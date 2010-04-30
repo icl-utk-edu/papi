@@ -12,6 +12,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#include "components_config.h"
 
 /* Prototypes */
 int vec_int_ok_dummy(  );
@@ -26,43 +27,6 @@ long long vec_dummy_get_virt_cycles( const hwd_context_t * zero );
 long long vec_dummy_get_virt_usec( const hwd_context_t * zero );
 long long vec_dummy_get_real_usec( void );
 long long vec_dummy_get_real_cycles( void );
-
-extern papi_vector_t MY_VECTOR;
-#ifdef HAVE_ACPI
-extern papi_vector_t _acpi_vector;
-#endif
-#ifdef HAVE_MX
-extern papi_vector_t _mx_vector;
-#endif
-#ifdef HAVE_NET
-extern papi_vector_t _net_vector;
-#endif
-#ifdef HAVE_LMSENSORS
-extern papi_vector_t _lmsensors_vector;
-#endif
-#ifdef HAVE_LUSTRE
-extern papi_vector_t _Lustre_vector;
-#endif
-
-papi_vector_t *_papi_hwd[] = {
-	&MY_VECTOR,
-#ifdef HAVE_ACPI
-	&_acpi_vector,
-#endif
-#ifdef HAVE_MX
-	&_mx_vector,
-#endif
-#ifdef HAVE_NET
-	&_net_vector,
-#endif
-#ifdef HAVE_LMSENSORS
-	&_lmsensors_vector,
-#endif
-#ifdef HAVE_LUSTRE
-	&_Lustre_vector,
-#endif
-	NULL
-};
 
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 

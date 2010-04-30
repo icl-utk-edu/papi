@@ -2,7 +2,6 @@
 
 COMPSRCS += components/lustre/linux-lustre.c components/lustre/host_counter.c
 COMPOBJS += linux-lustre.o host_counter.o
-CFLAGS += -DHAVE_LUSTRE
 
 linux-lustre.o: components/lustre/linux-lustre.c components/lustre/linux-lustre.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/lustre/linux-lustre.c -o linux-lustre.o 

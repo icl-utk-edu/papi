@@ -367,7 +367,7 @@ LUSTRE_ntv_enum_events( unsigned int *EventCode, int modifier )
   return(PAPI_OK);
 }
 */
-papi_vector_t _Lustre_vector = {
+papi_vector_t _lustre_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name =

@@ -4,7 +4,7 @@ include components/mx/Makefile.mx
 
 COMPSRCS += components/mx/linux-mx.c 
 COMPOBJS += linux-mx.o
-CFLAGS += -DHAVE_MX -DMXPATH=\"$(MXPATH)\"
+CFLAGS += -DMXPATH=\"$(MXPATH)\"
 
 linux-mx.o: components/mx/linux-mx.c components/mx/linux-mx.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/mx/linux-mx.c -o linux-mx.o 
