@@ -105,16 +105,26 @@ __ 5. Diff the two directories:
 	-B: ignore changes whose lines are blank
 	-N: treat absent files as empty
 
-__ 6. Copy the diff file to icl:/sw/www/icl/projects/papi/downloads/patches
+__ 6. Create a copy of the directory to be patched and cd into it.
 
-__ 7. Check permissions on the diff. 644 is good. 
+__ 7. Apply the patch:
+                > patch -p1 ../<patchfile>
+                > patch -p1 ../papi400patch3.diff
 
-__ 8. Create a link with supporting text on the PAPI software web page.
+__ 8. If the patch applied cleanly, build and test on affected platforms;
+         otherwise clean up the patch and try again.
 
-__ 9. Create a News item on the PAPI Web page.
+__ 9. Copy the diff file to icl:/sw/www/icl/projects/papi/downloads/patches
 
-__ 10. Email the papi discussion list with an announcement.
+__ 10. Check permissions on the diff. 644 is good. 
 
+__ 11. Create a link with supporting text on the PAPI software web page.
+
+__ 12. Create a News item on the PAPI Web page.
+
+__ 13. Email the papi discussion list with an announcement.
+
+__ 14. Post the announcement on the PAPI User Forum.
 
 
 
