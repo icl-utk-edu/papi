@@ -80,6 +80,14 @@ static inline int rdpmc(struct perf_event_mmap_page *hdr, uint64_t *value)
 }
 #else
 /*
+ *  Default barrier macro.
+ *  Given this is architecture specific, it must be defined when
+ *  libpfm is ported to new architecture. The default macro below
+ *  simply does nothing.
+ */
+#define barrier() {}
+
+/*
  *  Default function to read counter directly from user level mode.
  *  Given this is architecture specific, it must be defined when
  *  libpfm is ported to new architecture. The default routine below
