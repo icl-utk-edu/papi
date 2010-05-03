@@ -198,6 +198,7 @@ PAPI_FCALL( papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, ( int *ncpu,
 		for ( i = ( int ) strlen( hwinfo->model_string ); i < model_len;
 			  model_str[i++] = ' ' );
 #else
+		(void)i; /* unused...  */
 		/* This case needs the passed strings to be of sufficient size *
 		 * and will include the NULL character in the target string    */
 		strcpy( vendor_string, hwinfo->vendor_string );
@@ -348,8 +349,8 @@ PAPI_FCALL( papif_get_event_info, PAPIF_GET_EVENT_INFO,
 #endif
 {
 	PAPI_event_info_t info;
-#if defined(_FORTRAN_STRLEN_AT_END)
 	( void ) flags;			 /*Unused */
+#if defined(_FORTRAN_STRLEN_AT_END)
 	int i;
 	if ( ( *check = PAPI_get_event_info( *EventCode, &info ) ) == PAPI_OK ) {
 		strncpy( symbol, info.symbol, ( size_t ) symbol_len );

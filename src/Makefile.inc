@@ -1,14 +1,14 @@
-PAPI_SRCDIR = $(PWD)
+PAPI_SRCDIR = $(PWD)	
 
-SOURCES	= $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
+SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
     papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
     papi_vector.c papi_memory.c $(COMPSRCS)
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
     papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o \
-    papi_vector.o papi_memory.o $(COMPOBJS)
-HEADERS = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
+    papi_vector.o papi_memory.o $(COMPOBJS) $(MISCOBJS)
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h papi_protos.h papi_vector.h \
     papi_memory.h config.h
 LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
@@ -193,8 +193,9 @@ freebsd/map-core2-extreme.o: freebsd/map-core2-extreme.c $(HEADERS)
 freebsd/map-i7.o: freebsd/map-i7.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
 
-freebsd.o: freebsd.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) -c $< -o $@
+# So we already build this for $SUBSTRATE
+#freebsd.o: freebsd.c $(HEADERS)
+#	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 test: ctests
 	$(SETPATH) ctests/zero

@@ -29,12 +29,12 @@
 #if defined(DEBUG)
 # define SHOW_COUNTER(id,name) \
 	{ \
-		unsigned long long tmp_value; \
+		pmc_value_t tmp_value; \
 		int ret = pmc_read (id, &tmp_value); \
 		if (ret < 0) \
 			fprintf (stderr, "DEBUG: Unable to read counter %s (ID: %08x) on routine %s (file: %s, line: %d)\n", name, id, __FUNCTION__, __FILE__, __LINE__); \
 		else \
-			fprintf (stderr, "DEBUG: Read counter %s (ID: %08x) - value %llu on routine %s (file: %s, line: %d)\n", name, id, tmp_value, __FUNCTION__, __FILE__, __LINE__); \
+			fprintf (stderr, "DEBUG: Read counter %s (ID: %08x) - value %llu on routine %s (file: %s, line: %d)\n", name, id, (long long unsigned int)tmp_value, __FUNCTION__, __FILE__, __LINE__); \
 	}
 #else
 # define SHOW_COUNTER(id,name)
@@ -42,49 +42,20 @@
 
 static hwd_libpmc_context_t Context;
 
-int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain);
+extern int _papi_freebsd_get_dmem_info(PAPI_dmem_info_t*);
+
+extern papi_vector_t _papi_freebsd_vector;
+
+int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain);
+
+long long _papi_freebsd_get_real_cycles(void);
+long long _papi_freebsd_get_real_usec();
+
+int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len);
 
 int init_mdi(void);
 int init_presets(void);
 
-papi_svector_t _freebsd_svector_table[] = {
- {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
- {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
- {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
- {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
- {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
- {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
- {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
- {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
- {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
- {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
- {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
- {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
- {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
- {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
- {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
- {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
- {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
- {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
- {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
- {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
- {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
- {(void (*)())_papi_hwd_add_prog_event, VEC_PAPI_HWD_ADD_PROG_EVENT},
- {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
- {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
- {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
- {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
- {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
- {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
- {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
- {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
- {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
- {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
- {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
- {(void (*)())_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
- {NULL, VEC_PAPI_END}
-};
 
 /*
  * Substrate setup and shutdown
@@ -94,21 +65,19 @@ papi_svector_t _freebsd_svector_table[] = {
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int _papi_hwd_init_substrate(papi_vectors_t *vtable)
+int _papi_freebsd_init_substrate(int cidx)
 {
    int retval;
+   (void)cidx;
 
    SHOW_WHERE_I_AM;
 
-   retval = _papi_hwi_setup_vector_table( vtable, _freebsd_svector_table);
-   
-#ifdef DEBUG
+#ifdef DEBUG 
    /* This prints out which functions are mapped to dummy routines
     * and this should be taken out once the substrate is completed.
     * The 0 argument will print out only dummy routines, change
     * it to a 1 to print out all routines.
     */
-   vector_print_table(vtable, 0);
 #endif
 
    /* Internal function, doesn't necessarily need to be a function */
@@ -123,6 +92,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 int init_presets(void)
 {
 	const struct pmc_cpuinfo *info;
+	int i;
 
 	SHOW_WHERE_I_AM;
 
@@ -159,17 +129,25 @@ int init_presets(void)
 		/* Unknown processor! */
 		Context.CPUsubstrate = CPU_UNKNOWN;
 
-	_papi_hwi_system_info.sub_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
+
+	MY_VECTOR.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
+	MY_VECTOR.cmp_info.attach = 0;
 
 	_papi_hwi_setup_all_presets(_papi_hwd_native_info[Context.CPUsubstrate].map, NULL);
 
+
+
+	/*
+	for (i=0; i < PAPI_MAX_LOCK; i++)
+	  _papi_hwd_lock_data[i] = MUTEX_OPEN;
+	*/
 	return 0;
 }
 
 /*
  * This function is an internal function and not exposed and thus
  * it can be called anything you want as long as the information
- * is setup in _papi_hwd_init_substrate.  Below is some, but not
+ * is setup in _papi_freebsd_init_substrate.  Below is some, but not
  * all of the values that will need to be setup.  For a complete
  * list check out papi_mdi_t, though some of the values are setup
  * and used above the substrate level.
@@ -231,7 +209,14 @@ int init_mdi(void)
 		/* Right now, PMC states that TSC is an additional counter. However
 		   it's only available as a system-wide counter and this requires
 		   root access */
-		_papi_hwi_system_info.sub_info.num_cntrs = info->pm_npmc - 1;
+		MY_VECTOR.cmp_info.num_cntrs = info->pm_npmc - 1;
+
+		if ( strstr(pmc_name_of_cputype(info->pm_cputype), "INTEL"))
+		  _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
+		else if ( strstr(pmc_name_of_cputype(info->pm_cputype), "AMD"))
+		  _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_AMD;
+		else
+		  fprintf(stderr,"We didn't actually find a supported vendor...\n\n\n");
 /*
 		_papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
 		_papi_hwi_system_info.supports_program = 0;
@@ -258,19 +243,21 @@ int init_mdi(void)
 /*
  * This is called whenever a thread is initialized
  */
-int _papi_hwd_init(hwd_context_t *ctx)
+int _papi_freebsd_init(hwd_context_t *ctx)
 {
+  (void)ctx;
 	SHOW_WHERE_I_AM;
 	return PAPI_OK;
 }
 
-int _papi_hwd_shutdown(hwd_context_t *ctx)
+int _papi_freebsd_shutdown(hwd_context_t *ctx)
 {
+  (void)ctx;
 	SHOW_WHERE_I_AM;
 	return PAPI_OK;
 }
 
-int _papi_hwd_shutdown_global(void)
+int _papi_freebsd_shutdown_substrate(void)
 {
 	SHOW_WHERE_I_AM;
 	return PAPI_OK;
@@ -280,7 +267,7 @@ int _papi_hwd_shutdown_global(void)
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int _papi_hwd_init_control_state(hwd_control_state_t *ptr)
+int _papi_freebsd_init_control_state(hwd_control_state_t *ptr)
 {
 	/* We will default to gather counters in USER|KERNEL mode */
 	SHOW_WHERE_I_AM;
@@ -291,11 +278,12 @@ int _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 	return PAPI_OK;
 }
 
-int _papi_hwd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int count, hwd_context_t *ctx)
+int _papi_freebsd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int count, hwd_context_t *ctx)
 {
 	char name[1024];
 	int i;
 	int res;
+	(void)ctx;
 
 	SHOW_WHERE_I_AM;
 
@@ -328,7 +316,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *nativ
 
 	for (i = 0; i < count; i++)
 	{
-		res = _papi_hwd_ntv_code_to_name (native[i].ni_event, name, sizeof(name));
+		res = _papi_freebsd_ntv_code_to_name (native[i].ni_event, name, sizeof(name));
 		if (res != PAPI_OK)
 			return res;
 
@@ -373,9 +361,10 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *nativ
 	return PAPI_OK;
 }
 
-int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int _papi_freebsd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 {
 	int i, ret;
+	(void)ctx;
 
 	SHOW_WHERE_I_AM;
 
@@ -384,7 +373,7 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 		if ((ret = pmc_allocate (ctrl->counters[i], PMC_MODE_TC, 0, PMC_CPU_ANY, &(ctrl->pmcs[i]))) < 0)
 		{
 #if defined(DEBUG)
-			/* This shouldn't happen, it's tested previously on _papi_hwd_allocate_registers */
+			/* This shouldn't happen, it's tested previously on _papi_freebsd_allocate_registers */
 			fprintf (stderr, "DEBUG: %s FAILED to allocate '%s' [%d of %d] ERROR = %d\n", FUNC, ctrl->counters[i], i+1, ctrl->n_counters, ret);
 #endif
 			return PAPI_ESYS;
@@ -410,9 +399,11 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 	return PAPI_OK;
 }
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
+int _papi_freebsd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
 {
 	int i, ret;
+	(void)ctx;
+	(void)flags;
 
 	SHOW_WHERE_I_AM;
 
@@ -433,9 +424,10 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **ev
 	return PAPI_OK;
 }
 
-int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int _papi_freebsd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 {
 	int i, ret;
+	(void)ctx;
 
 	SHOW_WHERE_I_AM;
 
@@ -451,7 +443,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 		if ((ret = pmc_release (ctrl->pmcs[i])) < 0)
 		{
 #if defined(DEBUG)
-			/* This shouldn't happen, it's tested previously on _papi_hwd_allocate_registers */
+			/* This shouldn't happen, it's tested previously on _papi_freebsd_allocate_registers */
 			fprintf (stderr, "DEBUG: %s FAILED to release '%s' [%d of %d] ERROR = %d\n", FUNC, ctrl->counters[i], i+1, ctrl->n_counters, ret);
 #endif
 			return PAPI_ESYS;
@@ -460,9 +452,10 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 	return PAPI_OK;
 }
 
-int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int _papi_freebsd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 {
 	int i, ret;
+	(void)ctx;
 
 	SHOW_WHERE_I_AM;
 
@@ -472,7 +465,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 		if (ctrl->caps[i] & PMC_CAP_WRITE)
 		{
 #if defined(DEBUG)
-			fprintf (stderr, "DEBUG: _papi_hwd_reset is about to stop the counter %d\n", i+1);
+			fprintf (stderr, "DEBUG: _papi_freebsd_reset is about to stop the counter %d\n", i+1);
   		SHOW_COUNTER(ctrl->pmcs[i],ctrl->counters[i]);
 #endif
 			if ((ret = pmc_stop (ctrl->pmcs[i])) < 0)
@@ -483,7 +476,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 				return PAPI_ESYS;
 			}
 #if defined(DEBUG)
-			fprintf (stderr, "DEBUG: _papi_hwd_reset is about to write the counter %d\n", i+1);
+			fprintf (stderr, "DEBUG: _papi_freebsd_reset is about to write the counter %d\n", i+1);
   		SHOW_COUNTER(ctrl->pmcs[i],ctrl->counters[i]);
 #endif
 			if ((ret = pmc_write (ctrl->pmcs[i], 0)) < 0)
@@ -494,7 +487,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 				return PAPI_ESYS;
 			}
 #if defined(DEBUG)
-			fprintf (stderr, "DEBUG: _papi_hwd_reset is about to start the counter %d\n", i+1);
+			fprintf (stderr, "DEBUG: _papi_freebsd_reset is about to start the counter %d\n", i+1);
   		SHOW_COUNTER(ctrl->pmcs[i],ctrl->counters[i]);
 #endif
 			if ((ret = pmc_start (ctrl->pmcs[i])) < 0)
@@ -505,7 +498,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 				return PAPI_ESYS;
 			}
 #if defined(DEBUG)
-			fprintf (stderr, "DEBUG: _papi_hwd_reset after starting the counter %d\n", i+1);
+			fprintf (stderr, "DEBUG: _papi_freebsd_reset after starting the counter %d\n", i+1);
   		SHOW_COUNTER(ctrl->pmcs[i],ctrl->counters[i]);
 #endif
 		}
@@ -515,9 +508,10 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 	return PAPI_OK;
 }
 
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
+int _papi_freebsd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
 {
 	int i, ret;
+	(void)ctx;
 
 	SHOW_WHERE_I_AM;
 
@@ -557,8 +551,11 @@ int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *fr
 /*
  * Overflow and profile functions 
  */
-void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
+void _papi_freebsd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
 {
+  (void)signal;
+  (void)info;
+  (void)context;
   /* Real function would call the function below with the proper args
    * _papi_hwi_dispatch_overflow_signal(...);
    */
@@ -566,20 +563,28 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
   return;
 }
 
-int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
+int _papi_freebsd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
 {
+  (void)master;
+  (void)ESI;
 	SHOW_WHERE_I_AM;
   return PAPI_OK;
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
+int _papi_freebsd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
+  (void)ESI;
+  (void)EventIndex;
+  (void)threshold;
 	SHOW_WHERE_I_AM;
   return PAPI_OK;
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threashold)
+int _papi_freebsd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threashold)
 {
+  (void)ESI;
+  (void)EventIndex;
+  (void)threashold;
 	SHOW_WHERE_I_AM;
   return PAPI_OK;
 }
@@ -592,14 +597,16 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threashold)
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int _papi_hwd_ctl (hwd_context_t *ctx, int code, _papi_int_option_t *option)
+int _papi_freebsd_ctl (hwd_context_t *ctx, int code, _papi_int_option_t *option)
 {
+  (void)ctx;
 	SHOW_WHERE_I_AM;
 	switch (code)
 	{
 		case PAPI_DOMAIN:
 		case PAPI_DEFDOM:
-			return _papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain);
+			/*return _papi_freebsd_set_domain(&option->domain.ESI->machdep, option->domain.domain);*/
+			return _papi_freebsd_set_domain(option->domain.ESI->ctl_state, option->domain.domain);
 		case PAPI_GRANUL:
 		case PAPI_DEFGRN:
 			return PAPI_ESBSTR;
@@ -618,7 +625,7 @@ int _papi_hwd_ctl (hwd_context_t *ctx, int code, _papi_int_option_t *option)
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain) 
+int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain) 
 {
   int found = 0;
 
@@ -637,11 +644,34 @@ int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
 		return PAPI_ESBSTR;
 }
 
+long long _papi_freebsd_get_real_cycles(void)
+{
+	/* Hey, I've seen somewhere a define called __x86_64__! Should I support it? */
+#if !defined(__i386__) && !defined(__amd64__)
+	SHOW_WHERE_I_AM;
+	/* This will surely work, but with low precision and high overhead */
+   return ((long long) _papi_freebsd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
+#else
+	SHOW_WHERE_I_AM;
+	if (Context.use_rdtsc)
+	{
+		long long cycles;
+		__asm __volatile(".byte 0x0f, 0x31" : "=A" (cycles));
+	  return cycles;
+	}
+	else
+	{
+		return ((long long) _papi_freebsd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
+	}
+#endif
+}
+
+
 /* 
  * Timing Routines
  * These functions should return the highest resolution timers available.
  */
-long long _papi_hwd_get_real_usec(void)
+long long _papi_freebsd_get_real_usec(void)
 {
 	/* Hey, I've seen somewhere a define called __x86_64__! Should I support it? */
 #if !defined(__i386__) && !defined(__amd64__)
@@ -656,7 +686,7 @@ long long _papi_hwd_get_real_usec(void)
 	SHOW_WHERE_I_AM;
 	if (Context.use_rdtsc)
 	{
-		return _papi_hwd_get_real_cycles() / _papi_hwi_system_info.hw_info.mhz;
+		return _papi_freebsd_get_real_cycles() / _papi_hwi_system_info.hw_info.mhz;
 	}
 	else
 	{
@@ -668,31 +698,10 @@ long long _papi_hwd_get_real_usec(void)
 #endif
 }
 
-long long _papi_hwd_get_real_cycles(void)
-{
-	/* Hey, I've seen somewhere a define called __x86_64__! Should I support it? */
-#if !defined(__i386__) && !defined(__amd64__)
-	SHOW_WHERE_I_AM;
-	/* This will surely work, but with low precision and high overhead */
-   return ((long long) _papi_hwd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
-#else
-	SHOW_WHERE_I_AM;
-	if (Context.use_rdtsc)
-	{
-		long long cycles;
-		__asm __volatile(".byte 0x0f, 0x31" : "=A" (cycles));
-	  return cycles;
-	}
-	else
-	{
-		return ((long long) _papi_hwd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
-	}
-#endif
-}
-
-long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_freebsd_get_virt_usec(const hwd_context_t * ctx)
 {
 	struct rusage res;
+	(void)ctx;
 
 	SHOW_WHERE_I_AM;
 
@@ -701,29 +710,34 @@ long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 	return (res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec;
 }
 
-long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_freebsd_get_virt_cycles(const hwd_context_t * ctx)
 {
 	SHOW_WHERE_I_AM;
-	return ((long long) _papi_hwd_get_virt_usec(ctx) * _papi_hwi_system_info.hw_info.mhz);
+	return ((long long) _papi_freebsd_get_virt_usec(ctx) * _papi_hwi_system_info.hw_info.mhz);
 }
 
 /*
  * Native Event functions
  */
-int _papi_hwd_add_prog_event(hwd_control_state_t * ctrl, unsigned int EventCode, void *inout, EventInfo_t * EventInfoArray){
+int _papi_freebsd_add_prog_event(hwd_control_state_t * ctrl, unsigned int EventCode, void *inout, EventInfo_t * EventInfoArray){
+  (void)ctrl;
+  (void)EventCode;
+  (void)inout;
+  (void)EventInfoArray;
 	SHOW_WHERE_I_AM;
   return PAPI_OK;
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _papi_freebsd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
 	int res;
 	char name[1024];
 	unsigned int nextCode = 1 + *EventCode;
+	(void)modifier;
 
 	SHOW_WHERE_I_AM;
 
-	res = _papi_hwd_ntv_code_to_name(nextCode, name, sizeof(name));
+	res = _papi_freebsd_ntv_code_to_name(nextCode, name, sizeof(name));
 
 	if (res != PAPI_OK)
 		return res;
@@ -733,13 +747,20 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 	return PAPI_OK;
 }
 
-int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+int _papi_freebsd_ntv_name_to_code(char *name, int* event_code) {
+  SHOW_WHERE_I_AM;
+  (void)name;
+  (void)event_code;
+  return PAPI_OK;
+}
+
+int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
 	SHOW_WHERE_I_AM;
 	int nidx;
 
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
-	if (nidx >= _papi_hwi_system_info.sub_info.num_native_events)
+	if (nidx >= MY_VECTOR.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
 	strncpy (ntv_name, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
 	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1)
@@ -747,13 +768,13 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 	return PAPI_OK;
 }
 
-int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len)
+int _papi_freebsd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len)
 {
 	SHOW_WHERE_I_AM;
 	int nidx;
 
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
-	if (nidx >= _papi_hwi_system_info.sub_info.num_native_events)
+	if (nidx >= MY_VECTOR.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
 	strncpy (descr, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
 	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description) > len-1)
@@ -761,14 +782,18 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len)
 	return PAPI_OK;
 }
 
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+int _papi_freebsd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
+  (void)EventCode;
+  (void)bits;
 	SHOW_WHERE_I_AM;
 	return PAPI_OK;
 }
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values, int name_len, int count)
+int _papi_freebsd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values, int name_len, int count)
 {
+  (void)bits;
+  (void)values;
   const char str[]="Counter: 0  Event: 0";
 	SHOW_WHERE_I_AM;
   if ( count == 0 ) return(0);
@@ -785,7 +810,7 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *
  */
 
 /* Here we'll check if PMC can provide all the counters the user want */
-int _papi_hwd_allocate_registers (EventSetInfo_t *ESI) 
+int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI) 
 {
 	char name[1024];
 	int failed, allocated_counters, i, j, ret;
@@ -801,7 +826,7 @@ int _papi_hwd_allocate_registers (EventSetInfo_t *ESI)
 		/* Check if we can allocate all the counters needed */
 		for (i = 0; i < ESI->NativeCount; i++)
 		{
-			ret = _papi_hwd_ntv_code_to_name (ESI->NativeInfoArray[i].ni_event, name, sizeof(name));
+			ret = _papi_freebsd_ntv_code_to_name (ESI->NativeInfoArray[i].ni_event, name, sizeof(name));
 			if (ret != PAPI_OK)
 				return ret;
 			if ( (ret = pmc_allocate (name, PMC_MODE_TC, 0, PMC_CPU_ANY, &pmcs[i])) < 0)
@@ -832,14 +857,18 @@ int _papi_hwd_allocate_registers (EventSetInfo_t *ESI)
 }
 
 /* Forces the event to be mapped to only counter ctr. */
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
+void _papi_freebsd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
+  (void)dst;
+  (void)ctr;
 	SHOW_WHERE_I_AM;
 }
 
 /* This function examines the event to determine if it can be mapped 
  * to counter ctr.  Returns true if it can, false if it can't. 
  */
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
+int _papi_freebsd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
+  (void)dst;
+  (void)ctr;
 	SHOW_WHERE_I_AM;
 	return 1;
 } 
@@ -848,7 +877,8 @@ int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
  * exclusive mapping.  Returns true if exlusive, false if 
  * non-exclusive.  
  */
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
+int _papi_freebsd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
+  (void)dst;
 	SHOW_WHERE_I_AM;
 	return 1;
 }
@@ -858,8 +888,10 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
  * this detects a conflict if true. Returns true if conflict, false 
  * if no conflict.  
  */
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+int _papi_freebsd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
+  (void)dst;
+  (void)src;
 	SHOW_WHERE_I_AM;
   return 0;
 }
@@ -870,22 +902,102 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
  *  the src event will be exclusive, but the code shouldn't assume it.
  *  Returns nothing.  
  */
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
+void _papi_freebsd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
 {
+  (void)dst;
+  (void)src;
 	SHOW_WHERE_I_AM;
   return;
 }
 
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
+void _papi_freebsd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
 {
 	SHOW_WHERE_I_AM;
+	(void)dst;
+	(void)src;
   return;
 }
 
 /*
  * Shared Library Information and other Information Functions
  */
-int _papi_hwd_update_shlib_info(void){
+int _papi_freebsd_update_shlib_info(void){
 	SHOW_WHERE_I_AM;
   return PAPI_OK;
 }
+
+papi_vector_t _papi_freebsd_vector = {
+  .cmp_info = {
+	/* default component information (unspecified values are initialized to 0) */
+	.default_domain = PAPI_DOM_USER,
+	.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+	.default_granularity = PAPI_GRN_THR,
+	.available_granularities = PAPI_GRN_THR,
+
+	.hardware_intr = 1,
+	.kernel_multiplex = 1,
+	.kernel_profile = 1,
+	.profile_ear = 1,
+	.num_mpx_cntrs = HWPMC_NUM_COUNTERS, /* ?? */
+	.hardware_intr_sig = PAPI_INT_SIGNAL,
+
+	/* component specific cmp_info initializations */
+	.fast_real_timer = 1,
+	.fast_virtual_timer = 0,
+	.attach = 0,
+	.attach_must_ptrace = 0,
+	.itimer_sig = PAPI_INT_MPX_SIGNAL,
+	.itimer_num = PAPI_INT_ITIMER,
+	.itimer_ns = PAPI_INT_MPX_DEF_US * 1000,	/* Not actually supported */
+	.itimer_res_ns = 1,
+  } ,
+  .size = { 
+	.context = sizeof( hwd_context_t ),
+	.control_state = sizeof( hwd_control_state_t ),
+	.reg_value = sizeof( hwd_register_t ),
+	.reg_alloc = sizeof( hwd_reg_alloc_t )
+  },
+
+  .dispatch_timer	= _papi_freebsd_dispatch_timer,
+  .start	= _papi_freebsd_start,
+  .stop		= _papi_freebsd_stop,
+  .read		= _papi_freebsd_read,
+  .reset	= _papi_freebsd_reset,
+  .write	= _papi_freebsd_write,
+  .get_real_cycles	= _papi_freebsd_get_real_cycles,
+  .get_real_usec	= _papi_freebsd_get_real_usec,
+  .get_virt_cycles	= _papi_freebsd_get_virt_cycles,
+  .get_virt_usec	= _papi_freebsd_get_virt_usec,
+  .stop_profiling	= _papi_freebsd_stop_profiling,
+  .init_substrate	= _papi_freebsd_init_substrate,
+  .init				= _papi_freebsd_init,
+  .init_control_state	= _papi_freebsd_init_control_state,
+  .update_shlib_info	= _papi_freebsd_update_shlib_info,
+  //.get_system_info		= _papi_freebsd_get_system_info,
+  .update_control_state	= _papi_freebsd_update_control_state,
+  .ctl					= _papi_freebsd_ctl,
+  .set_overflow		= _papi_freebsd_set_overflow,
+  .set_profile		= _papi_freebsd_set_profile,
+  .set_domain		= _papi_freebsd_set_domain,
+
+  .ntv_enum_events	= _papi_freebsd_ntv_enum_events,
+  .ntv_name_to_code	= _papi_freebsd_ntv_name_to_code,
+  .ntv_code_to_name	= _papi_freebsd_ntv_code_to_name,
+  .ntv_code_to_descr	= _papi_freebsd_ntv_code_to_descr,
+  .ntv_code_to_bits		= _papi_freebsd_ntv_code_to_bits,
+  .ntv_bits_to_info		= _papi_freebsd_ntv_bits_to_info,
+
+  .allocate_registers	= _papi_freebsd_allocate_registers,
+  .bpt_map_avail		= _papi_freebsd_bpt_map_avail,
+  .bpt_map_set			= _papi_freebsd_bpt_map_set,
+  .bpt_map_exclusive	= _papi_freebsd_bpt_map_exclusive,
+  .bpt_map_shared		= _papi_freebsd_bpt_map_shared,
+  .bpt_map_preempt		= _papi_freebsd_bpt_map_preempt,
+  .bpt_map_update		= _papi_freebsd_bpt_map_update,
+
+  .get_dmem_info		= _papi_freebsd_get_dmem_info,
+
+  .shutdown				= _papi_freebsd_shutdown,
+  .shutdown_substrate	= _papi_freebsd_shutdown_substrate,
+
+};

@@ -58,6 +58,7 @@ _papi_hwi_lock( int lck )
 		_papi_hwd_lock( lck );
 		THRDBG( "Lock %d\n", lck );
 	} else {
+	  (void) lck; /* unused if !defined(DEBUG) */
 		THRDBG( "Skipped lock %d\n", lck );
 	}
 
@@ -71,6 +72,7 @@ _papi_hwi_unlock( int lck )
 		_papi_hwd_unlock( lck );
 		THRDBG( "Unlock %d\n", lck );
 	} else {
+	  (void) lck; /* unused if !defined(DEBUG) */
 		THRDBG( "Skipped unlock %d\n", lck );
 	}
 

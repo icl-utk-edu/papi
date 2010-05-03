@@ -25,14 +25,24 @@
 #include <assert.h>
 
 #include "papi.h"
+#include "papi_defines.h"
 #include <pmc.h>
 
 #include "freebsd-config.h"
 
-#define MAX_COUNTERS       HWPMC_NUM_COUNTERS
-#define MAX_COUNTER_TERMS  MAX_COUNTERS
+#define MY_VECTOR			_papi_freebsd_vector
+#define MAX_COUNTERS		HWPMC_NUM_COUNTERS
+#define MAX_COUNTER_TERMS	MAX_COUNTERS
 
 #define inline_static inline static
+
+#undef hwd_siginfo_t
+#undef hwd_register_t
+#undef hwd_reg_alloc_t
+#undef hwd_control_state_t
+#undef hwd_context_t
+#undef hwd_ucontext_t
+#undef hwd_libpmc_context_t
 
 typedef struct hwd_siginfo {
 	int placeholder;
