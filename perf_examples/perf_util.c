@@ -32,7 +32,7 @@
 #include "perf_util.h"
 
 int
-perf_setup_argv_events(char **argv, perf_event_desc_t **fd)
+perf_setup_argv_events(const char **argv, perf_event_desc_t **fd)
 {
 	perf_event_desc_t *fdt = NULL;
 	int num = 0, max_fd = 0, new_max;
@@ -85,7 +85,8 @@ error:
 int
 perf_setup_list_events(const char *ev, perf_event_desc_t **fd)
 {
-	char **argv, *p, *q;
+	const char **argv;
+	char *p, *q;
 	char *events;
 	int num = 0, i, ret;
 

@@ -44,7 +44,7 @@
 #include <perfmon/pfmlib_perf_event.h>
 #include "perf_util.h"
 
-static char *gen_events[]={
+static const char *gen_events[]={
 	"PERF_COUNT_HW_CPU_CYCLES",
 	"PERF_COUNT_HW_INSTRUCTIONS",
 	NULL
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	if (ret != PFM_SUCCESS)
 		errx(1, "Cannot initialize library: %s", pfm_strerror(ret));
 
-	num = perf_setup_argv_events(argc > 1 ? argv+1 : gen_events, &fds);
+	num = perf_setup_argv_events(argc > 1 ? (const char **)argv+1 : gen_events, &fds);
 	if (num == -1)
 		errx(1, "cannot setup events");
 

@@ -141,7 +141,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 	size_t sz;
 	uint64_t type, fmt;
 	uint64_t val64;
-	char *str;
+	const char *str;
 	int ret, e;
 
 	sz = ehdr->size - sizeof(*ehdr);
@@ -388,7 +388,7 @@ static void
 display_lost(perf_event_desc_t *hw)
 {
 	struct { uint64_t id, lost; } lost;
-	char *str;
+	const char *str;
 	int e, ret;
 
 	ret = perf_read_buffer(hw->buf, hw->pgmsk, &lost, sizeof(lost));

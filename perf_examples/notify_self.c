@@ -52,7 +52,7 @@ print_sample(int id)
 	uint64_t time_enabled, time_running;
 	struct { uint64_t value, id; } grp;
 	int e, ret;
-	char *str;
+	const char *str;
 
 	ret = perf_read_buffer_64(fds[id].buf, fds[id].pgmsk, &ip);
 	if (ret)

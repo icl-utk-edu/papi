@@ -165,7 +165,7 @@ static void
 display_lost(perf_event_desc_t *hw)
 {
 	struct { uint64_t id, lost; } lost;
-	char *str;
+	const char *str;
 	int e, ret;
 
 	ret = perf_read_buffer(hw->buf, hw->pgmsk, &lost, sizeof(lost));

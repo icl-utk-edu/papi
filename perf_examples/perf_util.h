@@ -32,7 +32,7 @@ typedef struct {
 	struct perf_event_attr hw;
 	uint64_t value, prev_value;
 	uint64_t enabled, running;
-	char *name;
+	const char *name;
 	uint64_t id; /* event id kernel */
 	void *buf;
 	size_t pgmsk;
@@ -42,7 +42,7 @@ typedef struct {
 /* handy shortcut */
 #define PERF_FORMAT_SCALE (PERF_FORMAT_TOTAL_TIME_ENABLED|PERF_FORMAT_TOTAL_TIME_RUNNING)
 
-extern int perf_setup_argv_events(char **argv, perf_event_desc_t **fd);
+extern int perf_setup_argv_events(const char **argv, perf_event_desc_t **fd);
 extern int perf_setup_list_events(const char *events, perf_event_desc_t **fd);
 extern int perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size_t sz);
 extern void perf_skip_buffer(struct perf_event_mmap_page *hdr, size_t sz);
