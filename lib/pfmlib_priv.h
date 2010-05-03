@@ -45,8 +45,8 @@
 #define PFMLIB_PMU_PIDX_MASK	((1<< PFMLIB_PMU_SHIFT)-1)
 
 typedef struct {
-	char 		*name;	/* name */
-	char		*desc;	/* description */
+	const char	*name;	/* name */
+	const char	*desc;	/* description */
 	pfm_attr_t	type;	/* used to validate value (if any) */
 } pfmlib_attr_desc_t;
 
