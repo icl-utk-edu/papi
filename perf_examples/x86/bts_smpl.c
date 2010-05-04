@@ -59,7 +59,7 @@ typedef struct {
 static jmp_buf jbuf;
 static uint64_t collected_samples, lost_samples;
 static perf_event_desc_t *fds;
-static int num_events;
+static int num_fds;
 static options_t options;
 
 static struct option the_options[]={
@@ -172,7 +172,7 @@ display_lost(perf_event_desc_t *hw)
 	if (ret)
 		errx(1, "cannot read lost info");
 
-	e = perf_id2event(fds, num_events, lost.id);
+	e = perf_id2event(fds, num_fds, lost.id);
 	if (e == -1)
 		str = "unknown lost event";
 	else
@@ -239,8 +239,8 @@ mainloop(char **arg)
 	/*
 	 * does allocate fds
 	 */
-	num_events = perf_setup_list_events("PERF_COUNT_HW_BRANCH_INSTRUCTIONS", &fds);
-	if (num_events == -1)
+	ret = perf_setup_list_events("PERF_COUNT_HW_BRANCH_INSTRUCTIONS", &fds, &num_fds);
+	if (ret || !num_fds)
 		errx(1, "cannot setup event");
 
 	memset(pollfds, 0, sizeof(pollfds));

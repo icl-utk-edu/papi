@@ -31,69 +31,86 @@
 #include <perfmon/pfmlib_perf_event.h>
 #include "perf_util.h"
 
+/* the **fd parameter must point to a null pointer on the first call
+ * max_fds and num_fds must both point to a zero value on the first call
+ * The return value is success (0) vs. failure (non-zero)
+ */
 int
-perf_setup_argv_events(const char **argv, perf_event_desc_t **fd)
+perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 {
-	perf_event_desc_t *fdt = NULL;
-	int num = 0, max_fd = 0, new_max;
-	int ret;
+	perf_event_desc_t *fd;
+	int new_max, ret, num, max_fds;
+	int group_leader;
 
-	if (!(argv && fd))
+	if (!(argv && fds && num_fds))
 		return -1;
 
-	
-	while(*argv) {
-		if (num == max_fd) {
+	fd = *fds;
+	if (fd) {
+		max_fds = fd[0].max_fds;
+		if (max_fds < 2)
+			return -1;
+		num = *num_fds;
+	} else {
+		max_fds = num = 0; /* bootstrap */
+	}
+	group_leader = num;
 
-			if (!max_fd)
+	while(*argv) {
+		if (num == max_fds) {
+			if (max_fds == 0)
 				new_max = 2;
 			else
-				new_max = max_fd << 1;
+				new_max = max_fds << 1;
 
-			if (new_max < max_fd) {
+			if (new_max < max_fds) {
 				warn("too many entries");
 				goto error;
 			}
-			fdt = realloc(fdt, new_max * sizeof(*fdt));
-			if (!fdt) {
+			fd = realloc(fd, new_max * sizeof(*fd));
+			if (!fd) {
 				warn("cannot allocate memory");
 				goto error;
 			}
 			/* reset newly allocated chunk */
-			memset(fdt+max_fd, 0, (new_max - max_fd) * sizeof(*fdt));
-			max_fd = new_max;
+			memset(fd + max_fds, 0, (new_max - max_fds) * sizeof(*fd));
+			max_fds = new_max;
+
+			/* update max size */
+			fd[0].max_fds = max_fds;
 		}
 
-		ret = pfm_get_perf_event_encoding(*argv, PFM_PLM3, &fdt[num].hw, NULL, NULL);
+		ret = pfm_get_perf_event_encoding(*argv, PFM_PLM3, &fd[num].hw, NULL, NULL);
 		if (ret != PFM_SUCCESS) {
 			warnx("event %s: %s\n", *argv, pfm_strerror(ret));
 			goto error;
 		}
 		/* ABI compatibility */
-		fdt[num].hw.size = sizeof(struct perf_event_attr);
-		fdt[num].name = *argv;
+		fd[num].hw.size = sizeof(struct perf_event_attr);
+
+		fd[num].name = *argv;
+		fd[num].group_leader = group_leader;
 		num++;
 		argv++;
 	}
-	*fd = fdt;
-	return num;
+	*num_fds = num;
+	*fds = fd;
+	return 0;
 error:
-	free(fdt);
+	free(fd);
 	return -1;
 }
 
 int
-perf_setup_list_events(const char *ev, perf_event_desc_t **fd)
+perf_setup_list_events(const char *ev, perf_event_desc_t **fd, int *num_fds)
 {
 	const char **argv;
-	char *p, *q;
-	char *events;
-	int num = 0, i, ret;
+	char *p, *q, *events;
+	int i, ret, num = 0;
 
-	if (!(ev && fd))
+	if (!(ev && fd && num_fds))
 		return -1;
 
-	
 	events = strdup(ev);
 	if (!events)
 		return -1;
@@ -105,7 +122,7 @@ perf_setup_list_events(const char *ev, perf_event_desc_t **fd)
 	}
 	num++;
 	num++; /* terminator */
-  
+
 	argv = malloc(num * sizeof(char *));
 	if (!argv) {
 		free(events);
@@ -119,9 +136,32 @@ perf_setup_list_events(const char *ev, perf_event_desc_t **fd)
 	}
 	argv[i++] = q;
 	argv[i] = NULL;
-	ret = perf_setup_argv_events(argv, fd);
+	ret = perf_setup_argv_events(argv, fd, num_fds);
 	free(argv);
 	return ret;
+}
+
+int
+perf_get_group_nevents(perf_event_desc_t *fds, int num, int idx)
+{
+	int leader;
+	int i;
+
+	if (idx < 0 || idx >= num)
+		return 0;
+
+	leader = fds[idx].group_leader;
+
+	for (i = leader + 1; i < num; i++) {
+		if (fds[i].group_leader != leader) {
+			/* This is a new group leader, so the previous
+			 * event was the final event of the preceding
+			 * group.
+			 */
+			return i - leader;
+		}
+	}
+	return 1;
 }
 
 int

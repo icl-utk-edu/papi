@@ -44,7 +44,7 @@ typedef struct {
 static volatile unsigned long notification_received;
 
 static perf_event_desc_t *fds;
-static int num_events;
+static int num_fds;
 
 static int buffer_pages = 1; /* size of buffer payload  (must be power of 2) */
 
@@ -56,7 +56,7 @@ sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 	uint64_t ip;
 	int id, ret;
 	
-	id = perf_fd2event(fds, num_events, info->si_fd);
+	id = perf_fd2event(fds, num_fds, info->si_fd);
 	if (id == -1)
 		errx(1, "cannot find event for descriptor %d", info->si_fd);
 
@@ -129,15 +129,15 @@ main(int argc, char **argv)
 	/*
  	 * allocates fd for us
  	 */
-	num_events = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES,"
+	ret = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES,"
 				       "PERF_COUNT_HW_CPU_CYCLES,"
 					"PERF_COUNT_HW_CPU_CYCLES",
-				        &fds);
-	if (num_events < 1)
+				        &fds, &num_fds);
+	if (ret || !num_fds)
 		exit(1);
 
 	fds[0].fd = -1;
-	for(i=0; i < num_events; i++) {
+	for(i=0; i < num_fds; i++) {
 		/* want a notification for each sample added to the buffer */
 		fds[i].hw.disabled =  !!i;
 		printf("i=%d disabled=%d\n", i, fds[i].hw.disabled);
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 		fds[i].pgmsk = (buffer_pages * pgsz) - 1;
 	}
 
-	for(i=0; i < num_events; i++) {
+	for(i=0; i < num_fds; i++) {
 		ret = ioctl(fds[i].fd, PERF_EVENT_IOC_REFRESH , 1);
 		if (ret == -1)
 			err(1, "cannot refresh");
@@ -194,7 +194,7 @@ error:
 	/*
 	 * destroy our session
 	 */
-	for(i=0; i < num_events; i++)
+	for(i=0; i < num_fds; i++)
 		close(fds[i].fd);
 
 	free(fds);

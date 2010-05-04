@@ -65,9 +65,9 @@ noploop(void)
 int
 main(int argc, char **argv)
 {
-	perf_event_desc_t *fds;
+	perf_event_desc_t *fds = NULL;
 	uint64_t values[3];
-	int i, ret, num;
+	int i, ret, num_fds = 0;
 
 	setlocale(LC_ALL, "");
 	/*
@@ -77,12 +77,12 @@ main(int argc, char **argv)
 	if (ret != PFM_SUCCESS)
 		errx(1, "Cannot initialize library: %s", pfm_strerror(ret));
 
-	num = perf_setup_argv_events(argc > 1 ? (const char **)argv+1 : gen_events, &fds);
-	if (num == -1)
+	ret = perf_setup_argv_events(argc > 1 ? (const char **)argv+1 : gen_events, &fds, &num_fds);
+	if (ret || !num_fds)
 		errx(1, "cannot setup events");
 
 	fds[0].fd = -1;
-	for(i=0; i < num; i++) {
+	for(i=0; i < num_fds; i++) {
 		/* request timing information necessary for scaling */
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
 
@@ -97,8 +97,8 @@ main(int argc, char **argv)
 	signal(SIGALRM, sig_handler);
 
 	/*
- 	 * enable all counters attached to this thread and created by it
- 	 */
+	 * enable all counters attached to this thread and created by it
+	 */
 	ret = prctl(PR_TASK_PERF_EVENTS_ENABLE);
 	if (ret)
 		err(1, "prctl(enable) failed");
@@ -108,8 +108,8 @@ main(int argc, char **argv)
 	noploop();
 
 	/*
- 	 * disable all counters attached to this thread
- 	 */
+	 * disable all counters attached to this thread
+	 */
 	ret = prctl(PR_TASK_PERF_EVENTS_DISABLE);
 	if (ret)
 		err(1, "prctl(disable) failed");
@@ -121,7 +121,7 @@ main(int argc, char **argv)
 	 */
 	memset(values, 0, sizeof(values));
 
-	for (i=0; i < num; i++) {
+	for (i=0; i < num_fds; i++) {
 		uint64_t val;
 		double ratio;
 

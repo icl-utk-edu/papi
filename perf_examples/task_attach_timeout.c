@@ -95,19 +95,19 @@ print_counts(perf_event_desc_t *fds, int num, int do_delta)
 int
 measure(pid_t pid)
 {
-	perf_event_desc_t *fds;
-	int i, num;
+	perf_event_desc_t *fds = NULL;
+	int i, ret, num_fds = 0;
 	char fn[32];
 
 	if (pfm_initialize() != PFM_SUCCESS)
 		errx(1, "libpfm initialization failed\n");
 
-	num = perf_setup_list_events(options.events, &fds);
-	if (num < 1)
+	ret = perf_setup_list_events(options.events, &fds, &num_fds);
+	if (ret || (num_fds == 0))
 		exit(1);
 
 	fds[0].fd = -1;
-	for(i=0; i < num; i++) {
+	for(i=0; i < num_fds; i++) {
 		fds[i].hw.disabled = 0; /* start immediately */
 
 		/* request timing information necessary for scaling counts */
@@ -130,15 +130,15 @@ measure(pid_t pid)
 		sleep(1);
 		options.delay--;
 		if (options.print)
-			print_counts(fds, num, 1);
+			print_counts(fds, num_fds, 1);
 	}
 	if (options.delay)
 		warn("thread %d terminated before timeout", pid);
 
 	if (!options.print)
-		print_counts(fds, num, 0);
+		print_counts(fds, num_fds, 0);
 
-	for(i=0; i < num; i++)
+	for(i=0; i < num_fds; i++)
 		close(fds[i].fd);
 
 	free(fds);

@@ -36,14 +36,16 @@ typedef struct {
 	uint64_t id; /* event id kernel */
 	void *buf;
 	size_t pgmsk;
+	int group_leader;
 	int fd;
+	int max_fds;
 } perf_event_desc_t;
 
 /* handy shortcut */
 #define PERF_FORMAT_SCALE (PERF_FORMAT_TOTAL_TIME_ENABLED|PERF_FORMAT_TOTAL_TIME_RUNNING)
 
-extern int perf_setup_argv_events(const char **argv, perf_event_desc_t **fd);
-extern int perf_setup_list_events(const char *events, perf_event_desc_t **fd);
+extern int perf_setup_argv_events(const char **argv, perf_event_desc_t **fd, int *num_fds);
+extern int perf_setup_list_events(const char *events, perf_event_desc_t **fd, int *num_fds);
 extern int perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size_t sz);
 extern void perf_skip_buffer(struct perf_event_mmap_page *hdr, size_t sz);
 
@@ -109,4 +111,13 @@ perf_id2event(perf_event_desc_t *fds, int num_events, uint64_t id)
 			return j;
 	return -1;
 }
+
+static inline int
+perf_is_group_leader(perf_event_desc_t *fds, int idx)
+{
+	return fds[idx].group_leader == idx;
+}
+
+extern int perf_get_group_nevents(perf_event_desc_t *fds, int num, int leader);
+
 #endif

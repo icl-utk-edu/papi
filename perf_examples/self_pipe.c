@@ -85,8 +85,9 @@ static void
 measure(void)
 {
 	perf_event_desc_t *fds = NULL;
+	int num_fds = 0;
 	uint64_t values[3];
-	int i, ret, num;
+	int i, ret;
 	int pr[2], pw[2];
 	ssize_t nbytes;
 	pid_t pid;
@@ -109,11 +110,11 @@ measure(void)
 	if (ret)
 		err(1, "cannot create write pipe");
 
-	num = perf_setup_list_events(options.events, &fds);
-	if (num < 1)
+	ret = perf_setup_list_events(options.events, &fds, &num_fds);
+	if (ret || !num_fds)
 		exit(1);
 
-	for(i=0; i < num; i++) {
+	for(i=0; i < num_fds; i++) {
 		fds[i].hw.disabled = 1;
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
 
@@ -141,7 +142,7 @@ measure(void)
 			err(1, "cannot create child\n");
 		case 0:
 			/* do not inherit session fd */
-			for(i=0; i < num; i++)
+			for(i=0; i < num_fds; i++)
 				close(fds[i].fd);
 			/* pr[]: write master, read child */
 			/* pw[]: read master, write child */
@@ -170,7 +171,7 @@ measure(void)
 
 	prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-	for(i=0; i < num; i++) {
+	for(i=0; i < num_fds; i++) {
 		uint64_t val;
 		double ratio;
 
@@ -204,7 +205,7 @@ measure(void)
 	/*
 	 * and destroy our session
 	 */
-	for(i=0; i < num; i++)
+	for(i=0; i < num_fds; i++)
 		close(fds[i].fd);
 
 	free(fds);

@@ -54,7 +54,7 @@ typedef struct {
 static jmp_buf jbuf;
 static uint64_t collected_samples, lost_samples;
 static perf_event_desc_t *fds;
-static int num_events;
+static int num_fds;
 static options_t options;
 static uint64_t sum_period;
 
@@ -353,7 +353,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 
 			sz -= sizeof(grp);
 
-			e = perf_id2event(fds, num_events, grp.id);
+			e = perf_id2event(fds, num_fds, grp.id);
 			if (e == -1)
 				str = "unknown sample event";
 			else
@@ -419,7 +419,7 @@ display_lost(perf_event_desc_t *hw)
 	if (ret)
 		errx(1, "cannot read lost info");
 
-	e = perf_id2event(fds, num_events, lost.id);
+	e = perf_id2event(fds, num_fds, lost.id);
 	if (e == -1)
 		str = "unknown lost event";
 	else
@@ -510,8 +510,8 @@ mainloop(char **arg)
 	/*
 	 * does allocate fds
 	 */
-	num_events = perf_setup_list_events(options.events, &fds);
-	if (num_events == -1)
+	ret = perf_setup_list_events(options.events, &fds, &num_fds);
+	if (ret || !num_fds)
 		errx(1, "cannot setup event list");
 
 	memset(pollfds, 0, sizeof(pollfds));
@@ -536,7 +536,7 @@ mainloop(char **arg)
 		errx(1, "task %s [%d] exited already status %d\n", arg[0], pid, WEXITSTATUS(status));
 
 	fds[0].fd = -1;
-	for(i=0; i < num_events; i++) {
+	for(i=0; i < num_fds; i++) {
 
 		fds[i].hw.disabled = 0; /* start immediately */
 
@@ -595,7 +595,7 @@ mainloop(char **arg)
 	 * We are skipping the first 3 values (nr, time_enabled, time_running)
 	 * and then for each event we get a pair of values.
 	 */
-	sz = (3+2*num_events)*sizeof(uint64_t);
+	sz = (3+2*num_fds)*sizeof(uint64_t);
 	val = malloc(sz);
 	if (!val)
 		err(1, "cannot allocated memory");
@@ -605,7 +605,7 @@ mainloop(char **arg)
 		err(1, "cannot read id %zu", sizeof(val));
 
 
-	for(i=0; i < num_events; i++) {
+	for(i=0; i < num_fds; i++) {
 		fds[i].id = val[2*i+1+3];
 		printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
 	}
@@ -639,7 +639,7 @@ terminate_session:
 	 */
 	wait4(pid, &status, 0, NULL);
 
-	for(i=0; i < num_events; i++)
+	for(i=0; i < num_fds; i++)
 		close(fds[i].fd);
 
 	/* check for partial event buffer */

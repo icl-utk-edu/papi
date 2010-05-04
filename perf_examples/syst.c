@@ -43,22 +43,21 @@ typedef struct {
 
 static options_t options;
 static perf_event_desc_t **all_fds;
-static int num;
+static int *num_fds;
 
 void
 setup_cpu(int cpu)
 {
-	perf_event_desc_t *fds = NULL;
-	int i;
+	perf_event_desc_t *fds;
+	int i, ret;
 
-	num = perf_setup_list_events(options.events, &fds);
-	if (num == -1)
+	ret = perf_setup_list_events(options.events, &all_fds[cpu], &num_fds[cpu]);
+	if (ret || (num_fds == 0))
 		errx(1, "cannot setup events\n");
-
-	all_fds[cpu] = fds;
+	fds = all_fds[cpu]; /* temp */
 
 	fds[0].fd = -1;
-	for(i=0; i < num; i++) {
+	for(i=0; i < num_fds[cpu]; i++) {
 		fds[i].hw.disabled = options.group ? !i : 1;
 
 		if (options.excl && ((options.group && !i) || (!options.group)))
@@ -92,10 +91,11 @@ measure(void)
 		cmax = cmin + 1;
 		ncpus = 1;
 	}
-	all_fds = malloc(ncpus * sizeof(perf_event_desc_t));
-	if (!all_fds)
-		err(1, "cannot allocate memory for all_fds");
+	all_fds = calloc(ncpus, sizeof(perf_event_desc_t));
+	num_fds = calloc(ncpus, sizeof(int));
 
+	if (!all_fds || !num_fds)
+		err(1, "cannot allocate memory for internal structures");
 	for(c=cmin ; c < cmax; c++)
 		setup_cpu(c);
 
@@ -106,7 +106,7 @@ measure(void)
 		fds = all_fds[c];
 		if (options.group) 
 			ret = ioctl(fds[0].fd, PERF_EVENT_IOC_ENABLE, 0);
-		else for(i=0; i < num; i++) {
+		else for(i=0; i < num_fds[c]; i++) {
 			ret = ioctl(fds[i].fd, PERF_EVENT_IOC_ENABLE, 0);
 			if (ret)
 				err(1, "cannot enable event %s\n", fds[i].name);
@@ -121,7 +121,7 @@ measure(void)
 		puts("------------------------");
 		for(c = cmin; c < cmax; c++) {
 			fds = all_fds[c];
-			for(i=0; i < num; i++) {
+			for(i=0; i < num_fds[c]; i++) {
 				double ratio;
 
 				ret = read(fds[i].fd, values, sizeof(values));
@@ -152,7 +152,7 @@ measure(void)
 	}
 	for(c = cmin; c < cmax; c++) {
 		fds = all_fds[c];
-		for(i=0; i < num; i++)
+		for(i=0; i < num_fds[c]; i++)
 			close(fds[i].fd);
 	}
 	free(all_fds);

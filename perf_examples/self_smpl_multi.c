@@ -77,7 +77,6 @@ static int program_time = PROGRAM_TIME;
 static int threshold = THRESHOLD;
 static int signum = SIGIO;
 static pthread_barrier_t barrier;
-static int num_events;
 
 
 static int buffer_pages = 1;
@@ -120,8 +119,9 @@ long bad_msg[MAX_THR];
 long bad_restart[MAX_THR];
 int fown;
 
-int __thread myid; /* TLS */
+static int __thread myid; /* TLS */
 static perf_event_desc_t __thread *fds; /* TLS */
+static int __thread num_fds; /* TLS */
 
 pid_t
 gettid(void)
@@ -277,8 +277,10 @@ overflow_start(char *name)
 	size_t pgsz;
 	int ret, fd, flags;
 
-	num_events = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES", &fds);
-	if (num_events != 1)
+	fds = NULL;
+	num_fds = 0;
+	ret = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES", &fds, &num_fds);
+	if (ret || !num_fds)
 		errx(1, "cannot monitor event");
 
 	pgsz = sysconf(_SC_PAGESIZE);

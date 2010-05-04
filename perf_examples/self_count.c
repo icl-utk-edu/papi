@@ -179,10 +179,10 @@ read_count(perf_event_desc_t *fds)
 int
 main(int argc, char **argv)
 {
-	perf_event_desc_t *fds;
+	perf_event_desc_t *fds = NULL;
 	size_t pgsz;
 	uint64_t val;
-	int i, ret, num;
+	int i, ret, num_fds = 0;
 	int n = 30;
 
 	pgsz = sysconf(_SC_PAGESIZE);
@@ -193,12 +193,12 @@ main(int argc, char **argv)
 	if (ret != PFM_SUCCESS)
 		errx(1, "Cannot initialize library: %s", pfm_strerror(ret));
 
-	num = perf_setup_argv_events(argc > 1 ? (const char **)(argv+1) : gen_events, &fds);
-	if (num == -1)
+	ret = perf_setup_argv_events(argc > 1 ? (const char **)argv+1 : gen_events, &fds, &num_fds);
+	if (ret || !num_fds)
 		errx(1, "cannot setup events");
 
 	fds[0].fd = -1;
-	for(i=0; i < num; i++) {
+	for(i=0; i < num_fds; i++) {
 		/* request timing information necesaary for scaling */
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
 		fds[i].hw.disabled = 0;
@@ -215,15 +215,15 @@ main(int argc, char **argv)
 	signal(SIGALRM, sig_handler);
 
 	/*
- 	 * enable all counters attached to this thread
- 	 */
+	 * enable all counters attached to this thread
+	 */
 	ioctl(fds[0].fd, PERF_EVENT_IOC_ENABLE, 0);
 
 	alarm(10);
 
 	for(;quit == 0;) {
-		
-		for (i=0; i < num; i++) {
+
+		for (i=0; i < num_fds; i++) {
 			val = read_count(&fds[i]);
 			printf("%20"PRIu64" %s\n", val, fds[i].name);
 		}
@@ -233,11 +233,11 @@ main(int argc, char **argv)
 			n = 30;
 	}
 	/*
- 	 * disable all counters attached to this thread
- 	 */
+	 * disable all counters attached to this thread
+	 */
 	ioctl(fds[0].fd, PERF_EVENT_IOC_DISABLE, 0);
 
-	for (i=0; i < num; i++) {
+	for (i=0; i < num_fds; i++) {
 		munmap(fds[i].buf, pgsz);
 		close(fds[i].fd);
 	}

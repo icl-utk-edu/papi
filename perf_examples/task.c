@@ -35,10 +35,13 @@
 
 #include "perf_util.h"
 
+#define MAX_GROUPS 16
+
 typedef struct {
-	const char *events;
+	const char *events[MAX_GROUPS];
+	int num_groups;
+	int format_group;
 	int inherit;
-	int group;
 	int print;
 	int pin;
 	pid_t pid;
@@ -59,11 +62,11 @@ child(char **arg)
 }
 
 static void
-read_group(perf_event_desc_t *fds, int num)
+read_groups(perf_event_desc_t *fds, int num)
 {
-	uint64_t *values;
-	size_t sz;
-	int i, ret;
+	uint64_t *values = NULL;
+	size_t new_sz, sz = 0;
+	int i, evt, ret;
 
 	/*
 	 * 	{ u64		nr;
@@ -76,56 +79,55 @@ read_group(perf_event_desc_t *fds, int num)
 	 *
 	 * we do not use FORMAT_ID in this program
 	 */
-	sz = sizeof(uint64_t) * (3 + num);
-	values = malloc(sz);
-	if (!values)
-		err(1, "cannot allocate memory for values\n");
 
-	ret = read(fds[0].fd, values, sz);
-	if (ret != sz) { /* unsigned */
-		if (ret == -1)
-			err(1, "cannot read values event %s", fds[0].name);
-		else	/* likely pinned and could not be loaded */
-			warnx("could not read event0 ret=%d", ret);
-	}
+	for (evt = 0; evt < num; ) {
+		int num_evts_to_read;
 
-	/*
-	 * propagate to save area
-	 */
-	for(i=0; i < num; i++) {
-		values[0] = values[3+i];
-		/*
-		 * scaling because we may be sharing the PMU and
-		 * thus may be multiplexed
-		 */
-		fds[i].prev_value = fds[i].value;
-		fds[i].value = perf_scale(values);
-		fds[i].enabled = values[1];
-		fds[i].running = values[2];
-	}
-	free(values);
-}
-
-static void
-read_single(perf_event_desc_t *fds, int num)
-{
-	uint64_t values[3];
-	int i, ret;
-
-	for(i=0; i < num; i++) {
-
-		ret = read(fds[i].fd, values, sizeof(values));
-		if (ret != sizeof(values)) { /* unsigned */
-			if (ret == -1)
-				err(1, "cannot read values event %s", fds[i].name);
-			else	/* likely pinned and could not be loaded */
-				warnx("could not read event%d", i);
+		if (options.format_group) {
+			num_evts_to_read = perf_get_group_nevents(fds, num, evt);
+			new_sz = sizeof(uint64_t) * (3 + num_evts_to_read);
+		} else {
+			num_evts_to_read = 1;
+			new_sz = sizeof(uint64_t) * 3;
 		}
-		fds[i].prev_value = fds[i].value;
-		fds[i].value = perf_scale(values);
-		fds[i].enabled = values[1];
-		fds[i].running = values[2];
+
+		if (new_sz > sz) {
+			sz = new_sz;
+			values = realloc(values, sz);
+		}
+
+		if (!values)
+			err(1, "cannot allocate memory for values\n");
+
+		ret = read(fds[evt].fd, values, sz);
+		if (ret != sz) { /* unsigned */
+			if (ret == -1)
+				err(1, "cannot read values event %s", fds[0].name);
+
+			/* likely pinned and could not be loaded */
+			warnx("could not read event %d, tried to read %d bytes, but got %d",
+				evt, (int)sz, ret);
+		}
+
+		/*
+		 * propagate to save area
+		 */
+		for (i = evt; i < (evt + num_evts_to_read); i++) {
+			if (options.format_group)
+				values[0] = values[3 + (i - evt)];
+			/*
+			 * scaling because we may be sharing the PMU and
+			 * thus may be multiplexed
+			 */
+			fds[i].prev_value = fds[i].value;
+			fds[i].value = perf_scale(values);
+			fds[i].enabled = values[1];
+			fds[i].running = values[2];
+		}
+		evt += num_evts_to_read;
 	}
+	if (values)
+		free(values);
 }
 
 static void
@@ -133,20 +135,20 @@ print_counts(perf_event_desc_t *fds, int num)
 {
 	int i;
 
-	if (options.group)
-		read_group(fds, num);
-	else
-		read_single(fds, num);
+	read_groups(fds, num);
 
 	for(i=0; i < num; i++) {
 		double ratio;
 		uint64_t val;
 
 		val = fds[i].value - fds[i].prev_value;
-
 		ratio = 0.0;
 		if (fds[i].enabled)
 			ratio = 1.0 * fds[i].running / fds[i].enabled;
+
+		/* separate groups */
+		if (i && fds[i].hw.enable_on_exec)
+			putchar('\n');
 
 		if (ratio == 1.0)
 			printf("%'20"PRIu64" %s (%'"PRIu64" : %'"PRIu64")\n", val, fds[i].name, fds[i].enabled, fds[i].running);
@@ -167,8 +169,8 @@ static void sig_handler(int n)
 int
 parent(char **arg)
 {
-	perf_event_desc_t *fds;
-	int status, ret, i, num;
+	perf_event_desc_t *fds = NULL;
+	int status, ret, i, num_fds = 0, grp, group_fd;
 	int ready[2], go[2];
 	char buf;
 	pid_t pid;
@@ -176,9 +178,12 @@ parent(char **arg)
 	if (pfm_initialize() != PFM_SUCCESS)
 		errx(1, "libpfm initialization failed");
 
-	num = perf_setup_list_events(options.events, &fds);
-	if (num < 1)
-		exit(1);
+	for (grp = 0; grp < options.num_groups; grp++) {
+		int ret;
+		ret = perf_setup_list_events(options.events[grp], &fds, &num_fds);
+		if (ret || !num_fds)
+			exit(1);
+	}
 
 	pid = options.pid;
 	if (!pid) {
@@ -232,37 +237,43 @@ parent(char **arg)
 	}
 
 	fds[0].fd = -1;
-	for(i=0; i < num; i++) {
+	for(i=0; i < num_fds; i++) {
+		int is_group_leader; /* boolean */
+
+		is_group_leader = perf_is_group_leader(fds, i);
+		if (is_group_leader) {
+			/* this is the group leader */
+			group_fd = -1;
+		} else {
+			group_fd = fds[fds[i].group_leader].fd;
+		}
+
 		/*
 		 * create leader disabled with enable_on-exec
 		 */
 		if (!options.pid) {
-			if (options.group) {
-				fds[i].hw.disabled = !i;
-				fds[i].hw.enable_on_exec = !i;
-			} else {
-				fds[i].hw.disabled = 1;
-				fds[i].hw.enable_on_exec = 1;
-			}
+			fds[i].hw.disabled = is_group_leader;
+			fds[i].hw.enable_on_exec = is_group_leader;
 		}
 
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
 		/* request timing information necessary for scaling counts */
-		if (!i && options.group)
-			fds[0].hw.read_format |= PERF_FORMAT_GROUP;
+		if (is_group_leader && options.format_group)
+			fds[i].hw.read_format |= PERF_FORMAT_GROUP;
 
 		if (options.inherit)
 			fds[i].hw.inherit = 1;
 
-		if (options.pin && ((options.group && i== 0) || (!options.group)))
+		if (options.pin && is_group_leader)
 			fds[i].hw.pinned = 1;
-
-		fds[i].fd = perf_event_open(&fds[i].hw, pid, -1, options.group ? fds[0].fd : -1, 0);
+		fds[i].fd = perf_event_open(&fds[i].hw, pid, -1, group_fd, 0);
 		if (fds[i].fd == -1) {
 			warn("cannot attach event%d %s", i, fds[i].name);
 			goto error;
 		}
-	}	
+	}
+	ioctl(fds[0].fd, PERF_EVENT_IOC_DISABLE, 0);
+
 
 	if (!options.pid)
 		close(go[1]);
@@ -271,12 +282,12 @@ parent(char **arg)
 		if (!options.pid) {
 			while(waitpid(pid, &status, WNOHANG) == 0) {
 				sleep(1);
-				print_counts(fds, num);
+				print_counts(fds, num_fds);
 			}
 		} else {
 			while(quit == 0) {
 				sleep(1);
-				print_counts(fds, num);
+				print_counts(fds, num_fds);
 			}
 		}
 	} else {
@@ -284,10 +295,10 @@ parent(char **arg)
 			waitpid(pid, &status, 0);
 		else
 			pause();
-		print_counts(fds, num);
+		print_counts(fds, num_fds);
 	}
 
-	for(i=0; i < num; i++)
+	for(i=0; i < num_fds; i++)
 		close(fds[i].fd);
 
 	free(fds);
@@ -305,11 +316,11 @@ usage(void)
 	printf("usage: task [-h] [-i] [-g] [-p] [-P] [-t pid] [-e event1,event2,...] cmd\n"
 		"-h\t\tget help\n"
 		"-i\t\tinherit across fork\n"
-		"-g\t\tgroup events\n"
+		"-f\t\tuse PERF_FORMAT_GROUP for reading up counts (experimental, not working)\n"
 		"-p\t\tprint counts every second\n"
 		"-P\t\tpin events\n"
 		"-t pid\tmeasure existing pid\n"
-		"-e ev,ev\tlist of events to measure\n"
+		"-e ev,ev\tgroup of events to measure (multiple -e switches are allowed)\n"
 		);
 }
 
@@ -320,13 +331,18 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c=getopt(argc, argv,"he:igpPt:")) != -1) {
+	while ((c=getopt(argc, argv,"he:ifpPt:")) != -1) {
 		switch(c) {
 			case 'e':
-				options.events = optarg;
+				if (options.num_groups < MAX_GROUPS) {
+					options.events[options.num_groups++] = optarg;
+				} else {
+					errx(1, "you cannot specify more than %d groups.\n",
+						MAX_GROUPS);
+				}
 				break;
-			case 'g':
-				options.group = 1;
+			case 'f':
+				options.format_group = 1;
 				break;
 			case 'p':
 				options.print = 1;
@@ -347,12 +363,13 @@ main(int argc, char **argv)
 				errx(1, "unknown error");
 		}
 	}
-	if (!options.events)
-		options.events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
-
+	if (options.num_groups == 0) {
+		options.events[0] = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+		options.num_groups = 1;
+	}
 	if (!argv[optind] && !options.pid)
 		errx(1, "you must specify a command to execute or a thread to attach to\n");
-	
+
 	signal(SIGINT, sig_handler);
 
 	return parent(argv+optind);
