@@ -59,8 +59,6 @@ if test "$OS" = "CLE"; then
   walltimer=cycle
   ffsll=yes
   cross_compiling=yes
-  disable_shared=no
-  disable_static=yes
   use_static_tests=yes
 elif test "$OS" = "bgp"; then
   if test "x$CC" = "x"; then
@@ -134,12 +132,106 @@ AC_ARG_WITH(tests,
         	[tests=$withval],
         	[tests="ctests ftests"]) 
 
-AC_ARG_WITH(generic,
-            [  --with-generic		Specify a generic build for any hardware platform ],
-            [if test "$OS" != "linux"; then
-               AC_MSG_ERROR([PAPI requires Linux for a generic build])
-             fi
-             MAKEVER=generic])
+AC_ARG_WITH(no_cpu,
+            [  --with-no-cpu		Specify a build with no CPU component ],
+            [MAKEVER=No_CPU], 
+            [AC_MSG_CHECKING(for CPU type)
+             AC_ARG_WITH(CPU,
+                         [  --with-CPU=<cpu>		Specify CPU type],
+                         [CPU=$withval
+                          case "$CPU" in
+                            core|core2|i7|atom|p4|p3|opteron|athlon) 
+                            MISCSRCS="$MISCSRCS x86_cache_info.c" ;;
+                          esac],
+	                     [case "$OS" in
+                          aix)
+                            CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
+                            if test "$CPU" = ""; then
+                              CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
+                            fi ;;
+                          linux)
+                            if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
+                              family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                              model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                              if test "$family" = "6"; then
+                                if test "$model" = "14"; then
+                                  CPU=core
+                                fi
+                                if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
+                                CPU=core2
+                                fi
+                                if (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || test "$model" = "44" || test "$model" = "46"); then
+                                  CPU=i7
+                                fi
+                                if test "$model" = "28"; then 
+                                  CPU=atom
+                                fi
+                                MISCSRCS="$MISCSRCS x86_cache_info.c"
+                              elif test "$family" = "15"; then
+                                CPU=p4
+                                MISCSRCS="$MISCSRCS x86_cache_info.c"
+                              elif test "$family" = "32"; then
+	                            CPU=montecito
+	                          elif test "$family" = "31"; then
+	                            CPU=itanium2
+                              fi	
+                            elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
+                              family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                              if (test "$family" = "15" || test "$family" = "16"); then
+                                CPU=opteron
+                              elif test "$family" = "6"; then
+                                CPU=athlon
+                              fi
+                              MISCSRCS="$MISCSRCS x86_cache_info.c"
+                            else
+                              family=`uname -m`
+                              if test "$family" = "ppc64"; then
+                                CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                                case "$CPU_info" in
+                                  PPC970*) CPU="PPC970";;
+                                  POWER5)  CPU="POWER5";;
+                                  POWER5+) CPU="POWER5+";;
+                                  POWER6)  CPU="POWER6";;
+                                esac
+	                          fi
+                            fi ;;
+                          solaris)
+                            AC_CHECK_HEADER([libcpc.h],
+                                            [CFLAGS="$CFLAGS -lcpc"
+                                             AC_TRY_RUN([#include <stdlib.h>
+                                                         #include <libcpc.h> 
+                                                         int main() {
+                                                         // Check for libcpc 2
+                                                         if(CPC_VER_CURRENT == 2) 
+                                                           exit(0);
+                                                         exit(1);
+                                                         } ], 
+                                                        [cpc_version=2], 
+                                                        [cpc_version=0])],
+                                            [AC_MSG_ERROR([libcpc is needed for running PAPI on Solaris]) ])
+                            processor=`uname -p`
+                            machinetype=`uname -m`
+                            if test "$processor" = "sparc"; then
+                              if test "$machinetype" = "sun4u"; then
+                                CPU=ultra
+                                AC_CHECK_LIB([cpc], [cpc_take_sample], [], 
+                                             [AC_MSG_ERROR([libcpc.a is needed on Solaris, install SUNWcpc]) ])
+                              elif test "$machinetype" = "sun4v"; then
+                                CPU=niagara2
+                                if test "$cpc_version" != "2"; then
+                                  AC_MSG_ERROR([libcpc2 needed for Niagara 2])
+                                fi
+                              else
+                                AC_MSG_ERROR([$machinetype not supported])
+                              fi
+                            else
+                              AC_MSG_ERROR([Only SPARC processors are supported on Solaris])
+                            fi ;;
+                          bgp)
+	                        CPU=bgp ;;
+                          esac ])
+             AC_MSG_RESULT($CPU)
+             AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type]) ])
 
 AC_MSG_CHECKING(for components to build)
 COMPONENT_RULES=components/Rules.components
@@ -197,104 +289,6 @@ if test "$CC" = "gcc"; then
     EXTRA_CFLAGS="-W"
   fi
 fi
-
-AC_MSG_CHECKING(for CPU type)
-AC_ARG_WITH(CPU,
-            [  --with-CPU=<cpu>		Specify CPU type],
-            [CPU=$withval
-             case "$CPU" in
-               core|core2|i7|atom|p4|p3|opteron|athlon) 
-                 MISCSRCS="$MISCSRCS x86_cache_info.c" ;;
-             esac],
-	        [case "$OS" in
-               aix)
-                 CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
-                 if test "$CPU" = ""; then
-                   CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
-                 fi ;;
-               linux)
-                 if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
-                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   if test "$family" = "6"; then
-                     if test "$model" = "14"; then
-                       CPU=core
-                     fi
-                     if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
-                       CPU=core2
-                     fi
-                     if (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || test "$model" = "44" || test "$model" = "46"); then
-                       CPU=i7
-                     fi
-                     if test "$model" = "28"; then 
-                       CPU=atom
-                     fi
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
-                   elif test "$family" = "15"; then
-                     CPU=p4
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
-                   elif test "$family" = "32"; then
-	                 CPU=montecito
-	               elif test "$family" = "31"; then
-	                 CPU=itanium2
-                   fi	
-                 elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
-                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   if (test "$family" = "15" || test "$family" = "16"); then
-                     CPU=opteron
-                   elif test "$family" = "6"; then
-                     CPU=athlon
-                   fi
-                   MISCSRCS="$MISCSRCS x86_cache_info.c"
-                 else
-                   family=`uname -m`
-                   if test "$family" = "ppc64"; then
-                     CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                     case "$CPU_info" in
-                       PPC970*) CPU="PPC970";;
-                       POWER5)  CPU="POWER5";;
-                       POWER5+) CPU="POWER5+";;
-                       POWER6)  CPU="POWER6";;
-                     esac
-	               fi
-                 fi ;;
-               solaris)
-                 AC_CHECK_HEADER([libcpc.h],
-                                 [CFLAGS="$CFLAGS -lcpc"
-                                  AC_TRY_RUN([#include <stdlib.h>
-                                              #include <libcpc.h> 
-                                              int main() {
-                                              // Check for libcpc 2
-                                              if(CPC_VER_CURRENT == 2) 
-                                                exit(0);
-                                              exit(1);
-                                              } ], 
-                                             [cpc_version=2], 
-                                             [cpc_version=0])],
-                                 [AC_MSG_ERROR([libcpc is needed for running PAPI on Solaris]) ])
-                 processor=`uname -p`
-                 machinetype=`uname -m`
-                 if test "$processor" = "sparc"; then
-                   if test "$machinetype" = "sun4u"; then
-                     CPU=ultra
-                     AC_CHECK_LIB([cpc], [cpc_take_sample], [], 
-                                  [AC_MSG_ERROR([libcpc.a is needed on Solaris, install SUNWcpc]) ])
-                   elif test "$machinetype" = "sun4v"; then
-                     CPU=niagara2
-                     if test "$cpc_version" != "2"; then
-                       AC_MSG_ERROR([libcpc2 needed for Niagara 2])
-                     fi
-                   else
-                     AC_MSG_ERROR([$machinetype not supported])
-                   fi
-                 else
-                   AC_MSG_ERROR([Only SPARC processors are supported on Solaris])
-                 fi ;;
-               bgp)
-	             CPU=bgp ;;
-               esac ])
-AC_MSG_RESULT($CPU)
-AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type])
 
 if test "x$ffsll" = "x"; then
   AC_ARG_WITH(ffsll,
@@ -949,7 +943,7 @@ fi
 #          Checking platform
 ##################################################
 AC_MSG_CHECKING(platform)
-if test "$MAKEVER" != "generic"; then
+if test "$MAKEVER" != "No_CPU"; then
   case "$OS" in
     aix)
       MAKEVER="$OS"-"$CPU" ;;
@@ -1028,12 +1022,8 @@ if test "$MAKEVER" != "generic"; then
   esac
 fi
 if test "x$MAKEVER" = "x"; then
-  if test "$OS" = "linux"; then
-    AC_MSG_NOTICE(This platform is not directly supported but a generic build can be used)
-    MAKEVER="generic"
-  else
-    AC_MSG_ERROR([This platform is not supported])
-  fi
+  AC_MSG_NOTICE(This platform is not supported so a generic build without a CPU component will be used)
+  MAKEVER="No_CPU"
 fi 
 AC_MSG_RESULT($MAKEVER)
 
@@ -1042,7 +1032,7 @@ AC_MSG_RESULT($MAKEVER)
 ##################################################
 FILENAME=NO_INCLUDE_FILE
 SHOW_CONF=showconf
-TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear omp"
+TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.$(PAPIVER)'
 OMPCFLGS=-fopenmp
@@ -1262,10 +1252,11 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     CFLAGS="$CFLAGS -m64"
     FFLAGS="$FFLAGS -m64"
   fi
-elif test "$MAKEVER" = "generic"; then
+elif test "$MAKEVER" = "No_CPU"; then
   FILENAME=Makefile.inc
   SUBSTR=any-null
-  DESCR="Sample substrate: Any hardware platform with GNU compilers"
+  MEMSUBSTR=any-null
+  DESCR="Generic build without a CPU component"
 fi
 
 AC_SUBST(prefix)
