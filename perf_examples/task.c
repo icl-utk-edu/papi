@@ -142,13 +142,19 @@ print_counts(perf_event_desc_t *fds, int num)
 		uint64_t val;
 
 		val = fds[i].value - fds[i].prev_value;
+
 		ratio = 0.0;
 		if (fds[i].enabled)
 			ratio = 1.0 * fds[i].running / fds[i].enabled;
 
 		/* separate groups */
-		if (i && fds[i].hw.enable_on_exec)
+		if (perf_is_group_leader(fds, i))
 			putchar('\n');
+
+		if (fds[i].value < fds[i].prev_value) {
+			printf("inconsistent scaling %s (cur=%'"PRIu64" : prev=%'"PRIu64")\n", fds[i].name, fds[i].value, fds[i].prev_value);
+			continue;
+		}
 
 		if (ratio == 1.0)
 			printf("%'20"PRIu64" %s (%'"PRIu64" : %'"PRIu64")\n", val, fds[i].name, fds[i].enabled, fds[i].running);
@@ -236,7 +242,6 @@ parent(char **arg)
 		close(ready[0]);
 	}
 
-	fds[0].fd = -1;
 	for(i=0; i < num_fds; i++) {
 		int is_group_leader; /* boolean */
 
@@ -272,8 +277,6 @@ parent(char **arg)
 			goto error;
 		}
 	}
-	ioctl(fds[0].fd, PERF_EVENT_IOC_DISABLE, 0);
-
 
 	if (!options.pid)
 		close(go[1]);
