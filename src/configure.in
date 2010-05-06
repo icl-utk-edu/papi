@@ -1040,7 +1040,7 @@ AC_MSG_RESULT($MAKEVER)
 ##################################################
 FILENAME=NO_INCLUDE_FILE
 SHOW_CONF=showconf
-TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear omp"
+TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.$(PAPIVER)'
 OMPCFLGS=-fopenmp
