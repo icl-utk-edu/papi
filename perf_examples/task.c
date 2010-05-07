@@ -99,14 +99,14 @@ read_groups(perf_event_desc_t *fds, int num)
 		if (!values)
 			err(1, "cannot allocate memory for values\n");
 
-		ret = read(fds[evt].fd, values, sz);
-		if (ret != sz) { /* unsigned */
+		ret = read(fds[evt].fd, values, new_sz);
+		if (ret != new_sz) { /* unsigned */
 			if (ret == -1)
 				err(1, "cannot read values event %s", fds[evt].name);
 
 			/* likely pinned and could not be loaded */
-			warnx("could not read event %d, tried to read %d bytes, but got %d",
-				evt, (int)sz, ret);
+			warnx("could not read event %d, tried to read %zu bytes, but got %d",
+				evt, new_sz, ret);
 		}
 
 		/*

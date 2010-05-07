@@ -161,7 +161,7 @@ perf_get_group_nevents(perf_event_desc_t *fds, int num, int idx)
 			return i - leader;
 		}
 	}
-	return 1;
+	return i - leader;
 }
 
 int
