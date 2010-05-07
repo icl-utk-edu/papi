@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h> 
 
 unsigned char PENTIUM4 = 0;
 /* Native events consist of a flag field, an event field, and a unit mask field. 		

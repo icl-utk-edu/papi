@@ -28,9 +28,11 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
-#if defined(__FreeBSD__)
-# include <ctype.h>			 /* isdigit */
-#endif
+#include <stdarg.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h> 
+#include <ctype.h>			
 
 /********************/
 /* BEGIN PROTOTYPES */

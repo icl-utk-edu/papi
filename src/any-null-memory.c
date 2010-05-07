@@ -1,9 +1,20 @@
+/* 
+* File:    any-null-memory.c
+* CVS:     $Id$
+* Author:  
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "papi.h"
 #include "papi_internal.h"
+#include <unistd.h>
 
 int
 _any_get_memory_info( PAPI_hw_info_t * hw, int id )
 {
+	( void ) hw;			 /*unused */
+	( void ) id;			 /*unused */
 	return PAPI_OK;
 }
 
@@ -20,6 +31,5 @@ _any_get_dmem_info( PAPI_dmem_info_t * d )
 	d->locked = 8;
 	d->stack = 9;
 	d->pagesize = getpagesize(  );
-
 	return ( PAPI_OK );
 }

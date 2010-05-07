@@ -52,6 +52,10 @@ AC_ARG_WITH(OS,
               OS=solaris
             fi ])
 AC_MSG_RESULT($OS)
+
+AC_ARG_WITH(no_cpu_component,
+            [  --with-no-cpu-component		Specify a build with no CPU component],
+            [MAKEVER=without-cpu-component]) 
 	    
 if test "$OS" = "CLE"; then
   virtualtimer=times
@@ -73,7 +77,9 @@ elif test "$OS" = "bgp"; then
   ffsll=yes
   cross_compiling=yes
 elif test "$OS" = "linux"; then
-  MISCSRCS=hwinfo_linux.c
+  if test "$MAKEVER" != "without-cpu-component"; then
+    MISCSRCS=hwinfo_linux.c
+  fi
   if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
     if test "$bitmode" = "64" -a "$libdir" = '${exec_prefix}/lib'; then
       libdir='${exec_prefix}/lib64'
@@ -131,13 +137,6 @@ AC_ARG_WITH(tests,
         	[ --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install ],
         	[tests=$withval],
         	[tests="ctests ftests"]) 
-
-AC_ARG_WITH(generic,
-            [  --with-generic		Specify a generic build for any hardware platform ],
-            [if test "$OS" != "linux"; then
-               AC_MSG_ERROR([PAPI requires Linux for a generic build])
-             fi
-             MAKEVER=generic])
 
 AC_MSG_CHECKING(for components to build)
 COMPONENT_RULES=components/Rules.components
@@ -201,8 +200,10 @@ AC_ARG_WITH(CPU,
             [  --with-CPU=<cpu>		Specify CPU type],
             [CPU=$withval
              case "$CPU" in
-               core|core2|i7|atom|p4|p3|opteron|athlon) 
-                 MISCSRCS="$MISCSRCS x86_cache_info.c" ;;
+               core|core2|i7|atom|p4|p3|opteron|athlon)
+                 if test "$MAKEVER" != "without-cpu-component"; then 
+                   MISCSRCS="$MISCSRCS x86_cache_info.c" 
+                 fi ;;
              esac],
 	        [case "$OS" in
                aix)
@@ -227,10 +228,14 @@ AC_ARG_WITH(CPU,
                      if test "$model" = "28"; then 
                        CPU=atom
                      fi
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     if test "$MAKEVER" != "without-cpu-component"; then 
+                       MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     fi
                    elif test "$family" = "15"; then
                      CPU=p4
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     if test "$MAKEVER" != "without-cpu-component"; then 
+                       MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     fi
                    elif test "$family" = "32"; then
 	                 CPU=montecito
 	               elif test "$family" = "31"; then
@@ -243,7 +248,9 @@ AC_ARG_WITH(CPU,
                    elif test "$family" = "6"; then
                      CPU=athlon
                    fi
-                   MISCSRCS="$MISCSRCS x86_cache_info.c"
+                   if test "$MAKEVER" != "without-cpu-component"; then 
+                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                   fi
                  else
                    family=`uname -m`
                    if test "$family" = "ppc64"; then
@@ -947,7 +954,7 @@ fi
 #          Checking platform
 ##################################################
 AC_MSG_CHECKING(platform)
-if test "$MAKEVER" != "generic"; then
+if test "$MAKEVER" != "without-cpu-component"; then
   case "$OS" in
     aix)
       MAKEVER="$OS"-"$CPU" ;;
@@ -1026,12 +1033,8 @@ if test "$MAKEVER" != "generic"; then
   esac
 fi
 if test "x$MAKEVER" = "x"; then
-  if test "$OS" = "linux"; then
-    AC_MSG_NOTICE(This platform is not directly supported but a generic build can be used)
-    MAKEVER="generic"
-  else
-    AC_MSG_ERROR([This platform is not supported])
-  fi
+  AC_MSG_NOTICE(This platform is not supported so a generic build without a CPU component will be used)
+  MAKEVER="without-cpu-component"
 fi 
 AC_MSG_RESULT($MAKEVER)
 
@@ -1260,10 +1263,13 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     CFLAGS="$CFLAGS -m64"
     FFLAGS="$FFLAGS -m64"
   fi
-elif test "$MAKEVER" = "generic"; then
+elif test "$MAKEVER" = "without-cpu-component"; then
   FILENAME=Makefile.inc
   SUBSTR=any-null
-  DESCR="Sample substrate: Any hardware platform with GNU compilers"
+  MEMSUBSTR=any-null
+  MISCHDRS=papi_lock.h
+  CFLAGS="$CFLAGS -DNO_CPU_COMPONENT"
+  DESCR="Generic build without a CPU component"
 fi
 
 AC_SUBST(prefix)

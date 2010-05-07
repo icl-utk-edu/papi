@@ -14,6 +14,19 @@
 #include "papi_memory.h"
 #include "components_config.h"
 
+#if !defined(_WIN32)
+#include <sys/time.h>
+#include <sys/times.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h> 
+#endif
+
+#if ((defined _BGL) || (defined __bgp__))
+#include <stdlib.h>
+#include <sys/resource.h>
+#endif
+
 /* Prototypes */
 int vec_int_ok_dummy(  );
 int vec_int_one_dummy(  );
@@ -61,12 +74,6 @@ vec_dummy_get_real_cycles( void )
 	cyc = usec * _papi_hwi_system_info.hw_info.mhz;
 	return ( ( long long ) cyc );
 }
-
-#if ((defined _BGL) || (defined __bgp__))
-#include <stdlib.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
 
 long long
 vec_dummy_get_virt_usec( const hwd_context_t * zero )

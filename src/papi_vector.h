@@ -4,6 +4,8 @@
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
+#include "papi.h"
+
 /** Identifier for each component 
  *	@internal */
 typedef struct cmp_id {

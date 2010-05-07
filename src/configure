@@ -757,10 +757,10 @@ enable_option_checking
 with_arch
 with_bitmode
 with_OS
+with_no_cpu_component
 with_OSVER
 with_nativecc
 with_tests
-with_generic
 with_components
 with_debug
 with_CPU
@@ -1429,10 +1429,10 @@ Optional Packages:
   --with-arch=<arch>		Specify architecture (uname -m)
   --with-bitmode=<32,64>		Specify bit mode of library
   --with-OS=<os>       		Specify operating system
+  --with-no-cpu-component		Specify a build with no CPU component
   --with-OSVER=<ver>		Specify operating system version
   --with-nativecc=<path>		Specify native C compiler for header generation
  --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
-  --with-generic		Specify a generic build for any hardware platform
  --with-components=<"component1 component2">		Specify which components to build
   --with-debug=<yes,memory>		Yes builds a debug version of the library and memory disables PAPI_NO_MEMORY_MANAGEMENT
   --with-CPU=<cpu>		Specify CPU type
@@ -1958,6 +1958,13 @@ fi
 { $as_echo "$as_me:$LINENO: result: $OS" >&5
 $as_echo "$OS" >&6; }
 
+
+# Check whether --with-no_cpu_component was given.
+if test "${with_no_cpu_component+set}" = set; then
+  withval=$with_no_cpu_component; MAKEVER=without-cpu-component
+fi
+
+
 if test "$OS" = "CLE"; then
   virtualtimer=times
   tls=__thread
@@ -1978,7 +1985,9 @@ elif test "$OS" = "bgp"; then
   ffsll=yes
   cross_compiling=yes
 elif test "$OS" = "linux"; then
-  MISCSRCS=hwinfo_linux.c
+  if test "$MAKEVER" != "without-cpu-component"; then
+    MISCSRCS=hwinfo_linux.c
+  fi
   if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
     if test "$bitmode" = "64" -a "$libdir" = '${exec_prefix}/lib'; then
       libdir='${exec_prefix}/lib64'
@@ -5209,18 +5218,6 @@ else
 fi
 
 
-
-# Check whether --with-generic was given.
-if test "${with_generic+set}" = set; then
-  withval=$with_generic; if test "$OS" != "linux"; then
-               { { $as_echo "$as_me:$LINENO: error: PAPI requires Linux for a generic build" >&5
-$as_echo "$as_me: error: PAPI requires Linux for a generic build" >&2;}
-   { (exit 1); exit 1; }; }
-             fi
-             MAKEVER=generic
-fi
-
-
 { $as_echo "$as_me:$LINENO: checking for components to build" >&5
 $as_echo_n "checking for components to build... " >&6; }
 COMPONENT_RULES=components/Rules.components
@@ -5296,7 +5293,9 @@ if test "${with_CPU+set}" = set; then
   withval=$with_CPU; CPU=$withval
              case "$CPU" in
                core|core2|i7|atom|p4|p3|opteron|athlon)
-                 MISCSRCS="$MISCSRCS x86_cache_info.c" ;;
+                 if test "$MAKEVER" != "without-cpu-component"; then
+                   MISCSRCS="$MISCSRCS x86_cache_info.c"
+                 fi ;;
              esac
 else
   case "$OS" in
@@ -5322,10 +5321,14 @@ else
                      if test "$model" = "28"; then
                        CPU=atom
                      fi
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     if test "$MAKEVER" != "without-cpu-component"; then
+                       MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     fi
                    elif test "$family" = "15"; then
                      CPU=p4
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     if test "$MAKEVER" != "without-cpu-component"; then
+                       MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     fi
                    elif test "$family" = "32"; then
 	                 CPU=montecito
 	               elif test "$family" = "31"; then
@@ -5338,7 +5341,9 @@ else
                    elif test "$family" = "6"; then
                      CPU=athlon
                    fi
-                   MISCSRCS="$MISCSRCS x86_cache_info.c"
+                   if test "$MAKEVER" != "without-cpu-component"; then
+                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                   fi
                  else
                    family=`uname -m`
                    if test "$family" = "ppc64"; then
@@ -8343,7 +8348,7 @@ fi
 ##################################################
 { $as_echo "$as_me:$LINENO: checking platform" >&5
 $as_echo_n "checking platform... " >&6; }
-if test "$MAKEVER" != "generic"; then
+if test "$MAKEVER" != "without-cpu-component"; then
   case "$OS" in
     aix)
       MAKEVER="$OS"-"$CPU" ;;
@@ -8528,15 +8533,9 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
   esac
 fi
 if test "x$MAKEVER" = "x"; then
-  if test "$OS" = "linux"; then
-    { $as_echo "$as_me:$LINENO: This platform is not directly supported but a generic build can be used" >&5
-$as_echo "$as_me: This platform is not directly supported but a generic build can be used" >&6;}
-    MAKEVER="generic"
-  else
-    { { $as_echo "$as_me:$LINENO: error: This platform is not supported" >&5
-$as_echo "$as_me: error: This platform is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
+  { $as_echo "$as_me:$LINENO: This platform is not supported so a generic build without a CPU component will be used" >&5
+$as_echo "$as_me: This platform is not supported so a generic build without a CPU component will be used" >&6;}
+  MAKEVER="without-cpu-component"
 fi
 { $as_echo "$as_me:$LINENO: result: $MAKEVER" >&5
 $as_echo "$MAKEVER" >&6; }
@@ -8766,10 +8765,13 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     CFLAGS="$CFLAGS -m64"
     FFLAGS="$FFLAGS -m64"
   fi
-elif test "$MAKEVER" = "generic"; then
+elif test "$MAKEVER" = "without-cpu-component"; then
   FILENAME=Makefile.inc
   SUBSTR=any-null
-  DESCR="Sample substrate: Any hardware platform with GNU compilers"
+  MEMSUBSTR=any-null
+  MISCHDRS=papi_lock.h
+  CFLAGS="$CFLAGS -DNO_CPU_COMPONENT"
+  DESCR="Generic build without a CPU component"
 fi
 
 

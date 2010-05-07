@@ -19,6 +19,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#include <string.h>
 
 /* high level papi functions*/
 

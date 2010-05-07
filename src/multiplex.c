@@ -1,7 +1,3 @@
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
-
 /** 
  * @file    multiplex.c
  * CVS:     $Id$
@@ -145,6 +141,12 @@ static unsigned int randomseed;
 /* Timer stuff */
 
 #ifndef _WIN32
+#include <sys/time.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h> 
+#include <assert.h>
+
 static sigset_t sigreset;
 static struct itimerval itime;
 static const struct itimerval itimestop = { {0, 0}, {0, 0} };

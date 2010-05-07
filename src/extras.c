@@ -435,6 +435,9 @@ _papi_hwi_stop_timer( void )
 }
 
 #else
+#include <sys/time.h>
+#include <errno.h>
+#include <string.h>
 
 int _papi_hwi_using_signal[PAPI_NSIG];
 

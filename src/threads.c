@@ -16,6 +16,8 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#include <string.h>
+#include <unistd.h>
 
 /*****************/
 /* BEGIN GLOBALS */

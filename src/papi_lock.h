@@ -1,22 +1,35 @@
+/**
+* @file:   papi_lock.h
+* CVS:     $Id$
+* @author  Philip Mucci
+*          mucci@cs.utk.edu
+*/
 
-extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#ifndef PAPI_LOCK_H
+#define PAPI_LOCK_H
 
-inline void
-_papi_hwd_lock_init( void )
-{
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-		_papi_hwd_lock_data[i] = MUTEX_OPEN;
-}
-
-inline void
-_papi_hwd_lock_fini( void )
-{
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-		_papi_hwd_lock_data[i] = MUTEX_OPEN;
-}
+#include "papi_defines.h"
 
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
+
+volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+
+inline_static void 
+_papi_hwd_lock_init( void )
+{
+	int i;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+}
+
+inline_static void
+_papi_hwd_lock_fini( void )
+{
+	int i;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+}
 
 #ifdef __ia64__
 
@@ -112,3 +125,4 @@ __raw_spin_unlock( volatile unsigned int *lock )
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
 
+#endif

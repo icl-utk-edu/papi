@@ -11,6 +11,7 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 #include "papi_preset.h"
+#include <string.h>
 
 /* Defined in papi_data.c */
 extern hwi_presets_t _papi_hwi_presets;
