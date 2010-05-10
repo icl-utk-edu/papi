@@ -1399,7 +1399,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		{ .uname = "ANY_P",
 		  .udesc = "Instructions retired (precise event)",
 		  .ucode = 0x0,
-		  .uflags = INTEL_X86_PEBS|INTEL_X86_DFL|INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_PEBS|INTEL_X86_DFL|INTEL_X86_NCOMBO|INTEL_X86_DFL,
 		},
 		{ .uname = "LOADS",
 		  .udesc = "Instructions retired, which contain a load",
