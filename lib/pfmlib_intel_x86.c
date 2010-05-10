@@ -39,7 +39,7 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("e", "edge level"),				/* edge */
 	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
 	PFM_ATTR_B("t", "measure any thread"),			/* monitor on both threads */
-	PFM_ATTR_B("p", "enable PEBS"),				/* enable PEBS */
+	PFM_ATTR_I("p", "enable PEBS [0-3]"),			/* enable PEBS */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -308,7 +308,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 						return PFM_ERR_ATTR;
 					}
 					if (attrs)
-						attrs->precise = 1;
+						attrs->precise_ip = a->ival;
 					break;
 			}
 		}

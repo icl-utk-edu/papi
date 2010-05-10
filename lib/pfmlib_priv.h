@@ -68,7 +68,7 @@ typedef struct {
  */
 typedef struct {
 	int plm;	/* privilege level mask */
-	int precise;	/* enable precise sampling */
+	int precise_ip;	/* enable precise_ip sampling */
 	/* more to be added in the future */
 } pfmlib_perf_attr_t;
 

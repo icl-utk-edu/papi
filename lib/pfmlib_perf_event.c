@@ -89,7 +89,14 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 		hw->exclude_kernel = !(dfl_plm & PFM_PLM0);
 		hw->exclude_hv = !(dfl_plm & PFM_PLMH);
 	}
-	hw->precise = perf_attrs.precise;
+	/*
+	 * perf_event precise_ip must be in [0-3]
+	 * see perf_event.h
+	 */
+	if (perf_attrs.precise_ip < 0 || perf_attrs.precise_ip > 3)
+		return PFM_ERR_ATTR_SET;
+
+	hw->precise_ip = perf_attrs.precise_ip;
 
 	__pfm_vbprintf("PERF[type=%x val=0x%"PRIx64" e_u=%d e_k=%d e_hv=%d precise=%d] %s\n",
 			hw->type,
@@ -97,7 +104,7 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 			hw->exclude_user,
 			hw->exclude_kernel,
 			hw->exclude_hv,
-			hw->precise,
+			hw->precise_ip,
 			e.fstr);
 
 	free(codes);

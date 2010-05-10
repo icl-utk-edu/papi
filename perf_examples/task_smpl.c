@@ -164,11 +164,11 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 			errx(1, "cannot read IP");
 
 		/*
-		 * MISC_EXACT indicates that kernel is returning
+		 * MISC_EXACT_IP indicates that kernel is returning
 		 * th  IIP of an instruction which caused the event, i.e.,
 		 * no skid
 		 */
-		if (hw->hw.precise && (ehdr->misc & PERF_RECORD_MISC_EXACT))
+		if (hw->hw.precise_ip && (ehdr->misc & PERF_RECORD_MISC_EXACT_IP))
 			xtra = " (exact) ";
 
 		printf("IIP:0x%016"PRIx64"%s", val64, xtra);
@@ -527,8 +527,6 @@ mainloop(char **arg)
 
 		if (!i) {
 			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID;
-			if (fds[i].hw.precise)
-				fds[i].hw.sample_type |= PERF_SAMPLE_RAW;
 
 			if (options.opt_freq)
 				fds[i].hw.freq = 1;
@@ -544,7 +542,7 @@ mainloop(char **arg)
 
 		fds[i].fd = perf_event_open(&fds[i].hw, pid, -1, fds[0].fd, 0);
 		if (fds[i].fd == -1) {
-			if (fds[i].hw.precise)
+			if (fds[i].hw.precise_ip)
 				err(1, "cannot attach event %s: precise mode may not be supported", fds[i].name);
 			err(1, "cannot attach event %s", fds[i].name);
 		}
