@@ -119,5 +119,5 @@ perf_is_group_leader(perf_event_desc_t *fds, int idx)
 }
 
 extern int perf_get_group_nevents(perf_event_desc_t *fds, int num, int leader);
-
+extern int perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_event_header *ehdr, FILE *fp);
 #endif

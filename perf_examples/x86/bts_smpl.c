@@ -90,7 +90,7 @@ child(char **arg)
 
 struct timeval last_read, this_read;
 
-static void
+void
 display_sample(perf_event_desc_t *hw, uint32_t sz)
 {
 	struct { uint32_t pid, tid; } pid;
@@ -207,7 +207,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 			return; /* nothing to read */
 		switch(ehdr.type) {
 			case PERF_RECORD_SAMPLE:
-				display_sample(hw, ehdr.size - sizeof(ehdr));
+				perf_display_sample(fds, num_fds, hw - fds, &ehdr, stdout);
 				break;
 			case PERF_RECORD_EXIT:
 				display_exit(hw);

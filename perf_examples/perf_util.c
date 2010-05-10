@@ -227,3 +227,336 @@ perf_skip_buffer(struct perf_event_mmap_page *hdr, size_t sz)
 
 	hdr->data_tail += sz;
 }
+
+static size_t
+__perf_handle_raw(perf_event_desc_t *hw)
+{
+	size_t sz = 0;
+	uint32_t raw_sz, i;
+	char *buf;
+	int ret;
+
+	ret = perf_read_buffer_32(hw->buf, hw->pgmsk, &raw_sz);
+	if (ret) {
+		warnx("cannot read raw size");
+		return -1;
+	}
+
+	sz += sizeof(raw_sz);
+
+	printf("\n\tRAWSZ:%u\n", raw_sz);
+
+	buf = malloc(raw_sz);
+	if (!buf) {
+		warn("cannot allocate raw buffer");
+		return -1;
+	}
+
+
+	ret = perf_read_buffer(hw->buf, hw->pgmsk, buf, raw_sz);
+	if (ret) {
+		warnx("cannot read raw data");
+		free(buf);
+		return -1;
+	}
+
+	if (raw_sz)
+		putchar('\t');
+
+	for(i=0; i < raw_sz; i++) {
+		printf("0x%02x ", buf[i] & 0xff );
+		if (((i+1) % 16)  == 0)
+			printf("\n\t");
+	}
+	if (raw_sz)
+		putchar('\n');
+
+	free(buf);
+
+	return sz + raw_sz;
+}
+
+
+int
+perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_event_header *ehdr, FILE *fp)
+{
+	perf_event_desc_t *hw;
+	struct { uint32_t pid, tid; } pid;
+	struct { uint64_t value, id; } grp;
+	uint64_t time_enabled, time_running;
+	size_t sz;
+	uint64_t type, fmt;
+	uint64_t val64;
+	const char *str;
+	int ret, e;
+
+	if (!(fds || fp || ehdr || num_fds < 0 || idx < 0 ||  idx >= num_fds))
+		return -1;
+
+	sz = ehdr->size - sizeof(*ehdr);
+
+	hw = fds+idx;
+
+	type = hw->hw.sample_type;
+	fmt  = hw->hw.read_format;
+
+	/*
+	 * the sample_type information is laid down
+	 * based on the PERF_RECORD_SAMPLE format specified
+	 * in the perf_event.h header file.
+	 * That order is different from the enum perf_event_sample_format
+	 */
+	if (type & PERF_SAMPLE_IP) {
+		char *xtra = " ";
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret) {
+			warnx("cannot read IP");
+			return -1;
+		}
+
+		/*
+		 * MISC_EXACT_IP indicates that kernel is returning
+		 * th  IIP of an instruction which caused the event, i.e.,
+		 * no skid
+		 */
+		if (hw->hw.precise_ip && (ehdr->misc & PERF_RECORD_MISC_EXACT_IP))
+			xtra = " (exact) ";
+
+		fprintf(fp, "IIP:0x%016"PRIx64"%s", val64, xtra);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_TID) {
+		ret = perf_read_buffer(hw->buf, hw->pgmsk, &pid, sizeof(pid));
+		if (ret) {
+			warnx( "cannot read PID");
+			return -1;
+		}
+
+		fprintf(fp, "PID:%d TID:%d ", pid.pid, pid.tid);
+		sz -= sizeof(pid);
+	}
+
+	if (type & PERF_SAMPLE_TIME) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret) {
+			warnx( "cannot read time");
+			return -1;
+		}
+
+		fprintf(fp, "TIME:%'"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_ADDR) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret) {
+			warnx( "cannot read addr");
+			return -1;
+		}
+
+		fprintf(fp, "ADDR:%"PRIx64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_ID) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret) {
+			warnx( "cannot read id");
+			return -1;
+		}
+
+		fprintf(fp, "ID:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_STREAM_ID) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret) {
+			warnx( "cannot read stream_id");
+			return -1;
+		}
+		fprintf(fp, "STREAM_ID:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_CPU) {
+		struct { uint32_t cpu, res; } cpu;
+		ret = perf_read_buffer(hw->buf, hw->pgmsk, &cpu, sizeof(cpu));
+		if (ret) {
+			warnx( "cannot read cpu");
+			return -1;
+		}
+		fprintf(fp, "CPU:%u CPU_RES:%u ", cpu.cpu, cpu.res);
+		sz -= sizeof(cpu);
+	}
+
+	if (type & PERF_SAMPLE_PERIOD) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret) {
+			warnx( "cannot read period");
+			return -1;
+		}
+		fprintf(fp, "PERIOD:%'"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	/* struct read_format {
+	 * 	{ u64		value;
+	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
+	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
+	 * 	  { u64		id;           } && PERF_FORMAT_ID
+	 * 	} && !PERF_FORMAT_GROUP
+	 *
+	 * 	{ u64		nr;
+	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
+	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
+	 * 	  { u64		value;
+	 * 	    { u64	id;           } && PERF_FORMAT_ID
+	 * 	  }		cntr[nr];
+	 * 	} && PERF_FORMAT_GROUP
+	 * };
+	 */
+	if (type & PERF_SAMPLE_READ) {
+		uint64_t nr;
+
+		if (fmt & PERF_FORMAT_GROUP) {
+			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
+			if (ret) {
+				warnx( "cannot read nr");
+				return -1;
+			}
+
+			sz -= sizeof(nr);
+
+			time_enabled = time_running = 1;
+
+			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
+				if (ret) {
+					warnx( "cannot read timing info");
+					return -1;
+				}
+				sz -= sizeof(time_enabled);
+			}
+
+			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
+				if (ret) {
+					warnx( "cannot read timing info");
+					return -1;
+				}
+				sz -= sizeof(time_running);
+			}
+
+			fprintf(fp, "ENA=%'"PRIu64" RUN=%'"PRIu64" NR=%"PRIu64"\n", time_enabled, time_running, nr);
+
+			while(nr--) {
+				ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
+				if (ret) {
+					warnx( "cannot read grp");
+					return -1;
+				}
+
+				sz -= sizeof(grp);
+
+				e = perf_id2event(fds, num_fds, grp.id);
+				if (e == -1)
+					str = "unknown sample event";
+				else
+					str = fds[e].name;
+
+				if (time_running)
+					grp.value = grp.value * time_enabled / time_running;
+
+				fprintf(fp, "\t%'"PRIu64" %s (%"PRIu64"%s)\n",
+					grp.value, str,
+					grp.id,
+					time_running != time_enabled ? ", scaled":"");
+
+			}
+		} else {
+			uint64_t val;
+			/*
+			 * this program does not use FORMAT_GROUP when there is only one event
+			 */
+			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val);
+			if (ret) {
+				warnx( "cannot read value");
+				return -1;
+			}
+
+			sz -= sizeof(val);
+
+			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
+				if (ret) {
+					warnx( "cannot read timing info");
+					return -1;
+				}
+				sz -= sizeof(time_enabled);
+			}
+
+			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
+				if (ret) {
+					warnx( "cannot read timing info");
+					return -1;
+				}
+				sz -= sizeof(time_running);
+			}
+
+			fprintf(fp, "ENA=%'"PRIu64" RUN=%'"PRIu64"\n", time_enabled, time_running);
+			if (time_running)
+				val = val * time_enabled / time_running;
+
+				fprintf(fp, "\t%'"PRIu64" %s %s\n",
+					val, fds[0].name,
+					time_running != time_enabled ? ", scaled":"");
+		}
+	}
+
+	if (type & PERF_SAMPLE_CALLCHAIN) {
+		uint64_t nr, ip;
+
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
+		if (ret) {
+			warnx( "cannot read callchain nr");
+			return -1;
+		}
+		sz -= sizeof(nr);
+
+		while(nr--) {
+			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &ip);
+			if (ret) {
+				warnx( "cannot read ip");
+				return -1;
+			}
+
+			sz -= sizeof(ip);
+
+			fprintf(fp, "\t0x%"PRIx64"\n", ip);
+		}
+	}
+
+	if (type & PERF_SAMPLE_RAW) {
+		ret = __perf_handle_raw(hw);
+		if (ret == -1)
+			return -1;
+		sz -= ret;
+	}
+
+	/*
+	 * if we have some data left, it is because there is more
+	 * than what we know about. In fact, it is more complicated
+	 * because we may have the right size but wrong layout. But
+	 * that's the best we can do.
+	 */
+	if (sz) {
+		warnx("did not correctly parse sample leftover=%zu", sz);
+		perf_skip_buffer(hw->buf, sz);
+	}
+
+	putchar('\n');
+	return 0;
+}
