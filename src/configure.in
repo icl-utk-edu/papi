@@ -800,26 +800,38 @@ fi
 ##################################################
 #          perfmon
 ##################################################
-#CONFIG_PFMLIB_OLD_PFMV2 is used in Rules.pfm
-old_pfmv2="n"
+old_pfmv2=n
 
 AC_ARG_WITH(perfmon,
-            [  --with-perfmon		Specify perfmon as the performance interface ],
-            [user_specified_interface=yes],
+            [  --with-perfmon=<x.y>		Specify perfmon as the performance interface and specify version],
+            [perfmon=$withval 
+             user_specified_interface=yes
+             perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
+             perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
+             if test "x$perfmon" = "x"; then
+               AC_MSG_ERROR("Badly formed perfmon version string")
+             fi
+             perfmon=`echo ${perfmon} | sed 's/\.//'`
+             if test $perfmon -lt 25; then
+               old_pfmv2=y
+               CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
+             fi],
             [perfmon=no
 	         if test "$cross_compiling" = "no" ; then
                AC_MSG_CHECKING(for perfmon version)
 	           AC_CHECK_FILE(/sys/kernel/perfmon/version,
                              [perfmon=`cat /sys/kernel/perfmon/version`],
                              [AC_CHECK_FILE(/proc/perfmon,
-                                            [perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`]) ])
-               if test "$perfmon" != no; then
+                                            [perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`],
+                                            [perfmon=no])])
+               if test "$perfmon" != "no"; then
                  perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
                  perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
                  AC_MSG_RESULT($perfmon)
                  perfmon=`echo ${perfmon} | sed 's/\.//'`
                  if test $perfmon -lt 25; then
                    old_pfmv2="y"
+                   CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
                  fi
                fi
 	         fi])
@@ -1199,9 +1211,6 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-ita
   TARGETS="$TARGETS range"
   CFLAGS="$CFLAGS -DITANIUM$CPU"
   FFLAGS="$FFLAGS -DITANIUM$CPU"
-  if test "$old_pfmv2" = "y"; then
-    CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
-  fi
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
 elif test "$MAKEVER" = "solaris-ultra"; then
   FILENAME=Makefile.inc
