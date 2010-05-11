@@ -5778,7 +5778,7 @@ fi
 fi
 
 fi
-if test $didcheck != 1; then
+if test "$didcheck" != "1"; then
   { $as_echo "$as_me:$LINENO: checking for ffsll" >&5
 $as_echo_n "checking for ffsll... " >&6; }
   if test "$ffsll" = "yes" ; then
@@ -8604,7 +8604,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
   fi
   FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
   OPTFLAGS='-O3 -qstrict $(PMINIT)'
-  FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
   SMPCFLGS=-qsmp
   OMPCFLGS='-qsmp=omp'
   LDFLAGS='-L$(PMAPI)/lib -lpmapi'
@@ -8665,6 +8664,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
   fi
   F77=gfortran
   CFLAGS="$CFLAGS -D__crayxt"
+  FFLAGS=""
 elif test "$MAKEVER" = "freebsd"; then
   if test "x$no_cpu_component" = "x"; then
     SUBSTR=freebsd

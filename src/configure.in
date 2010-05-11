@@ -311,7 +311,7 @@ if test "x$ffsll" = "x"; then
                didcheck=1
                AC_CHECK_FUNC(ffsll,[ffsll=yes],[ffsll=no]) ])
 fi
-if test $didcheck != 1; then
+if test "$didcheck" != "1"; then
   AC_MSG_CHECKING(for ffsll)
   if test "$ffsll" = "yes" ; then
     AC_DEFINE(HAVE_FFSLL, 1, This platform has the ffsll() function)
@@ -1099,7 +1099,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
   fi
   FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
   OPTFLAGS='-O3 -qstrict $(PMINIT)'
-  FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
   SMPCFLGS=-qsmp
   OMPCFLGS='-qsmp=omp'
   LDFLAGS='-L$(PMAPI)/lib -lpmapi'
@@ -1160,6 +1159,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
   fi 
   F77=gfortran
   CFLAGS="$CFLAGS -D__crayxt"
+  FFLAGS=""
 elif test "$MAKEVER" = "freebsd"; then
   if test "x$no_cpu_component" = "x"; then 
     SUBSTR=freebsd
