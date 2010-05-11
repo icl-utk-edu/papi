@@ -1239,6 +1239,8 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     SUBSTR=solaris-ultra
     MEMSUBSTR=solaris
     TARGETS="serial multiplex_and_pthreads shared"
+  else
+    TARGETS=""
   fi
   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
   if test "$CC" = "gcc"; then
@@ -1251,7 +1253,9 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     FFLAGS=$CFLAGS
   else 
     # Sun Workshop compilers: V5.0 and V6.0 R2
-    TARGETS="$TARGETS smp omp"
+    if test "x$no_cpu_component" = "x"; then
+      TARGETS="$TARGETS smp omp"
+    fi
     CPP="$CC -E"
     CC_R="$CC -mt"
     CC_SHR="$CC -ztext -G -Kpic" 
@@ -1286,6 +1290,7 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__ -DCOMP_VECTOR=_niagara2_vector"
     ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vector"
   else
+    TARGETS=""
     CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__"
   fi
   DESCR="Solaris 10 with libcpc2 and UltraSPARC T2 (Niagara 2)"

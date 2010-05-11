@@ -106,21 +106,13 @@ do {                                                    \
 } while(0)
 
 #elif defined(__sparc__)
-static inline void
-__raw_spin_lock( volatile unsigned int *lock )
-{
-	__asm__ __volatile__( "\n1:\n\t" "ldstub	[%0], %%g2\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2f\n\t" " ldub	[%0], %%g2\n\t" ".subsection	2\n" "2:\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2b\n\t" " ldub	[%0], %%g2\n\t" "b,a	1b\n\t" ".previous\n":	/* no outputs */
-						  :"r"( lock )
-						  :"g2", "memory", "cc" );
-}
-static inline void
-__raw_spin_unlock( volatile unsigned int *lock )
-{
-	__asm__ __volatile__( "stb %%g0, [%0]"::"r"( lock ):"memory" );
-}
-
-#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
-#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
+#include <synch.h>
+extern void cpu_sync( void );
+extern unsigned long long get_tick( void );
+extern caddr_t _start, _end, _etext, _edata;
+rwlock_t lock[PAPI_MAX_LOCK];
+#define _papi_hwd_lock(lck) rw_wrlock(&lock[lck]);
+#define _papi_hwd_unlock(lck) rw_unlock(&lock[lck]);
 #else
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
