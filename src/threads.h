@@ -11,6 +11,8 @@
 #endif
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #ifdef HAVE_THREAD_LOCAL_STORAGE
 #define THREAD_LOCAL_STORAGE_KEYWORD HAVE_THREAD_LOCAL_STORAGE

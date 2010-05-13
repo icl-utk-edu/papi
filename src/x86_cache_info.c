@@ -14,6 +14,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include <string.h>
+#include <stdio.h>
 
 static void init_mem_hierarchy( PAPI_mh_info_t * mh_info );
 static int init_amd( PAPI_mh_info_t * mh_info );
