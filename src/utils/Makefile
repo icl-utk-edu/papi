@@ -1,3 +1,5 @@
+# File: utils/Makefile
+# CVS:  $Id$
 INCLUDE = -I../ctests -I. 
 LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
@@ -5,11 +7,11 @@ CC	= gcc
 CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
 
-TARGETS = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
-	papi_event_chooser papi_decode papi_xml_event_info papi_version
+ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
+	  papi_event_chooser papi_decode papi_xml_event_info papi_version
 UTILOBJS= do_loops.o dummy.o test_utils.o
 
-default all utils util: $(TARGETS)
+default all utils: $(UTIL_TARGETS)
 
 papi_event_chooser: event_chooser.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) event_chooser.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
@@ -51,12 +53,9 @@ dummy.o: ../ctests/dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~
+	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
-clobber: clean
-	rm -f $(TARGETS) 
-
-install: $(TARGETS)
+install: $(UTIL_TARGETS)
 	@echo "Utilities (BINDIR) being installed in: \"$(BINDIR)\""; 
 	-mkdir -p $(BINDIR)
 	-chmod go+rx $(BINDIR)

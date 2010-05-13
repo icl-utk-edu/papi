@@ -1,3 +1,5 @@
+# File: ctests/Makefile
+# CVS:  $Id$
 INCLUDE = -I.
 LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
@@ -30,11 +32,11 @@ ACPI	= acpi
 EAR	= earprofile
 RANGE	= data_range
 BROKEN	= inherit pernode
-TESTS	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
+ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH)
 UTILOBJS= do_loops.o test_utils.o dummy.o
 
-default all ctests ctest: serial multiplex_and_pthreads shared 
+default all ctests ctest: $(CTEST_TARGETS)
 
 attach: $(ATTACH)
 
@@ -378,9 +380,9 @@ dummy.o: dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c dummy.c
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(TESTS) unregister_pthreads
+	rm -f *.o *.stderr *.stdout core *~ $(ALL) unregister_pthreads
 
-install: $(TARGETS)
+install: $(CTEST_TARGETS)
 	@echo "C tests (DATADIR) being installed in: \"$(DATADIR)\""; 
 	-mkdir -p $(DATADIR)/ctests
 	-chmod go+rx $(DATADIR)

@@ -1,3 +1,5 @@
+# File: ftests/Makefile
+# CVS:  $Id$
 INCLUDE = -I../ctests -I.
 LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
@@ -6,45 +8,12 @@ F77	= gfortran
 CFLAGS	= -g -O 
 FFLAGS	= -g -O -ffixed-line-length-132
 
-TESTS 	= strtest zero first  second tenth description fdmemtest\
-          accum highlevel cost johnmay2 \
-	  case1 case2 clockres eventname fmatrixlowpapi \
-	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2 avail 
+ALL = strtest zero first  second tenth description fdmemtest accum highlevel cost johnmay2 \
+	  case1 case2 clockres eventname fmatrixlowpapi fmatrixpapi fmatrixpapi2 flops fmultiplex1 \
+      fmultiplex2 avail 
 UTILOBJS = do_loops.o dummy.o ftests_util.o 
- 
-default all ftests ftest: $(TESTS)
 
-attach:
-
-p4:
-
-ear:
-
-forkexec_tests:
-
-range:
-
-mpi:
-
-shared:
-
-multiplex:
-
-omp:
-
-smp: 
-
-pthreads:
-
-shmem:
-
-multiplex_and_pthreads: 
-
-overflow_tests:
-
-profile_tests:
-
-serial:  $(TESTS)
+default all ftests ftest: $(FTEST_TARGETS)
 
 clockres: clockres.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) clockres.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
@@ -122,9 +91,9 @@ dummy.o: ../ctests/dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
+	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
-install: $(TARGETS)
+install: $(FTEST_TARGETS)
 	@echo "Fortran tests (DATADIR) being installed in: \"$(DATADIR)\""; 
 	-mkdir -p $(DATADIR)/ftests
 	-chmod go+rx $(DATADIR)

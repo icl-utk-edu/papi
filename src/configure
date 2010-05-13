@@ -639,6 +639,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+UTIL_TARGETS
+FTEST_TARGETS
 COMPONENT_RULES
 BITFLAGS
 BGP_SYSDIR
@@ -662,7 +664,7 @@ OMPCFLGS
 SMPCFLGS
 CC_SHR
 CC_R
-TARGETS
+CTEST_TARGETS
 DESCR
 MEMSUBSTR
 SUBSTR
@@ -770,9 +772,9 @@ with_tls
 with_virtualtimer
 with_pmapi
 with_papi_events
-enable_static_tests
-enable_shared
-enable_static
+with_static_tools
+with_static_lib
+with_shared_lib
 with_shlib
 with_perfctr
 with_perfctr_root
@@ -1415,14 +1417,6 @@ if test -n "$ac_init_help"; then
    esac
   cat <<\_ACEOF
 
-Optional Features:
-  --disable-option-checking  ignore unrecognized --enable/--with options
-  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
-  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-static-tests   Enable tests built static
-  --disable-shared        Disable the use of shared library
-  --disable-static        Disable the use of static library
-
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
@@ -1432,8 +1426,8 @@ Optional Packages:
   --with-no-cpu-component		Specify a build with no CPU component
   --with-OSVER=<ver>		Specify operating system version
   --with-nativecc=<path>		Specify native C compiler for header generation
- --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
- --with-components=<"component1 component2">		Specify which components to build
+  --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
+  --with-components=<"component1 component2">		Specify which components to build
   --with-debug=<yes,memory>		Yes builds a debug version of the library and memory disables PAPI_NO_MEMORY_MANAGEMENT
   --with-CPU=<cpu>		Specify CPU type
   --with-ffsll		Specify use of the ffsll() function
@@ -1442,6 +1436,9 @@ Optional Packages:
   --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>		Specify per-thread virtual timer
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-papi-events=<file>		Specify events file to use
+  --with-static-tools		Specify static build of tests and utilities
+  --with-static-lib=<yes,no>		Specify whether to build a static library of Papi
+  --with-shared-lib=<yes,no>		Specify whether to build a shared library of Papi
   --with-shlib		Specify dynamic linking of papi library with test cases and utilities
   --with-perfctr		Specify perfctr as the performance interface
   --with-perfctr-root=<path>		Specify path to source tree (for use by developers only)
@@ -1971,7 +1968,7 @@ if test "$OS" = "CLE"; then
   walltimer=cycle
   ffsll=yes
   cross_compiling=yes
-  use_static_tests=yes
+  STATIC="-static"
 elif test "$OS" = "bgp"; then
   if test "x$CC" = "x"; then
      CC=powerpc-bgp-linux-gcc
@@ -6752,38 +6749,38 @@ $as_echo "$as_me: Generating papi_events_table.h" >&6;}
 fi
 
 
-{ $as_echo "$as_me:$LINENO: checking for building tests static" >&5
-$as_echo_n "checking for building tests static... " >&6; }
-# Check whether --enable-static-tests was given.
-if test "${enable_static_tests+set}" = set; then
-  enableval=$enable_static_tests; use_static_tests=$enableval
+
+# Check whether --with-static_tools was given.
+if test "${with_static_tools+set}" = set; then
+  withval=$with_static_tools; STATIC="-static"
 fi
 
-{ $as_echo "$as_me:$LINENO: result: $use_static_tests" >&5
-$as_echo "$use_static_tests" >&6; }
-if test "$use_static_tests" = "yes"; then
-  STATIC="-static"
-fi
 
 { $as_echo "$as_me:$LINENO: checking for which libraries to build" >&5
 $as_echo_n "checking for which libraries to build... " >&6; }
-# Check whether --enable-shared was given.
-if test "${enable_shared+set}" = set; then
-  enableval=$enable_shared; disable_shared=$enableval
+
+# Check whether --with-static_lib was given.
+if test "${with_static_lib+set}" = set; then
+  withval=$with_static_lib; static_lib=$withval
+else
+  static_lib=yes
 fi
 
-# Check whether --enable-static was given.
-if test "${enable_static+set}" = set; then
-  enableval=$enable_static; disable_static=$enableval
+
+# Check whether --with-shared_lib was given.
+if test "${with_shared_lib+set}" = set; then
+  withval=$with_shared_lib; shared_lib=$withval
+else
+  shared_lib=yes
 fi
 
-if test "$disable_shared" != "yes"; then
+if test "$shared_lib" = "yes"; then
   papiLIBS="shared"
 fi
-if test "$disable_static" != "yes"; then
+if test "$static_lib" = "yes"; then
   papiLIBS="$papiLIBS static"
 fi
-if test "$disable_static" = "yes" -a "$disable_shared" = "yes"; then
+if test "$shared_lib" = "no" -a "$static_lib" = "no"; then
   { { $as_echo "$as_me:$LINENO: error: Both shared and static libs are disabled" >&5
 $as_echo "$as_me: error: Both shared and static libs are disabled" >&2;}
    { (exit 1); exit 1; }; }
@@ -8558,7 +8555,9 @@ $as_echo "$MAKEVER" >&6; }
 ##################################################
 FILENAME=Makefile.inc
 SHOW_CONF=showconf
-TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear"
+CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear"
+FTEST_TARGETS="strtest zero first second tenth description fdmemtest accum highlevel cost johnmay2 case1 case2 clockres eventname fmatrixlowpapi fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2 avail"
+UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.$(PAPIVER)'
 OMPCFLGS=-fopenmp
@@ -8679,6 +8678,7 @@ elif test "$MAKEVER" = "linux-pe"; then
   if test "x$no_cpu_component" = "x"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perf_events
+    MEMSUBSTR=perfmon
     MISCSRCS="$MISCSRCS sys_perf_counter_open.c"
   fi
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
@@ -8688,7 +8688,7 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
     MEMSUBSTR=linux
     VERSION=2.6.x
     if test "$CPU" = "p4"; then
-      TARGETS='$(TARGETS) p4'
+      CTEST_TARGETS="$(CTEST_TARGETS) p4"
     fi
   fi
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
@@ -8734,7 +8734,7 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-ita
     else
       CPU=3
     fi
-    TARGETS="$TARGETS range"
+    CTEST_TARGETS="$CTEST_TARGETS range"
     CFLAGS="$CFLAGS -DITANIUM$CPU"
     FFLAGS="$FFLAGS -DITANIUM$CPU"
   fi
@@ -8743,11 +8743,9 @@ elif test "$MAKEVER" = "solaris-ultra"; then
   if test "x$no_cpu_component" = "x"; then
     SUBSTR=solaris-ultra
     MEMSUBSTR=solaris
-    TARGETS="serial multiplex_and_pthreads shared"
-  else
-    TARGETS=""
   fi
   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
+  CTEST_TARGETS="serial multiplex_and_pthreads shared"
   if test "$CC" = "gcc"; then
     F77=g77
     CPP="$CC -E"
@@ -8758,9 +8756,7 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     FFLAGS=$CFLAGS
   else
     # Sun Workshop compilers: V5.0 and V6.0 R2
-    if test "x$no_cpu_component" = "x"; then
-      TARGETS="$TARGETS smp omp"
-    fi
+    CTEST_TARGETS="$CTEST_TARGETS smp omp"
     CPP="$CC -E"
     CC_R="$CC -mt"
     CC_SHR="$CC -ztext -G -Kpic"
@@ -8791,11 +8787,10 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
   if test "x$no_cpu_component" = "x"; then
     SUBSTR=solaris-niagara2
     MEMSUBSTR=solaris-niagara2
-    TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
+    CTEST_TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
     CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__ -DCOMP_VECTOR=_niagara2_vector"
     ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vector"
   else
-    TARGETS=""
     CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__"
   fi
   DESCR="Solaris 10 with libcpc2 and UltraSPARC T2 (Niagara 2)"
@@ -8826,7 +8821,12 @@ if test "$no_cpu_component" = "yes"; then
   MISCHDRS=papi_lock.h
   CFLAGS="$CFLAGS -DNO_CPU_COMPONENT"
   DESCR="$DESCR without a CPU component"
+  CTEST_TARGETS=""
+  FTEST_TARGETS=""
+  UTIL_TARGETS="papi_clockres papi_mem_info papi_version"
 fi
+
+
 
 
 
