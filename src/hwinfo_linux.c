@@ -10,6 +10,10 @@
 #include <ctype.h>
 #include <err.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
 #define _PATH_SYS_SYSTEM "/sys/devices/system"
 #define _PATH_SYS_CPU0	 _PATH_SYS_SYSTEM "/cpu/cpu0"
