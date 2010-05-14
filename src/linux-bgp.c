@@ -638,6 +638,11 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
 					return PAPI_ESBSTR;
 				}
 			}
+                        /* here is if we are event 255 */ 
+			else {
+
+			}
+
 		} else {
 			/*
 			 * The event is already being monitored by the UPC.  This is a normal
@@ -689,6 +694,10 @@ _bgp_update_control_state( hwd_control_state_t * this_state,
 	return PAPI_OK;
 }
 
+
+/* Hack to get cycle count */
+static long_long begin_cycles;
+
 /*
  * PAPI Start
  *
@@ -702,6 +711,7 @@ _bgp_start( hwd_context_t * ctx, hwd_control_state_t * ctrlstate )
 	sigemptyset( &mask_set );
 	sigaddset( &mask_set, SIGXCPU );
 	sigprocmask( SIG_BLOCK, &mask_set, &old_set );
+        begin_cycles=_bgp_GetTimeBase();
 	BGP_UPC_Start( BGP_UPC_NO_RESET_COUNTERS );
 	sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
 	return ( PAPI_OK );
@@ -751,6 +761,8 @@ _bgp_read( hwd_context_t * ctx, hwd_control_state_t * this_state,
 		return PAPI_ESBSTR;
 	}
 	sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
+        /* hack to emulate BGP_MISC_ELAPSED_TIME counter */
+        this_state->counters[255]=_bgp_GetTimeBase()-begin_cycles;
 	*dp = ( long_long * ) & this_state->counters[0];
 
 //  printf("_bgp_read:  dp = %p\n", dp);
