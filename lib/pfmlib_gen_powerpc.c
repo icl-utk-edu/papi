@@ -122,6 +122,7 @@ pfm_gen_powerpc_pmu_detect(void* this)
 		gen_powerpc_support.pmu = PFM_PMU_POWER6;
 		gen_powerpc_support.name = "POWER6";
 		gen_powerpc_support.desc = "IBM Power6";
+		gen_powerpc_support.pme_count = POWER6_PME_EVENT_COUNT;
 		this_pe(this) = power6_pe;
 		return PFM_SUCCESS;
 	}
