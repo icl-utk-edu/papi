@@ -8513,7 +8513,7 @@ $as_echo "$as_me: error: pmc_npmc info returned 0. Determine if the HWPMC module
   linux)
     if test "$perf_events" = "yes" ; then
       MAKEVER="$OS"-pe
-    elif test "$perfmon" != "no" ; then
+    elif test $perfmon -gt 20 ; then
       MAKEVER="$OS"-perfmon2
     else
       case "$CPU" in
@@ -8524,7 +8524,7 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
           fi
 	      if test "$CPU" = "montecito"; then
-		    MAKEVER="$OS"-pfm-itanium3
+		    MAKEVER="$OS"-pfm-montecito
 		  else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		  fi ;;
@@ -8723,7 +8723,7 @@ elif test "$MAKEVER" = "linux-perfmon2"; then
     SUBSTR=perfmon
     MEMSUBSTR=perfmon
   fi
-elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-itanium3"); then
+elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-montecito"); then
   if test "x$no_cpu_component" = "x"; then
     FILENAME=Rules.pfm
     SUBSTR=linux-ia64

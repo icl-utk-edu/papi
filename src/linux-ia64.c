@@ -1118,13 +1118,8 @@ _ia64_init_substrate( int cidx )
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[PAPI_MAX_LOCK] = MUTEX_OPEN;
 
-	/* Setup the vector entries that the OS knows about */
-	retval = _papi_hwi_setup_vector_table( vtable, _linux_ia64_table );
-	if ( retval != PAPI_OK )
-		return ( retval );
-	*/
-		/* Opened once for all threads. */
-		if ( pfm_initialize(  ) != PFMLIB_SUCCESS )
+	/* Opened once for all threads. */
+	if ( pfm_initialize(  ) != PFMLIB_SUCCESS )
 		return ( PAPI_ESYS );
 
 	if ( pfm_get_version( &version ) != PFMLIB_SUCCESS )
