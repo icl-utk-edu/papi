@@ -50,13 +50,13 @@ extern int perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void
 extern void perf_skip_buffer(struct perf_event_mmap_page *hdr, size_t sz);
 
 static inline int
-perf_read_buffer_32(void *hdr, size_t pgmsk, void *buf)
+perf_read_buffer_32(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf)
 {
 	return perf_read_buffer(hdr, pgmsk, buf, sizeof(uint32_t));
 }
 
 static inline int
-perf_read_buffer_64(void *hdr, size_t pgmsk, void *buf)
+perf_read_buffer_64(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf)
 {
 	return perf_read_buffer(hdr, pgmsk, buf, sizeof(uint64_t));
 }
