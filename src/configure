@@ -8549,13 +8549,13 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
     fi
     MAKEVER="$OS"-"$CPU" ;;
 esac
+{ $as_echo "$as_me:$LINENO: result: $MAKEVER" >&5
+$as_echo "$MAKEVER" >&6; }
 if test "x$MAKEVER" = "x"; then
   { $as_echo "$as_me:$LINENO: This platform is not supported so a generic build without a CPU component will be used" >&5
 $as_echo "$as_me: This platform is not supported so a generic build without a CPU component will be used" >&6;}
   MAKEVER="generic_platform"
 fi
-{ $as_echo "$as_me:$LINENO: result: $MAKEVER" >&5
-$as_echo "$MAKEVER" >&6; }
 
 ##################################################
 #          Set build macros
@@ -8698,7 +8698,7 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
       CTEST_TARGETS="$(CTEST_TARGETS) p4"
     fi
   fi
-elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
+elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
   if test "x$no_cpu_component" = "x"; then
     FILENAME=Rules.perfctr
     SUBSTR=perfctr-ppc64
@@ -8713,15 +8713,19 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
       CPU_MODEL=POWER5p
       ARCH_EVENTS=power5+_events
       ARCH_SPEC_EVTS=power5+_events_map.c
+    elif test "$MAKEVER" = "linux-perfctr-POWER6"; then
+      CPU_MODEL=POWER6
+      ARCH_EVENTS=power6_events
+      ARCH_SPEC_EVTS=power6_events_map.c
     elif test "$MAKEVER" = "linux-perfctr-PPC970"; then
       CPU_MODEL=PPC970
       ARCH_EVENTS=ppc970_events
       ARCH_SPEC_EVTS=ppc970_events_map.c
     fi
-    CFLAGS='$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors'
+    CFLAGS="$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors"
     FFLAGS='-D_$(CPU_MODEL)'
   else
-    CFLAGS='$CFLAGS -DPPC64'
+    CFLAGS="$CFLAGS -DPPC64"
     FFLAGS=""
   fi
 elif test "$MAKEVER" = "linux-perfmon2"; then
