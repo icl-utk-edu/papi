@@ -5306,16 +5306,15 @@ else
                    family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
                    model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
                    if test "$family" = "6"; then
-                     if test "$model" = "14"; then
+                     if (test "$model" = "7" || test "$model" = "8" || test "$model" = "10" || test "$model" = "11"); then
+                       CPU=p3
+                     elif test "$model" = "14"; then
                        CPU=core
-                     fi
-                     if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
+                     elif (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
                        CPU=core2
-                     fi
-                     if (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || test "$model" = "44" || test "$model" = "46"); then
+                     elif (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || test "$model" = "44" || test "$model" = "46"); then
                        CPU=i7
-                     fi
-                     if test "$model" = "28"; then
+                     elif test "$model" = "28"; then
                        CPU=atom
                      fi
                      if test "x$no_cpu_component" = "x"; then
@@ -6823,6 +6822,7 @@ fi
 { $as_echo "$as_me:$LINENO: result: $shlib" >&5
 $as_echo "$shlib" >&6; }
 
+if test "x$no_cpu_component" = "x"; then
 ##################################################
 #          perfctr
 ##################################################
@@ -7259,12 +7259,15 @@ $as_echo "$as_me: error: \"Badly formed perfmon version string\"" >&2;}
    { (exit 1); exit 1; }; }
              fi
              perfmon=`echo ${perfmon} | sed 's/\.//'`
+             if test $perfmon -gt 20; then
+               perfmon2=yes
+             fi
              if test $perfmon -lt 25; then
                old_pfmv2=y
                CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
              fi
 else
-  perfmon=no
+  perfmon=0
 	         if test "$cross_compiling" = "no" ; then
                { $as_echo "$as_me:$LINENO: checking for perfmon version" >&5
 $as_echo_n "checking for perfmon version... " >&6; }
@@ -7308,17 +7311,20 @@ $as_echo "$ac_cv_file__proc_perfmon" >&6; }
 if test "x$ac_cv_file__proc_perfmon" = x""yes; then
   perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`
 else
-  perfmon=no
+  perfmon=0
 fi
 
 fi
 
-               if test "$perfmon" != "no"; then
+               if test "$perfmon" != 0; then
                  perfmon=`echo ${perfmon} | sed 's/^ \t*//;s/ \t*$//'`
                  perfmon=`echo ${perfmon} | grep -e '[1-9]\.[0-9][0-9]*'`
                  { $as_echo "$as_me:$LINENO: result: $perfmon" >&5
 $as_echo "$perfmon" >&6; }
                  perfmon=`echo ${perfmon} | sed 's/\.//'`
+                 if test $perfmon -gt 20; then
+                   perfmon2=yes
+                 fi
                  if test $perfmon -lt 25; then
                    old_pfmv2="y"
                    CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
@@ -7510,13 +7516,13 @@ fi
   else
     PEINCFLAG='-DPEINCLUDE=\"$(PEPATH)\"'
     CFLAGS="$CFLAGS $PEINCFLAG"
-    if test "$perf_events" != "no" -a "$perfctr" = "no" -a "$perfmon" = "no"; then
+    if test "$perf_events" != "no" -a "$perfctr" = "no" -a "$perfmon" = 0; then
       perf_events="yes"
     fi
   fi
 fi
 
-if test "$perfmon" != "no" -o "$perf_events" = "yes"; then
+if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
   dotest=0
   if test "x$pfm_root" != "x"; then
     LIBS="-L$pfm_root/lib -lpfm"
@@ -8349,10 +8355,11 @@ _ACEOF
   fi
 fi
 
-if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "no"; then
-  { { $as_echo "$as_me:$LINENO: error: No performance monitoring interface available" >&5
-$as_echo "$as_me: error: No performance monitoring interface available" >&2;}
-   { (exit 1); exit 1; }; }
+if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = 0; then
+  { $as_echo "$as_me:$LINENO: Platform does not have a performance interface; Using generic platform without CPU component" >&5
+$as_echo "$as_me: Platform does not have a performance interface; Using generic platform without CPU component" >&6;}
+  MAKEVER="generic_platform"
+fi
 fi
 
 ##################################################
@@ -8513,7 +8520,7 @@ $as_echo "$as_me: error: pmc_npmc info returned 0. Determine if the HWPMC module
   linux)
     if test "$perf_events" = "yes" ; then
       MAKEVER="$OS"-pe
-    elif test $perfmon -gt 20 ; then
+    elif test "$perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
     else
       case "$CPU" in
@@ -8545,7 +8552,7 @@ esac
 if test "x$MAKEVER" = "x"; then
   { $as_echo "$as_me:$LINENO: This platform is not supported so a generic build without a CPU component will be used" >&5
 $as_echo "$as_me: This platform is not supported so a generic build without a CPU component will be used" >&6;}
-  MAKEVER="unknown_platform"
+  MAKEVER="generic_platform"
 fi
 { $as_echo "$as_me:$LINENO: result: $MAKEVER" >&5
 $as_echo "$MAKEVER" >&6; }
@@ -8811,8 +8818,8 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     CFLAGS="$CFLAGS -m64"
     FFLAGS="$FFLAGS -m64"
   fi
-elif test "$MAKEVER" = "unknown_platform"; then
-  DESCR="Generic build"
+elif test "$MAKEVER" = "generic_platform"; then
+  DESCR="Generic platform"
   no_cpu_component=yes
 fi
 if test "$no_cpu_component" = "yes"; then
@@ -8820,7 +8827,7 @@ if test "$no_cpu_component" = "yes"; then
   MEMSUBSTR=any-null
   MISCHDRS=papi_lock.h
   CFLAGS="$CFLAGS -DNO_CPU_COMPONENT"
-  DESCR="$DESCR without a CPU component"
+  DESCR="$DESCR without CPU component"
   CTEST_TARGETS=""
   FTEST_TARGETS=""
   UTIL_TARGETS="papi_clockres papi_mem_info papi_version"
