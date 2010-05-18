@@ -13,25 +13,51 @@
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
 
+#ifdef _AIX
+atomic_p lock[PAPI_MAX_LOCK];
+#else
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#endif
 
 inline_static void 
 _papi_hwd_lock_init( void )
 {
+#if defined(__bgp__) 
+    /* PAPI on BG/P does not need locks. */ 
+    return;
+#elif defined(_AIX)
+	int i;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		lock[i] = ( int * ) ( lock_var + i );
+#else
 	int i;
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+#endif
 }
 
 inline_static void
 _papi_hwd_lock_fini( void )
 {
+#if defined(_AIX) || defined(__bgp__)
+    return;
+#else
 	int i;
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+#endif
 }
 
-#ifdef __ia64__
+#ifdef _AIX
+
+#define _papi_hwd_lock(lck)   { while(_check_lock(lock[lck],0,1) == TRUE) { ; } }
+#define _papi_hwd_unlock(lck) { _clear_lock(lock[lck], 0); }
+
+#elif defined(__bgp__)
+
+/* PAPI on BG/P does not need locks. */ 
+
+#elif defined(__ia64__)
 
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
