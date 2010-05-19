@@ -23,6 +23,7 @@ int get_number( char *buf );
 int
 _ia64_get_memory_info( PAPI_hw_info_t * mem_info, int cpu_type )
 {
+	( void ) cpu_type;		 /*unused */
 	int retval = 0;
 	FILE *f;
 	int clevel = 0, cindex = -1;

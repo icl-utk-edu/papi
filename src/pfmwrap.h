@@ -108,6 +108,7 @@ pfmw_stop( hwd_context_t * ctx )
 inline int
 pfmw_perfmonctl( pid_t tid, int fd, int cmd, void *arg, int narg )
 {
+	( void ) tid;			 /*unused */
 	return ( perfmonctl( fd, cmd, arg, narg ) );
 }
 
@@ -125,7 +126,8 @@ pfmw_destroy_context( hwd_context_t * thr_ctx )
 inline int
 pfmw_dispatch_events( pfmw_param_t * evt )
 {
-	int ret, i;
+	int ret;
+	unsigned int i;
 /*
       PFMW_PEVT_DFLPLM(evt) = PFM_PLM3;
 */
@@ -260,7 +262,8 @@ pfmw_create_context( hwd_context_t * thr_ctx )
 inline int
 set_pmds_to_write( EventSetInfo_t * ESI, int index, unsigned long value )
 {
-	int *pos, count, hwcntr, i;
+	int *pos, count, i;
+	unsigned int hwcntr;
 	ia64_control_state_t *this_state =
 		( ia64_control_state_t * ) ESI->ctl_state;
 	pfmw_param_t *pevt = &( this_state->evt );
@@ -354,20 +357,21 @@ pfmw_recreate_context( EventSetInfo_t * ESI, hwd_context_t * thr_ctx,
 		if ( pfm_ita_is_dear( native_index ) )
 			set_pmds_to_write( ESI, EventIndex, DEAR_REGS_MASK );
 		else if ( pfm_ita_is_btb( native_index )
-				  || EventCode == PAPI_BR_INS )
+				  || EventCode == ( unsigned int ) PAPI_BR_INS )
 			set_pmds_to_write( ESI, EventIndex, BTB_REGS_MASK );
 		break;
 	case PFMLIB_ITANIUM2_PMU:
 		if ( pfm_ita2_is_dear( native_index ) )
 			set_pmds_to_write( ESI, EventIndex, DEAR_REGS_MASK );
 		else if ( pfm_ita2_is_btb( native_index )
-				  || EventCode == PAPI_BR_INS )
+				  || EventCode == ( unsigned int ) PAPI_BR_INS )
 			set_pmds_to_write( ESI, EventIndex, BTB_REGS_MASK );
 		break;
 	case PFMLIB_MONTECITO_PMU:
 		if ( pfm_mont_is_dear( native_index ) )
 			set_pmds_to_write( ESI, EventIndex, MONT_DEAR_REGS_MASK );
-		else if ( pfm_mont_is_etb( native_index ) || EventCode == PAPI_BR_INS )
+		else if ( pfm_mont_is_etb( native_index ) ||
+				  EventCode == ( unsigned int ) PAPI_BR_INS )
 			set_pmds_to_write( ESI, EventIndex, MONT_ETB_REGS_MASK );
 		break;
 	default:
