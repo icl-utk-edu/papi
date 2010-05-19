@@ -491,12 +491,14 @@ net_init_mdi(  )
 int
 NET_init( hwd_context_t * ctx )
 {
+	( void ) ctx;			 /*unused */
 	return ( PAPI_OK );
 }
 
 int
 NET_shutdown( hwd_context_t * ctx )
 {
+	( void ) ctx;			 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -507,6 +509,7 @@ NET_shutdown( hwd_context_t * ctx )
 int
 NET_init_control_state( hwd_control_state_t * ptr )
 {
+	( void ) ptr;			 /*unused */
 	return PAPI_OK;
 }
 
@@ -514,6 +517,8 @@ int
 NET_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
 						  int count, hwd_context_t * ctx )
 {
+	( void ) ptr;			 /*unused */
+	( void ) ctx;			 /*unused */
 	int i, index;
 
 	for ( i = 0; i < count; i++ ) {
@@ -646,6 +651,8 @@ read_net_counters( long long *counters )
 int
 NET_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
 	read_net_counters( _papi_hwd_net_register_start );
 	memcpy( _papi_hwd_net_register, _papi_hwd_net_register_start,
 			NET_MAX_COUNTERS * sizeof ( long long ) );
@@ -658,6 +665,8 @@ int
 NET_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 		  int flags )
 {
+	( void ) ctx;			 /*unused */
+	( void ) flags;			 /*unused */
 	int i;
 
 	read_net_counters( _papi_hwd_net_register );
@@ -673,6 +682,7 @@ NET_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 int
 NET_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;			 /*unused */
 	int i;
 
 	read_net_counters( _papi_hwd_net_register );
@@ -696,6 +706,9 @@ NET_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 NET_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
+	( void ) from;			 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -710,6 +723,9 @@ NET_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 int
 NET_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
+	( void ) ctx;			 /*unused */
+	( void ) code;			 /*unused */
+	( void ) option;		 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -726,6 +742,7 @@ NET_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 int
 NET_set_domain( hwd_control_state_t * cntrl, int domain )
 {
+	( void ) cntrl;			 /*unused */
 	int found = 0;
 	if ( PAPI_DOM_USER & domain ) {
 		found = 1;
@@ -795,9 +812,13 @@ int
 NET_ntv_bits_to_info( hwd_register_t * bits, char *names, unsigned int *values,
 					  int name_len, int count )
 {
+	( void ) bits;			 /*unused */
+	( void ) names;			 /*unused */
+	( void ) values;		 /*unused */
+	( void ) name_len;		 /*unused */
+	( void ) count;			 /*unused */
 	return ( 1 );
 }
-
 
 int
 NET_ntv_enum_events( unsigned int *EventCode, int modifier )
@@ -838,7 +859,6 @@ papi_vector_t _net_vector = {
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = NET_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
