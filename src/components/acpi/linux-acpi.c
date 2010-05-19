@@ -4,6 +4,7 @@
 #include "linux-acpi.h"
 #include "papi_memory.h"
 
+extern papi_vector_t _acpi_vector;
 int init_presets(  );
 
 enum native_name_acpi
@@ -37,7 +38,7 @@ ACPI_init_substrate(  )
 {
 	int retval = PAPI_OK;
 
-	/* retval = _papi_hwi_setup_vector_table( vtable, &_acpi_vectors); */
+	/* retval = _papi_hwi_setup_vector_table( vtable, &_acpi_vector); */
 
 #ifdef DEBUG
 	/* This prints out which functions are mapped to dummy routines
@@ -45,7 +46,7 @@ ACPI_init_substrate(  )
 	 * The 0 argument will print out only dummy routines, change
 	 * it to a 1 to print out all routines.
 	 */
-	vector_print_table( _acpi_vectors, 0 );
+	vector_print_table( &_acpi_vector, 0 );
 #endif
 	/* Internal function, doesn't necessarily need to be a function */
 	init_presets(  );
@@ -79,6 +80,7 @@ init_presets(  )
 int
 ACPI_init( hwd_context_t * ctx )
 {
+	( void ) ctx;			 /*unused */
 	init_presets(  );
 	return ( PAPI_OK );
 }
@@ -86,6 +88,7 @@ ACPI_init( hwd_context_t * ctx )
 int
 ACPI_shutdown( hwd_context_t * ctx )
 {
+	( void ) ctx;			 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -96,6 +99,7 @@ ACPI_shutdown( hwd_context_t * ctx )
 int
 ACPI_init_control_state( hwd_control_state_t * ptr )
 {
+	( void ) ptr;			 /*unused */
 	return PAPI_OK;
 }
 
@@ -103,6 +107,8 @@ int
 ACPI_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
 						   int count, hwd_context_t * ctx )
 {
+	( void ) ptr;			 /*unused */
+	( void ) ctx;			 /*unused */
 	int i, index;
 
 	for ( i = 0; i < count; i++ ) {
@@ -116,6 +122,8 @@ ACPI_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
 int
 ACPI_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -273,6 +281,8 @@ int
 ACPI_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 		   int flags )
 {
+	( void ) ctx;			 /*unused */
+	( void ) flags;			 /*unused */
 	static int failed = 0;
 
 	if ( failed ||
@@ -293,18 +303,25 @@ ACPI_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 int
 ACPI_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
 	return ( PAPI_OK );
 }
 
 int
 ACPI_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
 	return ( PAPI_OK );
 }
 
 int
 ACPI_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
+	( void ) from;			 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -319,6 +336,9 @@ ACPI_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 int
 ACPI_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
+	( void ) ctx;			 /*unused */
+	( void ) code;			 /*unused */
+	( void ) option;		 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -335,6 +355,7 @@ ACPI_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 int
 ACPI_set_domain( hwd_control_state_t * cntrl, int domain )
 {
+	( void ) cntrl;			 /*unused */
 	int found = 0;
 	if ( PAPI_DOM_USER & domain ) {
 		found = 1;
@@ -429,6 +450,11 @@ int
 ACPI_ntv_bits_to_info( hwd_register_t * bits, char *names, unsigned int *values,
 					   int name_len, int count )
 {
+	( void ) bits;			 /*unused */
+	( void ) names;			 /*unused */
+	( void ) values;		 /*unused */
+	( void ) name_len;		 /*unused */
+	( void ) count;			 /*unused */
 	return ( 1 );
 }
 
@@ -450,7 +476,6 @@ papi_vector_t _acpi_vector = {
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = ACPI_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
