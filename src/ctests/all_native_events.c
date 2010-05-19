@@ -109,6 +109,9 @@ main( int argc, char **argv )
 					unc_count++;
 					continue;
 				}
+				if ( !strncmp( info.symbol, "OFFCORE_RESPONSE_0", 18 ) ) {
+					continue;
+				}
 			}
 			if ( s->cntr_umasks ) {
 				k = i;
