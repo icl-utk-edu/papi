@@ -3,7 +3,10 @@
 # CVS: $Id$
 
 AC_INIT
-AC_PATH_PROG(MXPATH, mx_counters)
+AC_ARG_WITH(mx_counters,
+            [  --with-mx-counters=<path> Specify path to mx counters],
+            [MXPATH=$withval],
+            [AC_PATH_PROG(MXPATH, mx_counters)])
 if test "$MXPATH" = ""; then
   AC_MSG_ERROR([Component requires the path to mx_counters])
 fi

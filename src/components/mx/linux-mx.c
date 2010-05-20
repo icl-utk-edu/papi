@@ -112,403 +112,113 @@ enum native_name_mx
 };
 
 MX_native_event_entry_t mx_native_table[] = {
-	{{1, MXPATH},
-	 "LANAI_UPTIME",
-	 "Lanai uptime (seconds)",
-	 },
-	{{2, MXPATH},
-	 "COUNTERS_UPTIME",
-	 "Counters uptime (seconds)",
-	 },
-	{{3, MXPATH},
-	 "BAD_CRC8",
-	 "Bad CRC8 (Port 0)",
-	 },
-	{{4, MXPATH},
-	 "BAD_CRC32",
-	 "Bad CRC32 (Port 0)",
-	 },
-	{{5, MXPATH},
-	 "UNSTRIPPED_ROUTE",
-	 "Unstripped route (Port 0)",
-	 },
-	{{6, MXPATH},
-	 "PKT_DESC_INVALID",
-	 "pkt_desc_invalid (Port 0)",
-	 },
-	{{7, MXPATH},
-	 "RECV_PKT_ERRORS",
-	 "recv_pkt_errors (Port 0)",
-	 },
-	{{8, MXPATH},
-	 "PKT_MISROUTED",
-	 "pkt_misrouted (Port 0)",
-	 },
-	{{9, MXPATH},
-	 "DATA_SRC_UNKNOWN",
-	 "data_src_unknown",
-	 },
-	{{10, MXPATH},
-	 "DATA_BAD_ENDPT",
-	 "data_bad_endpt",
-	 },
-	{{11, MXPATH},
-	 "DATA_ENDPT_CLOSED",
-	 "data_endpt_closed",
-	 },
-	{{12, MXPATH},
-	 "DATA_BAD_SESSION",
-	 "data_bad_session",
-	 },
-	{{13, MXPATH},
-	 "PUSH_BAD_WINDOW",
-	 "push_bad_window",
-	 },
-	{{14, MXPATH},
-	 "PUSH_DUPLICATE",
-	 "push_duplicate",
-	 },
-	{{15, MXPATH},
-	 "PUSH_OBSOLETE",
-	 "push_obsolete",
-	 },
-	{{16, MXPATH},
-	 "PUSH_RACE_DRIVER",
-	 "push_race_driver",
-	 },
-	{{17, MXPATH},
-	 "PUSH_BAD_SEND_HANDLE_MAGIC",
-	 "push_bad_send_handle_magic",
-	 },
-	{{18, MXPATH},
-	 "PUSH_BAD_SRC_MAGIC",
-	 "push_bad_src_magic",
-	 },
-	{{19, MXPATH},
-	 "PULL_OBSOLETE",
-	 "pull_obsolete",
-	 },
-	{{20, MXPATH},
-	 "PULL_NOTIFY_OBSOLETE",
-	 "pull_notify_obsolete",
-	 },
-	{{21, MXPATH},
-	 "PULL_RACE_DRIVER",
-	 "pull_race_driver",
-	 },
-	{{22, MXPATH},
-	 "ACK_BAD_TYPE",
-	 "ack_bad_type",
-	 },
-	{{23, MXPATH},
-	 "ACK_BAD_MAGIC",
-	 "ack_bad_magic",
-	 },
-	{{24, MXPATH},
-	 "ACK_RESEND_RACE",
-	 "ack_resend_race",
-	 },
-	{{25, MXPATH},
-	 "LATE_ACK",
-	 "Late ack",
-	 },
-	{{26, MXPATH},
-	 "ACK_NACK_FRAMES_IN_PIPE",
-	 "ack_nack_frames_in_pipe",
-	 },
-	{{27, MXPATH},
-	 "NACK_BAD_ENDPT",
-	 "nack_bad_endpt",
-	 },
-	{{28, MXPATH},
-	 "NACK_ENDPT_CLOSED",
-	 "nack_endpt_closed",
-	 },
-	{{29, MXPATH},
-	 "NACK_BAD_SESSION",
-	 "nack_bad_session",
-	 },
-	{{30, MXPATH},
-	 "NACK_BAD_RDMAWIN",
-	 "nack_bad_rdmawin",
-	 },
-	{{31, MXPATH},
-	 "NACK_EVENTQ_FULL",
-	 "nack_eventq_full",
-	 },
-	{{32, MXPATH},
-	 "SEND_BAD_RDMAWIN",
-	 "send_bad_rdmawin",
-	 },
-	{{33, MXPATH},
-	 "CONNECT_TIMEOUT",
-	 "connect_timeout",
-	 },
-	{{34, MXPATH},
-	 "CONNECT_SRC_UNKNOWN",
-	 "connect_src_unknown",
-	 },
-	{{35, MXPATH},
-	 "QUERY_BAD_MAGIC",
-	 "query_bad_magic",
-	 },
-	{{36, MXPATH},
-	 "QUERY_TIMED_OUT",
-	 "query_timed_out",
-	 },
-	{{37, MXPATH},
-	 "QUERY_SRC_UNKNOWN",
-	 "query_src_unknown",
-	 },
-	{{38, MXPATH},
-	 "RAW_SENDS",
-	 "Raw sends (Port 0)",
-	 },
-	{{39, MXPATH},
-	 "RAW_RECEIVES",
-	 "Raw receives (Port 0)",
-	 },
-	{{40, MXPATH},
-	 "RAW_OVERSIZED_PACKETS",
-	 "Raw oversized packets (Port 0)",
-	 },
-	{{41, MXPATH},
-	 "RAW_RECV_OVERRUN",
-	 "raw_recv_overrun",
-	 },
-	{{42, MXPATH},
-	 "RAW_DISABLED",
-	 "raw_disabled",
-	 },
-	{{43, MXPATH},
-	 "CONNECT_SEND",
-	 "connect_send",
-	 },
-	{{44, MXPATH},
-	 "CONNECT_RECV",
-	 "connect_recv",
-	 },
-	{{45, MXPATH},
-	 "ACK_SEND",
-	 "ack_send (Port 0)",
-	 },
-	{{46, MXPATH},
-	 "ACK_RECV",
-	 "ack_recv (Port 0)",
-	 },
-	{{47, MXPATH},
-	 "PUSH_SEND",
-	 "push_send (Port 0)",
-	 },
-	{{48, MXPATH},
-	 "PUSH_RECV",
-	 "push_recv (Port 0)",
-	 },
-	{{49, MXPATH},
-	 "QUERY_SEND",
-	 "query_send (Port 0)",
-	 },
-	{{50, MXPATH},
-	 "QUERY_RECV",
-	 "query_recv (Port 0)",
-	 },
-	{{51, MXPATH},
-	 "REPLY_SEND",
-	 "reply_send (Port 0)",
-	 },
-	{{52, MXPATH},
-	 "REPLY_RECV",
-	 "reply_recv (Port 0)",
-	 },
-	{{53, MXPATH},
-	 "QUERY_UNKNOWN",
-	 "query_unknown (Port 0)",
-	 },
-/*   {{ 54, MXPATH},
-   "QUERY_UNKNOWN",
-   "query_unknown (Port 0)",
-   },*/
-	{{55, MXPATH},
-	 "DATA_SEND_NULL",
-	 "data_send_null (Port 0)",
-	 },
-	{{56, MXPATH},
-	 "DATA_SEND_SMALL",
-	 "data_send_small (Port 0)",
-	 },
-	{{57, MXPATH},
-	 "DATA_SEND_MEDIUM",
-	 "data_send_medium (Port 0)",
-	 },
-	{{58, MXPATH},
-	 "DATA_SEND_RNDV",
-	 "data_send_rndv (Port 0)",
-	 },
-	{{59, MXPATH},
-	 "DATA_SEND_PULL",
-	 "data_send_pull (Port 0)",
-	 },
-	{{60, MXPATH},
-	 "DATA_RECV_NULL",
-	 "data_recv_null (Port 0)",
-	 },
-	{{61, MXPATH},
-	 "DATA_RECV_SMALL_INLINE",
-	 "data_recv_small_inline (Port 0)",
-	 },
-	{{62, MXPATH},
-	 "DATA_RECV_SMALL_COPY",
-	 "data_recv_small_copy (Port 0)",
-	 },
-	{{63, MXPATH},
-	 "DATA_RECV_MEDIUM",
-	 "data_recv_medium (Port 0)",
-	 },
-	{{64, MXPATH},
-	 "DATA_RECV_RNDV",
-	 "data_recv_rndv (Port 0)",
-	 },
-	{{65, MXPATH},
-	 "DATA_RECV_PULL",
-	 "data_recv_pull (Port 0)",
-	 },
-	{{66, MXPATH},
-	 "ETHER_SEND_UNICAST_CNT",
-	 "ether_send_unicast_cnt (Port 0)",
-	 },
-	{{67, MXPATH},
-	 "ETHER_SEND_MULTICAST_CNT",
-	 "ether_send_multicast_cnt (Port 0)",
-	 },
-	{{68, MXPATH},
-	 "ETHER_RECV_SMALL_CNT",
-	 "ether_recv_small_cnt (Port 0)",
-	 },
-	{{69, MXPATH},
-	 "ETHER_RECV_BIG_CNT",
-	 "ether_recv_big_cnt (Port 0)",
-	 },
-	{{70, MXPATH},
-	 "ETHER_OVERRUN",
-	 "ether_overrun",
-	 },
-	{{71, MXPATH},
-	 "ETHER_OVERSIZED",
-	 "ether_oversized",
-	 },
-	{{72, MXPATH},
-	 "DATA_RECV_NO_CREDITS",
-	 "data_recv_no_credits",
-	 },
-	{{73, MXPATH},
-	 "PACKETS_RECENT",
-	 "Packets resent",
-	 },
-	{{74, MXPATH},
-	 "PACKETS_DROPPED",
-	 "Packets dropped (data send side)",
-	 },
-	{{75, MXPATH},
-	 "MAPPER_ROUTES_UPDATE",
-	 "Mapper routes update",
-	 },
-	{{76, MXPATH},
-	 "ROUTE_DISPERSION",
-	 "Route dispersion (Port 0)",
-	 },
-	{{77, MXPATH},
-	 "OUT_OF_SEND_HANDLES",
-	 "out_of_send_handles",
-	 },
-	{{78, MXPATH},
-	 "OUT_OF_PULL_HANDLES",
-	 "out_of_pull_handles",
-	 },
-	{{79, MXPATH},
-	 "OUT_OF_PUSH_HANDLES",
-	 "out_of_push_handles",
-	 },
-	{{80, MXPATH},
-	 "MEDIUM_CONT_RACE",
-	 "medium_cont_race",
-	 },
-	{{81, MXPATH},
-	 "CMD_TYPE_UNKNOWN",
-	 "cmd_type_unknown",
-	 },
-	{{82, MXPATH},
-	 "UREQ_TYPE_UNKNOWN",
-	 "ureq_type_unknown",
-	 },
-	{{83, MXPATH},
-	 "INTERRUPTS_OVERRUN",
-	 "Interrupts overrun",
-	 },
-	{{84, MXPATH},
-	 "WAITING_FOR_INTERRUPT_DMA",
-	 "Waiting for interrupt DMA",
-	 },
-	{{85, MXPATH},
-	 "WAITING_FOR_INTERRUPT_ACK",
-	 "Waiting for interrupt Ack",
-	 },
-	{{86, MXPATH},
-	 "WAITING_FOR_INTERRUPT_TIMER",
-	 "Waiting for interrupt Timer",
-	 },
-	{{87, MXPATH},
-	 "SLABS_RECYCLING",
-	 "Slabs recycling",
-	 },
-	{{88, MXPATH},
-	 "SLABS_PRESSURE",
-	 "Slabs pressure",
-	 },
-	{{89, MXPATH},
-	 "SLABS_STARVATION",
-	 "Slabs starvation",
-	 },
-	{{90, MXPATH},
-	 "OUT_OF_RDMA_HANDLES",
-	 "out_of_rdma handles",
-	 },
-	{{91, MXPATH},
-	 "EVENTQ_FULL",
-	 "eventq_full",
-	 },
-	{{92, MXPATH},
-	 "BUFFER_DROP",
-	 "buffer_drop (Port 0)",
-	 },
-	{{93, MXPATH},
-	 "MEMORY_DROP",
-	 "memory_drop (Port 0)",
-	 },
-	{{94, MXPATH},
-	 "HARDWARE_FLOW_CONTROL",
-	 "Hardware flow control (Port 0)",
-	 },
-	{{95, MXPATH},
-	 "SIMULATED_PACKETS_LOST",
-	 "(Devel) Simulated packets lost (Port 0)",
-	 },
-	{{96, MXPATH},
-	 "LOGGING_FRAMES_DUMPED",
-	 "(Logging) Logging frames dumped",
-	 },
-	{{97, MXPATH},
-	 "WAKE_INTERRUPTS",
-	 "Wake interrupts",
-	 },
-	{{98, MXPATH},
-	 "AVERTED_WAKEUP_RACE",
-	 "Averted wakeup race",
-	 },
-	{{99, MXPATH},
-	 "DMA_METADATA_RACE",
-	 "Dma metadata race",
-	 },
-	{{0, 0}, "", ""}
+	{{1, {MXPATH}}, "LANAI_UPTIME", "Lanai uptime (seconds)"},
+	{{2, {MXPATH}}, "COUNTERS_UPTIME", "Counters uptime (seconds)"},
+	{{3, {MXPATH}}, "BAD_CRC8", "Bad CRC8 (Port 0)"},
+	{{4, {MXPATH}}, "BAD_CRC32", "Bad CRC32 (Port 0)"},
+	{{5, {MXPATH}}, "UNSTRIPPED_ROUTE", "Unstripped route (Port 0)"},
+	{{6, {MXPATH}}, "PKT_DESC_INVALID", "pkt_desc_invalid (Port 0)"},
+	{{7, {MXPATH}}, "RECV_PKT_ERRORS", "recv_pkt_errors (Port 0)"},
+	{{8, {MXPATH}}, "PKT_MISROUTED", "pkt_misrouted (Port 0)"},
+	{{9, {MXPATH}}, "DATA_SRC_UNKNOWN", "data_src_unknown"},
+	{{10, {MXPATH}}, "DATA_BAD_ENDPT", "data_bad_endpt"},
+	{{11, {MXPATH}}, "DATA_ENDPT_CLOSED", "data_endpt_closed"},
+	{{12, {MXPATH}}, "DATA_BAD_SESSION", "data_bad_session"},
+	{{13, {MXPATH}}, "PUSH_BAD_WINDOW", "push_bad_window"},
+	{{14, {MXPATH}}, "PUSH_DUPLICATE", "push_duplicate"},
+	{{15, {MXPATH}}, "PUSH_OBSOLETE", "push_obsolete"},
+	{{16, {MXPATH}}, "PUSH_RACE_DRIVER", "push_race_driver"},
+	{{17, {MXPATH}}, "PUSH_BAD_SEND_HANDLE_MAGIC",
+	 "push_bad_send_handle_magic"},
+	{{18, {MXPATH}}, "PUSH_BAD_SRC_MAGIC", "push_bad_src_magic"},
+	{{19, {MXPATH}}, "PULL_OBSOLETE", "pull_obsolete"},
+	{{20, {MXPATH}}, "PULL_NOTIFY_OBSOLETE", "pull_notify_obsolete"},
+	{{21, {MXPATH}}, "PULL_RACE_DRIVER", "pull_race_driver"},
+	{{22, {MXPATH}}, "ACK_BAD_TYPE", "ack_bad_type"},
+	{{23, {MXPATH}}, "ACK_BAD_MAGIC", "ack_bad_magic"},
+	{{24, {MXPATH}}, "ACK_RESEND_RACE", "ack_resend_race"},
+	{{25, {MXPATH}}, "LATE_ACK", "Late ack"},
+	{{26, {MXPATH}}, "ACK_NACK_FRAMES_IN_PIPE", "ack_nack_frames_in_pipe"},
+	{{27, {MXPATH}}, "NACK_BAD_ENDPT", "nack_bad_endpt"},
+	{{28, {MXPATH}}, "NACK_ENDPT_CLOSED", "nack_endpt_closed"},
+	{{29, {MXPATH}}, "NACK_BAD_SESSION", "nack_bad_session"},
+	{{30, {MXPATH}}, "NACK_BAD_RDMAWIN", "nack_bad_rdmawin"},
+	{{31, {MXPATH}}, "NACK_EVENTQ_FULL", "nack_eventq_full"},
+	{{32, {MXPATH}}, "SEND_BAD_RDMAWIN", "send_bad_rdmawin"},
+	{{33, {MXPATH}}, "CONNECT_TIMEOUT", "connect_timeout"},
+	{{34, {MXPATH}}, "CONNECT_SRC_UNKNOWN", "connect_src_unknown"},
+	{{35, {MXPATH}}, "QUERY_BAD_MAGIC", "query_bad_magic"},
+	{{36, {MXPATH}}, "QUERY_TIMED_OUT", "query_timed_out"},
+	{{37, {MXPATH}}, "QUERY_SRC_UNKNOWN", "query_src_unknown"},
+	{{38, {MXPATH}}, "RAW_SENDS", "Raw sends (Port 0)"},
+	{{39, {MXPATH}}, "RAW_RECEIVES", "Raw receives (Port 0)"},
+	{{40, {MXPATH}}, "RAW_OVERSIZED_PACKETS", "Raw oversized packets (Port 0)"},
+	{{41, {MXPATH}}, "RAW_RECV_OVERRUN", "raw_recv_overrun"},
+	{{42, {MXPATH}}, "RAW_DISABLED", "raw_disabled"},
+	{{43, {MXPATH}}, "CONNECT_SEND", "connect_send"},
+	{{44, {MXPATH}}, "CONNECT_RECV", "connect_recv"},
+	{{45, {MXPATH}}, "ACK_SEND", "ack_send (Port 0)"},
+	{{46, {MXPATH}}, "ACK_RECV", "ack_recv (Port 0)"},
+	{{47, {MXPATH}}, "PUSH_SEND", "push_send (Port 0)"},
+	{{48, {MXPATH}}, "PUSH_RECV", "push_recv (Port 0)"},
+	{{49, {MXPATH}}, "QUERY_SEND", "query_send (Port 0)"},
+	{{50, {MXPATH}}, "QUERY_RECV", "query_recv (Port 0)"},
+	{{51, {MXPATH}}, "REPLY_SEND", "reply_send (Port 0)"},
+	{{52, {MXPATH}}, "REPLY_RECV", "reply_recv (Port 0)"},
+	{{53, {MXPATH}}, "QUERY_UNKNOWN", "query_unknown (Port 0)"},
+/*   {{ 54, {MXPATH}}, "QUERY_UNKNOWN", "query_unknown (Port 0)"},*/
+	{{55, {MXPATH}}, "DATA_SEND_NULL", "data_send_null (Port 0)"},
+	{{56, {MXPATH}}, "DATA_SEND_SMALL", "data_send_small (Port 0)"},
+	{{57, {MXPATH}}, "DATA_SEND_MEDIUM", "data_send_medium (Port 0)"},
+	{{58, {MXPATH}}, "DATA_SEND_RNDV", "data_send_rndv (Port 0)"},
+	{{59, {MXPATH}}, "DATA_SEND_PULL", "data_send_pull (Port 0)"},
+	{{60, {MXPATH}}, "DATA_RECV_NULL", "data_recv_null (Port 0)"},
+	{{61, {MXPATH}}, "DATA_RECV_SMALL_INLINE",
+	 "data_recv_small_inline (Port 0)"},
+	{{62, {MXPATH}}, "DATA_RECV_SMALL_COPY", "data_recv_small_copy (Port 0)"},
+	{{63, {MXPATH}}, "DATA_RECV_MEDIUM", "data_recv_medium (Port 0)"},
+	{{64, {MXPATH}}, "DATA_RECV_RNDV", "data_recv_rndv (Port 0)"},
+	{{65, {MXPATH}}, "DATA_RECV_PULL", "data_recv_pull (Port 0)"},
+	{{66, {MXPATH}}, "ETHER_SEND_UNICAST_CNT",
+	 "ether_send_unicast_cnt (Port 0)"},
+	{{67, {MXPATH}}, "ETHER_SEND_MULTICAST_CNT",
+	 "ether_send_multicast_cnt (Port 0)"},
+	{{68, {MXPATH}}, "ETHER_RECV_SMALL_CNT", "ether_recv_small_cnt (Port 0)"},
+	{{69, {MXPATH}}, "ETHER_RECV_BIG_CNT", "ether_recv_big_cnt (Port 0)"},
+	{{70, {MXPATH}}, "ETHER_OVERRUN", "ether_overrun"},
+	{{71, {MXPATH}}, "ETHER_OVERSIZED", "ether_oversized"},
+	{{72, {MXPATH}}, "DATA_RECV_NO_CREDITS", "data_recv_no_credits"},
+	{{73, {MXPATH}}, "PACKETS_RECENT", "Packets resent"},
+	{{74, {MXPATH}}, "PACKETS_DROPPED", "Packets dropped (data send side)"},
+	{{75, {MXPATH}}, "MAPPER_ROUTES_UPDATE", "Mapper routes update"},
+	{{76, {MXPATH}}, "ROUTE_DISPERSION", "Route dispersion (Port 0)"},
+	{{77, {MXPATH}}, "OUT_OF_SEND_HANDLES", "out_of_send_handles"},
+	{{78, {MXPATH}}, "OUT_OF_PULL_HANDLES", "out_of_pull_handles"},
+	{{79, {MXPATH}}, "OUT_OF_PUSH_HANDLES", "out_of_push_handles"},
+	{{80, {MXPATH}}, "MEDIUM_CONT_RACE", "medium_cont_race"},
+	{{81, {MXPATH}}, "CMD_TYPE_UNKNOWN", "cmd_type_unknown"},
+	{{82, {MXPATH}}, "UREQ_TYPE_UNKNOWN", "ureq_type_unknown"},
+	{{83, {MXPATH}}, "INTERRUPTS_OVERRUN", "Interrupts overrun"},
+	{{84, {MXPATH}}, "WAITING_FOR_INTERRUPT_DMA", "Waiting for interrupt DMA"},
+	{{85, {MXPATH}}, "WAITING_FOR_INTERRUPT_ACK", "Waiting for interrupt Ack"},
+	{{86, {MXPATH}}, "WAITING_FOR_INTERRUPT_TIMER",
+	 "Waiting for interrupt Timer"},
+	{{87, {MXPATH}}, "SLABS_RECYCLING", "Slabs recycling"},
+	{{88, {MXPATH}}, "SLABS_PRESSURE", "Slabs pressure"},
+	{{89, {MXPATH}}, "SLABS_STARVATION", "Slabs starvation"},
+	{{90, {MXPATH}}, "OUT_OF_RDMA_HANDLES", "out_of_rdma handles"},
+	{{91, {MXPATH}}, "EVENTQ_FULL", "eventq_full"},
+	{{92, {MXPATH}}, "BUFFER_DROP", "buffer_drop (Port 0)"},
+	{{93, {MXPATH}}, "MEMORY_DROP", "memory_drop (Port 0)"},
+	{{94, {MXPATH}}, "HARDWARE_FLOW_CONTROL", "Hardware flow control (Port 0)"},
+	{{95, {MXPATH}}, "SIMULATED_PACKETS_LOST",
+	 "(Devel) Simulated packets lost (Port 0)"},
+	{{96, {MXPATH}}, "LOGGING_FRAMES_DUMPED",
+	 "(Logging) Logging frames dumped"},
+	{{97, {MXPATH}}, "WAKE_INTERRUPTS", "Wake interrupts"},
+	{{98, {MXPATH}}, "AVERTED_WAKEUP_RACE", "Averted wakeup race"},
+	{{99, {MXPATH}}, "DMA_METADATA_RACE", "Dma metadata race"},
+	{{0, {0}}, "", ""}
 };
 
 long long _papi_hwd_mx_register_start[MX_MAX_COUNTERS];
@@ -629,12 +339,14 @@ mx_init_mdi(  )
 int
 MX_init( hwd_context_t * ctx )
 {
+	( void ) ctx;			 /*unused */
 	return ( PAPI_OK );
 }
 
 int
 MX_shutdown( hwd_context_t * ctx )
 {
+	( void ) ctx;			 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -645,6 +357,7 @@ MX_shutdown( hwd_context_t * ctx )
 int
 MX_init_control_state( hwd_control_state_t * ptr )
 {
+	( void ) ptr;			 /*unused */
 	return PAPI_OK;
 }
 
@@ -652,6 +365,8 @@ int
 MX_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
 						 int count, hwd_context_t * ctx )
 {
+	( void ) ptr;			 /*unused */
+	( void ) ctx;			 /*unused */
 	int i, index;
 
 	for ( i = 0; i < count; i++ ) {
@@ -712,6 +427,8 @@ read_mx_counters( long long *counters )
 int
 MX_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
 	read_mx_counters( _papi_hwd_mx_register_start );
 	memcpy( _papi_hwd_mx_register, _papi_hwd_mx_register_start,
 			MX_MAX_COUNTERS * sizeof ( long long ) );
@@ -724,6 +441,8 @@ int
 MX_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 		 int flags )
 {
+	( void ) ctx;			 /*unused */
+	( void ) flags;			 /*unused */
 	int i;
 
 	read_mx_counters( _papi_hwd_mx_register );
@@ -739,6 +458,7 @@ MX_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 int
 MX_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;			 /*unused */
 	int i;
 
 	read_mx_counters( _papi_hwd_mx_register );
@@ -755,13 +475,15 @@ int
 MX_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	MX_start( ctx, ctrl );
-
 	return ( PAPI_OK );
 }
 
 int
 MX_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctrl;			 /*unused */
+	( void ) from;			 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -776,6 +498,9 @@ MX_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 int
 MX_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
+	( void ) ctx;			 /*unused */
+	( void ) code;			 /*unused */
+	( void ) option;		 /*unused */
 	return ( PAPI_OK );
 }
 
@@ -792,6 +517,7 @@ MX_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 int
 MX_set_domain( hwd_control_state_t * cntrl, int domain )
 {
+	( void ) cntrl;			 /*unused */
 	int found = 0;
 	if ( PAPI_DOM_USER & domain ) {
 		found = 1;
@@ -861,9 +587,13 @@ int
 MX_ntv_bits_to_info( hwd_register_t * bits, char *names, unsigned int *values,
 					 int name_len, int count )
 {
+	( void ) bits;			 /*unused */
+	( void ) names;			 /*unused */
+	( void ) values;		 /*unused */
+	( void ) name_len;		 /*unused */
+	( void ) count;			 /*unused */
 	return ( 1 );
 }
-
 
 int
 MX_ntv_enum_events( unsigned int *EventCode, int modifier )
@@ -905,10 +635,10 @@ MX_allocate_registers( EventSetInfo_t * ESI )
 	for ( i = 0; i < natNum; i++ ) {
 		/* retrieve the mapping information about this native event */
 		MX_ntv_code_to_bits( ESI->NativeInfoArray[i].ni_event,
-							 &event_list[i].ra_bits );
+							 ( hwd_register_t * ) ( &event_list[i].ra_bits ) );
 
 	}
-	if ( _papi_hwi_bipartite_alloc( event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
+	if ( _papi_hwi_bipartite_alloc( ( hwd_reg_alloc_t * ) event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
 		for ( i = 0; i < natNum; i++ ) {
 			/* Copy all info about this native event to the NativeInfo struct */
 			memcpy( &( ESI->NativeInfoArray[i].ni_bits ),
@@ -926,6 +656,8 @@ MX_allocate_registers( EventSetInfo_t * ESI )
 void
 MX_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
 {
+	( void ) dst;			 /*unused */
+	( void ) ctr;			 /*unused */
 }
 
 /* This function examines the event to determine if it can be mapped 
@@ -934,6 +666,8 @@ MX_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
 int
 MX_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
 {
+	( void ) dst;			 /*unused */
+	( void ) ctr;			 /*unused */
 	return ( 1 );
 }
 
@@ -944,6 +678,7 @@ MX_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
 int
 MX_bpt_map_exclusive( hwd_reg_alloc_t * dst )
 {
+	( void ) dst;			 /*unused */
 	return ( 1 );
 }
 
@@ -955,6 +690,8 @@ MX_bpt_map_exclusive( hwd_reg_alloc_t * dst )
 int
 MX_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
+	( void ) dst;			 /*unused */
+	( void ) src;			 /*unused */
 	return ( 0 );
 }
 
@@ -967,12 +704,16 @@ MX_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 void
 MX_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
+	( void ) dst;			 /*unused */
+	( void ) src;			 /*unused */
 	return;
 }
 
 void
 MX_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
+	( void ) dst;			 /*unused */
+	( void ) src;			 /*unused */
 	return;
 }
 
@@ -992,10 +733,9 @@ papi_vector_t _mx_vector = {
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = MX_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
-				 .hardware_intr_sig = PAPI_SIGNAL,
+				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */
 				 .fast_real_timer = 0,
