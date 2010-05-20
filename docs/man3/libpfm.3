@@ -1,4 +1,4 @@
-.TH LIBPFM 4  "September, 2009" "" "Linux Programmer's Manual"
+.TH LIBPFM 4  "May, 2010" "" "Linux Programmer's Manual"
 .SH NAME
 libpfm \- a helper library to develop monitoring tools 
 .SH SYNOPSIS
@@ -28,6 +28,9 @@ a user specifies an event to measure as a string and the library returns
 the parameters needed to invoke the kernel API. It is important to realize
 that the library does \fBnot\fR make the system call to program the event.
 
+\fBNote:\fR You must first call \fBpfm_initialize()\fR in order to use any of the other
+provided functions in the library.
+
 A first part of the library provides an event listing and query
 interface. This can be used to discover the events available on a specific hardware 
 platform.
@@ -41,9 +44,9 @@ must be passed to the kernel to program a specific event.
 
 .SH EVENT DETECTION
 
-When the library is initialize, it first detects the underlying hardware
-and software configuration. Based on this information it enables certain
-PMU support. Multiple events tables may be activated.
+When the library is initialized via \fBpfm_initialize()\fR, it first detects the
+underlying hardware and software configuration.  Based on this information
+it enables certain PMU support.  Multiple events tables may be activated.
 
 It is possible to force activation of a specific PMU (group of events)
 using an environment variable.
@@ -114,6 +117,6 @@ Robert Richter <robert.richter@amd.com>
 .SH SEE ALSO
 libpfm_amd64(3), libpfm_intel_core(3), libpfm_intel_atom(3),
 libpfm_intel_p6(3), libpfm_intel_nhm(3), libpfm_intel_nhm_unc(3),
-pfm_get_perf_event_encoding(3)
+pfm_get_perf_event_encoding(3), pfm_initialize(3)
 .sp
 Some examples are shipped with the library
