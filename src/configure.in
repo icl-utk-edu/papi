@@ -96,9 +96,11 @@ AC_ARG_WITH(OSVER,
             fi ])
 AC_MSG_RESULT($OSVER)
 
-# Set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
-CFLAGS="-g"
-FFLAGS=""
+#If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
+CFLAGS="$CFLAGS -g"
+if test "x$FFLAGS" = "x"; then
+  FFLAGS=""
+fi
 OPTFLAGS="-O2" 
 TOPTFLAGS="-O0" 
 

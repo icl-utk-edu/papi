@@ -2008,9 +2008,11 @@ fi
 { $as_echo "$as_me:$LINENO: result: $OSVER" >&5
 $as_echo "$OSVER" >&6; }
 
-# Set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
-CFLAGS="-g"
-FFLAGS=""
+#If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
+CFLAGS="$CFLAGS -g"
+if test "x$FFLAGS" = "x"; then
+  FFLAGS=""
+fi
 OPTFLAGS="-O2"
 TOPTFLAGS="-O0"
 
