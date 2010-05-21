@@ -6,8 +6,6 @@ License: BSD
 Group: Development/System
 URL: http://icl.cs.utk.edu/papi/
 Source0: http://icl.cs.utk.edu/projects/papi/downloads/%{name}-%{version}.tar.gz
-Patch1: papi-4.0.0-patch1.patch
-Patch2: papi-rpm.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: ncurses-devel
 BuildRequires: gcc-gfortran
@@ -31,8 +29,6 @@ that uses PAPI.
 
 %prep
 %setup -q
-#%patch1 -p1
-%patch2 -p1 -b .rpm
 
 %build
 cd src
