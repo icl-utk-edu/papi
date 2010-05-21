@@ -57,7 +57,7 @@ ifeq ($(SYS),Linux)
 LPC_UTILS=perf_util.o
 TARGET_LINUX +=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
-	self_pipe
+	self_pipe syst_count
 
 XTRA += rtop
 endif
