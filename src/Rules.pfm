@@ -9,21 +9,21 @@ endif
 
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-$(VERSION)
+    PFM_ROOT := ./libpfm-$(VERSION)
 endif
 	PFM_LIB_PATH := $(PFM_ROOT)/lib
 endif
 ifeq (,$(PFM_INC_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-$(VERSION)
+    PFM_ROOT := ./libpfm-$(VERSION)
 endif
-        PFM_INC_PATH := $(PFM_ROOT)/include
+    PFM_INC_PATH := $(PFM_ROOT)/include
 endif
 
 OPTIM := $(CFLAGS)
 CFLAGS-3.y := -DPFM30 
 CFLAGS += -I$(PFM_INC_PATH) $(ALTIX) $(CFLAGS-$(VERSION))
-MISCHDRS = pfmwrap.h
+MISCHDRS += pfmwrap.h
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS = $(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)

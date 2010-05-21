@@ -31,7 +31,7 @@ endif
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
-MISCHDRS = perfctr-$(CPU).h
+MISCHDRS += perfctr-$(CPU).h
 MISCSRCS +=  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
