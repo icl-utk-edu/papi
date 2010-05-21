@@ -14,6 +14,7 @@
 #include "any-null.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "cycle.h"
 #ifndef _WIN32
 #include <sys/time.h>
 #include <sys/times.h>

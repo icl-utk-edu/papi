@@ -96,35 +96,30 @@ AC_ARG_WITH(OSVER,
             fi ])
 AC_MSG_RESULT($OSVER)
 
-#If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 CFLAGS="$CFLAGS -g"
+#prevent icc warnings about overriding optimization settings set by AC_PROG_CC
+if test "$CC" = "icc"; then
+  CFLAGS="-openmp -wr188"
+fi
+#If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
   FFLAGS=""
 fi
 OPTFLAGS="-O2" 
 TOPTFLAGS="-O0" 
-
+AC_PROG_CC(gcc cc xlc)
+AC_PROG_F77(gfortran f95 f90 f77 xlf)
 AC_PROG_AWK
-#prevent icc warnings about overriding optimization settings set by AC_PROG_CC
-if test "$CC" != "icc"; then
-  AC_PROG_CC
-else
-  CFLAGS="-openmp -wr188"
-fi
-AC_PROG_F77
-if test "x$AR" = "x"; then
-  AR=ar
-fi
-if test "$OS" != "linux"; then
-  AC_PROG_CC(xlc cc gcc)
-  AC_PROG_F77(xlf f77 f90 f95 gfortran)
-fi
 AC_PROG_CPP
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB   
 AC_GNU_SOURCE
 AC_HEADER_STDC
+
+if test "x$AR" = "x"; then
+  AR=ar
+fi
 
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_CHECKING(for native compiler for header generation)
@@ -1072,13 +1067,6 @@ elif test "$bitmode" = "64"; then
 fi
 OPTFLAGS="$OPTFLAGS $DEBUGFLAGS"
 CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE -Wall $NOTLS $BITFLAGS"
-if test "$F77" = "pgf77"; then
-  FFLAGS="$FFLAGS -Wall -Mextend"
-elif test "$F77" = "ifort"; then
-  FFLAGS="$FFLAGS -warn all"
-else
-  FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
-fi
 FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 
 if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
@@ -1321,10 +1309,17 @@ elif test "$MAKEVER" = "generic_platform"; then
   DESCR="Generic platform"
   no_cpu_component=yes
 fi
+if test "$F77" = "pgf77"; then
+  FFLAGS="$FFLAGS -Wall -Mextend"
+elif test "$F77" = "ifort"; then
+  FFLAGS="$FFLAGS -warn all"
+else
+  FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
+fi
 if test "$no_cpu_component" = "yes"; then
   SUBSTR=any-null
   MEMSUBSTR=any-null
-  MISCHDRS=papi_lock.h
+  MISCHDRS="papi_lock.h cycle.h"
   CFLAGS="$CFLAGS -DNO_CPU_COMPONENT"
   DESCR="$DESCR without CPU component"
   CTEST_TARGETS=""
