@@ -167,55 +167,58 @@ perf_get_group_nevents(perf_event_desc_t *fds, int num, int idx)
 int
 perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size_t sz)
 {
-	char *data;
-	unsigned long tail, head;
+	void *data;
+	unsigned long tail;
 	size_t avail_sz, m, c;
 	
 	/*
- 	 * data ipoint to start of buffer payload
- 	 * first page is buffer header
- 	 */
-	data = (char *)(((unsigned long)hdr)+sysconf(_SC_PAGESIZE));
+	 * data points to beginning of buffer payload
+	 */
+	data = ((void *)hdr)+sysconf(_SC_PAGESIZE);
 
 	/*
- 	 * position of head and tail within the buffer payload
- 	 */
+	 * position of tail within the buffer payload
+	 */
 	tail = hdr->data_tail & pgmsk;
-	head = hdr->data_head & pgmsk;
 
 	/*
- 	 * size of what was added
- 	 * data_head, data_tail never wrap around
- 	 */
+	 * size of what is available
+	 *
+	 * data_head, data_tail never wrap around
+	 */
 	avail_sz = hdr->data_head - hdr->data_tail;
 	if (sz > avail_sz)
 		return -1;
 
 	/*
- 	 * straddles if:
- 	 *        head (modulo pgmsk) < tail + size
- 	 * otherwise fits into he buffer
- 	 */
-	if ((tail + avail_sz) == head) {
-		memcpy(buf, &data[tail], sz);
-	} else {
-		/*
-		 * c = size till end of buffer
- 		 */
-		c = pgmsk + 1 -  tail;
+	 * sz <= avail_sz, we can satisfy the request
+	 */
 
-		/*
-		 * min with requested size
-		 */
-		m = c < sz ? c : sz;
+	/*
+	 * c = size till end of buffer
+	 *
+	 * buffer payload size is necessarily
+	 * a power of two, so we can do:
+	 */
+	c = pgmsk + 1 -  tail;
 
-		/* copy beginning */
-		memcpy(buf, data+tail, m);
+	/*
+	 * min with requested size
+	 */
+	m = c < sz ? c : sz;
 
-		if ((sz - m) > 0)
-			memcpy(buf+m, &data[0], sz - m);
-	}
+	/* copy beginning */
+	memcpy(buf, data+tail, m);
+
+	/*
+	 * copy wrapped around leftover
+	 */
+	if ((sz - m) > 0)
+		memcpy(buf+m, data, sz - m);
+
+//printf("\nhead=%lx tail=%lx new_tail=%lx sz=%zu\n", hdr->data_head, hdr->data_tail, hdr->data_tail+sz, sz);
 	hdr->data_tail += sz;
+
 	return 0;
 }
 
