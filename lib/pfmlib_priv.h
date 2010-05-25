@@ -150,7 +150,6 @@ extern int pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, i
 #define DPRINT(fmt, a...)
 #endif
 
-extern pfmlib_pmu_t crayx2_support;
 extern pfmlib_pmu_t montecito_support;
 extern pfmlib_pmu_t itanium2_support;
 extern pfmlib_pmu_t itanium_support;

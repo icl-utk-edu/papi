@@ -91,7 +91,6 @@ typedef enum {
 	PFM_PMU_MIPS_ICE9A,		/* SiCortex ICE9A */
 	PFM_PMU_MIPS_ICE9B,		/* SiCortex ICE9B */
 	PFM_PMU_POWERPC,		/* POWERPC */
-	PFM_PMU_CRAYX2,			/* Cray X2 */
 	PFM_PMU_CELL,			/* IBM CELL */
 
 	PFM_PMU_SPARC_ULTRA12,		/* UltraSPARC I, II, IIi, and IIe */

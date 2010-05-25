@@ -97,10 +97,6 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&sparc_support,
 #endif
 
-#ifdef CONFIG_PFMLIB_ARCH_CRAYX2
-	&crayx2_support,
-#endif
-
 #ifdef CONFIG_PFMLIB_CELL
 	&cell_support,
 #endif
