@@ -7882,7 +7882,7 @@ if test "$no_cpu_component" = "yes"; then
   DESCR="$DESCR without CPU component"
   CTEST_TARGETS=""
   FTEST_TARGETS=""
-  UTIL_TARGETS="papi_clockres papi_mem_info papi_version"
+  UTIL_TARGETS="papi_clockres papi_mem_info papi_native_avail papi_version"
 fi
 
 
