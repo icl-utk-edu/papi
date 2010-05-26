@@ -56,36 +56,6 @@ AC_MSG_RESULT($OS)
 AC_ARG_WITH(no_cpu_component,
             [  --with-no-cpu-component		Specify a build with no CPU component],
             [no_cpu_component=yes]) 
-	    
-if test "$OS" = "CLE"; then
-  virtualtimer=times
-  tls=__thread
-  walltimer=cycle
-  ffsll=yes
-  cross_compiling=yes
-  STATIC="-static"
-elif test "$OS" = "bgp"; then
-  if test "x$CC" = "x"; then
-     CC=powerpc-bgp-linux-gcc
-  fi
-  if test "x$F77" = "x"; then
-     F77=powerpc-bgp-linux-gfortran
-  fi
-  walltimer=cycle
-  virtualtimer=perfctr
-  tls=no
-  ffsll=yes
-  cross_compiling=yes
-elif test "$OS" = "linux"; then
-  if test "x$no_cpu_component" = "x"; then
-    MISCSRCS=hwinfo_linux.c
-  fi
-  if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
-    if test "$bitmode" = "64" -a "$libdir" = '${exec_prefix}/lib'; then
-      libdir='${exec_prefix}/lib64'
-    fi
-  fi
-fi
 
 AC_MSG_CHECKING(for OS version)
 AC_ARG_WITH(OSVER,
@@ -116,6 +86,53 @@ AC_PROG_MAKE_SET
 AC_PROG_RANLIB   
 AC_GNU_SOURCE
 AC_HEADER_STDC
+AC_C_INLINE
+AC_HEADER_TIME
+AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h])
+AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time])
+	    
+if test "$OS" = "CLE"; then
+  virtualtimer=times
+  tls=__thread
+  walltimer=cycle
+  ffsll=yes
+  cross_compiling=yes
+  STATIC="-static"
+  # This may only apply to Cray UNICOS
+  AC_MSG_CHECKING([for _rtc intrinsic])
+  rtc_ok=yes
+  AC_TRY_LINK([#ifdef HAVE_INTRINSICS_H
+               #include <intrinsics.h>
+               #endif], [_rtc()], [AC_DEFINE(HAVE__RTC,1,[Define for _rtc() intrinsic.])], [rtc_ok=no])
+  AC_MSG_RESULT($rtc_ok)
+elif test "$OS" = "bgp"; then
+  if test "x$CC" = "x"; then
+     CC=powerpc-bgp-linux-gcc
+  fi
+  if test "x$F77" = "x"; then
+     F77=powerpc-bgp-linux-gfortran
+  fi
+  walltimer=cycle
+  virtualtimer=perfctr
+  tls=no
+  ffsll=yes
+  cross_compiling=yes
+elif test "$OS" = "linux"; then
+  if test "x$no_cpu_component" = "x"; then
+    MISCSRCS=hwinfo_linux.c
+  fi
+  if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
+    if test "$bitmode" = "64" -a "$libdir" = '${exec_prefix}/lib'; then
+      libdir='${exec_prefix}/lib64'
+    fi
+  fi
+elif test "$OS" = "solaris"; then
+  AC_CHECK_TYPE([hrtime_t],
+                [AC_DEFINE(HAVE_HRTIME_T, 1, [Define if hrtime_t is defined in <sys/time.h>])],[],
+                [#if HAVE_SYS_TIME_H
+                 #include <sys/time.h>
+                 #endif])
+fi
 
 if test "x$AR" = "x"; then
   AR=ar
