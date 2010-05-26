@@ -77,8 +77,8 @@ if test "x$FFLAGS" = "x"; then
 fi
 OPTFLAGS="-O2" 
 TOPTFLAGS="-O0" 
-AC_PROG_CC(gcc cc xlc)
-AC_PROG_F77(gfortran f95 f90 f77 xlf)
+AC_PROG_CC(xlc gcc cc)
+AC_PROG_F77(xlf gfortran f95 f90 f77)
 AC_PROG_AWK
 AC_PROG_CPP
 AC_PROG_LN_S
