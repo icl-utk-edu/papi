@@ -334,7 +334,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c=getopt(argc, argv,"he:ifpPt:")) != -1) {
+	while ((c=getopt(argc, argv,"+he:ifpPt:")) != -1) {
 		switch(c) {
 			case 'e':
 				if (options.num_groups < MAX_GROUPS) {

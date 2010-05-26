@@ -357,7 +357,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c=getopt_long(argc, argv,"he:m:p:if", the_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"+he:m:p:if", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'e':

@@ -350,7 +350,7 @@ main(int argc, char **argv)
 {
 	int c;
 
-	while ((c=getopt_long(argc, argv,"hm:p:if", the_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"+hm:p:if", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'i':
