@@ -19,7 +19,7 @@
 #include <sys/times.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdio.h> 
+#include <stdio.h>
 #endif
 
 #if ((defined _BGL) || (defined __bgp__))
@@ -177,6 +177,11 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 {
 	if ( !v )
 		return ( PAPI_EINVAL );
+
+	if ( !v->cmp_info.itimer_sig )
+		v->cmp_info.itimer_sig = PAPI_NULL;
+	if ( !v->cmp_info.itimer_num )
+		v->cmp_info.itimer_num = PAPI_NULL;
 
 	/* component function pointers */
 #ifdef _WIN32				 /* Windows requires a different callback format */
