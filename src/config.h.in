@@ -3,6 +3,9 @@
 /* cpu type */
 #undef CPU
 
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
 /* POSIX 1b realtime clock */
 #undef HAVE_CLOCK_GETTIME_REALTIME
 
@@ -12,14 +15,26 @@
 /* Native access to a hardware cycle counter */
 #undef HAVE_CYCLE
 
+/* Define to 1 if you have the <c_asm.h> header file. */
+#undef HAVE_C_ASM_H
+
 /* This platform has the ffsll() function */
 #undef HAVE_FFSLL
+
+/* Define to 1 if you have the `gethrtime' function. */
+#undef HAVE_GETHRTIME
 
 /* Full gettid function */
 #undef HAVE_GETTID
 
 /* Normal gettimeofday timer */
 #undef HAVE_GETTIMEOFDAY
+
+/* Define if hrtime_t is defined in <sys/time.h> */
+#undef HAVE_HRTIME_T
+
+/* Define to 1 if you have the <intrinsics.h> header file. */
+#undef HAVE_INTRINSICS_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -29,6 +44,12 @@
 
 /* perfctr header file */
 #undef HAVE_LIBPERFCTR_H
+
+/* Define to 1 if you have the `mach_absolute_time' function. */
+#undef HAVE_MACH_ABSOLUTE_TIME
+
+/* Define to 1 if you have the <mach/mach_time.h> header file. */
+#undef HAVE_MACH_MACH_TIME_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -60,6 +81,9 @@
 /* old reg_evt_idx */
 #undef HAVE_PFM_REG_EVT_IDX
 
+/* Define to 1 if you have the `read_real_time' function. */
+#undef HAVE_READ_REAL_TIME
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -78,14 +102,23 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
 /* Keyword for per-thread variables */
 #undef HAVE_THREAD_LOCAL_STORAGE
 
+/* Define to 1 if you have the `time_base_to_time' function. */
+#undef HAVE_TIME_BASE_TO_TIME
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define for _rtc() intrinsic. */
+#undef HAVE__RTC
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -104,6 +137,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
 
 /* Use the perfctr virtual TSC for per-thread times */
 #undef USE_PERFCTR_PTTIMER
@@ -142,3 +178,9 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
