@@ -1245,7 +1245,7 @@ _papi_hwi_init_global( void )
 int
 _papi_hwi_init_global_internal( void )
 {
-#ifdef NO_CPU_COMPONENT
+#ifdef NO_CPU_COUNTERS
 	/* Developer's Note: In the current design, frequency and all other hardware info is set
 	   by the various substrates. In the future, substrate code should be restricted to what
 	   is directly related to counters. For now, the set_freq function is a temporary hack

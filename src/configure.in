@@ -53,9 +53,9 @@ AC_ARG_WITH(OS,
             fi ])
 AC_MSG_RESULT($OS)
 
-AC_ARG_WITH(no_cpu_component,
-            [  --with-no-cpu-component		Specify a build with no CPU component],
-            [no_cpu_component=yes]) 
+AC_ARG_WITH(no_cpu_counters,
+            [  --with-no-cpu-counters		Specify a build with no CPU counters],
+            [no_cpu_counters=yes]) 
 
 AC_MSG_CHECKING(for OS version)
 AC_ARG_WITH(OSVER,
@@ -118,7 +118,7 @@ elif test "$OS" = "bgp"; then
   ffsll=yes
   cross_compiling=yes
 elif test "$OS" = "linux"; then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     MISCSRCS=hwinfo_linux.c
   fi
   if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
@@ -212,7 +212,7 @@ AC_ARG_WITH(CPU,
             [CPU=$withval
              case "$CPU" in
                core|core2|i7|atom|p4|p3|opteron|athlon)
-                 if test "x$no_cpu_component" = "x"; then 
+                 if test "x$no_cpu_counters" = "x"; then 
                    MISCSRCS="$MISCSRCS x86_cache_info.c" 
                  fi ;;
              esac],
@@ -238,12 +238,12 @@ AC_ARG_WITH(CPU,
                      elif test "$model" = "28"; then 
                        CPU=atom
                      fi
-                     if test "x$no_cpu_component" = "x"; then 
+                     if test "x$no_cpu_counters" = "x"; then 
                        MISCSRCS="$MISCSRCS x86_cache_info.c"
                      fi
                    elif test "$family" = "15"; then
                      CPU=p4
-                     if test "x$no_cpu_component" = "x"; then 
+                     if test "x$no_cpu_counters" = "x"; then 
                        MISCSRCS="$MISCSRCS x86_cache_info.c"
                      fi
                    elif test "$family" = "32"; then
@@ -258,7 +258,7 @@ AC_ARG_WITH(CPU,
                    elif test "$family" = "6"; then
                      CPU=athlon
                    fi
-                   if test "x$no_cpu_component" = "x"; then 
+                   if test "x$no_cpu_counters" = "x"; then 
                      MISCSRCS="$MISCSRCS x86_cache_info.c"
                    fi
                  else
@@ -724,7 +724,7 @@ if test "$papiLIBS" != "shared static"; then
 fi
 AC_MSG_RESULT($shlib)
 
-if test "x$no_cpu_component" = "x"; then 
+if test "x$no_cpu_counters" = "x"; then 
 ##################################################
 #          perfctr
 ##################################################
@@ -973,7 +973,7 @@ if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
 fi
 
 if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = 0; then
-  AC_MSG_NOTICE(Platform does not have a performance interface; Using generic platform without CPU component)
+  AC_MSG_NOTICE(Platform does not have a performance interface; Using generic platform without CPU counters)
   MAKEVER="generic_platform"
 fi
 fi
@@ -1060,7 +1060,7 @@ case "$OS" in
 esac
 AC_MSG_RESULT($MAKEVER)
 if test "x$MAKEVER" = "x"; then
-  AC_MSG_NOTICE(This platform is not supported so a generic build without a CPU component will be used)
+  AC_MSG_NOTICE(This platform is not supported so a generic build without CPU counters will be used)
   MAKEVER="generic_platform"
 fi 
 
@@ -1096,7 +1096,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
     SHLIB=libpapi.so
     BITFLAGS=""
   fi
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     SUBSTR=pmapi-ppc64
     MEMSUBSTR=aix
     MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h papi_events_table.h"
@@ -1138,7 +1138,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
     fi
   fi
 elif test "$MAKEVER" = "bgp"; then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     SUBSTR=linux-bgp
     MEMSUBSTR=linux-bgp
     MISCSRCS=linux-bgp-preset-events.c
@@ -1162,7 +1162,7 @@ elif test "$MAKEVER" = "bgp"; then
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   OMPCFLGS=""
 elif test "$MAKEVER" = "CLE-perfmon2"; then 
-  if test "x$no_cpu_component" = "x"; then 
+  if test "x$no_cpu_counters" = "x"; then 
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     MEMSUBSTR=perfmon
@@ -1172,7 +1172,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
   CFLAGS="$CFLAGS -D__crayxt"
   FFLAGS=""
 elif test "$MAKEVER" = "freebsd"; then
-  if test "x$no_cpu_component" = "x"; then 
+  if test "x$no_cpu_counters" = "x"; then 
     SUBSTR=freebsd
     MEMSUBSTR=perfmon
     MISCHDRS="freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h"
@@ -1182,14 +1182,14 @@ elif test "$MAKEVER" = "freebsd"; then
   CFLAGS="$CFLAGS -I. -Ifreebsd -DPIC -fPIC $DEBUGFLAGS"
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 elif test "$MAKEVER" = "linux-pe"; then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perf_events 
     MEMSUBSTR=perfmon 
     MISCSRCS="$MISCSRCS sys_perf_counter_open.c"
   fi
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.perfctr-pfm
     SUBSTR=perfctr-x86
     MEMSUBSTR=linux
@@ -1199,7 +1199,7 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
     fi
   fi
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.perfctr
     SUBSTR=perfctr-ppc64
     MEMSUBSTR=linux-ppc64
@@ -1229,13 +1229,13 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
     FFLAGS=""
   fi
 elif test "$MAKEVER" = "linux-perfmon2"; then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     MEMSUBSTR=perfmon
   fi
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-montecito"); then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.pfm
     SUBSTR=linux-ia64
     MEMSUBSTR=linux-ia64
@@ -1251,7 +1251,7 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-mon
   fi
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
 elif test "$MAKEVER" = "solaris-ultra"; then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     SUBSTR=solaris-ultra
     MEMSUBSTR=solaris
   fi
@@ -1271,7 +1271,7 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     CPP="$CC -E"
     CC_R="$CC -mt"
     CC_SHR="$CC -ztext -G -Kpic" 
-    if test "x$no_cpu_component" = "x"; then 
+    if test "x$no_cpu_counters" = "x"; then 
       CFLAGS="-xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT -DCOMP_VECTOR=_solaris_vectors"
     else 
       CFLAGS="-xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT"
@@ -1287,7 +1287,7 @@ elif test "$MAKEVER" = "solaris-ultra"; then
   if test "$bitmode" = "64"; then
     LIBRARY=libpapi64.a
     SHLIB=libpapi64.so
-    if test "x$no_cpu_component" = "x"; then 
+    if test "x$no_cpu_counters" = "x"; then 
       CFLAGS="-xtarget=ultra3 -xarch=v9a -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors"
     else
       CFLAGS="-xtarget=ultra3 -xarch=v9a -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT"
@@ -1295,7 +1295,7 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v9a"
   fi
 elif test "$MAKEVER" = "solaris-niagara2"; then
-  if test "x$no_cpu_component" = "x"; then
+  if test "x$no_cpu_counters" = "x"; then
     SUBSTR=solaris-niagara2
     MEMSUBSTR=solaris-niagara2
     CTEST_TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
@@ -1324,7 +1324,7 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
   fi
 elif test "$MAKEVER" = "generic_platform"; then
   DESCR="Generic platform"
-  no_cpu_component=yes
+  no_cpu_counters=yes
 fi
 if test "$F77" = "pgf77"; then
   FFLAGS="$FFLAGS -Wall -Mextend"
@@ -1333,12 +1333,12 @@ elif test "$F77" = "ifort"; then
 else
   FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
 fi
-if test "$no_cpu_component" = "yes"; then
+if test "$no_cpu_counters" = "yes"; then
   SUBSTR=any-null
   MEMSUBSTR=any-null
   MISCHDRS="papi_lock.h cycle.h"
-  CFLAGS="$CFLAGS -DNO_CPU_COMPONENT"
-  DESCR="$DESCR without CPU component"
+  CFLAGS="$CFLAGS -DNO_CPU_COUNTERS"
+  DESCR="$DESCR without CPU counters"
   CTEST_TARGETS=""
   FTEST_TARGETS=""
   UTIL_TARGETS="papi_clockres papi_native_avail papi_version"
