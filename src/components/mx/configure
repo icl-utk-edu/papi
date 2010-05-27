@@ -641,7 +641,6 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_mx_counters
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1261,11 +1260,6 @@ if test -n "$ac_init_help"; then
 
   cat <<\_ACEOF
 
-Optional Packages:
-  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-mx-counters=<path> Specify path to mx counters
-
 _ACEOF
 ac_status=$?
 fi
@@ -1702,12 +1696,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-
-# Check whether --with-mx_counters was given.
-if test "${with_mx_counters+set}" = set; then
-  withval=$with_mx_counters; MXPATH=$withval
-else
-  # Extract the first word of "mx_counters", so it can be a program name with args.
+# Extract the first word of "mx_counters", so it can be a program name with args.
 set dummy mx_counters; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -1746,8 +1735,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-
-fi
 
 if test "$MXPATH" = ""; then
   { { $as_echo "$as_me:$LINENO: error: Component requires the path to mx_counters" >&5
@@ -2866,4 +2853,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:$LINENO: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
-
