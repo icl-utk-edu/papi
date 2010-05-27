@@ -18,6 +18,10 @@
 #include <sys/ptrace.h>
 #include <inttypes.h>
 
+#ifdef _AIX
+#define _LINUX_SOURCE_COMPAT
+#endif
+
 int
 wait_for_attach_and_loop( void )
 {

@@ -17,6 +17,10 @@
 #include "papi_test.h"
 #include <sys/ptrace.h>
 
+#ifdef _AIX
+#define _LINUX_SOURCE_COMPAT
+#endif
+
 int
 wait_for_attach_and_loop( void )
 {
