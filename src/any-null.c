@@ -28,7 +28,7 @@
 #endif
 
 extern papi_vector_t MY_VECTOR;
-static unsigned int frequency = 0;
+static int frequency = -1;
 
 #ifndef _WIN32
 static char *
@@ -52,7 +52,7 @@ void
 set_freq(  )
 {
 #if defined(_AIX)
-	frequency = ( unsigned int ) pm_cycles(  ) / 1000000;
+	frequency = ( int ) pm_cycles(  ) / 1000000;
 #elif defined(__bgp__)
 	_BGP_Personality_t bgp;
 	frequency = BGP_Personality_clockMHz( &bgp );
@@ -74,7 +74,7 @@ set_freq(  )
 		if ( s )
 			sscanf( s + 1, "%f", &mhz );
 
-		frequency = ( unsigned int ) mhz;
+		frequency = ( int ) mhz;
 		fclose( f );
 	}
 #endif
