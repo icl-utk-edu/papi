@@ -341,6 +341,10 @@ terminate_session:
 		ovfl_count, lost_samples);
 	if (collected_samples)
 		printf("avg period=%"PRIu64"\n", sum_period / collected_samples);
+
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return 0;
 }
 

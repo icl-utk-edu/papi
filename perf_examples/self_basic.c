@@ -138,5 +138,8 @@ main(int argc, char **argv)
 
 	close(fd);
 
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return 0;
 }

@@ -213,6 +213,7 @@ typedef struct {
  * initialization, configuration, errors
  */
 extern pfm_err_t pfm_initialize(void);
+extern void pfm_terminate(void);
 extern const char *pfm_strerror(int code);
 extern int pfm_get_version(void);
 

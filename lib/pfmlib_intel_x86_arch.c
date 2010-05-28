@@ -42,6 +42,7 @@
 
 extern pfmlib_pmu_t intel_x86_arch_support;
 
+static intel_x86_entry_t *x86_arch_pe;
 /*
  * .byte 0x53 == push ebx. it's universal for 32 and 64 bit
  * .byte 0x5b == pop ebx.
@@ -86,6 +87,7 @@ create_arch_event_table(unsigned int mask, int version)
 	if (pe == NULL)
 		return PFM_ERR_NOTSUPP;
 
+	x86_arch_pe = pe;
 	intel_x86_arch_support.pe = pe;
 
 	/*
@@ -183,6 +185,14 @@ pfm_intel_x86_arch_init(void *this)
 	return create_arch_event_table(ebx.val, eax.eax.version);
 }
 
+void
+pfm_intel_x86_arch_terminate(void *this)
+{
+	/* workaround const void for intel_x86_arch_support.pe */
+	if (x86_arch_pe)
+		free(x86_arch_pe);
+}
+
 /* architected PMU */
 pfmlib_pmu_t intel_x86_arch_support={
 	.desc			= "Intel X86 architectural PMU",
@@ -195,6 +205,7 @@ pfmlib_pmu_t intel_x86_arch_support={
 
 	.pmu_detect		= pfm_intel_x86_arch_detect,
 	.pmu_init		= pfm_intel_x86_arch_init,
+	.pmu_terminate		= pfm_intel_x86_arch_terminate,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,

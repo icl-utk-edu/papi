@@ -389,6 +389,25 @@ pfm_initialize(void)
 	return ret;
 }
 
+void
+pfm_terminate(void)
+{
+	pfmlib_pmu_t *pmu;
+	int pmu_id;
+
+	if (PFMLIB_INITIALIZED() == 0)
+		return;
+
+	pfmlib_for_all_pmu(pmu_id) {
+		pmu = pfmlib_pmus_map[pmu_id];
+		if (!pfmlib_pmu_active(pmu))
+			continue;
+		if (pmu->pmu_terminate)
+			pmu->pmu_terminate(pmu);
+	}
+	pfm_cfg.initdone = 0;
+}
+
 int
 pfm_find_event(const char *str)
 {

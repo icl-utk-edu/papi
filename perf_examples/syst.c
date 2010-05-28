@@ -206,5 +206,9 @@ main(int argc, char **argv)
 		errx(1, "libpfm initialization failed: %s\n", pfm_strerror(ret));
 	
 	measure();
+
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return 0;
 }

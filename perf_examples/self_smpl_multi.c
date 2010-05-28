@@ -474,5 +474,8 @@ main(int argc, char **argv)
 			fd2ov[i].id, fd2ov[i].fd, total[i], mismatch[i],
 			bad_msg[i], bad_restart[i]);
 	}
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return (0);
 }

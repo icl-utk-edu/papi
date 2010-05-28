@@ -199,5 +199,8 @@ error:
 
 	free(fds);
 
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return 0;
 }

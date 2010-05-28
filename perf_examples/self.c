@@ -150,5 +150,9 @@ main(int argc, char **argv)
 		close(fds[i].fd);
 	}
 	free(fds);
+
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return 0;
 }

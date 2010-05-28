@@ -387,5 +387,7 @@ main(int argc, char **argv)
 
 	regfree(&preg);
 
+	pfm_terminate();
+
 	return 0;
 }

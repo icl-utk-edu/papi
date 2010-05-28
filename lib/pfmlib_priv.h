@@ -101,7 +101,7 @@ typedef struct pfmlib_pmu {
 
 	int 		 (*pmu_detect)(void *this);
 	int 		 (*pmu_init)(void *this);	/* optional */
-
+	void		 (*pmu_terminate)(void *this); /* optional */
 	int		 (*get_event_first)(void *this);
 	int		 (*get_event_next)(void *this, int pidx);
 	int		 (*get_event_perf_type)(void *this, int pidx);

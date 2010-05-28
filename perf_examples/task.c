@@ -305,11 +305,19 @@ parent(char **arg)
 		close(fds[i].fd);
 
 	free(fds);
+
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return 0;
 error:
 	free(fds);
 	if (!options.pid)
 		kill(SIGKILL, pid);
+
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return -1;
 }
 

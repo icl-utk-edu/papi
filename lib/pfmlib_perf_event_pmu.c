@@ -44,13 +44,13 @@
 #define PERF_MAX_UMASKS	8
 
 typedef struct {
-	const char	*uname;	/* unit mask name */
+	char		*uname;	/* unit mask name */
 	const char	*udesc;	/* unit mask desc */
 	uint64_t	uid;	/* unit mask id */
 } perf_umask_t;
 	
 typedef struct {
-	const char	*name;			/* name */
+	char		*name;			/* name */
 	const char	*desc;			/* description */
 	uint64_t	id;			/* perf_hw_id or equivalent */
 	int		modmsk;			/* modifiers bitmask */
@@ -95,12 +95,9 @@ static const pfmlib_attr_desc_t perf_mods[]={
 pfmlib_pmu_t perf_event_support;
 #define perf_nevents (perf_event_support.pme_count)
 
-static perf_event_t *perf_pe;
-static perf_umask_t *perf_um;
-
-static void *perf_pe_free, *perf_pe_end;
-static void *perf_um_free, *perf_um_end;
-static size_t perf_pe_sz, perf_um_sz;
+static perf_event_t *perf_pe, *perf_pe_free, *perf_pe_end;
+static perf_umask_t *perf_um, *perf_um_free, *perf_um_end;
+static int perf_pe_count, perf_um_count;
 
 static inline int
 perf_attr2mod(int pidx, int attr_idx)
@@ -168,8 +165,8 @@ get_debugfs_mnt(void)
 	return res;
 }
 
-#define PERF_ALLOC_EVCHUNK	(512)
-#define PERF_ALLOC_UMCHUNK	(1024)
+#define PERF_ALLOC_EVENT_COUNT	(512)
+#define PERF_ALLOC_UMASK_COUNT	(1024)
 
 /*
  * clone static event table into a  dynamic
@@ -177,21 +174,18 @@ get_debugfs_mnt(void)
  *
  * Used for tracepoints
  */
-static void *
+static perf_event_t *
 perf_table_clone(void)
 {
-	void *addr;
-	size_t sz, stat_sz;
+	perf_event_t *addr;
 
-	stat_sz = perf_nevents * sizeof(perf_event_t);
+	perf_pe_count = perf_nevents + PERF_ALLOC_EVENT_COUNT;
 
-	sz = perf_pe_sz = stat_sz + PERF_ALLOC_EVCHUNK;
-
-	addr = malloc(sz);
+	addr = malloc(perf_pe_count * sizeof(perf_event_t));
 	if (addr) {
-		memcpy(addr, perf_static_events, stat_sz);
-		perf_pe_free = addr + stat_sz;
-		perf_pe_end = perf_pe_free + PERF_ALLOC_EVCHUNK;
+		memcpy(addr, perf_static_events, perf_nevents * sizeof(perf_event_t));
+		perf_pe_free = addr + perf_nevents;
+		perf_pe_end = perf_pe_free + PERF_ALLOC_EVENT_COUNT;
 		perf_pe = addr;
 	}
 	return addr;
@@ -204,26 +198,23 @@ perf_table_clone(void)
  *
  * may realloc existing table if necessary for growth
  */
-static void *
+static perf_event_t *
 perf_table_alloc_event(void)
 {
-	void *new_pe;
-	size_t sz;
+	perf_event_t *new_pe;
 
 retry:
-	sz = sizeof(perf_event_t);
-	if ((perf_pe_free+sz) < perf_pe_end) {
-		perf_pe_free += sz;
-		return perf_pe_free - sz;
-	}
-	perf_pe_sz += PERF_ALLOC_EVCHUNK;
+	if (perf_pe_free < perf_pe_end)
+		return perf_pe_free++;
+
+	perf_pe_count += PERF_ALLOC_EVENT_COUNT;
 	
-	new_pe = realloc(perf_pe, perf_pe_sz);
+	new_pe = realloc(perf_pe, perf_pe_count * sizeof(perf_event_t));
 	if (!new_pe) 
 		return NULL;
 	
-	perf_pe_free = new_pe + (perf_pe_free - (void *)perf_pe);
-	perf_pe_end = perf_pe_free + PERF_ALLOC_EVCHUNK;
+	perf_pe_free = new_pe + (perf_pe_free - perf_pe);
+	perf_pe_end = perf_pe_free + PERF_ALLOC_EVENT_COUNT;
 	perf_pe = new_pe;
 
 	goto retry;
@@ -243,26 +234,23 @@ retry:
  * All unit masks for an event are contiguous in the
  * overflow table.
  */
-static void *
+static perf_umask_t *
 perf_table_alloc_umask(void)
 {
-	void *new_um;
-	size_t sz;
+	perf_umask_t *new_um;
 
 retry:
-	sz = sizeof(perf_umask_t);
-	if ((perf_um_free+sz) < perf_um_end) {
-		perf_um_free += sz;
-		return perf_um_free - sz;
-	}
-	perf_um_sz += PERF_ALLOC_UMCHUNK;
+	if (perf_um_free < perf_um_end)
+		return perf_um_free++;
+
+	perf_um_count += PERF_ALLOC_UMASK_COUNT;
 	
-	new_um = realloc(perf_um, perf_um_sz);
+	new_um = realloc(perf_um, perf_um_count * sizeof(*new_um));
 	if (!new_um) 
 		return NULL;
 	
-	perf_um_free = new_um + (perf_um_free - (void *)perf_um);
-	perf_um_end = perf_um_free + PERF_ALLOC_UMCHUNK;
+	perf_um_free = new_um + (perf_um_free - perf_um);
+	perf_um_end = perf_um_free + PERF_ALLOC_UMASK_COUNT;
 	perf_um = new_um;
 
 	goto retry;
@@ -327,7 +315,6 @@ gen_tracepoint_table(void)
 
 		dir2_fd = dirfd(dir2);
 
-		
 		/*
  		 * if a subdir did not fit our expected
  		 * tracepoint format, then we reuse the
@@ -335,6 +322,9 @@ gen_tracepoint_table(void)
  		 */
 		if (!reuse_event)
 			p = perf_table_alloc_event();
+
+		if (!p)
+			break;
 
 		if (p)
 			p->name = tracepoint_name = strdup(d1->d_name);
@@ -647,6 +637,59 @@ pfm_perf_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	return PFM_SUCCESS;
 }
 
+void
+pfm_perf_terminate(void *this)
+{
+	perf_event_t *p;
+	size_t i, j;
+
+	if (!(perf_pe && perf_um))
+		return;
+
+	/*
+	 * free tracepoints name + unit mask names
+	 * which are dynamically allocated
+	 */
+	for (i=0; i < perf_nevents; i++) {
+		p = &perf_pe[i];
+
+		if (p->type != PERF_TYPE_TRACEPOINT)
+			continue;
+
+		free(p->name);
+
+		/*
+		 * first PERF_MAX_UMASKS are pre-allocated
+		 * the rest is in a separate dynamic table
+		 */
+		for (j=0; j < p->numasks; j++) {
+			if (j == PERF_MAX_UMASKS)
+				break;
+			free(p->umasks[j].uname);
+		}
+	}
+	/*
+	 * perf_pe is systematically allocated
+	 */
+	free(perf_pe);
+	perf_pe = NULL;
+	perf_pe_free = perf_pe_end = NULL;
+
+	if (perf_um) {
+		int n;
+		/*
+		 * free the dynamic umasks' uname
+		 */
+		n = perf_um_free - perf_um;
+		for(i=0; i < n; i++) {
+			free(perf_um[i].uname);
+		}
+		free(perf_um);
+		perf_um = NULL;
+		perf_um_free = perf_um_end = NULL;
+	}
+}
+
 pfmlib_pmu_t perf_event_support={
 	.desc			= "perf_events generic PMU",
 	.name			= "perf",
@@ -655,6 +698,7 @@ pfmlib_pmu_t perf_event_support={
 	.max_encoding		= 1,
 	.pmu_detect		= pfm_perf_detect,
 	.pmu_init		= pfm_perf_init,
+	.pmu_terminate		= pfm_perf_terminate,
 	.get_event_encoding	= pfm_perf_get_encoding,
 	.get_event_first	= pfm_perf_get_event_first,
 	.get_event_next		= pfm_perf_get_event_next,

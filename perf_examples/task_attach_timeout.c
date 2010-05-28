@@ -142,6 +142,10 @@ measure(pid_t pid)
 		close(fds[i].fd);
 
 	free(fds);
+
+	/* free libpfm resources cleanly */
+	pfm_terminate();
+
 	return 0;
 }
 
