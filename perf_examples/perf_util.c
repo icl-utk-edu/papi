@@ -138,6 +138,7 @@ perf_setup_list_events(const char *ev, perf_event_desc_t **fd, int *num_fds)
 	argv[i] = NULL;
 	ret = perf_setup_argv_events(argv, fd, num_fds);
 	free(argv);
+	free(events);
 	return ret;
 }
 
