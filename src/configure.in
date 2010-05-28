@@ -1331,7 +1331,7 @@ if test "$F77" = "pgf77"; then
   FFLAGS="$FFLAGS -Wall -Mextend"
 elif test "$F77" = "ifort"; then
   FFLAGS="$FFLAGS -warn all"
-else
+elif test "F77" != "xlf"; then
   FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
 fi
 if test "$no_cpu_counters" = "yes"; then
