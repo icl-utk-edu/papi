@@ -462,22 +462,6 @@ typedef long long ticks;
 
 INLINE_ELAPSED( inline )
 #define HAVE_TICK_COUNTER
-#elif defined(NO_RTC_INTRINSIC)
-/* Cray using GNU compiler, courtesy Steve Kaufmann */
-static inline unsigned long long
-_rtc( void )
-{
-	unsigned long high, low;
-	asm volatile ( ".byte 0x0f,0x31":"=a" ( low ), "=d"( high ) );
-	return ( ( unsigned long long ) high << 32 ) + low;
-}
-
-typedef long long ticks;
-
-#define getticks _rtc
-
-INLINE_ELAPSED( inline )
-#define HAVE_TICK_COUNTER
 #endif
 /*----------------------------------------------------------------*/
 /* MIPS ZBus */
