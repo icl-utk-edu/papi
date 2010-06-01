@@ -120,6 +120,9 @@
 /* Define for _rtc() intrinsic. */
 #undef HAVE__RTC
 
+/* Define if _rtc() is not found. */
+#undef NO_RTC_INTRINSIC
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 

@@ -4606,7 +4606,7 @@ if test "$OS" = "CLE"; then
   ffsll=yes
   cross_compiling=yes
   STATIC="-static"
-  # This may only apply to Cray UNICOS
+  # _rtc is only defined when using the Cray compiler
   { $as_echo "$as_me:$LINENO: checking for _rtc intrinsic" >&5
 $as_echo_n "checking for _rtc intrinsic... " >&6; }
   rtc_ok=yes
@@ -4658,6 +4658,11 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
 	rtc_ok=no
+
+cat >>confdefs.h <<\_ACEOF
+#define NO_RTC_INTRINSIC 1
+_ACEOF
+
 fi
 
 rm -rf conftest.dSYM
