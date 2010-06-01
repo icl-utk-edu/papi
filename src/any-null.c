@@ -14,6 +14,12 @@
 #include "any-null.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <string.h>
+#endif
 #ifndef _WIN32
 #include "cycle.h"
 #include <string.h>
@@ -57,6 +63,17 @@ set_freq(  )
 	_BGP_Personality_t bgp;
 	frequency = BGP_Personality_clockMHz( &bgp );
 #elif defined(_WIN32)
+#elif defined(__APPLE__)
+	int mib[2];
+	size_t len = sizeof(frequency);
+	unsigned int freq;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_CPU_FREQ;
+	if (0 > sysctl(mib, 2, &freq, &len, NULL, 0))
+	  frequency	= -1;
+	else 
+	  frequency = freq;
 #else
 	char maxargs[PAPI_HUGE_STR_LEN], *s;
 	float mhz = 0.0;

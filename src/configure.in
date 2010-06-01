@@ -1059,6 +1059,8 @@ case "$OS" in
       AC_MSG_ERROR([The bitmode you specified is not supported])
     fi
     MAKEVER="$OS"-"$CPU" ;;
+  darwin)
+    MAKEVER="$OS" ;;
 esac
 AC_MSG_RESULT($MAKEVER)
 if test "x$MAKEVER" = "x"; then
@@ -1325,6 +1327,18 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     CFLAGS="$CFLAGS -m64"
     FFLAGS="$FFLAGS -m64"
   fi
+elif test "$MAKEVER" = "darwin"; then
+  DESCR="Darwin"
+  no_cpu_counters="yes"
+  CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-dylib -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+  SHLIB=libpapi.dylib
+  SUBSTR=any-null
+  MEMSUBSTR=any-null
+  MISCHDRS="papi_lock.h cycle.h"
+  CFLAGS="$CFLAGS -DNO_CPU_COUNTERS"
+  CTEST_TARGETS=""
+  FTEST_TARGETS=""
+  UTIL_TARGETS="papi_clockres papi_native_avail papi_version"
 elif test "$MAKEVER" = "generic_platform"; then
   DESCR="Generic platform"
   no_cpu_counters=yes
