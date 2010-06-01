@@ -148,6 +148,15 @@ _any_get_virt_cycles( const hwd_context_t * ctx )
 }
 
 papi_vector_t _any_vector = {
+	/*Developer's Note: The size data members are set to non-zero values in case 
+	   the framework uses them as the size argument to malloc */
+	.size = {
+			 .context = sizeof ( int ),
+			 .control_state = sizeof ( int ),
+			 .reg_value = sizeof ( int ),
+			 .reg_alloc = sizeof ( int )
+			 }
+	,
 	.get_real_usec = _any_get_real_usec,
 	.get_real_cycles = _any_get_real_cycles,
 	.get_virt_cycles = _any_get_virt_cycles,
