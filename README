@@ -48,7 +48,7 @@ To install PAPI on your system:
 - Run the test suite when you are finished to verify that everything went ok.
   NOTE: Although we make every attempt to get all tests to PASS or SKIP on all
   platforms, there are occasional instances of FAILures due to excessively 
-  tight compliance thresholds or platform ideosynchracies. Don't panic if one
+  tight compliance thresholds or platform idiosyncrasies. Don't panic if one
   or two tests FAIL. Contact us with complete output and we'll see what we can do.
 
 Using PAPI
