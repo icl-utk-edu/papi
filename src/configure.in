@@ -108,8 +108,8 @@ if test "$OS" = "CLE"; then
                AC_DEFINE(NO_RTC_INTRINSIC,1,[Define if _rtc() is not found.])])
   AC_MSG_RESULT($rtc_ok)
 elif test "$OS" = "bgp"; then
-  CC=powerpc-bgp-linux-gcc
-  F77=powerpc-bgp-linux-gfortran
+  CC=gcc
+  F77=gfortran
   walltimer=cycle
   virtualtimer=perfctr
   tls=no
@@ -1139,6 +1139,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
     fi
   fi
 elif test "$MAKEVER" = "bgp"; then
+  CPP="$CC -E"
   if test "x$no_cpu_counters" = "x"; then
     SUBSTR=linux-bgp
     MEMSUBSTR=linux-bgp
