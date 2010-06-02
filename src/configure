@@ -4671,12 +4671,8 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
   { $as_echo "$as_me:$LINENO: result: $rtc_ok" >&5
 $as_echo "$rtc_ok" >&6; }
 elif test "$OS" = "bgp"; then
-  if test "x$CC" = "x"; then
-     CC=powerpc-bgp-linux-gcc
-  fi
-  if test "x$F77" = "x"; then
-     F77=powerpc-bgp-linux-gfortran
-  fi
+  CC=powerpc-bgp-linux-gcc
+  F77=powerpc-bgp-linux-gfortran
   walltimer=cycle
   virtualtimer=perfctr
   tls=no
