@@ -56,6 +56,8 @@ _papi_hwd_lock_fini( void )
 #elif defined(__bgp__)
 
 /* PAPI on BG/P does not need locks. */ 
+#define _papi_hwd_lock(lck)   {}
+#define _papi_hwd_unlock(lck) {}
 
 #elif defined(__ia64__)
 
