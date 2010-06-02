@@ -108,8 +108,8 @@ if test "$OS" = "CLE"; then
                AC_DEFINE(NO_RTC_INTRINSIC,1,[Define if _rtc() is not found.])])
   AC_MSG_RESULT($rtc_ok)
 elif test "$OS" = "bgp"; then
-  CC=gcc
-  F77=gfortran
+  CC=powerpc-bgp-linux-gcc 
+  F77=powerpc-bgp-linux-gfortran
   walltimer=cycle
   virtualtimer=perfctr
   tls=no
