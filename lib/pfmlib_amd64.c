@@ -37,6 +37,8 @@
 
 #define IS_FAMILY_10H() (amd64_revision >= AMD64_FAM10H)
 
+static amd64_pmu_t amd64_pmu;
+
 static const pfmlib_attr_desc_t amd64_mods[]={
 	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
 	PFM_ATTR_B("k", "monitor at priv level 0"),		/* monitor priv level 0 */
@@ -71,6 +73,18 @@ static const char *amd64_cpu_strs[] = {
 pfmlib_pmu_t amd64_support;
 
 static int pfm_amd64_get_event_next(void *this, int idx);
+
+static inline int
+amd64_eflag(int idx, int flag)
+{
+	return !!(amd64_events[idx].flags & flag);
+}
+
+static inline int
+amd64_uflag(int idx, int attr, int flag)
+{
+	return !!(amd64_events[idx].umasks[attr].uflags & flag);
+}
 
 static inline int
 amd64_attr2mod(int pidx, int attr_idx)

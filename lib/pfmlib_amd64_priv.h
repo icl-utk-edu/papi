@@ -175,7 +175,7 @@ typedef union {
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
-static struct {
+typedef struct {
         amd64_rev_t     	revision;
         char            	*name;
         int             	family;
@@ -183,8 +183,7 @@ static struct {
         int             	stepping;
 	int			num_events; /* total number of events in table */
         const amd64_entry_t	*events;
-} amd64_pmu;
-
+} amd64_pmu_t;
 
 #define amd64_revision    amd64_pmu.revision
 #define amd64_num_events  amd64_pmu.num_events
@@ -192,17 +191,5 @@ static struct {
 #define amd64_family      amd64_pmu.family
 #define amd64_model       amd64_pmu.model
 #define amd64_stepping    amd64_pmu.stepping
-
-static inline int
-amd64_eflag(int idx, int flag)
-{
-	return !!(amd64_events[idx].flags & flag);
-}
-
-static inline int
-amd64_uflag(int idx, int attr, int flag)
-{
-	return !!(amd64_events[idx].umasks[attr].uflags & flag);
-}
 
 #endif /* __PFMLIB_AMD64_PRIV_H__ */
