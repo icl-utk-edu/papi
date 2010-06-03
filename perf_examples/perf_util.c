@@ -358,7 +358,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			return -1;
 		}
 
-		fprintf(fp, "ADDR:%"PRIx64" ", val64);
+		fprintf(fp, "ADDR:%016"PRIx64" ", val64);
 		sz -= sizeof(val64);
 	}
 
