@@ -650,7 +650,7 @@ case "$virtualtimer" in
 esac
 AC_MSG_RESULT($virtualtimer)
 
-if test "$OS" = "aix"; then
+if test "$OS" = "aix" -a "x$no_cpu_counters" = "x"; then
   AC_ARG_WITH(pmapi,
               [  --with-pmapi=<path>		Specify path of pmapi on aix system ],
               [PMAPI=$withval],
@@ -1329,13 +1329,6 @@ elif test "$MAKEVER" = "darwin"; then
   no_cpu_counters="yes"
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-dylib -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   SHLIB=libpapi.dylib
-  SUBSTR=any-null
-  MEMSUBSTR=any-null
-  MISCHDRS="papi_lock.h cycle.h"
-  CFLAGS="$CFLAGS -DNO_CPU_COUNTERS"
-  CTEST_TARGETS=""
-  FTEST_TARGETS=""
-  UTIL_TARGETS="papi_clockres papi_native_avail papi_version"
 elif test "$MAKEVER" = "generic_platform"; then
   DESCR="Generic platform"
   no_cpu_counters=yes

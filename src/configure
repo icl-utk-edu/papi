@@ -6186,7 +6186,7 @@ esac
 { $as_echo "$as_me:$LINENO: result: $virtualtimer" >&5
 $as_echo "$virtualtimer" >&6; }
 
-if test "$OS" = "aix"; then
+if test "$OS" = "aix" -a "x$no_cpu_counters" = "x"; then
 
 # Check whether --with-pmapi was given.
 if test "${with_pmapi+set}" = set; then
@@ -8432,13 +8432,6 @@ elif test "$MAKEVER" = "darwin"; then
   no_cpu_counters="yes"
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-dylib -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   SHLIB=libpapi.dylib
-  SUBSTR=any-null
-  MEMSUBSTR=any-null
-  MISCHDRS="papi_lock.h cycle.h"
-  CFLAGS="$CFLAGS -DNO_CPU_COUNTERS"
-  CTEST_TARGETS=""
-  FTEST_TARGETS=""
-  UTIL_TARGETS="papi_clockres papi_native_avail papi_version"
 elif test "$MAKEVER" = "generic_platform"; then
   DESCR="Generic platform"
   no_cpu_counters=yes
