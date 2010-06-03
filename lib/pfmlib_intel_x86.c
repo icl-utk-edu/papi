@@ -475,42 +475,6 @@ pfm_intel_x86_event_is_valid(void *this, int pidx)
 	return pidx >= 0 && pidx < p->pme_count;
 }
 
-/*
- * The following functions are specific to this PMU and are exposed directly
- * to the user
- */
-#if 0
-int
-pfm_intel_x86_event_pebs(const char *str)
-{
-	int i, ret, umask_pebs = 1;
-	pfmlib_event_desc_t e;
-
-	if (PFMLIB_INITIALIZED() == 0)
-		return PFM_ERR_NOTSUPP;
-
-	ret = pfmlib_parse_event(str, &e);
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	/*
-	 * check event-level first
-	 * if no unit masks, then we are done
-	 */
-	if (intel_x86_eflag(e.pmu, &e, INTEL_X86_PEBS) && e.nattrs == 0)
-		return PFM_SUCCESS;
-
-	/*
-	 * ALL unit masks must support PEBS
-	 */
-	for(i=0; i < e.nattrs; i++)
-		if (e.attrs[i].type == PFM_ATTR_UMASK)
-			umask_pebs &= intel_x86_uflag(e.pmu, &e, e.attrs[i].id, INTEL_X86_PEBS);
-	
-	return umask_pebs ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
-}
-#endif
-
 void
 pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr)
 {
