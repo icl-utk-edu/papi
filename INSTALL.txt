@@ -71,19 +71,20 @@ General Installation
 MORE ABOUT CONFIGURE OPTIONS
 *****************************************************************************
 
-Beginning with PAPI 3.5.0, there is an extensive array of options available
-from the configure command-line. These options select default directories,
-32- or 64-bit library modes, driver versions, compiler settings and more.
-For complete details on the command-line options:
+Beginning with PAPI 4.0.0, there is an extensive array of options available
+from the configure command-line which may differ from previous versions of
+PAPI. These options select default directories, 32- or 64-bit library modes, 
+driver versions, compiler settings and more. For complete details on the 
+command-line options, use:
 	% ./configure --help
 
 *****************************************************************************
 Operating System Specific Installation Steps (In Alphabetical Order by OS)
 *****************************************************************************
 
-AIX - IBM POWER3, POWER4, POWER5
+AIX - IBM POWER5 and POWER6
 *****************************************************************************
-PAPI is supported on AIX 5.x for POWER3, POWER4 and POWER5.
+PAPI is supported on AIX 5.x for POWER5 and POWER6.
 Use ./configure to select the desired make options for your system, 
 specifying the --with_bitmode=32 or --with-bitmode=64 to select wordlength.
 32 bits is the default.
@@ -95,25 +96,6 @@ specifying the --with_bitmode=32 or --with-bitmode=64 to select wordlength.
 
 WARNING: PAPI requires XLC version 6 or greater.
 Your version can be determined by running 'lslpp -a -l | grep -i xlc'.
-
-BG/L 
-*****************************************************************************
-BG/L is a cross-compiled environment. The machine on which PAPI is compiled
-is not the machine on which PAPI runs. To compile PAPI on BG/L, specify the 
-BG/L environment as shown below:
-
-	% ./configure --with-OS=bgl
-	% make
-
-The testing targets in the make file will not work in the BG/L environment.
-Since BG/L supports multiple queueing systems, you must manually execute
-programs in the ctests and ftests directories to check for successful
-library creation. You can also manually edit the run_tests.sh script to
-automate testing for your installation. 
-
-WARNING: ./configure might fail if the cross compiler is not in your path.
-	 If that is the case, just add it to your path 
-	 and everything should work.
 
 BG/P
 *****************************************************************************
@@ -190,7 +172,7 @@ use:
     % ./run_cat_tests.sh
 after substituting "aprun -n1" for "yod -sz 1" in run_cat_tests.sh.
 
-Linux - Itanium I & II
+Linux - Itanium II & Montecito
 *****************************************************************************
 PAPI on Itanium Linux links to the perfmon library. The library version and 
 the Itanium version are automatically determined by configure.
@@ -202,23 +184,16 @@ to learn more about these options.
 Follow the general installation instructions to complete your installation.
 
 PLATFORM NOTES:
-The earprofile test fails under perfmon for Itanium I and II. It has been
+The earprofile test fails under perfmon for Itanium II. It has been
 reconfigured to work on the upcoming perfmon2 interface.
 
-Linux - Itanium Montecito
-*****************************************************************************
-A preliminary implementation of PAPI for Montecito is available in this
-release. It can be configured using either libpfm or the beta perfmon2
-implementation. Your operating system will require a kernel patch to use
-perfmon2. Contact the PAPI team if you are interested in experimenting
-with this implementation. CAVEAT EMPTOR.
-
-Linux - PPC64 (POWER5, POWER4, and PowerPC970)
+Linux - PPC64 (POWER5, POWER5+, POWER6, and PowerPC970)
 ****************************************************************************
 Linux/PPC64 requires that the kernel be patched and recompiled with the
-PerfCtr patch.   The required patches and complete installation instructions
-are provided in the papi/src/perfctr-2.7.x directory. PPC64 is the ONLY 
-platform that REQUIRES use of PerfCtr 2.7.x.
+PerfCtr patch if the kernel is version 2.6.30 or older. The required patches 
+and complete installation instructions are provided in the 
+papi/src/perfctr-2.7.x directory. PPC64 is the ONLY platform that REQUIRES 
+use of PerfCtr 2.7.x.
 
 *- IF YOU HAVE ALREADY PATCHED YOUR KERNEL AND/OR INSTALLED PERFCTR -*
 
@@ -240,9 +215,9 @@ Follow the general installation instructions to complete your installation.
 Linux/x86 - Intel Pentium, Core and AMD Athlon, Opteron
 *****************************************************************************
 Linux/x86 requires that the kernel be patched and recompiled with the PerfCtr
-patch. The required patches and complete installation instructions are 
-provided in the papi/src/perfctr-x.y directory. Please see the INSTALL file
-in that directory.
+patch if the kernel is version 2.6.30 or older. The required patches and 
+complete installation instructions are provided in the papi/src/perfctr-x.y 
+directory. Please see the INSTALL file in that directory.
 
 Do not forget, you also need to build your kernel with APIC support in order
 for hardware overflow to work. This is very important for accurate statistical
@@ -265,10 +240,8 @@ You can verify the APIC is working after rebooting with the new kernel
 by running the 'perfex -i' command found in the perfctr/examples/perfex
 directory.
 
-PAPI on x86 assumes PerfCtr 2.6.x. You can change this with the 
-'--with-perfctr=<5,6,7> option to ./configure. THIS IS NOT ADVISED.
-PerfCtr 2.7.x is supported only for PPC64.
-NOTE: THE VERSIONS OF PERFCTR DO NOT CORRESPOND TO LINUX KERNEL VERSIONS.
+PAPI on x86 assumes PerfCtr 2.6.x. NOTE: THE VERSIONS OF PERFCTR DO NOT 
+CORRESPOND TO LINUX KERNEL VERSIONS.
 
 *- IF YOU HAVE ALREADY PATCHED YOUR KERNEL AND/OR INSTALLED PERFCTR -*
 
@@ -318,12 +291,6 @@ PLATFORM NOTES:
 Opteron fails the matrix-hl test because the default definition of PAPI_FP_OPS
 overcounts speculative floating point operations.
 
-MIPS - IRIX 6.5
-*****************************************************************************
-No additional steps are required to install PAPI on IRIX. Follow the 
-general installation guide, and everything should work.
-
-
 Solaris 8 - Ultrasparc
 *****************************************************************************
 The only requirement for Solaris is that you must be running version 2.8 or 
@@ -332,15 +299,14 @@ to install PAPI and you can follow the general installation guide.
 
 Solaris 10 - UltraSPARC T2/Niagara 2
 *****************************************************************************
-PAPI supports the Niagara 2 on Solaris 10 as of PAPI 3.7.0. The substrate
-offers support for common basic operations like adding/reading/etc and the
-advanced features multiplexing (see below), overflow handling and profiling.
-The implementation for Solaris 10 is based on libcpc 2, which offers access
-to the underlying performance counters. Performance counters for the
-UltraSPARC architecture are described in the UltraSPARC architecture manual
-in general with detailed descriptions in the actual processor manual. In
-case of this substrate the documentation for performance counters can be
-found at:
+PAPI supports the Niagara 2 on Solaris 10. The substrate offers support for 
+common basic operations like adding/reading/etc and the advanced features 
+multiplexing (see below), overflow handling and profiling. The implementation 
+for Solaris 10 is based on libcpc 2, which offers access to the underlying 
+performance counters. Performance counters for the UltraSPARC architecture 
+are described in the UltraSPARC architecture manual in general with detailed 
+descriptions in the actual processor manual. In case of this substrate the 
+documentation for performance counters can be found at:
 
  - http://www.opensparc.net/publications/specifications/
 
@@ -396,4 +362,37 @@ and installing this driver.
 
 The general installation instructions are irrelevant for Windows.
 
+Other Platforms
+*****************************************************************************
+PAPI can be compiled and installed on most platforms that have GNU compilers 
+regardless of operating system or hardware. However, PAPI can only provide 
+access to the CPU hardware counters on platforms that are directly supported.
 
+
+*****************************************************************************
+CREATING AND RUNNING COMPONENTS
+*****************************************************************************
+
+Basic instructions on how to create a new component can be found in 
+src/components/README. The components directory contains several components 
+developed by the PAPI team along with a simple yet functional "example" 
+component which can be used as a guide to aid third-party developers. 
+Assuming components are developed according to the specified guidelines, 
+they will function within the PAPI framework without requiring any changes 
+to PAPI source code.
+
+Before running any component that requires configuration, the configure 
+script for that component must be executed in order to generate the 
+Makefile which contains the configuration settings. Normally, the script 
+will only need to be executed once. Depending on the component, configure 
+may require that one or more configuration settings be specified by the user.
+
+The components to be added to PAPI are specified during the configuration of
+PAPI by adding the --with-components=<component list> command line option to
+configure. For example, to add the acpi, lustre, and net components, the 
+option would be:
+   	% ./configure --with-components="acpi lustre net"
+
+Attempting to add a component to PAPI which requires configuration and has 
+not been configured will result in a compilation error because the PAPI 
+build environment will be unable to find the Makefile for that component. 
