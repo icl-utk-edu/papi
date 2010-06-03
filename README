@@ -36,7 +36,7 @@ This version of libpfm supports:
 		Intel Yonah (Core Duo/Core Solo),
 		Intel Core (Merom, Penryn, Dunnington) Core 2 and Quad
 		Intel Atom
-		Intel Nehalem (Core i7, Core i5)
+		Intel Nehalem (Nehalem, Westmere, Beckton)
 		Intel architectural perfmon v1, v2, v3
 
 
