@@ -25,15 +25,15 @@ OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow sys
 	overflow overflow_force_software overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	overflow_index overflow_one_and_read overflow_allcounters
 PROFILE  = profile profile_force_software sprofile profile_twoevents byte_profile
-
 ATTACH	= multiattach zero_attach
 P4_TEST	= p4_lst_ins
 ACPI	= acpi 
 EAR	= earprofile
 RANGE	= data_range
 BROKEN	= inherit pernode
+API = api
 ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
-	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH)
+	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH) $(API)
 UTILOBJS= do_loops.o test_utils.o dummy.o
 
 default all ctests ctest: $(CTEST_TARGETS)
@@ -71,6 +71,11 @@ forkexec_tests: $(FORKEXEC)
 overflow_tests: $(OVERFLOW)
 
 profile_tests: $(PROFILE)
+
+papi_api: $(API)
+
+api: api.c $(UTILOBJS) $(PAPILIB) 
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) api.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@
 
 sdsc2: sdsc2.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@

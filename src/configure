@@ -8449,7 +8449,7 @@ if test "$no_cpu_counters" = "yes"; then
   MISCHDRS="papi_lock.h cycle.h"
   CFLAGS="$CFLAGS -DNO_CPU_COUNTERS"
   DESCR="$DESCR without CPU counters"
-  CTEST_TARGETS=""
+  CTEST_TARGETS="papi_api"
   FTEST_TARGETS=""
   UTIL_TARGETS="papi_clockres papi_native_avail papi_version"
 fi
