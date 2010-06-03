@@ -50,39 +50,38 @@ ifeq ($(SYS),Linux)
 CFLAGS+= -pthread
 endif
 
-TARGET_GEN=
 PERF_EVENT_HDR=$(TOPDIR)/include/perfmon/perf_event.h
 
 ifeq ($(SYS),Linux)
 LPC_UTILS=perf_util.o
-TARGET_LINUX +=self self_basic self_count task task_attach_timeout syst \
+TARGETS+=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
 	self_pipe syst_count
 
 XTRA += rtop
 endif
 
-all: $(TARGET_GEN) $(TARGET_LINUX) $(XTRA)
+all: $(TARGETS) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-# Many systems don't have ncurses installed
+#
+# Many systems don't have ncurses-devel installed
+#
 rtop: rtop.o $(PFMLIB)
 	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
-$(TARGET_LINUX):  %:%.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
+$(TARGETS):  %:%.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 
-$(TARGET_GEN):  %:%.o $(PFMLIB)
-	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGET_LINUX) $(TARGET_GEN) $(XTRA) *~
+	$(RM) -f *.o $(TARGETS) $(XTRA) *~
 
 distclean: clean
 
-install_examples: $(TARGET_LINUX) $(TARGET_GEN)
-	@echo installing: $(TARGET_LINUX) $(TARGET_GEN)
+install_examples: $(TARGETS)
+	@echo installing: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)
-	$(INSTALL) -m 755 $(TARGET_LINUX) $(TARGET_GEN) $(DESTDIR)$(EXAMPLESDIR)
+	$(INSTALL) -m 755 $(TARGETS) $(DESTDIR)$(EXAMPLESDIR)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
