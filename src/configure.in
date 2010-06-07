@@ -1069,7 +1069,7 @@ fi
 ##################################################
 FILENAME=Makefile.inc
 SHOW_CONF=showconf
-CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear"
+CTEST_TARGETS="papi_api serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear"
 FTEST_TARGETS="strtest zero first second tenth description fdmemtest accum highlevel cost johnmay2 case1 case2 clockres eventname fmatrixlowpapi fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2 avail"
 UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version"
 LIBRARY=libpapi.a
@@ -1346,7 +1346,7 @@ if test "$no_cpu_counters" = "yes"; then
   MISCHDRS="papi_lock.h cycle.h"
   CFLAGS="$CFLAGS -DNO_CPU_COUNTERS"
   DESCR="$DESCR without CPU counters"
-  CTEST_TARGETS="papi_api"
+  CTEST_TARGETS=""
   FTEST_TARGETS=""
   UTIL_TARGETS="papi_clockres papi_native_avail papi_version"
 fi
