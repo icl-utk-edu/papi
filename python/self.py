@@ -24,14 +24,14 @@
 # Self monitoring example. Copied from self.c
 
 import os
-from optparse import OptionParser
+import optparse
 import random
 import errno
 import struct
-from perfmon import *
+import perfmon
 
 if __name__ == '__main__':
-  parser = OptionParser()
+  parser = optparse.OptionParser()
   parser.add_option("-e", "--events", help="Events to use",
                     action="store", dest="events")
   parser.set_defaults(events="PERF_COUNT_HW_CPU_CYCLES")
@@ -42,7 +42,7 @@ if __name__ == '__main__':
   else:
     raise "You need to specify events to monitor"
 
-  s = PerThreadSession(int(os.getpid()), events)
+  s = perfmon.PerThreadSession(int(os.getpid()), events)
   s.start()
 
   # code to be measured

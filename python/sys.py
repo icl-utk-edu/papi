@@ -27,13 +27,13 @@
 
 import sys
 import os
-from optparse import OptionParser
+import optparse
 import time 
 import struct
-from perfmon import *
+import perfmon
 
 if __name__ == '__main__':
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.add_option("-e", "--events", help="Events to use",
 		       action="store", dest="events")
     parser.add_option("-c", "--cpulist", help="CPUs to monitor",
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     else:
       raise "You need to specify events to monitor"
 
-    s = SystemWideSession(cpus, events)
+    s = perfmon.SystemWideSession(cpus, events)
 
     s.start()
     # Measuring loop

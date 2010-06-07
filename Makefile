@@ -27,7 +27,7 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
 include config.mk
 
-DIRS=lib examples perf_examples include docs
+DIRS=lib examples perf_examples include docs python
 
 all: 
 	@echo Compiling for \'$(ARCH)\' target
