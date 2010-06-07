@@ -650,7 +650,7 @@ case "$virtualtimer" in
 esac
 AC_MSG_RESULT($virtualtimer)
 
-if test "$OS" = "aix" -a "x$no_cpu_counters" = "x"; then
+if test "$OS" = "aix"; then
   AC_ARG_WITH(pmapi,
               [  --with-pmapi=<path>		Specify path of pmapi on aix system ],
               [PMAPI=$withval],

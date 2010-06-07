@@ -6186,7 +6186,7 @@ esac
 { $as_echo "$as_me:$LINENO: result: $virtualtimer" >&5
 $as_echo "$virtualtimer" >&6; }
 
-if test "$OS" = "aix" -a "x$no_cpu_counters" = "x"; then
+if test "$OS" = "aix"; then
 
 # Check whether --with-pmapi was given.
 if test "${with_pmapi+set}" = set; then
