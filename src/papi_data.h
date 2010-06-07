@@ -19,10 +19,6 @@
 #ifndef _PAPI_DATA_H
 #define _PAPI_DATA_H  1
 
-/********************/
-/*  BEGIN GLOBALS   */
-/********************/
-
 /* Static preinitialized table of text information for all preset events */
 hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
 	/*  0 */ {"PAPI_L1_DCM", "L1D cache misses", "Level 1 data cache misses"},
@@ -214,7 +210,6 @@ hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
 	/*127 */ {NULL, NULL, NULL}
 };
 
-
 const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
 	/* 0 */ {PAPI_OK, "PAPI_OK", "No error"},
 	/* 1 */ {PAPI_EINVAL, "PAPI_EINVAL", "Invalid argument"},
@@ -237,12 +232,13 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
 			 "Hardware does not support performance counters"},
 	/*14 */ {PAPI_EMISC, "PAPI_EMISC", "Unknown error code"},
 	/*15 */ {PAPI_EPERM, "PAPI_EPERM",
-			 "Permission level does not permit operation"}
-	/*16 */ {PAPI_ENOINIT, "PAPI_ENOINIT", "PAPI hasn't been initialized yet"}
-	/*17 */ {PAPI_ENOCMP, "PAPI_ENOCMP", "Component Index isn't set"}
+			 "Permission level does not permit operation"},
+	/*16 */ {PAPI_ENOINIT, "PAPI_ENOINIT", "PAPI hasn't been initialized yet"},
+	/*17 */ {PAPI_ENOCMP, "PAPI_ENOCMP", "Component Index isn't set"},
+    /*18 */ {PAPI_ENOSUPP, "PAPI_ENOSUPP", "Not supported"},
+    /*19 */ {PAPI_ENOIMPL, "PAPI_ENOIMPL", "Not implemented"},
+    /*20 */ {PAPI_EBUF, "PAPI_EBUF", "Buffer size exceeded"},
+    /*21 */ {PAPI_EINVAL_DOM, "PAPI_EINVAL_DOM", "EventSet domain is not supported for the operation"}
 };
 
-/********************/
-/*    END GLOBALS   */
-/********************/
 #endif

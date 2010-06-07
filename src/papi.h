@@ -109,30 +109,29 @@ failure.
 @{
 */
 
-#define PAPI_OK        0        /**<No error */
-#define PAPI_EINVAL   -1        /**<Invalid argument */
-#define PAPI_ENOMEM   -2        /**<Insufficient memory */
-#define PAPI_ESYS     -3        /**<A System/C library call failed, please check errno */
-#define PAPI_ESBSTR   -4        /**<Substrate returned an error, 
-                                   usually the result of an unimplemented feature */
-#define PAPI_ENOSUPP  -4
-#define PAPI_ECLOST   -5        /**<Access to the counters was lost or interrupted */
-#define PAPI_EBUG     -6        /**<Internal error, please send mail to the developers */
-#define PAPI_ENOEVNT  -7        /**<Hardware Event does not exist */
-#define PAPI_ECNFLCT  -8        /**<Hardware Event exists, but cannot be counted 
-                                   due to counter resource limitations */
-#define PAPI_ENOTRUN  -9        /**<No Events or EventSets are currently counting */
-#define PAPI_EISRUN  -10        /**<Events or EventSets are currently counting */
-#define PAPI_ENOEVST -11        /**< No EventSet Available */
-#define PAPI_ENOTPRESET -12     /**< Not a Preset Event in argument */
-#define PAPI_ENOCNTR -13        /**< Hardware does not support counters */
-#define PAPI_EMISC   -14        /**< No clue as to what this error code means */
-#define PAPI_EPERM   -15        /**< You lack the necessary permissions */
-#define PAPI_ENOINIT -16        /**< PAPI hasn't been initialized yet */
-#define PAPI_EBUF    -17        /**< Buffer size exceeded (usually strings) */
-#define PAPI_EINVAL_DOM -18     /**< The EventSet's domain is not supported for the operation */
-#define PAPI_ENOCMP  -19        /**< Component Index isn't set */
-#define PAPI_NUM_ERRORS	 20	/**< Number of error messages specified in this API. */
+#define PAPI_OK          0     /**< No error */
+#define PAPI_EINVAL     -1     /**< Invalid argument */
+#define PAPI_ENOMEM     -2     /**< Insufficient memory */
+#define PAPI_ESYS       -3     /**< A System/C library call failed */
+#define PAPI_ESBSTR     -4     /**< Not supported by substrate */
+#define PAPI_ECLOST     -5     /**< Access to the counters was lost or interrupted */
+#define PAPI_EBUG       -6     /**< Internal error, please send mail to the developers */
+#define PAPI_ENOEVNT    -7     /**< Event does not exist */
+#define PAPI_ECNFLCT    -8     /**< Event exists, but cannot be counted due to counter resource limitations */
+#define PAPI_ENOTRUN    -9     /**< EventSet is currently not running */
+#define PAPI_EISRUN     -10    /**< EventSet is currently counting */
+#define PAPI_ENOEVST    -11    /**< No such EventSet Available */
+#define PAPI_ENOTPRESET -12    /**< Event in argument is not a valid preset */
+#define PAPI_ENOCNTR    -13    /**< Hardware does not support performance counters */
+#define PAPI_EMISC      -14    /**< Unknown error code */
+#define PAPI_EPERM      -15    /**< Permission level does not permit operation */
+#define PAPI_ENOINIT    -16    /**< PAPI hasn't been initialized yet */
+#define PAPI_ENOCMP     -17    /**< Component Index isn't set */
+#define PAPI_ENOSUPP    -18    /**< Not supported */
+#define PAPI_ENOIMPL    -19    /**< Not implemented */
+#define PAPI_EBUF       -20    /**< Buffer size exceeded */
+#define PAPI_EINVAL_DOM -21    /**< EventSet domain is not supported for the operation */
+#define PAPI_NUM_ERRORS	 22    /**< Number of error messages specified in this API */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
