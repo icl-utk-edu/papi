@@ -15,16 +15,24 @@
 #include "components_config.h"
 
 #if !defined(_WIN32)
-#include <sys/time.h>
-#include <sys/times.h>
-#include <unistd.h>
+#include "cycle.h"
 #include <string.h>
-#include <stdio.h>
 #endif
 
-#if ((defined _BGL) || (defined __bgp__))
-#include <stdlib.h>
-#include <sys/resource.h>
+#ifdef _AIX
+#include <pmapi.h>
+#endif
+
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <errno.h>
+#endif
+
+#ifdef __bgp__
+#include <common/bgp_personality_inlines.h>
+#include <common/bgp_personality.h>
+#include <spi/kernel_interface.h>
 #endif
 
 /* Prototypes */
@@ -41,7 +49,76 @@ long long vec_dummy_get_virt_usec( const hwd_context_t * zero );
 long long vec_dummy_get_real_usec( void );
 long long vec_dummy_get_real_cycles( void );
 
+extern int compute_freq(  );
+
+static int frequency = -1;
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
+
+#ifndef _WIN32
+static char *
+search_cpu_info( FILE * f, char *search_str, char *line )
+{
+	char *s;
+
+	while ( fgets( line, 256, f ) != NULL ) {
+		if ( strstr( line, search_str ) != NULL ) {
+			/* ignore all characters in line up to : */
+			for ( s = line; *s && ( *s != ':' ); ++s );
+			if ( *s )
+				return s;
+		}
+	}
+	return NULL;
+}
+#endif
+
+void
+set_freq(  )
+{
+#if defined(_AIX)
+	frequency = ( int ) pm_cycles(  ) / 1000000;
+#elif defined(__bgp__)
+	_BGP_Personality_t bgp;
+	frequency = BGP_Personality_clockMHz( &bgp );
+#elif defined(_WIN32)
+#elif defined(__APPLE__)
+	int mib[2];
+	size_t len = sizeof ( frequency );
+	unsigned int freq;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_CPU_FREQ;
+	if ( 0 > sysctl( mib, 2, &freq, &len, NULL, 0 ) )
+		frequency = -1;
+	else
+		frequency = freq;
+#else
+	char maxargs[PAPI_HUGE_STR_LEN], *s;
+	float mhz = 0.0;
+	FILE *f;
+
+	if ( ( f = fopen( "/proc/cpuinfo", "r" ) ) != NULL ) {
+		rewind( f );
+		s = search_cpu_info( f, "clock", maxargs );
+
+		if ( !s ) {
+			rewind( f );
+			s = search_cpu_info( f, "cpu MHz", maxargs );
+		}
+
+		if ( s )
+			sscanf( s + 1, "%f", &mhz );
+
+		frequency = ( int ) mhz;
+		fclose( f );
+	}
+#endif
+ 
+#ifndef _WIN32
+	if ( frequency == -1 )
+		frequency = compute_freq(  );
+#endif
+}
 
 void
 _vectors_error(  )
@@ -53,46 +130,43 @@ _vectors_error(  )
 long long
 vec_dummy_get_real_usec( void )
 {
-#ifdef _WIN32
+#if defined(__bgp__)
+	return ( long long ) ( _bgp_GetTimeBase(  ) / frequency );
+#elif defined(_WIN32)
+	/*** NOTE: This differs from the code in win32.c ***/
 	LARGE_INTEGER PerformanceCount, Frequency;
 	QueryPerformanceCounter( &PerformanceCount );
 	QueryPerformanceFrequency( &Frequency );
 	return ( ( PerformanceCount.QuadPart * 1000000 ) / Frequency.QuadPart );
 #else
-	struct timeval tv;
-	gettimeofday( &tv, NULL );
-	return ( ( tv.tv_sec * 1000000 ) + tv.tv_usec );
+	return ( long long ) getticks(  ) / frequency;
 #endif
 }
 
 long long
 vec_dummy_get_real_cycles( void )
 {
-	float usec, cyc;
-
-	usec = ( float ) vec_dummy_get_real_usec(  );
-	cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-	return ( ( long long ) cyc );
+#if defined(__bgp__)
+	return _bgp_GetTimeBase(  );
+#elif defined(_WIN32)
+#else
+	return ( long long ) getticks(  );
+#endif
 }
 
 long long
 vec_dummy_get_virt_usec( const hwd_context_t * zero )
 {
 	( void ) zero;			 /*unused */
+#if defined(__bgp__)
+	return ( long long ) ( _bgp_GetTimeBase(  ) / frequency );
+#elif defined(_WIN32)
+	/*** NOTE: This differs from the code in win32.c ***/
 	long long retval;
-#if ((defined _BGL) || (defined __bgp__))
-	struct rusage ruse;
-	getrusage( RUSAGE_SELF, &ruse );
-	retval =
-		( long long ) ( ruse.ru_utime.tv_sec * 1000000 +
-						ruse.ru_utime.tv_usec );
-#elif _WIN32
-	/* identical code is found in the windows substrate */
 	HANDLE p;
 	BOOL ret;
 	FILETIME Creation, Exit, Kernel, User;
 	long long virt;
-
 	p = GetCurrentProcess(  );
 	ret = GetProcessTimes( p, &Creation, &Exit, &Kernel, &User );
 	if ( ret ) {
@@ -104,24 +178,20 @@ vec_dummy_get_virt_usec( const hwd_context_t * zero )
 	} else
 		return ( PAPI_ESBSTR );
 #else
-	struct tms buffer;
-	times( &buffer );
-	retval =
-		( long long ) buffer.tms_utime * ( long long ) ( 1000000 /
-														 sysconf
-														 ( _SC_CLK_TCK ) );
+	return ( long long ) getticks(  ) / frequency;
 #endif
-	return ( retval );
 }
 
 long long
 vec_dummy_get_virt_cycles( const hwd_context_t * zero )
 {
-	float usec, cyc;
-
-	usec = ( float ) vec_dummy_get_virt_usec( zero );
-	cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-	return ( ( long long ) cyc );
+	( void ) zero;			 /*unused */
+#if defined(__bgp__)
+	return _bgp_GetTimeBase(  );
+#elif defined(_WIN32)
+#else
+	return ( long long ) getticks(  );
+#endif
 }
 
 int
