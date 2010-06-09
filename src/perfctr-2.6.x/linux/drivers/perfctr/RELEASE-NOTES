@@ -3,6 +3,14 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.41, 2010-06-08
+- x86: Add support for OFFCORE_RSP_{0,1} on Nehalem/Westmere.
+- x86: Recognise Intel family 6 models 30 and 37 as Nehalems.
+  Update comments mapping product lines to model numbers.
+- x86: Rename PERFCTR_X86_INTEL_COREI7 CPU/PMU type constant to
+  PERFCTR_X86_INTEL_NHLM. Update driver to print "Nehalem" rather
+  than "Core i7" when a CPU of this type is detected.
+
 Version 2.6.40, 2010-01-30
 - x86: add comment after #endif terminating big kernel >= 2.6.19 block
 - x86: handle cpumask API change in kernel 2.6.32

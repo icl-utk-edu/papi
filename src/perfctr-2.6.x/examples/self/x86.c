@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2010  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +41,7 @@ void do_setup(const struct perfctr_info *info,
 #endif
       case PERFCTR_X86_INTEL_CORE2:
       case PERFCTR_X86_INTEL_ATOM:
-      case PERFCTR_X86_INTEL_COREI7:
+      case PERFCTR_X86_INTEL_NHLM:
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
       case PERFCTR_X86_AMD_FAM10H:

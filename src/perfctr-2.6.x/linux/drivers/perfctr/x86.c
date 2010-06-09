@@ -54,6 +54,7 @@ struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 		unsigned int pebs_matrix_vert;
 	} control;
 	unsigned int core2_fixed_ctr_ctrl;
+	unsigned int nhlm_offcore_rsp[2];
 } ____cacheline_aligned;
 static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 #define __get_cpu_cache(cpu) (&per_cpu_cache[cpu])
@@ -104,6 +105,10 @@ struct perfctr_pmu_msrs {
 #define MSR_CORE_PERF_GLOBAL_CTRL	0x38F
 #define CORE2_PMC_FIXED_FLAG		(1<<30)
 #define CORE2_PMC_FIXED_MASK		0x3
+
+/* Intel Nehalem */
+#define MSR_OFFCORE_RSP0	0x1A6		/* Westmere has another at 0x1A7 */
+#define OFFCORE_RSP_RESERVED	(~0xF7FF)
 
 /* AMD K7 */
 #define MSR_K7_EVNTSEL0		0xC0010000	/* .. 0xC0010003 */
@@ -437,6 +442,7 @@ static cpumask_t amd_mc_core0_mask;	/* only these may use NB events */
 static int p6_has_separate_enables;	/* affects EVNTSEL.ENable rules */
 static unsigned int p6_nr_pmcs;	/* number of general-purpose counters */
 static unsigned int p6_nr_ffcs;	/* number of fixed-function counters */
+static unsigned int nhlm_nr_offcore_rsps; /* number of OFFCORE_RSP MSRs */
 
 /* shared with K7 */
 static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, cpumask_t *cpumask)
@@ -532,6 +538,19 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, cpu
 				core2_fixed_ctr_ctrl |= ctl << (pmc & CORE2_PMC_FIXED_MASK) * 4;
 			}
 		}
+	}
+	/*
+	 * check offcore_rsp[] on Intel Nehalem
+	 * on others we force it to zero (should return -EINVAL but
+	 * having zeroes there has not been a requirement before)
+	 */
+	for (i = 0; i < 2; ++i) {
+		if (i < nhlm_nr_offcore_rsps) {
+			unsigned int offcore_rsp = state->control.nhlm.offcore_rsp[i];
+			if (offcore_rsp & OFFCORE_RSP_RESERVED)
+				return -EINVAL;
+		} else
+			state->control.nhlm.offcore_rsp[i] = 0;
 	}
 	state->core2_fixed_ctr_ctrl = core2_fixed_ctr_ctrl;
 	state->k1.id = new_id();
@@ -691,6 +710,15 @@ static void p6_like_write_control(const struct perfctr_cpu_state *state,
 		cache->core2_fixed_ctr_ctrl = state->core2_fixed_ctr_ctrl;
 		wrmsr(MSR_CORE_PERF_FIXED_CTR_CTRL, state->core2_fixed_ctr_ctrl, 0);
 	}
+	for (i = 0; i < 2; ++i) {
+		unsigned int offcore_rsp;
+		
+		offcore_rsp = state->control.nhlm.offcore_rsp[i];
+		if (offcore_rsp != cache->nhlm_offcore_rsp[i]) {
+			cache->nhlm_offcore_rsp[i] = offcore_rsp;
+			wrmsr(MSR_OFFCORE_RSP0+i, offcore_rsp, 0);
+		}
+	}
 	cache->k1.id = state->k1.id;
 }
 
@@ -718,6 +746,7 @@ static const struct perfctr_pmu_msrs p6_pmu_msrs = {
 static struct perfctr_msr_range core2_extras[] = {
 	{ MSR_CORE_PERF_FIXED_CTR0, 3 }, /* on Atom we'll update this count */
 	{ MSR_CORE_PERF_FIXED_CTR_CTRL, 1 },
+	{ MSR_OFFCORE_RSP0, 0 },	/* on Nehalem we'll update this count */
 	{ 0, 0 },
 };
 
@@ -1643,7 +1672,7 @@ static int __init intel_p6_init(void)
 	static char p6_name[] __initdata = "Intel P6";
 	static char core2_name[] __initdata = "Intel Core 2";
 	static char atom_name[] __initdata = "Intel Atom";
-	static char corei7_name[] __initdata = "Intel Core i7";
+	static char nhlm_name[] __initdata = "Intel Nehalem";
 	unsigned int misc_enable;
 
 	/*
@@ -1657,11 +1686,13 @@ static int __init intel_p6_init(void)
 	case 15:	/* Core 2 */
 	case 22:	/* Core 2 based Celeron model 16h */
 	case 23:	/* Core 2 */
-	case 26:	/* Core i7 */
+	case 26:	/* Nehalem: Core i7-900, Xeon 5500, Xeon 3500 */
 	case 28:	/* Atom */
 	case 29:	/* Core 2 based Xeon 7400 */
-	case 44:	/* Core i7-980X (Gulftown) */
-	case 46:	/* Nehalem-based Xeon 7500 */
+	case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
+	case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeno L3406 */
+	case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+	case 46:	/* Nehalem: Xeon 7500 */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 			return -ENODEV;
@@ -1683,13 +1714,23 @@ static int __init intel_p6_init(void)
 		p6_has_separate_enables = 1;
 		p6_nr_ffcs = 3;
 		break;
-	case 26:	/* Core i7 */
-	case 44:	/* Core i7-980X (Gulftown) */
-	case 46:	/* Nehalem-based Xeon 7500 */
-		perfctr_cpu_name = corei7_name;
+	case 26:	/* Nehalem: Core i7-900, Xeon 5500, Xeon 3500 */
+	case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
+	case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
+	case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+	case 46:	/* Nehalem: Xeon 7500 */
+		perfctr_cpu_name = nhlm_name;
 		p6_has_separate_enables = 1;
 		p6_nr_ffcs = 3;
 		p6_nr_pmcs = 4;
+		switch (current_cpu_data.x86_model) { /* Westmere adds MSR_OFFCORE_RSP1 */
+		case 37:
+		case 44:
+			nhlm_nr_offcore_rsps = 2;
+			break;
+		default:
+			nhlm_nr_offcore_rsps = 1;
+		}
 		break;
 	case 28: {	/* Atom */
 		unsigned int maxlev, eax, ebx, dummy, edx;
@@ -1778,10 +1819,12 @@ static int __init intel_p6_init(void)
 	case 29:	/* Core 2 based Xeon 7400 */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
 		break;
-	case 26:	/* Core i7 */
-	case 44:	/* Core i7-980X (Gulftown) */
-	case 46:	/* Nehalem-based Xeon 7500 */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_COREI7;
+	case 26:	/* Nehalem: Core i7-900, Xeon 5500, Xeon 3500 */
+	case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
+	case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
+	case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+	case 46:	/* Nehalem: Xeon 7500 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_NHLM;
 		break;
 	case 28:	/* Atom */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_ATOM;
@@ -1795,6 +1838,7 @@ static int __init intel_p6_init(void)
 	p6_perfctrs[0].nr_msrs = p6_nr_pmcs;
 	p6_evntsels[0].nr_msrs = p6_nr_pmcs;
 	core2_extras[0].nr_msrs = p6_nr_ffcs;
+	core2_extras[2].nr_msrs = nhlm_nr_offcore_rsps;
 	pmu_msrs = p6_nr_ffcs != 0 ? &core2_pmu_msrs : &p6_pmu_msrs;
 
 #ifdef CONFIG_X86_LOCAL_APIC
@@ -1813,11 +1857,13 @@ static int __init intel_p6_init(void)
 		case 15:	/* Core 2 */
 		case 22:	/* Core 2 based Celeron model 16h */
 		case 23:	/* Core 2 */
-		case 26:	/* Core i7 */
+		case 26:	/* Nehalem: Core i7-900, Xeon 5500, Xeon 3500 */
 		case 28:	/* Atom */
 		case 29:	/* Core 2 based Xeon 7400 */
-		case 44:	/* Core i7-980X (Gulftown) */
-		case 46:	/* Nehalem-based Xeon 7500 */
+		case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
+		case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
+		case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+		case 46:	/* Nehalem: Xeon 7500 */
 			lvtpc_reinit_needed = 1;
 		}
 	}
@@ -2089,6 +2135,14 @@ static void perfctr_cpu_invalidate_cache(void)
 	 * indicate that it has an all-bits-zero value.
 	 */
 	cache->core2_fixed_ctr_ctrl = 0;
+
+	/*
+	 * To ensure that MSR_OFFCORE_RSP[0..1] are not written to
+	 * on processors that do not have them, each CPU cache must
+	 * indicate that they have all-bits-zero values.
+	 */
+	cache->nhlm_offcore_rsp[0] = 0;
+	cache->nhlm_offcore_rsp[1] = 0;
 }
 
 static void perfctr_cpu_init_one(void *ignore)

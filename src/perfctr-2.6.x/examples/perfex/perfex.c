@@ -4,7 +4,7 @@
  *	perfex - a command-line interface to processor performance counters
  *
  * SYNOPSIS
- *	perfex [-e event] .. [--p4pe=value] [--p4pmv=value] [-o file] command
+ *	perfex [-e event] .. [--nhlm_offcore_rsp_{0,1}=value] [--p4{pe,pmv}=value] [-o file] command
  *	perfex { -i | -l | -L }
  *
  * DESCRIPTION
@@ -41,6 +41,10 @@
  *
  *		The counts, together with an event description are written
  *		to the result file (default is stderr).
+ *
+ *	--nhlm_offcore_rsp_{0,1}=value
+ *		Specify the value to be stored in the auxiliary control
+ *		registers OFFCORE_RSP_{0,1} on Nehalem processors.
  *
  *	--p4pe=value | --p4_pebs_enable=value
  *	--p4pmv=value | --p4_pebs_matrix_vert=value
@@ -101,7 +105,7 @@
  *	perfex is superficially similar to IRIX' perfex(1).
  *	The -a, -mp, -s, and -x options are not yet implemented.
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2010  Mikael Pettersson
  */
 
 /*
@@ -268,7 +272,7 @@ static int do_child(int sock, const struct vperfctr_control *control, char **arg
     return 1;
 }
 
-static int do_parent(int sock, int child_pid, FILE *resfile)
+static int do_parent(int sock, int child_pid, FILE *resfile, const struct perfctr_info *info)
 {
     int child_status;
     int fd;
@@ -300,12 +304,13 @@ static int do_parent(int sock, int child_pid, FILE *resfile)
     }
     close(fd);
 
-    do_print(resfile, &control.cpu_control, &sum);
+    do_print(resfile, info, &control.cpu_control, &sum);
 
     return WEXITSTATUS(child_status);
 }
 
-static int do_perfex(const struct vperfctr_control *control, char **argv, FILE *resfile)
+static int do_perfex(
+    const struct vperfctr_control *control, char **argv, FILE *resfile, const struct perfctr_info *info)
 {
     int pid;
     int sv[2];
@@ -324,7 +329,7 @@ static int do_perfex(const struct vperfctr_control *control, char **argv, FILE *
 	return do_child(sv[1], control, argv);
     } else {
 	close(sv[1]);
-	return do_parent(sv[0], pid, resfile);
+	return do_parent(sv[0], pid, resfile, info);
     }
 }
 
@@ -416,7 +421,7 @@ static void do_list(const struct perfctr_info *info, int long_format)
 
     event_set = perfctr_cpu_event_set(info->cpu_type);
     if (!event_set || !event_set->nevents) {
-	printf("\nThe event list for this CPU type is not available\n");
+	printf("\nThe user-space library does not include an event list for this CPU type (this is not an error)\n");
 	return;
     }
     printf("\nEvents Available:\n");
@@ -542,5 +547,5 @@ int main(int argc, char **argv)
 	break;
     }
 
-    return do_perfex(&control, argv, resfile);
+    return do_perfex(&control, argv, resfile, &info);
 }

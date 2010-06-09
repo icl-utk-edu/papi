@@ -29,7 +29,8 @@
 #define PERFCTR_X86_AMD_FAM10H	19	/* family 10h, family 11h */
 #define PERFCTR_X86_AMD_FAM10	PERFCTR_X86_AMD_FAM10H /* XXX: compat crap, delete soon */
 #define PERFCTR_X86_INTEL_ATOM	20	/* family 6 model 28 */
-#define PERFCTR_X86_INTEL_COREI7 21	/* family 6 model 26, 44, 46 */
+#define PERFCTR_X86_INTEL_NHLM	21	/* Nehalem: family 6 models 26, 30, 37, 44, 46 */
+#define PERFCTR_X86_INTEL_COREI7 PERFCTR_X86_INTEL_NHLM /* XXX: compat crap, delete soon */
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;
@@ -50,6 +51,12 @@ struct perfctr_cpu_control {
 			unsigned int pebs_matrix_vert;	/* for replay tagging */
 		} p4;
 		unsigned int evntsel_high[18];
+		/* Note: nhlm.offcore_rsp[] must not overlap evntsel_high[],
+		   instead we make it overlap the p4.pebs_ fields */
+		struct {
+			unsigned int _padding[18];
+			unsigned int offcore_rsp[2];
+		} nhlm;
 	}; /* XXX: should be a named field 'u', but that breaks source-code compatibility */
 	int ireset[18];			/* < 0, for i-mode counters */
 	unsigned int _reserved1;

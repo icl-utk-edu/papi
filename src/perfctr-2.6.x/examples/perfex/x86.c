@@ -1,25 +1,44 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2010  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include "libperfctr.h"
 #include "arch.h"
 
+static int info_is_p4(const struct perfctr_info *info)
+{
+    switch (info->cpu_type) {
+#if !defined(__x86_64__)
+    case PERFCTR_X86_INTEL_P4:
+    case PERFCTR_X86_INTEL_P4M2:
+#endif
+    case PERFCTR_X86_INTEL_P4M3:
+	return 1;
+    default:
+	return 0;
+    }
+}
+
 void do_print(FILE *resfile,
+	      const struct perfctr_info *info,
 	      const struct perfctr_cpu_control *cpu_control,
 	      const struct perfctr_sum_ctrs *sum)
 {
     unsigned int nrctrs, i;
+    int is_p4;
 
+    is_p4 = info_is_p4(info);
     if (cpu_control->tsc_on)
 	fprintf(resfile, "tsc\t\t\t\t%19lld\n", sum->tsc);
     nrctrs = cpu_control->nractrs;
     for(i = 0; i < nrctrs; ++i) {
 	fprintf(resfile, "event 0x%08X",
 		cpu_control->evntsel[i]);
+	/* p4.escr[] overlaps evntsel_high[], but the output syntax
+	   is the same regardless of whether is_p4 is true or not */
 	if (cpu_control->p4.escr[i])
 	    fprintf(resfile, "/0x%08X",
 		    cpu_control->p4.escr[i]);
@@ -29,16 +48,22 @@ void do_print(FILE *resfile,
 	    fprintf(resfile, "@%u\t\t", cpu_control->pmc_map[i]);
 	fprintf(resfile, "%19lld\n", sum->pmc[i]);
     }
+    /* p4.pebs_{enable,matrix_vert} overlap nhlm.offcore_rsp[],
+       and we want to adjust the output based on is_p4 */
     if (cpu_control->p4.pebs_enable)
-	fprintf(resfile, "PEBS_ENABLE 0x%08X\n",
+	fprintf(resfile, "%s 0x%08X\n",
+		is_p4 ? "PEBS_ENABLE" : "NHLM_OFFCORE_RSP_0",
 		cpu_control->p4.pebs_enable);
     if (cpu_control->p4.pebs_matrix_vert)
-	fprintf(resfile, "PEBS_MATRIX_VERT 0x%08X\n",
+	fprintf(resfile, "%s 0x%08X\n",
+		is_p4 ? "PEBS_MATRIX_VERT" : "NHLM_OFFCORE_RSP_1",
 		cpu_control->p4.pebs_matrix_vert);
 }
 
 void do_arch_usage(void)
 {
+    fprintf(stderr, "\t--nhlm_offcore_rsp_0=<value>\tValue for OFFCORE_RSP_0 (Nehalem only)\n");
+    fprintf(stderr, "\t--nhlm_offcore_rsp_1=<value>\tValue for OFFCORE_RSP_1 (Nehalem only)\n");
     fprintf(stderr, "\t--p4pe=<value>\t\t\tValue for PEBS_ENABLE (P4 only)\n");
     fprintf(stderr, "\t--p4_pebs_enable=<value>\tSame as --p4pe=<value>\n");
     fprintf(stderr, "\t--p4pmv=<value>\t\t\tValue for PEBS_MATRIX_VERT (P4 only)\n");

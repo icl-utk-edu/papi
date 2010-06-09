@@ -6,6 +6,23 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.41, 2010-06-08
+- Extend examples/perfex/ to allow users to set up values for
+  the OFFCORE_RSP MSRs on Nehalem-based processors.
+- Add driver support for OFFCORE_RSP MSRs on Nehalem-based processors.
+- Recognise more Nehalem-based processors (models 30, 37).
+- Renamed PERFCTR_X86_INTEL_COREI7 symbolic CPU/PMU type constant
+  to PERFCTR_X86_INTEL_NHLM, since it denotes the entire Nehalem
+  family not just the (original) Core i7. The old constant is
+  also defined for now, to not break source code compatibility.
+- Correct Core i7 event setup in examples/global/ to actually
+  work. It was rejected by the driver due to a copy-paste error.
+- Rewrite the missing event list message in `perfex -l/-L' to
+  indicate that this is a user-space library omission, not an
+  issue with the driver or the hardware.
+- Updated kernel support: 2.6.18-194.3.1.el5, 2.6.18-194.el5,
+  2.6.18-164.15.1.el5 (RHEL5).
+
 Version 2.6.40, 2010-01-30
 - Preliminary support for Intel Xeon 7500 (Nehalem-based) processors.
 - Preliminary support for Intel i7-980X Gulftown processors.

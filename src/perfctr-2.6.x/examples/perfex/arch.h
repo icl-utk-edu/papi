@@ -1,12 +1,13 @@
 /* $Id$
  * Architecture-specific support code.
  *
- * Copyright (C) 2004-2007  Mikael Pettersson
+ * Copyright (C) 2004-2010  Mikael Pettersson
  */
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
 
 extern void do_print(FILE *resfile,
+		     const struct perfctr_info *info,
 		     const struct perfctr_cpu_control *cpu_control,
 		     const struct perfctr_sum_ctrs *sum);
 

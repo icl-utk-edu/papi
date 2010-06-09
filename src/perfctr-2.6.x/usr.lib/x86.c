@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific perfctr library procedures.
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2010  Mikael Pettersson
  */
 #include <stdio.h>
 #include "libperfctr.h"
@@ -80,7 +80,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 	return 5;
       case PERFCTR_X86_INTEL_ATOM:
 	return atom_nrctrs();
-      case PERFCTR_X86_INTEL_COREI7:
+      case PERFCTR_X86_INTEL_NHLM:
 	return 7;
       case PERFCTR_X86_GENERIC:
       default:
@@ -135,8 +135,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "AMD Family 10h";
       case PERFCTR_X86_INTEL_ATOM:
 	return "Intel Atom";
-      case PERFCTR_X86_INTEL_COREI7:
-	return "Intel Core i7";
+      case PERFCTR_X86_INTEL_NHLM:
+	return "Intel Nehalem";
       default:
         return "?";
     }
