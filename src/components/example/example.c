@@ -1,3 +1,15 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
+/*
+ * File:    example.c
+ * Author:  Joachim Protze
+ *          joachim.protze@zih.tu-dresden.de
+ * Mods:    Vince Weaver
+ *          vweaver1@eecs.utk.edu
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
