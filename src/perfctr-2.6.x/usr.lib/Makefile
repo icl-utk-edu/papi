@@ -40,7 +40,7 @@ ppc_ABIVER=5
 arm_ABIVER=0
 SO_ABIVER=$($(ARCH)_ABIVER)
 
-SO_LIBVER=2.6.40
+SO_LIBVER=2.6.41
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 
