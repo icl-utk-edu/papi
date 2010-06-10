@@ -578,6 +578,37 @@ test_fail( char *file, int line, char *call, int retval )
 }
 
 void
+test_fail_exit( char *file, int line, char *call, int retval )
+{
+	char buf[128];
+	memset( buf, '\0', sizeof ( buf ) );
+	fprintf( stdout, "%-40s FAILED\nLine # %d\n", file, line );
+
+	if ( retval == PAPI_ESYS ) {
+		sprintf( buf, "System error in %s", call );
+		perror( buf );
+	} else if ( retval > 0 ) {
+		fprintf( stdout, "Error: %s\n", call );
+	} else if ( retval == 0 ) {
+#if defined(sgi)
+		fprintf( stdout, "SGI requires root permissions for this test\n" );
+#else
+		fprintf( stdout, "Error: %s\n", call );
+#endif
+	} else {
+		char errstring[PAPI_MAX_STR_LEN];
+		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
+		fprintf( stdout, "Error in %s: %s\n", call, errstring );
+	}
+
+	fprintf( stdout, "\n" );
+
+	if ( PAPI_is_initialized(  ) )
+		PAPI_shutdown(  );
+	exit( 1 );
+}
+
+void
 test_skip( char *file, int line, char *call, int retval )
 {
 	char buf[128];
