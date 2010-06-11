@@ -160,6 +160,7 @@ getEventValue( unsigned event_id )
 int
 LM_SENSORS_init( hwd_context_t * ctx )
 {
+    ( void ) ctx;
 	return PAPI_OK;
 }
 
@@ -178,7 +179,7 @@ LM_SENSORS_init_substrate(  )
 		return res;
 	}
 
-	printf( "Using libsensors version: %s\n", libsensors_version );
+	fprintf( stderr, "Using libsensors version: %s\n", libsensors_version );
 
 	/* Create dyanmic events table */
 	NUM_EVENTS = detectSensors(  );
@@ -191,12 +192,12 @@ LM_SENSORS_init_substrate(  )
 		return EXIT_FAILURE;
 	}
 
-	if ( NUM_EVENTS != createNativeEvents(  ) ) {
+	if ( ( unsigned ) NUM_EVENTS != createNativeEvents(  ) ) {
 		fprintf( stderr, "Number of LM_SENSORS events mismatch!\n" );
 		return EXIT_FAILURE;
 	}
 
-	printf( "Number of events created: %d\n", NUM_EVENTS );
+	fprintf( stderr, "Number of events created: %d\n", NUM_EVENTS );
 	return ( PAPI_OK );
 }
 
@@ -226,6 +227,8 @@ LM_SENSORS_init_control_state( hwd_control_state_t * ctrl )
 int
 LM_SENSORS_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+	( void ) ctx;
+	( void ) ctrl;
 	return ( PAPI_OK );
 }
 
@@ -236,6 +239,8 @@ LM_SENSORS_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 LM_SENSORS_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+    ( void ) ctx;
+	( void ) ctrl;
 	return ( PAPI_OK );
 }
 
@@ -247,6 +252,8 @@ int
 LM_SENSORS_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 				 long_long ** events, int flags )
 {
+    ( void ) ctx;
+	( void ) flags;
 	long long start = PAPI_get_real_usec(  );
 
 	if ( start - ( ( LM_SENSORS_control_state_t * ) ctrl )->lastupdate > 200000 ) {	// cache refresh
@@ -270,6 +277,7 @@ LM_SENSORS_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 int
 LM_SENSORS_shutdown( hwd_context_t * ctx )
 {
+    ( void ) ctx;
 	/* Call the libsensors cleaning function before leaving */
 	sensors_cleanup(  );
 
@@ -284,6 +292,9 @@ LM_SENSORS_shutdown( hwd_context_t * ctx )
 int
 LM_SENSORS_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
+    ( void ) ctx;
+	( void ) code;
+	( void ) option;
 	return ( PAPI_OK );
 }
 
@@ -300,6 +311,8 @@ LM_SENSORS_update_control_state( hwd_control_state_t * ptr,
 								 hwd_context_t * ctx )
 {
 	int i, index;
+    ( void ) ctx;
+	( void ) ptr;
 
 	for ( i = 0; i < count; i++ ) {
 		index =
@@ -325,7 +338,8 @@ int
 LM_SENSORS_set_domain( hwd_control_state_t * cntrl, int domain )
 {
 	int found = 0;
-
+    ( void ) cntrl;
+	
 	if ( PAPI_DOM_USER & domain )
 		found = 1;
 
@@ -348,6 +362,8 @@ LM_SENSORS_set_domain( hwd_control_state_t * cntrl, int domain )
 int
 LM_SENSORS_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+    ( void ) ctx;
+	( void ) ctrl;
 	return ( PAPI_OK );
 }
 
@@ -438,7 +454,7 @@ papi_vector_t _lmsensors_vector = {
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = LM_SENSORS_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER,
+				 //.available_domains = PAPI_DOM_USER,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,

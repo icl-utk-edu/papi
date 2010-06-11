@@ -99,7 +99,7 @@ typedef struct LM_SENSORS_context
 /* This table contains the LM_SENSORS native events */
 static LM_SENSORS_native_event_entry_t *lm_sensors_native_table;
 /* number of events in the table*/
-static unsigned NUM_EVENTS = 0;
+static int NUM_EVENTS = 0;
 
 
 
