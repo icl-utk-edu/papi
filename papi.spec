@@ -33,7 +33,8 @@ that uses PAPI.
 %build
 cd src
 %configure --with-static-lib=no --with-shared-lib=yes --with-shlib
-make
+#DBG workaround to make sure libpfm just uses the normal CFLAGS
+DBG="" make
 
 #%check
 #cd src
