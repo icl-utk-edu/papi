@@ -120,7 +120,7 @@ intermix the PAPI and BG/P UPC native calls. This test program is built with
 the normal make sequence and can be found in the ctests/bgp directory.
 
 The testing targets in the make file will not work in the BG/P environment.
-Since BG/P supports multiple queueing systems, you must manually execute
+Since BG/P supports multiple queuing systems, you must manually execute
 individual programs in the ctests and ftests directories to check for successful
 library creation. You can also manually edit the run_tests.sh script to
 automate testing for your installation.
@@ -212,12 +212,42 @@ to learn more about these options.
 
 Follow the general installation instructions to complete your installation.
 
-Linux/x86 - Intel Pentium, Core and AMD Athlon, Opteron
+Linux Perf Events ( with kernel 2.6.31 and newer )
 *****************************************************************************
-Linux/x86 requires that the kernel be patched and recompiled with the PerfCtr
-patch if the kernel is version 2.6.30 or older. The required patches and 
-complete installation instructions are provided in the papi/src/perfctr-x.y 
-directory. Please see the INSTALL file in that directory.
+
+Performance counter support has been merged as the "Perf Events"
+subsystem as of Linux 2.6.31.  This means that PAPI can be built
+without patching the kernel on new enough systems.
+
+Perf Events support is new, and certain functionality does not work.
+
+   + Kernels before 2.6.33 have extra overhead when determining
+     whether events conflict or not.
+   + Multiplexing requires kernel 2.6.33 or newer
+   + Nehalem EX support requires kernel 2.6.34 or newer
+   + Pentium 4 support requires kernel 2.6.35 or newer
+   + Attaching, Domain setting (kernel versus userspace) and
+     profiling currently do not work with any kernel.  You will
+     need to use PerfCtr for these to work.
+
+The PAPI configure script should auto-detect the availability of
+Perf Events.  It does require that the linux kernel headers
+are installed, this is an optional package on most distributions.
+
+If you cannot install the kernel headers, you can obtain the
+perf_event.h file from your kernel and run configure as such:
+   ./configure --with-pe-incdir=INCDIR
+replacing INCDIR with the directory that perf_event.h is in.
+
+
+Linux PerfCtr (requires patching the kernel)
+*****************************************************************************
+When using Linux kernels before 2.6.31 the kernel must be patched with
+the PerfCtr patch set.  (This patchset can also be used on more recent
+kernels if the support provided by Perf Events is not enough for your
+workload).  The required patches and  complete installation instructions 
+are provided in the papi/src/perfctr-x.y directory. Please see the INSTALL 
+file in that directory.
 
 Do not forget, you also need to build your kernel with APIC support in order
 for hardware overflow to work. This is very important for accurate statistical
