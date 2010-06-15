@@ -16,6 +16,7 @@
 * @author  Maynard Johnson
 *          maynardj@us.ibm.com
 *
+* @brief Return codes and api definitions.
 */
 
 #ifndef _PAPI
@@ -100,9 +101,8 @@ extern "C"
 #include <limits.h>
 #include "papiStdEventDefs.h"
 
-/** @internal 
-	@defgroup ret_codes Return Codes
-	
+/** @defgroup ret_codes Return Codes
+Return Codes
 All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
 failure. 

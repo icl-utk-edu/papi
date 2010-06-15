@@ -15,6 +15,8 @@
 *	   london@cs.utk.edu
 * @author  Per Ekman
 *          pek@pdc.kth.se
+*
+* @brief Most of the low-level API is here.
 */
 
 #include "papi.h"

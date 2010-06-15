@@ -2,12 +2,13 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/*
-* File:    linux-lustre.c
-* Author:  Haihang You
+/**
+* @file    linux-lustre.c
+* @author  Haihang You
 *          you@eecs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
+* @ingroup papi_coponents
 */
 #include <inttypes.h>
 #include "papi.h"
@@ -29,7 +30,7 @@ long long _papi_hwd_lustre_register[LUSTRE_MAX_COUNTERS];
  * Substrate setup and shutdown
  */
 
-/* Initialize hardware counters, setup the function vector table
+/** Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
@@ -103,7 +104,7 @@ lustre_init_mdi(  )
 */ }
 
 
-/*
+/**
  * This is called whenever a thread is initialized
  */
 int
@@ -137,7 +138,7 @@ LUSTRE_shutdown( hwd_context_t * ctx )
 	return ( PAPI_OK );
 }
 
-/*
+/**
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
@@ -232,10 +233,10 @@ LUSTRE_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
  * Functions for setting up various options
  */
 
-/* This function sets various options in the substrate
- * The valid codes being passed in are PAPI_SET_DEFDOM,
- * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
- */
+/** This function sets various options in the substrate
+  * The valid codes being passed in are PAPI_SET_DEFDOM,
+  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
+  */
 int
 LUSTRE_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
@@ -245,16 +246,16 @@ LUSTRE_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	return ( PAPI_OK );
 }
 
-/*
- * This function has to set the bits needed to count different domains
- * In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
- * By default return PAPI_EINVAL if none of those are specified
- * and PAPI_OK with success
- * PAPI_DOM_USER is only user context is counted
- * PAPI_DOM_KERNEL is only the Kernel/OS context is counted
- * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
- * PAPI_DOM_ALL   is all of the domains
- */
+/**
+  * This function has to set the bits needed to count different domains
+  * In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
+  * By default return PAPI_EINVAL if none of those are specified
+  * and PAPI_OK with success
+  * PAPI_DOM_USER is only user context is counted
+  * PAPI_DOM_KERNEL is only the Kernel/OS context is counted
+  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
+  * PAPI_DOM_ALL   is all of the domains
+  */
 int
 LUSTRE_set_domain( hwd_control_state_t * cntrl, int domain )
 {

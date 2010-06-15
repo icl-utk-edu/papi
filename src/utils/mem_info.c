@@ -5,6 +5,7 @@
  *         london@cs.utk.edu
  */
 /** @file mem_info.c
+  * @brief papi_mem_info utility.
   *	@page papi_mem_info
   *	@section NAME
   *		papi_mem_info - provides information on the memory architecture of the current processor. 

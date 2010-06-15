@@ -2,22 +2,22 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
- * File:    linux-lmsensors.h
+/** 
+ * @file    linux-lmsensors.h
  * CVS:     $Id$
- * Author:  Daniel Lucio
- * Mods:    Joachim Protze
- * Mods:    Heike Jagode
+ * @author  Daniel Lucio
+ * @author  Joachim Protze
+ * @author  Heike Jagode
  *          jagode@eecs.utk.edu
- */
-
-
-/* 
+ *
+ * @ingroup papi_components
+ *
+ *
  * LM_SENSORS component 
  * 
  * Tested version of lm_sensors: 3.1.1
  *
- * Description: 
+ * @brief 
  *  This file has the source code for a component that enables PAPI-C to access
  *  hardware monitoring sensors through the libsensors library. This code will
  *  dynamically create a native events table for all the sensors that can be 
@@ -48,7 +48,7 @@
 // time in usecs
 #define LM_SENSORS_REFRESHTIME 200000
 
-/* Structure that stores private information of each event */
+/** Structure that stores private information of each event */
 typedef struct LM_SENSORS_register
 {
 	/* This is used by the framework.It likes it to be !=0 to do somehting */
@@ -64,7 +64,7 @@ typedef struct LM_SENSORS_register
  * assumptions for them.
  */
 
-/* This structure is used to build the table of events */
+/** This structure is used to build the table of events */
 typedef struct LM_SENSORS_native_event_entry
 {
 	LM_SENSORS_register_t resources;

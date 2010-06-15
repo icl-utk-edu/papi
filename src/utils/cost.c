@@ -1,4 +1,5 @@
 /** @file cost.c
+  * @brief papi_cost utility.
   *	@page papi_cost
   * @section  NAME
   *		papi_cost - computes execution time costs for basic PAPI operations. 

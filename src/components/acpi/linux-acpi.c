@@ -1,3 +1,5 @@
+/** @file linux-acpi.c
+  */
 #include <inttypes.h>
 #include "papi.h"
 #include "papi_internal.h"
@@ -29,7 +31,7 @@ ACPI_native_event_entry_t acpi_native_table[] = {
  * Substrate setup and shutdown
  */
 
-/* Initialize hardware counters, setup the function vector table
+/** Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
@@ -74,7 +76,7 @@ init_presets(  )
 }
 
 
-/*
+/**
  * This is called whenever a thread is initialized
  */
 int
@@ -92,7 +94,7 @@ ACPI_shutdown( hwd_context_t * ctx )
 	return ( PAPI_OK );
 }
 
-/*
+/**
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
@@ -329,7 +331,7 @@ ACPI_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
  * Functions for setting up various options
  */
 
-/* This function sets various options in the substrate
+/** This function sets various options in the substrate
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -342,7 +344,7 @@ ACPI_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	return ( PAPI_OK );
 }
 
-/*
+/**
  * This function has to set the bits needed to count different domains
  * In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
  * By default return PAPI_EINVAL if none of those are specified
@@ -395,7 +397,7 @@ long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 	return(1);
 }
 */
-/*
+/**
  * Native Event functions
  */
 int

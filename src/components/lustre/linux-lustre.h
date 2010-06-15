@@ -2,12 +2,14 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
-* File:    linux-lustre.h
-* Author:  Haihang You
+/** 
+* @file    linux-lustre.h
+* @author  Haihang You
 *          you@eecs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
+* @ingroup papi_components
+* @brief A component for the luster filesystem.
 */
 
 #ifndef _PAPI_LUSTRE_H

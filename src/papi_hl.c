@@ -11,10 +11,8 @@
 *           london@cs.utk.edu
 * @author	dan terpstra
 *			terpstra@cs.utk.edu
-*/
-
-/* This file contains the 'high level' interface to PAPI. 
-   BASIC is a high level language. ;-) */
+* @brief This file contains the 'high level' interface to PAPI. 
+*  BASIC is a high level language. ;-) */
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -35,17 +33,17 @@
 #define PAPI_HL_READ		1
 #define PAPI_HL_ACCUM		2
 
-/* 
+/** @internal 
  * This is stored per thread
  */
 typedef struct _HighLevelInfo
 {
-	int EventSet;					   /* EventSet of the thread */
+	int EventSet;					   /**< EventSet of the thread */
 	short int num_evts;
 	short int running;
-	long long initial_time;			   /* Start time */
-	float total_proc_time;			   /* Total processor time */
-	float total_ins;				   /* Total instructions */
+	long long initial_time;			   /**< Start time */
+	float total_proc_time;			   /**< Total processor time */
+	float total_ins;				   /**< Total instructions */
 } HighLevelInfo;
 
 extern int init_level;
@@ -93,7 +91,7 @@ int _internal_hl_read_cnts( long long *values, int array_len, int flag );
    -- PAPI_accum() replaced with PAPI_start() / PAPI_stop pair for same reason.
 */
 
-/*
+/** @internal 
  * This function is called to determine the state of the system.
  * We may as well set the HighLevelInfo so you don't have to look it
  * up again.
@@ -141,7 +139,7 @@ _internal_check_state( HighLevelInfo ** outgoing )
 	return ( PAPI_OK );
 }
 
-/*
+/** @internal 
  * Make sure to allocate space for values 
  */
 int

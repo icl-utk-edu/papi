@@ -2,13 +2,16 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
-* File:    linux-acpi.h
+/** 
+* @file    linux-acpi.h
 * CVS:     $Id$
-* Author:  Haihang You
+* @author  Haihang You
 *          you@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
+*
+* @brief An ACPI component for Linux.
+* @ingroup papi_components
 */
 
 #ifndef _PAPI_ACPI_H

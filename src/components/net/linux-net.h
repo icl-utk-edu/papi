@@ -2,14 +2,16 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
-* File:    linux-net.h
-* CVS:     $Id$
-* Author:  Haihang You
-*          you@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
-*/
+/** 
+  * @file    linux-net.h
+  * CVS:     $Id$
+  * @author  Haihang You
+  *          you@cs.utk.edu
+  * Mods:    <your name here>
+  *          <your email address>
+  * @brief A network interface component for Linux.
+  * @ingroup papi_components
+  */
 
 #ifndef _PAPI_GM_H
 #define _PAPI_GM_H

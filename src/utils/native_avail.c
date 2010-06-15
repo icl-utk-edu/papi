@@ -1,6 +1,7 @@
 /* This file performs the following test: hardware info and which native events are available */
 /** @file native_avail.c
   *	@page papi_native_avail
+  * @brief papi_native_avail utility. 
   *	@section  NAME
   *		papi_native_avail - provides detailed information for PAPI native events. 
   *

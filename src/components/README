@@ -3,10 +3,12 @@
 * CVS:     $Id$
 * @author: Brian Sheely
 *          bsheely@eecs.utk.edu
+* @defgroup papi_components Components
+* @brief Component Readme file
 */
 
-Creating New Components
------------------------
+/** @page component_readme Component Readme 
+@section Creating New Components
 
 The first step in creating a new component is to create a new directory inside the components directory. The naming convention is to use lower case letters for the directory name. At a minimum, this directory will contain all header files and source code required to build the component along with a Rules file which contains the build rules and compiler settings specific to that component. The Rules file must be named using the format Rules.x where x is the name of the directory. There are no restrictions on the naming of header or source files.
 
@@ -18,5 +20,18 @@ In summary, the additional files required for configuration based on user input 
 
 There is one final very important naming convention that applies to components. The array of function pointers that the component defines must use the naming convention papi_vector_t _x_vector where x is the name of the component directory. 
 
+@section Existing Components
+example/  
 
+lmsensors/  
+
+lustre/  
+
+mx/  
+
+net/ 
+
+acpi/
+
+*/
 

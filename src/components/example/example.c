@@ -2,12 +2,18 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/*
- * File:    example.c
- * Author:  Joachim Protze
+/**
+ * @file    example.c
+ * @author  Joachim Protze
  *          joachim.protze@zih.tu-dresden.de
- * Mods:    Vince Weaver
+ * @author	Vince Weaver
  *          vweaver1@eecs.utk.edu
+ *
+ * @ingroup papi_components
+ *
+ * @brief
+ *	This is an example component, it demos the component interface
+ *  and implements two example counters.
  */
 
 #include <stdio.h>
@@ -52,8 +58,8 @@ typedef struct example_reg_alloc
 /** Holds control flags, usually out-of band configuration of the hardware */
 typedef struct example_control_state
 {
-	long_long counter[EXAMPLE_MAX_COUNTERS];	/*< Copy of counts, used for caching */
-	long_long lastupdate;			   /*< Last update time, used for caching */
+	long_long counter[EXAMPLE_MAX_COUNTERS];	/**< Copy of counts, used for caching */
+	long_long lastupdate;			   /**< Last update time, used for caching */
 } example_control_state_t;
 
 /** Holds per-thread information */
@@ -62,9 +68,9 @@ typedef struct example_context
 	example_control_state_t state;
 } example_context_t;
 
-/* This table contains the native events */
+/** This table contains the native events */
 static example_native_event_entry_t *example_native_table;
-/* number of events in the table*/
+/** number of events in the table*/
 static int NUM_EVENTS = 1;
 
 

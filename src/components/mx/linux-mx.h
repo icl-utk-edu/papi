@@ -2,13 +2,15 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
-* File:    linux-mx.h
+/** 
+* @file    linux-mx.h
 * CVS:     $Id$
-* Author:  Haihang You
+* @author  Haihang You
 *          you@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
+* @ingroup papi_components
+* @brief MX component for linux.
 */
 
 #ifndef _PAPI_GM_H

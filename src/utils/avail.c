@@ -1,5 +1,6 @@
 /**
   * @file avail.c
+  *	@brief papi_avail utility.
   * @page papi_avail
   *	@section Name
   *	papi_avail - provides availability and detail information for PAPI preset events. 

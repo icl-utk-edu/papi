@@ -1,4 +1,5 @@
 /** @file clockres.c
+  *	@brief papi_clockres utility.
   *
   * @page papi_clockres
   *	@section Name

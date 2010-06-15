@@ -31,7 +31,7 @@ PROJECT_NAME           = PAPI-C
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = 4.0
+PROJECT_NUMBER         = 4.1
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.
@@ -569,9 +569,8 @@ WARN_LOGFILE           =
 # with spaces.
 
 #INPUT                  = ../src/utils ../src
-INPUT					= ../src/multiplex.c ../src/papi.h ../src/threads.h \
-						../src/papi.c ../src/papi_hl.c ../src/utils
-
+INPUT					= ../src/papi.h  ../src/papi.c ../src/papi_hl.c \
+						../src/utils ../src/components ../src/components/README 
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -594,7 +593,7 @@ FILE_PATTERNS          = *.c *.h
 # should be searched for input files as well. Possible values are YES and NO.
 # If left blank NO is used.
 
-RECURSIVE              = NO
+RECURSIVE              = YES
 
 # The EXCLUDE tag can be used to specify files and/or directories that should
 # excluded from the INPUT source files. This way you can easily exclude a
@@ -614,7 +613,7 @@ EXCLUDE_SYMLINKS       = NO
 # against the file with absolute path, so to exclude all test directories
 # for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       =
+EXCLUDE_PATTERNS       = */CVS/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
