@@ -3,12 +3,14 @@
 /****************************/
 
 /* 
- * File:    linux-infiniband.c
+ * @file    linux-infiniband.c
  * CVS:     $Id$
- * Author:  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
+ * @author  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
  *			<your email address>
+ * @ingroup papi_components 		
+ * @brief A component for Infiniband devices.
  */
 
 #include "papi.h"

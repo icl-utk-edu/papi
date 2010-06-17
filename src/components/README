@@ -36,3 +36,4 @@ acpi/
 infiniband/
 These files have the source code for a component that enables PAPI-C to access hardware monitoring counters for InfiniBand devices through the OFED library. Since a new interface was introduced with OFED version 1.4 (released Dec 2008), the current InfiniBand component does not support OFED versions < 1.4.
 
+*/

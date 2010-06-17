@@ -3,12 +3,14 @@
 /****************************/
 
 /*
-* File:    linux-lustre.c
+* @file    linux-lustre.c
 * CVS:     $Id$
-* Author:  Haihang You (in collaboration with Michael Kluge, TU Dresden)
+* @author  Haihang You (in collaboration with Michael Kluge, TU Dresden)
 *          you@eecs.utk.edu
 * Mods:    Heike Jagode
 *          jagode@eecs.utk.edu
+* @ingroup papi_components 		
+* @brief A component for the luster filesystem.
 */
 
 #include "papi.h"
