@@ -1,0 +1,2 @@
+INFINIBAND_INCDIR = @infiniband_incdir@
+INFINIBAND_LIBDIR = @infiniband_libdir@

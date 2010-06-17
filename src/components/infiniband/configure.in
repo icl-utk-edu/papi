@@ -1,0 +1,50 @@
+# Process this file with autoconf to produce a configure script.
+# File: components/infiniband/configure.in
+# CVS: $Id$
+
+AC_INIT
+
+# looking for infiniband header files
+AC_ARG_WITH(infiniband_incdir,
+			[  --with-infiniband_incdir=<path>  Specify path to InfiniBand header files ],
+			[case "$with_infiniband_incdir" in 
+			yes|''|no) AC_MSG_ERROR([--with-infiniband_incdir requires a path]) ;;
+			*) infiniband_incdir=$with_infiniband_incdir ;;
+			esac],
+			[infiniband_incdir="/usr/include/infiniband"])
+
+CFLAGS="$CFLAGS -I$infiniband_incdir"
+AC_CHECK_HEADERS([mad.h umad.h],
+				 [AC_DEFINE([HAVE_INFINIBAND_H], [1], [infiniband header] )],
+				 [AC_MSG_ERROR([mad.h, umad.h not found. See --with-infiniband_incdir ])],
+				 [#include <mad.h> #include <umad.h>])
+				 
+				 
+				 
+# looking for infiniband libraries
+AC_ARG_WITH(infiniband_libdir,
+			[  --with-infiniband_libdir=<path>  Specify path to InfiniBand libraries ],
+			[case "$with_infiniband_libdir" in 
+			yes|''|no) AC_MSG_ERROR([--with-infiniband_libdir requires a path]) ;;
+			*) infiniband_libdir=$with_infiniband_libdir ;;
+			esac],
+			[infiniband_libdir="/usr/lib64"])
+
+LDFLAGS="$LDFLAGS -L$infiniband_libdir -libmad -libumad"
+AC_CHECK_LIB([ibmad],
+			 [madrpc_init],
+			 [],
+			 [AC_MSG_ERROR([libibmad.a is needed for the PAPI infiniband component])])
+			 
+AC_CHECK_LIB([ibumad],
+			 [umad_init],
+			 [],
+			 [AC_MSG_ERROR([libibumad.a is needed for the PAPI infiniband component])])
+
+
+
+AC_SUBST(infiniband_incdir)
+AC_SUBST(infiniband_libdir)
+AC_CONFIG_FILES([Makefile.infiniband])
+
+AC_OUTPUT
