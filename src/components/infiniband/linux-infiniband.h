@@ -10,7 +10,6 @@
  * Mods:	<your name here>
  *			<your email address>
  * @ingroup papi_components 		
- * @brief A component for Infiniband devices.
  */
 
 /* 
@@ -18,7 +17,7 @@
  * 
  * Tested version of OFED: 1.4
  *
- * Description: 
+ * @brief
  *  This file has the source code for a component that enables PAPI-C to 
  *  access hardware monitoring counters for InfiniBand devices through the  
  *  OFED library. Since a new interface was introduced with OFED version 1.4 
