@@ -53,6 +53,14 @@
  * See individual functions for details on usage and support.
  * 
  * @ref low_api
+ *
+ * @section Components 
+ *
+ *	Components provide access to hardware information on specific subsystems.
+ *
+ *	Components can be found under the conponents directory or @ref papi_components "here". 
+ *	and included in a build as an argument to configure, 
+ *	'--with-components=<comma_seperated_list_of_components_to_build>'
  * 
  * @section papi_util PAPI Utility Commands
  * <ul> 
