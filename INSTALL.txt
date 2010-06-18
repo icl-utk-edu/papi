@@ -89,7 +89,7 @@ doxygen from the doc directory.
 
 More complete documentation of all internal apis and structures can be 
 generated with: 
-	% doxygen -g Doxyfile-everything 
+	% doxygen Doxyfile-everything 
 
 
 *****************************************************************************
