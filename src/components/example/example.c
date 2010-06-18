@@ -13,7 +13,7 @@
  *
  * @brief
  *	This is an example component, it demos the component interface
- *  and implements two example counters.
+ *  and implements three example counters.
  */
 
 #include <stdio.h>

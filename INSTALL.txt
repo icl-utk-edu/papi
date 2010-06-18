@@ -234,15 +234,20 @@ subsystem as of Linux 2.6.31.  This means that PAPI can be built
 without patching the kernel on new enough systems.
 
 Perf Events support is new, and certain functionality does not work.
+If you need any of the functionality listed below, we recommend
+you install the PerfCtr patchset and use that in conjunction with PAPI.
 
+   + Currently setting the domain to something other than 
+     user does not work.
+   + Currently having more than one EventSet will cause wrong
+     output (all EventSets will read as the last one created)
+   + Currently attaching is not supported.
    + Kernels before 2.6.33 have extra overhead when determining
      whether events conflict or not.
    + Multiplexing requires kernel 2.6.33 or newer
    + Nehalem EX support requires kernel 2.6.34 or newer
-   + Pentium 4 support requires kernel 2.6.35 or newer
-   + Attaching, Domain setting (kernel versus userspace) and
-     profiling currently do not work with any kernel.  You will
-     need to use PerfCtr for these to work.
+   + Pentium 4 support requires kernel 2.6.35 or newer, plus
+     additional fixes to PAPI that are not included yet.
 
 The PAPI configure script should auto-detect the availability of
 Perf Events.  It does require that the linux kernel headers
