@@ -2,12 +2,12 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/*
+/**
  * @file    linux-lustre.h
  * CVS:     $Id$
  * @author  Haihang You (in collaboration with Michael Kluge, TU Dresden)
  *          you@eecs.utk.edu
- * Mods:    Heike Jagode
+ * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * @ingroup papi_components 		
  * @brief A component for the luster filesystem.
@@ -18,7 +18,7 @@
 
 #include <dirent.h>
 
-/* describes a single counter with its properties */
+/** describes a single counter with its properties */
 typedef struct counter_info_struct
 {
 	int idx;
@@ -36,7 +36,7 @@ typedef struct
 } string_list;
 
 
-/* describes the infos collected from a mounted Lustre filesystem */
+/** describes the infos collected from a mounted Lustre filesystem */
 typedef struct lustre_fs_struct
 {
 	FILE *proc_fd;
@@ -48,7 +48,7 @@ typedef struct lustre_fs_struct
 } lustre_fs;
 
 
-/* describes one network interface */
+/** describes one network interface */
 typedef struct network_if_struct
 {
 	char *name;

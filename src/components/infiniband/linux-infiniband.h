@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/** 
  * @file    linux-infiniband.h
  * CVS:     $Id$
  * @author  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
@@ -10,9 +10,7 @@
  * Mods:	<your name here>
  *			<your email address>
  * @ingroup papi_components 		
- */
-
-/* 
+ * 
  * InfiniBand component 
  * 
  * Tested version of OFED: 1.4

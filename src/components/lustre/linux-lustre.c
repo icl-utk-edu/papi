@@ -2,14 +2,13 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/*
+/**
 * @file    linux-lustre.c
 * CVS:     $Id$
 * @author  Haihang You (in collaboration with Michael Kluge, TU Dresden)
 *          you@eecs.utk.edu
-* Mods:    Heike Jagode
+* @author  Heike Jagode
 *          jagode@eecs.utk.edu
-* @ingroup papi_components 		
 * @brief A component for the luster filesystem.
 */
 
