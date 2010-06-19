@@ -84,7 +84,7 @@ PREFIX=$(install_prefix)
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
 MANDIR=$(PREFIX)/share/man
-EXAMPLESDIR=$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)/examples
+DOCDIR=$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)
 
 #
 # Configuration Paramaters for libpfm library

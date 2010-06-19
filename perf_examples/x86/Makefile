@@ -39,6 +39,8 @@ LPC_UTILS=../perf_util.o
 TARGETS += bts_smpl
 endif
 
+EXAMPLESDIR=$(DOCDIR)/perf_examples/x86
+
 all: $(TARGETS)
 
 $(TARGETS):  %:%.o $(LPC_UTILS) $(PFMLIB) 
@@ -48,5 +50,11 @@ clean:
 	$(RM) -f *.o $(TARGETS) *~
 
 distclean: clean
+
+install_examples: $(TARGETS)
+	@echo installing: $(TARGETS)
+	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)
+	$(INSTALL) -m 755 $(TARGETS) $(TARGET_GEN) $(DESTDIR)$(EXAMPLESDIR)
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 .PHONY: install depend install_examples

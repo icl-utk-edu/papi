@@ -27,7 +27,8 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
 include config.mk
 
-DIRS=lib examples perf_examples include docs python
+EXAMPLE_DIRS=examples perf_examples
+DIRS=lib $(EXAMPLE_DIRS) include docs python
 
 all: 
 	@echo Compiling for \'$(ARCH)\' target
@@ -53,7 +54,7 @@ install:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 install_examples:
-	$(MAKE) -C examples $@
+	@set -e ; for d in $(EXAMPLE_DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 .PHONY: all clean distclean depend tar tarcvs install install_examples lib
 

@@ -61,6 +61,8 @@ TARGETS+=self self_basic self_count task task_attach_timeout syst \
 XTRA += rtop
 endif
 
+EXAMPLESDIR=$(DOCDIR)/perf_examples
+
 all: $(TARGETS) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
