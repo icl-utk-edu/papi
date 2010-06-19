@@ -20,11 +20,16 @@
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
+
+include $(TOPDIR)/config.mk
+include $(TOPDIR)/rules.mk
+
 all:
 	./setup.py build
 
 install:
-	./setup.py install
+	./setup.py install --prefix=$(DESTDIR)$(PREFIX)
 
 clean:
 	$(RM) src/perfmon_int_wrap.c src/perfmon_int.py src/*.pyc
