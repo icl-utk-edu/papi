@@ -1,4 +1,110 @@
 ===============================================================================
+PAPI 4.1.0 RELEASE NOTES                                            22 Jun 2010
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP410.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This is the second release of Component PAPI, or PAPI-C. See other references
+to PAPI-C, including the description in this file under PAPI 4.0.0 for details 
+on the differences between Classic PAPI and PAPI-C.
+
+This release includes significant code cleanup to eliminate compiler warnings
+and type inconsistencies and to eliminate memory leaks.
+
+We also now support embedded doxygen comments for documentation. See the PAPI
+website for more details.
+
+The component build environment has been restructured to make it easier to add
+and build components without modifying baseline PAPI code. See 
+/src/components/README for details.
+
+Visit the PAPI Reference pages for more information at:
+http://icl.cs.utk.edu/projects/papi/wiki/Main_Page
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 4.1.0 SINCE PAPI 4.0.0
+===============================================================================
+Bug Fixes:
+----------
+    * configure was mis-identifying some Pentium 4 processors
+    * the ctests/shlib test now tests against the shared math library, libm.so,
+      instead of libpapi.so, which works more predictably with library renaming.
+    * multiplexing was silently returning without setting multiplex TRUE in 
+      cases where no event had been assigned to an eventset. An event must be
+      added to an eventset or PAPI_assign_eventset_component() must be called
+      before multiplexing can be enabled. This silent error has been removed. 
+    * the perfmon and perf_events counter interfaces were not properly handling 
+      event unit masks. This has been fixed.
+    * PAPI_name_to_code() was not exiting properly in certain circumstances, 
+      failing on events where there should have been a match. This is corrected.
+    * a serious but insidious bug in the overflow logic was corrected. This bug 
+      would only show up when PAPI_overflow was called between calls to 
+      PAPI_add_event. Overflow would only be set for the last call of 
+      PAPI_overflow. This has  been corrected.
+	* IBM Blue Gene P systems were corrupting stack frames and crashing when the
+	  papi_get_event_info call was executed. This has been fixed.
+	* The PAPI cycles event was not working for IBM Blue Gene P. This is fixed.
+	* papi_native_avail was exiting improperly when using the -e option. 
+	  This caused problems with batch execution systems (like Blue Gene P). 
+	  This has been fixed.
+	* a significant number of memory leaks have been purged.
+	* compiler warning flags have been tightened and a range of warnings have
+	  been eliminated.
+	* removed implicit type conversions in prototypes.
+	
+
+Enhancements:
+-------------
+	* the utils/papi_version utility now reports four digits where the last digit
+	  matches the patch number.
+	* Pentium II and Athlon now use libpfm for event decoding like all other x86
+	  platforms.
+	* Doxygen documentation has been added to the API and components.
+	* Component compilation has been completely restructured. See
+	  /papi/src/components/README for details.
+	* PAPI can now be compiled with a no-cpu-counters option.
+	
+
+New Platforms:
+-------------
+	* the ultrasparc architecture has been resurrected
+	* freebsd support was migrated from PAPI 3.7
+	* Intel Nehalem EX and Westmere support has been added
+	
+Deprecated Platforms:
+---------------------
+	* IBM BG/L has been deprecated.
+	* POWER 3 and POWER4 have been deprecated
+
+New Components:
+---------------
+	* Infiniband: Experimental
+	* Lustre: Experimental
+	* example: provides simple test case and template code.
+
+Open Issues:
+-------------
+
+Experimental:
+-------------
+
+Known Bugs:
+-----------
+
+===============================================================================
 PAPI 4.0.0 RELEASE NOTES                                            19 Jan 2010
 ===============================================================================
 
