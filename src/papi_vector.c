@@ -300,6 +300,26 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->ntv_bits_to_info =
 			( int ( * )( hwd_register_t *, char *, unsigned int *, int, int ) )
 			vec_int_dummy;
+
+	if ( !v->ntv_enum_nm_events )
+		v->ntv_enum_nm_events = ( int ( * )( char *, int, int ) ) vec_int_dummy;
+	if ( !v->ntv_name_to_code )
+		v->ntv_name_to_code =
+			( int ( * )( char *, unsigned int * ) ) vec_int_dummy;
+	if ( !v->ntv_code_to_name )
+		v->ntv_code_to_name =
+			( int ( * )( unsigned int, char *, int ) ) vec_int_dummy;
+	if ( !v->ntv_name_to_descr )
+		v->ntv_name_to_descr =
+			( int ( * )( char *, char *, int ) ) vec_int_ok_dummy;
+	if ( !v->ntv_name_to_bits )
+		v->ntv_name_to_bits =
+			( int ( * )( char *, hwd_register_t * ) ) vec_int_dummy;
+	if ( !v->ntv_name_to_info )
+		v->ntv_name_to_info =
+			( int ( * )( char *, char *, unsigned int *, int, int ) )
+			vec_int_dummy;
+
 	if ( !v->allocate_registers )
 		v->allocate_registers =
 			( int ( * )( EventSetInfo_t * ) ) vec_int_one_dummy;

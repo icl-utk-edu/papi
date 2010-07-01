@@ -755,10 +755,6 @@ PAPI_event_name_to_code( char *in, int *out )
 	if ( init_level == PAPI_NOT_INITED )
 		papi_return( PAPI_ENOINIT );
 
-	/* With user definable events, we can no longer assume
-	   presets begin with "PAPI"...
-	   if (strncmp(in, "PAPI", 4) == 0) {
-	 */
 	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
 		if ( ( _papi_hwi_presets.info[i].symbol )
 			 && ( strcasecmp( _papi_hwi_presets.info[i].symbol, in ) == 0 ) ) {
@@ -855,6 +851,108 @@ PAPI_enum_event( int *EventCode, int modifier )
 	}
 	papi_return( PAPI_EINVAL );
 }
+
+/* Updates EventName to next valid name string, or returns error; 
+  modifier can specify {all / available} for presets, or other values for native tables 
+  and may be platform specific (Major groups / all attributes; P / M / E chip, etc) */
+/** @brief enumerate PAPI preset or native events by name
+ *
+ *	@param EventName
+ *		a defined preset or native event such as PAPI_TOT_INS.
+ *	@param modifier 
+ *		modifies the search logic. For preset events, 
+ *		TRUE specifies available events only. 
+ *		For native events, each platform behaves differently. 
+ *		See platform-specific documentation for details
+ *
+ *	@retval PAPI_ENOEVNT 
+ *		The next requested PAPI preset or native event is not available on 
+ *		the underlying hardware. 
+ *
+ *	Given a preset or native event name, PAPI_enum_named_event() replaces the name 
+ *	with the next available event name in either the preset or native table. 
+ *	The modifier argument affects which events are returned. 
+ *	For all platforms and event types, a value of PAPI_ENUM_ALL (zero) 
+ *	directs the function to return all possible events. 
+ *
+ *	For preset events, a TRUE (non-zero) value currently directs the function 
+ *	to return event names only for PAPI preset events available on this platform. 
+ *	This may change in the future. 
+ *	For native events, the effect of the modifier argument is different on each platform. 
+ *	See the discussion below for platform-specific definitions. 
+ *
+ *	PENTIUM 4
+ *	The following values are implemented for modifier on Pentium 4: 
+ *	PAPI_PENT4_ENUM_GROUPS - 45 groups + custom + user event types PAPI_PENT4_ENUM_COMBOS 
+ *	- all combinations of mask bits for given group PAPI_PENT4_ENUM_BITS 
+ *	- all individual bits for a given group
+ *
+ *	ITANIUM
+ *	The following values are implemented for modifier on Itanium: 
+ *	<ul>
+ *		<li> PAPI_ITA_ENUM_IARR - Enumerate IAR (instruction address ranging) events 
+ *		<li> PAPI_ITA_ENUM_DARR - Enumerate DAR (data address ranging) events 
+ *		<li> PAPI_ITA_ENUM_OPCM - Enumerate OPC (opcode matching) events 
+ *		<li> PAPI_ITA_ENUM_IEAR - Enumerate IEAR (instr event address register) events 
+ *		<li> PAPI_ITA_ENUM_DEAR - Enumerate DEAR (data event address register) events
+ *	</ul>
+ *
+ *	POWER 4
+ *	The following values are implemented for modifier on POWER 4: 
+ *	<ul>
+ *		<li> PAPI_PWR4_ENUM_GROUPS - Enumerate groups to which an event belongs 
+ *	</ul>
+ *
+ *	@see PAPI_get_event_info PAPI_event_name_to_code PAPI_preset PAPI_native
+ */
+int
+PAPI_enum_named_event( char *EventName, int len, int modifier )
+{
+	int i = *EventCode;
+	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
+
+	if ( _papi_hwi_invalid_cmp( cidx ) ||
+		 ( ( i & PAPI_PRESET_MASK ) && cidx > 0 ) )
+		return ( PAPI_ENOCMP );
+
+	/* search the preset table first */
+	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
+		if ( ( _papi_hwi_presets.info[i].symbol )
+			 && ( strcasecmp( _papi_hwi_presets.info[i].symbol, EventCode ) == 0 ) ) {
+			if ( modifier == PAPI_ENUM_FIRST ) {
+				strncpy(EventName = ( int ) PAPI_PRESET_MASK;
+				papi_return PAPI_OK;
+			}
+			papi_return( PAPI_OK );
+		}
+	}
+
+
+
+	if ( i & PAPI_PRESET_MASK ) {
+		if ( modifier == PAPI_ENUM_FIRST ) {
+			*EventCode = ( int ) PAPI_PRESET_MASK;
+			return ( PAPI_OK );
+		}
+		i &= PAPI_PRESET_AND_MASK;
+		while ( ++i < PAPI_MAX_PRESET_EVENTS ) {
+			if ( _papi_hwi_presets.info[i].symbol == NULL )
+				return ( PAPI_ENOEVNT );	/* NULL pointer terminates list */
+			if ( modifier & PAPI_PRESET_ENUM_AVAIL ) {
+				if ( _papi_hwi_presets.count[i] == 0 )
+					continue;
+			}
+			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );
+			return ( PAPI_OK );
+		}
+	} else if ( i & PAPI_NATIVE_MASK ) {
+		/* Should check against num native events here */
+		return ( _papi_hwd[cidx]->
+				 ntv_enum_events( ( unsigned int * ) EventCode, modifier ) );
+	}
+	papi_return( PAPI_EINVAL );
+}
+
 
 /** @brief create a new empty PAPI event set 
   * 

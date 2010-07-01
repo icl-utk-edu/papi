@@ -86,7 +86,7 @@
 
 /* This is the official PAPI version */
 /* The final digit represents the patch count */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,2)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,9,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -793,7 +793,8 @@ read the documentation carefully.  */
    int   PAPI_create_eventset(int *EventSet); /**< create a new empty PAPI event set */
    int   PAPI_detach(int EventSet); /**< detach specified event set from a previously specified process or thread id */
    int   PAPI_destroy_eventset(int *EventSet); /**< deallocates memory associated with an empty PAPI event set */
-   int   PAPI_enum_event(int *EventCode, int modifier); /**< return the event code for the next available preset or natvie event */
+   int   PAPI_enum_event(int *EventCode, int modifier); /**< return the event code for the next available preset or native event */
+   int   PAPI_enum_named_event(char *EventName, int modifier); /**< return the name of the next available preset or native event */
    int   PAPI_event_code_to_name(int EventCode, char *out); /**< translate an integer PAPI event code into an ASCII PAPI preset or native name */
    int   PAPI_event_name_to_code(char *in, int *out); /**< translate an ASCII PAPI preset or native name into an integer PAPI event code */
    int  PAPI_get_dmem_info(PAPI_dmem_info_t *dest); /**< get dynamic memory usage information */

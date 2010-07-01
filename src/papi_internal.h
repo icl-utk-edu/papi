@@ -249,6 +249,7 @@ typedef struct _EventInfo {
  */
 typedef struct _NativeInfo {
    int ni_event;                /**< native event code; always non-zero unless empty */
+   char *ni_eventname;            /**< pointer to native event name; check here if event code is empty */
    int ni_position;             /**< counter array position where this native event lives */
    int ni_owners;               /**< specifies how many owners share this native event */
    hwd_register_t *ni_bits;     /**< Substrate defined resources used by this native event */
