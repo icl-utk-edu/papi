@@ -4,6 +4,8 @@
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
+#include "papi.h"
+
 /** Identifier for each component 
  *	@internal */
 typedef struct cmp_id {
@@ -64,6 +66,10 @@ typedef struct papi_vectors {
     int		(*ntv_code_to_descr)	(unsigned int, char *, int);			/**< */
     int		(*ntv_code_to_bits)	(unsigned int, hwd_register_t *);			/**< */
     int		(*ntv_bits_to_info)	(hwd_register_t *, char *, unsigned int *, int, int);		/**< */
+    int		(*ntv_enum_nm_events)	(char *, int, int);						/**< */
+    int		(*ntv_name_to_descr)	( char *, char *, int);			/**< */
+    int		(*ntv_name_to_bits)	(char *, hwd_register_t *);			/**< */
+    int		(*ntv_name_to_info)	(char *, char *, unsigned int *, int, int);		/**< */
     int		(*allocate_registers)	(EventSetInfo_t *);						/**< */
     int		(*bpt_map_avail)	(hwd_reg_alloc_t *, int);					/**< */
     void	(*bpt_map_set)		(hwd_reg_alloc_t *, int);					/**< */

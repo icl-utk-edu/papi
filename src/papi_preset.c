@@ -11,6 +11,7 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 #include "papi_preset.h"
+#include <string.h>
 
 /* Defined in papi_data.c */
 extern hwi_presets_t _papi_hwi_presets;
@@ -35,9 +36,9 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 	if ( findem != NULL ) {
 		for ( pnum = 0;
 			  ( pnum < PAPI_MAX_PRESET_EVENTS ) &&
-			  ( findem[pnum].event_code != 0 ); pnum++ ) {
+			  ( findem[pnum].preset_code != 0 ); pnum++ ) {
 			/* find the index for the event to be initialized */
-			preset_index = ( findem[pnum].event_code & PAPI_PRESET_AND_MASK );
+			preset_index = ( findem[pnum].preset_code & PAPI_PRESET_AND_MASK );
 			/* count and set the number of native terms in this event, these items are contiguous.
 			   PAPI_MAX_COUNTER_TERMS is arbitrarily defined in the high level to be a reasonable
 			   number of terms to use in a derived event linear expression, currently 8.
@@ -97,9 +98,9 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 	if ( notes != NULL ) {
 		for ( pnum = 0;
 			  ( pnum < PAPI_MAX_PRESET_EVENTS ) &&
-			  ( notes[pnum].event_code != 0 ); pnum++ ) {
+			  ( notes[pnum].preset_code != 0 ); pnum++ ) {
 			/* strdup the note string into the sparse preset data array */
-			preset_index = ( notes[pnum].event_code & PAPI_PRESET_AND_MASK );
+			preset_index = ( notes[pnum].preset_code & PAPI_PRESET_AND_MASK );
 			if ( _papi_hwi_presets.dev_note[preset_index] != NULL )
 				papi_free( _papi_hwi_presets.dev_note[preset_index] );
 			_papi_hwi_presets.dev_note[preset_index] =

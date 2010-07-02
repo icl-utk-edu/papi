@@ -16,6 +16,7 @@
 * @author  Maynard Johnson
 *          maynardj@us.ibm.com
 *
+* @brief Return codes and api definitions.
 */
 
 #ifndef _PAPI
@@ -52,6 +53,14 @@
  * See individual functions for details on usage and support.
  * 
  * @ref low_api
+ *
+ * @section Components 
+ *
+ *	Components provide access to hardware information on specific subsystems.
+ *
+ *	Components can be found under the conponents directory or @ref papi_components "here". 
+ *	and included in a build as an argument to configure, 
+ *	'--with-components=<comma_seperated_list_of_components_to_build>'
  * 
  * @section papi_util PAPI Utility Commands
  * <ul> 
@@ -86,7 +95,7 @@
 
 /* This is the official PAPI version */
 /* The final digit represents the patch count */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,2)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,9,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -100,39 +109,37 @@ extern "C"
 #include <limits.h>
 #include "papiStdEventDefs.h"
 
-/** @internal 
-	@defgroup ret_codes Return Codes
-	
+/** @defgroup ret_codes Return Codes
+Return Codes
 All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
 failure. 
 @{
 */
 
-#define PAPI_OK        0        /**<No error */
-#define PAPI_EINVAL   -1        /**<Invalid argument */
-#define PAPI_ENOMEM   -2        /**<Insufficient memory */
-#define PAPI_ESYS     -3        /**<A System/C library call failed, please check errno */
-#define PAPI_ESBSTR   -4        /**<Substrate returned an error, 
-                                   usually the result of an unimplemented feature */
-#define PAPI_ENOSUPP  -4
-#define PAPI_ECLOST   -5        /**<Access to the counters was lost or interrupted */
-#define PAPI_EBUG     -6        /**<Internal error, please send mail to the developers */
-#define PAPI_ENOEVNT  -7        /**<Hardware Event does not exist */
-#define PAPI_ECNFLCT  -8        /**<Hardware Event exists, but cannot be counted 
-                                   due to counter resource limitations */
-#define PAPI_ENOTRUN  -9        /**<No Events or EventSets are currently counting */
-#define PAPI_EISRUN  -10        /**<Events or EventSets are currently counting */
-#define PAPI_ENOEVST -11        /**< No EventSet Available */
-#define PAPI_ENOTPRESET -12     /**< Not a Preset Event in argument */
-#define PAPI_ENOCNTR -13        /**< Hardware does not support counters */
-#define PAPI_EMISC   -14        /**< No clue as to what this error code means */
-#define PAPI_EPERM   -15        /**< You lack the necessary permissions */
-#define PAPI_ENOINIT -16        /**< PAPI hasn't been initialized yet */
-#define PAPI_EBUF    -17        /**< Buffer size exceeded (usually strings) */
-#define PAPI_EINVAL_DOM -18     /**< The EventSet's domain is not supported for the operation */
-#define PAPI_ENOCMP  -19        /**< Component Index isn't set */
-#define PAPI_NUM_ERRORS	 20	/**< Number of error messages specified in this API. */
+#define PAPI_OK          0     /**< No error */
+#define PAPI_EINVAL     -1     /**< Invalid argument */
+#define PAPI_ENOMEM     -2     /**< Insufficient memory */
+#define PAPI_ESYS       -3     /**< A System/C library call failed */
+#define PAPI_ESBSTR     -4     /**< Not supported by substrate */
+#define PAPI_ECLOST     -5     /**< Access to the counters was lost or interrupted */
+#define PAPI_EBUG       -6     /**< Internal error, please send mail to the developers */
+#define PAPI_ENOEVNT    -7     /**< Event does not exist */
+#define PAPI_ECNFLCT    -8     /**< Event exists, but cannot be counted due to counter resource limitations */
+#define PAPI_ENOTRUN    -9     /**< EventSet is currently not running */
+#define PAPI_EISRUN     -10    /**< EventSet is currently counting */
+#define PAPI_ENOEVST    -11    /**< No such EventSet Available */
+#define PAPI_ENOTPRESET -12    /**< Event in argument is not a valid preset */
+#define PAPI_ENOCNTR    -13    /**< Hardware does not support performance counters */
+#define PAPI_EMISC      -14    /**< Unknown error code */
+#define PAPI_EPERM      -15    /**< Permission level does not permit operation */
+#define PAPI_ENOINIT    -16    /**< PAPI hasn't been initialized yet */
+#define PAPI_ENOCMP     -17    /**< Component Index isn't set */
+#define PAPI_ENOSUPP    -18    /**< Not supported */
+#define PAPI_ENOIMPL    -19    /**< Not implemented */
+#define PAPI_EBUF       -20    /**< Buffer size exceeded */
+#define PAPI_EINVAL_DOM -21    /**< EventSet domain is not supported for the operation */
+#define PAPI_NUM_ERRORS	 22    /**< Number of error messages specified in this API */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
@@ -202,13 +209,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_UNKNOWN 0
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
-#define PAPI_VENDOR_CYRIX   3
-#define PAPI_VENDOR_IBM     4
-#define PAPI_VENDOR_MIPS    5
-#define PAPI_VENDOR_CRAY    6
-#define PAPI_VENDOR_SUN     7
-#define PAPI_VENDOR_FREESCALE 8
-#define PAPI_VENDOR_SICORTEX 9
+#define PAPI_VENDOR_IBM     3
+#define PAPI_VENDOR_CRAY    4
+#define PAPI_VENDOR_SUN     5
+#define PAPI_VENDOR_FREESCALE 6
 /* @} */
 
 /** @internal 
@@ -729,7 +733,7 @@ read the documentation carefully.  */
 
 /* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
 /* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
-#ifdef _BGP
+#ifdef __bgp__
 #define PAPI_MAX_INFO_TERMS  19		   /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
 #else
 #define PAPI_MAX_INFO_TERMS 12
@@ -796,7 +800,8 @@ read the documentation carefully.  */
    int   PAPI_create_eventset(int *EventSet); /**< create a new empty PAPI event set */
    int   PAPI_detach(int EventSet); /**< detach specified event set from a previously specified process or thread id */
    int   PAPI_destroy_eventset(int *EventSet); /**< deallocates memory associated with an empty PAPI event set */
-   int   PAPI_enum_event(int *EventCode, int modifier); /**< return the event code for the next available preset or natvie event */
+   int   PAPI_enum_event(int *EventCode, int modifier); /**< return the event code for the next available preset or native event */
+   int   PAPI_enum_named_event(char *EventName, int modifier); /**< return the name of the next available preset or native event */
    int   PAPI_event_code_to_name(int EventCode, char *out); /**< translate an integer PAPI event code into an ASCII PAPI preset or native name */
    int   PAPI_event_name_to_code(char *in, int *out); /**< translate an ASCII PAPI preset or native name into an integer PAPI event code */
    int  PAPI_get_dmem_info(PAPI_dmem_info_t *dest); /**< get dynamic memory usage information */

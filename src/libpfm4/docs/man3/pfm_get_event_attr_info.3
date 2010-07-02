@@ -1,0 +1,119 @@
+.TH LIBPFM 4  "December, 2009" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_get_event_attr_info \- get event attribute information
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_get_event_attr_info(int " idx ", int " attr ", pfm_event_attr_info_t *" info ");"
+.sp
+.SH DESCRIPTION
+This function returns in \fBinfo\fR information about the
+attribute designated by \fBattr\fR for the event specified
+in \fBidx\fR.
+
+The \fBpfm_event_attr_info_t\fR structure is defined as follows:
+.nf
+typedef struct {
+        const char              *name;
+        const char              *desc;
+        const char              *equiv;
+        uint64_t                code;
+        pfm_attr_t              type;
+        int                     idx;
+        int                     size;
+        struct {
+                int             is_dfl:1;
+                int             reserved:31;
+        };
+        union {
+                uint64_t        dfl_val64;
+                const char      *dfl_str;
+                int             dfl_bool;
+                int             dfl_int;
+        };
+        uint64_t                reserved[5];
+} pfm_event_attr_info_t;
+.fi
+
+The fields of this structure are defined as follows:
+.TP
+.B name
+This is the name of the attribute. This is a read-only string.
+.TP
+.B desc
+This is the description of the attribute. This is a read-only string.
+It may contain multiple sentences.
+.TP
+.B equiv
+Certain attributes may be just variations of other attributes for the same event.
+They may be provided as handy shortcuts to avoid supplying a long list of attributes.
+For those attributes, this field is not NULL and contains the complete equivalent attribute
+string. This string, once appended to the event name, may be used library calls requiring
+an event string.
+.TP
+.B code
+This is the raw attribute code. For PFM_ATTR_UMASK, this is the unit mask code. For
+all other attributes, this is an opaque index.
+.TP
+.B type
+This is the type of the attribute. Attributes represent either sub-events or extra
+filters that can be applied to the event. Filters (also called modifiers)  may be
+tied to the event or the PMU register the event is programmed into. The type of an attribute
+determines how it must be specified. The following types are defined:
+.RS
+.TP
+.B PFM_ATTR_UMASK
+This is a unit mask, i.e., a sub-event. It is specified using its name.
+Depending on the event, it may be possible to specify multiple unit masks.
+.TP
+.B PFM_ATTR_MOD_BOOL
+This is a boolean attribute. It has a value of 0, 1, y or n. The
+value is specified after the equal sign, e.g., foo=1. As a convenience,
+the equal sign and value may be omitted, in which case this is equivalent
+to =1.
+.TP
+.B PFM_ATTR_MOD_INTEGER
+This is an integer attribute. It has a value which must be passed after
+the equal sign. The range of valid values depends on the attribute and
+is usually specified in its description.
+.PP
+.RE
+.TP
+.B idx
+This is the attribute index. It is identical to the value of \fBattr\fR
+passed to the call and is provided for completeness.
+.TP
+.B size
+This field must be set to zero for now. It will be used in case the
+\fBpfm_event_info\fR structure is expanded.
+.TP
+.B is_dfl
+This field indicates whether or not this attribute is set by default. This
+applies mostly for PFM_ATTR_UMASK. If a unit mask is marked as default,
+and no unit mask is specified in the event string, then the library uses
+it by default. Note that there may be multiple defaults per event depending
+on how unit masks are grouped.
+.TP
+.B dfl_val64, dfl_str, dfl_bool, dfl_int
+This union contains the value of an attribute. For PFM_ATTR_UMASK, the is
+the unit mask code, for all other types this is the actual value of the
+attribute.
+.PP
+The \fBreserved\fR field must be set to zero.
+
+.SH RETURN
+
+If successful, the function returns \fBPFM_SUCCESS\fR and attribute information
+in \fBinfo\fR, otherwise it returns an error code.
+.SH ERRORS
+.TP
+.B PFMLIB_ERR_NOINIT
+Library has not been initialized properly.
+.TP
+.B PFMLIB_ERR_INVAL
+The \fBidx\fR or \fBattr\fR arguments are invalid or \fBinfo\fR is \fBNULL\fR or \fBsize\fR
+is not zero.
+.SH AUTHOR
+Stephane Eranian <eranian@gmail.com>
+.PP

@@ -1,0 +1,93 @@
+          ------------------------------------------------------------
+                                    libpfm-4.x:
+          a helper library to program the performance monitoring events
+          ------------------------------------------------------------
+ 	  Copyright (c) 2009 Google, Inc
+	                Contributed by Stephane Eranian <eranian@gmail.com>
+
+ 	  Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
+	                Contributed by Stephane Eranian <eranian@hpl.hp.com>
+	
+
+This package provides a library, called libpfm which is used
+to develop monitoring tools exploiting the performance monitoring
+events such as those provided by the Performance Monitoring Unit
+Unit (PMU) of modern processors.
+
+This is a complete rewrite of libpfm3 and it is NOT backward compatible
+with it.
+
+Libpfm4 helps convert from an event name, expressed as a string, to 
+the event encoding. The encoding can then be used with specific OS
+interfaces. Libpfm4 also provides OS-specific interfaces to directly
+setup OS-specific data structures to be passed to the kernel. The
+current libpfm4, for instance, provides support for the perf_events
+interface which was introduced in Linux v2.6.31. Perfmon support is
+not present yet.
+
+The library supports only X86-based processors at this point, but all
+the other processors supported in libpfm3 will be added later on.
+
+This version of libpfm supports:
+	- For AMD X86:
+		AMD Opteron (K7, K8, fam 10h, fam11h)
+	- For Intel X86: 
+		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)
+		Intel Yonah (Core Duo/Core Solo),
+		Intel Core (Merom, Penryn, Dunnington) Core 2 and Quad
+		Intel Atom
+		Intel Nehalem (Core i7, Core i5)
+		Intel architectural perfmon v1, v2, v3
+
+
+The core of the library is very generic and not tied to any particular OS interface.
+Thus, it can be compiled on non-Linux platforms, such as MacOS X and OpenSolaris.
+
+WHAT'S THERE
+-------------
+	- the library source code including support for all processors listed
+	  above
+
+	- a set of generic examples showing how to list and query events. They
+	  are in examples.
+
+	- a set of examples showing how the library can be used with the
+	  perf_events interface. They are in perf_examples.
+
+	- a set of library header files and also the perf_events kernel header.
+
+	- man pages for all the library entry points
+
+	- Python bindings for libpfm (not yet functional)
+
+INSTALLATION
+------------
+	- edit config.mk to :
+		- update some of the configuration variables
+		- make your compiler options
+
+	- type make
+	- type make install
+
+ 	- To compile and install the Python bindings, you need to go to the
+	  python sub-directory and type make. Python is not systematically
+	  built
+
+	- to compile the library for another ABI (e.g. 32-bit x86 on a
+	  64-bit x86) system, you can pass the ABI flag to the compiler as
+	  follows (assuming you have the multilib version of gcc):
+		$ make OPTION="-m32 -O2"
+
+REQUIREMENTS:
+-------------
+	- to run the programs in the perf_examples subdir, you MUST be using a
+	  linux kernel with perf_events. That means v2.6.31 or later.
+
+	- to compile the Python bindings, you need to have SWIG and the python
+	  development packages installed
+
+DOCUMENTATION
+-------------
+	- man pages for all entry points. It is recommended you start with: man libpfm
+	- More information can be found on library web site:
+			http://perfmon2.sf.net

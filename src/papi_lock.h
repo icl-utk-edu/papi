@@ -1,75 +1,65 @@
-#ifdef USE_SEMAPHORES
-extern int sem_set;
+/**
+* @file:   papi_lock.h
+* CVS:     $Id$
+* @author  Philip Mucci
+*          mucci@cs.utk.edu
+*/
 
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
+#ifndef PAPI_LOCK_H
+#define PAPI_LOCK_H
 
-inline void
-_papi_hwd_lock_init( void )
-{
-	union semun val;
-	val.val = 1;
-
-	if ( ( retval = semget( IPC_PRIVATE, PAPI_MAX_LOCK, 0666 ) ) == -1 ) {
-		PAPIERROR( "semget errno %d", errno );
-		return ( PAPI_ESYS );
-	}
-	sem_set = retval;
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
-		if ( ( retval = semctl( sem_set, i, SETVAL, val ) ) == -1 ) {
-			abort(  );
-		}
-	}
-}
-
-inline void
-_papi_hwd_lock_fini( void )
-{
-	if ( ( retval = semctl( sem_set, 0, IPC_RMID, 0 ) ) == -1 ) {
-		abort(  );
-	}
-}
-
-inline void
-_papi_hwd_lock( int lck )
-{
-	struct sembuf sem_lock = { lck, -1, 0 };
-	if ( semop( sem_set, &sem_lock, 1 ) == -1 ) {
-		abort(  );
-	}
-}
-
-inline void
-_papi_hwd_unlock( int lck )
-{
-	struct sembuf sem_unlock = { lck, 1, 0 };
-	if ( semop( sem_set, &sem_unlock, 1 ) == -1 ) {
-		abort(  );
-	}
-}
-
-#else
-
-extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-
-inline void
-_papi_hwd_lock_init( void )
-{
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-		_papi_hwd_lock_data[i] = MUTEX_OPEN;
-}
-
-inline void
-_papi_hwd_lock_fini( void )
-{
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-		_papi_hwd_lock_data[i] = MUTEX_OPEN;
-}
+#include "papi_defines.h"
 
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
 
-#ifdef __ia64__
+#ifdef _AIX
+atomic_p lock[PAPI_MAX_LOCK];
+#else
+volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#endif
+
+inline_static void 
+_papi_hwd_lock_init( void )
+{
+#if defined(__bgp__) 
+    /* PAPI on BG/P does not need locks. */ 
+    return;
+#elif defined(_AIX)
+	int i;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		lock[i] = ( int * ) ( lock_var + i );
+#else
+	int i;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+#endif
+}
+
+inline_static void
+_papi_hwd_lock_fini( void )
+{
+#if defined(_AIX) || defined(__bgp__)
+    return;
+#else
+	int i;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+#endif
+}
+
+#ifdef _AIX
+
+#define _papi_hwd_lock(lck)   { while(_check_lock(lock[lck],0,1) == TRUE) { ; } }
+#define _papi_hwd_unlock(lck) { _clear_lock(lock[lck], 0); }
+
+#elif defined(__bgp__)
+
+/* PAPI on BG/P does not need locks. */ 
+#define _papi_hwd_lock(lck)   {}
+#define _papi_hwd_unlock(lck) {}
+
+#elif defined(__ia64__)
 
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
@@ -102,67 +92,6 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 
-#elif defined(mips)
-static inline void
-__raw_spin_lock( volatile unsigned int *lock )
-{
-	unsigned int tmp;
-	extern int _perfmon2_pfm_pmu_type;
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU ) {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqzl	%1, 1b					\n"
-							  "	 nop						\n"
-							  "	sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	} else if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU ) {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "  	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqz	%1, 1b					\n"
-							  "	 sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	} else {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqz	%1, 1b					\n"
-							  "	 sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	}
-}
-
-static inline void
-__raw_spin_unlock( volatile unsigned int *lock )
-{
-	__asm__ __volatile__( "	.set	noreorder	# __raw_spin_unlock	\n"
-						  "	sync						\n"
-						  "	sw	$0, %0					\n"
-						  "	.set\treorder					\n":"=m"( *lock )
-						  :"m"( *lock )
-						  :"memory" );
-}
-
-#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
-#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
-
 #elif defined(__powerpc__)
 
 /*
@@ -191,9 +120,6 @@ papi_xchg_u32( volatile void *p, unsigned long val )
 	return prev;
 }
 
-/*
- * The two defines below are taken directly from the MIPS implementation.
- */
 #define  _papi_hwd_lock(lck)                          \
 do {                                                    \
   unsigned int retval;                                 \
@@ -208,23 +134,14 @@ do {                                                    \
 } while(0)
 
 #elif defined(__sparc__)
-static inline void
-__raw_spin_lock( volatile unsigned int *lock )
-{
-	__asm__ __volatile__( "\n1:\n\t" "ldstub	[%0], %%g2\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2f\n\t" " ldub	[%0], %%g2\n\t" ".subsection	2\n" "2:\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2b\n\t" " ldub	[%0], %%g2\n\t" "b,a	1b\n\t" ".previous\n":	/* no outputs */
-						  :"r"( lock )
-						  :"g2", "memory", "cc" );
-}
-static inline void
-__raw_spin_unlock( volatile unsigned int *lock )
-{
-	__asm__ __volatile__( "stb %%g0, [%0]"::"r"( lock ):"memory" );
-}
-
-#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
-#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
+#include <synch.h>
+extern void cpu_sync( void );
+extern unsigned long long get_tick( void );
+extern caddr_t _start, _end, _etext, _edata;
+rwlock_t lock[PAPI_MAX_LOCK];
+#define _papi_hwd_lock(lck) rw_wrlock(&lock[lck]);
+#define _papi_hwd_unlock(lck) rw_unlock(&lock[lck]);
 #else
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
 
-#endif /* USE_SEMAPHORES */
