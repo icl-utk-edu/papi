@@ -44,7 +44,6 @@ CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
 endif
 
 CFLAGS+= -I. -D_GNU_SOURCE
-LIBS += -lm
 
 ifeq ($(SYS),Linux)
 CFLAGS+= -pthread
@@ -69,7 +68,7 @@ all: $(TARGETS) $(XTRA)
 # Many systems don't have ncurses-devel installed
 #
 rtop: rtop.o $(PFMLIB)
-	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
+	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses -lm
 
 $(TARGETS):  %:%.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
