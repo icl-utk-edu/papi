@@ -1444,7 +1444,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 		/* For now, assume we are always doing per-thread self-monitoring FIXME */
 		/* Flags parameter is currently unused, but needs to be set to 0 for now */
 		ctx->evt[i].event_fd =
-			sys_perf_counter_open( &ctl->events[i], 0, -1,
+			sys_perf_counter_open( &ctl->events[i], ctl->tid, -1,
 								   ctx->evt[ctx->evt[i].group_leader].event_fd,
 								   0 );
 		if ( ctx->evt[i].event_fd == -1 ) {
@@ -1579,10 +1579,7 @@ close_pe_evts( context_t * ctx )
 static int
 attach( control_state_t * ctl, unsigned long tid )
 {
-	( void ) ctl;			 /*unused */
-	( void ) tid;			 /*unused */
-	/* NYI!  FIXME */
-	SUBDBG( "attach is unimplemented!" );
+	ctl->tid = tid;
 	return PAPI_OK;
 }
 
@@ -1590,9 +1587,7 @@ static int
 detach( context_t * ctx, control_state_t * ctl )
 {
 	( void ) ctx;			 /*unused */
-	( void ) ctl;			 /*unused */
-	/* NYI!  FIXME */
-	SUBDBG( "detach is unimplemented!" );
+	ctl->tid = 0;
 	return PAPI_OK;
 }
 
@@ -2268,11 +2263,9 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		return ret;
 	}
 	case PAPI_ATTACH:
-		return PAPI_ENOSUPP; /* FIXME */
 		return attach( ( control_state_t * ) ( option->attach.ESI->ctl_state ),
 					   option->attach.tid );
 	case PAPI_DETACH:
-		return PAPI_ENOSUPP; /* FIXME */
 		return detach( pe_ctx,
 					   ( control_state_t * ) ( option->attach.ESI->
 											   ctl_state ) );
@@ -2974,6 +2967,10 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 #else
 			inp.pfp_events[0] = *( ( pfm_register_t * ) native[i].ni_bits );
 			ret = pfm_dispatch_events( &inp, NULL, &outp, NULL );
+			if (ret != PFMLIB_SUCCESS) {
+				SUBDBG( "Error: pfm_dispatch_events returned: %d\n", ret);
+				return PAPI_ESBSTR;
+			}
 			pe_event = outp.pfp_pmcs[0].reg_value;
 			SUBDBG( "pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value );
 #endif
@@ -3096,7 +3093,7 @@ papi_vector_t _papi_pe_vector = {
 				 /* component specific cmp_info initializations */
 				 .fast_real_timer = 1,
 				 .fast_virtual_timer = 0,
-				 .attach = 0,
+				 .attach = 1,
 				 .attach_must_ptrace = 0,
 				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
 				 .itimer_num = PAPI_INT_ITIMER,

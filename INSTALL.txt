@@ -242,7 +242,6 @@ you install the PerfCtr patchset and use that in conjunction with PAPI.
      user does not work.
    + Currently having more than one EventSet will cause wrong
      output (all EventSets will read as the last one created)
-   + Currently attaching is not supported.
    + Kernels before 2.6.33 have extra overhead when determining
      whether events conflict or not.
    + Multiplexing requires kernel 2.6.33 or newer
