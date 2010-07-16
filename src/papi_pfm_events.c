@@ -374,7 +374,8 @@ load_preset_table( char *pmu_str, int pmu_type,
 				SUBDBG( "Ending preset scanning at line %d of %s.\n", line_no,
 						name );
 #endif
-				goto done;
+			        get_presets=0; found_presets=0;
+				/* goto done; */
 			}
 			t = trim_string( strtok( NULL, "," ) );
 			if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
@@ -530,7 +531,7 @@ load_preset_table( char *pmu_str, int pmu_type,
 	  nextline:
 		line_no++;
 	}
-  done:
+/*  done: */
 	if ( table )
 		fclose( table );
 	return ( PAPI_OK );

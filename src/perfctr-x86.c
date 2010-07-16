@@ -270,7 +270,7 @@ setup_x86_presets( int cputype )
 #ifdef PERFCTR_X86_INTEL_CORE
 		case PERFCTR_X86_INTEL_CORE:
 			retval = _papi_pfm_init(  );
-			_papi_pfm_setup_presets( "Intel Core", 0 );
+			_papi_pfm_setup_presets( "Intel Core Duo/Solo", 0 );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE2
