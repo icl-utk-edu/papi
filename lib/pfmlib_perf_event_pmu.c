@@ -629,6 +629,7 @@ pfm_perf_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->name  = perf_pe[idx].name;
 	info->desc  = perf_pe[idx].desc;
 	info->code  = perf_pe[idx].id;
+	info->equiv = NULL;
 
 	/* unit masks + modifiers */
 	info->nattrs  = perf_pe[idx].numasks;
