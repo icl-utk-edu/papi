@@ -190,14 +190,13 @@ measure(void)
 {
 	int c, cmin, cmax, ncpus;
 
-	if (options.cpu == -1) {
-		cmin = 0;
-		cmax = (int)sysconf(_SC_NPROCESSORS_ONLN);
-		ncpus = cmax;
-	} else {
+	cmin = 0;
+	cmax = (int)sysconf(_SC_NPROCESSORS_ONLN);
+	ncpus = cmax;
+
+	if (options.cpu != -1) {
 		cmin = options.cpu;
 		cmax = cmin + 1;
-		ncpus = 1;
 	}
 
 	all_fds = malloc(ncpus * sizeof(perf_event_desc_t *));
