@@ -53,7 +53,7 @@ x86_cache_info( PAPI_mh_info_t * mh_info )
 
 	if ( !strncmp( "GenuineIntel", &reg.vendor[4], 12 ) ) {
 		mh_info->levels = init_intel( mh_info );
-	} else if ( strncmp( "GenuineIntel", &reg.vendor[4], 12 ) ) {
+	} else if ( !strncmp( "AuthenticAMD", &reg.vendor[4], 12 ) ) {
 		mh_info->levels = init_amd( mh_info );
 	} else {
 		MEMDBG( "Unsupported cpu type; Not Intel or AMD x86\n" );
@@ -100,7 +100,7 @@ _amd_L2_L3_assoc( unsigned short int pattern )
 	return ( assoc[pattern] );
 }
 
-/* Cache configuration for AMD AThlon/Duron */
+/* Cache configuration for AMD Athlon/Duron */
 static int
 init_amd( PAPI_mh_info_t * mh_info )
 {
@@ -317,6 +317,11 @@ init_amd( PAPI_mh_info_t * mh_info )
 }
 
    /*
+    * The data from this table now comes from figure 3-17 in
+    *  the Intel Architectures Software Reference Manual 2A
+    *  (cpuid instruction section)
+    * 
+    * Pretviously the information was provided by
     * "Intel® Processor Identification and the CPUID Instruction",
     * Application Note, AP-485, Nov 2008, 241618-033
     * Updated to AP-485, Aug 2009, 241618-036
@@ -414,6 +419,14 @@ static struct _intel_cache_info intel_cache[] = {
 	 .associativity = 2,
 	 .line_size = 32,
 	 },
+// 0x0B
+	{.descriptor = 0x0B,
+	 .level = 1,
+	 .type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+	 .size[0] = 4096,
+	 .associativity = 4,
+	 .entries = 4,
+	 },   
 // 0x0C
 	{.descriptor = 0x0C,
 	 .level = 1,
@@ -430,6 +443,14 @@ static struct _intel_cache_info intel_cache[] = {
 	 .associativity = 4,
 	 .line_size = 64,
 	 },
+// 0x0E
+	{.descriptor = 0x0E,
+	 .level = 1,
+	 .type = PAPI_MH_TYPE_DATA,
+	 .size[0] = 24,
+	 .associativity = 6,
+	 .line_size = 64,
+	 },   
 // 0x21
 	{.descriptor = 0x21,
 	 .level = 2,
@@ -657,6 +678,14 @@ static struct _intel_cache_info intel_cache[] = {
 	 .associativity = 24,
 	 .line_size = 64,
 	 },
+// 0x4F
+	{.descriptor = 0x4F,
+	 .level = 1,
+	 .type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+	 .size[0] = 4,
+	 .associativity = SHRT_MAX,
+	 .entries = 32,
+	 },
 // 0x50
 	{.descriptor = 0x50,
 	 .level = 1,
@@ -705,6 +734,14 @@ static struct _intel_cache_info intel_cache[] = {
 	 .associativity = 4,
 	 .entries = 16,
 	 },
+// 0x59
+	{.descriptor = 0x59,
+	 .level = 1,
+	 .type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+	 .size[0] = 4,
+	 .associativity = SHRT_MAX,
+	 .entries = 16,
+	 },   
 // 0x5A
 	{.descriptor = 0x5A,
 	 .level = 1,
@@ -861,6 +898,14 @@ static struct _intel_cache_info intel_cache[] = {
 	 .associativity = 2,
 	 .line_size = 64,
 	 },
+// 0x80
+	{.descriptor = 0x80,
+	 .level = 2,
+	 .type = PAPI_MH_TYPE_UNIFIED,
+	 .size[0] = 512,
+	 .associativity = 8,
+	 .line_size = 64,
+	 },   
 // 0x82
 	{.descriptor = 0x82,
 	 .level = 2,
@@ -952,6 +997,22 @@ static struct _intel_cache_info intel_cache[] = {
 	 .associativity = 4,
 	 .entries = 256,
 	 },
+// 0xBA
+	{.descriptor = 0xBA,
+	 .level = 1,
+	 .type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+	 .size[0] = 4,
+	 .associativity = 4,
+	 .entries = 64,
+	 },   
+// 0xC0
+	{.descriptor = 0xBA,
+	 .level = 1,
+	 .type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+	 .size = {4,4096},
+	 .associativity = 4,
+	 .entries = 8,
+	 },      
 // 0xCA
 	{.descriptor = 0xCA,
 	 .level = 2,
@@ -1228,7 +1289,10 @@ init_intel( PAPI_mh_info_t * mh_info )
 			for ( b = 3; b >= 0; b-- ) {	/* walk the descriptor bytes from high to low */
 				i = r * 4 + b;	/* calculate an index into the array of descriptors */
 				if ( i ) {	 /* skip the low order byte in eax [0]; it's the count (see above) */
-					for ( t = 0; t < size; t++ ) {	/* walk the descriptor table */
+				   if ( reg.descrip[i] == 0xff ) {
+				      fprintf(stderr,"Warning! PAPI x86_cache: must implement cpuid leaf 4\n");
+				   }
+					for ( t = 0; t < size; t++ ) {	/* walk the descriptor table */					   
 						if ( reg.descrip[i] == intel_cache[t].descriptor ) {	/* find match */
 							if ( intel_cache[t].level > last_level )
 								last_level = intel_cache[t].level;
