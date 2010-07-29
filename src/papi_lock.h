@@ -14,6 +14,7 @@
 #define MUTEX_CLOSED 1
 
 #ifdef _AIX
+volatile int lock_var[PAPI_MAX_LOCK] = { 0 };
 atomic_p lock[PAPI_MAX_LOCK];
 #else
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];

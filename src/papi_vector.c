@@ -51,7 +51,7 @@ long long vec_dummy_get_real_cycles( void );
 
 extern int compute_freq(  );
 
-static int frequency = -1;
+static long long frequency = -1;
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 
 #ifndef _WIN32
@@ -76,15 +76,16 @@ void
 set_freq(  )
 {
 #if defined(_AIX)
-	frequency = ( int ) pm_cycles(  ) / 1000000;
+	/* pm_cycles() returns cycles per sec --> frequency is cycles per micro-sec */
+	frequency = ( long long ) pm_cycles(  ) / 1000000;
 #elif defined(__bgp__)
 	_BGP_Personality_t bgp;
-	frequency = BGP_Personality_clockMHz( &bgp );
+	frequency = ( long long ) BGP_Personality_clockMHz( &bgp );
 #elif defined(_WIN32)
 #elif defined(__APPLE__)
 	int mib[2];
 	size_t len = sizeof ( frequency );
-	unsigned int freq;
+	unsigned long long freq;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_CPU_FREQ;
@@ -109,14 +110,14 @@ set_freq(  )
 		if ( s )
 			sscanf( s + 1, "%f", &mhz );
 
-		frequency = ( int ) mhz;
+		frequency = ( long long ) mhz;
 		fclose( f );
 	}
 #endif
  
 #ifndef _WIN32
 	if ( frequency == -1 )
-		frequency = compute_freq(  );
+		frequency = ( long long ) compute_freq(  );
 #endif
 }
 
@@ -138,6 +139,17 @@ vec_dummy_get_real_usec( void )
 	QueryPerformanceCounter( &PerformanceCount );
 	QueryPerformanceFrequency( &Frequency );
 	return ( ( PerformanceCount.QuadPart * 1000000 ) / Frequency.QuadPart );
+#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+	long long aix_usec;
+	timebasestruct_t t;
+	t = getticks(  );
+	/* converts time base information to real time, if necessary.
+	   It's recommended that applications unconditionally call time_base_to_time */
+	time_base_to_time( &t, TIMEBASE_SZ );
+	/* convert sec to micro-sec and nano-sec to micro-sec */
+	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
+	/* return real time in micro-sec */
+	return ( aix_usec );
 #else
 	return ( long long ) getticks(  ) / frequency;
 #endif
@@ -149,6 +161,16 @@ vec_dummy_get_real_cycles( void )
 #if defined(__bgp__)
 	return _bgp_GetTimeBase(  );
 #elif defined(_WIN32)
+#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+	long long aix_usec;
+	timebasestruct_t t;
+	t = getticks(  );
+	/* converts time base information to real time, if necessary.
+	 It's recommended that applications unconditionally call time_base_to_time */
+	time_base_to_time( &t, TIMEBASE_SZ );
+	/* convert sec to micro-sec and nano-sec to micro-sec */
+	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
+	return ( aix_usec * frequency );
 #else
 	return ( long long ) getticks(  );
 #endif
@@ -177,6 +199,17 @@ vec_dummy_get_virt_usec( const hwd_context_t * zero )
 		retval = virt / 1000;
 	} else
 		return ( PAPI_ESBSTR );
+#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+	long long aix_usec;
+	timebasestruct_t t;
+	t = getticks(  );
+	/* converts time base information to real time, if necessary.
+	 It's recommended that applications unconditionally call time_base_to_time */
+	time_base_to_time( &t, TIMEBASE_SZ );
+	/* convert sec to micro-sec and nano-sec to micro-sec */
+	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
+	/* return real time in micro-sec */
+	return ( aix_usec );
 #else
 	return ( long long ) getticks(  ) / frequency;
 #endif
@@ -189,6 +222,16 @@ vec_dummy_get_virt_cycles( const hwd_context_t * zero )
 #if defined(__bgp__)
 	return _bgp_GetTimeBase(  );
 #elif defined(_WIN32)
+#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+	long long aix_usec;
+	timebasestruct_t t;
+	t = getticks(  );
+	/* converts time base information to real time, if necessary.
+	 It's recommended that applications unconditionally call time_base_to_time */
+	time_base_to_time( &t, TIMEBASE_SZ );
+	/* convert sec to micro-sec and nano-sec to micro-sec */
+	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
+	return ( aix_usec * frequency );
 #else
 	return ( long long ) getticks(  );
 #endif

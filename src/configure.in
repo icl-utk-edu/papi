@@ -1107,7 +1107,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
     FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
   else 
     CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -DNEED_FFSLL'
-    FFLAGS=$(FLAGS)
+    FFLAGS='$(FLAGS)'
   fi
   FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
   OPTFLAGS='-O3 -qstrict $(PMINIT)'
@@ -1337,7 +1337,7 @@ if test "$F77" = "pgf77"; then
   FFLAGS="$FFLAGS -Wall -Mextend"
 elif test "$F77" = "ifort"; then
   FFLAGS="$FFLAGS -warn all"
-elif test "F77" != "xlf"; then
+elif test "$F77" != "xlf"; then
   FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
 fi
 if test "$no_cpu_counters" = "yes"; then
