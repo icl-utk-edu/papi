@@ -8,6 +8,15 @@
 #ifndef PAPI_LOCK_H
 #define PAPI_LOCK_H
 
+/* AIX compiler does not recognize the inline keyword */
+#ifdef _AIX
+#define inline
+#endif 
+
+#ifdef _AIX
+#include <sys/atomic_op.h>
+#endif
+
 #include "papi_defines.h"
 
 #define MUTEX_OPEN 0

@@ -17,6 +17,11 @@
 #ifndef _PAPI_INTERNAL_H
 #define _PAPI_INTERNAL_H
 
+/* AIX's C compiler does not recognize the inline keyword */
+#ifdef _AIX
+#define inline
+#endif 
+
 #ifdef DEBUG
 
 #ifdef __GNUC__
