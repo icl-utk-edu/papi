@@ -15,6 +15,8 @@
 *	   london@cs.utk.edu
 * @author  Per Ekman
 *          pek@pdc.kth.se
+* Mods:    <Gary Mohr>
+*          <gary.mohr@bull.com>
 *
 * @brief Most of the low-level API is here.
 */
@@ -56,6 +58,7 @@ extern int _papi_hwi_error_level;
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern papi_mdi_t _papi_hwi_system_info;
 extern void _papi_hwi_dummy_handler( int, void *, long long, void * );
+extern void remap_event_position( EventSetInfo_t *, int );
 
 /* papi_data.c */
 
@@ -750,6 +753,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
 int
 PAPI_event_name_to_code( char *in, int *out )
 {
+   APIDBG("Entry: in: %p, name: %s, out: %p\n", in, in, out);
 	int i;
 
 	if ( ( in == NULL ) || ( out == NULL ) )
@@ -889,6 +893,7 @@ PAPI_enum_event( int *EventCode, int modifier )
 int
 PAPI_create_eventset( int *EventSet )
 {
+   APIDBG("Entry: EventSet: %p\n", EventSet);
 	ThreadInfo_t *master;
 	int retval;
 
@@ -1010,6 +1015,7 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
 int
 PAPI_add_event( int EventSet, int EventCode )
 {
+   APIDBG("Entry: EventSet: %d, EventCode: 0x%x\n", EventSet, EventCode);
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */
@@ -1186,12 +1192,15 @@ PAPI_destroy_eventset( int *EventSet )
 int
 PAPI_start( int EventSet )
 {
+	APIDBG("Entry: EventSet: %d\n", EventSet);
+	int i;
+	int is_dirty=0;
 	int retval;
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
+	ThreadInfo_t *thread = NULL;
+	CpuInfo_t *cpu = NULL;
+	hwd_context_t *context;
 	int cidx;
-
-	APIDBG( "PAPI_start\n" );
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
@@ -1200,17 +1209,20 @@ PAPI_start( int EventSet )
 	cidx = valid_ESI_component( ESI );
 	if ( cidx < 0 )
 		papi_return( cidx );
-
-	thread = ESI->master;
-
-	/* only one event set can be running at any time, so if another event
-	   set is running, the user must stop that event set explicitly */
-
-	if ( thread->running_eventset[cidx] )
-		papi_return( PAPI_EISRUN );
-
+	
+	/* only one event set per thread/cpu can be running at any time, so if another event
+		set is running, the user must stop that event set explicitly */
+	if (!(ESI->state & PAPI_CPU_ATTACHED)) {
+		thread = ESI->master;
+		if ( thread->running_eventset[cidx] )
+			papi_return( PAPI_EISRUN );
+	} else {
+		cpu = ESI->CpuInfo;
+		if ( cpu->running_eventset[cidx] )
+			papi_return( PAPI_EISRUN );
+	}
+	
 	/* Check that there are added events */
-
 	if ( ESI->NumberOfEvents < 1 )
 		papi_return( PAPI_EINVAL );
 
@@ -1223,17 +1235,32 @@ PAPI_start( int EventSet )
 			papi_return( retval );
 
 		/* Update the state of this EventSet */
-
 		ESI->state ^= PAPI_STOPPED;
 		ESI->state |= PAPI_RUNNING;
 
 		return ( PAPI_OK );
 	}
 
-	/* Short circuit this stuff if there's nothing running */
+	/* get the context we should use for this event set */
+	context = _papi_hwi_get_context( ESI, &is_dirty );
+	if (is_dirty) {
+		/* we need to reset the context state because it was last used for some */
+		/* other event set and does not contain the information for our events. */
+		retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
+														  ESI->NativeInfoArray,
+														  ESI->NativeCount,
+														  context);
+		if ( retval != PAPI_OK ) {
+			papi_return( retval );
+		}
+		
+		/* now that the context contains this event sets information, */
+		/* make sure the position array in the EventInfoArray is correct */
+		for ( i=0 ; i<ESI->NativeCount ; i++ )
+			remap_event_position( ESI, i );
+	}
 
 	/* If overflowing is enabled, turn it on */
-
 	if ( ( ESI->state & PAPI_OVERFLOWING ) &&
 		 !( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) ) {
 		retval =
@@ -1245,17 +1272,14 @@ PAPI_start( int EventSet )
 		/* Update the state of this EventSet and thread before to avoid races */
 		ESI->state ^= PAPI_STOPPED;
 		ESI->state |= PAPI_RUNNING;
-		if ( !( ESI->state & PAPI_ATTACHED ) )
-			thread->running_eventset[cidx] = ESI;
+		thread->running_eventset[cidx] = ESI;   /* can not be attached to thread or cpu if overflowing */
 
-		retval =
-			_papi_hwd[cidx]->start( thread->context[cidx], ESI->ctl_state );
+		retval = _papi_hwd[cidx]->start( context, ESI->ctl_state );
 		if ( retval != PAPI_OK ) {
 			_papi_hwi_stop_signal( _papi_hwd[cidx]->cmp_info.itimer_sig );
 			ESI->state ^= PAPI_RUNNING;
 			ESI->state |= PAPI_STOPPED;
-			if ( !( ESI->state & PAPI_ATTACHED ) )
-				thread->running_eventset[cidx] = NULL;
+			thread->running_eventset[cidx] = NULL;
 			papi_return( retval );
 		}
 
@@ -1264,28 +1288,36 @@ PAPI_start( int EventSet )
 										_papi_hwd[cidx]->cmp_info.itimer_ns );
 		if ( retval != PAPI_OK ) {
 			_papi_hwi_stop_signal( _papi_hwd[cidx]->cmp_info.itimer_sig );
-			_papi_hwd[cidx]->stop( thread->context[cidx], ESI->ctl_state );
+			_papi_hwd[cidx]->stop( context, ESI->ctl_state );
 			ESI->state ^= PAPI_RUNNING;
 			ESI->state |= PAPI_STOPPED;
-			if ( !( ESI->state & PAPI_ATTACHED ) )
-				thread->running_eventset[cidx] = NULL;
+			thread->running_eventset[cidx] = NULL;
 			papi_return( retval );
 		}
 	} else {
 		/* Update the state of this EventSet and thread before to avoid races */
 		ESI->state ^= PAPI_STOPPED;
 		ESI->state |= PAPI_RUNNING;
-		if ( !( ESI->state & PAPI_ATTACHED ) )
-			thread->running_eventset[cidx] = ESI;
+		/* if not attached to cpu or another process */
+		if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
+			if ( !( ESI->state & PAPI_ATTACHED ) ) {
+				thread->running_eventset[cidx] = ESI;
+			}
+		} else {
+			cpu->running_eventset[cidx] = ESI;
+		}
 
-		retval =
-			_papi_hwd[cidx]->start( thread->context[cidx], ESI->ctl_state );
+		retval = _papi_hwd[cidx]->start( context, ESI->ctl_state );
 		if ( retval != PAPI_OK ) {
-			_papi_hwd[cidx]->stop( thread->context[cidx], ESI->ctl_state );
+			_papi_hwd[cidx]->stop( context, ESI->ctl_state );
 			ESI->state ^= PAPI_RUNNING;
 			ESI->state |= PAPI_STOPPED;
-			if ( !( ESI->state & PAPI_ATTACHED ) )
-				thread->running_eventset[cidx] = NULL;
+			if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
+				if ( !( ESI->state & PAPI_ATTACHED ) ) 
+					thread->running_eventset[cidx] = NULL;
+			} else {
+				cpu->running_eventset[cidx] = NULL;
+			}
 			papi_return( retval );
 		}
 	}
@@ -1321,11 +1353,11 @@ PAPI_start( int EventSet )
 int
 PAPI_stop( int EventSet, long long *values )
 {
+   APIDBG("Entry: EventSet: %d, values: %p\n", EventSet, values);
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
+	hwd_context_t *context;
 	int cidx, retval;
 
-	APIDBG( "PAPI_stop\n" );
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
@@ -1333,8 +1365,6 @@ PAPI_stop( int EventSet, long long *values )
 	cidx = valid_ESI_component( ESI );
 	if ( cidx < 0 )
 		papi_return( cidx );
-
-	thread = ESI->master;
 
 	if ( !( ESI->state & PAPI_RUNNING ) )
 		papi_return( PAPI_ENOTRUN );
@@ -1354,15 +1384,15 @@ PAPI_stop( int EventSet, long long *values )
 		return ( PAPI_OK );
 	}
 
+	/* get the context we should use for this event set */
+	context = _papi_hwi_get_context( ESI, NULL );
 	/* Read the current counter values into the EventSet */
-
-	retval = _papi_hwi_read( thread->context[cidx], ESI, ESI->sw_stop );
+	retval = _papi_hwi_read( context, ESI, ESI->sw_stop );
 	if ( retval != PAPI_OK )
 		papi_return( retval );
 
 	/* Remove the control bits from the active counter config. */
-
-	retval = _papi_hwd[cidx]->stop( thread->context[cidx], ESI->ctl_state );
+	retval = _papi_hwd[cidx]->stop( context, ESI->ctl_state );
 	if ( retval != PAPI_OK )
 		papi_return( retval );
 	if ( values )
@@ -1374,7 +1404,7 @@ PAPI_stop( int EventSet, long long *values )
 	if ( ESI->state & PAPI_PROFILING ) {
 		if ( _papi_hwd[cidx]->cmp_info.kernel_profile &&
 			 !( ESI->profile.flags & PAPI_PROFIL_FORCE_SW ) ) {
-			retval = _papi_hwd[cidx]->stop_profiling( thread, ESI );
+			retval = _papi_hwd[cidx]->stop_profiling( ESI->master, ESI );
 			if ( retval < PAPI_OK )
 				papi_return( retval );
 		}
@@ -1399,12 +1429,13 @@ PAPI_stop( int EventSet, long long *values )
 	ESI->state |= PAPI_STOPPED;
 
 	/* Update the running event set for this thread */
-
-	/* #warning "I don't know why this is here" */
-
-	if ( !( ESI->state & PAPI_ATTACHED ) )
-		thread->running_eventset[cidx] = NULL;
-
+	if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
+		if ( !( ESI->state & PAPI_ATTACHED ))
+			ESI->master->running_eventset[cidx] = NULL;
+	} else {
+		ESI->CpuInfo->running_eventset[cidx] = NULL;
+	}
+	
 #if defined(DEBUG)
 	if ( _papi_hwi_debug & DEBUG_API ) {
 		int i;
@@ -1436,38 +1467,37 @@ PAPI_reset( int EventSet )
 {
 	int retval = PAPI_OK;
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
+	hwd_context_t *context;
 	int cidx;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
-	thread = ESI->master;
 
 	cidx = valid_ESI_component( ESI );
 	if ( cidx < 0 )
 		papi_return( cidx );
 
 	if ( ESI->state & PAPI_RUNNING ) {
-		if ( _papi_hwi_is_sw_multiplex( ESI ) )
+		if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
 			retval = MPX_reset( ESI->multiplex.mpx_evset );
-		else {
+		} else {
 			/* If we're not the only one running, then just
 			   read the current values into the ESI->start
 			   array. This holds the starting value for counters
 			   that are shared. */
-
-			retval =
-				_papi_hwd[cidx]->reset( thread->context[cidx], ESI->ctl_state );
-
+			/* get the context we should use for this event set */
+			context = _papi_hwi_get_context( ESI, NULL );
+			retval = _papi_hwd[cidx]->reset( context, ESI->ctl_state );
 		}
 	} else {
 #ifdef __bgp__
 		//  For BG/P, we always want to reset the 'real' hardware counters.  The counters
 		//  can be controlled via multiple interfaces, and we need to ensure that the values
 		//  are truly zero...
-		retval =
-			_papi_hwd[cidx]->reset( thread->context[cidx], ESI->ctl_state );
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( ESI, NULL );
+		retval = _papi_hwd[cidx]->reset( context, ESI->ctl_state );
 #endif
 		memset( ESI->sw_stop, 0x00,
 				( size_t ) ESI->NumberOfEvents * sizeof ( long long ) );
@@ -1502,7 +1532,7 @@ int
 PAPI_read( int EventSet, long long *values )
 {
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
+	hwd_context_t *context;
 	int cidx, retval = PAPI_OK;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -1513,15 +1543,17 @@ PAPI_read( int EventSet, long long *values )
 	if ( cidx < 0 )
 		papi_return( cidx );
 
-	thread = ESI->master;
 	if ( values == NULL )
 		papi_return( PAPI_EINVAL );
 
 	if ( ESI->state & PAPI_RUNNING ) {
-		if ( _papi_hwi_is_sw_multiplex( ESI ) )
+		if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
 			retval = MPX_read( ESI->multiplex.mpx_evset, values );
-		else
-			retval = _papi_hwi_read( thread->context[cidx], ESI, values );
+		} else {
+			/* get the context we should use for this event set */
+			context = _papi_hwi_get_context( ESI, NULL );
+			retval = _papi_hwi_read( context, ESI, values );
+		}
 		if ( retval != PAPI_OK )
 			papi_return( retval );
 	} else {
@@ -1545,7 +1577,7 @@ int
 PAPI_read_ts( int EventSet, long long *values, long long *cyc )
 {
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
+	hwd_context_t *context;
 	int cidx, retval = PAPI_OK;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -1556,15 +1588,17 @@ PAPI_read_ts( int EventSet, long long *values, long long *cyc )
 	if ( cidx < 0 )
 		papi_return( cidx );
 
-	thread = ESI->master;
 	if ( values == NULL )
 		papi_return( PAPI_EINVAL );
 
 	if ( ESI->state & PAPI_RUNNING ) {
-		if ( _papi_hwi_is_sw_multiplex( ESI ) )
+		if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
 			retval = MPX_read( ESI->multiplex.mpx_evset, values );
-		else
-			retval = _papi_hwi_read( thread->context[cidx], ESI, values );
+		} else {
+			/* get the context we should use for this event set */
+			context = _papi_hwi_get_context( ESI, NULL );
+			retval = _papi_hwi_read( context, ESI, values );
+		}
 		if ( retval != PAPI_OK )
 			papi_return( retval );
 	} else {
@@ -1613,7 +1647,7 @@ int
 PAPI_accum( int EventSet, long long *values )
 {
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
+	hwd_context_t *context;
 	int i, cidx, retval;
 	long long a, b, c;
 
@@ -1625,16 +1659,17 @@ PAPI_accum( int EventSet, long long *values )
 	if ( cidx < 0 )
 		papi_return( cidx );
 
-	thread = ESI->master;
-
 	if ( values == NULL )
 		papi_return( PAPI_EINVAL );
 
 	if ( ESI->state & PAPI_RUNNING ) {
-		if ( _papi_hwi_is_sw_multiplex( ESI ) )
+		if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
 			retval = MPX_read( ESI->multiplex.mpx_evset, ESI->sw_stop );
-		else
-			retval = _papi_hwi_read( thread->context[cidx], ESI, ESI->sw_stop );
+		} else {
+			/* get the context we should use for this event set */
+			context = _papi_hwi_get_context( ESI, NULL );
+			retval = _papi_hwi_read( context, ESI, ESI->sw_stop );
+		}
 		if ( retval != PAPI_OK )
 			papi_return( retval );
 	}
@@ -1677,7 +1712,7 @@ PAPI_write( int EventSet, long long *values )
 {
 	int cidx, retval = PAPI_OK;
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
+	hwd_context_t *context;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
@@ -1687,15 +1722,13 @@ PAPI_write( int EventSet, long long *values )
 	if ( cidx < 0 )
 		papi_return( cidx );
 
-	thread = ESI->master;
-
 	if ( values == NULL )
 		papi_return( PAPI_EINVAL );
 
 	if ( ESI->state & PAPI_RUNNING ) {
-		retval =
-			_papi_hwd[cidx]->write( thread->context[cidx], ESI->ctl_state,
-									values );
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( ESI, NULL );
+		retval = _papi_hwd[cidx]->write( context, ESI->ctl_state, values );
 		if ( retval != PAPI_OK )
 			return ( retval );
 	}
@@ -1732,7 +1765,6 @@ int
 PAPI_cleanup_eventset( int EventSet )
 {
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
 	int i, cidx, total, retval;
 
 	/* Is the EventSet already in existence? */
@@ -1749,8 +1781,6 @@ PAPI_cleanup_eventset( int EventSet )
 			papi_return( cidx );
 		papi_return( PAPI_OK );
 	}
-
-	thread = ESI->master;
 
 	/* Of course, it must be stopped in order to modify it. */
 
@@ -2066,9 +2096,11 @@ PAPI_set_multiplex( int EventSet )
 int
 PAPI_set_opt( int option, PAPI_option_t * ptr )
 {
+	APIDBG("Entry:  option: %d, ptr: %p\n", option, ptr);
+
 	_papi_int_option_t internal;
 	int retval = PAPI_OK;
-	ThreadInfo_t *thread = NULL;
+	hwd_context_t *context;
 	int cidx;
 
 	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) )
@@ -2092,6 +2124,10 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( _papi_hwd[cidx]->cmp_info.attach == 0 )
 			papi_return( PAPI_ESBSTR );
 
+		/* if attached to a cpu, return an error */
+		if (internal.attach.ESI->state & PAPI_CPU_ATTACHED)
+			papi_return( PAPI_ESBSTR );
+
 		if ( ( internal.attach.ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
 
@@ -2099,10 +2135,9 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( PAPI_EINVAL );
 
 		internal.attach.tid = internal.attach.ESI->attach.tid;
-		thread = internal.attach.ESI->master;
-		retval =
-			_papi_hwd[cidx]->ctl( thread->context[cidx], PAPI_DETACH,
-								  &internal );
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( internal.attach.ESI, NULL );
+		retval = _papi_hwd[cidx]->ctl( context, PAPI_DETACH, &internal );
 		if ( retval != PAPI_OK )
 			papi_return( retval );
 
@@ -2129,16 +2164,54 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( internal.attach.ESI->state & PAPI_ATTACHED )
 			papi_return( PAPI_EINVAL );
 
+		/* if attached to a cpu, return an error */
+		if (internal.attach.ESI->state & PAPI_CPU_ATTACHED)
+			papi_return( PAPI_ESBSTR );
+
 		internal.attach.tid = ptr->attach.tid;
-		thread = internal.attach.ESI->master;
-		retval =
-			_papi_hwd[cidx]->ctl( thread->context[cidx], PAPI_ATTACH,
-								  &internal );
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( internal.attach.ESI, NULL );
+		retval = _papi_hwd[cidx]->ctl( context, PAPI_ATTACH, &internal );
 		if ( retval != PAPI_OK )
 			papi_return( retval );
 
 		internal.attach.ESI->state |= PAPI_ATTACHED;
 		internal.attach.ESI->attach.tid = ptr->attach.tid;
+		return ( PAPI_OK );
+	}
+	case PAPI_CPU_ATTACH:
+	{
+		APIDBG("eventset: %d, cpu_num: %d\n", ptr->cpu.eventset, ptr->cpu.cpu_num);
+		internal.cpu.ESI = _papi_hwi_lookup_EventSet( ptr->cpu.eventset );
+		if ( internal.cpu.ESI == NULL )
+			papi_return( PAPI_ENOEVST );
+
+		internal.cpu.cpu_num = ptr->cpu.cpu_num;
+		APIDBG("internal: %p, ESI: %p, cpu_num: %d\n", &internal, internal.cpu.ESI, internal.cpu.cpu_num);
+
+		cidx = valid_ESI_component( internal.cpu.ESI );
+		if ( cidx < 0 )
+			papi_return( cidx );
+
+		if ( _papi_hwd[cidx]->cmp_info.cpu == 0 )
+			papi_return( PAPI_ESBSTR );
+
+		if ( ( internal.cpu.ESI->state & PAPI_STOPPED ) == 0 )
+			papi_return( PAPI_EISRUN );
+
+		retval = _papi_hwi_lookup_or_create_cpu(&internal.cpu.ESI->CpuInfo, internal.cpu.cpu_num);
+		if( retval != PAPI_OK) {
+			papi_return( retval );
+		}
+
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( internal.cpu.ESI, NULL );
+		retval = _papi_hwd[cidx]->ctl( context, PAPI_CPU_ATTACH, &internal );
+		if ( retval != PAPI_OK )
+			papi_return( retval );
+
+		/* set to show this event set is attached to a cpu not a thread */
+		internal.cpu.ESI->state |= PAPI_CPU_ATTACHED;
 		return ( PAPI_OK );
 	}
 	case PAPI_DEF_MPX_NS:
@@ -2149,10 +2222,10 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		/* We should check the resolution here with the system, either
 		   substrate if kernel multiplexing or PAPI if SW multiplexing. */
 		internal.multiplex.ns = ( unsigned long ) ptr->multiplex.ns;
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( internal.cpu.ESI, NULL );
 		/* Low level just checks/adjusts the args for this substrate */
-		retval =
-			_papi_hwd[cidx]->ctl( thread->context[cidx], PAPI_DEF_MPX_NS,
-								  &internal );
+		retval = _papi_hwd[cidx]->ctl( context, PAPI_DEF_MPX_NS, &internal );
 		if ( retval == PAPI_OK ) {
 			_papi_hwd[cidx]->cmp_info.itimer_ns = ( int ) internal.multiplex.ns;
 			ptr->multiplex.ns = ( int ) internal.multiplex.ns;
@@ -2216,10 +2289,9 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		internal.multiplex.flags = ptr->multiplex.flags;
 		if ( ( _papi_hwd[cidx]->cmp_info.kernel_multiplex ) &&
 			 ( ( ptr->multiplex.flags & PAPI_MULTIPLEX_FORCE_SW ) == 0 ) ) {
-			thread = internal.multiplex.ESI->master;
-			retval =
-				_papi_hwd[cidx]->ctl( thread->context[cidx], PAPI_MULTIPLEX,
-									  &internal );
+			/* get the context we should use for this event set */
+			context = _papi_hwi_get_context( ESI, NULL );
+			retval = _papi_hwd[cidx]->ctl( context, PAPI_MULTIPLEX, &internal );
 		}
 		/* Kernel or PAPI may have changed this value so send it back out to the user */
 		ptr->multiplex.ns = ( int ) internal.multiplex.ns;
@@ -2290,18 +2362,15 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( dom & ~_papi_hwd[cidx]->cmp_info.available_domains )
 			papi_return( PAPI_EINVAL );
 
-		thread = internal.domain.ESI->master;
-
 		if ( !( internal.domain.ESI->state & PAPI_STOPPED ) )
 			papi_return( PAPI_EISRUN );
 
 		/* Try to change the domain of the eventset in the hardware */
-
 		internal.domain.domain = dom;
 		internal.domain.eventset = ptr->domain.eventset;
-		retval =
-			_papi_hwd[cidx]->ctl( thread->context[cidx], PAPI_DOMAIN,
-								  &internal );
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( internal.domain.ESI, NULL );
+		retval = _papi_hwd[cidx]->ctl( context, PAPI_DOMAIN, &internal );
 		if ( retval < PAPI_OK )
 			papi_return( retval );
 
@@ -2408,8 +2477,6 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( cidx < 0 )
 			papi_return( cidx );
 
-		thread = ESI->master;
-
 		internal.address_range.ESI = ESI;
 
 		if ( !( internal.address_range.ESI->state & PAPI_STOPPED ) )
@@ -2420,8 +2487,9 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 
 		internal.address_range.start = ptr->addr.start;
 		internal.address_range.end = ptr->addr.end;
-		retval =
-			_papi_hwd[cidx]->ctl( thread->context[cidx], option, &internal );
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( internal.address_range.ESI, NULL );
+		retval = _papi_hwd[cidx]->ctl( context, option, &internal );
 		ptr->addr.start_off = internal.address_range.start_off;
 		ptr->addr.end_off = internal.address_range.end_off;
 		papi_return( retval );
@@ -2559,6 +2627,16 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 			papi_return( PAPI_ENOEVST );
 		ptr->attach.tid = ESI->attach.tid;
 		return ( ( ESI->state & PAPI_ATTACHED ) != 0 );
+	}
+	case PAPI_CPU_ATTACH:
+	{
+		if ( ptr == NULL )
+			papi_return( PAPI_EINVAL );
+		ESI = _papi_hwi_lookup_EventSet( ptr->attach.eventset );
+		if ( ESI == NULL )
+			papi_return( PAPI_ENOEVST );
+		ptr->cpu.cpu_num = ESI->CpuInfo->cpu_num;
+		return ( ( ESI->state & PAPI_CPU_ATTACHED ) != 0 );
 	}
 	case PAPI_DEF_MPX_NS:
 	{
@@ -2976,7 +3054,6 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 {
 	int retval, cidx, index, i;
 	EventSetInfo_t *ESI;
-	ThreadInfo_t *thread;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
@@ -2986,14 +3063,15 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 	if ( cidx < 0 )
 		papi_return( cidx );
 
-	thread = ESI->master;
-
 	if ( ( ESI->state & PAPI_STOPPED ) != PAPI_STOPPED )
 		papi_return( PAPI_EISRUN );
 
 	if ( ESI->state & PAPI_ATTACHED )
 		papi_return( PAPI_EINVAL );
-
+	
+	if ( ESI->state & PAPI_CPU_ATTACHED )
+		papi_return( PAPI_EINVAL );
+	
 	if ( ( index =
 		   _papi_hwi_lookup_EventCodeIndex( ESI,
 											( unsigned int ) EventCode ) ) < 0 )
@@ -3160,6 +3238,9 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
 		papi_return( PAPI_EISRUN );
 
 	if ( ESI->state & PAPI_ATTACHED )
+		papi_return( PAPI_EINVAL );
+
+	if ( ESI->state & PAPI_CPU_ATTACHED )
 		papi_return( PAPI_EINVAL );
 
 	cidx = valid_ESI_component( ESI );

@@ -4,7 +4,7 @@
 #include "papi.h"
 
 /* created to break a circular dependency between papi_internal.h and perfctr-x86.h */
-#define NUM_INNER_LOCK  7
+#define NUM_INNER_LOCK  8
 #define PAPI_MAX_LOCK   (NUM_INNER_LOCK + PAPI_NUM_LOCK)
 
 #endif

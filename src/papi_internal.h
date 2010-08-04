@@ -152,6 +152,7 @@ extern int papi_num_components;
 #define MEMORY_LOCK		PAPI_NUM_LOCK+4	/* papi_memory.c */
 #define SUBSTRATE_LOCK          PAPI_NUM_LOCK+5	/* <substrate.c> */
 #define GLOBAL_LOCK          	PAPI_NUM_LOCK+6	/* papi.c for global variable (static and non) initialization/shutdown */
+#define CPUS_LOCK		PAPI_NUM_LOCK+7	/* cpus.c */
 
 /* extras related */
 
@@ -213,6 +214,10 @@ typedef struct _EventSetOverflowInfo {
 typedef struct _EventSetAttachInfo {
   unsigned long tid;
 } EventSetAttachInfo_t;
+
+typedef struct _EventSetCpuInfo {
+  unsigned int cpu_num;
+} EventSetCpuInfo_t;
 
 #if 0
 typedef struct _EventSetInheritInfo
@@ -339,11 +344,13 @@ typedef struct EventSetMultiplexInfo {
 /** Opaque struct, not defined yet...due to threads.h <-> papi_internal.h 
  @internal */
 struct _ThreadInfo;
+struct _CpuInfo;
 
 /** Fields below are ordered by access in PAPI_read for performance 
  @internal */
 typedef struct _EventSetInfo {
   struct _ThreadInfo *master;  /**< Pointer to the thread that owns this EventSet */
+  struct _CpuInfo    *CpuInfo; /**< Pointer to cpu that owns this EventSet */
   
   int state;                   /**< The state of this entire EventSet; can be
 				  PAPI_RUNNING or PAPI_STOPPED plus flags */
@@ -381,6 +388,7 @@ typedef struct _EventSetInfo {
   EventSetOverflowInfo_t overflow;
   EventSetMultiplexInfo_t multiplex;
   EventSetAttachInfo_t attach;
+  EventSetCpuInfo_t cpu;
   EventSetProfileInfo_t profile;
 } EventSetInfo_t;
 
@@ -399,6 +407,11 @@ typedef struct _papi_int_attach {
    unsigned long tid;
    EventSetInfo_t *ESI;
 } _papi_int_attach_t;
+
+typedef struct _papi_int_cpu {
+   unsigned int cpu_num;
+   EventSetInfo_t *ESI;
+} _papi_int_cpu_t;
 
 typedef struct _papi_int_multiplex {
    int flags;
@@ -462,6 +475,7 @@ typedef union _papi_int_option_t {
    _papi_int_profile_t profile;
    _papi_int_domain_t domain;
    _papi_int_attach_t attach;
+   _papi_int_cpu_t cpu;
    _papi_int_multiplex_t multiplex;
    _papi_int_itimer_t itimer;
 #if 0
@@ -591,6 +605,7 @@ LEAKDBG( char *format, ... )
 #endif
 
 #include "threads.h"
+#include "cpus.h"
 #include "papi_vector.h"
 #include "papi_protos.h"
 
@@ -633,6 +648,48 @@ inline_static int
 _papi_hwi_invalid_cmp( int cidx )
 {
 	return ( cidx < 0 || cidx >= papi_num_components );
+}
+
+inline_static hwd_context_t *
+_papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty )
+{
+	INTDBG("Entry: ESI: %p, is_dirty: %p\n", ESI, is_dirty);
+	int dirty_ctx;
+	hwd_context_t *ctx=NULL;
+
+	/* assume for now the control state is clean (last updated by this ESI) */
+	dirty_ctx = 0;
+	
+	/* get a context pointer based on if we are counting for a thread or for a cpu */
+	if (ESI->state & PAPI_CPU_ATTACHED) {
+		/* use cpu context */
+		ctx = ESI->CpuInfo->context[ESI->CmpIdx];
+
+		/* if the user wants to know if the control state was last set by the same event set, tell him */
+		if (is_dirty != NULL) {
+			if (ESI->CpuInfo->from_esi != ESI) {
+				dirty_ctx = 1;
+			}
+			*is_dirty = dirty_ctx;
+		}
+		ESI->CpuInfo->from_esi = ESI;
+	   
+	} else {
+
+		/* use thread context */
+		ctx = ESI->master->context[ESI->CmpIdx];
+
+		/* if the user wants to know if the control state was last set by the same event set, tell him */
+		if (is_dirty != NULL) {
+			if (ESI->master->from_esi != ESI) {
+				dirty_ctx = 1;
+			}
+			*is_dirty = dirty_ctx;
+		}
+		ESI->master->from_esi = ESI;
+
+	}
+	return( ctx );
 }
 
 #endif /* PAPI_INTERNAL_H */

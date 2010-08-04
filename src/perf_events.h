@@ -99,6 +99,7 @@ typedef struct
 	int num_groups;
 	unsigned domain;
 	unsigned multiplexed;
+	unsigned int cpu_num;
 	unsigned long tid;
 	struct perf_event_attr events[MAX_MPX_EVENTS];
 	per_event_info_t per_event_info[MAX_MPX_EVENTS];

@@ -254,6 +254,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFILING    0x20  /**< EventSet has profiling enabled */
 #define PAPI_MULTIPLEXING 0x40  /**< EventSet has multiplexing enabled */
 #define PAPI_ATTACHED	  0x80  /**< EventSet is attached to another thread/process */
+#define PAPI_CPU_ATTACHED 0x100 /**< EventSet is attached to a specific cpu (not counting thread of execution) */
 /* @} */
 
 /** @internal 
@@ -327,6 +328,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_INSTR_ADDRESS  24      /**< Option to set instruction address range restriction */
 #define PAPI_DEF_ITIMER		25		/**< Option to set the type of itimer used in both software multiplexing, overflowing and profiling */
 #define PAPI_DEF_ITIMER_NS	26		/**< Multiplexing/overflowing interval in ns, same as PAPI_DEF_MPX_NS */
+/* Currently the following options are only available on systems using the perf_events substrate within papi */
+#define PAPI_CPU_ATTACH		27       /**< Specify a cpu number the event set should be tied to */
 
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
@@ -526,6 +529,7 @@ read the documentation carefully.  */
      unsigned int fast_virtual_timer:1;    /**< Supports a fast virtual timer */
      unsigned int attach:1;                /**< Supports attach */
      unsigned int attach_must_ptrace:1;	   /**< Attach must first ptrace and stop the thread/process*/
+     unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
      unsigned int edge_detect:1;           /**< Supports edge detection on events */
      unsigned int invert:1;                /**< Supports invert detection on events */
      unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
@@ -659,6 +663,12 @@ read the documentation carefully.  */
    } PAPI_attach_option_t;
 
 /** */
+      typedef struct _papi_cpu_option {
+         int eventset;
+         unsigned int cpu_num;
+      } PAPI_cpu_option_t;
+
+/** */
    typedef struct _papi_multiplex_option {
       int eventset;
       int ns;
@@ -690,6 +700,7 @@ read the documentation carefully.  */
 		PAPI_domain_option_t domain;
 		PAPI_domain_option_t defdomain;
 		PAPI_attach_option_t attach;
+		PAPI_cpu_option_t cpu;
 		PAPI_multiplex_option_t multiplex;
 		PAPI_itimer_option_t itimer;
 		PAPI_hw_info_t *hw_info;

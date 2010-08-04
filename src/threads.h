@@ -31,6 +31,7 @@ typedef struct _ThreadInfo
 	hwd_context_t **context;
 	void *thread_storage[PAPI_MAX_TLS];
 	EventSetInfo_t **running_eventset;
+	EventSetInfo_t *from_esi;          /* ESI used for last update this control state */
 	int wants_signal;
 } ThreadInfo_t;
 

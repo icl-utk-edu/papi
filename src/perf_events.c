@@ -6,6 +6,8 @@
 *          - based upon perfmon.c written by -
 *          Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:    Gary Mohr
+*          gary.mohr@bull.com
 */
 
 
@@ -1444,9 +1446,8 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 		/* For now, assume we are always doing per-thread self-monitoring FIXME */
 		/* Flags parameter is currently unused, but needs to be set to 0 for now */
 		ctx->evt[i].event_fd =
-			sys_perf_counter_open( &ctl->events[i], ctl->tid, -1,
-								   ctx->evt[ctx->evt[i].group_leader].event_fd,
-								   0 );
+			sys_perf_counter_open( &ctl->events[i], ctl->tid, ctl->cpu_num,
+				ctx->evt[ctx->evt[i].group_leader].event_fd, 0 );
 		if ( ctx->evt[i].event_fd == -1 ) {
 			PAPIERROR
 				( "sys_perf_counter_open returned error on event #%d.  Unix says, %s",
@@ -1455,6 +1456,9 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			ret = PAPI_ECNFLCT;
 			goto cleanup;
 		}
+		
+		SUBDBG ("sys_perf_counter_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d\n", 
+			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, ctx->evt[ctx->evt[i].group_leader].event_fd, ctx->evt[i].event_fd);
 
 		ret = check_scheduability( ctx, ctl, i );
 		if ( ret != PAPI_OK ) {
@@ -1605,6 +1609,15 @@ set_domain( hwd_control_state_t * ctl, int domain )
 		pe_ctl->events[i].exclude_hv =
 			!( pe_ctl->domain & PAPI_DOM_SUPERVISOR );
 	}
+	return PAPI_OK;
+}
+
+inline static int
+set_cpu( control_state_t * ctl, unsigned int cpu_num )
+{
+	ctl->tid = -1;      /* this tells the kernel not to count for a thread */
+
+	ctl->cpu_num = cpu_num;
 	return PAPI_OK;
 }
 
@@ -1942,6 +1955,7 @@ pe_enable_counters( context_t * ctx, control_state_t * ctl )
 
 	for ( i = 0; i < num_fds; i++ ) {
 		if ( ctx->evt[i].group_leader == i ) {
+			SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
 			ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
 
 			if ( ret == -1 ) {
@@ -2130,6 +2144,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 						   strerror( errno ) );
 				return PAPI_ESBSTR;
 			}
+			SUBDBG("read: fd: %2d, tid: 0x%llx, cpu: %d, buffer[0]: 0x%llx, ret: %d\n", 
+				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu_num, buffer[0], ret);
 		}
 
 		int count_idx = get_count_idx_by_id( buffer, pe_ctl->multiplexed,
@@ -2269,6 +2285,9 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		return detach( pe_ctx,
 					   ( control_state_t * ) ( option->attach.ESI->
 											   ctl_state ) );
+	case PAPI_CPU_ATTACH:
+		return set_cpu( ( control_state_t * ) ( option->cpu.ESI->ctl_state ),
+						option->cpu.cpu_num );
 	case PAPI_DOMAIN:
 		return
 			set_domain( ( control_state_t * ) ( option->domain.ESI->ctl_state ),
@@ -2882,8 +2901,11 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 int
 _papi_pe_init_control_state( hwd_control_state_t * ctl )
 {
+	control_state_t *pe_ctl = ( control_state_t * ) ctl;
 	memset( ctl, 0, sizeof ( control_state_t ) );
 	set_domain( ctl, MY_VECTOR.cmp_info.default_domain );
+	/* Set cpu number in the control block to show events are not tied to specific cpu */
+	pe_ctl->cpu_num = -1;
 	return PAPI_OK;
 }
 
@@ -2940,7 +2962,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 	memset( &inp, 0, sizeof ( inp ) );
 	memset( &outp, 0, sizeof ( outp ) );
 	inp.pfp_event_count = 1;
-	inp.pfp_dfl_plm = pe_ctl->domain;
+	inp.pfp_dfl_plm = PAPI_DOM_USER;
 	pfm_regmask_set( &inp.pfp_unavail_pmcs, 16 );	// mark fixed counters as unavailable
 #endif
 
@@ -3095,6 +3117,7 @@ papi_vector_t _papi_pe_vector = {
 				 .fast_virtual_timer = 0,
 				 .attach = 1,
 				 .attach_must_ptrace = 0,
+				 .cpu = 1,
 				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
 				 .itimer_num = PAPI_INT_ITIMER,
 				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,	/* Not actually supported */

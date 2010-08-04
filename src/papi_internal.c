@@ -21,6 +21,8 @@
 *          maynardj@us.ibm.com
 * Mods:    Brian Sheely
 *          bsheely@eecs.utk.edu
+* Mods:    <Gary Mohr>
+*          <gary.mohr@bull.com>
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -378,6 +380,8 @@ _papi_hwi_free_EventSet( EventSetInfo_t * ESI )
 		papi_free( ESI->hw_start );
 	if ( ( ESI->state & PAPI_MULTIPLEXING ) && ESI->multiplex.mpx_evset )
 		papi_free( ESI->multiplex.mpx_evset );
+	if ( ( ESI->state & PAPI_CPU_ATTACH ) && ESI->CpuInfo )
+		_papi_hwi_shutdown_cpu( ESI->CpuInfo );
 
 #ifdef DEBUG
 	memset( ESI, 0x00, sizeof ( EventSetInfo_t ) );
@@ -550,7 +554,7 @@ _papi_hwi_add_native_precheck( EventSetInfo_t * ESI, int nevt )
 /* this function is called after mapping is done
    refill info for every added events
  */
-static void
+void
 remap_event_position( EventSetInfo_t * ESI, int thisindex )
 {
 	EventInfo_t *out, *head;
@@ -659,6 +663,7 @@ add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
 	int nidx, i, j, remap = 0;
 	int retval, retval2;
 	int max_counters;
+	hwd_context_t *context;
 
 	if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex )
 		max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
@@ -694,15 +699,15 @@ add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
 
 	/* if remap!=0, we need reallocate counters */
 	if ( remap ) {
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( ESI, NULL );
+	   
 		if ( _papi_hwd[ESI->CmpIdx]->allocate_registers( ESI ) ) {
-			retval =
-				_papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
-															  ESI->
-															  NativeInfoArray,
+
+			retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
+															  ESI->NativeInfoArray,
 															  ESI->NativeCount,
-															  ESI->master->
-															  context[ESI->
-																	  CmpIdx] );
+															  context);
 			if ( retval != PAPI_OK ) {
 			  clean:
 				for ( i = 0; i < size; i++ ) {
@@ -713,16 +718,10 @@ add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
 					INTDBG( "should not happen!\n" );
 				}
 				/* re-establish the control state after the previous error */
-				retval2 =
-					_papi_hwd[ESI->CmpIdx]->update_control_state( ESI->
-																  ctl_state,
-																  ESI->
-																  NativeInfoArray,
-																  ESI->
-																  NativeCount,
-																  ESI->master->
-																  context[ESI->
-																		  CmpIdx] );
+				retval2 = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
+																  ESI->NativeInfoArray,
+																  ESI->NativeCount,
+																  context);
 				if ( retval2 != PAPI_OK ) {
 					PAPIERROR
 						( "update_control_state failed to re-establish working events!" );
@@ -921,6 +920,7 @@ int
 remove_native_events( EventSetInfo_t * ESI, int *nevt, int size )
 {
 	NativeInfo_t *native = ESI->NativeInfoArray;
+	hwd_context_t *context;
 	int i, j, zero = 0, retval;
 
 	/* Remove the references to this event from the native events:
@@ -986,13 +986,10 @@ remove_native_events( EventSetInfo_t * ESI, int *nevt, int size )
 	   Then send the info down to the substrate to update the hwd control structure. */
 	retval = PAPI_OK;
 	if ( zero ) {
-		retval =
-			_papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
-														  native,
-														  ESI->NativeCount,
-														  ESI->master->
-														  context[ESI->
-																  CmpIdx] );
+      /* get the context we should use for this event set */
+      context = _papi_hwi_get_context( ESI, NULL );
+		retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
+														  native, ESI->NativeCount, context);
 		if ( retval == PAPI_OK )
 			retval = update_overflow( ESI );
 	}
@@ -1078,11 +1075,9 @@ _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 {
 	int retval;
 	long long *dp = NULL;
-	int i, j = 0, index;
+	int i, index;
 
-	retval =
-		_papi_hwd[ESI->CmpIdx]->read( context, ESI->ctl_state, &dp,
-									  ESI->state );
+	retval = _papi_hwd[ESI->CmpIdx]->read( context, ESI->ctl_state, &dp, ESI->state );
 	if ( retval != PAPI_OK )
 		return ( retval );
 
@@ -1094,26 +1089,25 @@ _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 	   changed.  
 	 */
 
-	for ( i = 0; j != ESI->NumberOfEvents; i++, j++ ) {
+	for ( i = 0; i != ESI->NumberOfEvents; i++ ) {
 		index = ESI->EventInfoArray[i].pos[0];
 		if ( index == -1 )
 			continue;
 
-		INTDBG( "Event index %d, position is 0x%x\n", j, index );
+		INTDBG( "Event index %d, position is 0x%x\n", i, index );
 
 		/* If this is not a derived event */
 
 		if ( ESI->EventInfoArray[i].derived == NOT_DERIVED ) {
-			INTDBG( "counter index is %d\n", index );
-			values[j] = dp[index];
+			values[i] = dp[index];
+			INTDBG( "value: 0x%llx\n", values[i] );
 		} else {			 /* If this is a derived event */
-
-			values[j] = handle_derived( &ESI->EventInfoArray[i], dp );
+			values[i] = handle_derived( &ESI->EventInfoArray[i], dp );
 #ifdef DEBUG
-			if ( values[j] < ( long long ) 0 ) {
-				INTDBG( "Derived Event is negative!!: %lld\n", values[j] );
+			if ( values[i] < ( long long ) 0 ) {
+				INTDBG( "Derived Event is negative!!: %lld\n", values[i] );
 			}
-			INTDBG( "read value is =%lld \n", values[j] );
+			INTDBG( "derived value: 0x%llx \n", values[i] );
 #endif
 		}
 	}
