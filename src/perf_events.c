@@ -1389,10 +1389,30 @@ tune_up_fd( context_t * ctx, int evt_idx )
 			  strerror( errno ) );
 		return PAPI_ESYS;
 	}
-	/* set ownership of the descriptor */
-	ret = fcntl( fd, F_SETOWN, mygettid(  ) );
+#ifndef F_SETOWN_EX
+   #define F_SETOWN_EX     15
+   #define F_GETOWN_EX     16
+   
+   #define F_OWNER_TID     0
+   #define F_OWNER_PID     1
+   #define F_OWNER_PGRP    2
+   
+   struct f_owner_ex {
+              int     type;
+              pid_t   pid;
+   };
+#endif
+   
+   
+        struct f_owner_ex fown_ex;
+
+	/* set ownership of the descriptor */   
+        fown_ex.type = F_OWNER_TID;
+        fown_ex.pid  = mygettid();
+        ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
+   
 	if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd, strerror( errno ) );
+		PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", fd, strerror( errno ) );
 		return ( PAPI_ESYS );
 	}
 	/*
