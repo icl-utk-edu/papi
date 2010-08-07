@@ -829,6 +829,8 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 	
 	memset(&e, 0, sizeof(e));
 
+	e.dfl_plm = dfl_plm;
+
 	ret = pfmlib_parse_event(str, &e);
 	if (ret != PFM_SUCCESS)
 		return ret;
