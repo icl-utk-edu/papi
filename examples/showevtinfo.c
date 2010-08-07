@@ -37,9 +37,12 @@
 
 #include <perfmon/pfmlib.h>
 
+#define MAXBUF	1024
+
 static struct {
 	int compact;
 	int sort;
+	int encode;
 	uint64_t mask;
 } options;
 
@@ -55,7 +58,10 @@ show_event_info_compact(pfm_event_info_t *info)
 {
 	pfm_event_attr_info_t ainfo;
 	pfm_pmu_info_t pinfo;
-	int i, ret;
+	uint64_t*codes = NULL;
+	int count = 0;
+	char buf[MAXBUF];
+	int i, j, ret;
 
 	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
@@ -67,7 +73,24 @@ show_event_info_compact(pfm_event_info_t *info)
 		if (ret != PFM_SUCCESS)
 			err(1, "cannot get attribute info: %s", pfm_strerror(ret));
 
-		printf("%s::%s:%s\n", pinfo.name, info->name, ainfo.name);
+		if (ainfo.type != PFM_ATTR_UMASK)
+			continue;
+
+		snprintf(buf, sizeof(buf)-1, "%s::%s:%s", pinfo.name, info->name, ainfo.name);
+
+		buf[sizeof(buf)-1] = '\0';
+		printf("%s", buf);
+
+		if (options.encode) {
+			ret = pfm_get_event_encoding(buf, PFM_PLM0|PFM_PLM3, NULL, NULL, &codes, &count);
+			if (ret != PFM_SUCCESS) {
+				warnx("cannot encode event %s : %s\n", buf, pfm_strerror(ret));
+				continue;
+			}
+			for (j=0; j < count; j++)
+				printf(" %#"PRIx64, codes[j]);
+		}
+		putchar('\n');
 	}
 }
 
@@ -266,8 +289,9 @@ show_info_sorted(regex_t *preg)
 static void
 usage(void)
 {
-	printf("showevtinfo [-L] [-h] [-s] [-C] [-m mask]\n"
+	printf("showevtinfo [-L] [-E] [-h] [-s] [-C] [-m mask]\n"
 		"-L\t\tlist one event per line\n"
+		"-E\t\tlist one event per line with encoding\n"
 		"-h\t\tget help\n"
 		"-s\t\tsort event by PMU and by code based on -m mask\n"
 		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n");
@@ -309,10 +333,14 @@ main(int argc, char **argv)
 
 	memset(&pinfo, 0, sizeof(pinfo));
 
-	while ((c=getopt(argc, argv,"hCLsm:")) != -1) {
+	while ((c=getopt(argc, argv,"hCELsm:")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
+				break;
+			case 'E':
+				options.compact = 1;
+				options.encode = 1;
 				break;
 			case 's':
 				options.sort = 1;
