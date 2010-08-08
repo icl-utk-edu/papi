@@ -46,8 +46,6 @@ static struct {
 	uint64_t mask;
 } options;
 
-extern int pfm_pmu_validate_events(pfm_pmu_t pmu, FILE *fp);
-
 typedef struct {
 	uint64_t code;
 	int idx;
@@ -82,13 +80,16 @@ show_event_info_compact(pfm_event_info_t *info)
 		printf("%s", buf);
 
 		if (options.encode) {
+			/* must reset because count may varies from event to the next */
+			codes = NULL; count = 0;
 			ret = pfm_get_event_encoding(buf, PFM_PLM0|PFM_PLM3, NULL, NULL, &codes, &count);
 			if (ret != PFM_SUCCESS) {
-				warnx("cannot encode event %s : %s\n", buf, pfm_strerror(ret));
+				warnx("cannot encode event %s : %s", buf, pfm_strerror(ret));
 				continue;
 			}
 			for (j=0; j < count; j++)
 				printf(" %#"PRIx64, codes[j]);
+			free(codes);
 		}
 		putchar('\n');
 	}
@@ -310,11 +311,10 @@ validate_event_tables(void)
 		if (ret != PFM_SUCCESS)
 			continue;
 
-		printf("Checking %s: ", pinfo.name); fflush(stdout);
-		ret = pfm_pmu_validate_events(i, stdout);
+		printf("Checking %s:\n", pinfo.name);
+		ret = pfm_pmu_validate(i, stdout);
 		if (ret != PFM_SUCCESS && ret != PFM_ERR_NOTSUPP)
 			retval = 1;
-		printf("%s\n", ret == PFM_SUCCESS ? "OK" : pfm_strerror(ret));
 	}
 	return retval;
 }
@@ -408,7 +408,7 @@ main(int argc, char **argv)
 			match = show_info(&preg);
 
 		if (match == 0)
-			errx(1, "event %s not found", *argv);
+			errx(1, "event %s not found", *args);
 
 		args++;
 	}

@@ -277,7 +277,7 @@ amd64_setup(amd64_rev_t revision)
 		amd64_pmu.num_events	= amd64_k7_table.num;
 	}
 
-	/* Barcelona, Shanghai, Istanbul */
+	/* Barcelona, Shanghai, Istanbul, Magny-Cours */
 	if (IS_FAMILY_10H()) {
 		amd64_pmu.events	= amd64_fam10h_table.events;
 		amd64_pmu.num_events	= amd64_fam10h_table.num;
@@ -653,6 +653,96 @@ pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	return PFM_SUCCESS;
 }
 
+static int
+pfm_amd64_validate_family(void *this, const struct amd64_table *fam, const char *name, FILE *fp)
+{
+	const amd64_entry_t *pe = fam->events;
+	int i, j, k, ndfl;
+	int error = 0;
+
+	for(i=0; i < fam->num; i++) {
+
+		if (!pe[i].name) {
+			fprintf(fp, "pmu: %s event%d: :: no name\n", name, i);
+			error++;
+		}
+
+		if (!pe[i].desc) {
+			fprintf(fp, "pmu: %s event%d: %s :: no description\n", name, i, pe[i].name);
+			error++;
+		}
+
+		if (pe[i].numasks >= AMD64_MAX_UMASKS) {
+			fprintf(fp, "pmu: %s event%d: %s :: numasks too big (<%d)\n", name, i, pe[i].name, AMD64_MAX_UMASKS);
+			error++;
+		}
+
+		for(j=0, ndfl = 0; j < pe[i].numasks; j++) {
+
+			if (!pe[i].umasks[j].uname) {
+				fprintf(fp, "pmu: %s event%d: umask%d :: no name\n", name, i, j);
+				error++;
+			}
+
+			if (!pe[i].umasks[j].udesc) {
+				fprintf(fp, "pmu: %s event%d: umask%d: %s :: no description\n", name, i, j, pe[i].umasks[j].uname);
+				error++;
+			}
+			if (!pe[i].umasks[j].uflags & AMD64_FL_DFL)
+				ndfl++;
+		}
+		if (pe[i].numasks && ndfl > 1) {
+			fprintf(fp, "pmu: %s event%d: %s :: more than one default unit mask\n", name, i, pe[i].name);
+			error++;
+		}
+
+		/* check for excess unit masks */
+		for(; j < AMD64_MAX_UMASKS; j++) {
+			if (pe[i].umasks[j].uname || pe[i].umasks[j].udesc) {
+				fprintf(fp, "pmu: %s event%d: %s :: numasks (%d) invalid more events exists\n", name, i, pe[i].name, pe[i].numasks);
+				error++;
+			}
+		}
+
+		if (pe[i].flags & AMD64_FL_NCOMBO) {
+			fprintf(fp, "pmu: %s event%d: %s :: NCOMBO is unit mask only flag\n", name, i, pe[i].name);
+			error++;
+		}
+
+		for(j=0; j < pe[i].numasks; j++) {
+
+			if (pe[i].umasks[j].uflags & AMD64_FL_NCOMBO)
+				continue;
+
+			for(k=j+1; k < pe[i].numasks; k++) {
+				if (pe[i].umasks[k].uflags & AMD64_FL_NCOMBO)
+					continue;
+				if ((pe[i].umasks[j].ucode &  pe[i].umasks[k].ucode)) {
+					fprintf(fp, "pmu: %s event%d: %s :: umask %s and %s have overlapping code bits\n", name, i, pe[i].name, pe[i].umasks[j].uname, pe[i].umasks[k].uname);
+					error++;
+				}
+			}
+		}
+	}
+	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
+}
+
+static int
+pfm_amd64_validate_table(void *this, FILE *fp)
+{
+	int ret;
+
+	ret = pfm_amd64_validate_family(this, &amd64_k7_table, "amd64 k7", fp);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	ret = pfm_amd64_validate_family(this, &amd64_k8_table, "amd64 k8", fp);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	return pfm_amd64_validate_family(this, &amd64_fam10h_table, "amd64 fam10h", fp);
+}
+
 pfmlib_pmu_t amd64_support = {
 	.desc			= "AMD64",
 	.name			= "amd64",
@@ -671,4 +761,5 @@ pfmlib_pmu_t amd64_support = {
 	.get_event_perf_type	= pfm_amd64_get_event_perf_type,
 	.get_event_info		= pfm_amd64_get_event_info,
 	.get_event_attr_info	= pfm_amd64_get_event_attr_info,
+	.validate_table		= pfm_amd64_validate_table,
 };

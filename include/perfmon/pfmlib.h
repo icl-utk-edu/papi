@@ -237,6 +237,11 @@ extern pfm_err_t pfm_get_event_info(int idx, pfm_event_info_t *output);
 extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_event_attr_info_t *output);
 
 /*
+ * library validation API
+ */
+extern pfm_err_t pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp);
+
+/*
  * error codes
  */
 #define PFM_SUCCESS		0	/* success */

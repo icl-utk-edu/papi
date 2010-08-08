@@ -25,7 +25,7 @@
 #ifndef __PFMLIB_AMD64_PRIV_H__
 #define __PFMLIB_AMD64_PRIV_H__
 
-#define PFMLIB_AMD64_MAX_UMASK	12
+#define AMD64_MAX_UMASKS	12
 
 typedef struct {
 	const char		*uname; /* unit mask name */
@@ -37,7 +37,7 @@ typedef struct {
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
-	amd64_umask_t		umasks[PFMLIB_AMD64_MAX_UMASK]; /* umask desc */
+	amd64_umask_t		umasks[AMD64_MAX_UMASKS]; /* umask desc */
 	unsigned int		code; 	/* event code */
 	unsigned int		numasks;/* number of umasks */
 	unsigned int		flags;	/* flags */

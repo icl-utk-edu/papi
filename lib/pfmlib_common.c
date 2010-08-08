@@ -621,7 +621,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	 */
 	pfmlib_for_all_pmu(pmu_id) {
 		pmu = pfmlib_pmus_map[pmu_id];
-		if (!pfmlib_pmu_active(pmu))
+		if (!pmu)
 			continue;
 		if (pname && strcasecmp(pname, pmu->name))
 			continue;
@@ -862,10 +862,92 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 	return PFM_SUCCESS;
 }
 
+static int
+pfm_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
+{
+	pfm_event_info_t einfo;
+	pfm_event_attr_info_t ainfo;
+	uint64_t *codes;
+	char *buf;
+	size_t maxlen = 0, len;
+	int count;
+	int i, u, n = 0;
+	int ret, retval =PFM_SUCCESS;
+
+	pfmlib_for_each_pmu_event(pmu, i) {
+		ret = pmu->get_event_info(pmu, i, &einfo);
+		if (ret != PFM_SUCCESS)
+			return ret;
+
+		len = strlen(einfo.name);
+		if (len > maxlen)
+			maxlen = len;
+
+		for_each_pmu_event_attr(u, &einfo) {
+			ret = pmu->get_event_attr_info(pmu, i, u, &ainfo);
+			if (ret != PFM_SUCCESS)
+				return ret;
+
+			if (ainfo.type != PFM_ATTR_UMASK)
+				continue;
+
+			len = strlen(einfo.name) + strlen(ainfo.name);
+			if (len > maxlen)
+				maxlen = len;
+		}
+	}
+	/* 2 = ::, 1=:, 1=eol */
+	maxlen += strlen(pmu->name) + 2 + 1 + 1;
+	buf = malloc(maxlen);
+	if (!buf)
+		return PFM_ERR_NOMEM;
+
+	fprintf(fp, "\tcheck encoding: "); fflush(fp);
+	pfmlib_for_each_pmu_event(pmu, i) {
+		ret = pmu->get_event_info(pmu, i, &einfo);
+		if (ret != PFM_SUCCESS)
+			return ret;
+
+		for_each_pmu_event_attr(u, &einfo) {
+			ret = pmu->get_event_attr_info(pmu, i, u, &ainfo);
+			if (ret != PFM_SUCCESS)
+				return ret;
+
+			if (ainfo.type != PFM_ATTR_UMASK)
+				continue;
+
+			/*
+			 * XXX: some events may require more than one umasks to encode
+			 */
+			sprintf(buf, "%s::%s:%s", pmu->name, einfo.name, ainfo.name);
+
+			codes = NULL; count = 0;
+			ret = pfm_get_event_encoding(buf, PFM_PLM3|PFM_PLM0, NULL, NULL, &codes, &count);
+			if (ret != PFM_SUCCESS) {
+				fprintf(fp, "\tcannot encode %s : %s\n", buf, pfm_strerror(ret));
+				retval = ret;;
+			}
+			if (codes == NULL) {
+				fprintf(fp, "\tno encoding returned for event %s\n", buf);
+				continue;
+			}
+			free(codes);
+		}
+		n++;
+	}
+	free(buf);
+
+	if (retval == PFM_SUCCESS)
+		fprintf(fp, "OK (%d events)\n", n);
+
+	return retval;
+}
+
 int
-pfm_pmu_validate_events(pfm_pmu_t pmu_id, FILE *fp)
+pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 {
 	pfmlib_pmu_t *pmu;
+	int ret;
 
 	if (fp == NULL)
 		return PFM_ERR_INVAL;
@@ -875,6 +957,7 @@ pfm_pmu_validate_events(pfm_pmu_t pmu_id, FILE *fp)
 		return PFM_ERR_INVAL;
 
 
+	fprintf(fp, "\tcheck struct: "); fflush(fp);
 	if (!pmu->name) {
 		fprintf(fp, "pmu id: %d :: no name\n", pmu->pmu);
 		return PFM_ERR_INVAL;
@@ -921,10 +1004,16 @@ pfm_pmu_validate_events(pfm_pmu_t pmu_id, FILE *fp)
 		fprintf(fp, "pmu: %s :: missing get_event_encoding callback\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
-	if (!pmu->validate_table)
-		return PFM_ERR_NOTSUPP;
+	fputs("OK\n", fp);
 
-	return pmu->validate_table(pmu, fp);
+	if (pmu->validate_table) {
+		fprintf(fp, "\tcheck table: "); fflush(stdout);
+		ret = pmu->validate_table(pmu, fp);
+		if (ret != PFM_SUCCESS)
+			return ret;
+		fputs("OK\n", fp);
+	}
+	return pfm_pmu_validate_encoding(pmu, fp);
 }
 
 int
