@@ -368,7 +368,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.ngrp = 2,
 	.umasks = {
 	  INTEL_COREDUO_MESI_UMASKS(0),
-	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(1)
 	},
 	.numasks = 7
   },
@@ -380,7 +380,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.ngrp = 2,
 	.umasks = {
 	  INTEL_COREDUO_MESI_UMASKS(0),
-	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(1)
 	},
 	.numasks = 7
   },
@@ -392,7 +392,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.ngrp = 2,
 	.umasks = {
 	  INTEL_COREDUO_MESI_UMASKS(0),
-	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(1)
 	},
 	.numasks = 7
   },
@@ -404,8 +404,8 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.ngrp = 3,
 	.umasks = {
 	  INTEL_COREDUO_MESI_UMASKS(0),
-	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
-	  INTEL_COREDUO_HW_PREFETCH_UMASKS(1)
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(1),
+	  INTEL_COREDUO_HW_PREFETCH_UMASKS(2)
 	},
 	.numasks = 9
   },
@@ -417,7 +417,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.ngrp = 3,
 	.umasks = {
 	  INTEL_COREDUO_MESI_UMASKS(0),
-	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(1),
 	  INTEL_COREDUO_HW_PREFETCH_UMASKS(2)
 	},
 	.numasks = 9
@@ -430,7 +430,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.ngrp = 3,
 	.umasks = {
 	  INTEL_COREDUO_MESI_UMASKS(0),
-	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(1),
 	  INTEL_COREDUO_HW_PREFETCH_UMASKS(2)
 	},
 	.numasks = 9
