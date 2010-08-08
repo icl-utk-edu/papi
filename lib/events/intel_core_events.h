@@ -1051,7 +1051,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		  .grpmsk= 0x3,
 		  .ucode = 0x02
 		},
-		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_SPECIFICITY_UMASKS(1),
 	   },
 	   .numasks = 5
 	},
