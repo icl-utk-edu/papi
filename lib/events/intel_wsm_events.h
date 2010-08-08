@@ -174,7 +174,6 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "STALL_CYCLES",
 		  .udesc  = "Cycles Uops are not retiring (Precise Event)",
 		  .ucode  = 0x01 | (1<<16) | (1<<15), /* cmask=1, inv=1 */
-		  .modhw = _INTEL_X86_ATTR_C|INTEL_X86_ATTR_I,
 		  .uflags = INTEL_X86_NCOMBO,
 		  .uequiv = "ANY:c=1:i=1",
 		},
@@ -182,13 +181,11 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		  .udesc  = "Total cycles using precise uop retired event (Precise Event)",
 		  .ucode  = 0x01 | (1<< 16), /* counter mask = 1 */
 		  .uflags = INTEL_X86_NCOMBO,
-		  .modhw = _INTEL_X86_ATTR_C,
 		  .uequiv = "ANY:c=1",
 		},
 		{ .uname  = "ACTIVE_CYCLES",
 		  .udesc  = "Alias for TOTAL_CYCLES (Precise Event)",
 		  .ucode  = 0x01 | (1<< 16), /* counter mask = 1 */
-		  .modhw = _INTEL_X86_ATTR_C,
 		  .uflags = INTEL_X86_NCOMBO,
 		  .uequiv = "ANY:c=1",
 		},
@@ -291,7 +288,6 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "PORT015_STALL_CYCLES",
 		  .udesc  = "Cycles no Uops issued on ports 0, 1 or 5",
 		  .ucode  = 0x40 | (1<<16) | (1<<15), /* counter-mask=1, inv=1 */
-		  .modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I,
 	  	  .uflags = INTEL_X86_NCOMBO,
 		  .uequiv = "PORT015:c=1:i=1",
 		},
@@ -775,7 +771,6 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "STALLED_CYCLES",
 		  .udesc  = "Cycles stalled no issued uops",
 		  .ucode  = 0x01 | (1<<16) | (1<<15), /* counter-mask=1, inv=1 */
-		  .modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I,
 		  .uflags = INTEL_X86_NCOMBO,
 		  .uequiv = "ANY:c=1:i=1",
 		},
@@ -1169,7 +1164,6 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "ACTIVE",
 		  .udesc  = "Cycles is which at least one micro-op delivered by LSD",
 		  .ucode  = 0x01 | (1<<16),
-		  .modhw = _INTEL_X86_ATTR_C,
 		  .uflags = INTEL_X86_NCOMBO,
 		  .uequiv = "UOPS:c=1",
 		},
@@ -1473,7 +1467,6 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		  .udesc  = "Counts the number of divide or square root operations. The divide can be integer, X87 or Streaming SIMD Extensions (SSE). The square root operation can be either X87 or SSE. Count may be incorrect when HT is on",
 		  .ucode  = 0x01 | (1<<16) | (1<<15) | (1<<10),    /* cmask=1, invert=1, edge=1 */
 		  .uflags = INTEL_X86_NCOMBO,
-		  .modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E,
 		  .uequiv = "CYCLES_DIV_BUSY:c=1:i=1:e=1",
 		},
 		{ .uname  = "MUL",

@@ -279,25 +279,37 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 		} else {
 			switch(pfm_intel_x86_attr2mod(this, e->event, a->id)) {
 				case INTEL_X86_ATTR_I: /* invert */
+					if (modhw & _INTEL_X86_ATTR_I)
+						return PFM_ERR_ATTR_HW;
 					reg->sel_inv = !!a->ival;
 					break;
 				case INTEL_X86_ATTR_E: /* edge */
+					if (modhw & _INTEL_X86_ATTR_E)
+						return PFM_ERR_ATTR_HW;
 					reg->sel_edge = !!a->ival;
 					break;
 				case INTEL_X86_ATTR_C: /* counter-mask */
+					if (modhw & _INTEL_X86_ATTR_C)
+						return PFM_ERR_ATTR_HW;
 					if (a->ival > 255)
 						return PFM_ERR_ATTR_VAL;
 					reg->sel_cnt_mask = a->ival;
 					break;
 				case INTEL_X86_ATTR_U: /* USR */
+					if (modhw & _INTEL_X86_ATTR_U)
+						return PFM_ERR_ATTR_HW;
 					reg->sel_usr = !!a->ival;
 					plmmsk |= _INTEL_X86_ATTR_U;
 					break;
 				case INTEL_X86_ATTR_K: /* OS */
+					if (modhw & _INTEL_X86_ATTR_K)
+						return PFM_ERR_ATTR_HW;
 					reg->sel_os = !!a->ival;
 					plmmsk |= _INTEL_X86_ATTR_K;
 					break;
 				case INTEL_X86_ATTR_T: /* anythread (v3 and above) */
+					if (modhw & _INTEL_X86_ATTR_T)
+						return PFM_ERR_ATTR_HW;
 					if (reg->sel_anythr)
 						return PFM_ERR_ATTR_SET;
 					reg->sel_anythr = !!a->ival;
@@ -339,19 +351,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	reg->val |= umask << 8;
 	reg->sel_en        = 1; /* force enable bit to 1 */
 	reg->sel_int       = 1; /* force APIC int to 1 */
-
-	if ((modhw & _INTEL_X86_ATTR_I) && reg->sel_inv)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_E) && reg->sel_edge)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_C) && reg->sel_cnt_mask)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_T) && reg->sel_anythr)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_U) && reg->sel_usr)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_K) && reg->sel_os)
-		return PFM_ERR_ATTR_HW;
 
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
 

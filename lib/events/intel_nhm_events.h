@@ -103,7 +103,6 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.udesc  = "Counts the number of divide or square root operations. The divide can be integer, X87 or Streaming SIMD Extensions (SSE). The square root operation can be either X87 or SSE.",
 				.ucode  = 0x01 | (1<<16) | (1<<15) | (1<<10),    /* cmask=1  invert=1  edge=1 */
 				.uflags = INTEL_X86_NCOMBO,
-				.modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E,
 				.uequiv = "CYCLES_DIV_BUSY:c=1:i=1:e=1",
 			},
 			{ .uname  = "MUL",
@@ -664,22 +663,18 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "IQ_FULL",
 				.udesc  = "Instruction Queue full stall cycles",
 				.ucode  = 0x04,
-				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "LCP",
 				.udesc  = "Length Change Prefix stall cycles",
 				.ucode  = 0x01,
-				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "MRU",
 				.udesc  = "Stall cycles due to BPU MRU bypass",
 				.ucode  = 0x02,
-				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "REGEN",
 				.udesc  = "Regen stall cycles",
 				.ucode  = 0x08,
-				.uflags = INTEL_X86_NCOMBO,
 			},
 		},
 		.numasks = 5
@@ -1512,8 +1507,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "INACTIVE",
 				.udesc  = "Cycles no uops were delivered by the LSD",
 				.ucode  = 0x01 | (1<<16)|(1<<15),
-				.modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I,
-				.uequiv = "ACTIVE:c=1:i=1",
+				.uequiv = "ACTIVE:i=1",
 			},
 		},
 		.numasks = 2
@@ -2251,8 +2245,8 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "PORT015_STALL_CYCLES",
 				.udesc  = "Cycles no Uops issued on ports 0, 1 or 5",
 				.ucode  = 0x40 | (1<<16) | (1<<15), /* counter-mask=1, inv=1 */
-				.modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I,
 				.uflags = INTEL_X86_NCOMBO,
+				.uequiv = "PORT015:c=1:i=1",
 			},
 		},
 		.numasks = 9
@@ -2272,7 +2266,6 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "STALLED_CYCLES",
 				.udesc  = "Cycles stalled no issued uops",
 				.ucode  = 0x01 | (1<<16) | (1<<15), /* counter-mask=1, inv=1 */
-				.modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I,
 				.uflags = INTEL_X86_NCOMBO,
 				.uequiv = "ANY:c=1:i=1",
 			},
@@ -2305,14 +2298,12 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "ACTIVE_CYCLES",
 				.udesc  = "Cycles Uops are being retired (Precise Event)",
 				.ucode  = 0x01 | (1<< 16), /* counter mask = 1 */
-				.modhw = _INTEL_X86_ATTR_C,
 				.uflags = INTEL_X86_NCOMBO,
 				.uequiv = "ANY:c=1",
 			},
 			{ .uname  = "STALL_CYCLES",
 				.udesc  = "Cycles No Uops retired (Precise Event)",
 				.ucode  = 0x01 | (1<<16) | (1<<15), /* counter-mask=1, inv=1 */
-				.modhw = _INTEL_X86_ATTR_C|_INTEL_X86_ATTR_I,
 				.uflags = INTEL_X86_NCOMBO,
 				.uequiv = "ANY:c=1:i=1",
 			},
