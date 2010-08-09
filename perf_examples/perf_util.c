@@ -310,7 +310,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	 * That order is different from the enum perf_event_sample_format
 	 */
 	if (type & PERF_SAMPLE_IP) {
-		char *xtra = " ";
+		const char *xtra = " ";
 		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
 		if (ret) {
 			warnx("cannot read IP");
