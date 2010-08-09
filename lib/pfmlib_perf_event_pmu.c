@@ -657,7 +657,12 @@ pfm_perf_terminate(void *this)
 		if (p->type != PERF_TYPE_TRACEPOINT)
 			continue;
 
-		free(p->name);
+		/* cast to keep compiler happy, we are
+ 		 * freeing the dynamically allocated clone
+ 		 * table, not the static one. We do not want
+ 		 * to create a specific data type
+ 		 */
+		free((void *)(p->name));
 
 		/*
 		 * first PERF_MAX_UMASKS are pre-allocated
@@ -666,7 +671,7 @@ pfm_perf_terminate(void *this)
 		for (j=0; j < p->numasks; j++) {
 			if (j == PERF_MAX_UMASKS)
 				break;
-			free(p->umasks[j].uname);
+			free((void *)(p->umasks[j].uname));
 		}
 	}
 	/*
@@ -683,7 +688,7 @@ pfm_perf_terminate(void *this)
 		 */
 		n = perf_um_free - perf_um;
 		for(i=0; i < n; i++) {
-			free(perf_um[i].uname);
+			free((void *)(perf_um[i].uname));
 		}
 		free(perf_um);
 		perf_um = NULL;
