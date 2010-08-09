@@ -688,7 +688,7 @@ pfm_amd64_validate_family(void *this, const struct amd64_table *fam, const char 
 				fprintf(fp, "pmu: %s event%d: umask%d: %s :: no description\n", name, i, j, pe[i].umasks[j].uname);
 				error++;
 			}
-			if (!pe[i].umasks[j].uflags & AMD64_FL_DFL)
+			if (pe[i].umasks[j].uflags & AMD64_FL_DFL)
 				ndfl++;
 		}
 		if (pe[i].numasks && ndfl > 1) {
