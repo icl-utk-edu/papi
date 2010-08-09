@@ -30,6 +30,7 @@
 extern "C" {
 #endif
 #include <inttypes.h>
+#include <stdio.h>
 
 #define LIBPFM_VERSION		(4 << 16 | 0)
 #define PFM_MAJ_VERSION(v)	((v)>>16)
