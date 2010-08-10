@@ -677,7 +677,7 @@ pfm_amd64_validate_family(void *this, const struct amd64_table *fam, const char 
 			error++;
 		}
 
-		for(j=0, ndfl = 0; j < pe[i].numasks; j++) {
+		for(ndfl = 0, j= 0; j < pe[i].numasks; j++) {
 
 			if (!pe[i].umasks[j].uname) {
 				fprintf(fp, "pmu: %s event%d: umask%d :: no name\n", name, i, j);
@@ -685,14 +685,19 @@ pfm_amd64_validate_family(void *this, const struct amd64_table *fam, const char 
 			}
 
 			if (!pe[i].umasks[j].udesc) {
-				fprintf(fp, "pmu: %s event%d: umask%d: %s :: no description\n", name, i, j, pe[i].umasks[j].uname);
+				fprintf(fp, "pmu: %s event%d:%s umask%d: %s :: no description\n", name, i, pe[i].name, j, pe[i].umasks[j].uname);
 				error++;
 			}
-			if (pe[i].umasks[j].uflags & AMD64_FL_DFL)
-				ndfl++;
+
+			if (pe[i].umasks[j].uflags & AMD64_FL_DFL) {
+				for(k=0; k < j; k++)
+					if (pe[i].umasks[k].uflags == pe[i].umasks[j].uflags)
+						ndfl++;
+			}
 		}
-		if (pe[i].numasks && ndfl > 1) {
-			fprintf(fp, "pmu: %s event%d: %s :: more than one default unit mask\n", name, i, pe[i].name);
+
+		if (pe[i].numasks && ndfl) {
+			fprintf(fp, "pmu: %s event%d: %s :: more than one default unit mask with same code\n", name, i, pe[i].name);
 			error++;
 		}
 
