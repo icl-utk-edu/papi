@@ -51,6 +51,7 @@ main(int argc, const char **argv)
 	pfm_pmu_info_t pinfo;
 	const char *arg[3];
 	const char **p;
+	char *fqstr;
 	pfm_event_info_t info;
 	uint64_t *codes;
 	int count;
@@ -113,7 +114,8 @@ main(int argc, const char **argv)
 		 * and the function:
 		 * pfm_get_perf_event_encoding()
 		 */
-		ret = pfm_get_event_encoding(*p, PFM_PLM3, NULL, &idx, &codes, &count);
+		fqstr = NULL;
+		ret = pfm_get_event_encoding(*p, PFM_PLM3, &fqstr, &idx, &codes, &count);
 		if (ret != PFM_SUCCESS) {
 			/*
 			 * codes is too small for this event
@@ -135,12 +137,13 @@ main(int argc, const char **argv)
 		if (ret != PFM_SUCCESS)
 			errx(1, "cannot get PMU info: %s", pfm_strerror(ret));
 
-		printf("Event %s:\n", *p);
+		printf("Event %s:\n", fqstr);
 		printf("\tPMU: %s\n", pinfo.desc);
 		printf("\tIDX: %d\n", idx);
 		for(j=0; j < count; j++)
 			printf("\tcodes[%d]=0x%"PRIx64"\n", j, codes[j]);
 
+		free(fqstr);
 		p++;
 	}
 	if (codes)
