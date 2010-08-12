@@ -52,14 +52,28 @@ typedef struct {
 } code_info_t;
 
 static void
+print_codes(char *buf, int plm)
+{
+	uint64_t *codes = NULL;
+	int j, ret, count = 0;
+
+	ret = pfm_get_event_encoding(buf, PFM_PLM0|PFM_PLM3, NULL, NULL, &codes, &count);
+	if (ret != PFM_SUCCESS) {
+		warnx("cannot encode event %s : %s", buf, pfm_strerror(ret));
+		return;
+	}
+	for (j=0; j < count; j++)
+		printf(" %#"PRIx64, codes[j]);
+	free(codes);
+}
+
+static void
 show_event_info_compact(pfm_event_info_t *info)
 {
 	pfm_event_attr_info_t ainfo;
 	pfm_pmu_info_t pinfo;
-	uint64_t*codes = NULL;
-	int count = 0;
 	char buf[MAXBUF];
-	int i, j, ret;
+	int i, ret, um = 0;
 
 	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
@@ -79,18 +93,17 @@ show_event_info_compact(pfm_event_info_t *info)
 		buf[sizeof(buf)-1] = '\0';
 		printf("%s", buf);
 
-		if (options.encode) {
-			/* must reset because count may varies from event to the next */
-			codes = NULL; count = 0;
-			ret = pfm_get_event_encoding(buf, PFM_PLM0|PFM_PLM3, NULL, NULL, &codes, &count);
-			if (ret != PFM_SUCCESS) {
-				warnx("cannot encode event %s : %s", buf, pfm_strerror(ret));
-				continue;
-			}
-			for (j=0; j < count; j++)
-				printf(" %#"PRIx64, codes[j]);
-			free(codes);
-		}
+		if (options.encode)
+			print_codes(buf, PFM_PLM0|PFM_PLM3);
+		putchar('\n');
+		um++;
+	}
+	if (um == 0) {
+		snprintf(buf, sizeof(buf)-1, "%s::%s", pinfo.name, info->name);
+		buf[sizeof(buf)-1] = '\0';
+		printf("%s", buf);
+		if (options.encode)
+			print_codes(buf, PFM_PLM0|PFM_PLM3);
 		putchar('\n');
 	}
 }
