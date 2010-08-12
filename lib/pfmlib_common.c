@@ -472,7 +472,6 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 	na = d->nattrs;
 
 	while(s) {
-		ret = PFM_ERR_ATTR;
 		p = strchr(s, ':');
 		if (p)
 			*p++ = '\0';
@@ -487,8 +486,13 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 			ret = pmu->get_event_attr_info(pmu, idx, a, &ainfo);
 			if (ret != PFM_SUCCESS)
 				return ret;
+
 			if (!strcasecmp(ainfo.name, s))
 				goto found_attr;
+		}
+		{ pfm_event_info_t einfo;
+		  pmu->get_event_info(pmu, idx, &einfo);
+		  DPRINT("attr=%s not found for event %s\n", s, einfo.name);
 		}
 		return PFM_ERR_ATTR;
 found_attr:
@@ -579,6 +583,46 @@ error:
 	return ret;
 }
 
+static int
+pfmlib_parse_equiv_event(pfmlib_pmu_t *pmu, const char *event, pfmlib_event_desc_t *d)
+{
+	pfm_event_info_t einfo;
+	char *str, *s, *p;
+	int i;
+	int ret;
+
+	/*
+	 * create copy because string is const
+	 */
+	s = str = strdup(event);
+	if (!str)
+		return PFM_ERR_NOMEM;
+
+	p = strchr(s, ':');
+	if (p)
+		*p++ = '\0';
+
+	pfmlib_for_each_pmu_event(pmu, i) {
+		ret = pmu->get_event_info(pmu, i, &einfo);
+		if (ret != PFM_SUCCESS)
+			goto error;
+		if (!strcasecmp(einfo.name, s))
+			goto found;
+	}
+	free(str);
+	return PFM_ERR_NOTFOUND;
+found:
+	d->pmu = pmu;
+	d->event = i; /* private index */
+
+	ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
+	if (ret == PFM_SUCCESS)
+		ret = pfmlib_sanitize_event(d);
+error:
+	free(str);
+	return ret;
+}
+
 int
 pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 {
@@ -643,16 +687,15 @@ found:
 	 * handle equivalence
 	 */
 	if (einfo.equiv) {
-		ret = pfmlib_parse_event(einfo.equiv, d);
-		if (ret != PFM_SUCCESS)
-			goto error;
+		ret = pfmlib_parse_equiv_event(pmu, einfo.equiv, d);
 	} else {
 		d->pmu = pmu;
 		d->event = i; /* private index */
+
+		ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
+		if (ret == PFM_SUCCESS)
+			ret = pfmlib_sanitize_event(d);
 	}
-	ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
-	if (ret == PFM_SUCCESS)
-		ret = pfmlib_sanitize_event(d);
 error:
 	free(str);
 	return ret;
