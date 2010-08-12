@@ -318,7 +318,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .umasks = {
 			{ .uname  = "ANY_P",
 				.udesc  = "Instructions Retired (Precise Event)",
-				.ucode  = 0x00,
+				.ucode  = 0x01,
 				.uflags = 0,
 			},
 			{ .uname  = "X87",
