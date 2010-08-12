@@ -26,12 +26,14 @@
 #define __PFMLIB_AMD64_PRIV_H__
 
 #define AMD64_MAX_UMASKS	12
+#define AMD64_MAX_GRP		4 /* must be < 32 (int) */
 
 typedef struct {
 	const char		*uname; /* unit mask name */
 	const char		*udesc; /* event/umask description */
 	unsigned int		ucode;  /* unit mask code */
 	unsigned int		uflags; /* unit mask flags */
+	unsigned int		grpid;	/* unit mask group id */
 } amd64_umask_t;
 
 typedef struct {
@@ -42,6 +44,7 @@ typedef struct {
 	unsigned int		numasks;/* number of umasks */
 	unsigned int		flags;	/* flags */
 	unsigned int		modmsk;	/* modifiers bitmask */
+	unsigned int		ngrp;	/* number of unit masks groups */
 } amd64_entry_t;
 
 #define AMD64_FAM10H AMD64_FAM10H_REV_B

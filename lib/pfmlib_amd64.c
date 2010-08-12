@@ -373,33 +373,42 @@ pfm_amd64_init(void *this)
 }
 
 static int
-amd64_add_defaults(int idx, char *umask_str, uint64_t *umask)
+amd64_add_defaults(int idx, char *umask_str, unsigned int msk, uint64_t *umask)
 {
 	const amd64_entry_t *ent;
-	int j, ret = PFM_ERR_UMASK;
+	int i, j, added;
 
 	ent = amd64_events+idx;
 
-	for(j=0; j < ent->numasks; j++) {
-		/* skip umasks for other revisions */
-		if (!amd64_umask_valid(idx, j))
+	for(i=0; msk; msk >>=1, i++) {
+
+		if (!(msk & 0x1))
 			continue;
 
-		if (amd64_uflag(idx, j, AMD64_FL_DFL)) {
+		added = 0;
 
-			DPRINT("added default %s\n", ent->umasks[j].uname);
+		for(j=0; j < ent->numasks; j++) {
 
-			*umask |= ent->umasks[j].ucode;
+			if (ent->umasks[j].grpid != i)
+				continue;
 
-			evt_strcat(umask_str, ":%s", ent->umasks[j].uname);
+			/* skip umasks for other revisions */
+			if (!amd64_umask_valid(idx, j))
+				continue;
 
-			ret = PFM_SUCCESS;
+			if (amd64_uflag(idx, j, AMD64_FL_DFL)) {
+				DPRINT("added default %s\n", ent->umasks[j].uname);
+				*umask |= ent->umasks[j].ucode;
+				evt_strcat(umask_str, ":%s", ent->umasks[j].uname);
+				added++;
+			}
+		}
+		if (!added) {
+			DPRINT("no default found for event %s unit mask group %d\n", ent->name, i);
+			return PFM_ERR_UMASK;
 		}
 	}
-	if (ret != PFM_SUCCESS)
-		DPRINT("no default found for event %s\n", ent->name);
-
-	return ret;
+	return PFM_SUCCESS;
 }
 
 static int
@@ -408,13 +417,21 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	pfmlib_attr_t *a;
 	uint64_t umask = 0;
 	unsigned int plmmsk = 0;
-	int k, ret, ncombo = 0;
-	int numasks, uc = 0;
+	int k, ret, grpid, last_grpid = -1;
+	int numasks;
+	unsigned int grpmsk, ugrpmsk = 0;
+	int grpcounts[AMD64_MAX_GRP];
+	int ncombo[AMD64_MAX_GRP];
 	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
+
+	memset(grpcounts, 0, sizeof(grpcounts));
+	memset(ncombo, 0, sizeof(ncombo));
 
 	umask_str[0] = e->fstr[0] = '\0';
 
 	reg->val = 0; /* assume reserved bits are zerooed */
+
+	grpmsk = (1 << amd64_events[e->event].ngrp)-1;
 
 	if (amd64_event_ibsfetch(e->event))
 		reg->ibsfetch.en = 1;
@@ -432,22 +449,32 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	for(k=0; k < e->nattrs; k++) {
 		a = e->attrs+k;
 		if (a->type == PFM_ATTR_UMASK) {
+			grpid = amd64_events[e->event].umasks[a->id].grpid;
+			++grpcounts[grpid];
+printf("grpmsk=%#x count[%d]=%d\n", grpmsk, grpid, grpcounts[grpid]);
+
 			/*
 		 	 * upper layer has removed duplicates
 		 	 * so if we come here more than once, it is for two
 		 	 * diinct umasks
 		 	 */
 			if (amd64_uflag(e->event, a->id, AMD64_FL_NCOMBO))
-				ncombo = 1;
-
-			if (++uc > 1 && ncombo) {
-				DPRINT("event does not support unit mask combination\n");
+				ncombo[grpid] = 1;
+			/*
+			 * if more than one umask in this group but one is marked
+			 * with ncombo, then fail. It is okay to combine umask within
+			 * a group as long as none is tagged with NCOMBO
+			 */
+			if (grpcounts[grpid] > 1 && ncombo[grpid])  {
+				DPRINT("event does not support unit mask combination within a group\n");
 				return PFM_ERR_FEATCOMB;
 			}
 
 			evt_strcat(umask_str, ":%s", amd64_events[e->event].umasks[a->id].uname);
 
+			last_grpid = grpid;
 			umask |= amd64_events[e->event].umasks[a->id].ucode;
+			ugrpmsk  |= 1 << amd64_events[e->event].umasks[a->id].grpid;
 		} else {
 			switch(amd64_attr2mod(e->event, a->id)) {
 				case AMD64_ATTR_I: /* invert */
@@ -504,13 +531,13 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		if (e->dfl_plm & PFM_PLMH)
 			reg->sel_host = 1;
 	}
-
 	/*
-	 * if no unit mask specified, then try defaults
+	 * check that there is at least of unit mask in each unit
+	 * mask group
 	 */
-	if (amd64_events[e->event].numasks && !uc) {
-		/* XXX: fix for IBS */
-		ret = amd64_add_defaults(e->event, umask_str, &umask);
+	if (ugrpmsk != grpmsk) {
+		ugrpmsk ^= grpmsk;
+		ret = amd64_add_defaults(e->event, umask_str, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
@@ -677,6 +704,21 @@ pfm_amd64_validate_family(void *this, const struct amd64_table *fam, const char 
 			error++;
 		}
 
+		if (pe[i].numasks && pe[i].ngrp == 0) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp cannot be zero\n", name, i, pe[i].name);
+			error++;
+		}
+
+		if (pe[i].numasks == 0 && pe[i].ngrp) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp must be zero\n", name, i, pe[i].name);
+			error++;
+		}
+
+		if (pe[i].ngrp >= AMD64_MAX_GRP) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp too big (max=%d)\n", name, i, pe[i].name, AMD64_MAX_GRP);
+			error++;
+		}
+
 		for(ndfl = 0, j= 0; j < pe[i].numasks; j++) {
 
 			if (!pe[i].umasks[j].uname) {
@@ -689,9 +731,15 @@ pfm_amd64_validate_family(void *this, const struct amd64_table *fam, const char 
 				error++;
 			}
 
+			if (pe[i].ngrp && pe[i].umasks[j].grpid >= pe[i].ngrp) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpid, pe[i].ngrp);
+				error++;
+			}
+
 			if (pe[i].umasks[j].uflags & AMD64_FL_DFL) {
 				for(k=0; k < j; k++)
-					if (pe[i].umasks[k].uflags == pe[i].umasks[j].uflags)
+					if ((pe[i].umasks[k].uflags == pe[i].umasks[j].uflags)
+					    && (pe[i].umasks[k].grpid == pe[i].umasks[j].grpid))
 						ndfl++;
 			}
 		}

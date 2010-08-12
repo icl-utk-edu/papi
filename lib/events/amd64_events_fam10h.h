@@ -55,6 +55,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x00,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Dispatched FPU Operations",
+	.ngrp = 1,
 	.numasks = 7,
 	.umasks  = {
 		{ .uname = "OPS_ADD",
@@ -102,6 +103,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x03,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Retired SSE Operations",
+	.ngrp = 1,
 	.numasks = 8,
 	.umasks  = {
 		{ .uname = "SINGLE_ADD_SUB_OPS",
@@ -143,6 +145,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x04,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Retired Move Ops",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "LOW_QW_MOVE_UOPS",
@@ -172,6 +175,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x05,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Retired Serializing Ops",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "SSE_BOTTOM_EXECUTING_UOPS",
@@ -201,6 +205,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x06,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Number of Cycles that a Serializing uop is in the FP Scheduler",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "BOTTOM_EXECUTE_CYCLES",
@@ -222,6 +227,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x20,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Segment Register Loads",
+	.ngrp = 1,
 	.numasks = 8,
 	.umasks  = {
 		{ .uname = "ES",
@@ -278,6 +284,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x24,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Locked Operations",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "EXECUTED",
@@ -317,6 +324,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x2A,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Cancelled Store to Load Forward Operations",
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "ADDRESS_MISMATCHES",
@@ -357,6 +365,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x42,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Data Cache Refills from L2 or Northbridge",
+	.ngrp = 1,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "SYSTEM",
@@ -390,6 +399,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x43,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Data Cache Refills from the Northbridge",
+	.ngrp = 1,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "INVALID",
@@ -423,6 +433,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x44,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Data Cache Lines Evicted",
+	.ngrp = 1,
 	.numasks = 8,
 	.umasks  = {
 		{ .uname = "INVALID",
@@ -464,6 +475,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x45,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L1 DTLB Miss and L2 DTLB Hit",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "L2_4K_TLB_HIT",
@@ -495,6 +507,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x46,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L1 DTLB and L2 DTLB Miss",
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "4K_TLB_RELOAD",
@@ -535,6 +548,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x4A,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Single-bit ECC Errors Recorded by Scrubber",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "SCRUBBER_ERROR",
@@ -564,6 +578,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x4B,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Prefetch Instructions Dispatched",
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "LOAD",
@@ -589,6 +604,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x4C,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "DCACHE Misses by Locked Instructions",
+	.ngrp = 1,
 	.numasks = 2,
 	.umasks  = {
 		{ .uname = "DATA_CACHE_MISSES_BY_LOCKED_INSTRUCTIONS",
@@ -606,6 +622,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x4D,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L1 DTLB Hit",
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "L1_4K_TLB_HIT",
@@ -631,6 +648,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x52,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Ineffective Software Prefetches",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "SW_PREFETCH_HIT_IN_L1",
@@ -657,6 +675,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x65,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Memory Requests by Type",
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "NON_CACHEABLE",
@@ -682,6 +701,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x67,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Data Prefetcher",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "CANCELLED",
@@ -703,47 +723,58 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x68,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Average L1 refill latency for Icache and Dcache misses (request count for cache refills)",
+	.ngrp = 1,
 	.numasks = 10,
 	.umasks  = {
 		{ .uname = "BUFFER_0",
 		  .udesc = "Buffer 0",
 		  .ucode = 0x00,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_1",
 		  .udesc = "Buffer 1",
 		  .ucode = 0x01,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_2",
 		  .udesc = "Buffer 2",
 		  .ucode = 0x02,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_3",
 		  .udesc = "Buffer 3",
 		  .ucode = 0x03,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_4",
 		  .udesc = "Buffer 4",
 		  .ucode = 0x04,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_5",
 		  .udesc = "Buffer 5",
 		  .ucode = 0x05,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_6",
 		  .udesc = "Buffer 6",
 		  .ucode = 0x06,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_7",
 		  .udesc = "Buffer 7",
 		  .ucode = 0x07,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_8",
 		  .udesc = "Buffer 8",
 		  .ucode = 0x08,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_9",
 		  .udesc = "Buffer 9",
 		  .ucode = 0x09,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 	 },
 	},
@@ -751,47 +782,58 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x69,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Average L1 refill latency for Icache and Dcache misses (cycles that requests spent waiting for the refills)",
+	.ngrp = 1,
 	.numasks = 10,
 	.umasks  = {
 		{ .uname = "BUFFER_0",
 		  .udesc = "Buffer 0",
 		  .ucode = 0x00,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_1",
 		  .udesc = "Buffer 1",
 		  .ucode = 0x01,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_2",
 		  .udesc = "Buffer 2",
 		  .ucode = 0x02,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_3",
 		  .udesc = "Buffer 3",
 		  .ucode = 0x03,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_4",
 		  .udesc = "Buffer 4",
 		  .ucode = 0x04,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_5",
 		  .udesc = "Buffer 5",
 		  .ucode = 0x05,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_6",
 		  .udesc = "Buffer 6",
 		  .ucode = 0x06,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_7",
 		  .udesc = "Buffer 7",
 		  .ucode = 0x07,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_8",
 		  .udesc = "Buffer 8",
 		  .ucode = 0x08,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 		{ .uname = "BUFFER_9",
 		  .udesc = "Buffer 9",
 		  .ucode = 0x09,
+		  .uflags = AMD64_FL_NCOMBO,
 		},
 	 },
 	},
@@ -799,6 +841,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x6C,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Northbridge Read Responses by Coherency State",
+	.ngrp = 1,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "EXCLUSIVE",
@@ -832,6 +875,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x6D,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Octwords Written to System",
+	.ngrp = 1,
 	.numasks = 2,
 	.umasks  = {
 		{ .uname = "QUADWORD_WRITE_TRANSFER",
@@ -854,6 +898,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x7D,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Requests to L2 Cache",
+	.ngrp = 1,
 	.numasks = 7,
 	.umasks  = {
 		{ .uname = "INSTRUCTIONS",
@@ -891,6 +936,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x7E,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L2 Cache Misses",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "INSTRUCTIONS",
@@ -920,6 +966,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x7F,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L2 Fill/Writeback",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "L2_FILLS",
@@ -966,6 +1013,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x85,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L1 ITLB Miss and L2 ITLB Miss",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "4K_PAGE_FETCHES",
@@ -1012,6 +1060,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x8C,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Instruction Cache Lines Invalidated",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "INVALIDATING_PROBE_NO_IN_FLIGHT",
@@ -1098,6 +1147,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xCB,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Retired MMX/FP Instructions",
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "X87",
@@ -1123,6 +1173,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xCC,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Retired Fastpath Double Op Instructions",
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "POSITION_0",
@@ -1218,6 +1269,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xDB,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "FPU Exceptions",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "X87_RECLASS_MICROFAULTS",
@@ -1267,6 +1319,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xE0,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "DRAM Accesses",
+	.ngrp = 1,
 	.numasks = 7,
 	.umasks  = {
 		{ .uname = "HIT",
@@ -1304,6 +1357,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xE1,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "DRAM Controller Page Table Overflows",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "DCT0_PAGE_TABLE_OVERFLOW",
@@ -1325,6 +1379,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xE2,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Memory Controller DRAM Command Slots Missed",
+	.ngrp = 1,
 	.numasks = 3,
 	.umasks  = {
 		{ .uname = "DCT0_COMMAND_SLOTS_MISSED",
@@ -1346,6 +1401,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xE3,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Memory Controller Turnarounds",
+	.ngrp = 1,
 	.numasks = 7,
 	.umasks  = {
 		{ .uname = "CHIP_SELECT",
@@ -1383,6 +1439,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xE4,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Memory Controller Bypass Counter Saturation",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "HIGH_PRIORITY",
@@ -1412,6 +1469,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xE8,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Thermal Status",
+	.ngrp = 1,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "CLKS_DIE_TEMP_TOO_HIGH",
@@ -1445,6 +1503,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xE9,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU/IO Requests to Memory/IO",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "I_O_TO_I_O",
@@ -1490,6 +1549,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xEA,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Cache Block Commands",
+	.ngrp = 1,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "VICTIM_WRITEBACK",
@@ -1523,6 +1583,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xEB,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Sized Commands",
+	.ngrp = 1,
 	.numasks = 7,
 	.umasks  = {
 		{ .uname = "NON_POSTED_WRITE_BYTE",
@@ -1560,6 +1621,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xEC,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Probe Responses and Upstream Requests",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "MISS",
@@ -1605,6 +1667,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xEE,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "GART Events",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "APERTURE_HIT_FROM_CPU",
@@ -1650,6 +1713,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1F0,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Memory Controller Requests",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "WRITE_REQUESTS",
@@ -1695,6 +1759,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E0,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU to DRAM Requests to Target Node",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "LOCAL_TO_0",
@@ -1740,6 +1805,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E1,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "IO to DRAM Requests to Target Node",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "LOCAL_TO_0",
@@ -1785,6 +1851,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E2,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU Read Command Latency to Target Node 0-3",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "READ_BLOCK",
@@ -1830,6 +1897,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E3,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU Read Command Requests to Target Node 0-3",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "READ_BLOCK",
@@ -1875,6 +1943,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E4,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU Read Command Latency to Target Node 4-7",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "READ_BLOCK",
@@ -1920,6 +1989,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E5,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU Read Command Requests to Target Node 4-7",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "READ_BLOCK",
@@ -1965,6 +2035,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E6,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU Command Latency to Target Node 0-3/4-7",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "READ_SIZED",
@@ -2010,6 +2081,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1E7,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "CPU Requests to Target Node 0-3/4-7",
+	.ngrp = 1,
 	.numasks = 9,
 	.umasks  = {
 		{ .uname = "READ_SIZED",
@@ -2055,6 +2127,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xF6,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "HyperTransport Link 0 Transmit Bandwidth",
+	.ngrp = 1,
 	.numasks = 8,
 	.umasks  = {
 		{ .uname = "COMMAND_DWORD_SENT",
@@ -2088,7 +2161,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		{ .uname = "ALL",
 		  .udesc = "All sub-events selected",
 		  .ucode = 0x3F,
-		  .uflags = AMD64_FL_DFL,
+		  .uflags = AMD64_FL_DFL, /* COMBO needed to allow SUBLINK_MASK */
 		},
 	 },
 	},
@@ -2096,6 +2169,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xF7,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "HyperTransport Link 1 Transmit Bandwidth",
+	.ngrp = 1,
 	.numasks = 8,
 	.umasks  = {
 		{ .uname = "COMMAND_DWORD_SENT",
@@ -2129,7 +2203,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		{ .uname = "ALL",
 		  .udesc = "All sub-events selected",
 		  .ucode = 0x3F,
-		  .uflags = AMD64_FL_DFL,
+		  .uflags = AMD64_FL_DFL, /* COMBO needed to allow SUBLINK_MASK */
 		},
 	 },
 	},
@@ -2137,6 +2211,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0xF8,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "HyperTransport Link 2 Transmit Bandwidth",
+	.ngrp = 1,
 	.numasks = 8,
 	.umasks  = {
 		{ .uname = "COMMAND_DWORD_SENT",
@@ -2170,7 +2245,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		{ .uname = "ALL",
 		  .udesc = "All sub-events selected",
 		  .ucode = 0x3F,
-		  .uflags = AMD64_FL_DFL,
+		  .uflags = AMD64_FL_DFL, /* COMBO needed to allow SUBLINK_MASK */
 		},
 	 },
 	},
@@ -2178,6 +2253,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x1F9,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "HyperTransport Link 3 Transmit Bandwidth",
+	.ngrp = 1,
 	.numasks = 8,
 	.umasks  = {
 		{ .uname = "COMMAND_DWORD_SENT",
@@ -2211,7 +2287,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		{ .uname = "ALL",
 		  .udesc = "All sub-events selected",
 		  .ucode = 0x3F,
-		  .uflags = AMD64_FL_DFL,
+		  .uflags = AMD64_FL_DFL, /* COMBO needed to allow SUBLINK_MASK */
 		},
 	 },
 	},
@@ -2220,20 +2296,37 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Read Request to L3 Cache",
 	.flags = AMD64_FL_TILL_FAM10H_REV_C,
-	.numasks = 8,
+	.ngrp = 2,
+	.numasks = 5,
 	.umasks  = {
 		{ .uname = "READ_BLOCK_EXCLUSIVE",
 		  .udesc = "Read Block Exclusive (Data cache read)",
 		  .ucode = 0x01,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_SHARED",
 		  .udesc = "Read Block Shared (Instruction cache read)",
 		  .ucode = 0x02,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_MODIFY",
 		  .udesc = "Read Block Modify",
 		  .ucode = 0x04,
+		  .grpid = 0,
 		},
+		{ .uname = "ANY_READ",
+		  .udesc = "any read modes (exclusive, shared, modify)",
+		  .ucode = 0x07,
+		  .grpid = 0,
+		  .uflags=AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .uname = "CORE_0_SELECT",
 		  .udesc = "Core 0 Select",
 		  .ucode = 0x10,
@@ -2250,9 +2343,11 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Core 3 Select",
 		  .ucode = 0x80,
 		},
-		{ .uname = "ALL",
+#endif
+		{ .uname = "ALL_CORES",
 		  .udesc = "All sub-events selected",
-		  .ucode = 0xF7,
+		  .ucode = 0xF0,
+		  .grpid = 1,
 		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
@@ -2262,20 +2357,37 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L3 Cache Misses",
 	.flags = AMD64_FL_TILL_FAM10H_REV_C,
-	.numasks = 8,
+	.ngrp = 2,
+	.numasks = 5,
 	.umasks  = {
 		{ .uname = "READ_BLOCK_EXCLUSIVE",
 		  .udesc = "Read Block Exclusive (Data cache read)",
 		  .ucode = 0x01,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_SHARED",
 		  .udesc = "Read Block Shared (Instruction cache read)",
 		  .ucode = 0x02,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_MODIFY",
 		  .udesc = "Read Block Modify",
 		  .ucode = 0x04,
+		  .grpid = 0,
 		},
+		{ .uname = "ANY_READ",
+		  .udesc = "any read modes (exclusive, shared, modify)",
+		  .ucode = 0x07,
+		  .grpid = 0,
+		  .uflags=AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .uname = "CORE_0_SELECT",
 		  .udesc = "Core 0 Select",
 		  .ucode = 0x10,
@@ -2292,9 +2404,11 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Core 3 Select",
 		  .ucode = 0x80,
 		},
-		{ .uname = "ALL",
-		  .udesc = "All sub-events selected",
-		  .ucode = 0xF7,
+#endif
+		{ .uname = "ALL_CORES",
+		  .udesc = "All cores",
+		  .ucode = 0xF0,
+		  .grpid = 1,
 		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
@@ -2304,24 +2418,43 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L3 Fills caused by L2 Evictions",
 	.flags = AMD64_FL_TILL_FAM10H_REV_C,
-	.numasks = 9,
+	.ngrp = 2,
+	.numasks = 6,
 	.umasks  = {
 		{ .uname = "SHARED",
 		  .udesc = "Shared",
 		  .ucode = 0x01,
+		  .grpid = 0,
 		},
 		{ .uname = "EXCLUSIVE",
 		  .udesc = "Exclusive",
 		  .ucode = 0x02,
+		  .grpid = 0,
 		},
 		{ .uname = "OWNED",
 		  .udesc = "Owned",
 		  .ucode = 0x04,
+		  .grpid = 0,
 		},
 		{ .uname = "MODIFIED",
 		  .udesc = "Modified",
 		  .ucode = 0x08,
+		  .grpid = 0,
 		},
+		{ .uname = "ANY_STATE",
+		  .udesc = "any line state (shared, owned, exclusive, modified)",
+		  .ucode = 0x0f,
+		  .grpid = 0,
+		  .uflags=AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
+
 		{ .uname = "CORE_0_SELECT",
 		  .udesc = "Core 0 Select",
 		  .ucode = 0x10,
@@ -2338,9 +2471,11 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Core 3 Select",
 		  .ucode = 0x80,
 		},
-		{ .uname = "ALL",
-		  .udesc = "All sub-events selected",
-		  .ucode = 0xFF,
+#endif
+		{ .uname = "ALL_CORES",
+		  .udesc = "All cores",
+		  .ucode = 0xF0,
+		  .grpid = 1,
 		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
@@ -2349,6 +2484,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.code  = 0x4E3,
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L3 Evictions",
+	.ngrp = 1,
 	.numasks = 5,
 	.umasks  = {
 		{ .uname = "SHARED",
@@ -2382,6 +2518,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Page Size Mismatches",
 	.flags = AMD64_FL_FAM10H_REV_C,
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "GUEST_LARGER",
@@ -2408,6 +2545,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Retired x87 Floating Point Operations",
 	.flags = AMD64_FL_FAM10H_REV_C,
+	.ngrp = 1,
 	.numasks = 4,
 	.umasks  = {
 		{ .uname = "ADD_SUB_OPS",
@@ -2461,7 +2599,8 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Read Request to L3 Cache",
 	.flags = AMD64_FL_FAM10H_REV_D,
-	.numasks = 11,
+	.ngrp = 2,
+	.numasks = 5,
 	.umasks  = {
 		{ .uname = "READ_BLOCK_EXCLUSIVE",
 		  .udesc = "Read Block Exclusive (Data cache read)",
@@ -2475,6 +2614,19 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Read Block Modify",
 		  .ucode = 0x04,
 		},
+		{ .uname = "ANY_READ",
+		  .udesc = "any read modes (exclusive, shared, modify)",
+		  .ucode = 0x07,
+		  .grpid = 0,
+		  .uflags=AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .uname = "CORE_0_SELECT",
 		  .udesc = "Core 0 Select",
 		  .ucode = 0x00,
@@ -2499,14 +2651,11 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Core 5 Select",
 		  .ucode = 0x50,
 		},
-		{ .uname = "ANY_CORE",
-		  .udesc = "Any core",
+#endif
+		{ .uname = "ALL_CORES",
+		  .udesc = "All cores",
 		  .ucode = 0xF0,
-		},
-		{ .uname = "ALL",
-		  .udesc = "All sub-events selected",
-		  .ucode = 0xF7,
-		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		  .grpid = 1,
 		},
 	 },
 	},
@@ -2515,20 +2664,38 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L3 Cache Misses",
 	.flags = AMD64_FL_FAM10H_REV_D,
-	.numasks = 11,
+	.ngrp = 2,
+	.numasks = 5,
 	.umasks  = {
 		{ .uname = "READ_BLOCK_EXCLUSIVE",
 		  .udesc = "Read Block Exclusive (Data cache read)",
 		  .ucode = 0x01,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_SHARED",
 		  .udesc = "Read Block Shared (Instruction cache read)",
 		  .ucode = 0x02,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_MODIFY",
 		  .udesc = "Read Block Modify",
+		  .grpid = 0,
 		  .ucode = 0x04,
 		},
+		{ .uname = "ANY_READ",
+		  .udesc = "any read modes (exclusive, shared, modify)",
+		  .ucode = 0x07,
+		  .grpid = 0,
+		  .uflags=AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
+
 		{ .uname = "CORE_0_SELECT",
 		  .udesc = "Core 0 Select",
 		  .ucode = 0x00,
@@ -2553,13 +2720,11 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Core 5 Select",
 		  .ucode = 0x50,
 		},
-		{ .uname = "ANY_CORE",
-		  .udesc = "Any core",
+#endif
+		{ .uname = "ALL_CORES",
+		  .udesc = "All cores",
 		  .ucode = 0xF0,
-		},
-		{ .uname = "ALL",
-		  .udesc = "All sub-events selected",
-		  .ucode = 0xF7,
+		  .grpid = 1,
 		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
@@ -2569,24 +2734,42 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "L3 Fills caused by L2 Evictions",
 	.flags = AMD64_FL_FAM10H_REV_D,
-	.numasks = 12,
+	.ngrp = 2,
+	.numasks = 6,
 	.umasks  = {
 		{ .uname = "SHARED",
 		  .udesc = "Shared",
 		  .ucode = 0x01,
+		  .grpid = 0,
 		},
 		{ .uname = "EXCLUSIVE",
 		  .udesc = "Exclusive",
 		  .ucode = 0x02,
+		  .grpid = 0,
 		},
 		{ .uname = "OWNED",
 		  .udesc = "Owned",
 		  .ucode = 0x04,
+		  .grpid = 0,
 		},
 		{ .uname = "MODIFIED",
 		  .udesc = "Modified",
 		  .ucode = 0x08,
+		  .grpid = 0,
 		},
+		{ .uname = "ANY_STATE",
+		  .udesc = "any line state (shared, owned, exclusive, modified)",
+		  .ucode = 0x0f,
+		  .grpid = 0,
+		  .uflags=AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .uname = "CORE_0_SELECT",
 		  .udesc = "Core 0 Select",
 		  .ucode = 0x00,
@@ -2615,9 +2798,11 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Any core",
 		  .ucode = 0xF0,
 		},
-		{ .uname = "ALL",
-		  .udesc = "All sub-events selected",
-		  .ucode = 0xFF,
+#endif
+		{ .uname = "ALL_CORES",
+		  .udesc = "All cores",
+		  .ucode = 0xF0,
+		  .grpid = 1,
 		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
@@ -2627,20 +2812,37 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.modmsk = AMD64_FAM10H_ATTRS,
 	.desc  = "Non-cancelled L3 Read Requests",
 	.flags = AMD64_FL_FAM10H_REV_D,
-	.numasks = 11,
+	.ngrp = 2,
+	.numasks = 5,
 	.umasks  = {
 		{ .uname = "READ_BLOCK_EXCLUSIVE",
 		  .udesc = "Read Block Exclusive (Data cache read)",
 		  .ucode = 0x01,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_SHARED",
 		  .udesc = "Read Block Shared (Instruction cache read)",
 		  .ucode = 0x02,
+		  .grpid = 0,
 		},
 		{ .uname = "READ_BLOCK_MODIFY",
 		  .udesc = "Read Block Modify",
 		  .ucode = 0x04,
+		  .grpid = 0,
 		},
+		{ .uname = "ANY_READ",
+		  .udesc = "any read modes (exclusive, shared, modify)",
+		  .ucode = 0x07,
+		  .grpid = 0,
+		  .uflags=AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .uname = "CORE_0_SELECT",
 		  .udesc = "Core 0 Select",
 		  .ucode = 0x00,
@@ -2665,14 +2867,11 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 		  .udesc = "Core 5 Select",
 		  .ucode = 0x50,
 		},
-		{ .uname = "ANY_CORE",
-		  .udesc = "Any core",
+#endif
+		{ .uname = "ALL_CORES",
+		  .udesc = "All cores",
 		  .ucode = 0xF0,
-		},
-		{ .uname = "ALL",
-		  .udesc = "All sub-events selected",
-		  .ucode = 0xF7,
-		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
+		  .grpid = 1,
 		},
 	 },
 	},
