@@ -451,7 +451,6 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		if (a->type == PFM_ATTR_UMASK) {
 			grpid = amd64_events[e->event].umasks[a->id].grpid;
 			++grpcounts[grpid];
-printf("grpmsk=%#x count[%d]=%d\n", grpmsk, grpid, grpcounts[grpid]);
 
 			/*
 		 	 * upper layer has removed duplicates
