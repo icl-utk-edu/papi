@@ -44,13 +44,13 @@
 #define PERF_MAX_UMASKS	8
 
 typedef struct {
-	char		*uname;	/* unit mask name */
+	const char	*uname;	/* unit mask name */
 	const char	*udesc;	/* unit mask desc */
 	uint64_t	uid;	/* unit mask id */
 } perf_umask_t;
 	
 typedef struct {
-	char		*name;			/* name */
+	const char	*name;			/* name */
 	const char	*desc;			/* description */
 	uint64_t	id;			/* perf_hw_id or equivalent */
 	int		modmsk;			/* modifiers bitmask */
@@ -658,11 +658,11 @@ pfm_perf_terminate(void *this)
 			continue;
 
 		/* cast to keep compiler happy, we are
- 		 * freeing the dynamically allocated clone
- 		 * table, not the static one. We do not want
- 		 * to create a specific data type
- 		 */
-		free((void *)(p->name));
+		 * freeing the dynamically allocated clone
+		 * table, not the static one. We do not want
+		 * to create a specific data type
+		 */
+		free((void *)p->name);
 
 		/*
 		 * first PERF_MAX_UMASKS are pre-allocated
@@ -671,7 +671,7 @@ pfm_perf_terminate(void *this)
 		for (j=0; j < p->numasks; j++) {
 			if (j == PERF_MAX_UMASKS)
 				break;
-			free((void *)(p->umasks[j].uname));
+			free((void *)p->umasks[j].uname);
 		}
 	}
 	/*
