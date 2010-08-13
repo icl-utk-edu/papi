@@ -273,6 +273,9 @@ extern pfm_err_t pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp);
 #define pfm_for_each_event_attr(x, z) \
 	for((x)=0; (x) < (z)->nattrs; (x) = (x)+1)
 
+#define pfm_for_all_pmus(x) \
+	for((x)= 0 ; (x) < PFM_PMU_MAX; (x)++)
+
 #ifdef __cplusplus /* extern C */
 }
 #endif
