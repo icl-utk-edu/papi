@@ -126,7 +126,7 @@ check_arch_pmu(int family)
 	 * older than Pentium (family=5). Those processors
 	 * did not have the CPUID instruction
 	 */
-	if (family < 5)
+	if (family < 5 || family == 15)
 		return PFM_ERR_NOTSUPP;
 
 	/*
