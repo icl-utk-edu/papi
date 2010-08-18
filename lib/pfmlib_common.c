@@ -205,7 +205,7 @@ pfmlib_idx2pidx(int idx, int *pidx)
 	pmu_id = (idx >> PFMLIB_PMU_SHIFT) & PFMLIB_PMU_MASK;
 
 	pmu = pmu2pmuidx(pmu_id);
-	if (!pfmlib_pmu_active(pmu))
+	if (!pmu)
 		return NULL;
 
 	*pidx = idx & PFMLIB_PMU_PIDX_MASK;
@@ -667,6 +667,16 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		pmu = pfmlib_pmus_map[pmu_id];
 		if (!pmu)
 			continue;
+		/*
+		 * if no explicit PMU name is given, then
+		 * only look for active (detected) PMU models
+		 */
+		if (!pname && !pfmlib_pmu_active(pmu))
+			continue;
+
+		/*
+		 * check for requested PMU name,
+		 */
 		if (pname && strcasecmp(pname, pmu->name))
 			continue;
 		/*
@@ -712,7 +722,7 @@ pfm_get_nevents(void)
 
 	pfmlib_for_all_pmu(pmu_id) {
 		pmu = pfmlib_pmus_map[pmu_id];
-		if (!pfmlib_pmu_active(pmu))
+		if (!pmu)
 			continue;
 		total += pmu->pme_count;
 	}
@@ -755,24 +765,25 @@ pfm_get_version(void)
 	return LIBPFM_VERSION;
 }
 
-static pfm_pmu_t
+static pfmlib_pmu_t *
 pfmlib_get_pmu_next(pfm_pmu_t i)
 {
 	pfmlib_pmu_t *pmu;
 
 	for(++i; i < PFM_PMU_MAX; i++) {
 		pmu = pfmlib_pmus_map[i];
-		if (pmu && (pmu->flags & PFMLIB_PMU_FL_ACTIVE))
-			return pfmlib_pmus_map[i]->pmu;
+		if (!pmu)
+			continue;
+		return pmu;
 	}
-	return -1;
+	return NULL;
 }
 
 int
 pfm_get_event_next(int idx)
 {
 	pfmlib_pmu_t *pmu;
-	int pidx, pmu_id;
+	int pidx;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
@@ -785,11 +796,9 @@ pfm_get_event_next(int idx)
 	/*
 	 * ran out of event, move to next PMU
 	 */
-	pmu_id = pfmlib_get_pmu_next(idx2pmu(idx));
-	if (pmu_id == -1)
+	pmu = pfmlib_get_pmu_next(idx2pmu(idx));
+	if (!pmu)
 		return -1;
-
-	pmu = pfmlib_pmus_map[pmu_id];
 
 	pidx = pmu->get_event_first(pmu);
 	return pidx == -1 ? -1 : pfmlib_pidx2idx(pmu, pidx);
@@ -801,9 +810,10 @@ pfm_get_event_first(void)
 	pfmlib_pmu_t *pmu;
 	int pmu_id, pidx;
 
+	/* scan all compiled in PMU models */
 	pfmlib_for_all_pmu(pmu_id) {
 		pmu = pfmlib_pmus_map[pmu_id];
-		if (!pfmlib_pmu_active(pmu))
+		if (!pmu)
 			continue;
 		pidx = pmu->get_event_first(pmu);
 		if (pidx != -1)
@@ -1161,14 +1171,9 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
 	info->desc = pmu->desc;
 	info->pmu = pmuid;
 	/*
-	 * pme_count only valid when PMU is detected
+	 * XXX: pme_count only valid when PMU is detected
 	 */
-	if (pfmlib_pmu_active(pmu)) {
-		info->is_present = 1;
-		info->nevents = pmu->pme_count;
-	} else {
-		info->is_present = 0;
-		info->nevents = 0;
-	}
+	info->is_present = !!pfmlib_pmu_active(pmu);
+	info->nevents = pmu->pme_count;
 	return PFM_SUCCESS;
 }

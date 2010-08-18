@@ -1,8 +1,8 @@
 /*
  * showevtinfo.c - show event information
  *
- * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
- * Contributed by Stephane Eranian <eranian@hpl.hp.com>
+ * Copyright (c) 2010 Google, Inc
+ * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,6 +50,13 @@ typedef struct {
 	uint64_t code;
 	int idx;
 } code_info_t;
+
+static int
+event_has_pname(char *s)
+{
+	char *p;
+	return (p = strchr(s, ':')) && *(p+1) == ':';
+}
 
 static void
 print_codes(char *buf, int plm)
@@ -188,26 +195,41 @@ show_event_info(pfm_event_info_t *info)
 
 
 static int
-show_info(regex_t *preg)
+show_info(char *event, regex_t *preg)
 {
 	pfm_pmu_info_t pinfo;
 	pfm_event_info_t info;
-	int i, ret, match = 0;
+	pfm_pmu_t last_pmu = PFM_PMU_NONE;
+	int i, ret, match = 0, pname;
 	size_t len, l = 0;
 	char *fullname = NULL;
 
 	memset(&pinfo, 0, sizeof(pinfo));
 	memset(&info, 0, sizeof(info));
 
-	pfm_for_each_event(i) {
+	pname = event_has_pname(event);
 
+	/*
+	 * scan all supported events, incl. those
+	 * from undetected PMU models
+	 */
+	pfm_for_each_event(i) {
 		ret = pfm_get_event_info(i, &info);
 		if (ret != PFM_SUCCESS)
 			errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
-		ret = pfm_get_pmu_info(info.pmu, &pinfo);
-		if (ret != PFM_SUCCESS)
-			errx(1, "cannot get PMU name: %s", pfm_strerror(ret));
+
+		if (info.pmu != last_pmu) {
+			ret = pfm_get_pmu_info(info.pmu, &pinfo);
+			if (ret != PFM_SUCCESS)
+				errx(1, "cannot get pmu info: %s", pfm_strerror(ret));
+
+			last_pmu = pinfo.pmu;
+		}
+
+		/* no pmu prefix, just look for detected PMU models */
+		if (!pname && !pinfo.is_present)
+			continue;
 
 		len = strlen(info.name) + strlen(pinfo.name) + 1 + 2;
 		if (len > l) {
@@ -233,7 +255,7 @@ show_info(regex_t *preg)
 }
 
 static int
-show_info_sorted(regex_t *preg)
+show_info_sorted(char *event, regex_t *preg)
 {
 	pfm_pmu_info_t pinfo;
 	pfm_event_info_t info;
@@ -245,7 +267,7 @@ show_info_sorted(regex_t *preg)
 	memset(&pinfo, 0, sizeof(pinfo));
 	memset(&info, 0, sizeof(info));
 
-	for(j=0; j < PFM_PMU_MAX; j++) {
+	pfm_for_all_pmus(j) {
 
 		ret = pfm_get_pmu_info(j, &pinfo);
 		if (ret != PFM_SUCCESS)
@@ -255,6 +277,7 @@ show_info_sorted(regex_t *preg)
 		if (!codes)
 			err(1, "cannot allocate memory\n");
 
+		/* scans all supported events */
 		n = 0;
 		pfm_for_each_event(i) {
 
@@ -319,7 +342,7 @@ validate_event_tables(void)
 
 	memset(&pinfo, 0, sizeof(pinfo));
 
-	for(i=0; i < PFM_PMU_MAX; i++) {
+	pfm_for_all_pmus(i) {
 		ret = pfm_get_pmu_info(i, &pinfo);
 		if (ret != PFM_SUCCESS)
 			continue;
@@ -332,6 +355,29 @@ validate_event_tables(void)
 	return retval;
 }
 
+/*
+ * keep: [pmu::]event
+ * drop everything else
+ */
+static void
+drop_event_attributes(char *str)
+{
+	char *p;
+
+	p = strchr(str, ':');
+	if (!p)
+		return;
+
+	str = p+1;
+	/* keep PMU name */
+	if (*str == ':')
+		str++;
+
+	/* stop string at 1st attribute */
+	p = strchr(str, ':');
+	if (p)
+		*p = '\0';
+}
 
 int
 main(int argc, char **argv)
@@ -391,7 +437,7 @@ main(int argc, char **argv)
 
 	if (!options.compact) {
 		printf("Supported PMU models:\n");
-		for(i=0; i < PFM_PMU_MAX; i++) {
+		pfm_for_all_pmus(i) {
 			ret = pfm_get_pmu_info(i, &pinfo);
 			if (ret != PFM_SUCCESS)
 				continue;
@@ -400,7 +446,7 @@ main(int argc, char **argv)
 		}
 
 		printf("Detected PMU models:\n");
-		for(i=0; i < PFM_PMU_MAX; i++) {
+		pfm_for_all_pmus(i) {
 			ret = pfm_get_pmu_info(i, &pinfo);
 			if (ret != PFM_SUCCESS)
 				continue;
@@ -412,13 +458,15 @@ main(int argc, char **argv)
 	}
 
 	while(*args) {
-		if (regcomp(&preg, *args, REG_ICASE|REG_NOSUB))
+		/* drop umasks and modifiers */
+		drop_event_attributes(*args);
+		if (regcomp(&preg, *args, REG_ICASE))
 			errx(1, "error in regular expression for event \"%s\"", *argv);
 
 		if (options.sort)
-			match = show_info_sorted(&preg);
+			match = show_info_sorted(*args, &preg);
 		else
-			match = show_info(&preg);
+			match = show_info(*args, &preg);
 
 		if (match == 0)
 			errx(1, "event %s not found", *args);
