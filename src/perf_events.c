@@ -1223,6 +1223,41 @@ mygettid( void )
 #endif
 }
 
+inline static int
+check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain )
+{
+	int ev_fd;
+	struct perf_event_attr attr;
+
+	/* clearing this will set a type of hardware and to count all domains */
+	memset(&attr, '\0', sizeof(attr));
+	attr.read_format = PERF_FORMAT_ID | PERF_FORMAT_GROUP;  /* try to use read formats papi will use */
+
+	/* set the event id (config field) to instructios (an event that should always exist) */
+	attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+	
+	/* now set up domains this event set will be counting */
+	if (!(domain & PAPI_DOM_SUPERVISOR)) {
+		attr.exclude_hv = 1;
+	}
+	if (!(domain & PAPI_DOM_USER)) {
+		attr.exclude_user = 1;
+	}
+	if (!(domain & PAPI_DOM_KERNEL)) {
+		attr.exclude_kernel = 1;
+	}
+
+	ev_fd = sys_perf_counter_open( &attr, tid, cpu_num, -1, 0 );
+	if ( ev_fd == -1 ) {
+		PAPIERROR( "sys_perf_counter_open returned error.  Unix says, %s", strerror( errno ) );
+		fflush( stdout );
+		return PAPI_EPERM;
+	}
+	/* now close it, this was just to make sure we have permissions to set these options */
+	close(ev_fd);
+	return PAPI_OK;
+}
+
 #ifdef KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
 inline static int
 check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
@@ -1251,7 +1286,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 	int cnt = read( ctx->evt[ctx->evt[idx].group_leader].event_fd, buffer,
 					MAX_READ );
 	if ( cnt == -1 ) {
-		INTDBG( "read returned an error!  Should never happen." );
+		SUBDBG( "read returned an error!  Should never happen.\n" );
 		return PAPI_EBUG;
 	}
 	if ( cnt == 0 ) {
@@ -1601,17 +1636,17 @@ close_pe_evts( context_t * ctx )
 
 
 static int
-attach( control_state_t * ctl, unsigned long tid )
+attach( control_state_t * pe_ctl, unsigned long tid )
 {
-	ctl->tid = tid;
+	pe_ctl->tid = tid;
 	return PAPI_OK;
 }
 
 static int
-detach( context_t * ctx, control_state_t * ctl )
+detach( context_t * ctx, control_state_t * pe_ctl )
 {
 	( void ) ctx;			 /*unused */
-	ctl->tid = 0;
+	pe_ctl->tid = 0;
 	return PAPI_OK;
 }
 
@@ -2164,8 +2199,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 						   strerror( errno ) );
 				return PAPI_ESBSTR;
 			}
-			SUBDBG("read: fd: %2d, tid: 0x%llx, cpu: %d, buffer[0]: 0x%llx, ret: %d\n", 
-				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu_num, buffer[0], ret);
+			SUBDBG("read: fd: %2d, tid: 0x%lx, cpu: %d, buffer[0-2]: 0x%lx, 0x%lx, 0x%lx, ret: %d\n", 
+				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu_num, buffer[0], buffer[1], buffer[2], ret);
 		}
 
 		int count_idx = get_count_idx_by_id( buffer, pe_ctl->multiplexed,
@@ -2281,12 +2316,12 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	int ret;
 	context_t *pe_ctx = ( context_t * ) ctx;
+	control_state_t *pe_ctl = NULL;
 
 	switch ( code ) {
 	case PAPI_MULTIPLEX:
 	{
-		control_state_t *pe_ctl =
-			( control_state_t * ) ( option->multiplex.ESI->ctl_state );
+		pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
 		pe_ctl->multiplexed = 1;
 		ret =
 			_papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events,
@@ -2299,19 +2334,29 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		return ret;
 	}
 	case PAPI_ATTACH:
-		return attach( ( control_state_t * ) ( option->attach.ESI->ctl_state ),
-					   option->attach.tid );
+		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+		/* looks like we are allowed so go ahead and store thread id */
+		if (check_permissions( option->attach.tid, pe_ctl->cpu_num, pe_ctl->domain ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		return attach( pe_ctl, option->attach.tid );
 	case PAPI_DETACH:
-		return detach( pe_ctx,
-					   ( control_state_t * ) ( option->attach.ESI->
-											   ctl_state ) );
+		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+		return detach( pe_ctx, pe_ctl );
 	case PAPI_CPU_ATTACH:
-		return set_cpu( ( control_state_t * ) ( option->cpu.ESI->ctl_state ),
-						option->cpu.cpu_num );
+		pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
+		if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, pe_ctl->domain ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		/* looks like we are allowed so go ahead and store cpu number */
+		return set_cpu( pe_ctl, option->cpu.cpu_num );
 	case PAPI_DOMAIN:
-		return
-			set_domain( ( control_state_t * ) ( option->domain.ESI->ctl_state ),
-						option->domain.domain );
+		pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
+		/* looks like we are allowed so go ahead and store counting domain */
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, option->domain.domain ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		return set_domain( option->domain.ESI->ctl_state, option->domain.domain );
 	case PAPI_GRANUL:
 		return
 			set_granularity( ( control_state_t * ) ( option->granularity.ESI->
@@ -2922,7 +2967,7 @@ int
 _papi_pe_init_control_state( hwd_control_state_t * ctl )
 {
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-	memset( ctl, 0, sizeof ( control_state_t ) );
+	memset( pe_ctl, 0, sizeof ( control_state_t ) );
 	set_domain( ctl, MY_VECTOR.cmp_info.default_domain );
 	/* Set cpu number in the control block to show events are not tied to specific cpu */
 	pe_ctl->cpu_num = -1;
@@ -3106,7 +3151,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 		}
 	}
 	pe_ctl->num_events = count;
-	set_domain( pe_ctl, pe_ctl->domain );
+	set_domain( ctl, pe_ctl->domain );
 
 	ret = open_pe_evts( pe_ctx, pe_ctl );
 	if ( ret != PAPI_OK ) {
