@@ -453,7 +453,9 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 int
 pfm_intel_x86_get_event_first(void *this)
 {
-	return 0;
+	pfmlib_pmu_t *p = this;
+
+	return p->pme_count ? 0 : -1;
 }
 
 int
