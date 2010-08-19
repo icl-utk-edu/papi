@@ -43,6 +43,7 @@ static struct {
 	int compact;
 	int sort;
 	int encode;
+	int combo;
 	uint64_t mask;
 } options;
 
@@ -58,20 +59,105 @@ event_has_pname(char *s)
 	return (p = strchr(s, ':')) && *(p+1) == ':';
 }
 
-static void
+static int
 print_codes(char *buf, int plm)
 {
 	uint64_t *codes = NULL;
 	int j, ret, count = 0;
 
 	ret = pfm_get_event_encoding(buf, PFM_PLM0|PFM_PLM3, NULL, NULL, &codes, &count);
-	if (ret != PFM_SUCCESS) {
-		warnx("cannot encode event %s : %s", buf, pfm_strerror(ret));
-		return;
-	}
-	for (j=0; j < count; j++)
+	if (ret != PFM_SUCCESS)
+		return -1;
+
+	if (count)
+		printf("%#"PRIx64, codes[0]);
+	for (j=1; j < count; j++)
 		printf(" %#"PRIx64, codes[j]);
 	free(codes);
+	return 0;
+}
+
+static int
+check_valid(char *buf, int plm)
+{
+	uint64_t *codes = NULL;
+	int ret, count = 0;
+
+	ret = pfm_get_event_encoding(buf, PFM_PLM0|PFM_PLM3, NULL, NULL, &codes, &count);
+	if (ret != PFM_SUCCESS)
+		return -1;
+	free(codes);
+	return 0;
+}
+
+static void
+show_event_info_combo(pfm_event_info_t *info)
+{
+	pfm_event_attr_info_t ainfo;
+	pfm_pmu_info_t pinfo;
+	char buf[MAXBUF];
+	int len;
+	int i, j, ret;
+	uint64_t total, m;
+
+	memset(&ainfo, 0, sizeof(ainfo));
+	memset(&pinfo, 0, sizeof(pinfo));
+
+	pfm_get_pmu_info(info->pmu, &pinfo);
+
+	if (info->nattrs) {
+		if (info->nattrs > ((sizeof(total)<<3))) {
+			warnx("too many umasks, cannot show all combinations for event %s", info->name);
+			return;
+		}
+		total = 1ULL << info->nattrs;
+
+		for (i = 1; i < total; i++) {
+
+			len = sizeof(buf);
+			len -= snprintf(buf, len, "%s::%s", pinfo.name, info->name);
+			if (len <= 0) {
+				warnx("event name too long%s", info->name);
+				return;
+			}
+
+			for(m = i, j= 0; m; m >>=1, j++) {
+				if (m & 0x1ULL) {
+					ret = pfm_get_event_attr_info(info->idx, j, &ainfo);
+					if (ret != PFM_SUCCESS)
+						err(1, "cannot get attribute info: %s", pfm_strerror(ret));
+
+					/* we have hit an attribute, that means combination is not useful */
+					if (ainfo.type != PFM_ATTR_UMASK)
+						break;
+
+					if (len < (1 + strlen(ainfo.name))) {
+						warnx("umasks combination too long for event %s", buf);
+						break;
+					}
+					strncat(buf, ":", len); len--;
+					strncat(buf, ainfo.name, len);
+					len -= strlen(ainfo.name);
+				}
+			}
+			/* if found a valid umask combination, check encoding */
+			if (m == 0) {
+				if (options.encode)
+					ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
+				else
+					ret = check_valid(buf, PFM_PLM0|PFM_PLM3);
+				if (!ret)
+					printf("%s%s\n", options.encode ? "\t":"", buf);
+			}
+		}
+	} else {
+		snprintf(buf, sizeof(buf)-1, "%s::%s", pinfo.name, info->name);
+		buf[sizeof(buf)-1] = '\0';
+
+		ret = options.encode ? print_codes(buf, PFM_PLM0|PFM_PLM3) : 0;
+		if (!ret)
+			printf("%s%s\n", options.encode ? "\t":"", buf);
+	}
 }
 
 static void
@@ -96,21 +182,26 @@ show_event_info_compact(pfm_event_info_t *info)
 			continue;
 
 		snprintf(buf, sizeof(buf)-1, "%s::%s:%s", pinfo.name, info->name, ainfo.name);
-
 		buf[sizeof(buf)-1] = '\0';
-		printf("%s", buf);
 
-		if (options.encode)
-			print_codes(buf, PFM_PLM0|PFM_PLM3);
-		putchar('\n');
+		ret = 0;
+		if (options.encode) {
+			ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
+			if (!ret)
+				putchar('\t');
+		}
+		if (!ret)
+			printf("%s\n", buf);
 		um++;
 	}
 	if (um == 0) {
 		snprintf(buf, sizeof(buf)-1, "%s::%s", pinfo.name, info->name);
 		buf[sizeof(buf)-1] = '\0';
-		printf("%s", buf);
-		if (options.encode)
+		if (options.encode) {
 			print_codes(buf, PFM_PLM0|PFM_PLM3);
+			putchar('\t');
+		}
+		printf("%s", buf);
 		putchar('\n');
 	}
 }
@@ -242,7 +333,10 @@ show_info(char *event, regex_t *preg)
 
 		if (regexec(preg, fullname, 0, NULL, 0) == 0) {
 			if (options.compact)
-				show_event_info_compact(&info);
+				if (options.combo)
+					show_event_info_combo(&info);
+				else
+					show_event_info_compact(&info);
 			else
 				show_event_info(&info);
 			match++;
@@ -329,6 +423,7 @@ usage(void)
 	printf("showevtinfo [-L] [-E] [-h] [-s] [-C] [-m mask]\n"
 		"-L\t\tlist one event per line\n"
 		"-E\t\tlist one event per line with encoding\n"
+		"-M\t\tdisplay all valid unit masks combination (use with -L or -E)\n"
 		"-h\t\tget help\n"
 		"-s\t\tsort event by PMU and by code based on -m mask\n"
 		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n");
@@ -392,7 +487,7 @@ main(int argc, char **argv)
 
 	memset(&pinfo, 0, sizeof(pinfo));
 
-	while ((c=getopt(argc, argv,"hCELsm:")) != -1) {
+	while ((c=getopt(argc, argv,"hCELsm:M")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
@@ -400,6 +495,9 @@ main(int argc, char **argv)
 			case 'E':
 				options.compact = 1;
 				options.encode = 1;
+				break;
+			case 'M':
+				options.combo = 1;
 				break;
 			case 's':
 				options.sort = 1;
@@ -416,7 +514,7 @@ main(int argc, char **argv)
 				usage();
 				exit(0);
 			default:
-				errx(1, "unknown error");
+				errx(1, "unknown option error");
 		}
 	}
 	ret = pfm_initialize();
