@@ -772,7 +772,7 @@ int
 pfm_get_event_next(int idx)
 {
 	pfmlib_pmu_t *pmu;
-	int pidx;
+	int pidx, px;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
@@ -782,15 +782,21 @@ pfm_get_event_next(int idx)
 	if (pidx != -1)
 		return pfmlib_pidx2idx(pmu, pidx);
 
+	px = idx2pmu(idx);
 	/*
 	 * ran out of event, move to next PMU
 	 */
-	pmu = pfmlib_get_pmu_next(idx2pmu(idx));
+retry:
+	pmu = pfmlib_get_pmu_next(px);
 	if (!pmu)
 		return -1;
 
 	pidx = pmu->get_event_first(pmu);
-	return pidx == -1 ? -1 : pfmlib_pidx2idx(pmu, pidx);
+	if (pidx == -1) {
+		px++;
+		goto retry;
+	}
+	return pfmlib_pidx2idx(pmu, pidx);
 }
 
 int
