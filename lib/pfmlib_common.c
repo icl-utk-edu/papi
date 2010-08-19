@@ -430,31 +430,17 @@ pfm_find_event(const char *str)
 static int
 pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 {
-	pfmlib_event_desc_t d2;
-	int i, j = 0, k;
+	int i, j;
 
 	/*
-	 * remove duplicates
-	 * fail if same modifier passed with two distinct values
+	 * fail if duplicate attributes are found
 	 */
 	for(i=0; i < d->nattrs; i++) {
-		for(k=0; k < j; k++) {
-			if (d->attrs[i].id == d2.attrs[k].id
-			   && d->attrs[i].type == d2.attrs[k].type) {
-				if (d->attrs[i].ival != d2.attrs[k].ival)
-					return PFM_ERR_ATTR_SET;
-				break;
-			}
-		}
-		if (k == j) {
-			d2.attrs[j] = d->attrs[i];
-			j++;
+		for(j=i+1; j < d->nattrs; j++) {
+			if (d->attrs[i].id == d->attrs[j].id)
+				return PFM_ERR_ATTR_SET;
 		}
 	}
-	for(i=0; i < j; i++)
-		d->attrs[i] = d2.attrs[i];
-
-	d->nattrs = j;
 	return PFM_SUCCESS;
 }
 
