@@ -80,7 +80,7 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 			fd[0].max_fds = max_fds;
 		}
 
-		ret = pfm_get_perf_event_encoding(*argv, PFM_PLM3, &fd[num].hw, NULL, NULL);
+		ret = pfm_get_perf_event_encoding(*argv, PFM_PLM0|PFM_PLM3, &fd[num].hw, NULL, NULL);
 		if (ret != PFM_SUCCESS) {
 			warnx("event %s: %s\n", *argv, pfm_strerror(ret));
 			goto error;
