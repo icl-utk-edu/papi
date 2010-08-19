@@ -2192,8 +2192,14 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.ucode  = 0x02,
 				.uflags = INTEL_X86_NCOMBO,
 			},
+			{ .uname  = "MS_CYCLES_ACTIVE",
+				.udesc  = "cycles in which at least one uop is decoded by Microcode Sequencer",
+				.ucode  = 0x2 | (1<< 16), /* counter-mask = 1 */
+				.uflags = INTEL_X86_NCOMBO,
+				.uequiv = "MS:c=1"
+			},
 		},
-		.numasks = 3
+		.numasks = 4
 	},
 	{ .name   = "UOPS_EXECUTED",
 		.desc   = "Micro-ops executed",
@@ -2213,18 +2219,21 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "PORT2_CORE",
-				.udesc  = "Uops executed on port 2 (core count only)",
-				.ucode  = 0x04,
+				.udesc  = "Uops executed on port 2 on any thread (core count only)",
+				.ucode  = 0x04 | (1<< 13), /* any=1 */
+				.modhw = _INTEL_X86_ATTR_T,
 				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "PORT3_CORE",
-				.udesc  = "Uops executed on port 3 (core count only)",
-				.ucode  = 0x08,
+				.udesc  = "Uops executed on port 3 on any thread (core count only)",
+				.ucode  = 0x08 | (1<<13), /* any=1 */
+				.modhw = _INTEL_X86_ATTR_T,
 				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "PORT4_CORE",
-				.udesc  = "Uops executed on port 4 (core count only)",
-				.ucode  = 0x10,
+				.udesc  = "Uops executed on port 4 on any thread (core count only)",
+				.ucode  = 0x10 | (1<<13), /* any=1 */
+				.modhw = _INTEL_X86_ATTR_T,
 				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "PORT5",
@@ -2238,8 +2247,9 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "PORT234_CORE",
-				.udesc  = "Uops issued on ports 2, 3 or 4 (core count only)",
-				.ucode  = 0x80,
+				.udesc  = "Uops issued on ports 2, 3 or 4 on any thread (core count only)",
+				.ucode  = 0x80 | (1<<13), /* any=1 */
+				.modhw = _INTEL_X86_ATTR_T,
 				.uflags = INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "PORT015_STALL_CYCLES",
