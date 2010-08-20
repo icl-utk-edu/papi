@@ -70,6 +70,7 @@ typedef struct {
 	  .numasks = 0,		\
 	  .modmsk = (m),	\
 	  .ngrp = 0,		\
+	  .umask_ovfl_idx = -1,	\
 	}
 
 
@@ -341,7 +342,7 @@ gen_tracepoint_table(void)
 		p->desc = "tracepoint";
 		p->id = -1;
 		p->type = PERF_TYPE_TRACEPOINT;
-		p->umask_ovfl_idx = 0;
+		p->umask_ovfl_idx = -1;
 		p->modmsk = 0,
 		p->ngrp = 1;
 
@@ -710,6 +711,86 @@ pfm_perf_terminate(void *this)
 	}
 }
 
+static int
+pfm_perf_validate_table(void *this, FILE *fp)
+{
+	const char *name = perf_event_support.name;
+	perf_umask_t *um;
+	int i, j;
+	int error = 0;
+
+	for(i=0; i < perf_event_support.pme_count; i++) {
+
+		if (!perf_pe[i].name) {
+			fprintf(fp, "pmu: %s event%d: :: no name\n", name, i);
+			error++;
+		}
+
+		if (!perf_pe[i].desc) {
+			fprintf(fp, "pmu: %s event%d: %s :: no description\n", name, i, perf_pe[i].name);
+			error++;
+		}
+
+		if (perf_pe[i].type < PERF_TYPE_HARDWARE || perf_pe[i].type >= PERF_TYPE_MAX) {
+			fprintf(fp, "pmu: %s event%d: %s :: invalid type\n", name, i, perf_pe[i].name);
+			error++;
+		}
+
+		if (perf_pe[i].numasks >= PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx == -1) {
+			fprintf(fp, "pmu: %s event%d: %s :: numasks too big (<%d)\n", name, i, perf_pe[i].name, PERF_MAX_UMASKS);
+			error++;
+		}
+
+		if (perf_pe[i].numasks < PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx != -1) {
+			fprintf(fp, "pmu: %s event%d: %s :: overflow umask idx defined but not needed (<%d)\n", name, i, perf_pe[i].name, PERF_MAX_UMASKS);
+			error++;
+		}
+
+		if (perf_pe[i].numasks && perf_pe[i].ngrp == 0) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp cannot be zero\n", name, i, perf_pe[i].name);
+			error++;
+		}
+
+		if (perf_pe[i].numasks == 0 && perf_pe[i].ngrp) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp must be zero\n", name, i, perf_pe[i].name);
+			error++;
+		}
+
+		for(j= 0; j < perf_pe[i].numasks; j++) {
+
+			if (j < PERF_MAX_UMASKS){
+				um = perf_pe[i].umasks+j;
+			} else {
+				um = perf_get_ovfl_umask(i);
+				um += j - PERF_MAX_UMASKS;
+			}
+			if (!um->uname) {
+				fprintf(fp, "pmu: %s event%d: umask%d :: no name\n", name, i, j);
+				error++;
+			}
+
+			if (!um->udesc) {
+				fprintf(fp, "pmu: %s event%d:%s umask%d: %s :: no description\n", name, i, perf_pe[i].name, j, um->uname);
+				error++;
+			}
+
+			if (perf_pe[i].ngrp && um->grpid >= perf_pe[i].ngrp) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", name, i, perf_pe[i].name, j, um->uname, um->grpid, perf_pe[i].ngrp);
+				error++;
+			}
+		}
+
+		/* check for excess unit masks */
+		for(; j < PERF_MAX_UMASKS; j++) {
+			if (perf_pe[i].umasks[j].uname || perf_pe[i].umasks[j].udesc) {
+				fprintf(fp, "pmu: %s event%d: %s :: numasks (%d) invalid more events exists\n", name, i, perf_pe[i].name, perf_pe[i].numasks);
+				error++;
+			}
+		}
+	}
+	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
+}
+
 pfmlib_pmu_t perf_event_support={
 	.desc			= "perf_events generic PMU",
 	.name			= "perf",
@@ -726,4 +807,5 @@ pfmlib_pmu_t perf_event_support={
 	.get_event_perf_type	= pfm_perf_get_event_perf_type,
 	.get_event_info		= pfm_perf_get_event_info,
 	.get_event_attr_info	= pfm_perf_get_event_attr_info,
+	.validate_table		= pfm_perf_validate_table,
 };
