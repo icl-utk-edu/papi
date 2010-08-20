@@ -2877,7 +2877,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	},
 
 /* Family 10h, IBS pseudo-events */
-
+#if 0
 /* 126 */{.name = "IBSFETCH_EVENT",
 	.code  = 0xFF,
 	.modmsk = AMD64_FAM10H_ATTRS_IBSFE,
@@ -2890,6 +2890,7 @@ static const amd64_entry_t amd64_fam10h_pe[]={
 	.desc  = "pseudo-event to enable IBS Op sampling",
 	.flags = AMD64_FL_IBSOP,
 	},
+#endif
 };
 
 #define PME_AMD64_FAM10H_EVENT_COUNT		(sizeof(amd64_fam10h_pe)/sizeof(amd64_entry_t))
