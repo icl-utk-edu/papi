@@ -170,8 +170,8 @@ typedef struct {
 	int			size;	/* for struct extension, 0 for now */
 	int			nevents;/* how many events for this PMU */
 	struct {
-		int		is_present:1;	/* present on host system */
-		int		reserved_bits:31;
+		unsigned int	is_present:1;	/* present on host system */
+		unsigned int	reserved_bits:31;
 	} SWIG_NAME(flags);
 	uint64_t		reserved[3];
 } pfm_pmu_info_t;
