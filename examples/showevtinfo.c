@@ -116,14 +116,14 @@ show_event_info_combo(pfm_event_info_t *info)
 		total = 1ULL << info->nattrs;
 
 		for (i = 1; i < total; i++) {
-
+			int added, nrej;
 			len = sizeof(buf);
 			len -= snprintf(buf, len, "%s::%s", pinfo.name, info->name);
 			if (len <= 0) {
 				warnx("event name too long%s", info->name);
 				return;
 			}
-
+			added = nrej = 0;
 			for(m = i, j= 0; m; m >>=1, j++) {
 				if (m & 0x1ULL) {
 					ret = pfm_get_event_attr_info(info->idx, j, &ainfo);
@@ -131,8 +131,10 @@ show_event_info_combo(pfm_event_info_t *info)
 						err(1, "cannot get attribute info: %s", pfm_strerror(ret));
 
 					/* we have hit an attribute, that means combination is not useful */
-					if (ainfo.type != PFM_ATTR_UMASK)
-						break;
+					if (ainfo.type != PFM_ATTR_UMASK) {
+						nrej++;
+						continue;
+					}
 
 					if (len < (1 + strlen(ainfo.name))) {
 						warnx("umasks combination too long for event %s", buf);
@@ -141,10 +143,11 @@ show_event_info_combo(pfm_event_info_t *info)
 					strncat(buf, ":", len); len--;
 					strncat(buf, ainfo.name, len);
 					len -= strlen(ainfo.name);
+					added++;
 				}
 			}
 			/* if found a valid umask combination, check encoding */
-			if (m == 0) {
+			if (added || info->nattrs == nrej) {
 				if (options.encode)
 					ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
 				else
