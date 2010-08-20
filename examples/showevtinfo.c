@@ -103,6 +103,9 @@ show_event_info_combo(pfm_event_info_t *info)
 	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
 
+	pinfo.size = sizeof(pinfo);
+	ainfo.size = sizeof(ainfo);
+
 	pfm_get_pmu_info(info->pmu, &pinfo);
 
 	if (info->nattrs) {
@@ -171,6 +174,9 @@ show_event_info_compact(pfm_event_info_t *info)
 	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
 
+	pinfo.size = sizeof(pinfo);
+	ainfo.size = sizeof(ainfo);
+
 	pfm_get_pmu_info(info->pmu, &pinfo);
 
 	pfm_for_each_event_attr(i, info) {
@@ -229,6 +235,9 @@ show_event_info(pfm_event_info_t *info)
 
 	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
+
+	pinfo.size = sizeof(pinfo);
+	ainfo.size = sizeof(ainfo);
 
 	ret = pfm_get_pmu_info(info->pmu, &pinfo);
 	if (ret)
@@ -298,6 +307,9 @@ show_info(char *event, regex_t *preg)
 	memset(&pinfo, 0, sizeof(pinfo));
 	memset(&info, 0, sizeof(info));
 
+	pinfo.size = sizeof(pinfo);
+	info.size = sizeof(info);
+
 	pname = event_has_pname(event);
 
 	/*
@@ -360,6 +372,9 @@ show_info_sorted(char *event, regex_t *preg)
 
 	memset(&pinfo, 0, sizeof(pinfo));
 	memset(&info, 0, sizeof(info));
+
+	pinfo.size = sizeof(pinfo);
+	info.size = sizeof(info);
 
 	pfm_for_all_pmus(j) {
 
@@ -437,6 +452,8 @@ validate_event_tables(void)
 
 	memset(&pinfo, 0, sizeof(pinfo));
 
+	pinfo.size = sizeof(pinfo);
+
 	pfm_for_all_pmus(i) {
 		ret = pfm_get_pmu_info(i, &pinfo);
 		if (ret != PFM_SUCCESS)
@@ -486,6 +503,8 @@ main(int argc, char **argv)
 	int ret, c, validate = 0;
 
 	memset(&pinfo, 0, sizeof(pinfo));
+
+	pinfo.size = sizeof(pinfo);
 
 	while ((c=getopt(argc, argv,"hCELsm:M")) != -1) {
 		switch(c) {
