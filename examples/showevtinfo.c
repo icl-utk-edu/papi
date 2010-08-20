@@ -70,9 +70,9 @@ print_codes(char *buf, int plm)
 		return -1;
 
 	if (count)
-		printf("%#"PRIx64, codes[0]);
+		printf("0x%"PRIx64, codes[0]);
 	for (j=1; j < count; j++)
-		printf(" %#"PRIx64, codes[j]);
+		printf(" 0x%"PRIx64, codes[j]);
 	free(codes);
 	return 0;
 }
@@ -93,61 +93,73 @@ check_valid(char *buf, int plm)
 static void
 show_event_info_combo(pfm_event_info_t *info)
 {
-	pfm_event_attr_info_t ainfo;
+	pfm_event_attr_info_t *ainfo;
 	pfm_pmu_info_t pinfo;
 	char buf[MAXBUF];
-	int len;
+	int len, numasks = 0;
 	int i, j, ret;
 	uint64_t total, m;
 
-	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
 
 	pinfo.size = sizeof(pinfo);
-	ainfo.size = sizeof(ainfo);
 
 	pfm_get_pmu_info(info->pmu, &pinfo);
 
-	if (info->nattrs) {
+	ainfo = malloc(info->nattrs * sizeof(*ainfo));
+	if (!ainfo)
+		err(1, "event %s : ", info->name);
+
+	/*
+	 * extract attribute information and count number
+	 * of umasks
+	 *
+	 * we cannot just drop non umasks because we need
+	 * to keep attributes in order for the enumeration
+	 * of 2^n
+	 */
+	pfm_for_each_event_attr(i, info) {
+		ainfo[i].size = sizeof(*ainfo);
+
+		ret = pfm_get_event_attr_info(info->idx, i, &ainfo[i]);
+		if (ret != PFM_SUCCESS)
+			err(1, "cannot get attribute info: %s", pfm_strerror(ret));
+
+		if (ainfo[i].type == PFM_ATTR_UMASK)
+			numasks++;
+	}
+	if (numasks) {
 		if (info->nattrs > ((sizeof(total)<<3))) {
 			warnx("too many umasks, cannot show all combinations for event %s", info->name);
+			free(ainfo);
 			return;
 		}
 		total = 1ULL << info->nattrs;
 
 		for (i = 1; i < total; i++) {
-			int added, nrej;
 			len = sizeof(buf);
 			len -= snprintf(buf, len, "%s::%s", pinfo.name, info->name);
 			if (len <= 0) {
 				warnx("event name too long%s", info->name);
 				return;
 			}
-			added = nrej = 0;
 			for(m = i, j= 0; m; m >>=1, j++) {
 				if (m & 0x1ULL) {
-					ret = pfm_get_event_attr_info(info->idx, j, &ainfo);
-					if (ret != PFM_SUCCESS)
-						err(1, "cannot get attribute info: %s", pfm_strerror(ret));
+					/* we have hit a non umasks attribute, skip */
+					if (ainfo[j].type != PFM_ATTR_UMASK)
+						break;
 
-					/* we have hit an attribute, that means combination is not useful */
-					if (ainfo.type != PFM_ATTR_UMASK) {
-						nrej++;
-						continue;
-					}
-
-					if (len < (1 + strlen(ainfo.name))) {
+					if (len < (1 + strlen(ainfo[j].name))) {
 						warnx("umasks combination too long for event %s", buf);
 						break;
 					}
 					strncat(buf, ":", len); len--;
-					strncat(buf, ainfo.name, len);
-					len -= strlen(ainfo.name);
-					added++;
+					strncat(buf, ainfo[j].name, len);
+					len -= strlen(ainfo[j].name);
 				}
 			}
 			/* if found a valid umask combination, check encoding */
-			if (added || info->nattrs == nrej) {
+			if (m == 0) {
 				if (options.encode)
 					ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
 				else
@@ -164,6 +176,7 @@ show_event_info_combo(pfm_event_info_t *info)
 		if (!ret)
 			printf("%s%s\n", options.encode ? "\t":"", buf);
 	}
+	free(ainfo);
 }
 
 static void
