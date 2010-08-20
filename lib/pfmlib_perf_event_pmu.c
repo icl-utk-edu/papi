@@ -47,6 +47,7 @@ typedef struct {
 	const char	*uname;	/* unit mask name */
 	const char	*udesc;	/* unit mask desc */
 	uint64_t	uid;	/* unit mask id */
+	int		grpid;	/* group identifier */
 } perf_umask_t;
 	
 typedef struct {
@@ -56,6 +57,7 @@ typedef struct {
 	int		modmsk;			/* modifiers bitmask */
 	int		type;			/* perf_type_id */
 	int		numasks;		/* number of unit masls */
+	int		ngrp;			/* number of umasks groups */
 	unsigned long	umask_ovfl_idx;		/* base index of overflow unit masks */
 	perf_umask_t	umasks[PERF_MAX_UMASKS];/* first unit masks */
 } perf_event_t;
@@ -66,7 +68,8 @@ typedef struct {
 	  .type = (t),		\
 	  .desc = #f,		\
 	  .numasks = 0,		\
-	  .modmsk = (m)	\
+	  .modmsk = (m),	\
+	  .ngrp = 0,		\
 	}
 
 
@@ -340,6 +343,7 @@ gen_tracepoint_table(void)
 		p->type = PERF_TYPE_TRACEPOINT;
 		p->umask_ovfl_idx = 0;
 		p->modmsk = 0,
+		p->ngrp = 1;
 
 		numasks = 0;
 		reuse_event = 0;
@@ -397,6 +401,7 @@ gen_tracepoint_table(void)
 			}
 			um->udesc = um->uname;
 			um->uid   = id;
+			um->grpid = 0;
 			DPRINT("idpath=%s:%s id=%"PRIu64"\n", p->name, um->uname, id);
 			numasks++;
 		}
@@ -500,7 +505,10 @@ static int
 pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 {
 	pfmlib_attr_t *a;
+	unsigned int msk, grpmsk;
 	int i;
+
+	grpmsk = (1 << perf_pe[e->event].ngrp)-1;
 
 	*codes = perf_pe[e->event].id;
 	*count = 1;
@@ -513,9 +521,15 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 		if (a->type == PFM_ATTR_UMASK) {
 			*codes |= perf_pe[e->event].umasks[a->id].uid;
 			evt_strcat(e->fstr, ":%s", perf_pe[e->event].umasks[a->id].uname);
+
+			msk = 1 << perf_pe[e->event].umasks[a->id].grpid;
+			/* umask cannot be combined in each group */
+			if ((grpmsk & msk) == 0)
+				return PFM_ERR_UMASK;
+			grpmsk &= ~msk;
 		}
 	}
-	return PFM_SUCCESS;
+	return grpmsk ? PFM_ERR_UMASK : PFM_SUCCESS;
 }
 
 static int
