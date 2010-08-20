@@ -44,6 +44,7 @@ __ 11. Export the tag to a clean working directory:
 
 __ 12. Delete any unneccessary files or directories
 		particularly .doc and .pdf files in the /doc directory
+	Things needed in /doc {Doxyfile, Doxyfile-everything, Makefile}
 
 __ 13. Rename the directory from papi to papi-X.Y.Z
 
