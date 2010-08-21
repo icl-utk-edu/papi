@@ -132,20 +132,28 @@ INC_IA64=pfmlib_ia64_priv.h	 \
 	events/montecito_events.h
 
 INC_IA32= pfmlib_intel_x86_priv.h	\
+	pfmlib_amd64_priv.h		\
 	events/amd64_events.h    	\
+	events/amd64_events_k7.h    	\
+	events/amd64_events_k8.h    	\
+	events/amd64_events_fam10h.h	\
 	events/intel_p6_events.h	\
-	events/intel_netburst_events.h \
+	events/intel_netburst_events.h	\
 	events//intel_x86_arch_events.h \
-	events/intel_coreduo_events.h  \
+	events/intel_coreduo_events.h	\
 	events/intel_core_events.h	\
 	events/intel_atom_events.h	\
 	events/intel_nhm_events.h	\
 	events/intel_nhm_unc_events.h
 
 INC_X86_64=pfmlib_intel_x86_priv.h	\
+	pfmlib_amd64_priv.h		\
 	events/amd64_events.h    	\
-	events/intel_netburst_events.h \
-	events/intel_x86_arch_events.h \
+	events/amd64_events_k7.h    	\
+	events/amd64_events_k8.h    	\
+	events/amd64_events_fam10h.h	\
+	events/intel_netburst_events.h	\
+	events/intel_x86_arch_events.h	\
 	events/intel_core_events.h	\
 	events/intel_atom_events.h	\
 	events/intel_nhm_events.h	\
@@ -157,15 +165,15 @@ INC_SICORTEX= $(INC_MIPS64)
 
 INC_POWERPC=events/ppc970_events.h	\
 	events/ppc970mp_events.h	\
-	events/power4_events.h	\
+	events/power4_events.h		\
 	events/power5_events.h		\
-	events/power5+_events.h	\
+	events/power5+_events.h		\
 	events/power6_events.h
 
 INC_SPARC=events/ultra12_events.h	\
 	events/ultra3_events.h		\
 	events/ultra3plus_events.h	\
-	events/ultra3i_events.h	\
+	events/ultra3i_events.h		\
 	events/ultra4plus_events.h	\
 	events/niagara1_events.h	\
 	events/niagara2_events.h
