@@ -169,7 +169,7 @@ enum perf_event_read_format {
 /*
  * Hardware event_id to monitor via a performance monitoring event:
  */
-struct perf_event_attr {
+typedef struct perf_event_attr {
 	/*
 	 * Major type: hardware/software/tracepoint/etc.
 	 */
@@ -225,7 +225,7 @@ struct perf_event_attr {
 	uint32_t        bp_type;
 	uint64_t        bp_addr;
 	uint64_t        bp_len;
-};
+} perf_event_attr_t;
 
 /*
  * Ioctls that can be done on a perf event fd:

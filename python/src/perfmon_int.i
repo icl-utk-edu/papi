@@ -33,7 +33,6 @@
 #include <perfmon/pfmlib_perf_event.h>
 
 static PyObject *libpfm_err;
-typedef struct perf_event_attr perf_event_attr_t;
 %}
 %include "typemaps.i"
 %include "carrays.i"
@@ -73,13 +72,13 @@ typedef struct perf_event_attr perf_event_attr_t;
     $result = SWIG_AppendOutput($result, o);
 }
 
-%typemap(in, numinputs=0) T* output (T temp) {
+%typemap(in, numinputs=0) T* output {
     $1 = (T*) malloc(sizeof(T));
     memset($1, 0, sizeof(T));
 }
 
-%extend T{
-    ~T(){
+%extend T {
+    ~T() {
         free(self);
     }
 }
@@ -88,26 +87,28 @@ typedef struct perf_event_attr perf_event_attr_t;
 ptr_argout(pfm_pmu_info_t);
 ptr_argout(pfm_event_info_t);
 ptr_argout(pfm_event_attr_info_t);
-ptr_argout(perf_event_attr_t);
 
 /* Kernel interface */
 %include <perfmon/perf_event.h>
 /* Library interface */
+/* We never set the const char * members. So no memory leak */
+#pragma SWIG nowarn=451
 %include <perfmon/pfmlib.h>
-
-extern pfm_err_t
-pfm_get_perf_event_encoding(const char *str, int dfl_plm,
-                            perf_event_attr_t *output, char **fstr, int *idx);
 
 %typedef int pid_t;
 
 extern os_err_t
 perf_event_open(
-    perf_event_attr_t        *hw_event_uptr,
+    struct perf_event_attr   *hw_event_uptr,
     pid_t                    pid,
     int                      cpu,
     int                      group_fd,
     unsigned long            flags);
+
+ptr_argout(perf_event_attr_t);
+extern pfm_err_t
+pfm_get_perf_event_encoding(const char *str, int dfl_plm,
+                            perf_event_attr_t *output, char **fstr, int *idx);
 
 %init %{
   libpfm_err = PyErr_NewException("perfmon.libpfmError", NULL, NULL);
