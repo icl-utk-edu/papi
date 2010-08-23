@@ -63,7 +63,7 @@ typedef enum {
 	PFM_PMU_ITANIUM,	 	/* Intel Itanium   */
 	PFM_PMU_ITANIUM2,		/* Intel Itanium 2 */
 	PFM_PMU_MONTECITO,		/* Intel Dual-Core Itanium 2 9000 */
-	PFM_PMU_AMD64,			/* AMD AMD64 (K7, K8, Fam 10h) */
+	PFM_PMU_AMD64,			/* AMD AMD64 (obsolete) */
 	PFM_PMU_I386_P6,		/* Intel PIII (P6 core) */
 	PFM_PMU_PENTIUM4,		/* Intel Pentium4/Xeon/EM64T */
 	PFM_PMU_COREDUO,		/* Intel Core Duo/Core Solo */
@@ -114,6 +114,17 @@ typedef enum {
 	PFM_PMU_PERF_EVENT,		/* perf_event PMU */
 	PFM_PMU_INTEL_WSM,		/* Intel Westmere */
 	PFM_PMU_INTEL_WSM_UNC,		/* Intel Westmere uncore PMU */
+
+	PFM_PMU_AMD64_K7,		/* AMD AMD64 K7 */
+	PFM_PMU_AMD64_K8_REVB,		/* AMD AMD64 K8 RevB */
+	PFM_PMU_AMD64_K8_REVC,		/* AMD AMD64 K8 RevC */
+	PFM_PMU_AMD64_K8_REVD,		/* AMD AMD64 K8 RevD */
+	PFM_PMU_AMD64_K8_REVE,		/* AMD AMD64 K8 RevE */
+	PFM_PMU_AMD64_K8_REVF,		/* AMD AMD64 K8 RevF */
+	PFM_PMU_AMD64_K8_REVG,		/* AMD AMD64 K8 RevG */
+	PFM_PMU_AMD64_FAM10H_BARCELONA,	/* AMD AMD64 Fam10h Barcelona RevB */
+	PFM_PMU_AMD64_FAM10H_SHANGHAI,	/* AMD AMD64 Fam10h Shanghai RevC  */
+	PFM_PMU_AMD64_FAM10H_ISTANBUL,	/* AMD AMD64 Fam10h Istanbul RevD  */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 

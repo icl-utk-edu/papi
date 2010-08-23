@@ -56,7 +56,7 @@ ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 INCARCH = $(INC_IA32)
 SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
 	  pfmlib_intel_nhm_unc.c pfmlib_intel_coreduo.c pfmlib_intel_p6.c pfmlib_intel_nhm.c \
-	  pfmlib_intel_wsm.c
+	  pfmlib_intel_wsm.c pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c
 
 CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
@@ -64,7 +64,8 @@ endif
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 INCARCH = $(INC_X86_64)
 SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
-	  pfmlib_intel_nhm.c pfmlib_intel_nhm_unc.c pfmlib_intel_wsm.c
+	  pfmlib_intel_nhm.c pfmlib_intel_nhm_unc.c pfmlib_intel_wsm.c pfmlib_amd64_k7.c pfmlib_amd64_k8.c  \
+	  pfmlib_amd64_fam10h.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
 endif
 
@@ -133,7 +134,6 @@ INC_IA64=pfmlib_ia64_priv.h	 \
 
 INC_IA32= pfmlib_intel_x86_priv.h	\
 	pfmlib_amd64_priv.h		\
-	events/amd64_events.h    	\
 	events/amd64_events_k7.h    	\
 	events/amd64_events_k8.h    	\
 	events/amd64_events_fam10h.h	\
@@ -148,7 +148,6 @@ INC_IA32= pfmlib_intel_x86_priv.h	\
 
 INC_X86_64=pfmlib_intel_x86_priv.h	\
 	pfmlib_amd64_priv.h		\
-	events/amd64_events.h    	\
 	events/amd64_events_k7.h    	\
 	events/amd64_events_k8.h    	\
 	events/amd64_events_fam10h.h	\

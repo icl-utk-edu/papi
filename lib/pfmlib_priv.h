@@ -95,6 +95,7 @@ typedef struct pfmlib_pmu {
 	int		pme_count;		/* number of events */
 	int		max_encoding;		/* max number of uint64_t to encode an event */
 	int		flags;			/* PMU flags */
+	int		pmu_rev;		/* PMU model specific revision */
 	const void	*pe;			/* pointer to event table */
 
 	const pfmlib_attr_desc_t *atdesc;	/* pointer to attrs table */
@@ -154,7 +155,16 @@ extern pfmlib_pmu_t montecito_support;
 extern pfmlib_pmu_t itanium2_support;
 extern pfmlib_pmu_t itanium_support;
 extern pfmlib_pmu_t generic_ia64_support;
-extern pfmlib_pmu_t amd64_support;
+extern pfmlib_pmu_t amd64_k7_support;
+extern pfmlib_pmu_t amd64_k8_revb_support;
+extern pfmlib_pmu_t amd64_k8_revc_support;
+extern pfmlib_pmu_t amd64_k8_revd_support;
+extern pfmlib_pmu_t amd64_k8_reve_support;
+extern pfmlib_pmu_t amd64_k8_revf_support;
+extern pfmlib_pmu_t amd64_k8_revg_support;
+extern pfmlib_pmu_t amd64_fam10h_barcelona_support;
+extern pfmlib_pmu_t amd64_fam10h_shanghai_support;
+extern pfmlib_pmu_t amd64_fam10h_istanbul_support;
 extern pfmlib_pmu_t intel_p6_support;
 extern pfmlib_pmu_t intel_ppro_support;
 extern pfmlib_pmu_t intel_pii_support;

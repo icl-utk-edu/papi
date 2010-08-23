@@ -47,6 +47,12 @@ typedef struct {
 	unsigned int		ngrp;	/* number of unit masks groups */
 } amd64_entry_t;
 
+/*
+ * we keep an internal revision type to avoid
+ * dealing with arbitrarily large pfm_pmu_t
+ * which would not fit into the 8 bits reserved
+ * in amd64_entry_t.flags or amd64_umask_t.flags
+ */
 #define AMD64_FAM10H AMD64_FAM10H_REV_B
 typedef enum {
         AMD64_CPU_UN = 0,
@@ -61,6 +67,15 @@ typedef enum {
         AMD64_FAM10H_REV_C,
         AMD64_FAM10H_REV_D,
 } amd64_rev_t;
+
+typedef struct {
+        pfm_pmu_t		revision;
+        int             	family;
+        int             	model;
+        int             	stepping;
+} pfm_amd64_config_t;
+
+extern pfm_amd64_config_t pfm_amd64_cfg;
 
 /* 
  * flags values (bottom 8 bits only)
@@ -178,21 +193,15 @@ typedef union {
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
-typedef struct {
-        amd64_rev_t     	revision;
-        char            	*name;
-        int             	family;
-        int             	model;
-        int             	stepping;
-	int			num_events; /* total number of events in table */
-        const amd64_entry_t	*events;
-} amd64_pmu_t;
-
-#define amd64_revision    amd64_pmu.revision
-#define amd64_num_events  amd64_pmu.num_events
-#define amd64_events      amd64_pmu.events
-#define amd64_family      amd64_pmu.family
-#define amd64_model       amd64_pmu.model
-#define amd64_stepping    amd64_pmu.stepping
-
+extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfm_amd64_get_event_first(void *this);
+extern int pfm_amd64_get_event_next(void *this, int idx);
+extern int pfm_amd64_event_is_valid(void *this, int idx);
+extern int pfm_amd64_get_event_perf_type(void *this, int pidx);
+extern int pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info);
+extern int pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info);
+extern int pfm_amd64_validate_table(void *this, FILE *fp);
+extern int pfm_amd64_detect(void *this);
+extern int pfm_amd64_pmu_init(void *this);
+extern const pfmlib_attr_desc_t amd64_mods[];
 #endif /* __PFMLIB_AMD64_PRIV_H__ */
