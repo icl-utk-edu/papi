@@ -8,6 +8,7 @@
 */
 int TESTS_QUIET = 0;
 static int TEST_FAIL = 0;
+static int TEST_WARN = 0;
 
 /*  Support routine to display header information to the screen
 	from the hardware info data structure. The same code was duplicated
@@ -526,9 +527,15 @@ tests_quiet( int argc, char **argv )
 void
 test_pass( char *file, long long **values, int num_tests )
 {
-	if ( !TEST_FAIL )
+	if ( TEST_FAIL ) {
+	}
+        else if ( TEST_WARN ) {
+		fprintf( stdout, "%-40s PASSED with WARNING\n", file );	   
+	}
+        else {
 		fprintf( stdout, "%-40s PASSED\n", file );
-
+	}
+   
 	if ( values )
 		free_test_space( values, num_tests );
 
@@ -607,6 +614,34 @@ test_fail_exit( char *file, int line, char *call, int retval )
 	if ( PAPI_is_initialized(  ) )
 		PAPI_shutdown(  );
 	exit( 1 );
+}
+
+
+/* Use a positive value of retval to simply print an error message */
+void
+test_warn( char *file, int line, char *call, int retval )
+{
+
+	char buf[128];
+	memset( buf, '\0', sizeof ( buf ) );
+	fprintf( stdout, "%-40s WARNING\nLine # %d\n", file, line );
+
+	if ( retval == PAPI_ESYS ) {
+		sprintf( buf, "System warning in %s", call );
+		perror( buf );
+	} else if ( retval > 0 ) {
+		fprintf( stdout, "Warning: %s\n", call );
+	} else if ( retval == 0 ) {
+		fprintf( stdout, "Warning: %s\n", call );
+	} else {
+		char errstring[PAPI_MAX_STR_LEN];
+		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
+		fprintf( stdout, "Warning in %s: %s\n", call, errstring );
+	}
+
+	fprintf( stdout, "\n" );
+	TEST_WARN++;
+
 }
 
 void

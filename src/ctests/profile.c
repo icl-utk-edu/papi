@@ -135,7 +135,16 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 			   PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
 							EventSet, PAPI_event, thresh,
 							profflags[i] | bucket ) ) != PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+		   if (retval==PAPI_ENOSUPP) { 
+		      char warning[BUFSIZ];
+		    
+		      sprintf(warning,"PAPI_profil %s not supported",
+			      profstr[i]);
+		      test_warn( __FILE__, __LINE__, warning, 1 );
+		   }		   
+		   else {
+		      test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+		   }
 		}
 #else
 		if ( ( retval =
@@ -143,7 +152,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 							EventSet, PAPI_event, thresh,
 							profflags[i] | bucket | PAPI_PROFIL_FORCE_SW ) ) !=
 			 PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+		   test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
 		}
 #endif
 
