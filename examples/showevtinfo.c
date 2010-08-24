@@ -131,8 +131,7 @@ show_event_info_combo(pfm_event_info_t *info)
 	if (numasks) {
 		if (info->nattrs > ((sizeof(total)<<3))) {
 			warnx("too many umasks, cannot show all combinations for event %s", info->name);
-			free(ainfo);
-			return;
+			goto end;
 		}
 		total = 1ULL << info->nattrs;
 
@@ -141,7 +140,7 @@ show_event_info_combo(pfm_event_info_t *info)
 			len -= snprintf(buf, len, "%s::%s", pinfo.name, info->name);
 			if (len <= 0) {
 				warnx("event name too long%s", info->name);
-				return;
+				goto end;
 			}
 			for(m = i, j= 0; m; m >>=1, j++) {
 				if (m & 0x1ULL) {
@@ -176,6 +175,7 @@ show_event_info_combo(pfm_event_info_t *info)
 		if (!ret)
 			printf("%s%s\n", options.encode ? "\t":"", buf);
 	}
+end:
 	free(ainfo);
 }
 
