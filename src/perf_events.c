@@ -2688,17 +2688,18 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	ctx.si = info;
 	ctx.ucontext = ( hwd_ucontext_t * ) uc;
 
-	if ( thread->running_eventset[cidx]->overflow.
-		 flags & PAPI_OVERFLOW_FORCE_SW ) {
+	if ( thread->running_eventset[cidx]->overflow.flags & 
+	     PAPI_OVERFLOW_FORCE_SW ) {
 		address = GET_OVERFLOW_ADDRESS( ctx );
 		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL, 0,
-											0, &thread, cidx );
+						    0, &thread, cidx );
+	   return;
 	}
 	if ( thread->running_eventset[cidx]->overflow.flags !=
 		 PAPI_OVERFLOW_HARDWARE ) {
 		PAPIERROR
-			( "thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d",
-			  fd );
+			( "thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
+			  fd , thread->running_eventset[cidx]->overflow.flags);
 	}
 	{
 		int i;
