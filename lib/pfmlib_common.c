@@ -779,9 +779,8 @@ pfmlib_get_pmu_next(pfm_pmu_t i)
 
 	for(++i; i < PFM_PMU_MAX; i++) {
 		pmu = pfmlib_pmus_map[i];
-		if (!pmu)
-			continue;
-		return pmu;
+		if (pmu)
+			return pmu;
 	}
 	return NULL;
 }
