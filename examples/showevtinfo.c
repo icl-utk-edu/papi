@@ -569,6 +569,8 @@ main(int argc, char **argv)
 	}
 
 	if (!options.compact) {
+		int total_events = 0;
+
 		printf("Supported PMU models:\n");
 		pfm_for_all_pmus(i) {
 			ret = pfm_get_pmu_info(i, &pinfo);
@@ -584,10 +586,12 @@ main(int argc, char **argv)
 			if (ret != PFM_SUCCESS)
 				continue;
 
-			if (pinfo.is_present)
+			if (pinfo.is_present) {
 				printf("\t[%d, %s, \"%s\", %d events]\n", i, pinfo.name, pinfo.desc, pinfo.nevents);
+				total_events += pinfo.nevents;
+			}
 		}
-		printf("Total events: %d\n", pfm_get_nevents());
+		printf("Total events: %d available, %d supported\n", pfm_get_nevents(), total_events);
 	}
 
 	while(*args) {
