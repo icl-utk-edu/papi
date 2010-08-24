@@ -99,7 +99,8 @@ static const pfmlib_attr_desc_t perf_mods[]={
 pfmlib_pmu_t perf_event_support;
 #define perf_nevents (perf_event_support.pme_count)
 
-static perf_event_t *perf_pe, *perf_pe_free, *perf_pe_end;
+static perf_event_t *perf_pe = perf_static_events;
+static perf_event_t  *perf_pe_free, *perf_pe_end;
 static perf_umask_t *perf_um, *perf_um_free, *perf_um_end;
 static int perf_pe_count, perf_um_count;
 
@@ -444,7 +445,6 @@ pfm_perf_detect(void *this)
 static int
 pfm_perf_init(void *this)
 {
-
 	perf_pe = perf_static_events;
 
 	gen_tracepoint_table();
