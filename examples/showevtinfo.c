@@ -37,13 +37,15 @@
 
 #include <perfmon/pfmlib.h>
 
-#define MAXBUF	1024
+#define MAXBUF		1024
+#define COMBO_MAX	18
 
 static struct {
 	int compact;
 	int sort;
 	int encode;
 	int combo;
+	int combo_lim;
 	uint64_t mask;
 } options;
 
@@ -51,6 +53,8 @@ typedef struct {
 	uint64_t code;
 	int idx;
 } code_info_t;
+
+static void show_event_info_compact(pfm_event_info_t *info);
 
 static int
 event_has_pname(char *s)
@@ -128,6 +132,13 @@ show_event_info_combo(pfm_event_info_t *info)
 		if (ainfo[i].type == PFM_ATTR_UMASK)
 			numasks++;
 	}
+	if (numasks > options.combo_lim) {
+		warnx("event %s has too many umasks to print all combinations, dropping to simple enumeration", info->name);
+		free(ainfo);
+		show_event_info_compact(info);
+		return;
+	}
+
 	if (numasks) {
 		if (info->nattrs > ((sizeof(total)<<3))) {
 			warnx("too many umasks, cannot show all combinations for event %s", info->name);
@@ -457,7 +468,8 @@ usage(void)
 		"-M\t\tdisplay all valid unit masks combination (use with -L or -E)\n"
 		"-h\t\tget help\n"
 		"-s\t\tsort event by PMU and by code based on -m mask\n"
-		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n");
+		"-l\t\tmaximum number of umasks to list all combinations (default: %d)\n"
+		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n", COMBO_MAX);
 }
 
 static int
@@ -522,7 +534,7 @@ main(int argc, char **argv)
 
 	pinfo.size = sizeof(pinfo);
 
-	while ((c=getopt(argc, argv,"hCELsm:M")) != -1) {
+	while ((c=getopt(argc, argv,"hCELsm:Ml:")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
@@ -539,6 +551,9 @@ main(int argc, char **argv)
 				break;
 			case 'C':
 				validate = 1;
+				break;
+			case 'l':
+				options.combo_lim = atoi(optarg);
 				break;
 			case 'm':
 				options.mask = strtoull(optarg, &endptr, 16);
@@ -567,6 +582,10 @@ main(int argc, char **argv)
 	} else {
 		args = argv + optind;
 	}
+
+	/* avoid combinatorial explosion */
+	if (options.combo_lim == 0)
+		options.combo_lim = COMBO_MAX;
 
 	if (!options.compact) {
 		int total_events = 0;
