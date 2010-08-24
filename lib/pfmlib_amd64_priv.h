@@ -87,10 +87,11 @@ extern pfm_amd64_config_t pfm_amd64_cfg;
 #define AMD64_TILL_REV(rev)	((rev)<<16)
 #define AMD64_NOT_SUPP		0x1ff00
 
-#define AMD64_FL_NCOMBO        	0x1 /* unit mask can be combined */
-#define AMD64_FL_IBSFE		0x2 /* IBS fetch */
-#define AMD64_FL_IBSOP		0x4 /* IBS op */
-#define AMD64_FL_DFL		0x8 /* unit mask is default choice */
+#define AMD64_FL_NCOMBO        		0x01 /* unit mask can be combined */
+#define AMD64_FL_IBSFE			0x02 /* IBS fetch */
+#define AMD64_FL_IBSOP			0x04 /* IBS op */
+#define AMD64_FL_DFL			0x08 /* unit mask is default choice */
+#define AMD64_FL_OMIT			0x10 /* umask can be omitted */
 
 #define AMD64_FL_TILL_K8_REV_C		AMD64_TILL_REV(AMD64_K8_REV_C)
 #define AMD64_FL_K8_REV_D		AMD64_FROM_REV(AMD64_K8_REV_D)

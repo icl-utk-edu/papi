@@ -376,7 +376,7 @@ static int
 amd64_add_defaults(void *this, int idx, char *umask_str, unsigned int msk, uint64_t *umask)
 {
 	const amd64_entry_t *ent, *pe = this_pe(this);
-	int i, j, added;
+	int i, j, added, omit, numasks_grp;
 
 	ent = pe+idx;
 
@@ -385,12 +385,15 @@ amd64_add_defaults(void *this, int idx, char *umask_str, unsigned int msk, uint6
 		if (!(msk & 0x1))
 			continue;
 
-		added = 0;
+		added = omit = numasks_grp = 0;
 
 		for(j=0; j < ent->numasks; j++) {
 
 			if (ent->umasks[j].grpid != i)
 				continue;
+
+			/* number of umasks in this group */
+			numasks_grp++;
 
 			/* skip umasks for other revisions */
 			if (!amd64_umask_valid(this, idx, j))
@@ -402,8 +405,14 @@ amd64_add_defaults(void *this, int idx, char *umask_str, unsigned int msk, uint6
 				evt_strcat(umask_str, ":%s", ent->umasks[j].uname);
 				added++;
 			}
+			if (amd64_uflag(this, idx, j, AMD64_FL_OMIT))
+				omit++;
 		}
-		if (!added) {
+		/*
+		 * fail if no default was found AND at least one umasks cannot be omitted
+		 * in the group
+		 */
+		if (!added && omit != numasks_grp) {
 			DPRINT("no default found for event %s unit mask group %d\n", ent->name, i);
 			return PFM_ERR_UMASK;
 		}
@@ -419,7 +428,7 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	pfmlib_attr_t *a;
 	uint64_t umask = 0;
 	unsigned int plmmsk = 0;
-	int k, ret, grpid, last_grpid = -1;
+	int k, ret, grpid;
 	int numasks;
 	unsigned int grpmsk, ugrpmsk = 0;
 	int grpcounts[AMD64_MAX_GRP];
@@ -473,7 +482,6 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 
 			evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
 
-			last_grpid = grpid;
 			umask |= pe[e->event].umasks[a->id].ucode;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
 		} else {
@@ -532,6 +540,7 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		if (e->dfl_plm & PFM_PLMH)
 			reg->sel_host = 1;
 	}
+
 	/*
 	 * check that there is at least of unit mask in each unit
 	 * mask group
