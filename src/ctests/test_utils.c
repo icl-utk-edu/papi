@@ -541,6 +541,7 @@ test_pass( char *file, long long **values, int num_tests )
 		exit( 1 );
 }
 
+/* Use a positive value of retval to simply print an error message */
 void
 test_fail( char *file, int line, char *call, int retval )
 {

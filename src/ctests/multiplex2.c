@@ -114,6 +114,10 @@ case1( void )
 	if ( allvalid ) {
 		printf( "Caution: %d counters had zero values\n", allvalid );
 	}
+   
+        if (allvalid==j) {
+	   test_fail( __FILE__, __LINE__, "All counters returned zero", 5 );
+	}
 
 	for ( i = 0, allvalid = 0; i < j; i++ ) {
 		for ( k = i + 1; k < j; k++ ) {

@@ -56,6 +56,20 @@ main( int argc, char **argv )
 		printf( LLDFMT, ins );
 		printf( " IPC: %f\n", ipc );
 	}
+   
+           /* This should not happen unless the optimizer */
+           /* gets too good                               */
+        if (ins < INDEX*INDEX) {
+	   test_fail( __FILE__, __LINE__, "Instruction count too low.", 
+		      5 );
+	}
+           /* Something is broken, or else you have a really */
+           /* slow processor                                 */
+        if (ipc<0.01 ) {
+	   test_fail( __FILE__, __LINE__, "IPC equals zero.", 
+		      5 );
+	}
+   
 	test_pass( __FILE__, NULL, 0 );
 	exit( 1 );
 }

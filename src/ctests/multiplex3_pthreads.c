@@ -38,7 +38,7 @@ mainloop( int arg )
 	int allvalid;
 	long long *values;
 	int EventSet = PAPI_NULL;
-	int retval, i, j = 2;
+	int retval, i, j = 2, skipped_counters=0;
 	PAPI_event_info_t pset;
 
 	( void ) arg;
@@ -134,6 +134,12 @@ mainloop( int arg )
 						PAPI_remove_event( EventSet, ( int ) pset.event_code );
 					if ( retval == PAPI_OK )
 						printf( "Removed %s\n", pset.symbol );
+				        /* This added because the test */
+				        /* can take a long time if mplexing */
+				        /* is broken and all values are 0   */
+				        skipped_counters++;
+				        if (skipped_counters>MAX_TO_ADD) break;
+
 				}
 			}
 		}
