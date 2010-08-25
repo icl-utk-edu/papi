@@ -914,8 +914,8 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 		*idx = pfmlib_pidx2idx(e.pmu, e.event);
 
 	if (fstr) {
-		*fstr = strdup(e.fstr);
-		if (!fstr) {
+		*fstr = malloc(strlen(e.fstr) + 2 + strlen(e.pmu->name) + 1);
+		if (!*fstr) {
 			if (orig_codes != *codes) {
 				free(codes);
 				*count = orig_count;
@@ -923,6 +923,7 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 			}
 			return PFM_ERR_NOMEM;
 		}
+		sprintf(*fstr, "%s::%s", e.pmu->name, e.fstr);
 	}
 	return PFM_SUCCESS;
 }
