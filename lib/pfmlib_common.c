@@ -289,6 +289,20 @@ pfmlib_pmu_sanity_checks(pfmlib_pmu_t *p)
 	return PFM_SUCCESS;
 }
 
+int
+pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr)
+{
+	/* nothing to do */
+	if (!fstr)
+		return PFM_SUCCESS;
+
+	*fstr = malloc(strlen(e->fstr) + 2 + strlen(e->pmu->name) + 1);
+	if (*fstr)
+		sprintf(*fstr, "%s::%s", e->pmu->name, e->fstr);
+
+	return fstr ? PFM_SUCCESS : PFM_ERR_NOMEM;
+}
+
 static int
 pfmlib_pmu_activate(pfmlib_pmu_t *p)
 {
@@ -913,19 +927,15 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 	if (idx)
 		*idx = pfmlib_pidx2idx(e.pmu, e.event);
 
-	if (fstr) {
-		*fstr = malloc(strlen(e.fstr) + 2 + strlen(e.pmu->name) + 1);
-		if (!*fstr) {
-			if (orig_codes != *codes) {
-				free(codes);
-				*count = orig_count;
-				*codes = orig_codes;
-			}
-			return PFM_ERR_NOMEM;
+	ret = pfmlib_build_fstr(&e, fstr);
+	if (ret != PFM_SUCCESS) {
+		if (orig_codes != *codes) {
+			free(codes);
+			*count = orig_count;
+			*codes = orig_codes;
 		}
-		sprintf(*fstr, "%s::%s", e.pmu->name, e.fstr);
 	}
-	return PFM_SUCCESS;
+	return ret;
 }
 
 static int

@@ -118,12 +118,7 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	/*
 	 * propagate fully qualified event string if necessary
 	 */
-	if (fstr) {
-		*fstr = strdup(e.fstr);
-		if (!fstr)
-			return PFM_ERR_NOMEM;
-	}
-	return PFM_SUCCESS;
+	return pfmlib_build_fstr(&e, fstr);
 }
 
 int

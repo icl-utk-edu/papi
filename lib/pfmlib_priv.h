@@ -141,6 +141,7 @@ extern void pfmlib_strconcat(char *str, size_t max, const char *fmt, ...);
 extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
 extern int pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
 extern int pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr);
 
 #ifdef CONFIG_PFMLIB_DEBUG
 #define DPRINT(fmt, a...) \
