@@ -22,10 +22,14 @@ add_remove_event( int EventSet, int event_code, char *name )
 	char errstring[PAPI_MAX_STR_LEN];
 	long long values;
 
-	if ( PENTIUM4 )
-		if ( strcmp( name, "REPLAY_EVENT:BR_MSP" ) == 0 )
-			return 1;
-
+   /* Is there an issue with older machines? */
+   /* Disable for now, add back once we can reproduce */
+//	if ( PENTIUM4 ) {
+//		if ( strcmp( name, "REPLAY_EVENT:BR_MSP" ) == 0 ) {
+//			return 1;
+//		}
+//	}
+   
 	retval = PAPI_add_event( EventSet, event_code );
 	if ( retval != PAPI_OK ) {
 		printf( "Error adding %s\n", name );
@@ -61,7 +65,8 @@ add_remove_event( int EventSet, int event_code, char *name )
 int
 main( int argc, char **argv )
 {
-	int i, k, EventSet = PAPI_NULL, add_count = 0, err_count = 0, unc_count = 0;
+	int i, k, EventSet = PAPI_NULL, add_count = 0, err_count = 0, 
+            unc_count = 0, offcore_count = 0;
 	int retval;
 	PAPI_event_info_t info, info1;
 	const PAPI_hw_info_t *hwinfo = NULL;
@@ -110,6 +115,7 @@ main( int argc, char **argv )
 					continue;
 				}
 				if ( !strncmp( info.symbol, "OFFCORE_RESPONSE_0", 18 ) ) {
+				        offcore_count++;
 					continue;
 				}
 			}
@@ -148,8 +154,12 @@ main( int argc, char **argv )
 			add_count );
 	if ( err_count )
 		printf( "Failed to add %d events.\n", err_count );
-	if ( unc_count )
-		printf( "%d Uncore events were ignored.\n", unc_count );
+	if (( unc_count ) || (offcore_count)) {
+	   char warning[BUFSIZ];
+	   sprintf(warning,"%d Uncore and %d Offcore events were ignored",
+		   unc_count,offcore_count);
+	   test_warn( __FILE__, __LINE__, warning, 1 );
+	}
 	if ( add_count > 0 )
 		test_pass( __FILE__, NULL, 0 );
 	else
