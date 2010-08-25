@@ -65,6 +65,10 @@
       end if
 
       call PAPIf_set_multiplex(EventSet, retval)
+      if ( retval.EQ.PAPI_ENOSUPP) then
+        call ftest_skip(__FILE__, __LINE__,
+     .       'Multiplex not implemented', retval)
+      end if
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      .       'papif_set_multiplex', retval)

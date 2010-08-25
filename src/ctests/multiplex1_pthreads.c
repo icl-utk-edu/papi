@@ -55,9 +55,13 @@ init_papi_pthreads( int *out_events, int *len )
 	}
 
 	retval = PAPI_multiplex_init(  );
-	if ( retval != PAPI_OK )
+        if ( retval == PAPI_ENOSUPP) {
+	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	}
+	else if ( retval != PAPI_OK ) {
 		CPP_TEST_FAIL( "PAPI_multiplex_init", retval );
-
+	}
+   
 	if ( ( retval =
 		   PAPI_thread_init( ( unsigned
 							   long ( * )( void ) ) ( pthread_self ) ) ) !=
@@ -192,8 +196,12 @@ case2_pthreads( void *arg )
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_assign_eventset_component", retval );
 
-	if ( ( retval = PAPI_set_multiplex( EventSet ) ) != PAPI_OK )
+	if ( ( retval = PAPI_set_multiplex( EventSet ) ) != PAPI_OK ) {
+	   if ( retval == PAPI_ENOSUPP) {
+	      test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	   }
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
+	}
 	printf( "++case2 thread %4x:", ( unsigned ) pthread_self(  ) );
 
 	for ( i = 0; i < PAPI_events_len; i++ ) {
@@ -259,9 +267,12 @@ case3_pthreads( void *arg )
 			printf( "Added %s\n", out );
 	}
 
-	if ( ( retval = PAPI_set_multiplex( EventSet ) ) != PAPI_OK )
+	if ( ( retval = PAPI_set_multiplex( EventSet ) ) != PAPI_OK ) {
+	   if ( retval == PAPI_ENOSUPP) {
+	        test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	   }
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
-
+	}
 	do_stuff(  );
 
 	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
@@ -311,9 +322,13 @@ case4_pthreads( void *arg )
 	PAPI_event_code_to_name( PAPI_events[i], out );
 	printf( "Added %s\n", out );
 
-	if ( ( retval = PAPI_set_multiplex( EventSet ) ) != PAPI_OK )
+	if ( ( retval = PAPI_set_multiplex( EventSet ) ) != PAPI_OK ) {
+	        if ( retval == PAPI_ENOSUPP) {
+	           test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	        }
+	   
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
-
+	}
 	i = 1;
 	retval = PAPI_add_event( EventSet, PAPI_events[i] );
 	if ( retval != PAPI_OK )

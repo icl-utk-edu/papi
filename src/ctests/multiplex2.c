@@ -52,7 +52,10 @@ case1( void )
 				   retval );
 
 	retval = PAPI_set_multiplex( EventSet );
-	if ( retval != PAPI_OK )
+        if ( retval == PAPI_ENOSUPP) {
+	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	}
+        else if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
 
 	max_mux = PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL );

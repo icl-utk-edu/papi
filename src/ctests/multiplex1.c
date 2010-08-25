@@ -57,7 +57,10 @@ init_papi( int *out_events, int *len )
 	}
 
 	retval = PAPI_multiplex_init(  );
-	if ( retval != PAPI_OK )
+        if ( retval == PAPI_ENOSUPP) {
+	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	}
+	else if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_multiplex_init", retval );
 
 	for ( i = 0; in_events[i] != 0; i++ ) {
@@ -152,7 +155,10 @@ case2(  )
 		CPP_TEST_FAIL( "PAPI_assign_eventset_component", retval );
 
 	retval = PAPI_set_multiplex( EventSet );
-	if ( retval != PAPI_OK )
+        if ( retval == PAPI_ENOSUPP) {
+	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	}   
+	else if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
 
 	for ( i = 0; i < PAPI_events_len; i++ ) {
@@ -217,7 +223,9 @@ case3(  )
 	}
 
 	retval = PAPI_set_multiplex( EventSet );
-	if ( retval != PAPI_OK )
+        if ( retval == PAPI_ENOSUPP) {
+	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	} else if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
 
 	do_stuff(  );
@@ -271,7 +279,10 @@ case4(  )
 	printf( "Added %s\n", out );
 
 	retval = PAPI_set_multiplex( EventSet );
-	if ( retval != PAPI_OK )
+        if ( retval == PAPI_ENOSUPP) {
+	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	}   
+	else if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
 
 	i = 1;

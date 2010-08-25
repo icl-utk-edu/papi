@@ -64,7 +64,10 @@ char *argv[];
 				   retval );
 
 	retval = PAPI_set_multiplex( EventSet );
-	if ( retval != PAPI_OK )
+        if (retval == PAPI_ENOSUPP) {
+	   test_skip( __FILE__, __LINE__, "Multiplex not supported", 1 );
+	}
+	else if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex fails \n", retval );
 #endif
 

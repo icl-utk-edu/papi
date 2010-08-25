@@ -516,7 +516,8 @@ read the documentation carefully.  */
      int hardware_intr_sig;       /**< Signal used by hardware to deliver PMC events */
      int clock_ticks;             /**< clock ticks per second */
      int opcode_match_width;      /**< Width of opcode matcher if exists, 0 if not */
-     int reserved[2];             /* */
+     int os_version;              /**< Currently running kernel version */
+     int reserved[1];             /* */
      unsigned int hardware_intr:1;         /**< hw overflow intr, does not need to be emulated in software*/
      unsigned int precise_intr:1;          /**< Performance interrupts happen precisely */
      unsigned int posix1b_timers:1;        /**< Using POSIX 1b interval timers (timer_create) instead of setitimer */

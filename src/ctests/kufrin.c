@@ -52,7 +52,10 @@ thread( void *arg )
 	}
 
 	ret = PAPI_set_multiplex( eventset );
-	if ( ret != PAPI_OK ) {
+        if ( ret == PAPI_ENOSUPP) {
+	   test_skip( __FILE__, __LINE__, "Multiplexing not supported", 1 );
+	}
+	else if ( ret != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", ret );
 	}
 

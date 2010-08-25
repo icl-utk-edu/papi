@@ -234,9 +234,14 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component",
 				   retval );
 
-	if ( ( retval = PAPI_set_multiplex( eventset ) ) )
+	if ( ( retval = PAPI_set_multiplex( eventset ) ) ) {
+	   if ( retval == PAPI_ENOSUPP) {
+	      test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	   }
+	   
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
-
+	}
+   
 	if ( ( retval = PAPI_add_events( eventset, events, nevents ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_add_events", retval );
 

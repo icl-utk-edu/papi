@@ -51,6 +51,8 @@
 #  error Unrecognized arch.  Please add a clause for your arch here.
 #endif
 
+#include <sys/utsname.h>
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -1694,6 +1696,30 @@ set_granularity( control_state_t * this_state, int domain )
 	return PAPI_OK;
 }
 
+#define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
+
+static int get_linux_version() {
+      
+     int major=0,minor=0,sub=0;
+     char *ptr;
+   
+     struct utsname uname_buffer;
+   
+     uname(&uname_buffer);
+      
+     ptr=strtok(uname_buffer.release,".");
+     if (ptr!=NULL) major=atoi(ptr);
+   
+     ptr=strtok(NULL,".");
+     if (ptr!=NULL) minor=atoi(ptr);
+   
+     ptr=strtok(NULL,".");
+     if (ptr!=NULL) sub=atoi(ptr);
+   
+     return LINUX_VERSION(major,minor,sub);
+}
+   
+
 /* This function should tell your kernel extension that your children
    inherit performance register information and propagate the values up
    upon child exit and parent wait. */
@@ -1821,10 +1847,18 @@ _papi_pe_init_substrate( int cidx )
 		MY_VECTOR.cmp_info.cntr_umasks = 1;
 	}
 
+           /* Setup Kernel Version */
+        MY_VECTOR.cmp_info.os_version=get_linux_version();
+   
 	MY_VECTOR.cmp_info.hardware_intr = 1;
 	MY_VECTOR.cmp_info.attach = 1;
 	MY_VECTOR.cmp_info.attach_must_ptrace = 1;
-	MY_VECTOR.cmp_info.kernel_multiplex = 1;
+        if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) {
+	   MY_VECTOR.cmp_info.kernel_multiplex = 0;
+	}
+        else {
+	   MY_VECTOR.cmp_info.kernel_multiplex = 1;
+	}
 	MY_VECTOR.cmp_info.kernel_profile = 1;
 	MY_VECTOR.cmp_info.profile_ear = 0;
 	MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
@@ -1838,6 +1872,9 @@ _papi_pe_init_substrate( int cidx )
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[i] = MUTEX_OPEN;
 
+
+        
+   
 	return PAPI_OK;
 }
 

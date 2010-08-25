@@ -2269,14 +2269,18 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	{
 		EventSetInfo_t *ESI;
 		ESI = _papi_hwi_lookup_EventSet( ptr->multiplex.eventset );
-
+	   
 		if ( ESI == NULL )
 			papi_return( PAPI_ENOEVST );
 
 		cidx = valid_ESI_component( ESI );
 		if ( cidx < 0 )
 			papi_return( cidx );
-
+	   
+	   	if ( !( _papi_hwd[cidx]->cmp_info.kernel_multiplex )) {
+		   return PAPI_ENOSUPP;
+		}
+	   
 		if ( !( ESI->state & PAPI_STOPPED ) )
 			papi_return( PAPI_EISRUN );
 		if ( ESI->state & PAPI_MULTIPLEXING )
