@@ -157,15 +157,13 @@ print_counts(perf_event_desc_t *fds, int num, int cpu)
 			printf("inconsistent scaling %s (cur=%'"PRIu64" : prev=%'"PRIu64")\n", fds[i].name, fds[i].value, fds[i].prev_value);
 			continue;
 		}
-
-		if (ratio == 1.0)
-			printf("CPU%-2d %'20"PRIu64" %s (%'"PRIu64" : %'"PRIu64")\n", cpu, val, fds[i].name, fds[i].enabled, fds[i].running);
-		else
-			if (ratio == 0.0)
-				printf("CPU%d %'20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", cpu, val, fds[i].name);
-			else
-				printf("CPU%d %'20"PRIu64" %s (scaled from %.2f%% of time %'"PRIu64":%'"PRIu64")\n", cpu, val, fds[i].name, ratio*100.0, fds[i].enabled, fds[i].running);
-
+		printf("CPU%-2d %'20"PRIu64" %s (%.2f%% scaling, ena=%'"PRIu64", run=%'"PRIu64")\n",
+			cpu,
+			val,
+			fds[i].name,
+			(1.0-ratio)*100.0,
+			fds[i].enabled,
+			fds[i].running);
 	}
 }
 
@@ -314,8 +312,14 @@ parent(char **arg)
 	} else {
 		if (!options.pid)
 			waitpid(pid, &status, 0);
-		else
+		else {
 			pause();
+ 			for (cpu=0; cpu < options.ncpus; cpu++) {
+ 				fds = fds_cpus[cpu];
+ 				for(i=0; i < num_fds; i++)
+ 					ioctl(fds[i].fd, PERF_EVENT_IOC_DISABLE, 0);
+ 			}
+		}
 		for (cpu=0; cpu < options.ncpus; cpu++) {
 			fds = fds_cpus[cpu];
 			print_counts(fds, num_fds, cpu);
