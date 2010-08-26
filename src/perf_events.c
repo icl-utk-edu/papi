@@ -1251,8 +1251,7 @@ check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain 
 
 	ev_fd = sys_perf_counter_open( &attr, tid, cpu_num, -1, 0 );
 	if ( ev_fd == -1 ) {
-		PAPIERROR( "sys_perf_counter_open returned error.  Unix says, %s", strerror( errno ) );
-		fflush( stdout );
+		SUBDBG( "sys_perf_counter_open returned error.  Unix says, %s", strerror( errno ) );
 		return PAPI_EPERM;
 	}
 	/* now close it, this was just to make sure we have permissions to set these options */
@@ -1506,10 +1505,9 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			sys_perf_counter_open( &ctl->events[i], ctl->tid, ctl->cpu_num,
 				ctx->evt[ctx->evt[i].group_leader].event_fd, 0 );
 		if ( ctx->evt[i].event_fd == -1 ) {
-			PAPIERROR
+			SUBDBG
 				( "sys_perf_counter_open returned error on event #%d.  Unix says, %s",
 				  i, strerror( errno ) );
-			fflush( stdout );
 			ret = PAPI_ECNFLCT;
 			goto cleanup;
 		}
@@ -1531,8 +1529,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 
 			cnt = read( ctx->evt[i].event_fd, buffer, sizeof ( buffer ) );
 			if ( cnt == -1 ) {
-				PAPIERROR( "read of event %d to obtain id returned %d", cnt );
-				fflush( stdout );
+				SUBDBG( "read of event %d to obtain id returned %d", cnt );
 				ret = PAPI_EBUG;
 				i++;		 /* the last event did open, so we need to bump the counter before doing the cleanup */
 				goto cleanup;
@@ -2236,7 +2233,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 						   strerror( errno ) );
 				return PAPI_ESBSTR;
 			}
-			SUBDBG("read: fd: %2d, tid: 0x%lx, cpu: %d, buffer[0-2]: 0x%lx, 0x%lx, 0x%lx, ret: %d\n", 
+			SUBDBG("read: fd: %2d, tid: 0x%lx, cpu: %d, buffer[0-2]: 0x%llx, 0x%llx, 0x%llx, ret: %d\n", 
 				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu_num, buffer[0], buffer[1], buffer[2], ret);
 		}
 
