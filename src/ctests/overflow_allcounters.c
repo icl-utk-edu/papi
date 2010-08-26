@@ -3,6 +3,8 @@
 * CVS:     $Id$
 * Author:  Haihang You
 *          you@cs.utk.edu
+* Mods:    Vince Weaver
+*          vweaver1@eecs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -154,6 +156,25 @@ main( int argc, char **argv )
 			printf( "%16d", ovt[i] );
 		printf( "\n" );
 		printf( "-----------------------------------------------\n" );
+	}
+   
+          /* validation */
+        for ( j = 0; j < num_events; j++ ) {
+	      //printf("Validation: %lld / %d != %d (%lld)\n",
+	      //       *( values + j + num_events * (j+1) ) ,
+              //       mythreshold,
+	      //       ovt[j],
+	      //       *(values+j+num_events*(j+1))/mythreshold);
+	   if (*(values+j+num_events*(j+1))/mythreshold != ovt[j]) {
+	      char error_string[BUFSIZ];
+	      sprintf(error_string,"Overflow value differs from expected %lld / %d != %d (%lld)",
+		     *( values + j + num_events * (j+1) ) ,
+                     mythreshold,
+		     ovt[j],
+	             *(values+j+num_events*(j+1))/mythreshold);
+	      test_fail( __FILE__, __LINE__, error_string, 1 );
+	   }
+	    
 	}
 
 	retval = PAPI_cleanup_eventset( EventSet );
