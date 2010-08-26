@@ -65,11 +65,12 @@ main( int argc, char **argv )
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
+   
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
-	EventSet = enum_add_native_events( &num_events, &events );
+	EventSet = enum_add_native_events( &num_events, &events, 1 );
+
 	names =
 		( char ** ) calloc( ( unsigned int ) num_events, sizeof ( char * ) );
 	for ( i = 0; i < num_events; i++ ) {
@@ -133,8 +134,7 @@ main( int argc, char **argv )
 
 		printf( "Test Overflow on %d counters with %d events.\n", num_events,
 				num_events );
-		printf
-			( "---------------------------------------------------------------\n" );
+		printf( "---------------------------------------------------------------\n" );
 		printf( "Threshold for overflow is: %d\n", mythreshold );
 		printf( "Using %d iterations of c += a*b\n", num_flops );
 		printf( "-----------------------------------------------\n" );

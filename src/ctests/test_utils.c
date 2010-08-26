@@ -811,7 +811,7 @@ add_two_nonderived_events( int *num_events, int *papi_event,
 
 /* add native events to use all counters */
 int
-enum_add_native_events( int *num_events, int **evtcodes )
+enum_add_native_events( int *num_events, int **evtcodes, int need_interrupt )
 {
 	/* query and set up the right event to monitor */
 	int EventSet = PAPI_NULL;
@@ -819,12 +819,29 @@ enum_add_native_events( int *num_events, int **evtcodes )
 	unsigned int counters, event_found = 0;
 	PAPI_event_info_t info;
 	const PAPI_component_info_t *s = NULL;
-
+        const PAPI_hw_info_t *hw_info = NULL;
+   
 	s = PAPI_get_component_info( 0 );
 	if ( s == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR );
 
+        hw_info = PAPI_get_hardware_info(  );
+        if ( hw_info == NULL )
+                test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+   
+   
 	counters = ( unsigned int ) PAPI_num_hwctrs(  );
+   
+        if (need_interrupt) {
+           if ( (!strcmp(hw_info->model_string,"POWER6")) ||
+	        (!strcmp(hw_info->model_string,"POWER5")) ) {
+	   
+	        test_warn(__FILE__, __LINE__,
+			  "Limiting num_counters because of LIMITED_PMC on Power5 and Power6",1);
+                counters=4;
+	   }
+        }
+
 	( *evtcodes ) = ( int * ) calloc( counters, sizeof ( int ) );
 
 	retval = PAPI_create_eventset( &EventSet );
