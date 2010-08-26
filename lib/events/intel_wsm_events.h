@@ -125,7 +125,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .desc   = "L1D cacheable load lock speculated or retired accepted into the fill buffer",
 	  .modmsk = INTEL_V3_ATTRS,
 	  .cntmsk = 0xf,
-	  .code = 0x0153,
+	  .code = 0x0152,
 	  .flags  = 0,
 	},
 	{ .name   = "BPU_CLEARS",
