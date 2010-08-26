@@ -780,16 +780,19 @@ pfm_get_version(void)
 }
 
 static pfmlib_pmu_t *
-pfmlib_get_pmu_next(pfm_pmu_t i)
+pfmlib_get_pmu_next(pfm_pmu_t p)
 {
 	pfmlib_pmu_t *pmu;
+	int i;
 
-	for(++i; i < PFM_PMU_MAX; i++) {
-		pmu = pfmlib_pmus_map[i];
-		if (pmu)
-			return pmu;
+	for(i = 0; i < PFMLIB_NUM_PMUS; i++) {
+		pmu = pfmlib_pmus[i];
+		if (pmu->pmu == p)
+			goto found;
 	}
 	return NULL;
+found:
+	return i == (PFMLIB_NUM_PMUS-1) ? NULL : pfmlib_pmus[i+1];
 }
 
 int
