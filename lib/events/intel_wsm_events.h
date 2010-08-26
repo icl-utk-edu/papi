@@ -125,7 +125,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .desc   = "L1D cacheable load lock speculated or retired accepted into the fill buffer",
 	  .modmsk = INTEL_V3_ATTRS,
 	  .cntmsk = 0xf,
-	  .code = 0x0153,
+	  .code = 0x0152,
 	  .flags  = 0,
 	},
 	{ .name   = "BPU_CLEARS",
@@ -2133,6 +2133,18 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	 .cntmsk = 0xf,
 	 .code= 0x00c5,
 	 .desc =  "count mispredicted branch instructions at retirement. Specifically, this event counts at retirement of the last micro-op of a branch instruction in the architectural path of the execution and experienced misprediction in the branch prediction hardware",
+	},
+	{.name = "THREAD_ACTIVE",
+	 .modmsk = INTEL_V3_ATTRS,
+	 .cntmsk = 0xf,
+	 .code= 0x01ec,
+	 .desc =  "Cycles thread is active",
+	},
+	{.name = "UOP_UNFUSION",
+	 .modmsk = INTEL_V3_ATTRS,
+	 .cntmsk = 0xf,
+	 .code= 0x01db,
+	 .desc =  "Counts unfusion events due to floating point exception to a fused uop",
 	}
 };
 #define PME_WSM_EVENT_COUNT	  (sizeof(intel_wsm_pe)/sizeof(intel_x86_entry_t))
