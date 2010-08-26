@@ -2348,7 +2348,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	{
 		int dom = ptr->domain.domain;
 		if ( ( dom < PAPI_DOM_MIN ) || ( dom > PAPI_DOM_MAX ) )
-			papi_return( PAPI_EINVAL );
+			papi_return( PAPI_EINVAL_DOM );
 
 		internal.domain.ESI = _papi_hwi_lookup_EventSet( ptr->domain.eventset );
 		if ( internal.domain.ESI == NULL )
@@ -2364,7 +2364,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			dom = _papi_hwd[cidx]->cmp_info.available_domains;
 
 		if ( dom & ~_papi_hwd[cidx]->cmp_info.available_domains )
-			papi_return( PAPI_EINVAL );
+			papi_return( PAPI_EINVAL_DOM );
 
 		if ( !( internal.domain.ESI->state & PAPI_STOPPED ) )
 			papi_return( PAPI_EISRUN );

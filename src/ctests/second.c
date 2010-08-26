@@ -335,19 +335,30 @@ case1( int num )
 		option.domain.eventset = EventSet1;
 		retval = PAPI_set_opt( PAPI_DOMAIN, &option );
 		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+			test_fail( __FILE__, __LINE__, "PAPI_set_domain ALL ", retval );
 
 		option.domain.domain = PAPI_DOM_ALL ^ PAPI_DOM_SUPERVISOR;
 		option.domain.eventset = EventSet2;
 		retval = PAPI_set_opt( PAPI_DOMAIN, &option );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+		if ( retval != PAPI_OK ) {
+
+                   /* DOM_ALL is special-cased as domains_available   */
+                   /* in papi.c .  Some machines don't like DOM_OTHER */
+                   /* so try that if the above case fails.            */
+		   option.domain.domain ^= PAPI_DOM_OTHER;
+		   option.domain.eventset = EventSet2;
+		   retval = PAPI_set_opt( PAPI_DOMAIN, &option );
+
+                   if (retval != PAPI_OK) {
+			test_fail( __FILE__, __LINE__, "PAPI_set_domain ALL^SUPERVISOR ", retval );
+                   }
+                }
 
 		option.domain.domain = PAPI_DOM_SUPERVISOR;
 		option.domain.eventset = EventSet3;
 		retval = PAPI_set_opt( PAPI_DOMAIN, &option );
 		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+			test_fail( __FILE__, __LINE__, "PAPI_set_domain SUPERVISOR ", retval );
 
 		free_test_space( values, num_tests );
 		values = allocate_test_space( num_tests, 2 );
