@@ -136,8 +136,8 @@ static pfmlib_pmu_t *pfmlib_pmus_map[PFM_PMU_MAX];
 #define for_each_pmu_event_attr(u, i) \
 	for((u)=0; (u) < (i)->nattrs; (u) = (u)+1)
 
-#define pfmlib_for_all_pmu(x) \
-	for((x)= 0 ; (x) < PFM_PMU_MAX; (x)++)
+#define pfmlib_for_each_pmu(x) \
+	for((x)= 0 ; (x) < PFMLIB_NUM_PMUS; (x)++)
 
 pfmlib_config_t pfm_cfg;
 
@@ -348,9 +348,6 @@ pfmlib_init_pmus(void)
 	int i, ret, n = 0;
 	int nsuccess = 0;
 	
-	for(i=0; i < PFM_PMU_MAX; i++)
-		pfmlib_pmus_map[i] = NULL;
-
 	if (pfm_cfg.forced_pmu) {
 		char *p;
 		p = strchr(pfm_cfg.forced_pmu, ',');
@@ -425,13 +422,13 @@ void
 pfm_terminate(void)
 {
 	pfmlib_pmu_t *pmu;
-	int pmu_id;
+	int id;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return;
 
-	pfmlib_for_all_pmu(pmu_id) {
-		pmu = pfmlib_pmus_map[pmu_id];
+	pfmlib_for_each_pmu(id) {
+		pmu = pfmlib_pmus[id];
 		if (!pfmlib_pmu_active(pmu))
 			continue;
 		if (pmu->pmu_terminate)
@@ -647,7 +644,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	pfm_event_info_t einfo;
 	char *str, *s, *p, *q;
 	pfmlib_pmu_t *pmu;
-	int i, pmu_id;
+	int i, id;
 	const char *pname = NULL;
 	int ret;
 
@@ -684,10 +681,8 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	/*
 	 * for each pmu
 	 */
-	pfmlib_for_all_pmu(pmu_id) {
-		pmu = pfmlib_pmus_map[pmu_id];
-		if (!pmu)
-			continue;
+	pfmlib_for_each_pmu(id) {
+		pmu = pfmlib_pmus[id];
 		/*
 		 * if no explicit PMU name is given, then
 		 * only look for active (detected) PMU models
@@ -739,12 +734,10 @@ int
 pfm_get_nevents(void)
 {
 	pfmlib_pmu_t *pmu;
-	int pmu_id, total = 0;
+	int id, total = 0;
 
-	pfmlib_for_all_pmu(pmu_id) {
-		pmu = pfmlib_pmus_map[pmu_id];
-		if (!pmu)
-			continue;
+	pfmlib_for_each_pmu(id) {
+		pmu = pfmlib_pmus[id];
 		total += pmu->pme_count;
 	}
 	return total;
@@ -834,13 +827,11 @@ int
 pfm_get_event_first(void)
 {
 	pfmlib_pmu_t *pmu;
-	int pmu_id, pidx;
+	int id, pidx;
 
 	/* scan all compiled in PMU models */
-	pfmlib_for_all_pmu(pmu_id) {
-		pmu = pfmlib_pmus_map[pmu_id];
-		if (!pmu)
-			continue;
+	pfmlib_for_each_pmu(id) {
+		pmu = pfmlib_pmus[id];
 		pidx = pmu->get_event_first(pmu);
 		if (pidx != -1)
 			return pfmlib_pidx2idx(pmu, pidx);
