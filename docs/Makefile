@@ -34,6 +34,9 @@ endif
 ARCH_X86=libpfm_intel_core.3	\
 	 libpfm_intel_x86_arch.3\
 	 libpfm_amd64.3		\
+	 libpfm_amd64_k7.3	\
+	 libpfm_amd64_k8.3	\
+	 libpfm_amd64_fam10h.3	\
 	 libpfm_intel_atom.3	\
 	 libpfm_intel_nhm.3	\
 	 libpfm_intel_nhm_unc.3 \
