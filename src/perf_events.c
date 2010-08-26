@@ -2196,7 +2196,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 	/*
 	 * FIXME this loop should not be needed.  We ought to be able to read up
 	 * the counters from the group leader's fd only, but right now
-	 * PERF_RECORD_GROUP doesn't work like need it to.  So for now, disable
+	 * PERF_RECORD_GROUP doesn't work like we need it to.  So for now, disable
 	 * the group leader so that the counters are more or less synchronized,
 	 * read them up, then re-enable the group leader.
 	 */
@@ -2233,7 +2233,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 						   strerror( errno ) );
 				return PAPI_ESBSTR;
 			}
-			SUBDBG("read: fd: %2d, tid: 0x%lx, cpu: %d, buffer[0-2]: 0x%llx, 0x%llx, 0x%llx, ret: %d\n", 
+			SUBDBG("read: fd: %2d, tid: 0x%lx, cpu: %d, buffer[0-2]: 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", ret: %d\n", 
 				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu_num, buffer[0], buffer[1], buffer[2], ret);
 		}
 
@@ -2244,13 +2244,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 					   pe_ctx->evt[i].event_id );
 			return PAPI_ESBSTR;
 		}
-		if ( pe_ctl->events[i].sample_period != 0 ) {
-			/*
-			 * Calculate how many counts up it's gone since its most recent
-			 * sample_period overflow
-			 */
-			buffer[count_idx] -= ~0ULL - pe_ctl->events[i].sample_period;
-		}
+
 		if ( pe_ctl->multiplexed ) {
 			if ( buffer[get_total_time_running_idx(  )] ) {
 				pe_ctl->counts[i] =
