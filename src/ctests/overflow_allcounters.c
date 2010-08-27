@@ -57,6 +57,8 @@ main( int argc, char **argv )
 	const PAPI_hw_info_t *hw_info = NULL;
 	int num_events, *ovt;
 	char name[PAPI_MAX_STR_LEN];
+        const PAPI_component_info_t *comp_info = NULL;
+        int using_perfmon=0;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
@@ -66,8 +68,17 @@ main( int argc, char **argv )
 
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", retval );
    
+        comp_info = PAPI_get_component_info( 0 );
+	if ( hw_info == NULL )
+		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", retval );
+
+        if (strstr(comp_info->name,"perfmon.c")) {
+	  using_perfmon=1;
+	}
+
+
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
@@ -167,12 +178,17 @@ main( int argc, char **argv )
 	      //       *(values+j+num_events*(j+1))/mythreshold);
 	   if (*(values+j+num_events*(j+1))/mythreshold != ovt[j]) {
 	      char error_string[BUFSIZ];
-	      sprintf(error_string,"Overflow value differs from expected %lld / %d != %d (%lld)",
+              if (!using_perfmon) {
+	         sprintf(error_string,"Overflow value differs from expected %lld / %d != %d (%lld)",
 		     *( values + j + num_events * (j+1) ) ,
                      mythreshold,
 		     ovt[j],
 	             *(values+j+num_events*(j+1))/mythreshold);
-	      test_fail( __FILE__, __LINE__, error_string, 1 );
+	         test_fail( __FILE__, __LINE__, error_string, 1 );
+	      }
+	      else {
+		 test_warn( __FILE__, __LINE__, "perfmon substrate handles overflow differently than perf_events",1);
+	      }
 	   }
 	    
 	}
