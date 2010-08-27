@@ -36,10 +36,6 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_nhm_priv.h"
 
-/* Intel Westmere event tables */
-#include "intel_wsm_events.h"
-#include "intel_wsm_unc_events.h"
-
 /* Intel Core i7 event tables */
 #include "intel_corei7_events.h"
 #include "intel_corei7_unc_events.h"
@@ -126,52 +122,14 @@
 #define PFMLIB_NHM_ALL_FLAGS \
 	(PFM_NHM_SEL_INV|PFM_NHM_SEL_EDGE|PFM_NHM_SEL_ANYTHR)
 
-#define NHM_NUM_GEN_COUNTERS	4
-#define NHM_NUM_FIXED_COUNTERS	3
-
 pfm_pmu_support_t intel_nhm_support;
-pfm_pmu_support_t intel_wsm_support;
 
 static pfmlib_regmask_t nhm_impl_pmcs, nhm_impl_pmds;
 static pfmlib_regmask_t nhm_impl_unc_pmcs, nhm_impl_unc_pmds;
 static pme_nhm_entry_t *pe, *unc_pe;
 static unsigned int num_pe, num_unc_pe;
-static int cpu_model, aaj80;
+static int cpu_model;
 static int pme_cycles, pme_instr;
-
-#ifdef __i386__
-static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
-			 unsigned int *ecx, unsigned int *edx)
-{
-	/*
-	 * because ebx is used in Pic mode, we need to save/restore because
-	 * cpuid clobbers it. I could not figure out a way to get ebx out in
-	 * one cpuid instruction. To extract ebx, we need to  move it to another
-	 * register (here eax)
-	 */
-	__asm__("pushl %%ebx;cpuid; popl %%ebx"
-			:"=a" (*eax)
-			: "a" (op)
-			: "ecx", "edx");
-
-	__asm__("pushl %%ebx;cpuid; movl %%ebx, %%eax;popl %%ebx"
-			:"=a" (*ebx)
-			: "a" (op)
-			: "ecx", "edx");
-}
-#else
-static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
-			 unsigned int *ecx, unsigned int *edx)
-{
-        __asm__("cpuid"
-                        : "=a" (*eax),
-                        "=b" (*ebx),
-                        "=c" (*ecx),
-                        "=d" (*edx)
-                        : "0" (op), "c"(0));
-}
-#endif
-
 
 static inline pme_nhm_entry_t *
 get_nhm_entry(unsigned int i)
@@ -180,7 +138,7 @@ get_nhm_entry(unsigned int i)
 }
 
 static int
-pfm_nhm_detect_common(void)
+pfm_nhm_detect(void)
 {
 	int ret;
 	int family;
@@ -204,53 +162,17 @@ pfm_nhm_detect_common(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	cpu_model = atoi(buffer);
-
+	/*
+	 * XXX: is there a way to identify a Core-based processor?
+	 * So for now, look for Core 2 only
+	 */
 	if (family != 6)
 		return PFMLIB_ERR_NOTSUPP;
 
-	return PFMLIB_SUCCESS;
-}
-
-static int
-pfm_nhm_detect(void)
-{
-#define INTEL_ARCH_MISP_BR_RETIRED	(1 << 6)
-	unsigned int eax, ebx, ecx, edx;
-	int ret;
-
-	ret = pfm_nhm_detect_common();
-	if (ret != PFMLIB_SUCCESS)
-		return ret;
-
 	switch(cpu_model) {
-		case 26: /* Nehalem */
-		case 30:
-		case 31:
-		case 46:
-			/*
-	 		 * check for erratum AAJ80
-	 		 *
-	 		 * MISPREDICTED_BRANCH_RETIRED may be broken
-	 		 * in which case it appears in the list of
-	 		 * unavailable architected events
-	 		 */
-			cpuid(0xa, &eax, &ebx, &ecx, &edx);
-			if (ebx & INTEL_ARCH_MISP_BR_RETIRED)
-				aaj80 = 1;
-			break;
-		default:
-			return PFMLIB_ERR_NOTSUPP;
-	}
-	return PFMLIB_SUCCESS;
-}
-
-static int
-pfm_wsm_detect(void)
-{
-	switch(cpu_model) {
-		case 37: /* Westmere */
-		case 44:
-			break;
+		case 26: /* Nehalem Core i7 */
+		case 30: /* Nehalem Core i5 */
+			  break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
@@ -284,36 +206,11 @@ static inline void setup_nhm_impl_unc_regs(void)
 
 }
 
-static void
-fixup_mem_uncore_retired(void)
-{
-	size_t i;
-
-	for(i=0; i < PME_COREI7_EVENT_COUNT; i++) {
-		if (corei7_pe[i].pme_code != 0xf)
-			continue;
-		
-		/*
- 		 * assume model46 umasks are at the end
- 		 */
-		corei7_pe[i].pme_numasks = 6;
-		break;
-	}
-}
-
 static int
 pfm_nhm_init(void)
 {
-	pfm_pmu_support_t *supp;
 	int i;
 	int num_unc_cnt = 0;
-
-	if (forced_pmu != PFMLIB_NO_PMU) {
-		if (forced_pmu == PFMLIB_INTEL_NHM_PMU)
-			cpu_model = 26;
-		else
-			cpu_model = 37;
-	}
 
 	/* core */
 	pfm_regmask_set(&nhm_impl_pmcs, 0);
@@ -334,71 +231,44 @@ pfm_nhm_init(void)
 	pfm_regmask_set(&nhm_impl_pmds, 18);
 
 	/* lbr */
-	pfm_regmask_set(&nhm_impl_pmcs, 30);
+ 	pfm_regmask_set(&nhm_impl_pmcs, 30);
 	for(i=31; i < 64; i++)
 		pfm_regmask_set(&nhm_impl_pmds, i);
 
 	switch(cpu_model) {
-	case 46:
-		num_pe = PME_COREI7_EVENT_COUNT;
-		num_unc_pe = 0;
-		pe = corei7_pe;
-		unc_pe = NULL;
-		pme_cycles = PME_COREI7_UNHALTED_CORE_CYCLES;
-		pme_instr = PME_COREI7_INSTRUCTIONS_RETIRED;
-		num_unc_cnt = 0;
-		fixup_mem_uncore_retired();
-		supp = &intel_nhm_support;
-		break;
-	case 26: /* Nehalem */
+	case 26:
+	case 30:
 		num_pe = PME_COREI7_EVENT_COUNT;
 		num_unc_pe = PME_COREI7_UNC_EVENT_COUNT;
 		pe = corei7_pe;
 		unc_pe = corei7_unc_pe;
 		pme_cycles = PME_COREI7_UNHALTED_CORE_CYCLES;
 		pme_instr = PME_COREI7_INSTRUCTIONS_RETIRED;
-		setup_nhm_impl_unc_regs();
-		num_unc_cnt = 9; /* one fixed + 8 generic */
-		supp = &intel_nhm_support;
-		break;
-	case 37: /* Westmere */
-	case 44:
-		num_pe = PME_WSM_EVENT_COUNT;
-		num_unc_pe = PME_WSM_UNC_EVENT_COUNT;
-		pe = wsm_pe;
-		unc_pe = intel_wsm_unc_pe;
-		pme_cycles = PME_WSM_UNHALTED_CORE_CYCLES;
-		pme_instr = PME_WSM_INSTRUCTIONS_RETIRED;
-		setup_nhm_impl_unc_regs();
-		num_unc_cnt = 9; /* one fixed + 8 generic */
-
-		/* OFFCORE_RESPONSE_1 */
-		pfm_regmask_set(&nhm_impl_pmcs, 31);
-		supp = &intel_wsm_support;
+ 		setup_nhm_impl_unc_regs();
+ 		num_unc_cnt = 9; /* one fixed + 8 generic */
 		break;
 	default:
 		return PFMLIB_ERR_NOTSUPP;
 	}
-	
-	supp->pme_count = num_pe + num_unc_pe;
-	supp->num_cnt = NHM_NUM_GEN_COUNTERS
-		      + NHM_NUM_FIXED_COUNTERS
-		      + num_unc_cnt;
-	/*
-	 * propagate uncore registers to impl bitmaps
-	 */
-	pfm_regmask_or(&nhm_impl_pmds, &nhm_impl_pmds, &nhm_impl_unc_pmds);
-	pfm_regmask_or(&nhm_impl_pmcs, &nhm_impl_pmcs, &nhm_impl_unc_pmcs);
+ 	intel_nhm_support.num_cnt = 4 + 3 + num_unc_cnt;
+ 	/*
+ 	 * propagate uncore registers to impl bitmaps
+ 	 */
+ 	pfm_regmask_or(&nhm_impl_pmds, &nhm_impl_pmds, &nhm_impl_unc_pmds);
+ 	pfm_regmask_or(&nhm_impl_pmcs, &nhm_impl_pmcs, &nhm_impl_unc_pmcs);
 
-	/*
-	 * compute number of registers available
-	 * not all CPUs may have uncore
-	 */
-	pfm_regmask_weight(&nhm_impl_pmds, &supp->pmd_count);
-	pfm_regmask_weight(&nhm_impl_pmcs, &supp->pmc_count);
+ 	/*
+ 	 * compute number of registers available
+ 	 * not all CPUs may have uncore
+ 	 */
+ 	pfm_regmask_weight(&nhm_impl_pmds, &intel_nhm_support.pmd_count);
+ 	pfm_regmask_weight(&nhm_impl_pmcs, &intel_nhm_support.pmc_count);
+ 
+	intel_nhm_support.pme_count = num_pe + num_unc_pe;
 
 	return PFMLIB_SUCCESS;
 }
+
 
 static int
 pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
@@ -444,33 +314,6 @@ pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
 }
 
 /*
- * Allow combination of events when cnt_mask > 0 AND unit mask codes do
- * not overlap (otherwise, we do not know what is actually measured)
- */
-static int
-pfm_nhm_check_cmask(pfmlib_event_t *e, pme_nhm_entry_t *ne, pfmlib_nhm_counter_t *cntr)
-{
-	unsigned int ref, ucode;
-	int i, j;
-
-	if (!cntr)
-		return -1;
-
-	if (cntr->cnt_mask == 0)
-		return -1;
-
-	for(i=0; i < e->num_masks; i++) {
-		ref =  ne->pme_umasks[e->unit_masks[i]].pme_ucode;
-		for(j=i+1; j < e->num_masks; j++) {
-			ucode = ne->pme_umasks[e->unit_masks[j]].pme_ucode;
-			if (ref & ucode)
-				return -1;
-		}
-	}
-	return 0;
-}
- 
-/*
  * IMPORTANT: the interface guarantees that pfp_pmds[] elements are returned in the order the events
  *	      were submitted.
  */
@@ -491,13 +334,12 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	uint64_t pebs_mask, ld_mask;
 	unsigned long long fixed_ctr;
 	unsigned int plm;
-	unsigned int npc, npmc0, npmc01, nf2, nuf;
+	unsigned int npc, npmc01, npmc0, nf2, nuf;
 	unsigned int i, n, k, j, umask, use_pebs = 0;
 	unsigned int assign_pc[PMU_NHM_NUM_COUNTERS];
 	unsigned int next_gen, last_gen, u_flags;
 	unsigned int next_unc_gen, last_unc_gen, lat;
-	unsigned int offcore_rsp0_value = 0;
-	unsigned int offcore_rsp1_value = 0;
+	unsigned int offcore_value = 0;
 
 	npc = npmc01 = npmc0 = nf2 = nuf = 0;
 	unc_global_ctrl = 0;
@@ -527,12 +369,6 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 
 		ne = get_nhm_entry(e[i].event);
 
-		/* check for erratum AAJ80 */
-		if (aaj80 && (ne->pme_code & 0xff) == 0xc5) {
-			DPRINT("MISPREDICTED_BRANCH_RETIRED broken on this Nehalem processor, see eeratum AAJ80\n");
-			return PFMLIB_ERR_NOTSUPP;
-		}
-
 		/*
 		 * check for valid flags
 		 */
@@ -540,7 +376,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 			return PFMLIB_ERR_INVAL;
 
 		if (ne->pme_flags & PFMLIB_NHM_UMASK_NCOMBO
-		    && e[i].num_masks > 1 && pfm_nhm_check_cmask(e, ne, cntrs ? cntrs+i : NULL)) {
+		    && e[i].num_masks > 1) {
 			DPRINT("events does not support unit mask combination\n");
 				return PFMLIB_ERR_NOASSIGN;
 		}
@@ -563,13 +399,14 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
+
 		/*
 		 * check event-level single register constraint (PMC0/1 only)
 		 * fail if more than two events requested for the same counter pair
 		 */
 		if (ne->pme_flags & PFMLIB_NHM_PMC01) {
 			if (++npmc01 > 2) {
-				DPRINT("two events compete for a PMC0\n");
+				DPRINT("more than two events compete for a PMC0 and PMC1\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -596,8 +433,8 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 			umask |= ne->pme_umasks[e[i].unit_masks[j]].pme_ucode;
 
 		if (ne->pme_flags & PFMLIB_NHM_OFFCORE_RSP0) {
-			if (offcore_rsp0_value && offcore_rsp0_value != umask) {
-				DPRINT("all OFFCORE_RSP0 events must have the same unit mask\n");
+			if (offcore_value && offcore_value != umask) {
+				DPRINT("all OFFCORE_RESPONSE events must have the same unit mask\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 			if (pfm_regmask_isset(r_pmcs, 19)) {
@@ -605,27 +442,11 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				return PFMLIB_ERR_NOASSIGN;
 			}
 			if (!((umask & 0xff) && (umask & 0xff00))) {
-				DPRINT("OFFCORE_RSP0 must have at least one request and response unit mask set\n");
+				DPRINT("OFFCORE_RESPONSE must have at least one request and response unit mask set\n");
 				return PFMLIB_ERR_INVAL;
 			}
 			/* lock-in offcore_value */
-			offcore_rsp0_value = umask;
-		}
-		if (ne->pme_flags & PFMLIB_NHM_OFFCORE_RSP1) {
-			if (offcore_rsp1_value && offcore_rsp1_value != umask) {
-				DPRINT("all OFFCORE_RSP1 events must have the same unit mask\n");
-				return PFMLIB_ERR_NOASSIGN;
-			}
-			if (pfm_regmask_isset(r_pmcs, 31)) {
-				DPRINT("OFFCORE_RSP1 register not available\n");
-				return PFMLIB_ERR_NOASSIGN;
-			}
-			if (!((umask & 0xff) && (umask & 0xff00))) {
-				DPRINT("OFFCORE_RSP1 must have at least one request and response unit mask set\n");
-				return PFMLIB_ERR_INVAL;
-			}
-			/* lock-in offcore_value */
-			offcore_rsp1_value = umask;
+			offcore_value = umask;
 		}
 
 		/*
@@ -648,12 +469,11 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	for(i=0; i < PMU_NHM_NUM_COUNTERS; i++)
 		assign_pc[i] = -1;
 
-
 	next_gen = 0; /* first generic counter */
 	last_gen = 3; /* last generic counter */
 
 	/*
-	 * strongest constraint: only uncore_fixed_ctr0 or PMC0 only
+	 * strongest constraint: only uncore_fixed_ctr0 or PMC0-only
 	 */
 	if (nuf || npmc0) {
 		for(i=0; i < n; i++) {
@@ -835,7 +655,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		if (is_fixed_pmc(assign_pc[i]) || is_uncore(assign_pc[i]))
 			continue;
 
-		reg.val = 0; /* assume reserved bits are zeroed */
+		reg.val = 0; /* assume reserved bits are zerooed */
 
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
@@ -848,13 +668,12 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		umask = (val >> 8) & 0xff;
 
 		u_flags = 0;
-
 		/*
-		 * for OFFCORE_RSP, the unit masks are all in the
-		 * dedicated OFFCORE_RSP MSRs and event unit mask must be
-		 * 0x1 (extracted from pme_code)
+ 		 * for OFFCORE_RESPONSE, the unit masks are all in the
+		 * dedicated OFFCORE_RSP MSR and event unit mask must be
+		 * 0x1 (extracted from pme_code
 		 */
-		if (!(ne->pme_flags & (PFMLIB_NHM_OFFCORE_RSP0|PFMLIB_NHM_OFFCORE_RSP1)))
+		if (!(ne->pme_flags & PFMLIB_NHM_OFFCORE_RSP0))
 			for(k=0; k < e[i].num_masks; k++) {
 				umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
 				u_flags |= ne->pme_umasks[e[i].unit_masks[k]].pme_uflags;
@@ -1123,9 +942,9 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	/*
  	 * setup OFFCORE_RSP0
  	 */
-	if (offcore_rsp0_value) {
+	if (offcore_value) {
 		pc[npc].reg_num     = 19;
-		pc[npc].reg_value   = offcore_rsp0_value;
+		pc[npc].reg_value   = offcore_value;
 		pc[npc].reg_addr    = 0x1a6;
 		pc[npc].reg_alt_addr = 0x1a6;
 		__pfm_vbprintf("[OFFCORE_RSP0(pmc%u)=0x%"PRIx64"]\n",
@@ -1133,20 +952,6 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				pc[npc].reg_value);
 		npc++;
 	}
-	/*
- 	 * setup OFFCORE_RSP1
- 	 */
-	if (offcore_rsp1_value) {
-		pc[npc].reg_num     = 31;
-		pc[npc].reg_value   = offcore_rsp1_value;
-		pc[npc].reg_addr    = 0x1a7;
-		pc[npc].reg_alt_addr = 0x1a7;
-		__pfm_vbprintf("[OFFCORE_RSP1(pmc%u)=0x%"PRIx64"]\n",
-				pc[npc].reg_num,
-				pc[npc].reg_value);
-		npc++;
-	}
-
 	outp->pfp_pmc_count = npc;
 
 	return PFMLIB_SUCCESS;
@@ -1577,32 +1382,6 @@ pfm_pmu_support_t intel_nhm_support={
 	.get_event_counters	= pfm_nhm_get_event_counters,
 	.dispatch_events	= pfm_nhm_dispatch_events,
 	.pmu_detect		= pfm_nhm_detect,
-	.pmu_init		= pfm_nhm_init,
-	.get_impl_pmcs		= pfm_nhm_get_impl_pmcs,
-	.get_impl_pmds		= pfm_nhm_get_impl_pmds,
-	.get_impl_counters	= pfm_nhm_get_impl_counters,
-	.get_hw_counter_width	= pfm_nhm_get_hw_counter_width,
-	.get_event_desc         = pfm_nhm_get_event_description,
-	.get_num_event_masks	= pfm_nhm_get_num_event_masks,
-	.get_event_mask_name	= pfm_nhm_get_event_mask_name,
-	.get_event_mask_code	= pfm_nhm_get_event_mask_code,
-	.get_event_mask_desc	= pfm_nhm_get_event_mask_desc,
-	.get_cycle_event	= pfm_nhm_get_cycle_event,
-	.get_inst_retired_event = pfm_nhm_get_inst_retired
-};
-
-pfm_pmu_support_t intel_wsm_support={
-	.pmu_name		= "Intel Westmere",
-	.pmu_type		= PFMLIB_INTEL_WSM_PMU,
-	.pme_count		= 0,/* patched at runtime */
-	.pmc_count		= 0,/* patched at runtime */
-	.pmd_count		= 0,/* patched at runtime */
-	.num_cnt		= 0,/* patched at runtime */
-	.get_event_code		= pfm_nhm_get_event_code,
-	.get_event_name		= pfm_nhm_get_event_name,
-	.get_event_counters	= pfm_nhm_get_event_counters,
-	.dispatch_events	= pfm_nhm_dispatch_events,
-	.pmu_detect		= pfm_wsm_detect,
 	.pmu_init		= pfm_nhm_init,
 	.get_impl_pmcs		= pfm_nhm_get_impl_pmcs,
 	.get_impl_pmds		= pfm_nhm_get_impl_pmds,
