@@ -1529,7 +1529,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 
 			cnt = read( ctx->evt[i].event_fd, buffer, sizeof ( buffer ) );
 			if ( cnt == -1 ) {
-				SUBDBG( "read of event %d to obtain id returned %d", cnt );
+				SUBDBG( "read of event %d to obtain id returned %d", i, cnt );
 				ret = PAPI_EBUG;
 				i++;		 /* the last event did open, so we need to bump the counter before doing the cleanup */
 				goto cleanup;
