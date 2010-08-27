@@ -670,8 +670,6 @@ test_skip( char *file, int line, char *call, int retval )
 		}
 		fprintf( stdout, "\n" );
 	}
-	if ( PAPI_is_initialized(  ) )
-		PAPI_shutdown(  );
 	exit( 0 );
 }
 
