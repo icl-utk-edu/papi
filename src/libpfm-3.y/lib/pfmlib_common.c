@@ -52,7 +52,6 @@ static pfm_pmu_support_t *supported_pmus[]=
 	&core_support,
 	&intel_atom_support,
 	&intel_nhm_support,
-	&intel_wsm_support,
 	&gen_ia32_support, /* must always be last for x86-64 */
 #endif
 
@@ -67,7 +66,6 @@ static pfm_pmu_support_t *supported_pmus[]=
 	&core_support,
 	&intel_atom_support,
 	&intel_nhm_support,
-	&intel_wsm_support,
 	&gen_ia32_support, /* must always be last for i386 */
 #endif
 

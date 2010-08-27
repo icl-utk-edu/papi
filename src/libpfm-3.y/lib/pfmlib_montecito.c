@@ -766,7 +766,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 	pc[pos1].reg_num     = 37; /* PMC37 is I-EAR config register */
 	pc[pos1].reg_value   = reg.pmc_val;
-	pc[pos1].reg_addr  = pc[pos1].reg_alt_addr = 37;
+	pc[pos1].reg_addr  = pc[pos1].reg_addr = 37;
 	pos1++;
 
 	pd[pos2].reg_num  = 34;
