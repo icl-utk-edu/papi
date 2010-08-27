@@ -89,6 +89,12 @@ MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)
 
 #
+# System header files
+#
+# SYSINCDIR : where to find standard header files (default to .)
+SYSINCDIR=.
+
+#
 # Configuration Paramaters for libpfm library
 #
 ifeq ($(ARCH),ia64)
@@ -159,7 +165,7 @@ OPTIM?=-O
 else
 OPTIM?=-O2
 endif
-CFLAGS+=$(OPTIM) $(DBG) -I$(PFMINCDIR)
+CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a
 
