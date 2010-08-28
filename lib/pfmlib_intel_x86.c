@@ -562,6 +562,13 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
+		for (j=i+1; j < pmu->pme_count; j++) {
+			if (pe[i].code == pe[j].code && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
+				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
+			error++;
+			}
+		}
+
 		for(j=0; j < pe[i].numasks; j++) {
 
 			if (!pe[i].umasks[j].uname) {
