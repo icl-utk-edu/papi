@@ -137,11 +137,14 @@ main(int argc, const char **argv)
 		if (ret != PFM_SUCCESS)
 			errx(1, "cannot get PMU info: %s", pfm_strerror(ret));
 
-		printf("Event %s:\n", fqstr);
-		printf("\tPMU: %s\n", pinfo.desc);
-		printf("\tIDX: %d\n", idx);
+		printf("Requested Event: %s\n", *p);
+		printf("Actual    Event: %s\n", fqstr);
+		printf("PMU            : %s\n", pinfo.desc);
+		printf("IDX            : %d\n", idx);
+		printf("Codes          :");
 		for(j=0; j < count; j++)
-			printf("\tcodes[%d]=0x%"PRIx64"\n", j, codes[j]);
+			printf(" 0x%"PRIx64, codes[j]);
+		putchar('\n');
 
 		free(fqstr);
 		p++;
