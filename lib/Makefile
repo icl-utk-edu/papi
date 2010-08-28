@@ -150,7 +150,9 @@ INC_IA32= pfmlib_intel_x86_priv.h	\
 	events/intel_core_events.h	\
 	events/intel_atom_events.h	\
 	events/intel_nhm_events.h	\
-	events/intel_nhm_unc_events.h
+	events/intel_nhm_unc_events.h	\
+	events/intel_wsm_events.h	\
+	events/intel_wsm_unc_events.h
 
 INC_X86_64=pfmlib_intel_x86_priv.h	\
 	pfmlib_amd64_priv.h		\
@@ -162,7 +164,9 @@ INC_X86_64=pfmlib_intel_x86_priv.h	\
 	events/intel_core_events.h	\
 	events/intel_atom_events.h	\
 	events/intel_nhm_events.h	\
-	events/intel_nhm_unc_events.h
+	events/intel_nhm_unc_events.h	\
+	events/intel_wsm_events.h	\
+	events/intel_wsm_unc_events.h
 
 INC_MIPS64=gen_mips64_events.h
 
