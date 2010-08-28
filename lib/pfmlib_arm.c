@@ -128,7 +128,8 @@ pfm_arm_validate_table(void *this, FILE *fp)
 
 	for(i=0; i < pmu->pme_count; i++) {
 		if (!pe[i].name) {
-			fprintf(fp, "pmu: %s event%d: :: no name\n", pmu->name, i);
+			fprintf(fp, "pmu: %s event%d: :: no name (prev event was %s)\n", pmu->name, i,
+			i > 1 ? pe[i-1].name : "??");
 			error++;
 		}
 		if (!pe[i].desc) {

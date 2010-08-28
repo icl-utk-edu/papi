@@ -527,7 +527,8 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 	for(i=0; i < pmu->pme_count; i++) {
 
 		if (!pe[i].name) {
-			fprintf(fp, "pmu: %s event%d: :: no name\n", pmu->name, i);
+			fprintf(fp, "pmu: %s event%d: :: no name (prev event was %s)\n", pmu->name, i,
+			i > 1 ? pe[i-1].name : "??");
 			error++;
 		}
 
@@ -564,7 +565,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		for(j=0; j < pe[i].numasks; j++) {
 
 			if (!pe[i].umasks[j].uname) {
-				fprintf(fp, "pmu: %s event%d: umask%d :: no name\n", pmu->name, i, j);
+				fprintf(fp, "pmu: %s event%d: %s umask%d :: no name\n", pmu->name, i, pe[i].name, j);
 				error++;
 			}
 			if (pe[i].umasks[j].modhw && (pe[i].umasks[j].modhw | pe[i].modmsk) != pe[i].modmsk) {

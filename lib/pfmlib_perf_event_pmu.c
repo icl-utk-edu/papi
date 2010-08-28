@@ -722,7 +722,8 @@ pfm_perf_validate_table(void *this, FILE *fp)
 	for(i=0; i < perf_event_support.pme_count; i++) {
 
 		if (!perf_pe[i].name) {
-			fprintf(fp, "pmu: %s event%d: :: no name\n", name, i);
+			fprintf(fp, "pmu: %s event%d: :: no name (prev event was %s)\n", pmu->name, i,
+			i > 1 ? perf_pe[i-1].name : "??");
 			error++;
 		}
 
@@ -765,7 +766,7 @@ pfm_perf_validate_table(void *this, FILE *fp)
 				um += j - PERF_MAX_UMASKS;
 			}
 			if (!um->uname) {
-				fprintf(fp, "pmu: %s event%d: umask%d :: no name\n", name, i, j);
+				fprintf(fp, "pmu: %s event%d: %s umask%d :: no name\n", pmu->name, i, perf_pe[i].name, j);
 				error++;
 			}
 
