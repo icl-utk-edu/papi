@@ -184,13 +184,13 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		},
 		{ .uname  = "TOTAL_CYCLES",
 		  .udesc  = "Total cycles using precise uop retired event (Precise Event)",
-		  .ucode  = 0x01 | (16 << 16), /* counter mask = 16 */
+		  .ucode  = 0x01 | (16 << 16), /* cmask = 16 */
 		  .uflags = INTEL_X86_NCOMBO,
 		  .uequiv = "ANY:c=16",
 		},
 		{ .uname  = "ACTIVE_CYCLES",
 		  .udesc  = "Alias for TOTAL_CYCLES (Precise Event)",
-		  .ucode  = 0x01 | (1 << 16), /* counter mask = 1 */
+		  .ucode  = 0x01 | (1 << 16), /* cmask = 1 */
 		  .uflags = INTEL_X86_NCOMBO,
 		  .uequiv = "ANY:c=1",
 		},
@@ -373,7 +373,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 			},
 			{ .uname  = "TOTAL_CYCLES",
 				.udesc  = "Total cycles (Precise Event)",
-				.ucode  = 0x1 | (16 << 16) | (1 <<15), /* inv=1, counter-mask = 16 */
+				.ucode  = 0x1 | (16 << 16) | (1 <<15), /* inv=1, cmask = 16 */
 				.uflags = INTEL_X86_NCOMBO,
 				.uequiv = "ANY_P:c=16:i=1",
 			},
@@ -1549,7 +1549,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .numasks = 3
 	},
 	{ .name   = "L2_TRANSACTIONS",
-	  .desc   = "All L2 transactions",
+	  .desc   = "L2 transactions",
 	  .modmsk = INTEL_V3_ATTRS,
 	  .cntmsk = 0xf,
 	  .ngrp = 1,
