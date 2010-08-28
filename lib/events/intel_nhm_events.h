@@ -82,7 +82,8 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.code = 0x00c4,
 		.cntmsk = 0xf,
 		.modmsk = INTEL_V3_ATTRS, /* because we can fallback to generic counter */
-		.desc =  "count branch instructions at retirement. Specifically, this event counts the retirement of the last micro-op of a branch instruction. Alias to event BR_INST_RETIRED:ANY",
+		.desc =  "count branch instructions at retirement. Specifically, this event counts the retirement of the last micro-op of a branch instruction.",
+		.equiv = "BR_INST_RETIRED:ALL_BRANCHES",
 	},
 	/*
 	 * BEGIN core specific events

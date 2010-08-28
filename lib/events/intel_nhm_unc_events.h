@@ -30,7 +30,7 @@ static const intel_x86_entry_t intel_nhm_unc_pe[]={
 		.desc   = "Uncore clockticks.",
 		.cntmsk = 1ULL << 20,
 		.modmsk = 0,
-		.code   = 0x0000,
+		.code   = 0xffff, /* irrelevant, using a fixed counter only */
 	},
 	{ .name   = "UNC_DRAM_OPEN",
 		.desc   = "DRAM open comamnds issued for read or write",

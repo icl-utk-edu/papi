@@ -133,7 +133,8 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0xc0,
-	.desc = "Instructions retired"
+	.desc = "Instructions retired",
+	.equiv = "INSTR_RET"
   },
 
   {
@@ -179,14 +180,16 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0xc4,
-	.desc = "Branch instructions retired"
+	.desc = "Branch instructions retired",
+	.equiv = "BR_INSTR_RET"
   },
   {
 	.name = "MISPREDICTED_BRANCH_RETIRED",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0xc5,
-	.desc = "Mispredicted branch instruction retired"
+	.desc = "Mispredicted branch instruction retired",
+	.equiv = "BR_MISPRED_RET"
   },
 
   /*
