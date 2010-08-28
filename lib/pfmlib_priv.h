@@ -185,6 +185,8 @@ extern pfmlib_pmu_t cell_support;
 extern pfmlib_pmu_t perf_event_support;
 extern pfmlib_pmu_t intel_wsm_support;
 extern pfmlib_pmu_t intel_wsm_unc_support;
+extern pfmlib_pmu_t arm_cortex_a8_support;
+extern pfmlib_pmu_t arm_cortex_a9_support;
 
 extern char *pfmlib_forced_pmu;
 

@@ -126,6 +126,9 @@ typedef enum {
 	PFM_PMU_AMD64_FAM10H_SHANGHAI,	/* AMD AMD64 Fam10h Shanghai RevC  */
 	PFM_PMU_AMD64_FAM10H_ISTANBUL,	/* AMD AMD64 Fam10h Istanbul RevD  */
 
+	PFM_PMU_ARM_CORTEX_A8,		/* ARM Cortex A8 */
+	PFM_PMU_ARM_CORTEX_A9,		/* ARM Cortex A9 */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

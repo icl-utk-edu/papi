@@ -119,6 +119,11 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&cell_support,
 #endif
 
+#ifdef CONFIG_PFMLIB_ARCH_ARM
+	&arm_cortex_a8_support,
+	&arm_cortex_a9_support,
+#endif
+
 #ifdef __linux__
 	&perf_event_support,
 #endif

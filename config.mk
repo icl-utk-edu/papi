@@ -51,6 +51,9 @@ endif
 ifeq (sparc64,$(findstring sparc64,$(ARCH)))
 override ARCH=sparc
 endif
+ifeq (armv7,$(findstring armv7,$(ARCH)))
+override ARCH=arm
+endif
 
 #
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
@@ -126,6 +129,10 @@ endif
 
 ifeq ($(ARCH),sparc)
 CONFIG_PFMLIB_ARCH_SPARC=y
+endif
+
+ifeq ($(ARCH),arm)
+CONFIG_PFMLIB_ARCH_ARM=y
 endif
 
 ifeq ($(XTPE_COMPILE_TARGET),linux)
