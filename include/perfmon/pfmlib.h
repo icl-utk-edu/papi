@@ -269,10 +269,9 @@ extern pfm_err_t pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp);
 #define PFM_ERR_NOMEM	 	-7	/* out of memory */
 #define PFM_ERR_ATTR		-8	/* invalid event attribute */
 #define PFM_ERR_ATTR_VAL	-9	/* invalid event attribute value */
-#define PFM_ERR_ATTR_SET	-10	/* attribute value hardcoded */
+#define PFM_ERR_ATTR_SET	-10	/* attribute value already set */
 #define PFM_ERR_TOOMANY		-11	/* too many parameters */
 #define PFM_ERR_TOOSMALL	-12	/* parameter is too small */
-#define PFM_ERR_ATTR_HW		-13	/* attribute hardwired, cannot change*/
 
 /*
  * event, attribute iterators

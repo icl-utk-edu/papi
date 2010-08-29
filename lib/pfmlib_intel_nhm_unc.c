@@ -215,13 +215,13 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	}
 
 	if ((modhw & _NHM_UNC_ATTR_I) && reg->nhm_unc.usel_inv)
-		return PFM_ERR_ATTR_HW;
+		return PFM_ERR_ATTR_SET;
 	if ((modhw & _NHM_UNC_ATTR_E) && reg->nhm_unc.usel_edge)
-		return PFM_ERR_ATTR_HW;
+		return PFM_ERR_ATTR_SET;
 	if ((modhw & _NHM_UNC_ATTR_C) && reg->nhm_unc.usel_cnt_mask)
-		return PFM_ERR_ATTR_HW;
+		return PFM_ERR_ATTR_SET;
 	if ((modhw & _NHM_UNC_ATTR_O) && reg->nhm_unc.usel_occ)
-		return PFM_ERR_ATTR_HW;
+		return PFM_ERR_ATTR_SET;
 
 	/*
 	 * check that there is at least of unit mask in each unit
