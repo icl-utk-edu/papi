@@ -58,6 +58,33 @@ is_model_umask(void *this, int pidx, int attr)
 	return model == 0 || model == pfm_intel_x86_cfg.model;
 }
 
+static void
+pfm_intel_x86_display_reg(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t reg)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	/*
+	 * handle generic counters
+	 */
+	__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d "
+		       "en=%d int=%d inv=%d edge=%d cnt_mask=%d",
+			reg.val,
+			reg.sel_event_select,
+			reg.sel_unit_mask,
+			reg.sel_os,
+			reg.sel_usr,
+			reg.sel_en,
+			reg.sel_int,
+			reg.sel_inv,
+			reg.sel_edge,
+			reg.sel_cnt_mask);
+
+	if (pe[e->event].modmsk & _INTEL_X86_ATTR_T)
+		__pfm_vbprintf(" any=%d", reg.sel_anythr);
+
+	__pfm_vbprintf("] %s\n", e->fstr);
+}
+
+
 static int
 pfm_intel_x86_numasks(void *this, int pidx)
 {
@@ -410,7 +437,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_I, name), reg->sel_inv);
 	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_C, name), reg->sel_cnt_mask);
 
-	if (pfm_intel_x86_cfg.arch_version > 2)
+	if (pe[e->event].modmsk & _INTEL_X86_ATTR_T)
 		evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_T, name), reg->sel_anythr);
 
 	return PFM_SUCCESS;
@@ -446,7 +473,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 		if (reg.sel_usr)
 			attrs->plm |= PFM_PLM3;
 	}
-	pfm_intel_x86_display_reg(reg, e->fstr);
+	pfm_intel_x86_display_reg(this, e, reg);
 	return PFM_SUCCESS;
 }
 
@@ -474,36 +501,6 @@ pfm_intel_x86_event_is_valid(void *this, int pidx)
 {
 	pfmlib_pmu_t *p = this;
 	return pidx >= 0 && pidx < p->pme_count;
-}
-
-void
-pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr)
-{
-	/*
-	 * handle generic counters
-	 */
-	__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d "
-		       "en=%d int=%d inv=%d edge=%d cnt_mask=%d",
-			reg.val,
-			reg.sel_event_select,
-			reg.sel_unit_mask,
-			reg.sel_os,
-			reg.sel_usr,
-			reg.sel_en,
-			reg.sel_int,
-			reg.sel_inv,
-			reg.sel_edge,
-			reg.sel_cnt_mask);
-
-	switch(pfm_intel_x86_cfg.arch_version) {
-	case 3:
-		/* v3 adds anythread */
-		__pfm_vbprintf(" any=%d", reg.sel_anythr);
-		break;
-	default:
-		break;
-	}
-	__pfm_vbprintf("] %s\n", fstr);
 }
 
 int

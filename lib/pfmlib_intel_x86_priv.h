@@ -223,7 +223,6 @@ intel_x86_uflag(void *this, pfmlib_event_desc_t *e, int attr, int flag)
 }
 
 extern int pfm_intel_x86_detect(void);
-extern void pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr);
 extern int pfm_intel_x86_add_defaults(void *this, int pidx, char *umask_str, unsigned int msk, unsigned int *umask);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
