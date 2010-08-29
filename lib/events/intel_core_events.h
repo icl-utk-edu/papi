@@ -237,9 +237,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .desc =  "Number of micro-ops dispatched for execution",
 	},
 	{ .name = "RS_UOPS_DISPATCHED_NONE",
-	  .code = 0xa0 | (1 << 23) | (1 << 24),
+	  .code = 0xa0 | (1 << 23) | (1 << 24), /* inv=1 cmask=1 */
 	  .cntmsk = 0x3,
-	  .modmsk = _INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K,
 	  .equiv = "RS_UOPS_DISPATCHED:i=1:c=1",
 	  .desc =  "Number of of cycles in which no micro-ops is dispatched for execution",
 	},
