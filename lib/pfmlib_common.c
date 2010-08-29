@@ -719,14 +719,17 @@ found:
 	 */
 	if (einfo.equiv) {
 		ret = pfmlib_parse_equiv_event(pmu, einfo.equiv, d);
+		if (ret == PFM_SUCCESS) {
+			i = d->event;
+			pmu->get_event_info(pmu, i, &einfo);
+		}
 	} else {
 		d->pmu = pmu;
 		d->event = i; /* private index */
-
-		ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
-		if (ret == PFM_SUCCESS)
-			ret = pfmlib_sanitize_event(d);
 	}
+	ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
+	if (ret == PFM_SUCCESS)
+		ret = pfmlib_sanitize_event(d);
 error:
 	free(str);
 	return ret;
