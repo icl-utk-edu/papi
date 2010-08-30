@@ -384,13 +384,13 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	}
 
 	if (type & PERF_SAMPLE_CPU) {
-		struct { uint32_t cpu, res; } cpu;
+		struct { uint32_t cpu, reserved; } cpu;
 		ret = perf_read_buffer(hw->buf, hw->pgmsk, &cpu, sizeof(cpu));
 		if (ret) {
 			warnx( "cannot read cpu");
 			return -1;
 		}
-		fprintf(fp, "CPU:%u CPU_RES:%u ", cpu.cpu, cpu.res);
+		fprintf(fp, "CPU:%u ", cpu.cpu);
 		sz -= sizeof(cpu);
 	}
 
