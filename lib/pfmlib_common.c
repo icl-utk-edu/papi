@@ -765,27 +765,11 @@ pfm_get_version(void)
 	return LIBPFM_VERSION;
 }
 
-static pfmlib_pmu_t *
-pfmlib_get_pmu_next(pfm_pmu_t p)
-{
-	pfmlib_pmu_t *pmu;
-	int i;
-
-	for(i = 0; i < PFMLIB_NUM_PMUS; i++) {
-		pmu = pfmlib_pmus[i];
-		if (pmu->pmu == p)
-			goto found;
-	}
-	return NULL;
-found:
-	return i == (PFMLIB_NUM_PMUS-1) ? NULL : pfmlib_pmus[i+1];
-}
-
 int
 pfm_get_event_next(int idx)
 {
 	pfmlib_pmu_t *pmu;
-	int pidx, px;
+	int i = 0, pidx, px;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
@@ -796,17 +780,23 @@ pfm_get_event_next(int idx)
 		return pfmlib_pidx2idx(pmu, pidx);
 
 	px = idx2pmu(idx);
+
 	/*
 	 * ran out of event, move to next PMU
 	 */
 retry:
-	pmu = pfmlib_get_pmu_next(px);
-	if (!pmu)
+	for(; i < PFMLIB_NUM_PMUS; i++) {
+		pmu = pfmlib_pmus[i];
+		if (pmu->pmu == px)
+			break;
+	}
+	if (i >= (PFMLIB_NUM_PMUS-1))
 		return -1;
 
+	pmu = pfmlib_pmus[++i];
 	pidx = pmu->get_event_first(pmu);
 	if (pidx == -1) {
-		px++;
+		px = pmu->pmu;
 		goto retry;
 	}
 	return pfmlib_pidx2idx(pmu, pidx);
