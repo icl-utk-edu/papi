@@ -52,28 +52,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 #endif
 
-#ifdef CONFIG_PFMLIB_ARCH_X86_64
-	//&pentium4_support,
-	&amd64_k7_support,
-	&amd64_k8_revb_support,
-	&amd64_k8_revc_support,
-	&amd64_k8_revd_support,
-	&amd64_k8_reve_support,
-	&amd64_k8_revf_support,
-	&amd64_k8_revg_support,
-	&amd64_fam10h_barcelona_support,
-	&amd64_fam10h_shanghai_support,
-	&amd64_fam10h_istanbul_support,
-	&intel_core_support,
-	&intel_atom_support,
-	&intel_nhm_support,
-	&intel_nhm_unc_support,
-	&intel_wsm_support,
-	&intel_wsm_unc_support,
-	&intel_x86_arch_support, /* must always be last for x86-64 */
-#endif
-
-#ifdef CONFIG_PFMLIB_ARCH_I386
+#ifdef CONFIG_PFMLIB_ARCH_X86
 	//&pentium4_support,
 	&intel_pii_support,
 	&intel_ppro_support,
@@ -96,7 +75,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_nhm_unc_support,
 	&intel_wsm_support,
 	&intel_wsm_unc_support,
-	&intel_x86_arch_support, /* must always be last for i386 */
+	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_MIPS64

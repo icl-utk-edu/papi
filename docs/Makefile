@@ -45,11 +45,7 @@ ARCH_X86=libpfm_intel_core.3	\
 	 libpfm_intel_p6.3	\
 	 libpfm_intel_coreduo.3
 
-ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
-ARCH_MAN=$(ARCH_X86)
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
+ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
 ARCH_MAN=$(ARCH_X86)
 endif
 
