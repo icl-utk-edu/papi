@@ -255,42 +255,6 @@ void amd64_display_reg(void *this, pfm_amd64_reg_t reg, char *fstr)
 			fstr);
 }
 
-#if 0
-static void
-amd64_setup(amd64_rev_t revision)
-{
-	int i;
-
-        amd64_pmu.revision = revision;
-        amd64_pmu.name = (char *)amd64_cpu_strs[revision];
-        amd64_support.name  = amd64_pmu.name;
-
-	/* K8 (default) */
-	amd64_pmu.events	= amd64_k8_table.events;
-	amd64_pmu.num_events	= amd64_k8_table.num;
-
-	/* K7 */
-        if (amd64_pmu.revision == AMD64_K7) {
-		amd64_pmu.events	= amd64_k7_table.events;
-		amd64_pmu.num_events	= amd64_k7_table.num;
-	}
-
-	/* Barcelona, Shanghai, Istanbul, Magny-Cours */
-	if (IS_FAMILY_10H()) {
-		amd64_pmu.events	= amd64_fam10h_table.events;
-		amd64_pmu.num_events	= amd64_fam10h_table.num;
-	}
-	/*
-	 * calculate number of useable events
-	 * on AMD64, some events may be restricted to certain steppings
-	 */
-	amd64_support.pme_count = 0;
-	for(i= 0; i < amd64_num_events; i++)
-		if (amd64_event_valid(i))
-			amd64_support.pme_count++;
-}
-#endif
-
 int
 pfm_amd64_detect(void *this)
 {
@@ -322,55 +286,6 @@ pfm_amd64_detect(void *this)
 
 	return PFM_SUCCESS;
 }
-
-void
-pfm_amd64_force(void)
-{
-        char *str;
-        /* parses LIBPFM_FORCE_PMU=amd64,<family>,<model>,<stepping> */
-	str = strchr(pfm_cfg.forced_pmu, ',');
-        if (!str || *str++ != ',')
-                goto failed;
-        pfm_amd64_cfg.family = strtol(str, &str, 10);
-        if (!*str || *str++ != ',')
-                goto failed;
-        pfm_amd64_cfg.model = strtol(str, &str, 10);
-        if (!*str || *str++ != ',')
-                goto failed;
-        pfm_amd64_cfg.stepping = strtol(str, &str, 10);
-        if (!*str)
-                goto done;
-failed:
-        DPRINT("force failed at: %s\n", str ? str : "<NULL>");
-        /* force AMD64 =  force to Barcelona */
-        pfm_amd64_cfg.family = 16;
-        pfm_amd64_cfg.model  = 2;
-        pfm_amd64_cfg.stepping = 2;
-done:
-        amd64_get_revision(&pfm_amd64_cfg);
-}
-
-#if 0
-static int
-pfm_amd64_init(void *this)
-{
-        if (pfm_cfg.forced_pmu)
-                pfm_amd64_force();
-
-        __pfm_vbprintf("AMD family=%d model=0x%x stepping=0x%x rev=%s, %s\n",
-                       amd64_family,
-                       amd64_model,
-                       amd64_stepping,
-                       amd64_rev_strs[amd64_revision],
-                       amd64_cpu_strs[amd64_revision]);
-
-        amd64_setup(amd64_revision);
-
-	amd64_support.pe = amd64_events;
-	
-        return PFM_SUCCESS;
-}
-#endif
 
 static int
 amd64_add_defaults(void *this, int idx, char *umask_str, unsigned int msk, uint64_t *umask)
