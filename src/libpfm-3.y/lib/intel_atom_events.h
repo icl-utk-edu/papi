@@ -120,7 +120,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	 * BEGIN non architectural events
 	 */
 	{ .pme_name   = "SIMD_INSTR_RETIRED",
-	  .pme_desc   = "SIMD Instructions retired.",
+	  .pme_desc   = "SIMD Instructions retired",
 	  .pme_code   = 0xCE,
 	  .pme_flags  = 0,
 	}, 
@@ -136,21 +136,21 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 9,
 	}, 
 	{ .pme_name   = "SIMD_SAT_INSTR_RETIRED",
-	  .pme_desc   = "Saturated arithmetic instructions retired.",
+	  .pme_desc   = "Saturated arithmetic instructions retired",
 	  .pme_code   = 0xCF,
 	  .pme_flags  = 0,
 	}, 
 	{ .pme_name   = "ICACHE",
-	  .pme_desc   = "Instruction fetches.",
+	  .pme_desc   = "Instruction fetches",
 	  .pme_code   = 0x80,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "ACCESSES",
-		  .pme_udesc  = "Instruction fetches, including uncacheacble fetches.",
+		  .pme_udesc  = "Instruction fetches, including uncacheacble fetches",
 		  .pme_ucode  = 0x3,
 		}, 
 		{ .pme_uname  = "MISSES",
-		  .pme_udesc  = "count all instructions fetches that miss tha icache or produce memory requests. This includes uncacheache fetches. Any instruction fetch miss is counted only once and not once for every cycle it is outstanding.",
+		  .pme_udesc  = "count all instructions fetches that miss tha icache or produce memory requests. This includes uncacheache fetches. Any instruction fetch miss is counted only once and not once for every cycle it is outstanding",
 		  .pme_ucode  = 0x2,
 		}, 
 	  },
@@ -167,20 +167,20 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 7
 	}, 
 	{ .pme_name   = "UOPS_RETIRED",
-	  .pme_desc   = "Micro-ops retired.",
+	  .pme_desc   = "Micro-ops retired",
 	  .pme_code   = 0xC2,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "ANY",
-		  .pme_udesc  = "Micro-ops retired.",
+		  .pme_udesc  = "Micro-ops retired",
 		  .pme_ucode  = 0x10,
 		}, 
 		{ .pme_uname  = "STALLED_CYCLES",
-		  .pme_udesc  = "Cycles no micro-ops retired.",
+		  .pme_udesc  = "Cycles no micro-ops retired",
 		  .pme_ucode  = 0x1d010, /* inv=1 cnt_mask=1 */
 		}, 
 		{ .pme_uname  = "STALLS",
-		  .pme_udesc  = "Periods no micro-ops retired.",
+		  .pme_udesc  = "Periods no micro-ops retired",
 		  .pme_ucode  = 0x1d410, /* inv=1 edge=1, cnt_mask=1 */
 		}, 
 	  },
@@ -197,31 +197,31 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "SIMD_COMP_INST_RETIRED",
-	  .pme_desc   = "Retired computational Streaming SIMD Extensions (SSE) packed-single instructions.",
+	  .pme_desc   = "Retired computational Streaming SIMD Extensions (SSE) instructions",
 	  .pme_code   = 0xCA,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "PACKED_SINGLE",
-		  .pme_udesc  = "Retired computational Streaming SIMD Extensions (SSE) packed-single instructions.",
+		  .pme_udesc  = "Retired computational Streaming SIMD Extensions (SSE) packed-single instructions",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "SCALAR_SINGLE",
-		  .pme_udesc  = "Retired computational Streaming SIMD Extensions (SSE) scalar-single instructions.",
+		  .pme_udesc  = "Retired computational Streaming SIMD Extensions (SSE) scalar-single instructions",
 		  .pme_ucode  = 0x2,
 		}, 
 		{ .pme_uname  = "PACKED_DOUBLE",
-		  .pme_udesc  = "Retired computational Streaming SIMD Extensions 2 (SSE2) packed-double instructions.",
+		  .pme_udesc  = "Retired computational Streaming SIMD Extensions 2 (SSE2) packed-double instructions",
 		  .pme_ucode  = 0x4,
 		}, 
 		{ .pme_uname  = "SCALAR_DOUBLE",
-		  .pme_udesc  = "Retired computational Streaming SIMD Extensions 2 (SSE2) scalar-double instructions.",
+		  .pme_udesc  = "Retired computational Streaming SIMD Extensions 2 (SSE2) scalar-double instructions",
 		  .pme_ucode  = 0x8,
 		}, 
 	  },
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "SNOOP_STALL_DRV",
-	  .pme_desc   = "Bus stalled for snoops.",
+	  .pme_desc   = "Bus stalled for snoops",
 	  .pme_code   = 0x7E,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -231,7 +231,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_TRANS_BURST",
-	  .pme_desc   = "Burst (full cache-line) bus transactions.",
+	  .pme_desc   = "Burst (full cache-line) bus transactions",
 	  .pme_code   = 0x6E,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -241,23 +241,23 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "SIMD_SAT_UOP_EXEC",
-	  .pme_desc   = "SIMD saturated arithmetic micro-ops executed.",
+	  .pme_desc   = "SIMD saturated arithmetic micro-ops executed",
 	  .pme_code   = 0xB1,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "S",
-		  .pme_udesc  = "SIMD saturated arithmetic micro-ops executed.",
+		  .pme_udesc  = "SIMD saturated arithmetic micro-ops executed",
 		  .pme_ucode  = 0x0,
 		}, 
 		{ .pme_uname  = "AR",
-		  .pme_udesc  = "SIMD saturated arithmetic micro-ops retired.",
+		  .pme_udesc  = "SIMD saturated arithmetic micro-ops retired",
 		  .pme_ucode  = 0x80,
 		}, 
 	  },
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "BUS_TRANS_IO",
-	  .pme_desc   = "IO bus transactions.",
+	  .pme_desc   = "IO bus transactions",
 	  .pme_code   = 0x6C,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -267,7 +267,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_TRANS_RFO",
-	  .pme_desc   = "RFO bus transactions.",
+	  .pme_desc   = "RFO bus transactions",
 	  .pme_code   = 0x66,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -277,7 +277,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "SIMD_ASSIST",
-	  .pme_desc   = "SIMD assists invoked.",
+	  .pme_desc   = "SIMD assists invoked",
 	  .pme_code   = 0xCD,
 	  .pme_flags  = 0,
 	}, 
@@ -287,7 +287,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "ANY_P",
-		  .pme_udesc  = "Instructions retired using generic counter (precise event).",
+		  .pme_udesc  = "Instructions retired using generic counter (precise event)",
 		  .pme_ucode  = 0x0,
 	  	  .pme_flags = PFMLIB_INTEL_ATOM_PEBS
 		}, 
@@ -311,12 +311,12 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "MUL",
-	  .pme_desc   = "Multiply operations executed.",
+	  .pme_desc   = "Multiply operations executed",
 	  .pme_code   = 0x12,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "S",
-		  .pme_udesc  = "Multiply operations executed.",
+		  .pme_udesc  = "Multiply operations executed",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "AR",
@@ -327,12 +327,12 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "DIV",
-	  .pme_desc   = "Divide operations executed.",
+	  .pme_desc   = "Divide operations executed",
 	  .pme_code   = 0x13,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "S",
-		  .pme_udesc  = "Divide operations executed.",
+		  .pme_udesc  = "Divide operations executed",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "AR",
@@ -343,7 +343,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "BUS_TRANS_P",
-	  .pme_desc   = "Partial bus transactions.",
+	  .pme_desc   = "Partial bus transactions",
 	  .pme_code   = 0x6b,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -353,7 +353,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_IO_WAIT",
-	  .pme_desc   = "IO requests waiting in the bus queue.",
+	  .pme_desc   = "IO requests waiting in the bus queue",
 	  .pme_code   = 0x7F,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -362,7 +362,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "L2_M_LINES_IN",
-	  .pme_desc   = "L2 cache line modifications.",
+	  .pme_desc   = "L2 cache line modifications",
 	  .pme_code   = 0x25,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -371,7 +371,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "L2_LINES_IN",
-	  .pme_desc   = "L2 cache misses.",
+	  .pme_desc   = "L2 cache misses",
 	  .pme_code   = 0x24,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -381,7 +381,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUSQ_EMPTY",
-	  .pme_desc   = "Bus queue is empty.",
+	  .pme_desc   = "Bus queue is empty",
 	  .pme_code   = 0x7D,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -400,7 +400,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 7
 	}, 
 	{ .pme_name   = "BUS_HITM_DRV",
-	  .pme_desc   = "HITM signal asserted.",
+	  .pme_desc   = "HITM signal asserted",
 	  .pme_code   = 0x7B,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -409,23 +409,23 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "ITLB",
-	  .pme_desc   = "ITLB hits.",
+	  .pme_desc   = "ITLB hits",
 	  .pme_code   = 0x82,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "FLUSH",
-		  .pme_udesc  = "ITLB flushes.",
+		  .pme_udesc  = "ITLB flushes",
 		  .pme_ucode  = 0x4,
 		}, 
 		{ .pme_uname  = "MISSES",
-		  .pme_udesc  = "ITLB misses.",
+		  .pme_udesc  = "ITLB misses",
 		  .pme_ucode  = 0x2,
 		}, 
 	  },
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "BUS_TRANS_MEM",
-	  .pme_desc   = "Memory bus transactions.",
+	  .pme_desc   = "Memory bus transactions",
 	  .pme_code   = 0x6F,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -435,7 +435,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_TRANS_PWR",
-	  .pme_desc   = "Partial write bus transaction.",
+	  .pme_desc   = "Partial write bus transaction",
 	  .pme_code   = 0x6A,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -450,7 +450,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_flags  = 0,
 	}, 
 	{ .pme_name   = "BUS_TRANS_INVAL",
-	  .pme_desc   = "Invalidate bus transactions.",
+	  .pme_desc   = "Invalidate bus transactions",
 	  .pme_code   = 0x69,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -460,7 +460,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "SIMD_UOP_TYPE_EXEC",
-	  .pme_desc   = "SIMD packed multiply micro-ops executed",
+	  .pme_desc   = "SIMD micro-ops executed",
 	  .pme_code   = 0xB3,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
@@ -516,28 +516,28 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 12
 	}, 
 	{ .pme_name   = "SIMD_INST_RETIRED",
-	  .pme_desc   = "Retired Streaming SIMD Extensions (SSE) packed-single instructions.",
+	  .pme_desc   = "Retired Streaming SIMD Extensions (SSE)",
 	  .pme_code   = 0xC7,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "PACKED_SINGLE",
-		  .pme_udesc  = "Retired Streaming SIMD Extensions (SSE) packed-single instructions.",
+		  .pme_udesc  = "Retired Streaming SIMD Extensions (SSE) packed-single instructions",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "SCALAR_SINGLE",
-		  .pme_udesc  = "Retired Streaming SIMD Extensions (SSE) scalar-single instructions.",
+		  .pme_udesc  = "Retired Streaming SIMD Extensions (SSE) scalar-single instructions",
 		  .pme_ucode  = 0x2,
 		}, 
 		{ .pme_uname  = "PACKED_DOUBLE",
-		  .pme_udesc  = "Retired Streaming SIMD Extensions 2 (SSE2) packed-double instructions.",
+		  .pme_udesc  = "Retired Streaming SIMD Extensions 2 (SSE2) packed-double instructions",
 		  .pme_ucode  = 0x4,
 		}, 
 		{ .pme_uname  = "SCALAR_DOUBLE",
-		  .pme_udesc  = "Retired Streaming SIMD Extensions 2 (SSE2) scalar-double instructions.",
+		  .pme_udesc  = "Retired Streaming SIMD Extensions 2 (SSE2) scalar-double instructions",
 		  .pme_ucode  = 0x8,
 		}, 
 		{ .pme_uname  = "VECTOR",
-		  .pme_udesc  = "Retired Streaming SIMD Extensions 2 (SSE2) vector instructions.",
+		  .pme_udesc  = "Retired Streaming SIMD Extensions 2 (SSE2) vector instructions",
 		  .pme_ucode  = 0x10,
 		}, 
 		{ .pme_uname  = "ANY",
@@ -548,17 +548,17 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 6
 	}, 
 	{ .pme_name   = "CYCLES_DIV_BUSY",
-	  .pme_desc   = "Cycles the divider is busy.",
+	  .pme_desc   = "Cycles the divider is busy",
 	  .pme_code   = 0x14,
 	  .pme_flags  = 0,
 	}, 
 	{ .pme_name   = "PREFETCH",
-	  .pme_desc   = "Streaming SIMD Extensions (SSE) PrefetchT0 instructions executed.",
+	  .pme_desc   = "Streaming SIMD Extensions (SSE) PrefetchT0 instructions executed",
 	  .pme_code   = 0x7,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "PREFETCHT0",
-		  .pme_udesc  = "Streaming SIMD Extensions (SSE) PrefetchT0 instructions executed.",
+		  .pme_udesc  = "Streaming SIMD Extensions (SSE) PrefetchT0 instructions executed",
 		  .pme_ucode  = 0x01,
 		}, 
 		{ .pme_uname  = "SW_L2",
@@ -584,7 +584,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 9
 	}, 
 	{ .pme_name   = "SIMD_UOPS_EXEC",
-	  .pme_desc   = "SIMD micro-ops executed (excluding stores).",
+	  .pme_desc   = "SIMD micro-ops executed (excluding stores)",
 	  .pme_code   = 0xB0,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
@@ -600,12 +600,12 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "HW_INT_RCV",
-	  .pme_desc   = "Hardware interrupts received.",
+	  .pme_desc   = "Hardware interrupts received",
 	  .pme_code   = 0xC8,
 	  .pme_flags  = 0,
 	}, 
 	{ .pme_name   = "BUS_TRANS_BRD",
-	  .pme_desc   = "Burst read bus transactions.",
+	  .pme_desc   = "Burst read bus transactions",
 	  .pme_code   = 0x65,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -620,7 +620,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_flags  = 0,
 	}, 
 	{ .pme_name   = "BUS_DATA_RCV",
-	  .pme_desc   = "Bus cycles while processor receives data.",
+	  .pme_desc   = "Bus cycles while processor receives data",
 	  .pme_code   = 0x64,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -629,60 +629,60 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "MACHINE_CLEARS",
-	  .pme_desc   = "Self-Modifying Code detected.",
+	  .pme_desc   = "Self-Modifying Code detected",
 	  .pme_code   = 0xC3,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "SMC",
-		  .pme_udesc  = "Self-Modifying Code detected.",
+		  .pme_udesc  = "Self-Modifying Code detected",
 		  .pme_ucode  = 0x1,
 		}, 
 	  },
 	  .pme_numasks = 1
 	}, 
 	{ .pme_name   = "BR_INST_RETIRED",
-	  .pme_desc   = "Retired branch instructions.",
+	  .pme_desc   = "Retired branch instructions",
 	  .pme_code   = 0xC4,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "ANY",
-		  .pme_udesc  = "Retired branch instructions.",
+		  .pme_udesc  = "Retired branch instructions",
 		  .pme_ucode  = 0x0,
 		}, 
 		{ .pme_uname  = "PRED_NOT_TAKEN",
-		  .pme_udesc  = "Retired branch instructions that were predicted not-taken.",
+		  .pme_udesc  = "Retired branch instructions that were predicted not-taken",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "MISPRED_NOT_TAKEN",
-		  .pme_udesc  = "Retired branch instructions that were mispredicted not-taken.",
+		  .pme_udesc  = "Retired branch instructions that were mispredicted not-taken",
 		  .pme_ucode  = 0x2,
 		}, 
 		{ .pme_uname  = "PRED_TAKEN",
-		  .pme_udesc  = "Retired branch instructions that were predicted taken.",
+		  .pme_udesc  = "Retired branch instructions that were predicted taken",
 		  .pme_ucode  = 0x4,
 		}, 
 		{ .pme_uname  = "MISPRED_TAKEN",
-		  .pme_udesc  = "Retired branch instructions that were mispredicted taken.",
+		  .pme_udesc  = "Retired branch instructions that were mispredicted taken",
 		  .pme_ucode  = 0x8,
 		}, 
 		{ .pme_uname  = "MISPRED",
-		  .pme_udesc  = "Retired mispredicted branch instructions (precise event).",
+		  .pme_udesc  = "Retired mispredicted branch instructions (precise event)",
 	  	  .pme_flags = PFMLIB_INTEL_ATOM_PEBS,
 		  .pme_ucode  = 0xA,
 		}, 
 		{ .pme_uname  = "TAKEN",
-		  .pme_udesc  = "Retired taken branch instructions.",
+		  .pme_udesc  = "Retired taken branch instructions",
 		  .pme_ucode  = 0xC,
 		}, 
 		{ .pme_uname  = "ANY1",
-		  .pme_udesc  = "Retired branch instructions.",
+		  .pme_udesc  = "Retired branch instructions",
 		  .pme_ucode  = 0xF,
 		}, 
 	  },
 	  .pme_numasks = 8
 	}, 
 	{ .pme_name   = "L2_ADS",
-	  .pme_desc   = "Cycles L2 address bus is in use.",
+	  .pme_desc   = "Cycles L2 address bus is in use",
 	  .pme_code   = 0x21,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -696,7 +696,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_flags  = 0,
 	}, 
 	{ .pme_name   = "BUS_TRANS_WB",
-	  .pme_desc   = "Explicit writeback bus transactions.",
+	  .pme_desc   = "Explicit writeback bus transactions",
 	  .pme_code   = 0x67,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -706,12 +706,12 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "MACRO_INSTS",
-	  .pme_desc   = "Non-CISC nacro instructions decoded ",
+	  .pme_desc   = "Macro instructions decoded",
 	  .pme_code   = 0xAA,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "NON_CISC_DECODED",
-		  .pme_udesc  = "Non-CISC nacro instructions decoded ",
+		  .pme_udesc  = "Non-CISC macro instructions decoded",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "ALL_DECODED",
@@ -722,7 +722,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "L2_LINES_OUT",
-	  .pme_desc   = "L2 cache lines evicted. ",
+	  .pme_desc   = "L2 cache lines evicted",
 	  .pme_code   = 0x26,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -743,12 +743,12 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 9
 	}, 
 	{ .pme_name   = "SEGMENT_REG_LOADS",
-	  .pme_desc   = "Number of segment register loads.",
+	  .pme_desc   = "Number of segment register loads",
 	  .pme_code   = 0x6,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "ANY",
-		  .pme_udesc  = "Number of segment register loads.",
+		  .pme_udesc  = "Number of segment register loads",
 		  .pme_ucode  = 0x80,
 		}, 
 	  },
@@ -769,7 +769,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_flags  = 0,
 	}, 
 	{ .pme_name   = "EXT_SNOOP",
-	  .pme_desc   = "External snoops.",
+	  .pme_desc   = "External snoops",
 	  .pme_code   = 0x77,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -779,44 +779,44 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 7
 	}, 
 	{ .pme_name   = "BACLEARS",
-	  .pme_desc   = "BACLEARS asserted.",
+	  .pme_desc   = "BACLEARS asserted",
 	  .pme_code   = 0xE6,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "ANY",
-		  .pme_udesc  = "BACLEARS asserted.",
+		  .pme_udesc  = "BACLEARS asserted",
 		  .pme_ucode  = 0x1,
 		}, 
 	  },
 	  .pme_numasks = 1
 	}, 
 	{ .pme_name   = "CYCLES_INT_MASKED",
-	  .pme_desc   = "Cycles during which interrupts are disabled.",
+	  .pme_desc   = "Cycles during which interrupts are disabled",
 	  .pme_code   = 0xC6,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "CYCLES_INT_MASKED",
-		  .pme_udesc  = "Cycles during which interrupts are disabled.",
+		  .pme_udesc  = "Cycles during which interrupts are disabled",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "CYCLES_INT_PENDING_AND_MASKED",
-		  .pme_udesc  = "Cycles during which interrupts are pending and disabled.",
+		  .pme_udesc  = "Cycles during which interrupts are pending and disabled",
 		  .pme_ucode  = 0x2,
 		}, 
 	  },
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "FP_ASSIST",
-	  .pme_desc   = "Floating point assists.",
+	  .pme_desc   = "Floating point assists",
 	  .pme_code   = 0x11,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "S",
-		  .pme_udesc  = "Floating point assists for executed instructions.",
+		  .pme_udesc  = "Floating point assists for executed instructions",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "AR",
-		  .pme_udesc  = "Floating point assists for retired instructions.",
+		  .pme_udesc  = "Floating point assists for retired instructions",
 		  .pme_ucode  = 0x81,
 		}, 
 	  },
@@ -833,7 +833,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 7
 	}, 
 	{ .pme_name   = "BUS_TRANS_DEF",
-	  .pme_desc   = "Deferred bus transactions.",
+	  .pme_desc   = "Deferred bus transactions",
 	  .pme_code   = 0x6D,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -843,31 +843,31 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "DATA_TLB_MISSES",
-	  .pme_desc   = "Memory accesses that missed the DTLB.",
+	  .pme_desc   = "Memory accesses that missed the DTLB",
 	  .pme_code   = 0x8,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "DTLB_MISS",
-		  .pme_udesc  = "Memory accesses that missed the DTLB.",
+		  .pme_udesc  = "Memory accesses that missed the DTLB",
 		  .pme_ucode  = 0x7,
 		}, 
 		{ .pme_uname  = "DTLB_MISS_LD",
-		  .pme_udesc  = "DTLB misses due to load operations.",
+		  .pme_udesc  = "DTLB misses due to load operations",
 		  .pme_ucode  = 0x5,
 		}, 
 		{ .pme_uname  = "L0_DTLB_MISS_LD",
-		  .pme_udesc  = "L0 (micro-TLB) misses due to load operations.",
+		  .pme_udesc  = "L0 (micro-TLB) misses due to load operations",
 		  .pme_ucode  = 0x9,
 		}, 
 		{ .pme_uname  = "DTLB_MISS_ST",
-		  .pme_udesc  = "DTLB misses due to store operations.",
+		  .pme_udesc  = "DTLB misses due to store operations",
 		  .pme_ucode  = 0x6,
 		}, 
 	  },
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_BNR_DRV",
-	  .pme_desc   = "Number of Bus Not Ready signals asserted.",
+	  .pme_desc   = "Number of Bus Not Ready signals asserted",
 	  .pme_code   = 0x61,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -909,7 +909,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	   .pme_numasks = 3
 	},
 	{ .pme_name   = "BUS_TRANS_ANY",
-	  .pme_desc   = "All bus transactions.",
+	  .pme_desc   = "All bus transactions",
 	  .pme_code   = 0x70,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -919,22 +919,22 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "MEM_LOAD_RETIRED",
-	  .pme_desc   = "Retired loads that hit the L2 cache (precise event).",
+	  .pme_desc   = "Retired loads that hit the L2 cache (precise event)",
 	  .pme_code   = 0xCB,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
 		{ .pme_uname  = "L2_HIT",
-		  .pme_udesc  = "Retired loads that hit the L2 cache (precise event).",
+		  .pme_udesc  = "Retired loads that hit the L2 cache (precise event)",
 		  .pme_ucode  = 0x1,
 	  	  .pme_flags = PFMLIB_INTEL_ATOM_PEBS
 		}, 
 		{ .pme_uname  = "L2_MISS",
-		  .pme_udesc  = "Retired loads that miss the L2 cache (precise event).",
+		  .pme_udesc  = "Retired loads that miss the L2 cache (precise event)",
 		  .pme_ucode  = 0x2,
 	  	  .pme_flags = PFMLIB_INTEL_ATOM_PEBS
 		}, 
 		{ .pme_uname  = "DTLB_MISS",
-		  .pme_udesc  = "Retired loads that miss the DTLB (precise event).",
+		  .pme_udesc  = "Retired loads that miss the DTLB (precise event)",
 		  .pme_ucode  = 0x4,
 	  	  .pme_flags = PFMLIB_INTEL_ATOM_PEBS
 		}, 
@@ -942,28 +942,28 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 3
 	}, 
 	{ .pme_name   = "X87_COMP_OPS_EXE",
-	  .pme_desc   = "Floating point computational micro-ops executed.",
+	  .pme_desc   = "Floating point computational micro-ops executed",
 	  .pme_code   = 0x10,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "ANY_S",
-		  .pme_udesc  = "Floating point computational micro-ops executed.",
+		  .pme_udesc  = "Floating point computational micro-ops executed",
 		  .pme_ucode  = 0x1,
 		}, 
 		{ .pme_uname  = "ANY_AR",
-		  .pme_udesc  = "Floating point computational micro-ops retired.",
+		  .pme_udesc  = "Floating point computational micro-ops retired",
 		  .pme_ucode  = 0x81,
 		}, 
 	  },
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "PAGE_WALKS",
-	  .pme_desc   = "Number of page-walks executed.",
+	  .pme_desc   = "Number of page-walks executed",
 	  .pme_code   = 0xC,
 	  .pme_flags  = PFMLIB_INTEL_ATOM_UMASK_NCOMBO,
     	  .pme_umasks = { 
 		{ .pme_uname  = "WALKS",
-		  .pme_udesc  = "Number of page-walks executed.",
+		  .pme_udesc  = "Number of page-walks executed",
 		  .pme_ucode  = 0x3 | 1ul << 10,
 		}, 
 		{ .pme_uname  = "CYCLES",
@@ -974,7 +974,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "BUS_LOCK_CLOCKS",
-	  .pme_desc   = "Bus cycles when a LOCK signal is asserted.",
+	  .pme_desc   = "Bus cycles when a LOCK signal is asserted",
 	  .pme_code   = 0x63,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -984,7 +984,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_REQUEST_OUTSTANDING",
-	  .pme_desc   = "Outstanding cacheable data read bus requests duration.",
+	  .pme_desc   = "Outstanding cacheable data read bus requests duration",
 	  .pme_code   = 0x60,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -994,7 +994,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_TRANS_IFETCH",
-	  .pme_desc   = "Instruction-fetch bus transactions.",
+	  .pme_desc   = "Instruction-fetch bus transactions",
 	  .pme_code   = 0x68,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -1004,7 +1004,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_HIT_DRV",
-	  .pme_desc   = "HIT signal asserted.",
+	  .pme_desc   = "HIT signal asserted",
 	  .pme_code   = 0x7A,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -1013,7 +1013,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "BUS_DRDY_CLOCKS",
-	  .pme_desc   = "Bus cycles when data is sent on the bus.",
+	  .pme_desc   = "Bus cycles when data is sent on the bus",
 	  .pme_code   = 0x62,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
@@ -1022,7 +1022,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	}, 
 	{ .pme_name   = "L2_DBUS_BUSY",
-	  .pme_desc   = "Cycles the L2 cache data bus is busy.",
+	  .pme_desc   = "Cycles the L2 cache data bus is busy",
 	  .pme_code   = 0x22,
 	  .pme_flags  = 0,
     	  .pme_umasks = { 
