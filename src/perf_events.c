@@ -1861,6 +1861,15 @@ _papi_pe_init_substrate( int cidx )
 	MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
 	MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
+        /* Error out if kernel too early to support p4 */
+        if (( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) && 
+	    (_papi_hwi_system_info.hw_info.cpuid_family == 15)) {   
+            if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,35)) {
+	       PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
+	       return PAPI_ENOSUPP;
+	    }
+	}
+   
 	/* Setup presets */
 	retval = _papi_pfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
 	if ( retval )
@@ -1869,9 +1878,6 @@ _papi_pe_init_substrate( int cidx )
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[i] = MUTEX_OPEN;
 
-
-        
-   
 	return PAPI_OK;
 }
 
