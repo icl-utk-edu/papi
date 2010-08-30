@@ -1306,6 +1306,8 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 }
 #endif
 
+#define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
+
 inline static int
 partition_events( context_t * ctx, control_state_t * ctl )
 {
@@ -1439,18 +1441,32 @@ tune_up_fd( context_t * ctx, int evt_idx )
    };
 #endif
    
-   
-        struct f_owner_ex fown_ex;
+           /* F_SETOWN_EX is not available until 2.6.32 */
+        if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,32)) {
+	   
+           /* get ownership of the descriptor */
+           ret = fcntl( fd, F_SETOWN, mygettid(  ) );
+           if ( ret == -1 ) {
+	      PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd,
+			 strerror( errno ) );
+	      return ( PAPI_ESYS );
+	   }
+	}
+        else {
+	   
+           struct f_owner_ex fown_ex;
 
-	/* set ownership of the descriptor */   
-        fown_ex.type = F_OWNER_TID;
-        fown_ex.pid  = mygettid();
-        ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
+	   /* set ownership of the descriptor */   
+           fown_ex.type = F_OWNER_TID;
+           fown_ex.pid  = mygettid();
+           ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
    
-	if ( ret == -1 ) {
+	   if ( ret == -1 ) {
 		PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", fd, strerror( errno ) );
 		return ( PAPI_ESYS );
+	   }
 	}
+	   
 	/*
 	 * when you explicitely declare that you want a particular signal,
 	 * even with you use the default signal, the kernel will send more
