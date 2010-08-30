@@ -63,7 +63,7 @@ cpuid(unsigned int op, unsigned int *a, unsigned int *b, unsigned int *c, unsign
 int
 pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 {
-#ifndef (CONFIG_PFMLIB_ARCH_X86)
+#ifndef CONFIG_PFMLIB_ARCH_X86
 	return -1;
 #else
 	unsigned int regs[4];
