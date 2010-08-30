@@ -48,6 +48,9 @@ endif
 ifeq ($(ARCH),x86_64)
 override ARCH=x86
 endif
+ifeq ($(ARCH),amd64)
+override ARCH=x86
+endif
 ifeq (ppc,$(findstring ppc,$(ARCH)))
 override ARCH=powerpc
 endif
