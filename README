@@ -30,7 +30,7 @@ the other processors supported in libpfm3 will be added later on.
 
 This version of libpfm supports:
 	- For AMD X86:
-		AMD Opteron (K7, K8, fam 10h, fam11h)
+		AMD Opteron (K7, K8, fam 10h)
 	- For Intel X86: 
 		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)
 		Intel Yonah (Core Duo/Core Solo),
@@ -38,7 +38,9 @@ This version of libpfm supports:
 		Intel Atom
 		Intel Nehalem (Nehalem, Westmere, Beckton)
 		Intel architectural perfmon v1, v2, v3
-
+	- For ARM:
+		ARMV7 Cortex A8
+		ARMV7 Cortex A9
 
 The core of the library is very generic and not tied to any particular OS interface.
 Thus, it can be compiled on non-Linux platforms, such as MacOS X and OpenSolaris.
