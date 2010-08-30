@@ -366,9 +366,10 @@ pfmlib_init_pmus(void)
 			nsuccess++;
 
 		if (pfm_cfg.forced_pmu) {
-			__pfm_vbprintf("PMU forced to %s %s\n",
+			__pfm_vbprintf("PMU forced to %s (%s) : %s\n",
+					p->name,
 					p->desc,
-					ret == PFM_SUCCESS ? "succeeded" : "failed");
+					ret == PFM_SUCCESS ? "success" : "failure");
 			return ret;
 		}
 	}
