@@ -30,15 +30,7 @@ include $(TOPDIR)/rules.mk
 SRCS=pfmlib_common.c
 
 ifeq ($(SYS),Linux)
-SRCS += pfmlib_perf_event.c pfmlib_perf_event_pmu.c pfmlib_os_linux.c
-endif
-
-ifeq ($(SYS),Darwin)
-SRCS += pfmlib_os_macos.c
-endif
-
-ifeq ($(SYS), SunOS)
-SRCS += pfmlib_os_opensolaris.c
+SRCS += pfmlib_perf_event.c pfmlib_perf_event_pmu.c
 endif
 
 CFLAGS+=-D_REENTRANT -I.

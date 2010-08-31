@@ -45,6 +45,23 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 
 pfm_intel_x86_config_t pfm_intel_x86_cfg;
 
+/*
+ * .byte 0x53 == push ebx. it's universal for 32 and 64 bit
+ * .byte 0x5b == pop ebx.
+ * Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
+ * Using the opcode directly avoids this problem.
+ */
+static inline void
+cpuid(unsigned int op, unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d)
+{
+  __asm__ __volatile__ (".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b"
+       : "=a" (*a),
+	     "=S" (*b),
+		 "=c" (*c),
+		 "=d" (*d)
+       : "a" (op));
+}
+
 static inline int
 is_model_umask(void *this, int pidx, int attr)
 {
@@ -142,31 +159,39 @@ pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx)
 	return x;
 }
 
+/*
+ * detect processor model using cpuid()
+ * based on documentation
+ * http://www.intel.com/Assets/PDF/appnote/241618.pdf
+ */
 int
 pfm_intel_x86_detect(void)
 {
-	int ret;
-	char buffer[128];
+	unsigned int a, b, c, d;
+	char buffer[64];
 
-	ret = pfmlib_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFM_ERR_NOTSUPP;
+	cpuid(0, &a, &b, &c, &d);
+	strncpy(&buffer[0], (char *)(&b), 4);
+	strncpy(&buffer[4], (char *)(&d), 4);
+	strncpy(&buffer[8], (char *)(&c), 4);
+	buffer[12] = '\0';
 
 	/* must be Intel */
 	if (strcmp(buffer, "GenuineIntel"))
 		return PFM_ERR_NOTSUPP;
 
-	ret = pfmlib_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFM_ERR_NOTSUPP;
+	cpuid(1, &a, &b, &c, &d);
 
-	pfm_intel_x86_cfg.family = atoi(buffer);
+	pfm_intel_x86_cfg.family = (a >> 8) & 0xf;  // bits 11 - 8
+	pfm_intel_x86_cfg.model  = (a >> 4) & 0xf;  // Bits  7 - 4
 
-	ret = pfmlib_getcpuinfo_attr("model", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFM_ERR_NOTSUPP;
+	/* extended family */
+	if (pfm_intel_x86_cfg.family == 0xf)
+		pfm_intel_x86_cfg.family += (a >> 20) & 0xff;
 
-	pfm_intel_x86_cfg.model = atoi(buffer);
+	/* extended model */
+	if (pfm_intel_x86_cfg.family >= 0x6)
+		pfm_intel_x86_cfg.model += ((a >> 16) & 0xf) << 4;
 
 	return PFM_SUCCESS;
 }

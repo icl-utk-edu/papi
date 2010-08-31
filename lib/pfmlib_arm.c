@@ -35,6 +35,125 @@
 
 pfm_arm_config_t pfm_arm_cfg;
 
+#ifdef CONFIG_PFMLIB_OS_LINUX
+/*
+ * getl(): our own equivalent to GNU getline() extension.
+ * This avoids a dependency on having a C library with
+ * support for getline().
+ */
+static int getl(char **buffer, size_t *len, FILE *fp)
+{
+#define	GETL_DFL_LEN	32
+	char *b;
+	int c, i = 0;
+	size_t maxsz, maxi, d;
+
+	if (!len || !fp || !buffer)
+		return -1;
+
+	b = *buffer;
+
+	if (!b)
+		*len = 0;
+
+	maxsz = *len;
+	maxi = maxsz - 2;
+
+	while ((c = fgetc(fp)) != EOF) {
+		if (maxsz == 0 || i == maxi) {
+			if (maxsz == 0)
+				maxsz = GETL_DFL_LEN;
+			else
+				maxsz <<= 1;
+
+			if (*buffer)
+				d = &b[i] - *buffer;
+			else
+				d = 0;
+
+			*buffer = realloc(*buffer, maxsz);
+			if (!*buffer)
+				return -1;
+
+			b = *buffer + d;
+			maxi = maxsz - d - 2;
+			i = 0;
+			*len = maxsz;
+		}
+		b[i++] = c;
+		if (c == '\n')
+			break;
+	}
+	b[i] = '\0';
+	return c != EOF ? 0 : -1;
+}
+
+/*
+ * helper function to retrieve one value from /proc/cpuinfo
+ * for internal libpfm use only
+ * attr: the attribute (line) to look for
+ * ret_buf: a buffer to store the value of the attribute (as a string)
+ * maxlen : number of bytes of capacity in ret_buf
+ *
+ * ret_buf is null terminated.
+ *
+ * Return:
+ * 	0 : attribute found, ret_buf populated
+ * 	-1: attribute not found
+ */
+
+int
+pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
+{
+	FILE *fp = NULL;
+	int ret = -1;
+	size_t attr_len, buf_len = 0;
+	char *p, *value = NULL;
+	char *buffer = NULL;
+
+	if (attr == NULL || ret_buf == NULL || maxlen < 1)
+		return -1;
+
+	attr_len = strlen(attr);
+
+	fp = fopen("/proc/cpuinfo", "r");
+	if (fp == NULL)
+		return -1;
+
+	while(getl(&buffer, &buf_len, fp) != -1){
+
+		/* skip  blank lines */
+		if (*buffer == '\n')
+			continue;
+
+		p = strchr(buffer, ':');
+		if (p == NULL)
+			goto error;
+
+		/*
+		 * p+2: +1 = space, +2= firt character
+		 * strlen()-1 gets rid of \n
+		 */
+		*p = '\0';
+		value = p+2;
+
+		value[strlen(value)-1] = '\0';
+
+		if (!strncmp(attr, buffer, attr_len))
+			break;
+	}
+	strncpy(ret_buf, value, maxlen-1);
+	ret_buf[maxlen-1] = '\0';
+	ret = 0;
+error:
+	free(buffer);
+	fclose(fp);
+	return ret;
+}
+#else
+#error "need to define helper to access processor identification"
+#endif
+
 int
 pfm_arm_detect(void)
 {

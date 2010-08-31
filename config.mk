@@ -187,3 +187,9 @@ endif
 ifeq ($(CONFIG_PFMLIB_DEBUG),y)
 CFLAGS += -DCONFIG_PFMLIB_DEBUG
 endif
+
+# compiling for linux
+# used by ARM
+ifeq ($(SYS),Linux)
+CFLAGS += -DCONFIG_PFMLIB_OS_LINUX
+endif
