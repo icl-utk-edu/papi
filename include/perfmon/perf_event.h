@@ -446,6 +446,14 @@ enum perf_callchain_context {
 #define __NR_perf_event_open 319
 #endif
 
+#ifdef __arm__
+#if defined(__ARM_EABI__) || defined(__thumb__)
+#define __NR_perf_event_open 364
+#else
+#define __NR_perf_event_open (0x900000+364)
+#endif
+#endif
+
 static inline int
 perf_event_open(
 	struct perf_event_attr		*hw_event_uptr,
