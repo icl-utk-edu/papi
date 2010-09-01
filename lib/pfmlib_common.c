@@ -616,8 +616,6 @@ found:
 	d->event = i; /* private index */
 
 	ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
-	if (ret == PFM_SUCCESS)
-		ret = pfmlib_sanitize_event(d);
 error:
 	free(str);
 	return ret;
