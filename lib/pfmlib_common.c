@@ -1169,3 +1169,20 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
 	info->nevents = pmu->pme_count;
 	return PFM_SUCCESS;
 }
+
+static int
+pfmlib_compare_attr_id(const void *a, const void *b)
+{
+	const pfmlib_attr_t *t1 = a;
+	const pfmlib_attr_t *t2 = b;
+
+	if (t1->id < t2->id)
+		return -1;
+	return t1->id == t2->id ? 0 : 1;
+}
+
+void
+pfmlib_sort_attr(pfmlib_event_desc_t *e)
+{
+	qsort(e->attrs, e->nattrs, sizeof(pfmlib_attr_t), pfmlib_compare_attr_id);
+}

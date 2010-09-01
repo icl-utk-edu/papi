@@ -288,12 +288,13 @@ pfm_amd64_detect(void *this)
 }
 
 static int
-amd64_add_defaults(void *this, int idx, char *umask_str, unsigned int msk, uint64_t *umask)
+amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
 {
 	const amd64_entry_t *ent, *pe = this_pe(this);
-	int i, j, added, omit, numasks_grp;
+	int i, j, k, added, omit, numasks_grp;
 
-	ent = pe+idx;
+	k = e->nattrs;
+	ent = pe+e->event;
 
 	for(i=0; msk; msk >>=1, i++) {
 
@@ -311,16 +312,22 @@ amd64_add_defaults(void *this, int idx, char *umask_str, unsigned int msk, uint6
 			numasks_grp++;
 
 			/* skip umasks for other revisions */
-			if (!amd64_umask_valid(this, idx, j))
+			if (!amd64_umask_valid(this, e->event, j))
 				continue;
 
-			if (amd64_uflag(this, idx, j, AMD64_FL_DFL)) {
+			if (amd64_uflag(this, e->event, j, AMD64_FL_DFL)) {
 				DPRINT("added default %s\n", ent->umasks[j].uname);
+
 				*umask |= ent->umasks[j].ucode;
-				evt_strcat(umask_str, ":%s", ent->umasks[j].uname);
+
+				e->attrs[k].id = j;
+				e->attrs[k].ival = 0;
+				e->attrs[k].type = PFM_ATTR_UMASK;
+				k++;
+
 				added++;
 			}
-			if (amd64_uflag(this, idx, j, AMD64_FL_OMIT))
+			if (amd64_uflag(this, e->event, j, AMD64_FL_OMIT))
 				omit++;
 		}
 		/*
@@ -332,6 +339,7 @@ amd64_add_defaults(void *this, int idx, char *umask_str, unsigned int msk, uint6
 			return PFM_ERR_UMASK;
 		}
 	}
+	e->nattrs = k;
 	return PFM_SUCCESS;
 }
 
@@ -348,12 +356,11 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	unsigned int grpmsk, ugrpmsk = 0;
 	int grpcounts[AMD64_MAX_GRP];
 	int ncombo[AMD64_MAX_GRP];
-	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
 
 	memset(grpcounts, 0, sizeof(grpcounts));
 	memset(ncombo, 0, sizeof(ncombo));
 
-	umask_str[0] = e->fstr[0] = '\0';
+	e->fstr[0] = '\0';
 
 	reg->val = 0; /* assume reserved bits are zerooed */
 
@@ -394,8 +401,6 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 				DPRINT("event does not support unit mask combination within a group\n");
 				return PFM_ERR_FEATCOMB;
 			}
-
-			evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
 
 			umask |= pe[e->event].umasks[a->id].ucode;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
@@ -462,7 +467,7 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	 */
 	if (ugrpmsk != grpmsk) {
 		ugrpmsk ^= grpmsk;
-		ret = amd64_add_defaults(this, e->event, umask_str, ugrpmsk, &umask);
+		ret = amd64_add_defaults(this, e, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
@@ -471,8 +476,16 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	 */
 	reg->sel_unit_mask = umask;
 
+	/*
+	 * reorder all the attributes such that the fstr appears always
+	 * the same regardless of how the attributes were submitted.
+	 */
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
-	evt_strcat(e->fstr, "%s", umask_str);
+	pfmlib_sort_attr(e);
+	for(k=0; k < e->nattrs; k++) {
+		if (e->attrs[k].type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
+	}
 
 	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_K, name), reg->sel_os);
 	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_U, name), reg->sel_usr);

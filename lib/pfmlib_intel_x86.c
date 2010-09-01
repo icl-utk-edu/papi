@@ -197,13 +197,14 @@ pfm_intel_x86_detect(void)
 }
 
 int
-pfm_intel_x86_add_defaults(void *this, int pidx, char *umask_str, unsigned int msk, unsigned int *umask)
+pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, unsigned int *umask)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
-	int i, j, added;
+	int i, j, k, added;
 
-	ent = pe+pidx;
+	k = e->nattrs;
+	ent = pe+e->event;
 
 	for(i=0; msk; msk >>=1, i++) {
 
@@ -217,15 +218,19 @@ pfm_intel_x86_add_defaults(void *this, int pidx, char *umask_str, unsigned int m
 			if (ent->umasks[j].grpid != i)
 				continue;
 
-			if (!is_model_umask(this, pidx, j))
+			if (!is_model_umask(this, e->event, j))
 				continue;
 
 			if (ent->umasks[j].uflags & INTEL_X86_DFL) {
 				DPRINT("added default %s for group %d\n", ent->umasks[j].uname, i);
+				printf("added default %s for group %d\n", ent->umasks[j].uname, i);
 
 				*umask |= ent->umasks[j].ucode;
 
-				evt_strcat(umask_str, ":%s", ent->umasks[j].uname);
+				e->attrs[k].id = j;
+				e->attrs[k].ival = 0;
+				e->attrs[k].type = PFM_ATTR_UMASK;
+				k++;
 
 				added++;
 			}
@@ -235,6 +240,7 @@ pfm_intel_x86_add_defaults(void *this, int pidx, char *umask_str, unsigned int m
 			return PFM_ERR_UMASK;
 		}
 	}
+	e->nattrs = k;
 	return PFM_SUCCESS;
 }
 
@@ -252,7 +258,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	int k, ret, grpid, last_grpid = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
-	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
 
 	memset(grpcounts, 0, sizeof(grpcounts));
 	memset(ncombo, 0, sizeof(ncombo));
@@ -260,7 +265,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	pe     = this_pe(this);
 	atdesc = this_atdesc(this);
 
-	umask_str[0] = e->fstr[0] = '\0';
+	e->fstr[0] = '\0';
 
 	/*
 	 * preset certain fields from event code
@@ -315,8 +320,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 				DPRINT("event does not support unit mask combination within a group\n");
 				return PFM_ERR_FEATCOMB;
 			}
-
-			evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
 
 			last_grpid = grpid;
 			modhw    |= pe[e->event].umasks[a->id].modhw;
@@ -387,17 +390,26 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 			reg->sel_usr = 1;
 	}
 
-	evt_strcat(e->fstr, "%s", pe[e->event].name);
 	/*
 	 * check that there is at least of unit mask in each unit
 	 * mask group
 	 */
 	if (ugrpmsk != grpmsk) {
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e->event, umask_str, ugrpmsk, &umask);
+		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
-		evt_strcat(e->fstr, "%s", umask_str);
+	}
+
+	/*
+	 * reorder all the attributes such that the fstr appears always
+	 * the same regardless of how the attributes were submitted.
+	 */
+	evt_strcat(e->fstr, "%s", pe[e->event].name);
+	pfmlib_sort_attr(e);
+	for(k=0; k < e->nattrs; k++) {
+		if (e->attrs[k].type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
 	}
 
 	reg->val |= umask << 8;

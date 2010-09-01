@@ -223,18 +223,23 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	if ((modhw & _NHM_UNC_ATTR_O) && reg->nhm_unc.usel_occ)
 		return PFM_ERR_ATTR_SET;
 
-	evt_strcat(e->fstr, "%s", pe[e->event].name);
 	/*
 	 * check that there is at least of unit mask in each unit
 	 * mask group
 	 */
 	if (ugrpmsk != grpmsk) {
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e->event, umask_str, ugrpmsk, &umask);
+		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
-		evt_strcat(e->fstr, "%s", umask_str);
 	}
+	evt_strcat(e->fstr, "%s", pe[e->event].name);
+	pfmlib_sort_attr(e);
+	for(k=0; k < e->nattrs; k++) {
+		if (e->attrs[k].type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
+	}
+
 	reg->val |= umask << 8;
 
 	reg->nhm_unc.usel_en    = 1; /* force enable bit to 1 */
