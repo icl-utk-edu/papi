@@ -434,6 +434,7 @@ enum perf_callchain_context {
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
 
+#ifndef __NR_perf_event_open
 #ifdef __x86_64__
 # define __NR_perf_event_open	298
 #endif
@@ -453,6 +454,7 @@ enum perf_callchain_context {
 #define __NR_perf_event_open (0x900000+364)
 #endif
 #endif
+#endif /* __NR_perf_event_open */
 
 static inline int
 perf_event_open(
