@@ -115,7 +115,7 @@ main(int argc, const char **argv)
 		 * pfm_get_perf_event_encoding()
 		 */
 		fqstr = NULL;
-		ret = pfm_get_event_encoding(*p, PFM_PLM3, &fqstr, &idx, &codes, &count);
+		ret = pfm_get_event_encoding(*p, PFM_PLM0|PFM_PLM3, &fqstr, &idx, &codes, &count);
 		if (ret != PFM_SUCCESS) {
 			/*
 			 * codes is too small for this event
