@@ -387,6 +387,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 			reg->sel_usr = 1;
 	}
 
+	evt_strcat(e->fstr, "%s", pe[e->event].name);
 	/*
 	 * check that there is at least of unit mask in each unit
 	 * mask group
@@ -396,61 +397,12 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 		ret = pfm_intel_x86_add_defaults(this, e->event, umask_str, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
+		evt_strcat(e->fstr, "%s", umask_str);
 	}
 
 	reg->val |= umask << 8;
 	reg->sel_en        = 1; /* force enable bit to 1 */
 	reg->sel_int       = 1; /* force APIC int to 1 */
-
-	evt_strcat(e->fstr, "%s", pe[e->event].name);
-
-	/*
-	 * decode unit masks
-	 */
-	umask = reg->sel_unit_mask;
-	for(k=0; k < pe[e->event].numasks; k++) {
-		unsigned int um, msk;
-
-		if (!is_model_umask(this, e->event, k))
-			continue;
-		/*
-		 * skip alias unit mask, it means there is an equivalent
-		 * unit mask.
-		 */
-		if (pe[e->event].umasks[k].uequiv)
-			continue;
-
-		/* just the unit mask and none of the hardwired modifiers */
-		um = pe[e->event].umasks[k].ucode & 0xff;
-
-		/*
-		 * if umasks is NCOMBO, then it means the umask code must match
-		 * exactly (is the only one allowed) and therefore it consumes
-		 * the full bit width of the group.
-		 *
-		 * Otherwise, we match individual bits, ane we only remove the
-		 * matching bits, because there can be combinations.
-		 */
-		if (intel_x86_uflag(this, e, k, INTEL_X86_NCOMBO)) {
-			/*
-			 * extract grp bitfield mask used to exclude groups
-			 * of bits
-			 */
-			msk = pe[e->event].umasks[k].grpmsk;
-			if (!msk)
-				msk = 0xff;
-
-			if ((umask & msk) == um) {
-				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
-				umask &= ~msk;
-			}
-		} else {
-			if (umask & um) {
-				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
-				umask &= ~um;
-			}
-		}
-	}
 	/*
 	 * decode modifiers
 	 */
@@ -607,10 +559,6 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 
 			if (pe[i].ngrp && pe[i].umasks[j].grpid >= pe[i].ngrp) {
 				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpid, pe[i].ngrp);
-				error++;
-			}
-			if (pe[i].ngrp > 1 && (!pe[i].umasks[j].grpmsk || pe[i].umasks[j].grpmsk > 0xff)) {
-				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grmsk=0x%x\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpmsk);
 				error++;
 			}
 		}

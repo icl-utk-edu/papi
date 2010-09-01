@@ -28,32 +28,27 @@
 		  .udesc = "Any cacheline access",\
 		  .ucode = 0xf,\
 		  .grpid = (g), \
-		  .grpmsk= 0xf, \
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .uequiv = "M_STATE:E_STATE:S_STATE:I_STATE", \
 		}, \
 		{ .uname = "I_STATE",\
 		  .udesc = "Invalid cacheline",\
-		  .grpmsk= 0xf, \
 		  .grpid = (g), \
 		  .ucode = 0x1\
 		},\
 		{ .uname = "S_STATE",\
 		  .udesc = "Shared cacheline",\
 		  .grpid = (g), \
-		  .grpmsk= 0xf, \
 		  .ucode = 0x2\
 		},\
 		{ .uname = "E_STATE",\
 		  .udesc = "Exclusive cacheline",\
 		  .grpid = (g), \
-		  .grpmsk= 0xf, \
 		  .ucode = 0x4\
 		},\
 		{ .uname = "M_STATE",\
 		  .udesc = "Modified cacheline",\
 		  .grpid = (g), \
-		  .grpmsk= 0xf, \
 		  .ucode = 0x8\
 		}
 
@@ -62,13 +57,11 @@
 		  .udesc = "This core",\
 		  .ucode = 0x40,\
 		  .grpid = (g), \
-		  .grpmsk= 0xc0, \
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		},\
 		{ .uname = "BOTH_CORES",\
 		  .udesc = "Both cores",\
 		  .grpid = (g), \
-		  .grpmsk= 0xc0, \
 		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0xc0\
 		}
@@ -77,21 +70,18 @@
 		{ .uname = "ANY",\
 		  .udesc = "All inclusive",\
 		  .grpid = (g), \
-		  .grpmsk= 0x30, \
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x30\
 		},\
 		{ .uname = "PREFETCH",\
 		  .udesc = "Hardware prefetch only",\
 		  .grpid = (g), \
-		  .grpmsk= 0x30, \
 		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x10\
 		}, \
 		{ .uname = "EXCL_PREFETCH",\
 		  .udesc = "Exclude hardware prefetch",\
 		  .grpid = (g), \
-		  .grpmsk= 0x30, \
 		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x00\
 		}
@@ -101,13 +91,11 @@
 		  .udesc = "This agent",\
 		  .ucode = 0x00, \
 		  .grpid = (g), \
-		  .grpmsk= 0x20, \
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		},\
 		{ .uname = "ALL_AGENTS",\
 		  .udesc = "Any agent on the bus",\
 		  .grpid = (g), \
-		  .grpmsk= 0x20, \
 		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20\
 		}
@@ -1007,22 +995,18 @@ static const intel_x86_entry_t intel_core_pe[]={
 		{ .uname = "ANY",
 		  .udesc = "Any external snoop response",
 		  .ucode = 0xb,
-		  .grpmsk= 0xb,
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname = "CLEAN",
 		  .udesc = "External snoop CLEAN response",
-		  .grpmsk= 0xb,
 		  .ucode = 0x1
 		},
 		{ .uname = "HIT",
 		  .udesc = "External snoop HIT response",
-		  .grpmsk= 0xb,
 		  .ucode = 0x2
 		},
 		{ .uname = "HITM",
 		  .udesc = "External snoop HITM response",
-		  .grpmsk= 0xb,
 		  .ucode = 0x8
 		},
 		INTEL_CORE_AGENT_UMASKS(1)
@@ -1039,17 +1023,14 @@ static const intel_x86_entry_t intel_core_pe[]={
 		{ .uname = "ANY",
 		  .udesc = "L1 data cache is snooped by other core",
 		  .ucode = 0x03,
-		  .grpmsk= 0x3,
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname = "SHARE",
 		  .udesc = "L1 data cache is snooped for sharing by other core",
-		  .grpmsk= 0x3,
 		  .ucode = 0x01
 		},
 		{ .uname = "INVALIDATE",
 		  .udesc = "L1 data cache is snooped for Invalidation by other core",
-		  .grpmsk= 0x3,
 		  .ucode = 0x02
 		},
 		INTEL_CORE_SPECIFICITY_UMASKS(1),

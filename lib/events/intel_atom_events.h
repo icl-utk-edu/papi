@@ -29,31 +29,26 @@
 		  .udesc = "Any cacheline access",\
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
 		  .grpid = (g),\
-		  .grpmsk= 0xf, \
 		  .ucode = 0xf\
 		},\
 		{ .uname = "I_STATE",\
 		  .udesc = "Invalid cacheline",\
 		  .grpid = (g),\
-		  .grpmsk= 0xf, \
 		  .ucode = 0x1\
 		},\
 		{ .uname = "S_STATE",\
 		  .udesc = "Shared cacheline",\
 		  .grpid = (g),\
-		  .grpmsk= 0xf, \
 		  .ucode = 0x2\
 		},\
 		{ .uname = "E_STATE",\
 		  .udesc = "Exclusive cacheline",\
 		  .grpid = (g),\
-		  .grpmsk= 0xf, \
 		  .ucode = 0x4\
 		},\
 		{ .uname = "M_STATE",\
 		  .udesc = "Modified cacheline",\
 		  .grpid = (g),\
-		  .grpmsk= 0xf, \
 		  .ucode = 0x8\
 		}
 
@@ -63,14 +58,12 @@
 		  .udesc = "This agent",\
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
 		  .grpid = (g),\
-		  .grpmsk= 0x20, \
 		  .ucode = 0x00\
 		},\
 		{ .uname = "ALL_AGENTS",\
 		  .udesc = "Any agent on the bus",\
 		  .uflags = INTEL_X86_NCOMBO,\
 		  .grpid = (g),\
-		  .grpmsk= 0x20, \
 		  .ucode = 0x20\
 		}
 
@@ -80,13 +73,11 @@
 		  .udesc = "This core",\
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
 		  .grpid = (g),\
-		  .grpmsk= 0xc0, \
 		  .ucode = 0x40\
 		},\
 		{ .uname = "BOTH_CORES",\
 		  .udesc = "Both cores",\
 		  .grpid = (g),\
-		  .grpmsk= 0xc0, \
 		  .ucode = 0xc0\
 		}
 
@@ -96,13 +87,11 @@
 		  .udesc = "All inclusive",\
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
 		  .grpid = (g),\
-		  .grpmsk= 0x30, \
 		  .ucode = 0x30\
 		},\
 		{ .uname = "PREFETCH",\
 		  .udesc = "Hardware prefetch only",\
 		  .grpid = (g),\
-		  .grpmsk= 0x30, \
 		  .ucode = 0x10\
 		}
 

@@ -51,7 +51,6 @@ typedef struct {
 	unsigned int		uflags;	/* unit mask flags */
 	unsigned int		umodel; /* only available on this PMU model */
 	unsigned int		grpid;	/* unit mask group id */
-	unsigned int		grpmsk; /* indicate which umask bits used by group */
 	unsigned int		modhw;	/* hardwired modifiers, cannot be changed */
 } intel_x86_umask_t;
 

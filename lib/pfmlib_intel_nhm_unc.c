@@ -223,6 +223,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	if ((modhw & _NHM_UNC_ATTR_O) && reg->nhm_unc.usel_occ)
 		return PFM_ERR_ATTR_SET;
 
+	evt_strcat(e->fstr, "%s", pe[e->event].name);
 	/*
 	 * check that there is at least of unit mask in each unit
 	 * mask group
@@ -232,52 +233,12 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 		ret = pfm_intel_x86_add_defaults(this, e->event, umask_str, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
+		evt_strcat(e->fstr, "%s", umask_str);
 	}
 	reg->val |= umask << 8;
 
 	reg->nhm_unc.usel_en    = 1; /* force enable bit to 1 */
 	reg->nhm_unc.usel_int   = 1; /* force APIC int to 1 */
-
-	evt_strcat(e->fstr, "%s", pe[e->event].name);
-
-	umask = reg->nhm_unc.usel_umask;
-	for(k=0; k < pe[e->event].numasks; k++) {
-		unsigned int um, msk;
-		/*
-		 * skip alias unit mask, it means there is an equivalent
-		 * unit mask.
-		 */
-		if (pe[e->event].umasks[k].uequiv)
-			continue;
-
-		um = pe[e->event].umasks[k].ucode & 0xff;
-		/*
-		 * extract grp bitfield mask used to exclude groups
-		 * of bits
-		 */
-		msk = pe[e->event].umasks[k].grpmsk;
-		if (!msk)
-			msk = 0xff;
-		/*
-		 * if umasks is NCOMBO, then it means the umask code must match
-		 * exactly (is the only one allowed) and therefore it consumes
-		 * the full bit width of the group.
-		 *
-		 * Otherwise, we match individual bits, ane we only remove the
-		 * matching bits, because there can be combinations.
-		 */
-		if (intel_x86_uflag(this, e, k, INTEL_X86_NCOMBO)) {
-			if ((umask & msk) == um) {
-				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
-				umask &= ~msk;
-			}
-		} else {
-			if (umask & um) {
-				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
-				umask &= ~um;
-			}
-		}
-	}
 
 	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_E, name), reg->nhm_unc.usel_edge);
 	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_I, name), reg->nhm_unc.usel_inv);
