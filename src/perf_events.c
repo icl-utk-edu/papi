@@ -3376,7 +3376,9 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 
 		/* Leave the disabling for when we know which
 		   events are the group leaders.  We only disable group leaders. */
-		/* ctl->events[i].disabled = 0; */
+                if (pe_ctx->evt[i].event_fd != -1) {
+		   pe_ctl->events[i].disabled = 0;
+                }
 
 		/* PAPI currently only monitors one thread at a time, so leave the
 		   inherit flag off */
