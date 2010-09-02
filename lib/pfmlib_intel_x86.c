@@ -232,6 +232,8 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk,
 				k++;
 
 				added++;
+				if (intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL))
+					goto done;
 			}
 		}
 		if (!added) {
@@ -239,6 +241,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk,
 			return PFM_ERR_UMASK;
 		}
 	}
+done:
 	e->nattrs = k;
 	return PFM_SUCCESS;
 }
@@ -393,7 +396,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	 * check that there is at least of unit mask in each unit
 	 * mask group
 	 */
-	if (ugrpmsk != grpmsk) {
+	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
 		ugrpmsk ^= grpmsk;
 		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
