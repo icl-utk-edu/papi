@@ -2277,10 +2277,6 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( cidx < 0 )
 			papi_return( cidx );
 	   
-	   	if ( !( _papi_hwd[cidx]->cmp_info.kernel_multiplex )) {
-		   return PAPI_ENOSUPP;
-		}
-	   
 		if ( !( ESI->state & PAPI_STOPPED ) )
 			papi_return( PAPI_EISRUN );
 		if ( ESI->state & PAPI_MULTIPLEXING )
