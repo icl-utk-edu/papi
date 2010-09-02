@@ -458,7 +458,8 @@ pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 	 */
 	for(i=0; i < d->nattrs; i++) {
 		for(j=i+1; j < d->nattrs; j++) {
-			if (d->attrs[i].id == d->attrs[j].id)
+			if (d->attrs[i].id == d->attrs[j].id
+			    && d->attrs[i].type == d->attrs[j].type)
 				return PFM_ERR_ATTR_SET;
 		}
 	}
@@ -578,8 +579,8 @@ handle_bool:
 				goto error;
 			}
 		}
-		DPRINT("na=%d id=%d type=%d idx=%d nattrs=%d name=%s\n", na, a, type, ainfo.idx, nattrs, ainfo.name);
-		d->attrs[na].id = a;
+		DPRINT("na=%d id=%d type=%d idx=%d nattrs=%d name=%s\n", na, ainfo.idx, type, ainfo.idx, nattrs, ainfo.name);
+		d->attrs[na].id = ainfo.idx;
 		d->attrs[na].type = type;
 		d->nattrs++;
 		na++;
