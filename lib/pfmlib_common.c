@@ -373,7 +373,8 @@ pfmlib_init_pmus(void)
 			return ret;
 		}
 	}
-	return nsuccess ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
+	DPRINT("%d PMU detected out of %d supported\n", nsuccess, PFMLIB_NUM_PMUS);
+	return PFM_SUCCESS;
 }
 
 int
