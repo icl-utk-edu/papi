@@ -63,6 +63,15 @@ typedef struct {
 #define PV_970MP	0x0044
 #define PV_970GX	0x0045
 
+extern int pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info);
+extern int pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
+extern int pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfm_gen_powerpc_get_event_perf_type(void *this, int pidx);
+extern int pfm_gen_powerpc_get_event_first(void *this);
+extern int pfm_gen_powerpc_get_event_next(void *this, int idx);
+extern int pfm_gen_powerpc_event_is_valid(void *this, int pidx);
+extern int pfm_gen_powerpc_validate_table(void *this, FILE *fp);
+
 #endif /* _POWER_REG_H */
 #endif
 

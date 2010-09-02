@@ -87,7 +87,13 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_POWERPC
-	&gen_powerpc_support,
+	&power4_support,
+	&ppc970_support,
+	&ppc970mp_support,
+	&power5_support,
+	&power5p_support,
+	&power6_support,
+	&power7_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_SPARC
