@@ -223,7 +223,6 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk,
 
 			if (ent->umasks[j].uflags & INTEL_X86_DFL) {
 				DPRINT("added default %s for group %d\n", ent->umasks[j].uname, i);
-				printf("added default %s for group %d\n", ent->umasks[j].uname, i);
 
 				*umask |= ent->umasks[j].ucode;
 
@@ -501,6 +500,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 {
 	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
+	int ndfl[INTEL_X86_NUM_GRP];
 	int i, j, k, error = 0;
 
 	if (!pmu->atdesc) {
@@ -553,6 +553,9 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			}
 		}
 
+		for(j=0; j < INTEL_X86_NUM_GRP; j++)
+			ndfl[j] = 0;
+
 		for(j=0; j < pe[i].numasks; j++) {
 
 			if (!pe[i].umasks[j].uname) {
@@ -573,15 +576,24 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpid, pe[i].ngrp);
 				error++;
 			}
+			if (pe[i].umasks[j].uflags & INTEL_X86_DFL)
+				ndfl[pe[i].umasks[j].grpid]++;
 		}
-
-		/* heck for excess unit masks */
+		/* check for excess unit masks */
 		for(; j < INTEL_X86_NUM_UMASKS; j++) {
 			if (pe[i].umasks[j].uname || pe[i].umasks[j].udesc) {
 				fprintf(fp, "pmu: %s event%d: %s :: numasks (%d) invalid more events exists\n", pmu->name, i, pe[i].name, pe[i].numasks);
 				error++;
 			}
 		}
+		/* only one default per grp */
+		for(j=0; j < pe[i].ngrp; j++) {
+			if (ndfl[j] > 1) {
+				fprintf(fp, "pmu: %s event%d: %s grpid %d has %d default umasks\n", pmu->name, i, pe[i].name, j, ndfl[j]);
+				error++;
+			}
+		}
+
 
 		if (pe[i].flags & INTEL_X86_NCOMBO) {
 			fprintf(fp, "pmu: %s event%d: %s :: NCOMBO is unit mask only flag\n", pmu->name, i, pe[i].name);
