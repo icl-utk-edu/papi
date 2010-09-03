@@ -49,7 +49,7 @@ check_values( int eventset, int *events, int nevents, long long *values,
                 else {
                   char buff[BUFSIZ];
 
-		  sprintf(buff,"Error on %d, %lf>%lf and %d>%d\n",j,spread[j],MPX_TOLERANCE,
+		  sprintf(buff,"Error on %d, %lf>%lf and %lld>%d\n",j,spread[j],MPX_TOLERANCE,
 			 refvalues[j],MINCOUNTS);
 
 		  test_fail( __FILE__, __LINE__, buff, 1 );
