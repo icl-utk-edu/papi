@@ -40,10 +40,20 @@ check_values( int eventset, int *events, int nevents, long long *values,
 		if ( !TESTS_QUIET )
 			printf( "%10.3g ", spread[j] );
 		/* Make sure that NaN get counted as errors */
-		if ( spread[j] < MPX_TOLERANCE )
+		if ( spread[j] < MPX_TOLERANCE ) {
 			i--;
-		else if ( refvalues[j] < MINCOUNTS )	/* Neglect inprecise results with low counts */
+		}
+		else if ( refvalues[j] < MINCOUNTS ) {	/* Neglect inprecise results with low counts */
 			i--;
+		}
+                else {
+                  char buff[BUFSIZ];
+
+		  sprintf(buff,"Error on %d, %lf>%lf and %d>%d\n",j,spread[j],MPX_TOLERANCE,
+			 refvalues[j],MINCOUNTS);
+
+		  test_fail( __FILE__, __LINE__, buff, 1 );
+		}
 	}
 	printf( "\n\n" );
 #if 0
@@ -62,8 +72,7 @@ check_values( int eventset, int *events, int nevents, long long *values,
 	( void ) events;
 #endif
 
-	if ( i )
-		test_fail( __FILE__, __LINE__, "Values outside threshold", i );
+
 }
 
 void
