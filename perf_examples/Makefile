@@ -57,7 +57,7 @@ TARGETS+=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
 	self_pipe syst_count task_cpu
 
-XTRA += rtop
+#XTRA += rtop
 endif
 
 EXAMPLESDIR=$(DOCDIR)/perf_examples
