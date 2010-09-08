@@ -155,15 +155,12 @@ print_counts(perf_event_desc_t *fds, int num)
 			printf("inconsistent scaling %s (cur=%'"PRIu64" : prev=%'"PRIu64")\n", fds[i].name, fds[i].value, fds[i].prev_value);
 			continue;
 		}
-
-		if (ratio == 1.0)
-			printf("%'20"PRIu64" %s (%'"PRIu64" : %'"PRIu64")\n", val, fds[i].name, fds[i].enabled, fds[i].running);
-		else
-			if (ratio == 0.0)
-				printf("%'20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", val, fds[i].name);
-			else
-				printf("%'20"PRIu64" %s (scaled from %.2f%% of time %'"PRIu64":%'"PRIu64")\n", val, fds[i].name, ratio*100.0, fds[i].enabled, fds[i].running);
-
+		printf("%'20"PRIu64" %s (%.2f%% scaling, ena=%'"PRIu64", run=%'"PRIu64")\n",
+			val,
+			fds[i].name,
+			(1.0-ratio)*100.0,
+			fds[i].enabled,
+			fds[i].running);
 	}
 }
 
