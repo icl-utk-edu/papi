@@ -462,7 +462,7 @@ show_info_sorted(char *event, regex_t *preg)
 static void
 usage(void)
 {
-	printf("showevtinfo [-L] [-E] [-h] [-s] [-C] [-m mask]\n"
+	printf("showevtinfo [-L] [-E] [-h] [-s] [-m mask]\n"
 		"-L\t\tlist one event per line\n"
 		"-E\t\tlist one event per line with encoding\n"
 		"-M\t\tdisplay all valid unit masks combination (use with -L or -E)\n"
@@ -470,29 +470,6 @@ usage(void)
 		"-s\t\tsort event by PMU and by code based on -m mask\n"
 		"-l\t\tmaximum number of umasks to list all combinations (default: %d)\n"
 		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n", COMBO_MAX);
-}
-
-static int
-validate_event_tables(void)
-{
-	pfm_pmu_info_t pinfo;
-	int i, ret, retval = 0;
-
-	memset(&pinfo, 0, sizeof(pinfo));
-
-	pinfo.size = sizeof(pinfo);
-
-	pfm_for_all_pmus(i) {
-		ret = pfm_get_pmu_info(i, &pinfo);
-		if (ret != PFM_SUCCESS)
-			continue;
-
-		printf("Checking %s:\n", pinfo.name);
-		ret = pfm_pmu_validate(i, stdout);
-		if (ret != PFM_SUCCESS && ret != PFM_ERR_NOTSUPP)
-			retval = 1;
-	}
-	return retval;
 }
 
 /*
@@ -528,13 +505,13 @@ main(int argc, char **argv)
 	char **args;
 	int i, match;
 	regex_t preg;
-	int ret, c, validate = 0;
+	int ret, c;
 
 	memset(&pinfo, 0, sizeof(pinfo));
 
 	pinfo.size = sizeof(pinfo);
 
-	while ((c=getopt(argc, argv,"hCELsm:Ml:")) != -1) {
+	while ((c=getopt(argc, argv,"hELsm:Ml:")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
@@ -548,9 +525,6 @@ main(int argc, char **argv)
 				break;
 			case 's':
 				options.sort = 1;
-				break;
-			case 'C':
-				validate = 1;
 				break;
 			case 'l':
 				options.combo_lim = atoi(optarg);
@@ -570,9 +544,6 @@ main(int argc, char **argv)
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
 		errx(1, "cannot initialize libpfm: %s", pfm_strerror(ret));
-
-	if (validate)
-		exit(validate_event_tables());
 
 	if (options.mask == 0)
 		options.mask = ~0;
