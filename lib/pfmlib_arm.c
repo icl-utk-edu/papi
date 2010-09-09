@@ -41,7 +41,8 @@ pfm_arm_config_t pfm_arm_cfg;
  * This avoids a dependency on having a C library with
  * support for getline().
  */
-static int getl(char **buffer, size_t *len, FILE *fp)
+static int
+getl(char **buffer, size_t *len, FILE *fp)
 {
 #define	GETL_DFL_LEN	32
 	char *b;
@@ -102,7 +103,7 @@ static int getl(char **buffer, size_t *len, FILE *fp)
  * 	-1: attribute not found
  */
 
-int
+static int
 pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 {
 	FILE *fp = NULL;
@@ -151,7 +152,11 @@ error:
 	return ret;
 }
 #else
-#error "need to define helper to access processor identification"
+static int
+pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
+{
+	return -1;
+}
 #endif
 
 int
