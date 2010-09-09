@@ -236,6 +236,7 @@ extern pfm_err_t pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_INTEL_PII_PMU		38	/* Intel Pentium II */
 #define PFMLIB_INTEL_ATOM_PMU		39	/* Intel Atom */
 #define PFMLIB_INTEL_NHM_PMU            40      /* Intel Nehalem */
+#define PFMLIB_INTEL_WSM_PMU            41      /* Intel Westmere */
 
 #define PFMLIB_MIPS_20KC_PMU		64	/* MIPS 20KC */
 #define PFMLIB_MIPS_24K_PMU		65	/* MIPS 24K */

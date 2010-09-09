@@ -102,7 +102,8 @@ typedef union {
 		uint64_t reserved1:1;
 		uint64_t ibsopen:1;
 		uint64_t ibsopval:1;
-		uint64_t reserved2:45;
+		uint64_t ibsopcntl:1;
+		uint64_t reserved2:44;
 	} reg;
 } ibsopctl_t; /* MSR 0xc0011033 */
 
@@ -189,6 +190,7 @@ typedef struct {
  * values for ibs_param_t.options
  */
 #define IBS_OPTIONS_RANDEN 1	/* enable randomization (IBS fetch only) */
+#define IBS_OPTIONS_UOPS   1	/* count dispatched uops (IBS op only) */
 
 typedef struct {
 	pfmlib_amd64_counter_t pfp_amd64_counters[PMU_AMD64_MAX_COUNTERS]; /* extended counter features */

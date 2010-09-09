@@ -94,13 +94,13 @@ static pme_nhm_entry_t wsm_pe[]={
 		  .pme_uflags = 0,
 		},
 		{ .pme_uname  = "MS_CYCLES_ACTIVE",
-		  .pme_udesc  = "Uops decoded by Microcode Sequencer",
-		  .pme_ucode  = 0x2,
+		  .pme_udesc  = "cycles in which at least one uop is decoded by Microcode Sequencer",
+		  .pme_ucode  = 0x2 | (1<< 16), /* counter-mask = 1 */
 		  .pme_uflags = 0,
 		},
 		{ .pme_uname  = "STALL_CYCLES",
 		  .pme_udesc  = "Cycles no Uops are decoded",
-		  .pme_ucode  = 0x1,
+		  .pme_ucode  = 0x1 | (1<<16) | (1<<15), /* inv=1, counter-mask=1 */
 		  .pme_uflags = 0,
 		},
 	  },
@@ -108,7 +108,7 @@ static pme_nhm_entry_t wsm_pe[]={
 	},
 	{ .pme_name   = "L1D_CACHE_LOCK_FB_HIT",
 	  .pme_desc   = "L1D cacheable load lock speculated or retired accepted into the fill buffer",
-	  .pme_code   = 0x0153,
+	  .pme_code   = 0x0152,
 	  .pme_flags  = 0,
 	},
 	{ .pme_name   = "BPU_CLEARS",
@@ -224,18 +224,18 @@ static pme_nhm_entry_t wsm_pe[]={
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "PORT2_CORE",
-				.pme_udesc  = "Uops executed on port 2 (load uops) (core count only)",
-				.pme_ucode  = 0x04,
+				.pme_udesc  = "Uops executed on port 2 from any thread (load uops) (core count only)",
+				.pme_ucode  = 0x04 | (1<< 13), /* any=1 */
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "PORT3_CORE",
-				.pme_udesc  = "Uops executed on port 3 (store uops) (core count only)",
-				.pme_ucode  = 0x08,
+				.pme_udesc  = "Uops executed on port 3 from any thread (store uops) (core count only)",
+				.pme_ucode  = 0x08 | (1<<13), /* any=1 */
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "PORT4_CORE",
-				.pme_udesc  = "Uops executed on port 4 (handle store values for stores on port 3) (core count only)",
-				.pme_ucode  = 0x10,
+				.pme_udesc  = "Uops executed on port 4 from any thread (handle store values for stores on port 3) (core count only)",
+				.pme_ucode  = 0x10 | (1<<13), /* any=1 */
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "PORT5",
@@ -249,8 +249,8 @@ static pme_nhm_entry_t wsm_pe[]={
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "PORT234_CORE",
-				.pme_udesc  = "Uops issued on ports 2, 3 or 4 (core count only)",
-				.pme_ucode  = 0x80,
+				.pme_udesc  = "Uops issued on ports 2, 3 or 4 from any thread (core count only)",
+				.pme_ucode  = 0x80 | (1<<13), /* any=1 */
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "PORT015_STALL_CYCLES",
@@ -258,8 +258,32 @@ static pme_nhm_entry_t wsm_pe[]={
 				.pme_ucode  = 0x40 | (1<<16) | (1<<15), /* counter-mask=1, inv=1 */
 				.pme_uflags = 0,
 			},
+			{ .pme_uname  = "CORE_ACTIVE_CYCLES_NO_PORT5",
+		  		.pme_udesc  = "Cycles in which uops are executed only on port0-4 on any thread (core count only)",
+				.pme_ucode  = 0x1f | (1<<13) | (1<<16), /* counter-mask = 1, any=1 */
+			},
+			{ .pme_uname  = "CORE_ACTIVE_CYCLES",
+		  		.pme_udesc  = "Cycles in which uops are executed on any port any thread (core count only)",
+		  		.pme_ucode  = 0x3f | (1<<13) | (1<<16), /* counter-mask = 1, any=1 */
+			},
+			{ .pme_uname  = "CORE_STALL_CYCLES",
+		  		.pme_udesc  = "Cycles in which no uops are executed on any port any thread (core count only)",
+		  		.pme_ucode  = 0x3f | (1<<13) | (1<<15) | (1<<16), /* counter-mask = 1, inv = 1,any=1 */
+			},
+			{ .pme_uname  = "CORE_STALL_CYCLES_NO_PORT5",
+		  		.pme_udesc  = "Cycles in which no uops are executed on any port0-4 on any thread (core count only)",
+		  		.pme_ucode  = 0x1f | (1<<13) | (1<<15) | (1<<16), /* counter-mask = 1, inv = 1,any=1 */
+			},
+			{ .pme_uname  = "CORE_STALL_COUNT",
+		  		.pme_udesc  = "number of transitions from stalled to uops to execute on any port any thread(core count only)",
+		  		.pme_ucode  = 0x3f | (1<<13) | (1<<15) | (1<<16) | (1<<10), /* counter-mask = 1, inv = 1, any=1, edge=1 */
+			},
+			{ .pme_uname  = "CORE_STALL_COUNT_NO_PORT5",
+		  		.pme_udesc  = "number of transitions from stalled to uops to execute on port0-4 on any thread (core count only)",
+		  		.pme_ucode  = 0x1f | (1<<13) | (1<<15) | (1<<16) | (1<<10), /* counter-mask = 1, inv = 1, any=1, edge=1 */
+			},
 	  },
-	  .pme_numasks = 9
+	  .pme_numasks = 15
 	},
 	{ .pme_name   = "IO_TRANSACTIONS",
 	  .pme_desc   = "I/O transactions",
@@ -278,7 +302,7 @@ static pme_nhm_entry_t wsm_pe[]={
 	  .pme_umasks = {
 			{ .pme_uname  = "ANY_P",
 				.pme_udesc  = "Instructions Retired (Precise Event)",
-				.pme_ucode  = 0x00,
+				.pme_ucode  = 0x01,
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "X87",
@@ -885,7 +909,7 @@ static pme_nhm_entry_t wsm_pe[]={
 				.pme_ucode  = 0x01,
 				.pme_uflags = 0,
 			},
-			{ .pme_uname  = "STALLED_CYCLES",
+			{ .pme_uname  = "STALL_CYCLES",
 				.pme_udesc  = "Cycles stalled no issued uops",
 				.pme_ucode  = 0x01 | (1<<16) | (1<<15), /* counter-mask=1, inv=1 */
 				.pme_uflags = 0,
@@ -895,8 +919,18 @@ static pme_nhm_entry_t wsm_pe[]={
 				.pme_ucode  = 0x02,
 				.pme_uflags = 0,
 			},
+			{ .pme_uname  = "CYCLES_ALL_THREADS",
+		  		.pme_udesc  = "Cycles uops issued on either threads (core count)",
+		  		.pme_ucode  = 0x01 | (1<<16) | (1<<13), /* counter-mask=1, any=1 */
+				.pme_uflags = 0,
+			},
+			{ .pme_uname  = "CORE_STALL_CYCLES",
+		  		.pme_udesc  = "Cycles no uops issued on any threads (core count)",
+		  		.pme_ucode  = 0x01 | (1<<16) | (1<<15) | (1<<13), /* counter-mask=1, any=1, inv=1 */
+				.pme_uflags = 0,
+			},
 		},
-		.pme_numasks = 3
+		.pme_numasks = 5
 	},
 	{ .pme_name   = "L2_RQSTS",
 	  .pme_desc   = "L2 requests",
@@ -1567,6 +1601,11 @@ static pme_nhm_entry_t wsm_pe[]={
 	  .pme_code   = 0x0117,
 	  .pme_flags  = 0,
 	},
+	{ .pme_name   = "LSD_OVERFLOW",
+	  .pme_desc   = "Number of loops that cannot stream from the instruction queue.",
+	  .pme_code = 0x0120,
+	  .pme_flags  = 0,
+	},
 	{ .pme_name   = "SB_DRAIN",
 	  .pme_desc   = "store buffer",
 	  .pme_code   = 0x4,
@@ -2107,7 +2146,15 @@ static pme_nhm_entry_t wsm_pe[]={
 	{.pme_name = "MISPREDICTED_BRANCH_RETIRED",
 	 .pme_code = 0x00c5,
 	 .pme_desc =  "count mispredicted branch instructions at retirement. Specifically, this event counts at retirement of the last micro-op of a branch instruction in the architectural path of the execution and experienced misprediction in the branch prediction hardware",
-	}
+	},
+        {.pme_name = "THREAD_ACTIVE",
+         .pme_code= 0x01ec,
+         .pme_desc =  "Cycles thread is active",
+        },
+        {.pme_name = "UOP_UNFUSION",
+         .pme_code= 0x01db,
+         .pme_desc =  "Counts unfusion events due to floating point exception to a fused uop",
+        }
 };
 #define PME_WSM_UNHALTED_CORE_CYCLES 0
 #define PME_WSM_INSTRUCTIONS_RETIRED 1
