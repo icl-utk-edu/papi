@@ -76,7 +76,7 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_SPARC),y)
 INCARCH = $(INC_SPARC)
-#SRCS   += pfmlib_sparc.c
+SRCS   += pfmlib_sparc.c pfmlib_sparc_ultra12.c pfmlib_sparc_ultra3.c pfmlib_sparc_ultra4.c pfmlib_sparc_niagara.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_SPARC
 endif
 

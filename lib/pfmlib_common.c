@@ -98,7 +98,13 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_SPARC
-	&sparc_support,
+	&sparc_ultra12_support,
+	&sparc_ultra3_support,
+	&sparc_ultra3i_support,
+	&sparc_ultra3plus_support,
+	&sparc_ultra4plus_support,
+	&sparc_niagara1_support,
+	&sparc_niagara2_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_CELL

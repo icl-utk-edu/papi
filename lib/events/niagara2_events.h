@@ -1,10 +1,10 @@
-static pme_sparc_mask_entry_t niagara2_pe[] = {
+static const sparc_entry_t niagara2_pe[] = {
 	/* PIC0 Niagara-2 events */
-	{	.pme_name = "All_strands_idle",
-		.pme_desc = "Cycles when no strand can be picked for the physical core on which the monitoring strand resides.",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0x0,
-		.pme_masks = {
+	{	.name = "All_strands_idle",
+		.desc = "Cycles when no strand can be picked for the physical core on which the monitoring strand resides.",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0x0,
+		.masks = {
 			{
 				.mask_name = "ignored0",
 				.mask_desc = "Ignored",
@@ -39,11 +39,11 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 			},
 		},
 	},
-	{	.pme_name = "Instr_cnt",
-		.pme_desc = "Number of instructions completed",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0x2,
-		.pme_masks = {
+	{	.name = "Instr_cnt",
+		.desc = "Number of instructions completed",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0x2,
+		.masks = {
 			{
 				.mask_name = "branches",
 				.mask_desc = "Completed branches",
@@ -80,11 +80,11 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 		},
 	},
 	{
-		.pme_name = "cache",
-		.pme_desc = "Cache events",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0x3,
-		.pme_masks = {
+		.name = "cache",
+		.desc = "Cache events",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0x3,
+		.masks = {
 			{
 				.mask_name = "IC_miss",
 				.mask_desc = "I-cache misses. This counts only primary instruction cache misses, and does not count duplicate instruction cache misses.4 Also, only 'true' misses are counted. If a thread encounters an I$ miss, but the thread is redirected (due to a branch misprediction or trap, for example) before the line returns from L2 and is loaded into the I$, then the miss is not counted.",
@@ -120,11 +120,11 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 		},
 	},
 	{
-		.pme_name = "TLB",
-		.pme_desc = "TLB events",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0x4,
-		.pme_masks = {
+		.name = "TLB",
+		.desc = "TLB events",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0x4,
+		.masks = {
 			{
 				.mask_name = "ignored0",
 				.mask_desc = "Ignored",
@@ -161,11 +161,11 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 		},
 	},
 	{
-		.pme_name = "mem",
-		.pme_desc = "Memory operations",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0x5,
-		.pme_masks = {
+		.name = "mem",
+		.desc = "Memory operations",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0x5,
+		.masks = {
 			{
 				.mask_name = "stream_load",
 				.mask_desc = "Stream Unit load operations to L2",
@@ -201,11 +201,11 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 		},
 	},
 	{
-		.pme_name = "spu_ops",
-		.pme_desc = "Stream Unit operations.  User, supervisor, and hypervisor counting must all be enabled to properly count these events.",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0x6,
-		.pme_masks = {
+		.name = "spu_ops",
+		.desc = "Stream Unit operations.  User, supervisor, and hypervisor counting must all be enabled to properly count these events.",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0x6,
+		.masks = {
 			{
 				.mask_name = "DES",
 				.mask_desc = "Increment for each CWQ or ASI operation that uses DES/3DES unit",
@@ -241,11 +241,11 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 		},
 	},
 	{
-		.pme_name = "spu_busy",
-		.pme_desc = "Stream Unit busy cycles.  User, supervisor, and hypervisor counting must all be enabled to properly count these events.",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0x07,
-		.pme_masks = {
+		.name = "spu_busy",
+		.desc = "Stream Unit busy cycles.  User, supervisor, and hypervisor counting must all be enabled to properly count these events.",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0x07,
+		.masks = {
 			{
 				.mask_name = "DES",
 				.mask_desc = "Cycles the DES/3DES unit is busy",
@@ -281,11 +281,11 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 		},
 	},
 	{
-		.pme_name = "tlb_miss",
-		.pme_desc = "TLB misses",
-		.pme_ctrl = PME_CTRL_S0 | PME_CTRL_S1,
-		.pme_val = 0xb,
-		.pme_masks = {
+		.name = "tlb_miss",
+		.desc = "TLB misses",
+		.ctrl = PME_CTRL_S0 | PME_CTRL_S1,
+		.code = 0xb,
+		.masks = {
 			{
 				.mask_name = "ignored0",
 				.mask_desc = "Ignored",
@@ -321,4 +321,4 @@ static pme_sparc_mask_entry_t niagara2_pe[] = {
 		},
 	},
 };
-#define PME_NIAGARA2_EVENT_COUNT	   (sizeof(niagara2_pe)/sizeof(pme_sparc_mask_entry_t))
+#define PME_SPARC_NIAGARA2_EVENT_COUNT	   (sizeof(niagara2_pe)/sizeof(sparc_entry_t))
