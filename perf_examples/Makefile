@@ -31,11 +31,11 @@ ifeq ($(ARCH),ia64)
 #DIRS +=ia64
 endif
 
-ifeq ($(ARCH),ia32)
+ifeq ($(ARCH),x86)
 DIRS +=x86
 endif
 
-ifeq ($(ARCH),x86_64)
+ifeq ($(ARCH),x86)
 DIRS +=x86
 endif
 
