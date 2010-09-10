@@ -134,6 +134,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 		ret = perf_read_buffer(hw->buf, hw->pgmsk, &ehdr, sizeof(ehdr));
 		if (ret)
 			return; /* nothing to read */
+
 		switch(ehdr.type) {
 			case PERF_RECORD_SAMPLE:
 				perf_display_sample(fds, num_fds, hw - fds, &ehdr, stdout);
@@ -168,7 +169,7 @@ mainloop(char **arg)
 	/*
 	 * does allocate fds
 	 */
-	ret = perf_setup_list_events("PERF_COUNT_HW_BRANCH_INSTRUCTIONS", &fds, &num_fds);
+	ret = perf_setup_list_events("PERF_COUNT_HW_BRANCH_INSTRUCTIONS:u", &fds, &num_fds);
 	if (ret || !num_fds)
 		errx(1, "cannot setup event");
 
@@ -204,7 +205,7 @@ mainloop(char **arg)
 	/*
 	 * BTS only supported at user level
 	 */
-	if (fds[0].hw.exclude_user)
+	if (fds[0].hw.exclude_user ||fds[0].hw.exclude_kernel == 0)
 		errx(1, "BTS currently supported only at the user level\n");
 
 	/*
