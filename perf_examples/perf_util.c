@@ -216,7 +216,7 @@ perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size
 	if ((sz - m) > 0)
 		memcpy(buf+m, data, sz - m);
 
-//printf("\nhead=%lx tail=%lx new_tail=%lx sz=%zu\n", hdr->data_head, hdr->data_tail, hdr->data_tail+sz, sz);
+	//printf("\nhead=%lx tail=%lx new_tail=%lx sz=%zu\n", hdr->data_head, hdr->data_tail, hdr->data_tail+sz, sz);
 	hdr->data_tail += sz;
 
 	return 0;
@@ -325,7 +325,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 		if (hw->hw.precise_ip && (ehdr->misc & PERF_RECORD_MISC_EXACT_IP))
 			xtra = " (exact) ";
 
-		fprintf(fp, "IIP:0x%016"PRIx64"%s", val64, xtra);
+		fprintf(fp, "IIP:%#016"PRIx64"%s", val64, xtra);
 		sz -= sizeof(val64);
 	}
 
@@ -358,7 +358,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			return -1;
 		}
 
-		fprintf(fp, "ADDR:%016"PRIx64" ", val64);
+		fprintf(fp, "ADDR:%#016"PRIx64" ", val64);
 		sz -= sizeof(val64);
 	}
 
