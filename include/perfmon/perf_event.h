@@ -215,7 +215,9 @@ typedef struct perf_event_attr {
 			 *  See also PERF_RECORD_MISC_EXACT_IP
 			 */
 			precise_ip     :  2, /* skid constraint       */
-			__reserved_1   : 47;
+			mmap_data      :  1, /* non-exec mmap data    */
+
+			__reserved_1   : 46;
 
 	union {
 		uint32_t	wakeup_events;		/* wakeup every n events */
