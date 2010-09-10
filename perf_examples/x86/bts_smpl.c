@@ -125,6 +125,19 @@ display_exit(perf_event_desc_t *hw)
 }
 
 static void
+display_freq(int mode, perf_event_desc_t *hw)
+{
+	struct { uint64_t time, id, stream_id; } thr;
+	int ret;
+
+	ret = perf_read_buffer(hw->buf, hw->pgmsk, &thr, sizeof(thr));
+	if (ret)
+		errx(1, "cannot read throttling info");
+
+	printf("%s value=%"PRIu64" event ID=%"PRIu64"\n", mode ? "Throttled" : "Unthrottled", thr.id, thr.stream_id);
+}
+
+static void
 process_smpl_buf(perf_event_desc_t *hw)
 {
 	struct perf_event_header ehdr;
@@ -144,6 +157,12 @@ process_smpl_buf(perf_event_desc_t *hw)
 				break;
 			case PERF_RECORD_LOST:
 				display_lost(hw);
+				break;
+			case PERF_RECORD_THROTTLE:
+				display_freq(1, hw);
+				break;
+			case PERF_RECORD_UNTHROTTLE:
+				display_freq(0, hw);
 				break;
 			default:
 				printf("unknown sample type %d\n", ehdr.type);
