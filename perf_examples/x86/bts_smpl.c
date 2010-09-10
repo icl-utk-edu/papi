@@ -107,7 +107,7 @@ display_lost(perf_event_desc_t *hw)
 	else
 		str = fds[e].name;
 
-	printf("<<<LOST %"PRIu64" SAMPLES FOR EVENT %s>>>\n", lost.lost, str);
+	printf("<<<LOST %"PRIu64" SAMPLES FOR EVENT %s (%"PRIu64") >>>\n", lost.lost, str, lost.id);
 	lost_samples += lost.lost;
 }
 
@@ -178,6 +178,7 @@ mainloop(char **arg)
 	struct pollfd pollfds[1];
 	size_t map_size = 0;
 	pid_t pid;
+	uint64_t val[2];
 	int status, ret;
 
 	if (pfm_initialize() != PFM_SUCCESS)
@@ -233,6 +234,7 @@ mainloop(char **arg)
 	fds[0].hw.sample_period = 1;
 	fds[0].hw.exclude_kernel = 1;
 	fds[0].hw.exclude_hv = 1;
+	fds[0].hw.read_format |= PERF_FORMAT_ID;
 
 	fds[0].fd = perf_event_open(&fds[0].hw, pid, -1, -1, 0);
 	if (fds[0].fd == -1)
@@ -244,6 +246,13 @@ mainloop(char **arg)
 
 	/* does not include header page */
 	fds[0].pgmsk = (options.mmap_pages*getpagesize())-1;
+
+	ret = read(fds[0].fd, val, sizeof(val));
+	if (ret == -1)
+		err(1, "cannot read id %zu", sizeof(val));
+
+	fds[0].id = val[1];
+	printf("%"PRIu64"  %s\n", fds[0].id, fds[0].name);
 
 	/*
 	 * effectively activate monitoring
