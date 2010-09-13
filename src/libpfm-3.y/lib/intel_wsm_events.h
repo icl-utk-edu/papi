@@ -302,7 +302,7 @@ static pme_nhm_entry_t wsm_pe[]={
 	  .pme_umasks = {
 			{ .pme_uname  = "ANY_P",
 				.pme_udesc  = "Instructions Retired (Precise Event)",
-				.pme_ucode  = 0x01,
+				.pme_ucode  = 0x00,
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "X87",
