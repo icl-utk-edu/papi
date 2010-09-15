@@ -33,6 +33,7 @@ typedef struct {
 	unsigned int		pme_cntmsk; /* counter mask */
 	unsigned int		pme_ucode;  /* unit mask code */
 	unsigned int		pme_uflags; /* unit mask flags */
+	unsigned int		pme_umodel; /* CPU model for this umask */
 } pme_nhm_umask_t;
 
 typedef struct {
@@ -59,6 +60,8 @@ typedef struct {
 #define PFMLIB_NHM_PEBS			0x040 /* support PEBS (precise event) */
 #define PFMLIB_NHM_UNC			0x080 /* uncore event */
 #define PFMLIB_NHM_UNC_FIXED		0x100 /* uncore fixed event */
-#define PFMLIB_NHM_PMC0			0x200 /* only works in PMC0 */
+#define PFMLIB_NHM_OFFCORE_RSP1		0x200 /* requires OFFCORE_RSP1 register */
+#define PFMLIB_NHM_PMC0			0x400 /* works only on IA32_PMC0 */
+#define PFMLIB_NHM_EX			0x800 /*  has Nehalem-EX specific unit masks */
 
 #endif /* __PFMLIB_NHM_PRIV_H__ */

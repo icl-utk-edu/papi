@@ -275,6 +275,7 @@ pfm_gen_ia32_init(void)
 		eax.eax.num_cnt = 2;
 		eax.eax.cnt_width = 40;
 		eax.eax.ebx_length = 0; /* unused */
+		ebx.val = 0;
 		edx.edx.num_cnt = 3;
 		edx.edx.cnt_width = 40;
 	}
