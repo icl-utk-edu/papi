@@ -22,6 +22,8 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 endif
 endif
 
+unexport CFLAGS
+
 CFLAGS += -DSUBSTRATE_USES_LIBPFM
 MISCHDRS += perfmon.h papi_pfm_events.h $(PAPI_EVENTS_TABLE)
 MISCSRCS += papi_pfm_events.c

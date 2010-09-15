@@ -28,6 +28,8 @@ CFLAGS += -I$(PERFCTR_KINC_PATH)
 endif
 endif
 
+unexport CFLAGS
+
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
