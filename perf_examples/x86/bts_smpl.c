@@ -151,6 +151,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 		switch(ehdr.type) {
 			case PERF_RECORD_SAMPLE:
 				perf_display_sample(fds, num_fds, hw - fds, &ehdr, stdout);
+				collected_samples++;
 				break;
 			case PERF_RECORD_EXIT:
 				display_exit(hw);
@@ -165,7 +166,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 				display_freq(0, hw);
 				break;
 			default:
-				printf("unknown sample type %d\n", ehdr.type);
+				printf("unknown sample type %d sz=%d\n", ehdr.type, ehdr.size);
 				perf_skip_buffer(hw->buf, ehdr.size);
 		}
 	}
