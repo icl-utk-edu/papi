@@ -147,8 +147,10 @@ void read_cpu(int c)
 			if (ret != sizeof(values)) {
 				if (ret == -1)
 					err(1, "cannot read event %s : %d", fds[j].name, ret);
-				else
-					warnx("could not read event %s", fds[j].name);
+				else {
+					warnx("CPU%d G%-2d could not read event %s, read=%d", c, i, fds[j].name, ret);
+					continue;
+				}
 			}
 
 			/*
