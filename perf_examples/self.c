@@ -139,13 +139,12 @@ main(int argc, char **argv)
 		val = perf_scale(values);
 		ratio = perf_scale_ratio(values);
 
-		if (ratio == 1.0)
-			printf("%'20"PRIu64" %s\n", val, fds[i].name);
-		else
-			if (ratio == 0.0)
-				printf("%'20"PRIu64" %s (did not run: competing session)\n", val, fds[i].name);
-			else
-				printf("%'20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
+		printf("%'20"PRIu64" %s (%.2f%% scaling, ena=%'"PRIu64", run=%'"PRIu64")\n",
+			val,
+			fds[i].name,
+			(1.0-ratio)*100.0,
+			fds[i].enabled,
+			fds[i].running);
 
 		close(fds[i].fd);
 	}
