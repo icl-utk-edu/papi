@@ -302,63 +302,6 @@ fixup_mem_uncore_retired(void)
 }
 
 static int
-pfm_wsm_detect(void)
-{
-	switch(cpu_model) {
-		case 37: /* Westmere */
-		case 44:
-			break;
-		default:
-			return PFMLIB_ERR_NOTSUPP;
-	}
-	return PFMLIB_SUCCESS;
-}
-
-static inline void setup_nhm_impl_unc_regs(void)
-{
-	pfm_regmask_set(&nhm_impl_unc_pmds, 20);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 21);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 22);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 23);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 24);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 25);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 26);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 27);
-	pfm_regmask_set(&nhm_impl_unc_pmds, 28);
-
-	/* uncore */
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 20);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 21);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 22);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 23);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 24);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 25);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 26);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 27);
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 28);
-	/* unnhm_addrop_match */
-	pfm_regmask_set(&nhm_impl_unc_pmcs, 29);
-
-}
-
-static void
-fixup_mem_uncore_retired(void)
-{
-	size_t i;
-
-	for(i=0; i < PME_COREI7_EVENT_COUNT; i++) {
-		if (corei7_pe[i].pme_code != 0xf)
-			continue;
-		
-		/*
- 		 * assume model46 umasks are at the end
- 		 */
-		corei7_pe[i].pme_numasks = 6;
-		break;
-	}
-}
-
-static int
 pfm_nhm_init(void)
 {
 	pfm_pmu_support_t *supp;
@@ -640,7 +583,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		 */
 		if (ne->pme_flags & PFMLIB_NHM_PMC01) {
 			if (++npmc01 > 2) {
-				DPRINT("more than two events compete for a PMC0 and PMC1\n");
+				DPRINT("two events compete for a PMC0\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -719,11 +662,6 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	for(i=0; i < PMU_NHM_NUM_COUNTERS; i++)
 		assign_pc[i] = -1;
 
-	next_gen = 0; /* first generic counter */
-	last_gen = 3; /* last generic counter */
-
-	next_gen = 0; /* first generic counter */
-	last_gen = 3; /* last generic counter */
 
 	next_gen = 0; /* first generic counter */
 	last_gen = 3; /* last generic counter */
