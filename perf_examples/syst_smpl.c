@@ -133,6 +133,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 				ret = perf_display_sample(fds, num_fds, hw - fds, &ehdr, stdout);
 				if (ret)
 					errx(1, "cannot parse sample");
+				collected_samples++;
 				break;
 			case PERF_RECORD_EXIT:
 				display_exit(hw);
