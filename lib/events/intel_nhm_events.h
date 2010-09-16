@@ -257,7 +257,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.umasks = {
 			{ .uname  = "ALL_BRANCHES",
 				.udesc  = "Retired branch instructions (Precise Event)",
-				.ucode  = 0x04,
+				.ucode  = 0x00, /* architected event encoding */
 				.uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 			},
 			{ .uname  = "CONDITIONAL",

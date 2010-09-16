@@ -207,7 +207,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .umasks = {
 		{ .uname  = "ALL_BRANCHES",
 		  .udesc  = "Mispredicted retired branch instructions (Precise Event)",
-		  .ucode  = 0x4,
+		  .ucode  = 0x0, /* architected event encoding */
 		  .uflags = INTEL_X86_NCOMBO,
 		},
 		{ .uname  = "NEAR_CALL",
@@ -1174,7 +1174,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .umasks = {
 		{ .uname  = "ALL_BRANCHES",
 		  .udesc  = "Retired branch instructions (Precise Event)",
-		  .ucode  = 0x4,
+		  .ucode  = 0x0, /* architected event encoding */
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname  = "CONDITIONAL",
