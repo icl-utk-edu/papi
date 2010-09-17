@@ -1,5 +1,5 @@
             ------------------------------------------------------
-                                    libpfm-3.9:
+                                    libpfm-3.10:
       a helper library to program the Performance Monitoring Unit (PMU)
             ------------------------------------------------------
  	  Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
@@ -23,7 +23,7 @@ This version of libpfm supports:
 		Intel Netburst (Pentium 4, Xeon)
 		Intel Core (Merom, Penryn, Dunnington) Core 2 and Quad
 		Intel Atom
-		Intel Nehalem
+		Intel Nehalem (Nehalem, Westmere)
 		Intel architectural perfmon v1, v2, v3
 	- For MIPS:
 		5K, 20K, 25KF, 34K, 5KC, 74K, R10000, R12000, RM7000, RM9000,

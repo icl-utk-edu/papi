@@ -2009,7 +2009,7 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 	.pme_code  = 0x4E0,
 	.pme_desc  = "Read Request to L3 Cache",
 	.pme_flags = PFMLIB_AMD64_UMASK_COMBO | PFMLIB_AMD64_TILL_FAM10H_REV_C,
-	.pme_numasks = 8,
+	.pme_numasks = 5,
 	.pme_umasks  = {
 		{ .pme_uname = "READ_BLOCK_EXCLUSIVE",
 		  .pme_udesc = "Read Block Exclusive (Data cache read)",
@@ -2023,6 +2023,17 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Read Block Modify",
 		  .pme_ucode = 0x04,
 		},
+		{ .pme_uname = "ANY_READ",
+		  .pme_udesc = "any read modes (exclusive, shared, modify)",
+		  .pme_ucode = 0x07,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .pme_uname = "CORE_0_SELECT",
 		  .pme_udesc = "Core 0 Select",
 		  .pme_ucode = 0x10,
@@ -2039,9 +2050,10 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Core 3 Select",
 		  .pme_ucode = 0x80,
 		},
-		{ .pme_uname = "ALL",
-		  .pme_udesc = "All sub-events selected",
-		  .pme_ucode = 0xF7,
+#endif
+		{ .pme_uname = "ALL_CORES",
+		  .pme_udesc = "All cores",
+		  .pme_ucode = 0xF0,
 		},
 	 },
 	},
@@ -2049,7 +2061,7 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 	.pme_code  = 0x4E1,
 	.pme_desc  = "L3 Cache Misses",
 	.pme_flags = PFMLIB_AMD64_UMASK_COMBO | PFMLIB_AMD64_TILL_FAM10H_REV_C,
-	.pme_numasks = 8,
+	.pme_numasks = 5,
 	.pme_umasks  = {
 		{ .pme_uname = "READ_BLOCK_EXCLUSIVE",
 		  .pme_udesc = "Read Block Exclusive (Data cache read)",
@@ -2063,6 +2075,17 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Read Block Modify",
 		  .pme_ucode = 0x04,
 		},
+		{ .pme_uname = "ANY_READ",
+		  .pme_udesc = "any read modes (exclusive, shared, modify)",
+		  .pme_ucode = 0x07,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .pme_uname = "CORE_0_SELECT",
 		  .pme_udesc = "Core 0 Select",
 		  .pme_ucode = 0x10,
@@ -2079,9 +2102,10 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Core 3 Select",
 		  .pme_ucode = 0x80,
 		},
-		{ .pme_uname = "ALL",
-		  .pme_udesc = "All sub-events selected",
-		  .pme_ucode = 0xF7,
+#endif
+		{ .pme_uname = "ALL_CORES",
+		  .pme_udesc = "All cores",
+		  .pme_ucode = 0xF0,
 		},
 	 },
 	},
@@ -2089,7 +2113,7 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 	.pme_code  = 0x4E2,
 	.pme_desc  = "L3 Fills caused by L2 Evictions",
 	.pme_flags = PFMLIB_AMD64_UMASK_COMBO | PFMLIB_AMD64_TILL_FAM10H_REV_C,
-	.pme_numasks = 9,
+	.pme_numasks = 6,
 	.pme_umasks  = {
 		{ .pme_uname = "SHARED",
 		  .pme_udesc = "Shared",
@@ -2107,6 +2131,17 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Modified",
 		  .pme_ucode = 0x08,
 		},
+		{ .pme_uname = "ANY_STATE",
+		  .pme_udesc = "any line state (shared, owned, exclusive, modified)",
+		  .pme_ucode = 0x0f,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
 		{ .pme_uname = "CORE_0_SELECT",
 		  .pme_udesc = "Core 0 Select",
 		  .pme_ucode = 0x10,
@@ -2123,9 +2158,10 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Core 3 Select",
 		  .pme_ucode = 0x80,
 		},
-		{ .pme_uname = "ALL",
-		  .pme_udesc = "All sub-events selected",
-		  .pme_ucode = 0xFF,
+#endif
+		{ .pme_uname = "ALL_CORES",
+		  .pme_udesc = "All cores",
+		  .pme_ucode = 0xF0,
 		},
 	 },
 	},
@@ -2235,7 +2271,7 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 	.pme_code  = 0x4E0,
 	.pme_desc  = "Read Request to L3 Cache",
 	.pme_flags = PFMLIB_AMD64_UMASK_COMBO | PFMLIB_AMD64_FAM10H_REV_D,
-	.pme_numasks = 11,
+	.pme_numasks = 5,
 	.pme_umasks  = {
 		{ .pme_uname = "READ_BLOCK_EXCLUSIVE",
 		  .pme_udesc = "Read Block Exclusive (Data cache read)",
@@ -2249,6 +2285,18 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Read Block Modify",
 		  .pme_ucode = 0x04,
 		},
+		{ .pme_uname = "ANY_READ",
+		  .pme_udesc = "any read modes (exclusive, shared, modify)",
+		  .pme_ucode = 0x07,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
+	
 		{ .pme_uname = "CORE_0_SELECT",
 		  .pme_udesc = "Core 0 Select",
 		  .pme_ucode = 0x00,
@@ -2277,9 +2325,10 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Any core",
 		  .pme_ucode = 0xF0,
 		},
-		{ .pme_uname = "ALL",
-		  .pme_udesc = "All sub-events selected",
-		  .pme_ucode = 0xF7,
+#endif
+		{ .pme_uname = "ALL_CORES",
+		  .pme_udesc = "All cores",
+		  .pme_ucode = 0xF0,
 		},
 	 },
 	},
@@ -2287,7 +2336,7 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 	.pme_code  = 0x4E1,
 	.pme_desc  = "L3 Cache Misses",
 	.pme_flags = PFMLIB_AMD64_UMASK_COMBO | PFMLIB_AMD64_FAM10H_REV_D,
-	.pme_numasks = 11,
+	.pme_numasks = 5,
 	.pme_umasks  = {
 		{ .pme_uname = "READ_BLOCK_EXCLUSIVE",
 		  .pme_udesc = "Read Block Exclusive (Data cache read)",
@@ -2301,6 +2350,18 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Read Block Modify",
 		  .pme_ucode = 0x04,
 		},
+		{ .pme_uname = "ANY_READ",
+		  .pme_udesc = "any read modes (exclusive, shared, modify)",
+		  .pme_ucode = 0x07,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
+
 		{ .pme_uname = "CORE_0_SELECT",
 		  .pme_udesc = "Core 0 Select",
 		  .pme_ucode = 0x00,
@@ -2329,9 +2390,10 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Any core",
 		  .pme_ucode = 0xF0,
 		},
-		{ .pme_uname = "ALL",
-		  .pme_udesc = "All sub-events selected",
-		  .pme_ucode = 0xF7,
+#endif
+		{ .pme_uname = "ALL_CORES",
+		  .pme_udesc = "All cores",
+		  .pme_ucode = 0xF0,
 		},
 	 },
 	},
@@ -2339,7 +2401,7 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 	.pme_code  = 0x4E2,
 	.pme_desc  = "L3 Fills caused by L2 Evictions",
 	.pme_flags = PFMLIB_AMD64_UMASK_COMBO | PFMLIB_AMD64_FAM10H_REV_D,
-	.pme_numasks = 12,
+	.pme_numasks = 6,
 	.pme_umasks  = {
 		{ .pme_uname = "SHARED",
 		  .pme_udesc = "Shared",
@@ -2357,6 +2419,18 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Modified",
 		  .pme_ucode = 0x08,
 		},
+		{ .pme_uname = "ANY_STATE",
+		  .pme_udesc = "any line state (shared, owned, exclusive, modified)",
+		  .pme_ucode = 0x0f,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
+
 		{ .pme_uname = "CORE_0_SELECT",
 		  .pme_udesc = "Core 0 Select",
 		  .pme_ucode = 0x00,
@@ -2385,9 +2459,10 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		  .pme_udesc = "Any core",
 		  .pme_ucode = 0xF0,
 		},
-		{ .pme_uname = "ALL",
-		  .pme_udesc = "All sub-events selected",
-		  .pme_ucode = 0xFF,
+#endif
+		{ .pme_uname = "ALL_CORES",
+		  .pme_udesc = "All cores",
+		  .pme_ucode = 0xF0,
 		},
 	 },
 	},
@@ -2422,6 +2497,179 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
                }
         },
        },
+/* 125 */{.pme_name = "MAB_REQUESTS",
+	.pme_code  = 0x68,
+	.pme_desc  = "Average L1 refill latency for Icache and Dcache misses (request count for cache refills)",
+	.pme_numasks = 10,
+	.pme_umasks  = {
+		{ .pme_uname = "BUFFER_0",
+		  .pme_udesc = "Buffer 0",
+		  .pme_ucode = 0x00,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_1",
+		  .pme_udesc = "Buffer 1",
+		  .pme_ucode = 0x01,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_2",
+		  .pme_udesc = "Buffer 2",
+		  .pme_ucode = 0x02,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_3",
+		  .pme_udesc = "Buffer 3",
+		  .pme_ucode = 0x03,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_4",
+		  .pme_udesc = "Buffer 4",
+		  .pme_ucode = 0x04,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_5",
+		  .pme_udesc = "Buffer 5",
+		  .pme_ucode = 0x05,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_6",
+		  .pme_udesc = "Buffer 6",
+		  .pme_ucode = 0x06,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_7",
+		  .pme_udesc = "Buffer 7",
+		  .pme_ucode = 0x07,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_8",
+		  .pme_udesc = "Buffer 8",
+		  .pme_ucode = 0x08,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_9",
+		  .pme_udesc = "Buffer 9",
+		  .pme_ucode = 0x09,
+		  .pme_uflags = 0,
+		},
+	 },
+	},
+/* 126 */{.pme_name = "MAB_WAIT_CYCLES",
+	.pme_code  = 0x69,
+	.pme_desc  = "Average L1 refill latency for Icache and Dcache misses (cycles that requests spent waiting for the refills)",
+	.pme_numasks = 10,
+	.pme_umasks  = {
+		{ .pme_uname = "BUFFER_0",
+		  .pme_udesc = "Buffer 0",
+		  .pme_ucode = 0x00,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_1",
+		  .pme_udesc = "Buffer 1",
+		  .pme_ucode = 0x01,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_2",
+		  .pme_udesc = "Buffer 2",
+		  .pme_ucode = 0x02,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_3",
+		  .pme_udesc = "Buffer 3",
+		  .pme_ucode = 0x03,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_4",
+		  .pme_udesc = "Buffer 4",
+		  .pme_ucode = 0x04,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_5",
+		  .pme_udesc = "Buffer 5",
+		  .pme_ucode = 0x05,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_6",
+		  .pme_udesc = "Buffer 6",
+		  .pme_ucode = 0x06,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_7",
+		  .pme_udesc = "Buffer 7",
+		  .pme_ucode = 0x07,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_8",
+		  .pme_udesc = "Buffer 8",
+		  .pme_ucode = 0x08,
+		  .pme_uflags = 0,
+		},
+		{ .pme_uname = "BUFFER_9",
+		  .pme_udesc = "Buffer 9",
+		  .pme_ucode = 0x09,
+		  .pme_uflags = 0,
+		},
+	 },
+	},
+/* 127 */{.pme_name = "NON_CANCELLED_L3_READ_REQUESTS",
+	.pme_code  = 0x4ED,
+	.pme_desc  = "Non-cancelled L3 Read Requests",
+	.pme_numasks = 5,
+	.pme_umasks  = {
+		{ .pme_uname = "READ_BLOCK_EXCLUSIVE",
+		  .pme_udesc = "Read Block Exclusive (Data cache read)",
+		  .pme_ucode = 0x01,
+		},
+		{ .pme_uname = "READ_BLOCK_SHARED",
+		  .pme_udesc = "Read Block Shared (Instruction cache read)",
+		  .pme_ucode = 0x02,
+		},
+		{ .pme_uname = "READ_BLOCK_MODIFY",
+		  .pme_udesc = "Read Block Modify",
+		  .pme_ucode = 0x04,
+		},
+		{ .pme_uname = "ANY_READ",
+		  .pme_udesc = "any read modes (exclusive, shared, modify)",
+		  .pme_ucode = 0x07,
+		},
+#if 0
+/*
+ *    http://support.amd.com/us/Processor_TechDocs/41322.pdf
+ *
+ *    Issue number 437 on page 131.
+ *
+ */
+		{ .pme_uname = "CORE_0_SELECT",
+		  .pme_udesc = "Core 0 Select",
+		  .pme_ucode = 0x00,
+		},
+		{ .pme_uname = "CORE_1_SELECT",
+		  .pme_udesc = "Core 1 Select",
+		  .pme_ucode = 0x10,
+		},
+		{ .pme_uname = "CORE_2_SELECT",
+		  .pme_udesc = "Core 2 Select",
+		  .pme_ucode = 0x20,
+		},
+		{ .pme_uname = "CORE_3_SELECT",
+		  .pme_udesc = "Core 3 Select",
+		  .pme_ucode = 0x30,
+		},
+		{ .pme_uname = "CORE_4_SELECT",
+		  .pme_udesc = "Core 4 Select",
+		  .pme_ucode = 0x40,
+		},
+		{ .pme_uname = "CORE_5_SELECT",
+		  .pme_udesc = "Core 5 Select",
+		  .pme_ucode = 0x50,
+		},
+#endif
+		{ .pme_uname = "ALL_CORES",
+		  .pme_udesc = "All cores",
+		  .pme_ucode = 0xF0,
+		},
+	 },
+	},
 };
 
 #define PME_AMD64_FAM10H_EVENT_COUNT		(sizeof(amd64_fam10h_pe)/sizeof(pme_amd64_entry_t))

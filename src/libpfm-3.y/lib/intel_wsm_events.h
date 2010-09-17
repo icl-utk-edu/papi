@@ -200,13 +200,8 @@ static pme_nhm_entry_t wsm_pe[]={
 		  .pme_ucode  = 0x10,
 		  .pme_uflags = 0,
 		},
-		{ .pme_uname  = "EPDE_HIT",
-		  .pme_udesc  = "counts hits of extended PDE cache",
-		  .pme_ucode  = 0x01,
-		  .pme_uflags = 0,
-		},
 	  },
-	  .pme_numasks = 2
+	  .pme_numasks = 1
 	},
 	{ .pme_name   = "UOPS_EXECUTED",
 	  .pme_desc   = "micro-ops executed",
@@ -315,8 +310,13 @@ static pme_nhm_entry_t wsm_pe[]={
 		  		.pme_ucode  = 0x4,
 		  		.pme_uflags = 0,
 			},
+			{ .pme_uname  = "TOTAL_CYCLES",
+				.pme_udesc  = "Total cycles (Precise Event)",
+				.pme_ucode  = 0x1 | (16 << 16) | (1 <<15), /* inv=1, cmask = 16 */
+				.pme_uflags = 0,
+			},
 		},
-		.pme_numasks = 3
+		.pme_numasks = 4
 	},
 	{ .pme_name   = "ILD_STALL",
 	  .pme_desc   = "Instruction Length Decoder stalls",
@@ -1160,8 +1160,13 @@ static pme_nhm_entry_t wsm_pe[]={
 		  .pme_ucode  = 0x1,
 		  .pme_uflags = 0,
 		},
+	  	{ .pme_uname  = "SMC",
+		  .pme_udesc  = "Self-modifying code detected",
+		  .pme_ucode  = 0x4,
+		  .pme_uflags = 0,
+		},
 	  },
-	  .pme_numasks = 2
+	  .pme_numasks = 3
 	},
 	{ .pme_name   = "FP_COMP_OPS_EXE",
 	  .pme_desc   = "SSE/MMX micro-ops",
