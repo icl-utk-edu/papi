@@ -60,7 +60,6 @@ static uint64_t collected_samples, lost_samples;
 static perf_event_desc_t *fds;
 static int num_fds;
 static options_t options;
-static uint64_t sum_period;
 
 static struct option the_options[]={
 	{ "help", 0, 0,  1},
@@ -339,8 +338,6 @@ terminate_session:
 	printf("%"PRIu64" samples collected in %"PRIu64" poll events, %"PRIu64" lost samples\n",
 		collected_samples,
 		ovfl_count, lost_samples);
-	if (collected_samples)
-		printf("avg period=%"PRIu64"\n", sum_period / collected_samples);
 
 	/* free libpfm resources cleanly */
 	pfm_terminate();
