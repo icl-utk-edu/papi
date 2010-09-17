@@ -31,7 +31,7 @@ extern "C" {
 #include <perfmon/pfmlib_os.h>
 #include <perfmon/pfmlib_comp.h>
 
-#define PFMLIB_VERSION		(3 << 16 | 9)
+#define PFMLIB_VERSION		(3 << 16 | 10)
 #define PFMLIB_MAJ_VERSION(v)	((v)>>16)
 #define PFMLIB_MIN_VERSION(v)	((v) & 0xffff)
 

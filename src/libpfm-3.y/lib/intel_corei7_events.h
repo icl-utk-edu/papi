@@ -2007,8 +2007,13 @@ static pme_nhm_entry_t corei7_pe[]={
 				.pme_ucode  = 0x02,
 				.pme_uflags = 0,
 			},
+			{ .pme_uname  = "MS_CYCLES_ACTIVE",
+				.pme_udesc  = "cycles in which at least one uop is decoded by Microcode Sequencer",
+				.pme_ucode  = 0x2 | (1<< 16), /* counter-mask = 1 */
+			},
+
 		},
-		.pme_numasks = 3
+		.pme_numasks = 4
 	},
 	{ .pme_name   = "UOPS_EXECUTED",
 		.pme_desc   = "Micro-ops executed",
