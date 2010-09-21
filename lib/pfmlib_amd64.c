@@ -248,9 +248,7 @@ amd64_attr2mod(void *this, int pidx, int attr_idx)
 	return x;
 }
 
-
-
-void amd64_display_reg(void *this, pfm_amd64_reg_t reg, char *fstr)
+void amd64_display_reg(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t reg)
 {
 	pfmlib_pmu_t *pmu = this;
 
@@ -268,7 +266,7 @@ void amd64_display_reg(void *this, pfm_amd64_reg_t reg, char *fstr)
 			reg.sel_cnt_mask,
 			reg.sel_guest,
 			reg.sel_host,
-			fstr);
+			e->fstr);
 	else
 		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
 			reg.val,
@@ -281,7 +279,7 @@ void amd64_display_reg(void *this, pfm_amd64_reg_t reg, char *fstr)
 			reg.sel_inv,
 			reg.sel_edge,
 			reg.sel_cnt_mask,
-			fstr);
+			e->fstr);
 }
 
 int
@@ -558,7 +556,7 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int 
 			attrs->plm |= PFM_PLM3;
 	}
 
-	amd64_display_reg(this, reg, e->fstr);
+	amd64_display_reg(this, e, reg);
 
 	return PFM_SUCCESS;
 }
