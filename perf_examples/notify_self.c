@@ -51,6 +51,7 @@ print_sample(int id)
 	uint64_t nr, ip;
 	uint64_t time_enabled, time_running;
 	struct { uint64_t value, id; } grp;
+	double val, ratio;
 	int e, ret;
 	const char *str;
 
@@ -86,12 +87,14 @@ print_sample(int id)
 			str = fds[e].name;
 
 		if (time_running)
-			grp.value = grp.value * time_enabled / time_running;
+			ratio = (double)time_enabled / (double)time_running;
 		else
-			grp.value = 0;
+			ratio = 0.0;
 
-		printf("\t%'"PRIu64" %s (%"PRIu64"%s)\n",
-			grp.value, str,
+		val = grp.value * ratio;
+
+		printf("\t%'18.0f %s (%"PRIu64"%s)\n",
+			val, str,
 			grp.id,
 			time_running != time_enabled ? ", scaled":"");
 
