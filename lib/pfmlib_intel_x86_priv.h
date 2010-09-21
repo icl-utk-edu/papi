@@ -199,7 +199,7 @@ typedef struct {
 
 typedef struct {
 	int model;
-	int family;
+	int family; /* 0 means nothing detected yet */
 	int arch_version;
 } pfm_intel_x86_config_t;
 

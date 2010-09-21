@@ -290,6 +290,9 @@ pfm_amd64_detect(void *this)
 	unsigned int a, b, c, d;
 	char buffer[128];
 
+	if (pfm_amd64_cfg.family)
+		return PFM_SUCCESS;
+
 	cpuid(0, &a, &b, &c, &d);
 	strncpy(&buffer[0], (char *)(&b), 4);
 	strncpy(&buffer[4], (char *)(&d), 4);

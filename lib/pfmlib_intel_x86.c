@@ -170,6 +170,9 @@ pfm_intel_x86_detect(void)
 	unsigned int a, b, c, d;
 	char buffer[64];
 
+	if (pfm_intel_x86_cfg.family)
+		return PFM_SUCCESS;
+
 	cpuid(0, &a, &b, &c, &d);
 	strncpy(&buffer[0], (char *)(&b), 4);
 	strncpy(&buffer[4], (char *)(&d), 4);
