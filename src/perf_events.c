@@ -63,8 +63,20 @@
 #include <dirent.h>
 #endif
 
+
+
 /* Needed for ioctl call */
 #include <sys/ioctl.h>
+
+
+#if defined(HAVE_MMTIMER)
+#include <sys/mman.h>
+#include <linux/mmtimer.h>
+#ifndef MMTIMER_FULLNAME
+#define MMTIMER_FULLNAME "/dev/mmtimer"
+#endif
+#endif
+
 
 /* These sentinels tell papi_pe_set_overflow() how to set the
  * wakeup_events field in the event descriptor record.
@@ -135,12 +147,22 @@ dump_event_header( struct perf_event_header *header )
 */
 
 #if defined(HAVE_MMTIMER)
+
+static int mmdev_fd;
+static unsigned long mmdev_mask;
+static unsigned long mmdev_ratio;
+static volatile unsigned long *mmdev_timer_addr;
+
+
 inline_static long long
 get_cycles( void )
 {
 	long long tmp = 0;
-	tmp = *mmdev_timer_addr;
-#error "This needs work"
+
+        tmp = *mmdev_timer_addr & mmdev_mask;
+	SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_ratio);
+        tmp *= mmdev_ratio;
+
 	return tmp;
 }
 #elif defined(__ia64__)
@@ -1893,6 +1915,81 @@ _papi_pe_init_substrate( int cidx )
 
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+
+
+#if defined(HAVE_MMTIMER)
+        /* setup mmtimer */
+        {
+	  unsigned long femtosecs_per_tick = 0;
+	  unsigned long freq = 0;
+	  int result;
+	  int offset;
+
+	  SUBDBG( "MMTIMER Opening %s\n", MMTIMER_FULLNAME );
+	  if ( ( mmdev_fd = open( MMTIMER_FULLNAME, O_RDONLY ) ) == -1 ) {
+	    PAPIERROR( "Failed to open MM timer %s", MMTIMER_FULLNAME );
+	    return ( PAPI_ESYS );
+	  }
+	  SUBDBG( "MMTIMER checking if we can mmap" );
+	  if ( ioctl( mmdev_fd, MMTIMER_MMAPAVAIL, 0 ) != 1 ) {
+	    PAPIERROR( "mmap of MM timer unavailable" );
+	    return ( PAPI_ESBSTR );
+	  }
+	  SUBDBG( "MMTIMER setting close on EXEC flag\n" );
+	  if ( fcntl( mmdev_fd, F_SETFD, FD_CLOEXEC ) == -1 ) {
+	    PAPIERROR( "Failed to fcntl(FD_CLOEXEC) on MM timer FD %d: %s",
+		       mmdev_fd, strerror( errno ) );
+	    return ( PAPI_ESYS );
+	  }
+	  SUBDBG( "MMTIMER is on FD %d, getting offset\n", mmdev_fd );
+	  if ( ( offset = ioctl( mmdev_fd, MMTIMER_GETOFFSET, 0 ) ) < 0 ) {
+	    PAPIERROR( "Failed to get offset of MM timer" );
+	    return ( PAPI_ESYS );
+	  }
+	  SUBDBG( "MMTIMER has offset of %d, getting frequency\n", offset );
+	  if ( ioctl( mmdev_fd, MMTIMER_GETFREQ, &freq ) == -1 ) {
+	    PAPIERROR( "Failed to get frequency of MM timer" );
+	    return ( PAPI_ESYS );
+	  }
+	  SUBDBG( "MMTIMER has frequency %lu Mhz\n", freq / 1000000 );
+	  // don't know for sure, but I think this ratio is inverted
+	  //     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
+          mmdev_ratio =
+		  ( unsigned long ) _papi_hwi_system_info.hw_info.mhz / ( freq /
+                                                                                        
+									  1000000 );
+          SUBDBG( "MMTIMER has a ratio of %ld to the CPU's clock, getting resolution\n",
+		    mmdev_ratio );
+          if ( ioctl( mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick ) == -1 ) {
+		  PAPIERROR( "Failed to get femtoseconds per tick" );
+		  return ( PAPI_ESYS );
+          }
+          SUBDBG( "MMTIMER res is %lu femtosecs/tick (10^-15s) or %f Mhz, getting valid bits\n",
+	  femtosecs_per_tick, 1.0e9 / ( double ) femtosecs_per_tick );
+          if ( ( result = ioctl( mmdev_fd, MMTIMER_GETBITS, 0 ) ) == -ENOSYS ) {
+	     PAPIERROR( "Failed to get number of bits in MMTIMER" );
+	     return ( PAPI_ESYS );
+          }
+          mmdev_mask = ~( 0xffffffffffffffff << result );
+          SUBDBG( "MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",
+		    result, mmdev_mask );
+          if ( ( mmdev_timer_addr =
+		       ( unsigned long * ) mmap( 0, getpagesize(  ), PROT_READ,
+						 MAP_PRIVATE, mmdev_fd,
+						 0 ) ) == NULL ) {
+	     PAPIERROR( "Failed to mmap MM timer" );
+	     return ( PAPI_ESYS );
+          }
+          SUBDBG( "MMTIMER page is at %p, actual address is %p\n",
+			mmdev_timer_addr, mmdev_timer_addr + offset );
+          mmdev_timer_addr += offset;
+          /* mmdev_fd should be closed and page should be unmapped in a global shutdown routine */
+        }
+#endif
+
+        if ( retval )
+	  return ( retval );
+
 
 	return PAPI_OK;
 }
