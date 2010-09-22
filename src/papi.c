@@ -1548,7 +1548,7 @@ PAPI_read( int EventSet, long long *values )
 
 	if ( ESI->state & PAPI_RUNNING ) {
 		if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
-			retval = MPX_read( ESI->multiplex.mpx_evset, values );
+		  retval = MPX_read( ESI->multiplex.mpx_evset, values, 0 );
 		} else {
 			/* get the context we should use for this event set */
 			context = _papi_hwi_get_context( ESI, NULL );
@@ -1593,7 +1593,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cyc )
 
 	if ( ESI->state & PAPI_RUNNING ) {
 		if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
-			retval = MPX_read( ESI->multiplex.mpx_evset, values );
+		  retval = MPX_read( ESI->multiplex.mpx_evset, values, 0 );
 		} else {
 			/* get the context we should use for this event set */
 			context = _papi_hwi_get_context( ESI, NULL );
@@ -1664,7 +1664,7 @@ PAPI_accum( int EventSet, long long *values )
 
 	if ( ESI->state & PAPI_RUNNING ) {
 		if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
-			retval = MPX_read( ESI->multiplex.mpx_evset, ESI->sw_stop );
+		  retval = MPX_read( ESI->multiplex.mpx_evset, ESI->sw_stop, 0 );
 		} else {
 			/* get the context we should use for this event set */
 			context = _papi_hwi_get_context( ESI, NULL );

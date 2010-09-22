@@ -62,7 +62,7 @@ int MPX_stop( MPX_EventSet * mpx_events, long long *values );
 int MPX_cleanup( MPX_EventSet ** mpx_events );
 void MPX_shutdown( void );
 int MPX_reset( MPX_EventSet * mpx_events );
-int MPX_read( MPX_EventSet * mpx_events, long long *values );
+int MPX_read( MPX_EventSet * mpx_events, long long *values, int called_by_stop );
 int MPX_start( MPX_EventSet * mpx_events );
 
 /* The following PAPI internal functions are defined by the threads.c file. */

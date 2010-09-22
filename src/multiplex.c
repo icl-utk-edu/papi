@@ -21,7 +21,9 @@
     What happens when several components are counting multiplexed?
 */
 
-#define MPX_NONDECR
+/* disable this to return to the pre 4.1.1 behavior */
+#define MPX_NONDECR_HYBRID
+
 /* Nils Smeds */
 
 /* This MPX update modifies the behaviour of the multiplexing in PAPI.
@@ -645,12 +647,16 @@ mpx_handler( int signal )
 				/* If it's a rate, count occurrences & average later */
 				if ( !cur_event->is_a_rate ) {
 					cur_event->cycles += cycles;
-					if ( cycles >= MPX_MINCYC )	/* Only update current rate on a decent slice */
+					if ( cycles >= MPX_MINCYC ) {	/* Only update current rate on a decent slice */
 						cur_event->rate_estimate =
 							( double ) counts[0] / ( double ) cycles;
+					}
 					cur_event->count_estimate +=
 						( long long ) ( ( double ) total_cycles *
 										cur_event->rate_estimate );
+                                        MPXDBG("New estimate = %lld (%lld cycles * %lf rate)\n",
+                                               cur_event->count_estimate,total_cycles,
+                                               cur_event->rate_estimate);
 				} else {
 					/* Make sure we ran long enough to get a useful measurement (otherwise
 					 * potentially inaccurate rate measurements get averaged in with
@@ -812,7 +818,7 @@ MPX_start( MPX_EventSet * mpx_events )
 			 * running long enough to get an accurate count.
 			 */
 			if ( !( t->cur_event->is_a_rate ) ) {
-#ifndef MPX_NONDECR
+#ifdef MPX_NONDECR_HYBRID
 				if ( mev != t->cur_event ) {	/* This event is not running this slice */
 					mpx_events->start_values[i] +=
 						( long long ) ( mev->rate_estimate *
@@ -897,7 +903,7 @@ MPX_start( MPX_EventSet * mpx_events )
 }
 
 int
-MPX_read( MPX_EventSet * mpx_events, long long *values )
+MPX_read( MPX_EventSet * mpx_events, long long *values, int called_by_stop )
 {
 	int i;
 	int retval;
@@ -927,40 +933,50 @@ MPX_read( MPX_EventSet * mpx_events, long long *values )
 		for ( i = 0; i < mpx_events->num_events; i++ ) {
 			MasterEvent *mev = mpx_events->mev[i];
 
-			if ( !( mev->is_a_rate ) )
-				mpx_events->stop_values[i] = mev->count_estimate;
-			else
-				mpx_events->stop_values[i] = mev->count;
-
-
-#ifndef MPX_NONDECR
-			/* Extrapolate data up to the current time 
-			 * only if it's not a rate measurement 
-			 */
 			if ( !( mev->is_a_rate ) ) {
-				if ( mev != thread_data->cur_event ) {
-					mpx_events->stop_values[i] +=
+				mpx_events->stop_values[i] = mev->count_estimate;
+			}
+			else {
+				mpx_events->stop_values[i] = mev->count;
+			}
+#ifdef MPX_NONDECR_HYBRID
+			/* If we are called from MPX_stop() then      */
+                        /* adjust the final values based on the       */
+                        /* cycles elapsed since the last read         */
+                        /* otherwise, don't do this as it can cause   */
+                        /* decreasing values if read is called again  */
+                        /* before another sample happens.             */
+
+                        if (called_by_stop) {
+
+			   /* Extrapolate data up to the current time 
+			    * only if it's not a rate measurement 
+			    */
+			   if ( !( mev->is_a_rate ) ) {
+			      if ( mev != thread_data->cur_event ) {
+				 mpx_events->stop_values[i] +=
 						( long long ) ( mev->rate_estimate *
 										( cycles_this_slice +
 										  thread_data->total_c -
 										  mev->prev_total_c ) );
-					MPXDBG
+				 MPXDBG
 						( "%s:%d:: Inactive %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
 						  __FILE__, __LINE__, i, mpx_events->stop_values[i],
 						  mev->count_estimate, mev->rate_estimate,
 						  cycles_this_slice + thread_data->total_c -
 						  mev->prev_total_c );
-				} else {
-					mpx_events->stop_values[i] += last_value[0] +
+			      } else {
+				 mpx_events->stop_values[i] += last_value[0] +
 						( long long ) ( mev->rate_estimate *
 										( thread_data->total_c -
 										  mev->prev_total_c ) );
-					MPXDBG
+				 MPXDBG
 						( "%s:%d:: -Active- %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
 						  __FILE__, __LINE__, i, mpx_events->stop_values[i],
 						  mev->count_estimate, mev->rate_estimate,
 						  thread_data->total_c - mev->prev_total_c );
-				}
+			      }
+			   }
 			}
 #endif
 		}
@@ -1007,7 +1023,7 @@ MPX_reset( MPX_EventSet * mpx_events )
 	long long values[PAPI_MPX_DEF_DEG];
 
 	/* Get the current values from MPX_read */
-	retval = MPX_read( mpx_events, values );
+	retval = MPX_read( mpx_events, values, 0 );
 	if ( retval != PAPI_OK )
 		return retval;
 
@@ -1056,9 +1072,9 @@ MPX_stop( MPX_EventSet * mpx_events, long long *values )
 	/* Read the counter values, this updates mpx_events->stop_values[] */
 	MPXDBG( "Start\n" );
 	if ( values == NULL )
-		retval = MPX_read( mpx_events, dummy_mpx_values );
+	  retval = MPX_read( mpx_events, dummy_mpx_values, 1 );
 	else
-		retval = MPX_read( mpx_events, values );
+	  retval = MPX_read( mpx_events, values, 1 );
 
 	/* Block timer interrupts while modifying active events */
 	mpx_hold(  );
