@@ -133,7 +133,7 @@ static const test_event_t x86_test_events[]={
 	{ .name = "nhm::BRANCH_INSTRUCTIONS_RETIRED",
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
-	  .codes[0] = 0x5304c4,
+	  .codes[0] = 0x5300c4, /* architected encoding, guaranteed to exist */
 	  .fstr = "nhm::BR_INST_RETIRED:ALL_BRANCHES:k=1:u=1:e=0:i=0:c=0:t=0"
 	},
 	{ .name = "nhm::ARITH:DIV:k",
