@@ -70,7 +70,7 @@ typedef enum {
 
 typedef struct {
         pfm_pmu_t		revision;
-        int             	family;
+        int             	family; /* 0 means nothing detected yet */
         int             	model;
         int             	stepping;
 } pfm_amd64_config_t;
