@@ -143,8 +143,8 @@ main(int argc, char **argv)
 			val,
 			fds[i].name,
 			(1.0-ratio)*100.0,
-			fds[i].enabled,
-			fds[i].running);
+			values[1],
+			values[2]);
 
 		close(fds[i].fd);
 	}
