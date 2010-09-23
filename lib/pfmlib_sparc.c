@@ -191,21 +191,47 @@ int pfm_sparc_detect(void)
 }
 
 void
-pfm_sparc_display_reg(int code, char *fstr)
+pfm_sparc_display_reg(void *this, pfmlib_event_desc_t *e, pfm_sparc_reg_t reg)
 {
-	__pfm_vbprintf("[0x%x] %s\n", code, fstr);
+	__pfm_vbprintf("[0x%x umask=0x%x code=0x%x ctrl_s1=%d ctrl_s0=%d] %s\n",
+		reg.val,
+		reg.config.umask,
+		reg.config.code,
+		reg.config.ctrl_s1,
+		reg.config.ctrl_s0,
+		e->fstr);
 }
 
 int
 pfm_sparc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
 {
 	const sparc_entry_t *pe = this_pe(this);
+	pfmlib_attr_t *a;
+	pfm_sparc_reg_t reg;
+	int k;
 
 	*count = 1;
-	*codes = pe[e->event].code;
+
+	reg.val = pe[e->event].code << 16 | pe[e->event].ctrl;
+
+	for(k=0; k < e->nattrs; k++) {
+		a = e->attrs+k;
+		if (a->type == PFM_ATTR_UMASK) {
+			reg.config.umask |= 1 << pe[e->event].umasks[a->id].ubit;
+		}
+	}
+
+	*codes = reg.val;
+
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
 
-	pfm_sparc_display_reg(pe[e->event].code, e->fstr);
+	pfmlib_sort_attr(e);
+	for(k=0; k < e->nattrs; k++) {
+		if (e->attrs[k].type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
+	}
+
+	pfm_sparc_display_reg(this, e, reg);
 
 	return PFM_SUCCESS;
 }
@@ -271,7 +297,18 @@ pfm_sparc_validate_table(void *this, FILE *fp)
 int
 pfm_sparc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
 {
-	return PFM_ERR_INVAL;
+	const sparc_entry_t *pe = this_pe(this);
+
+	info->name = pe[pidx].umasks[attr_idx].uname;
+	info->desc = pe[pidx].umasks[attr_idx].udesc;
+	info->name = pe[pidx].umasks[attr_idx].uname;
+	info->idx = attr_idx;
+	info->equiv= NULL;
+	info->code = 1 << pe[pidx].umasks[attr_idx].ubit;
+	info->type = PFM_ATTR_UMASK;
+	info->is_dfl = 0;
+
+	return PFM_SUCCESS;
 }
 
 int
@@ -288,7 +325,7 @@ pfm_sparc_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->equiv = NULL;
 
 	/* no attributes defined for ARM yet */
-	info->nattrs  = 0;
+	info->nattrs  = pe[idx].numasks;
 
 	return PFM_SUCCESS;
 }

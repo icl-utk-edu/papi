@@ -2,8 +2,9 @@
 #define __PFMLIB_SPARC_PRIV_H__
 
 typedef struct {
-	char			*mask_name;	/* mask name */
-	char			*mask_desc;	/* mask description */
+	char			*uname;	/* mask name */
+	char			*udesc;	/* mask description */
+	int			ubit;	/* umask bit position */
 } sparc_mask_t;
 
 #define EVENT_MASK_BITS		8
@@ -13,9 +14,20 @@ typedef struct {
 	char			ctrl;	/* S0 or S1 */
 	char			__pad;
 	int			code;	/* S0/S1 encoding */
-	int			nmasks;	/* number of entries in masks */
-	sparc_mask_t		masks[EVENT_MASK_BITS];
+	int			numasks;	/* number of entries in masks */
+	sparc_mask_t		umasks[EVENT_MASK_BITS];
 } sparc_entry_t;
+
+typedef union {
+	unsigned int val;
+	struct {
+		unsigned int	ctrl_s0   : 1;
+		unsigned int	ctrl_s1   : 1;
+		unsigned int	reserved1 : 14;
+		unsigned int	code	  : 8;
+		unsigned int	umask	  : 8;
+	} config;
+} pfm_sparc_reg_t;
 
 #define PME_CTRL_S0		1
 #define PME_CTRL_S1		2
