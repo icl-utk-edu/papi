@@ -58,6 +58,7 @@ pfmlib_pmu_t intel_coreduo_support={
 	.name			= "coreduo",
 	.pmu			= PFM_PMU_COREDUO,
 	.pme_count		= PME_COREDUO_EVENT_COUNT,
+	.max_encoding		= 1,
 	.pe			= coreduo_pe,
 	.atdesc			= intel_x86_mods,
 
