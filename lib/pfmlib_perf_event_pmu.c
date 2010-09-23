@@ -47,6 +47,7 @@ typedef struct {
 	const char	*uname;	/* unit mask name */
 	const char	*udesc;	/* unit mask desc */
 	uint64_t	uid;	/* unit mask id */
+	int		uflags;	/* umask options */
 	int		grpid;	/* group identifier */
 } perf_umask_t;
 	
@@ -61,6 +62,11 @@ typedef struct {
 	unsigned long	umask_ovfl_idx;		/* base index of overflow unit masks */
 	perf_umask_t	umasks[PERF_MAX_UMASKS];/* first unit masks */
 } perf_event_t;
+
+/*
+ * umask options: uflags
+ */
+#define PERF_FL_DEFAULT	0x1	/* umask is default for group */
 
 #define PCL_EVT(f, t, m)	\
 	{ .name = #f,		\
@@ -469,6 +475,55 @@ pfm_perf_get_event_next(void *this, int idx)
 }
 
 static int
+pfm_perf_add_defaults(pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
+{
+	perf_event_t *ent;
+	perf_umask_t *um;
+	int i, j, k, added;
+
+	k = e->nattrs;
+	ent = perf_pe+e->event;
+
+	for(i=0; msk; msk >>=1, i++) {
+
+		if (!(msk & 0x1))
+			continue;
+
+		added = 0;
+
+		for(j=0; j < ent->numasks; j++) {
+
+			if (j < PERF_MAX_UMASKS) {
+				um = &perf_pe[e->event].umasks[j];
+			} else {
+				um = perf_get_ovfl_umask(e->event);
+			}
+			if (um->grpid != i)
+				continue;
+
+			if (um->uflags & PERF_FL_DEFAULT) {
+				DPRINT("added default %s for group %d\n", um->uname, i);
+
+				*umask |= um->uid;
+
+				e->attrs[k].id = j;
+				e->attrs[k].ival = 0;
+				e->attrs[k].type = PFM_ATTR_UMASK;
+				k++;
+
+				added++;
+			}
+		}
+		if (!added) {
+			DPRINT("no default found for event %s unit mask group %d\n", ent->name, i);
+			return PFM_ERR_UMASK;
+		}
+	}
+	e->nattrs = k;
+	return PFM_SUCCESS;
+}
+
+static int
 pfmlib_perf_encode_tp(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 {
 	perf_umask_t *um;
@@ -506,31 +561,54 @@ static int
 pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 {
 	pfmlib_attr_t *a;
+	perf_event_t *ent;
 	unsigned int msk, grpmsk;
-	int i;
+	uint64_t umask = 0;
+	int i, ret;
 
 	grpmsk = (1 << perf_pe[e->event].ngrp)-1;
 
-	*codes = perf_pe[e->event].id;
+	ent = perf_pe + e->event;
+
+	*codes = ent->id;
 	*count = 1;
 
 	e->fstr[0] = '\0';
-	evt_strcat(e->fstr, "%s", perf_pe[e->event].name);
 
 	for(i=0; i < e->nattrs; i++) {
 		a = e->attrs+i;
 		if (a->type == PFM_ATTR_UMASK) {
-			*codes |= perf_pe[e->event].umasks[a->id].uid;
-			evt_strcat(e->fstr, ":%s", perf_pe[e->event].umasks[a->id].uname);
+			*codes |= ent->umasks[a->id].uid;
 
-			msk = 1 << perf_pe[e->event].umasks[a->id].grpid;
+			msk = 1 << ent->umasks[a->id].grpid;
 			/* umask cannot be combined in each group */
 			if ((grpmsk & msk) == 0)
 				return PFM_ERR_UMASK;
 			grpmsk &= ~msk;
 		}
 	}
-	return grpmsk ? PFM_ERR_UMASK : PFM_SUCCESS;
+
+	/* check for missing default umasks */
+	if (grpmsk) {
+		ret = pfm_perf_add_defaults(e, grpmsk, &umask);
+		if (ret != PFM_SUCCESS)
+			return ret;
+		*codes |= umask;
+	}
+
+	/*
+	 * reorder all the attributes such that the fstr appears always
+	 * the same regardless of how the attributes were submitted.
+	 *
+	 * cannot sort attr until after we have added the default umasks
+	 */
+	evt_strcat(e->fstr, "%s", ent->name);
+	pfmlib_sort_attr(e);
+	for(i=0; i < e->nattrs; i++) {
+		if (e->attrs[i].type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", ent->umasks[e->attrs[i].id].uname);
+	}
+	return PFM_SUCCESS;
 }
 
 static int
@@ -590,6 +668,10 @@ pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *
 		}
 	
 	}
+	evt_strcat(e->fstr, ":k=%lu", !!(attrs->plm & PFM_PLM0));
+	evt_strcat(e->fstr, ":u=%lu", !!(attrs->plm & PFM_PLM3));
+	evt_strcat(e->fstr, ":h=%lu", !!(attrs->plm & PFM_PLMH));
+
 	return PFM_SUCCESS;
 }
 

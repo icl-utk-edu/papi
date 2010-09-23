@@ -51,6 +51,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "READ",
 		  .udesc = "read access",
 		  .uid   = PERF_COUNT_HW_CACHE_OP_READ << 8,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 0,
 		},
 		{ .uname = "WRITE",
@@ -71,6 +72,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "MISS",
 		  .udesc = "miss access",
 		  .uid   = PERF_COUNT_HW_CACHE_RESULT_MISS << 16,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 1,
 		}
 	}
@@ -88,6 +90,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "READ",
 		  .udesc = "read access",
 		  .uid   = PERF_COUNT_HW_CACHE_OP_READ << 8,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 0,
 		},
 		{ .uname = "PREFETCH",
@@ -103,6 +106,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "MISS",
 		  .udesc = "miss access",
 		  .uid   = PERF_COUNT_HW_CACHE_RESULT_MISS << 16,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 1,
 		}
 	}
@@ -120,6 +124,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "READ",
 		  .udesc = "read access",
 		  .uid   = PERF_COUNT_HW_CACHE_OP_READ << 8,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 0,
 		},
 		{ .uname = "WRITE",
@@ -140,6 +145,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "MISS",
 		  .udesc = "miss access",
 		  .uid   = PERF_COUNT_HW_CACHE_RESULT_MISS << 16,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 1,
 		}
 	}
@@ -157,6 +163,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "READ",
 		  .udesc = "read access",
 		  .uid   = PERF_COUNT_HW_CACHE_OP_READ << 8,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 0,
 		},
 		{ .uname = "WRITE",
@@ -177,6 +184,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "MISS",
 		  .udesc = "miss access",
 		  .uid   = PERF_COUNT_HW_CACHE_RESULT_MISS << 16,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 1,
 		}
 	}
@@ -194,6 +202,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "READ",
 		  .udesc = "read access",
 		  .uid   = PERF_COUNT_HW_CACHE_OP_READ << 8,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 0,
 		},
 		{ .uname = "ACCESS",
@@ -204,6 +213,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "MISS",
 		  .udesc = "miss access",
 		  .uid   = PERF_COUNT_HW_CACHE_RESULT_MISS << 16,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 1,
 		}
 	}
@@ -221,6 +231,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "READ",
 		  .udesc = "read access",
 		  .uid   = PERF_COUNT_HW_CACHE_OP_READ << 8,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 0,
 		},
 		{ .uname = "ACCESS",
@@ -231,6 +242,7 @@ static perf_event_t perf_static_events[]={
 		{ .uname = "MISS",
 		  .udesc = "miss access",
 		  .uid   = PERF_COUNT_HW_CACHE_RESULT_MISS << 16,
+		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 1,
 		}
 	}
