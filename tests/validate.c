@@ -113,6 +113,12 @@ main(int argc, char **argv)
 	if (ret != PFM_SUCCESS)
 		errx(1, "cannot initialize libpfm: %s", pfm_strerror(ret));
 
+	/* run everything by default */
+	if (!(options.valid_intern || options.valid_arch)) {
+		options.valid_intern = 1;
+		options.valid_arch = 1;
+	}
+
 	if (options.valid_intern) {
 		printf("Libpfm internal table tests:"); fflush(stdout);
 		retval1 = validate_event_tables();
