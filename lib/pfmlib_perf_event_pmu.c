@@ -497,6 +497,7 @@ pfm_perf_add_defaults(pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
 				um = &perf_pe[e->event].umasks[j];
 			} else {
 				um = perf_get_ovfl_umask(e->event);
+				um += j - PERF_MAX_UMASKS;
 			}
 			if (um->grpid != i)
 				continue;
