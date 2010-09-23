@@ -1079,6 +1079,11 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 		fprintf(fp, "pmu: %s :: missing get_event_encoding callback\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
+	if (!pmu->max_encoding) {
+		fprintf(fp, "pmu: %s :: max_encoding is zero\n", pmu->name);
+		return PFM_ERR_INVAL;
+	}
+
 	fputs("OK\n", fp);
 
 	if (pmu->validate_table) {
