@@ -107,8 +107,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.name = "UNHALTED_CORE_CYCLES",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
-	.code    = 0x003c,
-	.desc    = "Unhalted core cycles",
+	.code   = 0x003c,
+	.desc   = "Unhalted core cycles",
+	.equiv  = "CPU_CLK_UNHALTED:CORE_P"
   },
   {
 	.name = "UNHALTED_REFERENCE_CYCLES",
@@ -468,6 +469,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.desc = "Core cycles when core is not halted",
 	.ngrp = 1,
 	.umasks = {
+	{ .uname = "CORE_P",
+		.udesc = "Unhalted core cycles",
+		.ucode = 0x00
+	  },
 	{ .uname = "NONHLT_REF_CYCLES",
 		.udesc = "Non-halted bus cycles",
 		.ucode = 0x01
@@ -477,7 +482,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 		.ucode = 0x02
 	  }
 	},
-	.numasks = 2
+	.numasks = 3
   },
   { .modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
