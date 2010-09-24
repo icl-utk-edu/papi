@@ -633,7 +633,7 @@ int
 pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 {
 	pfm_event_info_t einfo;
-	char *str, *s, *p, *q;
+	char *str, *s, *p;
 	pfmlib_pmu_t *pmu;
 	int i, id;
 	const char *pname = NULL;
@@ -646,6 +646,16 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	if (!str)
 		return PFM_ERR_NOMEM;
 
+	/*
+	 * ignore everything passed after a comma
+	 * (simplify dealing with const event list)
+	 *
+	 * safe to do before pname, because now
+	 * PMU name cannot have commas in them.
+	 */
+	p = strchr(s, ',');
+	if (p)
+		*p = '\0';
 
 	/* check for optional PMU name */
 	p = strchr(s, ':');
@@ -657,18 +667,6 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	}
 	if (p)
 		*p++ = '\0';
-	/*
-	 * ignore everything passed after a comma
-	 * (simplify dealing with const event list)
-	 * must be after pname, because some PMU names
-	 * may include commas
-	 *
-	 * do not destroy p, use q instead
-	 */
-	q = strchr(s, ',');
-	if (q)
-		*q = '\0';
-
 	/*
 	 * for each pmu
 	 */

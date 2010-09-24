@@ -322,6 +322,12 @@ static const test_event_t x86_test_events[]={
 	  .count = 1,
 	  .codes[0] = 0x40053f7e0,
 	  .fstr = "amd64_fam10h_shanghai::READ_REQUEST_TO_L3_CACHE:ANY_READ:ALL_CORES:k=1:u=1:e=0:i=0:c=0:h=0:g=0",
+	},
+	{ .name = "core::RAT_STALLS:ANY:u:c=1,cycles", /* must cut at comma */
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x1510fd2,
+	  .fstr = "core::RAT_STALLS:ANY:k=0:u=1:e=0:i=0:c=1"
 	}
 };
 #define NUM_TEST_EVENTS (sizeof(x86_test_events)/sizeof(test_event_t))
