@@ -251,11 +251,11 @@ pfmlib_init_debug_env(void)
 	pfm_cfg.fp = stderr;
 
 	str = getenv("LIBPFM_VERBOSE");
-	if (str && isdigit(*str))
+	if (str && isdigit((int)*str))
 		pfm_cfg.verbose = *str - '0';
 
 	str = getenv("LIBPFM_DEBUG");
-	if (str && isdigit(*str))
+	if (str && isdigit((int)*str))
 		pfm_cfg.debug = *str - '0';
 
 	str = getenv("LIBPFM_DEBUG_STDOUT");
@@ -563,9 +563,11 @@ handle_bool:
 				if (strlen(s) > 1)
 					goto error;
 
-				if (tolower(*s) == 'y' || tolower(*s) == 't' || *s == '1')
+				if (tolower((int)*s) == 'y'
+				    || tolower((int)*s) == 't' || *s == '1')
 					d->attrs[na].ival = 1;
-				else if (tolower(*s) == 'n' || tolower(*s) == 'f' || *s == '0')
+				else if (tolower((int)*s) == 'n'
+					 || tolower((int)*s) == 'f' || *s == '0')
 					d->attrs[na].ival = 0;
 				else
 					goto error;
