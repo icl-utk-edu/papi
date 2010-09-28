@@ -178,6 +178,7 @@ extern pfmlib_pmu_t intel_core_support;
 extern pfmlib_pmu_t intel_x86_arch_support;
 extern pfmlib_pmu_t intel_atom_support;
 extern pfmlib_pmu_t intel_nhm_support;
+extern pfmlib_pmu_t intel_nhm_ex_support;
 extern pfmlib_pmu_t intel_nhm_unc_support;
 extern pfmlib_pmu_t power4_support;
 extern pfmlib_pmu_t ppc970_support;

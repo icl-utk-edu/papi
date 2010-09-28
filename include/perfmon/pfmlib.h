@@ -73,6 +73,7 @@ typedef enum {
 	PFM_PMU_INTEL_PII,		/* Intel Pentium II */
 	PFM_PMU_INTEL_ATOM,		/* Intel Atom */
 	PFM_PMU_INTEL_NHM,		/* Intel Nehalem core PMU */
+	PFM_PMU_INTEL_NHM_EX,		/* Intel Nehalem-EX core PMU */
 	PFM_PMU_INTEL_NHM_UNC,		/* Intel Nehalem uncore PMU */
 	PFM_PMU_INTEL_X86_ARCH,		/* Intel X86 architectural PMU */
 

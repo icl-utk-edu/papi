@@ -59,6 +59,27 @@ pfm_nhm_detect(void *this)
 }
 
 static int
+pfm_nhm_ex_detect(void *this)
+{
+	int ret;
+
+	ret = pfm_intel_x86_detect();
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_intel_x86_cfg.family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	switch(pfm_intel_x86_cfg.model) {
+		case 46:
+			break;
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
 pfm_nhm_init(void *this)
 {
 	pfm_intel_x86_cfg.arch_version = 3;
@@ -127,6 +148,26 @@ pfmlib_pmu_t intel_nhm_support={
 	.pe			= intel_nhm_pe,
 	.atdesc			= intel_x86_mods,
 	.pmu_detect		= pfm_nhm_detect,
+	.pmu_init		= pfm_nhm_init,
+	.get_event_encoding	= pfm_intel_x86_get_encoding,
+	.get_event_first	= pfm_intel_x86_get_event_first,
+	.get_event_next		= pfm_intel_x86_get_event_next,
+	.event_is_valid		= pfm_intel_x86_event_is_valid,
+	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
+	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
+};
+
+pfmlib_pmu_t intel_nhm_ex_support={
+	.desc			= "Intel Nehalem-EX",
+	.name			= "nhm_ex",
+	.pmu			= PFM_PMU_INTEL_NHM_EX,
+	.pme_count		= PME_NHM_EVENT_COUNT,
+	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
+	.pe			= intel_nhm_pe,
+	.atdesc			= intel_x86_mods,
+	.pmu_detect		= pfm_nhm_ex_detect,
 	.pmu_init		= pfm_nhm_init,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,

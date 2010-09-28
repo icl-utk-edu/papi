@@ -72,6 +72,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_core_support,
 	&intel_atom_support,
 	&intel_nhm_support,
+	&intel_nhm_ex_support,
 	&intel_nhm_unc_support,
 	&intel_wsm_support,
 	&intel_wsm_unc_support,

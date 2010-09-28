@@ -65,6 +65,7 @@ cpuid(unsigned int op, unsigned int *a, unsigned int *b, unsigned int *c, unsign
 static inline int
 is_model_umask(void *this, int pidx, int attr)
 {
+	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
 	int model;
@@ -72,7 +73,7 @@ is_model_umask(void *this, int pidx, int attr)
 	ent = pe + pidx;
 	model = ent->umasks[attr].umodel;
 
-	return model == 0 || model == pfm_intel_x86_cfg.model;
+	return model == 0 || model == pmu->pmu;
 }
 
 static void
@@ -105,6 +106,7 @@ pfm_intel_x86_display_reg(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_
 static int
 pfm_intel_x86_numasks(void *this, int pidx)
 {
+	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
 	int i, model, n = 0;
 
@@ -113,7 +115,7 @@ pfm_intel_x86_numasks(void *this, int pidx)
 	 */
 	for(i=0; i < pe[pidx].numasks; i++) {
 		model = pe[pidx].umasks[i].umodel;
-		if (model && model != pfm_intel_x86_cfg.model)
+		if (model && model != pmu->pmu)
 			continue;
 		n++;
 	}
