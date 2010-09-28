@@ -126,11 +126,10 @@ pfm_intel_x86_numasks(void *this, int pidx)
 int
 pfm_intel_x86_attr2umask(void *this, int pidx, int attr_idx)
 {
-	int i, numasks;
+	const intel_x86_entry_t *pe = this_pe(this);
+	int i;
 
-	numasks = pfm_intel_x86_numasks(this, pidx);
-
-	for(i=0; i < numasks; i++) {
+	for(i=0; i < pe[pidx].numasks; i++) {
 
 		if (!is_model_umask(this, pidx, i))
 			continue;
