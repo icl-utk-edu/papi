@@ -1451,7 +1451,7 @@ Optional Packages:
   --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location
   --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location
-  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.31 or greater)
+  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)
   --with-pe-incdir=<path>		Specify path to the correct perf header file
 
 Some influential environment variables:
@@ -7030,35 +7030,11 @@ fi
 
 
   # Linux 2.6.31 check
-  if test "x$PEPATH" = "x"; then
-    as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_counter.h" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_counter.h" >&5
-$as_echo_n "checking for $pe_incdir/perf_counter.h... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pe_incdir/perf_counter.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  PEPATH="$pe_incdir/perf_counter.h"
-	               CFLAGS="$CFLAGS -DKERNEL31"
-fi
-
-  fi
+#  if test "x$PEPATH" = "x"; then
+#    AC_CHECK_FILE($pe_incdir/perf_counter.h,
+#	              [PEPATH="$pe_incdir/perf_counter.h"
+#	               CFLAGS="$CFLAGS -DKERNEL31"])
+#  fi
 
   if test "x$PEPATH" = "x"; then
     pe_incdir="/lib/modules/$OSVER/source/include/linux"
@@ -7088,35 +7064,11 @@ as_val=`eval 'as_val=${'$as_ac_File'}
   PEPATH="$pe_incdir/perf_event.h"
 fi
 
-    if test "x$PEPATH" = "x"; then
-      as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_counter.h" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_counter.h" >&5
-$as_echo_n "checking for $pe_incdir/perf_counter.h... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pe_incdir/perf_counter.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  PEPATH="$pe_incdir/perf_counter.h"
-	                 CFLAGS="$CFLAGS -DKERNEL31"
-fi
-
-    fi
+#    if test "x$PEPATH" = "x"; then
+#      AC_CHECK_FILE($pe_incdir/perf_counter.h,
+#	                [PEPATH="$pe_incdir/perf_counter.h"
+#	                 CFLAGS="$CFLAGS -DKERNEL31"])
+#    fi
   fi
 
   if test "x$PEPATH" = "x"; then
@@ -8291,7 +8243,7 @@ elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perf_events
     MEMSUBSTR=perfmon
-    MISCSRCS="$MISCSRCS sys_perf_counter_open.c"
+    MISCSRCS="$MISCSRCS sys_perf_event_open.c"
   fi
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
   if test "x$no_cpu_counters" = "x"; then
@@ -9206,7 +9158,8 @@ $debug ||
 if test -n "$CONFIG_FILES"; then
 
 
-ac_cr=''
+ac_cr='
+'
 ac_cs_awk_cr=`$AWK 'BEGIN { print "a\rb" }' </dev/null 2>/dev/null`
 if test "$ac_cs_awk_cr" = "a${ac_cr}b"; then
   ac_cs_awk_cr='\\r'

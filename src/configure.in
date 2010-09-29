@@ -879,7 +879,7 @@ if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
   fi 
  
   AC_ARG_WITH(perf_events,
-              [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.31 or greater)],
+              [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
               [perf_events=yes])
 
   AC_ARG_WITH(pe_incdir,
@@ -893,21 +893,21 @@ if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
 	            [PEPATH="$pe_incdir/perf_event.h"])
 
   # Linux 2.6.31 check
-  if test "x$PEPATH" = "x"; then
-    AC_CHECK_FILE($pe_incdir/perf_counter.h,
-	              [PEPATH="$pe_incdir/perf_counter.h"
-	               CFLAGS="$CFLAGS -DKERNEL31"])
-  fi
+#  if test "x$PEPATH" = "x"; then
+#    AC_CHECK_FILE($pe_incdir/perf_counter.h,
+#	              [PEPATH="$pe_incdir/perf_counter.h"
+#	               CFLAGS="$CFLAGS -DKERNEL31"])
+#  fi
 
   if test "x$PEPATH" = "x"; then
     pe_incdir="/lib/modules/$OSVER/source/include/linux"
     AC_CHECK_FILE($pe_incdir/perf_event.h,
 	              [PEPATH="$pe_incdir/perf_event.h"])
-    if test "x$PEPATH" = "x"; then
-      AC_CHECK_FILE($pe_incdir/perf_counter.h,
-	                [PEPATH="$pe_incdir/perf_counter.h"
-	                 CFLAGS="$CFLAGS -DKERNEL31"])
-    fi
+#    if test "x$PEPATH" = "x"; then
+#      AC_CHECK_FILE($pe_incdir/perf_counter.h,
+#	                [PEPATH="$pe_incdir/perf_counter.h"
+#	                 CFLAGS="$CFLAGS -DKERNEL31"])
+#    fi
   fi
 
   if test "x$PEPATH" = "x"; then
@@ -1188,7 +1188,7 @@ elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perf_events 
     MEMSUBSTR=perfmon 
-    MISCSRCS="$MISCSRCS sys_perf_counter_open.c"
+    MISCSRCS="$MISCSRCS sys_perf_event_open.c"
   fi
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
   if test "x$no_cpu_counters" = "x"; then

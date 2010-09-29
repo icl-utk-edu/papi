@@ -36,7 +36,7 @@
 
 /* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
  * implementations (e.g. x86) which don't do a static event scheduability
- * check in sys_perf_counter_open.  Note, this code should be morphed into
+ * check in sys_perf_event_open.  Note, this code should be morphed into
  * configure.in code as soon as we know how to characterize a kernel properly
  * (e.g. 2.6.33 kernels check scheduability upon open).
  */
@@ -1271,9 +1271,9 @@ check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain 
 		attr.exclude_kernel = 1;
 	}
 
-	ev_fd = sys_perf_counter_open( &attr, tid, cpu_num, -1, 0 );
+	ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
 	if ( ev_fd == -1 ) {
-		SUBDBG( "sys_perf_counter_open returned error.  Unix says, %s", strerror( errno ) );
+		SUBDBG( "sys_perf_event_open returned error.  Unix says, %s", strerror( errno ) );
 		return PAPI_EPERM;
 	}
 	/* now close it, this was just to make sure we have permissions to set these options */
@@ -1385,7 +1385,7 @@ partition_events( context_t * ctx, control_state_t * ctl )
 					ctl->events[i].disabled = 0;
 				}
 				ctx->evt[j].event_fd =
-					sys_perf_counter_open( &ctl->events[j], 0, -1,
+					sys_perf_event_open( &ctl->events[j], 0, -1,
 										   ctx->evt[i].event_fd, 0 );
 				ret = PAPI_OK;
 				if ( ctx->evt[j].event_fd > -1 )
@@ -1540,17 +1540,17 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 		/* For now, assume we are always doing per-thread self-monitoring FIXME */
 		/* Flags parameter is currently unused, but needs to be set to 0 for now */
 		ctx->evt[i].event_fd =
-			sys_perf_counter_open( &ctl->events[i], ctl->tid, ctl->cpu_num,
+			sys_perf_event_open( &ctl->events[i], ctl->tid, ctl->cpu_num,
 				ctx->evt[ctx->evt[i].group_leader].event_fd, 0 );
 		if ( ctx->evt[i].event_fd == -1 ) {
-			SUBDBG
-				( "sys_perf_counter_open returned error on event #%d.  Unix says, %s",
+			PAPIERROR
+				( "sys_perf_event_open returned error on event #%d.  Unix says, %s",
 				  i, strerror( errno ) );
 			ret = PAPI_ECNFLCT;
 			goto cleanup;
 		}
 		
-		SUBDBG ("sys_perf_counter_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d\n", 
+		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d\n", 
 			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, ctx->evt[ctx->evt[i].group_leader].event_fd, ctx->evt[i].event_fd);
 
 		ret = check_scheduability( ctx, ctl, i );
