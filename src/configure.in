@@ -1028,7 +1028,7 @@ case "$OS" in
       MAKEVER="$OS"-pe
     elif test "$perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
-    else
+    elif test "$perfctr" != "no" ; then
       case "$CPU" in
         itanium2|montecito)
           if test "$bitmode" = "32"; then
@@ -1044,6 +1044,8 @@ case "$OS" in
         POWER5|POWER5+|POWER6|PPC970)
           MAKEVER="$OS"-perfctr-"$CPU" ;;
      esac
+    else
+      MAKEVER="generic_platform"
     fi ;;	   
   solaris)
     if test "$bitmode" = "64" -a "`isainfo -v | grep "64"`" = ""; then
