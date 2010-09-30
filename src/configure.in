@@ -880,12 +880,12 @@ if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
  
   AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
-              [perf_events=yes])
+              [force_perf_events=yes])
 
   AC_ARG_WITH(pe_incdir,
 	          [  --with-pe-incdir=<path>		Specify path to the correct perf header file],
               [pe_incdir=$with_pe_incdir 
-               perf_events="yes"],
+               force_perf_events="yes"],
               [pe_incdir="/usr/include/linux"])
 
   # Linux 2.6.32 and newer check
@@ -903,10 +903,17 @@ if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
   else
     PEINCFLAG='-DPEINCLUDE=\"$(PEPATH)\"'
     CFLAGS="$CFLAGS $PEINCFLAG"
-    if test "$perf_events" != "no" -a "$perfctr" = "no" -a "$perfmon" = 0; then
+    if test "$perfctr" = "no" -a "$perfmon" = 0; then
       perf_events="yes"
+    else
+      perf_events="no"
     fi
   fi
+ 
+  if test "$force_perf_events" = "yes" -a "$perf_events" != "yes"; then
+     AC_MSG_ERROR([Perf Events explicitly specified, but perf events support not found])
+  fi
+
 fi
 
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
