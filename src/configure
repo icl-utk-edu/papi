@@ -5463,13 +5463,14 @@ if test "${with_pfm_libdir+set}" = set; then :
 fi
 
 
+  major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
+  minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
+  point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
+
 ##################################################
 #          Linux perf_event/perf_counter
 ##################################################
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
-  major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
-  minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
-  point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
 
   # Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489
   if (test "$major_version" -lt 2 || test "$major_version" = 2 -a "$minor_version" -lt 6 || test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 33); then
@@ -5718,7 +5719,11 @@ case "$OS" in
   bgp)
     MAKEVER=bgp ;;
   CLE)
-    MAKEVER="$OS"-perfmon2 ;;
+    if (test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 31); then
+       MAKEVER="$OS"-perfmon2
+    else
+       MAKEVER="$OS"-pe
+    fi ;;
   freebsd)
     MAKEVER="freebsd"
     LDFLAGS="-lpmc"
