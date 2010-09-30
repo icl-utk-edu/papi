@@ -1,6 +1,6 @@
 Summary: Performance Application Programming Interface
 Name: papi
-Version: 4.1.0
+Version: 4.1.1
 Release: 1%{?dist}
 License: BSD
 Group: Development/System
@@ -9,7 +9,7 @@ Source0: http://icl.cs.utk.edu/projects/papi/downloads/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: ncurses-devel
 BuildRequires: gcc-gfortran
-BuildRequires: kernel-headers >= 2.6.31
+BuildRequires: kernel-headers >= 2.6.32
 BuildRequires: chrpath
 #Right now libpfm does not know anything about s390 and will fail
 ExcludeArch: s390 s390x
