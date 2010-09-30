@@ -238,20 +238,23 @@ Perf Events support is new, and certain functionality does not work.
 If you need any of the functionality listed below, we recommend
 you install the PerfCtr patchset and use that in conjunction with PAPI.
 
-   + Currently setting the domain to something other than 
-     user does not work.
-   + Currently having more than one EventSet will cause wrong
-     output (all EventSets will read as the last one created)
+   + PAPI requires at least Linux kernel 2.6.32, as the earlier 2.6.31
+     version had some significant API changes.
    + Kernels before 2.6.33 have extra overhead when determining
      whether events conflict or not.
-   + Multiplexing requires kernel 2.6.33 or newer
-   + Nehalem EX support requires kernel 2.6.34 or newer
-   + Pentium 4 support requires kernel 2.6.35 or newer, plus
-     additional fixes to PAPI that are not included yet.
+   + Counter multiplexing is handled by PAPI (rather than perf_events) 
+     on kernels before 2.6.33 due to a bug in the kernel perf_events code.
+   + Nehalem EX support requires kernel 2.6.34 or newer.
+   + Pentium 4 support requires kernel 2.6.35 or newer.
 
 The PAPI configure script should auto-detect the availability of
-Perf Events.  It does require that the linux kernel headers
-are installed, this is an optional package on most distributions.
+Perf Events on new enough distributions (this mainly requires
+that perf_event.h be available in /usr/include/linux)
+
+On older distributions (even ones that include the 2.6.32 kernel) 
+the perf_event.h file might not be there.  One fix is to install
+your distributions linux kernel headers package, which is often
+an optional package not installed by default.
 
 If you cannot install the kernel headers, you can obtain the
 perf_event.h file from your kernel and run configure as such:
