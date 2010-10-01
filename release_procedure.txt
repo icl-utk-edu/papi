@@ -26,6 +26,9 @@ __ 5. Create a ChangeLog for the current release.
 	  Macros->CVS->Build ChangeLog (advanced).
 	Use the -r<branch>: command to log commit messages from the previous 
 	branch point to the present.
+	- Another is to use the perl script: cvs2cl.pl as follows:
+	  > perl ./cvs2cl.pl -F trunk --group-within-date -l "-d>2010/09/30"
+	  (where the date is the date of the previous release)
 
 __ 6. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
