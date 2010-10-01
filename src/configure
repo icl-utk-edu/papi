@@ -5426,6 +5426,7 @@ $as_echo "$perfmon" >&6; }
                    perfmon2=yes
                  fi
                  if test $perfmon -lt 25; then
+# must be y, not yes, or libpfm breaks
                    old_pfmv2="y"
                    CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
                  fi
@@ -5801,6 +5802,12 @@ fi
       MAKEVER="$OS"-pe
     elif test "$perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
+    elif test "$old_pfmv2" = "y" ; then
+      if test "$CPU" = "montecito"; then
+         MAKEVER="$OS"-pfm-montecito
+      else
+         MAKEVER="$OS"-pfm-"$CPU"
+      fi
     elif test "$perfctr" != "no" ; then
       case "$CPU" in
         itanium2|montecito)
