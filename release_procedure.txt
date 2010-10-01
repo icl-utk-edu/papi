@@ -14,8 +14,8 @@ __ 1. Notify developers that a release is imminent and the repository should be
 __ 2. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
 
-__ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in;
-	and commit to cvs if needed.
+__ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
+	Doxyfile, Doxyfile-everything (PROJECT_NUMBER) ; and commit to cvs if needed.
 
 __ 4. If configure.in is changed, run autoconf (2.61) 
 	and commit the resulting configure.
