@@ -57,7 +57,7 @@ __ 14. tar the directory:
 __ 15. zip the tarball:
 	gzip papi-X.Y.Z.tar
 
-__ 16. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
+__ 16. Copy the tarball to /silk/homes/icl/projects/papi/downloads
 
 __ 17. Check permissions on the tarball. 664 is good. 
 
