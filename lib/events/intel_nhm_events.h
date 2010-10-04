@@ -1707,7 +1707,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.ucode  = 0x08,
 				.uflags = INTEL_X86_NCOMBO,
 			},
-					{ .uname  = "REMOTE_DRAM",
+			{ .uname  = "REMOTE_DRAM",
 				.udesc  = "Load instructions retired remote DRAM and remote home-remote cache HITM (Precise Event)",
 				.ucode  = 0x10,
 				.uflags = INTEL_X86_NCOMBO,
