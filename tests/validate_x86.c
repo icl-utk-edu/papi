@@ -328,7 +328,30 @@ static const test_event_t x86_test_events[]={
 	  .count = 1,
 	  .codes[0] = 0x1510fd2ull,
 	  .fstr = "core::RAT_STALLS:ANY:k=0:u=1:e=0:i=0:c=1"
-	}
+	},
+	{ .name = "wsm::mem_uncore_retired:remote_dram",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x53040f,
+	  .fstr = "wsm::MEM_UNCORE_RETIRED:REMOTE_HITM:k=1:u=1:e=0:i=0:c=0:t=0",
+	},
+	{ .name = "wsm_dp::mem_uncore_retired:remote_dram",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x53100f,
+	  .fstr = "wsm_dp::MEM_UNCORE_RETIRED:REMOTE_DRAM:k=1:u=1:e=0:i=0:c=0:t=0",
+	},
+	{ .name = "wsm::mem_uncore_retired:local_dram",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x53080f,
+	  .fstr = "wsm::MEM_UNCORE_RETIRED:LOCAL_DRAM_AND_REMOTE_CACHE_HIT:k=1:u=1:e=0:i=0:c=0:t=0",
+	},
+	{ .name = "wsm_dp::mem_uncore_retired:local_dram",
+	  .ret  = PFM_ERR_ATTR,
+	  .count = 1,
+	  .codes[0] = 0,
+	},
 };
 #define NUM_TEST_EVENTS (sizeof(x86_test_events)/sizeof(test_event_t))
 

@@ -27,7 +27,7 @@
 #include "events/intel_wsm_events.h"
 
 static int
-pfm_wsm_detect(void *this)
+pfm_wsm_sp_detect(void *this)
 {
 	int ret;
 
@@ -41,7 +41,26 @@ pfm_wsm_detect(void *this)
 	switch (pfm_intel_x86_cfg.model) {
 		case 37: /* Clarkdale */
 			break;
-		case 44: /* Gulftown */
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_wsm_dp_detect(void *this)
+{
+	int ret;
+
+	ret = pfm_intel_x86_detect();
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_intel_x86_cfg.family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	switch (pfm_intel_x86_cfg.model) {
+		case 44: /* Westmere-EP, Gulftown */
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
@@ -56,15 +75,35 @@ pfm_wsm_init(void *this)
 	return PFM_SUCCESS;
 }
 
-pfmlib_pmu_t intel_wsm_support={
-	.desc			= "Intel Westmere",
+pfmlib_pmu_t intel_wsm_sp_support={
+	.desc			= "Intel Westmere (single-socket)",
 	.name			= "wsm",
 	.pmu			= PFM_PMU_INTEL_WSM,
 	.pme_count		= PME_WSM_EVENT_COUNT,
 	.max_encoding		= 1,
 	.pe			= intel_wsm_pe,
 	.atdesc			= intel_x86_mods,
-	.pmu_detect		= pfm_wsm_detect,
+	.pmu_detect		= pfm_wsm_sp_detect,
+	.pmu_init		= pfm_wsm_init,
+	.get_event_encoding	= pfm_intel_x86_get_encoding,
+	.get_event_first	= pfm_intel_x86_get_event_first,
+	.get_event_next		= pfm_intel_x86_get_event_next,
+	.event_is_valid		= pfm_intel_x86_event_is_valid,
+	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
+	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
+};
+
+pfmlib_pmu_t intel_wsm_dp_support={
+	.desc			= "Intel Westmere (dual-socket)",
+	.name			= "wsm_dp",
+	.pmu			= PFM_PMU_INTEL_WSM_DP,
+	.pme_count		= PME_WSM_EVENT_COUNT,
+	.max_encoding		= 1,
+	.pe			= intel_wsm_pe,
+	.atdesc			= intel_x86_mods,
+	.pmu_detect		= pfm_wsm_dp_detect,
 	.pmu_init		= pfm_wsm_init,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
