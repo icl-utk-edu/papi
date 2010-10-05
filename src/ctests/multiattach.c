@@ -45,29 +45,33 @@ main( int argc, char **argv )
 	const PAPI_component_info_t *cmpinfo;
 	pid_t pid, pid2;
 
-	pid = fork(  );
-	if ( pid < 0 )
-		test_fail( __FILE__, __LINE__, "fork()", PAPI_ESYS );
-	if ( pid == 0 )
-		exit( wait_for_attach_and_loop(  ) );
-	pid2 = fork(  );
-	if ( pid2 < 0 )
-		test_fail( __FILE__, __LINE__, "fork()", PAPI_ESYS );
-	if ( pid2 == 0 )
-		exit( wait_for_attach_and_loop(  ) );
-
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
 
 	if ( cmpinfo->attach == 0 )
 		test_skip( __FILE__, __LINE__, "Platform does not support attaching",
 				   0 );
+
+
+	pid = fork(  );
+	if ( pid < 0 )
+		test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
+	if ( pid == 0 )
+		exit( wait_for_attach_and_loop(  ) );
+	pid2 = fork(  );
+	if ( pid2 < 0 )
+		test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
+	if ( pid2 == 0 )
+		exit( wait_for_attach_and_loop(  ) );
+
+
 
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )

@@ -44,20 +44,14 @@ main( int argc, char **argv )
 	const PAPI_component_info_t *cmpinfo;
 	pid_t pid;
 
-	pid = fork(  );
-	if ( pid < 0 )
-		test_fail( __FILE__, __LINE__, "fork()", PAPI_ESYS );
-	if ( pid == 0 )
-		exit( wait_for_attach_and_loop(  ) );
-
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
 
 	if ( cmpinfo->attach == 0 )
 		test_skip( __FILE__, __LINE__, "Platform does not support attaching",
@@ -66,6 +60,15 @@ main( int argc, char **argv )
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 0 );
+
+
+	pid = fork(  );
+	if ( pid < 0 )
+		test_fail( __FILE__, __LINE__, "fork()", PAPI_ESYS );
+	if ( pid == 0 )
+		exit( wait_for_attach_and_loop(  ) );
+
+
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
