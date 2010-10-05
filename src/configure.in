@@ -130,6 +130,10 @@ elif test "$OS" = "solaris"; then
                 [#if HAVE_SYS_TIME_H
                  #include <sys/time.h>
                  #endif])
+  if test "x$AR" = "x"; then
+    AR=/usr/ccs/bin/ar
+  fi
+
 fi
 
 if test "x$AR" = "x"; then
