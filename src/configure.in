@@ -1206,7 +1206,7 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
     MEMSUBSTR=linux
     VERSION=2.6.x  
     if test "$CPU" = "p4"; then
-      CTEST_TARGETS="$(CTEST_TARGETS) p4"
+      CTEST_TARGETS="$CTEST_TARGETS p4"
     fi
   fi
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
