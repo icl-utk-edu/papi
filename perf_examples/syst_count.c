@@ -92,10 +92,18 @@ setup_cpu(int cpu)
 			fds[j].fd = perf_event_open(&fds[j].hw, -1, cpu, group_fd, 0);
 			if (fds[j].fd == -1) {
 				if (errno == EACCES)
-					warnx("you need to be root to run system-wide on this machine");
-				err(1, "cannot attach event %s to CPU%ds", fds[j].name, cpu);
+					err(1, "you need to be root to run system-wide on this machine");
+
+				warn("cannot attach event %s to CPU%ds, skipping it", fds[j].name, cpu);
+				goto error;
 			}
 		}
+	}
+	return;
+error:
+	for (i=0; i < j; i++) {
+		close(fds[i].fd);
+		fds[i].fd = -1;
 	}
 }
 
@@ -105,6 +113,9 @@ void start_cpu(int c)
 	int j, ret, n = 0;
 
 	fds = all_fds[c];
+
+	if (fds[0].fd == -1)
+		return;
 
 	for(j=0; j < options.num_groups; j++) {
 		/* group leader always first in each group */
@@ -121,6 +132,9 @@ void stop_cpu(int c)
 	int j, ret, n = 0;
 
 	fds = all_fds[c];
+
+	if (fds[0].fd == -1)
+		return;
 
 	for(j=0; j < options.num_groups; j++) {
 		/* group leader always first in each group */
@@ -139,6 +153,11 @@ void read_cpu(int c)
 	int i, j, n, ret;
 
 	fds = all_fds[c];
+
+	if (fds[0].fd == -1) {
+		printf("CPU%d not monitored\n", c);
+		return;
+	}
 
 	for(i=0, j = 0; i < options.num_groups; i++) {
 		for(n = 0; n < options.nevents[i]; n++, j++) {
@@ -178,6 +197,9 @@ void close_cpu(int c)
 	int i, j;
 
 	fds = all_fds[c];
+
+	if (fds[0].fd == -1)
+		return;
 
 	for(i=0; i < options.num_groups; i++) {
 		for(j=0; j < options.nevents[i]; j++)
