@@ -35,7 +35,6 @@
 #include <signal.h>
 #include <getopt.h>
 #include <setjmp.h>
-#include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/mman.h>
@@ -78,12 +77,6 @@ cld_handler(int n)
 int
 child(char **arg)
 {
-	/*
-	 * force the task to stop before executing the first
-	 * user level instruction
-	 */
-	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-
 	execvp(arg[0], arg);
 	/* not reached */
 	return -1;
@@ -180,12 +173,14 @@ mainloop(char **arg)
 {
 	static uint64_t ovfl_count; /* static to avoid setjmp issue */
 	struct pollfd pollfds[1];
+	int go[2], ready[2];
 	uint64_t *val;
 	size_t sz, pgsz;
 	size_t map_size = 0;
 	pid_t pid;
 	int status, ret;
 	int i;
+	char buf;
 
 	if (pfm_initialize() != PFM_SUCCESS)
 		errx(1, "libpfm initialization failed\n");
@@ -202,29 +197,49 @@ mainloop(char **arg)
 
 	memset(pollfds, 0, sizeof(pollfds));
 
+	ret = pipe(ready);
+	if (ret)
+		err(1, "cannot create pipe ready");
+
+	ret = pipe(go);
+	if (ret)
+		err(1, "cannot create pipe go");
+
 	/*
 	 * Create the child task
 	 */
 	if ((pid=fork()) == -1)
 		err(1, "cannot fork process\n");
 
-	if (pid == 0)
+	if (pid == 0) {
+		close(ready[0]);
+		close(go[1]);
+
+		/*
+		 * let the parent know we exist
+		 */
+		close(ready[1]);
+		if (read(go[0], &buf, 1) == -1)
+			err(1, "unable to read go_pipe");
+
 		exit(child(arg));
+	}
+	close(ready[1]);
+	close(go[0]);
 
-	/*
-	 * wait for the child to exec
-	 */
-	ret = waitpid(pid, &status, WUNTRACED);
-	if (ret == -1)
-		err(1, "waitpid failed");
+	if (read(ready[0], &buf, 1) == -1)
+		err(1, "unable to read child_ready_pipe");
 
-	if (WIFEXITED(status))
-		errx(1, "task %s [%d] exited already status %d\n", arg[0], pid, WEXITSTATUS(status));
+	close(ready[0]);
 
 	fds[0].fd = -1;
 	for(i=0; i < num_fds; i++) {
 
-		fds[i].hw.disabled = 0; /* start immediately */
+		if (i == 0) {
+			fds[i].hw.disabled = 1; /* start immediately */
+			fds[i].hw.enable_on_exec = 1; /* start immediately */
+		} else
+			fds[i].hw.disabled = 0; /* start immediately */
 
 		/*
 		 * set notification threshold to be halfway through the buffer
@@ -299,12 +314,14 @@ mainloop(char **arg)
 	pollfds[0].fd = fds[0].fd;
 	pollfds[0].events = POLLIN;
 	
-	/*
-	 * effectively activate monitoring
-	 */
-	ptrace(PTRACE_DETACH, pid, NULL, 0);
-
+	for(i=0; i < num_fds; i++) {
+		ret = ioctl(fds[i].fd, PERF_EVENT_IOC_ENABLE, 0);
+		if (ret)
+			err(1, "cannot enable event %s\n", fds[i].name);
+	}
 	signal(SIGCHLD, cld_handler);
+
+	close(go[1]);
 
 	if (setjmp(jbuf) == 1)
 		goto terminate_session;
