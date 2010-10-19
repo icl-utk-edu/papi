@@ -421,6 +421,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	 * };
 	 */
 	if (type & PERF_SAMPLE_READ) {
+		uint64_t values[3];
 		uint64_t nr;
 
 		if (fmt & PERF_FORMAT_GROUP) {
@@ -454,6 +455,8 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 
 			fprintf(fp, "ENA=%'"PRIu64" RUN=%'"PRIu64" NR=%"PRIu64"\n", time_enabled, time_running, nr);
 
+			values[1] = time_enabled;
+			values[2] = time_running;
 			while(nr--) {
 				grp.id = -1;
 				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &grp.value);
@@ -478,10 +481,8 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 				else
 					str = fds[e].name;
 
-				if (time_running)
-					grp.value = grp.value * time_enabled / time_running;
-				else
-					grp.value = 0;
+				values[0] = grp.value;
+				grp.value = perf_scale(values);
 
 				fprintf(fp, "\t%'"PRIu64" %s (%"PRIu64"%s)\n",
 					grp.value, str,
@@ -527,14 +528,15 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			}
 
 			fprintf(fp, "ENA=%'"PRIu64" RUN=%'"PRIu64"\n", time_enabled, time_running);
-			if (time_running)
-				val64 = val64 * time_enabled / time_running;
-			else
-				val64 = 0;
 
-				fprintf(fp, "\t%'"PRIu64" %s %s\n",
-					val64, fds[0].name,
-					time_running != time_enabled ? ", scaled":"");
+			values[0] = val64;
+			values[1] = time_enabled;
+			values[2] = time_running;
+			val64 = perf_scale(values);
+
+			fprintf(fp, "\t%'"PRIu64" %s %s\n",
+				val64, fds[0].name,
+				time_running != time_enabled ? ", scaled":"");
 		}
 	}
 
