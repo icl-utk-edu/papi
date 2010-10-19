@@ -455,13 +455,22 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			fprintf(fp, "ENA=%'"PRIu64" RUN=%'"PRIu64" NR=%"PRIu64"\n", time_enabled, time_running, nr);
 
 			while(nr--) {
-				ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
+				grp.id = -1;
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &grp.value);
 				if (ret) {
-					warnx( "cannot read grp");
+					warnx( "cannot read group value");
 					return -1;
 				}
+				sz -= sizeof(grp.value);
 
-				sz -= sizeof(grp);
+				if (fmt & PERF_FORMAT_ID) {
+					ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &grp.id);
+					if (ret) {
+						warnx( "cannot read leader id");
+						return -1;
+					}
+					sz -= sizeof(grp.id);
+				}
 
 				e = perf_id2event(fds, num_fds, grp.id);
 				if (e == -1)
@@ -471,6 +480,8 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 
 				if (time_running)
 					grp.value = grp.value * time_enabled / time_running;
+				else
+					grp.value = 0;
 
 				fprintf(fp, "\t%'"PRIu64" %s (%"PRIu64"%s)\n",
 					grp.value, str,
@@ -479,17 +490,15 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 
 			}
 		} else {
-			uint64_t val;
 			/*
 			 * this program does not use FORMAT_GROUP when there is only one event
 			 */
-			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val);
+			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
 			if (ret) {
 				warnx( "cannot read value");
 				return -1;
 			}
-
-			sz -= sizeof(val);
+			sz -= sizeof(val64);
 
 			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
 				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
@@ -508,13 +517,23 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 				}
 				sz -= sizeof(time_running);
 			}
+			if (fmt & PERF_FORMAT_ID) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+				if (ret) {
+					warnx( "cannot read leader id");
+					return -1;
+				}
+				sz -= sizeof(val64);
+			}
 
 			fprintf(fp, "ENA=%'"PRIu64" RUN=%'"PRIu64"\n", time_enabled, time_running);
 			if (time_running)
-				val = val * time_enabled / time_running;
+				val64 = val64 * time_enabled / time_running;
+			else
+				val64 = 0;
 
 				fprintf(fp, "\t%'"PRIu64" %s %s\n",
-					val, fds[0].name,
+					val64, fds[0].name,
 					time_running != time_enabled ? ", scaled":"");
 		}
 	}
