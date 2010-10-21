@@ -22,7 +22,7 @@
  *  hardware monitoring sensors through the libsensors library. This code will
  *  dynamically create a native events table for all the sensors that can be 
  *  accesed by the libsensors library.
- *  In order to learn more about libsensors, visit:   http://www.lm-sensors.org/
+ *  In order to learn more about libsensors, visit: (http://www.lm-sensors.org) 
  *
  * Notes: 
  *  - I used the ACPI and MX components to write this component. A lot of the

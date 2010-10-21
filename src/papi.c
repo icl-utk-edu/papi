@@ -3589,7 +3589,7 @@ PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
 /** @brief set the default counting granularity for eventsets bound to the cpu component 
  *
  *	@param granularity
- *		one of the following constants as defined in the papi.h header file:
+ *		one of the following constants as defined in the papi.h header file
  *		<ul>
  *			<li> PAPI_GRN_THR	Count each individual thread
  *			<li> PAPI_GRN_PROC	Count each individual process
@@ -3628,7 +3628,7 @@ PAPI_set_granularity( int granularity )
  *		An integer identifier for a component. 
  *		By convention, component 0 is always the cpu component. 
  *	@param granularity
- *		one of the following constants as defined in the papi.h header file:
+ *		one of the following constants as defined in the papi.h header file
  *		<ul>
  *			<li> PAPI_GRN_THR	Count each individual thread
  *			<li> PAPI_GRN_PROC	Count each individual process
@@ -3677,7 +3677,7 @@ PAPI_set_cmp_granularity( int granularity, int cidx )
 /** @brief set the default counting domain for new event sets bound to the cpu component 
  *
  *	@param domain
- *		one of the following constants as defined in the papi.h header file:
+ *		one of the following constants as defined in the papi.h header file
  *		<ul>
  *			<li> PAPI_DOM_USER	User context counted
  *			<li> PAPI_DOM_KERNEL	Kernel/OS context counted
@@ -3716,7 +3716,7 @@ PAPI_set_domain( int domain )
  *		An integer identifier for a component. 
  *		By convention, component 0 is always the cpu component. 
  *	@param domain
- *		one of the following constants as defined in the papi.h header file:
+ *		one of the following constants as defined in the papi.h header file
  *		<ul>
  *			<li> PAPI_DOM_USER	User context counted
  *			<li> PAPI_DOM_KERNEL	Kernel/OS context counted
