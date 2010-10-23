@@ -691,7 +691,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "DEC0",
 				.udesc  = "Instructions that must be decoded by decoder 0",
 				.ucode  = 0x01,
-				.uflags = INTEL_X86_NCOMBO,
+				.uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 			},
 		},
 		.numasks = 1
@@ -1429,7 +1429,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "HIT",
 				.udesc  = "Large ITLB hit",
 				.ucode  = 0x01,
-				.uflags = INTEL_X86_NCOMBO,
+				.uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 			},
 		},
 		.numasks = 1

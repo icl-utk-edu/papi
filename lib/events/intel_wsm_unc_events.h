@@ -69,7 +69,7 @@ static const intel_x86_entry_t intel_wsm_unc_pe[]={
 			{ .uname  = "READ_TRACKER",
 				.udesc  = "in the read tracker",
 				.ucode  = 0x01,
-				.uflags = 0,
+				.uflags = INTEL_X86_DFL,
 			},
 		},
 		.numasks = 1
@@ -676,7 +676,7 @@ static const intel_x86_entry_t intel_wsm_unc_pe[]={
 			{ .uname  = "LOCAL",
 				.udesc  = "QHL FrcAckCnflts sent to local home",
 				.ucode  = 0x04,
-				.uflags = 0,
+				.uflags = INTEL_X86_DFL,
 			},
 		},
 		.numasks = 1

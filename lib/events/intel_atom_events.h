@@ -820,6 +820,7 @@ static const intel_x86_entry_t intel_atom_pe[]={
 		{ .uname  = "SMC",
 		  .udesc  = "Self-Modifying Code detected",
 		  .ucode  = 0x1,
+		  .uflags = INTEL_X86_DFL,
 		},
 	  },
 	  .numasks = 1
