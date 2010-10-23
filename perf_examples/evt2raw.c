@@ -51,17 +51,17 @@ main(int argc, char **argv)
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
-		errx(1, "Internal error: pfm_initialize returned %s\n",
+		errx(1, "Internal error: pfm_initialize returned %s",
 			pfm_strerror(ret));
 
 	ret = pfm_get_perf_event_encoding(event_str, PFM_PLM0|PFM_PLM3, &pea,
 		NULL, NULL);
 	if (ret != PFM_SUCCESS)
-		errx(1, "Error: pfm_get_perf_encoding returned %s\n",
+		errx(1, "Error: pfm_get_perf_encoding returned %s",
 			pfm_strerror(ret));
 
 	if (pea.type != PERF_TYPE_RAW)
-		errx(1, "Error: %s is not a raw hardware event\n", event_str);
+		errx(1, "Error: %s is not a raw hardware event", event_str);
 
 	printf("r%"PRIx64"\n", pea.config);
 
