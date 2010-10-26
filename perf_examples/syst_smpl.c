@@ -48,6 +48,7 @@ typedef struct {
 	int opt_freq;
 	int mmap_pages;
 	int cpu;
+	int pin;
 	int delay;
 	char *events;
 	uint64_t period;
@@ -180,6 +181,9 @@ setup_cpu(int cpu)
 		fds[i].hw.watermark = 1;
 
 		if (!i) {
+			if (options.pin)
+				fds[i].hw.pinned = 1;
+
 			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_CPU;
 
 			if (options.opt_freq)
@@ -300,7 +304,7 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: syst_smpl [-h] [--help] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] [-c cpu] [-d seconds]\n");
+	printf("usage: syst_smpl [-h] [-P] [--help] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] [-c cpu] [-d seconds]\n");
 }
 
 int
@@ -313,7 +317,7 @@ main(int argc, char **argv)
 	options.cpu = -1;
 	options.delay = -1;
 
-	while ((c=getopt_long(argc, argv,"he:m:p:fc:d:", the_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"hPe:m:p:fc:d:", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'e':
@@ -331,6 +335,9 @@ main(int argc, char **argv)
 				break;
 			case 'p':
 				options.period = strtoull(optarg, NULL, 0);
+				break;
+			case 'P':
+				options.pin = 1;
 				break;
 			case 'd':
 				options.delay = atoi(optarg);

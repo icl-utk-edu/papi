@@ -257,7 +257,7 @@ measure(void)
 static void
 usage(void)
 {
-	printf("usage: syst [-c cpu] [-x] [-h] [-d delay] [-e event1,event2,...]\n");
+	printf("usage: syst [-c cpu] [-x] [-h] [-d delay] [-P] [-e event1,event2,...]\n");
 }
 
 int
@@ -269,7 +269,7 @@ main(int argc, char **argv)
 
 	options.cpu = -1;
 
-	while ((c=getopt(argc, argv,"hc:e:d:xp")) != -1) {
+	while ((c=getopt(argc, argv,"hc:e:d:xP")) != -1) {
 		switch(c) {
 			case 'x':
 				options.excl = 1;
@@ -288,7 +288,7 @@ main(int argc, char **argv)
 			case 'd':
 				options.delay = atoi(optarg);
 				break;
-			case 'p':
+			case 'P':
 				options.pin = 1;
 				break;
 			case 'h':
