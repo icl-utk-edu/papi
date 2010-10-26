@@ -653,7 +653,7 @@ static const intel_x86_entry_t intel_nhm_unc_pe[]={
 			{ .uname  = "LOCAL",
 				.udesc  = "QHL FrcAckCnflts sent to local home",
 				.ucode  = 0x04,
-				.uflags = 0,
+				.uflags = INTEL_X86_DFL,
 			},
 		},
 		.numasks = 1

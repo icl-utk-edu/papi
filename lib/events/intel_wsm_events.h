@@ -233,7 +233,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "WALK_CYCLES",
 		  .udesc  = "Extended Page Table walk cycles",
 		  .ucode  = 0x10,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1
@@ -1046,7 +1046,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "OVERLAP_STORE",
 		  .udesc  = "lods that partially overlap an earlier store",
 		  .ucode  = 0x2,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1
@@ -1062,7 +1062,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "STORE",
 		  .udesc  = "store referenced with misaligned address",
 		  .ucode  = 0x2,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1
@@ -1208,7 +1208,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "HIT",
 		  .udesc  = "Large ITLB hit",
 		  .ucode  = 0x1,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1
@@ -1466,12 +1466,12 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .cntmsk = 0xf,
 	  .ngrp = 1,
 	  .code = 0xC,
-	  .flags  = 0,
+	  .flags = INTEL_X86_PEBS,
 	  .umasks = {
 		{ .uname  = "DTLB_MISS",
 		  .udesc  = "Retired stores that miss the DTLB (Precise Event)",
 		  .ucode  = 0x1,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1
@@ -1487,7 +1487,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "DEC0",
 		  .udesc  = "Instructions that must be decoded by decoder 0",
 		  .ucode  = 0x1,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1
@@ -1510,7 +1510,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "DECODED",
 		  .udesc  = "Instructions decoded",
 		  .ucode  = 0x1,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1
@@ -1616,7 +1616,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		{ .uname  = "ANY",
 		  .udesc  = "All Store buffer stall cycles",
 		  .ucode  = 0x7,
-		  .uflags = INTEL_X86_NCOMBO,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 	  },
 	  .numasks = 1

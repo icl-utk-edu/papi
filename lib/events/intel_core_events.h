@@ -776,7 +776,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .umasks = {
 		{ .uname = "REQUESTS",
 		  .udesc = "L1 data cache prefetch requests",
-		  .ucode = 0x10
+		  .ucode = 0x10,
+		  .uflags= INTEL_X86_DFL,
 		}
 	   },
 	   .numasks = 1
@@ -1148,7 +1149,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .umasks = {
 		{ .uname = "FULL",
 		  .udesc = "Cycles during which the instruction queue is full",
-		  .ucode = 0x2
+		  .ucode = 0x2,
+		  .uflags= INTEL_X86_DFL,
 		}
 	   },
 	   .numasks = 1

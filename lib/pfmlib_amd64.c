@@ -731,6 +731,12 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
+		/* if only one umask, then ought to be default */
+		if (pe[i].numasks == 1 && ndfl != 1) {
+			fprintf(fp, "pmu: %s event%d: %s, only one umask but no default\n", pmu->name, i, pe[i].name);
+			error++;
+		}
+
 		/* check for excess unit masks */
 		for(; j < AMD64_MAX_UMASKS; j++) {
 			if (pe[i].umasks[j].uname || pe[i].umasks[j].udesc) {
