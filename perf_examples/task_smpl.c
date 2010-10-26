@@ -49,6 +49,7 @@ typedef struct {
 	int opt_no_show;
 	int opt_inherit;
 	int opt_freq;
+	int cpu;
 	int mmap_pages;
 	char *events;
 	uint64_t period;
@@ -265,7 +266,7 @@ mainloop(char **arg)
 				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;
 		}
 
-		fds[i].fd = perf_event_open(&fds[i].hw, pid, -1, fds[0].fd, 0);
+		fds[i].fd = perf_event_open(&fds[i].hw, pid, options.cpu, fds[0].fd, 0);
 		if (fds[i].fd == -1) {
 			if (fds[i].hw.precise_ip)
 				err(1, "cannot attach event %s: precise mode may not be supported", fds[i].name);
@@ -365,7 +366,7 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [-i] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] cmd\n");
+	printf("usage: task_smpl [-h] [--help] [-i] [-c cpu] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] cmd\n");
 }
 
 int
@@ -375,7 +376,9 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c=getopt_long(argc, argv,"+he:m:p:if", the_options, 0)) != -1) {
+	options.cpu = -1;
+
+	while ((c=getopt_long(argc, argv,"+he:m:p:ifc:", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'e':
@@ -396,6 +399,9 @@ main(int argc, char **argv)
 				break;
 			case 'p':
 				options.period = strtoull(optarg, NULL, 0);
+				break;
+			case 'c':
+				options.cpu = atoi(optarg);
 				break;
 			case 'h':
 				usage();
