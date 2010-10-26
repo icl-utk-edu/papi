@@ -97,6 +97,9 @@ int main(int argc, char **argv)
       exit(-1);
    }
 
+   if ((retval = PAPI_thread_init(&pthread_self)) != PAPI_OK)
+	 ERROR_RETURN(retval);
+
    if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
       ERROR_RETURN(retval);
 
