@@ -443,6 +443,8 @@ pfm_find_event(const char *str)
 	if (!str)
 		return PFM_ERR_INVAL;
 
+	memset(&e, 0, sizeof(e));
+
 	ret = pfmlib_parse_event(str, &e);
 	if (ret == PFM_SUCCESS)
 		return pfmlib_pidx2idx(e.pmu, e.event);
