@@ -69,12 +69,12 @@
 
    AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time])
 
-   dnl Cray UNICOS _rtc() (real-time clock) intrinsic
+   dnl Cray CLE _rtc() (real-time clock) intrinsic
    AC_MSG_CHECKING([for _rtc intrinsic])
    rtc_ok=yes
    AC_TRY_LINK([#ifdef HAVE_INTRINSICS_H
 #include <intrinsics.h>
-#endif], [_rtc()], [AC_DEFINE(HAVE__RTC,1,[Define if you have the UNICOS _rtc() intrinsic.])], [rtc_ok=no])
+#endif], [_rtc()], [AC_DEFINE(HAVE__RTC,1,[Define if you have the CLE _rtc() intrinsic.])], [rtc_ok=no])
    AC_MSG_RESULT($rtc_ok)
 
    dnl ---------------------------------------------------------------------
@@ -450,7 +450,7 @@ elapsed( ticks t1, ticks t0 )
 #endif
 
 /*----------------------------------------------------------------*/
-/* Cray UNICOS _rtc() intrinsic function */
+/* Cray CLE _rtc() intrinsic function */
 #if defined(HAVE__RTC) && !defined(HAVE_TICK_COUNTER)
 #ifdef HAVE_INTRINSICS_H
 #  include <intrinsics.h>
