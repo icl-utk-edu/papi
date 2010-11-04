@@ -309,8 +309,8 @@ setup_x86_presets( int cputype )
 			_papi_pfm_setup_presets( "Intel Atom", 0 );
 			break;
 #endif
-#ifdef PERFCTR_X86_INTEL_COREI7	/* family 6 model 26 */
-		case PERFCTR_X86_INTEL_COREI7:
+#ifdef PERFCTR_X86_INTEL_NHLM	/* family 6 model 26 */
+		case PERFCTR_X86_INTEL_NHLM:
 			retval = _papi_pfm_init(  );
 			_papi_pfm_setup_presets( "Intel Core i7", 0 );
 			break;
@@ -383,8 +383,8 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 #ifdef PERFCTR_X86_INTEL_ATOM
 		case PERFCTR_X86_INTEL_ATOM:
 #endif
-#ifdef PERFCTR_X86_INTEL_COREI7
-		case PERFCTR_X86_INTEL_COREI7:
+#ifdef PERFCTR_X86_INTEL_NHLM
+		case PERFCTR_X86_INTEL_NHLM:
 #endif
 #ifdef PERFCTR_X86_AMD_K8
 		case PERFCTR_X86_AMD_K8:
