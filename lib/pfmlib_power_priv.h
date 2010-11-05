@@ -37,9 +37,13 @@ typedef struct {
 #define __stringify_1(x)	#x
 #define __stringify(x)		__stringify_1(x)
 
+#ifdef __powerpc__
 #define mfspr(rn)	({unsigned long rval; \
 			asm volatile("mfspr %0," __stringify(rn) \
 				: "=r" (rval)); rval;})
+#else
+#define mfspr(rn)	(0)
+#endif
 
 /* Special Purpose Registers (SPRNs)*/
 #define SPRN_PVR	0x11F	/* Processor Version Register */
