@@ -96,6 +96,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&power5p_support,
 	&power6_support,
 	&power7_support,
+	&torrent_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_SPARC

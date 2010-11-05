@@ -131,6 +131,8 @@ typedef enum {
 	PFM_PMU_ARM_CORTEX_A8,		/* ARM Cortex A8 */
 	PFM_PMU_ARM_CORTEX_A9,		/* ARM Cortex A9 */
 
+	PFM_PMU_TORRENT,		/* IBM Torrent hub chip */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

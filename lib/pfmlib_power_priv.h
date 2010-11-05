@@ -24,6 +24,32 @@ typedef struct {
    char *pme_long_desc;
 } pme_power_entry_t;
 
+typedef struct {
+   char *pme_name;
+   unsigned pme_code;
+   char *pme_desc;
+   uint64_t pme_modmsk;
+} pme_torrent_entry_t;
+
+/* Attribute "type "for PowerBus MCD events */
+#define TORRENT_ATTR_MCD_TYPE		0
+/* Attribute "sel" for PowerBus bus utilization events */
+#define TORRENT_ATTR_UTIL_SEL		1
+/* Attribute "lo_cmp" for PowerBus utilization events */
+#define TORRENT_ATTR_UTIL_LO_CMP	2
+/* Attribute "hi_cmp" for PowerBus utilization events */
+#define TORRENT_ATTR_UTIL_HI_CMP	3
+
+#define _TORRENT_ATTR_MCD_TYPE		(1 << TORRENT_ATTR_MCD_TYPE)
+#define _TORRENT_ATTR_MCD		(_TORRENT_ATTR_MCD_TYPE)
+#define _TORRENT_ATTR_UTIL_SEL		(1 << TORRENT_ATTR_UTIL_SEL)
+#define _TORRENT_ATTR_UTIL_LO_CMP	(1 << TORRENT_ATTR_UTIL_LO_CMP)
+#define _TORRENT_ATTR_UTIL_HI_CMP	(1 << TORRENT_ATTR_UTIL_HI_CMP)
+#define _TORRENT_ATTR_UTIL_LO		(_TORRENT_ATTR_UTIL_SEL | \
+					_TORRENT_ATTR_UTIL_LO_CMP)
+#define _TORRENT_ATTR_UTIL_HI		(_TORRENT_ATTR_UTIL_SEL | \
+					_TORRENT_ATTR_UTIL_HI_CMP)
+
 /*
  * These definitions were taken from the reg.h file which, until Linux
  * 2.6.18, resided in /usr/include/asm-ppc64.  Most of the unneeded

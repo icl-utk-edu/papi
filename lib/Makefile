@@ -70,7 +70,7 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
 INCARCH = $(INC_POWERPC)
-SRCS   += pfmlib_powerpc.c pfmlib_power4.c pfmlib_ppc970.c pfmlib_power5.c pfmlib_power6.c pfmlib_power7.c
+SRCS   += pfmlib_powerpc.c pfmlib_power4.c pfmlib_ppc970.c pfmlib_power5.c pfmlib_power6.c pfmlib_power7.c pfmlib_torrent.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 
@@ -148,7 +148,8 @@ INC_POWERPC=events/ppc970_events.h	\
 	events/power5_events.h		\
 	events/power5+_events.h		\
 	events/power6_events.h		\
-	events/power7_events.h
+	events/power7_events.h		\
+	events/torrent_events.h
 
 INC_SPARC=events/ultra12_events.h	\
 	events/ultra3_events.h		\
