@@ -51,11 +51,11 @@ static struct {
 static void
 usage(void)
 {
-	printf("validate [-C] [-a] [-A]\n"
-		"-C\t\\thave the library validate events\n"
-		"-a\t\\tarchitecture specific event tests\n"
-		"-A\t\\trun all tests\n"
-		"-h\t\tget help\n");
+	printf("validate [-c] [-a] [-A]\n"
+		"-c\trun the library validate events\n"
+		"-a\trun architecture specific event tests\n"
+		"-A\trun all tests\n"
+		"-h\tget help\n");
 }
 
 static int
