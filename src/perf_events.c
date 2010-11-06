@@ -10,24 +10,6 @@
 *          gary.mohr@bull.com
 */
 
-
-/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
- * implementations (e.g. x86) which don't do a static event scheduability
- * check in sys_perf_event_open.  Note, this code should be morphed into
- * configure.in code as soon as we know how to characterize a kernel properly
- * (e.g. 2.6.33 kernels check scheduability upon open).
- */
-#if defined(__powerpc__)
-#  define KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
-#elif defined(__x86_64__) || defined(__i386__)
-/* This might get fixed in the 2.6.33 kernel, if Stephane's patch makes it
- * in.
- */
-#  undef KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
-#else
-#  error Unrecognized arch.  Please add a clause for your arch here.
-#endif
-
 #include <sys/utsname.h>
 
 #include "papi.h"
@@ -35,6 +17,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include "mb.h"
+
+#define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
 
 #if defined(__sparc__)
 #include <dirent.h>
@@ -1258,40 +1242,48 @@ check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain 
 	return PAPI_OK;
 }
 
-#ifdef KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
+
+/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
+ * implementations (e.g. x86) which don't do a static event scheduability
+ * check in sys_perf_event_open.  Note, this code should be morphed into
+ * configure.in code as soon as we know how to characterize a kernel properly
+ * (e.g. 2.6.33 kernels check scheduability upon open).
+ */
+
+
 inline static int
-check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
-{
-	( void ) ctx;			 /*unused */
-	( void ) ctl;			 /*unused */
-	( void ) idx;			 /*unused */
-	return PAPI_OK;
-}
-#else
-static int
 check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 {
 	( void ) ctl;			 /*unused */
 #define MAX_READ 8192
 	uint8_t buffer[MAX_READ];
 
-	/* This will cause the events in the group to be scheduled onto the counters
-	 * by the kernel, and so will force an error condition if the events are not
-	 * compatible.
-	 */
-	ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_ENABLE,
+
+        if 
+#if defined(__powerpc__)
+	  (0)
+#else
+          (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) 
+#endif
+	   {
+
+	   /* This will cause the events in the group to be scheduled onto the counters
+	    * by the kernel, and so will force an error condition if the events are not
+	    * compatible.
+	    */
+	   ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_ENABLE,
 		   NULL );
-	ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd,
+	   ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd,
 		   PERF_EVENT_IOC_DISABLE, NULL );
-	int cnt = read( ctx->evt[ctx->evt[idx].group_leader].event_fd, buffer,
+	   int cnt = read( ctx->evt[ctx->evt[idx].group_leader].event_fd, buffer,
 					MAX_READ );
-	if ( cnt == -1 ) {
+	   if ( cnt == -1 ) {
 		SUBDBG( "read returned an error!  Should never happen.\n" );
 		return PAPI_EBUG;
-	}
-	if ( cnt == 0 ) {
+	   }
+	   if ( cnt == 0 ) {
 		return PAPI_ECNFLCT;
-	} else {
+	   } else {
 		/* Reset all of the counters (opened so far) back to zero from the
 		 * above brief enable/disable call pair.  I wish we didn't have to to do
 		 * this, because it hurts performance, but I don't see any alternative.
@@ -1300,12 +1292,12 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 		for ( j = ctx->evt[idx].group_leader; j <= idx; j++ ) {
 			ioctl( ctx->evt[j].event_fd, PERF_EVENT_IOC_RESET, NULL );
 		}
+	   }
 	}
 	return PAPI_OK;
 }
-#endif
 
-#define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
+
 
 inline static int
 partition_events( context_t * ctx, control_state_t * ctl )
