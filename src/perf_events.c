@@ -11,29 +11,6 @@
 */
 
 
-/*
- * The following defines are used for a somewhat experimental optimization
- * of PAPI_read for the perf_events substrate.
- *
- * The following combinations are allowed:
- *   define USE_FORMAT_GROUP and define USE_FORMAT_ID
- *   undef USE_FORMAT_GROUP and define USE_FORMAT_ID
- *   undef USE_FORMAT_GROUP and undef USE_FORMAT_ID 
- *
- * For performance purposes, you should either define both of them or neither
- * of them.
- *
- * The best PAPI_read performance should be achieved with them both defined,
- * but only for event sets with more than one counter.
- *
- */
-#define USE_FORMAT_GROUP
-#define USE_FORMAT_ID
-
-#if defined(USE_FORMAT_GROUP) && !defined(USE_FORMAT_ID)
-#error When USE_FORMAT_GROUP is defined, USE_FORMAT_ID must be defined also
-#endif
-
 /* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
  * implementations (e.g. x86) which don't do a static event scheduability
  * check in sys_perf_event_open.  Note, this code should be morphed into
@@ -1343,16 +1320,19 @@ partition_events( context_t * ctx, control_state_t * ctl )
 		ctx->evt[0].event_fd = -1;
 		for ( i = 0; i < ctl->num_events; i++ ) {
 			ctx->evt[i].group_leader = 0;
-#ifdef USE_FORMAT_ID
-			ctl->events[i].read_format = PERF_FORMAT_ID;
-#else
-			ctl->events[i].read_format = 0;
-#endif
+                        if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+                           ctl->events[i].read_format = PERF_FORMAT_ID;
+                        }
+                        else {
+                           ctl->events[i].read_format = 0;
+                        }
+
 			if ( i == 0 ) {
 				ctl->events[i].disabled = 1;
-#ifdef USE_FORMAT_GROUP
-				ctl->events[i].read_format |= PERF_FORMAT_GROUP;
-#endif
+                                if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+                                   ctl->events[i].read_format |= PERF_FORMAT_GROUP;
+                               }
+
 			} else {
 				ctl->events[i].disabled = 0;
 			}
@@ -1378,9 +1358,9 @@ partition_events( context_t * ctx, control_state_t * ctl )
 				 * up all counters in the group when reading the group leader. */
 				if ( j == i ) {
 					ctl->events[i].disabled = 1;
-#ifdef USE_FORMAT_GROUP
-					ctl->events[i].read_format |= PERF_FORMAT_GROUP;
-#endif
+                                        if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+                                           ctl->events[i].read_format |= PERF_FORMAT_GROUP;
+                                        }
 				} else {
 					ctl->events[i].disabled = 0;
 				}
@@ -1558,9 +1538,9 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			i++;			 /* the last event did open, so we need to bump the counter before doing the cleanup */
 			goto cleanup;
 		}
-#ifdef USE_FORMAT_ID
-		/* obtain the id of this event assigned by the kernel */
-		{
+               if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+                       /* obtain the id of this event assigned by the kernel */
+
 			uint64_t buffer[MAX_COUNTERS * 4];	/* max size needed */
 			int id_idx = 1;			   /* position of the id within the buffer for a non-group leader */
 			int cnt;
@@ -1581,7 +1561,6 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			}
 			ctx->evt[i].event_id = buffer[id_idx];
 		}
-#endif
 	}
 
 	/* Now that we've successfully opened all of the events, do whatever
@@ -2252,54 +2231,58 @@ _papi_pe_write( hwd_context_t * ctx, hwd_control_state_t * ctl,
 static int
 get_id_idx( int multiplexed, int n )
 {
-#ifdef USE_FORMAT_GROUP
-	if ( multiplexed )
-		return 3 + ( n * 2 ) + 1;
-	else
-		return 1 + ( n * 2 ) + 1;
-#else
-	return 1;
-#endif
+       if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+               if ( multiplexed )
+                       return 3 + ( n * 2 ) + 1;
+               else
+                       return 1 + ( n * 2 ) + 1;
+       }
+       else {
+               return 1;
+       }
 }
 
 /* Get the index of the n'th counter in the buffer */
 static int
 get_count_idx( int multiplexed, int n )
 {
-#ifdef USE_FORMAT_GROUP
-	if ( multiplexed )
-		return 3 + ( n * 2 );
-	else
-		return 1 + ( n * 2 );
-#else
-	return 0;
-#endif
+       if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+               if ( multiplexed )
+                       return 3 + ( n * 2 );
+               else
+                       return 1 + ( n * 2 );
+       }
+       else {
+               return 0;
+       }
 }
 
 /* Return the count index for the event with the given id */
 static uint64_t
 get_count_idx_by_id( uint64_t * buf, int multiplexed, uint64_t id )
 {
-#ifdef USE_FORMAT_GROUP
-	unsigned int i;
 
-	for ( i = 0; i < buf[get_nr_idx(  )]; i++ ) {
-		unsigned long index = get_id_idx( multiplexed, i );
+       if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+               unsigned int i;
 
-		if ( index > READ_BUFFER_SIZE ) {
+               for ( i = 0; i < buf[get_nr_idx(  )]; i++ ) {
+                       unsigned long index = get_id_idx( multiplexed, i );
+
+		   if ( index > READ_BUFFER_SIZE ) {
 			PAPIERROR( "Attempting access beyond buffer" );
 			return -1;
-		}
+		   }
 
-		if ( buf[index] == id ) {
+		   if ( buf[index] == id ) {
 			return get_count_idx( multiplexed, i );
-		}
-	}
-	PAPIERROR( "Did not find id %d in the buffer!", id );
-	return -1;
-#else
-	return 0;
-#endif
+		   }
+	   }
+	   PAPIERROR( "Did not find id %d in the buffer!", id );
+	   return -1;
+       }
+       else {
+	   return 0;
+       }
 }
 
 
@@ -2341,9 +2324,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 /* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
 		uint64_t buffer[READ_BUFFER_SIZE];
 
-#ifdef USE_FORMAT_GROUP
-		if ( i == pe_ctx->evt[i].group_leader )
-#endif
+               if ((MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) || ( i == pe_ctx->evt[i].group_leader ))
+
 		{
 			ret = read( pe_ctx->evt[i].event_fd, buffer, sizeof ( buffer ) );
 			if ( ret == -1 ) {
@@ -3538,9 +3520,10 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 		 * Cause the kernel to assign an id to each event so that we can keep track of which
 		 * event is which when we read up an entire group of counters.
 		 */
-#ifdef USE_FORMAT_ID
-		pe_ctl->events[i].read_format |= PERF_FORMAT_ID;
-#endif
+               if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+                       pe_ctl->events[i].read_format |= PERF_FORMAT_ID;
+               }
+
 		if ( native ) {
 			native[i].ni_position = i;
 		}
