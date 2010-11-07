@@ -948,7 +948,7 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 	char *buf;
 	size_t maxlen = 0, len;
 	int i, u, n = 0, um;
-	int ret, retval =PFM_SUCCESS;
+	int ret, retval = PFM_SUCCESS;
 
 	pfmlib_for_each_pmu_event(pmu, i) {
 		ret = pmu->get_event_info(pmu, i, &einfo);
@@ -981,14 +981,18 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 	fprintf(fp, "\tcheck encoding: "); fflush(fp);
 	pfmlib_for_each_pmu_event(pmu, i) {
 		ret = pmu->get_event_info(pmu, i, &einfo);
-		if (ret != PFM_SUCCESS)
-			return ret;
+		if (ret != PFM_SUCCESS) {
+			retval = ret;
+			continue;
+		}
 
 		um = 0;
 		for_each_pmu_event_attr(u, &einfo) {
 			ret = pmu->get_event_attr_info(pmu, i, u, &ainfo);
-			if (ret != PFM_SUCCESS)
-				return ret;
+			if (ret != PFM_SUCCESS) {
+				retval = ret;
+				continue;
+			}
 
 			if (ainfo.type != PFM_ATTR_UMASK)
 				continue;
@@ -1011,6 +1015,7 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 			if (ret != PFM_SUCCESS) {
 				fprintf(fp, "cannot encode event %s : %s\n", buf, pfm_strerror(ret));
 				retval = ret;
+				continue;
 			}
 		}
 		n++;
