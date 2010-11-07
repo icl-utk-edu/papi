@@ -261,7 +261,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	unsigned int umask;
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0, pebs_umasks = 0;
-	int k, ret, grpid, last_grpid = -1;
+	int k, id, ret, grpid, last_grpid = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 
@@ -290,7 +290,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	for(k=0; k < e->nattrs; k++) {
 		a = e->attrs+k;
 		if (a->type == PFM_ATTR_UMASK) {
-			grpid = pe[e->event].umasks[a->id].grpid;
+			id = pfm_intel_x86_attr2umask(this, e->event, a->id);
+			grpid = pe[e->event].umasks[id].grpid;
 
 			/*
 			 * certain event groups are meant to be
@@ -314,7 +315,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 			++grpcounts[grpid];
 
 			/* mark that we have a umask with NCOMBO in this group */
-			if (intel_x86_uflag(this, e, a->id, INTEL_X86_NCOMBO))
+			if (intel_x86_uflag(this, e, id, INTEL_X86_NCOMBO))
 				ncombo[grpid] = 1;
 
 			/*
@@ -328,17 +329,18 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 			}
 
 			last_grpid = grpid;
-			modhw    |= pe[e->event].umasks[a->id].modhw;
-			umask    |= pe[e->event].umasks[a->id].ucode;
-			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
+			modhw    |= pe[e->event].umasks[id].modhw;
+			umask    |= pe[e->event].umasks[id].ucode;
+			ugrpmsk  |= 1 << pe[e->event].umasks[id].grpid;
 
 			reg->val |= umask << 8;
 
-			if (intel_x86_uflag(this, e, a->id, INTEL_X86_PEBS))
+			if (intel_x86_uflag(this, e, id, INTEL_X86_PEBS))
 				pebs_umasks++;
 			
 		} else {
-			switch(pfm_intel_x86_attr2mod(this, e->event, a->id)) {
+			id = pfm_intel_x86_attr2mod(this, e->event, a->id);
+			switch(id) {
 				case INTEL_X86_ATTR_I: /* invert */
 					if (modhw & _INTEL_X86_ATTR_I)
 						return PFM_ERR_ATTR_SET;
@@ -414,8 +416,10 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
 	pfmlib_sort_attr(e);
 	for(k=0; k < e->nattrs; k++) {
-		if (e->attrs[k].type == PFM_ATTR_UMASK)
-			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
+		if (e->attrs[k].type == PFM_ATTR_UMASK) {
+			id = pfm_intel_x86_attr2umask(this, e->event, e->attrs[k].id);
+			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[id].uname);
+		}
 	}
 
 	reg->val |= umask << 8;
