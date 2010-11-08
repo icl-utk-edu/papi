@@ -229,7 +229,7 @@ AC_ARG_WITH(CPU,
                    family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
                    model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
                    if test "$family" = "6"; then
-                     if (test "$model" = "7" || test "$model" = "8" || test "$model" = "10" || test "$model" = "11"); then
+                     if (test "$model" = "7" || test "$model" = "8" || test "$model" = "9" || test "$model" = "10" || test "$model" = "11" || test "$model" = "13"); then
                        CPU=p3
                      elif test "$model" = "14"; then
                        CPU=core
