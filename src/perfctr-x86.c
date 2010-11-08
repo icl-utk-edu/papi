@@ -315,6 +315,12 @@ setup_x86_presets( int cputype )
 			_papi_pfm_setup_presets( "Intel Core i7", 0 );
 			break;
 #endif
+#ifdef PERFCTR_X86_INTEL_WSMR
+		case PERFCTR_X86_INTEL_WSMR:
+			retval = _papi_pfm_init(  );
+			_papi_pfm_setup_presets( "Intel Westmere", 0 );
+			break;
+#endif
 		default:
 			PAPIERROR( MODEL_ERROR );
 			return ( PAPI_ESBSTR );
@@ -385,6 +391,9 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 #endif
 #ifdef PERFCTR_X86_INTEL_NHLM
 		case PERFCTR_X86_INTEL_NHLM:
+#endif
+#ifdef PERFCTR_X86_INTEL_WSMR
+		case PERFCTR_X86_INTEL_WSMR:
 #endif
 #ifdef PERFCTR_X86_AMD_K8
 		case PERFCTR_X86_AMD_K8:
