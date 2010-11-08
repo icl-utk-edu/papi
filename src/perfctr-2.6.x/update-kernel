@@ -225,45 +225,46 @@ apply_patch() {
     patch $dryrun $bVt -p1 < "$perfctr/patches/patch-kernel-$patch"
 }
 
-install_files_by_symlinks() {
-    if [ -d include/asm-x86 ] ; then
-	echo ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86/
-	ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86/
+install_file() {
+    if [ -n "$sym" ]; then
+	echo ln -sf ${perfctr}/$1/$2 $3/
+	if [ -z "$dryrun" ]; then
+	    ln -sf ${perfctr}/$1/$2 $3/
+	fi
     else
-	echo ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-i386/
-	ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-i386/
-	echo ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86_64/
-	ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86_64/
+	echo tar -C "${perfctr}/$1/" --exclude CVS -cf - $2 '|' tar -C $3/ -xf -
+	if [ -z "$dryrun" ]; then
+	    tar -C "${perfctr}/$1/" --exclude CVS -cf - $2 | tar -C $3/ -xf -
+	fi
     fi
-    if [ -d include/asm-powerpc ] ; then
-	echo ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-powerpc/
-	ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-powerpc/
-    else
-	echo ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-ppc/
-	ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-ppc/
-    fi
-    echo ln -sf ${perfctr}/linux/include/asm-arm/perfctr.h include/asm-arm/
-    ln -sf ${perfctr}/linux/include/asm-arm/perfctr.h include/asm-arm/
-    echo ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
-    ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
-    echo ln -sf ${perfctr}/linux/drivers/perfctr drivers/
-    ln -sf ${perfctr}/linux/drivers/perfctr drivers/
-}
-
-install_files_by_tar() {
-    tar -C "$perfctr/linux" --exclude CVS -cf - . | tar -xf -
-    rm -f include/asm
 }
 
 install_files() {
     echo
     echo Installing new kernel source files
     echo
-    if [ -n "$sym" ]; then
-	install_files_by_symlinks
+    if [ -d arch/x86/include/asm ]; then
+	install_file linux/include/asm-x86 perfctr.h arch/x86/include/asm
+    elif [ -d include/asm-x86 ]; then
+	install_file linux/include/asm-x86 perfctr.h include/asm-x86
     else
-	install_files_by_tar
+	install_file linux/include/asm-x86 perfctr.h include/asm-i386
+	install_file linux/include/asm-x86 perfctr.h include/asm-x86_64
     fi
+    if [ -d arch/powerpc/include/asm ]; then
+	install_file linux/include/asm-powerpc perfctr.h arch/powerpc/include/asm
+    elif [ -d include/asm-powerpc ]; then
+	install_file linux/include/asm-powerpc perfctr.h include/asm-powerpc
+    else
+	install_file linux/include/asm-powerpc perfctr.h include/asm-ppc
+    fi
+    if [ -d arch/arm/include/asm ]; then
+	install_file linux/include/asm-arm perfctr.h arch/arm/include/asm
+    else
+	install_file linux/include/asm-arm perfctr.h include/asm-arm
+    fi
+    install_file linux/include/linux perfctr.h include/linux
+    install_file linux/drivers perfctr drivers
 }
 
 get_perfctr_srcdir
@@ -276,6 +277,4 @@ if [ -z "$nopatch" ]; then
     identify_patch
     apply_patch
 fi
-if [ -z "$dryrun" ]; then
-    install_files
-fi
+install_files

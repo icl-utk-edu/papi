@@ -1673,6 +1673,7 @@ static int __init intel_p6_init(void)
 	static char core2_name[] __initdata = "Intel Core 2";
 	static char atom_name[] __initdata = "Intel Atom";
 	static char nhlm_name[] __initdata = "Intel Nehalem";
+	static char wstmr_name[] __initdata = "Intel Westmere";
 	unsigned int misc_enable;
 
 	/*
@@ -1690,8 +1691,8 @@ static int __init intel_p6_init(void)
 	case 28:	/* Atom */
 	case 29:	/* Core 2 based Xeon 7400 */
 	case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
-	case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeno L3406 */
-	case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+	case 37:	/* Westmere: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeno L3406 */
+	case 44:	/* Westmere: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
 	case 46:	/* Nehalem: Xeon 7500 */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
@@ -1716,21 +1717,21 @@ static int __init intel_p6_init(void)
 		break;
 	case 26:	/* Nehalem: Core i7-900, Xeon 5500, Xeon 3500 */
 	case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
-	case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
-	case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
 	case 46:	/* Nehalem: Xeon 7500 */
 		perfctr_cpu_name = nhlm_name;
 		p6_has_separate_enables = 1;
 		p6_nr_ffcs = 3;
 		p6_nr_pmcs = 4;
-		switch (current_cpu_data.x86_model) { /* Westmere adds MSR_OFFCORE_RSP1 */
-		case 37:
-		case 44:
-			nhlm_nr_offcore_rsps = 2;
-			break;
-		default:
-			nhlm_nr_offcore_rsps = 1;
-		}
+		nhlm_nr_offcore_rsps = 1;
+		break;
+	case 37:	/* Westmere: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
+	case 44:	/* Westmere: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+		perfctr_cpu_name = wstmr_name;
+		p6_has_separate_enables = 1;
+		p6_nr_ffcs = 3;
+		p6_nr_pmcs = 4;
+		/* Westmere adds MSR_OFFCORE_RSP1 and drops some events */
+		nhlm_nr_offcore_rsps = 2;
 		break;
 	case 28: {	/* Atom */
 		unsigned int maxlev, eax, ebx, dummy, edx;
@@ -1821,10 +1822,12 @@ static int __init intel_p6_init(void)
 		break;
 	case 26:	/* Nehalem: Core i7-900, Xeon 5500, Xeon 3500 */
 	case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
-	case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
-	case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
 	case 46:	/* Nehalem: Xeon 7500 */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_NHLM;
+		break;
+	case 37:	/* Westmere: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
+	case 44:	/* Westmere: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_WSTMR;
 		break;
 	case 28:	/* Atom */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_ATOM;
@@ -1861,8 +1864,8 @@ static int __init intel_p6_init(void)
 		case 28:	/* Atom */
 		case 29:	/* Core 2 based Xeon 7400 */
 		case 30:	/* Nehalem: Core i7-800/i5-700, i7-900XM/i7-800M/i7-700M, Xeon 3400 */
-		case 37:	/* Nehalem: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
-		case 44:	/* Nehalem: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
+		case 37:	/* Westmere: Core i5-600/i3-500/Pentium-G6950, i7-600M/i5-500M/i5-400M/i3-300M, Xeon L3406 */
+		case 44:	/* Westmere: Core i7-980X (Gulftown), Xeon 5600, Xeon 3600 */
 		case 46:	/* Nehalem: Xeon 7500 */
 			lvtpc_reinit_needed = 1;
 		}
@@ -2414,7 +2417,7 @@ static inline int reserve_lapic_nmi(void) { return 0; }
 static inline void release_lapic_nmi(void) { }
 #endif	/* CONFIG_X86_LOCAL_APIC */
 
-static void do_init_tests(void)
+static void __init do_init_tests(void)
 {
 #ifdef CONFIG_PERFCTR_INIT_TESTS
 	if (reserve_lapic_nmi() >= 0) {

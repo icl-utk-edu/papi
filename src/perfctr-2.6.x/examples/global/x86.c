@@ -59,6 +59,7 @@ void setup_control(const struct perfctr_info *info,
 	evntsel0 = 0xC0 | (3 << 16) | (1 << 22);
 	break;
       case PERFCTR_X86_INTEL_NHLM:
+      case PERFCTR_X86_INTEL_WSTMR:
 	/* FP_COMP_OPS_EXE.ANY, any CPL, Enable */
 	evntsel0 = 0x10 | (0xFF << 8) | (3 << 16) | (1 << 22);
 	break;

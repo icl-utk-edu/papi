@@ -6,6 +6,16 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.42, 2010-11-07
+- Classify Westmere processors as Westmere not Nehalem.
+- Update update-kernel to install arch-specific header files
+  in arch/$arch/include/asm/ for newer kernels.  Also make
+  update-kernel --test trace file installation steps.
+- Update usr.src/Makefile to use the LD make variable rather
+  than plain 'ld' if set.  Useful for cross-compilation and
+  builds with non-default target options.
+- Updated kernel support: 2.6.18-194.17.4.el5 (RHEL5).
+
 Version 2.6.41, 2010-06-08
 - Extend examples/perfex/ to allow users to set up values for
   the OFFCORE_RSP MSRs on Nehalem-based processors.

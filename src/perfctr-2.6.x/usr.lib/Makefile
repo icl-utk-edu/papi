@@ -6,6 +6,7 @@ CC=gcc
 CFLAGS=-O2 -fomit-frame-pointer -Wall
 BUILD_INCLDIR=../linux/include
 CPPFLAGS=-I$(BUILD_INCLDIR)
+LD=ld
 AR=ar
 ARFLAGS=ruv
 RANLIB=ranlib
@@ -40,7 +41,7 @@ ppc_ABIVER=5
 arm_ABIVER=0
 SO_ABIVER=$($(ARCH)_ABIVER)
 
-SO_LIBVER=2.6.41
+SO_LIBVER=2.6.42
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 
@@ -74,7 +75,7 @@ libperfctr.a:	$(AR_OBJS)
 
 # not installed, only built as a workaround for PAPI's broken Makefiles
 libperfctr.o:	$(AR_OBJS)
-	ld -r -o $@ $(AR_OBJS)
+	$(LD) -r -o $@ $(AR_OBJS)
 
 libperfctr.so:	$(SO_OBJS)
 	$(CC) -shared -o $@ -Wl,-soname,$(SO_NAME) $(SO_OBJS)

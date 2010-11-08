@@ -29,8 +29,9 @@
 #define PERFCTR_X86_AMD_FAM10H	19	/* family 10h, family 11h */
 #define PERFCTR_X86_AMD_FAM10	PERFCTR_X86_AMD_FAM10H /* XXX: compat crap, delete soon */
 #define PERFCTR_X86_INTEL_ATOM	20	/* family 6 model 28 */
-#define PERFCTR_X86_INTEL_NHLM	21	/* Nehalem: family 6 models 26, 30, 37, 44, 46 */
+#define PERFCTR_X86_INTEL_NHLM	21	/* Nehalem: family 6 models 26, 30, 46 */
 #define PERFCTR_X86_INTEL_COREI7 PERFCTR_X86_INTEL_NHLM /* XXX: compat crap, delete soon */
+#define PERFCTR_X86_INTEL_WSTMR	22	/* Westmere: family 6 models 37, 44 */
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;
