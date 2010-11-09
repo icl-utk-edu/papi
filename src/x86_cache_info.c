@@ -1235,13 +1235,28 @@ intel_decode_descriptor( struct _intel_cache_info *d, PAPI_mh_level_t * L )
 	}
 }
 
-static void cpuid2 ( unsigned int* eax, unsigned int* ebx, 
+inline_static void
+cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
+{
+	unsigned int op = *a;
+	// .byte 0x53 == push ebx. it's universal for 32 and 64 bit
+	// .byte 0x5b == pop ebx.
+	// Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
+	// Using the opcode directly avoids this problem.
+  __asm__ __volatile__( ".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b":"=a"( *a ), "=S"( *b ), "=c"( *c ),
+						  "=d"
+						  ( *d )
+  :					  "a"( op ) );
+}
+
+inline static void 
+cpuid2 ( unsigned int* eax, unsigned int* ebx, 
                     unsigned int* ecx, unsigned int* edx, 
                     unsigned int index, unsigned int ecx_in )
 {
   unsigned int a,b,c,d;
-  asm volatile ("cpuid"
-		: "=a" (a), "=b" (b), "=c" (c), "=d" (d) \
+  __asm__ __volatile__ (".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b"
+		: "=a" (a), "=S" (b), "=c" (c), "=d" (d) \
 		: "0" (index), "2"(ecx_in) );
   *eax = a; *ebx = b; *ecx = c; *edx = d;
 }
@@ -1456,16 +1471,4 @@ init_intel( PAPI_mh_info_t * mh_info, int *levels )
 
 
 
-inline_static void
-cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
-{
-	unsigned int op = *a;
-	// .byte 0x53 == push ebx. it's universal for 32 and 64 bit
-	// .byte 0x5b == pop ebx.
-	// Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
-	// Using the opcode directly avoids this problem.
-  __asm__ __volatile__( ".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b":"=a"( *a ), "=S"( *b ), "=c"( *c ),
-						  "=d"
-						  ( *d )
-  :					  "a"( op ) );
-}
+
