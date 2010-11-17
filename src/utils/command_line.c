@@ -66,12 +66,12 @@ main( int argc, char **argv )
 	success = ( char * ) malloc( ( size_t ) argc );
 
 	if ( success == NULL || values == NULL )
-		test_fail( __FILE__, __LINE__, "malloc", PAPI_ESYS );
+		test_fail_exit( __FILE__, __LINE__, "malloc", PAPI_ESYS );
 
 	for ( ; i < argc; i++ ) {
 		if ( ( retval =
 			   PAPI_event_name_to_code( argv[i], &event ) ) != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_event_name_to_code", retval );
+			test_fail_exit( __FILE__, __LINE__, "PAPI_event_name_to_code", retval );
 
 		if ( ( retval = PAPI_add_event( EventSet, event ) ) != PAPI_OK ) {
 			PAPI_perror( retval, errstr, 1024 );
@@ -88,13 +88,13 @@ main( int argc, char **argv )
 	do_flush(  );
 
 	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
 
 	do_flops( NUM_FLOPS );
 	do_misses( 1, L1_MISS_BUFFER_SIZE_INTS );
 
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
 
 	for ( i = 1, j = 0; i < argc; i++ ) {
 		if ( success[i] ) {
@@ -106,7 +106,7 @@ main( int argc, char **argv )
 
 	printf( "\n----------------------------------\n" );
 	printf
-		( "Verification: None.\n This utility lets you add events from the command line interface to see if they work.\n" );
+		( "Verification: Checks for valid event name.\n This utility lets you add events from the command line interface to see if they work.\n" );
 	test_pass( __FILE__, NULL, 0 );
 	exit( 1 );
 }
