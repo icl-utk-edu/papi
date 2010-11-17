@@ -41,6 +41,7 @@ volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 extern int get_cpu_info( PAPI_hw_info_t * hwinfo );
 #endif
 extern papi_vector_t _papi_pfm_vector;
+extern int _papi_pfm_error( int pfm_error );
 extern int _papi_pfm_setup_presets( char *name, int type );
 extern int _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier );
 extern int _papi_pfm_ntv_name_to_code( char *ntv_name,
@@ -1674,7 +1675,7 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 				if ( dispatch_count == 0 ) {
 					PAPIERROR( "pfm_dispatch_events(): %s",
 							   pfm_strerror( ret ) );
-					return ( PAPI_ECNFLCT );
+					return ( _papi_pfm_error( ret ) );
 				}
 				SUBDBG
 					( "Dispatch failed because of counter conflict, trying again with %d counters.\n",
@@ -1682,7 +1683,7 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 				goto again;
 			}
 			PAPIERROR( "pfm_dispatch_events(): %s", pfm_strerror( ret ) );
-			return ( PAPI_ECNFLCT );
+			return ( _papi_pfm_error( ret ) );
 		}
 
 		/*

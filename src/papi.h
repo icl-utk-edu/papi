@@ -139,7 +139,10 @@ failure.
 #define PAPI_ENOIMPL    -19    /**< Not implemented */
 #define PAPI_EBUF       -20    /**< Buffer size exceeded */
 #define PAPI_EINVAL_DOM -21    /**< EventSet domain is not supported for the operation */
-#define PAPI_NUM_ERRORS	 22    /**< Number of error messages specified in this API */
+#define PAPI_EATTR		-22    /**< Invalid or missing event attributes */
+#define PAPI_ECOUNT		-23    /**< Too many events or attributes */
+#define PAPI_ECOMBO		-24    /**< Bad combination of features */
+#define PAPI_NUM_ERRORS	 25    /**< Number of error messages specified in this API */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */

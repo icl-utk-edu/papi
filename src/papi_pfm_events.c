@@ -744,6 +744,44 @@ _pfm_convert_umask( unsigned int event, unsigned int umask )
 	return ( convert_pfm_masks( &gete ) );
 }
 
+/* convert libpfm error codes to PAPI error codes for 
+	more informative error reporting */
+int
+_papi_pfm_error( int pfm_error )
+{
+	switch ( pfm_error ) {
+		case PFMLIB_SUCCESS:		return PAPI_OK;			/* success */
+		case PFMLIB_ERR_NOTSUPP:	return PAPI_ENOSUPP;	/* function not supported */
+		case PFMLIB_ERR_INVAL:		return PAPI_EINVAL;		/* invalid parameters */
+		case PFMLIB_ERR_NOINIT:		return PAPI_ENOINIT;	/* library was not initialized */
+		case PFMLIB_ERR_NOTFOUND:	return PAPI_ENOEVNT;	/* event not found */
+		case PFMLIB_ERR_NOASSIGN:	return PAPI_ECNFLCT;	/* cannot assign events to counters */
+		case PFMLIB_ERR_FULL:		return PAPI_EBUF;		/* buffer is full or too small */
+		case PFMLIB_ERR_EVTMANY:	return PAPI_EMISC;		/* event used more than once */
+		case PFMLIB_ERR_MAGIC:		return PAPI_EBUG;		/* invalid library magic number */
+		case PFMLIB_ERR_FEATCOMB:	return PAPI_ECOMBO;		/* invalid combination of features */
+		case PFMLIB_ERR_EVTSET:		return PAPI_ENOEVST;	/* incompatible event sets */
+		case PFMLIB_ERR_EVTINCOMP:	return PAPI_ECNFLCT;	/* incompatible event combination */
+		case PFMLIB_ERR_TOOMANY:	return PAPI_ECOUNT;		/* too many events or unit masks */
+		case PFMLIB_ERR_BADHOST:	return PAPI_ESYS;		/* not supported by host CPU */
+		case PFMLIB_ERR_UMASK:		return PAPI_EATTR;		/* invalid or missing unit mask */
+		case PFMLIB_ERR_NOMEM:		return PAPI_ENOMEM;		/* out of memory */
+
+		/* Itanium only */
+		case PFMLIB_ERR_IRRTOOBIG:		/* code range too big */
+		case PFMLIB_ERR_IRREMPTY:		/* empty code range */
+		case PFMLIB_ERR_IRRINVAL:		/* invalid code range */
+		case PFMLIB_ERR_IRRTOOMANY:		/* too many code ranges */
+		case PFMLIB_ERR_DRRINVAL:		/* invalid data range */
+		case PFMLIB_ERR_DRRTOOMANY:		/* too many data ranges */
+		case PFMLIB_ERR_IRRALIGN:		/* bad alignment for code range */
+		case PFMLIB_ERR_IRRFLAGS:		/* code range missing flags */
+		default:
+			return PAPI_EINVAL;
+	}
+}
+
+
 int
 _papi_pfm_setup_presets( char *pmu_name, int pmu_type )
 {
@@ -820,6 +858,7 @@ _papi_pfm_ntv_name_to_code( char *name, int *event_code )
 	SUBDBG( "pfm_find_full_event(%s,%p)\n", name, &event );
 	ret = pfm_find_full_event( name, &event );
 	if ( ret == PFMLIB_SUCCESS ) {
+		SUBDBG( "Full event name found\n" );
 		/* we can only capture PAPI_NATIVE_UMASK_MAX or fewer masks */
 		if ( event.num_masks > PAPI_NATIVE_UMASK_MAX ) {
 			SUBDBG( "num_masks (%d) > max masks (%d)\n", event.num_masks,
@@ -840,10 +879,11 @@ _papi_pfm_ntv_name_to_code( char *name, int *event_code )
 			return ( PAPI_OK );
 		}
 	} else if ( ret == PFMLIB_ERR_UMASK ) {
+		SUBDBG( "UMASK error, looking for base event only\n" );
 		ret = pfm_find_event( name, &event.event );
 		if ( ret == PFMLIB_SUCCESS ) {
 			*event_code = encode_native_event( event.event, 0, 0 );
-			return ( PAPI_OK );
+			return ( PAPI_EATTR );
 		}
 	}
 	return ( unsigned int ) PAPI_ENOEVNT;
