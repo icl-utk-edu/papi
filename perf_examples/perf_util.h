@@ -71,6 +71,9 @@ perf_scale(uint64_t *values)
 {
 	uint64_t res = 0;
 
+	if (values[2] > values[1])
+		warnx("WARNING: time_running > time_enabled\n");
+
 	if (values[2])
 		res = (uint64_t)((double)values[0] * values[1]/values[2]);
 	return res;
