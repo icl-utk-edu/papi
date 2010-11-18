@@ -121,7 +121,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		},
 		{ .uname  = "STALL_CYCLES",
 		  .udesc  = "Cycles no Uops are decoded",
-		  .ucode  = 0x2 | (1 << 16) | (1 << 15), /* cmask=1, inv=1 */
+		  .ucode  = 0x1 | (1 << 16) | (1 << 15), /* cmask=1, inv=1 */
 		  .uflags = INTEL_X86_NCOMBO,
 		},
 	  },
