@@ -115,12 +115,13 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		},
 		{ .uname  = "MS_CYCLES_ACTIVE",
 		  .udesc  = "Uops decoded by Microcode Sequencer",
-		  .ucode  = 0x2,
+		  .ucode  = 0x2 | (1 << 16),	/* cmask = 1 */
 		  .uflags = INTEL_X86_NCOMBO,
+		  .uequiv = "MS:c=1",
 		},
 		{ .uname  = "STALL_CYCLES",
 		  .udesc  = "Cycles no Uops are decoded",
-		  .ucode  = 0x1,
+		  .ucode  = 0x2 | (1 << 16) | (1 << 15), /* cmask=1, inv=1 */
 		  .uflags = INTEL_X86_NCOMBO,
 		},
 	  },
