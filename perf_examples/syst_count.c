@@ -44,6 +44,7 @@ typedef struct {
 	int delay;
 	int excl;
 	int pin;
+	int interval;
 	int cpu;
 } options_t;
 
@@ -179,7 +180,7 @@ void read_cpu(int c)
 			fds[j].value = perf_scale(values);
 			ratio = perf_scale_ratio(values);
 
-			printf("CPU%d G%-2d %'-20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64")\n",
+			printf("CPU%-3d G%-2d %'-20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64")\n",
 				c,
 				i,
 				fds[j].value,
@@ -235,17 +236,37 @@ measure(void)
 	/*
 	 * FIX this for hotplug CPU
 	 */
-	for(c=cmin ; c < cmax; c++)
-		start_cpu(c);
 
-	sleep(options.delay);
+	if (options.interval) {
+		int delay;
+		for (delay = 1 ; delay <= options.delay; delay++) {
+			for(c=cmin ; c < cmax; c++)
+				start_cpu(c);
 
-	for(c=cmin ; c < cmax; c++)
-		stop_cpu(c);
+			sleep(1);
 
-	for(c = cmin; c < cmax; c++) {
-		printf("# -----\n");
-		read_cpu(c);
+			for(c=cmin ; c < cmax; c++)
+				stop_cpu(c);
+
+			for(c = cmin; c < cmax; c++) {
+				printf("# %'ds -----\n", delay);
+				read_cpu(c);
+			}
+
+		}
+	} else {
+		for(c=cmin ; c < cmax; c++)
+			start_cpu(c);
+
+		sleep(options.delay);
+
+		for(c=cmin ; c < cmax; c++)
+			stop_cpu(c);
+
+		for(c = cmin; c < cmax; c++) {
+			printf("# -----\n");
+			read_cpu(c);
+		}
 	}
 
 	for(c = cmin; c < cmax; c++)
@@ -257,7 +278,7 @@ measure(void)
 static void
 usage(void)
 {
-	printf("usage: syst [-c cpu] [-x] [-h] [-d delay] [-P] [-e event1,event2,...]\n");
+	printf("usage: syst [-c cpu] [-x] [-h] [-p] [-d delay] [-P] [-e event1,event2,...]\n");
 }
 
 int
@@ -269,11 +290,14 @@ main(int argc, char **argv)
 
 	options.cpu = -1;
 
-	while ((c=getopt(argc, argv,"hc:e:d:xP")) != -1) {
+	while ((c=getopt(argc, argv,"hc:e:d:xPp")) != -1) {
 		switch(c) {
 			case 'x':
 				options.excl = 1;
 				break;
+ 			case 'p':
+ 				options.interval = 1;
+ 				break;
 			case 'e':
 				if (options.num_groups < MAX_GROUPS) {
 					options.events[options.num_groups++] = optarg;

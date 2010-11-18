@@ -2192,8 +2192,14 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.uflags = INTEL_X86_NCOMBO,
 				.uequiv = "MS:c=1"
 			},
+			{ .uname  = "STALL_CYCLES",
+				.udesc  = "cycles no Uops are decoded",
+				.ucode  = 0x2 | (1 << 16) | (1 << 15), /* cmask=1, inv=1 */
+				.uflags = INTEL_X86_NCOMBO,
+				.uequiv = "MS:c=1:i=1"
+			},
 		},
-		.numasks = 4
+		.numasks = 5
 	},
 	{ .name   = "UOPS_EXECUTED",
 		.desc   = "Micro-ops executed",
