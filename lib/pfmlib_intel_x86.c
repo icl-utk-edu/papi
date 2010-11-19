@@ -251,11 +251,12 @@ done:
 }
 
 static int
-pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg, pfmlib_perf_attr_t *attrs)
+pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
 {
 	pfmlib_attr_t *a;
 	const intel_x86_entry_t *pe;
 	const pfmlib_attr_desc_t *atdesc;
+	pfm_intel_x86_reg_t reg;
 	unsigned int grpmsk, ugrpmsk = 0;
 	uint64_t val;
 	unsigned int umask;
@@ -279,11 +280,12 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	val   = pe[e->event].code;
 
 	grpmsk = (1 << pe[e->event].ngrp)-1;
-	reg->val |= val;
+	reg.val = val;
 
 	/* take into account hardcoded umask */
 	umask = (val >> 8) & 0xff;
 
+printf("reg.val=0x%"PRIx64" um=%x\n", reg.val, umask);
 	if (intel_x86_eflag(this, e, INTEL_X86_PEBS))
 		pebs_umasks++;
 
@@ -333,8 +335,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 			umask    |= pe[e->event].umasks[id].ucode;
 			ugrpmsk  |= 1 << pe[e->event].umasks[id].grpid;
 
-			reg->val |= umask << 8;
-
 			if (intel_x86_uflag(this, e, id, INTEL_X86_PEBS))
 				pebs_umasks++;
 			
@@ -344,36 +344,36 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 				case INTEL_X86_ATTR_I: /* invert */
 					if (modhw & _INTEL_X86_ATTR_I)
 						return PFM_ERR_ATTR_SET;
-					reg->sel_inv = !!a->ival;
+					reg.sel_inv = !!a->ival;
 					break;
 				case INTEL_X86_ATTR_E: /* edge */
 					if (modhw & _INTEL_X86_ATTR_E)
 						return PFM_ERR_ATTR_SET;
-					reg->sel_edge = !!a->ival;
+					reg.sel_edge = !!a->ival;
 					break;
 				case INTEL_X86_ATTR_C: /* counter-mask */
 					if (modhw & _INTEL_X86_ATTR_C)
 						return PFM_ERR_ATTR_SET;
 					if (a->ival > 255)
 						return PFM_ERR_ATTR_VAL;
-					reg->sel_cnt_mask = a->ival;
+					reg.sel_cnt_mask = a->ival;
 					break;
 				case INTEL_X86_ATTR_U: /* USR */
 					if (modhw & _INTEL_X86_ATTR_U)
 						return PFM_ERR_ATTR_SET;
-					reg->sel_usr = !!a->ival;
+					reg.sel_usr = !!a->ival;
 					plmmsk |= _INTEL_X86_ATTR_U;
 					break;
 				case INTEL_X86_ATTR_K: /* OS */
 					if (modhw & _INTEL_X86_ATTR_K)
 						return PFM_ERR_ATTR_SET;
-					reg->sel_os = !!a->ival;
+					reg.sel_os = !!a->ival;
 					plmmsk |= _INTEL_X86_ATTR_K;
 					break;
 				case INTEL_X86_ATTR_T: /* anythread (v3 and above) */
 					if (modhw & _INTEL_X86_ATTR_T)
 						return PFM_ERR_ATTR_SET;
-					reg->sel_anythr = !!a->ival;
+					reg.sel_anythr = !!a->ival;
 					break;
 				case INTEL_X86_ATTR_P: /* PEBS */
 					if (!pebs_umasks) {
@@ -393,11 +393,10 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	 */
 	if (!(plmmsk & (_INTEL_X86_ATTR_K|_INTEL_X86_ATTR_U))) {
 		if (e->dfl_plm & PFM_PLM0)
-			reg->sel_os = 1;
+			reg.sel_os = 1;
 		if (e->dfl_plm & PFM_PLM3)
-			reg->sel_usr = 1;
+			reg.sel_usr = 1;
 	}
-
 	/*
 	 * check that there is at least of unit mask in each unit
 	 * mask group
@@ -422,20 +421,31 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 		}
 	}
 
-	reg->val |= umask << 8;
-	reg->sel_en        = 1; /* force enable bit to 1 */
-	reg->sel_int       = 1; /* force APIC int to 1 */
+	if (intel_x86_eflag(this, e, INTEL_X86_NHM_OFFCORE)) {
+		codes[1] = umask;
+		*count = 2;
+		umask = 0;
+	} else {
+		*count = 1;
+	}
+
+	reg.val    |= umask << 8;
+	reg.sel_en  = 1; /* force enable bit to 1 */
+	reg.sel_int = 1; /* force APIC int to 1 */
+
+	codes[0] = reg.val;
+
 	/*
 	 * decode modifiers
 	 */
-	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_K, name), reg->sel_os);
-	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_U, name), reg->sel_usr);
-	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_E, name), reg->sel_edge);
-	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_I, name), reg->sel_inv);
-	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_C, name), reg->sel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_K, name), reg.sel_os);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_U, name), reg.sel_usr);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_E, name), reg.sel_edge);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_I, name), reg.sel_inv);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_C, name), reg.sel_cnt_mask);
 
 	if (pe[e->event].modmsk & _INTEL_X86_ATTR_T)
-		evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_T, name), reg->sel_anythr);
+		evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_T, name), reg.sel_anythr);
 
 	return PFM_SUCCESS;
 }
@@ -457,18 +467,19 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 
 	reg.val = 0; /* not initialized by encode function */
 
-	ret = pfm_intel_x86_encode_gen(this, e, &reg, attrs);
+	ret = pfm_intel_x86_encode_gen(this, e, codes, count, attrs);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	*codes = reg.val;
-	*count = 1;
+	reg.val = codes[0];
 
 	if (attrs) {
 		if (reg.sel_os)
 			attrs->plm |= PFM_PLM0;
 		if (reg.sel_usr)
 			attrs->plm |= PFM_PLM3;
+		if (intel_x86_eflag(this, e, INTEL_X86_NHM_OFFCORE))
+			attrs->offcore = 1;
 	}
 	pfm_intel_x86_display_reg(this, e, reg);
 	return PFM_SUCCESS;

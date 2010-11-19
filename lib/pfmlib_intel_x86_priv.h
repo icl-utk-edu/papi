@@ -85,6 +85,7 @@ typedef struct {
 #define INTEL_X86_ENCODER		0x08 	/* event requires model-specific encoding */
 #define INTEL_X86_DFL			0x10	/* unit mask is default choice */
 #define INTEL_X86_GRP_EXCL		0x20	/* only one unit mask group can be selected */
+#define INTEL_X86_NHM_OFFCORE		0x40	/* Nehalem/Westmere offcore_response */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */

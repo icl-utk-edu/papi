@@ -40,6 +40,24 @@ modifier with values in the range [0:255].
 .B t
 Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
 
+.SH OFFCORE_RESPONSE events
+The library is able to encode the OFFCORE_RESPONSE_0 and OFFCORE_RESPONSE_1 events.
+Those are special events because they, each, need a second MSR (0x1a6 and 0x1a7 respectively)
+to be programmed for the event to count properly. Thus two values are necessary for each event.
+The first value can be programmed on any of the generic counters. The second value goes into
+the dedicated MSR (0x1a6 or 0x1a7).
+
+The OFFCORE_RESPONSE events are exposed as normal events with several umasks which are divided in
+two groups: request and response. The user must provide \fBat least\fR one umask from each group.
+For instance, OFFCORE_RESPONSE_0:ANY_DATA:LOCAL_DRAM.
+
+When using \fBpfm_get_event_encoding()\fR, two 64-bit values are returned. The first value
+corresponds to what needs to be programmed into any of the generic counters. The second value
+must be programmed into the corresponding dedicated MSR (0x1a6 or 0x1a7).
+
+When using an OS-specific encoding routine, the way the event is encoded is OS specific. Refer to
+the corresponding man page for more information.
+
 .SH ENVIRONMENT VARIABLES
 It is possible to force activation of the Intel Westmere support using the \fBLIBPFM_FORCE_PMU\fR variable.
 The PMU name, nhm, must be passed. No additional options are supported.

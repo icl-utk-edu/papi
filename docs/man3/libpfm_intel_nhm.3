@@ -48,6 +48,23 @@ interrupted instruction address is handled by the kernel. The exact meaning of e
 values depends on the underlying kernel interface. For perf_events, this determines how
 \fBPERF_SAMPLE_IP\fR is adjusted by the kernel. Refer to perf_events documentation for more details.
 
+.SH OFFCORE_RESPONSE event
+The library is able to encode the OFFCORE_RESPONSE_0 event. This is a special event because it
+needs a second MSR (0x1a6) to be programmed for the event to count properly. Thus two values
+are necessary. The first value can be programmed on any of the generic counters. The second value
+goes into the dedicated MSR (0x1a6).
+
+The OFFCORE_RESPONSE event is exposed as a normal event with several umasks which are divided in two
+groups: request and response. The user must provide \fBat least\fR one umask from each group.
+For instance, OFFCORE_RESPONSE_0:ANY_DATA:LOCAL_DRAM.
+
+When using \fBpfm_get_event_encoding()\fR, two 64-bit values are returned. The first value
+corresponds to what needs to be programmed into any of the generic counters. The second value
+must be programmed into the dedicated MSR (0x1a6).
+
+When using an OS-specific encoding routine, the way the event is encoded is OS specific. Refer to
+the corresponding man page for more information.
+
 .SH ENVIRONMENT VARIABLES
 It is possible to force activation of the Intel Nehalem support using the \fBLIBPFM_FORCE_PMU\fR variable.
 The PMU name, nhm, must be passed. No additional options are supported.

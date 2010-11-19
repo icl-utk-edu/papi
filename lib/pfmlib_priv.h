@@ -69,6 +69,7 @@ typedef struct {
 typedef struct {
 	int plm;	/* privilege level mask */
 	int precise_ip;	/* enable precise_ip sampling */
+	int offcore;	/* Intel WSM/NHM offcore_response */
 	/* more to be added in the future */
 } pfmlib_perf_attr_t;
 

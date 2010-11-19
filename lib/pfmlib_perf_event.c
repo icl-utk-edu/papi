@@ -69,7 +69,7 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 
 	/* don't know how to deal with this in PERF */
 	ret = PFM_ERR_INVAL;
-	if (count > 1)
+	if (count > 2)
 		goto error;
 
 	ret = PFM_ERR_NOTSUPP;
@@ -91,6 +91,19 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 		hw->exclude_user = !(dfl_plm & PFM_PLM3);
 		hw->exclude_kernel = !(dfl_plm & PFM_PLM0);
 		hw->exclude_hv = !(dfl_plm & PFM_PLMH);
+	}
+
+	/*
+	 * encoding of Intel Nehalem/Westmere OFFCORE_RESPONSE events
+	 * they use an extra MSR, which is encoding in the upper 32 bits
+	 * of hw->config
+	 */
+	if (perf_attrs.offcore) {
+		if (count != 2) {
+			DPRINT("perf_encoding: offcore=1 count=%d\n", count);
+			return PFM_ERR_INVAL;
+		}
+		hw->config |= codes[1] << 32;
 	}
 	/*
 	 * perf_event precise_ip must be in [0-3]
