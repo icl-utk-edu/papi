@@ -62,17 +62,20 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	if (ret != PFM_SUCCESS)
 		return ret;
 
+	ret = PFM_ERR_INVAL;
 	/* no values */
 	if (!count)
-		return PFM_ERR_INVAL;
+		goto error;
 
 	/* don't know how to deal with this in PERF */
+	ret = PFM_ERR_INVAL;
 	if (count > 1)
-		return PFM_ERR_NOTSUPP;
+		goto error;
 
+	ret = PFM_ERR_NOTSUPP;
 	hw->type = pmu->get_event_perf_type(pmu, e.event);
 	if (hw->type == -1)
-		return PFM_ERR_NOTSUPP;
+		goto error;
 
 	hw->config = codes[0];
 
@@ -93,8 +96,9 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	 * perf_event precise_ip must be in [0-3]
 	 * see perf_event.h
 	 */
+	ret = PFM_ERR_ATTR_SET;
 	if (perf_attrs.precise_ip < 0 || perf_attrs.precise_ip > 3)
-		return PFM_ERR_ATTR_SET;
+		goto error;
 
 	hw->precise_ip = perf_attrs.precise_ip;
 
@@ -107,8 +111,6 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 			hw->precise_ip,
 			e.fstr);
 
-	free(codes);
-
 	/*
 	 * propagate event index if necessary
 	 */
@@ -118,7 +120,10 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	/*
 	 * propagate fully qualified event string if necessary
 	 */
-	return pfmlib_build_fstr(&e, fstr);
+	ret = pfmlib_build_fstr(&e, fstr);
+error:
+	free(codes);
+	return ret;
 }
 
 int
