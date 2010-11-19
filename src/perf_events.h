@@ -58,6 +58,7 @@ typedef struct
 	int num_groups;
 	unsigned domain;
 	unsigned multiplexed;
+	unsigned overflow;
 	unsigned int cpu_num;
 	unsigned long tid;
 	struct perf_event_attr events[MAX_MPX_EVENTS];

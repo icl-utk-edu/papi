@@ -2134,9 +2134,13 @@ pe_enable_counters( context_t * ctx, control_state_t * ctl )
 
 	for ( i = 0; i < num_fds; i++ ) {
 		if ( ctx->evt[i].group_leader == i ) {
-			SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
-			ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
-
+			if ( ctl->overflow == 1) {
+				SUBDBG("ioctl(refresh): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
+				ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_REFRESH, NULL );
+			} else {
+				SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
+				ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
+			}	
 			if ( ret == -1 ) {
 				/* Never should happen */
 				return PAPI_EBUG;
@@ -2361,9 +2365,11 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 	if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
 		for ( i = 0; i < pe_ctx->num_evts; i++ )
 			if ( pe_ctx->evt[i].group_leader == i ) {
-				ret =
-					ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE,
-						   NULL );
+				if (pe_ctl->overflow == 1) {
+					ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_REFRESH, NULL );
+				} else {
+					ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
+				}
 				if ( ret == -1 ) {
 					/* Never should happen */
 					return PAPI_EBUG;
@@ -2805,7 +2811,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 			  fd );
 		return;
 	}
-
+	
 	ctx.si = info;
 	ctx.ucontext = ( hwd_ucontext_t * ) uc;
 
@@ -2840,6 +2846,8 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 				  fd );
 		}
 	}
+
+	ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL );
 
 	if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING )
 		 && !( thread->running_eventset[cidx]->profile.
@@ -2912,7 +2920,9 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 
 	}
 
-	/* Need restart here when kernel supports that -- FIXME */
+	/* Restart the counters */
+	if (ioctl( fd, PERF_EVENT_IOC_REFRESH, NULL ) == -1)
+			PAPIERROR( "overflow refresh failed", 0 );
 }
 
 int
@@ -3063,11 +3073,17 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		}
 	}
 	if ( found_non_zero_sample_period ) {
+		/* turn on internal overflow flag for this event set */
+		ctl->overflow = 1;
+		
 		/* Enable the signal handler */
 		retval =
 			_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
 									MY_VECTOR.cmp_info.CmpIdx );
 	} else {
+		/* turn off internal overflow flag for this event set */
+		ctl->overflow = 0;
+		
 		/*
 		 * Remove the signal handler, if there are no remaining non-zero
 		 * sample_periods set
