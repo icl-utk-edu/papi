@@ -785,8 +785,8 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 	  .ngrp = 1,
 	  .code = 0x0B,
 	  .umasks = {
-		{ .uname  = "LATENCY_ABOVE_THRESHOLD (Precise Event)",
-		  .udesc  = "Memory instructions retired above programmed clocks, minimum value threshold is 4, requires PEBS",
+		{ .uname  = "LATENCY_ABOVE_THRESHOLD",
+		  .udesc  = "Memory instructions retired above programmed clocks, minimum value threshold is 4, requires PEBS (Precise Event)",
 		  .ucode  = 0x10,
 		  .uflags = INTEL_X86_NCOMBO,
 		},
