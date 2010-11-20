@@ -285,7 +285,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 	/* take into account hardcoded umask */
 	umask = (val >> 8) & 0xff;
 
-printf("reg.val=0x%"PRIx64" um=%x\n", reg.val, umask);
 	if (intel_x86_eflag(this, e, INTEL_X86_PEBS))
 		pebs_umasks++;
 
