@@ -31,7 +31,7 @@
 static void
 usage(void)
 {
-	printf("usage: evt2raw <event>\n"
+	printf("usage: evt2raw [-v] <event>\n"
 		"<event> is the symbolic event, including modifiers, to "
 		"translate to a raw code.\n");
 }
@@ -39,15 +39,27 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int ret;
+	int ret, c, verbose = 0;
 	struct perf_event_attr pea;
-	char *event_str;
+	char *event_str, *fstr = NULL;
 
-	if (argc != 2) {
+	if (argc < 2) {
 		usage();
 		return 1;
 	}
-	event_str = argv[1];
+	while ( (c=getopt(argc, argv, "hv")) != -1) {
+		switch(c) {
+		case 'h':
+			usage();
+			exit(0);
+		case 'v':
+			verbose = 1;
+			break;
+		default:
+			exit(1);
+		}
+	}
+	event_str = argv[optind];
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
@@ -55,7 +67,7 @@ main(int argc, char **argv)
 			pfm_strerror(ret));
 
 	ret = pfm_get_perf_event_encoding(event_str, PFM_PLM0|PFM_PLM3, &pea,
-		NULL, NULL);
+		&fstr, NULL);
 	if (ret != PFM_SUCCESS)
 		errx(1, "Error: pfm_get_perf_encoding returned %s",
 			pfm_strerror(ret));
@@ -63,7 +75,13 @@ main(int argc, char **argv)
 	if (pea.type != PERF_TYPE_RAW)
 		errx(1, "Error: %s is not a raw hardware event", event_str);
 
-	printf("r%"PRIx64"\n", pea.config);
+	if (verbose)
+		printf("r%"PRIx64"\t%s\n", pea.config, fstr);
+	else
+		printf("r%"PRIx64"\n", pea.config);
+
+	if (fstr)
+		free(fstr);
 
 	return 0;
 }
