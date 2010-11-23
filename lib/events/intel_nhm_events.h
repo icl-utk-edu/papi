@@ -2388,6 +2388,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		  .ucode  = 0xff,
 		  .grpid  = 0,
 		  .uequiv = "DMND_DATA_RD:DMND_RFO:DMND_IFETCH:WB:PF_DATA_RD:PF_RFO:PF_IFETCH:OTHER",
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname  = "ANY_DATA",
 		  .udesc  = "request: combination of DMND_DATA | PF_DATA_RD",
@@ -2438,8 +2439,15 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		  .ucode  = 0x8000,
 		  .grpid  = 1,
 		},
+		{ .uname  = "ANY_RESPONSE",
+		  .udesc  = "response: combination of all response umasks",
+		  .ucode  = 0xff00,
+		  .uequiv = "UNCORE_HIT:OTHER_CORE_HIT_SNP:OTHER_CORE_HITM:REMOTE_CACHE_FWD:REMOTE_DRAM:LOCAL_DRAM:NON_DRAM",
+		  .grpid  = 1,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
+		},
 	  },
-	  .numasks = 19
+	  .numasks = 20
 	},
 };
 #define PME_NHM_EVENT_COUNT	  (sizeof(intel_nhm_pe)/sizeof(intel_x86_entry_t))
