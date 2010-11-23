@@ -515,17 +515,14 @@ extern int _papi_hwi_using_signal[PAPI_NSIG];
  */
 
 #ifdef NO_VARARG_MACRO
-inline_static void
-PAPIDEBUG( int level, char *format, ... )
+
+inline_static void PAPIDEBUG( int level, char *format, va_list args )
 {
 #ifdef DEBUG
-	va_list args;
 
 	if ( ISLEVEL( level ) ) {
-		va_start( args, format );
 		DEBUGLABEL( DEBUGLEVEL( level ) );
 		vfprintf( stderr, format, args );
-		va_end( args );
 	} else
 #endif
 		return;
@@ -535,7 +532,10 @@ inline_static void
 SUBDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_SUBSTRATE, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_SUBSTRATE, format, args );
+	va_end(args);
 #endif
 }
 
@@ -543,7 +543,10 @@ inline_static void
 APIDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_API, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_API, format, args );
+	va_end(args);
 #endif
 }
 
@@ -551,7 +554,10 @@ inline_static void
 INTDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_INTERNAL, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_INTERNAL, format, args );
+	va_end(args);
 #endif
 }
 
@@ -559,7 +565,10 @@ inline_static void
 THRDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_THREADS, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_THREADS, format, args );
+	va_end(args);
 #endif
 }
 
@@ -567,7 +576,10 @@ inline_static void
 MPXDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_MULTIPLEX, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_MULTIPLEX, format, args );
+	va_end(args);
 #endif
 }
 
@@ -575,7 +587,10 @@ inline_static void
 OVFDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_OVERFLOW, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_OVERFLOW, format, args );
+	va_end(args);
 #endif
 }
 
@@ -583,7 +598,10 @@ inline_static void
 PRFDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_PROFILE, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_PROFILE, format, args );
+	va_end(args);
 #endif
 }
 
@@ -591,7 +609,10 @@ inline_static void
 MEMDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_MEMORY, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_MEMORY, format , args);
+	va_end(args);
 #endif
 }
 
@@ -599,7 +620,10 @@ inline_static void
 LEAKDBG( char *format, ... )
 {
 #ifdef DEBUG
-	PAPIDEBUG( DEBUG_LEAK, format );
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_LEAK, format , args);
+	va_end(args);
 #endif
 }
 #endif
