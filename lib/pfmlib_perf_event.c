@@ -95,7 +95,7 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 
 	/*
 	 * encoding of Intel Nehalem/Westmere OFFCORE_RESPONSE events
-	 * they use an extra MSR, which is encoding in the upper 32 bits
+	 * they use an extra MSR, which is encoded in the upper 32 bits
 	 * of hw->config
 	 */
 	if (perf_attrs.offcore) {
