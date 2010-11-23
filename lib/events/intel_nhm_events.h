@@ -2441,7 +2441,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		},
 		{ .uname  = "ANY_RESPONSE",
 		  .udesc  = "response: combination of all response umasks",
-		  .ucode  = 0xff00,
+		  .ucode  = 0xf700,
 		  .uequiv = "UNCORE_HIT:OTHER_CORE_HIT_SNP:OTHER_CORE_HITM:REMOTE_CACHE_FWD:REMOTE_DRAM:LOCAL_DRAM:NON_DRAM",
 		  .grpid  = 1,
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
