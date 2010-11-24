@@ -521,15 +521,19 @@ inline_static void PAPIDEBUG( int level, char *format, va_list args )
 #ifdef DEBUG
 
 	if ( ISLEVEL( level ) ) {
-		DEBUGLABEL( DEBUGLEVEL( level ) );
 		vfprintf( stderr, format, args );
 	} else
 #endif
 		return;
 }
 
+#define SUBDBG do { \
+ if (DEBUG_SUBSTRATE & _papi_hwi_debug) {\
+   DEBUGLABEL( DEBUGLEVEL ( DEBUG_SUBSTRATE ) ); \
+ } \
+} while(0); _SUBDBG
 inline_static void
-SUBDBG( char *format, ... )
+_SUBDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -539,8 +543,13 @@ SUBDBG( char *format, ... )
 #endif
 }
 
+#define APIDBG do { \
+  if (DEBUG_API&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_API ) ); \
+  } \
+} while(0); _APIDBG
 inline_static void
-APIDBG( char *format, ... )
+_APIDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -550,8 +559,13 @@ APIDBG( char *format, ... )
 #endif
 }
 
+#define INTDBG do { \
+    if (DEBUG_INTERNAL&_papi_hwi_debug) {\
+	  DEBUGLABEL( DEBUGLEVEL ( DEBUG_INTERNAL ) ); \
+	} \
+} while(0); _INTDBG
 inline_static void
-INTDBG( char *format, ... )
+_INTDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -561,8 +575,13 @@ INTDBG( char *format, ... )
 #endif
 }
 
+#define THRDBG do { \
+  if (DEBUG_THREADS&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_THREADS ) ); \
+  } \
+} while(0); _THRDBG
 inline_static void
-THRDBG( char *format, ... )
+_THRDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -571,9 +590,13 @@ THRDBG( char *format, ... )
 	va_end(args);
 #endif
 }
-
+#define MPXDBG do { \
+  if (DEBUG_MULTIPLEX&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_MULTIPLEX ) ); \
+  } \
+} while(0); _MPXDBG
 inline_static void
-MPXDBG( char *format, ... )
+_MPXDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -583,8 +606,13 @@ MPXDBG( char *format, ... )
 #endif
 }
 
+#define OVFDBG do { \
+  if (DEBUG_OVERFLOW&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_OVERFLOW ) ); \
+  } \
+} while(0); _OVFDBG
 inline_static void
-OVFDBG( char *format, ... )
+_OVFDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -594,8 +622,13 @@ OVFDBG( char *format, ... )
 #endif
 }
 
+#define PRFDBG do { \
+  if (DEBUG_PROFILE&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_PROFILE ) ); \
+  } \
+} while(0); _PRFDBG
 inline_static void
-PRFDBG( char *format, ... )
+_PRFDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -605,8 +638,13 @@ PRFDBG( char *format, ... )
 #endif
 }
 
+#define MEMDBG do { \
+  if (DEBUG_MEMORY&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_MEMORY ) ); \
+  } \
+} while(0); _MEMDBG
 inline_static void
-MEMDBG( char *format, ... )
+_MEMDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
@@ -616,8 +654,13 @@ MEMDBG( char *format, ... )
 #endif
 }
 
+#define LEAKDBG do { \
+  if (DEBUG_LEAK&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_LEAK ) ); \
+  } \
+} while(0); _LEAKDBG
 inline_static void
-LEAKDBG( char *format, ... )
+_LEAKDBG( char *format, ... )
 {
 #ifdef DEBUG
 	va_list args;
