@@ -101,7 +101,8 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	if (perf_attrs.offcore) {
 		if (count != 2) {
 			DPRINT("perf_encoding: offcore=1 count=%d\n", count);
-			return PFM_ERR_INVAL;
+			ret = PFM_ERR_INVAL;
+			goto error;
 		}
 		hw->config |= codes[1] << 32;
 	}
