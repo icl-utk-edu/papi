@@ -57,7 +57,7 @@ typedef struct {
 /*
  * event-specific encoder (optional)
  */
-typedef int (*intel_x86_encoder_t)(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+typedef int (*intel_x86_encoder_t)(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
 
 /*
  * event description
@@ -226,7 +226,7 @@ extern int pfm_intel_x86_detect(void);
 extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, unsigned int *umask);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
-extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
 extern int pfm_intel_x86_get_event_first(void *this);
 extern int pfm_intel_x86_get_event_next(void *this, int idx);
 extern int pfm_intel_x86_get_event_umask_first(void *this, int idx);

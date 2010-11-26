@@ -537,7 +537,7 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 }
 
 int
-pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
 {
 	pfm_amd64_reg_t reg;
 	int ret;
@@ -546,8 +546,8 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int 
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	*codes = reg.val;
-	*count = 1;
+	e->codes[0] = reg.val;
+	e->count = 1;
 
 	if (attrs) {
 		if (reg.sel_os)

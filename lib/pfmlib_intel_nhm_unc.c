@@ -266,7 +266,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 }
 
 static int
-pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
 {
 	pfm_intel_x86_reg_t reg;
 	int ret;
@@ -276,8 +276,8 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	*codes = reg.val;
-	*count = 1;
+	e->codes[0] = reg.val;
+	e->count = 1;
 
 	return PFM_SUCCESS;
 }

@@ -144,7 +144,7 @@ error:
 }
 
 static int
-pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
 {
 	const pme_torrent_entry_t *pe = this_pe(this);
 	uint32_t torrent_pmu;
@@ -152,10 +152,8 @@ pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 
 	e->fstr[0] = '\0'; /* initialize the fully-qualified event string */
 
-	codes[0] = 0;
-
-	*count = 1;
-	codes[0] = (uint64_t)pe[e->event].pme_code;
+	e->count = 1;
+	e->codes[0] = (uint64_t)pe[e->event].pme_code;
 
 	for (i = 0; i < e->nattrs; i++) {
 
@@ -167,7 +165,7 @@ pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 			switch (mod) {
 			case TORRENT_ATTR_MCD_TYPE:
 				if (e->attrs[i].ival <= 3) {
-					codes[0] |= e->attrs[i].ival << TORRENT_ATTR_MCD_TYPE_SHIFT;
+					e->codes[0] |= e->attrs[i].ival << TORRENT_ATTR_MCD_TYPE_SHIFT;
 				} else {
 					DPRINT("value of attribute \'type\' - %" PRIu64 " - is not in the range 0..3.\n", e->attrs[i].ival);
 					return PFM_ERR_ATTR_VAL;
@@ -182,7 +180,7 @@ pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 			switch (mod) {
 			case TORRENT_ATTR_UTIL_SEL:
 				if (e->attrs[i].ival <= 3) {
-					codes[0] |= e->attrs[i].ival << TORRENT_ATTR_UTIL_SEL_SHIFT;
+					e->codes[0] |= e->attrs[i].ival << TORRENT_ATTR_UTIL_SEL_SHIFT;
 				} else {
 					DPRINT("value of attribute \'sel\' - %" PRIu64 " - is not in the range 0..3.\n", e->attrs[i].ival);
 					return PFM_ERR_ATTR_VAL;
@@ -191,7 +189,7 @@ pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 			case TORRENT_ATTR_UTIL_LO_CMP:
 			case TORRENT_ATTR_UTIL_HI_CMP:
 				if (e->attrs[i].ival <= 31) {
-					codes[0] |= e->attrs[i].ival << TORRENT_ATTR_UTIL_CMP_SHIFT;
+					e->codes[0] |= e->attrs[i].ival << TORRENT_ATTR_UTIL_CMP_SHIFT;
 				} else {
 					if (mod == TORRENT_ATTR_UTIL_LO_CMP)
 						DPRINT("value of attribute \'lo_cmp\' - %" PRIu64 " - is not in the range 0..31.\n", e->attrs[i].ival);

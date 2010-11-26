@@ -194,7 +194,7 @@ typedef union {
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
-extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
 extern int pfm_amd64_get_event_first(void *this);
 extern int pfm_amd64_get_event_next(void *this, int idx);
 extern int pfm_amd64_event_is_valid(void *this, int idx);

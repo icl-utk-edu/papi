@@ -95,7 +95,7 @@ typedef struct {
 
 extern int pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info);
 extern int pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
-extern int pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
 extern int pfm_gen_powerpc_get_event_perf_type(void *this, int pidx);
 extern int pfm_gen_powerpc_get_event_first(void *this);
 extern int pfm_gen_powerpc_get_event_next(void *this, int idx);

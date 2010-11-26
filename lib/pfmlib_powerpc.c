@@ -58,12 +58,12 @@ pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_eve
 }
 
 int
-pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
 {
 	const pme_power_entry_t *pe = this_pe(this);
 
-	*count = 1;
-	codes[0] = (uint64_t)pe[e->event].pme_code;
+	e->count = 1;
+	e->codes[0] = (uint64_t)pe[e->event].pme_code;
 	evt_strcat(e->fstr, "%s", pe[e->event].pme_name);
 	return PFM_SUCCESS;
 }

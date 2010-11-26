@@ -77,7 +77,7 @@ typedef struct {
  * must be big enough to hold all possible priv level attributes
  */
 #define PFMLIB_MAX_EVENT_ATTRS	64 /* max attributes per event desc */
-
+#define PFMLIB_MAX_ENCODING	4  /* max event encoding length in u64 */
 struct pfmlib_pmu;
 typedef struct {
 	struct pfmlib_pmu	*pmu;				/* pmu */
@@ -85,7 +85,9 @@ typedef struct {
 	int			dfl_plm;			/* default priv level mask */
 	int			event;				/* pidx */
 	int			nattrs;				/* number of attrs in attrs[] */
+	int			count;				/* number of entries in codes[] */
 	pfmlib_attr_t		attrs[PFMLIB_MAX_EVENT_ATTRS];	/* list of attributes */
+	uint64_t		codes[PFMLIB_MAX_ENCODING];	/* event encoding */
 } pfmlib_event_desc_t;
 #define modx(atdesc, a, z) (atdesc[(a)].z)
 
@@ -111,7 +113,7 @@ typedef struct pfmlib_pmu {
 	int		 (*event_is_valid)(void *this, int pidx);
 
 	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
-	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
 
 	int		 (*validate_table)(void *this, FILE *fp);
 } pfmlib_pmu_t;
@@ -140,7 +142,6 @@ extern void pfmlib_strconcat(char *str, size_t max, const char *fmt, ...);
 
 
 extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
-extern int pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, pfmlib_perf_attr_t *attrs);
 extern int pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr);
 extern void pfmlib_sort_attr(pfmlib_event_desc_t *e);
 

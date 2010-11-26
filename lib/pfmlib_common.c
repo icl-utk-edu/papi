@@ -279,6 +279,12 @@ pfmlib_pmu_sanity_checks(pfmlib_pmu_t *p)
 		return PFM_ERR_NOTSUPP;
 	}
 
+	if (p->max_encoding > PFMLIB_MAX_ENCODING) {
+		DPRINT("max encoding too high (%d > %d) for %s\n",
+			p->max_encoding, PFMLIB_MAX_ENCODING, p->desc);
+		return PFM_ERR_NOTSUPP;
+	}
+
 	return PFM_SUCCESS;
 }
 
@@ -831,52 +837,11 @@ pfm_get_event_first(void)
 }
 
 int
-pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, pfmlib_perf_attr_t *attrs)
-{
-	pfmlib_pmu_t *pmu = e->pmu;
-	uint64_t *local_codes;
-	int ret, local_count;
-	/*
-	 * too small, must reallocate
-	 */
-	if (*codes && *count < pmu->max_encoding)
-		return PFM_ERR_TOOSMALL;
-
-	/*
-	 * count but no codes
-	 */
-	if (*count && !*codes)
-		return PFM_ERR_INVAL;
-
-	local_codes = *codes;
-	local_count = *count;
-
-	if (!*codes) {
-		local_codes = calloc(pmu->max_encoding, sizeof(uint64_t));
-		if (!local_codes)
-			return PFM_ERR_NOMEM;
-		local_count = pmu->max_encoding;
-	}
-
-	/* count may be adjusted to match need for event */
-	ret = pmu->get_event_encoding(pmu, e, local_codes, &local_count, attrs);
-	if (ret != PFM_SUCCESS) {
-		if (!*codes)
-			free(local_codes);
-	} else {
-		*codes = local_codes;
-		*count = local_count;
-	}
-	return ret;
-}
-
-int
 pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count)
 {
+	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
-	uint64_t *orig_codes = NULL;
-	int orig_count;
-	int ret;
+	int ret, i;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFM_ERR_NOINIT;
@@ -896,11 +861,9 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 	if (ret != PFM_SUCCESS)
 		return ret;
 	
-	orig_count = *count;
-	if (codes)
-		orig_codes = *codes;
+	pmu = e.pmu;
 
-	ret = pfmlib_get_event_encoding(&e, codes, count, NULL);
+	ret = pmu->get_event_encoding(pmu, &e, NULL);
 	if (ret != PFM_SUCCESS)
 		return ret;
 	/*
@@ -910,13 +873,27 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 		*idx = pfmlib_pidx2idx(e.pmu, e.event);
 
 	ret = pfmlib_build_fstr(&e, fstr);
-	if (ret != PFM_SUCCESS) {
-		if (orig_codes != *codes) {
-			free(codes);
-			*count = orig_count;
-			*codes = orig_codes;
-		}
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (*codes == NULL) {
+		ret = PFM_ERR_NOMEM;
+		*codes = malloc(sizeof(uint64_t) * e.count);
+		if (!*codes)
+			goto error;
+	} else if (*count < e.count) {
+		ret = PFM_ERR_TOOSMALL;
+		goto error;
 	}
+
+	*count = e.count;
+
+	for (i = 0; i < e.count; i++)
+		(*codes)[i] = e.codes[i];
+
+	return PFM_SUCCESS;
+error:
+	free(fstr);
 	return ret;
 }
 
@@ -1057,6 +1034,12 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 		fprintf(fp, "pmu: %s :: invalid PMU id\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
+
+	if (pmu->max_encoding >= PFMLIB_MAX_ENCODING) {
+		fprintf(fp, "pmu: %s :: max encoding too high\n", pmu->name);
+		return PFM_ERR_INVAL;
+	}
+
 	if (pfmlib_pmu_active(pmu) && !pmu->pme_count) {
 		fprintf(fp, "pmu: %s :: no events\n", pmu->name);
 		return PFM_ERR_INVAL;

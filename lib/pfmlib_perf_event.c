@@ -58,7 +58,7 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	 * values[] dynamically allocated by call because we
 	 * pass NULL
 	 */
-	ret = pfmlib_get_event_encoding(&e, &codes, &count, &perf_attrs);
+	ret = pmu->get_event_encoding(pmu, &e, &perf_attrs);
 	if (ret != PFM_SUCCESS)
 		return ret;
 

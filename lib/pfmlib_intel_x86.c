@@ -251,7 +251,7 @@ done:
 }
 
 static int
-pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
 {
 	pfmlib_attr_t *a;
 	const intel_x86_entry_t *pe;
@@ -421,18 +421,18 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 	}
 
 	if (intel_x86_eflag(this, e, INTEL_X86_NHM_OFFCORE)) {
-		codes[1] = umask;
-		*count = 2;
+		e->codes[1] = umask;
+		e->count = 2;
 		umask = 0;
 	} else {
-		*count = 1;
+		e->count = 1;
 	}
 
 	reg.val    |= umask << 8;
 	reg.sel_en  = 1; /* force enable bit to 1 */
 	reg.sel_int = 1; /* force APIC int to 1 */
 
-	codes[0] = reg.val;
+	e->codes[0] = reg.val;
 
 	/*
 	 * decode modifiers
@@ -450,7 +450,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 }
 
 int
-pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	pfm_intel_x86_reg_t reg;
@@ -461,16 +461,16 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 	 * model specific encoding function
 	 */
 	if (intel_x86_eflag(this, e, INTEL_X86_ENCODER))
-		return pe[e->event].encoder(this, e, codes, count, attrs);
+		return pe[e->event].encoder(this, e, attrs);
 
 
 	reg.val = 0; /* not initialized by encode function */
 
-	ret = pfm_intel_x86_encode_gen(this, e, codes, count, attrs);
+	ret = pfm_intel_x86_encode_gen(this, e, attrs);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	reg.val = codes[0];
+	reg.val = e->codes[0];
 
 	if (attrs) {
 		if (reg.sel_os)
