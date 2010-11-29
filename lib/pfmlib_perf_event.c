@@ -33,10 +33,7 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
 	pfmlib_perf_attr_t perf_attrs;
-	uint64_t *codes = NULL;
-	int count = 0;
 	int ret;
-
 
 	memset(&e, 0, sizeof(e));
 
@@ -62,22 +59,12 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	ret = PFM_ERR_INVAL;
-	/* no values */
-	if (!count)
-		goto error;
 
-	/* don't know how to deal with this in PERF */
-	ret = PFM_ERR_INVAL;
-	if (count > 2)
-		goto error;
-
-	ret = PFM_ERR_NOTSUPP;
 	hw->type = pmu->get_event_perf_type(pmu, e.event);
 	if (hw->type == -1)
-		goto error;
+		return PFM_ERR_NOTSUPP;
 
-	hw->config = codes[0];
+	hw->config = e.codes[0];
 
 	/*
 	 * propagate to event attributes to perf_event
@@ -99,20 +86,22 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	 * of hw->config
 	 */
 	if (perf_attrs.offcore) {
-		if (count != 2) {
-			DPRINT("perf_encoding: offcore=1 count=%d\n", count);
-			ret = PFM_ERR_INVAL;
-			goto error;
+		if (e.count != 2) {
+			DPRINT("perf_encoding: offcore=1 count=%d\n", e.count);
+			return PFM_ERR_INVAL;
 		}
-		hw->config |= codes[1] << 32;
+		hw->config |= e.codes[1] << 32;
+	} else if (e.count > 2) {
+		DPRINT("cannot handle e.count > 2\n");
+		return PFM_ERR_NOTSUPP;
 	}
+
 	/*
 	 * perf_event precise_ip must be in [0-3]
 	 * see perf_event.h
 	 */
-	ret = PFM_ERR_ATTR_SET;
 	if (perf_attrs.precise_ip < 0 || perf_attrs.precise_ip > 3)
-		goto error;
+		return PFM_ERR_ATTR_SET;
 
 	hw->precise_ip = perf_attrs.precise_ip;
 
@@ -134,10 +123,7 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	/*
 	 * propagate fully qualified event string if necessary
 	 */
-	ret = pfmlib_build_fstr(&e, fstr);
-error:
-	free(codes);
-	return ret;
+	return pfmlib_build_fstr(&e, fstr);
 }
 
 int
