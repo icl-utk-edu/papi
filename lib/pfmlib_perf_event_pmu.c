@@ -525,13 +525,14 @@ pfm_perf_add_defaults(pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
 }
 
 static int
-pfmlib_perf_encode_tp(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
+pfmlib_perf_encode_tp(pfmlib_event_desc_t *e)
 {
 	perf_umask_t *um;
 	pfmlib_attr_t *a;
 	int i, nu = 0;
 
 	e->fstr[0] = '\0';
+	e->count = 1;
 	evt_strcat(e->fstr, "%s", perf_pe[e->event].name);
 	/*
 	 * look for tracepoints
@@ -546,11 +547,11 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 				return PFM_ERR_FEATCOMB;
 
 			if (a->id < PERF_MAX_UMASKS) {
-				*codes = perf_pe[e->event].umasks[a->id].uid;
+				e->codes[0] = perf_pe[e->event].umasks[a->id].uid;
 				evt_strcat(e->fstr, ":%s", perf_pe[e->event].umasks[a->id].uname);
 			} else {
 				um = perf_get_ovfl_umask(e->event);
-				*codes = um[a->id - PERF_MAX_UMASKS].uid;
+				e->codes[0] = um[a->id - PERF_MAX_UMASKS].uid;
 				evt_strcat(e->fstr, ":%s", um[a->id - PERF_MAX_UMASKS].uname);
 			}
 		}
@@ -559,7 +560,7 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 }
 
 static int
-pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
+pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e)
 {
 	pfmlib_attr_t *a;
 	perf_event_t *ent;
@@ -571,15 +572,15 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 
 	ent = perf_pe + e->event;
 
-	*codes = ent->id;
-	*count = 1;
+	e->codes[0] = ent->id;
+	e->count = 1;
 
 	e->fstr[0] = '\0';
 
 	for(i=0; i < e->nattrs; i++) {
 		a = e->attrs+i;
 		if (a->type == PFM_ATTR_UMASK) {
-			*codes |= ent->umasks[a->id].uid;
+			e->codes[0] |= ent->umasks[a->id].uid;
 
 			msk = 1 << ent->umasks[a->id].grpid;
 			/* umask cannot be combined in each group */
@@ -594,7 +595,7 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 		ret = pfm_perf_add_defaults(e, grpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
-		*codes |= umask;
+		e->codes[0] |= umask;
 	}
 
 	/*
@@ -613,23 +614,23 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 }
 
 static int
-pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
 {
 	pfmlib_attr_t *a;
 	int i, ret;
 
 	switch(perf_pe[e->event].type) {
 	case PERF_TYPE_TRACEPOINT:
-		ret = pfmlib_perf_encode_tp(e, codes, count);
+		ret = pfmlib_perf_encode_tp(e);
 		break;
 	case PERF_TYPE_HW_CACHE:
-		ret = pfmlib_perf_encode_hw_cache(e, codes, count);
+		ret = pfmlib_perf_encode_hw_cache(e);
 		break;
 	case PERF_TYPE_HARDWARE:
 	case PERF_TYPE_SOFTWARE:
 		ret = PFM_SUCCESS;
-		*codes = perf_pe[e->event].id;
-		*count = 1;
+		e->codes[0] = perf_pe[e->event].id;
+		e->count = 1;
 		e->fstr[0] = '\0';
 		evt_strcat(e->fstr, "%s", perf_pe[e->event].name);
 		break;
