@@ -227,7 +227,7 @@ dispatch_emt( int signal, siginfo_t * sip, void *arg )
 		/* Call the regular overflow function in extras.c */
 		if ( thread->running_eventset[cidx]->overflow.
 			 flags & PAPI_OVERFLOW_FORCE_SW ) {
-			//address = GET_OVERFLOW_ADDRESS(ctx);
+			address = GET_OVERFLOW_ADDRESS(ctx);
 			_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL,
 												overflow_vector, 0, &thread,
 												cidx );
@@ -925,9 +925,9 @@ _ultra_hwd_dispatch_timer( int signal, siginfo_t * si, void *context )
   ctx.si = si;
   ctx.ucontext = ( ucontext_t * ) context;
 
+  address = GET_OVERFLOW_ADDRESS( ctx );
   _papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, &isHardware,
-				      0, 0, &master,
-				      MY_VECTOR.cmp_info.CmpIdx );
+				      0, 0, &master, MY_VECTOR.cmp_info.CmpIdx );
 
   /* We are done, resume interrupting counters */
   if ( isHardware ) {
@@ -1208,7 +1208,9 @@ _ultra_hwd_update_control_state( hwd_control_state_t * this_state,
 								hwd_context_t * zero )
 {
 	int nidx1, nidx2, hwcntr;
-	uint64_t tmp, cmd0, cmd1, pcr;
+	uint64_t tmp = 0;
+	uint64_t pcr;
+	int64_t cmd0, cmd1;
 
 /* save the last three bits */
 	pcr = this_state->counter_cmd.cmd.ce_pcr & 0x7;
@@ -1232,7 +1234,6 @@ _ultra_hwd_update_control_state( hwd_control_state_t * this_state,
 			cmd1 = native_table[nidx1].encoding[1];
 			native[0].ni_position = 1;
 		}
-		tmp = 0;
 	}
 
 /* two native events */
