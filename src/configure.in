@@ -706,11 +706,11 @@ AC_MSG_CHECKING(for link test cases with shared library)
 AC_ARG_WITH(shlib,
 	        [  --with-shlib		Specify dynamic linking of papi library with test cases and utilities],
  	        [shlib=yes
-             SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'   
+             SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib;export LIBPATH=.:./libpfm-3.y/lib;'   
              LINKLIB='../$(SHLIB)'],
  	        [if test "$papiLIBS" = "shared"; then
                shlib=yes
-               SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'   
+               SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib;export LIBPATH=.:./libpfm-3.y/lib;'   
                LINKLIB='../$(SHLIB)'
              else
                LINKLIB='../$(LIBRARY)'

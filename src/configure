@@ -5122,12 +5122,12 @@ $as_echo_n "checking for link test cases with shared library... " >&6; }
 # Check whether --with-shlib was given.
 if test "${with_shlib+set}" = set; then :
   withval=$with_shlib; shlib=yes
-             SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'
+             SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib;export LIBPATH=.:./libpfm-3.y/lib;'
              LINKLIB='../$(SHLIB)'
 else
   if test "$papiLIBS" = "shared"; then
                shlib=yes
-               SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'
+               SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib;export LIBPATH=.:./libpfm-3.y/lib;'
                LINKLIB='../$(SHLIB)'
              else
                LINKLIB='../$(LIBRARY)'
