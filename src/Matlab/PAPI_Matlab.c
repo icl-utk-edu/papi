@@ -9,6 +9,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]) {
   float real_time, proc_time, rate;
   int i;
+  int number_of_counters;
   unsigned int mrows, nchars;
   unsigned int *events;
   unsigned int flop_events[2];
@@ -140,31 +141,36 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(nrhs != 1) {
       mexErrMsgTxt(no_input);
     }
-    if(nlhs > PAPI_num_counters()) {
+	number_of_counters = PAPI_num_counters();
+    if(nlhs > number_of_counters ) {
       mexErrMsgTxt(one_output);
     }
-    if (nlhs == 0) values = NULL;
-    else {
+	if (nlhs == 0) 
+	  values = (long long*)mxCalloc(number_of_counters, sizeof(long long));
+	else 
 	  values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
-	  if (start_time == 0) {
+
+	if (start_time == 0) {
+	  if (nlhs == 0)
+		result = PAPI_stop_counters(values, number_of_counters);
+	  else
 		result = PAPI_stop_counters(values, nlhs);
-	  } else {
-		start_time = 0;
-		result = PAPI_stop_counters(flop_values, 2);
-	  }
-	
-	  if(result < PAPI_OK) {
-		if(result != PAPI_ENOTRUN) {
-		  mexPrintf("Error code: %d\n", result);
-		  mexErrMsgTxt("Error stopping the running counters.");
-		}
-	  }
-	  accum_error = 0;
-	  for(i = 0; i < nlhs; i++) {
-		plhs[i] = mxCreateScalarDouble((double)values[i]);
-	  }
-	  mxFree(values);
+	} else {
+	  start_time = 0;
+	  result = PAPI_stop_counters(flop_values, 2);
 	}
+
+	if(result < PAPI_OK) {
+	  if(result != PAPI_ENOTRUN) {
+		mexPrintf("Error code: %d\n", result);
+		mexErrMsgTxt("Error stopping the running counters.");
+	  }
+	}
+	accum_error = 0;
+	for(i = 0; i < nlhs; i++) {
+	  plhs[i] = mxCreateScalarDouble((double)values[i]);
+	}
+	mxFree(values);
   }
 
   else if(!strncmp(input, "read", 4)) {
