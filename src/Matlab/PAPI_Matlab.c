@@ -90,12 +90,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
      plhs[0] = mxCreateScalarDouble((double)(ins - accum_error));
       /* this call adds 7 fp instructions to the total */
       /* but apparently not on Pentium M with Matlab 7.0.4 */
-//      accum_error += 7;
+/*      accum_error += 7; */
       if(nlhs == 2) {
         plhs[1] = mxCreateScalarDouble((double)rate);
         /* the second call adds 4 fp instructions to the total */
       /* but apparently not on Pentium M with Matlab 7.0.4 */
-//        accum_error += 4;
+/*        accum_error += 4; */
       }
     }
   }
