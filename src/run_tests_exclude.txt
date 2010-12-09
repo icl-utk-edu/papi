@@ -4,4 +4,7 @@
 # lines beginning with # will be ignored
 # this file must have UNIX line endings
 
+# Time wasting support program, not a standalone test
+ctests/burn
+
 # these tests haven't been implemented
