@@ -112,7 +112,7 @@ PAPI and Matlab both work.
 
 The following instructions are for a Linux/Unix environment:
 
-Assuming papi.h is present in /usr/local/include and libpapi.a
+Assuming papi.h is present in /usr/local/include and libpapi.so
 is present in /usr/local/lib, the below should work.  If not,
 you may need to alter the compile strings and/or the #include
 statement in PAPI_Matlab.c.  Also, the compile string will be
@@ -124,7 +124,7 @@ directory (you'll have a different compile string on a
 different architecture):
 
 1. Compile the wrapper:
-mex -I/usr/local/include PAPI_Matlab.c /usr/local/lib/libpapi.a -output PAPI
+mex -I/usr/local/include PAPI_Matlab.c /usr/local/lib/libpapi.so -output PAPI
 
 2.  Start Matlab:
 matlab
@@ -178,7 +178,7 @@ You can pass as many events as you like to be counted or
 recorded, as long as that number does not exceed the number
 of available hardware counters.
 
-Contact jthomas@cs.utk.edu with any questions regarding
-PAPI calls in Matlab - either errors or questions.
+Contact ralph@eecs.utk.edu or/and ptools-perfapi@eecs.utk.edu
+with any questions regarding PAPI calls in Matlab - either errors or questions.
 Also, this has just been implemented, so changes could
 be coming..........

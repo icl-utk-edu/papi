@@ -1,3 +1,16 @@
+
+/****************************/                                                                                                     
+/* THIS IS OPEN SOURCE CODE */                                                                                                     
+/****************************/                                                                                                     
+                                                                                                                                   
+/**                                                                                                                                
+  * @file:    PAPI_Matlab.c
+  * CVS:     $Id$    
+  * @author Joseph Thomas <jthomas@cs.utk.edu>
+  *
+  *	@brief PAPI Matlab integration.
+  *	See PAPI_Matlab.readme for more information.
+  */
 #include "mex.h"
 #include "matrix.h"
 #include "papi.h"
