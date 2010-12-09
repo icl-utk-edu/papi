@@ -58,9 +58,9 @@ main( int argc, char **argv )
 	int num_events, *ovt;
 	char name[PAPI_MAX_STR_LEN];
 	const PAPI_component_info_t *comp_info = NULL;
-	int using_perfmon=0;
-	int using_aix=0;
-	
+	int using_perfmon = 0;
+	int using_aix = 0;
+
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -70,14 +70,14 @@ main( int argc, char **argv )
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", retval );
-   
-        comp_info = PAPI_get_component_info( 0 );
+
+	comp_info = PAPI_get_component_info( 0 );
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", retval );
 
-	if (strstr(comp_info->name,"perfmon.c")) 
-	  using_perfmon=1;
-	if (strstr(comp_info->name, "aix.c") )
+	if ( strstr( comp_info->name, "perfmon.c" ) )
+		using_perfmon = 1;
+	if ( strstr( comp_info->name, "aix.c" ) )
 		using_aix = 1;
 
 
@@ -94,8 +94,7 @@ main( int argc, char **argv )
 		else
 			names[i] = strdup( name );
 	}
-	values =
-		( long long * )
+	values = ( long long * )
 		calloc( ( unsigned int ) ( num_events * ( num_events + 1 ) ),
 				sizeof ( long long ) );
 	ovt = ( int * ) calloc( ( unsigned int ) num_events, sizeof ( int ) );
@@ -149,7 +148,8 @@ main( int argc, char **argv )
 
 		printf( "Test Overflow on %d counters with %d events.\n", num_events,
 				num_events );
-		printf( "---------------------------------------------------------------\n" );
+		printf
+			( "---------------------------------------------------------------\n" );
 		printf( "Threshold for overflow is: %d\n", mythreshold );
 		printf( "Using %d iterations of c += a*b\n", num_flops );
 		printf( "-----------------------------------------------\n" );
@@ -170,31 +170,36 @@ main( int argc, char **argv )
 		printf( "\n" );
 		printf( "-----------------------------------------------\n" );
 	}
-   
-          /* validation */
-        for ( j = 0; j < num_events; j++ ) {
-	      //printf("Validation: %lld / %d != %d (%lld)\n",
-	      //       *( values + j + num_events * (j+1) ) ,
-              //       mythreshold,
-	      //       ovt[j],
-	      //       *(values+j+num_events*(j+1))/mythreshold);
-			if (*(values+j+num_events*(j+1))/mythreshold != ovt[j]) {
-				char error_string[BUFSIZ];
-				
-				if ( using_perfmon )
-					test_warn( __FILE__, __LINE__, "perfmon substrate handles overflow differently than perf_events",1);
-				else if ( using_aix )
-					test_warn( __FILE__, __LINE__, "AIX (pmapi) substrate handles overflow differently than various other substrates",1);
-				else {
-					sprintf(error_string,"Overflow value differs from expected %lld / %d != %d (%lld)",
-							*( values + j + num_events * (j+1) ) ,
-							mythreshold,
-							ovt[j],
-							*(values+j+num_events*(j+1))/mythreshold);
-					test_fail( __FILE__, __LINE__, error_string, 1 );					
-				}
+
+	/* validation */
+	for ( j = 0; j < num_events; j++ ) {
+		//printf("Validation: %lld / %d != %d (%lld)\n",
+		//       *( values + j + num_events * (j+1) ) ,
+		//       mythreshold,
+		//       ovt[j],
+		//       *(values+j+num_events*(j+1))/mythreshold);
+		if ( *( values + j + num_events * ( j + 1 ) ) / mythreshold != ovt[j] ) {
+			char error_string[BUFSIZ];
+
+			if ( using_perfmon )
+				test_warn( __FILE__, __LINE__,
+						   "perfmon substrate handles overflow differently than perf_events",
+						   1 );
+			else if ( using_aix )
+				test_warn( __FILE__, __LINE__,
+						   "AIX (pmapi) substrate handles overflow differently than various other substrates",
+						   1 );
+			else {
+				sprintf( error_string,
+						 "Overflow value differs from expected %lld / %d != %d (%lld)",
+						 *( values + j + num_events * ( j + 1 ) ), mythreshold,
+						 ovt[j],
+						 *( values + j +
+							num_events * ( j + 1 ) ) / mythreshold );
+				test_fail( __FILE__, __LINE__, error_string, 1 );
 			}
 		}
+	}
 
 	retval = PAPI_cleanup_eventset( EventSet );
 	if ( retval != PAPI_OK )
