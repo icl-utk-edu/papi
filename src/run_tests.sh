@@ -44,6 +44,7 @@ fi
 echo ""
 
 MATCH=0
+LIST=""
 for i in $ALLTESTS;
 do
   for xtest in $EXCLUDE;
@@ -57,10 +58,11 @@ do
     MATCH=1
   fi;
   if [ $MATCH -ne 1 ]; then
-    echo -n "$i "
+	LIST="$LIST $i"
   fi;
   MATCH=0
 done
+echo $LIST
 echo ""
 
 echo ""
@@ -101,7 +103,7 @@ do
       if [ "$i" = "ctests/timer_overflow" ]; then
         echo Skipping test $i, it takes too long...
       else
-      echo -n "Running $i: ";
+      printf "Running $i:";
       $VALGRIND ./$i $TESTS_QUIET
       fi;
     fi;
@@ -127,7 +129,7 @@ do
   fi;
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-    echo -n "Running $i: ";
+    printf "Running $i:";
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
