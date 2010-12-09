@@ -27,7 +27,9 @@ VALGRIND="";
 
 CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
-EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
+#EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
+EXCLUDE=`grep -v -e '^#' run_tests_exclude.txt`
+
 ALLTESTS="$CTESTS $FTESTS";
 x=0;
 CWD=`pwd`
