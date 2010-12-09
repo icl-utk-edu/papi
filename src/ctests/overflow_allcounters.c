@@ -57,9 +57,10 @@ main( int argc, char **argv )
 	const PAPI_hw_info_t *hw_info = NULL;
 	int num_events, *ovt;
 	char name[PAPI_MAX_STR_LEN];
-        const PAPI_component_info_t *comp_info = NULL;
-        int using_perfmon=0;
-
+	const PAPI_component_info_t *comp_info = NULL;
+	int using_perfmon=0;
+	int using_aix=0;
+	
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -74,9 +75,10 @@ main( int argc, char **argv )
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", retval );
 
-        if (strstr(comp_info->name,"perfmon.c")) {
+	if (strstr(comp_info->name,"perfmon.c")) 
 	  using_perfmon=1;
-	}
+	if (strstr(comp_info->name, "aix.c") )
+		using_aix = 1;
 
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
@@ -176,22 +178,23 @@ main( int argc, char **argv )
               //       mythreshold,
 	      //       ovt[j],
 	      //       *(values+j+num_events*(j+1))/mythreshold);
-	   if (*(values+j+num_events*(j+1))/mythreshold != ovt[j]) {
-	      char error_string[BUFSIZ];
-              if (!using_perfmon) {
-	         sprintf(error_string,"Overflow value differs from expected %lld / %d != %d (%lld)",
-		     *( values + j + num_events * (j+1) ) ,
-                     mythreshold,
-		     ovt[j],
-	             *(values+j+num_events*(j+1))/mythreshold);
-	         test_fail( __FILE__, __LINE__, error_string, 1 );
-	      }
-	      else {
-		 test_warn( __FILE__, __LINE__, "perfmon substrate handles overflow differently than perf_events",1);
-	      }
-	   }
-	    
-	}
+			if (*(values+j+num_events*(j+1))/mythreshold != ovt[j]) {
+				char error_string[BUFSIZ];
+				
+				if ( using_perfmon )
+					test_warn( __FILE__, __LINE__, "perfmon substrate handles overflow differently than perf_events",1);
+				else if ( using_aix )
+					test_warn( __FILE__, __LINE__, "AIX (pmapi) substrate handles overflow differently than various other substrates",1);
+				else {
+					sprintf(error_string,"Overflow value differs from expected %lld / %d != %d (%lld)",
+							*( values + j + num_events * (j+1) ) ,
+							mythreshold,
+							ovt[j],
+							*(values+j+num_events*(j+1))/mythreshold);
+					test_fail( __FILE__, __LINE__, error_string, 1 );					
+				}
+			}
+		}
 
 	retval = PAPI_cleanup_eventset( EventSet );
 	if ( retval != PAPI_OK )
