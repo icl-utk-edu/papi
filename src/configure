@@ -4316,6 +4316,7 @@ else
                        POWER5)  CPU="POWER5";;
                        POWER5+) CPU="POWER5+";;
                        POWER6)  CPU="POWER6";;
+                       POWER7)  CPU="POWER7";;
                      esac
 	               fi
                  fi ;;
@@ -5825,7 +5826,7 @@ fi
 		  fi ;;
         athlon|opteron|atom|core|core2|p3|p4|i7)
 	        MAKEVER="$OS"-perfctr-x86 ;;
-        POWER5|POWER5+|POWER6|PPC970)
+        POWER5|POWER5+|POWER6|POWER7|PPC970)
           MAKEVER="$OS"-perfctr-"$CPU" ;;
      esac
     else
@@ -5869,7 +5870,7 @@ OPTFLAGS="$OPTFLAGS $DEBUGFLAGS"
 CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE -Wall $NOTLS $BITFLAGS"
 FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 
-if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
+if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$MAKEVER" = "aix-power7"); then
   if test "$bitmode" = "64"; then
     LIBRARY=libpapi64.a
     SHLIB=libpapi64.so
@@ -5916,6 +5917,15 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
     CPU_MODEL=POWER6
     cpu_option=pwr6
     DESCR="AIX 5.1.0 or greater with POWER6"
+    CPPFLAGS="-qlanglvl=extended"
+    if test "$bitmode" = "64"; then
+      DESCR="$DESCR 64 bit build"
+    fi
+  elif test "$MAKEVER" = "aix-power7"; then
+    ARCH_EVENTS=power7_events
+    CPU_MODEL=POWER7
+    cpu_option=pwr7
+    DESCR="AIX 5.1.0 or greater with POWER7"
     CPPFLAGS="-qlanglvl=extended"
     if test "$bitmode" = "64"; then
       DESCR="$DESCR 64 bit build"
@@ -5983,7 +5993,7 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
       CTEST_TARGETS="$CTEST_TARGETS p4"
     fi
   fi
-elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
+elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-POWER7" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
   if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.perfctr
     SUBSTR=perfctr-ppc64
@@ -6002,6 +6012,10 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
       CPU_MODEL=POWER6
       ARCH_EVENTS=power6_events
       ARCH_SPEC_EVTS=power6_events_map.c
+    elif test "$MAKEVER" = "linux-perfctr-POWER7"; then
+      CPU_MODEL=POWER7
+      ARCH_EVENTS=power7_events
+      ARCH_SPEC_EVTS=power7_events_map.c
     elif test "$MAKEVER" = "linux-perfctr-PPC970"; then
       CPU_MODEL=PPC970
       ARCH_EVENTS=ppc970_events
