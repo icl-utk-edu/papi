@@ -119,7 +119,12 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #define PFMLIB_NUM_PMUS	(sizeof(pfmlib_pmus)/sizeof(pfmlib_pmu_t *))
 
 /*
- * pfm_pmu_t mapping to pfmlib_pmus[] index
+ * Mapping table from PMU index to pfmlib_pmu_t
+ * table is populated from pfmlib_pmus[] when the library
+ * is initialized.
+ *
+ * Some entries can be NULL if PMU is not implemented on host
+ * architecture or if the initialization failed.
  */
 static pfmlib_pmu_t *pfmlib_pmus_map[PFM_PMU_MAX];
 
@@ -180,7 +185,13 @@ pfmlib_strconcat(char *str, size_t max, const char *fmt, ...)
 static inline int
 pfmlib_pmu_active(pfmlib_pmu_t *pmu)
 {
-        return pmu && (pmu->flags & PFMLIB_PMU_FL_ACTIVE);
+        return !!(pmu->flags & PFMLIB_PMU_FL_ACTIVE);
+}
+
+static inline int
+pfmlib_pmu_initialized(pfmlib_pmu_t *pmu)
+{
+        return !!(pmu->flags & PFMLIB_PMU_FL_INIT);
 }
 
 static inline pfm_pmu_t
@@ -307,10 +318,6 @@ pfmlib_pmu_activate(pfmlib_pmu_t *p)
 {
 	int ret;
 
-	ret = pfmlib_pmu_sanity_checks(p);
-	if (ret != PFM_SUCCESS)
-		return ret;
-
 	if (p->pmu_init) {
 		ret = p->pmu_init(p);
 		if (ret != PFM_SUCCESS)
@@ -358,7 +365,7 @@ pfmlib_init_pmus(void)
 	 * when forced, only the designated PMU
 	 * is setup and activated
 	 */
-	for(i=0; i < PFMLIB_NUM_PMUS; i++) {
+	pfmlib_for_each_pmu(i) {
 
 		p = pfmlib_pmus[i];
 
@@ -371,6 +378,18 @@ pfmlib_init_pmus(void)
 		else if (!pfmlib_match_forced_pmu(p->name))
 			ret = PFM_ERR_NOTSUPP;
 
+		/*
+		 * basic checks
+		 * failure causes PMU to not be available
+		 */
+		if (pfmlib_pmu_sanity_checks(p) != PFM_SUCCESS)
+			continue;
+
+		p->flags |= PFMLIB_PMU_FL_INIT;
+
+		/*
+		 * populate mapping table
+		 */
 		pfmlib_pmus_map[p->pmu] = p;
 
 		if (ret != PFM_SUCCESS)
@@ -423,13 +442,13 @@ void
 pfm_terminate(void)
 {
 	pfmlib_pmu_t *pmu;
-	int id;
+	int i;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return;
 
-	pfmlib_for_each_pmu(id) {
-		pmu = pfmlib_pmus[id];
+	pfmlib_for_each_pmu(i) {
+		pmu = pfmlib_pmus[i];
 		if (!pfmlib_pmu_active(pmu))
 			continue;
 		if (pmu->pmu_terminate)
@@ -648,7 +667,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	pfm_event_info_t einfo;
 	char *str, *s, *p;
 	pfmlib_pmu_t *pmu;
-	int i, id;
+	int i, j;
 	const char *pname = NULL;
 	int ret;
 
@@ -683,11 +702,11 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	/*
 	 * for each pmu
 	 */
-	pfmlib_for_each_pmu(id) {
-		pmu = pfmlib_pmus[id];
+	pfmlib_for_each_pmu(j) {
+		pmu = pfmlib_pmus[j];
 		/*
 		 * if no explicit PMU name is given, then
-		 * only look for active (detected) PMU models
+		 * only look for active PMU models
 		 */
 		if (!pname && !pfmlib_pmu_active(pmu))
 			continue;
@@ -739,10 +758,12 @@ int
 pfm_get_nevents(void)
 {
 	pfmlib_pmu_t *pmu;
-	int id, total = 0;
+	int i, total = 0;
 
-	pfmlib_for_each_pmu(id) {
-		pmu = pfmlib_pmus[id];
+	pfmlib_for_each_pmu(i) {
+		pmu = pfmlib_pmus[i];
+		if (!pfmlib_pmu_initialized(pmu))
+			continue;
 		total += pmu->pme_count;
 	}
 	return total;
@@ -787,7 +808,7 @@ int
 pfm_get_event_next(int idx)
 {
 	pfmlib_pmu_t *pmu;
-	int i = 0, pidx, px;
+	int pidx, px;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
@@ -799,24 +820,21 @@ pfm_get_event_next(int idx)
 
 	px = idx2pmu(idx);
 
-	/*
-	 * ran out of event, move to next PMU
-	 */
 retry:
-	for(; i < PFMLIB_NUM_PMUS; i++) {
-		pmu = pfmlib_pmus[i];
-		if (pmu->pmu == px)
+	for (++px; px < PFM_PMU_MAX; px++) {
+		pmu = pfmlib_pmus_map[px];
+		if (pmu)
 			break;
 	}
-	if (i >= (PFMLIB_NUM_PMUS-1))
+
+	/* reached the end */
+	if (px == PFM_PMU_MAX)
 		return -1;
 
-	pmu = pfmlib_pmus[++i];
 	pidx = pmu->get_event_first(pmu);
-	if (pidx == -1) {
-		px = pmu->pmu;
+	if (pidx == -1)
 		goto retry;
-	}
+
 	return pfmlib_pidx2idx(pmu, pidx);
 }
 
@@ -824,11 +842,17 @@ int
 pfm_get_event_first(void)
 {
 	pfmlib_pmu_t *pmu;
-	int id, pidx;
+	int i, pidx;
 
 	/* scan all compiled in PMU models */
-	pfmlib_for_each_pmu(id) {
-		pmu = pfmlib_pmus[id];
+	pfmlib_for_each_pmu(i) {
+		pmu = pfmlib_pmus[i];
+		/*
+		 * check is pmu validated
+		 */
+		if (!pfmlib_pmu_initialized(pmu))
+			continue;
+
 		pidx = pmu->get_event_first(pmu);
 		if (pidx != -1)
 			return pfmlib_pidx2idx(pmu, pidx);
@@ -1020,6 +1044,12 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 
 
 	fprintf(fp, "\tcheck struct: "); fflush(fp);
+
+	if (!pfmlib_pmu_initialized(pmu)) {
+		fprintf(fp, "pmu: %s :: initialization failed\n", pmu->name);
+		return PFM_ERR_INVAL;
+	}
+
 	if (!pmu->name) {
 		fprintf(fp, "pmu id: %d :: no name\n", pmu->pmu);
 		return PFM_ERR_INVAL;
@@ -1040,7 +1070,7 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 		return PFM_ERR_INVAL;
 	}
 
-	if (pfmlib_pmu_active(pmu) && !pmu->pme_count) {
+	if (pfmlib_pmu_active(pmu)  && !pmu->pme_count) {
 		fprintf(fp, "pmu: %s :: no events\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
@@ -1171,7 +1201,7 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
 	/*
 	 * XXX: pme_count only valid when PMU is detected
 	 */
-	info->is_present = !!pfmlib_pmu_active(pmu);
+	info->is_present = pfmlib_pmu_active(pmu);
 	info->nevents = pmu->pme_count;
 	return PFM_SUCCESS;
 }

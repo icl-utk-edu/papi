@@ -121,7 +121,8 @@ typedef struct pfmlib_pmu {
 /*
  * pfmlib_pmu_t flags
  */
-#define PFMLIB_PMU_FL_ACTIVE	0x1	/* PMU is detected */
+#define PFMLIB_PMU_FL_INIT	0x1	/* PMU initialized correctly */
+#define PFMLIB_PMU_FL_ACTIVE	0x2	/* PMU is initialized + detected on host */
 
 typedef struct {
 	int	initdone;
