@@ -382,6 +382,7 @@ _aix_get_system_info( void )
 
 	_aix_mdi_init(  );
 
+	_papi_hwi_system_info.hw_info.nnodes = 1;
 	_papi_hwi_system_info.hw_info.ncpu = _system_configuration.ncpus;
 	_papi_hwi_system_info.hw_info.totalcpus =
 		_papi_hwi_system_info.hw_info.ncpu *
