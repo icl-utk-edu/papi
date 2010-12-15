@@ -818,17 +818,19 @@ pfm_get_event_next(int idx)
 	if (pidx != -1)
 		return pfmlib_pidx2idx(pmu, pidx);
 
-	px = idx2pmu(idx);
-
+	for (px = 0; px < PFMLIB_NUM_PMUS; px++) {
+		if (pfmlib_pmus[px] == pmu)
+			break;
+	}
 retry:
-	for (++px; px < PFM_PMU_MAX; px++) {
-		pmu = pfmlib_pmus_map[px];
-		if (pmu)
+	for (++px; px < PFMLIB_NUM_PMUS; px++) {
+		pmu = pfmlib_pmus[px];
+		if (pfmlib_pmu_initialized(pmu))
 			break;
 	}
 
 	/* reached the end */
-	if (px == PFM_PMU_MAX)
+	if (px == PFMLIB_NUM_PMUS)
 		return -1;
 
 	pidx = pmu->get_event_first(pmu);
