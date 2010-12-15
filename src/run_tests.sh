@@ -106,6 +106,7 @@ do
       if [ "$i" = "ctests/timer_overflow" ]; then
         echo Skipping test $i, it takes too long...
       else
+	  RAN="$i $RAN"
       printf "Running $i:";
       $VALGRIND ./$i $TESTS_QUIET
       fi;
@@ -132,9 +133,14 @@ do
   fi;
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
+	RAN="$i $RAN"
     printf "Running $i:";
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
   MATCH=0
 done
+
+if [ "$RAN" = "" ]; then 
+	echo "FAILED to run any tests. (you can safely ignore this if this was expected behavior)"
+fi;
