@@ -36,12 +36,12 @@
 
 /*
  * event identifier encoding:
- * bit 00-24 : event table specific index
- * bit 15-30 : PMU identifier (16384 possbilities)
- * bit 31    : reserved (cannot be set to distinguish negative error code)
+ * bit 00-20 : event table specific index (2097152 possibilities)
+ * bit 21-30 : PMU identifier (1024 possibilities)
+ * bit 31    : reserved (to distinguish from a negative error code)
  */
-#define PFMLIB_PMU_SHIFT	24
-#define PFMLIB_PMU_MASK		0x7fff /* must fit PFMLIB_PMU_MAX */
+#define PFMLIB_PMU_SHIFT	21
+#define PFMLIB_PMU_MASK		0x3ff /* must fit PFM_PMU_MAX */
 #define PFMLIB_PMU_PIDX_MASK	((1<< PFMLIB_PMU_SHIFT)-1)
 
 typedef struct {
