@@ -255,7 +255,7 @@ pfmlib_valid_attr(pfmlib_pmu_t *pmu, int pidx, int attr)
  *  LIBPFM_DEBUG   : enable debug output (must be 1)
  */
 static void
-pfmlib_init_debug_env(void)
+pfmlib_init_env(void)
 {
 	char *str;
 
@@ -426,7 +426,7 @@ pfm_initialize(void)
 		return PFM_ERR_NOTSUPP;
 	}
 
-	pfmlib_init_debug_env();
+	pfmlib_init_env();
 
 	ret = pfmlib_init_pmus();
 	if (ret == PFM_SUCCESS)
