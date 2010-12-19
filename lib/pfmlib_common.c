@@ -503,7 +503,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 	char *s, *p, *q, *endptr;
 	char yes[2] = "y";
 	pfm_attr_t type;
-	int a, has_val;
+	int a, has_val, has_raw_um = 0, has_um = 0;
 	int na, ret;
 
 	s = str;
@@ -520,20 +520,58 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 
 		has_val = !!q;
 
+		/*
+		 * check for raw umasks in hexdecimal only
+		 */
+		if (*s == '0' && tolower(*(s+1)) == 'x') {
+			char *endptr = NULL;
+
+			/* can only have one raw umask */
+			if (has_raw_um || has_um) {
+				DPRINT("cannot mix raw umask with umask\n");
+				return PFM_ERR_ATTR;
+			}
+
+			memset(&ainfo, 0, sizeof(ainfo));
+
+			ainfo.type = PFM_ATTR_RAW_UMASK;
+			ainfo.idx  = strtoul(s, &endptr, 0);
+			if (*endptr) {
+				DPRINT("raw umask (%s) is not a number\n");
+				return PFM_ERR_ATTR;
+			}
+
+			has_raw_um = 1;
+
+			goto found_attr;
+		}
+
 		for(a = 0; a < nattrs; a++) {
 			ret = pmu->get_event_attr_info(pmu, idx, a, &ainfo);
+
 			if (ret != PFM_SUCCESS)
 				return ret;
 
 			if (!strcasecmp(ainfo.name, s))
 				goto found_attr;
 		}
+
 		{ pfm_event_info_t einfo;
 		  pmu->get_event_info(pmu, idx, &einfo);
 		  DPRINT("attr=%s not found for event %s\n", s, einfo.name);
 		}
 		return PFM_ERR_ATTR;
 found_attr:
+		type = ainfo.type;
+
+		if (type == PFM_ATTR_UMASK) {
+			has_um = 1;
+			if (has_raw_um) {
+				DPRINT("cannot mix raw umask with umask\n");
+				return PFM_ERR_ATTR;
+			}
+		}
+
 		if (ainfo.equiv) {
 			char *z;
 
@@ -555,13 +593,12 @@ found_attr:
 			na = d->nattrs;
 			continue;
 		}
-		type = ainfo.type;
 		/*
 		 * we tolerate missing value for boolean attributes.
 		 * Presence of the attribute is equivalent to
 		 * attr=1, i.e., attribute is set
 		 */
-		if (type != PFM_ATTR_UMASK && !has_val) {
+		if (type != PFM_ATTR_UMASK && type != PFM_ATTR_RAW_UMASK && !has_val) {
 			if (type != PFM_ATTR_MOD_BOOL)
 				return PFM_ERR_ATTR_VAL;
 			has_val = 1; s = yes; /* no const */
@@ -569,15 +606,15 @@ found_attr:
 		}
 
 		d->attrs[na].ival = 0;
-		if (type == PFM_ATTR_UMASK && has_val)
+		if ((type == PFM_ATTR_UMASK || type == PFM_ATTR_RAW_UMASK) && has_val)
 			return PFM_ERR_ATTR_VAL;
 
 		if (has_val) {
 			s = q;
+handle_bool:
 			ret = PFM_ERR_ATTR_VAL;
 			if (!strlen(s))
 				goto error;
-handle_bool:
 			if (na == PFMLIB_MAX_EVENT_ATTRS) {
 				DPRINT("too many attributes\n");
 				ret = PFM_ERR_TOOMANY;
@@ -587,6 +624,7 @@ handle_bool:
 			endptr = NULL;
 			switch(type) {
 			case PFM_ATTR_UMASK:
+			case PFM_ATTR_RAW_UMASK:
 				/* unit mask has no value */
 				goto error;
 			case PFM_ATTR_MOD_BOOL:

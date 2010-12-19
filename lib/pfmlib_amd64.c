@@ -434,7 +434,24 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 
 			umask |= pe[e->event].umasks[a->id].ucode;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
-		} else {
+
+		} else if (a->type == PFM_ATTR_RAW_UMASK) {
+
+			/* there can only be one RAW_UMASK per event */
+
+			/* sanity checks */
+			if (((a->id & ~0xff) && !IS_FAMILY_10H(pmu))
+			   || ((a->id & ~0xfff) && IS_FAMILY_10H(pmu))) {
+				DPRINT("raw umask is invalid\n");
+				return PFM_ERR_ATTR;
+			}
+			/* override umask and extended umask */
+			umask = a->id & 0xff;
+			reg->sel_event_mask2 = a->id >> 8;
+			ugrpmsk = grpmsk;
+
+		} else { /* modifiers */
+
 			switch(amd64_attr2mod(this, e->event, a->id)) {
 				case AMD64_ATTR_I: /* invert */
 					reg->sel_inv = !!a->ival;
@@ -515,6 +532,8 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	for(k=0; k < e->nattrs; k++) {
 		if (e->attrs[k].type == PFM_ATTR_UMASK)
 			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
+		else if (e->attrs[k].type == PFM_ATTR_RAW_UMASK)
+			evt_strcat(e->fstr, ":0x%"PRIx64, e->attrs[k].id);
 	}
 
 	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_K, name), reg->sel_os);

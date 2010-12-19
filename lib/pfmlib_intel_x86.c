@@ -282,7 +282,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 	grpmsk = (1 << pe[e->event].ngrp)-1;
 	reg.val = val;
 
-	/* take into account hardcoded umask */
+	/* take into account hardcoded umask + modifiers */
 	umask = (val >> 8) & 0xff;
 
 	if (intel_x86_eflag(this, e, INTEL_X86_PEBS))
@@ -290,6 +290,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 
 	for(k=0; k < e->nattrs; k++) {
 		a = e->attrs+k;
+
 		if (a->type == PFM_ATTR_UMASK) {
 			id = pfm_intel_x86_attr2umask(this, e->event, a->id);
 			grpid = pe[e->event].umasks[id].grpid;
@@ -337,6 +338,18 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 			if (intel_x86_uflag(this, e, id, INTEL_X86_PEBS))
 				pebs_umasks++;
 			
+		} else if (a->type == PFM_ATTR_RAW_UMASK) {
+
+			/* there can only be one RAW_UMASK per event */
+
+			/* sanity check */
+			if (a->id & ~0xff) {
+				DPRINT("raw umask is 8-bit wide\n");
+				return PFM_ERR_ATTR;
+			}
+			/* override umask */
+			umask = a->id & 0xff;
+			ugrpmsk = grpmsk;
 		} else {
 			id = pfm_intel_x86_attr2mod(this, e->event, a->id);
 			switch(id) {
@@ -417,6 +430,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 		if (e->attrs[k].type == PFM_ATTR_UMASK) {
 			id = pfm_intel_x86_attr2umask(this, e->event, e->attrs[k].id);
 			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[id].uname);
+		} else if (e->attrs[k].type == PFM_ATTR_RAW_UMASK) {
+			evt_strcat(e->fstr, ":0x%"PRIx64, e->attrs[k].id);
 		}
 	}
 
@@ -428,9 +443,9 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 		e->count = 1;
 	}
 
-	reg.val    |= umask << 8;
-	reg.sel_en  = 1; /* force enable bit to 1 */
-	reg.sel_int = 1; /* force APIC int to 1 */
+	reg.val     |= umask << 8; /* take into account hardcoded modifiers */
+	reg.sel_en   = 1; /* force enable bit to 1 */
+	reg.sel_int  = 1; /* force APIC int to 1 */
 
 	e->codes[0] = reg.val;
 
