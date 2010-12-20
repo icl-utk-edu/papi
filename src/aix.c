@@ -354,7 +354,10 @@ _aix_get_system_info( void )
 			basename( maxargs ) );
 
 #ifdef _POWER6
-	retval = pm_initialize( PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT );
+	/* problem with pm_initialize(): it cannot be called multiple times with 
+	   PM_CURRENT; use instead the actual proc type - here PM_POWER6 - 
+	   and multiple invocations are no longer a problem */ 
+	retval = pm_initialize( PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER6 );
 #else
 #ifdef _AIXVERSION_510
 #ifdef PM_INITIALIZE
