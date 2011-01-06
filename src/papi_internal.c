@@ -552,24 +552,25 @@ _papi_hwi_add_native_precheck( EventSetInfo_t * ESI, int nevt )
 
 
 /* this function is called after mapping is done
-   refill info for every added events
+   refill info for every added event
  */
 void
-remap_event_position( EventSetInfo_t * ESI, int thisindex )
+remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_events )
 {
 	EventInfo_t *out, *head;
-	int i, j, k, n, preset_index, nevt, total_events;
+	int i, j, k, n, preset_index, nevt;
 
 	head = ESI->EventInfoArray;
 	out = &head[thisindex];
-	total_events = ESI->NumberOfEvents;
-
+   
 	j = 0;
-	for ( i = 0; i <= total_events; i++ ) {
+	for ( i = 0; i < total_events; i++ ) {
 
 		/* find the added event in EventInfoArray */
-		while ( head[j].event_code == ( unsigned int ) PAPI_NULL )
+		while ( head[j].event_code == ( unsigned int ) PAPI_NULL ) {
 			j++;
+		}
+	   
 		/* fill in the new information */
 		if ( head[j].event_code & PAPI_PRESET_MASK ) {
 			preset_index = ( int ) head[j].event_code & PAPI_PRESET_AND_MASK;
@@ -815,7 +816,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 				ESI->EventInfoArray[thisindex].ops =
 					_papi_hwi_presets.data[preset_index]->operation;
 				if ( remap )
-					remap_event_position( ESI, thisindex );
+					remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
 			}
 		} else if ( EventCode & PAPI_NATIVE_MASK ) {
 			/* Check if native event exists */
@@ -845,7 +846,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 				ESI->EventInfoArray[thisindex].event_code =
 					( unsigned int ) EventCode;
 				if ( remap )
-					remap_event_position( ESI, thisindex );
+					remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
 			}
 		} else {
 			/* not Native and Preset events */

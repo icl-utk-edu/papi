@@ -58,7 +58,7 @@ extern int _papi_hwi_error_level;
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern papi_mdi_t _papi_hwi_system_info;
 extern void _papi_hwi_dummy_handler( int, void *, long long, void * );
-extern void remap_event_position( EventSetInfo_t *, int );
+extern void remap_event_position( EventSetInfo_t *, int, int );
 
 /* papi_data.c */
 
@@ -1256,8 +1256,9 @@ PAPI_start( int EventSet )
 		
 		/* now that the context contains this event sets information, */
 		/* make sure the position array in the EventInfoArray is correct */
-		for ( i=0 ; i<ESI->NativeCount ; i++ )
-			remap_event_position( ESI, i );
+		for ( i=0 ; i<ESI->NativeCount ; i++ ) {
+			remap_event_position( ESI, i, ESI->NumberOfEvents );
+		}
 	}
 
 	/* If overflowing is enabled, turn it on */
