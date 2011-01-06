@@ -143,6 +143,7 @@ typedef enum {
 	PFM_ATTR_UMASK,		/* unit mask */
 	PFM_ATTR_MOD_BOOL,	/* register modifier */
 	PFM_ATTR_MOD_INTEGER,	/* register modifier */
+	PFM_ATTR_RAW_UMASK,	/* raw umask (not user visible) */
 
 	PFM_ATTR_MAX		/* end-marker */
 } pfm_attr_t;

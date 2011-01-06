@@ -74,13 +74,6 @@ typedef struct {
 } pfmlib_perf_attr_t;
 
 /*
- * internal attribute types, not visible to users
- */
-enum pfmlib_priv_attr {
-	PFM_ATTR_RAW_UMASK = PFM_ATTR_MAX+1,
-};
-
-/*
  * must be big enough to hold all possible priv level attributes
  */
 #define PFMLIB_MAX_EVENT_ATTRS	64 /* max attributes per event desc */
