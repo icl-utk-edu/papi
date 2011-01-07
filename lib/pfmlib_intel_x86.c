@@ -431,7 +431,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 			id = pfm_intel_x86_attr2umask(this, e->event, e->attrs[k].id);
 			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[id].uname);
 		} else if (e->attrs[k].type == PFM_ATTR_RAW_UMASK) {
-			evt_strcat(e->fstr, ":0x%"PRIx64, e->attrs[k].id);
+			evt_strcat(e->fstr, ":0x%x", e->attrs[k].id);
 		}
 	}
 

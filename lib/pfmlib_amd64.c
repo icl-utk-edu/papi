@@ -533,7 +533,7 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		if (e->attrs[k].type == PFM_ATTR_UMASK)
 			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
 		else if (e->attrs[k].type == PFM_ATTR_RAW_UMASK)
-			evt_strcat(e->fstr, ":0x%"PRIx64, e->attrs[k].id);
+			evt_strcat(e->fstr, ":0x%x", e->attrs[k].id);
 	}
 
 	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_K, name), reg->sel_os);
