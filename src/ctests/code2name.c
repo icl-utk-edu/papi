@@ -14,7 +14,7 @@ int
 main( int argc, char **argv )
 {
 	int retval;
-	int code = PAPI_TOT_CYC;
+	int code = PAPI_TOT_CYC, last;
 	char event_name[PAPI_MAX_STR_LEN];
 	const PAPI_hw_info_t *hwinfo = NULL;
 	const PAPI_component_info_t *cmp_info;
@@ -63,23 +63,41 @@ main( int argc, char **argv )
 		printf( "Found |%s|\n", event_name );
 
 	/* Find the first defined native event */
+	/* For platform independence, always ASK FOR the first event */
+	/* Don't just assume it'll be the first numeric value */
 	code = PAPI_NATIVE_MASK;
+	PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+
 	printf( "Looking for first native event: 0x%x...\n", code );
 	retval = PAPI_event_code_to_name( code, event_name );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
-	printf( "Found |%s|\n", event_name );
+	if ( retval != PAPI_OK ) {
+	  test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	}
+	else {
+	  printf( "Found |%s|\n", event_name );
+	}
 
 	/* Find the last defined native event */
 	cmp_info = PAPI_get_component_info( 0 );
 	if ( cmp_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR );
-	code = ( cmp_info->num_native_events - 1 ) | PAPI_NATIVE_MASK;
+
+	code = PAPI_NATIVE_MASK;
+	PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+
+	while ( PAPI_enum_event( &code, PAPI_ENUM_EVENTS ) == PAPI_OK ) {
+	  last=code;
+	}
+
+	code = last;
 	printf( "Looking for last native event: 0x%x...\n", code );
 	retval = PAPI_event_code_to_name( code, event_name );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
-	printf( "Found |%s|\n", event_name );
+	}
+	else {
+	   printf( "Found |%s|\n", event_name );
+	}
 
 	/* Highly doubtful we have this many natives */
 	/* Turn on all bits *except* PRESET bit and COMPONENT bits */
