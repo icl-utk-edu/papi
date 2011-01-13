@@ -306,7 +306,11 @@ high-level2: high-level2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) high-level2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level2
 
 shlib: shlib.c $(UTILOBJS) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib -ldl
+	@if test "$(SUBSTR)" == "freebsd" ; then \
+		-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib ; \
+	else \
+		-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib -ldl ; \
+	endif
 	if [ ! -x ./shlib ]; then $(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib; fi
 
 exeinfo: exeinfo.c $(UTILOBJS) $(PAPILIB)

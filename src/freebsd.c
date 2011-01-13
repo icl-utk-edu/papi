@@ -125,6 +125,8 @@ int init_presets(void)
 		Context.CPUsubstrate = CPU_CORE2;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE2EXTREME") == 0)
 		Context.CPUsubstrate = CPU_CORE2EXTREME;
+	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_COREI7") == 0)
+		Context.CPUsubstrate = CPU_COREI7;
 	else
 		/* Unknown processor! */
 		Context.CPUsubstrate = CPU_UNKNOWN;

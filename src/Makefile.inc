@@ -54,7 +54,9 @@ $(SHLIB): $(SOURCES) $(SHLIBOBJS)
 	    rm -f $(SHLIB) libpapi.so; \
 	fi
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
-	-$(POST_BUILD)
+	@if test "$(POST_BUILD)" != "" ; then \
+		-$(POST_BUILD) ; \
+	fi
 	@if test "$(SHLIB)" != "libpapi.so" ; then \
 		ln -sf $(SHLIB) libpapi.so; \
 	fi
@@ -150,6 +152,9 @@ bgp_tests:$(LIBRARY) null
 	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
  
 #Required for freebsd
+freebsd-memory.o: freebsd-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
 freebsd/map.o: freebsd/map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
 
@@ -211,7 +216,7 @@ utils: $(papiLIBS) null
 	$(SETPATH) cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(UTIL_TARGETS)
 
 ctests: $(papiLIBS) null
-	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS) $(DEBUGFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(CTEST_TARGETS)
+	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS) $(DEBUGFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" SUBSTR="$(SUBSTR)" LIBRARY="$(LINKLIB)" $(CTEST_TARGETS)
 
 ftests: $(papiLIBS) null
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(FTEST_TARGETS)

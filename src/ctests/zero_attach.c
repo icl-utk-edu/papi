@@ -21,6 +21,11 @@
 #define _LINUX_SOURCE_COMPAT
 #endif
 
+#if defined(__FreeBSD__)
+# define PTRACE_ATTACH PT_ATTACH
+# define PTRACE_CONT PT_CONTINUE
+#endif
+
 int
 wait_for_attach_and_loop( void )
 {
