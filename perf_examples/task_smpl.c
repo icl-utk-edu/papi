@@ -297,19 +297,22 @@ mainloop(char **arg)
 	 * We are skipping the first 3 values (nr, time_enabled, time_running)
 	 * and then for each event we get a pair of values.
 	 */
-	sz = (3+2*num_fds)*sizeof(uint64_t);
-	val = malloc(sz);
-	if (!val)
-		err(1, "cannot allocate memory");
+	if (num_fds > 1) {
+		sz = (3+2*num_fds)*sizeof(uint64_t);
+		val = malloc(sz);
+		if (!val)
+			err(1, "cannot allocate memory");
 
-	ret = read(fds[0].fd, val, sz);
-	if (ret == -1)
-		err(1, "cannot read id %zu", sizeof(val));
+		ret = read(fds[0].fd, val, sz);
+		if (ret == -1)
+			err(1, "cannot read id %zu", sizeof(val));
 
 
-	for(i=0; i < num_fds; i++) {
-		fds[i].id = val[2*i+1+3];
-		printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
+		for(i=0; i < num_fds; i++) {
+			fds[i].id = val[2*i+1+3];
+			printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
+		}
+		free(val);
 	}
 
 	pollfds[0].fd = fds[0].fd;
@@ -351,7 +354,6 @@ terminate_session:
 	munmap(fds[0].buf, map_size);
 
 	free(fds);
-	free(val);
 
 	printf("%"PRIu64" samples collected in %"PRIu64" poll events, %"PRIu64" lost samples\n",
 		collected_samples,
