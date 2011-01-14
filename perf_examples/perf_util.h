@@ -26,6 +26,7 @@
 
 #include <sys/types.h>
 #include <inttypes.h>
+#include <err.h>
 #include <perfmon/pfmlib_perf_event.h>
 
 typedef struct {
