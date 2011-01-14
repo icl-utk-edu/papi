@@ -53,6 +53,7 @@ PERF_EVENT_HDR=$(TOPDIR)/include/perfmon/perf_event.h
 
 ifeq ($(SYS),Linux)
 LPC_UTILS=perf_util.o
+LPC_UTILS_HDR=perf_util.h
 TARGETS+=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
 	self_pipe syst_count task_cpu syst_smpl
@@ -71,8 +72,10 @@ all: $(TARGETS) $(XTRA)
 rtop: rtop.o $(PFMLIB)
 	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses -lm
 
-$(TARGETS):  %:%.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
-	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
+$(TARGETS): %:%.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) 
+
+$(LPC_UTILS): $(LPC_UTILS_HDR)
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
