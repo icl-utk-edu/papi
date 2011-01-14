@@ -310,7 +310,7 @@ shlib: shlib.c $(UTILOBJS) $(PAPILIB)
 		-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib ; \
 	else \
 		-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib -ldl ; \
-	endif
+	fi
 	if [ ! -x ./shlib ]; then $(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib; fi
 
 exeinfo: exeinfo.c $(UTILOBJS) $(PAPILIB)
