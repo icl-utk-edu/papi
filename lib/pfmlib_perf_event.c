@@ -139,7 +139,7 @@ pfm_get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr
 	if (dfl_plm < 1)
 		return PFM_ERR_INVAL;
 
-	memset(hw, 0, sizeof(hw));
+	memset(hw, 0, sizeof(*hw));
 
 	return get_perf_event_encoding(str, dfl_plm, hw, fstr, idx);
 }
