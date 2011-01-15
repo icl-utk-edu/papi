@@ -1120,7 +1120,7 @@ _ia64_init_substrate( int cidx )
 
 	preset_search_map = NULL;
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-		_papi_hwd_lock_data[PAPI_MAX_LOCK] = MUTEX_OPEN;
+		_papi_hwd_lock_data[i] = MUTEX_OPEN;
 
 	/* Opened once for all threads. */
 	if ( pfm_initialize(  ) != PFMLIB_SUCCESS )
