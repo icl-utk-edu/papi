@@ -21,6 +21,11 @@
 
 #define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
 
+#ifdef __ia64__
+#include "perfmon/pfmlib_itanium2.h"
+#include "perfmon/pfmlib_montecito.h"
+#endif
+
 #if defined(__sparc__)
 #include <dirent.h>
 #endif

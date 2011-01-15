@@ -30,14 +30,7 @@
 #include <sys/ucontext.h>
 #include <sys/ptrace.h>
 #include "perfmon/pfmlib.h"
-#include "perfmon/perfmon.h"
 #include "perfmon/perfmon_dfl_smpl.h"
-
-#ifdef __ia64__
-#include "perfmon/pfmlib_itanium2.h"
-#include "perfmon/pfmlib_montecito.h"
-#endif
-
 #include "papi_defines.h"
 
 #if defined(DEBUG)

@@ -26,6 +26,11 @@
 #include "papi_memory.h"
 #include "papi_pfm_events.h"
 
+#ifdef __ia64__
+#include "perfmon/pfmlib_itanium2.h"
+#include "perfmon/pfmlib_montecito.h"
+#endif
+
 typedef unsigned uint;
 
 /* Globals declared extern elsewhere */

@@ -20,12 +20,6 @@ xxx - bits_to_info uses native_map not pfm()
 #include "papi_memory.h"
 
 #include "perfmon/pfmlib.h"
-#include "perfmon/perfmon.h"
-
-#ifdef __ia64__
-#include "perfmon/pfmlib_itanium2.h"
-#include "perfmon/pfmlib_montecito.h"
-#endif
 
 #if defined(DEBUG)
 #define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
