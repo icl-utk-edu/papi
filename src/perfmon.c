@@ -56,7 +56,7 @@ extern int _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 									   unsigned int *values, int name_len,
 									   int count );
 
-int _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex,
+static int _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex,
 							int threshold );
 
 /* Static locals */
@@ -2228,7 +2228,7 @@ init_proc_thread_timer( hwd_context_t * thr_ctx )
 }
 #endif
 
-int
+static int
 _papi_sub_pfm_init( hwd_context_t * thr_ctx )
 {
 	pfarg_load_t load_args;
@@ -2245,7 +2245,7 @@ _papi_sub_pfm_init( hwd_context_t * thr_ctx )
 	memset( &load_args, 0, sizeof ( load_args ) );
 
 	if ( ( ret = pfm_create_context( &newctx, NULL, NULL, 0 ) ) == -1 ) {
-		PAPIERROR( "_papi_pfm_init:pfm_create_context(): %s",
+		PAPIERROR( "pfm_create_context(): %s",
 				   strerror( errno ) );
 		return ( PAPI_ESYS );
 	}
@@ -3243,7 +3243,7 @@ process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 /* This function  used when hardware overflows ARE working 
     or when software overflows are forced					*/
 
-void
+static void
 _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 {
 	_papi_hwi_context_t ctx;
@@ -3380,7 +3380,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	}
 }
 
-int
+static int
 _papi_pfm_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 {
 	( void ) ESI;			 /*unused */
@@ -3388,7 +3388,7 @@ _papi_pfm_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 	return ( process_smpl_buf( 0, sizeof ( pfm_dfl_smpl_entry_t ), &thread ) );
 }
 
-int
+static int
 _papi_pfm_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
@@ -3513,7 +3513,7 @@ _papi_pfm_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 #endif
 
-int
+static int
 _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	pfm_control_state_t *this_state =
@@ -3595,7 +3595,7 @@ _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	return ( retval );
 }
 
-int
+static int
 _papi_pfm_init_control_state( hwd_control_state_t * ctl0 )
 {
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ctl0;
@@ -3620,7 +3620,7 @@ _papi_pfm_init_control_state( hwd_control_state_t * ctl0 )
 	return ( PAPI_OK );
 }
 
-int
+static int
 _papi_pfm_allocate_registers( EventSetInfo_t * ESI )
 {
 	int i, j;
@@ -3642,7 +3642,7 @@ _papi_pfm_allocate_registers( EventSetInfo_t * ESI )
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 
-int
+static int
 _papi_pfm_update_control_state( hwd_control_state_t * ctl0,
 								NativeInfo_t * native, int count,
 								hwd_context_t * ctx0 )
