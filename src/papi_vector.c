@@ -1,5 +1,5 @@
 /*
- * File:    linux.c
+ * File:    papi_vector.c
  * CVS:     $Id$
  * Author:  Kevin London
  *          london@cs.utk.edu

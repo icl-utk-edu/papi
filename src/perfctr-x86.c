@@ -26,7 +26,7 @@ extern inline int _pfm_decode_native_event( unsigned int EventCode,
 extern inline unsigned int _pfm_convert_umask( unsigned int event,
 											   unsigned int umask );
 
-/* Prototypes for entry points found in linux.c and linux-memory.c */
+/* Prototypes for entry points found in perfctr.c and linux-memory.c */
 extern int _linux_init_substrate( int );
 extern int _linux_ctl( hwd_context_t * ctx, int code,
 					   _papi_int_option_t * option );

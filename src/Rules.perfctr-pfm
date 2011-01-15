@@ -34,7 +34,7 @@ CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
 MISCHDRS += perfctr-x86.h $(PAPI_EVENTS_TABLE)
-MISCSRCS +=  linux.c $(ARCH_SPEC_EVTS)
+MISCSRCS +=  perfctr.c $(ARCH_SPEC_EVTS)
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
 ifeq (,$(PERFCTR_OBJS))
@@ -120,8 +120,8 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
 
-linux.o: linux.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
+perfctr.o: perfctr.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c perfctr.c -o $@
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@

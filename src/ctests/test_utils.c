@@ -902,7 +902,7 @@ init_multiplex( void )
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
-	if ( ( strstr( cmpinfo->name, "linux.c" ) ) &&
+	if ( ( strstr( cmpinfo->name, "perfctr.c" ) ) &&
 		 strcmp( hw_info->model_string, "POWER6" ) == 0 ) {
 		retval = PAPI_set_domain( PAPI_DOM_ALL );
 		if ( retval != PAPI_OK )

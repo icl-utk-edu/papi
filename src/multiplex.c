@@ -1201,7 +1201,7 @@ mpx_check( int EventSet )
 	 * cannot be controlled on a domain level.
 	 */
 	EventSetInfo_t *ESI = _papi_hwi_lookup_EventSet( EventSet );
-	if ( strstr( _papi_hwd[ESI->CmpIdx]->cmp_info.name, "linux.c" ) == NULL )
+	if ( strstr( _papi_hwd[ESI->CmpIdx]->cmp_info.name, "perfctr.c" ) == NULL )
 		return PAPI_OK;
 
 	if ( strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" ) == 0 ) {

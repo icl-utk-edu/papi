@@ -1,14 +1,14 @@
 /* 
-* File:    linux.c
+* File:    perfctr.c
 * CVS:     $Id$
 * Author:  Philip Mucci
-*          mucci@cs.utk.edu
+*          mucci at cs.utk.edu
 * Mods:    Kevin London
-*          london@cs.utk.edu
+*          london at cs.utk.edu
 * Mods:    Maynard Johnson
-*          maynardj@us.ibm.com
+*          maynardj at us.ibm.com
 * Mods:    Brian Sheely
-*          bsheely@eecs.utk.edu
+*          bsheely at eecs.utk.edu
 */
 
 #include "papi.h"
