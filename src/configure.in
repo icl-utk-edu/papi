@@ -1040,22 +1040,15 @@ case "$OS" in
     elif test "$perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
     elif test "$old_pfmv2" = "y" ; then
-      if test "$CPU" = "montecito"; then
-         MAKEVER="$OS"-pfm-montecito
-      else
-         MAKEVER="$OS"-pfm-"$CPU"
-      fi
+      MAKEVER="$OS"-pfm-"$CPU"
     elif test "$perfctr" != "no" ; then
       case "$CPU" in
         itanium2|montecito)
           if test "$bitmode" = "32"; then
             AC_MSG_ERROR([The bitmode you specified is not supported])
           fi
-	      if test "$CPU" = "montecito"; then
-		    MAKEVER="$OS"-pfm-montecito
-		  else
-		    MAKEVER="$OS"-pfm-"$CPU"
-		  fi ;;
+	  MAKEVER="$OS"-pfm-"$CPU"
+	  ;;
         athlon|opteron|atom|core|core2|p3|p4|i7)
 	        MAKEVER="$OS"-perfctr-x86 ;;
         POWER5|POWER5+|POWER6|POWER7|PPC970)
