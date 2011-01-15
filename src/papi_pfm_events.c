@@ -840,7 +840,7 @@ _papi_pfm_setup_presets( char *pmu_name, int pmu_type )
 	return ( PAPI_OK );
 }
 
-unsigned int
+int
 _papi_pfm_ntv_name_to_code( char *name, int *event_code )
 {
 	pfmlib_event_t event;
@@ -855,30 +855,30 @@ _papi_pfm_ntv_name_to_code( char *name, int *event_code )
 		if ( event.num_masks > PAPI_NATIVE_UMASK_MAX ) {
 			SUBDBG( "num_masks (%d) > max masks (%d)\n", event.num_masks,
 					PAPI_NATIVE_UMASK_MAX );
-			return ( unsigned int ) PAPI_ENOEVNT;
+			return PAPI_ENOEVNT;
 		} else {
 			/* no mask index can exceed PAPI_NATIVE_UMASK_MAX */
 			for ( i = 0; i < event.num_masks; i++ ) {
 				if ( event.unit_masks[i] > PAPI_NATIVE_UMASK_MAX ) {
 					SUBDBG( "mask index (%d) > max masks (%d)\n",
 							event.unit_masks[i], PAPI_NATIVE_UMASK_MAX );
-					return ( unsigned int ) PAPI_ENOEVNT;
+					return PAPI_ENOEVNT;
 				}
 			}
 			*event_code =
 				encode_native_event( event.event, event.num_masks,
 									 event.unit_masks );
-			return ( PAPI_OK );
+			return PAPI_OK;
 		}
 	} else if ( ret == PFMLIB_ERR_UMASK ) {
 		SUBDBG( "UMASK error, looking for base event only\n" );
 		ret = pfm_find_event( name, &event.event );
 		if ( ret == PFMLIB_SUCCESS ) {
 			*event_code = encode_native_event( event.event, 0, 0 );
-			return ( PAPI_EATTR );
+			return PAPI_EATTR;
 		}
 	}
-	return ( unsigned int ) PAPI_ENOEVNT;
+	return PAPI_ENOEVNT;
 }
 
 int
