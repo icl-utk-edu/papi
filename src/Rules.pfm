@@ -33,7 +33,7 @@ MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" OPTIM="$(OPTIM)" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" OPTIM="$(OPTIM)" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" lib
 else
 	@echo '$@ not installed!'; exit 1
 endif
