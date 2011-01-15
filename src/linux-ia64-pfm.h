@@ -1,13 +1,13 @@
-#ifndef _PAPI_PFMWRAP_H
-#define _PAPI_PFMWRAP_H
+#ifndef _LINUX_IA64_PFM_H
+#define _LINUX_IA64_PFM_H
 
 /*
-* File:    linux-ia64.c
+* File:    linux-ia64-pfm.h
 * CVS:     $Id$
 * Author:  Per Ekman
-*          pek@pdc.kth.se
+*          pek at pdc.kth.se
 * Mods:	   Zhou Min
-*          min@cs.utk.edu
+*          min at cs.utk.edu
 */
 
 #if defined(__INTEL_COMPILER)
@@ -1074,4 +1074,4 @@ pfmw_get_num_events( int *num )
 	return ( PAPI_OK );
 }
 
-#endif /* _PFMWRAP_H */
+#endif /* _LINUX_IA64_PFM_H */

@@ -15,7 +15,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
-#include "pfmwrap.h"
+#include "linux-ia64-pfm.h"
 #include "threads.h"
 #include "papi_memory.h"
 
