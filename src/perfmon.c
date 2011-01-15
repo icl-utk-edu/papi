@@ -202,7 +202,7 @@ dump_smpl( pfm_dfl_smpl_entry_t * entry )
 */
 
 #if defined(HAVE_MMTIMER)
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	long long tmp = 0;
@@ -211,7 +211,7 @@ get_cycles( void )
 	return ( tmp );
 }
 #elif defined(__ia64__)
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	long long tmp = 0;
@@ -228,7 +228,7 @@ get_cycles( void )
 	return tmp;
 }
 #elif (defined(__i386__)||defined(__x86_64__))
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	long long ret = 0;
@@ -249,7 +249,7 @@ get_cycles( void )
 
 /* #define get_cycles _rtc ?? */
 #elif defined(__sparc__)
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	register unsigned long ret asm( "g1" );
@@ -1589,7 +1589,7 @@ get_system_info( papi_mdi_t * mdi )
 	return ( PAPI_OK );
 }
 
-inline_static pid_t
+static inline pid_t
 mygettid( void )
 {
 #ifdef SYS_gettid
@@ -1604,7 +1604,7 @@ mygettid( void )
 }
 
 
-inline static int
+static inline int
 compute_kernel_args( hwd_control_state_t * ctl0 )
 {
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ctl0;
@@ -1873,7 +1873,7 @@ detach( hwd_context_t * ctx, hwd_control_state_t * ctl )
 }
 #endif /* ! WIN32 */
 
-inline static int
+static inline int
 set_domain( hwd_control_state_t * ctl0, int domain )
 {
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ctl0;
@@ -1908,7 +1908,7 @@ set_domain( hwd_control_state_t * ctl0, int domain )
 	return ( compute_kernel_args( ctl ) );
 }
 
-inline static int
+static inline int
 set_granularity( hwd_control_state_t * this_state, int domain )
 {
 	( void ) this_state;	 /*unused */
@@ -1930,7 +1930,7 @@ set_granularity( hwd_control_state_t * this_state, int domain )
    inherit performance register information and propagate the values up
    upon child exit and parent wait. */
 
-inline static int
+static inline int
 set_inherit( int arg )
 {
 	( void ) arg;			 /*unused */
@@ -2681,7 +2681,7 @@ _papi_pfm_stop( hwd_context_t * ctx0, hwd_control_state_t * ctl0 )
 	return PAPI_OK;
 }
 
-inline_static int
+static inline int
 round_requested_ns( int ns )
 {
 	if ( ns <= MY_VECTOR.cmp_info.itimer_res_ns ) {

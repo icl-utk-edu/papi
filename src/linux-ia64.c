@@ -673,7 +673,7 @@ search_cpu_info( FILE * f, char *search_str, char *line )
 	/* End stolen code */
 }
 
-inline_static unsigned long
+static inline unsigned long
 get_cycles( void )
 {
 	unsigned long tmp;
@@ -843,7 +843,7 @@ _ia64_set_domain( hwd_control_state_t * this_state, int domain )
 	}
 }
 
-inline static int
+static inline int
 set_granularity( hwd_control_state_t * this_state, int domain )
 {
 	( void ) this_state;	 /*unused */
@@ -970,20 +970,20 @@ _ia64_read( hwd_context_t * ctx, hwd_control_state_t * machdep,
    inherit performance register information and propagate the values up
    upon child exit and parent wait. */
 
-inline static int
+static inline int
 set_inherit( int arg )
 {
 	( void ) arg;			 /*unused */
 	return ( PAPI_ESBSTR );
 }
 
-inline static int
+static inline int
 set_default_domain( hwd_control_state_t * this_state, int domain )
 {
 	return ( _ia64_set_domain( this_state, domain ) );
 }
 
-inline static int
+static inline int
 set_default_granularity( hwd_control_state_t * this_state, int granularity )
 {
 	return ( set_granularity( this_state, granularity ) );
@@ -1447,7 +1447,7 @@ _ia64_stop( hwd_context_t * ctx, hwd_control_state_t * zero )
 	return PAPI_OK;
 }
 
-inline_static int
+static inline int
 round_requested_ns( int ns )
 {
 	if ( ns < MY_VECTOR.cmp_info.itimer_res_ns ) {

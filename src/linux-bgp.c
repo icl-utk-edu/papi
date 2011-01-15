@@ -311,7 +311,7 @@ _bgp_get_system_info( void )
  * Assign the global native and preset table pointers, find the native
  * table's size in memory and then call the preset setup routine.
  */
-inline_static int
+static inline int
 setup_bgp_presets( int cpu_type )
 {
 	switch ( cpu_type ) {

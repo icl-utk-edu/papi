@@ -38,7 +38,7 @@ extern int setup_x86_presets( int cputype );
 #endif
 
 #if !defined(PPC64) 
-inline_static int
+static inline int
 xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 {
 	switch ( perfctr_cpu_type ) {
@@ -275,7 +275,7 @@ detach( hwd_control_state_t * ctl )
 	return ( PAPI_OK );
 }							 /* end detach() */
 
-inline_static int
+static inline int
 round_requested_ns( int ns )
 {
 	if ( ns < MY_VECTOR.cmp_info.itimer_res_ns ) {
@@ -671,7 +671,7 @@ _linux_get_system_info( void )
 /* Low level functions, should not handle errors, just return codes. */
 
 #if !defined(PPC64)
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	long long ret = 0;
@@ -688,7 +688,7 @@ get_cycles( void )
 	return ret;
 }
 #else
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	unsigned long tbl = 0;

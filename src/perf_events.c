@@ -108,7 +108,7 @@ static unsigned long mmdev_ratio;
 static volatile unsigned long *mmdev_timer_addr;
 
 
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	long long tmp = 0;
@@ -120,7 +120,7 @@ get_cycles( void )
 	return tmp;
 }
 #elif defined(__ia64__)
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	long long tmp = 0;
@@ -137,7 +137,7 @@ get_cycles( void )
 	return tmp;
 }
 #elif (defined(__i386__)||defined(__x86_64__))
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	long long ret = 0;
@@ -156,7 +156,7 @@ get_cycles( void )
 
 /* #define get_cycles _rtc ?? */
 #elif defined(__sparc__)
-inline_static long long
+static inline long long
 get_cycles( void )
 {
 	register unsigned long ret asm( "g1" );
@@ -1189,7 +1189,7 @@ get_system_info( papi_mdi_t * mdi )
 	return PAPI_OK;
 }
 
-inline_static pid_t
+static inline pid_t
 mygettid( void )
 {
 #ifdef SYS_gettid
@@ -1201,7 +1201,7 @@ mygettid( void )
 #endif
 }
 
-inline static int
+static inline int
 check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain )
 {
 	int ev_fd;
@@ -1244,7 +1244,7 @@ check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain 
  */
 
 
-inline static int
+static inline int
 check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 {
 	( void ) ctl;			 /*unused */
@@ -1292,7 +1292,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 
 
 
-inline static int
+static inline int
 partition_events( context_t * ctx, control_state_t * ctl )
 {
 	int i, ret;
@@ -1489,7 +1489,7 @@ tune_up_fd( context_t * ctx, int evt_idx )
 	return PAPI_OK;
 }
 
-inline static int
+static inline int
 open_pe_evts( context_t * ctx, control_state_t * ctl )
 {
 	int i, ret = PAPI_OK;
@@ -1586,7 +1586,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 	return ret;
 }
 
-inline static int
+static inline int
 close_pe_evts( context_t * ctx )
 {
 	int i, ret;
@@ -1651,7 +1651,7 @@ detach( context_t * ctx, control_state_t * pe_ctl )
 	return PAPI_OK;
 }
 
-inline static int
+static inline int
 set_domain( hwd_control_state_t * ctl, int domain )
 {
 	int i;
@@ -1668,7 +1668,7 @@ set_domain( hwd_control_state_t * ctl, int domain )
 	return PAPI_OK;
 }
 
-inline static int
+static inline int
 set_cpu( control_state_t * ctl, unsigned int cpu_num )
 {
 	ctl->tid = -1;      /* this tells the kernel not to count for a thread */
@@ -1677,7 +1677,7 @@ set_cpu( control_state_t * ctl, unsigned int cpu_num )
 	return PAPI_OK;
 }
 
-inline static int
+static inline int
 set_granularity( control_state_t * this_state, int domain )
 {
 	( void ) this_state;	 /*unused */
@@ -1723,7 +1723,7 @@ static int get_linux_version() {
    inherit performance register information and propagate the values up
    upon child exit and parent wait. */
 
-inline static int
+static inline int
 set_inherit( int arg )
 {
 	( void ) arg;			 /*unused */
@@ -2420,7 +2420,7 @@ _papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	return PAPI_OK;
 }
 
-inline_static int
+static inline int
 round_requested_ns( int ns )
 {
 	if ( ns < MY_VECTOR.cmp_info.itimer_res_ns ) {
