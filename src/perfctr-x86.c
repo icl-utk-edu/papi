@@ -18,11 +18,6 @@ extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 extern int _papi_hwd_get_system_info( void );
 extern unsigned char PENTIUM4;
-extern inline int _pfm_decode_native_event( unsigned int EventCode,
-											unsigned int *event,
-											unsigned int *umask );
-extern inline unsigned int _pfm_convert_umask( unsigned int event,
-											   unsigned int umask );
 
 /* Prototypes for entry points found in perfctr.c and linux-memory.c */
 extern int _linux_init_substrate( int );

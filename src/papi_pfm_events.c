@@ -694,7 +694,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 }
 
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
-inline int
+static inline int
 _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 						  unsigned int *umask )
 {
@@ -752,7 +752,7 @@ convert_pfm_masks( pfmlib_event_t * gete )
 }
 
 /* convert an event code and pfm unit mask into a PAPI unit mask */
-inline unsigned int
+static inline unsigned int
 _pfm_convert_umask( unsigned int event, unsigned int umask )
 {
 	pfmlib_event_t gete;
