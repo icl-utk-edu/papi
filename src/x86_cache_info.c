@@ -20,8 +20,20 @@ static void init_mem_hierarchy( PAPI_mh_info_t * mh_info );
 static int init_amd( PAPI_mh_info_t * mh_info, int *levels );
 static short int _amd_L2_L3_assoc( unsigned short int pattern );
 static int init_intel( PAPI_mh_info_t * mh_info , int *levels);
-inline_static void cpuid( unsigned int *, unsigned int *, unsigned int *,
-						  unsigned int * );
+
+static inline void
+cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
+{
+	unsigned int op = *a;
+	// .byte 0x53 == push ebx. it's universal for 32 and 64 bit
+	// .byte 0x5b == pop ebx.
+	// Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
+	// Using the opcode directly avoids this problem.
+  __asm__ __volatile__( ".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b":"=a"( *a ), "=S"( *b ), "=c"( *c ),
+						  "=d"
+						  ( *d )
+  :					  "a"( op ) );
+}
 
 /* This is the only exposed entry point in this file */
 int
@@ -1235,21 +1247,7 @@ intel_decode_descriptor( struct _intel_cache_info *d, PAPI_mh_level_t * L )
 	}
 }
 
-inline_static void
-cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
-{
-	unsigned int op = *a;
-	// .byte 0x53 == push ebx. it's universal for 32 and 64 bit
-	// .byte 0x5b == pop ebx.
-	// Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
-	// Using the opcode directly avoids this problem.
-  __asm__ __volatile__( ".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b":"=a"( *a ), "=S"( *b ), "=c"( *c ),
-						  "=d"
-						  ( *d )
-  :					  "a"( op ) );
-}
-
-inline static void 
+static inline void
 cpuid2 ( unsigned int* eax, unsigned int* ebx, 
                     unsigned int* ecx, unsigned int* edx, 
                     unsigned int index, unsigned int ecx_in )
