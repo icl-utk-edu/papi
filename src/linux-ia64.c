@@ -304,7 +304,7 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
 static inline int _ia64_modify_event( unsigned int event, int modifier );
 
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
-inline int
+static inline int
 _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 						  unsigned int *umask )
 {

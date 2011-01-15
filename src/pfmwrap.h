@@ -105,14 +105,14 @@ pfmw_stop( hwd_context_t * ctx )
 	pfm_self_stop( ( ( ia64_context_t * ) ctx )->fd );
 }
 
-inline int
+static inline int
 pfmw_perfmonctl( pid_t tid, int fd, int cmd, void *arg, int narg )
 {
 	( void ) tid;			 /*unused */
 	return ( perfmonctl( fd, cmd, arg, narg ) );
 }
 
-inline int
+static inline int
 pfmw_destroy_context( hwd_context_t * thr_ctx )
 {
 	int ret;
@@ -123,7 +123,7 @@ pfmw_destroy_context( hwd_context_t * thr_ctx )
 		return PAPI_OK;
 }
 
-inline int
+static inline int
 pfmw_dispatch_events( pfmw_param_t * evt )
 {
 	int ret;
@@ -168,7 +168,7 @@ pfmw_dispatch_events( pfmw_param_t * evt )
 	}
 }
 
-inline int
+static inline int
 pfmw_create_ctx_common( hwd_context_t * ctx )
 {
 	pfarg_load_t load_args;
@@ -239,7 +239,7 @@ pfmw_create_ctx_common( hwd_context_t * ctx )
 
 }
 
-inline int
+static inline int
 pfmw_create_context( hwd_context_t * thr_ctx )
 {
 	pfarg_context_t ctx;
@@ -259,7 +259,7 @@ pfmw_create_context( hwd_context_t * thr_ctx )
 	return ( pfmw_create_ctx_common( thr_ctx ) );
 }
 
-inline int
+static inline int
 set_pmds_to_write( EventSetInfo_t * ESI, int index, unsigned long value )
 {
 	int *pos, count, i;
@@ -283,13 +283,13 @@ set_pmds_to_write( EventSetInfo_t * ESI, int index, unsigned long value )
 	return ( PAPI_OK );
 }
 
-extern inline int _pfm_decode_native_event( unsigned int EventCode,
-											unsigned int *event,
-											unsigned int *umask );
+static inline int
+_pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
+			  unsigned int *umask );
 
-inline int
+static inline int
 pfmw_recreate_context( EventSetInfo_t * ESI, hwd_context_t * thr_ctx,
-					   void **smpl_vaddr, int EventIndex )
+		       void **smpl_vaddr, int EventIndex )
 {
 	pfm_default_smpl_ctx_arg_t ctx;
 	pfm_uuid_t buf_fmt_id = PFM_DEFAULT_SMPL_UUID;
@@ -385,7 +385,7 @@ pfmw_recreate_context( EventSetInfo_t * ESI, hwd_context_t * thr_ctx,
 	return ( pfmw_create_ctx_common( thr_ctx ) );
 }
 
-inline int
+static inline int
 pfmw_get_event_name( char *name, unsigned int idx )
 {
 	unsigned int total;
@@ -399,7 +399,7 @@ pfmw_get_event_name( char *name, unsigned int idx )
 		return PAPI_ENOEVNT;
 }
 
-inline void
+static inline void
 pfmw_get_event_description( unsigned int idx, char *dest, int len )
 {
 	char *descr;
@@ -411,7 +411,7 @@ pfmw_get_event_description( unsigned int idx, char *dest, int len )
 		*dest = '\0';
 }
 
-inline int
+static inline int
 pfmw_is_dear( unsigned int i )
 {
 	switch ( _perfmon2_pfm_pmu_type ) {
@@ -431,7 +431,7 @@ pfmw_is_dear( unsigned int i )
 	}
 }
 
-inline int
+static inline int
 pfmw_is_iear( unsigned int i )
 {
 	switch ( _perfmon2_pfm_pmu_type ) {
@@ -451,7 +451,7 @@ pfmw_is_iear( unsigned int i )
 	}
 }
 
-inline int
+static inline int
 pfmw_support_darr( unsigned int i )
 {
 	switch ( _perfmon2_pfm_pmu_type ) {
@@ -471,7 +471,7 @@ pfmw_support_darr( unsigned int i )
 	}
 }
 
-inline int
+static inline int
 pfmw_support_iarr( unsigned int i )
 {
 	switch ( _perfmon2_pfm_pmu_type ) {
@@ -491,7 +491,7 @@ pfmw_support_iarr( unsigned int i )
 	}
 }
 
-inline int
+static inline int
 pfmw_support_opcm( unsigned int i )
 {
 	switch ( _perfmon2_pfm_pmu_type ) {
@@ -622,7 +622,7 @@ check_ibrp_events( hwd_control_state_t * current_state )
 	}
 }
 
-inline int
+static inline int
 install_irange( hwd_context_t * pctx, hwd_control_state_t * current_state )
 {
 	ia64_control_state_t *this_state = ( ia64_control_state_t * ) current_state;
@@ -690,7 +690,7 @@ install_irange( hwd_context_t * pctx, hwd_control_state_t * current_state )
 	}
 }
 
-inline int
+static inline int
 install_drange( hwd_context_t * pctx, hwd_control_state_t * current_state )
 {
 	ia64_control_state_t *this_state = ( ia64_control_state_t * ) current_state;
@@ -763,7 +763,7 @@ install_drange( hwd_context_t * pctx, hwd_control_state_t * current_state )
    Both drange and irange can be set on the same eventset.
    If start=end=0, the feature is disabled. 
 */
-inline int
+static inline int
 set_drange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 			_papi_int_option_t * option )
 {
@@ -915,7 +915,7 @@ set_drange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 	}
 }
 
-inline int
+static inline int
 set_irange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 			_papi_int_option_t * option )
 {
