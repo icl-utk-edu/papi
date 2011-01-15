@@ -75,7 +75,7 @@ int _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex,
 
 /* Static locals */
 #define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
-int _perfmon2_pfm_pmu_type = -1;
+static int _perfmon2_pfm_pmu_type = -1;
 
 /* Debug functions */
 

@@ -53,7 +53,7 @@ static int _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex,
 
 /* Static locals */
 
-int _perfmon2_pfm_pmu_type = -1;
+static int _perfmon2_pfm_pmu_type = -1;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmcs;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmds;
 
