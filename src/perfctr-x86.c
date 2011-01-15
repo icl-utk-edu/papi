@@ -11,15 +11,13 @@
 #include "papi_internal.h"
 #include "perfctr-x86.h"
 #include "perfmon/pfmlib.h"
+#include "papi_pfm_events.h"
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 extern int _papi_hwd_get_system_info( void );
 extern unsigned char PENTIUM4;
-extern int _papi_pfm_setup_presets( char *name, int type );
-extern int _pfm_get_counter_info( unsigned int event, unsigned int *selector,
-								  int *code );
 extern inline int _pfm_decode_native_event( unsigned int EventCode,
 											unsigned int *event,
 											unsigned int *umask );
@@ -42,28 +40,6 @@ extern long long _linux_get_real_cycles( void );
 extern long long _linux_get_virt_cycles( const hwd_context_t * ctx );
 extern long long _linux_get_virt_usec( const hwd_context_t * ctx );
 extern int _linux_shutdown( hwd_context_t * ctx );
-
-/* remap definitions of ntv routines to pfm */
-#define _x86_ntv_enum_events _papi_pfm_ntv_enum_events
-#define _x86_ntv_name_to_code _papi_pfm_ntv_name_to_code
-#define _x86_ntv_code_to_name _papi_pfm_ntv_code_to_name
-#define _x86_ntv_code_to_descr _papi_pfm_ntv_code_to_descr
-#define _x86_ntv_code_to_bits _papi_pfm_ntv_code_to_bits
-#define _x86_ntv_bits_to_info _papi_pfm_ntv_bits_to_info
-/* add an entry that doesn't exist for non-pfm */
-int _x86_ntv_name_to_code( char *name, unsigned int *event_code );
-
-/* Prototypes for entry points found in papi_pfm_events */
-extern int _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifer );
-extern int _papi_pfm_ntv_code_to_name( unsigned int EventCode, char *name,
-									   int len );
-extern int _papi_pfm_ntv_code_to_descr( unsigned int EventCode, char *name,
-										int len );
-extern int _papi_pfm_ntv_code_to_bits( unsigned int EventCode,
-									   hwd_register_t * bits );
-extern int _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-									   unsigned int *values, int name_len,
-									   int count );
 
 extern papi_mdi_t _papi_hwi_system_info;
 
@@ -671,7 +647,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 
 	for ( i = 0; i < natNum; i++ ) {
 		/* retrieve the mapping information about this native event */
-		_x86_ntv_code_to_bits( ( unsigned int ) ESI->NativeInfoArray[i].
+		_papi_pfm_ntv_code_to_bits( ( unsigned int ) ESI->NativeInfoArray[i].
 							   ni_event, &event_list[i].ra_bits );
 
 		if ( PENTIUM4 ) {
@@ -1181,12 +1157,12 @@ papi_vector_t _x86_vector = {
 	.stop_profiling = _x86_stop_profiling,
 
 	/* from pfm */
-	.ntv_enum_events = _x86_ntv_enum_events,
-	.ntv_name_to_code = _x86_ntv_name_to_code,
-	.ntv_code_to_name = _x86_ntv_code_to_name,
-	.ntv_code_to_descr = _x86_ntv_code_to_descr,
-	.ntv_code_to_bits = _x86_ntv_code_to_bits,
-	.ntv_bits_to_info = _x86_ntv_bits_to_info,
+	.ntv_enum_events   = _papi_pfm_ntv_enum_events,
+	.ntv_name_to_code  = _papi_pfm_ntv_name_to_code,
+	.ntv_code_to_name  = _papi_pfm_ntv_code_to_name,
+	.ntv_code_to_descr = _papi_pfm_ntv_code_to_descr,
+	.ntv_code_to_bits  = _papi_pfm_ntv_code_to_bits,
+	.ntv_bits_to_info  = _papi_pfm_ntv_bits_to_info,
 
 	/* from OS */
 	.update_shlib_info = _linux_update_shlib_info,

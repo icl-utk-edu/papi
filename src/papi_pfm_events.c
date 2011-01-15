@@ -18,7 +18,31 @@ xxx - bits_to_info uses native_map not pfm()
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
-#include "papi_pfm_events.h"
+
+#include "perfmon/pfmlib.h"
+#include "perfmon/perfmon.h"
+
+#ifdef __ia64__
+#include "perfmon/pfmlib_itanium2.h"
+#include "perfmon/pfmlib_montecito.h"
+#endif
+
+#if defined(DEBUG)
+#define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
+#else
+#define DEBUGCALL(a,b)
+#endif
+
+#define PAPI_EVENT_FILE "papi_events.csv"
+
+typedef struct
+{
+	int preset;				/* Preset code */
+	int derived;				/* Derived code */
+	char *( findme[MAX_COUNTER_TERMS] );	/* Strings to look for, more than 1 means derived */
+	char *operation;			/* PostFix operations between terms */
+	char *note;				/* In case a note is included with a preset */
+} pfm_preset_search_entry_t;
 
 /* these define cccr and escr register bits, and the p4 event structure */
 #include "perfmon/pfmlib_pentium4.h"
@@ -37,12 +61,6 @@ extern unsigned int PAPI_NATIVE_EVENT_SHIFT;
 extern unsigned int PAPI_NATIVE_UMASK_AND_MASK;
 extern unsigned int PAPI_NATIVE_UMASK_MAX;
 extern unsigned int PAPI_NATIVE_UMASK_SHIFT;
-
-extern int _papi_pfm_ntv_code_to_bits( unsigned int EventCode,
-									   hwd_register_t * bits );
-extern int _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-									   unsigned int *values, int name_len,
-									   int count );
 
 /* Globals declared extern elsewhere */
 

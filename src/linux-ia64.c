@@ -414,7 +414,7 @@ _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier )
 	}
 }
 
-unsigned int
+static unsigned int
 _papi_pfm_ntv_name_to_code( char *name, unsigned int *event_code )
 {
 	pfmlib_event_t event;

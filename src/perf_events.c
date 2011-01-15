@@ -16,6 +16,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include "papi_pfm_events.h"
 #include "mb.h"
 
 #define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
@@ -51,19 +52,6 @@ hwi_search_t *preset_search_map;
 volatile unsigned int _papi_pe_lock_data[PAPI_MAX_LOCK];
 extern papi_vector_t _papi_pe_vector;
 
-extern int _papi_pfm_setup_presets( char *name, int type );
-extern int _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier );
-extern int _papi_pfm_ntv_name_to_code( char *ntv_name,
-									   unsigned int *EventCode );
-extern int _papi_pfm_ntv_code_to_name( unsigned int EventCode, char *ntv_name,
-									   int len );
-extern int _papi_pfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr,
-										int len );
-extern int _papi_pfm_ntv_code_to_bits( unsigned int EventCode,
-									   hwd_register_t * bits );
-extern int _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-									   unsigned int *values, int name_len,
-									   int count );
 extern int get_cpu_info( PAPI_hw_info_t * hwinfo );
 
 /* Forward function declarations */

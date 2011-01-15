@@ -8,31 +8,22 @@
 *
 */
 
-#include "perfmon/pfmlib.h"
-#include "perfmon/perfmon.h"
-
-#ifdef __ia64__
-#include "perfmon/pfmlib_itanium2.h"
-#include "perfmon/pfmlib_montecito.h"
-#endif
-
-#if defined(DEBUG)
-#define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
-#else
-#define DEBUGCALL(a,b)
-#endif
-
-#define inline_static inline static
-
-#define PAPI_EVENT_FILE "papi_events.csv"
-
-typedef struct
-{
-	int preset;						   /* Preset code */
-	int derived;					   /* Derived code */
-	char *( findme[MAX_COUNTER_TERMS] );	/* Strings to look for, more than 1 means derived */
-	char *operation;				   /* PostFix operations between terms */
-	char *note;						   /* In case a note is included with a preset */
-} pfm_preset_search_entry_t;
+/* Prototypes for entry points found in papi_pfm_events */
+extern int _papi_pfm_error( int pfm_error );
+extern int _papi_pfm_setup_presets( char *name, int type );
+extern int _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier );
+extern int _pfm_get_counter_info( unsigned int event, unsigned int *selector,
+				  int *code );
+extern int _papi_pfm_ntv_name_to_code( char *ntv_name,
+				       unsigned int *EventCode );
+extern int _papi_pfm_ntv_code_to_name( unsigned int EventCode, char *name,
+				       int len );
+extern int _papi_pfm_ntv_code_to_descr( unsigned int EventCode, char *name,
+					int len );
+extern int _papi_pfm_ntv_code_to_bits( unsigned int EventCode,
+				       hwd_register_t * bits );
+extern int _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
+				       unsigned int *values, int name_len,
+				       int count );
 
 #endif // _PAPI_PFM_EVENTS_H
