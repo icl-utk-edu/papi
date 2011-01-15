@@ -822,32 +822,6 @@ _papi_pfm_setup_presets( char *pmu_name, int pmu_type )
 	return ( PAPI_OK );
 }
 
-int
-_papi_pfm_init(  )
-{
-	int retval;
-	unsigned int ncnt;
-
-	/* Opened once for all threads. */
-	SUBDBG( "pfm_initialize()\n" );
-	if ( ( retval = pfm_initialize(  ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-
-	/* Fill in MY_VECTOR.cmp_info.num_native_events */
-
-	SUBDBG( "pfm_get_num_events(%p)\n", &ncnt );
-	if ( ( retval = pfm_get_num_events( &ncnt ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_num_events(%p): %s", &ncnt,
-				   pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-	SUBDBG( "pfm_get_num_events() returns: %d\n", ncnt );
-	MY_VECTOR.cmp_info.num_native_events = ( int ) ncnt;
-	return ( PAPI_OK );
-}
-
 unsigned int
 _papi_pfm_ntv_name_to_code( char *name, int *event_code )
 {

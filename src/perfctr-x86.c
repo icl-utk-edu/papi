@@ -10,13 +10,13 @@
 #include "papi_memory.h"
 #include "papi_internal.h"
 #include "perfctr-x86.h"
+#include "perfmon/pfmlib.h"
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 extern int _papi_hwd_get_system_info( void );
 extern unsigned char PENTIUM4;
-extern int _papi_pfm_init(  );
 extern int _papi_pfm_setup_presets( char *name, int type );
 extern int _pfm_get_counter_info( unsigned int event, unsigned int *selector,
 								  int *code );
@@ -99,6 +99,32 @@ extern papi_vector_t MY_VECTOR;
 #else
 #define AMD_FPU "SPECULATIVE"
 #endif
+
+static int
+_papi_pfm_init(  )
+{
+	int retval;
+	unsigned int ncnt;
+
+	/* Opened once for all threads. */
+	SUBDBG( "pfm_initialize()\n" );
+	if ( ( retval = pfm_initialize(  ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
+		return ( PAPI_ESBSTR );
+	}
+
+	/* Fill in MY_VECTOR.cmp_info.num_native_events */
+
+	SUBDBG( "pfm_get_num_events(%p)\n", &ncnt );
+	if ( ( retval = pfm_get_num_events( &ncnt ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_get_num_events(%p): %s", &ncnt,
+				   pfm_strerror( retval ) );
+		return ( PAPI_ESBSTR );
+	}
+	SUBDBG( "pfm_get_num_events() returns: %d\n", ncnt );
+	MY_VECTOR.cmp_info.num_native_events = ( int ) ncnt;
+	return ( PAPI_OK );
+}
 
 static int
 _papi_hwd_fixup_vec( void )
