@@ -90,6 +90,36 @@ AC_C_INLINE
 AC_HEADER_TIME
 AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h])
 AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time])
+
+#
+# Check if the system provides dl* symbols without -ldl, and if not,
+# check for -ldl existance.
+#
+
+AC_MSG_CHECKING([for dlopen and dlerror symbols in base system])
+AC_TRY_LINK([#include <dlfcn.h>],
+	[void *p = dlopen ("", 0); char *c = dlerror();],
+	[dlsymbols_in_base="yes"], [dlsymbols_in_base="no"])
+if test "${dlsymbols_in_base}" = "yes"; then
+	AC_MSG_RESULT([found])
+	LDL=""
+else
+	AC_MSG_RESULT([not found])
+	AC_MSG_CHECKING([for dlopen and dlerror symbols in -ldl])
+	SAVED_LDFLAGS=${LDFLAGS}
+	LDFLAGS="${LDFLAGS} -ldl"
+	AC_TRY_LINK([#include <dlfcn.h>],
+		[void *p = dlopen ("", 0); char *c = dlerror();],
+		[has_ldl="yes"], [has_ldl="no"])
+	LDFLAGS=${SAVED_LDFLAGS}
+	if test "${has_ldl}" = "yes" ; then
+		AC_MSG_RESULT([found])
+  	LDL="-ldl"
+	else
+		AC_MSG_ERROR([cannot find dlopen and dlerror symbols neither in the base system libraries nor in -ldl])
+	fi
+fi
+AC_SUBST(LDL)
 	    
 if test "$OS" = "CLE"; then
   virtualtimer=times
@@ -832,7 +862,7 @@ AC_ARG_WITH(perfmon,
              fi],
             [perfmon=0
 	         if test "$cross_compiling" = "no" ; then
-               AC_MSG_CHECKING(for perfmon version)
+               AC_MSG_NOTICE(Checking for perfmon version)
 	           AC_CHECK_FILE(/sys/kernel/perfmon/version,
                              [perfmon=`cat /sys/kernel/perfmon/version`],
                              [AC_CHECK_FILE(/proc/perfmon,
