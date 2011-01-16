@@ -67,7 +67,6 @@ int init_presets(void);
  */
 int _papi_freebsd_init_substrate(int cidx)
 {
-   int retval;
    (void)cidx;
 
    SHOW_WHERE_I_AM;
@@ -86,13 +85,12 @@ int _papi_freebsd_init_substrate(int cidx)
    /* Internal function, doesn't necessarily need to be a function */
    init_presets();
 
-   return retval;
+   return PAPI_OK;
 }
 
 int init_presets(void)
 {
 	const struct pmc_cpuinfo *info;
-	int i;
 
 	SHOW_WHERE_I_AM;
 
