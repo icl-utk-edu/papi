@@ -747,11 +747,21 @@ int _papi_freebsd_ntv_enum_events(unsigned int *EventCode, int modifier)
 	return PAPI_OK;
 }
 
-int _papi_freebsd_ntv_name_to_code(char *name, int* event_code) {
+int _papi_freebsd_ntv_name_to_code(char *name, unsigned int* event_code) {
   SHOW_WHERE_I_AM;
   (void)name;
   (void)event_code;
-  return PAPI_OK;
+
+	int i;
+
+	for (i = 0; i < MY_VECTOR.cmp_info.num_native_events; i++)
+		if (strcmp (name, _papi_hwd_native_info[Context.CPUsubstrate].info[i].name) == 0)
+		{
+			*event_code = i | PAPI_NATIVE_AND_MASK;
+			return PAPI_OK;
+		}
+
+	return PAPI_ENOEVNT;
 }
 
 int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
