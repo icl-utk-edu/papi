@@ -657,6 +657,7 @@ PMAPI
 MAKEVER
 DEBUGFLAGS
 arch
+LDL
 EGREP
 GREP
 RANLIB
@@ -4085,6 +4086,71 @@ fi
 done
 
 
+#
+# Check if the system provides dl* symbols without -ldl, and if not,
+# check for -ldl existance.
+#
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen and dlerror symbols in base system" >&5
+$as_echo_n "checking for dlopen and dlerror symbols in base system... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <dlfcn.h>
+int
+main ()
+{
+void *p = dlopen ("", 0); char *c = dlerror();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  dlsymbols_in_base="yes"
+else
+  dlsymbols_in_base="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+if test "${dlsymbols_in_base}" = "yes"; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+	LDL=""
+else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen and dlerror symbols in -ldl" >&5
+$as_echo_n "checking for dlopen and dlerror symbols in -ldl... " >&6; }
+	SAVED_LDFLAGS=${LDFLAGS}
+	LDFLAGS="${LDFLAGS} -ldl"
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <dlfcn.h>
+int
+main ()
+{
+void *p = dlopen ("", 0); char *c = dlerror();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  has_ldl="yes"
+else
+  has_ldl="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	LDFLAGS=${SAVED_LDFLAGS}
+	if test "${has_ldl}" = "yes" ; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+  	LDL="-ldl"
+	else
+		as_fn_error "cannot find dlopen and dlerror symbols neither in the base system libraries nor in -ldl" "$LINENO" 5
+	fi
+fi
+
+
 if test "$OS" = "CLE"; then
   virtualtimer=times
   tls=__thread
@@ -5378,8 +5444,8 @@ if test "${with_perfmon+set}" = set; then :
 else
   perfmon=0
 	         if test "$cross_compiling" = "no" ; then
-               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perfmon version" >&5
-$as_echo_n "checking for perfmon version... " >&6; }
+               { $as_echo "$as_me:${as_lineno-$LINENO}: Checking for perfmon version" >&5
+$as_echo "$as_me: Checking for perfmon version" >&6;}
 	           { $as_echo "$as_me:${as_lineno-$LINENO}: checking for /sys/kernel/perfmon/version" >&5
 $as_echo_n "checking for /sys/kernel/perfmon/version... " >&6; }
 if test "${ac_cv_file__sys_kernel_perfmon_version+set}" = set; then :
