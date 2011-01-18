@@ -65,7 +65,8 @@ typedef enum {
 	PFM_PMU_MONTECITO,		/* Intel Dual-Core Itanium 2 9000 */
 	PFM_PMU_AMD64,			/* AMD AMD64 (obsolete) */
 	PFM_PMU_I386_P6,		/* Intel PIII (P6 core) */
-	PFM_PMU_PENTIUM4,		/* Intel Pentium4/Xeon/EM64T */
+	PFM_PMU_INTEL_NETBURST,		/* Intel Netburst (Pentium 4) */
+	PFM_PMU_INTEL_NETBURST_P,	/* Intel Netburst Prescott (Pentium 4) */
 	PFM_PMU_COREDUO,		/* Intel Core Duo/Core Solo */
 	PFM_PMU_I386_PM,		/* Intel Pentium M */
 	PFM_PMU_INTEL_CORE,		/* Intel Core */

@@ -36,10 +36,12 @@
 
 #include <perfmon/pfmlib.h>
 
+#define MAX_ENCODING	8
+
 typedef struct {
 	const char *name;
 	const char *fstr;
-	uint64_t codes[2];
+	uint64_t codes[MAX_ENCODING];
 	int ret, count;
 } test_event_t;
 
@@ -525,6 +527,62 @@ static const test_event_t x86_test_events[]={
 	{ .name = "wsm::uops_issued:0xfff",
 	  .ret  = PFM_ERR_ATTR,
 	  .count = 0,
+	},
+	{ .name = "netburst::global_power_events",
+	  .ret  = PFM_SUCCESS,
+	  .count = 3,
+	  .codes[0] = 0x2600020f,
+	  .codes[1] = 0x3d000,
+	  .codes[2] = 0x18,
+	  .fstr = "netburst::global_power_events:RUNNING:k=1:u=1:e=0:cmpl=0:thr=0",
+	},
+	{ .name = "netburst::global_power_events:RUNNING:u:k",
+	  .ret  = PFM_SUCCESS,
+	  .count = 3,
+	  .codes[0] = 0x2600020f,
+	  .codes[1] = 0x3d000,
+	  .codes[2] = 0x18,
+	  .fstr = "netburst::global_power_events:RUNNING:k=1:u=1:e=0:cmpl=0:thr=0",
+	},
+	{ .name = "netburst::global_power_events:RUNNING:e",
+	  .ret  = PFM_SUCCESS,
+	  .count = 3,
+	  .codes[0] = 0x2600020f,
+	  .codes[1] = 0x107d000,
+	  .codes[2] = 0x18,
+	  .fstr = "netburst::global_power_events:RUNNING:k=1:u=1:e=1:cmpl=0:thr=0",
+	},
+	{ .name = "netburst::global_power_events:RUNNING:cmpl:e:u",
+	  .ret  = PFM_SUCCESS,
+	  .count = 3,
+	  .codes[0] = 0x26000205,
+	  .codes[1] = 0x10fd000,
+	  .codes[2] = 0x18,
+	  .fstr = "netburst::global_power_events:RUNNING:k=0:u=1:e=1:cmpl=1:thr=0",
+	},
+	{ .name = "netburst::global_power_events:RUNNING:cmpl:thr=8:u",
+	  .ret  = PFM_SUCCESS,
+	  .count = 3,
+	  .codes[0] = 0x26000205,
+	  .codes[1] = 0x8fd000,
+	  .codes[2] = 0x18,
+	  .fstr = "netburst::global_power_events:RUNNING:k=0:u=1:e=0:cmpl=1:thr=8",
+	},
+	{ .name = "netburst::global_power_events:RUNNING:cmpl:thr=32:u",
+	  .ret  = PFM_ERR_ATTR_VAL,
+	  .count = 0,
+	},
+	{ .name = "netburst::instr_completed:nbogus",
+	  .ret  = PFM_ERR_NOTFOUND,
+	  .count = 0,
+	},
+	{ .name = "netburst_p::instr_completed:nbogus",
+	  .ret  = PFM_SUCCESS,
+	  .count = 3,
+	  .codes[0] = 0xe00020f,
+	  .codes[1] = 0x3b000,
+	  .codes[2] = 0x2d,
+	  .fstr = "netburst_p::instr_completed:NBOGUS:k=1:u=1:e=0:cmpl=0:thr=0",
 	},
 };
 #define NUM_TEST_EVENTS (sizeof(x86_test_events)/sizeof(test_event_t))

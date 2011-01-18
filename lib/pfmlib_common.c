@@ -50,7 +50,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_X86
-	//&pentium4_support,
+	&netburst_support,
+	&netburst_p_support,
 	&intel_pii_support,
 	&intel_ppro_support,
 	&intel_p6_support,

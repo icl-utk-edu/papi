@@ -57,7 +57,7 @@
 #define EVENT_SELECT_BITS 6
 
 typedef union {
-	unsigned long val;
+	unsigned long long val;
 	struct {
 		unsigned long t1_usr:1;
 		unsigned long t1_os:1;
@@ -110,7 +110,7 @@ typedef union {
  *   11 - 0    Reserved
  **/
 typedef union {
-	unsigned long val;
+	unsigned long long val;
 	struct {
 		unsigned long reserved1:12;
 		unsigned long enable:1;
@@ -129,106 +129,6 @@ typedef union {
 	} bits;
 } netburst_cccr_value_t;
 
-
-/**
- * netburst_escr_reg_t
- *
- * Describe one ESCR register.
- *
- * "netburst_escrs" is a flat array of these structures
- * that defines all the ESCRs.
- *
- * @name: ESCR's name
- * @pmc: Perfmon's PMC number for this ESCR.
- * @allowed_cccrs: Array of CCCR numbers that can be used with this ESCR. A
- *                 positive value is an index into the netburst_ccrs array.
- *                 A value of -1 indicates that slot is unused.
- **/
-
-#define MAX_CCCRS_PER_ESCR 3
-
-typedef struct {
-	char *name;
-	int pmc;
-	int allowed_cccrs[MAX_CCCRS_PER_ESCR];
-} netburst_escr_reg_t;
-
-
-/* CCCR: Counter Configuration Control Register
- *
- * These registers are used to configure the data counters. There are 18
- * CCCRs, one for each data counter.
- */
-
-/**
- * netburst_cccr_reg_t
- *
- * Describe one CCCR register.
- *
- * "netburst_cccrs" is a flat array of these structures
- * that defines all the CCCRs.
- *
- * @name: CCCR's name
- * @pmc: Perfmon's PMC number for this CCCR
- * @pmd: Perfmon's PMD number for the associated data counter. Every CCCR has
- *       exactly one counter.
- * @allowed_escrs: Array of ESCR numbers that can be used with this CCCR. A
- *                 positive value is an index into the netburst_escrs array.
- *                 A value of -1 indicates that slot is unused. The index into
- *                 this array is the value to use in the escr_select portion
- *                 of the CCCR value.
- **/
-
-#define MAX_ESCRS_PER_CCCR 8
-
-typedef struct {
-	char *name;
-	int pmc;
-	int pmd;
-	int allowed_escrs[MAX_ESCRS_PER_CCCR];
-} netburst_cccr_reg_t;
-
-/**
- * netburst_replay_regs_t
- *
- * Describe one pair of PEBS registers for use with the replay_event event.
- *
- * "p4_replay_regs" is a flat array of these structures
- * that defines all the PEBS pairs per Table A-10 of 
- * the Intel System Programming Guide Vol 3B.
- *
- * @enb:      value for the PEBS_ENABLE register for a given replay metric.
- * @mat_vert: value for the PEBS_MATRIX_VERT register for a given metric.
- *            The replay_event event defines a series of virtual mask bits
- *            that serve as indexes into this array. The values at that index
- *            provide information programmed into the PEBS registers to count
- *            specific metrics available to the replay_event event.
- **/
-
-typedef struct {
-	int enb;
-	int mat_vert;
-} netburst_replay_regs_t;
-
-/**
- * netburst_pmc_t
- *
- * Provide a mapping from PMC number to the type of control register and
- * its index within the appropriate array.
- *
- * @name: Name
- * @type: NETBURST_PMC_TYPE_ESCR or NETBURST_PMC_TYPE_CCCR
- * @index: Index into the netburst_escrs array or the netburst_cccrs array.
- **/
-typedef struct {
-	char *name;
-	int type;
-	int index;
-} netburst_pmc_t;
-
-#define NETBURST_PMC_TYPE_ESCR 1
-#define NETBURST_PMC_TYPE_CCCR 2
-
 /**
  * netburst_event_mask_t
  *
@@ -242,37 +142,88 @@ typedef struct {
 	char *name;
 	char *desc;
 	unsigned int bit;
+	unsigned int flags;
 } netburst_event_mask_t;
-
-/**
- * netburst_event_t
- *
- * Describe one event that can be counted on Pentium4/EM64T.
- *
- * "netburst_events" is a flat array of these structures that defines
- * all possible events.
- *
- * @name: Event name
- * @desc: Event description
- * @event_select: Value for the 'event_select' field in the ESCR (bits [31:25]).
- * @escr_select: Value for the 'escr_select' field in the CCCR (bits [15:13]).
- * @allowed_escrs: Numbers for ESCRs that can be used to count this event. A
- *                 positive value is an index into the netburst_escrs array.
- *                 A value of -1 means that slot is not used.
- * @event_masks: Array of descriptions of available masks for this event.
- *               Array elements with a NULL 'name' field are unused.
- **/
+/*
+ * netburst_event_mask_t->flags
+ */
+#define NETBURST_FL_DFL	0x1 /* event mask is default */
 
 #define MAX_ESCRS_PER_EVENT 2
+
+/*
+ * These are the unique event codes used by perf_events.
+ * The need to be encoded in the ESCR.event_select field when
+ * programming for perf_events
+ */
+enum netburst_events {
+	P4_EVENT_TC_DELIVER_MODE,
+	P4_EVENT_BPU_FETCH_REQUEST,
+	P4_EVENT_ITLB_REFERENCE,
+	P4_EVENT_MEMORY_CANCEL,
+	P4_EVENT_MEMORY_COMPLETE,
+	P4_EVENT_LOAD_PORT_REPLAY,
+	P4_EVENT_STORE_PORT_REPLAY,
+	P4_EVENT_MOB_LOAD_REPLAY,
+	P4_EVENT_PAGE_WALK_TYPE,
+	P4_EVENT_BSQ_CACHE_REFERENCE,
+	P4_EVENT_IOQ_ALLOCATION,
+	P4_EVENT_IOQ_ACTIVE_ENTRIES,
+	P4_EVENT_FSB_DATA_ACTIVITY,
+	P4_EVENT_BSQ_ALLOCATION,
+	P4_EVENT_BSQ_ACTIVE_ENTRIES,
+	P4_EVENT_SSE_INPUT_ASSIST,
+	P4_EVENT_PACKED_SP_UOP,
+	P4_EVENT_PACKED_DP_UOP,
+	P4_EVENT_SCALAR_SP_UOP,
+	P4_EVENT_SCALAR_DP_UOP,
+	P4_EVENT_64BIT_MMX_UOP,
+	P4_EVENT_128BIT_MMX_UOP,
+	P4_EVENT_X87_FP_UOP,
+	P4_EVENT_TC_MISC,
+	P4_EVENT_GLOBAL_POWER_EVENTS,
+	P4_EVENT_TC_MS_XFER,
+	P4_EVENT_UOP_QUEUE_WRITES,
+	P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE,
+	P4_EVENT_RETIRED_BRANCH_TYPE,
+	P4_EVENT_RESOURCE_STALL,
+	P4_EVENT_WC_BUFFER,
+	P4_EVENT_B2B_CYCLES,
+	P4_EVENT_BNR,
+	P4_EVENT_SNOOP,
+	P4_EVENT_RESPONSE,
+	P4_EVENT_FRONT_END_EVENT,
+	P4_EVENT_EXECUTION_EVENT,
+	P4_EVENT_REPLAY_EVENT,
+	P4_EVENT_INSTR_RETIRED,
+	P4_EVENT_UOPS_RETIRED,
+	P4_EVENT_UOP_TYPE,
+	P4_EVENT_BRANCH_RETIRED,
+	P4_EVENT_MISPRED_BRANCH_RETIRED,
+	P4_EVENT_X87_ASSIST,
+	P4_EVENT_MACHINE_CLEAR,
+	P4_EVENT_INSTR_COMPLETED,
+};
 
 typedef struct {
 	char *name;
 	char *desc;
 	unsigned int event_select;
 	unsigned int escr_select;
+	enum netburst_events perf_code;	/* perf_event event code, enum P4_EVENTS */
 	int allowed_escrs[MAX_ESCRS_PER_EVENT];
 	netburst_event_mask_t event_masks[EVENT_MASK_BITS];
-} netburst_event_t;
+} netburst_entry_t;
+
+#define NETBURST_ATTR_U	0
+#define NETBURST_ATTR_K	1
+#define NETBURST_ATTR_C	2
+#define NETBURST_ATTR_E	3
+#define NETBURST_ATTR_T	4
+
+#define _NETBURST_ATTR_U (1 << NETBURST_ATTR_U)
+#define _NETBURST_ATTR_K (1 << NETBURST_ATTR_K)
+
+#define P4_REPLAY_REAL_MASK 0x00000003
 
 #endif
-
