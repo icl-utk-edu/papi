@@ -613,10 +613,15 @@ pfm_amd64_get_event_next(void *this, int idx)
 }
 
 int
-pfm_amd64_event_is_valid(void *this, int idx)
+pfm_amd64_event_is_valid(void *this, int pidx)
 {
+	pfmlib_pmu_t *pmu = this;
+
+	if (pidx < 0 || pidx >= pmu->pme_count)
+		return 0;
+
 	/* valid revision */
-	return amd64_event_valid(this, idx);
+	return amd64_event_valid(this, pidx);
 }
 
 int
