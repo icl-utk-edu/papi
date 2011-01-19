@@ -1,4 +1,81 @@
 ===============================================================================
+PAPI 4.1.2 RELEASE NOTES                                            20 Jan 2011
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP412.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This is a minor release of PAPI-C. It addresses a number of bugs and other
+issues that have surfaced since the 4.1.1 release.
+
+Visit the PAPI Reference pages for more information at:
+http://icl.cs.utk.edu/projects/papi/wiki/Main_Page
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 4.1.2 SINCE PAPI 4.1.1
+===============================================================================
+Bug Fixes:
+----------
+	* fixed a long-standing subtle bug identified by Richard Strong that caused 
+	  segfaults when multiplexing
+	* fixed several bugs that were causing test failures on POWER6/AIX
+	* properly detect Pentium M in configure
+	* fixed a problem with perf_events not properly handling overflows; first 
+	  identified by Mark Krentel
+	* fixed a problem where perfctr was silently adding uncountable events
+	* fixed a lock bug identified by Martin Schindewolf
+	* fixed forking order for {multi|zero}_attach.c
+	
+Enhancements:
+-------------
+	* updated support for freeBSD submitted by Harald Servat
+	* a plethora of code cleanups submitted by Robert Richter
+	* addressed compatibility issues in run_tests.sh to make it posix comliant
+	* refreshed PAPI_Matlab support
+	* reimplemented SUBDBG print capabilities to address an issue first 
+	  identified by Maynard Johnson
+	* refreshed preset event definitions for Nehalem, including implementations 
+	  for PAPI_HW_INT; submitted by Michel Brown
+	* added 3 new error codes: PAPI_EATTR, PAPI_ECOUNT, and PAPI_ECOMBO. 
+	  These provide more detail on why an event add fails
+	* implement cpuid leaf4 mtrics required by Intel Westmere
+	
+New Platforms:
+-------------
+	* Intel Westmere on perfctr and perf_events
+	
+Deprecated Platforms:
+---------------------
+	
+New Components:
+---------------
+
+Open Issues:
+-------------
+	* PowerPC970 / linux is currently not supported by configure
+	* POWER7 / AIX support is in development
+	  
+Experimental:
+-------------
+	* libpfm4 support is experimentally available and subject to change
+
+Known Bugs:
+-----------
+
+
+===============================================================================
 PAPI 4.1.1 RELEASE NOTES                                            01 Oct 2010
 ===============================================================================
 

@@ -202,7 +202,7 @@ PLATFORM NOTES:
 The earprofile test fails under perfmon for Itanium II. It has been
 reconfigured to work on the upcoming perfmon2 interface.
 
-Linux - PPC64 (POWER5, POWER5+, POWER6, and PowerPC970)
+Linux - PPC64 (POWER5, POWER5+, POWER6 and PowerPC970)
 ****************************************************************************
 Linux/PPC64 requires that the kernel be patched and recompiled with the
 PerfCtr patch if the kernel is version 2.6.30 or older. The required patches 
@@ -227,11 +227,11 @@ to learn more about these options.
 
 Follow the general installation instructions to complete your installation.
 
-Linux Perf Events ( with kernel 2.6.31 and newer )
+Linux Perf Events ( with kernel 2.6.32 and newer )
 *****************************************************************************
 
 Performance counter support has been merged as the "Perf Events"
-subsystem as of Linux 2.6.31.  This means that PAPI can be built
+subsystem as of Linux 2.6.32.  This means that PAPI can be built
 without patching the kernel on new enough systems.
 
 Perf Events support is new, and certain functionality does not work.
@@ -264,7 +264,7 @@ replacing INCDIR with the directory that perf_event.h is in.
 
 Linux PerfCtr (requires patching the kernel)
 *****************************************************************************
-When using Linux kernels before 2.6.31 the kernel must be patched with
+When using Linux kernels before 2.6.32 the kernel must be patched with
 the PerfCtr patch set.  (This patchset can also be used on more recent
 kernels if the support provided by Perf Events is not enough for your
 workload). The required patches and complete installation instructions 
