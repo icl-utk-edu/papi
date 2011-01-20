@@ -48,6 +48,7 @@ pfmlib_pmu_t amd64_fam10h_##n##_support={			\
 	.max_encoding		= 1,				\
 	.pe			= amd64_fam10h_pe,		\
 	.atdesc			= amd64_mods,			\
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,	\
 								\
 	.pmu_detect		= pfm_amd64_fam10h_##n##_detect,\
 	.pmu_init		= pfm_amd64_pmu_init,		\

@@ -126,6 +126,7 @@ pfmlib_pmu_t intel_pii_support={
 	.pme_count		= I386_PII_EVENT_COUNT,
 	.pe			= i386_pII_pe,
 	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_p6_detect_pii,
 	.max_encoding		= 1,
@@ -147,6 +148,7 @@ pfmlib_pmu_t intel_p6_support={
 	.pme_count		= I386_PIII_EVENT_COUNT,
 	.pe			= i386_pIII_pe,
 	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_p6_detect_piii,
 	.max_encoding		= 1,
@@ -168,6 +170,7 @@ pfmlib_pmu_t intel_ppro_support={
 	.pme_count		= I386_PPRO_EVENT_COUNT,
 	.pe			= i386_ppro_pe,
 	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_p6_detect_ppro,
 
@@ -190,6 +193,7 @@ pfmlib_pmu_t intel_pm_support={
 	.pmu			= PFM_PMU_I386_PM,
 	.pe			= i386_pm_pe,
 	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_p6_detect_pm,
 	.pme_count		= I386_PM_EVENT_COUNT,

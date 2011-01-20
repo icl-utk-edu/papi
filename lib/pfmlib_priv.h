@@ -123,6 +123,7 @@ typedef struct pfmlib_pmu {
  */
 #define PFMLIB_PMU_FL_INIT	0x1	/* PMU initialized correctly */
 #define PFMLIB_PMU_FL_ACTIVE	0x2	/* PMU is initialized + detected on host */
+#define PFMLIB_PMU_FL_RAW_UMASK	0x4	/* PMU supports PFM_ATTR_RAW_UMASKS */
 
 typedef struct {
 	int	initdone;

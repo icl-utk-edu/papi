@@ -523,6 +523,10 @@ static const test_event_t x86_test_events[]={
 	  .ret  = PFM_ERR_ATTR,
 	  .count = 0,
 	},
+	{ .name = "wsm::uops_issued:0xfff",
+	  .ret  = PFM_ERR_ATTR,
+	  .count = 0,
+	},
 };
 #define NUM_TEST_EVENTS (sizeof(x86_test_events)/sizeof(test_event_t))
 

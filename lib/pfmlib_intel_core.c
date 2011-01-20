@@ -71,6 +71,7 @@ pfmlib_pmu_t intel_core_support={
 	.max_encoding		= 1,
 	.pe			= intel_core_pe,
 	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_core_detect,
 	.pmu_init		= pfm_core_init,

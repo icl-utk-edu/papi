@@ -50,6 +50,7 @@ pfmlib_pmu_t amd64_k7_support={
 	.max_encoding		= 1,
 	.pe			= amd64_k7_pe,
 	.atdesc			= amd64_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_amd64_k7_detect,
 	.get_event_encoding	= pfm_amd64_get_encoding,

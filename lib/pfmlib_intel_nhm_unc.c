@@ -193,6 +193,18 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
 
 			reg->val |= umask << 8;
+		} else if (a->type == PFM_ATTR_RAW_UMASK) {
+
+			/* there can only be one RAW_UMASK per event */
+
+			/* sanity check */
+			if (a->id & ~0xff) {
+				DPRINT("raw umask is 8-bit wide\n");
+				return PFM_ERR_ATTR;
+			}
+			/* override umask */
+			umask = a->id & 0xff;
+			ugrpmsk = grpmsk;
 		} else {
 			switch(pfm_intel_x86_attr2mod(this, e->event, a->id)) {
 				case NHM_UNC_ATTR_I: /* invert */
@@ -238,6 +250,8 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	for(k=0; k < e->nattrs; k++) {
 		if (e->attrs[k].type == PFM_ATTR_UMASK)
 			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
+		else if (e->attrs[k].type == PFM_ATTR_RAW_UMASK)
+			evt_strcat(e->fstr, ":0x%x", e->attrs[k].id);
 	}
 
 	reg->val |= umask << 8;
@@ -298,6 +312,7 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.max_encoding		= 1,
 	.pe			= intel_nhm_unc_pe,
 	.atdesc			= nhm_unc_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_nhm_unc_detect,
 	.get_event_encoding	= pfm_nhm_unc_get_encoding,
@@ -319,6 +334,7 @@ pfmlib_pmu_t intel_wsm_unc_support={
 	.max_encoding		= 1,
 	.pe			= intel_wsm_unc_pe,
 	.atdesc			= nhm_unc_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_wsm_unc_detect,
 	.get_event_encoding	= pfm_nhm_unc_get_encoding,

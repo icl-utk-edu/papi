@@ -528,9 +528,14 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 				DPRINT("cannot mix raw umask with umask\n");
 				return PFM_ERR_ATTR;
 			}
+			if (!(pmu->flags & PFMLIB_PMU_FL_RAW_UMASK)) {
+				DPRINT("PMU %s does not support RAW umasks\n", pmu->name);
+				return PFM_ERR_ATTR;
+			}
 
 			memset(&ainfo, 0, sizeof(ainfo));
 
+			ainfo.name = "RAW_UMASK";
 			ainfo.type = PFM_ATTR_RAW_UMASK;
 			ainfo.idx  = strtoul(s, &endptr, 0);
 			if (*endptr) {
