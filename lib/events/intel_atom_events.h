@@ -758,7 +758,7 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	  .ngrp = 1,
 	  .umasks = {
 		{ .uname  = "S",
-		  .udesc  = "number of SMD saturated arithmetic micro-ops executed",
+		  .udesc  = "number of SIMD saturated arithmetic micro-ops executed",
 		  .uflags  = INTEL_X86_NCOMBO,
 		  .ucode  = 0x0,
 		},
