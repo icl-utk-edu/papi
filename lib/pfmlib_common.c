@@ -507,7 +507,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 	na = d->nattrs;
 
 	while(s) {
-		p = strchr(s, ':');
+		p = strchr(s, PFMLIB_ATTR_DELIM);
 		if (p)
 			*p++ = '\0';
 
@@ -678,7 +678,7 @@ pfmlib_parse_equiv_event(pfmlib_pmu_t *pmu, const char *event, pfmlib_event_desc
 	if (!str)
 		return PFM_ERR_NOMEM;
 
-	p = strchr(s, ':');
+	p = strchr(s, PFMLIB_ATTR_DELIM);
 	if (p)
 		*p++ = '\0';
 
@@ -725,18 +725,18 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	 * safe to do before pname, because now
 	 * PMU name cannot have commas in them.
 	 */
-	p = strchr(s, ',');
+	p = strchr(s, PFMLIB_EVENT_DELIM);
 	if (p)
 		*p = '\0';
 
 	/* check for optional PMU name */
-	p = strchr(s, ':');
-	if (p && *(p+1) == ':') {
+	p = strstr(s, PFMLIB_PMU_DELIM);
+	if (p) {
 		*p = '\0';
 		pname = s;
-		s = p + 2;
-		p = strchr(s, ':');
+		s = p + strlen(PFMLIB_PMU_DELIM);
 	}
+	p = strchr(s, PFMLIB_ATTR_DELIM);
 	if (p)
 		*p++ = '\0';
 	/*
