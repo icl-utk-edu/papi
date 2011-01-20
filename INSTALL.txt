@@ -187,6 +187,38 @@ use:
     % ./run_cat_tests.sh
 after substituting "aprun -n1" for "yod -sz 1" in run_cat_tests.sh.
 
+FreeBSD - i386 & amd64
+*****************************************************************************
+PAPI requires FreeBSD 6 or higher to work.
+
+Kernel needs some modifications to provide PAPI access to the performance 
+monitoring counters. Simply, add "options HWPMC_HOOKS" and "device hwpmc" in
+the kernel configuration file. For i386 systems, add also "device apic".
+(You can obtain more information in hwpmc(4), see NOTE 1 to check the
+supported HW)
+
+After this step, just recompile the kernel and boot it.
+
+FreeBSD 7 (or greater) does not ship with a fortran compiler. To compile
+fortan tests you will need to install a fortran compiler first (e.g.
+installing it from /usr/ports/lang/gcc42), and setup the F77 environment
+variable with the compiler you want to use (e.g. gfortran42). 
+
+Fortran compilers may issue errors due to "Integer too big for its kind *".
+Add to FFLAGS environment variable a compiler option to use int*8 by default
+(in gfortran42 it is -fdefault-integer-8).
+
+Follow the "General Installation" steps.
+
+NOTE 1: 
+--
+HWPMC driver supports the following processors: Intel Pentium 2,
+Intel Pentium Pro, Intel Pentium 3, Intel Pentium M, Intel Celeron,
+Intel Pentium 4, AMD K7 (AMD Athlon) and AMD K8 (AMD Athlon64 / Opteron).
+
+FreeBSD 8 also adds support for Core/Core2/Core-i[357]/Atom processors.
+There is also a patch for FreeBSD 7/7.1 in http://wiki.freebsd.org/PmcTools
+
 Linux - Itanium II & Montecito
 *****************************************************************************
 PAPI on Itanium Linux links to the perfmon library. The library version and 
