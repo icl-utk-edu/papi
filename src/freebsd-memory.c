@@ -3,7 +3,7 @@
 /****************************/
 
 /*
-* File:		linux-memory.c
+* File:		freebsd-memory.c
 * Author:	Harald Servat
 *			redcrash@gmail.com
 * Mod:		James Ralph 

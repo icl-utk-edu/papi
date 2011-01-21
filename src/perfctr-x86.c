@@ -19,16 +19,16 @@ extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 extern int _papi_hwd_get_system_info( void );
 extern unsigned char PENTIUM4;
 
-/* Prototypes for entry points found in perfctr.c and linux-memory.c */
+#include "linux-memory.h"
+
+/* Prototypes for entry points found in perfctr.c */
 extern int _linux_init_substrate( int );
 extern int _linux_ctl( hwd_context_t * ctx, int code,
 					   _papi_int_option_t * option );
 extern void _linux_dispatch_timer( int signal, hwd_siginfo_t * si,
 								   void *context );
-extern int _linux_get_memory_info( PAPI_hw_info_t * hw_info, int cpu_type );
 extern int _linux_update_shlib_info( void );
 extern int _linux_get_system_info( void );
-extern int _linux_get_dmem_info( PAPI_dmem_info_t * d );
 extern int _linux_init( hwd_context_t * ctx );
 extern long long _linux_get_real_usec( void );
 extern long long _linux_get_real_cycles( void );
