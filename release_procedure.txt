@@ -38,8 +38,10 @@ __ 8. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and
 	RELEASENOTES.txt.
 
 __ 9. Tag cvs: papi-X-Y-Z-t.
+      cvs tag papi-X-Y-Z-t
 
 __ 10. If this is not an incremental release, also branch cvs: papi-X-Y-Z-b.
+      cvs tag -r papi-X-Y-Z-t -b papi-X-Y-Z-b
 
 __ 11. Export the tag to a clean working directory:
 	> cvs export -r <tag> <module> ex:
@@ -47,7 +49,8 @@ __ 11. Export the tag to a clean working directory:
 
 __ 12. Delete any unneccessary files or directories
 		particularly .doc and .pdf files in the /doc directory
-	Things needed in /doc {Doxyfile, Doxyfile-everything, Makefile}
+	Things needed in /doc {Doxyfile, Doxyfile-everything}
+        You can use the delete_before_release.sh script for this.
 
 __ 13. Rename the directory from papi to papi-X.Y.Z
 
