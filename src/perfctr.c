@@ -668,68 +668,6 @@ _linux_get_system_info( void )
 	return ( PAPI_OK );
 }
 
-/* Low level functions, should not handle errors, just return codes. */
-
-#if !defined(PPC64)
-static inline long long
-get_cycles( void )
-{
-	long long ret = 0;
-#ifdef __x86_64__
-	do {
-		unsigned int a, d;
-		asm volatile ( "rdtsc":"=a" ( a ), "=d"( d ) );
-		( ret ) = ( ( long long ) a ) | ( ( ( long long ) d ) << 32 );
-	} while ( 0 );
-#else
-	__asm__ __volatile__( "rdtsc":"=A"( ret )
-						  : );
-#endif
-	return ret;
-}
-#else
-static inline long long
-get_cycles( void )
-{
-	unsigned long tbl = 0;
-	unsigned long tbu = 0;
-	unsigned long long res = 0;
-	asm volatile ( "mftb %0":"=r" ( tbl ) );
-	asm volatile ( "mftbu %0":"=r" ( tbu ) );
-	res = tbu;
-	res = ( res << 32 ) | tbl;
-	return ( res * tb_scale_factor );
-}
-#endif //PPC64
-
-long long
-_linux_get_real_usec( void )
-{
-	return ( ( long long ) get_cycles(  ) /
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
-}
-
-long long
-_linux_get_real_cycles( void )
-{
-	return ( ( long long ) get_cycles(  ) );
-}
-
-long long
-_linux_get_virt_cycles( const hwd_context_t * ctx )
-{
-	return ( ( long long ) vperfctr_read_tsc( ctx->perfctr ) *
-			 tb_scale_factor );
-}
-
-long long
-_linux_get_virt_usec( const hwd_context_t * ctx )
-{
-	return ( ( ( long long ) vperfctr_read_tsc( ctx->perfctr ) *
-			   tb_scale_factor ) /
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
-}
-
 /* This routine is for shutting down threads, including the
    master thread. */
 

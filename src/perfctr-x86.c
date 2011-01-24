@@ -30,11 +30,9 @@ extern void _linux_dispatch_timer( int signal, hwd_siginfo_t * si,
 extern int _linux_update_shlib_info( void );
 extern int _linux_get_system_info( void );
 extern int _linux_init( hwd_context_t * ctx );
-extern long long _linux_get_real_usec( void );
-extern long long _linux_get_real_cycles( void );
-extern long long _linux_get_virt_cycles( const hwd_context_t * ctx );
-extern long long _linux_get_virt_usec( const hwd_context_t * ctx );
 extern int _linux_shutdown( hwd_context_t * ctx );
+
+#include "linux-timer.h"
 
 extern papi_mdi_t _papi_hwi_system_info;
 
