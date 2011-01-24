@@ -1158,12 +1158,12 @@ papi_vector_t _x86_vector = {
 
 	/* from OS */
 	.update_shlib_info = _linux_update_shlib_info,
-	.get_memory_info = _linux_get_memory_info,
-	.get_system_info = _linux_get_system_info
-	.get_real_usec = _linux_get_real_usec,
-	.get_real_cycles = _linux_get_real_cycles,
-	.get_virt_cycles = _linux_get_virt_cycles,
-	.get_virt_usec = _linux_get_virt_usec,
+	.get_memory_info =   _linux_get_memory_info,
+	.get_system_info =   _linux_get_system_info,
+	.get_real_usec =     _linux_get_real_usec,
+	.get_real_cycles =   _linux_get_real_cycles,
+	.get_virt_cycles =   _linux_get_virt_cycles,
+	.get_virt_usec =     _linux_get_virt_usec,
 
 	/* from pfm */
 	.ntv_enum_events   = _papi_pfm_ntv_enum_events,
