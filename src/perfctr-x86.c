@@ -27,7 +27,6 @@ extern int _linux_ctl( hwd_context_t * ctx, int code,
 					   _papi_int_option_t * option );
 extern void _linux_dispatch_timer( int signal, hwd_siginfo_t * si,
 								   void *context );
-extern int _linux_update_shlib_info( void );
 extern int _linux_get_system_info( void );
 extern int _linux_init( hwd_context_t * ctx );
 extern int _linux_shutdown( hwd_context_t * ctx );

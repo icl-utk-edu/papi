@@ -72,141 +72,6 @@ dump_event_header( struct perf_event_header *header )
 # define dump_event_header(header)
 #endif
 
-int
-_papi_pe_update_shlib_info( void )
-{
-	char fname[PAPI_HUGE_STR_LEN];
-	unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
-	char buf[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], perm[5], dev[16];
-	char mapname[PAPI_HUGE_STR_LEN], lastmapname[PAPI_HUGE_STR_LEN];
-	unsigned long begin = 0, end = 0, size = 0, inode = 0, foo = 0;
-	PAPI_address_map_t *tmp = NULL;
-	FILE *f;
-
-	memset( fname, 0x0, sizeof ( fname ) );
-	memset( buf, 0x0, sizeof ( buf ) );
-	memset( perm, 0x0, sizeof ( perm ) );
-	memset( dev, 0x0, sizeof ( dev ) );
-	memset( mapname, 0x0, sizeof ( mapname ) );
-	memset( lastmapname, 0x0, sizeof ( lastmapname ) );
-
-	sprintf( fname, "/proc/%ld/maps", ( long ) _papi_hwi_system_info.pid );
-	f = fopen( fname, "r" );
-
-	if ( !f ) {
-		PAPIERROR( "fopen(%s) returned < 0", fname );
-		return PAPI_OK;
-	}
-
-  again:
-	while ( !feof( f ) ) {
-		begin = end = size = inode = foo = 0;
-		if ( fgets( buf, sizeof ( buf ), f ) == 0 )
-			break;
-		/* If mapname is null in the string to be scanned, we need to detect that */
-		if ( strlen( mapname ) )
-			strcpy( lastmapname, mapname );
-		else
-			lastmapname[0] = '\0';
-		/* If mapname is null in the string to be scanned, we need to detect that */
-		mapname[0] = '\0';
-		sscanf( buf, "%lx-%lx %4s %lx %s %ld %s", &begin, &end, perm, &foo, dev,
-				&inode, mapname );
-		size = end - begin;
-
-		/* the permission string looks like "rwxp", where each character can
-		 * be either the letter, or a hyphen.  The final character is either
-		 * p for private or s for shared. */
-
-		if ( counting ) {
-			if ( ( perm[2] == 'x' ) && ( perm[0] == 'r' ) && ( inode != 0 ) ) {
-				if ( strcmp( _papi_hwi_system_info.exe_info.fullname, mapname )
-					 == 0 ) {
-					_papi_hwi_system_info.exe_info.address_info.text_start =
-						( caddr_t ) begin;
-					_papi_hwi_system_info.exe_info.address_info.text_end =
-						( caddr_t ) ( begin + size );
-				}
-				t_index++;
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode != 0 )
-						&&
-						( strcmp
-						  ( _papi_hwi_system_info.exe_info.fullname,
-							mapname ) == 0 ) ) {
-				_papi_hwi_system_info.exe_info.address_info.data_start =
-					( caddr_t ) begin;
-				_papi_hwi_system_info.exe_info.address_info.data_end =
-					( caddr_t ) ( begin + size );
-				d_index++;
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode == 0 )
-						&&
-						( strcmp
-						  ( _papi_hwi_system_info.exe_info.fullname,
-							lastmapname ) == 0 ) ) {
-				_papi_hwi_system_info.exe_info.address_info.bss_start =
-					( caddr_t ) begin;
-				_papi_hwi_system_info.exe_info.address_info.bss_end =
-					( caddr_t ) ( begin + size );
-				b_index++;
-			}
-		} else if ( !counting ) {
-			if ( ( perm[2] == 'x' ) && ( perm[0] == 'r' ) && ( inode != 0 ) ) {
-				if ( strcmp( _papi_hwi_system_info.exe_info.fullname, mapname )
-					 != 0 ) {
-					t_index++;
-					tmp[t_index - 1].text_start = ( caddr_t ) begin;
-					tmp[t_index - 1].text_end = ( caddr_t ) ( begin + size );
-					strncpy( tmp[t_index - 1].name, mapname, PAPI_MAX_STR_LEN );
-				}
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode != 0 ) ) {
-				if ( ( strcmp
-					   ( _papi_hwi_system_info.exe_info.fullname,
-						 mapname ) != 0 )
-					 && ( t_index > 0 ) &&
-					 ( tmp[t_index - 1].data_start == 0 ) ) {
-					tmp[t_index - 1].data_start = ( caddr_t ) begin;
-					tmp[t_index - 1].data_end = ( caddr_t ) ( begin + size );
-				}
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode == 0 ) ) {
-				if ( ( t_index > 0 ) && ( tmp[t_index - 1].bss_start == 0 ) ) {
-					tmp[t_index - 1].bss_start = ( caddr_t ) begin;
-					tmp[t_index - 1].bss_end = ( caddr_t ) ( begin + size );
-				}
-			}
-		}
-	}
-
-	if ( counting ) {
-		/* When we get here, we have counted the number of entries in the map
-		   for us to allocate */
-
-		tmp =
-			( PAPI_address_map_t * ) papi_calloc( t_index,
-												  sizeof
-												  ( PAPI_address_map_t ) );
-		if ( tmp == NULL ) {
-			PAPIERROR( "Error allocating shared library address map" );
-			return PAPI_ENOMEM;
-		}
-		t_index = 0;
-		rewind( f );
-		counting = 0;
-		goto again;
-	} else {
-		if ( _papi_hwi_system_info.shlib_info.map )
-			papi_free( _papi_hwi_system_info.shlib_info.map );
-		_papi_hwi_system_info.shlib_info.map = tmp;
-		_papi_hwi_system_info.shlib_info.count = t_index;
-
-		fclose( f );
-	}
-	return PAPI_OK;
-}
-
 static int
 get_system_info( papi_mdi_t * mdi )
 {
@@ -240,7 +105,7 @@ get_system_info( papi_mdi_t * mdi )
 
 	/* Executable regions, may require reading /proc/pid/maps file */
 
-	retval = _papi_pe_update_shlib_info(  );
+	retval = _linux_update_shlib_info(  );
 	SUBDBG( "Text: Start %p, End %p, length %d\n",
 			mdi->exe_info.address_info.text_start,
 			mdi->exe_info.address_info.text_end,
@@ -912,13 +777,11 @@ _papi_pe_init_substrate( int cidx )
 
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
 		switch ( _perfmon2_pfm_pmu_type ) {
-#ifdef PFMLIB_SPARC_ULTRA12_PMU
 		case PFMLIB_SPARC_ULTRA12_PMU:
 		case PFMLIB_SPARC_ULTRA3_PMU:
 		case PFMLIB_SPARC_ULTRA3I_PMU:
 		case PFMLIB_SPARC_ULTRA3PLUS_PMU:
 		case PFMLIB_SPARC_ULTRA4PLUS_PMU:
-#endif
 			break;
 
 		default:
@@ -2550,7 +2413,6 @@ papi_vector_t _papi_pe_vector = {
 	.shutdown = _papi_pe_shutdown,
 	.ctl = _papi_pe_ctl,
 	.update_control_state = _papi_pe_update_control_state,
-	.update_shlib_info = _papi_pe_update_shlib_info,
 	.set_domain = set_domain,
 	.reset = _papi_pe_reset,
 	.set_overflow = _papi_pe_set_overflow,
@@ -2569,6 +2431,7 @@ papi_vector_t _papi_pe_vector = {
 	.get_real_cycles = _linux_get_real_cycles,
 	.get_virt_cycles = _linux_get_virt_cycles,
 	.get_virt_usec = _linux_get_virt_usec,
+	.update_shlib_info = _linux_update_shlib_info,
 
 	/* from counter name mapper */
 	.ntv_enum_events = _papi_pfm_ntv_enum_events,
