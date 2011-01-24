@@ -212,7 +212,7 @@ _linux_get_real_cycles( void )
 	long long retval;
 #if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)
 	retval =
-		_papi_pe_get_real_usec(  ) *
+		_linux_get_real_usec(  ) *
 		( long long ) _papi_hwi_system_info.hw_info.mhz;
 #else
 	retval = get_cycles(  );
