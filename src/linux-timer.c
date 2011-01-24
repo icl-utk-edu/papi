@@ -116,7 +116,7 @@ get_cycles( void )
 	long long tmp = 0;
 
         tmp = *mmdev_timer_addr & mmdev_mask;
-	SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_ratio);
+	SUBDBG("MMTIMER is %llu, scaled %llu\n",tmp,tmp*mmdev_ratio);
         tmp *= mmdev_ratio;
 
 	return tmp;
