@@ -325,7 +325,7 @@ _aix_mdi_init(  )
 
 
 static int
-_aix_get_system_info( void )
+_aix_get_system_info( papi_mdi_t *mdi )
 {
 	int retval;
 	/* pm_info_t pminfo; */
@@ -509,7 +509,7 @@ _aix_init_substrate( int cidx )
 	int retval = PAPI_OK, procidx;
 
 	/* Fill in what we can of the papi_system_info. */
-	retval = MY_VECTOR.get_system_info(  );
+	retval = MY_VECTOR.get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return ( retval );
 

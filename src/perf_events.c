@@ -21,8 +21,7 @@
 
 #include "linux-memory.h"
 #include "linux-timer.h"
-
-#define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
+#include "linux-common.h"
 
 /* Needed for ioctl call */
 #include <sys/ioctl.h>
@@ -34,130 +33,14 @@
 #define WAKEUP_PROFILING -1
 
 /* Globals declared extern elsewhere */
-
 hwi_search_t *preset_search_map;
 volatile unsigned int _papi_pe_lock_data[PAPI_MAX_LOCK];
 extern papi_vector_t _papi_pe_vector;
 
-extern int get_cpu_info( PAPI_hw_info_t * hwinfo );
-
-/* Forward function declarations */
-int _papi_pe_update_control_state( hwd_control_state_t * ctl,
-								   NativeInfo_t * native, int count,
-								   hwd_context_t * ctx );
-int _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex,
-						   int threshold );
-
-
-#define min(x, y) ({				\
-	typeof(x) _min1 = (x);			\
-	typeof(y) _min2 = (y);			\
-	(void) (&_min1 == &_min2);		\
-	_min1 < _min2 ? _min1 : _min2; })
-
-/* Static locals */
+/* Static globals */
 #define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
 static int _perfmon2_pfm_pmu_type = -1;
 
-/* Debug functions */
-
-#ifdef DEBUG
-static void
-dump_event_header( struct perf_event_header *header )
-{
-	SUBDBG( "event->type = %08x\n", header->type );
-	SUBDBG( "event->size = %d\n", header->size );
-}
-#else
-# define dump_event_header(header)
-#endif
-
-static int
-get_system_info( papi_mdi_t * mdi )
-{
-	int retval;
-	char maxargs[PAPI_HUGE_STR_LEN];
-	pid_t pid;
-
-	/* Software info */
-
-	/* Path and args */
-
-	pid = getpid(  );
-	if ( pid < 0 ) {
-		PAPIERROR( "getpid() returned < 0" );
-		return PAPI_ESYS;
-	}
-	mdi->pid = pid;
-
-	sprintf( maxargs, "/proc/%d/exe", ( int ) pid );
-	if ( readlink( maxargs, mdi->exe_info.fullname, PAPI_HUGE_STR_LEN ) < 0 ) {
-		PAPIERROR( "readlink(%s) returned < 0", maxargs );
-		return PAPI_ESYS;
-	}
-
-	/* Careful, basename can modify it's argument */
-
-	strcpy( maxargs, mdi->exe_info.fullname );
-	strcpy( mdi->exe_info.address_info.name, basename( maxargs ) );
-	SUBDBG( "Executable is %s\n", mdi->exe_info.address_info.name );
-	SUBDBG( "Full Executable is %s\n", mdi->exe_info.fullname );
-
-	/* Executable regions, may require reading /proc/pid/maps file */
-
-	retval = _linux_update_shlib_info(  );
-	SUBDBG( "Text: Start %p, End %p, length %d\n",
-			mdi->exe_info.address_info.text_start,
-			mdi->exe_info.address_info.text_end,
-			( int ) ( mdi->exe_info.address_info.text_end -
-					  mdi->exe_info.address_info.text_start ) );
-	SUBDBG( "Data: Start %p, End %p, length %d\n",
-			mdi->exe_info.address_info.data_start,
-			mdi->exe_info.address_info.data_end,
-			( int ) ( mdi->exe_info.address_info.data_end -
-					  mdi->exe_info.address_info.data_start ) );
-	SUBDBG( "Bss: Start %p, End %p, length %d\n",
-			mdi->exe_info.address_info.bss_start,
-			mdi->exe_info.address_info.bss_end,
-			( int ) ( mdi->exe_info.address_info.bss_end -
-					  mdi->exe_info.address_info.bss_start ) );
-
-	/* PAPI_preload_option information */
-
-	strcpy( mdi->preload_info.lib_preload_env, "LD_PRELOAD" );
-	mdi->preload_info.lib_preload_sep = ' ';
-	strcpy( mdi->preload_info.lib_dir_env, "LD_LIBRARY_PATH" );
-	mdi->preload_info.lib_dir_sep = ':';
-
-	/* Hardware info */
-	retval = get_cpu_info( &mdi->hw_info );
-	if ( retval )
-		return retval;
-
-	retval = _linux_get_memory_info( &mdi->hw_info, mdi->hw_info.model );
-	if ( retval )
-		return retval;
-
-	SUBDBG( "Found %d %s(%d) %s(%d) CPU's at %f Mhz, clock %d Mhz.\n",
-			mdi->hw_info.totalcpus,
-			mdi->hw_info.vendor_string,
-			mdi->hw_info.vendor, mdi->hw_info.model_string, mdi->hw_info.model,
-			mdi->hw_info.mhz, mdi->hw_info.clock_mhz );
-
-	return PAPI_OK;
-}
-
-static inline pid_t
-mygettid( void )
-{
-#ifdef SYS_gettid
-	return syscall( SYS_gettid );
-#elif defined(__NR_gettid)
-	return syscall( __NR_gettid );
-#else
-	return syscall( 1105 );
-#endif
-}
 
 static inline int
 check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain )
@@ -372,19 +255,6 @@ tune_up_fd( context_t * ctx, int evt_idx )
 			  strerror( errno ) );
 		return PAPI_ESYS;
 	}
-#ifndef F_SETOWN_EX
-   #define F_SETOWN_EX     15
-   #define F_GETOWN_EX     16
-   
-   #define F_OWNER_TID     0
-   #define F_OWNER_PID     1
-   #define F_OWNER_PGRP    2
-   
-   struct f_owner_ex {
-              int     type;
-              pid_t   pid;
-   };
-#endif
    
            /* F_SETOWN_EX is not available until 2.6.32 */
         if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,32)) {
@@ -653,29 +523,6 @@ set_granularity( control_state_t * this_state, int domain )
 	return PAPI_OK;
 }
 
-
-static int get_linux_version() {
-      
-     int major=0,minor=0,sub=0;
-     char *ptr;
-   
-     struct utsname uname_buffer;
-   
-     uname(&uname_buffer);
-      
-     ptr=strtok(uname_buffer.release,".");
-     if (ptr!=NULL) major=atoi(ptr);
-   
-     ptr=strtok(NULL,".");
-     if (ptr!=NULL) minor=atoi(ptr);
-   
-     ptr=strtok(NULL,".");
-     if (ptr!=NULL) sub=atoi(ptr);
-   
-     return LINUX_VERSION(major,minor,sub);
-}
-   
-
 /* This function should tell your kernel extension that your children
    inherit performance register information and propagate the values up
    upon child exit and parent wait. */
@@ -760,7 +607,7 @@ _papi_pe_init_substrate( int cidx )
 
 	pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
 	SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
-	retval = get_system_info( &_papi_hwi_system_info );
+	retval = _linux_get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return retval;
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
@@ -835,100 +682,13 @@ _papi_pe_init_substrate( int cidx )
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[i] = MUTEX_OPEN;
 
-
-#if defined(HAVE_MMTIMER)
-        /* setup mmtimer */
-        {
-	  unsigned long femtosecs_per_tick = 0;
-	  unsigned long freq = 0;
-	  int result;
-	  int offset;
-
-	  SUBDBG( "MMTIMER Opening %s\n", MMTIMER_FULLNAME );
-	  if ( ( mmdev_fd = open( MMTIMER_FULLNAME, O_RDONLY ) ) == -1 ) {
-	    PAPIERROR( "Failed to open MM timer %s", MMTIMER_FULLNAME );
-	    return ( PAPI_ESYS );
-	  }
-	  SUBDBG( "MMTIMER checking if we can mmap" );
-	  if ( ioctl( mmdev_fd, MMTIMER_MMAPAVAIL, 0 ) != 1 ) {
-	    PAPIERROR( "mmap of MM timer unavailable" );
-	    return ( PAPI_ESBSTR );
-	  }
-	  SUBDBG( "MMTIMER setting close on EXEC flag\n" );
-	  if ( fcntl( mmdev_fd, F_SETFD, FD_CLOEXEC ) == -1 ) {
-	    PAPIERROR( "Failed to fcntl(FD_CLOEXEC) on MM timer FD %d: %s",
-		       mmdev_fd, strerror( errno ) );
-	    return ( PAPI_ESYS );
-	  }
-	  SUBDBG( "MMTIMER is on FD %d, getting offset\n", mmdev_fd );
-	  if ( ( offset = ioctl( mmdev_fd, MMTIMER_GETOFFSET, 0 ) ) < 0 ) {
-	    PAPIERROR( "Failed to get offset of MM timer" );
-	    return ( PAPI_ESYS );
-	  }
-	  SUBDBG( "MMTIMER has offset of %d, getting frequency\n", offset );
-	  if ( ioctl( mmdev_fd, MMTIMER_GETFREQ, &freq ) == -1 ) {
-	    PAPIERROR( "Failed to get frequency of MM timer" );
-	    return ( PAPI_ESYS );
-	  }
-	  SUBDBG( "MMTIMER has frequency %lu Mhz\n", freq / 1000000 );
-	  // don't know for sure, but I think this ratio is inverted
-	  //     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
-          mmdev_ratio =
-		  ( unsigned long ) _papi_hwi_system_info.hw_info.mhz / ( freq /
-                                                                                        
-									  1000000 );
-          SUBDBG( "MMTIMER has a ratio of %ld to the CPU's clock, getting resolution\n",
-		    mmdev_ratio );
-          if ( ioctl( mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick ) == -1 ) {
-		  PAPIERROR( "Failed to get femtoseconds per tick" );
-		  return ( PAPI_ESYS );
-          }
-          SUBDBG( "MMTIMER res is %lu femtosecs/tick (10^-15s) or %f Mhz, getting valid bits\n",
-	  femtosecs_per_tick, 1.0e9 / ( double ) femtosecs_per_tick );
-          if ( ( result = ioctl( mmdev_fd, MMTIMER_GETBITS, 0 ) ) == -ENOSYS ) {
-	     PAPIERROR( "Failed to get number of bits in MMTIMER" );
-	     return ( PAPI_ESYS );
-          }
-          mmdev_mask = ~( 0xffffffffffffffff << result );
-          SUBDBG( "MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",
-		    result, mmdev_mask );
-          if ( ( mmdev_timer_addr =
-		       ( unsigned long * ) mmap( 0, getpagesize(  ), PROT_READ,
-						 MAP_PRIVATE, mmdev_fd,
-						 0 ) ) == NULL ) {
-	     PAPIERROR( "Failed to mmap MM timer" );
-	     return ( PAPI_ESYS );
-          }
-          SUBDBG( "MMTIMER page is at %p, actual address is %p\n",
-			mmdev_timer_addr, mmdev_timer_addr + offset );
-          mmdev_timer_addr += offset;
-          /* mmdev_fd should be closed and page should be unmapped in a global shutdown routine */
-        }
-#endif
-
-        if ( retval )
-	  return ( retval );
-
-
-	return PAPI_OK;
-}
-
-#if defined(USE_PROC_PTTIMER)
-static int
-init_proc_thread_timer( context_t * thr_ctx )
-{
-	char buf[LINE_MAX];
-	int fd;
-	sprintf( buf, "/proc/%d/task/%d/stat", getpid(  ), mygettid(  ) );
-	fd = open( buf, O_RDONLY );
-	if ( fd == -1 ) {
-		PAPIERROR( "open(%s)", buf );
-		return PAPI_ESYS;
+	retval=mmtimer_setup();
+	if (retval) {
+	   return retval;
 	}
-	thr_ctx->stat_fd = fd;
+
 	return PAPI_OK;
 }
-#endif
 
 int
 _papi_sub_pe_init( hwd_context_t * thr_ctx )
@@ -1201,10 +961,6 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 
 }
 
-#if defined(__crayxt)
-int _papi_pe_start_create_context = 0; /* CrayPat checkpoint support */
-#endif /* XT */
-
 int
 _papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
@@ -1254,704 +1010,6 @@ round_requested_ns( int ns )
 		return ns + leftover_ns;
 	}
 }
-
-int
-_papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
-{
-	int ret;
-	context_t *pe_ctx = ( context_t * ) ctx;
-	control_state_t *pe_ctl = NULL;
-
-	switch ( code ) {
-	case PAPI_MULTIPLEX:
-	{
-		pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
-		pe_ctl->multiplexed = 1;
-		ret =
-			_papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events,
-										   pe_ctx );
-		/*
-		 * Variable ns is not supported, but we can clear the pinned
-		 * bits in the events to allow the scheduler to multiplex the
-		 * events onto the physical hardware registers.
-		 */
-		return ret;
-	}
-	case PAPI_ATTACH:
-		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
-		/* looks like we are allowed so go ahead and store thread id */
-		if (check_permissions( option->attach.tid, pe_ctl->cpu_num, pe_ctl->domain ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		return attach( pe_ctl, option->attach.tid );
-	case PAPI_DETACH:
-		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
-		return detach( pe_ctx, pe_ctl );
-	case PAPI_CPU_ATTACH:
-		pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, pe_ctl->domain ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		/* looks like we are allowed so go ahead and store cpu number */
-		return set_cpu( pe_ctl, option->cpu.cpu_num );
-	case PAPI_DOMAIN:
-		pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
-		/* looks like we are allowed so go ahead and store counting domain */
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, option->domain.domain ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		return set_domain( option->domain.ESI->ctl_state, option->domain.domain );
-	case PAPI_GRANUL:
-		return
-			set_granularity( ( control_state_t * ) ( option->granularity.ESI->
-													 ctl_state ),
-							 option->granularity.granularity );
-#if 0
-	case PAPI_DATA_ADDRESS:
-		ret =
-			set_default_domain( ( control_state_t * ) ( option->address_range.
-														ESI->ctl_state ),
-								option->address_range.domain );
-		if ( ret != PAPI_OK )
-			return ret;
-		set_drange( pe_ctx,
-					( control_state_t * ) ( option->address_range.ESI->
-											ctl_state ), option );
-		return PAPI_OK;
-	case PAPI_INSTR_ADDRESS:
-		ret =
-			set_default_domain( ( control_state_t * ) ( option->address_range.
-														ESI->ctl_state ),
-								option->address_range.domain );
-		if ( ret != PAPI_OK )
-			return ret;
-		set_irange( pe_ctx,
-					( control_state_t * ) ( option->address_range.ESI->
-											ctl_state ), option );
-		return PAPI_OK;
-#endif
-	case PAPI_DEF_ITIMER:
-	{
-		/* flags are currently ignored, eventually the flags will be able
-		   to specify whether or not we use POSIX itimers (clock_gettimer) */
-		if ( ( option->itimer.itimer_num == ITIMER_REAL ) &&
-			 ( option->itimer.itimer_sig != SIGALRM ) )
-			return PAPI_EINVAL;
-		if ( ( option->itimer.itimer_num == ITIMER_VIRTUAL ) &&
-			 ( option->itimer.itimer_sig != SIGVTALRM ) )
-			return PAPI_EINVAL;
-		if ( ( option->itimer.itimer_num == ITIMER_PROF ) &&
-			 ( option->itimer.itimer_sig != SIGPROF ) )
-			return PAPI_EINVAL;
-		if ( option->itimer.ns > 0 )
-			option->itimer.ns = round_requested_ns( option->itimer.ns );
-		/* At this point, we assume the user knows what he or
-		   she is doing, they maybe doing something arch specific */
-		return PAPI_OK;
-	}
-	case PAPI_DEF_MPX_NS:
-	{
-		/* Defining a given ns per set is not current supported */
-		return PAPI_ENOSUPP;
-	}
-	case PAPI_DEF_ITIMER_NS:
-	{
-		option->itimer.ns = round_requested_ns( option->itimer.ns );
-		return PAPI_OK;
-	}
-	default:
-		return PAPI_ENOSUPP;
-	}
-}
-
-int
-_papi_pe_shutdown( hwd_context_t * ctx )
-{
-	context_t *pe_ctx = ( context_t * ) ctx;
-	int ret;
-
-	ret = close_pe_evts( pe_ctx );
-	return ret;
-}
-
-
-#if defined(__ia64__)
-
-#include "perfmon/pfmlib_itanium2.h"
-#include "perfmon/pfmlib_montecito.h"
-
-static inline int
-is_montecito_and_dear( unsigned int native_index )
-{
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU ) {
-		if ( pfm_mont_is_dear( native_index ) )
-			return 1;
-	}
-	return 0;
-}
-static inline int
-is_montecito_and_iear( unsigned int native_index )
-{
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU ) {
-		if ( pfm_mont_is_iear( native_index ) )
-			return 1;
-	}
-	return 0;
-}
-static inline int
-is_itanium2_and_dear( unsigned int native_index )
-{
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_ITANIUM2_PMU ) {
-		if ( pfm_ita2_is_dear( native_index ) )
-			return 1;
-	}
-	return 0;
-}
-static inline int
-is_itanium2_and_iear( unsigned int native_index )
-{
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_ITANIUM2_PMU ) {
-		if ( pfm_ita2_is_iear( native_index ) )
-			return 1;
-	}
-	return 0;
-}
-#endif
-
-#define BPL (sizeof(uint64_t)<<3)
-#define LBPL	6
-static inline void
-pfm_bv_set( uint64_t * bv, uint16_t rnum )
-{
-	bv[rnum >> LBPL] |= 1UL << ( rnum & ( BPL - 1 ) );
-}
-
-static inline int
-find_profile_index( EventSetInfo_t * ESI, int evt_idx, int *flags,
-					unsigned int *native_index, int *profile_index )
-{
-	int pos, esi_index, count;
-
-	for ( count = 0; count < ESI->profile.event_counter; count++ ) {
-		esi_index = ESI->profile.EventIndex[count];
-		pos = ESI->EventInfoArray[esi_index].pos[0];
-		// PMU_FIRST_COUNTER
-		if ( pos == evt_idx ) {
-			*profile_index = count;
-			*native_index =
-				ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
-			*flags = ESI->profile.flags;
-			SUBDBG( "Native event %d is at profile index %d, flags %d\n",
-					*native_index, *profile_index, *flags );
-			return ( PAPI_OK );
-		}
-	}
-
-	PAPIERROR( "wrong count: %d vs. ESI->profile.event_counter %d", count,
-			   ESI->profile.event_counter );
-	return ( PAPI_EBUG );
-}
-
-/*
- * These functions were shamelessly stolen from builtin-record.c in the
- * kernel's tools/perf directory and then hacked up.
- */
-
-static uint64_t
-mmap_read_head( evt_t * pe )
-{
-	struct perf_event_mmap_page *pc = pe->mmap_buf;
-	int head;
-
-	if ( pc == NULL ) {
-		PAPIERROR( "perf_event_mmap_page is NULL" );
-		return 0;
-	}
-
-	head = pc->data_head;
-	rmb(  );
-
-	return head;
-}
-
-static void
-mmap_write_tail( evt_t * pe, uint64_t tail )
-{
-	struct perf_event_mmap_page *pc = pe->mmap_buf;
-
-	/*
-	 * ensure all reads are done before we write the tail out.
-	 */
-	mb(  );
-	pc->data_tail = tail;
-}
-
-static void
-mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
-{
-	( void ) evt_index;		 /*unused */
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
-	uint64_t head = mmap_read_head( pe );
-	uint64_t old = pe->tail;
-	unsigned char *data = pe->mmap_buf + getpagesize(  );
-	int diff;
-
-	diff = head - old;
-	if ( diff < 0 ) {
-		SUBDBG( "WARNING: failed to keep up with mmap data. head = %" PRIu64
-				",  tail = %" PRIu64 ". Discarding samples.\n", head, old );
-		/*
-		 * head points to a known good entry, start there.
-		 */
-		old = head;
-	}
-
-	for ( ; old != head; ) {
-		struct ip_event
-		{
-			struct perf_event_header header;
-			uint64_t ip;
-		};
-		struct lost_event
-		{
-			struct perf_event_header header;
-			uint64_t id;
-			uint64_t lost;
-		};
-		typedef union event_union
-		{
-			struct perf_event_header header;
-			struct ip_event ip;
-			struct lost_event lost;
-		} event_t;
-
-		event_t *event = ( event_t * ) & data[old & pe->mask];
-
-		event_t event_copy;
-
-		size_t size = event->header.size;
-
-
-		/*
-		 * Event straddles the mmap boundary -- header should always
-		 * be inside due to u64 alignment of output.
-		 */
-		if ( ( old & pe->mask ) + size != ( ( old + size ) & pe->mask ) ) {
-			uint64_t offset = old;
-			uint64_t len = min( sizeof ( *event ), size ), cpy;
-			void *dst = &event_copy;
-
-			do {
-				cpy = min( pe->mask + 1 - ( offset & pe->mask ), len );
-				memcpy( dst, &data[offset & pe->mask], cpy );
-				offset += cpy;
-				dst += cpy;
-				len -= cpy;
-			}
-			while ( len );
-
-			event = &event_copy;
-		}
-
-		old += size;
-
-		dump_event_header( &event->header );
-
-		switch ( event->header.type ) {
-		case PERF_RECORD_SAMPLE:
-			_papi_hwi_dispatch_profile( ( *thr )->running_eventset[cidx],
-										( caddr_t ) ( unsigned long ) event->ip.
-										ip, 0, profile_index );
-			break;
-		case PERF_RECORD_LOST:
-			SUBDBG( "Warning: because of a mmap buffer overrun, %" PRId64
-					" events were lost.\nLoss was recorded when counter id 0x%"
-					PRIx64 " overflowed.\n", event->lost.lost, event->lost.id );
-			break;
-		default:
-			SUBDBG( "Error: unexpected header type - %d\n",
-					event->header.type );
-			break;
-		}
-	}
-
-	pe->tail = old;
-	mmap_write_tail( pe, old );
-}
-
-
-static inline int
-process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
-{
-	int ret, flags, profile_index;
-	unsigned native_index;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
-
-	ret =
-		find_profile_index( ( *thr )->running_eventset[cidx], evt_idx, &flags,
-							&native_index, &profile_index );
-	if ( ret != PAPI_OK )
-		return ( ret );
-
-	mmap_read( thr, &( ( context_t * ) ( *thr )->context[cidx] )->evt[evt_idx],
-			   evt_idx, profile_index );
-
-	return ( PAPI_OK );
-}
-
-/*
- * This function is used when hardware overflows are working or when
- * software overflows are forced
- */
-
-void
-_papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
-{
-	( void ) n;				 /*unused */
-	_papi_hwi_context_t ctx;
-	int found_evt_idx = -1, fd = info->si_fd;
-	caddr_t address;
-	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
-
-	if ( thread == NULL ) {
-		PAPIERROR( "thread == NULL in _papi_pe_dispatch_timer for fd %d!", fd );
-		return;
-	}
-
-	if ( thread->running_eventset[cidx] == NULL ) {
-		PAPIERROR
-			( "thread->running_eventset == NULL in _papi_pe_dispatch_timer for fd %d!",
-			  fd );
-		return;
-	}
-
-	if ( thread->running_eventset[cidx]->overflow.flags == 0 ) {
-		PAPIERROR
-			( "thread->running_eventset->overflow.flags == 0 in _papi_pe_dispatch_timer for fd %d!",
-			  fd );
-		return;
-	}
-	
-	ctx.si = info;
-	ctx.ucontext = ( hwd_ucontext_t * ) uc;
-
-	if ( thread->running_eventset[cidx]->overflow.flags & 
-	     PAPI_OVERFLOW_FORCE_SW ) {
-		address = GET_OVERFLOW_ADDRESS( ctx );
-		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL, 0,
-						    0, &thread, cidx );
-	   return;
-	}
-	if ( thread->running_eventset[cidx]->overflow.flags !=
-		 PAPI_OVERFLOW_HARDWARE ) {
-		PAPIERROR
-			( "thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
-			  fd , thread->running_eventset[cidx]->overflow.flags);
-	}
-	{
-		int i;
-
-		/* See if the fd is one that's part of the this thread's context */
-		for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts;
-			  i++ ) {
-			if ( fd ==
-				 ( ( context_t * ) thread->context[cidx] )->evt[i].event_fd ) {
-				found_evt_idx = i;
-				break;
-			}
-		}
-		if ( found_evt_idx == -1 ) {
-			PAPIERROR
-				( "Unable to find fd %d among the open event fds _papi_hwi_dispatch_timer!",
-				  fd );
-		}
-	}
-
-	ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL );
-
-	if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING )
-		 && !( thread->running_eventset[cidx]->profile.
-			   flags & PAPI_PROFIL_FORCE_SW ) )
-		process_smpl_buf( found_evt_idx, &thread );
-	else {
-		__u64 ip;
-		unsigned int head;
-		evt_t *pe =
-			&( ( context_t * ) thread->context[cidx] )->evt[found_evt_idx];
-
-		unsigned char *data = pe->mmap_buf + getpagesize(  );
-
-		/*
-		 * Read up the most recent IP from the sample in the mmap buffer.  To
-		 * do this, we make the assumption that all of the records in the
-		 * mmap buffer are the same size, and that they all contain the IP as
-		 * their only record element.  This means that we can use the
-		 * data_head element from the user page and move backward one record
-		 * from that point and read the data.  Since we don't actually need
-		 * to access the header of the record, we can just subtract 8 (size
-		 * of the IP) from data_head and read up that word from the mmap
-		 * buffer.  After we subtract 8, we account for mmap buffer wrapping
-		 * by AND'ing this offset with the buffer mask.
-		 */
-		head = mmap_read_head( pe );
-
-		if ( head == 0 ) {
-			PAPIERROR
-				( "Attempting to access memory which may be inaccessable" );
-			return;
-		}
-
-		ip = *( __u64 * ) ( data + ( ( head - 8 ) & pe->mask ) );
-		/*
-		 * Update the tail to the current head pointer. 
-		 *
-		 * Note: that if we were to read the record at the tail pointer,
-		 * rather than the one at the head (as you might otherwise think
-		 * would be natural), we could run into problems.  Signals don't
-		 * stack well on Linux, particularly if not using RT signals, and if
-		 * they come in rapidly enough, we can lose some.  Overtime, the head
-		 * could catch up to the tail and monitoring would be stopped, and
-		 * since no more signals are coming in, this problem will never be
-		 * resolved, resulting in a complete loss of overflow notification
-		 * from that point on.  So the solution we use here will result in
-		 * only the most recent IP value being read every time there are two
-		 * or more samples in the buffer (for that one overflow signal).  But
-		 * the handler will always bring up the tail, so the head should
-		 * never run into the tail.
-		 */
-		mmap_write_tail( pe, head );
-
-		/*
-		 * The fourth parameter is supposed to be a vector of bits indicating
-		 * the overflowed hardware counters, but it's not really clear that
-		 * it's useful, because the actual hardware counters used are not
-		 * exposed to the PAPI user.  For now, I'm just going to set the bit
-		 * that indicates which event register in the array overflowed.  The
-		 * result is that the overflow vector will not be identical to the
-		 * perfmon implementation, and part of that is due to the fact that
-		 * which hardware register is actually being used is opaque at the
-		 * user level (the kernel event dispatcher hides that info).
-		 */
-
-		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx,
-											( caddr_t ) ( unsigned long ) ip,
-											NULL, ( 1 << found_evt_idx ), 0,
-											&thread, cidx );
-
-	}
-
-	/* Restart the counters */
-	if (ioctl( fd, PERF_EVENT_IOC_REFRESH, NULL ) == -1)
-			PAPIERROR( "overflow refresh failed", 0 );
-}
-
-int
-_papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
-{
-	( void ) ESI;			 /*unused */
-	int i, ret = PAPI_OK;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
-
-	/*
-	 * Loop through all of the events and process those which have mmap
-	 * buffers attached.
-	 */
-	for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts; i++ ) {
-		/*
-		 * Use the mmap_buf field as an indicator of this fd being used for
-		 * profiling
-		 */
-		if ( ( ( context_t * ) thread->context[cidx] )->evt[i].mmap_buf ) {
-			/* Process any remaining samples in the sample buffer */
-			ret = process_smpl_buf( i, &thread );
-			if ( ret ) {
-				PAPIERROR( "process_smpl_buf returned error %d", ret );
-				return ret;
-			}
-		}
-	}
-	return ret;
-}
-
-
-
-int
-_papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
-{
-	int ret;
-	int evt_idx;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
-	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
-	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
-
-	/*
-	 * Since you can't profile on a derived event, the event is always the
-	 * first and only event in the native event list.
-	 */
-	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
-
-	if ( threshold == 0 ) {
-		SUBDBG( "MUNMAP(%p,%lld)\n", ctx->evt[evt_idx].mmap_buf,
-				( unsigned long long ) ctx->evt[evt_idx].nr_mmap_pages *
-				getpagesize(  ) );
-
-		if ( ctx->evt[evt_idx].mmap_buf ) {
-			munmap( ctx->evt[evt_idx].mmap_buf,
-					ctx->evt[evt_idx].nr_mmap_pages * getpagesize(  ) );
-		}
-
-		ctx->evt[evt_idx].mmap_buf = NULL;
-		ctx->evt[evt_idx].nr_mmap_pages = 0;
-		ctl->events[evt_idx].sample_type &= ~PERF_SAMPLE_IP;
-		ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
-// #warning "This should be handled somewhere else"
-		ESI->state &= ~( PAPI_OVERFLOWING );
-		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
-
-		return ( ret );
-	}
-
-	/* Look up the native event code */
-	if ( ESI->profile.flags & ( PAPI_PROFIL_DATA_EAR | PAPI_PROFIL_INST_EAR ) ) {
-		/*
-		 * These are NYI x86-specific features.  FIXME
-		 */
-		return PAPI_ENOSUPP;
-	}
-
-	if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
-		/*
-		 * This requires an ability to randomly alter the sample_period within a
-		 * given range.  Kernel does not have this ability. FIXME ?
-		 */
-		return PAPI_ENOSUPP;
-	}
-
-	ctx->evt[evt_idx].nr_mmap_pages = NR_MMAP_PAGES;
-	ctl->events[evt_idx].sample_type |= PERF_SAMPLE_IP;
-
-	ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
-	if ( ret != PAPI_OK )
-		return ret;
-
-	return PAPI_OK;
-}
-
-int
-_papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
-{
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
-	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
-	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
-	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
-
-	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
-
-	if ( threshold == 0 ) {
-		/* If this counter isn't set to overflow, it's an error */
-		if ( ctl->events[evt_idx].sample_period == 0 )
-			return PAPI_EINVAL;
-	}
-
-	ctl->events[evt_idx].sample_period = threshold;
-
-	/*
-	 * Note that the wakeup_mode field initially will be set to zero
-	 * (WAKEUP_MODE_COUNTER_OVERFLOW) as a result of a call to memset 0 to
-	 * all of the events in the ctl struct.
-	 */
-	switch ( ctl->per_event_info[evt_idx].wakeup_mode ) {
-	case WAKEUP_MODE_PROFILING:
-		/*
-		 * Setting wakeup_events to special value zero means issue a wakeup
-		 * (signal) on every mmap page overflow.
-		 */
-		ctl->events[evt_idx].wakeup_events = 0;
-		break;
-	case WAKEUP_MODE_COUNTER_OVERFLOW:
-		/*
-		 * Setting wakeup_events to one means issue a wakeup on every counter
-		 * overflow (not mmap page overflow).
-		 */
-		ctl->events[evt_idx].wakeup_events = 1;
-		/* We need the IP to pass to the overflow handler */
-		ctl->events[evt_idx].sample_type = PERF_SAMPLE_IP;
-		/* one for the user page, and two to take IP samples */
-		ctx->evt[evt_idx].nr_mmap_pages = 1 + 2;
-		break;
-	default:
-		PAPIERROR
-			( "ctl->per_event_info[%d].wakeup_mode set to an unknown value - %u",
-			  evt_idx, ctl->per_event_info[evt_idx].wakeup_mode );
-		return PAPI_EBUG;
-	}
-
-	for ( i = 0; i < ctl->num_events; i++ ) {
-		if ( ctl->events[evt_idx].sample_period ) {
-			found_non_zero_sample_period = 1;
-			break;
-		}
-	}
-	if ( found_non_zero_sample_period ) {
-		/* turn on internal overflow flag for this event set */
-		ctl->overflow = 1;
-		
-		/* Enable the signal handler */
-		retval =
-			_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
-									MY_VECTOR.cmp_info.CmpIdx );
-	} else {
-		/* turn off internal overflow flag for this event set */
-		ctl->overflow = 0;
-		
-		/*
-		 * Remove the signal handler, if there are no remaining non-zero
-		 * sample_periods set
-		 */
-		retval = _papi_hwi_stop_signal( MY_VECTOR.cmp_info.hardware_intr_sig );
-		if ( retval != PAPI_OK )
-			return retval;
-	}
-	retval =
-		_papi_pe_update_control_state( ctl, NULL,
-									   ( ( control_state_t * ) ( ESI->
-																 ctl_state ) )->
-									   num_events, ctx );
-
-	return retval;
-}
-
-int
-_papi_pe_init_control_state( hwd_control_state_t * ctl )
-{
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-	memset( pe_ctl, 0, sizeof ( control_state_t ) );
-	set_domain( ctl, MY_VECTOR.cmp_info.default_domain );
-	/* Set cpu number in the control block to show events are not tied to specific cpu */
-	pe_ctl->cpu_num = -1;
-	return PAPI_OK;
-}
-
-int
-_papi_pe_allocate_registers( EventSetInfo_t * ESI )
-{
-	int i, j;
-	for ( i = 0; i < ESI->NativeCount; i++ ) {
-		if ( _papi_pfm_ntv_code_to_bits
-			 ( ESI->NativeInfoArray[i].ni_event,
-			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
-			goto bail;
-	}
-	return 1;
-  bail:
-	for ( j = 0; j < i; j++ )
-		memset( ESI->NativeInfoArray[j].ni_bits, 0x0,
-				sizeof ( pfm_register_t ) );
-	return 0;
-}
-
-
 
 long long generate_p4_event(long long escr,
 			    long long cccr,
@@ -2183,6 +1241,7 @@ long long generate_p4_event(long long escr,
     return pe_event;
 }
 
+
 /* This function clears the current contents of the control structure and
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
@@ -2369,6 +1428,665 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 	return PAPI_OK;
 }
 
+int
+_papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
+{
+	int ret;
+	context_t *pe_ctx = ( context_t * ) ctx;
+	control_state_t *pe_ctl = NULL;
+
+	switch ( code ) {
+	case PAPI_MULTIPLEX:
+	{
+		pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
+		pe_ctl->multiplexed = 1;
+		ret =
+			_papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events,
+										   pe_ctx );
+		/*
+		 * Variable ns is not supported, but we can clear the pinned
+		 * bits in the events to allow the scheduler to multiplex the
+		 * events onto the physical hardware registers.
+		 */
+		return ret;
+	}
+	case PAPI_ATTACH:
+		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+		/* looks like we are allowed so go ahead and store thread id */
+		if (check_permissions( option->attach.tid, pe_ctl->cpu_num, pe_ctl->domain ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		return attach( pe_ctl, option->attach.tid );
+	case PAPI_DETACH:
+		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+		return detach( pe_ctx, pe_ctl );
+	case PAPI_CPU_ATTACH:
+		pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
+		if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, pe_ctl->domain ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		/* looks like we are allowed so go ahead and store cpu number */
+		return set_cpu( pe_ctl, option->cpu.cpu_num );
+	case PAPI_DOMAIN:
+		pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
+		/* looks like we are allowed so go ahead and store counting domain */
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, option->domain.domain ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		return set_domain( option->domain.ESI->ctl_state, option->domain.domain );
+	case PAPI_GRANUL:
+		return
+			set_granularity( ( control_state_t * ) ( option->granularity.ESI->
+													 ctl_state ),
+							 option->granularity.granularity );
+#if 0
+	case PAPI_DATA_ADDRESS:
+		ret =
+			set_default_domain( ( control_state_t * ) ( option->address_range.
+														ESI->ctl_state ),
+								option->address_range.domain );
+		if ( ret != PAPI_OK )
+			return ret;
+		set_drange( pe_ctx,
+					( control_state_t * ) ( option->address_range.ESI->
+											ctl_state ), option );
+		return PAPI_OK;
+	case PAPI_INSTR_ADDRESS:
+		ret =
+			set_default_domain( ( control_state_t * ) ( option->address_range.
+														ESI->ctl_state ),
+								option->address_range.domain );
+		if ( ret != PAPI_OK )
+			return ret;
+		set_irange( pe_ctx,
+					( control_state_t * ) ( option->address_range.ESI->
+											ctl_state ), option );
+		return PAPI_OK;
+#endif
+	case PAPI_DEF_ITIMER:
+	{
+		/* flags are currently ignored, eventually the flags will be able
+		   to specify whether or not we use POSIX itimers (clock_gettimer) */
+		if ( ( option->itimer.itimer_num == ITIMER_REAL ) &&
+			 ( option->itimer.itimer_sig != SIGALRM ) )
+			return PAPI_EINVAL;
+		if ( ( option->itimer.itimer_num == ITIMER_VIRTUAL ) &&
+			 ( option->itimer.itimer_sig != SIGVTALRM ) )
+			return PAPI_EINVAL;
+		if ( ( option->itimer.itimer_num == ITIMER_PROF ) &&
+			 ( option->itimer.itimer_sig != SIGPROF ) )
+			return PAPI_EINVAL;
+		if ( option->itimer.ns > 0 )
+			option->itimer.ns = round_requested_ns( option->itimer.ns );
+		/* At this point, we assume the user knows what he or
+		   she is doing, they maybe doing something arch specific */
+		return PAPI_OK;
+	}
+	case PAPI_DEF_MPX_NS:
+	{
+		/* Defining a given ns per set is not current supported */
+		return PAPI_ENOSUPP;
+	}
+	case PAPI_DEF_ITIMER_NS:
+	{
+		option->itimer.ns = round_requested_ns( option->itimer.ns );
+		return PAPI_OK;
+	}
+	default:
+		return PAPI_ENOSUPP;
+	}
+}
+
+int
+_papi_pe_shutdown( hwd_context_t * ctx )
+{
+	context_t *pe_ctx = ( context_t * ) ctx;
+	int ret;
+
+	ret = close_pe_evts( pe_ctx );
+	return ret;
+}
+
+
+#define BPL (sizeof(uint64_t)<<3)
+#define LBPL	6
+static inline void
+pfm_bv_set( uint64_t * bv, uint16_t rnum )
+{
+	bv[rnum >> LBPL] |= 1UL << ( rnum & ( BPL - 1 ) );
+}
+
+static inline int
+find_profile_index( EventSetInfo_t * ESI, int evt_idx, int *flags,
+					unsigned int *native_index, int *profile_index )
+{
+	int pos, esi_index, count;
+
+	for ( count = 0; count < ESI->profile.event_counter; count++ ) {
+		esi_index = ESI->profile.EventIndex[count];
+		pos = ESI->EventInfoArray[esi_index].pos[0];
+		// PMU_FIRST_COUNTER
+		if ( pos == evt_idx ) {
+			*profile_index = count;
+			*native_index =
+				ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
+			*flags = ESI->profile.flags;
+			SUBDBG( "Native event %d is at profile index %d, flags %d\n",
+					*native_index, *profile_index, *flags );
+			return ( PAPI_OK );
+		}
+	}
+
+	PAPIERROR( "wrong count: %d vs. ESI->profile.event_counter %d", count,
+			   ESI->profile.event_counter );
+	return ( PAPI_EBUG );
+}
+
+/*
+ * These functions were shamelessly stolen from builtin-record.c in the
+ * kernel's tools/perf directory and then hacked up.
+ */
+
+static uint64_t
+mmap_read_head( evt_t * pe )
+{
+	struct perf_event_mmap_page *pc = pe->mmap_buf;
+	int head;
+
+	if ( pc == NULL ) {
+		PAPIERROR( "perf_event_mmap_page is NULL" );
+		return 0;
+	}
+
+	head = pc->data_head;
+	rmb(  );
+
+	return head;
+}
+
+static void
+mmap_write_tail( evt_t * pe, uint64_t tail )
+{
+	struct perf_event_mmap_page *pc = pe->mmap_buf;
+
+	/*
+	 * ensure all reads are done before we write the tail out.
+	 */
+	mb(  );
+	pc->data_tail = tail;
+}
+
+static void
+mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
+{
+	( void ) evt_index;		 /*unused */
+	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	uint64_t head = mmap_read_head( pe );
+	uint64_t old = pe->tail;
+	unsigned char *data = pe->mmap_buf + getpagesize(  );
+	int diff;
+
+	diff = head - old;
+	if ( diff < 0 ) {
+		SUBDBG( "WARNING: failed to keep up with mmap data. head = %" PRIu64
+				",  tail = %" PRIu64 ". Discarding samples.\n", head, old );
+		/*
+		 * head points to a known good entry, start there.
+		 */
+		old = head;
+	}
+
+	for ( ; old != head; ) {
+		struct ip_event
+		{
+			struct perf_event_header header;
+			uint64_t ip;
+		};
+		struct lost_event
+		{
+			struct perf_event_header header;
+			uint64_t id;
+			uint64_t lost;
+		};
+		typedef union event_union
+		{
+			struct perf_event_header header;
+			struct ip_event ip;
+			struct lost_event lost;
+		} event_t;
+
+		event_t *event = ( event_t * ) & data[old & pe->mask];
+
+		event_t event_copy;
+
+		size_t size = event->header.size;
+
+
+		/*
+		 * Event straddles the mmap boundary -- header should always
+		 * be inside due to u64 alignment of output.
+		 */
+		if ( ( old & pe->mask ) + size != ( ( old + size ) & pe->mask ) ) {
+			uint64_t offset = old;
+			uint64_t len = min( sizeof ( *event ), size ), cpy;
+			void *dst = &event_copy;
+
+			do {
+				cpy = min( pe->mask + 1 - ( offset & pe->mask ), len );
+				memcpy( dst, &data[offset & pe->mask], cpy );
+				offset += cpy;
+				dst += cpy;
+				len -= cpy;
+			}
+			while ( len );
+
+			event = &event_copy;
+		}
+
+		old += size;
+
+	        SUBDBG( "event->type = %08x\n", event->header.type );
+	        SUBDBG( "event->size = %d\n", event->header.size );
+
+		switch ( event->header.type ) {
+		case PERF_RECORD_SAMPLE:
+			_papi_hwi_dispatch_profile( ( *thr )->running_eventset[cidx],
+										( caddr_t ) ( unsigned long ) event->ip.
+										ip, 0, profile_index );
+			break;
+		case PERF_RECORD_LOST:
+			SUBDBG( "Warning: because of a mmap buffer overrun, %" PRId64
+					" events were lost.\nLoss was recorded when counter id 0x%"
+					PRIx64 " overflowed.\n", event->lost.lost, event->lost.id );
+			break;
+		default:
+			SUBDBG( "Error: unexpected header type - %d\n",
+					event->header.type );
+			break;
+		}
+	}
+
+	pe->tail = old;
+	mmap_write_tail( pe, old );
+}
+
+
+static inline int
+process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
+{
+	int ret, flags, profile_index;
+	unsigned native_index;
+	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+
+	ret =
+		find_profile_index( ( *thr )->running_eventset[cidx], evt_idx, &flags,
+							&native_index, &profile_index );
+	if ( ret != PAPI_OK )
+		return ( ret );
+
+	mmap_read( thr, &( ( context_t * ) ( *thr )->context[cidx] )->evt[evt_idx],
+			   evt_idx, profile_index );
+
+	return ( PAPI_OK );
+}
+
+/*
+ * This function is used when hardware overflows are working or when
+ * software overflows are forced
+ */
+
+void
+_papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
+{
+	( void ) n;				 /*unused */
+	_papi_hwi_context_t ctx;
+	int found_evt_idx = -1, fd = info->si_fd;
+	caddr_t address;
+	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
+	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+
+	if ( thread == NULL ) {
+		PAPIERROR( "thread == NULL in _papi_pe_dispatch_timer for fd %d!", fd );
+		return;
+	}
+
+	if ( thread->running_eventset[cidx] == NULL ) {
+		PAPIERROR
+			( "thread->running_eventset == NULL in _papi_pe_dispatch_timer for fd %d!",
+			  fd );
+		return;
+	}
+
+	if ( thread->running_eventset[cidx]->overflow.flags == 0 ) {
+		PAPIERROR
+			( "thread->running_eventset->overflow.flags == 0 in _papi_pe_dispatch_timer for fd %d!",
+			  fd );
+		return;
+	}
+	
+	ctx.si = info;
+	ctx.ucontext = ( hwd_ucontext_t * ) uc;
+
+	if ( thread->running_eventset[cidx]->overflow.flags & 
+	     PAPI_OVERFLOW_FORCE_SW ) {
+		address = GET_OVERFLOW_ADDRESS( ctx );
+		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL, 0,
+						    0, &thread, cidx );
+	   return;
+	}
+	if ( thread->running_eventset[cidx]->overflow.flags !=
+		 PAPI_OVERFLOW_HARDWARE ) {
+		PAPIERROR
+			( "thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
+			  fd , thread->running_eventset[cidx]->overflow.flags);
+	}
+	{
+		int i;
+
+		/* See if the fd is one that's part of the this thread's context */
+		for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts;
+			  i++ ) {
+			if ( fd ==
+				 ( ( context_t * ) thread->context[cidx] )->evt[i].event_fd ) {
+				found_evt_idx = i;
+				break;
+			}
+		}
+		if ( found_evt_idx == -1 ) {
+			PAPIERROR
+				( "Unable to find fd %d among the open event fds _papi_hwi_dispatch_timer!",
+				  fd );
+		}
+	}
+
+	ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL );
+
+	if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING )
+		 && !( thread->running_eventset[cidx]->profile.
+			   flags & PAPI_PROFIL_FORCE_SW ) )
+		process_smpl_buf( found_evt_idx, &thread );
+	else {
+		__u64 ip;
+		unsigned int head;
+		evt_t *pe =
+			&( ( context_t * ) thread->context[cidx] )->evt[found_evt_idx];
+
+		unsigned char *data = pe->mmap_buf + getpagesize(  );
+
+		/*
+		 * Read up the most recent IP from the sample in the mmap buffer.  To
+		 * do this, we make the assumption that all of the records in the
+		 * mmap buffer are the same size, and that they all contain the IP as
+		 * their only record element.  This means that we can use the
+		 * data_head element from the user page and move backward one record
+		 * from that point and read the data.  Since we don't actually need
+		 * to access the header of the record, we can just subtract 8 (size
+		 * of the IP) from data_head and read up that word from the mmap
+		 * buffer.  After we subtract 8, we account for mmap buffer wrapping
+		 * by AND'ing this offset with the buffer mask.
+		 */
+		head = mmap_read_head( pe );
+
+		if ( head == 0 ) {
+			PAPIERROR
+				( "Attempting to access memory which may be inaccessable" );
+			return;
+		}
+
+		ip = *( __u64 * ) ( data + ( ( head - 8 ) & pe->mask ) );
+		/*
+		 * Update the tail to the current head pointer. 
+		 *
+		 * Note: that if we were to read the record at the tail pointer,
+		 * rather than the one at the head (as you might otherwise think
+		 * would be natural), we could run into problems.  Signals don't
+		 * stack well on Linux, particularly if not using RT signals, and if
+		 * they come in rapidly enough, we can lose some.  Overtime, the head
+		 * could catch up to the tail and monitoring would be stopped, and
+		 * since no more signals are coming in, this problem will never be
+		 * resolved, resulting in a complete loss of overflow notification
+		 * from that point on.  So the solution we use here will result in
+		 * only the most recent IP value being read every time there are two
+		 * or more samples in the buffer (for that one overflow signal).  But
+		 * the handler will always bring up the tail, so the head should
+		 * never run into the tail.
+		 */
+		mmap_write_tail( pe, head );
+
+		/*
+		 * The fourth parameter is supposed to be a vector of bits indicating
+		 * the overflowed hardware counters, but it's not really clear that
+		 * it's useful, because the actual hardware counters used are not
+		 * exposed to the PAPI user.  For now, I'm just going to set the bit
+		 * that indicates which event register in the array overflowed.  The
+		 * result is that the overflow vector will not be identical to the
+		 * perfmon implementation, and part of that is due to the fact that
+		 * which hardware register is actually being used is opaque at the
+		 * user level (the kernel event dispatcher hides that info).
+		 */
+
+		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx,
+											( caddr_t ) ( unsigned long ) ip,
+											NULL, ( 1 << found_evt_idx ), 0,
+											&thread, cidx );
+
+	}
+
+	/* Restart the counters */
+	if (ioctl( fd, PERF_EVENT_IOC_REFRESH, NULL ) == -1)
+			PAPIERROR( "overflow refresh failed", 0 );
+}
+
+int
+_papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
+{
+	( void ) ESI;			 /*unused */
+	int i, ret = PAPI_OK;
+	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+
+	/*
+	 * Loop through all of the events and process those which have mmap
+	 * buffers attached.
+	 */
+	for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts; i++ ) {
+		/*
+		 * Use the mmap_buf field as an indicator of this fd being used for
+		 * profiling
+		 */
+		if ( ( ( context_t * ) thread->context[cidx] )->evt[i].mmap_buf ) {
+			/* Process any remaining samples in the sample buffer */
+			ret = process_smpl_buf( i, &thread );
+			if ( ret ) {
+				PAPIERROR( "process_smpl_buf returned error %d", ret );
+				return ret;
+			}
+		}
+	}
+	return ret;
+}
+
+
+int
+_papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
+{
+	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
+	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
+	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
+
+	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
+
+	if ( threshold == 0 ) {
+		/* If this counter isn't set to overflow, it's an error */
+		if ( ctl->events[evt_idx].sample_period == 0 )
+			return PAPI_EINVAL;
+	}
+
+	ctl->events[evt_idx].sample_period = threshold;
+
+	/*
+	 * Note that the wakeup_mode field initially will be set to zero
+	 * (WAKEUP_MODE_COUNTER_OVERFLOW) as a result of a call to memset 0 to
+	 * all of the events in the ctl struct.
+	 */
+	switch ( ctl->per_event_info[evt_idx].wakeup_mode ) {
+	case WAKEUP_MODE_PROFILING:
+		/*
+		 * Setting wakeup_events to special value zero means issue a wakeup
+		 * (signal) on every mmap page overflow.
+		 */
+		ctl->events[evt_idx].wakeup_events = 0;
+		break;
+	case WAKEUP_MODE_COUNTER_OVERFLOW:
+		/*
+		 * Setting wakeup_events to one means issue a wakeup on every counter
+		 * overflow (not mmap page overflow).
+		 */
+		ctl->events[evt_idx].wakeup_events = 1;
+		/* We need the IP to pass to the overflow handler */
+		ctl->events[evt_idx].sample_type = PERF_SAMPLE_IP;
+		/* one for the user page, and two to take IP samples */
+		ctx->evt[evt_idx].nr_mmap_pages = 1 + 2;
+		break;
+	default:
+		PAPIERROR
+			( "ctl->per_event_info[%d].wakeup_mode set to an unknown value - %u",
+			  evt_idx, ctl->per_event_info[evt_idx].wakeup_mode );
+		return PAPI_EBUG;
+	}
+
+	for ( i = 0; i < ctl->num_events; i++ ) {
+		if ( ctl->events[evt_idx].sample_period ) {
+			found_non_zero_sample_period = 1;
+			break;
+		}
+	}
+	if ( found_non_zero_sample_period ) {
+		/* turn on internal overflow flag for this event set */
+		ctl->overflow = 1;
+		
+		/* Enable the signal handler */
+		retval =
+			_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
+									MY_VECTOR.cmp_info.CmpIdx );
+	} else {
+		/* turn off internal overflow flag for this event set */
+		ctl->overflow = 0;
+		
+		/*
+		 * Remove the signal handler, if there are no remaining non-zero
+		 * sample_periods set
+		 */
+		retval = _papi_hwi_stop_signal( MY_VECTOR.cmp_info.hardware_intr_sig );
+		if ( retval != PAPI_OK )
+			return retval;
+	}
+	retval =
+		_papi_pe_update_control_state( ctl, NULL,
+									   ( ( control_state_t * ) ( ESI->
+																 ctl_state ) )->
+									   num_events, ctx );
+
+	return retval;
+}
+
+
+
+int
+_papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
+{
+	int ret;
+	int evt_idx;
+	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
+	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
+
+	/*
+	 * Since you can't profile on a derived event, the event is always the
+	 * first and only event in the native event list.
+	 */
+	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
+
+	if ( threshold == 0 ) {
+		SUBDBG( "MUNMAP(%p,%lld)\n", ctx->evt[evt_idx].mmap_buf,
+				( unsigned long long ) ctx->evt[evt_idx].nr_mmap_pages *
+				getpagesize(  ) );
+
+		if ( ctx->evt[evt_idx].mmap_buf ) {
+			munmap( ctx->evt[evt_idx].mmap_buf,
+					ctx->evt[evt_idx].nr_mmap_pages * getpagesize(  ) );
+		}
+
+		ctx->evt[evt_idx].mmap_buf = NULL;
+		ctx->evt[evt_idx].nr_mmap_pages = 0;
+		ctl->events[evt_idx].sample_type &= ~PERF_SAMPLE_IP;
+		ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
+// #warning "This should be handled somewhere else"
+		ESI->state &= ~( PAPI_OVERFLOWING );
+		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
+
+		return ( ret );
+	}
+
+	/* Look up the native event code */
+	if ( ESI->profile.flags & ( PAPI_PROFIL_DATA_EAR | PAPI_PROFIL_INST_EAR ) ) {
+		/*
+		 * These are NYI x86-specific features.  FIXME
+		 */
+		return PAPI_ENOSUPP;
+	}
+
+	if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
+		/*
+		 * This requires an ability to randomly alter the sample_period within a
+		 * given range.  Kernel does not have this ability. FIXME ?
+		 */
+		return PAPI_ENOSUPP;
+	}
+
+	ctx->evt[evt_idx].nr_mmap_pages = NR_MMAP_PAGES;
+	ctl->events[evt_idx].sample_type |= PERF_SAMPLE_IP;
+
+	ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
+	if ( ret != PAPI_OK )
+		return ret;
+
+	return PAPI_OK;
+}
+
+
+int
+_papi_pe_init_control_state( hwd_control_state_t * ctl )
+{
+	control_state_t *pe_ctl = ( control_state_t * ) ctl;
+	memset( pe_ctl, 0, sizeof ( control_state_t ) );
+	set_domain( ctl, MY_VECTOR.cmp_info.default_domain );
+	/* Set cpu number in the control block to show events are not tied to specific cpu */
+	pe_ctl->cpu_num = -1;
+	return PAPI_OK;
+}
+
+int
+_papi_pe_allocate_registers( EventSetInfo_t * ESI )
+{
+	int i, j;
+	for ( i = 0; i < ESI->NativeCount; i++ ) {
+		if ( _papi_pfm_ntv_code_to_bits
+			 ( ESI->NativeInfoArray[i].ni_event,
+			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
+			goto bail;
+	}
+	return 1;
+  bail:
+	for ( j = 0; j < i; j++ )
+		memset( ESI->NativeInfoArray[j].ni_bits, 0x0,
+				sizeof ( pfm_register_t ) );
+	return 0;
+}
+
+
+
+
 papi_vector_t _papi_pe_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
@@ -2425,19 +2143,20 @@ papi_vector_t _papi_pe_vector = {
 	.init = _papi_sub_pe_init,
 
 	/* from OS */
-	.get_memory_info = _linux_get_memory_info,
-	.get_dmem_info = _linux_get_dmem_info,
-	.get_real_usec = _linux_get_real_usec,
-	.get_real_cycles = _linux_get_real_cycles,
-	.get_virt_cycles = _linux_get_virt_cycles,
-	.get_virt_usec = _linux_get_virt_usec,
+	.get_memory_info =   _linux_get_memory_info,
+	.get_dmem_info =     _linux_get_dmem_info,
+	.get_real_usec =     _linux_get_real_usec,
+	.get_real_cycles =   _linux_get_real_cycles,
+	.get_virt_cycles =   _linux_get_virt_cycles,
+	.get_virt_usec =     _linux_get_virt_usec,
 	.update_shlib_info = _linux_update_shlib_info,
+	.get_system_info =   _linux_get_system_info,
 
 	/* from counter name mapper */
-	.ntv_enum_events = _papi_pfm_ntv_enum_events,
-	.ntv_name_to_code = _papi_pfm_ntv_name_to_code,
-	.ntv_code_to_name = _papi_pfm_ntv_code_to_name,
+	.ntv_enum_events =   _papi_pfm_ntv_enum_events,
+	.ntv_name_to_code =  _papi_pfm_ntv_name_to_code,
+	.ntv_code_to_name =  _papi_pfm_ntv_code_to_name,
 	.ntv_code_to_descr = _papi_pfm_ntv_code_to_descr,
-	.ntv_code_to_bits = _papi_pfm_ntv_code_to_bits,
-	.ntv_bits_to_info = _papi_pfm_ntv_bits_to_info,
+	.ntv_code_to_bits =  _papi_pfm_ntv_code_to_bits,
+	.ntv_bits_to_info =  _papi_pfm_ntv_bits_to_info,
 };

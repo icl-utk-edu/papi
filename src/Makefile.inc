@@ -106,6 +106,9 @@ $(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
 linux-timer.o: linux-timer.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-timer.c -o linux-timer.o
 
+linux-common.o: linux-common.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-common.c -o linux-common.o
+
 extras.o: extras.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
 
@@ -126,9 +129,6 @@ $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 
 x86_cache_info.o: x86_cache_info.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
-
-hwinfo_linux.o: hwinfo_linux.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c hwinfo_linux.c -o hwinfo_linux.o
 
 $(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
 	sh papi_events_table.sh > $@

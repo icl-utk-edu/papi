@@ -241,7 +241,7 @@ _bgp_update_shlib_info(  )
  * Initialize system information structure
  */
 int
-_bgp_get_system_info( void )
+_bgp_get_system_info( papi_mdi_t *mdi )
 {
 	_BGP_Personality_t bgp;
 	int tmp;
@@ -427,7 +427,7 @@ _bgp_init_global( void )
 	 * Fill in what we can of the papi_system_info
 	 */
 	SUBDBG( "Before _bgp_get_system_info()...\n" );
-	retval = _bgp_get_system_info(  );
+	retval = _bgp_get_system_info( &_papi_hwi_system_info );
 	SUBDBG( "After _bgp_get_system_info(), retval=%d...\n", retval );
 	if ( retval != PAPI_OK )
 		return ( retval );

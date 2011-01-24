@@ -384,7 +384,7 @@ print_walk_names( void *arg, int regno, const char *name, uint8_t bits )
 }
 
 static int
-get_system_info( void )
+get_system_info( papi_mdi_t *mdi )
 {
 	int retval;
 	pid_t pid;
@@ -832,7 +832,7 @@ _ultra_hwd_init_substrate( int cidx )
 	if ( retval != PAPI_OK ) return(retval); */
 
 	/* Fill in what we can of the papi_system_info. */
-	retval = get_system_info(  );
+	retval = get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return ( retval );
 

@@ -71,7 +71,7 @@ long_long _niagara2_get_real_usec( void );
 long_long _niagara2_get_real_cycles( void );
 long_long _niagara2_get_virt_usec( const hwd_context_t * );
 long_long _niagara2_get_virt_cycles( const hwd_context_t * );
-int _niagara2_get_system_info( void );
+int _niagara2_get_system_info( papi_mdi_t *mdi );
 int _niagara2_init_control_state( hwd_control_state_t * );
 int _niagara2_init_substrate( int );   // Needs changes
 static void _niagara2_lock_init( void );
@@ -707,7 +707,7 @@ _niagara2_get_virt_cycles( const hwd_context_t * zero )
 }
 
 int
-_niagara2_get_system_info( void )
+_niagara2_get_system_info( papi_mdi_t *mdi )
 {
 	// Used for evaluating return values
 	int retval = 0;
@@ -914,7 +914,7 @@ _niagara2_init_substrate( int cidx )
 	SUBDBG( " -> %s: Gathering system information for PAPI\n", __func__ );
 #endif
 	/* Store system info in central data structure */
-	__CHECK_ERR_PAPI( _niagara2_get_system_info(  ) );
+	__CHECK_ERR_PAPI( _niagara2_get_system_info( &_papi_hwi_system_info ) );
 
 #ifdef DEBUG
 	SUBDBG( " -> %s: Initializing locks\n", __func__ );

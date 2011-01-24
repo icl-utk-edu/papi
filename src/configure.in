@@ -146,9 +146,6 @@ elif test "$OS" = "bgp"; then
   ffsll=yes
   cross_compiling=yes
 elif test "$OS" = "linux"; then
-  if test "x$no_cpu_counters" = "x"; then
-    MISCSRCS=hwinfo_linux.c
-  fi
   if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
     if test "$bitmode" = "64" -a "$libdir" = '${exec_prefix}/lib'; then
       libdir='${exec_prefix}/lib64'
@@ -1214,7 +1211,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     MEMSUBSTR=linux
-    MISCSRCS="hwinfo_linux.c x86_cache_info.c"
+    MISCSRCS="x86_cache_info.c"
   fi 
   F77=gfortran
   CFLAGS="$CFLAGS -D__crayxt"
@@ -1235,18 +1232,18 @@ elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perf_events 
     MEMSUBSTR=linux
-    MISCSRCS="$MISCSRCS sys_perf_event_open.c linux-timer.c"
-    MISCOBJS="linux-timer.o"
-    MISCHDRS="linux-timer.h"
+    MISCSRCS="$MISCSRCS sys_perf_event_open.c linux-timer.c linux-common.c"
+    MISCOBJS="linux-timer.o linux-common.o"
+    MISCHDRS="linux-timer.h linux-common.h"
   fi
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
   if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.perfctr-pfm
     SUBSTR=perfctr-x86
     MEMSUBSTR=linux
-    MISCSRCS="$MISCSRCS linux-timer.c"
-    MISCOBJS="linux-timer.o"
-    MISCHDRS="linux-timer.h"
+    MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
+    MISCOBJS="linux-timer.o linux-common.o"
+    MISCHDRS="linux-timer.h linux-common.h"
     VERSION=2.6.x  
     if test "$CPU" = "p4"; then
       CTEST_TARGETS="$CTEST_TARGETS p4"
@@ -1257,9 +1254,9 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
     FILENAME=Rules.perfctr
     SUBSTR=perfctr-ppc64
     MEMSUBSTR=linux
-    MISCSRCS="$MISCSRCS linux-timer.c"
-    MISCOBJS="linux-timer.o"
-    MISCHDRS="linux-timer.h"
+    MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
+    MISCOBJS="linux-timer.o linux-common.o"
+    MISCHDRS="linux-timer.h linux-common.h"
     VERSION=2.7.x
     CPU=ppc64
     if test "$MAKEVER" = "linux-perfctr-POWER5"; then
@@ -1294,18 +1291,18 @@ elif test "$MAKEVER" = "linux-perfmon2"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     MEMSUBSTR=linux
-    MISCSRCS="$MISCSRCS linux-timer.c"
-    MISCOBJS="linux-timer.o"
-    MISCHDRS="linux-timer.h"
+    MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
+    MISCOBJS="linux-timer.o linux-common.o"
+    MISCHDRS="linux-timer.h linux-common.h"
   fi
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-montecito"); then
   if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.pfm
     SUBSTR=linux-ia64
     MEMSUBSTR=linux
-    MISCSRCS="$MISCSRCS linux-timer.c"
-    MISCOBJS="linux-timer.o"
-    MISCHDRS="linux-timer.h"
+    MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
+    MISCOBJS="linux-timer.o linux-common.o"
+    MISCHDRS="linux-timer.h linux-common.h"
     VERSION=3.y
     if test "$MAKEVER" = "linux-pfm-itanium2"; then
       CPU=2

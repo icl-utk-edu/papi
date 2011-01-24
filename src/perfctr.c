@@ -15,10 +15,9 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 
-extern papi_vector_t MY_VECTOR;
-extern int get_cpu_info( PAPI_hw_info_t * hwinfo );
+#include "linux-common.h"
 
-int _linux_get_system_info( void );
+extern papi_vector_t MY_VECTOR;
 
 #ifdef PPC64
 extern int setup_ppc64_presets( int cputype );
@@ -157,7 +156,7 @@ _linux_init_substrate( int cidx )
 #endif
 
 	/* Fill in what we can of the papi_system_info. */
-	retval = MY_VECTOR.get_system_info(  );
+	retval = MY_VECTOR.get_system_info( &_papi_hwi_system_info );
 	if ( retval != PAPI_OK )
 		return ( retval );
 
@@ -420,85 +419,6 @@ _linux_init( hwd_context_t * ctx )
 		PAPIERROR( VCNTRL_ERROR );
 		return ( PAPI_ESYS );
 	}
-
-	return ( PAPI_OK );
-}
-
-int
-_linux_get_system_info( void )
-{
-	int retval;
-	char maxargs[PAPI_HUGE_STR_LEN];
-	pid_t pid;
-
-	/* Software info */
-
-	/* Path and args */
-
-	pid = getpid(  );
-	if ( pid < 0 ) {
-		PAPIERROR( "getpid() returned < 0" );
-		return ( PAPI_ESYS );
-	}
-	_papi_hwi_system_info.pid = pid;
-
-	sprintf( maxargs, "/proc/%d/exe", ( int ) pid );
-	if ( readlink
-		 ( maxargs, _papi_hwi_system_info.exe_info.fullname,
-		   PAPI_HUGE_STR_LEN ) < 0 ) {
-		PAPIERROR( "readlink(%s) returned < 0", maxargs );
-		strcpy( _papi_hwi_system_info.exe_info.fullname, "" );
-		strcpy( _papi_hwi_system_info.exe_info.address_info.name, "" );
-	} else {
-		/* basename can modify it's argument */
-		strcpy( maxargs, _papi_hwi_system_info.exe_info.fullname );
-		strcpy( _papi_hwi_system_info.exe_info.address_info.name,
-				basename( maxargs ) );
-	}
-
-	/* Executable regions, may require reading /proc/pid/maps file */
-
-	retval = _linux_update_shlib_info(  );
-
-	/* PAPI_preload_option information */
-
-	strcpy( _papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD" );
-	_papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
-	strcpy( _papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH" );
-	_papi_hwi_system_info.preload_info.lib_dir_sep = ':';
-
-	SUBDBG( "Executable is %s\n",
-			_papi_hwi_system_info.exe_info.address_info.name );
-	SUBDBG( "Full Executable is %s\n",
-			_papi_hwi_system_info.exe_info.fullname );
-	SUBDBG( "Text: Start %p, End %p, length %d\n",
-			_papi_hwi_system_info.exe_info.address_info.text_start,
-			_papi_hwi_system_info.exe_info.address_info.text_end,
-			( int ) ( _papi_hwi_system_info.exe_info.address_info.text_end -
-					  _papi_hwi_system_info.exe_info.address_info.
-					  text_start ) );
-	SUBDBG( "Data: Start %p, End %p, length %d\n",
-			_papi_hwi_system_info.exe_info.address_info.data_start,
-			_papi_hwi_system_info.exe_info.address_info.data_end,
-			( int ) ( _papi_hwi_system_info.exe_info.address_info.data_end -
-					  _papi_hwi_system_info.exe_info.address_info.
-					  data_start ) );
-	SUBDBG( "Bss: Start %p, End %p, length %d\n",
-			_papi_hwi_system_info.exe_info.address_info.bss_start,
-			_papi_hwi_system_info.exe_info.address_info.bss_end,
-			( int ) ( _papi_hwi_system_info.exe_info.address_info.bss_end -
-					  _papi_hwi_system_info.exe_info.address_info.bss_start ) );
-
-	/* Hardware info */
-	get_cpu_info( &_papi_hwi_system_info.hw_info );
-
-	SUBDBG( "Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
-			_papi_hwi_system_info.hw_info.totalcpus,
-			_papi_hwi_system_info.hw_info.vendor_string,
-			_papi_hwi_system_info.hw_info.vendor,
-			_papi_hwi_system_info.hw_info.model_string,
-			_papi_hwi_system_info.hw_info.model,
-			_papi_hwi_system_info.hw_info.mhz );
 
 	return ( PAPI_OK );
 }

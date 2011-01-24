@@ -19,6 +19,10 @@
 #include "threads.h"
 #include "papi_memory.h"
 
+#include "linux-memory.h"
+#include "linux-timer.h"
+#include "linux-common.h"
+
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
@@ -30,10 +34,6 @@ extern unsigned int PAPI_NATIVE_EVENT_SHIFT;
 extern unsigned int PAPI_NATIVE_UMASK_AND_MASK;
 extern unsigned int PAPI_NATIVE_UMASK_MAX;
 extern unsigned int PAPI_NATIVE_UMASK_SHIFT;
-extern int _ia64_get_memory_info( PAPI_hw_info_t * mem_info, int cpu_type );
-extern int _ia64_get_dmem_info( PAPI_dmem_info_t * d );
-extern int get_cpu_info( PAPI_hw_info_t * hwinfo );
-int _ia64_update_shlib_info( void );
 
 /* Static locals */
 
@@ -66,13 +66,6 @@ static papi_svector_t _linux_ia64_table[] = {
  {NULL, VEC_PAPI_END}
 };
 */
-
-#ifdef HAVE_MMTIMER
-static int mmdev_fd;
-static unsigned long mmdev_mask;
-static unsigned long mmdev_ratio;
-static volatile unsigned long *mmdev_timer_addr;
-#endif
 
 static itanium_preset_search_t ia1_preset_search_map[] = {
 	{PAPI_L1_TCM, DERIVED_ADD,
@@ -673,27 +666,6 @@ search_cpu_info( FILE * f, char *search_str, char *line )
 	/* End stolen code */
 }
 
-static inline unsigned long
-get_cycles( void )
-{
-	unsigned long tmp;
-#ifdef HAVE_MMTIMER
-	tmp = *mmdev_timer_addr & mmdev_mask;
-//   SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_ratio);
-	tmp *= mmdev_ratio;
-#elif defined(__INTEL_COMPILER)
-	tmp = __getReg( _IA64_REG_AR_ITC );
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
-		tmp = tmp * ( unsigned long ) 4;
-#else  /* GCC */
-	/* XXX: need more to adjust for Itanium itc bug */
-	__asm__ __volatile__( "mov %0=ar.itc":"=r"( tmp )::"memory" );
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
-		tmp = tmp * ( unsigned long ) 4;
-#endif
-	return tmp;
-}
-
 int
 _ia64_ita_set_domain( hwd_control_state_t * this_state, int domain )
 {
@@ -990,122 +962,7 @@ set_default_granularity( hwd_control_state_t * this_state, int granularity )
 }
 
 
-int
-_ia64_get_system_info( void )
-{
-	int retval;
-	char maxargs[PAPI_HUGE_STR_LEN];
-	pid_t pid;
-	int ncnt, nnev;
 
-	retval = pfmw_get_num_events( &nnev );
-	if ( retval != PAPI_OK )
-		return ( retval );
-
-	retval = pfmw_get_num_counters( &ncnt );
-	if ( retval != PAPI_OK )
-		return ( retval );
-
-	/* Path and args */
-
-	pid = getpid(  );
-	if ( pid < 0 ) {
-		PAPIERROR( "getpid() returned < 0" );
-		return ( PAPI_ESYS );
-	}
-	_papi_hwi_system_info.pid = pid;
-
-	sprintf( maxargs, "/proc/%d/exe", ( int ) pid );
-	if ( readlink
-		 ( maxargs, _papi_hwi_system_info.exe_info.fullname,
-		   PAPI_HUGE_STR_LEN ) < 0 ) {
-		PAPIERROR( "readlink(%s) returned < 0", maxargs );
-		return ( PAPI_ESYS );
-	}
-
-	/* basename can modify it's argument */
-	strcpy( maxargs, _papi_hwi_system_info.exe_info.fullname );
-	strcpy( _papi_hwi_system_info.exe_info.address_info.name,
-			basename( maxargs ) );
-
-	/* Executable regions, may require reading /proc/pid/maps file */
-
-	retval = _ia64_update_shlib_info(  );
-
-	/* PAPI_preload_option information */
-
-	strcpy( _papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD" );
-	_papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
-	strcpy( _papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH" );
-	_papi_hwi_system_info.preload_info.lib_dir_sep = ':';
-
-	SUBDBG( "Executable is %s\n",
-			_papi_hwi_system_info.exe_info.address_info.name );
-	SUBDBG( "Full Executable is %s\n",
-			_papi_hwi_system_info.exe_info.fullname );
-	SUBDBG( "Text: Start %p, End %p, length %d\n",
-			_papi_hwi_system_info.exe_info.address_info.text_start,
-			_papi_hwi_system_info.exe_info.address_info.text_end,
-			( int ) ( _papi_hwi_system_info.exe_info.address_info.text_end -
-					  _papi_hwi_system_info.exe_info.address_info.
-					  text_start ) );
-	SUBDBG( "Data: Start %p, End %p, length %d\n",
-			_papi_hwi_system_info.exe_info.address_info.data_start,
-			_papi_hwi_system_info.exe_info.address_info.data_end,
-			( int ) ( _papi_hwi_system_info.exe_info.address_info.data_end -
-					  _papi_hwi_system_info.exe_info.address_info.
-					  data_start ) );
-	SUBDBG( "Bss: Start %p, End %p, length %d\n",
-			_papi_hwi_system_info.exe_info.address_info.bss_start,
-			_papi_hwi_system_info.exe_info.address_info.bss_end,
-			( int ) ( _papi_hwi_system_info.exe_info.address_info.bss_end -
-					  _papi_hwi_system_info.exe_info.address_info.bss_start ) );
-
-	/* Hardware info */
-	get_cpu_info( &_papi_hwi_system_info.hw_info );
-
-	SUBDBG( "Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
-			_papi_hwi_system_info.hw_info.totalcpus,
-			_papi_hwi_system_info.hw_info.vendor_string,
-			_papi_hwi_system_info.hw_info.vendor,
-			_papi_hwi_system_info.hw_info.model_string,
-			_papi_hwi_system_info.hw_info.model,
-			_papi_hwi_system_info.hw_info.mhz );
-
-
-	/* Name of the substrate we're using */
-	strcpy( MY_VECTOR.cmp_info.name,
-			"$Id$" );
-	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
-	sprintf( MY_VECTOR.cmp_info.support_version, "%08x", PFMLIB_VERSION );
-	sprintf( MY_VECTOR.cmp_info.kernel_version, "%08x", 2 << 16 );	/* 2.0 */
-	MY_VECTOR.cmp_info.num_native_events = nnev;
-	MY_VECTOR.cmp_info.num_cntrs = ncnt;
-  /*_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;*/
-	MY_VECTOR.cmp_info.hardware_intr = 1;
-	MY_VECTOR.cmp_info.fast_real_timer = 1;
-	MY_VECTOR.cmp_info.fast_virtual_timer = 0;
-	MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
-	MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
-	MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
-	MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
-	MY_VECTOR.cmp_info.hardware_intr_sig = OVFL_SIGNAL;
-	MY_VECTOR.cmp_info.kernel_profile = 1;
-	MY_VECTOR.cmp_info.data_address_range = 1;	/* Supports data address range limiting */
-	MY_VECTOR.cmp_info.instr_address_range = 1;	/* Supports instruction address range limiting */
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
-		MY_VECTOR.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
-
-	MY_VECTOR.cmp_info.cntr_IEAR_events = 1;	/* counters support instr event addr register */
-	MY_VECTOR.cmp_info.cntr_DEAR_events = 1;	/* counters support data event addr register */
-	MY_VECTOR.cmp_info.cntr_OPCM_events = 1;	/* counter events support opcode matching */
-	MY_VECTOR.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
-	/* Put the signal handler in use to consume PFM_END_MSG's */
-	_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
-							MY_VECTOR.cmp_info.CmpIdx );
-
-	return ( PAPI_OK );
-}
 
 int
 _ia64_init_substrate( int cidx )
@@ -1170,80 +1027,54 @@ _ia64_init_substrate( int cidx )
 	}
 
 	/* Fill in what we can of the papi_system_info. */
-	retval = _ia64_get_system_info(  );
+	retval = _linux_get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return ( retval );
 
-#if defined(HAVE_MMTIMER)
-	{
-		unsigned long femtosecs_per_tick = 0;
-		unsigned long freq = 0;
-		int result;
-		int offset;
+	int ncnt, nnev;
 
-		SUBDBG( "MMTIMER Opening %s\n", MMTIMER_FULLNAME );
-		if ( ( mmdev_fd = open( MMTIMER_FULLNAME, O_RDONLY ) ) == -1 ) {
-			PAPIERROR( "Failed to open MM timer %s", MMTIMER_FULLNAME );
-			return ( PAPI_ESYS );
-		}
-		SUBDBG( "MMTIMER checking if we can mmap" );
-		if ( ioctl( mmdev_fd, MMTIMER_MMAPAVAIL, 0 ) != 1 ) {
-			PAPIERROR( "mmap of MM timer unavailable" );
-			return ( PAPI_ESBSTR );
-		}
-		SUBDBG( "MMTIMER setting close on EXEC flag\n" );
-		if ( fcntl( mmdev_fd, F_SETFD, FD_CLOEXEC ) == -1 ) {
-			PAPIERROR( "Failed to fcntl(FD_CLOEXEC) on MM timer FD %d: %s",
-					   mmdev_fd, strerror( errno ) );
-			return ( PAPI_ESYS );
-		}
-		SUBDBG( "MMTIMER is on FD %d, getting offset\n", mmdev_fd );
-		if ( ( offset = ioctl( mmdev_fd, MMTIMER_GETOFFSET, 0 ) ) < 0 ) {
-			PAPIERROR( "Failed to get offset of MM timer" );
-			return ( PAPI_ESYS );
-		}
-		SUBDBG( "MMTIMER has offset of %d, getting frequency\n", offset );
-		if ( ioctl( mmdev_fd, MMTIMER_GETFREQ, &freq ) == -1 ) {
-			PAPIERROR( "Failed to get frequency of MM timer" );
-			return ( PAPI_ESYS );
-		}
-		SUBDBG( "MMTIMER has frequency %lu Mhz\n", freq / 1000000 );
-// don't know for sure, but I think this ratio is inverted
-//     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
-		mmdev_ratio =
-			( unsigned long ) _papi_hwi_system_info.hw_info.mhz / ( freq /
-																	1000000 );
-		SUBDBG
-			( "MMTIMER has a ratio of %ld to the CPU's clock, getting resolution\n",
-			  mmdev_ratio );
-		if ( ioctl( mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick ) == -1 ) {
-			PAPIERROR( "Failed to get femtoseconds per tick" );
-			return ( PAPI_ESYS );
-		}
-		SUBDBG
-			( "MMTIMER res is %lu femtosecs/tick (10^-15s) or %f Mhz, getting valid bits\n",
-			  femtosecs_per_tick, 1.0e9 / ( double ) femtosecs_per_tick );
-		if ( ( result = ioctl( mmdev_fd, MMTIMER_GETBITS, 0 ) ) == -ENOSYS ) {
-			PAPIERROR( "Failed to get number of bits in MMTIMER" );
-			return ( PAPI_ESYS );
-		}
-		mmdev_mask = ~( 0xffffffffffffffff << result );
-		SUBDBG
-			( "MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",
-			  result, mmdev_mask );
-		if ( ( mmdev_timer_addr =
-			   ( unsigned long * ) mmap( 0, getpagesize(  ), PROT_READ,
-										 MAP_PRIVATE, mmdev_fd,
-										 0 ) ) == NULL ) {
-			PAPIERROR( "Failed to mmap MM timer" );
-			return ( PAPI_ESYS );
-		}
-		SUBDBG( "MMTIMER page is at %p, actual address is %p\n",
-				mmdev_timer_addr, mmdev_timer_addr + offset );
-		mmdev_timer_addr += offset;
-		/* mmdev_fd should be closed and page should be unmapped in a global shutdown routine */
-	}
-#endif
+	retval = pfmw_get_num_events( &nnev );
+	if ( retval != PAPI_OK )
+		return ( retval );
+
+	retval = pfmw_get_num_counters( &ncnt );
+	if ( retval != PAPI_OK )
+		return ( retval );
+
+	/* Name of the substrate we're using */
+	strcpy( MY_VECTOR.cmp_info.name,
+			"$Id$" );
+	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
+	sprintf( MY_VECTOR.cmp_info.support_version, "%08x", PFMLIB_VERSION );
+	sprintf( MY_VECTOR.cmp_info.kernel_version, "%08x", 2 << 16 );	/* 2.0 */
+	MY_VECTOR.cmp_info.num_native_events = nnev;
+	MY_VECTOR.cmp_info.num_cntrs = ncnt;
+  /*_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;*/
+	MY_VECTOR.cmp_info.hardware_intr = 1;
+	MY_VECTOR.cmp_info.fast_real_timer = 1;
+	MY_VECTOR.cmp_info.fast_virtual_timer = 0;
+	MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
+	MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
+	MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
+	MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
+	MY_VECTOR.cmp_info.hardware_intr_sig = OVFL_SIGNAL;
+	MY_VECTOR.cmp_info.kernel_profile = 1;
+	MY_VECTOR.cmp_info.data_address_range = 1;	/* Supports data address range limiting */
+	MY_VECTOR.cmp_info.instr_address_range = 1;	/* Supports instruction address range limiting */
+	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
+		MY_VECTOR.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
+
+	MY_VECTOR.cmp_info.cntr_IEAR_events = 1;	/* counters support instr event addr register */
+	MY_VECTOR.cmp_info.cntr_DEAR_events = 1;	/* counters support data event addr register */
+	MY_VECTOR.cmp_info.cntr_OPCM_events = 1;	/* counter events support opcode matching */
+	MY_VECTOR.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
+	/* Put the signal handler in use to consume PFM_END_MSG's */
+	_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
+							MY_VECTOR.cmp_info.CmpIdx );
+
+	retval = mmtimer_setup();
+	if ( retval )
+		return ( retval );
 
 	retval =
 		generate_preset_search_map( &preset_search_map, ia_preset_search_map,
@@ -1259,7 +1090,7 @@ _ia64_init_substrate( int cidx )
 	 * fakining it here with hw_info.model which is not set by this
 	 * substrate 
 	 */
-	retval = _ia64_get_memory_info( &_papi_hwi_system_info.hw_info,
+	retval = _linux_memory_info( &_papi_hwi_system_info.hw_info,
 									_papi_hwi_system_info.hw_info.model );
 	if ( retval )
 		return ( retval );
@@ -1284,93 +1115,6 @@ _ia64_init( hwd_context_t * zero )
 	}
 #endif
 	return ( pfmw_create_context( zero ) );
-}
-
-long long
-_ia64_get_real_usec( void )
-{
-	return ( ( long long ) get_cycles(  ) /
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
-}
-
-long long
-_ia64_get_real_cycles( void )
-{
-	return ( ( long long ) get_cycles(  ) );
-}
-
-long long
-_ia64_get_virt_usec( const hwd_context_t * zero )
-{
-	long long retval = 0;
-#if defined(USE_PROC_PTTIMER)
-	{
-		char buf[LINE_MAX];
-		long long utime, stime;
-		int rv, cnt = 0, i = 0;
-
-		rv = read( zero->stat_fd, buf, LINE_MAX * sizeof ( char ) );
-		if ( rv == -1 ) {
-			PAPIERROR( "read()" );
-			return ( PAPI_ESYS );
-		}
-		lseek( zero->stat_fd, 0, SEEK_SET );
-
-		buf[rv] = '\0';
-		SUBDBG( "Thread stat file is:%s\n", buf );
-		while ( ( cnt != 13 ) && ( i < rv ) ) {
-			if ( buf[i] == ' ' ) {
-				cnt++;
-			}
-			i++;
-		}
-		if ( cnt != 13 ) {
-			PAPIERROR( "utime and stime not in thread stat file?" );
-			return ( PAPI_ESBSTR );
-		}
-
-		if ( sscanf( buf + i, "%llu %llu", &utime, &stime ) != 2 ) {
-			PAPIERROR
-				( "Unable to scan two items from thread stat file at 13th space?" );
-			return ( PAPI_ESBSTR );
-		}
-		retval =
-			( long long ) ( utime +
-							stime ) * 1000000 / MY_VECTOR.cmp_info.clock_ticks;
-	}
-#elif defined(HAVE_CLOCK_GETTIME_THREAD)
-	{
-		( void ) zero;		 /*unused */
-		struct timespec foo;
-		double bar;
-
-		syscall( __NR_clock_gettime, HAVE_CLOCK_GETTIME_THREAD, &foo );
-		bar =
-			( double ) foo.tv_nsec / 1000.0 + ( double ) foo.tv_sec * 1000000.0;
-		retval = ( long long ) bar;
-	}
-#elif defined(HAVE_PER_THREAD_TIMES)
-	{
-		( void ) zero;		 /*unused */
-		struct tms buffer;
-		times( &buffer );
-		/* SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime); */
-		retval =
-			( long long ) ( ( buffer.tms_utime + buffer.tms_stime ) *
-							( 1000000 / sysconf( _SC_CLK_TCK ) ) );
-		/* NOT CLOCKS_PER_SEC as in the headers! */
-	}
-#else
-#error "No working per thread timer"
-#endif
-	return ( retval );
-}
-
-long long
-_ia64_get_virt_cycles( const hwd_context_t * zero )
-{
-	return ( _ia64_get_virt_usec( zero ) *
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
 /* reset the hardware counters */
@@ -2354,141 +2098,6 @@ _ia64_update_control_state( hwd_control_state_t * this_state,
 	}
 }
 
-int
-_ia64_update_shlib_info( void )
-{
-	char fname[PAPI_HUGE_STR_LEN];
-	char buf[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], perm[5], dev[6];
-	char mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
-	unsigned long begin, end, size, inode, foo;
-	unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
-	PAPI_address_map_t *tmp = NULL;
-	FILE *f;
-
-	memset( fname, 0x0, sizeof ( fname ) );
-	memset( buf, 0x0, sizeof ( buf ) );
-	memset( perm, 0x0, sizeof ( perm ) );
-	memset( dev, 0x0, sizeof ( dev ) );
-	memset( mapname, 0x0, sizeof ( mapname ) );
-	memset( lastmapname, 0x0, sizeof ( lastmapname ) );
-
-	sprintf( fname, "/proc/%ld/maps", ( long ) _papi_hwi_system_info.pid );
-	f = fopen( fname, "r" );
-
-	if ( !f ) {
-		PAPIERROR( "fopen(%s) returned < 0", fname );
-		return ( PAPI_OK );
-	}
-
-  again:
-	while ( !feof( f ) ) {
-		begin = end = size = inode = foo = 0;
-		if ( fgets( buf, sizeof ( buf ), f ) == 0 )
-			break;
-		/* If mapname is null in the string to be scanned, we need to detect that */
-		if ( strlen( mapname ) )
-			strcpy( lastmapname, mapname );
-		else
-			lastmapname[0] = '\0';
-		/* If mapname is null in the string to be scanned, we need to detect that */
-		mapname[0] = '\0';
-		sscanf( buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
-				&foo, dev, &inode, mapname );
-		size = end - begin;
-
-		/* the permission string looks like "rwxp", where each character can
-		 * be either the letter, or a hyphen.  The final character is either
-		 * p for private or s for shared. */
-
-		if ( counting ) {
-			if ( ( perm[2] == 'x' ) && ( perm[0] == 'r' ) && ( perm[1] != 'w' )
-				 && ( inode != 0 ) ) {
-				if ( strcmp( _papi_hwi_system_info.exe_info.fullname, mapname )
-					 == 0 ) {
-					_papi_hwi_system_info.exe_info.address_info.text_start =
-						( caddr_t ) begin;
-					_papi_hwi_system_info.exe_info.address_info.text_end =
-						( caddr_t ) ( begin + size );
-				}
-				t_index++;
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode != 0 ) &&
-						( strcmp
-						  ( _papi_hwi_system_info.exe_info.fullname,
-							mapname ) == 0 ) ) {
-				_papi_hwi_system_info.exe_info.address_info.data_start =
-					( caddr_t ) begin;
-				_papi_hwi_system_info.exe_info.address_info.data_end =
-					( caddr_t ) ( begin + size );
-				d_index++;
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode == 0 ) &&
-						( strcmp
-						  ( _papi_hwi_system_info.exe_info.fullname,
-							lastmapname ) == 0 ) ) {
-				_papi_hwi_system_info.exe_info.address_info.bss_start =
-					( caddr_t ) begin;
-				_papi_hwi_system_info.exe_info.address_info.bss_end =
-					( caddr_t ) ( begin + size );
-				b_index++;
-			}
-		} else if ( !counting ) {
-			if ( ( perm[2] == 'x' ) && ( perm[0] == 'r' ) && ( perm[1] != 'w' )
-				 && ( inode != 0 ) ) {
-				if ( strcmp( _papi_hwi_system_info.exe_info.fullname, mapname )
-					 != 0 ) {
-					t_index++;
-					tmp[t_index - 1].text_start = ( caddr_t ) begin;
-					tmp[t_index - 1].text_end = ( caddr_t ) ( begin + size );
-					strncpy( tmp[t_index - 1].name, mapname, PAPI_MAX_STR_LEN );
-				}
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode != 0 ) ) {
-				if ( ( strcmp
-					   ( _papi_hwi_system_info.exe_info.fullname,
-						 mapname ) != 0 )
-					 && ( t_index > 0 ) &&
-					 ( tmp[t_index - 1].data_start == 0 ) ) {
-					tmp[t_index - 1].data_start = ( caddr_t ) begin;
-					tmp[t_index - 1].data_end = ( caddr_t ) ( begin + size );
-				}
-			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
-						( inode == 0 ) ) {
-				if ( ( t_index > 0 ) && ( tmp[t_index - 1].bss_start == 0 ) ) {
-					tmp[t_index - 1].bss_start = ( caddr_t ) begin;
-					tmp[t_index - 1].bss_end = ( caddr_t ) ( begin + size );
-				}
-			}
-		}
-	}
-
-	if ( counting ) {
-		/* When we get here, we have counted the number of entries in the map
-		   for us to allocate */
-
-		tmp =
-			( PAPI_address_map_t * ) papi_calloc( t_index,
-												  sizeof
-												  ( PAPI_address_map_t ) );
-		if ( tmp == NULL ) {
-			PAPIERROR( "Error allocating shared library address map" );
-			return ( PAPI_ENOMEM );
-		}
-		t_index = 0;
-		rewind( f );
-		counting = 0;
-		goto again;
-	} else {
-		if ( _papi_hwi_system_info.shlib_info.map )
-			papi_free( _papi_hwi_system_info.shlib_info.map );
-		_papi_hwi_system_info.shlib_info.map = tmp;
-		_papi_hwi_system_info.shlib_info.count = t_index;
-
-		fclose( f );
-	}
-	return ( PAPI_OK );
-}
-
 papi_vector_t _ia64_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
@@ -2530,7 +2139,6 @@ papi_vector_t _ia64_vector = {
 	.shutdown = _ia64_shutdown,
 	.ctl = _ia64_ctl,
 	.update_control_state = _ia64_update_control_state,
-	.update_shlib_info = _ia64_update_shlib_info,
 	.set_domain = _ia64_set_domain,
 	.reset = _ia64_reset,
 	.set_overflow = _ia64_set_overflow,
@@ -2541,14 +2149,16 @@ papi_vector_t _ia64_vector = {
 	.ntv_code_to_descr = _ia64_ntv_code_to_descr,
 	.init_substrate = _ia64_init_substrate,
 	.dispatch_timer = _ia64_dispatch_timer,
-	.get_real_usec = _ia64_get_real_usec,
-	.get_real_cycles = _ia64_get_real_cycles,
-	.get_virt_cycles = _ia64_get_virt_cycles,
-	.get_virt_usec = _ia64_get_virt_usec,
+	.init = _ia64_init,
 
 	/* from OS */
-	.get_memory_info = _ia64_get_memory_info,
-	.get_system_info = _ia64_get_system_info,
-	.init = _ia64_init,
-	.get_dmem_info = _ia64_get_dmem_info
+	.get_memory_info =   _linux_get_memory_info,
+	.get_dmem_info =     _linux_get_dmem_info
+	.get_real_usec =     _linux_get_real_usec,
+	.get_real_cycles =   _linux_get_real_cycles,
+	.get_virt_cycles =   _linux_get_virt_cycles,
+	.get_virt_usec =     _linux_get_virt_usec,
+	.update_shlib_info = _linux_update_shlib_info,
+	.get_system_info =   _linux_get_system_info,
+
 };

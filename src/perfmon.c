@@ -41,13 +41,12 @@ typedef unsigned uint;
 hwi_search_t *preset_search_map;
 #ifdef WIN32
 extern int __pfm_getcpuinfo_attr( const char *attr, char *ret_buf,
-								  size_t maxlen );
+						    size_t maxlen );
 extern void OpenWinPMCDriver(  );
 extern void CloseWinPMCDriver(  );
 CRITICAL_SECTION _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #else
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-extern int get_cpu_info( PAPI_hw_info_t * hwinfo );
 #endif
 extern papi_vector_t _papi_pfm_vector;
 
@@ -424,175 +423,6 @@ decode_vendor_string( char *s, int *vendor )
 		*vendor = PAPI_VENDOR_UNKNOWN;
 }
 #endif
-
-
-#ifdef WIN32
-static int
-get_cpu_info( PAPI_hw_info_t * hw_info )
-{
-	int retval = PAPI_OK;
-	char maxargs[PAPI_HUGE_STR_LEN];
-	char *s;
-	char model[48];
-	int i;
-	for ( i = 0; i < 3; ++i )
-		__cpuid( &model[i * 16], 0x80000002 + i );
-	for ( i = 0; i < 48; ++i )
-		model[i] = tolower( model[i] );
-	if ( ( s = strstr( model, "mhz" ) ) != NULL ) {
-		--s;
-		while ( isspace( *s ) || isdigit( *s ) || *s == '.' && s >= model )
-			--s;
-		++s;
-		hw_info->mhz = ( float ) atof( s );
-	} else if ( ( s = strstr( model, "ghz" ) ) != NULL ) {
-		--s;
-		while ( isspace( *s ) || isdigit( *s ) || *s == '.' && s >= model )
-			--s;
-		++s;
-		hw_info->mhz = ( float ) atof( s ) * 1000;
-	} else
-		return PAPI_EBUG;
-
-	hw_info->clock_mhz = hw_info->mhz;
-
-	__pfm_getcpuinfo_attr( "vendor_id", hw_info->vendor_string,
-						   sizeof ( hw_info->vendor_string ) );
-
-	if ( strlen( hw_info->vendor_string ) )
-		decode_vendor_string( hw_info->vendor_string, &hw_info->vendor );
-	__cpuid( maxargs, 1 );
-	hw_info->revision = *( uint32_t * ) maxargs & 0xf;
-	strcpy( hw_info->model_string, model );
-	return ( retval );
-}
-#endif
-
-#ifdef WIN32
-static char *
-basename( const char *path )
-{
-	const char *s = path, *last = NULL;
-	while ( *s != '\0' )
-		if ( *s == '\\' )
-			last = s;
-
-	return last ? last + 1 : path;
-}
-#endif
-
-static int
-get_system_info( papi_mdi_t * mdi )
-{
-	int retval;
-	/* Software info */
-
-	/* Path and args */
-
-#ifdef WIN32
-	SYSTEM_INFO si;
-	HANDLE hModule;
-	int len;
-
-	_papi_hwi_system_info.pid = getpid(  );
-
-	hModule = GetModuleHandle( NULL );	// current process
-	len =
-		GetModuleFileName( hModule, mdi->exe_info.fullname, PAPI_MAX_STR_LEN );
-	if ( len )
-		strcpy( mdi->exe_info.address_info.name, mdi->exe_info.fullname );
-	else
-		return ( PAPI_ESYS );
-#else
-	char maxargs[PAPI_HUGE_STR_LEN];
-	pid_t pid;
-
-	pid = getpid(  );
-	if ( pid < 0 ) {
-		PAPIERROR( "getpid() returned < 0" );
-		return ( PAPI_ESYS );
-	}
-	mdi->pid = pid;
-
-	sprintf( maxargs, "/proc/%d/exe", ( int ) pid );
-	if ( readlink( maxargs, mdi->exe_info.fullname, PAPI_HUGE_STR_LEN ) < 0 ) {
-		PAPIERROR( "readlink(%s) returned < 0", maxargs );
-		return ( PAPI_ESYS );
-	}
-
-	/* Careful, basename can modify it's argument */
-
-	strcpy( maxargs, mdi->exe_info.fullname );
-	strcpy( mdi->exe_info.address_info.name, basename( maxargs ) );
-#endif
-	SUBDBG( "Executable is %s\n", mdi->exe_info.address_info.name );
-	SUBDBG( "Full Executable is %s\n", mdi->exe_info.fullname );
-
-	/* Executable regions, may require reading /proc/pid/maps file */
-
-	retval = _linux_update_shlib_info(  );
-	SUBDBG( "Text: Start %p, End %p, length %d\n",
-			mdi->exe_info.address_info.text_start,
-			mdi->exe_info.address_info.text_end,
-			( int ) ( mdi->exe_info.address_info.text_end -
-					  mdi->exe_info.address_info.text_start ) );
-	SUBDBG( "Data: Start %p, End %p, length %d\n",
-			mdi->exe_info.address_info.data_start,
-			mdi->exe_info.address_info.data_end,
-			( int ) ( mdi->exe_info.address_info.data_end -
-					  mdi->exe_info.address_info.data_start ) );
-	SUBDBG( "Bss: Start %p, End %p, length %d\n",
-			mdi->exe_info.address_info.bss_start,
-			mdi->exe_info.address_info.bss_end,
-			( int ) ( mdi->exe_info.address_info.bss_end -
-					  mdi->exe_info.address_info.bss_start ) );
-
-	/* PAPI_preload_option information */
-
-	strcpy( mdi->preload_info.lib_preload_env, "LD_PRELOAD" );
-	mdi->preload_info.lib_preload_sep = ' ';
-	strcpy( mdi->preload_info.lib_dir_env, "LD_LIBRARY_PATH" );
-	mdi->preload_info.lib_dir_sep = ':';
-
-	/* Hardware info */
-#ifdef WIN32
-	GetSystemInfo( &si );
-	mdi->hw_info.ncpu = mdi->hw_info.totalcpus = si.dwNumberOfProcessors;
-	mdi->hw_info.nnodes = 1;
-#endif
-
-	retval = get_cpu_info( &mdi->hw_info );
-	if ( retval )
-		return ( retval );
-
-	retval = _linux_get_memory_info( &mdi->hw_info, mdi->hw_info.model );
-	if ( retval )
-		return ( retval );
-
-	SUBDBG( "Found %d %s(%d) %s(%d) CPU's at %f Mhz, clock %d Mhz.\n",
-			mdi->hw_info.totalcpus,
-			mdi->hw_info.vendor_string,
-			mdi->hw_info.vendor,
-			mdi->hw_info.model_string,
-			mdi->hw_info.model, mdi->hw_info.mhz, mdi->hw_info.clock_mhz );
-
-	return ( PAPI_OK );
-}
-
-static inline pid_t
-mygettid( void )
-{
-#ifdef SYS_gettid
-	return ( syscall( SYS_gettid ) );
-#elif defined(__NR_gettid)
-	return ( syscall( __NR_gettid ) );
-#elif defined WIN32
-	return GetCurrentThreadId(  );
-#else
-	return ( syscall( 1105 ) );
-#endif
-}
-
 
 static inline int
 compute_kernel_args( hwd_control_state_t * ctl0 )
@@ -1102,7 +932,7 @@ _papi_pfm_init_substrate( int cidx )
 
 	pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
 	SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
-	retval = get_system_info( &_papi_hwi_system_info );
+	retval = _linux_get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return ( retval );
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
@@ -1192,23 +1022,6 @@ _papi_pfm_shutdown_substrate(  )
 #endif
 	return PAPI_OK;
 }
-
-#if defined(USE_PROC_PTTIMER)
-static int
-init_proc_thread_timer( hwd_context_t * thr_ctx )
-{
-	char buf[LINE_MAX];
-	int fd;
-	sprintf( buf, "/proc/%d/task/%d/stat", getpid(  ), mygettid(  ) );
-	fd = open( buf, O_RDONLY );
-	if ( fd == -1 ) {
-		PAPIERROR( "open(%s)", buf );
-		return ( PAPI_ESYS );
-	}
-	thr_ctx->stat_fd = fd;
-	return ( PAPI_OK );
-}
-#endif
 
 static int
 _papi_sub_pfm_init( hwd_context_t * thr_ctx )

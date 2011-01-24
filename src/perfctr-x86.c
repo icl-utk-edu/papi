@@ -16,7 +16,6 @@
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-extern int _papi_hwd_get_system_info( void );
 extern unsigned char PENTIUM4;
 
 #include "linux-memory.h"
@@ -27,10 +26,11 @@ extern int _linux_ctl( hwd_context_t * ctx, int code,
 					   _papi_int_option_t * option );
 extern void _linux_dispatch_timer( int signal, hwd_siginfo_t * si,
 								   void *context );
-extern int _linux_get_system_info( void );
+
 extern int _linux_init( hwd_context_t * ctx );
 extern int _linux_shutdown( hwd_context_t * ctx );
 
+#include "linux-common.h"
 #include "linux-timer.h"
 
 extern papi_mdi_t _papi_hwi_system_info;
@@ -1148,6 +1148,23 @@ papi_vector_t _x86_vector = {
 	.set_overflow = _x86_set_overflow,
 	.stop_profiling = _x86_stop_profiling,
 
+	.init_substrate = _linux_init_substrate,
+	.ctl = _linux_ctl,
+	.dispatch_timer = _linux_dispatch_timer,
+	.init = _linux_init,
+	.get_dmem_info = _linux_get_dmem_info,
+	.shutdown = _linux_shutdown,
+
+
+	/* from OS */
+	.update_shlib_info = _linux_update_shlib_info,
+	.get_memory_info = _linux_get_memory_info,
+	.get_system_info = _linux_get_system_info
+	.get_real_usec = _linux_get_real_usec,
+	.get_real_cycles = _linux_get_real_cycles,
+	.get_virt_cycles = _linux_get_virt_cycles,
+	.get_virt_usec = _linux_get_virt_usec,
+
 	/* from pfm */
 	.ntv_enum_events   = _papi_pfm_ntv_enum_events,
 	.ntv_name_to_code  = _papi_pfm_ntv_name_to_code,
@@ -1156,18 +1173,4 @@ papi_vector_t _x86_vector = {
 	.ntv_code_to_bits  = _papi_pfm_ntv_code_to_bits,
 	.ntv_bits_to_info  = _papi_pfm_ntv_bits_to_info,
 
-	/* from OS */
-	.update_shlib_info = _linux_update_shlib_info,
-	.get_memory_info = _linux_get_memory_info,
-	.get_system_info = _linux_get_system_info,
-	.init_substrate = _linux_init_substrate,
-	.ctl = _linux_ctl,
-	.dispatch_timer = _linux_dispatch_timer,
-	.init = _linux_init,
-	.get_dmem_info = _linux_get_dmem_info,
-	.shutdown = _linux_shutdown,
-	.get_real_usec = _linux_get_real_usec,
-	.get_real_cycles = _linux_get_real_cycles,
-	.get_virt_cycles = _linux_get_virt_cycles,
-	.get_virt_usec = _linux_get_virt_usec
 };
