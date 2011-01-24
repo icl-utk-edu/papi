@@ -775,10 +775,11 @@ found:
 	 */
 	if (einfo.equiv) {
 		ret = pfmlib_parse_equiv_event(pmu, einfo.equiv, d);
-		if (ret == PFM_SUCCESS) {
-			i = d->event;
-			pmu->get_event_info(pmu, i, &einfo);
-		}
+		if (ret != PFM_SUCCESS)
+			goto error;
+
+		i = d->event;
+		pmu->get_event_info(pmu, i, &einfo);
 	} else {
 		d->pmu = pmu;
 		d->event = i; /* private index */
