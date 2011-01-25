@@ -30,13 +30,15 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.code = 0x003c,
 		.cntmsk = 0x20000000full,
 		.modmsk = INTEL_V3_ATTRS, /* because we can fallback to generic counter */
-		.desc =  "count core clock cycles whenever the clock signal on the specific core is running (not halted). Alias to event CPU_CLK_UNHALTED:THREAD"
+		.desc =  "count core clock cycles whenever the clock signal on the specific core is running (not halted)",
+		.equiv = "CPU_CLK_UNHALTED:THREAD_P",
 	},
 	{.name = "INSTRUCTION_RETIRED",
 		.code = 0x00c0,
 		.cntmsk = 0x10000000full,
 		.modmsk = INTEL_V3_ATTRS, /* because we can fallback to generic counter */
-		.desc =  "count the number of instructions at retirement. Alias to event INST_RETIRED:ANY_P",
+		.desc =  "count the number of instructions at retirement",
+		.equiv = "INST_RETIRED:ANY_P",
 	},
 	{.name = "INSTRUCTIONS_RETIRED",
 		.code = 0x00c0,
