@@ -109,6 +109,11 @@ is activated. The value of the variable must be the PMU name as returned by the
 to specify additional options, such as specific processor models or stepping.
 Additional parameters necessarily appears after a comma. For instance,
 LIBPFM_FORCE_PMU=amd64,16,2,1.
+.TP
+.B LIBPFM_ENCODE_INACTIVE
+Set this variable to 1 to enable encoding of events for non detected, but supported,
+PMUs models.
+
 .SH AUTHORS
 .nf
 Stephane Eranian <eranian@gmail.com>

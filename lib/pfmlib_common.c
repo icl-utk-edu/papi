@@ -275,6 +275,10 @@ pfmlib_init_env(void)
 		pfm_cfg.fp = stdout;
 
 	pfm_cfg.forced_pmu = getenv("LIBPFM_FORCE_PMU");
+
+	str = getenv("LIBPFM_ENCODE_INACTIVE");
+	if (str)
+		pfm_cfg.inactive = 1;
 }
 
 static int
@@ -756,6 +760,12 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		 * check for requested PMU name,
 		 */
 		if (pname && strcasecmp(pname, pmu->name))
+			continue;
+		/*
+		 * only allow event on inactive PMU if enabled via
+		 * environement variable
+		 */
+		if (pname && !pfmlib_pmu_active(pmu) && !pfm_cfg.inactive)
 			continue;
 		/*
 		 * for each event

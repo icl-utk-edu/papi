@@ -108,6 +108,8 @@ main(int argc, char **argv)
 				errx(1, "unknown option error");
 		}
 	}
+	/* to allow encoding of events from non detected PMU models */
+	setenv("LIBPFM_ENCODE_INACTIVE", "1", 1);
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
