@@ -23,21 +23,6 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 
 	int retval;
 
-#ifdef WIN32
-        SYSTEM_INFO si;
-        HANDLE hModule;
-        int len;
-
-        _papi_hwi_system_info.pid = getpid(  );
-
-        hModule = GetModuleHandle( NULL );      // current process
-        len =
-	  GetModuleFileName( hModule, mdi->exe_info.fullname, PAPI_MAX_STR_LEN );
-        if ( len )
-	  strcpy( mdi->exe_info.address_info.name, mdi->exe_info.fullname );
-	else
-	  return ( PAPI_ESYS );
-#else
 	char maxargs[PAPI_HUGE_STR_LEN];
 	pid_t pid;
 
@@ -62,7 +47,7 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 
 	strcpy( maxargs, mdi->exe_info.fullname );
 	strcpy( mdi->exe_info.address_info.name, basename( maxargs ) );
-#endif
+
 	SUBDBG( "Executable is %s\n", mdi->exe_info.address_info.name );
 	SUBDBG( "Full Executable is %s\n", mdi->exe_info.fullname );
 
@@ -93,11 +78,6 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	mdi->preload_info.lib_dir_sep = ':';
 
 	/* Hardware info */
-#ifdef WIN32
-        GetSystemInfo( &si );
-        mdi->hw_info.ncpu = mdi->hw_info.totalcpus = si.dwNumberOfProcessors;
-        mdi->hw_info.nnodes = 1;
-#endif
 
 	retval = _linux_get_cpu_info( &mdi->hw_info );
 	if ( retval )
@@ -230,47 +210,6 @@ decode_vendor_string( char *s, int *vendor )
 		*vendor = PAPI_VENDOR_UNKNOWN;
 }
 
-#ifdef WIN32
-extern int __pfm_getcpuinfo_attr( const char *attr, char *ret_buf,
-				  size_t maxlen );
-
-int
-_linux_get_cpu_info( PAPI_hw_info_t * hw_info )
-{
-  int retval = PAPI_OK;
-  char maxargs[PAPI_HUGE_STR_LEN];
-  char *s;
-  char model[48];
-  int i;
-  for ( i = 0; i < 3; ++i )
-    __cpuid( &model[i * 16], 0x80000002 + i );
-  for ( i = 0; i < 48; ++i )
-    model[i] = tolower( model[i] );
-  if ( ( s = strstr( model, "mhz" ) ) != NULL ) {
-    --s;
-    while ( isspace( *s ) || isdigit( *s ) || *s == '.' && s >= model)
-      --s;
-    ++s;
-    hw_info->mhz = ( float ) atof( s ) * 1000;
-  } else
-    return PAPI_EBUG;
-
-  hw_info->clock_mhz = hw_info->mhz;
-
-  __pfm_getcpuinfo_attr( "vendor_id", hw_info->vendor_string,
-			 sizeof ( hw_info->vendor_string ) );
-
-  if ( strlen( hw_info->vendor_string ) )
-    decode_vendor_string( hw_info->vendor_string, &hw_info->vendor );
-  __cpuid( maxargs, 1 );
-  hw_info->revision = *( uint32_t * ) maxargs & 0xf;
-  strcpy( hw_info->model_string, model );
-  return ( retval );
-}
-
-
-
-#else
 
 int
 _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
@@ -457,5 +396,3 @@ _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 
 	return retval;
 }
-
-#endif

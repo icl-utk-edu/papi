@@ -150,8 +150,6 @@ get_cycles( void )
 		( ret ) = ( ( long long ) a ) | ( ( ( long long ) d ) << 32 );
 	}
 	while ( 0 );
-#elif defined WIN32
-        ret = __rdtsc(  );
 #else
 	__asm__ __volatile__( "rdtsc":"=A"( ret ): );
 #endif
@@ -318,23 +316,6 @@ _linux_get_virt_usec( const hwd_context_t * zero )
 			( long long ) ( buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec );
 	}
 
-#elif defined WIN32
-	HANDLE p;
-        BOOL ret;
-        FILETIME Creation, Exit, Kernel, User;
-        long long virt;
-
-        p = GetCurrentProcess(  );
-        ret = GetProcessTimes( p, &Creation, &Exit, &Kernel, &User );
-        if ( ret ) {
-                virt =
-		  ( ( ( long long ) ( Kernel.dwHighDateTime +
-                                                                User.dwHighDate\
-				      Time ) ) << 32 )
-		  + Kernel.dwLowDateTime + User.dwLowDateTime;
-                return ( virt / 1000 );
-        } else
-	  return ( PAPI_ESBSTR );
 #else
 #error "No working per thread virtual timer"
 #endif

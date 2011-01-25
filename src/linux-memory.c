@@ -25,29 +25,6 @@
 extern int x86_cache_info( PAPI_mh_info_t * mh_info );
 
 
-#ifdef _WIN32
-#include <Psapi.h>
-int
-_linux_get_dmem_info( PAPI_dmem_info_t * d )
-{
-
-	HANDLE proc = GetCurrentProcess(  );
-	PROCESS_MEMORY_COUNTERS cntr;
-	SYSTEM_INFO SystemInfo;			   // system information structure  
-
-	GetSystemInfo( &SystemInfo );
-	GetProcessMemoryInfo( proc, &cntr, sizeof ( cntr ) );
-
-	d->pagesize = SystemInfo.dwPageSize;
-	d->size =
-		( cntr.WorkingSetSize - cntr.PagefileUsage ) / SystemInfo.dwPageSize;
-	d->resident = cntr.WorkingSetSize / SystemInfo.dwPageSize;
-	d->high_water_mark = cntr.PeakWorkingSetSize / SystemInfo.dwPageSize;
-
-	return PAPI_OK;
-}
-#else
-
 /* 2.6.19 has this:
 VmPeak:     4588 kB
 VmSize:     4584 kB
@@ -142,7 +119,6 @@ _linux_get_dmem_info( PAPI_dmem_info_t * d )
 
 	return PAPI_OK;
 }
-#endif /* _WIN32 */
 
 /*
  * Architecture-specific cache detection code 
@@ -847,7 +823,7 @@ _linux_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 int
 _linux_update_shlib_info( void )
 {
-#ifndef WIN32
+
 	char fname[PAPI_HUGE_STR_LEN];
 	unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
 	char buf[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], perm[5], dev[16];
@@ -977,6 +953,6 @@ _linux_update_shlib_info( void )
 
 		fclose( f );
 	}
-#endif
+
 	return PAPI_OK;
 }

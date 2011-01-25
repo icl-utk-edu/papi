@@ -729,8 +729,6 @@ pe_enable_counters( context_t * ctx, control_state_t * ctl )
 	return PAPI_OK;
 }
 
-int _papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl );
-
 /* reset the hardware counters */
 int
 _papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
