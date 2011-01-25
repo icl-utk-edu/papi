@@ -21,14 +21,14 @@ extern unsigned char PENTIUM4;
 #include "linux-memory.h"
 
 /* Prototypes for entry points found in perfctr.c */
-extern int _linux_init_substrate( int );
-extern int _linux_ctl( hwd_context_t * ctx, int code,
+extern int _perfctr_init_substrate( int );
+extern int _perfctr_ctl( hwd_context_t * ctx, int code,
 					   _papi_int_option_t * option );
-extern void _linux_dispatch_timer( int signal, hwd_siginfo_t * si,
+extern void _perfctr_dispatch_timer( int signal, hwd_siginfo_t * si,
 								   void *context );
 
-extern int _linux_init( hwd_context_t * ctx );
-extern int _linux_shutdown( hwd_context_t * ctx );
+extern int _perfctr_init( hwd_context_t * ctx );
+extern int _perfctr_shutdown( hwd_context_t * ctx );
 
 #include "linux-common.h"
 #include "linux-timer.h"
@@ -1148,12 +1148,12 @@ papi_vector_t _x86_vector = {
 	.set_overflow = _x86_set_overflow,
 	.stop_profiling = _x86_stop_profiling,
 
-	.init_substrate = _linux_init_substrate,
-	.ctl = _linux_ctl,
-	.dispatch_timer = _linux_dispatch_timer,
-	.init = _linux_init,
-	.get_dmem_info = _linux_get_dmem_info,
-	.shutdown = _linux_shutdown,
+	.init_substrate = _perfctr_init_substrate,
+	.ctl = _perfctr_ctl,
+	.dispatch_timer = _perfctr_dispatch_timer,
+	.init = _perfctr_init,
+	.get_dmem_info = _perfctr_get_dmem_info,
+	.shutdown = _perfctr_shutdown,
 
 
 	/* from OS */

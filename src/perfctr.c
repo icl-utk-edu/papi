@@ -103,7 +103,7 @@ lock_init( void )
 }
 
 int
-_linux_init_substrate( int cidx )
+_perfctr_init_substrate( int cidx )
 {
 	int retval;
 	struct perfctr_info info;
@@ -144,7 +144,7 @@ _linux_init_substrate( int cidx )
 		PAPIERROR( VOPEN_ERROR );
 		return ( PAPI_ESYS );
 	}
-	SUBDBG( "_linux_init_substrate vperfctr_open = %p\n", dev );
+	SUBDBG( "_perfctr_init_substrate vperfctr_open = %p\n", dev );
 
 	/* Get info from the kernel */
 	retval = vperfctr_info( dev, &info );
@@ -286,7 +286,7 @@ round_requested_ns( int ns )
 }
 
 int
-_linux_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
+_perfctr_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	( void ) ctx;			 /*unused */
 	switch ( code ) {
@@ -344,7 +344,7 @@ _linux_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 }
 
 void
-_linux_dispatch_timer( int signal, siginfo_t * si, void *context )
+_perfctr_dispatch_timer( int signal, siginfo_t * si, void *context )
 {
 	( void ) signal;		 /*unused */
 	_papi_hwi_context_t ctx;
@@ -375,7 +375,7 @@ _linux_dispatch_timer( int signal, siginfo_t * si, void *context )
 
 
 int
-_linux_init( hwd_context_t * ctx )
+_perfctr_init( hwd_context_t * ctx )
 {
 	struct vperfctr_control tmp;
 	int error;
@@ -427,7 +427,7 @@ _linux_init( hwd_context_t * ctx )
    master thread. */
 
 int
-_linux_shutdown( hwd_context_t * ctx )
+_perfctr_shutdown( hwd_context_t * ctx )
 {
 #ifdef DEBUG
 	int retval = vperfctr_unlink( ctx->perfctr );
@@ -437,7 +437,7 @@ _linux_shutdown( hwd_context_t * ctx )
 	vperfctr_unlink( ctx->perfctr );
 #endif
 	vperfctr_close( ctx->perfctr );
-	SUBDBG( "_linux_shutdown vperfctr_close(%p)\n", ctx->perfctr );
+	SUBDBG( "_perfctr_shutdown vperfctr_close(%p)\n", ctx->perfctr );
 	memset( ctx, 0x0, sizeof ( hwd_context_t ) );
 	return ( PAPI_OK );
 }
