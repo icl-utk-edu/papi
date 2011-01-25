@@ -105,6 +105,7 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	.cntmsk = 0x200000003ull,
 	.modmsk  = INTEL_V3_ATTRS,
 	  .desc  = "Unhalted core cycles",
+	 .equiv = "CPU_CLK_UNHALTED:CORE_P",
        },
 	{.name  = "UNHALTED_REFERENCE_CYCLES",
 	.code  = 0x013c,
@@ -118,7 +119,8 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	.cntmsk = 0x100000003ull,
 	.flags = 0,
 	.modmsk  = INTEL_V3_ATTRS,
-	  .desc  = "Instructions retired"
+	  .desc  = "Instructions retired",
+	 .equiv = "INST_RETIRED:ANY_P",
 	},
 	{.name  = "INSTRUCTIONS_RETIRED",
 	.code  = 0xc0,
