@@ -214,6 +214,8 @@ AC_ARG_WITH(debug,
 if test "$debug" = "yes"; then
   if test "$CC" = "gcc"; then
     CFLAGS="-g3"
+  else
+    CFLAGS="-g"
   fi
   OPTFLAGS="-O0"
   DEBUGFLAGS="-DDEBUG" 
