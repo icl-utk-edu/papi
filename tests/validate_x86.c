@@ -497,7 +497,6 @@ static const test_event_t x86_test_events[]={
 	{ .name = "amd64_fam10h_barcelona::DISPATCHED_FPU:0x4ff:u",
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
-	  .codes[0] = 1,
 	  .codes[0] = 0x40051ff00ull,
 	  .fstr = "amd64_fam10h_barcelona::DISPATCHED_FPU:0x4ff:k=0:u=1:e=0:i=0:c=0:h=0:g=0"
 	},
