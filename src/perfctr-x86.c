@@ -1149,15 +1149,15 @@ papi_vector_t _x86_vector = {
 	.stop_profiling = _x86_stop_profiling,
 
 	.init_substrate = _perfctr_init_substrate,
-	.ctl = _perfctr_ctl,
+	.ctl =            _perfctr_ctl,
 	.dispatch_timer = _perfctr_dispatch_timer,
-	.init = _perfctr_init,
-	.get_dmem_info = _perfctr_get_dmem_info,
-	.shutdown = _perfctr_shutdown,
+	.init =           _perfctr_init,
+	.shutdown =       _perfctr_shutdown,
 
 
 	/* from OS */
 	.update_shlib_info = _linux_update_shlib_info,
+	.get_dmem_info =     _linux_get_dmem_info,
 	.get_memory_info =   _linux_get_memory_info,
 	.get_system_info =   _linux_get_system_info,
 	.get_real_usec =     _linux_get_real_usec,
