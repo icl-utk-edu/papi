@@ -353,7 +353,11 @@ _aix_get_system_info( papi_mdi_t *mdi )
 	strcpy( _papi_hwi_system_info.exe_info.address_info.name,
 			basename( maxargs ) );
 
-#ifdef _POWER6
+#ifdef _POWER7
+	/* XXX once the segfault is tracked down, PM_INIT_FLAGS is the correct value to pass pm_initialize */
+	/*retval = pm_initialize( PM_INIT_FLAGS , &pminfo, &pmgroups, PM_POWER7); */
+	retval = pm_initialize( PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT, &pminfo, &pmgroups, PM_POWER7);
+#elif defined(_POWER6)
 	/* problem with pm_initialize(): it cannot be called multiple times with 
 	   PM_CURRENT; use instead the actual proc type - here PM_POWER6 - 
 	   and multiple invocations are no longer a problem */ 
@@ -548,6 +552,9 @@ _aix_init_substrate( int cidx )
 		break;
 	case PM_PowerPC970:
 		_papi_pmapi_setup_presets( "PPC970", 0 );
+		break;
+	case PM_POWER7:
+		_papi_pmapi_setup_presets( "POWER7", 0);
 		break;
 	default:
 		fprintf( stderr, "%s is not supported!\n", pminfo.proc_name );
