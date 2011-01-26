@@ -5925,7 +5925,10 @@ elif test "$bitmode" = "64"; then
   BITFLAGS=-m64
 fi
 OPTFLAGS="$OPTFLAGS $DEBUGFLAGS"
-CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE -Wall $NOTLS $BITFLAGS"
+CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE $NOTLS $BITFLAGS"
+if test "x$CC" = "xgcc"; then
+	CFLAGS="$CFLAGS -Wall"
+fi
 FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 
 if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$MAKEVER" = "aix-power7"); then
