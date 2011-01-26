@@ -1017,7 +1017,8 @@ case "$OS" in
   bgp)
     MAKEVER=bgp ;;
   CLE)
-    if (test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 31); then
+    if test "$perfmon2" = "yes"; then
+#    if (test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 31 -a "$perfmon2" != "yes" ); then
        MAKEVER="$OS"-perfmon2
     else
        MAKEVER="$OS"-pe
@@ -1220,7 +1221,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     MEMSUBSTR=linux
-    MISCSRCS="x86_cache_info.c"
+    MISCSRCS="x86_cache_info.c linux-common.c linux-timer.c"
   fi 
   F77=gfortran
   CFLAGS="$CFLAGS -D__crayxt"

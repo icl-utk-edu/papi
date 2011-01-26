@@ -295,12 +295,14 @@ _linux_get_virt_usec( const hwd_context_t * zero )
 #elif defined(HAVE_PER_THREAD_TIMES)
 	{
 		struct tms buffer;
+
 		times( &buffer );
+
 		SUBDBG( "user %d system %d\n", ( int ) buffer.tms_utime,
 				( int ) buffer.tms_stime );
 		retval =
-			( long long ) ( ( buffer.tms_utime + buffer.tms_stime ) * 1000000 /
-							MY_VECTOR.cmp_info.clock_ticks );
+		  ( long long ) ( ( buffer.tms_utime + buffer.tms_stime ) * 1000000 / sysconf( _SC_CLK_TCK ));
+
 		/* NOT CLOCKS_PER_SEC as in the headers! */
 	}
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)

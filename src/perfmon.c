@@ -28,6 +28,7 @@
 
 #include "linux-memory.h"
 #include "linux-timer.h"
+#include "linux-common.h"
 
 #ifdef __ia64__
 #include "perfmon/pfmlib_itanium2.h"
