@@ -91,7 +91,7 @@ int _niagara2_start( hwd_context_t *, hwd_control_state_t * );
 int _niagara2_stop( hwd_context_t *, hwd_control_state_t * );
 int _niagara2_update_control_state( hwd_control_state_t *, NativeInfo_t *, int,
 									hwd_context_t * );
-int _niagara2_update_shlib_info( void );
+int _niagara2_update_shlib_info( papi_mdi_t );
 /* Functions from solaris-niagara2-memory.c */
 extern int _niagara2_get_memory_info( PAPI_hw_info_t *, int );
 extern int _niagara2_get_dmem_info( PAPI_dmem_info_t * );
@@ -763,7 +763,7 @@ _niagara2_get_system_info( papi_mdi_t *mdi )
 	strncpy( _papi_hwi_system_info.exe_info.address_info.name,
 			 basename( _papi_hwi_system_info.exe_info.fullname ),
 			 PAPI_HUGE_STR_LEN );
-	__CHECK_ERR_PAPI( _niagara2_update_shlib_info(  ) );
+	__CHECK_ERR_PAPI( _niagara2_update_shlib_info( &_papi_hwi_system_info ) );
 
 	/* Fill _papi_hwi_system_info.hw_info */
 
@@ -1590,7 +1590,7 @@ _niagara2_update_control_state( hwd_control_state_t * ctrl,
 }
 
 int
-_niagara2_update_shlib_info( void )
+_niagara2_update_shlib_info( papi_mdi_t *mdi )
 {
 	char *file = "/proc/self/map";
 	char *resolve_pattern = "/proc/self/path/%s";

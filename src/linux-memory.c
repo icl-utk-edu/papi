@@ -821,7 +821,7 @@ _linux_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 }
 
 int
-_linux_update_shlib_info( void )
+_linux_update_shlib_info( papi_mdi_t *mdi )
 {
 
 	char fname[PAPI_HUGE_STR_LEN];
@@ -839,7 +839,7 @@ _linux_update_shlib_info( void )
 	memset( mapname, 0x0, sizeof ( mapname ) );
 	memset( lastmapname, 0x0, sizeof ( lastmapname ) );
 
-	sprintf( fname, "/proc/%ld/maps", ( long ) _papi_hwi_system_info.pid );
+	sprintf( fname, "/proc/%ld/maps", ( long ) mdi->pid );
 	f = fopen( fname, "r" );
 
 	if ( !f ) {
@@ -869,11 +869,11 @@ _linux_update_shlib_info( void )
 
 		if ( counting ) {
 			if ( ( perm[2] == 'x' ) && ( perm[0] == 'r' ) && ( inode != 0 ) ) {
-				if ( strcmp( _papi_hwi_system_info.exe_info.fullname, mapname )
+				if ( strcmp( mdi->exe_info.fullname, mapname )
 					 == 0 ) {
-					_papi_hwi_system_info.exe_info.address_info.text_start =
+					mdi->exe_info.address_info.text_start =
 						( caddr_t ) begin;
-					_papi_hwi_system_info.exe_info.address_info.text_end =
+					mdi->exe_info.address_info.text_end =
 						( caddr_t ) ( begin + size );
 				}
 				t_index++;
@@ -881,28 +881,28 @@ _linux_update_shlib_info( void )
 						( inode != 0 )
 						&&
 						( strcmp
-						  ( _papi_hwi_system_info.exe_info.fullname,
+						  ( mdi->exe_info.fullname,
 							mapname ) == 0 ) ) {
-				_papi_hwi_system_info.exe_info.address_info.data_start =
+				mdi->exe_info.address_info.data_start =
 					( caddr_t ) begin;
-				_papi_hwi_system_info.exe_info.address_info.data_end =
+				mdi->exe_info.address_info.data_end =
 					( caddr_t ) ( begin + size );
 				d_index++;
 			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
 						( inode == 0 )
 						&&
 						( strcmp
-						  ( _papi_hwi_system_info.exe_info.fullname,
+						  ( mdi->exe_info.fullname,
 							lastmapname ) == 0 ) ) {
-				_papi_hwi_system_info.exe_info.address_info.bss_start =
+				mdi->exe_info.address_info.bss_start =
 					( caddr_t ) begin;
-				_papi_hwi_system_info.exe_info.address_info.bss_end =
+				mdi->exe_info.address_info.bss_end =
 					( caddr_t ) ( begin + size );
 				b_index++;
 			}
 		} else if ( !counting ) {
 			if ( ( perm[2] == 'x' ) && ( perm[0] == 'r' ) && ( inode != 0 ) ) {
-				if ( strcmp( _papi_hwi_system_info.exe_info.fullname, mapname )
+				if ( strcmp( mdi->exe_info.fullname, mapname )
 					 != 0 ) {
 					t_index++;
 					tmp[t_index - 1].text_start = ( caddr_t ) begin;
@@ -912,7 +912,7 @@ _linux_update_shlib_info( void )
 			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
 						( inode != 0 ) ) {
 				if ( ( strcmp
-					   ( _papi_hwi_system_info.exe_info.fullname,
+					   ( mdi->exe_info.fullname,
 						 mapname ) != 0 )
 					 && ( t_index > 0 ) &&
 					 ( tmp[t_index - 1].data_start == 0 ) ) {
@@ -946,10 +946,10 @@ _linux_update_shlib_info( void )
 		counting = 0;
 		goto again;
 	} else {
-		if ( _papi_hwi_system_info.shlib_info.map )
-			papi_free( _papi_hwi_system_info.shlib_info.map );
-		_papi_hwi_system_info.shlib_info.map = tmp;
-		_papi_hwi_system_info.shlib_info.count = t_index;
+		if ( mdi->shlib_info.map )
+			papi_free( mdi->shlib_info.map );
+		mdi->shlib_info.map = tmp;
+		mdi->shlib_info.count = t_index;
 
 		fclose( f );
 	}

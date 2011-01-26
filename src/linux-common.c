@@ -53,7 +53,7 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 
 	/* Executable regions, may require reading /proc/pid/maps file */
 
-	retval = _linux_update_shlib_info(  );
+	retval = _linux_update_shlib_info( mdi );
 	SUBDBG( "Text: Start %p, End %p, length %d\n",
 			mdi->exe_info.address_info.text_start,
 			mdi->exe_info.address_info.text_end,

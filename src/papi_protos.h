@@ -235,7 +235,7 @@ void _papi_hwi_shutdown_highlevel(  );
 int _papi_hwd_get_dmem_info( PAPI_dmem_info_t * );
 
 /* Defined by the OS substrate file */
-int _papi_hwd_update_shlib_info( void );
+int _papi_hwd_update_shlib_info( papi_mdi_t * );
 
 /* Defined in a memory file, could be processor or OS specific */
 int _papi_hwd_get_memory_info( PAPI_hw_info_t *, int );

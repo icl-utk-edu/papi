@@ -345,7 +345,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->init_control_state =
 			( int ( * )( hwd_control_state_t * ptr ) ) vec_void_dummy;
 	if ( !v->update_shlib_info )
-		v->update_shlib_info = ( int ( * )( void ) ) vec_int_dummy;
+		v->update_shlib_info = ( int ( * )( papi_mdi_t * ) ) vec_int_dummy;
 	if ( !v->get_system_info )
 		v->get_system_info = ( int ( * )(  ) ) vec_int_dummy;
 	if ( !v->get_memory_info )

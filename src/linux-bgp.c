@@ -99,7 +99,7 @@ _papi_hwd_unlock( int lock )
  *        PAPI_OK.  Commented out code is carry-over from BG/L.
  */
 int
-_bgp_update_shlib_info(  )
+_bgp_update_shlib_info( papi_mdi_t *mdi )
 {
 //  char fname[PAPI_HUGE_STR_LEN];
 //  PAPI_address_map_t *tmp, *tmp2;
@@ -252,7 +252,7 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 	//        and the pid is not filled in the system_info structure.
 	//        Basically, _bgp_update_shlib_info() simply returns
 	//        with PAPI_OK
-	_bgp_update_shlib_info(  );
+	_bgp_update_shlib_info( &_papi_hwi_system_info  );
 
 	/* Hardware info */
 	if ( ( tmp = Kernel_GetPersonality( &bgp, sizeof bgp ) ) ) {

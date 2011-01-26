@@ -2810,7 +2810,7 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 		int retval;
 		if ( ptr == NULL )
 			papi_return( PAPI_EINVAL );
-		retval = _papi_hwd[cidx]->update_shlib_info(  );
+		retval = _papi_hwd[cidx]->update_shlib_info( &_papi_hwi_system_info );
 		ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
 		papi_return( retval );
 	}

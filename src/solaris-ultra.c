@@ -511,7 +511,7 @@ get_system_info( papi_mdi_t *mdi )
 			_papi_hwi_system_info.exe_info.fullname );
 
 	/* Executable regions, reading /proc/pid/maps file */
-	retval = _ultra_hwd_update_shlib_info(  );
+	retval = _ultra_hwd_update_shlib_info( &_papi_hwi_system_info );
 
 	/* Hardware info */
 
@@ -1323,7 +1323,7 @@ _ultra_hwd_get_virt_cycles( const hwd_context_t * zero )
 }
 
 int
-_ultra_hwd_update_shlib_info( void )
+_ultra_hwd_update_shlib_info( papi_mdi_t *mdi )
 {
 	/*??? system call takes very long */
 
@@ -1466,7 +1466,7 @@ _ultra_hwd_update_shlib_info( void )
 /* once the bug in dladdr is fixed by SUN, (now dladdr caused deadlock when
    used with pthreads) this function can be used again */
 int
-_papi_hwd_update_shlib_info( void )
+_papi_hwd_update_shlib_info( papi_mdi_t *mdi )
 {
 	char fname[80], name[PAPI_HUGE_STR_LEN];
 	prmap_t newp;

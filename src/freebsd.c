@@ -931,7 +931,7 @@ void _papi_freebsd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 /*
  * Shared Library Information and other Information Functions
  */
-int _papi_freebsd_update_shlib_info(void){
+int _papi_freebsd_update_shlib_info(papi_mdi_t *mdi){
 	SHOW_WHERE_I_AM;
   return PAPI_OK;
 }

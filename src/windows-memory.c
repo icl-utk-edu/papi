@@ -70,7 +70,7 @@ _windows_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 }
 
 int
-_windows_update_shlib_info( void )
+_windows_update_shlib_info( papi_mdi_t *mdi )
 {
 	return PAPI_OK;
 }

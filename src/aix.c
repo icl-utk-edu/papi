@@ -311,7 +311,7 @@ _aix_mdi_init(  )
 		_papi_hwi_system_info.exe_info.address_info.bss_end =
 			( caddr_t ) END_OF_BSS;
 	} else {
-		_aix_update_shlib_info(  );
+		_aix_update_shlib_info( &_papi_hwi_system_info );
 	}
 
 /*   _papi_hwi_system_info.supports_64bit_counters = 1;
@@ -859,7 +859,7 @@ _aix_stop( hwd_context_t * ctx, hwd_control_state_t * cntrl )
 }
 
 int
-_aix_update_shlib_info( void )
+_aix_update_shlib_info( papi_mdi_t *mdi )
 {
 #if ( ( defined( _AIXVERSION_510) || defined(_AIXVERSION_520)))
 	struct ma_msg_s
