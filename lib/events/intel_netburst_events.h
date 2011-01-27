@@ -1527,7 +1527,7 @@ netburst_entry_t netburst_events[] = {
 	 .desc = "Instructions that have completed and "
 		 "retired during a clock cycle (models 3, 4, 6 only)",
 	 .event_select = 0x7,
-	 .escr_select = 0x5,
+	 .escr_select = 0x4,
 	 .allowed_escrs = { 21, 42 },
 	 .perf_code = P4_EVENT_INSTR_COMPLETED,
 	 .event_masks = {
