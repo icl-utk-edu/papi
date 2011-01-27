@@ -82,10 +82,6 @@ main( int argc, char **argv )
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-	retval = PAPI_create_eventset( &EventSet );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-
 	retval = papi_print_header
 		( "Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n",
 		  0, &hwinfo );
@@ -99,6 +95,11 @@ main( int argc, char **argv )
 	Intel_i7 = strstr( hwinfo->model_string, "Intel Core i7" );
 
 	for ( cid = 0; cid < numcmp; cid++ ) {
+
+		retval = PAPI_create_eventset( &EventSet );
+		if ( retval != PAPI_OK )
+			test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+
 		if ( ( s = PAPI_get_component_info( cid ) ) == NULL )
 			test_fail( __FILE__, __LINE__, "PAPI_get_substrate_info", 2 );
 
@@ -149,6 +150,10 @@ main( int argc, char **argv )
 					err_count++;
 			}
 		} while ( PAPI_enum_event( &i, PAPI_ENUM_EVENTS ) == PAPI_OK );
+
+		retval = PAPI_destroy_eventset( &EventSet );
+		if ( retval != PAPI_OK )
+			test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 	}
 	printf( "\n\nSuccessfully found, added, and removed %d events.\n",
 			add_count );
