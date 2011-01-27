@@ -93,17 +93,22 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 		hw->config |= e.codes[1] << 32;
 	} else {
 		uint64_t escr;
+		int is_p4;
 
-		if (pmu->pmu !=  PFM_PMU_INTEL_NETBURST && e.count > 2) {
+		is_p4 = pmu->pmu == PFM_PMU_INTEL_NETBURST
+			|| pmu->pmu == PFM_PMU_INTEL_NETBURST_P;
+
+
+		if (!is_p4 && e.count > 2) {
 			DPRINT("cannot handle e.count > 2\n");
 			return PFM_ERR_NOTSUPP;
 		}
 		/*
- 		 * codes[0] = ESCR
- 		 * codes[1] = CCCR
- 		 * codes[2] = P4_EVENTS (perf code)
- 		 */
-		if (pmu->pmu == PFM_PMU_INTEL_NETBURST) {
+		 * codes[0] = ESCR
+		 * codes[1] = CCCR
+		 * codes[2] = P4_EVENTS (perf code)
+		 */
+		if (is_p4) {
 			/* cleanup event_select, and install perf specific code */
 			escr  = e.codes[0] & ~(0x3full << 25);
 			escr |= e.codes[2] << 25;
