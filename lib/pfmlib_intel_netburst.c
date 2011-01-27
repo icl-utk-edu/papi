@@ -64,8 +64,8 @@ netburst_display_reg(pfmlib_event_desc_t *e)
 	escr.val = e->codes[0];
 	cccr.val = e->codes[1];
 
-	__pfm_vbprintf("[0x%"PRIx64" 0x%"PRIx64" 0x%"PRIx64" usr=%ld os=%ld tag_ena=%ld tag_val=%ld "
-		       "evmask=0x%lx evsel=0x%lx escr_sel=0x%lx comp=%ld cmpl=%ld thr=%ld e=%ld",
+	__pfm_vbprintf("[0x%"PRIx64" 0x%"PRIx64" 0x%"PRIx64" usr=%d os=%d tag_ena=%d tag_val=%d "
+		       "evmask=0x%x evsel=0x%x escr_sel=0x%x comp=%d cmpl=%d thr=%d e=%d",
 			escr,
 			cccr,
 			e->codes[2], /* perf_event code */
