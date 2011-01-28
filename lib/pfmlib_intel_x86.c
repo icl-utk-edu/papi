@@ -685,6 +685,9 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_
 		info->code = pe[pidx].umasks[idx].ucode;
 		info->type = PFM_ATTR_UMASK;
 		info->is_dfl = !!(pe[pidx].umasks[idx].uflags & INTEL_X86_DFL);
+
+		if (pe[pidx].umasks[idx].uflags & INTEL_X86_PEBS)
+			info->is_precise = 1;
 	} else {
 		idx = pfm_intel_x86_attr2mod(this, pidx, attr_idx);
 		info->name = modx(atdesc, idx, name);
@@ -692,7 +695,6 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_
 		info->equiv= NULL;
 		info->code = idx;
 		info->type = modx(atdesc, idx, type);
-		info->is_dfl = 0;
 	}
 	info->idx = attr_idx;
 	info->dfl_val64 = 0;
@@ -712,6 +714,13 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->desc  = pe[idx].desc;
 	info->code  = pe[idx].code;
 	info->equiv = pe[idx].equiv;
+
+	/*
+	 * no    umask: event supports PEBS
+	 * with umasks: at least one umask supports PEBS
+	 */
+	if (pe[idx].flags & INTEL_X86_PEBS)
+		info->is_precise = 1;
 
 	/* unit masks + modifiers */
 	info->nattrs  = pfm_intel_x86_numasks(this, idx);

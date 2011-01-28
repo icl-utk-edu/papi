@@ -1195,6 +1195,9 @@ pfm_get_event_info(int idx, pfm_event_info_t *info)
 	/* default data type is uint64 */
 	info->dtype = PFM_DTYPE_UINT64;
 
+	/* reset flags */
+	info->is_precise = 0;
+
 	ret = pmu->get_event_info(pmu, pidx, info);
 	if (ret == PFM_SUCCESS) {
 		info->pmu = pmu->pmu;
@@ -1224,6 +1227,10 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_event_attr_info_t *info)
 
 	if (!pfmlib_valid_attr(pmu, pidx, attr_idx))
 		return PFM_ERR_ATTR;
+
+	/* reset flags */
+	info->is_dfl     = 0;
+	info->is_precise = 0;
 
 	return pmu->get_event_attr_info(pmu, pidx, attr_idx, info);
 }

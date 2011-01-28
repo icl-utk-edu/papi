@@ -656,7 +656,6 @@ pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_
 		info->equiv= NULL;
 		info->code = m;
 		info->type = modx(amd64_mods, m, type);
-		info->is_dfl = 0;
 		new_idx = attr_idx;
 	}
 	info->idx = new_idx;

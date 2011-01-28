@@ -46,6 +46,8 @@ static struct {
 	int encode;
 	int combo;
 	int combo_lim;
+	pfm_event_info_t efilter;
+	pfm_event_attr_info_t ufilter;
 	uint64_t mask;
 } options;
 
@@ -94,6 +96,56 @@ check_valid(char *buf, int plm)
 	return 0;
 }
 
+static int
+match_ufilters(pfm_event_attr_info_t *info)
+{
+	uint32_t ufilter1 = 0;
+	uint32_t ufilter2 = 0;
+
+	if (options.ufilter.is_dfl)
+		ufilter1 |= 0x1;
+
+	if (info->is_dfl)
+		ufilter2 |= 0x1;
+
+	if (options.ufilter.is_precise)
+		ufilter1 |= 0x2;
+
+	if (info->is_precise)
+		ufilter2 |= 0x2;
+
+	if (!ufilter1)
+		return 1;
+
+	/* at least one filter matches */
+	return ufilter1 & ufilter2;
+}
+
+static int
+match_efilters(pfm_event_info_t *info)
+{
+	pfm_event_attr_info_t ainfo;
+	int n = 0;
+	int i, ret;
+
+	if (options.efilter.is_precise && !info->is_precise)
+		return 0;
+
+	memset(&ainfo, 0, sizeof(ainfo));
+	ainfo.size = sizeof(ainfo);
+
+	pfm_for_each_event_attr(i, info) {
+		ret = pfm_get_event_attr_info(info->idx, i, &ainfo);
+		if (ret != PFM_SUCCESS)
+			continue;
+		if (match_ufilters(&ainfo))
+			return 1;
+                if (ainfo.type == PFM_ATTR_UMASK)
+		        n++;
+	}
+	return n ? 0 : 1;
+}
+
 static void
 show_event_info_combo(pfm_event_info_t *info)
 {
@@ -110,7 +162,7 @@ show_event_info_combo(pfm_event_info_t *info)
 
 	pfm_get_pmu_info(info->pmu, &pinfo);
 
-	ainfo = malloc(info->nattrs * sizeof(*ainfo));
+	ainfo = calloc(info->nattrs, sizeof(*ainfo));
 	if (!ainfo)
 		err(1, "event %s : ", info->name);
 
@@ -214,6 +266,9 @@ show_event_info_compact(pfm_event_info_t *info)
 		if (ainfo.type != PFM_ATTR_UMASK)
 			continue;
 
+		if (!match_ufilters(&ainfo))
+			continue;
+
 		snprintf(buf, sizeof(buf)-1, "%s::%s:%s", pinfo.name, info->name, ainfo.name);
 		buf[sizeof(buf)-1] = '\0';
 
@@ -228,6 +283,9 @@ show_event_info_compact(pfm_event_info_t *info)
 		um++;
 	}
 	if (um == 0) {
+		if (!match_efilters(info))
+			return;
+
 		snprintf(buf, sizeof(buf)-1, "%s::%s", pinfo.name, info->name);
 		buf[sizeof(buf)-1] = '\0';
 		if (options.encode) {
@@ -253,6 +311,39 @@ int compare_codes(const void *a, const void *b)
 }
 
 static void
+print_event_flags(pfm_event_info_t *info)
+{
+	int n = 0;
+
+	if (info->is_precise) {
+		printf("[precise] ");
+		n++;
+	}
+	if (!n)
+		printf("None");
+}
+
+static void
+print_attr_flags(pfm_event_attr_info_t *info)
+{
+	int n = 0;
+
+	if (info->is_dfl) {
+		printf("[default] ");
+		n++;
+	}
+
+	if (info->is_precise) {
+		printf("[precise] ");
+		n++;
+	}
+
+	if (!n)
+		printf("None ");
+}
+
+
+static void
 show_event_info(pfm_event_info_t *info)
 {
 	pfm_event_attr_info_t ainfo;
@@ -266,6 +357,8 @@ show_event_info(pfm_event_info_t *info)
 	pinfo.size = sizeof(pinfo);
 	ainfo.size = sizeof(ainfo);
 
+	if (!match_efilters(info))
+		return;
 	ret = pfm_get_pmu_info(info->pmu, &pinfo);
 	if (ret)
 		errx(1, "cannot get pmu info: %s", pfm_strerror(ret));
@@ -281,6 +374,10 @@ show_event_info(pfm_event_info_t *info)
 		info->name,
 		info->equiv ? info->equiv : "None");
 
+	printf("Flags    : ");
+	print_event_flags(info);
+	putchar('\n');
+
 	printf("Desc     : %s\n", info->desc ? info->desc : "no description available");
 	printf("Code     : 0x%"PRIx64"\n", info->code);
 
@@ -291,19 +388,24 @@ show_event_info(pfm_event_info_t *info)
 
 		switch(ainfo.type) {
 		case PFM_ATTR_UMASK:
+			if (!match_ufilters(&ainfo))
+				continue;
+
 			printf("Umask-%02u : 0x%02"PRIx64" : [%s] : ",
 				um,
 				ainfo.code,
 				ainfo.name);
 
-			if (ainfo.equiv)
-				printf("Alias to %s", ainfo.equiv);
-			else
-				printf("%s", ainfo.desc);
+			print_attr_flags(&ainfo);
 
-			if (ainfo.is_dfl)
-				printf(" (DEFAULT)");
-				putchar('\n');
+			putchar(':');
+
+			if (ainfo.equiv)
+				printf(" Alias to %s", ainfo.equiv);
+			else
+				printf(" %s", ainfo.desc);
+
+			putchar('\n');
 			um++;
 			break;
 		case PFM_ATTR_MOD_BOOL:
@@ -469,6 +571,7 @@ usage(void)
 		"-h\t\tget help\n"
 		"-s\t\tsort event by PMU and by code based on -m mask\n"
 		"-l\t\tmaximum number of umasks to list all combinations (default: %d)\n"
+		"-F\t\tshow only events and attributes with certain flags (precise,...)\n"
 		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n", COMBO_MAX);
 }
 
@@ -496,6 +599,62 @@ drop_event_attributes(char *str)
 		*p = '\0';
 }
 
+#define EVENT_FLAGS(n, f, l) { .name = n, .ebit = f, .ubit = l }
+struct attr_flags {
+	const char *name;
+	int ebit; /* bit position in pfm_event_info_t.flags, -1 means ignore */
+	int ubit; /*  bit position in pfm_event_attr_info_t.flags, -1 means ignore */
+};
+
+static const struct attr_flags  event_flags[]={
+	EVENT_FLAGS("precise", 0, 1),
+	EVENT_FLAGS("pebs", 0, 1),
+	EVENT_FLAGS("default", -1, 0),
+	EVENT_FLAGS("dfl", -1, 0),
+	EVENT_FLAGS(NULL, 0, 0)
+};
+
+static void
+parse_filters(char *arg)
+{
+	const struct attr_flags *attr;
+	char *p;
+
+	while (arg) {
+		p = strchr(arg, ',');
+		if (p)
+			*p++ = 0;
+
+		for (attr = event_flags; attr->name; attr++) {
+			if (!strcasecmp(attr->name, arg)) {
+				switch(attr->ebit) {
+				case 0:
+					options.efilter.is_precise = 1;
+					break;
+				case -1:
+					break;
+				default:
+					errx(1, "unknown event flag %d", attr->ebit);
+				}
+				switch (attr->ubit) {
+				case 0:
+					options.ufilter.is_dfl = 1;
+					break;
+				case 1:
+					options.ufilter.is_precise = 1;
+					break;
+				case -1:
+					break;
+				default:
+					errx(1, "unknown umaks flag %d", attr->ubit);
+				}
+				break;
+			}
+		}
+		arg = p;
+	}
+}
+
 int
 main(int argc, char **argv)
 {
@@ -511,10 +670,13 @@ main(int argc, char **argv)
 
 	pinfo.size = sizeof(pinfo);
 
-	while ((c=getopt(argc, argv,"hELsm:Ml:")) != -1) {
+	while ((c=getopt(argc, argv,"hELsm:Ml:F:")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
+				break;
+			case 'F':
+				parse_filters(optarg);
 				break;
 			case 'E':
 				options.compact = 1;

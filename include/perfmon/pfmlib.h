@@ -206,6 +206,10 @@ typedef struct {
 	int			idx;	/* unique event identifier */
 	int			nattrs;	/* number of attributes */
 	int			size;	/* for struct extension, 0 for now */
+	struct {
+		unsigned int	is_precise:1;	/* precise sampling (Intel X86=PEBS) */
+		unsigned int	reserved_bits:31;
+	} SWIG_NAME(flags);
 	uint64_t		reserved[2];
 } pfm_event_info_t;
 
@@ -218,8 +222,9 @@ typedef struct {
 	int			idx;	/* attribute opaque index */
 	int			size;	/* size for extension, =0 for now */
 	struct {
-		int		is_dfl:1;	/* is default umask */
-		int		reserved_bits:31;
+		unsigned int    is_dfl:1;	/* is default umask */
+		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
+		unsigned int	reserved_bits:30;
 	} SWIG_NAME(flags);
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */

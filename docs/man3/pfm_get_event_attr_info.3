@@ -24,7 +24,8 @@ typedef struct {
         int                     size;
         struct {
                 int             is_dfl:1;
-                int             reserved:31;
+                int             is_precise:1;
+                int             reserved:30;
         };
         union {
                 uint64_t        dfl_val64;
@@ -94,6 +95,13 @@ applies mostly for PFM_ATTR_UMASK. If a unit mask is marked as default,
 and no unit mask is specified in the event string, then the library uses
 it by default. Note that there may be multiple defaults per event depending
 on how unit masks are grouped.
+.TP
+.B is_precise
+This field indicates whether or not this umask supports precise sampling.
+Precise sampling is a hardware mechanism that avoids instruction address
+skid when using interrupt-based sampling. On Intel X86 processors, this
+field indicates that the umask supports Precise Event-Based Sampling (PEBS).
+
 .TP
 .B dfl_val64, dfl_str, dfl_bool, dfl_int
 This union contains the value of an attribute. For PFM_ATTR_UMASK, the is

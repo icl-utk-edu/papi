@@ -19,10 +19,14 @@ typedef struct {
         const char              *equiv;
         uint64_t                code;
         pfm_pmu_t               pmu;
-	pfm_dtype_t		dtype
+        pfm_dtype_t             dtype
         int                     idx;
         int                     nattrs;
         int                     size;
+        struct {
+          unsigned int s_precise:1;
+          unsigned int reserved_bits:31;
+        };
         uint64_t                reserved[2];
 } pfm_event_info_t;
 .fi
@@ -67,8 +71,18 @@ the value of this field is simply 0.
 .B size
 This field must be set to zero for now. It will be used in case the
 \fBpfm_event_info\fR structure is expanded.
+.TP
+.B reserved
+The field must be set to zero.
+.TP
+.B is_precise
+This bitfield indicates whether or not the event support precise sampling.
+Precise sampling is a hardware mechanism that avoids instruction address
+skid when using interrupt-based sampling. When the event has umasks, this
+field means that at least one umask supports precise sampling. On Intel X86
+processors, this indicates whether the event support Precise Event-Based
+Sampling (PEBS).
 .PP
-The \fBreserved\fR field must be set to zero.
 
 
 .SH RETURN
