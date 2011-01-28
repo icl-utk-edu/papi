@@ -580,7 +580,7 @@ static const test_event_t x86_test_events[]={
 	  .ret  = PFM_SUCCESS,
 	  .count = 3,
 	  .codes[0] = 0xe00020f,
-	  .codes[1] = 0x3b000,
+	  .codes[1] = 0x39000,
 	  .codes[2] = 0x2d,
 	  .fstr = "netburst_p::instr_completed:NBOGUS:k=1:u=1:e=0:cmpl=0:thr=0",
 	},
