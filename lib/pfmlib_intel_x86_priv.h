@@ -81,7 +81,7 @@ typedef struct {
  */
 #define INTEL_X86_NCOMBO		0x01	/* unit masks within group cannot be combined */
 #define INTEL_X86_FALLBACK_GEN		0x02	/* fallback from fixed to generic counter possible */
-#define INTEL_X86_PEBS			0x04 	/* event support PEBS */
+#define INTEL_X86_PEBS			0x04 	/* event supports PEBS or at least one umask supports PEBS */
 #define INTEL_X86_ENCODER		0x08 	/* event requires model-specific encoding */
 #define INTEL_X86_DFL			0x10	/* unit mask is default choice */
 #define INTEL_X86_GRP_EXCL		0x20	/* only one unit mask group can be selected */

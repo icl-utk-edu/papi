@@ -1181,23 +1181,20 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	  .modmsk  = INTEL_V3_PEBS_ATTRS,
 	  .desc   = "Retired loads",
 	  .code   = 0xCB,
-	  .flags  = 0,
+	  .flags  = INTEL_X86_PEBS,
 	  .ngrp = 1,
 	  .umasks = {
 		{ .uname  = "L2_HIT",
 		  .udesc  = "Retired loads that hit the L2 cache (precise event)",
 		  .ucode  = 0x1,
-		  .uflags = INTEL_X86_PEBS
 		},
 		{ .uname  = "L2_MISS",
 		  .udesc  = "Retired loads that miss the L2 cache (precise event)",
 		  .ucode  = 0x2,
-		  .uflags = INTEL_X86_PEBS
 		},
 		{ .uname  = "DTLB_MISS",
 		  .udesc  = "Retired loads that miss the DTLB (precise event)",
 		  .ucode  = 0x4,
-		  .uflags = INTEL_X86_PEBS
 		},
 	  },
 	  .numasks = 3

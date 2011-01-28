@@ -167,11 +167,12 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .equiv = "BR_INST_RETIRED:ANY",
 	},
 	{.name = "MISPREDICTED_BRANCH_RETIRED",
-	 .code = 0x00c5,
+	 .code = 0xc5,
 	 .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
 	 .desc =  "count mispredicted branch instructions at retirement. Specifically, this event counts at retirement of the last micro-op of a branch instruction in the architectural path of the execution and experienced misprediction in the branch prediction hardware.",
 	 .equiv = "BR_INST_RETIRED_MISPRED",
+	 .flags= INTEL_X86_PEBS
 	},
 	/*
 	 * END: architected events
@@ -1381,9 +1382,10 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .modmsk = INTEL_V2_PEBS_ATTRS,
 	  .ngrp = 1,
 	  .desc =  "Instructions retired",
+	  .flags = INTEL_X86_PEBS,
 	  .umasks = {
 		{ .uname = "ANY_P",
-		  .udesc = "Instructions retired (precise event)",
+		  .udesc = "Instructions retired (Precise Event)",
 		  .ucode = 0x0,
 		  .uflags = INTEL_X86_PEBS|INTEL_X86_NCOMBO|INTEL_X86_DFL,
 		},
@@ -1409,13 +1411,14 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .modmsk = INTEL_V2_PEBS_ATTRS,
 	  .ngrp = 1,
 	  .desc =  "FXCH instructions retired",
+	  .flags = INTEL_X86_PEBS,
 	  .umasks = {
 		{ .uname = "FXCH",
 		  .udesc = "FXCH instructions retired",
 		  .ucode = 0x1
 		},
 		{ .uname = "ANY",
-		  .udesc = "Retired floating-point computational operations (precise event)",
+		  .udesc = "Retired floating-point computational operations (Precise Event)",
 		  .ucode = 0xfe,
 		  .uflags = INTEL_X86_PEBS|INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
@@ -1516,10 +1519,10 @@ static const intel_x86_entry_t intel_core_pe[]={
 	   .numasks = 6
 	},
 	{ .name = "BR_INST_RETIRED_MISPRED",
-	  .code = 0x00c5,
+	  .code = 0xc5,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_PEBS_ATTRS,
-	  .desc =  "Retired mispredicted branch instructions (precise_event)",
+	  .desc =  "Retired mispredicted branch instructions (Precise Event)",
 	  .flags= INTEL_X86_PEBS
 	},
 	{ .name = "CYCLES_INT_MASKED",
@@ -1543,6 +1546,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .modmsk = INTEL_V2_PEBS_ATTRS,
 	  .ngrp = 1,
 	  .desc =  "Retired Streaming SIMD Extensions (SSE) packed-single instructions",
+	  .flags = INTEL_X86_PEBS,
 	  .umasks = {
 		{ .uname = "PACKED_SINGLE",
 		  .udesc = "Retired Streaming SIMD Extensions (SSE) packed-single instructions",
@@ -1565,7 +1569,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		  .ucode = 0x10
 		},
 		{ .uname = "ANY",
-		  .udesc = "Retired Streaming SIMD instructions (precise event)",
+		  .udesc = "Retired Streaming SIMD instructions (Precise Event)",
 		  .ucode = 0x1f,
 		  .uflags = INTEL_X86_PEBS|INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
@@ -1618,31 +1622,32 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .modmsk = INTEL_V2_PEBS_ATTRS,
 	  .ngrp = 1,
 	  .desc =  "Retired loads that miss the L1 data cache",
+	  .flags = INTEL_X86_PEBS,
 	  .umasks = {
 		{ .uname = "L1D_MISS",
-		  .udesc = "Retired loads that miss the L1 data cache (precise event)",
+		  .udesc = "Retired loads that miss the L1 data cache (Precise Event)",
 		  .ucode = 0x1,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS,
 		},
 		{ .uname = "L1D_LINE_MISS",
-		  .udesc = "L1 data cache line missed by retired loads (precise event)",
+		  .udesc = "L1 data cache line missed by retired loads (Precise Event)",
 		  .ucode = 0x2,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS,
 		},
 		{ .uname = "L2_MISS",
-		  .udesc = "Retired loads that miss the L2 cache (precise event)",
+		  .udesc = "Retired loads that miss the L2 cache (Precise Event)",
 		  .ucode = 0x4,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS,
 		},
 		{ .uname = "L2_LINE_MISS",
-		  .udesc = "L2 cache line missed by retired loads (precise event)",
+		  .udesc = "L2 cache line missed by retired loads (Precise Event)",
 		  .ucode = 0x8,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS,
 		},
 		{ .uname = "DTLB_MISS",
-		  .udesc = "Retired loads that miss the DTLB (precise event)",
+		  .udesc = "Retired loads that miss the DTLB (Precise Event)",
 		  .ucode = 0x10,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS,
 		}
 	   },
 	   .numasks = 5
