@@ -72,8 +72,11 @@ print_codes(char *buf, int plm)
 	int j, ret, count = 0;
 
 	ret = pfm_get_event_encoding(buf, PFM_PLM0|PFM_PLM3, NULL, NULL, &codes, &count);
-	if (ret != PFM_SUCCESS)
+	if (ret != PFM_SUCCESS) {
+		if (ret == PFM_ERR_NOTFOUND)
+			errx(1, "encoding failed, try setting env variable LIBPFM_ENCODE_INACTIVE=1");
 		return -1;
+	}
 
 	if (count)
 		printf("0x%"PRIx64, codes[0]);
@@ -289,7 +292,9 @@ show_event_info_compact(pfm_event_info_t *info)
 		snprintf(buf, sizeof(buf)-1, "%s::%s", pinfo.name, info->name);
 		buf[sizeof(buf)-1] = '\0';
 		if (options.encode) {
-			print_codes(buf, PFM_PLM0|PFM_PLM3);
+			ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
+			if (ret)
+				return;
 			putchar('\t');
 		}
 		printf("%s", buf);
