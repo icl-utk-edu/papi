@@ -163,7 +163,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 			 * can be used
 			 */
 			if (last_grpid != -1 && grpid != last_grpid
-			    && intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL)) {
+			    && intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) {
 				DPRINT("exclusive unit mask group error\n");
 				return PFM_ERR_FEATCOMB;
 			}
@@ -177,7 +177,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 			 */
 			++grpcounts[grpid];
 
-			if (intel_x86_uflag(this, e, a->id, INTEL_X86_NCOMBO))
+			if (intel_x86_uflag(this, e->event, a->id, INTEL_X86_NCOMBO))
 				ncombo[grpid] = 1;
 
 			if (grpcounts[grpid] > 1 && ncombo[grpid])  {
@@ -239,7 +239,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	 * check that there is at least of unit mask in each unit
 	 * mask group
 	 */
-	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
+	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
 		ugrpmsk ^= grpmsk;
 		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)

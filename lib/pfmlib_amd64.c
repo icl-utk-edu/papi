@@ -658,6 +658,7 @@ pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_
 		info->type = modx(amd64_mods, m, type);
 		new_idx = attr_idx;
 	}
+	info->is_precise = 0;
 	info->idx = new_idx;
 	info->dfl_val64 = 0;
 
@@ -675,6 +676,8 @@ pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->desc  = pe[idx].desc;
 	info->equiv = NULL;
 	info->code  = pe[idx].code;
+
+	info->is_precise = 0;
 
 	info->nattrs  = amd64_get_numasks(this, idx);
 	info->nattrs += pfmlib_popcnt((unsigned long)pe[idx].modmsk);

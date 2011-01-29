@@ -236,7 +236,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk,
 				k++;
 
 				added++;
-				if (intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL))
+				if (intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL))
 					goto done;
 			}
 		}
@@ -285,7 +285,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 	/* take into account hardcoded umask + modifiers */
 	umask = (val >> 8) & 0xff;
 
-	if (intel_x86_eflag(this, e, INTEL_X86_PEBS))
+	if (intel_x86_eflag(this, e->event, INTEL_X86_PEBS))
 		pebs_umasks++;
 
 	for(k=0; k < e->nattrs; k++) {
@@ -301,7 +301,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 			 * can be used
 			 */
 			if (last_grpid != -1 && grpid != last_grpid
-			    && intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL)) {
+			    && intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) {
 				DPRINT("exclusive unit mask group error\n");
 				return PFM_ERR_FEATCOMB;
 			}
@@ -317,7 +317,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 			++grpcounts[grpid];
 
 			/* mark that we have a umask with NCOMBO in this group */
-			if (intel_x86_uflag(this, e, id, INTEL_X86_NCOMBO))
+			if (intel_x86_uflag(this, e->event, id, INTEL_X86_NCOMBO))
 				ncombo[grpid] = 1;
 
 			/*
@@ -335,7 +335,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 			umask    |= pe[e->event].umasks[id].ucode;
 			ugrpmsk  |= 1 << pe[e->event].umasks[id].grpid;
 
-			if (intel_x86_uflag(this, e, id, INTEL_X86_PEBS))
+			if (intel_x86_uflag(this, e->event, id, INTEL_X86_PEBS))
 				pebs_umasks++;
 			
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
@@ -413,7 +413,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 	 * check that there is at least of unit mask in each unit
 	 * mask group
 	 */
-	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
+	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
 		ugrpmsk ^= grpmsk;
 		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
@@ -435,7 +435,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 		}
 	}
 
-	if (intel_x86_eflag(this, e, INTEL_X86_NHM_OFFCORE)) {
+	if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
 		e->codes[1] = umask;
 		e->count = 2;
 		umask = 0;
@@ -475,7 +475,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_
 	 * If event requires special encoding, then invoke
 	 * model specific encoding function
 	 */
-	if (intel_x86_eflag(this, e, INTEL_X86_ENCODER))
+	if (intel_x86_eflag(this, e->event, INTEL_X86_ENCODER))
 		return pe[e->event].encoder(this, e, attrs);
 
 
@@ -492,7 +492,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_
 			attrs->plm |= PFM_PLM0;
 		if (reg.sel_usr)
 			attrs->plm |= PFM_PLM3;
-		if (intel_x86_eflag(this, e, INTEL_X86_NHM_OFFCORE))
+		if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE))
 			attrs->offcore = 1;
 	}
 	pfm_intel_x86_display_reg(this, e, reg);
@@ -684,10 +684,8 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_
 		info->equiv= pe[pidx].umasks[idx].uequiv;
 		info->code = pe[pidx].umasks[idx].ucode;
 		info->type = PFM_ATTR_UMASK;
-		info->is_dfl = !!(pe[pidx].umasks[idx].uflags & INTEL_X86_DFL);
-
-		if (pe[pidx].umasks[idx].uflags & INTEL_X86_PEBS)
-			info->is_precise = 1;
+		info->is_dfl = intel_x86_uflag(this, pidx, idx, INTEL_X86_DFL);
+		info->is_precise = intel_x86_uflag(this, pidx, idx, INTEL_X86_PEBS);
 	} else {
 		idx = pfm_intel_x86_attr2mod(this, pidx, attr_idx);
 		info->name = modx(atdesc, idx, name);
@@ -695,6 +693,8 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_
 		info->equiv= NULL;
 		info->code = idx;
 		info->type = modx(atdesc, idx, type);
+		info->is_dfl = 0;
+		info->is_precise = 0;
 	}
 	info->idx = attr_idx;
 	info->dfl_val64 = 0;
@@ -719,8 +719,7 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	 * no    umask: event supports PEBS
 	 * with umasks: at least one umask supports PEBS
 	 */
-	if (pe[idx].flags & INTEL_X86_PEBS)
-		info->is_precise = 1;
+	info->is_precise = intel_x86_eflag(this, idx, INTEL_X86_PEBS);
 
 	/* unit masks + modifiers */
 	info->nattrs  = pfm_intel_x86_numasks(this, idx);

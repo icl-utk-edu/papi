@@ -209,17 +209,17 @@ extern pfm_intel_x86_config_t pfm_intel_x86_cfg;
 extern const pfmlib_attr_desc_t intel_x86_mods[];
 
 static inline int
-intel_x86_eflag(void *this, pfmlib_event_desc_t *e, int flag)
+intel_x86_eflag(void *this, int idx, int flag)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	return !!(pe[e->event].flags & flag);
+	return !!(pe[idx].flags & flag);
 }
 
 static inline int
-intel_x86_uflag(void *this, pfmlib_event_desc_t *e, int attr, int flag)
+intel_x86_uflag(void *this, int idx, int attr, int flag)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	return !!(pe[e->event].umasks[attr].uflags & flag);
+	return !!(pe[idx].umasks[attr].uflags & flag);
 }
 
 extern int pfm_intel_x86_detect(void);
