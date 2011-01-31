@@ -19,6 +19,8 @@ typedef struct {
         pfm_pmu_t               pmu;
         int                     size;
         int                     nevents;
+        int                     max_encoding;
+        int                     first_event;
         struct {
                 int             is_present:1;
                 int             reserved:31;
@@ -53,6 +55,15 @@ host system.
 .B size
 This field must be set to zero for now. It will be used in case the
 \fBpfm_pmu_info\fR structure is expanded.
+.TP
+.B max_encoding
+This field returns the number of event codes returned by \fBpfm_get_event_encoding()\fR.
+.TP
+.B first_event
+This field returns the opaque index of the first event for this PMU model. The index
+can be used with \fBpfm_get_event_info()\fR or \fBpfm_get_event_next()\fR functions.
+In case no event is available, this field contains \fB-1\fR.
+
 .PP
 The \fBreserved\fR field must be set to zero.
 

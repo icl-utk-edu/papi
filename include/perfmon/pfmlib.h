@@ -189,6 +189,8 @@ typedef struct {
 	pfm_pmu_t		pmu;	/* PMU identification */
 	int			size;	/* for struct extension, 0 for now */
 	int			nevents;/* how many events for this PMU */
+	int			first_event;/* opaque index of first event */
+	int			max_encoding; /* number of uint64_t to encode an event */
 	struct {
 		unsigned int	is_present:1;	/* present on host system */
 		unsigned int	reserved_bits:31;

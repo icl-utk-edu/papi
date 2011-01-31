@@ -1239,6 +1239,7 @@ int
 pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
 {
 	pfmlib_pmu_t *pmu;
+	int pidx;
 
 	if (!PFMLIB_INITIALIZED())
 		return PFM_ERR_NOINIT;
@@ -1259,6 +1260,14 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
 	info->name = pmu->name;
 	info->desc = pmu->desc;
 	info->pmu = pmuid;
+	info->max_encoding = pmu->max_encoding;
+
+	pidx = pmu->get_event_first(pmu);
+	if (pidx == -1)
+		info->first_event = -1;
+	else
+		info->first_event = pfmlib_pidx2idx(pmu, pidx);
+
 	/*
 	 * XXX: pme_count only valid when PMU is detected
 	 */

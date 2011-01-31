@@ -744,7 +744,7 @@ main(int argc, char **argv)
 				continue;
 
 			if (pinfo.is_present) {
-				printf("\t[%d, %s, \"%s\", %d events]\n", i, pinfo.name, pinfo.desc, pinfo.nevents);
+				printf("\t[%d, %s, \"%s\", %d events, %d max encoding]\n", i, pinfo.name, pinfo.desc, pinfo.nevents, pinfo.max_encoding);
 				total_events += pinfo.nevents;
 			}
 		}
