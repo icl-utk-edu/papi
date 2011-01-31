@@ -46,6 +46,8 @@ static struct {
 	int encode;
 	int combo;
 	int combo_lim;
+	int desc;
+	char *csv_sep;
 	pfm_event_info_t efilter;
 	pfm_event_attr_info_t ufilter;
 	uint64_t mask;
@@ -66,7 +68,7 @@ event_has_pname(char *s)
 }
 
 static int
-print_codes(char *buf, int plm)
+print_codes(char *buf, int plm, int max_encoding)
 {
 	uint64_t *codes = NULL;
 	int j, ret, count = 0;
@@ -77,11 +79,11 @@ print_codes(char *buf, int plm)
 			errx(1, "encoding failed, try setting env variable LIBPFM_ENCODE_INACTIVE=1");
 		return -1;
 	}
-
-	if (count)
-		printf("0x%"PRIx64, codes[0]);
-	for (j=1; j < count; j++)
-		printf(" 0x%"PRIx64, codes[j]);
+	for(j = 0; j < max_encoding; j++) {
+		if (j < count)
+			printf("0x%"PRIx64, codes[j]);
+		printf("%s", options.csv_sep);
+	}
 	free(codes);
 	return 0;
 }
@@ -226,20 +228,20 @@ show_event_info_combo(pfm_event_info_t *info)
 			/* if found a valid umask combination, check encoding */
 			if (m == 0) {
 				if (options.encode)
-					ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
+					ret = print_codes(buf, PFM_PLM0|PFM_PLM3, pinfo.max_encoding);
 				else
 					ret = check_valid(buf, PFM_PLM0|PFM_PLM3);
 				if (!ret)
-					printf("%s%s\n", options.encode ? "\t":"", buf);
+					printf("%s\n", buf);
 			}
 		}
 	} else {
 		snprintf(buf, sizeof(buf)-1, "%s::%s", pinfo.name, info->name);
 		buf[sizeof(buf)-1] = '\0';
 
-		ret = options.encode ? print_codes(buf, PFM_PLM0|PFM_PLM3) : 0;
+		ret = options.encode ? print_codes(buf, PFM_PLM0|PFM_PLM3, pinfo.max_encoding) : 0;
 		if (!ret)
-			printf("%s%s\n", options.encode ? "\t":"", buf);
+			printf("%s\n", buf);
 	}
 end:
 	free(ainfo);
@@ -277,12 +279,16 @@ show_event_info_compact(pfm_event_info_t *info)
 
 		ret = 0;
 		if (options.encode) {
-			ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
-			if (!ret)
-				putchar('\t');
+			ret = print_codes(buf, PFM_PLM0|PFM_PLM3, pinfo.max_encoding);
 		}
-		if (!ret)
-			printf("%s\n", buf);
+		if (!ret) {
+			printf("%s", buf);
+			if (options.desc) {
+				printf("%s", options.csv_sep);
+				printf("\"%s. %s.\"", info->desc, ainfo.desc);
+			}
+			putchar('\n');
+		}
 		um++;
 	}
 	if (um == 0) {
@@ -292,12 +298,15 @@ show_event_info_compact(pfm_event_info_t *info)
 		snprintf(buf, sizeof(buf)-1, "%s::%s", pinfo.name, info->name);
 		buf[sizeof(buf)-1] = '\0';
 		if (options.encode) {
-			ret = print_codes(buf, PFM_PLM0|PFM_PLM3);
+			ret = print_codes(buf, PFM_PLM0|PFM_PLM3, pinfo.max_encoding);
 			if (ret)
 				return;
-			putchar('\t');
 		}
 		printf("%s", buf);
+		if (options.desc) {
+			printf("%s", options.csv_sep);
+			printf("\"%s.\"", info->desc);
+		}
 		putchar('\n');
 	}
 }
@@ -570,14 +579,17 @@ static void
 usage(void)
 {
 	printf("showevtinfo [-L] [-E] [-h] [-s] [-m mask]\n"
-		"-L\t\tlist one event per line\n"
-		"-E\t\tlist one event per line with encoding\n"
+		"-L\t\tlist one event per line (compact mode)\n"
+		"-E\t\tlist one event per line with encoding (compact mode)\n"
 		"-M\t\tdisplay all valid unit masks combination (use with -L or -E)\n"
 		"-h\t\tget help\n"
 		"-s\t\tsort event by PMU and by code based on -m mask\n"
 		"-l\t\tmaximum number of umasks to list all combinations (default: %d)\n"
 		"-F\t\tshow only events and attributes with certain flags (precise,...)\n"
-		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n", COMBO_MAX);
+		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n"
+		"-x sep\t\tuse sep as field separator in compact mode\n"
+		"-D\t\t\tprint event description in compact mode\n"
+		, COMBO_MAX);
 }
 
 /*
@@ -666,6 +678,7 @@ main(int argc, char **argv)
 	static char *argv_all[2] = { ".*", NULL };
 	pfm_pmu_info_t pinfo;
 	char *endptr = NULL;
+	char default_sep[2] = "\t";
 	char **args;
 	int i, match;
 	regex_t preg;
@@ -675,7 +688,7 @@ main(int argc, char **argv)
 
 	pinfo.size = sizeof(pinfo);
 
-	while ((c=getopt(argc, argv,"hELsm:Ml:F:")) != -1) {
+	while ((c=getopt(argc, argv,"hELsm:Ml:F:x:D")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
@@ -693,8 +706,14 @@ main(int argc, char **argv)
 			case 's':
 				options.sort = 1;
 				break;
+			case 'D':
+				options.desc = 1;
+				break;
 			case 'l':
 				options.combo_lim = atoi(optarg);
+				break;
+			case 'x':
+				options.csv_sep = optarg;
 				break;
 			case 'm':
 				options.mask = strtoull(optarg, &endptr, 16);
@@ -720,6 +739,8 @@ main(int argc, char **argv)
 	} else {
 		args = argv + optind;
 	}
+	if (!options.csv_sep)
+		options.csv_sep = default_sep;
 
 	/* avoid combinatorial explosion */
 	if (options.combo_lim == 0)
