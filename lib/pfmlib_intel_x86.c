@@ -538,6 +538,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 	const intel_x86_entry_t *pe = this_pe(this);
 	int ndfl[INTEL_X86_NUM_GRP];
 	int i, j, k, error = 0;
+	int npebs;
 
 	if (!pmu->atdesc) {
 		fprintf(fp, "pmu: %s missing attr_desc\n", pmu->name);
@@ -592,7 +593,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		for(j=0; j < INTEL_X86_NUM_GRP; j++)
 			ndfl[j] = 0;
 
-		for(j=0; j < pe[i].numasks; j++) {
+		for(j=0, npebs = 0; j < pe[i].numasks; j++) {
 
 			if (!pe[i].umasks[j].uname) {
 				fprintf(fp, "pmu: %s event%d: %s umask%d :: no name\n", pmu->name, i, pe[i].name, j);
@@ -614,6 +615,19 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			}
 			if (pe[i].umasks[j].uflags & INTEL_X86_DFL)
 				ndfl[pe[i].umasks[j].grpid]++;
+
+			if (pe[i].umasks[j].uflags & INTEL_X86_PEBS)
+				npebs++;
+		}
+
+		if (npebs && !intel_x86_eflag(this, i, INTEL_X86_PEBS)) {
+			fprintf(fp, "pmu: %s event%d: %s, pebs umasks but event pebs flag not set\n", pmu->name, i, pe[i].name);
+			error++;
+		}
+
+		if (intel_x86_eflag(this, i, INTEL_X86_PEBS) && pe[i].numasks && npebs == 0) {
+			fprintf(fp, "pmu: %s event%d: %s, pebs event flag but not umask has pebs flag\n", pmu->name, i, pe[i].name);
+			error++;
 		}
 
 		/* if only one umask, then ought to be default */
