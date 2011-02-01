@@ -1662,11 +1662,13 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .umasks = {
 		{ .uname = "TO_FP",
 		  .udesc = "Transitions from MMX (TM) Instructions to Floating Point Instructions",
-		  .ucode = 0x2
+		  .ucode = 0x2,
+	  	  .uflags = INTEL_X86_PEBS,
 		},
 		{ .uname = "TO_MMX",
 		  .udesc = "Transitions from Floating Point to MMX (TM) Instructions",
-		  .ucode = 0x1
+		  .ucode = 0x1,
+	  	  .uflags = INTEL_X86_PEBS,
 		}
 	   },
 	   .numasks = 2
