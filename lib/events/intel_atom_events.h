@@ -775,7 +775,7 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	{ .name   = "HW_INT_RCV",
 	  .cntmsk = 0x3,
 	  .modmsk  = INTEL_V3_ATTRS,
-	  .desc   = "Hardware interrupts received",
+	  .desc   = "Hardware interrupts received (warning overcounts by 2x)",
 	  .code   = 0x01C8, /* 0x01 for umask better than 0x0, though it overcounts by 2x */
 	  .flags  = 0,
 	},
