@@ -225,19 +225,22 @@ setup_cpu(int cpu)
 	 * We are skipping the first 3 values (nr, time_enabled, time_running)
 	 * and then for each event we get a pair of values.
 	 */
-	sz = (3+2*num_fds)*sizeof(uint64_t);
-	val = malloc(sz);
-	if (!val)
-		err(1, "cannot allocated memory");
+	if (num_fds > 1) {
+		sz = (3+2*num_fds)*sizeof(uint64_t);
+		val = malloc(sz);
+		if (!val)
+			err(1, "cannot allocated memory");
 
-	ret = read(fds[0].fd, val, sz);
-	if (ret == -1)
-		err(1, "cannot read id %zu", sizeof(val));
+		ret = read(fds[0].fd, val, sz);
+		if (ret == -1)
+			err(1, "cannot read id %zu", sizeof(val));
 
 
-	for(i=0; i < num_fds; i++) {
-		fds[i].id = val[2*i+1+3];
-		printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
+		for(i=0; i < num_fds; i++) {
+			fds[i].id = val[2*i+1+3];
+			printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
+		}
+		free(val);
 	}
 	return 0;
 }
