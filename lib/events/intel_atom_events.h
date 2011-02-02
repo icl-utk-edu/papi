@@ -776,7 +776,7 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	  .cntmsk = 0x3,
 	  .modmsk  = INTEL_V3_ATTRS,
 	  .desc   = "Hardware interrupts received",
-	  .code   = 0xC8,
+	  .code   = 0x01C8, /* 0x01 for umask better than 0x0, though it overcounts by 2x */
 	  .flags  = 0,
 	},
 	{ .name   = "BUS_TRANS_BRD",
