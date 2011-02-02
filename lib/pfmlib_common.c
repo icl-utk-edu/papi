@@ -109,12 +109,22 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_cortex_a8_support,
 	&arm_cortex_a9_support,
 #endif
-
 #ifdef __linux__
 	&perf_event_support,
 #endif
 };
 #define PFMLIB_NUM_PMUS	(sizeof(pfmlib_pmus)/sizeof(pfmlib_pmu_t *))
+
+static pfmlib_os_t pfmlib_os_none;
+
+static pfmlib_os_t *pfmlib_oses[]={
+	&pfmlib_os_none,
+#ifdef __linux__
+	&pfmlib_os_perf,
+	&pfmlib_os_perf_ext,
+#endif
+};
+#define PFMLIB_NUM_OSES	(sizeof(pfmlib_oses)/sizeof(pfmlib_os_t *))
 
 /*
  * Mapping table from PMU index to pfmlib_pmu_t
@@ -126,6 +136,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
  */
 static pfmlib_pmu_t *pfmlib_pmus_map[PFM_PMU_MAX];
 
+
 #define pfmlib_for_each_pmu_event(p, e) \
 	for(e=(p)->get_event_first((p)); e != -1; e = (p)->get_event_next((p), e))
 
@@ -134,6 +145,12 @@ static pfmlib_pmu_t *pfmlib_pmus_map[PFM_PMU_MAX];
 
 #define pfmlib_for_each_pmu(x) \
 	for((x)= 0 ; (x) < PFMLIB_NUM_PMUS; (x)++)
+
+#define pfmlib_for_each_pmu(x) \
+	for((x)= 0 ; (x) < PFMLIB_NUM_PMUS; (x)++)
+
+#define pfmlib_for_each_os(x) \
+	for((x)= 0 ; (x) < PFMLIB_NUM_OSES; (x)++)
 
 pfmlib_config_t pfm_cfg;
 
@@ -178,6 +195,20 @@ pfmlib_strconcat(char *str, size_t max, const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(str+len, todo, fmt, ap);
 	va_end(ap);
+}
+
+/*
+ * compact all pattrs starting from index i
+ */
+void
+pfmlib_compact_pattrs(pfmlib_event_desc_t *e, int i)
+{
+	int j;
+
+	for (j = i+1; j < e->npattrs; j++)
+		e->pattrs[j - 1] = e->pattrs[j];
+
+	e->npattrs--;
 }
 
 static inline int
@@ -236,18 +267,18 @@ pfmlib_idx2pidx(int idx, int *pidx)
 	return pmu;
 }
 
-static int
-pfmlib_valid_attr(pfmlib_pmu_t *pmu, int pidx, int attr)
+static pfmlib_os_t *
+pfmlib_find_os(pfm_os_t id)
 {
-	pfm_event_info_t info;
-	int ret;
+	int o;
+	pfmlib_os_t *os;
 
-	memset(&info, 0, sizeof(info));
-	ret = pmu->get_event_info(pmu, pidx, &info);
-	if (ret != PFM_SUCCESS)
-		return 0;
-
-	return attr >= 0 && attr < info.nattrs;
+	pfmlib_for_each_os(o) {
+		os = pfmlib_oses[o];
+		if (os->id == id && (os->flags & PFMLIB_OS_FL_ACTIVATED))
+			return os;
+	}
+	return NULL;
 }
 
 /*
@@ -413,6 +444,26 @@ pfmlib_init_pmus(void)
 	return PFM_SUCCESS;
 }
 
+static void
+pfmlib_init_os(void)
+{
+	int o;
+	pfmlib_os_t *os;
+
+	pfmlib_for_each_os(o) {
+		os = pfmlib_oses[o];
+
+		if (!os->detect)
+			continue;
+
+		if (os->detect(os) != PFM_SUCCESS)
+			continue;
+
+		DPRINT("OS layer %s activated\n", os->name);
+		os->flags = PFMLIB_OS_FL_ACTIVATED;
+	}
+}
+
 int
 pfm_initialize(void)
 {
@@ -434,8 +485,12 @@ pfm_initialize(void)
 	pfmlib_init_env();
 
 	ret = pfmlib_init_pmus();
-	if (ret == PFM_SUCCESS)
-		pfm_cfg.initdone = 1;
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	pfmlib_init_os();
+
+	pfm_cfg.initdone = 1;
 
 	return ret;
 }
@@ -483,15 +538,19 @@ pfm_find_event(const char *str)
 static int
 pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 {
+	pfm_event_attr_info_t *a1, *a2;
 	int i, j;
 
 	/*
 	 * fail if duplicate attributes are found
 	 */
 	for(i=0; i < d->nattrs; i++) {
+		a1 = attr(d, i);
 		for(j=i+1; j < d->nattrs; j++) {
-			if (d->attrs[i].id == d->attrs[j].id
-			    && d->attrs[i].type == d->attrs[j].type)
+			a2 = attr(d, j);
+			if (a1->idx == a2->idx
+			    && a1->type == a2->type
+			    && a1->ctrl == a2->ctrl)
 				return PFM_ERR_ATTR_SET;
 		}
 	}
@@ -499,17 +558,16 @@ pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 }
 
 static int
-pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmlib_event_desc_t *d)
+pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 {
-	pfm_event_attr_info_t ainfo;
+	pfm_event_attr_info_t *ainfo;
 	char *s, *p, *q, *endptr;
 	char yes[2] = "y";
 	pfm_attr_t type;
-	int a, has_val, has_raw_um = 0, has_um = 0;
-	int na, ret;
+	int aidx = 0, has_val, has_raw_um = 0, has_um = 0;
+	int ret = PFM_ERR_INVAL;
 
 	s = str;
-	na = d->nattrs;
 
 	while(s) {
 		p = strchr(s, PFMLIB_ATTR_DELIM);
@@ -533,16 +591,20 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 				DPRINT("cannot mix raw umask with umask\n");
 				return PFM_ERR_ATTR;
 			}
-			if (!(pmu->flags & PFMLIB_PMU_FL_RAW_UMASK)) {
-				DPRINT("PMU %s does not support RAW umasks\n", pmu->name);
+			if (!(d->pmu->flags & PFMLIB_PMU_FL_RAW_UMASK)) {
+				DPRINT("PMU %s does not support RAW umasks\n", d->pmu->name);
 				return PFM_ERR_ATTR;
 			}
 
-			memset(&ainfo, 0, sizeof(ainfo));
+			/* we have reserved an entry at the end of pattrs */
+			aidx = d->npattrs;
+			ainfo = d->pattrs + aidx;
 
-			ainfo.name = "RAW_UMASK";
-			ainfo.type = PFM_ATTR_RAW_UMASK;
-			ainfo.idx  = strtoul(s, &endptr, 0);
+			ainfo->name = "RAW_UMASK";
+			ainfo->type = PFM_ATTR_RAW_UMASK;
+			ainfo->ctrl = PFM_ATTR_CTRL_PMU;
+			ainfo->idx  = strtoul(s, &endptr, 0);
+			ainfo->equiv= NULL;
 			if (*endptr) {
 				DPRINT("raw umask (%s) is not a number\n");
 				return PFM_ERR_ATTR;
@@ -553,23 +615,15 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 			goto found_attr;
 		}
 
-		for(a = 0; a < nattrs; a++) {
-			ret = pmu->get_event_attr_info(pmu, idx, a, &ainfo);
-
-			if (ret != PFM_SUCCESS)
-				return ret;
-
-			if (!strcasecmp(ainfo.name, s))
+		for(aidx = 0; aidx < d->npattrs; aidx++) {
+			if (!strcasecmp(d->pattrs[aidx].name, s)) {
+				ainfo = d->pattrs + aidx;
 				goto found_attr;
-		}
-
-		{ pfm_event_info_t einfo;
-		  pmu->get_event_info(pmu, idx, &einfo);
-		  DPRINT("attr=%s not found for event %s\n", s, einfo.name);
+			}
 		}
 		return PFM_ERR_ATTR;
 found_attr:
-		type = ainfo.type;
+		type = ainfo->type;
 
 		if (type == PFM_ATTR_UMASK) {
 			has_um = 1;
@@ -579,25 +633,25 @@ found_attr:
 			}
 		}
 
-		if (ainfo.equiv) {
+		if (ainfo->equiv) {
 			char *z;
 
 			/* cannot have equiv for attributes with value */
 			if (has_val)
 				return PFM_ERR_ATTR_VAL;
+
 			/* copy because it is const */
-			z = strdup(ainfo.equiv);
+			z = strdup(ainfo->equiv);
 			if (!z)
 				return PFM_ERR_NOMEM;
 
-			ret = pfmlib_parse_event_attr(z, pmu, idx, nattrs, d);
+			ret = pfmlib_parse_event_attr(z, d);
 
 			free(z);
 
 			if (ret != PFM_SUCCESS)
 				return ret;
 			s = p;
-			na = d->nattrs;
 			continue;
 		}
 		/*
@@ -612,7 +666,7 @@ found_attr:
 			goto handle_bool;
 		}
 
-		d->attrs[na].ival = 0;
+		d->attrs[d->nattrs].ival = 0;
 		if ((type == PFM_ATTR_UMASK || type == PFM_ATTR_RAW_UMASK) && has_val)
 			return PFM_ERR_ATTR_VAL;
 
@@ -622,7 +676,7 @@ handle_bool:
 			ret = PFM_ERR_ATTR_VAL;
 			if (!strlen(s))
 				goto error;
-			if (na == PFMLIB_MAX_EVENT_ATTRS) {
+			if (d->nattrs == PFMLIB_MAX_ATTRS) {
 				DPRINT("too many attributes\n");
 				ret = PFM_ERR_TOOMANY;
 				goto error;
@@ -640,15 +694,15 @@ handle_bool:
 
 				if (tolower((int)*s) == 'y'
 				    || tolower((int)*s) == 't' || *s == '1')
-					d->attrs[na].ival = 1;
+					d->attrs[d->nattrs].ival = 1;
 				else if (tolower((int)*s) == 'n'
 					 || tolower((int)*s) == 'f' || *s == '0')
-					d->attrs[na].ival = 0;
+					d->attrs[d->nattrs].ival = 0;
 				else
 					goto error;
 				break;
 			case PFM_ATTR_MOD_INTEGER:
-				d->attrs[na].ival = strtoull(s, &endptr, 0);
+				d->attrs[d->nattrs].ival = strtoull(s, &endptr, 0);
 				if (*endptr != '\0')
 					goto error;
 				break;
@@ -656,11 +710,8 @@ handle_bool:
 				goto error;
 			}
 		}
-		DPRINT("na=%d id=%d type=%d idx=%d nattrs=%d name=%s\n", na, ainfo.idx, type, ainfo.idx, nattrs, ainfo.name);
-		d->attrs[na].id = ainfo.idx;
-		d->attrs[na].type = type;
+		d->attrs[d->nattrs].id = aidx;
 		d->nattrs++;
-		na++;
 		s = p;
 	}
 	ret = PFM_SUCCESS;
@@ -669,8 +720,81 @@ error:
 }
 
 static int
-pfmlib_parse_equiv_event(pfmlib_pmu_t *pmu, const char *event, pfmlib_event_desc_t *d)
+pfmlib_build_event_pattrs(pfmlib_event_desc_t  *e)
 {
+	pfmlib_pmu_t *pmu;
+	pfmlib_os_t *os;
+	int i, ret, pmu_nattrs = 0, os_nattrs = 0;
+	int npattrs;
+
+	/*
+	 * cannot satisfy request for an OS that was not activated
+	 */
+	os = pfmlib_find_os(e->osid);
+	if (!os)
+		return PFM_ERR_NOTSUPP;
+
+	pmu = e->pmu;
+
+	/* get actual PMU number of attributes for the event */
+	if (pmu->get_event_nattrs)
+		pmu_nattrs = pmu->get_event_nattrs(pmu, e->event);
+	if (os && os->get_os_nattrs)
+		os_nattrs += os->get_os_nattrs(os, e);
+
+	npattrs = pmu_nattrs + os_nattrs;
+
+	/*
+	 * add extra entry for raw umask, if supported
+	 */
+	if (pmu->flags & PFMLIB_PMU_FL_RAW_UMASK)
+		npattrs++;
+
+	if (npattrs) {
+		e->pattrs = malloc(npattrs * sizeof(*e->pattrs));
+		if (!e->pattrs)
+			return PFM_ERR_NOMEM;
+	}
+
+	/* collect all actual PMU attrs */
+	for(i = 0; i < pmu_nattrs; i++) {
+		ret = pmu->get_event_attr_info(pmu, e->event, i, e->pattrs+i);
+		if (ret != PFM_SUCCESS)
+			goto error;
+	}
+	e->npattrs = pmu_nattrs;
+
+	if (os_nattrs) {
+		if (e->osid == os->id && os->get_os_attr_info) {
+			os->get_os_attr_info(os, e);
+			/*
+			 * check for conflicts between HW and OS attributes
+			 */
+			if (pmu->validate_pattrs)
+				pmu->validate_pattrs(pmu, e);
+		}
+	}
+	for (i = 0; i < e->npattrs; i++)
+		DPRINT("%d %d %d %d %s\n", e->event, i, e->pattrs[i].type, e->pattrs[i].ctrl, e->pattrs[i].name);
+
+	return PFM_SUCCESS;
+error:
+	free(e->pattrs);
+	e->pattrs = NULL;
+	return ret;
+}
+
+static void
+pfmlib_release_event(pfmlib_event_desc_t *e)
+{
+	free(e->pattrs);
+	e->pattrs = NULL;
+}
+
+static int
+pfmlib_parse_equiv_event(const char *event, pfmlib_event_desc_t *d)
+{
+	pfmlib_pmu_t *pmu = d->pmu;
 	pfm_event_info_t einfo;
 	char *str, *s, *p;
 	int i;
@@ -700,9 +824,24 @@ found:
 	d->pmu = pmu;
 	d->event = i; /* private index */
 
-	ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
+	/*
+	 * build_event_pattrs and parse_event_attr
+	 * cannot be factorized with pfmlib_parse_event()
+	 * because equivalent event may add its own attributes
+	 */
+	ret = pfmlib_build_event_pattrs(d);
+	if (ret != PFM_SUCCESS)
+		goto error;
+
+	ret = pfmlib_parse_event_attr(p, d);
+	if (ret == PFM_SUCCESS)
+		ret = pfmlib_sanitize_event(d);
 error:
 	free(str);
+
+	if (ret != PFM_SUCCESS)
+		pfmlib_release_event(d);
+
 	return ret;
 }
 
@@ -712,9 +851,8 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	pfm_event_info_t einfo;
 	char *str, *s, *p;
 	pfmlib_pmu_t *pmu;
-	int i, j;
 	const char *pname = NULL;
-	int ret;
+	int i, j, ret;
 
 	/*
 	 * create copy because string is const
@@ -755,7 +893,6 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		 */
 		if (!pname && !pfmlib_pmu_active(pmu))
 			continue;
-
 		/*
 		 * check for requested PMU name,
 		 */
@@ -781,28 +918,43 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	free(str);
 	return PFM_ERR_NOTFOUND;
 found:
+	d->pmu = pmu;
 	/*
 	 * handle equivalence
 	 */
 	if (einfo.equiv) {
-		ret = pfmlib_parse_equiv_event(pmu, einfo.equiv, d);
+		ret = pfmlib_parse_equiv_event(einfo.equiv, d);
 		if (ret != PFM_SUCCESS)
 			goto error;
-
-		i = d->event;
-		pmu->get_event_info(pmu, i, &einfo);
 	} else {
-		d->pmu = pmu;
 		d->event = i; /* private index */
+
+		ret = pfmlib_build_event_pattrs(d);
+		if (ret != PFM_SUCCESS)
+			goto error;
 	}
-	ret = pfmlib_parse_event_attr(p, pmu, i, einfo.nattrs, d);
+	/*
+	 * parse attributes from original event
+	 */
+	ret = pfmlib_parse_event_attr(p, d);
 	if (ret == PFM_SUCCESS)
 		ret = pfmlib_sanitize_event(d);
+
+	for (i = 0; i < d->nattrs; i++) {
+		pfm_event_attr_info_t *a = attr(d, i);
+		if (a->type != PFM_ATTR_RAW_UMASK)
+			DPRINT("%d %d %s\n", d->event, i, d->pattrs[a->idx].name);
+		else
+			DPRINT("%d %d RAW_UMASK (0x%x)\n", d->event, i, a->idx);
+	}
 error:
 	free(str);
+	if (ret != PFM_SUCCESS)
+		pfmlib_release_event(d);
 	return ret;
 }
 
+#if 0
 /*
  * total number of events
  */
@@ -820,6 +972,7 @@ pfm_get_nevents(void)
 	}
 	return total;
 }
+#endif
 
 /* sorry, only English supported at this point! */
 static const char *pfmlib_err_list[]=
@@ -860,38 +1013,17 @@ int
 pfm_get_event_next(int idx)
 {
 	pfmlib_pmu_t *pmu;
-	int pidx, px;
+	int pidx;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
 		return -1;
 
 	pidx = pmu->get_event_next(pmu, pidx);
-	if (pidx != -1)
-		return pfmlib_pidx2idx(pmu, pidx);
-
-	for (px = 0; px < PFMLIB_NUM_PMUS; px++) {
-		if (pfmlib_pmus[px] == pmu)
-			break;
-	}
-retry:
-	for (++px; px < PFMLIB_NUM_PMUS; px++) {
-		pmu = pfmlib_pmus[px];
-		if (pfmlib_pmu_initialized(pmu))
-			break;
-	}
-
-	/* reached the end */
-	if (px == PFMLIB_NUM_PMUS)
-		return -1;
-
-	pidx = pmu->get_event_first(pmu);
-	if (pidx == -1)
-		goto retry;
-
-	return pfmlib_pidx2idx(pmu, pidx);
+	return pidx == -1 ? -1 : pfmlib_pidx2idx(pmu, pidx);
 }
 
+#if 0
 int
 pfm_get_event_first(void)
 {
@@ -902,7 +1034,7 @@ pfm_get_event_first(void)
 	pfmlib_for_each_pmu(i) {
 		pmu = pfmlib_pmus[i];
 		/*
-		 * check is pmu validated
+		 * check if pmu validated
 		 */
 		if (!pfmlib_pmu_initialized(pmu))
 			continue;
@@ -913,66 +1045,100 @@ pfm_get_event_first(void)
 	}
 	return -1;
 }
+#endif
 
 int
-pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count)
+pfm_get_os_event_encoding(const char *str, int dfl_plm, pfm_os_t uos, void *args)
 {
-	pfmlib_pmu_t *pmu;
-	pfmlib_event_desc_t e;
-	int ret, i;
+	pfmlib_os_t *os;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFM_ERR_NOINIT;
 
-	if (!(str && count && codes))
+	if (!(args && str))
 		return PFM_ERR_INVAL;
 
-	/* must provide default priv level */
-	if (dfl_plm < 1)
+	if (dfl_plm & ~(PFM_PLM_ALL))
 		return PFM_ERR_INVAL;
-	
-	memset(&e, 0, sizeof(e));
 
-	e.dfl_plm = dfl_plm;
+	os = pfmlib_find_os(uos);
+	if (!os)
+		return PFM_ERR_NOTSUPP;
 
-	ret = pfmlib_parse_event(str, &e);
-	if (ret != PFM_SUCCESS)
-		return ret;
-	
-	pmu = e.pmu;
+	return os->encode(os, str, dfl_plm, args);
+}
 
-	ret = pmu->get_event_encoding(pmu, &e, NULL);
-	if (ret != PFM_SUCCESS)
-		return ret;
+/*
+ * old API maintained for backward compatibility with existing apps
+ * prefer pfm_get_os_event_encoding()
+ */
+int
+pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count)
+{
+	pfm_pmu_encode_arg_t arg;
+	int ret;
+
+	if (!(str && codes && count))
+		return PFM_ERR_INVAL;
+
+	if ((*codes && !*count) || (!*codes && *count))
+		return PFM_ERR_INVAL;
+
+	memset(&arg, 0, sizeof(arg));
+
+	arg.fstr = fstr;
+	arg.codes = *codes;
+	arg.count = *count;
+
 	/*
-	 * return opaque event identifier
+	 * request RAW PMU encoding
 	 */
-	if (idx)
-		*idx = pfmlib_pidx2idx(e.pmu, e.event);
-
-	ret = pfmlib_build_fstr(&e, fstr);
+	ret = pfm_get_os_event_encoding(str, dfl_plm, PFM_OS_NONE, &arg);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (*codes == NULL) {
-		ret = PFM_ERR_NOMEM;
-		*codes = malloc(sizeof(uint64_t) * e.count);
-		if (!*codes)
-			goto error;
-	} else if (*count < e.count) {
-		ret = PFM_ERR_TOOSMALL;
-		goto error;
-	}
+	/* handle the case where the array was allocated */
+	*codes = arg.codes;
+	*count = arg.count;
 
-	*count = e.count;
-
-	for (i = 0; i < e.count; i++)
-		(*codes)[i] = e.codes[i];
+	if (idx)
+		*idx = arg.idx;
 
 	return PFM_SUCCESS;
+}
+
+static int
+pfmlib_check_event_pattrs(pfmlib_pmu_t *pmu, int pidx, pfm_os_t osid, FILE *fp)
+{
+	pfmlib_event_desc_t e;
+	int i, j, ret = PFM_ERR_ATTR;
+
+	memset(&e, 0, sizeof(e));
+	e.event = pidx;
+	e.osid  = osid;
+	e.pmu   = pmu;
+
+	ret = pfmlib_build_event_pattrs(&e);
+	if (ret != PFM_SUCCESS) {
+		fprintf(fp, "invalid pattrs for event %d\n", pidx);
+		return ret;
+	}
+
+	for (i = 0; i < e.npattrs; i++) {
+		for (j = i+1; j < e.npattrs; j++) {
+			if (!strcmp(e.pattrs[i].name, e.pattrs[j].name)) {
+				fprintf(fp, "event %d duplicate pattrs %s\n", pidx, e.pattrs[i].name);
+				goto error;
+			}
+		}
+	}
+	ret = PFM_SUCCESS;
 error:
-	free(fstr);
-	return ret;
+	/*
+	 * release resources allocated for event
+	 */
+	pfmlib_release_event(&e);
+	return PFM_SUCCESS;
 }
 
 static int
@@ -1007,6 +1173,10 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 
 	pfmlib_for_each_pmu_event(pmu, i) {
 		ret = pmu->get_event_info(pmu, i, &einfo);
+		if (ret != PFM_SUCCESS)
+			return ret;
+
+		ret = pfmlib_check_event_pattrs(pmu, i, PFM_OS_NONE, fp);
 		if (ret != PFM_SUCCESS)
 			return ret;
 
@@ -1140,10 +1310,6 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 		fprintf(fp, "pmu: %s :: missing get_event_next callback\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
-	if (!pmu->get_event_perf_type) {
-		fprintf(fp, "pmu: %s :: missing get_event_perf_type callback\n", pmu->name);
-		return PFM_ERR_INVAL;
-	}
 	if (!pmu->get_event_info) {
 		fprintf(fp, "pmu: %s :: missing get_event_info callback\n", pmu->name);
 		return PFM_ERR_INVAL;
@@ -1174,69 +1340,121 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 }
 
 int
-pfm_get_event_info(int idx, pfm_event_info_t *info)
+pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 {
+	pfmlib_event_desc_t e;
 	pfmlib_pmu_t *pmu;
 	int pidx, ret;
 
 	if (!PFMLIB_INITIALIZED())
 		return PFM_ERR_NOINIT;
 
+	if (os < 0 || os >= PFM_OS_MAX)
+		return PFM_ERR_INVAL;
+
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
 		return PFM_ERR_INVAL;
 
-	if (!info)
+	if (!uinfo)
 		return PFM_ERR_INVAL;
 
-	if (info->size && info->size != sizeof(*info))
+	if (uinfo->size && uinfo->size != sizeof(*uinfo))
 		return PFM_ERR_INVAL;
+
+	ret = pmu->get_event_info(pmu, pidx, uinfo);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	uinfo->idx = idx; /* public index */
 
 	/* default data type is uint64 */
-	info->dtype = PFM_DTYPE_UINT64;
+	uinfo->dtype = PFM_DTYPE_UINT64;
 
 	/* reset flags */
-	info->is_precise = 0;
+	uinfo->is_precise = 0;
 
-	ret = pmu->get_event_info(pmu, pidx, info);
+	ret = pmu->get_event_info(pmu, pidx, uinfo);
 	if (ret == PFM_SUCCESS) {
-		info->pmu = pmu->pmu;
-		info->idx = idx;
+		uinfo->pmu = pmu->pmu;
+		uinfo->idx = idx;
 	}
+
+	memset(&e, 0, sizeof(e));
+	e.event = pidx;
+	e.osid  = os;
+	e.pmu   = pmu;
+
+	ret = pfmlib_build_event_pattrs(&e);
+	if (ret == PFM_SUCCESS)
+		uinfo->nattrs = e.npattrs;
+
+	pfmlib_release_event(&e);
 	return ret;
 }
 
 int
-pfm_get_event_attr_info(int idx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_t *uinfo)
 {
+	pfmlib_event_desc_t e;
 	pfmlib_pmu_t *pmu;
-	int pidx;
+	uint32_t sz;
+	int pidx, ret;
 
 	if (!PFMLIB_INITIALIZED())
 		return PFM_ERR_NOINIT;
+
+	if (attr_idx < 0)
+		return PFM_ERR_INVAL;
+
+	if (os < 0 || os >= PFM_OS_MAX)
+		return PFM_ERR_INVAL;
+
+	if (!uinfo)
+		return PFM_ERR_INVAL;
+
+	if (uinfo->size && uinfo->size != sizeof(*uinfo))
+		return PFM_ERR_INVAL;
+
+	/* reset flags */
+	uinfo->is_dfl     = 0;
+	uinfo->is_precise = 0;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
 		return PFM_ERR_INVAL;
 
-	if (!info)
-		return PFM_ERR_INVAL;
+	memset(&e, 0, sizeof(e));
+	e.event = pidx;
+	e.osid  = os;
+	e.pmu   = pmu;
 
-	if (info->size && info->size != sizeof(*info))
-		return PFM_ERR_INVAL;
+	ret = pfmlib_build_event_pattrs(&e);
+	if (ret != PFM_SUCCESS)
+		return ret;
 
-	if (!pfmlib_valid_attr(pmu, pidx, attr_idx))
-		return PFM_ERR_ATTR;
+	ret = PFM_ERR_INVAL;
+	if (attr_idx >= e.npattrs)
+		goto error;
 
-	/* reset flags */
-	info->is_dfl     = 0;
-	info->is_precise = 0;
+	sz = uinfo->size;
+	*uinfo = e.pattrs[attr_idx];
+	uinfo->size = sz;
+	/*
+	 * info.idx = private, namespace specific index,
+	 * should not be visible externally, so override
+	 * with public index
+	 */
+	uinfo->idx  = attr_idx;
 
-	return pmu->get_event_attr_info(pmu, pidx, attr_idx, info);
+	ret = PFM_SUCCESS;
+error:
+	pfmlib_release_event(&e);
+	return ret;
 }
 
 int
-pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
+pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 {
 	pfmlib_pmu_t *pmu;
 	int pidx;
@@ -1247,32 +1465,33 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
 	if (pmuid < PFM_PMU_NONE || pmuid >= PFM_PMU_MAX)
 		return PFM_ERR_INVAL;
 
-	if (!info)
+	if (!uinfo)
 		return PFM_ERR_INVAL;
 
-	if (info->size && info->size != sizeof(*info))
+	if (uinfo->size && uinfo->size != sizeof(*uinfo))
 		return PFM_ERR_INVAL;
 
 	pmu = pfmlib_pmus_map[pmuid];
 	if (!pmu)
 		return PFM_ERR_NOTSUPP;
 
-	info->name = pmu->name;
-	info->desc = pmu->desc;
-	info->pmu = pmuid;
-	info->max_encoding = pmu->max_encoding;
+	uinfo->name = pmu->name;
+	uinfo->desc = pmu->desc;
+	uinfo->pmu = pmuid;
+	uinfo->max_encoding = pmu->max_encoding;
 
 	pidx = pmu->get_event_first(pmu);
 	if (pidx == -1)
-		info->first_event = -1;
+		uinfo->first_event = -1;
 	else
-		info->first_event = pfmlib_pidx2idx(pmu, pidx);
+		uinfo->first_event = pfmlib_pidx2idx(pmu, pidx);
 
 	/*
 	 * XXX: pme_count only valid when PMU is detected
 	 */
-	info->is_present = pfmlib_pmu_active(pmu);
-	info->nevents = pmu->pme_count;
+	uinfo->is_present = pfmlib_pmu_active(pmu);
+	uinfo->nevents = pmu->pme_count;
+
 	return PFM_SUCCESS;
 }
 
@@ -1292,3 +1511,82 @@ pfmlib_sort_attr(pfmlib_event_desc_t *e)
 {
 	qsort(e->attrs, e->nattrs, sizeof(pfmlib_attr_t), pfmlib_compare_attr_id);
 }
+
+static int
+pfmlib_raw_pmu_encode(void *this, const char *str, int dfl_plm, void *data)
+{
+	pfmlib_os_t *os = this;
+	pfm_pmu_encode_arg_t *arg = data;
+	pfmlib_pmu_t *pmu;
+	pfmlib_event_desc_t e;
+	int ret, i;
+
+	memset(&e, 0, sizeof(e));
+	/*
+	 * only actual PMU features
+	 * Use actual OS interface for OS specific encodings
+	 */
+	e.osid    = os->id;
+	e.dfl_plm = dfl_plm;
+
+	ret = pfmlib_parse_event(str, &e);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	pmu = e.pmu;
+
+	ret = pmu->get_event_encoding(pmu, &e);
+	if (ret != PFM_SUCCESS)
+		goto error;
+	/*
+	 * return opaque event identifier
+	 */
+	arg->idx = pfmlib_pidx2idx(e.pmu, e.event);
+
+	if (arg->codes == NULL) {
+		ret = PFM_ERR_NOMEM;
+		arg->codes = malloc(sizeof(uint64_t) * e.count);
+		if (!arg->codes)
+			goto error_fstr;
+	} else if (arg->count < e.count) {
+		ret = PFM_ERR_TOOSMALL;
+		goto error_fstr;
+	}
+
+	arg->count = e.count;
+
+	for (i = 0; i < e.count; i++)
+		arg->codes[i] = e.codes[i];
+
+	if (arg->fstr) {
+		ret = pfmlib_build_fstr(&e, arg->fstr);
+		if (ret != PFM_SUCCESS)
+			goto error;
+	}
+
+	ret = PFM_SUCCESS;
+
+error_fstr:
+	if (ret != PFM_SUCCESS)
+		free(arg->fstr);
+error:
+	/*
+	 * release resources allocated for event
+	 */
+	pfmlib_release_event(&e);
+	return ret;
+}
+
+static int
+pfmlib_raw_pmu_detect(void *this)
+{
+	return PFM_SUCCESS;
+}
+
+static pfmlib_os_t pfmlib_os_none= {
+	.name = "No OS (raw PMU)",
+	.id = PFM_OS_NONE,
+	.flags = PFMLIB_OS_FL_ACTIVATED,
+	.encode = pfmlib_raw_pmu_encode,
+	.detect = pfmlib_raw_pmu_detect,
+};

@@ -27,139 +27,277 @@
 #include <perfmon/pfmlib_perf_event.h>
 #include "pfmlib_priv.h"
 
+#define PERF_PROC_FILE "/proc/sys/kernel/perf_event_paranoid"
+
+/*
+ * contains ONLY attributes related to PMU features
+ */
+static const pfmlib_attr_desc_t perf_event_mods[]={
+	PFM_ATTR_B("u", "monitor at user level"),	/* monitor user level */
+	PFM_ATTR_B("k", "monitor at kernel level"),	/* monitor kernel level */
+	PFM_ATTR_B("h", "monitor at hypervisor level"),	/* monitor hypervisor level */
+	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
+};
+
+/*
+ * contains all attributes controlled by perf_events. That includes PMU attributes
+ * and pure software attributes such as sampling periods
+ */
+static const pfmlib_attr_desc_t perf_event_ext_mods[]={
+	PFM_ATTR_B("u", "monitor at user level"),	/* monitor user level */
+	PFM_ATTR_B("k", "monitor at kernel level"),	/* monitor kernel level */
+	PFM_ATTR_B("h", "monitor at hypervisor level"),	/* monitor hypervisor level */
+	PFM_ATTR_I("period", "sampling period"),     	/* sampling period */
+	PFM_ATTR_I("freq", "sampling frequency (Hz)"),     /* sampling frequency */
+	PFM_ATTR_I("precise", "precise ip"),     		/* anti-skid mechanism */
+	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
+};
+
 static int
-get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw, char **fstr, int *idx)
+pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 {
+	pfmlib_os_t *os = this;
+	pfm_perf_encode_arg_t *arg = data;
+	struct perf_event_attr *attr = arg->attr;
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
-	pfmlib_perf_attr_t perf_attrs;
-	int ret;
+	pfm_event_attr_info_t *a;
+	uint64_t ival;
+	int has_plm = 0;
+	int i, count, plm = 0, ret;
 
 	memset(&e, 0, sizeof(e));
+
+	e.osid = os->id;
+	e.os_data = attr;
 
 	ret = pfmlib_parse_event(str, &e);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
 	pmu = e.pmu;
+	count = pmu->max_encoding;
 
-	/*
-	 * initialize default priv level mask
-	 * is used if no plm modifier is passed
-	 */
-	e.dfl_plm = dfl_plm;
-
-	memset(&perf_attrs, 0, sizeof(perf_attrs));
-
-	/*
-	 * values[] dynamically allocated by call because we
-	 * pass NULL
-	 */
-	ret = pmu->get_event_encoding(pmu, &e, &perf_attrs);
-	if (ret != PFM_SUCCESS)
+	ret = pmu->get_event_encoding(pmu, &e);
+        if (ret != PFM_SUCCESS)
 		return ret;
 
-
-	hw->type = pmu->get_event_perf_type(pmu, e.event);
-	if (hw->type == -1)
-		return PFM_ERR_NOTSUPP;
-
-	hw->config = e.codes[0];
-
 	/*
-	 * propagate to event attributes to perf_event
-	 * use dfl_plm if no modifier specified
+	 * process perf_event attributes
 	 */
-	if (perf_attrs.plm) {
-		hw->exclude_user = !(perf_attrs.plm & PFM_PLM3);
-		hw->exclude_kernel = !(perf_attrs.plm & PFM_PLM0);
-		hw->exclude_hv = !(perf_attrs.plm & PFM_PLMH);
-	} else {
-		hw->exclude_user = !(dfl_plm & PFM_PLM3);
-		hw->exclude_kernel = !(dfl_plm & PFM_PLM0);
-		hw->exclude_hv = !(dfl_plm & PFM_PLMH);
-	}
+	for (i = 0; i < e.nattrs; i++) {
 
-	/*
-	 * encoding of Intel Nehalem/Westmere OFFCORE_RESPONSE events
-	 * they use an extra MSR, which is encoded in the upper 32 bits
-	 * of hw->config
-	 */
-	if (perf_attrs.offcore) {
-		if (e.count != 2) {
-			DPRINT("perf_encoding: offcore=1 count=%d\n", e.count);
-			return PFM_ERR_INVAL;
-		}
-		hw->config |= e.codes[1] << 32;
-	} else {
-		uint64_t escr;
-		int is_p4;
+		a = attr(&e, i);
 
-		is_p4 = pmu->pmu == PFM_PMU_INTEL_NETBURST
-			|| pmu->pmu == PFM_PMU_INTEL_NETBURST_P;
+		if (a->ctrl != PFM_ATTR_CTRL_PERF_EVENT)
+			continue;
 
+		ival = e.attrs[i].ival;
 
-		if (!is_p4 && e.count > 2) {
-			DPRINT("cannot handle e.count > 2\n");
-			return PFM_ERR_NOTSUPP;
-		}
-		/*
-		 * codes[0] = ESCR
-		 * codes[1] = CCCR
-		 * codes[2] = P4_EVENTS (perf code)
-		 */
-		if (is_p4) {
-			/* cleanup event_select, and install perf specific code */
-			escr  = e.codes[0] & ~(0x3full << 25);
-			escr |= e.codes[2] << 25;
-			hw->config = (escr << 32) | e.codes[1];
+		switch(a->idx) {
+		case PERF_ATTR_U:
+			if (ival)
+				plm |= PFM_PLM3;
+			has_plm = 1;
+			break;
+		case PERF_ATTR_K:
+			if (ival)
+				plm |= PFM_PLM0;
+			has_plm = 1;
+			break;
+		case PERF_ATTR_H:
+			if (ival)
+				plm |= PFM_PLMH;
+			has_plm = 1;
+			break;
+		case PERF_ATTR_PE:
+			if (!ival || attr->freq)
+				return PFM_ERR_ATTR_VAL;
+			attr->sample_period = ival;
+			break;
+		case PERF_ATTR_FR:
+			if (!ival)
+				return PFM_ERR_ATTR_VAL;
+			attr->sample_freq = ival;
+			attr->freq = 1;
+			break;
+		case PERF_ATTR_PR:
+			if (ival < 0 || ival > 3)
+				return PFM_ERR_ATTR_VAL;
+			attr->precise_ip = ival;
+			break;
 		}
 	}
-
 	/*
-	 * perf_event precise_ip must be in [0-3]
-	 * see perf_event.h
+	 * if no priv level mask was provided
+	 * with the event, then use dfl_plm
 	 */
-	if (perf_attrs.precise_ip < 0 || perf_attrs.precise_ip > 3)
-		return PFM_ERR_ATTR_SET;
+	if (!has_plm)
+		plm = dfl_plm;
 
-	hw->precise_ip = perf_attrs.precise_ip;
+	attr->exclude_user = !(plm & PFM_PLM3);
+	attr->exclude_kernel = !(plm & PFM_PLM0);
+	attr->exclude_hv = !(plm & PFM_PLMH);
 
-	__pfm_vbprintf("PERF[type=%x val=0x%"PRIx64" e_u=%d e_k=%d e_hv=%d precise=%d] %s\n",
-			hw->type,
-			hw->config,
-			hw->exclude_user,
-			hw->exclude_kernel,
-			hw->exclude_hv,
-			hw->precise_ip,
-			e.fstr);
+	__pfm_vbprintf("PERF[type=%x val=0x%"PRIx64" e_u=%d e_k=%d e_hv=%d period=%"PRIu64" freq=%d precise=%d] %s\n",
+			attr->type,
+			attr->config,
+			attr->exclude_user,
+			attr->exclude_kernel,
+			attr->exclude_hv,
+			attr->sample_period,
+			attr->freq,
+			attr->precise_ip,
+			str);
 
 	/*
 	 * propagate event index if necessary
 	 */
-	if (idx)
-		*idx = pfmlib_pidx2idx(e.pmu, e.event);
+	arg->idx = pfmlib_pidx2idx(e.pmu, e.event);
 
 	/*
-	 * propagate fully qualified event string if necessary
+	 * fstr not requested, stop here
 	 */
-	return pfmlib_build_fstr(&e, fstr);
+	if (!arg->fstr)
+		return PFM_SUCCESS;
+
+	for (i=0; i < e.npattrs; i++) {
+		int idx;
+
+		if (e.pattrs[i].ctrl != PFM_ATTR_CTRL_PERF_EVENT)
+			continue;
+
+		idx = e.pattrs[i].idx;
+		switch (idx) {
+		case PERF_ATTR_K:
+			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !!(plm & PFM_PLM0));
+			break;
+		case PERF_ATTR_U:
+			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !!(plm & PFM_PLM3));
+			break;
+		case PERF_ATTR_H:
+			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !!(plm & PFM_PLMH));
+			break;
+		case PERF_ATTR_PR:
+			evt_strcat(e.fstr, ":%s=%d", perf_event_ext_mods[idx].name, attr->precise_ip);
+			break;
+		case PERF_ATTR_PE:
+		case PERF_ATTR_FR:
+			if (attr->freq && attr->sample_period)
+				evt_strcat(e.fstr, ":%s=%"PRIu64, perf_event_ext_mods[idx].name, attr->sample_period);
+			else if (attr->sample_period)
+				evt_strcat(e.fstr, ":%s=%"PRIu64, perf_event_ext_mods[idx].name, attr->sample_period);
+		}
+	}
+
+	return pfmlib_build_fstr(&e, arg->fstr);
+}
+/*
+ * get OS-specific event attributes
+ */
+static int
+perf_get_os_nattrs(void *this, pfmlib_event_desc_t *e)
+{
+	pfmlib_os_t *os = this;
+	int i = 0;
+
+	for (; os->atdesc[i].name; i++);
+
+	return i;
 }
 
-int
-pfm_get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw, char **fstr, int *idx)
+static int
+perf_get_os_attr_info(void *this, pfmlib_event_desc_t *e)
 {
+	pfmlib_os_t *os = this;
+	pfm_event_attr_info_t *info;
+	int i, j = e->npattrs;
+
+	for (i = 0; os->atdesc[i].name; i++, j++) {
+		info = e->pattrs+j;
+
+		info->name = os->atdesc[i].name;
+		info->desc = os->atdesc[i].desc;
+		info->equiv= NULL;
+		info->code = i;
+		info->idx  = i; /* namespace-specific index */
+		info->type = os->atdesc[i].type;
+		info->is_dfl = 0;
+		info->ctrl = PFM_ATTR_CTRL_PERF_EVENT;
+	}
+	e->npattrs += i;
+
+	return PFM_SUCCESS;
+}
+
+/*
+ * old interface, maintained for backward compatibility with earlier versions of the library
+ */
+int
+pfm_get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *attr, char **fstr, int *idx)
+{
+	pfm_perf_encode_arg_t arg;
+	size_t sz;
+	int ret;
+
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFM_ERR_NOINIT;
 
-	if (!(hw && str))
+	/* idx and fstr can be NULL */
+	if (!(attr && str))
 		return PFM_ERR_INVAL;
 
-	/* must provide default priv level */
-	if (dfl_plm < 1)
+	if (dfl_plm & ~(PFM_PLM_ALL))
 		return PFM_ERR_INVAL;
 
-	memset(hw, 0, sizeof(*hw));
+	memset(&arg, 0, sizeof(arg));
 
-	return get_perf_event_encoding(str, dfl_plm, hw, fstr, idx);
+	/*
+	 * zero out everything that is passed
+	 */
+	if (attr->size == 0)
+		sz = sizeof(*attr);
+	else
+		sz = attr->size;
+
+	memset(attr, 0, sz);
+
+	arg.attr = attr;
+	arg.fstr = fstr;
+
+	ret = pfm_get_os_event_encoding(str, dfl_plm, PFM_OS_PERF_EVENT_EXT, &arg);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (idx)
+		*idx = arg.idx;
+
+	return PFM_SUCCESS;
 }
+
+static int
+pfm_perf_event_os_detect(void *this)
+{
+	int ret = access(PERF_PROC_FILE, F_OK);
+	return ret ? PFM_ERR_NOTSUPP : PFM_SUCCESS;
+}
+
+pfmlib_os_t pfmlib_os_perf={
+	.name = "perf_event",
+	.id = PFM_OS_PERF_EVENT,
+	.atdesc = perf_event_mods,
+	.detect = pfm_perf_event_os_detect,
+	.get_os_attr_info = perf_get_os_attr_info,
+	.get_os_nattrs = perf_get_os_nattrs,
+	.encode = pfmlib_perf_event_encode,
+};
+
+pfmlib_os_t pfmlib_os_perf_ext={
+	.name = "perf_event extended",
+	.id = PFM_OS_PERF_EVENT_EXT,
+	.atdesc = perf_event_ext_mods,
+	.detect = pfm_perf_event_os_detect,
+	.get_os_attr_info = perf_get_os_attr_info,
+	.get_os_nattrs = perf_get_os_nattrs,
+	.encode = pfmlib_perf_event_encode,
+};

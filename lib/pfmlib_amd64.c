@@ -34,23 +34,31 @@
 #include "pfmlib_priv.h"		/* library private */
 #include "pfmlib_amd64_priv.h"		/* architecture private */
 
-#define IS_FAMILY_10H(p) ((p)->pmu_rev >= AMD64_FAM10H)
+#define IS_FAMILY_10H(p) (((pfmlib_pmu_t *)(p))->pmu_rev >= AMD64_FAM10H)
 
 const pfmlib_attr_desc_t amd64_mods[]={
-	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
 	PFM_ATTR_B("k", "monitor at priv level 0"),		/* monitor priv level 0 */
+	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
+	PFM_ATTR_B("e", "edge level"),				/* edge */
+	PFM_ATTR_B("i", "invert"),				/* invert */
+	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
 	PFM_ATTR_B("h", "monitor in hypervisor"),		/* monitor in hypervisor*/
 	PFM_ATTR_B("g", "measure in guest"),			/* monitor in guest */
-	PFM_ATTR_B("i", "invert"),				/* invert */
-	PFM_ATTR_B("e", "edge level"),				/* edge */
-	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
-	PFM_ATTR_B("r", "sampling period randomization"),	/* randomization */
-	PFM_ATTR_I("p", "sampling period"),			/* sampling period */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
 pfmlib_pmu_t amd64_support;
 pfm_amd64_config_t pfm_amd64_cfg;
+
+static int
+amd64_num_mods(void *this, int idx)
+{
+	const amd64_entry_t *pe = this_pe(this);
+	unsigned int mask;
+
+	mask = pe[idx].modmsk;
+	return pfmlib_popcnt(mask);
+}
 
 static inline int
 amd64_eflag(void *this, int idx, int flag)
@@ -206,7 +214,7 @@ amd64_umask_valid(void *this, int i, int attr)
 }
 
 static int
-amd64_get_numasks(void *this, int pidx)
+amd64_num_umasks(void *this, int pidx)
 {
 	const amd64_entry_t *pe = this_pe(this);
 	int i, n;
@@ -238,7 +246,7 @@ amd64_attr2mod(void *this, int pidx, int attr_idx)
 	const amd64_entry_t *pe = this_pe(this);
 	int x, n;
 
-	n = attr_idx - amd64_get_numasks(this, pidx);
+	n = attr_idx - amd64_num_umasks(this, pidx);
 
 	pfmlib_for_each_bit(x, pe[pidx].modmsk) {
 		if (n == 0)
@@ -352,7 +360,6 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 
 				e->attrs[k].id = j;
 				e->attrs[k].ival = 0;
-				e->attrs[k].type = PFM_ATTR_UMASK;
 				k++;
 
 				added++;
@@ -374,11 +381,42 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 }
 
 static int
-amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
+amd64_perf_encode(pfmlib_event_desc_t *e)
+{
+	struct perf_event_attr *attr = e->os_data;
+
+	if (e->count > 1) {
+		DPRINT("%s: unsupported count=%d\n", e->count);
+		return PFM_ERR_NOTSUPP;
+	}
+	/* all events treated as raw for now */
+	attr->type = PERF_TYPE_RAW;
+	attr->config = e->codes[0];
+
+	return PFM_SUCCESS;
+}
+
+static int
+amd64_os_encode(pfmlib_event_desc_t *e)
+{
+	switch (e->osid) {
+	case PFM_OS_PERF_EVENT:
+		return amd64_perf_encode(e);
+	case PFM_OS_NONE:
+		break;
+	default:
+		return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+int
+pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
 	const amd64_entry_t *pe = this_pe(this);
-	pfmlib_attr_t *a;
+	pfm_amd64_reg_t reg;
+	pfm_event_attr_info_t *a;
 	uint64_t umask = 0;
 	unsigned int plmmsk = 0;
 	int k, ret, grpid;
@@ -392,27 +430,31 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 
 	e->fstr[0] = '\0';
 
-	reg->val = 0; /* assume reserved bits are zerooed */
+	reg.val = 0; /* assume reserved bits are zerooed */
 
 	grpmsk = (1 << pe[e->event].ngrp)-1;
 
 	if (amd64_event_ibsfetch(this, e->event))
-		reg->ibsfetch.en = 1;
+		reg.ibsfetch.en = 1;
 	else if (amd64_event_ibsop(this, e->event))
-		reg->ibsop.en = 1;
+		reg.ibsop.en = 1;
 	else {
-		reg->sel_event_mask  = pe[e->event].code;
-		reg->sel_event_mask2 = pe[e->event].code >> 8;
-		reg->sel_en = 1; /* force enable */
-		reg->sel_int = 1; /* force APIC  */
+		reg.sel_event_mask  = pe[e->event].code;
+		reg.sel_event_mask2 = pe[e->event].code >> 8;
+		reg.sel_en = 1; /* force enable */
+		reg.sel_int = 1; /* force APIC  */
 	}
 
 	numasks = pe[e->event].numasks;
 
 	for(k=0; k < e->nattrs; k++) {
-		a = e->attrs+k;
+		a = attr(e, k);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
 		if (a->type == PFM_ATTR_UMASK) {
-			grpid = pe[e->event].umasks[a->id].grpid;
+			grpid = pe[e->event].umasks[a->idx].grpid;
 			++grpcounts[grpid];
 
 			/*
@@ -420,7 +462,7 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		 	 * so if we come here more than once, it is for two
 		 	 * diinct umasks
 		 	 */
-			if (amd64_uflag(this, e->event, a->id, AMD64_FL_NCOMBO))
+			if (amd64_uflag(this, e->event, a->idx, AMD64_FL_NCOMBO))
 				ncombo[grpid] = 1;
 			/*
 			 * if more than one umask in this group but one is marked
@@ -432,64 +474,54 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 				return PFM_ERR_FEATCOMB;
 			}
 
-			umask |= pe[e->event].umasks[a->id].ucode;
-			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
+			umask |= pe[e->event].umasks[a->idx].ucode;
+			ugrpmsk  |= 1 << pe[e->event].umasks[a->idx].grpid;
 
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
 
 			/* there can only be one RAW_UMASK per event */
 
 			/* sanity checks */
-			if (((a->id & ~0xff) && !IS_FAMILY_10H(pmu))
-			   || ((a->id & ~0xfff) && IS_FAMILY_10H(pmu))) {
+			if (((a->idx & ~0xff) && !IS_FAMILY_10H(pmu))
+			   || ((a->idx & ~0xfff) && IS_FAMILY_10H(pmu))) {
 				DPRINT("raw umask is invalid\n");
 				return PFM_ERR_ATTR;
 			}
 			/* override umask and extended umask */
-			umask = a->id & 0xff;
-			reg->sel_event_mask2 = a->id >> 8;
+			umask = a->idx & 0xff;
+			reg.sel_event_mask2 = a->idx >> 8;
 			ugrpmsk = grpmsk;
 
 		} else { /* modifiers */
+			uint64_t ival = e->attrs[k].ival;
 
-			switch(amd64_attr2mod(this, e->event, a->id)) {
+			switch(a->idx) { //amd64_attr2mod(this, e->osid, e->event, a->idx)) {
 				case AMD64_ATTR_I: /* invert */
-					reg->sel_inv = !!a->ival;
+					reg.sel_inv = !!ival;
 					break;
 				case AMD64_ATTR_E: /* edge */
-					reg->sel_edge = !!a->ival;
+					reg.sel_edge = !!ival;
 					break;
 				case AMD64_ATTR_C: /* counter-mask */
-					if (a->ival > 255)
+					if (ival > 255)
 						return PFM_ERR_ATTR_VAL;
-					reg->sel_cnt_mask = a->ival;
+					reg.sel_cnt_mask = ival;
 					break;
 				case AMD64_ATTR_U: /* USR */
-					reg->sel_usr = !!a->ival;
+					reg.sel_usr = !!ival;
 					plmmsk |= _AMD64_ATTR_U;
 					break;
 				case AMD64_ATTR_K: /* OS */
-					reg->sel_os = !!a->ival;
+					reg.sel_os = !!ival;
 					plmmsk |= _AMD64_ATTR_K;
 					break;
 				case AMD64_ATTR_G: /* GUEST */
-					reg->sel_guest = !!a->ival;
+					reg.sel_guest = !!ival;
 					plmmsk |= _AMD64_ATTR_G;
 					break;
 				case AMD64_ATTR_H: /* HOST */
-					reg->sel_host = !!a->ival;
+					reg.sel_host = !!ival;
 					plmmsk |= _AMD64_ATTR_H;
-					break;
-				case AMD64_ATTR_R: /* IBS RANDOM */
-					reg->ibsfetch.randen = !!a->ival;
-					break;
-				case AMD64_ATTR_P: /* IBS SAMPLING PERIOD */
-					if (a->ival & 0xf || a->ival > 0xffff0)
-						return PFM_ERR_ATTR_VAL;
-					if (amd64_event_ibsfetch(this, e->event))
-						reg->ibsfetch.maxcnt = a->ival >> 4;
-					else
-						reg->ibsop.maxcnt = a->ival >> 4;
 					break;
 			}
 		}
@@ -501,11 +533,11 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	 */
 	if (!(plmmsk & (_AMD64_ATTR_K|_AMD64_ATTR_U|_AMD64_ATTR_H))) {
 		if (e->dfl_plm & PFM_PLM0)
-			reg->sel_os = 1;
+			reg.sel_os = 1;
 		if (e->dfl_plm & PFM_PLM3)
-			reg->sel_usr = 1;
-		if (e->dfl_plm & PFM_PLMH)
-			reg->sel_host = 1;
+			reg.sel_usr = 1;
+		if (IS_FAMILY_10H(this) && e->dfl_plm & PFM_PLMH)
+			reg.sel_host = 1;
 	}
 
 	/*
@@ -518,10 +550,11 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
-	/*
-	 * XXX: fix for IBS
-	 */
-	reg->sel_unit_mask = umask;
+
+	reg.sel_unit_mask = umask;
+
+	e->codes[0] = reg.val;
+	e->count = 1;
 
 	/*
 	 * reorder all the attributes such that the fstr appears always
@@ -529,55 +562,53 @@ amd64_encode(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	 */
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
 	pfmlib_sort_attr(e);
-	for(k=0; k < e->nattrs; k++) {
-		if (e->attrs[k].type == PFM_ATTR_UMASK)
-			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
-		else if (e->attrs[k].type == PFM_ATTR_RAW_UMASK)
-			evt_strcat(e->fstr, ":0x%x", e->attrs[k].id);
+	for (k = 0; k < e->nattrs; k++) {
+		a = attr(e, k);
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+		if (a->type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[a->idx].uname);
+		else if (a->type == PFM_ATTR_RAW_UMASK)
+			evt_strcat(e->fstr, ":0x%x", a->idx);
 	}
 
-	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_K, name), reg->sel_os);
-	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_U, name), reg->sel_usr);
-	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_E, name), reg->sel_edge);
-	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_I, name), reg->sel_inv);
-	evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_C, name), reg->sel_cnt_mask);
+	for (k = 0; k < e->npattrs; k++) {
+		int idx;
 
-	if (IS_FAMILY_10H(pmu)) {
-		evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_H, name), reg->sel_host);
-		evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_G, name), reg->sel_guest);
-		if (amd64_event_ibsfetch(this, e->event)) {
-			evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_R, name), reg->ibsfetch.randen);
-			evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_P, name), reg->ibsfetch.maxcnt);
-		} else if (amd64_event_ibsop(this, e->event)) {
-			evt_strcat(e->fstr, ":%s=%lu", modx(amd64_mods, AMD64_ATTR_P, name), reg->ibsop.maxcnt);
+		if (e->pattrs[k].ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (e->pattrs[k].type == PFM_ATTR_UMASK)
+			continue;
+
+		idx = e->pattrs[k].idx;
+		switch(idx) {
+		case AMD64_ATTR_K:
+			evt_strcat(e->fstr, ":%s=%lu", amd64_mods[idx].name, reg.sel_os);
+			break;
+		case AMD64_ATTR_U:
+			evt_strcat(e->fstr, ":%s=%lu", amd64_mods[idx].name, reg.sel_usr);
+			break;
+		case AMD64_ATTR_E:
+			evt_strcat(e->fstr, ":%s=%lu", amd64_mods[idx].name, reg.sel_edge);
+			break;
+		case AMD64_ATTR_I:
+			evt_strcat(e->fstr, ":%s=%lu", amd64_mods[idx].name, reg.sel_inv);
+			break;
+		case AMD64_ATTR_C:
+			evt_strcat(e->fstr, ":%s=%lu", amd64_mods[idx].name, reg.sel_cnt_mask);
+			break;
+		case AMD64_ATTR_H:
+			evt_strcat(e->fstr, ":%s=%lu", amd64_mods[idx].name, reg.sel_host);
+			break;
+		case AMD64_ATTR_G:
+			evt_strcat(e->fstr, ":%s=%lu", amd64_mods[idx].name, reg.sel_guest);
+			break;
 		}
 	}
-	return PFM_SUCCESS;
-}
-
-int
-pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
-{
-	pfm_amd64_reg_t reg;
-	int ret;
-
-	ret = amd64_encode(this, e, &reg);
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	e->codes[0] = reg.val;
-	e->count = 1;
-
-	if (attrs) {
-		if (reg.sel_os)
-			attrs->plm |= PFM_PLM0;
-		if (reg.sel_usr)
-			attrs->plm |= PFM_PLM3;
-	}
-
 	amd64_display_reg(this, e, reg);
 
-	return PFM_SUCCESS;
+	return amd64_os_encode(e);
 }
 
 int
@@ -631,35 +662,35 @@ pfm_amd64_get_event_perf_type(void *this, int pidx)
 }
 
 int
-pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_amd64_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	const amd64_entry_t *pe = this_pe(this);
-	int m, n, new_idx;
+	int numasks, idx;
 
-	n = amd64_get_numasks(this, idx);
+	numasks = amd64_num_umasks(this, pidx);
 
-	if (attr_idx < n) {
-		new_idx = amd64_get_umask(this, idx, attr_idx);
-		if (new_idx == -1)
+	if (attr_idx < numasks) {
+		idx = amd64_get_umask(this, pidx, attr_idx);
+		if (idx == -1)
 			return PFM_ERR_ATTR;
 
-		info->name = pe[idx].umasks[new_idx].uname;
-		info->desc = pe[idx].umasks[new_idx].udesc;
-		info->equiv= NULL;
-		info->code = pe[idx].umasks[new_idx].ucode;
+		info->name = pe[pidx].umasks[idx].uname;
+		info->desc = pe[pidx].umasks[idx].udesc;
+		info->code = pe[pidx].umasks[idx].ucode;
 		info->type = PFM_ATTR_UMASK;
-		info->is_dfl = amd64_uflag(this, idx, new_idx, AMD64_FL_DFL);
+		info->is_dfl = amd64_uflag(this, pidx, idx, AMD64_FL_DFL);
 	} else {
-		m = amd64_attr2mod(this, idx, attr_idx);
-		info->name = modx(amd64_mods, m, name);
-		info->desc = modx(amd64_mods, m, desc);
-		info->equiv= NULL;
-		info->code = m;
-		info->type = modx(amd64_mods, m, type);
-		new_idx = attr_idx;
+		idx = amd64_attr2mod(this, pidx, attr_idx);
+		info->name = amd64_mods[idx].name;
+		info->desc = amd64_mods[idx].desc;
+		info->type = amd64_mods[idx].type;
+		info->code = idx;
+		info->is_dfl = 0;
 	}
 	info->is_precise = 0;
-	info->idx = new_idx;
+	info->equiv  = NULL;
+	info->ctrl   = PFM_ATTR_CTRL_PMU;
+	info->idx    = idx; /* namespace specific index */
 	info->dfl_val64 = 0;
 
 	return PFM_SUCCESS;
@@ -668,19 +699,19 @@ pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_
 int
 pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
+	pfmlib_pmu_t *pmu = this;
 	const amd64_entry_t *pe = this_pe(this);
-	/*
-	 * pmu and idx filled out by caller
-	 */
+
 	info->name  = pe[idx].name;
 	info->desc  = pe[idx].desc;
 	info->equiv = NULL;
 	info->code  = pe[idx].code;
+	info->idx   = idx;
+	info->pmu   = pmu->pmu;
 
 	info->is_precise = 0;
-
-	info->nattrs  = amd64_get_numasks(this, idx);
-	info->nattrs += pfmlib_popcnt((unsigned long)pe[idx].modmsk);
+	info->nattrs  = amd64_num_umasks(this, idx);
+	info->nattrs += amd64_num_mods(this, idx);
 
 	return PFM_SUCCESS;
 }
@@ -693,6 +724,11 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 	const char *name =  pmu->name;
 	int i, j, k, ndfl;
 	int error = 0;
+
+	if (!pmu->atdesc) {
+		fprintf(fp, "pmu: %s missing attr_desc\n", pmu->name);
+		error++;
+	}
 
 	for(i=0; i < pmu->pme_count; i++) {
 
@@ -795,6 +831,15 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 }
 
 int
+pfm_amd64_get_event_nattrs(void *this, int pidx)
+{
+	int nattrs;
+	nattrs  = amd64_num_umasks(this, pidx);
+	nattrs += amd64_num_mods(this, pidx);
+	return nattrs;
+}
+
+int
 pfm_amd64_pmu_init(void *this)
 {
 	pfmlib_pmu_t *pmu = this;
@@ -805,5 +850,52 @@ pfm_amd64_pmu_init(void *this)
 			total++;
 	}
 	pmu->pme_count = total;
+	return PFM_SUCCESS;
+}
+
+int
+pfm_amd64_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	pfmlib_pmu_t *pmu = this;
+
+	int i, compact;
+
+	for (i=0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		if (e->osid == PFM_OS_PERF_EVENT || e->osid == PFM_OS_PERF_EVENT_EXT) {
+			/*
+			 * with perf_events, u and k are handled at the OS level
+			 * via attr.exclude_* fields
+			 */
+			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+
+				if (e->pattrs[i].idx == AMD64_ATTR_U
+				    || e->pattrs[i].idx == AMD64_ATTR_K
+				    || e->pattrs[i].idx == AMD64_ATTR_H)
+					compact = 1;
+			}
+		}
+
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+
+			/* No precise mode on AMD */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+
+			/* older processors do not support hypervisor priv level */
+			if (!IS_FAMILY_10H(pmu) && e->pattrs[i].idx == PERF_ATTR_H)
+				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
 	return PFM_SUCCESS;
 }

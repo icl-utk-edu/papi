@@ -5,12 +5,24 @@ pfm_get_event_attr_info \- get event attribute information
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.BI "int pfm_get_event_attr_info(int " idx ", int " attr ", pfm_event_attr_info_t *" info ");"
+.BI "int pfm_get_event_attr_info(int " idx ", int " attr ", pfm_os_t " os ", pfm_event_attr_info_t *" info ");"
 .sp
 .SH DESCRIPTION
 This function returns in \fBinfo\fR information about the
 attribute designated by \fBattr\fR for the event specified
-in \fBidx\fR.
+in \fBidx\fR and the os layer in \fBos\fR.
+
+The \fBpfm_os_t\fR enumeration provides the following choices:
+.TP
+.B PFM_OS_NONE
+The returned information pertains only to what the PMU hardware exports.
+No operating system attributes is taken into account.
+.TP
+.B PFM_OS_PERF_EVENT
+The returned information includes the actual PMU hardware and the
+additional attributes exported by the perf_events kernel interface.
+In case perf_events is not detected, an error is returned.
+.PP
 
 The \fBpfm_event_attr_info_t\fR structure is defined as follows:
 .nf
@@ -21,6 +33,8 @@ typedef struct {
         uint64_t                code;
         pfm_attr_t              type;
         int                     idx;
+        pfm_attr_ctrl_t         ctrl;
+        int                     reserved1;
         int                     size;
         struct {
                 int             is_dfl:1;
@@ -33,7 +47,7 @@ typedef struct {
                 int             dfl_bool;
                 int             dfl_int;
         };
-        uint64_t                reserved[5];
+        uint64_t                reserved[4];
 } pfm_event_attr_info_t;
 .fi
 
@@ -101,14 +115,30 @@ This field indicates whether or not this umask supports precise sampling.
 Precise sampling is a hardware mechanism that avoids instruction address
 skid when using interrupt-based sampling. On Intel X86 processors, this
 field indicates that the umask supports Precise Event-Based Sampling (PEBS).
-
 .TP
 .B dfl_val64, dfl_str, dfl_bool, dfl_int
 This union contains the value of an attribute. For PFM_ATTR_UMASK, the is
 the unit mask code, for all other types this is the actual value of the
 attribute.
+.TP
+.B ctrl
+This field indicates which layer or source controls the attribute.
+The following sources are defined:
+.RS
+.TP
+.B PFM_ATTR_CTRL_UNKNOWN
+The source controlling the attribute is not known.
+.TP
+.B PFM_ATTR_CTRL_PMU
+The attribute is controlled by the PMU hardware.
+.TP
+.B PFM_ATTR_CTRL_PERF_EVENT
+The attribute is controlled by the perf_events kernel interface.
+.RE
+.TP
+.B reserved
+This field must be set to zero.
 .PP
-The \fBreserved\fR field must be set to zero.
 
 .SH RETURN
 
@@ -122,6 +152,9 @@ Library has not been initialized properly.
 .B PFMLIB_ERR_INVAL
 The \fBidx\fR or \fBattr\fR arguments are invalid or \fBinfo\fR is \fBNULL\fR or \fBsize\fR
 is not zero.
+.TP
+.B PFM_ERR_NOTSUPP
+The requested os layer has not been detected on the host system.
 .SH AUTHOR
 Stephane Eranian <eranian@gmail.com>
 .PP

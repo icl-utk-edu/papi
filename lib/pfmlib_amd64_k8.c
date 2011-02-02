@@ -56,10 +56,11 @@ pfmlib_pmu_t amd64_k8_##n##_support={				\
 	.get_event_first	= pfm_amd64_get_event_first,	\
 	.get_event_next		= pfm_amd64_get_event_next,	\
 	.event_is_valid		= pfm_amd64_event_is_valid,	\
-	.get_event_perf_type	= pfm_amd64_get_event_perf_type,\
 	.validate_table		= pfm_amd64_validate_table,	\
 	.get_event_info		= pfm_amd64_get_event_info,	\
 	.get_event_attr_info	= pfm_amd64_get_event_attr_info,\
+	.validate_pattrs	= pfm_amd64_validate_pattrs,	\
+	.get_event_nattrs	= pfm_amd64_get_event_nattrs,	\
 }
 
 DEFINE_K8_REV(RevB, revb, AMD64_K8_REV_B, PFM_PMU_AMD64_K8_REVB);

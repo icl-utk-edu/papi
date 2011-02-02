@@ -57,6 +57,8 @@ main(int argc, const char **argv)
 	int count;
 	int i, j;
 	int ret, idx;
+	int total_supported_events = 0;
+	int total_available_events = 0;
 
 	/*
 	 * Initialize pfm library (required before we can use it)
@@ -82,11 +84,14 @@ main(int argc, const char **argv)
 		ret = pfm_get_pmu_info(i, &pinfo);
 		if (ret != PFM_SUCCESS)
 			continue;
-		if (pinfo.is_present)
+		if (pinfo.is_present) {
 			printf("\t[%d, %s, \"%s\"]\n", i, pinfo.name, pinfo.desc);
+			total_supported_events += pinfo.nevents;
+		}
+		total_available_events += pinfo.nevents;
 	}
 
-	printf("Total events: %d\n", pfm_get_nevents());
+	printf("Total events: %d available, %d supported\n", total_available_events, total_supported_events);
 
 	/*
 	 * be nice to user!
@@ -129,7 +134,7 @@ main(int argc, const char **argv)
 			}
 			errx(1, "cannot encode event %s: %s", *p, pfm_strerror(ret));
 		}
-		ret = pfm_get_event_info(idx, &info);
+		ret = pfm_get_event_info(idx, PFM_OS_NONE, &info);
 		if (ret != PFM_SUCCESS)
 			errx(1, "cannot get event info: %s", pfm_strerror(ret));
 

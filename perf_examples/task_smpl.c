@@ -48,11 +48,9 @@
 typedef struct {
 	int opt_no_show;
 	int opt_inherit;
-	int opt_freq;
 	int cpu;
 	int mmap_pages;
 	char *events;
-	uint64_t period;
 } options_t;
 
 static jmp_buf jbuf;
@@ -237,34 +235,31 @@ mainloop(char **arg)
 	for(i=0; i < num_fds; i++) {
 
 		if (i == 0) {
-			fds[i].hw.disabled = 1; /* start immediately */
+			fds[i].hw.disabled = 1;
 			fds[i].hw.enable_on_exec = 1; /* start immediately */
 		} else
-			fds[i].hw.disabled = 0; /* start immediately */
+			fds[i].hw.disabled = 0;
 
-		/*
-		 * set notification threshold to be halfway through the buffer
-		 */
-		fds[i].hw.wakeup_watermark = (options.mmap_pages*pgsz) / 2; 
-		fds[i].hw.watermark = 1;
 
 		if (options.opt_inherit)
 			fds[i].hw.inherit = 1;
 
-		if (!i) {
+		if (fds[i].hw.sample_period) {
+			/*
+			 * set notification threshold to be halfway through the buffer
+			 */
+			fds[i].hw.wakeup_watermark = (options.mmap_pages*pgsz) / 2;
+			fds[i].hw.watermark = 1;
+
 			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID;
-
-			if (options.opt_freq) {
-				fds[i].hw.freq = 1;
-				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
-			}
-
-			fds[i].hw.sample_period = options.period;
-			printf("period=%"PRIu64" freq=%d\n", options.period, options.opt_freq);
+			printf("%s period=%"PRIu64" freq=%d\n", fds[i].name, fds[i].hw.sample_period, fds[i].hw.freq);
 
 			fds[i].hw.read_format = PERF_FORMAT_SCALE;
 			if (num_fds > 1)
 				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;
+
+			if (fds[i].hw.freq)
+				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
 		}
 
 		fds[i].fd = perf_event_open(&fds[i].hw, pid, options.cpu, fds[0].fd, 0);
@@ -284,6 +279,17 @@ mainloop(char **arg)
 
 	/* does not include header page */
 	fds[0].pgmsk = (options.mmap_pages*pgsz)-1;
+
+	/*
+	 * send samples for all events to first event's buffer
+	 */
+	for (i = 1; i < num_fds; i++) {
+		if (!fds[i].hw.sample_period)
+			continue;
+		ret = ioctl(fds[i].fd, PERF_EVENT_IOC_SET_OUTPUT, fds[0].fd);
+		if (ret)
+			err(1, "cannot redirect sampling output");
+	}
 
 	/*
 	 * we are using PERF_FORMAT_GROUP, therefore the structure
@@ -369,7 +375,7 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [-i] [-c cpu] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] cmd\n");
+	printf("usage: task_smpl [-h] [--help] [-i] [-c cpu] [-m mmap_pages] [-e event1,...,eventn] cmd\n");
 }
 
 int
@@ -381,7 +387,7 @@ main(int argc, char **argv)
 
 	options.cpu = -1;
 
-	while ((c=getopt_long(argc, argv,"+he:m:p:ifc:", the_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"+he:m:ic:", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'e':
@@ -392,16 +398,10 @@ main(int argc, char **argv)
 			case 'i':
 				options.opt_inherit = 1;
 				break;
-			case 'f':
-				options.opt_freq = 1;
-				break;
 			case 'm':
 				if (options.mmap_pages)
 					errx(1, "mmap pages already set\n");
 				options.mmap_pages = atoi(optarg);
-				break;
-			case 'p':
-				options.period = strtoull(optarg, NULL, 0);
 				break;
 			case 'c':
 				options.cpu = atoi(optarg);
@@ -418,9 +418,6 @@ main(int argc, char **argv)
 		errx(1, "you must specify a command to execute\n");
 	if (!options.events)
 		options.events = strdup(gen_events);
-
-	if (!options.period)
-		options.period = options.opt_freq ? 1 : SMPL_PERIOD;
 
 	if (!options.mmap_pages)
 		options.mmap_pages = 1;

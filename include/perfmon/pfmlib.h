@@ -165,6 +165,30 @@ typedef enum {
 	PFM_DTYPE_MAX		/* end-marker */
 } pfm_dtype_t;
 
+/*
+ * event attribute control: which layer is controlling
+ * the attribute could be PMU, OS APIs
+ */
+typedef enum {
+	PFM_ATTR_CTRL_UNKNOWN = 0,	/* unknown */
+	PFM_ATTR_CTRL_PMU,		/* PMU hardware */
+	PFM_ATTR_CTRL_PERF_EVENT,	/* perf_events kernel interface */
+
+	PFM_ATTR_CTRL_MAX
+} pfm_attr_ctrl_t;
+
+/*
+ * OS layer
+ * Used when querying event or attribute information
+ */
+typedef enum {
+	PFM_OS_NONE = 0,	/* only PMU */
+	PFM_OS_PERF_EVENT,	/* perf_events PMU attribute subset + PMU */
+	PFM_OS_PERF_EVENT_EXT,	/* perf_events all attributes + PMU */
+
+	PFM_OS_MAX,
+} pfm_os_t;
+
 /* SWIG doesn't deal well with anonymous nested structures */
 #ifdef SWIG
 #define SWIG_NAME(x) x
@@ -222,7 +246,9 @@ typedef struct {
 	uint64_t		code;	/* attribute code */
 	pfm_attr_t		type;	/* attribute type */
 	int			idx;	/* attribute opaque index */
-	int			size;	/* size for extension, =0 for now */
+	pfm_attr_ctrl_t		ctrl;		/* what is providing attr */
+	int			reserved1;	/* for future use */
+	uint32_t		size;	/* size for extension, =0 for now */
 	struct {
 		unsigned int    is_dfl:1;	/* is default umask */
 		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
@@ -234,8 +260,19 @@ typedef struct {
 		int		dfl_bool;	/* default boolean value */
 		int		dfl_int;	/* default integer value */
 	} SWIG_NAME(defaults);
-	uint64_t		reserved[5];
+	uint64_t		reserved[4];
 } pfm_event_attr_info_t;
+
+/*
+ * raw PMU encoding argument (use with PFM_OS_NONE)
+ */
+typedef struct {
+	uint64_t	*codes;		/* out/in: event codes array */
+	char		**fstr;		/* out/in: fully qualified event string */
+	int		count;		/* out/in: # of elements in array */
+	int		idx;		/* out: unique event identifier */
+	int		reserved[4];	/* for future use */
+} pfm_pmu_encode_arg_t;
 
 /*
  * initialization, configuration, errors
@@ -253,21 +290,32 @@ extern pfm_err_t pfm_get_pmu_info(pfm_pmu_t pmu, pfm_pmu_info_t *output);
 /*
  * event API
  */
-extern int pfm_get_nevents(void);
 extern int pfm_get_event_first(void);
 extern int pfm_get_event_next(int idx);
 extern int pfm_find_event(const char *str);
-extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count);
-extern pfm_err_t pfm_get_event_info(int idx, pfm_event_info_t *output);
+extern pfm_err_t pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *info);
+
+/*
+ * event encoding API
+ *
+ * content of args depends on value of os (refer to man page)
+ */
+extern pfm_err_t pfm_get_os_event_encoding(const char *str, int dfl_plm, pfm_os_t os, void *args);
+
 /*
  * attribute API
  */
-extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_event_attr_info_t *output);
+extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_os_t os, pfm_event_attr_info_t *output);
 
 /*
  * library validation API
  */
 extern pfm_err_t pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp);
+
+/*
+ * older encoding API
+ */
+extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count);
 
 /*
  * error codes

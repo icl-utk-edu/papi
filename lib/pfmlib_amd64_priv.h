@@ -103,15 +103,13 @@ extern pfm_amd64_config_t pfm_amd64_cfg;
 #define AMD64_FL_TILL_FAM10H_REV_C	AMD64_TILL_REV(AMD64_FAM10H_REV_C)
 #define AMD64_FL_FAM10H_REV_D		AMD64_FROM_REV(AMD64_FAM10H_REV_D)
 
-#define AMD64_ATTR_U	0
-#define AMD64_ATTR_K	1
-#define AMD64_ATTR_H	2
-#define AMD64_ATTR_G	3
-#define AMD64_ATTR_I	4
-#define AMD64_ATTR_E	5
-#define AMD64_ATTR_C	6
-#define AMD64_ATTR_R	7
-#define AMD64_ATTR_P	8
+#define AMD64_ATTR_K	0
+#define AMD64_ATTR_U	1
+#define AMD64_ATTR_E	2
+#define AMD64_ATTR_I	3
+#define AMD64_ATTR_C	4
+#define AMD64_ATTR_H	5
+#define AMD64_ATTR_G	6
 
 #define _AMD64_ATTR_U  (1 << AMD64_ATTR_U)
 #define _AMD64_ATTR_K  (1 << AMD64_ATTR_K)
@@ -120,16 +118,12 @@ extern pfm_amd64_config_t pfm_amd64_cfg;
 #define _AMD64_ATTR_C  (1 << AMD64_ATTR_C)
 #define _AMD64_ATTR_H  (1 << AMD64_ATTR_H)
 #define _AMD64_ATTR_G  (1 << AMD64_ATTR_G)
-#define _AMD64_ATTR_R  (1 << AMD64_ATTR_R)
-#define _AMD64_ATTR_P  (1 << AMD64_ATTR_P)
 
 #define AMD64_BASIC_ATTRS \
 	(_AMD64_ATTR_I|_AMD64_ATTR_E|_AMD64_ATTR_C|_AMD64_ATTR_U|_AMD64_ATTR_K)
 
 #define AMD64_K8_ATTRS			(AMD64_BASIC_ATTRS)
 #define AMD64_FAM10H_ATTRS		(AMD64_BASIC_ATTRS|_AMD64_ATTR_H|_AMD64_ATTR_G)
-#define AMD64_FAM10H_ATTRS_IBSFE	(_AMD64_ATTR_R)
-#define AMD64_FAM10H_ATTRS_IBSOP	(0)
 
 /*
  * AMD64 MSR definitions
@@ -194,15 +188,16 @@ typedef union {
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
-extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
+extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_amd64_get_event_first(void *this);
 extern int pfm_amd64_get_event_next(void *this, int idx);
 extern int pfm_amd64_event_is_valid(void *this, int idx);
-extern int pfm_amd64_get_event_perf_type(void *this, int pidx);
 extern int pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info);
 extern int pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info);
 extern int pfm_amd64_validate_table(void *this, FILE *fp);
 extern int pfm_amd64_detect(void *this);
 extern int pfm_amd64_pmu_init(void *this);
 extern const pfmlib_attr_desc_t amd64_mods[];
+extern int pfm_amd64_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_amd64_get_event_nattrs(void *this, int pidx);
 #endif /* __PFMLIB_AMD64_PRIV_H__ */

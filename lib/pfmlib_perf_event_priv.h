@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2009 Google, Inc
+ * pfmlib_perf_events_priv.h: perf_event public attributes
+ *
+ * Copyright (c) 2011 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,40 +21,21 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PFMLIB_PERF_EVENTS_H__
-#define __PFMLIB_PERF_EVENTS_H__
+#ifndef __PERF_EVENT_PRIV_H__
+#define __PERF_EVENT_PRIV_H__
 
-#include <perfmon/pfmlib.h>
-#include <perfmon/perf_event.h>
+#define PERF_ATTR_U	0	/* monitor at user privilege levels */
+#define PERF_ATTR_K	1	/* monitor at kernel privilege levels */
+#define PERF_ATTR_H	2	/* monitor at hypervisor levels */
+#define PERF_ATTR_PE	3	/* sampling period */
+#define PERF_ATTR_FR	4	/* average target sampling rate */
+#define PERF_ATTR_PR	5	/* precise sampling mode */
 
-#ifdef __cplusplus
-extern "C" {
+#define _PERF_ATTR_U  (1 << PERF_ATTR_U)
+#define _PERF_ATTR_K  (1 << PERF_ATTR_K)
+#define _PERF_ATTR_H  (1 << PERF_ATTR_H)
+#define _PERF_ATTR_PE (1 << PERF_ATTR_PE)
+#define _PERF_ATTR_FR (1 << PERF_ATTR_FR)
+#define _PERF_ATTR_PR (1 << PERF_ATTR_PR)
+
 #endif
-
-/*
- * 3rd argument to pfm_get_os_event_encoding()
- */
-typedef struct {
-	struct perf_event_attr *attr;	/* in/out: perf_event struct pointer */
-	char **fstr;			/* out/in: fully qualified event string */
-	int idx;			/* out: opaque event identifier */
-	int cpu;			/* out: cpu to program */
-	int flags;			/* out: perf_event_open() flags */
-	int reserved[5];		/* for future use */
-} pfm_perf_encode_arg_t;
-
-/*
- * old interface, maintained for backward compatibility with older versions o
- * the library. Should use pfm_get_os_event_encoding() now
- */
-extern pfm_err_t pfm_get_perf_event_encoding(const char *str,
-					     int dfl_plm,
-					     struct perf_event_attr *attr,
-					     char **fstr,
-					     int *idx);
-
-#ifdef __cplusplus /* extern C */
-}
-#endif
-
-#endif /* __PFMLIB_PERF_EVENT_H__ */

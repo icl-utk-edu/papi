@@ -5,11 +5,12 @@ pfm_get_event_info \- get event information
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.BI "int pfm_get_event_info(int " idx ", pfm_event_info_t *" info ");"
+.BI "int pfm_get_event_info(int " idx ", pfm_os_t " os ", pfm_event_info_t *" info ");"
 .sp
 .SH DESCRIPTION
 This function returns in \fBinfo\fR information about a specific event
-designated by its opaque unique identifier in \fBidx\fR.
+designated by its opaque unique identifier in \fBidx\fR for the operating system
+specified in \fBos\fR.
 
 The \fBpfm_event_info_t\fR structure is defined as follows:
 .nf
@@ -85,6 +86,17 @@ Sampling (PEBS).
 .PP
 
 
+The \fBpfm_os_t\fR enumeration provides the following choices:
+.TP
+.B PFM_OS_NONE
+The returned information pertains only to what the PMU hardware exports.
+No operating system attributes is taken into account.
+.TP
+.B PFM_OS_PERF_EVENT
+The returned information includes the actual PMU hardware and the
+additional attributes exported by the perf_events kernel interface.
+In case perf_events is not detected, an error is returned.
+.PP
 .SH RETURN
 
 If successful, the function returns \fBPFM_SUCCESS\fR and event information
@@ -97,6 +109,9 @@ Library has not been initialized properly.
 .B PFMLIB_ERR_INVAL
 The \fBidx\fR argument is invalid or \fBinfo\fR is \fBNULL\fR or \fBsize\fR
 is not zero.
+.TP
+.B PFMLIB_ERR_NOTSUPP
+The requested \fBos\fR is not detected or supported.
 .SH AUTHOR
 Stephane Eranian <eranian@gmail.com>
 .PP

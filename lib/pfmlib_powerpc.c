@@ -45,6 +45,8 @@ pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 	info->desc = pe[pidx].pme_long_desc;
 	info->code = pe[pidx].pme_code;
 	info->equiv = NULL;
+	info->idx   = idx;
+	info->pmu   = pmu->pmu;
 	info->nattrs = 0;
 
 	return PFM_SUCCESS;

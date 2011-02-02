@@ -33,7 +33,7 @@
 /*
  * maximum number of unit masks/event
  */
-#define INTEL_X86_NUM_UMASKS	32
+#define INTEL_X86_NUM_UMASKS	24
 /*
  * maximum number of unit masks groups per event
  */
@@ -57,7 +57,7 @@ typedef struct {
 /*
  * event-specific encoder (optional)
  */
-typedef int (*intel_x86_encoder_t)(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
+typedef int (*intel_x86_encoder_t)(void *this, pfmlib_event_desc_t *e);
 
 /*
  * event description
@@ -133,14 +133,12 @@ typedef union pfm_intel_x86_reg {
 		unsigned long reserved2:32;	/* reserved */
 	} nhm_lbr_select;
 } pfm_intel_x86_reg_t;
-
-#define INTEL_X86_ATTR_U	0 /* user (1, 2, 3) */
-#define INTEL_X86_ATTR_K	1 /* kernel (0) */
-#define INTEL_X86_ATTR_I	2 /* invert */
-#define INTEL_X86_ATTR_E	3 /* edge */
+#define INTEL_X86_ATTR_K	0 /* kernel (0) */
+#define INTEL_X86_ATTR_U	1 /* user (1, 2, 3) */
+#define INTEL_X86_ATTR_E	2 /* edge */
+#define INTEL_X86_ATTR_I	3 /* invert */
 #define INTEL_X86_ATTR_C	4 /* counter mask */
 #define INTEL_X86_ATTR_T	5 /* any thread */
-#define INTEL_X86_ATTR_P	6 /* request PEBS */
 
 #define _INTEL_X86_ATTR_U  (1 << INTEL_X86_ATTR_U)
 #define _INTEL_X86_ATTR_K  (1 << INTEL_X86_ATTR_K)
@@ -148,7 +146,6 @@ typedef union pfm_intel_x86_reg {
 #define _INTEL_X86_ATTR_E  (1 << INTEL_X86_ATTR_E)
 #define _INTEL_X86_ATTR_C  (1 << INTEL_X86_ATTR_C)
 #define _INTEL_X86_ATTR_T  (1 << INTEL_X86_ATTR_T)
-#define _INTEL_X86_ATTR_P  (1 << INTEL_X86_ATTR_P)
 
 #define INTEL_X86_ATTRS \
 	(_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E|_INTEL_X86_ATTR_C|_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
@@ -226,14 +223,17 @@ extern int pfm_intel_x86_detect(void);
 extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, unsigned int *umask);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
-extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
+extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_intel_x86_get_event_first(void *this);
 extern int pfm_intel_x86_get_event_next(void *this, int idx);
 extern int pfm_intel_x86_get_event_umask_first(void *this, int idx);
 extern int pfm_intel_x86_get_event_umask_next(void *this, int idx, int attr);
-extern int pfm_intel_x86_get_event_perf_type(void *this, int pidx);
 extern int pfm_intel_x86_validate_table(void *this, FILE *fp);
 extern int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info);
 extern int pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info);
-extern int pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx);
+extern int pfm_intel_x86_valid_pebs(pfmlib_event_desc_t *e);
+extern int pfm_intel_x86_perf_event_encoding(pfmlib_event_desc_t *e, void *data);
+extern int pfm_intel_x86_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_intel_x86_get_event_nattrs(void *this, int pidx);
+extern int intel_x86_attr2mod(void *this, int pidx, int attr_idx);
 #endif /* __PFMLIB_INTEL_X86_PRIV_H__ */

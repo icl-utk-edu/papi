@@ -50,6 +50,7 @@ static struct {
 	char *csv_sep;
 	pfm_event_info_t efilter;
 	pfm_event_attr_info_t ufilter;
+	pfm_os_t os;
 	uint64_t mask;
 } options;
 
@@ -59,6 +60,12 @@ typedef struct {
 } code_info_t;
 
 static void show_event_info_compact(pfm_event_info_t *info);
+
+static const char *srcs[PFM_ATTR_CTRL_MAX]={
+	[PFM_ATTR_CTRL_UNKNOWN] = "???",
+	[PFM_ATTR_CTRL_PMU] = "PMU",
+	[PFM_ATTR_CTRL_PERF_EVENT] = "perf_event",
+};
 
 static int
 event_has_pname(char *s)
@@ -140,7 +147,7 @@ match_efilters(pfm_event_info_t *info)
 	ainfo.size = sizeof(ainfo);
 
 	pfm_for_each_event_attr(i, info) {
-		ret = pfm_get_event_attr_info(info->idx, i, &ainfo);
+		ret = pfm_get_event_attr_info(info->idx, i, options.os, &ainfo);
 		if (ret != PFM_SUCCESS)
 			continue;
 		if (match_ufilters(&ainfo))
@@ -182,9 +189,9 @@ show_event_info_combo(pfm_event_info_t *info)
 	pfm_for_each_event_attr(i, info) {
 		ainfo[i].size = sizeof(*ainfo);
 
-		ret = pfm_get_event_attr_info(info->idx, i, &ainfo[i]);
+		ret = pfm_get_event_attr_info(info->idx, i, options.os, &ainfo[i]);
 		if (ret != PFM_SUCCESS)
-			err(1, "cannot get attribute info: %s", pfm_strerror(ret));
+			errx(1, "cannot get attribute info: %s", pfm_strerror(ret));
 
 		if (ainfo[i].type == PFM_ATTR_UMASK)
 			numasks++;
@@ -264,9 +271,9 @@ show_event_info_compact(pfm_event_info_t *info)
 	pfm_get_pmu_info(info->pmu, &pinfo);
 
 	pfm_for_each_event_attr(i, info) {
-		ret = pfm_get_event_attr_info(info->idx, i, &ainfo);
+		ret = pfm_get_event_attr_info(info->idx, i, options.os, &ainfo);
 		if (ret != PFM_SUCCESS)
-			err(1, "cannot get attribute info: %s", pfm_strerror(ret));
+			errx(1, "cannot get attribute info: %s", pfm_strerror(ret));
 
 		if (ainfo.type != PFM_ATTR_UMASK)
 			continue;
@@ -364,6 +371,7 @@ show_event_info(pfm_event_info_t *info)
 	pfm_pmu_info_t pinfo;
 	int mod = 0, um = 0;
 	int i, ret;
+	const char *src;
 
 	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
@@ -396,18 +404,24 @@ show_event_info(pfm_event_info_t *info)
 	printf("Code     : 0x%"PRIx64"\n", info->code);
 
 	pfm_for_each_event_attr(i, info) {
-		ret = pfm_get_event_attr_info(info->idx, i, &ainfo);
+		ret = pfm_get_event_attr_info(info->idx, i, options.os, &ainfo);
 		if (ret != PFM_SUCCESS)
-			errx(1, "cannot retrieve event %s attribute info: %s\n", info->name, pfm_strerror(ret));
+			errx(1, "cannot retrieve event %s attribute info: %s", info->name, pfm_strerror(ret));
 
+		if (ainfo.ctrl >= PFM_ATTR_CTRL_MAX) {
+			warnx("event: %s has unsupported attribute source %d", info->name, ainfo.ctrl);
+			ainfo.ctrl = PFM_ATTR_CTRL_UNKNOWN;
+		}
+		src = srcs[ainfo.ctrl];
 		switch(ainfo.type) {
 		case PFM_ATTR_UMASK:
 			if (!match_ufilters(&ainfo))
 				continue;
 
-			printf("Umask-%02u : 0x%02"PRIx64" : [%s] : ",
+			printf("Umask-%02u : 0x%02"PRIx64" : %s : [%s] : ",
 				um,
 				ainfo.code,
+				src,
 				ainfo.name);
 
 			print_attr_flags(&ainfo);
@@ -423,15 +437,15 @@ show_event_info(pfm_event_info_t *info)
 			um++;
 			break;
 		case PFM_ATTR_MOD_BOOL:
-			printf("Modif-%02u : 0x%02"PRIx64" : [%s] : %s (boolean)\n", mod, ainfo.code, ainfo.name, ainfo.desc);
+			printf("Modif-%02u : 0x%02"PRIx64" : %s : [%s] : %s (boolean)\n", mod, ainfo.code, src, ainfo.name, ainfo.desc);
 			mod++;
 			break;
 		case PFM_ATTR_MOD_INTEGER:
-			printf("Modif-%02u : 0x%02"PRIx64" : [%s] : %s (integer)\n", mod, ainfo.code, ainfo.name, ainfo.desc);
+			printf("Modif-%02u : 0x%02"PRIx64" : %s : [%s] : %s (integer)\n", mod, ainfo.code, src, ainfo.name, ainfo.desc);
 			mod++;
 			break;
 		default:
-			printf("Attr-%02u  : 0x%02"PRIx64" : [%s] : %s\n", i, ainfo.code, ainfo.name, ainfo.desc);
+			printf("Attr-%02u  : 0x%02"PRIx64" : %s : [%s] : %s\n", i, ainfo.code, ainfo.name, src, ainfo.desc);
 		}
 	}
 }
@@ -442,8 +456,7 @@ show_info(char *event, regex_t *preg)
 {
 	pfm_pmu_info_t pinfo;
 	pfm_event_info_t info;
-	pfm_pmu_t last_pmu = PFM_PMU_NONE;
-	int i, ret, match = 0, pname;
+	int i, j, ret, match = 0, pname;
 	size_t len, l = 0;
 	char *fullname = NULL;
 
@@ -459,42 +472,40 @@ show_info(char *event, regex_t *preg)
 	 * scan all supported events, incl. those
 	 * from undetected PMU models
 	 */
-	pfm_for_each_event(i) {
-		ret = pfm_get_event_info(i, &info);
+	pfm_for_all_pmus(j) {
+
+		ret = pfm_get_pmu_info(j, &pinfo);
 		if (ret != PFM_SUCCESS)
-			errx(1, "cannot get event info: %s", pfm_strerror(ret));
-
-
-		if (info.pmu != last_pmu) {
-			ret = pfm_get_pmu_info(info.pmu, &pinfo);
-			if (ret != PFM_SUCCESS)
-				errx(1, "cannot get pmu info: %s", pfm_strerror(ret));
-
-			last_pmu = pinfo.pmu;
-		}
+			continue;
 
 		/* no pmu prefix, just look for detected PMU models */
 		if (!pname && !pinfo.is_present)
 			continue;
 
-		len = strlen(info.name) + strlen(pinfo.name) + 1 + 2;
-		if (len > l) {
-			l = len;
-			fullname = realloc(fullname, l);
-			if (!fullname)
-				err(1, "cannot allocate memory");
-		}
-		sprintf(fullname, "%s::%s", pinfo.name, info.name);
+		for (i = pinfo.first_event; i != -1; i = pfm_get_event_next(i)) {
+			ret = pfm_get_event_info(i, options.os, &info);
+			if (ret != PFM_SUCCESS)
+				errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
-		if (regexec(preg, fullname, 0, NULL, 0) == 0) {
-			if (options.compact)
-				if (options.combo)
-					show_event_info_combo(&info);
+			len = strlen(info.name) + strlen(pinfo.name) + 1 + 2;
+			if (len > l) {
+				l = len;
+				fullname = realloc(fullname, l);
+				if (!fullname)
+					err(1, "cannot allocate memory");
+			}
+			sprintf(fullname, "%s::%s", pinfo.name, info.name);
+
+			if (regexec(preg, fullname, 0, NULL, 0) == 0) {
+				if (options.compact)
+					if (options.combo)
+						show_event_info_combo(&info);
+					else
+						show_event_info_compact(&info);
 				else
-					show_event_info_compact(&info);
-			else
-				show_event_info(&info);
-			match++;
+					show_event_info(&info);
+				match++;
+			}
 		}
 	}
 	if (fullname)
@@ -503,7 +514,7 @@ show_info(char *event, regex_t *preg)
 	return match;
 }
 
-static int
+	static int
 show_info_sorted(char *event, regex_t *preg)
 {
 	pfm_pmu_info_t pinfo;
@@ -531,9 +542,9 @@ show_info_sorted(char *event, regex_t *preg)
 
 		/* scans all supported events */
 		n = 0;
-		pfm_for_each_event(i) {
+		for (i = pinfo.first_event; i != -1; i = pfm_get_event_next(i)) {
 
-			ret = pfm_get_event_info(i, &info);
+			ret = pfm_get_event_info(i, options.os, &info);
 			if (ret != PFM_SUCCESS)
 				errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
@@ -546,7 +557,7 @@ show_info_sorted(char *event, regex_t *preg)
 		}
 		qsort(codes, n, sizeof(*codes), compare_codes);
 		for(i=0; i < n; i++) {
-			ret = pfm_get_event_info(codes[i].idx, &info);
+			ret = pfm_get_event_info(codes[i].idx, options.os, &info);
 			if (ret != PFM_SUCCESS)
 				errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
@@ -575,28 +586,29 @@ show_info_sorted(char *event, regex_t *preg)
 	return match;
 }
 
-static void
+	static void
 usage(void)
 {
 	printf("showevtinfo [-L] [-E] [-h] [-s] [-m mask]\n"
-		"-L\t\tlist one event per line (compact mode)\n"
-		"-E\t\tlist one event per line with encoding (compact mode)\n"
-		"-M\t\tdisplay all valid unit masks combination (use with -L or -E)\n"
-		"-h\t\tget help\n"
-		"-s\t\tsort event by PMU and by code based on -m mask\n"
-		"-l\t\tmaximum number of umasks to list all combinations (default: %d)\n"
-		"-F\t\tshow only events and attributes with certain flags (precise,...)\n"
-		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n"
-		"-x sep\t\tuse sep as field separator in compact mode\n"
-		"-D\t\t\tprint event description in compact mode\n"
-		, COMBO_MAX);
+			"-L\t\tlist one event per line (compact mode)\n"
+			"-E\t\tlist one event per line with encoding (compact mode)\n"
+			"-M\t\tdisplay all valid unit masks combination (use with -L or -E)\n"
+			"-h\t\tget help\n"
+			"-s\t\tsort event by PMU and by code based on -m mask\n"
+			"-l\t\tmaximum number of umasks to list all combinations (default: %d)\n"
+			"-F\t\tshow only events and attributes with certain flags (precise,...)\n"
+			"-m mask\t\thexadecimal event code mask, bits to match when sorting\n"
+			"-x sep\t\tuse sep as field separator in compact mode\n"
+			"-D\t\t\tprint event description in compact mode\n"
+			"-O os\t\tshow attributes for the specific operating system\n",
+			COMBO_MAX);
 }
 
 /*
  * keep: [pmu::]event
  * drop everything else
  */
-static void
+	static void
 drop_event_attributes(char *str)
 {
 	char *p;
@@ -631,7 +643,7 @@ static const struct attr_flags  event_flags[]={
 	EVENT_FLAGS(NULL, 0, 0)
 };
 
-static void
+	static void
 parse_filters(char *arg)
 {
 	const struct attr_flags *attr;
@@ -672,6 +684,40 @@ parse_filters(char *arg)
 	}
 }
 
+static const struct {
+	char *name;
+	pfm_os_t os;
+} supported_oses[]={
+	{ .name = "none", .os = PFM_OS_NONE },
+	{ .name = "raw", .os = PFM_OS_NONE },
+	{ .name = "pmu", .os = PFM_OS_NONE },
+
+	{ .name = "perf", .os = PFM_OS_PERF_EVENT},
+	{ .name = "perf_ext", .os = PFM_OS_PERF_EVENT_EXT},
+	{ .name = NULL, }
+};
+
+static void
+setup_os(char *ostr)
+{
+	int i;
+
+	for (i = 0; supported_oses[i].name; i++) {
+		if (!strcmp(supported_oses[i].name, ostr)) {
+			options.os = supported_oses[i].os;
+			return;
+		}
+	}
+	fprintf(stderr, "unknown OS layer %s, choose from:", ostr);
+	for (i = 0; supported_oses[i].name; i++) {
+		if (i)
+			fputc(',', stderr);
+		fprintf(stderr, " %s", supported_oses[i].name);
+	}
+	fputc('\n', stderr);
+	exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -679,6 +725,7 @@ main(int argc, char **argv)
 	pfm_pmu_info_t pinfo;
 	char *endptr = NULL;
 	char default_sep[2] = "\t";
+	char *ostr = NULL;
 	char **args;
 	int i, match;
 	regex_t preg;
@@ -688,7 +735,7 @@ main(int argc, char **argv)
 
 	pinfo.size = sizeof(pinfo);
 
-	while ((c=getopt(argc, argv,"hELsm:Ml:F:x:D")) != -1) {
+	while ((c=getopt(argc, argv,"hELsm:Ml:F:x:DO:")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
@@ -714,6 +761,8 @@ main(int argc, char **argv)
 				break;
 			case 'x':
 				options.csv_sep = optarg;
+			case 'O':
+				ostr = optarg;
 				break;
 			case 'm':
 				options.mask = strtoull(optarg, &endptr, 16);
@@ -746,8 +795,14 @@ main(int argc, char **argv)
 	if (options.combo_lim == 0)
 		options.combo_lim = COMBO_MAX;
 
+	if (ostr)
+		setup_os(ostr);
+	else
+		options.os = PFM_OS_NONE;
+
 	if (!options.compact) {
-		int total_events = 0;
+		int total_supported_events = 0;
+		int total_available_events = 0;
 
 		printf("Supported PMU models:\n");
 		pfm_for_all_pmus(i) {
@@ -766,10 +821,11 @@ main(int argc, char **argv)
 
 			if (pinfo.is_present) {
 				printf("\t[%d, %s, \"%s\", %d events, %d max encoding]\n", i, pinfo.name, pinfo.desc, pinfo.nevents, pinfo.max_encoding);
-				total_events += pinfo.nevents;
+				total_supported_events += pinfo.nevents;
 			}
+			total_available_events += pinfo.nevents;
 		}
-		printf("Total events: %d available, %d supported\n", pfm_get_nevents(), total_events);
+		printf("Total events: %d available, %d supported\n", total_available_events, total_supported_events);
 	}
 
 	while(*args) {

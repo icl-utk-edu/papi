@@ -21,7 +21,6 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#define _GNU_SOURCE /* getline() */
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
@@ -29,8 +28,11 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <limits.h>
+#ifdef __linux__
 #include <syscall.h> /* for openat() */
 #include <sys/param.h>
+#endif
 
 /*
  * looks like several distributions do not have
@@ -79,30 +81,16 @@ typedef struct {
 	  .umask_ovfl_idx = -1,	\
 	}
 
-
+#ifndef MAXPATHLEN
+#define MAXPATHLEN	1024
+#endif
 static char debugfs_mnt[MAXPATHLEN];
 
-#define PERF_ATTR_U	0 /* user level (interpretation is arch-specific)*/
-#define PERF_ATTR_K	1 /* kernel level (interpretation is arch-specific) */
-#define PERF_ATTR_H	2 /* hypervisor level (interpretation is arch-specific) */
-
-#define _PERF_ATTR_U	(1 << PERF_ATTR_U)
-#define _PERF_ATTR_K	(1 << PERF_ATTR_K)
-#define _PERF_ATTR_H	(1 << PERF_ATTR_H)
-
-static const pfmlib_attr_desc_t perf_mods[]={
-	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv levels 1, 2, 3 */
-	PFM_ATTR_B("k", "monitor at priv level 0"),		/* montor priv level 0 */
-	PFM_ATTR_B("h", "monitor in hypervisor"),		/* virtualization host */
-	PFM_ATTR_NULL
-};
-
-#define PERF_ATTR_HW (_PERF_ATTR_U|_PERF_ATTR_K|_PERF_ATTR_H)
-#define PERF_ATTR_SW (_PERF_ATTR_U|_PERF_ATTR_K)
+#define PERF_ATTR_HW 0
+#define PERF_ATTR_SW 0
 
 #include "events/perf_events.h"
 
-pfmlib_pmu_t perf_event_support;
 #define perf_nevents (perf_event_support.pme_count)
 
 static perf_event_t *perf_pe = perf_static_events;
@@ -110,19 +98,84 @@ static perf_event_t  *perf_pe_free, *perf_pe_end;
 static perf_umask_t *perf_um, *perf_um_free, *perf_um_end;
 static int perf_pe_count, perf_um_count;
 
-static inline int
-perf_attr2mod(int pidx, int attr_idx)
+static inline unsigned long
+perf_get_ovfl_umask_idx(perf_umask_t *um)
 {
-	int x, n;
+	return um - perf_um;
+}
 
-	n = attr_idx - perf_pe[pidx].numasks;
+static inline perf_umask_t *
+perf_get_ovfl_umask(int pidx)
+{
+	return perf_um+perf_pe[pidx].umask_ovfl_idx;
+}
 
-	pfmlib_for_each_bit(x, perf_pe[pidx].modmsk) {
-		if (n == 0)
-			break;
-		n--;
+static inline perf_umask_t *
+perf_attridx2um(int idx, int attr_idx)
+{
+	perf_umask_t *um;
+
+	if (attr_idx < PERF_MAX_UMASKS) {
+		um = &perf_pe[idx].umasks[attr_idx];
+	} else {
+		um  = perf_get_ovfl_umask(idx);
+		um += attr_idx - PERF_MAX_UMASKS;
 	}
-	return x;
+
+	return um;
+}
+
+/*
+ * getl(): our own equivalent to GNU getline() extension.
+ * This avoids a dependency on having a C library with
+ * support for getline().
+ */
+static int
+getl(char **buffer, size_t *len, FILE *fp)
+{
+#define	GETL_DFL_LEN	32
+	char *b;
+	int c, i = 0;
+	size_t maxsz, maxi, d;
+
+	if (!len || !fp || !buffer)
+		return -1;
+
+	b = *buffer;
+
+	if (!b)
+		*len = 0;
+
+	maxsz = *len;
+	maxi = maxsz - 2;
+
+	while ((c = fgetc(fp)) != EOF) {
+		if (maxsz == 0 || i == maxi) {
+			if (maxsz == 0)
+				maxsz = GETL_DFL_LEN;
+			else
+				maxsz <<= 1;
+
+			if (*buffer)
+				d = &b[i] - *buffer;
+			else
+				d = 0;
+
+			*buffer = realloc(*buffer, maxsz);
+			if (!*buffer)
+				return -1;
+
+			b = *buffer + d;
+			maxi = maxsz - d - 2;
+			i = 0;
+			*len = maxsz;
+		}
+		b[i++] = c;
+		if (c == '\n')
+			break;
+	}
+	b[i] = '\0';
+	return c != EOF ? 0 : -1;
 }
 
 
@@ -144,7 +197,7 @@ get_debugfs_mnt(void)
 	if (!fp)
 		return -1;
 
-	while(getline(&buffer, &len, fp) != -1) {
+	while(getl(&buffer, &len, fp) != -1) {
 
 		q = strchr(buffer, ' ');
 		if (!q)
@@ -238,7 +291,7 @@ retry:
  * But gievn we can dynamically add events
  * which may have more unit masks, then we
  * put them into a separate overflow unit
- * masks table which can grow on demand.
+ * masks,  table which can grow on demand.
  * In that case the first PERF_MAX_UMASKS
  * are in the event, the rest in the overflow
  * table at index pointed to by event->umask_ovfl_idx
@@ -265,18 +318,6 @@ retry:
 	perf_um = new_um;
 
 	goto retry;
-}
-
-static inline unsigned long
-perf_get_ovfl_umask_idx(perf_umask_t *um)
-{
-	return um - perf_um;
-}
-
-static inline perf_umask_t *
-perf_get_ovfl_umask(int pidx)
-{
-	return perf_um+perf_pe[pidx].umask_ovfl_idx;
 }
 
 static void
@@ -441,11 +482,15 @@ gen_tracepoint_table(void)
 static int
 pfm_perf_detect(void *this)
 {
+#ifdef __linux__
 	/* ought to find a better way of detecting PERF */
 #define PERF_OLD_PROC_FILE "/proc/sys/kernel/perf_counter_paranoid"
 #define PERF_PROC_FILE "/proc/sys/kernel/perf_event_paranoid"
 	return !(access(PERF_PROC_FILE, F_OK)
 		  && access(PERF_OLD_PROC_FILE, F_OK)) ? PFM_SUCCESS: PFM_ERR_NOTSUPP;
+#else
+	return PFM_SUCCESS;
+#endif
 }
 
 static int
@@ -509,7 +554,6 @@ pfm_perf_add_defaults(pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
 
 				e->attrs[k].id = j;
 				e->attrs[k].ival = 0;
-				e->attrs[k].type = PFM_ATTR_UMASK;
 				k++;
 
 				added++;
@@ -528,7 +572,7 @@ static int
 pfmlib_perf_encode_tp(pfmlib_event_desc_t *e)
 {
 	perf_umask_t *um;
-	pfmlib_attr_t *a;
+	pfm_event_attr_info_t *a;
 	int i, nu = 0;
 
 	e->fstr[0] = '\0';
@@ -538,7 +582,10 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e)
 	 * look for tracepoints
 	 */
 	for(i=0; i < e->nattrs; i++) {
-		a = e->attrs+i;
+		a = attr(e, i);
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
 		if (a->type == PFM_ATTR_UMASK) {
 			/*
 			 * tracepoint unit masks cannot be combined
@@ -546,15 +593,16 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e)
 			if (++nu > 1)
 				return PFM_ERR_FEATCOMB;
 
-			if (a->id < PERF_MAX_UMASKS) {
-				e->codes[0] = perf_pe[e->event].umasks[a->id].uid;
-				evt_strcat(e->fstr, ":%s", perf_pe[e->event].umasks[a->id].uname);
+			if (a->idx < PERF_MAX_UMASKS) {
+				e->codes[0] = perf_pe[e->event].umasks[a->idx].uid;
+				evt_strcat(e->fstr, ":%s", perf_pe[e->event].umasks[a->idx].uname);
 			} else {
 				um = perf_get_ovfl_umask(e->event);
-				e->codes[0] = um[a->id - PERF_MAX_UMASKS].uid;
-				evt_strcat(e->fstr, ":%s", um[a->id - PERF_MAX_UMASKS].uname);
+				e->codes[0] = um[a->idx - PERF_MAX_UMASKS].uid;
+				evt_strcat(e->fstr, ":%s", um[a->idx - PERF_MAX_UMASKS].uname);
 			}
-		}
+		} else
+			return PFM_ERR_ATTR;
 	}
 	return PFM_SUCCESS;
 }
@@ -562,7 +610,7 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e)
 static int
 pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e)
 {
-	pfmlib_attr_t *a;
+	pfm_event_attr_info_t *a;
 	perf_event_t *ent;
 	unsigned int msk, grpmsk;
 	uint64_t umask = 0;
@@ -578,16 +626,19 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e)
 	e->fstr[0] = '\0';
 
 	for(i=0; i < e->nattrs; i++) {
-		a = e->attrs+i;
+		a = attr(e, i);
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
 		if (a->type == PFM_ATTR_UMASK) {
-			e->codes[0] |= ent->umasks[a->id].uid;
+			e->codes[0] |= ent->umasks[a->idx].uid;
 
-			msk = 1 << ent->umasks[a->id].grpid;
+			msk = 1 << ent->umasks[a->idx].grpid;
 			/* umask cannot be combined in each group */
 			if ((grpmsk & msk) == 0)
 				return PFM_ERR_UMASK;
 			grpmsk &= ~msk;
-		}
+		} else
+			return PFM_ERR_ATTR; /* no mod, no raw umask */
 	}
 
 	/* check for missing default umasks */
@@ -607,17 +658,38 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e)
 	evt_strcat(e->fstr, "%s", ent->name);
 	pfmlib_sort_attr(e);
 	for(i=0; i < e->nattrs; i++) {
-		if (e->attrs[i].type == PFM_ATTR_UMASK)
-			evt_strcat(e->fstr, ":%s", ent->umasks[e->attrs[i].id].uname);
+		a = attr(e, i);
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+		if (a->type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", ent->umasks[a->idx].uname);
 	}
 	return PFM_SUCCESS;
 }
 
 static int
-pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
+pfm_perf_os_encode(pfmlib_event_desc_t *e)
 {
-	pfmlib_attr_t *a;
-	int i, ret;
+	struct perf_event_attr *attr;
+
+	switch (e->osid) {
+	case PFM_OS_PERF_EVENT:
+		attr = e->os_data;
+		attr->type = perf_pe[e->event].type;
+		attr->config = e->codes[0];
+		break;
+	case PFM_OS_NONE:
+		return PFM_SUCCESS;
+	default:
+		return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e)
+{
+	int ret;
 
 	switch(perf_pe[e->event].type) {
 	case PERF_TYPE_TRACEPOINT:
@@ -638,43 +710,7 @@ pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *at
 		DPRINT("unsupported event type=%d\n", perf_pe[e->event].type);
 		return PFM_ERR_NOTSUPP;
 	}
-
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (!attrs)
-		return PFM_SUCCESS;
-
-	/*
-	 * propagate priv level to caller attrs struct
-	 */
-	for(i=0; i < e->nattrs; i++) {
-		a = e->attrs+i;
-
-		if (a->type == PFM_ATTR_UMASK)
-			continue;
-
-		switch(a->id - perf_pe[e->event].numasks) {
-		case PERF_ATTR_U:
-			if (a->ival)
-				attrs->plm |= PFM_PLM3;
-			break;	
-		case PERF_ATTR_K:
-			if (a->ival)
-				attrs->plm |= PFM_PLM0;
-			break;	
-		case PERF_ATTR_H:
-			if (a->ival)
-				attrs->plm |= PFM_PLMH;
-			break;	
-		}
-	
-	}
-	evt_strcat(e->fstr, ":k=%lu", !!(attrs->plm & PFM_PLM0));
-	evt_strcat(e->fstr, ":u=%lu", !!(attrs->plm & PFM_PLM3));
-	evt_strcat(e->fstr, ":h=%lu", !!(attrs->plm & PFM_PLMH));
-
-	return PFM_SUCCESS;
+	return pfm_perf_os_encode(e);
 }
 
 static int
@@ -684,37 +720,21 @@ pfm_perf_event_is_valid(void *this, int idx)
 }
 
 static int
-pfm_perf_get_event_perf_type(void *this, int pidx)
-{
-	return perf_pe[pidx].type;
-}
-
-int
 pfm_perf_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	perf_umask_t *um;
-	int m;
 
-	if (attr_idx < perf_pe[idx].numasks) {
-		if (attr_idx < PERF_MAX_UMASKS) {
-			um = &perf_pe[idx].umasks[attr_idx];
-		} else {
-			um  = perf_get_ovfl_umask(idx);
-			um += attr_idx - PERF_MAX_UMASKS;
-		}
-		info->name = um->uname;
-		info->desc = um->udesc;
-		info->equiv= NULL;
-		info->code = um->uid;
-		info->type = PFM_ATTR_UMASK;
-	} else {
-		m = perf_attr2mod(idx, attr_idx);
-		info->name = modx(perf_mods, m, name);
-		info->desc = modx(perf_mods, m, desc);
-		info->equiv= NULL;
-		info->code = m;
-		info->type = modx(perf_mods, m, type);
-	}
+	/* only supports umasks, modifiers handled at OS layer */
+	um = perf_attridx2um(idx, attr_idx);
+
+	info->name = um->uname;
+	info->desc = um->udesc;
+	info->equiv= NULL;
+	info->code = um->uid;
+	info->type = PFM_ATTR_UMASK;
+	info->ctrl = PFM_ATTR_CTRL_PMU;
+
+	info->is_precise = 0;
 	info->is_dfl = 0;
 	info->idx = attr_idx;
 	info->dfl_val64 = 0;
@@ -722,22 +742,25 @@ pfm_perf_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_i
 	return PFM_SUCCESS;
 }
 
-int
+static int
 pfm_perf_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
+	pfmlib_pmu_t *pmu = this;
 	info->name  = perf_pe[idx].name;
 	info->desc  = perf_pe[idx].desc;
 	info->code  = perf_pe[idx].id;
 	info->equiv = NULL;
+	info->idx   = idx;
+	info->pmu   = pmu->pmu;
+	info->is_precise = 0;
 
 	/* unit masks + modifiers */
 	info->nattrs  = perf_pe[idx].numasks;
-	info->nattrs += pfmlib_popcnt((unsigned long)perf_pe[idx].modmsk);
 
 	return PFM_SUCCESS;
 }
 
-void
+static void
 pfm_perf_terminate(void *this)
 {
 	perf_event_t *p;
@@ -841,7 +864,7 @@ pfm_perf_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
-		for(j= 0; j < perf_pe[i].numasks; j++) {
+		for(j = 0; j < perf_pe[i].numasks; j++) {
 
 			if (j < PERF_MAX_UMASKS){
 				um = perf_pe[i].umasks+j;
@@ -876,6 +899,52 @@ pfm_perf_validate_table(void *this, FILE *fp)
 	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
 }
 
+static int
+pfm_perf_get_event_nattrs(void *this, int idx)
+{
+	return perf_pe[idx].numasks;
+}
+
+/*
+ * remove attrs which are in conflicts (or duplicated) with os layer
+ */
+static int
+pfm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	int i, compact;
+
+	for (i = 0; i < e->npattrs; i++) {
+		compact = 0;
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		/*
+		 * only PERF_TYPE_HARDWARE may have precise mode
+		 * there is no way to know for sure for those events
+		 * so we let the modifiers thru and leave it to the kernel
+		 * to decide
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT
+		    && perf_pe[e->event].type != PERF_TYPE_HARDWARE) {
+
+			/* Precise mode, subject to PEBS */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+			/*
+			 * No hypervisor on Intel */
+			if (e->pattrs[i].idx == PERF_ATTR_H)
+				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
+	return PFM_SUCCESS;
+}
+
 pfmlib_pmu_t perf_event_support={
 	.desc			= "perf_events generic PMU",
 	.name			= "perf",
@@ -889,8 +958,9 @@ pfmlib_pmu_t perf_event_support={
 	.get_event_first	= pfm_perf_get_event_first,
 	.get_event_next		= pfm_perf_get_event_next,
 	.event_is_valid		= pfm_perf_event_is_valid,
-	.get_event_perf_type	= pfm_perf_get_event_perf_type,
 	.get_event_info		= pfm_perf_get_event_info,
 	.get_event_attr_info	= pfm_perf_get_event_attr_info,
 	.validate_table		= pfm_perf_validate_table,
+	.get_event_nattrs	= pfm_perf_get_event_nattrs,
+	.validate_pattrs	= pfm_perf_validate_pattrs,
 };

@@ -67,11 +67,10 @@ GEN_MAN= libpfm.3 \
 	pfm_get_event_attr_info.3 \
 	pfm_get_event_info.3 \
 	pfm_get_event_encoding.3 \
-	pfm_get_event_first.3 \
 	pfm_get_event_next.3 \
 	pfm_get_pmu_info.3 \
-	pfm_get_nevents.3 \
 	pfm_get_perf_event_encoding.3 \
+	pfm_get_os_event_encoding.3 \
 	pfm_get_version.3 \
 	pfm_initialize.3 \
 	pfm_terminate.3 \

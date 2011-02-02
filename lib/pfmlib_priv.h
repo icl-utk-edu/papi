@@ -24,9 +24,12 @@
  */
 #ifndef __PFMLIB_PRIV_H__
 #define __PFMLIB_PRIV_H__
-#include <stdio.h>
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_perf_event.h>
+
+#include "pfmlib_perf_event_priv.h"
+
+#define PFM_PLM_ALL (PFM_PLM0|PFM_PLM1|PFM_PLM2|PFM_PLM3|PFM_PLMH)
 
 #define PFMLIB_ATTR_DELIM	':'	/* event attribute delimiter */
 #define PFMLIB_PMU_DELIM	"::"	/* pmu to event delimiter */
@@ -58,42 +61,43 @@ typedef struct {
  * attribute description passed to model-specific layer
  */
 typedef struct {
-	int		id;		/* attribute index */
-	pfm_attr_t	type;		/* attribute type */
+	int	id;			/* attribute index */
 	union {
-		uint64_t ival;			/* integer value (incl. bool) */
-		char *sval;			/* string */
-	};					/* attribute value */
+		uint64_t	ival;	/* integer value (incl. bool) */
+		char		*sval;	/* string */
+	};
 } pfmlib_attr_t;
-
-/*
- * perf_event specific attributes that needs to be communicated
- * back up to match perf_event_attr with hardware settings
- */
-typedef struct {
-	int plm;	/* privilege level mask */
-	int precise_ip;	/* enable precise_ip sampling */
-	int offcore;	/* Intel WSM/NHM offcore_response */
-	/* more to be added in the future */
-} pfmlib_perf_attr_t;
 
 /*
  * must be big enough to hold all possible priv level attributes
  */
-#define PFMLIB_MAX_EVENT_ATTRS	64 /* max attributes per event desc */
-#define PFMLIB_MAX_ENCODING	4  /* max event encoding length in u64 */
+#define PFMLIB_MAX_ATTRS	64 /* max attributes per event desc */
+#define PFMLIB_MAX_ENCODING	4  /* max encoding length */
+
+/*
+ * we add one entry to hold any raw umask users may specify
+ * the last entry in pattrs[] hold that raw umask info
+ */
+#define PFMLIB_MAX_PATTRS	(PFMLIB_MAX_ATTRS+1)
+
 struct pfmlib_pmu;
 typedef struct {
 	struct pfmlib_pmu	*pmu;				/* pmu */
-	char			fstr[PFMLIB_EVT_MAX_NAME_LEN];	/* fully qualified event string */
 	int			dfl_plm;			/* default priv level mask */
 	int			event;				/* pidx */
+	int			npattrs;			/* number of attrs in pattrs[] */
 	int			nattrs;				/* number of attrs in attrs[] */
+	pfm_os_t		osid;				/* OS API requested */
 	int			count;				/* number of entries in codes[] */
-	pfmlib_attr_t		attrs[PFMLIB_MAX_EVENT_ATTRS];	/* list of attributes */
+	pfmlib_attr_t		attrs[PFMLIB_MAX_ATTRS];	/* list of requested attributes */
+
+	pfm_event_attr_info_t	*pattrs;			/* list of possible attributes */
+	char			fstr[PFMLIB_EVT_MAX_NAME_LEN];	/* fully qualified event string */
 	uint64_t		codes[PFMLIB_MAX_ENCODING];	/* event encoding */
+	void			*os_data;
 } pfmlib_event_desc_t;
-#define modx(atdesc, a, z) (atdesc[(a)].z)
+#define modx(atdesc, a, z)	(atdesc[(a)].z)
+#define attr(e, k)		((e)->pattrs + (e)->attrs[k].id)
 
 typedef struct pfmlib_pmu {
 	const char 	*desc;			/* PMU description */
@@ -112,15 +116,29 @@ typedef struct pfmlib_pmu {
 	void		 (*pmu_terminate)(void *this); /* optional */
 	int		 (*get_event_first)(void *this);
 	int		 (*get_event_next)(void *this, int pidx);
-	int		 (*get_event_perf_type)(void *this, int pidx);
 	int		 (*get_event_info)(void *this, int pidx, pfm_event_info_t *info);
+	int		 (*get_event_nattrs)(void *this, int pidx);
 	int		 (*event_is_valid)(void *this, int pidx);
 
 	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
-	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs);
+	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e);
 
 	int		 (*validate_table)(void *this, FILE *fp);
+	int		 (*validate_pattrs)(void *this, pfmlib_event_desc_t *e);
 } pfmlib_pmu_t;
+
+typedef struct {
+	const char			*name;
+	const pfmlib_attr_desc_t	*atdesc;
+	pfm_os_t			id;
+	int				flags;
+	int				(*detect)(void *this);
+	int				(*get_os_attr_info)(void *this, pfmlib_event_desc_t *e);
+	int				(*get_os_nattrs)(void *this, pfmlib_event_desc_t *e);
+	int				(*encode)(void *this, const char *str, int dfl_plm, void *args);
+} pfmlib_os_t;
+
+#define PFMLIB_OS_FL_ACTIVATED	0x1	/* OS layer detected */
 
 /*
  * pfmlib_pmu_t flags
@@ -145,8 +163,8 @@ extern pfmlib_config_t pfm_cfg;
 extern void __pfm_vbprintf(const char *fmt,...);
 extern void __pfm_dbprintf(const char *fmt,...);
 extern void pfmlib_strconcat(char *str, size_t max, const char *fmt, ...);
+extern void pfmlib_compact_pattrs(pfmlib_event_desc_t *e, int i);
 #define evt_strcat(str, fmt, a...) pfmlib_strconcat(str, PFMLIB_EVT_MAX_NAME_LEN, fmt, a)
-
 
 extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
 extern int pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr);
@@ -206,6 +224,9 @@ extern pfmlib_pmu_t intel_wsm_dp_support;
 extern pfmlib_pmu_t intel_wsm_unc_support;
 extern pfmlib_pmu_t arm_cortex_a8_support;
 extern pfmlib_pmu_t arm_cortex_a9_support;
+
+extern pfmlib_os_t pfmlib_os_perf;
+extern pfmlib_os_t pfmlib_os_perf_ext;
 
 extern char *pfmlib_forced_pmu;
 

@@ -102,16 +102,49 @@ found:
 	n = e->nattrs;
 	e->attrs[n].id = i;
 	e->attrs[n].ival = i;
-	e->attrs[n].type = PFM_ATTR_UMASK;
 	e->nattrs = n+1;
 
 	return PFM_SUCCESS;
 }
 
-static int
-pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
+static void
+netburst_perf_encode(pfmlib_event_desc_t *e)
 {
-	pfmlib_attr_t *a;
+	struct perf_event_attr *attr = e->os_data;
+	int perf_code = netburst_events[e->event].perf_code;
+	uint64_t escr;
+
+	attr->type = PERF_TYPE_RAW;
+	/*
+	 * codes[0] = ESCR
+	 * codes[1] = CCCR
+	 *
+	 * cleanup event_select, and install perf specific code
+	 */
+	escr  = e->codes[0] & ~(0x3full << 25);
+	escr |= perf_code << 25;
+	attr->config = (escr << 32) | e->codes[1];
+}
+
+static int
+netburst_os_encode(pfmlib_event_desc_t *e)
+{
+	switch (e->osid) {
+	case PFM_OS_PERF_EVENT:
+		netburst_perf_encode(e);
+		break;
+	case PFM_OS_NONE:
+		break;
+	default:
+		return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e)
+{
+	pfm_event_attr_info_t *a;
 	netburst_escr_value_t escr;
 	netburst_cccr_value_t cccr;
 	unsigned int evmask = 0;
@@ -127,12 +160,15 @@ pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t
 	cccr.val = 0;
 
 	for(k=0; k < e->nattrs; k++) {
-		a = e->attrs+k;
+		a = attr(e, k);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
 
 		if (a->type == PFM_ATTR_UMASK) {
 
-			bit = netburst_events[e->event].event_masks[a->id].bit;
-			n   = netburst_events[e->event].event_masks[a->id].name;
+			bit = netburst_events[e->event].event_masks[a->idx].bit;
+			n   = netburst_events[e->event].event_masks[a->idx].name;
 			/*
 			 * umask combination seems possible, although it does
 			 * not always make sense, e.g., BOGUS vs. NBOGUS
@@ -148,37 +184,37 @@ pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t
 			/* should not happen */
 			return PFM_ERR_ATTR;
 		} else {
-			id = a->id - netburst_get_numasks(e->event);
-			switch (id) {
+			uint64_t ival = e->attrs[k].ival;
+			switch (a->idx) {
 			case NETBURST_ATTR_U:
-				escr.bits.t1_usr = !!a->ival;
-				escr.bits.t0_usr = !!a->ival;
+				escr.bits.t1_usr = !!ival;
+				escr.bits.t0_usr = !!ival;
 				plmmsk |= _NETBURST_ATTR_U;
 				break;
 			case NETBURST_ATTR_K:
-				escr.bits.t1_os = !!a->ival;
-				escr.bits.t0_os = !!a->ival;
+				escr.bits.t1_os = !!ival;
+				escr.bits.t0_os = !!ival;
 				plmmsk |= _NETBURST_ATTR_K;
 				break;
 			case NETBURST_ATTR_E:
-				if (a->ival) {
+				if (ival) {
 					cccr.bits.compare = 1;
 					cccr.bits.edge = 1;
 				}
 				break;
 			case NETBURST_ATTR_C:
-				if (a->ival) {
+				if (ival) {
 					cccr.bits.compare = 1;
 					cccr.bits.complement = 1;
 				}
 				break;
 			case NETBURST_ATTR_T:
-				if (a->ival < 0 || a->ival > 15)
+				if (ival < 0 || ival > 15)
 					return PFM_ERR_ATTR_VAL;
 
-				if (a->ival) {
+				if (ival) {
 					cccr.bits.compare = 1;
-					cccr.bits.threshold = a->ival;
+					cccr.bits.threshold = ival;
 				}
 				break;
 			default:
@@ -207,13 +243,6 @@ pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t
 			return ret;
 	}
 
-	if (attrs) {
-		if (escr.bits.t0_os)
-			attrs->plm |= PFM_PLM0;
-		if (escr.bits.t0_usr)
-			attrs->plm |= PFM_PLM3;
-	}
-
 	escr.bits.tag_enable   = tag_enable;
 	escr.bits.tag_value    = tag_value;
 	escr.bits.event_mask   = evmask;
@@ -234,7 +263,10 @@ pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t
 	evt_strcat(e->fstr, "%s", netburst_events[e->event].name);
 	pfmlib_sort_attr(e);
 	for(k=0; k < e->nattrs; k++) {
-		if (e->attrs[k].type == PFM_ATTR_UMASK) {
+		a = attr(e, k);
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+		if (a->type == PFM_ATTR_UMASK) {
 			id = e->attrs[k].id;
 			evt_strcat(e->fstr, ":%s", netburst_events[e->event].event_masks[id].name);
 		}
@@ -246,14 +278,13 @@ pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t
 	evt_strcat(e->fstr, ":%s=%lu", netburst_mods[NETBURST_ATTR_C].name, cccr.bits.complement);
 	evt_strcat(e->fstr, ":%s=%lu", netburst_mods[NETBURST_ATTR_T].name, cccr.bits.threshold);
 
-	e->count = 3;
+	e->count = 2;
 	e->codes[0] = escr.val;
 	e->codes[1] = cccr.val;
-	e->codes[2] = netburst_events[e->event].perf_code;
 
 	netburst_display_reg(e);
 
-	return PFM_SUCCESS;
+	return netburst_os_encode(e);;
 }
 
 static int
@@ -325,12 +356,6 @@ pfm_netburst_event_is_valid(void *this, int pidx)
 }
 
 static int
-pfm_netburst_get_event_perf_type(void *this, int pidx)
-{
-	return PERF_TYPE_RAW;
-}
-
-static int
 pfm_netburst_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	const netburst_entry_t *pe = this_pe(this);
@@ -355,7 +380,8 @@ pfm_netburst_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_a
 		info->type = netburst_mods[idx].type;
 		info->is_dfl = 0;
 	}
-	info->idx = attr_idx;
+	info->ctrl = PFM_ATTR_CTRL_PMU;
+	info->idx = idx; /* namespace specific index */
 	info->dfl_val64 = 0;
 
 	return PFM_SUCCESS;
@@ -365,6 +391,8 @@ static int
 pfm_netburst_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
 	const netburst_entry_t *pe = this_pe(this);
+	pfmlib_pmu_t *pmu = this;
+
 	/*
 	 * pmu and idx filled out by caller
 	 */
@@ -372,6 +400,8 @@ pfm_netburst_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->desc  = pe[idx].desc;
 	info->code  = pe[idx].event_select | (pe[idx].escr_select << 8);
 	info->equiv = NULL;
+	info->idx   = idx; /* private index */
+	info->pmu   = pmu->pmu;
 
 	info->nattrs  = netburst_get_numasks(idx);
 	info->nattrs += NETBURST_MODS_COUNT;
@@ -435,6 +465,59 @@ pfm_netburst_validate_table(void *this, FILE *fp)
 	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
 }
 
+
+static int
+pfm_netburst_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	int i, compact;
+
+	for (i = 0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		if (e->osid == PFM_OS_PERF_EVENT) {
+			/*
+			 * with perf_events, u and k are handled at the OS level
+			 * via exclude_user, exclude_kernel.
+			 */
+			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+				if (e->pattrs[i].idx == NETBURST_ATTR_U
+				    || e->pattrs[i].idx == NETBURST_ATTR_K)
+					compact = 1;
+			}
+		}
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+
+			/* no PEBS support (for now) */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+			/*
+			 * No hypervisor on Intel */
+			if (e->pattrs[i].idx == PERF_ATTR_H)
+				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_netburst_get_event_nattrs(void *this, int pidx)
+{
+	int nattrs;
+	nattrs  = netburst_get_numasks(pidx);
+	nattrs += NETBURST_MODS_COUNT;
+	return nattrs;
+}
+
+
 pfmlib_pmu_t netburst_support = {
 	.desc			= "Pentium4",
 	.name			= "netburst",
@@ -449,10 +532,11 @@ pfmlib_pmu_t netburst_support = {
 	.get_event_first	= pfm_netburst_get_event_first,
 	.get_event_next		= pfm_netburst_get_event_next,
 	.event_is_valid		= pfm_netburst_event_is_valid,
-	.get_event_perf_type	= pfm_netburst_get_event_perf_type,
 	.validate_table		= pfm_netburst_validate_table,
 	.get_event_info		= pfm_netburst_get_event_info,
 	.get_event_attr_info	= pfm_netburst_get_event_attr_info,
+	.get_event_nattrs	= pfm_netburst_get_event_nattrs,
+	.validate_pattrs	= pfm_netburst_validate_pattrs,
 };
 
 pfmlib_pmu_t netburst_p_support = {
@@ -469,8 +553,9 @@ pfmlib_pmu_t netburst_p_support = {
 	.get_event_first	= pfm_netburst_get_event_first,
 	.get_event_next		= pfm_netburst_get_event_next,
 	.event_is_valid		= pfm_netburst_event_is_valid,
-	.get_event_perf_type	= pfm_netburst_get_event_perf_type,
 	.validate_table		= pfm_netburst_validate_table,
 	.get_event_info		= pfm_netburst_get_event_info,
 	.get_event_attr_info	= pfm_netburst_get_event_attr_info,
+	.get_event_nattrs	= pfm_netburst_get_event_nattrs,
+	.validate_pattrs	= pfm_netburst_validate_pattrs,
 };
