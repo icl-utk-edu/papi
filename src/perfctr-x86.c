@@ -306,7 +306,7 @@ setup_x86_presets( int cputype )
 #ifdef PERFCTR_X86_INTEL_NHLM	/* family 6 model 26 */
 		case PERFCTR_X86_INTEL_NHLM:
 			retval = _papi_pfm_init(  );
-			_papi_pfm_setup_presets( "Intel Core i7", 0 );
+			_papi_pfm_setup_presets( "Intel Nehalem", 0 );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_WSMR
