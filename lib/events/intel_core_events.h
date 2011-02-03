@@ -1654,7 +1654,6 @@ static const intel_x86_entry_t intel_core_pe[]={
 	},
 	{ .name = "FP_MMX_TRANS",
 	  .code = 0xcc,
-	  .flags = INTEL_X86_PEBS,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
 	  .ngrp = 1,
@@ -1663,12 +1662,10 @@ static const intel_x86_entry_t intel_core_pe[]={
 		{ .uname = "TO_FP",
 		  .udesc = "Transitions from MMX (TM) Instructions to Floating Point Instructions",
 		  .ucode = 0x2,
-	  	  .uflags = INTEL_X86_PEBS,
 		},
 		{ .uname = "TO_MMX",
 		  .udesc = "Transitions from Floating Point to MMX (TM) Instructions",
 		  .ucode = 0x1,
-	  	  .uflags = INTEL_X86_PEBS,
 		}
 	   },
 	   .numasks = 2
