@@ -338,7 +338,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 	{ .name   = "BR_MISP_RETIRED",
 		.desc   = "Count Mispredicted Branch Activity",
 		.code   = 0xC5,
-		.flags  = 0,
+		.flags  = INTEL_X86_PEBS,
 		.cntmsk = 0xf,
 		.modmsk = INTEL_V3_ATTRS,
 		.ngrp = 1,
@@ -346,7 +346,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 			{ .uname  = "NEAR_CALL",
 				.udesc  = "Counts mispredicted direct and indirect near unconditional retired calls",
 				.ucode  = 0x02,
-				.uflags = INTEL_X86_DFL,
+				.uflags = INTEL_X86_DFL|INTEL_X86_PEBS,
 			},
 		},
 		.numasks = 1
