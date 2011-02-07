@@ -192,7 +192,7 @@ perf_table_clone(void)
 
 	perf_pe_count = perf_nevents + PERF_ALLOC_EVENT_COUNT;
 
-	addr = malloc(perf_pe_count * sizeof(perf_event_t));
+	addr = malloc(perf_pe_count, sizeof(perf_event_t));
 	if (addr) {
 		memcpy(addr, perf_static_events, perf_nevents * sizeof(perf_event_t));
 		perf_pe_free = addr + perf_nevents;
