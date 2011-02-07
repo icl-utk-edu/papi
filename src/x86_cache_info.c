@@ -1393,6 +1393,8 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 	int size;						   /* size of the descriptor table */
 	int last_level = 0;				   /* how many levels in the cache hierarchy */
 
+	int need_leaf4=0;
+
 	/* All of Intel's cache info is in 1 call to cpuid
 	 * however it is a table lookup :(
 	 */
@@ -1425,8 +1427,12 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 				i = r * 4 + b;	/* calculate an index into the array of descriptors */
 				if ( i ) {	 /* skip the low order byte in eax [0]; it's the count (see above) */
 				   if ( reg.descrip[i] == 0xff ) {
-				      fprintf(stderr,"Warning! PAPI x86_cache: must implement cpuid leaf 4\n");
+				      MEMDBG("Warning! PAPI x86_cache: must implement cpuid leaf 4\n");
+				      need_leaf4=1;
 				      return PAPI_ENOSUPP;
+				      /* we might continue instead */
+				      /* in order to get TLB info  */
+				      /* continue;                 */
 				   }
 					for ( t = 0; t < size; t++ ) {	/* walk the descriptor table */					   
 						if ( reg.descrip[i] == intel_cache[t].descriptor ) {	/* find match */
@@ -1442,6 +1448,9 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 	}
 	MEMDBG( "# of Levels: %d\n", last_level );
 	*num_levels=last_level;
+	if (need_leaf4) {
+	   return PAPI_ENOSUPP;
+	}
 	return PAPI_OK;
 }
 
