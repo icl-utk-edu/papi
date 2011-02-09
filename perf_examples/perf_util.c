@@ -39,6 +39,7 @@ int
 perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 {
 	perf_event_desc_t *fd;
+	pfm_perf_encode_arg_t arg;
 	int new_max, ret, num, max_fds;
 	int group_leader;
 
@@ -79,8 +80,10 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 			/* update max size */
 			fd[0].max_fds = max_fds;
 		}
+		memset(&arg, 0, sizeof(arg));
+		arg.attr = &fd[num].hw;
 
-		ret = pfm_get_perf_event_encoding(*argv, PFM_PLM0|PFM_PLM3, &fd[num].hw, NULL, NULL);
+		ret = pfm_get_os_event_encoding(*argv, PFM_PLM0|PFM_PLM3, PFM_OS_PERF_EVENT_EXT, &arg);
 		if (ret != PFM_SUCCESS) {
 			warnx("event %s: %s\n", *argv, pfm_strerror(ret));
 			goto error;
