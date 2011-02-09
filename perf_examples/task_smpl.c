@@ -260,7 +260,6 @@ mainloop(char **arg)
 			fds[i].hw.sample_period = options.period;
 			printf("period=%"PRIu64" freq=%d\n", options.period, options.opt_freq);
 
-			/* must get event id for SAMPLE_GROUP */
 			fds[i].hw.read_format = PERF_FORMAT_SCALE;
 			if (num_fds > 1)
 				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;

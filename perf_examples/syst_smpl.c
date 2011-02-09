@@ -192,8 +192,9 @@ setup_cpu(int cpu)
 			fds[i].hw.sample_period = options.period;
 			printf("period=%"PRIu64" freq=%d\n", options.period, options.opt_freq);
 
-			/* must get event id for SAMPLE_GROUP */
-			fds[i].hw.read_format = PERF_FORMAT_GROUP|PERF_FORMAT_ID|PERF_FORMAT_SCALE;
+			fds[i].hw.read_format = PERF_FORMAT_SCALE;
+			if (num_fds > 1)
+				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;
 		}
 
 		fds[i].fd = perf_event_open(&fds[i].hw, -1, cpu, fds[0].fd, 0);
