@@ -254,8 +254,10 @@ mainloop(char **arg)
 		if (!i) {
 			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID;
 
-			if (options.opt_freq)
+			if (options.opt_freq) {
 				fds[i].hw.freq = 1;
+				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
+			}
 
 			fds[i].hw.sample_period = options.period;
 			printf("period=%"PRIu64" freq=%d\n", options.period, options.opt_freq);
