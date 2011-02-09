@@ -129,9 +129,9 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	umask_str[0] = e->fstr[0] = '\0';
 
 	/*
-	 * XXX: does not work with perf kernel
+	 * XXX: disable for now
 	 */
-	if (pe[e->event].cntmsk == 0x100000)
+	if (0 && pe[e->event].cntmsk == 0x100000)
 		return intel_nhm_unc_encode_fixed(this, e, reg);
 
 	/*
@@ -259,6 +259,9 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	reg->nhm_unc.usel_en    = 1; /* force enable bit to 1 */
 	reg->nhm_unc.usel_int   = 1; /* force APIC int to 1 */
 
+	if (attrs)
+		attrs->plm = PFM_PLM0 | PFM_PLM3 | PFM_PLMH;
+
 	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_E, name), reg->nhm_unc.usel_edge);
 	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_I, name), reg->nhm_unc.usel_inv);
 	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_C, name), reg->nhm_unc.usel_cnt_mask);
@@ -299,7 +302,7 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 static int
 pfm_nhm_unc_get_event_perf_type(void *this, int pidx)
 {
-	/* XXX: fix once Core i7 uncore is supported by perf_events */
+	/* XXX: fix once NHM uncore is supported by perf_events */
 	return -1;
 }
 
