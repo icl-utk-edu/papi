@@ -118,6 +118,7 @@ int _papi_hwd_reset( hwd_context_t *, hwd_control_state_t * );
 int _papi_hwd_stop( hwd_context_t *, hwd_control_state_t * );
 int _papi_hwd_write( hwd_context_t *, hwd_control_state_t *,
 					 long long events[] );
+int _papi_hwd_destroy_eventset( int * );
 int _papi_hwd_ctl( hwd_context_t *, int code, _papi_int_option_t * option );
 int _papi_hwd_init_global( void );
 int _papi_hwd_set_overflow( EventSetInfo_t * ESI, int EventIndex,

@@ -43,6 +43,7 @@ typedef struct papi_vectors {
     int		(*read)			(hwd_context_t *, hwd_control_state_t *, long long **, int);	/**< */
     int		(*reset)		(hwd_context_t *, hwd_control_state_t *);		/**< */
     int		(*write)		(hwd_context_t *, hwd_control_state_t *, long long[]);			/**< */
+	int			(*destroy_eventset)	(int *);								/**< */
     long long	(*get_real_cycles)	(void);									/**< */
     long long	(*get_real_usec)	(void);									/**< */
     long long	(*get_virt_cycles)	(const hwd_context_t *);				/**< */

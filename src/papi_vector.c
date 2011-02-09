@@ -326,6 +326,8 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->write =
 			( int ( * )( hwd_context_t *, hwd_control_state_t *, long long[] ) )
 			vec_int_dummy;
+	if ( !v->destroy_eventset ) 
+		v->destroy_eventset = ( int ( * )( int * ) ) vec_int_dummy;
 	if ( !v->get_real_cycles )
 		v->get_real_cycles = ( long long ( * )(  ) ) vec_dummy_get_real_cycles;
 	if ( !v->get_real_usec )
@@ -525,6 +527,8 @@ vector_print_table( papi_vector_t * v, int print_func )
 	vector_print_routine( ( void * ) v->read, "_papi_hwd_read", print_func );
 	vector_print_routine( ( void * ) v->reset, "_papi_hwd_reset", print_func );
 	vector_print_routine( ( void * ) v->write, "_papi_hwd_write", print_func );
+	vector_print_routine( ( void * ) v->destroy_eventset, 
+						  "_papi_hwd_destroy_eventset", print_func );
 	vector_print_routine( ( void * ) v->get_real_cycles,
 						  "_papi_hwd_get_real_cycles", print_func );
 	vector_print_routine( ( void * ) v->get_real_usec,

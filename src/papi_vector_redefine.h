@@ -19,6 +19,7 @@
 #define _papi_hwd_read			_papi_hwi_current_vector->read
 #define _papi_hwd_reset			_papi_hwi_current_vector->reset
 #define _papi_hwd_write			_papi_hwi_current_vector->write
+#define _papi_hwd_destroy_eventset	_papi_hwi_current_vector->destroy_eventset
 #define _papi_hwd_get_real_cycles	_papi_hwi_current_vector->get_real_cycles
 #define _papi_hwd_get_real_usec		_papi_hwi_current_vector->get_real_usec
 #define _papi_hwd_get_virt_cycles	_papi_hwi_current_vector->get_virt_cycles
