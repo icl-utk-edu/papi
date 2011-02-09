@@ -401,6 +401,7 @@ amd64_os_encode(pfmlib_event_desc_t *e)
 {
 	switch (e->osid) {
 	case PFM_OS_PERF_EVENT:
+	case PFM_OS_PERF_EVENT_EXT:
 		return amd64_perf_encode(e);
 	case PFM_OS_NONE:
 		break;

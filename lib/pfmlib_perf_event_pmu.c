@@ -674,6 +674,7 @@ pfm_perf_os_encode(pfmlib_event_desc_t *e)
 
 	switch (e->osid) {
 	case PFM_OS_PERF_EVENT:
+	case PFM_OS_PERF_EVENT_EXT:
 		attr = e->os_data;
 		attr->type = perf_pe[e->event].type;
 		attr->config = e->codes[0];

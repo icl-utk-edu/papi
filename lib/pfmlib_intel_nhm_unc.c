@@ -117,6 +117,7 @@ intel_nhm_unc_os_encode(void *this, pfmlib_event_desc_t *e)
 {
 	switch (e->osid) {
 	case PFM_OS_PERF_EVENT:
+	case PFM_OS_PERF_EVENT_EXT:
 		return intel_nhm_unc_perf_encode(this, e);
 	case PFM_OS_NONE:
 		break;
