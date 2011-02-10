@@ -29,7 +29,7 @@ all:
 	./setup.py build
 
 install:
-	./setup.py install --prefix=$(DESTDIR)$(PREFIX)
+	./setup.py install --prefix=$(DESTDIR)
 
 clean:
 	$(RM) src/perfmon_int_wrap.c src/perfmon_int.py src/*.pyc

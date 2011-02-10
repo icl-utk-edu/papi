@@ -79,5 +79,5 @@ GEN_MAN= libpfm.3 \
 MAN=$(GEN_MAN) $(ARCH_MAN)
 install:
 
-	-mkdir -p $(DESTDIR)$(MANDIR)/man3
-	( cd man3; $(INSTALL) -m 644 $(MAN) $(DESTDIR)$(MANDIR)/man3 )
+	-mkdir -p $(MANDIR)/man3
+	( cd man3; $(INSTALL) -m 644 $(MAN) $(MANDIR)/man3 )

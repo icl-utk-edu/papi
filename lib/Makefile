@@ -188,10 +188,10 @@ install: $(TARGETS)
 
 install:
 	@echo building: $(TARGETS)
-	-mkdir -p $(DESTDIR)$(LIBDIR)
-	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
+	-mkdir -p $(LIBDIR)
+	$(INSTALL) -m 644 $(ALIBPFM) $(LIBDIR)
 ifeq ($(CONFIG_PFMLIB_SHARED),y)
-	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
-	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
-	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.$(SOLIBEXT)
+	$(INSTALL) $(SLIBPFM) $(LIBDIR)
+	cd $(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
+	cd $(LIBDIR); $(LN) $(SLIBPFM) libpfm.$(SOLIBEXT)
 endif

@@ -84,8 +84,8 @@ distclean: clean
 
 install_examples: $(TARGETS)
 	@echo installing: $(TARGETS)
-	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)
-	$(INSTALL) -m 755 $(TARGETS) $(DESTDIR)$(EXAMPLESDIR)
+	-mkdir -p $(EXAMPLESDIR)
+	$(INSTALL) -m 755 $(TARGETS) $(EXAMPLESDIR)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/

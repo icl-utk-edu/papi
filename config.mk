@@ -90,12 +90,11 @@ AGE=0
 #
 # Where should things (lib, headers, man) go in the end.
 #
-install_prefix=/usr/local
-PREFIX=$(install_prefix)
-LIBDIR=$(PREFIX)/lib
-INCDIR=$(PREFIX)/include
-MANDIR=$(PREFIX)/share/man
-DOCDIR=$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)
+DESTDIR=/usr/local
+LIBDIR=$(DESTDIR)/lib
+INCDIR=$(DESTDIR)/include
+MANDIR=$(DESTDIR)/share/man
+DOCDIR=$(DESTDIR)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)
 
 #
 # System header files
@@ -181,7 +180,7 @@ PFMLIB=$(PFMLIBDIR)/libpfm.a
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC64),y)
 CFLAGS+= -m64
 LDFLAGS+= -m64
-LIBDIR=$(PREFIX)/lib64
+LIBDIR=$(DESTDIR)/lib64
 endif
 
 ifeq ($(CONFIG_PFMLIB_DEBUG),y)

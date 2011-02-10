@@ -55,6 +55,7 @@ tar: clean
 tarcvs: clean
 	a=`basename $$PWD`; cd ..; tar --exclude=CVS -zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
 install: 
+	@echo installing in $(DESTDIR)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 install_examples:

@@ -30,9 +30,9 @@ HEADERS= perfmon/pfmlib.h           \
 	perfmon/pfmlib_perf_event.h
 
 dir:
-	-mkdir -p $(DESTDIR)$(INCDIR)/perfmon
+	-mkdir -p $(INCDIR)/perfmon
 
 install: dir 
-	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INCDIR)/perfmon
+	$(INSTALL) -m 644 $(HEADERS) $(INCDIR)/perfmon
 
 .PHONY: all clean distclean depend dir
