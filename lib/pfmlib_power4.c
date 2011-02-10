@@ -47,7 +47,6 @@ pfmlib_pmu_t power4_support={
 	.get_event_first	= pfm_gen_powerpc_get_event_first,
 	.get_event_next		= pfm_gen_powerpc_get_event_next,
 	.event_is_valid		= pfm_gen_powerpc_event_is_valid,
-	.get_event_perf_type	= pfm_gen_powerpc_get_event_perf_type,
 	.validate_table		= pfm_gen_powerpc_validate_table,
 	.get_event_info		= pfm_gen_powerpc_get_event_info,
 	.get_event_attr_info	= pfm_gen_powerpc_get_event_attr_info,

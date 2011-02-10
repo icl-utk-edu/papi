@@ -83,17 +83,17 @@ static int pfm_torrent_detect(void* this)
 static int
 pfm_torrent_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 {
+	pfmlib_pmu_t *pmu = this;
 	const pme_torrent_entry_t *pe = this_pe(this);
 
 	info->name = pe[pidx].pme_name;
-	if (pe[pidx].pme_desc)
-		info->desc =  pe[pidx].pme_desc;
-	else
-		info->desc = "";
-
-	info->equiv = NULL;
+	info->desc = pe[pidx].pme_desc ? pe[pidx].pme_desc : "";
 	info->code = pe[pidx].pme_code;
+	info->equiv = NULL;
+	info->idx   = pidx; /* private index */
+	info->pmu   = pmu->pmu;
 	info->dtype = PFM_DTYPE_UINT64;
+	info->is_precise = 0;
 
 	/* unit masks + modifiers */
 	info->nattrs = pfmlib_popcnt((unsigned long)pe[pidx].pme_modmsk);
@@ -111,12 +111,14 @@ pfm_torrent_get_event_attr_info(void *this, int idx, int attr_idx,
 
 	info->name = modx(torrent_modifiers, m, name);
 	info->desc = modx(torrent_modifiers, m, desc);
-	info->equiv = NULL;
 	info->code = m;
 	info->type = modx(torrent_modifiers, m, type);
+	info->equiv = NULL;
 	info->is_dfl = 0;
-	info->idx = attr_idx;
+	info->is_precise = 0;
+	info->idx = m;
 	info->dfl_val64 = 0;
+	info->ctrl = PFM_ATTR_CTRL_PMU;
 
 	return PFM_SUCCESS;
 }
@@ -144,7 +146,33 @@ error:
 }
 
 static int
-pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
+pfm_torrent_perf_encode(void *this, pfmlib_event_desc_t *e)
+{
+	struct perf_event_attr *attr = e->os_data;
+
+	attr->type = PERF_TYPE_RAW;
+	attr->config = e->codes[0];
+
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_torrent_os_encode(void *this, pfmlib_event_desc_t *e)
+{
+	switch (e->osid) {
+	case PFM_OS_PERF_EVENT:
+	case PFM_OS_PERF_EVENT_EXT:
+		return pfm_torrent_perf_encode(this, e);
+	case PFM_OS_NONE:
+		break;
+	default:
+		return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	const pme_torrent_entry_t *pe = this_pe(this);
 	uint32_t torrent_pmu;
@@ -204,7 +232,7 @@ pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t 
 			return PFM_ERR_ATTR;
 		}
 	}
-	return PFM_SUCCESS;
+	return pfm_torrent_os_encode(this, e);
 }
 
 pfmlib_pmu_t torrent_support = {
@@ -217,7 +245,6 @@ pfmlib_pmu_t torrent_support = {
 	.get_event_first	= pfm_gen_powerpc_get_event_first,
 	.get_event_next		= pfm_gen_powerpc_get_event_next,
 	.event_is_valid		= pfm_gen_powerpc_event_is_valid,
-	.get_event_perf_type	= pfm_gen_powerpc_get_event_perf_type,
 	.pmu_detect		= pfm_torrent_detect,
 	.get_event_encoding	= pfm_torrent_get_encoding,
 	.validate_table		= pfm_torrent_validate_table,

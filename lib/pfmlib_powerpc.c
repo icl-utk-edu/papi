@@ -36,6 +36,7 @@
 int
 pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 {
+	pfmlib_pmu_t *pmu = this;
 	const pme_power_entry_t *pe = this_pe(this);
 
 	/*
@@ -45,8 +46,10 @@ pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 	info->desc = pe[pidx].pme_long_desc;
 	info->code = pe[pidx].pme_code;
 	info->equiv = NULL;
-	info->idx   = idx;
+	info->idx   = pidx; /* private index */
 	info->pmu   = pmu->pmu;
+	info->is_precise = 0;
+
 	info->nattrs = 0;
 
 	return PFM_SUCCESS;
@@ -59,21 +62,43 @@ pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_eve
 	return PFM_ERR_ATTR;
 }
 
+static int
+pfm_gen_powerpc_perf_encode(void *this, pfmlib_event_desc_t *e)
+{
+	struct perf_event_attr *attr = e->os_data;
+
+	attr->type = PERF_TYPE_RAW;
+	attr->config = e->codes[0];
+
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_gen_powerpc_os_encode(void *this, pfmlib_event_desc_t *e)
+{
+	switch (e->osid) {
+	case PFM_OS_PERF_EVENT:
+	case PFM_OS_PERF_EVENT_EXT:
+		return pfm_gen_powerpc_perf_encode(this, e);
+	case PFM_OS_NONE:
+		break;
+	default:
+		return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
 int
-pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e, pfmlib_perf_attr_t *attrs)
+pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	const pme_power_entry_t *pe = this_pe(this);
 
 	e->count = 1;
 	e->codes[0] = (uint64_t)pe[e->event].pme_code;
-	evt_strcat(e->fstr, "%s", pe[e->event].pme_name);
-	return PFM_SUCCESS;
-}
 
-int
-pfm_gen_powerpc_get_event_perf_type(void *this, int pidx)
-{
-	return PERF_TYPE_RAW;
+	evt_strcat(e->fstr, "%s", pe[e->event].pme_name);
+
+	return pfm_gen_powerpc_os_encode(this, e);
 }
 
 int
