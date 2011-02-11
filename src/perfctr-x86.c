@@ -309,8 +309,8 @@ setup_x86_presets( int cputype )
 			_papi_pfm_setup_presets( "Intel Nehalem", 0 );
 			break;
 #endif
-#ifdef PERFCTR_X86_INTEL_WSMR
-		case PERFCTR_X86_INTEL_WSMR:
+#ifdef PERFCTR_X86_INTEL_WSTMR
+		case PERFCTR_X86_INTEL_WSTMR:
 			retval = _papi_pfm_init(  );
 			_papi_pfm_setup_presets( "Intel Westmere", 0 );
 			break;
@@ -386,8 +386,8 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 #ifdef PERFCTR_X86_INTEL_NHLM
 		case PERFCTR_X86_INTEL_NHLM:
 #endif
-#ifdef PERFCTR_X86_INTEL_WSMR
-		case PERFCTR_X86_INTEL_WSMR:
+#ifdef PERFCTR_X86_INTEL_WSTMR
+		case PERFCTR_X86_INTEL_WSTMR:
 #endif
 #ifdef PERFCTR_X86_AMD_K8
 		case PERFCTR_X86_AMD_K8:

@@ -66,8 +66,8 @@ xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 #ifdef PERFCTR_X86_INTEL_NHLM	/* family 6 model 26 */
 	case PERFCTR_X86_INTEL_NHLM:
 #endif
-#ifdef PERFCTR_X86_INTEL_WSMR
-	case PERFCTR_X86_INTEL_WSMR:
+#ifdef PERFCTR_X86_INTEL_WSTMR
+	case PERFCTR_X86_INTEL_WSTMR:
 #endif
 		return ( PAPI_VENDOR_INTEL );
 #ifdef PERFCTR_X86_AMD_K8
