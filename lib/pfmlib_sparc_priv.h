@@ -32,14 +32,19 @@ typedef union {
 #define PME_CTRL_S0		1
 #define PME_CTRL_S1		2
 
-extern int pfm_sparc_detect(void);
-extern int pfm_sparc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+#define SPARC_ATTR_K	0
+#define SPARC_ATTR_U	1
+#define SPARC_ATTR_H	2
+
+extern int pfm_sparc_detect(void *this);
+extern int pfm_sparc_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_sparc_get_event_first(void *this);
 extern int pfm_sparc_get_event_next(void *this, int idx);
 extern int pfm_sparc_event_is_valid(void *this, int pidx);
-extern int pfm_sparc_get_event_perf_type(void *this, int pidx);
 extern int pfm_sparc_validate_table(void *this, FILE *fp);
 extern int pfm_sparc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);
 extern int pfm_sparc_get_event_info(void *this, int idx, pfm_event_info_t *info);
+extern int pfm_sparc_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_sparc_get_event_nattrs(void *this, int pidx);
 
 #endif /* __PFMLIB_SPARC_PRIV_H__ */

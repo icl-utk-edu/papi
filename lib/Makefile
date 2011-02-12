@@ -151,13 +151,13 @@ INC_POWERPC=events/ppc970_events.h	\
 	events/power7_events.h		\
 	events/torrent_events.h
 
-INC_SPARC=events/ultra12_events.h	\
-	events/ultra3_events.h		\
-	events/ultra3plus_events.h	\
-	events/ultra3i_events.h		\
-	events/ultra4plus_events.h	\
-	events/niagara1_events.h	\
-	events/niagara2_events.h
+INC_SPARC=events/sparc_ultra12_events.h		\
+	events/sparc_ultra3_events.h		\
+	events/sparc_ultra3plus_events.h	\
+	events/sparc_ultra3i_events.h		\
+	events/sparc_ultra4plus_events.h	\
+	events/sparc_niagara1_events.h		\
+	events/sparc_niagara2_events.h
 
 INC_CELL=events/cell_events.h
 

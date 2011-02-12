@@ -41,6 +41,11 @@ This version of libpfm supports:
 	- For ARM:
 		ARMV7 Cortex A8
 		ARMV7 Cortex A9
+	- For SPARC
+		Ultra I, II
+		Ultra III, IIIi, III+
+		Ultra IV+
+		Niagara I, Niagara II
 
 The core of the library is very generic and not tied to any particular OS interface.
 Thus, it can be compiled on non-Linux platforms, such as MacOS X and OpenSolaris.

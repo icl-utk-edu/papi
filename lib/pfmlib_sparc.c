@@ -1,9 +1,8 @@
 /*
- * pfmlib_sparc.c : 	support for SPARC processors
+ * pfmlib_sparc.c : support for SPARC processors
  * 
- * Based upon gen_powerpc code which is:
- * Copyright (C) IBM Corporation, 2007.  All rights reserved.
- * Contributed by Corey Ashford (cjashfor@us.ibm.com)
+ * Copyright (c) 2011 Google, Inc
+ * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +23,6 @@
  * IN THE SOFTWARE.
  *
  */
-
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
@@ -34,6 +32,14 @@
 /* private headers */
 #include "pfmlib_priv.h"			/* library private */
 #include "pfmlib_sparc_priv.h"
+
+const pfmlib_attr_desc_t sparc_mods[]={
+	PFM_ATTR_B("k", "monitor at priv level 0"),		/* monitor priv level 0 */
+	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
+	PFM_ATTR_B("h", "monitor in hypervisor"),		/* monitor in hypervisor*/
+	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
+};
+#define SPARC_NUM_MODS (sizeof(sparc_mods)/sizeof(pfmlib_attr_desc_t) - 1)
 
 #ifdef CONFIG_PFMLIB_OS_LINUX
 /*
@@ -179,15 +185,21 @@ pmu_name_to_pmu_type(char *name)
 	return PFM_PMU_NONE;
 }
 
-int pfm_sparc_detect(void)
+int
+pfm_sparc_detect(void *this)
 {
+	pfmlib_pmu_t *pmu = this;
+	pfm_pmu_t model;
 	int ret;
 	char buffer[32];
 
 	ret = pfmlib_getcpuinfo_attr("pmu", buffer, sizeof(buffer));
 	if (ret == -1)
 		return PFM_ERR_NOTSUPP;
-	return pmu_name_to_pmu_type(buffer);
+
+	model = pmu_name_to_pmu_type(buffer);
+	
+	return model == pmu->pmu ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
 }
 
 void
@@ -202,38 +214,75 @@ pfm_sparc_display_reg(void *this, pfmlib_event_desc_t *e, pfm_sparc_reg_t reg)
 		e->fstr);
 }
 
+static int
+pfm_sparc_perf_encode(void *this, pfmlib_event_desc_t *e)
+{
+	struct perf_event_attr *attr = e->os_data;
+
+	attr->type = PERF_TYPE_RAW;
+	attr->config = (e->codes[0] << 16) | e->codes[1];
+
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_sparc_os_encode(void *this, pfmlib_event_desc_t *e)
+{
+	switch (e->osid) {
+	case PFM_OS_PERF_EVENT:
+	case PFM_OS_PERF_EVENT_EXT:
+		return pfm_sparc_perf_encode(this, e);
+	case PFM_OS_NONE:
+		break;
+	default:
+		return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
 int
-pfm_sparc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_sparc_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	const sparc_entry_t *pe = this_pe(this);
-	pfmlib_attr_t *a;
+	pfm_event_attr_info_t *a;
 	pfm_sparc_reg_t reg;
-	int k;
+	int i;
 
-	*count = 1;
 
-	reg.val = pe[e->event].code << 16 | pe[e->event].ctrl;
+	//reg.val = pe[e->event].code << 16 | pe[e->event].ctrl;
+	reg.val = pe[e->event].code;
 
-	for(k=0; k < e->nattrs; k++) {
-		a = e->attrs+k;
-		if (a->type == PFM_ATTR_UMASK) {
-			reg.config.umask |= 1 << pe[e->event].umasks[a->id].ubit;
-		}
+	for (i = 0; i < e->nattrs; i++) {
+
+		a = attr(e, i);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (a->type == PFM_ATTR_UMASK)
+			reg.config.umask |= 1 << pe[e->event].umasks[a->idx].ubit;
 	}
 
-	*codes = reg.val;
+	e->count = 2;
+	e->codes[0] = reg.val;
+	e->codes[1] = pe[e->event].ctrl;
 
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
 
 	pfmlib_sort_attr(e);
-	for(k=0; k < e->nattrs; k++) {
-		if (e->attrs[k].type == PFM_ATTR_UMASK)
-			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[e->attrs[k].id].uname);
+	for (i = 0; i < e->nattrs; i++) {
+
+		a = attr(e, i);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (a->type == PFM_ATTR_UMASK)
+			evt_strcat(e->fstr, ":%s", pe[e->event].umasks[a->idx].uname);
 	}
 
 	pfm_sparc_display_reg(this, e, reg);
 
-	return PFM_SUCCESS;
+	return pfm_sparc_os_encode(this, e);
 }
 
 int
@@ -258,12 +307,6 @@ pfm_sparc_event_is_valid(void *this, int pidx)
 {
 	pfmlib_pmu_t *p = this;
 	return pidx >= 0 && pidx < p->pme_count;
-}
-
-int
-pfm_sparc_get_event_perf_type(void *this, int pidx)
-{
-	return PERF_TYPE_RAW;
 }
 
 int
@@ -298,15 +341,32 @@ int
 pfm_sparc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	const sparc_entry_t *pe = this_pe(this);
+	int idx;
 
-	info->name = pe[pidx].umasks[attr_idx].uname;
-	info->desc = pe[pidx].umasks[attr_idx].udesc;
-	info->name = pe[pidx].umasks[attr_idx].uname;
-	info->idx = attr_idx;
-	info->equiv= NULL;
-	info->code = 1 << pe[pidx].umasks[attr_idx].ubit;
-	info->type = PFM_ATTR_UMASK;
+	if (attr_idx < pe[pidx].numasks) {
+		info->name = pe[pidx].umasks[attr_idx].uname;
+		info->desc = pe[pidx].umasks[attr_idx].udesc;
+		info->name = pe[pidx].umasks[attr_idx].uname;
+		info->equiv= NULL;
+		info->code = 1 << pe[pidx].umasks[attr_idx].ubit;
+		info->type = PFM_ATTR_UMASK;
+		info->idx = attr_idx;
+	} else {
+		/*
+		 * all mods implemented by ALL events */
+		idx = attr_idx - pe[pidx].numasks;
+
+		info->name = sparc_mods[idx].name;
+		info->desc = sparc_mods[idx].desc;
+		info->type = sparc_mods[idx].type;
+		info->code = idx;
+
+		info->type = sparc_mods[idx].type;
+	}
+
 	info->is_dfl = 0;
+	info->is_precise = 0;
+	info->ctrl = PFM_ATTR_CTRL_PMU;;
 
 	return PFM_SUCCESS;
 }
@@ -314,7 +374,7 @@ pfm_sparc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr
 int
 pfm_sparc_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
-
+	pfmlib_pmu_t *pmu = this;
 	const sparc_entry_t *pe = this_pe(this);
 	/*
 	 * pmu and idx filled out by caller
@@ -323,9 +383,60 @@ pfm_sparc_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->desc  = pe[idx].desc;
 	info->code  = pe[idx].code;
 	info->equiv = NULL;
+	info->idx   = idx; /* private index */
+	info->pmu   = pmu->pmu;
+	info->is_precise = 0;
 
-	/* no attributes defined for ARM yet */
 	info->nattrs  = pe[idx].numasks;
 
+	return PFM_SUCCESS;
+}
+
+int
+pfm_sparc_get_event_nattrs(void *this, int pidx)
+{
+	const sparc_entry_t *pe = this_pe(this);
+
+	return SPARC_NUM_MODS + pe[pidx].numasks;
+}
+
+int
+pfm_sparc_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	int i, compact;
+
+	for (i=0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		if (e->osid == PFM_OS_PERF_EVENT || e->osid == PFM_OS_PERF_EVENT_EXT) {
+			/*
+			 * with perf_events, u and k are handled at the OS level
+			 * via attr.exclude_* fields
+			 */
+			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+
+				if (e->pattrs[i].idx == SPARC_ATTR_U
+				    || e->pattrs[i].idx == SPARC_ATTR_K
+				    || e->pattrs[i].idx == SPARC_ATTR_H)
+					compact = 1;
+			}
+		}
+
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+
+			/* No precise mode on SPARC */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
 	return PFM_SUCCESS;
 }
