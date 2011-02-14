@@ -159,8 +159,14 @@ pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 }
 #endif
 
+static void
+pfm_arm_display_reg(pfm_arm_reg_t reg, char *fstr)
+{
+	__pfm_vbprintf("[0x%"PRIx64"] %s\n", reg.val, fstr);
+}
+
 int
-pfm_arm_detect(void)
+pfm_arm_detect(void *this)
 {
 
 	int ret;
@@ -187,23 +193,50 @@ pfm_arm_detect(void)
    
 	return PFM_SUCCESS;
 }
-   
+
+static int
+pfm_arm_perf_encode(void *this, pfmlib_event_desc_t *e)
+{
+	struct perf_event_attr *attr = e->os_data;
+
+	attr->type = PERF_TYPE_RAW;
+	attr->config = e->codes[0];
+
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_arm_os_encode(void *this, pfmlib_event_desc_t *e)
+{
+	switch (e->osid) {
+	case PFM_OS_PERF_EVENT:
+	case PFM_OS_PERF_EVENT_EXT:
+		return pfm_arm_perf_encode(this, e);
+	case PFM_OS_NONE:
+		break;
+	default:
+		return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
 int
-pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs)
+pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 
 	const arm_entry_t *pe = this_pe(this);
 	pfm_arm_reg_t reg;
 
 	reg.val = pe[e->event].code;
-        evt_strcat(e->fstr, "%s", pe[e->event].name);
   
-	*codes = reg.val;
-	*count = 1;
+	e->codes[0] = reg.val;
+	e->count    = 1;
+
+        evt_strcat(e->fstr, "%s", pe[e->event].name);
 
         pfm_arm_display_reg(reg, e->fstr);
    
-	return PFM_SUCCESS;
+	return pfm_arm_os_encode(this, e);
 }
 
 int
@@ -228,18 +261,6 @@ pfm_arm_event_is_valid(void *this, int pidx)
 {
 	pfmlib_pmu_t *p = this;
 	return pidx >= 0 && pidx < p->pme_count;
-}
-
-void
-pfm_arm_display_reg(pfm_arm_reg_t reg, char *fstr)
-{
-	__pfm_vbprintf("[0x%"PRIx64"] %s\n", reg.val, fstr);
-}
-
-int
-pfm_arm_get_event_perf_type(void *this, int pidx)
-{
-	return PERF_TYPE_RAW;
 }
 
 int
@@ -271,20 +292,69 @@ pfm_arm_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_i
 }
 
 int
+pfm_arm_get_event_nattrs(void *this, int pidx)
+{
+	return 0;
+}
+
+int
 pfm_arm_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
-
+	pfmlib_pmu_t *pmu = this;
 	const arm_entry_t *pe = this_pe(this);
-	/*
-	 * pmu and idx filled out by caller
-	 */
+
 	info->name  = pe[idx].name;
 	info->desc  = pe[idx].desc;
 	info->code  = pe[idx].code;
 	info->equiv = NULL;
+	info->idx   = idx; /* private index */
+	info->pmu   = pmu->pmu;
+	info->is_precise = 0;
 
 	/* no attributes defined for ARM yet */
 	info->nattrs  = 0;
 
+	return PFM_SUCCESS;
+}
+
+int
+pfm_arm_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	int i, compact;
+
+	for (i=0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		if (e->osid == PFM_OS_PERF_EVENT || e->osid == PFM_OS_PERF_EVENT_EXT) {
+			/*
+			 * with perf_events, u and k are handled at the OS level
+			 * via attr.exclude_* fields
+			 */
+			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+#if 0
+				if (e->pattrs[i].idx == SPARC_ATTR_U
+				    || e->pattrs[i].idx == SPARC_ATTR_K
+				    || e->pattrs[i].idx == SPARC_ATTR_H)
+					compact = 1;
+#endif
+			}
+		}
+
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+
+			/* No precise mode on ARM */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
 	return PFM_SUCCESS;
 }

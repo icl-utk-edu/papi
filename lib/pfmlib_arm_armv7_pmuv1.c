@@ -36,13 +36,13 @@
 #include "events/arm_cortex_a8_events.h"        /* event tables */
 #include "events/arm_cortex_a9_events.h"
 
-int
+static int
 pfm_arm_detect_cortex_a8(void *this)
 {
 
 	int ret;
 
-        ret = pfm_arm_detect();
+        ret = pfm_arm_detect(this);
         if (ret != PFM_SUCCESS)
 		return PFM_ERR_NOTSUPP;
    
@@ -53,13 +53,13 @@ pfm_arm_detect_cortex_a8(void *this)
 	return PFM_ERR_NOTSUPP;   
 }
 
-int
+static int
 pfm_arm_detect_cortex_a9(void *this)
 {
 
 	int ret;
 
-        ret = pfm_arm_detect();
+        ret = pfm_arm_detect(this);
         if (ret != PFM_SUCCESS)
 		return PFM_ERR_NOTSUPP;
    
@@ -85,10 +85,11 @@ pfmlib_pmu_t arm_cortex_a8_support={
 	.get_event_first	= pfm_arm_get_event_first,
 	.get_event_next		= pfm_arm_get_event_next,
 	.event_is_valid		= pfm_arm_event_is_valid,
-	.get_event_perf_type	= pfm_arm_get_event_perf_type,
 	.validate_table		= pfm_arm_validate_table,
 	.get_event_info		= pfm_arm_get_event_info,
 	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	.validate_pattrs	= pfm_arm_validate_pattrs,
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
 };
 
 /* Cortex A9 support */
@@ -106,8 +107,9 @@ pfmlib_pmu_t arm_cortex_a9_support={
 	.get_event_first	= pfm_arm_get_event_first,
 	.get_event_next		= pfm_arm_get_event_next,
 	.event_is_valid		= pfm_arm_event_is_valid,
-	.get_event_perf_type	= pfm_arm_get_event_perf_type,
 	.validate_table		= pfm_arm_validate_table,
 	.get_event_info		= pfm_arm_get_event_info,
 	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	.validate_pattrs	= pfm_arm_validate_pattrs,
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
 };

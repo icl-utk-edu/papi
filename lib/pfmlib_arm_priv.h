@@ -56,21 +56,15 @@ typedef struct {
 
 extern pfm_arm_config_t pfm_arm_cfg;
 
-extern int pfm_arm_detect_cortex_a8(void *this);
-extern int pfm_arm_detect_cortex_a9(void *this);
-extern int pfm_arm_detect();
-extern void pfm_arm_display_reg(pfm_arm_reg_t reg, char *fstr);
-extern int pfm_arm_add_defaults(void *this, int pidx, char *umask_str, unsigned int msk, unsigned int *umask);
-
-extern int pfm_arm_event_is_valid(void *this, int pidx);
-extern int pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfm_arm_detect(void *this);
+extern int pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_arm_get_event_first(void *this);
 extern int pfm_arm_get_event_next(void *this, int idx);
-extern int pfm_arm_get_event_umask_first(void *this, int idx);
-extern int pfm_arm_get_event_umask_next(void *this, int idx, int attr);
-extern int pfm_arm_get_event_perf_type(void *this, int pidx);
+extern int pfm_arm_event_is_valid(void *this, int pidx);
 extern int pfm_arm_validate_table(void *this, FILE *fp);
-extern int pfm_arm_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info);
+extern int pfm_arm_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);
 extern int pfm_arm_get_event_info(void *this, int idx, pfm_event_info_t *info);
-extern int pfm_arm_attr2mod(void *this, int pidx, int attr_idx);
+extern int pfm_arm_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_arm_get_event_nattrs(void *this, int pidx);
+
 #endif /* __PFMLIB_ARM_PRIV_H__ */
