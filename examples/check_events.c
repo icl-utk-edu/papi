@@ -132,6 +132,8 @@ main(int argc, const char **argv)
 				count = 0;
 				continue;
 			}
+			if (ret == PFM_ERR_NOTFOUND && strstr(*p, "::"))
+				errx(1, "%s: try setting LIBPFM_ENCODE_INACTIVE=1", pfm_strerror(ret));
 			errx(1, "cannot encode event %s: %s", *p, pfm_strerror(ret));
 		}
 		ret = pfm_get_event_info(idx, PFM_OS_NONE, &info);
