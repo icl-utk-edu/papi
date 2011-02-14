@@ -232,6 +232,10 @@ mainloop(char **arg)
 	close(ready[0]);
 
 	fds[0].fd = -1;
+
+	if (!fds[0].hw.sample_period)
+		errx(1, "need to set sampling period or freq on first event, use :period= or :freq=");
+
 	for(i=0; i < num_fds; i++) {
 
 		if (i == 0) {

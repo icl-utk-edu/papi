@@ -167,6 +167,9 @@ setup_cpu(int cpu)
 	if (ret || !num_fds)
 		errx(1, "cannot setup event list");
 
+	if (!fds[0].hw.sample_period)
+		errx(1, "need to set sampling period or freq on first event, use :period= or :freq=");
+
 	fds[0].fd = -1;
 	for(i=0; i < num_fds; i++) {
 
