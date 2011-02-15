@@ -103,6 +103,23 @@ INSTALLATION
 		$ make BITMODE=64
 		$ make BITMODE=64 install
 
+PACKAGING
+---------
+	The library comes with the config files necessary to generate RPMs or
+	Debian packages. The source code produces 3 packages:
+	- libpfm4 : runtime library
+	- libpfm4-dev: development files (headers, manpages, static library)
+	- libpfm4-pyton: Python bindings for the library
+
+	To generate the RPMs:
+	$ rpmbuild -ba libpfm4.spec
+
+	To generate the Debian package:
+	$ debuild -i -us -uc -b
+
+	You may need to install some extra packages to make Debian package
+	generation possible.
+
 REQUIREMENTS:
 -------------
 	- to run the programs in the perf_examples subdir, you MUST be using a
