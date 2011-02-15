@@ -25,11 +25,13 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
+PYTHON_PREFIX=$(PREFIX)
+
 all:
 	./setup.py build
 
 install:
-	./setup.py install --prefix=$(DESTDIR)
+	./setup.py install --prefix=$(DESTDIR)$(PYTHON_PREFIX)
 
 clean:
 	$(RM) src/perfmon_int_wrap.c src/perfmon_int.py src/*.pyc
