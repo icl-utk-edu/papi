@@ -39,6 +39,7 @@
 #include <string.h>
 #include <signal.h>
 #include <locale.h>
+#include <sys/prctl.h>
 #include <err.h>
 
 #include <perfmon/pfmlib_perf_event.h>

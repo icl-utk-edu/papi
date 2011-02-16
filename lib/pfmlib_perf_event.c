@@ -22,6 +22,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/types.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <perfmon/pfmlib_perf_event.h>
