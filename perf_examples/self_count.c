@@ -35,6 +35,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/mman.h>
+#include <sys/ioctl.h>
 #include <err.h>
 
 #include "perf_util.h"

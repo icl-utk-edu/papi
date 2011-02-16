@@ -35,6 +35,9 @@
 #include <signal.h>
 #include <sched.h>
 #include <err.h>
+#include <sys/ioctl.h>
+#include <sys/prctl.h>
+
 #include <perfmon/pfmlib_perf_event.h>
 
 #include "perf_util.h"

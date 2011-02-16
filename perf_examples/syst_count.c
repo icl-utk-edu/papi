@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <err.h>
 #include <locale.h>
+#include <sys/ioctl.h>
 
 #include "perf_util.h"
 

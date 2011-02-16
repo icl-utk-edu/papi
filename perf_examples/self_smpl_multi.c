@@ -66,6 +66,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 
 #include "perf_util.h"

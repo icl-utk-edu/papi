@@ -433,8 +433,6 @@ enum perf_callchain_context {
 #ifdef __linux__
 #include <unistd.h>
 #include <sys/syscall.h>
-#include <sys/ioctl.h>
-#include <sys/prctl.h>
 
 #ifndef __NR_perf_event_open
 #ifdef __x86_64__

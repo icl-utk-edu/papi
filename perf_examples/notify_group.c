@@ -31,6 +31,8 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <err.h>
+#include <sys/prctl.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 
 #include "perf_util.h"

@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <locale.h>
+#include <sys/ioctl.h>
 #include <err.h>
 
 #include "perf_util.h"

@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <err.h>
 
 #include "perf_util.h"

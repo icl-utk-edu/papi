@@ -34,6 +34,7 @@
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <sys/poll.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <err.h>

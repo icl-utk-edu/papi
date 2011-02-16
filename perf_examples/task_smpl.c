@@ -26,6 +26,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/types.h>
+#include <linux/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -39,6 +40,7 @@
 #include <sys/poll.h>
 #include <sys/mman.h>
 #include <locale.h>
+#include <sys/ioctl.h>
 #include <err.h>
 
 #include "perf_util.h"

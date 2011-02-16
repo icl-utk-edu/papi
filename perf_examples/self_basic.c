@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <locale.h>
+#include <sys/ioctl.h>
 #include <err.h>
 
 #include <perfmon/pfmlib_perf_event.h>
