@@ -34,6 +34,9 @@ def public_members(self):
     return s
 
 class System:
+  # Use the os that gives us everything
+  os = PFM_OS_PERF_EVENT_EXT
+
   def __init__(self):
     self.ncpus = os.sysconf('SC_NPROCESSORS_ONLN')
     self.pmus = []
@@ -59,7 +62,8 @@ class Event:
   def __parse_attrs(self):
     info = self.info
     for index in range(0, info.nattrs):
-      self.__attrs.append(pfm_get_event_attr_info(info.idx, index)[1])
+      self.__attrs.append(pfm_get_event_attr_info(info.idx, index,
+                                                  System.os)[1])
 
   def attrs(self):
     if not self.__attrs:
@@ -72,9 +76,9 @@ class PMU:
     self.__events = []
 
   def __parse_events(self):
-    index = pfm_get_event_first()
+    index = self.info.first_event
     while index != -1:
-      self.__events.append(Event(pfm_get_event_info(index)[1]))
+      self.__events.append(Event(pfm_get_event_info(index, System.os)[1]))
       index = pfm_get_event_next(index)
 
   def events(self):

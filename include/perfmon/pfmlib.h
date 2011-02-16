@@ -290,10 +290,9 @@ extern pfm_err_t pfm_get_pmu_info(pfm_pmu_t pmu, pfm_pmu_info_t *output);
 /*
  * event API
  */
-extern int pfm_get_event_first(void);
 extern int pfm_get_event_next(int idx);
 extern int pfm_find_event(const char *str);
-extern pfm_err_t pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *info);
+extern pfm_err_t pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *output);
 
 /*
  * event encoding API
