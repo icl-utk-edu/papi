@@ -657,12 +657,6 @@ pfm_amd64_event_is_valid(void *this, int pidx)
 }
 
 int
-pfm_amd64_get_event_perf_type(void *this, int pidx)
-{
-	return PERF_TYPE_RAW;
-}
-
-int
 pfm_amd64_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	const amd64_entry_t *pe = this_pe(this);

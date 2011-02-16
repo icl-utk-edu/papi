@@ -627,12 +627,6 @@ pfm_intel_x86_event_is_valid(void *this, int pidx)
 }
 
 int
-pfm_intel_x86_get_event_perf_type(void *this, int pidx)
-{
-	return PERF_TYPE_RAW;
-}
-
-int
 pfm_intel_x86_validate_table(void *this, FILE *fp)
 {
 	pfmlib_pmu_t *pmu = this;
