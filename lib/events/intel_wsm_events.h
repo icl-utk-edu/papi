@@ -43,6 +43,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		.cntmsk = 0x10000000full,
 		.modmsk = INTEL_FIXED3_ATTRS,
 		.desc =  "This is an alias for INSTRUCTION_RETIRED",
+	 	.equiv = "INSTRUCTION_RETIRED",
 	},
 	{.name = "UNHALTED_REFERENCE_CYCLES",
 		.code = 0x013c,
