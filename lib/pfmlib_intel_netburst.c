@@ -107,7 +107,8 @@ found:
 	return PFM_SUCCESS;
 }
 
-static void
+#ifdef __linux__
+static int
 netburst_perf_encode(pfmlib_event_desc_t *e)
 {
 	struct perf_event_attr *attr = e->os_data;
@@ -124,15 +125,24 @@ netburst_perf_encode(pfmlib_event_desc_t *e)
 	escr  = e->codes[0] & ~(0x3full << 25);
 	escr |= perf_code << 25;
 	attr->config = (escr << 32) | e->codes[1];
+
+	return PFM_SUCCESS;
 }
+#else
+static inline int
+netburst_perf_encode(pfmlib_event_desc_t *e)
+{
+	return PFM_ERR_NOTSUPP;
+}
+#endif
 
 static int
 netburst_os_encode(pfmlib_event_desc_t *e)
 {
 	switch (e->osid) {
 	case PFM_OS_PERF_EVENT:
-		netburst_perf_encode(e);
-		break;
+	case PFM_OS_PERF_EVENT_EXT:
+		return netburst_perf_encode(e);
 	case PFM_OS_NONE:
 		break;
 	default:

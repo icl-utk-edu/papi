@@ -194,6 +194,7 @@ pfm_arm_detect(void *this)
 	return PFM_SUCCESS;
 }
 
+#ifdef __linux__
 static int
 pfm_arm_perf_encode(void *this, pfmlib_event_desc_t *e)
 {
@@ -204,6 +205,13 @@ pfm_arm_perf_encode(void *this, pfmlib_event_desc_t *e)
 
 	return PFM_SUCCESS;
 }
+#else
+static inline int
+pfm_arm_perf_encode(void *this, pfmlib_event_desc_t *e)
+{
+	return PFM_ERR_NOTSUPP;
+}
+#endif
 
 static int
 pfm_arm_os_encode(void *this, pfmlib_event_desc_t *e)

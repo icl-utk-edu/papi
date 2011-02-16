@@ -214,6 +214,7 @@ pfm_sparc_display_reg(void *this, pfmlib_event_desc_t *e, pfm_sparc_reg_t reg)
 		e->fstr);
 }
 
+#ifdef __linux__
 static int
 pfm_sparc_perf_encode(void *this, pfmlib_event_desc_t *e)
 {
@@ -224,6 +225,13 @@ pfm_sparc_perf_encode(void *this, pfmlib_event_desc_t *e)
 
 	return PFM_SUCCESS;
 }
+#else
+static inline int
+pfm_sparc_perf_encode(void *this, pfmlib_event_desc_t *e)
+{
+	return PFM_ERR_NOTSUPP;
+}
+#endif
 
 static int
 pfm_sparc_os_encode(void *this, pfmlib_event_desc_t *e)

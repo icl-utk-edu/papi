@@ -380,6 +380,7 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 	return PFM_SUCCESS;
 }
 
+#ifdef __linux__
 static int
 amd64_perf_encode(pfmlib_event_desc_t *e)
 {
@@ -395,6 +396,13 @@ amd64_perf_encode(pfmlib_event_desc_t *e)
 
 	return PFM_SUCCESS;
 }
+#else
+static inline int
+amd64_perf_encode(pfmlib_event_desc_t *e)
+{
+	return PFM_ERR_NOTSUPP;
+}
+#endif
 
 static int
 amd64_os_encode(pfmlib_event_desc_t *e)

@@ -307,6 +307,7 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 	return pebs != numasks && has_pp ? PFM_ERR_FEATCOMB : PFM_SUCCESS;
 }
 
+#ifdef __linux__
 static int
 intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
 {
@@ -336,6 +337,13 @@ intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
 	}
 	return PFM_SUCCESS;
 }
+#else
+static inline int
+intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
+{
+	return PFM_ERR_NOTSUPP;
+}
+#endif
 
 static int
 intel_x86_os_encode(void *this, pfmlib_event_desc_t *e)
