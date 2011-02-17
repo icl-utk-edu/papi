@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #ifdef __linux__
-#include <syscall.h> /* for openat() */
+#include <sys/syscall.h> /* for openat() */
 #include <sys/param.h>
 #endif
 
