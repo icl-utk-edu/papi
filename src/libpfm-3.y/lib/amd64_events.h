@@ -24,8 +24,10 @@
  * applications on Linux.
  */
 
+#include "amd64_events_k7.h"
 #include "amd64_events_k8.h"
 #include "amd64_events_fam10h.h"
+#include "amd64_events_fam15h.h"
 
 struct pme_amd64_table {
 	unsigned int		num;
@@ -34,11 +36,18 @@ struct pme_amd64_table {
 	unsigned int		ret_inst;
 };
 
+static struct pme_amd64_table amd64_k7_table = {
+	.num	  = PME_AMD64_K7_EVENT_COUNT,
+	.events	  = amd64_k7_pe,
+	.cpu_clks = PME_AMD64_K7_CPU_CLK_UNHALTED,
+	.ret_inst = PME_AMD64_K7_RETIRED_INSTRUCTIONS,
+};
+
 static struct pme_amd64_table amd64_k8_table = {
 	.num	  = PME_AMD64_K8_EVENT_COUNT,
 	.events	  = amd64_k8_pe,
-	.cpu_clks = PME_AMD64_FAM10H_CPU_CLK_UNHALTED,
-	.ret_inst = PME_AMD64_FAM10H_RETIRED_INSTRUCTIONS,
+	.cpu_clks = PME_AMD64_K8_CPU_CLK_UNHALTED,
+	.ret_inst = PME_AMD64_K8_RETIRED_INSTRUCTIONS,
 };
 
 static struct pme_amd64_table amd64_fam10h_table = {
@@ -46,4 +55,11 @@ static struct pme_amd64_table amd64_fam10h_table = {
 	.events   = amd64_fam10h_pe,
 	.cpu_clks = PME_AMD64_FAM10H_CPU_CLK_UNHALTED,
 	.ret_inst = PME_AMD64_FAM10H_RETIRED_INSTRUCTIONS,
+};
+
+static struct pme_amd64_table amd64_fam15h_table = {
+	.num      = PME_AMD64_FAM15H_EVENT_COUNT,
+	.events   = amd64_fam15h_pe,
+	.cpu_clks = PME_AMD64_FAM15H_CPU_CLK_UNHALTED,
+	.ret_inst = PME_AMD64_FAM15H_RETIRED_INSTRUCTIONS,
 };

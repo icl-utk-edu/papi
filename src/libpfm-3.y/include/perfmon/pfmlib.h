@@ -31,7 +31,7 @@ extern "C" {
 #include <perfmon/pfmlib_os.h>
 #include <perfmon/pfmlib_comp.h>
 
-#define PFMLIB_VERSION		(3 << 16 | 2)
+#define PFMLIB_VERSION		(3 << 16 | 10)
 #define PFMLIB_MAJ_VERSION(v)	((v)>>16)
 #define PFMLIB_MIN_VERSION(v)	((v) & 0xffff)
 
@@ -66,9 +66,11 @@ typedef unsigned long pfmlib_regmask_bits_t;
 #define PFMLIB_REG_MAX	PFMLIB_MAX_PMDS
 #endif
 
+#ifndef SWIG
 #define __PFMLIB_REG_BV_BITS (sizeof(pfmlib_regmask_bits_t)<<3)
 #define PFMLIB_BVSIZE(x) (((x)+(__PFMLIB_REG_BV_BITS)-1) / __PFMLIB_REG_BV_BITS)
 #define PFMLIB_REG_BV PFMLIB_BVSIZE(PFMLIB_REG_MAX)
+#endif
 
 typedef struct {
 	pfmlib_regmask_bits_t bits[PFMLIB_REG_BV];
@@ -138,64 +140,91 @@ typedef struct {
 	unsigned int	pfm_reserved:30;/* for future use */
 } pfmlib_options_t;
 
-extern int pfm_set_options(pfmlib_options_t *opt);
-extern int pfm_initialize(void);
+/*
+ * special data type for libpfm error value used to help
+ * with Python support and in particular for SWIG. By using
+ * a specific type we can detect library calls and trap errors
+ * in one SWIG statement as opposed to having to keep track of
+ * each call individually. Programs can use 'int' safely for
+ * the return value.
+ */
+typedef int pfm_err_t;			/* error if !PFMLIB_SUCCESS */
 
-extern int pfm_list_supported_pmus(int (*pf)(const char *fmt,...));
-extern int pfm_get_pmu_name(char *name, int maxlen);
-extern int pfm_get_pmu_type(int *type);
-extern int pfm_get_pmu_name_bytype(int type, char *name, size_t maxlen);
-extern int pfm_is_pmu_supported(int type);
-extern int pfm_force_pmu(int type);
+extern pfm_err_t pfm_set_options(pfmlib_options_t *opt);
+extern pfm_err_t pfm_initialize(void);
+
+extern pfm_err_t pfm_list_supported_pmus(int (*pf)(const char *fmt,...));
+extern pfm_err_t pfm_get_pmu_name(char *name, int maxlen);
+extern pfm_err_t pfm_get_pmu_type(int *type);
+extern pfm_err_t pfm_get_pmu_name_bytype(int type, char *name, size_t maxlen);
+extern pfm_err_t pfm_is_pmu_supported(int type);
+extern pfm_err_t pfm_force_pmu(int type);
 
 /*
  * pfm_find_event_byname() is obsolete, use pfm_find_event
  */
-extern int pfm_find_event(const char *str, unsigned int *idx);
-extern int pfm_find_event_byname(const char *name, unsigned int *idx);
-extern int pfm_find_event_bycode(int code, unsigned int *idx);
-extern int pfm_find_event_bycode_next(int code, unsigned int start, unsigned int *next);
-extern int pfm_find_event_mask(unsigned int event_idx, const char *str, unsigned int *mask_idx);
-extern int pfm_find_full_event(const char *str, pfmlib_event_t *e);
+extern pfm_err_t pfm_find_event(const char *str, unsigned int *idx);
+extern pfm_err_t pfm_find_event_byname(const char *name, unsigned int *idx);
+extern pfm_err_t pfm_find_event_bycode(int code, unsigned int *idx);
+extern pfm_err_t pfm_find_event_bycode_next(int code, unsigned int start,
+                                            unsigned int *next);
+extern pfm_err_t pfm_find_event_mask(unsigned int event_idx, const char *str,
+                                     unsigned int *mask_idx);
+extern pfm_err_t pfm_find_full_event(const char *str, pfmlib_event_t *e);
 
-extern int pfm_get_max_event_name_len(size_t *len);
+extern pfm_err_t pfm_get_max_event_name_len(size_t *len);
 
-extern int pfm_get_num_events(unsigned int *count);
-extern int pfm_get_num_event_masks(unsigned int event_idx, unsigned int *count);
-extern int pfm_get_event_name(unsigned int idx, char *name, size_t maxlen);
-extern int pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen);
-extern int pfm_get_event_code(unsigned int idx, int *code);
-extern int pfm_get_event_mask_code(unsigned int idx, unsigned int mask_idx, unsigned int *code);
-extern int pfm_get_event_counters(unsigned int idx, pfmlib_regmask_t *counters);
-extern int pfm_get_event_description(unsigned int idx, char **str);
-extern int pfm_get_event_code_counter(unsigned int idx, unsigned int cnt, int *code);
-extern int pfm_get_event_mask_name(unsigned int event_idx, unsigned int mask_idx, char *name, size_t maxlen);
-extern int pfm_get_event_mask_description(unsigned int event_idx, unsigned int mask_idx, char **desc);
+extern pfm_err_t pfm_get_num_events(unsigned int *count);
+extern pfm_err_t pfm_get_num_event_masks(unsigned int event_idx,
+                                         unsigned int *count);
+extern pfm_err_t pfm_get_event_name(unsigned int idx, char *name,
+                                    size_t maxlen);
+extern pfm_err_t pfm_get_full_event_name(pfmlib_event_t *e, char *name,
+                                         size_t maxlen);
+extern pfm_err_t pfm_get_event_code(unsigned int idx, int *code);
+extern pfm_err_t pfm_get_event_mask_code(unsigned int idx,
+                                         unsigned int mask_idx,
+                                         unsigned int *code);
+extern pfm_err_t pfm_get_event_counters(unsigned int idx,
+                                        pfmlib_regmask_t *counters);
+extern pfm_err_t pfm_get_event_description(unsigned int idx, char **str);
+extern pfm_err_t pfm_get_event_code_counter(unsigned int idx, unsigned int cnt,
+                                            int *code);
+extern pfm_err_t pfm_get_event_mask_name(unsigned int event_idx,
+                                         unsigned int mask_idx,
+                                         char *name, size_t maxlen);
+extern pfm_err_t pfm_get_event_mask_description(unsigned int event_idx,
+                                                unsigned int mask_idx,
+                                                char **desc);
 
-extern int pfm_dispatch_events(pfmlib_input_param_t *p, void *model_in, pfmlib_output_param_t *q, void *model_out);
+extern pfm_err_t pfm_dispatch_events(pfmlib_input_param_t *p,
+                                     void *model_in,
+                                     pfmlib_output_param_t *q,
+                                     void *model_out);
 
-extern int pfm_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs);
-extern int pfm_get_impl_pmds(pfmlib_regmask_t *impl_pmds);
-extern int pfm_get_impl_counters(pfmlib_regmask_t *impl_counters);
-extern int pfm_get_num_pmds(unsigned int *num);
-extern int pfm_get_num_pmcs(unsigned int *num);
-extern int pfm_get_num_counters(unsigned int *num);
+extern pfm_err_t pfm_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs);
+extern pfm_err_t pfm_get_impl_pmds(pfmlib_regmask_t *impl_pmds);
+extern pfm_err_t pfm_get_impl_counters(pfmlib_regmask_t *impl_counters);
+extern pfm_err_t pfm_get_num_pmds(unsigned int *num);
+extern pfm_err_t pfm_get_num_pmcs(unsigned int *num);
+extern pfm_err_t pfm_get_num_counters(unsigned int *num);
 
-extern int pfm_get_hw_counter_width(unsigned int *width);
-extern int pfm_get_version(unsigned int *version);
+extern pfm_err_t pfm_get_hw_counter_width(unsigned int *width);
+extern pfm_err_t pfm_get_version(unsigned int *version);
 extern char *pfm_strerror(int code);
-extern int pfm_get_cycle_event(pfmlib_event_t *e);
-extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
+extern pfm_err_t pfm_get_cycle_event(pfmlib_event_t *e);
+extern pfm_err_t pfm_get_inst_retired_event(pfmlib_event_t *e);
 
 /*
  * Supported PMU family
  */
-#define PFMLIB_NO_PMU	 	 	0	/* unsupported */
+#define PFMLIB_NO_PMU	 	 	-1	/* PMU unused (forced) */
+#define PFMLIB_UNKNOWN_PMU	 	0	/* type not yet known (dynamic) */
 #define PFMLIB_GEN_IA64_PMU	 	1	/* Intel IA-64 architected PMU */
 #define PFMLIB_ITANIUM_PMU	 	2	/* Intel Itanium   */
 #define PFMLIB_ITANIUM2_PMU 	 	3	/* Intel Itanium 2 */
 #define PFMLIB_MONTECITO_PMU 	 	4	/* Intel Dual-Core Itanium 2 9000 */
-#define PFMLIB_AMD64_PMU		16	/* AMD AMD64 */
+#define PFMLIB_AMD64_PMU		16	/* AMD AMD64 (K7, K8, Families 10h, 15h) */
 #define PFMLIB_GEN_IA32_PMU		63	/* Intel architectural PMU for X86 */
 #define PFMLIB_I386_P6_PMU		32	/* Intel PIII (P6 core) */
 #define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */
@@ -205,6 +234,9 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_INTEL_CORE_PMU		36	/* Intel Core */
 #define PFMLIB_INTEL_PPRO_PMU		37	/* Intel Pentium Pro */
 #define PFMLIB_INTEL_PII_PMU		38	/* Intel Pentium II */
+#define PFMLIB_INTEL_ATOM_PMU		39	/* Intel Atom */
+#define PFMLIB_INTEL_NHM_PMU            40      /* Intel Nehalem */
+#define PFMLIB_INTEL_WSM_PMU            41      /* Intel Westmere */
 
 #define PFMLIB_MIPS_20KC_PMU		64	/* MIPS 20KC */
 #define PFMLIB_MIPS_24K_PMU		65	/* MIPS 24K */
@@ -235,6 +267,7 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_POWER5_PMU               114	/* IBM POWER5 */
 #define PFMLIB_POWER5p_PMU              115	/* IBM POWER5+ */
 #define PFMLIB_POWER6_PMU               116	/* IBM POWER6 */
+#define PFMLIB_POWER7_PMU               117	/* IBM POWER7 */
 
 #define PFMLIB_SPARC_ULTRA12_PMU	130	/* UltraSPARC I, II, IIi, and IIe */
 #define PFMLIB_SPARC_ULTRA3_PMU		131	/* UltraSPARC III */

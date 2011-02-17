@@ -25,7 +25,18 @@
 #ifndef __PFMLIB_AMD64_PRIV_H__
 #define __PFMLIB_AMD64_PRIV_H__
 
-#define PFMLIB_AMD64_MAX_UMASK	19
+/* PERFSEL/PERFCTR include IBS registers of family 10h */
+#define PMU_AMD64_NUM_PERFSEL	6	/* total number of PMCs defined */
+#define PMU_AMD64_NUM_PERFCTR	14	/* total number of PMDs defined */
+#define PMU_AMD64_NUM_COUNTERS	4	/* total numbers of EvtSel/EvtCtr */
+#define PMU_AMD64_COUNTER_WIDTH	48	/* hardware counter bit width */
+#define PMU_AMD64_CNT_MASK_MAX	4 	/* max cnt_mask value */
+#define PMU_AMD64_IBSFETCHCTL_PMC 4	/* IBS: fetch PMC base */
+#define PMU_AMD64_IBSFETCHCTL_PMD 4	/* IBS: fetch PMD base */
+#define PMU_AMD64_IBSOPCTL_PMC 5	/* IBS: op PMC base */
+#define PMU_AMD64_IBSOPCTL_PMD 7	/* IBS: op PMD base */
+
+#define PFMLIB_AMD64_MAX_UMASK	13
 
 typedef struct {
 	char			*pme_uname; /* unit mask name */
@@ -43,12 +54,76 @@ typedef struct {
 	unsigned int		pme_flags;	/* flags */
 } pme_amd64_entry_t;
 
+typedef enum {
+	AMD64_CPU_UN,
+	AMD64_K7,
+	AMD64_K8_REV_B,
+	AMD64_K8_REV_C,
+	AMD64_K8_REV_D,
+	AMD64_K8_REV_E,
+	AMD64_K8_REV_F,
+	AMD64_K8_REV_G,
+	AMD64_FAM10H_REV_B,
+	AMD64_FAM10H_REV_C,
+	AMD64_FAM10H_REV_D,
+	AMD64_FAM10H_REV_E,
+	AMD64_FAM15H_REV_B,
+} amd64_rev_t;
+
+static const char *amd64_rev_strs[]= {
+	"?", "?",
+	/* K8 */
+	"B", "C", "D", "E", "F", "G",
+	/* Family 10h */
+	"B", "C", "D", "E",
+	/* Family 15h */
+	"B",
+};
+
+static const char *amd64_cpu_strs[] = {
+	"AMD64 (unknown model)",
+	"AMD64 (K7)",
+	"AMD64 (K8 RevB)",
+	"AMD64 (K8 RevC)",
+	"AMD64 (K8 RevD)",
+	"AMD64 (K8 RevE)",
+	"AMD64 (K8 RevF)",
+	"AMD64 (K8 RevG)",
+	"AMD64 (Family 10h RevB, Barcelona)",
+	"AMD64 (Family 10h RevC, Shanghai)",
+	"AMD64 (Family 10h RevD, Istanbul)",
+	"AMD64 (Family 10h RevE)",
+	"AMD64 (Family 15h RevB)",
+};
+
 /* 
  * pme_flags values
  */
 #define PFMLIB_AMD64_UMASK_COMBO	0x1 /* unit mask can be combined */
-#define PFMLIB_AMD64_K8_REV_D		0x2 /* event requires at least rev D */
-#define PFMLIB_AMD64_K8_REV_E		0x4 /* event requires at least rev E */
-#define PFMLIB_AMD64_K8_REV_F		0x8 /* event requires at least rev F */
+#define PFMLIB_AMD64_FROM_REV(rev)	((rev)<<8)
+#define PFMLIB_AMD64_TILL_REV(rev)	((rev)<<16)
+#define PFMLIB_AMD64_NOT_SUPP		0x1ff00
+#define PFMLIB_AMD64_TILL_K8_REV_C	PFMLIB_AMD64_TILL_REV(AMD64_K8_REV_C)
+#define PFMLIB_AMD64_K8_REV_D		PFMLIB_AMD64_FROM_REV(AMD64_K8_REV_D)
+#define PFMLIB_AMD64_K8_REV_E		PFMLIB_AMD64_FROM_REV(AMD64_K8_REV_E)
+#define PFMLIB_AMD64_TILL_K8_REV_E	PFMLIB_AMD64_TILL_REV(AMD64_K8_REV_E)
+#define PFMLIB_AMD64_K8_REV_F		PFMLIB_AMD64_FROM_REV(AMD64_K8_REV_F)
+#define PFMLIB_AMD64_TILL_FAM10H_REV_B	PFMLIB_AMD64_TILL_REV(AMD64_FAM10H_REV_B)
+#define PFMLIB_AMD64_FAM10H_REV_C	PFMLIB_AMD64_FROM_REV(AMD64_FAM10H_REV_C)
+#define PFMLIB_AMD64_TILL_FAM10H_REV_C	PFMLIB_AMD64_TILL_REV(AMD64_FAM10H_REV_C)
+#define PFMLIB_AMD64_FAM10H_REV_D	PFMLIB_AMD64_FROM_REV(AMD64_FAM10H_REV_D)
+
+static inline int from_revision(unsigned int flags)
+{
+	return ((flags) >> 8) & 0xff;
+}
+
+static inline int till_revision(unsigned int flags)
+{
+	int till = (((flags)>>16) & 0xff);
+	if (!till)
+		return 0xff;
+	return till;
+}
 
 #endif /* __PFMLIB_AMD64_PRIV_H__ */
