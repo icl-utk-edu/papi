@@ -48,7 +48,7 @@ pfmlib_pmu_t sparc_niagara1_support={
 	.validate_table		= pfm_sparc_validate_table,
 	.get_event_info		= pfm_sparc_get_event_info,
 	.get_event_attr_info	= pfm_sparc_get_event_attr_info,
-	.validate_pattrs	= pfm_sparc_validate_pattrs,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_sparc_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_sparc_get_event_nattrs,
 };
 
@@ -70,6 +70,6 @@ pfmlib_pmu_t sparc_niagara2_support={
 	.validate_table		= pfm_sparc_validate_table,
 	.get_event_info		= pfm_sparc_get_event_info,
 	.get_event_attr_info	= pfm_sparc_get_event_attr_info,
-	.validate_pattrs	= pfm_sparc_validate_pattrs,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_sparc_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_sparc_get_event_nattrs,
 };
