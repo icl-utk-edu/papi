@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <err.h>
 
 #include <perfmon/pfmlib_perf_event.h>
