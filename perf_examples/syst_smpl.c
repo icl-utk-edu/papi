@@ -44,6 +44,12 @@
 
 #define SMPL_PERIOD	240000000ULL
 
+#define MAX_PATH	1024
+#ifndef STR
+# define _STR(x) #x
+# define STR(x) _STR(x)
+#endif
+
 typedef struct {
 	int opt_no_show;
 	int mmap_pages;
@@ -51,6 +57,7 @@ typedef struct {
 	int pin;
 	int delay;
 	char *events;
+	char *cgroup;
 } options_t;
 
 static jmp_buf jbuf;
@@ -68,7 +75,6 @@ static struct option the_options[]={
 };
 
 static const char *gen_events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
-
 
 static void
 display_lost(perf_event_desc_t *hw)
@@ -155,10 +161,11 @@ process_smpl_buf(perf_event_desc_t *hw)
 }
 
 int
-setup_cpu(int cpu)
+setup_cpu(int cpu, int fd)
 {
 	uint64_t *val;
-	int ret;
+	int ret, flags;
+	pid_t pid;
 	int i;
 
 	/*
@@ -176,6 +183,13 @@ setup_cpu(int cpu)
 
 		fds[i].hw.disabled = !i; /* start immediately */
 
+		if (options.cgroup) {
+			flags = PERF_FLAG_PID_CGROUP;
+			pid = fd;
+		} else {
+			flags = 0;
+			pid = -1;
+		}
 
 		if (options.pin)
 			fds[i].hw.pinned = 1;
@@ -200,7 +214,7 @@ setup_cpu(int cpu)
 				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
 		}
 
-		fds[i].fd = perf_event_open(&fds[i].hw, -1, cpu, fds[0].fd, 0);
+		fds[i].fd = perf_event_open(&fds[i].hw, -1, cpu, fds[0].fd, flags);
 		if (fds[i].fd == -1) {
 			if (fds[i].hw.precise_ip)
 				err(1, "cannot attach event %s: precise mode may not be supported", fds[i].name);
@@ -272,6 +286,52 @@ start_cpu(void)
 		err(1, "cannot start counter");
 }
 
+static const char
+*cgroupfs_find_mountpoint(void)
+{
+	static char cgroup_mountpoint[MAX_PATH+1];
+	FILE *fp;
+	int found = 0;
+	char type[64];
+
+	fp = fopen("/proc/mounts", "r");
+	if (!fp)
+		return NULL;
+
+	while (fscanf(fp, "%*s %"
+				STR(MAX_PATH)
+				"s %99s %*s %*d %*d\n",
+				cgroup_mountpoint, type) == 2) {
+
+		found = !strcmp(type, "cgroup");
+		if (found)
+			break;
+	}
+	fclose(fp);
+
+	return found ? cgroup_mountpoint : NULL;
+}
+
+int
+open_cgroup(char *name)
+{
+	char path[MAX_PATH+1];
+	const char *mnt;
+	int cfd;
+
+	mnt = cgroupfs_find_mountpoint();
+	if (!mnt)
+		errx(1, "cannot find cgroup fs mount point");
+
+	snprintf(path, MAX_PATH, "%s/%s", mnt, name);
+
+	cfd = open(path, O_RDONLY);
+	if (cfd == -1)
+		warn("no access to cgroup %s\n", name);
+
+	return cfd;
+}
+
 static void handler(int n)
 {
 	longjmp(jbuf, 1);
@@ -283,6 +343,7 @@ mainloop(char **arg)
 	static uint64_t ovfl_count = 0; /* static to avoid setjmp issue */
 	struct pollfd pollfds[1];
 	int ret;
+	int fd = -1;
 	int i;
 
 	if (pfm_initialize() != PFM_SUCCESS)
@@ -291,7 +352,13 @@ mainloop(char **arg)
 	pgsz = sysconf(_SC_PAGESIZE);
 	map_size = (options.mmap_pages+1)*pgsz;
 
-	setup_cpu(options.cpu);
+	if (options.cgroup) {
+		fd = open_cgroup(options.cgroup);
+		if (fd == -1)
+			err(1, "cannot open cgroup file %s\n", options.cgroup);
+	}
+
+	setup_cpu(options.cpu, fd);
 
 	signal(SIGALRM, handler);
 	signal(SIGINT, handler);
@@ -349,7 +416,7 @@ main(int argc, char **argv)
 	options.cpu = -1;
 	options.delay = -1;
 
-	while ((c=getopt_long(argc, argv,"hPe:m:c:d:", the_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"hPe:m:c:d:G:", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'e':
@@ -367,6 +434,9 @@ main(int argc, char **argv)
 				break;
 			case 'd':
 				options.delay = atoi(optarg);
+				break;
+			case 'G':
+				options.cgroup = optarg;
 				break;
 			case 'c':
 				options.cpu = atoi(optarg);

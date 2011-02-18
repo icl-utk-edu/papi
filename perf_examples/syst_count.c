@@ -33,10 +33,17 @@
 #include <err.h>
 #include <locale.h>
 #include <sys/ioctl.h>
+#include <time.h>
 
 #include "perf_util.h"
 
 #define MAX_GROUPS	16
+#define MAX_PATH	1024
+
+#ifndef STR
+# define _STR(x) #x
+# define STR(x) _STR(x)
+#endif
 
 typedef struct {
 	const char *events[MAX_GROUPS];
@@ -47,17 +54,66 @@ typedef struct {
 	int pin;
 	int interval;
 	int cpu;
+	char *cgroup_name;
 } options_t;
 
 static options_t options;
 static perf_event_desc_t **all_fds;
 
+static const char
+*cgroupfs_find_mountpoint(void)
+{
+	static char cgroup_mountpoint[MAX_PATH+1];
+	FILE *fp;
+	int found = 0;
+	char type[64];
+
+	fp = fopen("/proc/mounts", "r");
+	if (!fp)
+		return NULL;
+
+	while (fscanf(fp, "%*s %"
+				STR(MAX_PATH)
+				"s %99s %*s %*d %*d\n",
+				cgroup_mountpoint, type) == 2) {
+
+		found = !strcmp(type, "cgroup");
+		if (found)
+			break;
+	}
+	fclose(fp);
+
+	return found ? cgroup_mountpoint : NULL;
+}
+
+int
+open_cgroup(char *name)
+{
+	char path[MAX_PATH+1];
+	const char *mnt;
+	int cfd;
+
+	mnt = cgroupfs_find_mountpoint();
+	if (!mnt)
+		errx(1, "cannot find cgroup fs mount point");
+
+	snprintf(path, MAX_PATH, "%s/%s", mnt, name);
+
+	cfd = open(path, O_RDONLY);
+	if (cfd == -1)
+		warn("no access to cgroup %s\n", name);
+
+	return cfd;
+}
+
 void
-setup_cpu(int cpu)
+setup_cpu(int cpu, int cfd)
 {
 	perf_event_desc_t *fds = NULL;
 	int old_total, total = 0, num;
 	int i, j, n, ret, is_lead, group_fd;
+	unsigned long flags;
+	pid_t pid;
 
 	for(i=0, j=0; i < options.num_groups; i++) {
 		old_total = total;
@@ -83,6 +139,16 @@ setup_cpu(int cpu)
 			}
 			fds[j].hw.size = sizeof(struct perf_event_attr);
 
+			if (options.cgroup_name) {
+				flags = PERF_FLAG_PID_CGROUP;
+				pid = cfd;
+				//fds[j].hw.cgroup = 1;
+				//fds[j].hw.cgroup_fd = cfd;
+			} else {
+				flags = 0;
+				pid = -1;
+			}
+
 			if (options.pin && is_lead)
 				fds[j].hw.pinned = 1;
 
@@ -91,7 +157,7 @@ setup_cpu(int cpu)
 
 			/* request timing information necessary for scaling counts */
 			fds[j].hw.read_format = PERF_FORMAT_SCALE;
-			fds[j].fd = perf_event_open(&fds[j].hw, -1, cpu, group_fd, 0);
+			fds[j].fd = perf_event_open(&fds[j].hw, pid, cpu, group_fd, flags);
 			if (fds[j].fd == -1) {
 				if (errno == EACCES)
 					err(1, "you need to be root to run system-wide on this machine");
@@ -173,7 +239,6 @@ void read_cpu(int c)
 					continue;
 				}
 			}
-
 			/*
 			 * scaling because we may be sharing the PMU and
 			 * thus may be multiplexed
@@ -181,14 +246,17 @@ void read_cpu(int c)
 			fds[j].value = perf_scale(values);
 			ratio = perf_scale_ratio(values);
 
-			printf("CPU%-3d G%-2d %'-20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64")\n",
+			printf("CPU%-3d G%-2d %'-20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64") %s\n",
 				c,
 				i,
 				fds[j].value,
 				fds[j].name,
 				(1.0-ratio)*100,
 				values[1],
-				values[2]);
+				values[2],
+				options.cgroup_name ? options.cgroup_name : "");
+	if (values[2] > values[1])
+		errx(1, "WARNING: time_running > time_enabled %"PRIu64"\n", values[2] - values[1]);
 		}
 	}
 }
@@ -215,6 +283,7 @@ void
 measure(void)
 {
 	int c, cmin, cmax, ncpus;
+	int cfd = -1;
 
 	cmin = 0;
 	cmax = (int)sysconf(_SC_NPROCESSORS_ONLN);
@@ -229,25 +298,38 @@ measure(void)
 	if (!all_fds)
 		err(1, "cannot allocate memory for all_fds");
 
+	if (options.cgroup_name) {
+		cfd = open_cgroup(options.cgroup_name);
+		if (cfd == -1)
+			exit(1);
+	}
+
 	for(c=cmin ; c < cmax; c++)
-		setup_cpu(c);
+		setup_cpu(c, cfd);
 
 	printf("<press CTRL-C to quit before %ds time limit>\n", options.delay);
-
 	/*
 	 * FIX this for hotplug CPU
 	 */
 
 	if (options.interval) {
+		struct timespec tv;
 		int delay;
+
 		for (delay = 1 ; delay <= options.delay; delay++) {
-			for(c=cmin ; c < cmax; c++)
-				start_cpu(c);
 
-			sleep(1);
+		for(c=cmin ; c < cmax; c++)
+			start_cpu(c);
 
-			for(c=cmin ; c < cmax; c++)
-				stop_cpu(c);
+			if (0) {
+				tv.tv_sec = 0;
+				tv.tv_nsec = 100000000;
+				nanosleep(&tv, NULL);
+			} else
+				sleep(1);
+
+		for(c=cmin ; c < cmax; c++)
+			stop_cpu(c);
 
 			for(c = cmin; c < cmax; c++) {
 				printf("# %'ds -----\n", delay);
@@ -255,14 +337,16 @@ measure(void)
 			}
 
 		}
+
 	} else {
 		for(c=cmin ; c < cmax; c++)
 			start_cpu(c);
 
 		sleep(options.delay);
 
-		for(c=cmin ; c < cmax; c++)
-			stop_cpu(c);
+		if (0)
+			for(c=cmin ; c < cmax; c++)
+				stop_cpu(c);
 
 		for(c = cmin; c < cmax; c++) {
 			printf("# -----\n");
@@ -279,7 +363,7 @@ measure(void)
 static void
 usage(void)
 {
-	printf("usage: syst [-c cpu] [-x] [-h] [-p] [-d delay] [-P] [-e event1,event2,...]\n");
+	printf("usage: syst [-c cpu] [-x] [-h] [-p] [-d delay] [-P] [-G cgroup name] [-e event1,event2,...]\n");
 }
 
 int
@@ -291,7 +375,7 @@ main(int argc, char **argv)
 
 	options.cpu = -1;
 
-	while ((c=getopt(argc, argv,"hc:e:d:xPp")) != -1) {
+	while ((c=getopt(argc, argv,"hc:e:d:xPpG:")) != -1) {
 		switch(c) {
 			case 'x':
 				options.excl = 1;
@@ -319,6 +403,9 @@ main(int argc, char **argv)
 			case 'h':
 				usage();
 				exit(0);
+			case 'G':
+				options.cgroup_name = optarg;
+				break;
 			default:
 				errx(1, "unknown error");
 		}
