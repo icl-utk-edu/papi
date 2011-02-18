@@ -946,6 +946,10 @@ PAPI_assign_eventset_component( int EventSet, int cidx )
 	if ( retval < 0 )
 		papi_return( retval );
 
+/* cowardly refuse to reassign eventsets */ 
+	if ( ESI->CmpIdx >= 0 )
+	  return PAPI_EINVAL;
+
 	return ( _papi_hwi_assign_eventset( ESI, cidx ) );
 }
 
