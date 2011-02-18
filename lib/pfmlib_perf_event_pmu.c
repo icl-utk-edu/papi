@@ -909,8 +909,8 @@ pfm_perf_get_event_nattrs(void *this, int idx)
 /*
  * remove attrs which are in conflicts (or duplicated) with os layer
  */
-static int
-pfm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+static void
+pfm_perf_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
 	int i, compact;
 
@@ -943,7 +943,6 @@ pfm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			i--;
 		}
 	}
-	return PFM_SUCCESS;
 }
 
 pfmlib_pmu_t perf_event_support={
@@ -963,5 +962,5 @@ pfmlib_pmu_t perf_event_support={
 	.get_event_attr_info	= pfm_perf_get_event_attr_info,
 	.validate_table		= pfm_perf_validate_table,
 	.get_event_nattrs	= pfm_perf_get_event_nattrs,
-	.validate_pattrs	= pfm_perf_validate_pattrs,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_perf_perf_validate_pattrs),
 };

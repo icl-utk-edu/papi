@@ -408,8 +408,9 @@ pfm_sparc_get_event_nattrs(void *this, int pidx)
 	return SPARC_NUM_MODS + pe[pidx].numasks;
 }
 
-int
-pfm_sparc_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+#ifdef __linux__
+void
+pfm_sparc_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
 	int i, compact;
 
@@ -420,18 +421,16 @@ pfm_sparc_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		if (e->pattrs[i].type == PFM_ATTR_UMASK)
 			continue;
 
-		if (e->osid == PFM_OS_PERF_EVENT || e->osid == PFM_OS_PERF_EVENT_EXT) {
-			/*
-			 * with perf_events, u and k are handled at the OS level
-			 * via attr.exclude_* fields
-			 */
-			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+		/*
+		 * with perf_events, u and k are handled at the OS level
+		 * via attr.exclude_* fields
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
 
-				if (e->pattrs[i].idx == SPARC_ATTR_U
-				    || e->pattrs[i].idx == SPARC_ATTR_K
-				    || e->pattrs[i].idx == SPARC_ATTR_H)
-					compact = 1;
-			}
+			if (e->pattrs[i].idx == SPARC_ATTR_U
+					|| e->pattrs[i].idx == SPARC_ATTR_K
+					|| e->pattrs[i].idx == SPARC_ATTR_H)
+				compact = 1;
 		}
 
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
@@ -446,5 +445,5 @@ pfm_sparc_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			i--;
 		}
 	}
-	return PFM_SUCCESS;
 }
+#endif

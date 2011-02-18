@@ -776,8 +776,8 @@ pfmlib_build_event_pattrs(pfmlib_event_desc_t  *e)
 			/*
 			 * check for conflicts between HW and OS attributes
 			 */
-			if (pmu->validate_pattrs)
-				pmu->validate_pattrs(pmu, e);
+			if (pmu->validate_pattrs[e->osid])
+				pmu->validate_pattrs[e->osid](pmu, e);
 		}
 	}
 	for (i = 0; i < e->npattrs; i++)

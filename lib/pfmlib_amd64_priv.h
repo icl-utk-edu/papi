@@ -198,6 +198,7 @@ extern int pfm_amd64_validate_table(void *this, FILE *fp);
 extern int pfm_amd64_detect(void *this);
 extern int pfm_amd64_pmu_init(void *this);
 extern const pfmlib_attr_desc_t amd64_mods[];
-extern int pfm_amd64_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 extern int pfm_amd64_get_event_nattrs(void *this, int pidx);
+
+extern void pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 #endif /* __PFMLIB_AMD64_PRIV_H__ */

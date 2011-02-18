@@ -856,8 +856,9 @@ pfm_amd64_pmu_init(void *this)
 	return PFM_SUCCESS;
 }
 
-int
-pfm_amd64_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+#ifdef __linux__
+void
+pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
 
@@ -870,18 +871,16 @@ pfm_amd64_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		if (e->pattrs[i].type == PFM_ATTR_UMASK)
 			continue;
 
-		if (e->osid == PFM_OS_PERF_EVENT || e->osid == PFM_OS_PERF_EVENT_EXT) {
-			/*
-			 * with perf_events, u and k are handled at the OS level
-			 * via attr.exclude_* fields
-			 */
-			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+		/*
+		 * with perf_events, u and k are handled at the OS level
+		 * via attr.exclude_* fields
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
 
-				if (e->pattrs[i].idx == AMD64_ATTR_U
-				    || e->pattrs[i].idx == AMD64_ATTR_K
-				    || e->pattrs[i].idx == AMD64_ATTR_H)
-					compact = 1;
-			}
+			if (e->pattrs[i].idx == AMD64_ATTR_U
+					|| e->pattrs[i].idx == AMD64_ATTR_K
+					|| e->pattrs[i].idx == AMD64_ATTR_H)
+				compact = 1;
 		}
 
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
@@ -900,5 +899,5 @@ pfm_amd64_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			i--;
 		}
 	}
-	return PFM_SUCCESS;
 }
+#endif

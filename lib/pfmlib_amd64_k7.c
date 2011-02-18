@@ -60,6 +60,6 @@ pfmlib_pmu_t amd64_k7_support={
 	.validate_table		= pfm_amd64_validate_table,
 	.get_event_info		= pfm_amd64_get_event_info,
 	.get_event_attr_info	= pfm_amd64_get_event_attr_info,
-	.validate_pattrs	= pfm_amd64_validate_pattrs,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_amd64_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_amd64_get_event_nattrs,
 };

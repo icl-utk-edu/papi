@@ -476,8 +476,9 @@ pfm_netburst_validate_table(void *this, FILE *fp)
 }
 
 
-static int
-pfm_netburst_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+#ifdef __linux__
+static void
+pfm_netburst_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
 	int i, compact;
 
@@ -488,16 +489,14 @@ pfm_netburst_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		if (e->pattrs[i].type == PFM_ATTR_UMASK)
 			continue;
 
-		if (e->osid == PFM_OS_PERF_EVENT) {
-			/*
-			 * with perf_events, u and k are handled at the OS level
-			 * via exclude_user, exclude_kernel.
-			 */
-			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
-				if (e->pattrs[i].idx == NETBURST_ATTR_U
-				    || e->pattrs[i].idx == NETBURST_ATTR_K)
-					compact = 1;
-			}
+		/*
+		 * with perf_events, u and k are handled at the OS level
+		 * via exclude_user, exclude_kernel.
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+			if (e->pattrs[i].idx == NETBURST_ATTR_U
+					|| e->pattrs[i].idx == NETBURST_ATTR_K)
+				compact = 1;
 		}
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
 
@@ -515,8 +514,8 @@ pfm_netburst_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			i--;
 		}
 	}
-	return PFM_SUCCESS;
 }
+#endif
 
 static int
 pfm_netburst_get_event_nattrs(void *this, int pidx)
@@ -546,7 +545,7 @@ pfmlib_pmu_t netburst_support = {
 	.get_event_info		= pfm_netburst_get_event_info,
 	.get_event_attr_info	= pfm_netburst_get_event_attr_info,
 	.get_event_nattrs	= pfm_netburst_get_event_nattrs,
-	.validate_pattrs	= pfm_netburst_validate_pattrs,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_netburst_perf_validate_pattrs),
 };
 
 pfmlib_pmu_t netburst_p_support = {
@@ -567,5 +566,5 @@ pfmlib_pmu_t netburst_p_support = {
 	.get_event_info		= pfm_netburst_get_event_info,
 	.get_event_attr_info	= pfm_netburst_get_event_attr_info,
 	.get_event_nattrs	= pfm_netburst_get_event_nattrs,
-	.validate_pattrs	= pfm_netburst_validate_pattrs,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_netburst_perf_validate_pattrs),
 };

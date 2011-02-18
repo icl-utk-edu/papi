@@ -124,7 +124,7 @@ typedef struct pfmlib_pmu {
 	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e);
 
 	int		 (*validate_table)(void *this, FILE *fp);
-	int		 (*validate_pattrs)(void *this, pfmlib_event_desc_t *e);
+	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 } pfmlib_pmu_t;
 
 typedef struct {
@@ -287,5 +287,15 @@ pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
 
 #define pfmlib_for_each_bit(x, m) \
 	for((x) = pfmlib_fnb((m), (sizeof(m)<<3), 0); (x) < (sizeof(m)<<3); (x) = pfmlib_fnb((m), (sizeof(m)<<3), (x)+1))
+
+#ifdef __linux__
+#define PFMLIB_VALID_PERF_PATTRS(f)  \
+	.validate_pattrs[PFM_OS_PERF_EVENT] = f, \
+	.validate_pattrs[PFM_OS_PERF_EVENT_EXT]	= f
+#else
+#define PFMLIB_VALID_PERF_PATTRS(f) \
+	.validate_pattrs[PFM_OS_PERF_EVENT] = NULL, \
+	.validate_pattrs[PFM_OS_PERF_EVENT_EXT]	= NULL
+#endif
 
 #endif /* __PFMLIB_PRIV_H__ */

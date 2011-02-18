@@ -138,7 +138,7 @@ pfmlib_pmu_t intel_pii_support={
 	.validate_table		= pfm_intel_x86_validate_table,
 	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
-	.validate_pattrs	= pfm_intel_x86_validate_pattrs,
+	PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
 };
 
@@ -161,7 +161,7 @@ pfmlib_pmu_t intel_p6_support={
 	.validate_table		= pfm_intel_x86_validate_table,
 	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
-	.validate_pattrs	= pfm_intel_x86_validate_pattrs,
+	PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
 };
 
@@ -185,7 +185,7 @@ pfmlib_pmu_t intel_ppro_support={
 	.validate_table		= pfm_intel_x86_validate_table,
 	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
-	.validate_pattrs	= pfm_intel_x86_validate_pattrs,
+	PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
 };
 
@@ -210,6 +210,6 @@ pfmlib_pmu_t intel_pm_support={
 	.validate_table		= pfm_intel_x86_validate_table,
 	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
-	.validate_pattrs	= pfm_intel_x86_validate_pattrs,
+	PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
 };

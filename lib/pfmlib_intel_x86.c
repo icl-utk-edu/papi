@@ -876,6 +876,17 @@ pfm_intel_x86_valid_pebs(pfmlib_event_desc_t *e)
 	return npebs == numasks ? PFM_SUCCESS : PFM_ERR_FEATCOMB;
 }
 
+int
+pfm_intel_x86_get_event_nattrs(void *this, int pidx)
+{
+	int nattrs;
+	nattrs  = intel_x86_num_umasks(this, pidx);
+	nattrs += intel_x86_num_mods(this, pidx);
+	return nattrs;
+}
+
+#ifdef __linux__
+
 static int
 intel_x86_event_has_pebs(void *this, pfmlib_event_desc_t *e)
 {
@@ -902,8 +913,8 @@ intel_x86_event_has_pebs(void *this, pfmlib_event_desc_t *e)
 /*
  * remove attrs which are in conflicts (or duplicated) with os layer
  */
-int
-pfm_intel_x86_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+void
+pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
 	int i, compact;
 	int has_pebs = intel_x86_event_has_pebs(this, e);
@@ -914,16 +925,14 @@ pfm_intel_x86_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		if (e->pattrs[i].type == PFM_ATTR_UMASK)
 			continue;
 
-		if (e->osid == PFM_OS_PERF_EVENT || e->osid == PFM_OS_PERF_EVENT_EXT) {
-			/*
-			 * with perf_events, u and k are handled at the OS level
-			 * via exclude_user, exclude_kernel.
-			 */
-			if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
-				if (e->pattrs[i].idx == INTEL_X86_ATTR_U
-				    || e->pattrs[i].idx == INTEL_X86_ATTR_K)
-					compact = 1;
-			}
+		/*
+		 * with perf_events, u and k are handled at the OS level
+		 * via exclude_user, exclude_kernel.
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+			if (e->pattrs[i].idx == INTEL_X86_ATTR_U
+					|| e->pattrs[i].idx == INTEL_X86_ATTR_K)
+				compact = 1;
 		}
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
 
@@ -942,14 +951,5 @@ pfm_intel_x86_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			i--;
 		}
 	}
-	return PFM_SUCCESS;
 }
-
-int
-pfm_intel_x86_get_event_nattrs(void *this, int pidx)
-{
-	int nattrs;
-	nattrs  = intel_x86_num_umasks(this, pidx);
-	nattrs += intel_x86_num_mods(this, pidx);
-	return nattrs;
-}
+#endif
