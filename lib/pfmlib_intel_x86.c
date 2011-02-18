@@ -268,45 +268,6 @@ done:
 	return PFM_SUCCESS;
 }
 
-static int
-intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
-{
-	pfm_event_attr_info_t *a;
-	int numasks = 0, pebs = 0;
-	int has_pp = 0;
-	int i;
-
-	/*
-	 * if entire event supports PEBS then we are all set
-	 * any umask combination works
-	 */
-	if (intel_x86_eflag(this, e->event, INTEL_X86_PEBS))
-		return PFM_SUCCESS;
-
-	/*
-	 * if only certain umasks support PEBS, then we need
-	 * to check combinations
-	 */
-	for (i = 0; i < e->nattrs; i++) {
-		a = attr(e, i);
-
-		if (a->ctrl == PFM_ATTR_CTRL_PMU && a->type == PFM_ATTR_UMASK) {
-			/* count number of umasks */
-			numasks++;
-			/* and those that support PEBS */
-			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_PEBS))
-				pebs++;
-		}
-
-		if (a->ctrl == PFM_ATTR_CTRL_PERF_EVENT && a->idx == PERF_ATTR_PR)
-			has_pp = 1;
-	}
-	/*
-	 * pass if user requested PEBS and all umasks are PEBS
-	 */
-	return pebs != numasks && has_pp ? PFM_ERR_FEATCOMB : PFM_SUCCESS;
-}
-
 #ifdef __linux__
 static int
 intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
@@ -337,13 +298,78 @@ intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
 	}
 	return PFM_SUCCESS;
 }
+
+static int
+intel_x86_requesting_pebs(pfmlib_event_desc_t *e)
+{
+	pfm_event_attr_info_t *a;
+	int i;
+
+	for (i = 0; i < e->nattrs; i++) {
+		a = attr(e, i);
+		if (a->ctrl != PFM_ATTR_CTRL_PERF_EVENT)
+			continue;
+		if (a->idx == PERF_ATTR_PR && e->attrs[i].ival)
+			return 1;
+	}
+	return 0;
+}
 #else
 static inline int
 intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
 {
 	return PFM_ERR_NOTSUPP;
 }
+
+static int
+intel_x86_requesting_pebs(pfmlib_event_desc_t *e)
+{
+	return 0;
+}
 #endif
+
+static int
+intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	pfm_event_attr_info_t *a;
+	int numasks = 0, pebs = 0;
+	int i;
+
+	if (!intel_x86_requesting_pebs(e))
+		return PFM_SUCCESS;
+
+	/*
+	 * if event has no umask and is PEBS, then we are okay
+	 */
+	if (!pe[e->event].numasks
+	    && intel_x86_eflag(this, e->event, INTEL_X86_PEBS))
+		return PFM_SUCCESS;
+
+	/*
+	 * if the event sets PEBS, then it measn at least one umask
+	 * supports PEBS, so we need to check
+	 */
+	for (i = 0; i < e->nattrs; i++) {
+		a = attr(e, i);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (a->type == PFM_ATTR_UMASK) {
+			/* count number of umasks */
+			numasks++;
+			/* and those that support PEBS */
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_PEBS))
+				pebs++;
+		}
+	}
+	/*
+	 * pass if user requested only PEBS  umasks
+	 */
+	return pebs != numasks ? PFM_ERR_FEATCOMB : PFM_SUCCESS;
+}
+
 
 static int
 intel_x86_os_encode(void *this, pfmlib_event_desc_t *e)
