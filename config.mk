@@ -187,8 +187,10 @@ ifeq ($(CONFIG_PFMLIB_DEBUG),y)
 CFLAGS += -DCONFIG_PFMLIB_DEBUG
 endif
 
-# compiling for linux
-# used by ARM
-ifeq ($(SYS),Linux)
-CFLAGS += -DCONFIG_PFMLIB_OS_LINUX
+#
+# Python is for use with perf_events
+# so it only works on Linux
+#
+ifneq ($(SYS),Linux)
+CONFIG_PFMLIB_NOPYTHON=y
 endif
