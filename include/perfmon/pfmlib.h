@@ -340,9 +340,6 @@ extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fst
  * for pmu, simply iterate over pfm_pmu_t enum and use
  * pfm_get_pmu_info() and the is_present field
  */
-#define pfm_for_each_event(x) \
-	for((x)=pfm_get_event_first(); (x) != -1; (x) = pfm_get_event_next((x)))
-
 #define pfm_for_each_event_attr(x, z) \
 	for((x)=0; (x) < (z)->nattrs; (x) = (x)+1)
 
