@@ -39,6 +39,7 @@ pfmlib_pmu_t power6_support={
 	.name			= "power6",
 	.pmu			= PFM_PMU_POWER6,
 	.pme_count		= POWER6_PME_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_CORE,
 	.max_encoding		= 1,
 	.pe			= power6_pe,
 	.pmu_detect		= pfm_power6_detect,

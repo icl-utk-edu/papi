@@ -39,6 +39,7 @@ pfmlib_pmu_t power7_support={
 	.name			= "power7",
 	.pmu			= PFM_PMU_POWER7,
 	.pme_count		= POWER7_PME_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_CORE,
 	.max_encoding		= 1,
 	.pe			= power7_pe,
 	.pmu_detect		= pfm_power7_detect,

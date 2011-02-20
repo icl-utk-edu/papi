@@ -175,9 +175,13 @@ pfm_intel_x86_arch_init(void *this)
 	 */
 	if (!pfm_cfg.forced_pmu) {
 		cpuid(0xa, &eax.val, &ebx.val, &ecx.val, &edx.val);
+		intel_x86_arch_support.num_cntrs = eax.eax.num_cnt;
+		intel_x86_arch_support.num_fixed_cntrs = edx.edx.num_cnt;
 	} else {
 		eax.eax.version = 3;
 		ebx.val = 0; /* no restriction */
+		intel_x86_arch_support.num_cntrs = 0;
+		intel_x86_arch_support.num_fixed_cntrs = 0;
 	}
 	/*
  	 * must be called after impl_cntrs has been initialized
@@ -201,7 +205,8 @@ pfmlib_pmu_t intel_x86_arch_support={
 	.pme_count		= 0,
 	.pe			= NULL,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK | PFMLIB_PMU_FL_ARCH_DFL,
+	.type			= PFM_PMU_TYPE_CORE,
 	.max_encoding		= 1,
 
 	.pmu_detect		= pfm_intel_x86_arch_detect,

@@ -697,6 +697,12 @@ static const struct {
 	{ .name = NULL, }
 };
 
+static const char *pmu_types[]={
+	"unknown type",
+	"core",
+	"uncore",
+};
+
 static void
 setup_os(char *ostr)
 {
@@ -820,7 +826,18 @@ main(int argc, char **argv)
 				continue;
 
 			if (pinfo.is_present) {
-				printf("\t[%d, %s, \"%s\", %d events, %d max encoding]\n", i, pinfo.name, pinfo.desc, pinfo.nevents, pinfo.max_encoding);
+				if (pinfo.type >= PFM_PMU_TYPE_MAX)
+					pinfo.type = PFM_PMU_TYPE_UNKNOWN;
+
+				printf("\t[%d, %s, \"%s\", %d events, %d max encoding, %d counters, %s PMU]\n",
+				       i,
+				       pinfo.name,
+				       pinfo.desc,
+				       pinfo.nevents,
+				       pinfo.max_encoding,
+				       pinfo.num_cntrs + pinfo.num_fixed_cntrs,
+				       pmu_types[pinfo.type]);
+
 				total_supported_events += pinfo.nevents;
 			}
 			total_available_events += pinfo.nevents;

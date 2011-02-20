@@ -17,15 +17,21 @@ typedef struct {
         const char              *name;
         const char              *desc;
         pfm_pmu_t               pmu;
+        pfm_pmu_type_t          type;
         int                     size;
         int                     nevents;
-        int                     max_encoding;
         int                     first_event;
+        int                     max_encoding;
+        int                     num_cntrs;
+        int                     num_fixed_cntrs;
         struct {
                 int             is_present:1;
-                int             reserved:31;
+                int             is_arch_default:1;
+                int             is_core:1;
+                int             is_uncore:1;
+                int             reserved:28;
         };
-        uint64_t                reserved[3];
+        uint64_t                reserved[6];
 } pfm_pmu_info_t;
 .fi
 
@@ -43,14 +49,42 @@ This is the description of PMU. This is a read-only string.
 This is the unique PMU identification code. It is identical to the value
 passed in \fBpmu\fR and it provided only for completeness.
 .TP
+.B type
+This field contains the type of the PMU. The following types are defined:
+.RS
+.TP
+.B PFM_PMU_TYPE_UNKNOWN
+The type of the PMU could not be determined.
+.TP
+.B PFM_PMU_TYPE_CORE
+This field is set to one when the PMU is implemented by the processor core.
+.TP
+.B PFM_PMU_TYPE_UNCORE
+This field is set to one when the PMU is implemented on the processor
+die but at the socket level, i.e., capturing events for all cores.
+.PP
+.RE
+.TP
 .B nevents
 This is the number of available events for this PMU model based on the
 host processor. It is \fBonly\fR valid is the \fBis_present\fR field
 is set to 1.
 .TP
-.B is_present
-This field is set to one is the PMU model has been detected on the
-host system.
+.B first_event
+This field returns the opaque index of the first event for this PMU model. The index
+can be used with \fBpfm_get_event_info()\fR or \fBpfm_get_event_next()\fR functions.
+In case no event is available, this field contains \fB-1\fR.
+.TP
+.B num_cntrs
+This field contains the number of generic counters supported by the PMU.
+A counter is generic if it can count more than one event. When it is not
+possible to determine the number of generic counters, this field contains \fb-1\fR.
+.TP
+.B num_fixed_cntrs
+This field contains the number of fixed counters supported by the PMU.
+A counter is fixed if it hardwired to count only one event. When it is not
+possible to determine the number of generic counters, this field contains \fb-1\fR.
+
 .TP
 .B size
 This field must be set to zero for now. It will be used in case the
@@ -59,13 +93,17 @@ This field must be set to zero for now. It will be used in case the
 .B max_encoding
 This field returns the number of event codes returned by \fBpfm_get_event_encoding()\fR.
 .TP
-.B first_event
-This field returns the opaque index of the first event for this PMU model. The index
-can be used with \fBpfm_get_event_info()\fR or \fBpfm_get_event_next()\fR functions.
-In case no event is available, this field contains \fB-1\fR.
-
+.B is_present
+This field is set to one is the PMU model has been detected on the
+host system.
+.TP
+.B is_dfl
+This field is set to one if the PMU is the default PMU for this architecture.
+Otherwise this field is zero.
+.TP
+.B reserved
+This field must be set to zero.
 .PP
-The \fBreserved\fR field must be set to zero.
 
 .SH RETURN
 

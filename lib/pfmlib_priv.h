@@ -107,6 +107,9 @@ typedef struct pfmlib_pmu {
 	int		max_encoding;		/* max number of uint64_t to encode an event */
 	int		flags;			/* PMU flags */
 	int		pmu_rev;		/* PMU model specific revision */
+	int		num_cntrs;		/* number of generic counters */
+	int		num_fixed_cntrs;	/* number of fixed counters */
+	pfm_pmu_type_t	type;			/* PMU type */
 	const void	*pe;			/* pointer to event table */
 
 	const pfmlib_attr_desc_t *atdesc;	/* pointer to attrs table */
@@ -146,6 +149,7 @@ typedef struct {
 #define PFMLIB_PMU_FL_INIT	0x1	/* PMU initialized correctly */
 #define PFMLIB_PMU_FL_ACTIVE	0x2	/* PMU is initialized + detected on host */
 #define PFMLIB_PMU_FL_RAW_UMASK	0x4	/* PMU supports PFM_ATTR_RAW_UMASKS */
+#define PFMLIB_PMU_FL_ARCH_DFL	0x8	/* PMU is arch default */
 
 typedef struct {
 	int	initdone;

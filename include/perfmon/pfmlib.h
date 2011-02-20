@@ -140,6 +140,13 @@ typedef enum {
 } pfm_pmu_t;
 
 typedef enum {
+	PFM_PMU_TYPE_UNKNOWN=0,	/* unknown PMU type */
+	PFM_PMU_TYPE_CORE,	/* processor core PMU */
+	PFM_PMU_TYPE_UNCORE,	/* processor socket-level PMU */
+	PFM_PMU_TYPE_MAX
+} pfm_pmu_type_t;
+
+typedef enum {
 	PFM_ATTR_NONE=0,	/* no attribute */
 	PFM_ATTR_UMASK,		/* unit mask */
 	PFM_ATTR_MOD_BOOL,	/* register modifier */
@@ -208,19 +215,27 @@ typedef int pfm_err_t;		/* error if !PFM_SUCCESS */
 typedef int os_err_t;		/* error if a syscall fails */
 
 typedef struct {
-	const char		*name;	/* event name */
-	const char		*desc;	/* event description */
-	pfm_pmu_t		pmu;	/* PMU identification */
-	int			size;	/* for struct extension, 0 for now */
-	int			nevents;/* how many events for this PMU */
-	int			first_event;/* opaque index of first event */
-	int			max_encoding; /* number of uint64_t to encode an event */
+	const char		*name;		/* event name */
+	const char		*desc;		/* event description */
+	pfm_pmu_t		pmu;		/* PMU identification */
+	pfm_pmu_type_t		type;		/* PMU type */
+	int			size;		/* for struct extension, 0 for now */
+	int			nevents;	/* how many events for this PMU */
+	int			first_event;	/* opaque index of first event */
+	int			max_encoding;	/* max number of uint64_t to encode an event */
+	int			num_cntrs;	/* number of generic counters */
+	int			num_fixed_cntrs;/* number of fixed counters */
 	struct {
 		unsigned int	is_present:1;	/* present on host system */
-		unsigned int	reserved_bits:31;
+		unsigned int	is_dfl:1;	/* is architecture default PMU */
+		unsigned int	reserved_bits:30;
 	} SWIG_NAME(flags);
-	uint64_t		reserved[3];
+	uint64_t		reserved[6];
 } pfm_pmu_info_t;
+
+#define PFM_PMU_TYPE_UNKNOWN	0	/* PMU type is unknown */
+#define PFM_PMU_TYPE_CORE	1	/* core CPU PMU */
+#define PFM_PMU_TYPE_UNCORE	2	/* processor socket-level PMU */
 
 typedef struct {
 	const char		*name;	/* event name */
@@ -236,7 +251,7 @@ typedef struct {
 		unsigned int	is_precise:1;	/* precise sampling (Intel X86=PEBS) */
 		unsigned int	reserved_bits:31;
 	} SWIG_NAME(flags);
-	uint64_t		reserved[2];
+	uint64_t		reserved[5];
 } pfm_event_info_t;
 
 typedef struct {

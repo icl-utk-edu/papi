@@ -1484,7 +1484,10 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 	uinfo->name = pmu->name;
 	uinfo->desc = pmu->desc;
 	uinfo->pmu = pmuid;
-	uinfo->max_encoding = pmu->max_encoding;
+
+	uinfo->max_encoding    = pmu->max_encoding;
+	uinfo->num_cntrs       = pmu->num_cntrs;
+	uinfo->num_fixed_cntrs = pmu->num_fixed_cntrs;
 
 	pidx = pmu->get_event_first(pmu);
 	if (pidx == -1)
@@ -1496,7 +1499,9 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 	 * XXX: pme_count only valid when PMU is detected
 	 */
 	uinfo->is_present = pfmlib_pmu_active(pmu);
-	uinfo->nevents = pmu->pme_count;
+	uinfo->is_dfl     = !!(pmu->flags & PFMLIB_PMU_FL_ARCH_DFL);
+	uinfo->type       = pmu->type;
+	uinfo->nevents    = pmu->pme_count;
 
 	return PFM_SUCCESS;
 }

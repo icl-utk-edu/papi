@@ -532,9 +532,11 @@ pfmlib_pmu_t netburst_support = {
 	.name			= "netburst",
 	.pmu			= PFM_PMU_INTEL_NETBURST,
 	.pme_count		= NETBURST_EVENT_COUNT - 1,
+	.type			= PFM_PMU_TYPE_CORE,
 	.atdesc			= netburst_mods,
 	.pe			= netburst_events,
 	.max_encoding		= 3,
+	.num_cntrs		= 18,
 
 	.pmu_detect		= pfm_netburst_detect,
 	.get_event_encoding	= pfm_netburst_get_encoding,
@@ -553,9 +555,11 @@ pfmlib_pmu_t netburst_p_support = {
 	.name			= "netburst_p",
 	.pmu			= PFM_PMU_INTEL_NETBURST_P,
 	.pme_count		= NETBURST_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_CORE,
 	.atdesc			= netburst_mods,
 	.pe			= netburst_events,
 	.max_encoding		= 3,
+	.num_cntrs		= 18,
 
 	.pmu_detect		= pfm_netburst_detect_prescott,
 	.get_event_encoding	= pfm_netburst_get_encoding,

@@ -76,10 +76,12 @@ pfmlib_pmu_t arm_cortex_a8_support={
 	.name			= "arm_ac8",
 	.pmu			= PFM_PMU_ARM_CORTEX_A8,
 	.pme_count		= ARM_CORTEX_A8_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_CORE,
 	.pe			= arm_cortex_a8_pe,
 
 	.pmu_detect		= pfm_arm_detect_cortex_a8,
 	.max_encoding		= 1,
+	.num_cntrs		= 2,
 
 	.get_event_encoding	= pfm_arm_get_encoding,
 	.get_event_first	= pfm_arm_get_event_first,
@@ -98,10 +100,12 @@ pfmlib_pmu_t arm_cortex_a9_support={
 	.name			= "arm_ac9",
 	.pmu			= PFM_PMU_ARM_CORTEX_A9,
 	.pme_count		= ARM_CORTEX_A9_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_CORE,
 	.pe			= arm_cortex_a9_pe,
 
 	.pmu_detect		= pfm_arm_detect_cortex_a9,
 	.max_encoding		= 1,
+	.num_cntrs		= 2,
 
 	.get_event_encoding	= pfm_arm_get_encoding,
 	.get_event_first	= pfm_arm_get_event_first,

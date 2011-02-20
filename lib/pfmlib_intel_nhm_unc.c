@@ -331,6 +331,9 @@ pfmlib_pmu_t intel_nhm_unc_support={
 
 	.pmu			= PFM_PMU_INTEL_NHM_UNC,
 	.pme_count		= PME_NHM_UNC_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_UNCORE,
+	.num_cntrs		= 8,
+	.num_fixed_cntrs	= 1,
 	.max_encoding		= 1,
 	.pe			= intel_nhm_unc_pe,
 	.atdesc			= nhm_unc_mods,
@@ -354,6 +357,9 @@ pfmlib_pmu_t intel_wsm_unc_support={
 
 	.pmu			= PFM_PMU_INTEL_WSM_UNC,
 	.pme_count		= PME_WSM_UNC_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_UNCORE,
+	.num_cntrs		= 8,
+	.num_fixed_cntrs	= 1,
 	.max_encoding		= 1,
 	.pe			= intel_wsm_unc_pe,
 	.atdesc			= nhm_unc_mods,
