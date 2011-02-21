@@ -381,6 +381,7 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 }
 
 #ifdef __linux__
+#include "pfmlib_perf_event_priv.h"
 static int
 amd64_perf_encode(pfmlib_event_desc_t *e)
 {

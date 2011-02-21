@@ -42,6 +42,7 @@
 #undef HAS_OPENAT
 
 #include "pfmlib_priv.h"
+#include "pfmlib_perf_event_priv.h"
 
 #define PERF_MAX_UMASKS	8
 

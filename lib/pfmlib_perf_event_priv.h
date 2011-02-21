@@ -24,6 +24,8 @@
 #ifndef __PERF_EVENT_PRIV_H__
 #define __PERF_EVENT_PRIV_H__
 
+#include "perfmon/pfmlib_perf_event.h"
+
 #define PERF_ATTR_U	0	/* monitor at user privilege levels */
 #define PERF_ATTR_K	1	/* monitor at kernel privilege levels */
 #define PERF_ATTR_H	2	/* monitor at hypervisor levels */

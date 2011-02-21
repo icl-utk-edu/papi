@@ -195,6 +195,7 @@ pfm_arm_detect(void *this)
 }
 
 #ifdef __linux__
+#include "pfmlib_perf_event_priv.h"
 static int
 pfm_arm_perf_encode(void *this, pfmlib_event_desc_t *e)
 {

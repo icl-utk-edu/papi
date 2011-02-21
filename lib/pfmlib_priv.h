@@ -25,9 +25,6 @@
 #ifndef __PFMLIB_PRIV_H__
 #define __PFMLIB_PRIV_H__
 #include <perfmon/pfmlib.h>
-#include <perfmon/pfmlib_perf_event.h>
-
-#include "pfmlib_perf_event_priv.h"
 
 #define PFM_PLM_ALL (PFM_PLM0|PFM_PLM1|PFM_PLM2|PFM_PLM3|PFM_PLMH)
 

@@ -269,6 +269,7 @@ done:
 }
 
 #ifdef __linux__
+#include "pfmlib_perf_event_priv.h"
 static int
 intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
 {

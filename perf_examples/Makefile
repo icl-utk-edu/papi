@@ -49,7 +49,7 @@ ifeq ($(SYS),Linux)
 CFLAGS+= -pthread
 endif
 
-PERF_EVENT_HDR=$(TOPDIR)/include/perfmon/perf_event.h
+PERF_EVENT_HDR=$(TOPDIR)/include/perfmon/pfmlib_perf_event.h
 
 ifeq ($(SYS),Linux)
 LPC_UTILS=perf_util.o

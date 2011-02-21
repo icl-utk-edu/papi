@@ -108,6 +108,7 @@ found:
 }
 
 #ifdef __linux__
+#include "pfmlib_perf_event_priv.h"
 static int
 netburst_perf_encode(pfmlib_event_desc_t *e)
 {

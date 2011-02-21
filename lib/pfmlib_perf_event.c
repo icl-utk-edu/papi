@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <perfmon/pfmlib_perf_event.h>
+#include "pfmlib_perf_event_priv.h"
 #include "pfmlib_priv.h"
 
 #define PERF_PROC_FILE "/proc/sys/kernel/perf_event_paranoid"

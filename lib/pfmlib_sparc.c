@@ -215,6 +215,7 @@ pfm_sparc_display_reg(void *this, pfmlib_event_desc_t *e, pfm_sparc_reg_t reg)
 }
 
 #ifdef __linux__
+#include "pfmlib_perf_event_priv.h"
 static int
 pfm_sparc_perf_encode(void *this, pfmlib_event_desc_t *e)
 {
