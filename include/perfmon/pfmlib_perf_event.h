@@ -21,20 +21,9 @@
  */
 #ifndef __PFMLIB_PERF_EVENTS_H__
 #define __PFMLIB_PERF_EVENTS_H__
-#include <sys/types.h>
-#include <linux/perf_event.h>
 
-/*
- * add whatever is missing for the distro perf_event.h
- * file
- */
-#ifndef PERF_FLAG_PID_CGROUP
-#define PERF_FLAG_PID_CGROUP (1 << 2)
-#endif
-
-#include <sys/syscall.h>
-#include <unistd.h>
 #include <perfmon/pfmlib.h>
+#include <perfmon/perf_event.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,17 +50,7 @@ extern pfm_err_t pfm_get_perf_event_encoding(const char *str,
 					     struct perf_event_attr *attr,
 					     char **fstr,
 					     int *idx);
-static inline int
-perf_event_open(
-	struct perf_event_attr		*hw_event_uptr,
-	pid_t				pid,
-	int				cpu,
-	int				group_fd,
-	unsigned long			flags)
-{
-	return syscall(
-		__NR_perf_event_open, hw_event_uptr, pid, cpu, group_fd, flags);
-}
+
 #ifdef __cplusplus /* extern C */
 }
 #endif
