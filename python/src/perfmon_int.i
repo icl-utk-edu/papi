@@ -29,7 +29,6 @@
 
 #define SWIG
 #include <perfmon/pfmlib.h>
-#include <perfmon/perf_event.h>
 #include <perfmon/pfmlib_perf_event.h>
 
 static PyObject *libpfm_err;
@@ -88,8 +87,6 @@ ptr_argout(pfm_pmu_info_t);
 ptr_argout(pfm_event_info_t);
 ptr_argout(pfm_event_attr_info_t);
 
-/* Kernel interface */
-%include <perfmon/perf_event.h>
 /* Library interface */
 /* We never set the const char * members. So no memory leak */
 #pragma SWIG nowarn=451
@@ -105,10 +102,10 @@ perf_event_open(
     int                      group_fd,
     unsigned long            flags);
 
-ptr_argout(perf_event_attr_t);
+ptr_argout(perf_event_attr);
 extern pfm_err_t
 pfm_get_perf_event_encoding(const char *str, int dfl_plm,
-                            perf_event_attr_t *output, char **fstr, int *idx);
+                            struct perf_event_attr *output, char **fstr, int *idx);
 
 %init %{
   libpfm_err = PyErr_NewException("perfmon.libpfmError", NULL, NULL);
