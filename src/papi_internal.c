@@ -1135,6 +1135,48 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 		}
 	}
 
+	ESI->CmpIdx = -1;
+	ESI->NumberOfEvents = 0;
+	ESI->NativeCount = 0;
+
+	if ( ESI->ctl_state )
+	  papi_free( ESI->ctl_state );
+
+	if ( ESI->sw_stop )
+	  papi_free( ESI->sw_stop );
+
+	if ( ESI->hw_start )
+	  papi_free( ESI->hw_start );
+	
+	if ( ESI->EventInfoArray )
+	  papi_free( ESI->EventInfoArray );
+	
+	if ( ESI->NativeInfoArray ) 
+	  papi_free( ESI->NativeInfoArray );
+	
+	if ( ESI->overflow.deadline )
+	  papi_free( ESI->overflow.deadline );
+	
+	if ( ESI->profile.prof )
+	  papi_free( ESI->profile.prof );
+
+	ESI->ctl_state = NULL;
+	ESI->sw_stop = NULL;
+	ESI->hw_start = NULL;
+	ESI->EventInfoArray = NULL;
+	ESI->NativeInfoArray = NULL;
+
+	memset( &ESI->domain, 0x0, sizeof(EventSetDomainInfo_t) );
+	memset( &ESI->granularity, 0x0, sizeof(EventSetGranularityInfo_t) );
+	memset( &ESI->overflow, 0x0, sizeof(EventSetOverflowInfo_t) );
+	memset( &ESI->multiplex, 0x0, sizeof(EventSetMultiplexInfo_t) );
+	memset( &ESI->attach, 0x0, sizeof(EventSetAttachInfo_t) );
+	memset( &ESI->cpu, 0x0, sizeof(EventSetCpuInfo_t) );
+	memset( &ESI->profile, 0x0, sizeof(EventSetProfileInfo_t) );
+
+	ESI->CpuInfo = NULL;
+
+
 	return ( PAPI_OK );
 }
 
