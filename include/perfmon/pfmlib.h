@@ -233,10 +233,6 @@ typedef struct {
 	uint64_t		reserved[6];
 } pfm_pmu_info_t;
 
-#define PFM_PMU_TYPE_UNKNOWN	0	/* PMU type is unknown */
-#define PFM_PMU_TYPE_CORE	1	/* core CPU PMU */
-#define PFM_PMU_TYPE_UNCORE	2	/* processor socket-level PMU */
-
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
