@@ -10,6 +10,7 @@
 *          gary.mohr@bull.com
 */
 
+
 #include <sys/utsname.h>
 
 #include "papi.h"
@@ -40,6 +41,111 @@ extern papi_vector_t _papi_pe_vector;
 /* Static globals */
 #define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
 static int _perfmon2_pfm_pmu_type = -1;
+
+
+/******** Kernel Version Dependent Routines  **********************/
+
+/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
+ * implementations (e.g. x86) which don't do a static event scheduability
+ * check in sys_perf_event_open.  
+ * This was fixed for x86 in the 2.6.33 kernel
+ */
+inline int bug_check_scheduability(void) {
+
+#if defined(__powerpc__)
+  /* PowerPC not affected by this bug */
+#else
+  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
+#endif
+  return 0;
+}
+
+/* before 2.6.33 multiplexing did not work */
+inline int bug_multiplex(void) {
+
+  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
+  return 0;
+
+}
+
+/* before 2.6.34 PERF_FORMAT_GROUP did not work                     */
+/* PERF_FORMAT_GROUP allows reading an entire groups counts at once */
+/* If FORMAT_GROUP is enabled, than FORMAT_ID *must* be enabled too */
+inline int bug_format_group(void) {
+
+  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,34)) return 1;
+  return 0;
+
+}
+
+
+/* before 2.6.34 FORMAT_ID did not work                     */
+/* If FORMAT_GROUP is enabled, than FORMAT_ID *must* be too */
+inline int bug_format_id(void) {
+
+  if ( (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,34)) ||
+       bug_format_group()) return 1;
+
+  return 0;
+
+}
+
+
+	/* Set the F_SETOWN_EX flag on the fd.                          */
+        /* This affects which thread an overflow signal gets sent to    */
+	/* Handled in a subroutine to handle the fact that the behavior */
+        /* is dependent on kernel version.                              */
+
+int fcntl_setown_fd(int fd) {
+
+  int ret;
+
+   
+           /* F_SETOWN_EX is not available until 2.6.32 */
+        if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,32)) {
+	   
+           /* get ownership of the descriptor */
+           ret = fcntl( fd, F_SETOWN, mygettid(  ) );
+           if ( ret == -1 ) {
+	      PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd,
+			 strerror( errno ) );
+	      return PAPI_ESYS;
+	   }
+	}
+        else {
+	   
+           struct f_owner_ex fown_ex;
+
+	   /* set ownership of the descriptor */   
+           fown_ex.type = F_OWNER_TID;
+           fown_ex.pid  = mygettid();
+           ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
+   
+	   if ( ret == -1 ) {
+		PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", fd, strerror( errno ) );
+		return PAPI_ESYS;
+	   }
+	}
+	return PAPI_OK;
+}
+
+
+int processor_supported(int vendor, int family) {
+
+        /* Error out if kernel too early to support p4 */
+  if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
+            if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,35)) {
+	       PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
+	       return 0;
+	    }
+  }
+
+  return 1;
+}
+
+/********* End Kernel-version Dependent Routines  ****************/
+
+
 
 
 static inline int
@@ -78,12 +184,9 @@ check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain 
 
 
 /* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
- * implementations (e.g. x86) which don't do a static event scheduability
- * check in sys_perf_event_open.  Note, this code should be morphed into
- * configure.in code as soon as we know how to characterize a kernel properly
- * (e.g. 2.6.33 kernels check scheduability upon open).
+ * implementations (e.g. x86 before 2.6.33) which don't do a static event 
+ * scheduability check in sys_perf_event_open.  N
  */
-
 
 static inline int
 check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
@@ -92,14 +195,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 #define MAX_READ 8192
 	uint8_t buffer[MAX_READ];
 
-
-        if 
-#if defined(__powerpc__)
-	  (0)
-#else
-          (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) 
-#endif
-	   {
+        if (bug_check_scheduability()) {
 
 	   /* This will cause the events in the group to be scheduled onto the counters
 	    * by the kernel, and so will force an error condition if the events are not
@@ -146,18 +242,18 @@ partition_events( context_t * ctx, control_state_t * ctl )
 		ctx->evt[0].event_fd = -1;
 		for ( i = 0; i < ctl->num_events; i++ ) {
 			ctx->evt[i].group_leader = 0;
-                        if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
-                           ctl->events[i].read_format = PERF_FORMAT_ID;
-                        }
-                        else {
+			if (!bug_format_id()) {
+		           ctl->events[i].read_format = PERF_FORMAT_ID;
+			}
+			else {
                            ctl->events[i].read_format = 0;
-                        }
+			}
 
 			if ( i == 0 ) {
 				ctl->events[i].disabled = 1;
-                                if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+				if (!bug_format_group()) {
                                    ctl->events[i].read_format |= PERF_FORMAT_GROUP;
-                               }
+			        }
 
 			} else {
 				ctl->events[i].disabled = 0;
@@ -184,9 +280,9 @@ partition_events( context_t * ctx, control_state_t * ctl )
 				 * up all counters in the group when reading the group leader. */
 				if ( j == i ) {
 					ctl->events[i].disabled = 1;
-                                        if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
-                                           ctl->events[i].read_format |= PERF_FORMAT_GROUP;
-                                        }
+					if (!bug_format_group()) {
+					   ctl->events[i].read_format |= PERF_FORMAT_GROUP;
+					}
 				} else {
 					ctl->events[i].disabled = 0;
 				}
@@ -255,32 +351,13 @@ tune_up_fd( context_t * ctx, int evt_idx )
 			  strerror( errno ) );
 		return PAPI_ESYS;
 	}
-   
-           /* F_SETOWN_EX is not available until 2.6.32 */
-        if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,32)) {
-	   
-           /* get ownership of the descriptor */
-           ret = fcntl( fd, F_SETOWN, mygettid(  ) );
-           if ( ret == -1 ) {
-	      PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd,
-			 strerror( errno ) );
-	      return ( PAPI_ESYS );
-	   }
-	}
-        else {
-	   
-           struct f_owner_ex fown_ex;
 
-	   /* set ownership of the descriptor */   
-           fown_ex.type = F_OWNER_TID;
-           fown_ex.pid  = mygettid();
-           ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
-   
-	   if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", fd, strerror( errno ) );
-		return ( PAPI_ESYS );
-	   }
-	}
+	/* Set the F_SETOWN_EX flag on the fd.                          */
+        /* This affects which thread an overflow signal gets sent to    */
+	/* Handled in a subroutine to handle the fact that the behavior */
+        /* is dependent on kernel version.                              */
+	ret=fcntl_setown_fd(fd);
+	if (ret!=PAPI_OK) return ret;
 	   
 	/*
 	 * when you explicitely declare that you want a particular signal,
@@ -351,7 +428,9 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			i++;			 /* the last event did open, so we need to bump the counter before doing the cleanup */
 			goto cleanup;
 		}
-               if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+
+		if (!bug_format_id()) {
+
                        /* obtain the id of this event assigned by the kernel */
 
 			uint64_t buffer[MAX_COUNTERS * 4];	/* max size needed */
@@ -374,6 +453,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			}
 			ctx->evt[i].event_id = buffer[id_idx];
 		}
+
 	}
 
 	/* Now that we've successfully opened all of the events, do whatever
@@ -654,7 +734,7 @@ _papi_pe_init_substrate( int cidx )
 	MY_VECTOR.cmp_info.hardware_intr = 1;
 	MY_VECTOR.cmp_info.attach = 1;
 	MY_VECTOR.cmp_info.attach_must_ptrace = 1;
-        if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) {
+	if (bug_multiplex()) {
 	   MY_VECTOR.cmp_info.kernel_multiplex = 0;
 	}
         else {
@@ -664,6 +744,12 @@ _papi_pe_init_substrate( int cidx )
 	MY_VECTOR.cmp_info.profile_ear = 0;
 	MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
 	MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+
+	/* Check that processor is supported */
+	if (!processor_supported(_papi_hwi_system_info.hw_info.vendor,
+				 _papi_hwi_system_info.hw_info.cpuid_family)) {
+	  return PAPI_ENOSUPP;
+	}
 
         /* Error out if kernel too early to support p4 */
         if (( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) && 
@@ -802,7 +888,7 @@ _papi_pe_write( hwd_context_t * ctx, hwd_control_state_t * ctl,
 static int
 get_id_idx( int multiplexed, int n )
 {
-       if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+  if (!bug_format_group()) {
                if ( multiplexed )
                        return 3 + ( n * 2 ) + 1;
                else
@@ -817,12 +903,12 @@ get_id_idx( int multiplexed, int n )
 static int
 get_count_idx( int multiplexed, int n )
 {
-       if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+  if (!bug_format_group()) {
                if ( multiplexed )
                        return 3 + ( n * 2 );
                else
                        return 1 + ( n * 2 );
-       }
+      }
        else {
                return 0;
        }
@@ -833,7 +919,7 @@ static uint64_t
 get_count_idx_by_id( uint64_t * buf, int multiplexed, uint64_t id )
 {
 
-       if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
+  if (!bug_format_group()) {
                unsigned int i;
 
                for ( i = 0; i < buf[get_nr_idx(  )]; i++ ) {
@@ -852,6 +938,7 @@ get_count_idx_by_id( uint64_t * buf, int multiplexed, uint64_t id )
 	   return -1;
        }
        else {
+
 	   return 0;
        }
 }
@@ -895,7 +982,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 /* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
 		uint64_t buffer[READ_BUFFER_SIZE];
 
-               if ((MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) || ( i == pe_ctx->evt[i].group_leader ))
+		if ( (bug_format_group()) || ( i == pe_ctx->evt[i].group_leader ))
 
 		{
 			ret = read( pe_ctx->evt[i].event_fd, buffer, sizeof ( buffer ) );
@@ -1406,8 +1493,8 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 		 * Cause the kernel to assign an id to each event so that we can keep track of which
 		 * event is which when we read up an entire group of counters.
 		 */
-               if (MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) {
-                       pe_ctl->events[i].read_format |= PERF_FORMAT_ID;
+		if (!bug_format_id()) {
+		   pe_ctl->events[i].read_format |= PERF_FORMAT_ID;
                }
 
 		if ( native ) {
