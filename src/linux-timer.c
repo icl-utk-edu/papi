@@ -3,6 +3,9 @@
 *
 */
 
+#include <time.h>
+#include <sys/syscall.h>
+
 #include "papi.h"
 #include "papi_internal.h"
 

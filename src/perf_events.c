@@ -11,7 +11,15 @@
 */
 
 
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
+#include <signal.h>
+#include <syscall.h>
 #include <sys/utsname.h>
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -19,19 +27,27 @@
 #include "papi_memory.h"
 #include "papi_pfm_events.h"
 #include "mb.h"
+#include "syscalls.h"
 
 #include "linux-memory.h"
 #include "linux-timer.h"
 #include "linux-common.h"
 
-/* Needed for ioctl call */
-#include <sys/ioctl.h>
 
 /* These sentinels tell papi_pe_set_overflow() how to set the
  * wakeup_events field in the event descriptor record.
  */
 #define WAKEUP_COUNTER_OVERFLOW 0
 #define WAKEUP_PROFILING -1
+
+#define WAKEUP_MODE_COUNTER_OVERFLOW 0
+#define WAKEUP_MODE_PROFILING 1
+
+/* just an unlikely magic cookie */
+#define CTX_INITIALIZED 0xdc1dc1
+
+#define PERF_EVENTS_RUNNING 0x01
+
 
 /* Globals declared extern elsewhere */
 hwi_search_t *preset_search_map;

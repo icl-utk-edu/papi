@@ -16,6 +16,9 @@
 *          memory detection info this file.
 */
 
+#include <string.h>
+#include <errno.h>
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h" /* papi_calloc() */

@@ -38,8 +38,6 @@
 #include <sys/times.h>
 #include <stddef.h>
 
-#define inline_static inline static
-
 #define POWER_MAX_COUNTERS MAX_COUNTERS
 #define MAX_COUNTER_TERMS MAX_COUNTERS
 

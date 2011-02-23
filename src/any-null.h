@@ -15,6 +15,5 @@
 // These defines are made in the various substrates but required by the framework
 #define MAX_COUNTERS 4
 #define MAX_COUNTER_TERMS MAX_COUNTERS
-#define inline_static inline static
 
 #endif

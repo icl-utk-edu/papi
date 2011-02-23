@@ -25,24 +25,13 @@
 #include "papi_defines.h"
 #include "libperfctr.h"
 
-#define inline_static inline static
-
 #define MAX_COUNTERS 18
 #define MAX_COUNTER_TERMS 8
 #define HW_OVERFLOW 1
 #define MY_VECTOR _x86_vector
 #define hwd_pmc_control vperfctr_control
 
-#undef hwd_siginfo_t
-typedef siginfo_t hwd_siginfo_t;
-#undef hwd_ucontext_t
-typedef ucontext_t hwd_ucontext_t;
-
-#ifdef __x86_64__
-#define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
-#else
-#define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
-#endif
+#include "linux-context.h"
 
 /* bit fields unique to P4 */
 #define ESCR_T0_OS (1 << 3)
@@ -58,24 +47,7 @@ typedef ucontext_t hwd_ucontext_t;
 
 /* Lock macros */
 extern volatile unsigned int lock[PAPI_MAX_LOCK];
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
-
-#define  _papi_hwd_lock(lck)                    \
-do                                              \
-{                                               \
-   unsigned int res = 0;                        \
-   do {                                         \
-      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
-   } while(res != (unsigned int)MUTEX_OPEN);   \
-} while(0)
-
-#define  _papi_hwd_unlock(lck)                  \
-do                                              \
-{                                               \
-   unsigned int res = 0;                       \
-   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
-} while(0)
+#include "linux-lock.h"
 
 /* Used in resources.selector to determine on which counters an event can live. */
 #define CNTR1 0x1

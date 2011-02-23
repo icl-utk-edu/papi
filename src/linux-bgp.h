@@ -16,8 +16,6 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#define inline_static inline static
-
 #define MAX_COUNTERS BGP_UPC_MAX_MONITORED_EVENTS
 #define MAX_COUNTER_TERMS MAX_COUNTERS
 

@@ -14,6 +14,10 @@ xxx - Enum event uses native_map not pfm()
 xxx - bits_to_info uses native_map not pfm()
 */
 
+#include <ctype.h>
+#include <string.h>
+#include <errno.h>
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"

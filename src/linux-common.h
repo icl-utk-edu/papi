@@ -1,3 +1,6 @@
+#ifndef _LINUX_COMMON_H
+#define _LINUX_COMMON_H
+
 #define LINUX_VERSION(a,b,c) ( ((a&0xff)<<24) | ((b&0xff)<<16) | ((c&0xff) << 8))
 
 #define min(x, y) ({				\
@@ -14,7 +17,7 @@ mygettid( void )
 #elif defined(__NR_gettid)
 	return syscall( __NR_gettid );
 #else
-	return syscall( 1105 );
+#error "cannot fine gettid"
 #endif
 }
 
@@ -36,3 +39,4 @@ int get_linux_version();
 int _linux_get_cpu_info( PAPI_hw_info_t * hwinfo );
 int _linux_get_system_info( papi_mdi_t * mdi );
 
+#endif

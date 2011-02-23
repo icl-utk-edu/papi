@@ -359,7 +359,7 @@ _perfctr_dispatch_timer( int signal, siginfo_t * si, void *context )
 #define OVERFLOW_MASK si->si_pmc_ovf_mask
 #define GEN_OVERFLOW 0
 
-	address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( &ctx ) );
+	address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( ctx ) );
 	_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, &isHardware,
 										OVERFLOW_MASK, GEN_OVERFLOW, &master,
 										MY_VECTOR.cmp_info.CmpIdx );

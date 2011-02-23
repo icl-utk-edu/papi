@@ -1565,7 +1565,7 @@ ia64_dispatch_sigprof( int n, hwd_siginfo_t * info, struct sigcontext *sc )
 
 	ctx.si = info;
 	ctx.ucontext = sc;
-	address = GET_OVERFLOW_ADDRESS( ( &ctx ) );
+	address = GET_OVERFLOW_ADDRESS( ( ctx ) );
 
 	if ( ( thread == NULL ) || ( thread->running_eventset[cidx] == NULL ) ) {
 		SUBDBG( "%p, %p\n", thread, thread->running_eventset[cidx] );

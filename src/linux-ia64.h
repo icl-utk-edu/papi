@@ -58,7 +58,7 @@
 #include "perfmon/pfmlib_itanium2.h"
 #include "perfmon/pfmlib_itanium.h"
 
-#define inline_static inline static
+#include "linux-lock.h"
 
 typedef int ia64_register_t;
 typedef int ia64_register_map_t;
@@ -149,9 +149,7 @@ typedef struct Itanium_context
 
 //typedef Itanium_context_t hwd_context_t;
 
-/* for _papi_hwi_context_t */
-#undef hwd_siginfo_t
-typedef struct siginfo hwd_siginfo_t;
+#include "linux-context.h"
 
 #undef  hwd_ucontext_t
 typedef struct sigcontext hwd_ucontext_t;
@@ -164,10 +162,6 @@ typedef ia64_reg_alloc_t hwd_reg_alloc_t;
 typedef ia64_register_t hwd_register_t;
 #undef  hwd_control_state_t
 typedef ia64_control_state_t hwd_control_state_t;
-#undef  hwd_context_t
-typedef ia64_context_t hwd_context_t;
-
-#define GET_OVERFLOW_ADDRESS(ctx)  ((caddr_t)((ctx->ucontext)->sc_ip))
 
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))
@@ -182,22 +176,6 @@ typedef ia64_context_t hwd_context_t;
 
 
 #define MY_VECTOR _ia64_vector
-extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-#define MUTEX_OPEN 0
-#define MUTEX_CLOSED 1
 
-#ifdef __INTEL_COMPILER
-#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
-
-#define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
-#else  /* GCC */
-#define _papi_hwd_lock(lck)			 			      \
-   { int res = 0;							      \
-    do {								      \
-      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
-      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
-    } while (res != MUTEX_OPEN); }
-
-#define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
 #endif /* __INTEL_COMPILER */
 #endif /* _PAPI_LINUX_IA64_H */

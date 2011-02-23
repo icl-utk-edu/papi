@@ -2,7 +2,6 @@
 * File:    linux-common.c
 */
 
-#include <sys/utsname.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,9 +10,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
+#include <syscall.h>
+#include <sys/utsname.h>
 
 #include "papi.h"
 #include "papi_internal.h"
+
+
 
 #include "linux-memory.h"
 #include "linux-common.h"

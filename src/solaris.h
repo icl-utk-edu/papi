@@ -21,6 +21,4 @@ extern rwlock_t lock[PAPI_MAX_LOCK];
 
 #define _papi_hwd_unlock(lck)   rw_unlock(&lock[lck]);
 
-#define inline_static inline static
-
 #endif

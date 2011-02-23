@@ -62,8 +62,6 @@
  *
  ******************************************************************************/
 
-#define inline_static inline static
-
 #define MAX_COUNTERS 2
 #define MAX_COUNTER_TERMS MAX_COUNTERS
 #define PAPI_MAX_NATIVE_EVENTS 71

@@ -193,6 +193,10 @@ extern int papi_num_components;
 #include SUBSTRATE
 #include "papi_preset.h"
 
+#ifndef inline_static
+#define inline_static inline static
+#endif
+
 typedef struct _EventSetDomainInfo {
    int domain;
 } EventSetDomainInfo_t;

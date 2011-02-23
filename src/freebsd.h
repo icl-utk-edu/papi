@@ -34,8 +34,6 @@
 #define MAX_COUNTERS		HWPMC_NUM_COUNTERS
 #define MAX_COUNTER_TERMS	MAX_COUNTERS
 
-#define inline_static inline static
-
 #undef hwd_siginfo_t
 #undef hwd_register_t
 #undef hwd_reg_alloc_t
