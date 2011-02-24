@@ -1427,4 +1427,425 @@ _papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 	return ( PAPI_OK );
 }
 
-#endif /* PERFCTR_PFM_EVENTS */
+#endif 
+
+
+
+
+static int _perfmon2_pfm_pmu_type = -1;
+
+
+int
+_papi_pfm3_init(void) {
+
+   int retval;
+   unsigned int ncnt;
+   unsigned int version;
+   char pmu_name[PAPI_MIN_STR_LEN];
+
+
+   /* The following checks the version of the PFM library
+      against the version PAPI linked to... */
+   SUBDBG( "pfm_initialize()\n" );
+   if ( ( retval = pfm_initialize(  ) ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+
+   /* Get the libpfm3 version */
+   SUBDBG( "pfm_get_version(%p)\n", &version );
+   if ( pfm_get_version( &version ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_version(%p): %s", version, pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+
+   /* Set the version */
+   sprintf( MY_VECTOR.cmp_info.support_version, "%d.%d",
+	    PFM_VERSION_MAJOR( version ), PFM_VERSION_MINOR( version ) );
+
+   /* Complain if the compiled-against version doesn't match current version */
+   if ( PFM_VERSION_MAJOR( version ) != PFM_VERSION_MAJOR( PFMLIB_VERSION ) ) {
+      PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
+				   PFM_VERSION_MAJOR( PFMLIB_VERSION ),
+				   PFM_VERSION_MAJOR( version ) );
+      return PAPI_ESBSTR;
+   }
+
+   /* Always initialize globals dynamically to handle forks properly. */
+
+   _perfmon2_pfm_pmu_type = -1;
+
+   /* Opened once for all threads. */
+   SUBDBG( "pfm_get_pmu_type(%p)\n", &_perfmon2_pfm_pmu_type );
+   if ( pfm_get_pmu_type( &_perfmon2_pfm_pmu_type ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_pmu_type(%p): %s", _perfmon2_pfm_pmu_type,
+				   pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+
+   pmu_name[0] = '\0';
+   if ( pfm_get_pmu_name( pmu_name, PAPI_MIN_STR_LEN ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_pmu_name(%p,%d): %s", pmu_name, PAPI_MIN_STR_LEN,
+				   pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+   SUBDBG( "PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type );
+
+   /* Setup presets */
+   retval = _papi_pfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
+   if ( retval )
+      return retval;
+
+   /* Fill in cmp_info */
+
+   SUBDBG( "pfm_get_num_events(%p)\n", &ncnt );
+   if ( ( retval = pfm_get_num_events( &ncnt ) ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_num_events(%p): %s\n", &ncnt,
+				   pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+   SUBDBG( "pfm_get_num_events: %d\n", ncnt );
+   MY_VECTOR.cmp_info.num_native_events = ncnt;
+
+   pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
+   SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
+
+
+   MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+
+   return PAPI_OK;
+}
+
+
+int _papi_pfm3_vendor_fixups(void) {
+
+   /* On IBM and Power6 Machines default domain should include supervisor */
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
+      MY_VECTOR.cmp_info.available_domains |=
+			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+      if ( !strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" )) {
+	 MY_VECTOR.cmp_info.default_domain =
+		       PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+      }
+      /* all other machines available domains  are USER/KERNEL */
+   } else {
+	 MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
+   }
+
+
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
+      switch ( _perfmon2_pfm_pmu_type ) {
+	 case PFMLIB_SPARC_ULTRA12_PMU:
+	 case PFMLIB_SPARC_ULTRA3_PMU:
+	 case PFMLIB_SPARC_ULTRA3I_PMU:
+	 case PFMLIB_SPARC_ULTRA3PLUS_PMU:
+	 case PFMLIB_SPARC_ULTRA4PLUS_PMU:
+	      break;
+
+	 default:
+	       MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
+	       break;
+      }
+   }
+
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
+      MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
+   }
+
+   if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
+		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
+       MY_VECTOR.cmp_info.fast_counter_read = 1;
+       MY_VECTOR.cmp_info.fast_real_timer = 1;
+       MY_VECTOR.cmp_info.cntr_umasks = 1;
+   }
+   return PAPI_OK;
+}
+
+
+long long generate_p4_event(long long escr,
+			    long long cccr,
+			    long long escr_addr) {
+		   
+/*
+ * RAW events specification
+ *
+ * Bits                Meaning
+ * -----       -------
+ *  0-6        Metric value from enum P4_PEBS_METRIC (if needed)
+ *  7-11       Reserved, set to 0
+ * 12-31       Bits 12-31 of CCCR register (Intel SDM Vol 3)
+ * 32-56       Bits  0-24 of ESCR register (Intel SDM Vol 3)
+ * 57-62       Event key from enum P4_EVENTS
+ *    63       Reserved, set to 0
+ */
+		   
+ enum P4_EVENTS {
+      P4_EVENT_TC_DELIVER_MODE,
+      P4_EVENT_BPU_FETCH_REQUEST,
+      P4_EVENT_ITLB_REFERENCE,
+      P4_EVENT_MEMORY_CANCEL,
+      P4_EVENT_MEMORY_COMPLETE,
+      P4_EVENT_LOAD_PORT_REPLAY,
+      P4_EVENT_STORE_PORT_REPLAY,
+      P4_EVENT_MOB_LOAD_REPLAY,
+      P4_EVENT_PAGE_WALK_TYPE,
+      P4_EVENT_BSQ_CACHE_REFERENCE,
+      P4_EVENT_IOQ_ALLOCATION,
+      P4_EVENT_IOQ_ACTIVE_ENTRIES,
+      P4_EVENT_FSB_DATA_ACTIVITY,
+      P4_EVENT_BSQ_ALLOCATION,
+      P4_EVENT_BSQ_ACTIVE_ENTRIES,
+      P4_EVENT_SSE_INPUT_ASSIST,
+      P4_EVENT_PACKED_SP_UOP,
+      P4_EVENT_PACKED_DP_UOP,
+      P4_EVENT_SCALAR_SP_UOP,
+      P4_EVENT_SCALAR_DP_UOP,
+      P4_EVENT_64BIT_MMX_UOP,
+      P4_EVENT_128BIT_MMX_UOP,
+      P4_EVENT_X87_FP_UOP,
+      P4_EVENT_TC_MISC,
+      P4_EVENT_GLOBAL_POWER_EVENTS,
+      P4_EVENT_TC_MS_XFER,
+      P4_EVENT_UOP_QUEUE_WRITES,
+      P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE,
+      P4_EVENT_RETIRED_BRANCH_TYPE,
+      P4_EVENT_RESOURCE_STALL,
+      P4_EVENT_WC_BUFFER,
+      P4_EVENT_B2B_CYCLES,
+      P4_EVENT_BNR,
+      P4_EVENT_SNOOP,
+      P4_EVENT_RESPONSE,
+      P4_EVENT_FRONT_END_EVENT,
+      P4_EVENT_EXECUTION_EVENT,
+      P4_EVENT_REPLAY_EVENT,
+      P4_EVENT_INSTR_RETIRED,
+      P4_EVENT_UOPS_RETIRED,
+      P4_EVENT_UOP_TYPE,
+      P4_EVENT_BRANCH_RETIRED,
+      P4_EVENT_MISPRED_BRANCH_RETIRED,
+      P4_EVENT_X87_ASSIST,
+      P4_EVENT_MACHINE_CLEAR,
+      P4_EVENT_INSTR_COMPLETED,
+   };
+		   
+		  		   
+    int eventsel=(escr>>25)&0x3f;
+    int cccrsel=(cccr>>13)&0x7;
+    int event_key=-1;
+    long long pe_event;
+		   
+    switch(eventsel) {
+       case 0x1: if (cccrsel==1) {
+		    if (escr_addr>0x3c8) {
+		       // tc_escr0,1 0x3c4 
+		       event_key=P4_EVENT_TC_DELIVER_MODE; 
+		    }
+		    else {
+		       // alf_escr0, 0x3ca    
+		       event_key=P4_EVENT_RESOURCE_STALL;
+		    }
+		 }
+		 if (cccrsel==4) {	    
+		    if (escr_addr<0x3af) {
+		       // pmh_escr0,1 0x3ac
+		       event_key=P4_EVENT_PAGE_WALK_TYPE;
+		    }
+		    else {
+		       // cru_escr0, 3b8 cccr=04
+		       event_key=P4_EVENT_UOPS_RETIRED;
+		    }
+		 }
+		 break;
+		    case 0x2: if (cccrsel==5) {
+		                 if (escr_addr<0x3a8) { 
+		                    // MSR_DAC_ESCR0 / MSR_DAC_ESCR1
+		                    event_key=P4_EVENT_MEMORY_CANCEL; 
+				 } else {
+				   //MSR_CRU_ESCR2, MSR_CRU_ESCR3
+				   event_key=P4_EVENT_MACHINE_CLEAR;
+				 }
+			      } else if (cccrsel==1) {
+		      	         event_key=P4_EVENT_64BIT_MMX_UOP;
+			      } else if (cccrsel==4) {
+			         event_key=P4_EVENT_INSTR_RETIRED;
+			      } else if (cccrsel==2) {
+			         event_key=P4_EVENT_UOP_TYPE;
+			      }
+			      break;
+		    case 0x3: if (cccrsel==0) {
+		                 event_key=P4_EVENT_BPU_FETCH_REQUEST;
+		              }
+                              if (cccrsel==2) {
+		                 event_key=P4_EVENT_MOB_LOAD_REPLAY;
+			      }
+		              if (cccrsel==6) {
+			         event_key=P4_EVENT_IOQ_ALLOCATION;
+			      }
+		              if (cccrsel==4) {
+			         event_key=P4_EVENT_MISPRED_BRANCH_RETIRED;
+		              }
+			      if (cccrsel==5) { 
+				 event_key=P4_EVENT_X87_ASSIST;
+		              }
+			      break;
+		    case 0x4: if (cccrsel==2) {
+		                 if (escr_addr<0x3b0) {
+				    // saat, 0x3ae 
+		                    event_key=P4_EVENT_LOAD_PORT_REPLAY; 
+		                 }
+		                 else {
+				    // tbpu 0x3c2
+		                    event_key=P4_EVENT_RETIRED_BRANCH_TYPE;
+				 }
+		              }
+		              if (cccrsel==1) {
+		      	         event_key=P4_EVENT_X87_FP_UOP;
+		              }
+			      if (cccrsel==3) {
+			         event_key=P4_EVENT_RESPONSE;
+		              }
+			      break;
+                    case 0x5: if (cccrsel==2) {
+		                 if (escr_addr<0x3b0) {
+		                    // saat, 0x3ae 
+		                    event_key=P4_EVENT_STORE_PORT_REPLAY;
+				 }
+		                 else {
+		                    // tbpu, 0x3c2
+		                    event_key=P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE;
+				 }
+		              }
+		              if (cccrsel==7) {
+		      	         event_key=P4_EVENT_BSQ_ALLOCATION;
+		              }
+		              if (cccrsel==0) {
+			         event_key=P4_EVENT_TC_MS_XFER;
+		              }
+			      if (cccrsel==5) {
+			         event_key=P4_EVENT_WC_BUFFER;
+		              }
+			      break;
+		    case 0x6: if (cccrsel==7) {
+		                 event_key=P4_EVENT_BSQ_ACTIVE_ENTRIES; 
+		              }
+		              if (cccrsel==1) {
+		      	         event_key=P4_EVENT_TC_MISC;
+			      }
+			      if (cccrsel==3) {
+				 event_key=P4_EVENT_SNOOP;
+			      }
+		              if (cccrsel==5) {
+			         event_key=P4_EVENT_BRANCH_RETIRED;
+			      }
+			      break;
+		    case 0x7: event_key=P4_EVENT_INSTR_COMPLETED; break;
+		    case 0x8: if (cccrsel==2) {
+		                 event_key=P4_EVENT_MEMORY_COMPLETE; 
+		              }
+		      	      if (cccrsel==1) {
+				 event_key=P4_EVENT_PACKED_SP_UOP;
+			      }
+			      if (cccrsel==3) {
+				 event_key=P4_EVENT_BNR;
+		              }
+			      if (cccrsel==5) {
+				 event_key=P4_EVENT_FRONT_END_EVENT;
+		              }
+			      break;
+                    case 0x9: if (cccrsel==0) {
+		                 event_key=P4_EVENT_UOP_QUEUE_WRITES; 
+		              }
+		      	      if (cccrsel==5) {
+				 event_key=P4_EVENT_REPLAY_EVENT;
+			      }
+			      break;
+                    case 0xa: event_key=P4_EVENT_SCALAR_SP_UOP; break;
+                    case 0xc: if (cccrsel==7) {
+		                 event_key=P4_EVENT_BSQ_CACHE_REFERENCE; 
+		              }
+		              if (cccrsel==1) {
+		      	         event_key=P4_EVENT_PACKED_DP_UOP;
+			      }
+			      if (cccrsel==5) {
+				 event_key=P4_EVENT_EXECUTION_EVENT;
+			      }
+			      break;
+		    case 0xe: event_key=P4_EVENT_SCALAR_DP_UOP; break;
+		    case 0x13: event_key=P4_EVENT_GLOBAL_POWER_EVENTS; break;
+                    case 0x16: event_key=P4_EVENT_B2B_CYCLES; break;
+		    case 0x17: event_key=P4_EVENT_FSB_DATA_ACTIVITY; break;
+		    case 0x18: event_key=P4_EVENT_ITLB_REFERENCE; break;
+                    case 0x1a: if (cccrsel==6) {
+		                  event_key=P4_EVENT_IOQ_ACTIVE_ENTRIES; 
+		               }
+		               if (cccrsel==1) {
+			          event_key=P4_EVENT_128BIT_MMX_UOP;
+		  }
+		  break;
+       case 0x34: event_key= P4_EVENT_SSE_INPUT_ASSIST; break;
+    }
+		   
+    pe_event=(escr&0x1ffffff)<<32;
+    pe_event|=(cccr&0xfffff000);		    
+    pe_event|=(((long long)(event_key))<<57);
+   
+    return pe_event;
+}
+
+
+int
+_papi_pfm3_setup_counters( __u64 *pe_event, hwd_register_t *ni_bits ) {
+
+  int ret;
+
+    /*
+     * We need an event code that is common across all counters.
+     * The implementation is required to know how to translate the supplied
+     * code to whichever counter it ends up on.
+     */
+
+#if defined(__powerpc__)
+    int code;
+    ret = pfm_get_event_code_counter( ( ( pfm_register_t * ) ni_bits )->event, 0, &code );
+    if ( ret ) {
+       /* Unrecognized code, but should never happen */
+       return PAPI_EBUG;
+    }
+    *pe_event = code;
+    SUBDBG( "Stuffing native event index %d (code 0x%x, raw code 0x%x) into events array.\n",
+				  i, ( ( pfm_register_t * ) ni_bits )->event, code );
+#else
+
+   pfmlib_input_param_t inp;
+   pfmlib_output_param_t outp;
+
+   memset( &inp, 0, sizeof ( inp ) );
+   memset( &outp, 0, sizeof ( outp ) );
+   inp.pfp_event_count = 1;
+   inp.pfp_dfl_plm = PAPI_DOM_USER;
+   pfm_regmask_set( &inp.pfp_unavail_pmcs, 16 );	// mark fixed counters as unavailable
+
+    inp.pfp_events[0] = *( ( pfm_register_t * ) ni_bits );
+    ret = pfm_dispatch_events( &inp, NULL, &outp, NULL );
+    if (ret != PFMLIB_SUCCESS) {
+       SUBDBG( "Error: pfm_dispatch_events returned: %d\n", ret);
+       return PAPI_ESBSTR;
+    }
+		   	
+       /* Special case p4 */
+    if (( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) && 
+        ( _papi_hwi_system_info.hw_info.cpuid_family == 15)) {
+
+	*pe_event=generate_p4_event( outp.pfp_pmcs[0].reg_value, /* escr */  
+		                    outp.pfp_pmcs[1].reg_value, /* cccr */
+		                    outp.pfp_pmcs[0].reg_addr); /* escr_addr */
+    }
+    else {
+        *pe_event = outp.pfp_pmcs[0].reg_value;   
+    }
+    SUBDBG( "pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value );
+#endif
+
+    return PAPI_OK;
+}
+
