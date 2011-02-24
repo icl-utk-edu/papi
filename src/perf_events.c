@@ -66,7 +66,8 @@ static int _perfmon2_pfm_pmu_type = -1;
  * check in sys_perf_event_open.  
  * This was fixed for x86 in the 2.6.33 kernel
  */
-inline int bug_check_scheduability(void) {
+static inline int 
+bug_check_scheduability(void) {
 
 #if defined(__powerpc__)
   /* PowerPC not affected by this bug */
@@ -77,7 +78,8 @@ inline int bug_check_scheduability(void) {
 }
 
 /* before 2.6.33 multiplexing did not work */
-inline int bug_multiplex(void) {
+static inline int 
+bug_multiplex(void) {
 
   if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
   return 0;
@@ -87,7 +89,8 @@ inline int bug_multiplex(void) {
 /* before 2.6.34 PERF_FORMAT_GROUP did not work                     */
 /* PERF_FORMAT_GROUP allows reading an entire groups counts at once */
 /* If FORMAT_GROUP is enabled, than FORMAT_ID *must* be enabled too */
-inline int bug_format_group(void) {
+static inline int 
+bug_format_group(void) {
 
   if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,34)) return 1;
   return 0;
@@ -97,7 +100,8 @@ inline int bug_format_group(void) {
 
 /* before 2.6.34 FORMAT_ID did not work                     */
 /* If FORMAT_GROUP is enabled, than FORMAT_ID *must* be too */
-inline int bug_format_id(void) {
+static inline int 
+bug_format_id(void) {
 
   if ( (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,34)) ||
        bug_format_group()) return 1;
@@ -111,8 +115,8 @@ inline int bug_format_id(void) {
         /* This affects which thread an overflow signal gets sent to    */
 	/* Handled in a subroutine to handle the fact that the behavior */
         /* is dependent on kernel version.                              */
-
-int fcntl_setown_fd(int fd) {
+static inline int 
+fcntl_setown_fd(int fd) {
 
   int ret;
 
@@ -146,7 +150,8 @@ int fcntl_setown_fd(int fd) {
 }
 
 
-int processor_supported(int vendor, int family) {
+static inline int 
+processor_supported(int vendor, int family) {
 
         /* Error out if kernel too early to support p4 */
   if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
@@ -158,11 +163,6 @@ int processor_supported(int vendor, int family) {
 
   return 1;
 }
-
-/********* End Kernel-version Dependent Routines  ****************/
-
-
-
 
 static inline unsigned int
 get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader )
@@ -176,8 +176,8 @@ get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader 
 	}
 
 	// if our kernel supports it and we are not using inherit, add the group read options
-//!bug_format_group()
-	if ((MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) && !inherit) {
+
+	if ( (!bug_format_group()) && !inherit) {
 		format |= PERF_FORMAT_ID;
 		// if it qualifies for PERF_FORMAT_ID and it is a group leader,
 		// it also gets PERF_FORMAT_GROUP
@@ -190,6 +190,8 @@ get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader 
 
 	return format;
 }
+
+/********* End Kernel-version Dependent Routines  ****************/
 
 static inline int
 check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain, unsigned int multiplex, unsigned int inherit )
@@ -452,8 +454,10 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			goto cleanup;
 		}
 		
- 		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d, read_format: 0x%x\n",
-			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, ctx->evt[ctx->evt[i].group_leader].event_fd, ctx->evt[i].event_fd, ctl->events[i].read_format);
+ 		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d, read_format: 0x%llx\n",
+			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, 
+			ctx->evt[ctx->evt[i].group_leader].event_fd, 
+			ctx->evt[i].event_fd, ctl->events[i].read_format);
 
 		ret = check_scheduability( ctx, ctl, i );
 		if ( ret != PAPI_OK ) {
@@ -771,15 +775,6 @@ _papi_pe_init_substrate( int cidx )
 	if (!processor_supported(_papi_hwi_system_info.hw_info.vendor,
 				 _papi_hwi_system_info.hw_info.cpuid_family)) {
 	  return PAPI_ENOSUPP;
-	}
-
-        /* Error out if kernel too early to support p4 */
-        if (( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) && 
-	    (_papi_hwi_system_info.hw_info.cpuid_family == 15)) {   
-            if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,35)) {
-	       PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
-	       return PAPI_ENOSUPP;
-	    }
 	}
    
 	/* Setup presets */
