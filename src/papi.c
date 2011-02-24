@@ -2201,6 +2201,11 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( _papi_hwd[cidx]->cmp_info.cpu == 0 )
 			papi_return( PAPI_ESBSTR );
 
+		// can not attach to a cpu if already attached to a process or 
+		// counters set to be inherited by child processes
+		if ( internal.cpu.ESI->state & (PAPI_ATTACHED | PAPI_INHERIT) )
+			papi_return( PAPI_EINVAL );
+
 		if ( ( internal.cpu.ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
 
@@ -2446,28 +2451,41 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		internal.granularity.ESI->granularity.granularity = grn;
 		return ( retval );
 	}
-#if 0
 	case PAPI_INHERIT:
 	{
-		EventSetInfo_t *tmp = _papi_hwi_lookup_in_thread_list(  );
-		if ( tmp == NULL )
-			return ( PAPI_EINVAL );
+		if ( ptr == NULL )
+			papi_return( PAPI_EINVAL );
+		EventSetInfo_t *ESI;
+		ESI = _papi_hwi_lookup_EventSet( ptr->inherit.eventset );
+		if ( ESI == NULL )
+			papi_return( PAPI_ENOEVST );
 
-		cidx = valid_ESI_component( tmp );
+		cidx = valid_ESI_component( ESI );
 		if ( cidx < 0 )
 			papi_return( cidx );
 
-		internal.inherit.inherit = ptr->inherit.inherit;
-		internal.inherit.master = tmp;
+		if ( _papi_hwd[cidx]->cmp_info.inherit == 0 )
+			papi_return( PAPI_ESBSTR );
 
-		retval = _papi_hwd[cidx]->ctl( tmp, PAPI_INHERIT, &internal );
+		if ( ( ESI->state & PAPI_STOPPED ) == 0 )
+			papi_return( PAPI_EISRUN );
+
+		/* if attached to a cpu, return an error */
+		if (ESI->state & PAPI_CPU_ATTACHED)
+			papi_return( PAPI_ESBSTR );
+
+		internal.inherit.ESI = ESI;
+		internal.inherit.inherit = ptr->inherit.inherit;
+
+		/* get the context we should use for this event set */
+		context = _papi_hwi_get_context( internal.inherit.ESI, NULL );
+		retval = _papi_hwd[cidx]->ctl( context, PAPI_INHERIT, &internal );
 		if ( retval < PAPI_OK )
 			return ( retval );
 
-		tmp->inherit.inherit = ptr->inherit.inherit;
+		ESI->inherit.inherit = ptr->inherit.inherit;
 		return ( retval );
 	}
-#endif
 	case PAPI_DATA_ADDRESS:
 	case PAPI_INSTR_ADDRESS:
 	{
@@ -2700,17 +2718,16 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 		/* For now, MAX_HWCTRS and MAX CTRS are identical.
 		   At some future point, they may map onto different values.
 		 */
-#if 0
 	case PAPI_INHERIT:
 	{
-		EventSetInfo_t *tmp;
-		tmp = _papi_hwi_lookup_in_thread_list(  );
-		if ( tmp == NULL )
-			return ( PAPI_EINVAL );
-
-		return ( tmp->inherit.inherit );
+		if ( ptr == NULL )
+			papi_return( PAPI_EINVAL );
+		ESI = _papi_hwi_lookup_EventSet( ptr->inherit.eventset );
+		if ( ESI == NULL )
+			papi_return( PAPI_ENOEVST );
+		ptr->inherit.inherit = ESI->inherit.inherit;
+		return ( PAPI_OK );
 	}
-#endif
 	case PAPI_GRANUL:
 		if ( ptr == NULL )
 			papi_return( PAPI_EINVAL );

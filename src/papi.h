@@ -332,7 +332,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DEF_ITIMER		25		/**< Option to set the type of itimer used in both software multiplexing, overflowing and profiling */
 #define PAPI_DEF_ITIMER_NS	26		/**< Multiplexing/overflowing interval in ns, same as PAPI_DEF_MPX_NS */
 /* Currently the following options are only available on systems using the perf_events substrate within papi */
-#define PAPI_CPU_ATTACH		27       /**< Specify a cpu number the event set should be tied to */
+#define PAPI_CPU_ATTACH		27      /**< Specify a cpu number the event set should be tied to */
+#define PAPI_INHERIT		28      /**< Option to set counter inheritance flag */
 
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
@@ -472,6 +473,7 @@ read the documentation carefully.  */
 
 /** */
    typedef struct _papi_inherit_option {
+      int eventset;
       int inherit;
    } PAPI_inherit_option_t;
 
@@ -534,6 +536,7 @@ read the documentation carefully.  */
      unsigned int attach:1;                /**< Supports attach */
      unsigned int attach_must_ptrace:1;	   /**< Attach must first ptrace and stop the thread/process*/
      unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
+     unsigned int inherit:1;               /**< Supports child processes inheriting parents counters */
      unsigned int edge_detect:1;           /**< Supports edge detection on events */
      unsigned int invert:1;                /**< Supports invert detection on events */
      unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
@@ -542,7 +545,7 @@ read the documentation carefully.  */
      unsigned int cntr_IEAR_events:1;      /**< counters support instr event addr register */
      unsigned int cntr_DEAR_events:1;      /**< counters support data event addr register */
      unsigned int cntr_OPCM_events:1;      /**< counter events support opcode matching */
-     unsigned int reserved_bits:12;
+     unsigned int reserved_bits:10;
    } PAPI_component_info_t;
 
 /** */
@@ -696,9 +699,7 @@ read the documentation carefully.  */
 	{
 		PAPI_preload_info_t preload;
 		PAPI_debug_option_t debug;
-#if 0
 		PAPI_inherit_option_t inherit;
-#endif
 		PAPI_granularity_option_t granularity;
 		PAPI_granularity_option_t defgranularity;
 		PAPI_domain_option_t domain;

@@ -33,6 +33,7 @@ typedef struct
 	unsigned domain;
 	unsigned multiplexed;
 	unsigned overflow;
+	int inherit;
 	unsigned int cpu_num;
 	unsigned long tid;
 	struct perf_event_attr events[MAX_MPX_EVENTS];

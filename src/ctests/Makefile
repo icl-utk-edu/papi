@@ -15,7 +15,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
+SERIAL  = inherit hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc
@@ -30,7 +30,7 @@ P4_TEST	= p4_lst_ins
 ACPI	= acpi 
 EAR	= earprofile
 RANGE	= data_range
-BROKEN	= inherit pernode
+BROKEN	= pernode
 API = api
 ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH) $(API)

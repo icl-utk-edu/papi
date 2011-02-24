@@ -642,6 +642,9 @@ test_skip( char *file, int line, char *call, int retval )
 		} else if ( retval == PAPI_EPERM ) {
 			fprintf( stdout, "Line # %d\n", line );
 			fprintf( stdout, "Invalid permissions for %s.", call );
+		} else if ( retval == PAPI_ESBSTR ) {
+			fprintf( stdout, "Line # %d\n", line );
+			fprintf( stdout, "%s.", call );
 		} else if ( retval >= 0 ) {
 			fprintf( stdout, "Line # %d\n", line );
 			fprintf( stdout, "Error calculating: %s\n", call );

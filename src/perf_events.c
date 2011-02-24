@@ -164,15 +164,42 @@ int processor_supported(int vendor, int family) {
 
 
 
+static inline unsigned int
+get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader )
+{
+	unsigned int format = 0;
+
+	// if we need read format options for multiplexing, add them now
+	if (multiplex) {
+		format |= PERF_FORMAT_TOTAL_TIME_ENABLED;
+		format |= PERF_FORMAT_TOTAL_TIME_RUNNING;
+	}
+
+	// if our kernel supports it and we are not using inherit, add the group read options
+//!bug_format_group()
+	if ((MY_VECTOR.cmp_info.os_version > LINUX_VERSION(2,6,33)) && !inherit) {
+		format |= PERF_FORMAT_ID;
+		// if it qualifies for PERF_FORMAT_ID and it is a group leader,
+		// it also gets PERF_FORMAT_GROUP
+		if (group_leader) {
+			format |= PERF_FORMAT_GROUP;
+		}
+	}
+
+	SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n", multiplex, inherit, group_leader, format);
+
+	return format;
+}
+
 static inline int
-check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain )
+check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain, unsigned int multiplex, unsigned int inherit )
 {
 	int ev_fd;
 	struct perf_event_attr attr;
 
 	/* clearing this will set a type of hardware and to count all domains */
 	memset(&attr, '\0', sizeof(attr));
-	attr.read_format = PERF_FORMAT_ID | PERF_FORMAT_GROUP;  /* try to use read formats papi will use */
+	attr.read_format = get_read_format(multiplex, inherit, 1);
 
 	/* set the event id (config field) to instructios (an event that should always exist) */
 	attr.config = PERF_COUNT_HW_INSTRUCTIONS;
@@ -258,19 +285,10 @@ partition_events( context_t * ctx, control_state_t * ctl )
 		ctx->evt[0].event_fd = -1;
 		for ( i = 0; i < ctl->num_events; i++ ) {
 			ctx->evt[i].group_leader = 0;
-			if (!bug_format_id()) {
-		           ctl->events[i].read_format = PERF_FORMAT_ID;
-			}
-			else {
-                           ctl->events[i].read_format = 0;
-			}
+			ctl->events[i].read_format = get_read_format(ctl->multiplexed, ctl->inherit, !i);
 
 			if ( i == 0 ) {
 				ctl->events[i].disabled = 1;
-				if (!bug_format_group()) {
-                                   ctl->events[i].read_format |= PERF_FORMAT_GROUP;
-			        }
-
 			} else {
 				ctl->events[i].disabled = 0;
 			}
@@ -296,9 +314,7 @@ partition_events( context_t * ctx, control_state_t * ctl )
 				 * up all counters in the group when reading the group leader. */
 				if ( j == i ) {
 					ctl->events[i].disabled = 1;
-					if (!bug_format_group()) {
-					   ctl->events[i].read_format |= PERF_FORMAT_GROUP;
-					}
+					ctl->events[i].read_format = get_read_format(ctl->multiplexed, ctl->inherit, 1);
 				} else {
 					ctl->events[i].disabled = 0;
 				}
@@ -436,8 +452,8 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			goto cleanup;
 		}
 		
-		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d\n", 
-			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, ctx->evt[ctx->evt[i].group_leader].event_fd, ctx->evt[i].event_fd);
+ 		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d, read_format: 0x%x\n",
+			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, ctx->evt[ctx->evt[i].group_leader].event_fd, ctx->evt[i].event_fd, ctl->events[i].read_format);
 
 		ret = check_scheduability( ctx, ctl, i );
 		if ( ret != PAPI_OK ) {
@@ -445,8 +461,9 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			goto cleanup;
 		}
 
-		if (!bug_format_id()) {
-
+		// if a new enough kernel and counters are not being inherited by children. 
+		// we are using grouped reads so get the events index into the group
+		if ((!bug_format_id()) && (!ctl->inherit)) {
                        /* obtain the id of this event assigned by the kernel */
 
 			uint64_t buffer[MAX_COUNTERS * 4];	/* max size needed */
@@ -617,17 +634,6 @@ set_granularity( control_state_t * this_state, int domain )
 		return PAPI_EINVAL;
 	}
 	return PAPI_OK;
-}
-
-/* This function should tell your kernel extension that your children
-   inherit performance register information and propagate the values up
-   upon child exit and parent wait. */
-
-static inline int
-set_inherit( int arg )
-{
-	( void ) arg;			 /*unused */
-	return PAPI_ESBSTR;
 }
 
 int
@@ -932,10 +938,10 @@ get_count_idx( int multiplexed, int n )
 
 /* Return the count index for the event with the given id */
 static uint64_t
-get_count_idx_by_id( uint64_t * buf, int multiplexed, uint64_t id )
+get_count_idx_by_id( uint64_t * buf, int multiplexed, int inherit, uint64_t id )
 {
 
-  if (!bug_format_group()) {
+  if ((!bug_format_group()) && (!inherit)) {
                unsigned int i;
 
                for ( i = 0; i < buf[get_nr_idx(  )]; i++ ) {
@@ -998,7 +1004,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 /* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
 		uint64_t buffer[READ_BUFFER_SIZE];
 
-		if ( (bug_format_group()) || ( i == pe_ctx->evt[i].group_leader ))
+		if ( (bug_format_group()) || ( i == pe_ctx->evt[i].group_leader ) || (pe_ctl->inherit))
 
 		{
 			ret = read( pe_ctx->evt[i].event_fd, buffer, sizeof ( buffer ) );
@@ -1012,7 +1018,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu_num, buffer[0], buffer[1], buffer[2], ret);
 		}
 
-		int count_idx = get_count_idx_by_id( buffer, pe_ctl->multiplexed,
+		int count_idx = get_count_idx_by_id( buffer, pe_ctl->multiplexed, pe_ctl->events[i].inherit,
 											 pe_ctx->evt[i].event_id );
 		if ( count_idx == -1 ) {
 			PAPIERROR( "get_count_idx_by_id failed for event num %d, id %d", i,
@@ -1448,9 +1454,8 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 		   pe_ctl->events[i].disabled = 0;
                 }
 
-		/* PAPI currently only monitors one thread at a time, so leave the
-		   inherit flag off */
-		/* pe_ctl->events[i].inherit = 0; */
+		/* Copy the inherit flag into the attribute block that will be passed to the kernel */
+		pe_ctl->events[i].inherit = pe_ctl->inherit;
 
 		/*
 		 * Only the group leader's pinned field must be set to 1.  It's an
@@ -1497,21 +1502,8 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 		 */
 		/* pe_ctl->events[i].wakeup_events = 0; */
 
-		/*
-		 * When multiplexed, keep track of time enabled vs. time running for
-		 * scaling purposes.
-		 */
-		pe_ctl->events[i].read_format =
-			pe_ctl->
-			multiplexed ? PERF_FORMAT_TOTAL_TIME_ENABLED |
-			PERF_FORMAT_TOTAL_TIME_RUNNING : 0;
-		/*
-		 * Cause the kernel to assign an id to each event so that we can keep track of which
-		 * event is which when we read up an entire group of counters.
-		 */
-		if (!bug_format_id()) {
-		   pe_ctl->events[i].read_format |= PERF_FORMAT_ID;
-               }
+		// set the correct read format, based on kernel version and options that are set
+		pe_ctl->events[i].read_format = get_read_format(pe_ctl->multiplexed, pe_ctl->inherit, 0);
 
 		if ( native ) {
 			native[i].ni_position = i;
@@ -1540,6 +1532,10 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	case PAPI_MULTIPLEX:
 	{
 		pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, pe_ctl->domain, 1, pe_ctl->inherit ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		/* looks like we are allowed so go ahead and set multiplexed attribute */
 		pe_ctl->multiplexed = 1;
 		ret =
 			_papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events,
@@ -1553,33 +1549,44 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	}
 	case PAPI_ATTACH:
 		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
-		/* looks like we are allowed so go ahead and store thread id */
-		if (check_permissions( option->attach.tid, pe_ctl->cpu_num, pe_ctl->domain ) != PAPI_OK) {
+		if (check_permissions( option->attach.tid, pe_ctl->cpu_num, pe_ctl->domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
+		/* looks like we are allowed so go ahead and store thread id */
 		return attach( pe_ctl, option->attach.tid );
 	case PAPI_DETACH:
 		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
 		return detach( pe_ctx, pe_ctl );
 	case PAPI_CPU_ATTACH:
 		pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, pe_ctl->domain ) != PAPI_OK) {
+		if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, pe_ctl->domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
 		/* looks like we are allowed so go ahead and store cpu number */
 		return set_cpu( pe_ctl, option->cpu.cpu_num );
 	case PAPI_DOMAIN:
 		pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
-		/* looks like we are allowed so go ahead and store counting domain */
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, option->domain.domain ) != PAPI_OK) {
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, option->domain.domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
+		/* looks like we are allowed so go ahead and store counting domain */
 		return set_domain( option->domain.ESI->ctl_state, option->domain.domain );
 	case PAPI_GRANUL:
 		return
 			set_granularity( ( control_state_t * ) ( option->granularity.ESI->
 													 ctl_state ),
 							 option->granularity.granularity );
+	case PAPI_INHERIT:
+		pe_ctl = ( control_state_t * ) ( option->inherit.ESI->ctl_state );
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, pe_ctl->domain, pe_ctl->multiplexed, option->inherit.inherit ) != PAPI_OK) {
+			return PAPI_EPERM;
+		}
+		/* looks like we are allowed to set the requested inheritance */
+		if (option->inherit.inherit)
+			pe_ctl->inherit = 1;         // set so children will inherit counters
+		else
+			pe_ctl->inherit = 0;         // set so children will not inherit counters
+		return PAPI_OK;
 #if 0
 	case PAPI_DATA_ADDRESS:
 		ret =
@@ -2209,6 +2216,7 @@ papi_vector_t _papi_pe_vector = {
 				 .attach = 1,
 				 .attach_must_ptrace = 0,
 				 .cpu = 1,
+				 .inherit = 1,
 				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
 				 .itimer_num = PAPI_INT_ITIMER,
 				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,	/* Not actually supported */

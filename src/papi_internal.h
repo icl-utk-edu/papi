@@ -223,12 +223,10 @@ typedef struct _EventSetCpuInfo {
   unsigned int cpu_num;
 } EventSetCpuInfo_t;
 
-#if 0
 typedef struct _EventSetInheritInfo
 {
 	int inherit;
 } EventSetInheritInfo_t;
-#endif
 
 /** @internal */
 typedef struct _EventSetProfileInfo {
@@ -394,6 +392,7 @@ typedef struct _EventSetInfo {
   EventSetAttachInfo_t attach;
   EventSetCpuInfo_t cpu;
   EventSetProfileInfo_t profile;
+  EventSetInheritInfo_t inherit;
 } EventSetInfo_t;
 
 /** @internal */
@@ -455,13 +454,11 @@ typedef PAPI_itimer_option_t _papi_int_itimer_t;
 #undef multiplex_itimer_num
 #undef multiplex_itimer_us
 
-#if 0
 typedef struct _papi_int_inherit
 {
-	EventSetInfo_t *master;
+	EventSetInfo_t *ESI;
 	int inherit;
 } _papi_int_inherit_t;
-#endif
 
 /** @internal */
 typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
@@ -482,9 +479,7 @@ typedef union _papi_int_option_t {
    _papi_int_cpu_t cpu;
    _papi_int_multiplex_t multiplex;
    _papi_int_itimer_t itimer;
-#if 0
 	_papi_int_inherit_t inherit;
-#endif
 	_papi_int_granularity_t granularity;
 	_papi_int_addr_range_t address_range;
 } _papi_int_option_t;
