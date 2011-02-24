@@ -7,12 +7,16 @@
 #endif
 #include "papi_test.h"
 
+extern int TESTS_QUIET;
+
 int
-main(  )
+main( int argc, char **argv )
 {
 	int retval, pid, status, EventSet = PAPI_NULL;
 	long long int values[2];
 	PAPI_option_t opt;
+
+        tests_quiet( argc, argv );
 
 	if ( ( retval = PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
@@ -59,17 +63,19 @@ main(  )
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	printf( "Test case inherit: parent starts, child works, parent stops.\n" );
-	printf( "------------------------------------------------------------\n" );
+	if (!TESTS_QUIET) {
+	   printf( "Test case inherit: parent starts, child works, parent stops.\n" );
+	   printf( "------------------------------------------------------------\n" );
 
-	printf( "Test run    : \t1\n" );
-	printf( "PAPI_FP_INS : \t%lld\n", values[1] );
-	printf( "PAPI_TOT_CYC: \t%lld\n", values[0] );
-	printf( "------------------------------------------------------------\n" );
+	   printf( "Test run    : \t1\n" );
+	   printf( "PAPI_FP_INS : \t%lld\n", values[1] );
+	   printf( "PAPI_TOT_CYC: \t%lld\n", values[0] );
+	   printf( "------------------------------------------------------------\n" );
 
-	printf( "Verification:\n" );
-	printf( "Row 1 at least %d\n", NUM_FLOPS );
-	printf( "Row 2 greater than row 1\n");
+	   printf( "Verification:\n" );
+	   printf( "Row 1 at least %d\n", NUM_FLOPS );
+	   printf( "Row 2 greater than row 1\n");
+	}
 
 	if ( values[1] < NUM_FLOPS) {
 		test_fail( __FILE__, __LINE__, "PAPI_FP_INS", 1 );
