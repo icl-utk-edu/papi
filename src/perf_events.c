@@ -56,7 +56,6 @@ extern papi_vector_t _papi_pe_vector;
 
 /* Static globals */
 #define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
-static int _perfmon2_pfm_pmu_type = -1;
 
 
 /******** Kernel Version Dependent Routines  **********************/
@@ -640,157 +639,199 @@ set_granularity( control_state_t * this_state, int domain )
 	return PAPI_OK;
 }
 
+static int _perfmon2_pfm_pmu_type = -1;
+
+
+int
+_papi_pfm3_init(void) {
+
+   int retval;
+   unsigned int ncnt;
+   unsigned int version;
+   char pmu_name[PAPI_MIN_STR_LEN];
+
+
+   /* The following checks the version of the PFM library
+      against the version PAPI linked to... */
+   SUBDBG( "pfm_initialize()\n" );
+   if ( ( retval = pfm_initialize(  ) ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+
+   /* Get the libpfm3 version */
+   SUBDBG( "pfm_get_version(%p)\n", &version );
+   if ( pfm_get_version( &version ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_version(%p): %s", version, pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+
+   /* Set the version */
+   sprintf( MY_VECTOR.cmp_info.support_version, "%d.%d",
+	    PFM_VERSION_MAJOR( version ), PFM_VERSION_MINOR( version ) );
+
+   /* Complain if the compiled-against version doesn't match current version */
+   if ( PFM_VERSION_MAJOR( version ) != PFM_VERSION_MAJOR( PFMLIB_VERSION ) ) {
+      PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
+				   PFM_VERSION_MAJOR( PFMLIB_VERSION ),
+				   PFM_VERSION_MAJOR( version ) );
+      return PAPI_ESBSTR;
+   }
+
+   /* Always initialize globals dynamically to handle forks properly. */
+
+   _perfmon2_pfm_pmu_type = -1;
+
+   /* Opened once for all threads. */
+   SUBDBG( "pfm_get_pmu_type(%p)\n", &_perfmon2_pfm_pmu_type );
+   if ( pfm_get_pmu_type( &_perfmon2_pfm_pmu_type ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_pmu_type(%p): %s", _perfmon2_pfm_pmu_type,
+				   pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+
+   pmu_name[0] = '\0';
+   if ( pfm_get_pmu_name( pmu_name, PAPI_MIN_STR_LEN ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_pmu_name(%p,%d): %s", pmu_name, PAPI_MIN_STR_LEN,
+				   pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+   SUBDBG( "PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type );
+
+   /* Setup presets */
+   retval = _papi_pfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
+   if ( retval )
+      return retval;
+
+   /* Fill in cmp_info */
+
+   SUBDBG( "pfm_get_num_events(%p)\n", &ncnt );
+   if ( ( retval = pfm_get_num_events( &ncnt ) ) != PFMLIB_SUCCESS ) {
+      PAPIERROR( "pfm_get_num_events(%p): %s\n", &ncnt,
+				   pfm_strerror( retval ) );
+      return PAPI_ESBSTR;
+   }
+   SUBDBG( "pfm_get_num_events: %d\n", ncnt );
+   MY_VECTOR.cmp_info.num_native_events = ncnt;
+
+   pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
+   SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
+
+
+   MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+
+   return PAPI_OK;
+}
+
+
+int _papi_pfm3_vendor_fixups(void) {
+
+   /* On IBM and Power6 Machines default domain should include supervisor */
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
+      MY_VECTOR.cmp_info.available_domains |=
+			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+      if ( !strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" )) {
+	 MY_VECTOR.cmp_info.default_domain =
+		       PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+      }
+      /* all other machines available domains  are USER/KERNEL */
+   } else {
+	 MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
+   }
+
+
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
+      switch ( _perfmon2_pfm_pmu_type ) {
+	 case PFMLIB_SPARC_ULTRA12_PMU:
+	 case PFMLIB_SPARC_ULTRA3_PMU:
+	 case PFMLIB_SPARC_ULTRA3I_PMU:
+	 case PFMLIB_SPARC_ULTRA3PLUS_PMU:
+	 case PFMLIB_SPARC_ULTRA4PLUS_PMU:
+	      break;
+
+	 default:
+	       MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
+	       break;
+      }
+   }
+
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
+      MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
+   }
+
+   if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
+		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
+       MY_VECTOR.cmp_info.fast_counter_read = 1;
+       MY_VECTOR.cmp_info.fast_real_timer = 1;
+       MY_VECTOR.cmp_info.cntr_umasks = 1;
+   }
+   return PAPI_OK;
+}
+
 int
 _papi_pe_init_substrate( int cidx )
 {
-	( void ) cidx;			 /*unused */
-	int i, retval;
-	unsigned int ncnt;
-	unsigned int version;
-	char pmu_name[PAPI_MIN_STR_LEN];
-	char buf[PAPI_HUGE_STR_LEN];
 
-	/* The following checks the version of the PFM library
-	   against the version PAPI linked to... */
-	SUBDBG( "pfm_initialize()\n" );
-	if ( ( retval = pfm_initialize(  ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
-		return PAPI_ESBSTR;
-	}
+  int i;
+  int retval;
 
-	SUBDBG( "pfm_get_version(%p)\n", &version );
-	if ( pfm_get_version( &version ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_version(%p): %s", version, pfm_strerror( retval ) );
-		return PAPI_ESBSTR;
-	}
+  ( void ) cidx;          /*unused */
 
-	sprintf( MY_VECTOR.cmp_info.support_version, "%d.%d",
-			 PFM_VERSION_MAJOR( version ), PFM_VERSION_MINOR( version ) );
+  /* Run the libpfm3-specific setup */
+  retval=_papi_pfm3_init();
+  if (retval) return retval;
 
-	if ( PFM_VERSION_MAJOR( version ) != PFM_VERSION_MAJOR( PFMLIB_VERSION ) ) {
-		PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
-				   PFM_VERSION_MAJOR( PFMLIB_VERSION ),
-				   PFM_VERSION_MAJOR( version ) );
-		return PAPI_ESBSTR;
-	}
+  /* Get Linux-specific system info */
+  retval = _linux_get_system_info( &_papi_hwi_system_info );
+  if ( retval )
+     return retval;
+
+  /* Set various version strings */
+  strcpy( MY_VECTOR.cmp_info.name,
+	   "$Id$" );
+  strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
 
 
-	/* Always initialize globals dynamically to handle forks properly. */
+  /* Setup Kernel Version */
+  MY_VECTOR.cmp_info.os_version=get_linux_version();
+  
+  /* perf_events defaults */
+  MY_VECTOR.cmp_info.hardware_intr = 1;
+  MY_VECTOR.cmp_info.attach = 1;
+  MY_VECTOR.cmp_info.attach_must_ptrace = 1;
+  MY_VECTOR.cmp_info.kernel_profile = 1;
+  MY_VECTOR.cmp_info.profile_ear = 0;
+  MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
-	_perfmon2_pfm_pmu_type = -1;
-
-	/* Opened once for all threads. */
-	SUBDBG( "pfm_get_pmu_type(%p)\n", &_perfmon2_pfm_pmu_type );
-	if ( pfm_get_pmu_type( &_perfmon2_pfm_pmu_type ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_pmu_type(%p): %s", _perfmon2_pfm_pmu_type,
-				   pfm_strerror( retval ) );
-		return PAPI_ESBSTR;
-	}
-
-	pmu_name[0] = '\0';
-	if ( pfm_get_pmu_name( pmu_name, PAPI_MIN_STR_LEN ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_pmu_name(%p,%d): %s", pmu_name, PAPI_MIN_STR_LEN,
-				   pfm_strerror( retval ) );
-		return PAPI_ESBSTR;
-	}
-	SUBDBG( "PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type );
-
-
-	/* Fill in cmp_info */
-
-	SUBDBG( "pfm_get_num_events(%p)\n", &ncnt );
-	if ( ( retval = pfm_get_num_events( &ncnt ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_num_events(%p): %s\n", &ncnt,
-				   pfm_strerror( retval ) );
-		return PAPI_ESBSTR;
-	}
-	SUBDBG( "pfm_get_num_events: %d\n", ncnt );
-	MY_VECTOR.cmp_info.num_native_events = ncnt;
-	strcpy( MY_VECTOR.cmp_info.name,
-			"$Id$" );
-	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
-	sprintf( buf, "%08x", version );
-
-	pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
-	SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
-	retval = _linux_get_system_info( &_papi_hwi_system_info );
-	if ( retval )
-		return retval;
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
-		/* powerpc */
-		MY_VECTOR.cmp_info.available_domains |=
-			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-		if ( strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" ) ==
-			 0 ) {
-			MY_VECTOR.cmp_info.default_domain =
-				PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-		}
-	} else
-		MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
-
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
-		switch ( _perfmon2_pfm_pmu_type ) {
-		case PFMLIB_SPARC_ULTRA12_PMU:
-		case PFMLIB_SPARC_ULTRA3_PMU:
-		case PFMLIB_SPARC_ULTRA3I_PMU:
-		case PFMLIB_SPARC_ULTRA3PLUS_PMU:
-		case PFMLIB_SPARC_ULTRA4PLUS_PMU:
-			break;
-
-		default:
-			MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
-			break;
-		}
-	}
-
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
-		MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
-	}
-
-	if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
-		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
-		MY_VECTOR.cmp_info.fast_counter_read = 1;
-		MY_VECTOR.cmp_info.fast_real_timer = 1;
-		MY_VECTOR.cmp_info.cntr_umasks = 1;
-	}
-
-           /* Setup Kernel Version */
-        MY_VECTOR.cmp_info.os_version=get_linux_version();
+  /* hardware multiplex was broken before 2.6.33 */	
+  if (bug_multiplex()) {
+     MY_VECTOR.cmp_info.kernel_multiplex = 0;
+  }
+  else {
+     MY_VECTOR.cmp_info.kernel_multiplex = 1;
+  }
+ 
+  /* Check that processor is supported */
+  if (!processor_supported(_papi_hwi_system_info.hw_info.vendor,
+			   _papi_hwi_system_info.hw_info.cpuid_family)) {
+     return PAPI_ENOSUPP;
+  }
    
-	MY_VECTOR.cmp_info.hardware_intr = 1;
-	MY_VECTOR.cmp_info.attach = 1;
-	MY_VECTOR.cmp_info.attach_must_ptrace = 1;
-	if (bug_multiplex()) {
-	   MY_VECTOR.cmp_info.kernel_multiplex = 0;
-	}
-        else {
-	   MY_VECTOR.cmp_info.kernel_multiplex = 1;
-	}
-	MY_VECTOR.cmp_info.kernel_profile = 1;
-	MY_VECTOR.cmp_info.profile_ear = 0;
-	MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-	MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+  /* Setup Locks */
+  for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+      _papi_hwd_lock_data[i] = MUTEX_OPEN;
 
-	/* Check that processor is supported */
-	if (!processor_supported(_papi_hwi_system_info.hw_info.vendor,
-				 _papi_hwi_system_info.hw_info.cpuid_family)) {
-	  return PAPI_ENOSUPP;
-	}
-   
-	/* Setup presets */
-	retval = _papi_pfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
-	if ( retval )
-		return retval;
+  /* Setup mmtimers */
+  retval=mmtimer_setup();
+  if (retval) {
+     return retval;
+  }
 
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-		_papi_hwd_lock_data[i] = MUTEX_OPEN;
+  /* Run Vendor-specific fixups */
+  _papi_pfm3_vendor_fixups();
 
-	retval=mmtimer_setup();
-	if (retval) {
-	   return retval;
-	}
+  return PAPI_OK;
 
-	return PAPI_OK;
 }
 
 int
@@ -1344,6 +1385,63 @@ long long generate_p4_event(long long escr,
 }
 
 
+int
+_papi_pfm3_setup_counters( __u64 *pe_event, hwd_register_t *ni_bits ) {
+
+  int ret;
+
+    /*
+     * We need an event code that is common across all counters.
+     * The implementation is required to know how to translate the supplied
+     * code to whichever counter it ends up on.
+     */
+
+#if defined(__powerpc__)
+    int code;
+    ret = pfm_get_event_code_counter( ( ( pfm_register_t * ) ni_bits )->event, 0, &code );
+    if ( ret ) {
+       /* Unrecognized code, but should never happen */
+       return PAPI_EBUG;
+    }
+    *pe_event = code;
+    SUBDBG( "Stuffing native event index %d (code 0x%x, raw code 0x%x) into events array.\n",
+				  i, ( ( pfm_register_t * ) ni_bits )->event, code );
+#else
+
+   pfmlib_input_param_t inp;
+   pfmlib_output_param_t outp;
+
+   memset( &inp, 0, sizeof ( inp ) );
+   memset( &outp, 0, sizeof ( outp ) );
+   inp.pfp_event_count = 1;
+   inp.pfp_dfl_plm = PAPI_DOM_USER;
+   pfm_regmask_set( &inp.pfp_unavail_pmcs, 16 );	// mark fixed counters as unavailable
+
+    inp.pfp_events[0] = *( ( pfm_register_t * ) ni_bits );
+    ret = pfm_dispatch_events( &inp, NULL, &outp, NULL );
+    if (ret != PFMLIB_SUCCESS) {
+       SUBDBG( "Error: pfm_dispatch_events returned: %d\n", ret);
+       return PAPI_ESBSTR;
+    }
+		   	
+       /* Special case p4 */
+    if (( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) && 
+        ( _papi_hwi_system_info.hw_info.cpuid_family == 15)) {
+
+	*pe_event=generate_p4_event( outp.pfp_pmcs[0].reg_value, /* escr */  
+		                    outp.pfp_pmcs[1].reg_value, /* cccr */
+		                    outp.pfp_pmcs[0].reg_addr); /* escr_addr */
+    }
+    else {
+        *pe_event = outp.pfp_pmcs[0].reg_value;   
+    }
+    SUBDBG( "pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value );
+#endif
+
+    return PAPI_OK;
+}
+
+
 /* This function clears the current contents of the control structure and
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
@@ -1355,10 +1453,6 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 	int i = 0, ret;
 	context_t *pe_ctx = ( context_t * ) ctx;
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-#ifndef __powerpc__
-	pfmlib_input_param_t inp;
-	pfmlib_output_param_t outp;
-#endif
 	__u64 pe_event;
 
 	if ( pe_ctx->cookie != CTX_INITIALIZED ) {
@@ -1375,62 +1469,18 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 		SUBDBG( "Called with count == 0\n" );
 		return PAPI_OK;
 	}
-#ifndef __powerpc__
-	memset( &inp, 0, sizeof ( inp ) );
-	memset( &outp, 0, sizeof ( outp ) );
-	inp.pfp_event_count = 1;
-	inp.pfp_dfl_plm = PAPI_DOM_USER;
-	pfm_regmask_set( &inp.pfp_unavail_pmcs, 16 );	// mark fixed counters as unavailable
-#endif
+
 
 	for ( i = 0; i < count; i++ ) {
-		/*
-		 * We need an event code that is common across all counters.
-		 * The implementation is required to know how to translate the supplied
-		 * code to whichever counter it ends up on.
-		 */
 		if ( native ) {
-#if defined(__powerpc__)
-			int code;
-			ret =
-				pfm_get_event_code_counter( ( ( pfm_register_t * ) native[i].
-											  ni_bits )->event, 0, &code );
-			if ( ret ) {
-				/* Unrecognized code, but should never happen */
-				return PAPI_EBUG;
-			}
-			pe_event = code;
-			SUBDBG
-				( "Stuffing native event index %d (code 0x%x, raw code 0x%x) into events array.\n",
-				  i, ( ( pfm_register_t * ) native[i].ni_bits )->event, code );
-#else
-			inp.pfp_events[0] = *( ( pfm_register_t * ) native[i].ni_bits );
-			ret = pfm_dispatch_events( &inp, NULL, &outp, NULL );
-			if (ret != PFMLIB_SUCCESS) {
-				SUBDBG( "Error: pfm_dispatch_events returned: %d\n", ret);
-				return PAPI_ESBSTR;
-			}
-		   	
-		           /* Special case p4 */
-		        if (( _papi_hwi_system_info.hw_info.vendor == 
-			      PAPI_VENDOR_INTEL ) && (
-			      _papi_hwi_system_info.hw_info.cpuid_family == 15)) {
+		   ret=_papi_pfm3_setup_counters(&pe_event,native[i].ni_bits);
+		   if (ret!=PAPI_OK) return ret;
 
-			   pe_event=generate_p4_event(
-			   	       outp.pfp_pmcs[0].reg_value, /* escr */  
-		                       outp.pfp_pmcs[1].reg_value, /* cccr */
-		                       outp.pfp_pmcs[0].reg_addr); /* escr_addr */
-			}
-		        else {
-		           pe_event = outp.pfp_pmcs[0].reg_value;   
-			}
-		        SUBDBG( "pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value );
-#endif
-			/* use raw event types, not the predefined ones */
-			pe_ctl->events[i].type = PERF_TYPE_RAW;
-			pe_ctl->events[i].config = pe_event;
+		   /* use raw event types, not the predefined ones */
+		   pe_ctl->events[i].type = PERF_TYPE_RAW;
+		   pe_ctl->events[i].config = pe_event;
 		} else {
-			/* Assume the native events codes are already initialized */
+		   /* Assume the native events codes are already initialized */
 		}
 
 		/* Will be set to the threshold set by PAPI_overflow. */
@@ -1504,6 +1554,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 			native[i].ni_position = i;
 		}
 	}
+
 	pe_ctl->num_events = count;
 	set_domain( ctl, pe_ctl->domain );
 
