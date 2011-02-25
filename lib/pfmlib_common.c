@@ -287,6 +287,43 @@ pfmlib_find_os(pfm_os_t id)
 	return NULL;
 }
 
+size_t
+pfmlib_check_struct(void *st, size_t usz, size_t refsz, size_t sz)
+{
+	size_t rsz = sz;
+
+	/*
+	 * if user size is zero, then use ABI0 size
+	 */
+	if (usz == 0)
+		usz = PFM_PMU_INFO_ABI0;
+
+	/*
+	 * cannot be smaller than ABI0 size
+	 */
+	if (usz < refsz) {
+		DPRINT("pfmlib_check_struct: user size too small %zu\n", usz);
+		return 0;
+	}
+
+	/*
+	 * if bigger than current ABI, then check that none
+	 * of the extra bits are set. This is to avoid mistake
+	 * by caller assuming the library set those bits.
+	 */
+	if (usz > sz) {
+		char *addr = st + sz;
+		char *end = st + usz;
+		while (addr != end) {
+			if (*addr++) {
+				DPRINT("pfmlib_check_struct: invalid extra bits\n");
+				return 0;
+			}
+		}
+	}
+	return rsz;
+}
+
 /*
  * check environment variables for:
  *  LIBPFM_VERBOSE : enable verbose output (must be 1)
@@ -1095,6 +1132,7 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 	arg.fstr = fstr;
 	arg.codes = *codes;
 	arg.count = *count;
+	arg.size  = sizeof(arg);
 
 	/*
 	 * request RAW PMU encoding
@@ -1348,8 +1386,10 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 int
 pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 {
+	pfm_event_info_t info;
 	pfmlib_event_desc_t e;
 	pfmlib_pmu_t *pmu;
+	size_t sz = sizeof(info);
 	int pidx, ret;
 
 	if (!PFMLIB_INITIALIZED())
@@ -1365,26 +1405,26 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 	if (!uinfo)
 		return PFM_ERR_INVAL;
 
-	if (uinfo->size && uinfo->size != sizeof(*uinfo))
+	sz = pfmlib_check_struct(uinfo, uinfo->size, PFM_EVENT_INFO_ABI0, sz);
+	if (!sz)
 		return PFM_ERR_INVAL;
 
-	ret = pmu->get_event_info(pmu, pidx, uinfo);
+	memset(&info, 0, sizeof(info));
+
+	info.size = sz;
+
+	/* default data type is uint64 */
+	info.dtype = PFM_DTYPE_UINT64;
+
+	/* reset flags */
+	info.is_precise = 0;
+
+	ret = pmu->get_event_info(pmu, pidx, &info);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	uinfo->idx = idx; /* public index */
-
-	/* default data type is uint64 */
-	uinfo->dtype = PFM_DTYPE_UINT64;
-
-	/* reset flags */
-	uinfo->is_precise = 0;
-
-	ret = pmu->get_event_info(pmu, pidx, uinfo);
-	if (ret == PFM_SUCCESS) {
-		uinfo->pmu = pmu->pmu;
-		uinfo->idx = idx;
-	}
+	info.pmu = pmu->pmu;
+	info.idx = idx;
 
 	memset(&e, 0, sizeof(e));
 	e.event = pidx;
@@ -1392,8 +1432,10 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 	e.pmu   = pmu;
 
 	ret = pfmlib_build_event_pattrs(&e);
-	if (ret == PFM_SUCCESS)
-		uinfo->nattrs = e.npattrs;
+	if (ret == PFM_SUCCESS) {
+		info.nattrs = e.npattrs;
+		memcpy(uinfo, &info, sz);
+	}
 
 	pfmlib_release_event(&e);
 	return ret;
@@ -1402,9 +1444,10 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 int
 pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_t *uinfo)
 {
+	pfm_event_attr_info_t info;
 	pfmlib_event_desc_t e;
 	pfmlib_pmu_t *pmu;
-	uint32_t sz;
+	size_t sz = sizeof(info);
 	int pidx, ret;
 
 	if (!PFMLIB_INITIALIZED())
@@ -1416,18 +1459,15 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	if (os < 0 || os >= PFM_OS_MAX)
 		return PFM_ERR_INVAL;
 
+	pmu = pfmlib_idx2pidx(idx, &pidx);
+	if (!pmu)
+		return PFM_ERR_INVAL;
+
 	if (!uinfo)
 		return PFM_ERR_INVAL;
 
-	if (uinfo->size && uinfo->size != sizeof(*uinfo))
-		return PFM_ERR_INVAL;
-
-	/* reset flags */
-	uinfo->is_dfl     = 0;
-	uinfo->is_precise = 0;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
+	sz = pfmlib_check_struct(uinfo, uinfo->size, PFM_ATTR_INFO_ABI0, sz);
+	if (!sz)
 		return PFM_ERR_INVAL;
 
 	memset(&e, 0, sizeof(e));
@@ -1440,18 +1480,27 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 		return ret;
 
 	ret = PFM_ERR_INVAL;
+
 	if (attr_idx >= e.npattrs)
 		goto error;
 
-	sz = uinfo->size;
-	*uinfo = e.pattrs[attr_idx];
-	uinfo->size = sz;
+	/*
+	 * copy event_attr_info
+	 */
+	info = e.pattrs[attr_idx];
+
+	/*
+	 * rewrite size to reflect what we are returning
+	 */
+	info.size = sz;
 	/*
 	 * info.idx = private, namespace specific index,
 	 * should not be visible externally, so override
 	 * with public index
 	 */
-	uinfo->idx  = attr_idx;
+	info.idx  = attr_idx;
+
+	memcpy(uinfo, &info, sz);
 
 	ret = PFM_SUCCESS;
 error:
@@ -1462,7 +1511,9 @@ error:
 int
 pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 {
+	pfm_pmu_info_t info;
 	pfmlib_pmu_t *pmu;
+	size_t sz = sizeof(info);
 	int pidx;
 
 	if (!PFMLIB_INITIALIZED())
@@ -1474,34 +1525,38 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 	if (!uinfo)
 		return PFM_ERR_INVAL;
 
-	if (uinfo->size && uinfo->size != sizeof(*uinfo))
+	sz = pfmlib_check_struct(uinfo, uinfo->size, PFM_PMU_INFO_ABI0, sz);
+	if (!sz)
 		return PFM_ERR_INVAL;
-
+ 
 	pmu = pfmlib_pmus_map[pmuid];
 	if (!pmu)
 		return PFM_ERR_NOTSUPP;
 
-	uinfo->name = pmu->name;
-	uinfo->desc = pmu->desc;
-	uinfo->pmu = pmuid;
+	info.name = pmu->name;
+	info.desc = pmu->desc;
+	info.pmu  = pmuid;
+	info.size = sz;
 
-	uinfo->max_encoding    = pmu->max_encoding;
-	uinfo->num_cntrs       = pmu->num_cntrs;
-	uinfo->num_fixed_cntrs = pmu->num_fixed_cntrs;
+	info.max_encoding    = pmu->max_encoding;
+	info.num_cntrs       = pmu->num_cntrs;
+	info.num_fixed_cntrs = pmu->num_fixed_cntrs;
 
 	pidx = pmu->get_event_first(pmu);
 	if (pidx == -1)
-		uinfo->first_event = -1;
+		info.first_event = -1;
 	else
-		uinfo->first_event = pfmlib_pidx2idx(pmu, pidx);
+		info.first_event = pfmlib_pidx2idx(pmu, pidx);
 
 	/*
 	 * XXX: pme_count only valid when PMU is detected
 	 */
-	uinfo->is_present = pfmlib_pmu_active(pmu);
-	uinfo->is_dfl     = !!(pmu->flags & PFMLIB_PMU_FL_ARCH_DFL);
-	uinfo->type       = pmu->type;
-	uinfo->nevents    = pmu->pme_count;
+	info.is_present = pfmlib_pmu_active(pmu);
+	info.is_dfl     = !!(pmu->flags & PFMLIB_PMU_FL_ARCH_DFL);
+	info.type       = pmu->type;
+	info.nevents    = pmu->pme_count;
+
+	memcpy(uinfo, &info, sz);
 
 	return PFM_SUCCESS;
 }
@@ -1526,11 +1581,24 @@ pfmlib_sort_attr(pfmlib_event_desc_t *e)
 static int
 pfmlib_raw_pmu_encode(void *this, const char *str, int dfl_plm, void *data)
 {
+	pfm_pmu_encode_arg_t arg;
+	pfm_pmu_encode_arg_t *uarg = data;
 	pfmlib_os_t *os = this;
-	pfm_pmu_encode_arg_t *arg = data;
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
+	size_t sz = sizeof(arg);
 	int ret, i;
+
+	sz = pfmlib_check_struct(uarg, uarg->size, PFM_RAW_ENCODE_ABI0, sz);
+	if (!sz)
+		return PFM_ERR_INVAL;
+
+	memset(&arg, 0, sizeof(arg));
+
+	/*
+	 * get input data
+	 */
+	memcpy(&arg, uarg, sz);
 
 	memset(&e, 0, sizeof(e));
 	/*
@@ -1552,34 +1620,37 @@ pfmlib_raw_pmu_encode(void *this, const char *str, int dfl_plm, void *data)
 	/*
 	 * return opaque event identifier
 	 */
-	arg->idx = pfmlib_pidx2idx(e.pmu, e.event);
+	arg.idx = pfmlib_pidx2idx(e.pmu, e.event);
 
-	if (arg->codes == NULL) {
+	if (arg.codes == NULL) {
 		ret = PFM_ERR_NOMEM;
-		arg->codes = malloc(sizeof(uint64_t) * e.count);
-		if (!arg->codes)
+		arg.codes = malloc(sizeof(uint64_t) * e.count);
+		if (!arg.codes)
 			goto error_fstr;
-	} else if (arg->count < e.count) {
+	} else if (arg.count < e.count) {
 		ret = PFM_ERR_TOOSMALL;
 		goto error_fstr;
 	}
 
-	arg->count = e.count;
+	arg.count = e.count;
 
 	for (i = 0; i < e.count; i++)
-		arg->codes[i] = e.codes[i];
+		arg.codes[i] = e.codes[i];
 
-	if (arg->fstr) {
-		ret = pfmlib_build_fstr(&e, arg->fstr);
+	if (arg.fstr) {
+		ret = pfmlib_build_fstr(&e, arg.fstr);
 		if (ret != PFM_SUCCESS)
 			goto error;
 	}
 
 	ret = PFM_SUCCESS;
 
+	/* copy out results */
+	memcpy(uarg, &arg, sz);
+
 error_fstr:
 	if (ret != PFM_SUCCESS)
-		free(arg->fstr);
+		free(arg.fstr);
 error:
 	/*
 	 * release resources allocated for event

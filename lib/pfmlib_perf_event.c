@@ -58,15 +58,26 @@ static const pfmlib_attr_desc_t perf_event_ext_mods[]={
 static int
 pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 {
+	pfm_perf_encode_arg_t arg;
+	pfm_perf_encode_arg_t *uarg = data;
 	pfmlib_os_t *os = this;
-	pfm_perf_encode_arg_t *arg = data;
-	struct perf_event_attr *attr = arg->attr;
+	struct perf_event_attr *attr;
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
 	pfm_event_attr_info_t *a;
+	size_t sz = sizeof(arg);
 	uint64_t ival;
 	int has_plm = 0;
 	int i, count, plm = 0, ret;
+
+	sz = pfmlib_check_struct(uarg, uarg->size, PFM_PERF_ENCODE_ABI0, sz);
+	if (!sz)
+		return PFM_ERR_INVAL;
+
+	/* copy input */
+	memcpy(&arg, uarg, sz);
+
+	attr = arg.attr;
 
 	memset(&e, 0, sizeof(e));
 
@@ -155,13 +166,15 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	/*
 	 * propagate event index if necessary
 	 */
-	arg->idx = pfmlib_pidx2idx(e.pmu, e.event);
+	arg.idx = pfmlib_pidx2idx(e.pmu, e.event);
 
 	/*
 	 * fstr not requested, stop here
 	 */
-	if (!arg->fstr)
+	if (!arg.fstr) {
+		memcpy(uarg, &arg, sz);
 		return PFM_SUCCESS;
+	}
 
 	for (i=0; i < e.npattrs; i++) {
 		int idx;
@@ -192,7 +205,11 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 		}
 	}
 
-	return pfmlib_build_fstr(&e, arg->fstr);
+	ret = pfmlib_build_fstr(&e, arg.fstr);
+	if (ret == PFM_SUCCESS)
+		memcpy(uarg, &arg, sz);
+
+	return ret;
 }
 /*
  * get OS-specific event attributes

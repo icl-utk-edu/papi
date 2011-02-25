@@ -29,6 +29,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <sys/types.h>
+#include <unistd.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -217,9 +219,9 @@ typedef int os_err_t;		/* error if a syscall fails */
 typedef struct {
 	const char		*name;		/* event name */
 	const char		*desc;		/* event description */
+	size_t			size;		/* struct sizeof */
 	pfm_pmu_t		pmu;		/* PMU identification */
 	pfm_pmu_type_t		type;		/* PMU type */
-	int			size;		/* for struct extension, 0 for now */
 	int			nevents;	/* how many events for this PMU */
 	int			first_event;	/* opaque index of first event */
 	int			max_encoding;	/* max number of uint64_t to encode an event */
@@ -230,36 +232,34 @@ typedef struct {
 		unsigned int	is_dfl:1;	/* is architecture default PMU */
 		unsigned int	reserved_bits:30;
 	} SWIG_NAME(flags);
-	uint64_t		reserved[6];
 } pfm_pmu_info_t;
 
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
 	const char		*equiv;	/* event is equivalent to */
+	size_t			size;	/* struct sizeof */
 	uint64_t		code;	/* event raw code (not encoding) */
 	pfm_pmu_t		pmu;	/* which PMU */
 	pfm_dtype_t		dtype;	/* data type of event value */
 	int			idx;	/* unique event identifier */
 	int			nattrs;	/* number of attributes */
-	int			size;	/* for struct extension, 0 for now */
+	int			reserved; /* for future use */
 	struct {
 		unsigned int	is_precise:1;	/* precise sampling (Intel X86=PEBS) */
 		unsigned int	reserved_bits:31;
 	} SWIG_NAME(flags);
-	uint64_t		reserved[5];
 } pfm_event_info_t;
 
 typedef struct {
 	const char		*name;	/* attribute symbolic name */
 	const char		*desc;	/* attribute description */
 	const char		*equiv;	/* attribute is equivalent to */
+	size_t			size;	/* struct sizeof */
 	uint64_t		code;	/* attribute code */
 	pfm_attr_t		type;	/* attribute type */
 	int			idx;	/* attribute opaque index */
 	pfm_attr_ctrl_t		ctrl;		/* what is providing attr */
-	int			reserved1;	/* for future use */
-	uint32_t		size;	/* size for extension, =0 for now */
 	struct {
 		unsigned int    is_dfl:1;	/* is default umask */
 		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
@@ -271,7 +271,6 @@ typedef struct {
 		int		dfl_bool;	/* default boolean value */
 		int		dfl_int;	/* default integer value */
 	} SWIG_NAME(defaults);
-	uint64_t		reserved[4];
 } pfm_event_attr_info_t;
 
 /*
@@ -280,10 +279,25 @@ typedef struct {
 typedef struct {
 	uint64_t	*codes;		/* out/in: event codes array */
 	char		**fstr;		/* out/in: fully qualified event string */
+	size_t		size;		/* sizeof struct */
 	int		count;		/* out/in: # of elements in array */
 	int		idx;		/* out: unique event identifier */
-	int		reserved[4];	/* for future use */
 } pfm_pmu_encode_arg_t;
+
+#if __WORDSIZE == 64
+#define PFM_PMU_INFO_ABI0	56
+#define PFM_EVENT_INFO_ABI0	56
+#define PFM_ATTR_INFO_ABI0	64
+
+#define PFM_RAW_ENCODE_ABI0	32
+#else
+#define PFM_PMU_INFO_ABI0	44
+#define PFM_EVENT_INFO_ABI0	44
+#define PFM_ATTR_INFO_ABI0	52
+
+#define PFM_RAW_ENCODE_ABI0	24
+#endif
+
 
 /*
  * initialization, configuration, errors

@@ -35,12 +35,17 @@ extern "C" {
 typedef struct {
 	struct perf_event_attr *attr;	/* in/out: perf_event struct pointer */
 	char **fstr;			/* out/in: fully qualified event string */
+	size_t size;			/* sizeof struct */
 	int idx;			/* out: opaque event identifier */
 	int cpu;			/* out: cpu to program */
 	int flags;			/* out: perf_event_open() flags */
-	int reserved[5];		/* for future use */
 } pfm_perf_encode_arg_t;
 
+#if __WORDSIZE == 64
+#define PFM_PERF_ENCODE_ABI0	40	/* includes 4-byte padding */
+#else
+#define PFM_PERF_ENCODE_ABI0	24
+#endif
 /*
  * old interface, maintained for backward compatibility with older versions o
  * the library. Should use pfm_get_os_event_encoding() now

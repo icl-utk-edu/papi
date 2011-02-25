@@ -171,6 +171,8 @@ extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
 extern int pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr);
 extern void pfmlib_sort_attr(pfmlib_event_desc_t *e);
 
+extern size_t pfmlib_check_struct(void *st, size_t usz, size_t refsz, size_t sz);
+
 #ifdef CONFIG_PFMLIB_DEBUG
 #define DPRINT(fmt, a...) \
 	do { \

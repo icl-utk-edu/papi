@@ -28,9 +28,9 @@ argument must be a pointer to a \fBpfm_raw_pmu_encode_arg_t\fR structure which i
 typedef struct {
     uint64_t    *codes;
     char        **fstr;
+    size_t      size;
     int         count;
     int         idx;
-    int         reserved[4];
 } pfm_pmu_encode_arg_t;
 .fi
 
@@ -55,6 +55,15 @@ Upon return, if \fBfstr\fR was not NULL on entry, then it points to the event st
 dynamically allocated and needs to eventually be freed. If \fBfstr\fR was NULL on entry, then nothing is returned
 in this field.
 .TP
+.B size
+This field contains the size of the struct passed. This field is used to provide
+for extensibility of the struct without compromising backward compatibility.
+The value should be set to \fBsizeof(pfm_pmu_encode_arg_t)\fR. If instead, a value of
+\fB0\fR is specified, the library assumes the struct passed is identical to the
+first ABI version which size is \fBPFM_RAW_ENCODE_ABI0\fR. Thus, if fields were
+added after the first ABI, they will not be set by the library. The library
+does check that bytes beyond what is implemented are zeroes.
+.TP
 .B idx
 Upon return, this field contains the opaque unique identifier for the event described in \fBstr\fR.
 This index can be used to retrieve information about the event using \fBpfm_get_event_info()\fR, for instance.
@@ -71,10 +80,10 @@ PERF_OS_EVENT to adds modifiers controlled only by the perf_event interface, suc
 typedef struct {
     struct perf_event_attr *attr;
     char **fstr;
+    size_t size;
     int idx;
     int cpu;
     int flags;
-    int reserved[5];
 } pfm_perf_encode_arg_t;
 .fi
 
@@ -91,6 +100,15 @@ and all modifiers are spelled out, this field must be set to a non-null address 
 Upon return, if \fBfstr\fR was not NULL on entry, then it points to the event string. The string is
 dynamically allocated and needs to eventually be freed. If \fBfstr\fR was NULL on entry, then nothing is returned
 in this field.
+.TP
+.B size
+This field contains the size of the struct passed. This field is used to provide
+for extensibility of the struct without compromising backward compatibility.
+The value should be set to \fBsizeof(pfm_perf_encode_arg_t)\fR. If instead, a value of
+\fB0\fR is specified, the library assumes the struct passed is identical to the
+first ABI version which size is \fBPFM_PERF_ENCODE_ABI0\fR. Thus, if fields were
+added after the first ABI, they will not be set by the library. The library
+does check that bytes beyond what is implemented are zeroes.
 .TP
 .B idx
 Upon return, this field contains the opaque unique identifier for the event described in \fBstr\fR.

@@ -18,17 +18,16 @@ typedef struct {
         const char              *name;
         const char              *desc;
         const char              *equiv;
+        size_t			size;
         uint64_t                code;
         pfm_pmu_t               pmu;
         pfm_dtype_t             dtype
         int                     idx;
         int                     nattrs;
-        int                     size;
         struct {
           unsigned int s_precise:1;
           unsigned int reserved_bits:31;
         };
-        uint64_t                reserved[2];
 } pfm_event_info_t;
 .fi
 
@@ -70,11 +69,13 @@ may be unit masks or modifiers. If the event has not attribute, then
 the value of this field is simply 0.
 .TP
 .B size
-This field must be set to zero for now. It will be used in case the
-\fBpfm_event_info\fR structure is expanded.
-.TP
-.B reserved
-The field must be set to zero.
+This field contains the size of the struct passed. This field is used to provide
+for extensibility of the struct without compromising backward compatibility.
+The value should be set to \fBsizeof(pfm_event_info_t)\fR. If instead, a value of
+\fB0\fR is specified, the library assumes the struct passed is identical to the
+first ABI version which size is \fBPFM_EVENT_INFO_ABI0\fR. Thus, if fields were
+added after the first ABI, they will not be set by the library. The library
+does check that bytes beyond what is implemented are zeroes.
 .TP
 .B is_precise
 This bitfield indicates whether or not the event support precise sampling.
@@ -84,7 +85,6 @@ field means that at least one umask supports precise sampling. On Intel X86
 processors, this indicates whether the event support Precise Event-Based
 Sampling (PEBS).
 .PP
-
 
 The \fBpfm_os_t\fR enumeration provides the following choices:
 .TP
