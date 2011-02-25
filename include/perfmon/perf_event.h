@@ -188,7 +188,7 @@ struct perf_event_attr {
 	__u64	sample_type;
 	__u64	read_format;
 
-	__u64	disabled       :  1, /* off by default        */
+	__u64		disabled       :  1, /* off by default        */
 			inherit	       :  1, /* children inherit it   */
 			pinned	       :  1, /* must always be on PMU */
 			exclusive      :  1, /* only group on PMU     */
@@ -214,8 +214,9 @@ struct perf_event_attr {
 			 */
 			precise_ip     :  2, /* skid constraint       */
 			mmap_data      :  1, /* non-exec mmap data    */
+			sample_id_all  :  1, /* sample_type all events */
 
-			__reserved_1   : 46;
+			__reserved_1   : 45;
 
 	union {
 		__u32	wakeup_events;		/* wakeup every n events */
