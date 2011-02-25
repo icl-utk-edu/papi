@@ -296,7 +296,7 @@ pfmlib_check_struct(void *st, size_t usz, size_t refsz, size_t sz)
 	 * if user size is zero, then use ABI0 size
 	 */
 	if (usz == 0)
-		usz = PFM_PMU_INFO_ABI0;
+		usz = refsz;
 
 	/*
 	 * cannot be smaller than ABI0 size
