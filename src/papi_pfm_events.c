@@ -1792,9 +1792,8 @@ long long generate_p4_event(long long escr,
     return pe_event;
 }
 
-
 int
-_papi_pfm3_setup_counters( __u64 *pe_event, hwd_register_t *ni_bits ) {
+_papi_pfm3_setup_counters( unsigned long long *pe_event, hwd_register_t *ni_bits ) {
 
   int ret;
 

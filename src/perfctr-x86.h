@@ -21,6 +21,7 @@
 #include <sys/ucontext.h>
 #include <linux/unistd.h>
 
+#include "perfmon/pfmlib.h"
 #include "papi.h"
 #include "papi_defines.h"
 #include "libperfctr.h"
@@ -159,5 +160,7 @@ typedef struct native_event_entry
 	char *description;				   // description of this event     
 	X86_register_t resources;		   // resources required by this native event 
 } native_event_entry_t;
+
+typedef pfmlib_event_t pfm_register_t;
 
 #endif
