@@ -35,6 +35,9 @@
 #include <err.h>
 
 #include <perfmon/pfmlib.h>
+#ifdef __linux__
+#include <perfmon/pfmlib_perf_event.h>
+#endif
 
 #define __weak_func	__attribute__((weak))
 
@@ -62,7 +65,7 @@ static int
 validate_event_tables(void)
 {
 	pfm_pmu_info_t pinfo;
-	int i, ret, retval = 0;
+	int i, ret, errors = 0;
 
 	memset(&pinfo, 0, sizeof(pinfo));
 
@@ -73,20 +76,159 @@ validate_event_tables(void)
 		if (ret != PFM_SUCCESS)
 			continue;
 
-		fprintf(stderr, "Checking %s:\n", pinfo.name);
-		ret = pfm_pmu_validate(i, stderr);
-		if (ret != PFM_SUCCESS && ret != PFM_ERR_NOTSUPP)
-			retval = 1;
+		printf("\tchecking %s (%d events): ", pinfo.name, pinfo.nevents);
+		fflush(stdout);
+
+		ret = pfm_pmu_validate(i, stdout);
+		if (ret != PFM_SUCCESS && ret != PFM_ERR_NOTSUPP) {
+			printf("Failed\n");
+			errors++;
+		} else if (ret == PFM_ERR_NOTSUPP) {
+			printf("N/A\n");
+		} else {
+			printf("Passed\n");
+		}
 	}
-	return retval;
+	return errors;
+}
+
+#if __WORDSIZE == 64
+#define STRUCT_MULT	8
+#else
+#define STRUCT_MULT	4
+#endif
+
+#define MAX_FIELDS 32
+typedef struct {
+		const char *name;
+		size_t sz;
+} field_desc_t;
+typedef struct {
+	const char *name;
+	size_t sz;
+	size_t bitfield_sz;
+	field_desc_t fields[MAX_FIELDS];
+} struct_desc_t;
+
+#define LAST_STRUCT { .name = NULL, }
+
+#define FIELD(n, st) \
+	{ .name = #n, \
+	  .sz   = sizeof(((st *)(0))->n), \
+	}
+#define LAST_FIELD { .name = NULL, }
+
+static const struct_desc_t pfmlib_structs[]={
+	{
+	 .name = "pfm_pmu_info_t",
+	 .sz   = sizeof(pfm_pmu_info_t),
+	 .bitfield_sz = 4,
+	 .fields= {
+		FIELD(name, pfm_pmu_info_t),
+		FIELD(desc, pfm_pmu_info_t),
+		FIELD(size, pfm_pmu_info_t),
+		FIELD(pmu, pfm_pmu_info_t),
+		FIELD(type, pfm_pmu_info_t),
+		FIELD(nevents, pfm_pmu_info_t),
+		FIELD(first_event, pfm_pmu_info_t),
+		FIELD(max_encoding, pfm_pmu_info_t),
+		FIELD(num_cntrs, pfm_pmu_info_t),
+		FIELD(num_fixed_cntrs, pfm_pmu_info_t),
+		LAST_FIELD
+	 },
+	},
+	{
+	 .name = "pfm_event_info_t",
+	 .sz   = sizeof(pfm_event_info_t),
+	 .bitfield_sz = 4,
+	 .fields= {
+		FIELD(name, pfm_event_info_t),
+		FIELD(desc, pfm_event_info_t),
+		FIELD(equiv, pfm_event_info_t),
+		FIELD(size, pfm_event_info_t),
+		FIELD(code, pfm_event_info_t),
+		FIELD(pmu, pfm_event_info_t),
+		FIELD(dtype, pfm_event_info_t),
+		FIELD(idx, pfm_event_info_t),
+		FIELD(nattrs, pfm_event_info_t),
+		FIELD(reserved, pfm_event_info_t),
+		LAST_FIELD
+	 },
+	},
+	{
+	 .name = "pfm_event_attr_info_t",
+	 .sz   = sizeof(pfm_event_attr_info_t),
+	 .bitfield_sz = 4+8,
+	 .fields= {
+		FIELD(name, pfm_event_attr_info_t),
+		FIELD(desc, pfm_event_attr_info_t),
+		FIELD(equiv, pfm_event_attr_info_t),
+		FIELD(size, pfm_event_attr_info_t),
+		FIELD(code, pfm_event_attr_info_t),
+		FIELD(type, pfm_event_attr_info_t),
+		FIELD(idx, pfm_event_attr_info_t),
+		FIELD(ctrl, pfm_event_attr_info_t),
+		LAST_FIELD
+	 },
+	},
+#ifdef __linux__
+	{
+	 .name = "pfm_perf_encode_arg_t",
+	 .sz   = sizeof(pfm_perf_encode_arg_t),
+	 .bitfield_sz = 0,
+	 .fields= {
+		FIELD(attr, pfm_perf_encode_arg_t),
+		FIELD(fstr, pfm_perf_encode_arg_t),
+		FIELD(size, pfm_perf_encode_arg_t),
+		FIELD(idx, pfm_perf_encode_arg_t),
+		FIELD(cpu, pfm_perf_encode_arg_t),
+		FIELD(flags, pfm_perf_encode_arg_t),
+		FIELD(pad0, pfm_perf_encode_arg_t),
+		LAST_FIELD
+	 },
+	},
+#endif
+	LAST_STRUCT
+};
+
+static int
+validate_structs(void)
+{
+
+	const struct_desc_t *d;
+	const field_desc_t *f;
+	size_t sz;
+	int errors = 0;
+
+	for (d = pfmlib_structs; d->name; d++) {
+
+		printf("\t%s : ", d->name);
+
+		if (d->sz % STRUCT_MULT) {
+			printf("Failed (wrong mult size=%zu)\n", d->sz);
+			errors++;
+		}
+
+		sz = d->bitfield_sz;
+		for (f = d->fields; f->name; f++) {
+			sz += f->sz;
+		}
+
+		if (sz != d->sz) {
+			printf("Failed (invisible padding of %zu bytes)\n", d->sz - sz);
+			errors++;
+			continue;
+		}
+		printf("Passed\n");
+		
+	}
+	return errors;
 }
 
 int
 main(int argc, char **argv)
 {
-	int ret, c;
-	int retval1 = 0;
-	int retval2 = 0;
+	int ret, c, errors = 0;
 
 
 	while ((c=getopt(argc, argv,"hcaA")) != -1) {
@@ -109,7 +251,9 @@ main(int argc, char **argv)
 		}
 	}
 	/* to allow encoding of events from non detected PMU models */
-	setenv("LIBPFM_ENCODE_INACTIVE", "1", 1);
+	ret = setenv("LIBPFM_ENCODE_INACTIVE", "1", 1);
+	if (ret)
+		err(1, "cannot force inactive encoding");
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
@@ -121,25 +265,25 @@ main(int argc, char **argv)
 		options.valid_arch = 1;
 	}
 
+	printf("Libpfm structure tests:\n");
+	errors += validate_structs();
+
 	if (options.valid_intern) {
-		printf("Libpfm internal table tests:"); fflush(stdout);
-		retval1 = validate_event_tables();
-		if (retval1)
-			printf(" Failed (%d errors)\n", retval1);
-		else
-			printf(" Passed\n");
+		printf("Libpfm internal table tests:\n");
+		errors += validate_event_tables();
 	}
 
 	if (options.valid_arch) {
-		printf("Architecture specific tests:"); fflush(stdout);
-		retval2 = validate_arch(stderr);
-		if (retval2)
-			printf(" Failed (%d errors)\n", retval2);
-		else
-			printf(" Passed\n");
+		printf("Architecture specific tests:\n");
+		errors += validate_arch(stderr);
 	}
 
 	pfm_terminate();
 
-	return retval1 || retval2;
+	if (errors)
+		printf("Total %d errors\n", errors);
+	else
+		printf("All tests passed\n");
+
+	return errors;
 }

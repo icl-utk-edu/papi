@@ -587,7 +587,7 @@ static int check_test_events(FILE *fp)
 	char *fstr;
 	uint64_t *codes;
 	int count, i, j;
-	int ret, retval = 0;
+	int ret, errors = 0;
 
 	for (i=0, e = x86_test_events; i < NUM_TEST_EVENTS; i++, e++) {
 		codes = NULL;
@@ -596,35 +596,35 @@ static int check_test_events(FILE *fp)
 		ret = pfm_get_event_encoding(e->name, PFM_PLM0 | PFM_PLM3, &fstr, NULL, &codes, &count);
 		if (ret != e->ret) {
 			fprintf(fp,"Event%d %s, ret=%s(%d) expected %s(%d)\n", i, e->name, pfm_strerror(ret), ret, pfm_strerror(e->ret), e->ret);
-			retval = 1;
+			errors++;
 		} else {
 			if (ret != PFM_SUCCESS) {
 				if (fstr) {
 					fprintf(fp,"Event%d %s, expected fstr NULL but it is not\n", i, e->name);
-					retval++;
+					errors++;
 				}
 				if (count != 0) {
 					fprintf(fp,"Event%d %s, expected count=0 instead of %d\n", i, e->name, count);
-					retval++;
+					errors++;
 				}
 				if (codes) {
 					fprintf(fp,"Event%d %s, expected codes[] NULL but it is not\n", i, e->name);
-					retval++;
+					errors++;
 				}
 			} else {
 				if (count != e->count) {
 					fprintf(fp,"Event%d %s, count=%d expected %d\n", i, e->name, count, e->count);
-					retval++;
+					errors++;
 				}
 				for (j=0; j < count; j++) {
 					if (codes[j] != e->codes[j]) {
 						fprintf(fp,"Event%d %s, codes[%d]=%#"PRIx64" expected %#"PRIx64"\n", i, e->name, j, codes[j], e->codes[j]);
-						retval++;
+						errors++;
 					}
 				}
 				if (e->fstr && strcmp(fstr, e->fstr)) {
 					fprintf(fp,"Event%d %s, fstr=%s expected %s\n", i, e->name, fstr, e->fstr);
-					retval++;
+					errors++;
 				}
 			}
 		}
@@ -633,7 +633,8 @@ static int check_test_events(FILE *fp)
 		if (fstr)
 			free(fstr);
 	}
-	return retval;
+	printf("\t %d x86 events: %d errors\n", i, errors);
+	return errors;
 }
 
 int
