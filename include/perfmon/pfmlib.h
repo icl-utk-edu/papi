@@ -274,7 +274,7 @@ typedef struct {
 } pfm_event_attr_info_t;
 
 /*
- * raw PMU encoding argument (use with PFM_OS_NONE)
+ * use with PFM_OS_NONE for pfm_get_os_event_encoding()
  */
 typedef struct {
 	uint64_t	*codes;		/* out/in: event codes array */
