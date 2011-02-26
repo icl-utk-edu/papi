@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 /*
- * 3rd argument to pfm_get_os_event_encoding()
+ * use with PFM_OS_PERF, PFM_OS_PERF_EXT for pfm_get_os_event_encoding()
  */
 typedef struct {
 	struct perf_event_attr *attr;	/* in/out: perf_event struct pointer */
@@ -39,6 +39,7 @@ typedef struct {
 	int idx;			/* out: opaque event identifier */
 	int cpu;			/* out: cpu to program */
 	int flags;			/* out: perf_event_open() flags */
+	int pad0;			/* explicit 64-bit mode padding */
 } pfm_perf_encode_arg_t;
 
 #if __WORDSIZE == 64
