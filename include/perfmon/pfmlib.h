@@ -295,7 +295,7 @@ typedef struct {
 #define PFM_EVENT_INFO_ABI0	44
 #define PFM_ATTR_INFO_ABI0	52
 
-#define PFM_RAW_ENCODE_ABI0	24
+#define PFM_RAW_ENCODE_ABI0	20
 #endif
 
 
