@@ -1296,8 +1296,8 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 int
 pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 {
-	pfmlib_pmu_t *pmu;
-	int ret;
+	pfmlib_pmu_t *pmu, *pmx;
+	int i, ret;
 
 	if (fp == NULL)
 		return PFM_ERR_INVAL;
@@ -1363,6 +1363,23 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 	if (!pmu->max_encoding) {
 		fprintf(fp, "pmu: %s :: max_encoding is zero\n", pmu->name);
 		return PFM_ERR_INVAL;
+	}
+
+	/* look for duplicate names, id */
+	pfmlib_for_each_pmu(i) {
+		pmx = pfmlib_pmus[i];
+		if (!pfmlib_pmu_active(pmx))
+			continue;
+		if (pmx == pmu)
+			continue;
+		if (!strcasecmp(pmx->name, pmu->name)) {
+			fprintf(fp, "pmu: %s :: duplicate name\n", pmu->name);
+			return PFM_ERR_INVAL;
+		}
+		if (pmx->pmu == pmu->pmu) {
+			fprintf(fp, "pmu: %s :: duplicate id\n", pmu->name);
+			return PFM_ERR_INVAL;
+		}
 	}
 
 	if (pmu->validate_table) {
