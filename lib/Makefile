@@ -53,7 +53,8 @@ endif
 INCARCH = $(INC_X86)
 SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
 	  pfmlib_intel_nhm_unc.c pfmlib_intel_coreduo.c pfmlib_intel_p6.c pfmlib_intel_nhm.c \
-	  pfmlib_intel_wsm.c pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c pfmlib_intel_netburst.c
+	  pfmlib_intel_wsm.c pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c pfmlib_intel_netburst.c \
+	  pfmlib_intel_snb.c
 
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86
 endif
@@ -156,7 +157,8 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_nhm_events.h	\
 	events/intel_nhm_unc_events.h	\
 	events/intel_wsm_events.h	\
-	events/intel_wsm_unc_events.h
+	events/intel_wsm_unc_events.h	\
+	events/intel_snb_events.h
 
 INC_MIPS64=gen_mips64_events.h
 

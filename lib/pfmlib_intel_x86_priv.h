@@ -33,7 +33,7 @@
 /*
  * maximum number of unit masks/event
  */
-#define INTEL_X86_NUM_UMASKS	24
+#define INTEL_X86_NUM_UMASKS	32
 /*
  * maximum number of unit masks groups per event
  */
@@ -47,7 +47,7 @@ typedef struct {
 	const char		*udesc; /* unit umask description */
 	const char		*uequiv;/* name of event from which this one is derived, NULL if none */
 	uint64_t		ucntmsk;/* supported counters for umask (if set, supersedes cntmsk) */
-	unsigned int		ucode;  /* unit mask code */
+	uint64_t		ucode;  /* unit mask code */
 	unsigned int		uflags;	/* unit mask flags */
 	unsigned int		umodel; /* only available on this PMU model */
 	unsigned int		grpid;	/* unit mask group id */

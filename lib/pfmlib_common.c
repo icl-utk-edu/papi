@@ -75,6 +75,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_wsm_sp_support,
 	&intel_wsm_dp_support,
 	&intel_wsm_unc_support,
+	&intel_snb_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
