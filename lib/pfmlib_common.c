@@ -1247,7 +1247,6 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 	if (!buf)
 		return PFM_ERR_NOMEM;
 
-	fprintf(fp, "\tcheck encoding: "); fflush(fp);
 	pfmlib_for_each_pmu_event(pmu, i) {
 		ret = pmu->get_event_info(pmu, i, &einfo);
 		if (ret != PFM_SUCCESS) {
@@ -1291,9 +1290,6 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 	}
 	free(buf);
 
-	if (retval == PFM_SUCCESS)
-		fprintf(fp, "OK (%d events)\n", n);
-
 	return retval;
 }
 
@@ -1310,8 +1306,6 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 	if (!pmu)
 		return PFM_ERR_INVAL;
 
-
-	fprintf(fp, "\tcheck struct: "); fflush(fp);
 
 	if (!pfmlib_pmu_initialized(pmu)) {
 		fprintf(fp, "pmu: %s :: initialization failed\n", pmu->name);
@@ -1371,14 +1365,10 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 		return PFM_ERR_INVAL;
 	}
 
-	fputs("OK\n", fp);
-
 	if (pmu->validate_table) {
-		fprintf(fp, "\tcheck table: "); fflush(stdout);
 		ret = pmu->validate_table(pmu, fp);
 		if (ret != PFM_SUCCESS)
 			return ret;
-		fputs("OK\n", fp);
 	}
 	return pfmlib_pmu_validate_encoding(pmu, fp);
 }
