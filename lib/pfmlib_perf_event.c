@@ -83,6 +83,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 
 	e.osid = os->id;
 	e.os_data = attr;
+	e.dfl_plm = dfl_plm;
 
 	ret = pfmlib_parse_event(str, &e);
 	if (ret != PFM_SUCCESS)
