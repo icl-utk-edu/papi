@@ -467,5 +467,17 @@ perf_event_open(
 	return syscall(
 		__NR_perf_event_open, hw_event_uptr, pid, cpu, group_fd, flags);
 }
+
+#include <sys/prctl.h>
+/*
+ * compensate for some distros which do not
+ * have recent enough linux/prctl.h
+ */
+#ifndef PR_TASK_PERF_EVENTS_DISABLE
+#define PR_TASK_PERF_EVENTS_ENABLE		32
+#define PR_TASK_PERF_EVENTS_DISABLE		31
 #endif
+
+#endif /* __linux__ */
+
 #endif /* _LINUX_PERF_EVENT_H */
