@@ -30,6 +30,10 @@ include config.mk
 EXAMPLE_DIRS=examples perf_examples
 DIRS=lib tests $(EXAMPLE_DIRS) include docs
 
+ifeq ($(SYS),Linux)
+EXAMPLE_DIRS +=perf_examples
+endif
+
 ifneq ($(CONFIG_PFMLIB_NOPYTHON),y)
 DIRS += python
 endif
