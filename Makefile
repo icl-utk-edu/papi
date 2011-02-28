@@ -27,7 +27,7 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
 include config.mk
 
-EXAMPLE_DIRS=examples perf_examples
+EXAMPLE_DIRS=examples
 DIRS=lib tests $(EXAMPLE_DIRS) include docs
 
 ifeq ($(SYS),Linux)
