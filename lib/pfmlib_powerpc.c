@@ -62,40 +62,6 @@ pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_eve
 	return PFM_ERR_ATTR;
 }
 
-#ifdef __linux__
-static int
-pfm_gen_powerpc_perf_encode(void *this, pfmlib_event_desc_t *e)
-{
-	struct perf_event_attr *attr = e->os_data;
-
-	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
-
-	return PFM_SUCCESS;
-}
-#else
-static inline int
-pfm_gen_powerpc_perf_encode(void *this, pfmlib_event_desc_t *e)
-{
-	return PFM_ERR_NOTSUPP;
-}
-#endif
-
-static int
-pfm_gen_powerpc_os_encode(void *this, pfmlib_event_desc_t *e)
-{
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		return pfm_gen_powerpc_perf_encode(this, e);
-	case PFM_OS_NONE:
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
 int
 pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
@@ -106,7 +72,7 @@ pfm_gen_powerpc_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 	evt_strcat(e->fstr, "%s", pe[e->event].pme_name);
 
-	return pfm_gen_powerpc_os_encode(this, e);
+	return PFM_SUCCESS;
 }
 
 int

@@ -89,7 +89,10 @@ pfmlib_pmu_t intel_wsm_sp_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.pmu_detect		= pfm_wsm_sp_detect,
 	.pmu_init		= pfm_wsm_init,
-	.get_event_encoding	= pfm_intel_x86_get_encoding,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
@@ -114,7 +117,10 @@ pfmlib_pmu_t intel_wsm_dp_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.pmu_detect		= pfm_wsm_dp_detect,
 	.pmu_init		= pfm_wsm_init,
-	.get_event_encoding	= pfm_intel_x86_get_encoding,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,

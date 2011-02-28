@@ -188,6 +188,8 @@ typedef union {
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
+#define IS_FAMILY_10H(p) (((pfmlib_pmu_t *)(p))->pmu_rev >= AMD64_FAM10H)
+
 extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_amd64_get_event_first(void *this);
 extern int pfm_amd64_get_event_next(void *this, int idx);
@@ -200,5 +202,6 @@ extern int pfm_amd64_pmu_init(void *this);
 extern const pfmlib_attr_desc_t amd64_mods[];
 extern int pfm_amd64_get_event_nattrs(void *this, int pidx);
 
+extern int pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern void pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 #endif /* __PFMLIB_AMD64_PRIV_H__ */

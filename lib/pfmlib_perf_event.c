@@ -26,8 +26,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <perfmon/pfmlib_perf_event.h>
-#include "pfmlib_perf_event_priv.h"
+
 #include "pfmlib_priv.h"
+#include "pfmlib_perf_event_priv.h"
 
 #define PERF_PROC_FILE "/proc/sys/kernel/perf_event_paranoid"
 
@@ -92,7 +93,12 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	pmu = e.pmu;
 	count = pmu->max_encoding;
 
-	ret = pmu->get_event_encoding(pmu, &e);
+	if (!pmu->get_event_encoding[e.osid]) {
+		DPRINT("PMU %s does not support PFM_OS_NONE\n", pmu->name);
+		return PFM_ERR_NOTSUPP;
+	}
+
+	ret = pmu->get_event_encoding[e.osid](pmu, &e);
         if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -321,3 +327,5 @@ pfmlib_os_t pfmlib_os_perf_ext={
 	.get_os_nattrs = perf_get_os_nattrs,
 	.encode = pfmlib_perf_event_encode,
 };
+
+

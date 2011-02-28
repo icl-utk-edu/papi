@@ -194,41 +194,6 @@ pfm_arm_detect(void *this)
 	return PFM_SUCCESS;
 }
 
-#ifdef __linux__
-#include "pfmlib_perf_event_priv.h"
-static int
-pfm_arm_perf_encode(void *this, pfmlib_event_desc_t *e)
-{
-	struct perf_event_attr *attr = e->os_data;
-
-	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
-
-	return PFM_SUCCESS;
-}
-#else
-static inline int
-pfm_arm_perf_encode(void *this, pfmlib_event_desc_t *e)
-{
-	return PFM_ERR_NOTSUPP;
-}
-#endif
-
-static int
-pfm_arm_os_encode(void *this, pfmlib_event_desc_t *e)
-{
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		return pfm_arm_perf_encode(this, e);
-	case PFM_OS_NONE:
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
 int
 pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
@@ -245,7 +210,7 @@ pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e)
 
         pfm_arm_display_reg(reg, e->fstr);
    
-	return pfm_arm_os_encode(this, e);
+	return PFM_SUCCESS;
 }
 
 int
@@ -325,44 +290,3 @@ pfm_arm_get_event_info(void *this, int idx, pfm_event_info_t *info)
 
 	return PFM_SUCCESS;
 }
-
-#ifdef __linux__
-void
-pfm_arm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
-{
-	int i, compact;
-
-	for (i=0; i < e->npattrs; i++) {
-		compact = 0;
-
-		/* umasks never conflict */
-		if (e->pattrs[i].type == PFM_ATTR_UMASK)
-			continue;
-
-		/*
-		 * with perf_events, u and k are handled at the OS level
-		 * via attr.exclude_* fields
-		 */
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
-#if 0
-			if (e->pattrs[i].idx == SPARC_ATTR_U
-					|| e->pattrs[i].idx == SPARC_ATTR_K
-					|| e->pattrs[i].idx == SPARC_ATTR_H)
-				compact = 1;
-#endif
-		}
-
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
-
-			/* No precise mode on ARM */
-			if (e->pattrs[i].idx == PERF_ATTR_PR)
-				compact = 1;
-		}
-
-		if (compact) {
-			pfmlib_compact_pattrs(e, i);
-			i--;
-		}
-	}
-}
-#endif

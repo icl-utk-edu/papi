@@ -133,7 +133,9 @@ pfmlib_pmu_t intel_pii_support={
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
 
-	.get_event_encoding	= pfm_intel_x86_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
@@ -158,7 +160,9 @@ pfmlib_pmu_t intel_p6_support={
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
 
-	.get_event_encoding	= pfm_intel_x86_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
@@ -183,7 +187,9 @@ pfmlib_pmu_t intel_ppro_support={
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
 
-	.get_event_encoding	= pfm_intel_x86_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
@@ -209,7 +215,9 @@ pfmlib_pmu_t intel_pm_support={
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
 
-	.get_event_encoding	= pfm_intel_x86_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,

@@ -23,7 +23,7 @@
  */
 #ifndef __PERF_EVENT_PRIV_H__
 #define __PERF_EVENT_PRIV_H__
-
+#include "pfmlib_priv.h"
 #include "perfmon/pfmlib_perf_event.h"
 
 #define PERF_ATTR_U	0	/* monitor at user privilege levels */

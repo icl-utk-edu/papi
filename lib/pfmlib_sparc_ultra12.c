@@ -42,7 +42,8 @@ pfmlib_pmu_t sparc_ultra12_support={
 	.flags			= 0,
 
 	.pmu_detect		= pfm_sparc_detect,
-	.get_event_encoding	= pfm_sparc_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_sparc_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_sparc_get_perf_encoding),
 	.get_event_first	= pfm_sparc_get_event_first,
 	.get_event_next		= pfm_sparc_get_event_next,
 	.event_is_valid		= pfm_sparc_event_is_valid,

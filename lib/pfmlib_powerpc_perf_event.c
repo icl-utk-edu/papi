@@ -1,8 +1,8 @@
 /*
- * pfmlib_power6.c : IBM Power6 support
+ * pfmlib_powerpc_perf_event.c : perf_event IBM Power/Torrent functions
  *
- * Copyright (C) IBM Corporation, 2009.  All rights reserved.
- * Contributed by Corey Ashford (cjashfor@us.ibm.com)
+ * Copyright (c) 2011 Google, Inc
+ * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,34 +21,34 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
+
 /* private headers */
-#include "pfmlib_priv.h"
-#include "pfmlib_power_priv.h"
-#include "events/power6_events.h"
+#include "pfmlib_priv.h"		/* library private */
+#include "pfmlib_power_priv.h"		/* architecture private */
+#include "pfmlib_perf_event_priv.h"
 
-static int
-pfm_power6_detect(void* this)
+int
+pfm_gen_powerpc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
-	if (__is_processor(PV_POWER6))
-		return PFM_SUCCESS;
-	return PFM_ERR_NOTSUPP;
-}
+	pfmlib_pmu_t *pmu = this;
+	struct perf_event_attr *attr = e->os_data;
+	int ret;
 
-pfmlib_pmu_t power6_support={
-	.desc			= "POWER6",
-	.name			= "power6",
-	.pmu			= PFM_PMU_POWER6,
-	.pme_count		= POWER6_PME_EVENT_COUNT,
-	.type			= PFM_PMU_TYPE_CORE,
-	.max_encoding		= 1,
-	.pe			= power6_pe,
-	.pmu_detect		= pfm_power6_detect,
-	.get_event_encoding[PFM_OS_NONE] = pfm_gen_powerpc_get_encoding,
-	 PFMLIB_ENCODE_PERF(pfm_gen_powerpc_get_perf_encoding),
-	.get_event_first	= pfm_gen_powerpc_get_event_first,
-	.get_event_next		= pfm_gen_powerpc_get_event_next,
-	.event_is_valid		= pfm_gen_powerpc_event_is_valid,
-	.validate_table		= pfm_gen_powerpc_validate_table,
-	.get_event_info		= pfm_gen_powerpc_get_event_info,
-	.get_event_attr_info	= pfm_gen_powerpc_get_event_attr_info,
-};
+	if (!pmu->get_event_encoding[PFM_OS_NONE])
+		return PFM_ERR_NOTSUPP;
+
+	/*
+	 * encoding routine changes based on PMU model
+	 */
+	ret = pmu->get_event_encoding[PFM_OS_NONE](this, e);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	attr->type = PERF_TYPE_RAW;
+	attr->config = e->codes[0];
+
+	return PFM_SUCCESS;
+}

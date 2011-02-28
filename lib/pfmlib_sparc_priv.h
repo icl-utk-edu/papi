@@ -47,4 +47,5 @@ extern int pfm_sparc_get_event_info(void *this, int idx, pfm_event_info_t *info)
 extern int pfm_sparc_get_event_nattrs(void *this, int pidx);
 
 extern void pfm_sparc_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_sparc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 #endif /* __PFMLIB_SPARC_PRIV_H__ */

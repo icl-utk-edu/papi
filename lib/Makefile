@@ -45,6 +45,11 @@ CFLAGS += -DCONFIG_PFMLIB_ARCH_IA64
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_intel_x86_perf_event.c pfmlib_amd64_perf_event.c pfmlib_intel_netburst_perf_event.c
+endif
+
 INCARCH = $(INC_X86)
 SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
 	  pfmlib_intel_nhm_unc.c pfmlib_intel_coreduo.c pfmlib_intel_p6.c pfmlib_intel_nhm.c \
@@ -69,18 +74,33 @@ endif
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_powerpc_perf_event.c
+endif
+
 INCARCH = $(INC_POWERPC)
 SRCS   += pfmlib_powerpc.c pfmlib_power4.c pfmlib_ppc970.c pfmlib_power5.c pfmlib_power6.c pfmlib_power7.c pfmlib_torrent.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_SPARC),y)
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_sparc_perf_event.c
+endif
+
 INCARCH = $(INC_SPARC)
 SRCS   += pfmlib_sparc.c pfmlib_sparc_ultra12.c pfmlib_sparc_ultra3.c pfmlib_sparc_ultra4.c pfmlib_sparc_niagara.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_SPARC
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_arm_perf_event.c
+endif
+
 INCARCH = $(INC_ARM)
 SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM

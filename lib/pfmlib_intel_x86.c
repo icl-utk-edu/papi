@@ -271,67 +271,6 @@ done:
 	return PFM_SUCCESS;
 }
 
-#ifdef __linux__
-#include "pfmlib_perf_event_priv.h"
-static int
-intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
-{
-	struct perf_event_attr *attr = e->os_data;
-
-	if (e->count > 2) {
-		DPRINT("%s: unsupported count=%d\n", e->count);
-		return PFM_ERR_NOTSUPP;
-	}
-
-	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
-
-	/*
-	 * Nehalem/Westmere OFFCORE_RESPONSE event
-	 * takes two MSRs.
-	 * encode second MSR in upper 32-bit of config
-	 *
-	 * XXX: DO NOT USE likely to change once offcore in upstream kernel
-	 */
-	if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
-		if (e->count != 2) {
-			DPRINT("perf_encoding: offcore=1 count=%d\n", e->count);
-			return PFM_ERR_INVAL;
-		}
-		attr->config |= e->codes[1];
-	}
-	return PFM_SUCCESS;
-}
-
-static int
-intel_x86_requesting_pebs(pfmlib_event_desc_t *e)
-{
-	pfm_event_attr_info_t *a;
-	int i;
-
-	for (i = 0; i < e->nattrs; i++) {
-		a = attr(e, i);
-		if (a->ctrl != PFM_ATTR_CTRL_PERF_EVENT)
-			continue;
-		if (a->idx == PERF_ATTR_PR && e->attrs[i].ival)
-			return 1;
-	}
-	return 0;
-}
-#else
-static inline int
-intel_x86_perf_encode(void *this, pfmlib_event_desc_t *e)
-{
-	return PFM_ERR_NOTSUPP;
-}
-
-static int
-intel_x86_requesting_pebs(pfmlib_event_desc_t *e)
-{
-	return 0;
-}
-#endif
-
 static int
 intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 {
@@ -340,8 +279,10 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 	int numasks = 0, pebs = 0;
 	int i;
 
-	if (!intel_x86_requesting_pebs(e))
+#if 1
+	if (1) // !intel_x86_requesting_pebs(e))
 		return PFM_SUCCESS;
+#endif
 
 	/*
 	 * if event has no umask and is PEBS, then we are okay
@@ -372,22 +313,6 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 	 * pass if user requested only PEBS  umasks
 	 */
 	return pebs != numasks ? PFM_ERR_FEATCOMB : PFM_SUCCESS;
-}
-
-
-static int
-intel_x86_os_encode(void *this, pfmlib_event_desc_t *e)
-{
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		return intel_x86_perf_encode(this, e);
-	case PFM_OS_NONE:
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
 }
 
 static int
@@ -614,7 +539,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			break;
 		}
 	}
-	return intel_x86_os_encode(this, e);
+	return PFM_SUCCESS;
 }
 
 int
@@ -635,6 +560,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e)
 		return ret;
 
 	pfm_intel_x86_display_reg(this, e);
+
 	return PFM_SUCCESS;
 }
 
@@ -914,72 +840,3 @@ pfm_intel_x86_get_event_nattrs(void *this, int pidx)
 	nattrs += intel_x86_num_mods(this, pidx);
 	return nattrs;
 }
-
-#ifdef __linux__
-
-static int
-intel_x86_event_has_pebs(void *this, pfmlib_event_desc_t *e)
-{
-	pfm_event_attr_info_t *a;
-	int i;
-
-	/* first check at the event level */
-	if (intel_x86_eflag(e->pmu, e->event, INTEL_X86_PEBS))
-		return 1;
-
-	/* check umasks */
-	for(i=0; i < e->npattrs; i++) {
-		a = e->pattrs+i;
-
-		if (a->ctrl != PFM_ATTR_CTRL_PMU || a->type != PFM_ATTR_UMASK)
-			continue;
-
-		if (intel_x86_uflag(e->pmu, e->event, a->idx, INTEL_X86_PEBS))
-			return 1;
-	}
-	return 0;
-}
-
-/*
- * remove attrs which are in conflicts (or duplicated) with os layer
- */
-void
-pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
-{
-	int i, compact;
-	int has_pebs = intel_x86_event_has_pebs(this, e);
-
-	for (i = 0; i < e->npattrs; i++) {
-		compact = 0;
-		/* umasks never conflict */
-		if (e->pattrs[i].type == PFM_ATTR_UMASK)
-			continue;
-
-		/*
-		 * with perf_events, u and k are handled at the OS level
-		 * via exclude_user, exclude_kernel.
-		 */
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
-			if (e->pattrs[i].idx == INTEL_X86_ATTR_U
-					|| e->pattrs[i].idx == INTEL_X86_ATTR_K)
-				compact = 1;
-		}
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
-
-			/* Precise mode, subject to PEBS */
-			if (e->pattrs[i].idx == PERF_ATTR_PR && !has_pebs)
-				compact = 1;
-
-			/*
-			 * No hypervisor on Intel */
-			if (e->pattrs[i].idx == PERF_ATTR_H)
-				compact = 1;
-		}
-
-		if (compact) {
-			pfmlib_compact_pattrs(e, i);
-			i--;
-		}
-	}
-}
-#endif

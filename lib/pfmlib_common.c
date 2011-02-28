@@ -1192,7 +1192,7 @@ pfmlib_validate_encoding(char *buf, int plm)
 	int count = 0, ret;
 
 	ret = pfm_get_event_encoding(buf, plm, NULL, NULL, &codes, &count);
-	if (ret == PFM_SUCCESS) {
+	if (ret != PFM_SUCCESS) {
 		int i;
 		DPRINT("%s ", buf);
 		for(i=0; i < count; i++)
@@ -1271,8 +1271,13 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 			sprintf(buf, "%s::%s:%s", pmu->name, einfo.name, ainfo.name);
 			ret = pfmlib_validate_encoding(buf, PFM_PLM3|PFM_PLM0);
 			if (ret != PFM_SUCCESS) {
-				fprintf(fp, "cannot encode event %s : %s\n", buf, pfm_strerror(ret));
-				retval = ret;
+				/*
+				 * some PMU may not support raw encoding
+				 */
+				if (ret != PFM_ERR_NOTSUPP) {
+					fprintf(fp, "cannot encode event %s : %s\n", buf, pfm_strerror(ret));
+					retval = ret;
+				}
 				continue;
 			}
 			um++;
@@ -1281,8 +1286,10 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 			sprintf(buf, "%s::%s", pmu->name, einfo.name);
 			ret = pfmlib_validate_encoding(buf, PFM_PLM3|PFM_PLM0);
 			if (ret != PFM_SUCCESS) {
-				fprintf(fp, "cannot encode event %s : %s\n", buf, pfm_strerror(ret));
-				retval = ret;
+				if (ret != PFM_ERR_NOTSUPP) {
+					fprintf(fp, "cannot encode event %s : %s\n", buf, pfm_strerror(ret));
+					retval = ret;
+				}
 				continue;
 			}
 		}
@@ -1297,6 +1304,7 @@ int
 pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 {
 	pfmlib_pmu_t *pmu, *pmx;
+	int nos = 0;
 	int i, ret;
 
 	if (fp == NULL)
@@ -1356,8 +1364,12 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 		fprintf(fp, "pmu: %s :: missing get_event_attr_info callback\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
-	if (!pmu->get_event_encoding) {
-		fprintf(fp, "pmu: %s :: missing get_event_encoding callback\n", pmu->name);
+	for (i = PFM_OS_NONE; i < PFM_OS_MAX; i++) {
+		if (pmu->get_event_encoding[i])
+			nos++;
+	}
+	if (!nos) {
+		fprintf(fp, "pmu: %s :: no os event encoding callback\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
 	if (!pmu->max_encoding) {
@@ -1590,7 +1602,7 @@ pfmlib_raw_pmu_encode(void *this, const char *str, int dfl_plm, void *data)
 {
 	pfm_pmu_encode_arg_t arg;
 	pfm_pmu_encode_arg_t *uarg = data;
-	pfmlib_os_t *os = this;
+
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
 	size_t sz = sizeof(arg);
@@ -1608,11 +1620,8 @@ pfmlib_raw_pmu_encode(void *this, const char *str, int dfl_plm, void *data)
 	memcpy(&arg, uarg, sz);
 
 	memset(&e, 0, sizeof(e));
-	/*
-	 * only actual PMU features
-	 * Use actual OS interface for OS specific encodings
-	 */
-	e.osid    = os->id;
+
+	e.osid    = PFM_OS_NONE;
 	e.dfl_plm = dfl_plm;
 
 	ret = pfmlib_parse_event(str, &e);
@@ -1621,7 +1630,12 @@ pfmlib_raw_pmu_encode(void *this, const char *str, int dfl_plm, void *data)
 
 	pmu = e.pmu;
 
-	ret = pmu->get_event_encoding(pmu, &e);
+	if (!pmu->get_event_encoding[PFM_OS_NONE]) {
+		DPRINT("PMU %s does not support PFM_OS_NONE\n", pmu->name);
+		return PFM_ERR_NOTSUPP;
+	}
+
+	ret = pmu->get_event_encoding[PFM_OS_NONE](pmu, &e);
 	if (ret != PFM_SUCCESS)
 		goto error;
 	/*

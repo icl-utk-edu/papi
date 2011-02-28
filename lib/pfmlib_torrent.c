@@ -21,13 +21,13 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* private headers */
-#include "pfmlib_priv.h"
-#include "pfmlib_power_priv.h"
-#include "events/torrent_events.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+
+#include "pfmlib_priv.h"
+#include "pfmlib_power_priv.h"
+#include "events/torrent_events.h"
 
 const pfmlib_attr_desc_t torrent_modifiers[] = {
 	PFM_ATTR_I("type", "Counter type: 0 = 2x64-bit counters w/32-bit prescale, 1 = 4x32-bit counters w/16-bit prescale, 2 = 2x32-bit counters w/no prescale, 3 = 4x16-bit counters w/no prescale"),
@@ -146,32 +146,6 @@ error:
 }
 
 static int
-pfm_torrent_perf_encode(void *this, pfmlib_event_desc_t *e)
-{
-	struct perf_event_attr *attr = e->os_data;
-
-	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
-
-	return PFM_SUCCESS;
-}
-
-static int
-pfm_torrent_os_encode(void *this, pfmlib_event_desc_t *e)
-{
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		return pfm_torrent_perf_encode(this, e);
-	case PFM_OS_NONE:
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
 pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	const pme_torrent_entry_t *pe = this_pe(this);
@@ -232,7 +206,7 @@ pfm_torrent_get_encoding(void *this, pfmlib_event_desc_t *e)
 			return PFM_ERR_ATTR;
 		}
 	}
-	return pfm_torrent_os_encode(this, e);
+	return PFM_SUCCESS;
 }
 
 pfmlib_pmu_t torrent_support = {
@@ -246,7 +220,8 @@ pfmlib_pmu_t torrent_support = {
 	.get_event_next		= pfm_gen_powerpc_get_event_next,
 	.event_is_valid		= pfm_gen_powerpc_event_is_valid,
 	.pmu_detect		= pfm_torrent_detect,
-	.get_event_encoding	= pfm_torrent_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_torrent_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_gen_powerpc_get_perf_encoding),
 	.validate_table		= pfm_torrent_validate_table,
 	.get_event_info		= pfm_torrent_get_event_info,
 	.get_event_attr_info	= pfm_torrent_get_event_attr_info,

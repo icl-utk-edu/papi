@@ -1,8 +1,8 @@
 /*
- * pfmlib_power6.c : IBM Power6 support
+ * pfmlib_arm_perf_event.c : perf_event ARM functions
  *
- * Copyright (C) IBM Corporation, 2009.  All rights reserved.
- * Contributed by Corey Ashford (cjashfor@us.ibm.com)
+ * Copyright (c) 2011 Google, Inc
+ * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,34 +21,50 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
+
 /* private headers */
-#include "pfmlib_priv.h"
-#include "pfmlib_power_priv.h"
-#include "events/power6_events.h"
+#include "pfmlib_priv.h"		/* library private */
+#include "pfmlib_arm_priv.h"
+#include "pfmlib_perf_event_priv.h"
 
-static int
-pfm_power6_detect(void* this)
+void
+pfm_arm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
-	if (__is_processor(PV_POWER6))
-		return PFM_SUCCESS;
-	return PFM_ERR_NOTSUPP;
-}
+	int i, compact;
 
-pfmlib_pmu_t power6_support={
-	.desc			= "POWER6",
-	.name			= "power6",
-	.pmu			= PFM_PMU_POWER6,
-	.pme_count		= POWER6_PME_EVENT_COUNT,
-	.type			= PFM_PMU_TYPE_CORE,
-	.max_encoding		= 1,
-	.pe			= power6_pe,
-	.pmu_detect		= pfm_power6_detect,
-	.get_event_encoding[PFM_OS_NONE] = pfm_gen_powerpc_get_encoding,
-	 PFMLIB_ENCODE_PERF(pfm_gen_powerpc_get_perf_encoding),
-	.get_event_first	= pfm_gen_powerpc_get_event_first,
-	.get_event_next		= pfm_gen_powerpc_get_event_next,
-	.event_is_valid		= pfm_gen_powerpc_event_is_valid,
-	.validate_table		= pfm_gen_powerpc_validate_table,
-	.get_event_info		= pfm_gen_powerpc_get_event_info,
-	.get_event_attr_info	= pfm_gen_powerpc_get_event_attr_info,
-};
+	for (i = 0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		/*
+		 * with perf_events, u and k are handled at the OS level
+		 * via attr.exclude_* fields
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+#if 0
+			if (e->pattrs[i].idx == SPARC_ATTR_U
+					|| e->pattrs[i].idx == SPARC_ATTR_K
+					|| e->pattrs[i].idx == SPARC_ATTR_H)
+				compact = 1;
+#endif
+		}
+
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+
+			/* No precise mode on ARM */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
+}

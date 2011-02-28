@@ -107,52 +107,7 @@ found:
 	return PFM_SUCCESS;
 }
 
-#ifdef __linux__
-#include "pfmlib_perf_event_priv.h"
-static int
-netburst_perf_encode(pfmlib_event_desc_t *e)
-{
-	struct perf_event_attr *attr = e->os_data;
-	int perf_code = netburst_events[e->event].perf_code;
-	uint64_t escr;
-
-	attr->type = PERF_TYPE_RAW;
-	/*
-	 * codes[0] = ESCR
-	 * codes[1] = CCCR
-	 *
-	 * cleanup event_select, and install perf specific code
-	 */
-	escr  = e->codes[0] & ~(0x3full << 25);
-	escr |= perf_code << 25;
-	attr->config = (escr << 32) | e->codes[1];
-
-	return PFM_SUCCESS;
-}
-#else
-static inline int
-netburst_perf_encode(pfmlib_event_desc_t *e)
-{
-	return PFM_ERR_NOTSUPP;
-}
-#endif
-
-static int
-netburst_os_encode(pfmlib_event_desc_t *e)
-{
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		return netburst_perf_encode(e);
-	case PFM_OS_NONE:
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
+int
 pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfm_event_attr_info_t *a;
@@ -295,7 +250,7 @@ pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 	netburst_display_reg(e);
 
-	return netburst_os_encode(e);;
+	return PFM_SUCCESS;
 }
 
 static int
@@ -477,47 +432,6 @@ pfm_netburst_validate_table(void *this, FILE *fp)
 }
 
 
-#ifdef __linux__
-static void
-pfm_netburst_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
-{
-	int i, compact;
-
-	for (i = 0; i < e->npattrs; i++) {
-		compact = 0;
-
-		/* umasks never conflict */
-		if (e->pattrs[i].type == PFM_ATTR_UMASK)
-			continue;
-
-		/*
-		 * with perf_events, u and k are handled at the OS level
-		 * via exclude_user, exclude_kernel.
-		 */
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
-			if (e->pattrs[i].idx == NETBURST_ATTR_U
-					|| e->pattrs[i].idx == NETBURST_ATTR_K)
-				compact = 1;
-		}
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
-
-			/* no PEBS support (for now) */
-			if (e->pattrs[i].idx == PERF_ATTR_PR)
-				compact = 1;
-			/*
-			 * No hypervisor on Intel */
-			if (e->pattrs[i].idx == PERF_ATTR_H)
-				compact = 1;
-		}
-
-		if (compact) {
-			pfmlib_compact_pattrs(e, i);
-			i--;
-		}
-	}
-}
-#endif
-
 static int
 pfm_netburst_get_event_nattrs(void *this, int pidx)
 {
@@ -540,7 +454,8 @@ pfmlib_pmu_t netburst_support = {
 	.num_cntrs		= 18,
 
 	.pmu_detect		= pfm_netburst_detect,
-	.get_event_encoding	= pfm_netburst_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_netburst_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_netburst_get_perf_encoding),
 	.get_event_first	= pfm_netburst_get_event_first,
 	.get_event_next		= pfm_netburst_get_event_next,
 	.event_is_valid		= pfm_netburst_event_is_valid,
@@ -563,7 +478,8 @@ pfmlib_pmu_t netburst_p_support = {
 	.num_cntrs		= 18,
 
 	.pmu_detect		= pfm_netburst_detect_prescott,
-	.get_event_encoding	= pfm_netburst_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_netburst_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_netburst_get_perf_encoding),
 	.get_event_first	= pfm_netburst_get_event_first,
 	.get_event_next		= pfm_netburst_get_event_next,
 	.event_is_valid		= pfm_netburst_event_is_valid,

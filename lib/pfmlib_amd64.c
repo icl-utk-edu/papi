@@ -34,8 +34,6 @@
 #include "pfmlib_priv.h"		/* library private */
 #include "pfmlib_amd64_priv.h"		/* architecture private */
 
-#define IS_FAMILY_10H(p) (((pfmlib_pmu_t *)(p))->pmu_rev >= AMD64_FAM10H)
-
 const pfmlib_attr_desc_t amd64_mods[]={
 	PFM_ATTR_B("k", "monitor at priv level 0"),		/* monitor priv level 0 */
 	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
@@ -380,46 +378,6 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 	return PFM_SUCCESS;
 }
 
-#ifdef __linux__
-#include "pfmlib_perf_event_priv.h"
-static int
-amd64_perf_encode(pfmlib_event_desc_t *e)
-{
-	struct perf_event_attr *attr = e->os_data;
-
-	if (e->count > 1) {
-		DPRINT("%s: unsupported count=%d\n", e->count);
-		return PFM_ERR_NOTSUPP;
-	}
-	/* all events treated as raw for now */
-	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
-
-	return PFM_SUCCESS;
-}
-#else
-static inline int
-amd64_perf_encode(pfmlib_event_desc_t *e)
-{
-	return PFM_ERR_NOTSUPP;
-}
-#endif
-
-static int
-amd64_os_encode(pfmlib_event_desc_t *e)
-{
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		return amd64_perf_encode(e);
-	case PFM_OS_NONE:
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
 int
 pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
@@ -617,8 +575,7 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 		}
 	}
 	amd64_display_reg(this, e, reg);
-
-	return amd64_os_encode(e);
+	return PFM_SUCCESS;
 }
 
 int
@@ -856,49 +813,3 @@ pfm_amd64_pmu_init(void *this)
 	pmu->pme_count = total;
 	return PFM_SUCCESS;
 }
-
-#ifdef __linux__
-void
-pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
-{
-	pfmlib_pmu_t *pmu = this;
-
-	int i, compact;
-
-	for (i=0; i < e->npattrs; i++) {
-		compact = 0;
-
-		/* umasks never conflict */
-		if (e->pattrs[i].type == PFM_ATTR_UMASK)
-			continue;
-
-		/*
-		 * with perf_events, u and k are handled at the OS level
-		 * via attr.exclude_* fields
-		 */
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
-
-			if (e->pattrs[i].idx == AMD64_ATTR_U
-					|| e->pattrs[i].idx == AMD64_ATTR_K
-					|| e->pattrs[i].idx == AMD64_ATTR_H)
-				compact = 1;
-		}
-
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
-
-			/* No precise mode on AMD */
-			if (e->pattrs[i].idx == PERF_ATTR_PR)
-				compact = 1;
-
-			/* older processors do not support hypervisor priv level */
-			if (!IS_FAMILY_10H(pmu) && e->pattrs[i].idx == PERF_ATTR_H)
-				compact = 1;
-		}
-
-		if (compact) {
-			pfmlib_compact_pattrs(e, i);
-			i--;
-		}
-	}
-}
-#endif

@@ -226,4 +226,8 @@ typedef struct {
 
 #define P4_REPLAY_REAL_MASK 0x00000003
 
+extern int pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e);
+extern int pfm_netburst_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
+extern void pfm_netburst_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+
 #endif

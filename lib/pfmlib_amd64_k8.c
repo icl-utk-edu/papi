@@ -54,7 +54,8 @@ pfmlib_pmu_t amd64_k8_##n##_support={				\
 								\
 	.pmu_detect		= pfm_amd64_k8_##n##_detect,	\
 	.pmu_init		= pfm_amd64_pmu_init,		\
-	.get_event_encoding	= pfm_amd64_get_encoding,	\
+	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding, \
+	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),	\
 	.get_event_first	= pfm_amd64_get_event_first,	\
 	.get_event_next		= pfm_amd64_get_event_next,	\
 	.event_is_valid		= pfm_amd64_event_is_valid,	\

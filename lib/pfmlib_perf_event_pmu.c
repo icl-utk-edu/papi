@@ -669,29 +669,14 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e)
 }
 
 static int
-pfm_perf_os_encode(pfmlib_event_desc_t *e)
-{
-	struct perf_event_attr *attr;
-
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		attr = e->os_data;
-		attr->type = perf_pe[e->event].type;
-		attr->config = e->codes[0];
-		break;
-	case PFM_OS_NONE:
-		return PFM_SUCCESS;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
 pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
+	struct perf_event_attr *attr;
 	int ret;
+
+	if (e->osid != PFM_OS_PERF_EVENT
+	    && e->osid != PFM_OS_PERF_EVENT_EXT)
+		return PFM_ERR_NOTSUPP;
 
 	switch(perf_pe[e->event].type) {
 	case PERF_TYPE_TRACEPOINT:
@@ -712,7 +697,12 @@ pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e)
 		DPRINT("unsupported event type=%d\n", perf_pe[e->event].type);
 		return PFM_ERR_NOTSUPP;
 	}
-	return pfm_perf_os_encode(e);
+
+	attr = e->os_data;
+	attr->type = perf_pe[e->event].type;
+	attr->config = e->codes[0];
+
+	return PFM_SUCCESS;
 }
 
 static int
@@ -955,7 +945,7 @@ pfmlib_pmu_t perf_event_support={
 	.pmu_detect		= pfm_perf_detect,
 	.pmu_init		= pfm_perf_init,
 	.pmu_terminate		= pfm_perf_terminate,
-	.get_event_encoding	= pfm_perf_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_perf_get_encoding),
 	.get_event_first	= pfm_perf_get_event_first,
 	.get_event_next		= pfm_perf_get_event_next,
 	.event_is_valid		= pfm_perf_event_is_valid,

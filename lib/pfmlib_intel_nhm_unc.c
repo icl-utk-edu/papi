@@ -101,7 +101,7 @@ pfm_wsm_unc_detect(void *this)
 }
 
 static int
-intel_nhm_unc_perf_encode(void *this, pfmlib_event_desc_t *e)
+pfm_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
 #if 0
 	struct perf_event_attr *attr = e->os_data;
@@ -118,7 +118,7 @@ intel_nhm_unc_os_encode(void *this, pfmlib_event_desc_t *e)
 	switch (e->osid) {
 	case PFM_OS_PERF_EVENT:
 	case PFM_OS_PERF_EVENT_EXT:
-		return intel_nhm_unc_perf_encode(this, e);
+		return pfm_nhm_unc_get_perf_encoding(this, e);
 	case PFM_OS_NONE:
 		break;
 	default:
@@ -340,7 +340,10 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_nhm_unc_detect,
-	.get_event_encoding	= pfm_nhm_unc_get_encoding,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_nhm_unc_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_nhm_unc_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
@@ -366,7 +369,10 @@ pfmlib_pmu_t intel_wsm_unc_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_wsm_unc_detect,
-	.get_event_encoding	= pfm_nhm_unc_get_encoding,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_nhm_unc_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_nhm_unc_get_perf_encoding),
+
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
