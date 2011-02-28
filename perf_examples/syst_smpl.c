@@ -204,7 +204,7 @@ setup_cpu(int cpu, int fd)
 			}
 
 			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID|PERF_SAMPLE_CPU;
-			printf("%s period=%llu freq=%d\n", fds[i].name, fds[i].hw.sample_period, fds[i].hw.freq);
+			printf("%s period=%"PRIu64" freq=%d\n", fds[i].name, fds[i].hw.sample_period, fds[i].hw.freq);
 
 			fds[i].hw.read_format = PERF_FORMAT_SCALE;
 			if (num_fds > 1)

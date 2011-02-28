@@ -76,9 +76,9 @@ main(int argc, char **argv)
 		errx(1, "Error: %s is not a raw hardware event", event_str);
 
 	if (verbose)
-		printf("r%llx\t%s\n", pea.config, fstr);
+		printf("r%"PRIx64"\t%s\n", pea.config, fstr);
 	else
-		printf("r%llx\n", pea.config);
+		printf("r%"PRIx64"\n", pea.config);
 
 	if (fstr)
 		free(fstr);
