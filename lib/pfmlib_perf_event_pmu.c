@@ -941,6 +941,7 @@ pfmlib_pmu_t perf_event_support={
 	.name			= "perf",
 	.pmu			= PFM_PMU_PERF_EVENT,
 	.pme_count		= PME_PERF_EVENT_COUNT,
+	.type			= PFM_PMU_TYPE_OS_GENERIC,
 	.max_encoding		= 1,
 	.pmu_detect		= pfm_perf_detect,
 	.pmu_init		= pfm_perf_init,

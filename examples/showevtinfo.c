@@ -701,6 +701,7 @@ static const char *pmu_types[]={
 	"unknown type",
 	"core",
 	"uncore",
+	"OS generic",
 };
 
 static void

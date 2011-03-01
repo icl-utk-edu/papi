@@ -145,6 +145,7 @@ typedef enum {
 	PFM_PMU_TYPE_UNKNOWN=0,	/* unknown PMU type */
 	PFM_PMU_TYPE_CORE,	/* processor core PMU */
 	PFM_PMU_TYPE_UNCORE,	/* processor socket-level PMU */
+	PFM_PMU_TYPE_OS_GENERIC,/* generic OS-provided PMU */
 	PFM_PMU_TYPE_MAX
 } pfm_pmu_type_t;
 
