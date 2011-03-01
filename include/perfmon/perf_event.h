@@ -28,6 +28,13 @@
 #include <sys/ioctl.h>		/* for _IO */
 #include <sys/prctl.h>		/* for prctl() comamnds */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+/*
+ * avoid clashes with actual kernel header file
+ */
+#ifndef _LINUX_PERF_EVENT_H
 /*
  * attr->type field values
  */
@@ -280,6 +287,7 @@ enum perf_callchain_context {
 	PERF_CONTEXT_MAX		= (uint64_t)-4095,
 };
 
+#endif /* _LINUX_PERF_EVENT_H */
 /*
  * flags for perf_event_open()
  */
@@ -332,6 +340,10 @@ perf_event_open(
 #ifndef PR_TASK_PERF_EVENTS_DISABLE
 #define PR_TASK_PERF_EVENTS_ENABLE	32
 #define PR_TASK_PERF_EVENTS_DISABLE	31
+#endif
+
+#ifdef __cplusplus /* extern C */
+}
 #endif
 
 #endif /* __PERFMON_PERF_EVENT_H__ */
