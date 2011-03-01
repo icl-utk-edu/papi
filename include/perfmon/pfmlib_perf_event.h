@@ -45,7 +45,7 @@ typedef struct {
 #if __WORDSIZE == 64
 #define PFM_PERF_ENCODE_ABI0	40	/* includes 4-byte padding */
 #else
-#define PFM_PERF_ENCODE_ABI0	24
+#define PFM_PERF_ENCODE_ABI0	28
 #endif
 /*
  * old interface, maintained for backward compatibility with older versions o
