@@ -229,7 +229,7 @@ check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain,
 
 /* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
  * implementations (e.g. x86 before 2.6.33) which don't do a static event 
- * scheduability check in sys_perf_event_open.  N
+ * scheduability check in sys_perf_event_open.
  */
 
 static inline int
@@ -446,8 +446,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			sys_perf_event_open( &ctl->events[i], ctl->tid, ctl->cpu_num,
 				ctx->evt[ctx->evt[i].group_leader].event_fd, 0 );
 		if ( ctx->evt[i].event_fd == -1 ) {
-			PAPIERROR
-				( "sys_perf_event_open returned error on event #%d.  Unix says, %s",
+			SUBDBG("sys_perf_event_open returned error on event #%d.  Unix says, %s",
 				  i, strerror( errno ) );
 			ret = PAPI_ECNFLCT;
 			goto cleanup;

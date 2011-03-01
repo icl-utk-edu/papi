@@ -1811,8 +1811,8 @@ _papi_pfm3_setup_counters( unsigned long long *pe_event, hwd_register_t *ni_bits
        return PAPI_EBUG;
     }
     *pe_event = code;
-    SUBDBG( "Stuffing native event index %d (code 0x%x, raw code 0x%x) into events array.\n",
-				  i, ( ( pfm_register_t * ) ni_bits )->event, code );
+    SUBDBG( "Stuffing native event index (code 0x%x, raw code 0x%x) into events array.\n",
+				  ( ( pfm_register_t * ) ni_bits )->event, code );
 #else
 
    pfmlib_input_param_t inp;
