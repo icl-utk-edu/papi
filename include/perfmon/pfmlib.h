@@ -39,6 +39,11 @@ extern "C" {
 #define PFM_MIN_VERSION(v)	((v) & 0xffff)
 
 /*
+ * ABI revision level
+ */
+#define LIBPFM_ABI_VERSION	0
+
+/*
  * priv level mask (for dfl_plm)
  */
 #define PFM_PLM0	0x01 /* kernel */
@@ -288,7 +293,7 @@ typedef struct {
 
 #if __WORDSIZE == 64
 #define PFM_PMU_INFO_ABI0	56
-#define PFM_EVENT_INFO_ABI0	56
+#define PFM_EVENT_INFO_ABI0	64
 #define PFM_ATTR_INFO_ABI0	64
 
 #define PFM_RAW_ENCODE_ABI0	32
