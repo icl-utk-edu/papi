@@ -103,10 +103,12 @@ typedef struct {
 		const char *name;
 		size_t sz;
 } field_desc_t;
+
 typedef struct {
 	const char *name;
 	size_t sz;
 	size_t bitfield_sz;
+	size_t abi_sz;
 	field_desc_t fields[MAX_FIELDS];
 } struct_desc_t;
 
@@ -123,6 +125,7 @@ static const struct_desc_t pfmlib_structs[]={
 	 .name = "pfm_pmu_info_t",
 	 .sz   = sizeof(pfm_pmu_info_t),
 	 .bitfield_sz = 4,
+	 .abi_sz = PFM_PMU_INFO_ABI0,
 	 .fields= {
 		FIELD(name, pfm_pmu_info_t),
 		FIELD(desc, pfm_pmu_info_t),
@@ -141,6 +144,7 @@ static const struct_desc_t pfmlib_structs[]={
 	 .name = "pfm_event_info_t",
 	 .sz   = sizeof(pfm_event_info_t),
 	 .bitfield_sz = 4,
+	 .abi_sz = PFM_EVENT_INFO_ABI0,
 	 .fields= {
 		FIELD(name, pfm_event_info_t),
 		FIELD(desc, pfm_event_info_t),
@@ -159,6 +163,7 @@ static const struct_desc_t pfmlib_structs[]={
 	 .name = "pfm_event_attr_info_t",
 	 .sz   = sizeof(pfm_event_attr_info_t),
 	 .bitfield_sz = 4+8,
+	 .abi_sz = PFM_ATTR_INFO_ABI0,
 	 .fields= {
 		FIELD(name, pfm_event_attr_info_t),
 		FIELD(desc, pfm_event_attr_info_t),
@@ -171,11 +176,25 @@ static const struct_desc_t pfmlib_structs[]={
 		LAST_FIELD
 	 },
 	},
+	{
+	 .name = "pfm_pmu_encode_arg_t",
+	 .sz   = sizeof(pfm_pmu_encode_arg_t),
+	 .abi_sz = PFM_RAW_ENCODE_ABI0,
+	 .fields= {
+		FIELD(codes, pfm_pmu_encode_arg_t),
+		FIELD(fstr, pfm_pmu_encode_arg_t),
+		FIELD(size, pfm_pmu_encode_arg_t),
+		FIELD(count, pfm_pmu_encode_arg_t),
+		FIELD(idx, pfm_pmu_encode_arg_t),
+		LAST_FIELD
+	 },
+	},
 #ifdef __linux__
 	{
 	 .name = "pfm_perf_encode_arg_t",
 	 .sz   = sizeof(pfm_perf_encode_arg_t),
 	 .bitfield_sz = 0,
+	 .abi_sz = PFM_PERF_ENCODE_ABI0,
 	 .fields= {
 		FIELD(attr, pfm_perf_encode_arg_t),
 		FIELD(fstr, pfm_perf_encode_arg_t),
@@ -199,10 +218,17 @@ validate_structs(void)
 	const field_desc_t *f;
 	size_t sz;
 	int errors = 0;
+	int abi = LIBPFM_ABI_VERSION;
 
+	printf("\tlibpfm ABI version : %d\n", abi);
 	for (d = pfmlib_structs; d->name; d++) {
 
 		printf("\t%s : ", d->name);
+
+		if (d->abi_sz != d->sz) {
+			printf("struct size does not correspond to ABI size %zu vs. %zu)\n", d->abi_sz, d->sz);
+			errors++;
+		}
 
 		if (d->sz % STRUCT_MULT) {
 			printf("Failed (wrong mult size=%zu)\n", d->sz);
