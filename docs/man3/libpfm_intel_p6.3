@@ -34,10 +34,6 @@ Enable edge detection, i.e., count only when there is a state transition. This i
 Set the counter mask value. The mask acts as a threshold. The counter will count the number of cycles
 in which the number of occurrences of the event is greater or equal to the threshold. This is an integer
 modifier with values in the range [0:255].
-
-.SH ENVIRONMENT VARIABLES
-It is possible to force activation of a specific Intel P6 processors using the \fBLIBPFM_FORCE_PMU\fR variable.
-One of the PMU names listed in the synopsis must be specified.
 .SH AUTHORS
 .nf
 Stephane Eranian <eranian@gmail.com>

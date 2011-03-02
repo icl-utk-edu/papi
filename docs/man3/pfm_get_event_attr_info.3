@@ -21,7 +21,13 @@ No operating system attributes is taken into account.
 .B PFM_OS_PERF_EVENT
 The returned information includes the actual PMU hardware and the
 additional attributes exported by the perf_events kernel interface.
+The perf_event attributes pertain only the PMU hardware.
 In case perf_events is not detected, an error is returned.
+.TP
+.B PFM_OS_PERF_EVENT_EXT
+The returned information includes all of what is already provided
+by \fBPFM_OS_PERF_EVENT\fR plus all the software attributes controlled
+by perf_events, such as sampling period, precise sampling.
 .PP
 
 The \fBpfm_event_attr_info_t\fR structure is defined as follows:
@@ -141,7 +147,7 @@ The attribute is controlled by the perf_events kernel interface.
 .RE
 .TP
 .B reserved
-This field must be set to zero.
+These fields must be set to zero.
 .PP
 
 .SH RETURN

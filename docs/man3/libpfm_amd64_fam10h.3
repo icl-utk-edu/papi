@@ -42,24 +42,6 @@ Enable edge detection, i.e., count only when there is a state transition. This i
 Set the counter mask value. The mask acts as a threshold. The counter will count the number of cycles
 in which the number of occurrences of the event is greater or equal to the threshold. This is an integer
 modifier with values in the range [0:255].
-.SH ENVIRONMENT VARIABLES
-It is possible to force activation of the AMD64 support using the \fBLIBPFM_FORCE_PMU\fR variable.
-The PMU name, amd64, must be passed. But the library supports additional options which can be
-expressed as follows:
-.ce
-.B LIBPFM_FORCE_PMU=amd64,family,model,stepping
-
-Where the components are defined as follows:
-.TP
-.B family
-The family number: 16.
-.TP
-.B model
-The model number with the family.
-.TP
-.B stepping
-The stepping for the model.
-
 .SH AUTHORS
 .nf
 Stephane Eranian <eranian@gmail.com>

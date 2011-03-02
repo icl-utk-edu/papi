@@ -42,17 +42,6 @@ modifier with values in the range [0:255].
 Measure on both threads at the same time assuming hyper-threading is enabled. This modifier requires
 at least version 3 of the architectural PMU. This is a boolean modifier.
 
-.SH ENVIRONMENT VARIABLES
-It is possible to force activation of the Intel X86 architectural PMU support using the \fBLIBPFM_FORCE_PMU\fR variable.
-The PMU name, ix8arch, must be passed. The following additional options may be passed using the syntax below:
-.ce
-.B LIBPFM_FORCE_PMU=ix86arch,version
-
-Where the components of the string are defined as follows:
-.TP
-.B version
-The desired architectural PMU revision number, which starts at 1. If the number is not supported, the highest know
-version will be used.
 .SH AUTHORS
 .nf
 Stephane Eranian <eranian@gmail.com>

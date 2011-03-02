@@ -13,6 +13,44 @@ provides access to hardware performance counters, kernel software counters and t
 The function takes an event string in \fBstr\fR and a default privilege level mask in \fBdfl_plm\fR
 and fills out the relevant parts of the perf_events specific data structure in \fBattr\fR.
 
+This function is \fBdeprecated\fR. It is superseded by \fBpfm_get_os_event_encoding()\fR
+with the OS argument set to either \fBPFM_OS_PERF_EVENT\fR or \fBPFM_OS_PERF_EVENT_EXT\fR.
+Using this function provides extended support for perf_events. Certain perf_event configuration
+option are only available through this new interface.
+
+The following examples illustrates the transition:
+
+.nf
+   struct perf_event_attr attr;
+   int i, count = 0;
+   uint64_t *codes;
+
+   memset(&attr, 0, sizeof(attr));
+
+   ret = pfm_get_perf_event_encoding("RETIRED_INSTRUCTIONS", PFM_PLM3, &attrs, NULL, NULL);
+   if (ret != PFM_SUCCESS)
+      err(1", cannot get encoding %s", pfm_strerror(ret));
+
+.fi
+
+is equivalent to:
+
+.nf
+   #include <perfmon/pfmlib_perf_event.h>
+   struct perf_event_attr attr;
+   pfm_perf_encode_arg_t arg;
+
+   memset(&arg, 0, sizeof(arg));
+   arg.size = sizeof(arg);
+   arg.attr = &attr;
+
+   ret = pfm_get_os_event_encoding("RETIRED_INSTRUCTIONS", PFM_PLM3, PFM_OS_PERF, &arg);
+   if (ret != PFM_SUCCESS)
+      err(1", cannot get encoding %s", pfm_strerror(ret));
+
+.nf
+
+
 The \fBdfl_plm\fR cannot be zero, though it may not necessarily be used by the event.
 Depending on the event, combination of the following privilege levels may be used:
 .TP
@@ -110,4 +148,5 @@ Missing unit mask.
 Unit masks or features cannot be combined into a single event.
 .SH AUTHOR
 Stephane Eranian <eranian@gmail.com>
-.PP
+.SH SEE ALSO
+pfm_get_os_event_encoding(3)

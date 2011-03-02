@@ -44,10 +44,6 @@ modifier with values in the range [0-3]. The value of this modifier determines h
 interrupted instruction address is handled by the kernel. The exact meaning of each of the four
 values depends on the underlying kernel interface. For perf_events, this determines how
 \fBPERF_SAMPLE_IP\fR is adjusted by the kernel. Refer to perf_events documentation for more details.
-
-.SH ENVIRONMENT VARIABLES
-It is possible to force activation of the Intel Atom support using the \fBLIBPFM_FORCE_PMU\fR variable.
-The PMU name, atom, must be passed. No additional options are supported.
 .SH AUTHORS
 .nf
 Stephane Eranian <eranian@gmail.com>
