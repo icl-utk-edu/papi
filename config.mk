@@ -64,7 +64,8 @@ endif
 #
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
 # CONFIG_PFMLIB_DEBUG: enable debugging output support
-# CONFIG_PFMLIB_NOPYTHON: do not generate the python support
+# CONFIG_PFMLIB_NOPYTHON: do not generate the python support, incompatible
+# with PFMLIB_SHARED=n
 #
 CONFIG_PFMLIB_SHARED?=y
 CONFIG_PFMLIB_DEBUG?=y
@@ -192,5 +193,15 @@ endif
 # so it only works on Linux
 #
 ifneq ($(SYS),Linux)
+CONFIG_PFMLIB_NOPYTHON=y
+endif
+
+#
+# compile examples statically if library is
+# compile static
+# not compatible with python support, so disable for now
+#
+ifeq ($(CONFIG_PFMLIB_SHARED),n)
+LDFLAGS+= -static
 CONFIG_PFMLIB_NOPYTHON=y
 endif
