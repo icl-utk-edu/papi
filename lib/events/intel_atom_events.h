@@ -830,7 +830,6 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	  .modmsk  = INTEL_V3_ATTRS,
 	  .desc   = "Retired branch instructions",
 	  .code   = 0xC4,
-	  .flags  = INTEL_X86_PEBS,
 	  .ngrp = 1,
 	  .umasks = {
 		{ .uname  = "ANY",
@@ -855,8 +854,8 @@ static const intel_x86_entry_t intel_atom_pe[]={
 		  .ucode  = 0x8,
 		},
 		{ .uname  = "MISPRED",
-		  .udesc  = "Retired mispredicted branch instructions (precise event)",
-		  .uflags = INTEL_X86_PEBS|INTEL_X86_NCOMBO,
+		  .udesc  = "Retired mispredicted branch instructions",
+		  .uflags = INTEL_X86_NCOMBO, /* PEBS appears broken */
 		  .ucode  = 0xA,
 		},
 		{ .uname  = "TAKEN",
