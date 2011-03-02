@@ -60,50 +60,70 @@ typedef struct {
 static options_t options;
 static perf_event_desc_t **all_fds;
 
-static const char
-*cgroupfs_find_mountpoint(void)
+static int
+cgroupfs_find_mountpoint(char *buf, size_t maxlen)
 {
-	static char cgroup_mountpoint[MAX_PATH+1];
 	FILE *fp;
+	char mountpoint[MAX_PATH+1], tokens[MAX_PATH+1], type[MAX_PATH+1];
+	char *token, *saved_ptr;
 	int found = 0;
-	char type[64];
 
 	fp = fopen("/proc/mounts", "r");
 	if (!fp)
-		return NULL;
+		return -1;
 
-	while (fscanf(fp, "%*s %"
-				STR(MAX_PATH)
-				"s %99s %*s %*d %*d\n",
-				cgroup_mountpoint, type) == 2) {
+	/*
+	 * in order to handle split hierarchy, we need to scan /proc/mounts
+	 * and inspect every cgroupfs mount point to find one that has
+	 * perf_event subsystem
+	 */
+	while (fscanf(fp, "%*s %"STR(MAX_PATH)"s %"STR(MAX_PATH)"s %"
+				STR(MAX_PATH)"s %*d %*d\n",
+				mountpoint, type, tokens) == 3) {
 
-		found = !strcmp(type, "cgroup");
+		if (!strcmp(type, "cgroup")) {
+
+			token = strtok_r(tokens, ",", &saved_ptr);
+
+			while (token != NULL) {
+				if (!strcmp(token, "perf_event")) {
+					found = 1;
+					break;
+				}
+				token = strtok_r(NULL, ",", &saved_ptr);
+			}
+		}
 		if (found)
 			break;
 	}
 	fclose(fp);
+	if (!found)
+		return -1;
 
-	return found ? cgroup_mountpoint : NULL;
+	if (strlen(mountpoint) < maxlen) {
+		strcpy(buf, mountpoint);
+		return 0;
+	}
+	return -1;
 }
 
 int
 open_cgroup(char *name)
 {
-	char path[MAX_PATH+1];
-	const char *mnt;
-	int cfd;
+        char path[MAX_PATH+1];
+        char mnt[MAX_PATH+1];
+        int cfd;
 
-	mnt = cgroupfs_find_mountpoint();
-	if (!mnt)
-		errx(1, "cannot find cgroup fs mount point");
+        if (cgroupfs_find_mountpoint(mnt, MAX_PATH+1))
+                errx(1, "cannot find cgroup fs mount point");
 
-	snprintf(path, MAX_PATH, "%s/%s", mnt, name);
+        snprintf(path, MAX_PATH, "%s/%s", mnt, name);
 
-	cfd = open(path, O_RDONLY);
-	if (cfd == -1)
-		warn("no access to cgroup %s\n", name);
+        cfd = open(path, O_RDONLY);
+        if (cfd == -1)
+                warn("no access to cgroup %s\n", name);
 
-	return cfd;
+        return cfd;
 }
 
 void
