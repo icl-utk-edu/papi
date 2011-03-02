@@ -183,15 +183,15 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		},
 		{ .uname  = "TOTAL_CYCLES",
 		  .udesc  = "Total cycles using precise uop retired event (Precise Event)",
-		  .ucode  = 0x01 | (16 << 16), /* cmask = 16 */
+		  .ucode  = 0x01 | (16 << 16) | (1 << 15), /* cmask=16, inv=1 */
 		  .uflags = INTEL_X86_NCOMBO|INTEL_X86_PEBS,
-		  .uequiv = "ANY:c=16",
+		  .uequiv = "ANY:c=16:i=1",
 		},
 		{ .uname  = "ACTIVE_CYCLES",
 		  .udesc  = "Alias for TOTAL_CYCLES (Precise Event)",
-		  .ucode  = 0x01 | (1 << 16), /* cmask = 1 */
+		  .ucode  = 0x01 | (16 << 16) | (1<< 15), /* cmask=1, inv=1 */
 		  .uflags = INTEL_X86_NCOMBO|INTEL_X86_PEBS,
-		  .uequiv = "ANY:c=1",
+		  .uequiv = "ANY:c=16:i=1",
 		},
 	  },
 	  .numasks = 6
