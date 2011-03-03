@@ -53,7 +53,7 @@ typedef struct {
  */
 extern pfm_err_t pfm_get_perf_event_encoding(const char *str,
 					     int dfl_plm,
-					     struct perf_event_attr *attr,
+					     perf_event_attr_t *output,
 					     char **fstr,
 					     int *idx);
 

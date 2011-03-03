@@ -88,27 +88,18 @@ ptr_argout(pfm_pmu_info_t);
 ptr_argout(pfm_event_info_t);
 ptr_argout(pfm_event_attr_info_t);
 
+%typedef int pid_t;
+
 /* Kernel interface */
 %include <perfmon/perf_event.h>
+ptr_argout(perf_event_attr_t);
+
 /* Library interface */
 /* We never set the const char * members. So no memory leak */
 #pragma SWIG nowarn=451
 %include <perfmon/pfmlib.h>
-
-%typedef int pid_t;
-
-extern os_err_t
-perf_event_open(
-    struct perf_event_attr   *hw_event_uptr,
-    pid_t                    pid,
-    int                      cpu,
-    int                      group_fd,
-    unsigned long            flags);
-
-ptr_argout(perf_event_attr);
-extern pfm_err_t
-pfm_get_perf_event_encoding(const char *str, int dfl_plm,
-                            struct perf_event_attr *output, char **fstr, int *idx);
+/* OS specific library interface */
+%include <perfmon/pfmlib_perf_event.h>
 
 %init %{
   libpfm_err = PyErr_NewException("perfmon.libpfmError", NULL, NULL);

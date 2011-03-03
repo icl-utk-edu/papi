@@ -27,6 +27,7 @@
 #include <sys/syscall.h>	/* for syscall stub macros */
 #include <sys/ioctl.h>		/* for _IO */
 #include <sys/prctl.h>		/* for prctl() comamnds */
+#include <perfmon/pfmlib.h>	/* for os_err_t */
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,7 +159,7 @@ enum perf_event_read_format {
 /*
  * perf_event_attr struct passed to perf_event_open()
  */
-struct perf_event_attr {
+typedef struct perf_event_attr {
 	uint32_t	type;
 	uint32_t	size;
 	uint64_t	config;
@@ -199,7 +200,7 @@ struct perf_event_attr {
 	uint32_t        bp_type;
 	uint64_t        bp_addr;
 	uint64_t        bp_len;
-};
+} perf_event_attr_t;
 
 /*
  * perf_events ioctl commands, use with event fd
@@ -321,7 +322,7 @@ enum perf_callchain_context {
 /*
  * perf_event_open() syscall stub
  */
-static inline int
+static inline os_err_t
 perf_event_open(
 	struct perf_event_attr		*hw_event_uptr,
 	pid_t				pid,
