@@ -198,8 +198,14 @@ typedef struct perf_event_attr {
 	} SWIG_NAME(wakeup);
 
 	uint32_t        bp_type;
-	uint64_t        bp_addr;
-	uint64_t        bp_len;
+	union {
+		uint64_t        bp_addr;
+		uint64_t	config1; /* extend config */
+	} SWIG_NAME(bpa);
+	union {
+		uint64_t        bp_len;
+		uint64_t	config2; /* extend config1 */
+	} SWIG_NAME(bpb);
 } perf_event_attr_t;
 
 /*
