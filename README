@@ -9,46 +9,57 @@
 	                Contributed by Stephane Eranian <eranian@hpl.hp.com>
 	
 
-This package provides a library, called libpfm which is used
-to develop monitoring tools exploiting the performance monitoring
-events such as those provided by the Performance Monitoring Unit
-Unit (PMU) of modern processors.
+This package provides a library, called libpfm4 which is used to develop
+monitoring tools exploiting the performance monitoring events such as those
+provided by the Performance Monitoring Unit (PMU) of modern processors.
 
 This is a complete rewrite of libpfm3 and it is NOT backward compatible
 with it.
 
 Libpfm4 helps convert from an event name, expressed as a string, to 
-the event encoding. The encoding can then be used with specific OS
-interfaces. Libpfm4 also provides OS-specific interfaces to directly
-setup OS-specific data structures to be passed to the kernel. The
-current libpfm4, for instance, provides support for the perf_events
-interface which was introduced in Linux v2.6.31. Perfmon support is
-not present yet.
+the event encoding that is either the raw as documented by HW vendor
+or it could be specific to an OS interface. In the latter case, the
+library is able to prepare the OS-specific data structures needed
+by the kernel to setup the event.
 
-The library supports only X86-based processors at this point, but all
-the other processors supported in libpfm3 will be added later on.
+The current libpfm4 provides support for the perf_events interface which was
+introduced in Linux v2.6.31. Perfmon support is not present yet.
 
-This version of libpfm supports:
+The library does not make any performance monitoring system calls. It is
+portable and supports other operating system environments beyond Linux.
+
+
+The library supports many PMUs. The current version can handle:
+
 	- For AMD X86:
-		AMD Opteron (K7, K8, fam 10h)
+		AMD64 K7, K8, Fam 10h
+
 	- For Intel X86: 
 		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)
 		Intel Yonah (Core Duo/Core Solo),
-		Intel Core (Merom, Penryn, Dunnington) Core 2 and Quad
+		Intel Core (Merom, Penryn, Dunnington)
 		Intel Atom
-		Intel Nehalem (Nehalem, Westmere, Beckton)
+		Intel Nehalem (Core i7, Core i5, Core i3)
+		Intel Sandy Bridge (Core i7 2xxx)
 		Intel architectural perfmon v1, v2, v3
+
 	- For ARM:
 		ARMV7 Cortex A8
 		ARMV7 Cortex A9
+
 	- For SPARC
 		Ultra I, II
 		Ultra III, IIIi, III+
 		Ultra IV+
 		Niagara I, Niagara II
 
-The core of the library is very generic and not tied to any particular OS interface.
-Thus, it can be compiled on non-Linux platforms, such as MacOS X and OpenSolaris.
+	- For IBM
+		Power 4
+		Power 5
+		Power 6
+		Power 7
+		PPC970
+		Torrent
 
 WHAT'S THERE
 -------------
@@ -61,11 +72,13 @@ WHAT'S THERE
 	- a set of examples showing how the library can be used with the
 	  perf_events interface. They are in perf_examples.
 
-	- a set of library header files and also the perf_events kernel header.
+	- a set of library header files used to compile the library and
+	  perf_examples
 
 	- man pages for all the library entry points
 
-	- Python bindings for libpfm (not yet functional)
+	- Python bindings for the library
+
 
 INSTALLATION
 ------------
@@ -77,13 +90,13 @@ INSTALLATION
 	- type make install
 
  	- To compile and install the Python bindings, you need to go to the
-	  python sub-directory and type make. Python is not systematically
-	  built
+	  python sub-directory and type make. Python may not be systematically
+	  built.
 
 	- to compile the library for another ABI (e.g. 32-bit x86 on a
 	  64-bit x86) system, you can pass the ABI flag to the compiler as
 	  follows (assuming you have the multilib version of gcc):
-		$ make OPTION="-m32 -O2"
+		$ make OPTIM="-m32 -O2"
 
 	- to compile and install the library for 64-bit Power processors,
 	  invoke make as follows:
