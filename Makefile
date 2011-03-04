@@ -38,6 +38,11 @@ ifneq ($(CONFIG_PFMLIB_NOPYTHON),y)
 DIRS += python
 endif
 
+TAR=tar --exclude=.git --exclude=.gitignore
+CURDIR=$(shell basename "$$PWD")
+PKG=libpfm-4.$(REVISION).$(AGE)
+TARBALL=$(PKG).tar.gz
+
 all: 
 	@echo Compiling for \'$(ARCH)\' target
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
@@ -54,10 +59,9 @@ depend:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 tar: clean
-	a=`basename $$PWD`; cd ..; tar zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
+	ln -s $$PWD ../$(PKG) && cd .. &&  $(TAR) -zcf $(TARBALL) $(PKG)/. && rm $(PKG)
+	@echo generated ../$(TARBALL)
 
-tarcvs: clean
-	a=`basename $$PWD`; cd ..; tar --exclude=CVS -zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
 install: 
 	@echo installing in $(DESTDIR)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
@@ -65,6 +69,6 @@ install:
 install_examples:
 	@set -e ; for d in $(EXAMPLE_DIRS) ; do $(MAKE) -C $$d $@ ; done
 
-.PHONY: all clean distclean depend tar tarcvs install install_examples lib
+.PHONY: all clean distclean depend tar install install_examples lib
 
 # DO NOT DELETE
