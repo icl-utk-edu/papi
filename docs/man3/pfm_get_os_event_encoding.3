@@ -11,10 +11,10 @@ pfm_get_event_encoding \- get event encoding for a specific operating system
 This is the key function to retrieve the encoding of an event for a specific operating system
 interface. The event string passed in \fBstr\fR is parsed and encoded for the operating system
 specified by \fBos\fR. The event is encoded to monitor at the privilege levels specified
-by the \fBdfl_plm\fR mask, if supported. The operating system specific input and output arguments
-are passed in \fBarg\fR.
+by the \fBdfl_plm\fR mask, if supported, otherwise this parameter is ignored. The operating
+system specific input and output arguments are passed in \fBarg\fR.
 
-The event string may contains sub-event masks (umask) and any other supported modifiers. Only one
+The event string, \fBstr\fR, may contains sub-event masks (umask) and any other supported modifiers. Only one
 event is parsed from the string. For convenience, it is possible to pass a comma-separated list
 of events in \fBstr\fR but only the first event is encoded.
 

@@ -69,6 +69,39 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 }
 
 int
+pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
+{
+	struct perf_event_attr *attr = e->os_data;
+	int ret;
+
+	/*
+	 * first, we need to do the generic encoding
+	 */
+	ret = pfm_intel_x86_get_encoding(this, e);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+#if 0
+	/* XXX: uncomment when uncore support is upstream */
+	attr->type = PERF_TYPE_UNCORE;
+#endif
+	attr->config = e->codes[0];
+	/*
+	 * uncore measures at all priv levels
+	 *
+	 * user cannot set per-event priv levels because
+	 * attributes are simply not there
+	 *
+	 * dfl_plm is ignored in this case
+	 */
+	attr->exclude_hv = 0;
+	attr->exclude_kernel = 0;
+	attr->exclude_user = 0;
+
+	return PFM_SUCCESS;
+}
+
+int
 pfm_intel_x86_requesting_pebs(pfmlib_event_desc_t *e)
 {
 	pfm_event_attr_info_t *a;

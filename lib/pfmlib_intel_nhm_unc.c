@@ -101,33 +101,6 @@ pfm_wsm_unc_detect(void *this)
 }
 
 static int
-pfm_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
-{
-#if 0
-	struct perf_event_attr *attr = e->os_data;
-	/* not yet supported by perf_event */
-	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
-#endif
-	return PFM_ERR_NOTSUPP;
-}
-
-static int
-intel_nhm_unc_os_encode(void *this, pfmlib_event_desc_t *e)
-{
-	switch (e->osid) {
-	case PFM_OS_PERF_EVENT:
-	case PFM_OS_PERF_EVENT_EXT:
-		return pfm_nhm_unc_get_perf_encoding(this, e);
-	case PFM_OS_NONE:
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
 pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfm_intel_x86_reg_t reg;
@@ -148,15 +121,6 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	pe = this_pe(this);
 	umask_str[0] = e->fstr[0] = '\0';
 
-	/*
-	 * uncore only measure user+kernel, so ensure default is setup
-	 * accordingly even though we are not using it, this avoids
-	 * possible mistakes by user
-	 */
-	if (e->dfl_plm != (PFM_PLM0|PFM_PLM3)) {
-		DPRINT("dfl_plm must be PLM0|PLM3 with Intel uncore PMU\n");
-		return PFM_ERR_INVAL;
-	}
 	reg.val = 0;
 
 	val = pe[e->event].code;
@@ -322,7 +286,7 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		reg.nhm_unc.usel_cnt_mask,
 		pe[e->event].name);
 
-	return intel_nhm_unc_os_encode(this, e);
+	return PFM_SUCCESS;
 }
 
 pfmlib_pmu_t intel_nhm_unc_support={
@@ -342,7 +306,7 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.pmu_detect		= pfm_nhm_unc_detect,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_nhm_unc_get_encoding,
-	 PFMLIB_ENCODE_PERF(pfm_nhm_unc_get_perf_encoding),
+	 PFMLIB_ENCODE_PERF(pfm_intel_nhm_unc_get_perf_encoding),
 
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
@@ -371,7 +335,7 @@ pfmlib_pmu_t intel_wsm_unc_support={
 	.pmu_detect		= pfm_wsm_unc_detect,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_nhm_unc_get_encoding,
-	 PFMLIB_ENCODE_PERF(pfm_nhm_unc_get_perf_encoding),
+	 PFMLIB_ENCODE_PERF(pfm_intel_nhm_unc_get_perf_encoding),
 
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
