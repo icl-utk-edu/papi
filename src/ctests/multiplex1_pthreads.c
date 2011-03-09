@@ -118,7 +118,7 @@ do_pthreads( void *( *fn ) ( void * ) )
 		pthread_join( id[i], NULL );
 
 	pthread_attr_destroy( &attr );
-	pthread_exit( NULL );
+
 	return ( SUCCESS );
 }
 
