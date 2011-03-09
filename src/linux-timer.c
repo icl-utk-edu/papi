@@ -9,6 +9,11 @@
 #include "papi.h"
 #include "papi_internal.h"
 
+#if defined(HAVE_PER_THREAD_TIMES)
+#include <sys/times.h>
+#endif
+
+
 #if defined(HAVE_MMTIMER)
 #include <sys/mman.h>
 #include <linux/mmtimer.h>
