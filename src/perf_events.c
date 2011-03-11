@@ -190,6 +190,21 @@ get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader 
 	return format;
 }
 
+
+
+/* define SYNC_READ for all kernel versions older than 2.6.33 */
+/* as a workaround for kernel bug 14489                       */
+
+static inline int 
+bug_sync_read(void) {
+
+  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33))
+     return 1;
+
+  return 0;
+
+}
+
 /********* End Kernel-version Dependent Routines  ****************/
 
 static inline int
@@ -890,7 +905,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 	 * read them up, then re-enable the group leader.
 	 */
 
-#ifdef SYNC_READ
+     if (bug_sync_read()) {
 	if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
 		for ( i = 0; i < pe_ctx->num_evts; i++ )
 			/* disable only the group leaders */
@@ -904,7 +919,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 				}
 			}
 	}
-#endif
+     }
 
 	for ( i = 0; i < pe_ctl->num_events; i++ ) {
 
@@ -952,7 +967,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 		}
 	}
 
-#ifdef SYNC_READ
+    if (bug_sync_read()) {
+
 	if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
 		for ( i = 0; i < pe_ctx->num_evts; i++ )
 			if ( pe_ctx->evt[i].group_leader == i ) {
@@ -967,7 +983,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 				}
 			}
 	}
-#endif
+    }
 
 	*events = pe_ctl->counts;
 

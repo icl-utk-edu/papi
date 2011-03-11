@@ -5543,11 +5543,6 @@ fi
 ##################################################
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
 
-  # Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489
-  if (test "$major_version" -lt 2 || test "$major_version" = 2 -a "$minor_version" -lt 6 || test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 33); then
-    CFLAGS="$CFLAGS -DSYNC_READ"
-  fi
-
 
 # Check whether --with-perf_events was given.
 if test "${with_perf_events+set}" = set; then :

@@ -908,11 +908,6 @@ AC_ARG_WITH(pfm_libdir,
 #          Linux perf_event/perf_counter
 ##################################################
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then 
-
-  # Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489
-  if (test "$major_version" -lt 2 || test "$major_version" = 2 -a "$minor_version" -lt 6 || test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 33); then
-    CFLAGS="$CFLAGS -DSYNC_READ"
-  fi 
  
   AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
