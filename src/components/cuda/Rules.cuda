@@ -1,0 +1,11 @@
+# $Id$
+
+include components/cuda/Makefile.cuda
+
+COMPSRCS += components/cuda/linux-cuda.c
+COMPOBJS += linux-cuda.o
+CFLAGS += -I$(CUDA_INCDIR) -I$(CUPTI_INCDIR)
+LDFLAGS += -L$(CUPTI_LIBDIR) -lcupti
+
+linux-cuda.o: components/cuda/linux-cuda.c components/cuda/linux-cuda.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/linux-cuda.c -o linux-cuda.o

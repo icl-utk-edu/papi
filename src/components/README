@@ -33,6 +33,10 @@ net/
 
 acpi/
 
+cuda/
+The PAPI CUDA component is a hardware performance counter measurement technology for the NVIDIA CUDA platform which provides access to the hardware counters inside the GPU. PAPI CUDA is based on CUPTI support in the NVIDIA driver library. In any environment where the CUPTI-enabled driver is installed, the PAPI CUDA component can provide detailed performance counter information regarding the execution of GPU kernels.
+NOTE: In order to disable and destroy the CUDA eventGroup properly, the user has to call PAPI_destroy_eventset( &EventSet ) before calling PAPI_shutdown() in the application. This is important since it also frees the performance monitoring hardware on the GPU.
+
 infiniband/
 These files have the source code for a component that enables PAPI-C to access hardware monitoring counters for InfiniBand devices through the OFED library. Since a new interface was introduced with OFED version 1.4 (released Dec 2008), the current InfiniBand component does not support OFED versions < 1.4.
 

@@ -1,0 +1,36 @@
+# Process this file with autoconf to produce a configure script.
+# File: components/cuda/configure.in
+# CVS: $Id$
+
+
+AC_INIT
+AC_ARG_WITH(cuda_incdir,
+            [--with-cuda_incdir=<path> Specify path to CUDA includes],
+            [CUDA_INCDIR=$withval
+             CFLAGS="$CFLAGS -I$withval"],
+            [AC_MSG_ERROR([Component requires path to CUDA includes])])	
+
+
+AC_ARG_WITH(cupti_incdir,
+            [--with-cupti_incdir=<path> Specify path to CuPTI includes],
+            [CUPTI_INCDIR=$withval
+             CFLAGS="$CFLAGS -I$withval"],
+            [AC_MSG_ERROR([Component requires path to CuPTI includes])])	
+
+
+AC_ARG_WITH(cupti_libdir,
+            [--with-cupti_libdir=<path> Specify path to cupti library],
+            [CUPTI_LIBDIR=$withval
+             LDFLAGS="$LDFLAGS -L$withval -lcupti" 
+             AC_CHECK_LIB([cupti], 
+                          [cuptiSubscribe], 
+                          [],				          
+                          [AC_MSG_ERROR([libcupti.a not found])])],
+            [AC_MSG_ERROR([Component requires path to cupti library])])
+
+
+AC_SUBST(CUDA_INCDIR)
+AC_SUBST(CUPTI_INCDIR)
+AC_SUBST(CUPTI_LIBDIR)
+AC_CONFIG_FILES([Makefile.cuda])
+AC_OUTPUT
