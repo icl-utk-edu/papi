@@ -1,3 +1,5 @@
+#include <string.h>
+
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"

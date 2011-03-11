@@ -12,6 +12,11 @@
 * @brief A component for the luster filesystem.
 */
 
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
