@@ -159,9 +159,12 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	attr->exclude_kernel = !(plm & PFM_PLM0);
 	attr->exclude_hv = !(plm & PFM_PLMH);
 
-	__pfm_vbprintf("PERF[type=%x val=0x%"PRIx64" e_u=%d e_k=%d e_hv=%d period=%"PRIu64" freq=%d precise=%d] %s\n",
+	__pfm_vbprintf("PERF[type=%x config=0x%"PRIx64" config1=0x%"PRIx64
+                       " e_u=%d e_k=%d e_hv=%d period=%"PRIu64" freq=%d"
+                       " precise=%d] %s\n",
 			attr->type,
 			attr->config,
+			attr->config1,
 			attr->exclude_user,
 			attr->exclude_kernel,
 			attr->exclude_hv,
