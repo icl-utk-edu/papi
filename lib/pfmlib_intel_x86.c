@@ -324,8 +324,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	const pfmlib_attr_desc_t *atdesc;
 	pfm_intel_x86_reg_t reg;
 	unsigned int grpmsk, ugrpmsk = 0;
-	uint64_t val;
-	unsigned int umask;
+	unsigned int umask1, umask2;
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0;
 	int k, ret, grpid, last_grpid = -1, id;
@@ -342,13 +341,15 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 	/*
 	 * preset certain fields from event code
+	 * including modifiers
 	 */
-	reg.val = val = pe[e->event].code;
+	reg.val = pe[e->event].code;
 
 	grpmsk = (1 << pe[e->event].ngrp)-1;
 
 	/* take into account hardcoded umask */
-	umask = (val >> 8) & 0xff;
+	umask1 = (reg.val >> 8) & 0xff;
+	umask2 = 0;
 
 	for (k = 0; k < e->nattrs; k++) {
 		a = attr(e, k);
@@ -396,7 +397,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 			last_grpid = grpid;
 			modhw    |= pe[e->event].umasks[a->idx].modhw;
-			umask    |= pe[e->event].umasks[a->idx].ucode;
+			umask2   |= pe[e->event].umasks[a->idx].ucode;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->idx].grpid;
 
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
@@ -409,7 +410,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 				return PFM_ERR_ATTR;
 			}
 			/* override umask */
-			umask = a->idx & 0xff;
+			umask2 = a->idx & 0xff;
 			ugrpmsk = grpmsk;
 		} else {
 			uint64_t ival = e->attrs[k].ival;
@@ -468,7 +469,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	 */
 	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask);
+		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask2);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
@@ -494,14 +495,16 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	}
 
 	if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
-		e->codes[1] = umask;
+		e->codes[1] = umask2;
 		e->count = 2;
-		umask = 0;
+		umask2 = 0;
 	} else {
 		e->count = 1;
 	}
 
-	reg.val     |= umask << 8; /* take into account hardcoded modifiers */
+	/* take into account hardcoded modifiers, so use or on reg.val */
+	reg.val     |= (umask1 | umask2)  << 8;
+
 	reg.sel_en   = 1; /* force enable bit to 1 */
 	reg.sel_int  = 1; /* force APIC int to 1 */
 
