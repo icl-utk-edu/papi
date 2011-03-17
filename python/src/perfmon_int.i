@@ -99,7 +99,12 @@ ptr_argout(perf_event_attr_t);
 #pragma SWIG nowarn=451
 %include <perfmon/pfmlib.h>
 /* OS specific library interface */
-%include <perfmon/pfmlib_perf_event.h>
+extern pfm_err_t pfm_get_perf_event_encoding(const char *str,
+					     int dfl_plm,
+					     perf_event_attr_t *output,
+					     char **fstr,
+					     int *idx);
+
 
 %init %{
   libpfm_err = PyErr_NewException("perfmon.libpfmError", NULL, NULL);
