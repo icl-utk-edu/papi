@@ -84,7 +84,7 @@ pfmlib_pmu_t arm_cortex_a8_support={
 	.num_cntrs		= 2,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
-	 PFMLIB_ENCODE_PERF(pfmlib_get_perf_encoding),
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
 	.get_event_first	= pfm_arm_get_event_first,
 	.get_event_next		= pfm_arm_get_event_next,
 	.event_is_valid		= pfm_arm_event_is_valid,
@@ -109,7 +109,7 @@ pfmlib_pmu_t arm_cortex_a9_support={
 	.num_cntrs		= 2,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
-	 PFMLIB_ENCODE_PERF(pfmlib_get_perf_encoding),
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
 	.get_event_first	= pfm_arm_get_event_first,
 	.get_event_next		= pfm_arm_get_event_next,
 	.event_is_valid		= pfm_arm_event_is_valid,

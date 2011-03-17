@@ -30,6 +30,23 @@
 #include "pfmlib_arm_priv.h"
 #include "pfmlib_perf_event_priv.h"
 
+int
+pfm_arm_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
+{
+	struct perf_event_attr *attr = e->os_data;
+	int ret;
+
+	ret = pfm_arm_get_encoding(this, e);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	attr->type = PERF_TYPE_RAW;
+	attr->config = (e->codes[0] << 16) | e->codes[1];
+
+	return PFM_SUCCESS;
+}
+
+
 void
 pfm_arm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
