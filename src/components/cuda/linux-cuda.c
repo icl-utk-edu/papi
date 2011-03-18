@@ -38,7 +38,9 @@ detectDevice( void )
 	int skipDevice = 0;
 	int id;
 	char deviceName_tmp[PAPI_MIN_STR_LEN] = "init";
-
+	
+	totalEventCount = 0;
+	
 	/* CUDA initialization  */
 	err = cuInit( 0 );
 	if ( err != CUDA_SUCCESS ) {
@@ -373,28 +375,28 @@ int
 CUDA_init_substrate(  )
 {
 	int i;
-
+	
 	/* Initialize CuPTI library */
 	if ( 0 != cuInit( 0 ) ) {
 		perror( "cuInit(): Failed to initialize the CUDA library" );
 		exit( EXIT_FAILURE );
 	}
-
+	
 	/* Create dynamic event table */
 	NUM_EVENTS = detectDevice(  );
-
+	
 	cuda_native_table = ( CUDA_native_event_entry_t * )
 		malloc( sizeof ( CUDA_native_event_entry_t ) * NUM_EVENTS );
 	if ( cuda_native_table == NULL ) {
 		perror( "malloc(): Failed to allocate memory to events table" );
 		exit( EXIT_FAILURE );
 	}
-
+	
 	if ( NUM_EVENTS != createNativeEvents(  ) ) {
 		fprintf( stderr, "Number of CUDA events mismatch!\n" );
 		exit( EXIT_FAILURE );
 	}
-
+	
 	/* allocate memory for the list of events that are added to the CuPTI eventGroup */
 	addedEvents.list = malloc( sizeof ( int ) * NUM_EVENTS );
 	if ( addedEvents.list == NULL ) {
@@ -402,11 +404,11 @@ CUDA_init_substrate(  )
 			( "malloc(): Failed to allocate memory to table of events that are added to CuPTI eventGroup" );
 		exit( EXIT_FAILURE );
 	}
-
+	
 	/* initialize the event list */
 	for ( i = 0; i < NUM_EVENTS; i++ )
 		addedEvents.list[i] = 0;
-
+	
 	return ( PAPI_OK );
 }
 
@@ -494,6 +496,7 @@ CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 	( void ) ctx;
 	( void ) flags;
 
+	
 	if ( 0 != getEventValue( ( ( CUDA_control_state_t * ) ctrl )->counts ) )
 		exit( EXIT_FAILURE );
 
@@ -557,7 +560,12 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 	int index;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	char *device_tmp;
-
+	
+	if ( count == 0 ) {
+		printf("Removing CUDA events is currently not supported (Bug in cuda 4.0rc).\n");
+		exit( EXIT_FAILURE );
+	}
+	
 	index =
 		native[count -
 			   1].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
