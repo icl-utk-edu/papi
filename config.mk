@@ -197,6 +197,13 @@ CONFIG_PFMLIB_NOPYTHON=y
 endif
 
 #
+# mark that we are compiling on Linux
+#
+ifeq ($(SYS),Linux)
+CFLAGS+= -DCONFIG_PFMLIB_OS_LINUX
+endif
+
+#
 # compile examples statically if library is
 # compile static
 # not compatible with python support, so disable for now
