@@ -47,62 +47,6 @@ static int num_fds = 0;
 static int buffer_pages = 1; /* size of buffer payload (must be power of 2)*/
 
 static void
-print_sample(int id)
-{
-	uint64_t nr, ip;
-	uint64_t time_enabled, time_running;
-	struct { uint64_t value, id; } grp;
-	double val, ratio;
-	int e, ret;
-	const char *str;
-
-	ret = perf_read_buffer_64(fds[id].buf, fds[id].pgmsk, &ip);
-	if (ret)
-		errx(1, "cannot read IP");
-
-
-	ret = perf_read_buffer_64(fds[id].buf, fds[id].pgmsk, &nr);
-	if (ret)
-		errx(1, "cannot read sample");
-
-	time_enabled = time_running = 1;
-
-	ret = perf_read_buffer_64(fds[id].buf, fds[id].pgmsk, &time_enabled);
-	if (ret)
-		errx(1, "cannot read timing info");
-
-	ret = perf_read_buffer_64(fds[id].buf, fds[id].pgmsk, &time_running);
-	if (ret)
-		errx(1, "cannot read timing info");
-
-	printf("Notification %lu: ip=0x%"PRIx64" ena=%"PRIu64" run=%"PRIu64"\n", notification_received, ip, time_enabled, time_running);
-	while(nr--) {
-		ret = perf_read_buffer(fds[id].buf, fds[id].pgmsk, &grp, sizeof(grp));
-		if (ret)
-			errx(1, "cannot read grp");
-
-		e = perf_id2event(fds, num_fds, grp.id);
-		if (e == -1)
-			str = "unknown event";
-		else
-			str = fds[e].name;
-
-		if (time_running)
-			ratio = (double)time_enabled / (double)time_running;
-		else
-			ratio = 0.0;
-
-		val = grp.value * ratio;
-
-		printf("\t%'18.0f %s (%"PRIu64"%s)\n",
-			val, str,
-			grp.id,
-			time_running != time_enabled ? ", scaled":"");
-
-	}
-}
-
-static void
 sigio_handler(int n, struct siginfo *info, void *uc)
 {
 	struct perf_event_header ehdr;
@@ -136,15 +80,16 @@ sigio_handler(int n, struct siginfo *info, void *uc)
 		perf_skip_buffer(fds[id].buf, ehdr.size);
 		goto skip;
 	}
-	print_sample(id);
+	printf("Notification:%lu ", notification_received);
+	ret = perf_display_sample(fds, num_fds, 0, &ehdr, stdout);
 	/*
 	 * increment our notification counter
 	 */
 	notification_received++;
 skip:
 	/*
- 	 * rearm the counter for one more shot
- 	 */
+	 * rearm the counter for one more shot
+	 */
 	ret = ioctl(info->si_fd, PERF_EVENT_IOC_REFRESH, 1);
 	if (ret == -1)
 		err(1, "cannot refresh");
@@ -205,12 +150,12 @@ main(int argc, char **argv)
 		fds[i].hw.disabled = !i;
 		if (!i) {
 			fds[i].hw.wakeup_events = 1;
-			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_READ;
+			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_READ|PERF_SAMPLE_PERIOD;
 			fds[i].hw.sample_period = SMPL_PERIOD;
 
 			/* read() returns event identification for signal handler */
 			fds[i].hw.read_format = PERF_FORMAT_GROUP|PERF_FORMAT_ID|PERF_FORMAT_SCALE;
-		} 
+		}
 
 		fds[i].fd = perf_event_open(&fds[i].hw, 0, -1, fds[0].fd, 0);
 		if (fds[i].fd == -1)
