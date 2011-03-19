@@ -81,10 +81,8 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-#if 0
-	/* XXX: uncomment when uncore support is upstream */
 	attr->type = PERF_TYPE_UNCORE;
-#endif
+
 	attr->config = e->codes[0];
 	/*
 	 * uncore measures at all priv levels
