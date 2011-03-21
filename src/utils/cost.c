@@ -34,8 +34,8 @@
 
 static int num_iters = NUM_ITERS;
 
-unsigned int 
-find_derived_postfix( unsigned int i )
+int 
+find_derived( int i , char *type)
 {
   PAPI_event_info_t info;
 
@@ -43,12 +43,31 @@ find_derived_postfix( unsigned int i )
 
   do {
 	if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-	  if ( strcmp( info.derived, "DERIVED_POSTFIX") == 0 )
+	  if ( strcmp( info.derived, type) == 0 )
 		return i;
 	}
   } while ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK );
 
   return PAPI_NULL;
+}
+
+/* Slight misnomer, find derived event != DERIVED_POSTFIX */
+int
+find_derived_add( int i ) 
+{
+  int ret;
+
+  if ( (ret = find_derived( i, "DERIVED_ADD")) != PAPI_NULL)
+	return ret;
+
+
+  return find_derived( i, "DERIVED_SUB"); 
+}
+
+int 
+find_derived_postfix( int i ) 
+{
+  return ( find_derived ( i, "DERIVED_POSTFIX" ) );
 }
 
 static void
@@ -169,7 +188,7 @@ print_stats( int i, long long min, long long max, double average, double std )
 	char *test[] = { "loop latency", "PAPI_start/stop (2 counters)",
 		"PAPI_read (2 counters)", "PAPI_read_ts (2 counters)",
 			"PAPI_accum (2 counters)", "PAPI_reset (2 counters)", 
-			"PAPI_read (1 derived_postfix counter)"
+			"PAPI_read (1 derived_postfix counter)"," PAPI_read (1 derived_[add|sub] counter)"
 	};
 	printf( "\nTotal cost for %s over %d iterations\n", test[i], num_iters );
 	printf
@@ -226,7 +245,7 @@ main( int argc, char **argv )
 	int show_dist = 0, show_std_dev = 0;
 	long long totcyc, values[2];
 	long long *array;
-	unsigned int event;
+	int event;
 
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
@@ -425,6 +444,30 @@ main( int argc, char **argv )
 	} else {
 	  printf("\tI was unable to find a DERIVED_POSTFIX preset event to "
 		  "test on this architecture, skipping.\n");
+	}
+
+	if ( ( event = find_derived_add( event ) ) != PAPI_NULL ) {
+	  if ( (retval = PAPI_add_event( EventSet, event) ) != PAPI_OK )
+		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+
+	  printf( "\nPerforming DERIVED_[ADD|SUB] PAPI_read()  test..." );
+
+	  if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	  PAPI_read( EventSet, values );
+
+	  for ( i = 0; i < num_iters; i++ ) {
+		totcyc = PAPI_get_real_cyc(  );
+		PAPI_read( EventSet, values );
+		totcyc = PAPI_get_real_cyc(  ) - totcyc;
+		array[i] = totcyc;
+	  }
+	  if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+
+	  do_output( 7, array, bins, show_std_dev, show_dist );
+	} else {
+	  printf("\tI was unable to find a suitable DERIVED_[ADD|SUB] event to test, skipping.\n");
 	}
 
 	free( array );
