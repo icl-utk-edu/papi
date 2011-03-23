@@ -751,7 +751,7 @@ static const intel_x86_entry_t intel_snb_pe[]={
 	  .flags = INTEL_X86_PEBS,
 	  .umasks = {
 		{ .uname = "ANY_P",
-		  .udesc  = "Number of instructions retired (Precise Event)",
+		  .udesc  = "Number of instructions retired",
 		  .ucode  = 0x0,
 		  .uflags = INTEL_X86_NCOMBO | INTEL_X86_DFL,
 		},
