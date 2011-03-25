@@ -8,7 +8,7 @@ CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
 
 ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
-	  papi_event_chooser papi_decode papi_xml_event_info papi_version
+	  papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost
 UTILOBJS= do_loops.o dummy.o test_utils.o
 
 default all utils: $(UTIL_TARGETS)
@@ -24,6 +24,9 @@ papi_clockres: ../ctests/clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
 
 papi_cost: cost.c $(UTILOBJS) $(PAPILIB) cost_utils.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cost.c $(UTILOBJS) cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
+
+papi_multiplex_cost: multiplex_cost.c $(UTILOBJS) $(PAPILIB) cost_utils.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiplex_cost.c $(UTILOBJS) cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_multiplex_cost -lm
 
 papi_command_line: command_line.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) command_line.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_command_line
