@@ -31,8 +31,7 @@
   *		it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>. 
  */
 #include "papi_test.h"
-
-static int num_iters = NUM_ITERS;
+#include "cost_utils.h"
 
 int 
 find_derived( int i , char *type)
@@ -90,97 +89,6 @@ print_help( void )
 	printf( "\n" );
 }
 
-/* computes min, max, and mean for an array; returns std deviation */
-static double
-do_stats( long long *array, long long *min, long long *max, double *average )
-{
-	int i;
-	double std, tmp;
-
-	*min = *max = array[0];
-	*average = 0;
-	for ( i = 0; i < num_iters; i++ ) {
-		*average += ( double ) array[i];
-		if ( *min > array[i] )
-			*min = array[i];
-		if ( *max < array[i] )
-			*max = array[i];
-	}
-	*average = *average / ( double ) num_iters;
-	std = 0;
-	for ( i = 0; i < num_iters; i++ ) {
-		tmp = ( double ) array[i] - ( *average );
-		std += tmp * tmp;
-	}
-	std = sqrt( std / ( num_iters - 1 ) );
-	return ( std );
-}
-
-static void
-do_std_dev( long long *a, int *s, double std, double ave )
-{
-	int i, j;
-	double dev[10];
-
-	for ( i = 0; i < 10; i++ ) {
-		dev[i] = std * ( i + 1 );
-		s[i] = 0;
-	}
-
-	for ( i = 0; i < num_iters; i++ ) {
-		for ( j = 0; j < 10; j++ ) {
-			if ( ( ( double ) a[i] - dev[j] ) > ave )
-				s[j]++;
-		}
-	}
-}
-
-static void
-do_dist( long long *a, long long min, long long max, int bins, int *d )
-{
-	int i, j;
-	int dmax = 0;
-	int range = ( int ) ( max - min + 1 );	/* avoid edge conditions */
-
-	/* clear the distribution array */
-	for ( i = 0; i < bins; i++ ) {
-		d[i] = 0;
-	}
-
-	/* scan the array to distribute cost per bin */
-	for ( i = 0; i < num_iters; i++ ) {
-		j = ( ( int ) ( a[i] - min ) * bins ) / range;
-		d[j]++;
-		if ( j && ( dmax < d[j] ) )
-			dmax = d[j];
-	}
-
-	/* scale each bin to a max of 100 */
-	for ( i = 1; i < bins; i++ ) {
-		d[i] = ( d[i] * 100 ) / dmax;
-	}
-}
-
-static void
-print_dist( long long min, long long max, int bins, int *d )
-{
-	int i, j;
-	int step = ( int ) ( max - min ) / bins;
-
-	printf( "\nCost distribution profile\n\n" );
-	for ( i = 0; i < bins; i++ ) {
-		printf( "%8d:", ( int ) min + ( step * i ) );
-		if ( d[i] > 100 ) {
-			printf
-				( "**************************** %d counts ****************************",
-				  d[i] );
-		} else {
-			for ( j = 0; j < d[i]; j++ )
-				printf( "*" );
-		}
-		printf( "\n" );
-	}
-}
 
 static void
 print_stats( int i, long long min, long long max, double average, double std )
@@ -210,6 +118,28 @@ print_std_dev( int *s )
 		printf( "  %d\t", s[i] );
 	printf( "\n\n" );
 }
+
+static void
+print_dist( long long min, long long max, int bins, int *d )
+{
+	int i, j;
+	int step = ( int ) ( max - min ) / bins;
+
+	printf( "\nCost distribution profile\n\n" );
+	for ( i = 0; i < bins; i++ ) {
+		printf( "%8d:", ( int ) min + ( step * i ) );
+		if ( d[i] > 100 ) {
+			printf
+				( "**************************** %d counts ****************************",
+				  d[i] );
+		} else {
+			for ( j = 0; j < d[i]; j++ )
+				printf( "*" );
+		}
+		printf( "\n" );
+	}
+}
+
 static void
 do_output( int test_type, long long *array, int bins, int show_std_dev,
 		   int show_dist )
@@ -246,6 +176,7 @@ main( int argc, char **argv )
 	long long totcyc, values[2];
 	long long *array;
 	int event;
+	PAPI_event_info_t info;
 
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
@@ -417,7 +348,6 @@ main( int argc, char **argv )
 	do_output( 5, array, bins, show_std_dev, show_dist );
 
 	/* Derived event test */
-	printf( "\nPerforming DERIVED_POSTFIX event test...\n" );
 	PAPI_cleanup_eventset( EventSet );
 
 	event = 0 | PAPI_PRESET_MASK;
@@ -425,6 +355,9 @@ main( int argc, char **argv )
 	if ( ( event = find_derived_postfix( event ) ) != PAPI_NULL ) {
 	  if ( (retval = PAPI_add_event( EventSet, event) ) != PAPI_OK )
 		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+
+	  PAPI_get_event_info(event, &info);
+	  printf( "\nPerforming DERIVED_POSTFIX PAPI_read(%d counters)  test...", info.count );
 
 	  if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
@@ -450,7 +383,8 @@ main( int argc, char **argv )
 	  if ( (retval = PAPI_add_event( EventSet, event) ) != PAPI_OK )
 		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-	  printf( "\nPerforming DERIVED_[ADD|SUB] PAPI_read()  test..." );
+	  PAPI_get_event_info(event, &info);
+	  printf( "\nPerforming DERIVED_[ADD|SUB] PAPI_read(%d counters)  test...", info.count );
 
 	  if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );

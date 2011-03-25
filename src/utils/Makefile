@@ -22,8 +22,8 @@ papi_xml_event_info: event_info.c $(PAPILIB) $(UTILOBJS)
 papi_clockres: ../ctests/clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) ../ctests/clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
 
-papi_cost: cost.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cost.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
+papi_cost: cost.c $(UTILOBJS) $(PAPILIB) cost_utils.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cost.c $(UTILOBJS) cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
 
 papi_command_line: command_line.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) command_line.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_command_line
@@ -51,6 +51,9 @@ do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
 
 dummy.o: ../ctests/dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
+
+cost_utils.o: ../ctests/papi_test.h cost_utils.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c cost_utils.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
