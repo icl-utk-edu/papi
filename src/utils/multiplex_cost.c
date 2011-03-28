@@ -17,12 +17,11 @@
   *
   *	@section Options
   *	<ul>
-  *		<li>-m, --min <Min number of events to test>
-  *		<li>-x, --max <Max number of events to test>
-  *		<li> -k, --kernel-mpx If supported, time kernel multiplexing (default)
-  *		<li> -s, --sw	Time software multiplexed EventSets (default)
-  *		<li> --no-sw	Do not time software multiplexed EventSets
-  *		<li> --no-kernel Do not time kernel multiplexed EventSets.
+  *		<li>-m <Min number of events to test>
+  *		<li>-x <Max number of events to test>
+  *		<li> -k, Do not time kernel multiplexing 
+  *		<li> -s, Do not ime software multiplexed EventSets 
+  *		<li> -t THREASHOLD, Test with THRESHOLD iterations of counting loop. 
   *	</ul>
   *
   *	@section Bugs
@@ -39,7 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
+#include <unistd.h>
 
 #include "papi_test.h"
 #include "cost_utils.h"
@@ -138,28 +137,14 @@ finalize_test(void)
   first_time = 1;
 }
 
-static struct option opt_struct[] =
-{
-  { "help",		no_argument,		NULL, 'h' },
-  { "min",		required_argument,	NULL, 'm'},
-  { "max",		required_argument,	NULL, 'x'},
-  { "sw",		no_argument,		&options.force_sw, 1},
-  { "kernel",	no_argument,		&options.kernel_mpx, 1},
-  { "no-kernel",no_argument,		&options.kernel_mpx, 0},
-  { "no-sw",	no_argument,		&options.force_sw, 0},
-  { 0, 0, 0, 0 }
-};
-
 static void 
 usage(void)
 {
   printf( "Usage: papi_multiplex_cost [options]\n\
-\t-m,--min=min number of events to count\n\
-\t-x, --max=max number of events to count\n\
-\t-s, --sw time software multiplexed reads\n\
-\t-k, --kernel time kernel multiplexed reads (if supported).\n\
-\t--no-kernel do not test kernel multiplexed reads\n\
-\t--no-sw do not test software multiplexed reads\n\
+\t-m num, number of events to count\n\
+\t-x num, number of events to count\n\
+\t-s, Do not run software multiplexing test.\n\
+\t-k, Do not attempt kernel multiplexed test.\n\
 \t-t THREASHOLD set the threshold for the number of iterations. Default: 100,000\n" );
 }
 
@@ -189,7 +174,7 @@ main( int argc, char **argv )
   options.force_sw = 1;
   options.kernel_mpx = 1;
 
-  while ( ( c=getopt_long(argc, argv, "hm:x:skt:", opt_struct, 0) ) != -1 ) {
+  while ( ( c=getopt(argc, argv, "hm:x:skt:") ) != -1 ) {
 	switch (c) {
 	  case 'h':
 		usage();
@@ -201,10 +186,10 @@ main( int argc, char **argv )
 		options.max = atoi(optarg);
 		break;
 	  case 's':
-		options.force_sw = 1;
+		options.force_sw = 0;
 		break;
 	  case 'k':
-		options.kernel_mpx = 1;
+		options.kernel_mpx = 0;
 		break;
 	  case 't':
 		num_iters = atoi(optarg);
