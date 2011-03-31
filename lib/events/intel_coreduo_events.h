@@ -1053,7 +1053,6 @@ static const intel_x86_entry_t coreduo_pe[]={
   { .modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0xCC,
-	.name = "FP_MMX_TRANS",
 	.name = "MMX_FP_TRANS",
 	.desc = "Transitions from MMX (TM) Instructions to Floating Point Instructions",
 	.ngrp = 1,

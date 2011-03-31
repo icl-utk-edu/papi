@@ -175,7 +175,7 @@ pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e)
 				}
 				break;
 			case NETBURST_ATTR_T:
-				if (ival < 0 || ival > 15)
+				if (ival > 15)
 					return PFM_ERR_ATTR_VAL;
 
 				if (ival) {
@@ -410,7 +410,7 @@ pfm_netburst_validate_table(void *this, FILE *fp)
 					fprintf(fp, "pmu: %s event%d:%s umask%d: %s :: no description\n", name, i, pe[i].name, j, pe[i].event_masks[j].name);
 					error++;
 				}
-				if (pe[i].event_masks[j].bit < 0 || pe[i].event_masks[j].bit >= (EVENT_MASK_BITS+4)) {
+				if (pe[i].event_masks[j].bit >= (EVENT_MASK_BITS+4)) {
 					fprintf(fp, "pmu: %s event%d:%s umask%d: %s :: invalid bit field\n", name, i, pe[i].name, j, pe[i].event_masks[j].name);
 					error++;
 				}

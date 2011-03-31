@@ -1415,7 +1415,7 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 	if (!PFMLIB_INITIALIZED())
 		return PFM_ERR_NOINIT;
 
-	if (os < 0 || os >= PFM_OS_MAX)
+	if (os >= PFM_OS_MAX)
 		return PFM_ERR_INVAL;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
@@ -1476,7 +1476,7 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	if (attr_idx < 0)
 		return PFM_ERR_INVAL;
 
-	if (os < 0 || os >= PFM_OS_MAX)
+	if (os >= PFM_OS_MAX)
 		return PFM_ERR_INVAL;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
