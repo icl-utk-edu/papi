@@ -1154,6 +1154,8 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
   if test $debug != "yes"; then
 	OPTFLAGS='-O3 -qstrict $(PMINIT)'
+  else
+	OPTFLAGS='$(PMINIT)'
   fi
   SMPCFLGS=-qsmp
   OMPCFLGS='-qsmp=omp'
