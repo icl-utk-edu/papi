@@ -1109,11 +1109,14 @@ SHLIB='libpapi.so.$(PAPIVER)'
 OMPCFLGS=-fopenmp
 CC_R='$(CC) -pthread'
 CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
-if test "$bitmode" = "32"; then
-  BITFLAGS=-m32
-elif test "$bitmode" = "64"; then
-  BITFLAGS=-m64
+if test "$CC" = "gcc"; then
+	if test "$bitmode" = "32"; then
+		BITFLAGS=-m32
+	elif test "$bitmode" = "64"; then
+		BITFLAGS=-m64
+	fi
 fi
+
 OPTFLAGS="$OPTFLAGS $DEBUGFLAGS"
 CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE $NOTLS $BITFLAGS"
 if test "x$CC" = "xgcc"; then
@@ -1149,7 +1152,9 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     FFLAGS='$(FLAGS)'
   fi
   FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
-  OPTFLAGS='-O3 -qstrict $(PMINIT)'
+  if test $debug != "yes"; then
+	OPTFLAGS='-O3 -qstrict $(PMINIT)'
+  fi
   SMPCFLGS=-qsmp
   OMPCFLGS='-qsmp=omp'
   LDFLAGS='-L$(PMAPI)/lib -lpmapi'
