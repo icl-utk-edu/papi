@@ -354,9 +354,8 @@ _aix_get_system_info( papi_mdi_t *mdi )
 			basename( maxargs ) );
 
 #ifdef _POWER7
-	/* XXX once the segfault is tracked down, PM_INIT_FLAGS is the correct value to pass pm_initialize */
-	/*retval = pm_initialize( PM_INIT_FLAGS , &pminfo, &pmgroups, PM_POWER7); */
-	retval = pm_initialize( PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT, &pminfo, &pmgroups, PM_POWER7);
+	/* we pass PM_POWER7 for the same reasons as below (power6 case) */
+	retval = pm_initialize( PM_INIT_FLAGS , &pminfo, &pmgroups, PM_POWER7); 
 #elif defined(_POWER6)
 	/* problem with pm_initialize(): it cannot be called multiple times with 
 	   PM_CURRENT; use instead the actual proc type - here PM_POWER6 - 
