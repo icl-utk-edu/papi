@@ -223,7 +223,7 @@ pfm_intel_x86_detect(void)
 }
 
 int
-pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, unsigned int *umask)
+pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
@@ -324,7 +324,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	const pfmlib_attr_desc_t *atdesc;
 	pfm_intel_x86_reg_t reg;
 	unsigned int grpmsk, ugrpmsk = 0;
-	unsigned int umask1, umask2;
+	uint64_t umask1, umask2;
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0;
 	int k, ret, grpid, last_grpid = -1, id;

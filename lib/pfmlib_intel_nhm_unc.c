@@ -108,7 +108,7 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	const intel_x86_entry_t *pe = this_pe(this);
 	unsigned int grpmsk, ugrpmsk = 0;
 	uint64_t val;
-	unsigned int umask;
+	uint64_t umask;
 	unsigned int modhw = 0;
 	int k, ret, grpid, last_grpid = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];

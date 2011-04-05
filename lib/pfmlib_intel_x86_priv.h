@@ -220,7 +220,7 @@ intel_x86_uflag(void *this, int idx, int attr, int flag)
 }
 
 extern int pfm_intel_x86_detect(void);
-extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, unsigned int *umask);
+extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e);
