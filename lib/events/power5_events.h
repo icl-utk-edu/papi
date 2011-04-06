@@ -625,8 +625,8 @@ static const pme_power_entry_t power5_pe[] = {
 	[ POWER5_PME_PM_BR_PRED_TA ] = {
 		.pme_name = "PM_BR_PRED_TA",
 		.pme_code = 0x230e3,
-		.pme_short_desc = "A conditional branch was predicted",
-		.pme_long_desc = " target prediction",
+		.pme_short_desc = "A conditional branch was predicted, target prediction",
+		.pme_long_desc = "The target address of a branch instruction was predicted.",
 	},
 	[ POWER5_PME_PM_MRK_DATA_FROM_L375_MOD_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L375_MOD_CYC",
@@ -1249,8 +1249,8 @@ static const pme_power_entry_t power5_pe[] = {
 	[ POWER5_PME_PM_FPU1_1FLOP ] = {
 		.pme_name = "PM_FPU1_1FLOP",
 		.pme_code = 0xc7,
-		.pme_short_desc = "FPU1 executed add",
-		.pme_long_desc = " mult",
+		.pme_short_desc = "FPU1 executed add, mult, sub, cmp or sel instruction",
+		.pme_long_desc = "The floating point unit has executed an add, mult, sub, compare, fsel, fneg, fabs, fnabs, fres, or frsqrte kind of instruction.  These are single FLOP operations.",
 	},
 	[ POWER5_PME_PM_FPU_FRSP_FCONV ] = {
 		.pme_name = "PM_FPU_FRSP_FCONV",
@@ -2275,8 +2275,8 @@ static const pme_power_entry_t power5_pe[] = {
 	[ POWER5_PME_PM_FPU0_1FLOP ] = {
 		.pme_name = "PM_FPU0_1FLOP",
 		.pme_code = 0xc3,
-		.pme_short_desc = "FPU0 executed add",
-		.pme_long_desc = " mult",
+		.pme_short_desc = "FPU0 executed add, mult, sub, cmp or sel instruction",
+		.pme_long_desc = "The floating point unit has executed an add, mult, sub, compare, fsel, fneg, fabs, fnabs, fres, or frsqrte kind of instruction.  These are single FLOP operations.",
 	},
 	[ POWER5_PME_PM_MRK_DATA_FROM_L35_SHR_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L35_SHR_CYC",
@@ -2743,8 +2743,8 @@ static const pme_power_entry_t power5_pe[] = {
 	[ POWER5_PME_PM_BR_PRED_CR_TA ] = {
 		.pme_name = "PM_BR_PRED_CR_TA",
 		.pme_code = 0x423087,
-		.pme_short_desc = "A conditional branch was predicted",
-		.pme_long_desc = " CR and target prediction",
+		.pme_short_desc = "A conditional branch was predicted, CR and target prediction",
+		.pme_long_desc = "Both the condition (taken or not taken) and the target address of a branch instruction was predicted.",
 	},
 	[ POWER5_PME_PM_MRK_LSU0_FLUSH_SRQ ] = {
 		.pme_name = "PM_MRK_LSU0_FLUSH_SRQ",
@@ -2797,8 +2797,8 @@ static const pme_power_entry_t power5_pe[] = {
 	[ POWER5_PME_PM_BR_PRED_CR ] = {
 		.pme_name = "PM_BR_PRED_CR",
 		.pme_code = 0x230e2,
-		.pme_short_desc = "A conditional branch was predicted",
-		.pme_long_desc = " CR prediction",
+		.pme_short_desc = "A conditional branch was predicted, CR prediction",
+		.pme_long_desc = "A conditional branch instruction was predicted as taken or not taken.",
 	},
 	[ POWER5_PME_PM_MRK_DATA_FROM_L2 ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L2",

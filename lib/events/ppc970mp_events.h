@@ -639,8 +639,8 @@ static const pme_power_entry_t ppc970mp_pe[] = {
 	[ PPC970MP_PME_PM_FPU0_ALL ] = {
 		.pme_name = "PM_FPU0_ALL",
 		.pme_code = 0x103,
-		.pme_short_desc = "FPU0 executed add",
-		.pme_long_desc = " mult",
+		.pme_short_desc = "FPU0 executed add, mult, sub, cmp or sel instruction",
+		.pme_long_desc = "This signal is active for one cycle when fp0 is executing an add, mult, sub, compare, or fsel kind of instruction. This could be fadd*, fmul*, fsub*, fcmp**, fsel where XYZ* means XYZ, XYZs, XYZ., XYZs. and XYZ** means XYZu, XYZo",
 	},
 	[ PPC970MP_PME_PM_DATA_TABLEWALK_CYC ] = {
 		.pme_name = "PM_DATA_TABLEWALK_CYC",
@@ -1371,8 +1371,8 @@ static const pme_power_entry_t ppc970mp_pe[] = {
 	[ PPC970MP_PME_PM_FPU_ALL ] = {
 		.pme_name = "PM_FPU_ALL",
 		.pme_code = 0x5100,
-		.pme_short_desc = "FPU executed add",
-		.pme_long_desc = " mult",
+		.pme_short_desc = "FPU executed add, mult, sub, cmp or sel instruction",
+		.pme_long_desc = "This signal is active for one cycle when FPU is executing an add, mult, sub, compare, or fsel kind of instruction. This could be fadd*, fmul*, fsub*, fcmp**, fsel where XYZ* means XYZ, XYZs, XYZ., XYZs. and XYZ** means XYZu, XYZo. Combined Unit 0 + Unit 1",
 	},
 	[ PPC970MP_PME_PM_LSU_SRQ_S0_ALLOC ] = {
 		.pme_name = "PM_LSU_SRQ_S0_ALLOC",
@@ -1485,8 +1485,8 @@ static const pme_power_entry_t ppc970mp_pe[] = {
 	[ PPC970MP_PME_PM_FPU1_ALL ] = {
 		.pme_name = "PM_FPU1_ALL",
 		.pme_code = 0x107,
-		.pme_short_desc = "FPU1 executed add",
-		.pme_long_desc = " mult",
+		.pme_short_desc = "FPU1 executed add, mult, sub, cmp or sel instruction",
+		.pme_long_desc = "This signal is active for one cycle when fp1 is executing an add, mult, sub, compare, or fsel kind of instruction. This could be fadd*, fmul*, fsub*, fcmp**, fsel where XYZ* means XYZ, XYZs, XYZ., XYZs. and XYZ** means XYZu, XYZo",
 	},
 	[ PPC970MP_PME_PM_FPU1_FSQRT ] = {
 		.pme_name = "PM_FPU1_FSQRT",
