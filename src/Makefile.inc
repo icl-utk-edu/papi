@@ -228,7 +228,7 @@ doc:
 	-cd ../doc; $(MAKE) doxygen-user
 
 clean: native_clean
-	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c papi_events_table.h components_config.h
+	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c papi_events_table.h 
 	-cd ctests; $(MAKE) clean
 	-cd ctests/bgp; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
@@ -236,7 +236,7 @@ clean: native_clean
 	-cd ../doc; $(MAKE) clean
 
 clobber distclean: clean native_clobber
-	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so
+	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so components_config.h
 	-cd utils;  $(MAKE) clean
 	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
