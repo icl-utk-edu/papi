@@ -25,7 +25,7 @@ OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow sys
 	overflow overflow_force_software overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	overflow_index overflow_one_and_read overflow_allcounters
 PROFILE  = profile profile_force_software sprofile profile_twoevents byte_profile
-ATTACH	= multiattach zero_attach
+ATTACH	= multiattach zero_attach attach3 attach2 attach_target
 P4_TEST	= p4_lst_ins
 ACPI	= acpi 
 EAR	= earprofile
@@ -314,17 +314,26 @@ exeinfo: exeinfo.c $(UTILOBJS) $(PAPILIB)
 subinfo: subinfo.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) subinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o subinfo 
 
-zero_attach: zero_attach.c $(UTILOBJS) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_attach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_attach 
-
 hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) hwinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o hwinfo
 
 code2name: code2name.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) code2name.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o code2name
 
+attach_target: do_loops.c
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DDUMMY_DRIVER do_loops.c dummy.o -o attach_target 
+
+zero_attach: zero_attach.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_attach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_attach 
+
 multiattach: multiattach.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiattach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o multiattach 
+
+attach3: attach3.c attach_target $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach3.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o attach3 
+
+attach2: attach2.c attach_target $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o attach2 
 
 reset: reset.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o reset 

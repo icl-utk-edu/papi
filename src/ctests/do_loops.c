@@ -297,3 +297,16 @@ _DO_STUFF( void )
 {
 	do_stuff(  );
 }
+
+#ifdef DUMMY_DRIVER
+int main(int argc, char **argv)
+{
+  int i;
+  if (argc > 1)
+    if ((i = atoi(argv[1])) < 1) {
+      i = NUM_FLOPS;
+    }
+  do_flops(i);
+  exit(0);
+}
+#endif
