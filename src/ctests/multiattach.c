@@ -28,10 +28,10 @@
 #endif
 
 int
-wait_for_attach_and_loop( void )
+wait_for_attach_and_loop( int num )
 {
 	kill( getpid(  ), SIGSTOP );
-	do_flops( NUM_FLOPS );
+	do_flops( NUM_FLOPS * num );
 	kill( getpid(  ), SIGSTOP );
 	return ( 0 );
 }
@@ -69,12 +69,12 @@ main( int argc, char **argv )
 	if ( pid < 0 )
 		test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
 	if ( pid == 0 )
-		exit( wait_for_attach_and_loop(  ) );
+		exit( wait_for_attach_and_loop( 1 ) );
 	pid2 = fork(  );
 	if ( pid2 < 0 )
 		test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
 	if ( pid2 == 0 )
-		exit( wait_for_attach_and_loop(  ) );
+		exit( wait_for_attach_and_loop( 2 ) );
 
 
 
