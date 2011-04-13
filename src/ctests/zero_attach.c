@@ -74,7 +74,6 @@ main( int argc, char **argv )
 		exit( wait_for_attach_and_loop(  ) );
 
 
-
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */

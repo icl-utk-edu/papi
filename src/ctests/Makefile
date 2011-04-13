@@ -25,7 +25,7 @@ OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow sys
 	overflow overflow_force_software overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	overflow_index overflow_one_and_read overflow_allcounters
 PROFILE  = profile profile_force_software sprofile profile_twoevents byte_profile
-ATTACH	= multiattach zero_attach attach3 attach2 attach_target
+ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target
 P4_TEST	= p4_lst_ins
 ACPI	= acpi 
 EAR	= earprofile
@@ -328,6 +328,9 @@ zero_attach: zero_attach.c $(UTILOBJS) $(PAPILIB)
 
 multiattach: multiattach.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiattach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o multiattach 
+
+multiattach2: multiattach2.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiattach2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o multiattach2 
 
 attach3: attach3.c attach_target $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach3.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o attach3 

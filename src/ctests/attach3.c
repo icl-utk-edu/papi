@@ -93,6 +93,8 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component",
 				   retval );
 
+	/* The following call causes this test to fail for perf_events */
+
 	retval = PAPI_attach( EventSet1, ( unsigned long ) pid );
 	if ( retval != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
@@ -101,10 +103,10 @@ main( int argc, char **argv )
 
 	retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
 	retval = PAPI_add_event(EventSet1, PAPI_FP_INS);
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
 	num_events1 = 2;
 
 	values = allocate_test_space( 1, 2);
