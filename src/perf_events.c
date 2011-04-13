@@ -1182,14 +1182,14 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		}
 		/* looks like we are allowed so go ahead and set multiplexed attribute */
 		pe_ctl->multiplexed = 1;
-		ret =
-			_papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events,
-										   pe_ctx );
+		ret = _papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events, pe_ctx );
 		/*
 		 * Variable ns is not supported, but we can clear the pinned
 		 * bits in the events to allow the scheduler to multiplex the
 		 * events onto the physical hardware registers.
 		 */
+		if (ret != PAPI_OK)
+		  pe_ctl->multiplexed = 0;
 		return ret;
 	}
 	case PAPI_ATTACH:
@@ -1197,8 +1197,11 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		if (check_permissions( option->attach.tid, pe_ctl->cpu_num, pe_ctl->domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
-		/* looks like we are allowed so go ahead and store thread id */
-		return attach( pe_ctl, option->attach.tid );
+		ret = attach( pe_ctl, option->attach.tid );
+		if (ret == PAPI_OK) {
+		  /* If events have been already been added, something may have been done to the kernel, so update */
+		  ret = _papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events, pe_ctx ); }
+		return ret;
 	case PAPI_DETACH:
 		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
 		return detach( pe_ctx, pe_ctl );
