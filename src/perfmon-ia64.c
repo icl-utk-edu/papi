@@ -1,5 +1,5 @@
 /*
-* File:    linux-ia64.c
+* File:    perfmon-ia64.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -15,7 +15,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
-#include "linux-ia64-pfm.h"
+#include "perfmon-ia64-pfm.h"
 #include "threads.h"
 #include "papi_memory.h"
 

@@ -1,8 +1,8 @@
-#ifndef _LINUX_IA64_PFM_H
-#define _LINUX_IA64_PFM_H
+#ifndef _PERFMON_IA64_PFM_H
+#define _PERFMON_IA64_PFM_H
 
 /*
-* File:    linux-ia64-pfm.h
+* File:    perfmon-ia64-pfm.h
 * CVS:     $Id$
 * Author:  Per Ekman
 *          pek at pdc.kth.se
@@ -1074,4 +1074,4 @@ pfmw_get_num_events( int *num )
 	return ( PAPI_OK );
 }
 
-#endif /* _LINUX_IA64_PFM_H */
+#endif /* _PERFMON_IA64_PFM_H */

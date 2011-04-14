@@ -1,7 +1,7 @@
-#ifndef _PAPI_LINUX_IA64_H
-#define _PAPI_LINUX_IA64_H
+#ifndef _PAPI_PERFMON_IA64_H
+#define _PAPI_PERFMON_IA64_H
 /* 
-* File:    linux-ia64.h
+* File:    perfmon-ia64.h
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -178,4 +178,4 @@ typedef ia64_control_state_t hwd_control_state_t;
 #define MY_VECTOR _ia64_vector
 
 #endif /* __INTEL_COMPILER */
-#endif /* _PAPI_LINUX_IA64_H */
+#endif /* _PAPI_PERFMON_IA64_H */

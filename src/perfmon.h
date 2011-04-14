@@ -1,7 +1,7 @@
 #ifndef _PAPI_PERFMON_H
 #define _PAPI_PERFMON_H
 /* 
-* File:    linux-ia64.h
+* File:    perfmon.h
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
