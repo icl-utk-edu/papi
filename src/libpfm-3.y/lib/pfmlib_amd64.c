@@ -72,8 +72,10 @@
  * 	1 -> PMD1 -> PERCTR1 -> MSR @ 0xc0010005
  * 	...
  */
-#define AMD64_SEL_BASE	0xc0010000
-#define AMD64_CTR_BASE	0xc0010004
+#define AMD64_SEL_BASE		0xc0010000
+#define AMD64_CTR_BASE		0xc0010004
+#define AMD64_SEL_BASE_F15H	0xc0010200
+#define AMD64_CTR_BASE_F15H	0xc0010201
 
 static struct {
 	amd64_rev_t	revision;
@@ -213,6 +215,7 @@ pfm_amd64_setup(amd64_rev_t revision)
 		amd64_support.pme_count	= amd64_fam15h_table.num;
 		amd64_pmu.cpu_clks	= amd64_fam15h_table.cpu_clks;
 		amd64_pmu.ret_inst	= amd64_fam15h_table.ret_inst;
+		amd64_support.num_cnt   = PMU_AMD64_NUM_COUNTERS_F15H;
 		amd64_support.pmc_count	= PMU_AMD64_NUM_PERFSEL;
 		amd64_support.pmd_count	= PMU_AMD64_NUM_PERFCTR;
 		return;
@@ -522,15 +525,19 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 			if ((IS_FAM10H_ONLY(reg)) && !IS_FAMILY_10H())
 				return PFMLIB_ERR_BADHOST;
 
-			pc[j].reg_value = reg.val;
-			pc[j].reg_addr  = AMD64_SEL_BASE+assign[j];
-			pc[j].reg_alt_addr = AMD64_SEL_BASE+assign[j];
+			if (amd64_support.num_cnt == PMU_AMD64_NUM_COUNTERS_F15H) {
+				pc[j].reg_addr = AMD64_SEL_BASE_F15H + (assign[j] << 1);
+				pd[j].reg_addr = AMD64_CTR_BASE_F15H + (assign[j] << 1);
+			} else {
+				pc[j].reg_addr = AMD64_SEL_BASE + assign[j];
+				pd[j].reg_addr = AMD64_CTR_BASE + assign[j];
+			}
 
+			pc[j].reg_value = reg.val;
+			pc[j].reg_alt_addr = pc[j].reg_addr;
 
 			pd[j].reg_num  = assign[j];
-			pd[j].reg_addr = AMD64_CTR_BASE+assign[j];
-			/* index to use with RDPMC */
-			pd[j].reg_alt_addr = assign[j];
+			pd[j].reg_alt_addr = assign[j];		/* index to use with RDPMC */
 
 			__pfm_vbprintf("[PERFSEL%u(pmc%u)=0x%llx emask=0x%x umask=0x%x os=%d usr=%d inv=%d en=%d int=%d edge=%d cnt_mask=%d] %s\n",
 					assign[j],
@@ -671,7 +678,7 @@ pfm_amd64_dispatch_events(
 static int
 pfm_amd64_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
-	if (cnt != PFMLIB_CNT_FIRST && cnt > 3)
+	if (cnt != PFMLIB_CNT_FIRST && cnt >= amd64_support.num_cnt)
 		return PFMLIB_ERR_INVAL;
 
 	*code = pfm_amd64_get_event_entry(i)->pme_code;
@@ -727,7 +734,7 @@ pfm_amd64_get_impl_counters(pfmlib_regmask_t *impl_counters)
 	unsigned int i = 0;
 
 	/* counting pmds are contiguous */
-	for(i=0; i < 4; i++)
+	for(i=0; i < amd64_support.num_cnt; i++)
 		pfm_regmask_set(impl_counters, i);
 }
 
