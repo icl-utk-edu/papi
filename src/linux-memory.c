@@ -450,51 +450,65 @@ PAPI_mh_info_t sys_mem_info[4] = {
 	,						 // POWER6 end
 	{3,
 	 {
-	  {						 // level 1 begins
-	   {					 // tlb's begin
-		/// POWER6 has an ERAT (Effective to Real Address
+	  [0] = { // level 1 begins
+		.tlb = {
+		/// POWER7 has an ERAT (Effective to Real Address
 		/// Translation) instead of a TLB.  For the purposes of this
 		/// data, we will treat it like a TLB.
-		{PAPI_MH_TYPE_INST, 128, 2, 0}
+		[0] = { .type = PAPI_MH_TYPE_INST,
+				.num_entries = 64, .page_size = 0, .associativity = 2 }
 		,
-		{PAPI_MH_TYPE_DATA, 128, 128, 0}
+		[1] = { .type = PAPI_MH_TYPE_DATA,
+				.num_entries = 64, .page_size = 0,
+				.associativity = SHRT_MAX }
 		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_INST, 65536, 128, 512, 4}
 		,
-		{PAPI_MH_TYPE_DATA, 65536, 128, 512, 8}
-		}
-	   }
-	  ,
-	  {						 // level 2 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
+		.cache = { // level 1 caches begin
+		[0] = { .type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_PSEUDO_LRU,
+				.size = 32768, .line_size = 128, .num_lines = 64,
+				.associativity = 4 }
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
-		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_UNIFIED, 4194304, 128, 16384, 8}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+		[1] = { .type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_LRU,
+				.size = 32768, .line_size = 128, .num_lines = 32,
+				.associativity = 8 }
 		}
 	   }
 	  ,
-	  {						 // level 3 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
+	  [1] = { // level 2 begins
+		.tlb = {
+		[0] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+			.page_size = -1, .associativity = -1 }
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
+		[1] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+			.page_size = -1, .associativity = -1 }
 		}
-	   ,
-	   {					 // caches begin
-		/// POWER6 has a 2 slice L3 cache.  Each slice is 16MB, so
-		/// combined they are 32MB and usable by each core.  For
-		/// this reason, we will treat it as a single 32MB cache.
-		{PAPI_MH_TYPE_UNIFIED, 33554432, 128, 262144, 16}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+		.cache = {
+		[0] = { .type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_PSEUDO_LRU,
+				.size = 262144, .line_size = 128, .num_lines = 256,
+				.associativity = 8 }
+		,
+		[1] = { .type = PAPI_MH_TYPE_EMPTY, .size = -1, .line_size = -1,
+				.num_lines = -1, .associativity = -1 }
+		}
+	   }
+	  ,
+	  [2] = { // level 3 begins
+		.tlb = {
+		[0] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+			.page_size = -1, .associativity = -1 }
+		,
+		[1] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+			.page_size = -1, .associativity = -1 }
+		}
+		,
+		.cache = {
+		[0] = { .type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_PSEUDO_LRU,
+				.size = 4194304, .line_size = 128, .num_lines = 4096,
+				.associativity = 8 }
+		,
+		[1] = { .type = PAPI_MH_TYPE_EMPTY, .size = -1, .line_size = -1,
+				.num_lines = -1, .associativity = -1 }
 		}
 	   }
 	  ,
