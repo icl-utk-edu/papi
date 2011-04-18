@@ -35,6 +35,9 @@ ALLTESTS="$CTESTS $FTESTS";
 x=0;
 CWD=`pwd`
 
+PATH=./ctests:$PATH
+export PATH
+
 echo "Platform:"
 uname -a
 

@@ -16,6 +16,7 @@
 
 #include "papi_test.h"
 #include <sys/ptrace.h>
+#include <limits.h>
 
 #ifdef _AIX
 #define _LINUX_SOURCE_COMPAT
@@ -29,9 +30,16 @@
 int
 wait_for_attach_and_loop( void )
 {
+  char *path;
+  char newpath[PATH_MAX];
+  path = getenv("PATH");
+
+  sprintf(newpath, "PATH=./:%s", (path)?path:'\0' );
+  putenv(newpath);
+
   if (ptrace(PTRACE_TRACEME, 0, 0, 0) == 0) {
-    execl("./attach_target","attach_target","100000000",NULL); 
-    perror("execl(./attach_target) failed");
+    execlp("attach_target","attach_target","100000000",NULL); 
+    perror("execl(attach_target) failed");
   }
   perror("PTRACE_TRACEME");
   return ( 1 );
