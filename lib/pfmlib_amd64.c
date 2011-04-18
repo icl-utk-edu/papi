@@ -152,6 +152,11 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
                 default:
                         rev = PFM_PMU_AMD64_FAM10H_BARCELONA;
                 }
+        } else if (cfg->family == 20) { /* bobcat */
+                switch (cfg->model) {
+                default:
+                        rev = PFM_PMU_AMD64_FAM14H_BOBCAT;
+                }
         }
         cfg->revision = rev;
 }

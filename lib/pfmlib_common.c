@@ -67,6 +67,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&amd64_fam10h_barcelona_support,
 	&amd64_fam10h_shanghai_support,
 	&amd64_fam10h_istanbul_support,
+	&amd64_fam14h_bobcat_support,
 	&intel_core_support,
 	&intel_atom_support,
 	&intel_nhm_support,

@@ -142,6 +142,7 @@ typedef enum {
 	PFM_PMU_TORRENT,		/* IBM Torrent hub chip */
 
 	PFM_PMU_INTEL_SNB,		/* Intel Sandy Bridge (single socket) */
+	PFM_PMU_AMD64_FAM14H_BOBCAT,	/* AMD AMD64 Fam14h Bobcat */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
