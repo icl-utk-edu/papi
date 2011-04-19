@@ -1,6 +1,9 @@
 #include <errno.h>
+#include <stdio.h>
 #include <unistd.h>
 #include PEINCLUDE
+
+#include "papi_debug.h" /* SUBDBG */
 
 // Temporarily need this definition from .../asm/unistd.h in the PCL kernel
 #undef __NR_perf_event_open
@@ -12,12 +15,38 @@
 #define __NR_perf_event_open	336
 #endif
 
+extern int _papi_hwi_debug;
+
 long
 sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 					   int group_fd, unsigned long flags )
 {
 	int ret;
 
+   SUBDBG("sys_perf_event_open(%p,%d,%d,%d,%lx\n",hw_event,pid,cpu,group_fd,flags);
+   SUBDBG("   type: %d\n",hw_event->type);
+   SUBDBG("   size: %d\n",hw_event->size);
+   SUBDBG("   config: %llx\n",hw_event->config);
+   SUBDBG("   sample_period: %llx\n",hw_event->sample_period);
+   SUBDBG("   sample_type: %llx\n",hw_event->sample_type);
+   SUBDBG("   read_format: %llx\n",hw_event->read_format);
+   SUBDBG("   disabled: %d\n",hw_event->disabled);
+   SUBDBG("   inherit: %d\n",hw_event->inherit);
+   SUBDBG("   pinned: %d\n",hw_event->pinned);
+   SUBDBG("   exclusive: %d\n",hw_event->exclusive);
+   SUBDBG("   exclude_user: %d\n",hw_event->exclude_user);
+   SUBDBG("   exclude_kernel: %d\n",hw_event->exclude_kernel);
+   SUBDBG("   exclude_hv: %d\n",hw_event->exclude_hv);
+   SUBDBG("   exclude_idle: %d\n",hw_event->exclude_idle);   
+   SUBDBG("   mmap: %d\n",hw_event->mmap);   
+   SUBDBG("   comm: %d\n",hw_event->comm);   
+   SUBDBG("   freq: %d\n",hw_event->freq);   
+   SUBDBG("   inherit_stat: %d\n",hw_event->inherit_stat);   
+   SUBDBG("   enable_on_exec: %d\n",hw_event->enable_on_exec);   
+   SUBDBG("   task: %d\n",hw_event->task);   
+   SUBDBG("   watermark: %d\n",hw_event->watermark);   
+   
+   
 	ret =
 		syscall( __NR_perf_event_open, hw_event, pid, cpu, group_fd, flags );
 #if defined(__x86_64__) || defined(__i386__)
@@ -26,5 +55,6 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 		ret = -1;
 	}
 #endif
+	SUBDBG("Returned %d\n",ret);
 	return ret;
 }

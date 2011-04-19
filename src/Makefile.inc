@@ -130,6 +130,9 @@ $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 x86_cache_info.o: x86_cache_info.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
 
+sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o
+
 $(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
 	sh papi_events_table.sh > $@
 
