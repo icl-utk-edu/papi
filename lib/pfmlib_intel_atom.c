@@ -51,8 +51,13 @@ pfm_intel_atom_detect(void *this)
 	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	if (pfm_intel_x86_cfg.model != 28)
+	switch(pfm_intel_x86_cfg.model) {
+	case 28: /* Bonnell */
+	case 38: /* Lincroft */
+		break;
+	default:
 		return PFM_ERR_NOTSUPP;
+	}
 	return PFM_SUCCESS;
 }
 
