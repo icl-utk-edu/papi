@@ -32,7 +32,7 @@ portable and supports other operating system environments beyond Linux.
 The library supports many PMUs. The current version can handle:
 
 	- For AMD X86:
-		AMD64 K7, K8, Fam 10h
+		AMD64 K7, K8, Fam 10h, Fam14h (Bobcat)
 
 	- For Intel X86: 
 		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)
