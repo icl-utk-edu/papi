@@ -909,6 +909,11 @@ AC_ARG_WITH(pfm_libdir,
 ##################################################
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then 
  
+  AC_ARG_WITH(assumed_kernel,
+		[  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds],
+		[CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""],
+		)		
+
   AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
               [force_perf_events=yes])

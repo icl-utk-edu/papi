@@ -102,13 +102,21 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 int get_linux_version() {
       
      int major=0,minor=0,sub=0;
-     char *ptr;
+     char *ptr;   
+     char kernel_name[BUFSIZ];
    
+#ifdef ASSUME_KERNEL
+     strncpy(kernel_name,ASSUME_KERNEL,BUFSIZ);
+#else
      struct utsname uname_buffer;
-   
-     uname(&uname_buffer);
-      
-     ptr=strtok(uname_buffer.release,".");
+
+     uname(&uname_buffer); 
+     strncpy(kernel_name,uname_buffer.release,BUFSIZ);
+#endif
+
+     SUBDBG("Using kernel version %s\n",kernel_name);
+
+     ptr=strtok(kernel_name,".");
      if (ptr!=NULL) major=atoi(ptr);
    
      ptr=strtok(NULL,".");
