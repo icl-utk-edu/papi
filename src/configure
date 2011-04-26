@@ -721,6 +721,7 @@ with_bitmode
 with_OS
 with_no_cpu_counters
 with_OSVER
+with_assumed_kernel
 with_nativecc
 with_tests
 with_components
@@ -746,7 +747,6 @@ with_pfm_root
 with_pfm_prefix
 with_pfm_incdir
 with_pfm_libdir
-with_assumed_kernel
 with_perf_events
 with_pe_incdir
 '
@@ -1375,6 +1375,7 @@ Optional Packages:
   --with-OS=<os>       		Specify operating system
   --with-no-cpu-counters		Specify a build with no CPU counters
   --with-OSVER=<ver>		Specify operating system version
+  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds
   --with-nativecc=<path>		Specify native C compiler for header generation
   --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
   --with-components=<"component1 component2">		Specify which components to build
@@ -1400,7 +1401,6 @@ Optional Packages:
   --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location
   --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location
-  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds
   --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)
   --with-pe-incdir=<path>		Specify path to the correct perf header file
 
@@ -2412,6 +2412,21 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OSVER" >&5
 $as_echo "$OSVER" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for perf_event workaround level" >&5
+$as_echo_n "checking for perf_event workaround level... " >&6; }
+
+# Check whether --with-assumed_kernel was given.
+if test "${with_assumed_kernel+set}" = set; then :
+  withval=$with_assumed_kernel; assumed_kernel=$withval; CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""
+else
+  assumed_kernel="autodetect"
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $assumed_kernel" >&5
+$as_echo "$assumed_kernel" >&6; }
+
 
 CFLAGS="$CFLAGS -g"
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
@@ -5544,13 +5559,6 @@ fi
 #          Linux perf_event/perf_counter
 ##################################################
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
-
-
-# Check whether --with-assumed_kernel was given.
-if test "${with_assumed_kernel+set}" = set; then :
-  withval=$with_assumed_kernel; CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""
-fi
-
 
 
 # Check whether --with-perf_events was given.

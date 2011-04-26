@@ -66,6 +66,15 @@ AC_ARG_WITH(OSVER,
             fi ])
 AC_MSG_RESULT($OSVER)
 
+AC_MSG_CHECKING(for perf_event workaround level)
+AC_ARG_WITH(assumed_kernel,
+		[  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds],
+		[assumed_kernel=$withval; CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""],
+                [assumed_kernel="autodetect"]
+		)		
+AC_MSG_RESULT($assumed_kernel)
+
+
 CFLAGS="$CFLAGS -g"
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
 if test "$CC" = "icc"; then
@@ -909,11 +918,6 @@ AC_ARG_WITH(pfm_libdir,
 ##################################################
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then 
  
-  AC_ARG_WITH(assumed_kernel,
-		[  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds],
-		[CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""],
-		)		
-
   AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
               [force_perf_events=yes])

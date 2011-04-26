@@ -104,17 +104,18 @@ int get_linux_version() {
      int major=0,minor=0,sub=0;
      char *ptr;   
      char kernel_name[BUFSIZ];
-   
-#ifdef ASSUME_KERNEL
-     strncpy(kernel_name,ASSUME_KERNEL,BUFSIZ);
-#else
      struct utsname uname_buffer;
 
      uname(&uname_buffer); 
+
+     SUBDBG("Native kernel version %s\n",uname_buffer.release);
+   
+#ifdef ASSUME_KERNEL
+     strncpy(kernel_name,ASSUME_KERNEL,BUFSIZ);
+     SUBDBG("Assuming kernel version %s\n",kernel_name);
+#else
      strncpy(kernel_name,uname_buffer.release,BUFSIZ);
 #endif
-
-     SUBDBG("Using kernel version %s\n",kernel_name);
 
      ptr=strtok(kernel_name,".");
      if (ptr!=NULL) major=atoi(ptr);
