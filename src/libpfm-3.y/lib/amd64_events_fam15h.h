@@ -1065,6 +1065,8 @@ static pme_amd64_entry_t amd64_fam15h_pe[]={
 		},
 	 },
 	},
+/* Northbridge events (.pme_code & 0x0E0) not yet supported by the kernel */
+#if 0
 /* 78 */{.pme_name = "DRAM_ACCESSES",
 	.pme_code  = 0xE0,
 	.pme_desc  = "DRAM Accesses",
@@ -2241,6 +2243,7 @@ static pme_amd64_entry_t amd64_fam15h_pe[]={
 		},
 	 },
 	},
+#endif
 };
 
 #define PME_AMD64_FAM15H_EVENT_COUNT		(sizeof(amd64_fam15h_pe)/sizeof(pme_amd64_entry_t))
