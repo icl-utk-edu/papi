@@ -60,10 +60,10 @@ typedef union {
 		uint64_t sel_en:1;		/* enable */
 		uint64_t sel_inv:1;		/* invert counter mask */
 		uint64_t sel_cnt_mask:8;	/* counter mask */
-		uint64_t sel_event_mask2:4;	/* 10h only: event mask [11:8] */
+		uint64_t sel_event_mask2:4;	/* from 10h: event mask [11:8] */
 		uint64_t sel_res2:4;		/* reserved */
-		uint64_t sel_guest:1;		/* 10h only: guest only counter */
-		uint64_t sel_host:1;		/* 10h only: host only counter */
+		uint64_t sel_guest:1;		/* from 10h: guest only counter */
+		uint64_t sel_host:1;		/* from 10h: host only counter */
 		uint64_t sel_res3:22;		/* reserved */
 	} perfsel;
 } pfm_amd64_sel_reg_t; /* MSR 0xc001000-0xc001003 */

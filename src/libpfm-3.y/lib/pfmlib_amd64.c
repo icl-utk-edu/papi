@@ -51,7 +51,7 @@
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
-#define IS_FAM10H_ONLY(reg) \
+#define CHECK_AMD_ARCH(reg) \
 	((reg).sel_event_mask2 || (reg).sel_guest || (reg).sel_host)
 
 #define PFMLIB_AMD64_HAS_COMBO(_e) \
@@ -106,8 +106,8 @@ pfm_pmu_support_t amd64_support;
 #define amd64_model	  amd64_pmu.model
 #define amd64_stepping	  amd64_pmu.stepping
 
-#define IS_FAMILY_10H()	(amd64_pmu.family == 0x10)
-#define HAS_IBS()	(amd64_pmu.family >= 0x10)
+/* AMD architectural pmu features starts with family 10h */
+#define IS_AMD_ARCH()	(amd64_pmu.family >= 0x10)
 
 static amd64_rev_t
 amd64_get_revision(int family, int model, int stepping)
@@ -522,7 +522,7 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 			}
 			pc[j].reg_num   = assign[j];
 
-			if ((IS_FAM10H_ONLY(reg)) && !IS_FAMILY_10H())
+			if ((CHECK_AMD_ARCH(reg)) && !IS_AMD_ARCH())
 				return PFMLIB_ERR_BADHOST;
 
 			if (amd64_support.num_cnt == PMU_AMD64_NUM_COUNTERS_F15H) {
@@ -577,7 +577,7 @@ static int pfm_amd64_dispatch_ibs(pfmlib_input_param_t *inp,
 	if (!inp_mod || !outp || !outp_mod)
 		return PFMLIB_ERR_INVAL;
 
-	if (!HAS_IBS())
+	if (!IS_AMD_ARCH())
 		return PFMLIB_ERR_BADHOST;
 
 	/* IBS fetch profiling */
