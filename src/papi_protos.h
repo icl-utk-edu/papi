@@ -14,32 +14,6 @@
 *          you@cs.utk.edu
 */
 
-/* The following PAPI internal functions are defined by the papi_internal.c file. */
-int _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
-					long long *values );
-int _papi_hwi_create_eventset( int *EventSet, ThreadInfo_t * handle );
-int _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx );
-void _papi_hwi_free_EventSet( EventSetInfo_t * ESI );
-int _papi_hwi_add_event( EventSetInfo_t * ESI, int index );
-int _papi_hwi_add_pevent( EventSetInfo_t * ESI, int EventCode, void *inout );
-int _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode );
-int _papi_hwi_remove_EventSet( EventSetInfo_t * ESI );
-int _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI );
-int _papi_hwi_get_domain( PAPI_domain_option_t * opt );
-int _papi_hwi_get_granularity( PAPI_granularity_option_t * opt );
-int _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * opt );
-int _papi_hwi_lookup_EventCodeIndex( const EventSetInfo_t * ESI,
-									 unsigned int EventCode );
-inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet( int eventset );
-int _papi_hwi_remove_EventSet( EventSetInfo_t * );
-void print_state( EventSetInfo_t * ESI );
-int _papi_hwi_init_global_internal( void );
-int _papi_hwi_init_global( void );
-void _papi_hwi_shutdown_global_internal( void );
-int _papi_hwi_cleanup_all_presets( void );
-int _papi_hwi_get_event_info( int EventCode, PAPI_event_info_t * info );
-int _papi_hwi_set_event_info( PAPI_event_info_t * info, int *EventCode );
-
 /* The following PAPI internal functions are defined by the papi_preset.c file. */
 
 int _papi_hwi_setup_all_presets( hwi_search_t * findem,
@@ -177,17 +151,6 @@ int _papi_hwd_ntv_bits_to_info( hwd_register_t * bits, char *names,
     _papi_hwd_ntv_decode();
 */
 
-/* the following functions are counter allocation functions */
-/* this function recusively does Modified Bipartite Graph counter allocation 
-    success  return 1
-    fail     return 0
-	Author: Haihang You  you@cs.utk.edu
-	Mods  : Dan Terpstra terpstra@cs.utk.edu
-*/
-
-int _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count,
-							   int cidx );
-
 /* The following functions are called by _papi_hwi_bipartite_alloc().
    They are hardware dependent, but don't need to be implemented
    if _papi_hwi_bipartite_alloc() is not called.
@@ -240,9 +203,6 @@ int _papi_hwd_update_shlib_info( papi_mdi_t * );
 
 /* Defined in a memory file, could be processor or OS specific */
 int _papi_hwd_get_memory_info( PAPI_hw_info_t *, int );
-
-/* papi_internal.c global papi error function */
-void PAPIERROR( char *format, ... );
 
 #if (!defined(HAVE_FFSLL) || defined(__bgp__))
 int ffsll( long long lli );

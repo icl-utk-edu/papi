@@ -53,12 +53,7 @@ extern int ( *_papi_hwi_thread_kill_fn ) ( int, int );
 #endif
 
 extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
-extern int _papi_hwi_error_level;
-//extern hwi_describe_t _papi_hwi_err[];
-extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern papi_mdi_t _papi_hwi_system_info;
-extern void _papi_hwi_dummy_handler( int, void *, long long, void * );
-extern void remap_event_position( EventSetInfo_t *, int, int );
 
 /* papi_data.c */
 
@@ -1261,7 +1256,7 @@ PAPI_start( int EventSet )
 		/* now that the context contains this event sets information, */
 		/* make sure the position array in the EventInfoArray is correct */
 		for ( i=0 ; i<ESI->NativeCount ; i++ ) {
-			remap_event_position( ESI, i, ESI->NumberOfEvents );
+			_papi_hwi_remap_event_position( ESI, i, ESI->NumberOfEvents );
 		}
 	}
 

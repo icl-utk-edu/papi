@@ -39,8 +39,9 @@
 static int default_debug_handler( int errorCode );
 static long long handle_derived( EventInfo_t * evi, long long *from );
 
-extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
+#ifdef NO_CPU_COUNTERS
 extern void set_freq(  );
+#endif
 
 /* Defined in papi_data.c */
 extern hwi_presets_t _papi_hwi_presets;
@@ -530,7 +531,7 @@ _papi_hwi_remove_EventSet( EventSetInfo_t * ESI )
      Success, return hwd_native_t array index
      Fail,    return -1;                                                             
 */
-int
+static int
 _papi_hwi_add_native_precheck( EventSetInfo_t * ESI, int nevt )
 {
 	int i;
@@ -555,7 +556,7 @@ _papi_hwi_add_native_precheck( EventSetInfo_t * ESI, int nevt )
    refill info for every added event
  */
 void
-remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_events )
+_papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_events )
 {
 	EventInfo_t *out, *head;
 	int i, j, k, n, preset_index, nevt;
@@ -816,7 +817,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 				ESI->EventInfoArray[thisindex].ops =
 					_papi_hwi_presets.data[preset_index]->operation;
 				if ( remap )
-					remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
+				   _papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
 			}
 		} else if ( EventCode & PAPI_NATIVE_MASK ) {
 			/* Check if native event exists */
@@ -846,7 +847,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 				ESI->EventInfoArray[thisindex].event_code =
 					( unsigned int ) EventCode;
 				if ( remap )
-					remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
+				   _papi_hwi_remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
 			}
 		} else {
 			/* not Native and Preset events */
@@ -917,7 +918,7 @@ _papi_hwi_add_pevent( EventSetInfo_t * ESI, int EventCode, void *inout )
 }
 
 
-int
+static int
 remove_native_events( EventSetInfo_t * ESI, int *nevt, int size )
 {
 	NativeInfo_t *native = ESI->NativeInfoArray;
@@ -1417,7 +1418,8 @@ handle_derived_add_ps( int *position, long long *from )
       #      as MHZ(million hz) got from  _papi_hwi_system_info.hw_info.mhz*1000000.0
 
   Haihang (you@cs.utk.edu)
-*/ long long
+*/ 
+static long long
 _papi_hwi_postfix_calc( EventInfo_t * evi, long long *hw_counter )
 {
 	char *point = evi->ops, operand[16];
@@ -1521,7 +1523,7 @@ handle_derived( EventInfo_t * evi, long long *from )
 }
 
 #if 0
-void
+static void
 print_state( EventSetInfo_t * ESI, int cidx )
 {
 	int i;
