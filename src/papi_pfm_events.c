@@ -1089,8 +1089,8 @@ _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 					   pfm_get_event_code_counter( event, i,
 												   code ) ) !=
 					 PFMLIB_SUCCESS ) {
-					PAPIERROR( "pfm_get_event_code_counter(%p, %d, %p): %s",
-							   event, i, code, pfm_strerror( ret ) );
+					PAPIERROR( "pfm_get_event_code_counter(%d, %d, %p): %s",
+						   event, i, code, pfm_strerror( ret ) );
 					return ( PAPI_ESBSTR );
 				}
 				first = 0;
@@ -1155,8 +1155,7 @@ _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 				   pfm_get_event_code_counter( ( ( pfm_register_t * ) bits )->
 											   event, j,
 											   &foo ) ) != PFMLIB_SUCCESS ) {
-				PAPIERROR( "pfm_get_event_code_counter(%p,%d,%d,%p): %s",
-						   *( ( pfm_register_t * ) bits ),
+				PAPIERROR( "pfm_get_event_code_counter(%d,%d,%p): %s",
 						   ( ( pfm_register_t * ) bits )->event, j, &foo,
 						   pfm_strerror( ret ) );
 				return ( PAPI_EBUG );
