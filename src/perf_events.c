@@ -51,7 +51,7 @@
 
 /* Globals declared extern elsewhere */
 hwi_search_t *preset_search_map;
-volatile unsigned int _papi_pe_lock_data[PAPI_MAX_LOCK];
+static volatile unsigned int _papi_pe_lock_data[PAPI_MAX_LOCK];
 extern papi_vector_t _papi_pe_vector;
 
 /* Static globals */
@@ -654,7 +654,7 @@ set_granularity( control_state_t * this_state, int domain )
 }
 
 
-int
+static int
 _papi_pe_init_substrate( int cidx )
 {
 
@@ -720,7 +720,7 @@ _papi_pe_init_substrate( int cidx )
 
 }
 
-int
+static int
 _papi_sub_pe_init( hwd_context_t * thr_ctx )
 {
 	( void ) thr_ctx;		 /*unused */
@@ -760,7 +760,7 @@ pe_enable_counters( context_t * ctx, control_state_t * ctl )
 }
 
 /* reset the hardware counters */
-int
+static int
 _papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
 	int i, ret;
@@ -803,7 +803,7 @@ _papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 }
 
 /* write(set) the hardware counters */
-int
+static int
 _papi_pe_write( hwd_context_t * ctx, hwd_control_state_t * ctl,
 				long long *from )
 {
@@ -888,7 +888,7 @@ get_count_idx_by_id( uint64_t * buf, int multiplexed, int inherit, uint64_t id )
 }
 
 
-int
+static int
 _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 			   long long **events, int flags )
 {
@@ -991,7 +991,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 
 }
 
-int
+static int
 _papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
 	context_t *pe_ctx = ( context_t * ) ctx;
@@ -1005,7 +1005,7 @@ _papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	return ret;
 }
 
-int
+static int
 _papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
 	( void ) ctl;			 /*unused */
@@ -1045,7 +1045,7 @@ round_requested_ns( int ns )
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 
-int
+static int
 _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 							   int count, hwd_context_t * ctx )
 {
@@ -1166,7 +1166,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 	return PAPI_OK;
 }
 
-int
+static int
 _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	int ret;
@@ -1293,7 +1293,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	}
 }
 
-int
+static int
 _papi_pe_shutdown( hwd_context_t * ctx )
 {
 	context_t *pe_ctx = ( context_t * ) ctx;
@@ -1491,7 +1491,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
  * software overflows are forced
  */
 
-void
+static void
 _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 {
 	( void ) n;				 /*unused */
@@ -1633,7 +1633,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 			PAPIERROR( "overflow refresh failed", 0 );
 }
 
-int
+static int
 _papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 {
 	( void ) ESI;			 /*unused */
@@ -1662,7 +1662,7 @@ _papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 }
 
 
-int
+static int
 _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
@@ -1748,7 +1748,7 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 
 
-int
+static int
 _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	int ret;
@@ -1811,7 +1811,7 @@ _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 }
 
 
-int
+static int
 _papi_pe_init_control_state( hwd_control_state_t * ctl )
 {
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
@@ -1822,7 +1822,7 @@ _papi_pe_init_control_state( hwd_control_state_t * ctl )
 	return PAPI_OK;
 }
 
-int
+static int
 _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 {
 	int i, j;
