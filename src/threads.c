@@ -320,9 +320,9 @@ _papi_hwi_broadcast_signal( unsigned int mytid )
 	    return(PAPI_EMISC);
 */
 			}
-			if ( foo->next == _papi_hwi_thread_head )
-				break;
 		}
+		if ( foo->next == _papi_hwi_thread_head )
+		  break;
 	}
 	_papi_hwi_unlock( THREADS_LOCK );
 
