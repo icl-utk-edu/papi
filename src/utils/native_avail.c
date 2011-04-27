@@ -336,7 +336,7 @@ main( int argc, char **argv )
 			retval = PAPI_get_event_info( i, &info );
 
 			/* This event may not exist */
-			if ( retval == PAPI_ENOEVNT )
+			if ( retval != PAPI_OK )
 				continue;
 
 			/* count only events that as supported by host cpu */
