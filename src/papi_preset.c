@@ -110,7 +110,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 	/* xxxx right now presets are only cpu, component 0 */
 	_papi_hwd[0]->cmp_info.num_preset_events += did_something;
 
-	return ( did_something ? 0 : PAPI_ESBSTR );
+	return ( did_something ? PAPI_OK : PAPI_ESBSTR );
 }
 
 int
