@@ -311,14 +311,12 @@ _papi_hwi_broadcast_signal( unsigned int mytid )
 				   state & ( PAPI_OVERFLOWING | PAPI_MULTIPLEXING ) ) ) {
 				/* xxxx mpx_info inside _papi_mdi_t _papi_hwi_system_info is commented out.
 				   See papi_internal.h for details. The multiplex_timer_sig value is now part of that structure */
-/*
-	  THRDBG("Thread 0x%lx sending signal %d to thread 0x%lx\n",mytid,foo->tid,
-		  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_hwd[i]->cmp_info.multiplex_timer_sig));
-	  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, 
-		  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_hwd[i]->cmp_info.multiplex_timer_sig));
-	  if (retval != 0)
-	    return(PAPI_EMISC);
-*/
+			  THRDBG("Thread 0x%lx sending signal %d to thread 0x%lx\n",mytid,foo->tid,
+				  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_hwd[i]->cmp_info.itimer_sig));
+			  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, 
+				  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_hwd[i]->cmp_info.itimer_sig));
+			  if (retval != 0)
+				return(PAPI_EMISC);
 			}
 		}
 		if ( foo->next == _papi_hwi_thread_head )
