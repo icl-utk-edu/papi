@@ -16,6 +16,12 @@
 #ifndef _PAPI_DEBUG_H
 #define _PAPI_DEBUG_H
 
+#ifdef NO_VARARG_MACRO
+#include <stdarg.h>
+#endif
+
+#include <stdio.h>
+
 /* Debug Levels */
 
 #define DEBUG_SUBSTRATE         0x002
