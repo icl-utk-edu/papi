@@ -1,6 +1,8 @@
-#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
+
 #include PEINCLUDE
 
 #include "papi_debug.h" /* SUBDBG */
@@ -55,6 +57,6 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 		ret = -1;
 	}
 #endif
-	SUBDBG("Returned %d\n",ret);
+	SUBDBG("Returned %d %d %s\n",ret,errno,strerror(errno));
 	return ret;
 }

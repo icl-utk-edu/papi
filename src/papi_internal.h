@@ -188,7 +188,7 @@ typedef struct _EventInfo {
    unsigned int event_code;     /**< Preset or native code for this event as passed to PAPI_add_event() */
    /* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
    int pos[MAX_COUNTER_TERMS];   /**< position in the counter array for this events components */
-   char *ops;                   /**< operation string of preset */
+   char *ops;                   /**< operation string of preset (points into preset event struct) */
    int derived;                 /**< Counter derivation command used for derived events */
 } EventInfo_t;
 

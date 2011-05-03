@@ -219,6 +219,12 @@ initialize_NativeInfoArray( EventSetInfo_t * ESI )
 
 	max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
 	sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
+
+	/* ugh this is ugly.  Why don't we have a proper date type here? */
+        /* NativeInfoArray is allocated in _papi_hwi_assign_eventset     */
+        /*   as an array of NativeInfo_t, with an array of hwd_register_t */
+        /*   just tacked onto the end.  Then we point to them.  Wouldn't it */
+        /*   be better to have the hwd_register_t values in-line?  vmw    */
 	ptr =
 		( ( ( char * ) ESI->NativeInfoArray ) +
 		  ( ( size_t ) max_counters * sizeof ( NativeInfo_t ) ) );
@@ -274,12 +280,10 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 									   sizeof ( EventInfo_t ) );
 /* allocate room for the native events and for the component-private register structures */
 /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
-	ESI->NativeInfoArray =
-		( NativeInfo_t * ) papi_malloc( ( size_t ) max_counters *
-										sizeof ( NativeInfo_t ) +
-										( size_t ) max_counters *
-										( size_t ) _papi_hwd[cidx]->size.
-										reg_value );
+/* ugh is there a cleaner way to allocate this?  vmw */
+	ESI->NativeInfoArray = ( NativeInfo_t * ) 
+             papi_malloc( ( size_t ) max_counters * sizeof ( NativeInfo_t ) +
+			  ( size_t ) max_counters * ( size_t ) _papi_hwd[cidx]->size.reg_value );
 
 	/* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
 	ESI->overflow.deadline = ( long long * )
@@ -1114,71 +1118,108 @@ _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 		}
 	}
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int
 _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 {
-	int retval, i, tmp;
-	/* Always clean the whole thing */
-
-	tmp = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
-
-	for ( i = ( tmp - 1 ); i >= 0; i-- ) {
-		if ( ESI->EventInfoArray[i].event_code != ( unsigned int ) PAPI_NULL ) {
-			retval =
-				_papi_hwi_remove_event( ESI,
-										( int ) ESI->EventInfoArray[i].
-										event_code );
-			if ( retval != PAPI_OK )
-				return ( retval );
-		}
-	}
-
-	ESI->CmpIdx = -1;
-	ESI->NumberOfEvents = 0;
-	ESI->NativeCount = 0;
-
-	if ( ESI->ctl_state )
-	  papi_free( ESI->ctl_state );
-
-	if ( ESI->sw_stop )
-	  papi_free( ESI->sw_stop );
-
-	if ( ESI->hw_start )
-	  papi_free( ESI->hw_start );
+   int i, j, num_cntrs, retval;
+   hwd_context_t *context;
+   int EventCode;
+   NativeInfo_t *native;
 	
-	if ( ESI->EventInfoArray )
-	  papi_free( ESI->EventInfoArray );
+   num_cntrs = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+
+   for(i=0;i<num_cntrs;i++) {
+
+      EventCode=ESI->EventInfoArray[i].event_code;     
+
+      /* skip if event not there */
+      if ( EventCode == PAPI_NULL ) continue;
+
+      /* If it is a MPX EventSet, remove it from the multiplex */
+      /* data structure and this thread's multiplex list */
+
+      if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
+	 retval = mpx_remove_event( &ESI->multiplex.mpx_evset, EventCode );
+	 if ( retval < PAPI_OK )
+	    return retval;
+      } else {
+
+	  native = ESI->NativeInfoArray;
+
+	  /* clear out ESI->NativeInfoArray */
+	  /* do we really need to do this, seeing as we free() it later? */
+
+	  for( j = 0; j < ESI->NativeCount; j++ ) {
+	     native[j].ni_event = -1;
+	     native[j].ni_position = -1;
+	     native[j].ni_owners = 0;
+	     /* native[j].ni_bits?? */
+	  }
+      }
+      /* do we really need to do this, seeing as we free() it later? */
+      ESI->EventInfoArray[i].event_code= ( unsigned int ) PAPI_NULL;
+      for( j = 0; j < MAX_COUNTER_TERMS; j++ ) {
+	  ESI->EventInfoArray[i].pos[j] = -1;
+      }
+      ESI->EventInfoArray[i].ops = NULL;
+      ESI->EventInfoArray[i].derived = NOT_DERIVED;
+   }
+
+   context = _papi_hwi_get_context( ESI, NULL );
+   /* calling with count of 0 equals a close? */
+   retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
+			       NULL, 0, context);
+   if (retval!=PAPI_OK) {
+     return retval;
+   }
+
+   ESI->CmpIdx = -1;
+   ESI->NumberOfEvents = 0;
+   ESI->NativeCount = 0;
+
+   if ( ESI->ctl_state )
+      papi_free( ESI->ctl_state );
+
+   if ( ESI->sw_stop )
+      papi_free( ESI->sw_stop );
+
+   if ( ESI->hw_start )
+      papi_free( ESI->hw_start );
 	
-	if ( ESI->NativeInfoArray ) 
-	  papi_free( ESI->NativeInfoArray );
+   if ( ESI->EventInfoArray )
+      papi_free( ESI->EventInfoArray );
 	
-	if ( ESI->overflow.deadline )
-	  papi_free( ESI->overflow.deadline );
+   if ( ESI->NativeInfoArray ) 
+      papi_free( ESI->NativeInfoArray );
 	
-	if ( ESI->profile.prof )
-	  papi_free( ESI->profile.prof );
+   if ( ESI->overflow.deadline )
+      papi_free( ESI->overflow.deadline );
+	
+   if ( ESI->profile.prof )
+      papi_free( ESI->profile.prof );
 
-	ESI->ctl_state = NULL;
-	ESI->sw_stop = NULL;
-	ESI->hw_start = NULL;
-	ESI->EventInfoArray = NULL;
-	ESI->NativeInfoArray = NULL;
+   ESI->ctl_state = NULL;
+   ESI->sw_stop = NULL;
+   ESI->hw_start = NULL;
+   ESI->EventInfoArray = NULL;
+   ESI->NativeInfoArray = NULL;
 
-	memset( &ESI->domain, 0x0, sizeof(EventSetDomainInfo_t) );
-	memset( &ESI->granularity, 0x0, sizeof(EventSetGranularityInfo_t) );
-	memset( &ESI->overflow, 0x0, sizeof(EventSetOverflowInfo_t) );
-	memset( &ESI->multiplex, 0x0, sizeof(EventSetMultiplexInfo_t) );
-	memset( &ESI->attach, 0x0, sizeof(EventSetAttachInfo_t) );
-	memset( &ESI->cpu, 0x0, sizeof(EventSetCpuInfo_t) );
-	memset( &ESI->profile, 0x0, sizeof(EventSetProfileInfo_t) );
+   memset( &ESI->domain, 0x0, sizeof(EventSetDomainInfo_t) );
+   memset( &ESI->granularity, 0x0, sizeof(EventSetGranularityInfo_t) );
+   memset( &ESI->overflow, 0x0, sizeof(EventSetOverflowInfo_t) );
+   memset( &ESI->multiplex, 0x0, sizeof(EventSetMultiplexInfo_t) );
+   memset( &ESI->attach, 0x0, sizeof(EventSetAttachInfo_t) );
+   memset( &ESI->cpu, 0x0, sizeof(EventSetCpuInfo_t) );
+   memset( &ESI->profile, 0x0, sizeof(EventSetProfileInfo_t) );
+   memset( &ESI->inherit, 0x0, sizeof(EventSetInheritInfo_t) );
 
-	ESI->CpuInfo = NULL;
+   ESI->CpuInfo = NULL;
 
 
-	return ( PAPI_OK );
+   return PAPI_OK;
 }
 
 int

@@ -92,14 +92,14 @@ main( int argc, char **argv )
 	   platform */
 	retval = PAPI_create_eventset(&EventSet1);
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 
 	/* Here we are testing that this does not cause a fail */
 
-	/* retval = PAPI_assign_eventset_component( EventSet1, 0 );
+	retval = PAPI_assign_eventset_component( EventSet1, 0 );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component",
-		retval ); */
+		retval );
 
 	retval = PAPI_attach( EventSet1, ( unsigned long ) pid );
 	if ( retval != PAPI_OK )
@@ -109,10 +109,11 @@ main( int argc, char **argv )
 
 	retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
+
 	retval = PAPI_add_event(EventSet1, PAPI_FP_INS);
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
+		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
 	num_events1 = 2;
 
 	values = allocate_test_space( 1, 2);
@@ -183,7 +184,7 @@ main( int argc, char **argv )
 	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
-
+	
 	retval = PAPI_cleanup_eventset(EventSet1);
 	if (retval != PAPI_OK)
 	  test_fail_exit( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
