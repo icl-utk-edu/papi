@@ -12,3 +12,4 @@ rm doc/procedure.txt
 rm doc/progref_template.doc
 rm doc/README
 rm delete_before_release.sh
+rm cvs2cl.pl
