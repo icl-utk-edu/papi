@@ -312,10 +312,10 @@ main( int argc, char **argv )
 
 	printf("Verification: pid %d results should be twice pid %d\n",pid2,pid );
 
-	ratio1=(double)values[0][0]/(double)values[1][0];
-	ratio2=(double)values[0][1]/(double)values[1][1];
+	ratio1=(double)values[1][0]/(double)values[0][0];
+	ratio2=(double)values[1][1]/(double)values[0][1];
 
-	printf("\t%lld/%lld = %lf\n",values[0][0],values[1][0],ratio1);
+	printf("\t%lld/%lld = %lf\n",values[1][0],values[0][0],ratio1);
 	
 
 	if ((ratio1 >2.1 ) || (ratio1 < 1.9)) {
@@ -325,7 +325,7 @@ main( int argc, char **argv )
 	}
 
 
-	printf("\t%lld/%lld = %lf\n",values[0][1],values[1][1],ratio2);
+	printf("\t%lld/%lld = %lf\n",values[1][1],values[0][1],ratio2);
 
 	if ((ratio2 >2.1 ) || (ratio2 < 1.9)) {
 	  printf("Error!  Ratio out of range, should be ~2.0, not %lf\n",ratio2);
