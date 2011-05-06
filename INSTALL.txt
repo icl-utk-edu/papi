@@ -158,9 +158,9 @@ perfmon version to configure as shown below.
 Before running configure to create the makefile that supports a Cray XT/XE CLE
 build of PAPI, execute the following module commands:
     % module purge
-    % module load gnu
+    % module load gcc
 Note: do not load the programming environment module (e.g. PrgEnv-gnu)
-but the compiler module (e.g. gnu) as shown above.
+but the compiler module (e.g. gcc) as shown above.
 
 Check CLE compute nodes for the version of perfmon2 that it supports:
     % aprun -b -a xt cat /sys/kernel/perfmon/version
