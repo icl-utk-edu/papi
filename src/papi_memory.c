@@ -476,8 +476,9 @@ _papi_mem_check_all_overflow(  )
 			fnd++;
 	}
 
-	if ( fnd )
+	if ( fnd ) {
 		LEAKDBG( "%d Total Buffer overflows detected!\n", fnd );
+	}
 #endif
 	return ( fnd );
 }
