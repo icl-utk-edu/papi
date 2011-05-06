@@ -150,33 +150,41 @@ appear to work.
 The IBM RedPaper: http://www.redbooks.ibm.com/abstracts/redp4256.html provides
 further discussion about PAPI on BGP along with other performance issues.
 
-CLE - Cray XT4/XT5 Opteron
+CLE - Cray XT and XE Opteron
 *****************************************************************************
-The Cray XT4/5 is a cross-compiled environment. You must specify the
+The Cray XT/XE is a cross-compiled environment. You must specify the
 perfmon version to configure as shown below.
 
-Before running configure to create the makefile that supports a Cray XT CLE
+Before running configure to create the makefile that supports a Cray XT/XE CLE
 build of PAPI, execute the following module commands:
     % module purge
-    % module load Base-opts
-    % module load pgi
-Note: do not load the programming environment module (e.g. PrgEnv-pgi)
-but the compiler module (e.g. pgi) as shown above.
+    % module load gnu
+Note: do not load the programming environment module (e.g. PrgEnv-gnu)
+but the compiler module (e.g. gnu) as shown above.
 
 Check CLE compute nodes for the version of perfmon2 that it supports:
     % aprun -b -a xt cat /sys/kernel/perfmon/version
 
-and use this version when configuring PAPI:
-    % configure --with-perfmon=2.3 --prefix=<install-dir>
+and use this version when configuring PAPI for a perfmon2 substrate:
+    % configure CFLAGS="-D__crayxt" \
+	--with-perfmon=2.82 --prefix=<install-dir> \
+	--with-virtualtimer=times --with-tls=__thread \
+	--with-walltimer=cycle --with-ffsll --with-shared-lib=no \
+	--with-static-tools
 
-Example ORNL's Jaguar system:
-To build PAPI for the compute nodes on ORNL's Jaguar system, you should use
-the Cray wrapper 'cc'. The wrappers will call the appropriate compiler which
-will use the appropriate header files and link against the appropriate
-libraries.
-    % configure --with-perfmon=2.3 --prefix=<install-dir> CC=cc
+Configure PAPI for a perf events substrate:
+    % configure CFLAGS="-D__crayxt" \
+        --with-perf-events --with-pe-incdir=<perf-events-hdr-dir> \
+        --with-assumed-kernel=2.6.34 --prefix=<install-dir> \
+        --with-virtualtimer=times --with-tls=__thread \
+        --with-walltimer=cycle --with-ffsll --with-shared-lib=no \
+        --with-static-tools
 
-The testing targets in the makefile will not work in the XT CLE environment.
+Invoke the make accordingly:
+    % make CONFIG_PFMLIB_ARCH_CRAYXT=y CONFIG_PFMLIB_SHARED=n
+    % make CONFIG_PFMLIB_ARCH_CRAYXT=y CONFIG_PFMLIB_SHARED=n install
+
+The testing targets in the makefile will not work in the XT/XE CLE environment.
 It is necessary to log into an interactive session and run the tests
 manually through the job submission system. For example, instead of:
     % make test
