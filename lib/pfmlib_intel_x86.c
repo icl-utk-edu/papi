@@ -321,7 +321,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 {
 	pfm_event_attr_info_t *a;
 	const intel_x86_entry_t *pe;
-	const pfmlib_attr_desc_t *atdesc;
 	pfm_intel_x86_reg_t reg;
 	unsigned int grpmsk, ugrpmsk = 0;
 	uint64_t umask1, umask2;
@@ -335,7 +334,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	memset(ncombo, 0, sizeof(ncombo));
 
 	pe     = this_pe(this);
-	atdesc = this_atdesc(this);
 
 	e->fstr[0] = '\0';
 

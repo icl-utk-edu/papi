@@ -165,7 +165,6 @@ setup_cpu(int cpu, int fd)
 {
 	uint64_t *val;
 	int ret, flags;
-	pid_t pid;
 	int i;
 
 	/*
@@ -185,10 +184,8 @@ setup_cpu(int cpu, int fd)
 
 		if (options.cgroup) {
 			flags = PERF_FLAG_PID_CGROUP;
-			pid = fd;
 		} else {
 			flags = 0;
-			pid = -1;
 		}
 
 		if (options.pin)

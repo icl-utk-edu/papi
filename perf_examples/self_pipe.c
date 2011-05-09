@@ -90,9 +90,9 @@ measure(void)
 	perf_event_desc_t *fds = NULL;
 	int num_fds = 0;
 	uint64_t values[3];
+	ssize_t n;
 	int i, ret;
 	int pr[2], pw[2];
-	ssize_t nbytes;
 	pid_t pid;
 	char cc = '0';
 
@@ -168,8 +168,12 @@ measure(void)
 	 * ping pong loop
 	 */
 	while(!quit) {
-		nbytes = write(pr[1], "c", 1);
-		nbytes = read(pw[0], &cc, 1);	
+		n = write(pr[1], "c", 1);
+		if (n < 1)
+			err(1, "write failed");
+		n = read(pw[0], &cc, 1);
+		if (n < 1)
+			err(1, "read failed");
 	}
 
 	prctl(PR_TASK_PERF_EVENTS_DISABLE);

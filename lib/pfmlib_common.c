@@ -429,15 +429,9 @@ static int
 pfmlib_init_pmus(void)
 {
 	pfmlib_pmu_t *p;
-	int i, ret, n = 0;
+	int i, ret;
 	int nsuccess = 0;
 	
-	if (pfm_cfg.forced_pmu) {
-		char *p;
-		p = strchr(pfm_cfg.forced_pmu, ',');
-		n = p ? p - pfm_cfg.forced_pmu : strlen(pfm_cfg.forced_pmu);
-	}
-
 	/*
 	 * activate all detected PMUs
 	 * when forced, only the designated PMU

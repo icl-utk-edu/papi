@@ -393,7 +393,6 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 	uint64_t umask = 0;
 	unsigned int plmmsk = 0;
 	int k, ret, grpid;
-	int numasks;
 	unsigned int grpmsk, ugrpmsk = 0;
 	int grpcounts[AMD64_MAX_GRP];
 	int ncombo[AMD64_MAX_GRP];
@@ -417,8 +416,6 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 		reg.sel_en = 1; /* force enable */
 		reg.sel_int = 1; /* force APIC  */
 	}
-
-	numasks = pe[e->event].numasks;
 
 	for(k=0; k < e->nattrs; k++) {
 		a = attr(e, k);

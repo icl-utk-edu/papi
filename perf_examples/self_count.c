@@ -127,7 +127,9 @@ read_count(perf_event_desc_t *fds)
 	uint64_t offset = 0;
 	uint64_t val;
 	unsigned int seq;
+#if 0
 	double ratio;
+#endif
 	int ret, idx;
 
 	hdr = fds->buf;
@@ -163,9 +165,9 @@ read_count(perf_event_desc_t *fds)
 	values[0] += offset;
 
 	val   = perf_scale(values);
+#if 0
 	ratio = perf_scale_ratio(values);
 
-#if 0
 	if (ratio == 1.0)
 		printf("%20"PRIu64" %s (%s)\n", val, fds->name, offset == -1 ? "syscall" : "rdpmc");
 	else

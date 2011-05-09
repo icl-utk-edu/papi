@@ -69,7 +69,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	size_t sz = sizeof(arg);
 	uint64_t ival;
 	int has_plm = 0;
-	int i, count, plm = 0, ret;
+	int i, plm = 0, ret;
 
 	sz = pfmlib_check_struct(uarg, uarg->size, PFM_PERF_ENCODE_ABI0, sz);
 	if (!sz)
@@ -91,7 +91,6 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 		return ret;
 
 	pmu = e.pmu;
-	count = pmu->max_encoding;
 
 	if (!pmu->get_event_encoding[e.osid]) {
 		DPRINT("PMU %s does not support PFM_OS_NONE\n", pmu->name);

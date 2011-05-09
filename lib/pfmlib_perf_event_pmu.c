@@ -321,6 +321,10 @@ retry:
 	goto retry;
 }
 
+#ifdef __GNUC__
+#define POTENTIALLY_UNUSED __attribute__((unused))
+#endif
+
 static void
 gen_tracepoint_table(void)
 {
@@ -333,7 +337,8 @@ gen_tracepoint_table(void)
 	char id_str[32];
 	uint64_t id;
 	int fd, err;
-	int dir2_fd, reuse_event = 0;
+	int POTENTIALLY_UNUSED dir2_fd;
+	int reuse_event = 0;
 	int numasks;
 	char *tracepoint_name;
 
@@ -693,7 +698,7 @@ pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e)
 		return PFM_ERR_NOTSUPP;
 	}
 
-	return PFM_SUCCESS;
+	return ret;
 }
 
 static int
@@ -726,7 +731,7 @@ pfm_perf_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	attr->type = perf_pe[e->event].type;
 	attr->config = e->codes[0];
 
-	return PFM_SUCCESS;
+	return ret;
 }
 
 
