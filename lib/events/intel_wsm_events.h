@@ -2196,8 +2196,14 @@ static const intel_x86_entry_t intel_wsm_pe[]={
 		  .ucode  = 0x01,
 		  .uflags = INTEL_X86_NCOMBO,
 		},
+		{ .uname  = "TOTAL_CYCLES",
+		  .udesc  = "Total number of elapsed cycles. Does not work when C-state enabled",
+		  .ucode  = 0x00 | (2 << 16) | (1 << 15), /* cmask=2, inv=1 */
+		  .uflags = INTEL_X86_NCOMBO,
+		  .uequiv = "THREAD_P:c=2:i=1",
+		},
 	  },
-	  .numasks = 2
+	  .numasks = 3
 	},
 	{ .name   = "L1D_WB_L2",
 	  .desc   = "L1D writebacks to L2",
