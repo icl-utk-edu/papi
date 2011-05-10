@@ -24,6 +24,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <err.h>
 #include <perfmon/pfmlib_perf_event.h>
@@ -36,12 +37,14 @@ usage(void)
 		"translate to a raw code.\n");
 }
 
+#define MAX_MODIFIER_CHARS 5  /* u,k,h plus the colon and null terminator */
 int
 main(int argc, char **argv)
 {
 	int ret, c, verbose = 0;
 	struct perf_event_attr pea;
 	char *event_str, *fstr = NULL;
+	char modifiers[MAX_MODIFIER_CHARS];
 
 	if (argc < 2) {
 		usage();
@@ -67,7 +70,7 @@ main(int argc, char **argv)
 			pfm_strerror(ret));
 
 	pea.size = sizeof(struct perf_event_attr);
-	ret = pfm_get_perf_event_encoding(event_str, PFM_PLM0|PFM_PLM3, &pea,
+	ret = pfm_get_perf_event_encoding(event_str, PFM_PLM0|PFM_PLM3|PFM_PLMH, &pea,
 		&fstr, NULL);
 	if (ret != PFM_SUCCESS)
 		errx(1, "Error: pfm_get_perf_encoding returned %s",
@@ -76,10 +79,21 @@ main(int argc, char **argv)
 	if (pea.type != PERF_TYPE_RAW)
 		errx(1, "Error: %s is not a raw hardware event", event_str);
 
+	modifiers[0] = '\0';
+	if (pea.exclude_user | pea.exclude_kernel | pea.exclude_hv) {
+		strcat(modifiers, ":");
+		if (!pea.exclude_user)
+			strcat(modifiers, "u");
+		if (!pea.exclude_kernel)
+			strcat(modifiers, "k");
+		if (!pea.exclude_hv)
+			strcat(modifiers, "h");
+	}
+
 	if (verbose)
-		printf("r%"PRIx64"\t%s\n", pea.config, fstr);
+		printf("r%"PRIx64"%s\t%s\n", pea.config, modifiers, fstr);
 	else
-		printf("r%"PRIx64"\n", pea.config);
+		printf("r%"PRIx64"%s\n", pea.config, modifiers);
 
 	if (fstr)
 		free(fstr);
