@@ -951,7 +951,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 		if ( pe_ctl->multiplexed ) {
 			if ( buffer[get_total_time_running_idx(  )] ) {
 				pe_ctl->counts[i] =
-					( __u64 ) ( ( double ) buffer[count_idx] * ( double )
+					( uint64_t ) ( ( double ) buffer[count_idx] * ( double )
 								buffer[get_total_time_enabled_idx(  )] /
 								( double )
 								buffer[get_total_time_running_idx(  )] );
@@ -1052,7 +1052,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 	int i = 0, ret;
 	context_t *pe_ctx = ( context_t * ) ctx;
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-	__u64 pe_event;
+	uint64_t pe_event;
 
 	if ( pe_ctx->cookie != CTX_INITIALIZED ) {
 		memset( pe_ctl->events, 0,
@@ -1072,7 +1072,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 
 	for ( i = 0; i < count; i++ ) {
 		if ( native ) {
-		   ret=_papi_pfm3_setup_counters(&pe_event,native[i].ni_bits);
+		  ret=_papi_pfm3_setup_counters(&pe_event,native[i].ni_bits);
 		   if (ret!=PAPI_OK) return ret;
 
 		   /* use raw event types, not the predefined ones */
@@ -1562,7 +1562,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 			   flags & PAPI_PROFIL_FORCE_SW ) )
 		process_smpl_buf( found_evt_idx, &thread );
 	else {
-		__u64 ip;
+		uint64_t ip;
 		unsigned int head;
 		evt_t *pe =
 			&( ( context_t * ) thread->context[cidx] )->evt[found_evt_idx];
@@ -1589,7 +1589,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 			return;
 		}
 
-		ip = *( __u64 * ) ( data + ( ( head - 8 ) & pe->mask ) );
+		ip = *( uint64_t * ) ( data + ( ( head - 8 ) & pe->mask ) );
 		/*
 		 * Update the tail to the current head pointer. 
 		 *
