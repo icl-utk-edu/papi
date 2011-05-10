@@ -66,6 +66,7 @@ main(int argc, char **argv)
 		errx(1, "Internal error: pfm_initialize returned %s",
 			pfm_strerror(ret));
 
+	pea.size = sizeof(struct perf_event_attr);
 	ret = pfm_get_perf_event_encoding(event_str, PFM_PLM0|PFM_PLM3, &pea,
 		&fstr, NULL);
 	if (ret != PFM_SUCCESS)
