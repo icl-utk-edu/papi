@@ -55,7 +55,7 @@ Enhancements:
 	
 New Platforms:
 -------------
-	* POWER7 / AIX support is now available.
+	* POWER7 / AIX support is now available (see Known Bugs below)
 	* Intel Westmere for perfctr.
 	* AMD Family 15h (Interlagos) and 10h RevE processors.
 	
@@ -80,6 +80,10 @@ Experimental:
 
 Known Bugs:
 -----------
+	* POWER7 / AIX has some known bugs in this version:
+		* PAPI_FP_OPS overcounts by 50% in many cases
+		* multiplexing does not work correctly
+		* memory limits for threaded tests are causing problems
 
 ===============================================================================
 PAPI 4.1.2 RELEASE NOTES                                            20 Jan 2011
