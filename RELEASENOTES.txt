@@ -1,4 +1,87 @@
 ===============================================================================
+PAPI 4.1.3 RELEASE NOTES                                            06 May 2011
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP413.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This is a minor release of PAPI-C. It addresses a number of bugs and other
+issues that have surfaced since the 4.1.2 release.
+
+Visit the PAPI Reference pages for more information at:
+http://icl.cs.utk.edu/projects/papi/wiki/Main_Page
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 4.1.3 SINCE PAPI 4.1.2
+===============================================================================
+Bug Fixes:
+----------
+	* Fixed a linux-timer.c compile error that only shows up on PPC.
+	* Fixed ctests/all_native_events.c:
+	  It failed when PAPI was built with several components because the 
+	  eventset failed to add events that were not from the first component.
+	* Redefined PAPI_FP_OPS for Nehalem; Now counts properly for 32-bit code.
+	* Uncovered and resolved bugs in attaching to fork/exec'd code.
+	* Reworked eventset cleanup code to avoid an error situation in perf_events
+	  where events were being removed from a terminated attached process.
+	* Fixed a configure bug preventing non-default bitmode builds of perf_event
+	  versions of PAPI.
+
+	
+Enhancements:
+-------------
+	* consolidated a bunch of duplicated linux code into "linux-xxx.c" files.
+	* Split WIN32 specific code out from linux common code.
+	* Renamed various perfctr functions to be _perfctr_ rather than _linux_.
+	* Added function pointer destroy_eventset to the PAPI vector table.
+	  Needed for the CUDA Component.
+	* PAPI_assign_eventset_component now refuses to reassign components.
+	* Implemented inherit feature for perf_events. Thanks to Gary Mohr.
+	* Added a case to utils/cost.c to test for processing derived events.
+	* Added utils/multiplex_cost.c.
+	* Added --with-assumed-kernel to configure
+	
+New Platforms:
+-------------
+	* POWER7 / AIX support is now available.
+	* Intel Westmere for perfctr.
+	* AMD Family 15h (Interlagos) and 10h RevE processors.
+	
+Deprecated Platforms:
+---------------------
+	
+New Components:
+---------------
+	* NVidia CUDA: still in pre-release until NVidia releases official CUDA4.
+	
+Open Issues:
+-------------
+	* Currently using PAPI_attach() to attach to multiple processes at the same
+	  time will not work.  On the perf_events substrate this may fail with a 
+	  PAPI_EISRUN error for the subsequent attaches.  On other substrates the
+	  additional attaches may work but results read back will be invalid.
+	  This behavior will be fixed in a subsequent PAPI release.
+
+Experimental:
+-------------
+	* libpfm4 support is experimentally available but subject to change
+
+Known Bugs:
+-----------
+
+===============================================================================
 PAPI 4.1.2 RELEASE NOTES                                            20 Jan 2011
 ===============================================================================
 

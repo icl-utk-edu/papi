@@ -1,4 +1,55 @@
+2011-05-10
+
+	* src/Rules.pfm_pe: The --with-bitmode parameter was not being
+	  passed along to libpfm3,  so it was not possible to build
+	  perf_event PAPI on non-default bitmodes.  This change passes
+	  along the $(BITFLAGS) value to the libpfm3 make invocation.
+
+	* src/: papi_pfm_events.c, papi_pfm_events.h, perf_events.c: The
+	  perf_events code was using __u64 instead of uint64_t and this was
+	  causing a warning when compiling for 64-bit Power.
+
+	* src/libpfm-3.y/lib/amd64_events_fam15h.h: Added Robert Richter's
+	  patch with a few new events for AMD Family 15h.
+
+2011-05-06
+
+	* INSTALL.txt: Load the 'gcc' module not 'gnu' module for Cray.
+
+	* INSTALL.txt: Update the install instructions for Cray XT and XE
+	  systems.
+
+	* src/ctests/: multiattach.c, multiattach2.c: Make the multiattach
+	  and multiattach2 failures into warnings.
+
+	  I have a proposed fix that makes the failures go away, but it has
+	  not been tested much and also causes some new fcntl() error
+	  messages under perfctr.
+
+	  So temporarily make the tests only warn for the release and I'll
+	  work on a proper fix for after.  The behavior in these tests has
+	  been broken for a long time so it is not a recent regression.
+
+	* src/papi_memory.c: Band-aid for the leak debugging statement in
+	  papi_memory.c on NO_VARARG_MACRO systems.  (aix currently)
+
 2011-05-05
+
+	* src/ctests/multiattach.c: Had the division backwards on the
+	  validation.
+
+	* src/ctests/multiattach.c: Update the multiattach test to fail if
+	  the results aren't in the proper ratio.  This was failing on
+	  perf_event kernels but since the results weren't checked   it was
+	  never reported as an error.
+
+	* delete_before_release.sh: delete cvs2cl.pl before release
+
+	* ChangeLogP413.txt: First cut change log for the 4.1.3 release.
+	  Nothing's frozen yet...
+
+	* cvs2cl.pl: Perl script to generate change logs. Keeping it with
+	  the project makes life easier.
 
 	* INSTALL.txt: Change INSTALL to reflect that we support power7.
 
