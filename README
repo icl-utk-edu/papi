@@ -17,10 +17,10 @@ This is a complete rewrite of libpfm3 and it is NOT backward compatible
 with it.
 
 Libpfm4 helps convert from an event name, expressed as a string, to 
-the event encoding that is either the raw as documented by HW vendor
-or it could be specific to an OS interface. In the latter case, the
-library is able to prepare the OS-specific data structures needed
-by the kernel to setup the event.
+the event encoding that is either the raw event as documented by HW vendor
+or the OS-specific encoding. In the latter case, the library is able to
+prepare the OS-specific data structures needed by the kernel to setup the
+event.
 
 The current libpfm4 provides support for the perf_events interface which was
 introduced in Linux v2.6.31. Perfmon support is not present yet.
@@ -79,12 +79,15 @@ WHAT'S THERE
 
 	- Python bindings for the library
 
+	- a SPEC file to build RPMs from the library
+
+	- the Debian-style config file to build a .deb package from the library
 
 INSTALLATION
 ------------
 	- edit config.mk to :
 		- update some of the configuration variables
-		- make your compiler options
+		- select your compiler options
 
 	- type make
 	- type make install
@@ -109,12 +112,12 @@ PACKAGING
 	Debian packages. The source code produces 3 packages:
 	- libpfm4 : runtime library
 	- libpfm4-dev: development files (headers, manpages, static library)
-	- libpfm4-pyton: Python bindings for the library
+	- libpfm4-python: Python bindings for the library
 
 	To generate the RPMs:
 	$ rpmbuild -ba libpfm4.spec
 
-	To generate the Debian package:
+	To generate the Debian packages:
 	$ debuild -i -us -uc -b
 
 	You may need to install some extra packages to make Debian package
