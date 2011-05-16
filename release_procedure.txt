@@ -37,7 +37,9 @@ __ 7. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 __ 8. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
 
-__ 9. Tag cvs: papi-X-Y-Z-t.
+__ 9a. Update your local copy from cvs to make sure you have all changes.
+
+__ 9b. Tag cvs: papi-X-Y-Z-t.
       cvs tag papi-X-Y-Z-t
 
 __ 10. If this is not an incremental release, also branch cvs: papi-X-Y-Z-b.
