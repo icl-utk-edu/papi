@@ -1,0 +1,51 @@
+.TH LIBPFM 3  "September, 2009" "" "Linux Programmer's Manual"
+.SH NAME
+libpfm_intel_atom - support for Intel Atom processors
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.B PMU name: atom
+.B PMU desc: Intel Atom
+.sp
+.SH DESCRIPTION
+The library supports all Intel Atom-based processors that includes family 6 model 28.
+
+.SH MODIFIERS
+The following modifiers are supported on Intel Atom processors:
+.TP
+.B u
+Measure at user level which includes privilege levels 1, 2, 3. This corresponds to \fBPFM_PLM3\fR.
+This is a boolean modifier.
+.TP
+.B k
+Measure at kernel level which includes privilege level 0. This corresponds to \fBPFM_PLM0\fR.
+This is a boolean modifier.
+.TP
+.B i
+Invert the meaning of the event. The counter will now count cycles in which the event is \fBnot\fR
+occurring. This is a boolean modifier
+.TP
+.B e
+Enable edge detection, i.e., count only when there is a state transition. This is a boolean modifier.
+.TP
+.B c
+Set the counter mask value. The mask acts as a threshold. The counter will count the number of cycles
+in which the number of occurrences of the event is greater or equal to the threshold. This is an integer
+modifier with values in the range [0:255].
+.TP
+.B t
+Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
+.TP
+.B p
+Enable precise sampling for this event. On Intel Atom, this triggers the use of the Precise Event
+Based Sampling (PEBS) mode. Not all events or unit masks support this mode. This is an integer
+modifier with values in the range [0-3]. The value of this modifier determines how the skid of the
+interrupted instruction address is handled by the kernel. The exact meaning of each of the four
+values depends on the underlying kernel interface. For perf_events, this determines how
+\fBPERF_SAMPLE_IP\fR is adjusted by the kernel. Refer to perf_events documentation for more details.
+.SH AUTHORS
+.nf
+Stephane Eranian <eranian@gmail.com>
+.if
+.PP
