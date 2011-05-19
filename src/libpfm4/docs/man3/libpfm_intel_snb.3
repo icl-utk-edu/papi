@@ -1,0 +1,80 @@
+.TH LIBPFM 3  "Janury, 2011" "" "Linux Programmer's Manual"
+.SH NAME
+libpfm_intel_snb - support for Intel Sandy Bridge core PMU
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.B PMU name: snb
+.B PMU desc: Intel Sandy Bridge
+.sp
+.SH DESCRIPTION
+The library supports the Intel Sandy Bridge core PMU. It should be noted that
+this PMU model only covers the each core's PMU and not the socket level
+PMU. This PMU model covers only th single socket Sandy Bridge processors, a.k.a.,
+Intel Core I7 2xxx series.
+
+On Sandy Bridge, the number of generic counters depends on the Hyperthreading (HT) mode.
+When HT is on, then only 4 generic counters are available. When HT is off, then 8 generic
+counters are available. The \fBpfm_get_pmu_info()\fR function returns the maximum number
+of generic counters in \fBnum_cntrs\fr.
+
+.SH MODIFIERS
+The following modifiers are supported on Intel Sandy Bridge processors:
+.TP
+.B u
+Measure at user level which includes privilege levels 1, 2, 3. This corresponds to \fBPFM_PLM3\fR.
+This is a boolean modifier.
+.TP
+.B k
+Measure at kernel level which includes privilege level 0. This corresponds to \fBPFM_PLM0\fR.
+This is a boolean modifier.
+.TP
+.B i
+Invert the meaning of the event. The counter will now count cycles in which the event is \fBnot\fR
+occurring. This is a boolean modifier
+.TP
+.B e
+Enable edge detection, i.e., count only when there is a state transition. This is a boolean modifier.
+.TP
+.B c
+Set the counter mask value. The mask acts as a threshold. The counter will count the number of cycles
+in which the number of occurrences of the event is greater or equal to the threshold. This is an integer
+modifier with values in the range [0:255].
+.TP
+.B t
+Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
+
+.SH OFFCORE_RESPONSE_0 event
+The event needs special treatment because it uses two MSRs: a generic counter and MSR @ 0x1a6.
+
+The OFFCORE_RESPONSE_0 event is exposed as a normal event with several umasks which are divided in
+two groups: request and response. The user must provide \fBat least\fR one umask from each group.
+For instance, OFFCORE_RESPONSE_0:ANY_DATA:LOCAL_DRAM.
+
+When using \fBpfm_get_event_encoding()\fR, two 64-bit values are returned. The first value, in
+\fBcodes[0]\fR, corresponds to what needs to be programmed into any of the generic counters.
+The second value, \fbcodes[1]\fR, must be programmed into the dedicated MSR 0x1a6.
+
+When using an OS-specific encoding routine, the way the event is encoded is OS specific. Refer to
+the corresponding man page for more information.
+
+.SH OFFCORE_RESPONSE_1 event
+The event needs special treatment because it uses two MSRs: a generic counter and MSR @ 0x1a7.
+
+The OFFCORE_RESPONSE_1 event is exposed as a normal event with several umasks which are divided in
+two groups: request and response. The user must provide \fBat least\fR one umask from each group.
+For instance, OFFCORE_RESPONSE_1:ANY_DATA:LOCAL_DRAM.
+
+When using \fBpfm_get_event_encoding()\fR, two 64-bit values are returned. The first value, in
+\fBcodes[0]\fR, corresponds to what needs to be programmed into any of the generic counters.
+The second value, \fbcodes[1]\fR, must be programmed into the dedicated MSR 0x1a7.
+
+When using an OS-specific encoding routine, the way the event is encoded is OS specific. Refer to
+the corresponding man page for more information.
+
+.SH AUTHORS
+.nf
+Stephane Eranian <eranian@gmail.com>
+.if
+.PP
