@@ -1142,11 +1142,11 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   if test "$bitmode" = "64"; then
     LIBRARY=libpapi64.a
     SHLIB=libpapi64.so
-    BITFLAGS=-q64
+    BITFLAGS='-q64 -bmaxdata:0x07000000000000'
     ARG64=-X64
   else
     SHLIB=libpapi.so
-    BITFLAGS=""
+    BITFLAGS="-bmaxdata:0xD0000000/dsa"
   fi
   if test "x$no_cpu_counters" = "x"; then
     SUBSTR=pmapi-ppc64
