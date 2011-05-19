@@ -20,11 +20,20 @@
 /* Take a guess at this value for now - FIXME */
 #define MAX_MPX_EVENTS 64
 
+#ifndef PFMLIB_MAX_PMCS                                                       
+#define PFMLIB_MAX_PMCS 100                                                   
+#define PFMLIB_MAX_PMDS 100                                                   
+typedef int pfm_register_t;                                                   
+#else                                                                         
+typedef pfmlib_event_t pfm_register_t;                                        
+#endif                                                                        
+ 
+typedef int reg_alloc_t;            
+
 typedef struct
 {
 	unsigned char wakeup_mode;
 } per_event_info_t;
-
 
 typedef struct
 {
@@ -61,9 +70,6 @@ typedef struct
 	int num_evts;
 	evt_t evt[MAX_MPX_EVENTS];
 } context_t;
-
-typedef pfmlib_event_t pfm_register_t;
-typedef int reg_alloc_t;
 
 #define MY_VECTOR _papi_pe_vector
 #define MAX_COUNTERS PFMLIB_MAX_PMCS

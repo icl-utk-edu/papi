@@ -25,12 +25,6 @@ xxx - bits_to_info uses native_map not pfm()
 
 #include "perfmon/pfmlib.h"
 
-#if defined(DEBUG)
-#define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
-#else
-#define DEBUGCALL(a,b)
-#endif
-
 #define PAPI_EVENT_FILE "papi_events.csv"
 
 typedef struct

@@ -1765,7 +1765,7 @@ _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 	if ( threshold == 0 ) {
 		SUBDBG( "MUNMAP(%p,%lld)\n", ctx->evt[evt_idx].mmap_buf,
-				( unsigned long long ) ctx->evt[evt_idx].nr_mmap_pages *
+				( uint64_t ) ctx->evt[evt_idx].nr_mmap_pages *
 				getpagesize(  ) );
 
 		if ( ctx->evt[evt_idx].mmap_buf ) {
