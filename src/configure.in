@@ -1142,11 +1142,17 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   if test "$bitmode" = "64"; then
     LIBRARY=libpapi64.a
     SHLIB=libpapi64.so
+# By default AIX enforces a limit on heap space 
+#( limiting the heap to share the same 256MB memory segment as stack )
+# changing the max data paramater moves the heap off the stack's memory segment
     BITFLAGS='-q64 -bmaxdata:0x07000000000000'
     ARG64=-X64
   else
+# If the issue ever comes up, /dsa requires AIX v5.1 or higher
+# and the Large address-space model (-bmaxdata) requires v4.3 or later
+# see http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.genprogc/doc/genprogc/lrg_prg_support.htm#a179c11c5d
     SHLIB=libpapi.so
-    BITFLAGS="-bmaxdata:0xD0000000/dsa"
+    BITFLAGS="-bmaxdata:0x80000000/dsa"
   fi
   if test "x$no_cpu_counters" = "x"; then
     SUBSTR=pmapi-ppc64
