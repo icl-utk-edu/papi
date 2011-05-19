@@ -27,6 +27,20 @@ extern int _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 				       int count );
 extern int _papi_pfm3_init(void);
 extern int _papi_pfm3_vendor_fixups(void);
+
+/* Gross perfctr/perf_events compatability hack */
+/* need to think up a better way to handle this */
+#ifdef PERFCTR_PFM_EVENTS
+struct perf_event_attr {
+  int config;
+  int type;
+};
+
+#define PERF_TYPE_RAW 4;
+
+#endif
+
+
 extern int _papi_pfm3_setup_counters( struct perf_event_attr *attr, 
 				      hwd_register_t *ni_bits );
 

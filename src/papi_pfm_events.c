@@ -25,6 +25,8 @@ xxx - bits_to_info uses native_map not pfm()
 
 #include "perfmon/pfmlib.h"
 
+#include "papi_pfm_events.h"
+
 #define PAPI_EVENT_FILE "papi_events.csv"
 
 typedef struct
@@ -833,7 +835,7 @@ out:
 }
 
 int
-_papi_pfm_ntv_name_to_code( char *name, int *event_code )
+_papi_pfm_ntv_name_to_code( char *name, unsigned int *event_code )
 {
 	pfmlib_event_t event;
 	unsigned int i;
