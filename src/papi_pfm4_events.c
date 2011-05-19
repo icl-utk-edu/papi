@@ -555,7 +555,10 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
  *
  ******************************************************************/
 
-struct native_event_t {
+/* FIXME -- make it handle arbitrary number */
+#define MAX_NATIVE_EVENTS 1000
+
+static struct native_event_t {
   int component;
   char *pmu;
   int papi_code;
@@ -565,9 +568,9 @@ struct native_event_t {
   char *canonical_name;
   char *pmu_plus_name;
   int users;
-} native_events[1000];
+} native_events[MAX_NATIVE_EVENTS];
 
-int num_native_events=0;
+static int num_native_events=0;
 
 
 static struct native_event_t *find_existing_event(char *name) {
@@ -763,6 +766,12 @@ static struct native_event_t *allocate_native_event(char *name,
 	 native_events[new_event].perfmon_idx);
 
   num_native_events++;
+
+  /* FIXME -- simply allocate more */
+  if (num_native_events >= MAX_NATIVE_EVENTS) {
+     fprintf(stderr,"TOO MANY NATIVE EVENTS\n");
+     exit(0);
+  }
 
   return &native_events[new_event];
 
