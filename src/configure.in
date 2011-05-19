@@ -918,6 +918,10 @@ AC_ARG_WITH(pfm_libdir,
 ##################################################
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then 
  
+  AC_ARG_WITH(libpfm4,
+              [  --with-libpfm4		Specify use of libpfm4 with Linux Performance Event (requires kernel 2.6.32 or greater)],
+              [force_libpfm4=yes])
+
   AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
               [force_perf_events=yes])
@@ -941,7 +945,8 @@ if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
   if test "x$PEPATH" = "x"; then
     perf_events="no"
   else
-    PEINCFLAG='-DPEINCLUDE=\"$(PEPATH)\"'
+#    PEINCFLAG='-DPEINCLUDE=\"$(PEPATH)\"'
+    PEINCFLAG='-DPEINCLUDE=\"libpfm4/include/perfmon/perf_event.h\"'
     CFLAGS="$CFLAGS $PEINCFLAG"
     if test "$perfctr" = "no" -a "$perfmon" = 0; then
       perf_events="yes"
@@ -1250,7 +1255,12 @@ elif test "$MAKEVER" = "freebsd"; then
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 elif test "$MAKEVER" = "linux-pe"; then
   if test "x$no_cpu_counters" = "x"; then
-    FILENAME=Rules.pfm_pe
+    if test "x$force_libpfm4" = "x"; then
+       FILENAME=Rules.pfm_pe
+    else
+       FILENAME=Rules.pfm4_pe
+    fi
+
     SUBSTR=perf_events 
     MEMSUBSTR=linux
     MISCSRCS="$MISCSRCS sys_perf_event_open.c linux-timer.c linux-common.c"

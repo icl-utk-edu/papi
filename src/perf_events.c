@@ -1761,7 +1761,7 @@ _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
 	if ( threshold == 0 ) {
-		SUBDBG( "MUNMAP(%p,%lld)\n", ctx->evt[evt_idx].mmap_buf,
+		SUBDBG( "MUNMAP(%p,%"PRIu64")\n", ctx->evt[evt_idx].mmap_buf,
 				( uint64_t ) ctx->evt[evt_idx].nr_mmap_pages *
 				getpagesize(  ) );
 
