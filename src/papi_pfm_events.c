@@ -1786,9 +1786,10 @@ long long generate_p4_event(long long escr,
 }
 
 int
-_papi_pfm3_setup_counters( uint64_t *pe_event, hwd_register_t *ni_bits ) {
+_papi_pfm3_setup_counters( struct perf_event_attr *attr, 
+			   hwd_register_t *ni_bits ) {
 
-  int ret;
+  int ret,pe_event;
 
     /*
      * We need an event code that is common across all counters.
@@ -1803,7 +1804,7 @@ _papi_pfm3_setup_counters( uint64_t *pe_event, hwd_register_t *ni_bits ) {
        /* Unrecognized code, but should never happen */
        return PAPI_EBUG;
     }
-    *pe_event = code;
+    pe_event = code;
     SUBDBG( "Stuffing native event index (code 0x%x, raw code 0x%x) into events array.\n",
 				  ( ( pfm_register_t * ) ni_bits )->event, code );
 #else
@@ -1828,15 +1829,20 @@ _papi_pfm3_setup_counters( uint64_t *pe_event, hwd_register_t *ni_bits ) {
     if (( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) && 
         ( _papi_hwi_system_info.hw_info.cpuid_family == 15)) {
 
-	*pe_event=generate_p4_event( outp.pfp_pmcs[0].reg_value, /* escr */  
+	pe_event=generate_p4_event( outp.pfp_pmcs[0].reg_value, /* escr */  
 		                    outp.pfp_pmcs[1].reg_value, /* cccr */
 		                    outp.pfp_pmcs[0].reg_addr); /* escr_addr */
     }
     else {
-        *pe_event = outp.pfp_pmcs[0].reg_value;   
+        pe_event = outp.pfp_pmcs[0].reg_value;   
     }
     SUBDBG( "pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value );
 #endif
+
+    attr->config=pe_event;
+
+    /* for libpfm3 we currently only handle RAW type */
+    attr->type=PERF_TYPE_RAW;
 
     return PAPI_OK;
 }

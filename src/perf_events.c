@@ -467,7 +467,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 			goto cleanup;
 		}
 		
- 		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d, read_format: 0x%llx\n",
+ 		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d, read_format: 0x%"PRIu64"\n",
 			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, 
 			ctx->evt[ctx->evt[i].group_leader].event_fd, 
 			ctx->evt[i].event_fd, ctl->events[i].read_format);
@@ -1052,7 +1052,6 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 	int i = 0, ret;
 	context_t *pe_ctx = ( context_t * ) ctx;
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-	uint64_t pe_event;
 
 	if ( pe_ctx->cookie != CTX_INITIALIZED ) {
 		memset( pe_ctl->events, 0,
@@ -1072,12 +1071,10 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 
 	for ( i = 0; i < count; i++ ) {
 		if ( native ) {
-		  ret=_papi_pfm3_setup_counters(&pe_event,native[i].ni_bits);
+		  ret=_papi_pfm3_setup_counters(&pe_ctl->events[i],
+						native[i].ni_bits);
 		   if (ret!=PAPI_OK) return ret;
 
-		   /* use raw event types, not the predefined ones */
-		   pe_ctl->events[i].type = PERF_TYPE_RAW;
-		   pe_ctl->events[i].config = pe_event;
 		} else {
 		   /* Assume the native events codes are already initialized */
 		}
