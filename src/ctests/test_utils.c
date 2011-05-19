@@ -1,5 +1,7 @@
 #include "papi_test.h"
 
+#include <unistd.h>
+
 /*  Variable to hold reporting status
 	if TRUE, output is suppressed
 	if FALSE output is sent to stdout
@@ -524,16 +526,39 @@ tests_quiet( int argc, char **argv )
 	}
 }
 
+#define RED    "\033[1;31m"
+#define YELLOW "\033[1;33m"
+#define GREEN  "\033[1;32m"
+#define NORMAL "\033[0m"
+
 void
 test_pass( char *file, long long **values, int num_tests )
 {
+  int line_pad;
+
+  line_pad=(int)(50-strlen(file));
+  if (line_pad<0) line_pad=0;
+
 	if ( TEST_FAIL ) {
 	}
         else if ( TEST_WARN ) {
-		fprintf( stdout, "%-40s PASSED with WARNING\n", file );	   
+	  if (isatty(fileno(stdout))) {
+	    fprintf( stdout, "%-*s %sPASSED with WARNING%s\n", 
+		     line_pad, file, YELLOW, NORMAL);	   
+	  }
+	  else {
+	        fprintf( stdout, "%-*s PASSED with WARNING\n", 
+			 line_pad, file );	   
+	  }
 	}
         else {
-		fprintf( stdout, "%-40s PASSED\n", file );
+	  if (isatty(fileno(stdout))) {
+	    fprintf( stdout, "%-*s %sPASSED%s\n", line_pad, file, 
+		     GREEN, NORMAL );
+	  }
+	  else {
+	    fprintf( stdout, "%-*s PASSED\n", line_pad, file );
+	  }
 	}
    
 	if ( values )
@@ -552,12 +577,25 @@ test_pass( char *file, long long **values, int num_tests )
 void
 test_fail( char *file, int line, char *call, int retval )
 {
+
+  int line_pad;
+
+  line_pad=(int)(50-strlen(file));
+  if (line_pad<0) line_pad=0;
+
 	if ( TEST_FAIL )		 //Prevent duplicate output
 		return;
 
 	char buf[128];
 	memset( buf, '\0', sizeof ( buf ) );
-	fprintf( stdout, "%-40s FAILED\nLine # %d\n", file, line );
+
+	if (isatty(fileno(stdout))) {
+	  fprintf( stdout, "%-*s %sFAILED%s\nLine # %d\n", line_pad, file, 
+		    RED,NORMAL,line );
+	}
+	else {
+	  fprintf( stdout, "%-*s FAILED\nLine # %d\n", line_pad, file, line );
+	}
 
 	if ( retval == PAPI_ESYS ) {
 		sprintf( buf, "System error in %s", call );
@@ -605,9 +643,21 @@ void
 test_warn( char *file, int line, char *call, int retval )
 {
 
+  int line_pad;
+
+  line_pad=(int)(50-strlen(file));
+  if (line_pad<0) line_pad=0;
+
 	char buf[128];
 	memset( buf, '\0', sizeof ( buf ) );
-	fprintf( stdout, "%-40s WARNING\nLine # %d\n", file, line );
+
+	if (isatty(fileno(stdout))) {
+	  fprintf( stdout, "%-*s %sWARNING%s\nLine # %d\n", line_pad, file, 
+		   YELLOW, NORMAL, line );
+	}
+	else {
+	  fprintf( stdout, "%-*s WARNING\nLine # %d\n", line_pad, file, line );
+	}
 
 	if ( retval == PAPI_ESYS ) {
 		sprintf( buf, "System warning in %s", call );
