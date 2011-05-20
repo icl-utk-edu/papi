@@ -51,6 +51,15 @@
 #define MASK_TOT_INS 0x00002
 #define MASK_TOT_CYC 0x00001
 
+#define MAX_TEST_EVENTS 18
+
+extern struct test_events_t {
+  unsigned int mask;
+  unsigned int event;
+} test_events[MAX_TEST_EVENTS];
+
+//extern test_events_t test_events[MAX_TEST_EVENTS];
+
 int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwinfo);
 void validate_string(char *name, char *s);
 void *get_overflow_address(void *context);

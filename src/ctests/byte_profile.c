@@ -63,43 +63,22 @@ my_main(  )
 
 static int
 do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
-			int bucket )
-{
+	    int bucket, unsigned int mask ) {
+
 	int i, retval;
 	unsigned long blength;
-	int num_buckets;
+	int num_buckets, num_events=0;
 
-	const int *events;
-#if defined(__powerpc__)
-	const int power6_events[] = { PAPI_TOT_CYC, PAPI_FP_INS };
-	int power6_num_events = 2;
-	int std_events[] = { PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_INS };
-	int num_events = 3;
+	int events[MAX_TEST_EVENTS];
 	char *header = "address\t\t\tcyc\tins\tfp_ins\n";
-#else
-	const int power6_events[] = { };
-	int power6_num_events = 0;
-#if defined(ITANIUM2)
-	const int std_events[] =
-		{ PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
-#else
-	const int std_events[] =
-		{ PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
-#endif
-	int num_events = 4;
-	char *header = "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
-#endif
-	const int p3_events[] = { PAPI_TOT_CYC, PAPI_TOT_INS };
 
-	if ( strcmp( hw_info->model_string, "POWER6" ) == 0 ) {
-		events = power6_events;
-		num_events = power6_num_events;
-	} else if ( PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) == 2 ) {
-		events = p3_events;
-		num_events = 2;
-	} else {
-		events = std_events;
+	for(i=0;i<MAX_TEST_EVENTS;i++) {
+	  if (mask & test_events[i].mask) {
+	    events[num_events]=test_events[i].event;
+	    num_events++;
+	  }
 	}
+
 
 	int num_bufs = num_events;
 	int event = num_events;
@@ -180,19 +159,18 @@ main( int argc, char **argv )
 
 	prof_init( argc, argv, &hw_info, &prginfo );
 
+       	mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
+
 #if defined(__powerpc__)
 	if ( strcmp( hw_info->model_string, "POWER6" ) == 0 )
 		mask = MASK_TOT_CYC | MASK_FP_INS;
 	else
 		mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_INS;
-#else
-#if defined(ITANIUM2)
-	mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
-#else
-       	mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
-#endif
 #endif
 
+#if defined(ITANIUM2)
+	mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
+#endif
 	EventSet = add_test_events( &num_events, &mask, 0 );
 	values = allocate_test_space( 1, num_events );
 
@@ -221,8 +199,9 @@ main( int argc, char **argv )
 	prof_print_prof_info( start, end, THRESHOLD, event_name );
 
 	retval =
-		do_profile( start, ( unsigned ) length, FULL_SCALE * 2, THRESHOLD,
-					PAPI_PROFIL_BUCKET_32 );
+		do_profile( start, ( unsigned ) length, 
+			    FULL_SCALE * 2, THRESHOLD,
+			    PAPI_PROFIL_BUCKET_32, mask );
 
 	remove_test_events( &EventSet, mask );
 

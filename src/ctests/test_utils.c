@@ -137,9 +137,9 @@ int is_event_derived(unsigned int event) {
      PAPI_get_event_info(event,&info);
 
      if (strcmp(info.derived,"NOT_DERIVED")) {
-        return 0;
+       //       printf("%x is derived\n",event);
+        return 1;
      }
-     return 1;
   }
   return 0;
 }
@@ -151,12 +151,7 @@ int is_event_derived(unsigned int event) {
 
 */
 
-#define MAX_TEST_EVENTS 18
-
-static struct test_events_t {
-  unsigned int mask;
-  unsigned int event;
-} test_events[MAX_TEST_EVENTS] = {
+struct test_events_t test_events[MAX_TEST_EVENTS] = {
   { MASK_TOT_CYC, PAPI_TOT_CYC },
   { MASK_TOT_INS, PAPI_TOT_INS },
   { MASK_FP_INS,  PAPI_FP_INS },
@@ -204,10 +199,10 @@ add_test_events( int *number, int *mask, int allow_derived )
 
      /* check all the masks */
   for(i=0;i<MAX_TEST_EVENTS;i++) {
-
     
      if ( *mask & test_events[i].mask ) {
 
+           /* remove any derived events if told to */
         if ((is_event_derived(test_events[i].event)) && (!allow_derived)) {
 	   *mask = *mask ^ test_events[i].mask;
 	   continue;

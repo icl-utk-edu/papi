@@ -17,8 +17,7 @@
    - future profiling tests.
 */
 
-#include "papi_test.h"
-#include "prof_utils.h"
+#include "papi_test.h"#include "prof_utils.h"
 
 /* variables global to profiling tests */
 long long **values;
@@ -61,7 +60,7 @@ prof_init( int argc, char **argv, const PAPI_hw_info_t ** hw_info,
    Assumed globals: EventSet, PAPI_event, hw_info, event_name.
 */
 int
-prof_events( int num_tests, const PAPI_hw_info_t * hw_info )
+prof_events( int num_tests)
 {
 	int retval;
 	int num_events, mask;

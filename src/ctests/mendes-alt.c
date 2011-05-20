@@ -16,8 +16,6 @@ long long PAPI_values2[PAPI_MAX_EVENTS];
 long long PAPI_values3[PAPI_MAX_EVENTS];
 static int EventSet = PAPI_NULL;
 
-#include "papi_test.h"
-
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 int
