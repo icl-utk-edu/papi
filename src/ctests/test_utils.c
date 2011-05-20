@@ -9,6 +9,7 @@
 	declared here so it can be available globally
 */
 int TESTS_QUIET = 0;
+int TESTS_COLOR = 0;
 static int TEST_FAIL = 0;
 static int TEST_WARN = 0;
 
@@ -524,6 +525,10 @@ tests_quiet( int argc, char **argv )
 		if ( retval != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
 	}
+   if (getenv("TESTS_COLOR")!=NULL) {
+      TESTS_COLOR=1;
+   }
+   
 }
 
 #define RED    "\033[1;31m"
@@ -542,7 +547,7 @@ test_pass( char *file, long long **values, int num_tests )
 	if ( TEST_FAIL ) {
 	}
         else if ( TEST_WARN ) {
-	  if (isatty(fileno(stdout))) {
+	  if (TESTS_COLOR) {
 	    fprintf( stdout, "%-*s %sPASSED with WARNING%s\n", 
 		     line_pad, file, YELLOW, NORMAL);	   
 	  }
@@ -552,7 +557,7 @@ test_pass( char *file, long long **values, int num_tests )
 	  }
 	}
         else {
-	  if (isatty(fileno(stdout))) {
+	  if (TESTS_COLOR) {
 	    fprintf( stdout, "%-*s %sPASSED%s\n", line_pad, file, 
 		     GREEN, NORMAL );
 	  }
@@ -589,7 +594,7 @@ test_fail( char *file, int line, char *call, int retval )
 	char buf[128];
 	memset( buf, '\0', sizeof ( buf ) );
 
-	if (isatty(fileno(stdout))) {
+	if (TESTS_COLOR) {
 	  fprintf( stdout, "%-*s %sFAILED%s\nLine # %d\n", line_pad, file, 
 		    RED,NORMAL,line );
 	}
@@ -651,7 +656,7 @@ test_warn( char *file, int line, char *call, int retval )
 	char buf[128];
 	memset( buf, '\0', sizeof ( buf ) );
 
-	if (isatty(fileno(stdout))) {
+	if (TESTS_COLOR) {
 	  fprintf( stdout, "%-*s %sWARNING%s\nLine # %d\n", line_pad, file, 
 		   YELLOW, NORMAL, line );
 	}
