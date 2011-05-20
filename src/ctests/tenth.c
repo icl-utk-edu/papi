@@ -100,9 +100,9 @@ main( int argc, char **argv )
 		test_skip( __FILE__, __LINE__, EVT3_STR, retval );
 
 
-	EventSet1 = add_test_events( &num_events1, &mask1 );
-	EventSet2 = add_test_events( &num_events2, &mask2 );
-	EventSet3 = add_test_events( &num_events3, &mask3 );
+	EventSet1 = add_test_events( &num_events1, &mask1, 1 );
+	EventSet2 = add_test_events( &num_events2, &mask2, 1 );
+	EventSet3 = add_test_events( &num_events3, &mask3, 1 );
 
 	values = allocate_test_space( num_tests, 1 );
 

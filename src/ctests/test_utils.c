@@ -126,217 +126,117 @@ free_test_space( long long **values, int num_tests )
 	free( values );
 }
 
-/* Mask tells us what to select. 
-	See test_utils.h for mask definitions
+
+
+int is_event_derived(unsigned int event) {
+
+  PAPI_event_info_t info;
+
+  if (event & PAPI_PRESET_MASK) {
+
+     PAPI_get_event_info(event,&info);
+
+     if (strcmp(info.derived,"NOT_DERIVED")) {
+        return 0;
+     }
+     return 1;
+  }
+  return 0;
+}
+
+
+/* Add events to an EventSet, as specified by a mask.
+
+   Returns: number = number of events added
+
 */
 
+#define MAX_TEST_EVENTS 18
+
+static struct test_events_t {
+  unsigned int mask;
+  unsigned int event;
+} test_events[MAX_TEST_EVENTS] = {
+  { MASK_TOT_CYC, PAPI_TOT_CYC },
+  { MASK_TOT_INS, PAPI_TOT_INS },
+  { MASK_FP_INS,  PAPI_FP_INS },
+  { MASK_L1_TCM,  PAPI_L1_TCM },
+  { MASK_L1_ICM,  PAPI_L1_ICM },
+  { MASK_L1_DCM,  PAPI_L1_DCM },
+  { MASK_L2_TCM,  PAPI_L2_TCM },
+  { MASK_L2_TCA,  PAPI_L2_TCA },
+  { MASK_L2_TCH,  PAPI_L2_TCH },
+  { MASK_BR_CN,   PAPI_BR_CN  },
+  { MASK_BR_MSP,  PAPI_BR_MSP },
+  { MASK_BR_PRC,  PAPI_BR_PRC },
+  { MASK_TOT_IIS, PAPI_TOT_IIS},
+  { MASK_L1_DCR,  PAPI_L1_DCR},
+  { MASK_L1_DCW,  PAPI_L1_DCW},
+  { MASK_L1_DCW,  PAPI_L1_DCW},
+  { MASK_L1_DCA,  PAPI_L1_DCA},
+  { MASK_FP_OPS,  PAPI_FP_OPS},
+};
+
+
 int
-add_test_events( int *number, int *mask )
+add_test_events( int *number, int *mask, int allow_derived )
 {
-	int retval;
-	int EventSet = PAPI_NULL;
+  int retval,i;
+  int EventSet = PAPI_NULL;
+  int num_counters = 0;
+  char name_string[BUFSIZ];
 
-	*number = 0;
+  *number = 0;
 
-	retval = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
-	if ( retval < 1 )
-		test_fail( __FILE__, __LINE__, "PAPI_get_opt", retval );
+     /* get the number of available HW counters */
+  num_counters = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
+  if ( num_counters < 1 ) {
+     test_fail( __FILE__, __LINE__, "Zero HW Counters available", 
+			   num_counters );
+  }
 
-	retval = PAPI_create_eventset( &EventSet );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+     /* create the eventset */
+  retval = PAPI_create_eventset( &EventSet );
+  if ( retval != PAPI_OK ) {
+     test_fail( __FILE__, __LINE__, "PAPI_create_eventset", 
+			   retval );
+  }
 
-	if ( *mask & MASK_L1_DCA ) {
-		retval = PAPI_add_event( EventSet, PAPI_L1_DCA );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L1_DCA is not available.\n" );
-			*mask = *mask ^ MASK_L1_DCA;
-		}
+     /* check all the masks */
+  for(i=0;i<MAX_TEST_EVENTS;i++) {
+
+    
+     if ( *mask & test_events[i].mask ) {
+
+        if ((is_event_derived(test_events[i].event)) && (!allow_derived)) {
+	   *mask = *mask ^ test_events[i].mask;
+	   continue;
+        }
+
+	retval = PAPI_add_event( EventSet, test_events[i].event );
+
+	if ( retval == PAPI_OK ) {
+
+	   ( *number )++;
+	   if ((*number)==num_counters) {
+	     if ( !TESTS_QUIET) {
+	       fprintf(stdout, "Stopping with %d events due to HW limit\n",
+		       num_counters);
+	     }
+	     break;
+	   }
 	}
-
-	if ( *mask & MASK_L1_DCW ) {
-		retval = PAPI_add_event( EventSet, PAPI_L1_DCW );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L1_DCW is not available.\n" );
-			*mask = *mask ^ MASK_L1_DCW;
-		}
+	else {
+	   if ( !TESTS_QUIET ) {
+	     PAPI_event_code_to_name(test_events[i].event,name_string);
+	     fprintf( stdout, "%s is not available.\n", name_string );
+	   }
+	   *mask = *mask ^ test_events[i].mask;
 	}
+     }
+  }
 
-	if ( *mask & MASK_L1_DCR ) {
-		retval = PAPI_add_event( EventSet, PAPI_L1_DCR );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L1_DCR is not available.\n" );
-			*mask = *mask ^ MASK_L1_DCR;
-		}
-	}
-
-	if ( *mask & MASK_L2_TCH ) {
-		retval = PAPI_add_event( EventSet, PAPI_L2_TCH );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L2_TCH is not available.\n" );
-			*mask = *mask ^ MASK_L2_TCH;
-		}
-	}
-
-	if ( *mask & MASK_L2_TCA ) {
-		retval = PAPI_add_event( EventSet, PAPI_L2_TCA );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L2_TCA is not available.\n" );
-			*mask = *mask ^ MASK_L2_TCA;
-		}
-	}
-
-	if ( *mask & MASK_L2_TCM ) {
-		retval = PAPI_add_event( EventSet, PAPI_L2_TCM );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L2_TCM is not available.\n" );
-			*mask = *mask ^ MASK_L2_TCM;
-		}
-	}
-
-	if ( *mask & MASK_L1_DCM ) {
-		retval = PAPI_add_event( EventSet, PAPI_L1_DCM );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L1_DCM is not available.\n" );
-			*mask = *mask ^ MASK_L1_DCM;
-		}
-	}
-
-	if ( *mask & MASK_L1_ICM ) {
-		retval = PAPI_add_event( EventSet, PAPI_L1_ICM );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L1_ICM is not available.\n" );
-			*mask = *mask ^ MASK_L1_ICM;
-		}
-	}
-
-	if ( *mask & MASK_L1_TCM ) {
-		retval = PAPI_add_event( EventSet, PAPI_L1_TCM );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_L1_TCM is not available.\n" );
-			*mask = *mask ^ MASK_L1_TCM;
-		}
-	}
-
-	if ( *mask & MASK_BR_CN ) {
-		retval = PAPI_add_event( EventSet, PAPI_BR_CN );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-
-			char errstring[PAPI_MAX_STR_LEN];
-			PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-			if ( !TESTS_QUIET ) {
-				fprintf( stdout, "Error: %s\n", errstring );
-				fprintf( stdout, "PAPI_BR_CN is not available.\n" );
-			}
-			*mask = *mask ^ MASK_BR_CN;
-		}
-	}
-	if ( *mask & MASK_BR_MSP ) {
-		retval = PAPI_add_event( EventSet, PAPI_BR_MSP );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_BR_MSP is not available.\n" );
-			*mask = *mask ^ MASK_BR_MSP;
-		}
-	}
-	if ( *mask & MASK_BR_PRC ) {
-		retval = PAPI_add_event( EventSet, PAPI_BR_PRC );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_BR_PRC is not available.\n" );
-			*mask = *mask ^ MASK_BR_PRC;
-		}
-	}
-
-	if ( *mask & MASK_FP_OPS ) {
-		retval = PAPI_add_event( EventSet, PAPI_FP_OPS );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_FP_OPS is not available.\n" );
-			*mask = *mask ^ MASK_FP_OPS;
-		}
-	}
-
-	if ( *mask & MASK_FP_INS ) {
-		retval = PAPI_add_event( EventSet, PAPI_FP_INS );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_FP_INS is not available.\n" );
-			*mask = *mask ^ MASK_FP_INS;
-		}
-	}
-
-	if ( *mask & MASK_TOT_INS ) {
-		retval = PAPI_add_event( EventSet, PAPI_TOT_INS );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_TOT_INS is not available.\n" );
-			*mask = *mask ^ MASK_TOT_INS;
-		}
-	}
-
-	if ( *mask & MASK_TOT_IIS ) {
-		retval = PAPI_add_event( EventSet, PAPI_TOT_IIS );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_TOT_IIS is not available.\n" );
-			*mask = *mask ^ MASK_TOT_IIS;
-		}
-	}
-
-	if ( *mask & MASK_TOT_CYC ) {
-		retval = PAPI_add_event( EventSet, PAPI_TOT_CYC );
-		if ( retval == PAPI_OK )
-			( *number )++;
-		else {
-			if ( !TESTS_QUIET )
-				fprintf( stdout, "PAPI_TOT_CYC is not available.\n" );
-			*mask = *mask ^ MASK_TOT_CYC;
-		}
-	}
-
-	return ( EventSet );
+  return EventSet;
 }
 
 int
@@ -770,88 +670,88 @@ test_print_event_header( char *call, int evset )
 }
 
 int
-add_two_events( int *num_events, int *papi_event,
-				const PAPI_hw_info_t * hw_info, int *mask )
-{
-	( void ) hw_info;		 /*unused parameter */
-	/* query and set up the right event to monitor */
-	int EventSet = PAPI_NULL;
-	PAPI_event_info_t info;
-	unsigned int potential_evt_to_add[3][2] =
-		{ {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
-	{( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
-	{( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
-	};
-	int i = 0;
-	unsigned int counters, event_found = 0;
+add_two_events( int *num_events, int *papi_event, int *mask ) {
 
-	*mask = 0;
-	counters = ( unsigned int ) PAPI_num_hwctrs(  );
-	while ( ( i < 3 ) && ( !event_found ) ) {
-		if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
-			if ( PAPI_get_event_info
-				 ( ( int ) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
-			  if ( ( info.count > 0 ) && ( counters > info.count ) ) {
-					event_found = 1;
-			  }
-			  else {
-			    if (counters==0) {
-			      test_fail(__FILE__,__LINE__,"Zero Counters Available!  PAPI Won't like this!\n",0);
-			    }
-			  }
-			}
-		}
-		if ( !event_found )
-			i++;
-	}
-	if ( event_found ) {
-		*papi_event = ( int ) potential_evt_to_add[i][0];
-		*mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
-		EventSet = add_test_events( num_events, mask );
-	} else {
-		test_fail( __FILE__, __LINE__, "Not enough room to add an event!", 0 );
-	}
-	return ( EventSet );
+     /* query and set up the right event to monitor */
+  int EventSet = PAPI_NULL;
+  PAPI_event_info_t info;
+  unsigned int potential_evt_to_add[3][2] =
+    { {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
+      {( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
+      {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
+    };
+  int i = 0;
+  unsigned int counters, event_found = 0;
+
+  *mask = 0;
+  counters = ( unsigned int ) PAPI_num_hwctrs(  );
+
+  while ( ( i < 3 ) && ( !event_found ) ) {
+    if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
+			
+       if ( PAPI_get_event_info ( ( int ) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
+	  if ( ( info.count > 0 ) && ( counters > info.count ) ) {
+	     event_found = 1;
+	  }
+	  else {
+	     if (counters==0) {
+		test_fail(__FILE__,__LINE__,"Zero Counters Available!  PAPI Won't like this!\n",0);
+	     }
+	  }
+       }
+    }
+    if ( !event_found ) {
+       i++;
+    }
+  }
+
+  if ( event_found ) {
+     *papi_event = ( int ) potential_evt_to_add[i][0];
+     *mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
+     EventSet = add_test_events( num_events, mask, 1 );
+  } else {
+     test_fail( __FILE__, __LINE__, "Not enough room to add an event!", 0 );
+  }
+  return EventSet;
 }
 
 int
-add_two_nonderived_events( int *num_events, int *papi_event,
-						   const PAPI_hw_info_t * hw_info, int *mask )
-{
-	( void ) hw_info;		 /*unused parameter */
-	/* query and set up the right event to monitor */
-	int EventSet = PAPI_NULL;
-	PAPI_event_info_t info;
-	unsigned int potential_evt_to_add[3][2] =
-		{ {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
-	{( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
-	{( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
-	};
-	int i = 0;
-	unsigned int counters, event_found = 0;
+add_two_nonderived_events( int *num_events, int *papi_event, int *mask ) {
 
-	*mask = 0;
-	counters = ( unsigned int ) PAPI_num_hwctrs(  );
-	while ( ( i < 3 ) && ( !event_found ) ) {
-		if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
-			if ( PAPI_get_event_info
-				 ( ( int ) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
-				if ( ( info.count > 0 ) && ( counters > info.count ) &&
-					 !strcmp( info.derived, "NOT_DERIVED" ) )
-					event_found = 1;
-			}
-		}
-		if ( !event_found )
-			i++;
-	}
-	if ( event_found ) {
-		*papi_event = ( int ) potential_evt_to_add[i][0];
-		*mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
-		EventSet = add_test_events( num_events, mask );
-	} else {
-		test_fail( __FILE__, __LINE__, "Not enough room to add an event!", 0 );
-	}
-	return ( EventSet );
+	/* query and set up the right event to monitor */
+  int EventSet = PAPI_NULL;
+
+  unsigned int potential_evt_to_add[3][2] =
+		{ {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
+		  {( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
+		  {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
+		};
+  int i = 0;
+  unsigned int event_found = 0;
+
+  *mask = 0;
+	
+  while ( ( i < 3 ) && ( !event_found ) ) {
+
+    if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
+       if ( !is_event_derived(potential_evt_to_add[i][0])) {
+	  event_found = 1;
+       }
+    }
+
+    if ( !event_found ) {
+       i++;
+    }
+  }
+	
+  if ( event_found ) {
+     *papi_event = ( int ) potential_evt_to_add[i][0];
+     *mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
+     EventSet = add_test_events( num_events, mask, 0 );
+  } else {
+     test_fail( __FILE__, __LINE__, "Not enough room to add an event!", 0 );
+  }
+  return EventSet;
 }
 
 /* add native events to use all counters */
@@ -976,3 +876,4 @@ init_multiplex( void )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI multiplex init fail\n", retval );
 }
+

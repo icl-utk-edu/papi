@@ -19,80 +19,46 @@
 #include "prof_utils.h"
 #define PROFILE_ALL
 
-static int do_profile( caddr_t start, unsigned long plength, unsigned scale,
-					   int thresh, int bucket );
-static void cleara( double a[] );
-static void my_main(  );
-static int my_dummy( int i );
-
 static const PAPI_hw_info_t *hw_info;
 
-int
-main( int argc, char **argv )
+#define N (1 << 23)
+#define T (10)
+
+double aa[N], bb[N];
+double s = 0, s2 = 0;
+
+static void
+cleara( double a[N] )
 {
-	int num_events = 0;
-	long length;
-	int mask;
-	int retval;
-	const PAPI_exe_info_t *prginfo;
-	caddr_t start, end;
+	int i;
 
-	prof_init( argc, argv, &hw_info, &prginfo );
+	for ( i = 0; i < N; i++ ) {
+		a[i] = 0;
+	}
+}
 
-#if defined(__powerpc__)
-	if ( strcmp( hw_info->model_string, "POWER6" ) == 0 )
-		mask = MASK_TOT_CYC | MASK_FP_INS;
-	else
-		mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_INS;
-#else
-#if defined(ITANIUM2)
-	mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
-#else
-	if ( PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) == 2 )
-		mask = MASK_TOT_CYC | MASK_TOT_INS;
-	else
-		mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
-#endif
-#endif
+static int
+my_dummy( int i )
+{
+	return ( i + 1 );
+}
 
-	EventSet = add_test_events( &num_events, &mask );
-	values = allocate_test_space( 1, num_events );
+static void
+my_main(  )
+{
+	int i, j;
 
-/* profile the cleara and my_main address space */
-	start = ( caddr_t ) cleara;
-	end = ( caddr_t ) my_dummy;
-
-/* Itanium and PowerPC64 processors return function descriptors instead
- * of function addresses. You must dereference the descriptor to get the address.
-*/
-#if defined(ITANIUM1) || defined(ITANIUM2) || defined(__powerpc64__)
-	start = ( caddr_t ) ( ( ( struct fdesc * ) start )->ip );
-	end = ( caddr_t ) ( ( ( struct fdesc * ) end )->ip );
-#endif
-
-	/* call dummy so it doesn't get optimized away */
-	retval = my_dummy( 1 );
-
-	length = end - start;
-	if ( length < 0 )
-		test_fail( __FILE__, __LINE__, "Profile length < 0!", ( int ) length );
-
-	prof_print_address
-		( "Test case byte_profile: Multi-event profiling at byte resolution.\n",
-		  prginfo );
-	prof_print_prof_info( start, end, THRESHOLD, event_name );
-
-	retval =
-		do_profile( start, ( unsigned ) length, FULL_SCALE * 2, THRESHOLD,
-					PAPI_PROFIL_BUCKET_32 );
-
-	remove_test_events( &EventSet, mask );
-
-	if ( retval )
-		test_pass( __FILE__, values, 1 );
-	else
-		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
-	exit( 1 );
+	for ( j = 0; j < T; j++ ) {
+		for ( i = 0; i < N; i++ ) {
+			bb[i] = 0;
+		}
+		cleara( aa );
+		memset( aa, 0, sizeof ( aa ) );
+		for ( i = 0; i < N; i++ ) {
+			s += aa[i] * bb[i];
+			s2 += aa[i] * aa[i] + bb[i] * bb[i];
+		}
+	}
 }
 
 static int
@@ -197,44 +163,76 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 	for ( i = 0; i < num_bufs; i++ ) {
 		free( profbuf[i] );
 	}
-	return ( retval );
+	return retval;
 }
 
-#define N (1 << 23)
-#define T (10)
 
-double aa[N], bb[N];
-double s = 0, s2 = 0;
 
-static void
-cleara( double a[N] )
+int
+main( int argc, char **argv )
 {
-	int i;
+	int num_events = 0;
+	long length;
+	int mask;
+	int retval;
+	const PAPI_exe_info_t *prginfo;
+	caddr_t start, end;
 
-	for ( i = 0; i < N; i++ ) {
-		a[i] = 0;
-	}
-}
-static void
-my_main(  )
-{
-	int i, j;
+	prof_init( argc, argv, &hw_info, &prginfo );
 
-	for ( j = 0; j < T; j++ ) {
-		for ( i = 0; i < N; i++ ) {
-			bb[i] = 0;
-		}
-		cleara( aa );
-		memset( aa, 0, sizeof ( aa ) );
-		for ( i = 0; i < N; i++ ) {
-			s += aa[i] * bb[i];
-			s2 += aa[i] * aa[i] + bb[i] * bb[i];
-		}
-	}
+#if defined(__powerpc__)
+	if ( strcmp( hw_info->model_string, "POWER6" ) == 0 )
+		mask = MASK_TOT_CYC | MASK_FP_INS;
+	else
+		mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_INS;
+#else
+#if defined(ITANIUM2)
+	mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
+#else
+       	mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
+#endif
+#endif
+
+	EventSet = add_test_events( &num_events, &mask, 0 );
+	values = allocate_test_space( 1, num_events );
+
+/* profile the cleara and my_main address space */
+	start = ( caddr_t ) cleara;
+	end = ( caddr_t ) my_dummy;
+
+/* Itanium and PowerPC64 processors return function descriptors instead
+ * of function addresses. You must dereference the descriptor to get the address.
+*/
+#if defined(ITANIUM1) || defined(ITANIUM2) || defined(__powerpc64__)
+	start = ( caddr_t ) ( ( ( struct fdesc * ) start )->ip );
+	end = ( caddr_t ) ( ( ( struct fdesc * ) end )->ip );
+#endif
+
+	/* call dummy so it doesn't get optimized away */
+	retval = my_dummy( 1 );
+
+	length = end - start;
+	if ( length < 0 )
+		test_fail( __FILE__, __LINE__, "Profile length < 0!", ( int ) length );
+
+	prof_print_address
+		( "Test case byte_profile: Multi-event profiling at byte resolution.\n",
+		  prginfo );
+	prof_print_prof_info( start, end, THRESHOLD, event_name );
+
+	retval =
+		do_profile( start, ( unsigned ) length, FULL_SCALE * 2, THRESHOLD,
+					PAPI_PROFIL_BUCKET_32 );
+
+	remove_test_events( &EventSet, mask );
+
+	if ( retval )
+		test_pass( __FILE__, values, 1 );
+	else
+		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
+	return 1;
 }
 
-static int
-my_dummy( int i )
-{
-	return ( i + 1 );
-}
+
+
+

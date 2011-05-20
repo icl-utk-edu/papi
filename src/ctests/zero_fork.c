@@ -20,7 +20,6 @@ long long elapsed_us, elapsed_cyc;
 long long **values;
 char event_name[PAPI_MAX_STR_LEN];
 int retval, num_tests = 1;
-const PAPI_hw_info_t *hw_info = NULL;
 
 void
 process_init( void )
@@ -31,14 +30,10 @@ process_init( void )
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-	hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depends on the availability of the event on the
 	   platform */
-	EventSet1 = add_two_events( &num_events1, &PAPI_event, hw_info, &mask1 );
+	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 
 	values = allocate_test_space( num_tests, num_events1 );
 

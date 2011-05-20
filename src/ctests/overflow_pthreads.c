@@ -60,7 +60,7 @@ Thread( void *arg )
 	   PAPI_TOT_INS, depends on the availability of the event on the 
 	   platform */
 	EventSet1 =
-		add_two_nonderived_events( &num_events1, &papi_event, hw_info, &mask1 );
+		add_two_nonderived_events( &num_events1, &papi_event, &mask1 );
 
 	expected[EventSet1] = *( int * ) arg / mythreshold;
 	myid[EventSet1] = PAPI_thread_id(  );

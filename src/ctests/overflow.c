@@ -72,7 +72,7 @@ main( int argc, char **argv )
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
 	EventSet =
-		add_two_nonderived_events( &num_events, &PAPI_event, hw_info, &mask );
+		add_two_nonderived_events( &num_events, &PAPI_event, &mask );
 
 	if ( PAPI_event == PAPI_FP_INS )
 		mythreshold = THRESHOLD;

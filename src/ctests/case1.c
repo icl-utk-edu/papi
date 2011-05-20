@@ -15,7 +15,7 @@ extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 int
 main( int argc, char **argv )
 {
-	double c, a = 0.999, b = 1.001;
+  double c, a = 0.999, b = 1.001;
 	int n = 1000;
 	int EventSet = PAPI_NULL;
 	int retval;
@@ -59,6 +59,8 @@ main( int argc, char **argv )
 		for ( i = 0; i < n; i++ ) {
 			c = a * b;
 		}
+		if (!TESTS_QUIET) fprintf(stdout,"c=%lf\n",c);
+
 		if ( ( retval = PAPI_stop( EventSet, g1 ) ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 	}

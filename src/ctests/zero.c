@@ -25,7 +25,6 @@ main( int argc, char **argv )
 	long long **values;
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
-	const PAPI_hw_info_t *hw_info;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
@@ -33,14 +32,10 @@ main( int argc, char **argv )
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-	hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
-	EventSet1 = add_two_events( &num_events1, &PAPI_event, hw_info, &mask1 );
+	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 
 	retval = PAPI_event_code_to_name( PAPI_event, event_name );
 	if ( retval != PAPI_OK )

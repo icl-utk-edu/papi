@@ -28,8 +28,6 @@ main( int argc, char **argv )
 	long long t1, t2;
 	long long values[MAXEVENTS], refvalues[MAXEVENTS];
 	int sleep_time = SLEEPTIME;
-	double valsqsum[MAXEVENTS];
-	double valsum[MAXEVENTS];
 	double spread[MAXEVENTS];
 	int nevents = MAXEVENTS;
 	int eventset = PAPI_NULL;
@@ -47,8 +45,6 @@ main( int argc, char **argv )
 
 	for ( i = 0; i < MAXEVENTS; i++ ) {
 		values[i] = 0;
-		valsqsum[i] = 0;
-		valsum[i] = 0;
 	}
 
 	if ( argc > 1 ) {

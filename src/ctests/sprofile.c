@@ -75,7 +75,7 @@ main( int argc, char **argv )
 	sprof[2].pr_off = 0;
 	sprof[2].pr_scale = 0x2;
 
-	EventSet = add_test_events( &num_events, &mask );
+	EventSet = add_test_events( &num_events, &mask, 1 );
 
 	values = allocate_test_space( num_tests, num_events );
 

@@ -70,7 +70,7 @@ prof_events( int num_tests, const PAPI_hw_info_t * hw_info )
 	   PAPI_TOT_INS, depends on the availability of the event on the
 	   platform */
 	EventSet =
-		add_two_nonderived_events( &num_events, &PAPI_event, hw_info, &mask );
+		add_two_nonderived_events( &num_events, &PAPI_event, &mask );
 
 	values = allocate_test_space( num_tests, num_events );
 

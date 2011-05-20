@@ -50,7 +50,6 @@ main( int argc, char **argv )
 {
 	int status, retval, num_tests = 1, tmp;
 	int EventSet1 = PAPI_NULL;
-	int num_events1;
 	long long **values;
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
 	char event_name[PAPI_MAX_STR_LEN];;
@@ -115,7 +114,6 @@ main( int argc, char **argv )
 	retval = PAPI_add_event(EventSet1, PAPI_FP_INS);
 	if ( retval != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
-	num_events1 = 2;
 
 	values = allocate_test_space( 1, 2);
 

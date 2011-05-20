@@ -103,10 +103,10 @@ ref_measurements( int iters, int *eventset, int *events, int nevents,
 			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 		t2 = PAPI_get_real_usec(  );
 
-#if 0
-		printf( "\tOperations= %.1f Mflop", y * 1e-6 );
-		printf( "\t(%g Mflop/s)\n\n", ( ( float ) y / ( t2 - t1 ) ) );
-#endif
+		if (!TESTS_QUIET) {
+		   printf( "\tOperations= %.1f Mflop", y * 1e-6 );
+		   printf( "\t(%g Mflop/s)\n\n", ( ( float ) y / ( t2 - t1 ) ) );
+		}
 
 		PAPI_get_event_info( events[i], &info );
 		printf( "%20s = ", info.short_descr );
@@ -155,8 +155,6 @@ main( int argc, char **argv )
 	long long t1, t2;
 	long long values[MAXEVENTS], refvalues[MAXEVENTS];
 	int sleep_time = SLEEPTIME;
-	double valsqsum[MAXEVENTS];
-	double valsum[MAXEVENTS];
 	int nevents = MAXEVENTS;
 	int eventset = PAPI_NULL;
 	int events[MAXEVENTS];
@@ -178,8 +176,6 @@ main( int argc, char **argv )
 
 	for ( i = 0; i < MAXEVENTS; i++ ) {
 		values[i] = 0;
-		valsqsum[i] = 0;
-		valsum[i] = 0;
 	}
 
 	if ( argc > 1 ) {
@@ -224,6 +220,8 @@ main( int argc, char **argv )
 		iters = iters * ( int ) ( 1000000 / t1 );
 		printf( "Modified iteration count to %d\n\n", iters );
 	}
+
+	if (!TESTS_QUIET) fprintf(stdout,"y=%lf\n",y);
 
 	/* Now loop through the items one at a time */
 

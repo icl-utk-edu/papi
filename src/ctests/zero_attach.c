@@ -45,7 +45,6 @@ main( int argc, char **argv )
 	long long **values;
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
-	const PAPI_hw_info_t *hw_info;
 	const PAPI_component_info_t *cmpinfo;
 	pid_t pid;
 
@@ -62,11 +61,6 @@ main( int argc, char **argv )
 		test_skip( __FILE__, __LINE__, "Platform does not support attaching",
 				   0 );
 
-	hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 0 );
-
-
 	pid = fork(  );
 	if ( pid < 0 )
 		test_fail( __FILE__, __LINE__, "fork()", PAPI_ESYS );
@@ -77,7 +71,7 @@ main( int argc, char **argv )
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
-	EventSet1 = add_two_events( &num_events1, &PAPI_event, hw_info, &mask1 );
+	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 
 	if ( cmpinfo->attach_must_ptrace ) {
 		if ( ptrace( PTRACE_ATTACH, pid, NULL, NULL ) == -1 ) {
