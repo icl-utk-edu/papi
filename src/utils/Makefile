@@ -9,7 +9,7 @@ CFLAGS	= -g -O -Wall
 
 ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
 	  papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost \
-	  papi_component_avail 
+	  papi_component_avail papi_error_codes
 UTILOBJS= do_loops.o dummy.o test_utils.o
 
 default all utils: $(UTIL_TARGETS)
@@ -49,6 +49,9 @@ papi_native_avail: native_avail.c $(PAPILIB) $(UTILOBJS)
 
 papi_component_avail: component.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) component.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_component_avail
+
+papi_error_codes: error_codes.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) error_codes.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_error_codes
 
 test_utils.o: ../ctests/test_utils.c ../ctests/papi_test.h ../ctests/test_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/test_utils.c

@@ -238,7 +238,10 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
     /*18 */ {PAPI_ENOSUPP, "PAPI_ENOSUPP", "Not supported"},
     /*19 */ {PAPI_ENOIMPL, "PAPI_ENOIMPL", "Not implemented"},
     /*20 */ {PAPI_EBUF, "PAPI_EBUF", "Buffer size exceeded"},
-    /*21 */ {PAPI_EINVAL_DOM, "PAPI_EINVAL_DOM", "EventSet domain is not supported for the operation"}
+    /*21 */ {PAPI_EINVAL_DOM, "PAPI_EINVAL_DOM", "EventSet domain is not supported for the operation"},
+    /*21 */ {PAPI_EATTR, "PAPI_EATTR", "Invalid or missing event attributes"},
+    /*21 */ {PAPI_ECOUNT, "PAPI_ECOUNT", "Too many events or attributes"},
+    /*21 */ {PAPI_ECOMBO, "PAPI_ECOMBO", "Bad combination of features"}
 };
 
 #endif

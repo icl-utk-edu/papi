@@ -2958,8 +2958,6 @@ PAPI_shutdown( void )
  *	@param errorCode 
  *		the error code to interpret
  *
- *	@retval PAPI_EINVAL 
- *		One or more of the arguments to PAPI_perror() is invalid.
  *	@retval NULL 
  *		The input error code to PAPI_strerror() is invalid. 
  *
@@ -2968,7 +2966,7 @@ PAPI_shutdown( void )
  *	If the call fails the function returns the NULL pointer. 
  *	This function is not implemented in Fortran. 
  *
- *	@see  PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
+ *	@see  PAPI_perror PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
  */
 char *
 PAPI_strerror( int errorCode )
@@ -2977,6 +2975,31 @@ PAPI_strerror( int errorCode )
 		return ( NULL );
 
 	return ( ( char * ) _papi_hwi_err[-errorCode].name );
+}
+
+/** @brief Return the PAPI error description string to user. 
+ *
+ *	@param errorCode 
+ *		the error code to interpret
+ *
+ *	@retval NULL 
+ *		The input error code to PAPI_descr_error() is invalid, 
+ *		or the description string is empty. 
+ *
+ *	PAPI_descr_error() returns a pointer to the error message corresponding to the 
+ *	error code code . 
+ *	If the call fails the function returns the NULL pointer. 
+ *	This function is not implemented in Fortran. 
+ *
+ *	@see  PAPI_strerror PAPI_perror
+ */
+char *
+PAPI_descr_error( int errorCode )
+{
+	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
+		return ( NULL );
+
+	return ( ( char * ) _papi_hwi_err[-errorCode].descr );
 }
 
 /** @brief convert PAPI error codes to strings, and print error message to stderr. 

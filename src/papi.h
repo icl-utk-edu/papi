@@ -815,6 +815,7 @@ read the documentation carefully.  */
    int   PAPI_cleanup_eventset(int EventSet); /**< remove all PAPI events from an event set */
    int   PAPI_create_eventset(int *EventSet); /**< create a new empty PAPI event set */
    int   PAPI_detach(int EventSet); /**< detach specified event set from a previously specified process or thread id */
+   char *PAPI_descr_error(int); /**< return a pointer to the error message corresponding to a specified error code */
    int   PAPI_destroy_eventset(int *EventSet); /**< deallocates memory associated with an empty PAPI event set */
    int   PAPI_enum_event(int *EventCode, int modifier); /**< return the event code for the next available preset or natvie event */
    int   PAPI_event_code_to_name(int EventCode, char *out); /**< translate an integer PAPI event code into an ASCII PAPI preset or native name */
@@ -872,7 +873,7 @@ read the documentation carefully.  */
    int   PAPI_start(int EventSet); /**< start counting hardware events in an event set */
    int   PAPI_state(int EventSet, int *status); /**< return the counting state of an event set */
    int   PAPI_stop(int EventSet, long long * values); /**< stop counting hardware events in an event set and return current events */
-   char *PAPI_strerror(int); /**< return a pointer to the error message corresponding to a specified error code */
+   char *PAPI_strerror(int); /**< return a pointer to the error name corresponding to a specified error code */
    unsigned long PAPI_thread_id(void); /**< get the thread identifier of the current thread */
    int   PAPI_thread_init(unsigned long (*id_fn) (void)); /**< initialize thread support in the PAPI library */
    int   PAPI_unlock(int); /**< unlock one of two PAPI internal user mutex variables */
