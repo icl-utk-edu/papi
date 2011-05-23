@@ -29,6 +29,8 @@
 /** This driver supports two counters */
 #define EXAMPLE_MAX_COUNTERS 3
 
+papi_vector_t _example_vector;
+
 /** Structure that stores private information for each event */
 typedef struct example_register
 {
@@ -187,6 +189,7 @@ example_init_substrate(  )
 	example_native_table[1].resources.selector = 2;
 	example_native_table[2].resources.selector = 3;
 
+	_example_vector.cmp_info.num_native_events = NUM_EVENTS;
 	return PAPI_OK;
 }
 
