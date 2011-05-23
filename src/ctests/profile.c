@@ -43,11 +43,10 @@ main( int argc, char **argv )
 	int mask;
 	int retval;
 	int mythreshold = THRESHOLD;
-	const PAPI_hw_info_t *hw_info;
 	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
 
-	prof_init( argc, argv, &hw_info, &prginfo );
+	prof_init( argc, argv, &prginfo );
 	mask = prof_events( num_tests );
 
 #ifdef PROFILE_ALL

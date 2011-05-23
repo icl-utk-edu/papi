@@ -33,11 +33,10 @@ void *profbuf[5];
    - initing the PAPI library;
    - setting the debug level;
    - getting hardware and executable info.
-   It assumes that prginfo and hw_info are global to the parent routine.
+   It assumes that prginfo is global to the parent routine.
 */
 void
-prof_init( int argc, char **argv, const PAPI_hw_info_t ** hw_info,
-		   const PAPI_exe_info_t ** prginfo )
+prof_init( int argc, char **argv, const PAPI_exe_info_t ** prginfo )
 {
 	int retval;
 
@@ -47,10 +46,6 @@ prof_init( int argc, char **argv, const PAPI_hw_info_t ** hw_info,
 		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-	*hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
 	if ( ( *prginfo = PAPI_get_executable_info(  ) ) == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
 }
@@ -58,7 +53,7 @@ prof_init( int argc, char **argv, const PAPI_hw_info_t ** hw_info,
 /* Many profiling tests count one of {FP_INS, FP_OPS, TOT_INS} and TOT_CYC.
    This function creates an event set containing the appropriate pair of events.
    It also initializes the global event_name string to the event selected.
-   Assumed globals: EventSet, PAPI_event, hw_info, event_name.
+   Assumed globals: EventSet, PAPI_event, event_name.
 */
 int
 prof_events( int num_tests)

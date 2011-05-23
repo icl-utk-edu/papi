@@ -23,7 +23,7 @@
 #define FULL_SCALE 65536
 
 /* Internal prototype */
-void prof_init(int argc, char **argv, const PAPI_hw_info_t **hw_info, const PAPI_exe_info_t **prginfo);
+void prof_init(int argc, char **argv, const PAPI_exe_info_t **prginfo);
 int prof_events(int num_tests);
 void prof_print_address(char *title, const PAPI_exe_info_t *prginfo);
 void prof_print_prof_info(caddr_t start, caddr_t end, int threshold, char *event_name);

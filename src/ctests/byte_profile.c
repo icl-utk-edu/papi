@@ -158,7 +158,11 @@ main( int argc, char **argv )
 	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
 
-	prof_init( argc, argv, &hw_info, &prginfo );
+	prof_init( argc, argv, &prginfo );
+
+	hw_info = PAPI_get_hardware_info(  );
+        if ( hw_info == NULL )
+	  test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
        	mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
 
