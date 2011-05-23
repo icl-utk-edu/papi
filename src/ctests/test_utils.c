@@ -721,26 +721,25 @@ add_two_nonderived_events( int *num_events, int *papi_event, int *mask ) {
 	/* query and set up the right event to monitor */
   int EventSet = PAPI_NULL;
 
-  unsigned int potential_evt_to_add[3][2] =
+#define POTENTIAL_EVENTS 3
+
+  unsigned int potential_evt_to_add[POTENTIAL_EVENTS][2] =
 		{ {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
 		  {( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
 		  {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
 		};
-  int i = 0;
-  unsigned int event_found = 0;
+
+  int event_found = 0,i;
 
   *mask = 0;
 	
-  while ( ( i < 3 ) && ( !event_found ) ) {
+  for(i=0;i<POTENTIAL_EVENTS;i++) {
 
-    if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
+     if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
        if ( !is_event_derived(potential_evt_to_add[i][0])) {
 	  event_found = 1;
+	  break;
        }
-    }
-
-    if ( !event_found ) {
-       i++;
     }
   }
 	
