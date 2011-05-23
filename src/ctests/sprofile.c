@@ -21,6 +21,7 @@
 
 /* This file performs the following test: sprofile */
 
+#include "papi_test.h"
 #include "prof_utils.h"
 
 int

@@ -42,8 +42,6 @@ Master pthread:
 #endif
 
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
-const PAPI_hw_info_t *hw_info = NULL;
-
 
 void
 Thread( int t, int n )
@@ -59,7 +57,7 @@ Thread( int t, int n )
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
-	EventSet1 = add_two_events( &num_events1, &PAPI_event, hw_info, &mask1 );
+	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 
 	retval = PAPI_event_code_to_name( PAPI_event, event_name );
 	if ( retval != PAPI_OK )
@@ -111,10 +109,6 @@ main( int argc, char **argv )
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
-	hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
 	elapsed_us = PAPI_get_real_usec(  );
 

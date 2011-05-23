@@ -151,6 +151,11 @@ int is_event_derived(unsigned int event) {
 
 */
 
+//struct test_events_t {
+//  unsigned int mask;
+//  unsigned int event;
+//};
+
 struct test_events_t test_events[MAX_TEST_EVENTS] = {
   { MASK_TOT_CYC, PAPI_TOT_CYC },
   { MASK_TOT_INS, PAPI_TOT_INS },

@@ -53,12 +53,12 @@
 
 #define MAX_TEST_EVENTS 18
 
-extern struct test_events_t {
-  unsigned int mask;
-  unsigned int event;
-} test_events[MAX_TEST_EVENTS];
+struct test_events_t {                                                       
+  unsigned int mask;                                                         
+  unsigned int event;                                                        
+};      
 
-//extern test_events_t test_events[MAX_TEST_EVENTS];
+extern struct test_events_t test_events[];
 
 int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwinfo);
 void validate_string(char *name, char *s);

@@ -17,7 +17,8 @@
    - future profiling tests.
 */
 
-#include "papi_test.h"#include "prof_utils.h"
+#include "papi_test.h"
+#include "prof_utils.h"
 
 /* variables global to profiling tests */
 long long **values;

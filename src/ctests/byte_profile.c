@@ -16,6 +16,7 @@
    block of code at byte level resolution of the instruction addresses.
 */
 
+#include "papi_test.h"
 #include "prof_utils.h"
 #define PROFILE_ALL
 

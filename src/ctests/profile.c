@@ -28,6 +28,7 @@
    - Stop eventset 1
 */
 
+#include "papi_test.h"
 #include "prof_utils.h"
 #define PROFILE_ALL
 
@@ -47,7 +48,7 @@ main( int argc, char **argv )
 	caddr_t start, end;
 
 	prof_init( argc, argv, &hw_info, &prginfo );
-	mask = prof_events( num_tests, hw_info );
+	mask = prof_events( num_tests );
 
 #ifdef PROFILE_ALL
 /* use these lines to profile entire code address space */

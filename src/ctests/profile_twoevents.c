@@ -9,6 +9,7 @@
 
 /* This file performs the following test: profiling two events */
 
+#include "papi_test.h"
 #include "prof_utils.h"
 
 int
@@ -25,7 +26,7 @@ main( int argc, char **argv )
 
 	prof_init( argc, argv, &hw_info, &prginfo );
 
-	mask = prof_events( num_tests, hw_info );
+	mask = prof_events( num_tests );
 	start = prginfo->address_info.text_start;
 	end = prginfo->address_info.text_end;
 
