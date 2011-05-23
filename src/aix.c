@@ -1018,6 +1018,7 @@ papi_vector_t _aix_vector = {
 				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
 				 .itimer_num = PAPI_INT_ITIMER,
 				 .itimer_res_ns = 1,
+				 .itimer_ns = 1000 * PAPI_INT_MPX_DEF_US,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */
