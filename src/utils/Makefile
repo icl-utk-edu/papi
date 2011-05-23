@@ -8,7 +8,8 @@ CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
 
 ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
-	  papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost
+	  papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost \
+	  papi_component_avail 
 UTILOBJS= do_loops.o dummy.o test_utils.o
 
 default all utils: $(UTIL_TARGETS)
@@ -45,6 +46,9 @@ papi_decode: decode.c $(PAPILIB) $(UTILOBJS)
 
 papi_native_avail: native_avail.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) native_avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_native_avail
+
+papi_component_avail: component.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) component.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_component_avail
 
 test_utils.o: ../ctests/test_utils.c ../ctests/papi_test.h ../ctests/test_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/test_utils.c
