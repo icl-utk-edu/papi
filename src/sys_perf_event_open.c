@@ -57,6 +57,8 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 		ret = -1;
 	}
 #endif
-	SUBDBG("Returned %d %d %s\n",ret,errno,strerror(errno));
+	SUBDBG("Returned %d %d %s\n",ret,
+	       ret<0?errno:0,
+	       ret<0?strerror(errno):" ");
 	return ret;
 }

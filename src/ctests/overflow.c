@@ -78,6 +78,8 @@ main( int argc, char **argv )
 	EventSet =
 		add_two_nonderived_events( &num_events, &PAPI_event, &mask );
 
+	printf("Using %x for the overflow event\n",PAPI_event);
+
 	if ( PAPI_event == PAPI_FP_INS ) {
 		mythreshold = THRESHOLD;
 	}
@@ -104,13 +106,15 @@ main( int argc, char **argv )
 
 	/* set up overflow handler */
 	retval = PAPI_overflow( EventSet, PAPI_event, mythreshold, 0, handler );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
+	}
 
 	/* Start overflow run */
 	retval = PAPI_start( EventSet );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( num_flops );
 
