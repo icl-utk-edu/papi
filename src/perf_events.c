@@ -741,17 +741,13 @@ pe_enable_counters( context_t * ctx, control_state_t * ctl )
 
 	for ( i = 0; i < num_fds; i++ ) {
 		if ( ctx->evt[i].group_leader == i ) {
-			if ( ctl->overflow == 1) {
-				SUBDBG("ioctl(refresh): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
-				ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_REFRESH, NULL );
-			} else {
-				SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
-				ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
-			}	
-			if ( ret == -1 ) {
+		  /* this should refresh overflow counters too */
+		   SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
+                   ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
+		   if ( ret == -1 ) {
 				/* Never should happen */
 				return PAPI_EBUG;
-			}
+		   }
 		}
 	}
 
@@ -972,15 +968,12 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 	if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
 		for ( i = 0; i < pe_ctx->num_evts; i++ )
 			if ( pe_ctx->evt[i].group_leader == i ) {
-				if (pe_ctl->overflow == 1) {
-					ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_REFRESH, NULL );
-				} else {
-					ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
-				}
-				if ( ret == -1 ) {
+			  /* this should refresh any overflow counters too */
+			   ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
+			   if ( ret == -1 ) {
 					/* Never should happen */
 					return PAPI_EBUG;
-				}
+			   }
 			}
 	}
     }
@@ -1626,7 +1619,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	}
 
 	/* Restart the counters */
-	if (ioctl( fd, PERF_EVENT_IOC_REFRESH, NULL ) == -1)
+	if (ioctl( fd, PERF_EVENT_IOC_REFRESH, 1 ) == -1)
 			PAPIERROR( "overflow refresh failed", 0 );
 }
 
