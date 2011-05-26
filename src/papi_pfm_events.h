@@ -30,7 +30,8 @@ extern int _papi_pfm3_vendor_fixups(void);
 
 /* Gross perfctr/perf_events compatability hack */
 /* need to think up a better way to handle this */
-#ifndef SUBSTRATE_NAME_perf_events 
+
+#ifndef __PERFMON_PERF_EVENT_H__
 struct perf_event_attr {
   int config;
   int type;
@@ -38,7 +39,7 @@ struct perf_event_attr {
 
 #define PERF_TYPE_RAW 4;
 
-#endif
+#endif /* !__PERFMON_PERF_EVENT_H__ */
 
 
 extern int _papi_pfm3_setup_counters( struct perf_event_attr *attr, 
