@@ -23,7 +23,7 @@ endif
 
 unexport CFLAGS
 
-CFLAGS += -DSUBSTRATE_USES_LIBPFM
+CFLAGS += -DSUBSTRATE_USES_LIBPFM -DSUBSTRATE_NAME_$(SUBSTR)
 MISCHDRS += perfmon.h papi_pfm_events.h $(PAPI_EVENTS_TABLE)
 MISCSRCS += papi_pfm4_events.c
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
