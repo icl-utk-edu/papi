@@ -30,7 +30,7 @@ extern int _papi_pfm3_vendor_fixups(void);
 
 /* Gross perfctr/perf_events compatability hack */
 /* need to think up a better way to handle this */
-#ifdef PERFCTR_PFM_EVENTS
+#ifndef SUBSTRATE_USES_LIBPFM
 struct perf_event_attr {
   int config;
   int type;
