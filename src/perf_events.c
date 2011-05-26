@@ -77,6 +77,14 @@ bug_check_scheduability(void) {
 }
 
 /* before 2.6.33 multiplexing did not work */
+
+/* It turns out this is possibly just a symptom of the  */
+/*   check schedulability bug, and not an inherent bug  */
+/*   in perf_events.  It might be x86 only too.         */
+/* It's because our multiplex partition code depends on */
+/* incompatible events havng an immediate error         */
+
+
 static inline int 
 bug_multiplex(void) {
 
