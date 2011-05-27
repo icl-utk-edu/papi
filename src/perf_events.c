@@ -93,9 +93,11 @@ bug_multiplex(void) {
 
 }
 
-/* before 2.6.34 PERF_FORMAT_GROUP did not work                     */
-/* PERF_FORMAT_GROUP allows reading an entire groups counts at once */
-/* If FORMAT_GROUP is enabled, than FORMAT_ID *must* be enabled too */
+/* PERF_FORMAT_GROUP allows reading an entire group's counts at once   */
+/* before 2.6.34 PERF_FORMAT_GROUP did not work when reading results   */
+/*  from attached processes.  We are lazy and disable it for all cases */
+/*  commit was:  050735b08ca8a016bbace4445fa025b88fee770b              */
+
 static inline int 
 bug_format_group(void) {
 
@@ -103,20 +105,6 @@ bug_format_group(void) {
   return 0;
 
 }
-
-
-/* before 2.6.34 FORMAT_ID did not work                     */
-/* If FORMAT_GROUP is enabled, than FORMAT_ID *must* be too */
-static inline int 
-bug_format_id(void) {
-
-  if ( (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,34)) ||
-       bug_format_group()) return 1;
-
-  return 0;
-
-}
-
 
 	/* Set the F_SETOWN_EX flag on the fd.                          */
         /* This affects which thread an overflow signal gets sent to    */
@@ -488,7 +476,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 
 		// if a new enough kernel and counters are not being inherited by children. 
 		// we are using grouped reads so get the events index into the group
-		if ((!bug_format_id()) && (!ctl->inherit)) {
+		if ((!bug_format_group()) && (!ctl->inherit)) {
                        /* obtain the id of this event assigned by the kernel */
 
 			uint64_t buffer[MAX_COUNTERS * 4];	/* max size needed */
