@@ -250,7 +250,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk,
 			if (ent->umasks[j].uflags & INTEL_X86_DFL) {
 				DPRINT("added default %s for group %d\n", ent->umasks[j].uname, i);
 
-				*umask |= ent->umasks[j].ucode;
+				*umask |= ent->umasks[j].ucode >> 8;
 
 				e->attrs[k].id = j;
 				e->attrs[k].ival = 0;
@@ -395,7 +395,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 			last_grpid = grpid;
 			modhw    |= pe[e->event].umasks[a->idx].modhw;
-			umask2   |= pe[e->event].umasks[a->idx].ucode;
+			umask2   |= pe[e->event].umasks[a->idx].ucode >> 8;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->idx].grpid;
 
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
@@ -623,13 +623,18 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
-		if (pe[i].numasks >= INTEL_X86_NUM_UMASKS) {
-			fprintf(fp, "pmu: %s event%d: %s :: numasks too big (<%d)\n", pmu->name, i, pe[i].name, INTEL_X86_NUM_UMASKS);
+		if (pe[i].numasks && pe[i].ngrp == 0) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp cannot be zero\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 
-		if (pe[i].numasks && pe[i].ngrp == 0) {
-			fprintf(fp, "pmu: %s event%d: %s :: ngrp cannot be zero\n", pmu->name, i, pe[i].name);
+		if (pe[i].numasks && pe[i].umasks == NULL) {
+			fprintf(fp, "pmu: %s event%d: %s :: numasks but no umasks\n", pmu->name, i, pe[i].name);
+			error++;
+		}
+
+		if (pe[i].numasks == 0 && pe[i].umasks) {
+			fprintf(fp, "pmu: %s event%d: %s :: numasks=0 but umasks defined\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 
@@ -696,13 +701,6 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
-		/* check for excess unit masks */
-		for(; j < INTEL_X86_NUM_UMASKS; j++) {
-			if (pe[i].umasks[j].uname || pe[i].umasks[j].udesc) {
-				fprintf(fp, "pmu: %s event%d: %s :: numasks (%d) invalid more events exists\n", pmu->name, i, pe[i].name, pe[i].numasks);
-				error++;
-			}
-		}
 		/* only one default per grp */
 		for(j=0; j < pe[i].ngrp; j++) {
 			if (ndfl[j] > 1) {

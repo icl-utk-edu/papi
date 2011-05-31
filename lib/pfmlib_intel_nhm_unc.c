@@ -44,6 +44,15 @@
 #define NHM_UNC_ATTRS \
 	(_NHM_UNC_ATTR_I|_NHM_UNC_ATTR_E|_NHM_UNC_ATTR_C|_NHM_UNC_ATTR_O)
 
+#define NHM_UNC_MOD_OCC_BIT 	17
+#define NHM_UNC_MOD_EDGE_BIT	18
+#define NHM_UNC_MOD_INV_BIT	23
+#define NHM_UNC_MOD_CMASK_BIT	24
+
+#define NHM_UNC_MOD_OCC		(1 << NHM_UNC_MOD_OCC_BIT)
+#define NHM_UNC_MOD_EDGE	(1 << NHM_UNC_MOD_EDGE_BIT)
+#define NHM_UNC_MOD_INV		(1 << NHM_UNC_MOD_INV_BIT)
+
 /* Intel Nehalem/Westmere uncore event table */
 #include "events/intel_nhm_unc_events.h"
 #include "events/intel_wsm_unc_events.h"
@@ -172,7 +181,7 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 			last_grpid = grpid;
 			modhw    |= pe[e->event].umasks[a->idx].modhw;
-			umask    |= pe[e->event].umasks[a->idx].ucode;
+			umask    |= pe[e->event].umasks[a->idx].ucode >> 8;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->idx].grpid;
 
 			reg.val |= umask << 8;
@@ -294,7 +303,7 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.name			= "nhm_unc",
 
 	.pmu			= PFM_PMU_INTEL_NHM_UNC,
-	.pme_count		= PME_NHM_UNC_EVENT_COUNT,
+	.pme_count		= PME_INTEL_NHM_UNC_EVENT_COUNT,
 	.type			= PFM_PMU_TYPE_UNCORE,
 	.num_cntrs		= 8,
 	.num_fixed_cntrs	= 1,
@@ -323,7 +332,7 @@ pfmlib_pmu_t intel_wsm_unc_support={
 	.name			= "wsm_unc",
 
 	.pmu			= PFM_PMU_INTEL_WSM_UNC,
-	.pme_count		= PME_WSM_UNC_EVENT_COUNT,
+	.pme_count		= PME_INTEL_WSM_UNC_EVENT_COUNT,
 	.type			= PFM_PMU_TYPE_UNCORE,
 	.num_cntrs		= 8,
 	.num_fixed_cntrs	= 1,

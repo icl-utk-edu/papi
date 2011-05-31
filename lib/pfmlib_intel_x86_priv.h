@@ -31,10 +31,6 @@
 
 
 /*
- * maximum number of unit masks/event
- */
-#define INTEL_X86_NUM_UMASKS	32
-/*
  * maximum number of unit masks groups per event
  */
 #define INTEL_X86_NUM_GRP	8
@@ -73,7 +69,7 @@ typedef struct {
 	unsigned int			modmsk;	/* bitmask of modifiers for this event */
 	unsigned int			ngrp;	/* number of unit masks groups */
 	intel_x86_encoder_t		encoder; /* event-specific encoder (optional) */
-	intel_x86_umask_t		umasks[INTEL_X86_NUM_UMASKS]; /* umask desc */
+	const intel_x86_umask_t		*umasks; /* umask desc */
 } intel_x86_entry_t;
 
 /*
@@ -152,11 +148,9 @@ typedef union pfm_intel_x86_reg {
 
 #define INTEL_V1_ATTRS 		INTEL_X86_ATTRS
 #define INTEL_V2_ATTRS 		INTEL_X86_ATTRS
-#define INTEL_V2_PEBS_ATTRS 	(INTEL_V2_ATTRS|_INTEL_X86_ATTR_P)
 #define INTEL_FIXED2_ATTRS	(_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
 #define INTEL_FIXED3_ATTRS	(INTEL_FIXED2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V3_ATTRS 		(INTEL_V2_ATTRS|_INTEL_X86_ATTR_T)
-#define INTEL_V3_PEBS_ATTRS 	(INTEL_V3_ATTRS|_INTEL_X86_ATTR_P)
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -170,6 +164,18 @@ typedef union pfm_intel_x86_reg {
 #define sel_inv		 perfevtsel.sel_inv
 #define sel_cnt_mask	 perfevtsel.sel_cnt_mask
 #define sel_anythr	 perfevtsel.sel_anythr
+
+/*
+ * shift relative to start of register
+ */
+#define INTEL_X86_EDGE_BIT	18
+#define INTEL_X86_ANY_BIT	21
+#define INTEL_X86_INV_BIT	23
+#define INTEL_X86_CMASK_BIT	24
+
+#define INTEL_X86_MOD_EDGE	(1 << INTEL_X86_EDGE_BIT)
+#define INTEL_X86_MOD_ANY	(1 << INTEL_X86_ANY_BIT)
+#define INTEL_X86_MOD_INV	(1 << INTEL_X86_INV_BIT)
 
 typedef struct {
 	unsigned int version:8;
