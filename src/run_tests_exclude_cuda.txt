@@ -6,23 +6,7 @@
 
 # Time wasting support program, not a standalone test
 ctests/burn
-ctests/pthrtough
-ctests/pthrtough2
 ctests/thrspecific
-ctests/profile_pthreads
-ctests/overflow_pthreads
-ctests/zero_pthreads
-ctests/clockres_pthreads
-ctests/krentel_pthreads
-ctests/fork
-ctests/fork2
-ctests/forkexec2
-ctests/forkexec3
-ctests/forkexec4
-ctests/fork_overflow
-ctests/zero_fork
-ctests/kufrin
-ctests/multiplex1_pthreads
 ctests/shlib
 
 # these tests haven't been implemented

@@ -513,18 +513,25 @@ int
 CUDA_shutdown( hwd_context_t * ctx )
 {
 	( void ) ctx;
-	uint32_t j;
-	int i;
 
-	/* deallocate all the memory */
-	for ( i = 0; i < deviceCount; i++ )
-		for ( j = 0; j < device[i].domainCount; j++ )
-			free( device[i].domain[j].event );
-	free( device[i].domain );
+	/* if running a threaded application, we need to make sure that 
+	   a thread doesn't free the same memory location(s) more than once */
+	if ( CUDA_FREED == 0 ) {
+		uint32_t j;
+		int i;
+		
+		/* deallocate all the memory */
+		for ( i = 0; i < deviceCount; i++ )
+			for ( j = 0; j < device[i].domainCount; j++ )
+				free( device[i].domain[j].event );
+		free( device[i].domain );
+		
+		free( device );
+		free( cuda_native_table );
+		free( addedEvents.list );
 
-	free( device );
-	free( cuda_native_table );
-	free( addedEvents.list );
+		CUDA_FREED = 1;
+	}
 
 	return ( PAPI_OK );
 }
