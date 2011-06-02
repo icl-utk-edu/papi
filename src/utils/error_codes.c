@@ -7,7 +7,7 @@
   * @brief papi_error_codes utility.
   *	@page papi_error_codes
   *	@section  NAME
-  *		papi_error_codes - executes PAPI preset or native events from the command line. 
+  *		papi_error_codes - lists all currently defined PAPI error codes. 
   *
   *	@section Synopsis
   *		papi_error_codes
