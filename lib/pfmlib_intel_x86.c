@@ -753,7 +753,7 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_
 		info->name = pe[pidx].umasks[idx].uname;
 		info->desc = pe[pidx].umasks[idx].udesc;
 		info->equiv= pe[pidx].umasks[idx].uequiv;
-		info->code = pe[pidx].umasks[idx].ucode;
+		info->code = pe[pidx].umasks[idx].ucode >> 8; /* show actual umask code */
 		info->type = PFM_ATTR_UMASK;
 		info->is_dfl = intel_x86_uflag(this, pidx, idx, INTEL_X86_DFL);
 		info->is_precise = intel_x86_uflag(this, pidx, idx, INTEL_X86_PEBS);
