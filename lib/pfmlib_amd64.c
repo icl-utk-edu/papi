@@ -157,7 +157,9 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
                 default:
                         rev = PFM_PMU_AMD64_FAM14H_BOBCAT;
                 }
-        }
+	} else if (cfg->family == 21) {
+		rev = PFM_PMU_AMD64_FAM15H_INTERLAGOS;
+	}
         cfg->revision = rev;
 }
 

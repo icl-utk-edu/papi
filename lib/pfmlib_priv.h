@@ -197,6 +197,7 @@ extern pfmlib_pmu_t amd64_fam10h_barcelona_support;
 extern pfmlib_pmu_t amd64_fam10h_shanghai_support;
 extern pfmlib_pmu_t amd64_fam10h_istanbul_support;
 extern pfmlib_pmu_t amd64_fam14h_bobcat_support;
+extern pfmlib_pmu_t amd64_fam15h_interlagos_support;
 extern pfmlib_pmu_t intel_p6_support;
 extern pfmlib_pmu_t intel_ppro_support;
 extern pfmlib_pmu_t intel_pii_support;
@@ -245,6 +246,7 @@ extern char *pfmlib_forced_pmu;
 #define this_pe(t)		(((pfmlib_pmu_t *)t)->pe)
 #define this_atdesc(t)		(((pfmlib_pmu_t *)t)->atdesc)
 
+#define LIBPFM_ARRAY_SIZE(a) (sizeof(a) / sizeof(typeof(*(a))))
 /*
  * population count (number of bits set)
  */
