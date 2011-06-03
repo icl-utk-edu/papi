@@ -1,4 +1,4 @@
-Release Procedure for PAPI  January 13, 2010
+Release Procedure for PAPI  June 01, 2011
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -17,8 +17,10 @@ __ 2. Update any documentation that may have changed. Pay particular attention
 __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
 	Doxyfile, Doxyfile-everything (PROJECT_NUMBER) ; and commit to cvs if needed.
 
-__ 4. If configure.in is changed, run autoconf (2.61) 
-	and commit the resulting configure.
+__ 4. If configure.in is changed, run autoconf (2.59) and commit the resulting
+	configure file.
+	NOTE: Using an autoconf version >2.59 will work, but will produce an 
+	inordinate number of extraneous differences between versions.
 
 __ 5. Create a ChangeLog for the current release. 
 	- One handy way to do this is to use the python script that comes with
