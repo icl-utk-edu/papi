@@ -159,7 +159,8 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
 	return;
 }
 
-/** @brief simplified call to get Mflips/s (floating point instruction rate), real and processor time 
+/** @class PAPI_flips
+  *	simplified call to get Mflips/s (floating point instruction rate), real and processor time 
   *
   * @param *rtime
   *		total realtime since the first PAPI_flips() call
@@ -218,7 +219,8 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 	return ( PAPI_OK );
 }
 
-/** @brief simplified call to get Mflops/s (floating point instruction rate), real and processor time 
+/** @class PAPI_flops
+  *	simplified call to get Mflops/s (floating point instruction rate), real and processor time 
   *
   * @param *rtime
   *		total realtime since the first PAPI_flops() call
@@ -275,7 +277,8 @@ PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
 	return ( PAPI_OK );
 }
 
-/** @brief gets instructions per cycle, real and processor time 
+/** @class PAPI_ipc
+  *	gets instructions per cycle, real and processor time 
  * @param *rtime
  *		total realtime since the first PAPI_flops() call
  *	@param *ptime
@@ -394,7 +397,8 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
 	return PAPI_OK;
 }
 
-/** @brief get the number of hardware counters available on the system
+/** @class PAPI_num_counters
+  *	get the number of hardware counters available on the system
   * 
   * @post 
   *		Initializes the library to PAPI_HIGH_LEVEL_INITED if necessary.
@@ -422,7 +426,8 @@ PAPI_num_counters( void )
 	return ( PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) );
 }
 
-/** @brief start counting hardware events 
+/** @class PAPI_start_counters
+  *	start counting hardware events 
  *
  * @param *events
  *		an array of codes for events such as PAPI_INT_INS or a native event code 
@@ -525,7 +530,8 @@ _internal_hl_read_cnts( long long *values, int array_len, int flag )
 	return ( PAPI_EINVAL );
 }
 
-/** @brief read and reset counters 
+/** @class PAPI_read_counters
+  *	read and reset counters 
  *
  * @param *values
  *		an array to hold the counter values of the counting events
@@ -554,7 +560,8 @@ PAPI_read_counters( long long *values, int array_len )
 }
 
 
-/** @brief accumulate and reset counters 
+/** @class PAPI_accum_counters
+  *	accumulate and reset counters 
  *
  * @param *values
  *		an array to hold the counter values of the counting events
@@ -585,7 +592,8 @@ PAPI_accum_counters( long long *values, int array_len )
 	return ( _internal_hl_read_cnts( values, array_len, PAPI_HL_ACCUM ) );
 }
 
-/** @brief stop counting hardware events and reset values to zero
+/** @class PAPI_stop_counters
+  *	stop counting hardware events and reset values to zero
  *
  * @param *values
  *		an array where to put the counter values

@@ -434,9 +434,11 @@ read the documentation carefully.  */
 #define long_long long long
 #define u_long_long unsigned long long
 
+/** @defgroup papi_data_structures PAPI Data Structures */
+
 	typedef unsigned long PAPI_thread_id_t;
 
-	/** */
+	/** @ingroup papi_data_structures */
 	typedef struct _papi_all_thr_spec {
      int num;
      PAPI_thread_id_t *id;
@@ -452,7 +454,7 @@ read the documentation carefully.  */
 	typedef char *caddr_t;
 #endif
 
-	/** */
+	/** @ingroup papi_data_structures */
    typedef struct _papi_sprofil {
       void *pr_base;          /**< buffer base */
       unsigned pr_size;       /**< buffer size */
@@ -463,7 +465,7 @@ read the documentation carefully.  */
                                  also, two extensions 0x1000 == 1, 0x2000 == 2 */
    } PAPI_sprofil_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_itimer_option {
      int itimer_num;
      int itimer_sig;
@@ -471,27 +473,27 @@ read the documentation carefully.  */
      int flags;
    } PAPI_itimer_option_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_inherit_option {
       int eventset;
       int inherit;
    } PAPI_inherit_option_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_domain_option {
       int def_cidx; /**< this structure requires a component index to set default domains */
       int eventset;
       int domain;
    } PAPI_domain_option_t;
 
-/** */
+/**  @ingroup papi_data_structures*/
    typedef struct _papi_granularity_option {
       int def_cidx; /**< this structure requires a component index to set default granularity */
       int eventset;
       int granularity;
    } PAPI_granularity_option_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_preload_option {
       char lib_preload_env[PAPI_MAX_STR_LEN];   
       char lib_preload_sep;
@@ -499,7 +501,7 @@ read the documentation carefully.  */
       char lib_dir_sep;
    } PAPI_preload_info_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_component_option {
      char name[PAPI_MAX_STR_LEN];            /**< Name of the substrate we're using, usually CVS RCS Id */
      char version[PAPI_MIN_STR_LEN];         /**< Version of this substrate, usually CVS Revision */
@@ -548,7 +550,7 @@ read the documentation carefully.  */
      unsigned int reserved_bits:10;
    } PAPI_component_info_t;
 
-/** */
+/**  @ingroup papi_data_structures*/
    typedef struct _papi_mpx_info {
      int timer_sig;				/**< Signal number used by the multiplex timer, 0 if not: PAPI_SIGNAL */
      int timer_num;				/**< Number of the itimer or POSIX 1 timer used by the multiplex timer: PAPI_ITIMER */
@@ -557,13 +559,13 @@ read the documentation carefully.  */
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
-   /** */
+   /** @ingroup papi_data_structures */
    typedef struct _papi_debug_option {
       int level;
       PAPI_debug_handler_t handler;
    } PAPI_debug_option_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_address_map {
       char name[PAPI_HUGE_STR_LEN];
       caddr_t text_start;       /**< Start address of program text segment */
@@ -574,13 +576,13 @@ read the documentation carefully.  */
       caddr_t bss_end;          /**< End address of program bss segment */
    } PAPI_address_map_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_program_info {
       char fullname[PAPI_HUGE_STR_LEN];  /**< path+name */
       PAPI_address_map_t address_info;
    } PAPI_exe_info_t;
 
-   /** */
+   /** @ingroup papi_data_structures */
    typedef struct _papi_shared_lib_info {
       PAPI_address_map_t *map;
       int count;
@@ -613,7 +615,7 @@ read the documentation carefully.  */
 #define PAPI_MH_MAX_LEVELS    6		   /* # descriptors for each TLB or cache level */
 #define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  4
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_mh_tlb_info {
       int type; /**< Empty, instr, data, vector, unified */
       int num_entries;
@@ -621,7 +623,7 @@ read the documentation carefully.  */
       int associativity;
    } PAPI_mh_tlb_info_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_mh_cache_info {
       int type; /**< Empty, instr, data, vector, trace, unified */
       int size;
@@ -630,19 +632,21 @@ read the documentation carefully.  */
       int associativity;
    } PAPI_mh_cache_info_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_mh_level_info {
       PAPI_mh_tlb_info_t   tlb[PAPI_MH_MAX_LEVELS];
       PAPI_mh_cache_info_t cache[PAPI_MH_MAX_LEVELS];
    } PAPI_mh_level_t;
 
-/** mh for mem hierarchy maybe? */
+/**  @ingroup papi_data_structures
+  *	 @brief mh for mem hierarchy maybe? */
    typedef struct _papi_mh_info { 
       int levels;
       PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
    } PAPI_mh_info_t;
 
-/** Hardware info structure */
+/**  @ingroup papi_data_structures
+  *  @brief Hardware info structure */
    typedef struct _papi_hw_info {
       int ncpu;                     /**< Number of CPUs per NUMA Node */
       int threads;                  /**< Number of hdw threads per core */
@@ -663,27 +667,27 @@ read the documentation carefully.  */
       PAPI_mh_info_t mem_hierarchy;  /**< PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_attach_option {
       int eventset;
       unsigned long tid;
    } PAPI_attach_option_t;
 
-/** */
+/**  @ingroup papi_data_structures*/
       typedef struct _papi_cpu_option {
          int eventset;
          unsigned int cpu_num;
       } PAPI_cpu_option_t;
 
-/** */
+/** @ingroup papi_data_structures */
    typedef struct _papi_multiplex_option {
       int eventset;
       int ns;
       int flags;
    } PAPI_multiplex_option_t;
 
-   /** address range specification for range restricted counting 
-	   if both are zero, range is disabled  */
+   /** @ingroup papi_data_structures 
+	 *  @brief address range specification for range restricted counting if both are zero, range is disabled  */
    typedef struct _papi_addr_range_option { 
       int eventset;           /**< eventset to restrict */
       caddr_t start;          /**< user requested start address of an address range */
@@ -692,8 +696,9 @@ read the documentation carefully.  */
       int end_off;            /**< hardware specified offset from end address */
    } PAPI_addr_range_option_t;
 
-/** @union PAPI_option_t
-    @brief A pointer to the following is passed to PAPI_set/get_opt() */
+/** @ingroup papi_data_structures 
+  *	@union PAPI_option_t
+  *	@brief A pointer to the following is passed to PAPI_set/get_opt() */
 
 	typedef union
 	{
@@ -715,7 +720,8 @@ read the documentation carefully.  */
 		PAPI_addr_range_option_t addr;
 	} PAPI_option_t;
 
-/** A pointer to the following is passed to PAPI_get_dmem_info() */
+/** @ingroup papi_data_structures
+  *	@brief A pointer to the following is passed to PAPI_get_dmem_info() */
 	typedef struct _dmem_t {
 	  long long peak;
 	  long long size;
@@ -754,7 +760,8 @@ read the documentation carefully.  */
 #else
 #define PAPI_MAX_INFO_TERMS 12
 #endif
-/** @brief This structure is the event information that is exposed to the user through the API.
+/** @ingroup papi_data_structures 
+  *	@brief This structure is the event information that is exposed to the user through the API.
 
    The same structure is used to describe both preset and native events.
    WARNING: This structure is very large. With current definitions, it is about 2660 bytes.

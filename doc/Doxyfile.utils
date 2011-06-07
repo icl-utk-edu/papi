@@ -372,7 +372,7 @@ INTERNAL_DOCS          = NO
 # in case and if your file system supports case sensitive file names. Windows
 # and Mac users are advised to set this option to NO.
 
-CASE_SENSE_NAMES       = YES
+CASE_SENSE_NAMES       = NO
 
 # If the HIDE_SCOPE_NAMES tag is set to NO (the default) then Doxygen
 # will show members with their full class and namespace scopes in the
@@ -568,7 +568,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT					= ../src/papi.h  ../src/papi.c ../src/papi_hl.c 
+INPUT					= ../src/utils 
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -585,7 +585,7 @@ INPUT_ENCODING         = UTF-8
 # *.c *.cc *.cxx *.cpp *.c++ *.java *.ii *.ixx *.ipp *.i++ *.inl *.h *.hh *.hxx
 # *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.py *.f90
 
-FILE_PATTERNS          = *.c *.h
+FILE_PATTERNS          = *.c 
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -1116,7 +1116,7 @@ MAN_OUTPUT             = man
 # The MAN_EXTENSION tag determines the extension that is added to
 # the generated man pages (default is the subroutine's section .3)
 
-MAN_EXTENSION          = .3
+MAN_EXTENSION          = .1
 
 # If the MAN_LINKS tag is set to YES and Doxygen generates man output,
 # then it will generate one additional man file for each entity
