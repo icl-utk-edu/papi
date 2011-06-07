@@ -520,6 +520,8 @@ CUDA_shutdown( hwd_context_t * ctx )
 	if ( CUDA_FREED == 0 ) {
 		uint32_t j;
 		int i;
+		
+		CUDA_FREED = 1;
 
 		/* deallocate all the memory */
 		for ( i = 0; i < deviceCount; i++ )
@@ -530,8 +532,6 @@ CUDA_shutdown( hwd_context_t * ctx )
 		free( device );
 		free( cuda_native_table );
 		free( addedEvents.list );
-
-		CUDA_FREED = 1;
 	}
 
 	return ( PAPI_OK );

@@ -6,7 +6,6 @@
 
 # Time wasting support program, not a standalone test
 ctests/burn
-ctests/thrspecific
 ctests/shlib
 
 # these tests haven't been implemented
