@@ -45,7 +45,7 @@ detectDevice( void )
 	err = cuInit( 0 );
 	if ( err != CUDA_SUCCESS ) {
 		printf( "Initialization of CUDA library failed.\n" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 
 	/* How many gpgpu devices do we have? */
@@ -53,14 +53,14 @@ detectDevice( void )
 	CHECK_CU_ERROR( err, "cuDeviceGetCount" );
 	if ( deviceCount == 0 ) {
 		printf( "There is no device supporting CUDA.\n" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 
 	/* allocate memory for device data table */
 	device = ( DeviceData_t * ) malloc( sizeof ( DeviceData_t ) * deviceCount );
 	if ( device == NULL ) {
 		perror( "malloc(): Failed to allocate memory to CUDA device table" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 
 	/* What are the devices? Get Name and # of domains per device */
@@ -84,7 +84,7 @@ detectDevice( void )
 
 		/* enumerate the domains on the device */
 		if ( 0 != enumEventDomains( device[id].dev, id ) )
-			exit( EXIT_FAILURE );
+			return( PAPI_ENOSUPP );
 	}
 
 	deviceCount = deviceCount - skipDevice;
@@ -379,7 +379,7 @@ CUDA_init_substrate(  )
 	/* Initialize CuPTI library */
 	if ( 0 != cuInit( 0 ) ) {
 		perror( "cuInit(): Failed to initialize the CUDA library" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 	
 	/* Create dynamic event table */
@@ -389,12 +389,12 @@ CUDA_init_substrate(  )
 		malloc( sizeof ( CUDA_native_event_entry_t ) * NUM_EVENTS );
 	if ( cuda_native_table == NULL ) {
 		perror( "malloc(): Failed to allocate memory to events table" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 	
 	if ( NUM_EVENTS != createNativeEvents(  ) ) {
 		fprintf( stderr, "Number of CUDA events mismatch!\n" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 	
 	/* allocate memory for the list of events that are added to the CuPTI eventGroup */
@@ -402,7 +402,7 @@ CUDA_init_substrate(  )
 	if ( addedEvents.list == NULL ) {
 		perror
 			( "malloc(): Failed to allocate memory to table of events that are added to CuPTI eventGroup" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 	
 	/* initialize the event list */
@@ -431,16 +431,18 @@ CUDA_init_control_state( hwd_control_state_t * ctrl )
 	   the device specified with cudaSetDevice() in user code */
 	if ( CUDA_SUCCESS != cudaGetDevice( &currentDeviceID ) ) {
 		printf( "There is no device supporting CUDA.\n" );
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 	}
 	printf( "DEVICE USED: %s (%d)\n", device[currentDeviceID].name,
 			currentDeviceID );
 	
 	/* get the CUDA context from the calling CPU thread */
 	cuErr = cuCtxGetCurrent( &cuCtx );
-
+	printf("%d != %d || %p == NULL\n", cuErr, CUDA_SUCCESS, cuCtx );
+	
 	/* if no CUDA context is bound to the calling CPU thread yet, create one */
 	if ( cuErr != CUDA_SUCCESS || cuCtx == NULL ) {
+		printf("%s (%d)\n", device[currentDeviceID].name, currentDeviceID );
 		cuErr = cuCtxCreate( &cuCtx, 0, device[currentDeviceID].dev );
 		CHECK_CU_ERROR( cuErr, "cuCtxCreate" );
 	}
@@ -498,7 +500,7 @@ CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 
 	
 	if ( 0 != getEventValue( ( ( CUDA_control_state_t * ) ctrl )->counts ) )
-		exit( EXIT_FAILURE );
+		return ( PAPI_ENOSUPP );
 
 	*events = ( ( CUDA_control_state_t * ) ctrl )->counts;
 
@@ -568,40 +570,43 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	char *device_tmp;
 	
-	if ( count == 0 ) {
-		printf("Removing CUDA events is currently not supported (Bug in cuda 4.0rc).\n");
-		exit( EXIT_FAILURE );
-	}
+	cuptiErr = cuptiEventGroupDisable(eventGroup);
+	CHECK_CUPTI_ERROR(cuptiErr, "cuptiEventGroupDisable");
 	
-	index =
-		native[count -
-			   1].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
-	native[count - 1].ni_position = index;
-
-	/* store events, that have been added to the CuPTI eveentGroup 
-	   in a seperate place (addedEvents).
-	   Needed, so that we can read the values for the added events only */
-	addedEvents.count = count;
-	addedEvents.list[count - 1] = index;	
-	
-	/* determine the device name from the event name chosen */
-	device_tmp = strchr( cuda_native_table[index].name, '.' );
-
-	/* if this device name is different from the actual device the code is running on, then exit */
-	if ( 0 != strncmp( device[currentDeviceID].name,
-						device_tmp + 1,
-						strlen( device[currentDeviceID].name ) ) ) {
-		printf
-			( "Device %s is used -- BUT event %s is collected. \n ---> ERROR: Specify events for the device that is used!\n\n",
-				device[currentDeviceID].name, cuda_native_table[index].name );
-		exit( EXIT_FAILURE ); 
+	/* Remove or Add events */
+	if ( old_count > count ) {
+		cuptiErr = cuptiEventGroupRemoveEvent( eventGroup, cuda_native_table[addedEvents.list[0]].resources.eventId );
+		old_count = count;
 	}
+	else {		
+		index = native[count - 1].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		native[count - 1].ni_position = index;
 
-	/* Add events to the CuPTI eventGroup */
-	cuptiErr =
-	cuptiEventGroupAddEvent( eventGroup,
-							cuda_native_table[index].resources.eventId );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupAddEvent" );
+		/* store events, that have been added to the CuPTI eveentGroup 
+		 in a seperate place (addedEvents).
+		 Needed, so that we can read the values for the added events only */
+		addedEvents.count = count;
+		addedEvents.list[count - 1] = index;	
+	
+		/* determine the device name from the event name chosen */
+		device_tmp = strchr( cuda_native_table[index].name, '.' );
+
+		/* if this device name is different from the actual device the code is running on, then exit */
+		if ( 0 != strncmp( device[currentDeviceID].name,
+						   device_tmp + 1,
+						   strlen( device[currentDeviceID].name ) ) ) {
+			printf( "Device %s is used -- BUT event %s is collected. \n ---> ERROR: Specify events for the device that is used!\n\n",
+				    device[currentDeviceID].name, cuda_native_table[index].name );
+			return ( PAPI_ENOSUPP ); // Not supported 
+		}
+
+		/* Add events to the CuPTI eventGroup */
+		cuptiErr = cuptiEventGroupAddEvent( eventGroup, cuda_native_table[index].resources.eventId );
+		CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupAddEvent" );
+		
+		/* Keep track of events in EventGroup if an event is removed */
+		old_count = count;
+	}
 	
 	return ( PAPI_OK );
 }

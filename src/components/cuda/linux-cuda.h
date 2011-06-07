@@ -138,6 +138,7 @@ static int totalDomainCount = 0;
 static int totalEventCount = 0;
 static int currentDeviceID;			   /* determine the actual device the user code is running on */
 static int CUDA_FREED = 0;
+static int old_count = 0;
 
 DeviceData_t *device;
 AddedEvents_t addedEvents;
