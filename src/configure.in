@@ -100,6 +100,10 @@ AC_HEADER_TIME
 AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h])
 AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time])
 
+# Check for doxygen, used to generate the man pages
+AC_MSG_CHECKING(for doxygen)
+AC_CHECK_PROG([DOXYGEN], [doxygen], [doxygen-manpages])
+
 #
 # Check if the system provides dl* symbols without -ldl, and if not,
 # check for -ldl existance.
@@ -1529,6 +1533,7 @@ AC_SUBST(COMPONENT_RULES)
 AC_SUBST(FTEST_TARGETS)
 AC_SUBST(UTIL_TARGETS)
 AC_SUBST(EXTRA_CFLAGS)
+AC_SUBST(DOXYGEN)
 
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)
