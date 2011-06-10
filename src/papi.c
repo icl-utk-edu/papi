@@ -138,6 +138,11 @@ set_runtime_config(  )
  *	However it is much better to use the underlying thread subsystem's call, 
  *	which is pthread_self() on Linux platforms. 
  *
+ *	@code
+if ( PAPI_thread_init(pthread_self) != PAPI_OK )
+	exit(1);
+ *	@endcode
+ *
  *	@see PAPI_register_thread PAPI_unregister_thread PAPI_get_thr_specific PAPI_set_thr_specific PAPI_thread_id PAPI_list_threads
  */
 int
@@ -174,6 +179,14 @@ PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
  *	It calls the function registered with PAPI through a call to 
  *	PAPI_thread_init().
  *
+ *	@code
+unsigned long tid;
+
+if ((tid = PAPI_thread_id()) == (unsigned long int)-1 )
+	exit(1);
+
+printf("Initial thread id is: %lu\n", tid );
+ *	@endcode
  *	@see PAPI_thread_init
  */
 unsigned long
@@ -2887,6 +2900,11 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
   *
   * @return 
   *		Number of components available on the system
+  *
+  *	@code
+// Query the library for a component count. 
+printf("%d components installed., PAPI_num_components() );
+  * @endcode
   */
 int
 PAPI_num_components( void )

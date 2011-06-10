@@ -410,6 +410,16 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
   *	@retval PAPI_ESYS 
   *		A system or C library call failed inside PAPI, see the errno variable. 
   *
+  *	@code
+int num_hwcntrs;
+//  The installation does not support PAPI 
+if ((num_hwcntrs = PAPI_num_counters()) < 0 )
+	handle_error(1);
+//  The installation supports PAPI, but has no counters 
+if ((num_hwcntrs = PAPI_num_counters()) == 0 )
+	fprintf(stderr,"Info:: This machine does not provide hardware counters.\n");
+  *	@endcode
+  *
   * PAPI_num_counters() returns the optimal length of the values array for the high level functions. 
   * This value corresponds to the number of hardware counters supported by the current substrate. 
   */
@@ -457,6 +467,11 @@ PAPI_num_counters( void )
  * simultaneously by reading the vendor's documentation. 
  * The length of the *events array should be no longer than the value returned 
  * by PAPI_num_counters(). 
+ *
+ *	@code
+if( PAPI_start_counters( Events, num_hwcntrs ) != PAPI_OK )
+	handle_error(1);
+ *	@endcode
  *
  * @see PAPI_stop_counters() PAPI_add_event() PAPI_create_eventset()
  */
@@ -551,6 +566,22 @@ _internal_hl_read_cnts( long long *values, int array_len, int flag )
  *
  * PAPI_read_counters() copies the event counters into the array *values. 
  *
+ *	@code
+do_100events();
+if ( PAPI_read_counters( values, num_hwcntrs ) != PAPI_OK )
+	handlw_error(1);
+// values[0] now equals 100 
+do_100events();
+if ( PAPI_accum_counters( values, num_hwcntrs ) != PAPI_OK )
+	handle_error(1);
+// values[0] now equals 200
+values[0] = -100;
+do_100events();
+if ( PAPI_accum_counters(values, num_hwcntrs ) != PAPI_OK )
+	handle_error();
+// values[0] now equals 0
+ *	@endcode
+ *
  * @see PAPI_set_opt() PAPI_start_counters()
  */
 int
@@ -580,6 +611,22 @@ PAPI_read_counters( long long *values, int array_len )
  *		A system or C library call failed inside PAPI, see the errno variable. 
  *
  * PAPI_accum_counters() adds the event counters into the array *values. 
+ *
+ *	@code
+do_100events();
+if ( PAPI_read_counters( values, num_hwcntrs ) != PAPI_OK )
+	handlw_error(1);
+// values[0] now equals 100 
+do_100events();
+if ( PAPI_accum_counters( values, num_hwcntrs ) != PAPI_OK )
+	handle_error(1);
+// values[0] now equals 200
+values[0] = -100;
+do_100events();
+if ( PAPI_accum_counters(values, num_hwcntrs ) != PAPI_OK )
+	handle_error();
+// values[0] now equals 0
+ *	@endcode
  *
  * @see PAPI_set_opt() PAPI_start_counters()
  */
