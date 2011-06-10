@@ -613,6 +613,16 @@ PAPI_accum_counters( long long *values, int array_len )
  * The PAPI_stop_counters() function stops the counters and copies the counts 
  * into the *values array. 
  * The counters must have been started by a previous call to PAPI_start_counters(). 
+ *
+ *	\code
+int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
+long long values[2];
+if ( PAPI_start_counters( Events, 2 ) != PAPI_OK )
+	handle_error(1);
+your_slow_code();
+if ( PAPI_stop_counters( values, 2 ) != PAPI_OK )
+	handle_error(1);
+ *	\endcode
  * 
  * @see PAPI_read_counters() PAPI_start_counters() PAPI_set_opt()
  */
