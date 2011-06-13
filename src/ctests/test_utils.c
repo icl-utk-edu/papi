@@ -526,6 +526,12 @@ test_fail( char *file, int line, char *call, int retval )
 	   calling PAPI_shutdown here could prevent some threads
 	   from being able to free memory they have allocated.
 	 */
+
+	/* This is stupid.  Threads are the rare case */
+	/* and in any case an exit() should clear everything out */
+	/* adding back the exit() call */
+
+	exit(1);
 }
 
 /* This routine mimics the previous implementation of test_fail()
