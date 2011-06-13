@@ -617,29 +617,30 @@ int find_event_no_aliases(char *name) {
 
   SUBDBG("Looking for %s\n",name);
 
-  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
-  memset(&event_info,0,sizeof(pfm_event_info_t));
-
   pfm_for_all_pmus(j) {
-    SUBDBG("Looking in pmu %d\n",j);
 
+    memset(&pinfo,0,sizeof(pfm_pmu_info_t));
     pfm_get_pmu_info(j, &pinfo);
-    if (!pinfo.is_present)
-      continue;
+    if (!pinfo.is_present) {
+       SUBDBG("PMU %d not present, skipping...\n",j);
+       continue;
+    }
 
+    SUBDBG("Looking in pmu %d\n",j);   
     i = pinfo.first_event; 
     while(1) {
+        memset(&event_info,0,sizeof(pfm_event_info_t));
         ret=pfm_get_event_info(i, PFM_OS_PERF_EVENT, &event_info);
 	if (ret<0) break;
 	
 	sprintf(blah,"%s::%s",pinfo.name,event_info.name);
-	SUBDBG("Trying %x %s\n",i,blah);
+	//SUBDBG("Trying %x %s\n",i,blah);
 	if (!strcmp(name,blah)) {
 	  SUBDBG("FOUND %s %s %x\n",name,blah,i);
 	  return i;
 	}
 
-	SUBDBG("Trying %x %s\n",i,event_info.name);
+	//SUBDBG("Trying %x %s\n",i,event_info.name);
 	if (!strcmp(name,event_info.name)) {
 	  SUBDBG("FOUND %s %s %x\n",name,event_info.name,i);
 	  return i;
@@ -700,11 +701,11 @@ static struct native_event_t *allocate_native_event(char *name,
   int count=5;
   unsigned int i;
   uint64_t *codes;
-  char *fstr=NULL;
+  char *fstr=NULL,*base_start;
   int found_idx;
   pfm_event_info_t info;
   pfm_pmu_info_t pinfo;
-  char base[BUFSIZ];
+  char base[BUFSIZ],pmuplusbase[BUFSIZ];
 
   /* allocate canonical string */
 
@@ -731,10 +732,12 @@ static struct native_event_t *allocate_native_event(char *name,
 
   strncpy(base,name,BUFSIZ);
   i=0;
+  base_start=base;
   while(i<strlen(base)) {
     if (base[i]==':') {
       if (base[i+1]==':') {
           i++;
+	  base_start=&base[i+1];
       }
       else {
 	base[i]=0;
@@ -743,18 +746,22 @@ static struct native_event_t *allocate_native_event(char *name,
     i++;
   }
 
-  native_events[new_event].base_name=strdup(base);
+  native_events[new_event].base_name=strdup(base_start);
 
   { char tmp[BUFSIZ];
     sprintf(tmp,"%s::%s",pinfo.name,info.name);
     native_events[new_event].pmu_plus_name=strdup(tmp);
+
+    sprintf(pmuplusbase,"%s::%s",pinfo.name,base_start);
   }
 
   native_events[new_event].component=0;
   native_events[new_event].pmu=strdup(pinfo.name);
   native_events[new_event].papi_code=new_event | PAPI_NATIVE_MASK;
     
-  native_events[new_event].perfmon_idx=find_event_no_aliases(base);
+  native_events[new_event].perfmon_idx=find_event_no_aliases(pmuplusbase);
+  SUBDBG("Using %x as index instead of %x for %s\n",
+	 native_events[new_event].perfmon_idx,event_idx,pmuplusbase);
 
   native_events[new_event].allocated_name=strdup(name);
 
@@ -800,7 +807,8 @@ _papi_pfm_ntv_name_to_code( char *name, unsigned int *event_code )
 
       if (actual_idx<0) return PAPI_ENOEVNT;
 
-      //SUBDBG("Using %x instead of %x\n",event_idx,actual_idx);
+      SUBDBG("Using %x as the index\n",actual_idx);
+
       our_event=allocate_native_event(name,actual_idx);
     }
 
@@ -1237,6 +1245,7 @@ static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode) {
   char *name=NULL;
 
   ret=convert_libpfm4_to_string( code, &name);
+  SUBDBG("Converted %x to %s\n",code,name);
   if (ret==PFM_SUCCESS) {
      ret=_papi_pfm_ntv_name_to_code(name,PapiEventCode);
      SUBDBG("RETURNING FIRST: %x %s\n",*PapiEventCode,name);
@@ -1331,21 +1340,29 @@ _papi_pfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	current_event=find_existing_event_by_number(*PapiEventCode);
 	if (current_event==NULL) {
-	  return PAPI_ENOEVNT;
+           SUBDBG("EVENTS %x not found\n",*PapiEventCode);
+	   return PAPI_ENOEVNT;
 	}
 
 	if ( modifier == PAPI_ENUM_EVENTS ) {
+	   SUBDBG("ENUM_EVENTS %x\n",*PapiEventCode);
 	   unsigned int blah=0;
 
 	   code=current_event->perfmon_idx;
 
 	   ret=find_next_no_aliases(code);
 
-	   SUBDBG("Returned %x\n",ret);
-	   if (ret<0) return ret;
+	   SUBDBG("find_next_no_aliases() Returned %x\n",ret);
+	   if (ret<0) {
+	      SUBDBG("<0 so returning\n");
+	      return ret;
+	   }
+
+	   SUBDBG("VMW BLAH1\n");
 
 	   ret=convert_pfmidx_to_native(ret, &blah);
 
+	   SUBDBG("VMW BLAH2\n");
 
 	     if (ret<0) {
 	       SUBDBG("Couldn't convert to native %d %s\n",
@@ -1354,9 +1371,11 @@ _papi_pfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	     *PapiEventCode=(unsigned int)blah;
 
 	     if ((ret!=PAPI_OK) && (blah!=0)) {
+	        SUBDBG("Faking PAPI_OK because blah!=0\n");
 	        return PAPI_OK;
 	     }
 
+             SUBDBG("Returning PAPI_OK\n");
 	     return ret;
 
 	}
@@ -1541,6 +1560,11 @@ _papi_pfm3_init(void) {
    if (!found_default) {
       PAPIERROR("Could not find default PMU\n");
       return PAPI_ESBSTR;
+   }
+
+   if (found_default>1) {
+     PAPIERROR("Found too many default PMUs!\n");
+     return PAPI_ESBSTR;
    }
 
    MY_VECTOR.cmp_info.num_native_events = ncnt;
