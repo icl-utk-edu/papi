@@ -218,6 +218,7 @@ add_test_events( int *number, int *mask, int allow_derived )
 	if ( retval == PAPI_OK ) {
 
 	   ( *number )++;
+#if 0
 	   if ((*number)==num_counters) {
 	     if ( !TESTS_QUIET) {
 	       fprintf(stdout, "Stopping with %d events due to HW limit\n",
@@ -225,11 +226,13 @@ add_test_events( int *number, int *mask, int allow_derived )
 	     }
 	     break;
 	   }
+#endif
 	}
 	else {
 	   if ( !TESTS_QUIET ) {
 	     PAPI_event_code_to_name(test_events[i].event,name_string);
-	     fprintf( stdout, "%s is not available.\n", name_string );
+	     fprintf( stdout, "%s is not available (%s).\n", name_string,
+		      PAPI_descr_error(retval));
 	   }
 	   *mask = *mask ^ test_events[i].mask;
 	}
