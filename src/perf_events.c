@@ -1484,7 +1484,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	_papi_hwi_context_t ctx;
 	int found_evt_idx = -1, fd = info->si_fd;
 	caddr_t address;
-	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
+	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
 	if ( thread == NULL ) {

@@ -93,7 +93,7 @@ lookup_and_set_thread_symbols( void )
 }
 
 static ThreadInfo_t *
-allocate_thread( void )
+allocate_thread( int tid )
 {
 	ThreadInfo_t *thread;
 	int i;
@@ -138,11 +138,15 @@ allocate_thread( void )
 				( size_t ) _papi_hwd[i]->size.context );
 	}
 
-
-	if ( _papi_hwi_thread_id_fn )
-		thread->tid = ( *_papi_hwi_thread_id_fn ) (  );
-	else
-		thread->tid = ( unsigned long ) getpid(  );
+	if (tid == 0 ) {
+	   if ( _papi_hwi_thread_id_fn )
+	      thread->tid = ( *_papi_hwi_thread_id_fn ) (  );
+	   else
+	      thread->tid = ( unsigned long ) getpid(  );
+	}
+	else {
+	  thread->tid=tid;
+	}
 
 	THRDBG( "Allocated thread 0x%lx at %p\n", thread->tid, thread );
 
@@ -259,13 +263,13 @@ remove_thread( ThreadInfo_t * entry )
 }
 
 int
-_papi_hwi_initialize_thread( ThreadInfo_t ** dest )
+_papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 {
 	int retval;
 	ThreadInfo_t *thread;
 	int i;
 
-	if ( ( thread = allocate_thread(  ) ) == NULL ) {
+	if ( ( thread = allocate_thread( tid  ) ) == NULL ) {
 		*dest = NULL;
 		return ( PAPI_ENOMEM );
 	}
@@ -398,7 +402,7 @@ int
 _papi_hwi_shutdown_global_threads( void )
 {
 	int err;
-	ThreadInfo_t *tmp = _papi_hwi_lookup_thread(  );
+	ThreadInfo_t *tmp = _papi_hwi_lookup_thread( 0 );
 
 	if ( tmp == NULL ) {
 		THRDBG( "Did not find my thread for shutdown!\n" );
@@ -444,7 +448,7 @@ _papi_hwi_init_global_threads( void )
 	_papi_hwi_thread_kill_fn = NULL;
 #endif
 
-	retval = _papi_hwi_initialize_thread( &tmp );
+	retval = _papi_hwi_initialize_thread( &tmp , 0);
 	if ( retval == PAPI_OK )
 		retval = lookup_and_set_thread_symbols(  );
 

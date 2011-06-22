@@ -47,26 +47,30 @@ main( int argc, char **argv )
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 	const PAPI_component_info_t *cmpinfo;
-	pid_t pid2;
+	pid_t pid;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-
+	/* init the library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
 
+	/* get component info */
 	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
 
+	/* see if we support attach */
 	if ( cmpinfo->attach == 0 )
 		test_skip( __FILE__, __LINE__, "Platform does not support attaching",
 				   0 );
-
-	pid2 = fork(  );
-	if ( pid2 < 0 )
+	/* fork! */
+	pid = fork(  );
+	if ( pid < 0 )
 		test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
-	if ( pid2 == 0 )
+
+	/* if child, wait_for_attach_and_loop */
+	if ( pid == 0 )
 		exit( wait_for_attach_and_loop( 2 ) );
 
 
@@ -77,11 +81,11 @@ main( int argc, char **argv )
 	EventSet2 = add_two_events( &num_events2, &PAPI_event2, &mask2 );
 
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_ATTACH, pid2, NULL, NULL ) == -1 ) {
+		if ( ptrace( PTRACE_ATTACH, pid, NULL, NULL ) == -1 ) {
 			perror( "ptrace(PTRACE_ATTACH)" );
 			return ( 1 );
 		}
-		if ( waitpid( pid2, &status, 0 ) == -1 ) {
+		if ( waitpid( pid, &status, 0 ) == -1 ) {
 			perror( "waitpid()" );
 			exit( 1 );
 		}
@@ -90,11 +94,7 @@ main( int argc, char **argv )
 					   "Child process didnt return true to WIFSTOPPED", 0 );
 	}
 
-	/* retval = PAPI_attach( EventSet1, ( unsigned long ) pid );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_attach", retval ); */
-
-	retval = PAPI_attach( EventSet2, ( unsigned long ) pid2 );
+	retval = PAPI_attach( EventSet2, ( unsigned long ) pid );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_attach", retval ); 
 
@@ -117,11 +117,11 @@ main( int argc, char **argv )
 
 	/* Wait for the SIGSTOP. */
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_CONT, pid2, NULL, NULL ) == -1 ) {
+		if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
 			perror( "ptrace(PTRACE_CONT)" );
 			return 1;
 		}
-		if ( waitpid( pid2, &status, 0 ) == -1 ) {
+		if ( waitpid( pid, &status, 0 ) == -1 ) {
 			perror( "waitpid()" );
 			exit( 1 );
 		}
@@ -141,17 +141,16 @@ main( int argc, char **argv )
 
 	retval = PAPI_start( EventSet2 );
 	if ( retval != PAPI_OK ) {
-	  //		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-		test_warn( __FILE__, __LINE__, "Known issue with attaching to multiple processes", 0);
+	   test_fail( __FILE__, __LINE__, "PAPI_start", retval );	   
 	}
 
 	/* Wait for the SIGSTOP. */
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_CONT, pid2, NULL, NULL ) == -1 ) {
+		if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
 			perror( "ptrace(PTRACE_ATTACH)" );
 			return ( 1 );
 		}
-		if ( waitpid( pid2, &status, 0 ) == -1 ) {
+		if ( waitpid( pid, &status, 0 ) == -1 ) {
 			perror( "waitpid()" );
 			exit( 1 );
 		}
@@ -187,13 +186,13 @@ main( int argc, char **argv )
 	remove_test_events( &EventSet2, mask2 );
 
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_CONT, pid2, NULL, NULL ) == -1 ) {
+		if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
 			perror( "ptrace(PTRACE_CONT)" );
 			return 1;
 		}
 	}
 
-	if ( waitpid( pid2, &status, 0 ) == -1 ) {
+	if ( waitpid( pid, &status, 0 ) == -1 ) {
 		perror( "waitpid()" );
 		exit( 1 );
 	}
@@ -221,10 +220,10 @@ main( int argc, char **argv )
 	printf( TAB1, add_event_str, ( values[0] )[0] );
 	sprintf( add_event_str, "(PID self) PAPI_TOT_CYC : \t" );
 	printf( TAB1, add_event_str, ( values[0] )[1] );
-	sprintf( add_event_str, "(PID %jd) %-12s : \t", ( intmax_t ) pid2,
+	sprintf( add_event_str, "(PID %jd) %-12s : \t", ( intmax_t ) pid,
 			 event_name );
 	printf( TAB1, add_event_str, ( values[1] )[0] );
-	sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t", ( intmax_t ) pid2 );
+	sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t", ( intmax_t ) pid );
 	printf( TAB1, add_event_str, ( values[1] )[1] );
 	printf( TAB1, "Real usec    : \t", elapsed_us );
 	printf( TAB1, "Real cycles  : \t", elapsed_cyc );

@@ -248,7 +248,7 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
 	if ( *t )
 		thread = *t;
 	else
-		*t = thread = _papi_hwi_lookup_thread(  );
+		*t = thread = _papi_hwi_lookup_thread( 0 );
 
 	if ( thread != NULL ) {
 		ESI = thread->running_eventset[cidx];

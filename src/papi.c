@@ -234,7 +234,7 @@ PAPI_register_thread( void )
 
 	if ( init_level == PAPI_NOT_INITED )
 		papi_return( PAPI_ENOINIT );
-	papi_return( _papi_hwi_lookup_or_create_thread( &thread ) );
+	papi_return( _papi_hwi_lookup_or_create_thread( &thread, 0 ) );
 }
 
 /* 
@@ -266,7 +266,7 @@ PAPI_register_thread( void )
 int
 PAPI_unregister_thread( void )
 {
-	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
+	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 
 	if ( thread )
 		papi_return( _papi_hwi_shutdown_thread( thread ) );
@@ -366,7 +366,7 @@ PAPI_get_thr_specific( int tag, void **ptr )
 		papi_return( _papi_hwi_gather_all_thrspec_data
 					 ( tag, ( PAPI_all_thr_spec_t * ) ptr ) );
 
-	retval = _papi_hwi_lookup_or_create_thread( &thread );
+	retval = _papi_hwi_lookup_or_create_thread( &thread, 0 );
 	if ( retval == PAPI_OK )
 		*ptr = thread->thread_storage[tag];
 	else
@@ -412,7 +412,7 @@ PAPI_set_thr_specific( int tag, void *ptr )
 	if ( ( tag < 0 ) || ( tag > PAPI_NUM_TLS ) )
 		papi_return( PAPI_EINVAL );
 
-	retval = _papi_hwi_lookup_or_create_thread( &thread );
+	retval = _papi_hwi_lookup_or_create_thread( &thread, 0 );
 	if ( retval == PAPI_OK )
 		thread->thread_storage[tag] = ptr;
 	else
@@ -922,7 +922,7 @@ PAPI_create_eventset( int *EventSet )
 
 	if ( init_level == PAPI_NOT_INITED )
 		papi_return( PAPI_ENOINIT );
-	retval = _papi_hwi_lookup_or_create_thread( &master );
+	retval = _papi_hwi_lookup_or_create_thread( &master, 0 );
 	if ( retval )
 		papi_return( retval );
 
@@ -1242,17 +1242,22 @@ PAPI_start( int EventSet )
 	if ( cidx < 0 )
 		papi_return( cidx );
 	
-	/* only one event set per thread/cpu can be running at any time, so if another event
-		set is running, the user must stop that event set explicitly */
-	if (!(ESI->state & PAPI_CPU_ATTACHED)) {
-		thread = ESI->master;
-		if ( thread->running_eventset[cidx] )
-			papi_return( PAPI_EISRUN );
+	/* only one event set per thread/cpu can be running at any time, */
+	/* so if another event set is running, the user must stop that   */
+        /* event set explicitly */
+
+	/* check cpu attached case first */
+	if (ESI->state & PAPI_CPU_ATTACHED) {
+	   cpu = ESI->CpuInfo;
+	   if ( cpu->running_eventset[cidx] ) {
+	      papi_return( PAPI_EISRUN );
+	   }
 	} else {
-		cpu = ESI->CpuInfo;
-		if ( cpu->running_eventset[cidx] )
-			papi_return( PAPI_EISRUN );
-	}
+      	    thread = ESI->master;
+	    if ( thread->running_eventset[cidx] ) {
+	       papi_return( PAPI_EISRUN );
+	    }
+	} 
 	
 	/* Check that there are added events */
 	if ( ESI->NumberOfEvents < 1 )
@@ -2223,6 +2228,10 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 
 		internal.attach.ESI->state |= PAPI_ATTACHED;
 		internal.attach.ESI->attach.tid = ptr->attach.tid;
+
+		_papi_hwi_lookup_or_create_thread( 
+				      &(internal.attach.ESI->master), ptr->attach.tid );
+
 		return ( PAPI_OK );
 	}
 	case PAPI_CPU_ATTACH:
@@ -2963,7 +2972,7 @@ PAPI_shutdown( void )
 
 	MPX_shutdown(  );
 
-	master = _papi_hwi_lookup_thread(  );
+	master = _papi_hwi_lookup_thread( 0 );
 
 	/* Count number of running EventSets AND */
 	/* Stop any running EventSets in this thread */
@@ -4210,7 +4219,7 @@ PAPI_get_virt_cyc( void )
 
 	if ( init_level == PAPI_NOT_INITED )
 		papi_return( PAPI_ENOINIT );
-	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master ) ) != PAPI_OK )
+	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
 	return ( ( long long ) _papi_hwd[0]->
@@ -4248,7 +4257,7 @@ PAPI_get_virt_nsec( void )
 
 	if ( init_level == PAPI_NOT_INITED )
 		papi_return( PAPI_ENOINIT );
-	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master ) ) != PAPI_OK )
+	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
 	return ( ( _papi_hwd[0]->get_virt_cycles( master->context[0] ) * 1000LL ) /
@@ -4284,7 +4293,7 @@ PAPI_get_virt_usec( void )
 	ThreadInfo_t *master;
 	int retval;
 
-	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master ) ) != PAPI_OK )
+	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
 	return ( ( long long ) _papi_hwd[0]->get_virt_usec( master->context[0] ) );

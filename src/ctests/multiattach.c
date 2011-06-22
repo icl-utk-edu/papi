@@ -312,18 +312,17 @@ main( int argc, char **argv )
 	printf("\t%lld/%lld = %lf\n",values[1][0],values[0][0],ratio1);
 	
 
-	if ((ratio1 >2.1 ) || (ratio1 < 1.9)) {
-	  printf("Known issue!  Ratio out of range, should be ~2.0 not %lf\n",ratio1);
-	  test_warn( __FILE__, __LINE__,
+	if ((ratio1 >2.15 ) || (ratio1 < 1.85)) {
+	  printf("Ratio out of range, should be ~2.0 not %lf\n",ratio1);
+	  test_fail( __FILE__, __LINE__,
 		    "Known issue: Counter ratio not two", 0 );
 	}
 
-
 	printf("\t%lld/%lld = %lf\n",values[1][1],values[0][1],ratio2);
 
-	if ((ratio2 >2.1 ) || (ratio2 < 1.9)) {
-	  printf("Known issue!  Ratio out of range, should be ~2.0, not %lf\n",ratio2);
-	  test_warn( __FILE__, __LINE__,
+	if ((ratio2 >2.15 ) || (ratio2 < 1.85)) {
+	  printf("Ratio out of range, should be ~2.0, not %lf\n",ratio2);
+	  test_fail( __FILE__, __LINE__,
 		    "Known issue: Counter ratio not two", 0 );
 	}
 

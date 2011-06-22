@@ -56,7 +56,7 @@ extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
 
 extern int ( *_papi_hwi_thread_kill_fn ) ( int, int );
 
-extern int _papi_hwi_initialize_thread( ThreadInfo_t ** dest );
+extern int _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid );
 extern int _papi_hwi_init_global_threads( void );
 extern int _papi_hwi_shutdown_thread( ThreadInfo_t * thread );
 extern int _papi_hwi_shutdown_global_threads( void );
@@ -92,22 +92,31 @@ _papi_hwi_unlock( int lck )
 }
 
 inline_static ThreadInfo_t *
-_papi_hwi_lookup_thread( void )
+_papi_hwi_lookup_thread( int custom_tid )
 {
-#ifdef HAVE_THREAD_LOCAL_STORAGE
-	THRDBG( "TLS returning %p\n", _papi_hwi_my_thread );
-	return ( _papi_hwi_my_thread );
-#else
+
 	unsigned long int tid;
 	ThreadInfo_t *tmp;
 
-	if ( _papi_hwi_thread_id_fn == NULL ) {
-		THRDBG( "Threads not initialized, returning master thread at %p\n",
-				_papi_hwi_thread_head );
-		return ( ( ThreadInfo_t * ) _papi_hwi_thread_head );
-	}
 
-	tid = ( *_papi_hwi_thread_id_fn ) (  );
+	if (custom_tid==0) {
+
+#ifdef HAVE_THREAD_LOCAL_STORAGE
+	THRDBG( "TLS returning %p\n", _papi_hwi_my_thread );
+	return ( _papi_hwi_my_thread );
+#endif
+
+	   if ( _papi_hwi_thread_id_fn == NULL ) {
+	      THRDBG( "Threads not initialized, returning master thread at %p\n",
+				_papi_hwi_thread_head );
+	      return ( ( ThreadInfo_t * ) _papi_hwi_thread_head );
+	   }
+
+	   tid = ( *_papi_hwi_thread_id_fn ) (  );
+	}
+	else {
+	  tid=custom_tid;
+	}
 	THRDBG( "Threads initialized, looking for thread 0x%lx\n", tid );
 
 	_papi_hwi_lock( THREADS_LOCK );
@@ -133,17 +142,17 @@ _papi_hwi_lookup_thread( void )
 
 	_papi_hwi_unlock( THREADS_LOCK );
 	return ( tmp );
-#endif
+
 }
 
 inline_static int
-_papi_hwi_lookup_or_create_thread( ThreadInfo_t ** here )
+_papi_hwi_lookup_or_create_thread( ThreadInfo_t ** here, int tid )
 {
-	ThreadInfo_t *tmp = _papi_hwi_lookup_thread(  );
+	ThreadInfo_t *tmp = _papi_hwi_lookup_thread( tid );
 	int retval = PAPI_OK;
 
 	if ( tmp == NULL )
-		retval = _papi_hwi_initialize_thread( &tmp );
+	  retval = _papi_hwi_initialize_thread( &tmp, tid );
 
 	if ( retval == PAPI_OK )
 		*here = tmp;
