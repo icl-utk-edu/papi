@@ -22,6 +22,8 @@
 
 static const PAPI_hw_info_t *hw_info;
 
+static int num_events = 0;
+
 #define N (1 << 23)
 #define T (10)
 
@@ -68,21 +70,46 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 
 	int i, retval;
 	unsigned long blength;
-	int num_buckets, num_events=0;
-
-	int events[MAX_TEST_EVENTS];
-	char *header = "address\t\t\tcyc\tins\tfp_ins\n";
-
-	for(i=0;i<MAX_TEST_EVENTS;i++) {
-	  if (mask & test_events[i].mask) {
-	    events[num_events]=test_events[i].event;
-	    num_events++;
-	  }
-	}
-
+	int num_buckets,j=0;
 
 	int num_bufs = num_events;
 	int event = num_events;
+
+	int events[MAX_TEST_EVENTS];
+	char header[BUFSIZ];
+
+	strncpy(header,"address\t\t",BUFSIZ);
+
+	//= "address\t\t\tcyc\tins\tfp_ins\n";
+
+	for(i=0;i<MAX_TEST_EVENTS;i++) {
+	  if (mask & test_events[i].mask) {
+	    events[j]=test_events[i].event;
+
+	    if (events[j]==PAPI_TOT_CYC) {
+	       strncat(header,"\tcyc",BUFSIZ);
+	    }
+	    if (events[j]==PAPI_TOT_INS) {
+	       strncat(header,"\tins",BUFSIZ);
+	    }
+	    if (events[j]==PAPI_FP_INS) {
+	       strncat(header,"\tfp_ins",BUFSIZ);
+	    }
+	    if (events[j]==PAPI_FP_OPS) {
+	       strncat(header,"\tfp_ops",BUFSIZ);
+	    }
+	    if (events[j]==PAPI_L2_TCM) {
+	       strncat(header,"\tl2_tcm",BUFSIZ);
+	    }
+
+	    j++;
+
+	  }
+	}
+
+	strncat(header,"\n",BUFSIZ);
+
+
 
 	blength = prof_size( plength, scale, bucket, &num_buckets );
 	prof_alloc( num_bufs, blength );
@@ -101,6 +128,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 		      break;
 		   }
                    else {
+		        printf("Failed with event %d 0x%x\n",i,events[i]);
 			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
 		   }
 		}
@@ -151,7 +179,6 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 int
 main( int argc, char **argv )
 {
-	int num_events = 0;
 	long length;
 	int mask;
 	int retval;
