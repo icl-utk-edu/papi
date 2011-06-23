@@ -1569,7 +1569,8 @@ _papi_pfm3_init(void) {
 
    MY_VECTOR.cmp_info.num_native_events = ncnt;
 
-   MY_VECTOR.cmp_info.num_cntrs = default_pmu.num_cntrs;
+   MY_VECTOR.cmp_info.num_cntrs = default_pmu.num_cntrs+
+                                  default_pmu.num_fixed_cntrs;
    SUBDBG( "num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
 
    MY_VECTOR.cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
