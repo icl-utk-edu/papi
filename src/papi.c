@@ -605,7 +605,7 @@ PAPI_library_init( int version )
  *	If the event CANNOT be counted, the function returns an error code. 
  *	This function also can be used to check the syntax of a native event. 
  *
- *	@see PAPI_remove_event PAPI_remove_event PAPI_presets PAPI_native
+ *	@see PAPI_remove_event PAPI_remove_events PAPI_presets PAPI_native
  */
 int
 PAPI_query_event( int EventCode )
@@ -1070,15 +1070,20 @@ PAPI_add_event( int EventSet, int EventCode )
 }
 
 /** @class PAPI_remove_event
- *	remove PAPI preset or native hardware event from an EventSet 
+ * @brief removes a hardware event from a PAPI event set. 
+ *
+ * A hardware event can be either a PAPI Preset or a native hardware event code. 
+ * For a list of PAPI preset events, see PAPI_presets or run the papi_avail utility in the PAPI distribution. 
+ * PAPI Presets can be passed to PAPI_query_event to see if they exist on the underlying architecture. 
+ * For a list of native events available on current platform, run papi_native_avail in the PAPI distribution. 
  *
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
  *	@param EventCode
  *		a defined event such as PAPI_TOT_INS or a native event. 
  *
- *	@retval Positive integer 
- *		The number of consecutive elements that succeeded before the error.
+ *	@retval PAPI_OK 
+ *		Everything worked.
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOEVST 
@@ -1091,7 +1096,31 @@ PAPI_add_event( int EventSet, int EventCode )
  *	@retval PAPI_ENOEVNT 
  *		The PAPI preset is not available on the underlying hardware. 
  *
- *	PAPI_remove_event() removes a hardware event to a PAPI event set.
+ *	@par Example:
+ *	@code
+int EventSet = PAPI_NULL;
+int ret;
+
+/* Create an empty EventSet */
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Add Total Instructions Executed to our EventSet */
+ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Start counting */
+ret = PAPI_start(EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Stop counting, ignore values */
+ret = PAPI_stop(EventSet, NULL);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Remove event */
+ret = PAPI_remove_event(EventSet, PAPI_TOT_INS);
+if (ret != PAPI_OK) handle_error(ret);
+ *	@endcode
  *
  *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
  *		PAPI_presets PAPI_add_event PAPI_add_events
@@ -3941,8 +3970,14 @@ PAPI_add_events( int EventSet, int *Events, int number )
 }
 
 /** @class PAPI_remove_events
- *	remove PAPI presets or native hardware events from an EventSet  
+ * @brief removes an array of hardware event codes from a PAPI event set.
  *
+ * A hardware event can be either a PAPI Preset or a native hardware event code. 
+ * For a list of PAPI preset events, see PAPI_presets or run the papi_avail utility in the PAPI distribution. 
+ * PAPI Presets can be passed to PAPI_query_event to see if they exist on the underlying architecture. 
+ * For a list of native events available on current platform, run papi_native_avail in the PAPI distribution. 
+ * It should be noted that PAPI_remove_events can partially succeed, exactly like PAPI_add_events. 
+ * 
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
  *	@param *Events
@@ -3964,9 +3999,35 @@ PAPI_add_events( int EventSet, int *Events, int number )
  *	@retval PAPI_ENOEVNT 
  *		The PAPI preset is not available on the underlying hardware. 
  *
- *	PAPI_remove_events() does the same, but for an array of hardware event codes. 
- *	It should be noted that PAPI_remove_events can partially succeed, exactly 
- *	like PAPI_add_events. 
+ *	@par Example:
+ *	@code
+int EventSet = PAPI_NULL;
+int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
+int ret;
+ 
+ /* Create an empty EventSet */
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Add two events to our EventSet */
+ret = PAPI_add_events(EventSet, Events, 2);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Start counting */
+ret = PAPI_start(EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Stop counting, ignore values */
+ret = PAPI_stop(EventSet, NULL);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Remove event */
+ret = PAPI_remove_events(EventSet, Events, 2);
+if (ret != PAPI_OK) handle_error(ret);
+ *	@endcode
+ *
+ *  @bug The last argument should be a pointer so the count can be returned on partial success in addition
+ *  to a real error code.
  *
  *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
  *		PAPI_presets PAPI_add_event PAPI_add_events
