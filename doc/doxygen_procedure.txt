@@ -4,7 +4,15 @@ To invoke doxygen,
    cd $(papi_dir)/doc
    doxygen 
 
-This produces output in doc/html and doc/man
+This command produces man-pages for the PAPI user-exposed api and data-structures. 
+
+There are several different configuration files are present:
+Doxyfile - the default config used when invoking doxygen, creates man-pages 
+	for api and user data-structures.
+Doxyfile-everything - Creates manpages for anything that looks like source code
+	under the src directory. 
+Doxyfile.html - Generates html documentation for user exposed api/data-structures.
+Doxyfile.utils - 
 
 doc/Doxyfile is the configuration file for doxygen.
 Really the only thing to pay attention to in Doxyfile is the INPUT variable,
@@ -25,7 +33,11 @@ thing_to_be_commented
 Doxygen responds to several special commands, denoted by @command 
 (if you're feeling texy, \command)
 
-/** @brief gives a brief overview of what the function does, 
+As an artifact of how doxygen started life, we call our api functions 'classes' 
+to get doxygen to generate man-pages for the function.
+
+/** @class MY_FUNCTION
+    @brief gives a brief overview of what the function does, 
 		limited to 1 line or 1 sentence if you need the space.
 	@param arg1 describes a parameter to the function
 
@@ -37,6 +49,15 @@ Doxygen responds to several special commands, denoted by @command
 	Which can span many lines
 
 	And paragraphs (feeling texy now?)
+
+	@par Examples:
+	@code
+	This is the way to get examples to format nicely
+	code goes here....
+	@endcode
+
+	@bug 
+	Here you get a section of freeform text to describe bugs you encounter. 
 */
 
 @internal keeps comment blocks marked as such out of the documentation 

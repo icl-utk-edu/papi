@@ -1,32 +1,19 @@
-.PHONY:	clean doxygen-user doxygen-full install FORCE all
+.PHONY:	clean doxygen-user doxygen-full install all
 
-all: doxygen-user doxygen-html
+all: doxygen-user 
 	@echo "Built PAPI user documentation"
 
-utils: FORCE
-	doxygen Doxyfile.utils
-
-doxygen-user: FORCE 
+doxygen-user: 
 	doxygen Doxyfile.utils
 	doxygen Doxyfile
 
 doxygen-full: 
-	doxygen Doxyfile.utils-everything
+	doxygen Doxyfile.utils
 	doxygen Doxyfile-everything
-
-doxygen-html: FORCE 
-	doxygen Doxyfile.html
 
 clean:
 	rm -rf man html
 
 install: doxygen-user
-	@echo "Man pages (MANDIR) being installed in: \"$(MANDIR)\""; 
-	-mkdir -p $(MANDIR)/man3
-	-chmod go+rx $(MANDIR)/man3
-	-cp man/man3/*.3 $(MANDIR)/man3
-	-chmod go+r $(MANDIR)/man3/*.3
-	-mkdir -p $(MANDIR)/man1
-	-chmod go+rx $(MANDIR)/man1
-	-cp man/man1/*.1 $(MANDIR)/man1
-	-chmod go+r $(MANDIR)/man1/*.1
+	-rm -rf ../man/man1 ../man/man3
+	-cp -R man/ ../
