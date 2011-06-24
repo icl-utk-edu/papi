@@ -145,7 +145,7 @@ dispatch_emt( int signal, siginfo_t * sip, void *arg )
 		ThreadInfo_t *thread = NULL;
 		int t, overflow_vector, readvalue;
 
-		thread = _papi_hwi_lookup_thread(  );
+		thread = _papi_hwi_lookup_thread( 0 );
 		ESI = ( EventSetInfo_t * ) thread->running_eventset;
 		int cidx = ESI->CmpIdx;
 
@@ -952,7 +952,7 @@ _ultra_hwd_dispatch_timer( int signal, siginfo_t * si, void *context )
         ctx.si = si;
         ctx.ucontext = ( hwd_ucontext_t * ) info;
 
-	thread = _papi_hwi_lookup_thread(  );
+	thread = _papi_hwi_lookup_thread( 0 );
 
 	if ( thread == NULL ) {
 		PAPIERROR( "thread == NULL in _papi_hwd_dispatch_timer");

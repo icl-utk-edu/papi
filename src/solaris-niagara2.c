@@ -485,7 +485,7 @@ _niagara2_dispatch_timer( int signal, siginfo_t * si, void *info )
 #endif
 
 	/* From the old substrate */
-	thread = _papi_hwi_lookup_thread(  );
+	thread = _papi_hwi_lookup_thread( 0 );
 	ESI = ( EventSetInfo_t * ) thread->running_eventset[cidx];
 
 	/* From the old substrate, modified */

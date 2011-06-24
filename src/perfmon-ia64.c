@@ -1552,7 +1552,7 @@ ia64_dispatch_sigprof( int n, hwd_siginfo_t * info, struct sigcontext *sc )
 {
 	( void ) n;				 /*unused */
 	_papi_hwi_context_t ctx;
-	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
+	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 	caddr_t address;
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
 

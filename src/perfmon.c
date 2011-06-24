@@ -1903,7 +1903,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 #endif
 	int ret, wanted_fd, fd = info->si_fd;
 	caddr_t address;
-	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
+	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
 	if ( thread == NULL ) {
