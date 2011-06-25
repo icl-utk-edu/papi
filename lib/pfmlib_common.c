@@ -220,6 +220,45 @@ pfmlib_compact_pattrs(pfmlib_event_desc_t *e, int i)
 	e->npattrs--;
 }
 
+static void
+pfmlib_compact_attrs(pfmlib_event_desc_t *e, int i)
+{
+	int j;
+
+	for (j = i+1; j < e->nattrs; j++)
+		e->attrs[j - 1] = e->attrs[j];
+
+	e->nattrs--;
+}
+
+/*
+ *  0 : different attribute
+ *  1 : exactly same attribute (duplicate can be removed)
+ * -1 : same attribute but value differ, this is an error
+ */
+static inline int
+pfmlib_same_attr(pfmlib_event_desc_t *d, int i, int j)
+{
+	pfm_event_attr_info_t *a1, *a2;
+	pfmlib_attr_t *b1, *b2;
+
+	a1 = attr(d, i);
+	a2 = attr(d, j);
+
+	b1 = d->attrs+i;
+	b2 = d->attrs+j;
+
+	if (a1->idx == a2->idx
+	    && a1->type == a2->type
+	    && a1->ctrl == a2->ctrl) {
+		if (b1->ival == b2->ival)
+			return 1;
+		return -1;
+
+	}
+	return 0;
+}
+
 static inline int
 pfmlib_pmu_active(pfmlib_pmu_t *pmu)
 {
@@ -578,19 +617,17 @@ pfm_find_event(const char *str)
 static int
 pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 {
-	pfm_event_attr_info_t *a1, *a2;
-	int i, j;
+	int i, j, ret;
 
 	/*
 	 * fail if duplicate attributes are found
 	 */
 	for(i=0; i < d->nattrs; i++) {
-		a1 = attr(d, i);
 		for(j=i+1; j < d->nattrs; j++) {
-			a2 = attr(d, j);
-			if (a1->idx == a2->idx
-			    && a1->type == a2->type
-			    && a1->ctrl == a2->ctrl)
+			ret = pfmlib_same_attr(d, i, j);
+			if (ret == 1)
+				pfmlib_compact_attrs(d, j);
+			else if (ret == -1)
 				return PFM_ERR_ATTR_SET;
 		}
 	}
