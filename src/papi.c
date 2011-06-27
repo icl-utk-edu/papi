@@ -321,12 +321,19 @@ PAPI_list_threads( PAPI_thread_id_t * id, int *num )
 	papi_return( retval );
 }
 
-/*
- * Return a pointer to the stored thread information.
- */
-
 /** @class PAPI_get_thr_specific
-  *	retrieve a pointer to a thread specific data structure 
+ * @brief Retrieve a pointer to a thread specific data structure 
+ *
+ *	In C, PAPI_get_thr_specific PAPI_get_thr_specific will retrieve the pointer from the array with index @em tag. 
+ *	There are 2 user available locations and @em tag can be either 
+ *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
+ *	The array mentioned above is managed by PAPI and allocated to each 
+ *	thread which has called PAPI_thread_init. 
+ *	There is no Fortran equivalent function. 
+ *
+ *	@par Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_get_thr_specific( int tag, void **ptr );
  *
  *	@param tag
  *		An identifier, the value of which is either PAPI_USR1_TLS or 
@@ -336,17 +343,31 @@ PAPI_list_threads( PAPI_thread_id_t * id, int *num )
  *		A pointer to the memory containing the data structure. 
  *
  *	@retval PAPI_EINVAL 
- *		The tag argument is out of range. 
+ *		The @em tag argument is out of range. 
  *
- *	PAPI_get_thr_specific will retrieve the pointer from the array with index tag. 
- *	There are 2 user available locations and tag can be either 
- *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
- *	The array mentioned above is managed by PAPI and allocated to each 
- *	thread which has called PAPI_thread_init. 
- *	There is no Fortran equivalent function. 
- *
- *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id
- */
+ *	@par Example:
+ *	@code
+ int ret;
+ HighLevelInfo *state = NULL;
+ ret = PAPI_thread_init(pthread_self);
+ if (ret != PAPI_OK) handle_error(ret);
+ 
+ /* Do we have the thread specific data setup yet? */
+
+ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
+if (ret != PAPI_OK || state == NULL) {
+	state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+	if (state == NULL) return (PAPI_ESYS);
+	memset(state, 0, sizeof(HighLevelInfo));
+	state->EventSet = PAPI_NULL;
+	ret = PAPI_create_eventset(&state->EventSet);
+	if (ret != PAPI_OK) return (PAPI_ESYS);
+	ret = PAPI_set_thr_specific(PAPI_USR1_TLS, state);
+	if (ret != PAPI_OK) return (ret);
+}
+*	@endcode
+*	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id PAPI_set_thr_specific
+*/
 int
 PAPI_get_thr_specific( int tag, void **ptr )
 {
@@ -375,12 +396,19 @@ PAPI_get_thr_specific( int tag, void **ptr )
 	return ( PAPI_OK );
 }
 
-/*
- * Store a pointer to memory provided by the thread
- */
-
 /** @class PAPI_set_thr_specific
-  *	Store to a pointer to a thread specific data structure 
+ * @brief Store a pointer to a thread specific data structure 
+ *
+ *	In C, PAPI_set_thr_specific will save @em ptr into an array indexed by @em tag. 
+ *	There are 2 user available locations and @em tag can be either 
+ *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
+ *	The array mentioned above is managed by PAPI and allocated to each 
+ *	thread which has called PAPI_thread_init. 
+ *	There is no Fortran equivalent function. 
+ *
+ *	@par Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_set_thr_specific( int tag, void *ptr );
  *
  *	@param tag
  *		An identifier, the value of which is either PAPI_USR1_TLS or 
@@ -390,16 +418,30 @@ PAPI_get_thr_specific( int tag, void **ptr )
  *		A pointer to the memory containing the data structure. 
  *
  *	@retval PAPI_EINVAL 
- *		The tag argument is out of range. 
+ *		The @em tag argument is out of range. 
  *
- *	In C, PAPI_set_thr_specific will save ptr into an array indexed by tag. 
- *	There are 2 user available locations and tag can be either 
- *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
- *	The array mentioned above is managed by PAPI and allocated to each 
- *	thread which has called PAPI_thread_init. 
- *	There is no Fortran equivalent function. 
- *
- *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id
+ *	@par Example:
+ *	@code
+int ret;
+HighLevelInfo *state = NULL;
+ret = PAPI_thread_init(pthread_self);
+if (ret != PAPI_OK) handle_error(ret);
+ 
+/* Do we have the thread specific data setup yet? */
+
+ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
+if (ret != PAPI_OK || state == NULL) {
+	state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+	if (state == NULL) return (PAPI_ESYS);
+	memset(state, 0, sizeof(HighLevelInfo));
+	state->EventSet = PAPI_NULL;
+	ret = PAPI_create_eventset(&state->EventSet);
+	if (ret != PAPI_OK) return (PAPI_ESYS);
+	ret = PAPI_set_thr_specific(PAPI_USR1_TLS, state);
+	if (ret != PAPI_OK) return (ret);
+}
+ *	@endcode
+ *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id PAPI_get_thr_specific
  */
 int
 PAPI_set_thr_specific( int tag, void *ptr )
@@ -1077,6 +1119,14 @@ PAPI_add_event( int EventSet, int EventCode )
  * PAPI Presets can be passed to PAPI_query_event to see if they exist on the underlying architecture. 
  * For a list of native events available on current platform, run papi_native_avail in the PAPI distribution. 
  *
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_remove_event( int  EventSet, int  EventCode );
+ *
+ *	@par Fortran Prototype:
+ *		#include fpapi.h @n
+ *		PAPIF_remove_event( C_INT  EventSet,  C_INT  EventCode,  C_INT  check )
+ *
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
  *	@param EventCode
@@ -1516,7 +1566,18 @@ PAPI_stop( int EventSet, long long *values )
 }
 
 /** @class PAPI_reset
- *	reset the hardware event counts in an event set 
+ * @brief reset the hardware event counts in an event set 
+ *
+ *	PAPI_reset() zeroes the values of the counters contained in EventSet. 
+ *	This call assumes an initialized PAPI library and a properly added event set 
+ *
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_reset( int EventSet );
+ *
+ *	@par Fortran Prototype:
+ *		#include fpapi.h @n
+ *		PAPIF_reset( C_INT  EventSet,  C_INT  check )
  *
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset 
@@ -1526,8 +1587,32 @@ PAPI_stop( int EventSet, long long *values )
  *	@retval PAPI_ENOEVST 
  *		The EventSet specified does not exist. 
  *
- *	PAPI_reset() zeroes the values of the counters contained in EventSet . 
- *	This call assumes an initialized PAPI library and a properly added event set 
+ *	@par Example:
+ *	@code
+ int EventSet = PAPI_NULL;
+ int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
+ int ret;
+ 
+/* Create an empty EventSet */
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Add two events to our EventSet */
+ret = PAPI_add_events(EventSet, Events, 2);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Start counting */
+ret = PAPI_start(EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* Stop counting, ignore values */
+ret = PAPI_stop(EventSet, NULL);
+if (ret != PAPI_OK) handle_error(ret);
+
+/* reset the counters in this EventSet */
+ret = PAPI_reset(EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+ *	@endcode
  *
  *	@see PAPI_create_eventset
  */
@@ -3977,6 +4062,14 @@ PAPI_add_events( int EventSet, int *Events, int number )
  * PAPI Presets can be passed to PAPI_query_event to see if they exist on the underlying architecture. 
  * For a list of native events available on current platform, run papi_native_avail in the PAPI distribution. 
  * It should be noted that PAPI_remove_events can partially succeed, exactly like PAPI_add_events. 
+ *
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_remove_events( int  EventSet, int * EventCode, int  number );
+ *
+ *	@par Fortran Prototype:
+ *		#include fpapi.h @n
+ *		PAPIF_remove_events( C_INT  EventSet,  C_INT(*)  EventCode,  C_INT  number,  C_INT  check )
  * 
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
