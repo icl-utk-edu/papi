@@ -352,7 +352,7 @@ PAPI_list_threads( PAPI_thread_id_t * id, int *num )
  ret = PAPI_thread_init(pthread_self);
  if (ret != PAPI_OK) handle_error(ret);
  
- /* Do we have the thread specific data setup yet? */
+ // Do we have the thread specific data setup yet?
 
 ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
 if (ret != PAPI_OK || state == NULL) {
@@ -427,7 +427,7 @@ HighLevelInfo *state = NULL;
 ret = PAPI_thread_init(pthread_self);
 if (ret != PAPI_OK) handle_error(ret);
  
-/* Do we have the thread specific data setup yet? */
+// Do we have the thread specific data setup yet?
 
 ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
 if (ret != PAPI_OK || state == NULL) {
@@ -1151,23 +1151,23 @@ PAPI_add_event( int EventSet, int EventCode )
 int EventSet = PAPI_NULL;
 int ret;
 
-/* Create an empty EventSet */
+// Create an empty EventSet
 ret = PAPI_create_eventset(&EventSet);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Add Total Instructions Executed to our EventSet */
+// Add Total Instructions Executed to our EventSet
 ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Start counting */
+// Start counting
 ret = PAPI_start(EventSet);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Stop counting, ignore values */
+// Stop counting, ignore values
 ret = PAPI_stop(EventSet, NULL);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Remove event */
+// Remove event
 ret = PAPI_remove_event(EventSet, PAPI_TOT_INS);
 if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
@@ -1593,23 +1593,23 @@ PAPI_stop( int EventSet, long long *values )
  int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
  int ret;
  
-/* Create an empty EventSet */
+// Create an empty EventSet
 ret = PAPI_create_eventset(&EventSet);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Add two events to our EventSet */
+// Add two events to our EventSet
 ret = PAPI_add_events(EventSet, Events, 2);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Start counting */
+// Start counting
 ret = PAPI_start(EventSet);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Stop counting, ignore values */
+// Stop counting, ignore values
 ret = PAPI_stop(EventSet, NULL);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* reset the counters in this EventSet */
+// reset the counters in this EventSet
 ret = PAPI_reset(EventSet);
 if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
@@ -4098,23 +4098,23 @@ int EventSet = PAPI_NULL;
 int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
 int ret;
  
- /* Create an empty EventSet */
+ // Create an empty EventSet
 ret = PAPI_create_eventset(&EventSet);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Add two events to our EventSet */
+// Add two events to our EventSet
 ret = PAPI_add_events(EventSet, Events, 2);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Start counting */
+// Start counting
 ret = PAPI_start(EventSet);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Stop counting, ignore values */
+// Stop counting, ignore values
 ret = PAPI_stop(EventSet, NULL);
 if (ret != PAPI_OK) handle_error(ret);
 
-/* Remove event */
+// Remove event
 ret = PAPI_remove_events(EventSet, Events, 2);
 if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
