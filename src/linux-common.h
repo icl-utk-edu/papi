@@ -17,7 +17,7 @@ mygettid( void )
 #elif defined(__NR_gettid)
 	return syscall( __NR_gettid );
 #else
-#error "cannot fine gettid"
+#error "cannot find gettid"
 #endif
 }
 

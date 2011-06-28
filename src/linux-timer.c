@@ -9,6 +9,9 @@
 #include "papi.h"
 #include "papi_internal.h"
 
+/* for mygettid() on ia64 */
+#include "linux-common.h"
+
 #if defined(HAVE_PER_THREAD_TIMES)
 #include <sys/times.h>
 #endif
@@ -130,6 +133,8 @@ get_cycles( void )
 	return tmp;
 }
 #elif defined(__ia64__)
+extern int _perfmon2_pfm_pmu_type;
+
 static inline long long
 get_cycles( void )
 {
@@ -229,7 +234,7 @@ _linux_get_real_cycles( void )
 
 #if defined(USE_PROC_PTTIMER)
 static int
-init_proc_thread_timer( hwd_context_t *thr_ctx )
+init_proc_thread_timer( const hwd_context_t *thr_ctx )
 {
 	char buf[LINE_MAX];
 	int fd;

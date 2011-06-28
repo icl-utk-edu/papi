@@ -1426,8 +1426,8 @@ _papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 
 
 
-
-static int _perfmon2_pfm_pmu_type = -1;
+/* used by linux-timer.c for ia64 */
+int _perfmon2_pfm_pmu_type = -1;
 
 
 int

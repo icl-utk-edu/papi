@@ -31,18 +31,6 @@ hweight64( unsigned long x )
 extern int _perfmon2_pfm_pmu_type;
 extern papi_vector_t _ia64_vector;
 
-static inline pid_t
-mygettid( void )
-{
-#ifdef SYS_gettid
-	return ( syscall( SYS_gettid ) );
-#elif defined(__NR_gettid)
-	return ( syscall( __NR_gettid ) );
-#else
-	return ( syscall( 1105 ) );
-#endif
-}
-
 #if defined(PFMLIB_ITANIUM2_PMU) || defined(PFMLIB_MONTECITO_PMU)
 char *retired_events[] = {
 	"IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",
