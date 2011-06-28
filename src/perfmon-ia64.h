@@ -149,6 +149,7 @@ typedef struct Itanium_context
 
 //typedef Itanium_context_t hwd_context_t;
 
+#define PERFMON_IA64_BROKEN yes
 #include "linux-context.h"
 
 #undef  hwd_ucontext_t
@@ -177,5 +178,4 @@ typedef ia64_control_state_t hwd_control_state_t;
 
 #define MY_VECTOR _ia64_vector
 
-#endif /* __INTEL_COMPILER */
 #endif /* _PAPI_PERFMON_IA64_H */

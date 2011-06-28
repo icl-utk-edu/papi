@@ -229,7 +229,7 @@ _linux_get_real_cycles( void )
 
 #if defined(USE_PROC_PTTIMER)
 static int
-init_proc_thread_timer( context_t * thr_ctx )
+init_proc_thread_timer( hwd_context_t *thr_ctx )
 {
 	char buf[LINE_MAX];
 	int fd;
