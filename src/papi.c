@@ -464,9 +464,8 @@ PAPI_set_thr_specific( int tag, void *ptr )
 }
 
 
-/** @class PAPI_library_init
-  *	initialize the PAPI library. 
- *
+/** 	@class PAPI_library_init
+ *	@brief initialize the PAPI library. 
  *	@param version 
  *		upon initialization, PAPI checks the argument against the internal 
  *		value of PAPI_VER_CURRENT when the library was compiled. 
@@ -483,11 +482,25 @@ PAPI_set_thr_specific( int tag, void *ptr )
  *		A system or C library call failed inside PAPI, see the errno variable. 
  *
  *	PAPI_library_init() initializes the PAPI library. 
+ *	PAPI_is_initialized() check for initialization.
  *	It must be called before any low level PAPI functions can be used. 
  *	If your application is making use of threads PAPI_thread_init must also be 
  *	called prior to making any calls to the library other than PAPI_library_init() . 
- *	
- *	@see PAPI_thread_init
+ *	@par Examples:
+ *	@code
+ 		int retval;
+ 		retval = PAPI_library_init(PAPI_VER_CURRENT);
+		if (retval != PAPI_VER_CURRENT && retval > 0) {
+ 		fprintf(stderr,"PAPI library version mismatch!\en");
+		exit(1); }
+		if (retval < 0)
+ 		handle_error(retval);
+ 		retval = PAPI_is_initialized();
+		if (retval != PAPI_LOW_LEVEL_INITED)
+		handle_error(retval)	
+ *	@endcode
+ *	@bug If you don't call this before using any of the low level PAPI calls, your application could core dump.
+ *	@see PAPI_thread_init PAPI
  */
 int
 PAPI_library_init( int version )
@@ -671,8 +684,8 @@ PAPI_query_event( int EventCode )
 	papi_return( PAPI_ENOTPRESET );
 }
 
-/** @class PAPI_get_component_info
-  *	get information about a specific software component 
+/**	@class PAPI_get_component_info 
+ *	@brief get information about a specific software component 
  *
  *	@param cidx
  *		Component index
@@ -683,6 +696,18 @@ PAPI_query_event( int EventCode )
  *	information, and more. 
  *	For full details, see @ref PAPI_component_info_t. 
  *
+ *	@par Examples:
+ *	@code
+ 		const PAPI_component_info_t *cmpinfo = NULL;
+ 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+ 		exit(1);
+ 		if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
+ 		exit(1);
+ 		printf("This component supports %d Preset Events and %d Native events.\n",
+		cmpinfo->num_preset_events, cmpinfo->num_native_events);
+ *	@endcode
+ *
+ *	@see PAPI_component_info_t
  *	@see PAPI_get_executable_info PAPI_get_hardware_info PAPI_get_dmem_info PAPI_get_opt PAPI_library_init
  */
 const PAPI_component_info_t *
@@ -1980,9 +2005,8 @@ PAPI_cleanup_eventset( int EventSet )
 	papi_return( _papi_hwi_cleanup_eventset( ESI ) );
 }
 
-/** @class PAPI_multiplex_init
- *	initialize multiplex support in the PAPI library 
- *
+/**	@class PAPI_get_multiplex
+ *	@brief initialize multiplex support in the PAPI library 
  *	PAPI_multiplex_init enables and initializes multiplex support in the PAPI library. 
  *	Multiplexing allows a user to count more events than total physical counters 
  *	by time sharing the existing counters at some loss in precision. 
@@ -2720,10 +2744,10 @@ PAPI_num_cmp_hwctrs( int cidx )
 }
 
 /** @class PAPI_get_multiplex
- *	get the multiplexing status of specified event set 
+ *	@brief get the multiplexing status of specified event set 
  *
  *	@param EventSet
- *		an integer handle for a PAPI event set as created by PAPI_create_eventset
+ *	an integer handle for a PAPI event set as created by PAPI_create_eventset
  *
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid, or the EventSet 
@@ -2735,10 +2759,24 @@ PAPI_num_cmp_hwctrs( int cidx )
  *	@retval PAPI_ENOMEM 
  *		Insufficient memory to complete the operation. 
  *
- *	PAPI_get_multiplex tests the state of the PAPI_MULTIPLEXING flag in the 
- *	specified event set, returning TRUE if a PAPI event set is multiplexed, or FALSE if not. 
- *
- *	@see  PAPI_multiplex_init PAPI_set_opt PAPI_create_eventset
+ *	PAPI_get_multiplex tests the state of the PAPI_MULTIPLEXING flag in the specified event set, returning TRUE if a PAPI event set is multiplexed, or FALSE if not.          
+ *	PAPI_set_multiplex converts a standard PAPI event set created by a call to PAPI_create_eventset() into an event set capable of handling multiplexed events. This must be done after 
+ *	calling PAPI_multiplex_init() , but prior to calling PAPI_start(). Events can be added to an event set either before or after converting it into a multiplexed set, but the 	
+ *	conversion must be done prior to using it as a multiplexed set.
+ *	@par Examples:
+ *	@code
+		retval = PAPI_get_multiplex(EventSet);
+ 		if (retval > 0) printf("This event set is ready for multiplexing\n.")
+ 		if (retval == 0) printf("This event set is not enabled for multiplexing\n.")
+ 		if (retval < 0) handle_error(retval);
+ 		retval = PAPI_set_multiplex(EventSet);
+ 		if ((retval == PAPI_EINVAL) && (PAPI_get_multiplex(EventSet) > 0))
+ 		printf("This event set already has multiplexing enabled\n");
+ 		else if (retval != PAPI_OK) handle_error(retval);
+ *	@endcode
+ *	@see  PAPI_multiplex_init 
+ *	@see PAPI_set_opt 
+ *	@see PAPI_create_eventset
  */
 int
 PAPI_get_multiplex( int EventSet )
@@ -4145,9 +4183,8 @@ PAPI_remove_events( int EventSet, int *Events, int number )
 	return ( PAPI_OK );
 }
 
-/** @class PAPI_list_events
- *	list the events in an event set 
- *
+/**	@class PAPI_list_events
+ *	@brief list the events in an event set 
  *	@param EventSet
  *		An integer handle for a PAPI event set as created by PAPI_create_eventset 
  *	@param *Events 
@@ -4161,12 +4198,30 @@ PAPI_remove_events( int EventSet, int *Events, int number )
  *		stored number of counter codes. 
  *
  *	@retval PAPI_EINVAL
- *	@retval PAPI_ENOEVST
- *
+ *	@retval PAPI_ENOEVST *	
+ *	PAPIF_list_events(C_INT  EventSet,  C_INT(*)  Events,  C_INT  number,  C_INT  check )
  *	PAPI_list_events() decomposes an event set into the hardware events it contains.
  *	This call assumes an initialized PAPI library and a successfully added event set. 
- *
- *	@see PAPI_event_code_to_name PAPI_event_name_to_code PAPI_add_event PAPI_create_eventset
+ *	@par Examples:
+ *	@code
+ 		if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
+ 		exit(1);
+ 		if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+ 		exit(1);
+ 		Convert a second event name to an event code 
+ 		if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
+ 		exit(1);
+ 		if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+ 		exit(1);
+ 		number = 4;
+ 		if(PAPI_list_events(EventSet, Events, &number))
+ 		exit(1);
+ 		if(number != 2)
+ 		exit(1);
+ *	@endcode
+ *	@see PAPI_event_code_to_name 
+ *	@see PAPI_event_name_to_code 
+ *	@see PAPI_add_event PAPI_create_eventset
  */
 int
 PAPI_list_events( int EventSet, int *Events, int *number )
@@ -4237,7 +4292,9 @@ PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
  *	This function returns a pointer to a structure containing information 
  *	about the current program.
  *
- *	@see PAPI_get_opt PAPI_get_hardware_info PAPI_exe_info_t
+ *	@see PAPI_get_opt 
+ *	@see PAPI_get_hardware_info 
+ *	@see PAPI_exe_info_t
  */
 const PAPI_exe_info_t *
 PAPI_get_executable_info( void )
@@ -4254,13 +4311,20 @@ PAPI_get_executable_info( void )
 }
 
 /** @class PAPI_get_shared_lib_info
- *	get address info about the shared libraries used by the process 
+ *	@brief get address info about the shared libraries used by the process 
  *
  *	In C, this function returns a pointer to a structure containing information 
  *	about the shared library used by the program. 
  *	There is no Fortran equivalent call. 
- *	
- *	@see PAPI_get_hardware_info PAPI_get_executable_info PAPI_get_dmem_info PAPI_get_opt PAPI_library_init
+ *	@par NOTE: This data will be incorporated into the PAPI_get_executable_info call in the future. PAPI_get_shared_lib_info will be deprecated and should be used with caution.
+ *
+ *	@bug If called before the behavior of the routine is undefined.
+ *
+ *	@see PAPI_shlib_info_t
+ *	@see PAPI_get_hardware_info
+ *	@see PAPI_get_executable_info 
+ *	@see PAPI_get_dmem_info 
+ *	@see PAPI_get_opt PAPI_library_init
  */
 const PAPI_shlib_info_t *
 PAPI_get_shared_lib_info( void )
@@ -4275,7 +4339,35 @@ PAPI_get_shared_lib_info( void )
 	else
 		return ( NULL );
 }
-
+/**	@class PAPI_get_hardware_info 
+ *	@brief get information about the system hardware
+ *
+ *	In C, this function returns a pointer to a structure containing information about the hardware on which the program runs. 
+ *       In Fortran, the values of the structure are returned explicitly.
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *
+ *	@bug
+ *		If called before the behavior of the routine is undefined. 
+ *	
+ *	@par NOTE
+ *		The C structure contains detailed information about cache and TLB sizes. 
+ *		This information is not available from Fortran.
+ *
+ *	@par Examples:
+ *	@code
+ 		const PAPI_hw_info_t *hwinfo = NULL;
+ 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)	
+ 		exit(1);
+ 		if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+ 		exit(1);
+ 		printf("%d CPU's at %f Mhz.\en",hwinfo->totalcpus,hwinfo->mhz);
+ *	@endcode	
+ *
+ *	@see PAPI_hw_info_t
+ *	@see PAPI_get_executable_info, PAPI_get_opt, PAPI_get_dmem_info, PAPI_library_init
+ */
 const PAPI_hw_info_t *
 PAPI_get_hardware_info( void )
 {
@@ -4293,14 +4385,20 @@ PAPI_get_hardware_info( void )
 
 /* The next 4 timing functions always use component 0 */
 
-/** @class PAPI_get_real_cyc
- *	get real time counter value in clock cycles 
- *
- *	Returns the total real time passed since some arbitrary starting point. 
+/**	@class PAPI_get_real_cyc
+ *	@brief get real time counter value in clock cycles 
+ * 	Returns the total real time passed since some arbitrary starting point. 
  *	The time is returned in clock cycles. 
  *	This call is equivalent to wall clock time.
- *
- *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
+ *		  
+ *	@par Examples:
+ *	@code
+ 		s = PAPI_get_real_cyc();
+ 		your_slow_code();
+ 		e = PAPI_get_real_cyc();
+ 		printf("Wallclock cycles: %lld\en",e-s);
+ *	@endcode	
+ *	@see PAPIF  PAPI PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
  */
 long long
 PAPI_get_real_cyc( void )
@@ -4309,14 +4407,16 @@ PAPI_get_real_cyc( void )
 }
 
 /** @class PAPI_get_real_nsec
- *	get real time counter value in nanoseconds 
+ *	@brief get real time counter value in nanoseconds 
  *
  *	This function returns the total real time passed since some arbitrary 
  *	starting point. 
  *	The time is returned in nanoseconds. 
  *	This call is equivalent to wall clock time.
  *
- *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
+ *	@see PAPI_get_virt_usec 
+ *	@see PAPI_get_virt_cyc 
+ *	@see PAPI_library_init
  */
 
 long long
@@ -4326,15 +4426,25 @@ PAPI_get_real_nsec( void )
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
-/** @class PAPI_get_real_usec
- *	get real time counter value in microseconds 
+/**	@class PAPI_get_real_usec
+ *	@brief get real time counter value in microseconds 
  *
  *	This function returns the total real time passed since some arbitrary 
  *	starting point. 
  *	The time is returned in microseconds. 
  *	This call is equivalent to wall clock time.
- *
- *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
+ *	@par Examples:
+ *	@code
+		s = PAPI_get_real_cyc();
+		your_slow_code();
+		e = PAPI_get_real_cyc();
+		printf("Wallclock cycles: %lld\en",e-s);
+ *	@endcode
+ *	@see PAPIF
+ *	@see PAPI
+ *	@see PAPI_get_virt_usec 
+ *	@see PAPI_get_virt_cyc 
+ *	@see PAPI_library_init
  */
 long long
 PAPI_get_real_usec( void )
@@ -4342,18 +4452,19 @@ PAPI_get_real_usec( void )
 	return ( _papi_hwd[0]->get_real_usec(  ) );
 }
 
-/** @class PAPI_get_virt_cyc
- *	get virtual time counter value in clock cycles 
+/**	@class PAPI_get_virt_cyc 
+ *	@brief get virtual time counter value in clock cycles 
  *
  *	@retval PAPI_ECNFLCT 
  *		If there is no master event set. 
- *		This will happen if the library has not been initialized, or for threaded 
- *		applications, if there has been no thread id function defined by the 
- *		PAPI_thread_init function.
+ *		This will happen if the library has not been initialized, or 	
+ *		for threaded applications, if there has been no thread id 
+ *		function defined by the  		PAPI_thread_init function.
  *	@retval PAPI_ENOMEM
- *		For threaded applications, if there has not yet been any thread specific
- *		master event created for the current thread, and if the allocation of 
- *		such an event set fails, the call will return PAPI_ENOMEM or PAPI_ESYS . 
+ *		For threaded applications, if there has not yet been any thread 
+ *		specific master event created for the current thread, and if 
+ *		the allocation of such an event set fails, the call will return 
+ *		PAPI_ENOMEM or PAPI_ESYS . 
  *
  *	This function returns the total number of virtual units from some 
  *	arbitrary starting point. 
@@ -4362,8 +4473,14 @@ PAPI_get_real_usec( void )
  *	Like the real time counters, this count is guaranteed to exist on every platform 
  *	PAPI supports. 
  *	However on some platforms, the resolution can be as bad as 1/Hz as defined 
- *	by the operating system. 
- *
+ *	by the operating system.
+ *	@par Examples:
+ *	@code
+ 		s = PAPI_get_virt_cyc();
+ 		your_slow_code();
+ 		e = PAPI_get_virt_cyc();
+ 		printf("Process has run for cycles: %lld\en",e-s);
+ *	@endcode
  */
 long long
 PAPI_get_virt_cyc( void )
@@ -4418,8 +4535,8 @@ PAPI_get_virt_nsec( void )
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
-/** @class PAPI_get_virt_usec
- *	get virtual time counter values in microseconds 
+/**	@class PAPI_get_virt_usec
+ *	@brief get virtual time counter values in microseconds 
  *
  *	@retval PAPI_ECNFLCT 
  *		If there is no master event set. 
@@ -4427,19 +4544,30 @@ PAPI_get_virt_nsec( void )
  *		applications, if there has been no thread id function defined by the 
  *		PAPI_thread_init function.
  *	@retval PAPI_ENOMEM
- *		For threaded applications, if there has not yet been any thread specific
- *		master event created for the current thread, and if the allocation of 
- *		such an event set fails, the call will return PAPI_ENOMEM or PAPI_ESYS . 
+ *		For threaded applications, if there has not yet been any thread 
+ *		specific master event created for the current thread, and if the 
+ *		allocation of such an event set fails, the call will return PAPI_ENOMEM or PAPI_ESYS . 
  *
  *	This function returns the total number of virtual units from some 
  *	arbitrary starting point. 
  *	Virtual units accrue every time the process is running in user-mode on 
  *	behalf of the process. 
- *	Like the real time counters, this count is guaranteed to exist on every platform 
- *	PAPI supports. 
- *	However on some platforms, the resolution can be as bad as 1/Hz as defined 
- *	by the operating system. 
- *
+ *	Like the real time counters, this count is guaranteed to exist on every 
+ *	platform PAPI supports. However on some platforms, the resolution can be 
+ *	as bad as 1/Hz as defined by the operating system.
+ *	@par Examples:
+ *	@code
+ 		s = PAPI_get_virt_cyc();
+ 		your_slow_code();
+ 		e = PAPI_get_virt_cyc();
+ 		printf("Process has run for cycles: %lld\en",e-s);
+ *	@endcode
+ *	@see PAPIF
+ *	@see PAPI
+ *	@see PAPI
+ *	@see PAPI_get_real_cyc
+ *	@see PAPI_get_virt_cyc
+
  */
 long long
 PAPI_get_virt_usec( void )
@@ -4508,9 +4636,8 @@ PAPI_unlock( int lck )
 	papi_return( _papi_hwi_unlock( lck ) );
 }
 
-/** @class PAPI_is_initialized
- *	check for initialization
- *
+/**	@class PAPI_is_initialized
+ *	@brief check for initialization
  *	@retval PAPI_NOT_INITED
  *		Library has not been initialized
  *	@retval PAPI_LOW_LEVEL_INITED
@@ -4519,9 +4646,28 @@ PAPI_unlock( int lck )
  *		High level has called library init 
  *	@retval PAPI_THREAD_LEVEL_INITED	
  *		Threads have been inited 
- *
+ *	
+ *	@param version
+		 upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled. 
+ *	This guards against portability problems when updating the PAPI shared libraries on your system.
+ *	@par Examples:
+ *	@code
+ 		int retval;
+ 		retval = PAPI_library_init(PAPI_VER_CURRENT);
+ 		if (retval != PAPI_VER_CURRENT && retval > 0) {
+ 		fprintf(stderr,"PAPI library version mismatch!\en");
+ 		exit(1); }
+ 		if (retval < 0)
+ 		handle_error(retval);
+ 		retval = PAPI_is_initialized();
+ 		if (retval != PAPI_LOW_LEVEL_INITED)
+ 		handle_error(retval);
+ *	@endcode
  *	PAPI_is_initialized() returns the status of the PAPI library. 
  *	The PAPI library can be in one of four states, as described under RETURN VALUES. 
+ *	@bug	If you don't call this before using any of the low level PAPI calls, your application could core dump.
+ *	@See PAPI 
+ *	@see PAPI_thread_init
  */
 int
 PAPI_is_initialized( void )
@@ -4539,38 +4685,41 @@ PAPI_is_initialized( void )
                   to this parameter
 */
 
-/** @class PAPI_get_overflow_event_index
- *	converts an overflow vector into an array of indexes to overflowing events 
- *
+/**	@class PAPI_get_overflow_event_index
+ *	@brief converts an overflow vector into an array of indexes to overflowing events 
  *	@param EventSet
  *		an integer handle to a PAPI event set as created by PAPI_create_eventset
  *	@param overflow_vector
  *		a vector with bits set for each counter that overflowed. 
  *		This vector is passed by the system to the overflow handler routine.
- *	@param array
+ *	@param *array
  *		an array of indexes for events in EventSet. 
  *		No more than *number indexes will be stored into the array.
- *	@param number 
+ *	@param *number 
  *		On input the variable determines the size of the array. 
  *		On output the variable contains the number of indexes in the array. 
  *
  *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid. 
- *		This could occur if the overflow_vector is empty (zero), if the array or 
- *		number pointers are NULL, if the value of number is less than one, 
- *		or if the EventSet is empty.
- *	@retval PAPI_ENOEVST 
- *		The EventSet specified does not exist. 
- *	
+ *		One or more of the arguments is invalid. This could occur if the overflow_vector is empty (zero), if the array or number pointers are NULL, if the value of number is less than one, or if the EventSet is empty.
+ *	@retval PAPI_ENOEVST
+		The EventSet specified does not exist.
+ *	@par Examples
+ *	@code
+ 		void handler(int EventSet, void *address, long_long overflow_vector, void *context){
+ 		int Events[4], number, i;
+ 		int total = 0, retval;
+ 		printf("Overflow #%d\n  Handler(%d) Overflow at %p! vector=0x%llx\n",
+ 		total, EventSet, address, overflow_vector);
+ 		total++;
+ 		number = 4;
+ 		retval = PAPI_get_overflow_event_index(EventSet,
+ 		overflow_vector, Events, &number);
+ 		if(retval == PAPI_OK)
+ 		for(i=0; i<number; i++) printf("Event index[%d] = %d", i, Events[i]);}
+ *	@endcode
+ *	@bug This function may not return all overflowing events if used with software-driven overflow of multiple derived events.
  *	PAPI_get_overflow_event_index decomposes an overflow_vector into an event 
- *	index array in which the first element corresponds to the least significant
- *	set bit in overflow_vector and so on. Based on overflow_vector, 
- *	the user can only tell which physical counters overflowed. 
- *	Using this function, the user can map overflowing counters to specific 
- *	events in the event set. 
- *
- *	An array is used in this function to support the possibility of 
- *	multiple simultaneous overflow events.
+ *	index array in which the first element corresponds to the least significant set bit in overflow_vector and so on. Based on overflow_vector, the user can only tell which physical counters overflowed. Using this function, the user can map overflowing counters to specific events in the event set. An array is used in this function to support the possibility of multiple simultaneous overflow events.
  *
  *	@see PAPI_overflow
  */
