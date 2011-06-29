@@ -322,14 +322,7 @@ PAPI_list_threads( PAPI_thread_id_t * id, int *num )
 }
 
 /** @class PAPI_get_thr_specific
- * @brief Retrieve a pointer to a thread specific data structure 
- *
- *	In C, PAPI_get_thr_specific PAPI_get_thr_specific will retrieve the pointer from the array with index @em tag. 
- *	There are 2 user available locations and @em tag can be either 
- *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
- *	The array mentioned above is managed by PAPI and allocated to each 
- *	thread which has called PAPI_thread_init. 
- *	There is no Fortran equivalent function. 
+ *  @brief Retrieve a pointer to a thread specific data structure 
  *
  *	@par Prototype:
  *		#include <papi.h> @n
@@ -342,8 +335,16 @@ PAPI_list_threads( PAPI_thread_id_t * id, int *num )
  *	@param ptr
  *		A pointer to the memory containing the data structure. 
  *
+ *	@retval PAPI_OK
  *	@retval PAPI_EINVAL 
  *		The @em tag argument is out of range. 
+ *
+ *	In C, PAPI_get_thr_specific PAPI_get_thr_specific will retrieve the pointer from the array with index @em tag. 
+ *	There are 2 user available locations and @em tag can be either 
+ *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
+ *	The array mentioned above is managed by PAPI and allocated to each 
+ *	thread which has called PAPI_thread_init. 
+ *	There is no Fortran equivalent function. 
  *
  *	@par Example:
  *	@code
@@ -397,14 +398,7 @@ PAPI_get_thr_specific( int tag, void **ptr )
 }
 
 /** @class PAPI_set_thr_specific
- * @brief Store a pointer to a thread specific data structure 
- *
- *	In C, PAPI_set_thr_specific will save @em ptr into an array indexed by @em tag. 
- *	There are 2 user available locations and @em tag can be either 
- *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
- *	The array mentioned above is managed by PAPI and allocated to each 
- *	thread which has called PAPI_thread_init. 
- *	There is no Fortran equivalent function. 
+ *  @brief Store a pointer to a thread specific data structure 
  *
  *	@par Prototype:
  *		#include <papi.h> @n
@@ -417,8 +411,16 @@ PAPI_get_thr_specific( int tag, void **ptr )
  *	@param ptr
  *		A pointer to the memory containing the data structure. 
  *
+ *	@retval PAPI_OK
  *	@retval PAPI_EINVAL 
  *		The @em tag argument is out of range. 
+ *
+ *	In C, PAPI_set_thr_specific will save @em ptr into an array indexed by @em tag. 
+ *	There are 2 user available locations and @em tag can be either 
+ *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
+ *	The array mentioned above is managed by PAPI and allocated to each 
+ *	thread which has called PAPI_thread_init. 
+ *	There is no Fortran equivalent function. 
  *
  *	@par Example:
  *	@code
@@ -1592,10 +1594,6 @@ PAPI_stop( int EventSet, long long *values )
 
 /** @class PAPI_reset
  * @brief reset the hardware event counts in an event set 
- *
- *	PAPI_reset() zeroes the values of the counters contained in EventSet. 
- *	This call assumes an initialized PAPI library and a properly added event set 
- *
  *	@par C Prototype:
  *		#include <papi.h> @n
  *		int PAPI_reset( int EventSet );
@@ -1607,16 +1605,20 @@ PAPI_stop( int EventSet, long long *values )
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset 
  *
+ *	@retval PAPI_OK 
  *	@retval PAPI_ESYS 
  *		A system or C library call failed inside PAPI, see the errno variable.
  *	@retval PAPI_ENOEVST 
  *		The EventSet specified does not exist. 
+ *  @details
+ *	PAPI_reset() zeroes the values of the counters contained in EventSet. 
+ *	This call assumes an initialized PAPI library and a properly added event set 
  *
  *	@par Example:
  *	@code
- int EventSet = PAPI_NULL;
- int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
- int ret;
+int EventSet = PAPI_NULL;
+int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
+int ret;
  
 // Create an empty EventSet
 ret = PAPI_create_eventset(&EventSet);
@@ -2072,39 +2074,56 @@ PAPI_state( int EventSet, int *status )
 }
 
 /** @class PAPI_set_debug
- *	set the current debug level for PAPI 
+ * @brief set the current debug level for error output from PAPI 
  *
- *	@param level
+ * @par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_set_debug( int level );
+ *
+ * @par Fortran Prototype:
+ *		#include fpapi.h @n
+ *		PAPIF_set_debug( C_INT  level,  C_INT  check )
+ * 
+ * @param level
  *		one of the constants shown in the table below and defined in the papi.h 
- *		header file. 
- *		
- *	@retval PAPI_EINVAL The debuglevel is invalid. 
+ *		header file. @n
+ *	The possible debug levels for debugging are shown below.
+ *	@arg PAPI_QUIET			Do not print anything, just return the error code
+ *	@arg PAPI_VERB_ECONT	Print error message and continue
+ *	@arg PAPI_VERB_ESTOP	Print error message and exit 
+ *  @n
+ *	@retval PAPI_OK 
+ *	@retval PAPI_EINVAL
+ *		The debug level is invalid.
+ *  @n@n
  *
  *	The current debug level is used by both the internal error and debug message 
- *	handler subroutines. 
- *	The debug handler is only used if the library was compiled with -DDEBUG. 
- *	The debug handler is called when there is an error upon a call to the PAPI API. 
- *	The error handler is always active and it's behavior cannot be modified except 
- *	for whether or not it prints anything. 
+ *	handler subroutines. @n
+ *	The debug handler is only used if the library was compiled with -DDEBUG. @n
+ *	The debug handler is called when there is an error upon a call to the PAPI API.@n 
+ *	The error handler is always active and its behavior cannot be modified except 
+ *	for whether or not it prints anything.
  *	
- *	NOTE: This is the ONLY function that may be called BEFORE PAPI_library_init(). 
- *	The PAPI error handler prints out messages in the following form: 
- *				PAPI Error: message. 
- *
- *	The default PAPI debug handler prints out messages in the following form:
- *		PAPI Error: Error Code code,symbol,description 
+ *	The default PAPI debug handler prints out messages in the following form: @n
+ *		PAPI Error: Error Code code, symbol, description 
  *
  *	If the error was caused from a system call and the return code is PAPI_ESYS, 
  *	the message will have a colon space and the error string as reported by 
- *	strerror() appended to the end. 
- *	The possible debug levels for debugging are shown in the table below.
- *	<ul>
- *		<li>PAPI_QUIET	Do not print anything, just return the error code
- *		<li>PAPI_VERB_ECONT	Print error message and continue
- *		<li>PAPI_VERB_ESTOP	Print error message and exit 
- *	</ul>
+ *	strerror() appended to the end.
  *
- *	@see  PAPI_library_init PAPI_get_opt PAPI_set_opt
+ *	The PAPI error handler prints out messages in the following form: @n
+ *				PAPI Error: message. 
+ *  @n
+ *	@note This is the ONLY function that may be called BEFORE PAPI_library_init(). 
+ *  @n
+ *	@par Example:
+ *	@code
+ int ret;
+ ret = PAPI_set_debug(PAPI_VERB_ECONT);
+ if ( ret != PAPI_OK ) handle_error();
+ *	@endcode
+ *
+ *	@see  PAPI_library_init, PAPI_get_opt, PAPI_set_opt
  */
 int
 PAPI_set_debug( int level )
