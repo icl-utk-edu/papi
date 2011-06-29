@@ -3931,35 +3931,58 @@ PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
    The second function takes a component argument. */
 
 /** @class PAPI_set_granularity
- *	set the default counting granularity for eventsets bound to the cpu component 
+ *	@brief set the default counting granularity for eventsets bound to the cpu component 
  *
- *	@param granularity
- *		one of the following constants as defined in the papi.h header file
- *		<ul>
- *			<li> PAPI_GRN_THR	Count each individual thread
- *			<li> PAPI_GRN_PROC	Count each individual process
- *			<li> PAPI_GRN_PROCG	Count each individual process group
- *			<li> PAPI_GRN_SYS	Count the current CPU
- *			<li> PAPI_GRN_SYS_CPU	Count all CPU's individually
- *			<li> PAPI_GRN_MIN	The finest available granularity
- *			<li>PAPI_GRN_MAX	The coarsest available granularity 
- *		</ul>
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_set_granularity( int granularity );
  *
+ *	@par Fortran Prototype:
+ *		#include fpapi.h @n
+ *		PAPIF_set_granularity( C_INT  granularity,  C_INT  check )
+ *
+ *	@param granularity one of the following constants as defined in the papi.h header file
+ *	@arg PAPI_GRN_THR	Count each individual thread
+ *	@arg PAPI_GRN_PROC	Count each individual process
+ *	@arg PAPI_GRN_PROCG	Count each individual process group
+ *	@arg PAPI_GRN_SYS	Count the current CPU
+ *	@arg PAPI_GRN_SYS_CPU	Count all CPU's individually
+ *	@arg PAPI_GRN_MIN	The finest available granularity
+ *	@arg PAPI_GRN_MAX	The coarsest available granularity 
+ *  @manonly
+ *  @endmanonly
+ *
+ *	@retval PAPI_OK 
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
- *	@retval PAPI_ENOEVST 
- *		The event set specified does not exist.
- *	@retval PAPI_ENOCMP 
- *		The argument cidx is not a valid component.
- *	@retval PAPI_EISRUN 
- *		The event set is currently counting events. 
+ *  @manonly
+ *  @endmanonly
  *
  *	PAPI_set_granularity sets the default counting granularity for all new 
  *	event sets created by PAPI_create_eventset . 
  *	This call implicitly sets the granularity for the cpu component 
  *	(component 0) and is included to preserve backward compatibility. 
  *
- *	@see  PAPI_set_domain PAPI_set_opt PAPI_get_opt
+ *	@par Example:
+ *	@code
+int ret;
+
+// Initialize the library
+ret = PAPI_library_init(PAPI_VER_CURRENT);
+if (ret > 0 && ret != PAPI_VER_CURRENT) {
+  fprintf(stderr,"PAPI library version mismatch!\n");
+  exit(1); 
+}
+if (ret < 0) handle_error(ret);
+
+// Set the default granularity for the cpu component
+ret = PAPI_set_granularity(PAPI_GRN_PROC);
+if (ret != PAPI_OK) handle_error(ret);
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+ *	@endcode
+ *
+ *	@see  PAPI_set_cmp_granularity PAPI_set_domain PAPI_set_opt PAPI_get_opt
  */
 int
 PAPI_set_granularity( int granularity )
@@ -3968,31 +3991,34 @@ PAPI_set_granularity( int granularity )
 }
 
 /** @class PAPI_set_cmp_granularity
- *	set the default counting granularity for eventsets bound to the specified component 
+ *	@brief set the default counting granularity for eventsets bound to the specified component 
+ *
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_set_cmp_granularity( int granularity, int cidx );
+ *
+ *	@param granularity one of the following constants as defined in the papi.h header file
+ *	@arg PAPI_GRN_THR	Count each individual thread
+ *	@arg PAPI_GRN_PROC	Count each individual process
+ *	@arg PAPI_GRN_PROCG	Count each individual process group
+ *	@arg PAPI_GRN_SYS	Count the current CPU
+ *	@arg PAPI_GRN_SYS_CPU	Count all CPU's individually
+ *	@arg PAPI_GRN_MIN	The finest available granularity
+ *	@arg PAPI_GRN_MAX	The coarsest available granularity
  *
  *	@param cidx
  *		An integer identifier for a component. 
  *		By convention, component 0 is always the cpu component. 
- *	@param granularity
- *		one of the following constants as defined in the papi.h header file
- *		<ul>
- *			<li> PAPI_GRN_THR	Count each individual thread
- *			<li> PAPI_GRN_PROC	Count each individual process
- *			<li> PAPI_GRN_PROCG	Count each individual process group
- *			<li> PAPI_GRN_SYS	Count the current CPU
- *			<li> PAPI_GRN_SYS_CPU	Count all CPU's individually
- *			<li> PAPI_GRN_MIN	The finest available granularity
- *			<li>PAPI_GRN_MAX	The coarsest available granularity 
- *		</ul>
+ *  @manonly
+ *  @endmanonly
  *
+ *	@retval PAPI_OK 
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
- *	@retval PAPI_ENOEVST 
- *		The event set specified does not exist.
  *	@retval PAPI_ENOCMP 
  *		The argument cidx is not a valid component.
- *	@retval PAPI_EISRUN 
- *		The event set is currently counting events. 
+ *  @manonly
+ *  @endmanonly
  *
  *	PAPI_set_cmp_granularity sets the default counting granularity for all new 
  *	event sets, and requires an explicit component argument. 
@@ -4002,7 +4028,26 @@ PAPI_set_granularity( int granularity )
  *	The reader should note that the granularity of an event set affects only 
  *	the mode in which the counter continues to run. 
  *
- *	@see  PAPI_set_domain PAPI_set_opt PAPI_get_opt
+ *	@par Example:
+ *	@code
+int ret;
+
+// Initialize the library
+ret = PAPI_library_init(PAPI_VER_CURRENT);
+if (ret > 0 && ret != PAPI_VER_CURRENT) {
+  fprintf(stderr,"PAPI library version mismatch!\n");
+  exit(1); 
+}
+if (ret < 0) handle_error(ret);
+
+// Set the default granularity for the cpu component
+ret = PAPI_set_cmp_granularity(PAPI_GRN_PROC, 0);
+if (ret != PAPI_OK) handle_error(ret);
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+ *	@endcode
+ *
+ *	@see  PAPI_set_granularity PAPI_set_domain PAPI_set_opt PAPI_get_opt
  */
 int
 PAPI_set_cmp_granularity( int granularity, int cidx )
@@ -4021,35 +4066,58 @@ PAPI_set_cmp_granularity( int granularity, int cidx )
    The second function takes a component argument. */
 
 /** @class PAPI_set_domain
- *	set the default counting domain for new event sets bound to the cpu component 
+ *	@brief set the default counting domain for new event sets bound to the cpu component 
  *
- *	@param domain
- *		one of the following constants as defined in the papi.h header file
- *		<ul>
- *			<li> PAPI_DOM_USER	User context counted
- *			<li> PAPI_DOM_KERNEL	Kernel/OS context counted
- *			<li> PAPI_DOM_OTHER	Exception/transient mode counted
- *			<li> PAPI_DOM_SUPERVISOR	Supervisor/hypervisor context counted
- *			<li> PAPI_DOM_ALL	All above contexts counted
- *			<li> PAPI_DOM_MIN	The smallest available context
- *			<li> PAPI_DOM_MAX	The largest available context 
- *		</ul>
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_set_domain( int domain );
  *
+ *	@par Fortran Prototype:
+ *		#include fpapi.h @n
+ *		PAPIF_set_domain( C_INT  domain,  C_INT  check )
+ *
+ *	@param domain one of the following constants as defined in the papi.h header file
+ *	@arg PAPI_DOM_USER User context counted
+ *	@arg PAPI_DOM_KERNEL  Kernel/OS context counted
+ *	@arg PAPI_DOM_OTHER Exception/transient mode counted
+ *	@arg PAPI_DOM_SUPERVISOR Supervisor/hypervisor context counted
+ *	@arg PAPI_DOM_ALL All above contexts counted
+ *	@arg PAPI_DOM_MIN The smallest available context
+ *	@arg PAPI_DOM_MAX The largest available context 
+ *  @manonly
+ *  @endmanonly
+ *
+ *	@retval PAPI_OK 
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
- *	@retval PAPI_ENOEVST 
- *		The event set specified does not exist.
- *	@retval PAPI_ENOCMP 
- *		The argument cidx is not a valid component.
- *	@retval PAPI_EISRUN 
- *		The event set is currently counting events. 
- *
+ *  @manonly
+ *  @endmanonly
+ * 
  *	PAPI_set_domain sets the default counting domain for all new event sets 
  *	created by PAPI_create_eventset in all threads. 
  *	This call implicitly sets the domain for the cpu component (component 0) 
  *	and is included to preserve backward compatibility. 
  *
- *	@see PAPI_set_granularity PAPI_set_opt PAPI_get_opt
+ *	@par Example:
+ *	@code
+int ret;
+
+// Initialize the library
+ret = PAPI_library_init(PAPI_VER_CURRENT);
+if (ret > 0 && ret != PAPI_VER_CURRENT) {
+  fprintf(stderr,"PAPI library version mismatch!\n");
+  exit(1); 
+}
+if (ret < 0) handle_error(ret);
+
+// Set the default domain for the cpu component
+ret = PAPI_set_domain(PAPI_DOM_KERNEL);
+if (ret != PAPI_OK) handle_error(ret);
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+ *	@endcode
+ *
+ *	@see PAPI_set_cmp_domain PAPI_set_granularity PAPI_set_opt PAPI_get_opt
  */
 int
 PAPI_set_domain( int domain )
@@ -4058,31 +4126,36 @@ PAPI_set_domain( int domain )
 }
 
 /** @class PAPI_set_cmp_domain
- *	set the default counting domain for new event sets bound to the specified component
+ *	@brief set the default counting domain for new event sets bound to the specified component
+ *
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_set_cmp_domain( int domain, int  cidx );
+ *
+ *	@param domain one of the following constants as defined in the papi.h header file
+ *	@arg PAPI_DOM_USER User context counted
+ *	@arg PAPI_DOM_KERNEL  Kernel/OS context counted
+ *	@arg PAPI_DOM_OTHER Exception/transient mode counted
+ *	@arg PAPI_DOM_SUPERVISOR Supervisor/hypervisor context counted
+ *	@arg PAPI_DOM_ALL All above contexts counted
+ *	@arg PAPI_DOM_MIN The smallest available context
+ *	@arg PAPI_DOM_MAX The largest available context 
+ *	@arg PAPI_DOM_HWSPEC Something other than CPU like stuff. Individual components can decode
+ *  low order bits for more meaning
  *
  *	@param cidx
  *		An integer identifier for a component. 
  *		By convention, component 0 is always the cpu component. 
- *	@param domain
- *		one of the following constants as defined in the papi.h header file
- *		<ul>
- *			<li> PAPI_DOM_USER	User context counted
- *			<li> PAPI_DOM_KERNEL	Kernel/OS context counted
- *			<li> PAPI_DOM_OTHER	Exception/transient mode counted
- *			<li> PAPI_DOM_SUPERVISOR	Supervisor/hypervisor context counted
- *			<li> PAPI_DOM_ALL	All above contexts counted
- *			<li> PAPI_DOM_MIN	The smallest available context
- *			<li> PAPI_DOM_MAX	The largest available context 
- *		</ul>
+ *  @manonly
+ *  @endmanonly
  *
+ *	@retval PAPI_OK 
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
- *	@retval PAPI_ENOEVST 
- *		The event set specified does not exist.
  *	@retval PAPI_ENOCMP 
  *		The argument cidx is not a valid component.
- *	@retval PAPI_EISRUN 
- *		The event set is currently counting events. 
+ *  @manonly
+ *  @endmanonly
  *
  *	PAPI_set_cmp_domain sets the default counting domain for all new event sets 
  *	in all threads, and requires an explicit component argument. 
@@ -4092,11 +4165,29 @@ PAPI_set_domain( int domain )
  *	mode in which the counter continues to run. 
  *	Counts are still aggregated for the current process, and not for any other 
  *	processes in the system. 
- *
  *	Thus when requesting PAPI_DOM_KERNEL , the user is asking for events that 
  *	occur on behalf of the process, inside the kernel. 
  *
- *	@see PAPI_set_granularity PAPI_set_opt PAPI_get_opt
+ *	@par Example:
+ *	@code
+int ret;
+
+// Initialize the library
+ret = PAPI_library_init(PAPI_VER_CURRENT);
+if (ret > 0 && ret != PAPI_VER_CURRENT) {
+  fprintf(stderr,"PAPI library version mismatch!\n");
+  exit(1); 
+}
+if (ret < 0) handle_error(ret);
+
+// Set the default domain for the cpu component
+ret = PAPI_set_cmp_domain(PAPI_DOM_KERNEL,0);
+if (ret != PAPI_OK) handle_error(ret);
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+ *	@endcode
+ *
+ *	@see PAPI_set_domain PAPI_set_granularity PAPI_set_opt PAPI_get_opt
  */
 int
 PAPI_set_cmp_domain( int domain, int cidx )
