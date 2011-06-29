@@ -3152,13 +3152,41 @@ PAPI_num_components( void )
 }
 
 /** @class PAPI_num_events
-  *	return the number of events in an event set.
+  * @brief return the number of events in an event set.
   * 
-  * @param EventSet 
-  *   an integer handle for a PAPI event set created by PAPI_create_eventset.
-  *
-  * PAPI_num_events() returns the number of preset events contained in an event set. 
+  * PAPI_num_events() returns the number of preset and/or native events 
+  * contained in an event set. 
   * The event set should be created by @ref PAPI_create_eventset() .
+  *
+  * @par C Interface:
+  * #include <papi.h> @n
+  * int PAPI_num_events(int  EventSet );
+  *
+  * @par Fortran Interface:
+  * #include fpapi.h @n
+  * PAPIF_num_events(C_INT  EventSet,  C_INT  count)
+  *
+  * @param[in] EventSet -- 
+  *   an integer handle for a PAPI event set created by PAPI_create_eventset().
+  * @param[out] *count -- (Fortran only) 
+  *   On output the variable contains the number of events in the event set
+  *
+  * @retval On success, this function returns the positive number of 
+  *         events in the event set.
+  * @retval PAPI_EINVAL The event count is zero; 
+  *                     only if code is compiled with debug enabled.
+  * @retval PAPI_ENOEVST The EventSet specified does not exist. 
+  *
+  * @par Example
+  * @code
+  * // Count the events in our EventSet 
+  * printf(\"%d events found in EventSet.\\n\", PAPI_num_events(EventSet));
+  * @endcode
+  *
+  * @bug This function has no known bugs. 
+  *
+  * @see PAPI_add_event PAPI_create_eventset
+  *
   */
 int
 PAPI_num_events( int EventSet )
@@ -3303,28 +3331,58 @@ PAPI_descr_error( int errorCode )
 }
 
 /** @class PAPI_perror
- *	convert PAPI error codes to strings, and print error message to stderr. 
+ *  @brief convert PAPI error codes to strings, and print error message to stderr. 
  *
- *	@param code  
- *      the error code to interpret 
- *  @param destination  
- *      "the error message in quotes"
+ *  PAPI_perror() fills the string destination with the error message 
+ *  corresponding to the error code code . 
+ *  The function copies length worth of the error description string 
+ *  corresponding to code into destination. 
+ *  The resulting string is always null terminated. 
+ *  If length is 0, then the string is printed on stderr. 
+ *
+ * @par C Interface:
+ *     #include <papi.h> @n
+ *     int PAPI_perror(int code, char *destination, int length);
+ *
+ * @par Fortran Interface:
+ *     #include fpapi.h
+ *     PAPIF_perror(C_INT code, C_STRING destination, C_INT check)
+ *
+ *  @param[in] code  
+ *      -- the error code to interpret 
+ *  @param[out] destination  
+ *      -- the error message in quotes
  *  @param length 
- *      either 0 or strlen(destination)  
+ *      -- either 0 or strlen(destination)  
  * 
  *  @retval PAPI_EINVAL  
  *      One or more of the arguments to PAPI_perror() is invalid. 
- *  @retval NULL  
- *      The input error code to PAPI_strerror() is invalid. 
  *
- *	PAPI_perror() fills the string destination with the error message 
- *	corresponding to the error code code . 
- *	The function copies length worth of the error description string 
- *	corresponding to code into destination. 
- *	The resulting string is always null terminated. 
- *	If length is 0, then the string is printed on stderr. 
+ *  @par Example
+ *  @code
+ *  int EventSet = PAPI_NULL;
+ *  int native = 0x0;
+ *  char error_str[PAPI_MAX_STR_LEN];
+ *  if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
+ *  {
+ *     fprintf(stderr, \"PAPI error %d: %s\\n\",retval,PAPI_strerror(retval));
+ *     exit(1);
+ *  }
+ *  // Add Total Instructions Executed to our EventSet
+ *  if ((retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
+ *  {
+ *     PAPI_perror(retval,error_str,PAPI_MAX_STR_LEN);
+ *     fprintf(stderr,\"PAPI_error %d: %s\\n\",retval,error_str);
+ *     exit(1);
+ *  }
+ *  // Start counting
+ *  if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+ *     handle_error(retval);
+ *  @endcode
  *
- *	@see  PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
+ *  @bug This function has no known bugs.
+ *
+ *  @see PAPI_strerror
  */
 int
 PAPI_perror( int code, char *destination, int length )
@@ -3343,36 +3401,20 @@ PAPI_perror( int code, char *destination, int length )
 	return ( PAPI_OK );
 }
 
-/** @class PAPI_overflow
- *	set up an event set to begin registering overflows 
+/** @class _papi_overflow_handler
+ *  @brief user defined function to process overflow events
  *
- * @param EventSet
- *		an integer handle to a PAPI event set as created by @ref PAPI_create_eventset()
- * @param EventCode
- *		the preset or native event code to be set for overflow detection. 
- *		This event must have already been added to the EvenSet.
- * @param threshold
- *		the overflow threshold value for this EventCode.
- * @param flags
- *		bit map that controls the overflow mode of operation. 
- *		Set to @ref PAPI_OVERFLOW_FORCE_SW to force software overflowing, 
- *		even if hardware overflow support is available. 
- *		If hardware overflow support is available on a given system, it will be 
- *		the default mode of operation. 
- *		There are situations where it is advantageous to use software overflow instead. 
- *		Although software overflow is inherently less accurate, with more latency 
- *		and processing overhead, it does allow for overflowing on derived events, 
- *		and for the accurate recording of overflowing event counts. 
- *		These two features are typically not available with hardware overflow. 
- *		Only one type of overflow is allowed per event set, so setting one event 
- *		to hardware overflow and another to forced software overflow will result in an error being returned.
- *	@param handler
- *		pointer to the user supplied handler function to call upon overflow 
+ *  @see PAPI_overflow
+ */
+
+/** @class PAPI_overflow
+ *  @brief set up an event set to begin registering overflows 
  *
  * PAPI_overflow() marks a specific EventCode in an EventSet to generate an 
  * overflow signal after every threshold events are counted. 
  * More than one event in an event set can be used to trigger overflows. 
- * In such cases, the user must call this function once for each overflowing event. 
+ * In such cases, the user must call this function once for each overflowing 
+ * event. 
  * To turn off overflow on a specified event, call this function with a 
  * threshold value of 0.
  *
@@ -3380,15 +3422,110 @@ PAPI_perror( int code, char *destination, int length )
  * is the entire event set. 
  * PAPI defaults to hardware overflow if it is available. 
  * In the case of software overflow, a periodic timer interrupt causes PAPI 
- * to compare the event counts against the threshold values and call the overflow 
- * handler if one or more events have exceeded their threshold. 
+ * to compare the event counts against the threshold values and call the 
+ * overflow handler if one or more events have exceeded their threshold. 
  * In the case of hardware overflow, the counters are typically set to the 
  * negative of the threshold value and count up to 0. 
- * This zero-crossing triggers a hardware interrupt that calls the overflow handler. 
- * Because of this counter interrupt, the counter values for overflowing counters 
- * may be very small or even negative numbers, and cannot be relied upon as accurate. 
+ * This zero-crossing triggers a hardware interrupt that calls the overflow 
+ * handler. 
+ * Because of this counter interrupt, the counter values for overflowing 
+ * counters 
+ * may be very small or even negative numbers, and cannot be relied upon 
+ * as accurate. 
  * In such cases the overflow handler can approximate the counts by supplying 
  * the threshold value whenever an overflow occurs. 
+ *
+ * _papi_overflow_handler()  is  a placeholder for a user-defined function
+ * to process overflow events.  A pointer to this function  is  passed  to
+ * the  PAPI_overflow  routine, where it is invoked whenever a software or
+ * hardware overflow occurs.  This handler receives the  EventSet  of  the
+ * overflowing  event,  the  Program  Counter  address  when the interrupt
+ * occured, an overflow_vector that can be processed to  determined  which
+ * event(s)  caused  the  overflow,  and a pointer to the machine context,
+ * which can be used in a  platform-specific  manor  to  extract  register
+ * information about what was happening when the overflow occured.
+ *
+ * @par C Interface:
+ * #include <papi.h> @n
+ * int PAPI_overflow (int EventSet, int EventCode, int threshold, 
+ * int flags, PAPI_overflow_handler_t handler ); @n@n
+ * (*PAPI_overflow_handler_t) _papi_overflow_handler
+ * (int  EventSet, void *address, long_long overflow_vector, 
+ * void *context );
+ *
+ * @par Fortran Interface:
+ * Not implemented
+ *
+ * @param[in] EventSet
+ *	      -- an integer handle to a PAPI event set as created by 
+ *            @ref PAPI_create_eventset()
+ * @param[in] EventCode
+ *	      -- the preset or native event code to be set for overflow 
+ *            detection. 
+ *	      This event must have already been added to the EventSet.
+ * @param[in] threshold
+ *	      -- the overflow threshold value for this EventCode.
+ * @param[in] flags
+ *	      -- bitmap that controls the overflow mode of operation. 
+ *	      Set to @ref PAPI_OVERFLOW_FORCE_SW to force software 
+ *            overflowing, even if hardware overflow support is available. 
+ *	      If hardware overflow support is available on a given system, 
+ *            it will be the default mode of operation. 
+ *	      There are situations where it is advantageous to use software 
+ *            overflow instead. 
+ *	      Although software overflow is inherently less accurate, 
+ *            with more latency and processing overhead, it does allow for 
+ *            overflowing on derived events,  and for the accurate recording 
+ *            of overflowing event counts. 
+ *	      These two features are typically not available with hardware 
+ *            overflow. 
+ *	      Only one type of overflow is allowed per event set, so 
+ *            setting one event to hardware overflow and another to forced 
+ *            software overflow will result in an error being returned.
+ *	@param[in] handler
+ *	      -- pointer to the user supplied handler function to call upon 
+ *            overflow 
+ *      @param[in] address 
+ *            -- the Program Counter address at the time of the overflow
+ *      @param[in] overflow_vector  
+ *            -- a long long word containing flag bits to indicate
+ *               which hardware counter(s) caused the overflow
+ *      @param[in] *context 
+ *            -- pointer to a machine specific structure that defines the
+ *               register context at the time of overflow. This parameter 
+ *               is often unused and can be ignored in the user function.
+ *
+ * @retval PAPI_OK On success, PAPI_overflow returns PAPI_OK.  
+ * @retval PAPI_EINVAL One or more of the arguments is invalid.   
+ *            Most likely a bad threshold value.
+ * @retval PAPI_ENOMEM Insufficient memory to complete the operation.
+ * @retval PAPI_ENOEVST The EventSet specified does not exist.
+ * @retval PAPI_EISRUN The EventSet is currently counting events.
+ * @retval PAPI_ECNFLCT The underlying counter hardware cannot count 
+ *             this event and other events in the EventSet simultaneously. 
+ *             Also can happen if you are trying to overflow both by hardware
+ *             and by forced software at the same time.
+ * @retval PAPI_ENOEVNT The PAPI event is not available on 
+ *             the underlying hardware.
+ *
+ * @par Example
+ * @code
+ * // Define a simple overflow handler:
+ * void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+ * {
+ *    fprintf(stderr,\"Overflow at %p! bit=0x%llx \\n\",
+ *             address,overflow_vector);
+ * }
+ *
+ * // Call PAPI_overflow for an EventSet containing PAPI_TOT_INS,
+ * // setting the threshold to 100000. Use the handler defined above.
+ * retval = PAPI_overflow(EventSet, PAPI_TOT_INS, 100000, 0, handler);
+ * @endcode
+ *
+ * @bug This function has no known bugs.
+ *
+ * @see PAPI_get_overflow_event_index
+ *
  */
 int
 PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
