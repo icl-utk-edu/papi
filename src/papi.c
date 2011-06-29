@@ -275,48 +275,62 @@ PAPI_unregister_thread( void )
 }
 
 /** @class PAPI_list_threads
- *	list the registered thread ids 
+ *  @brief list the registered thread ids 
  *
- *	@param *id
- *		A pointer to a preallocated array. 
+ *  PAPI_list_threads() returns to the caller a list of all thread IDs 
+ *  known to PAPI.
+ *
+ *  This call assumes an initialized PAPI library. 
+ *
+ * @par C Interface
+ * #include <papi.h> @n
+ * int PAPI_list_threads(PAPI_thread_id_t *tids, int * number );
+ *
+ * @par Fortran Interface:
+ *              <none>
+ *
+ * @param[in,out] *tids
+ *		-- A pointer to a preallocated array. 
  *		This may be NULL to only return a count of threads. 
  *		No more than *number codes will be stored in the array.
- *	@param *num
- *		An input and output parameter, input specifies the number of allocated 
- *		elements in *id (if non-NULL) and output specifies the number of threads. 
+ * @param[in,out] *number
+ *		-- An input and output parameter.  
+ *              Input specifies the number of allocated elements in *tids 
+ *              (if non-NULL) and output specifies the number of threads. 
  *
- *	@retval PAPI_EINVAL
- *	
- *	PAPI_list_threads() returns to the caller a list of all thread ID's known to PAPI.
- *	This call assumes an initialized PAPI library. 
+ * @retval PAPI_OK The call returned successfully.
+ * @retval PAPI_EINVAL *number has an improper value
  *
- *	@see  PAPI_get_thr_specific PAPI_set_thr_specific PAPI_register_thread 
+ * @bug This function has no known bugs.
+ *
+ * @see  PAPI_get_thr_specific PAPI_set_thr_specific PAPI_register_thread 
  *			PAPI_unregister_thread PAPI_thread_init PAPI_thread_id
+ *
  */
 int
-PAPI_list_threads( PAPI_thread_id_t * id, int *num )
+PAPI_list_threads( PAPI_thread_id_t *tids, int *number )
 {
 	PAPI_all_thr_spec_t tmp;
 	int retval;
 
-	/* If id == NULL, then just count the threads, don't gather a list. */
-	/* If id != NULL, then we need the length of the id array in num. */
+	/* If tids == NULL, then just count the threads, don't gather a list. */
+	/* If tids != NULL, then we need the length of the tids array in num. */
 
-	if ( ( num == NULL ) || ( id && ( *num <= 0 ) ) )
+	if ( ( number == NULL ) || ( tids && ( *number <= 0 ) ) )
 		papi_return( PAPI_EINVAL );
 
 	memset( &tmp, 0x0, sizeof ( tmp ) );
 
 	/* data == NULL, since we don't want the thread specific pointers. */
-	/* id may be NULL, if the user doesn't want the thread ID's. */
+	/* tids may be NULL, if the user doesn't want the thread IDs. */
 
-	tmp.num = *num;
-	tmp.id = id;
+	tmp.num = *number;
+	tmp.id = tids;
 	tmp.data = NULL;
 
 	retval = _papi_hwi_gather_all_thrspec_data( 0, &tmp );
 	if ( retval == PAPI_OK )
-		*num = tmp.num;
+		*number = tmp.num;
 
 	papi_return( retval );
 }
@@ -2007,14 +2021,35 @@ PAPI_cleanup_eventset( int EventSet )
 	papi_return( _papi_hwi_cleanup_eventset( ESI ) );
 }
 
-/**	@class PAPI_get_multiplex
+/**	@class PAPI_multiplex_init
  *	@brief initialize multiplex support in the PAPI library 
- *	PAPI_multiplex_init enables and initializes multiplex support in the PAPI library. 
- *	Multiplexing allows a user to count more events than total physical counters 
- *	by time sharing the existing counters at some loss in precision. 
- *	Applications that make no use of multiplexing do not need to call this routine. 
  *
- *	@see PAPI_set_multiplex PAPI_get_multiplex
+ *	PAPI_multiplex_init() enables and initializes multiplex support in 
+ *      the PAPI library. 
+ *	Multiplexing allows a user to count more events than total physical 
+ *      counters by time sharing the existing counters at some loss in 
+ *      precision. 
+ *	Applications that make no use of multiplexing do not need to call 
+ *      this routine. 
+ *
+ * @par C Interface:
+ * #include <papi.h> @n
+ * int PAPI_multiplex_init (void);
+ *
+ * @par Fortran Interface:
+ * #include fpapi.h @n
+ * PAPIF_multiplex_init(C_INT  check )
+ *
+ * @par Examples
+ * @code
+ * retval = PAPI_multiplex_init();
+ * @endcode
+
+ * @retval PAPI_OK This call always returns PAPI_OK
+ *
+ * @bug This function has no known bugs.
+ *
+ * @see PAPI_set_multiplex PAPI_get_multiplex
  */
 int
 PAPI_multiplex_init( void )
@@ -2729,11 +2764,14 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	}
 }
 
-/* Preserves API compatibility with older versions */
 /** @class PAPI_num_hwctrs
- *	return the number of hardware counters on the cpu 
+ *  @brief return the number of hardware counters on the cpu 
  *
+ * @deprecated
  *	This is included to preserve backwards compatibility.
+ *      Use PAPI_num_cmp_hwctrs() instead.
+ *
+ * @see PAPI_num_cmp_hwctrs
  */
 int
 PAPI_num_hwctrs( void )
@@ -2742,19 +2780,40 @@ PAPI_num_hwctrs( void )
 }
 
 /** @class PAPI_num_cmp_hwctrs
- *	return the number of hardware counters for the specified component 
+ *  @brief return the number of hardware counters for the specified component 
  *
- *	@param cidx
- *		An integer identifier for a component. By convention, component 0 is always 
- *		the cpu component.
+ *  PAPI_num_cmp_hwctrs() returns the number of counters present in the 
+ *  specified component. 
+ *  By convention, component 0 is always the cpu. 
+ *  This count does not include any special purpose registers or 
+ *  other performance hardware. 
+ *  PAPI_library_init() must be called in order for this function to return 
+ *  anything greater than 0. 
  *
- *	PAPI_num_cmp_hwctrs() returns the number of counters present in the 
- *	specified component. 
- *	By convention, component 0 is always the cpu. 
- *	This count does not include any special purpose registers or 
- *	other performance hardware. 
- *	PAPI_library_init must be called in order for this function to return 
- *	anything greater than 0. 
+ * @par C Interface:
+ * #include <papi.h> @n
+ * int PAPI_num_cmp_hwctrs(int  cidx );
+ *
+ * @par Fortran Interface:
+ * #include fpapi.h @n
+ * PAPIF_num_hwctrs(C_INT  num)
+ *
+ * @param[in] cidx
+ *         -- An integer identifier for a component. 
+ *         By convention, component 0 is always the cpu component.
+ *
+ * @par Example
+ * @code
+ * // Query the cpu component for the number of counters.
+ * printf(\"%d hardware counters found.\\n\", PAPI_num_cmp_hwctrs(0));
+ * @endcode
+ *
+ * @retval 
+ *  On success, this function returns a value greater than zero.@n
+ *  A zero result usually means the library has not been initialized.
+ *
+ * @bug This count may include fixed-use counters in addition
+ *      to the general purpose counters.
  */
 int
 PAPI_num_cmp_hwctrs( int cidx )
@@ -4615,16 +4674,31 @@ PAPI_save( void )
 }
 
 /** @class PAPI_lock
- *	Lock one of two mutex variables defined in papi.h 
+ *  @brief Lock one of two mutex variables defined in papi.h 
  *
- *	@param lck
- *		an integer value specifying one of the two user locks: PAPI_USR1_LOCK or PAPI_USR2_LOCK 
+ *  PAPI_lock() grabs access to one of the two PAPI mutex variables. 
+ *  This function is provided to the user to have a platform independent call 
+ *  to a (hopefully) efficiently implemented mutex.
  *
- *	PAPI_lock() Grabs access to one of the two PAPI mutex variables. 
- *	This function is provided to the user to have a platform independent call 
- *	to (hopefully) efficiently implemented mutex.
+ *  @par C Interface:
+ *  #include <papi.h> @n
+ *  void PAPI_lock(int lock);
  *
- *	@see PAPI_thread_init
+ *  @par Fortran Interface:
+ *  #include fpapi.h @n
+ *  PAPIF_lock(C_INT  lock)
+ *
+ *  @param[in] lock
+ *    -- an integer value specifying one of the two user locks: PAPI_USR1_LOCK or PAPI_USR2_LOCK 
+ *
+ *  @retval 
+ *      There is no return value for this call. 
+ *      Upon return from  PAPI_lock the current thread has acquired 
+ *      exclusive access to the specified PAPI mutex.
+ *
+ *  @bug This function has no known bugs
+ *
+ *  @see PAPI_unlock PAPI_thread_init
  */
 int
 PAPI_lock( int lck )
