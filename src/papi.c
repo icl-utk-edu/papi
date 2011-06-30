@@ -658,25 +658,50 @@ PAPI_library_init( int version )
 }
 
 /** @class PAPI_query_event
-  *	query if PAPI event exists 
+ *  @brief query if PAPI event exists 
  *
- *	@param EventCode
- *		a defined event such as PAPI_TOT_INS. 
+ * @par C Interface:
+ * #include <papi.h> @n
+ * int PAPI_query_event(int EventCode);
  *
- *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid.
- *	@retval PAPI_ENOTPRESET 
- *		The hardware event specified is not a valid PAPI preset.
- *	@retval PAPI_ENOEVNT 
- *		The PAPI preset is not available on the underlying hardware. 
+ * @par Fortran Interface:
+ * #include fpapi.h @n
+ * PAPIF_query_event(C_INT EventCode, C_INT check )
  *
- *	PAPI_query_event() asks the PAPI library if the PAPI Preset event can be 
- *	counted on this architecture. 
- *	If the event CAN be counted, the function returns PAPI_OK. 
- *	If the event CANNOT be counted, the function returns an error code. 
- *	This function also can be used to check the syntax of a native event. 
+ * PAPI_query_event() asks the PAPI library if the PAPI Preset event can be 
+ * counted on this architecture. 
+ * If the event CAN be counted, the function returns PAPI_OK. 
+ * If the event CANNOT be counted, the function returns an error code. 
+ * This function also can be used to check the syntax of a native event. 
  *
- *	@see PAPI_remove_event PAPI_remove_events PAPI_presets PAPI_native
+ * @param EventCode
+ *    -- a defined event such as PAPI_TOT_INS. 
+ *
+ *  @retval PAPI_EINVAL 
+ *	    One or more of the arguments is invalid.
+ *  @retval PAPI_ENOTPRESET 
+ *	    The hardware event specified is not a valid PAPI preset.
+ *  @retval PAPI_ENOEVNT 
+ *	    The PAPI preset is not available on the underlying hardware. 
+ *
+ * @par Examples
+ * @code
+ * int retval;
+ * // Initialize the library
+ * retval = PAPI_library_init(PAPI_VER_CURRENT);
+ * if (retval != PAPI_VER_CURRENT) {
+ *   fprintf(stderr,\"PAPI library init error!\\n\");
+ *   exit(1); 
+ * }
+ * if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK) {
+ *   fprintf(stderr,\"No instruction counter? How lame.\\n\");
+ *   exit(1);
+ * }
+ * @endcode
+ *
+ * @bug These functions have no known bugs. 
+ *
+ * @see PAPI_remove_event PAPI_remove_events PAPI_presets PAPI_native
  */
 int
 PAPI_query_event( int EventCode )
