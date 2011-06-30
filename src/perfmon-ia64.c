@@ -1550,7 +1550,7 @@ ia64_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 }
 
 static inline void
-ia64_dispatch_sigprof( int n, hwd_siginfo_t * info, struct sigcontext *sc )
+ia64_dispatch_sigprof( int n, hwd_siginfo_t * info, hwd_ucontext_t *sc )
 {
 	( void ) n;				 /*unused */
 	_papi_hwi_context_t ctx;

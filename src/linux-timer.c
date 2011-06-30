@@ -9,8 +9,11 @@
 #include "papi.h"
 #include "papi_internal.h"
 
+#ifdef __ia64__
+#include "perfmon-ia64.h"
 /* for mygettid() on ia64 */
 #include "linux-common.h"
+#endif
 
 #if defined(HAVE_PER_THREAD_TIMES)
 #include <sys/times.h>
@@ -233,8 +236,8 @@ _linux_get_real_cycles( void )
 
 
 #if defined(USE_PROC_PTTIMER)
-static int
-init_proc_thread_timer( const hwd_context_t *thr_ctx )
+int
+init_proc_thread_timer( hwd_context_t *thr_ctx )
 {
 	char buf[LINE_MAX];
 	int fd;
