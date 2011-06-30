@@ -44,8 +44,8 @@ void *vec_void_star_dummy(  );
 long long vec_long_long_dummy(  );
 char *vec_char_star_dummy(  );
 long vec_long_dummy(  );
-long long vec_dummy_get_virt_cycles( const hwd_context_t * zero );
-long long vec_dummy_get_virt_usec( const hwd_context_t * zero );
+//long long vec_dummy_get_virt_cycles( hwd_context_t * zero );
+//long long vec_dummy_get_virt_usec( hwd_context_t * zero );
 long long vec_dummy_get_real_usec( void );
 long long vec_dummy_get_real_cycles( void );
 
@@ -177,7 +177,7 @@ vec_dummy_get_real_cycles( void )
 }
 
 long long
-vec_dummy_get_virt_usec( const hwd_context_t * zero )
+vec_dummy_get_virt_usec( hwd_context_t * zero )
 {
 	( void ) zero;			 /*unused */
 #if defined(__bgp__)
@@ -216,7 +216,7 @@ vec_dummy_get_virt_usec( const hwd_context_t * zero )
 }
 
 long long
-vec_dummy_get_virt_cycles( const hwd_context_t * zero )
+vec_dummy_get_virt_cycles( hwd_context_t * zero )
 {
 	( void ) zero;			 /*unused */
 #if defined(__bgp__)
@@ -475,12 +475,12 @@ vector_find_dummy( void *func, char **buf )
 		if ( buf != NULL )
 			*buf = papi_strdup( "vec_dummy_get_real_cycles" );
 	} else if ( vec_dummy_get_virt_usec ==
-				( long long ( * )( const hwd_context_t * ) ) func ) {
+				( long long ( * )( hwd_context_t * ) ) func ) {
 		ptr = ( void * ) vec_dummy_get_virt_usec;
 		if ( buf != NULL )
 			*buf = papi_strdup( "vec_dummy_get_virt_usec" );
 	} else if ( vec_dummy_get_virt_cycles ==
-				( long long ( * )( const hwd_context_t * ) ) func ) {
+				( long long ( * )( hwd_context_t * ) ) func ) {
 		ptr = ( void * ) vec_dummy_get_virt_cycles;
 		if ( buf != NULL )
 			*buf = papi_strdup( "vec_dummy_get_virt_cycles" );

@@ -46,8 +46,8 @@ typedef struct papi_vectors {
 	int			(*destroy_eventset)	(int *);								/**< */
     long long	(*get_real_cycles)	(void);									/**< */
     long long	(*get_real_usec)	(void);									/**< */
-    long long	(*get_virt_cycles)	(const hwd_context_t *);				/**< */
-    long long	(*get_virt_usec)	(const hwd_context_t *);				/**< */
+    long long	(*get_virt_cycles)	(hwd_context_t *);				/**< */
+    long long	(*get_virt_usec)	(hwd_context_t *);				/**< */
     int		(*stop_profiling)	(ThreadInfo_t *, EventSetInfo_t *);			/**< */
     int		(*init_substrate)	(int);										/**< */
     int		(*init)			(hwd_context_t *);								/**< */

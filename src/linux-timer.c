@@ -10,7 +10,8 @@
 #include "papi_internal.h"
 
 #ifdef __ia64__
-#include "perfmon-ia64.h"
+/* for MY_VECTOR _ia64_vector */
+#include "perfmon-ia64-pfm.h"
 /* for mygettid() on ia64 */
 #include "linux-common.h"
 #endif
@@ -253,7 +254,7 @@ init_proc_thread_timer( hwd_context_t *thr_ctx )
 #endif
 
 long long
-_linux_get_virt_usec( const hwd_context_t * zero )
+_linux_get_virt_usec( hwd_context_t *zero )
 {
 #ifndef USE_PROC_PTTIMER
 	( void ) zero;			 /*unused */
@@ -341,7 +342,7 @@ _linux_get_virt_usec( const hwd_context_t * zero )
 }
 
 long long
-_linux_get_virt_cycles( const hwd_context_t * zero )
+_linux_get_virt_cycles( hwd_context_t * zero )
 {
 	return _linux_get_virt_usec( zero ) *
 		( long long ) _papi_hwi_system_info.hw_info.mhz;
