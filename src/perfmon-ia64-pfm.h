@@ -31,16 +31,6 @@ hweight64( unsigned long x )
 extern int _perfmon2_pfm_pmu_type;
 extern papi_vector_t _ia64_vector;
 
-#if defined(PFMLIB_ITANIUM2_PMU) || defined(PFMLIB_MONTECITO_PMU)
-char *retired_events[] = {
-	"IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",
-	"IA64_TAGGED_INST_RETIRED_IBRP1_PMC9",
-	"IA64_TAGGED_INST_RETIRED_IBRP2_PMC8",
-	"IA64_TAGGED_INST_RETIRED_IBRP3_PMC9",
-	NULL
-};
-#endif
-
 #define OVFL_SIGNAL SIGPROF
 #define PFMW_PEVT_EVTCOUNT(evt)          (evt->inp.pfp_event_count)
 #define PFMW_PEVT_EVENT(evt,idx)         (evt->inp.pfp_events[idx].event)
@@ -511,6 +501,16 @@ check_ibrp_events( hwd_control_state_t * current_state )
 	int retired_code, incr;
 	pfmlib_ita2_output_param_t *ita2_output_param;
 	pfmlib_mont_output_param_t *mont_output_param;
+
+#if defined(PFMLIB_ITANIUM2_PMU) || defined(PFMLIB_MONTECITO_PMU)
+char *retired_events[] = {
+	"IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",
+	"IA64_TAGGED_INST_RETIRED_IBRP1_PMC9",
+	"IA64_TAGGED_INST_RETIRED_IBRP2_PMC8",
+	"IA64_TAGGED_INST_RETIRED_IBRP3_PMC9",
+	NULL
+};
+#endif
 
 	switch ( _perfmon2_pfm_pmu_type ) {
 	case PFMLIB_ITANIUM2_PMU:

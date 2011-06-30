@@ -708,7 +708,7 @@ _ia64_ita_set_domain( hwd_control_state_t * this_state, int domain )
 		}
 	}
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int

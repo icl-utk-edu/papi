@@ -10,10 +10,10 @@
 #include "papi_internal.h"
 
 #ifdef __ia64__
-/* for MY_VECTOR _ia64_vector */
-#include "perfmon-ia64-pfm.h"
 /* for mygettid() on ia64 */
 #include "linux-common.h"
+/* for MY_VECTOR _ia64_vector */
+#include "perfmon-ia64-pfm.h"
 #endif
 
 #if defined(HAVE_PER_THREAD_TIMES)
