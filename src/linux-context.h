@@ -6,10 +6,8 @@
 #undef hwd_siginfo_t
 typedef struct siginfo hwd_siginfo_t;
 
-#ifndef PERFMON_IA64_BROKEN
 #undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;
-#endif
 
 #if defined(__ia64__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_ip

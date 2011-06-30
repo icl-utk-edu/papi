@@ -138,7 +138,7 @@ typedef struct itanium_preset_search
 	char operation[MAX_COUNTERS * 5];
 } itanium_preset_search_t;
 
-typedef struct Itanium_context
+typedef struct
 {
 	int fd;							   /* file descriptor */
 	pid_t tid;						   /* thread id */
@@ -147,13 +147,13 @@ typedef struct Itanium_context
 #endif
 } ia64_context_t;
 
-//typedef Itanium_context_t hwd_context_t;
+#undef hwd_context_t
+typedef ia64_context_t hwd_context_t;
 
-#define PERFMON_IA64_BROKEN yes
 #include "linux-context.h"
 
-#undef  hwd_ucontext_t
-typedef struct sigcontext hwd_ucontext_t;
+//#undef  hwd_ucontext_t
+//typedef struct sigcontext hwd_ucontext_t;
 
 /* Override void* definitions from PAPI framework layer */
 /* with typedefs to conform to PAPI component layer code. */

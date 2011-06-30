@@ -15,13 +15,15 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
-#include "perfmon-ia64-pfm.h"
 #include "threads.h"
 #include "papi_memory.h"
 
 #include "linux-memory.h"
 #include "linux-timer.h"
 #include "linux-common.h"
+
+#include "perfmon-ia64-pfm.h"
+
 
 /* Globals declared extern elsewhere */
 
@@ -1087,11 +1089,11 @@ _ia64_init_substrate( int cidx )
 		return ( retval );
 
 	/* get_memory_info has a CPU model argument that is not used,
-	 * fakining it here with hw_info.model which is not set by this
+	 * faking it here with hw_info.model which is not set by this
 	 * substrate 
 	 */
-	retval = _linux_memory_info( &_papi_hwi_system_info.hw_info,
-									_papi_hwi_system_info.hw_info.model );
+	retval = _linux_get_memory_info( &_papi_hwi_system_info.hw_info,
+				     _papi_hwi_system_info.hw_info.model );
 	if ( retval )
 		return ( retval );
 
@@ -2153,7 +2155,7 @@ papi_vector_t _ia64_vector = {
 
 	/* from OS */
 	.get_memory_info =   _linux_get_memory_info,
-	.get_dmem_info =     _linux_get_dmem_info
+	.get_dmem_info =     _linux_get_dmem_info,
 	.get_real_usec =     _linux_get_real_usec,
 	.get_real_cycles =   _linux_get_real_cycles,
 	.get_virt_cycles =   _linux_get_virt_cycles,
