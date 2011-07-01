@@ -26,7 +26,7 @@
    - Stop eventset 1
 */
 
-#include "papi.h"
+#include "papi_test.h"
 #include "prof_utils.h"
 #undef THRESHOLD
 #define THRESHOLD 1000
