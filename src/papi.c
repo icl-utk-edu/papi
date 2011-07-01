@@ -1994,22 +1994,22 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 	return PAPI_OK;
 }
 
-/** @class PAPI_accum
- *	@brief Accumulate and reset counters in an event set 
+/**	@class PAPI_accum
+ *	@brief accumulate and reset counters in an event set 
  *	
- *  @par C Interface:
- *  #include <papi.h> @n
- *  int PAPI_accum(int  EventSet, long_long * values );
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_accum( int  EventSet, long_long * values );
  *
- *  @par Fortran Interface:
- *  #include fpapi.h @n
- *  PAPIF_accum(C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_accum( C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
  *
- *  These calls assume an initialized PAPI library and a properly added event set. 
- *  PAPI_accum() adds the counters of the indicated event set into the array values. 
- *  The counters are zeroed and continue counting after the operation.
- *  Note the differences between PAPI_read() and PAPI_accum(), specifically 
- *  that PAPI_accum() resets the values array to zero. 
+ *	These calls assume an initialized PAPI library and a properly added event set. 
+ *	PAPI_accum adds the counters of the indicated event set into the array values. 
+ *	The counters are zeroed and continue counting after the operation.
+ *	Note the differences between PAPI_read and PAPI_accum, specifically 
+ *	that PAPI_accum resets the values array to zero. 
  *
  *	@param EventSet
  *		an integer handle for a PAPI Event Set 
@@ -2018,33 +2018,37 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *		an array to hold the counter values of the counting events 
  *
  *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid.
+ *	One or more of the arguments is invalid.
  *	@retval PAPI_ESYS 
  *		A system or C library call failed inside PAPI, see the errno variable.
  *	@retval PAPI_ENOEVST 
  *		The event set specified does not exist. 
  *
- *  @par Examples:
- *  @code
- *  do_100events();
- *  if (PAPI_read(EventSet, values) != PAPI_OK)
- *  handle_error(1);
- *  // values[0] now equals 100
- *  do_100events();
- *  if (PAPI_accum(EventSet, values) != PAPI_OK)
- *  handle_error(1);
- *  // values[0] now equals 200
- *  values[0] = -100;
- *  do_100events();
- *  if (PAPI_accum(EventSet, values) != PAPI_OK)
- *  handle_error(1);
- *  // values[0] now equals 0
- *  @endcode
+ *	@par Examples:
+ *	@code
+ *	do_100events();
+ *	if ( PAPI_read( EventSet, values) != PAPI_OK )
+ *	handle_error(1);
+ *	// values[0] now equals 100
+ *	do_100events();
+ *	if (PAPI_accum( EventSet, values ) != PAPI_OK )
+ *	handle_error(1);
+ *	// values[0] now equals 200
+ *	values[0] = -100;
+ *	do_100events();
+ *	if (PAPI_accum( EventSet, values ) != PAPI_OK )
+ *	handle_error(1);
+ *	// values[0] now equals 0
+ *	@endcode
  *
- *  @bug 
- *  No known bugs.
+ *	@bug 
+ *	No known bugs.
  *
- *  @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
+ *	@see PAPI_start @n
+ *	PAPI @n
+ *	PAPIF @n
+ *	PAPI_set_opt @n
+ *	PAPI_reset
  */
 int
 PAPI_accum( int EventSet, long long *values )
@@ -4788,18 +4792,39 @@ PAPI_set_cmp_domain( int domain, int cidx )
 	papi_return( PAPI_set_opt( PAPI_DEFDOM, &ptr ) );
 }
 
-/** @class PAPI_add_events
- *	add PAPI presets or native hardware events to an event set 
- *  
+/**	@class PAPI_add_events
+ *	@brief add PAPI presets or native hardware events to an event set 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_add_events( int  EventSet, int * EventCodes, int  number );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_add_events( C_INT  EventSet,  C_INT(*)  EventCodes,  C_INT  number,  C_INT  check )
+ *
+ *	PAPI_add_event adds one event to a PAPI Event Set. PAPI_add_events does 
+ *	the same, but for an array of events.
+ *	A hardware event can be either a PAPI preset or a native hardware event code.
+ *	For a list of PAPI preset events, see PAPI_presets or run the avail test case
+ *	in the PAPI distribution. PAPI presets can be passed to PAPI_query_event to see
+ *	if they exist on the underlying architecture.
+ *	For a list of native events available on current platform, run native_avail
+ *	test case in the PAPI distribution. For the encoding of native events,
+ *	see PAPI_event_name_to_code to learn how to generate native code for the
+ *	supported native event on the underlying architecture.
+ *
  *	@param EventSet
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset ()
- *	@param *Events 
+ *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset
+ *	@param *EventCode 
  *		an array of defined events
  *	@param number 
- *		an integer indicating the number of events in the array *EventCode 
+ *		an integer indicating the number of events in the array *EventCode.
  *		It should be noted that PAPI_add_events can partially succeed, 
  *		exactly like PAPI_remove_events. 
  *
+ *	@retval Positive-Integer
+ *		The number of consecutive elements that succeeded before the error. 
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOMEM 
@@ -4816,18 +4841,34 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *	@retval PAPI_EBUG 
  *		Internal error, please send mail to the developers. 
  *
- *	PAPI_add_event() adds one event to a PAPI Event Set.
- *	A hardware event can be either a PAPI preset or a native hardware event code. 
- *	For a list of PAPI preset events, see PAPI_presets() or run the avail test 
- *	case in the PAPI distribution. 
- *	PAPI presets can be passed to PAPI_query_event() to see if they exist on 
- *	the underlying architecture. 
- *	For a list of native events available on current platform, run native_avail 
- *	test case in the PAPI distribution. 
- *	For the encoding of native events, see PAPI_event_name_to_code() to learn 
- *	how to generate native code for the supported native event on the underlying architecture. 
+ *	@par Examples:
+ *	@code
+ *	int EventSet = PAPI_NULL;
+ *	unsigned int native = 0x0;
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error(1);
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
+ *	handle_error(1);
+ *	// Add native event PM_CYC to EventSet
+ *	if ( PAPI_event_name_to_code( "PM_CYC", &native ) != PAPI_OK )
+ *	handle_error(1);
+ *	if ( PAPI_add_event( EventSet, native ) != PAPI_OK )
+ *	handle_error(1);
+ *	@endcode
  *
- * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
+ *	@bug
+ *	The vector function should take a pointer to a length argument so a proper 
+ *	return value can be set upon partial success.
+ *
+ *	@see PAPI_cleanup_eventset @n
+ *	PAPI_destroy_eventset @n
+ *	PAPI_event_code_to_name @n
+ *	PAPI_remove_events @n
+ *	PAPI_query_event @n
+ *	PAPI_presets @n
+ *	PAPI_native @n
+ *	PAPI_remove_event
  */
 int
 PAPI_add_events( int EventSet, int *Events, int number )
