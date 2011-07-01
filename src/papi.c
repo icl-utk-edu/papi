@@ -1789,26 +1789,61 @@ PAPI_reset( int EventSet )
 }
 
 /** @class PAPI_read
- *	read hardware counters from an event set 
- *
- *	@param EventSet
- *		an integer handle for a PAPI Event Set 
- *		as created by PAPI_create_eventset
- *	@param values 
- *		an array to hold the counter values of the counting events 
- *
- *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid.
- *	@retval PAPI_ESYS 
- *		A system or C library call failed inside PAPI, see the errno variable.
- *	@retval PAPI_ENOEVST 
- *		The event set specified does not exist. 
+ *  @brief read hardware counters from an event set 
  *	
- *	These calls assume an initialized PAPI library and a properly added event set. 
- *	PAPI_read() copies the counters of the indicated event set into the array values. 
- *	The counters continue counting after the read. 
+ *  PAPI_read() copies the counters of the indicated event set into 
+ *  the provided array. 
  *
- * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
+ *  The counters continue counting after the read. 
+ *
+ *  Note the differences between PAPI_read() and PAPI_accum(), specifically
+ *  that PAPI_accum() resets the values array to zero.
+ *
+ *  PAPI_read() assumes an initialized PAPI library and a properly added 
+ *  event set. 
+ *
+ *  @par C Interface:
+ *  #include <papi.h> @n
+ *  int PAPI_read(int  EventSet, long_long * values );
+ *
+ *  @par Fortran Interface:
+ *  #include fpapi.h @n
+ *  PAPIF_read(C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
+ *
+ *  @param[in] EventSet
+ *     -- an integer handle for a PAPI Event Set as created 
+ *        by PAPI_create_eventset()
+ *  @param[out] *values 
+ *     -- an array to hold the counter values of the counting events 
+ *
+ *  @retval PAPI_EINVAL 
+ *	    One or more of the arguments is invalid.
+ *  @retval PAPI_ESYS 
+ *	    A system or C library call failed inside PAPI, see the 
+ *          errno variable.
+ *  @retval PAPI_ENOEVST 
+ *	    The event set specified does not exist. 
+ *	
+ * @par Examples
+ * @code
+ * do_100events();
+ * if (PAPI_read(EventSet, values) != PAPI_OK)
+ *    handle_error(1);
+ * // values[0] now equals 100
+ * do_100events();
+ * if (PAPI_accum(EventSet, values) != PAPI_OK)
+ *    handle_error(1);
+ * // values[0] now equals 200
+ * values[0] = -100;
+ * do_100events();
+ * if (PAPI_accum(EventSet, values) != PAPI_OK)
+ *     handle_error(1);
+ * // values[0] now equals 0 
+ * @endcode
+ *
+ * @bug  These functions have no known bugs.
+ *
+ * @see  PAPI_accum PAPI_start PAPI_stop PAPI_reset
  */
 int
 PAPI_read( int EventSet, long long *values )
@@ -1855,8 +1890,53 @@ PAPI_read( int EventSet, long long *values )
 	return ( PAPI_OK );
 }
 
+/** @class PAPI_read_ts
+ *  @brief read hardware counters with a timestamp
+ *	
+ *  PAPI_read_ts() copies the counters of the indicated event set into 
+ *  the provided array.  It also places a real-time cycle timestamp 
+ *  into the cycles array.
+ *
+ *  The counters continue counting after the read. 
+ *
+ *  PAPI_read_ts() assumes an initialized PAPI library and a properly added 
+ *  event set. 
+ *
+ *  @par C Interface:
+ *  #include <papi.h> @n
+ *  int PAPI_read_ts(int EventSet, long long *values, long long *cycles );
+ *
+ *  @par Fortran Interface:
+ *  #include fpapi.h @n
+ *  PAPIF_read_ts(C_INT EventSet, C_LONG_LONG(*) values, C_LONG_LONG(*) cycles,
+ *  C_INT  check)
+ *
+ *  @param[in] EventSet
+ *     -- an integer handle for a PAPI Event Set as created 
+ *        by PAPI_create_eventset()
+ *  @param[out] *values 
+ *     -- an array to hold the counter values of the counting events 
+ *  @param[out] *cycles
+ *     -- an array to hold the timestamp values
+ *
+ *  @retval PAPI_EINVAL 
+ *	    One or more of the arguments is invalid.
+ *  @retval PAPI_ESYS 
+ *	    A system or C library call failed inside PAPI, see the 
+ *          errno variable.
+ *  @retval PAPI_ENOEVST 
+ *	    The event set specified does not exist. 
+ *	
+ * @par Examples
+ * @code
+ * @endcode
+ *
+ * @bug  This function has no known bugs.
+ *
+ * @see  PAPI_read PAPI_accum PAPI_start PAPI_stop PAPI_reset
+ */
 int
-PAPI_read_ts( int EventSet, long long *values, long long *cyc )
+PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 {
 	EventSetInfo_t *ESI;
 	hwd_context_t *context;
@@ -1888,7 +1968,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cyc )
 				( size_t ) ESI->NumberOfEvents * sizeof ( long long ) );
 	}
 
-	*cyc = _papi_hwd[cidx]->get_real_cycles(  );
+	*cycles = _papi_hwd[cidx]->get_real_cycles(  );
 
 #if defined(DEBUG)
 	if ( ISLEVEL( DEBUG_API ) ) {
@@ -1899,7 +1979,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cyc )
 #endif
 
 	APIDBG( "PAPI_read_ts returns %d\n", retval );
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /** @class PAPI_accum
