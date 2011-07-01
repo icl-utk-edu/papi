@@ -1124,14 +1124,34 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
 	papi_return( _papi_hwi_add_pevent( ESI, code, inout ) );
 }
 
-/** @class PAPI_add_event
- *	add PAPI preset or native hardware event to an event set 
+/**	@class PAPI_add_event
+ *	@brief add PAPI preset or native hardware event to an event set
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_add_event( int  EventSet, int  EventCode );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_add_event( C_INT  EventSet,  C_INT  EventCode,  C_INT  check )
+ *
+ *	PAPI_add_event adds one event to a PAPI Event Set. @n
+ *	A hardware event can be either a PAPI preset or a native hardware event code.
+ *	For a list of PAPI preset events, see PAPI_presets or run the avail test case
+ *	in the PAPI distribution. PAPI presets can be passed to PAPI_query_event to see
+ *	if they exist on the underlying architecture.
+ *	For a list of native events available on current platform, run native_avail
+ *	test case in the PAPI distribution. For the encoding of native events,
+ *	see PAPI_event_name_to_code to learn how to generate native code for the
+ *	supported native event on the underlying architecture.
  *
  *	@param EventSet
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset()
+ *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset.
  *	@param EventCode 
  *		a defined event such as PAPI_TOT_INS. 
  *
+ *	@retval Positive-Integer
+ *		The number of consecutive elements that succeeded before the error. 
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOMEM 
@@ -1148,18 +1168,34 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
  *	@retval PAPI_EBUG 
  *		Internal error, please send mail to the developers. 
  *
- *	PAPI_add_event() adds one event to a PAPI Event Set.
- *	A hardware event can be either a PAPI preset or a native hardware event code. 
- *	For a list of PAPI preset events, see PAPI_presets() or run the avail test 
- *	case in the PAPI distribution. 
- *	PAPI presets can be passed to PAPI_query_event() to see if they exist on 
- *	the underlying architecture. 
- *	For a list of native events available on current platform, run native_avail 
- *	test case in the PAPI distribution. 
- *	For the encoding of native events, see PAPI_event_name_to_code() to learn 
- *	how to generate native code for the supported native event on the underlying architecture. 
+ *	@par Examples:
+ *	@code
+ *	int EventSet = PAPI_NULL;
+ *	unsigned int native = 0x0;
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error(1);
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
+ *	handle_error(1);
+ *	// Add native event PM_CYC to EventSet
+ *	if ( PAPI_event_name_to_code( "PM_CYC", &native ) != PAPI_OK )
+ *	handle_error(1);
+ *	if ( PAPI_add_event( EventSet, native ) != PAPI_OK )
+ *	handle_error(1);
+ *	@endcode
  *
- * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
+ *	@bug
+ *	The vector function should take a pointer to a length argument so a proper 
+ *	return value can be set upon partial success.
+ *
+ *	@see PAPI_cleanup_eventset @n
+ *	PAPI_destroy_eventset @n
+ *	PAPI_event_code_to_name @n
+ *	PAPI_remove_events @n
+ *	PAPI_query_event @n
+ *	PAPI_presets @n
+ *	PAPI_native @n
+ *	PAPI_remove_event
  */
 int
 PAPI_add_event( int EventSet, int EventCode )
@@ -4804,7 +4840,7 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *	PAPIF_add_events( C_INT  EventSet,  C_INT(*)  EventCodes,  C_INT  number,  C_INT  check )
  *
  *	PAPI_add_event adds one event to a PAPI Event Set. PAPI_add_events does 
- *	the same, but for an array of events.
+ *	the same, but for an array of events. @n
  *	A hardware event can be either a PAPI preset or a native hardware event code.
  *	For a list of PAPI preset events, see PAPI_presets or run the avail test case
  *	in the PAPI distribution. PAPI presets can be passed to PAPI_query_event to see
@@ -4815,9 +4851,9 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *	supported native event on the underlying architecture.
  *
  *	@param EventSet
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset
+ *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset.
  *	@param *EventCode 
- *		an array of defined events
+ *		an array of defined events.
  *	@param number 
  *		an integer indicating the number of events in the array *EventCode.
  *		It should be noted that PAPI_add_events can partially succeed, 
