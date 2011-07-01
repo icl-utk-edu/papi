@@ -1995,12 +1995,26 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 }
 
 /** @class PAPI_accum
- *	accumulate and reset counters in an event set 
+ *	@brief Accumulate and reset counters in an event set 
  *	
+ *  @par C Interface:
+ *  #include <papi.h> @n
+ *  int PAPI_accum(int  EventSet, long_long * values );
+ *
+ *  @par Fortran Interface:
+ *  #include fpapi.h @n
+ *  PAPIF_accum(C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
+ *
+ *  These calls assume an initialized PAPI library and a properly added event set. 
+ *  PAPI_accum() adds the counters of the indicated event set into the array values. 
+ *  The counters are zeroed and continue counting after the operation.
+ *  Note the differences between PAPI_read() and PAPI_accum(), specifically 
+ *  that PAPI_accum() resets the values array to zero. 
+ *
  *	@param EventSet
  *		an integer handle for a PAPI Event Set 
  *		as created by PAPI_create_eventset
- *	@param values 
+ *	@param *values 
  *		an array to hold the counter values of the counting events 
  *
  *	@retval PAPI_EINVAL 
@@ -2010,13 +2024,27 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *	@retval PAPI_ENOEVST 
  *		The event set specified does not exist. 
  *
- * These calls assume an initialized PAPI library and a properly added event set. 
- * PAPI_accum() adds the counters of the indicated event set into the array values. 
- * The counters are zeroed and continue counting after the operation.
- * Note the differences between PAPI_read() and PAPI_accum(), specifically 
- * that PAPI_accum() resets the values array to zero. 
+ *  @par Examples:
+ *  @code
+ *  do_100events();
+ *  if (PAPI_read(EventSet, values) != PAPI_OK)
+ *  handle_error(1);
+ *  // values[0] now equals 100
+ *  do_100events();
+ *  if (PAPI_accum(EventSet, values) != PAPI_OK)
+ *  handle_error(1);
+ *  // values[0] now equals 200
+ *  values[0] = -100;
+ *  do_100events();
+ *  if (PAPI_accum(EventSet, values) != PAPI_OK)
+ *  handle_error(1);
+ *  // values[0] now equals 0
+ *  @endcode
  *
- * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
+ *  @bug 
+ *  No known bugs.
+ *
+ *  @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
  */
 int
 PAPI_accum( int EventSet, long long *values )
