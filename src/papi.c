@@ -208,24 +208,36 @@ PAPI_thread_id( void )
  * Notify PAPI that a thread has 'appeared'
  * We lookup the thread, if it does not exist we create it
  */
+
 /** @class PAPI_register_thread
- *	Notify PAPI that a thread has 'appeared'
+ *  @brief Notify PAPI that a thread has 'appeared'
  *
- *	@retval PAPI_ENOMEM 
- *		Space could not be allocated to store the new thread information.
- *	@retval PAPI_ESYS 
- *		A system or C library call failed inside PAPI, see the errno variable.
- *	@retval PAPI_ESBSTR 
- *		Hardware counters for this thread could not be initialized. 
+ *  @par C Interface:
+ *  #include <papi.h> @n
+ *  int PAPI_register_thread (void);
  *
- *	PAPI_register_thread should be called when the user wants to force PAPI to 
- *	initialize a thread that PAPI has not seen before. 
- *	Usually this is not necessary as PAPI implicitly detects the thread when an 
- *	eventset is created or other thread local PAPI functions are called. 
- *	However, it can be useful for debugging and performance enhancements in the 
- *	run-time systems of performance tools. 
+ *  @par Fortran Interface:
+ *  #include fpapi.h @n
+ *  PAPIF_register_thread(C_INT  check )
  *
- *	@see PAPI_thread_id PAPI_thread_init
+ *  PAPI_register_thread() should be called when the user wants to force 
+ *  PAPI to initialize a thread that PAPI has not seen before. 
+ *
+ *  Usually this is not necessary as PAPI implicitly detects the thread when 
+ *  an eventset is created or other thread local PAPI functions are called. 
+ *  However, it can be useful for debugging and performance enhancements 
+ *  in the run-time systems of performance tools. 
+ *
+ *  @retval PAPI_ENOMEM 
+ *	Space could not be allocated to store the new thread information.
+ *  @retval PAPI_ESYS 
+ *	A system or C library call failed inside PAPI, see the errno variable.
+ *  @retval PAPI_ESBSTR 
+ *	Hardware counters for this thread could not be initialized. 
+ *
+ *   @bug No known bugs.
+ *
+ *   @see PAPI_unregister_thread PAPI_thread_id PAPI_thread_init
  */
 int
 PAPI_register_thread( void )
@@ -1791,6 +1803,14 @@ PAPI_reset( int EventSet )
 /** @class PAPI_read
  *  @brief read hardware counters from an event set 
  *	
+ *  @par C Interface:
+ *  #include <papi.h> @n
+ *  int PAPI_read(int  EventSet, long_long * values );
+ *
+ *  @par Fortran Interface:
+ *  #include fpapi.h @n
+ *  PAPIF_read(C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
+ *
  *  PAPI_read() copies the counters of the indicated event set into 
  *  the provided array. 
  *
@@ -1801,14 +1821,6 @@ PAPI_reset( int EventSet )
  *
  *  PAPI_read() assumes an initialized PAPI library and a properly added 
  *  event set. 
- *
- *  @par C Interface:
- *  #include <papi.h> @n
- *  int PAPI_read(int  EventSet, long_long * values );
- *
- *  @par Fortran Interface:
- *  #include fpapi.h @n
- *  PAPIF_read(C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
  *
  *  @param[in] EventSet
  *     -- an integer handle for a PAPI Event Set as created 
@@ -1893,15 +1905,6 @@ PAPI_read( int EventSet, long long *values )
 /** @class PAPI_read_ts
  *  @brief read hardware counters with a timestamp
  *	
- *  PAPI_read_ts() copies the counters of the indicated event set into 
- *  the provided array.  It also places a real-time cycle timestamp 
- *  into the cycles array.
- *
- *  The counters continue counting after the read. 
- *
- *  PAPI_read_ts() assumes an initialized PAPI library and a properly added 
- *  event set. 
- *
  *  @par C Interface:
  *  #include <papi.h> @n
  *  int PAPI_read_ts(int EventSet, long long *values, long long *cycles );
@@ -1910,6 +1913,15 @@ PAPI_read( int EventSet, long long *values )
  *  #include fpapi.h @n
  *  PAPIF_read_ts(C_INT EventSet, C_LONG_LONG(*) values, C_LONG_LONG(*) cycles,
  *  C_INT  check)
+ *
+ *  PAPI_read_ts() copies the counters of the indicated event set into 
+ *  the provided array.  It also places a real-time cycle timestamp 
+ *  into the cycles array.
+ *
+ *  The counters continue counting after the read. 
+ *
+ *  PAPI_read_ts() assumes an initialized PAPI library and a properly added 
+ *  event set. 
  *
  *  @param[in] EventSet
  *     -- an integer handle for a PAPI Event Set as created 
