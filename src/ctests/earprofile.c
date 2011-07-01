@@ -115,11 +115,14 @@ main( int argc, char **argv )
 	int num_events, num_tests = 6;
 	long length;
 	int retval, retval2;
-	const PAPI_hw_info_t *hw_info;
-	const PAPI_exe_info_t *prginfo;
+	PAPI_hw_info_t *hw_info;
+	PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
 
-	prof_init( argc, argv, &hw_info, &prginfo );
+	prof_init( argc, argv, &prginfo );
+
+	if ( ( hw_info = PAPI_get_hardware_info(  ) ) == NULL )
+	   return PAPI_ESBSTR;
 
 	if ( ( strncasecmp( hw_info->model_string, "Itanium", strlen( "Itanium" ) )
 		   != 0 ) &&

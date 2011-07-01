@@ -15,8 +15,8 @@
 #define NUM 16384
 
 static void init_array( void );
-static int do_malloc_work( unsigned long loop );
-static int do_static_work( unsigned long loop );
+static int do_malloc_work( long loop );
+static int do_static_work( long loop );
 static void measure_load_store( caddr_t start, caddr_t end );
 static void measure_event( int index, PAPI_option_t * option );
 
@@ -201,7 +201,7 @@ init_array( void )
 }
 
 static int
-do_static_work( unsigned long loop )
+do_static_work( long loop )
 {
 	int i;
 	int sum = 0;
@@ -225,7 +225,7 @@ do_static_work( unsigned long loop )
 }
 
 static int
-do_malloc_work( unsigned long loop )
+do_malloc_work( long loop )
 {
 	int i;
 	int sum = 0;
