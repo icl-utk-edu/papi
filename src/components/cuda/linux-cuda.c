@@ -524,10 +524,12 @@ CUDA_shutdown( hwd_context_t * ctx )
 		CUDA_FREED = 1;
 
 		/* deallocate all the memory */
-		for ( i = 0; i < deviceCount; i++ )
+		for ( i = 0; i < deviceCount; i++ ) {
 			for ( j = 0; j < device[i].domainCount; j++ )
 				free( device[i].domain[j].event );
-		free( device[i].domain );
+			
+			free( device[i].domain );
+		}
 
 		free( device );
 		free( cuda_native_table );
