@@ -921,39 +921,61 @@ PAPI_event_name_to_code( char *in, int *out )
   modifier can specify {all / available} for presets, or other values for native tables 
   and may be platform specific (Major groups / all mask bits; P / M / E chip, etc) */
 /** @class PAPI_enum_event
-  *	enumerate PAPI preset or native events 
+ *	@brief enumerate PAPI preset or native events 
  *
- *	@param EventCode
- *		a defined preset or native event such as PAPI_TOT_INS.
- *	@param modifier 
- *		modifies the search logic. For preset events, 
- *		TRUE specifies available events only. 
- *		For native events, each platform behaves differently. 
- *		See platform-specific documentation for details
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_enum_event( int * EventCode, int  modifer );
  *
- *	@retval PAPI_ENOEVNT 
- *		The next requested PAPI preset or native event is not available on 
- *		the underlying hardware. 
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_enum_event( C_INT  EventCode,  C_INT  modifier,  C_INT  check )
  *
- *	Given a preset or native event code, PAPI_enum_event() replaces the event 
+ *	Given a preset or native event code, PAPI_enum_event replaces the event 
  *	code with the next available event in either the preset or native table. 
  *	The modifier argument affects which events are returned. 
  *	For all platforms and event types, a value of PAPI_ENUM_ALL (zero) 
- *	directs the function to return all possible events. 
+ *	directs the function to return all possible events. @n
  *
  *	For preset events, a TRUE (non-zero) value currently directs the function 
  *	to return event codes only for PAPI preset events available on this platform. 
  *	This may change in the future. 
  *	For native events, the effect of the modifier argument is different on each platform. 
- *	See the discussion below for platform-specific definitions. 
+ *	See the discussion below for platform-specific definitions.
  *
- *	PENTIUM 4
- *	The following values are implemented for modifier on Pentium 4: 
- *	PAPI_PENT4_ENUM_GROUPS - 45 groups + custom + user event types PAPI_PENT4_ENUM_COMBOS 
- *	- all combinations of mask bits for given group PAPI_PENT4_ENUM_BITS 
- *	- all individual bits for a given group
+ *	@param *EventCode
+ *		A defined preset or native event such as PAPI_TOT_INS.
+ *	@param modifier 
+ *		Modifies the search logic. For preset events, 
+ *		TRUE specifies available events only. 
+ *		For native events, each platform behaves differently. 
+ *		See platform-specific documentation for details.
  *
- *	ITANIUM
+ *	@retval PAPI_ENOEVNT 
+ *		The next requested PAPI preset or native event is not available on 
+ *		the underlying hardware.
+ *
+ *	@par Examples:
+ *	@code
+ *	// Scan for all supported native events on this platform
+ *	printf( "Name\t\t\t       Code\t   Description\n" );
+ *	do {
+ *		retval = PAPI_get_event_info( i, &info );
+ *		if ( retval == PAPI_OK ) {
+ *		printf( "%-30s 0x%-10x\n%s\n", info.symbol, info.event_code, info.long_descr );
+ *		}
+ *	} while ( PAPI_enum_event( &i, PAPI_ENUM_ALL ) == PAPI_OK );
+ *	@endcode
+ *
+ *	@par PENTIUM 4
+ *	The following values are implemented for modifier on Pentium 4:
+ *	<ul>
+ *		<li> PAPI_PENT4_ENUM_GROUPS - 45 groups + custom + user event types 
+ *		<li> PAPI_PENT4_ENUM_COMBOS - All combinations of mask bits for given group 
+ *		<li> PAPI_PENT4_ENUM_BITS  - All individual bits for a given group
+ *	</ul>
+ *
+ *	@par ITANIUM
  *	The following values are implemented for modifier on Itanium: 
  *	<ul>
  *		<li> PAPI_ITA_ENUM_IARR - Enumerate IAR (instruction address ranging) events 
@@ -963,13 +985,21 @@ PAPI_event_name_to_code( char *in, int *out )
  *		<li> PAPI_ITA_ENUM_DEAR - Enumerate DEAR (data event address register) events
  *	</ul>
  *
- *	POWER 4
+ *	@par POWER 4
  *	The following values are implemented for modifier on POWER 4: 
  *	<ul>
- *		<li> PAPI_PWR4_ENUM_GROUPS - Enumerate groups to which an event belongs 
+ *		<li> PAPI_PWR4_ENUM_GROUPS - Enumerate groups to which an event belongs
  *	</ul>
  *
- *	@see PAPI_get_event_info PAPI_event_name_to_code PAPI_preset PAPI_native
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI @n
+ *	PAPIF @n
+ *	PAPI_get_event_info @n
+ *	PAPI_event_name_to_code @n
+ *	PAPI_preset @n
+ *	PAPI_native
  */
 int
 PAPI_enum_event( int *EventCode, int modifier )
@@ -1027,7 +1057,7 @@ PAPI_enum_event( int *EventCode, int modifier )
  *	PAPI_assign_eventset_component or implicitly by calling PAPI_add_event
  *	or similar routines. 
  *
- *	@param EventSet
+ *	@param *EventSet
  *		Address of an integer location to store the new EventSet handle.
  *
  *	@exception PAPI_EINVAL 
