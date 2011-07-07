@@ -1006,32 +1006,53 @@ PAPI_enum_event( int *EventCode, int modifier )
 }
 
 /** @class PAPI_create_eventset
-  *	create a new empty PAPI event set 
-  * 
-  * @param EventSet
-  *		Address of an integer location to store the new EventSet handle
-  *
-  *	@exception PAPI_EINVAL 
-  *		The argument handle has not been initialized to PAPI_NULL or the argument is a NULL pointer.
-  *
-  *	@exception PAPI_ENOMEM 
-  *		Insufficient memory to complete the operation. 
-  *
-  * PAPI_create_eventset() creates a new EventSet pointed to by EventSet, 
-  * which must be initialized to PAPI_NULL before calling this routine. 
-  * The user may then add hardware events to the event set by calling 
-  * @ref PAPI_add_event() or similar routines. 
-  * NOTE: PAPI-C uses a late binding model to bind EventSets to components. 
-  * When an EventSet is first created it is not bound to a component. 
-  * This will cause some API calls that modify EventSet options to fail. 
-  * An EventSet can be bound to a component explicitly by calling 
-  * @ref PAPI_assign_eventset_component() or implicitly by calling 
-  * @ref PAPI_add_event() or similar routines. 
-  *
-  * @see PAPI_add_event() 
-  * @see PAPI_assign_eventset_component()
-  * @see PAPI_destroy_eventset()
-  * @see PAPI_cleanup_eventset()
+ *	@brief create a new empty PAPI EventSet 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	PAPI_create_eventset( int * EventSet );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_create_eventset( C_INT  EventSet,  C_INT  check )
+ *
+ *	PAPI_create_eventset creates a new EventSet pointed to by EventSet, 
+ *	which must be initialized to PAPI_NULL before calling this routine. 
+ *	The user may then add hardware events to the event set by calling 
+ *	PAPI_add_event or similar routines. 
+ *	NOTE: PAPI-C uses a late binding model to bind EventSets to components. 
+ *	When an EventSet is first created it is not bound to a component. 
+ *	This will cause some API calls that modify EventSet options to fail. 
+ *	An EventSet can be bound to a component explicitly by calling 
+ *	PAPI_assign_eventset_component or implicitly by calling PAPI_add_event
+ *	or similar routines. 
+ *
+ *	@param EventSet
+ *		Address of an integer location to store the new EventSet handle.
+ *
+ *	@exception PAPI_EINVAL 
+ *		The argument handle has not been initialized to PAPI_NULL or the argument is a NULL pointer.
+ *
+ *	@exception PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation. 
+ *
+ *	@par Examples:
+ *	@code
+ *	int EventSet = PAPI_NULL;
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS)  != PAPI_OK )
+ *	handle_error( 1 ); 
+ *	@endcode
+ *
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI_add_event @n
+ *	PAPI_assign_eventset_component @n
+ *	PAPI_destroy_eventset @n
+ *	PAPI_cleanup_eventset
   */
 int
 PAPI_create_eventset( int *EventSet )
