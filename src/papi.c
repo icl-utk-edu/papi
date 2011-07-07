@@ -1050,8 +1050,12 @@ PAPI_create_eventset( int *EventSet )
 }
 
 /** @class PAPI_assign_eventset_component
- *	assign a component index to an existing but empty EventSet 
+ *	@brief assign a component index to an existing but empty EventSet 
  *	
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	PAPI_assign_eventset_component( int EventSet, int cidx );
+ *
  *	@param EventSet 
  *		An integer identifier for an existing EventSet 
  *	@param cidx 
@@ -1065,15 +1069,33 @@ PAPI_create_eventset( int *EventSet )
  *	@retval PAPI_ENOMEM 
  *		Insufficient memory to complete the operation. 
  *
- * PAPI_assign_eventset_component() assigns a specific component index, 
- * as specified by cidx, to a new EventSet identified by EventSet, as obtained 
- * from PAPI_create_eventset(). 
- * EventSets are ordinarily automatically bound to components when the first 
- * event is added. 
- * This routine is useful to explicitly bind an EventSet to a component before 
- * setting component related options.
+ *	PAPI_assign_eventset_component assigns a specific component index, 
+ *	as specified by cidx, to a new EventSet identified by EventSet, as obtained 
+ *	from PAPI_create_eventset. EventSets are ordinarily automatically bound 
+ *	to components when the first event is added. This routine is useful to 
+ *	explicitly bind an EventSet to a component before setting component related 
+ *	options. 
  *
- * @see PAPI_set_opt() PAPI_create_eventset() PAPI_add_events() PAPI_set_multiplex()
+ *	@par Examples:
+ *	@code
+ *	int EventSet = PAPI_NULL;
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error(1);
+ *	// Bind our EventSet to the cpu component
+ *	if ( PAPI_assign_eventset_component( EventSet, 0 ) != PAPI_OK )
+ *	handle_error(1);
+ *	// Convert our EventSet to multiplexing
+ *	if ( PAPI_set_multiplex( EventSet ) != PAPI_OK )
+ *	handle_error(1);
+ *	@endcode
+ *
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI_set_opt @n
+ *	PAPI_create_eventset @n
+ *	PAPI_add_events @n
+ *	PAPI_set_multiplex
  */
 int
 PAPI_assign_eventset_component( int EventSet, int cidx )
