@@ -5374,13 +5374,53 @@ PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
 
 
 /** @class PAPI_get_executable_info
- *	get the executable's address space info 
+ *	@brief get the executable's address space info 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	const PAPI_exe_info_t *PAPI_get_executable_info( void );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_exe_info( C_STRING  fullname, C_STRING   name, @n
+ *						C_LONG_LONG   text_start,  C_LONG_LONG   text_end, @n
+ *						C_LONG_LONG   data_start,  C_LONG_LONG   data_end, @n
+ *						C_LONG_LONG   bss_start,   C_LONG_LONG   bss_end,  C_INT  check )
+ *
+ *	In C, this function returns a pointer to a structure containing information 
+ *	about the current program. @n
+ *	In Fortran, the fields of the structure are 
+ *	returned explicitly. 
+ *
+ *
+ *	@param fullname
+ *		Fully qualified path + filename of the executable.
+ *	@param name
+ *		Filename of the executable with no path information.
+ *	@param text_start, text_end
+ *		Start and End addresses of program text segment.
+ *	@param data_start, data_end
+ *		Start and End addresses of program data segment.
+ *	@param bss_start, bss_end
+ *		Start and End addresses of program bss segment.
  *
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid. 
  *
- *	This function returns a pointer to a structure containing information 
- *	about the current program.
+ *	@par Examples:
+ *	@code
+ *	const PAPI_exe_info_t *prginfo = NULL;
+ *	if ( ( prginfo = PAPI_get_executable_info( ) ) == NULL )
+ *	exit( 1 );
+ *	printf( "Path+Program: %s\n", exeinfo->fullname );
+ *	printf( "Program: %s\n", exeinfo->address_info.name );
+ *	printf( "Text start: %p, Text end: %p\n", exeinfo->address_info.text_start, exeinfo->address_info.text_end) ;
+ *	printf( "Data start: %p, Data end: %p\n", exeinfo->address_info.data_start, exeinfo->address_info.data_end );
+ *	printf( "Bss start: %p, Bss end: %p\n", exeinfo->address_info.bss_start, exeinfo->address_info.bss_end );
+ *	@endcode
+ *
+ *	@bug 
+ *	No known bugs.
  *
  *	@see PAPI_get_opt 
  *	@see PAPI_get_hardware_info 

@@ -565,7 +565,8 @@ read the documentation carefully.  */
       PAPI_debug_handler_t handler;
    } PAPI_debug_option_t;
 
-/** @ingroup papi_data_structures */
+/** @ingroup papi_data_structures
+	@brief get the executable's address space info */
    typedef struct _papi_address_map {
       char name[PAPI_HUGE_STR_LEN];
       caddr_t text_start;       /**< Start address of program text segment */
@@ -576,10 +577,11 @@ read the documentation carefully.  */
       caddr_t bss_end;          /**< End address of program bss segment */
    } PAPI_address_map_t;
 
-/** @ingroup papi_data_structures */
+/** @ingroup papi_data_structures
+	@brief get the executable's info */
    typedef struct _papi_program_info {
-      char fullname[PAPI_HUGE_STR_LEN];  /**< path+name */
-      PAPI_address_map_t address_info;
+      char fullname[PAPI_HUGE_STR_LEN];  /**< path + name */
+      PAPI_address_map_t address_info;	 /**< executable's address space info */
    } PAPI_exe_info_t;
 
    /** @ingroup papi_data_structures */
