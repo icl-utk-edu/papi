@@ -825,26 +825,59 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
 
 
 /** @class PAPI_event_code_to_name
-  *	convert a numeric hardware event code to a name.
+ *	convert a numeric hardware event code to a name.
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_event_code_to_name( int  EventCode, char * EventName );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_event_code_to_name( C_INT  EventCode,  C_STRING  EventName,  C_INT  check )
+ *
+ *	PAPI_event_code_to_name is used to translate a 32-bit integer PAPI event 
+ *	code into an ASCII PAPI event name. 
+ *	Either Preset event codes or Native event codes can be passed to this routine. 
+ *	Native event codes and names differ from platform to platform.
  *
  *	@param EventCode 
- *		the numeric code for the event 
- *	@param out
- *		string for the name to be placed in
+ *		The numeric code for the event. 
+ *	@param *EventName
+ *		A string containing the event name as listed in PAPI_presets or discussed in PAPI_native.
  *
  *	@retval PAPI_EINVAL 
- 8		One or more of the arguments is invalid.
+ *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOTPRESET 
  *		The hardware event specified is not a valid PAPI preset.
  *	@retval PAPI_ENOEVNT 
  *		The hardware event is not available on the underlying hardware. 
  *
- *	PAPI_event_code_to_name() is used to translate a 32-bit integer PAPI event 
- *	code into an ASCII PAPI event name. 
- *	Either Preset event codes or Native event codes can be passed to this routine. 
- *	Native event codes and names differ from platform to platform.
+ *	@par Examples:
+ *	@code
+ *	int EventCode, EventSet = PAPI_NULL;
+ *	char EventCodeStr[PAPI_MAX_STR_LEN];
+ *	char EventDescr[PAPI_MAX_STR_LEN];
+ *	char EventLabel[20];
+ *	// Convert to integer
+ *	if ( PAPI_event_name_to_code( "PAPI_TOT_INS", &EventCode ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	// Create the EventSet
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_event( EventSet, EventCode ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	@endcode
  *
- *	@see PAPI_remove_event PAPI_get_event_info PAPI_enum_events PAPI_add_event PAPI_presets PAPI_native
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI_remove_event @n
+ *	PAPI_get_event_info @n
+ *	PAPI_enum_events @n
+ *	PAPI_add_event @n
+ *	PAPI_presets @n
+ *	PAPI_native
  */
 int
 PAPI_event_code_to_name( int EventCode, char *out )
@@ -872,12 +905,23 @@ PAPI_event_code_to_name( int EventCode, char *out )
 }
 
 /** @class PAPI_event_name_to_code
-  *	convert a name to a numeric hardware event code. 
+ *	convert a name to a numeric hardware event code. 
  *
- *	@param in
- *		Name to convert
- *	@param out
- *		code
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_event_name_to_code( char * EventName, int * EventCode );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_event_name_to_code( C_STRING  EventName,  C_INT  EventCode,  C_INT  check )
+ *
+ *	PAPI_event_name_to_code is used to translate an ASCII PAPI event name 
+ *	into an integer PAPI event code. 
+ *
+ *	@param *EventCode 
+ *		The numeric code for the event. 
+ *	@param *EventName
+ *		A string containing the event name as listed in PAPI_presets or discussed in PAPI_native.
  *
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
@@ -886,10 +930,32 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *	@retval PAPI_ENOEVNT 
  *		The hardware event is not available on the underlying hardware. 
  *
- *	PAPI_event_name_to_code() is used to translate an ASCII PAPI event name 
- *	into an integer PAPI event code. 
+ *	@par Examples:
+ *	@code
+ *	int EventCode, EventSet = PAPI_NULL;
+ *	char EventCodeStr[PAPI_MAX_STR_LEN];
+ *	char EventDescr[PAPI_MAX_STR_LEN];
+ *	char EventLabel[20];
+ *	// Convert to integer
+ *	if ( PAPI_event_name_to_code( "PAPI_TOT_INS", &EventCode ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	// Create the EventSet
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_event( EventSet, EventCode ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	@endcode
  *
- *	@see PAPI_remove_event PAPI_get_event_info PAPI_enum_events PAPI_add_event PAPI_presets PAPI_native
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI_remove_event @n
+ *	PAPI_get_event_info @n
+ *	PAPI_enum_events @n
+ *	PAPI_add_event @n
+ *	PAPI_presets @n
+ *	PAPI_native
  */
 int
 PAPI_event_name_to_code( char *in, int *out )
