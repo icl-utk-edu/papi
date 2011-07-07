@@ -1054,10 +1054,13 @@ PAPI_create_eventset( int *EventSet )
  *	
  *	@par C Interface:
  *	#include <papi.h> @n
- *	PAPI_assign_eventset_component( int EventSet, int cidx );
+ *	PAPI_assign_eventset_component( int  EventSet, int  cidx );
+ *
+ *	@par Fortran Interface:
+ *	<none>
  *
  *	@param EventSet 
- *		An integer identifier for an existing EventSet 
+ *		An integer identifier for an existing EventSet.
  *	@param cidx 
  *		An integer identifier for a component. 
  *		By convention, component 0 is always the cpu component. 
@@ -1080,13 +1083,13 @@ PAPI_create_eventset( int *EventSet )
  *	@code
  *	int EventSet = PAPI_NULL;
  *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// Bind our EventSet to the cpu component
  *	if ( PAPI_assign_eventset_component( EventSet, 0 ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// Convert our EventSet to multiplexing
  *	if ( PAPI_set_multiplex( EventSet ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	@endcode
  *
  *	@bug 
@@ -1168,9 +1171,9 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
  *	supported native event on the underlying architecture.
  *
  *	@param EventSet
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset.
+ *		An integer handle for a PAPI Event Set as created by PAPI_create_eventset.
  *	@param EventCode 
- *		a defined event such as PAPI_TOT_INS. 
+ *		A defined event such as PAPI_TOT_INS. 
  *
  *	@retval Positive-Integer
  *		The number of consecutive elements that succeeded before the error. 
@@ -1195,15 +1198,15 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
  *	int EventSet = PAPI_NULL;
  *	unsigned int native = 0x0;
  *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// Add Total Instructions Executed to our EventSet
  *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// Add native event PM_CYC to EventSet
  *	if ( PAPI_event_name_to_code( "PM_CYC", &native ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	if ( PAPI_add_event( EventSet, native ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	@endcode
  *
  *	@bug
@@ -2076,7 +2079,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *		an array to hold the counter values of the counting events 
  *
  *	@retval PAPI_EINVAL 
- *	One or more of the arguments is invalid.
+ *		One or more of the arguments is invalid.
  *	@retval PAPI_ESYS 
  *		A system or C library call failed inside PAPI, see the errno variable.
  *	@retval PAPI_ENOEVST 
@@ -2084,18 +2087,18 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *
  *	@par Examples:
  *	@code
- *	do_100events();
+ *	do_100events( );
  *	if ( PAPI_read( EventSet, values) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// values[0] now equals 100
- *	do_100events();
+ *	do_100events( );
  *	if (PAPI_accum( EventSet, values ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// values[0] now equals 200
  *	values[0] = -100;
- *	do_100events();
+ *	do_100events( );
  *	if (PAPI_accum( EventSet, values ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// values[0] now equals 0
  *	@endcode
  *
@@ -2488,12 +2491,26 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
 }
 
 /** @class PAPI_attach
- *	attach PAPI event set to the specified thread id 
- *	
+ *	@brief attach PAPI event set to the specified thread id  
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_attach( int EventSet, unsigned long tid );
+ *
+ *	@par Fortran Interface:
+ *	<none>
+ *
+ *	PAPI_attach is a wrapper function that calls PAPI_set_opt to allow PAPI to 
+ *	monitor performance counts on a thread other than the one currently executing. 
+ *	This is sometimes referred to as third party monitoring. 
+ *	PAPI_attach connects the specified EventSet to the specifed thread;
+ *	PAPI_detach breaks that connection and restores the EventSet to the 
+ *	original executing thread. 
+ *
  *	@param EventSet 
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset)
+ *		An integer handle for a PAPI EventSet as created by PAPI_create_eventset.
  *	@param tid 
- *		a thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id . 
+ *		A thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id.
  *
  *	@retval PAPI_ESBSTR 
  *		This feature is unsupported on this substrate.
@@ -2504,12 +2521,30 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *	@retval PAPI_EISRUN 
  *		The event set is currently counting events. 
  *
- * PAPI_attach() is a wrapper function that calls PAPI_set_opt to allow PAPI 
- * to monitor performance counts on a thread other than the one currently executing. 
- * This is sometimes referred to as third party monitoring. 
- * PAPI_attach() connects the specified EventSet to the specifed thread
+ *	@par Examples:
+ *	@code
+ *	int EventSet = PAPI_NULL;
+ *	unsigned long pid;
+ *	pid = fork( );
+ *	if ( pid <= 0 )
+ *	exit( 1 );
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	exit( 1 );
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
+ *	exit( 1 );
+ *	// Attach this EventSet to the forked process
+ *	if ( PAPI_attach( EventSet, pid ) != PAPI_OK )
+ *	exit( 1 );
+ *	@endcode
  *
- * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI_set_opt @n
+ *	PAPI_list_threads @n
+ *	PAPI_thread_id @n
+ *	PAPI_thread_init
  */
 int
 PAPI_attach( int EventSet, unsigned long tid )
@@ -2518,10 +2553,26 @@ PAPI_attach( int EventSet, unsigned long tid )
 }
 
 /** @class PAPI_detach
- *	detach PAPI event set from previously specified thread id and restore to executing thread 
+ *	@brief detach PAPI event set from previously specified thread id and restore to executing thread  
  *	
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_detach( int  EventSet, unsigned long  tid );
+ *
+ *	@par Fortran Interface:
+ *	<none>
+ *
+ *	PAPI_detach is a wrapper function that calls PAPI_set_opt to allow PAPI to 
+ *	monitor performance counts on a thread other than the one currently executing. 
+ *	This is sometimes referred to as third party monitoring. 
+ *	PAPI_attach connects the specified EventSet to the specifed thread;
+ *	PAPI_detach breaks that connection and restores the EventSet to the 
+ *	original executing thread. 
+ *
  *	@param EventSet 
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset
+ *		An integer handle for a PAPI EventSet as created by PAPI_create_eventset.
+ *	@param tid 
+ *		A thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id.
  *
  *	@retval PAPI_ESBSTR 
  *		This feature is unsupported on this substrate.
@@ -2532,12 +2583,30 @@ PAPI_attach( int EventSet, unsigned long tid )
  *	@retval PAPI_EISRUN 
  *		The event set is currently counting events. 
  *
- * PAPI_detach() is a wrapper function that calls PAPI_set_opt to allow PAPI 
- * to monitor performance counts on a thread other than the one currently executing. 
- * This is sometimes referred to as third party monitoring. 
- * PAPI_detach() breaks that connection and restores the EventSet to the original executing thread. 
+ *	@par Examples:
+ *	@code
+ *	int EventSet = PAPI_NULL;
+ *	unsigned long pid;
+ *	pid = fork( );
+ *	if ( pid <= 0 )
+ *	exit( 1 );
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	exit( 1 );
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
+ *	exit( 1 );
+ *	// Attach this EventSet to the forked process
+ *	if ( PAPI_attach( EventSet, pid ) != PAPI_OK )
+ *	exit( 1 );
+ *	@endcode
  *
- * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI_set_opt @n
+ *	PAPI_list_threads @n
+ *	PAPI_thread_id @n
+ *	PAPI_thread_init
  */
 int
 PAPI_detach( int EventSet )
@@ -4873,11 +4942,11 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *	supported native event on the underlying architecture.
  *
  *	@param EventSet
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset.
+ *		An integer handle for a PAPI Event Set as created by PAPI_create_eventset.
  *	@param *EventCode 
- *		an array of defined events.
+ *		An array of defined events.
  *	@param number 
- *		an integer indicating the number of events in the array *EventCode.
+ *		An integer indicating the number of events in the array *EventCode.
  *		It should be noted that PAPI_add_events can partially succeed, 
  *		exactly like PAPI_remove_events. 
  *
@@ -4904,15 +4973,15 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *	int EventSet = PAPI_NULL;
  *	unsigned int native = 0x0;
  *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// Add Total Instructions Executed to our EventSet
  *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	// Add native event PM_CYC to EventSet
  *	if ( PAPI_event_name_to_code( "PM_CYC", &native ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	if ( PAPI_add_event( EventSet, native ) != PAPI_OK )
- *	handle_error(1);
+ *	handle_error( 1 );
  *	@endcode
  *
  *	@bug
