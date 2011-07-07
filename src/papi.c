@@ -1366,26 +1366,50 @@ PAPI_remove_event( int EventSet, int EventCode )
 	papi_return( _papi_hwi_remove_event( ESI, EventCode ) );
 }
 
-/** @class PAPI_destroy_eventset
- *	deallocates memory associated with an empty PAPI event set 
- *  
- *	@param *EventSet 
- *		a pointer to the integer handle for a PAPI event set as created by PAPI_create_eventset(). 
+/** @class PAPI_destroy_eventset 
+ *	@brief empty and destroy an EventSet 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_destroy_eventset( int * EventSet );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_destroy_eventset( C_INT  EventSet,  C_INT  check )
+ *
+ * PAPI_destroy_eventset deallocates the memory associated with an empty PAPI EventSet.
+ *
+ *	@param *EventSet
+ *		A pointer to the integer handle for a PAPI event set as created by PAPI_create_eventset.
  *		The value pointed to by EventSet is then set to PAPI_NULL on success. 
  *
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid. 
- *		Attempting to destroy a non-empty event set or passing in a null 
- *		pointer to be destroyed.
- *
+ *		Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed.
  *	@retval PAPI_ENOEVST 
  *		The EventSet specified does not exist.
- *
  *	@retval PAPI_EISRUN 
  *		The EventSet is currently counting events.
- *
  *	@retval PAPI_EBUG 
  *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
+ *
+ *	@par Examples:
+ *	@code
+ *	// Free all memory and data structures, EventSet must be empty.
+ *	if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	@endcode
+ *
+ *	@bugs
+ *	If the user has set profile on an event with the call, then when destroying 
+ *	the EventSet the memory allocated by will not be freed. 
+ *	The user should turn off profiling on the Events before destroying the 
+ *	EventSet to prevent this behavior.
+ *
+ *	@see PAPI_profil @n
+ *	PAPI_create_eventset @n
+ *	PAPI_add_event @n
+ *	PAPI_stop
  */
 int
 PAPI_destroy_eventset( int *EventSet )
@@ -2210,10 +2234,22 @@ PAPI_write( int EventSet, long long *values )
 }
 
 /** @class PAPI_cleanup_eventset
- *empty and destroy an EventSet 
+ *	@brief empty and destroy an EventSet 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_cleanup_eventset( int  EventSet );
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_cleanup_eventset( C_INT  EventSet,  C_INT  check )
+ *
+ * PAPI_cleanup_eventset removes all events from a PAPI event set and turns 
+ * off profiling and overflow for all events in the EventSet.
+ * This can not be called if the EventSet is not stopped.
  *
  *	@param EventSet
- *		an integer handle for a PAPI event set as created by PAPI_create_eventset
+ *		An integer handle for a PAPI event set as created by PAPI_create_eventset.
  *
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid. 
@@ -2225,11 +2261,23 @@ PAPI_write( int EventSet, long long *values )
  *	@retval PAPI_EBUG 
  *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
  *
- * PAPI_cleanup_eventset removes all events from a PAPI event set and turns 
- * off profiling and overflow for all events in the eventset. 
- * This can not be called if the EventSet is not stopped.
+ *	@par Examples:
+ *	@code
+ *	// Remove all events in the eventset
+ *	if ( PAPI_cleanup_eventset( EventSet ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	@endcode
  *
- * @see PAPI_profil PAPI_create_eventset PAPI_add_event PAPI_stop
+ *	@bugs
+ *	If the user has set profile on an event with the call, then when destroying 
+ *	the EventSet the memory allocated by will not be freed. 
+ *	The user should turn off profiling on the Events before destroying the 
+ *	EventSet to prevent this behavior.
+ *
+ *	@see PAPI_profil @n
+ *	PAPI_create_eventset @n
+ *	PAPI_add_event @n
+ *	PAPI_stop
  */
 int
 PAPI_cleanup_eventset( int EventSet )
