@@ -568,7 +568,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT					= ../src/papi.h  ../src/papi.c ../src/papi_hl.c 
+INPUT					= ../src/papi.h  ../src/papi.c ../src/papi_hl.c ../src/papi_vector.h
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is

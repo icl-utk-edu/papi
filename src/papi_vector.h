@@ -14,7 +14,7 @@ typedef struct cmp_id {
 } cmp_id_t;
 
 /** Sizes of structure private to each component 
- *	@internal */
+  */
 typedef struct cmp_struct_sizes {
     int		context;
     int		control_state;

@@ -79,6 +79,123 @@
  * @see The PAPI Website http://icl.cs.utk.edu/papi
  */
 
+/** @page CDI PAPI Component Development Interface
+  * @par \em Introduction
+  *		PAPI-C consists of a Framework and between 1 and 16 Components. 
+  *		The Framework is platform independent and exposes the PAPI API to end users. 
+  *		The Components provide access to hardware information on specific subsystems. 
+  *		By convention, Component 0 is always a CPU Component. 
+  *		This allows default behavior for legacy code, and provides a universal 
+  *		place to define system-wide operations and parameters, 
+  *		like clock rates and interrupt structures. 
+  *		Currently only a single CPU Component can exist at a time. 
+  *
+  * @par No CPU
+  *		In certain cases it can be desirable to use a generic CPU component for 
+  *		testing instrumentation or for operation on systems that don't provide 
+  *		the proper patches for accessing cpu counters. 
+  *		For such a case, the configure option: 
+  *	@code
+  *		configure --with-no-cpu-counters = yes
+  *	@endcode 
+  *	is provided to build PAPI with an "empty" cpu component.
+  *
+  *	@par Exposed Interface
+  *		A Component for PAPI-C typically consists of a single header file and a 
+  *		single (or small number of) source file(s). 
+  *		All of the information for a Component needed by PAPI-C is exposed through 
+  *		a single data structure that is declared and initialized at the bottom 
+  *		of the main source file. 
+  *		This structure, @ref papi_vector_t , is defined in @ref papi_vector.h .
+  *	
+  *	@par Compiling With an Existing Component 
+  *		Components provided with the PAPI source distribution all appear in the 
+  *		src/components directory. 
+  *		Each component exists in its own directory, named the same as the component itself. 
+  *		To include a component in a PAPI build, use the configure command line as shown:
+  *	
+  *	@code
+  *		configure --with-components="component list"
+  *	@endcode
+  *	
+  * Replace the "component list" argument with either the name of a specific 
+  *	component directory or multiple component names separated by spaces and 
+  *	enclosed in quotes as shown below:
+  *
+  *	\c configure --with-components="acpi lustre infiniband"
+  *
+  *	In some cases components themselves require additional configuration. 
+  *	In these cases an error message will be produced when you run @code make @endcode . 
+  *	To fix this, run the configure script found in the component directory.
+  * 
+  *	@par Adding a New Component 
+  *	The mechanics of adding a new component to the PAPI 4.1 build are relatively straight-forward.
+  *	Add a directory to the papi/src/components directory that is named with 
+  *	the base name of the component. 
+  *	This directory will contain the source files and build files for the new component. 
+  *	If configuration of the component is necessary, 
+  *	additional configure and make files will be needed. 
+  *	The /example directory can be cloned and renamed as a starting point. 
+  *	Other components can be used as examples. 
+  *	This is described in more detail in /components/README.
+  *
+  *	@par Developing a New Component 
+  *		A PAPI-C component generally consists of a header file and one or a 
+  *		small number of source files. 
+  *		The source file must contain a @ref papi_vector_t structure that 
+  *		exposes the internal data and entry points of the component to the PAPI-C Framework. 
+  *		This structure must have a unique name that is exposed externally and 
+  *		contains the name of the directory containing the component source code.
+  *
+  *	Three types of information are exposed in the @ref papi_vector_t structure:
+  *		Configuration parameters are contained in the @ref PAPI_component_info_t structure;
+  *		Sizes of opaque data structures necessary for memory management are in the @ref cmp_struct_sizes_t structure;
+  *		An array of function entry points which, if implemented, provide access to the functionality of the component.
+  *
+  *	If a function is not implemented in a given component its value in the structure can be left unset. 
+  *	In this case it will be initialized to NULL, and result (generally) in benign, although unproductive, behavior.
+  *
+  *	During the development of a component, functions can be implemented and tested in blocks. 
+  *	Further information about an appropriate order for developing these functions 
+  *	can be found in the Component Development Cookbook .
+  *
+  * @par PAPI-C Open Research Issues:
+  *	<ul>
+  *	<li> Support for non-standard data types: 
+  *		Currently PAPI supports returned data values expressed as unsigned 64-bit integers. 
+  *		This is appropriate for counting events, but may not be as appropriate 
+  *		for expressing other values. 
+  *		Examples of some other possible data types are shown below. 
+  *		Data type might be expressed as a flag in the event definition.
+  *	<li> Signed Integer
+  *		<ul>
+  *		<li>Float: 64-bit IEEE double precision
+  *		<li>Fixed Point: 32-bit integer and 32-bit fraction
+  *		<li>Ratios: 32 bit numerator and 32 bit denominator
+  *		</ul>
+  *	<li> Synchronization:
+  *		Components might report values with widely different time scales and 
+  *		remote measurements may be significantly skewed in time from local measurements. 
+  *		It would be desirable to have a mechanism to synchronize these values in time.
+  *	<li> Dynamic Component Discovery:
+  *		Components currently must be included statically in the PAPI library build. 
+  *		This minimizes startup disruption and time lag, particularly for large parallel systems. 
+  *		In some instances it would also be desirable to support a run-time 
+  *		discovery process for components, possibly by searching a specific 
+  *		location for dynamic libraries.
+  *	<li> Component Repository:
+  *		A small collection of components are currently maintained and 
+  *		supported inside the PAPI source distribution. 
+  *		It would be desirable to create a public component repository where 3rd 
+  *		parties could submit components for the use and benefit of the larger community.
+  *	<li> Multiple CPU Components:
+  *		With the rise in popularity of heterogeneous computing systems, it may 
+  *		become desirable to have more than one CPU component. 
+  *		Issues must then be resolved relating to which cpu time-base is used, 
+  *		how are interrupts handled, etc. 
+  *	</ul>
+  */
+
 /* Definition of PAPI_VERSION format.  Note that each of the four 
  * components _must_ be less than 256.  Also, the PAPI_VER_CURRENT
  * masks out the revision and increment.  Any revision change is supposed 

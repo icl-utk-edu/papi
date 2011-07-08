@@ -410,7 +410,8 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
   *	@retval PAPI_ESYS 
   *		A system or C library call failed inside PAPI, see the errno variable. 
   *
-  *	@code
+  *	@par Examples:
+  @code
 int num_hwcntrs;
 //  The installation does not support PAPI 
 if ((num_hwcntrs = PAPI_num_counters()) < 0 )
