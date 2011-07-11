@@ -63,9 +63,10 @@ Thread( int n )
 	printf( "Thread 0x%x started\n", omp_get_thread_num(  ) );
 	num_events1 = 2;
 
-	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
-	   PAPI_TOT_INS, depending on the availability of the event on the
-	   platform */
+	/* add PAPI_TOT_CYC and one of the events in 
+	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
+	   depending on the availability of the event 
+	   on the platform */
 	EventSet1 = add_two_events( &num_events1, &PAPI_event, hw_info, &mask1 );
 
 	retval = PAPI_event_code_to_name( PAPI_event, event_name );
@@ -96,9 +97,9 @@ Thread( int n )
 
 	if ( !TESTS_QUIET ) {
 		printf( "Thread 0x%x %-12s : \t%lld\n", omp_get_thread_num(  ),
-				event_name, ( values[0] )[0] );
+				event_name, values[0][1] );
 		printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", omp_get_thread_num(  ),
-				( values[0] )[1] );
+				values[0][0] );
 		printf( "Thread 0x%x Real usec   : \t%lld\n", omp_get_thread_num(  ),
 				elapsed_us );
 		printf( "Thread 0x%x Real cycles : \t%lld\n", omp_get_thread_num(  ),

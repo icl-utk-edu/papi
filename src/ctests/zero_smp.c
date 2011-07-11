@@ -87,8 +87,9 @@ Thread( int t, int n )
 
 	if ( !TESTS_QUIET ) {
 		printf( "Thread 0x%x %-12s : \t%lld\n", t, event_name,
-				( values[0] )[0] );
-		printf( "Thread 0x%x PAPI_TOT_CYC : \t%lld\n", t, ( values[0] )[1] );
+				values[0][1] );
+		printf( "Thread 0x%x PAPI_TOT_CYC : \t%lld\n", t, 
+			values[0][0] );
 	}
 
 	free_test_space( values, num_tests );

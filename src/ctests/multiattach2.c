@@ -33,7 +33,7 @@ wait_for_attach_and_loop( int num )
 	kill( getpid(  ), SIGSTOP );
 	do_flops( NUM_FLOPS * num );
 	kill( getpid(  ), SIGSTOP );
-	return ( 0 );
+	return 0;
 }
 
 int
@@ -49,95 +49,104 @@ main( int argc, char **argv )
 	const PAPI_component_info_t *cmpinfo;
 	pid_t pid;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );
 
 	/* init the library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
+	if ( retval != PAPI_VER_CURRENT ) {
+	   test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	/* get component info */
-	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
+	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL ) {
+	   test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
+	}
 
 	/* see if we support attach */
-	if ( cmpinfo->attach == 0 )
-		test_skip( __FILE__, __LINE__, "Platform does not support attaching",
-				   0 );
+	if ( cmpinfo->attach == 0 ) {
+	   test_skip( __FILE__, __LINE__, 
+		      "Platform does not support attaching",0 );
+	}
+
 	/* fork! */
 	pid = fork(  );
-	if ( pid < 0 )
-		test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
+	if ( pid < 0 ) {
+	  test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
+	}
 
 	/* if child, wait_for_attach_and_loop */
-	if ( pid == 0 )
-		exit( wait_for_attach_and_loop( 2 ) );
+	if ( pid == 0 ) {
+	   exit( wait_for_attach_and_loop( 2 ) );
+	}
 
-
-	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
-	   PAPI_TOT_INS, depending on the availability of the event on the
-	   platform */
+	/* add PAPI_TOT_CYC and one of the events in 
+	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
+	   depending on the availability of the event 
+	   on the platform                            */
 	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 	EventSet2 = add_two_events( &num_events2, &PAPI_event2, &mask2 );
 
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_ATTACH, pid, NULL, NULL ) == -1 ) {
-			perror( "ptrace(PTRACE_ATTACH)" );
-			return ( 1 );
-		}
-		if ( waitpid( pid, &status, 0 ) == -1 ) {
-			perror( "waitpid()" );
-			exit( 1 );
-		}
-		if ( WIFSTOPPED( status ) == 0 )
-			test_fail( __FILE__, __LINE__,
-					   "Child process didnt return true to WIFSTOPPED", 0 );
+	   if ( ptrace( PTRACE_ATTACH, pid, NULL, NULL ) == -1 ) {
+	      perror( "ptrace(PTRACE_ATTACH)" );
+	      return 1;
+	   }
+	   if ( waitpid( pid, &status, 0 ) == -1 ) {
+	      perror( "waitpid()" );
+	      exit( 1 );
+	   }
+	   if ( WIFSTOPPED( status ) == 0 ) {
+	      test_fail( __FILE__, __LINE__,
+			"Child process didnt return true to WIFSTOPPED", 0 );
+	   }
 	}
 
 	retval = PAPI_attach( EventSet2, ( unsigned long ) pid );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_attach", retval ); 
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_attach", retval ); 
+	}
 
 	retval = PAPI_event_code_to_name( PAPI_event, event_name );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	}
 	sprintf( add_event_str, "PAPI_add_event[%s]", event_name );
 
 	/* num_events1 is greater than num_events2 so don't worry. */
 
 	values = allocate_test_space( num_tests, num_events1 );
 
+	/* get before values */
 	elapsed_us = PAPI_get_real_usec(  );
-
 	elapsed_cyc = PAPI_get_real_cyc(  );
-
 	elapsed_virt_us = PAPI_get_virt_usec(  );
-
 	elapsed_virt_cyc = PAPI_get_virt_cyc(  );
 
 	/* Wait for the SIGSTOP. */
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
-			perror( "ptrace(PTRACE_CONT)" );
-			return 1;
-		}
-		if ( waitpid( pid, &status, 0 ) == -1 ) {
-			perror( "waitpid()" );
-			exit( 1 );
-		}
-		if ( WIFSTOPPED( status ) == 0 ) {
-			test_fail( __FILE__, __LINE__,
-					   "Child process didn't return true to WIFSTOPPED", 0 );
-		}
-		if ( WSTOPSIG( status ) != SIGSTOP ) {
-			test_fail( __FILE__, __LINE__,
-					   "Child process didn't stop on SIGSTOP", 0 );
-		}
+	   if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
+	      perror( "ptrace(PTRACE_CONT)" );
+	      return 1;
+	   }
+	   if ( waitpid( pid, &status, 0 ) == -1 ) {
+	      perror( "waitpid()" );
+	      exit( 1 );
+	   }
+	   if ( WIFSTOPPED( status ) == 0 ) {
+	      test_fail( __FILE__, __LINE__,
+			"Child process didn't return true to WIFSTOPPED", 0 );
+	   }
+	   if ( WSTOPSIG( status ) != SIGSTOP ) {
+	      test_fail( __FILE__, __LINE__,
+			 "Child process didn't stop on SIGSTOP", 0 );
+	   }
 	}
 
 	retval = PAPI_start( EventSet1 );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	retval = PAPI_start( EventSet2 );
 	if ( retval != PAPI_OK ) {
@@ -146,63 +155,63 @@ main( int argc, char **argv )
 
 	/* Wait for the SIGSTOP. */
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
-			perror( "ptrace(PTRACE_ATTACH)" );
-			return ( 1 );
-		}
-		if ( waitpid( pid, &status, 0 ) == -1 ) {
-			perror( "waitpid()" );
-			exit( 1 );
-		}
-		if ( WIFSTOPPED( status ) == 0 ) {
-			test_fail( __FILE__, __LINE__,
-					   "Child process didn't return true to WIFSTOPPED", 0 );
-		}
-		if ( WSTOPSIG( status ) != SIGSTOP ) {
-			test_fail( __FILE__, __LINE__,
-					   "Child process didn't stop on SIGSTOP", 0 );
-		}
+	   if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
+	      perror( "ptrace(PTRACE_ATTACH)" );
+	      return 1;
+	   }
+	   if ( waitpid( pid, &status, 0 ) == -1 ) {
+	      perror( "waitpid()" );
+	      exit( 1 );
+	   }
+	   if ( WIFSTOPPED( status ) == 0 ) {
+	      test_fail( __FILE__, __LINE__,
+			"Child process didn't return true to WIFSTOPPED", 0 );
+	   }
+	   if ( WSTOPSIG( status ) != SIGSTOP ) {
+	      test_fail( __FILE__, __LINE__,
+			 "Child process didn't stop on SIGSTOP", 0 );
+	   }
 	}
 
 	elapsed_virt_us = PAPI_get_virt_usec(  ) - elapsed_virt_us;
-
 	elapsed_virt_cyc = PAPI_get_virt_cyc(  ) - elapsed_virt_cyc;
-
 	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
-
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 
 	retval = PAPI_stop( EventSet1, values[0] );
-	if ( retval != PAPI_OK )
-		printf( "Warning: PAPI_stop returned error %d, probably ok.\n",
+	if ( retval != PAPI_OK ) {
+	   printf( "Warning: PAPI_stop returned error %d, probably ok.\n",
 				retval );
+	}
 
 	retval = PAPI_stop( EventSet2, values[1] );
-	if ( retval != PAPI_OK )
-		printf( "Warning: PAPI_stop returned error %d, probably ok.\n",
+	if ( retval != PAPI_OK ) {
+	   printf( "Warning: PAPI_stop returned error %d, probably ok.\n",
 				retval );
+	}
 
 	remove_test_events( &EventSet1, mask1 );
 	remove_test_events( &EventSet2, mask2 );
 
 	if ( cmpinfo->attach_must_ptrace ) {
-		if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
-			perror( "ptrace(PTRACE_CONT)" );
-			return 1;
-		}
+	   if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
+	      perror( "ptrace(PTRACE_CONT)" );
+	      return 1;
+	   }
 	}
 
 	if ( waitpid( pid, &status, 0 ) == -1 ) {
-		perror( "waitpid()" );
-		exit( 1 );
+	   perror( "waitpid()" );
+	   exit( 1 );
 	}
-	if ( WIFEXITED( status ) == 0 )
-		test_fail( __FILE__, __LINE__,
-				   "Child process didn't return true to WIFEXITED", 0 );
+	if ( WIFEXITED( status ) == 0 ) {
+	   test_fail( __FILE__, __LINE__,
+		     "Child process didn't return true to WIFEXITED", 0 );
+	}
 
 	/* This code isn't necessary as we know the child has exited,
-	   it *may* return an error if the substrate so chooses. You should use read() instead. */
-
+	   it *may* return an error if the substrate so chooses. 
+           You should use read() instead. */
 
 	printf( "Test case: multiple 3rd party attach start, stop.\n" );
 	printf( "-----------------------------------------------\n" );
@@ -212,29 +221,29 @@ main( int argc, char **argv )
 	printf( "Default granularity is: %d (%s)\n", tmp,
 			stringify_granularity( tmp ) );
 	printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
-	printf
-		( "-------------------------------------------------------------------------\n" );
+	printf( "-------------------------------------------------------------------------\n" );
 
 	sprintf( add_event_str, "(PID self) %-12s : \t", 
 			 event_name );
-	printf( TAB1, add_event_str, ( values[0] )[0] );
+	printf( TAB1, add_event_str, values[0][1] );
 	sprintf( add_event_str, "(PID self) PAPI_TOT_CYC : \t" );
-	printf( TAB1, add_event_str, ( values[0] )[1] );
+	printf( TAB1, add_event_str, values[0][0] );
 	sprintf( add_event_str, "(PID %jd) %-12s : \t", ( intmax_t ) pid,
 			 event_name );
-	printf( TAB1, add_event_str, ( values[1] )[0] );
-	sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t", ( intmax_t ) pid );
-	printf( TAB1, add_event_str, ( values[1] )[1] );
+	printf( TAB1, add_event_str, values[1][1] );
+	sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t", 
+		 ( intmax_t ) pid );
+	printf( TAB1, add_event_str, values[1][0] );
 	printf( TAB1, "Real usec    : \t", elapsed_us );
 	printf( TAB1, "Real cycles  : \t", elapsed_cyc );
 	printf( TAB1, "Virt usec    : \t", elapsed_virt_us );
 	printf( TAB1, "Virt cycles  : \t", elapsed_virt_cyc );
 
-	printf
-		( "-------------------------------------------------------------------------\n" );
+	printf( "-------------------------------------------------------------------------\n" );
 
 	printf( "Verification: none\n" );
 
 	test_pass( __FILE__, values, num_tests );
-	exit( 1 );
+	
+	return 0;
 }

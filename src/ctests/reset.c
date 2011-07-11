@@ -66,132 +66,162 @@ main( int argc, char **argv )
 	int PAPI_event, mask;
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	
 
+	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	if ( retval != PAPI_VER_CURRENT ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
-	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
-	   PAPI_TOT_INS, depending on the availability of the event on the
-	   platform */
+	/* add PAPI_TOT_CYC and one of the events in 
+	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
+	   depending on the availability of the event 
+	   on the platform */
 	EventSet = add_two_events( &num_events, &PAPI_event, &mask );
 
 	retval = PAPI_event_code_to_name( PAPI_event, event_name );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	}
 	sprintf( add_event_str, "PAPI_add_event[%s]", event_name );
 
 	values = allocate_test_space( num_tests, num_events );
 
-/*===== Test 1: Start/Stop =======================*/
+	/*===== Test 1: Start/Stop =======================*/
+
 	retval = PAPI_start( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( NUM_FLOPS );
 
 	retval = PAPI_stop( EventSet, values[0] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
-/*===== Test 2 Start/Stop =======================*/
+	/*===== Test 2 Start/Stop =======================*/
+
 	retval = PAPI_start( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( NUM_FLOPS );
 
 	retval = PAPI_stop( EventSet, values[1] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
-/*===== Test 3: Reset/Start/Stop =======================*/
+	/*===== Test 3: Reset/Start/Stop =======================*/
+
 	retval = PAPI_reset( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_reset", retval );
+	}
 
 	retval = PAPI_start( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( NUM_FLOPS );
 
 	retval = PAPI_stop( EventSet, values[2] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
-/*===== Test 4: Start/Read =======================*/
+	/*===== Test 4: Start/Read =======================*/
+
 	retval = PAPI_start( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( NUM_FLOPS / 2 );
 
 	retval = PAPI_read( EventSet, values[3] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
+	}
 
-/*===== Test 5: Read =======================*/
+	/*===== Test 5: Read =======================*/
+
 	do_flops( NUM_FLOPS / 2 );
 
 	retval = PAPI_read( EventSet, values[4] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
+	}
 
-/*===== Test 6: Read/Accum =======================*/
+	/*===== Test 6: Read/Accum =======================*/
+
 	do_flops( NUM_FLOPS / 2 );
 
 	retval = PAPI_read( EventSet, values[5] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
-	retval = PAPI_accum( EventSet, values[5] );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
+	}
 
-/*===== Test 7: Read =======================*/
+	retval = PAPI_accum( EventSet, values[5] );
+
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
+	}
+
+	/*===== Test 7: Read =======================*/
+
 	do_flops( NUM_FLOPS / 2 );
 
 	retval = PAPI_read( EventSet, values[6] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
+	}
 
-/*===== Test 8 Reset/Stop =======================*/
+	/*===== Test 8 Reset/Stop =======================*/
 	retval = PAPI_reset( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_reset", retval );
+	}
 
 	do_flops( NUM_FLOPS / 2 );
 
 	retval = PAPI_stop( EventSet, values[7] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
-/*===== Test 9: Reset/Read =======================*/
+	/*===== Test 9: Reset/Read =======================*/
 	retval = PAPI_reset( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_reset", retval );
+	}
 
 	retval = PAPI_read( EventSet, values[8] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
+	}
 
 	remove_test_events( &EventSet, mask );
 
 	printf( "Test case: Start/Stop/Read/Accum/Reset.\n" );
-	printf
-		( "----------------------------------------------------------------\n" );
+	printf( "----------------------------------------------------------------\n" );
 	tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );
-	printf( "Default domain is: %d (%s)\n", tmp, stringify_all_domains( tmp ) );
+	printf( "Default domain is: %d (%s)\n", tmp, 
+		stringify_all_domains( tmp ) );
 	tmp = PAPI_get_opt( PAPI_DEFGRN, NULL );
 	printf( "Default granularity is: %d (%s)\n", tmp,
 			stringify_granularity( tmp ) );
 	printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
-	printf
-		( "-------------------------------------------------------------------------\n" );
+	printf( "-------------------------------------------------------------------------\n" );
 
 	sprintf( add_event_str, "%s:", event_name );
-	printf( "                           %s    PAPI_TOT_CYC\n", event_name );
+	printf( "                           PAPI_TOT_CYC    %s\n", event_name );
 	printf( "1. start,ops,stop          %10lld      %10lld\n", values[0][0],
 			values[0][1] );
 	printf( "2. start,ops,stop          %10lld      %10lld\n", values[1][0],
@@ -219,45 +249,46 @@ main( int argc, char **argv )
 	printf( "Row 6 approximately equals 6 times row 4\n" );
 	printf( "Rows 7 and 8 approximately equal row 4\n" );
 	printf( "Row 9 equals 0\n" );
-	printf( "%% difference between %s 1 & 2: %.2f\n", add_event_str,
-			100.0 * ( float ) ( values[0] )[0] / ( float ) ( values[1] )[0] );
 	printf( "%% difference between %s 1 & 2: %.2f\n", "PAPI_TOT_CYC",
-			100.0 * ( float ) ( values[0] )[1] / ( float ) ( values[1] )[1] );
+		100.0 * ( float ) values[0][0] / ( float ) values[1][0] );
+	printf( "%% difference between %s 1 & 2: %.2f\n", add_event_str,
+		100.0 * ( float ) values[0][1] / ( float ) values[1][1] );
+
 
 	for ( i = 0; i <= 1; i++ ) {
 		if ( !approx_equals
 			 ( ( double ) values[0][i], ( double ) values[1][i] ) )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 		if ( !approx_equals
 			 ( ( double ) values[1][i], ( double ) values[2][i] ) )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 		if ( !approx_equals
 			 ( ( double ) values[2][i], ( double ) values[3][i] * 2.0 ) )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 		if ( !approx_equals
 			 ( ( double ) values[2][i], ( double ) values[4][i] ) )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 		if ( !approx_equals
 			 ( ( double ) values[5][i], ( double ) values[3][i] * 6.0 ) )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 		if ( !approx_equals
 			 ( ( double ) values[6][i], ( double ) values[3][i] ) )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 		if ( !approx_equals
 			 ( ( double ) values[7][i], ( double ) values[3][i] ) )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 		if ( values[8][i] != 0LL )
 			test_fail( __FILE__, __LINE__,
-					   ( ( i == 0 ) ? add_event_str : "PAPI_TOT_CYC" ), 1 );
+					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 	}
 
 	test_pass( __FILE__, values, num_tests );
-	exit( 1 );
+	return 0;
 }

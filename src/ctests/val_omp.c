@@ -96,7 +96,7 @@ Thread( int n )
 		   (values[0])[0], n); */
 #if 0
 		printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", omp_get_thread_num(  ),
-				( values[0] )[1] );
+				values[0][0] );
 		printf( "Thread 0x%x Real usec   : \t%lld\n", omp_get_thread_num(  ),
 				elapsed_us );
 		printf( "Thread 0x%x Real cycles : \t%lld\n", omp_get_thread_num(  ),
