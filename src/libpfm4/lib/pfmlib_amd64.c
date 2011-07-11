@@ -157,7 +157,9 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
                 default:
                         rev = PFM_PMU_AMD64_FAM14H_BOBCAT;
                 }
-        }
+	} else if (cfg->family == 21) {
+		rev = PFM_PMU_AMD64_FAM15H_INTERLAGOS;
+	}
         cfg->revision = rev;
 }
 
@@ -704,10 +706,15 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 		if (!pe[i].desc) {
 			fprintf(fp, "pmu: %s event%d: %s :: no description\n", name, i, pe[i].name);
 			error++;
+
+		}
+		if (pe[i].numasks && pe[i].umasks == NULL) {
+			fprintf(fp, "pmu: %s event%d: %s :: numasks but no umasks\n", pmu->name, i, pe[i].name);
+			error++;
 		}
 
-		if (pe[i].numasks >= AMD64_MAX_UMASKS) {
-			fprintf(fp, "pmu: %s event%d: %s :: numasks too big (<%d)\n", name, i, pe[i].name, AMD64_MAX_UMASKS);
+		if (pe[i].numasks == 0 && pe[i].umasks) {
+			fprintf(fp, "pmu: %s event%d: %s :: numasks=0 but umasks defined\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 
@@ -760,14 +767,6 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 		if (pe[i].numasks == 1 && ndfl != 1) {
 			fprintf(fp, "pmu: %s event%d: %s, only one umask but no default\n", pmu->name, i, pe[i].name);
 			error++;
-		}
-
-		/* check for excess unit masks */
-		for(; j < AMD64_MAX_UMASKS; j++) {
-			if (pe[i].umasks[j].uname || pe[i].umasks[j].udesc) {
-				fprintf(fp, "pmu: %s event%d: %s :: numasks (%d) invalid more events exists\n", name, i, pe[i].name, pe[i].numasks);
-				error++;
-			}
 		}
 
 		if (pe[i].flags & AMD64_FL_NCOMBO) {

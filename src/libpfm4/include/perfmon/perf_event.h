@@ -125,7 +125,7 @@ enum perf_event_sample_format {
 	PERF_SAMPLE_PERIOD		= 1U << 8,
 	PERF_SAMPLE_STREAM_ID		= 1U << 9,
 	PERF_SAMPLE_RAW			= 1U << 10,
-	PERF_SAMPLE_MAX
+	PERF_SAMPLE_MAX			= 1U << 11,
 };
 
 /*
@@ -136,7 +136,7 @@ enum perf_event_read_format {
 	PERF_FORMAT_TOTAL_TIME_RUNNING	= 1U << 1,
 	PERF_FORMAT_ID			= 1U << 2,
 	PERF_FORMAT_GROUP		= 1U << 3,
-	PERF_FORMAT_MAX
+	PERF_FORMAT_MAX			= 1U << 4,
 };
 
 /*
