@@ -41,6 +41,7 @@ pfmlib_pmu_t power4_support={
 	.pmu			= PFM_PMU_POWER4,
 	.pme_count		= POWER4_PME_EVENT_COUNT,
 	.type			= PFM_PMU_TYPE_CORE,
+	.num_cntrs		= 8,
 	.max_encoding		= 1,
 	.pe			= power4_pe,
 	.pmu_detect		= pfm_power4_detect,

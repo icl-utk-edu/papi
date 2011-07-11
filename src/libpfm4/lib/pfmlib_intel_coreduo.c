@@ -57,11 +57,11 @@ pfmlib_pmu_t intel_coreduo_support={
 	.desc			= "Intel Core Duo/Core Solo",
 	.name			= "coreduo",
 	.pmu			= PFM_PMU_COREDUO,
-	.pme_count		= PME_COREDUO_EVENT_COUNT,
+	.pme_count		= PME_INTEL_COREDUO_EVENT_COUNT,
 	.type			= PFM_PMU_TYPE_CORE,
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
-	.pe			= coreduo_pe,
+	.pe			= intel_coreduo_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 

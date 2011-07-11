@@ -25,7 +25,10 @@
 /* private headers */
 #include "pfmlib_priv.h"			/* library private */
 #include "pfmlib_intel_x86_priv.h"		/* architecture private */
-#include "events/intel_p6_events.h"		/* event tables */
+#include "events/intel_p6_events.h"		/* generic P6 (PIII) */
+#include "events/intel_pii_events.h"		/* Pentium II */
+#include "events/intel_ppro_events.h"		/* Pentium Pro */
+#include "events/intel_pm_events.h"		/* Pentium M */
 
 static int
 pfm_p6_detect_pii(void *this)
@@ -123,8 +126,8 @@ pfmlib_pmu_t intel_pii_support={
 	.desc			= "Intel Pentium II",
 	.name			= "pii",
 	.pmu			= PFM_PMU_INTEL_PII,
-	.pme_count		= I386_PII_EVENT_COUNT,
-	.pe			= i386_pII_pe,
+	.pme_count		= PME_INTEL_PII_EVENT_COUNT,
+	.pe			= intel_pii_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.type			= PFM_PMU_TYPE_CORE,
@@ -150,8 +153,8 @@ pfmlib_pmu_t intel_p6_support={
 	.desc			= "Intel P6 Processor Family",
 	.name			= "p6",
 	.pmu			= PFM_PMU_I386_P6,
-	.pme_count		= I386_PIII_EVENT_COUNT,
-	.pe			= i386_pIII_pe,
+	.pme_count		= PME_INTEL_P6_EVENT_COUNT,
+	.pe			= intel_p6_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.type			= PFM_PMU_TYPE_CORE,
@@ -177,8 +180,8 @@ pfmlib_pmu_t intel_ppro_support={
 	.desc			= "Intel Pentium Pro",
 	.name			= "ppro",
 	.pmu			= PFM_PMU_INTEL_PPRO,
-	.pme_count		= I386_PPRO_EVENT_COUNT,
-	.pe			= i386_ppro_pe,
+	.pme_count		= PME_INTEL_PPRO_EVENT_COUNT,
+	.pe			= intel_ppro_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.type			= PFM_PMU_TYPE_CORE,
@@ -205,12 +208,12 @@ pfmlib_pmu_t intel_pm_support={
 	.desc			= "Intel Pentium M",
 	.name			= "pm",
 	.pmu			= PFM_PMU_I386_PM,
-	.pe			= i386_pm_pe,
+	.pe			= intel_pm_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
 	.pmu_detect		= pfm_p6_detect_pm,
-	.pme_count		= I386_PM_EVENT_COUNT,
+	.pme_count		= PME_INTEL_PM_EVENT_COUNT,
 	.type			= PFM_PMU_TYPE_CORE,
 	.num_cntrs		= 2,
 	.max_encoding		= 1,

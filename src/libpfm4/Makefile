@@ -54,6 +54,7 @@ clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 distclean:  clean
+	@(cd debian; $(RM) -f *.log *.debhelper *.substvars; $(RM) -rf libpfm4-dev libpfm4 python-libpfm4 tmp files)
 
 depend: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done

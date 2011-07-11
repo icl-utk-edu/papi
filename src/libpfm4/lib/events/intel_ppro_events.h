@@ -24,10 +24,10 @@
  *
  * This file has been automatically generated.
  *
- * PMU: p6 (Intel P6 Processor Family)
+ * PMU: ppro (Intel Pentium Pro)
  */
 
-static const intel_x86_umask_t p6_l2_ifetch[]={
+static const intel_x86_umask_t ppro_l2_ifetch[]={
    { .uname  = "I",
      .udesc  = "Invalid state",
      .ucode = 0x100,
@@ -46,7 +46,7 @@ static const intel_x86_umask_t p6_l2_ifetch[]={
    },
 };
 
-static const intel_x86_umask_t p6_bus_drdy_clocks[]={
+static const intel_x86_umask_t ppro_bus_drdy_clocks[]={
    { .uname  = "SELF",
      .udesc  = "Clocks when processor is driving bus",
      .ucode = 0x0,
@@ -59,102 +59,7 @@ static const intel_x86_umask_t p6_bus_drdy_clocks[]={
    },
 };
 
-static const intel_x86_umask_t p6_mmx_instr_type_exec[]={
-   { .uname  = "MUL",
-     .udesc  = "MMX packed multiply instructions executed",
-     .ucode = 0x100,
-   },
-   { .uname  = "SHIFT",
-     .udesc  = "MMX packed shift instructions executed",
-     .ucode = 0x200,
-   },
-   { .uname  = "PACK",
-     .udesc  = "MMX pack operation instructions executed",
-     .ucode = 0x400,
-   },
-   { .uname  = "UNPACK",
-     .udesc  = "MMX unpack operation instructions executed",
-     .ucode = 0x800,
-   },
-   { .uname  = "LOGICAL",
-     .udesc  = "MMX packed logical instructions executed",
-     .ucode = 0x1000,
-   },
-   { .uname  = "ARITH",
-     .udesc  = "MMX packed arithmetic instructions executed",
-     .ucode = 0x2000,
-   },
-};
-
-static const intel_x86_umask_t p6_fp_mmx_trans[]={
-   { .uname  = "TO_FP",
-     .udesc  = "From MMX instructions to floating-point instructions",
-     .ucode = 0x0,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "TO_MMX",
-     .udesc  = "From floating-point instructions to MMX instructions",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-};
-
-static const intel_x86_umask_t p6_seg_rename_stalls[]={
-   { .uname  = "ES",
-     .udesc  = "Segment register ES",
-     .ucode = 0x100,
-   },
-   { .uname  = "DS",
-     .udesc  = "Segment register DS",
-     .ucode = 0x200,
-   },
-   { .uname  = "FS",
-     .udesc  = "Segment register FS",
-     .ucode = 0x400,
-   },
-   { .uname  = "GS",
-     .udesc  = "Segment register GS",
-     .ucode = 0x800,
-   },
-};
-
-static const intel_x86_umask_t p6_emon_kni_pref_dispatched[]={
-   { .uname  = "NTA",
-     .udesc  = "Prefetch NTA",
-     .ucode = 0x0,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "T1",
-     .udesc  = "Prefetch T1",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "T2",
-     .udesc  = "Prefetch T2",
-     .ucode = 0x200,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "WEAK",
-     .udesc  = "Weakly ordered stores",
-     .ucode = 0x300,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-};
-
-static const intel_x86_umask_t p6_emon_kni_inst_retired[]={
-   { .uname  = "PACKED_SCALAR",
-     .udesc  = "Packed and scalar instructions",
-     .ucode = 0x0,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "SCALAR",
-     .udesc  = "Scalar only",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-};
-
-static const intel_x86_entry_t intel_p6_pe[]={
+static const intel_x86_entry_t intel_ppro_pe[]={
 { .name   = "CPU_CLK_UNHALTED",
   .desc   = "Number cycles during which the processor is not halted",
   .modmsk = INTEL_X86_ATTRS,
@@ -234,7 +139,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x28,
   .numasks = 4,
   .ngrp = 1,
-  .umasks = p6_l2_ifetch,
+  .umasks = ppro_l2_ifetch,
 },
 { .name   = "L2_ST",
   .desc   = "Number of L2 data stores. This event indicates that a normal, unlocked, store memory access was received by the L2. Specifically, it indictes that the DCU sent a read-for ownership request to the L2. It also includes Invalid to Modified reqyests sent by the DCU to the L2. It includes only L2 cacheable memory accesses;  it does not include I/O accesses, other non-memory accesses, or memory accesses such as UC/WT memory accesses. It does include L2 cacheable TLB miss memory accesses",
@@ -243,7 +148,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x2a,
   .numasks = 4,
   .ngrp = 1,
-  .umasks = p6_l2_ifetch, /* identical to actual umasks list for this event */
+  .umasks = ppro_l2_ifetch, /* identical to actual umasks list for this event */
 },
 { .name   = "L2_M_LINES_INM",
   .desc   = "Number of modified lines allocated in the L2",
@@ -258,7 +163,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x2e,
   .numasks = 4,
   .ngrp = 1,
-  .umasks = p6_l2_ifetch, /* identical to actual umasks list for this event */
+  .umasks = ppro_l2_ifetch, /* identical to actual umasks list for this event */
 },
 { .name   = "L2_ADS",
   .desc   = "Number of L2 address strobes",
@@ -285,7 +190,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x62,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks,
+  .umasks = ppro_bus_drdy_clocks,
 },
 { .name   = "BUS_LOCK_CLOCKS",
   .desc   = "Number of clocks during which LOCK# is asserted on the external system bus",
@@ -294,7 +199,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x63,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_REQ_OUTSTANDING",
   .desc   = "Number of bus requests outstanding. This counter is incremented by the number of cacheable read bus requests outstanding in any given cycle",
@@ -309,7 +214,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x65,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRANS_RFO",
   .desc   = "Number of completed read for ownership transactions",
@@ -318,7 +223,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x66,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRANS_WB",
   .desc   = "Number of completed write back transactions",
@@ -327,7 +232,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x67,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRAN_IFETCH",
   .desc   = "Number of completed instruction fetch transactions",
@@ -336,7 +241,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x68,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRAN_INVAL",
   .desc   = "Number of completed invalidate transactions",
@@ -345,7 +250,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x69,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRAN_PWR",
   .desc   = "Number of completed partial write transactions",
@@ -354,7 +259,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x6a,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRANS_P",
   .desc   = "Number of completed partial transactions",
@@ -363,7 +268,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x6b,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRANS_IO",
   .desc   = "Number of completed I/O transactions",
@@ -372,7 +277,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x6c,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRAN_DEF",
   .desc   = "Number of completed deferred transactions",
@@ -381,7 +286,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x6d,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRAN_BURST",
   .desc   = "Number of completed burst transactions",
@@ -390,7 +295,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x6e,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRAN_ANY",
   .desc   = "Number of all completed bus transactions. Address bus utilization can be calculated knowing the minimum address bus occupancy. Includes special cycles, etc.",
@@ -399,7 +304,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x70,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_TRAN_MEM",
   .desc   = "Number of completed memory transactions",
@@ -408,7 +313,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x6f,
   .numasks = 2,
   .ngrp = 1,
-  .umasks = p6_bus_drdy_clocks, /* identical to actual umasks list for this event */
+  .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
 { .name   = "BUS_DATA_RECV",
   .desc   = "Number of bus clock cycles during which this processor is receiving data",
@@ -590,84 +495,6 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .cntmsk = 0x3,
   .code = 0x6,
 },
-{ .name   = "MMX_SAT_INSTR_EXEC",
-  .desc   = "Number of MMX saturating instructions executed",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xb1,
-},
-{ .name   = "MMX_UOPS_EXEC",
-  .desc   = "Number of MMX micro-ops executed",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xb2,
-},
-{ .name   = "MMX_INSTR_TYPE_EXEC",
-  .desc   = "Number of MMX instructions executed by type",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xb3,
-  .numasks = 6,
-  .ngrp = 1,
-  .umasks = p6_mmx_instr_type_exec,
-},
-{ .name   = "FP_MMX_TRANS",
-  .desc   = "Number of MMX transitions",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xcc,
-  .numasks = 2,
-  .ngrp = 1,
-  .umasks = p6_fp_mmx_trans,
-},
-{ .name   = "MMX_ASSIST",
-  .desc   = "Number of MMX micro-ops executed",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xcd,
-},
-{ .name   = "SEG_RENAME_STALLS",
-  .desc   = "Number of Segment Register Renaming Stalls",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xd4,
-  .numasks = 4,
-  .ngrp = 1,
-  .umasks = p6_seg_rename_stalls,
-},
-{ .name   = "SEG_REG_RENAMES",
-  .desc   = "Number of Segment Register Renames",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xd5,
-  .numasks = 4,
-  .ngrp = 1,
-  .umasks = p6_seg_rename_stalls, /* identical to actual umasks list for this event */
-},
-{ .name   = "RET_SEG_RENAMES",
-  .desc   = "Number of segment register rename events retired",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xd6,
-},
-{ .name   = "EMON_KNI_PREF_DISPATCHED",
-  .desc   = "Number of Streaming SIMD extensions prefetch/weakly-ordered instructions dispatched (speculative prefetches are included in counting). Pentium III and later",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0x7,
-  .numasks = 4,
-  .ngrp = 1,
-  .umasks = p6_emon_kni_pref_dispatched,
-},
-{ .name   = "EMON_KNI_PREF_MISS",
-  .desc   = "Number of prefetch/weakly-ordered instructions that miss all caches. Pentium III and later",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0x4b,
-  .numasks = 4,
-  .ngrp = 1,
-  .umasks = p6_emon_kni_pref_dispatched, /* identical to actual umasks list for this event */
-},
 { .name   = "L2_LD",
   .desc   = "Number of L2 data loads. This event indicates that a normal, unlocked, load memory access was received by the L2. It includes only L2 cacheable memory accesses; it does not include I/O accesses, other non-memory accesses, or memory accesses such as UC/WT memory accesses. It does include L2 cacheable TLB miss memory accesses",
   .modmsk = INTEL_X86_ATTRS,
@@ -675,7 +502,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x29,
   .numasks = 4,
   .ngrp = 1,
-  .umasks = p6_l2_ifetch, /* identical to actual umasks list for this event */
+  .umasks = ppro_l2_ifetch, /* identical to actual umasks list for this event */
 },
 { .name   = "L2_LINES_IN",
   .desc   = "Number of lines allocated in the L2",
@@ -695,23 +522,5 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .cntmsk = 0x3,
   .code = 0x27,
 },
-{ .name   = "EMON_KNI_INST_RETIRED",
-  .desc   = "Number of SSE instructions retired. Pentium III and later",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xd8,
-  .numasks = 2,
-  .ngrp = 1,
-  .umasks = p6_emon_kni_inst_retired,
-},
-{ .name   = "EMON_KNI_COMP_INST_RET",
-  .desc   = "Number of SSE computation instructions retired. Pentium III and later",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0xd9,
-  .numasks = 2,
-  .ngrp = 1,
-  .umasks = p6_emon_kni_inst_retired, /* identical to actual umasks list for this event */
-},
 };
-#define PME_INTEL_P6_EVENT_COUNT 80
+#define PME_INTEL_PPRO_EVENT_COUNT 68

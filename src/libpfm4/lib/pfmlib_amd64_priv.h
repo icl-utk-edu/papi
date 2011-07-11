@@ -25,7 +25,6 @@
 #ifndef __PFMLIB_AMD64_PRIV_H__
 #define __PFMLIB_AMD64_PRIV_H__
 
-#define AMD64_MAX_UMASKS	16
 #define AMD64_MAX_GRP		4 /* must be < 32 (int) */
 
 typedef struct {
@@ -39,7 +38,7 @@ typedef struct {
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
-	amd64_umask_t		umasks[AMD64_MAX_UMASKS]; /* umask desc */
+	const amd64_umask_t	*umasks;/* list of umasks */
 	unsigned int		code; 	/* event code */
 	unsigned int		numasks;/* number of umasks */
 	unsigned int		flags;	/* flags */
@@ -127,6 +126,7 @@ extern pfm_amd64_config_t pfm_amd64_cfg;
 #define AMD64_K8_ATTRS			(AMD64_BASIC_ATTRS)
 #define AMD64_FAM10H_ATTRS		(AMD64_BASIC_ATTRS|_AMD64_ATTR_H|_AMD64_ATTR_G)
 #define AMD64_FAM14H_ATTRS		(AMD64_BASIC_ATTRS|_AMD64_ATTR_H|_AMD64_ATTR_G)
+#define AMD64_FAM15H_ATTRS		(AMD64_BASIC_ATTRS|_AMD64_ATTR_H|_AMD64_ATTR_G)
 
 /*
  * AMD64 MSR definitions
