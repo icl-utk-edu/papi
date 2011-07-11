@@ -160,7 +160,15 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
 }
 
 /** @class PAPI_flips
-  *	simplified call to get Mflips/s (floating point instruction rate), real and processor time 
+  *	@brief simplified call to get Mflips/s (floating point instruction rate), real and processor time 
+  *
+  *	@par C Interface: 
+  *	@include <papi.h> @n
+  *	int PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips );
+  *
+  *	@par Fortran Interface:
+  *	#include "fpapi.h" @n
+  *	PAPIF_flips( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )
   *
   * @param *rtime
   *		total realtime since the first PAPI_flips() call
@@ -220,8 +228,22 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 }
 
 /** @class PAPI_flops
-  *	simplified call to get Mflops/s (floating point instruction rate), real and processor time 
+  *	@brief simplified call to get Mflops/s (floating point instruction rate), real and processor time 
   *
+  *	@par C Interface: 
+  *	@include <papi.h> @n
+  *	int PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops );
+  *
+  *	@par Fortran Interface:
+  *	#include "fpapi.h" @n
+  *	PAPIF_flops( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
+  *
+  * @param *rtime
+  *		total realtime since the first PAPI_flops() call
+  *	@param *ptime
+  *		total process time since the first PAPI_flops() call
+  *	@param *flpins
+  *		total floating point instructions since the first call
   * @param *rtime
   *		total realtime since the first PAPI_flops() call
   *	@param *ptime
@@ -278,8 +300,17 @@ PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
 }
 
 /** @class PAPI_ipc
-  *	gets instructions per cycle, real and processor time 
- * @param *rtime
+ *	@brief gets instructions per cycle, real and processor time 
+ *	
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
+ *
+ *	@par Fortran Interface:
+ *	#include "fpapi.h" @n
+ *	PAPIF_ipc( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ins, C_FLOAT ipc, C_INT check )
+ *
+ *	@param *rtime
  *		total realtime since the first PAPI_flops() call
  *	@param *ptime
  *		total process time since the first PAPI_flops() call
@@ -399,6 +430,14 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
 
 /** @class PAPI_num_counters
   *	get the number of hardware counters available on the system
+  *
+  *	@par C Interface:
+  *	#include <papi.h> @n
+  *	int PAPI_num_counters( void );
+  *
+  *	@par Fortran Interface:
+  *	#include "fpapi.h" @n
+  *	PAPIF_num_counters( C_INT number )
   * 
   * @post 
   *		Initializes the library to PAPI_HIGH_LEVEL_INITED if necessary.
@@ -438,7 +477,15 @@ PAPI_num_counters( void )
 }
 
 /** @class PAPI_start_counters
-  *	start counting hardware events 
+ *	@brief start counting hardware events 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_start_counters( int *events, int array_len );
+ *
+ *	@par Fortran Interface:
+ *	#include "fpapi.h" @n
+ *	PAPIF_start_counters( C_INT(*) events, C_INT array_len, C_INT check )
  *
  * @param *events
  *		an array of codes for events such as PAPI_INT_INS or a native event code 
@@ -547,7 +594,15 @@ _internal_hl_read_cnts( long long *values, int array_len, int flag )
 }
 
 /** @class PAPI_read_counters
-  *	read and reset counters 
+ *	@brief read and reset counters 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_read_counters( long long *values, int array_len );
+ *
+ *	@par Fortran Interface:
+ *	#include "fpapi.h" @n
+ *	PAPIF_read_counters( C_LONG_LONG(*) values, C_INT array_len, C_INT check )
  *
  * @param *values
  *		an array to hold the counter values of the counting events
@@ -593,7 +648,15 @@ PAPI_read_counters( long long *values, int array_len )
 
 
 /** @class PAPI_accum_counters
-  *	accumulate and reset counters 
+ *	@brief accumulate and reset counters 
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_accum_counters( long long *values, int array_len );
+ *
+ *	@par Fortran Interface:
+ *	#include "fpapi.h" @n
+ *	PAPIF_accum_counters( C_LONG_LONG(*) values, C_INT array_len, C_INT check )
  *
  * @param *values
  *		an array to hold the counter values of the counting events
@@ -641,7 +704,15 @@ PAPI_accum_counters( long long *values, int array_len )
 }
 
 /** @class PAPI_stop_counters
-  *	stop counting hardware events and reset values to zero
+ *	@brief stop counting hardware events and reset values to zero
+ *
+ *	@par C Interface:
+ *	#include <papi.h> @n
+ *	int PAPI_stop_counters( long long *values, int array_len );
+ *
+ *	@par Fortran Interface:
+ *	#include "fpapi.h" @n
+ *	PAPIF_stop_counters( C_LONG_LONG(*) values, C_INT array_len, C_INT check )
  *
  * @param *values
  *		an array where to put the counter values
