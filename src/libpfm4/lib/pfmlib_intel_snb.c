@@ -40,6 +40,7 @@ pfm_snb_detect(void *this)
 
 	switch (pfm_intel_x86_cfg.model) {
 		case 42: /* Sandy Bridge (Core i7 26xx, 25xx) */
+		case 45:
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
@@ -58,7 +59,7 @@ pfmlib_pmu_t intel_snb_support={
 	.desc			= "Intel Sandy Bridge",
 	.name			= "snb",
 	.pmu			= PFM_PMU_INTEL_SNB,
-	.pme_count		= PME_SNB_EVENT_COUNT,
+	.pme_count		= PME_INTEL_SNB_EVENT_COUNT,
 	.type			= PFM_PMU_TYPE_CORE,
 	.num_cntrs		= 8, /* consider with HT off by default */
 	.num_fixed_cntrs	= 3,
