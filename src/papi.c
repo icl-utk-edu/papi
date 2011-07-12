@@ -237,7 +237,9 @@ PAPI_thread_id( void )
  *
  *   @bug No known bugs.
  *
- *   @see PAPI_unregister_thread PAPI_thread_id PAPI_thread_init
+ *   @see PAPI_unregister_thread 
+ *   @see PAPI_thread_id 
+ *   @see PAPI_thread_init
  */
 int
 PAPI_register_thread( void )
@@ -315,8 +317,11 @@ PAPI_unregister_thread( void )
  *
  * @bug This function has no known bugs.
  *
- * @see  PAPI_get_thr_specific PAPI_set_thr_specific PAPI_register_thread 
- *			PAPI_unregister_thread PAPI_thread_init PAPI_thread_id
+ * @see PAPI_get_thr_specific 
+ * @see PAPI_set_thr_specific 
+ * @see PAPI_register_thread 
+ * @see PAPI_unregister_thread 
+ * @see PAPI_thread_init PAPI_thread_id
  *
  */
 int
@@ -713,7 +718,10 @@ PAPI_library_init( int version )
  *
  * @bug These functions have no known bugs. 
  *
- * @see PAPI_remove_event PAPI_remove_events PAPI_presets PAPI_native
+ * @see PAPI_remove_event 
+ * @see PAPI_remove_events 
+ * @see PAPI_presets 
+ * @see PAPI_native
  */
 int
 PAPI_query_event( int EventCode )
@@ -1367,69 +1375,76 @@ PAPI_add_event( int EventSet, int EventCode )
 	papi_return( _papi_hwi_add_event( ESI, EventCode ) );
 }
 
-/** @class PAPI_remove_event
- * @brief removes a hardware event from a PAPI event set. 
+/**  @class PAPI_remove_event
+ *   @brief removes a hardware event from a PAPI event set. 
  *
- * A hardware event can be either a PAPI Preset or a native hardware event code. 
- * For a list of PAPI preset events, see PAPI_presets or run the papi_avail utility in the PAPI distribution. 
- * PAPI Presets can be passed to PAPI_query_event to see if they exist on the underlying architecture. 
- * For a list of native events available on current platform, run papi_native_avail in the PAPI distribution. 
+ *   A hardware event can be either a PAPI Preset or a native hardware 
+ *   event code.  For a list of PAPI preset events, see PAPI_presets or 
+ *   run the papi_avail utility in the PAPI distribution.  PAPI Presets 
+ *   can be passed to PAPI_query_event to see if they exist on the 
+ *   underlying architecture.  For a list of native events available on 
+ *   the current platform, run papi_native_avail in the PAPI distribution. 
  *
- *	@par C Prototype:
- *		#include <papi.h> @n
- *		int PAPI_remove_event( int  EventSet, int  EventCode );
+ *   @par C Interface:
+ *   #include <papi.h> @n
+ *   int PAPI_remove_event( int  EventSet, int  EventCode );
  *
- *	@par Fortran Prototype:
- *		#include fpapi.h @n
- *		PAPIF_remove_event( C_INT  EventSet,  C_INT  EventCode,  C_INT  check )
+ *   @par Fortran interface:
+ *   #include fpapi.h @n
+ *   PAPIF_remove_event( C_INT  EventSet,  C_INT  EventCode,  C_INT  check )
  *
- *	@param EventSet
- *		an integer handle for a PAPI event set as created by PAPI_create_eventset
- *	@param EventCode
- *		a defined event such as PAPI_TOT_INS or a native event. 
+ *   @param[in] EventSet
+ *	   -- an integer handle for a PAPI event set as created 
+ *            by PAPI_create_eventset
+ *   @param[in] EventCode
+ *	   -- a defined event such as PAPI_TOT_INS or a native event. 
  *
- *	@retval PAPI_OK 
+ *   @retval PAPI_OK 
  *		Everything worked.
- *	@retval PAPI_EINVAL 
+ *   @retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
- *	@retval PAPI_ENOEVST 
+ *   @retval PAPI_ENOEVST 
  *		The EventSet specified does not exist.
- *	@retval PAPI_EISRUN 
+ *   @retval PAPI_EISRUN 
  *		The EventSet is currently counting events.
- *	@retval PAPI_ECNFLCT 
- *		The underlying counter hardware can not count this event and other 
- *		events in the EventSet simultaneously.
- *	@retval PAPI_ENOEVNT 
+ *   @retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this 
+ *              event and other events in the EventSet simultaneously.
+ *   @retval PAPI_ENOEVNT 
  *		The PAPI preset is not available on the underlying hardware. 
  *
- *	@par Example:
- *	@code
-int EventSet = PAPI_NULL;
-int ret;
-
-// Create an empty EventSet
-ret = PAPI_create_eventset(&EventSet);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Add Total Instructions Executed to our EventSet
-ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Start counting
-ret = PAPI_start(EventSet);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Stop counting, ignore values
-ret = PAPI_stop(EventSet, NULL);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Remove event
-ret = PAPI_remove_event(EventSet, PAPI_TOT_INS);
-if (ret != PAPI_OK) handle_error(ret);
- *	@endcode
+ *   @par Example:
+ *   @code
+ *   int EventSet = PAPI_NULL;
+ *   int ret;
  *
- *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
- *		PAPI_presets PAPI_add_event PAPI_add_events
+ *   // Create an empty EventSet
+ *   ret = PAPI_create_eventset(&EventSet);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Add Total Instructions Executed to our EventSet
+ *   ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Start counting
+ *   ret = PAPI_start(EventSet);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Stop counting, ignore values
+ *   ret = PAPI_stop(EventSet, NULL);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Remove event
+ *   ret = PAPI_remove_event(EventSet, PAPI_TOT_INS);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *   @endcode
+ *
+ *   @see PAPI_cleanup_eventset 
+ *   @see PAPI_destroy_eventset
+ *   @see PAPI_event_name_to_code 
+ *   @see PAPI_presets 
+ *   @see PAPI_add_event 
+ *   @see PAPI_add_events
  */
 int
 PAPI_remove_event( int EventSet, int EventCode )
@@ -2055,9 +2070,12 @@ PAPI_reset( int EventSet )
  * // values[0] now equals 0 
  * @endcode
  *
- * @bug  These functions have no known bugs.
+ * @bug These functions have no known bugs.
  *
- * @see  PAPI_accum PAPI_start PAPI_stop PAPI_reset
+ * @see PAPI_accum 
+ * @see PAPI_start 
+ * @see PAPI_stop 
+ * @see PAPI_reset
  */
 int
 PAPI_read( int EventSet, long long *values )
@@ -2145,9 +2163,13 @@ PAPI_read( int EventSet, long long *values )
  * @code
  * @endcode
  *
- * @bug  This function has no known bugs.
+ * @bug This function has no known bugs.
  *
- * @see  PAPI_read PAPI_accum PAPI_start PAPI_stop PAPI_reset
+ * @see PAPI_read 
+ * @see PAPI_accum 
+ * @see PAPI_start 
+ * @see PAPI_stop 
+ * @see PAPI_reset
  */
 int
 PAPI_read_ts( int EventSet, long long *values, long long *cycles )
@@ -2485,7 +2507,8 @@ PAPI_cleanup_eventset( int EventSet )
  *
  * @bug This function has no known bugs.
  *
- * @see PAPI_set_multiplex PAPI_get_multiplex
+ * @see PAPI_set_multiplex 
+ * @see PAPI_get_multiplex
  */
 int
 PAPI_multiplex_init( void )
@@ -3391,7 +3414,7 @@ PAPI_num_hwctrs( void )
  * printf(\"%d hardware counters found.\\n\", PAPI_num_cmp_hwctrs(0));
  * @endcode
  *
- * @retval 
+ * @returns 
  *  On success, this function returns a value greater than zero.@n
  *  A zero result usually means the library has not been initialized.
  *
@@ -3456,7 +3479,7 @@ PAPI_num_cmp_hwctrs( int cidx )
  *	  printf("This event set already has multiplexing enabled\n");
  *	else if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
- *	@see  PAPI_multiplex_init 
+ *	@see PAPI_multiplex_init 
  *	@see PAPI_set_opt 
  *	@see PAPI_create_eventset
  */
@@ -3789,7 +3812,8 @@ PAPI_num_components( void )
   *
   * @bug This function has no known bugs. 
   *
-  * @see PAPI_add_event PAPI_create_eventset
+  * @see PAPI_add_event 
+  * @see PAPI_create_eventset
   *
   */
 int
@@ -4678,15 +4702,17 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
  *	with a threshold value of 0. 
  *
  *	@par Representative values for the scale variable
- *	HEX	DECIMAL		DEFININTION
- *	0x20000	131072	Maps precisely one instruction address to a unique bucket in buf.
- *	0x10000	65536	Maps precisely two instruction addresses to a unique bucket in buf.
- *	0xFFFF	65535	Maps approximately two instruction addresses to a unique bucket in buf.
- *	0x8000	32768	Maps every four instruction addresses to a bucket in buf.
- *	0x4000	16384	Maps every eight instruction addresses to a bucket in buf.
- *	0x0002	2	Maps all instruction addresses to the same bucket in buf.
- *	0x0001	1	Undefined.
- *	0x0000	0	Undefined. 
+ *      <table>
+ * <tr><th>HEX</th>     <th>DECIMAL</th>  <th>DEFININTION</th></tr>
+ * <tr><td>0x20000</td>	<td> 131072</td>  <td>Maps precisely one instruction address to a unique bucket in buf.</td></tr>
+ * <tr><td>0x10000</td>	<td>  65536</td>  <td>Maps precisely two instruction addresses to a unique bucket in buf.</td></tr>
+ * <tr><td>0xFFFF</td>	<td>  65535</td> <td>Maps approximately two instruction addresses to a unique bucket in buf.</td></tr>
+ * <tr><td>0x8000</td>	<td>  32768</td> <td>Maps every four instruction addresses to a bucket in buf.</td></tr>
+ * <tr><td>0x4000</td>	<td>  16384</td> <td>Maps every eight instruction addresses to a bucket in buf.</td></tr>
+ * <tr><td>0x0002</td>	<td>      2</td> <td>Maps all instruction addresses to the same bucket in buf.</td></tr>
+ * <tr><td>0x0001</td>	<td>      1</td> <td>Undefined.</td></tr>
+ * <tr><td>0x0000</td>	<td>      0</td> <td>Undefined. </td></tr>
+ * </table>
  *
  *	Historically, the scale factor was introduced to allow the 
  *      allocation of buffers smaller than the code size to be profiled. 
@@ -4743,7 +4769,8 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
  *      To clean all memory, you must call PAPI_profil on the Events with 
  *      a 0 threshold. 
  *
- * @see PAPI_overflow PAPI_sprofil
+ * @see PAPI_overflow 
+ * @see PAPI_sprofil
  *
  */
 int
@@ -5743,14 +5770,15 @@ PAPI_save( void )
  *  @param[in] lock
  *    -- an integer value specifying one of the two user locks: PAPI_USR1_LOCK or PAPI_USR2_LOCK 
  *
- *  @retval 
+ *  @returns
  *      There is no return value for this call. 
  *      Upon return from  PAPI_lock the current thread has acquired 
  *      exclusive access to the specified PAPI mutex.
  *
  *  @bug This function has no known bugs
  *
- *  @see PAPI_unlock PAPI_thread_init
+ *  @see PAPI_unlock 
+ *  @see PAPI_thread_init
  */
 int
 PAPI_lock( int lck )
