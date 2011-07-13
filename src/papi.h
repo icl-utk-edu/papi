@@ -981,7 +981,7 @@ read the documentation carefully.  */
 					 int threshold, int flags); /**< generate PC histogram data where hardware counter overflow occurs */
    int   PAPI_query_event(int EventCode); /**< query if a PAPI event exists */
    int   PAPI_read(int EventSet, long long * values); /**< read hardware events from an event set with no reset */
-   int   PAPI_read_ts(int EventSet, long long * values, long long *cyc);
+   int   PAPI_read_ts(int EventSet, long long * values, long long *cyc); /**< read from an eventset with a real-time cycle timestamp */
    int   PAPI_register_thread(void); /**< inform PAPI of the existence of a new thread */
    int   PAPI_remove_event(int EventSet, int EventCode); /**< remove a hardware event from a PAPI event set */
    int   PAPI_remove_events(int EventSet, int *Events, int number); /**< remove an array of hardware events from a PAPI event set */
