@@ -2480,7 +2480,7 @@ PAPI_cleanup_eventset( int EventSet )
 }
 
 /**	@class PAPI_multiplex_init
- *	@brief initialize multiplex support in the PAPI library 
+ *	@brief Initialize multiplex support in the PAPI library.
  *
  *	PAPI_multiplex_init() enables and initializes multiplex support in 
  *      the PAPI library. 
@@ -2653,7 +2653,9 @@ PAPI_state( int EventSet, int *status )
  if ( ret != PAPI_OK ) handle_error();
  *	@endcode
  *
- *	@see  PAPI_library_init, PAPI_get_opt, PAPI_set_opt
+ *	@see  PAPI_library_init
+ *	@see  PAPI_get_opt
+ *	@see  PAPI_set_opt
  */
 int
 PAPI_set_debug( int level )
@@ -2803,7 +2805,7 @@ PAPI_detach( int EventSet )
 }
 
 /** @class PAPI_set_multiplex
- *	@brief convert a standard event set to a multiplexed event set 
+ *	@brief Convert a standard event set to a multiplexed event set. 
  *
  * @par C Interface:
  *     #include <papi.h> @n
@@ -2818,8 +2820,7 @@ PAPI_detach( int EventSet )
  *
  *	@retval PAPI_OK
  *	@retval PAPI_EINVAL 
- *		-- One or more of the arguments is invalid, or the EventSet 
- *		is already multiplexed.
+ *		-- One or more of the arguments is invalid, or the EventSet is already multiplexed.
  *	@retval PAPI_ENOCMP
  *		-- The EventSet specified is not yet bound to a component.
  *	@retval PAPI_ENOEVST 
@@ -2906,41 +2907,105 @@ PAPI_set_multiplex( int EventSet )
 }
 
 /** @class PAPI_set_opt
- *	set PAPI library or event set options 
+ *	@brief Set PAPI library or event set options.
  *
- *	@param	option
- *		is an input parameter describing the course of action. 
- *		Possible values are defined in papi.h and briefly described in the table below. 
- *		The Fortran calls are implementations of specific options.
+ * @par C Interface:
+ *     #include <papi.h> @n
+ *     int PAPI_set_opt(  int option, PAPI_option_t * ptr );
  *
- *	@param ptr
- *		is a pointer to a structure that acts as both an input and output parameter.
+ *	@param[in]	option
+ *		Defines the option to be set. 
+ *		Possible values are briefly described in the table below. 
  *
- *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid. 
+ *	@param[in,out] ptr
+ *		Pointer to a structure determined by the selected option. See PAPI_option_t
+ *		for a description of possible structures.
  *
- *	PAPI_get_opt() and PAPI_set_opt() query or change the options of the PAPI 
- *	library or a specific event set created by PAPI_create_eventset . 
- *	Some options may require that the eventset be bound to a component before 
- *	they can execute successfully. 
- *	This can be done either by adding an event or by explicitly calling 
- *	PAPI_assign_eventset_component . 
+ *	@retval PAPI_OK
+ *	@retval PAPI_EINVAL The specified ption or parameter is invalid.
+ *	@retval PAPI_ENOEVST The EventSet specified does not exist.
+ *	@retval PAPI_EISRUN The EventSet is currently counting events.
+ *	@retval PAPI_ESBSTR The option is not implemented for the current substrate.
+ *	@retval PAPI_ENOINIT PAPI has not been initialized.
+ *	@retval PAPI_EINVAL_DOM Invalid domain has been requested.
+ *
+ *	PAPI_set_opt() changes the options of the PAPI library or a specific EventSet created 
+ *	by PAPI_create_eventset. Some options may require that the EventSet be bound to a 
+ *	component before they can execute successfully. This can be done either by adding an 
+ *	event or by explicitly calling PAPI_assign_eventset_component. 
  *	
- *	The C interface for these functions passes a pointer to the PAPI_option_t structure. 
- *	Not all options require or return information in this structure, and not all 
- *	options are implemented for both get and set. 
- *	Some options require a component index to be provided. 
- *	These options are handled explicitly by the PAPI_get_cmp_opt() call for 'get' 
- *	and implicitly through the option structure for 'set'. 
- *	The Fortran interface is a series of calls implementing various subsets of 
- *	the C interface. Not all options in C are available in Fortran.
- *	NOTE: Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, 
+ *	Ptr is a pointer to the PAPI_option_t structure, which is actually a union of different
+ *	structures for different options. Not all options require or return information in these
+ *	structures. Each requires different values to be set. Some options require a component 
+ *	index to be provided. These options are handled implicitly through the option structures. 
+ *
+ *	@note Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX
  *	are also available as separate entry points in both C and Fortran.
  *
- *	The reader is urged to see the example code in the PAPI distribution for usage of PAPI_get_opt. 
- *	The file papi.h contains definitions for the structures unioned in the PAPI_option_t structure. 
+ *	The reader is encouraged to peruse the ctests code in the PAPI distribution for examples
+ *  of usage of PAPI_set_opt. 
  *
- *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
+ *	@par Possible values for the PAPI_set_opt option parameter
+ *  @manonly
+ * OPTION 			DEFINITION
+ * PAPI_DEFDOM		Set default counting domain for newly created event sets. Requires a 
+ *					component index.
+ * PAPI_DEFGRN		Set default counting granularity. Requires a component index.
+ * PAPI_DEBUG		Set the PAPI debug state and the debug handler. The debug state is 
+ *					specified in ptr->debug.level. The debug handler is specified in 
+ *					ptr->debug.handler. For further information regarding debug states and
+ *					the behavior of the handler, see PAPI_set_debug.
+ * PAPI_MULTIPLEX	Enable specified EventSet for multiplexing.
+ * PAPI_DEF_ITIMER	Set the type of itimer used in software multiplexing, overflowing 
+ *					and profiling.
+ * PAPI_DEF_MPX_USEC  Set the sampling time slice in microseconds for multiplexing and overflow.
+ * PAPI_DEF_MPX_NS	Set the sampling time slice in nanoseconds for multiplexing and overflow.
+ * PAPI_DEF_ITIMER_NS See PAPI_DEF_MPX_NS.
+ * PAPI_ATTACH		Attach EventSet specified in ptr->attach.eventset to thread or process id
+ *					specified in in ptr->attach.tid.
+ * PAPI_CPU_ATTACH	Attach EventSet specified in ptr->cpu.eventset to cpu specified in in
+ *					ptr->cpu.cpu_num.
+ * PAPI_DETACH		Detach EventSet specified in ptr->attach.eventset from any thread
+ *					or process id.
+ * PAPI_DOMAIN		Set domain for EventSet specified in ptr->domain.eventset. 
+ *					Will error if eventset is not bound to a component.
+ * PAPI_GRANUL		Set granularity for EventSet specified in ptr->granularity.eventset. 
+ *					Will error if eventset is not bound to a component.
+ * PAPI_INHERIT		Enable or disable inheritance for specified EventSet.
+ * PAPI_DATA_ADDRESS	Set data address range to restrict event counting for EventSet specified
+ *					in ptr->addr.eventset. Starting and ending addresses are specified in
+ *					ptr->addr.start and ptr->addr.end, respectively. If exact addresses
+ *					cannot be instantiated, offsets are returned in ptr->addr.start_off and
+ *					ptr->addr.end_off. Currently implemented on Itanium only.
+ * PAPI_INSTR_ADDRESS	Set instruction address range as described above. Itanium only.
+ * @endmanonly
+ * @htmlonly
+ * <table class="doxtable">
+ * <tr><th>OPTION</th><th>DEFINITION</th></tr>
+ * <tr><td>PAPI_DEFDOM</td><td>Set default counting domain for newly created event sets. Requires a component index.</td></tr>
+ * <tr><td>PAPI_DEFGRN</td><td>Set default counting granularity. Requires a component index.</td></tr>
+ * <tr><td>PAPI_DEBUG</td><td>Set the PAPI debug state and the debug handler. The debug state is specified in ptr->debug.level. The debug handler is specified in ptr->debug.handler. 
+ *			For further information regarding debug states and the behavior of the handler, see PAPI_set_debug.</td></tr>
+ * <tr><td>PAPI_MULTIPLEX</td><td>Enable specified EventSet for multiplexing.</td></tr>
+ * <tr><td>xPAPI_DEF_ITIMER</td><td>Set the type of itimer used in software multiplexing, overflowing and profiling.</td></tr>
+ * <tr><td>PAPI_DEF_MPX_USEC</td><td>Set the sampling time slice in microseconds for multiplexing and overflow.</td></tr>
+ * <tr><td>PAPI_DEF_MPX_NS</td><td>Set the sampling time slice in nanoseconds for multiplexing and overflow.</td></tr>
+ * <tr><td>PAPI_DEF_ITIMER_NS</td><td>See PAPI_DEF_MPX_NS.</td></tr>
+ * <tr><td>PAPI_ATTACH</td><td>Attach EventSet specified in ptr->attach.eventset to thread or process id specified in in ptr->attach.tid.</td></tr>
+ * <tr><td>PAPI_CPU_ATTACH</td><td>Attach EventSet specified in ptr->cpu.eventset to cpu specified in in ptr->cpu.cpu_num.</td></tr>
+ * <tr><td>PAPI_DETACH</td><td>Detach EventSet specified in ptr->attach.eventset from any thread or process id.</td></tr>
+ * <tr><td>PAPI_DOMAIN</td><td>Set domain for EventSet specified in ptr->domain.eventset. Will error if eventset is not bound to a component.</td></tr>
+ * <tr><td>PAPI_GRANUL</td><td>Set granularity for EventSet specified in ptr->granularity.eventset. Will error if eventset is not bound to a component.</td></tr>
+ * <tr><td>PAPI_INHERIT</td><td>Enable or disable inheritance for specified EventSet.</td></tr>
+ * <tr><td>PAPI_DATA_ADDRESS</td><td>Set data address range to restrict event counting for EventSet specified in ptr->addr.eventset. Starting and ending addresses are specified in ptr->addr.start and ptr->addr.end, respectively. If exact addresses cannot be instantiated, offsets are returned in ptr->addr.start_off and ptr->addr.end_off. Currently implemented on Itanium only.</td></tr>
+ * <tr><td>PAPI_INSTR_ADDRESS</td><td>Set instruction address range as described above. Itanium only.</td></tr>
+ * </table>
+ * @endhtmlonly
+ *
+ *	@see PAPI_set_debug
+ *	@see PAPI_set_multiplex
+ *	@see PAPI_set_domain
+ *	@see PAPI_option_t
  */
 int
 PAPI_set_opt( int option, PAPI_option_t * ptr )
@@ -4372,10 +4437,16 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *	@param flags 
  *		bit pattern to control profiling behavior. 
  *		Defined values are given in a table in the documentation for PAPI_pofil
+ *	@manonly
+ *
+ *	@endmanonly
  *
  *  @retval
  *		Return values for PAPI_sprofil() are identical to those for PAPI_profil.
  *		Please refer to that page for further details.
+ *	@manonly
+ *
+ *	@endmanonly
  *
  *	PAPI_sprofil() is a structure driven profiler that profiles one or more 
  *	disjoint regions of code in a single call. 
@@ -4384,22 +4455,26 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *	Each structure in the array defines the profiling parameters that are 
  *	normally passed to PAPI_profil(). 
  *	For more information on profiling, @ref PAPI_profil
+ *	@manonly
  *
- * @par Example
+ *	@endmanonly
+ *
+ * @par Example:
  * @code
  * int retval;
  * unsigned long length;
  * PAPI_exe_info_t *prginfo;
  * unsigned short *profbuf1, *profbuf2, profbucket;
  * PAPI_sprofil_t sprof[3];
- * if ((prginfo = PAPI_get_executable_info()) == NULL)
- *   handle_error(1);
+ *
+ * prginfo = PAPI_get_executable_info();
+ * if (prginfo == NULL) handle_error( NULL );
  * length = (unsigned long)(prginfo->text_end - prginfo->text_start);
  * // Allocate 2 buffers of equal length
  * profbuf1 = (unsigned short *)malloc(length);
  * profbuf2 = (unsigned short *)malloc(length);
  * if ((profbuf1 == NULL) || (profbuf2 == NULL))
- *   handle_error(1);
+ *   handle_error( NULL );
  * memset(profbuf1,0x00,length);
  * memset(profbuf2,0x00,length);
  * // First buffer
@@ -4417,9 +4492,9 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  * sprof[2].pr_size = 1;
  * sprof[2].pr_off = 0;
  * sprof[2].pr_scale = 0x0002;
- * if ((retval = PAPI_sprofil(sprof, EventSet, PAPI_FP_INS, 1000000,
+ * retval = PAPI_sprofil(sprof, EventSet, PAPI_FP_INS, 1000000,
  * PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
- *   handle_error(retval);
+ * if ( retval != PAPI_OK ) handle_error( retval );
  * @endcode
  *
  *	@see PAPI_overflow
@@ -4639,7 +4714,7 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
  *       implied on the left. 
  *	 Its value is the reciprocal of the number of addresses in a 
  *       subdivision, per counter of histogram buffer. 
- *	 Above is a table of representative values for scale.
+ *	 Below is a table of representative values for scale.
  * @param EventSet
  *    -- The PAPI EventSet to profile. This EventSet is marked as 
  *       profiling-ready, but profiling doesn't actually start until a 
@@ -4702,8 +4777,20 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
  *	with a threshold value of 0. 
  *
  *	@par Representative values for the scale variable
- *      <table>
- * <tr><th>HEX</th>     <th>DECIMAL</th>  <th>DEFININTION</th></tr>
+ *  @manonly
+ * HEX      DECIMAL  DEFININTION  
+ * 0x20000  131072   Maps precisely one instruction address to a unique bucket in buf.  
+ * 0x10000   65536   Maps precisely two instruction addresses to a unique bucket in buf.  
+ * 0x0FFFF   65535   Maps approximately two instruction addresses to a unique bucket in buf.  
+ * 0x08000   32768   Maps every four instruction addresses to a bucket in buf.  
+ * 0x04000   16384   Maps every eight instruction addresses to a bucket in buf.  
+ * 0x00002       2   Maps all instruction addresses to the same bucket in buf.  
+ * 0x00001       1   Undefined.  
+ * 0x00000       0   Undefined.  
+ * @endmanonly
+ * @htmlonly
+ * <table class="doxtable">
+ * <tr><th>HEX</th>     <th>DECIMAL</th>  <th>DEFINITION</th></tr>
  * <tr><td>0x20000</td>	<td> 131072</td>  <td>Maps precisely one instruction address to a unique bucket in buf.</td></tr>
  * <tr><td>0x10000</td>	<td>  65536</td>  <td>Maps precisely two instruction addresses to a unique bucket in buf.</td></tr>
  * <tr><td>0xFFFF</td>	<td>  65535</td> <td>Maps approximately two instruction addresses to a unique bucket in buf.</td></tr>
@@ -4713,6 +4800,7 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
  * <tr><td>0x0001</td>	<td>      1</td> <td>Undefined.</td></tr>
  * <tr><td>0x0000</td>	<td>      0</td> <td>Undefined. </td></tr>
  * </table>
+ * @endhtmlonly
  *
  *	Historically, the scale factor was introduced to allow the 
  *      allocation of buffers smaller than the code size to be profiled. 
