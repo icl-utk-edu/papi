@@ -7,8 +7,10 @@
  */
 
 /* This file hardware info and performs the following test:
-     Attempts to add all available native events to an event set.
-     This is a good preliminary way to validate native event tables.
+		- Start and stop all native events.
+    This is a good preliminary way to validate native event tables.
+	In its current form this test also stresses the number of 
+	events sets the library can handle outstanding. 
 */
 
 #include "papi_test.h"
@@ -16,11 +18,12 @@ extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 extern unsigned char PENTIUM4;
 
 static int
-add_remove_event( int EventSet, int event_code, char *name )
+check_event( int event_code, char *name )
 {
 	int retval;
 	char errstring[PAPI_MAX_STR_LEN];
 	long long values;
+	int EventSet = PAPI_NULL;
 
    /* Is there an issue with older machines? */
    /* Disable for now, add back once we can reproduce */
@@ -29,6 +32,11 @@ add_remove_event( int EventSet, int event_code, char *name )
 //			return 1;
 //		}
 //	}
+
+	retval = PAPI_create_eventset( &EventSet );
+	if ( retval != PAPI_OK )
+	  test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+
    
 	retval = PAPI_add_event( EventSet, event_code );
 	if ( retval != PAPI_OK ) {
@@ -52,20 +60,20 @@ add_remove_event( int EventSet, int event_code, char *name )
 		}
 	}
 
-	retval = PAPI_remove_event( EventSet, event_code );
-	if ( retval != PAPI_OK ) {
-		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-		printf( "Error removing %s: %s\n", name, errstring );
-		return ( 0 );
-	} else
-		printf( "Removed %s successfully.\n", name );
+
+/* Removeing events is not uniformly supported in some components, 
+   So until the semantics of destroy_eventset are nailed down, 
+   don't call this. 
+	PAPI_cleanup_eventset( &EventSet );
+	PAPI_destroy_eventset( &EventSet );
+*/
 	return ( 1 );
 }
 
 int
 main( int argc, char **argv )
 {
-	int i, k, EventSet = PAPI_NULL, add_count = 0, err_count = 0, 
+	int i, k, add_count = 0, err_count = 0, 
             unc_count = 0, offcore_count = 0;
 	int retval;
 	PAPI_event_info_t info, info1;
@@ -96,10 +104,6 @@ main( int argc, char **argv )
 
 	for ( cid = 0; cid < numcmp; cid++ ) {
 
-		retval = PAPI_create_eventset( &EventSet );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-
 		if ( ( s = PAPI_get_component_info( cid ) ) == NULL )
 			test_fail( __FILE__, __LINE__, "PAPI_get_substrate_info", 2 );
 
@@ -126,8 +130,8 @@ main( int argc, char **argv )
 					do {
 						retval = PAPI_get_event_info( k, &info1 );
 						event_code = ( int ) info1.event_code;
-						if ( add_remove_event
-							 ( EventSet, event_code, info1.symbol ) )
+						if ( check_event
+							 ( event_code, info1.symbol ) )
 							add_count++;
 						else
 							err_count++;
@@ -135,7 +139,7 @@ main( int argc, char **argv )
 							  PAPI_OK );
 				} else {
 					event_code = ( int ) info.event_code;
-					if ( add_remove_event( EventSet, event_code, info.symbol ) )
+					if ( check_event( event_code, info.symbol ) )
 						add_count++;
 					else
 						err_count++;
@@ -144,19 +148,16 @@ main( int argc, char **argv )
 				event_code = ( int ) info.event_code;
 				if ( s->cntr_groups )
 					event_code &= ~PAPI_NTV_GROUP_AND_MASK;
-				if ( add_remove_event( EventSet, event_code, info.symbol ) )
+				if ( check_event( event_code, info.symbol ) )
 					add_count++;
 				else
 					err_count++;
 			}
 		} while ( PAPI_enum_event( &i, PAPI_ENUM_EVENTS ) == PAPI_OK );
 
-		retval = PAPI_destroy_eventset( &EventSet );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 	}
-	printf( "\n\nSuccessfully found, added, and removed %d events.\n",
-			add_count );
+	printf( "\n\nSuccessfully found and added %d events (in %d eventsets).\n",
+			add_count , add_count);
 	if ( err_count )
 		printf( "Failed to add %d events.\n", err_count );
 	if (( unc_count ) || (offcore_count)) {
