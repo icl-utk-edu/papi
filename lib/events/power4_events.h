@@ -1731,7 +1731,5 @@ static const pme_power_entry_t power4_pe[] = {
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from the Modified state to the Tagged state. This transition was caused by a read snoop request that hit against a modified entry in the local L2. The event is provided on each of the three slices A,B,and C.",
 	}
 };
-#define POWER4_PME_EVENT_COUNT 244
-
 #endif
 

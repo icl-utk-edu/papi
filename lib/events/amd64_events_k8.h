@@ -1305,4 +1305,3 @@ static const amd64_entry_t amd64_k8_pe[]={
   .umasks  = amd64_k8_hypertransport_link0, /* identical to actual umasks list for this event */
 },
 };
-#define PME_AMD64_K8_EVENT_COUNT 87

@@ -1257,4 +1257,3 @@ static const amd64_entry_t amd64_fam15h_pe[]={
   .code    = 0x1d8,
 },
 };
-#define PME_AMD64_FAM15H_EVENT_COUNT 82

@@ -1369,4 +1369,3 @@ static const intel_x86_entry_t intel_wsm_unc_pe[]={
   .code = 0x86,
 },
 };
-#define PME_INTEL_WSM_UNC_EVENT_COUNT 52

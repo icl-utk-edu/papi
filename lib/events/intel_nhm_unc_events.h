@@ -1244,4 +1244,3 @@ static const intel_x86_entry_t intel_nhm_unc_pe[]={
   .umasks = nhm_unc_unc_snp_resp_to_remote_home,
 },
 };
-#define PME_INTEL_NHM_UNC_EVENT_COUNT 42
