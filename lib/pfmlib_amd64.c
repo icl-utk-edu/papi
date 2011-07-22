@@ -755,10 +755,12 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 					if ((pe[i].umasks[k].uflags == pe[i].umasks[j].uflags)
 					    && (pe[i].umasks[k].grpid == pe[i].umasks[j].grpid))
 						ndfl++;
+				if (pe[i].numasks == 1)
+					ndfl = 1;
 			}
 		}
 
-		if (pe[i].numasks && ndfl) {
+		if (pe[i].numasks > 1 && ndfl) {
 			fprintf(fp, "pmu: %s event%d: %s :: more than one default unit mask with same code\n", name, i, pe[i].name);
 			error++;
 		}
