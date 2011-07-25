@@ -61,6 +61,7 @@ pfm_wsm_dp_detect(void *this)
 
 	switch (pfm_intel_x86_cfg.model) {
 		case 44: /* Westmere-EP, Gulftown */
+		case 47: /* Westmere E7 */
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
