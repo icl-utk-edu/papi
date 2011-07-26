@@ -724,6 +724,11 @@ static struct native_event_t *allocate_native_event(char *name,
      free(fstr);
   }
 
+  if (ret!=PFM_SUCCESS) {
+    /* FIXME */
+    return NULL;
+  }
+
   /* get basename */	      
   memset(&info,0,sizeof(pfm_event_info_t));
   memset(&pinfo,0,sizeof(pfm_pmu_info_t));
@@ -885,50 +890,6 @@ _papi_pfm_setup_presets( char *pmu_name, int pmu_type )
 	}
 
 	return ( PAPI_OK );
-}
-
-static int our_get_number_of_attributes(int perf_event_code) {
-
-	pfm_event_info_t event_info;
-	pfm_event_attr_info_t *ainfo=NULL;
-	int num_masks=0;
-	pfm_err_t ret;
-	int i;
-
-	/* get number of attributes */
-
-	memset(&event_info, 0, sizeof(event_info));
-	ret=pfm_get_event_info(perf_event_code, PFM_OS_PERF_EVENT, &event_info);
-	
-	SUBDBG("%d possible attributes for event %x %s\n",event_info.nattrs,
-	       perf_event_code,event_info.name);
-
-	ainfo = malloc(event_info.nattrs * sizeof(*ainfo));
-        if (!ainfo) {
-	   return PAPI_ENOMEM;
-	}
-
-	pfm_for_each_event_attr(i, &event_info) {
-	   ainfo[i].size = sizeof(*ainfo);
-
-	   ret = pfm_get_event_attr_info(event_info.idx, i, PFM_OS_PERF_EVENT, &ainfo[i]);
-	   if (ret != PFM_SUCCESS) {
-	      PAPIERROR( "pfm_get_num_event_masks(%d,%p): %s", 
-			 perf_event_code, num_masks,
-			 pfm_strerror( ret ) );
-	      	if (ainfo) free(ainfo);
-		return PAPI_ENOEVNT;
-	   }
-
-     	   if (ainfo[i].type == PFM_ATTR_UMASK) {
-	      num_masks++;
-	   }
-	   SUBDBG("attribute %d: %s type: %d\n",i,ainfo[i].name,ainfo[i].type);
-	}
-	
-	if (ainfo) free(ainfo);
-
-	return num_masks;
 }
 
 int
@@ -1179,6 +1140,9 @@ papi_pfm_get_event_first_active(void)
   while(pmu_idx<PFM_PMU_MAX) {
 
     ret=pfm_get_pmu_info(pmu_idx, &pinfo);
+    if (ret!=PFM_SUCCESS) {
+       break;
+    }
 
     if (pinfo.is_present) {
 
@@ -1206,11 +1170,11 @@ convert_libpfm4_to_string( int code, char **event_name)
   pfm_event_info_t gete;//,first_info;
   pfm_pmu_info_t pinfo;
   char name[BUFSIZ];
-  int first;
+  //int first;
 
   SUBDBG("ENTER %x\n",code);
 
-  first=papi_pfm_get_event_first_active();
+  //first=papi_pfm_get_event_first_active();
 
   memset( &gete, 0, sizeof ( pfm_event_info_t ) );
   //memset( &first_info, 0, sizeof ( pfm_event_info_t ) );
@@ -1319,7 +1283,6 @@ int
 _papi_pfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
 
-        unsigned int num_masks=0;
 	int code,ret;
 	struct native_event_t *current_event;
 
@@ -1379,25 +1342,6 @@ _papi_pfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	     return ret;
 
 	}
-
-	/* get number of attributes */
-	num_masks=our_get_number_of_attributes(current_event->perfmon_idx);
-
-	SUBDBG( "Found %d masks\n", num_masks );
-
-
-	if ( modifier == PAPI_NTV_ENUM_UMASK_COMBOS ) {
-#if 0
-
-		if ( umask + 1 < ( unsigned int ) ( 1 << num_masks ) ) {
-			*PapiEventCode =
-				( unsigned int ) encode_native_event_raw( 
-									 perf_event_code, umask + 1 );
-			return PAPI_OK;
-		}
-#endif
-		return PAPI_ENOEVNT;
-	} 
 
 	if ( modifier == PAPI_NTV_ENUM_UMASKS ) {
 
