@@ -43,6 +43,15 @@
 #endif
 /* The Low Level Wrappers */
 
+/**	@class PAPIF_accum
+ *	@brief accumulate and reset counters in an event set 
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_accum( C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
+ *
+ *	@see PAPI_accum
+ */
 PAPI_FCALL( papif_accum, PAPIF_ACCUM,
 			( int *EventSet, long long *values, int *check ) )
 {

@@ -768,8 +768,11 @@ PAPI_query_event( int EventCode )
 		cmpinfo->num_preset_events, cmpinfo->num_native_events);
  *	@endcode
  *
+ *	@see PAPI_get_executable_info
+ *	@see PAPI_get_hardware_info
+ *	@see PAPI_get_dmem_info
+ *	@see PAPI_get_opt
  *	@see PAPI_component_info_t
- *	@see PAPI_get_executable_info PAPI_get_hardware_info PAPI_get_dmem_info PAPI_get_opt PAPI_library_init
  */
 const PAPI_component_info_t *
 PAPI_get_component_info( int cidx )
@@ -880,12 +883,12 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
  *	@bug 
  *	No known bugs.
  *
- *	@see PAPI_remove_event @n
- *	PAPI_get_event_info @n
- *	PAPI_enum_events @n
- *	PAPI_add_event @n
- *	PAPI_presets @n
- *	PAPI_native
+ *	@see PAPI_remove_event
+ *	@see PAPI_get_event_info
+ *	@see PAPI_enum_events
+ *	@see PAPI_add_event
+ *	@see PAPI_presets
+ *	@see PAPI_native
  */
 int
 PAPI_event_code_to_name( int EventCode, char *out )
@@ -2219,15 +2222,11 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 }
 
 /**	@class PAPI_accum
- *	@brief accumulate and reset counters in an event set 
+ *	@brief Accumulate and reset counters in an EventSet.
  *	
  *	@par C Interface:
  *	#include <papi.h> @n
  *	int PAPI_accum( int  EventSet, long_long * values );
- *
- *	@par Fortran Interface:
- *	#include fpapi.h @n
- *	PAPIF_accum( C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
  *
  *	These calls assume an initialized PAPI library and a properly added event set. 
  *	PAPI_accum adds the counters of the indicated event set into the array values. 
@@ -2265,14 +2264,10 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *	// values[0] now equals 0
  *	@endcode
  *
- *	@bug 
- *	No known bugs.
- *
- *	@see PAPI_start @n
- *	PAPI @n
- *	PAPIF @n
- *	PAPI_set_opt @n
- *	PAPI_reset
+ *	@see PAPIF_accum
+ *	@see PAPI_start
+ *	@see PAPI_set_opt
+ *	@see PAPI_reset
  */
 int
 PAPI_accum( int EventSet, long long *values )
@@ -2731,10 +2726,10 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *	@bug 
  *	No known bugs.
  *
- *	@see PAPI_set_opt @n
- *	PAPI_list_threads @n
- *	PAPI_thread_id @n
- *	PAPI_thread_init
+ *	@see PAPI_set_opt
+ *	@see PAPI_list_threads
+ *	@see PAPI_thread_id
+ *	@see PAPI_thread_init
  */
 int
 PAPI_attach( int EventSet, unsigned long tid )
@@ -2922,7 +2917,7 @@ PAPI_set_multiplex( int EventSet )
  *		for a description of possible structures.
  *
  *	@retval PAPI_OK
- *	@retval PAPI_EINVAL The specified ption or parameter is invalid.
+ *	@retval PAPI_EINVAL The specified option or parameter is invalid.
  *	@retval PAPI_ENOEVST The EventSet specified does not exist.
  *	@retval PAPI_EISRUN The EventSet is currently counting events.
  *	@retval PAPI_ESBSTR The option is not implemented for the current substrate.
@@ -2958,7 +2953,6 @@ PAPI_set_multiplex( int EventSet )
  * PAPI_MULTIPLEX	Enable specified EventSet for multiplexing.
  * PAPI_DEF_ITIMER	Set the type of itimer used in software multiplexing, overflowing 
  *					and profiling.
- * PAPI_DEF_MPX_USEC  Set the sampling time slice in microseconds for multiplexing and overflow.
  * PAPI_DEF_MPX_NS	Set the sampling time slice in nanoseconds for multiplexing and overflow.
  * PAPI_DEF_ITIMER_NS See PAPI_DEF_MPX_NS.
  * PAPI_ATTACH		Attach EventSet specified in ptr->attach.eventset to thread or process id
@@ -2988,7 +2982,6 @@ PAPI_set_multiplex( int EventSet )
  *			For further information regarding debug states and the behavior of the handler, see PAPI_set_debug.</td></tr>
  * <tr><td>PAPI_MULTIPLEX</td><td>Enable specified EventSet for multiplexing.</td></tr>
  * <tr><td>xPAPI_DEF_ITIMER</td><td>Set the type of itimer used in software multiplexing, overflowing and profiling.</td></tr>
- * <tr><td>PAPI_DEF_MPX_USEC</td><td>Set the sampling time slice in microseconds for multiplexing and overflow.</td></tr>
  * <tr><td>PAPI_DEF_MPX_NS</td><td>Set the sampling time slice in nanoseconds for multiplexing and overflow.</td></tr>
  * <tr><td>PAPI_DEF_ITIMER_NS</td><td>See PAPI_DEF_MPX_NS.</td></tr>
  * <tr><td>PAPI_ATTACH</td><td>Attach EventSet specified in ptr->attach.eventset to thread or process id specified in in ptr->attach.tid.</td></tr>
@@ -3562,42 +3555,105 @@ PAPI_get_multiplex( int EventSet )
 }
 
 /** @class PAPI_get_opt
-  *	get PAPI library or event set options 
-  *
-  *	@param	option
-  *		is an input parameter describing the course of action. 
-  *		Possible values are defined in papi.h and briefly described in the table below. 
-  *		The Fortran calls are implementations of specific options.
-  *
-  *	@param ptr
-  *		is a pointer to a structure that acts as both an input and output parameter.
-  *
-  *	@retval PAPI_EINVAL 
-  *		One or more of the arguments is invalid. 
-  *
-  *	PAPI_get_opt() and PAPI_set_opt() query or change the options of the PAPI 
-  *	library or a specific event set created by PAPI_create_eventset . 
-  *	Some options may require that the eventset be bound to a component before 
-  *	they can execute successfully. 
-  *	This can be done either by adding an event or by explicitly calling 
-  *	PAPI_assign_eventset_component . 
-  *	
-  *	The C interface for these functions passes a pointer to the PAPI_option_t structure. 
-  *	Not all options require or return information in this structure, and not all 
-  *	options are implemented for both get and set. 
-  *	Some options require a component index to be provided. 
-  *	These options are handled explicitly by the PAPI_get_cmp_opt() call for 'get' 
-  *	and implicitly through the option structure for 'set'. 
-  *	The Fortran interface is a series of calls implementing various subsets of 
-  *	the C interface. Not all options in C are available in Fortran.
-  *	NOTE: Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, 
-  *	are also available as separate entry points in both C and Fortran.
-  *
-  *	The reader is urged to see the example code in the PAPI distribution for usage of PAPI_get_opt. 
-  *	The file papi.h contains definitions for the structures unioned in the PAPI_option_t structure. 
-  *
-  *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
-  */
+ *	@brief Get PAPI library or event set options.
+ *
+ * @par C Interface:
+ *     #include <papi.h> @n
+ *     int PAPI_get_opt(  int option, PAPI_option_t * ptr );
+ *
+ *	@param[in]	option
+ *		Defines the option to get. 
+ *		Possible values are briefly described in the table below. 
+ *
+ *	@param[in,out] ptr
+ *		Pointer to a structure determined by the selected option. See PAPI_option_t
+ *		for a description of possible structures.
+ *
+ *	@retval PAPI_OK
+ *	@retval PAPI_EINVAL The specified option or parameter is invalid.
+ *	@retval PAPI_ENOEVST The EventSet specified does not exist.
+ *	@retval PAPI_ESBSTR The option is not implemented for the current substrate.
+ *	@retval PAPI_ENOINIT PAPI has not been initialized.
+ *
+ *	PAPI_get_opt() queries the options of the PAPI library or a specific event set created by 
+ *	PAPI_create_eventset. Some options may require that the eventset be bound to a component
+ *	before they can execute successfully. This can be done either by adding an event or by
+ *	explicitly calling PAPI_assign_eventset_component.
+ *
+ *	Ptr is a pointer to the PAPI_option_t structure, which is actually a union of different
+ *	structures for different options. Not all options require or return information in these
+ *	structures. Each returns different values in the structure. Some options require a component 
+ *	index to be provided. These options are handled explicitly by the PAPI_get_cmp_opt() call. 
+ *
+ *	@note Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX
+ *	are also available as separate entry points in both C and Fortran.
+ *
+ *	The reader is encouraged to peruse the ctests code in the PAPI distribution for examples
+ *  of usage of PAPI_set_opt. 
+ *
+ *	@par Possible values for the PAPI_get_opt option parameter
+ * @manonly
+ * OPTION 			DEFINITION
+ * PAPI_DEFDOM		Get default counting domain for newly created event sets. Requires a component index.
+ * PAPI_DEFGRN		Get default counting granularity. Requires a component index.
+ * PAPI_DEBUG		Get the PAPI debug state and the debug handler. The debug state is specified in ptr->debug.level. The debug handler is specified in ptr->debug.handler. 
+ *					For further information regarding debug states and the behavior of the handler, see PAPI_set_debug.
+ * PAPI_MULTIPLEX	Get current multiplexing state for specified EventSet.
+ * PAPI_DEF_ITIMER	Get the type of itimer used in software multiplexing, overflowing and profiling.
+ * PAPI_DEF_MPX_NS	Get the sampling time slice in nanoseconds for multiplexing and overflow.
+ * PAPI_DEF_ITIMER_NS	See PAPI_DEF_MPX_NS.
+ * PAPI_ATTACH		Get thread or process id to which event set is attached. Returns TRUE if currently attached.
+ * PAPI_CPU_ATTACH	Get ptr->cpu.cpu_num and Attach state for EventSet specified in ptr->cpu.eventset.
+ * PAPI_DETACH		Get thread or process id to which event set is attached. Returns TRUE if currently attached.
+ * PAPI_DOMAIN		Get domain for EventSet specified in ptr->domain.eventset. Will error if eventset is not bound to a component.
+ * PAPI_GRANUL		Get granularity for EventSet specified in ptr->granularity.eventset. Will error if eventset is not bound to a component.
+ * PAPI_INHERIT		Get current inheritance state for specified EventSet.
+ * PAPI_PRELOAD		Get LD_PRELOAD environment equivalent.
+ * PAPI_CLOCKRATE	Get clockrate in MHz.
+ * PAPI_MAX_CPUS	Get number of CPUs.
+ * PAPI_EXEINFO		Get Executable addresses for text/data/bss.
+ * PAPI_HWINFO		Get information about the hardware.
+ * PAPI_LIB_VERSION	Get the full PAPI version of the library.
+ * PAPI_MAX_HWCTRS	Get number of counters. Requires a component index.
+ * PAPI_MAX_MPX_CTRS	Get maximum number of multiplexing counters. Requires a component index.
+ * PAPI_SHLIBINFO	Get shared library information used by the program.
+ * PAPI_COMPONENTINFO	Get the PAPI features the specified component supports. Requires a component index.
+ * @endmanonly
+ * @htmlonly
+ * <table class="doxtable">
+ * <tr><th>OPTION</th><th>DEFINITION</th></tr>
+ * <tr><td>PAPI_DEFDOM</td><td>Get default counting domain for newly created event sets. Requires a component index.</td></tr>
+ * <tr><td>PAPI_DEFGRN</td><td>Get default counting granularity. Requires a component index.</td></tr>
+ * <tr><td>PAPI_DEBUG</td><td>Get the PAPI debug state and the debug handler. The debug state is specified in ptr->debug.level. The debug handler is specified in ptr->debug.handler. 
+ *			For further information regarding debug states and the behavior of the handler, see PAPI_set_debug.</td></tr>
+ * <tr><td>PAPI_MULTIPLEX</td><td>Get current multiplexing state for specified EventSet.</td></tr>
+ * <tr><td>PAPI_DEF_ITIMER</td><td>Get the type of itimer used in software multiplexing, overflowing and profiling.</td></tr>
+ * <tr><td>PAPI_DEF_MPX_NS</td><td>Get the sampling time slice in nanoseconds for multiplexing and overflow.</td></tr>
+ * <tr><td>PAPI_DEF_ITIMER_NS</td><td>See PAPI_DEF_MPX_NS.</td></tr>
+ * <tr><td>PAPI_ATTACH</td><td>Get thread or process id to which event set is attached. Returns TRUE if currently attached.</td></tr>
+ * <tr><td>PAPI_CPU_ATTACH</td><td>Get ptr->cpu.cpu_num and Attach state for EventSet specified in ptr->cpu.eventset.</td></tr>
+ * <tr><td>PAPI_DETACH</td><td>Get thread or process id to which event set is attached. Returns TRUE if currently attached.</td></tr>
+ * <tr><td>PAPI_DOMAIN</td><td>Get domain for EventSet specified in ptr->domain.eventset. Will error if eventset is not bound to a component.</td></tr>
+ * <tr><td>PAPI_GRANUL</td><td>Get granularity for EventSet specified in ptr->granularity.eventset. Will error if eventset is not bound to a component.</td></tr>
+ * <tr><td>PAPI_INHERIT</td><td>Get current inheritance state for specified EventSet.</td></tr>
+ * <tr><td>PAPI_PRELOAD</td><td>Get LD_PRELOAD environment equivalent.</td></tr>
+ * <tr><td>PAPI_CLOCKRATE</td><td>Get clockrate in MHz.</td></tr>
+ * <tr><td>PAPI_MAX_CPUS</td><td>Get number of CPUs.</td></tr>
+ * <tr><td>PAPI_EXEINFO</td><td>Get Executable addresses for text/data/bss.</td></tr>
+ * <tr><td>PAPI_HWINFO</td><td>Get information about the hardware.</td></tr>
+ * <tr><td>PAPI_LIB_VERSION</td><td>Get the full PAPI version of the library.</td></tr>
+ * <tr><td>PAPI_MAX_HWCTRS</td><td>Get number of counters. Requires a component index.</td></tr>
+ * <tr><td>PAPI_MAX_MPX_CTRS</td><td>Get maximum number of multiplexing counters. Requires a component index.</td></tr>
+ * <tr><td>PAPI_SHLIBINFO</td><td>Get shared library information used by the program.</td></tr>
+ * <tr><td>PAPI_COMPONENTINFO</td><td>Get the PAPI features the specified component supports. Requires a component index.</td></tr>
+ * </table>
+ * @endhtmlonly
+ *
+ *	@see PAPI_get_multiplex
+ *	@see PAPI_get_cmp_opt
+ *	@see PAPI_set_opt
+ *	@see PAPI_option_t
+ */
 int
 PAPI_get_opt( int option, PAPI_option_t * ptr )
 {
