@@ -1270,9 +1270,7 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
   int next;
 
   int cache_type,cache_level,cache_selfinit,cache_fullyassoc;
-  int cache_maxshare,cache_maxpackage;
   int cache_linesize,cache_partitions,cache_ways,cache_sets;
-  int cache_wb,cache_inclusive,cache_indexing;
 
   PAPI_mh_cache_info_t *c;
 
@@ -1300,18 +1298,22 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
     cache_level=(eax>>5)&0x3;
     cache_selfinit=(eax>>8)&0x1;
     cache_fullyassoc=(eax>>9)&0x1;
-    cache_maxshare=((eax>>14)&0xfff)+1;
-    cache_maxpackage=((eax>>26)&0x3f)+1;
-     
+
     cache_linesize=(ebx&0xfff)+1;
     cache_partitions=((ebx>>12)&0x3ff)+1;
     cache_ways=((ebx>>22)&0x3ff)+1;
        
     cache_sets=(ecx)+1;
 
+    /* should we export this info?
+
+    cache_maxshare=((eax>>14)&0xfff)+1;
+    cache_maxpackage=((eax>>26)&0x3f)+1;
+     
     cache_wb=(edx)&1;
     cache_inclusive=(edx>>1)&1;
     cache_indexing=(edx>>2)&1;
+    */
 
     if (cache_level>*num_levels) *num_levels=cache_level;
 
@@ -1422,6 +1424,10 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 	size = ( sizeof ( intel_cache ) / sizeof ( struct _intel_cache_info ) );	/* # descriptors */
 	MEMDBG( "Repeat cpuid(2,...) %d times. If not 1, code is broken.\n",
 			count );
+	if (count!=1) {
+	   fprintf(stderr,"Warning: Unhandled cpuid count of %d\n",count);
+	}
+
 	for ( r = 0; r < 4; r++ ) {	/* walk the registers */
 		if ( ( reg.descrip[r * 4 + 3] & 0x80 ) == 0 ) {	/* only process if high order bit is 0 */
 			for ( b = 3; b >= 0; b-- ) {	/* walk the descriptor bytes from high to low */
