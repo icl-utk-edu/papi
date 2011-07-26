@@ -723,16 +723,18 @@ static struct native_event_t *allocate_native_event(char *name,
      native_events[new_event].canonical_name=strdup(fstr);
      free(fstr);
   }
-
-  if (ret!=PFM_SUCCESS) {
-    /* FIXME */
-    return NULL;
-  }
+  //if (ret!=PFM_SUCCESS) {
+  //   return NULL;
+  //}
 
   /* get basename */	      
   memset(&info,0,sizeof(pfm_event_info_t));
   memset(&pinfo,0,sizeof(pfm_pmu_info_t));
   ret = pfm_get_event_info(event_idx, PFM_OS_PERF_EVENT, &info);
+  if (ret!=PFM_SUCCESS) {
+     return NULL;
+  }
+
   pfm_get_pmu_info(info.pmu, &pinfo);
 
   strncpy(base,name,BUFSIZ);
@@ -1140,11 +1142,8 @@ papi_pfm_get_event_first_active(void)
   while(pmu_idx<PFM_PMU_MAX) {
 
     ret=pfm_get_pmu_info(pmu_idx, &pinfo);
-    if (ret!=PFM_SUCCESS) {
-       break;
-    }
 
-    if (pinfo.is_present) {
+    if ((ret==PFM_SUCCESS) && pinfo.is_present) {
 
       pidx=pinfo.first_event;
 
@@ -1282,7 +1281,6 @@ static int find_next_umask(struct native_event_t *current_event,
 int
 _papi_pfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
-
 	int code,ret;
 	struct native_event_t *current_event;
 
@@ -1342,6 +1340,10 @@ _papi_pfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	     return ret;
 
 	}
+
+	if ( modifier == PAPI_NTV_ENUM_UMASK_COMBOS ) {
+		return PAPI_ENOEVNT;
+	} 
 
 	if ( modifier == PAPI_NTV_ENUM_UMASKS ) {
 
