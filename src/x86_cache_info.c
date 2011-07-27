@@ -1341,8 +1341,8 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
     if (cache_selfinit) MEMDBG("\tSelf-init\n");
     if (cache_fullyassoc) MEMDBG("\tFully Associtative\n");
      
-    MEMDBG("\tMax logical processors sharing cache: %d\n",cache_maxshare);
-    MEMDBG("\tMax logical processors sharing package: %d\n",cache_maxpackage);
+    //MEMDBG("\tMax logical processors sharing cache: %d\n",cache_maxshare);
+    //MEMDBG("\tMax logical processors sharing package: %d\n",cache_maxpackage);
      
     MEMDBG("\tCache linesize: %d\n",cache_linesize);
 
@@ -1353,9 +1353,9 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
     MEMDBG("\tCache size = %dkB\n",
 	   (cache_ways*cache_partitions*cache_linesize*cache_sets)/1024);
 
-    MEMDBG("\tWBINVD/INVD acts on lower caches: %d\n",cache_wb);
-    MEMDBG("\tCache is not inclusive: %d\n",cache_inclusive);
-    MEMDBG("\tComplex cache indexing: %d\n",cache_indexing);
+    //MEMDBG("\tWBINVD/INVD acts on lower caches: %d\n",cache_wb);
+    //MEMDBG("\tCache is not inclusive: %d\n",cache_inclusive);
+    //MEMDBG("\tComplex cache indexing: %d\n",cache_indexing);
 
     c->line_size=cache_linesize;
     if (cache_fullyassoc) {
