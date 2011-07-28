@@ -43,8 +43,11 @@
 #endif
 /* The Low Level Wrappers */
 
+/** @defgroup PAPIF PAPI Fortran Wrappers 
+ *	*/
 /**	@class PAPIF_accum
  *	@brief accumulate and reset counters in an event set 
+ *	@ingroup PAPIF
  *	
  *	@par Fortran Interface:
  *	#include fpapi.h @n
@@ -683,3 +686,4 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 	*check = PAPI_set_opt( PAPI_INHERIT, &i );
 }
 #endif
+
