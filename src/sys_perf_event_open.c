@@ -7,14 +7,21 @@
 
 #include "papi_debug.h" /* SUBDBG */
 
-// Temporarily need this definition from .../asm/unistd.h in the PCL kernel
-#undef __NR_perf_event_open
+#include <asm/unistd.h>
+
+/* In case headers aren't new enough to have __NR_perf_event_open */
+#ifndef __NR_perf_event_open
+
 #ifdef __powerpc__
 #define __NR_perf_event_open	319
 #elif defined(__x86_64__)
 #define __NR_perf_event_open	298
 #elif defined(__i386__)
 #define __NR_perf_event_open	336
+#elif defined(__arm__)          366+0x900000
+#define __NR_perf_event_open    
+#endif
+
 #endif
 
 extern int _papi_hwi_debug;
