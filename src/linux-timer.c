@@ -115,13 +115,18 @@ int mmtimer_setup(void) { return PAPI_OK; }
 
 /* Hardware clock functions */
 
-/* All architectures should set HAVE_CYCLES in configure if they have these. Not all do
-   so for now, we have to guard at the end of the statement, instead of the top. When
-   all archs set this, this region will be guarded with:
-   #if defined(HAVE_CYCLE)
+/* All architectures should set HAVE_CYCLES in configure if they have these. 
+   Not all do so for now, we have to guard at the end of the statement, 
+   instead of the top. When all archs set this, this region will be guarded 
+   with:
+     #if defined(HAVE_CYCLE)
    which is equivalent to
-   #if !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
+     #if !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
 */
+
+/************************/
+/* MMTIMER get_cycles() */
+/************************/
 
 #if defined(HAVE_MMTIMER)
 
@@ -136,6 +141,11 @@ get_cycles( void )
 
 	return tmp;
 }
+
+/************************/
+/* ia64 get_cycles()    */
+/************************/
+
 #elif defined(__ia64__)
 extern int _perfmon2_pfm_pmu_type;
 
@@ -155,6 +165,11 @@ get_cycles( void )
 	}
 	return tmp;
 }
+
+/************************/
+/* x86 get_cycles()     */
+/************************/
+
 #elif (defined(__i386__)||defined(__x86_64__))
 static inline long long
 get_cycles( void )
@@ -173,6 +188,10 @@ get_cycles( void )
 	return ret;
 }
 
+/************************/
+/* SPARC get_cycles()   */
+/************************/
+
 /* #define get_cycles _rtc ?? */
 #elif defined(__sparc__)
 static inline long long
@@ -184,6 +203,11 @@ get_cycles( void )
 						  :"=r"( ret ) );
 	return ret;
 }
+
+/************************/
+/* POWER get_cycles()   */
+/************************/
+
 #elif defined(__powerpc__)
 /*
  * It's not possible to read the cycles from user space on ppc970.
@@ -193,6 +217,10 @@ get_cycles( void )
  * but instead, rely on the definition of HAVE_CLOCK_GETTIME_REALTIME in
  * _papi_hwd_get_real_usec() for the needed functionality.
 */
+
+#elif defined(__arm__)
+/* um same as POWER */
+ 
 #elif !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
 #error "No get_cycles support for this architecture. Please modify perfmon.c or compile with a different timer"
 #endif
@@ -225,7 +253,7 @@ long long
 _linux_get_real_cycles( void )
 {
 	long long retval;
-#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)
+#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||defined(__arm__)
 	retval =
 		_linux_get_real_usec(  ) *
 		( long long ) _papi_hwi_system_info.hw_info.mhz;

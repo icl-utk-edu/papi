@@ -5,6 +5,21 @@
 #define mb()   __asm__ __volatile__ ("sync" : : : "memory")
 #define rmb()  __asm__ __volatile__ ("sync" : : : "memory")
 #define wmb()  __asm__ __volatile__ ("sync" : : : "memory")
+
+#elif defined __arm__
+
+/* FIXME!  not all arm have barriers! */
+#warning "WARNING! ARM memory barriers currently not working!"
+
+#define dsb() __asm__ __volatile__ ("dsb" : : : "memory")
+#define dmb() __asm__ __volatile__ ("dmb" : : : "memory")
+
+
+#define mb()            {}
+#define rmb()           {}
+#define wmb()           {}
+
+
 #elif defined(__x86_64__) || defined(__i386__)
 #ifdef CONFIG_X86_32
 /*

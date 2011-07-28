@@ -816,6 +816,23 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 }
 #endif
 
+/* FIXME:  have code read the /sys/ cpu files to gather cache info */
+/*         in cases where we can't otherwise get cache size data   */
+
+int
+generic_get_memory_info( PAPI_hw_info_t * hw_info )
+{
+
+
+	/* Now fetch the cache info */
+	hw_info->mem_hierarchy.levels = 0;
+
+	#warning "WARNING! linux_get_memory_info() does nothing on ARM!"
+
+	return 0;
+}
+
+
 int
 _linux_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 {
@@ -831,7 +848,7 @@ _linux_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 #elif defined(__sparc__)
 	sparc_get_memory_info( hwinfo );
 #else
-#error "No support for this architecture. Please modify linux-memory.c"
+        generic_get_memory_info (hwinfo);
 #endif
 
 	return retval;

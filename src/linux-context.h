@@ -26,6 +26,8 @@ typedef ucontext_t hwd_ucontext_t;
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs->nip
 #elif defined(__sparc__)
 #define OVERFLOW_ADDRESS(ctx) ((struct sigcontext *)ctx.ucontext)->si_regs.pc
+#elif defined(__arm__)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.arm_pc
 #else
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif

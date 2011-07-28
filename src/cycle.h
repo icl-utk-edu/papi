@@ -503,3 +503,17 @@ INLINE_ELAPSED( inline )
 #define HAVE_TICK_COUNTER
 #endif
 #endif /* HAVE_MIPS_ZBUS_TIMER */
+
+
+/****************** ARM */
+#ifdef __arm__
+
+/* FIXME! */
+static inline int
+getticks( void ) {
+  return 0;
+}
+
+#warning "WARNING!  getticks() not implemented on ARM"
+
+#endif

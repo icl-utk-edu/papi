@@ -7,6 +7,10 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
 
+/********/
+/* ia64 */
+/********/
+
 #if defined(__ia64__)
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
@@ -21,6 +25,11 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 #define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
 #endif
+
+/***********/
+/* x86     */
+/***********/
+
 #elif defined(__i386__)||defined(__x86_64__)
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
@@ -36,6 +45,11 @@ do                                              \
    unsigned int res = 0;                       \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
+
+/***************/
+/* power       */
+/***************/
+
 #elif defined(__powerpc__)
 
 /*
@@ -76,6 +90,11 @@ do {                                                    \
   unsigned int retval;                                 \
   retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
 } while(0)
+
+/*****************/
+/* SPARC         */
+/*****************/
+
 #elif defined(__sparc__)
 static inline void
 __raw_spin_lock( volatile unsigned int *lock )
@@ -92,7 +111,41 @@ __raw_spin_unlock( volatile unsigned int *lock )
 
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
+
+/*******************/
+/* ARM             */
+/*******************/
+
+#elif defined(__arm__)
+
+/* FIXME */
+/* not sure if this even works            */
+/* also the various flavors of ARM        */
+/* have differing levels of atomic        */
+/* instruction support.  A proper         */
+/* implementation needs to handle this :( */
+
+#warning "WARNING!  Verify mutexes work on ARM!"
+
+/*
+ * For arm/gcc, 0 is clear, 1 is set.
+ */
+#define MUTEX_SET(tsl) ({      \
+  int __r;                     \
+  asm volatile(                \
+  "swpb   %0, %1, [%2]\n\t"    \
+  "eor    %0, %0, #1\n\t"      \
+  : "=&r" (__r)                \
+  : "r" (1), "r" (tsl)         \
+  );                           \
+  __r & 1;                     \
+    })
+
+#define  _papi_hwd_lock(lck) MUTEX_SET(lck)
+#define  _papi_hwd_unlock(lck) (*(volatile int *)(lck) = 0)
+
 #else
+
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
 
