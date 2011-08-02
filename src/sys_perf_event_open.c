@@ -35,7 +35,8 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
    SUBDBG("sys_perf_event_open(%p,%d,%d,%d,%lx\n",hw_event,pid,cpu,group_fd,flags);
    SUBDBG("   type: %d\n",hw_event->type);
    SUBDBG("   size: %d\n",hw_event->size);
-   SUBDBG("   config: %"PRIu64"\n",hw_event->config);
+   SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",hw_event->config,
+	  hw_event->config);
    SUBDBG("   sample_period: %"PRIu64"\n",hw_event->sample_period);
    SUBDBG("   sample_type: %"PRIu64"\n",hw_event->sample_type);
    SUBDBG("   read_format: %"PRIu64"\n",hw_event->read_format);

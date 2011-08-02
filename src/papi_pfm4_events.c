@@ -1557,9 +1557,9 @@ _papi_pfm3_setup_counters( struct perf_event_attr *attr,
      return PAPI_ENOEVNT;
   }
   
-  SUBDBG( "pe_event: config 0x%"PRIu64" config2 0x%"PRIu64" type 0x%"PRIu32"\n", 
-          perf_arg.attr->config1, 
-	  perf_arg.attr->config2,
+  SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64" type 0x%"PRIx32"\n", 
+          perf_arg.attr->config, 
+	  perf_arg.attr->config1,
 	  perf_arg.attr->type);
 	  
 
