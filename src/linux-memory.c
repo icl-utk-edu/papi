@@ -827,8 +827,6 @@ generic_get_memory_info( PAPI_hw_info_t * hw_info )
 	/* Now fetch the cache info */
 	hw_info->mem_hierarchy.levels = 0;
 
-	#warning "WARNING! linux_get_memory_info() does nothing on ARM!"
-
 	return 0;
 }
 
@@ -847,6 +845,9 @@ _linux_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 	ppc64_get_memory_info( hwinfo );
 #elif defined(__sparc__)
 	sparc_get_memory_info( hwinfo );
+#elif defined(__arm__)
+	#warning "WARNING! linux_get_memory_info() does nothing on ARM!"
+        generic_get_memory_info (hwinfo);
 #else
         generic_get_memory_info (hwinfo);
 #endif
