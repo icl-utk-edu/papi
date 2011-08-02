@@ -41,7 +41,7 @@ pfm_arm_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 		return ret;
 
 	attr->type = PERF_TYPE_RAW;
-	attr->config = (e->codes[0] << 16) | e->codes[1];
+	attr->config = e->codes[0];
 
 	return PFM_SUCCESS;
 }
