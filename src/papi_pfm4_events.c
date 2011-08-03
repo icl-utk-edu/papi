@@ -1420,6 +1420,13 @@ int _papi_pfm3_vendor_fixups(void) {
 			MY_VECTOR.cmp_info.default_domain =
 				PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
 		}
+	} else if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
+	  /* FIXME: this will change with Cortex A15 */
+	  MY_VECTOR.cmp_info.available_domains |=
+			PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+	  MY_VECTOR.cmp_info.default_domain =
+			PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+
 	} else {
 		MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
 	}
