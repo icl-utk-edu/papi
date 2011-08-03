@@ -218,6 +218,8 @@ decode_vendor_string( char *s, int *vendor )
 		*vendor = PAPI_VENDOR_IBM;
 	else if ( strcasecmp( s, "Cray" ) == 0 )
 		*vendor = PAPI_VENDOR_CRAY;
+	else if ( strcasecmp( s, "ARM" ) == 0 )
+		*vendor = PAPI_VENDOR_ARM;
 	else
 		*vendor = PAPI_VENDOR_UNKNOWN;
 }
@@ -279,7 +281,16 @@ _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 						 ( strcasecmp( s, "PowerMac" ) == 0 ) ) {
 						strcpy( hwinfo->vendor_string, "IBM" );
 					}
+				 } else {
+			            rewind( f );
+			            s = search_cpu_info( f, "CPU implementer",
+							 maxargs );
+			            if ( s ) {
+				       strcpy( hwinfo->vendor_string, "ARM" );
+				    }
 				}
+
+				
 			}
 		}
 	}
