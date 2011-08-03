@@ -1,6 +1,6 @@
 /*
 * File:    perf_events.c
-* CVS:     $Id$
+*
 * Author:  Corey Ashford
 *          cjashfor@us.ibm.com
 *          - based upon perfmon.c written by -
@@ -8,6 +8,8 @@
 *          mucci@cs.utk.edu
 * Mods:    Gary Mohr
 *          gary.mohr@bull.com
+* Mods:    Vince Weaver
+*          vweaver1@eecs.utk.edu
 */
 
 
@@ -137,8 +139,9 @@ fcntl_setown_fd(int fd) {
            ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
    
 	   if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", fd, strerror( errno ) );
-		return PAPI_ESYS;
+	      PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", 
+			 fd, strerror( errno ) );
+	      return PAPI_ESYS;
 	   }
 	}
 	return PAPI_OK;
@@ -164,24 +167,26 @@ get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader 
 {
 	unsigned int format = 0;
 
-	// if we need read format options for multiplexing, add them now
+	/* if we need read format options for multiplexing, add them now */
 	if (multiplex) {
 		format |= PERF_FORMAT_TOTAL_TIME_ENABLED;
 		format |= PERF_FORMAT_TOTAL_TIME_RUNNING;
 	}
 
-	// if our kernel supports it and we are not using inherit, add the group read options
+	/* if our kernel supports it and we are not using inherit, */
+	/* add the group read options                              */
 
 	if ( (!bug_format_group()) && !inherit) {
 		format |= PERF_FORMAT_ID;
-		// if it qualifies for PERF_FORMAT_ID and it is a group leader,
-		// it also gets PERF_FORMAT_GROUP
+		/* if it qualifies for PERF_FORMAT_ID and it is a */
+		/* group leader, it also gets PERF_FORMAT_GROUP   */
 		if (group_leader) {
 			format |= PERF_FORMAT_GROUP;
 		}
 	}
 
-	SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n", multiplex, inherit, group_leader, format);
+	SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n",
+	       multiplex, inherit, group_leader, format);
 
 	return format;
 }
@@ -203,38 +208,57 @@ bug_sync_read(void) {
 
 /********* End Kernel-version Dependent Routines  ****************/
 
+
+/** Check if the current set of options is supported by  */
+/*  perf_events.                                         */
+/*  We do this by temporarily opening an event with the  */
+/*  desired options then closing it again.  We use the   */
+/*  PERF_COUNT_HW_INSTRUCTION event as a dummy event     */
+/*  on the assumption it is available on all             */
+/*  platforms.                                           */
+
 static inline int
-check_permissions( unsigned long tid, unsigned int cpu_num, unsigned int domain, unsigned int multiplex, unsigned int inherit )
+check_permissions( unsigned long tid, unsigned int cpu_num, 
+		   unsigned int domain, unsigned int multiplex, 
+		   unsigned int inherit )
 {
-	int ev_fd;
-	struct perf_event_attr attr;
+      int ev_fd;
+      struct perf_event_attr attr;
 
-	/* clearing this will set a type of hardware and to count all domains */
-	memset(&attr, '\0', sizeof(attr));
-	attr.read_format = get_read_format(multiplex, inherit, 1);
+      /* clearing this will set a type of hardware and to count all domains */
+      memset(&attr, '\0', sizeof(attr));
+      attr.read_format = get_read_format(multiplex, inherit, 1);
 
-	/* set the event id (config field) to instructios (an event that should always exist) */
-	attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+      /* set the event id (config field) to instructios */
+      /* (an event that should always exist)            */
+      /* This was cycles but that is missing on Niagara */
+      attr.config = PERF_COUNT_HW_INSTRUCTIONS;
 	
-	/* now set up domains this event set will be counting */
-	if (!(domain & PAPI_DOM_SUPERVISOR)) {
-		attr.exclude_hv = 1;
-	}
-	if (!(domain & PAPI_DOM_USER)) {
-		attr.exclude_user = 1;
-	}
-	if (!(domain & PAPI_DOM_KERNEL)) {
-		attr.exclude_kernel = 1;
-	}
+      /* now set up domains this event set will be counting */
+      if (!(domain & PAPI_DOM_SUPERVISOR)) {
+	 attr.exclude_hv = 1;
+      }
+      if (!(domain & PAPI_DOM_USER)) {
+	 attr.exclude_user = 1;
+      }
+      if (!(domain & PAPI_DOM_KERNEL)) {
+	 attr.exclude_kernel = 1;
+      }
 
-	ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
-	if ( ev_fd == -1 ) {
-		SUBDBG( "sys_perf_event_open returned error.  Unix says, %s", strerror( errno ) );
-		return PAPI_EPERM;
-	}
-	/* now close it, this was just to make sure we have permissions to set these options */
-	close(ev_fd);
-	return PAPI_OK;
+      SUBDBG("Calling sys_perf_event_open() from check_permissions");
+      SUBDBG("config is %"PRIx64"\n",attr.config);
+
+      ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
+      if ( ev_fd == -1 ) {
+	 SUBDBG( "sys_perf_event_open returned error.  Unix says, %s", 
+		   strerror( errno ) );
+	 return PAPI_EPERM;
+      }
+	
+      /* now close it, this was just to make sure we have permissions */
+      /* to set these options                                         */
+      close(ev_fd);
+      return PAPI_OK;
 }
 
 
@@ -252,16 +276,16 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 
         if (bug_check_scheduability()) {
 
-	   /* This will cause the events in the group to be scheduled onto the counters
-	    * by the kernel, and so will force an error condition if the events are not
-	    * compatible.
-	    */
-	   ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_ENABLE,
-		   NULL );
+	   /* This will cause the events in the group to be scheduled */
+	   /* onto the counters by the kernel, and so will force an   */
+	   /* error condition if the events are not compatible.       */
+	   ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd, 
+		  PERF_EVENT_IOC_ENABLE, NULL );
 	   ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd,
 		   PERF_EVENT_IOC_DISABLE, NULL );
-	   int cnt = read( ctx->evt[ctx->evt[idx].group_leader].event_fd, buffer,
-					MAX_READ );
+
+	   int cnt = read( ctx->evt[ctx->evt[idx].group_leader].event_fd, 
+			   buffer, MAX_READ );
 	   if ( cnt == -1 ) {
 		SUBDBG( "read returned an error!  Should never happen.\n" );
 		return PAPI_EBUG;
@@ -269,13 +293,14 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 	   if ( cnt == 0 ) {
 		return PAPI_ECNFLCT;
 	   } else {
-		/* Reset all of the counters (opened so far) back to zero from the
-		 * above brief enable/disable call pair.  I wish we didn't have to to do
-		 * this, because it hurts performance, but I don't see any alternative.
-		 */
+	     /* Reset all of the counters (opened so far) back to zero      */
+	     /* from the above brief enable/disable call pair.  I wish      */
+	     /* we didn't have to to do this, because it hurts performance, */
+	     /* but I don't see any alternative.                            */
 		int j;
 		for ( j = ctx->evt[idx].group_leader; j <= idx; j++ ) {
-			ioctl( ctx->evt[j].event_fd, PERF_EVENT_IOC_RESET, NULL );
+			ioctl( ctx->evt[j].event_fd, PERF_EVENT_IOC_RESET, 
+			       NULL );
 		}
 	   }
 	}
@@ -291,24 +316,26 @@ partition_events( context_t * ctx, control_state_t * ctl )
 
 	if ( !ctl->multiplexed ) {
 		/*
-		 * Initialize the group leader fd.  The first fd we create will be the
+		 * Initialize the group leader fd.  
+		 * The first fd we create will be the
 		 * group leader and so its group_fd value must be set to -1
 		 */
-		ctx->evt[0].event_fd = -1;
-		for ( i = 0; i < ctl->num_events; i++ ) {
-			ctx->evt[i].group_leader = 0;
-			ctl->events[i].read_format = get_read_format(ctl->multiplexed, ctl->inherit, !i);
+	   ctx->evt[0].event_fd = -1;
+	   for( i = 0; i < ctl->num_events; i++ ) {
+	      ctx->evt[i].group_leader = 0;
+	      ctl->events[i].read_format = get_read_format(ctl->multiplexed, 
+							   ctl->inherit, !i);
 
-			if ( i == 0 ) {
-				ctl->events[i].disabled = 1;
-			} else {
-				ctl->events[i].disabled = 0;
-			}
-		}
+	      if ( i == 0 ) {
+		 ctl->events[i].disabled = 1;
+	      } else {
+		 ctl->events[i].disabled = 0;
+	      }
+	   }
 	} else {
 		/*
-		 * Start with a simple "keep adding events till error, then start a new group"
-		 * algorithm.  IMPROVEME
+		 * Start with a simple "keep adding events till error, 
+		 * then start a new group" algorithm.  IMPROVEME
 		 */
 		int final_group = 0;
 
@@ -390,9 +417,8 @@ tune_up_fd( context_t * ctx, int evt_idx )
 	 */
 	ret = fcntl( fd, F_SETFL, O_ASYNC | O_NONBLOCK );
 	if ( ret ) {
-		PAPIERROR
-			( "fcntl(%d, F_SETFL, O_ASYNC | O_NONBLOCK) returned error: %s", fd,
-			  strerror( errno ) );
+		PAPIERROR ( "fcntl(%d, F_SETFL, O_ASYNC | O_NONBLOCK) "
+			    "returned error: %s", fd, strerror( errno ) );
 		return PAPI_ESYS;
 	}
 
@@ -441,41 +467,58 @@ tune_up_fd( context_t * ctx, int evt_idx )
 static inline int
 open_pe_evts( context_t * ctx, control_state_t * ctl )
 {
-	int i, ret = PAPI_OK;
+	
+     int i, ret = PAPI_OK;
 
-	/*
-	 * Partition events into groups that are countable on a set of hardware
-	 * counters simultaneously.
-	 */
-	partition_events( ctx, ctl );
+     /*
+      * Partition events into groups that are countable on a set of hardware
+      * counters simultaneously.
+      */
+     partition_events( ctx, ctl );
 
-	for ( i = 0; i < ctl->num_events; i++ ) {
+     for( i = 0; i < ctl->num_events; i++ ) {
 
-		/* For now, assume we are always doing per-thread self-monitoring FIXME */
-		/* Flags parameter is currently unused, but needs to be set to 0 for now */
-		ctx->evt[i].event_fd =
-			sys_perf_event_open( &ctl->events[i], ctl->tid, ctl->cpu_num,
-				ctx->evt[ctx->evt[i].group_leader].event_fd, 0 );
-		if ( ctx->evt[i].event_fd == -1 ) {
-			SUBDBG("sys_perf_event_open returned error on event #%d.  Unix says, %s",
-				  i, strerror( errno ) );
-			ret = PAPI_ECNFLCT;
-			goto cleanup;
-		}
+        /* For now, assume we are always doing per-thread self-monitoring */
+        /* FIXME */
+        /* Flags parameter is currently unused, but needs to be set to 0  */
+        /* for now                                                        */
+	
+        SUBDBG("sys_perf_event_open() of fd %d in open_pe_evts\n",i);
+        SUBDBG("config is %"PRIx64"\n",ctl->events[i].config);
+
+        ctx->evt[i].event_fd = sys_perf_event_open( &ctl->events[i], ctl->tid,
+						    ctl->cpu_num,
+				ctx->evt[ctx->evt[i].group_leader].event_fd, 
+						    0 );
+
+	if ( ctx->evt[i].event_fd == -1 ) {
+	   SUBDBG("sys_perf_event_open returned error on event #%d."
+		  "  Error: %s",
+		  i, strerror( errno ) );
+			
+	   ret = PAPI_ECNFLCT;
+	   goto cleanup;
+	}
 		
- 		SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d, group_leader/fd: %d/%d, event_fd: %d, read_format: 0x%"PRIu64"\n",
-			ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, 
-			ctx->evt[ctx->evt[i].group_leader].event_fd, 
-			ctx->evt[i].event_fd, ctl->events[i].read_format);
+ 	SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d,"
+                " group_leader/fd: %d/%d, event_fd: %d,"
+                " read_format: 0x%"PRIu64"\n",
+		ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, 
+		ctx->evt[ctx->evt[i].group_leader].event_fd, 
+		ctx->evt[i].event_fd, ctl->events[i].read_format);
 
 		ret = check_scheduability( ctx, ctl, i );
+
 		if ( ret != PAPI_OK ) {
-			i++;			 /* the last event did open, so we need to bump the counter before doing the cleanup */
-			goto cleanup;
+		   i++;		          /* the last event did open, so we  */
+		                          /* need to bump the counter before */
+                                          /* doing the cleanup               */
+		   goto cleanup;
 		}
 
-		// if a new enough kernel and counters are not being inherited by children. 
-		// we are using grouped reads so get the events index into the group
+		/* If a new enough kernel and counters are not being  */
+                /* inherited by children.  We are using grouped reads */
+                /* so get the events index into the group             */
 		if ((!bug_format_group()) && (!ctl->inherit)) {
                        /* obtain the id of this event assigned by the kernel */
 
@@ -608,18 +651,19 @@ detach( context_t * ctx, control_state_t * pe_ctl )
 static inline int
 set_domain( hwd_control_state_t * ctl, int domain )
 {
-	int i;
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
+	
+     int i;
+     control_state_t *pe_ctl = ( control_state_t * ) ctl;
 
-	pe_ctl->domain = domain;
-	for ( i = 0; i < pe_ctl->num_events; i++ ) {
-		pe_ctl->events[i].exclude_user = !( pe_ctl->domain & PAPI_DOM_USER );
-		pe_ctl->events[i].exclude_kernel =
+     pe_ctl->domain = domain;
+     for( i = 0; i < pe_ctl->num_events; i++ ) {
+	pe_ctl->events[i].exclude_user = !( pe_ctl->domain & PAPI_DOM_USER );
+	pe_ctl->events[i].exclude_kernel =
 			!( pe_ctl->domain & PAPI_DOM_KERNEL );
-		pe_ctl->events[i].exclude_hv =
+	pe_ctl->events[i].exclude_hv =
 			!( pe_ctl->domain & PAPI_DOM_SUPERVISOR );
-	}
-	return PAPI_OK;
+     }
+     return PAPI_OK;
 }
 
 static inline int
@@ -1062,6 +1106,8 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 		if ( native ) {
 		  ret=_papi_pfm3_setup_counters(&pe_ctl->events[i],
 						native[i].ni_bits);
+		  SUBDBG( "pe_ctl->events[%d].config=%"PRIx64"\n",i,
+			  pe_ctl->events[i].config);
 		   if (ret!=PAPI_OK) return ret;
 
 		} else {
