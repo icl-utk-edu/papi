@@ -1332,6 +1332,9 @@ _papi_pe_shutdown( hwd_context_t * ctx )
 	int ret;
 
 	ret = close_pe_evts( pe_ctx );
+
+	_papi_pfm_shutdown();
+
 	return ret;
 }
 

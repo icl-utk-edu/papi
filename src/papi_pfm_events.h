@@ -25,6 +25,8 @@ extern int _papi_pfm_ntv_code_to_bits( unsigned int EventCode,
 extern int _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 				       unsigned int *values, int name_len,
 				       int count );
+extern int _papi_pfm_shutdown(void);
+
 extern int _papi_pfm3_init(void);
 extern int _papi_pfm3_vendor_fixups(void);
 

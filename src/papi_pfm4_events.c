@@ -1444,6 +1444,13 @@ int _papi_pfm3_vendor_fixups(void) {
 	return PAPI_OK;
 }
 
+int _papi_pfm_shutdown(void) {
+
+  memset(&native_events,0,sizeof(struct native_event_t)*MAX_NATIVE_EVENTS);
+  num_native_events=0;
+
+  return PAPI_OK;
+}
 
 int
 _papi_pfm3_init(void) {

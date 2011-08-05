@@ -1425,6 +1425,12 @@ _papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 #endif 
 
 
+int _papi_pfm_shutdown(void) {
+
+  return PAPI_OK;
+}
+
+
 
 /* used by linux-timer.c for ia64 */
 int _perfmon2_pfm_pmu_type = -1;
