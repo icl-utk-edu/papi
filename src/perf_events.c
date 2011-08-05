@@ -1191,8 +1191,9 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 
 	ret = open_pe_evts( pe_ctx, pe_ctl );
 	if ( ret != PAPI_OK ) {
-		/* Restore values */
-		return ret;
+	   SUBDBG("open_pe_evts failed\n");
+	      /* Restore values */
+	   return ret;
 	}
 
 	return PAPI_OK;
@@ -1333,10 +1334,17 @@ _papi_pe_shutdown( hwd_context_t * ctx )
 
 	ret = close_pe_evts( pe_ctx );
 
-	_papi_pfm_shutdown();
-
 	return ret;
 }
+
+int
+_papi_pe_shutdown_substrate(  ) {
+
+	_papi_pfm_shutdown();
+
+	return PAPI_OK;
+}
+
 
 
 #define BPL (sizeof(uint64_t)<<3)
@@ -1921,6 +1929,7 @@ papi_vector_t _papi_pe_vector = {
 	.stop = _papi_pe_stop,
 	.read = _papi_pe_read,
 	.shutdown = _papi_pe_shutdown,
+	.shutdown_substrate = _papi_pe_shutdown_substrate,
 	.ctl = _papi_pe_ctl,
 	.update_control_state = _papi_pe_update_control_state,
 	.set_domain = set_domain,

@@ -565,7 +565,7 @@ static struct native_event_t {
   int perfmon_idx;
   char *allocated_name;
   char *base_name;
-  char *canonical_name;
+  //char *canonical_name;
   char *pmu_plus_name;
   int users;
 } native_events[MAX_NATIVE_EVENTS];
@@ -576,35 +576,47 @@ static int num_native_events=0;
 static struct native_event_t *find_existing_event(char *name) {
 
   int i;
+  struct native_event_t *temp_event=NULL;
 
   SUBDBG("Looking for %s\n",name);
 
+  _papi_hwi_lock( NAMELIB_LOCK );
+
   for(i=0;i<num_native_events;i++) {
-    // using cannonical breaks enumeration
-    //    if (!strcmp(name,native_events[i].canonical_name)) {
+
     if (!strcmp(name,native_events[i].allocated_name)) {
       SUBDBG("Found %s (%x %x)\n",
 	     native_events[i].allocated_name,
 	     native_events[i].perfmon_idx,
 	     native_events[i].papi_code);
-
-       return &native_events[i];
+       temp_event=&native_events[i];
+       break;
     }
   }
-  SUBDBG("%s not allocated yet\n",name);
-  return NULL;
+  _papi_hwi_unlock( NAMELIB_LOCK );
+
+  if (!temp_event) SUBDBG("%s not allocated yet\n",name);
+  return temp_event;
 }
 
 static struct native_event_t *find_existing_event_by_number(int eventnum) {
 
   int i;
+  struct native_event_t *temp_event=NULL;
+
+  _papi_hwi_lock( NAMELIB_LOCK );
 
   for(i=0;i<num_native_events;i++) {
     if (eventnum==native_events[i].papi_code) {
-       return &native_events[i];
+       temp_event=&native_events[i];
+       break;
     }
   }
-  return NULL;
+  _papi_hwi_unlock( NAMELIB_LOCK );
+
+  SUBDBG("Found %p for %x\n",temp_event,eventnum);
+
+  return temp_event;
 }
 
 
@@ -682,6 +694,7 @@ inc_pmu:
   SUBDBG("Incrementing PMU: %x\n",current_pmu);
   if (current_pmu>PFM_PMU_MAX) return -1;
 
+  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
   pfm_get_pmu_info(current_pmu, &pinfo);
   if (!pinfo.is_present) goto inc_pmu;
  
@@ -695,34 +708,34 @@ inc_pmu:
 static struct native_event_t *allocate_native_event(char *name, 
 						    int event_idx) {
 
-  int new_event=num_native_events;
+  int new_event;
 
   pfm_err_t ret;
-  int count=5;
+  //int count=5;
   unsigned int i;
-  uint64_t *codes;
-  char *fstr=NULL,*base_start;
-  int found_idx;
+  //uint64_t *codes;
+  //char *fstr=NULL;
+  char *base_start;
+  //int found_idx;
   pfm_event_info_t info;
   pfm_pmu_info_t pinfo;
   char base[BUFSIZ],pmuplusbase[BUFSIZ];
 
   /* allocate canonical string */
 
-  codes=calloc(count,sizeof(uint64_t));
+  //codes=calloc(count,sizeof(uint64_t));
 
-  ret=pfm_get_event_encoding(name, 
-  			     PFM_PLM0|PFM_PLM3,
-  			     &fstr, 
-  			     &found_idx, 
-  			     &codes, 
-  			     &count);
+  //  ret=pfm_get_event_encoding(name, 
+  //			     PFM_PLM0|PFM_PLM3,
+  //			     &fstr, 
+  //			     &found_idx, 
+  //			     &codes, 
+  //			     &count);
 
-  if (codes) free(codes);
-  if (fstr) {
-     native_events[new_event].canonical_name=strdup(fstr);
-     free(fstr);
-  }
+
+
+  //if (codes) free(codes);
+
   //if (ret!=PFM_SUCCESS) {
   //   return NULL;
   //}
@@ -735,6 +748,7 @@ static struct native_event_t *allocate_native_event(char *name,
      return NULL;
   }
 
+  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
   pfm_get_pmu_info(info.pmu, &pinfo);
 
   strncpy(base,name,BUFSIZ);
@@ -753,7 +767,15 @@ static struct native_event_t *allocate_native_event(char *name,
     i++;
   }
 
+  _papi_hwi_lock( NAMELIB_LOCK );
+
+  new_event=num_native_events;
+
   native_events[new_event].base_name=strdup(base_start);
+  //if (fstr) {
+    //     native_events[new_event].canonical_name=strdup(fstr);
+    //free(fstr);
+     //  }
 
   { char tmp[BUFSIZ];
     sprintf(tmp,"%s::%s",pinfo.name,info.name);
@@ -780,6 +802,9 @@ static struct native_event_t *allocate_native_event(char *name,
 	 native_events[new_event].perfmon_idx);
 
   num_native_events++;
+
+  _papi_hwi_unlock( NAMELIB_LOCK );
+
 
   /* FIXME -- simply allocate more */
   if (num_native_events >= MAX_NATIVE_EVENTS) {
@@ -1141,6 +1166,7 @@ papi_pfm_get_event_first_active(void)
 
   while(pmu_idx<PFM_PMU_MAX) {
 
+    memset(&pinfo,0,sizeof(pfm_pmu_info_t));
     ret=pfm_get_pmu_info(pmu_idx, &pinfo);
 
     if ((ret==PFM_SUCCESS) && pinfo.is_present) {
@@ -1182,6 +1208,7 @@ convert_libpfm4_to_string( int code, char **event_name)
   ret=pfm_get_event_info(code, PFM_OS_PERF_EVENT, &gete);
   //  ret=pfm_get_event_info(first, PFM_OS_PERF_EVENT, &first_info);
 
+  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
   pfm_get_pmu_info(gete.pmu, &pinfo);
   /* VMW */
   /* FIXME, make a "is it the default" function */
@@ -1446,8 +1473,12 @@ int _papi_pfm3_vendor_fixups(void) {
 
 int _papi_pfm_shutdown(void) {
 
+  SUBDBG("shutdown\n");
+
+  _papi_hwi_lock( NAMELIB_LOCK );
   memset(&native_events,0,sizeof(struct native_event_t)*MAX_NATIVE_EVENTS);
   num_native_events=0;
+  _papi_hwi_unlock( NAMELIB_LOCK );
 
   return PAPI_OK;
 }
@@ -1493,12 +1524,13 @@ _papi_pfm3_init(void) {
    detected_pmus=0;
    ncnt=0;
    /* need to init pinfo or pfmlib might complain */
-   memset(&pinfo, 0, sizeof(pfm_pmu_info_t));
+   memset(&default_pmu, 0, sizeof(pfm_pmu_info_t));
    /* init default pmu */
    retval=pfm_get_pmu_info(0, &default_pmu);
    
    SUBDBG("Detected pmus:\n");
    for(i=0;i<PFM_PMU_MAX;i++) {
+      memset(&pinfo,0,sizeof(pfm_pmu_info_t));
       retval=pfm_get_pmu_info(i, &pinfo);
       if (retval!=PFM_SUCCESS) continue;
       if (pinfo.is_present) {
@@ -1561,7 +1593,7 @@ _papi_pfm3_setup_counters( struct perf_event_attr *attr,
 
   _papi_pfm_ntv_code_to_name( our_idx,our_name,BUFSIZ);
 
-  SUBDBG("trying %s %x\n",our_name,our_idx);
+  SUBDBG("trying \"%s\" %x\n",our_name,our_idx);
 
   ret = pfm_get_os_event_encoding(our_name, 
 				  PFM_PLM0 | PFM_PLM3, 

@@ -91,6 +91,7 @@ extern int papi_num_components;
 #define SUBSTRATE_LOCK          PAPI_NUM_LOCK+5	/* <substrate.c> */
 #define GLOBAL_LOCK          	PAPI_NUM_LOCK+6	/* papi.c for global variable (static and non) initialization/shutdown */
 #define CPUS_LOCK		PAPI_NUM_LOCK+7	/* cpus.c */
+#define NAMELIB_LOCK            PAPI_NUM_LOCK+8 /* papi_pfm4_events.c */
 
 /* extras related */
 
