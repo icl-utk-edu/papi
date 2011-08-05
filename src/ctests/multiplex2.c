@@ -39,10 +39,18 @@ case1( void )
 	init_papi(  );
 	init_multiplex(  );
 
+#if 0
+	if ( PAPI_set_domain( PAPI_DOM_KERNEL ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+#endif
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 
+#if 0
+	if ( PAPI_set_domain( PAPI_DOM_KERNEL ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+#endif
 	/* In Component PAPI, EventSets must be assigned a component index
 	   before you can fiddle with their internals.
 	   0 is always the cpu component */
@@ -50,6 +58,10 @@ case1( void )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component",
 				   retval );
+#if 0
+	if ( PAPI_set_domain( PAPI_DOM_KERNEL ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+#endif
 
 	retval = PAPI_set_multiplex( EventSet );
         if ( retval == PAPI_ENOSUPP) {
@@ -61,6 +73,11 @@ case1( void )
 	max_mux = PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL );
 	if ( max_mux > 32 )
 		max_mux = 32;
+
+#if 0
+	if ( PAPI_set_domain( PAPI_DOM_KERNEL ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+#endif
 
 	/* Fill up the event set with as many non-derived events as we can */
 	printf
@@ -92,6 +109,11 @@ case1( void )
 
 	do_stuff(  );
 
+#if 0
+	if ( PAPI_set_domain( PAPI_DOM_KERNEL ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
+#endif
+	
 	if ( PAPI_start( EventSet ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
