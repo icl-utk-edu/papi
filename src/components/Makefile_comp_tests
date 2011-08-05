@@ -1,0 +1,4 @@
+UTILOBJS= ../../../ctests/do_loops.o ../../../ctests/test_utils.o ../../../ctests/dummy.o
+INCLUDE = -I../../../ctests -I../../.. -I.
+PAPILIB = ../../../libpapi.a 
+

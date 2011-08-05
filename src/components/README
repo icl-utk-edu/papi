@@ -20,6 +20,24 @@ In summary, the additional files required for configuration based on user input 
 
 There is one final very important naming convention that applies to components. The array of function pointers that the component defines must use the naming convention papi_vector_t _x_vector where x is the name of the component directory. 
 
+
+Adding tests to the components:
+-------------------------------
+
+In order to add tests to a component that will be compiled together with PAPI when typing 'make' (as well as cleaned up when 'make clean' or 'make clobber' is typed), the following steps need to be carried out:
+
+    1. create a directory with name 'tests' in the specific component directory
+    2. add your test files and a Makefile to the 'tests' directory (see the example test and Makefile in components/example/tests)
+    3. The components/<component>/tests/Makefile has to have a rule with the name '<component>_tests'; e.g. for tests added to the example component, the name of the rule would be 'example_tests'. See:
+	TESTS = HelloWorld
+	example_tests: $(TESTS)
+    4. Include components/Makefile_comp_tests to your component test Makefile
+	(see components/example/tests/Makefile for more details)
+
+NOTE: there is no need to modify any PAPI code other than adding your tests and a Makefile to your component and follow step 1 to 4 listed above.
+
+
+
 @section Existing Components
 example/  
 

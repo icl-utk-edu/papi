@@ -214,7 +214,17 @@ echo "   NULL" >> components_config.h
 echo "};" >> components_config.h
 echo "" >> components_config.h
 echo "#endif" >> components_config.h 
+
+# check for component tests
+for comp in $components; do
+  if test "`find components/$comp -name "tests"`" != "" ; then
+	COMPONENTS="$COMPONENTS $comp"
+  fi
+done
+tests="$tests comp_tests"
+
 AC_MSG_RESULT($components)
+
 
 AC_MSG_CHECKING(for debug build)
 AC_ARG_WITH(debug,
@@ -1526,6 +1536,7 @@ AC_SUBST(SHOW_CONF)
 AC_SUBST(BGP_SYSDIR)
 AC_SUBST(BITFLAGS)
 AC_SUBST(COMPONENT_RULES)
+AC_SUBST(COMPONENTS)
 AC_SUBST(FTEST_TARGETS)
 AC_SUBST(UTIL_TARGETS)
 AC_SUBST(EXTRA_CFLAGS)

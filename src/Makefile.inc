@@ -227,13 +227,27 @@ ctests: $(papiLIBS) null
 ftests: $(papiLIBS) null
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(FTEST_TARGETS)
 
-clean: native_clean
+# compile tests added to components
+comp_tests:
+	@for comp in $(COMPONENTS) ; do \
+		$$comp_tests: $(papiLIBS) null ; \
+		$(SETPATH) cd components/$$comp/tests ; $(MAKE) LDFLAGS="$(LDFLAGS) $(STATIC)" ; \
+		$(SETPATH) cd ../../.. ; done
+	
+
+clean: native_clean comp_tests_clean
 	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c papi_events_table.h 
 	-cd ctests; $(MAKE) clean
 	-cd ctests/bgp; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
 	-cd utils;  $(MAKE) clean
 	-cd ../doc; $(MAKE) clean
+
+# Component tests cleaning
+comp_tests_clean:
+	@for comp in $(COMPONENTS) ; do \
+		cd components/$$comp/tests ; $(MAKE) clean ; \
+		cd ../../.. ; done
 
 clobber distclean: clean native_clobber
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so components_config.h
