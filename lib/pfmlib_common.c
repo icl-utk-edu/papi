@@ -49,14 +49,19 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 #endif
 
-#ifdef CONFIG_PFMLIB_ARCH_X86
-	&netburst_support,
-	&netburst_p_support,
+#ifdef CONFIG_PFMLIB_ARCH_I386
+	/* 32-bit only processors */
 	&intel_pii_support,
 	&intel_ppro_support,
 	&intel_p6_support,
 	&intel_pm_support,
 	&intel_coreduo_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_ARCH_X86
+	/* 32 and 64 bit processors */
+	&netburst_support,
+	&netburst_p_support,
 	&amd64_k7_support,
 	&amd64_k8_revb_support,
 	&amd64_k8_revc_support,

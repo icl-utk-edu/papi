@@ -31,25 +31,25 @@
 SYS  := $(shell uname -s)
 ARCH := $(shell uname -m)
 ifeq (i686,$(findstring i686,$(ARCH)))
-override ARCH=x86
+override ARCH=i386
 endif
 ifeq (i586,$(findstring i586,$(ARCH)))
-override ARCH=x86
+override ARCH=i386
 endif
 ifeq (i486,$(findstring i486,$(ARCH)))
-override ARCH=x86
+override ARCH=i386
 endif
 ifeq (i386,$(findstring i386,$(ARCH)))
-override ARCH=x86
+override ARCH=i386
 endif
 ifeq (i86pc,$(findstring i86pc,$(ARCH)))
-override ARCH=x86
+override ARCH=i386
 endif
 ifeq ($(ARCH),x86_64)
-override ARCH=x86
+override ARCH=x86_64
 endif
 ifeq ($(ARCH),amd64)
-override ARCH=x86
+override ARCH=x86_64
 endif
 ifeq (ppc,$(findstring ppc,$(ARCH)))
 override ARCH=powerpc
@@ -110,7 +110,13 @@ ifeq ($(ARCH),ia64)
 CONFIG_PFMLIB_ARCH_IA64=y
 endif
 
-ifeq ($(ARCH),x86)
+ifeq ($(ARCH),x86_64)
+CONFIG_PFMLIB_ARCH_X86_64=y
+CONFIG_PFMLIB_ARCH_X86=y
+endif
+
+ifeq ($(ARCH),i386)
+CONFIG_PFMLIB_ARCH_I386=y
 CONFIG_PFMLIB_ARCH_X86=y
 endif
 
