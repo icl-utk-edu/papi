@@ -69,7 +69,7 @@ endif
 #
 CONFIG_PFMLIB_SHARED?=y
 CONFIG_PFMLIB_DEBUG?=y
-CONFIG_PFMLIB_NOPYTHON?=n
+CONFIG_PFMLIB_NOPYTHON?=y
 
 #
 # Cell Broadband Engine is reported as PPC but needs special handling.
