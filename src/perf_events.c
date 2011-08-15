@@ -1337,10 +1337,19 @@ _papi_pe_shutdown( hwd_context_t * ctx )
 	return ret;
 }
 
+
+int _papi_pfm_shutdown(hwd_context_t *ctx0) {
+
+  (void) ctx0;
+
+  return PAPI_OK;
+}
+
+
 int
 _papi_pe_shutdown_substrate(  ) {
 
-	_papi_pfm_shutdown();
+	_papi_pfm_shutdown(NULL);
 
 	return PAPI_OK;
 }
