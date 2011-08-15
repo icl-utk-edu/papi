@@ -60,6 +60,7 @@ pfmlib_pmu_t intel_snb_support={
 	.pmu			= PFM_PMU_INTEL_SNB,
 	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snb_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
 	.num_cntrs		= 8, /* consider with HT off by default */
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 2, /* offcore_response */

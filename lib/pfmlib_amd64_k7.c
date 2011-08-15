@@ -48,6 +48,7 @@ pfmlib_pmu_t amd64_k7_support={
 	.pmu_rev		= AMD64_K7,
 	.pme_count		= LIBPFM_ARRAY_SIZE(amd64_k7_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= AMD64_K7_PLM,
 	.num_cntrs		= 4,
 	.max_encoding		= 1,
 	.pe			= amd64_k7_pe,

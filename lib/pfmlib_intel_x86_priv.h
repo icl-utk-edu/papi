@@ -177,6 +177,9 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_X86_MOD_ANY	(1 << INTEL_X86_ANY_BIT)
 #define INTEL_X86_MOD_INV	(1 << INTEL_X86_INV_BIT)
 
+/* intel x86 core PMU supported plm */
+#define INTEL_X86_PLM	(PFM_PLM0|PFM_PLM3)
+
 typedef struct {
 	unsigned int version:8;
 	unsigned int num_cnt:8;

@@ -1619,6 +1619,27 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 	return PFM_SUCCESS;
 }
 
+pfmlib_pmu_t *
+pfmlib_get_pmu_by_type(pfm_pmu_type_t t)
+{
+	pfmlib_pmu_t *pmu;
+	int i;
+
+	pfmlib_for_each_pmu(i) {
+		pmu = pfmlib_pmus[i];
+
+		if (!pfmlib_pmu_active(pmu))
+			continue;
+
+		/* first match */
+		if (pmu->type != t)
+			continue;
+
+		return pmu;
+	}
+	return NULL;
+}
+
 static int
 pfmlib_compare_attr_id(const void *a, const void *b)
 {

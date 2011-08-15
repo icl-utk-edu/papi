@@ -64,6 +64,7 @@ pfmlib_pmu_t intel_coreduo_support={
 	.pe			= intel_coreduo_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.supported_plm		= INTEL_X86_PLM,
 
 	.pmu_detect		= pfm_coreduo_detect,
 	.pmu_init		= pfm_coreduo_init,
