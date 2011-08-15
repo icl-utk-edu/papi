@@ -714,4 +714,3 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .umasks = p6_emon_kni_inst_retired, /* identical to actual umasks list for this event */
 },
 };
-#define PME_INTEL_P6_EVENT_COUNT 80

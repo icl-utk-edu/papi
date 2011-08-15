@@ -226,4 +226,3 @@ static const amd64_entry_t amd64_k7_pe[]={
   .code    = 0xcf,
 },
 };
-#define PME_AMD64_K7_EVENT_COUNT 24

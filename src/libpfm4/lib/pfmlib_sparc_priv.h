@@ -36,6 +36,9 @@ typedef union {
 #define SPARC_ATTR_U	1
 #define SPARC_ATTR_H	2
 
+#define SPARC_PLM (PFM_PLM0|PFM_PLM3)
+#define NIAGARA2_PLM (SPARC_PLM|PFM_PLMH)
+
 extern int pfm_sparc_detect(void *this);
 extern int pfm_sparc_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_sparc_get_event_first(void *this);

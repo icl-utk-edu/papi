@@ -27,11 +27,10 @@ include $(TOPDIR)/rules.mk
 
 .PHONY: all clean distclean depend
 
-ifeq ($(CONFIG_PFMLIB_ARCH_IA64),y)
 ARCH_MAN=
-endif
 
-ARCH_X86=libpfm_intel_core.3	\
+ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
+ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_x86_arch.3\
 	 libpfm_amd64.3		\
 	 libpfm_amd64_k7.3	\
@@ -42,25 +41,12 @@ ARCH_X86=libpfm_intel_core.3	\
 	 libpfm_intel_nhm_unc.3 \
 	 libpfm_intel_wsm.3	\
 	 libpfm_intel_wsm_unc.3 \
-	 libpfm_intel_snb.3	\
-	 libpfm_intel_p6.3	\
-	 libpfm_intel_coreduo.3
+	 libpfm_intel_snb.3
 
-ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
-ARCH_MAN=$(ARCH_X86)
+ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
+ARCH_MAN += libpfm_intel_p6.3 libpfm_intel_coreduo.3
 endif
 
-ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
-ARCH_MAN=
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-endif
-
-ifeq ($(CONFIG_PFMLIB_CELL),y)
 endif
 
 GEN_MAN= libpfm.3 \
@@ -78,6 +64,7 @@ GEN_MAN= libpfm.3 \
 	pfm_strerror.3
 
 MAN=$(GEN_MAN) $(ARCH_MAN)
+
 install:
 
 	-mkdir -p $(MANDIR)/man3

@@ -3894,7 +3894,5 @@ static const pme_power_entry_t power6_pe[] = {
 		.pme_long_desc = "Outbound GX bus utilizations (# of cycles in use)",
 	}
 };
-#define POWER6_PME_EVENT_COUNT 553
-
 #endif
 

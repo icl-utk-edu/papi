@@ -1633,7 +1633,5 @@ static const pme_power_entry_t ppc970mp_pe[] = {
 		.pme_long_desc = "A store was flushed because younger load hits and older store that is already in the SRQ or in the same group.",
 	}
 };
-#define PPC970MP_PME_EVENT_COUNT 230
-
 #endif
 

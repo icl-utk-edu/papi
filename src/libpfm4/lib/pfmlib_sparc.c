@@ -303,7 +303,7 @@ pfm_sparc_validate_table(void *this, FILE *fp)
 			error++;
 		}
 		for(j=i+1; j < pmu->pme_count; j++) {
-			if (pe[i].code == pe[j].code) {
+			if (pe[i].code == pe[j].code && pe[i].ctrl == pe[j].ctrl) {
 				fprintf(fp, "pmu: %s event%d: %s code: 0x%x is duplicated in event%d : %s\n", pmu->name, i, pe[i].name, pe[i].code, j, pe[j].name);
 				error++;
 			}

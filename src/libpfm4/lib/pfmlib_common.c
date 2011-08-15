@@ -49,14 +49,19 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 #endif
 
-#ifdef CONFIG_PFMLIB_ARCH_X86
-	&netburst_support,
-	&netburst_p_support,
+#ifdef CONFIG_PFMLIB_ARCH_I386
+	/* 32-bit only processors */
 	&intel_pii_support,
 	&intel_ppro_support,
 	&intel_p6_support,
 	&intel_pm_support,
 	&intel_coreduo_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_ARCH_X86
+	/* 32 and 64 bit processors */
+	&netburst_support,
+	&netburst_p_support,
 	&amd64_k7_support,
 	&amd64_k8_revb_support,
 	&amd64_k8_revc_support,
@@ -78,6 +83,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_wsm_dp_support,
 	&intel_wsm_unc_support,
 	&intel_snb_support,
+	&intel_snb_ep_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
@@ -218,6 +224,45 @@ pfmlib_compact_pattrs(pfmlib_event_desc_t *e, int i)
 		e->pattrs[j - 1] = e->pattrs[j];
 
 	e->npattrs--;
+}
+
+static void
+pfmlib_compact_attrs(pfmlib_event_desc_t *e, int i)
+{
+	int j;
+
+	for (j = i+1; j < e->nattrs; j++)
+		e->attrs[j - 1] = e->attrs[j];
+
+	e->nattrs--;
+}
+
+/*
+ *  0 : different attribute
+ *  1 : exactly same attribute (duplicate can be removed)
+ * -1 : same attribute but value differ, this is an error
+ */
+static inline int
+pfmlib_same_attr(pfmlib_event_desc_t *d, int i, int j)
+{
+	pfm_event_attr_info_t *a1, *a2;
+	pfmlib_attr_t *b1, *b2;
+
+	a1 = attr(d, i);
+	a2 = attr(d, j);
+
+	b1 = d->attrs+i;
+	b2 = d->attrs+j;
+
+	if (a1->idx == a2->idx
+	    && a1->type == a2->type
+	    && a1->ctrl == a2->ctrl) {
+		if (b1->ival == b2->ival)
+			return 1;
+		return -1;
+
+	}
+	return 0;
 }
 
 static inline int
@@ -578,19 +623,17 @@ pfm_find_event(const char *str)
 static int
 pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 {
-	pfm_event_attr_info_t *a1, *a2;
-	int i, j;
+	int i, j, ret;
 
 	/*
 	 * fail if duplicate attributes are found
 	 */
 	for(i=0; i < d->nattrs; i++) {
-		a1 = attr(d, i);
 		for(j=i+1; j < d->nattrs; j++) {
-			a2 = attr(d, j);
-			if (a1->idx == a2->idx
-			    && a1->type == a2->type
-			    && a1->ctrl == a2->ctrl)
+			ret = pfmlib_same_attr(d, i, j);
+			if (ret == 1)
+				pfmlib_compact_attrs(d, j);
+			else if (ret == -1)
 				return PFM_ERR_ATTR_SET;
 		}
 	}
@@ -1575,6 +1618,27 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 	memcpy(uinfo, &info, sz);
 
 	return PFM_SUCCESS;
+}
+
+pfmlib_pmu_t *
+pfmlib_get_pmu_by_type(pfm_pmu_type_t t)
+{
+	pfmlib_pmu_t *pmu;
+	int i;
+
+	pfmlib_for_each_pmu(i) {
+		pmu = pfmlib_pmus[i];
+
+		if (!pfmlib_pmu_active(pmu))
+			continue;
+
+		/* first match */
+		if (pmu->type != t)
+			continue;
+
+		return pmu;
+	}
+	return NULL;
 }
 
 static int

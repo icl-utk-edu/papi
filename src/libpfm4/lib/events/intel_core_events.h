@@ -1892,4 +1892,3 @@ static const intel_x86_entry_t intel_core_pe[]={
   .code = 0xf8,
 },
 };
-#define PME_INTEL_CORE_EVENT_COUNT 133

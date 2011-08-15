@@ -72,7 +72,7 @@ pfmlib_pmu_t intel_atom_support={
 	.desc			= "Intel Atom",
 	.name			= "atom",
 	.pmu			= PFM_PMU_INTEL_ATOM,
-	.pme_count		= PME_INTEL_ATOM_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_atom_pe),
 	.type			= PFM_PMU_TYPE_CORE,
 	.num_cntrs		= 2,
 	.num_fixed_cntrs	= 3,
@@ -80,6 +80,7 @@ pfmlib_pmu_t intel_atom_support={
 	.pe			= intel_atom_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.supported_plm		= INTEL_X86_PLM,
 
 	.pmu_detect		= pfm_intel_atom_detect,
 	.pmu_init		= pfm_intel_atom_init,

@@ -2416,4 +2416,3 @@ static const amd64_entry_t amd64_fam10h_pe[]={
   .umasks  = amd64_fam10h_l3_cache_misses, /* identical to actual umasks list for this event */
 },
 };
-#define PME_AMD64_FAM10H_EVENT_COUNT 126

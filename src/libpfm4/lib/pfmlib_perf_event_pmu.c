@@ -928,33 +928,69 @@ pfm_perf_get_event_nattrs(void *this, int idx)
 }
 
 /*
+ * this function tries to figure out what the underlying core PMU
+ * priv level masks are. It looks for a TYPE_CORE PMU and uses the
+ * first event to determine supported priv level masks.
+ */
+static inline int
+pfm_perf_pmu_supported_plm(void)
+{
+	pfmlib_pmu_t *pmu;
+
+	pmu = pfmlib_get_pmu_by_type(PFM_PMU_TYPE_CORE);
+	if (!pmu) {
+		DPRINT("no core CPU PMU\n");
+		return 0;
+	}
+	DPRINT("guessing plm from %s PMU\n", pmu->name);
+	return pmu->supported_plm;
+}
+
+/*
  * remove attrs which are in conflicts (or duplicated) with os layer
  */
 static void
 pfm_perf_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
-	int i, compact;
+	int i, compact, type;
+	int plm = pfm_perf_pmu_supported_plm();
 
 	for (i = 0; i < e->npattrs; i++) {
 		compact = 0;
+
 		/* umasks never conflict */
 		if (e->pattrs[i].type == PFM_ATTR_UMASK)
 			continue;
 
+		if (e->pattrs[i].ctrl != PFM_ATTR_CTRL_PERF_EVENT)
+			continue;
+
 		/*
-		 * only PERF_TYPE_HARDWARE may have precise mode
+		 * only PERF_TYPE_HARDWARE/HW_CACHE may have
+		 * precise mode or hypervisor mode
+		 *
 		 * there is no way to know for sure for those events
-		 * so we let the modifiers thru and leave it to the kernel
+		 * so we allow the modifiers tand leave it to the kernel
 		 * to decide
 		 */
-		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT
-		    && perf_pe[e->event].type != PERF_TYPE_HARDWARE) {
+		type = perf_pe[e->event].type;
+		if (type == PERF_TYPE_HARDWARE || type == PERF_TYPE_HW_CACHE) {
+			/* no hypervisor mode */
+			if (e->pattrs[i].idx == PERF_ATTR_H && !(plm & PFM_PLMH))
+				compact = 1;
 
-			/* Precise mode, subject to PEBS */
+			/* no user mode */
+			if (e->pattrs[i].idx == PERF_ATTR_U && !(plm & PFM_PLM3))
+				compact = 1;
+
+			/* no kernel mode */
+			if (e->pattrs[i].idx == PERF_ATTR_K && !(plm & PFM_PLM0))
+				compact = 1;
+		} else {
 			if (e->pattrs[i].idx == PERF_ATTR_PR)
 				compact = 1;
-			/*
-			 * No hypervisor on Intel */
+
+			/* no hypervisor mode */
 			if (e->pattrs[i].idx == PERF_ATTR_H)
 				compact = 1;
 		}
