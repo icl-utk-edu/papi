@@ -3782,7 +3782,5 @@ static const pme_power_entry_t power7_pe[] = {
 		.pme_long_desc = "The Instruction Fetch Unit finished an instruction",
 	}
 };
-#define POWER7_PME_EVENT_COUNT 537
-
 #endif
 

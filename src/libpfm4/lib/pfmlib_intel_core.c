@@ -67,14 +67,16 @@ pfmlib_pmu_t intel_core_support={
 	.desc			= "Intel Core",
 	.name			= "core",
 	.pmu			= PFM_PMU_INTEL_CORE,
-	.pme_count		= PME_INTEL_CORE_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_core_pe),
 	.type			= PFM_PMU_TYPE_CORE,
 	.num_cntrs		= 2,
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 1,
+	.supported_plm		= INTEL_X86_PLM,
 	.pe			= intel_core_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 
 	.pmu_detect		= pfm_core_detect,
 	.pmu_init		= pfm_core_init,

@@ -47,18 +47,32 @@ endif
 ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
 
 ifeq ($(SYS),Linux)
-SRCS += pfmlib_intel_x86_perf_event.c pfmlib_amd64_perf_event.c pfmlib_intel_netburst_perf_event.c
+SRCS += pfmlib_intel_x86_perf_event.c pfmlib_amd64_perf_event.c \
+	pfmlib_intel_netburst_perf_event.c
 endif
 
 INCARCH = $(INC_X86)
-SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
-	  pfmlib_intel_nhm_unc.c pfmlib_intel_coreduo.c pfmlib_intel_p6.c pfmlib_intel_nhm.c \
-	  pfmlib_intel_wsm.c pfmlib_intel_netburst.c pfmlib_intel_snb.c \
-	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c pfmlib_amd64_fam14h.c \
-	  pfmlib_amd64_fam15h.c
+SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
+	  pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
+	  pfmlib_intel_nhm_unc.c pfmlib_intel_nhm.c \
+	  pfmlib_intel_wsm.c  pfmlib_intel_snb.c \
+	  pfmlib_intel_netburst.c \
+	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
+	  pfmlib_amd64_fam14h.c pfmlib_amd64_fam15h.c
 
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86
+
+ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
+SRCS += pfmlib_intel_coreduo.c pfmlib_intel_p6.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
+CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
+endif
+
+endif
+
 
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
 INCARCH = $(INC_MIPS64)

@@ -1361,4 +1361,3 @@ static const intel_x86_entry_t intel_atom_pe[]={
   .umasks = atom_bus_io_wait, /* identical to actual umasks list for this event */
 },
 };
-#define PME_INTEL_ATOM_EVENT_COUNT 81

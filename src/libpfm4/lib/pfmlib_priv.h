@@ -102,10 +102,12 @@ typedef struct pfmlib_pmu {
 	pfm_pmu_t	pmu;			/* PMU model */
 	int		pme_count;		/* number of events */
 	int		max_encoding;		/* max number of uint64_t to encode an event */
-	int		flags;			/* PMU flags */
+	int		flags;			/* 16 LSB: common, 16 MSB: arch spec*/
 	int		pmu_rev;		/* PMU model specific revision */
 	int		num_cntrs;		/* number of generic counters */
 	int		num_fixed_cntrs;	/* number of fixed counters */
+	int		supported_plm;		/* supported priv levels */
+
 	pfm_pmu_type_t	type;			/* PMU type */
 	const void	*pe;			/* pointer to event table */
 
@@ -141,7 +143,7 @@ typedef struct {
 #define PFMLIB_OS_FL_ACTIVATED	0x1	/* OS layer detected */
 
 /*
- * pfmlib_pmu_t flags
+ * pfmlib_pmu_t common flags (LSB 16 bits)
  */
 #define PFMLIB_PMU_FL_INIT	0x1	/* PMU initialized correctly */
 #define PFMLIB_PMU_FL_ACTIVE	0x2	/* PMU is initialized + detected on host */
@@ -170,6 +172,7 @@ extern void pfmlib_compact_pattrs(pfmlib_event_desc_t *e, int i);
 extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
 extern int pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr);
 extern void pfmlib_sort_attr(pfmlib_event_desc_t *e);
+extern pfmlib_pmu_t * pfmlib_get_pmu_by_type(pfm_pmu_type_t t);
 
 extern size_t pfmlib_check_struct(void *st, size_t usz, size_t refsz, size_t sz);
 
@@ -214,6 +217,7 @@ extern pfmlib_pmu_t intel_nhm_support;
 extern pfmlib_pmu_t intel_nhm_ex_support;
 extern pfmlib_pmu_t intel_nhm_unc_support;
 extern pfmlib_pmu_t intel_snb_support;
+extern pfmlib_pmu_t intel_snb_ep_support;
 extern pfmlib_pmu_t power4_support;
 extern pfmlib_pmu_t ppc970_support;
 extern pfmlib_pmu_t ppc970mp_support;

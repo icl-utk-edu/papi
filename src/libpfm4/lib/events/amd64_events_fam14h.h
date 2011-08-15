@@ -1538,4 +1538,3 @@ static const amd64_entry_t amd64_fam14h_pe[]={
   .umasks  = amd64_fam14h_pdc_miss,
 },
 };
-#define PME_AMD64_FAM14H_EVENT_COUNT 82

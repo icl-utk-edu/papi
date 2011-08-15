@@ -39,8 +39,8 @@ The library supports many PMUs. The current version can handle:
 		Intel Yonah (Core Duo/Core Solo),
 		Intel Core (Merom, Penryn, Dunnington)
 		Intel Atom
-		Intel Nehalem (Core i7, Core i5, Core i3)
-		Intel Sandy Bridge (Core i7 2xxx)
+		Intel Nehalem, Westmere
+		Intel Sandy Bridge
 		Intel architectural perfmon v1, v2, v3
 
 	- For ARM:

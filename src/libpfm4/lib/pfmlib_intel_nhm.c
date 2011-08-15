@@ -142,14 +142,16 @@ pfmlib_pmu_t intel_nhm_support={
 	.desc			= "Intel Nehalem",
 	.name			= "nhm",
 	.pmu			= PFM_PMU_INTEL_NHM,
-	.pme_count		= PME_INTEL_NHM_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_nhm_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
 	.num_cntrs		= 4,
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_nhm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_nhm_detect,
 	.pmu_init		= pfm_nhm_init,
 
@@ -167,17 +169,19 @@ pfmlib_pmu_t intel_nhm_support={
 };
 
 pfmlib_pmu_t intel_nhm_ex_support={
-	.desc			= "Intel Nehalem-EX",
+	.desc			= "Intel Nehalem EX",
 	.name			= "nhm_ex",
 	.pmu			= PFM_PMU_INTEL_NHM_EX,
-	.pme_count		= PME_INTEL_NHM_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_nhm_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
 	.num_cntrs		= 4,
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_nhm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_nhm_ex_detect,
 	.pmu_init		= pfm_nhm_init,
 

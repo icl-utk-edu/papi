@@ -1218,4 +1218,3 @@ static const intel_x86_entry_t intel_coreduo_pe[]={
   .code = 0xf8,
 },
 };
-#define PME_INTEL_COREDUO_EVENT_COUNT 119

@@ -138,7 +138,7 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
                 default:
                         rev = PFM_PMU_AMD64_K8_REVB;
                 }
-        } else if (cfg->family == 16) {
+        } else if (cfg->family == 16) { /* family 10h */
                 switch (cfg->model) {
                 case 4:
                 case 5:
@@ -152,12 +152,12 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
                 default:
                         rev = PFM_PMU_AMD64_FAM10H_BARCELONA;
                 }
-        } else if (cfg->family == 20) { /* bobcat */
+        } else if (cfg->family == 20) { /* family 14h */
                 switch (cfg->model) {
                 default:
                         rev = PFM_PMU_AMD64_FAM14H_BOBCAT;
                 }
-	} else if (cfg->family == 21) {
+	} else if (cfg->family == 21) { /* family 15h */
 		rev = PFM_PMU_AMD64_FAM15H_INTERLAGOS;
 	}
         cfg->revision = rev;
@@ -695,6 +695,11 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 		error++;
 	}
 
+	if (!pmu->supported_plm && pmu->type == PFM_PMU_TYPE_CORE) {
+		fprintf(fp, "pmu: %s supported_plm not set\n", pmu->name);
+		error++;
+	}
+
 	for(i=0; i < pmu->pme_count; i++) {
 
 		if (!pe[i].name) {
@@ -755,10 +760,12 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 					if ((pe[i].umasks[k].uflags == pe[i].umasks[j].uflags)
 					    && (pe[i].umasks[k].grpid == pe[i].umasks[j].grpid))
 						ndfl++;
+				if (pe[i].numasks == 1)
+					ndfl = 1;
 			}
 		}
 
-		if (pe[i].numasks && ndfl) {
+		if (pe[i].numasks > 1 && ndfl) {
 			fprintf(fp, "pmu: %s event%d: %s :: more than one default unit mask with same code\n", name, i, pe[i].name);
 			error++;
 		}

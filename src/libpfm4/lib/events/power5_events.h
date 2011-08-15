@@ -3341,7 +3341,5 @@ static const pme_power_entry_t power5_pe[] = {
 		.pme_long_desc = "A Read/Claim  Dispatch was rejected at dispatch because the Castout Machine was busy.  In the case of an RC starting up on a miss and the victim is valid, the CO machine must be available for the RC to process the access. If the CO is still busy working on an old castout, then the RC must not-ack the access if it is a miss(re-issued by the CIU). If it is a miss and the CO is available to process the castout, the RC will accept the access. Once the RC has finished, it can restart and process new accesses that result in a hit (or miss that doesn't need a CO) even though the CO is still processing a castout from a previous access.",
 	}
 };
-#define POWER5_PME_EVENT_COUNT 474
-
 #endif
 

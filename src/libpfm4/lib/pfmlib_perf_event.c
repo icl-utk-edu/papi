@@ -147,6 +147,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			break;
 		}
 	}
+
 	/*
 	 * if no priv level mask was provided
 	 * with the event, then use dfl_plm
@@ -154,9 +155,16 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	if (!has_plm)
 		plm = dfl_plm;
 
-	attr->exclude_user = !(plm & PFM_PLM3);
+	/*
+	 * perf_event plm work by exclusion, so use logical or
+	 * goal here is to set to zero any exclude_* not supported
+	 * by underlying PMU
+	 */
+	plm |= (~pmu->supported_plm) & PFM_PLM_ALL;
+
+	attr->exclude_user   = !(plm & PFM_PLM3);
 	attr->exclude_kernel = !(plm & PFM_PLM0);
-	attr->exclude_hv = !(plm & PFM_PLMH);
+	attr->exclude_hv     = !(plm & PFM_PLMH);
 
 	__pfm_vbprintf("PERF[type=%x config=0x%"PRIx64" config1=0x%"PRIx64
                        " e_u=%d e_k=%d e_hv=%d period=%"PRIu64" freq=%d"

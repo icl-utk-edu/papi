@@ -48,6 +48,27 @@ pfm_snb_detect(void *this)
 }
 
 static int
+pfm_snb_ep_detect(void *this)
+{
+	int ret;
+
+	ret = pfm_intel_x86_detect();
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_intel_x86_cfg.family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	switch (pfm_intel_x86_cfg.model) {
+		case 45: /* Sandy Bridge EP */
+			break;
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
 pfm_snb_init(void *this)
 {
 	pfm_intel_x86_cfg.arch_version = 3;
@@ -58,15 +79,45 @@ pfmlib_pmu_t intel_snb_support={
 	.desc			= "Intel Sandy Bridge",
 	.name			= "snb",
 	.pmu			= PFM_PMU_INTEL_SNB,
-	.pme_count		= PME_INTEL_SNB_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snb_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
 	.num_cntrs		= 8, /* consider with HT off by default */
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 2, /* offcore_response */
 	.pe			= intel_snb_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_snb_detect,
+	.pmu_init		= pfm_snb_init,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+	.get_event_first	= pfm_intel_x86_get_event_first,
+	.get_event_next		= pfm_intel_x86_get_event_next,
+	.event_is_valid		= pfm_intel_x86_event_is_valid,
+	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
+};
+
+pfmlib_pmu_t intel_snb_ep_support={
+	.desc			= "Intel Sandy Bridge EP",
+	.name			= "snb_ep",
+	.pmu			= PFM_PMU_INTEL_SNB_EP,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snb_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
+	.num_cntrs		= 8, /* consider with HT off by default */
+	.num_fixed_cntrs	= 3,
+	.max_encoding		= 2, /* offcore_response */
+	.pe			= intel_snb_pe,
+	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
+	.pmu_detect		= pfm_snb_ep_detect,
 	.pmu_init		= pfm_snb_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),

@@ -61,6 +61,7 @@ pfm_wsm_dp_detect(void *this)
 
 	switch (pfm_intel_x86_cfg.model) {
 		case 44: /* Westmere-EP, Gulftown */
+		case 47: /* Westmere E7 */
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
@@ -79,14 +80,16 @@ pfmlib_pmu_t intel_wsm_sp_support={
 	.desc			= "Intel Westmere (single-socket)",
 	.name			= "wsm",
 	.pmu			= PFM_PMU_INTEL_WSM,
-	.pme_count		= PME_INTEL_WSM_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_wsm_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
 	.num_cntrs		= 4,
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_wsm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_wsm_sp_detect,
 	.pmu_init		= pfm_wsm_init,
 
@@ -104,17 +107,19 @@ pfmlib_pmu_t intel_wsm_sp_support={
 };
 
 pfmlib_pmu_t intel_wsm_dp_support={
-	.desc			= "Intel Westmere (dual-socket)",
+	.desc			= "Intel Westmere DP",
 	.name			= "wsm_dp",
 	.pmu			= PFM_PMU_INTEL_WSM_DP,
-	.pme_count		= PME_INTEL_WSM_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_wsm_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
 	.num_cntrs		= 4,
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_wsm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_wsm_dp_detect,
 	.pmu_init		= pfm_wsm_init,
 
