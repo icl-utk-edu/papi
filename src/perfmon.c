@@ -488,7 +488,7 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 				if ( dispatch_count == 0 ) {
 					PAPIERROR( "pfm_dispatch_events(): %s",
 							   pfm_strerror( ret ) );
-					return ( _papi_pfm_error( ret ) );
+					return ( _papi_libpfm_error( ret ) );
 				}
 				SUBDBG
 					( "Dispatch failed because of counter conflict, trying again with %d counters.\n",
@@ -496,7 +496,7 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 				goto again;
 			}
 			PAPIERROR( "pfm_dispatch_events(): %s", pfm_strerror( ret ) );
-			return ( _papi_pfm_error( ret ) );
+			return ( _papi_libpfm_error( ret ) );
 		}
 
 		/*
@@ -998,7 +998,7 @@ _papi_pfm_init_substrate( int cidx )
 #endif
 
 	/* Setup presets */
-	retval = _papi_pfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
+	retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
 	if ( retval )
 		return ( retval );
 
@@ -2274,7 +2274,7 @@ _papi_pfm_allocate_registers( EventSetInfo_t * ESI )
 {
 	int i, j;
 	for ( i = 0; i < ESI->NativeCount; i++ ) {
-		if ( _papi_pfm_ntv_code_to_bits
+		if ( _papi_libpfm_ntv_code_to_bits
 			 ( ESI->NativeInfoArray[i].ni_event,
 			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
 			goto bail;
