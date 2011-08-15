@@ -695,6 +695,11 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 		error++;
 	}
 
+	if (!pmu->supported_plm && pmu->type == PFM_PMU_TYPE_CORE) {
+		fprintf(fp, "pmu: %s supported_plm not set\n", pmu->name);
+		error++;
+	}
+
 	for(i=0; i < pmu->pme_count; i++) {
 
 		if (!pe[i].name) {
