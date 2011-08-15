@@ -303,7 +303,6 @@ static int
 load_preset_table( char *pmu_str, int pmu_type,
 				   pfm_preset_search_entry_t * here )
 {
-	pfmlib_event_t event;
 	char pmu_name[PAPI_MIN_STR_LEN];
 	char line[LINE_MAX];
 	char name[PATH_MAX] = "builtin papi_events_table";
@@ -327,16 +326,6 @@ load_preset_table( char *pmu_str, int pmu_type,
 		pmu_str++;
 	}
 	*tmpn = '\0';
-
-	/* make sure these events are supported before adding them */
-	if ( pfm_get_cycle_event( &event ) != PFMLIB_ERR_NOTSUPP ) {
-		here[insert].preset = ( int ) PAPI_TOT_CYC;
-		here[insert++].derived = -1;
-	}
-	if ( pfm_get_inst_retired_event( &event ) != PFMLIB_ERR_NOTSUPP ) {
-		here[insert].preset = ( int ) PAPI_TOT_INS;
-		here[insert++].derived = -1;
-	}
 
 	/* try the environment variable first */
 	if ( ( tmpn = getenv( "PAPI_PERFMON_EVENT_FILE" ) ) &&
@@ -582,7 +571,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	unsigned int i = 0, j = 0;
 	hwi_search_t *psmap;
 	hwi_dev_notes_t *notemap;
-	pfmlib_event_t event;
+	unsigned int event_idx;
 
 	/* Count up the proposed presets */
 	while ( strmap[i].preset )
@@ -604,57 +593,24 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 
 	i = 0;
 	while ( strmap[i].preset ) {
-		if ( ( strmap[i].preset == ( int ) PAPI_TOT_CYC ) &&
-			 ( strmap[i].derived == -1 ) ) {
-			SUBDBG( "pfm_get_cycle_event(%p)\n", &event );
-			if ( ( ret = pfm_get_cycle_event( &event ) ) == PFMLIB_SUCCESS ) {
-				if ( setup_preset_term( &psmap[j].data.native[0], &event ) ==
-					 PAPI_OK ) {
-					psmap[j].event_code = ( unsigned int ) strmap[i].preset;
-					psmap[j].data.derived = NOT_DERIVED;
-					psmap[j].data.native[1] = PAPI_NULL;
-					j++;
-				}
-			} else
-				SUBDBG( "pfm_get_cycle_event(%p): %s\n", &event,
-						pfm_strerror( ret ) );
-		} else if ( ( strmap[i].preset == ( int ) PAPI_TOT_INS ) &&
-					( strmap[i].derived == -1 ) ) {
-			SUBDBG( "pfm_get_inst_retired_event(%p)\n", &event );
-			if ( ( ret =
-				   pfm_get_inst_retired_event( &event ) ) == PFMLIB_SUCCESS ) {
-				if ( setup_preset_term( &psmap[j].data.native[0], &event ) ==
-					 PAPI_OK ) {
-					psmap[j].event_code = ( unsigned int ) strmap[i].preset;
-					psmap[j].data.derived = NOT_DERIVED;
-					psmap[j].data.native[1] = PAPI_NULL;
-					j++;
-				}
-			} else
-				SUBDBG( "pfm_get_inst_retired_event(%p): %s\n", &event,
-						pfm_strerror( ret ) );
-		} else {
-			/* Handle derived events */
-			term = 0;
-			do {
-				SUBDBG( "pfm_find_full_event(%s,%p)\n", strmap[i].findme[term],
+
+	   /* Handle derived events */
+	   term = 0;
+	   do {
+	      SUBDBG( "pfm_find_full_event(%s,%p)\n", strmap[i].findme[term],
 						&event );
-				if ( ( ret =
-					   pfm_find_full_event( strmap[i].findme[term],
-											&event ) ) == PFMLIB_SUCCESS ) {
-					if ( ( ret =
-						   setup_preset_term( &psmap[j].data.native[term],
-											  &event ) ) == PAPI_OK ) {
-						term++;
-					} else
-						break;
-				} else {
-					PAPIERROR( "pfm_find_full_event(%s,%p): %s",
-							   strmap[i].findme[term], &event,
-							   pfm_strerror( ret ) );
-					term++;
-				}
-			} while ( strmap[i].findme[term] != NULL &&
+
+	      ret=_papi_libpfm_ntv_name_to_code(strmap[i].findme[term],
+						&event_idx);
+	      if (ret==PAPI_OK) {
+		psmap[j].data.native[term]=event_idx;
+		term++;
+	      }
+	      else {
+		SUBDBG("Error finding event %x\n",event_idx);
+	      }
+
+	   } while ( strmap[i].findme[term] != NULL &&
 					  term < MAX_COUNTER_TERMS );
 
 			/* terminate the native term array with PAPI_NULL */
@@ -675,7 +631,6 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 				}
 				j++;
 			}
-		}
 		i++;
 	}
 	if ( i != j ) {
