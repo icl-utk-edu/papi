@@ -4,14 +4,10 @@
 *          based heavily on existing papi_libpfm3_events.c
 */
 
-#include <ctype.h>
 #include <string.h>
-#include <errno.h>
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_memory.h"
 
 #include "papi_libpfm_events.h"
 
@@ -20,12 +16,6 @@
 
 extern papi_vector_t MY_VECTOR;
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-
-/*******************************************************************
- *
- *
- *
- ******************************************************************/
 
 /* FIXME -- make it handle arbitrary number */
 #define MAX_NATIVE_EVENTS 1000
@@ -183,34 +173,11 @@ static struct native_event_t *allocate_native_event(char *name,
   int new_event;
 
   pfm_err_t ret;
-  //int count=5;
   unsigned int i;
-  //uint64_t *codes;
-  //char *fstr=NULL;
   char *base_start;
-  //int found_idx;
   pfm_event_info_t info;
   pfm_pmu_info_t pinfo;
   char base[BUFSIZ],pmuplusbase[BUFSIZ];
-
-  /* allocate canonical string */
-
-  //codes=calloc(count,sizeof(uint64_t));
-
-  //  ret=pfm_get_event_encoding(name, 
-  //			     PFM_PLM0|PFM_PLM3,
-  //			     &fstr, 
-  //			     &found_idx, 
-  //			     &codes, 
-  //			     &count);
-
-
-
-  //if (codes) free(codes);
-
-  //if (ret!=PFM_SUCCESS) {
-  //   return NULL;
-  //}
 
   /* get basename */	      
   memset(&info,0,sizeof(pfm_event_info_t));
@@ -244,10 +211,6 @@ static struct native_event_t *allocate_native_event(char *name,
   new_event=num_native_events;
 
   native_events[new_event].base_name=strdup(base_start);
-  //if (fstr) {
-    //     native_events[new_event].canonical_name=strdup(fstr);
-    //free(fstr);
-     //  }
 
   { char tmp[BUFSIZ];
     sprintf(tmp,"%s::%s",pinfo.name,info.name);
@@ -544,6 +507,29 @@ static int find_next_umask(struct native_event_t *current_event,
 
 }
 
+/* convert libpfm error codes to PAPI error codes for 
+   more informative error reporting */
+int
+_papi_libpfm_error( int pfm_error ) {
+
+  switch ( pfm_error ) {
+  case PFM_SUCCESS:      return PAPI_OK;       /* success */
+  case PFM_ERR_NOTSUPP:  return PAPI_ENOSUPP;  /* function not supported */
+  case PFM_ERR_INVAL:    return PAPI_EINVAL;   /* invalid parameters */
+  case PFM_ERR_NOINIT:   return PAPI_ENOINIT;  /* library not initialized */
+  case PFM_ERR_NOTFOUND: return PAPI_ENOEVNT;  /* event not found */
+  case PFM_ERR_FEATCOMB: return PAPI_ECOMBO;   /* invalid combination of features */
+  case PFM_ERR_UMASK:    return PAPI_EATTR;    /* invalid or missing unit mask */
+  case PFM_ERR_NOMEM:    return PAPI_ENOMEM;   /* out of memory */
+  case PFM_ERR_ATTR:     return PAPI_EATTR;    /* invalid event attribute */
+  case PFM_ERR_ATTR_VAL: return PAPI_EATTR;    /* invalid event attribute value */
+  case PFM_ERR_ATTR_SET: return PAPI_EATTR;    /* attribute value already set */
+  case PFM_ERR_TOOMANY:  return PAPI_ECOUNT;   /* too many parameters */
+  case PFM_ERR_TOOSMALL: return PAPI_ECOUNT;   /* parameter is too small */
+  default: return PAPI_EINVAL;
+  }
+}
+
 
 /***********************************************************/
 /* Exported functions                                      */
@@ -580,10 +566,8 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
 
      SUBDBG("Using pfm to look up event %s\n",name);
      actual_idx=pfm_find_event(name);
-
-     /* FIXME!  Map the libpfm4 error to a PAPI error */
      if (actual_idx<0) {
-        return PAPI_ENOEVNT;
+        return _papi_libpfm_error(actual_idx);
      }
 
      SUBDBG("Using %x as the index\n",actual_idx);
@@ -600,7 +584,6 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
   }
 
   /* Failure here means allocate_native_event failed */
-  /* Can we give a better error?                     */
 
   SUBDBG("Event %s not found\n",name);
 
@@ -608,8 +591,24 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
 
 }
 
+
+/** @class  _papi_libpfm_ntv_code_to_name
+ *  @brief  Take an event code and convert it to a name
+ *
+ *  @param[in] EventCode
+ *        -- PAPI event code
+ *  @param[out] *ntv_name
+ *        -- pointer to a string to hold the name
+ *  @param[in] len
+ *        -- length of ntv_name string
+ *
+ *  @retval PAPI_OK       The event was found and converted to a name
+ *  @retval PAPI_ENOEVENT The event does not exist
+ *  @retval PAPI_EBUF     The event name was too big for ntv_name
+ */
+
 int
-_papi_libpfm_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
+_papi_libpfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len )
 {
 
         struct native_event_t *our_event;
@@ -617,70 +616,102 @@ _papi_libpfm_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
         SUBDBG("ENTER %x\n",EventCode);
 
         our_event=find_existing_event_by_number(EventCode);
+	if (our_event==NULL) {
+	  return PAPI_ENOEVNT;
+	}
 
-	if (our_event==NULL) return PAPI_ENOEVNT;
-
-	/* use actual rather than canonical to not break enum */
 	strncpy(ntv_name,our_event->allocated_name,len);
+
+	if (strlen(our_event->allocated_name) > (unsigned)len) {
+	   return PAPI_EBUF;
+	}
 
 	return PAPI_OK;
 }
 
-/* attributes concactinated onto end of descr separated by ", masks" */
-/* then comma separated */
+
+/** @class  _papi_libpfm_ntv_code_to_descr
+ *  @brief  Take an event code and convert it to a description
+ *
+ *  @param[in] EventCode
+ *        -- PAPI event code
+ *  @param[out] *ntv_descr
+ *        -- pointer to a string to hold the description
+ *  @param[in] len
+ *        -- length of ntv_descr string
+ *
+ *  @retval PAPI_OK       The event was found and converted to a description
+ *  @retval PAPI_ENOEVENT The event does not exist
+ *  @retval PAPI_EBUF     The event name was too big for ntv_descr
+ *
+ *  If the event has umasks, return the description for each
+ *  separated by commas.
+ */
+
 
 int
 _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len )
 {
   int ret,a,first_mask=1;
   char *eventd, *tmp=NULL;
-	//int i, first_desc=1;
   pfm_event_info_t gete;
-	//     	size_t total_len = 0;
-
 
   pfm_event_attr_info_t ainfo;
   char *b;
-  //  pfm_event_info_t info;
   char event_string[BUFSIZ],*ptr;
 
-	struct native_event_t *our_event;
+  struct native_event_t *our_event;
 
-        SUBDBG("ENTER %x\n",EventCode);
+  SUBDBG("ENTER %x\n",EventCode);
 
-	our_event=find_existing_event_by_number(EventCode);
+  our_event=find_existing_event_by_number(EventCode);
+  if (our_event==NULL) {
+     return PAPI_ENOEVNT;
+  }
 
-	memset( &gete, 0, sizeof ( gete ) );
-
-	SUBDBG("Getting info on %x\n",our_event->perfmon_idx);
-	ret=pfm_get_event_info(our_event->perfmon_idx, PFM_OS_PERF_EVENT, &gete);
-	SUBDBG("Return=%d\n",ret);
-
-	/* error check?*/
-
-	eventd=strdup(gete.desc);
-
-	tmp = ( char * ) malloc( strlen( eventd ) + 1 );
-	if ( tmp == NULL ) {
-	   free( eventd );
-	   return PAPI_ENOMEM;
-	}
-	tmp[0] = '\0';
-	strcat( tmp, eventd );
-	free( eventd );
+  SUBDBG("Getting info on %x\n",our_event->perfmon_idx);
 	
-	/* Handle Umasks */
+  /* libpfm requires the structure be zeroed */
+  memset( &gete, 0, sizeof ( gete ) );
+
+  ret=pfm_get_event_info(our_event->perfmon_idx, PFM_OS_PERF_EVENT, &gete);
+  if (ret<0) {
+     SUBDBG("Return=%d\n",ret);
+     return _papi_libpfm_error(ret);
+  }
+
+  eventd=strdup(gete.desc);
+
+  tmp = ( char * ) malloc( strlen( eventd ) + 1 );
+  if ( tmp == NULL ) {
+     free( eventd );
+     return PAPI_ENOMEM;
+  }
+	
+  tmp[0] = '\0';
+  strcat( tmp, eventd );
+  free( eventd );
+	
+  /* Handle Umasks */
+
+  /* attributes concactinated onto end of descr separated by ", masks" */
+  /* then comma separated */
+
   strcpy(event_string,our_event->allocated_name);
 
+  /* Point to first umask */
+
+  /* Skip the pmu name :: if one exists */
   if (strstr(event_string,"::")) {
-    ptr=strstr(event_string,"::");
-    ptr+=2;
-    b=strtok(ptr,":");
+     ptr=strstr(event_string,"::");
+     ptr+=2;
+     b=strtok(ptr,":");
   }
   else {
-    b=strtok(event_string,":");
+     b=strtok(event_string,":");
   }
   
+  /* if no umask, then done */
   if (!b) {
      SUBDBG("No colon!\n"); /* no umask */
      goto descr_in_tmp;
@@ -703,10 +734,9 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
 
       ret = pfm_get_event_attr_info(our_event->perfmon_idx, a, 
 				    PFM_OS_PERF_EVENT, &ainfo);
-
       if (ret != PFM_SUCCESS) {
 	SUBDBG("get_event_attr failed %s\n",pfm_strerror(ret));
-	return ret;
+	return _papi_libpfm_error(ret);
       }
 
       SUBDBG("Trying %s with %s\n",ainfo.name,b);
@@ -734,13 +764,14 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
 
     SUBDBG("attr=%s not found for event %s\n", b, ainfo.name);
 
-    return PAPI_ECNFLCT;
+    return PAPI_EATTR;
 
 found_attr:
 
     b=strtok(NULL,":");
   }
 
+  /* We are done and the description to copy is in tmp */
 descr_in_tmp:
 	strncpy( ntv_descr, tmp, ( size_t ) len );
 	if ( ( int ) strlen( tmp ) > len - 1 )
@@ -752,7 +783,6 @@ descr_in_tmp:
 	SUBDBG("PFM4 Code: %x %s\n",EventCode,ntv_descr);
 
 	return ret;
-
 }
 
 int
