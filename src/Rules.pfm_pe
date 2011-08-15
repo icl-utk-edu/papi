@@ -26,7 +26,7 @@ unexport CFLAGS
 
 CFLAGS += -DSUBSTRATE_USES_LIBPFM -DSUBSTRATE_NAME_$(SUBSTR)
 MISCHDRS += perfmon.h papi_libpfm_events.h $(PAPI_EVENTS_TABLE)
-MISCSRCS += papi_libpfm3_events.c
+MISCSRCS += papi_libpfm3_events.c papi_libpfm_presets.c
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
@@ -49,8 +49,11 @@ config.h:
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
 
-papi_libpfm3_events.o: papi_libpfm3_events.c $(HEADERS) $(PAPI_EVENTS_TABLE)
+papi_libpfm3_events.o: papi_libpfm3_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm3_events.c -o $@
+
+papi_libpfm_presets.o: papi_libpfm_presets.c $(HEADERS) $(PAPI_EVENTS_TABLE)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm_presets.c -o $@
 
 native_clean:
 	-rm -f $(MISCOBJS)
