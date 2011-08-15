@@ -150,7 +150,8 @@ pfmlib_pmu_t intel_nhm_support={
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_nhm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_nhm_detect,
 	.pmu_init		= pfm_nhm_init,
 
@@ -179,7 +180,8 @@ pfmlib_pmu_t intel_nhm_ex_support={
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_nhm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_nhm_ex_detect,
 	.pmu_init		= pfm_nhm_init,
 

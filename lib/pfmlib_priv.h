@@ -102,7 +102,7 @@ typedef struct pfmlib_pmu {
 	pfm_pmu_t	pmu;			/* PMU model */
 	int		pme_count;		/* number of events */
 	int		max_encoding;		/* max number of uint64_t to encode an event */
-	int		flags;			/* PMU flags */
+	int		flags;			/* 16 LSB: common, 16 MSB: arch spec*/
 	int		pmu_rev;		/* PMU model specific revision */
 	int		num_cntrs;		/* number of generic counters */
 	int		num_fixed_cntrs;	/* number of fixed counters */
@@ -143,7 +143,7 @@ typedef struct {
 #define PFMLIB_OS_FL_ACTIVATED	0x1	/* OS layer detected */
 
 /*
- * pfmlib_pmu_t flags
+ * pfmlib_pmu_t common flags (LSB 16 bits)
  */
 #define PFMLIB_PMU_FL_INIT	0x1	/* PMU initialized correctly */
 #define PFMLIB_PMU_FL_ACTIVE	0x2	/* PMU is initialized + detected on host */

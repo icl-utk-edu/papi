@@ -75,7 +75,8 @@ pfmlib_pmu_t intel_core_support={
 	.supported_plm		= INTEL_X86_PLM,
 	.pe			= intel_core_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 
 	.pmu_detect		= pfm_core_detect,
 	.pmu_init		= pfm_core_init,

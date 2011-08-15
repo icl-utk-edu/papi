@@ -35,7 +35,7 @@
 const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("k", "monitor at priv level 0"),		/* monitor priv level 0 */
 	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
-	PFM_ATTR_B("e", "edge level"),				/* edge */
+	PFM_ATTR_B("e", "edge level (may require counter-mask >= 1)"), /* edge */
 	PFM_ATTR_B("i", "invert"),				/* invert */
 	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
 	PFM_ATTR_B("t", "measure any thread"),			/* monitor on both threads */
@@ -319,6 +319,7 @@ static int
 pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 {
+	pfmlib_pmu_t *pmu = this;
 	pfm_event_attr_info_t *a;
 	const intel_x86_entry_t *pe;
 	pfm_intel_x86_reg_t reg;
@@ -507,6 +508,15 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	reg.sel_int  = 1; /* force APIC int to 1 */
 
 	e->codes[0] = reg.val;
+
+	/*
+	 * on recent processors (except Atom), edge requires cmask >=1
+	 */
+	if ((pmu->flags & INTEL_X86_PMU_FL_ECMASK)
+	    && reg.sel_edge && !reg.sel_cnt_mask) {
+		DPRINT("edge requires cmask >= 1\n");
+		return PFM_ERR_ATTR;
+	}
 
 	/*
 	 * decode ALL modifiers

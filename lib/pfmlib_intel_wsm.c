@@ -88,7 +88,8 @@ pfmlib_pmu_t intel_wsm_sp_support={
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_wsm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_wsm_sp_detect,
 	.pmu_init		= pfm_wsm_init,
 
@@ -117,7 +118,8 @@ pfmlib_pmu_t intel_wsm_dp_support={
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_wsm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_wsm_dp_detect,
 	.pmu_init		= pfm_wsm_init,
 

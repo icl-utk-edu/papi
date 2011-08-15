@@ -180,6 +180,11 @@ typedef union pfm_intel_x86_reg {
 /* intel x86 core PMU supported plm */
 #define INTEL_X86_PLM	(PFM_PLM0|PFM_PLM3)
 
+/*
+ * Intel x86 specific pmu flags (pmu->flags 16 MSB)
+ */
+#define INTEL_X86_PMU_FL_ECMASK 0x10000	/* edge requires cmask >=1 */
+
 typedef struct {
 	unsigned int version:8;
 	unsigned int num_cnt:8;

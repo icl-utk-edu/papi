@@ -87,7 +87,8 @@ pfmlib_pmu_t intel_snb_support={
 	.max_encoding		= 2, /* offcore_response */
 	.pe			= intel_snb_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_snb_detect,
 	.pmu_init		= pfm_snb_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
@@ -114,7 +115,8 @@ pfmlib_pmu_t intel_snb_ep_support={
 	.max_encoding		= 2, /* offcore_response */
 	.pe			= intel_snb_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_snb_ep_detect,
 	.pmu_init		= pfm_snb_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
