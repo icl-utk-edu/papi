@@ -14,8 +14,11 @@
 #define dsb() __asm__ __volatile__ ("dsb" : : : "memory")
 #define dmb() __asm__ __volatile__ ("dmb" : : : "memory")
 
+/* Use __kuser_memory_barrier helper from the CPU helper page. See
+ * arch/arm/kernel/entry-armv.S in the kernel source for details.  */
+#define rmb()    ((void(*)(void))0xffff0fa0)()
+#define mb()     asm volatile("":::"memory")
 
-#define mb()            {}
 #define rmb()           {}
 #define wmb()           {}
 
