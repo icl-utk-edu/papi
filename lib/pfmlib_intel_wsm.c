@@ -107,7 +107,7 @@ pfmlib_pmu_t intel_wsm_sp_support={
 };
 
 pfmlib_pmu_t intel_wsm_dp_support={
-	.desc			= "Intel Westmere (dual-socket)",
+	.desc			= "Intel Westmere DP",
 	.name			= "wsm_dp",
 	.pmu			= PFM_PMU_INTEL_WSM_DP,
 	.pme_count		= LIBPFM_ARRAY_SIZE(intel_wsm_pe),

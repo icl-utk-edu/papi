@@ -169,7 +169,7 @@ pfmlib_pmu_t intel_nhm_support={
 };
 
 pfmlib_pmu_t intel_nhm_ex_support={
-	.desc			= "Intel Nehalem-EX",
+	.desc			= "Intel Nehalem EX",
 	.name			= "nhm_ex",
 	.pmu			= PFM_PMU_INTEL_NHM_EX,
 	.pme_count		= LIBPFM_ARRAY_SIZE(intel_nhm_pe),
