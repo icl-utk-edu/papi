@@ -1,7 +1,7 @@
-#ifndef _PAPI_PFM_EVENTS_H
-#define _PAPI_PFM_EVENTS_H
+#ifndef _PAPI_LIBPFM_EVENTS_H
+#define _PAPI_LIBPFM_EVENTS_H
 /* 
-* File:    papi_pfm_events.h
+* File:    papi_libpfm_events.h
 */
 
 /* Prototypes for libpfm name library access */
@@ -45,4 +45,4 @@ struct perf_event_attr {
 extern int _papi_libpfm_setup_counters( struct perf_event_attr *attr, 
 				      hwd_register_t *ni_bits );
 
-#endif // _PAPI_PFM_EVENTS_H
+#endif // _PAPI_LIBPFM_EVENTS_H

@@ -1,6 +1,5 @@
 /*
-* File:    papi_pfm_events.c
-* CVS:     $Id$
+* File:    papi_libpfm3_events.c
 * Author:  Dan Terpstra: blantantly extracted from Phil's perfmon.c
 *          mucci@cs.utk.edu
 */
@@ -25,7 +24,7 @@ xxx - bits_to_info uses native_map not pfm()
 
 #include "perfmon/pfmlib.h"
 
-#include "papi_pfm_events.h"
+#include "papi_libpfm_events.h"
 
 #define PAPI_EVENT_FILE "papi_events.csv"
 

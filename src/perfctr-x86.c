@@ -11,7 +11,7 @@
 #include "papi_internal.h"
 #include "perfctr-x86.h"
 #include "perfmon/pfmlib.h"
-#include "papi_pfm_events.h"
+#include "papi_libpfm_events.h"
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;

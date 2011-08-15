@@ -1,7 +1,7 @@
 /*
 * File:    papi_libpfm4_events.c
-* Author:  Vince Weaver vweaver1 @ eecs.utkd.edu
-*          based heavily on existing papi_pfm_events.c
+* Author:  Vince Weaver vweaver1 @ eecs.utk.edu
+*          based heavily on existing papi_libpfm3_events.c
 */
 
 #include <ctype.h>
@@ -13,7 +13,7 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-#include "papi_pfm_events.h"
+#include "papi_libpfm_events.h"
 
 #include "perfmon/pfmlib.h"
 #include "perfmon/pfmlib_perf_event.h"
