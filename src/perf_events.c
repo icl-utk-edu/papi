@@ -693,6 +693,37 @@ set_granularity( control_state_t * this_state, int domain )
 	return PAPI_OK;
 }
 
+static int pe_vendor_fixups(void) {
+
+     /* powerpc */
+     /* On IBM and Power6 Machines default domain should include supervisor */
+  if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
+     MY_VECTOR.cmp_info.available_domains |=
+		  PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+     if (strcmp(_papi_hwi_system_info.hw_info.model_string, "POWER6" ) == 0 ) {
+        MY_VECTOR.cmp_info.default_domain =
+		  PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+     }
+  }
+
+     /* ARM */
+  if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
+     /* FIXME: this will change with Cortex A15 */
+     MY_VECTOR.cmp_info.available_domains |=
+	    PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+     MY_VECTOR.cmp_info.default_domain =
+	    PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+  }
+
+     /* CRAY */
+  if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
+    MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
+  }
+
+  return PAPI_OK;
+}
+
+
 
 static int
 _papi_pe_init_substrate( int cidx )
@@ -753,8 +784,10 @@ _papi_pe_init_substrate( int cidx )
      return retval;
   }
 
+  MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
+
   /* Run Vendor-specific fixups */
-  _papi_libpfm_vendor_fixups();
+  pe_vendor_fixups();
 
   return PAPI_OK;
 

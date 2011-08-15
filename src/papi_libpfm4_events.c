@@ -1458,41 +1458,6 @@ _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 
 }
 
-int _papi_libpfm_vendor_fixups(void) {
-
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
-		/* powerpc */
-		MY_VECTOR.cmp_info.available_domains |=
-			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-		if ( strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" ) ==
-			 0 ) {
-			MY_VECTOR.cmp_info.default_domain =
-				PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-		}
-	} else if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
-	  /* FIXME: this will change with Cortex A15 */
-	  MY_VECTOR.cmp_info.available_domains |=
-			PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-	  MY_VECTOR.cmp_info.default_domain =
-			PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-
-	} else {
-		MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
-	}
-
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
-		MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
-	}
-
-	if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
-		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
-		MY_VECTOR.cmp_info.fast_counter_read = 1;
-		MY_VECTOR.cmp_info.fast_real_timer = 1;
-		MY_VECTOR.cmp_info.cntr_umasks = 1;
-	}
-	return PAPI_OK;
-}
-
 int 
 _papi_libpfm_shutdown(void) {
 
@@ -1634,4 +1599,6 @@ _papi_libpfm_setup_counters( struct perf_event_attr *attr,
 
   return PAPI_OK;
 }
+
+
 

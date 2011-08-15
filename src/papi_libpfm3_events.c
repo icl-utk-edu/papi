@@ -1051,7 +1051,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *EventCode, int modifier )
     the first occurence found. */
 /* Right now its only called by ntv_code_to_bits in perfctr-p3, so we're ok. But for it to be
     generally useful it should be fixed. - dkt */
-int
+static int
 _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 {
 	pfmlib_regmask_t cnt, impl;
@@ -1509,52 +1509,6 @@ _papi_libpfm_init(void) {
 
    return PAPI_OK;
 }
-
-
-int _papi_libpfm_vendor_fixups(void) {
-
-   /* On IBM and Power6 Machines default domain should include supervisor */
-   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
-      MY_VECTOR.cmp_info.available_domains |=
-			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-      if ( !strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" )) {
-	 MY_VECTOR.cmp_info.default_domain =
-		       PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-      }
-      /* all other machines available domains  are USER/KERNEL */
-   } else {
-	 MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
-   }
-
-
-   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
-      switch ( _perfmon2_pfm_pmu_type ) {
-	 case PFMLIB_SPARC_ULTRA12_PMU:
-	 case PFMLIB_SPARC_ULTRA3_PMU:
-	 case PFMLIB_SPARC_ULTRA3I_PMU:
-	 case PFMLIB_SPARC_ULTRA3PLUS_PMU:
-	 case PFMLIB_SPARC_ULTRA4PLUS_PMU:
-	      break;
-
-	 default:
-	       MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
-	       break;
-      }
-   }
-
-   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
-      MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
-   }
-
-   if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
-		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
-       MY_VECTOR.cmp_info.fast_counter_read = 1;
-       MY_VECTOR.cmp_info.fast_real_timer = 1;
-       MY_VECTOR.cmp_info.cntr_umasks = 1;
-   }
-   return PAPI_OK;
-}
-
 
 long long generate_p4_event(long long escr,
 			    long long cccr,

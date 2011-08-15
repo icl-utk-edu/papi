@@ -1,5 +1,6 @@
 #ifndef _PAPI_LIBPFM_EVENTS_H
 #define _PAPI_LIBPFM_EVENTS_H
+
 /* 
 * File:    papi_libpfm_events.h
 */
@@ -8,9 +9,6 @@
 
 extern int _papi_libpfm_error( int pfm_error );
 extern int _papi_libpfm_setup_presets( char *name, int type );
-extern int _pfm_get_counter_info( unsigned int event, unsigned int *selector,
-				  int *code );
-
 extern int _papi_libpfm_ntv_enum_events( unsigned int *EventCode, int modifier );
 extern int _papi_libpfm_ntv_name_to_code( char *ntv_name,
 				       unsigned int *EventCode );
@@ -24,9 +22,7 @@ extern int _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 				       unsigned int *values, int name_len,
 				       int count );
 extern int _papi_libpfm_shutdown(void);
-
 extern int _papi_libpfm_init(void);
-extern int _papi_libpfm_vendor_fixups(void);
 
 /* Gross perfctr/perf_events compatability hack */
 /* need to think up a better way to handle this */
