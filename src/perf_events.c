@@ -786,6 +786,12 @@ _papi_pe_init_substrate( int cidx )
 
   MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
 
+  /* are any of these needed anymore? */
+  /* These settings are exported to userspace.  Ugh */
+  MY_VECTOR.cmp_info.fast_counter_read = 1;
+  MY_VECTOR.cmp_info.fast_real_timer = 1;
+  MY_VECTOR.cmp_info.cntr_umasks = 1;
+
   /* Run Vendor-specific fixups */
   pe_vendor_fixups();
 
