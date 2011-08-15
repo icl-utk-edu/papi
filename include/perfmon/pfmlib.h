@@ -144,6 +144,8 @@ typedef enum {
 	PFM_PMU_INTEL_SNB,		/* Intel Sandy Bridge (single socket) */
 	PFM_PMU_AMD64_FAM14H_BOBCAT,	/* AMD AMD64 Fam14h Bobcat */
 	PFM_PMU_AMD64_FAM15H_INTERLAGOS,/* AMD AMD64 Fam15h Interlagos */
+
+	PFM_PMU_INTEL_SNB_EP,		/* Intel SandyBridge EP */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
