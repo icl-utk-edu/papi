@@ -703,8 +703,8 @@ _papi_pe_init_substrate( int cidx )
 
   ( void ) cidx;          /*unused */
 
-  /* Run the libpfm3-specific setup */
-  retval=_papi_pfm3_init();
+  /* Run the libpfm-specific setup */
+  retval=_papi_libpfm_init();
   if (retval) return retval;
 
   /* Get Linux-specific system info */
@@ -754,7 +754,7 @@ _papi_pe_init_substrate( int cidx )
   }
 
   /* Run Vendor-specific fixups */
-  _papi_pfm3_vendor_fixups();
+  _papi_libpfm_vendor_fixups();
 
   return PAPI_OK;
 
@@ -1104,7 +1104,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 
 	for ( i = 0; i < count; i++ ) {
 		if ( native ) {
-		  ret=_papi_pfm3_setup_counters(&pe_ctl->events[i],
+		  ret=_papi_libpfm_setup_counters(&pe_ctl->events[i],
 						native[i].ni_bits);
 		  SUBDBG( "pe_ctl->events[%d].config=%"PRIx64"\n",i,
 			  pe_ctl->events[i].config);
@@ -1337,19 +1337,10 @@ _papi_pe_shutdown( hwd_context_t * ctx )
 	return ret;
 }
 
-
-int _papi_pfm_shutdown(hwd_context_t *ctx0) {
-
-  (void) ctx0;
-
-  return PAPI_OK;
-}
-
-
 int
 _papi_pe_shutdown_substrate(  ) {
 
-	_papi_pfm_shutdown(NULL);
+	_papi_libpfm_shutdown();
 
 	return PAPI_OK;
 }
@@ -1879,7 +1870,7 @@ _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 {
 	int i, j;
 	for ( i = 0; i < ESI->NativeCount; i++ ) {
-		if ( _papi_pfm_ntv_code_to_bits
+		if ( _papi_libpfm_ntv_code_to_bits
 			 ( ESI->NativeInfoArray[i].ni_event,
 			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
 			goto bail;
@@ -1963,10 +1954,10 @@ papi_vector_t _papi_pe_vector = {
 	.get_system_info =   _linux_get_system_info,
 
 	/* from counter name mapper */
-	.ntv_enum_events =   _papi_pfm_ntv_enum_events,
-	.ntv_name_to_code =  _papi_pfm_ntv_name_to_code,
-	.ntv_code_to_name =  _papi_pfm_ntv_code_to_name,
-	.ntv_code_to_descr = _papi_pfm_ntv_code_to_descr,
-	.ntv_code_to_bits =  _papi_pfm_ntv_code_to_bits,
-	.ntv_bits_to_info =  _papi_pfm_ntv_bits_to_info,
+	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,
+	.ntv_name_to_code =  _papi_libpfm_ntv_name_to_code,
+	.ntv_code_to_name =  _papi_libpfm_ntv_code_to_name,
+	.ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
+	.ntv_code_to_bits =  _papi_libpfm_ntv_code_to_bits,
+	.ntv_bits_to_info =  _papi_libpfm_ntv_bits_to_info,
 };

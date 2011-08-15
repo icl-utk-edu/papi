@@ -1165,12 +1165,12 @@ papi_vector_t _x86_vector = {
 	.get_virt_cycles =   _linux_get_virt_cycles,
 	.get_virt_usec =     _linux_get_virt_usec,
 
-	/* from pfm */
-	.ntv_enum_events   = _papi_pfm_ntv_enum_events,
-	.ntv_name_to_code  = _papi_pfm_ntv_name_to_code,
-	.ntv_code_to_name  = _papi_pfm_ntv_code_to_name,
-	.ntv_code_to_descr = _papi_pfm_ntv_code_to_descr,
-	.ntv_code_to_bits  = _papi_pfm_ntv_code_to_bits,
-	.ntv_bits_to_info  = _papi_pfm_ntv_bits_to_info,
+	/* from libpfm */
+	.ntv_enum_events   = _papi_libpfm_ntv_enum_events,
+	.ntv_name_to_code  = _papi_libpfm_ntv_name_to_code,
+	.ntv_code_to_name  = _papi_libpfm_ntv_code_to_name,
+	.ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
+	.ntv_code_to_bits  = _papi_libpfm_ntv_code_to_bits,
+	.ntv_bits_to_info  = _papi_libpfm_ntv_bits_to_info,
 
 };

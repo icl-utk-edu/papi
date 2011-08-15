@@ -2146,12 +2146,14 @@ papi_vector_t _ia64_vector = {
 	.set_overflow = _ia64_set_overflow,
 	.set_profile = _ia64_set_profile,
 	.stop_profiling = _ia64_stop_profiling,
-	.ntv_enum_events = _ia64_ntv_enum_events,
-	.ntv_code_to_name = _ia64_ntv_code_to_name,
-	.ntv_code_to_descr = _ia64_ntv_code_to_descr,
 	.init_substrate = _ia64_init_substrate,
 	.dispatch_timer = _ia64_dispatch_timer,
 	.init = _ia64_init,
+
+	.ntv_enum_events = _ia64_ntv_enum_events,
+	.ntv_code_to_name = _ia64_ntv_code_to_name,
+	.ntv_code_to_descr = _ia64_ntv_code_to_descr,
+
 
 	/* from OS */
 	.get_memory_info =   _linux_get_memory_info,

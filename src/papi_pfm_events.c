@@ -762,7 +762,7 @@ _pfm_convert_umask( unsigned int event, unsigned int umask )
 /* convert libpfm error codes to PAPI error codes for 
 	more informative error reporting */
 int
-_papi_pfm_error( int pfm_error )
+_papi_libpfm_error( int pfm_error )
 {
 	switch ( pfm_error ) {
 		case PFMLIB_SUCCESS:		return PAPI_OK;			/* success */
@@ -798,7 +798,7 @@ _papi_pfm_error( int pfm_error )
 
 
 int
-_papi_pfm_setup_presets( char *pmu_name, int pmu_type )
+_papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
 {
 	int retval;
 	hwi_search_t *preset_search_map = NULL;
@@ -835,7 +835,7 @@ out:
 }
 
 int
-_papi_pfm_ntv_name_to_code( char *name, unsigned int *event_code )
+_papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
 {
 	pfmlib_event_t event;
 	unsigned int i;
@@ -876,7 +876,7 @@ _papi_pfm_ntv_name_to_code( char *name, unsigned int *event_code )
 }
 
 int
-_papi_pfm_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
+_papi_libpfm_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
 {
 	int ret;
 	unsigned int event, umask;
@@ -911,7 +911,7 @@ _papi_pfm_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
 }
 
 int
-_papi_pfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len )
+_papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len )
 {
 	unsigned int event, umask;
 	char *eventd, **maskd, *tmp;
@@ -992,7 +992,7 @@ _papi_pfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len )
 }
 
 int
-_papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier )
+_papi_libpfm_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 	unsigned int event, umask, num_masks;
 	int ret;
@@ -1101,7 +1101,7 @@ _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 #ifndef PERFCTR_PFM_EVENTS
 
 int
-_papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
+_papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
 	unsigned int event, umask;
 	pfmlib_event_t gete;
@@ -1127,7 +1127,7 @@ _pmc_name( int i )
 }
 
 int
-_papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
+_papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 							unsigned int *values, int name_len, int count )
 {
 	int ret;
@@ -1250,7 +1250,7 @@ copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
 }
 
 int
-_papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
+_papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 							unsigned int *values, int name_len, int count )
 {
 	int i = 0;
@@ -1288,7 +1288,7 @@ _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 /* perfctr-p3 assumes each event has only a single command code
        libpfm assumes each counter might have a different code. */
 int
-_papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
+_papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
 	if ( PENTIUM4 ) {
 		pentium4_escr_value_t escr_value;
@@ -1431,7 +1431,7 @@ int _perfmon2_pfm_pmu_type = -1;
 
 
 int
-_papi_pfm3_init(void) {
+_papi_libpfm_init(void) {
 
    int retval;
    unsigned int ncnt;
@@ -1487,7 +1487,7 @@ _papi_pfm3_init(void) {
    SUBDBG( "PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type );
 
    /* Setup presets */
-   retval = _papi_pfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
+   retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
    if ( retval )
       return retval;
 
@@ -1512,7 +1512,7 @@ _papi_pfm3_init(void) {
 }
 
 
-int _papi_pfm3_vendor_fixups(void) {
+int _papi_libpfm_vendor_fixups(void) {
 
    /* On IBM and Power6 Machines default domain should include supervisor */
    if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
@@ -1788,7 +1788,7 @@ long long generate_p4_event(long long escr,
 }
 
 int
-_papi_pfm3_setup_counters( struct perf_event_attr *attr, 
+_papi_libpfm_setup_counters( struct perf_event_attr *attr, 
 			   hwd_register_t *ni_bits ) {
 
   int ret,pe_event;
@@ -1848,4 +1848,13 @@ _papi_pfm3_setup_counters( struct perf_event_attr *attr,
 
     return PAPI_OK;
 }
+
+int 
+_papi_libpfm_shutdown(void) {
+
+  SUBDBG("shutdown\n");
+
+  return PAPI_OK;
+}
+
 

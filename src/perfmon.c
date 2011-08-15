@@ -2439,8 +2439,7 @@ papi_vector_t _papi_pfm_vector = {
 	.shutdown = _papi_pfm_shutdown,
 	.shutdown_substrate = _papi_pfm_shutdown_substrate,
 	.ctl = _papi_pfm_ctl,
-	.update_control_state = _papi_pfm_update_control_state,
-	.update_shlib_info = _linux_update_shlib_info,
+	.update_control_state = _papi_pfm_update_control_state,	
 	.set_domain = set_domain,
 	.reset = _papi_pfm_reset,
 	.set_overflow = _papi_pfm_set_overflow,
@@ -2453,19 +2452,20 @@ papi_vector_t _papi_pfm_vector = {
 	.write = _papi_pfm_write,
 
 	/* from OS */
-	.get_memory_info = _linux_get_memory_info,
-	.get_dmem_info =   _linux_get_dmem_info,
-	.get_real_usec =   _linux_get_real_usec,
-	.get_real_cycles = _linux_get_real_cycles,
-	.get_virt_cycles = _linux_get_virt_cycles,
-	.get_virt_usec =   _linux_get_virt_usec,
+	.get_memory_info =   _linux_get_memory_info,
+	.get_dmem_info =     _linux_get_dmem_info,
+	.update_shlib_info = _linux_update_shlib_info,
+	.get_real_usec =     _linux_get_real_usec,
+	.get_real_cycles =   _linux_get_real_cycles,
+	.get_virt_cycles =   _linux_get_virt_cycles,
+	.get_virt_usec =     _linux_get_virt_usec,
 
 	/* from the counter name library */
-	.ntv_enum_events = _papi_pfm_ntv_enum_events,
-	.ntv_name_to_code = _papi_pfm_ntv_name_to_code,
-	.ntv_code_to_name = _papi_pfm_ntv_code_to_name,
-	.ntv_code_to_descr = _papi_pfm_ntv_code_to_descr,
-	.ntv_code_to_bits = _papi_pfm_ntv_code_to_bits,
-	.ntv_bits_to_info = _papi_pfm_ntv_bits_to_info,
+	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,
+	.ntv_name_to_code =  _papi_libpfm_ntv_name_to_code,
+	.ntv_code_to_name =  _papi_libpfm_ntv_code_to_name,
+	.ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
+	.ntv_code_to_bits =  _papi_libpfm_ntv_code_to_bits,
+	.ntv_bits_to_info =  _papi_libpfm_ntv_bits_to_info,
 
 };
