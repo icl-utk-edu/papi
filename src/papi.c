@@ -997,6 +997,7 @@ PAPI_event_name_to_code( char *in, int *out )
 /* Updates EventCode to next valid value, or returns error; 
   modifier can specify {all / available} for presets, or other values for native tables 
   and may be platform specific (Major groups / all mask bits; P / M / E chip, etc) */
+
 /** @class PAPI_enum_event
  *	@brief enumerate PAPI preset or native events 
  *
@@ -1023,8 +1024,7 @@ PAPI_event_name_to_code( char *in, int *out )
  *	@param *EventCode
  *		A defined preset or native event such as PAPI_TOT_INS.
  *	@param modifier 
- *		Modifies the search logic. For preset events, 
- *		TRUE specifies available events only. 
+ *		Modifies the search logic. See below for full list.
  *		For native events, each platform behaves differently. 
  *		See platform-specific documentation for details.
  *
@@ -1044,28 +1044,56 @@ PAPI_event_name_to_code( char *in, int *out )
  *	} while ( PAPI_enum_event( &i, PAPI_ENUM_ALL ) == PAPI_OK );
  *	@endcode
  *
- *	@par PENTIUM 4
- *	The following values are implemented for modifier on Pentium 4:
+ *      @par Generic Modifiers
+ *	The following values are implemented for preset events
  *	<ul>
- *		<li> PAPI_PENT4_ENUM_GROUPS - 45 groups + custom + user event types 
- *		<li> PAPI_PENT4_ENUM_COMBOS - All combinations of mask bits for given group 
- *		<li> PAPI_PENT4_ENUM_BITS  - All individual bits for a given group
+ *         <li> PAPI_ENUM_EVENTS -- Enumerate all (default)
+ *         <li> PAPI_ENUM_FIRST -- Enumerate first event (preset or native)
+ *                preset/native chosen based on type of EventCode
  *	</ul>
  *
- *	@par ITANIUM
+ *      @par Native Modifiers
+ *	The following values are implemented for native events
+ *	<ul>
+ *         <li>PAPI_NTV_ENUM_UMASKS -- Given an event, iterate through
+ *                     possible umasks one at a time
+ *         <li>PAPI_NTV_ENUM_UMASK_COMBOS -- Given an event, iterate
+ *                     through all possible combinations of umasks.
+ *                     This is not implemented on libpfm4.
+ *	</ul>
+ *
+ *	@par Preset Modifiers
+ *	The following values are implemented for preset events
+ *	<ul>
+ *         <li> PAPI_PRESET_ENUM_AVAIL -- enumerate only available presets
+ *         <li> PAPI_PRESET_ENUM_MSC   -- Miscellaneous preset events
+ *         <li> PAPI_PRESET_ENUM_INS   -- Instruction related preset events
+ *         <li> PAPI_PRESET_ENUM_IDL   -- Stalled or Idle preset events
+ *         <li> PAPI_PRESET_ENUM_BR    -- Branch related preset events
+ *         <li> PAPI_PRESET_ENUM_CND   -- Conditional preset events
+ *         <li> PAPI_PRESET_ENUM_MEM   -- Memory related preset events
+ *         <li> PAPI_PRESET_ENUM_CACH  -- Cache related preset events
+ *         <li> PAPI_PRESET_ENUM_L1    -- L1 cache related preset events
+ *         <li> PAPI_PRESET_ENUM_L2    -- L2 cache related preset events
+ *         <li> PAPI_PRESET_ENUM_L3    -- L3 cache related preset events
+ *         <li> PAPI_PRESET_ENUM_TLB   -- Translation Lookaside Buffer events
+ *         <li> PAPI_PRESET_ENUM_FP    -- Floating Point related preset events
+ *	</ul>
+ *
+ *	@par ITANIUM Modifiers
  *	The following values are implemented for modifier on Itanium: 
  *	<ul>
- *		<li> PAPI_ITA_ENUM_IARR - Enumerate IAR (instruction address ranging) events 
- *		<li> PAPI_ITA_ENUM_DARR - Enumerate DAR (data address ranging) events 
- *		<li> PAPI_ITA_ENUM_OPCM - Enumerate OPC (opcode matching) events 
- *		<li> PAPI_ITA_ENUM_IEAR - Enumerate IEAR (instr event address register) events 
- *		<li> PAPI_ITA_ENUM_DEAR - Enumerate DEAR (data event address register) events
+ *	   <li> PAPI_NTV_ENUM_IARR - Enumerate IAR (instruction address ranging) events 
+ *	   <li> PAPI_NTV_ENUM_DARR - Enumerate DAR (data address ranging) events 
+ *	   <li> PAPI_NTV_ENUM_OPCM - Enumerate OPC (opcode matching) events 
+ *	   <li> PAPI_NTV_ENUM_IEAR - Enumerate IEAR (instr event address register) events 
+ *	   <li> PAPI_NTV_ENUM_DEAR - Enumerate DEAR (data event address register) events
  *	</ul>
  *
- *	@par POWER 4
- *	The following values are implemented for modifier on POWER 4: 
+ *	@par POWER Modifiers
+ *	The following values are implemented for POWER
  *	<ul>
- *		<li> PAPI_PWR4_ENUM_GROUPS - Enumerate groups to which an event belongs
+ *	   <li> PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
  *	</ul>
  *
  *	@bug 
