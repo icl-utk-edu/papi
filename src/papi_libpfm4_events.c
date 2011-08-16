@@ -27,13 +27,13 @@ static struct native_event_t {
   int perfmon_idx;
   char *allocated_name;
   char *base_name;
-  //char *canonical_name;
   char *pmu_plus_name;
   int users;
 } native_events[MAX_NATIVE_EVENTS];
 
 static int num_native_events=0;
 
+static pfm_pmu_info_t default_pmu;
 
 static struct native_event_t *find_existing_event(char *name) {
 
@@ -61,6 +61,16 @@ static struct native_event_t *find_existing_event(char *name) {
   return temp_event;
 }
 
+/** @class  find_existing_event_by_number
+ *  @brief  looks up a native_event_t given its PAPI event code
+ *
+ *  @param[in] eventnum
+ *             -- a PAPI event number
+ *
+ *  @returns returns a struct native_event_t *, or NULL if event not found
+ *
+ */
+
 static struct native_event_t *find_existing_event_by_number(int eventnum) {
 
   int i;
@@ -68,6 +78,7 @@ static struct native_event_t *find_existing_event_by_number(int eventnum) {
 
   _papi_hwi_lock( NAMELIB_LOCK );
 
+  /* Simple linear search for now */
   for(i=0;i<num_native_events;i++) {
     if (eventnum==native_events[i].papi_code) {
        temp_event=&native_events[i];
@@ -126,43 +137,66 @@ static int find_event_no_aliases(char *name) {
 
 }
 
+/** @class  find_next_no_aliases
+ *  @brief  finds the event after this one, avoiding any event alias issues
+ *
+ *  @param[in] code
+ *             -- a libpfm4 event number
+ *
+ *  @returns returns a libpfm4 event number for next event
+ *           or a libpfm4 error code
+ *
+ */
 
 static int find_next_no_aliases(int code) {
 
-  int current_pmu=0,current_event=0,ret;
+  int current_pmu=0,current_event=0;
+  pfm_err_t ret;
   pfm_pmu_info_t pinfo;
   pfm_event_info_t event_info;
 
-  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+  /* Clear the structures, as libpfm4 requires it */
   memset(&event_info,0,sizeof(pfm_event_info_t));
 
-  pfm_get_event_info(code, PFM_OS_PERF_EVENT, &event_info);
+  ret=pfm_get_event_info(code, PFM_OS_PERF_EVENT, &event_info);
+  if (ret!=PFM_SUCCESS) {
+     return ret;
+  }
+
   current_pmu=event_info.pmu;
   current_event=code+1;
 
   SUBDBG("Current is %x guessing next is %x\n",code,current_event);
 
-stupid_loop:
+  while(1) {
 
-  ret=pfm_get_event_info(current_event, PFM_OS_PERF_EVENT, &event_info);
-  if (ret>=0) {
-    SUBDBG("Returning %x\n",current_event);
-     return current_event;
-  }
+     memset(&event_info,0,sizeof(pfm_event_info_t));
+     ret=pfm_get_event_info(current_event, PFM_OS_PERF_EVENT, &event_info);
+     if (ret==PFM_SUCCESS) {
+        SUBDBG("Returning %x\n",current_event);
+        return current_event;
+     }
 
-  /* need to increment pmu */
-inc_pmu:
-  current_pmu++;
-  SUBDBG("Incrementing PMU: %x\n",current_pmu);
-  if (current_pmu>PFM_PMU_MAX) return -1;
+     /* next event not found, so try moving to next PMU */
 
-  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
-  pfm_get_pmu_info(current_pmu, &pinfo);
-  if (!pinfo.is_present) goto inc_pmu;
+     while(1) {
+
+        current_pmu++;
+        SUBDBG("Incrementing PMU: %x\n",current_pmu);
+
+	/* Off the end, so done iterating */
+        if (current_pmu>PFM_PMU_MAX) {
+           return PFM_ERR_NOTFOUND;
+        }
  
-  current_event=pinfo.first_event;
+        memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+        pfm_get_pmu_info(current_pmu, &pinfo);
+        if (pinfo.is_present) break;
+     }
 
-  goto stupid_loop;
+     current_event=pinfo.first_event;
+
+  }
 
 }
 
@@ -273,6 +307,20 @@ prepare_umask( unsigned int foo, unsigned int *values )
 	return ( j );
 }
 
+/** @class  find_max_umask
+ *  @brief  finds the highest-numbered umask found in an event
+ *
+ *  @param[in] *current_event
+ *             -- a struct native_event_t for the event in question
+ *
+ *  @returns returns the highest-number umask 
+ *           or a libpfm4 error code
+ *  @retval PFM_ERR_UMASK -- event name has no umask
+ *  @retval PFM_ERR_NOTFOUND -- event not found
+ *  @retval PFM_ERR_ATTR -- attribute name not found by libpfm4
+ *
+ */
+
 static int find_max_umask(struct native_event_t *current_event) {
 
   pfm_event_attr_info_t ainfo;
@@ -281,16 +329,15 @@ static int find_max_umask(struct native_event_t *current_event) {
   pfm_event_info_t info;
   char event_string[BUFSIZ],*ptr;
 
-  SUBDBG("Enter\n");
-
   SUBDBG("Trying to find max umask in %s\n",current_event->allocated_name);
 
   strcpy(event_string,current_event->allocated_name);
 
+  /* Skip leading :: delimited PMU name and point to first umask */
   if (strstr(event_string,"::")) {
-    ptr=strstr(event_string,"::");
-    ptr+=2;
-    b=strtok(ptr,":");
+     ptr=strstr(event_string,"::");
+     ptr+=2;
+     b=strtok(ptr,":");
   }
   else {
      b=strtok(event_string,":");
@@ -298,21 +345,22 @@ static int find_max_umask(struct native_event_t *current_event) {
 
   if (!b) {
      SUBDBG("No colon!\n");
-     return -1;
+     return PFM_ERR_UMASK; /* Must be this value!! */
   }
 
   memset(&info,0,sizeof(pfm_event_info_t));
-  ret = pfm_get_event_info(current_event->perfmon_idx, PFM_OS_PERF_EVENT, &info);
+  ret = pfm_get_event_info(current_event->perfmon_idx, 
+			   PFM_OS_PERF_EVENT, &info);
   if (ret!=PFM_SUCCESS) {
      SUBDBG("get_event_info failed\n");
-     return -1;
+     return PFM_ERR_NOTFOUND;
   }
 
   /* skip first */
   b=strtok(NULL,":");
   if (!b) {
      SUBDBG("Skipping first failed\n");
-     return -1;
+     return PFM_ERR_UMASK; /* Must be this value!! */
   }
 
   while(b) {
@@ -343,7 +391,7 @@ static int find_max_umask(struct native_event_t *current_event) {
 
     SUBDBG("attr=%s not found for event %s\n", b, info.name);
 
-    return PAPI_ECNFLCT;
+    return PFM_ERR_ATTR;
 
 found_attr:
 
@@ -355,6 +403,14 @@ found_attr:
   return max;
 }
 
+/** @class  get_event_first_active
+ *  @brief  return the first available event that's on an active PMU
+ *
+ *  @returns returns a libpfm event number
+ *  @retval PAPI_ENOEVENT  Could not find an event
+ *
+ */
+
 static int
 get_event_first_active(void)
 {
@@ -362,12 +418,11 @@ get_event_first_active(void)
 
   pfm_pmu_info_t pinfo;
 
-  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
-
   pmu_idx=0;
 
   while(pmu_idx<PFM_PMU_MAX) {
 
+    /* clear the PMU structure (required by libpfm4) */
     memset(&pinfo,0,sizeof(pfm_pmu_info_t));
     ret=pfm_get_pmu_info(pmu_idx, &pinfo);
 
@@ -378,46 +433,59 @@ get_event_first_active(void)
       return pidx;
 
     }
+
     pmu_idx++;
 
   }
+
   return PAPI_ENOEVNT;
   
 }
 
 
-/* first PMU, no leading PMU indicator */
-/* subsequent, yes */
+
+/** @class  convert_libpfm4_to_string
+ *  @brief  convert a libpfm event value to an event name
+ *
+ *  @param[in] code
+ *        -- libpfm4 code to convert
+ *  @param[out] **event_name
+ *        -- pointer to a string pointer that will be allocated
+ *
+ *  @returns returns a libpfm error condition
+ *
+ *  If in the default PMU, then no leading PMU indicator.
+ *  Otherwise includes the PMU name.
+ */
 
 static int
 convert_libpfm4_to_string( int code, char **event_name)
 {
 
   int ret;
-  pfm_event_info_t gete;//,first_info;
+  pfm_event_info_t gete;
   pfm_pmu_info_t pinfo;
   char name[BUFSIZ];
-  //int first;
 
   SUBDBG("ENTER %x\n",code);
 
-  //first=get_event_first_active();
-
-  memset( &gete, 0, sizeof ( pfm_event_info_t ) );
-  //memset( &first_info, 0, sizeof ( pfm_event_info_t ) );
-  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+  /* Clear structures, as wanted by libpfm4 */
+  memset( &gete, 0, sizeof (pfm_event_info_t) );
 
   ret=pfm_get_event_info(code, PFM_OS_PERF_EVENT, &gete);
-  //  ret=pfm_get_event_info(first, PFM_OS_PERF_EVENT, &first_info);
+  if (ret!=PFM_SUCCESS) {
+     return ret;
+  }
 
-  memset(&pinfo,0,sizeof(pfm_pmu_info_t));
-  pfm_get_pmu_info(gete.pmu, &pinfo);
-  /* VMW */
-  /* FIXME, make a "is it the default" function */
+  memset( &pinfo, 0, sizeof(pfm_pmu_info_t) );
+  ret=pfm_get_pmu_info(gete.pmu, &pinfo);
+  if (ret!=PFM_SUCCESS) {
+     return ret;
+  }
 
-  if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
-       strcmp(pinfo.name,"ix86arch")) {
-    //  if (gete.pmu==first_info.pmu) {
+  /* Only prepend PMU name if not on the "default" PMU */
+
+  if (pinfo.pmu == default_pmu.pmu) {
      *event_name=strdup(gete.name);
   }
   else {
@@ -427,9 +495,22 @@ convert_libpfm4_to_string( int code, char **event_name)
 
   SUBDBG("Found name: %s\n",*event_name);
 
-  return ret;
+  return PFM_SUCCESS;
 
 }
+
+
+/** @class  convert_pfmidx_to_native
+ *  @brief  convert a libpfm event value to a PAPI event value
+ *
+ *  @param[in] code
+ *        -- libpfm4 code to convert
+ *  @param[out] *PapiEventCode
+ *        -- PAPI event code
+ *
+ *  @returns returns a PAPI error code
+ *
+ */
 
 static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode) {
 
@@ -437,18 +518,40 @@ static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode) {
   char *name=NULL;
 
   ret=convert_libpfm4_to_string( code, &name);
-  SUBDBG("Converted %x to %s\n",code,name);
-  if (ret==PFM_SUCCESS) {
-     ret=_papi_libpfm_ntv_name_to_code(name,PapiEventCode);
-     SUBDBG("RETURNING FIRST: %x %s\n",*PapiEventCode,name);
+  if (ret!=PFM_SUCCESS) {
+     return _papi_libpfm_error(ret);
   }
 
+  SUBDBG("Converted %x to %s\n",code,name);
+
+  ret=_papi_libpfm_ntv_name_to_code(name,PapiEventCode);
+
+  SUBDBG("Converted %s to event %x\n",name,*PapiEventCode);
+
   if (name) free(name);
+
   return ret;
 
 }
 
 
+/** @class  find_next_umask
+ *  @brief  finds the next umask
+ *
+ *  @param[in] *current_event
+ *             -- a struct native_event_t for the event in question
+ *  @param[in] current
+ *             -- number of current highest umask.  -1 indicates
+ *                start from scratch.
+ *  @parm[out] umask_name
+ *             -- name of next umask
+ *
+ *  @returns returns next umask value or a libpfm4 error code
+ *  @retval PFM_ERR_NOTFOUND -- event not found
+ *  @retval PFM_ERR_ATTR -- attribute name not found by libpfm4
+ *  @retval PFM_ERR_NOMEM -- out of memory when malloc()
+ *
+ */
 
 
 static int find_next_umask(struct native_event_t *current_event,
@@ -460,12 +563,15 @@ static int find_next_umask(struct native_event_t *current_event,
   int num_masks=0;
   pfm_err_t ret;
   int i;
-  //  int actual_val=0;
 
   /* get number of attributes */
 
   memset(&event_info, 0, sizeof(event_info));
-  ret=pfm_get_event_info(current_event->perfmon_idx, PFM_OS_PERF_EVENT, &event_info);
+  ret=pfm_get_event_info(current_event->perfmon_idx, 
+			 PFM_OS_PERF_EVENT, &event_info);
+  if (ret!=PFM_SUCCESS) {
+     return ret;
+  }
 	
   SUBDBG("%d possible attributes for event %s\n",
 	 event_info.nattrs,
@@ -473,10 +579,11 @@ static int find_next_umask(struct native_event_t *current_event,
 
   ainfo = malloc(event_info.nattrs * sizeof(*ainfo));
   if (!ainfo) {
-     return PAPI_ENOMEM;
+     return PFM_ERR_NOMEM;
   }
 
   pfm_for_each_event_attr(i, &event_info) {
+
      ainfo[i].size = sizeof(*ainfo);
 
      ret = pfm_get_event_attr_info(event_info.idx, i, PFM_OS_PERF_EVENT, 
@@ -484,13 +591,14 @@ static int find_next_umask(struct native_event_t *current_event,
      if (ret != PFM_SUCCESS) {
         SUBDBG("Not found\n");
         if (ainfo) free(ainfo);
-	return PAPI_ENOEVNT;
+	return PFM_ERR_NOTFOUND;
      }
 
      if (ainfo[i].type == PFM_ATTR_UMASK) {
 	SUBDBG("nm %d looking for %d\n",num_masks,current);
 	if (num_masks==current+1) {	  
-	   SUBDBG("Found attribute %d: %s type: %d\n",i,ainfo[i].name,ainfo[i].type);
+	   SUBDBG("Found attribute %d: %s type: %d\n",
+		  i,ainfo[i].name,ainfo[i].type);
 	
            sprintf(temp_string,"%s",ainfo[i].name);
            strncpy(umask_name,temp_string,BUFSIZ);
@@ -503,7 +611,7 @@ static int find_next_umask(struct native_event_t *current_event,
   }
 
   if (ainfo) free(ainfo);
-  return -1;
+  return PFM_ERR_ATTR;
 
 }
 
@@ -644,8 +752,9 @@ _papi_libpfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len )
  *  @retval PAPI_ENOEVENT The event does not exist
  *  @retval PAPI_EBUF     The event name was too big for ntv_descr
  *
- *  If the event has umasks, return the description for each
- *  separated by commas.
+ *  Return the event description.
+ *  If the event has umasks, then include ", masks" and the
+ *  umask descriptions follow, separated by commas.
  */
 
 
@@ -785,6 +894,21 @@ descr_in_tmp:
 	return ret;
 }
 
+
+/** @class  _papi_libpfm_ntv_enum_events
+ *  @brief  Walk through all events in a pre-defined order
+ *
+ *  @param[in,out] *PapiEventCode
+ *        -- PAPI event code to start with
+ *  @param[in] modifier
+ *        -- describe how to enumerate
+ *
+ *  @retval PAPI_OK       The event was found and converted to a description
+ *  @retval PAPI_ENOEVENT The event does not exist
+ *  @retval PAPI_ENOIMPL  The enumeration method requested in not implemented
+ *
+ */
+
 int
 _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
@@ -795,63 +919,72 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	/* return first event if so specified */
 	if ( modifier == PAPI_ENUM_FIRST ) {
-	   unsigned int blah=0;
+
+	   unsigned int papi_event=0;
+
            SUBDBG("ENUM_FIRST\n");
 
 	   code=get_event_first_active();
-	   ret=convert_pfmidx_to_native(code, &blah);
-	   *PapiEventCode=(unsigned int)blah;
+	   if (code < 0 ) {
+	      return code;
+	   }
+
+	   /* convert the libpfm4 event to a PAPI event */
+	   ret=convert_pfmidx_to_native(code, &papi_event);
+
+	   *PapiEventCode=(unsigned int)papi_event;
+
            SUBDBG("FOUND %x (from %x) ret=%d\n",*PapiEventCode,code,ret);
 
 	   return ret;
 	}
 
+	/* If we get this far, we're looking for a        */
+	/* next-event.  So gather info on the current one */
 	current_event=find_existing_event_by_number(*PapiEventCode);
 	if (current_event==NULL) {
            SUBDBG("EVENTS %x not found\n",*PapiEventCode);
 	   return PAPI_ENOEVNT;
 	}
 
+
+	/* Handle looking for the next event */
+
 	if ( modifier == PAPI_ENUM_EVENTS ) {
-	   SUBDBG("ENUM_EVENTS %x\n",*PapiEventCode);
-	   unsigned int blah=0;
+
+	   unsigned int papi_event=0;
+
+	   SUBDBG("PAPI_ENUM_EVENTS %x\n",*PapiEventCode);
 
 	   code=current_event->perfmon_idx;
 
 	   ret=find_next_no_aliases(code);
-
 	   SUBDBG("find_next_no_aliases() Returned %x\n",ret);
 	   if (ret<0) {
-	      SUBDBG("<0 so returning\n");
 	      return ret;
 	   }
 
-	   SUBDBG("VMW BLAH1\n");
-
-	   ret=convert_pfmidx_to_native(ret, &blah);
-
-	   SUBDBG("VMW BLAH2\n");
-
-	     if (ret<0) {
+	   /* Convert libpfm4 event code to PAPI event code */
+	   ret=convert_pfmidx_to_native(ret, &papi_event);
+	   if (ret<0) {
 	       SUBDBG("Couldn't convert to native %d %s\n",
 		      ret,PAPI_strerror(ret));
-	     }
-	     *PapiEventCode=(unsigned int)blah;
+	       return ret;
+	   }
 
-	     if ((ret!=PAPI_OK) && (blah!=0)) {
-	        SUBDBG("Faking PAPI_OK because blah!=0\n");
-	        return PAPI_OK;
-	     }
+	   *PapiEventCode=(unsigned int)papi_event;
 
-             SUBDBG("Returning PAPI_OK\n");
-	     return ret;
+           SUBDBG("Returning PAPI_OK\n");
 
+	   return ret;
 	}
 
+	/* We don't handle PAPI_NTV_ENUM_UMASK_COMBOS */
 	if ( modifier == PAPI_NTV_ENUM_UMASK_COMBOS ) {
-		return PAPI_ENOEVNT;
+	   return PAPI_ENOIMPL;
 	} 
 
+	/* Enumerate PAPI_NTV_ENUM_UMASKS (umasks on an event) */
 	if ( modifier == PAPI_NTV_ENUM_UMASKS ) {
 
 	   int max_umask,next_umask;
@@ -862,29 +995,48 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	   max_umask=find_max_umask(current_event);
 	   SUBDBG("Found max %d\n",max_umask);
+
+	   if (max_umask<0) {
+	      if (max_umask==PFM_ERR_UMASK) {
+	         max_umask=-1; /* needed for find_next_umask() to work */
+		               /* indicates the event as passed had no */
+		               /* umask in it.                         */
+	      }
+	      else {
+	         return _papi_libpfm_error(max_umask);
+	      }
+	   }
+
 	   next_umask=find_next_umask(current_event,max_umask,
 				      umask_string);
+
 	   SUBDBG("Found next %d\n",next_umask);
 	   if (next_umask>=0) {
-	     unsigned int blah;
+
+	      unsigned int papi_event;
+
 	      sprintf(new_name,"%s:%s",current_event->base_name,
 		     umask_string);
      
-              ret=_papi_libpfm_ntv_name_to_code(new_name,&blah);
-	      if (ret!=PAPI_OK) return PAPI_ENOEVNT;
+              ret=_papi_libpfm_ntv_name_to_code(new_name,&papi_event);
+	      if (ret!=PAPI_OK) {
+		 return PAPI_ENOEVNT;
+	      }
 
-	      *PapiEventCode=(unsigned int)blah;
+	      *PapiEventCode=(unsigned int)papi_event;
 	      SUBDBG("found code %x\n",*PapiEventCode);
 	      return PAPI_OK;
 	   }
 
 	   SUBDBG("couldn't find umask\n");
 
-	   return PAPI_ENOEVNT;
+	   return _papi_libpfm_error(next_umask);
 
-	} else {
-		return PAPI_EINVAL;
 	}
+	
+	/* An unknown enumeration method was indicated */
+
+	return PAPI_ENOIMPL;
 }
 
 
@@ -933,7 +1085,7 @@ int
 _papi_libpfm_init(void) {
 
   int detected_pmus=0, found_default=0;
-   pfm_pmu_info_t default_pmu;
+
  
    int i, version;
    pfm_err_t retval;
