@@ -867,7 +867,7 @@ error:
 	return ret;
 }
 
-static void
+void
 pfmlib_release_event(pfmlib_event_desc_t *e)
 {
 	free(e->pattrs);
