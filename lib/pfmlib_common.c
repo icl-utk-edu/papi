@@ -1037,26 +1037,6 @@ error:
 	return ret;
 }
 
-#if 0
-/*
- * total number of events
- */
-int
-pfm_get_nevents(void)
-{
-	pfmlib_pmu_t *pmu;
-	int i, total = 0;
-
-	pfmlib_for_each_pmu(i) {
-		pmu = pfmlib_pmus[i];
-		if (!pfmlib_pmu_initialized(pmu))
-			continue;
-		total += pmu->pme_count;
-	}
-	return total;
-}
-#endif
-
 /* sorry, only English supported at this point! */
 static const char *pfmlib_err_list[]=
 {
@@ -1105,30 +1085,6 @@ pfm_get_event_next(int idx)
 	pidx = pmu->get_event_next(pmu, pidx);
 	return pidx == -1 ? -1 : pfmlib_pidx2idx(pmu, pidx);
 }
-
-#if 0
-int
-pfm_get_event_first(void)
-{
-	pfmlib_pmu_t *pmu;
-	int i, pidx;
-
-	/* scan all compiled in PMU models */
-	pfmlib_for_each_pmu(i) {
-		pmu = pfmlib_pmus[i];
-		/*
-		 * check if pmu validated
-		 */
-		if (!pfmlib_pmu_initialized(pmu))
-			continue;
-
-		pidx = pmu->get_event_first(pmu);
-		if (pidx != -1)
-			return pfmlib_pidx2idx(pmu, pidx);
-	}
-	return -1;
-}
-#endif
 
 int
 pfm_get_os_event_encoding(const char *str, int dfl_plm, pfm_os_t uos, void *args)
