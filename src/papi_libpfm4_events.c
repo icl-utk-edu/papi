@@ -644,6 +644,7 @@ _papi_libpfm_error( int pfm_error ) {
 /***********************************************************/
 
 
+
 /** @class  _papi_libpfm_ntv_name_to_code
  *  @brief  Take an event name and convert it to an event code.
  *
@@ -1040,9 +1041,24 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 }
 
 
+
+/** @class  _papi_libpfm_ntv_code_to_bits
+ *  @brief  Convert an EventCode to HW specific event info
+ *
+ *  @param[in] EventCode
+ *        -- PAPI event code
+ *  @param[out] *bits
+ *        -- an opaque structure that holds HW specific event info
+ *
+ *  @retval PAPI_OK       We always return PAPI_OK
+ *
+ */
+
 int
 _papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 {
+
+  /* on libpfm4 we just use the PAPI EventCode as the value for "bits" */
 
   *(int *)bits=EventCode;
 
@@ -1050,12 +1066,22 @@ _papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 }
 
 
-/* This function would return info on which counters an event could be in */
-/* libpfm4 currently does not support this */
+/** @class  _papi_libpfm_ntv_bits_to_info
+ *  @brief  Convert native bits to a descriptive string describing registers
+ *
+ *  @param[in] *bits
+ *  @param[out] *names
+ *  @param[out] *values
+ *  @param[in] name_len
+ *  @param[in] count
+ *
+ *  @retval PAPI_OK       We always return PAPI_OK
+ *
+ */
 
 int
-_papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-			    unsigned int *values, int name_len, int count )
+_papi_libpfm_ntv_bits_to_info( hwd_register_t *bits, char *names,
+			       unsigned int *values, int name_len, int count )
 {
 
   (void)bits;
@@ -1064,15 +1090,26 @@ _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
   (void)name_len;
   (void)count;
 
+  /* We do not support this on libpfm4 */
+
   return PAPI_OK;
 
 }
+
+
+/** @class  _papi_libpfm_shutdown
+ *  @brief  Shutdown any initialization done by the libpfm4 code
+ *
+ *  @retval PAPI_OK       We always return PAPI_OK
+ *
+ */
 
 int 
 _papi_libpfm_shutdown(void) {
 
   SUBDBG("shutdown\n");
 
+  /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
   memset(&native_events,0,sizeof(struct native_event_t)*MAX_NATIVE_EVENTS);
   num_native_events=0;
@@ -1081,12 +1118,19 @@ _papi_libpfm_shutdown(void) {
   return PAPI_OK;
 }
 
+
+/** @class  _papi_libpfm_init
+ *  @brief  Initialize the libpfm4 code
+ *
+ *  @retval PAPI_OK       We initialized correctly
+ *  @retval PAPI_ESBSTR   There was an error initializing the substrate
+ *
+ */
+
 int
 _papi_libpfm_init(void) {
 
-  int detected_pmus=0, found_default=0;
-
- 
+   int detected_pmus=0, found_default=0;
    int i, version;
    pfm_err_t retval;
    unsigned int ncnt;
@@ -1121,6 +1165,7 @@ _papi_libpfm_init(void) {
    /* Count number of present PMUs */
    detected_pmus=0;
    ncnt=0;
+
    /* need to init pinfo or pfmlib might complain */
    memset(&default_pmu, 0, sizeof(pfm_pmu_info_t));
    /* init default pmu */
@@ -1132,10 +1177,12 @@ _papi_libpfm_init(void) {
       retval=pfm_get_pmu_info(i, &pinfo);
       if (retval!=PFM_SUCCESS) continue;
       if (pinfo.is_present) {
-	SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
+	 SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
 
          detected_pmus++;
 	 ncnt+=pinfo.nevents;
+
+	 /* Choose default PMU */
 	 if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
               strcmp(pinfo.name,"ix86arch")) {
 
@@ -1161,6 +1208,7 @@ _papi_libpfm_init(void) {
 
    MY_VECTOR.cmp_info.num_cntrs = default_pmu.num_cntrs+
                                   default_pmu.num_fixed_cntrs;
+
    SUBDBG( "num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
 
    MY_VECTOR.cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
@@ -1168,11 +1216,25 @@ _papi_libpfm_init(void) {
    /* Setup presets */
    retval = _papi_libpfm_setup_presets( (char *)default_pmu.name, 
 				     default_pmu.pmu );
-   if ( retval )
+   if ( retval ) {
       return retval;
-	
+   }	
+
    return PAPI_OK;
 }
+
+
+/** @class  _papi_libpfm_setup_counters
+ *  @brief  Generate the events HW bits to be programmed into the counters
+ *
+ *  @param[out] *attr
+ *        -- perf_event compatible attr structure
+ *  @param[in] *ni_bits
+ *        -- an opaque structure that holds HW specific event info
+ *
+ *  @retval PAPI_OK       We generated the event properly
+ *
+ */
 
 int
 _papi_libpfm_setup_counters( struct perf_event_attr *attr,
@@ -1184,21 +1246,27 @@ _papi_libpfm_setup_counters( struct perf_event_attr *attr,
    
   pfm_perf_encode_arg_t perf_arg;
 
+  /* clear the attribute structure */
   memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
   perf_arg.attr=attr;
    
   our_idx=*(int *)(ni_bits);
 
-  _papi_libpfm_ntv_code_to_name( our_idx,our_name,BUFSIZ);
+  /* convert our code to a name */
+  ret=_papi_libpfm_ntv_code_to_name( our_idx,our_name,BUFSIZ);
+  if (ret!=PAPI_OK) {
+     return ret;
+  }
 
   SUBDBG("trying \"%s\" %x\n",our_name,our_idx);
 
+  /* use name of the event to get the perf_event encoding */
   ret = pfm_get_os_event_encoding(our_name, 
 				  PFM_PLM0 | PFM_PLM3, 
                                   PFM_OS_PERF_EVENT_EXT, 
 				  &perf_arg);
   if (ret!=PFM_SUCCESS) {
-     return PAPI_ENOEVNT;
+     return _papi_libpfm_error(ret);
   }
   
   SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64" type 0x%"PRIx32"\n", 
