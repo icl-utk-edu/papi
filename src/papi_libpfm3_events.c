@@ -89,6 +89,10 @@ encode_native_event( unsigned int event, unsigned int num_mask,
 	return ( int ) ( tmp | PAPI_NATIVE_MASK );
 }
 
+#if 0
+
+/* was this ncessary?  Was used by the preset code */
+
 static int
 setup_preset_term( int *native, pfmlib_event_t * event )
 {
@@ -139,7 +143,7 @@ setup_preset_term( int *native, pfmlib_event_t * event )
 		  event->event, j );
 	return ( PAPI_ENOEVNT );
 }
-
+#endif
 
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
 static inline int
@@ -460,56 +464,6 @@ _papi_libpfm_ntv_enum_events( unsigned int *EventCode, int modifier )
 		return ( PAPI_EINVAL );
 }
 
-/* This call is broken. Selector can be much bigger than 32 bits. It should be a pfmlib_regmask_t - pjm */
-/* Also, libpfm assumes events can live on different counters with different codes. This call only returns
-    the first occurence found. */
-/* Right now its only called by ntv_code_to_bits in perfctr-p3, so we're ok. But for it to be
-    generally useful it should be fixed. - dkt */
-static int
-_pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
-{
-	pfmlib_regmask_t cnt, impl;
-	unsigned int num;
-	unsigned int i, first = 1;
-	int ret;
-
-	if ( ( ret = pfm_get_event_counters( event, &cnt ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_event_counters(%d,%p): %s", event, &cnt,
-				   pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
-	}
-	if ( ( ret = pfm_get_num_counters( &num ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_num_counters(%p): %s", num, pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
-	}
-	if ( ( ret = pfm_get_impl_counters( &impl ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_impl_counters(%p): %s", &impl,
-				   pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
-	}
-
-	*selector = 0;
-	for ( i = 0; num; i++ ) {
-		if ( pfm_regmask_isset( &impl, i ) )
-			num--;
-		if ( pfm_regmask_isset( &cnt, i ) ) {
-			if ( first ) {
-				if ( ( ret =
-					   pfm_get_event_code_counter( event, i,
-												   code ) ) !=
-					 PFMLIB_SUCCESS ) {
-					PAPIERROR( "pfm_get_event_code_counter(%d, %d, %p): %s",
-						   event, i, code, pfm_strerror( ret ) );
-					return ( PAPI_ESBSTR );
-				}
-				first = 0;
-			}
-			*selector |= 1 << i;
-		}
-	}
-	return ( PAPI_OK );
-}
-
 
 #ifndef PERFCTR_PFM_EVENTS
 
@@ -697,6 +651,59 @@ _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 	}
 	return ( ++i );
 }
+
+
+/* This call is broken. Selector can be much bigger than 32 bits. It should be a pfmlib_regmask_t - pjm */
+/* Also, libpfm assumes events can live on different counters with different codes. This call only returns
+    the first occurence found. */
+/* Right now its only called by ntv_code_to_bits in perfctr-p3, so we're ok. But for it to be
+    generally useful it should be fixed. - dkt */
+static int
+_pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
+{
+	pfmlib_regmask_t cnt, impl;
+	unsigned int num;
+	unsigned int i, first = 1;
+	int ret;
+
+	if ( ( ret = pfm_get_event_counters( event, &cnt ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_get_event_counters(%d,%p): %s", event, &cnt,
+				   pfm_strerror( ret ) );
+		return ( PAPI_ESBSTR );
+	}
+	if ( ( ret = pfm_get_num_counters( &num ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_get_num_counters(%p): %s", num, pfm_strerror( ret ) );
+		return ( PAPI_ESBSTR );
+	}
+	if ( ( ret = pfm_get_impl_counters( &impl ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_get_impl_counters(%p): %s", &impl,
+				   pfm_strerror( ret ) );
+		return ( PAPI_ESBSTR );
+	}
+
+	*selector = 0;
+	for ( i = 0; num; i++ ) {
+		if ( pfm_regmask_isset( &impl, i ) )
+			num--;
+		if ( pfm_regmask_isset( &cnt, i ) ) {
+			if ( first ) {
+				if ( ( ret =
+					   pfm_get_event_code_counter( event, i,
+												   code ) ) !=
+					 PFMLIB_SUCCESS ) {
+					PAPIERROR( "pfm_get_event_code_counter(%d, %d, %p): %s",
+						   event, i, code, pfm_strerror( ret ) );
+					return ( PAPI_ESBSTR );
+				}
+				first = 0;
+			}
+			*selector |= 1 << i;
+		}
+	}
+	return ( PAPI_OK );
+}
+
+
 
 /* perfctr-p3 assumes each event has only a single command code
        libpfm assumes each counter might have a different code. */
