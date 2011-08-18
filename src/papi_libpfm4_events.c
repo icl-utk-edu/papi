@@ -15,12 +15,14 @@
 #include "perfmon/pfmlib_perf_event.h"
 
 extern papi_vector_t MY_VECTOR;
+
+/* Whis is this here? */
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 /* FIXME -- make it handle arbitrary number */
-#define MAX_NATIVE_EVENTS 1000
+#define NATIVE_EVENT_CHUNK 1024
 
-static struct native_event_t {
+struct native_event_t {
   int component;
   char *pmu;
   int papi_code;
@@ -29,9 +31,12 @@ static struct native_event_t {
   char *base_name;
   char *pmu_plus_name;
   int users;
-} native_events[MAX_NATIVE_EVENTS];
+};
+
+static struct native_event_t *native_events;
 
 static int num_native_events=0;
+static int allocated_native_events=0;
 
 static pfm_pmu_info_t default_pmu;
 
@@ -272,13 +277,24 @@ static struct native_event_t *allocate_native_event(char *name,
 
   num_native_events++;
 
+  /* If we've allocated too many native events, then allocate more room */
+  if (num_native_events >= allocated_native_events) {
+
+     SUBDBG("Allocating more room for native events (%d %ld)\n",
+	    (allocated_native_events+NATIVE_EVENT_CHUNK),
+	    sizeof(struct native_event_t) *
+	    (allocated_native_events+NATIVE_EVENT_CHUNK));
+
+     native_events=realloc(native_events,
+			   sizeof(struct native_event_t) * 
+			   (allocated_native_events+NATIVE_EVENT_CHUNK));
+     allocated_native_events+=NATIVE_EVENT_CHUNK;
+  }
+
   _papi_hwi_unlock( NAMELIB_LOCK );
 
-
-  /* FIXME -- simply allocate more */
-  if (num_native_events >= MAX_NATIVE_EVENTS) {
-     fprintf(stderr,"TOO MANY NATIVE EVENTS\n");
-     exit(0);
+  if (native_events==NULL) {
+     return NULL;
   }
 
   return &native_events[new_event];
@@ -1111,8 +1127,11 @@ _papi_libpfm_shutdown(void) {
 
   /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
-  memset(&native_events,0,sizeof(struct native_event_t)*MAX_NATIVE_EVENTS);
+  memset(native_events,0,
+	 sizeof(struct native_event_t)*allocated_native_events);
   num_native_events=0;
+  allocated_native_events=0;
+  free(native_events);
   _papi_hwi_unlock( NAMELIB_LOCK );
 
   return PAPI_OK;
@@ -1162,6 +1181,13 @@ _papi_libpfm_init(void) {
       return PAPI_ESBSTR;
    }
 
+   /* allocate the native event structure */
+   native_events=calloc(NATIVE_EVENT_CHUNK,sizeof(struct native_event_t));
+   if (native_events==NULL) {
+      return PAPI_ENOMEM;
+   }
+   allocated_native_events=NATIVE_EVENT_CHUNK;
+
    /* Count number of present PMUs */
    detected_pmus=0;
    ncnt=0;
@@ -1175,7 +1201,10 @@ _papi_libpfm_init(void) {
    for(i=0;i<PFM_PMU_MAX;i++) {
       memset(&pinfo,0,sizeof(pfm_pmu_info_t));
       retval=pfm_get_pmu_info(i, &pinfo);
-      if (retval!=PFM_SUCCESS) continue;
+      if (retval!=PFM_SUCCESS) {
+	 SUBDBG("%d\n",retval);
+	 continue;
+      }
       if (pinfo.is_present) {
 	 SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
 
