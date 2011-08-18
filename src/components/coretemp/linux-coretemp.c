@@ -20,7 +20,7 @@ struct temp_event {
   struct temp_event *next;
 };
 
-static struct temp_event* root = (void*)PAPI_NULL;
+static struct temp_event* root = NULL;
 static CORETEMP_native_enent_entry_t * _coretemp_native_events;
 static int NUM_EVENTS		= 0;
 static int is_initialized	= 0;
@@ -42,7 +42,7 @@ int generateEventList(char *base_dir)
   struct temp_event *last;
 
   dir = opendir(base_dir);
-  if ( dir == (void*)PAPI_NULL ) {
+  if ( dir == NULL ) {
 	PAPIERROR("Oops: I can't find %s, are you sure the coretemp module is loaded?\n", base_dir);
 	return( PAPI_ESYS );
   }
@@ -62,9 +62,9 @@ int generateEventList(char *base_dir)
 		  if (!temp) 
 			PAPIERROR("out of memory!");
 		  
-		  temp->next = (void*)PAPI_NULL;
+		  temp->next = NULL;
 
-		  if (root == (void*)PAPI_NULL) 
+		  if (root == NULL) 
 			root = temp;
 		  else
 			last->next = temp;
@@ -136,8 +136,8 @@ int coretemp_init_substrate( )
 	t		= t->next;
 	papi_free(last);
 	i++;
-  } while (t != (void*)PAPI_NULL);
-  root = (void*)PAPI_NULL;
+  } while (t != NULL);
+  root = NULL;
   return (PAPI_OK);
 }
 
