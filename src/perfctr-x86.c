@@ -175,10 +175,13 @@ setup_x86_presets( int cputype )
 {
 	int retval = PAPI_OK;
 
+        if ( ( retval = _papi_libpfm_init(&MY_VECTOR) ) != PAPI_OK ) {
+	   return retval;
+	}
+
 	if ( PENTIUM4 ) {
 		/* load the baseline event map for all Pentium 4s */
-		if ( ( retval = _papi_libpfm_init(  ) ) != PAPI_OK )
-			return ( retval );
+
 		_papi_libpfm_setup_presets( "Intel Pentium4", 0 );	/* base events */
 
 		/* fix up the floating point and vector ops */
@@ -216,87 +219,74 @@ setup_x86_presets( int cputype )
 			PAPIERROR( MODEL_ERROR );
 			return ( PAPI_ESBSTR );
 		case PERFCTR_X86_INTEL_P6:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel P6", 0 );	/* base events */
 			break;
 		case PERFCTR_X86_INTEL_PII:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel P6", 0 );	/* base events */
 			break;
 		case PERFCTR_X86_INTEL_PIII:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel P6", 0 );	/* base events */
 			_papi_libpfm_setup_presets( "Intel PentiumIII", 0 );	/* events that differ from Pentium M */
 			break;
 #ifdef PERFCTR_X86_INTEL_PENTM
 		case PERFCTR_X86_INTEL_PENTM:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel P6", 0 );	/* base events */
 			_papi_libpfm_setup_presets( "Intel PentiumM", 0 );	/* events that differ from PIII */
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE
 		case PERFCTR_X86_INTEL_CORE:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel Core Duo/Solo", 0 );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE2
 		case PERFCTR_X86_INTEL_CORE2:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel Core2", 0 );
 			break;
 #endif
 		case PERFCTR_X86_AMD_K7:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "AMD64 (K7)", 0 );
 			break;
 #ifdef PERFCTR_X86_AMD_K8	 /* this is defined in perfctr 2.5.x */
 		case PERFCTR_X86_AMD_K8:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "AMD64", 0 );
 			_papi_hwd_fixup_fp( "AMD64" );
 			break;
 #endif
 #ifdef PERFCTR_X86_AMD_K8C	 /* this is defined in perfctr 2.6.x */
 		case PERFCTR_X86_AMD_K8C:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "AMD64", 0 );
 			_papi_hwd_fixup_fp( "AMD64" );
 			break;
 #endif
 #ifdef PERFCTR_X86_AMD_FAM10 /* this is defined in perfctr 2.6.29 */
 		case PERFCTR_X86_AMD_FAM10:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "AMD64 (Barcelona)", 0 );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_ATOM	/* family 6 model 28 */
 		case PERFCTR_X86_INTEL_ATOM:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel Atom", 0 );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_NHLM	/* family 6 model 26 */
 		case PERFCTR_X86_INTEL_NHLM:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel Nehalem", 0 );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_WSTMR
 		case PERFCTR_X86_INTEL_WSTMR:
-			retval = _papi_libpfm_init(  );
 			_papi_libpfm_setup_presets( "Intel Westmere", 0 );
 			break;
 #endif
 		default:
 			PAPIERROR( MODEL_ERROR );
-			return ( PAPI_ESBSTR );
+			return PAPI_ESBSTR;
 		}
 		SUBDBG( "Number of native events: %d\n",
 				MY_VECTOR.cmp_info.num_native_events );
 	}
-	return ( retval );
+	return retval;
 }
 
 static int

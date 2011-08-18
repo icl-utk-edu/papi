@@ -541,7 +541,7 @@ _pmc_name( int i )
 
 int
 _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-							unsigned int *values, int name_len, int count )
+			       unsigned int *values, int name_len, int count )
 {
 	int ret;
 	pfmlib_regmask_t selector;
@@ -844,7 +844,7 @@ int _perfmon2_pfm_pmu_type = -1;
 
 
 int
-_papi_libpfm_init(void) {
+_papi_libpfm_init(papi_vector_t *MY_VECTOR) {
 
    int retval;
    unsigned int ncnt;
@@ -868,7 +868,7 @@ _papi_libpfm_init(void) {
    }
 
    /* Set the version */
-   sprintf( MY_VECTOR.cmp_info.support_version, "%d.%d",
+   sprintf( MY_VECTOR->cmp_info.support_version, "%d.%d",
 	    PFM_VERSION_MAJOR( version ), PFM_VERSION_MINOR( version ) );
 
    /* Complain if the compiled-against version doesn't match current version */
@@ -913,13 +913,13 @@ _papi_libpfm_init(void) {
       return PAPI_ESBSTR;
    }
    SUBDBG( "pfm_get_num_events: %d\n", ncnt );
-   MY_VECTOR.cmp_info.num_native_events = ncnt;
+   MY_VECTOR->cmp_info.num_native_events = ncnt;
 
-   pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
-   SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
+   pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR->cmp_info.num_cntrs );
+   SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR->cmp_info.num_cntrs );
 
 
-   MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+   MY_VECTOR->cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
 
    return PAPI_OK;
 }

@@ -14,8 +14,6 @@
 #include "perfmon/pfmlib.h"
 #include "perfmon/pfmlib_perf_event.h"
 
-extern papi_vector_t MY_VECTOR;
-
 /* Whis is this here? */
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
@@ -1147,7 +1145,7 @@ _papi_libpfm_shutdown(void) {
  */
 
 int
-_papi_libpfm_init(void) {
+_papi_libpfm_init(papi_vector_t *MY_VECTOR) {
 
    int detected_pmus=0, found_default=0;
    int i, version;
@@ -1170,7 +1168,7 @@ _papi_libpfm_init(void) {
    }
 
    /* Set the version */
-   sprintf( MY_VECTOR.cmp_info.support_version, "%d.%d",
+   sprintf( MY_VECTOR->cmp_info.support_version, "%d.%d",
 	    PFM_MAJ_VERSION( version ), PFM_MIN_VERSION( version ) );
 
    /* Complain if the compiled-against version doesn't match current version */
@@ -1233,14 +1231,14 @@ _papi_libpfm_init(void) {
      return PAPI_ESBSTR;
    }
 
-   MY_VECTOR.cmp_info.num_native_events = ncnt;
+   MY_VECTOR->cmp_info.num_native_events = ncnt;
 
-   MY_VECTOR.cmp_info.num_cntrs = default_pmu.num_cntrs+
+   MY_VECTOR->cmp_info.num_cntrs = default_pmu.num_cntrs+
                                   default_pmu.num_fixed_cntrs;
 
-   SUBDBG( "num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
+   SUBDBG( "num_counters: %d\n", MY_VECTOR->cmp_info.num_cntrs );
 
-   MY_VECTOR.cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
+   MY_VECTOR->cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
    
    /* Setup presets */
    retval = _papi_libpfm_setup_presets( (char *)default_pmu.name, 

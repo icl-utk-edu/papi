@@ -22,7 +22,7 @@ extern int _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 				       unsigned int *values, int name_len,
 				       int count );
 extern int _papi_libpfm_shutdown(void);
-extern int _papi_libpfm_init(void);
+extern int _papi_libpfm_init(papi_vector_t *MY_VECTOR);
 
 /* Gross perfctr/perf_events compatability hack */
 /* need to think up a better way to handle this */

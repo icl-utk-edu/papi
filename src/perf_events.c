@@ -735,7 +735,7 @@ _papi_pe_init_substrate( int cidx )
   ( void ) cidx;          /*unused */
 
   /* Run the libpfm-specific setup */
-  retval=_papi_libpfm_init();
+  retval=_papi_libpfm_init(&MY_VECTOR);
   if (retval) return retval;
 
   /* Get Linux-specific system info */
