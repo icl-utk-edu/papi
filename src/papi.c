@@ -123,7 +123,7 @@ set_runtime_config(  )
 }
 
 /** @class	PAPI_thread_init
- *  initialize thread support in the PAPI library 
+ *  @brief Initialize thread support in the PAPI library 
  *
  *	@param *id_fn 
  *		Pointer to a function that returns current thread ID. 
@@ -168,7 +168,7 @@ PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
 }
 
 /** @class PAPI_thread_id
- *  get the thread identifier of the current thread 
+ *  @brief get the thread identifier of the current thread 
  *
  *	@retval PAPI_EMISC 
  *		is returned if there are no threads registered.
@@ -215,10 +215,6 @@ PAPI_thread_id( void )
  *  @par C Interface:
  *  #include <papi.h> @n
  *  int PAPI_register_thread (void);
- *
- *  @par Fortran Interface:
- *  #include fpapi.h @n
- *  PAPIF_register_thread(C_INT  check )
  *
  *  PAPI_register_thread() should be called when the user wants to force 
  *  PAPI to initialize a thread that PAPI has not seen before. 
@@ -521,16 +517,16 @@ PAPI_set_thr_specific( int tag, void *ptr )
  *	called prior to making any calls to the library other than PAPI_library_init() . 
  *	@par Examples:
  *	@code
- 		int retval;
- 		retval = PAPI_library_init(PAPI_VER_CURRENT);
-		if (retval != PAPI_VER_CURRENT && retval > 0) {
- 		fprintf(stderr,"PAPI library version mismatch!\en");
-		exit(1); }
-		if (retval < 0)
- 		handle_error(retval);
- 		retval = PAPI_is_initialized();
-		if (retval != PAPI_LOW_LEVEL_INITED)
-		handle_error(retval)	
+ *		int retval;
+ *		retval = PAPI_library_init(PAPI_VER_CURRENT);
+ *		if (retval != PAPI_VER_CURRENT && retval > 0) {
+ *			fprintf(stderr,"PAPI library version mismatch!\en");
+ *			exit(1); }
+ *		if (retval < 0)
+ *			handle_error(retval);
+ *		retval = PAPI_is_initialized();
+ *		if (retval != PAPI_LOW_LEVEL_INITED)
+ *			handle_error(retval)	
  *	@endcode
  *	@bug If you don't call this before using any of the low level PAPI calls, your application could core dump.
  *	@see PAPI_thread_init PAPI
@@ -1147,15 +1143,12 @@ PAPI_enum_event( int *EventCode, int modifier )
  *	#include <papi.h> @n
  *	PAPI_create_eventset( int * EventSet );
  *
- *	@par Fortran Interface:
- *	#include fpapi.h @n
- *	PAPIF_create_eventset( C_INT  EventSet,  C_INT  check )
- *
  *	PAPI_create_eventset creates a new EventSet pointed to by EventSet, 
  *	which must be initialized to PAPI_NULL before calling this routine. 
  *	The user may then add hardware events to the event set by calling 
- *	PAPI_add_event or similar routines. 
- *	NOTE: PAPI-C uses a late binding model to bind EventSets to components. 
+ *	PAPI_add_event or similar routines.
+ *
+ *	@note PAPI-C uses a late binding model to bind EventSets to components. 
  *	When an EventSet is first created it is not bound to a component. 
  *	This will cause some API calls that modify EventSet options to fail. 
  *	An EventSet can be bound to a component explicitly by calling 
@@ -1211,9 +1204,6 @@ PAPI_create_eventset( int *EventSet )
  *	@par C Interface:
  *	#include <papi.h> @n
  *	PAPI_assign_eventset_component( int  EventSet, int  cidx );
- *
- *	@par Fortran Interface:
- *	<none>
  *
  *	@param EventSet 
  *		An integer identifier for an existing EventSet.
@@ -1311,10 +1301,6 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
  *	@par C Interface:
  *	#include <papi.h> @n
  *	int PAPI_add_event( int  EventSet, int  EventCode );
- *
- *	@par Fortran Interface:
- *	#include fpapi.h @n
- *	PAPIF_add_event( C_INT  EventSet,  C_INT  EventCode,  C_INT  check )
  *
  *	PAPI_add_event adds one event to a PAPI Event Set. @n
  *	A hardware event can be either a PAPI preset or a native hardware event code.
@@ -1535,10 +1521,6 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	@par C Interface:
  *	#include <papi.h> @n
  *	int PAPI_destroy_eventset( int * EventSet );
- *
- *	@par Fortran Interface:
- *	#include fpapi.h @n
- *	PAPIF_destroy_eventset( C_INT  EventSet,  C_INT  check )
  *
  * PAPI_destroy_eventset deallocates the memory associated with an empty PAPI EventSet.
  *
@@ -2402,10 +2384,6 @@ PAPI_write( int EventSet, long long *values )
  *	#include <papi.h> @n
  *	int PAPI_cleanup_eventset( int  EventSet );
  *
- *	@par Fortran Interface:
- *	#include fpapi.h @n
- *	PAPIF_cleanup_eventset( C_INT  EventSet,  C_INT  check )
- *
  * PAPI_cleanup_eventset removes all events from a PAPI event set and turns 
  * off profiling and overflow for all events in the EventSet.
  * This can not be called if the EventSet is not stopped.
@@ -2516,10 +2494,6 @@ PAPI_cleanup_eventset( int EventSet )
  * @par C Interface:
  * #include <papi.h> @n
  * int PAPI_multiplex_init (void);
- *
- * @par Fortran Interface:
- * #include fpapi.h @n
- * PAPIF_multiplex_init(C_INT  check )
  *
  * @par Examples
  * @code
@@ -2833,10 +2807,6 @@ PAPI_detach( int EventSet )
  * @par C Interface:
  *     #include <papi.h> @n
  *     int PAPI_set_multiplex( int  EventSet );
- *
- * @par Fortran Interface:
- *     #include fpapi.h @n
- *     PAPIF_set_multiplex( C_INT  EventSet,  C_INT  check )
  *
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
@@ -3863,7 +3833,8 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
  *	and implicitly through the option structure for 'set'. 
  *	The Fortran interface is a series of calls implementing various subsets of 
  *	the C interface. Not all options in C are available in Fortran.
- *	NOTE: Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, 
+ *
+ *	@note Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, 
  *	are also available as separate entry points in both C and Fortran.
  *
  *	The reader is urged to see the example code in the PAPI distribution for usage of PAPI_get_opt. 
@@ -5284,15 +5255,11 @@ PAPI_set_cmp_domain( int domain, int cidx )
 }
 
 /**	@class PAPI_add_events
- *	@brief add PAPI presets or native hardware events to an event set 
+ *	@brief add multiple PAPI presets or native hardware events to an event set 
  *
  *	@par C Interface:
  *	#include <papi.h> @n
  *	int PAPI_add_events( int  EventSet, int * EventCodes, int  number );
- *
- *	@par Fortran Interface:
- *	#include fpapi.h @n
- *	PAPIF_add_events( C_INT  EventSet,  C_INT(*)  EventCodes,  C_INT  number,  C_INT  check )
  *
  *	PAPI_add_event adds one event to a PAPI Event Set. PAPI_add_events does 
  *	the same, but for an array of events. @n
@@ -5541,7 +5508,11 @@ PAPI_list_events( int EventSet, int *Events, int *number )
 
 /* xxx This is OS dependent, not component dependent, right? */
 /** @class PAPI_get_dmem_info
- *	get information about the dynamic memory usage of the current program 
+ *	@brief get information about the dynamic memory usage of the current program 
+ *
+ *	@par C Prototype:
+ *		#include <papi.h> @n
+ *		int PAPI_get_dmem_info( PAPI_dmem_info_t *dest );
  *
  *	@param dest
  *		structure to be filled in @ref PAPI_dmem_info_t
@@ -5554,7 +5525,7 @@ PAPI_list_events( int EventSet, int *Events, int *number )
  *	@retval PAPI_SYS 
  *		A system error occured. 
  *
- *	NOTE: This function is only implemented for the Linux operating system.
+ *	@note This function is only implemented for the Linux operating system.
  *	This function takes a pointer to a PAPI_dmem_info_t structure 
  *	and returns with the structure fields filled in. 
  *	A value of PAPI_EINVAL in any field indicates an undefined parameter. 
@@ -5579,18 +5550,8 @@ PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
  *	#include <papi.h> @n
  *	const PAPI_exe_info_t *PAPI_get_executable_info( void );
  *
- *	@par Fortran Interface:
- *	#include fpapi.h @n
- *	PAPIF_get_exe_info( C_STRING  fullname, C_STRING   name, @n
- *						C_LONG_LONG   text_start,  C_LONG_LONG   text_end, @n
- *						C_LONG_LONG   data_start,  C_LONG_LONG   data_end, @n
- *						C_LONG_LONG   bss_start,   C_LONG_LONG   bss_end,  C_INT  check )
- *
- *	In C, this function returns a pointer to a structure containing information 
- *	about the current program. @n
- *	In Fortran, the fields of the structure are 
- *	returned explicitly. 
- *
+ *	This function returns a pointer to a structure containing information 
+ *	about the current program.
  *
  *	@param fullname
  *		Fully qualified path + filename of the executable.
@@ -5645,7 +5606,7 @@ PAPI_get_executable_info( void )
  *	In C, this function returns a pointer to a structure containing information 
  *	about the shared library used by the program. 
  *	There is no Fortran equivalent call. 
- *	@par NOTE: This data will be incorporated into the PAPI_get_executable_info call in the future. PAPI_get_shared_lib_info will be deprecated and should be used with caution.
+ *	@note This data will be incorporated into the PAPI_get_executable_info call in the future. PAPI_get_shared_lib_info will be deprecated and should be used with caution.
  *
  *	@bug If called before the behavior of the routine is undefined.
  *
@@ -5680,8 +5641,7 @@ PAPI_get_shared_lib_info( void )
  *	@bug
  *		If called before the behavior of the routine is undefined. 
  *	
- *	@par NOTE
- *		The C structure contains detailed information about cache and TLB sizes. 
+ *	@note The C structure contains detailed information about cache and TLB sizes. 
  *		This information is not available from Fortran.
  *
  *	@par Examples:
@@ -5827,7 +5787,7 @@ PAPI_get_virt_cyc( void )
 }
 
 /** @class PAPI_get_virt_nsec
- *	get virtual time counter values in microseconds 
+ *	get virtual time counter values in nanoseconds 
  *
  *	@retval PAPI_ECNFLCT 
  *		If there is no master event set. 

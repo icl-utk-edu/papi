@@ -46,12 +46,12 @@
 /** @defgroup PAPIF PAPI Fortran Wrappers 
  *	*/
 /**	@class PAPIF_accum
- *	@brief accumulate and reset counters in an event set 
  *	@ingroup PAPIF
+ *	@brief accumulate and reset counters in an event set 
  *	
  *	@par Fortran Interface:
  *	#include fpapi.h @n
- *	PAPIF_accum( C_INT  EventSet,  C_LONG_LONG(*)  values,  C_INT  check )
+ *	PAPIF_accum( C_INT EventSet, C_LONG_LONG(*) values, C_INT  check )
  *
  *	@see PAPI_accum
  */
@@ -61,55 +61,138 @@ PAPI_FCALL( papif_accum, PAPIF_ACCUM,
 	*check = PAPI_accum( *EventSet, values );
 }
 
+/**	@class PAPIF_add_event
+ *	@ingroup PAPIF
+ *	@brief add PAPI preset or native hardware event to an event set
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_add_event( C_INT EventSet, C_INT EventCode, C_INT check )
+ *
+ *	@see PAPI_add_event
+ */
 PAPI_FCALL( papif_add_event, PAPIF_ADD_EVENT,
 			( int *EventSet, int *Event, int *check ) )
 {
 	*check = PAPI_add_event( *EventSet, *Event );
 }
 
+/**	@class PAPIF_add_events
+ *	@ingroup PAPIF
+ *	@brief add multiple PAPI presets or native hardware events to an event set
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_add_events( C_INT EventSet, C_INT(*) EventCodes, C_INT number, C_INT  check )
+ *
+ *	@see PAPI_add_events
+ */
 PAPI_FCALL( papif_add_events, PAPIF_ADD_EVENTS,
 			( int *EventSet, int *Events, int *number, int *check ) )
 {
 	*check = PAPI_add_events( *EventSet, Events, *number );
 }
 
+/**	@class PAPIF_cleanup_eventset
+ *	@ingroup PAPIF
+ *	@brief empty and destroy an EventSet 
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_cleanup_eventset( C_INT EventSet, C_INT check )
+ *
+ *	@see PAPI_cleanup_eventset
+ */
 PAPI_FCALL( papif_cleanup_eventset, PAPIF_CLEANUP_EVENTSET,
 			( int *EventSet, int *check ) )
 {
 	*check = PAPI_cleanup_eventset( *EventSet );
 }
 
+/**	@class PAPIF_create_eventset
+ *	@ingroup PAPIF
+ *	@brief create a new empty PAPI EventSet 
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_create_eventset( C_INT EventSet, C_INT check )
+ *
+ *	@see PAPI_create_eventset
+ */
 PAPI_FCALL( papif_create_eventset, PAPIF_CREATE_EVENTSET,
 			( int *EventSet, int *check ) )
 {
 	*check = PAPI_create_eventset( EventSet );
 }
 
+/**	@class PAPIF_assign_eventset_component
+ *	@ingroup PAPIF
+ *	@brief assign a component index to an existing but empty EventSet 
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_assign_eventset_component( C_INT EventSet, C_INT EventSet, C_INT check )
+ *
+ *	@see PAPI_assign_eventset_component
+ */
 PAPI_FCALL( papif_assign_eventset_component, PAPIF_ASSIGN_EVENTSET_COMPONENT,
 			( int *EventSet, int *cidx, int *check ) )
 {
 	*check = PAPI_assign_eventset_component( *EventSet, *cidx );
 }
 
+/**	@class PAPIF_destroy_eventset
+ *	@ingroup PAPIF
+ *	@brief empty and destroy an EventSet 
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_destroy_eventset( C_INT EventSet, C_INT check )
+ *
+ *	@see PAPI_destroy_eventset
+ */
 PAPI_FCALL( papif_destroy_eventset, PAPIF_DESTROY_EVENTSET,
 			( int *EventSet, int *check ) )
 {
 	*check = PAPI_destroy_eventset( EventSet );
 }
 
+/**	@class PAPIF_get_dmem_info
+ *	@ingroup PAPIF
+ *	@brief get information about the dynamic memory usage of the current program 
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_dmem_info( C_INT EventSet, C_INT check )
+ *
+ *	@see PAPI_get_dmem_info
+ */
+ /* XXX This looks totally broken. Should be passed all the members of the dmem_info struct. */
 PAPI_FCALL( papif_get_dmem_info, PAPIF_GET_DMEM_INFO,
 			( long long *dest, int *check ) )
 {
 	*check = PAPI_get_dmem_info( ( PAPI_dmem_info_t * ) dest );
 }
 
+/**	@class PAPIF_get_exe_info
+ *	@ingroup PAPIF
+ *	@brief get information about the dynamic memory usage of the current program 
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_exe_info( C_STRING fullname, C_STRING name, @n
+ *						C_LONG_LONG text_start,  C_LONG_LONG text_end, @n
+ *						C_LONG_LONG data_start,  C_LONG_LONG data_end, @n
+ *						C_LONG_LONG bss_start,   C_LONG_LONG bss_end, C_INT check )
+ *
+ *	@see PAPI_get_executable_info
+ */
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_get_exe_info, PAPIF_GET_EXE_INFO,
 			( char *fullname, char *name, long long *text_start,
 			  long long *text_end, long long *data_start, long long *data_end,
-			  long long *bss_start, long long *bss_end, char *lib_preload_env,
-			  int *check, int fullname_len, int name_len,
-			  int lib_preload_env_len ) )
+			  long long *bss_start, long long *bss_end,
+			  int *check, int fullname_len, int name_len ) )
 #else
 PAPI_FCALL( papif_get_exe_info, PAPIF_GET_EXE_INFO,
 			( char *fullname, char *name, long long *text_start,
@@ -123,17 +206,19 @@ PAPI_FCALL( papif_get_exe_info, PAPIF_GET_EXE_INFO,
     to get rid of those pesky gcc warnings. If you find a 64-bit system,
     conditionalize the cast with (yet another) #ifdef...
 */
-#if defined(_FORTRAN_STRLEN_AT_END)
-	( void ) lib_preload_env;	/*Unused */
-	( void ) lib_preload_env_len;	/*Unused */
-	int i;
 	if ( ( *check = PAPI_get_opt( PAPI_EXEINFO, &e ) ) == PAPI_OK ) {
+#if defined(_FORTRAN_STRLEN_AT_END)
+		int i;
 		strncpy( fullname, e.exe_info->fullname, ( size_t ) fullname_len );
 		for ( i = ( int ) strlen( e.exe_info->fullname ); i < fullname_len;
 			  fullname[i++] = ' ' );
 		strncpy( name, e.exe_info->address_info.name, ( size_t ) name_len );
 		for ( i = ( int ) strlen( e.exe_info->address_info.name ); i < name_len;
 			  name[i++] = ' ' );
+#else
+		strncpy( fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN );
+		strncpy( name, e.exe_info->address_info.name, PAPI_MAX_STR_LEN );
+#endif
 		*text_start = ( long ) e.exe_info->address_info.text_start;
 		*text_end = ( long ) e.exe_info->address_info.text_end;
 		*data_start = ( long ) e.exe_info->address_info.data_start;
@@ -141,20 +226,19 @@ PAPI_FCALL( papif_get_exe_info, PAPIF_GET_EXE_INFO,
 		*bss_start = ( long ) e.exe_info->address_info.bss_start;
 		*bss_end = ( long ) e.exe_info->address_info.bss_end;
 	}
-#else
-	if ( ( *check = PAPI_get_opt( PAPI_EXEINFO, &e ) ) == PAPI_OK ) {
-		strncpy( fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN );
-		strncpy( name, e.exe_info->address_info.name, PAPI_MAX_STR_LEN );
-		*text_start = ( long ) ( e.exe_info->address_info.text_start );
-		*text_end = ( long ) e.exe_info->address_info.text_end;
-		*data_start = ( long ) e.exe_info->address_info.data_start;
-		*data_end = ( long ) e.exe_info->address_info.data_end;
-		*bss_start = ( long ) e.exe_info->address_info.bss_start;
-		*bss_end = ( long ) e.exe_info->address_info.bss_end;
-	}
-#endif
 }
 
+/**	@class PAPIF_get_hardware_info 
+ *	@brief get information about the system hardware
+ *	
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_hardware_info( C_INT ncpu, C_INT nnodes,  C_INT totalcpus,@n
+ *						C_INT vendor, C_STRING vendor_str, C_INT model, C_STRING model_str, @n
+ *						C_FLOAT revision, C_FLOAT mhz )
+ *
+ *	@see PAPI_get_hardware_info
+ */
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, ( int *ncpu,
 																int *nnodes,
@@ -220,87 +304,246 @@ PAPI_FCALL( papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, ( int *ncpu,
 	return;
 }
 
+/** @class PAPIF_num_hwctrs
+ *  @brief return the number of hardware counters on the cpu 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_num_hwctrs( C_INT num )
+ *
+ * @see PAPI_num_hwctrs
+ * @see PAPI_num_cmp_hwctrs
+ */
 PAPI_FCALL( papif_num_hwctrs, PAPIF_num_hwctrs, ( int *num ) )
 {
 	*num = PAPI_num_hwctrs(  );
 }
 
+/** @class PAPIF_num_cmp_hwctrs
+ *  @brief return the number of hardware counters on the specified component 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_num_cmp_hwctrs( C_INT cidx, C_INT num )
+ *
+ * @see PAPI_num_hwctrs
+ * @see PAPI_num_cmp_hwctrs
+ */
 PAPI_FCALL( papif_num_cmp_hwctrs, PAPIF_num_cmp_hwctrs,
 			( int *cidx, int *num ) )
 {
 	*num = PAPI_num_cmp_hwctrs( *cidx );
 }
 
+/** @class PAPIF_get_real_cyc
+ *	@brief get real time counter value in clock cycles 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_real_cyc( C_LONG_LONG real_cyc )
+ *
+ * @see PAPI_get_real_cyc
+ */
 PAPI_FCALL( papif_get_real_cyc, PAPIF_GET_REAL_CYC, ( long long *real_cyc ) )
 {
 	*real_cyc = PAPI_get_real_cyc(  );
 }
 
+/** @class PAPIF_get_real_usec
+ *	@brief get real time counter value in microseconds
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_real_usec( C_LONG_LONG time )
+ *
+ * @see PAPI_get_real_usec
+ */
 PAPI_FCALL( papif_get_real_usec, PAPIF_GET_REAL_USEC, ( long long *time ) )
 {
 	*time = PAPI_get_real_usec(  );
 }
 
+/** @class PAPIF_get_real_nsec
+ *	@brief get real time counter value in nanoseconds
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_real_nsec( C_LONG_LONG time )
+ *
+ * @see PAPI_get_real_nsec
+ */
+PAPI_FCALL( papif_get_real_nsec, PAPIF_GET_REAL_NSEC, ( long long *time ) )
+{
+	*time = PAPI_get_real_nsec(  );
+}
+
+/** @class PAPIF_get_virt_cyc
+ *	@brief get virtual time counter value in clock cycles 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_virt_cyc( C_LONG_LONG virt_cyc )
+ *
+ * @see PAPI_get_virt_cyc
+ */
 PAPI_FCALL( papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, ( long long *virt_cyc ) )
 {
 	*virt_cyc = PAPI_get_virt_cyc(  );
 }
 
+/** @class PAPIF_get_virt_usec
+ *	@brief get virtual time counter value in microseconds 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_get_virt_usec( C_LONG_LONG time )
+ *
+ * @see PAPI_get_virt_usec
+ */
 PAPI_FCALL( papif_get_virt_usec, PAPIF_GET_VIRT_USEC, ( long long *time ) )
 {
 	*time = PAPI_get_virt_usec(  );
 }
 
+/** @class PAPIF_is_initialized
+ *	@brief check for initialization
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_is_initialized( C_INT level )
+ *
+ * @see PAPI_is_initialized
+ */
 PAPI_FCALL( papif_is_initialized, PAPIF_IS_INITIALIZED, ( int *level ) )
 {
 	*level = PAPI_is_initialized(  );
 }
 
+/** @class PAPIF_library_init
+ *	@brief initialize the PAPI library. 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_library_init( C_INT check )
+ *
+ * @see PAPI_library_init
+ */
 PAPI_FCALL( papif_library_init, PAPIF_LIBRARY_INIT, ( int *check ) )
 {
 	*check = PAPI_library_init( *check );
 }
 
+/** @class PAPIF_thread_id
+ *  @brief get the thread identifier of the current thread 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_thread_id( C_INT id )
+ *
+ * @see PAPI_thread_id
+ */
 PAPI_FCALL( papif_thread_id, PAPIF_THREAD_ID, ( unsigned long *id ) )
 {
 	*id = PAPI_thread_id(  );
 }
 
+/** @class PAPIF_register_thread
+ *  @brief Notify PAPI that a thread has 'appeared'
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_register_thread( C_INT check )
+ *
+ * @see PAPI_register_thread
+ */
 PAPI_FCALL( papif_register_thread, PAPIF_REGISTER_THREAD, ( int *check ) )
 {
 	*check = PAPI_register_thread(  );
 }
 
+/** @class PAPIF_unregister_thread
+ *  @brief Notify PAPI that a thread has 'disappeared'
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_unregister_thread( C_INT check )
+ *
+ * @see PAPI_unregister_thread
+ */
 PAPI_FCALL( papif_unregster_thread, PAPIF_UNREGSTER_THREAD, ( int *check ) )
 {
 	*check = PAPI_unregister_thread(  );
 }
 
+/** @class PAPIF_thread_init
+ *  @brief Initialize thread support in the PAPI library 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPIF_thread_init( C_INT FUNCTION  handle,  C_INT  check )
+ *
+ * @see PAPI_thread_init
+ */
 /* This must be passed an EXTERNAL or INTRINISIC FUNCTION not a SUBROUTINE */
-
 PAPI_FCALL( papif_thread_init, PAPIF_THREAD_INIT,
 			( unsigned long int ( *handle ) ( void ), int *check ) )
 {
 	*check = PAPI_thread_init( handle );
 }
 
+/** @class PAPI_list_events
+ *	@brief list the events in an event set 
+ *
+ *	@par Fortran Interface:
+ *	#include fpapi.h @n
+ *	PAPI_list_events( C_INT EventSet, C_INT(*) Events, C_INT number, C_INT check )
+ *
+ * @see PAPI_list_events
+ */
 PAPI_FCALL( papif_list_events, PAPIF_LIST_EVENTS,
 			( int *EventSet, int *Events, int *number, int *check ) )
 {
 	*check = PAPI_list_events( *EventSet, Events, number );
 }
 
+/** @class PAPIF_multiplex_init
+ *	@brief Initialize multiplex support in the PAPI library.
+ *
+ * @par Fortran Interface:
+ * #include fpapi.h @n
+ * PAPIF_multiplex_init( C_INT check )
+ *
+ * @see PAPI_multiplex_init
+ */
 PAPI_FCALL( papif_multiplex_init, PAPIF_MULTIPLEX_INIT, ( int *check ) )
 {
 	*check = PAPI_multiplex_init(  );
 }
 
+/** @class PAPIF_get_multiplex
+ *	@brief get the multiplexing status of specified event set 
+ *
+ * @par Fortran Interface:
+ * #include fpapi.h @n
+ * PAPIF_get_multiplex( C_INT  EventSet,  C_INT  check )
+ *
+ * @see PAPI_get_multiplex
+ */
 PAPI_FCALL( papif_get_multiplex, PAPIF_GET_MULTIPLEX,
 			( int *EventSet, int *check ) )
 {
 	*check = PAPI_get_multiplex( *EventSet );
 }
 
+/** @class PAPIF_set_multiplex
+ *	@brief Convert a standard event set to a multiplexed event set. 
+ *
+ * @par Fortran Interface:
+ * #include fpapi.h @n
+ * PAPIF_set_multiplex( C_INT  EventSet,  C_INT  check )
+ *
+ * @see PAPI_set_multiplex
+ */
 PAPI_FCALL( papif_set_multiplex, PAPIF_SET_MULTIPLEX,
 			( int *EventSet, int *check ) )
 {
