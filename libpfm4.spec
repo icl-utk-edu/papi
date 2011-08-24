@@ -10,9 +10,10 @@ Summary:	Library to encode performance events for use by perf tool
 Group:		System Environment/Libraries
 License:	MIT
 URL:		http://perfmon2.sourceforge.net/
-Source0:        %{name}-%{version}.tar.gz
-BuildRequires:  python-devel
-BuildRequires:  python-setuptools-devel
+Source0:	http://sourceforge.net/projects/perfmon2/files/libpfm4/%{name}-%{version}.tar.gz
+BuildRequires:	python-devel
+BuildRequires:	python-setuptools-devel
+BuildRequires:  swig
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
@@ -42,7 +43,7 @@ Python bindings for libpfm4 and perf_event_open system call.
 %setup -q
 
 %build
-make install_prefix=$RPM_BUILD_ROOT%{_prefix}
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -55,8 +56,8 @@ make \
 %clean
 rm -fr $RPM_BUILD_ROOT
 
-%post   -p /sbin/ldconfig
-%postun -p /sbin/ldconfig
+%post -p /sbin/ldconfig
+%postun	-p /sbin/ldconfig
 
 %files
 %defattr(644,root,root,755)
