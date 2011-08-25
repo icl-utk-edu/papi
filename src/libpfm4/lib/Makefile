@@ -234,3 +234,6 @@ ifeq ($(CONFIG_PFMLIB_SHARED),y)
 	cd $(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
 	cd $(LIBDIR); $(LN) $(SLIBPFM) libpfm.$(SOLIBEXT)
 endif
+
+tags:
+	$(CTAGS) -o $(TOPDIR)/tags --tag-relative=yes $(SRCS) $(INCDEP)

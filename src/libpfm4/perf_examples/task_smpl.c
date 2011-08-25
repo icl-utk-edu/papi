@@ -53,6 +53,7 @@ typedef struct {
 	int cpu;
 	int mmap_pages;
 	char *events;
+	FILE *output_file;
 } options_t;
 
 static jmp_buf jbuf;
@@ -102,7 +103,8 @@ display_lost(perf_event_desc_t *hw)
 	else
 		str = fds[e].name;
 
-	printf("<<<LOST %"PRIu64" SAMPLES FOR EVENT %s>>>\n", lost.lost, str);
+	fprintf(options.output_file,
+		"<<<LOST %"PRIu64" SAMPLES FOR EVENT %s>>>\n", lost.lost, str);
 	lost_samples += lost.lost;
 }
 
@@ -116,7 +118,7 @@ display_exit(perf_event_desc_t *hw)
 	if (ret)
 		errx(1, "cannot read exit info");
 
-	printf("[%d] exited\n", grp.pid);
+	fprintf(options.output_file,"[%d] exited\n", grp.pid);
 }
 
 static void
@@ -129,7 +131,7 @@ display_freq(int mode, perf_event_desc_t *hw)
 	if (ret)
 		errx(1, "cannot read throttling info");
 
-	printf("%s value=%"PRIu64" event ID=%"PRIu64"\n", mode ? "Throttled" : "Unthrottled", thr.id, thr.stream_id);
+	fprintf(options.output_file,"%s value=%"PRIu64" event ID=%"PRIu64"\n", mode ? "Throttled" : "Unthrottled", thr.id, thr.stream_id);
 }
 
 static void
@@ -146,7 +148,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 		switch(ehdr.type) {
 			case PERF_RECORD_SAMPLE:
 				collected_samples++;
-				ret = perf_display_sample(fds, num_fds, hw - fds, &ehdr, stdout);
+				ret = perf_display_sample(fds, num_fds, hw - fds, &ehdr, options.output_file);
 				if (ret)
 					errx(1, "cannot parse sample");
 				break;
@@ -258,7 +260,7 @@ mainloop(char **arg)
 			fds[i].hw.watermark = 1;
 
 			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID;
-			printf("%s period=%"PRIu64" freq=%d\n", fds[i].name, fds[i].hw.sample_period, fds[i].hw.freq);
+			fprintf(options.output_file,"%s period=%"PRIu64" freq=%d\n", fds[i].name, fds[i].hw.sample_period, fds[i].hw.freq);
 
 			fds[i].hw.read_format = PERF_FORMAT_SCALE;
 			if (num_fds > 1)
@@ -323,7 +325,7 @@ mainloop(char **arg)
 
 		for(i=0; i < num_fds; i++) {
 			fds[i].id = val[2*i+1+3];
-			printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
+			fprintf(options.output_file,"%"PRIu64"  %s\n", fds[i].id, fds[i].name);
 		}
 		free(val);
 	}
@@ -368,12 +370,15 @@ terminate_session:
 
 	free(fds);
 
-	printf("%"PRIu64" samples collected in %"PRIu64" poll events, %"PRIu64" lost samples\n",
+	fprintf(options.output_file,
+		"%"PRIu64" samples collected in %"PRIu64" poll events, %"PRIu64" lost samples\n",
 		collected_samples,
 		ovfl_count, lost_samples);
 
 	/* free libpfm resources cleanly */
 	pfm_terminate();
+
+	fclose(options.output_file);
 
 	return 0;
 }
@@ -381,7 +386,7 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [-i] [-c cpu] [-m mmap_pages] [-e event1,...,eventn] cmd\n");
+	printf("usage: task_smpl [-h] [--help] [-i] [-c cpu] [-m mmap_pages] [-o output_file] [-e event1,...,eventn] cmd\n");
 }
 
 int
@@ -392,8 +397,9 @@ main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 
 	options.cpu = -1;
+	options.output_file=stdout;
 
-	while ((c=getopt_long(argc, argv,"+he:m:ic:", the_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"+he:m:ic:o:", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'e':
@@ -411,6 +417,14 @@ main(int argc, char **argv)
 				break;
 			case 'c':
 				options.cpu = atoi(optarg);
+				break;
+			case 'o':
+				options.output_file=fopen(optarg,"w");
+				if (options.output_file==NULL) {
+					printf("Invalid filename %s\n",
+						optarg);
+					exit(0);
+				}
 				break;
 			case 'h':
 				usage();

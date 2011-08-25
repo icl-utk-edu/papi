@@ -194,6 +194,8 @@ ifeq ($(CONFIG_PFMLIB_DEBUG),y)
 CFLAGS += -DCONFIG_PFMLIB_DEBUG
 endif
 
+CTAGS?=ctags
+
 #
 # Python is for use with perf_events
 # so it only works on Linux
