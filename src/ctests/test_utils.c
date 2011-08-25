@@ -231,7 +231,8 @@ add_test_events( int *number, int *mask, int allow_derived )
 	else {
 	   if ( !TESTS_QUIET ) {
 	     PAPI_event_code_to_name(test_events[i].event,name_string);
-	     fprintf( stdout, "%s is not available (%s).\n", name_string,
+	     fprintf( stdout, "%x %s is not available (%s).\n", 
+		      test_events[i].event,name_string,
 		      PAPI_descr_error(retval));
 	   }
 	   *mask = *mask ^ test_events[i].mask;
@@ -764,7 +765,8 @@ add_two_nonderived_events( int *num_events, int *papi_event, int *mask ) {
 
 /* add native events to use all counters */
 int
-enum_add_native_events( int *num_events, int **evtcodes, int need_interrupt )
+enum_add_native_events( int *num_events, int **evtcodes, 
+			int need_interrupt, int no_software_events )
 {
 	/* query and set up the right event to monitor */
 	int EventSet = PAPI_NULL;
@@ -776,11 +778,13 @@ enum_add_native_events( int *num_events, int **evtcodes, int need_interrupt )
    
 	s = PAPI_get_component_info( 0 );
 	if ( s == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR );
+		test_fail( __FILE__, __LINE__, 
+			   "PAPI_get_component_info", PAPI_ESBSTR );
 
         hw_info = PAPI_get_hardware_info(  );
         if ( hw_info == NULL )
-                test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+                test_fail( __FILE__, __LINE__, 
+			   "PAPI_get_hardware_info", 2 );
    
    
 	counters = ( unsigned int ) PAPI_num_hwctrs(  );
@@ -799,7 +803,8 @@ enum_add_native_events( int *num_events, int **evtcodes, int need_interrupt )
 
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+		test_fail( __FILE__, __LINE__, 
+			   "PAPI_create_eventset", retval );
 
 	/* For platform independence, always ASK FOR the first event */
 	/* Don't just assume it'll be the first numeric value */
@@ -809,20 +814,31 @@ enum_add_native_events( int *num_events, int **evtcodes, int need_interrupt )
 	do {
 		retval = PAPI_get_event_info( i, &info );
 
+		/* HACK! FIXME */
+		if (no_software_events && 
+		    strstr(info.symbol,"PERF_COUNT_SW")) {
+		   if (!TESTS_QUIET) {
+		      fprintf(stderr,"Blocking event %s as a SW event\n",
+			      info.symbol);
+		   }
+		   continue;
+		}
+
 		if ( s->cntr_umasks ) {
 			k = i;
 			if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
 				do {
 					retval = PAPI_get_event_info( k, &info );
 					event_code = ( int ) info.event_code;
+
 					retval = PAPI_add_event( EventSet, event_code );
 					if ( retval == PAPI_OK ) {
 						( *evtcodes )[event_found] = event_code;
 						event_found++;
 					} else {
 						if ( !TESTS_QUIET )
-							fprintf( stdout, "0x%x is not available.\n",
-									 event_code );
+							fprintf( stdout, "0x%x (%s) is not available.\n",
+								 event_code, info.symbol );
 					}
 				}
 				while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK
@@ -853,7 +869,7 @@ enum_add_native_events( int *num_events, int **evtcodes, int need_interrupt )
 			event_found < counters );
 
 	*num_events = ( int ) event_found;
-	return ( EventSet );
+	return EventSet;
 }
 
 void

@@ -57,6 +57,8 @@ static volatile unsigned int _papi_pe_lock_data[PAPI_MAX_LOCK];
 extern papi_vector_t _papi_pe_vector;
 
 /* Static globals */
+
+/* FIXME */
 #define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
 
 

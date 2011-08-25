@@ -81,18 +81,23 @@ main( int argc, char **argv )
 		using_aix = 1;
 
 
-	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
-	   PAPI_TOT_INS, depending on the availability of the event on the
-	   platform */
-	EventSet = enum_add_native_events( &num_events, &events, 1 );
+	/* add PAPI_TOT_CYC and one of the events in */
+	/* PAPI_FP_INS, PAPI_FP_OPS PAPI_TOT_INS,    */
+        /* depending on the availability of the event*/
+	/* on the platform */
+	EventSet = enum_add_native_events( &num_events, &events, 1 , 1);
+
+	if (!TESTS_QUIET) printf("Trying %d events\n",num_events);
 
 	names =
 		( char ** ) calloc( ( unsigned int ) num_events, sizeof ( char * ) );
 	for ( i = 0; i < num_events; i++ ) {
 		if ( PAPI_event_code_to_name( events[i], name ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
-		else
+		else {
 			names[i] = strdup( name );
+			if (!TESTS_QUIET) printf("%i: %s\n",i,names[i]);
+		}
 	}
 	values = ( long long * )
 		calloc( ( unsigned int ) ( num_events * ( num_events + 1 ) ),
@@ -113,7 +118,9 @@ main( int argc, char **argv )
 
 	num_flops = NUM_FLOPS * 2;
 
-	retval = PAPI_start( EventSet );
+	/* initial test to make sure they all work */
+
+       	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
@@ -123,23 +130,35 @@ main( int argc, char **argv )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	for ( i = 0; i < num_events; i++ ) {
-		retval = PAPI_overflow( EventSet, events[i], mythreshold, 0, handler );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
+	/* done with initial test */
 
-		retval = PAPI_start( EventSet );
+	/* keep adding events? */
+	for ( i = 0; i < num_events; i++ ) {
+
+	        /* Enable overflow */
+		retval = PAPI_overflow( EventSet, events[i], 
+					mythreshold, 0, handler );
 		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+			test_fail( __FILE__, __LINE__, 
+				   "PAPI_overflow", retval );
+
+       		retval = PAPI_start( EventSet );
+		if ( retval != PAPI_OK )
+			test_fail( __FILE__, __LINE__, 
+				   "PAPI_start", retval );
 
 		do_flops( num_flops );
 
 		retval = PAPI_stop( EventSet, values + ( i + 1 ) * num_events );
 		if ( retval != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
-		retval = PAPI_overflow( EventSet, events[i], 0, 0, handler );
+
+		/* Disable overflow */
+		retval = PAPI_overflow( EventSet, events[i], 
+					0, 0, handler );
 		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
+			test_fail( __FILE__, __LINE__, 
+				   "PAPI_overflow", retval );
 		ovt[i] = total;
 		total = 0;
 	}
