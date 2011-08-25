@@ -86,20 +86,22 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	e.os_data = attr;
 	e.dfl_plm = dfl_plm;
 
+	/* after this call, need to call pfmlib_release_event() */
 	ret = pfmlib_parse_event(str, &e);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
 	pmu = e.pmu;
 
+	ret = PFM_ERR_NOTSUPP;
 	if (!pmu->get_event_encoding[e.osid]) {
 		DPRINT("PMU %s does not support PFM_OS_NONE\n", pmu->name);
-		return PFM_ERR_NOTSUPP;
+		goto done;
 	}
 
 	ret = pmu->get_event_encoding[e.osid](pmu, &e);
         if (ret != PFM_SUCCESS)
-		return ret;
+		goto done;
 
 	/*
 	 * process perf_event attributes
@@ -188,9 +190,10 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	/*
 	 * fstr not requested, stop here
 	 */
+	ret = PFM_SUCCESS;
 	if (!arg.fstr) {
 		memcpy(uarg, &arg, sz);
-		return PFM_SUCCESS;
+		goto done;
 	}
 
 	for (i=0; i < e.npattrs; i++) {
@@ -226,6 +229,8 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	if (ret == PFM_SUCCESS)
 		memcpy(uarg, &arg, sz);
 
+done:
+	pfmlib_release_event(&e);
 	return ret;
 }
 /*

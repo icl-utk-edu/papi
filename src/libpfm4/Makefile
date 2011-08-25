@@ -55,6 +55,7 @@ clean:
 
 distclean:  clean
 	@(cd debian; $(RM) -f *.log *.debhelper *.substvars; $(RM) -rf libpfm4-dev libpfm4 python-libpfm4 tmp files)
+	$(RM) -f tags
 
 depend: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
@@ -69,6 +70,10 @@ install:
 
 install_examples:
 	@set -e ; for d in $(EXAMPLE_DIRS) ; do $(MAKE) -C $$d $@ ; done
+
+tags:
+	@echo creating tags
+	$(MAKE) -C lib $@
 
 .PHONY: all clean distclean depend tar install install_examples lib
 

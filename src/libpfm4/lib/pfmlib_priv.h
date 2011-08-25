@@ -173,6 +173,7 @@ extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
 extern int pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr);
 extern void pfmlib_sort_attr(pfmlib_event_desc_t *e);
 extern pfmlib_pmu_t * pfmlib_get_pmu_by_type(pfm_pmu_type_t t);
+extern void pfmlib_release_event(pfmlib_event_desc_t *e);
 
 extern size_t pfmlib_check_struct(void *st, size_t usz, size_t refsz, size_t sz);
 

@@ -585,6 +585,6 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 		perf_skip_buffer(hw->buf, sz);
 	}
 
-	putchar('\n');
+	fputc('\n',fp);
 	return 0;
 }
