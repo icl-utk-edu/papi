@@ -1,0 +1,116 @@
+.TH "PAPI_event_info_t" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_event_info_t \- 
+.PP
+This structure is the event information that is exposed to the user through the API'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <papi\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned int \fBevent_code\fP"
+.br
+.ti -1c
+.RI "unsigned int \fBevent_type\fP"
+.br
+.ti -1c
+.RI "unsigned int \fBcount\fP"
+.br
+.ti -1c
+.RI "char \fBsymbol\fP [PAPI_HUGE_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBshort_descr\fP [PAPI_MIN_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBlong_descr\fP [PAPI_HUGE_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBderived\fP [PAPI_MIN_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBpostfix\fP [PAPI_MIN_STR_LEN]"
+.br
+.ti -1c
+.RI "unsigned int \fBcode\fP [PAPI_MAX_INFO_TERMS]"
+.br
+.ti -1c
+.RI "char \fBname\fP [PAPI_MAX_INFO_TERMS][PAPI_2MAX_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBnote\fP [PAPI_HUGE_STR_LEN]"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+The same structure is used to describe both preset and native events'\&. WARNING: This structure is very large'\&. With current definitions, it is about 2660 bytes'\&. Unlike previous versions of PAPI, which allocated an array of these structures within the library, this structure is carved from user space'\&. It does not exist inside the library, and only one copy need ever exist'\&. The basic philosophy is this:
+.IP "\(bu" 2
+each preset consists of a code, some descriptors, and an array of native events;
+.IP "\(bu" 2
+each native event consists of a code, and an array of register values;
+.IP "\(bu" 2
+fields are shared between preset and native events, and unused where not applicable;
+.IP "\(bu" 2
+To completely describe a preset event, the code must present all available information for that preset, and then walk the list of native events, retrieving and presenting information for each native event in turn'\&. The various fields and their usage is discussed below'\&. 
+.PP
+
+.SH "Field Documentation"
+.PP 
+.SS "unsigned int \fBPAPI_event_info_t::code\fP[PAPI_MAX_INFO_TERMS]"array of values that further describe the event:
+.IP "\(bu" 2
+for presets, native event_code values
+.IP "\(bu" 2
+for native events, register values for event programming 
+.PP
+
+.SS "unsigned int \fBPAPI_event_info_t::count\fP"number of terms (usually 1) in the code and name fields
+.IP "\(bu" 2
+for presets, these terms are native events
+.IP "\(bu" 2
+for native events, these terms are register contents 
+.PP
+
+.SS "char \fBPAPI_event_info_t::derived\fP[PAPI_MIN_STR_LEN]"name of the derived type
+.IP "\(bu" 2
+for presets, usually NOT_DERIVED
+.IP "\(bu" 2
+for native events, empty string NOTE: a derived description string is available in papi_data'\&.c that is currently not exposed to the user 
+.PP
+
+.SS "unsigned int \fBPAPI_event_info_t::event_code\fP"preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code 
+.SS "unsigned int \fBPAPI_event_info_t::event_type\fP"event type or category for preset events only 
+.SS "char \fBPAPI_event_info_t::long_descr\fP[PAPI_HUGE_STR_LEN]"a longer description of the event
+.IP "\(bu" 2
+typically a sentence for presets
+.IP "\(bu" 2
+possibly a paragraph from vendor docs for native events 
+.PP
+
+.SS "char \fBPAPI_event_info_t::name\fP[PAPI_MAX_INFO_TERMS][PAPI_2MAX_STR_LEN]"< names of code terms: - for presets, native event names, as in symbol, above
+.IP "\(bu" 2
+for native events, descriptive strings for each register value presented in the code array 
+.PP
+
+.SS "char \fBPAPI_event_info_t::note\fP[PAPI_HUGE_STR_LEN]"an optional developer note supplied with a preset event to delineate platform specific anomalies or restrictions NOTE: could also be implemented for native events'\&. 
+.SS "char \fBPAPI_event_info_t::postfix\fP[PAPI_MIN_STR_LEN]"string containing postfix operations; only defined for preset events of derived type DERIVED_POSTFIX 
+.SS "char \fBPAPI_event_info_t::short_descr\fP[PAPI_MIN_STR_LEN]"a description suitable for use as a label, typically only implemented for preset events 
+.SS "char \fBPAPI_event_info_t::symbol\fP[PAPI_HUGE_STR_LEN]"name of the event
+.IP "\(bu" 2
+for presets, something like PAPI_TOT_INS
+.IP "\(bu" 2
+for native events, something related to the vendor name
+.IP "\(bu" 2
+for perfmon2:opteron, these can get *very* long! 
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

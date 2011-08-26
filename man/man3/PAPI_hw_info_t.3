@@ -1,0 +1,91 @@
+.TH "PAPI_hw_info_t" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_hw_info_t \- 
+.PP
+Hardware info structure'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <papi\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "int \fBncpu\fP"
+.br
+.ti -1c
+.RI "int \fBthreads\fP"
+.br
+.ti -1c
+.RI "int \fBcores\fP"
+.br
+.ti -1c
+.RI "int \fBsockets\fP"
+.br
+.ti -1c
+.RI "int \fBnnodes\fP"
+.br
+.ti -1c
+.RI "int \fBtotalcpus\fP"
+.br
+.ti -1c
+.RI "int \fBvendor\fP"
+.br
+.ti -1c
+.RI "char \fBvendor_string\fP [PAPI_MAX_STR_LEN]"
+.br
+.ti -1c
+.RI "int \fBmodel\fP"
+.br
+.ti -1c
+.RI "char \fBmodel_string\fP [PAPI_MAX_STR_LEN]"
+.br
+.ti -1c
+.RI "float \fBrevision\fP"
+.br
+.ti -1c
+.RI "int \fBcpuid_family\fP"
+.br
+.ti -1c
+.RI "int \fBcpuid_model\fP"
+.br
+.ti -1c
+.RI "int \fBcpuid_stepping\fP"
+.br
+.ti -1c
+.RI "float \fBmhz\fP"
+.br
+.ti -1c
+.RI "int \fBclock_mhz\fP"
+.br
+.ti -1c
+.RI "\fBPAPI_mh_info_t\fP \fBmem_hierarchy\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "int \fBPAPI_hw_info_t::clock_mhz\fP"Cycle time of this CPU's cycle counter 
+.SS "int \fBPAPI_hw_info_t::cores\fP"Number of cores per socket 
+.SS "int \fBPAPI_hw_info_t::cpuid_family\fP"cpuid family 
+.SS "int \fBPAPI_hw_info_t::cpuid_model\fP"cpuid model 
+.SS "int \fBPAPI_hw_info_t::cpuid_stepping\fP"cpuid stepping 
+.SS "\fBPAPI_mh_info_t\fP \fBPAPI_hw_info_t::mem_hierarchy\fP"PAPI memory heirarchy description 
+.SS "float \fBPAPI_hw_info_t::mhz\fP"Cycle time of this CPU 
+.SS "int \fBPAPI_hw_info_t::model\fP"Model number of CPU 
+.SS "char \fBPAPI_hw_info_t::model_string\fP[PAPI_MAX_STR_LEN]"Model string of CPU 
+.SS "int \fBPAPI_hw_info_t::ncpu\fP"Number of CPUs per NUMA Node 
+.SS "int \fBPAPI_hw_info_t::nnodes\fP"Total Number of NUMA Nodes 
+.SS "float \fBPAPI_hw_info_t::revision\fP"Revision of CPU 
+.SS "int \fBPAPI_hw_info_t::sockets\fP"Number of sockets 
+.SS "int \fBPAPI_hw_info_t::threads\fP"Number of hdw threads per core 
+.SS "int \fBPAPI_hw_info_t::totalcpus\fP"Total number of CPU's in the entire system 
+.SS "int \fBPAPI_hw_info_t::vendor\fP"Vendor number of CPU 
+.SS "char \fBPAPI_hw_info_t::vendor_string\fP[PAPI_MAX_STR_LEN]"Vendor string of CPU 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

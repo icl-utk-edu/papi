@@ -1,0 +1,30 @@
+.TH "papi_avail" 1 "Fri Aug 26 2011" "Version 4.1.3.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+papi_avail \- .SH "Name"
+.PP
+papi_avail - provides availability and detail information for PAPI preset events'\&.
+.SH "Synopsis"
+.PP
+papi_avail [-adht] [-e event]
+.SH "Description"
+.PP
+papi_avail is a PAPI utility program that reports information about the current PAPI installation and supported preset events'\&. Using the -e option, it will also display information about specific native events'\&.
+.SH "Options"
+.PP
+.PD 0
+.IP "\(bu" 2
+-a Display only the available PAPI preset events'\&. 
+.IP "\(bu" 2
+-d Display PAPI preset event information in a more detailed format'\&. 
+.IP "\(bu" 2
+-h Display help information about this utility'\&. 
+.IP "\(bu" 2
+-t Display the PAPI preset event information in a tabular format'\&. This is the default'\&. 
+.IP "\(bu" 2
+-e <event> Display detailed event information for the named event'\&. This event can be either a preset or a native event'\&. 
+.PP
+.SH "Bugs"
+.PP
+There are no known bugs in this utility'\&. If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>'\&. 

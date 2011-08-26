@@ -1,0 +1,44 @@
+.TH "PAPI_thread_id" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_thread_id \- 
+.PP
+Get the thread identifier of the current thread'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_EMISC\fP is returned if there are no threads registered'\&. 
+.br
+\fI-1\fP is returned if the thread id function returns an error'\&.
+.RE
+.PP
+This function returns a valid thread identifier'\&. It calls the function registered with PAPI through a call to \fBPAPI_thread_init()\fP'\&.
+.PP
+.PP
+.nf
+unsigned long tid;
+
+if ((tid = PAPI_thread_id()) == (unsigned long int)-1 )
+    exit(1);
+
+printf('Initial thread id is: %lu\n', tid );
+.fi
+.PP
+ 
+.PP
+\fBSee also:\fP
+.RS 4
+\fBPAPI_thread_init\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

@@ -1,0 +1,68 @@
+.TH "PAPI_list_events" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_list_events \- 
+.PP
+list the events in an event set  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBParameters:\fP
+.RS 4
+\fIEventSet\fP An integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
+.br
+\fI*Events\fP An array of codes for events, such as PAPI_INT_INS'\&. No more than *number codes will be stored into the array'\&. 
+.br
+\fI*number\fP On input the variable determines the size of the Events array'\&. On output the variable contains the number of counters in the event set'\&. Note that if the given array Events is too short to hold all the counters in the event set the *number variable will be greater than the actually stored number of counter codes'\&.
+.RE
+.PP
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_EINVAL\fP 
+.br
+\fIPAPI_ENOEVST\fP * PAPIF_list_events(C_INT EventSet, C_INT(*) Events, C_INT number, C_INT check ) \fBPAPI_list_events()\fP decomposes an event set into the hardware events it contains'\&. This call assumes an initialized PAPI library and a successfully added event set'\&. 
+.RE
+.PP
+\fBExamples:\fP
+.RS 4
+
+.PP
+.nf
+        if (PAPI_event_name_to_code('PAPI_TOT_INS',&EventCode) != PAPI_OK)
+        exit(1);
+        if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+        exit(1);
+        Convert a second event name to an event code 
+        if (PAPI_event_name_to_code('PAPI_L1_LDM',&EventCode) != PAPI_OK)
+        exit(1);
+        if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+        exit(1);
+        number = 4;
+        if(PAPI_list_events(EventSet, Events, &number))
+        exit(1);
+        if(number != 2)
+        exit(1);
+
+.fi
+.PP
+ 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBPAPI_event_code_to_name\fP 
+.PP
+\fBPAPI_event_name_to_code\fP 
+.PP
+\fBPAPI_add_event\fP \fBPAPI_create_eventset\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

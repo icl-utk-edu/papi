@@ -1,0 +1,35 @@
+.TH "PAPI_descr_error" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_descr_error \- 
+.PP
+Return the PAPI error description string to user'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBParameters:\fP
+.RS 4
+\fIerrorCode\fP the error code to interpret
+.RE
+.PP
+\fBReturn values:\fP
+.RS 4
+\fINULL\fP The input error code to \fBPAPI_descr_error()\fP is invalid, or the description string is empty'\&.
+.RE
+.PP
+\fBPAPI_descr_error()\fP returns a pointer to the error message corresponding to the error code code '\&. If the call fails the function returns the NULL pointer'\&. This function is not implemented in Fortran'\&.
+.PP
+\fBSee also:\fP
+.RS 4
+\fBPAPI_strerror\fP \fBPAPI_perror\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

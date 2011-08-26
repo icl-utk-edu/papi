@@ -1,0 +1,34 @@
+.TH "PAPI_num_components" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_num_components \- 
+.PP
+Get the number of components available on the system'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBPostcondition:\fP
+.RS 4
+initializes the library to PAPI_HIGH_LEVEL_INITED if necessary
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Number of components available on the system
+.RE
+.PP
+.PP
+.nf
+// Query the library for a component count\&. 
+printf('%d components installed\&., PAPI_num_components() );
+.fi
+.PP
+ 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

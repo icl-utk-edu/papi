@@ -1,0 +1,56 @@
+.TH "PAPI_num_counters" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_num_counters \- 
+.PP
+Get the number of hardware counters available on the system'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBC Interface:\fP
+.RS 4
+#include <\fBpapi'\&.h\fP> 
+.br
+ int \fBPAPI_num_counters( void )\fP;
+.RE
+.PP
+\fBPostcondition:\fP
+.RS 4
+Initializes the library to PAPI_HIGH_LEVEL_INITED if necessary'\&.
+.RE
+.PP
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_EINVAL\fP \fBpapi'\&.h\fP is different from the version used to compile the PAPI library'\&. 
+.br
+\fIPAPI_ENOMEM\fP Insufficient memory to complete the operation'\&. 
+.br
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable'\&.
+.RE
+.PP
+\fBExamples:\fP
+.RS 4
+
+.PP
+.nf
+int num_hwcntrs;
+//  The installation does not support PAPI 
+if ((num_hwcntrs = PAPI_num_counters()) < 0 )
+    handle_error(1);
+//  The installation supports PAPI, but has no counters 
+if ((num_hwcntrs = PAPI_num_counters()) == 0 )
+    fprintf(stderr,'Info:: This machine does not provide hardware counters\&.\n');
+
+.fi
+.PP
+.RE
+.PP
+\fBPAPI_num_counters()\fP returns the optimal length of the values array for the high level functions'\&. This value corresponds to the number of hardware counters supported by the current substrate'\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

@@ -1,0 +1,39 @@
+.TH "PAPI_write" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_write \- 
+.PP
+Write counter values into counters'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBParameters:\fP
+.RS 4
+\fIEventSet\fP an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
+.br
+\fI*values\fP an array to hold the counter values of the counting events
+.RE
+.PP
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_ENOEVST\fP The EventSet specified does not exist'\&. 
+.br
+\fIPAPI_ESBSTR\fP \fBPAPI_write()\fP is not implemented for this architecture'\&. PAPI_ESYS The EventSet is currently counting events and the substrate could not change the values of the running counters'\&.
+.RE
+.PP
+\fBPAPI_write()\fP writes the counter values provided in the array values into the event set EventSet'\&. The virtual counters managed by the PAPI library will be set to the values provided'\&. If the event set is running, an attempt will be made to write the values to the running counters'\&. This operation is not permitted by all substrates and may result in a run-time error'\&.
+.PP
+\fBSee also:\fP
+.RS 4
+\fBPAPI_read\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

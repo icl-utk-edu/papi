@@ -1,0 +1,50 @@
+.TH "PAPI_lock" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_lock \- 
+.PP
+Lock one of two mutex variables defined in \fBpapi'\&.h\fP'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBPAPI_lock()\fP grabs access to one of the two PAPI mutex variables'\&. This function is provided to the user to have a platform independent call to a (hopefully) efficiently implemented mutex'\&.
+.PP
+\fBC Interface:\fP
+.RS 4
+#include <\fBpapi'\&.h\fP> 
+.br
+ void \fBPAPI_lock(int lock)\fP;
+.RE
+.PP
+\fBParameters:\fP
+.RS 4
+\fIlock\fP -- an integer value specifying one of the two user locks: PAPI_USR1_LOCK or PAPI_USR2_LOCK
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+There is no return value for this call'\&. Upon return from \fBPAPI_lock\fP the current thread has acquired exclusive access to the specified PAPI mutex'\&.
+.RE
+.PP
+\fBBug\fP
+.RS 4
+This function has no known bugs
+.RE
+.PP
+.PP
+\fBSee also:\fP
+.RS 4
+\fBPAPI_unlock\fP 
+.PP
+\fBPAPI_thread_init\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

@@ -1,0 +1,199 @@
+.TH "PAPI_component_info_t" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_component_info_t \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "char \fBname\fP [PAPI_MAX_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBversion\fP [PAPI_MIN_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBsupport_version\fP [PAPI_MIN_STR_LEN]"
+.br
+.ti -1c
+.RI "char \fBkernel_version\fP [PAPI_MIN_STR_LEN]"
+.br
+.ti -1c
+.RI "int \fBCmpIdx\fP"
+.br
+.ti -1c
+.RI "int \fBnum_cntrs\fP"
+.br
+.ti -1c
+.RI "int \fBnum_mpx_cntrs\fP"
+.br
+.ti -1c
+.RI "int \fBnum_preset_events\fP"
+.br
+.ti -1c
+.RI "int \fBnum_native_events\fP"
+.br
+.ti -1c
+.RI "int \fBdefault_domain\fP"
+.br
+.ti -1c
+.RI "int \fBavailable_domains\fP"
+.br
+.ti -1c
+.RI "int \fBdefault_granularity\fP"
+.br
+.ti -1c
+.RI "int \fBavailable_granularities\fP"
+.br
+.ti -1c
+.RI "int \fBitimer_sig\fP"
+.br
+.ti -1c
+.RI "int \fBitimer_num\fP"
+.br
+.ti -1c
+.RI "int \fBitimer_ns\fP"
+.br
+.ti -1c
+.RI "int \fBitimer_res_ns\fP"
+.br
+.ti -1c
+.RI "int \fBhardware_intr_sig\fP"
+.br
+.ti -1c
+.RI "int \fBclock_ticks\fP"
+.br
+.ti -1c
+.RI "int \fBopcode_match_width\fP"
+.br
+.ti -1c
+.RI "int \fBos_version\fP"
+.br
+.ti -1c
+.RI "int \fBreserved\fP [1]"
+.br
+.ti -1c
+.RI "unsigned int \fBhardware_intr\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBprecise_intr\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBposix1b_timers\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBkernel_profile\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBkernel_multiplex\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBdata_address_range\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBinstr_address_range\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBfast_counter_read\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBfast_real_timer\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBfast_virtual_timer\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBattach\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBattach_must_ptrace\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBcpu\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBinherit\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBedge_detect\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBinvert\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBprofile_ear\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBcntr_groups\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBcntr_umasks\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBcntr_IEAR_events\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBcntr_DEAR_events\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBcntr_OPCM_events\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBreserved_bits\fP:10"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Field Documentation"
+.PP 
+.SS "unsigned int \fBPAPI_component_info_t::attach\fP"Supports attach 
+.SS "unsigned int \fBPAPI_component_info_t::attach_must_ptrace\fP"Attach must first ptrace and stop the thread/process 
+.SS "int \fBPAPI_component_info_t::available_domains\fP"Available domains 
+.SS "int \fBPAPI_component_info_t::available_granularities\fP"Available granularities 
+.SS "int \fBPAPI_component_info_t::clock_ticks\fP"clock ticks per second 
+.SS "int \fBPAPI_component_info_t::CmpIdx\fP"Index into the vector array for this component; set at init time 
+.SS "unsigned int \fBPAPI_component_info_t::cntr_DEAR_events\fP"counters support data event addr register 
+.SS "unsigned int \fBPAPI_component_info_t::cntr_groups\fP"Underlying hardware uses counter groups (e'\&.g'\&. POWER5) 
+.SS "unsigned int \fBPAPI_component_info_t::cntr_IEAR_events\fP"counters support instr event addr register 
+.SS "unsigned int \fBPAPI_component_info_t::cntr_OPCM_events\fP"counter events support opcode matching 
+.SS "unsigned int \fBPAPI_component_info_t::cntr_umasks\fP"counters have unit masks 
+.SS "unsigned int \fBPAPI_component_info_t::cpu\fP"Supports specifying cpu number to use with event set 
+.SS "unsigned int \fBPAPI_component_info_t::data_address_range\fP"Supports data address range limiting 
+.SS "int \fBPAPI_component_info_t::default_domain\fP"The default domain when this substrate is used 
+.SS "int \fBPAPI_component_info_t::default_granularity\fP"The default granularity when this substrate is used 
+.SS "unsigned int \fBPAPI_component_info_t::edge_detect\fP"Supports edge detection on events 
+.SS "unsigned int \fBPAPI_component_info_t::fast_counter_read\fP"Supports a user level PMC read instruction 
+.SS "unsigned int \fBPAPI_component_info_t::fast_real_timer\fP"Supports a fast real timer 
+.SS "unsigned int \fBPAPI_component_info_t::fast_virtual_timer\fP"Supports a fast virtual timer 
+.SS "unsigned int \fBPAPI_component_info_t::hardware_intr\fP"hw overflow intr, does not need to be emulated in software 
+.SS "int \fBPAPI_component_info_t::hardware_intr_sig\fP"Signal used by hardware to deliver PMC events 
+.SS "unsigned int \fBPAPI_component_info_t::inherit\fP"Supports child processes inheriting parents counters 
+.SS "unsigned int \fBPAPI_component_info_t::instr_address_range\fP"Supports instruction address range limiting 
+.SS "unsigned int \fBPAPI_component_info_t::invert\fP"Supports invert detection on events 
+.SS "int \fBPAPI_component_info_t::itimer_ns\fP"ns between mpx switching and overflow/profile emulation 
+.SS "int \fBPAPI_component_info_t::itimer_num\fP"Number of the itimer used by mpx and overflow/profile emulation 
+.SS "int \fBPAPI_component_info_t::itimer_res_ns\fP"ns of resolution of itimer 
+.SS "int \fBPAPI_component_info_t::itimer_sig\fP"Signal number used by the multiplex timer, 0 if not 
+.SS "unsigned int \fBPAPI_component_info_t::kernel_multiplex\fP"In kernel multiplexing 
+.SS "unsigned int \fBPAPI_component_info_t::kernel_profile\fP"Has kernel profiling support (buffered interrupts or sprofil-like) 
+.SS "char \fBPAPI_component_info_t::kernel_version\fP[PAPI_MIN_STR_LEN]"Version of the kernel PMC support driver 
+.SS "char \fBPAPI_component_info_t::name\fP[PAPI_MAX_STR_LEN]"Name of the substrate we're using, usually CVS RCS Id 
+.SS "int \fBPAPI_component_info_t::num_cntrs\fP"Number of hardware counters the substrate supports 
+.SS "int \fBPAPI_component_info_t::num_mpx_cntrs\fP"Number of hardware counters the substrate or PAPI can multiplex supports 
+.SS "int \fBPAPI_component_info_t::num_native_events\fP"Number of native events the substrate supports 
+.SS "int \fBPAPI_component_info_t::num_preset_events\fP"Number of preset events the substrate supports 
+.SS "int \fBPAPI_component_info_t::opcode_match_width\fP"Width of opcode matcher if exists, 0 if not 
+.SS "int \fBPAPI_component_info_t::os_version\fP"Currently running kernel version 
+.SS "unsigned int \fBPAPI_component_info_t::posix1b_timers\fP"Using POSIX 1b interval timers (timer_create) instead of setitimer 
+.SS "unsigned int \fBPAPI_component_info_t::precise_intr\fP"Performance interrupts happen precisely 
+.SS "unsigned int \fBPAPI_component_info_t::profile_ear\fP"Supports data/instr/tlb miss address sampling 
+.SS "char \fBPAPI_component_info_t::support_version\fP[PAPI_MIN_STR_LEN]"Version of the support library 
+.SS "char \fBPAPI_component_info_t::version\fP[PAPI_MIN_STR_LEN]"Version of this substrate, usually CVS Revision 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

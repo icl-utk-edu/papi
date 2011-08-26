@@ -1,0 +1,31 @@
+.TH "PAPI_exe_info_t" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_exe_info_t \- 
+.PP
+get the executable's info  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <papi\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "char \fBfullname\fP [PAPI_HUGE_STR_LEN]"
+.br
+.ti -1c
+.RI "\fBPAPI_address_map_t\fP \fBaddress_info\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "\fBPAPI_address_map_t\fP \fBPAPI_exe_info_t::address_info\fP"executable's address space info 
+.SS "char \fBPAPI_exe_info_t::fullname\fP[PAPI_HUGE_STR_LEN]"path + name 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

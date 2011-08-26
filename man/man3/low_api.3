@@ -1,0 +1,286 @@
+.TH "The Low Level API" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+The Low Level API \- 
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBPAPI_accum\fP (int EventSet, long long *values)"
+.br
+.ti -1c
+.RI "int \fBPAPI_add_event\fP (int EventSet, int Event)"
+.br
+.ti -1c
+.RI "int \fBPAPI_add_events\fP (int EventSet, int *Events, int number)"
+.br
+.ti -1c
+.RI "int \fBPAPI_assign_eventset_component\fP (int EventSet, int cidx)"
+.br
+.ti -1c
+.RI "int \fBPAPI_attach\fP (int EventSet, unsigned long tid)"
+.br
+.ti -1c
+.RI "int \fBPAPI_cleanup_eventset\fP (int EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_create_eventset\fP (int *EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_detach\fP (int EventSet)"
+.br
+.ti -1c
+.RI "char * \fBPAPI_descr_error\fP (int)"
+.br
+.ti -1c
+.RI "int \fBPAPI_destroy_eventset\fP (int *EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_enum_event\fP (int *EventCode, int modifier)"
+.br
+.ti -1c
+.RI "int \fBPAPI_event_code_to_name\fP (int EventCode, char *out)"
+.br
+.ti -1c
+.RI "int \fBPAPI_event_name_to_code\fP (char *in, int *out)"
+.br
+.ti -1c
+.RI "int \fBPAPI_get_dmem_info\fP (\fBPAPI_dmem_info_t\fP *dest)"
+.br
+.ti -1c
+.RI "int \fBPAPI_get_event_info\fP (int EventCode, \fBPAPI_event_info_t\fP *info)"
+.br
+.ti -1c
+.RI "const \fBPAPI_exe_info_t\fP * \fBPAPI_get_executable_info\fP (void)"
+.br
+.ti -1c
+.RI "const \fBPAPI_hw_info_t\fP * \fBPAPI_get_hardware_info\fP (void)"
+.br
+.ti -1c
+.RI "const \fBPAPI_component_info_t\fP * \fBPAPI_get_component_info\fP (int cidx)"
+.br
+.ti -1c
+.RI "int \fBPAPI_get_multiplex\fP (int EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_get_opt\fP (int option, \fBPAPI_option_t\fP *ptr)"
+.br
+.ti -1c
+.RI "int \fBPAPI_get_cmp_opt\fP (int option, \fBPAPI_option_t\fP *ptr, int cidx)"
+.br
+.ti -1c
+.RI "long long \fBPAPI_get_real_cyc\fP (void)"
+.br
+.ti -1c
+.RI "long long \fBPAPI_get_real_nsec\fP (void)"
+.br
+.ti -1c
+.RI "long long \fBPAPI_get_real_usec\fP (void)"
+.br
+.ti -1c
+.RI "const \fBPAPI_shlib_info_t\fP * \fBPAPI_get_shared_lib_info\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_get_thr_specific\fP (int tag, void **ptr)"
+.br
+.ti -1c
+.RI "int \fBPAPI_get_overflow_event_index\fP (int Eventset, long long overflow_vector, int *array, int *number)"
+.br
+.ti -1c
+.RI "long long \fBPAPI_get_virt_cyc\fP (void)"
+.br
+.ti -1c
+.RI "long long \fBPAPI_get_virt_nsec\fP (void)"
+.br
+.ti -1c
+.RI "long long \fBPAPI_get_virt_usec\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_is_initialized\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_library_init\fP (int version)"
+.br
+.ti -1c
+.RI "int \fBPAPI_list_events\fP (int EventSet, int *Events, int *number)"
+.br
+.ti -1c
+.RI "int \fBPAPI_list_threads\fP (unsigned long *tids, int *number)"
+.br
+.ti -1c
+.RI "int \fBPAPI_lock\fP (int)"
+.br
+.ti -1c
+.RI "int \fBPAPI_multiplex_init\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_num_hwctrs\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_num_cmp_hwctrs\fP (int cidx)"
+.br
+.ti -1c
+.RI "int \fBPAPI_num_events\fP (int EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_overflow\fP (int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)"
+.br
+.ti -1c
+.RI "int \fBPAPI_perror\fP (int code, char *destination, int length)"
+.br
+.ti -1c
+.RI "int \fBPAPI_profil\fP (void *buf, unsigned bufsiz, caddr_t offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags)"
+.br
+.ti -1c
+.RI "int \fBPAPI_query_event\fP (int EventCode)"
+.br
+.ti -1c
+.RI "int \fBPAPI_read\fP (int EventSet, long long *values)"
+.br
+.ti -1c
+.RI "int \fBPAPI_read_ts\fP (int EventSet, long long *values, long long *cyc)"
+.br
+.ti -1c
+.RI "int \fBPAPI_register_thread\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_remove_event\fP (int EventSet, int EventCode)"
+.br
+.ti -1c
+.RI "int \fBPAPI_remove_events\fP (int EventSet, int *Events, int number)"
+.br
+.ti -1c
+.RI "int \fBPAPI_reset\fP (int EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_debug\fP (int level)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_cmp_domain\fP (int domain, int cidx)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_domain\fP (int domain)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_cmp_granularity\fP (int granularity, int cidx)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_granularity\fP (int granularity)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_multiplex\fP (int EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_opt\fP (int option, \fBPAPI_option_t\fP *ptr)"
+.br
+.ti -1c
+.RI "int \fBPAPI_set_thr_specific\fP (int tag, void *ptr)"
+.br
+.ti -1c
+.RI "void \fBPAPI_shutdown\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_sprofil\fP (\fBPAPI_sprofil_t\fP *prof, int profcnt, int EventSet, int EventCode, int threshold, int flags)"
+.br
+.ti -1c
+.RI "int \fBPAPI_start\fP (int EventSet)"
+.br
+.ti -1c
+.RI "int \fBPAPI_state\fP (int EventSet, int *status)"
+.br
+.ti -1c
+.RI "int \fBPAPI_stop\fP (int EventSet, long long *values)"
+.br
+.ti -1c
+.RI "char * \fBPAPI_strerror\fP (int)"
+.br
+.ti -1c
+.RI "unsigned long \fBPAPI_thread_id\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_thread_init\fP (unsigned long(*id_fn)(void))"
+.br
+.ti -1c
+.RI "int \fBPAPI_unlock\fP (int)"
+.br
+.ti -1c
+.RI "int \fBPAPI_unregister_thread\fP (void)"
+.br
+.ti -1c
+.RI "int \fBPAPI_write\fP (int EventSet, long long *values)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int \fBPAPI_accum\fP (intEventSet, long long *values)"accumulate and reset hardware events from an event set 
+.SS "int \fBPAPI_add_event\fP (intEventSet, intEvent)"add single PAPI preset or native hardware event to an event set 
+.SS "int \fBPAPI_add_events\fP (intEventSet, int *Events, intnumber)"add array of PAPI preset or native hardware events to an event set 
+.SS "int \fBPAPI_assign_eventset_component\fP (intEventSet, intcidx)"assign a component index to an existing but empty eventset 
+.SS "int \fBPAPI_attach\fP (intEventSet, unsigned longtid)"attach specified event set to a specific process or thread id 
+.SS "int \fBPAPI_cleanup_eventset\fP (intEventSet)"remove all PAPI events from an event set 
+.SS "int \fBPAPI_create_eventset\fP (int *EventSet)"create a new empty PAPI event set 
+.SS "char* \fBPAPI_descr_error\fP (int)"return a pointer to the error message corresponding to a specified error code 
+.SS "int \fBPAPI_destroy_eventset\fP (int *EventSet)"deallocates memory associated with an empty PAPI event set 
+.SS "int \fBPAPI_detach\fP (intEventSet)"detach specified event set from a previously specified process or thread id 
+.SS "int \fBPAPI_enum_event\fP (int *EventCode, intmodifier)"return the event code for the next available preset or natvie event 
+.SS "int \fBPAPI_event_code_to_name\fP (intEventCode, char *out)"translate an integer PAPI event code into an ASCII PAPI preset or native name 
+.SS "int \fBPAPI_event_name_to_code\fP (char *in, int *out)"translate an ASCII PAPI preset or native name into an integer PAPI event code 
+.SS "int \fBPAPI_get_cmp_opt\fP (intoption, \fBPAPI_option_t\fP *ptr, intcidx)"query the component specific option settings of a specific event set 
+.SS "const \fBPAPI_component_info_t\fP* \fBPAPI_get_component_info\fP (intcidx)"get information about the component features 
+.SS "int \fBPAPI_get_dmem_info\fP (\fBPAPI_dmem_info_t\fP *dest)"get dynamic memory usage information 
+.SS "int \fBPAPI_get_event_info\fP (intEventCode, \fBPAPI_event_info_t\fP *info)"get the name and descriptions for a given preset or native event code 
+.SS "const \fBPAPI_exe_info_t\fP* \fBPAPI_get_executable_info\fP (void)"get the executable's address space information 
+.SS "const \fBPAPI_hw_info_t\fP* \fBPAPI_get_hardware_info\fP (void)"get information about the system hardware 
+.SS "int \fBPAPI_get_multiplex\fP (intEventSet)"get the multiplexing status of specified event set 
+.SS "int \fBPAPI_get_opt\fP (intoption, \fBPAPI_option_t\fP *ptr)"query the option settings of the PAPI library or a specific event set 
+.SS "int \fBPAPI_get_overflow_event_index\fP (intEventset, long longoverflow_vector, int *array, int *number)"# decomposes an overflow_vector into an event index array 
+.SS "long long \fBPAPI_get_real_cyc\fP (void)"return the total number of cycles since some arbitrary starting point 
+.SS "long long \fBPAPI_get_real_nsec\fP (void)"return the total number of nanoseconds since some arbitrary starting point 
+.SS "long long \fBPAPI_get_real_usec\fP (void)"return the total number of microseconds since some arbitrary starting point 
+.SS "const \fBPAPI_shlib_info_t\fP* \fBPAPI_get_shared_lib_info\fP (void)"get information about the shared libraries used by the process 
+.SS "int \fBPAPI_get_thr_specific\fP (inttag, void **ptr)"return a pointer to a thread specific stored data structure 
+.SS "long long \fBPAPI_get_virt_cyc\fP (void)"return the process cycles since some arbitrary starting point 
+.SS "long long \fBPAPI_get_virt_nsec\fP (void)"return the process nanoseconds since some arbitrary starting point 
+.SS "long long \fBPAPI_get_virt_usec\fP (void)"return the process microseconds since some arbitrary starting point 
+.SS "int \fBPAPI_is_initialized\fP (void)"return the initialized state of the PAPI library 
+.SS "int \fBPAPI_library_init\fP (intversion)"initialize the PAPI library 
+.SS "int \fBPAPI_list_events\fP (intEventSet, int *Events, int *number)"list the events that are members of an event set 
+.SS "int \fBPAPI_list_threads\fP (unsigned long *tids, int *number)"list the thread ids currently known to PAPI 
+.SS "int \fBPAPI_lock\fP (int)"lock one of two PAPI internal user mutex variables 
+.SS "int \fBPAPI_multiplex_init\fP (void)"initialize multiplex support in the PAPI library 
+.SS "int \fBPAPI_num_cmp_hwctrs\fP (intcidx)"return the number of hardware counters for a specified component 
+.SS "int \fBPAPI_num_events\fP (intEventSet)"return the number of events in an event set 
+.SS "int \fBPAPI_num_hwctrs\fP (void)"return the number of hardware counters for the cpu 
+.SS "int \fBPAPI_overflow\fP (intEventSet, intEventCode, intthreshold, intflags, PAPI_overflow_handler_thandler)"set up an event set to begin registering overflows 
+.SS "int \fBPAPI_perror\fP (intcode, char *destination, intlength)"convert PAPI error codes to strings 
+.SS "int \fBPAPI_profil\fP (void *buf, unsignedbufsiz, caddr_toffset, unsignedscale, intEventSet, intEventCode, intthreshold, intflags)"generate PC histogram data where hardware counter overflow occurs 
+.SS "int \fBPAPI_query_event\fP (intEventCode)"query if a PAPI event exists 
+.SS "int \fBPAPI_read\fP (intEventSet, long long *values)"read hardware events from an event set with no reset 
+.SS "int \fBPAPI_read_ts\fP (intEventSet, long long *values, long long *cyc)"read from an eventset with a real-time cycle timestamp 
+.SS "int \fBPAPI_register_thread\fP (void)"inform PAPI of the existence of a new thread 
+.SS "int \fBPAPI_remove_event\fP (intEventSet, intEventCode)"remove a hardware event from a PAPI event set 
+.SS "int \fBPAPI_remove_events\fP (intEventSet, int *Events, intnumber)"remove an array of hardware events from a PAPI event set 
+.SS "int \fBPAPI_reset\fP (intEventSet)"reset the hardware event counts in an event set 
+.SS "int \fBPAPI_set_cmp_domain\fP (intdomain, intcidx)"set the component specific default execution domain for new event sets 
+.SS "int \fBPAPI_set_cmp_granularity\fP (intgranularity, intcidx)"set the component specific default granularity for new event sets 
+.SS "int \fBPAPI_set_debug\fP (intlevel)"set the current debug level for PAPI 
+.SS "int \fBPAPI_set_domain\fP (intdomain)"set the default execution domain for new event sets 
+.SS "int \fBPAPI_set_granularity\fP (intgranularity)"set the default granularity for new event sets 
+.SS "int \fBPAPI_set_multiplex\fP (intEventSet)"convert a standard event set to a multiplexed event set 
+.SS "int \fBPAPI_set_opt\fP (intoption, \fBPAPI_option_t\fP *ptr)"change the option settings of the PAPI library or a specific event set 
+.SS "int \fBPAPI_set_thr_specific\fP (inttag, void *ptr)"save a pointer as a thread specific stored data structure 
+.SS "void \fBPAPI_shutdown\fP (void)"finish using PAPI and free all related resources 
+.SS "int \fBPAPI_sprofil\fP (\fBPAPI_sprofil_t\fP *prof, intprofcnt, intEventSet, intEventCode, intthreshold, intflags)"generate hardware counter profiles from multiple code regions 
+.SS "int \fBPAPI_start\fP (intEventSet)"start counting hardware events in an event set 
+.SS "int \fBPAPI_state\fP (intEventSet, int *status)"return the counting state of an event set 
+.SS "int \fBPAPI_stop\fP (intEventSet, long long *values)"stop counting hardware events in an event set and return current events 
+.SS "char* \fBPAPI_strerror\fP (int)"return a pointer to the error name corresponding to a specified error code 
+.SS "unsigned long \fBPAPI_thread_id\fP (void)"get the thread identifier of the current thread 
+.SS "int \fBPAPI_thread_init\fP (unsigned long(*)(void)id_fn)"initialize thread support in the PAPI library 
+.SS "int \fBPAPI_unlock\fP (int)"unlock one of two PAPI internal user mutex variables 
+.SS "int \fBPAPI_unregister_thread\fP (void)"inform PAPI that a previously registered thread is disappearing 
+.SS "int \fBPAPI_write\fP (intEventSet, long long *values)"write counter values into counters 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

@@ -1,0 +1,30 @@
+.TH "PAPI_unlock" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_unlock \- 
+.PP
+Unlock one of the mutex variables defined in \fBpapi'\&.h\fP'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBParameters:\fP
+.RS 4
+\fIlck\fP an integer value specifying one of the two user locks: PAPI_USR1_LOCK or PAPI_USR2_LOCK
+.RE
+.PP
+\fBPAPI_unlock()\fP unlocks the mutex acquired by a call to \fBPAPI_lock\fP '\&.
+.PP
+\fBSee also:\fP
+.RS 4
+\fBPAPI_thread_init\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

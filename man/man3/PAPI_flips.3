@@ -1,0 +1,43 @@
+.TH "PAPI_flips" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_flips \- 
+.PP
+Simplified call to get Mflips/s (floating point instruction rate), real and processor time'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBC Interface: \fP
+.RS 4
+\fBpapi'\&.h\fP> 
+.br
+ int \fBPAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )\fP;
+.RE
+.PP
+\fBParameters:\fP
+.RS 4
+\fI*rtime\fP total realtime since the first \fBPAPI_flips()\fP call 
+.br
+\fI*ptime\fP total process time since the first \fBPAPI_flips()\fP call 
+.br
+\fI*flpins\fP total floating point instructions since the first call
+.RE
+.PP
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_EINVAL\fP The counters were already started by something other than: \fBPAPI_flips()\fP or \fBPAPI_flops()\fP'\&. 
+.br
+\fIPAPI_ENOEVNT\fP The floating point operations, floating point instructions or total cycles event does not exist'\&. 
+.br
+\fIPAPI_ENOMEM\fP Insufficient memory to complete the operation'\&.
+.RE
+.PP
+The first call to \fBPAPI_flips()\fP will initialize the PAPI High Level interface, set up the counters to monitor \fBPAPI_FP_INS\fP and \fBPAPI_TOT_CYC\fP events and start the counters'\&. Subsequent calls will read the counters and return total real time, total process time, total floating point instructions since the start of the measurement and the Mflip/s rate since latest call to \fBPAPI_flips()\fP'\&. A call to \fBPAPI_stop_counters()\fP will stop the counters from running and then calls such as \fBPAPI_start_counters()\fP can safely be used'\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

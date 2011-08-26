@@ -1,0 +1,52 @@
+.TH "PAPI_ipc" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_ipc \- 
+.PP
+Get instructions per cycle, real and processor time'\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+\fBC Interface:\fP
+.RS 4
+#include <\fBpapi'\&.h\fP> 
+.br
+ int \fBPAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )\fP;
+.RE
+.PP
+\fBParameters:\fP
+.RS 4
+\fI*rtime\fP total realtime since the first \fBPAPI_flops()\fP call 
+.br
+\fI*ptime\fP total process time since the first \fBPAPI_flops()\fP call 
+.br
+\fI*ins\fP total instructions since the first call 
+.br
+\fI*ipc\fP instructions per cycle achieved since the previous call
+.RE
+.PP
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_EINVAL\fP The counters were already started by something other than: \fBPAPI_ipc()\fP 
+.br
+\fIPAPI_ENOEVNT\fP The total instructions or total cycles event does not exist'\&. 
+.br
+\fIPAPI_ENOMEM\fP Insufficient memory to complete the operation'\&.
+.RE
+.PP
+The first call to \fBPAPI_ipc()\fP will initialize the PAPI High Level interface, set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters'\&. Subsequent calls will read the counters and return total real time, total process time, total instructions since the start of the measurement and the instructions per cycle rate since latest call to \fBPAPI_ipc()\fP'\&. A call to \fBPAPI_stop_counters()\fP will stop the counters from running and then calls such as \fBPAPI_start_counters()\fP can safely be used'\&.
+.PP
+\fBSee also:\fP
+.RS 4
+\fBPAPI_flops()\fP \fBPAPI_stop_counters()\fP \fBPAPI_set_opt()\fP \fBPAPI_flips()\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI-C from the source code'\&.
