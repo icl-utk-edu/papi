@@ -17,6 +17,9 @@ __ 2. Update any documentation that may have changed. Pay particular attention
 __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
 	Doxyfile, Doxyfile-everything (PROJECT_NUMBER) ; and commit to cvs if needed.
 
+-- 3b. Rebuild the doxygen manpages (  cd doc && make && for i in {1,3}; do cp man/man$i/*.$i ../man/man$i; done )
+	You will want to check if anything needs to be commited to cvs.
+
 __ 4. If configure.in is changed, run autoconf (2.59) and commit the resulting
 	configure file.
 	NOTE: Using an autoconf version >2.59 will work, but will produce an 
