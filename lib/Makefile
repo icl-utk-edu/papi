@@ -153,6 +153,10 @@ SOBJS=$(OBJS:.o=.lo)
 
 INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h pfmlib_priv.h
 
+ifeq ($(SYS),Linux)
+INC_COMMON += $(PFMINCDIR)/perfmon/perf_event.h
+endif
+
 INC_IA64=pfmlib_ia64_priv.h	 \
 	events/itanium_events.h	 \
 	events/itanium2_events.h \
