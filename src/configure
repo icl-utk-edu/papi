@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS PEPATH papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR MEMSUBSTR DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR MEMSUBSTR DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -5787,13 +5787,14 @@ fi;
 ##################################################
 #          Linux perf_event/perf_counter
 ##################################################
-if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+if test "$OS" = "linux"; then
 
 
 # Check whether --with-libpfm4 or --without-libpfm4 was given.
 if test "${with_libpfm4+set}" = set; then
   withval="$with_libpfm4"
   force_libpfm4=yes
+	       force_perf_events=yes
 fi;
 
 
@@ -5801,6 +5802,7 @@ fi;
 if test "${with_perf_events+set}" = set; then
   withval="$with_perf_events"
   force_perf_events=yes
+	       force_libpfm4=yes
 fi;
 
 
@@ -5808,13 +5810,70 @@ fi;
 if test "${with_pe_incdir+set}" = set; then
   withval="$with_pe_incdir"
   pe_incdir=$with_pe_incdir
-               force_perf_events="yes"
-else
-  pe_incdir="/usr/include/linux"
+               force_perf_events=yes
+	       force_libpfm4=yes
 fi;
 
-  # Linux 2.6.32 and newer check
-  as_ac_File=`echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
+# Check for perf_event.h
+  if test "$cross_compiling" = "no"; then
+     if test "x$pe_incdir" = "x"; then
+        echo "$as_me:$LINENO: checking for /usr/include/linux/perf_event.h" >&5
+echo $ECHO_N "checking for /usr/include/linux/perf_event.h... $ECHO_C" >&6
+if test "${ac_cv_file__usr_include_linux_perf_event_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/usr/include/linux/perf_event.h"; then
+  ac_cv_file__usr_include_linux_perf_event_h=yes
+else
+  ac_cv_file__usr_include_linux_perf_event_h=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file__usr_include_linux_perf_event_h" >&5
+echo "${ECHO_T}$ac_cv_file__usr_include_linux_perf_event_h" >&6
+
+	as_ac_File=`echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_event.h" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_event.h" >&5
+echo $ECHO_N "checking for /lib/modules/$OSVER/source/include/linux/perf_event.h... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/lib/modules/$OSVER/source/include/linux/perf_event.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+
+	echo "$as_me:$LINENO: checking for libpfm4/include/perfmon/perf_event.h" >&5
+echo $ECHO_N "checking for libpfm4/include/perfmon/perf_event.h... $ECHO_C" >&6
+if test "${ac_cv_file_libpfm4_include_perfmon_perf_event_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "libpfm4/include/perfmon/perf_event.h"; then
+  ac_cv_file_libpfm4_include_perfmon_perf_event_h=yes
+else
+  ac_cv_file_libpfm4_include_perfmon_perf_event_h=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file_libpfm4_include_perfmon_perf_event_h" >&5
+echo "${ECHO_T}$ac_cv_file_libpfm4_include_perfmon_perf_event_h" >&6
+
+     else
+	as_ac_File=`echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
 echo $ECHO_N "checking for $pe_incdir/perf_event.h... $ECHO_C" >&6
 if eval "test \"\${$as_ac_File+set}\" = set"; then
@@ -5832,56 +5891,29 @@ fi
 fi
 echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-  PEPATH="$pe_incdir/perf_event.h"
-fi
 
-
-  if test "x$PEPATH" = "x"; then
-    pe_incdir="/lib/modules/$OSVER/source/include/linux"
-    as_ac_File=`echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
-echo $ECHO_N "checking for $pe_incdir/perf_event.h... $ECHO_C" >&6
-if eval "test \"\${$as_ac_File+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pe_incdir/perf_event.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-  PEPATH="$pe_incdir/perf_event.h"
-fi
-
-  fi
-
-  if test "x$PEPATH" = "x"; then
-    perf_events="no"
+     fi
   else
-#    PEINCFLAG='-DPEINCLUDE=\"$(PEPATH)\"'
-    PEINCFLAG='-DPEINCLUDE=\"libpfm4/include/perfmon/perf_event.h\"'
-    CFLAGS="$CFLAGS $PEINCFLAG"
-    if test "$perfctr" = "no" -a "$perfmon" = 0; then
+     if test "x$pe_incdir" = "x"; then
+      pe_incdir="libpfm4/include/perfmon"
+     fi
+  fi
+
+  { echo "$as_me:$LINENO: \"DEBUG: force_libpfm4 force_perf_events perf_events pe_incdir cross_compiling\"" >&5
+echo "$as_me: \"DEBUG: force_libpfm4 force_perf_events perf_events pe_incdir cross_compiling\"" >&6;}
+  { echo "$as_me:$LINENO: \"DEBUG: |$force_libpfm4| |$force_perf_events| |$perf_events| |$pe_incdir| |$cross_compiling|\"" >&5
+echo "$as_me: \"DEBUG: |$force_libpfm4| |$force_perf_events| |$perf_events| |$pe_incdir| |$cross_compiling|\"" >&6;}
+
+  if test "$force_perf_events" = "yes"; then
       perf_events="yes"
-    else
+  else
       perf_events="no"
-    fi
   fi
 
-  if test "$force_perf_events" = "yes" -a "$perf_events" != "yes"; then
-     { { echo "$as_me:$LINENO: error: Perf Events explicitly specified, but perf events support not found" >&5
-echo "$as_me: error: Perf Events explicitly specified, but perf events support not found" >&2;}
-   { (exit 1); exit 1; }; }
+  if test "$perf_events" = "yes"; then
+      PEINCFLAG='-DPEINCLUDE=\"libpfm4/include/perfmon/perf_event.h\"'
+      CFLAGS="$CFLAGS $PEINCFLAG"
   fi
-
 fi
 
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
@@ -7350,7 +7382,6 @@ fi
 
 
 
-
 if test "$cross_compiling" = "yes" ; then
   { echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
@@ -8025,7 +8056,6 @@ s,@pfm_prefix@,$pfm_prefix,;t t
 s,@pfm_incdir@,$pfm_incdir,;t t
 s,@pfm_libdir@,$pfm_libdir,;t t
 s,@OS@,$OS,;t t
-s,@PEPATH@,$PEPATH,;t t
 s,@papi_events@,$papi_events,;t t
 s,@papi_events_table@,$papi_events_table,;t t
 s,@SETPATH@,$SETPATH,;t t
