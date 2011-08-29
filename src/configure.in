@@ -901,7 +901,6 @@ AC_ARG_WITH(perfmon,
                if test "$perfmon" != 0; then
                  perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
                  perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
-                 AC_MSG_RESULT($perfmon)
                  perfmon=`echo ${perfmon} | sed 's/\.//'`
                  if test $perfmon -gt 20; then
                    perfmon2=yes
@@ -970,13 +969,14 @@ AC_ARG_WITH(pe_incdir,
 
 
   if test "$perf_events" = "yes"; then
-      PECFLAGS="-DPEINCLUDE=\"$pe_incdir/perf_event.h\""
+      PECFLAGS="-DPEINCLUDE=\\\"$pe_incdir/perf_event.h\\\""
   fi
 
 #
 # Sort out the choice of the user vs. what we detected
 #
-
+# MESSING WITH CFLAGS IS STUPID!
+#
 if test "x$user_specified_interface" != "x"; then
    if test "$user_specified_interface" = "perfctr"; then
       perfmon=0
@@ -991,12 +991,20 @@ if test "x$user_specified_interface" != "x"; then
 			   perfctr=0
 			   perfmon=0
 			   CFLAGS="$CFLAGS $PECFLAGS"
-		else
+	else
 			AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface (perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events)")
 		fi								 
 	fi
   fi
+else
+	if test "$perfmon" != 0; then
+	   CFLAGS="$CFLAGS $PFMCFLAGS"
+	fi
+	if test "$perf_events" = "yes"; then
+	   CFLAGS="$CFLAGS $PECFLAGS"
+	fi
 fi
+
 
 #
 # User has made no choice, so we default to the ordering below in the platform section, if
