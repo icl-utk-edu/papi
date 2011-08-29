@@ -5265,7 +5265,7 @@ if test "x$no_cpu_counters" = "x"; then
 # Check whether --with-perfctr or --without-perfctr was given.
 if test "${with_perfctr+set}" = set; then
   withval="$with_perfctr"
-  user_specified_interface=yes
+  user_specified_interface=perfctr
 	     if test "$arch" != "ppc64"; then
 	     perfctr=6
 	     else
@@ -5338,28 +5338,28 @@ fi
 if test "${with_perfctr_root+set}" = set; then
   withval="$with_perfctr_root"
   perfctr_root=$withval
-             user_specified_interface=yes
+             user_specified_interface=perfctr
 fi;
 
 # Check whether --with-perfctr_prefix or --without-perfctr_prefix was given.
 if test "${with_perfctr_prefix+set}" = set; then
   withval="$with_perfctr_prefix"
   perfctr_prefix=$withval
-             user_specified_interface=yes
+             user_specified_interface=perfctr
 fi;
 
 # Check whether --with-perfctr_incdir or --without-perfctr_incdir was given.
 if test "${with_perfctr_incdir+set}" = set; then
   withval="$with_perfctr_incdir"
   perfctr_incdir=$withval
-            user_specified_interface=yes
+            user_specified_interface=perfctr
 fi;
 
 # Check whether --with-perfctr_libdir or --without-perfctr_libdir was given.
 if test "${with_perfctr_libdir+set}" = set; then
   withval="$with_perfctr_libdir"
   perfctr_libdir=$withval
-            user_specified_interface=yes
+            user_specified_interface=perfctr
 fi;
 
 if test "$perfctr" != "no"; then
@@ -5670,13 +5670,13 @@ fi
 old_pfmv2=n
 perfmon=0
 perfmon2=no
-if test "$perfctr" = 0; then
+
 
 # Check whether --with-perfmon or --without-perfmon was given.
 if test "${with_perfmon+set}" = set; then
   withval="$with_perfmon"
   perfmon=$withval
-             user_specified_interface=yes
+             user_specified_interface=perfmon
              perfmon=`echo ${perfmon} | sed 's/^ \t*//;s/ \t*$//'`
              perfmon=`echo ${perfmon} | grep -e '[1-9]\.[0-9][0-9]*'`
              if test "x$perfmon" = "x"; then
@@ -5690,7 +5690,7 @@ echo "$as_me: error: \"Badly formed perfmon version string\"" >&2;}
              fi
              if test $perfmon -lt 25; then
                old_pfmv2=y
-	       CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
+	       PFMCFLAGS="-DPFMLIB_OLD_PFMV2"
              fi
 else
   perfmon=0
@@ -5752,7 +5752,7 @@ echo "${ECHO_T}$perfmon" >&6
                  if test $perfmon -lt 25; then
 # must be y, not yes, or libpfm breaks
                    old_pfmv2="y"
-                   CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
+                   PFMCFLAGS="-DPFMLIB_OLD_PFMV2"
                  fi
                fi
 	         fi
@@ -5763,30 +5763,29 @@ fi;
 if test "${with_pfm_root+set}" = set; then
   withval="$with_pfm_root"
   pfm_root=$withval
-            user_specified_interface=yes
+            user_specified_interface=perfmon
 fi;
 
 # Check whether --with-pfm_prefix or --without-pfm_prefix was given.
 if test "${with_pfm_prefix+set}" = set; then
   withval="$with_pfm_prefix"
   pfm_prefix=$withval
-            user_specified_interface=yes
+            user_specified_interface=perfmon
 fi;
 
 # Check whether --with-pfm_incdir or --without-pfm_incdir was given.
 if test "${with_pfm_incdir+set}" = set; then
   withval="$with_pfm_incdir"
   pfm_incdir=$withval
-            user_specified_interface=yes
+            user_specified_interface=perfmon
 fi;
 
 # Check whether --with-pfm_libdir or --without-pfm_libdir was given.
 if test "${with_pfm_libdir+set}" = set; then
   withval="$with_pfm_libdir"
   pfm_libdir=$withval
-            user_specified_interface=yes
+            user_specified_interface=perfmon
 fi;
-fi
 
 ##################################################
 #          Linux perf_event/perf_counter
@@ -5794,7 +5793,6 @@ fi
 perf_events=no
 force_libpfm4=no
 force_perf_events=no
-if test "$perfctr" = 0 -a "$perfmon" = 0; then
 pe_incdir="libpfm4/include/perfmon"
 
 
@@ -5803,7 +5801,7 @@ if test "${with_perf_events+set}" = set; then
   withval="$with_perf_events"
   force_perf_events=yes
 	       force_libpfm4=yes
-	       user_specified_interface=yes
+	       user_specified_interface=pe
 fi;
 
 
@@ -5812,7 +5810,7 @@ if test "${with_libpfm4+set}" = set; then
   withval="$with_libpfm4"
   force_libpfm4=yes
 	       force_perf_events=yes
-	       user_specified_interface=yes
+	       user_specified_interface=pe
 fi;
 
 
@@ -5822,7 +5820,7 @@ if test "${with_pe_incdir+set}" = set; then
   pe_incdir=$with_pe_incdir
                force_perf_events=yes
 	       force_libpfm4=yes
-	       user_specified_interface=yes
+	       user_specified_interface=pe
 fi;
 
 # Check for perf_event.h
@@ -5878,16 +5876,40 @@ fi
 
 
   if test "$perf_events" = "yes"; then
-      CFLAGS="$CFLAGS -DPEINCLUDE=\"$pe_incdir/perf_event.h\""
+      PECFLAGS="-DPEINCLUDE=\"$pe_incdir/perf_event.h\""
+  fi
+
+#
+# Sort out the choice of the user vs. what we detected
+#
+
+if test "x$user_specified_interface" != "x"; then
+   if test "$user_specified_interface" = "perfctr"; then
+      perfmon=0
+      perf_events="no"
+   else
+	if test "$user_specified_interface" = "perfmon"; then
+	   perfctr=0
+	   perf_events="no"
+	   CFLAGS="$CFLAGS $PFMCFLAGS"
+	else
+		if test "$user_specified_interface" = "pe"; then
+			   perfctr=0
+			   perfmon=0
+			   CFLAGS="$CFLAGS $PECFLAGS"
+		else
+			{ { echo "$as_me:$LINENO: error: \"Unknown user_specified_interface=$user_specified_interface (perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events)\"" >&5
+echo "$as_me: error: \"Unknown user_specified_interface=$user_specified_interface (perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events)\"" >&2;}
+   { (exit 1); exit 1; }; }
+		fi
+	fi
   fi
 fi
 
 #
-# debuggin
+# User has made no choice, so we default to the ordering below in the platform section, if
+# we detect more than one.
 #
-
-{ echo "$as_me:$LINENO: CFLAGS=|$CFLAGS| perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events" >&5
-echo "$as_me: CFLAGS=|$CFLAGS| perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events" >&6;}
 
 #
 # What does this next section do?
