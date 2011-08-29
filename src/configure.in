@@ -867,6 +867,7 @@ if test "$perfctr" != "no"; then
   fi
 fi
 
+user_specified_interface=no
 ##################################################
 #          perfmon
 ##################################################
@@ -958,16 +959,13 @@ AC_ARG_WITH(pe_incdir,
 	       user_specified_interface=pe])
 
 # Check for perf_event.h
-  if test "$cross_compiling" = "no"; then 
-     if test "$force_perf_events" = "yes"; then
+  if test "$force_perf_events" = "yes"; then
 	perf_events="yes"
-     else
+  fi
+  if test "$cross_compiling" = "no"; then 
 	AC_CHECK_FILE(/proc/sys/kernel/perf_event_paranoid,[
 	AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")])
-     fi
   fi
-
-
   if test "$perf_events" = "yes"; then
       PECFLAGS="-DPEINCLUDE=\\\"$pe_incdir/perf_event.h\\\""
   fi
@@ -992,7 +990,7 @@ if test "x$user_specified_interface" != "x"; then
 			   perfmon=0
 			   CFLAGS="$CFLAGS $PECFLAGS"
 	else
-			AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface (perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events)")
+			AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events")
 		fi								 
 	fi
   fi
@@ -1064,8 +1062,9 @@ if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
   fi
 fi
 
-if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = 0 -a "$perfmon" = 0; then
+if test "$user_specified_interface" != "no" -a "$perf_events" = "no" -a "$perfctr" = 0 -a "$perfmon" = 0; then
   AC_MSG_NOTICE(Platform does not have a performance interface; Using generic platform without CPU counters)
+  AC_MSG_NOTICE("user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events")
   MAKEVER="generic_platform"
 fi
 fi

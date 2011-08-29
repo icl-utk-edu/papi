@@ -5664,6 +5664,7 @@ _ACEOF
   fi
 fi
 
+user_specified_interface=no
 ##################################################
 #          perfmon
 ##################################################
@@ -5822,10 +5823,10 @@ if test "${with_pe_incdir+set}" = set; then
 fi;
 
 # Check for perf_event.h
-  if test "$cross_compiling" = "no"; then
-     if test "$force_perf_events" = "yes"; then
+  if test "$force_perf_events" = "yes"; then
 	perf_events="yes"
-     else
+  fi
+  if test "$cross_compiling" = "no"; then
 	echo "$as_me:$LINENO: checking for /proc/sys/kernel/perf_event_paranoid" >&5
 echo $ECHO_N "checking for /proc/sys/kernel/perf_event_paranoid... $ECHO_C" >&6
 if test "${ac_cv_file__proc_sys_kernel_perf_event_paranoid+set}" = set; then
@@ -5869,10 +5870,7 @@ fi
 
 fi
 
-     fi
   fi
-
-
   if test "$perf_events" = "yes"; then
       PECFLAGS="-DPEINCLUDE=\\\"$pe_incdir/perf_event.h\\\""
   fi
@@ -5897,8 +5895,8 @@ if test "x$user_specified_interface" != "x"; then
 			   perfmon=0
 			   CFLAGS="$CFLAGS $PECFLAGS"
 	else
-			{ { echo "$as_me:$LINENO: error: \"Unknown user_specified_interface=$user_specified_interface (perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events)\"" >&5
-echo "$as_me: error: \"Unknown user_specified_interface=$user_specified_interface (perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events)\"" >&2;}
+			{ { echo "$as_me:$LINENO: error: \"Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events\"" >&5
+echo "$as_me: error: \"Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events\"" >&2;}
    { (exit 1); exit 1; }; }
 		fi
 	fi
@@ -6775,9 +6773,11 @@ _ACEOF
   fi
 fi
 
-if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = 0 -a "$perfmon" = 0; then
+if test "$user_specified_interface" != "no" -a "$perf_events" = "no" -a "$perfctr" = 0 -a "$perfmon" = 0; then
   { echo "$as_me:$LINENO: Platform does not have a performance interface; Using generic platform without CPU counters" >&5
 echo "$as_me: Platform does not have a performance interface; Using generic platform without CPU counters" >&6;}
+  { echo "$as_me:$LINENO: \"user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events\"" >&5
+echo "$as_me: \"user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events\"" >&6;}
   MAKEVER="generic_platform"
 fi
 fi
