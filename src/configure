@@ -883,8 +883,8 @@ Optional Packages:
   --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location
   --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location
-  --with-libpfm4		Specify use of libpfm4 with Linux Performance Event (requires kernel 2.6.32 or greater)
   --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)
+  --with-libpfm4		Specify use of libpfm4 with Linux Performance Event (requires kernel 2.6.32 or greater)
   --with-pe-incdir=<path>		Specify path to the correct perf header file
 
 Some influential environment variables:
@@ -5256,19 +5256,27 @@ fi
 echo "$as_me:$LINENO: result: $shlib" >&5
 echo "${ECHO_T}$shlib" >&6
 
-if test "x$no_cpu_counters" = "x"; then
 ##################################################
 #          perfctr
 ##################################################
+perfctr=0
+if test "x$no_cpu_counters" = "x"; then
 
 # Check whether --with-perfctr or --without-perfctr was given.
 if test "${with_perfctr+set}" = set; then
   withval="$with_perfctr"
   user_specified_interface=yes
+	     if test "$arch" != "ppc64"; then
+	     perfctr=6
+	     else
+	     perfctr=7
+	     fi
 else
-  perfctr=no
-             if test "$cross_compiling" = "no" ; then
-	           echo "$as_me:$LINENO: checking for /sys/class/perfctr" >&5
+  perfctr=0
+fi;
+
+if test "$cross_compiling" = "no" ; then
+  echo "$as_me:$LINENO: checking for /sys/class/perfctr" >&5
 echo $ECHO_N "checking for /sys/class/perfctr... $ECHO_C" >&6
 if test "${ac_cv_file__sys_class_perfctr+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5311,10 +5319,9 @@ fi
 
 fi
 
-             fi
-fi;
+fi
 
-if test "$perfctr" != "no"; then
+if test "$perfctr" != 0; then
   echo "$as_me:$LINENO: checking for perfctr version" >&5
 echo $ECHO_N "checking for perfctr version... $ECHO_C" >&6
   if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
@@ -5661,7 +5668,9 @@ fi
 #          perfmon
 ##################################################
 old_pfmv2=n
-
+perfmon=0
+perfmon2=no
+if test "$perfctr" = 0; then
 
 # Check whether --with-perfmon or --without-perfmon was given.
 if test "${with_perfmon+set}" = set; then
@@ -5681,13 +5690,11 @@ echo "$as_me: error: \"Badly formed perfmon version string\"" >&2;}
              fi
              if test $perfmon -lt 25; then
                old_pfmv2=y
-               CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
+	       CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
              fi
 else
   perfmon=0
 	         if test "$cross_compiling" = "no" ; then
-               { echo "$as_me:$LINENO: Checking for perfmon version" >&5
-echo "$as_me: Checking for perfmon version" >&6;}
 	           echo "$as_me:$LINENO: checking for /sys/kernel/perfmon/version" >&5
 echo $ECHO_N "checking for /sys/kernel/perfmon/version... $ECHO_C" >&6
 if test "${ac_cv_file__sys_kernel_perfmon_version+set}" = set; then
@@ -5779,23 +5786,16 @@ if test "${with_pfm_libdir+set}" = set; then
   pfm_libdir=$withval
             user_specified_interface=yes
 fi;
-
-  major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
-  minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
-  point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
+fi
 
 ##################################################
 #          Linux perf_event/perf_counter
 ##################################################
-if test "$OS" = "linux"; then
-
-
-# Check whether --with-libpfm4 or --without-libpfm4 was given.
-if test "${with_libpfm4+set}" = set; then
-  withval="$with_libpfm4"
-  force_libpfm4=yes
-	       force_perf_events=yes
-fi;
+perf_events=no
+force_libpfm4=no
+force_perf_events=no
+if test "$perfctr" = 0 -a "$perfmon" = 0; then
+pe_incdir="libpfm4/include/perfmon"
 
 
 # Check whether --with-perf_events or --without-perf_events was given.
@@ -5803,6 +5803,16 @@ if test "${with_perf_events+set}" = set; then
   withval="$with_perf_events"
   force_perf_events=yes
 	       force_libpfm4=yes
+	       user_specified_interface=yes
+fi;
+
+
+# Check whether --with-libpfm4 or --without-libpfm4 was given.
+if test "${with_libpfm4+set}" = set; then
+  withval="$with_libpfm4"
+  force_libpfm4=yes
+	       force_perf_events=yes
+	       user_specified_interface=yes
 fi;
 
 
@@ -5812,67 +5822,33 @@ if test "${with_pe_incdir+set}" = set; then
   pe_incdir=$with_pe_incdir
                force_perf_events=yes
 	       force_libpfm4=yes
+	       user_specified_interface=yes
 fi;
 
 # Check for perf_event.h
   if test "$cross_compiling" = "no"; then
-     if test "x$pe_incdir" = "x"; then
-        echo "$as_me:$LINENO: checking for /usr/include/linux/perf_event.h" >&5
-echo $ECHO_N "checking for /usr/include/linux/perf_event.h... $ECHO_C" >&6
-if test "${ac_cv_file__usr_include_linux_perf_event_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/usr/include/linux/perf_event.h"; then
-  ac_cv_file__usr_include_linux_perf_event_h=yes
-else
-  ac_cv_file__usr_include_linux_perf_event_h=no
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_file__usr_include_linux_perf_event_h" >&5
-echo "${ECHO_T}$ac_cv_file__usr_include_linux_perf_event_h" >&6
-
-	as_ac_File=`echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_event.h" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_event.h" >&5
-echo $ECHO_N "checking for /lib/modules/$OSVER/source/include/linux/perf_event.h... $ECHO_C" >&6
-if eval "test \"\${$as_ac_File+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/perf_event.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
-
-	echo "$as_me:$LINENO: checking for libpfm4/include/perfmon/perf_event.h" >&5
-echo $ECHO_N "checking for libpfm4/include/perfmon/perf_event.h... $ECHO_C" >&6
-if test "${ac_cv_file_libpfm4_include_perfmon_perf_event_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "libpfm4/include/perfmon/perf_event.h"; then
-  ac_cv_file_libpfm4_include_perfmon_perf_event_h=yes
-else
-  ac_cv_file_libpfm4_include_perfmon_perf_event_h=no
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_file_libpfm4_include_perfmon_perf_event_h" >&5
-echo "${ECHO_T}$ac_cv_file_libpfm4_include_perfmon_perf_event_h" >&6
-
+     if test "$force_perf_events" = "yes"; then
+	perf_events="yes"
      else
+	echo "$as_me:$LINENO: checking for /proc/sys/kernel/perf_event_paranoid" >&5
+echo $ECHO_N "checking for /proc/sys/kernel/perf_event_paranoid... $ECHO_C" >&6
+if test "${ac_cv_file__proc_sys_kernel_perf_event_paranoid+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/proc/sys/kernel/perf_event_paranoid"; then
+  ac_cv_file__proc_sys_kernel_perf_event_paranoid=yes
+else
+  ac_cv_file__proc_sys_kernel_perf_event_paranoid=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file__proc_sys_kernel_perf_event_paranoid" >&5
+echo "${ECHO_T}$ac_cv_file__proc_sys_kernel_perf_event_paranoid" >&6
+if test $ac_cv_file__proc_sys_kernel_perf_event_paranoid = yes; then
+
 	as_ac_File=`echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
 echo $ECHO_N "checking for $pe_incdir/perf_event.h... $ECHO_C" >&6
@@ -5891,30 +5867,31 @@ fi
 fi
 echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  perf_events="yes"
+fi
 
-     fi
-  else
-     if test "x$pe_incdir" = "x"; then
-      pe_incdir="libpfm4/include/perfmon"
+fi
+
      fi
   fi
 
-  { echo "$as_me:$LINENO: \"DEBUG: force_libpfm4 force_perf_events perf_events pe_incdir cross_compiling\"" >&5
-echo "$as_me: \"DEBUG: force_libpfm4 force_perf_events perf_events pe_incdir cross_compiling\"" >&6;}
-  { echo "$as_me:$LINENO: \"DEBUG: |$force_libpfm4| |$force_perf_events| |$perf_events| |$pe_incdir| |$cross_compiling|\"" >&5
-echo "$as_me: \"DEBUG: |$force_libpfm4| |$force_perf_events| |$perf_events| |$pe_incdir| |$cross_compiling|\"" >&6;}
-
-  if test "$force_perf_events" = "yes"; then
-      perf_events="yes"
-  else
-      perf_events="no"
-  fi
 
   if test "$perf_events" = "yes"; then
-      PEINCFLAG='-DPEINCLUDE=\"libpfm4/include/perfmon/perf_event.h\"'
-      CFLAGS="$CFLAGS $PEINCFLAG"
+      CFLAGS="$CFLAGS -DPEINCLUDE=\"$pe_incdir/perf_event.h\""
   fi
 fi
+
+#
+# debuggin
+#
+
+{ echo "$as_me:$LINENO: CFLAGS=|$CFLAGS| perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events" >&5
+echo "$as_me: CFLAGS=|$CFLAGS| perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events" >&6;}
+
+#
+# What does this next section do?
+#
 
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
   dotest=0
@@ -6769,7 +6746,7 @@ _ACEOF
   fi
 fi
 
-if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = 0; then
+if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = 0 -a "$perfmon" = 0; then
   { echo "$as_me:$LINENO: Platform does not have a performance interface; Using generic platform without CPU counters" >&5
 echo "$as_me: Platform does not have a performance interface; Using generic platform without CPU counters" >&6;}
   MAKEVER="generic_platform"
@@ -6788,6 +6765,9 @@ case "$OS" in
     MAKEVER=bgp ;;
   CLE)
     if test "$perfmon2" = "yes"; then
+#  major_version=`echo $OSVER | sed 's/\([[^.]][[^.]]*\).*/\1/'`
+#  minor_version=`echo $OSVER | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
+#  point_version=`echo $OSVER | sed -e 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/' -e 's/[[^0-9]].*//'`
 #    if (test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 31 -a "$perfmon2" != "yes" ); then
        MAKEVER="$OS"-perfmon2
     else

@@ -9,7 +9,6 @@
 AC_PREREQ(2.59)
 AC_INIT(PAPI, 4.1.4.0, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
-# AC_CANONICAL_SYSTEM
 AC_CONFIG_HEADER([config.h])
 
 AC_DEFUN([AS_AC_EXPAND],
@@ -780,19 +779,26 @@ if test "$papiLIBS" != "shared static"; then
 fi
 AC_MSG_RESULT($shlib)
 
-if test "x$no_cpu_counters" = "x"; then 
 ##################################################
 #          perfctr
 ##################################################
+perfctr=0
+if test "x$no_cpu_counters" = "x"; then 
 AC_ARG_WITH(perfctr,
             [  --with-perfctr		Specify perfctr as the performance interface ],
-            [user_specified_interface=yes],
-            [perfctr=no
-             if test "$cross_compiling" = "no" ; then
-	           AC_CHECK_FILE(/sys/class/perfctr,[perfctr=7],[AC_CHECK_FILE(/dev/perfctr,[perfctr=6])])
-             fi ])
+            [user_specified_interface=yes
+	     if test "$arch" != "ppc64"; then
+	     perfctr=6
+	     else
+	     perfctr=7
+	     fi],
+            [perfctr=0])
 
-if test "$perfctr" != "no"; then
+if test "$cross_compiling" = "no" ; then
+  AC_CHECK_FILE(/sys/class/perfctr,[perfctr=7],[AC_CHECK_FILE(/dev/perfctr,[perfctr=6])])
+fi 
+
+if test "$perfctr" != 0; then
   AC_MSG_CHECKING(for perfctr version)
   if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
     AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Patch kernel with 2.6.x.])
@@ -865,7 +871,9 @@ fi
 #          perfmon
 ##################################################
 old_pfmv2=n
-
+perfmon=0
+perfmon2=no
+if test "$perfctr" = 0; then
 AC_ARG_WITH(perfmon,
             [  --with-perfmon=<x.y>		Specify perfmon as the performance interface and specify version],
             [perfmon=$withval 
@@ -881,11 +889,10 @@ AC_ARG_WITH(perfmon,
              fi
              if test $perfmon -lt 25; then
                old_pfmv2=y
-               CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
+	       CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
              fi],
             [perfmon=0
 	         if test "$cross_compiling" = "no" ; then
-               AC_MSG_NOTICE(Checking for perfmon version)
 	           AC_CHECK_FILE(/sys/kernel/perfmon/version,
                              [perfmon=`cat /sys/kernel/perfmon/version`],
                              [AC_CHECK_FILE(/proc/perfmon,
@@ -923,61 +930,61 @@ AC_ARG_WITH(pfm_libdir,
            [  --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location ],
            [pfm_libdir=$withval
             user_specified_interface=yes])
-
-  major_version=`echo $OSVER | sed 's/\([[^.]][[^.]]*\).*/\1/'`
-  minor_version=`echo $OSVER | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
-  point_version=`echo $OSVER | sed -e 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/' -e 's/[[^0-9]].*//'`
+fi
 
 ##################################################
 #          Linux perf_event/perf_counter
 ##################################################
-if test "$OS" = "linux"; then 
- 
-  AC_ARG_WITH(libpfm4,
-              [  --with-libpfm4		Specify use of libpfm4 with Linux Performance Event (requires kernel 2.6.32 or greater)],
-              [force_libpfm4=yes
-	       force_perf_events=yes])
+perf_events=no
+force_libpfm4=no
+force_perf_events=no
+if test "$perfctr" = 0 -a "$perfmon" = 0; then
+pe_incdir="libpfm4/include/perfmon"
 
-  AC_ARG_WITH(perf_events,
+AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
               [force_perf_events=yes
-	       force_libpfm4=yes])
+	       force_libpfm4=yes
+	       user_specified_interface=yes])
 
-  AC_ARG_WITH(pe_incdir,
+AC_ARG_WITH(libpfm4,
+              [  --with-libpfm4		Specify use of libpfm4 with Linux Performance Event (requires kernel 2.6.32 or greater)],
+              [force_libpfm4=yes
+	       force_perf_events=yes
+	       user_specified_interface=yes])
+
+AC_ARG_WITH(pe_incdir,
 	          [  --with-pe-incdir=<path>		Specify path to the correct perf header file],
               [pe_incdir=$with_pe_incdir 
                force_perf_events=yes
-	       force_libpfm4=yes])
+	       force_libpfm4=yes
+	       user_specified_interface=yes])
 
 # Check for perf_event.h
   if test "$cross_compiling" = "no"; then 
-     if test "x$pe_incdir" = "x"; then
-        AC_CHECK_FILE(/usr/include/linux/perf_event.h)
-	AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_event.h)
-	AC_CHECK_FILE(libpfm4/include/perfmon/perf_event.h)
+     if test "$force_perf_events" = "yes"; then
+	perf_events="yes"
      else
-	AC_CHECK_FILE($pe_incdir/perf_event.h)
+	AC_CHECK_FILE(/proc/sys/kernel/perf_event_paranoid,[
+	AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")])
      fi
-  else
-     if test "x$pe_incdir" = "x"; then	
-      pe_incdir="libpfm4/include/perfmon"
-     fi
-  fi   
-
-  AC_MSG_NOTICE("DEBUG: force_libpfm4 force_perf_events perf_events pe_incdir cross_compiling")
-  AC_MSG_NOTICE("DEBUG: |$force_libpfm4| |$force_perf_events| |$perf_events| |$pe_incdir| |$cross_compiling|")
-
-  if test "$force_perf_events" = "yes"; then
-      perf_events="yes"
-  else
-      perf_events="no"
   fi
+
 
   if test "$perf_events" = "yes"; then
-      PEINCFLAG='-DPEINCLUDE=\"libpfm4/include/perfmon/perf_event.h\"'
-      CFLAGS="$CFLAGS $PEINCFLAG"
+      CFLAGS="$CFLAGS -DPEINCLUDE=\"$pe_incdir/perf_event.h\""
   fi
 fi
+
+#
+# debuggin
+#
+
+AC_MSG_NOTICE(CFLAGS=|$CFLAGS| perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events)
+
+#
+# What does this next section do?
+#
 
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
   dotest=0
@@ -1028,7 +1035,7 @@ if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
   fi
 fi
 
-if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = 0; then
+if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = 0 -a "$perfmon" = 0; then
   AC_MSG_NOTICE(Platform does not have a performance interface; Using generic platform without CPU counters)
   MAKEVER="generic_platform"
 fi
@@ -1045,6 +1052,9 @@ case "$OS" in
     MAKEVER=bgp ;;
   CLE)
     if test "$perfmon2" = "yes"; then
+#  major_version=`echo $OSVER | sed 's/\([[^.]][[^.]]*\).*/\1/'`
+#  minor_version=`echo $OSVER | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
+#  point_version=`echo $OSVER | sed -e 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/' -e 's/[[^0-9]].*//'`
 #    if (test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 31 -a "$perfmon2" != "yes" ); then
        MAKEVER="$OS"-perfmon2
     else
