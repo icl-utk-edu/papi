@@ -36,7 +36,7 @@
 #define PFM_ATTR_B(y, d) { .name = (y), .type = PFM_ATTR_MOD_BOOL, .desc = (d) }
 #define PFM_ATTR_NULL	{ .name = NULL }
 
-#define PFMLIB_EVT_MAX_NAME_LEN	128
+#define PFMLIB_EVT_MAX_NAME_LEN	256
 
 /*
  * event identifier encoding:

@@ -234,7 +234,7 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	 */
 	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask);
+		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask, -1);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
