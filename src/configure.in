@@ -975,7 +975,7 @@ AC_ARG_WITH(pe_incdir,
 #
 # MESSING WITH CFLAGS IS STUPID!
 #
-if test "x$user_specified_interface" != "x"; then
+if test "$user_specified_interface" != "no"; then
    if test "$user_specified_interface" = "perfctr"; then
       perfmon=0
       perf_events="no"
@@ -989,11 +989,11 @@ if test "x$user_specified_interface" != "x"; then
 			   perfctr=0
 			   perfmon=0
 			   CFLAGS="$CFLAGS $PECFLAGS"
-	else
+		else
 			AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events")
 		fi								 
 	fi
-  fi
+   fi
 else
 	if test "$perfmon" != 0; then
 	   CFLAGS="$CFLAGS $PFMCFLAGS"
