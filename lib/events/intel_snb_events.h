@@ -2105,7 +2105,7 @@ static const intel_x86_entry_t intel_snb_pe[]={
   .umasks = snb_offcore_requests_outstanding,
 },
 { .name   = "OTHER_ASSISTS",
-  .desc   = "Tbd",
+  .desc   = "Count hardware assists",
   .modmsk = INTEL_V3_ATTRS,
   .cntmsk = 0xff,
   .code = 0xc1,
