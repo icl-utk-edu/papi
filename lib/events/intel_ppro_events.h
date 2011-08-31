@@ -137,7 +137,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x28,
-  .numasks = 4,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_l2_ifetch),
   .ngrp = 1,
   .umasks = ppro_l2_ifetch,
 },
@@ -146,7 +146,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x2a,
-  .numasks = 4,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_l2_ifetch),
   .ngrp = 1,
   .umasks = ppro_l2_ifetch, /* identical to actual umasks list for this event */
 },
@@ -161,7 +161,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x2e,
-  .numasks = 4,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_l2_ifetch),
   .ngrp = 1,
   .umasks = ppro_l2_ifetch, /* identical to actual umasks list for this event */
 },
@@ -188,7 +188,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x62,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks,
 },
@@ -197,7 +197,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x63,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -212,7 +212,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x65,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -221,7 +221,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x66,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -230,7 +230,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x67,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -239,7 +239,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x68,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -248,7 +248,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x69,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -257,7 +257,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x6a,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -266,7 +266,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x6b,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -275,7 +275,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x6c,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -284,7 +284,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x6d,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -293,7 +293,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x6e,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -302,7 +302,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x70,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -311,7 +311,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x6f,
-  .numasks = 2,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_bus_drdy_clocks),
   .ngrp = 1,
   .umasks = ppro_bus_drdy_clocks, /* identical to actual umasks list for this event */
 },
@@ -500,7 +500,7 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x29,
-  .numasks = 4,
+  .numasks = LIBPFM_ARRAY_SIZE(ppro_l2_ifetch),
   .ngrp = 1,
   .umasks = ppro_l2_ifetch, /* identical to actual umasks list for this event */
 },
@@ -523,4 +523,3 @@ static const intel_x86_entry_t intel_ppro_pe[]={
   .code = 0x27,
 },
 };
-#define PME_INTEL_PPRO_EVENT_COUNT 68
