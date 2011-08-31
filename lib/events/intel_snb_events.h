@@ -1213,7 +1213,7 @@ static const intel_x86_umask_t snb_resource_stalls[]={
      .ucode = 0x400,
      .uflags= INTEL_X86_NCOMBO,
    },
-   { .uname  = "B",
+   { .uname  = "SB",
      .udesc  = "Cycles stalled due to no store buffers available (not including draining from sync)",
      .ucode = 0x800,
      .uflags= INTEL_X86_NCOMBO,
