@@ -73,7 +73,6 @@ parse_args( int argc, char **argv, command_flags_t * f )
 int
 main( int argc, char **argv )
 {
-	int j = 0;
 	int retval;
 	const PAPI_hw_info_t *hwinfo = NULL;
 	const PAPI_component_info_t* cmpinfo;
@@ -103,8 +102,6 @@ main( int argc, char **argv )
 
 
 	numcmp = PAPI_num_components(  );
-
-	j = 0;
 
 	for ( cid = 0; cid < numcmp; cid++ ) {
 	  cmpinfo = PAPI_get_component_info( cid );

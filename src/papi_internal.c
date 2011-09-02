@@ -562,11 +562,12 @@ _papi_hwi_add_native_precheck( EventSetInfo_t * ESI, int nevt )
 void
 _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_events )
 {
-	EventInfo_t *out, *head;
+        (void) thisindex;
+
+	EventInfo_t *head;
 	int i, j, k, n, preset_index, nevt;
 
 	head = ESI->EventInfoArray;
-	out = &head[thisindex];
    
 	j = 0;
 	for ( i = 0; i < total_events; i++ ) {

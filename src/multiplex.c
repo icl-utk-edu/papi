@@ -388,7 +388,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 			   int granularity )
 {
 	MPX_EventSet *newset = *mpx_events;
-	int retval, alloced_thread = 0, alloced_newset = 0;
+	int retval, alloced_newset = 0;
 	Threadlist *t;
 
 	/* Get the global list of threads */
@@ -426,7 +426,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 		tlist = t;
 		MPXDBG( "New head is at %p(%lu).\n", tlist,
 				( long unsigned ) tlist->tid );
-		alloced_thread = 1;
+		/* alloced_thread = 1; */
 	} else if ( _papi_hwi_thread_id_fn ) {
 
 		/* If we are threaded, AND there exists threads in the list, 
