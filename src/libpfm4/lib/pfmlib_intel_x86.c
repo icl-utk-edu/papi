@@ -223,11 +223,14 @@ pfm_intel_x86_detect(void)
 }
 
 int
-pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
+pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
+			   unsigned int msk,
+			   uint64_t *umask,
+			   int max_grpid)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
-	int i, j, k, added;
+	int i, j, k, added, skip;
 
 	k = e->nattrs;
 	ent = pe+e->event;
@@ -237,17 +240,23 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk,
 		if (!(msk & 0x1))
 			continue;
 
-		added = 0;
+		added = skip = 0;
 
 		for(j=0; j < ent->numasks; j++) {
 
 			if (ent->umasks[j].grpid != i)
 				continue;
 
+			if (max_grpid != -1 && i > max_grpid) {
+				skip = 1;
+				continue;
+			}
+
 			if (!is_model_umask(this, e->event, j))
 				continue;
 
-			if (ent->umasks[j].uflags & INTEL_X86_DFL) {
+			/* umask is default for group */
+			if (intel_x86_uflag(this, e->event, j, INTEL_X86_DFL)) {
 				DPRINT("added default %s for group %d\n", ent->umasks[j].uname, i);
 
 				*umask |= ent->umasks[j].ucode >> 8;
@@ -259,13 +268,22 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk,
 				added++;
 				if (intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL))
 					goto done;
+
+				if (intel_x86_uflag(this, e->event, j, INTEL_X86_EXCL_GRP_GT)) {
+					if (max_grpid != -1) {
+						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[j].grpid);
+						return PFM_ERR_UMASK;
+					}
+					max_grpid = ent->umasks[j].grpid;
+				}
 			}
 		}
-		if (!added) {
-			DPRINT("no default found for event %s unit mask group %d\n", ent->name, i);
+		if (!added && !skip) {
+			DPRINT("no default found for event %s unit mask group %d (max_grpid=%d)\n", ent->name, i, max_grpid);
 			return PFM_ERR_UMASK;
 		}
 	}
+	DPRINT("max_grpid=%d nattrs=%d k=%d\n", max_grpid, e->nattrs, k);
 done:
 	e->nattrs = k;
 	return PFM_SUCCESS;
@@ -316,6 +334,31 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 }
 
 static int
+intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, int max_grpid)
+{
+	const intel_x86_entry_t *pe;
+	pfm_event_attr_info_t *a;
+	int i, grpid;
+
+	DPRINT("check: max_grpid=%d\n", max_grpid);
+	pe = this_pe(this);
+
+	for (i = 0; i < e->nattrs; i++) {
+		a = attr(e, i);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (a->type == PFM_ATTR_UMASK) {
+			grpid = pe[e->event].umasks[a->idx].grpid;
+			if (grpid > max_grpid)
+				return PFM_ERR_FEATCOMB;
+		}
+	}
+	return PFM_SUCCESS;
+}
+
+static int
 pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 {
@@ -328,6 +371,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0;
 	int k, ret, grpid, last_grpid = -1, id;
+	int max_grpid = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 
@@ -369,6 +413,14 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 				DPRINT("exclusive unit mask group error\n");
 				return PFM_ERR_FEATCOMB;
 			}
+			/*
+			 * selecting certain umasks in a group may exclude any umasks
+			 * from any groups with a higher index
+			 *
+			 * enforcement requires looking at the grpid of all the umasks
+			 */
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_EXCL_GRP_GT))
+				max_grpid = grpid;
 
 			/*
 			 * upper layer has removed duplicates
@@ -390,7 +442,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			 * a group as long as none is tagged with NCOMBO
 			 */
 			if (grpcounts[grpid] > 1 && ncombo[grpid])  {
-				DPRINT("event does not support unit mask combination within a group\n");
+				DPRINT("umask %s does not support unit mask combination within group %d\n", pe[e->event].umasks[a->idx].uname, grpid);
 				return PFM_ERR_FEATCOMB;
 			}
 
@@ -468,7 +520,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	 */
 	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask2);
+		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask2, max_grpid);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
@@ -476,6 +528,17 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	ret = intel_x86_check_pebs(this, e);
 	if (ret != PFM_SUCCESS)
 		return ret;
+
+	/*
+	 * check no umask violates the max_grpid constraint
+	 */
+	if (max_grpid != -1) {
+		ret = intel_x86_check_max_grpid(this, e, max_grpid);
+		if (ret != PFM_SUCCESS) {
+			DPRINT("event %s: umask from grp > %d\n", pe[e->event].name, max_grpid);
+			return ret;
+		}
+	}
 
 	/*
 	 * reorder all the attributes such that the fstr appears always

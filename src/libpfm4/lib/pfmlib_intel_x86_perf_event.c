@@ -74,6 +74,9 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
 
+	/* no perf_event support for Intel uncore just yet */
+	return PFM_ERR_NOTSUPP;
+
 	/*
 	 * first, we need to do the generic encoding
 	 */
@@ -81,7 +84,7 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	attr->type = PERF_TYPE_UNCORE;
+	//attr->type = PERF_TYPE_UNCORE;
 
 	attr->config = e->codes[0];
 	/*
