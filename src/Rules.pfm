@@ -20,8 +20,6 @@ endif
     PFM_INC_PATH := $(PFM_ROOT)/include
 endif
 
-unexport CFLAGS
-
 OPTIM := $(CFLAGS)
 CFLAGS-3.y := -DPFM30 
 CFLAGS += -I$(PFM_INC_PATH) $(ALTIX) $(CFLAGS-$(VERSION))
