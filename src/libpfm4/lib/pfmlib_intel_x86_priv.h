@@ -82,6 +82,7 @@ typedef struct {
 #define INTEL_X86_DFL			0x10	/* unit mask is default choice */
 #define INTEL_X86_GRP_EXCL		0x20	/* only one unit mask group can be selected */
 #define INTEL_X86_NHM_OFFCORE		0x40	/* Nehalem/Westmere offcore_response */
+#define INTEL_X86_EXCL_GRP_GT		0x80	/* exclude use of grp with id > own grp */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -234,7 +235,7 @@ intel_x86_uflag(void *this, int idx, int attr, int flag)
 }
 
 extern int pfm_intel_x86_detect(void);
-extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask);
+extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask, int max_grpid);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e);

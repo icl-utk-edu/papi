@@ -61,6 +61,3 @@ static intel_x86_entry_t intel_x86_arch_pe[]={
 	 .desc =  "count mispredicted branch instructions at retirement. Specifically, this event counts at retirement of the last micro-op of a branch instruction in the architectural path of the execution and experienced misprediction in the branch prediction hardware",
 	}
 };
-#define PME_GEN_IA32_UNHALTED_CORE_CYCLES	0
-#define PME_GEN_IA32_INSTRUCTIONS_RETIRED	1
-#define PFMLIB_GEN_IA32_EVENT_COUNT	  (sizeof(gen_ia32_all_pe)/sizeof(intel_x86_entry_t))
