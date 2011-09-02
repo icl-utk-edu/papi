@@ -431,6 +431,15 @@ tune_up_fd( context_t * ctx, int evt_idx )
 	ret=fcntl_setown_fd(fd);
 	if (ret!=PAPI_OK) return ret;
 	   
+	/* Set FD_CLOEXEC.  Otherwise if we do an exec with an overflow */
+        /* running, the overflow handler will continue into the exec()'d*/
+        /* process and kill it because no signal handler is set up.     */
+
+	ret=fcntl(fd, F_SETFD, FD_CLOEXEC);
+	if (ret) {
+	   return PAPI_ESYS;
+	}
+
 	/*
 	 * when you explicitely declare that you want a particular signal,
 	 * even with you use the default signal, the kernel will send more
