@@ -165,7 +165,7 @@ typedef struct __sol_processor_information
 
 typedef struct __t2_pst_table
 {
-	unsigned int papi_pst;
+	int papi_pst;
 	char *ntv_event[MAX_COUNTERS];
 	int ntv_ctrs;
 	int ntv_opcode;
