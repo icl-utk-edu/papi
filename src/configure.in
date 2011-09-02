@@ -783,9 +783,11 @@ AC_MSG_RESULT($shlib)
 #          perfctr
 ##################################################
 perfctr=0
+force_perfctr=no
 if test "x$no_cpu_counters" = "x"; then 
 AC_ARG_WITH(perfctr,
             [  --with-perfctr		Specify perfctr as the performance interface ],
+	    force_perfctr=yes
             [user_specified_interface=perfctr
 	     if test "$arch" != "ppc64"; then
 	     perfctr=6
@@ -874,11 +876,13 @@ user_specified_interface=no
 old_pfmv2=n
 perfmon=0
 perfmon2=no
+force_perfmon2=no
 
 AC_ARG_WITH(perfmon,
             [  --with-perfmon=<x.y>		Specify perfmon as the performance interface and specify version],
             [perfmon=$withval 
              user_specified_interface=perfmon
+	     force_perfmon2=yes
              perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
              perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
              if test "x$perfmon" = "x"; then
@@ -1135,7 +1139,25 @@ case "$OS" in
     echo "" >> freebsd-config.h
     echo "#endif" >> freebsd-config.h ;;
   linux)
-    if test "$perf_events" = "yes" ; then
+
+    if test "$force_perf_events" = "yes" ; then
+      MAKEVER="$OS"-pe
+    elif test "$force_perfmon2" = "yes" ; then
+      MAKEVER="$OS"-perfmon2
+    elif test "$force_perfctr" = "yes" ; then
+      case "$CPU" in
+        itanium2|montecito)
+          if test "$bitmode" = "32"; then
+            AC_MSG_ERROR([The bitmode you specified is not supported])
+          fi
+	  MAKEVER="$OS"-pfm-"$CPU"
+	  ;;
+        athlon|opteron|atom|core|core2|p3|p4|i7)
+	        MAKEVER="$OS"-perfctr-x86 ;;
+        POWER5|POWER5+|POWER6|POWER7|PPC970)
+          MAKEVER="$OS"-perfctr-"$CPU" ;;
+     esac
+    elif test "$perf_events" = "yes" ; then
       MAKEVER="$OS"-pe
     elif test "$perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
