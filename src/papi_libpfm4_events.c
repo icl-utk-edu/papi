@@ -53,7 +53,7 @@ static struct native_event_t *find_existing_event(char *name) {
   int i;
   struct native_event_t *temp_event=NULL;
 
-  SUBDBG("Looking for %s\n",name);
+  SUBDBG("Looking for %s in %d events\n",name,num_native_events);
 
   _papi_hwi_lock( NAMELIB_LOCK );
 
@@ -1198,6 +1198,9 @@ _papi_libpfm_init(papi_vector_t *MY_VECTOR) {
    }
 
    /* allocate the native event structure */
+
+   num_native_events=0;
+
    native_events=calloc(NATIVE_EVENT_CHUNK,sizeof(struct native_event_t));
    if (native_events==NULL) {
       return PAPI_ENOMEM;
