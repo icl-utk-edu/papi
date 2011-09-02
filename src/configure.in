@@ -936,13 +936,13 @@ AC_ARG_WITH(pfm_libdir,
 ##################################################
 perf_events=no
 force_libpfm4=no
+force_libpfm3=no
 force_perf_events=no
 pe_incdir="libpfm4/include/perfmon"
 
 AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
               [force_perf_events=yes
-	       force_libpfm4=yes
 	       user_specified_interface=pe])
 
 AC_ARG_WITH(libpfm4,
@@ -951,11 +951,16 @@ AC_ARG_WITH(libpfm4,
 	       force_perf_events=yes
 	       user_specified_interface=pe])
 
+AC_ARG_WITH(libpfm3,
+              [  --with-libpfm3		Specify use of libpfm3 with Linux Performance Event (requires kernel 2.6.32 or greater)],
+              [force_libpfm3=yes
+	       force_perf_events=yes
+	       user_specified_interface=pe])
+
 AC_ARG_WITH(pe_incdir,
 	          [  --with-pe-incdir=<path>		Specify path to the correct perf header file],
               [pe_incdir=$with_pe_incdir 
                force_perf_events=yes
-	       force_libpfm4=yes
 	       user_specified_interface=pe])
 
 # Check for perf_event.h
@@ -1317,7 +1322,9 @@ elif test "$MAKEVER" = "freebsd"; then
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 elif test "$MAKEVER" = "linux-pe"; then
   if test "x$no_cpu_counters" = "x"; then
-    if test "x$force_libpfm4" = "x"; then
+    if test "$force_libpfm4" = "yes"; then
+       FILENAME=Rules.pfm4_pe
+    elif test "$force_libpfm3" = "yes"; then
        FILENAME=Rules.pfm_pe
     else
        FILENAME=Rules.pfm4_pe

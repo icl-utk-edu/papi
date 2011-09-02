@@ -885,6 +885,7 @@ Optional Packages:
   --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location
   --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)
   --with-libpfm4		Specify use of libpfm4 with Linux Performance Event (requires kernel 2.6.32 or greater)
+  --with-libpfm3		Specify use of libpfm3 with Linux Performance Event (requires kernel 2.6.32 or greater)
   --with-pe-incdir=<path>		Specify path to the correct perf header file
 
 Some influential environment variables:
@@ -2242,7 +2243,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2245:" \
+echo "$as_me:2246:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5791,6 +5792,7 @@ fi;
 ##################################################
 perf_events=no
 force_libpfm4=no
+force_libpfm3=no
 force_perf_events=no
 pe_incdir="libpfm4/include/perfmon"
 
@@ -5799,7 +5801,6 @@ pe_incdir="libpfm4/include/perfmon"
 if test "${with_perf_events+set}" = set; then
   withval="$with_perf_events"
   force_perf_events=yes
-	       force_libpfm4=yes
 	       user_specified_interface=pe
 fi;
 
@@ -5813,12 +5814,20 @@ if test "${with_libpfm4+set}" = set; then
 fi;
 
 
+# Check whether --with-libpfm3 or --without-libpfm3 was given.
+if test "${with_libpfm3+set}" = set; then
+  withval="$with_libpfm3"
+  force_libpfm3=yes
+	       force_perf_events=yes
+	       user_specified_interface=pe
+fi;
+
+
 # Check whether --with-pe_incdir or --without-pe_incdir was given.
 if test "${with_pe_incdir+set}" = set; then
   withval="$with_pe_incdir"
   pe_incdir=$with_pe_incdir
                force_perf_events=yes
-	       force_libpfm4=yes
 	       user_specified_interface=pe
 fi;
 
@@ -7122,7 +7131,9 @@ elif test "$MAKEVER" = "freebsd"; then
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 elif test "$MAKEVER" = "linux-pe"; then
   if test "x$no_cpu_counters" = "x"; then
-    if test "x$force_libpfm4" = "x"; then
+    if test "$force_libpfm4" = "yes"; then
+       FILENAME=Rules.pfm4_pe
+    elif test "$force_libpfm3" = "yes"; then
        FILENAME=Rules.pfm_pe
     else
        FILENAME=Rules.pfm4_pe
