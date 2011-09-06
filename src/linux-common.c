@@ -99,7 +99,23 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	return PAPI_OK;
 }
 
-int get_linux_version() {
+int _linux_detect_nmi_watchdog() {
+
+  int watchdog_detected=0,watchdog_value=0;
+  FILE *fff;
+
+  fff=fopen("/proc/sys/kernel/nmi_watchdog","r");
+  if (fff!=NULL) {
+     if (fscanf(fff,"%d",&watchdog_value)==1) {
+        if (watchdog_value>0) watchdog_detected=1;
+     }
+     fclose(fff);
+  }
+
+  return watchdog_detected;
+}
+
+int _linux_get_version() {
       
      int major=0,minor=0,sub=0;
      char *ptr;   

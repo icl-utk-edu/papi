@@ -58,6 +58,9 @@ extern papi_vector_t _papi_pe_vector;
 
 /* Static globals */
 
+static int nmi_watchdog_active;
+
+
 /* FIXME */
 #define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
 
@@ -68,6 +71,12 @@ extern papi_vector_t _papi_pe_vector;
  * implementations (e.g. x86) which don't do a static event scheduability
  * check in sys_perf_event_open.  
  * This was fixed for x86 in the 2.6.33 kernel
+ *
+ * Also! Kernels newer than 2.6.34 will fail in a similar way
+ *       if the nmi_watchdog has stolen a performance counter
+ *       and we try to use the maximum number of counters.
+ *       A sys_perf_open() will seem to succeed but will fail
+ *       at read time.  So re-use this work around code.
  */
 static inline int 
 bug_check_scheduability(void) {
@@ -77,6 +86,9 @@ bug_check_scheduability(void) {
 #else
   if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 #endif
+
+  if (nmi_watchdog_active) return 1;
+
   return 0;
 }
 
@@ -751,17 +763,22 @@ _papi_pe_init_substrate( int cidx )
 
   /* Get Linux-specific system info */
   retval = _linux_get_system_info( &_papi_hwi_system_info );
-  if ( retval )
-     return retval;
+  if ( retval ) return retval;
+
+  /* Detect NMI watchdog which can steal counters */
+  nmi_watchdog_active=_linux_detect_nmi_watchdog();
+  if (nmi_watchdog_active) {
+    fprintf(stdout,"Warning!  The Linux nmi_watchdog is using one of the performance counters\n"
+	           "          reducing the total number available by one.\n\n");
+  }
 
   /* Set various version strings */
   strcpy( MY_VECTOR.cmp_info.name,
 	   "$Id$" );
   strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
 
-
   /* Setup Kernel Version */
-  MY_VECTOR.cmp_info.os_version=get_linux_version();
+  MY_VECTOR.cmp_info.os_version=_linux_get_version();
   
   /* perf_events defaults */
   MY_VECTOR.cmp_info.hardware_intr = 1;
