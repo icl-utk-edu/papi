@@ -301,11 +301,13 @@ _DO_STUFF( void )
 #ifdef DUMMY_DRIVER
 int main(int argc, char **argv)
 {
-  int i;
-  if (argc > 1)
-    if ((i = atoi(argv[1])) < 1) {
-      i = NUM_FLOPS;
-    }
+  int c, i = NUM_FLOPS;
+  if (argc > 1) {
+     c =  atoi(argv[1]);
+     if (c >= 0) {
+       i = c;     
+     }
+  }
   do_flops(i);
   exit(0);
 }
