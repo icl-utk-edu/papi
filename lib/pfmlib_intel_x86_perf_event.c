@@ -34,13 +34,17 @@
 int
 pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
+	pfmlib_pmu_t *pmu = this;
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
+
+	if (!pmu->get_event_encoding[PFM_OS_NONE])
+		return PFM_ERR_NOTSUPP;
 
 	/*
 	 * first, we need to do the generic encoding
 	 */
-	ret = pfm_intel_x86_get_encoding(this, e);
+	ret = pmu->get_event_encoding[PFM_OS_NONE](this, e);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -71,16 +75,16 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 int
 pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
+	pfmlib_pmu_t *pmu = this;
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
 
-	/* no perf_event support for Intel uncore just yet */
 	return PFM_ERR_NOTSUPP;
 
-	/*
-	 * first, we need to do the generic encoding
-	 */
-	ret = pfm_intel_x86_get_encoding(this, e);
+	if (!pmu->get_event_encoding[PFM_OS_NONE])
+		return PFM_ERR_NOTSUPP;
+
+	ret = pmu->get_event_encoding[PFM_OS_NONE](this, e);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -147,6 +151,7 @@ intel_x86_event_has_pebs(void *this, pfmlib_event_desc_t *e)
 void
 pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
+	pfmlib_pmu_t *pmu = this;
 	int i, compact;
 	int has_pebs = intel_x86_event_has_pebs(this, e);
 
@@ -162,7 +167,7 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		 */
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
 			if (e->pattrs[i].idx == INTEL_X86_ATTR_U
-					|| e->pattrs[i].idx == INTEL_X86_ATTR_K)
+			    || e->pattrs[i].idx == INTEL_X86_ATTR_K)
 				compact = 1;
 		}
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
@@ -172,8 +177,17 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 				compact = 1;
 
 			/*
-			 * No hypervisor on Intel */
+			 * No hypervisor on Intel
+			 */
 			if (e->pattrs[i].idx == PERF_ATTR_H)
+				compact = 1;
+
+			/*
+			 * uncore has no priv level support
+			 */
+			if (pmu->type == PFM_PMU_TYPE_UNCORE
+			    && (e->pattrs[i].idx == PERF_ATTR_U
+			        || e->pattrs[i].idx == PERF_ATTR_K))
 				compact = 1;
 		}
 
