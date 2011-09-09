@@ -311,7 +311,7 @@ createNativeEvents( void )
  * Returns all event values from the CuPTI eventGroup 
  */
 static int
-getEventValue( long long *counts )
+getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t addedEvents )
 {
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	size_t events_read, bufferSizeBytes, arraySizeBytes, i;
@@ -364,6 +364,7 @@ int
 CUDA_init( hwd_context_t * ctx )
 {
 	( void ) ctx;
+		
 	return PAPI_OK;
 }
 
@@ -371,21 +372,48 @@ CUDA_init( hwd_context_t * ctx )
 /* Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
+ *
+ * NOTE: only called by main thread (not by every thread) !!!
+ *
+ * Starting in CUDA 4.0, multiple CPU threads can access the same CUDA context.
+ * This is a much easier programming model then pre-4.0 as threads - using the 
+ * same context - can share memory, data, etc. 
+ * It's possible to create a different context for each thread, but then we are
+ * likely running into a limitation that only one context can be profiled at a time.
+ * ==> and we don't want this. That's why CUDA context creation is done in 
+ * CUDA_init_substrate() (called only by main thread) rather than CUDA_init() 
+ * or CUDA_init_control_state() (both called by each thread).
  */
 int
 CUDA_init_substrate(  )
 {
-	int i;
-
-	/* Initialize CuPTI library */
-	if ( 0 != cuInit( 0 ) ) {
-		perror( "cuInit(): Failed to initialize the CUDA library" );
-		return ( PAPI_ENOSUPP );
-	}
-
+	CUresult cuErr = CUDA_SUCCESS;
+	
 	/* Create dynamic event table */
 	NUM_EVENTS = detectDevice(  );
 
+	/* TODO: works only for one device right now; 
+	 need to find out if user can use 2 or more devices at same time */
+	
+	/* want create a CUDA context for either the default device or
+	 the device specified with cudaSetDevice() in user code */
+	if ( CUDA_SUCCESS != cudaGetDevice( &currentDeviceID ) ) {
+		printf( "There is no device supporting CUDA.\n" );
+		return ( PAPI_ENOSUPP );
+	}
+	printf( "DEVICE USED: %s (%d)\n", device[currentDeviceID].name,
+		   currentDeviceID );
+	
+	/* get the CUDA context from the calling CPU thread */
+	cuErr = cuCtxGetCurrent( &cuCtx );
+	
+	/* if no CUDA context is bound to the calling CPU thread yet, create one */
+	if ( cuErr != CUDA_SUCCESS || cuCtx == NULL ) {
+		cuErr = cuCtxCreate( &cuCtx, 0, device[currentDeviceID].dev );
+		CHECK_CU_ERROR( cuErr, "cuCtxCreate" );
+	}
+	
+	/* Create dynamic event table */
 	cuda_native_table = ( CUDA_native_event_entry_t * )
 		malloc( sizeof ( CUDA_native_event_entry_t ) * NUM_EVENTS );
 	if ( cuda_native_table == NULL ) {
@@ -397,19 +425,7 @@ CUDA_init_substrate(  )
 		fprintf( stderr, "Number of CUDA events mismatch!\n" );
 		return ( PAPI_ENOSUPP );
 	}
-
-	/* allocate memory for the list of events that are added to the CuPTI eventGroup */
-	addedEvents.list = malloc( sizeof ( int ) * NUM_EVENTS );
-	if ( addedEvents.list == NULL ) {
-		perror
-			( "malloc(): Failed to allocate memory to table of events that are added to CuPTI eventGroup" );
-		return ( PAPI_ENOSUPP );
-	}
-
-	/* initialize the event list */
-	for ( i = 0; i < NUM_EVENTS; i++ )
-		addedEvents.list[i] = 0;
-
+	
 	return ( PAPI_OK );
 }
 
@@ -421,34 +437,25 @@ CUDA_init_substrate(  )
 int
 CUDA_init_control_state( hwd_control_state_t * ctrl )
 {
-	( void ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
-	CUresult cuErr = CUDA_SUCCESS;
+	int i;
 
-	/* TODO: works only for one device right now; 
-	   need to find out if user can use 2 or more devices at same time */
-
-	/* want create a CUDA context for either the default device or
-	   the device specified with cudaSetDevice() in user code */
-	if ( CUDA_SUCCESS != cudaGetDevice( &currentDeviceID ) ) {
-		printf( "There is no device supporting CUDA.\n" );
+	/* allocate memory for the list of events that are added to the CuPTI eventGroup */
+	ctrl->addedEvents.list = malloc( sizeof ( int ) * NUM_EVENTS );
+	if ( ctrl->addedEvents.list == NULL ) {
+		perror
+		( "malloc(): Failed to allocate memory to table of events that are added to CuPTI eventGroup" );
 		return ( PAPI_ENOSUPP );
 	}
-	printf( "DEVICE USED: %s (%d)\n", device[currentDeviceID].name,
-			currentDeviceID );
+	
+	/* initialize the event list */
+	for ( i = 0; i < NUM_EVENTS; i++ )
+		ctrl->addedEvents.list[i] = 0;
 
-	/* get the CUDA context from the calling CPU thread */
-	cuErr = cuCtxGetCurrent( &cuCtx );
-
-	/* if no CUDA context is bound to the calling CPU thread yet, create one */
-	if ( cuErr != CUDA_SUCCESS || cuCtx == NULL ) {
-		cuErr = cuCtxCreate( &cuCtx, 0, device[currentDeviceID].dev );
-		CHECK_CU_ERROR( cuErr, "cuCtxCreate" );
-	}
-
-	cuptiErr = cuptiEventGroupCreate( cuCtx, &eventGroup, 0 );
+	
+	cuptiErr = cuptiEventGroupCreate( cuCtx, &ctrl->eventGroup, 0 );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupCreate" );
-
+	
 	return PAPI_OK;
 }
 
@@ -460,14 +467,13 @@ int
 CUDA_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;
-	( void ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
-
-	cuptiErr = cuptiEventGroupEnable( eventGroup );
+	
+	cuptiErr = cuptiEventGroupEnable( ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupEnable" );
 
 	/* Resets all events in the CuPTI eventGroup to zero */
-	cuptiErr = cuptiEventGroupResetAllEvents( eventGroup );
+	cuptiErr = cuptiEventGroupResetAllEvents( ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupResetAllEvents" );
 
 	return ( PAPI_OK );
@@ -498,10 +504,10 @@ CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 	( void ) flags;
 
 
-	if ( 0 != getEventValue( ( ( CUDA_control_state_t * ) ctrl )->counts ) )
+	if ( 0 != getEventValue( ctrl->counts, ctrl->eventGroup, ctrl->addedEvents ) )
 		return ( PAPI_ENOSUPP );
 
-	*events = ( ( CUDA_control_state_t * ) ctrl )->counts;
+	*events = ctrl->counts;
 
 	return ( PAPI_OK );
 }
@@ -514,7 +520,8 @@ int
 CUDA_shutdown( hwd_context_t * ctx )
 {
 	( void ) ctx;
-
+	CUresult cuErr = CUDA_SUCCESS;
+	
 	/* if running a threaded application, we need to make sure that 
 	   a thread doesn't free the same memory location(s) more than once */
 	if ( CUDA_FREED == 0 ) {
@@ -533,9 +540,14 @@ CUDA_shutdown( hwd_context_t * ctx )
 
 		free( device );
 		free( cuda_native_table );
-		free( addedEvents.list );
+		free( ctx->state.addedEvents.list );
+		
+		/* destroy floating CUDA context */
+		cuErr = cuCtxDestroy( cuCtx );
+		CHECK_CU_ERROR( cuErr, "cuCtxDestroy" );		
 	}
 
+	
 	return ( PAPI_OK );
 }
 
@@ -565,20 +577,20 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 						   NativeInfo_t * native, int count,
 						   hwd_context_t * ctx )
 {
-	( void ) ptr;
 	( void ) ctx;
 	int index;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	char *device_tmp;
 
-	cuptiErr = cuptiEventGroupDisable( eventGroup );
+
+	cuptiErr = cuptiEventGroupDisable( ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
 
 	/* Remove or Add events */
 	if ( old_count > count ) {
 		cuptiErr =
-			cuptiEventGroupRemoveEvent( eventGroup,
-										cuda_native_table[addedEvents.list[0]].
+			cuptiEventGroupRemoveEvent( ptr->eventGroup,
+										cuda_native_table[ptr->addedEvents.list[0]].
 										resources.eventId );
 		/* Keep track of events in EventGroup if an event is removed */
 		old_count = count;
@@ -591,8 +603,8 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 		/* store events, that have been added to the CuPTI eveentGroup 
 		   in a seperate place (addedEvents).
 		   Needed, so that we can read the values for the added events only */
-		addedEvents.count = count;
-		addedEvents.list[count - 1] = index;
+		ptr->addedEvents.count = count;
+		ptr->addedEvents.list[count - 1] = index;
 
 		/* determine the device name from the event name chosen */
 		device_tmp = strchr( cuda_native_table[index].name, '.' );
@@ -607,9 +619,10 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 			return ( PAPI_ENOSUPP );	// Not supported 
 		}
 
+
 		/* Add events to the CuPTI eventGroup */
 		cuptiErr =
-			cuptiEventGroupAddEvent( eventGroup,
+			cuptiEventGroupAddEvent( ptr->eventGroup,
 									 cuda_native_table[index].resources.
 									 eventId );
 		CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupAddEvent" );
@@ -661,11 +674,10 @@ int
 CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;
-	( void ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 
 	/* Resets all events in the CuPTI eventGroup to zero */
-	cuptiErr = cuptiEventGroupResetAllEvents( eventGroup );
+	cuptiErr = cuptiEventGroupResetAllEvents( ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupResetAllEvents" );
 
 	return ( PAPI_OK );
@@ -673,27 +685,22 @@ CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 
 
 /*
- * Disable and Destoy the CUDA eventGroup 
+ * Disable and Destoy the CUDA eventGroup; FIXME: HJ: is not executed at all
  */
 int
-CUDA_destroy_eventset( int *EventSet )
+CUDA_destroy_eventset( hwd_control_state_t * ctrl )
 {
-	( void ) EventSet;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
-	CUresult cuErr = CUDA_SUCCESS;
 
+	printf("CUDA_destroy_eventset: &ctrl->eventGroup = %p\n", &ctrl->eventGroup );
 	/* Disable the CUDA eventGroup; 
 	   it also frees the perfmon hardware on the GPU */
-	cuptiErr = cuptiEventGroupDisable( eventGroup );
+	cuptiErr = cuptiEventGroupDisable( ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
 
 	/* Call the CuPTI cleaning function before leaving */
-	cuptiErr = cuptiEventGroupDestroy( eventGroup );
+	cuptiErr = cuptiEventGroupDestroy( ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDestroy" );
-
-	/* destroy floating CUDA context */
-	cuErr = cuCtxDestroy( cuCtx );
-	CHECK_CU_ERROR( cuErr, "cuCtxDestroy" );
 
 	return ( PAPI_OK );
 }
@@ -818,7 +825,6 @@ papi_vector_t _cuda_vector = {
 	.shutdown = CUDA_shutdown,
 	.destroy_eventset = CUDA_destroy_eventset,
 	.ctl = CUDA_ctl,
-
 	.update_control_state = CUDA_update_control_state,
 	.set_domain = CUDA_set_domain,
 	.reset = CUDA_reset,

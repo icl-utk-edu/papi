@@ -327,7 +327,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 			( int ( * )( hwd_context_t *, hwd_control_state_t *, long long[] ) )
 			vec_int_dummy;
 	if ( !v->destroy_eventset ) 
-		v->destroy_eventset = ( int ( * )( int * ) ) vec_int_dummy;
+		v->destroy_eventset = ( int ( * )( hwd_control_state_t * ) ) vec_int_dummy;
 	if ( !v->get_real_cycles )
 		v->get_real_cycles = ( long long ( * )(  ) ) vec_dummy_get_real_cycles;
 	if ( !v->get_real_usec )

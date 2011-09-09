@@ -112,17 +112,26 @@ typedef struct CUDA_reg_alloc
 
 typedef struct CUDA_control_state
 {
+	CUpti_EventGroup eventGroup;
+	AddedEvents_t addedEvents;
 	long long counts[CUDA_MAX_COUNTERS];
 	int ncounter;
 } CUDA_control_state_t;
 
-
+/* Holds per-thread information */
 typedef struct CUDA_context
 {
 	CUDA_control_state_t state;
 } CUDA_context_t;
 
 
+/* Override void* definitions from PAPI framework layer
+   with typedefs to conform to PAPI component layer code */
+#undef  hwd_control_state_t
+#undef  hwd_context_t
+typedef CUDA_control_state_t hwd_control_state_t;
+typedef CUDA_context_t hwd_context_t;
+ 
 /*************************  GLOBALS SECTION  ***********************************
  *******************************************************************************/
 
@@ -140,9 +149,20 @@ static int currentDeviceID;			   /* determine the actual device the user code is
 static int CUDA_FREED = 0;
 static int old_count = 0;
 
-DeviceData_t *device;
-AddedEvents_t addedEvents;
-CUpti_EventGroup eventGroup;
-CUcontext cuCtx;
+/* 
+ * Why are device and cuCtx globals?
+ *
+ * Starting in CUDA 4.0, multiple CPU threads can access the same CUDA context.
+ * This is a much easier programming model then pre-4.0 as threads - using the 
+ * same context - can share memory, data, etc. 
+ * It's possible to create a different context for each thread, but then we are
+ * likely running into a limitation that only one context can be profiled at a time.
+ * ==> and we don't want this. That's why CUDA context creation is done in 
+ * CUDA_init_substrate() (called only by main thread) rather than CUDA_init() 
+ * or CUDA_init_control_state() (both called by each thread).
+ */
+
+static DeviceData_t *device;
+static CUcontext cuCtx;
 
 #endif /* _PAPI_CUDA_H */
