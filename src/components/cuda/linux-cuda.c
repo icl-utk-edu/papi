@@ -363,8 +363,9 @@ getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t add
 int
 CUDA_init( hwd_context_t * ctx )
 {
-	( void ) ctx;
-		
+	/* Initialize number of events in EventSet for update_control_state() */
+	ctx->state.old_count = 0;
+	
 	return PAPI_OK;
 }
 
@@ -452,6 +453,7 @@ CUDA_init_control_state( hwd_control_state_t * ctrl )
 	for ( i = 0; i < NUM_EVENTS; i++ )
 		ctrl->addedEvents.list[i] = 0;
 
+	
 	
 	cuptiErr = cuptiEventGroupCreate( cuCtx, &ctrl->eventGroup, 0 );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupCreate" );
@@ -582,18 +584,18 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	char *device_tmp;
 
-
 	cuptiErr = cuptiEventGroupDisable( ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
-
+	
 	/* Remove or Add events */
-	if ( old_count > count ) {
+	if ( ptr->old_count > count ) {
 		cuptiErr =
 			cuptiEventGroupRemoveEvent( ptr->eventGroup,
 										cuda_native_table[ptr->addedEvents.list[0]].
 										resources.eventId );
+
 		/* Keep track of events in EventGroup if an event is removed */
-		old_count = count;
+		ptr->old_count = count;
 	} else {
 		index =
 			native[count -
@@ -616,9 +618,9 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 			printf
 				( "Device %s is used -- BUT event %s is collected. \n ---> ERROR: Specify events for the device that is used!\n\n",
 				  device[currentDeviceID].name, cuda_native_table[index].name );
+			
 			return ( PAPI_ENOSUPP );	// Not supported 
 		}
-
 
 		/* Add events to the CuPTI eventGroup */
 		cuptiErr =
@@ -628,7 +630,7 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 		CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupAddEvent" );
 
 		/* Keep track of events in EventGroup if an event is removed */
-		old_count = count;
+		ptr->old_count = count;
 	}
 
 	return ( PAPI_OK );
@@ -685,14 +687,12 @@ CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 
 
 /*
- * Disable and Destoy the CUDA eventGroup; FIXME: HJ: is not executed at all
- */
+ * Disable and Destoy the CUDA eventGroup */
 int
-CUDA_destroy_eventset( hwd_control_state_t * ctrl )
+CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 {
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 
-	printf("CUDA_destroy_eventset: &ctrl->eventGroup = %p\n", &ctrl->eventGroup );
 	/* Disable the CUDA eventGroup; 
 	   it also frees the perfmon hardware on the GPU */
 	cuptiErr = cuptiEventGroupDisable( ctrl->eventGroup );
@@ -823,7 +823,7 @@ papi_vector_t _cuda_vector = {
 	.stop = CUDA_stop,
 	.read = CUDA_read,
 	.shutdown = CUDA_shutdown,
-	.destroy_eventset = CUDA_destroy_eventset,
+	.cleanup_eventset = CUDA_cleanup_eventset,
 	.ctl = CUDA_ctl,
 	.update_control_state = CUDA_update_control_state,
 	.set_domain = CUDA_set_domain,

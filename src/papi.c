@@ -2432,8 +2432,11 @@ PAPI_cleanup_eventset( int EventSet )
 			papi_return( retval );
 	}
 
+	retval = _papi_hwd[cidx]->cleanup_eventset( ESI->ctl_state );
+	if ( retval != PAPI_OK ) 
+		papi_return( retval );
+	
 	/* Now do the magic */
-
 	papi_return( _papi_hwi_cleanup_eventset( ESI ) );
 }
 

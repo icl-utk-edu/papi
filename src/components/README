@@ -55,7 +55,7 @@ acpi/
 
 cuda/
 The PAPI CUDA component is a hardware performance counter measurement technology for the NVIDIA CUDA platform which provides access to the hardware counters inside the GPU. PAPI CUDA is based on CUPTI support in the NVIDIA driver library. In any environment where the CUPTI-enabled driver is installed, the PAPI CUDA component can provide detailed performance counter information regarding the execution of GPU kernels.
-NOTE: In order to disable and destroy the CUDA eventGroup properly, the user has to call PAPI_destroy_eventset( &EventSet ) before calling PAPI_shutdown() in the application. This is important since it also frees the performance monitoring hardware on the GPU.
+NOTE: In order to disable and destroy the CUDA eventGroup properly, the user has to call PAPI_cleanup_eventset( EventSet ) before calling PAPI_shutdown() in the application. This is important since it also frees the performance monitoring hardware on the GPU.
 
 How to install PAPI with the CUDA component?
 --------------------------------------------

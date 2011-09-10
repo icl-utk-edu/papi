@@ -116,6 +116,7 @@ typedef struct CUDA_control_state
 	AddedEvents_t addedEvents;
 	long long counts[CUDA_MAX_COUNTERS];
 	int ncounter;
+	int old_count;
 } CUDA_control_state_t;
 
 /* Holds per-thread information */
@@ -147,7 +148,6 @@ static int totalDomainCount = 0;
 static int totalEventCount = 0;
 static int currentDeviceID;			   /* determine the actual device the user code is running on */
 static int CUDA_FREED = 0;
-static int old_count = 0;
 
 /* 
  * Why are device and cuCtx globals?
