@@ -73,7 +73,6 @@ echo ""
 
 CUDA=`find Makefile | xargs grep cuda`;
 if [ "$CUDA" != "" ]; then
-  echo "Exclude some fork/thread tests that won't run with CUDA (reason: cannot invoke same GPU from different threads)!";
   EXCLUDE=`grep -v -e '^#' run_tests_exclude_cuda.txt`
 fi
 
