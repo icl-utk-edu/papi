@@ -73,22 +73,6 @@ endif
 
 endif
 
-
-ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
-INCARCH = $(INC_MIPS64)
-#SRCS   += pfmlib_gen_mips64.c
-CFLAGS += -DCONFIG_PFMLIB_ARCH_MIPS64
-
-ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
-  INCARCH = $(INC_SICORTEX)
-  CFLAGS += -DCONFIG_PFMLIB_ARCH_SICORTEX
-ifneq ($(SCINCDIR),)
-  CFLAGS += -I$(SCINCDIR)
-endif
-  SRCS   += pfmlib_sicortex.c
-endif
-endif
-
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
 
 ifeq ($(SYS),Linux)
@@ -120,6 +104,17 @@ endif
 INCARCH = $(INC_ARM)
 SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_mips_perf_event.c
+endif
+
+INCARCH = $(INC_MIPS)
+SRCS   += pfmlib_mips.c pfmlib_mips_74k.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_MIPS
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
@@ -181,9 +176,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_wsm_unc_events.h	\
 	events/intel_snb_events.h
 
-INC_MIPS64=gen_mips64_events.h
-
-INC_SICORTEX= $(INC_MIPS64)
+INC_MIPS=events/mips_74k_events.h
 
 INC_POWERPC=events/ppc970_events.h	\
 	events/ppc970mp_events.h	\

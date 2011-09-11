@@ -49,6 +49,10 @@ endif
 
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
+ARCH_MAN += libpfm_mips_74k.3
+endif
+
 GEN_MAN= libpfm.3 \
 	pfm_find_event.3 \
 	pfm_get_event_attr_info.3 \
