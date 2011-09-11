@@ -60,6 +60,12 @@ endif
 ifeq (armv7,$(findstring armv7,$(ARCH)))
 override ARCH=arm
 endif
+ifeq (mips64,$(findstring mips64,$(ARCH)))
+override ARCH=mips
+endif
+ifeq (mips,$(findstring mips,$(ARCH)))
+override ARCH=mips
+endif
 
 #
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
@@ -120,15 +126,8 @@ CONFIG_PFMLIB_ARCH_I386=y
 CONFIG_PFMLIB_ARCH_X86=y
 endif
 
-ifeq ($(ARCH),mips64)
-CONFIG_PFMLIB_ARCH_MIPS64=y
-#
-# SiCortex/Linux
-#
-MACHINE := $(shell test -f /etc/sicortex-release && echo sicortex)
-ifeq (sicortex,$(MACHINE))
-CONFIG_PFMLIB_ARCH_SICORTEX=y
-endif
+ifeq ($(ARCH),mips)
+CONFIG_PFMLIB_ARCH_MIPS=y
 endif
 
 ifeq ($(ARCH),powerpc)
@@ -174,12 +173,6 @@ LN?=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
 DBG?=-g -Wall -Werror
-# gcc/mips64 bug
-ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
-OPTIM?=-O
-else
-OPTIM?=-O2
-endif
 CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a

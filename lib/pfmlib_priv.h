@@ -206,7 +206,6 @@ extern pfmlib_pmu_t intel_p6_support;
 extern pfmlib_pmu_t intel_ppro_support;
 extern pfmlib_pmu_t intel_pii_support;
 extern pfmlib_pmu_t intel_pm_support;
-extern pfmlib_pmu_t generic_mips64_support;
 extern pfmlib_pmu_t sicortex_support;
 extern pfmlib_pmu_t netburst_support;
 extern pfmlib_pmu_t netburst_p_support;
@@ -242,6 +241,7 @@ extern pfmlib_pmu_t intel_wsm_dp_support;
 extern pfmlib_pmu_t intel_wsm_unc_support;
 extern pfmlib_pmu_t arm_cortex_a8_support;
 extern pfmlib_pmu_t arm_cortex_a9_support;
+extern pfmlib_pmu_t mips_74k_support;
 
 extern pfmlib_os_t pfmlib_os_perf;
 extern pfmlib_os_t pfmlib_os_perf_ext;
