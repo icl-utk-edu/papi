@@ -768,7 +768,7 @@ _papi_pe_init_substrate( int cidx )
   /* Detect NMI watchdog which can steal counters */
   nmi_watchdog_active=_linux_detect_nmi_watchdog();
   if (nmi_watchdog_active) {
-     SUBDBG(stdout,"The Linux nmi_watchdog is using one of the performance "
+     SUBDBG("The Linux nmi_watchdog is using one of the performance "
                    "counters, reducing the total number available.\n");
   }
 
