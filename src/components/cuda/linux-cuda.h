@@ -125,13 +125,6 @@ typedef struct CUDA_context
 	CUDA_control_state_t state;
 } CUDA_context_t;
 
-
-/* Override void* definitions from PAPI framework layer
-   with typedefs to conform to PAPI component layer code */
-#undef  hwd_control_state_t
-#undef  hwd_context_t
-typedef CUDA_control_state_t hwd_control_state_t;
-typedef CUDA_context_t hwd_context_t;
  
 /*************************  GLOBALS SECTION  ***********************************
  *******************************************************************************/

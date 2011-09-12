@@ -363,8 +363,9 @@ getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t add
 int
 CUDA_init( hwd_context_t * ctx )
 {
+	CUDA_context_t * CUDA_ctx = ( CUDA_context_t * ) ctx;
 	/* Initialize number of events in EventSet for update_control_state() */
-	ctx->state.old_count = 0;
+	CUDA_ctx->state.old_count = 0;
 	
 	return PAPI_OK;
 }
@@ -438,12 +439,13 @@ CUDA_init_substrate(  )
 int
 CUDA_init_control_state( hwd_control_state_t * ctrl )
 {
+	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	int i;
 
 	/* allocate memory for the list of events that are added to the CuPTI eventGroup */
-	ctrl->addedEvents.list = malloc( sizeof ( int ) * NUM_EVENTS );
-	if ( ctrl->addedEvents.list == NULL ) {
+	CUDA_ctrl->addedEvents.list = malloc( sizeof ( int ) * NUM_EVENTS );
+	if ( CUDA_ctrl->addedEvents.list == NULL ) {
 		perror
 		( "malloc(): Failed to allocate memory to table of events that are added to CuPTI eventGroup" );
 		return ( PAPI_ENOSUPP );
@@ -451,11 +453,11 @@ CUDA_init_control_state( hwd_control_state_t * ctrl )
 	
 	/* initialize the event list */
 	for ( i = 0; i < NUM_EVENTS; i++ )
-		ctrl->addedEvents.list[i] = 0;
+		CUDA_ctrl->addedEvents.list[i] = 0;
 
 	
 	
-	cuptiErr = cuptiEventGroupCreate( cuCtx, &ctrl->eventGroup, 0 );
+	cuptiErr = cuptiEventGroupCreate( cuCtx, &CUDA_ctrl->eventGroup, 0 );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupCreate" );
 	
 	return PAPI_OK;
@@ -469,13 +471,14 @@ int
 CUDA_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;
+	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	
-	cuptiErr = cuptiEventGroupEnable( ctrl->eventGroup );
+	cuptiErr = cuptiEventGroupEnable( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupEnable" );
 
 	/* Resets all events in the CuPTI eventGroup to zero */
-	cuptiErr = cuptiEventGroupResetAllEvents( ctrl->eventGroup );
+	cuptiErr = cuptiEventGroupResetAllEvents( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupResetAllEvents" );
 
 	return ( PAPI_OK );
@@ -504,12 +507,13 @@ CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 {
 	( void ) ctx;
 	( void ) flags;
+	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 
 
-	if ( 0 != getEventValue( ctrl->counts, ctrl->eventGroup, ctrl->addedEvents ) )
+	if ( 0 != getEventValue( CUDA_ctrl->counts, CUDA_ctrl->eventGroup, CUDA_ctrl->addedEvents ) )
 		return ( PAPI_ENOSUPP );
 
-	*events = ctrl->counts;
+	*events = CUDA_ctrl->counts;
 
 	return ( PAPI_OK );
 }
@@ -521,7 +525,7 @@ CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 int
 CUDA_shutdown( hwd_context_t * ctx )
 {
-	( void ) ctx;
+	CUDA_context_t * CUDA_ctx = ( CUDA_context_t * ) ctx;
 	CUresult cuErr = CUDA_SUCCESS;
 	
 	/* if running a threaded application, we need to make sure that 
@@ -542,7 +546,7 @@ CUDA_shutdown( hwd_context_t * ctx )
 
 		free( device );
 		free( cuda_native_table );
-		free( ctx->state.addedEvents.list );
+		free( CUDA_ctx->state.addedEvents.list );
 		
 		/* destroy floating CUDA context */
 		cuErr = cuCtxDestroy( cuCtx );
@@ -580,22 +584,23 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 						   hwd_context_t * ctx )
 {
 	( void ) ctx;
+	CUDA_control_state_t * CUDA_ptr = ( CUDA_control_state_t * ) ptr;
 	int index;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	char *device_tmp;
 
-	cuptiErr = cuptiEventGroupDisable( ptr->eventGroup );
+	cuptiErr = cuptiEventGroupDisable( CUDA_ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
 	
 	/* Remove or Add events */
-	if ( ptr->old_count > count ) {
+	if ( CUDA_ptr->old_count > count ) {
 		cuptiErr =
-			cuptiEventGroupRemoveEvent( ptr->eventGroup,
-										cuda_native_table[ptr->addedEvents.list[0]].
+			cuptiEventGroupRemoveEvent( CUDA_ptr->eventGroup,
+										cuda_native_table[CUDA_ptr->addedEvents.list[0]].
 										resources.eventId );
 
 		/* Keep track of events in EventGroup if an event is removed */
-		ptr->old_count = count;
+		CUDA_ptr->old_count = count;
 	} else {
 		index =
 			native[count -
@@ -605,8 +610,8 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 		/* store events, that have been added to the CuPTI eveentGroup 
 		   in a seperate place (addedEvents).
 		   Needed, so that we can read the values for the added events only */
-		ptr->addedEvents.count = count;
-		ptr->addedEvents.list[count - 1] = index;
+		CUDA_ptr->addedEvents.count = count;
+		CUDA_ptr->addedEvents.list[count - 1] = index;
 
 		/* determine the device name from the event name chosen */
 		device_tmp = strchr( cuda_native_table[index].name, '.' );
@@ -624,13 +629,13 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 
 		/* Add events to the CuPTI eventGroup */
 		cuptiErr =
-			cuptiEventGroupAddEvent( ptr->eventGroup,
+			cuptiEventGroupAddEvent( CUDA_ptr->eventGroup,
 									 cuda_native_table[index].resources.
 									 eventId );
 		CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupAddEvent" );
 
 		/* Keep track of events in EventGroup if an event is removed */
-		ptr->old_count = count;
+		CUDA_ptr->old_count = count;
 	}
 
 	return ( PAPI_OK );
@@ -676,10 +681,11 @@ int
 CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;
+	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 
 	/* Resets all events in the CuPTI eventGroup to zero */
-	cuptiErr = cuptiEventGroupResetAllEvents( ctrl->eventGroup );
+	cuptiErr = cuptiEventGroupResetAllEvents( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupResetAllEvents" );
 
 	return ( PAPI_OK );
@@ -691,15 +697,16 @@ CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 {
+	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 
 	/* Disable the CUDA eventGroup; 
 	   it also frees the perfmon hardware on the GPU */
-	cuptiErr = cuptiEventGroupDisable( ctrl->eventGroup );
+	cuptiErr = cuptiEventGroupDisable( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
 
 	/* Call the CuPTI cleaning function before leaving */
-	cuptiErr = cuptiEventGroupDestroy( ctrl->eventGroup );
+	cuptiErr = cuptiEventGroupDestroy( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDestroy" );
 
 	return ( PAPI_OK );
