@@ -478,10 +478,16 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 
 	/* Add null entry */
 	psmap = ( hwi_search_t * ) malloc( i * sizeof ( hwi_search_t ) );
-	notemap = ( hwi_dev_notes_t * ) malloc( i * sizeof ( hwi_dev_notes_t ) );
-	if ( ( psmap == NULL ) || ( notemap == NULL ) ) {
-	   return ( PAPI_ENOMEM );
+	if ( psmap == NULL ) {
+	   return PAPI_ENOMEM;
 	}
+
+	notemap = ( hwi_dev_notes_t * ) malloc( i * sizeof ( hwi_dev_notes_t ) );
+	if ( notemap == NULL ) {
+	   free(psmap);
+	   return PAPI_ENOMEM;
+	}
+
 	memset( psmap, 0x0, i * sizeof ( hwi_search_t ) );
 	memset( notemap, 0x0, i * sizeof ( hwi_dev_notes_t ) );
 
@@ -557,34 +563,29 @@ _papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
 	_perfmon2_pfm_preset_search_map =
 		malloc( sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
 	if ( _perfmon2_pfm_preset_search_map == NULL )
-		return ( PAPI_ENOMEM );
+		return PAPI_ENOMEM;
 	memset( _perfmon2_pfm_preset_search_map, 0x0,
 		sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
 
-	retval =
-		load_preset_table( pmu_name, pmu_type,
+	retval = load_preset_table( pmu_name, pmu_type,
 				   _perfmon2_pfm_preset_search_map );
-	if ( retval )
-		return ( retval );
+	if (retval) goto out;
 
-	retval =
-		generate_preset_search_map( &preset_search_map, &notemap,
+	retval = generate_preset_search_map( &preset_search_map, &notemap,
 					    _perfmon2_pfm_preset_search_map );
 
-	free_preset_table( _perfmon2_pfm_preset_search_map );
-	free( _perfmon2_pfm_preset_search_map );
-	if ( retval )
-		return ( retval );
+	if (retval) goto out;
 
 	retval = _papi_hwi_setup_all_presets( preset_search_map, notemap );
-	if ( retval ) {
-		free( preset_search_map );
-		free_notes( notemap );
-		free( notemap );
-		return ( retval );
-	}
 
-	return ( PAPI_OK );
+out:
+	free_preset_table( _perfmon2_pfm_preset_search_map );
+	free( _perfmon2_pfm_preset_search_map );
+	free( preset_search_map );
+	free_notes( notemap );
+	free( notemap );
+
+	return retval;
 }
 
 
