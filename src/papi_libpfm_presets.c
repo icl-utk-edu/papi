@@ -569,7 +569,7 @@ _papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
 
 	retval = load_preset_table( pmu_name, pmu_type,
 				   _perfmon2_pfm_preset_search_map );
-	if (retval) goto out;
+	if (retval) goto out1;
 
 	retval = generate_preset_search_map( &preset_search_map, &notemap,
 					    _perfmon2_pfm_preset_search_map );
@@ -579,11 +579,13 @@ _papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
 	retval = _papi_hwi_setup_all_presets( preset_search_map, notemap );
 
 out:
-	free_preset_table( _perfmon2_pfm_preset_search_map );
-	free( _perfmon2_pfm_preset_search_map );
 	free( preset_search_map );
 	free_notes( notemap );
 	free( notemap );
+
+out1:
+	free_preset_table( _perfmon2_pfm_preset_search_map );
+	free( _perfmon2_pfm_preset_search_map );
 
 	return retval;
 }
