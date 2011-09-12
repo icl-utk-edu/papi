@@ -566,6 +566,13 @@ _aix_init_substrate( int cidx )
 }
 
 int
+_aix_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return (PAPI_OK );
+}
+
+int
 _aix_init( hwd_context_t * context )
 {
 	int retval;
@@ -1067,6 +1074,7 @@ papi_vector_t _aix_vector = {
 	.init = _aix_init,
 	.get_dmem_info = _aix_get_dmem_info,
 	.shutdown = _aix_shutdown,
+	.cleanup_eventset = _aix_cleanup_eventset,
 	.get_real_usec = _aix_get_real_usec,
 	.get_real_cycles = _aix_get_real_cycles,
 	.get_virt_cycles = _aix_get_virt_cycles,

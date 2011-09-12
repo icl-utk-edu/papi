@@ -395,6 +395,14 @@ example_shutdown( hwd_context_t * ctx )
 }
 
 
+int
+example_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return ( PAPI_OK );
+}
+
+
 /** This function sets various options in the substrate
   @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
  */
@@ -486,6 +494,7 @@ papi_vector_t _example_vector = {
 	.read = example_read,
 	.write = example_write,
 	.shutdown = example_shutdown,
+	.cleanup_eventset = example_cleanup_eventset,
 	.ctl = example_ctl,
 	.bpt_map_set = NULL,
 	.bpt_map_avail = NULL,

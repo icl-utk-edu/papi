@@ -823,6 +823,12 @@ _ultra_hwd_shutdown_substrate( void )
 	return ( PAPI_OK );
 }
 
+int
+_ultra_hwd_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return ( PAPI_OK );
+}
 
 int
 _ultra_hwd_init_substrate( int cidx )
@@ -1603,6 +1609,7 @@ papi_vector_t _solaris_vector = {
         /* .write */
         .shutdown = _ultra_shutdown,
 	.shutdown_substrate = _ultra_hwd_shutdown_substrate,
+	.cleanup_eventset = _ultra_hwd_cleanup_eventset,
 	.ctl = _ultra_hwd_ctl,
         /* .bpt_map_set        */
         /* .bpt_map_avail      */

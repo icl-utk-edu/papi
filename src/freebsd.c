@@ -263,6 +263,13 @@ int _papi_freebsd_shutdown_substrate(void)
 	return PAPI_OK;
 }
 
+int
+_papi_freebsd_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return (PAPI_OK );
+}
+
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
@@ -1009,5 +1016,6 @@ papi_vector_t _papi_freebsd_vector = {
 
   .shutdown				= _papi_freebsd_shutdown,
   .shutdown_substrate	= _papi_freebsd_shutdown_substrate,
+  .cleanup_eventset		= _papi_freebsd_cleanup_eventset,
 
 };

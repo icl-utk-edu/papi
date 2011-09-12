@@ -1063,6 +1063,14 @@ _x86_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 	return ( PAPI_OK );
 }
 
+int
+_x86_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return ( PAPI_OK );
+}
+
+
 papi_vector_t _x86_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
@@ -1111,6 +1119,7 @@ papi_vector_t _x86_vector = {
 	.reset = _x86_reset,
 	.set_overflow = _x86_set_overflow,
 	.stop_profiling = _x86_stop_profiling,
+	.cleanup_eventset = _x86_cleanup_eventset,
 
 	.init_substrate = _perfctr_init_substrate,
 	.ctl =            _perfctr_ctl,

@@ -1024,6 +1024,13 @@ _papi_pfm_shutdown_substrate(  )
 	return PAPI_OK;
 }
 
+int
+_papi_pfm_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return ( PAPI_OK );
+}
+
 static int
 _papi_sub_pfm_init( hwd_context_t * thr_ctx )
 {
@@ -2438,6 +2445,7 @@ papi_vector_t _papi_pfm_vector = {
 	.read = _papi_pfm_read,
 	.shutdown = _papi_pfm_shutdown,
 	.shutdown_substrate = _papi_pfm_shutdown_substrate,
+	.cleanup_eventset = _papi_pfm_cleanup_eventset,
 	.ctl = _papi_pfm_ctl,
 	.update_control_state = _papi_pfm_update_control_state,	
 	.set_domain = set_domain,

@@ -94,6 +94,13 @@ ACPI_shutdown( hwd_context_t * ctx )
 	return ( PAPI_OK );
 }
 
+int
+ACPI_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return ( PAPI_OK );
+}
+
 /**
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
@@ -507,6 +514,7 @@ papi_vector_t _acpi_vector = {
 	.stop = ACPI_stop,
 	.read = ACPI_read,
 	.shutdown = ACPI_shutdown,
+	.cleanup_eventset = ACPI_cleanup_eventset,
 	.ctl = ACPI_ctl,
 	.update_control_state = ACPI_update_control_state,
 	.set_domain = ACPI_set_domain,

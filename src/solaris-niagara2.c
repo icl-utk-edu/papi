@@ -1398,6 +1398,24 @@ _niagara2_shutdown_global( void )
 }
 
 int
+_niagara2_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+#ifdef DEBUG
+	SUBDBG( "ENTERING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
+		   __LINE__ );
+#endif
+	
+	( void ) ctrl;
+	
+#ifdef DEBUG
+	SUBDBG( "LEAVING FUNCTION  >>%s<< at %s:%d\n", __func__, __FILE__,
+		   __LINE__ );
+#endif
+	
+	return ( PAPI_OK );
+}
+
+int
 _niagara2_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	int retval;
@@ -2525,6 +2543,7 @@ papi_vector_t _niagara2_vector = {
 	.write = NULL,			 /* NOT IMPLEMENTED */
 	.shutdown = _niagara2_shutdown,
 	.shutdown_substrate = _niagara2_shutdown_global,
+	.cleanup_eventset = _niagara2_cleanup_eventset,
 	.ctl = _niagara2_ctl,
 	.bpt_map_set = NULL,	 /* NOT IMPLEMENTED */
 	.bpt_map_avail = NULL,	 /* NOT IMPLEMENTED */

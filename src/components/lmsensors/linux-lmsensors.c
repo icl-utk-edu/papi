@@ -285,6 +285,14 @@ LM_SENSORS_shutdown( hwd_context_t * ctx )
 }
 
 
+int
+LM_SENSORS_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return ( PAPI_OK );
+}
+
+
 /* This function sets various options in the substrate
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
@@ -484,6 +492,7 @@ papi_vector_t _lmsensors_vector = {
 	.stop = LM_SENSORS_stop,
 	.read = LM_SENSORS_read,
 	.shutdown = LM_SENSORS_shutdown,
+	.cleanup_eventset = LM_SENSORS_cleanup_eventset,
 	.ctl = LM_SENSORS_ctl,
 
 	.update_control_state = LM_SENSORS_update_control_state,

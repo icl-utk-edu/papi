@@ -1412,7 +1412,12 @@ _papi_pe_shutdown_substrate(  ) {
 	return PAPI_OK;
 }
 
-
+int
+_papi_pe_cleanup_eventset( hwd_control_state_t * ctrl )
+{
+	( void ) ctrl;
+	return (PAPI_OK );
+}
 
 #define BPL (sizeof(uint64_t)<<3)
 #define LBPL	6
@@ -1997,6 +2002,7 @@ papi_vector_t _papi_pe_vector = {
 	.read = _papi_pe_read,
 	.shutdown = _papi_pe_shutdown,
 	.shutdown_substrate = _papi_pe_shutdown_substrate,
+	.cleanup_eventset = _papi_pe_cleanup_eventset,
 	.ctl = _papi_pe_ctl,
 	.update_control_state = _papi_pe_update_control_state,
 	.set_domain = set_domain,
