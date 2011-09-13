@@ -129,6 +129,8 @@ example_hardware_read( int which_one )
 int
 example_init( hwd_context_t * ctx )
 {
+        (void) ctx;
+
 	SUBDBG( "example_init %p...", ctx );
 
 	/* FIXME: do we need to make this thread safe? */
@@ -281,9 +283,12 @@ example_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 int
 example_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-	SUBDBG( "Want native bits for event %d", index );
+        (void) EventCode;
+        (void) bits;
+
+	SUBDBG( "Want native bits for event %d", 
+		EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK);
 
 	return PAPI_OK;
 }
@@ -294,6 +299,9 @@ example_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
 							  int count, hwd_context_t * ctx )
 {
 	int i, index;
+
+	(void) ptr;
+        (void) ctx;
 
 	SUBDBG( "example_update_control_state %p %p...", ptr, ctx );
 
@@ -314,6 +322,10 @@ example_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
 int
 example_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+
+        (void) ctx;
+        (void) ctrl;
+
 	SUBDBG( "example_start %p %p...", ctx, ctrl );
 
 	/* anything that would need to be set at counter start time */
@@ -326,6 +338,10 @@ example_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 example_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+
+        (void) ctx;
+        (void) ctrl;
+
 	SUBDBG( "example_stop %p %p...", ctx, ctrl );
 
 	/* anything that would need to be done at counter stop time */
@@ -339,6 +355,11 @@ int
 example_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 			  long_long ** events, int flags )
 {
+
+        (void) ctx;
+        (void) ctrl;
+	(void) flags;
+
 	SUBDBG( "example_read... %p %d", ctx, flags );
 
 	( ( example_control_state_t * ) ctrl )->counter[0] =
@@ -359,6 +380,11 @@ int
 example_write( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 			   long_long events[] )
 {
+
+        (void) ctx;
+	(void) ctrl;
+	(void) events;
+
 	SUBDBG( "example_write... %p %p", ctx, ctrl );
 
 	/* FIXME... this should actually carry out the write, though     */
@@ -373,6 +399,8 @@ example_write( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 int
 example_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+        (void) ctx;
+
 	SUBDBG( "example_reset ctx=%p ctrl=%p...", ctx, ctrl );
 
 	/* Reset the hardware */
@@ -387,6 +415,9 @@ example_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 example_shutdown( hwd_context_t * ctx )
 {
+
+        (void) ctx;
+
 	SUBDBG( "example_shutdown... %p", ctx );
 
 	/* Last chance to clean up */
@@ -409,6 +440,11 @@ example_cleanup_eventset( hwd_control_state_t * ctrl )
 int
 example_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
+
+        (void) ctx;
+	(void) code;
+	(void) option;
+
 	SUBDBG( "example_ctl..." );
 
 	/* FIXME.  This should maybe set up more state, such as which counters are active and */
@@ -429,6 +465,8 @@ example_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 int
 example_set_domain( hwd_control_state_t * cntrl, int domain )
 {
+        (void) cntrl;
+
 	int found = 0;
 	SUBDBG( "example_set_domain..." );
 
