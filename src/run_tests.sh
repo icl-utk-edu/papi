@@ -32,7 +32,7 @@ COMPTESTS=`find components/*/tests -perm -u+x -type f`;
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#' run_tests_exclude.txt`
 
-ALLTESTS="$CTESTS $FTESTS COMPTESTS";
+ALLTESTS="$CTESTS $FTESTS $COMPTESTS";
 x=0;
 CWD=`pwd`
 
