@@ -21,66 +21,84 @@
  *	See components/README for more details.
  */
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "papi_test.h"
 
 #define NUM_EVENTS 1
-#define PAPI
 
-int main ()
+int main (int argc, char **argv)
 {
-#ifdef PAPI
+
 	int retval, i;
 	int EventSet = PAPI_NULL;
 	long long values[NUM_EVENTS];
-    char *EventName[] = { "EXAMPLE_CONSTANT" };
+        char *EventName[] = { "EXAMPLE_CONSTANT" };
 	int events[NUM_EVENTS];
-	
+
+        /* Set TESTS_QUIET variable */
+        tests_quiet( argc, argv );      
+
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if( retval != PAPI_VER_CURRENT )
-		fprintf( stderr, "PAPI_library_init failed\n" );
+	if ( retval != PAPI_VER_CURRENT )
+	  test_fail(__FILE__, __LINE__,"PAPI_library_init failed\n",retval);
 	
-	printf( "PAPI_VERSION     : %4d %6d %7d\n",
+	if (!TESTS_QUIET) {
+	   printf( "PAPI_VERSION     : %4d %6d %7d\n",
 			PAPI_VERSION_MAJOR( PAPI_VERSION ),
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ) );
-	
+	}
+
 	/* convert PAPI native events to PAPI code */
 	for( i = 0; i < NUM_EVENTS; i++ ){
 		retval = PAPI_event_name_to_code( EventName[i], &events[i] );
-		if( retval != PAPI_OK )
-			fprintf( stderr, "PAPI_event_name_to_code failed\n" );
-		else
-			printf( "Name %s --- Code: %x\n", EventName[i], events[i] );
+		if ( retval != PAPI_OK )
+		   test_fail(__FILE__,__LINE__,
+			     "PAPI_event_name_to_code failed\n", retval);
+		else {
+		  if (!TESTS_QUIET) 
+                     printf( "Name %s --- Code: %x\n", 
+			     EventName[i], events[i] );
+		}
 	}
 
 	retval = PAPI_create_eventset( &EventSet );
-	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_create_eventset failed\n" );
+	if ( retval != PAPI_OK )
+	   test_fail( __FILE__, __LINE__,
+		      "PAPI_create_eventset failed\n", retval );
 	
 	retval = PAPI_add_events( EventSet, events, NUM_EVENTS );
-	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_add_events failed\n" );
+	if ( retval != PAPI_OK )
+	   test_fail( __FILE__, __LINE__,
+		      "PAPI_add_events failed\n", retval );
 	
 	retval = PAPI_start( EventSet );
-	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_start failed\n" );
-#endif
-	
-	
-	printf("Example component test: Hello World\n");
-	
-	
-#ifdef PAPI
-	retval = PAPI_stop( EventSet, values );
-	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_stop failed\n" );
+	if ( retval != PAPI_OK )
+	   test_fail( __FILE__, __LINE__, 
+		      "PAPI_start failed\n",retval );
 
-	for( i = 0; i < NUM_EVENTS; i++ )
-		printf( "%12lld \t\t --> %s \n", values[i], EventName[i] );
-#endif
+	
+	if (!TESTS_QUIET) {
+	   printf("Example component test: Hello World\n");
+	}
+	
+
+	retval = PAPI_stop( EventSet, values );
+	if ( retval != PAPI_OK )
+	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
+
+	if (!TESTS_QUIET) {
+	   for( i = 0; i < NUM_EVENTS; i++ )
+	      printf( "%12lld \t\t --> %s \n", values[i], EventName[i] );
+	}
+
+	if (values[0]!=42) {
+	   test_fail(  __FILE__, __LINE__, "Result should be 42!\n", 0);
+	}
+
+	test_pass( __FILE__, NULL, 0 );
 		
 	return 0;
 }

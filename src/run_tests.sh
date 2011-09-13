@@ -28,10 +28,11 @@ VALGRIND="";
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 CTESTS=`find ctests/* -prune -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
+COMPTESTS=`find components/*/tests -perm -u+x -type f`;
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#' run_tests_exclude.txt`
 
-ALLTESTS="$CTESTS $FTESTS";
+ALLTESTS="$CTESTS $FTESTS COMPTESTS";
 x=0;
 CWD=`pwd`
 
@@ -128,6 +129,32 @@ echo "Running Fortran Tests";
 echo ""
 
 for i in $FTESTS;
+do
+  for xtest in $EXCLUDE;
+  do
+    if [ "$i" = "$xtest" ]; then
+      MATCH=1
+      break
+    fi;
+  done
+  if [ `basename $i` = "Makefile" ]; then
+    MATCH=1
+  fi;
+  if [ $MATCH -ne 1 ]; then
+    if [ -x $i ]; then
+	RAN="$i $RAN"
+    printf "Running $i:";
+    $VALGRIND ./$i $TESTS_QUIET
+    fi;
+  fi;
+  MATCH=0
+done
+
+echo "";
+echo "Running Component Tests";
+echo ""
+
+for i in $COMPTESTS;
 do
   for xtest in $EXCLUDE;
   do
