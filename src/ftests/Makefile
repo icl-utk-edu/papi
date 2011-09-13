@@ -1,6 +1,6 @@
 # File: ftests/Makefile
 # CVS:  $Id$
-INCLUDE = -I../ctests -I.
+INCLUDE = -I../testlib -I.
 LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
 CC	= gcc
@@ -11,7 +11,7 @@ FFLAGS	= -g -O -ffixed-line-length-132
 ALL = strtest zero first  second tenth description fdmemtest accum highlevel cost johnmay2 \
 	  case1 case2 clockres eventname fmatrixlowpapi fmatrixpapi fmatrixpapi2 flops fmultiplex1 \
       fmultiplex2 avail 
-UTILOBJS = do_loops.o dummy.o ftests_util.o 
+UTILOBJS = ../testlib/do_loops.o ../testlib/dummy.o ftests_util.o 
 
 default all ftests ftest: $(FTEST_TARGETS)
 
@@ -84,11 +84,11 @@ fmultiplex2: fmultiplex2.F $(UTILOBJS) $(PAPILIB)
 ftests_util.o: ftests_util.F fpapi_test.h 
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c ftests_util.F
 
-do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
+do_loops.o: ../testlib/do_loops.c ../testlib/papi_test.h ../testlib/test_utils.h
+	cd ../testlib && make
 
-dummy.o: ../ctests/dummy.c
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
+dummy.o: ../testlib/dummy.c
+	cd ../testlib && make
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)

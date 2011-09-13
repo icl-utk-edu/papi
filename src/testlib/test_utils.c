@@ -231,9 +231,8 @@ add_test_events( int *number, int *mask, int allow_derived )
 	else {
 	   if ( !TESTS_QUIET ) {
 	     PAPI_event_code_to_name(test_events[i].event,name_string);
-	     fprintf( stdout, "%x %s is not available (%s).\n", 
-		      test_events[i].event,name_string,
-		      PAPI_descr_error(retval));
+	     fprintf( stdout, "%x %s is not available.\n", 
+		      test_events[i].event,name_string);
 	   }
 	   *mask = *mask ^ test_events[i].mask;
 	}

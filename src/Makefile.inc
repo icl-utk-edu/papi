@@ -241,6 +241,7 @@ clean: native_clean comp_tests_clean
 	-cd ctests; $(MAKE) clean
 	-cd ctests/bgp; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
+	-cd testlib; $(MAKE) clean
 	-cd utils;  $(MAKE) clean
 	-cd ../doc; $(MAKE) clean
 

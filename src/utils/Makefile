@@ -1,6 +1,6 @@
 # File: utils/Makefile
 # CVS:  $Id$
-INCLUDE = -I../ctests -I. 
+INCLUDE = -I../testlib -I. 
 LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
 CC	= gcc
@@ -10,7 +10,7 @@ CFLAGS	= -g -O -Wall
 ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
 	  papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost \
 	  papi_component_avail papi_error_codes
-UTILOBJS= do_loops.o dummy.o test_utils.o
+UTILOBJS= ../testlib/do_loops.o ../testlib/dummy.o ../testlib/test_utils.o
 
 default all utils: $(UTIL_TARGETS)
 
@@ -53,16 +53,16 @@ papi_component_avail: component.c $(PAPILIB) $(UTILOBJS)
 papi_error_codes: error_codes.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) error_codes.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_error_codes
 
-test_utils.o: ../ctests/test_utils.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/test_utils.c
+../testlib/test_utils.o: ../testlib/test_utils.c ../testlib/papi_test.h ../testlib/test_utils.h
+	cd ../testlib && make
 
-do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
+../testlib/do_loops.o: ../testlib/do_loops.c ../testlib/papi_test.h ../testlib/test_utils.h
+	cd ../testlib && make
 
-dummy.o: ../ctests/dummy.c
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
+../testlib/dummy.o: ../testlib/dummy.c
+	cd ../testlib && make
 
-cost_utils.o: ../ctests/papi_test.h cost_utils.c
+cost_utils.o: ../testlib/papi_test.h cost_utils.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c cost_utils.c
 
 clean:

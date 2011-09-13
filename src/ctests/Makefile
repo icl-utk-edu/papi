@@ -1,6 +1,6 @@
 # File: ctests/Makefile
 # CVS:  $Id$
-INCLUDE = -I.
+INCLUDE = -I. -I../testlib
 LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
 CC	= gcc
@@ -34,7 +34,7 @@ BROKEN	= pernode
 API = api
 ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH) $(API)
-UTILOBJS= do_loops.o test_utils.o dummy.o
+UTILOBJS= ../testlib/do_loops.o ../testlib/test_utils.o ../testlib/dummy.o
 
 default all ctests ctest: $(CTEST_TARGETS)
 
@@ -320,8 +320,8 @@ hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
 code2name: code2name.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) code2name.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o code2name
 
-attach_target: do_loops.c
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DDUMMY_DRIVER do_loops.c dummy.o -o attach_target 
+attach_target: ../testlib/do_loops.c
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DDUMMY_DRIVER ../testlib/do_loops.c ../testlib/dummy.c -o attach_target 
 
 zero_attach: zero_attach.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_attach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_attach 
@@ -383,17 +383,17 @@ forkexec3: forkexec3.c $(UTILOBJS) $(PAPILIB)
 forkexec4: forkexec4.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec4.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec4 
 
-prof_utils.o: prof_utils.c papi_test.h prof_utils.h
+../testlib/test_utils.o:	../testlib/test_utils.c ../testlib/papi_test.h ../testlib/test_utils.h
+	cd ../testlib && make
+
+../testlib/do_loops.o:	../testlib/do_loops.c ../testlib/papi_test.h ../testlib/test_utils.h
+	cd ../testlib && make
+
+../testlib/dummy.o:	../testlib/dummy.c
+	cd ../testlib && make
+
+prof_utils.o: prof_utils.c ../testlib/papi_test.h prof_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c prof_utils.c
-
-test_utils.o: test_utils.c papi_test.h test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c test_utils.c
-
-do_loops.o: do_loops.c papi_test.h test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c do_loops.c
-
-dummy.o: dummy.c
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL) unregister_pthreads
