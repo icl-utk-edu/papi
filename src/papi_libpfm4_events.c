@@ -28,6 +28,9 @@ struct native_event_t {
   char *base_name;
   char *pmu_plus_name;
   int users;
+  long long config;
+  long long config1;
+  int type;
 };
 
 static struct native_event_t *native_events;
@@ -247,6 +250,8 @@ static struct native_event_t *allocate_native_event(char *name,
   char base[BUFSIZ],pmuplusbase[BUFSIZ];
   char fullname[BUFSIZ];
 
+  pfm_perf_encode_arg_t perf_arg;
+
   /* get the event name from libpfm */
   memset(&info,0,sizeof(pfm_event_info_t));
   ret = pfm_get_event_info(event_idx, PFM_OS_PERF_EVENT, &info);
@@ -300,6 +305,30 @@ static struct native_event_t *allocate_native_event(char *name,
 
   /* is this needed? */
   native_events[new_event].users=0;
+
+
+  /* use name of the event to get the perf_event encoding */
+
+  /* clear the attribute structure */
+  memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
+  perf_arg.attr=calloc(1,sizeof(struct perf_event_attr));
+
+  ret = pfm_get_os_event_encoding(name, 
+  				  PFM_PLM0 | PFM_PLM3, 
+                                  PFM_OS_PERF_EVENT_EXT, 
+  				  &perf_arg);
+  if (ret!=PFM_SUCCESS) {
+     /* should do something! */
+  }
+  
+  native_events[new_event].config=perf_arg.attr->config;
+  native_events[new_event].config1=perf_arg.attr->config1;
+  native_events[new_event].type=perf_arg.attr->type;
+
+  SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64" type 0x%"PRIx32"\n", 
+          perf_arg.attr->config, 
+	  perf_arg.attr->config1,
+	  perf_arg.attr->type);
 
   SUBDBG("Creating event %s with papi %x perfidx %x\n",
 	 name,
@@ -1288,34 +1317,44 @@ int
 _papi_libpfm_setup_counters( struct perf_event_attr *attr,
 			   hwd_register_t *ni_bits ) {
 
-  int ret;
+  //  int ret;
   int our_idx;
-  char our_name[BUFSIZ];
+  //char our_name[BUFSIZ];
    
   pfm_perf_encode_arg_t perf_arg;
+
+  struct native_event_t *our_event;
 
   /* clear the attribute structure */
   memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
   perf_arg.attr=attr;
-   
+
   our_idx=*(int *)(ni_bits);
+  our_event=find_existing_event_by_number(our_idx);
+  if (our_event==NULL) {
+     return PAPI_ENOEVNT;
+  }
+
+  perf_arg.attr->config=our_event->config; 
+  perf_arg.attr->config1=our_event->config1;
+  perf_arg.attr->type=our_event->type;
 
   /* convert our code to a name */
-  ret=_papi_libpfm_ntv_code_to_name( our_idx,our_name,BUFSIZ);
-  if (ret!=PAPI_OK) {
-     return ret;
-  }
+  //  ret=_papi_libpfm_ntv_code_to_name( our_idx,our_name,BUFSIZ);
+  //if (ret!=PAPI_OK) {
+  //   return ret;
+  //}
 
-  SUBDBG("trying \"%s\" %x\n",our_name,our_idx);
+  //SUBDBG("trying \"%s\" %x\n",our_name,our_idx);
 
   /* use name of the event to get the perf_event encoding */
-  ret = pfm_get_os_event_encoding(our_name, 
-				  PFM_PLM0 | PFM_PLM3, 
-                                  PFM_OS_PERF_EVENT_EXT, 
-				  &perf_arg);
-  if (ret!=PFM_SUCCESS) {
-     return _papi_libpfm_error(ret);
-  }
+  //ret = pfm_get_os_event_encoding(our_name, 
+  //				  PFM_PLM0 | PFM_PLM3, 
+  //                              PFM_OS_PERF_EVENT_EXT, 
+  //				  &perf_arg);
+  //if (ret!=PFM_SUCCESS) {
+  //   return _papi_libpfm_error(ret);
+  //}
   
   SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64" type 0x%"PRIx32"\n", 
           perf_arg.attr->config, 
