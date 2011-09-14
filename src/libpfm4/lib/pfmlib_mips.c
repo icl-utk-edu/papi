@@ -168,15 +168,16 @@ pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 #endif
 
 static void
-pfm_mips_display_reg(pfm_mips_sel_reg_t reg, char *fstr)
+pfm_mips_display_reg(pfm_mips_sel_reg_t reg, uint64_t cntrs, char *fstr)
 {
-	__pfm_vbprintf("[0x%"PRIx64" mask=0x%x usr=%d sys=%d sup=%d int=%d] %s\n",
+	__pfm_vbprintf("[0x%"PRIx64" mask=0x%x usr=%d sys=%d sup=%d int=%d cntrs=0x%"PRIx64"] %s\n",
 			reg.val,
 			reg.perfsel64.sel_event_mask,
 			reg.perfsel64.sel_usr,
 			reg.perfsel64.sel_os,
 			reg.perfsel64.sel_sup,
 			reg.perfsel64.sel_exl,
+			cntrs,
 			fstr);
 }
 
@@ -224,17 +225,19 @@ int
 pfm_mips_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 
+	pfmlib_pmu_t *pmu = this;
 	const mips_entry_t *pe = this_pe(this);
 	pfm_event_attr_info_t *a;
 	pfm_mips_sel_reg_t reg;
-	uint64_t ival;
-	int plmmsk = 0;
+	uint64_t ival, cntmask = 0;
+	int plmmsk = 0, code;
 	int k, id;
 
-	reg.val = pe[e->event].code;
+	reg.val = 0;
+	code = pe[e->event].code;
 
-	e->codes[0] = reg.val;
-	e->count    = 1;
+	/* truncates bit 7 (counter info) */
+	reg.perfsel64.sel_event_mask = code;
 
 	for (k = 0; k < e->nattrs; k++) {
 		a = attr(e, k);
@@ -300,7 +303,21 @@ pfm_mips_get_encoding(void *this, pfmlib_event_desc_t *e)
 			break;
 		}
 	}
-pfm_mips_display_reg(reg, e->fstr);
+	e->codes[0] = reg.val;
+
+	/* cycles and instructions support all counters */
+	if (code == 0 || code == 1) {
+		cntmask = (1ULL << pmu->num_cntrs) -1;
+	} else {
+		/* event work on odd counters only */
+		for (k = !!(code & 0x80) ; k < pmu->num_cntrs; k+=2) {
+			cntmask |= 1ULL << k;
+		}
+	}
+	e->codes[1] = cntmask;
+	e->count    = 2;
+
+	pfm_mips_display_reg(reg, cntmask, e->fstr);
 
 	return PFM_SUCCESS;
 }
@@ -355,7 +372,7 @@ pfm_mips_validate_table(void *this, FILE *fp)
 		}
 	}
 	if (!pmu->supported_plm) {
-		fprintf(fp, "pmu: %s supported plm=0, is that right?\n", pmu->name);
+		fprintf(fp, "pmu: %s supported_plm=0, is that right?\n", pmu->name);
 		error++;
 	}
 	return error ? PFM_ERR_INVAL : PFM_SUCCESS;

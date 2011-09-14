@@ -19,9 +19,11 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux.
+ * Based on:
+ * MIPS32 74KTM Processor Core Family Software Users' Manual
+ * Document Number: MD00519 Revision 01.05 March 30, 2011
  */
+
 static const mips_entry_t mips_74k_pe []={
   {
     .name = "CYCLES", /* BOTH */

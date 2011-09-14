@@ -39,8 +39,29 @@ pfm_mips_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	if (ret != PFM_SUCCESS)
 		return ret;
 
+	if (e->count != 2) {
+		DPRINT("unexpected encoding count=%d\n", e->count);
+		return PFM_ERR_INVAL;
+	}
 	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
+
+	/*
+	 * priv levels are ignored because they are managed
+	 * directly through perf excl_*.
+	 */
+	attr->config = e->codes[0] >> 5;
+
+	/*
+	 * codes[1] contains counter mask supported by the event.
+	 * Events support either odd or even indexed counters
+	 * except for cycles (code = 0) and instructions (code =1)
+	 * which work on all counters.
+	 *
+	 * The kernel expects bit 7 of config to indicate whether
+	 * the event works only on odd-indexed counters
+	 */
+	if ((e->codes[1] & 0x2) && attr->config > 1)
+		attr->config |= 1ULL << 7;
 
 	return PFM_SUCCESS;
 }

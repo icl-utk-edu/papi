@@ -37,7 +37,7 @@ typedef struct {
 	const char			*name;	/* event name */
 	const char			*desc;	/* event description */
 	unsigned int			mask;   /* which counters event lives on */
-	unsigned int			code; 	/* event code */
+	unsigned int			code; 	/* event code, bit 8 = odd/even counter */
 } mips_entry_t;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -50,8 +50,8 @@ typedef union {
 		unsigned long sel_sup:1;		/* supervisor level */
 		unsigned long sel_usr:1;		/* user level */
 	        unsigned long sel_int:1;		/* enable intr */
-		unsigned long sel_event_mask:5;		/* event mask */
-		unsigned long sel_res1:22;		/* reserved */
+		unsigned long sel_event_mask:7;		/* event mask */
+		unsigned long sel_res1:20;		/* reserved */
 		unsigned long sel_res2:32;		/* reserved */
 	} perfsel64;
 } pfm_mips_sel_reg_t;
@@ -62,8 +62,8 @@ typedef union {
 	uint64_t	val;				/* complete register value */
 	struct {
 		unsigned long sel_res2:32;		/* reserved */
-		unsigned long sel_res1:22;		/* reserved */
-		unsigned long sel_event_mask:5;		/* event mask */
+		unsigned long sel_res1:20;		/* reserved */
+		unsigned long sel_event_mask:7;		/* event mask */
 	        unsigned long sel_int:1;		/* enable intr */
 		unsigned long sel_usr:1;		/* user level */
 		unsigned long sel_sup:1;		/* supervisor level */

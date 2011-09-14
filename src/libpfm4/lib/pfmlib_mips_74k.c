@@ -1,5 +1,5 @@
 /*
- * pfmlib_mips_pmu.c : 	support for MIPS chips
+ * pfmlib_mips_74k.c : 	support for MIPS chips
  *
  * Copyright (c) 2011 Samara Technology Group, Inc
  * Contributed by Philip Mucci <phil.mucci@@samaratechnologygroup.com>
@@ -22,18 +22,11 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-
 #include <sys/types.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-
-/* private headers */
-#include "pfmlib_priv.h"			/* library private */
+#include "pfmlib_priv.h"		/* library private */
 #include "pfmlib_mips_priv.h"
-
-#include "events/mips_74k_events.h"        /* event tables */
+#include "events/mips_74k_events.h"	/* event tables */
 
 /* root@redhawk_RT-N16:/proc# more cpuinfo
 system type             : Broadcom BCM4716 chip rev 1
@@ -72,7 +65,7 @@ pfmlib_pmu_t mips_74k_support={
 	.pe			= mips_74k_pe,
 
 	.pmu_detect		= pfm_mips_detect_74k,
-	.max_encoding		= 1,
+	.max_encoding		= 2, /* event encoding + counter bitmask */
 	.num_cntrs		= 4,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_mips_get_encoding,
