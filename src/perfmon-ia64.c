@@ -1283,13 +1283,6 @@ _ia64_shutdown( hwd_context_t * ctx )
 	return ( pfmw_destroy_context( ctx ) );
 }
 
-int
-_ia64_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 static int
 ia64_ita_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 {
@@ -2146,7 +2139,6 @@ papi_vector_t _ia64_vector = {
 	.stop = _ia64_stop,
 	.read = _ia64_read,
 	.shutdown = _ia64_shutdown,
-	.cleanup_eventset = _ia64_cleanup_eventset,
 	.ctl = _ia64_ctl,
 	.update_control_state = _ia64_update_control_state,
 	.set_domain = _ia64_set_domain,

@@ -856,13 +856,6 @@ LUSTRE_shutdown( hwd_context_t * ctx )
 }
 
 
-int
-LUSTRE_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup) functions
@@ -1148,7 +1141,6 @@ papi_vector_t _lustre_vector = {
 	.stop = LUSTRE_stop,
 	.read = LUSTRE_read,
 	.shutdown = LUSTRE_shutdown,
-	.cleanup_eventset = LUSTRE_cleanup_eventset,
 	.ctl = LUSTRE_ctl,
 	.update_control_state = LUSTRE_update_control_state,
 	.set_domain = LUSTRE_set_domain,

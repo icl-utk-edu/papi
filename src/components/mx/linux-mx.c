@@ -351,13 +351,6 @@ MX_shutdown( hwd_context_t * ctx )
 }
 
 
-int
-MX_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
@@ -770,7 +763,6 @@ papi_vector_t _mx_vector = {
 	.stop = MX_stop,
 	.read = MX_read,
 	.shutdown = MX_shutdown,
-	.cleanup_eventset = MX_cleanup_eventset,
 	.ctl = MX_ctl,
 	.bpt_map_set = MX_bpt_map_set,
 	.bpt_map_avail = MX_bpt_map_avail,

@@ -1151,12 +1151,6 @@ _bgp_init_substrate( int cidx )
 	return ( retval );
 }
 
-int
-_bgp_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return (PAPI_OK );
-}
 
 /*************************************/
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
@@ -1370,7 +1364,6 @@ papi_vector_t _bgp_vectors = {
 	.bpt_map_preempt = _bgp_bpt_map_preempt,
 	.bpt_map_update = _bgp_bpt_map_update,
 	.get_dmem_info = _bgp_get_dmem_info,
-	.cleanup_eventset = _bgp_cleanup_eventset,
 	.shutdown = _bgp_shutdown
 //  .shutdown_global      =
 //  .user                 =

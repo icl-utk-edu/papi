@@ -507,13 +507,6 @@ _papi_hwd_stop( hwd_context_t * ctx, hwd_control_state_t * state )
 }
 
 int
-_papi_hwd_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
-int
 _papi_hwd_read( hwd_context_t * ctx, hwd_control_state_t * spc, long long **dp,
 				int flags )
 {
@@ -857,7 +850,6 @@ papi_svector_t _ppc64_vector_table[] = {
 	 VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
 	{( void ( * )(  ) ) _papi_hwd_start, VEC_PAPI_HWD_START},
 	{( void ( * )(  ) ) _papi_hwd_stop, VEC_PAPI_HWD_STOP},
-	{( void ( * )(  ) ) _papi_hwd_cleanup_eventset, VEC_PAPI_HWD_CLEANUP_EVENTSET },
 	{( void ( * )(  ) ) _papi_hwd_read, VEC_PAPI_HWD_READ},
 	{( void ( * )(  ) ) _papi_hwd_reset, VEC_PAPI_HWD_RESET},
 	{( void ( * )(  ) ) _papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN},

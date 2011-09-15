@@ -383,13 +383,6 @@ int coretemp_shutdown (hwd_context_t * ctx)
 }
 
 
-int
-coretemp_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 
 /** This function sets various options in the substrate
   @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
@@ -490,7 +483,6 @@ papi_vector_t _coretemp_freebsd_vector = {
 	.read = coretemp_read,
 	.write = coretemp_write,
 	.shutdown = coretemp_shutdown,
-	.cleanup_eventset = coretemp_cleanup_eventset,
 	.ctl = coretemp_ctl,
 	.bpt_map_set = NULL,
 	.bpt_map_avail = NULL,

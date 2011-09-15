@@ -498,13 +498,6 @@ int _papi_hwd_init(hwd_context_t *context)
   return(PAPI_OK);
 }
 
-int
-_papi_hwd_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 
 unsigned long long _papi_hwd_get_real_usec (void)
 {

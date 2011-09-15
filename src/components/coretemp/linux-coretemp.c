@@ -240,13 +240,6 @@ coretemp_shutdown( hwd_context_t * ctx )
 }
 
 
-int
-coretemp_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 
 /* This function sets various options in the substrate
  * The valid codes being passed in are PAPI_SET_DEFDOM,
@@ -445,7 +438,6 @@ papi_vector_t _coretemp_vector = {
 	.stop = coretemp_stop,
 	.read = coretemp_read,
 	.shutdown = coretemp_shutdown,
-	.cleanup_eventset = coretemp_cleanup_eventset,
 	.ctl = coretemp_ctl,
 
 	.update_control_state = coretemp_update_control_state,

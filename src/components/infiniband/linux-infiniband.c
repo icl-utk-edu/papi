@@ -617,13 +617,6 @@ INFINIBAND_shutdown( hwd_context_t * ctx )
 }
 
 
-int
-INFINIBAND_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 
 /* This function sets various options in the substrate
  * The valid codes being passed in are PAPI_SET_DEFDOM,
@@ -820,7 +813,6 @@ papi_vector_t _infiniband_vector = {
 	.stop = INFINIBAND_stop,
 	.read = INFINIBAND_read,
 	.shutdown = INFINIBAND_shutdown,
-	.cleanup_eventset = INFINIBAND_cleanup_eventset,
 	.ctl = INFINIBAND_ctl,
 
 	.update_control_state = INFINIBAND_update_control_state,

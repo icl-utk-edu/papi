@@ -502,13 +502,6 @@ NET_shutdown( hwd_context_t * ctx )
 	return ( PAPI_OK );
 }
 
-int
-NET_cleanup_eventset( hwd_control_state_t * ctrl )
-{
-	( void ) ctrl;
-	return ( PAPI_OK );
-}
-
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
@@ -895,7 +888,6 @@ papi_vector_t _net_vector = {
 	.stop = NET_stop,
 	.read = NET_read,
 	.shutdown = NET_shutdown,
-	.cleanup_eventset = NET_cleanup_eventset,
 	.ctl = NET_ctl,
 	.update_control_state = NET_update_control_state,
 	.set_domain = NET_set_domain,
