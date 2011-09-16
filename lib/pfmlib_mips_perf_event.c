@@ -91,7 +91,7 @@ pfm_mips_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			if (  e->pattrs[i].idx == MIPS_ATTR_K
 			    ||e->pattrs[i].idx == MIPS_ATTR_U
 			    ||e->pattrs[i].idx == MIPS_ATTR_S
-			    ||e->pattrs[i].idx == MIPS_ATTR_I)
+			    ||e->pattrs[i].idx == MIPS_ATTR_E)
 				compact = 1;
 		}
 		/*
