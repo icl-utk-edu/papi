@@ -290,10 +290,10 @@ pfm_mips_get_encoding(void *this, pfmlib_event_desc_t *e)
 		id = e->pattrs[k].idx;
 		switch(id) {
 		case MIPS_ATTR_K:
-			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_usr);
+			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_os);
 			break;
 		case MIPS_ATTR_U:
-			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_os);
+			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_usr);
 			break;
 		case MIPS_ATTR_S:
 			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_sup);
