@@ -25,7 +25,7 @@ typedef struct {
         int                     idx;
         int                     nattrs;
         struct {
-          unsigned int s_precise:1;
+          unsigned int is_precise:1;
           unsigned int reserved_bits:31;
         };
 } pfm_event_info_t;
@@ -82,7 +82,7 @@ This bitfield indicates whether or not the event support precise sampling.
 Precise sampling is a hardware mechanism that avoids instruction address
 skid when using interrupt-based sampling. When the event has umasks, this
 field means that at least one umask supports precise sampling. On Intel X86
-processors, this indicates whether the event support Precise Event-Based
+processors, this indicates whether the event supports Precise Event-Based
 Sampling (PEBS).
 .PP
 
