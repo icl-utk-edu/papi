@@ -85,10 +85,10 @@ ftests_util.o: ftests_util.F fpapi_test.h
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c ftests_util.F
 
 do_loops.o: ../testlib/do_loops.c ../testlib/papi_test.h ../testlib/test_utils.h
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 dummy.o: ../testlib/dummy.c
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)

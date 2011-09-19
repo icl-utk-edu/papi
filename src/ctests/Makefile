@@ -384,13 +384,13 @@ forkexec4: forkexec4.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec4.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec4 
 
 ../testlib/test_utils.o:	../testlib/test_utils.c ../testlib/papi_test.h ../testlib/test_utils.h
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 ../testlib/do_loops.o:	../testlib/do_loops.c ../testlib/papi_test.h ../testlib/test_utils.h
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 ../testlib/dummy.o:	../testlib/dummy.c
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 prof_utils.o: prof_utils.c ../testlib/papi_test.h prof_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c prof_utils.c

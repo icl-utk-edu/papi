@@ -54,13 +54,13 @@ papi_error_codes: error_codes.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) error_codes.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_error_codes
 
 ../testlib/test_utils.o: ../testlib/test_utils.c ../testlib/papi_test.h ../testlib/test_utils.h
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 ../testlib/do_loops.o: ../testlib/do_loops.c ../testlib/papi_test.h ../testlib/test_utils.h
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 ../testlib/dummy.o: ../testlib/dummy.c
-	cd ../testlib && make
+	cd ../testlib && $(MAKE)
 
 cost_utils.o: ../testlib/papi_test.h cost_utils.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c cost_utils.c
