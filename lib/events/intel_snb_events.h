@@ -2195,7 +2195,7 @@ static const intel_x86_entry_t intel_snb_pe[]={
   .desc   = "Unhalted reference cycles",
   .modmsk = INTEL_FIXED3_ATTRS,
   .cntmsk = 0x400000000ull,
-  .code = 0x13c,
+  .code = 0x0300, /* pseudo encoding */
 },
 { .name   = "UOPS_DISPATCHED",
   .desc   = "Uops dispatched",
