@@ -98,10 +98,10 @@ AGE=0
 # Where should things (lib, headers, man) go in the end.
 #
 PREFIX=/usr/local
-LIBDIR=$(DESTDIR)$(PREFIX)/lib
-INCDIR=$(DESTDIR)$(PREFIX)/include
-MANDIR=$(DESTDIR)$(PREFIX)/share/man
-DOCDIR=$(DESTDIR)$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)
+LIBDIR=$(PREFIX)/lib
+INCDIR=$(PREFIX)/include
+MANDIR=$(PREFIX)/share/man
+DOCDIR=$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)
 
 #
 # System header files
