@@ -1190,9 +1190,12 @@ MPX_shutdown( void )
 	mpx_restore_signal(  );
 
 	if ( tlist ) {
-		Threadlist *t;
-		for ( t = tlist; t != NULL; t = t->next ) {
-			papi_free( t );
+	       Threadlist *next,*t=tlist;
+
+		while(t!=NULL) {
+		   next=t->next;
+		   papi_free( t );
+		   t = next;			
 		}
 		tlist = NULL;
 	}
