@@ -1638,14 +1638,15 @@ PAPI_start( int EventSet )
 	/* so if another event set is running, the user must stop that   */
         /* event set explicitly */
 
+      	thread = ESI->master;
+	cpu = ESI->CpuInfo;
+
 	/* check cpu attached case first */
 	if (ESI->state & PAPI_CPU_ATTACHED) {
-	   cpu = ESI->CpuInfo;
 	   if ( cpu->running_eventset[cidx] ) {
 	      papi_return( PAPI_EISRUN );
 	   }
 	} else {
-      	    thread = ESI->master;
 	    if ( thread->running_eventset[cidx] ) {
 	       papi_return( PAPI_EISRUN );
 	    }
