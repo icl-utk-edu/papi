@@ -3500,8 +3500,8 @@ else
 echo "${ECHO_T}not found" >&6
 	echo "$as_me:$LINENO: checking for dlopen and dlerror symbols in -ldl" >&5
 echo $ECHO_N "checking for dlopen and dlerror symbols in -ldl... $ECHO_C" >&6
-	SAVED_LDFLAGS=${LDFLAGS}
-	LDFLAGS="${LDFLAGS} -ldl"
+	SAVED_LIBS=${LIBS}
+	LIBS="${LIBS} -ldl"
 	cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -3548,7 +3548,7 @@ has_ldl="no"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-	LDFLAGS=${SAVED_LDFLAGS}
+	LIBS=${SAVED_LIBS}
 	if test "${has_ldl}" = "yes" ; then
 		echo "$as_me:$LINENO: result: found" >&5
 echo "${ECHO_T}found" >&6

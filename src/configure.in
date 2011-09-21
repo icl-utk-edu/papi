@@ -119,12 +119,12 @@ if test "${dlsymbols_in_base}" = "yes"; then
 else
 	AC_MSG_RESULT([not found])
 	AC_MSG_CHECKING([for dlopen and dlerror symbols in -ldl])
-	SAVED_LDFLAGS=${LDFLAGS}
-	LDFLAGS="${LDFLAGS} -ldl"
+	SAVED_LIBS=${LIBS}
+	LIBS="${LIBS} -ldl"
 	AC_TRY_LINK([#include <dlfcn.h>],
 		[void *p = dlopen ("", 0); char *c = dlerror();],
 		[has_ldl="yes"], [has_ldl="no"])
-	LDFLAGS=${SAVED_LDFLAGS}
+	LIBS=${SAVED_LIBS}
 	if test "${has_ldl}" = "yes" ; then
 		AC_MSG_RESULT([found])
   	LDL="-ldl"
