@@ -159,7 +159,7 @@ do_output( int test_type, long long *array, int bins, int show_std_dev,
 
 	if ( show_dist ) {
 		int *d;
-		d = malloc( ( size_t ) bins * sizeof ( int ) );
+		d = calloc( bins , sizeof ( int ) );
 		do_dist( array, min, max, bins, d );
 		print_dist( min, max, bins, d );
 		free( d );
