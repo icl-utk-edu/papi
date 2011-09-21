@@ -16,7 +16,6 @@
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-extern unsigned char PENTIUM4;
 
 #include "linux-memory.h"
 
@@ -67,6 +66,16 @@ extern papi_vector_t MY_VECTOR;
 #else
 #define AMD_FPU "SPECULATIVE"
 #endif
+
+static inline int is_pentium4(void) {
+  if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) &&
+       ( _papi_hwi_system_info.hw_info.cpuid_family == 15 )) {
+    return 1;
+  }
+
+  return 0;
+
+}
 
 static int
 _papi_hwd_fixup_vec( void )
@@ -179,7 +188,7 @@ setup_x86_presets( int cputype )
 	   return retval;
 	}
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		/* load the baseline event map for all Pentium 4s */
 
 		_papi_libpfm_setup_presets( "Intel Pentium4", 0 );	/* base events */
@@ -294,7 +303,7 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 {
 	int i, def_mode = 0;
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		if ( MY_VECTOR.cmp_info.default_domain & PAPI_DOM_USER )
 			def_mode |= ESCR_T0_USR;
 		if ( MY_VECTOR.cmp_info.default_domain & PAPI_DOM_KERNEL )
@@ -388,7 +397,7 @@ _x86_set_domain( hwd_control_state_t * cntrl, int domain )
 
 	/* Clear the current domain set for this event set */
 	/* We don't touch the Enable bit in this code */
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
 			cntrl->control.cpu_control.evntsel_aux[i] &=
 				~( ESCR_T0_OS | ESCR_T0_USR );
@@ -451,7 +460,7 @@ _x86_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
 	dst->ra_selector = ( unsigned int ) ( 1 << ctr );
 	dst->ra_rank = 1;
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		/* Pentium 4 requires that both an escr and a counter are selected.
 		   Find which counter mask contains this counter.
 		   Set the opposite escr to empty (-1) */
@@ -478,7 +487,7 @@ _x86_bpt_map_exclusive( hwd_reg_alloc_t * dst )
 static int
 _x86_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
-	if ( PENTIUM4 ) {
+  if ( is_pentium4() ) {
 		int retval1, retval2;
 		/* Pentium 4 needs to check for conflict of both counters and esc registers */
 		/* selectors must share bits */
@@ -518,7 +527,7 @@ _x86_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 	int i;
 	unsigned shared;
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 #ifdef DEBUG
 		SUBDBG( "src, dst\n" );
 		print_alloc( src );
@@ -580,7 +589,7 @@ _x86_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
 	dst->ra_selector = src->ra_selector;
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		dst->ra_escr[0] = src->ra_escr[0];
 		dst->ra_escr[1] = src->ra_escr[1];
 	}
@@ -598,7 +607,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 	   for counter allocation and optimization. */
 	natNum = ESI->NativeCount;
 
-	if ( PENTIUM4 )
+	if ( is_pentium4() )
 		SUBDBG( "native event count: %d\n", natNum );
 
 	for ( i = 0; i < natNum; i++ ) {
@@ -606,7 +615,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 		_papi_libpfm_ntv_code_to_bits( ( unsigned int ) ESI->NativeInfoArray[i].
 							   ni_event, &event_list[i].ra_bits );
 
-		if ( PENTIUM4 ) {
+		if ( is_pentium4() ) {
 			/* combine counter bit masks for both esc registers into selector */
 			event_list[i].ra_selector =
 				event_list[i].ra_bits.counter[0] | event_list[i].ra_bits.
@@ -631,7 +640,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 			}
 		}
 
-		if ( PENTIUM4 ) {
+		if ( is_pentium4() ) {
 			event_list[i].ra_escr[0] = event_list[i].ra_bits.escr[0];
 			event_list[i].ra_escr[1] = event_list[i].ra_bits.escr[1];
 #ifdef DEBUG
@@ -648,7 +657,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 				event_list[i].ra_bits.selector = event_list[i].ra_selector;
 #endif
 #ifdef DEBUG
-			if ( PENTIUM4 ) {
+			if ( is_pentium4() ) {
 				SUBDBG( "i: %d\n", i );
 				print_alloc( &event_list[i] );
 			}
@@ -657,7 +666,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 			ptr = ESI->NativeInfoArray[i].ni_bits;
 			*ptr = event_list[i].ra_bits;
 
-			if ( PENTIUM4 ) {
+			if ( is_pentium4() ) {
 				/* The selector contains the counter bit position. Turn it into a number
 				   and store it in the first counter value, zeroing the second. */
 				ptr->counter[0] = ffs( event_list[i].ra_selector ) - 1;
@@ -684,7 +693,7 @@ clear_cs_events( hwd_control_state_t * this_state )
 	/* Remove all counter control command values from eventset. */
 	for ( i = 0; i < j; i++ ) {
 		SUBDBG( "Clearing pmc event entry %d\n", i );
-		if ( PENTIUM4 ) {
+		if ( is_pentium4() ) {
 			this_state->control.cpu_control.pmc_map[i] = 0;
 			this_state->control.cpu_control.evntsel[i] = 0;
 			this_state->control.cpu_control.evntsel_aux[i] =
@@ -699,7 +708,7 @@ clear_cs_events( hwd_control_state_t * this_state )
 		this_state->control.cpu_control.ireset[i] = 0;
 	}
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		/* Clear pebs stuff */
 		this_state->control.cpu_control.p4.pebs_enable = 0;
 		this_state->control.cpu_control.p4.pebs_matrix_vert = 0;
@@ -710,7 +719,7 @@ clear_cs_events( hwd_control_state_t * this_state )
 	this_state->control.cpu_control.nrictrs = 0;
 
 #ifdef DEBUG
-	if ( PENTIUM4 )
+	if ( is_pentium4() )
 		print_control( &this_state->control.cpu_control );
 #endif
 }
@@ -731,7 +740,7 @@ _x86_update_control_state( hwd_control_state_t * this_state,
 	/* clear out the events from the control state */
 	clear_cs_events( this_state );
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		/* fill the counters we're using */
 		for ( i = 0; i < ( unsigned int ) count; i++ ) {
 			/* dereference the mapping information about this native event */
@@ -873,7 +882,7 @@ _x86_read( hwd_context_t * ctx, hwd_control_state_t * spc, long long **dp,
 {
 	if ( flags & PAPI_PAUSED ) {
 		vperfctr_read_state( ctx->perfctr, &spc->state, NULL );
-		if ( !PENTIUM4 ) {
+		if ( !is_pentium4() ) {
 			unsigned int i = 0;
 			for ( i = 0;
 				  i <
@@ -896,7 +905,7 @@ _x86_read( hwd_context_t * ctx, hwd_control_state_t * spc, long long **dp,
 	{
 		if ( ISLEVEL( DEBUG_SUBSTRATE ) ) {
 			unsigned int i;
-			if ( PENTIUM4 ) {
+			if ( is_pentium4() ) {
 				for ( i = 0; i < spc->control.cpu_control.nractrs; i++ ) {
 					SUBDBG( "raw val hardware index %d is %lld\n", i,
 							( long long ) spc->state.pmc[i] );
@@ -959,7 +968,7 @@ swap_events( EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int cntr1,
 	contr->cpu_control.evntsel[cntr1] = contr->cpu_control.evntsel[cntr2];
 	contr->cpu_control.evntsel[cntr2] = ui;
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		ui = contr->cpu_control.evntsel_aux[cntr1];
 		contr->cpu_control.evntsel_aux[cntr1] =
 			contr->cpu_control.evntsel_aux[cntr2];
@@ -979,7 +988,7 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	OVFDBG( "EventIndex=%d\n", EventIndex );
 
 #ifdef DEBUG
-	if ( PENTIUM4 )
+	if ( is_pentium4() )
 		print_control( &ESI->ctl_state->control.cpu_control );
 #endif
 
@@ -1003,7 +1012,7 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		   thus we subtract 1 from the threshold. */
 		contr->cpu_control.ireset[i] = ( -threshold + 1 );
 
-		if ( PENTIUM4 )
+		if ( is_pentium4() )
 			contr->cpu_control.evntsel[i] |= CCCR_OVF_PMI_T0;
 		else
 			contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
@@ -1019,12 +1028,12 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 			swap_events( ESI, contr, i, nracntrs );
 		OVFDBG( "Modified event set\n" );
 	} else {
-		if ( PENTIUM4 && contr->cpu_control.evntsel[i] & CCCR_OVF_PMI_T0 ) {
+	  if ( is_pentium4() && contr->cpu_control.evntsel[i] & CCCR_OVF_PMI_T0 ) {
 			contr->cpu_control.ireset[i] = 0;
 			contr->cpu_control.evntsel[i] &= ( ~CCCR_OVF_PMI_T0 );
 			contr->cpu_control.nrictrs--;
 			contr->cpu_control.nractrs++;
-		} else if ( !PENTIUM4 &&
+	  } else if ( !is_pentium4() &&
 					contr->cpu_control.evntsel[i] & PERF_INT_ENABLE ) {
 			contr->cpu_control.ireset[i] = 0;
 			contr->cpu_control.evntsel[i] &= ( ~PERF_INT_ENABLE );
@@ -1048,7 +1057,7 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	}
 
 #ifdef DEBUG
-	if ( PENTIUM4 )
+	if ( is_pentium4() )
 		print_control( &ESI->ctl_state->control.cpu_control );
 #endif
 	OVFDBG( "End of call. Exit code: %d\n", retval );

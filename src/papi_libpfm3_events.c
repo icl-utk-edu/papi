@@ -36,7 +36,6 @@ extern pentium4_escr_reg_t pentium4_escrs[];
 extern pentium4_cccr_reg_t pentium4_cccrs[];
 extern pentium4_event_t pentium4_events[];
 
-extern unsigned char PENTIUM4;
 extern papi_vector_t MY_VECTOR;
 extern unsigned int PAPI_NATIVE_EVENT_AND_MASK;
 extern unsigned int PAPI_NATIVE_EVENT_SHIFT;
@@ -616,13 +615,24 @@ copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
 	names[len - 1] = 0;
 }
 
+static inline int is_pentium4(void) {
+  if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) &&
+       ( _papi_hwi_system_info.hw_info.cpuid_family == 15 )) {
+    return 1;
+  }
+
+  return 0;
+
+}
+
+
 int
 _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 							unsigned int *values, int name_len, int count )
 {
 	int i = 0;
 
-	if ( PENTIUM4 ) {
+	if ( is_pentium4() ) {
 		copy_value( bits->cccr, "P4 CCCR", &names[i * name_len], &values[i],
 					name_len );
 		if ( ++i == count )
@@ -710,7 +720,7 @@ _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 int
 _papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
-	if ( PENTIUM4 ) {
+  if ( is_pentium4() ) {
 		pentium4_escr_value_t escr_value;
 		pentium4_cccr_value_t cccr_value;
 		unsigned int umask, num_masks, replay_mask, unit_masks[12];

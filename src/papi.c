@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <unistd.h> 
 
-unsigned char PENTIUM4 = 0;
 /* Native events consist of a flag field, an event field, and a unit mask field. 		
  * These variables define the characteristics of the event and unit mask fields. */
 unsigned int PAPI_NATIVE_EVENT_AND_MASK = 0x000003ff;
@@ -78,48 +77,6 @@ inline_static int
 valid_ESI_component( EventSetInfo_t * ESI )
 {
 	return ( valid_component( ESI->CmpIdx ) );
-}
-
-static void
-set_runtime_config(  )
-{
-	enum Vendors
-	{ INTEL };
-	FILE *file;
-	char line[256];
-	char *token;
-	char *delim = ":";
-	int vendor = -1, family = -1;
-
-	if ( ( file = fopen( "/proc/cpuinfo", "r" ) ) != NULL ) {
-		while ( fgets( line, sizeof ( line ), file ) != NULL ) {
-			if ( strstr( line, "vendor_id" ) ) {
-				if ( strstr( line, "GenuineIntel" ) )
-					vendor = INTEL;
-				else
-					return;
-			}
-
-			if ( strstr( line, "cpu family" ) ) {
-				token = strtok( line, delim );
-				token = strtok( NULL, delim );
-				family = atoi( token );
-			}
-		}
-
-		if ( vendor == INTEL ) {
-			if ( family == 15 ) {	//Pentium4
-				PENTIUM4 = 1;
-				PAPI_NATIVE_EVENT_AND_MASK = 0x000000ff;
-				PAPI_NATIVE_UMASK_AND_MASK = 0x0fffff00;
-				PAPI_NATIVE_UMASK_SHIFT = 8;
-			} else if ( family == 31 || family == 32 ) {	//Itanium2
-				PAPI_NATIVE_EVENT_AND_MASK = 0x00000fff;
-				PAPI_NATIVE_UMASK_AND_MASK = 0x0ffff000;
-				PAPI_NATIVE_UMASK_SHIFT = 12;
-			}
-		}
-	}
 }
 
 /** @class	PAPI_thread_init
@@ -625,7 +582,6 @@ PAPI_library_init( int version )
 
 	tmpel = _papi_hwi_error_level;
 	_papi_hwi_error_level = PAPI_VERB_ECONT;
-	set_runtime_config(  );
 
 	/* Initialize internal globals */
 	if ( _papi_hwi_init_global_internal(  ) != PAPI_OK ) {
@@ -644,6 +600,24 @@ PAPI_library_init( int version )
 		_papi_hwi_error_level = tmpel;
 		papi_return( init_retval );
 	}
+	
+	/* UGH!  Big hack ! */
+
+	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) {
+	  /* Pentium4 */
+	   if ( _papi_hwi_system_info.hw_info.cpuid_family == 15 ) {
+	      PAPI_NATIVE_EVENT_AND_MASK = 0x000000ff;
+	      PAPI_NATIVE_UMASK_AND_MASK = 0x0fffff00;
+	      PAPI_NATIVE_UMASK_SHIFT = 8;
+	      /* Itanium2 */
+	   } else if ( _papi_hwi_system_info.hw_info.cpuid_family == 31 || 
+		       _papi_hwi_system_info.hw_info.cpuid_family == 32 ) {
+	      PAPI_NATIVE_EVENT_AND_MASK = 0x00000fff;
+	      PAPI_NATIVE_UMASK_AND_MASK = 0x0ffff000;
+	      PAPI_NATIVE_UMASK_SHIFT = 12;
+	   }
+	}
+	
 
 	/* Initialize thread globals, including the main threads
 	   substrate */
