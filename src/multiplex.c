@@ -1081,12 +1081,14 @@ MPX_stop( MPX_EventSet * mpx_events, long long *values )
 
 	/* Get the master event list for this thread. */
 	head = get_my_threads_master_event_list(  );
+	if (!head) {
+	  retval=PAPI_EBUG;
+	  goto exit_mpx_stop;
+	}
 
 	/* Get this threads data structure */
-	if ( head ) {
-		thr = head->mythr;
-		cur_event = thr->cur_event;
-	}
+	thr = head->mythr;
+	cur_event = thr->cur_event;
 
 	/* This would be a good spot to "hold" the counter and then restart
 	 * it at the end, but PAPI_start resets counters so it is not possible
@@ -1137,6 +1139,7 @@ MPX_stop( MPX_EventSet * mpx_events, long long *values )
 	}
 	mpx_events->status = MPX_STOPPED;
 
+exit_mpx_stop:
 	MPXDBG( "End\n" );
 
 	/* Restore the timer (for other event sets that may be running) */
