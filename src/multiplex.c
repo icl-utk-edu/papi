@@ -1156,10 +1156,14 @@ MPX_cleanup( MPX_EventSet ** mpx_events )
 #endif
 	MPX_EventSet *tmp = *mpx_events;
 
+	if ( mpx_events == NULL )
+	   return PAPI_EINVAL;
+
 	if ( *mpx_events == NULL )
-		return PAPI_OK;
-	if ( mpx_events == NULL || ( *mpx_events )->status == MPX_RUNNING )
-		return PAPI_EINVAL;
+	   return PAPI_OK;
+
+	if (( *mpx_events )->status == MPX_RUNNING )
+	   return PAPI_EINVAL;
 
 	mpx_hold(  );
 
@@ -1204,6 +1208,9 @@ mpx_check( int EventSet )
 	 * cannot be controlled on a domain level.
 	 */
 	EventSetInfo_t *ESI = _papi_hwi_lookup_EventSet( EventSet );
+
+	if (ESI==NULL) return PAPI_EBUG;
+
 	if ( strstr( _papi_hwd[ESI->CmpIdx]->cmp_info.name, "perfctr.c" ) == NULL )
 		return PAPI_OK;
 
