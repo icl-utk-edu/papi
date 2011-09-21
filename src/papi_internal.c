@@ -580,7 +580,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 		/* fill in the new information */
 		if ( head[j].event_code & PAPI_PRESET_MASK ) {
 			preset_index = ( int ) head[j].event_code & PAPI_PRESET_AND_MASK;
-			for ( k = 0; k < MAX_COUNTER_TERMS; k++ ) {
+			for ( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
 				nevt = _papi_hwi_presets.data[preset_index]->native[k];
 				if ( nevt == PAPI_NULL )
 					break;

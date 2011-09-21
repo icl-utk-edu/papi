@@ -19,7 +19,7 @@ typedef struct
 {
 	int preset;		   /* Preset code */
 	int derived;		   /* Derived code */
-	char *( findme[MAX_COUNTER_TERMS] ); /* Strings to look for, more than 1 means derived */
+	char *( findme[PAPI_MAX_COUNTER_TERMS] ); /* Strings to look for, more than 1 means derived */
 	char *operation;	   /* PostFix operations between terms */
 	char *note;	           /* In case a note is included with a preset */
 } pfm_preset_search_entry_t;
@@ -378,7 +378,7 @@ load_preset_table( char *pmu_str, int pmu_type,
 				SUBDBG( "Adding term (%d) %s to preset event 0x%x.\n", i, t,
 						preset );
 #endif
-			} while ( ++i < MAX_COUNTER_TERMS );
+			} while ( ++i < PAPI_MAX_COUNTER_TERMS );
 			/* End of derived support */
 
 			if ( i == 0 ) {
@@ -387,7 +387,7 @@ load_preset_table( char *pmu_str, int pmu_type,
 					  line_no, name );
 				goto nextline;
 			}
-			if ( i == MAX_COUNTER_TERMS )
+			if ( i == PAPI_MAX_COUNTER_TERMS )
 				t = trim_string( strtok( NULL, "," ) );
 
 			/* Handle optional NOTEs */
@@ -433,7 +433,7 @@ free_preset_table( pfm_preset_search_entry_t * here )
 	int i = 0, j;
   SUBDBG("ENTER\n");
 	while ( here[i].preset ) {
-		for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
+		for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
 			free( here[i].findme[j] );
 		free( here[i].operation );
 		free( here[i].note );
@@ -514,10 +514,10 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	      } 
 
 	   } while ( strmap[i].findme[term] != NULL &&
-					  term < MAX_COUNTER_TERMS );
+					  term < PAPI_MAX_COUNTER_TERMS );
 
 	   /* terminate the native term array with PAPI_NULL */
-	   if ( term < MAX_COUNTER_TERMS ) {
+	   if ( term < PAPI_MAX_COUNTER_TERMS ) {
 	      psmap[j].data.native[term] = PAPI_NULL;
 	   }
 
