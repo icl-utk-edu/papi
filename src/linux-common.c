@@ -244,7 +244,7 @@ decode_vendor_string( char *s, int *vendor )
 int
 _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 {
-	int tmp, retval = PAPI_OK;
+  int tmp, retval = PAPI_OK;
 	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
 	float mhz = 0.0;
 	FILE *f;
@@ -420,18 +420,20 @@ _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 	hwinfo->ncpu =
 		hwinfo->nnodes >
 		1 ? hwinfo->totalcpus / hwinfo->nnodes : hwinfo->totalcpus;
-
+#if 0
+	int *nodecpu;
 	/* cpumap data is not currently part of the _papi_hw_info struct */
-	int *nodecpu =
-		( int * ) malloc( ( unsigned int ) hwinfo->nnodes * sizeof ( int ) );
-
+        nodecpu = malloc( (unsigned int) hwinfo->nnodes * sizeof(int) );
 	if ( nodecpu ) {
-		int i;
-		for ( i = 0; i < hwinfo->nnodes; ++i )
-			nodecpu[i] =
-				path_sibling( _PATH_SYS_SYSTEM "/node/node%d/cpumap", i );
-	} else
+	   int i;
+	   for ( i = 0; i < hwinfo->nnodes; ++i ) {
+	       nodecpu[i] = path_sibling( 
+                             _PATH_SYS_SYSTEM "/node/node%d/cpumap", i );
+	   }
+	} else {
 		PAPIERROR( "malloc failed for variable not currently used" );
+	}
+#endif
 
 	return retval;
 }
