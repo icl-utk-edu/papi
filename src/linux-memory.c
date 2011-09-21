@@ -114,6 +114,7 @@ _linux_get_dmem_info( PAPI_dmem_info_t * d )
 				&dum, &dat, &dum );
 	if ( ret != 7 ) {
 		PAPIERROR( "fscanf(7 items): %d\n", ret );
+		fclose(f);
 		return PAPI_ESBSTR;
 	}
 	d->pagesize = getpagesize(  );
@@ -974,6 +975,7 @@ _linux_update_shlib_info( papi_mdi_t *mdi )
 												  ( PAPI_address_map_t ) );
 		if ( tmp == NULL ) {
 			PAPIERROR( "Error allocating shared library address map" );
+			fclose(f);
 			return PAPI_ENOMEM;
 		}
 		t_index = 0;
