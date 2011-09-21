@@ -1406,7 +1406,7 @@ handle_derived_add( int *position, long long *from )
 	long long retval = 0;
 
 	i = 0;
-	while ( i < MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1423,7 +1423,7 @@ handle_derived_subtract( int *position, long long *from )
 	long long retval = from[position[0]];
 
 	i = 1;
-	while ( i < MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1465,8 +1465,10 @@ static long long
 _papi_hwi_postfix_calc( EventInfo_t * evi, long long *hw_counter )
 {
 	char *point = evi->ops, operand[16];
-	double stack[MAX_COUNTER_TERMS];
+	double stack[PAPI_MAX_COUNTER_TERMS];
 	int i, top = 0;
+
+	memset(&stack,0,PAPI_MAX_COUNTER_TERMS*sizeof(double));
 
 	while ( *point != '\0' ) {
 		if ( *point == 'N' ) {	/* to get count for each native event */
@@ -1672,14 +1674,15 @@ _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 		char *rest_event_list;
 		char *copy_rest_event_list;
 		int remainder;
+
 		rest_event_list =
-			( char * ) papi_malloc( ( size_t ) size *
-									( size_t ) _papi_hwd[cidx]->cmp_info.
-									num_cntrs );
+			papi_calloc(  _papi_hwd[cidx]->cmp_info.num_cntrs, 
+				      size );
+
 		copy_rest_event_list =
-			( char * ) papi_malloc( ( size_t ) size *
-									( size_t ) _papi_hwd[cidx]->cmp_info.
-									num_cntrs );
+		        papi_calloc( _papi_hwd[cidx]->cmp_info.num_cntrs,
+				     size );
+
 		if ( !rest_event_list || !copy_rest_event_list ) {
 			if ( rest_event_list )
 				papi_free( rest_event_list );
