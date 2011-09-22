@@ -566,10 +566,14 @@ read the documentation carefully.  */
   typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                                 long long overflow_vector, void *context);
 
-	/* All caddr_t's should become unsigned long's eventually. */
-
-#ifdef C99
+        /* Handle C99 compilation */
+	/* All caddr_ts should become unsigned longs eventually. */
+#ifdef __STDC_VERSION__
+  #if (__STDC_VERSION__ == 199901L)
 	typedef char *caddr_t;
+  #else
+
+  #endif
 #endif
 
 	/** @ingroup papi_data_structures */
