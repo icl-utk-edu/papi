@@ -61,12 +61,8 @@ check_event( int event_code, char *name )
 	}
 
 
-/* Removeing events is not uniformly supported in some components, 
-   So until the semantics of destroy_eventset are nailed down, 
-   don't call this. 
 	PAPI_cleanup_eventset( &EventSet );
 	PAPI_destroy_eventset( &EventSet );
-*/
 	return ( 1 );
 }
 
