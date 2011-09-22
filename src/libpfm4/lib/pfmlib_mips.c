@@ -39,7 +39,7 @@ static const pfmlib_attr_desc_t mips_mods[]={
 	PFM_ATTR_B("k", "monitor at system level"),
 	PFM_ATTR_B("u", "monitor at user level"),
 	PFM_ATTR_B("s", "monitor at supervisor level"),
-	PFM_ATTR_B("i", "monitor at interrupt level "),
+	PFM_ATTR_B("e", "monitor at exception level "),
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -259,9 +259,9 @@ pfm_mips_get_encoding(void *this, pfmlib_event_desc_t *e)
 			reg.perfsel64.sel_sup = !!ival;
 			plmmsk |= _MIPS_ATTR_S;
 			break;
-		case MIPS_ATTR_I: /* int */
+		case MIPS_ATTR_E: /* int */
 			reg.perfsel64.sel_exl = !!ival;
-			plmmsk |= _MIPS_ATTR_I;
+			plmmsk |= _MIPS_ATTR_E;
 		}
 	}
 
@@ -290,15 +290,15 @@ pfm_mips_get_encoding(void *this, pfmlib_event_desc_t *e)
 		id = e->pattrs[k].idx;
 		switch(id) {
 		case MIPS_ATTR_K:
-			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_usr);
+			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_os);
 			break;
 		case MIPS_ATTR_U:
-			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_os);
+			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_usr);
 			break;
 		case MIPS_ATTR_S:
 			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_sup);
 			break;
-		case MIPS_ATTR_I:
+		case MIPS_ATTR_E:
 			evt_strcat(e->fstr, ":%s=%lu", mips_mods[id].name, reg.perfsel64.sel_exl);
 			break;
 		}
@@ -394,6 +394,7 @@ pfm_mips_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_
 	info->desc = mips_mods[attr_idx].desc;
 	info->type = mips_mods[attr_idx].type;
 	info->type = mips_mods[attr_idx].type;
+	info->equiv= NULL;
 	info->idx   = attr_idx; /* private index */
 	info->code = attr_idx;
 	info->is_dfl = 0;

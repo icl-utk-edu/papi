@@ -227,8 +227,8 @@ show_event_info_combo(pfm_event_info_t *info)
 						warnx("umasks combination too long for event %s", buf);
 						break;
 					}
-					strncat(buf, ":", len); len--;
-					strncat(buf, ainfo[j].name, len);
+					strncat(buf, ":", len-1);buf[len-1] = '\0'; len--;
+					strncat(buf, ainfo[j].name, len-1);buf[len-1] = '\0';
 					len -= strlen(ainfo[j].name);
 				}
 			}

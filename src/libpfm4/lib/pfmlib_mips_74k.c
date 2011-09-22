@@ -80,4 +80,3 @@ pfmlib_pmu_t mips_74k_support={
 	.get_event_nattrs	= pfm_mips_get_event_nattrs,
 	.supported_plm		= PFM_PLM0|PFM_PLM3|PFM_PLMH,
 };
-

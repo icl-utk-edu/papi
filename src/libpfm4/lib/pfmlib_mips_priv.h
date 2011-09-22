@@ -37,7 +37,7 @@ typedef struct {
 	const char			*name;	/* event name */
 	const char			*desc;	/* event description */
 	unsigned int			mask;   /* which counters event lives on */
-	unsigned int			code; 	/* event code, bit 8 = odd/even counter */
+	unsigned int			code; 	/* event code */
 } mips_entry_t;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -50,8 +50,8 @@ typedef union {
 		unsigned long sel_sup:1;		/* supervisor level */
 		unsigned long sel_usr:1;		/* user level */
 	        unsigned long sel_int:1;		/* enable intr */
-		unsigned long sel_event_mask:7;		/* event mask */
-		unsigned long sel_res1:20;		/* reserved */
+		unsigned long sel_event_mask:5;		/* event mask */
+		unsigned long sel_res1:22;		/* reserved */
 		unsigned long sel_res2:32;		/* reserved */
 	} perfsel64;
 } pfm_mips_sel_reg_t;
@@ -62,8 +62,8 @@ typedef union {
 	uint64_t	val;				/* complete register value */
 	struct {
 		unsigned long sel_res2:32;		/* reserved */
-		unsigned long sel_res1:20;		/* reserved */
-		unsigned long sel_event_mask:7;		/* event mask */
+		unsigned long sel_res1:22;		/* reserved */
+		unsigned long sel_event_mask:5;		/* event mask */
 	        unsigned long sel_int:1;		/* enable intr */
 		unsigned long sel_usr:1;		/* user level */
 		unsigned long sel_sup:1;		/* supervisor level */
@@ -88,18 +88,18 @@ extern pfm_mips_config_t pfm_mips_cfg;
 #define MIPS_ATTR_K	0 /* system level */
 #define MIPS_ATTR_U	1 /* user level */
 #define MIPS_ATTR_S	2 /* supervisor level */
-#define MIPS_ATTR_I	3 /* int level */
+#define MIPS_ATTR_E	3 /* exception level */
 #define MIPS_NUM_ATTRS	4
 
 #define _MIPS_ATTR_K  (1 << MIPS_ATTR_K)
 #define _MIPS_ATTR_U  (1 << MIPS_ATTR_U)
 #define _MIPS_ATTR_S  (1 << MIPS_ATTR_S)
-#define _MIPS_ATTR_I  (1 << MIPS_ATTR_I)
+#define _MIPS_ATTR_E  (1 << MIPS_ATTR_E)
 
 #define MIPS_PLM_ALL (	_MIPS_ATTR_K |\
 			_MIPS_ATTR_U |\
 			_MIPS_ATTR_S |\
-			_MIPS_ATTR_I)
+			_MIPS_ATTR_E)
 
 extern int pfm_mips_detect(void *this);
 extern int pfm_mips_get_encoding(void *this, pfmlib_event_desc_t *e);
