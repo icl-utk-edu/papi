@@ -346,7 +346,7 @@ gen_tracepoint_table(void)
 	if (err == -1)
 		return;
 
-	strncat(debugfs_mnt, "/tracing/events", MAXPATHLEN);
+	strncat(debugfs_mnt, "/tracing/events", MAXPATHLEN-1);
 	debugfs_mnt[MAXPATHLEN-1]= '\0';
 
 	dir1 = opendir(debugfs_mnt);

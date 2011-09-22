@@ -49,6 +49,10 @@ endif
 
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
+ARCH_MAN += libpfm_mips_74k.3
+endif
+
 GEN_MAN= libpfm.3 \
 	pfm_find_event.3 \
 	pfm_get_event_attr_info.3 \
@@ -67,5 +71,5 @@ MAN=$(GEN_MAN) $(ARCH_MAN)
 
 install:
 
-	-mkdir -p $(MANDIR)/man3
-	( cd man3; $(INSTALL) -m 644 $(MAN) $(MANDIR)/man3 )
+	-mkdir -p $(DESTDIR)$(MANDIR)/man3
+	( cd man3; $(INSTALL) -m 644 $(MAN) $(DESTDIR)$(MANDIR)/man3 )

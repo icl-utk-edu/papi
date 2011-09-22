@@ -38,7 +38,7 @@ LIBS += -lrt
 endif
 
 TARGETS=showevtinfo check_events
-EXAMPLESDIR=$(DOCDIR)/examples
+EXAMPLESDIR=$(DESTDIR)$(DOCDIR)/examples
 
 all: $(TARGETS)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done

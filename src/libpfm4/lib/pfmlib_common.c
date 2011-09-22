@@ -87,8 +87,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
-#ifdef CONFIG_PFMLIB_ARCH_MIPS64
-	&generic_mips64_support,
+#ifdef CONFIG_PFMLIB_ARCH_MIPS
+	&mips_74k_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_SICORTEX

@@ -31,6 +31,14 @@ ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
 SRCS += validate_x86.c
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
+SRCS += validate_mips.c
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
+SRCS += validate_arm.c
+endif
+
 CFLAGS+= -I. -D_GNU_SOURCE
 LIBS += -lm
 

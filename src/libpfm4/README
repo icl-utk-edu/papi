@@ -61,6 +61,9 @@ The library supports many PMUs. The current version can handle:
 		PPC970
 		Torrent
 
+	- For MIPS
+		Mips 74k
+
 WHAT'S THERE
 -------------
 	- the library source code including support for all processors listed

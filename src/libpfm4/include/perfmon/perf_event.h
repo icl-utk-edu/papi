@@ -323,6 +323,16 @@ enum perf_callchain_context {
 # define __NR_perf_event_open (0x900000+364)
 #endif
 #endif
+
+#ifdef __mips__
+#if _MIPS_SIM == _MIPS_SIM_OABI32
+# define __NR_perf_event_open __NR_Linux + 333
+#elif _MIPS_SIM == _MIPS_SIM_ABI64
+# define __NR_perf_event_open __NR_Linux + 292
+#else /* if _MIPS_SIM == MIPS_SIM_NABI32 */
+# define __NR_perf_event_open __NR_Linux + 296
+#endif
+#endif
 #endif /* __NR_perf_event_open */
 
 /*
