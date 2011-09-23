@@ -236,6 +236,10 @@ decode_vendor_string( char *s, int *vendor )
 		*vendor = PAPI_VENDOR_CRAY;
 	else if ( strcasecmp( s, "ARM" ) == 0 )
 		*vendor = PAPI_VENDOR_ARM;
+	else if ( strcasecmp( s, "MIPS" ) == 0 )
+		*vendor = PAPI_VENDOR_MIPS;
+	else if ( strcasecmp( s, "SiCortex" ) == 0 )
+		*vendor = PAPI_VENDOR_MIPS;
 	else
 		*vendor = PAPI_VENDOR_UNKNOWN;
 }

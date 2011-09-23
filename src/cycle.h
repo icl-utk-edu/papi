@@ -464,9 +464,51 @@ INLINE_ELAPSED( inline )
 #define HAVE_TICK_COUNTER
 #endif
 /*----------------------------------------------------------------*/
-/* MIPS ZBus */
-#if HAVE_MIPS_ZBUS_TIMER
 #if defined(__mips__) && !defined(HAVE_TICK_COUNTER)
+typedef unsigned long long ticks;
+/*
+ * binutils wants to use rdhwr only on mips32r2
+ * but as linux kernel emulate it, it's fine
+ * to use it.
+ *
+ */
+#define MIPS_RDHWR(rd, value) {                 \
+    __asm__ __volatile__ (                      \
+                          ".set   push\n\t"     \
+                          ".set mips32r2\n\t"   \
+                          "rdhwr  %0, "rd"\n\t" \
+                          ".set   pop"          \
+                          : "=r" (value));      \
+}
+
+static inline ticks getticks(void)
+ {
+/* On kernels >= 2.6.25 rdhwr <reg>, $2 and $3 are emulated */
+     uint32_t count;
+     static uint32_t cyc_per_count = 0;
+
+     if (!cyc_per_count)
+        MIPS_RDHWR("$3", cyc_per_count);
+
+    MIPS_RDHWR("$2", count);
+     return (ticks)((ticks)count * (ticks)cyc_per_count);
+}
+#define HAVE_TICK_COUNTER
+INLINE_ELAPSED( __inline__ )
+#endif
+#if defined(__mips__) && !defined(HAVE_TICK_COUNTER) && !defined(HAVE_MIPS_ZBUS_TIMER)
+
+/* FIXME! */
+static inline int
+getticks( void ) {
+  return 0;
+}
+
+#warning "WARNING!  getticks() not implemented on MIPS"
+/* MIPS ZBus */
+#endif
+#if defined(__mips__) && !defined(HAVE_TICK_COUNTER) && defined(HAVE_MIPS_ZBUS_TIMER)
+
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -502,8 +544,6 @@ getticks( void )
 INLINE_ELAPSED( inline )
 #define HAVE_TICK_COUNTER
 #endif
-#endif /* HAVE_MIPS_ZBUS_TIMER */
-
 
 /****************** ARM */
 #ifdef __arm__

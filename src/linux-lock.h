@@ -144,6 +144,38 @@ __raw_spin_unlock( volatile unsigned int *lock )
 #define  _papi_hwd_lock(lck) MUTEX_SET(lck)
 #define  _papi_hwd_unlock(lck) (*(volatile int *)(lck) = 0)
 
+#elif defined(__mips__)
+static inline void __raw_spin_lock(volatile unsigned int *lock)
+{
+  unsigned int tmp;
+		__asm__ __volatile__(
+		"       .set    noreorder       # __raw_spin_lock       \n"
+		"1:     ll      %1, %2                                  \n"
+		"       bnez    %1, 1b                                  \n"
+		"        li     %1, 1                                   \n"
+		"       sc      %1, %0                                  \n"
+		"       beqzl   %1, 1b                                  \n"
+		"        nop                                            \n"
+		"       sync                                            \n"
+		"       .set    reorder                                 \n"
+		: "=m" (*lock), "=&r" (tmp)
+		: "m" (*lock)
+		: "memory");
+}
+
+static inline void __raw_spin_unlock(volatile unsigned int *lock)
+{
+	__asm__ __volatile__(
+	"       .set    noreorder       # __raw_spin_unlock     \n"
+	"       sync                                            \n"
+	"       sw      $0, %0                                  \n"
+	"       .set\treorder                                   \n"
+	: "=m" (*lock)
+	: "m" (*lock)
+	: "memory");
+}
+#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
+#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #else
 
 #error "_papi_hwd_lock/unlock undefined!"

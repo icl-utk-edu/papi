@@ -220,7 +220,10 @@ get_cycles( void )
 
 #elif defined(__arm__)
 /* um same as POWER */
- 
+
+#elif defined(__mips__)
+/* um same as POWER */
+
 #elif !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
 #error "No get_cycles support for this architecture. Please modify perfmon.c or compile with a different timer"
 #endif
@@ -253,7 +256,7 @@ long long
 _linux_get_real_cycles( void )
 {
 	long long retval;
-#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||defined(__arm__)
+#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||defined(__arm__)||defined(__mips__)
 	retval =
 		_linux_get_real_usec(  ) *
 		( long long ) _papi_hwi_system_info.hw_info.mhz;
