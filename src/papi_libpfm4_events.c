@@ -23,7 +23,7 @@ struct native_event_t {
   int component;
   char *pmu;
   int papi_code;
-  int perfmon_idx;
+  int libpfm4_idx;
   char *allocated_name;
   char *base_name;
   char *pmu_plus_name;
@@ -65,7 +65,7 @@ static struct native_event_t *find_existing_event(char *name) {
     if (!strcmp(name,native_events[i].allocated_name)) {
       SUBDBG("Found %s (%x %x)\n",
 	     native_events[i].allocated_name,
-	     native_events[i].perfmon_idx,
+	     native_events[i].libpfm4_idx,
 	     native_events[i].papi_code);
        temp_event=&native_events[i];
        break;
@@ -296,10 +296,10 @@ static struct native_event_t *allocate_native_event(char *name,
   native_events[new_event].pmu=strdup(pinfo.name);
   native_events[new_event].papi_code=new_event | PAPI_NATIVE_MASK;
     
-  native_events[new_event].perfmon_idx=find_event_no_aliases(pmuplusbase);
+  native_events[new_event].libpfm4_idx=find_event_no_aliases(pmuplusbase);
 
   SUBDBG("Using %x as index instead of %x for %s\n",
-	 native_events[new_event].perfmon_idx,event_idx,pmuplusbase);
+	 native_events[new_event].libpfm4_idx,event_idx,pmuplusbase);
 
   native_events[new_event].allocated_name=strdup(name);
 
@@ -333,7 +333,7 @@ static struct native_event_t *allocate_native_event(char *name,
   SUBDBG("Creating event %s with papi %x perfidx %x\n",
 	 name,
 	 native_events[new_event].papi_code,
-	 native_events[new_event].perfmon_idx);
+	 native_events[new_event].libpfm4_idx);
 
   num_native_events++;
 
@@ -403,7 +403,7 @@ static int find_max_umask(struct native_event_t *current_event) {
   }
 
   memset(&info,0,sizeof(pfm_event_info_t));
-  ret = pfm_get_event_info(current_event->perfmon_idx, 
+  ret = pfm_get_event_info(current_event->libpfm4_idx, 
 			   PFM_OS_PERF_EVENT, &info);
   if (ret!=PFM_SUCCESS) {
      SUBDBG("get_event_info failed\n");
@@ -421,11 +421,11 @@ static int find_max_umask(struct native_event_t *current_event) {
     a=0;
     while(1) {
 
-      SUBDBG("get_event_attr %x %d %p\n",current_event->perfmon_idx,a,&ainfo);
+      SUBDBG("get_event_attr %x %d %p\n",current_event->libpfm4_idx,a,&ainfo);
 
       memset(&ainfo,0,sizeof(pfm_event_attr_info_t));
 
-      ret = pfm_get_event_attr_info(current_event->perfmon_idx, a, 
+      ret = pfm_get_event_attr_info(current_event->libpfm4_idx, a, 
 				    PFM_OS_PERF_EVENT, &ainfo);
 
       if (ret != PFM_SUCCESS) {
@@ -620,7 +620,7 @@ static int find_next_umask(struct native_event_t *current_event,
   /* get number of attributes */
 
   memset(&event_info, 0, sizeof(event_info));
-  ret=pfm_get_event_info(current_event->perfmon_idx, 
+  ret=pfm_get_event_info(current_event->libpfm4_idx, 
 			 PFM_OS_PERF_EVENT, &event_info);
   if (ret!=PFM_SUCCESS) {
      return ret;
@@ -840,12 +840,12 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
      return PAPI_ENOEVNT;
   }
 
-  SUBDBG("Getting info on %x\n",our_event->perfmon_idx);
+  SUBDBG("Getting info on %x\n",our_event->libpfm4_idx);
 	
   /* libpfm requires the structure be zeroed */
   memset( &gete, 0, sizeof ( gete ) );
 
-  ret=pfm_get_event_info(our_event->perfmon_idx, PFM_OS_PERF_EVENT, &gete);
+  ret=pfm_get_event_info(our_event->libpfm4_idx, PFM_OS_PERF_EVENT, &gete);
   if (ret<0) {
      SUBDBG("Return=%d\n",ret);
      return _papi_libpfm_error(ret);
@@ -899,11 +899,11 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
     a=0;
     while(1) {
 
-      SUBDBG("get_event_attr %x %p\n",our_event->perfmon_idx,&ainfo);
+      SUBDBG("get_event_attr %x %p\n",our_event->libpfm4_idx,&ainfo);
 
       memset(&ainfo,0,sizeof(pfm_event_attr_info_t));
 
-      ret = pfm_get_event_attr_info(our_event->perfmon_idx, a, 
+      ret = pfm_get_event_attr_info(our_event->libpfm4_idx, a, 
 				    PFM_OS_PERF_EVENT, &ainfo);
       if (ret != PFM_SUCCESS) {
 	SUBDBG("get_event_attr failed %s\n",pfm_strerror(ret));
@@ -1018,7 +1018,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	   SUBDBG("PAPI_ENUM_EVENTS %x\n",*PapiEventCode);
 
-	   code=current_event->perfmon_idx;
+	   code=current_event->libpfm4_idx;
 
 	   ret=find_next_no_aliases(code);
 	   SUBDBG("find_next_no_aliases() Returned %x\n",ret);
