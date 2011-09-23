@@ -39,12 +39,12 @@ typedef struct
 {
 	int num_events;
 	int num_groups;
-	unsigned domain;
-	unsigned multiplexed;
-	unsigned overflow;
-	int inherit;
-	unsigned int cpu_num;
-	unsigned long tid;
+	unsigned int domain;
+	unsigned int multiplexed;
+	unsigned int overflow;
+	unsigned int inherit;
+	int cpu;
+	pid_t tid;
 	struct perf_event_attr events[MAX_MPX_EVENTS];
 	per_event_info_t per_event_info[MAX_MPX_EVENTS];
 	/* Buffer to gather counters */

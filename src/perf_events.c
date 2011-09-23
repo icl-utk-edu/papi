@@ -510,7 +510,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
         SUBDBG("config is %"PRIx64"\n",ctl->events[i].config);
 
         ctx->evt[i].event_fd = sys_perf_event_open( &ctl->events[i], ctl->tid,
-						    ctl->cpu_num,
+						    ctl->cpu,
 				ctx->evt[ctx->evt[i].group_leader].event_fd, 
 						    0 );
 
@@ -526,7 +526,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
  	SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d,"
                 " group_leader/fd: %d/%d, event_fd: %d,"
                 " read_format: 0x%"PRIu64"\n",
-		ctl->tid, ctl->cpu_num, ctx->evt[i].group_leader, 
+		ctl->tid, ctl->cpu, ctx->evt[i].group_leader, 
 		ctx->evt[ctx->evt[i].group_leader].event_fd, 
 		ctx->evt[i].event_fd, ctl->events[i].read_format);
 
@@ -694,7 +694,7 @@ set_cpu( control_state_t * ctl, unsigned int cpu_num )
 {
 	ctl->tid = -1;      /* this tells the kernel not to count for a thread */
 
-	ctl->cpu_num = cpu_num;
+	ctl->cpu = cpu_num;
 	return PAPI_OK;
 }
 
@@ -1040,7 +1040,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 				return PAPI_ESBSTR;
 			}
 			SUBDBG("read: fd: %2d, tid: 0x%lx, cpu: %d, buffer[0-2]: 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", ret: %d\n", 
-				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu_num, buffer[0], buffer[1], buffer[2], ret);
+				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu, buffer[0], buffer[1], buffer[2], ret);
 		}
 
 		int count_idx = get_count_idx_by_id( buffer, pe_ctl->multiplexed, pe_ctl->events[i].inherit,
@@ -1277,7 +1277,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	case PAPI_MULTIPLEX:
 	{
 		pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, pe_ctl->domain, 1, pe_ctl->inherit ) != PAPI_OK) {
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 1, pe_ctl->inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
 		/* looks like we are allowed so go ahead and set multiplexed attribute */
@@ -1294,7 +1294,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	}
 	case PAPI_ATTACH:
 		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
-		if (check_permissions( option->attach.tid, pe_ctl->cpu_num, pe_ctl->domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
+		if (check_permissions( option->attach.tid, pe_ctl->cpu, pe_ctl->domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
 		ret = attach( pe_ctl, option->attach.tid );
@@ -1314,7 +1314,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		return set_cpu( pe_ctl, option->cpu.cpu_num );
 	case PAPI_DOMAIN:
 		pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, option->domain.domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu, option->domain.domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
 		/* looks like we are allowed so go ahead and store counting domain */
@@ -1326,7 +1326,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 							 option->granularity.granularity );
 	case PAPI_INHERIT:
 		pe_ctl = ( control_state_t * ) ( option->inherit.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu_num, pe_ctl->domain, pe_ctl->multiplexed, option->inherit.inherit ) != PAPI_OK) {
+		if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, pe_ctl->multiplexed, option->inherit.inherit ) != PAPI_OK) {
 			return PAPI_EPERM;
 		}
 		/* looks like we are allowed to set the requested inheritance */
@@ -1927,7 +1927,7 @@ _papi_pe_init_control_state( hwd_control_state_t * ctl )
 	memset( pe_ctl, 0, sizeof ( control_state_t ) );
 	set_domain( ctl, MY_VECTOR.cmp_info.default_domain );
 	/* Set cpu number in the control block to show events are not tied to specific cpu */
-	pe_ctl->cpu_num = -1;
+	pe_ctl->cpu = -1;
 	return PAPI_OK;
 }
 
