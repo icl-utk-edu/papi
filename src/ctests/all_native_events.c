@@ -35,34 +35,40 @@ check_event( int event_code, char *name )
 
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK )
-	  test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-
+	   test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
    
 	retval = PAPI_add_event( EventSet, event_code );
 	if ( retval != PAPI_OK ) {
 		printf( "Error adding %s\n", name );
-		return ( 0 );
-	} else
-		printf( "Added %s successfully.\n", name );
+		return 0;
+	} else {
+	  //		printf( "Added %s successfully ", name );
+	}
 
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
 		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-		fprintf( stdout, "Error Starting %s : %s\n", name, errstring );
+		fprintf( stdout, "Error starting %s : %s\n", name, errstring );
 	} else {
 		retval = PAPI_stop( EventSet, &values );
 		if ( retval != PAPI_OK ) {
 			PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-			fprintf( stdout, "Error Stopping %s: %s\n", name, errstring );
-			return ( 0 );
+			fprintf( stdout, "Error stopping %s: %s\n", name, errstring );
+			return 0;
 		} else {
-			printf( "Stopped %s successfully.\n", name );
+			printf( "Added and Stopped %s successfully.\n", name );
 		}
 	}
 
 
-	PAPI_cleanup_eventset( &EventSet );
-	PAPI_destroy_eventset( &EventSet );
+	retval=PAPI_cleanup_eventset( EventSet );
+	if (retval != PAPI_OK ) {
+	  test_warn( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
+	}
+	retval=PAPI_destroy_eventset( &EventSet );
+	if (retval != PAPI_OK ) {
+	  test_warn( __FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+	}
 	return ( 1 );
 }
 
@@ -80,17 +86,19 @@ main( int argc, char **argv )
 	int numcmp, cid;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
-	/*for(i=0;i<argc;i++) */
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	if ( retval != PAPI_VER_CURRENT ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
-	retval = papi_print_header
-		( "Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n",
-		  0, &hwinfo );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	retval = papi_print_header( "Test case ALL_NATIVE_EVENTS: Available "
+				    "native events and hardware "
+				    "information.\n",
+				    0, &hwinfo );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	}
 
 	numcmp = PAPI_num_components(  );
 
