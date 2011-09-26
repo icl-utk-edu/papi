@@ -342,7 +342,7 @@ static struct native_event_t *allocate_native_event(char *name,
 
      SUBDBG("Allocating more room for native events (%d %ld)\n",
 	    (allocated_native_events+NATIVE_EVENT_CHUNK),
-	    sizeof(struct native_event_t) *
+	    (long)sizeof(struct native_event_t) *
 	    (allocated_native_events+NATIVE_EVENT_CHUNK));
 
      native_events=realloc(native_events,
