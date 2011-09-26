@@ -523,10 +523,10 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 	   goto cleanup;
 	}
 		
- 	SUBDBG ("sys_perf_event_open: tid: ox%lx, cpu_num: %d,"
+ 	SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
                 " group_leader/fd: %d/%d, event_fd: %d,"
                 " read_format: 0x%"PRIu64"\n",
-		ctl->tid, ctl->cpu, ctx->evt[i].group_leader, 
+		(long)ctl->tid, ctl->cpu, ctx->evt[i].group_leader, 
 		ctx->evt[ctx->evt[i].group_leader].event_fd, 
 		ctx->evt[i].event_fd, ctl->events[i].read_format);
 
@@ -1039,8 +1039,12 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 						   strerror( errno ) );
 				return PAPI_ESBSTR;
 			}
-			SUBDBG("read: fd: %2d, tid: 0x%lx, cpu: %d, buffer[0-2]: 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", ret: %d\n", 
-				pe_ctx->evt[i].event_fd, pe_ctl->tid, pe_ctl->cpu, buffer[0], buffer[1], buffer[2], ret);
+			SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, "
+                               "buffer[0-2]: 0x%" PRIx64 ", "
+			       "0x%" PRIx64 ", 0x%" PRIx64 ", ret: %d\n", 
+			       pe_ctx->evt[i].event_fd, (long)pe_ctl->tid, 
+			       pe_ctl->cpu, 
+			       buffer[0], buffer[1], buffer[2], ret);
 		}
 
 		int count_idx = get_count_idx_by_id( buffer, pe_ctl->multiplexed, pe_ctl->events[i].inherit,
