@@ -15,6 +15,7 @@ LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"
 FHEADERS = fpapi.h f77papi.h f90papi.h
 
 all: $(SHOW_CONF) $(LIBS) utils tests
+.PHONY : all
 
 include $(COMPONENT_RULES)
 
@@ -218,20 +219,20 @@ fulltest: tests
 
 tests: $(TESTS) 
 
-utils: $(papiLIBS) null
+utils: $(LIBS) null
 	$(SETPATH) cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(UTIL_TARGETS)
 
-ctests: $(papiLIBS) null
+ctests: $(LIBS) null
 	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS) $(DEBUGFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LDL="$(LDL)" LIBRARY="$(LINKLIB)" $(CTEST_TARGETS)
 
-ftests: $(papiLIBS) null
+ftests: $(LIBS) null
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(FTEST_TARGETS)
 
 # compile tests added to components
 comp_tests:
 ifneq (${COMPONENTS},)
 		@for comp in ${COMPONENTS} ; do \
-			$$comp_tests: $(papiLIBS) null ; \
+			$$comp_tests: $(LIBS) null ; \
 			$(SETPATH) cd components/$$comp/tests ; $(MAKE) LDFLAGS="$(LDFLAGS) $(STATIC)" ; \
 			$(SETPATH) cd ../../.. ; done 
 endif
