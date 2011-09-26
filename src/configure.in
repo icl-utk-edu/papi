@@ -92,6 +92,9 @@ OPTFLAGS="-O2"
 TOPTFLAGS="-O0" 
 AC_PROG_CC([xlc gcc cc])
 AC_PROG_F77([xlf gfortran f95 f90 f77 ifort])
+if test "x$F77" = "x"; then
+   F77="@echo nof77 "
+fi
 AC_PROG_AWK
 AC_PROG_CPP
 AC_PROG_LN_S
