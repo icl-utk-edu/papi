@@ -6,6 +6,8 @@
 #          mucci@cs.utk.edu
 # Mods:    Kevin London
 #          london@cs.utk.edu
+#          Philip Mucci
+#          mucci@cs.utk.edu
 
 AIXTHREAD_SCOPE=S
 export AIXTHREAD_SCOPE
@@ -20,10 +22,11 @@ fi
 chmod -x ctests/*.[ch]
 chmod -x ftests/*.[Fch]
 
-# Uncomment the following line to run tests using modified version of valgrind 
-# Requires this patch: http://people.redhat.com/wcohen/papi/valgrind-3.5.0-3.papi.src.rpm
-#VALGRIND="valgrind --leak-check=full";
-VALGRIND="";
+if [ "x$VALGRIND" = "x" ]; then
+# Uncomment the following line to run tests using Valgrind
+# VALGRIND="valgrind --leak-check=full";
+    VALGRIND="";
+fi
 
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 CTESTS=`find ctests/* -prune -perm -u+x -type f`;
@@ -41,6 +44,16 @@ export PATH
 
 echo "Platform:"
 uname -a
+
+echo "Date:"
+date
+
+echo ""
+if [ -r /proc/cpuinfo ]; then
+   echo "Cpuinfo:"
+   # only print info on first processor on x86
+   cat /proc/cpuinfo | sed '/^$/q'
+fi
 
 echo ""
 if ["$VALGRIND" = ""]; then
