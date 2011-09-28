@@ -48,7 +48,7 @@ shared: $(SHLIB)
 
 $(LIBRARY): $(OBJECTS)
 	rm -f $(LIBRARY)
-	$(AR) $(ARG64) ruv $(LIBRARY) $(OBJECTS)
+	$(AR) $(ARG64) rv $(LIBRARY) $(OBJECTS)
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
 	@if test "$(SHLIB)" != "libpapi.so" ; then \
