@@ -205,7 +205,7 @@ $(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile $(INCDEP)
 
 libpfm.a:  $(OBJS)
 	$(RM) $@
-	$(AR) cru $@ $(OBJS)
+	$(AR) cq $@ $(OBJS)
 
 $(SLIBPFM):  $(SOBJS)
 	$(CC) $(CFLAGS) $(SLDFLAGS)  -o $@ $(SOBJS)
