@@ -176,7 +176,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_wsm_unc_events.h	\
 	events/intel_snb_events.h
 
-INC_MIPS=events/mips_74k_events.h
+INC_MIPS=events/mips_74k_events.h events/mips_74k_events.h
 
 INC_POWERPC=events/ppc970_events.h	\
 	events/ppc970mp_events.h	\
@@ -205,7 +205,7 @@ $(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile $(INCDEP)
 
 libpfm.a:  $(OBJS)
 	$(RM) $@
-	$(AR) cru $@ $(OBJS)
+	$(AR) cq $@ $(OBJS)
 
 $(SLIBPFM):  $(SOBJS)
 	$(CC) $(CFLAGS) $(SLDFLAGS)  -o $@ $(SOBJS)
