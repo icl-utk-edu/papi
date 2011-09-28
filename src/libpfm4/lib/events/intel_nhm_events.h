@@ -1176,13 +1176,13 @@ static const intel_x86_umask_t nhm_mem_uncore_retired[]={
      .udesc  = "Load instructions retired where the memory reference missed L3 and data source is unknown (Model 46 only, Precise Event)",
      .ucode = 0x100,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
-     .umodel = 0x10,
+     .umodel = PFM_PMU_INTEL_NHM_EX,
    },
    { .uname  = "UNCACHEABLE",
      .udesc  = "Load instructions retired where the memory reference missed L1, L2, L3 caches and to perform I/O (Model 46 only, Precise Event)",
      .ucode = 0x8000,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
-     .umodel = 0x10,
+     .umodel = PFM_PMU_INTEL_NHM_EX,
    },
 };
 
