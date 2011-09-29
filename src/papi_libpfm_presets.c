@@ -76,7 +76,7 @@ trim_note( char *in )
 
 	note = trim_string( in );
 	if ( note != NULL ) {
-		len = ( int ) strlen( note );
+                len = ( int ) strlen( note );
 		if ( len > 0 ) {
 			if ( ispunct( *note ) ) {
 				start = *note;
@@ -96,13 +96,12 @@ trim_note( char *in )
 	return ( note );
 }
 
+extern hwi_presets_t _papi_hwi_presets;
+
 static inline int
 find_preset_code( char *tmp, int *code )
 {
 	int i = 0;
-	extern hwi_presets_t _papi_hwi_presets;
-
-  SUBDBG("ENTER\n");
 
 	while ( _papi_hwi_presets.info[i].symbol != NULL ) {
 		if ( strcasecmp( tmp, _papi_hwi_presets.info[i].symbol ) == 0 ) {
@@ -260,7 +259,7 @@ load_preset_table( char *pmu_str, int pmu_type,
 				SUBDBG( "Ending preset scanning at line %d of %s.\n", line_no,
 						name );
 #endif
-			        get_presets=0; found_presets=0;
+				get_presets=0; found_presets=0;
 				/* goto done; */
 			}
 			t = trim_string( strtok( NULL, "," ) );
@@ -276,9 +275,9 @@ load_preset_table( char *pmu_str, int pmu_type,
 			if ( strcasecmp( t, pmu_name ) == 0 ) {
 				int type;
 
-//#ifdef SHOW_LOADS
+#ifdef SHOW_LOADS
 				SUBDBG( "Found CPU %s at line %d of %s.\n", t, line_no, name );
-//#endif
+#endif
 				t = trim_string( strtok( NULL, "," ) );
 				if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
 #ifdef SHOW_LOADS
@@ -557,8 +556,6 @@ _papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
 	hwi_dev_notes_t *notemap = NULL;
 	pfm_preset_search_entry_t *_perfmon2_pfm_preset_search_map;
 
-        SUBDBG("ENTER\n");
-
 	/* allocate and clear array of search string structures */
 	_perfmon2_pfm_preset_search_map =
 		malloc( sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
@@ -589,7 +586,3 @@ out1:
 
 	return retval;
 }
-
-
-
-

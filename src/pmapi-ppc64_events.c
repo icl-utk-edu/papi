@@ -159,7 +159,7 @@ get_event_line( char *line, FILE * table, char **tmp_perfmon_events_table )
 
 /*  Trims blank space from both ends of a string (in place).
     Returns pointer to new start address */
-static char *
+static inline char *
 trim_string( char *in )
 {
 	int len, i = 0;
@@ -167,7 +167,7 @@ trim_string( char *in )
 
 	if ( in == NULL )
 		return ( in );
-	len = strlen( in );
+	len = ( int ) strlen( in );
 	if ( len == 0 )
 		return ( in );
 	/* Trim left */
@@ -180,7 +180,7 @@ trim_string( char *in )
 		i++;
 	}
 	/* Trim right */
-	i = strlen( start ) - 1;
+	i = ( int ) strlen( start ) - 1;
 	while ( i >= 0 ) {
 		if ( isblank( start[i] ) )
 			start[i] = '\0';
@@ -197,7 +197,7 @@ trim_string( char *in )
     beginning and end of string. If the same punctuation 
     appears first and last (quotes, slashes) they are trimmed;
     Also checks for the following pairs: () <> {} [] */
-static char *
+static inline char *
 trim_note( char *in )
 {
 	int len;
@@ -205,7 +205,7 @@ trim_note( char *in )
 
 	note = trim_string( in );
 	if ( note != NULL ) {
-		len = strlen( note );
+                len = ( int ) strlen( note );
 		if ( len > 0 ) {
 			if ( ispunct( *note ) ) {
 				start = *note;
@@ -227,14 +227,14 @@ trim_note( char *in )
 
 extern hwi_presets_t _papi_hwi_presets;
 
-static int
+static inline int
 find_preset_code( char *tmp, int *code )
 {
 	int i = 0;
 
 	while ( _papi_hwi_presets.info[i].symbol != NULL ) {
 		if ( strcasecmp( tmp, _papi_hwi_presets.info[i].symbol ) == 0 ) {
-			*code = i | PAPI_PRESET_MASK;
+			*code = ( int ) ( i | PAPI_PRESET_MASK );
 			return ( PAPI_OK );
 		}
 		i++;
@@ -249,10 +249,7 @@ find_preset_code( char *tmp, int *code )
 static char *papi_events_table = NULL;
 #endif
 
-/*#define SHOW_LOADS */
-#ifdef SHOW_LOADS
-#define SUBDBG printf
-#endif
+#define SHOW_LOADS
 
 static int
 load_preset_table( char *pmu_name, int pmu_type,
@@ -324,7 +321,8 @@ load_preset_table( char *pmu_name, int pmu_type,
 				SUBDBG( "Ending preset scanning at line %d of %s.\n", line_no,
 						name );
 #endif
-				goto done;
+				get_presets=0; found_presets=0;
+				/* goto done; */
 			}
 			t = trim_string( strtok( NULL, "," ) );
 			if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
@@ -483,11 +481,38 @@ load_preset_table( char *pmu_name, int pmu_type,
 	  nextline:
 		line_no++;
 	}
-  done:
+/*  done: */
 	if ( table )
 		fclose( table );
 	return ( insert );
 }
+
+/* Frees memory for all the strdup'd char strings in a preset string array.
+    Assumes the array is initialized to 0 and has at least one 0 entry at the end.
+    free()ing a NULL pointer is a NOP. */
+static void
+free_preset_table( pfm_preset_search_entry_t * here )
+{
+	int i = 0, j;
+	while ( here[i].preset ) {
+		for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
+			free( here[i].findme[j] );
+		free( here[i].operation );
+		free( here[i].note );
+		i++;
+	}
+}
+
+static void
+free_notes( hwi_dev_notes_t * here )
+{
+	int i = 0;
+	while ( here[i].event_code ) {
+		free( here[i].dev_note );
+		i++;
+	}
+}
+
 static int
 pmapi_find_full_event( char *name, int *evtcode )
 {
@@ -502,58 +527,6 @@ pmapi_find_full_event( char *name, int *evtcode )
 	return PAPI_ESBSTR;
 }
 
-#if 0
-static int
-setup_preset_term( int *native, pfmlib_event_t * event )
-{
-	/* It seems this could be greatly simplified. If impl_cnt is non-zero,
-	   the event lives on a counter. Therefore the entire routine could be:
-	   if (impl_cnt!= 0) encode_native_event.
-	   Am I wrong?
-	 */
-	pfmlib_regmask_t impl_cnt, evnt_cnt;
-	unsigned int n;
-	int j, ret;
-
-	/* find out which counters it lives on */
-	if ( ( ret =
-		   pfm_get_event_counters( event->event,
-								   &evnt_cnt ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_event_counters(%d,%p): %s", event->event, &evnt_cnt,
-				   pfm_strerror( ret ) );
-		return ( PAPI_EBUG );
-	}
-	if ( ( ret = pfm_get_impl_counters( &impl_cnt ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_impl_counters(%p): %s", &impl_cnt,
-				   pfm_strerror( ret ) );
-		return ( PAPI_EBUG );
-	}
-
-	/* Make sure this event lives on some counter, if so, put in the description. If not, BUG */
-	if ( ( ret = pfm_get_num_counters( &n ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_num_counters(%d): %s", n, pfm_strerror( ret ) );
-		return ( PAPI_EBUG );
-	}
-
-	for ( j = 0; n; j++ ) {
-		if ( pfm_regmask_isset( &impl_cnt, j ) ) {
-			n--;
-			if ( pfm_regmask_isset( &evnt_cnt, j ) ) {
-				*native =
-					encode_native_event( event->event, event->num_masks,
-										 event->unit_masks );
-				return ( PAPI_OK );
-			}
-		}
-	}
-
-	PAPIERROR
-		( "PAPI preset 0x%08x PFM event %d did not have any available counters",
-		  event->event, j );
-	return ( PAPI_ENOEVNT );
-}
-#endif
-
 static int
 generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 							pfm_preset_search_entry_t * strmap, int npresets )
@@ -564,13 +537,10 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	int event;
 
 	/* Count up the proposed presets */
-	for ( i = 0; i < npresets; i++ )
-		SUBDBG( "%d 0x%x\n", i, strmap[i].preset );
+	while ( strmap[i].preset ) {
+	  i++;
+	}
 
-	/*while (strmap[i].preset){
-	   SUBDBG("%d %p\n", i, strmap[i].preset);
-	   i++;
-	   } */
 	SUBDBG( "generate_preset_search_map(%p,%p,%p) %d proposed presets\n",
 			maploc, noteloc, strmap, i );
 	i++;
@@ -639,33 +609,8 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 			noteloc, strmap, j );
 	*maploc = psmap;
 	*noteloc = notemap;
-	return ( PAPI_OK );
-}
 
-/* Frees memory for all the strdup'd char strings in a preset string array.
-    Assumes the array is initialized to 0 and has at least one 0 entry at the end.
-    free()ing a NULL pointer is a NOP. */
-static void
-free_preset_table( pfm_preset_search_entry_t * here )
-{
-	int i = 0, j;
-	while ( here[i].preset ) {
-		for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
-			free( here[i].findme[j] );
-		free( here[i].operation );
-		free( here[i].note );
-		i++;
-	}
-}
-
-static void
-free_notes( hwi_dev_notes_t * here )
-{
-	int i = 0;
-	while ( here[i].event_code ) {
-		free( here[i].dev_note );
-		i++;
-	}
+	return PAPI_OK;
 }
 
 int
@@ -680,9 +625,9 @@ _papi_pmapi_setup_presets( char *pmu_name, int pmu_type )
 	_perfmon2_pfm_preset_search_map =
 		malloc( sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
 	if ( _perfmon2_pfm_preset_search_map == NULL )
-		return ( PAPI_ENOMEM );
+		return PAPI_ENOMEM;
 	memset( _perfmon2_pfm_preset_search_map, 0x0,
-			sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
+		sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
 
 	npresets = load_preset_table( pmu_name, pmu_type,
 				      _perfmon2_pfm_preset_search_map );
@@ -693,16 +638,18 @@ _papi_pmapi_setup_presets( char *pmu_name, int pmu_type )
 
 	retval = generate_preset_search_map( &preset_search_map, &notemap,
 					     _perfmon2_pfm_preset_search_map, npresets );
-	if ( retval )
-		goto out;
+	if (retval) goto out;
 
 	retval = _papi_hwi_setup_all_presets( preset_search_map, notemap );
+
 out:
-	free_preset_table( _perfmon2_pfm_preset_search_map );
-	free( _perfmon2_pfm_preset_search_map );
 	free( preset_search_map );
 	free_notes( notemap );
 	free( notemap );
+
+out1:
+	free_preset_table( _perfmon2_pfm_preset_search_map );
+	free( _perfmon2_pfm_preset_search_map );
 
 	return retval;
 }
