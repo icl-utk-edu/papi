@@ -52,6 +52,11 @@ ppc64_setup_gps( int total )
 	for ( gnum = 0; gnum < pmgroups.maxgroups; gnum++ ) {
 		for ( i = 0; i < MAX_COUNTERS; i++ ) {
 			/*group_map[gnum].counter_cmd[i] = pmgroups.event_groups[gnum].events[i]; */
+		    if (pmgroups.event_groups[gnum].group_id >=MAX_GROUPS) {
+		       fprintf(stdderr,"ERROR, group number trying to go past MAX GROUPS\n");
+		       continue;
+		    } 
+
 			group_map[pmgroups.event_groups[gnum].group_id].counter_cmd[i] =
 				pmgroups.event_groups[gnum].events[i];
 		}
