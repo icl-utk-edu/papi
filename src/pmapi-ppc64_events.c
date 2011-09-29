@@ -354,23 +354,23 @@ load_preset_table( char *pmu_name, int pmu_type,
 							pmu_name, type, line_no, name );
 #endif
 					get_presets = 1;
-				} else
+				} else {
 #ifdef SHOW_LOADS
 					SUBDBG( "Additional qualifier match failed %d vs %d.\n",
-							pmu_type, type )
+							pmu_type, type );
 #endif
-						;
+				}
 			}
 		} else if ( strcasecmp( t, "PRESET" ) == 0 ) {
 #ifdef SHOW_LOADS
-			SUBDBG( "PRESET token found on line %d\n", line_no );
+//			SUBDBG( "PRESET token found on line %d\n", line_no );
 #endif
 			if ( get_presets == 0 )
 				goto nextline;
 			found_presets = 1;
 			t = trim_string( strtok( NULL, "," ) );
 			if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-				printf
+				PAPIERROR
 					( "Expected name after PRESET token at line %d of %s -- ignoring",
 					  line_no, name );
 				goto nextline;
@@ -384,9 +384,9 @@ load_preset_table( char *pmu_name, int pmu_type,
 					  t, line_no, name );
 				goto nextline;
 			}
-#ifdef SHOW_LOADS
+
 			SUBDBG( "Found 0x%08x for %s\n", preset, t );
-#endif
+
 			t = trim_string( strtok( NULL, "," ) );
 			if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
 				PAPIERROR
@@ -403,17 +403,13 @@ load_preset_table( char *pmu_name, int pmu_type,
 					  t, line_no, name );
 				goto nextline;
 			}
-#ifdef SHOW_LOADS
+
 			SUBDBG( "Found %d for %s\n", derived, t );
 			SUBDBG( "Adding 0x%x,%d to preset search table.\n", preset,
 					derived );
-#endif
+
 			here[insert].preset = preset;
 			here[insert].derived = derived;
-#ifdef SHOW_LOADS
-			SUBDBG( "%d Adding 0x%x,%d to preset search table.\n", insert,
-					here[insert].preset, here[insert].derived );
-#endif
 
 			/* Derived support starts here */
 			/* Special handling for postfix */
@@ -443,7 +439,7 @@ load_preset_table( char *pmu_name, int pmu_type,
 				SUBDBG( "Adding term (%d) %s to preset event 0x%x.\n", i, t,
 						preset );
 #endif
-			} while ( ++i < MAX_COUNTER_TERMS );
+			} while ( ++i < PAPI_MAX_COUNTER_TERMS );
 			/* End of derived support */
 
 			if ( i == 0 ) {
@@ -452,7 +448,7 @@ load_preset_table( char *pmu_name, int pmu_type,
 					  line_no, name );
 				goto nextline;
 			}
-			if ( i == MAX_COUNTER_TERMS )
+			if ( i == PAPI_MAX_COUNTER_TERMS )
 				t = trim_string( strtok( NULL, "," ) );
 
 			/* Handle optional NOTEs */
@@ -473,6 +469,7 @@ load_preset_table( char *pmu_name, int pmu_type,
 			}
 
 			insert++;
+			SUBDBG( "# events inserted: --%d-- \n", insert );
 		} else {
 			PAPIERROR( "Unrecognized token %s at line %d of %s -- ignoring", t,
 					   line_no, name );
@@ -484,7 +481,8 @@ load_preset_table( char *pmu_name, int pmu_type,
 /*  done: */
 	if ( table )
 		fclose( table );
-	return ( insert );
+
+	return PAPI_OK;
 }
 
 /* Frees memory for all the strdup'd char strings in a preset string array.
@@ -495,7 +493,7 @@ free_preset_table( pfm_preset_search_entry_t * here )
 {
 	int i = 0, j;
 	while ( here[i].preset ) {
-		for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
+		for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
 			free( here[i].findme[j] );
 		free( here[i].operation );
 		free( here[i].note );
@@ -529,9 +527,11 @@ pmapi_find_full_event( char *name, int *evtcode )
 
 static int
 generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
-							pfm_preset_search_entry_t * strmap, int npresets )
+							pfm_preset_search_entry_t * strmap )
 {
-	int i = 0, j = 0, k = 0, term, ret;
+
+	int k = 0, term;
+	unsigned int i = 0, j = 0;
 	hwi_search_t *psmap;
 	hwi_dev_notes_t *notemap;
 	int event;
@@ -547,24 +547,30 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 
 	/* Add null entry */
 	psmap = ( hwi_search_t * ) malloc( i * sizeof ( hwi_search_t ) );
-	notemap = ( hwi_dev_notes_t * ) malloc( i * sizeof ( hwi_dev_notes_t ) );
-	if (!psmap || !notemap) {
-		free(psmap);
-		free(notemap);
-		return PAPI_ENOMEM;
+	if ( psmap == NULL ) {
+	   return PAPI_ENOMEM;
 	}
+
+	notemap = ( hwi_dev_notes_t * ) malloc( i * sizeof ( hwi_dev_notes_t ) );
+	if ( notemap == NULL ) {
+	   free(psmap);
+	   return PAPI_ENOMEM;
+	}
+
 	memset( psmap, 0x0, i * sizeof ( hwi_search_t ) );
 	memset( notemap, 0x0, i * sizeof ( hwi_dev_notes_t ) );
 
-	/*i = 0;
-	   while (strmap[i].preset) */
-	for ( i = 0; i < npresets; i++ ) {
-		/* Handle derived events */
-		term = 0;
-		do {
-			if ( ( ret =
-				   pmapi_find_full_event( strmap[i].findme[term],
-										  &event ) ) == PAPI_OK ) {
+	i = 0;
+	while ( strmap[i].preset ) {
+
+	   /* Handle derived events */
+	   term = 0;
+	   do {
+	      int ret;
+
+	      SUBDBG("Looking up: %s\n",strmap[i].findme[term]);
+		if ( ( ret = pmapi_find_full_event( strmap[i].findme[term],
+						&event ) ) == PAPI_OK ) {
 				/*if ((ret = setup_preset_term(&psmap[j].data.native[term], &event)) == PAPI_OK)
 				   {
 				   term++;
@@ -579,27 +585,30 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 						   strmap[i].findme[term] );
 				term++;
 			}
-		} while ( strmap[i].findme[term] != NULL && term < MAX_COUNTER_TERMS );
 
-		/* terminate the native term array with PAPI_NULL */
-		if ( term < MAX_COUNTER_TERMS )
-			psmap[j].data.native[term] = PAPI_NULL;
+	   } while ( strmap[i].findme[term] != NULL &&
+					  term < PAPI_MAX_COUNTER_TERMS );
 
-		if ( ret == PAPI_OK ) {
-			psmap[j].event_code = strmap[i].preset;
-			psmap[j].data.derived = strmap[i].derived;
-			if ( strmap[i].derived == DERIVED_POSTFIX ) {
-				strncpy( psmap[j].data.operation, strmap[i].operation,
-						 PAPI_MIN_STR_LEN );
-			}
-			if ( strmap[i].note ) {
-				notemap[k].event_code = strmap[i].preset;
-				notemap[k].dev_note = strdup( strmap[i].note );
-				k++;
-			}
-			j++;
-		}
-		/*i++; */
+	   /* terminate the native term array with PAPI_NULL */
+	   if ( term < PAPI_MAX_COUNTER_TERMS ) {
+	      psmap[j].data.native[term] = PAPI_NULL;
+	   }
+
+	   //if ( ret == PAPI_OK ) {
+	      psmap[j].event_code = ( unsigned int ) strmap[i].preset;
+	      psmap[j].data.derived = strmap[i].derived;
+	      if ( strmap[i].derived == DERIVED_POSTFIX ) {
+		 strncpy( psmap[j].data.operation, strmap[i].operation,
+							 PAPI_MIN_STR_LEN );
+	      }
+	      if ( strmap[i].note ) {
+		 notemap[k].event_code = ( unsigned int ) strmap[i].preset;
+		 notemap[k].dev_note = strdup( strmap[i].note );
+		 k++;
+	      }
+	      j++;
+	      //}
+	   i++;
 	}
 	if ( i != j ) {
 		PAPIERROR( "%d of %d events in %s were not valid", i - j, i,
@@ -616,7 +625,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 int
 _papi_pmapi_setup_presets( char *pmu_name, int pmu_type )
 {
-	int retval, npresets;
+	int retval;
 	hwi_search_t *preset_search_map = NULL;
 	hwi_dev_notes_t *notemap = NULL;
 	pfm_preset_search_entry_t *_perfmon2_pfm_preset_search_map;
@@ -629,15 +638,13 @@ _papi_pmapi_setup_presets( char *pmu_name, int pmu_type )
 	memset( _perfmon2_pfm_preset_search_map, 0x0,
 		sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
 
-	npresets = load_preset_table( pmu_name, pmu_type,
-				      _perfmon2_pfm_preset_search_map );
-	if (npresets < 0) {
-		retval = npresets;
-		goto out;
-	}
+	retval = load_preset_table( pmu_name, pmu_type,
+				   _perfmon2_pfm_preset_search_map );
+	if (retval) goto out1;
 
 	retval = generate_preset_search_map( &preset_search_map, &notemap,
-					     _perfmon2_pfm_preset_search_map, npresets );
+					    _perfmon2_pfm_preset_search_map );
+
 	if (retval) goto out;
 
 	retval = _papi_hwi_setup_all_presets( preset_search_map, notemap );

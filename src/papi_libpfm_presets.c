@@ -301,7 +301,7 @@ load_preset_table( char *pmu_str, int pmu_type,
 			}
 		} else if ( strcasecmp( t, "PRESET" ) == 0 ) {
 #ifdef SHOW_LOADS
-		  //			SUBDBG( "PRESET token found on line %d\n", line_no );
+//			SUBDBG( "PRESET token found on line %d\n", line_no );
 #endif
 			if ( get_presets == 0 )
 				goto nextline;
@@ -420,7 +420,7 @@ load_preset_table( char *pmu_str, int pmu_type,
 	if ( table )
 		fclose( table );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /* Frees memory for all the strdup'd char strings in a preset string array.
@@ -430,7 +430,6 @@ static void
 free_preset_table( pfm_preset_search_entry_t * here )
 {
 	int i = 0, j;
-  SUBDBG("ENTER\n");
 	while ( here[i].preset ) {
 		for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
 			free( here[i].findme[j] );
@@ -440,12 +439,10 @@ free_preset_table( pfm_preset_search_entry_t * here )
 	}
 }
 
-
 static void
 free_notes( hwi_dev_notes_t * here )
 {
 	int i = 0;
-  SUBDBG("ENTER\n");
 	while ( here[i].event_code ) {
 		free( here[i].dev_note );
 		i++;
@@ -535,7 +532,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	      j++;
 	      //}
 	   i++;
-        }
+	}
 	if ( i != j ) {
 		PAPIERROR( "%d of %d events in %s were not valid", i - j, i,
 				   PAPI_EVENT_FILE );
