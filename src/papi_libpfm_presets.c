@@ -21,7 +21,7 @@ typedef struct
 	int derived;		   /* Derived code */
 	char *( findme[PAPI_MAX_COUNTER_TERMS] ); /* Strings to look for, more than 1 means derived */
 	char *operation;	   /* PostFix operations between terms */
-	char *note;	           /* In case a note is included with a preset */
+	char *note;		   /* In case a note is included with a preset */
 } pfm_preset_search_entry_t;
 
 extern papi_vector_t MY_VECTOR;
@@ -120,7 +120,6 @@ open_event_table( char *name )
 {
 	FILE *table;
 
-  SUBDBG("ENTER\n");
 	SUBDBG( "Opening %s\n", name );
 	table = fopen( name, "r" );
 	if ( table == NULL ) {

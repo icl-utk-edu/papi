@@ -1,6 +1,19 @@
 #include SUBSTRATE
+
 #include "papi.h"
 #include "papi_internal.h"
+
+#define PAPI_EVENT_FILE "papi_events.csv"
+
+typedef struct
+{
+	int preset;		   /* Preset code */
+	int derived;		   /* Derived code */
+	char *( findme[PAPI_MAX_COUNTER_TERMS] ); /* Strings to look for, more than 1 means derived */
+	char *operation;	   /* PostFix operations between terms */
+	char *note;		   /* In case a note is included with a preset */
+} pfm_preset_search_entry_t;
+
 
 hwd_pminfo_t pminfo;
 pm_groups_info_t pmgroups;
@@ -101,61 +114,6 @@ ppc64_setup_native_table(  )
 	return index;
 }
 
-/* Look for an event file 'name' in a couple common locations.
-   Return a valid file handle if found */
-static FILE *
-open_event_table( char *name )
-{
-	FILE *table;
-
-	SUBDBG( "Opening %s\n", name );
-	table = fopen( name, "r" );
-	if ( table == NULL ) {
-		SUBDBG( "Open %s failed, trying ./%s.\n", name, PAPI_EVENT_FILE );
-		sprintf( name, "%s", PAPI_EVENT_FILE );
-		table = fopen( name, "r" );
-	}
-	if ( table == NULL ) {
-		SUBDBG( "Open ./%s failed, trying ../%s.\n", name, PAPI_EVENT_FILE );
-		sprintf( name, "../%s", PAPI_EVENT_FILE );
-		table = fopen( name, "r" );
-	}
-	if ( table )
-		SUBDBG( "Open %s succeeded.\n", name );
-	return ( table );
-}
-
-/* parse a single line from either a file or character table
-   Strip trailing <cr>; return 0 if empty */
-static int
-get_event_line( char *line, FILE * table, char **tmp_perfmon_events_table )
-{
-	int ret;
-	int i;
-
-	if ( table ) {
-		if ( fgets( line, LINE_MAX, table ) ) {
-			ret = 1;
-			i = strlen( line );
-			if ( line[i - 1] == '\n' )
-				line[i - 1] = '\0';
-		} else
-			ret = 0;
-	} else {
-		for ( i = 0;
-			  **tmp_perfmon_events_table && **tmp_perfmon_events_table != '\n';
-			  i++ ) {
-			line[i] = **tmp_perfmon_events_table;
-			( *tmp_perfmon_events_table )++;
-		}
-		if ( **tmp_perfmon_events_table == '\n' ) {
-			( *tmp_perfmon_events_table )++;
-		}
-		line[i] = '\0';
-		ret = **tmp_perfmon_events_table;
-	}
-	return ( ret );
-}
 
 /*  Trims blank space from both ends of a string (in place).
     Returns pointer to new start address */
@@ -240,6 +198,62 @@ find_preset_code( char *tmp, int *code )
 		i++;
 	}
 	return ( PAPI_EINVAL );
+}
+
+/* Look for an event file 'name' in a couple common locations.
+   Return a valid file handle if found */
+static FILE *
+open_event_table( char *name )
+{
+	FILE *table;
+
+	SUBDBG( "Opening %s\n", name );
+	table = fopen( name, "r" );
+	if ( table == NULL ) {
+		SUBDBG( "Open %s failed, trying ./%s.\n", name, PAPI_EVENT_FILE );
+		sprintf( name, "%s", PAPI_EVENT_FILE );
+		table = fopen( name, "r" );
+	}
+	if ( table == NULL ) {
+		SUBDBG( "Open ./%s failed, trying ../%s.\n", name, PAPI_EVENT_FILE );
+		sprintf( name, "../%s", PAPI_EVENT_FILE );
+		table = fopen( name, "r" );
+	}
+	if ( table )
+		SUBDBG( "Open %s succeeded.\n", name );
+	return ( table );
+}
+
+/* parse a single line from either a file or character table
+   Strip trailing <cr>; return 0 if empty */
+static int
+get_event_line( char *line, FILE * table, char **tmp_perfmon_events_table )
+{
+	int ret;
+	int i;
+
+	if ( table ) {
+		if ( fgets( line, LINE_MAX, table ) ) {
+			ret = 1;
+			i = ( int ) strlen( line );
+			if ( line[i - 1] == '\n' )
+				line[i - 1] = '\0';
+		} else
+			ret = 0;
+	} else {
+		for ( i = 0;
+			  **tmp_perfmon_events_table && **tmp_perfmon_events_table != '\n';
+			  i++ ) {
+			line[i] = **tmp_perfmon_events_table;
+			( *tmp_perfmon_events_table )++;
+		}
+		if ( **tmp_perfmon_events_table == '\n' ) {
+			( *tmp_perfmon_events_table )++;
+		}
+		line[i] = '\0';
+		ret = **tmp_perfmon_events_table;
+	}
+	return ( ret );
 }
 
 /* Static version of the events file. */

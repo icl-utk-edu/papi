@@ -73,17 +73,6 @@ typedef struct PPC64_native_map
 	int index;
 } PPC64_native_map_t;
 
-#define PAPI_EVENT_FILE "papi_events.csv"
-
-typedef struct
-{
-	int preset;						   /* Preset code */
-	int derived;					   /* Derived code */
-	char *( findme[MAX_COUNTERS] );	   /* Strings to look for, more than 1 means derived */
-	char *operation;				   /* PostFix operations between terms */
-	char *note;						   /* In case a note is included with a preset */
-} pfm_preset_search_entry_t;
-
 extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 #ifndef __perfctr__
 extern hwd_pminfo_t pminfo;
