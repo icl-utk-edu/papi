@@ -35,10 +35,9 @@ main( int argc, char **argv )
 	printf( "Bss start: %p, Bss end: %p\n", exeinfo->address_info.bss_start,
 			exeinfo->address_info.bss_end );
 
-	if ( ( exeinfo->fullname == NULL ) || ( strlen( exeinfo->fullname ) == 0 ) )
+	if ( ( strlen( &(exeinfo->fullname[0]) ) == 0 ) )
 		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
-	if ( ( exeinfo->address_info.name == NULL ) ||
-		 ( strlen( exeinfo->address_info.name ) == 0 ) )
+	if ( ( strlen( &(exeinfo->address_info.name[0]) ) == 0 ) )
 		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
 	if ( ( exeinfo->address_info.text_start == 0x0 ) ||
 		 ( exeinfo->address_info.text_end == 0x0 ) ||

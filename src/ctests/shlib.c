@@ -40,7 +40,7 @@ main( int argc, char **argv )
 				map->data_end );
 		printf( "Bss start: %p, Bss end: %p\n", map->bss_start, map->bss_end );
 
-		if ( ( map->name == NULL ) || ( strlen( map->name ) == 0 ) )
+		if ( strlen( &(map->name[0]) ) == 0 )
 			test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
 		if ( ( map->text_start == 0x0 ) || ( map->text_end == 0x0 ) ||
 			 ( map->text_start >= map->text_end ) )
@@ -108,7 +108,7 @@ main( int argc, char **argv )
 			printf( "Bss start: %p, Bss end: %p\n", map->bss_start,
 					map->bss_end );
 
-			if ( ( map->name == NULL ) || ( strlen( map->name ) == 0 ) )
+			if ( strlen( &(map->name[0]) ) == 0 )
 				test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
 			if ( ( map->text_start == 0x0 ) || ( map->text_end == 0x0 ) ||
 				 ( map->text_start >= map->text_end ) )
