@@ -87,19 +87,19 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 	    events[j]=test_events[i].event;
 
 	    if (events[j]==PAPI_TOT_CYC) {
-	       strncat(header,"\tcyc",BUFSIZ);
+	       strncat(header,"\tcyc",BUFSIZ-1);
 	    }
 	    if (events[j]==PAPI_TOT_INS) {
-	       strncat(header,"\tins",BUFSIZ);
+	       strncat(header,"\tins",BUFSIZ-1);
 	    }
 	    if (events[j]==PAPI_FP_INS) {
-	       strncat(header,"\tfp_ins",BUFSIZ);
+	       strncat(header,"\tfp_ins",BUFSIZ-1);
 	    }
 	    if (events[j]==PAPI_FP_OPS) {
-	       strncat(header,"\tfp_ops",BUFSIZ);
+	       strncat(header,"\tfp_ops",BUFSIZ-1);
 	    }
 	    if (events[j]==PAPI_L2_TCM) {
-	       strncat(header,"\tl2_tcm",BUFSIZ);
+	       strncat(header,"\tl2_tcm",BUFSIZ-1);
 	    }
 
 	    j++;
@@ -107,7 +107,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 	  }
 	}
 
-	strncat(header,"\n",BUFSIZ);
+	strncat(header,"\n",BUFSIZ-1);
 
 
 
