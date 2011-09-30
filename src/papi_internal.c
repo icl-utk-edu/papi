@@ -249,10 +249,6 @@ create_EventSet( EventSetInfo_t ** here )
 		return ( PAPI_ENOMEM );
 	memset( ESI, 0x00, sizeof ( EventSetInfo_t ) );
 
-	ESI->CmpIdx = -1;		 /* when eventset is created, it is not decided yet which component it belongs to, until first event is added */
-
-	ESI->state = PAPI_STOPPED;
-
 	*here = ESI;
 	return ( PAPI_OK );
 }
@@ -260,9 +256,15 @@ create_EventSet( EventSetInfo_t ** here )
 int
 _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 {
+        int retval;
 	size_t max_counters;
 	char *ptr;
 
+	/* Assigned at create time */
+
+	ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
+	ESI->granularity.granularity =
+		_papi_hwd[cidx]->cmp_info.default_granularity;
 	ESI->CmpIdx = cidx;
 
 	max_counters = ( size_t ) _papi_hwd[cidx]->cmp_info.num_mpx_cntrs;
@@ -340,23 +342,16 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 	ptr += sizeof ( int ) * max_counters;
 	ESI->profile.EventCode = ( int * ) ptr;
 
-
 	initialize_EventInfoArray( ESI );
 	initialize_NativeInfoArray( ESI );
 
-	_papi_hwd[cidx]->init_control_state( ESI->ctl_state );	/* this used to be init_config */
-
-	ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
-	ESI->granularity.granularity =
-		_papi_hwd[cidx]->cmp_info.default_granularity;
-
 	ESI->state = PAPI_STOPPED;
 
-	ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
-	ESI->granularity.granularity =
-		_papi_hwd[cidx]->cmp_info.default_granularity;
+	/* these used to be init_config */
+	retval = _papi_hwd[cidx]->init_control_state( ESI->ctl_state );	
+	retval |= _papi_hwd[cidx]->set_domain( ESI->ctl_state, ESI->domain.domain);
 
-	return ( PAPI_OK );
+	return retval;
 }
 
 /*========================================================================*/
@@ -440,11 +435,15 @@ _papi_hwi_create_eventset( int *EventSet, ThreadInfo_t * handle )
 
 	if ( *EventSet != PAPI_NULL )
 		return ( PAPI_EINVAL );
+
 	/* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
 	retval = create_EventSet( &ESI );
 	if ( retval != PAPI_OK )
 		return ( retval );
+
+	ESI->CmpIdx = -1;		 /* when eventset is created, it is not decided yet which component it belongs to, until first event is added */
+	ESI->state = PAPI_STOPPED;
 
 	/* Add it to the global table */
 
