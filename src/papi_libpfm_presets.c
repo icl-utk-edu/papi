@@ -11,7 +11,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 
-#include "papi_libpfm_events.h"
+#include "papi_setup_presets.h"
 
 #define PAPI_EVENT_FILE "papi_events.csv"
 
@@ -458,7 +458,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	unsigned int i = 0, j = 0;
 	hwi_search_t *psmap;
 	hwi_dev_notes_t *notemap;
-	unsigned int event_idx;
+	int event_idx;
 
 	/* Count up the proposed presets */
 	while ( strmap[i].preset ) {
@@ -493,7 +493,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	      int ret;
 
 	      SUBDBG("Looking up: %s\n",strmap[i].findme[term]);
-	      ret=_papi_libpfm_ntv_name_to_code(strmap[i].findme[term],
+	      ret=_papi_hwi_native_name_to_code(strmap[i].findme[term],
 					     &event_idx);
 
 	      if (ret==PAPI_OK) {

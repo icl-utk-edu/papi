@@ -1,7 +1,19 @@
+/*
+* File:    papi_libpfm_presets.c
+* Author:  Vince Weaver vweaver1 @ eecs.utk.edu
+*          Merge of the libpfm3/libpfm4 preset code
+*/
+
+#include <ctype.h>
+#include <string.h>
+#include <errno.h>
+
 #include SUBSTRATE
 
 #include "papi.h"
 #include "papi_internal.h"
+
+#include "papi_setup_presets.h"
 
 #define PAPI_EVENT_FILE "papi_events.csv"
 
@@ -583,7 +595,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	      int ret;
 
 	      SUBDBG("Looking up: %s\n",strmap[i].findme[term]);
-	      ret=_papi_libpfm_ntv_name_to_code(strmap[i].findme[term],
+	      ret=_papi_hwi_native_name_to_code(strmap[i].findme[term],
 					     &event_idx);
 
 	      if (ret==PAPI_OK) {
