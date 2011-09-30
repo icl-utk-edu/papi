@@ -73,7 +73,7 @@ main( int argc, char *argv[] )
 		printf( "\tunregister\n" );
 	}
 
-	th = ( pthread_t * ) malloc( ( size_t ) nthr * sizeof ( pthread_t * ) );
+	th = ( pthread_t * ) malloc( ( size_t ) nthr * sizeof ( pthread_t ) );
 	if ( th == NULL )
 		test_fail( __FILE__, __LINE__, "malloc", PAPI_ESYS );
 
