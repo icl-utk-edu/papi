@@ -13,13 +13,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-extern int _aix_allocate_registers( EventSetInfo_t * ESI );
-extern int _aix_update_control_state( hwd_control_state_t * this_state,
-									  NativeInfo_t * native, int count,
-									  hwd_context_t * context );
-extern int _aix_ntv_bits_to_info( hwd_register_t * bits, char *names,
-								  unsigned int *values, int name_len,
-								  int count );
+#include "pmapi-ppc64.h"
+
 extern int _aix_get_memory_info( PAPI_hw_info_t * mem_info, int type );
 extern int _aix_get_dmem_info( PAPI_dmem_info_t * d );
 
@@ -47,6 +42,167 @@ atomic_p lock[PAPI_MAX_LOCK];
 
 static int maxgroups = 0;
 struct utsname AixVer;
+
+extern hwd_groups_t group_map[];
+
+/* Reports the elements of the hwd_register_t struct as an array of names and a matching array of values.
+   Maximum string length is name_len; Maximum number of values is count.
+*/
+static void
+copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
+			int len )
+{
+	*values = val;
+	strncpy( names, nam, len );
+	names[len - 1] = '\0';
+}
+
+int
+_aix_ntv_bits_to_info( hwd_register_t * bits, char *names,
+					   unsigned int *values, int name_len, int count )
+{
+	int i = 0;
+	copy_value( bits->selector, "PowerPC64 event code", &names[i * name_len],
+				&values[i], name_len );
+	if ( ++i == count )
+		return ( i );
+	copy_value( ( unsigned int ) bits->counter_cmd,
+				"PowerPC64 counter_cmd code", &names[i * name_len], &values[i],
+				name_len );
+	return ( ++i );
+}
+
+/* this function recusively does Modified Bipartite Graph counter allocation 
+     success  return 1
+        fail     return 0
+*/
+static int
+do_counter_allocation( ppc64_reg_alloc_t * event_list, int size )
+{
+	int i, j, group = -1;
+	unsigned int map[GROUP_INTS];
+
+	for ( i = 0; i < GROUP_INTS; i++ )
+		map[i] = event_list[0].ra_group[i];
+
+	for ( i = 1; i < size; i++ ) {
+		for ( j = 0; j < GROUP_INTS; j++ )
+			map[j] &= event_list[i].ra_group[j];
+	}
+
+	for ( i = 0; i < GROUP_INTS; i++ ) {
+		if ( map[i] ) {
+			group = ffs( map[i] ) - 1 + i * 32;
+			break;
+		}
+	}
+
+	if ( group < 0 )
+		return group;		 /* allocation fail */
+	else {
+		for ( i = 0; i < size; i++ ) {
+			for ( j = 0; j < MAX_COUNTERS; j++ ) {
+				if ( event_list[i].ra_counter_cmd[j] >= 0
+					 && event_list[i].ra_counter_cmd[j] ==
+					 group_map[group].counter_cmd[j] )
+					event_list[i].ra_position = j;
+			}
+		}
+		return group;
+	}
+}
+
+
+/* this function will be called when there are counters available 
+     success  return 1
+        fail     return 0
+*/
+int
+_aix_allocate_registers( EventSetInfo_t * ESI )
+{
+	hwd_control_state_t *this_state = ESI->ctl_state;
+	unsigned char selector;
+	int i, j, natNum, index;
+	ppc64_reg_alloc_t event_list[MAX_COUNTERS];
+	int position, group;
+
+
+	/* not yet successfully mapped, but have enough slots for events */
+
+	/* Initialize the local structure needed 
+	   for counter allocation and optimization. */
+	natNum = ESI->NativeCount;
+	for ( i = 0; i < natNum; i++ ) {
+		/* CAUTION: Since this is in the hardware layer, it's ok 
+		   to access the native table directly, but in general this is a bad idea */
+		event_list[i].ra_position = -1;
+		/* calculate native event rank, which is number of counters it can live on, this is power3 specific */
+		for ( j = 0; j < MAX_COUNTERS; j++ ) {
+			if ( ( index =
+				   native_name_map[ESI->NativeInfoArray[i].
+								   ni_event & PAPI_NATIVE_AND_MASK].index ) <
+				 0 )
+				return 0;
+			event_list[i].ra_counter_cmd[j] =
+				native_table[index].resources.counter_cmd[j];
+		}
+		for ( j = 0; j < GROUP_INTS; j++ ) {
+			if ( ( index =
+				   native_name_map[ESI->NativeInfoArray[i].
+								   ni_event & PAPI_NATIVE_AND_MASK].index ) <
+				 0 )
+				return 0;
+			event_list[i].ra_group[j] = native_table[index].resources.group[j];
+		}
+		/*event_list[i].ra_mod = -1; */
+	}
+
+	if ( ( group = do_counter_allocation( event_list, natNum ) ) >= 0 ) {	/* successfully mapped */
+		/* copy counter allocations info back into NativeInfoArray */
+		this_state->group_id = group;
+		for ( i = 0; i < natNum; i++ )
+			ESI->NativeInfoArray[i].ni_position = event_list[i].ra_position;
+		/* update the control structure based on the NativeInfoArray */
+	  /*_papi_hwd_update_control_state(this_state, ESI->NativeInfoArray, natNum);*/
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+
+/* This used to be init_config, static to the substrate.
+   Now its exposed to the hwi layer and called when an EventSet is allocated.
+*/
+int
+_aix_init_control_state( hwd_control_state_t * ptr )
+{
+	int i;
+
+	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+		ptr->counter_cmd.events[i] = COUNT_NOTHING;
+	}
+	ptr->counter_cmd.mode.b.is_group = 1;
+
+	MY_VECTOR.set_domain( ptr, MY_VECTOR.cmp_info.default_domain );
+	_aix_set_granularity( ptr, MY_VECTOR.cmp_info.default_granularity );
+	/*setup_native_table(); */
+	return ( PAPI_OK );
+}
+
+
+/* This function updates the control structure with whatever resources are allocated
+    for all the native events in the native info structure array. */
+int
+_aix_update_control_state( hwd_control_state_t * this_state,
+						   NativeInfo_t * native, int count,
+						   hwd_context_t * context )
+{
+
+	this_state->counter_cmd.events[0] = this_state->group_id;
+	return PAPI_OK;
+}
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/* The following is for any POWER hardware */
@@ -530,14 +686,6 @@ _aix_init_substrate( int cidx )
 	MY_VECTOR.cmp_info.CmpIdx = cidx;
 	MY_VECTOR.cmp_info.num_native_events = ppc64_setup_native_table(  );
 
-/*#if !defined(_POWER5)
-   if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
-      return (PAPI_ESBSTR);}
-
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
-#else
-   _papi_libpfm_setup_presets("POWER5", 0);
-#endif*/
 	procidx = pm_get_procindex(  );
 	switch ( procidx ) {
 	case PM_POWER5:
