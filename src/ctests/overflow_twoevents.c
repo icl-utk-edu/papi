@@ -252,7 +252,7 @@ main( int argc, char **argv )
 			( int ) ( ( values[0] )[1] / threshold ) );
 
 	printf( "\nBatch overflows (add, add, over, over):\n" );
-	for ( k = 0; k < 3; k++ ) {
+	for ( k = 0; k < 2; k++ ) {
 		if ( overflow_counts[0][k].mask ) {
 			printf( VEC_FMT, ( long long ) overflow_counts[0][k].mask,
 					event_name[idx[k]], overflow_counts[0][k].count );
@@ -260,10 +260,12 @@ main( int argc, char **argv )
 	}
 
 	printf( "\nInterleaved overflows (add, over, add, over):\n" );
-	for ( k = 0; k < 3; k++ ) {
+	for ( k = 0; k < 2; k++ ) {
 		if ( overflow_counts[1][k].mask )
-			printf( VEC_FMT, ( long long ) overflow_counts[1][k].mask,
-					event_name[idx[k + 2]], overflow_counts[1][k].count );
+			printf( VEC_FMT, 
+				( long long ) overflow_counts[1][k].mask,
+				event_name[idx[k + 2]], 
+				overflow_counts[1][k].count );
 	}
 
 	printf( "\nCases 2+3 Unknown overflows: %d\n", total_unknown );
