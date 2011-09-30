@@ -1,7 +1,7 @@
 /*
 * File:    papi_libpfm_presets.c
 * Author:  Vince Weaver vweaver1 @ eecs.utk.edu
-*          Merge of the libpfm3/libpfm4 preset code
+*          Merge of the libpfm3/libpfm4/pmapi-ppc64_events preset code
 */
 
 #include <ctype.h>
@@ -23,10 +23,6 @@ typedef struct
 	char *operation;	   /* PostFix operations between terms */
 	char *note;		   /* In case a note is included with a preset */
 } pfm_preset_search_entry_t;
-
-extern papi_vector_t MY_VECTOR;
-volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-
 
 /*  Trims blank space from both ends of a string (in place).
     Returns pointer to new start address */

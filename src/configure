@@ -7053,7 +7053,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   if test "x$no_cpu_counters" = "x"; then
     SUBSTR=aix
     MEMSUBSTR=aix
-    MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h papi_events_table.h"
+    MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
     MISCSRCS="aix.c"
     MISCOBJS="aix.o"
     CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"

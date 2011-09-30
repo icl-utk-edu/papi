@@ -134,18 +134,14 @@ x86_cache_info.o: x86_cache_info.c $(HEADERS)
 sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o
 
+papi_libpfm_presets.o:	   papi_libpfm_presets.c $(HEADERS)
+			   $(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm_presets.c -o papi_libpfm_presets.o
+
 $(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
 	sh papi_events_table.sh > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
-
-# Required for AIX PowerPC configurations
-pmapi-ppc64_events.o: pmapi-ppc64_events.c  $(HEADERS) papi_events_table.h
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c pmapi-ppc64_events.c -o pmapi-ppc64_events.o
-
-aix.o: aix.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 # Required for BGP
 .SUFFIXES: .rts.o

@@ -13,7 +13,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-#include "pmapi-ppc64.h"
+#include "aix.h"
+
 #include "papi_setup_presets.h"
 
 extern int _aix_get_memory_info( PAPI_hw_info_t * mem_info, int type );
