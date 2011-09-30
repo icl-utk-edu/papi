@@ -351,7 +351,7 @@ _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 			s = search_cpu_info( f, "cpu model", maxargs );
 			if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
 				*t = '\0';
-				s = strtok( s + 2, " " );
+				strtok( s + 2, " " );
 				s = strtok( NULL, " " );
 				strcpy( hwinfo->model_string, s );
 			} else {

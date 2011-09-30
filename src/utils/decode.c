@@ -64,7 +64,6 @@ main( int argc, char **argv )
 	int retval;
 	int print_avail_only = 0;
 	PAPI_event_info_t info;
-	const PAPI_hw_info_t *hwinfo = NULL;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 	for ( i = 0; i < argc; i++ )
@@ -86,9 +85,6 @@ main( int argc, char **argv )
 		if ( retval != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
 	}
-
-	if ( ( hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
 	i = PAPI_PRESET_MASK;
 	printf
