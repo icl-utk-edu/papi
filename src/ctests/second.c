@@ -427,6 +427,9 @@ case1( int num )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy", retval );
 
 	dump_and_verify( num, values );
+
+	free(values);
+
 	PAPI_shutdown(  );
 }
 
@@ -538,6 +541,8 @@ case2_driver( void )
 	case2( MIDDLE, PAPI_DOM_KERNEL, values[2] );
 
 	dump_and_verify( CASE2, values );
+
+	free(values);
 }
 
 void
