@@ -18,7 +18,7 @@ clock_res_check( int flag )
 	int i;
 	double min, max, average, std, tmp;
 
-	elapsed_cyc = ( long long * ) malloc( NUM_ITERS * sizeof ( long long ) );
+	elapsed_cyc = ( long long * ) calloc( NUM_ITERS, sizeof ( long long ) );
 
 	/* Real */
 	switch ( flag ) {
