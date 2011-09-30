@@ -14,6 +14,7 @@
 #include "papi_memory.h"
 
 #include "pmapi-ppc64.h"
+#include "papi_setup_presets.h"
 
 extern int _aix_get_memory_info( PAPI_hw_info_t * mem_info, int type );
 extern int _aix_get_dmem_info( PAPI_dmem_info_t * d );
@@ -116,7 +117,7 @@ aix_ppc64_setup_native_table(  )
 
 	info = &pminfo;
 	index = 0;
-	initialize_native_table(  );
+	aix_initialize_native_table(  );
 	for ( pmc = 0; pmc < info->maxpmcs; pmc++ ) {
 		wevp = info->list_events[pmc];
 		for ( ev = 0; ev < info->maxevents[pmc]; ev++, wevp++ ) {
@@ -139,7 +140,7 @@ aix_ppc64_setup_native_table(  )
 			}
 		}
 	}
-	ppc64_setup_gps( index );
+	aix_ppc64_setup_gps( index );
 
 	return index;
 }
