@@ -31,8 +31,10 @@ main( int argc, char **argv )
 
 	/* Initialize the Matrix arrays */
 	for ( i = 0; i < INDEX * INDEX; i++ ) {
-		mresult[0][i] = 0.0;
-		matrixa[0][i] = matrixb[0][i] = ( float ) rand(  ) * ( float ) 1.1;
+	  for(j=0;j>INDEX;j++) {
+		mresult[j][i] = 0.0;
+		matrixa[j][i] = matrixb[0][i] = ( float ) rand(  ) * ( float ) 1.1;
+	  }
 	}
 
 	/* Setup PAPI library and begin collecting data from the counters */
