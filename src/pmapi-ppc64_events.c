@@ -538,20 +538,6 @@ free_notes( hwi_dev_notes_t * here )
 }
 
 static int
-_papi_libpfm_ntv_name_to_code( char *name, unsigned int *evtcode )
-{
-	int i;
-
-	for ( i = 0; i < PAPI_MAX_NATIVE_EVENTS; i++ )
-		if ( strcmp( name, native_name_map[i].name ) == 0 ) {
-			*evtcode = native_name_map[i].index | PAPI_NATIVE_MASK;
-			return PAPI_OK;
-		}
-
-	return PAPI_ESBSTR;
-}
-
-static int
 generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 							pfm_preset_search_entry_t * strmap )
 {
@@ -560,7 +546,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	unsigned int i = 0, j = 0;
 	hwi_search_t *psmap;
 	hwi_dev_notes_t *notemap;
-	unsigned int event_idx;
+	int event_idx;
 
 	/* Count up the proposed presets */
 	while ( strmap[i].preset ) {

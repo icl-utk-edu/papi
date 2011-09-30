@@ -1008,6 +1008,21 @@ _aix_update_shlib_info( papi_mdi_t *mdi )
 #endif
 }
 
+int
+_aix_ntv_name_to_code( char *name, unsigned int *evtcode )
+{
+       int i;
+
+       for ( i = 0; i < PAPI_MAX_NATIVE_EVENTS; i++ )
+               if ( strcmp( name, native_name_map[i].name ) == 0 ) {
+                       *evtcode = native_name_map[i].index | PAPI_NATIVE_MASK;
+                       return PAPI_OK;
+               }
+
+       return PAPI_ESBSTR;
+}
+
+
 papi_vector_t _aix_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
@@ -1052,12 +1067,12 @@ papi_vector_t _aix_vector = {
 	.reset = _aix_reset,
 	.set_overflow = _aix_set_overflow,
 /*    .stop_profiling =		_aix_stop_profiling, */
-	.ntv_enum_events = _aix_ntv_enum_events,
-/*    .ntv_name_to_code =		_aix_ntv_name_to_code, */
-	.ntv_code_to_name = _aix_ntv_code_to_name,
+	.ntv_enum_events =   _aix_ntv_enum_events,
+	.ntv_name_to_code =  _aix_ntv_name_to_code,
+	.ntv_code_to_name =  _aix_ntv_code_to_name,
 	.ntv_code_to_descr = _aix_ntv_code_to_descr,
-	.ntv_code_to_bits = _aix_ntv_code_to_bits,
-	.ntv_bits_to_info = _aix_ntv_bits_to_info,
+	.ntv_code_to_bits =  _aix_ntv_code_to_bits,
+	.ntv_bits_to_info =  _aix_ntv_bits_to_info,
 
 	/* from OS */
 	.get_memory_info = _aix_get_memory_info,

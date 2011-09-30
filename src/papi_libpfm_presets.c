@@ -448,7 +448,6 @@ free_notes( hwi_dev_notes_t * here )
 	}
 }
 
-
 static int
 generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 							pfm_preset_search_entry_t * strmap )
