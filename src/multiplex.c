@@ -1154,7 +1154,6 @@ MPX_cleanup( MPX_EventSet ** mpx_events )
 #ifdef PTHREADS
 	int retval;
 #endif
-	MPX_EventSet *tmp = *mpx_events;
 
 	if ( mpx_events == NULL )
 	   return PAPI_EINVAL;
@@ -1170,13 +1169,13 @@ MPX_cleanup( MPX_EventSet ** mpx_events )
 	/* Remove master events from this event set and from
 	 * the master list, if necessary.
 	 */
-	mpx_delete_events( tmp );
+	mpx_delete_events( *mpx_events );
 
 	mpx_release(  );
 
 	/* Free all the memory */
 
-	papi_free( tmp );
+	papi_free( *mpx_events );
 
 	*mpx_events = NULL;
 	return PAPI_OK;
