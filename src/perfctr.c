@@ -226,7 +226,7 @@ _perfctr_init_substrate( int cidx )
 	/* Setup native and preset events */
 //  retval = ppc64_setup_vector_table(vtable);
 	if ( !retval )
-		retval = setup_ppc64_native_table(  );
+		retval = perfctr_ppc64_setup_native_table(  );
 	if ( !retval )
 		retval = setup_ppc64_presets( info.cpu_type );
 #endif
