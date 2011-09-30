@@ -459,8 +459,6 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	hwi_search_t *psmap;
 	hwi_dev_notes_t *notemap;
 	unsigned int event_idx;
-  
-        SUBDBG("ENTER\n");
 
 	/* Count up the proposed presets */
 	while ( strmap[i].preset ) {
@@ -503,10 +501,10 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 		 psmap[j].data.native[term]=event_idx;
 		 term++;
 	      }
-              else {
+	      else {
 		 SUBDBG("Error finding event %x\n",event_idx);
 		 break;
-	      } 
+	      }
 
 	   } while ( strmap[i].findme[term] != NULL &&
 					  term < PAPI_MAX_COUNTER_TERMS );

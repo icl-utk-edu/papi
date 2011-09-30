@@ -536,24 +536,24 @@ _aix_init_substrate( int cidx )
 
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
 #else
-   _papi_pmapi_setup_presets("POWER5", 0);
+   _papi_libpfm_setup_presets("POWER5", 0);
 #endif*/
 	procidx = pm_get_procindex(  );
 	switch ( procidx ) {
 	case PM_POWER5:
-		_papi_pmapi_setup_presets( "POWER5", 0 );
+		_papi_libpfm_setup_presets( "POWER5", 0 );
 		break;
 	case PM_POWER5_II:
-		_papi_pmapi_setup_presets( "POWER5+", 0 );
+		_papi_libpfm_setup_presets( "POWER5+", 0 );
 		break;
 	case PM_POWER6:
-		_papi_pmapi_setup_presets( "POWER6", 0 );
+		_papi_libpfm_setup_presets( "POWER6", 0 );
 		break;
 	case PM_PowerPC970:
-		_papi_pmapi_setup_presets( "PPC970", 0 );
+		_papi_libpfm_setup_presets( "PPC970", 0 );
 		break;
 	case PM_POWER7:
-		_papi_pmapi_setup_presets( "POWER7", 0);
+		_papi_libpfm_setup_presets( "POWER7", 0);
 		break;
 	default:
 		fprintf( stderr, "%s is not supported!\n", pminfo.proc_name );

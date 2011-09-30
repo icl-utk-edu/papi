@@ -526,7 +526,7 @@ free_notes( hwi_dev_notes_t * here )
 }
 
 static int
-pmapi_find_full_event( char *name, int *evtcode )
+_papi_libpfm_ntv_name_to_code( char *name, unsigned int *evtcode )
 {
 	int i;
 
@@ -548,7 +548,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	unsigned int i = 0, j = 0;
 	hwi_search_t *psmap;
 	hwi_dev_notes_t *notemap;
-	int event;
+	unsigned int event_idx;
 
 	/* Count up the proposed presets */
 	while ( strmap[i].preset ) {
@@ -583,22 +583,18 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	      int ret;
 
 	      SUBDBG("Looking up: %s\n",strmap[i].findme[term]);
-		if ( ( ret = pmapi_find_full_event( strmap[i].findme[term],
-						&event ) ) == PAPI_OK ) {
-				/*if ((ret = setup_preset_term(&psmap[j].data.native[term], &event)) == PAPI_OK)
-				   {
-				   term++;
-				   }
-				   else break;
-				 */
-				psmap[j].data.native[term] = event;
-				term++;
-				SUBDBG( "\t%d  0x%x\n", i, event );
-			} else {
-				PAPIERROR( "pmapi_find_full_event(%s)",
-						   strmap[i].findme[term] );
-				term++;
-			}
+	      ret=_papi_libpfm_ntv_name_to_code(strmap[i].findme[term],
+					     &event_idx);
+
+	      if (ret==PAPI_OK) {
+		 SUBDBG("Found %x\n",event_idx);
+		 psmap[j].data.native[term]=event_idx;
+		 term++;
+	      }
+	      else {
+		 SUBDBG("Error finding event %x\n",event_idx);
+		 break;
+	      }
 
 	   } while ( strmap[i].findme[term] != NULL &&
 					  term < PAPI_MAX_COUNTER_TERMS );
@@ -637,7 +633,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 }
 
 int
-_papi_pmapi_setup_presets( char *pmu_name, int pmu_type )
+_papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
 {
 	int retval;
 	hwi_search_t *preset_search_map = NULL;
