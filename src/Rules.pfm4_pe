@@ -49,9 +49,6 @@ $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 papi_libpfm4_events.o: papi_libpfm4_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm4_events.c -o $@
 
-papi_libpfm_presets.o: papi_libpfm_presets.c $(HEADERS) $(PAPI_EVENTS_TABLE)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm_presets.c -o $@
-
 native_clean:
 	-rm -f $(MISCOBJS)
 ifneq (,${PFM_ROOT})

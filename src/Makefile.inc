@@ -134,7 +134,7 @@ x86_cache_info.o: x86_cache_info.c $(HEADERS)
 sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o
 
-papi_libpfm_presets.o:	   papi_libpfm_presets.c $(HEADERS)
+papi_libpfm_presets.o:	   papi_libpfm_presets.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 			   $(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm_presets.c -o papi_libpfm_presets.o
 
 $(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
