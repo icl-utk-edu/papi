@@ -124,9 +124,6 @@ perfctr.o: perfctr.c $(HEADERS)
 papi_libpfm3_events.o: papi_libpfm3_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm3_events.c -o $@
 
-papi_libpfm_presets.o: papi_libpfm_presets.c $(HEADERS) $(PAPI_EVENTS_TABLE)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm_presets.c -o $@
-
 native_clean:
 	-rm -f $(MISCOBJS) libperfctr.so*
 ifneq (,${PERFCTR_ROOT})
