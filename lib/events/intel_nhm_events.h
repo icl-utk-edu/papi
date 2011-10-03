@@ -1725,8 +1725,18 @@ static const intel_x86_umask_t nhm_offcore_response_0[]={
      .uequiv = "UNCORE_HIT:OTHER_CORE_HIT_SNP:OTHER_CORE_HITM:REMOTE_CACHE_FWD:REMOTE_DRAM:LOCAL_DRAM:NON_DRAM",
      .ucode = 0xf70000,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+     .umodel = PFM_PMU_INTEL_NHM,
      .grpid = 1,
    },
+   { .uname  = "ANY_RESPONSE",
+     .udesc  = "Response: combination of all response umasks",
+     .uequiv = "UNCORE_HIT:OTHER_CORE_HIT_SNP:OTHER_CORE_HITM:REMOTE_CACHE_FWD:REMOTE_CACHE_HITM:REMOTE_DRAM:LOCAL_DRAM:NON_DRAM",
+     .ucode = 0xf70000,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+     .umodel = PFM_PMU_INTEL_NHM_EX,
+     .grpid = 1,
+   },
+
 };
 
 static const intel_x86_entry_t intel_nhm_pe[]={
