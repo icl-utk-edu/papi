@@ -229,6 +229,7 @@ PAPI_FCALL( papif_get_exe_info, PAPIF_GET_EXE_INFO,
 }
 
 /**	@class PAPIF_get_hardware_info 
+ *	@ingroup PAPIF
  *	@brief get information about the system hardware
  *	
  *	@par Fortran Interface:
@@ -305,6 +306,7 @@ PAPI_FCALL( papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, ( int *ncpu,
 }
 
 /** @class PAPIF_num_hwctrs
+ *	@ingroup PAPIF
  *  @brief Return the number of hardware counters on the cpu.
  *
  *	@par Fortran Interface:
@@ -320,6 +322,7 @@ PAPI_FCALL( papif_num_hwctrs, PAPIF_num_hwctrs, ( int *num ) )
 }
 
 /** @class PAPIF_num_cmp_hwctrs
+ *	@ingroup PAPIF
  *  @brief Return the number of hardware counters on the specified component.
  *
  *	@par Fortran Interface:
@@ -336,6 +339,7 @@ PAPI_FCALL( papif_num_cmp_hwctrs, PAPIF_num_cmp_hwctrs,
 }
 
 /** @class PAPIF_get_real_cyc
+ *	@ingroup PAPIF
  *	@brief Get real time counter value in clock cycles.
  *
  *	@par Fortran Interface:
@@ -350,6 +354,7 @@ PAPI_FCALL( papif_get_real_cyc, PAPIF_GET_REAL_CYC, ( long long *real_cyc ) )
 }
 
 /** @class PAPIF_get_real_usec
+ *	@ingroup PAPIF
  *	@brief Get real time counter value in microseconds.
  *
  *	@par Fortran Interface:
@@ -364,6 +369,7 @@ PAPI_FCALL( papif_get_real_usec, PAPIF_GET_REAL_USEC, ( long long *time ) )
 }
 
 /** @class PAPIF_get_real_nsec
+ *	@ingroup PAPIF
  *	@brief Get real time counter value in nanoseconds.
  *
  *	@par Fortran Interface:
@@ -378,6 +384,7 @@ PAPI_FCALL( papif_get_real_nsec, PAPIF_GET_REAL_NSEC, ( long long *time ) )
 }
 
 /** @class PAPIF_get_virt_cyc
+ *	@ingroup PAPIF
  *	@brief Get virtual time counter value in clock cycles.
  *
  *	@par Fortran Interface:
@@ -392,6 +399,7 @@ PAPI_FCALL( papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, ( long long *virt_cyc ) )
 }
 
 /** @class PAPIF_get_virt_usec
+ *	@ingroup PAPIF
  *	@brief Get virtual time counter value in microseconds.
  *
  *	@par Fortran Interface:
@@ -406,6 +414,7 @@ PAPI_FCALL( papif_get_virt_usec, PAPIF_GET_VIRT_USEC, ( long long *time ) )
 }
 
 /** @class PAPIF_is_initialized
+ *	@ingroup PAPIF
  *	@brief Check for initialization.
  *
  *	@par Fortran Interface:
@@ -420,6 +429,7 @@ PAPI_FCALL( papif_is_initialized, PAPIF_IS_INITIALIZED, ( int *level ) )
 }
 
 /** @class PAPIF_library_init
+ *	@ingroup PAPIF
  *	@brief Initialize the PAPI library. 
  *
  *	@par Fortran Interface:
@@ -434,6 +444,7 @@ PAPI_FCALL( papif_library_init, PAPIF_LIBRARY_INIT, ( int *check ) )
 }
 
 /** @class PAPIF_thread_id
+ *	@ingroup PAPIF
  *  @brief Get the thread identifier of the current thread.
  *
  *	@par Fortran Interface:
@@ -448,6 +459,7 @@ PAPI_FCALL( papif_thread_id, PAPIF_THREAD_ID, ( unsigned long *id ) )
 }
 
 /** @class PAPIF_register_thread
+ *	@ingroup PAPIF
  *  @brief Notify PAPI that a thread has 'appeared'.
  *
  *	@par Fortran Interface:
@@ -462,6 +474,7 @@ PAPI_FCALL( papif_register_thread, PAPIF_REGISTER_THREAD, ( int *check ) )
 }
 
 /** @class PAPIF_unregister_thread
+ *	@ingroup PAPIF
  *  @brief Notify PAPI that a thread has 'disappeared'.
  *
  *	@par Fortran Interface:
@@ -476,6 +489,7 @@ PAPI_FCALL( papif_unregster_thread, PAPIF_UNREGSTER_THREAD, ( int *check ) )
 }
 
 /** @class PAPIF_thread_init
+ *	@ingroup PAPIF
  *  @brief Initialize thread support in the PAPI library.
  *
  *	@par Fortran Interface:
@@ -492,6 +506,7 @@ PAPI_FCALL( papif_thread_init, PAPIF_THREAD_INIT,
 }
 
 /** @class PAPI_list_events
+ *	@ingroup PAPIF
  *	@brief List the events in an event set.
  *
  *	@par Fortran Interface:
@@ -507,6 +522,7 @@ PAPI_FCALL( papif_list_events, PAPIF_LIST_EVENTS,
 }
 
 /** @class PAPIF_multiplex_init
+ *	@ingroup PAPIF
  *	@brief Initialize multiplex support in the PAPI library.
  *
  * @par Fortran Interface:
@@ -521,6 +537,7 @@ PAPI_FCALL( papif_multiplex_init, PAPIF_MULTIPLEX_INIT, ( int *check ) )
 }
 
 /** @class PAPIF_get_multiplex
+ *	@ingroup PAPIF
  *	@brief Get the multiplexing status of specified event set.
  *
  * @par Fortran Interface:
@@ -536,6 +553,7 @@ PAPI_FCALL( papif_get_multiplex, PAPIF_GET_MULTIPLEX,
 }
 
 /** @class PAPIF_set_multiplex
+ *	@ingroup PAPIF
  *	@brief Convert a standard event set to a multiplexed event set. 
  *
  * @par Fortran Interface:
@@ -551,6 +569,7 @@ PAPI_FCALL( papif_set_multiplex, PAPIF_SET_MULTIPLEX,
 }
 
 /** @class PAPIF_perror
+ *	@ingroup PAPIF
  *  @brief Convert PAPI error codes to strings, and print error message to stderr. 
  *
  * @par Fortran Interface:
@@ -595,6 +614,7 @@ PAPI_FCALL( papif_perror, PAPIF_PERROR,
  */
 
 /** @class PAPIF_query_event
+ *	@ingroup PAPIF
  *  @brief Query if PAPI event exists.
  *
  * @par Fortran Interface:
@@ -610,6 +630,7 @@ PAPI_FCALL( papif_query_event, PAPIF_QUERY_EVENT,
 }
 
 /** @class PAPIF_get_event_info
+ *	@ingroup PAPIF
  *	@brief Get the event's name and description info.
  *
  * @par Fortran Interface:
@@ -665,6 +686,7 @@ PAPI_FCALL( papif_get_event_info, PAPIF_GET_EVENT_INFO,
 }
 
 /** @class PAPIF_event_code_to_name
+ *	@ingroup PAPIF
  *	@brief Convert a numeric hardware event code to a name.
  *
  *	@par Fortran Interface:
@@ -696,6 +718,7 @@ PAPI_FCALL( papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
 }
 
 /** @class PAPIF_event_name_to_code
+ *	@ingroup PAPIF
  *	@brief Convert a name to a numeric hardware event code. 
  *
  *	@par Fortran Interface:
@@ -736,6 +759,7 @@ PAPI_FCALL( papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
 }
 
 /** @class PAPIF_num_events
+ *	@ingroup PAPIF
  *	@brief Enumerate PAPI preset or native events. 
  *
  * @par Fortran Interface:
@@ -750,6 +774,7 @@ PAPI_FCALL( papif_num_events, PAPIF_NUM_EVENTS, ( int *EventCode, int *count ) )
 }
 
 /** @class PAPIF_enum_event
+ *	@ingroup PAPIF
  *  @brief Return the number of events in an event set.
  *
  *	@par Fortran Interface:
@@ -765,6 +790,7 @@ PAPI_FCALL( papif_enum_event, PAPIF_ENUM_EVENT,
 }
 
 /** @class PAPIF_read
+ *	@ingroup PAPIF
  *  @brief Read hardware counters from an event set.
  *
  *  @par Fortran Interface:
@@ -780,6 +806,7 @@ PAPI_FCALL( papif_read, PAPIF_READ,
 }
 
 /** @class PAPIF_read_ts
+ *	@ingroup PAPIF
  *  @brief Read hardware counters with a timestamp.
  *
  *  @par Fortran Interface:
@@ -795,6 +822,7 @@ PAPI_FCALL( papif_read_ts, PAPIF_READ_TS,
 }
 
 /** @class PAPIF_remove_event
+ *	@ingroup PAPIF
  *  @brief Remove a hardware event from a PAPI event set. 
  *
  *   @par Fortran interface:
@@ -810,6 +838,7 @@ PAPI_FCALL( papif_remove_event, PAPIF_REMOVE_EVENT,
 }
 
 /** @class PAPIF_remove_events
+ *	@ingroup PAPIF
  * @brief Remove an array of hardware event codes from a PAPI event set.
  *
  *	@par Fortran Prototype:
@@ -825,6 +854,7 @@ PAPI_FCALL( papif_remove_events, PAPIF_REMOVE_EVENTS,
 }
 
 /** @class PAPIF_reset
+ *	@ingroup PAPIF
  *  @brief Reset the hardware event counts in an event set.
  *
  *	@par Fortran Prototype:
@@ -839,6 +869,7 @@ PAPI_FCALL( papif_reset, PAPIF_RESET, ( int *EventSet, int *check ) )
 }
 
 /** @class PAPIF_set_debug
+ *	@ingroup PAPIF
  * @brief Set the current debug level for error output from PAPI.
  *
  * @par Fortran Prototype:
@@ -853,6 +884,7 @@ PAPI_FCALL( papif_set_debug, PAPIF_SET_DEBUG, ( int *debug, int *check ) )
 }
 
 /** @class PAPIF_set_domain
+ *	@ingroup PAPIF
  *	@brief Set the default counting domain for new event sets bound to the cpu component.
  *
  *	@par Fortran Prototype:
@@ -867,6 +899,7 @@ PAPI_FCALL( papif_set_domain, PAPIF_SET_DOMAIN, ( int *domain, int *check ) )
 }
 
 /** @class PAPIF_set_cmp_domain
+ *	@ingroup PAPIF
  *	@brief Set the default counting domain for new event sets bound to the specified component.
  *
  *	@par Fortran Prototype:
@@ -882,6 +915,7 @@ PAPI_FCALL( papif_set_cmp_domain, PAPIF_SET_CMP_DOMAIN,
 }
 
 /** @class PAPIF_set_granularity
+ *	@ingroup PAPIF
  *	@brief Set the default counting granularity for eventsets bound to the cpu component.
  *
  *	@par Fortran Prototype:
@@ -897,6 +931,7 @@ PAPI_FCALL( papif_set_granularity, PAPIF_SET_GRANULARITY,
 }
 
 /** @class PAPIF_set_cmp_granularity
+ *	@ingroup PAPIF
  *	@brief Set the default counting granularity for eventsets bound to the specified component.
  *
  *	@par Fortran Prototype:
@@ -912,6 +947,7 @@ PAPI_FCALL( papif_set_cmp_granularity, PAPIF_SET_CMP_GRANULARITY,
 }
 
 /** @class PAPIF_shutdown
+ *	@ingroup PAPIF
  *	@brief finish using PAPI and free all related resources. 
  *
  *	@par Fortran Prototype:
@@ -926,6 +962,7 @@ PAPI_FCALL( papif_shutdown, PAPIF_SHUTDOWN, ( void ) )
 }
 
 /** @class PAPIF_start
+ *	@ingroup PAPIF
  *	@brief Start counting hardware events in an event set.
  *
  * @par Fortran Interface:
@@ -940,6 +977,7 @@ PAPI_FCALL( papif_start, PAPIF_START, ( int *EventSet, int *check ) )
 }
 
 /** @class PAPIF_state
+ *	@ingroup PAPIF
  * @brief Return the counting state of an EventSet.
  *
  * @par Fortran Interface:
@@ -955,6 +993,7 @@ PAPI_FCALL( papif_state, PAPIF_STATE,
 }
 
 /** @class PAPIF_stop
+ *	@ingroup PAPIF
  *	@brief Stop counting hardware events in an EventSet.
  *
  * @par Fortran Interface:
@@ -970,6 +1009,7 @@ PAPI_FCALL( papif_stop, PAPIF_STOP,
 }
 
 /** @class PAPIF_write
+ *	@ingroup PAPIF
  *	@brief Write counter values into counters.
  *
  * @par Fortran Interface:
@@ -985,6 +1025,7 @@ PAPI_FCALL( papif_write, PAPIF_WRITE,
 }
 
 /** @class PAPIF_lock
+ *	@ingroup PAPIF
  *  @brief Lock one of two mutex variables defined in papi.h.
  *
  *  @par Fortran Interface:
@@ -1000,6 +1041,7 @@ PAPI_FCALL( papif_lock, PAPIF_LOCK,
 }
 
 /** @class PAPIF_unlock
+ *	@ingroup PAPIF
  *	@brief Unlock one of the mutex variables defined in papi.h.
  *
  * @par Fortran Interface:
@@ -1017,6 +1059,7 @@ PAPI_FCALL( papif_unlock, PAPIF_unlock,
 /* The High Level API Wrappers */
 
 /** @class PAPIF_start_counters
+ *	@ingroup PAPIF
  *	@brief Start counting hardware events.
  *
  *	@par Fortran Interface:
@@ -1032,6 +1075,7 @@ PAPI_FCALL( papif_start_counters, PAPIF_START_COUNTERS,
 }
 
 /** @class PAPI_read_counters
+ *	@ingroup PAPIF
  *	@brief Read and reset counters. 
  *
  *	@par Fortran Interface:
@@ -1047,6 +1091,7 @@ PAPI_FCALL( papif_read_counters, PAPIF_READ_COUNTERS,
 }
 
 /** @class PAPIF_stop_counters
+ *	@ingroup PAPIF
  *	@brief Stop counting hardware events and reset values to zero.
  *
  *	@par Fortran Interface:
@@ -1062,6 +1107,7 @@ PAPI_FCALL( papif_stop_counters, PAPIF_STOP_COUNTERS,
 }
 
 /** @class PAPIF_accum_counters
+ *	@ingroup PAPIF
  *	@brief Accumulate and reset counters.
  *
  *	@par Fortran Interface:
@@ -1077,6 +1123,7 @@ PAPI_FCALL( papif_accum_counters, PAPIF_ACCUM_COUNTERS,
 }
 
 /** @class PAPIF_num_counters
+ *	@ingroup PAPIF
  *	@brief Get the number of hardware counters available on the system.
  *
  *	@par Fortran Interface:
@@ -1091,6 +1138,7 @@ PAPI_FCALL( papif_num_counters, PAPIF_NUM_COUNTERS, ( int *numevents ) )
 }
 
 /** @class PAPIF_ipc
+ *	@ingroup PAPIF
  *	@brief Get instructions per cycle, real and processor time.
  *	
  *	@par Fortran Interface:
@@ -1107,6 +1155,7 @@ PAPI_FCALL( papif_ipc, PAPIF_IPC,
 }
 
 /** @class PAPIF_flips
+ *	@ingroup PAPIF
  *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
  *
  *	@par Fortran Interface:
@@ -1123,6 +1172,7 @@ PAPI_FCALL( papif_flips, PAPIF_FLIPS,
 }
 
 /** @class PAPIF_flops
+ *	@ingroup PAPIF
  *	@brief Simplified call to get Mflops/s (floating point instruction rate), real and processor time. 
  *
  *	@par Fortran Interface:
@@ -1142,6 +1192,7 @@ PAPI_FCALL( papif_flops, PAPIF_FLOPS,
 /* Fortran only APIs for get_opt and set_opt functionality */
 
 /** @class PAPIF_get_clockrate
+ *	@ingroup PAPIF
  *	@brief Get the clockrate in MHz for the current cpu.
  *
  *	@par Fortran Prototype:
@@ -1158,6 +1209,7 @@ PAPI_FCALL( papif_get_clockrate, PAPIF_GET_CLOCKRATE, ( int *cr ) )
 }
 
 /** @class PAPIF_get_preload
+ *	@ingroup PAPIF
  *	@brief Get the LD_PRELOAD environment variable.
  *
  *	@par Fortran Prototype:
@@ -1194,6 +1246,7 @@ PAPI_FCALL( papif_get_preload, PAPIF_GET_PRELOAD,
 }
 
 /** @class PAPIF_get_granularity
+ *	@ingroup PAPIF
  *	@brief Get the granularity setting for the specified EventSet.
  *
  *	@par Fortran Prototype:
@@ -1221,6 +1274,7 @@ PAPI_FCALL( papif_get_granularity, PAPIF_GET_GRANULARITY,
 }
 
 /** @class PAPIF_get_domain
+ *	@ingroup PAPIF
  *	@brief Get the domain setting for the specified EventSet.
  *
  *	@par Fortran Prototype:
@@ -1259,6 +1313,7 @@ PAPI_FCALL( papif_get_inherit, PAPIF_GET_INHERIT, ( int *inherit, int *check ) )
 #endif
 
 /** @class PAPIF_set_event_domain
+ *	@ingroup PAPIF
  *	@brief Set the default counting domain for specified EventSet.
  *
  *	@par Fortran Prototype:
@@ -1278,7 +1333,16 @@ PAPI_FCALL( papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN,
 	*check = PAPI_set_opt( PAPI_DOMAIN, &d );
 }
 
-#if 0
+/** @class PAPIF_set_inherit
+ *	@ingroup PAPIF
+ *	@brief Turn on inheriting of counts from daughter to parent process.
+ *
+ *	@par Fortran Prototype:
+ *		#include fpapi.h @n
+ *		PAPIF_set_inherit( C_INT inherit, C_INT check )
+ *
+ * @see PAPI_set_opt
+ */
 PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 {
 	PAPI_option_t i;
@@ -1286,5 +1350,4 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 	i.inherit.inherit = *inherit;
 	*check = PAPI_set_opt( PAPI_INHERIT, &i );
 }
-#endif
 
