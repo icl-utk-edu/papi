@@ -170,7 +170,7 @@ PAPI_thread_id( void )
  *  @brief Notify PAPI that a thread has 'appeared'.
  *
  *  @par C Interface:
- *  #include <papi.h> @n
+ *  \#include <papi.h> @n
  *  int PAPI_register_thread (void);
  *
  *  PAPI_register_thread() should be called when the user wants to force 
@@ -250,7 +250,7 @@ PAPI_unregister_thread( void )
  *  This call assumes an initialized PAPI library. 
  *
  * @par C Interface
- * #include <papi.h> @n
+ * \#include <papi.h> @n
  * int PAPI_list_threads(PAPI_thread_id_t *tids, int * number );
  *
  * @param[in,out] *tids
@@ -306,7 +306,7 @@ PAPI_list_threads( PAPI_thread_id_t *tids, int *number )
  *  @brief Retrieve a pointer to a thread specific data structure.
  *
  *	@par Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_get_thr_specific( int tag, void **ptr );
  *
  *	@param tag
@@ -382,7 +382,7 @@ PAPI_get_thr_specific( int tag, void **ptr )
  *  @brief Store a pointer to a thread specific data structure.
  *
  *	@par Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_set_thr_specific( int tag, void *ptr );
  *
  *	@param tag
@@ -645,7 +645,7 @@ PAPI_library_init( int version )
  *  @brief Query if PAPI event exists.
  *
  * @par C Interface:
- * #include <papi.h> @n
+ * \#include <papi.h> @n
  * int PAPI_query_event(int EventCode);
  *
  * PAPI_query_event() asks the PAPI library if the PAPI Preset event can be 
@@ -802,7 +802,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
  *	@brief Convert a numeric hardware event code to a name.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_event_code_to_name( int  EventCode, char * EventName );
  *
  *	PAPI_event_code_to_name is used to translate a 32-bit integer PAPI event 
@@ -878,7 +878,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *	@brief Convert a name to a numeric hardware event code. 
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_event_name_to_code( char * EventName, int * EventCode );
  *
  *	PAPI_event_name_to_code is used to translate an ASCII PAPI event name 
@@ -957,7 +957,7 @@ PAPI_event_name_to_code( char *in, int *out )
  *	@brief Enumerate PAPI preset or native events.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_enum_event( int * EventCode, int  modifer );
  *
  *	Given a preset or native event code, PAPI_enum_event replaces the event 
@@ -1095,7 +1095,7 @@ PAPI_enum_event( int *EventCode, int modifier )
  *	@brief Create a new empty PAPI EventSet.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	PAPI_create_eventset( int * EventSet );
  *
  *	PAPI_create_eventset creates a new EventSet pointed to by EventSet, 
@@ -1157,7 +1157,7 @@ PAPI_create_eventset( int *EventSet )
  *	@brief Assign a component index to an existing but empty EventSet.
  *	
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	PAPI_assign_eventset_component( int  EventSet, int  cidx );
  *
  *	@param EventSet 
@@ -1254,7 +1254,7 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
  *	@brief add PAPI preset or native hardware event to an event set
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_add_event( int  EventSet, int  EventCode );
  *
  *	PAPI_add_event adds one event to a PAPI Event Set. @n
@@ -1358,7 +1358,7 @@ PAPI_add_event( int EventSet, int EventCode )
  *   the current platform, run papi_native_avail in the PAPI distribution. 
  *
  *   @par C Interface:
- *   #include <papi.h> @n
+ *   \#include <papi.h> @n
  *   int PAPI_remove_event( int  EventSet, int  EventCode );
  *
  *   @param[in] EventSet
@@ -1470,7 +1470,7 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	@brief Empty and destroy an EventSet.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_destroy_eventset( int * EventSet );
  *
  * PAPI_destroy_eventset deallocates the memory associated with an empty PAPI EventSet.
@@ -1538,7 +1538,7 @@ PAPI_destroy_eventset( int *EventSet )
  *	@brief Start counting hardware events in an event set.
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_start( int  EventSet );
  *
  *	@param EventSet
@@ -1735,7 +1735,7 @@ PAPI_start( int EventSet )
  *	@brief Stop counting hardware events in an event set. 
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_stop( int  EventSet, long long * values );
  *
  *	@param EventSet
@@ -1882,7 +1882,7 @@ PAPI_stop( int EventSet, long long *values )
  * @brief Reset the hardware event counts in an event set.
  *
  *	@par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_reset( int EventSet );
  *
  *	@param EventSet
@@ -1975,7 +1975,7 @@ PAPI_reset( int EventSet )
  *  @brief Read hardware counters from an event set.
  *	
  *  @par C Interface:
- *  #include <papi.h> @n
+ *  \#include <papi.h> @n
  *  int PAPI_read(int  EventSet, long_long * values );
  *
  *  PAPI_read() copies the counters of the indicated event set into 
@@ -2076,7 +2076,7 @@ PAPI_read( int EventSet, long long *values )
  *  @brief Read hardware counters with a timestamp.
  *	
  *  @par C Interface:
- *  #include <papi.h> @n
+ *  \#include <papi.h> @n
  *  int PAPI_read_ts(int EventSet, long long *values, long long *cycles );
  *
  *  PAPI_read_ts() copies the counters of the indicated event set into 
@@ -2167,7 +2167,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *	@brief Accumulate and reset counters in an EventSet.
  *	
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_accum( int  EventSet, long_long * values );
  *
  *	These calls assume an initialized PAPI library and a properly added event set. 
@@ -2313,7 +2313,7 @@ PAPI_write( int EventSet, long long *values )
  *	@brief Empty and destroy an EventSet.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_cleanup_eventset( int  EventSet );
  *
  * PAPI_cleanup_eventset removes all events from a PAPI event set and turns 
@@ -2427,7 +2427,7 @@ PAPI_cleanup_eventset( int EventSet )
  *      this routine. 
  *
  * @par C Interface:
- * #include <papi.h> @n
+ * \#include <papi.h> @n
  * int PAPI_multiplex_init (void);
  *
  * @par Examples
@@ -2455,7 +2455,7 @@ PAPI_multiplex_init( void )
  * @brief Return the counting state of an EventSet.
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_state( int  EventSet, int * status );
  *
  *	@param EventSet -- an integer handle for a PAPI event set as created by PAPI_create_eventset
@@ -2536,7 +2536,7 @@ PAPI_state( int EventSet, int *status )
  * @brief Set the current debug level for error output from PAPI.
  *
  * @par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_set_debug( int level );
  *
  * @param level
@@ -2609,7 +2609,7 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *	@brief Attach PAPI event set to the specified thread id.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_attach( int EventSet, unsigned long tid );
  *
  *	PAPI_attach is a wrapper function that calls PAPI_set_opt to allow PAPI to 
@@ -2668,7 +2668,7 @@ PAPI_attach( int EventSet, unsigned long tid )
  *	@brief Detach PAPI event set from previously specified thread id and restore to executing thread.
  *	
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_detach( int  EventSet, unsigned long  tid );
  *
  *	PAPI_detach is a wrapper function that calls PAPI_set_opt to allow PAPI to 
@@ -2727,7 +2727,7 @@ PAPI_detach( int EventSet )
  *	@brief Convert a standard event set to a multiplexed event set. 
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_set_multiplex( int  EventSet );
  *
  *	@param EventSet
@@ -2825,7 +2825,7 @@ PAPI_set_multiplex( int EventSet )
  *	@brief Set PAPI library or event set options.
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_set_opt(  int option, PAPI_option_t * ptr );
  *
  *	@param[in]	option
@@ -3375,7 +3375,7 @@ PAPI_num_hwctrs( void )
  *  anything greater than 0. 
  *
  * @par C Interface:
- * #include <papi.h> @n
+ * \#include <papi.h> @n
  * int PAPI_num_cmp_hwctrs(int  cidx );
  *
  * @param[in] cidx
@@ -3405,11 +3405,11 @@ PAPI_num_cmp_hwctrs( int cidx )
  *	@brief Get the multiplexing status of specified event set.
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_get_multiplex( int  EventSet );
  *
  * @par Fortran Interface:
- *     #include fpapi.h @n
+ *     \#include fpapi.h @n
  *     PAPIF_get_multiplex( C_INT  EventSet,  C_INT  check )
  *
  *	@param EventSet
@@ -3474,7 +3474,7 @@ PAPI_get_multiplex( int EventSet )
  *	@brief Get PAPI library or event set options.
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_get_opt(  int option, PAPI_option_t * ptr );
  *
  *	@param[in]	option
@@ -3824,7 +3824,7 @@ PAPI_num_components( void )
   * The event set should be created by @ref PAPI_create_eventset() .
   *
   * @par C Interface:
-  * #include <papi.h> @n
+  * \#include <papi.h> @n
   * int PAPI_num_events(int  EventSet );
   *
   * @param[in] EventSet -- 
@@ -3872,7 +3872,7 @@ PAPI_num_events( int EventSet )
   *	@brief Finish using PAPI and free all related resources. 
   *
   *	@par C Prototype:
-  *		#include <papi.h> @n
+  *		\#include <papi.h> @n
   *		void PAPI_shutdown( void );
   *
   * PAPI_shutdown() is an exit function used by the PAPI Library 
@@ -3952,7 +3952,7 @@ PAPI_shutdown( void )
  *	@brief Convert PAPI error codes to strings, and return the error string to user. 
  *
  *  @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_strerror( int code );
  *
  *  @param[in] code  
@@ -4035,7 +4035,7 @@ PAPI_descr_error( int errorCode )
  *  @brief Convert PAPI error codes to strings, and print error message to stderr. 
  *
  * @par C Interface:
- *     #include <papi.h> @n
+ *     \#include <papi.h> @n
  *     int PAPI_perror( int code, char *destination, int length );
  *
  *  @param[in] code  
@@ -4145,7 +4145,7 @@ PAPI_perror( int code, char *destination, int length )
  * information about what was happening when the overflow occured.
  *
  * @par C Interface:
- * #include <papi.h> @n
+ * \#include <papi.h> @n
  * int PAPI_overflow (int EventSet, int EventCode, int threshold, 
  * int flags, PAPI_overflow_handler_t handler ); @n@n
  * (*PAPI_overflow_handler_t) _papi_overflow_handler
@@ -4370,7 +4370,7 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *	@brief Generate PC histogram data from multiple code regions where hardware counter overflow occurs.
  *
  * @par C Interface:
- * #include <papi.h> @n
+ * \#include <papi.h> @n
  * int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags );
  *
  *	@param *prof 
@@ -4649,7 +4649,7 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
  *  @brief Generate a histogram of hardware counter overflows vs. PC addresses.
  *
  * @par C Interface:
- * #include <papi.h> @n
+ * \#include <papi.h> @n
  * int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
  * unsigned scale, int EventSet, int EventCode, int threshold, int flags );
  *
@@ -4894,7 +4894,7 @@ PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
  *	@brief Set the default counting granularity for eventsets bound to the cpu component.
  *
  *	@par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_set_granularity( int granularity );
  *
  *	@param -- granularity one of the following constants as defined in the papi.h header file
@@ -4950,7 +4950,7 @@ PAPI_set_granularity( int granularity )
  *	@brief Set the default counting granularity for eventsets bound to the specified component.
  *
  *	@par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_set_cmp_granularity( int granularity, int cidx );
  *
  *	@param granularity one of the following constants as defined in the papi.h header file
@@ -5025,7 +5025,7 @@ PAPI_set_cmp_granularity( int granularity, int cidx )
  *	@brief Set the default counting domain for new event sets bound to the cpu component.
  *
  *	@par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_set_domain( int domain );
  *
  *	@param domain one of the following constants as defined in the papi.h header file
@@ -5081,7 +5081,7 @@ PAPI_set_domain( int domain )
  *	@brief Set the default counting domain for new event sets bound to the specified component.
  *
  *	@par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_set_cmp_domain( int domain, int  cidx );
  *
  *	@param domain one of the following constants as defined in the papi.h header file
@@ -5156,7 +5156,7 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *	@brief add multiple PAPI presets or native hardware events to an event set 
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_add_events( int  EventSet, int * EventCodes, int  number );
  *
  *	PAPI_add_event adds one event to a PAPI Event Set. PAPI_add_events does 
@@ -5256,7 +5256,7 @@ PAPI_add_events( int EventSet, int *Events, int number )
  * It should be noted that PAPI_remove_events can partially succeed, exactly like PAPI_add_events. 
  *
  *	@par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_remove_events( int  EventSet, int * EventCode, int  number );
  *
  *	@param EventSet
@@ -5405,7 +5405,7 @@ PAPI_list_events( int EventSet, int *Events, int *number )
  *	@brief Get information about the dynamic memory usage of the current program. 
  *
  *	@par C Prototype:
- *		#include <papi.h> @n
+ *		\#include <papi.h> @n
  *		int PAPI_get_dmem_info( PAPI_dmem_info_t *dest );
  *
  *	@param dest
@@ -5441,7 +5441,7 @@ PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
  *	@brief Get the executable's address space info.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	const PAPI_exe_info_t *PAPI_get_executable_info( void );
  *
  *	This function returns a pointer to a structure containing information 
@@ -5786,7 +5786,7 @@ PAPI_save( void )
  *  to a (hopefully) efficiently implemented mutex.
  *
  *  @par C Interface:
- *  #include <papi.h> @n
+ *  \#include <papi.h> @n
  *  void PAPI_lock(int lock);
  *
  *  @param[in] lock

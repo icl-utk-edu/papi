@@ -163,7 +163,7 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
   *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
   *
   *	@par C Interface: 
-  *	@include <papi.h> @n
+  *	\#include <papi.h> @n
   *	int PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips );
   *
   * @param *rtime
@@ -227,7 +227,7 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
   *	@brief Simplified call to get Mflops/s (floating point instruction rate), real and processor time. 
   *
   *	@par C Interface: 
-  *	@include <papi.h> @n
+  *	\#include <papi.h> @n
   *	int PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops );
   *
   * @param *rtime
@@ -295,7 +295,7 @@ PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
  *	@brief Get instructions per cycle, real and processor time.
  *	
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
  *
  *	@param *rtime
@@ -420,7 +420,7 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
   *	@brief Get the number of hardware counters available on the system.
   *
   *	@par C Interface:
-  *	#include <papi.h> @n
+  *	\#include <papi.h> @n
   *	int PAPI_num_counters( void );
   *
   * @post 
@@ -464,7 +464,7 @@ PAPI_num_counters( void )
  *	@brief Start counting hardware events.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_start_counters( int *events, int array_len );
  *
  * @param *events
@@ -577,7 +577,7 @@ _internal_hl_read_cnts( long long *values, int array_len, int flag )
  *	@brief Read and reset counters.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_read_counters( long long *values, int array_len );
  *
  * @param *values
@@ -627,7 +627,7 @@ PAPI_read_counters( long long *values, int array_len )
  *	@brief Accumulate and reset counters.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_accum_counters( long long *values, int array_len );
  *
  * @param *values
@@ -679,7 +679,7 @@ PAPI_accum_counters( long long *values, int array_len )
  *	@brief Stop counting hardware events and reset values to zero.
  *
  *	@par C Interface:
- *	#include <papi.h> @n
+ *	\#include <papi.h> @n
  *	int PAPI_stop_counters( long long *values, int array_len );
  *
  * @param *values
