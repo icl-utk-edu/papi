@@ -660,8 +660,6 @@ read the documentation carefully.  */
      unsigned int fast_virtual_timer:1;    /**< Supports a fast virtual timer */
      unsigned int attach:1;                /**< Supports attach */
      unsigned int attach_must_ptrace:1;	   /**< Attach must first ptrace and stop the thread/process*/
-     unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
-     unsigned int inherit:1;               /**< Supports child processes inheriting parents counters */
      unsigned int edge_detect:1;           /**< Supports edge detection on events */
      unsigned int invert:1;                /**< Supports invert detection on events */
      unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
@@ -670,6 +668,9 @@ read the documentation carefully.  */
      unsigned int cntr_IEAR_events:1;      /**< counters support instr event addr register */
      unsigned int cntr_DEAR_events:1;      /**< counters support data event addr register */
      unsigned int cntr_OPCM_events:1;      /**< counter events support opcode matching */
+     /* This should be a granularity option */
+     unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
+     unsigned int inherit:1;               /**< Supports child processes inheriting parents counters */
      unsigned int reserved_bits:10;
    } PAPI_component_info_t;
 
