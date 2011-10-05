@@ -263,9 +263,6 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 				continue;
 			}
 
-			if (!is_model_umask(this, e->event, idx))
-				continue;
-
 			/* umask is default for group */
 			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_DFL)) {
 				DPRINT("added default %s for group %d j=%d idx=%d\n", ent->umasks[idx].uname, i, j, idx);
