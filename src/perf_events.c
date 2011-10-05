@@ -1785,6 +1785,13 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
+	SUBDBG("Attempting to set overflow for index %d (%d) of EventSet %d\n",
+	       evt_idx,EventIndex,ESI->EventSetIndex);
+
+	if (evt_idx<0) {
+	   return PAPI_EINVAL;
+	}
+
 	if ( threshold == 0 ) {
 		/* If this counter isn't set to overflow, it's an error */
 		if ( ctl->events[evt_idx].sample_period == 0 )

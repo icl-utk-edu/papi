@@ -4250,10 +4250,10 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 	if ( ESI->state & PAPI_CPU_ATTACHED )
 		papi_return( PAPI_EINVAL );
 	
-	if ( ( index =
-		   _papi_hwi_lookup_EventCodeIndex( ESI,
-											( unsigned int ) EventCode ) ) < 0 )
+	if ( ( index = _papi_hwi_lookup_EventCodeIndex( ESI,
+      						( unsigned int ) EventCode ) ) < 0 ) {
 		papi_return( PAPI_ENOEVNT );
+	}
 
 	if ( threshold < 0 )
 		papi_return( PAPI_EINVAL );
@@ -4322,6 +4322,7 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 		ESI->overflow.threshold[i] = threshold;
 		ESI->overflow.EventIndex[i] = index;
 		ESI->overflow.flags = flags;
+
 	}
 
 	/* If overflowing is already active, we should check to
@@ -4488,10 +4489,10 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
 	if ( cidx < 0 )
 		papi_return( cidx );
 
-	if ( ( index =
-		   _papi_hwi_lookup_EventCodeIndex( ESI,
-											( unsigned int ) EventCode ) ) < 0 )
-		papi_return( PAPI_ENOEVNT );
+	if ( ( index = _papi_hwi_lookup_EventCodeIndex( ESI,
+						   (unsigned int) EventCode ) ) < 0 ) {
+	   papi_return( PAPI_ENOEVNT );
+	}
 
 	/* We do not support derived events in overflow */
 	/* Unless it's DERIVED_CMPD in which no calculations are done */
