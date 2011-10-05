@@ -269,7 +269,10 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			/* umask is default for group */
 			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_DFL)) {
 				DPRINT("added default %s for group %d j=%d idx=%d\n", ent->umasks[idx].uname, i, j, idx);
-
+				/*
+				 * default could be an alias, but
+				 * ucode must reflect actual code
+				 */
 				*umask |= ent->umasks[idx].ucode >> 8;
 
 				e->attrs[k].id = j; /* pattrs index */
