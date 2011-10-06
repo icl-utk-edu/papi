@@ -43,7 +43,7 @@
 #endif
 /* The Low Level Wrappers */
 
-/** @defgroup PAPIF PAPI Fortran Wrappers 
+/** @defgroup PAPIF PAPI Fortran API 
  *	*/
 /**	@class PAPIF_accum
  *	@ingroup PAPIF

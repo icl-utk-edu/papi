@@ -34,7 +34,6 @@
  * either C or Fortran. 
  * A list of the function calls in these interfaces is given below, 
  * with references to other pages for more complete details. 
- * For general information on the Fortran interface see:  PAPIF(3)
  *
  * @section papi_high_api High Level Functions
  * A simple interface for instrumenting end-user applications. 
@@ -53,6 +52,12 @@
  * See individual functions for details on usage and support.
  * 
  * @ref low_api
+ *
+ * @section papi_Fortran Fortran API
+ * The Fortran interface has some unique features and entry points.
+ * See individual functions for details.
+ * 
+ * @ref PAPIF
  *
  * @section Components 
  *
