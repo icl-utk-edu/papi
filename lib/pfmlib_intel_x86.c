@@ -835,7 +835,7 @@ skip_dfl:
 					continue;
 				if (pe[i].umasks[k].grpid != pe[i].umasks[j].grpid)
 					continue;
-				if ((pe[i].umasks[j].ucode &  pe[i].umasks[k].ucode)) {
+				if ((pe[i].umasks[j].ucode & pe[i].umasks[k].ucode) && pe[i].umasks[j].umodel == pe[i].umasks[k].umodel) {
 					fprintf(fp, "pmu: %s event%d: %s :: umask %s and %s have overlapping code bits\n", pmu->name, i, pe[i].name, pe[i].umasks[j].uname, pe[i].umasks[k].uname);
 					error++;
 				}
