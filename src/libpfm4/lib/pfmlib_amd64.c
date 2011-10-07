@@ -335,6 +335,7 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 {
 	const amd64_entry_t *ent, *pe = this_pe(this);
 	int i, j, k, added, omit, numasks_grp;
+	int idx;
 
 	k = e->nattrs;
 	ent = pe+e->event;
@@ -346,30 +347,33 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 
 		added = omit = numasks_grp = 0;
 
-		for(j=0; j < ent->numasks; j++) {
+		for (j = 0; j < e->npattrs; j++) {
+			if (e->pattrs[j].ctrl != PFM_ATTR_CTRL_PMU)
+				continue;
 
-			if (ent->umasks[j].grpid != i)
+			if (e->pattrs[j].type != PFM_ATTR_UMASK)
+				continue;
+
+			idx = e->pattrs[j].idx;
+
+			if (ent->umasks[idx].grpid != i)
 				continue;
 
 			/* number of umasks in this group */
 			numasks_grp++;
 
-			/* skip umasks for other revisions */
-			if (!amd64_umask_valid(this, e->event, j))
-				continue;
+			if (amd64_uflag(this, e->event, idx, AMD64_FL_DFL)) {
+				DPRINT("added default for %s j=%d idx=%d\n", ent->umasks[idx].uname, j, idx);
 
-			if (amd64_uflag(this, e->event, j, AMD64_FL_DFL)) {
-				DPRINT("added default %s\n", ent->umasks[j].uname);
+				*umask |= ent->umasks[idx].ucode;
 
-				*umask |= ent->umasks[j].ucode;
-
-				e->attrs[k].id = j;
+				e->attrs[k].id = j; /* pattrs index */
 				e->attrs[k].ival = 0;
 				k++;
 
 				added++;
 			}
-			if (amd64_uflag(this, e->event, j, AMD64_FL_OMIT))
+			if (amd64_uflag(this, e->event, idx, AMD64_FL_OMIT))
 				omit++;
 		}
 		/*

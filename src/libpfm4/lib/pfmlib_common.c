@@ -858,7 +858,7 @@ pfmlib_build_event_pattrs(pfmlib_event_desc_t  *e)
 		}
 	}
 	for (i = 0; i < e->npattrs; i++)
-		DPRINT("%d %d %d %d %s\n", e->event, i, e->pattrs[i].type, e->pattrs[i].ctrl, e->pattrs[i].name);
+		DPRINT("%d %d %d %d %d %s\n", e->event, i, e->pattrs[i].type, e->pattrs[i].ctrl, e->pattrs[i].idx, e->pattrs[i].name);
 
 	return PFM_SUCCESS;
 error:
@@ -1026,7 +1026,7 @@ found:
 	for (i = 0; i < d->nattrs; i++) {
 		pfm_event_attr_info_t *a = attr(d, i);
 		if (a->type != PFM_ATTR_RAW_UMASK)
-			DPRINT("%d %d %s\n", d->event, i, d->pattrs[a->idx].name);
+			DPRINT("%d %d %d %s\n", d->event, i, a->idx, d->pattrs[a->idx].name);
 		else
 			DPRINT("%d %d RAW_UMASK (0x%x)\n", d->event, i, a->idx);
 	}

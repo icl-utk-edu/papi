@@ -231,6 +231,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
 	int i, j, k, added, skip;
+	int idx;
 
 	k = e->nattrs;
 	ent = pe+e->event;
@@ -241,10 +242,20 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			continue;
 
 		added = skip = 0;
+		/*
+		 * must scan list of possible attributes
+		 * (not all possible attributes)
+		 */
+		for (j = 0; j < e->npattrs; j++) {
+			if (e->pattrs[j].ctrl != PFM_ATTR_CTRL_PMU)
+				continue;
 
-		for(j=0; j < ent->numasks; j++) {
+			if (e->pattrs[j].type != PFM_ATTR_UMASK)
+				continue;
 
-			if (ent->umasks[j].grpid != i)
+			idx = e->pattrs[j].idx;
+
+			if (ent->umasks[idx].grpid != i)
 				continue;
 
 			if (max_grpid != -1 && i > max_grpid) {
@@ -252,16 +263,16 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 				continue;
 			}
 
-			if (!is_model_umask(this, e->event, j))
-				continue;
-
 			/* umask is default for group */
-			if (intel_x86_uflag(this, e->event, j, INTEL_X86_DFL)) {
-				DPRINT("added default %s for group %d\n", ent->umasks[j].uname, i);
+			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_DFL)) {
+				DPRINT("added default %s for group %d j=%d idx=%d\n", ent->umasks[idx].uname, i, j, idx);
+				/*
+				 * default could be an alias, but
+				 * ucode must reflect actual code
+				 */
+				*umask |= ent->umasks[idx].ucode >> 8;
 
-				*umask |= ent->umasks[j].ucode >> 8;
-
-				e->attrs[k].id = j;
+				e->attrs[k].id = j; /* pattrs index */
 				e->attrs[k].ival = 0;
 				k++;
 
@@ -269,12 +280,12 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 				if (intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL))
 					goto done;
 
-				if (intel_x86_uflag(this, e->event, j, INTEL_X86_EXCL_GRP_GT)) {
+				if (intel_x86_uflag(this, e->event, idx, INTEL_X86_EXCL_GRP_GT)) {
 					if (max_grpid != -1) {
-						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[j].grpid);
+						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[idx].grpid);
 						return PFM_ERR_UMASK;
 					}
-					max_grpid = ent->umasks[j].grpid;
+					max_grpid = ent->umasks[idx].grpid;
 				}
 			}
 		}
@@ -774,19 +785,35 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		}
 
 		/* if only one umask, then ought to be default */
-		if (pe[i].numasks == 1 && ndfl[0] != 1) {
+		if (pe[i].numasks == 1 && !(pe[i].umasks[0].uflags & INTEL_X86_DFL)) {
 			fprintf(fp, "pmu: %s event%d: %s, only one umask but no default\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 
-		/* only one default per grp */
-		for(j=0; j < pe[i].ngrp; j++) {
-			if (ndfl[j] > 1) {
-				fprintf(fp, "pmu: %s event%d: %s grpid %d has %d default umasks\n", pmu->name, i, pe[i].name, j, ndfl[j]);
-				error++;
+		if (pe[i].numasks) {
+			int *dfl_model = malloc(sizeof(*dfl_model) * pe[i].numasks);
+			if (!dfl_model)
+				goto skip_dfl;
+			for(j=0; j < pe[i].ngrp; j++) {
+				int k, l = 0, m;
+				for (k = 0; k < pe[i].numasks; k++) {
+					if (pe[i].umasks[k].grpid != j)
+						continue;
+					if (pe[i].umasks[k].uflags & INTEL_X86_DFL) {
+						for (m = 0; m < l; m++) {
+							if (dfl_model[m] == pe[i].umasks[k].umodel || dfl_model[m] == 0) {
+								fprintf(fp, "pmu: %s event%d: %s grpid %d has 2 default umasks\n", pmu->name, i, pe[i].name, j);
+								error++;
+							}
+						}
+						if (m == l)
+							dfl_model[l++] = pe[i].umasks[k].umodel;
+					}
+				}
 			}
+			free(dfl_model);
 		}
-
+skip_dfl:
 
 		if (pe[i].flags & INTEL_X86_NCOMBO) {
 			fprintf(fp, "pmu: %s event%d: %s :: NCOMBO is unit mask only flag\n", pmu->name, i, pe[i].name);
@@ -808,7 +835,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 					continue;
 				if (pe[i].umasks[k].grpid != pe[i].umasks[j].grpid)
 					continue;
-				if ((pe[i].umasks[j].ucode &  pe[i].umasks[k].ucode)) {
+				if ((pe[i].umasks[j].ucode & pe[i].umasks[k].ucode) && pe[i].umasks[j].umodel == pe[i].umasks[k].umodel) {
 					fprintf(fp, "pmu: %s event%d: %s :: umask %s and %s have overlapping code bits\n", pmu->name, i, pe[i].name, pe[i].umasks[j].uname, pe[i].umasks[k].uname);
 					error++;
 				}
