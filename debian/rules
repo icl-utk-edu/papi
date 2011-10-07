@@ -20,7 +20,7 @@ override_dh_auto_install: build
 	dh_testroot
 	dh_prep
 	dh_installdirs
-	make install DESTDIR=$(CURDIR)/debian/tmp PREFIX=/usr
+	make install DESTDIR=$(CURDIR)/debian/tmp PREFIX=/usr CONFIG_PFMLIB_NOPYTHON=n
 
 %:
 	dh  $@
