@@ -138,26 +138,33 @@ allocate_thread( int tid )
 				( size_t ) _papi_hwd[i]->size.context );
 	}
 
+	if ( _papi_hwi_thread_id_fn ) {
+           thread->tid = ( *_papi_hwi_thread_id_fn ) (  );
+	}
+	else {
+	   thread->tid = ( unsigned long ) getpid(  );
+	}
+
+	thread->allocator_tid=thread->tid;
+
 	if (tid == 0 ) {
-	   if ( _papi_hwi_thread_id_fn )
-	      thread->tid = ( *_papi_hwi_thread_id_fn ) (  );
-	   else
-	      thread->tid = ( unsigned long ) getpid(  );
 	}
 	else {
 	  thread->tid=tid;
 	}
 
-	THRDBG( "Allocated thread 0x%lx at %p\n", thread->tid, thread );
+	THRDBG( "Allocated thread %ld at %p, allocator: %ld\n", thread->tid, 
+		thread,
+		thread->allocator_tid );
 
-	return ( thread );
+	return thread;
 }
 
 static void
 free_thread( ThreadInfo_t ** thread )
 {
 	int i;
-	THRDBG( "Freeing thread 0x%lx at %p\n", ( *thread )->tid, *thread );
+	THRDBG( "Freeing thread %ld at %p\n", ( *thread )->tid, *thread );
 
 	for ( i = 0; i < papi_num_components; i++ ) {
 		if ( ( *thread )->context[i] )
@@ -176,7 +183,7 @@ free_thread( ThreadInfo_t ** thread )
 }
 
 static void
-insert_thread( ThreadInfo_t * entry )
+insert_thread( ThreadInfo_t * entry, int tid )
 {
 	_papi_hwi_lock( THREADS_LOCK );
 
@@ -184,13 +191,13 @@ insert_thread( ThreadInfo_t * entry )
 		THRDBG( "_papi_hwi_thread_head is NULL\n" );
 		entry->next = entry;
 	} else if ( _papi_hwi_thread_head->next == _papi_hwi_thread_head ) {	/* 1 elements */
-		THRDBG( "_papi_hwi_thread_head was thread 0x%lx at %p\n",
+		THRDBG( "_papi_hwi_thread_head was thread %ld at %p\n",
 				_papi_hwi_thread_head->tid, _papi_hwi_thread_head );
 		_papi_hwi_thread_head->next = entry;
 		entry->next = ( ThreadInfo_t * ) _papi_hwi_thread_head;
 	} else {				 /* 2+ elements */
 
-		THRDBG( "_papi_hwi_thread_head was thread 0x%lx at %p\n",
+		THRDBG( "_papi_hwi_thread_head was thread %ld at %p\n",
 				_papi_hwi_thread_head->tid, _papi_hwi_thread_head );
 		entry->next = _papi_hwi_thread_head->next;
 		_papi_hwi_thread_head->next = entry;
@@ -198,15 +205,18 @@ insert_thread( ThreadInfo_t * entry )
 
 	_papi_hwi_thread_head = entry;
 
-	THRDBG( "_papi_hwi_thread_head now thread 0x%lx at %p\n",
+	THRDBG( "_papi_hwi_thread_head now thread %ld at %p\n",
 			_papi_hwi_thread_head->tid, _papi_hwi_thread_head );
 
 	_papi_hwi_unlock( THREADS_LOCK );
 
 #if defined(HAVE_THREAD_LOCAL_STORAGE)
-	_papi_hwi_my_thread = entry;
-	THRDBG( "TLS for thread 0x%lx is now %p\n", entry->tid,
+	/* Don't set the current local thread if we are a fake attach thread */
+        if (tid==0) {
+	   _papi_hwi_my_thread = entry;
+	   THRDBG( "TLS for thread %ld is now %p\n", entry->tid,
 			_papi_hwi_my_thread );
+	}
 #endif
 }
 
@@ -217,7 +227,7 @@ remove_thread( ThreadInfo_t * entry )
 
 	_papi_hwi_lock( THREADS_LOCK );
 
-	THRDBG( "_papi_hwi_thread_head was thread 0x%lx at %p\n",
+	THRDBG( "_papi_hwi_thread_head was thread %ld at %p\n",
 			_papi_hwi_thread_head->tid, _papi_hwi_thread_head );
 
 	/* Find the preceding element and the matched element,
@@ -229,7 +239,7 @@ remove_thread( ThreadInfo_t * entry )
 	}
 
 	if ( tmp != entry ) {
-		THRDBG( "Thread 0x%lx at %p was not found in the thread list!\n",
+		THRDBG( "Thread %ld at %p was not found in the thread list!\n",
 				entry->tid, entry );
 		return ( PAPI_EBUG );
 	}
@@ -245,7 +255,7 @@ remove_thread( ThreadInfo_t * entry )
 		/* If we're removing the head, better advance it! */
 		if ( _papi_hwi_thread_head == tmp ) {
 			_papi_hwi_thread_head = tmp->next;
-			THRDBG( "_papi_hwi_thread_head now thread 0x%lx at %p\n",
+			THRDBG( "_papi_hwi_thread_head now thread %ld at %p\n",
 					_papi_hwi_thread_head->tid, _papi_hwi_thread_head );
 		}
 		THRDBG( "Removed thread %p from list\n", tmp );
@@ -255,11 +265,11 @@ remove_thread( ThreadInfo_t * entry )
 
 #if defined(HAVE_THREAD_LOCAL_STORAGE)
 	_papi_hwi_my_thread = NULL;
-	THRDBG( "TLS for thread 0x%lx is now %p\n", entry->tid,
+	THRDBG( "TLS for thread %ld is now %p\n", entry->tid,
 			_papi_hwi_my_thread );
 #endif
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int
@@ -271,7 +281,7 @@ _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 
 	if ( ( thread = allocate_thread( tid  ) ) == NULL ) {
 		*dest = NULL;
-		return ( PAPI_ENOMEM );
+		return PAPI_ENOMEM;
 	}
 
 	/* Call the substrate to fill in anything special. */
@@ -281,14 +291,14 @@ _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 		if ( retval ) {
 			free_thread( &thread );
 			*dest = NULL;
-			return ( retval );
+			return retval;
 		}
 	}
 
-	insert_thread( thread );
+	insert_thread( thread, tid );
 
 	*dest = thread;
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 #if defined(ANY_THREAD_GETS_SIGNAL)
@@ -315,7 +325,7 @@ _papi_hwi_broadcast_signal( unsigned int mytid )
 				   state & ( PAPI_OVERFLOWING | PAPI_MULTIPLEXING ) ) ) {
 				/* xxxx mpx_info inside _papi_mdi_t _papi_hwi_system_info is commented out.
 				   See papi_internal.h for details. The multiplex_timer_sig value is now part of that structure */
-			  THRDBG("Thread 0x%lx sending signal %d to thread 0x%lx\n",mytid,foo->tid,
+			  THRDBG("Thread %ld sending signal %d to thread %ld\n",mytid,foo->tid,
 				  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_hwd[i]->cmp_info.itimer_sig));
 			  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, 
 				  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_hwd[i]->cmp_info.itimer_sig));
@@ -359,7 +369,7 @@ _papi_hwi_set_thread_id_fn( unsigned long ( *id_fn ) ( void ) )
 	else
 		_papi_hwi_thread_head->tid = ( unsigned long ) getpid(  );
 
-	THRDBG( "New master tid is 0x%lx\n", _papi_hwi_thread_head->tid );
+	THRDBG( "New master tid is %ld\n", _papi_hwi_thread_head->tid );
 #else
 	THRDBG( "Skipping set of thread id function\n" );
 #endif
@@ -379,9 +389,14 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
 	else
 		tid = ( unsigned long ) getpid(  );
 
-	if ( thread->tid == tid ) {
+        THRDBG("Want to shutdown thread %ld, alloc %ld, our_tid: %ld\n",
+	       thread->tid,
+	       thread->allocator_tid,
+	       tid);
+
+	if ((thread->tid==tid) || ( thread->allocator_tid == tid )) {
 		remove_thread( thread );
-		THRDBG( "Shutting down thread 0x%lx at %p\n", thread->tid, thread );
+		THRDBG( "Shutting down thread %ld at %p\n", thread->tid, thread );
 		for ( i = 0; i < papi_num_components; i++ ) {
 			retval = _papi_hwd[i]->shutdown( thread->context[i] );
 			if ( retval != PAPI_OK )
@@ -391,9 +406,9 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
 		return ( failure );
 	}
 
-	THRDBG( "Skipping shutdown thread 0x%lx at %p, thread 0x%lx not owner!\n",
+	THRDBG( "Skipping shutdown thread %ld at %p, thread %ld not allocator!\n",
 			thread->tid, thread, tid );
-	return ( PAPI_EBUG );
+	return PAPI_EBUG;
 }
 
 /* THESE MUST BE CALLED WITH A GLOBAL LOCK */
@@ -401,15 +416,55 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
 int
 _papi_hwi_shutdown_global_threads( void )
 {
-	int err;
-	ThreadInfo_t *tmp = _papi_hwi_lookup_thread( 0 );
+        int err,num_threads,i;
+	ThreadInfo_t *tmp,*next;
+	unsigned long our_tid;
+
+	tmp = _papi_hwi_lookup_thread( 0 );
 
 	if ( tmp == NULL ) {
-		THRDBG( "Did not find my thread for shutdown!\n" );
-		err = PAPI_EBUG;
-	} else {
-		err = _papi_hwi_shutdown_thread( tmp );
+	   THRDBG( "Did not find my thread for shutdown!\n" );
+	   err = PAPI_EBUG;
 	}
+	else {
+	   our_tid=tmp->tid;
+
+	   THRDBG("Shutting down %ld\n",our_tid);
+
+	   err = _papi_hwi_shutdown_thread( tmp );
+
+
+	   /* count threads */
+	   tmp = ( ThreadInfo_t * ) _papi_hwi_thread_head;
+	   num_threads=0;
+	   while(tmp!=NULL) {
+	      num_threads++;
+	      if (tmp->next==_papi_hwi_thread_head) break;
+	      tmp=tmp->next;
+	   }
+
+	   /* Shut down all threads allocated by this thread */
+	   /* Urgh it's a circular list where we removed in the loop  */
+	   /* so the only sane way to do it is get a count in advance */
+	   tmp = ( ThreadInfo_t * ) _papi_hwi_thread_head;
+
+	   for(i=0;i<num_threads;i++) {
+
+	      next=tmp->next;
+
+	      THRDBG("looking at #%d %ld our_tid: %ld alloc_tid: %ld\n",
+		     i,tmp->tid,our_tid,tmp->allocator_tid);
+	    
+	      if (tmp->allocator_tid==our_tid) {
+		 THRDBG("Also removing thread %ld\n",tmp->tid);
+	         err = _papi_hwi_shutdown_thread( tmp );
+	      }
+  
+	      tmp=next;
+
+	   }
+	}
+
 
 #ifdef DEBUG
 	if ( ISLEVEL( DEBUG_THREADS ) ) {
@@ -428,7 +483,7 @@ _papi_hwi_shutdown_global_threads( void )
 	_papi_hwi_thread_kill_fn = NULL;
 #endif
 
-	return ( err );
+	return err;
 }
 
 int

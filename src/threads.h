@@ -27,6 +27,7 @@
 typedef struct _ThreadInfo
 {
 	unsigned long int tid;
+	unsigned long int allocator_tid;
 	struct _ThreadInfo *next;
 	hwd_context_t **context;
 	void *thread_storage[PAPI_MAX_TLS];
@@ -135,9 +136,9 @@ _papi_hwi_lookup_thread( int custom_tid )
 
 	if ( tmp ) {
 		_papi_hwi_thread_head = tmp;
-		THRDBG( "Found thread 0x%lx at %p\n", tid, tmp );
+		THRDBG( "Found thread %ld at %p\n", tid, tmp );
 	} else {
-		THRDBG( "Did not find tid 0x%lx\n", tid );
+		THRDBG( "Did not find tid %ld\n", tid );
 	}
 
 	_papi_hwi_unlock( THREADS_LOCK );
