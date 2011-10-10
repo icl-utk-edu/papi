@@ -246,11 +246,11 @@ create_EventSet( EventSetInfo_t ** here )
 
 	ESI = ( EventSetInfo_t * ) papi_malloc( sizeof ( EventSetInfo_t ) );
 	if ( ESI == NULL )
-		return ( PAPI_ENOMEM );
+		return PAPI_ENOMEM;
 	memset( ESI, 0x00, sizeof ( EventSetInfo_t ) );
 
 	*here = ESI;
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int
@@ -364,6 +364,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 void
 _papi_hwi_free_EventSet( EventSetInfo_t * ESI )
 {
+
 	if ( ESI->EventInfoArray )
 		papi_free( ESI->EventInfoArray );
 	if ( ESI->NativeInfoArray )
@@ -387,6 +388,7 @@ _papi_hwi_free_EventSet( EventSetInfo_t * ESI )
 	memset( ESI, 0x00, sizeof ( EventSetInfo_t ) );
 #endif
 	papi_free( ESI );
+
 }
 
 static int
@@ -431,16 +433,16 @@ _papi_hwi_create_eventset( int *EventSet, ThreadInfo_t * handle )
 	/* Is the EventSet already in existence? */
 
 	if ( ( EventSet == NULL ) || ( handle == NULL ) )
-		return ( PAPI_EINVAL );
+		return PAPI_EINVAL;
 
 	if ( *EventSet != PAPI_NULL )
-		return ( PAPI_EINVAL );
+		return PAPI_EINVAL;
 
 	/* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
 	retval = create_EventSet( &ESI );
 	if ( retval != PAPI_OK )
-		return ( retval );
+		return retval;
 
 	ESI->CmpIdx = -1;		 /* when eventset is created, it is not decided yet which component it belongs to, until first event is added */
 	ESI->state = PAPI_STOPPED;
@@ -450,14 +452,15 @@ _papi_hwi_create_eventset( int *EventSet, ThreadInfo_t * handle )
 	retval = add_EventSet( ESI, handle );
 	if ( retval < PAPI_OK ) {
 		_papi_hwi_free_EventSet( ESI );
-		return ( retval );
+		return retval ;
 	}
 
 	*EventSet = ESI->EventSetIndex;
+
 	INTDBG( "(%p,%p): new EventSet in slot %d\n",
 			( void * ) EventSet, handle, *EventSet );
 
-	return ( retval );
+	return retval;
 }
 
 /* This function returns the index of the the next free slot
@@ -527,7 +530,7 @@ _papi_hwi_remove_EventSet( EventSetInfo_t * ESI )
 
 	_papi_hwi_unlock( INTERNAL_LOCK );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 
@@ -1160,7 +1163,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
    hwd_context_t *context;
    int EventCode;
    NativeInfo_t *native;
-	
+
    num_cntrs = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
 
    for(i=0;i<num_cntrs;i++) {
@@ -1191,6 +1194,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 	     /* native[j].ni_bits?? */
 	  }
       }
+
       /* do we really need to do this, seeing as we free() it later? */
       ESI->EventInfoArray[i].event_code= ( unsigned int ) PAPI_NULL;
       for( j = 0; j < MAX_COUNTER_TERMS; j++ ) {
@@ -1249,7 +1253,6 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
    memset( &ESI->inherit, 0x0, sizeof(EventSetInheritInfo_t) );
 
    ESI->CpuInfo = NULL;
-
 
    return PAPI_OK;
 }

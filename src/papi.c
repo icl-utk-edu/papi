@@ -1512,6 +1512,8 @@ PAPI_destroy_eventset( int *EventSet )
 {
 	EventSetInfo_t *ESI;
 
+	APIDBG("Destroying Eventset %d\n",*EventSet);
+
 	/* check for pre-existing ESI */
 
 	if ( EventSet == NULL )
@@ -1530,7 +1532,7 @@ PAPI_destroy_eventset( int *EventSet )
 	_papi_hwi_remove_EventSet( ESI );
 	*EventSet = PAPI_NULL;
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /* simply checks for valid EventSet, calls substrate start() call */
@@ -2357,6 +2359,8 @@ PAPI_cleanup_eventset( int EventSet )
 	EventSetInfo_t *ESI;
 	int i, cidx, total, retval;
 
+	APIDBG("Attempting to cleanup Eventset %d\n",EventSet);
+
 	/* Is the EventSet already in existence? */
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -2387,6 +2391,7 @@ PAPI_cleanup_eventset( int EventSet )
 				papi_return( retval );
 		}
 	}
+
 	/* clear profile flag and turn off hardware profile handler */
 	if ( ( ESI->state & PAPI_PROFILING ) &&
 		 _papi_hwd[cidx]->cmp_info.hardware_intr &&
@@ -2410,7 +2415,7 @@ PAPI_cleanup_eventset( int EventSet )
 	retval = _papi_hwd[cidx]->cleanup_eventset( ESI->ctl_state );
 	if ( retval != PAPI_OK ) 
 		papi_return( retval );
-	
+
 	/* Now do the magic */
 	papi_return( _papi_hwi_cleanup_eventset( ESI ) );
 }
@@ -3868,6 +3873,7 @@ PAPI_num_events( int EventSet )
 	return ( ESI->NumberOfEvents );
 }
 
+
 /** @class PAPI_shutdown
   *	@brief Finish using PAPI and free all related resources. 
   *
@@ -3886,10 +3892,11 @@ PAPI_num_events( int EventSet )
 void
 PAPI_shutdown( void )
 {
-	DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
-	EventSetInfo_t *ESI;
-	int i, j = 0;
-	ThreadInfo_t *master;
+        EventSetInfo_t *ESI;
+        ThreadInfo_t *master;
+        DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
+        int i, j = 0;
+
 
 	APIDBG( "Enter\n" );
 	if ( init_retval == DEADBEEF ) {
@@ -3899,26 +3906,33 @@ PAPI_shutdown( void )
 
 	MPX_shutdown(  );
 
-	master = _papi_hwi_lookup_thread( 0 );
+	/* Free all EventSets for this thread */
 
-	/* Count number of running EventSets AND */
-	/* Stop any running EventSets in this thread */
+   master = _papi_hwi_lookup_thread( 0 );
+
+      /* Count number of running EventSets AND */
+      /* Stop any running EventSets in this thread */
 
 #ifdef DEBUG
-  again:
+again:
 #endif
-	for ( i = 0; i < map->totalSlots; i++ ) {
-		ESI = map->dataSlotArray[i];
-		if ( ESI ) {
-			if ( ESI->master == master ) {
-				if ( ESI->state & PAPI_RUNNING )
-					PAPI_stop( i, NULL );
-				PAPI_cleanup_eventset( i );
-				_papi_hwi_free_EventSet( ESI );
-			} else if ( ESI->state & PAPI_RUNNING )
-				j++;
-		}
-	}
+   for( i = 0; i < map->totalSlots; i++ ) {
+      ESI = map->dataSlotArray[i];
+      if ( ESI ) {
+	 if ( ESI->master == master ) {
+	    if ( ESI->state & PAPI_RUNNING ) {
+	       PAPI_stop( i, NULL );
+	    }
+	    PAPI_cleanup_eventset( i );
+	    _papi_hwi_free_EventSet( ESI );
+	 } 
+         else {
+            if ( ESI->state & PAPI_RUNNING ) {
+	       j++;
+	    }
+	 }
+      }
+   }
 
 	/* No locking required, we're just waiting for the others
 	   to call shutdown or stop their eventsets. */

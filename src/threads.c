@@ -374,8 +374,36 @@ _papi_hwi_set_thread_id_fn( unsigned long ( *id_fn ) ( void ) )
 	THRDBG( "Skipping set of thread id function\n" );
 #endif
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
+
+
+static int _papi_hwi_thread_free_eventsets(long tid) {
+
+   EventSetInfo_t *ESI;
+   ThreadInfo_t *master;
+   DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
+   int i;
+
+   master = _papi_hwi_lookup_thread( tid );
+
+   /* do we need locking around this? */
+   for( i = 0; i < map->totalSlots; i++ ) {
+      ESI = map->dataSlotArray[i];
+      if ( ( ESI ) && (ESI->master!=NULL) ) {
+
+	 if ( ESI->master == master ) {
+	    THRDBG("Attempting to remove %d from tid %ld\n",ESI->EventSetIndex,tid);
+	    _papi_hwi_remove_EventSet(ESI);
+	 } 
+      }
+   }
+
+   return PAPI_OK;
+}
+
+
+
 
 int
 _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
@@ -395,6 +423,9 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
 	       tid);
 
 	if ((thread->tid==tid) || ( thread->allocator_tid == tid )) {
+
+                _papi_hwi_thread_free_eventsets(tid);
+
 		remove_thread( thread );
 		THRDBG( "Shutting down thread %ld at %p\n", thread->tid, thread );
 		for ( i = 0; i < papi_num_components; i++ ) {
