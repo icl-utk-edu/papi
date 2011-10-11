@@ -1,8 +1,7 @@
 # File: ctests/Makefile
 # CVS:  $Id$
-INCLUDE = -I. -I../testlib
-LIBRARY = -lpapi
-PAPILIB = $(LIBRARY)
+INCLUDE = -I.. -I. -I../testlib
+PAPILIB = ../libpapi.a
 CC	= gcc
 CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall

@@ -316,6 +316,83 @@ case4(  )
 	return ( SUCCESS );
 }
 
+/* Tests that PAPI_read() works immediately after
+   PAPI_start() */
+
+int
+case5(  )
+{
+	int retval, i, EventSet = PAPI_NULL;
+	long long start_values[4] = { 0,0,0,0 }, values[4] = {0,0,0,0};
+	char out[PAPI_MAX_STR_LEN];
+
+	PAPI_events_len = 2;
+	init_papi( PAPI_events, &PAPI_events_len );
+
+	retval = PAPI_create_eventset( &EventSet );
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_create_eventset", retval );
+
+	/* In Component PAPI, EventSets must be assigned a component index
+	   before you can fiddle with their internals.
+	   0 is always the cpu component */
+
+	retval = PAPI_assign_eventset_component( EventSet, 0 );
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_assign_eventset_component", retval );
+	
+	retval = PAPI_set_multiplex( EventSet );
+        if ( retval == PAPI_ENOSUPP) {
+	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	}   
+	else if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
+
+	i = 0;
+	retval = PAPI_add_event( EventSet, PAPI_events[i] );
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_add_event", retval );
+	PAPI_event_code_to_name( PAPI_events[i], out );
+	printf( "Added %s\n", out );
+
+	i = 1;
+	retval = PAPI_add_event( EventSet, PAPI_events[i] );
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_add_event", retval );
+	PAPI_event_code_to_name( PAPI_events[i], out );
+	printf( "Added %s\n", out );
+
+	do_stuff(  );
+
+	retval = PAPI_start( EventSet );
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_start", retval );
+	
+	retval = PAPI_read( EventSet, start_values );
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_read", retval );
+
+	do_stuff(  );
+
+	retval = PAPI_stop( EventSet, values );
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_stop", retval );
+
+	if ( !TESTS_QUIET ) {
+		test_print_event_header( "case5:", EventSet );
+		printf( TAB2, "case5 start: ", start_values[0], start_values[1]);
+		printf( TAB2, "case5 end:", values[0], values[1]);
+		printf( TAB2, "case5 diff:", values[0]-start_values[0], values[1]-start_values[1]);
+	}
+
+	retval = PAPI_cleanup_eventset( EventSet );	/* JT */
+	if ( retval != PAPI_OK )
+		CPP_TEST_FAIL( "PAPI_cleanup_eventset", retval );
+
+	PAPI_shutdown(  );
+	return ( SUCCESS );
+}
+
 int
 main( int argc, char **argv )
 {
@@ -334,6 +411,9 @@ main( int argc, char **argv )
 
 	printf( "\ncase4: Does add/setmpx/add work?\n" );
 	case4(  );
+	
+	printf( "\ncase5: Does setmpx/add/add/start/read work?\n" );
+	case5(  );
 
 	test_pass( __FILE__, NULL, 0 );
 	exit( 0 );
