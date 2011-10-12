@@ -52,7 +52,7 @@ echo ""
 if [ -r /proc/cpuinfo ]; then
    echo "Cpuinfo:"
    # only print info on first processor on x86
-   cat /proc/cpuinfo | sed '/^$/q'
+   sed '/^$/q' /proc/cpuinfo
 fi
 
 echo ""
