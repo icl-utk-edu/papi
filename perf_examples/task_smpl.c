@@ -145,6 +145,11 @@ process_smpl_buf(perf_event_desc_t *hw)
 		if (ret)
 			return; /* nothing to read */
 
+		if (options.opt_no_show) {
+			perf_skip_buffer(hw->buf, ehdr.size - sizeof(ehdr));
+			continue;
+		}
+
 		switch(ehdr.type) {
 			case PERF_RECORD_SAMPLE:
 				collected_samples++;
@@ -166,7 +171,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 				break;
 			default:
 				printf("unknown sample type %d\n", ehdr.type);
-				perf_skip_buffer(hw->buf, ehdr.size);
+				perf_skip_buffer(hw->buf, ehdr.size - sizeof(ehdr));
 		}
 	}
 }
