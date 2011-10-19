@@ -3967,7 +3967,7 @@ again:
  *
  *  @par C Interface:
  *     \#include <papi.h> @n
- *     int PAPI_strerror( int code );
+ *     char * PAPI_strerror( int errorCode );
  *
  *  @param[in] code  
  *      -- the error code to interpret 
@@ -3992,7 +3992,7 @@ again:
  *  ret = PAPI_create_eventset(&EventSet);
  *  if (ret != PAPI_OK)
  *  {
- *     fprintf(stderr, \"PAPI error %d: %s\\n\", ret, PAPI_strerror(retval));
+ *     fprintf(stderr, "PAPI error %d: %s\n", ret, PAPI_strerror(retval));
  *     exit(1);
  *  }
  *  // Add Total Instructions Executed to our EventSet
@@ -4000,7 +4000,7 @@ again:
  *  if (ret != PAPI_OK)
  *  {
  *     PAPI_perror(ret, error_str, PAPI_MAX_STR_LEN);
- *     fprintf(stderr,\"PAPI_error %d: %s\\n\", ret, error_str);
+ *     fprintf(stderr,"PAPI_error %d: %s\n", ret, error_str);
  *     exit(1);
  *  }
  *  // Start counting
