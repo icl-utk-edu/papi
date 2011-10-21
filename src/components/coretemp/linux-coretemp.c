@@ -70,7 +70,7 @@ int generateEventList(char *base_dir)
 			last->next = temp;
 		  last = temp;
 
-		  snprintf(temp->name, NAME_MAX, "%s.%s", hwmonx->d_name, events->d_name);
+		  snprintf(temp->name, PAPI_MAX_STR_LEN, "%s.%s", hwmonx->d_name, events->d_name);
 		  snprintf(temp->path, PATH_MAX, "%s/%s", path, events->d_name);
 
 		  /* don't optimize this yet....
@@ -123,12 +123,15 @@ int coretemp_init_substrate( )
   if ( NUM_EVENTS < 0 ) 
 	return ( NUM_EVENTS );
 
+  if ( NUM_EVENTS == 0 ) 
+	return ( PAPI_OK );
+
   t = root;
   _coretemp_native_events = (CORETEMP_native_enent_entry_t*)
 	papi_malloc(sizeof(CORETEMP_native_enent_entry_t) * NUM_EVENTS);
 
   do {
-	strncpy(_coretemp_native_events[i].name,t->name,NAME_MAX);
+	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
 	strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
 	_coretemp_native_events[i].stone = 0;
 	_coretemp_native_events[i].resources.selector = i + 1;
