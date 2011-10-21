@@ -34,7 +34,7 @@ check_values( int eventset, int *events, int nevents, long long *values,
 	}
 
 	for ( j = 0; j < nevents; j++ ) {
-		spread[j] = abs( ( int ) ( refvalues[j] - values[j] ) );
+	  spread[j] = abs( (int) ( refvalues[j] - values[j] ) );
 		if ( values[j] )
 			spread[j] /= ( double ) values[j];
 		if ( !TESTS_QUIET )
@@ -49,7 +49,9 @@ check_values( int eventset, int *events, int nevents, long long *values,
                 else {
                   char buff[BUFSIZ];
 
-		  sprintf(buff,"Error on %d, %lf>%lf and %lld>%d\n",j,spread[j],MPX_TOLERANCE,
+		  printf("reference = %lld,  value = %lld,  diff = %lld\n",
+			 refvalues[j],values[j],refvalues[j] - values[j]  );
+		  sprintf(buff,"Error on %d, spread %lf > threshold %lf AND count %lld > minimum size threshold %d\n",j,spread[j],MPX_TOLERANCE,
 			 refvalues[j],MINCOUNTS);
 
 		  test_fail( __FILE__, __LINE__, buff, 1 );
