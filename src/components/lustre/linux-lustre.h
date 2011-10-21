@@ -17,6 +17,8 @@
 #define _PAPI_LUSTRE_H
 
 #include <dirent.h>
+#include <stdint.h>
+#include <ctype.h>
 
 /** describes a single counter with its properties */
 typedef struct counter_info_struct
