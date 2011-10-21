@@ -52,7 +52,12 @@ int generateEventList(char *base_dir)
 	if ( !strncmp("hwmon", hwmonx->d_name, 5) ) {
 	  snprintf(path, PATH_MAX, "%s/%s/device", base_dir, hwmonx->d_name);
 
+	  SUBDBG("Trying to open %s\n",path);
 	  d = opendir(path);
+	  if (d==NULL) {
+	     continue;
+	  }
+
 	  while( (events = readdir(d)) ) {
 		if ( events->d_name[0] == '.' )
 		  continue;
