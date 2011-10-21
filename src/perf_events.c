@@ -397,7 +397,7 @@ partition_events( context_t * ctx, control_state_t * ctl )
 		}
 		/* The final group we created is still open; close it */
 		for ( i = final_group; i < ctl->num_events; i++ ) {
-			close( ctx->evt[i].event_fd );
+		    if (ctx->evt[i].event_fd>=0) close( ctx->evt[i].event_fd );
 		}
 		ctx->evt[final_group].event_fd = -1;
 	}
@@ -600,7 +600,7 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 	 */
 	while ( i > 0 ) {
 		i--;
-		close( ctx->evt[i].event_fd );
+		if (ctx->evt[i].event_fd>=0) close( ctx->evt[i].event_fd );
 	}
 
 	return ret;
@@ -1613,6 +1613,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	caddr_t address;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int i;
 
 	if ( thread == NULL ) {
 		PAPIERROR( "thread == NULL in _papi_pe_dispatch_timer for fd %d!", fd );
@@ -1649,25 +1650,21 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 			( "thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
 			  fd , thread->running_eventset[cidx]->overflow.flags);
 	}
-	{
-		int i;
 
-		/* See if the fd is one that's part of the this thread's context */
-		for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts;
-			  i++ ) {
-			if ( fd ==
-				 ( ( context_t * ) thread->context[cidx] )->evt[i].event_fd ) {
-				found_evt_idx = i;
-				break;
-			}
-		}
-		if ( found_evt_idx == -1 ) {
-			PAPIERROR
-				( "Unable to find fd %d among the open event fds _papi_hwi_dispatch_timer!",
-				  fd );
-		}
+        /* See if the fd is one that's part of the this thread's context */
+	for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts; i++ ) {
+	    if ( fd == ( ( context_t * ) thread->context[cidx] )->evt[i].event_fd ) {
+	       found_evt_idx = i;
+	       break;
+	    }
 	}
 
+        if ( found_evt_idx == -1 ) {
+	   PAPIERROR( "Unable to find fd %d among the open event fds "
+		      "_papi_hwi_dispatch_timer!", fd );
+	   return;
+	}
+	
 	ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL );
 
 	if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING )
