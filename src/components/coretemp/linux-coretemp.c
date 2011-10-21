@@ -39,7 +39,7 @@ int generateEventList(char *base_dir)
   int count = 0;
   struct dirent *hwmonx,*events;
   struct temp_event *temp;
-  struct temp_event *last;
+  struct temp_event *last = NULL;
 
   dir = opendir(base_dir);
   if ( dir == NULL ) {
@@ -59,15 +59,20 @@ int generateEventList(char *base_dir)
 			 !strncmp("fan", events->d_name, 3) ) {
 		  /* new_event   path, events->d_name */
 		  temp = (struct temp_event *)papi_malloc(sizeof(struct temp_event));
-		  if (!temp) 
+		  if (!temp) {
 			PAPIERROR("out of memory!");
-		  
+			/* We should also free any previously allocated data */
+		  }
+
 		  temp->next = NULL;
 
-		  if (root == NULL) 
+		  if (root == NULL) {
 			root = temp;
-		  else
-			last->next = temp;
+		  }
+		  else {
+		     if (last) last->next = temp;
+		  }
+
 		  last = temp;
 
 		  snprintf(temp->name, PAPI_MAX_STR_LEN, "%s.%s", hwmonx->d_name, events->d_name);
