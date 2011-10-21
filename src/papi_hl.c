@@ -434,18 +434,21 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
   *		A system or C library call failed inside PAPI, see the errno variable. 
   *
   *	@par Examples:
-  @code
-int num_hwcntrs;
-//  The installation does not support PAPI 
-if ((num_hwcntrs = PAPI_num_counters()) < 0 )
-	handle_error(1);
-//  The installation supports PAPI, but has no counters 
-if ((num_hwcntrs = PAPI_num_counters()) == 0 )
-	fprintf(stderr,"Info:: This machine does not provide hardware counters.\n");
+  * @code
+  * int num_hwcntrs;
+  * //  The installation does not support PAPI 
+  * if ((num_hwcntrs = PAPI_num_counters()) < 0 )
+  * 	handle_error(1);
+  * //  The installation supports PAPI, but has no counters 
+  * if ((num_hwcntrs = PAPI_num_counters()) == 0 )
+  * 	fprintf(stderr,"Info:: This machine does not provide hardware counters.\n");
   *	@endcode
   *
   * PAPI_num_counters() returns the optimal length of the values array for the high level functions. 
-  * This value corresponds to the number of hardware counters supported by the current substrate. 
+  * This value corresponds to the number of hardware counters supported by the current substrate.
+  *
+  * @note This function only works for the CPU component. To determine the number of counters on
+  * another component, use the low level PAPI_num_cmp_hwctrs().
   */
 int
 PAPI_num_counters( void )
