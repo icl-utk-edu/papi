@@ -770,7 +770,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
 	/* query and set up the right event to monitor */
 	int EventSet = PAPI_NULL;
 	int i = 0, k, event_code, retval;
-	unsigned int counters, event_found = 0;
+	int counters, event_found = 0;
 	PAPI_event_info_t info;
 	const PAPI_component_info_t *s = NULL;
         const PAPI_hw_info_t *hw_info = NULL;
@@ -786,7 +786,11 @@ enum_add_native_events( int *num_events, int **evtcodes,
 			   "PAPI_get_hardware_info", 2 );
    
    
-	counters = ( unsigned int ) PAPI_num_hwctrs(  );
+	counters = PAPI_num_hwctrs(  );
+	if (counters<1) {
+	  test_fail(__FILE__,__LINE__,
+		    "No counters available!\n",1);
+	}
    
         if (need_interrupt) {
            if ( (!strcmp(hw_info->model_string,"POWER6")) ||
