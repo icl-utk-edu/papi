@@ -62,6 +62,10 @@ Thread( void *arg )
 	EventSet1 =
 		add_two_nonderived_events( &num_events1, &papi_event, &mask1 );
 
+	if (EventSet1 < 0) return NULL;
+
+	/* Wait, we're indexing a per-thread array with the EventSet number? */
+	/* does that make any sense at all???? -- vmw                        */
 	expected[EventSet1] = *( int * ) arg / mythreshold;
 	myid[EventSet1] = PAPI_thread_id(  );
 
