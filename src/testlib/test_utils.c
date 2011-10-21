@@ -9,8 +9,7 @@
 	declared here so it can be available globally
 */
 int TESTS_QUIET = 0;
-int TESTS_COLOR = 0;
-static int TEST_FAIL = 0;
+static int TESTS_COLOR = 0;
 static int TEST_WARN = 0;
 
 /*  Support routine to display header information to the screen
@@ -447,9 +446,7 @@ test_pass( char *file, long long **values, int num_tests )
   line_pad=(int)(50-strlen(file));
   if (line_pad<0) line_pad=0;
 
-	if ( TEST_FAIL ) {
-	}
-        else if ( TEST_WARN ) {
+        if ( TEST_WARN ) {
 	  if (TESTS_COLOR) {
 	    fprintf( stdout, "%-*s %sPASSED with WARNING%s\n", 
 		     line_pad, file, YELLOW, NORMAL);	   
@@ -475,10 +472,8 @@ test_pass( char *file, long long **values, int num_tests )
 	if ( PAPI_is_initialized(  ) )
 		PAPI_shutdown(  );
 
-	if ( !TEST_FAIL )
-		exit( 0 );
-	else
-		exit( 1 );
+	exit( 0 );
+
 }
 
 /* Use a positive value of retval to simply print an error message */
@@ -487,43 +482,39 @@ test_fail( char *file, int line, char *call, int retval )
 {
 
   int line_pad;
+  char buf[128];
 
   line_pad=(int)(50-strlen(file));
   if (line_pad<0) line_pad=0;
 
-	if ( TEST_FAIL )		 //Prevent duplicate output
-		return;
+  memset( buf, '\0', sizeof ( buf ) );
 
-	char buf[128];
-	memset( buf, '\0', sizeof ( buf ) );
-
-	if (TESTS_COLOR) {
-	  fprintf( stdout, "%-*s %sFAILED%s\nLine # %d\n", line_pad, file, 
+  if (TESTS_COLOR) {
+     fprintf( stdout, "%-*s %sFAILED%s\nLine # %d\n", line_pad, file, 
 		    RED,NORMAL,line );
-	}
-	else {
-	  fprintf( stdout, "%-*s FAILED\nLine # %d\n", line_pad, file, line );
-	}
+  }
+  else {
+     fprintf( stdout, "%-*s FAILED\nLine # %d\n", line_pad, file, line );
+  }
 
-	if ( retval == PAPI_ESYS ) {
-		sprintf( buf, "System error in %s", call );
-		perror( buf );
-	} else if ( retval > 0 ) {
-		fprintf( stdout, "Error: %s\n", call );
-	} else if ( retval == 0 ) {
+  if ( retval == PAPI_ESYS ) {
+     sprintf( buf, "System error in %s", call );
+     perror( buf );
+  } else if ( retval > 0 ) {
+     fprintf( stdout, "Error: %s\n", call );
+  } else if ( retval == 0 ) {
 #if defined(sgi)
 		fprintf( stdout, "SGI requires root permissions for this test\n" );
 #else
 		fprintf( stdout, "Error: %s\n", call );
 #endif
-	} else {
-		char errstring[PAPI_MAX_STR_LEN];
-		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-		fprintf( stdout, "Error in %s: %s\n", call, errstring );
-	}
+  } else {
+     char errstring[PAPI_MAX_STR_LEN];
+     PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
+     fprintf( stdout, "Error in %s: %s\n", call, errstring );
+  }
 
-	fprintf( stdout, "\n" );
-	TEST_FAIL = 1;
+  fprintf( stdout, "\n" );
 
 	/* NOTE: Because test_fail is called from thread functions, 
 	   calling PAPI_shutdown here could prevent some threads
