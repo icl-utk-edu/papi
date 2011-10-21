@@ -6,6 +6,8 @@
 #include "linux-acpi.h"
 #include "papi_memory.h"
 
+#define INVALID_VALUE -1000000L
+
 extern papi_vector_t _acpi_vector;
 int init_presets(  );
 
@@ -152,6 +154,8 @@ get_load_value(  )
 	}
 
 	fd = dup( fileno( f ) );
+	if (fd<0) goto fail;
+
 	fclose( f );
 	f = fdopen( fd, "r" );
 	assert( f );
@@ -181,7 +185,7 @@ get_load_value(  )
 		f = NULL;
 	}
 
-	return -1;
+	return INVALID_VALUE;
 }
 
 FILE *
@@ -226,25 +230,23 @@ get_temperature_value(  )
 	static int old_acpi = 0;
 
 	if ( !f ) {
-		if ( !
-			 ( f =
-			   fopen_first( "/proc/acpi/thermal_zone", "temperature",
-							"r" ) ) ) {
-			if ( !( f = fopen_first( "/proc/acpi/thermal", "status", "r" ) ) ) {
-				printf( "Unable to open ACPI temperature file." );
-				goto fail;
-			}
-
-			old_acpi = 1;
-		}
+	   if ( !( f = fopen_first( "/proc/acpi/thermal_zone", "temperature", "r" ) ) ) {
+	      if ( !( f = fopen_first( "/proc/acpi/thermal", "status", "r" ) ) ) {
+		 SUBDBG( "Unable to open ACPI temperature file." );
+		 goto fail;
+	      }
+	      old_acpi = 1;
+	   }
 	}
 
 	if ( !( p = fgets( txt, sizeof ( txt ), f ) ) ) {
-		printf( "Unable to read data from ACPI temperature file." );
+		SUBDBG( "Unable to read data from ACPI temperature file." );
 		goto fail;
 	}
 
 	fd = dup( fileno( f ) );
+	if (fd<0) goto fail;
+
 	fclose( f );
 	f = fdopen( fd, "r" );
 	assert( f );
@@ -263,10 +265,7 @@ get_temperature_value(  )
 		v = ( ( v - 2732 ) / 10 );	/* convert from deciKelvin to degrees Celcius */
 	}
 
-	if ( v > 100 )
-		v = 100;
-	if ( v < 0 )
-		v = 0;
+	if (( v > 100 ) || ( v < 0 )) PAPIERROR("Unexpected temperature value.\n");
 
 	return v;
 
@@ -276,7 +275,7 @@ get_temperature_value(  )
 		f = NULL;
 	}
 
-	return -1;
+	return INVALID_VALUE;
 }
 
 int
@@ -289,9 +288,9 @@ ACPI_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 
 	if ( failed ||
 		 ( ( ( ACPI_control_state_t * ) ctrl )->counts[0] =
-		   ( long long ) get_load_value(  ) ) < 0 ||
+		   ( long long ) get_load_value(  ) ) == INVALID_VALUE ||
 		 ( ( ( ACPI_control_state_t * ) ctrl )->counts[1] =
-		   ( long long ) get_temperature_value(  ) ) < 0 )
+		   ( long long ) get_temperature_value(  ) ) == INVALID_VALUE )
 		goto fail;
 
 	*events = ( ( ACPI_control_state_t * ) ctrl )->counts;
@@ -299,7 +298,7 @@ ACPI_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
 
   fail:
 	failed = 1;
-	return -1;
+	return PAPI_ESBSTR;
 }
 
 int
@@ -307,7 +306,7 @@ ACPI_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;			 /*unused */
 	( void ) ctrl;			 /*unused */
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int
@@ -315,7 +314,7 @@ ACPI_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;			 /*unused */
 	( void ) ctrl;			 /*unused */
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int
@@ -324,7 +323,7 @@ ACPI_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 	( void ) ctx;			 /*unused */
 	( void ) ctrl;			 /*unused */
 	( void ) from;			 /*unused */
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /*
@@ -341,7 +340,7 @@ ACPI_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	( void ) ctx;			 /*unused */
 	( void ) code;			 /*unused */
 	( void ) option;		 /*unused */
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /**
