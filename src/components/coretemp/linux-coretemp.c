@@ -11,6 +11,8 @@
  * but I have not explored this widely yet*/
 #define REFRESH_LAT 4000
 
+#define INVALID_RESULT -1000000L
+
 /* temporary event */
 struct temp_event {
   char name[PAPI_MAX_STR_LEN];
@@ -160,6 +162,10 @@ long getEventValue( int index )
   }
 
   fp = fopen(_coretemp_native_events[index].path, "r");
+  if (fp==NULL) {
+     return INVALID_RESULT;
+  }
+
   fgets(buf, PAPI_MAX_STR_LEN, fp);
   fclose(fp);
   return strtol(buf, NULL, 10);
