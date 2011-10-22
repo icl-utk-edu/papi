@@ -857,6 +857,8 @@ Optional Packages:
   --with-OS=<os>       		Specify operating system
   --with-no-cpu-counters		Specify a build with no CPU counters
   --with-OSVER=<ver>		Specify operating system version
+ --with-user-events	Build with support for user defined events.
+ --with-static-user-events             Build with a static user events file papi_static_user_events.h.
   --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds
   --with-nativecc=<path>		Specify native C compiler for header generation
   --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
@@ -1411,6 +1413,28 @@ else
 fi;
 echo "$as_me:$LINENO: result: $OSVER" >&5
 echo "${ECHO_T}$OSVER" >&6
+
+echo "$as_me:$LINENO: checking for user events" >&5
+echo $ECHO_N "checking for user events... $ECHO_C" >&6
+
+# Check whether --with-user_events or --without-user_events was given.
+if test "${with_user_events+set}" = set; then
+  withval="$with_user_events"
+  USER_EVENTS=yes
+fi;
+echo "$as_me:$LINENO: result: $USER_EVENTS" >&5
+echo "${ECHO_T}$USER_EVENTS" >&6
+
+echo "$as_me:$LINENO: checking for static user events build" >&5
+echo $ECHO_N "checking for static user events build... $ECHO_C" >&6
+
+# Check whether --with-static_user_events or --without-static_user_events was given.
+if test "${with_static_user_events+set}" = set; then
+  withval="$with_static_user_events"
+  STATIC_USER_EVENTS=yes
+fi;
+echo "$as_me:$LINENO: result: $STATIC_USER_EVENTS" >&5
+echo "${ECHO_T}$STATIC_USER_EVENTS" >&6
 
 echo "$as_me:$LINENO: checking for perf_event workaround level" >&5
 echo $ECHO_N "checking for perf_event workaround level... $ECHO_C" >&6
@@ -2243,7 +2267,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2246:" \
+echo "$as_me:2270:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -7340,6 +7364,15 @@ if test "$no_cpu_counters" = "yes"; then
   DESCR="$DESCR without CPU counters"
   CTEST_TARGETS=""
   FTEST_TARGETS=""
+fi
+
+if test "$STATIC_USER_EVENTS" = "yes"; then
+	CFLAGS="$CFLAGS -DSTATIC_USER_EVENTS"
+	USER_EVENTS="yes"
+fi
+
+if test "$USER_EVENTS" = "yes"; then
+	CFLAGS="$CFLAGS -DUSER_EVENTS"
 fi
 
 

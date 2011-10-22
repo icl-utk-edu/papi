@@ -24,6 +24,9 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#ifdef USER_EVENTS
+#include "papi_user_events.h"
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -488,6 +491,9 @@ PAPI_set_thr_specific( int tag, void *ptr )
 int
 PAPI_library_init( int version )
 {
+#ifdef USER_EVENTS
+	char *filename;
+#endif
 	int tmp = 0, tmpel;
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
@@ -638,6 +644,17 @@ PAPI_library_init( int version )
 	init_level = PAPI_LOW_LEVEL_INITED;
 	_in_papi_library_init_cnt--;
 	_papi_hwi_error_level = tmpel;
+
+#ifdef STATIC_USER_EVENTS
+	_papi_user_defined_events_setup(NULL);
+#endif
+
+#ifdef USER_EVENTS
+	if ( (filename = getenv( "PAPI_USER_EVENTS_FILE" )) != NULL ) {
+	  _papi_user_defined_events_setup(filename);
+	}
+#endif
+
 	return ( init_retval = PAPI_VER_CURRENT );
 }
 
@@ -689,7 +706,7 @@ PAPI_library_init( int version )
 int
 PAPI_query_event( int EventCode )
 {
-	if ( EventCode & PAPI_PRESET_MASK ) {
+	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
@@ -700,10 +717,20 @@ PAPI_query_event( int EventCode )
 			return ( PAPI_ENOEVNT );
 	}
 
-	if ( EventCode & PAPI_NATIVE_MASK ) {
+	if ( IS_NATIVE(EventCode) ) {
 		papi_return( _papi_hwi_query_native_event
 					 ( ( unsigned int ) EventCode ) );
 	}
+
+#ifdef USER_EVENTS
+	if ( IS_USER_DEFINED(EventCode) ) {
+	  EventCode &= PAPI_UE_AND_MASK;
+	  if ( EventCode < 0 || EventCode > (int)_papi_user_events_count)
+		return ( PAPI_EINVAL );
+
+	  papi_return( PAPI_OK );
+	}
+#endif
 
 	papi_return( PAPI_ENOTPRESET );
 }
@@ -783,17 +810,20 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
 	if ( info == NULL )
 		papi_return( PAPI_EINVAL );
 
-	if ( EventCode & PAPI_PRESET_MASK ) {
+	if ( IS_PRESET(EventCode) ) {
 		if ( i >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
 		papi_return( _papi_hwi_get_event_info( EventCode, info ) );
 	}
 
-	if ( EventCode & PAPI_NATIVE_MASK ) {
+	if ( IS_NATIVE(EventCode) ) {
 		papi_return( _papi_hwi_get_native_event_info
 					 ( ( unsigned int ) EventCode, info ) );
 	}
 
+	if ( IS_USER_DEFINED(EventCode) ) {
+	  papi_return( PAPI_OK );
+	}
 	papi_return( PAPI_ENOTPRESET );
 }
 
@@ -855,7 +885,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
 	if ( out == NULL )
 		papi_return( PAPI_EINVAL );
 
-	if ( EventCode & PAPI_PRESET_MASK ) {
+	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( ( EventCode >= PAPI_MAX_PRESET_EVENTS )
 			 || ( _papi_hwi_presets.info[EventCode].symbol == NULL ) )
@@ -866,10 +896,23 @@ PAPI_event_code_to_name( int EventCode, char *out )
 		papi_return( PAPI_OK );
 	}
 
-	if ( EventCode & PAPI_NATIVE_MASK ) {
+	if ( IS_NATIVE(EventCode) ) {
 		return ( _papi_hwi_native_code_to_name
 				 ( ( unsigned int ) EventCode, out, PAPI_MAX_STR_LEN ) );
 	}
+
+#ifdef USER_EVENTS
+	if ( IS_USER_DEFINED(EventCode) ) {
+	  EventCode &= PAPI_UE_AND_MASK;
+
+	  if ( EventCode < 0 || EventCode > (int)_papi_user_events_count )
+		papi_return( PAPI_EINVAL );
+
+	  strncpy( out, _papi_user_events[EventCode].symbol,
+		  PAPI_MIN_STR_LEN);
+	  papi_return( PAPI_OK );
+	}
+#endif
 
 	papi_return( PAPI_ENOEVNT );
 }
@@ -946,6 +989,16 @@ PAPI_event_name_to_code( char *in, int *out )
 			papi_return( PAPI_OK );
 		}
 	}
+
+#ifdef USER_EVENTS
+	for ( i=0; i < (int)_papi_user_events_count; i++ ) {
+	  if ( strcasecmp( _papi_user_events[i].symbol, in ) == 0 ) {
+		*out = (int) ( i | PAPI_UE_MASK );
+		papi_return( PAPI_OK );
+	  }
+	}
+#endif 
+
 	papi_return( _papi_hwi_native_name_to_code( in, out ) );
 }
 
@@ -1064,10 +1117,10 @@ PAPI_enum_event( int *EventCode, int modifier )
 	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	if ( _papi_hwi_invalid_cmp( cidx ) ||
-		 ( ( i & PAPI_PRESET_MASK ) && cidx > 0 ) )
+		 ( ( IS_PRESET(i) ) && cidx > 0 ) )
 		return ( PAPI_ENOCMP );
 
-	if ( i & PAPI_PRESET_MASK ) {
+	if ( IS_PRESET(i) ) {
 		if ( modifier == PAPI_ENUM_FIRST ) {
 			*EventCode = ( int ) PAPI_PRESET_MASK;
 			return ( PAPI_OK );
@@ -1083,11 +1136,27 @@ PAPI_enum_event( int *EventCode, int modifier )
 			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );
 			return ( PAPI_OK );
 		}
-	} else if ( i & PAPI_NATIVE_MASK ) {
+	} else if ( IS_NATIVE(i) ) {
 		/* Should check against num native events here */
 		return ( _papi_hwd[cidx]->
 				 ntv_enum_events( ( unsigned int * ) EventCode, modifier ) );
+	} 
+#ifdef USER_EVENTS
+	else if ( IS_USER_DEFINED(i) ) {
+	  if ( modifier == PAPI_ENUM_FIRST ) {
+		*EventCode = (int) 0x0;
+		return ( PAPI_OK );
+	  }
+
+	  i &= PAPI_UE_AND_MASK;
+	  ++i;
+
+	  if ( (int)_papi_user_events_count <= i )
+		*EventCode = i;
+	  return ( PAPI_OK );
 	}
+#endif
+
 	papi_return( PAPI_EINVAL );
 }
 
@@ -1428,8 +1497,9 @@ PAPI_remove_event( int EventSet, int EventCode )
 
 	/* Check argument for validity */
 
-	if ( ( ( EventCode & PAPI_PRESET_MASK ) == 0 ) &&
-		 ( EventCode & PAPI_NATIVE_MASK ) == 0 )
+	if ( ( !IS_PRESET(EventCode) ) &&
+		( !IS_NATIVE(EventCode) ) &&
+		( !IS_USER_DEFINED(EventCode) ))
 		papi_return( PAPI_EINVAL );
 
 	/* Of course, it must be stopped in order to modify it. */
@@ -3348,6 +3418,15 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		ptr->addr.end_off = internal.address_range.end_off;
 		papi_return( retval );
 	}
+	case PAPI_USER_EVENTS_FILE:
+	{
+#ifdef USER_EVENTS
+	  SUBDBG("Filename is -%s-\n", ptr->events_file);
+	  _papi_user_defined_events_setup(ptr->events_file);
+	  return( PAPI_OK );
+#endif
+	  return ( PAPI_ENOIMPL );
+	}
 	default:
 		papi_return( PAPI_EINVAL );
 	}
@@ -3947,6 +4026,10 @@ again:
 #endif
 
 	/* Shutdown the entire substrate */
+
+#ifdef USER_EVENTS
+	_papi_cleanup_user_events();
+#endif
 
 	_papi_hwi_shutdown_highlevel(  );
 	_papi_hwi_shutdown_global_internal(  );

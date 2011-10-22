@@ -220,6 +220,11 @@
 #define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,1,4,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
+  /* Tests for checking event code type */
+#define IS_NATIVE( EventCode ) ( ( EventCode & PAPI_NATIVE_MASK ) && !(EventCode & PAPI_PRESET_MASK) )
+#define IS_PRESET( EventCode ) ( ( EventCode & PAPI_PRESET_MASK ) && !(EventCode & PAPI_NATIVE_MASK) )
+#define IS_USER_DEFINED( EventCode ) ( ( EventCode & PAPI_PRESET_MASK ) && (EventCode & PAPI_NATIVE_MASK) )
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -458,6 +463,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 /* Currently the following options are only available on systems using the perf_events substrate within papi */
 #define PAPI_CPU_ATTACH		27      /**< Specify a cpu number the event set should be tied to */
 #define PAPI_INHERIT		28      /**< Option to set counter inheritance flag */
+#define PAPI_USER_EVENTS_FILE 29	/**< Option to set file from where to parse user defined events */
 
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
@@ -719,6 +725,9 @@ read the documentation carefully.  */
       int count;
    } PAPI_shlib_info_t;
 
+/** Specify the file containing user defined events. */
+typedef char* PAPI_user_defined_events_file_t;
+
    /* The following defines and next for structures define the memory heirarchy */
    /* All sizes are in BYTES */
    /* Associativity:
@@ -849,6 +858,7 @@ read the documentation carefully.  */
 		PAPI_exe_info_t *exe_info;
 		PAPI_component_info_t *cmp_info;
 		PAPI_addr_range_option_t addr;
+		PAPI_user_defined_events_file_t events_file;
 	} PAPI_option_t;
 
 /** @ingroup papi_data_structures

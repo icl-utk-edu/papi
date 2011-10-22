@@ -30,6 +30,9 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#ifdef USER_EVENTS
+#include "papi_user_events.h"
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
@@ -570,7 +573,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
     (void) thisindex;
 
     EventInfo_t *head;
-    int i, j, k, n, preset_index, nevt;
+    int i, j, k, n, preset_index = 0, nevt;
 
     APIDBG("Remapping %d events in EventSet %d\n",total_events,ESI->EventSetIndex);
 
@@ -587,7 +590,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
        }
 	   
        /* If it's a preset */
-       if ( head[j].event_code & PAPI_PRESET_MASK ) {
+       if ( IS_PRESET(head[j].event_code) ) {
 	  preset_index = ( int ) head[j].event_code & PAPI_PRESET_AND_MASK;
 
 	  /* walk all sub-events in the preset */
@@ -606,7 +609,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 	  /*head[j].pos[k]=-1; */
        } 
        /* It's a native event */
-       else {
+       else if( IS_NATIVE(head[j].event_code) ) {
 	  nevt = ( int ) head[j].event_code;
 
 	  /* Look for the new event in the NativeInfoArray */
@@ -618,7 +621,22 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 		break;
 	     }
 	  }
-       }					 /* end of if */
+       } 
+#ifdef USER_EVENTS 
+	   else if ( IS_USER_DEFINED(head[j].event_code) ) {
+		 for ( k = 0; k < MAX_COUNTER_TERMS; k++ ) {
+		   nevt = _papi_user_events[preset_index].events[k];
+		   if ( nevt == PAPI_NULL )
+			 break;
+		   for ( n = 0; n < ESI->NativeCount; n++ ) {
+			 if ( nevt == ESI->NativeInfoArray[n].ni_event ) {
+			   head[j].pos[k] = ESI->NativeInfoArray[n].ni_position;
+			 }
+		   }
+		 }
+	   }
+#endif
+	   /* end of if */
        j++;
     }						 /* end of for loop */
 }
@@ -794,7 +812,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
     if ( !_papi_hwi_is_sw_multiplex( ESI ) ) {
 
        /* Handle preset case */
-       if ( EventCode & PAPI_PRESET_MASK ) {
+       if ( IS_PRESET(EventCode) ) {
 	  int count;
 	  int preset_index = EventCode & ( int ) PAPI_PRESET_AND_MASK & 
 	                     ( int ) PAPI_COMPONENT_AND_MASK;
@@ -846,7 +864,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  }
        }
        /* Handle adding Native events */
-       else if ( EventCode & PAPI_NATIVE_MASK ) {
+       else if ( IS_NATIVE(EventCode) ) {
 
 	  /* Check if native event exists */
 	  if ( _papi_hwi_query_native_event( ( unsigned int ) EventCode ) != PAPI_OK ) {
@@ -878,7 +896,42 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		_papi_hwi_remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
 	     }
 	  }
-       } else {
+       } 
+#ifdef USER_EVENTS
+	   else if ( IS_USER_DEFINED( EventCode ) ) {
+		 int count;
+		 int index = EventCode & PAPI_UE_AND_MASK;
+
+		 if ( index < 0 || index >= (int)_papi_user_events_count )
+		   return ( PAPI_EINVAL );
+
+		 count = ( int ) _papi_user_events[index].count;
+
+		 for ( i = 0; i < count; i++ ) {
+		   for ( j = 0; j < ESI->overflow.event_counter; j++ ) {
+			 if ( ESI->overflow.EventCode[j] ==
+				 _papi_user_events[index].events[i] ) {
+			   return ( PAPI_EBUG );
+			 }
+		   }
+		 }
+
+		 remap = add_native_events( ESI,
+			 _papi_user_events[index].events,
+			 count, &ESI->EventInfoArray[thisindex] );
+
+		 if ( remap < 0 )
+		   return ( PAPI_ECNFLCT );
+		 else {
+		   ESI->EventInfoArray[thisindex].event_code       = (unsigned int) EventCode;
+		   ESI->EventInfoArray[thisindex].derived          = DERIVED_POSTFIX;
+		   ESI->EventInfoArray[thisindex].ops                      = _papi_user_events[index].operation;
+		   if ( remap )
+			 _papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
+		 }
+	   } 
+#endif
+	   else {
 
 	  /* not Native or Preset events */
 
@@ -1058,7 +1111,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 	} else
 		/* Remove the events hardware dependent stuff from the EventSet */
 	{
-		if ( EventCode & PAPI_PRESET_MASK ) {
+		if ( IS_PRESET(EventCode) ) {
 			int preset_index = EventCode & PAPI_PRESET_AND_MASK;
 
 			/* Check if it's within the valid range */
@@ -1079,7 +1132,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 									  native, j );
 			if ( retval != PAPI_OK )
 				return ( retval );
-		} else if ( EventCode & PAPI_NATIVE_MASK ) {
+		} else if ( IS_NATIVE(EventCode) ) {
 			/* Check if native event exists */
 			if ( _papi_hwi_query_native_event( ( unsigned int ) EventCode ) !=
 				 PAPI_OK )
@@ -1089,7 +1142,25 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 			retval = remove_native_events( ESI, &EventCode, 1 );
 			if ( retval != PAPI_OK )
 				return ( retval );
-		} else
+		} 
+#ifdef USER_EVENTS
+		else if ( IS_USER_DEFINED( EventCode ) ) {
+		  int index = EventCode & PAPI_UE_AND_MASK;
+
+		  if ( (index < 0) || (index >= (int)_papi_user_events_count) )
+			return ( PAPI_EINVAL );
+
+		  for( j = 0; j < PAPI_MAX_COUNTER_TERMS &&
+			  _papi_user_events[index].events[j] != 0; j++ ) {
+			retval = remove_native_events( ESI,
+				_papi_user_events[index].events, j);
+
+			if ( retval != PAPI_OK )
+			  return ( retval );
+		  }
+		} 
+#endif
+		else
 			return ( PAPI_ENOEVNT );
 	}
 	array = ESI->EventInfoArray;

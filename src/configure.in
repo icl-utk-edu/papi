@@ -70,6 +70,18 @@ AC_ARG_WITH(OSVER,
             fi ])
 AC_MSG_RESULT($OSVER)
 
+AC_MSG_CHECKING(for user events)
+AC_ARG_WITH(user_events, 
+						[ --with-user-events	Build with support for user defined events.],
+						[USER_EVENTS=yes])
+AC_MSG_RESULT($USER_EVENTS)
+
+AC_MSG_CHECKING(for static user events build)
+AC_ARG_WITH(static_user_events,
+							  [ --with-static-user-events             Build with a static user events file papi_static_user_events.h.],
+							  [STATIC_USER_EVENTS=yes])
+AC_MSG_RESULT($STATIC_USER_EVENTS)
+
 AC_MSG_CHECKING(for perf_event workaround level)
 AC_ARG_WITH(assumed_kernel,
 		[  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds],
@@ -1529,6 +1541,15 @@ if test "$no_cpu_counters" = "yes"; then
   DESCR="$DESCR without CPU counters"
   CTEST_TARGETS=""
   FTEST_TARGETS=""
+fi
+
+if test "$STATIC_USER_EVENTS" = "yes"; then
+	CFLAGS="$CFLAGS -DSTATIC_USER_EVENTS"
+	USER_EVENTS="yes"
+fi
+
+if test "$USER_EVENTS" = "yes"; then
+	CFLAGS="$CFLAGS -DUSER_EVENTS"
 fi
 
 AC_SUBST(prefix)
