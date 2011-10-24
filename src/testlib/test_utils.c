@@ -686,7 +686,7 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
   *mask = 0;
   counters = PAPI_num_hwctrs(  );
 
-  if (counters==0) {
+  if (counters<=0) {
      test_fail(__FILE__,__LINE__,"Zero Counters Available!  PAPI Won't like this!\n",0);
   }
 
@@ -698,7 +698,7 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
     if ( PAPI_query_event( (int) potential_evt_to_add[i][0] ) == PAPI_OK ) {
 			
        if ( PAPI_get_event_info( (int) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
-	  if ( ( info.count > 0 ) && ( counters > info.count ) ) {
+	 if ( ( info.count > 0 ) && ( (unsigned) counters > info.count ) ) {
 	     event_found = 1;
 	     break;
 	  }
