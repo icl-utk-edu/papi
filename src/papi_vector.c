@@ -498,11 +498,11 @@ vector_print_routine( void *func, char *fname, int pfunc )
 
 	ptr = vector_find_dummy( func, &buf );
 	if ( ptr ) {
-		printf( "%s: %s is mapped to %s.\n", ( ptr ? "DUMMY" : "function" ),
+		printf( "DUMMY: %s is mapped to %s.\n",
 				fname, buf );
 		papi_free( buf );
 	} else if ( ( !ptr && pfunc ) )
-		printf( "%s: %s is mapped to %p.\n", ( ptr ? "DUMMY" : "function" ),
+		printf( "function: %s is mapped to %p.\n",
 				fname, func );
 }
 
