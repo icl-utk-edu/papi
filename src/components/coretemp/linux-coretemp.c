@@ -267,13 +267,23 @@ int coretemp_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 int
 coretemp_shutdown( hwd_context_t * ctx )
 {
-    ( void ) ctx;
-
-	papi_free(_coretemp_native_events);
-
-	return ( PAPI_OK );
+  ( void ) ctx;
+  return ( PAPI_OK );
 }
 
+
+/*
+ * Clean up what was setup in  coretemp_init_substrate().
+ */
+int coretemp_shutdown_substrate( )
+{
+  if ( is_initialized ) {
+    is_initialized = 0;
+    papi_free(_coretemp_native_events);
+    _coretemp_native_events = NULL;
+  }
+  return ( PAPI_OK );
+}
 
 
 /* This function sets various options in the substrate
@@ -473,6 +483,7 @@ papi_vector_t _coretemp_vector = {
 	.stop = coretemp_stop,
 	.read = coretemp_read,
 	.shutdown = coretemp_shutdown,
+	.shutdown_substrate = coretemp_shutdown_substrate,
 	.ctl = coretemp_ctl,
 
 	.update_control_state = coretemp_update_control_state,
