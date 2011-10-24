@@ -142,7 +142,6 @@ main( int argc, char *argv[] )
 	int vector = 0;
 	int matrix = 0;
 	int double_precision = 0;
-	size_t element_size;
 	int retval = PAPI_OK;
 	char papi_event_str[PAPI_MIN_STR_LEN] = "PAPI_FP_OPS";
 	int papi_event;
@@ -200,11 +199,6 @@ main( int argc, char *argv[] )
 	if ( ( retval = PAPI_add_event( EventSet, papi_event ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
 
-	if ( double_precision )
-		element_size = sizeof ( double );
-	else
-		element_size = sizeof ( float );
-
 	printf( "\n" );
 
 	retval = PAPI_OK;
@@ -212,12 +206,18 @@ main( int argc, char *argv[] )
 	/* Inner Product test */
 	if ( inner ) {
 		/* Allocate the linear arrays */
-		x = malloc( INDEX5 * element_size );
-		y = malloc( INDEX5 * element_size );
+	   if (double_precision) {
+	        xd = malloc( INDEX5 * sizeof(double) );
+	        yd = malloc( INDEX5 * sizeof(double) );
+		if ( !( xd && yd ) )
+			retval = PAPI_ENOMEM;
+	   }
+	   else {
+	        x = malloc( INDEX5 * sizeof(float) );
+		y = malloc( INDEX5 * sizeof(float) );
 		if ( !( x && y ) )
 			retval = PAPI_ENOMEM;
-		xd = ( double * ) x;
-		yd = ( double * ) y;
+	   }
 
 		if ( retval == PAPI_OK ) {
 			headerlines( "Inner Product Test", TESTS_QUIET );
@@ -261,14 +261,19 @@ main( int argc, char *argv[] )
 	/* Matrix Vector test */
 	if ( vector && retval != PAPI_ENOMEM ) {
 		/* Allocate the needed arrays */
-		a = malloc( INDEX5 * INDEX5 * element_size );
-		x = malloc( INDEX5 * element_size );
-		y = malloc( INDEX5 * element_size );
+	  if (double_precision) {
+	        ad = malloc( INDEX5 * INDEX5 * sizeof(double) );
+	        xd = malloc( INDEX5 * sizeof(double) );
+	        yd = malloc( INDEX5 * sizeof(double) );
+		if ( !( ad && xd && yd ) )
+			retval = PAPI_ENOMEM;
+	  } else {
+	        a = malloc( INDEX5 * INDEX5 * sizeof(float) );
+	        x = malloc( INDEX5 * sizeof(float) );
+	        y = malloc( INDEX5 * sizeof(float) );
 		if ( !( a && x && y ) )
 			retval = PAPI_ENOMEM;
-		ad = ( double * ) a;
-		xd = ( double * ) x;
-		yd = ( double * ) y;
+	  }
 
 		if ( retval == PAPI_OK ) {
 			headerlines( "Matrix Vector Test", TESTS_QUIET );
@@ -319,14 +324,20 @@ main( int argc, char *argv[] )
 	/* Matrix Multiply test */
 	if ( matrix && retval != PAPI_ENOMEM ) {
 		/* Allocate the needed arrays */
-		a = malloc( INDEX5 * INDEX5 * element_size );
-		b = malloc( INDEX5 * INDEX5 * element_size );
-		c = malloc( INDEX5 * INDEX5 * element_size );
+	  if (double_precision) {
+	        ad = malloc( INDEX5 * INDEX5 * sizeof(double) );
+	        bd = malloc( INDEX5 * INDEX5 * sizeof(double) );
+	        cd = malloc( INDEX5 * INDEX5 * sizeof(double) );
+		if ( !( ad && bd && cd ) )
+			retval = PAPI_ENOMEM;
+	  } else {
+	        a = malloc( INDEX5 * INDEX5 * sizeof(float) );
+	        b = malloc( INDEX5 * INDEX5 * sizeof(float) );
+	        c = malloc( INDEX5 * INDEX5 * sizeof(float) );
 		if ( !( a && b && c ) )
 			retval = PAPI_ENOMEM;
-		ad = ( double * ) a;
-		bd = ( double * ) b;
-		cd = ( double * ) c;
+	  }
+
 
 		if ( retval == PAPI_OK ) {
 			headerlines( "Matrix Multiply Test", TESTS_QUIET );
