@@ -171,6 +171,7 @@ int
 main( int argc, char **argv )
 {
 	int i, retval, EventSet = PAPI_NULL;
+	int retval_start,retval_stop;
 	int bins = 100;
 	int show_dist = 0, show_std_dev = 0;
 	long long totcyc, values[2];
@@ -265,10 +266,13 @@ main( int argc, char **argv )
 
 	for ( i = 0; i < num_iters; i++ ) {
 		totcyc = PAPI_get_real_cyc(  );
-		PAPI_start( EventSet );
-		PAPI_stop( EventSet, values );
-		totcyc = PAPI_get_real_cyc(  ) - totcyc;
+		retval_start=PAPI_start( EventSet );
+		retval_stop=PAPI_stop( EventSet, values );
+		totcyc = PAPI_get_real_cyc(  ) - totcyc;		
 		array[i] = totcyc;
+		if (retval_start || retval_stop) {
+		   test_fail( __FILE__, __LINE__, "PAPI start/stop", retval_start );
+		}
 	}
 
 	do_output( 1, array, bins, show_std_dev, show_dist );
