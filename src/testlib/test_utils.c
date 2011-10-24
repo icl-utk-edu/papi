@@ -681,27 +681,28 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
       {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
     };
   int i = 0;
-  unsigned int counters, event_found = 0;
+  int counters, event_found = 0;
 
   *mask = 0;
-  counters = ( unsigned int ) PAPI_num_hwctrs(  );
+  counters = PAPI_num_hwctrs(  );
 
-  while ( ( i < 3 ) && ( !event_found ) ) {
-    if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
+  if (counters==0) {
+     test_fail(__FILE__,__LINE__,"Zero Counters Available!  PAPI Won't like this!\n",0);
+  }
+
+  /* This code tries to ensure that the event  generated will fit in the */
+  /* number of available counters. It doesn't account for the number     */
+  /* of counters used by the cycle counter.                              */
+
+  for(i=0;i<3;i++) {
+    if ( PAPI_query_event( (int) potential_evt_to_add[i][0] ) == PAPI_OK ) {
 			
-       if ( PAPI_get_event_info ( ( int ) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
+       if ( PAPI_get_event_info( (int) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
 	  if ( ( info.count > 0 ) && ( counters > info.count ) ) {
 	     event_found = 1;
-	  }
-	  else {
-	     if (counters==0) {
-		test_fail(__FILE__,__LINE__,"Zero Counters Available!  PAPI Won't like this!\n",0);
-	     }
+	     break;
 	  }
        }
-    }
-    if ( !event_found ) {
-       i++;
     }
   }
 
