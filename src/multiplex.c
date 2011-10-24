@@ -817,7 +817,7 @@ MPX_start( MPX_EventSet * mpx_events )
 			 * bother since the event might not have been
 			 * running long enough to get an accurate count.
 			 */
-			if ( !( t->cur_event->is_a_rate ) ) {
+			if ( t->cur_event && !( t->cur_event->is_a_rate ) ) {
 #ifdef MPX_NONDECR_HYBRID
 				if ( mev != t->cur_event ) {	/* This event is not running this slice */
 					mpx_events->start_values[i] +=
