@@ -1309,13 +1309,13 @@ _ultra_hwd_get_real_cycles( void )
 }
 
 long long
-_ultra_hwd_get_virt_usec( const hwd_context_t * zero )
+_ultra_hwd_get_virt_usec( hwd_context_t * zero )
 {
 	return ( ( long long ) gethrvtime(  ) / ( long long ) 1000 );
 }
 
 long long
-_ultra_hwd_get_virt_cycles( const hwd_context_t * zero )
+_ultra_hwd_get_virt_cycles( hwd_context_t * zero )
 {
 	return ( ( ( long long ) gethrvtime(  ) / ( long long ) 1000 ) *
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
