@@ -69,15 +69,25 @@ int generateEventList(char *base_dir)
 		  if (!temp) {
 			PAPIERROR("out of memory!");
 			/* We should also free any previously allocated data */
+			return PAPI_ENOMEM;
 		  }
 
 		  temp->next = NULL;
 
 		  if (root == NULL) {
-			root = temp;
+		     root = temp;
+		  }
+		  else if (last) {
+		     last->next = temp;
 		  }
 		  else {
-		     if (last) last->next = temp;
+		    /* Because this is a function, it is possible */
+		    /* we are called with root!=NULL but no last  */
+		    /* so add this to keep coverity happy         */
+		    free(temp);
+		    PAPIERROR("This shouldn't be possible\n");
+
+		    return PAPI_ESBSTR;
 		  }
 
 		  last = temp;
@@ -161,6 +171,7 @@ long getEventValue( int index )
 {
   char buf[PAPI_MAX_STR_LEN];
   FILE* fp;
+  long result;
 
   if (_coretemp_native_events[index].stone) {
 	return _coretemp_native_events[index].value;
@@ -171,9 +182,14 @@ long getEventValue( int index )
      return INVALID_RESULT;
   }
 
-  fgets(buf, PAPI_MAX_STR_LEN, fp);
+  if (fgets(buf, PAPI_MAX_STR_LEN, fp)==NULL) {
+     result=INVALID_RESULT;
+  }
+  else {
+     result=strtol(buf, NULL, 10);
+  }
   fclose(fp);
-  return strtol(buf, NULL, 10);
+  return result;
 }
 
 /*
