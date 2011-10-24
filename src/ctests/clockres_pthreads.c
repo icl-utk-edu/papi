@@ -87,10 +87,19 @@ main( int argc, char **argv )
 		test_skip( __FILE__, __LINE__, "pthread_attr_setscope", retval );
 #endif
 
-	pthread_create( &t1, &attr, pthread_main, NULL );
-	pthread_create( &t2, &attr, pthread_main, NULL );
-	pthread_create( &t3, &attr, pthread_main, NULL );
-	pthread_create( &t4, &attr, pthread_main, NULL );
+	if (pthread_create( &t1, &attr, pthread_main, NULL )) {
+	  test_fail(__FILE__, __LINE__, "cannot create thread", retval);
+	}
+	if (pthread_create( &t2, &attr, pthread_main, NULL )) {
+	  test_fail(__FILE__, __LINE__, "cannot create thread", retval);
+	}
+	if (pthread_create( &t3, &attr, pthread_main, NULL )) {
+	  test_fail(__FILE__, __LINE__, "cannot create thread", retval);
+	}
+	if (pthread_create( &t4, &attr, pthread_main, NULL )) {
+	  test_fail(__FILE__, __LINE__, "cannot create thread", retval);
+	}
+
 	pthread_main( NULL );
 
 	pthread_join( t1, NULL );
