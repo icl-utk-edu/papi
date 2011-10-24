@@ -425,6 +425,8 @@ case4( void )
 int
 main( int argc, char **argv )
 {
+  int retval;
+
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	printf( "%s: Using %d threads\n\n", argv[0], NUM_THREADS );
@@ -446,7 +448,10 @@ main( int argc, char **argv )
 	if ( case4(  ) != SUCCESS )
 		test_fail( __FILE__, __LINE__, "case4", PAPI_ESYS );
 
-	PAPI_library_init( PAPI_VER_CURRENT );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT )
+		CPP_TEST_FAIL( "PAPI_library_init", retval );
+
 	test_pass( __FILE__, NULL, 0 );
 	exit( 1 );
 }
