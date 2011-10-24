@@ -1374,8 +1374,8 @@ mpx_insert_events( MPX_EventSet * mpx_events, int *event_list,
 	 * of multiplexing events, so we can just delete that
 	 */
 	if ( mev && mev->papi_event ) {
-		PAPI_cleanup_eventset( mev->papi_event );
-		PAPI_destroy_eventset( &( mev->papi_event ) );
+		retval=PAPI_cleanup_eventset( mev->papi_event );
+		retval=PAPI_destroy_eventset( &( mev->papi_event ) );
 	}
 	if ( mev )
 		papi_free( mev );
@@ -1469,6 +1469,7 @@ mpx_remove_unused( MasterEvent ** head )
 {
 	MasterEvent *mev, *lastmev = NULL, *nextmev;
 	Threadlist *thr = ( *head == NULL ) ? NULL : ( *head )->mythr;
+	int retval;
 
 	/* Clean up and remove unused master events. */
 	for ( mev = *head; mev != NULL; mev = nextmev ) {
@@ -1479,8 +1480,8 @@ mpx_remove_unused( MasterEvent ** head )
 			} else {
 				lastmev->next = nextmev;
 			}
-			PAPI_cleanup_eventset( mev->papi_event );
-			PAPI_destroy_eventset( &( mev->papi_event ) );
+			retval=PAPI_cleanup_eventset( mev->papi_event );
+			retval=PAPI_destroy_eventset( &( mev->papi_event ) );
 			papi_free( mev );
 		} else {
 			lastmev = mev;

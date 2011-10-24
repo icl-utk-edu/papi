@@ -1487,7 +1487,7 @@ int
 PAPI_remove_event( int EventSet, int EventCode )
 {
 	EventSetInfo_t *ESI;
-	int i;
+	int i,retval;
 
 	/* check for pre-existing ESI */
 
@@ -1514,7 +1514,7 @@ PAPI_remove_event( int EventSet, int EventCode )
 	if ( ESI->state & PAPI_OVERFLOWING ) {
 		for ( i = 0; i < ESI->overflow.event_counter; i++ ) {
 			if ( ESI->overflow.EventCode[i] == EventCode ) {
-				PAPI_overflow( EventSet, EventCode, 0, 0,
+				retval = PAPI_overflow( EventSet, EventCode, 0, 0,
 							   ESI->overflow.handler );
 				break;
 			}
@@ -3974,7 +3974,7 @@ PAPI_shutdown( void )
         EventSetInfo_t *ESI;
         ThreadInfo_t *master;
         DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
-        int i, j = 0;
+        int i, j = 0, retval;
 
 
 	APIDBG( "Enter\n" );
@@ -4000,9 +4000,9 @@ again:
       if ( ESI ) {
 	 if ( ESI->master == master ) {
 	    if ( ESI->state & PAPI_RUNNING ) {
-	       PAPI_stop( i, NULL );
+	       retval=PAPI_stop( i, NULL );
 	    }
-	    PAPI_cleanup_eventset( i );
+	    retval=PAPI_cleanup_eventset( i );
 	    _papi_hwi_free_EventSet( ESI );
 	 } 
          else {
