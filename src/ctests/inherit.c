@@ -58,7 +58,11 @@ main( int argc, char **argv )
 		do_flops( NUM_FLOPS );
 		exit( 0 );
 	}
-	waitpid( pid, &status, 0 );
+	if ( waitpid( pid, &status, 0 ) == -1 ) {
+	  perror( "waitpid()" );
+	  exit( 1 );
+	}
+
 
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
