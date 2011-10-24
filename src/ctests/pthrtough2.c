@@ -54,7 +54,10 @@ main( int argc, char *argv[] )
 	pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_UNDETACHED );
 #endif
 #ifdef PTHREAD_SCOPE_SYSTEM
-	pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM );
+	ret = pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM );
+	if ( ret != 0 )
+	   test_skip( __FILE__, __LINE__, "pthread_attr_setscope", ret );
+
 #endif
 
 	nthr = NITER;
