@@ -921,6 +921,7 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
 	 if (first_mask) {
 	    tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(", masks:"));
 	    strcat(tmp,", masks:");
+	    first_mask=0;
 	 }
 	 else {
 	    tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(","));
