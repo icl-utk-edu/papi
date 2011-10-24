@@ -21,7 +21,7 @@
 int main (int argc, char **argv)
 {
 
-	int retval;
+        int retval,cid,numcmp;
 	int EventSet = PAPI_NULL;
 	long long values[NUM_EVENTS];
 	int code;
@@ -38,58 +38,70 @@ int main (int argc, char **argv)
 	   test_fail(__FILE__, __LINE__,"PAPI_library_init failed\n",retval);
 	}
 
-	code = PAPI_NATIVE_MASK;
-        PAPI_enum_event( &code, PAPI_ENUM_FIRST );
-
 	if (!TESTS_QUIET) {
 	   printf("Trying all hwmon* events\n");
 	}
 
-	while ( PAPI_enum_event( &code, PAPI_ENUM_EVENTS ) == PAPI_OK ) {
-	  retval = PAPI_event_code_to_name( code, event_name );
-	  if ( retval != PAPI_OK ) {
-	     test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
-	  }
+        numcmp = PAPI_num_components();
 
-	  if (!strncmp(event_name,"hwmon",5)) {
-	     if (!TESTS_QUIET) printf("0x%x %s ",code,event_name);
+	for(cid=0; cid<numcmp; cid++) {
+
+	   if (!TESTS_QUIET) printf("\tComponent %d\n",cid);
+
+	   code = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
+           PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+
+	   while ( PAPI_enum_event( &code, PAPI_ENUM_EVENTS ) == PAPI_OK ) {
+	      retval = PAPI_event_code_to_name( code, event_name );
+	      if ( retval != PAPI_OK ) {
+	         test_fail( __FILE__, __LINE__, 
+                            "PAPI_event_code_to_name", retval );
+	      }
+
+	      if (!strncmp(event_name,"hwmon",5)) {
+	         if (!TESTS_QUIET) printf("0x%x %s ",code,event_name);
 	     
-	     EventSet = PAPI_NULL;
+	         EventSet = PAPI_NULL;
 
-	     retval = PAPI_create_eventset( &EventSet );
-	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, "PAPI_create_eventset()",retval);
-	     }
+	         retval = PAPI_create_eventset( &EventSet );
+	         if (retval != PAPI_OK) {
+	            test_fail(__FILE__, __LINE__, 
+                              "PAPI_create_eventset()",retval);
+		 }
 
-	     retval = PAPI_add_event( EventSet, code );
-	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, "PAPI_add_event()",retval);
-	     }
+	         retval = PAPI_add_event( EventSet, code );
+	         if (retval != PAPI_OK) {
+	            test_fail(__FILE__, __LINE__, 
+                                 "PAPI_add_event()",retval);
+		 }
 
-	     retval = PAPI_start( EventSet);
-	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
-	     }
+	         retval = PAPI_start( EventSet);
+	         if (retval != PAPI_OK) {
+	            test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
+		 }
 
-	     retval = PAPI_stop( EventSet, values);
-	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
-	     }
+	         retval = PAPI_stop( EventSet, values);
+	         if (retval != PAPI_OK) {
+	            test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
+		 }
 
-	     if (!TESTS_QUIET) printf(" value: %lld\n",values[0]);
+	         if (!TESTS_QUIET) printf(" value: %lld\n",values[0]);
 
-	     retval = PAPI_cleanup_eventset( EventSet );
-	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset()",retval);
-	     }
+	         retval = PAPI_cleanup_eventset( EventSet );
+	         if (retval != PAPI_OK) {
+	            test_fail(__FILE__, __LINE__, 
+                              "PAPI_cleanup_eventset()",retval);
+		 }
 
-	     retval = PAPI_destroy_eventset( &EventSet );
-	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset()",retval);
-	     }
+	         retval = PAPI_destroy_eventset( &EventSet );
+	         if (retval != PAPI_OK) {
+	            test_fail(__FILE__, __LINE__, 
+                              "PAPI_destroy_eventset()",retval);
+		 }
 
-	     total_events++;
-	  }
+	         total_events++;
+	      }
+	   }
         }
 
 	if (total_events==0) {
