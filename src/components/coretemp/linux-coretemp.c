@@ -70,6 +70,8 @@ int generateEventList(char *base_dir)
 		  if (!temp) {
 			PAPIERROR("out of memory!");
 			/* We should also free any previously allocated data */
+			closedir(d);
+			closedir(dir);
 			return PAPI_ENOMEM;
 		  }
 
@@ -86,6 +88,9 @@ int generateEventList(char *base_dir)
 		    /* we are called with root!=NULL but no last  */
 		    /* so add this to keep coverity happy         */
 		    free(temp);
+		    closedir(d);
+		    closedir(dir);
+
 		    PAPIERROR("This shouldn't be possible\n");
 
 		    return PAPI_ESBSTR;
