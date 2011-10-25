@@ -40,6 +40,7 @@ typedef struct {
 	int group_leader;
 	int fd;
 	int max_fds;
+	int idx; /* opaque libpfm event identifier */
 } perf_event_desc_t;
 
 /* handy shortcut */
