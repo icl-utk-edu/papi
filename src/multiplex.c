@@ -1374,8 +1374,12 @@ mpx_insert_events( MPX_EventSet * mpx_events, int *event_list,
 	 * of multiplexing events, so we can just delete that
 	 */
 	if ( mev && mev->papi_event ) {
-		retval=PAPI_cleanup_eventset( mev->papi_event );
-		retval=PAPI_destroy_eventset( &( mev->papi_event ) );
+	   if (PAPI_cleanup_eventset( mev->papi_event )!=PAPI_OK) {
+	     PAPIERROR("Cleanup eventset\n");
+	   }
+	   if (PAPI_destroy_eventset( &( mev->papi_event )) !=PAPI_OK) {
+	     PAPIERROR("Destory eventset\n");
+	   }
 	}
 	if ( mev )
 		papi_free( mev );
