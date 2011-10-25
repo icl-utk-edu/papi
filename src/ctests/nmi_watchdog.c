@@ -64,7 +64,7 @@ int main( int argc, char **argv ) {
       printf("\techo \"0\" > /proc/sys/kernel/nmi_watchdog\n\n");
     }
 
-     test_fail( __FILE__, __LINE__, "NMI Watchdog Active", 0 );
+     test_warn( __FILE__, __LINE__, "NMI Watchdog Active, enabling slow workarounds", 0 );
   }
 	
   test_pass( __FILE__, NULL, 0 );
