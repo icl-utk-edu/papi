@@ -83,6 +83,12 @@ bug_check_scheduability(void) {
 
 #if defined(__powerpc__)
   /* PowerPC not affected by this bug */
+#elif defined(__mips__)
+
+  /* MIPS as of kernel 3.1 does not properly detect schedulability */
+
+  return 1;
+
 #else
   if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 #endif
@@ -105,6 +111,14 @@ static inline int
 bug_multiplex(void) {
 
   if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
+
+/* MIPS kernels, at least up to 3.1, have a bug where */
+/* kernel multiplexing does not work.                 */
+
+#if defined(__mips__)
+  return 1;
+#endif
+
   return 0;
 
 }
@@ -118,6 +132,13 @@ static inline int
 bug_format_group(void) {
 
   if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,34)) return 1;
+
+  /* MIPS, as of version 3.1, does not support this properly */
+
+#if defined(__mips__)
+  return 1;
+#endif
+
   return 0;
 
 }

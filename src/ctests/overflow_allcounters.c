@@ -107,10 +107,16 @@ main( int argc, char **argv )
 #if defined(linux)
 	{
 		char *tmp = getenv( "THRESHOLD" );
-		if ( tmp )
+		if ( tmp ) {
 			mythreshold = atoi( tmp );
-		else
+		}
+		else if (hw_info->mhz!=0) {
 			mythreshold = ( int ) hw_info->mhz * 20000;
+		}
+		else {
+			mythreshold = THRESHOLD;
+
+		}
 	}
 #else
 	mythreshold = THRESHOLD;

@@ -4331,45 +4331,63 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 	EventSetInfo_t *ESI;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
-	if ( ESI == NULL )
+	if ( ESI == NULL ) {
+		OVFDBG("No EventSet\n");
 		papi_return( PAPI_ENOEVST );
+        }
 
 	cidx = valid_ESI_component( ESI );
-	if ( cidx < 0 )
+	if ( cidx < 0 ) {
+		OVFDBG("Component Error\n");
 		papi_return( cidx );
+	}
 
-	if ( ( ESI->state & PAPI_STOPPED ) != PAPI_STOPPED )
+	if ( ( ESI->state & PAPI_STOPPED ) != PAPI_STOPPED ) {
+		OVFDBG("Already running\n");
 		papi_return( PAPI_EISRUN );
+	}
 
-	if ( ESI->state & PAPI_ATTACHED )
+	if ( ESI->state & PAPI_ATTACHED ) {
+		OVFDBG("Attached\n");
 		papi_return( PAPI_EINVAL );
+	}
 	
-	if ( ESI->state & PAPI_CPU_ATTACHED )
+	if ( ESI->state & PAPI_CPU_ATTACHED ) {
+		OVFDBG("CPU attached\n");
 		papi_return( PAPI_EINVAL );
+	}
 	
 	if ( ( index = _papi_hwi_lookup_EventCodeIndex( ESI,
       						( unsigned int ) EventCode ) ) < 0 ) {
 		papi_return( PAPI_ENOEVNT );
 	}
 
-	if ( threshold < 0 )
+	if ( threshold < 0 ) {
+		OVFDBG("Threshold below zero\n");
 		papi_return( PAPI_EINVAL );
+	}
 
 	/* We do not support derived events in overflow */
 	/* Unless it's DERIVED_CMPD in which no calculations are done */
 
 	if ( !( flags & PAPI_OVERFLOW_FORCE_SW ) && threshold != 0 &&
 		 ( ESI->EventInfoArray[index].derived ) &&
-		 ( ESI->EventInfoArray[index].derived != DERIVED_CMPD ) )
+		 ( ESI->EventInfoArray[index].derived != DERIVED_CMPD ) ) {
+		OVFDBG("Derived event in overflow\n");
 		papi_return( PAPI_EINVAL );
+	}
 
 	/* the first time to call PAPI_overflow function */
 
 	if ( !( ESI->state & PAPI_OVERFLOWING ) ) {
-		if ( handler == NULL )
+		if ( handler == NULL ) {
+			OVFDBG("NULL handler\n");
 			papi_return( PAPI_EINVAL );
-		if ( threshold == 0 )
+		}
+		if ( threshold == 0 ) {
+			OVFDBG("Zero threshold\n");
 			papi_return( PAPI_EINVAL );
+		}
 	}
 	if ( threshold > 0 &&
 		 ESI->overflow.event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs )
