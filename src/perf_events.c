@@ -119,6 +119,9 @@ bug_multiplex(void) {
   return 1;
 #endif
 
+  /* No word on when this will be fixed */
+  if (nmi_watchdog_active) return 1;
+
   return 0;
 
 }
