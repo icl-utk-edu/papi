@@ -17,7 +17,7 @@ SHARED  = shlib
 SERIAL  = inherit hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops second johnmay2 matrix-hl tenth ipc
+	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow \
 	child_overflow system_child_overflow system_overflow burn zero_fork
 OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn \
@@ -186,6 +186,9 @@ derived: derived.c $(UTILOBJS) $(PAPILIB)
 
 zero: zero.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero
+
+nmi_watchdog: nmi_watchdog.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) nmi_watchdog.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o nmi_watchdog
 
 zero_fork: zero_fork.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_fork.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_fork
