@@ -45,8 +45,9 @@ int generateEventList(char *base_dir)
 
   dir = opendir(base_dir);
   if ( dir == NULL ) {
-	PAPIERROR("Oops: I can't find %s, are you sure the coretemp module is loaded?\n", base_dir);
-	return( PAPI_ESYS );
+     SUBDBG("Can't find %s, are you sure the coretemp module is loaded?\n", 
+	       base_dir);
+     return 0;
   }
   while( (hwmonx = readdir(dir) ) ) {
 	if ( !strncmp("hwmon", hwmonx->d_name, 5) ) {
