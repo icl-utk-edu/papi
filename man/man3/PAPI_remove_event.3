@@ -1,21 +1,21 @@
-.TH "PAPI_remove_event" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_remove_event" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_remove_event \- 
 .PP
-removes a hardware event from a PAPI event set'\&.  
+removes a hardware event from a PAPI event set.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-A hardware event can be either a PAPI Preset or a native hardware event code'\&. For a list of PAPI preset events, see PAPI_presets or run the papi_avail utility in the PAPI distribution'\&. PAPI Presets can be passed to \fBPAPI_query_event\fP to see if they exist on the underlying architecture'\&. For a list of native events available on the current platform, run papi_native_avail in the PAPI distribution'\&.
+A hardware event can be either a PAPI Preset or a native hardware event code. For a list of PAPI preset events, see PAPI_presets or run the papi_avail utility in the PAPI distribution. PAPI Presets can be passed to \fBPAPI_query_event\fP to see if they exist on the underlying architecture. For a list of native events available on the current platform, run papi_native_avail in the PAPI distribution.
 .PP
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int PAPI_remove_event( int  EventSet, int  EventCode );
 .RE
@@ -24,22 +24,22 @@ A hardware event can be either a PAPI Preset or a native hardware event code'\&.
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
-\fIEventCode\fP -- a defined event such as PAPI_TOT_INS or a native event'\&.
+\fIEventCode\fP -- a defined event such as PAPI_TOT_INS or a native event.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_OK\fP Everything worked'\&. 
+\fIPAPI_OK\fP Everything worked. 
 .br
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid'\&. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
 .br
-\fIPAPI_ENOEVST\fP The EventSet specified does not exist'\&. 
+\fIPAPI_ENOEVST\fP The EventSet specified does not exist. 
 .br
-\fIPAPI_EISRUN\fP The EventSet is currently counting events'\&. 
+\fIPAPI_EISRUN\fP The EventSet is currently counting events. 
 .br
-\fIPAPI_ECNFLCT\fP The underlying counter hardware can not count this event and other events in the EventSet simultaneously'\&. 
+\fIPAPI_ECNFLCT\fP The underlying counter hardware can not count this event and other events in the EventSet simultaneously. 
 .br
-\fIPAPI_ENOEVNT\fP The PAPI preset is not available on the underlying hardware'\&.
+\fIPAPI_ENOEVNT\fP The PAPI preset is not available on the underlying hardware.
 .RE
 .PP
 \fBExample:\fP
@@ -93,4 +93,4 @@ PAPI_presets
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

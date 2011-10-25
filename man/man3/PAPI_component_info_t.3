@@ -1,4 +1,4 @@
-.TH "PAPI_component_info_t" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_component_info_t" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -10,16 +10,16 @@ PAPI_component_info_t \-
 
 .in +1c
 .ti -1c
-.RI "char \fBname\fP [PAPI_MAX_STR_LEN]"
+.RI "char \fBname\fP [128]"
 .br
 .ti -1c
-.RI "char \fBversion\fP [PAPI_MIN_STR_LEN]"
+.RI "char \fBversion\fP [64]"
 .br
 .ti -1c
-.RI "char \fBsupport_version\fP [PAPI_MIN_STR_LEN]"
+.RI "char \fBsupport_version\fP [64]"
 .br
 .ti -1c
-.RI "char \fBkernel_version\fP [PAPI_MIN_STR_LEN]"
+.RI "char \fBkernel_version\fP [64]"
 .br
 .ti -1c
 .RI "int \fBCmpIdx\fP"
@@ -112,12 +112,6 @@ PAPI_component_info_t \-
 .RI "unsigned int \fBattach_must_ptrace\fP:1"
 .br
 .ti -1c
-.RI "unsigned int \fBcpu\fP:1"
-.br
-.ti -1c
-.RI "unsigned int \fBinherit\fP:1"
-.br
-.ti -1c
 .RI "unsigned int \fBedge_detect\fP:1"
 .br
 .ti -1c
@@ -142,6 +136,12 @@ PAPI_component_info_t \-
 .RI "unsigned int \fBcntr_OPCM_events\fP:1"
 .br
 .ti -1c
+.RI "unsigned int \fBcpu\fP:1"
+.br
+.ti -1c
+.RI "unsigned int \fBinherit\fP:1"
+.br
+.ti -1c
 .RI "unsigned int \fBreserved_bits\fP:10"
 .br
 .in -1c
@@ -157,7 +157,7 @@ PAPI_component_info_t \-
 .SS "int \fBPAPI_component_info_t::clock_ticks\fP"clock ticks per second 
 .SS "int \fBPAPI_component_info_t::CmpIdx\fP"Index into the vector array for this component; set at init time 
 .SS "unsigned int \fBPAPI_component_info_t::cntr_DEAR_events\fP"counters support data event addr register 
-.SS "unsigned int \fBPAPI_component_info_t::cntr_groups\fP"Underlying hardware uses counter groups (e'\&.g'\&. POWER5) 
+.SS "unsigned int \fBPAPI_component_info_t::cntr_groups\fP"Underlying hardware uses counter groups (e.g. POWER5) 
 .SS "unsigned int \fBPAPI_component_info_t::cntr_IEAR_events\fP"counters support instr event addr register 
 .SS "unsigned int \fBPAPI_component_info_t::cntr_OPCM_events\fP"counter events support opcode matching 
 .SS "unsigned int \fBPAPI_component_info_t::cntr_umasks\fP"counters have unit masks 
@@ -180,8 +180,8 @@ PAPI_component_info_t \-
 .SS "int \fBPAPI_component_info_t::itimer_sig\fP"Signal number used by the multiplex timer, 0 if not 
 .SS "unsigned int \fBPAPI_component_info_t::kernel_multiplex\fP"In kernel multiplexing 
 .SS "unsigned int \fBPAPI_component_info_t::kernel_profile\fP"Has kernel profiling support (buffered interrupts or sprofil-like) 
-.SS "char \fBPAPI_component_info_t::kernel_version\fP[PAPI_MIN_STR_LEN]"Version of the kernel PMC support driver 
-.SS "char \fBPAPI_component_info_t::name\fP[PAPI_MAX_STR_LEN]"Name of the substrate we're using, usually CVS RCS Id 
+.SS "char \fBPAPI_component_info_t::kernel_version\fP[64]"Version of the kernel PMC support driver 
+.SS "char \fBPAPI_component_info_t::name\fP[128]"Name of the substrate we're using, usually CVS RCS Id 
 .SS "int \fBPAPI_component_info_t::num_cntrs\fP"Number of hardware counters the substrate supports 
 .SS "int \fBPAPI_component_info_t::num_mpx_cntrs\fP"Number of hardware counters the substrate or PAPI can multiplex supports 
 .SS "int \fBPAPI_component_info_t::num_native_events\fP"Number of native events the substrate supports 
@@ -191,9 +191,9 @@ PAPI_component_info_t \-
 .SS "unsigned int \fBPAPI_component_info_t::posix1b_timers\fP"Using POSIX 1b interval timers (timer_create) instead of setitimer 
 .SS "unsigned int \fBPAPI_component_info_t::precise_intr\fP"Performance interrupts happen precisely 
 .SS "unsigned int \fBPAPI_component_info_t::profile_ear\fP"Supports data/instr/tlb miss address sampling 
-.SS "char \fBPAPI_component_info_t::support_version\fP[PAPI_MIN_STR_LEN]"Version of the support library 
-.SS "char \fBPAPI_component_info_t::version\fP[PAPI_MIN_STR_LEN]"Version of this substrate, usually CVS Revision 
+.SS "char \fBPAPI_component_info_t::support_version\fP[64]"Version of the support library 
+.SS "char \fBPAPI_component_info_t::version\fP[64]"Version of this substrate, usually CVS Revision 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

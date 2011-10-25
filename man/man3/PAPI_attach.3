@@ -1,10 +1,10 @@
-.TH "PAPI_attach" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_attach" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_attach \- 
 .PP
-Attach PAPI event set to the specified thread id'\&.  
+Attach PAPI event set to the specified thread id.  
 
 .SH SYNOPSIS
 .br
@@ -13,29 +13,29 @@ Attach PAPI event set to the specified thread id'\&.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int \fBPAPI_attach( int EventSet, unsigned long tid )\fP;
 .RE
 .PP
-\fBPAPI_attach\fP is a wrapper function that calls \fBPAPI_set_opt\fP to allow PAPI to monitor performance counts on a thread other than the one currently executing'\&. This is sometimes referred to as third party monitoring'\&. \fBPAPI_attach\fP connects the specified EventSet to the specifed thread; \fBPAPI_detach\fP breaks that connection and restores the EventSet to the original executing thread'\&.
+\fBPAPI_attach\fP is a wrapper function that calls \fBPAPI_set_opt\fP to allow PAPI to monitor performance counts on a thread other than the one currently executing. This is sometimes referred to as third party monitoring. \fBPAPI_attach\fP connects the specified EventSet to the specifed thread; \fBPAPI_detach\fP breaks that connection and restores the EventSet to the original executing thread.
 .PP
 \fBParameters:\fP
 .RS 4
-\fIEventSet\fP An integer handle for a PAPI EventSet as created by \fBPAPI_create_eventset\fP'\&. 
+\fIEventSet\fP An integer handle for a PAPI EventSet as created by \fBPAPI_create_eventset\fP. 
 .br
-\fItid\fP A thread id as obtained from, for example, \fBPAPI_list_threads\fP or \fBPAPI_thread_id\fP'\&.
+\fItid\fP A thread id as obtained from, for example, \fBPAPI_list_threads\fP or \fBPAPI_thread_id\fP.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_ESBSTR\fP This feature is unsupported on this substrate'\&. 
+\fIPAPI_ESBSTR\fP This feature is unsupported on this substrate. 
 .br
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid'\&. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
 .br
-\fIPAPI_ENOEVST\fP The event set specified does not exist'\&. 
+\fIPAPI_ENOEVST\fP The event set specified does not exist. 
 .br
-\fIPAPI_EISRUN\fP The event set is currently counting events'\&.
+\fIPAPI_EISRUN\fP The event set is currently counting events.
 .RE
 .PP
 \fBExamples:\fP
@@ -63,7 +63,7 @@ Attach PAPI event set to the specified thread id'\&.
 .PP
 \fBBug\fP
 .RS 4
-No known bugs'\&.
+No known bugs.
 .RE
 .PP
 .PP
@@ -82,4 +82,4 @@ No known bugs'\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

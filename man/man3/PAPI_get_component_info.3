@@ -1,4 +1,4 @@
-.TH "PAPI_get_component_info" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_get_component_info" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,7 +16,7 @@ get information about a specific software component
 \fIcidx\fP Component index
 .RE
 .PP
-This function returns a pointer to a structure containing detailed information about a specific software component in the PAPI library'\&. This includes versioning information, preset and native event information, and more'\&. For full details, see \fBPAPI_component_info_t\fP'\&.
+This function returns a pointer to a structure containing detailed information about a specific software component in the PAPI library. This includes versioning information, preset and native event information, and more. For full details, see \fBPAPI_component_info_t\fP.
 .PP
 \fBExamples:\fP
 .RS 4
@@ -28,7 +28,7 @@ This function returns a pointer to a structure containing detailed information a
         exit(1);
         if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
         exit(1);
-        printf('This component supports %d Preset Events and %d Native events\&.\n',
+        printf('This component supports %d Preset Events and %d Native events.\n',
         cmpinfo->num_preset_events, cmpinfo->num_native_events);
 
 .fi
@@ -52,4 +52,4 @@ This function returns a pointer to a structure containing detailed information a
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

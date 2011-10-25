@@ -1,21 +1,21 @@
-.TH "PAPI_multiplex_init" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_multiplex_init" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_multiplex_init \- 
 .PP
-Initialize multiplex support in the PAPI library'\&.  
+Initialize multiplex support in the PAPI library.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBPAPI_multiplex_init()\fP enables and initializes multiplex support in the PAPI library'\&. Multiplexing allows a user to count more events than total physical counters by time sharing the existing counters at some loss in precision'\&. Applications that make no use of multiplexing do not need to call this routine'\&.
+\fBPAPI_multiplex_init()\fP enables and initializes multiplex support in the PAPI library. Multiplexing allows a user to count more events than total physical counters by time sharing the existing counters at some loss in precision. Applications that make no use of multiplexing do not need to call this routine.
 .PP
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int \fBPAPI_multiplex_init\fP (void);
 .RE
@@ -38,7 +38,7 @@ Initialize multiplex support in the PAPI library'\&.
 .PP
 \fBBug\fP
 .RS 4
-This function has no known bugs'\&.
+This function has no known bugs.
 .RE
 .PP
 .PP
@@ -53,4 +53,4 @@ This function has no known bugs'\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

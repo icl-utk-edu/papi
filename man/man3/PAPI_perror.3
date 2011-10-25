@@ -1,10 +1,10 @@
-.TH "PAPI_perror" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_perror" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_perror \- 
 .PP
-Convert PAPI error codes to strings, and print error message to stderr'\&.  
+Convert PAPI error codes to strings, and print error message to stderr.  
 
 .SH SYNOPSIS
 .br
@@ -13,7 +13,7 @@ Convert PAPI error codes to strings, and print error message to stderr'\&.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int \fBPAPI_perror( int code, char *destination, int length )\fP;
 .RE
@@ -29,10 +29,10 @@ Convert PAPI error codes to strings, and print error message to stderr'\&.
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments to \fBPAPI_perror()\fP is invalid'\&.
+\fIPAPI_EINVAL\fP One or more of the arguments to \fBPAPI_perror()\fP is invalid.
 .RE
 .PP
-\fBPAPI_perror()\fP fills the string destination with the error message corresponding to the error code code'\&. The function copies length worth of the error description string corresponding to code into destination'\&. The resulting string is always null terminated'\&. If length is 0, then the string is printed on stderr'\&.
+\fBPAPI_perror()\fP fills the string destination with the error message corresponding to the error code code. The function copies length worth of the error description string corresponding to code into destination. The resulting string is always null terminated. If length is 0, then the string is printed on stderr.
 .PP
 \fBExample:\fP
 .RS 4
@@ -75,4 +75,4 @@ Convert PAPI error codes to strings, and print error message to stderr'\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

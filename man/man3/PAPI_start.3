@@ -1,10 +1,10 @@
-.TH "PAPI_start" 3 "Fri Aug 26 2011" "Version 4.1.4.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_start" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_start \- 
 .PP
-Start counting hardware events in an event set'\&.  
+Start counting hardware events in an event set.  
 
 .SH SYNOPSIS
 .br
@@ -13,7 +13,7 @@ Start counting hardware events in an event set'\&.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int PAPI_start( int  EventSet );
 .RE
@@ -27,20 +27,20 @@ Start counting hardware events in an event set'\&.
 .RS 4
 \fIPAPI_OK\fP 
 .br
-\fIPAPI_EINVAL\fP -- One or more of the arguments is invalid'\&. 
+\fIPAPI_EINVAL\fP -- One or more of the arguments is invalid. 
 .br
-\fIPAPI_ESYS\fP -- A system or C library call failed inside PAPI, see the errno variable'\&. 
+\fIPAPI_ESYS\fP -- A system or C library call failed inside PAPI, see the errno variable. 
 .br
-\fIPAPI_ENOEVST\fP -- The EventSet specified does not exist'\&. 
+\fIPAPI_ENOEVST\fP -- The EventSet specified does not exist. 
 .br
-\fIPAPI_EISRUN\fP -- The EventSet is currently counting events'\&. 
+\fIPAPI_EISRUN\fP -- The EventSet is currently counting events. 
 .br
-\fIPAPI_ECNFLCT\fP -- The underlying counter hardware can not count this event and other events in the EventSet simultaneously'\&. 
+\fIPAPI_ECNFLCT\fP -- The underlying counter hardware can not count this event and other events in the EventSet simultaneously. 
 .br
-\fIPAPI_ENOEVNT\fP -- The PAPI preset is not available on the underlying hardware'\&.
+\fIPAPI_ENOEVNT\fP -- The PAPI preset is not available on the underlying hardware.
 .RE
 .PP
-\fBPAPI_start\fP starts counting all of the hardware events contained in the previously defined EventSet'\&. All counters are implicitly set to zero before counting'\&. Assumes an initialized PAPI library and a properly added event set'\&.
+\fBPAPI_start\fP starts counting all of the hardware events contained in the previously defined EventSet. All counters are implicitly set to zero before counting. Assumes an initialized PAPI library and a properly added event set.
 .PP
 \fBExample:\fP
 .RS 4
@@ -79,4 +79,4 @@ Start counting hardware events in an event set'\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.
