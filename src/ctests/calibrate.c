@@ -254,8 +254,13 @@ main( int argc, char *argv[] )
 				}
 			}
 		}
-		free( x );
-		free( y );
+		if (double_precision) {
+			free( xd );
+			free( yd );
+		} else {
+			free( x );
+			free( y );
+		}
 	}
 
 	/* Matrix Vector test */
@@ -316,9 +321,15 @@ main( int argc, char *argv[] )
 				}
 			}
 		}
-		free( a );
-		free( x );
-		free( y );
+		if (double_precision) {
+			free( ad );
+			free( xd );
+			free( yd );
+		} else {
+			free( a );
+			free( x );
+			free( y );
+		}
 	}
 
 	/* Matrix Multiply test */
@@ -376,9 +387,15 @@ main( int argc, char *argv[] )
 				}
 			}
 		}
-		free( a );
-		free( b );
-		free( c );
+		if (double_precision) {
+			free( ad );
+			free( bd );
+			free( cd );
+		} else {
+			free( a );
+			free( b );
+			free( c );
+		}
 	}
 
 	/* exit with status code */
