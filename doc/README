@@ -9,29 +9,9 @@
 
 This directory contains:
 
-A collection of files to aid in the preparation of documentation for PAPI.
-The current general philosophy behind PAPI documentation is to provide 
-basic documentation in a number of commonly accessible formats.
-To do this, the documents are sourced in Microsoft Word '.doc' format,
-and then converted to HTML, PDF, and PostScript formats.
-
-Three documents make up the basic collection:
-
-PAPI_USERS_GUIDE.doc	  General overview of using PAPI
-PAPI_Prog_Ref.doc	  Specific details on calling individual routines.
-			  This file is generated from the man pages 
-			  which are found in papi/man/man1 and man3
-
-Production of the PAPI_Prog_Ref.doc file is somewhat complicated.
-A number of support files in this directory are involved in this process:
-
-procedure.txt		  Documents the step by step procedure to produce
-			  the programmer's reference materials.
-papi_progref.pl		  Perl script to convert a man file into pseudo-html
-			  to be consumed in the production of the prog_ref.
-papiprog.bat		  A Windows batch file to script the conversion of
-			  multiple man pages to html.
-cat_progref.bat		  A Windows batch file to concatenate individual pages
-			  into a single file for import into Word.
-progref_template.doc	  A Word template file including macros to provide a
-			  formatted framework for the man pages.
+A collection of files to aid in the preparation of PAPI doxygen documentation.
+Beginning with PAPI 4.2.0, doxygen and an on-line wiki are the two primary
+sources of documentation. Man pages generated from doxygen can be found in the
+man directories and installed on your system. A PAPI Overview and html versions
+of the man pages can also be found online at: 
+	http://icl.cs.utk.edu/projects/papi/wiki/Main_Page

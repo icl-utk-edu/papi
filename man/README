@@ -10,28 +10,14 @@
 This directory contains:
 
 Makefile	Installs man pages.
-manServer.pl	A perl script to convert the man pages to html
-papiman.bat	A batch file (Windows or Unix) to automate the perl script.
-header.htm	html snippets to beautify the html of the converted man pages.
-footer.htm
-man3/		The troff formatted man pages.
-html/		The html formatted man pages.
-images/		A collection of graphics used on the html pages.
+man1/		Man pages for the PAPI utility applications.
+man3/		Man pages for the PAPI API functions.
 
 Makefile Usage:
 
 	make
 	make install DESTDIR=<destdir>
 
-Philosophy:
-
-  Man pages are the lowest common denominator for PAPI documentation.
-  Currently, all PAPI functionality is first documented as a man page.
-  From there, it is converted into a collection of linked html pages
-  using the perl script in this directory. Additionally, using tools
-  in the /papi/doc directory, it is also converted into a Programmer's
-  Reference and formatted as a Word .doc file, a PDF file, a PostScript
-  file, and a single html file. All these formats are accessible on the
-  PAPI website.
-  Any content changes or additions must be made to the man pages and
-  propagated forward from there.
+Beginning with PAPI 4.2.0, man pages are generated from the PAPI sources 
+using doxygen scripts found in the papi/doc directory. 
+They are updated prior to each release.

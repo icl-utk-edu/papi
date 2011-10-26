@@ -9,15 +9,16 @@
 
 This directory contains:
 
-README		This file.
-LICENSE.txt	The text of the PAPI license.	
-INSTALL.txt	Instructions for installing on all supported platforms.
-HISTORY.txt	A brief history of features and platforms added to PAPI.
-doc/ 		User documentation and support files.
-		See doc/README for details.
-man/ 		Stuff related to PAPI man pages. See man/README for details.
-src/ 		The PAPI library source files and support files.
-		See src/README for more details.
+README			This file.
+LICENSE.txt		The text of the PAPI license.	
+INSTALL.txt		Instructions for installing on all supported platforms.
+RELEASENOTES.txt	Information about recent releases.
+ChangeLogPxxx.txt	Detailed log of changes committed to the repository.
+doc/ 			User documentation and support files.
+				See doc/README for details.
+man/ 			Stuff related to PAPI man pages. See man/README for details.
+src/ 			The PAPI library source files and support files.
+				See src/README for more details.
 
 
 Getting Started
@@ -55,8 +56,8 @@ Using PAPI
 ----------
 
 To use PAPI in your own programs:
-- Read the User's Guide. Versions in a variety of formats can be found in the 
-  doc/ directory and online.
+- Read the PAPI Overview found at:
+	http://icl.cs.utk.edu/projects/papi/wiki/Main_Page.
 - Try out the utility programs in /utils to see what's in your system.
 - Try a test program. Source for a number of tests in both C and FORTRAN is
   available in the src/tests/ and src/ftests/ directories. Find a program
@@ -74,5 +75,5 @@ Bugs and Questions
   <http://lists.cs.utk.edu/listinfo/ptools-perfapi>
 - Read historical postings to the list.
 - Post questions to the list.
-- Post bugs to the PAPIZilla bug tracker at:
-  <http://icl.cs.utk.edu/projects/papi/bugz/>
+- Post bugs to the TRAC bug tracker at:
+  <http://icl.cs.utk.edu/trac/papi/>
