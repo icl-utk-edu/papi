@@ -624,7 +624,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
        } 
 #ifdef USER_EVENTS 
 	   else if ( IS_USER_DEFINED(head[j].event_code) ) {
-		 for ( k = 0; k < MAX_COUNTER_TERMS; k++ ) {
+		 for ( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
 		   nevt = _papi_user_events[preset_index].events[k];
 		   if ( nevt == PAPI_NULL )
 			 break;
@@ -1511,7 +1511,7 @@ handle_derived_add( int *position, long long *from )
 	long long retval = 0;
 
 	i = 0;
-	while ( i < PAPI_MAX_COUNTER_TERMS ) {
+	while ( i < MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1528,7 +1528,7 @@ handle_derived_subtract( int *position, long long *from )
 	long long retval = from[position[0]];
 
 	i = 1;
-	while ( i < PAPI_MAX_COUNTER_TERMS ) {
+	while ( i < MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
