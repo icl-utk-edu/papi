@@ -5,6 +5,130 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
+PAPI 4.2.0 RELEASE NOTES                                            26 Oct 2011
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP420.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+GENERAL NOTES
+===============================================================================
+This is a major release of PAPI-C. It add a significant new feature in 
+user-defined events. It also marks a shift from external (and out-dated) 
+man pages to doxygen generated man pages. These pages can be found online at:
+http://icl.cs.utk.edu/papi/docs/. They are also installable with "make install", 
+and you can build your own versions using doxygen.
+
+Visit the PAPI Reference pages for more information at:
+http://icl.cs.utk.edu/projects/papi/wiki/Main_Page
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+RECENT CHANGES IN PAPI 4.2.0
+===============================================================================
+Bug Fixes:
+----------
+	* Bug in CUDA v4.0 fixed. It caused a threaded application to hang when 
+	  parent called cuInit() before fork() and child called also cuInit().
+	  All fork ctests pass now if papi is configured with cuda component. 
+	* If papi is configured with cuda component and running a threaded 
+	  application, we need to make sure that a thread doesn't free the same 
+	  memory location(s) more than once. Now all pthread ctests pass with cuda.
+	* ctests/thrspecific works now with the CUDA component
+	* Added CudaRemoveEvent functionality (broken in earlier CUDA RC versions). 
+	* ctests/all_native_events works now for the default CUDA device.
+	* Add locking to papi_pfm4_events so that adding/looking up event names 
+	  doesn't have a race condition when multiple threads are doing it at once.
+	* Fixed a series of problems with Itanium builds.
+	* Set FD_CLOEXEC on the overflow signal handler fd. Otherwise if we exec()
+	  with overflow enabled, the exec'd process will quickly die due to lack 
+	  of signal handler. This patch is needed due to a change in behavior in 
+	  Linux 3.0. Mark Krentel first noticed this problem.
+	* Recent Ubuntu versions use the ld flag --as-needed by default, which
+	  breaks the PAPI configure step for the libdl check, as the
+	  --as-needed flag enforces the rule that libraries must come after the 
+	  object files on the command line, not before. The fix for this is to put 
+	  the libdl check it in LIBS instead of in LDFLAGS.
+	* Removed an fopen() without an fclose() on /proc/cpuinfo in papi.c. 
+	  This was being done to set the event masks properly for itanium and p4.
+	  Since the platform code sets CPU vendor and family for us we don't
+	  really have to open cpuinfo.  This fix may also work on non-Linux 
+	  systems too.
+	* Update papi.h to properly detect if being built with a C99 compiler.
+
+Enhancements:
+-------------
+	* Default support for libpfm4
+	* ./configure --with-libpfm3 to support legacy libpfm3 builds
+	* PERF_COUNT_SW software events are available under perf_events with 
+	  libpfm4
+	* Nehalem/Westmere/SandyBridge event support is ready, but support is 
+	  not yet available in the Linux kernel.
+	* Add new utility to display PAPI error codes and description strings.
+	* Add API to access error descriptions: PAPI_descr_error( int error_code).
+	* Add support for handling multiattach properly.
+	* Cleanups to avoid gcc-4.6 warnings.
+	* Added ability to add tests to components. All component tests are
+	  compiled with PAPI when typing 'make'and cleaned up with 'make clean' 
+	  or 'make clobber'. Also added tests to the example and cuda components.
+	* CUDA component is now thread-safe. Multiple CPU
+	  threads can access the same CUDA context. Note, it's possible to
+	  create a different CUDA context for each thread, but then we are
+	  likely running into a limitation that only one context can be
+	  profiled at a time.
+	* LOTS of code cleanup thanks to Will Cohen of RedHat.
+	* Refactored test code so no-cpu-counters can build with components
+	* Build all utilities with no-cpu-counters
+	* Modify run_tests.sh so that you can set the VALGRIND command 
+	  externally via environment variable without having to edit 
+	  run_tests.sh itself. Also adds Date and cpuinfo information to the 
+	  beginning of run_tests.sh results.  This can help when run_tests.sh 
+	  output is passed around when debugging a problem.
+	* Parallel make now works.
+	  
+New Platforms:
+-------------
+	* AMD Family 14h Bobcat (libpfm4 only)
+	* Intel SandyBridge (libpfm4 only)
+	* ARM Cortex-A8 and Cortex-A9 (libpfm4 only)
+	
+Deprecated Platforms:
+---------------------
+	* although still technically supported, we are no longer actively testing
+	  platforms based on the perfmon and perfctr patches. All linux kernels
+	  > 2.6.32 provide internal support for perf_events.
+	
+New / Improved Components:
+---------------
+	* Add a number of 'native' events to the component info structure in 
+	  example component.
+	* Introduce a papi_component_avail utility; lists the components we were
+	  built with, optionally with native/preset counts and version number.
+
+Open Issues:
+-------------
+	* On newer Linux kernels (2.6.34+) the nmi_watchdog counter can	steal one
+	  of the counters, reducing by one the total available.
+	  There's a bug in Linux where if you try to use the full number of
+	  counters on such a system with a group leader, the sys_perf_open()
+	  call will succeed only to fail at read time.
+	  (instead of the proper error code at open time).
+	  I do wish there were a way to notify the user more visibly,
+	  because losing a counter (when you might only have 4 total to
+	  begin with) is a big deal, and most Linux vendors are starting to
+	  ship kernels with the nmi_watchdog enabled.
+
+Experimental:
+-------------
+	* Preliminary support for MIPS 74K.
+
+Known Bugs:
+-----------
+	* src/: papi_pfm4_events.c, ctests/test_utils.c: power6 doesn't
+	  work with libpfm4, as it reports num_cntrs=0
+
+
+===============================================================================
 PAPI 4.1.4 RELEASE NOTES                                            29 Aug 2011
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
