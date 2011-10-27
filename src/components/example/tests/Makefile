@@ -1,17 +1,14 @@
 include ../../Makefile_comp_tests
 
-CC = gcc
-CFLAGS = 
-
 %.o:%.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
-TESTS = HelloWorld
+TESTS = example_basic
 
 example_tests: $(TESTS)
 
-HelloWorld: HelloWorld.o
-	$(CC) $(CFLAGS) $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+example_basic: example_basic.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o example_basic example_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
 
 
 clean:
