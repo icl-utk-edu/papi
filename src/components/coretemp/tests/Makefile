@@ -5,7 +5,7 @@ include ../../Makefile_comp_tests
 
 TESTS = coretemp_basic
 
-example_tests: $(TESTS)
+coretemp_tests: $(TESTS)
 
 coretemp_basic: coretemp_basic.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o coretemp_basic coretemp_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
