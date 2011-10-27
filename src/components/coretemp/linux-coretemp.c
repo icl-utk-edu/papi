@@ -24,7 +24,7 @@ struct temp_event {
 
 static struct temp_event* root = NULL;
 static CORETEMP_native_enent_entry_t * _coretemp_native_events;
-static int NUM_EVENTS		= 0;
+static int num_events		= 0;
 static int is_initialized	= 0;
 
 /*******************************************************************************
@@ -146,17 +146,17 @@ int coretemp_init_substrate( )
   is_initialized = 1;
   /* This is the prefered method, all coretemp sensors are symlinked here
    * see $(kernel_src)/Documentation/hwmon/sysfs-interface */
-  NUM_EVENTS = generateEventList("/sys/class/hwmon");
+  num_events = generateEventList("/sys/class/hwmon");
 
-  if ( NUM_EVENTS < 0 ) 
-	return ( NUM_EVENTS );
+  if ( num_events < 0 ) 
+	return ( num_events );
 
-  if ( NUM_EVENTS == 0 ) 
+  if ( num_events == 0 ) 
 	return ( PAPI_OK );
 
   t = root;
   _coretemp_native_events = (CORETEMP_native_enent_entry_t*)
-	papi_malloc(sizeof(CORETEMP_native_enent_entry_t) * NUM_EVENTS);
+	papi_malloc(sizeof(CORETEMP_native_enent_entry_t) * num_events);
 
   do {
 	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
@@ -206,7 +206,7 @@ int coretemp_init_control_state( hwd_control_state_t * ctl)
 {
   int i;
 
-  for ( i=0; i < NUM_EVENTS; i++ )
+  for ( i=0; i < num_events; i++ )
 	( ( CORETEMP_control_state_t *) ctl )->counts[i] = getEventValue(i);
   
   ( ( CORETEMP_control_state_t *) ctl)->lastupdate = PAPI_get_real_usec();
@@ -233,7 +233,7 @@ int coretemp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
   int i;
 
   if ( now - control->lastupdate > REFRESH_LAT ) {
-	for ( i = 0; i < NUM_EVENTS; i++ ) {
+	for ( i = 0; i < num_events; i++ ) {
 	  control->counts[i] = getEventValue( i );
 	}
 	control->lastupdate = now;
@@ -250,7 +250,7 @@ int coretemp_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
   CORETEMP_control_state_t* control = (CORETEMP_control_state_t*) ctl;
   int i;
 
-  for ( i = 0; i < NUM_EVENTS; i++ ) {
+  for ( i = 0; i < num_events; i++ ) {
 	control->counts[i] = getEventValue( i );
   }
 
@@ -376,27 +376,31 @@ coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
+
+	  if (num_events==0) {
+	    return PAPI_ENOEVNT;
+	  }
 		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
 
-		return ( PAPI_OK );
+		return PAPI_OK;
 		break;
 
 	case PAPI_ENUM_EVENTS:
 	{
 		int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-		if ( index < NUM_EVENTS - 1 ) {
+		if ( index < num_events - 1 ) {
 			*EventCode = *EventCode + 1;
-			return ( PAPI_OK );
+			return PAPI_OK;
 		} else
-			return ( PAPI_ENOEVNT );
+			return PAPI_ENOEVNT;
 
 		break;
 	}
 	default:
-		return ( PAPI_EINVAL );
+		return PAPI_EINVAL;
 	}
-	return ( PAPI_EINVAL );
+	return PAPI_EINVAL;
 }
 
 /*
@@ -407,7 +411,7 @@ coretemp_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-	if ( index >= 0 && index < NUM_EVENTS ) {
+	if ( index >= 0 && index < num_events ) {
 	  strncpy( name, _coretemp_native_events[index].name, len );
 	  return ( PAPI_OK );
 	}
@@ -422,7 +426,7 @@ coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
 	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-	if ( index >= 0 && index < NUM_EVENTS ) {
+	if ( index >= 0 && index < num_events ) {
 	
 	  strncpy( name, _coretemp_native_events[index].description, len );
 	}
@@ -437,7 +441,7 @@ coretemp_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
 	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-	if ( 0 > index || NUM_EVENTS <= index )
+	if ( 0 > index || num_events <= index )
 	  return ( PAPI_ENOEVNT );
 	memcpy( ( CORETEMP_register_t * ) bits,
 			&( _coretemp_native_events[index].resources ),

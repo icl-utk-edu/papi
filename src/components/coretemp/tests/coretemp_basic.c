@@ -27,7 +27,8 @@ int main (int argc, char **argv)
 	int code;
 	char event_name[PAPI_MAX_STR_LEN];
 	int total_events=0;
-
+	int r;
+	const PAPI_component_info_t *cmpinfo = NULL;
 
         /* Set TESTS_QUIET variable */
         tests_quiet( argc, argv );      
@@ -46,14 +47,21 @@ int main (int argc, char **argv)
 
 	for(cid=0; cid<numcmp; cid++) {
 
-	   if (!TESTS_QUIET) printf("\tComponent %d\n",cid);
+	   if (!TESTS_QUIET) {
+	      if ( (cmpinfo = PAPI_get_component_info(cid)) == NULL) {
+	         test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
+	      }
+	      printf("\tComponent %d - %s\n", cid, cmpinfo->name);
+	   }
 
 	   code = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
-           PAPI_enum_event( &code, PAPI_ENUM_FIRST );
 
-	   while ( PAPI_enum_event( &code, PAPI_ENUM_EVENTS ) == PAPI_OK ) {
+           r = PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+
+	   while ( r == PAPI_OK ) {
 	      retval = PAPI_event_code_to_name( code, event_name );
 	      if ( retval != PAPI_OK ) {
+		 printf("Error translating %x\n",code);
 	         test_fail( __FILE__, __LINE__, 
                             "PAPI_event_code_to_name", retval );
 	      }
@@ -101,6 +109,7 @@ int main (int argc, char **argv)
 
 	         total_events++;
 	      }
+	      r = PAPI_enum_event( &code, PAPI_ENUM_EVENTS );
 	   }
         }
 
