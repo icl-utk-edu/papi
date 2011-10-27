@@ -232,7 +232,7 @@ comp_tests:
 ifneq (${COMPONENTS},)
 		@for comp in ${COMPONENTS} ; do \
 			$$comp_tests: $(LIBS) null ; \
-			$(SETPATH) cd components/$$comp/tests ; $(MAKE) LDFLAGS="$(LDFLAGS) $(STATIC)" ; \
+			$(SETPATH) cd components/$$comp/tests ; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" ; \
 			$(SETPATH) cd ../../.. ; done 
 endif
 
