@@ -228,7 +228,7 @@ ftests: $(LIBS) null
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(FTEST_TARGETS)
 
 # compile tests added to components
-comp_tests:
+comp_tests:	$(LIBS) null
 ifneq (${COMPONENTS},)
 		@for comp in ${COMPONENTS} ; do \
 			$$comp_tests: $(LIBS) null ; \
