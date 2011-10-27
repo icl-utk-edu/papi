@@ -39,7 +39,7 @@ check_event( int event_code, char *name )
    
 	retval = PAPI_add_event( EventSet, event_code );
 	if ( retval != PAPI_OK ) {
-		printf( "Error adding %s\n", name );
+	  printf( "Error adding %s %d\n", name, retval );
 		return 0;
 	} else {
 	  //		printf( "Added %s successfully ", name );

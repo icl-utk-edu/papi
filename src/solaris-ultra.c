@@ -330,8 +330,8 @@ scan_prtconf( char *cpuname, int len_cpuname, int *hz, int *ver )
 	/* End stolen code */
 }
 
-static int
-set_domain( hwd_control_state_t * this_state, int domain )
+int
+_ultra_set_domain( hwd_control_state_t * this_state, int domain )
 {
 	papi_cpc_event_t *command = &this_state->counter_cmd;
 	cpc_event_t *event = &command->cmd;
@@ -340,6 +340,7 @@ set_domain( hwd_control_state_t * this_state, int domain )
 
 	pcr = pcr | 0x7;
 	pcr = pcr ^ 0x7;
+
 	if ( domain & PAPI_DOM_USER ) {
 		pcr = pcr | 1 << CPC_ULTRA_PCR_USR;
 		did = 1;
@@ -349,8 +350,9 @@ set_domain( hwd_control_state_t * this_state, int domain )
 		did = 1;
 	}
 	/* DOMAIN ERROR */
-	if ( !did )
+	if ( !did ) {
 		return ( PAPI_EINVAL );
+	}
 
 	event->ce_pcr = pcr;
 
@@ -799,7 +801,7 @@ set_default_domain( hwd_control_state_t * ctrl_state, int domain )
 	if ( domain == PAPI_DOM_OTHER )
 		return ( PAPI_EINVAL );
 
-	return ( set_domain( ctrl_state, domain ) );
+	return ( _ultra_set_domain( ctrl_state, domain ) );
 }
 
 static int
@@ -896,7 +898,7 @@ _ultra_hwd_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		return ( set_default_domain
 				 ( option->domain.ESI->ctl_state, option->domain.domain ) );
 	case PAPI_DOMAIN:
-		return ( set_domain
+		return ( _ultra_set_domain
 				 ( option->domain.ESI->ctl_state, option->domain.domain ) );
 	case PAPI_DEFGRN:
 		return ( set_default_granularity
@@ -1196,8 +1198,9 @@ _ultra_hwd_init_control_state( hwd_control_state_t * ptr )
 	ptr->counter_cmd.cmd.ce_pic[0] = 0;
 	ptr->counter_cmd.cmd.ce_pic[1] = 0;
 
-	set_domain( ptr, _solaris_vector.cmp_info.default_domain );
+	_ultra_set_domain( ptr, _solaris_vector.cmp_info.default_domain );
 	set_granularity( ptr, _solaris_vector.cmp_info.default_granularity );
+
 	return PAPI_OK;
 }
 
@@ -1611,7 +1614,7 @@ papi_vector_t _solaris_vector = {
         /* .bpt_map_update     */
 	/* .allocate_registers */
 	.update_control_state = _ultra_hwd_update_control_state,
-        /* .set_domain */
+        .set_domain = _ultra_set_domain,
 	.reset = _ultra_hwd_reset,
 	.set_overflow = _ultra_hwd_set_overflow,
 	/* .set_profile */
