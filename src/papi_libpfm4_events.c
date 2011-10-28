@@ -311,6 +311,8 @@ static struct native_event_t *allocate_native_event(char *name,
 
   /* clear the attribute structure */
   memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
+
+  /* should do something if this fails */
   perf_arg.attr=calloc(1,sizeof(struct perf_event_attr));
 
   ret = pfm_get_os_event_encoding(name, 
@@ -350,6 +352,8 @@ static struct native_event_t *allocate_native_event(char *name,
 			   (allocated_native_events+NATIVE_EVENT_CHUNK));
      allocated_native_events+=NATIVE_EVENT_CHUNK;
   }
+
+  free(perf_arg.attr);
 
   _papi_hwi_unlock( NAMELIB_LOCK );
 
@@ -1169,10 +1173,21 @@ _papi_libpfm_ntv_bits_to_info( hwd_register_t *bits, char *names,
 int 
 _papi_libpfm_shutdown(void) {
 
+  int i;
+
   SUBDBG("shutdown\n");
 
   /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
+
+  /* free memory allocate with strdup */
+  for( i=0; i<num_native_events; i++) {
+     free(native_events[i].base_name);
+     free(native_events[i].pmu_plus_name);
+     free(native_events[i].pmu);
+     free(native_events[i].allocated_name);
+  }
+
   memset(native_events,0,
 	 sizeof(struct native_event_t)*allocated_native_events);
   num_native_events=0;
