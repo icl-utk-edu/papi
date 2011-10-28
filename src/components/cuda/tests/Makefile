@@ -1,17 +1,17 @@
 include ../../Makefile_comp_tests
 
-CC = nvcc
-CFLAGS = -arch=sm_13
+NVCC = nvcc
+NVCFLAGS = -arch=sm_13
 
 %.o:%.cu
-	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
+	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<
 
 TESTS = HelloWorld
 
-cuda_tests: $(TESTS)
+cuda_tests: $(TESTS) 
 
-HelloWorld: HelloWorld.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+HelloWorld: HelloWorld.o $(UTILOBJS) $(PAPILIB)
+	$(NVCC) $(INCLUDE) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o
