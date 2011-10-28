@@ -62,8 +62,8 @@ Enhancements:
 	* ./configure --with-libpfm3 to support legacy libpfm3 builds
 	* PERF_COUNT_SW software events are available under perf_events with 
 	  libpfm4
-	* Nehalem/Westmere/SandyBridge event support is ready, but support is 
-	  not yet available in the Linux kernel.
+	* Nehalem/Westmere/SandyBridge Offcore event support is ready, 
+	  but support is not yet available in the Linux kernel.
 	* Add new utility to display PAPI error codes and description strings.
 	* Add API to access error descriptions: PAPI_descr_error( int error_code).
 	* Add support for handling multiattach properly.
@@ -121,12 +121,6 @@ Open Issues:
 Experimental:
 -------------
 	* Preliminary support for MIPS 74K.
-
-Known Bugs:
------------
-	* src/: papi_pfm4_events.c, ctests/test_utils.c: power6 doesn't
-	  work with libpfm4, as it reports num_cntrs=0
-
 
 ===============================================================================
 PAPI 4.1.4 RELEASE NOTES                                            29 Aug 2011
