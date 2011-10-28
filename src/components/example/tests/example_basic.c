@@ -61,7 +61,9 @@ int main (int argc, char **argv)
                            "PAPI_get_component_info failed\n", 0);
 	   }
 	   if (!TESTS_QUIET) {
-	      printf("\tComponent %d - %s\n", cid, cmpinfo->name);
+	      printf("\tComponent %d - %d events - %s\n", cid, 
+		     cmpinfo->num_native_events,
+		     cmpinfo->name);
 	   }
 	   if (strstr(cmpinfo->name,"example.c")) {
 	      /* FOUND! */
