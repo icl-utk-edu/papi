@@ -23,7 +23,7 @@ struct temp_event {
 };
 
 static struct temp_event* root = NULL;
-static CORETEMP_native_enent_entry_t * _coretemp_native_events;
+static CORETEMP_native_event_entry_t * _coretemp_native_events;
 static int num_events		= 0;
 static int is_initialized	= 0;
 
@@ -155,8 +155,8 @@ int coretemp_init_substrate( )
 	return ( PAPI_OK );
 
   t = root;
-  _coretemp_native_events = (CORETEMP_native_enent_entry_t*)
-	papi_malloc(sizeof(CORETEMP_native_enent_entry_t) * num_events);
+  _coretemp_native_events = (CORETEMP_native_event_entry_t*)
+	papi_malloc(sizeof(CORETEMP_native_event_entry_t) * num_events);
 
   do {
 	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
