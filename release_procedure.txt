@@ -17,8 +17,18 @@ __ 2. Update any documentation that may have changed. Pay particular attention
 __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
 	Doxyfile, Doxyfile-everything, Doxyfile.utils (PROJECT_NUMBER) ; and commit to cvs if needed.
 
--- 3b. Rebuild the doxygen manpages (  cd doc && make && for i in {1,3}; do cp man/man$i/*.$i ../man/man$i; done )
+-- 3a. Check doxygen version number, versions < 1.7.4 have bugs that our code
+		hits.
+
+-- 3b. Rebuild the doxygen manpages (  cd doc && make && make install )
 	You will want to check if anything needs to be commited to cvs.
+
+-- 3c. Update the website docs; 
+	We use doxygen-full for this, 
+	$(papi_dir)/docs make clean doxygen-everything
+	rm -rf /silk/homes/icl/projectsdev/papi/docs/* 
+	cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
+	chmod -R 755 /silk/homes/icl/projectsdev/papi/docs
 
 __ 4. If configure.in is changed, run autoconf (2.59) and commit the resulting
 	configure file.
