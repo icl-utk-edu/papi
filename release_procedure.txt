@@ -17,8 +17,7 @@ __ 2. Update any documentation that may have changed. Pay particular attention
 __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
 	Doxyfile, Doxyfile-everything, Doxyfile.utils (PROJECT_NUMBER) ; and commit to cvs if needed.
 
--- 3a. Check doxygen version number, versions < 1.7.4 have bugs that our code
-		hits.
+-- 3a. On most icl machines, export PATH=/mnt/scratch/doxygen-1.7.5.1/bin:$PATH
 
 -- 3b. Rebuild the doxygen manpages (  cd doc && make && make install )
 	You will want to check if anything needs to be commited to cvs.
