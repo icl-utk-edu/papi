@@ -4,7 +4,7 @@
  * Author: Kevin London
  *         london@cs.utk.edu
  */
-/** @file mem_info.c
+/** file mem_info.c
   * @brief papi_mem_info utility.
   *	@page papi_mem_info
   *	@section NAME

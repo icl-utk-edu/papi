@@ -1,4 +1,4 @@
-/** @file event_chooser.c
+/** file event_chooser.c
   * @brief papi_event_chooser utility.
   *	@page papi_event_chooser
   *	@section NAME

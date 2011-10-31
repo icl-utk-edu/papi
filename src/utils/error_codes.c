@@ -3,7 +3,7 @@
  	table format
 */
 
-/** @file error_codes.c
+/** file error_codes.c
   * @brief papi_error_codes utility.
   *	@page papi_error_codes
   *	@section  NAME

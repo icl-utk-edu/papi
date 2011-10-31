@@ -1,5 +1,5 @@
 /* This file decodes the preset events into a csv format file */
-/** @file decode.c
+/** file decode.c
   * @brief papi_decode utility.
   *	@page papi_decode
   *	@section  NAME

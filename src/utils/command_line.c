@@ -1,13 +1,10 @@
-/* 
+/* file: command_line.c
  * This simply tries to add the events listed on the command line one at a time
  * then starts and stops the counters and prints the results
 */
 
-/** @file command_line.c
-  * @brief papi_command_line utility.
-  *	@page papi_command_line
-  *	@section  NAME
-  *		papi_command_line - executes PAPI preset or native events from the command line. 
+/** 
+  *	@page papi_command_line executes PAPI preset or native events from the command line. 
   *
   *	@section Synopsis
   *		papi_command_line <event> <event> ...

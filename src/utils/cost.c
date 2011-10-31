@@ -1,4 +1,4 @@
-/** @file cost.c
+/** file cost.c
   * @brief papi_cost utility.
   *	@page papi_cost
   * @section  NAME

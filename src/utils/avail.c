@@ -1,5 +1,5 @@
 /**
-  * @file avail.c
+  * file avail.c
   *	@brief papi_avail utility.
   * @page papi_avail
   *	@section Name

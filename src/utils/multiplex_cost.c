@@ -1,4 +1,4 @@
-/** @file multiplex.c
+/** file multiplex.c
   * @brief papi_multiplex_cost utility.
   *	@page papi_multiplex_cost
   * @section  NAME

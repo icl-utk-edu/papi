@@ -1,5 +1,5 @@
 /* This file performs the following test: hardware info and which native events are available */
-/** @file component.c
+/** file component.c
   *	@page papi_component_avail
   * @brief papi_component_avail utility. 
   *	@section  NAME
