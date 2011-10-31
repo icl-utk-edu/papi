@@ -6,7 +6,7 @@
  * @file    example.c
  * @author  Joachim Protze
  *          joachim.protze@zih.tu-dresden.de
- * @author	Vince Weaver
+ * @author  Vince Weaver
  *          vweaver1@eecs.utk.edu
  *
  * @ingroup papi_components
@@ -375,7 +375,9 @@ example_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 	( ( example_control_state_t * ) ctrl )->counter[2] =
 		example_hardware_read( EXAMPLE_AUTOINC_REG );
 
-	*events = ( ( example_control_state_t * ) ctrl )->counter;	// serve cached data
+        /* serve cached data* */
+	*events = ( ( example_control_state_t * ) ctrl )->counter;	
+
 
 	return PAPI_OK;
 }
@@ -401,7 +403,8 @@ example_write( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 }
 
 
-/** Triggered by PAPI_reset */
+/** Triggered by PAPI_reset() but only if the EventSet is currently running */
+
 int
 example_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {

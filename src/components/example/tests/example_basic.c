@@ -278,10 +278,39 @@ int main (int argc, char **argv)
 
 
 	/***********************************/
+	/* Test multiple reads             */
+        /***********************************/
+
+	retval = PAPI_start( EventSet );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, 
+		      "PAPI_start failed\n",retval );
+	}
+
+	for(i=0;i<10;i++) {
+
+	  retval=PAPI_read( EventSet, values);
+	  if ( retval != PAPI_OK ) {
+	     test_fail(  __FILE__, __LINE__, "PAPI_read failed\n", retval);
+	  }
+	  if (!TESTS_QUIET) printf("%lld ",values[0]);
+	}
+	
+	retval = PAPI_stop( EventSet, values );
+	if ( retval != PAPI_OK ) {
+	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
+	}
+	if (!TESTS_QUIET) printf("%lld ",values[0]);
+
+	//	if (values[0]!=i) {
+	//   test_fail(  __FILE__, __LINE__, "Result wrong!\n", 0);
+	//}
+
+	/***********************************/
 	/* Test PAPI_reset()               */
 	/***********************************/
 
-	retval = PAPI_reset( EventSet );
+	retval = PAPI_reset( EventSet);
 	if ( retval != PAPI_OK ) {
 	   test_fail( __FILE__, __LINE__, 
 		      "PAPI_reset() failed\n",retval );
@@ -293,16 +322,23 @@ int main (int argc, char **argv)
 		      "PAPI_start failed\n",retval );
 	}
 	
+	retval = PAPI_reset( EventSet);
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, 
+		      "PAPI_reset() failed\n",retval );
+	}
+
 	retval = PAPI_stop( EventSet, values );
 	if ( retval != PAPI_OK ) {
 	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	}
 
+
 	if (!TESTS_QUIET) printf("Testing EXAMPLE_AUTOINC after PAPI_reset(): %lld\n",
 				 values[0]);
 
 	if (values[0]!=0) {
-	  //	   test_fail(  __FILE__, __LINE__, "Result not zero!\n", 0);
+	  	   test_fail(  __FILE__, __LINE__, "Result not zero!\n", 0);
 	}
 
 	retval = PAPI_cleanup_eventset(EventSet);
