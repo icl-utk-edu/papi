@@ -5,7 +5,7 @@
   *		papi_multiplex_cost - computes execution time costs for basic PAPI operations on multiplexed EventSets. 
   *
   *	@section Synopsis
-  *		papi_cost [-m, --min <min>] [-x, --max <max>] [-k,-s]
+  *		papi_cost [-m, --min < min >] [-x, --max < max >] [-k,-s]
   *
   *	@section Description
   *		papi_multiplex_cost is a PAPI utility program that computes the 
@@ -17,8 +17,8 @@
   *
   *	@section Options
   *	<ul>
-  *		<li>-m <Min number of events to test>
-  *		<li>-x <Max number of events to test>
+  *		<li>-m < Min number of events to test >
+  *		<li>-x < Max number of events to test >
   *		<li> -k, Do not time kernel multiplexing 
   *		<li> -s, Do not ime software multiplexed EventSets 
   *		<li> -t THREASHOLD, Test with THRESHOLD iterations of counting loop. 

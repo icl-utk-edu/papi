@@ -6,7 +6,7 @@
   *		lists other events that can be counted with them. 
   *
   *	@section Synopsis
-  *		papi_event_chooser NATIVE | PRESET <event> <event> ...
+  *		papi_event_chooser NATIVE | PRESET < event > < event > ...
   *
   *	@section Description
   *		papi_event_chooser is a PAPI utility program that reports information 
@@ -18,7 +18,7 @@
   *	@section Bugs
   *		There are no known bugs in this utility. 
   *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *		PAPI Mailing List at ptools-perfapi@ptools.org. 
  */
 #include "papi_test.h"
 #include <stdio.h>

@@ -19,7 +19,7 @@
   *		<li>-d	Display PAPI preset event information in a more detailed format.
   *		<li>-h	Display help information about this utility.
   *		<li>-t	Display the PAPI preset event information in a tabular format. This is the default.
-  *		<li>-e <event>	Display detailed event information for the named event. 
+  *		<li>-e < event >	Display detailed event information for the named event. 
   *			This event can be either a preset or a native event. 
   *	</ul>
   *

@@ -7,7 +7,7 @@
   *	@page papi_command_line executes PAPI preset or native events from the command line. 
   *
   *	@section Synopsis
-  *		papi_command_line <event> <event> ...
+  *		papi_command_line < event > < event > ...
   *
   *	@section Description
   *		papi_command_line is a PAPI utility program that adds named events from the 

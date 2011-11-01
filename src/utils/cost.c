@@ -16,13 +16,13 @@
   *
   *	@section Options
   *	<ul>
-  *		<li>-b <bins> Define the number of bins into which the results are 
+  *		<li>-b < bins > Define the number of bins into which the results are 
   *			partitioned for display. The default is 100.
   *		<li>-d	Display a graphical distribution of costs in a vertical histogram.
   *		<li>-h	Display help information about this utility.
   *		<li>-s	Show the number of iterations in each of the first 10 
   *			standard deviations above the mean.
-  *		<li>-t <threshold>	Set the threshold for the number of iterations to 
+  *		<li>-t < threshold > 	Set the threshold for the number of iterations to 
   *			measure costs. The default is 100,000.
   *	</ul>
   *
