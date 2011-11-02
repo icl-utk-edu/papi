@@ -217,8 +217,7 @@ _coretemp_init_substrate( int cidx )
      _coretemp_vector.cmp_info.num_native_events = num_events;
 
      /* Export the component id */
-     _example_vector.cmp_info.CmpIdx = cidx;
-
+     _coretemp_vector.cmp_info.CmpIdx = cidx;
 
      return PAPI_OK;
 }

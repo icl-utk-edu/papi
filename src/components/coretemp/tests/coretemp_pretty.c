@@ -27,6 +27,7 @@ int main (int argc, char **argv)
     char event_name[PAPI_MAX_STR_LEN];
     int r;
     const PAPI_component_info_t *cmpinfo = NULL;
+    PAPI_event_info_t evinfo;
     double temperature;
 
         /* Set TESTS_QUIET variable */
@@ -77,6 +78,12 @@ int main (int argc, char **argv)
                             "PAPI_event_code_to_name", retval );
 	}
 
+	retval = PAPI_get_event_info(code,&evinfo);
+	if (retval != PAPI_OK) {
+	  test_fail( __FILE__, __LINE__,
+             "Error getting event info\n",retval);
+	}
+
 	   /* Print Temperature Inputs */
 	if (strstr(event_name,"temp")) {
 	  
@@ -111,8 +118,10 @@ int main (int argc, char **argv)
 
 	     temperature=(values[0]/1000.0);
 
-             if (!TESTS_QUIET) printf("\tvalue: %.2lf degreesC\n",
-				      temperature);
+             if (!TESTS_QUIET) printf("\tvalue: %.2lf degreesC\t%s\n",
+				      temperature,
+				      evinfo.long_descr
+				      );
 
 	     retval = PAPI_cleanup_eventset( EventSet );
 	     if (retval != PAPI_OK) {
