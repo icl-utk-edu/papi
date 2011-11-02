@@ -760,95 +760,105 @@ enum_add_native_events( int *num_events, int **evtcodes,
 			int need_interrupt, int no_software_events )
 {
 	/* query and set up the right event to monitor */
-	int EventSet = PAPI_NULL;
-	int i = 0, k, event_code, retval;
-	int counters, event_found = 0;
-	PAPI_event_info_t info;
-	const PAPI_component_info_t *s = NULL;
-        const PAPI_hw_info_t *hw_info = NULL;
+     int EventSet = PAPI_NULL;
+     int i = 0, k, event_code, retval;
+     int counters, event_found = 0;
+     PAPI_event_info_t info;
+     const PAPI_component_info_t *s = NULL;
+     const PAPI_hw_info_t *hw_info = NULL;
    
-	s = PAPI_get_component_info( 0 );
-	if ( s == NULL )
-		test_fail( __FILE__, __LINE__, 
+     s = PAPI_get_component_info( 0 );
+     if ( s == NULL ) {
+	test_fail( __FILE__, __LINE__, 
 			   "PAPI_get_component_info", PAPI_ESBSTR );
+     }
 
-        hw_info = PAPI_get_hardware_info(  );
-        if ( hw_info == NULL )
-                test_fail( __FILE__, __LINE__, 
-			   "PAPI_get_hardware_info", 2 );
+     hw_info = PAPI_get_hardware_info(  );
+     if ( hw_info == NULL ) {
+        test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+     }
    
+     counters = PAPI_num_hwctrs(  );
+     if (counters<1) {
+	test_fail(__FILE__,__LINE__, "No counters available!\n",1);
+     }
+
+     if (!TESTS_QUIET) printf("Trying to fill %d hardware counters...\n",
+			      counters);
    
-	counters = PAPI_num_hwctrs(  );
-	if (counters<1) {
-	  test_fail(__FILE__,__LINE__,
-		    "No counters available!\n",1);
-	}
-   
-        if (need_interrupt) {
-           if ( (!strcmp(hw_info->model_string,"POWER6")) ||
-	        (!strcmp(hw_info->model_string,"POWER5")) ) {
+     if (need_interrupt) {
+        if ( (!strcmp(hw_info->model_string,"POWER6")) ||
+	     (!strcmp(hw_info->model_string,"POWER5")) ) {
 	   
-	        test_warn(__FILE__, __LINE__,
-			  "Limiting num_counters because of LIMITED_PMC on Power5 and Power6",1);
-                counters=4;
+	   test_warn(__FILE__, __LINE__,
+		    "Limiting num_counters because of LIMITED_PMC on Power5 and Power6",1);
+           counters=4;
+	}
+     }
+
+     ( *evtcodes ) = ( int * ) calloc( counters, sizeof ( int ) );
+
+     retval = PAPI_create_eventset( &EventSet );
+     if ( retval != PAPI_OK ) {
+	test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+     }
+
+     /* For platform independence, always ASK FOR the first event */
+     /* Don't just assume it'll be the first numeric value */
+     i = 0 | PAPI_NATIVE_MASK;
+     PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+
+     do {
+        retval = PAPI_get_event_info( i, &info );
+
+	/* HACK! FIXME */
+        if (no_software_events && strstr(info.symbol,"PERF_COUNT_SW")) {
+	   if (!TESTS_QUIET) {
+	      printf("Blocking event %s as a SW event\n", info.symbol);
 	   }
-        }
+	   continue;
+	}
 
-	( *evtcodes ) = ( int * ) calloc( counters, sizeof ( int ) );
+	if ( s->cntr_umasks ) {
+	   k = i;
+			
+	   if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+	      do {
+	         retval = PAPI_get_event_info( k, &info );
+		 event_code = ( int ) info.event_code;
 
-	retval = PAPI_create_eventset( &EventSet );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, 
-			   "PAPI_create_eventset", retval );
-
-	/* For platform independence, always ASK FOR the first event */
-	/* Don't just assume it'll be the first numeric value */
-	i = 0 | PAPI_NATIVE_MASK;
-	PAPI_enum_event( &i, PAPI_ENUM_FIRST );
-
-	do {
-		retval = PAPI_get_event_info( i, &info );
-
-		/* HACK! FIXME */
-		if (no_software_events && 
-		    strstr(info.symbol,"PERF_COUNT_SW")) {
-		   if (!TESTS_QUIET) {
-		      fprintf(stderr,"Blocking event %s as a SW event\n",
-			      info.symbol);
-		   }
-		   continue;
-		}
-
-		if ( s->cntr_umasks ) {
-			k = i;
-			if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-				do {
-					retval = PAPI_get_event_info( k, &info );
-					event_code = ( int ) info.event_code;
-
-					retval = PAPI_add_event( EventSet, event_code );
-					if ( retval == PAPI_OK ) {
-						( *evtcodes )[event_found] = event_code;
-						event_found++;
-					} else {
-						if ( !TESTS_QUIET )
-							fprintf( stdout, "0x%x (%s) is not available.\n",
-								 event_code, info.symbol );
-					}
-				}
-				while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK
+		 retval = PAPI_add_event( EventSet, event_code );
+		 if ( retval == PAPI_OK ) {
+		    ( *evtcodes )[event_found] = event_code;
+		    if ( !TESTS_QUIET ) {
+		       printf( "event_code[%d] = 0x%x (%s)\n",
+			       event_found, event_code, info.symbol );
+		    }
+		    event_found++;
+		 } else {
+		    if ( !TESTS_QUIET ) {
+		       printf( "0x%x (%s) can't be added to the EventSet.\n",
+			       event_code, info.symbol );
+		    }
+		 }
+	      } while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK
 						&& event_found < counters );
-			} else {
-				event_code = ( int ) info.event_code;
-				retval = PAPI_add_event( EventSet, event_code );
-				if ( retval == PAPI_OK ) {
-					( *evtcodes )[event_found] = event_code;
-					event_found++;
-				}
-			}
-			if ( !TESTS_QUIET && retval == PAPI_OK )
-				printf( "\n" );
-		} else {
+	   } else {
+	      event_code = ( int ) info.event_code;
+	      retval = PAPI_add_event( EventSet, event_code );
+	      if ( retval == PAPI_OK ) {
+		  ( *evtcodes )[event_found] = event_code;
+		  if ( !TESTS_QUIET ) {
+		     printf( "event_code[%d] = 0x%x (%s)\n",
+			       event_found, event_code, info.symbol );
+		  }
+		  event_found++;
+	      }
+	   }
+	   if ( !TESTS_QUIET && retval == PAPI_OK ) {
+	     /* */
+	   }
+	} else {
 			event_code = ( int ) info.event_code;
 			retval = PAPI_add_event( EventSet, event_code );
 			if ( retval == PAPI_OK ) {
@@ -864,6 +874,10 @@ enum_add_native_events( int *num_events, int **evtcodes,
 			event_found < counters );
 
 	*num_events = ( int ) event_found;
+
+	if (!TESTS_QUIET) printf("Tried to fill %d counters with events, "
+				 "found %d\n",counters,event_found);
+
 	return EventSet;
 }
 
