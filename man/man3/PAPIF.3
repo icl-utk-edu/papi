@@ -1,4 +1,4 @@
-.TH "PAPI Fortran API" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI Fortran API" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -49,55 +49,55 @@ PAPI Fortran API \-
 .ti -1c
 .RI "class \fBPAPIF_num_hwctrs\fP"
 .br
-.RI "\fIReturn the number of hardware counters on the cpu. \fP"
+.RI "\fIReturn the number of hardware counters on the cpu'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_num_cmp_hwctrs\fP"
 .br
-.RI "\fIReturn the number of hardware counters on the specified component. \fP"
+.RI "\fIReturn the number of hardware counters on the specified component'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_real_cyc\fP"
 .br
-.RI "\fIGet real time counter value in clock cycles. \fP"
+.RI "\fIGet real time counter value in clock cycles'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_real_usec\fP"
 .br
-.RI "\fIGet real time counter value in microseconds. \fP"
+.RI "\fIGet real time counter value in microseconds'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_real_nsec\fP"
 .br
-.RI "\fIGet real time counter value in nanoseconds. \fP"
+.RI "\fIGet real time counter value in nanoseconds'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_virt_cyc\fP"
 .br
-.RI "\fIGet virtual time counter value in clock cycles. \fP"
+.RI "\fIGet virtual time counter value in clock cycles'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_virt_usec\fP"
 .br
-.RI "\fIGet virtual time counter value in microseconds. \fP"
+.RI "\fIGet virtual time counter value in microseconds'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_is_initialized\fP"
 .br
-.RI "\fICheck for initialization. \fP"
+.RI "\fICheck for initialization'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_library_init\fP"
 .br
-.RI "\fIInitialize the PAPI library. \fP"
+.RI "\fIInitialize the PAPI library'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_thread_id\fP"
 .br
-.RI "\fIGet the thread identifier of the current thread. \fP"
+.RI "\fIGet the thread identifier of the current thread'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_register_thread\fP"
 .br
-.RI "\fINotify PAPI that a thread has 'appeared'. \fP"
+.RI "\fINotify PAPI that a thread has 'appeared''\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_unregister_thread\fP"
 .br
-.RI "\fINotify PAPI that a thread has 'disappeared'. \fP"
+.RI "\fINotify PAPI that a thread has 'disappeared''\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_thread_init\fP"
 .br
-.RI "\fIInitialize thread support in the PAPI library. \fP"
+.RI "\fIInitialize thread support in the PAPI library'\&. \fP"
 .ti -1c
 .RI "class \fBPAPI_list_events\fP"
 .br
@@ -105,168 +105,397 @@ PAPI Fortran API \-
 .ti -1c
 .RI "class \fBPAPIF_multiplex_init\fP"
 .br
-.RI "\fIInitialize multiplex support in the PAPI library. \fP"
+.RI "\fIInitialize multiplex support in the PAPI library'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_multiplex\fP"
 .br
-.RI "\fIGet the multiplexing status of specified event set. \fP"
+.RI "\fIGet the multiplexing status of specified event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_multiplex\fP"
 .br
-.RI "\fIConvert a standard event set to a multiplexed event set. \fP"
+.RI "\fIConvert a standard event set to a multiplexed event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_perror\fP"
 .br
-.RI "\fIConvert PAPI error codes to strings, and print error message to stderr. \fP"
+.RI "\fIConvert PAPI error codes to strings, and print error message to stderr'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_query_event\fP"
 .br
-.RI "\fIQuery if PAPI event exists. \fP"
+.RI "\fIQuery if PAPI event exists'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_event_info\fP"
 .br
-.RI "\fIGet the event's name and description info. \fP"
+.RI "\fIGet the event's name and description info'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_event_code_to_name\fP"
 .br
-.RI "\fIConvert a numeric hardware event code to a name. \fP"
+.RI "\fIConvert a numeric hardware event code to a name'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_event_name_to_code\fP"
 .br
-.RI "\fIConvert a name to a numeric hardware event code. \fP"
+.RI "\fIConvert a name to a numeric hardware event code'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_num_events\fP"
 .br
-.RI "\fIEnumerate PAPI preset or native events. \fP"
+.RI "\fIEnumerate PAPI preset or native events'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_enum_event\fP"
 .br
-.RI "\fIReturn the number of events in an event set. \fP"
+.RI "\fIReturn the number of events in an event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_read\fP"
 .br
-.RI "\fIRead hardware counters from an event set. \fP"
+.RI "\fIRead hardware counters from an event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_read_ts\fP"
 .br
-.RI "\fIRead hardware counters with a timestamp. \fP"
+.RI "\fIRead hardware counters with a timestamp'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_remove_event\fP"
 .br
-.RI "\fIRemove a hardware event from a PAPI event set. \fP"
+.RI "\fIRemove a hardware event from a PAPI event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_remove_events\fP"
 .br
-.RI "\fIRemove an array of hardware event codes from a PAPI event set. \fP"
+.RI "\fIRemove an array of hardware event codes from a PAPI event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_reset\fP"
 .br
-.RI "\fIReset the hardware event counts in an event set. \fP"
+.RI "\fIReset the hardware event counts in an event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_debug\fP"
 .br
-.RI "\fISet the current debug level for error output from PAPI. \fP"
+.RI "\fISet the current debug level for error output from PAPI'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_domain\fP"
 .br
-.RI "\fISet the default counting domain for new event sets bound to the cpu component. \fP"
+.RI "\fISet the default counting domain for new event sets bound to the cpu component'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_cmp_domain\fP"
 .br
-.RI "\fISet the default counting domain for new event sets bound to the specified component. \fP"
+.RI "\fISet the default counting domain for new event sets bound to the specified component'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_granularity\fP"
 .br
-.RI "\fISet the default counting granularity for eventsets bound to the cpu component. \fP"
+.RI "\fISet the default counting granularity for eventsets bound to the cpu component'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_cmp_granularity\fP"
 .br
-.RI "\fISet the default counting granularity for eventsets bound to the specified component. \fP"
+.RI "\fISet the default counting granularity for eventsets bound to the specified component'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_shutdown\fP"
 .br
-.RI "\fIfinish using PAPI and free all related resources. \fP"
+.RI "\fIfinish using PAPI and free all related resources'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_start\fP"
 .br
-.RI "\fIStart counting hardware events in an event set. \fP"
+.RI "\fIStart counting hardware events in an event set'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_state\fP"
 .br
-.RI "\fIReturn the counting state of an EventSet. \fP"
+.RI "\fIReturn the counting state of an EventSet'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_stop\fP"
 .br
-.RI "\fIStop counting hardware events in an EventSet. \fP"
+.RI "\fIStop counting hardware events in an EventSet'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_write\fP"
 .br
-.RI "\fIWrite counter values into counters. \fP"
+.RI "\fIWrite counter values into counters'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_lock\fP"
 .br
-.RI "\fILock one of two mutex variables defined in \fBpapi.h\fP. \fP"
+.RI "\fILock one of two mutex variables defined in \fBpapi'\&.h\fP'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_unlock\fP"
 .br
-.RI "\fIUnlock one of the mutex variables defined in \fBpapi.h\fP. \fP"
+.RI "\fIUnlock one of the mutex variables defined in \fBpapi'\&.h\fP'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_start_counters\fP"
 .br
-.RI "\fIStart counting hardware events. \fP"
+.RI "\fIStart counting hardware events'\&. \fP"
 .ti -1c
 .RI "class \fBPAPI_read_counters\fP"
 .br
-.RI "\fIRead and reset counters. \fP"
+.RI "\fIRead and reset counters'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_stop_counters\fP"
 .br
-.RI "\fIStop counting hardware events and reset values to zero. \fP"
+.RI "\fIStop counting hardware events and reset values to zero'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_accum_counters\fP"
 .br
-.RI "\fIAccumulate and reset counters. \fP"
+.RI "\fIAccumulate and reset counters'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_num_counters\fP"
 .br
-.RI "\fIGet the number of hardware counters available on the system. \fP"
+.RI "\fIGet the number of hardware counters available on the system'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_ipc\fP"
 .br
-.RI "\fIGet instructions per cycle, real and processor time. \fP"
+.RI "\fIGet instructions per cycle, real and processor time'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_flips\fP"
 .br
-.RI "\fISimplified call to get Mflips/s (floating point instruction rate), real and processor time. \fP"
+.RI "\fISimplified call to get Mflips/s (floating point instruction rate), real and processor time'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_flops\fP"
 .br
-.RI "\fISimplified call to get Mflops/s (floating point instruction rate), real and processor time. \fP"
+.RI "\fISimplified call to get Mflops/s (floating point instruction rate), real and processor time'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_clockrate\fP"
 .br
-.RI "\fIGet the clockrate in MHz for the current cpu. \fP"
+.RI "\fIGet the clockrate in MHz for the current cpu'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_preload\fP"
 .br
-.RI "\fIGet the LD_PRELOAD environment variable. \fP"
+.RI "\fIGet the LD_PRELOAD environment variable'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_granularity\fP"
 .br
-.RI "\fIGet the granularity setting for the specified EventSet. \fP"
+.RI "\fIGet the granularity setting for the specified EventSet'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_get_domain\fP"
 .br
-.RI "\fIGet the domain setting for the specified EventSet. \fP"
+.RI "\fIGet the domain setting for the specified EventSet'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_event_domain\fP"
 .br
-.RI "\fISet the default counting domain for specified EventSet. \fP"
+.RI "\fISet the default counting domain for specified EventSet'\&. \fP"
 .ti -1c
 .RI "class \fBPAPIF_set_inherit\fP"
 .br
-.RI "\fITurn on inheriting of counts from daughter to parent process. \fP"
+.RI "\fITurn on inheriting of counts from daughter to parent process'\&. \fP"
 .in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBpapif_accum\fP (int *EventSet, long long *values, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_add_event\fP (int *EventSet, int *Event, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_add_events\fP (int *EventSet, int *Events, int *number, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_cleanup_eventset\fP (int *EventSet, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_create_eventset\fP (int *EventSet, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_assign_eventset_component\fP (int *EventSet, int *cidx, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_destroy_eventset\fP (int *EventSet, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_dmem_info\fP (long long *dest, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_exe_info\fP (char *fullname, char *name, long long *text_start, long long *text_end, long long *data_start, long long *data_end, long long *bss_start, long long *bss_end, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_hardware_info\fP (int *ncpu, int *nnodes, int *totalcpus, int *vendor, char *vendor_string, int *model, char *model_string, float *revision, float *mhz)"
+.br
+.ti -1c
+.RI "void \fBpapif_num_hwctrs\fP (int *num)"
+.br
+.ti -1c
+.RI "void \fBpapif_num_cmp_hwctrs\fP (int *cidx, int *num)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_real_cyc\fP (long long *real_cyc)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_real_usec\fP (long long *time)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_real_nsec\fP (long long *time)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_virt_cyc\fP (long long *virt_cyc)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_virt_usec\fP (long long *time)"
+.br
+.ti -1c
+.RI "void \fBpapif_is_initialized\fP (int *level)"
+.br
+.ti -1c
+.RI "void \fBpapif_library_init\fP (int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_thread_id\fP (unsigned long *id)"
+.br
+.ti -1c
+.RI "void \fBpapif_register_thread\fP (int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_unregster_thread\fP (int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_thread_init\fP (unsigned long int(*handle)(void), int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_list_events\fP (int *EventSet, int *Events, int *number, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_multiplex_init\fP (int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_multiplex\fP (int *EventSet, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_multiplex\fP (int *EventSet, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_perror\fP (int *code, char *destination, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_query_event\fP (int *EventCode, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_event_info\fP (int *EventCode, char *symbol, char *long_descr, char *short_descr, int *count, char *event_note, int *flags, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_event_code_to_name\fP (int *EventCode, char *out, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_event_name_to_code\fP (char *in, int *out, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_num_events\fP (int *EventCode, int *count)"
+.br
+.ti -1c
+.RI "void \fBpapif_enum_event\fP (int *EventCode, int *modifier, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_read\fP (int *EventSet, long long *values, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_read_ts\fP (int *EventSet, long long *values, long long *cycles, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_remove_event\fP (int *EventSet, int *Event, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_remove_events\fP (int *EventSet, int *Events, int *number, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_reset\fP (int *EventSet, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_debug\fP (int *debug, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_domain\fP (int *domain, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_cmp_domain\fP (int *domain, int *cidx, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_granularity\fP (int *granularity, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_cmp_granularity\fP (int *granularity, int *cidx, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_shutdown\fP (void)"
+.br
+.ti -1c
+.RI "void \fBpapif_start\fP (int *EventSet, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_state\fP (int *EventSet, int *status, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_stop\fP (int *EventSet, long long *values, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_write\fP (int *EventSet, long long *values, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_lock\fP (int *lock, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_unlock\fP (int *lock, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_start_counters\fP (int *events, int *array_len, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_read_counters\fP (long long *values, int *array_len, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_stop_counters\fP (long long *values, int *array_len, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_accum_counters\fP (long long *values, int *array_len, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_num_counters\fP (int *numevents)"
+.br
+.ti -1c
+.RI "void \fBpapif_ipc\fP (float *rtime, float *ptime, long long *ins, float *ipc, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_flips\fP (float *real_time, float *proc_time, long long *flpins, float *mflips, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_flops\fP (float *real_time, float *proc_time, long long *flpops, float *mflops, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_clockrate\fP (int *cr)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_preload\fP (char *lib_preload_env, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_granularity\fP (int *eventset, int *granularity, int *mode, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_get_domain\fP (int *eventset, int *domain, int *mode, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_event_domain\fP (int *es, int *domain, int *check)"
+.br
+.ti -1c
+.RI "void \fBpapif_set_inherit\fP (int *inherit, int *check)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "void papif_get_clockrate (int *cr)"< Clock rate in MHz 
+.SS "void papif_get_domain (int *eventset, int *domain, int *mode, int *check)"< Domain for all new eventsets'\&. Takes non-NULL option pointer'\&.
+.PP
+< No error
+.PP
+< Domain for an eventset
+.PP
+< No error
+.PP
+< Invalid argument 
+.SS "void papif_get_event_info (int *EventCode, char *symbol, char *long_descr, char *short_descr, int *count, char *event_note, int *flags, int *check)"< No error 
+.SS "void papif_get_exe_info (char *fullname, char *name, long long *text_start, long long *text_end, long long *data_start, long long *data_end, long long *bss_start, long long *bss_end, int *check)"< Executable information
+.PP
+< No error 
+.SS "void papif_get_granularity (int *eventset, int *granularity, int *mode, int *check)"< Granularity for all new eventsets
+.PP
+< No error
+.PP
+< Granularity for an eventset
+.PP
+< No error
+.PP
+< Invalid argument 
+.SS "void papif_get_preload (char *lib_preload_env, int *check)"< Option to find out the environment variable that can preload libraries
+.PP
+< No error 
+.SS "void papif_set_event_domain (int *es, int *domain, int *check)"< Domain for an eventset 
+.SS "void papif_set_inherit (int *inherit, int *check)"< Option to set counter inheritance flag 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

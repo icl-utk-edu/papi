@@ -1,10 +1,10 @@
-.TH "PAPI_register_thread" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_register_thread" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_register_thread \- 
 .PP
-Notify PAPI that a thread has 'appeared'.  
+Notify PAPI that a thread has 'appeared''\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,27 +13,27 @@ Notify PAPI that a thread has 'appeared'.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi.h\fP> 
+#include <\fBpapi'\&.h\fP> 
 .br
  int \fBPAPI_register_thread\fP (void);
 .RE
 .PP
-\fBPAPI_register_thread()\fP should be called when the user wants to force PAPI to initialize a thread that PAPI has not seen before.
+\fBPAPI_register_thread()\fP should be called when the user wants to force PAPI to initialize a thread that PAPI has not seen before'\&.
 .PP
-Usually this is not necessary as PAPI implicitly detects the thread when an eventset is created or other thread local PAPI functions are called. However, it can be useful for debugging and performance enhancements in the run-time systems of performance tools.
+Usually this is not necessary as PAPI implicitly detects the thread when an eventset is created or other thread local PAPI functions are called'\&. However, it can be useful for debugging and performance enhancements in the run-time systems of performance tools'\&.
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_ENOMEM\fP Space could not be allocated to store the new thread information. 
+\fIPAPI_ENOMEM\fP Space could not be allocated to store the new thread information'\&. 
 .br
-\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable. 
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable'\&. 
 .br
-\fIPAPI_ESBSTR\fP Hardware counters for this thread could not be initialized.
+\fIPAPI_ESBSTR\fP Hardware counters for this thread could not be initialized'\&.
 .RE
 .PP
 \fBBug\fP
 .RS 4
-No known bugs.
+No known bugs'\&.
 .RE
 .PP
 .PP
@@ -50,4 +50,4 @@ No known bugs.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

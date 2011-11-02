@@ -1,10 +1,10 @@
-.TH "PAPI_set_debug" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_set_debug" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_set_debug \- 
 .PP
-Set the current debug level for error output from PAPI.  
+Set the current debug level for error output from PAPI'\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,16 +13,16 @@ Set the current debug level for error output from PAPI.
 .PP 
 \fBC Prototype:\fP
 .RS 4
-#include <\fBpapi.h\fP> 
+#include <\fBpapi'\&.h\fP> 
 .br
  int \fBPAPI_set_debug( int level )\fP;
 .RE
 .PP
 \fBParameters:\fP
 .RS 4
-\fIlevel\fP one of the constants shown in the table below and defined in the \fBpapi.h\fP header file. 
+\fIlevel\fP one of the constants shown in the table below and defined in the \fBpapi'\&.h\fP header file'\&. 
 .br
- The possible debug levels for debugging are shown below. 
+ The possible debug levels for debugging are shown below'\&. 
 .PD 0
 
 .IP "\(bu" 2
@@ -40,35 +40,35 @@ PAPI_VERB_ESTOP Print error message and exit
 .RS 4
 \fIPAPI_OK\fP 
 .br
-\fIPAPI_EINVAL\fP The debug level is invalid. 
+\fIPAPI_EINVAL\fP The debug level is invalid'\&. 
 .br
 
 .br
 .RE
 .PP
-The current debug level is used by both the internal error and debug message handler subroutines. 
+The current debug level is used by both the internal error and debug message handler subroutines'\&. 
 .br
- The debug handler is only used if the library was compiled with -DDEBUG. 
+ The debug handler is only used if the library was compiled with -DDEBUG'\&. 
 .br
- The debug handler is called when there is an error upon a call to the PAPI API.
+ The debug handler is called when there is an error upon a call to the PAPI API'\&.
 .br
- The error handler is always active and its behavior cannot be modified except for whether or not it prints anything.
+ The error handler is always active and its behavior cannot be modified except for whether or not it prints anything'\&.
 .PP
 The default PAPI debug handler prints out messages in the following form: 
 .br
  PAPI Error: Error Code code, symbol, description
 .PP
-If the error was caused from a system call and the return code is PAPI_ESYS, the message will have a colon space and the error string as reported by strerror() appended to the end.
+If the error was caused from a system call and the return code is PAPI_ESYS, the message will have a colon space and the error string as reported by strerror() appended to the end'\&.
 .PP
 The PAPI error handler prints out messages in the following form: 
 .br
- PAPI Error: message. 
+ PAPI Error: message'\&. 
 .br
  
 .PP
 \fBNote:\fP
 .RS 4
-This is the ONLY function that may be called BEFORE \fBPAPI_library_init()\fP. 
+This is the ONLY function that may be called BEFORE \fBPAPI_library_init()\fP'\&. 
 .br
  
 .RE
@@ -99,4 +99,4 @@ This is the ONLY function that may be called BEFORE \fBPAPI_library_init()\fP.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

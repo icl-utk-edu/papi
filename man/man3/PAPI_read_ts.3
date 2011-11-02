@@ -1,10 +1,10 @@
-.TH "PAPI_read_ts" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_read_ts" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_read_ts \- 
 .PP
-Read hardware counters with a timestamp.  
+Read hardware counters with a timestamp'\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,16 +13,16 @@ Read hardware counters with a timestamp.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi.h\fP> 
+#include <\fBpapi'\&.h\fP> 
 .br
  int \fBPAPI_read_ts(int EventSet, long long *values, long long *cycles )\fP;
 .RE
 .PP
-\fBPAPI_read_ts()\fP copies the counters of the indicated event set into the provided array. It also places a real-time cycle timestamp into the cycles array.
+\fBPAPI_read_ts()\fP copies the counters of the indicated event set into the provided array'\&. It also places a real-time cycle timestamp into the cycles array'\&.
 .PP
-The counters continue counting after the read.
+The counters continue counting after the read'\&.
 .PP
-\fBPAPI_read_ts()\fP assumes an initialized PAPI library and a properly added event set.
+\fBPAPI_read_ts()\fP assumes an initialized PAPI library and a properly added event set'\&.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -35,11 +35,11 @@ The counters continue counting after the read.
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid'\&. 
 .br
-\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable. 
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable'\&. 
 .br
-\fIPAPI_ENOEVST\fP The event set specified does not exist.
+\fIPAPI_ENOEVST\fP The event set specified does not exist'\&.
 .RE
 .PP
 \fBExamples\fP
@@ -54,7 +54,7 @@ The counters continue counting after the read.
 .PP
 \fBBug\fP
 .RS 4
-This function has no known bugs.
+This function has no known bugs'\&.
 .RE
 .PP
 .PP
@@ -75,4 +75,4 @@ This function has no known bugs.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

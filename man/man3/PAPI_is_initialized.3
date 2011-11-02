@@ -1,4 +1,4 @@
-.TH "PAPI_is_initialized" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_is_initialized" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -24,7 +24,7 @@ check for initialization
 .PP
 \fBParameters:\fP
 .RS 4
-\fIversion\fP upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled. This guards against portability problems when updating the PAPI shared libraries on your system. 
+\fIversion\fP upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled'\&. This guards against portability problems when updating the PAPI shared libraries on your system'\&. 
 .RE
 .PP
 \fBExamples:\fP
@@ -45,12 +45,12 @@ check for initialization
 
 .fi
 .PP
- \fBPAPI_is_initialized()\fP returns the status of the PAPI library. The PAPI library can be in one of four states, as described under RETURN VALUES. 
+ \fBPAPI_is_initialized()\fP returns the status of the PAPI library'\&. The PAPI library can be in one of four states, as described under RETURN VALUES'\&. 
 .RE
 .PP
 \fBBug\fP
 .RS 4
-If you don't call this before using any of the low level PAPI calls, your application could core dump.  PAPI 
+If you don't call this before using any of the low level PAPI calls, your application could core dump'\&.  PAPI 
 .RE
 .PP
 \fBSee also:\fP
@@ -62,4 +62,4 @@ If you don't call this before using any of the low level PAPI calls, your applic
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI-C from the source code'\&.

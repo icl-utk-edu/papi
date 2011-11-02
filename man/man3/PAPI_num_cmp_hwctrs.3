@@ -1,28 +1,28 @@
-.TH "PAPI_num_cmp_hwctrs" 3 "Tue Oct 25 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_num_cmp_hwctrs" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_num_cmp_hwctrs \- 
 .PP
-Return the number of hardware counters for the specified component.  
+Return the number of hardware counters for the specified component'\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBPAPI_num_cmp_hwctrs()\fP returns the number of counters present in the specified component. By convention, component 0 is always the cpu. This count does not include any special purpose registers or other performance hardware. \fBPAPI_library_init()\fP must be called in order for this function to return anything greater than 0.
+\fBPAPI_num_cmp_hwctrs()\fP returns the number of counters present in the specified component'\&. By convention, component 0 is always the cpu'\&. This count does not include any special purpose registers or other performance hardware'\&. \fBPAPI_library_init()\fP must be called in order for this function to return anything greater than 0'\&.
 .PP
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi.h\fP> 
+#include <\fBpapi'\&.h\fP> 
 .br
  int PAPI_num_cmp_hwctrs(int  cidx );
 .RE
 .PP
 \fBParameters:\fP
 .RS 4
-\fIcidx\fP -- An integer identifier for a component. By convention, component 0 is always the cpu component.
+\fIcidx\fP -- An integer identifier for a component'\&. By convention, component 0 is always the cpu component'\&.
 .RE
 .PP
 \fBExample\fP
@@ -30,8 +30,8 @@ Return the number of hardware counters for the specified component.
 
 .PP
 .nf
- // Query the cpu component for the number of counters.
- printf(\'%d hardware counters found.\\n\', PAPI_num_cmp_hwctrs(0));
+ // Query the cpu component for the number of counters\&.
+ printf(\'%d hardware counters found\&.\\n\', PAPI_num_cmp_hwctrs(0));
 
 .fi
 .PP
@@ -39,18 +39,18 @@ Return the number of hardware counters for the specified component.
 .PP
 \fBReturns:\fP
 .RS 4
-On success, this function returns a value greater than zero.
+On success, this function returns a value greater than zero'\&.
 .br
- A zero result usually means the library has not been initialized.
+ A zero result usually means the library has not been initialized'\&.
 .RE
 .PP
 \fBBug\fP
 .RS 4
-This count may include fixed-use counters in addition to the general purpose counters. 
+This count may include fixed-use counters in addition to the general purpose counters'\&. 
 .RE
 .PP
 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI-C from the source code'\&.
