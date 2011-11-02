@@ -305,42 +305,43 @@ _papi_example_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /** Triggered by PAPI_read() */
 int
-example_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
+_papi_example_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 			  long long ** events, int flags )
 {
 
-        (void) ctx;
-	(void) flags;
+   (void) ctx;
+   (void) flags;
 
    example_control_state_t *example_ctl = ( example_control_state_t * ) ctl;   
 
-	SUBDBG( "example_read... %p %d", ctx, flags );
+   SUBDBG( "example_read... %p %d", ctx, flags );
 
-	int i;
+   int i;
 
-	for(i=0;i<example_ctl->num_events;i++) {
-           example_ctl->counter[i] =
+   /* Read counters into expected slot */
+   for(i=0;i<example_ctl->num_events;i++) {
+      example_ctl->counter[i] =
 		example_hardware_read( example_ctl->counter_bits[i] );
-	}
+   }
 
-        /* serve cached data* */
-	*events = example_ctl->counter;	
+   /* return pointer to the values we read */
+   *events = example_ctl->counter;	
 
-	return PAPI_OK;
+   return PAPI_OK;
 }
 
 /** Triggered by PAPI_write(), but only if the counters are running */
 /*    otherwise, the updated state is written to ESI->hw_start      */
 int
-example_write( hwd_context_t * ctx, hwd_control_state_t * ctrl,
-			   long long events[] )
+_papi_example_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
+			   long long *events )
 {
 
         (void) ctx;
-	(void) ctrl;
+	(void) ctl;
 	(void) events;
 
-	SUBDBG( "example_write... %p %p", ctx, ctrl );
+	SUBDBG( "example_write... %p %p", ctx, ctl );
 
 	/* FIXME... this should actually carry out the write, though     */
 	/*  this is non-trivial as which counter being written has to be */
@@ -351,14 +352,15 @@ example_write( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 
 
 /** Triggered by PAPI_reset() but only if the EventSet is currently running */
-
+/*  If the eventset is not currently running, then the saved value in the   */
+/*  EventSet is set to zero without calling this routine.                   */
 int
-example_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
+_papi_example_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
         (void) ctx;
-	(void) ctrl;
+	(void) ctl;
 
-	SUBDBG( "example_reset ctx=%p ctrl=%p...", ctx, ctrl );
+	SUBDBG( "example_reset ctx=%p ctrl=%p...", ctx, ctl );
 
 	/* Reset the hardware */
 	example_hardware_reset(  );
@@ -368,7 +370,7 @@ example_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 
 /** Triggered by PAPI_shutdown() */
 int
-example_shutdown_substrate()
+_papi_example_shutdown_substrate()
 {
 
 	SUBDBG( "example_shutdown... %p", ctx );
@@ -380,14 +382,14 @@ example_shutdown_substrate()
 
 /** Called at thread shutdown */
 int
-example_shutdown( hwd_context_t * ctx )
+_papi_example_shutdown( hwd_context_t *ctx )
 {
 
         (void) ctx;
 
 	SUBDBG( "example_shutdown... %p", ctx );
 
-	/* Last chance to clean up */
+	/* Last chance to clean up thread */
 
 	return PAPI_OK;
 }
@@ -398,7 +400,7 @@ example_shutdown( hwd_context_t * ctx )
   @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
  */
 int
-example_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
+_papi_example_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 
         (void) ctx;
@@ -423,7 +425,7 @@ example_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
     PAPI_DOM_ALL   is all of the domains
  */
 int
-example_set_domain( hwd_control_state_t * cntrl, int domain )
+_papi_example_set_domain( hwd_control_state_t * cntrl, int domain )
 {
         (void) cntrl;
 
@@ -612,9 +614,9 @@ papi_vector_t _example_vector = {
 	.get_overflow_address = NULL,
 	.start =                _papi_example_start,
 	.stop =                 _papi_example_stop,
-	.read =                 example_read,
-	.reset =                example_reset,	
-	.write =                example_write,
+	.read =                 _papi_example_read,
+	.reset =                _papi_example_reset,	
+	.write =                _papi_example_write,
 	.cleanup_eventset =     NULL,
 	.get_real_cycles =      NULL,
 	.get_real_usec =        NULL,
@@ -628,11 +630,11 @@ papi_vector_t _example_vector = {
 	.get_system_info =      NULL,
 	.get_memory_info =      NULL,
 	.update_control_state = _papi_example_update_control_state,	
-	.ctl =                  example_ctl,	
+	.ctl =                  _papi_example_ctl,	
 	.set_overflow =         NULL,
 	.set_profile =          NULL,
 	.add_prog_event =       NULL,
-	.set_domain =           example_set_domain,
+	.set_domain =           _papi_example_set_domain,
 	.allocate_registers =   NULL,
 	.bpt_map_avail =        NULL,
 	.bpt_map_set =          NULL,
@@ -641,8 +643,8 @@ papi_vector_t _example_vector = {
 	.bpt_map_preempt =      NULL,
 	.bpt_map_update =       NULL,
 	.get_dmem_info =        NULL,
-	.shutdown =             example_shutdown,
-	.shutdown_substrate =   example_shutdown_substrate,
+	.shutdown =             _papi_example_shutdown,
+	.shutdown_substrate =   _papi_example_shutdown_substrate,
 	.user =                 NULL,
 
 	/* Name Mapping Functions */
