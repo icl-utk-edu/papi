@@ -193,8 +193,9 @@ int main (int argc, char **argv)
 	     }
 	  }
 	}
-
-	   /* Print Fan Inputs */
+	/********************/
+	/* Print Fan Inputs */
+	/********************/
 	else if (strstr(event_name,"fan")) {
 
 	     /* Only print inputs */
@@ -226,7 +227,8 @@ int main (int argc, char **argv)
 	        test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
 	     }
 
-             if (!TESTS_QUIET) printf("\tvalue: %lld RPM\n",values[0]);
+             if (!TESTS_QUIET) printf("\tvalue: %lld %s\n",values[0],
+				      evinfo.long_descr);
 
 	     retval = PAPI_cleanup_eventset( EventSet );
 	     if (retval != PAPI_OK) {
