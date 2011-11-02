@@ -18,20 +18,70 @@ papi_vector_t _coretemp_vector;
 /* temporary event */
 struct temp_event {
   char name[PAPI_MAX_STR_LEN];
+  char units[PAPI_MIN_STR_LEN];
+  char description[PAPI_MAX_STR_LEN];
+  char location[PAPI_MAX_STR_LEN];
   char path[PATH_MAX];
   int stone;
   long count;
   struct temp_event *next;
 };
 
-static struct temp_event* root = NULL;
+
 static CORETEMP_native_event_entry_t * _coretemp_native_events;
 static int num_events		= 0;
 static int is_initialized	= 0;
 
-/*******************************************************************************
- ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
- ******************************************************************************/
+/***************************************************************************/
+/******  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *******/
+/***************************************************************************/
+
+static struct temp_event* root = NULL;
+static struct temp_event *last = NULL;
+
+static int
+insert_in_list(char *name, char *units,
+	       char *description, char *filename) {
+
+
+    struct temp_event *temp;
+
+
+    /* new_event   path, events->d_name */
+    temp = (struct temp_event *) papi_calloc(sizeof(struct temp_event),1);
+    if (temp==NULL) {
+       PAPIERROR("out of memory!");
+       /* We should also free any previously allocated data */
+       return PAPI_ENOMEM;
+    }
+
+    temp->next = NULL;
+
+    if (root == NULL) {
+       root = temp;
+    }
+    else if (last) {
+       last->next = temp;
+    }
+    else {
+		   /* Because this is a function, it is possible */
+		   /* we are called with root!=NULL but no last  */
+		   /* so add this to keep coverity happy         */
+		   free(temp);
+		   PAPIERROR("This shouldn't be possible\n");
+
+		   return PAPI_ESBSTR;
+    }
+
+    last = temp;
+
+    snprintf(temp->name, PAPI_MAX_STR_LEN, "%s", name);
+    snprintf(temp->units, PAPI_MIN_STR_LEN, "%s", units);
+    snprintf(temp->description, PAPI_MAX_STR_LEN, "%s", description);
+    snprintf(temp->path, PATH_MAX, "%s", filename);
+
+    return PAPI_OK;
+}
 
 /*
  * find all coretemp information reported by the kernel
@@ -39,90 +89,204 @@ static int is_initialized	= 0;
 static int 
 generateEventList(char *base_dir)
 {
-  char path[PATH_MAX];
-  DIR *dir,*d;
-  int count = 0;
-  struct dirent *hwmonx,*events;
-  struct temp_event *temp;
-  struct temp_event *last = NULL;
+    char path[PATH_MAX],filename[PATH_MAX];
+    char modulename[PAPI_MIN_STR_LEN],
+         location[PAPI_MIN_STR_LEN],
+         units[PAPI_MIN_STR_LEN],
+         description[PAPI_MAX_STR_LEN],
+         name[PAPI_MAX_STR_LEN];
+    DIR *dir,*d;
+    FILE *fff;
+    int count = 0;
+    struct dirent *hwmonx;
+    int i,pathnum;
 
-  dir = opendir(base_dir);
-  if ( dir == NULL ) {
-     SUBDBG("Can't find %s, are you sure the coretemp module is loaded?\n", 
+#define NUM_PATHS 2
+    char paths[NUM_PATHS][PATH_MAX]={
+      "device","."
+    };
+
+    /* Open "/sys/class/hwmon" */
+    dir = opendir(base_dir);
+    if ( dir == NULL ) {
+       SUBDBG("Can't find %s, are you sure the coretemp module is loaded?\n", 
 	       base_dir);
-     return 0;
-  }
-  while( (hwmonx = readdir(dir) ) ) {
-	if ( !strncmp("hwmon", hwmonx->d_name, 5) ) {
-	  snprintf(path, PATH_MAX, "%s/%s/device", base_dir, hwmonx->d_name);
+       return 0;
+    }
 
-	  SUBDBG("Trying to open %s\n",path);
-	  d = opendir(path);
-	  if (d==NULL) {
-	     continue;
+    /* Iterate each /sys/class/hwmonX/device directory */
+    while( (hwmonx = readdir(dir) ) ) {
+       if ( !strncmp("hwmon", hwmonx->d_name, 5) ) {
+
+	 /* Found a hwmon directory */
+
+	 /* Sometimes the files are in ./, sometimes in device/ */
+	 for(pathnum=0;pathnum<NUM_PATHS;pathnum++) {
+
+	    snprintf(path, PATH_MAX, "%s/%s/%s", 
+		     base_dir, hwmonx->d_name,paths[pathnum]);
+
+	    SUBDBG("Trying to open %s\n",path);
+	    d = opendir(path);
+	    if (d==NULL) {
+	       continue;
+	    }
+
+	    /* Get the name of the module */
+
+	    snprintf(filename, PAPI_MAX_STR_LEN, "%s/name",path);
+	    fff=fopen(filename,"r");
+	    if (fff==NULL) {
+	       snprintf(modulename, PAPI_MIN_STR_LEN, "Unknown");
+	    } else {
+	       if (fgets(modulename,PAPI_MIN_STR_LEN,fff)!=NULL) {
+	          modulename[strlen(modulename)-1]='\0';
+	       }
+	       fclose(fff);
+	    }
+
+	    SUBDBG("Found module %s\n",modulename);
+
+	  /******************************************************/
+	  /* Try handling all events starting with in (voltage) */
+	  /******************************************************/
+
+	  i=1;
+	  while(1) {
+
+	     /* Try looking for a location label */
+	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_label", 
+		      path,i);
+	     fff=fopen(filename,"r");
+	     if (fff==NULL) {
+	        strncpy(location,"?",PAPI_MIN_STR_LEN);
+	     }
+	     else {
+	        if (fgets(location,PAPI_MIN_STR_LEN,fff)!=NULL) {
+	           location[strlen(location)-1]='\0';
+	        }
+	        fclose(fff);
+	     }
+
+	     /* Look for input temperature */
+	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_input", 
+		      path,i);
+	     fff=fopen(filename,"r");
+	     if (fff==NULL) break;
+	     fclose(fff);
+
+	     snprintf(name, PAPI_MAX_STR_LEN, "%s.in%i_input", 
+			 hwmonx->d_name, i);
+	     snprintf(units, PAPI_MIN_STR_LEN, "V");
+	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
+		      units,modulename,
+		      location);
+
+	     if (insert_in_list(name,units,description,filename)!=PAPI_OK) {
+	        goto done_error;
+	     }
+
+	     count++;
+
+	     i++;
 	  }
 
-	  while( (events = readdir(d)) ) {
-		if ( events->d_name[0] == '.' )
-		  continue;
+	  /************************************************************/
+	  /* Try handling all events starting with temp (temperature) */
+	  /************************************************************/
+	  i=1;
+	  while(1) {
 
-		if ( !strncmp("temp", events->d_name, 4) ||
-			 !strncmp("fan", events->d_name, 3) ) {
-		  /* new_event   path, events->d_name */
-		  temp = (struct temp_event *)papi_malloc(sizeof(struct temp_event));
-		  if (!temp) {
-			PAPIERROR("out of memory!");
-			/* We should also free any previously allocated data */
-			closedir(d);
-			closedir(dir);
-			return PAPI_ENOMEM;
-		  }
+	     /* Try looking for a location label */
+	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_label", 
+		      path,i);
+	     fff=fopen(filename,"r");
+	     if (fff==NULL) {
+	        strncpy(location,"?",PAPI_MIN_STR_LEN);
+	     }
+	     else {
+	        if (fgets(location,PAPI_MIN_STR_LEN,fff)!=NULL) {
+	           location[strlen(location)-1]='\0';
+	        }
+	        fclose(fff);
+	     }
 
-		  temp->next = NULL;
+	     /* Look for input temperature */
+	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_input", 
+		      path,i);
+	     fff=fopen(filename,"r");
+	     if (fff==NULL) break;
+	     fclose(fff);
 
-		  if (root == NULL) {
-		     root = temp;
-		  }
-		  else if (last) {
-		     last->next = temp;
-		  }
-		  else {
-		    /* Because this is a function, it is possible */
-		    /* we are called with root!=NULL but no last  */
-		    /* so add this to keep coverity happy         */
-		    free(temp);
-		    closedir(d);
-		    closedir(dir);
+	     snprintf(name, PAPI_MAX_STR_LEN, "%s.temp%i_input", 
+			 hwmonx->d_name, i);
+	     snprintf(units, PAPI_MIN_STR_LEN, "degrees C");
+	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
+		      units,modulename,
+		      location);
 
-		    PAPIERROR("This shouldn't be possible\n");
+	     if (insert_in_list(name,units,description,filename)!=PAPI_OK) {
+	        goto done_error;
+	     }
 
-		    return PAPI_ESBSTR;
-		  }
+	     count++;
 
-		  last = temp;
-
-		  snprintf(temp->name, PAPI_MAX_STR_LEN, "%s.%s", hwmonx->d_name, events->d_name);
-		  snprintf(temp->path, PATH_MAX, "%s/%s", path, events->d_name);
-
-		  /* don't optimize this yet....
-		  s = strchr(events->d_name, (int)'_');
-		  s++;
-		  if ( !strcmp("min", s) ||
-			   !strcmp("max", s) ) {
-			temp->stone = 1;
-			fp = fopen(temp->path,"r");
-			fgets(s,fp);
-		  }
-		  */
-		  count++;
-		}
+	     i++;
 	  }
-	  closedir(d);
-	}
-  }
 
-  closedir(dir);
-  return (count);
+	  /************************************************************/
+	  /* Try handling all events starting with fan (fan)          */
+	  /************************************************************/
+	  i=1;
+	  while(1) {
+
+	     /* Try looking for a location label */
+	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_label", 
+		      path,i);
+	     fff=fopen(filename,"r");
+	     if (fff==NULL) {
+	        strncpy(location,"?",PAPI_MIN_STR_LEN);
+	     }
+	     else {
+	        if (fgets(location,PAPI_MIN_STR_LEN,fff)!=NULL) {
+	           location[strlen(location)-1]='\0';
+	        }
+	        fclose(fff);
+	     }
+
+	     /* Look for input fan */
+	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_input", 
+		      path,i);
+	     fff=fopen(filename,"r");
+	     if (fff==NULL) break;
+	     fclose(fff);
+
+	     snprintf(name, PAPI_MAX_STR_LEN, "%s.fan%i_input", 
+			 hwmonx->d_name, i);
+	     snprintf(units, PAPI_MIN_STR_LEN, "RPM");
+	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
+		      units,modulename,
+		      location);
+
+	     if (insert_in_list(name,units,description,filename)!=PAPI_OK) {
+	        goto done_error;
+	     }
+
+	     count++;
+
+	     i++;
+	  }
+	 }
+       }
+    }
+
+    closedir(dir);
+    return count;
+
+done_error:
+    closedir(d);
+    closedir(dir);
+    return PAPI_ESBSTR;
 }
 
 static long long
@@ -204,6 +368,9 @@ _coretemp_init_substrate( int cidx )
      do {
 	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
 	strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
+	strncpy(_coretemp_native_events[i].units,t->units,PAPI_MIN_STR_LEN);
+	strncpy(_coretemp_native_events[i].description,t->description,
+	        PAPI_MAX_STR_LEN);
 	_coretemp_native_events[i].stone = 0;
 	_coretemp_native_events[i].resources.selector = i + 1;
 	last	= t;
@@ -460,6 +627,7 @@ _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 
      if ( index >= 0 && index < num_events ) {
 	strncpy( name, _coretemp_native_events[index].description, len );
+	return PAPI_OK;
      }
      return PAPI_ENOEVNT;
 }
@@ -515,6 +683,7 @@ papi_vector_t _coretemp_vector = {
 
 	.ntv_enum_events =      _coretemp_ntv_enum_events,
 	.ntv_code_to_name =     _coretemp_ntv_code_to_name,
+	.ntv_code_to_descr =    _coretemp_ntv_code_to_descr,
 	.ntv_code_to_bits =     NULL,
 	.ntv_bits_to_info =     NULL,
 };

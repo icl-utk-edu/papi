@@ -54,6 +54,7 @@ typedef struct CORETEMP_register
 typedef struct CORETEMP_native_event_entry
 {
   char name[PAPI_MAX_STR_LEN];
+  char units[PAPI_MIN_STR_LEN];
   char description[PAPI_MAX_STR_LEN];
   char path[PATH_MAX];
   int stone; /* some counters are set in stone, a max temperature is just that... */

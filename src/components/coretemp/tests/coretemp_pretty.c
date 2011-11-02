@@ -53,7 +53,7 @@ int main (int argc, char **argv)
 
 	if (strstr(cmpinfo->name,"linux-coretemp")) {
 	   coretemp_cid=cid;
-	   if (!TESTS_QUIET) printf("Found coretemp comonent at cid %d\n",
+	   if (!TESTS_QUIET) printf("Found coretemp component at cid %d\n",
 				    coretemp_cid);
            if (cmpinfo->num_native_events==0) {
               test_skip(__FILE__,__LINE__,"No coretemp events found",0);
@@ -84,7 +84,9 @@ int main (int argc, char **argv)
              "Error getting event info\n",retval);
 	}
 
+	   /****************************/
 	   /* Print Temperature Inputs */
+	   /****************************/
 	if (strstr(event_name,"temp")) {
 	  
 	     /* Only print inputs */
@@ -118,7 +120,7 @@ int main (int argc, char **argv)
 
 	     temperature=(values[0]/1000.0);
 
-             if (!TESTS_QUIET) printf("\tvalue: %.2lf degreesC\t%s\n",
+             if (!TESTS_QUIET) printf("\tvalue: %.2lf %s\n",
 				      temperature,
 				      evinfo.long_descr
 				      );
@@ -136,6 +138,62 @@ int main (int argc, char **argv)
 	     }
 	  }
 	}
+
+	   /****************************/
+	   /* Print Voltage Inputs */
+	   /****************************/
+	if (strstr(event_name,".in")) {
+	  
+	     /* Only print inputs */
+	  if (strstr(event_name,"_input")) {
+
+	     if (!TESTS_QUIET) printf("%s ",event_name);
+
+             EventSet = PAPI_NULL;
+
+	     retval = PAPI_create_eventset( &EventSet );
+	     if (retval != PAPI_OK) {
+	        test_fail(__FILE__, __LINE__, 
+                              "PAPI_create_eventset()",retval);
+	     }
+
+             retval = PAPI_add_event( EventSet, code );
+             if (retval != PAPI_OK) {
+	        test_fail(__FILE__, __LINE__, 
+                                 "PAPI_add_event()",retval);
+	     }
+
+             retval = PAPI_start( EventSet);
+	     if (retval != PAPI_OK) {
+	        test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
+	     }
+
+	     retval = PAPI_stop( EventSet, values);
+	     if (retval != PAPI_OK) {
+	        test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
+	     }
+
+	     temperature=(values[0]/1000.0);
+
+             if (!TESTS_QUIET) printf("\tvalue: %.2lf %s\n",
+				      temperature,
+				      evinfo.long_descr
+				      );
+
+	     retval = PAPI_cleanup_eventset( EventSet );
+	     if (retval != PAPI_OK) {
+	        test_fail(__FILE__, __LINE__, 
+                              "PAPI_cleanup_eventset()",retval);
+	     }
+
+	     retval = PAPI_destroy_eventset( &EventSet );
+             if (retval != PAPI_OK) {
+	        test_fail(__FILE__, __LINE__, 
+                              "PAPI_destroy_eventset()",retval);
+	     }
+	  }
+	}
+
 	   /* Print Fan Inputs */
 	else if (strstr(event_name,"fan")) {
 
