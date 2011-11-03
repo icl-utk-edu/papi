@@ -1510,15 +1510,16 @@ PAPI_remove_event( int EventSet, int EventCode )
 	/* if the state is PAPI_OVERFLOWING, you must first call
 	   PAPI_overflow with threshold=0 to remove the overflow flag */
 
-	/* Turn off the even that is overflowing */
+	/* Turn off the event that is overflowing */
 	if ( ESI->state & PAPI_OVERFLOWING ) {
-		for ( i = 0; i < ESI->overflow.event_counter; i++ ) {
-			if ( ESI->overflow.EventCode[i] == EventCode ) {
-				retval = PAPI_overflow( EventSet, EventCode, 0, 0,
-							   ESI->overflow.handler );
-				break;
-			}
-		}
+	   for ( i = 0; i < ESI->overflow.event_counter; i++ ) {
+	       if ( ESI->overflow.EventCode[i] == EventCode ) {
+		  retval = PAPI_overflow( EventSet, EventCode, 0, 0,
+					  ESI->overflow.handler );
+		  if (retval!=PAPI_OK) return retval;
+		  break;
+	       }
+	   }
 	}
 
 	/* force the user to call PAPI_profil to clear the PAPI_PROFILING flag */
@@ -4020,6 +4021,7 @@ again:
 	       retval=PAPI_stop( i, NULL );
 	    }
 	    retval=PAPI_cleanup_eventset( i );
+	    if (retval!=PAPI_OK) PAPIERROR("Error during cleanup.\n");
 	    _papi_hwi_free_EventSet( ESI );
 	 } 
          else {

@@ -1486,6 +1486,7 @@ mpx_remove_unused( MasterEvent ** head )
 			}
 			retval=PAPI_cleanup_eventset( mev->papi_event );
 			retval=PAPI_destroy_eventset( &( mev->papi_event ) );
+			if (retval!=PAPI_OK) PAPIERROR("Error destroying event\n");
 			papi_free( mev );
 		} else {
 			lastmev = mev;
