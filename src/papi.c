@@ -3453,8 +3453,25 @@ PAPI_num_hwctrs( void )
  *  PAPI_num_cmp_hwctrs() returns the number of counters present in the 
  *  specified component. 
  *  By convention, component 0 is always the cpu. 
- *  This count does not include any special purpose registers or 
- *  other performance hardware. 
+ *
+ *  On some components, especially for CPUs, the value returned is
+ *  a theoretical maximum for estimation purposes only.  It might not
+ *  be possible to easily create an EventSet that contains the full
+ *  number of events.  This can be due to a variety of reasons:
+ *  1).  Some CPUs (especially Intel and POWER) have the notion
+ *       of fixed counters that can only measure one thing, usually
+ *       cycles.
+ *  2).  Some CPUs have very explicit rules about which event can
+ *       run in which counter.  In this case it might not be possible
+ *       to add a wanted event even if counters are free.
+ *  3).  Some CPUs halve the number of counters available when
+ *       running with SMT (multiple CPU threads) enabled.
+ *  4).  Some operating systems "steal" a counter to use for things
+ *       such as NMI Watchdog timers.
+ *  The only sure way to see if events will fit is to attempt
+ *  adding events to an EventSet, and doing something sensible
+ *  if an error is generated.
+ *
  *  PAPI_library_init() must be called in order for this function to return 
  *  anything greater than 0. 
  *
