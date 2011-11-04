@@ -1,10 +1,10 @@
-.TH "PAPI_get_opt" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_get_opt" 3 "Fri Nov 4 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_get_opt \- 
 .PP
-Get PAPI library or event set options'\&.  
+Get PAPI library or event set options.  
 
 .SH SYNOPSIS
 .br
@@ -13,41 +13,41 @@ Get PAPI library or event set options'\&.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int \fBPAPI_get_opt(  int option, PAPI_option_t * ptr )\fP;
 .RE
 .PP
 \fBParameters:\fP
 .RS 4
-\fIoption\fP Defines the option to get'\&. Possible values are briefly described in the table below'\&.
+\fIoption\fP Defines the option to get. Possible values are briefly described in the table below.
 .br
-\fIptr\fP Pointer to a structure determined by the selected option'\&. See \fBPAPI_option_t\fP for a description of possible structures'\&.
+\fIptr\fP Pointer to a structure determined by the selected option. See \fBPAPI_option_t\fP for a description of possible structures.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
-\fIPAPI_EINVAL\fP The specified option or parameter is invalid'\&. 
+\fIPAPI_EINVAL\fP The specified option or parameter is invalid. 
 .br
-\fIPAPI_ENOEVST\fP The EventSet specified does not exist'\&. 
+\fIPAPI_ENOEVST\fP The EventSet specified does not exist. 
 .br
-\fIPAPI_ESBSTR\fP The option is not implemented for the current substrate'\&. 
+\fIPAPI_ESBSTR\fP The option is not implemented for the current substrate. 
 .br
-\fIPAPI_ENOINIT\fP PAPI has not been initialized'\&.
+\fIPAPI_ENOINIT\fP PAPI has not been initialized.
 .RE
 .PP
-\fBPAPI_get_opt()\fP queries the options of the PAPI library or a specific event set created by \fBPAPI_create_eventset\fP'\&. Some options may require that the eventset be bound to a component before they can execute successfully'\&. This can be done either by adding an event or by explicitly calling \fBPAPI_assign_eventset_component\fP'\&.
+\fBPAPI_get_opt()\fP queries the options of the PAPI library or a specific event set created by \fBPAPI_create_eventset\fP. Some options may require that the eventset be bound to a component before they can execute successfully. This can be done either by adding an event or by explicitly calling \fBPAPI_assign_eventset_component\fP.
 .PP
-Ptr is a pointer to the \fBPAPI_option_t\fP structure, which is actually a union of different structures for different options'\&. Not all options require or return information in these structures'\&. Each returns different values in the structure'\&. Some options require a component index to be provided'\&. These options are handled explicitly by the \fBPAPI_get_cmp_opt()\fP call'\&.
+Ptr is a pointer to the \fBPAPI_option_t\fP structure, which is actually a union of different structures for different options. Not all options require or return information in these structures. Each returns different values in the structure. Some options require a component index to be provided. These options are handled explicitly by the \fBPAPI_get_cmp_opt()\fP call.
 .PP
 \fBNote:\fP
 .RS 4
-Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX are also available as separate entry points in both C and Fortran'\&.
+Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX are also available as separate entry points in both C and Fortran.
 .RE
 .PP
-The reader is encouraged to peruse the ctests code in the PAPI distribution for examples of usage of \fBPAPI_set_opt\fP'\&.
+The reader is encouraged to peruse the ctests code in the PAPI distribution for examples of usage of \fBPAPI_set_opt\fP.
 .PP
 \fBPossible values for the PAPI_get_opt option parameter\fP
 .RS 4
@@ -95,4 +95,4 @@ The reader is encouraged to peruse the ctests code in the PAPI distribution for 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

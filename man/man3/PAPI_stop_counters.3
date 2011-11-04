@@ -1,10 +1,10 @@
-.TH "PAPI_stop_counters" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_stop_counters" 3 "Fri Nov 4 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_stop_counters \- 
 .PP
-Stop counting hardware events and reset values to zero'\&.  
+Stop counting hardware events and reset values to zero.  
 
 .SH SYNOPSIS
 .br
@@ -13,7 +13,7 @@ Stop counting hardware events and reset values to zero'\&.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int \fBPAPI_stop_counters( long long *values, int array_len )\fP;
 .RE
@@ -27,19 +27,19 @@ Stop counting hardware events and reset values to zero'\&.
 .PP
 \fBPostcondition:\fP
 .RS 4
-After this function is called, the values are reset to zero'\&.
+After this function is called, the values are reset to zero.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid'\&. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
 .br
-\fIPAPI_ENOTRUN\fP The EventSet is not started yet'\&. 
+\fIPAPI_ENOTRUN\fP The EventSet is not started yet. 
 .br
-\fIPAPI_ENOEVST\fP The EventSet has not been added yet'\&.
+\fIPAPI_ENOEVST\fP The EventSet has not been added yet.
 .RE
 .PP
-The \fBPAPI_stop_counters()\fP function stops the counters and copies the counts into the *values array'\&. The counters must have been started by a previous call to \fBPAPI_start_counters()\fP'\&.
+The \fBPAPI_stop_counters()\fP function stops the counters and copies the counts into the *values array. The counters must have been started by a previous call to \fBPAPI_start_counters()\fP.
 .PP
 .PP
 .nf
@@ -62,4 +62,4 @@ if ( PAPI_stop_counters( values, 2 ) != PAPI_OK )
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

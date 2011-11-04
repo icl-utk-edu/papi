@@ -1,10 +1,10 @@
-.TH "PAPI_read_counters" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_read_counters" 3 "Fri Nov 4 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_read_counters \- 
 .PP
-Read and reset counters'\&.  
+Read and reset counters.  
 
 .SH SYNOPSIS
 .br
@@ -13,7 +13,7 @@ Read and reset counters'\&.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int \fBPAPI_read_counters( long long *values, int array_len )\fP;
 .RE
@@ -27,22 +27,22 @@ Read and reset counters'\&.
 .PP
 \fBPrecondition:\fP
 .RS 4
-These calls assume an initialized PAPI library and a properly added event set'\&.
+These calls assume an initialized PAPI library and a properly added event set.
 .RE
 .PP
 \fBPostcondition:\fP
 .RS 4
-The counters are reset and left running after the call'\&.
+The counters are reset and left running after the call.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid'\&. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
 .br
-\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable'\&.
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable.
 .RE
 .PP
-\fBPAPI_read_counters()\fP copies the event counters into the array *values'\&.
+\fBPAPI_read_counters()\fP copies the event counters into the array *values.
 .PP
 .PP
 .nf
@@ -69,7 +69,7 @@ if ( PAPI_accum_counters(values, num_hwcntrs ) != PAPI_OK )
 .PP
 \fBFortran Interface:\fP
 .RS 4
-#include 'fpapi'\&.h' 
+#include 'fpapi.h' 
 .br
  PAPIF_read_counters( C_LONG_LONG(*) values, C_INT array_len, C_INT check )
 .RE
@@ -83,4 +83,4 @@ if ( PAPI_accum_counters(values, num_hwcntrs ) != PAPI_OK )
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

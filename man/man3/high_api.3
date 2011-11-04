@@ -1,4 +1,4 @@
-.TH "The High Level API" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "The High Level API" 3 "Fri Nov 4 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -36,33 +36,45 @@ The High Level API \-
 .in -1c
 .SH "Detailed Description"
 .PP 
-The simple interface implemented by the following eight routines allows the user to access and count specific hardware events from both C and Fortran'\&. It should be noted that this API can be used in conjunction with the low level API'\&. 
+The simple interface implemented by the following eight routines allows the user to access and count specific hardware events from both C and Fortran. It should be noted that this API can be used in conjunction with the low level API. 
 .SH "Function Documentation"
 .PP 
-.SS "int \fBPAPI_accum_counters\fP (long long *values, intarray_len)"add current counts to array and reset counters < Invalid argument 
-.SS "int \fBPAPI_flips\fP (float *rtime, float *ptime, long long *flpins, float *mflips)"simplified call to get Mflips/s (floating point instruction rate), real and processor time < Invalid argument
+.SS "int \fBPAPI_accum_counters\fP (long long *values, intarray_len)"add current counts to array and reset counters 
+.PP
+< Invalid argument 
+.SS "int \fBPAPI_flips\fP (float *rtime, float *ptime, long long *flpins, float *mflips)"simplified call to get Mflips/s (floating point instruction rate), real and processor time 
+.PP
+< Invalid argument
 .PP
 < No error
 .PP
 < No error
 .PP
 < No error 
-.SS "int \fBPAPI_flops\fP (float *rtime, float *ptime, long long *flpops, float *mflops)"simplified call to get Mflops/s (floating point operation rate), real and processor time < Invalid argument
+.SS "int \fBPAPI_flops\fP (float *rtime, float *ptime, long long *flpops, float *mflops)"simplified call to get Mflops/s (floating point operation rate), real and processor time 
+.PP
+< Invalid argument
 .PP
 < No error
 .PP
 < No error
 .PP
 < No error 
-.SS "int \fBPAPI_ipc\fP (float *rtime, float *ptime, long long *ins, float *ipc)"gets instructions per cycle, real and processor time < Invalid argument
+.SS "int \fBPAPI_ipc\fP (float *rtime, float *ptime, long long *ins, float *ipc)"gets instructions per cycle, real and processor time 
+.PP
+< Invalid argument
 .PP
 < No error 
 .SS "int \fBPAPI_num_components\fP (void)"get the number of components available on the system 
-.SS "int \fBPAPI_num_counters\fP (void)"get the number of hardware counters available on the system < No error
+.SS "int \fBPAPI_num_counters\fP (void)"get the number of hardware counters available on the system 
+.PP
+< No error
 .PP
 < Number of physical hardware counters 
 .SS "int \fBPAPI_read_counters\fP (long long *values, intarray_len)"copy current counts to array and reset counters 
-.SS "int \fBPAPI_start_counters\fP (int *events, intarray_len)"start counting hardware events < Invalid argument
+.SS "int \fBPAPI_start_counters\fP (int *events, intarray_len)"start counting hardware events 
+.PP
+< Invalid argument
 .PP
 < No error
 .PP
@@ -71,7 +83,9 @@ The simple interface implemented by the following eight routines allows the user
 < EventSet is currently counting
 .PP
 < No error 
-.SS "int \fBPAPI_stop_counters\fP (long long *values, intarray_len)"stop counters and return current counts < Invalid argument
+.SS "int \fBPAPI_stop_counters\fP (long long *values, intarray_len)"stop counters and return current counts 
+.PP
+< Invalid argument
 .PP
 < No error
 .PP
@@ -82,4 +96,4 @@ The simple interface implemented by the following eight routines allows the user
 < No error 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

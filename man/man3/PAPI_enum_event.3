@@ -1,10 +1,10 @@
-.TH "PAPI_enum_event" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_enum_event" 3 "Fri Nov 4 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_enum_event \- 
 .PP
-Enumerate PAPI preset or native events'\&.  
+Enumerate PAPI preset or native events.  
 
 .SH SYNOPSIS
 .br
@@ -13,26 +13,26 @@ Enumerate PAPI preset or native events'\&.
 .PP 
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi'\&.h\fP> 
+#include <\fBpapi.h\fP> 
 .br
  int PAPI_enum_event( int * EventCode, int  modifer );
 .RE
 .PP
-Given a preset or native event code, \fBPAPI_enum_event\fP replaces the event code with the next available event in either the preset or native table'\&. The modifier argument affects which events are returned'\&. For all platforms and event types, a value of PAPI_ENUM_ALL (zero) directs the function to return all possible events'\&. 
+Given a preset or native event code, \fBPAPI_enum_event\fP replaces the event code with the next available event in either the preset or native table. The modifier argument affects which events are returned. For all platforms and event types, a value of PAPI_ENUM_ALL (zero) directs the function to return all possible events. 
 .br
 .PP
-For preset events, a TRUE (non-zero) value currently directs the function to return event codes only for PAPI preset events available on this platform'\&. This may change in the future'\&. For native events, the effect of the modifier argument is different on each platform'\&. See the discussion below for platform-specific definitions'\&.
+For preset events, a TRUE (non-zero) value currently directs the function to return event codes only for PAPI preset events available on this platform. This may change in the future. For native events, the effect of the modifier argument is different on each platform. See the discussion below for platform-specific definitions.
 .PP
 \fBParameters:\fP
 .RS 4
-\fI*EventCode\fP A defined preset or native event such as PAPI_TOT_INS'\&. 
+\fI*EventCode\fP A defined preset or native event such as PAPI_TOT_INS. 
 .br
-\fImodifier\fP Modifies the search logic'\&. See below for full list'\&. For native events, each platform behaves differently'\&. See platform-specific documentation for details'\&.
+\fImodifier\fP Modifies the search logic. See below for full list. For native events, each platform behaves differently. See platform-specific documentation for details.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_ENOEVNT\fP The next requested PAPI preset or native event is not available on the underlying hardware'\&.
+\fIPAPI_ENOEVNT\fP The next requested PAPI preset or native event is not available on the underlying hardware.
 .RE
 .PP
 \fBExamples:\fP
@@ -45,7 +45,7 @@ For preset events, a TRUE (non-zero) value currently directs the function to ret
     do {
         retval = PAPI_get_event_info( i, &info );
         if ( retval == PAPI_OK ) {
-        printf( '%-30s 0x%-10x\n%s\n', info\&.symbol, info\&.event_code, info\&.long_descr );
+        printf( '%-30s 0x%-10x\n%s\n', info.symbol, info.event_code, info.long_descr );
         }
     } while ( PAPI_enum_event( &i, PAPI_ENUM_ALL ) == PAPI_OK );
 
@@ -73,7 +73,7 @@ The following values are implemented for native events
 .IP "\(bu" 2
 PAPI_NTV_ENUM_UMASKS -- Given an event, iterate through possible umasks one at a time 
 .IP "\(bu" 2
-PAPI_NTV_ENUM_UMASK_COMBOS -- Given an event, iterate through all possible combinations of umasks'\&. This is not implemented on libpfm4'\&. 
+PAPI_NTV_ENUM_UMASK_COMBOS -- Given an event, iterate through all possible combinations of umasks. This is not implemented on libpfm4. 
 .PP
 .RE
 .PP
@@ -141,7 +141,7 @@ PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
 .PP
 \fBBug\fP
 .RS 4
-No known bugs'\&.
+No known bugs.
 .RE
 .PP
 .PP
@@ -164,4 +164,4 @@ PAPI
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.

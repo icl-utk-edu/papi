@@ -1,10 +1,10 @@
-.TH "PAPI_library_init" 3 "Wed Nov 2 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_library_init" 3 "Fri Nov 4 2011" "Version 4.2.0.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_library_init \- 
 .PP
-initialize the PAPI library'\&.  
+initialize the PAPI library.  
 
 .SH SYNOPSIS
 .br
@@ -13,21 +13,21 @@ initialize the PAPI library'\&.
 .PP 
 \fBParameters:\fP
 .RS 4
-\fIversion\fP upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled'\&. This guards against portability problems when updating the PAPI shared libraries on your system'\&.
+\fIversion\fP upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled. This guards against portability problems when updating the PAPI shared libraries on your system.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP \fBpapi'\&.h\fP is different from the version used to compile the PAPI library'\&. 
+\fIPAPI_EINVAL\fP \fBpapi.h\fP is different from the version used to compile the PAPI library. 
 .br
-\fIPAPI_ENOMEM\fP Insufficient memory to complete the operation'\&. 
+\fIPAPI_ENOMEM\fP Insufficient memory to complete the operation. 
 .br
-\fIPAPI_ESBSTR\fP This substrate does not support the underlying hardware'\&. 
+\fIPAPI_ESBSTR\fP This substrate does not support the underlying hardware. 
 .br
-\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable'\&.
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable.
 .RE
 .PP
-\fBPAPI_library_init()\fP initializes the PAPI library'\&. \fBPAPI_is_initialized()\fP check for initialization'\&. It must be called before any low level PAPI functions can be used'\&. If your application is making use of threads \fBPAPI_thread_init\fP must also be called prior to making any calls to the library other than \fBPAPI_library_init()\fP '\&. 
+\fBPAPI_library_init()\fP initializes the PAPI library. \fBPAPI_is_initialized()\fP check for initialization. It must be called before any low level PAPI functions can be used. If your application is making use of threads \fBPAPI_thread_init\fP must also be called prior to making any calls to the library other than \fBPAPI_library_init()\fP . 
 .PP
 \fBExamples:\fP
 .RS 4
@@ -52,7 +52,7 @@ initialize the PAPI library'\&.
 .PP
 \fBBug\fP
 .RS 4
-If you don't call this before using any of the low level PAPI calls, your application could core dump'\&. 
+If you don't call this before using any of the low level PAPI calls, your application could core dump. 
 .RE
 .PP
 \fBSee also:\fP
@@ -64,4 +64,4 @@ If you don't call this before using any of the low level PAPI calls, your applic
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code'\&.
+Generated automatically by Doxygen for PAPI-C from the source code.
