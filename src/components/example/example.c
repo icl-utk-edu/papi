@@ -373,7 +373,7 @@ int
 _papi_example_shutdown_substrate()
 {
 
-	SUBDBG( "example_shutdown... %p", ctx );
+	SUBDBG( "example_shutdown_substrate..." );
 
 	free(example_native_table);
 
