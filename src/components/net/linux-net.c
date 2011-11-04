@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <ctype.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "linux-net.h"
