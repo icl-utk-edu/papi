@@ -375,7 +375,7 @@ _papi_example_shutdown_substrate()
 
 	SUBDBG( "example_shutdown_substrate..." );
 
-	free(example_native_table);
+	papi_free(example_native_table);
 
 	return PAPI_OK;
 }
