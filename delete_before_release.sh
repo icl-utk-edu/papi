@@ -4,5 +4,6 @@ rm release_procedure.txt
 rm doc/DataRange.html
 rm doc/PAPI-C.html
 rm doc/README
+rm src/buildbot_configure_with_components.sh
 rm delete_before_release.sh
 rm cvs2cl.pl
