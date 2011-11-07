@@ -609,42 +609,52 @@ papi_vector_t _example_vector = {
 		.reg_alloc = sizeof ( example_reg_alloc_t ),
 	},
 
-	/* function pointers in this component */
-	.dispatch_timer =       NULL,
-	.get_overflow_address = NULL,
+	/* function pointers */
+
+	/* Used for general PAPI interactions */
 	.start =                _papi_example_start,
 	.stop =                 _papi_example_stop,
 	.read =                 _papi_example_read,
 	.reset =                _papi_example_reset,	
 	.write =                _papi_example_write,
+	.init_substrate =       _papi_example_init_substrate,	
+	.init =                 _papi_example_init,
+	.init_control_state =   _papi_example_init_control_state,
+	.update_control_state = _papi_example_update_control_state,	
+	.ctl =                  _papi_example_ctl,	
+	.shutdown =             _papi_example_shutdown,
+	.shutdown_substrate =   _papi_example_shutdown_substrate,
+	.set_domain =           _papi_example_set_domain,
 	.cleanup_eventset =     NULL,
+	/* called in add_native_events() */
+	.allocate_registers =   NULL,
+
+	/* Used for overflow/profiling */
+	.dispatch_timer =       NULL,
+	.get_overflow_address = NULL,
+	.stop_profiling =       NULL,
+	.set_overflow =         NULL,
+	.set_profile =          NULL,
+
+	/* OS related functions */
 	.get_real_cycles =      NULL,
 	.get_real_usec =        NULL,
 	.get_virt_cycles =      NULL,
 	.get_virt_usec =        NULL,
-	.stop_profiling =       NULL,
-	.init_substrate =       _papi_example_init_substrate,	
-	.init =                 _papi_example_init,
-	.init_control_state =   _papi_example_init_control_state,
 	.update_shlib_info =    NULL,
 	.get_system_info =      NULL,
 	.get_memory_info =      NULL,
-	.update_control_state = _papi_example_update_control_state,	
-	.ctl =                  _papi_example_ctl,	
-	.set_overflow =         NULL,
-	.set_profile =          NULL,
-	.add_prog_event =       NULL,
-	.set_domain =           _papi_example_set_domain,
-	.allocate_registers =   NULL,
+	.get_dmem_info =        NULL,
+
+	/* bipartite map counter allocation? */
 	.bpt_map_avail =        NULL,
 	.bpt_map_set =          NULL,
 	.bpt_map_exclusive =    NULL,
 	.bpt_map_shared =       NULL,
 	.bpt_map_preempt =      NULL,
 	.bpt_map_update =       NULL,
-	.get_dmem_info =        NULL,
-	.shutdown =             _papi_example_shutdown,
-	.shutdown_substrate =   _papi_example_shutdown_substrate,
+
+	/* ??? */
 	.user =                 NULL,
 
 	/* Name Mapping Functions */
@@ -658,5 +668,11 @@ papi_vector_t _example_vector = {
 	/* event info, not for any sort of internal use.            */
 	.ntv_code_to_bits =  NULL,
 	.ntv_bits_to_info =  NULL,
+
+
+	/* Old and should be removed */
+	.add_prog_event =       NULL,
+
+
 };
 
