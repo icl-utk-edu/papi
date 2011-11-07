@@ -391,6 +391,28 @@ _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 		hwinfo->cpuid_model = tmp;
 	}
 
+	/* Processor fixups */
+
+	if (hwinfo->vendor == PAPI_VENDOR_MIPS) {
+	  rewind( f );
+	  /* Mhz does not exist as of 3.0.3, use BogoMIPS */
+	  s = search_cpu_info( f, "BogoMIPS", maxargs );
+	  if ((!s) || (sscanf( s + 1, "%f", &mhz ) != 1)) {
+	      PAPIERROR("Mhz detection failed. Please edit file %s at line %d.\n",__FILE__,__LINE__);
+	      hwinfo->mhz = 1;
+	      hwinfo->clock_mhz = 1;
+	  } else {
+	    /* MIPS has 2x clock multiplier */
+	    hwinfo->mhz = 2*(((int)mhz)+1);
+	    hwinfo->clock_mhz = hwinfo->mhz;
+	  }
+	  rewind( f );
+	  s = search_cpu_info( f, "cpu model", maxargs );
+	  s = strstr(s+1," V")+2;
+	  strtok(s," ");
+	  sscanf(s, "%f ", &hwinfo->revision );
+	}
+
 	fclose( f );
 	/* The following new members are set using the same methodology used in lscpu. */
 
