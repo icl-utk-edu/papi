@@ -3,7 +3,7 @@
 /****************************/
 
 /**
- * @file    coretemp-freebsd.c
+ * @file    coretemp_freebsd.c
  * @author  Joachim Protze
  *          joachim.protze@zih.tu-dresden.de
  * @author  Vince Weaver

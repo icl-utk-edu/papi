@@ -7,8 +7,8 @@
 * CVS:     $Id$
 * @author  Haihang You
 *          you@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    < your name here >
+*          < your email address >
 *
 * @brief An ACPI component for Linux.
 * @ingroup papi_components

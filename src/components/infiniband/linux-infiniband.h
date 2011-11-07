@@ -7,8 +7,8 @@
  * CVS:     $Id$
  * @author  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
+ * Mods:	< your name here >
+ *			< your email address >
  * @ingroup papi_components 		
  * 
  * InfiniBand component 

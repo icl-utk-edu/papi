@@ -7,8 +7,8 @@
 * CVS:     $Id$
 * @author  Haihang You
 *          you@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    < your name here >
+*          < your email address >
 * @ingroup papi_components
 * @brief MX component for linux.
 */

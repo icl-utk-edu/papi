@@ -7,8 +7,8 @@
  * CVS:     $Id$
  * @author  Heike Jagode (in collaboration with Robert Dietrich, TU Dresden)
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
+ * Mods:	< your name here >
+ *			< your email address >
  * @ingroup papi_components 		
  * 
  * CUDA component 
