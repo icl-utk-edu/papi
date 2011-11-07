@@ -603,7 +603,9 @@ RECURSIVE              = YES
 # excluded from the INPUT source files. This way you can easily exclude a
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                =
+EXCLUDE                = libpfm-2.x libpfm-3.x libpfm-3.y libpfm4 perfctr \
+						 perfctr-1.6.1 perfctr-2.3.12 perfctr-2.4.1 perfctr-2.4.5 \
+						 perfctr-2.4.x perfctr-2.6.x perfctr-2.6.x.old perfctr-2.7.x
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or
 # directories that are symbolic links (a Unix filesystem feature) are excluded
