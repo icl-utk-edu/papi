@@ -112,13 +112,6 @@ bug_multiplex(void) {
 
   if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 
-/* MIPS kernels, at least up to 3.1, have a bug where */
-/* kernel multiplexing does not work.                 */
-
-#if defined(__mips__)
-  return 1;
-#endif
-
   /* No word on when this will be fixed */
   if (nmi_watchdog_active) return 1;
 
@@ -840,8 +833,13 @@ _papi_pe_init_substrate( int cidx )
 
   /* are any of these needed anymore? */
   /* These settings are exported to userspace.  Ugh */
+#if defined(__i386__)||defined(__x86_64__)
   MY_VECTOR.cmp_info.fast_counter_read = 1;
   MY_VECTOR.cmp_info.fast_real_timer = 1;
+#else
+  MY_VECTOR.cmp_info.fast_counter_read = 0;
+  MY_VECTOR.cmp_info.fast_real_timer = 0;
+#endif
   MY_VECTOR.cmp_info.cntr_umasks = 1;
 
   /* Run Vendor-specific fixups */
@@ -2000,7 +1998,7 @@ papi_vector_t _papi_pe_vector = {
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */
-				 .fast_real_timer = 1,
+				 .fast_real_timer = 0,
 				 .fast_virtual_timer = 0,
 				 .attach = 1,
 				 .attach_must_ptrace = 0,
