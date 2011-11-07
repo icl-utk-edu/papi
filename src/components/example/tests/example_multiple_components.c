@@ -108,8 +108,8 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("PAPI_TOT_CYC", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
-		      "EXAMPLE_ZERO not found\n",retval );
+	  test_skip( __FILE__, __LINE__, 
+		      "No CPU component found\n",retval );
 	}
 
 	retval = PAPI_add_event( EventSet2, code);
