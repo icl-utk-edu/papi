@@ -139,7 +139,9 @@ vec_dummy_get_real_usec( void )
 	QueryPerformanceCounter( &PerformanceCount );
 	QueryPerformanceFrequency( &Frequency );
 	return ( ( PerformanceCount.QuadPart * 1000000 ) / Frequency.QuadPart );
-#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+#elif defined(_AIX)   /* Heike:  This needs to be tested on AIX with --with-no-cpu-counters */
+	/* It appears to work on Zeus ( power7 aix 6.1 ) 
+	   in that repeated calls were monotonically increasing -James */
 	long long aix_usec;
 	timebasestruct_t t;
 	t = getticks(  );
@@ -161,7 +163,7 @@ vec_dummy_get_real_cycles( void )
 #if defined(__bgp__)
 	return _bgp_GetTimeBase(  );
 #elif defined(_WIN32)
-#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+#elif defined(_AIX)   
 	long long aix_usec;
 	timebasestruct_t t;
 	t = getticks(  );
@@ -199,7 +201,7 @@ vec_dummy_get_virt_usec( hwd_context_t * zero )
 		retval = virt / 1000;
 	} else
 		return ( PAPI_ESBSTR );
-#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+#elif defined(_AIX)   
 	long long aix_usec;
 	timebasestruct_t t;
 	t = getticks(  );
@@ -222,7 +224,7 @@ vec_dummy_get_virt_cycles( hwd_context_t * zero )
 #if defined(__bgp__)
 	return _bgp_GetTimeBase(  );
 #elif defined(_WIN32)
-#elif defined(_AIX)   /* Heike: TODO: This needs to be tested on AIX with --with-no-cpu-counters */
+#elif defined(_AIX)   
 	long long aix_usec;
 	timebasestruct_t t;
 	t = getticks(  );
