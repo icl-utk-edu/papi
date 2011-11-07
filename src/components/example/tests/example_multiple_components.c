@@ -109,15 +109,14 @@ int main (int argc, char **argv)
 	retval = PAPI_event_name_to_code("PAPI_TOT_CYC", &code);
 	if ( retval != PAPI_OK ) {
 	  test_skip( __FILE__, __LINE__, 
-		      "No CPU component found\n",retval );
+		      "PAPI_TOT_CYC not available\n",retval );
 	}
 
 	retval = PAPI_add_event( EventSet2, code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__,
-		      "PAPI_add_events failed\n", retval );
+	   test_skip( __FILE__, __LINE__,
+		      "NO CPU component found\n", retval );
 	}
-
 
 	if (!TESTS_QUIET) printf("\nStarting EXAMPLE_CONSTANT and PAPI_TOT_CYC at the same time\n");
 
