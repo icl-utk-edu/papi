@@ -151,8 +151,12 @@ generateEventList(char *base_dir)
 	  /* Try handling all events starting with in (voltage) */
 	  /******************************************************/
 
-	  i=1;
-	  while(1) {
+
+	    /* arbitrary maximum */
+	    /* the problem is the numbering can be sparse */
+	    /* should probably go back to dirent listing  */
+	    
+	  for(i=0;i<32;i++) {
 
 	     /* Try looking for a location label */
 	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_label", 
@@ -172,7 +176,7 @@ generateEventList(char *base_dir)
 	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_input", 
 		      path,i);
 	     fff=fopen(filename,"r");
-	     if (fff==NULL) break;
+	     if (fff==NULL) continue;
 	     fclose(fff);
 
 	     snprintf(name, PAPI_MAX_STR_LEN, "%s.in%i_input", 
@@ -188,14 +192,13 @@ generateEventList(char *base_dir)
 
 	     count++;
 
-	     i++;
 	  }
 
 	  /************************************************************/
 	  /* Try handling all events starting with temp (temperature) */
 	  /************************************************************/
-	  i=1;
-	  while(1) {
+
+	  for(i=0;i<32;i++) {
 
 	     /* Try looking for a location label */
 	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_label", 
@@ -215,7 +218,7 @@ generateEventList(char *base_dir)
 	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_input", 
 		      path,i);
 	     fff=fopen(filename,"r");
-	     if (fff==NULL) break;
+	     if (fff==NULL) continue;
 	     fclose(fff);
 
 	     snprintf(name, PAPI_MAX_STR_LEN, "%s.temp%i_input", 
@@ -230,15 +233,13 @@ generateEventList(char *base_dir)
 	     }
 
 	     count++;
-
-	     i++;
 	  }
 
 	  /************************************************************/
 	  /* Try handling all events starting with fan (fan)          */
 	  /************************************************************/
-	  i=1;
-	  while(1) {
+
+	  for(i=0;i<32;i++) {
 
 	     /* Try looking for a location label */
 	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_label", 
@@ -258,7 +259,7 @@ generateEventList(char *base_dir)
 	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_input", 
 		      path,i);
 	     fff=fopen(filename,"r");
-	     if (fff==NULL) break;
+	     if (fff==NULL) continue;
 	     fclose(fff);
 
 	     snprintf(name, PAPI_MAX_STR_LEN, "%s.fan%i_input", 
@@ -274,7 +275,6 @@ generateEventList(char *base_dir)
 
 	     count++;
 
-	     i++;
 	  }
 	 }
        }
