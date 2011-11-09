@@ -334,7 +334,9 @@ getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t add
 		for ( j = 0; j < addedEvents.count; j++ )
 			if ( cuda_native_table[addedEvents.list[j]].resources.eventId ==
 				 eventIDArray[i] )
-				counts[addedEvents.list[j]] = counterDataBuffer[i];
+				// since cuptiEventGroupReadAllEvents() resets counter values to 0;
+				// we have to accumulate ourselves 
+				counts[addedEvents.list[j]] = counts[addedEvents.list[j]] + counterDataBuffer[i];
 
 	free( counterDataBuffer );
 	free( eventIDArray );
@@ -472,9 +474,14 @@ int
 CUDA_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;
+	int i;
 	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 	
+	// reset all event values to 0
+	for ( i = 0; i < NUM_EVENTS; i++ )
+		CUDA_ctrl->counts[i] = 0;
+
 	cuptiErr = cuptiEventGroupEnable( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupEnable" );
 
