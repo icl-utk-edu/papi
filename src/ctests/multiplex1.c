@@ -15,13 +15,13 @@
 /* Event to use in all cases; initialized in init_papi() */
 
 int solaris_preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
-	PAPI_BR_MSP, PAPI_TOT_CYC, PAPI_L2_TCM, PAPI_L1_ICM, 0
+  PAPI_TOT_CYC, PAPI_BR_MSP, PAPI_L2_TCM, PAPI_L1_ICM, 0
 };
 int power6_preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
-	PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_DCM, PAPI_L1_ICM, 0
+	PAPI_TOT_CYC, PAPI_FP_INS, PAPI_L1_DCM, PAPI_L1_ICM, 0
 };
 int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
-	PAPI_FP_INS, PAPI_TOT_INS, PAPI_L1_DCM, PAPI_L1_ICM, 0
+  PAPI_TOT_CYC, PAPI_FP_INS, PAPI_TOT_INS, PAPI_L1_DCM, PAPI_L1_ICM, 0
 };
 static int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int PAPI_events_len = 0;
@@ -322,7 +322,7 @@ case4(  )
 int
 case5(  )
 {
-	int retval, i, EventSet = PAPI_NULL;
+  int retval, i, j, EventSet = PAPI_NULL;
 	long long start_values[4] = { 0,0,0,0 }, values[4] = {0,0,0,0};
 	char out[PAPI_MAX_STR_LEN];
 
@@ -348,19 +348,21 @@ case5(  )
 	else if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
 
+	/* Add 2 events... */
+
 	i = 0;
 	retval = PAPI_add_event( EventSet, PAPI_events[i] );
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
 	printf( "Added %s\n", out );
-
-	i = 1;
+	i++;
 	retval = PAPI_add_event( EventSet, PAPI_events[i] );
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
 	printf( "Added %s\n", out );
+	i++;
 
 	do_stuff(  );
 
@@ -378,12 +380,14 @@ case5(  )
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_stop", retval );
 
-	if ( !TESTS_QUIET ) {
-		test_print_event_header( "case5:", EventSet );
-		printf( TAB2, "case5 start: ", start_values[0], start_values[1]);
-		printf( TAB2, "case5 end:", values[0], values[1]);
-		printf( TAB2, "case5 diff:", values[0]-start_values[0], values[1]-start_values[1]);
-	}
+	for (j=0;j<i;j++)
+	  {
+	      printf("read @start counter[%d]: %lld\n", j, start_values[j]);
+	      printf("read @stop  counter[%d]: %lld\n", j, values[j]);
+	      printf("difference  counter[%d]: %lld\n ", j, values[j]-start_values[j]);
+	      if (values[j]-start_values[j] < 0LL)
+		CPP_TEST_FAIL( "Difference in start and stop resulted in negative value!", 0 );
+	  }
 
 	retval = PAPI_cleanup_eventset( EventSet );	/* JT */
 	if ( retval != PAPI_OK )
