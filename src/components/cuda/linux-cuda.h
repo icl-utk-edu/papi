@@ -7,8 +7,8 @@
  * CVS:     $Id$
  * @author  Heike Jagode (in collaboration with Robert Dietrich, TU Dresden)
  *          jagode@eecs.utk.edu
- * Mods:	< your name here >
- *			< your email address >
+ * Mods:	<your name here>
+ *			<your email address>
  * @ingroup papi_components 		
  * 
  * CUDA component 
@@ -64,7 +64,7 @@ typedef struct DomainData
 {
 	CUpti_EventDomainID domainId;	   // CuPTI domain id
 	char name[PAPI_MIN_STR_LEN];	   // domain name
-	int eventCount;					   // number of events per domain
+	uint32_t eventCount;			   // number of events per domain
 	EventData_t *event;
 } DomainData_t;
 
@@ -130,7 +130,7 @@ typedef struct CUDA_context
  *******************************************************************************/
 
 static int enumEventDomains( CUdevice dev, int deviceId );
-static int enumEvents( CUdevice dev, int domainId, int eventCount );
+static int enumEvents( int domainId, int eventCount );
 
 /* This table contains the CUDA native events */
 static CUDA_native_event_entry_t *cuda_native_table;

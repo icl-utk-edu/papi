@@ -144,27 +144,19 @@ enumEventDomains( CUdevice dev, int deviceId )
 
 		/* query domain name */
 		size = PAPI_MIN_STR_LEN;
-		err = cuptiEventDomainGetAttribute( dev,
-											device[deviceId].domain[id].
-											domainId,
-											CUPTI_EVENT_DOMAIN_ATTR_NAME, &size,
-											( void * ) device[deviceId].
-											domain[id].name );
-		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetAttribute" );
+		err = cuptiDeviceGetEventDomainAttribute( dev,
+												  device[deviceId].domain[id].domainId,
+												  CUPTI_EVENT_DOMAIN_ATTR_NAME, &size,
+												  ( void * ) device[deviceId].domain[id].name );
+		CHECK_CUPTI_ERROR( err, "cuptiDeviceGetEventDomainAttribute" );
 
 		/* query num of events avaialble in the domain */
-		size = sizeof ( device[deviceId].domain[id].eventCount );
-		err = cuptiEventDomainGetAttribute( dev,
-											device[deviceId].domain[id].
-											domainId,
-											CUPTI_EVENT_DOMAIN_MAX_EVENTS,
-											&size,
-											( void * ) &device[deviceId].
-											domain[id].eventCount );
-		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetAttribute" );
+		err = cuptiEventDomainGetNumEvents( device[deviceId].domain[id].domainId,
+										    &device[deviceId].domain[id].eventCount );
+		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetNumEvents" );
 
-		/* enumerate the events for the domain[id] on the device dev */
-		if ( 0 != enumEvents( dev, deviceId, id ) )
+		/* enumerate the events for the domain[id] on the device deviceId */
+		if ( 0 != enumEvents( deviceId, id ) )
 			return -1;
 	}
 
@@ -178,12 +170,12 @@ enumEventDomains( CUdevice dev, int deviceId )
  * Detect supported events for specified device domain
  */
 static int
-enumEvents( CUdevice dev, int deviceId, int domainId )
+enumEvents( int deviceId, int domainId )
 {
 	CUptiResult err = CUPTI_SUCCESS;
 	CUpti_EventID *eventId = NULL;
 	size_t size = 0;
-	int id = 0;
+	uint32_t id = 0;
 
 	/* CuPTI event struct */
 	size =
@@ -207,8 +199,7 @@ enumEvents( CUdevice dev, int deviceId, int domainId )
 
 	/* enumerate the events for the domain[domainId] on the device[deviceId] */
 	err =
-		cuptiEventDomainEnumEvents( dev,
-									( CUpti_EventDomainID ) device[deviceId].
+		cuptiEventDomainEnumEvents( ( CUpti_EventDomainID ) device[deviceId].
 									domain[domainId].domainId, &size, eventId );
 	CHECK_CUPTI_ERROR( err, "cuptiEventDomainEnumEvents" );
 
@@ -218,8 +209,7 @@ enumEvents( CUdevice dev, int deviceId, int domainId )
 
 		/* query event name */
 		size = PAPI_MIN_STR_LEN;
-		err = cuptiEventGetAttribute( dev,
-									  device[deviceId].domain[domainId].
+		err = cuptiEventGetAttribute( device[deviceId].domain[domainId].
 									  event[id].eventId, CUPTI_EVENT_ATTR_NAME,
 									  &size,
 									  ( uint8_t * ) device[deviceId].
@@ -228,8 +218,7 @@ enumEvents( CUdevice dev, int deviceId, int domainId )
 
 		/* query event description */
 		size = PAPI_2MAX_STR_LEN;
-		err = cuptiEventGetAttribute( dev,
-									  device[deviceId].domain[domainId].
+		err = cuptiEventGetAttribute( device[deviceId].domain[domainId].
 									  event[id].eventId,
 									  CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &size,
 									  ( uint8_t * ) device[deviceId].
@@ -249,8 +238,8 @@ enumEvents( CUdevice dev, int deviceId, int domainId )
 static int
 createNativeEvents( void )
 {
-	int deviceId, eventId, id = 0;
-	uint32_t domainId;
+	int deviceId, id = 0;
+	uint32_t domainId, eventId;
 	int cuptiDomainId;
 	int i;
 	int devNameLen;
@@ -415,6 +404,18 @@ CUDA_init_substrate(  )
 		CHECK_CU_ERROR( cuErr, "cuCtxCreate" );
 	}
 	
+	/* cuCtxGetCurrent() can return a non-null context that is not valid 
+	   because the context has not yet been initialized.
+	   Here is a workaround: 
+	   cudaFree(NULL) forces the context to be initialized
+	   if cudaFree(NULL) returns success then we are able to use the context in subsequent calls
+	   if cudaFree(NULL) returns an error (or subsequent cupti* calls) then the context is not usable,
+	   and will never be useable */
+	if ( CUDA_SUCCESS != cudaFree( NULL ) ) {
+		printf( "The CUDA context is not initialized and cannot be used.\n" );
+		return ( PAPI_ENOSUPP );
+	}
+		
 	/* Create dynamic event table */
 	cuda_native_table = ( CUDA_native_event_entry_t * )
 		malloc( sizeof ( CUDA_native_event_entry_t ) * NUM_EVENTS );
