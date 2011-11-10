@@ -1180,12 +1180,15 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 #endif
       SUBDBG("(papi_pe_buffer[%d] %lld * tot_time_enabled %lld) / tot_time_running %lld\n",count_idx,papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
 
-      pe_ctl->counts[i] = (papi_pe_buffer[count_idx] * tot_time_enabled) / tot_time_running;
-      /* Use a scale factor of 100 */
-      long long scale = (tot_time_enabled * 100LL) / tot_time_running;
-      scale = scale * papi_pe_buffer[count_idx];
-      scale = scale / 100LL;
-      pe_ctl->counts[i] = scale;
+      if (tot_time_running == tot_time_enabled) {
+	pe_ctl->counts[i] = papi_pe_buffer[count_idx];
+      } else {
+	/* Use a scale factor of 100 */
+	long long scale = (tot_time_enabled * 100LL) / tot_time_running;
+	scale = scale * papi_pe_buffer[count_idx];
+	scale = scale / 100LL;
+	pe_ctl->counts[i] = scale;
+      }	     
     }
   }
 
