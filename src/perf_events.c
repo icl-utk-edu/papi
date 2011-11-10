@@ -310,8 +310,8 @@ static inline int
 check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 {
   int retval = 0, cnt = -1;
-	( void ) ctl;			 /*unused */
-	uint64_t papi_pe_buffer[READ_BUFFER_SIZE];
+  ( void ) ctl;			 /*unused */
+  long long papi_pe_buffer[READ_BUFFER_SIZE];
 
         if (bug_check_scheduability()) {
 
@@ -1071,7 +1071,7 @@ get_count_idx( int multiplexed, int n )
 
 /* Return the count index for the event with the given id */
 static int64_t
-get_count_idx_by_id( int64_t * buf, int multiplexed, int inherit, int64_t id )
+get_count_idx_by_id( long long * buf, int multiplexed, int inherit, int64_t id )
 {
 
   if ((!bug_format_group()) && (!inherit)) {
@@ -1107,7 +1107,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
   int i, ret = -1;
   context_t *pe_ctx = ( context_t * ) ctx;
   control_state_t *pe_ctl = ( control_state_t * ) ctl;
-  int64_t papi_pe_buffer[READ_BUFFER_SIZE];
+  long long papi_pe_buffer[READ_BUFFER_SIZE];
 
   /*
    * FIXME this loop should not be needed.  We ought to be able to read up
@@ -1143,12 +1143,9 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 	return PAPI_ESYS;
       }
       /* Check for short read here! */
-      SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, "
-	     "buffer[0-2]: 0x%" PRIx64 ", "
-	     "0x%" PRIx64 ", 0x%" PRIx64 ", ret: %d\n", 
-	     pe_ctx->evt[i].event_fd, (long)pe_ctl->tid, 
-	     pe_ctl->cpu, 
-	     papi_pe_buffer[0], papi_pe_buffer[1], papi_pe_buffer[2], ret);
+      SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
+	     pe_ctx->evt[i].event_fd, (long)pe_ctl->tid, pe_ctl->cpu, ret);
+      SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
     }
     /* Love to know what this does */
     int count_idx = get_count_idx_by_id( papi_pe_buffer, pe_ctl->multiplexed, pe_ctl->events[i].inherit,
@@ -1162,8 +1159,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
     if (!pe_ctl->multiplexed) {
       pe_ctl->counts[i] = papi_pe_buffer[count_idx];
     } else {
-      int64_t tot_time_running = papi_pe_buffer[get_total_time_running_idx(  )];
-      int64_t tot_time_enabled = papi_pe_buffer[get_total_time_enabled_idx(  )];
+      long long tot_time_running = papi_pe_buffer[get_total_time_running_idx(  )];
+      long long tot_time_enabled = papi_pe_buffer[get_total_time_enabled_idx(  )];
 #ifdef BRAINDEAD_MULTIPLEXING
       if (tot_time_enabled == 0)
 	tot_time_enabled = 1;
@@ -1181,7 +1178,14 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 	return PAPI_EBUG;
       }
 #endif
+      SUBDBG("(papi_pe_buffer[%d] %lld * tot_time_enabled %lld) / tot_time_running %lld\n",count_idx,papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
+
       pe_ctl->counts[i] = (papi_pe_buffer[count_idx] * tot_time_enabled) / tot_time_running;
+      /* Use a scale factor of 100 */
+      long long scale = (tot_time_enabled * 100LL) / tot_time_running;
+      scale = scale * papi_pe_buffer[count_idx];
+      scale = scale / 100LL;
+      pe_ctl->counts[i] = scale;
     }
   }
 
