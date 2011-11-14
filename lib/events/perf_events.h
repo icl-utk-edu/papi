@@ -246,6 +246,45 @@ static perf_event_t perf_static_events[]={
 		  .grpid = 1,
 		}
 	}
+       },
+       {
+	.name = "PERF_COUNT_HW_CACHE_NODE",
+	.desc = "Node memory access",
+	.id   = PERF_COUNT_HW_CACHE_NODE,
+	.type = PERF_TYPE_HW_CACHE,
+	.numasks = 5,
+	.modmsk = PERF_ATTR_HW,
+	.umask_ovfl_idx = -1,
+	.ngrp = 2,
+	.umasks = {
+		{ .uname = "READ",
+		  .udesc = "read access",
+		  .uid   = PERF_COUNT_HW_CACHE_OP_READ << 8,
+		  .uflags= PERF_FL_DEFAULT,
+		  .grpid = 0,
+		},
+		{ .uname = "WRITE",
+		  .udesc = "write access",
+		  .uid   = PERF_COUNT_HW_CACHE_OP_WRITE << 8,
+		  .grpid = 0,
+		},
+		{ .uname = "PREFETCH",
+		  .udesc = "prefetch access",
+		  .uid   = PERF_COUNT_HW_CACHE_OP_PREFETCH << 8,
+		  .grpid = 0,
+		},
+		{ .uname = "ACCESS",
+		  .udesc = "hit access",
+		  .uid   = PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16,
+		  .grpid = 1,
+		},
+		{ .uname = "MISS",
+		  .udesc = "miss access",
+		  .uid   = PERF_COUNT_HW_CACHE_RESULT_MISS << 16,
+		  .uflags= PERF_FL_DEFAULT,
+		  .grpid = 1,
+		}
+	}
        }
 };
 #define PME_PERF_EVENT_COUNT (sizeof(perf_static_events)/sizeof(perf_event_t))
