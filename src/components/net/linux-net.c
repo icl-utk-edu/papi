@@ -252,6 +252,17 @@ read_net_counters( long long *values )
                 &values[if_bidx + 12], &values[if_bidx + 13],
                 &values[if_bidx + 14], &values[if_bidx + 15]);
 
+            SUBDBG("\nRead "
+                "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu\n",
+                values[if_bidx + 0],  values[if_bidx + 1],
+                values[if_bidx + 2],  values[if_bidx + 3],
+                values[if_bidx + 4],  values[if_bidx + 5],
+                values[if_bidx + 6],  values[if_bidx + 7],
+                values[if_bidx + 8],  values[if_bidx + 9],
+                values[if_bidx + 10], values[if_bidx + 11],
+                values[if_bidx + 12], values[if_bidx + 13],
+                values[if_bidx + 14], values[if_bidx + 15]);
+
             if ( nf != NET_INTERFACE_COUNTERS ) {
                 /* This shouldn't happen */
                 SUBDBG("/proc line with wrong number of fields\n");
@@ -342,16 +353,7 @@ _net_init_substrate( int cidx  )
 int
 _net_init_control_state( hwd_control_state_t *ctl )
 {
-    NET_control_state_t *net_ctl = (NET_control_state_t *) ctl;
-    long long now = PAPI_get_real_usec();
-
-    read_net_counters(_net_register_start);
-    memcpy(_net_register_current, _net_register_start,
-            NET_MAX_COUNTERS * sizeof(_net_register_start[0]));
-
-    memset(net_ctl->values, NET_MAX_COUNTERS, sizeof(net_ctl->values[0]));
-    /* Set last access time for caching purposes */
-    net_ctl->lastupdate = now;
+    ( void ) ctl;
 
     return PAPI_OK;
 }
@@ -361,7 +363,21 @@ int
 _net_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
-    ( void ) ctl;
+
+    int i;
+
+    NET_control_state_t *net_ctl = (NET_control_state_t *) ctl;
+    long long now = PAPI_get_real_usec();
+
+    read_net_counters(_net_register_start);
+    memcpy(_net_register_current, _net_register_start,
+            NET_MAX_COUNTERS * sizeof(_net_register_start[0]));
+
+    /* set initial values to 0 */
+    memset(net_ctl->values, 0, NET_MAX_COUNTERS*sizeof(net_ctl->values[0]));
+    
+    /* Set last access time for caching purposes */
+    net_ctl->lastupdate = now;
 
     return PAPI_OK;
 }
