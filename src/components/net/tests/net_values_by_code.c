@@ -94,12 +94,12 @@ int main (int argc, char **argv)
                 /* generate some traffic
                  * the operation should take more than one second in order
                  * to guarantee that the network counters are updated */
-                system("ping -c 4 " PINGADDR " &> /dev/null");
+                system("ping -c 4 " PINGADDR " > /dev/null");
             }
 
             retval = PAPI_stop( EventSet, &value );
             if (retval != PAPI_OK) {
-                test_fail(__FILE__, __LINE__, "PAPI_start()", retval);
+                test_fail(__FILE__, __LINE__, "PAPI_stop()", retval);
             }
 
             if (!TESTS_QUIET) printf("%lld\n", value);

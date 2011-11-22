@@ -364,8 +364,6 @@ _net_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
 
-    int i;
-
     NET_control_state_t *net_ctl = (NET_control_state_t *) ctl;
     long long now = PAPI_get_real_usec();
 
@@ -417,12 +415,14 @@ _net_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
     (void) ctx;
 
     NET_control_state_t *net_ctl = (NET_control_state_t *) ctl;
+    long long now = PAPI_get_real_usec();
     int i;
 
     read_net_counters(_net_register_current);
     for ( i=0; i<NET_MAX_COUNTERS; i++ ) {
         net_ctl->values[i] = _net_register_current[i] - _net_register_start[i];
     }
+    net_ctl->lastupdate = now;
 
     return PAPI_OK;
 }
