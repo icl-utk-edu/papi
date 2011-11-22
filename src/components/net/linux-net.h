@@ -2,73 +2,83 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
-  * @file    linux-net.h
-  * CVS:     $Id$
-  * @author  Haihang You
-  *          you@cs.utk.edu
-  * Mods:    < your name here >
-  *          < your email address >
-  * @brief A network interface component for Linux.
-  * @ingroup papi_components
-  */
+/**
+ * @file    linux-net.h
+ * CVS:     $Id$
+ *
+ * @author  Haihang You
+ *          you@cs.utk.edu
+ *
+ * @author  Jose Pedro Oliveira
+ *          jpo@di.uminho.pt
+ *
+ * @ingroup papi_components
+ *
+ * @brief net component
+ *  This file contains the source code for a component that enables
+ *  PAPI-C to access network statistics through the /proc file system.
+ *  This component will dynamically create a native events table for
+ *  all the interfaces listed in /proc/net/dev (16 entries for each
+ *  interface).
+ */
 
-#ifndef _PAPI_GM_H
-#define _PAPI_GM_H
+#ifndef _PAPI_NET_H
+#define _PAPI_NET_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/times.h>
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
-#include <assert.h>
-#include <dirent.h>
 
+/*************************  DEFINES SECTION  ***********************************
+ *******************************************************************************/
+/* this number assumes that there will never be more events than indicated
+ * 20 INTERFACES * 16 COUNTERS = 320 */
+#define NET_MAX_COUNTERS 320
 
-#define NET_MAX_COUNTERS 100
-#define NET_MAX_COUNTER_TERMS  NET_MAX_COUNTERS
-
-#include "papi.h"
-#include "papi_preset.h"
-
-#define NETLINELEN 128
-/*#define GMPATH "/usr/gm/bin/gm_counters"*/
-
+/** Structure that stores private information of each event */
 typedef struct NET_register
 {
-	/* indicate which counters this event can live on */
-	unsigned int selector;
-	/* Buffers containing counter cmds for each possible metric */
-	char *counter_cmd[PAPI_MAX_STR_LEN];
+    /* This is used by the framework.It likes it to be !=0 to do somehting */
+    unsigned int selector;
 } NET_register_t;
 
+
+/*
+ * The following structures mimic the ones used by other components. It is more
+ * convenient to use them like that as programming with PAPI makes specific
+ * assumptions for them.
+ */
+
+
+/** This structure is used to build the table of events */
 typedef struct NET_native_event_entry
 {
-	/* description of the resources required by this native event */
-	NET_register_t resources;
-	/* If it exists, then this is the name of this event */
-	char *name;
-	/* If it exists, then this is the description of this event */
-	char *description;
+    NET_register_t resources;
+    char name[PAPI_MAX_STR_LEN];
+    char description[PAPI_MAX_STR_LEN];
 } NET_native_event_entry_t;
+
 
 typedef struct NET_reg_alloc
 {
-	NET_register_t ra_bits;
+    NET_register_t ra_bits;
 } NET_reg_alloc_t;
+
 
 typedef struct NET_control_state
 {
-	long long counts[NET_MAX_COUNTERS];
+    long long values[NET_MAX_COUNTERS]; // used for caching
+    long long lastupdate;
 } NET_control_state_t;
+
 
 typedef struct NET_context
 {
-	NET_control_state_t state;
+    NET_control_state_t state;
 } NET_context_t;
 
+
+/*************************  GLOBALS SECTION  ***********************************
+ *******************************************************************************/
+
 #endif /* _PAPI_NET_H */
+
+/* vim:set ts=4 sw=4 sts=4 et: */

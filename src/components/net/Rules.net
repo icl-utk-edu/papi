@@ -1,10 +1,8 @@
 # $Id$
 
-include components/net/Makefile.net
-
 COMPSRCS += components/net/linux-net.c
 COMPOBJS += linux-net.o
-CFLAGS += -DNETPATH=\"$(NETPATH)\"
 
 linux-net.o: components/net/linux-net.c components/net/linux-net.h $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/net/linux-net.c -o linux-net.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/net/linux-net.c -o $@
+

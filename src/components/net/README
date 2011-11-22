@@ -1,0 +1,64 @@
+
+COMPONENT
+
+    net
+
+SUMMARY
+
+    Linux network component
+
+DESCRIPTION
+
+    This network component enables PAPI-C to access the network
+    statistics exported by the Linux kernel through the /proc
+    pseudo-file system (file /proc/net/dev).
+
+    This component will dynamically create a native events table
+    based on the number of interfaces listed in /proc/net/dev (16
+    entries for each network interface).
+
+    Event names
+    -------------------------
+      "<ifname>.rx.bytes",
+      "<ifname>.rx.packets",
+      "<ifname>.rx.errors",
+      "<ifname>.rx.dropped",
+      "<ifname>.rx.fifo",
+      "<ifname>.rx.frame",
+      "<ifname>.rx.compressed",
+      "<ifname>.rx.multicast",
+      "<ifname>.tx.bytes",
+      "<ifname>.tx.packets",
+      "<ifname>.tx.errors",
+      "<ifname>.tx.dropped",
+      "<ifname>.tx.fifo",
+      "<ifname>.tx.colls",
+      "<ifname>.tx.carrier",
+      "<ifname>.tx.compressed"
+
+    By default the Linux kernel only updates the network statistics
+    once every second (see the references listed in the "SEE ALSO"
+    section for some problems you may come across and for how to
+    change the default polling period).
+
+    Note: The Linux network statistics are updated by code that
+    resides in the file net/core/dev.c.
+
+AUTHOR
+
+  Initial written by Haihang You <you@cs.utk.edu>.
+  Re-written by Jose Pedro Oliveira <jpo@di.uminho.pt> in order
+  to source data directly from /proc/net/dev.
+
+SEE ALSO
+
+ * Network Stats Anomaly
+   http://collectl.sourceforge.net/NetworkStats.html
+
+ * Occasionally corrupted network stats in /proc/net/dev
+   http://kerneltrap.org/mailarchive/linux-netdev/2008/1/14/566936
+   http://kerneltrap.org/mailarchive/linux-netdev/2008/1/14/567512
+
+
+# 2011-11-05 jpo
+# vim:set ai ts=4 sw=4 sts=4 et:
