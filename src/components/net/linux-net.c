@@ -128,7 +128,7 @@ generateNetEventList( void )
     for (i=0; i<2; i++) {
         retval = fgets (line, NET_PROC_MAX_LINE, fin);
         if (retval == NULL) {
-            SUBDBG("Not enough lines in %s\n", pathname);
+            SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
             return 0;
         }
     }
@@ -218,7 +218,7 @@ read_net_counters( long long *values )
     for (i=0; i<2; i++) {
         retval = fgets (line, NET_PROC_MAX_LINE, fin);
         if (retval == NULL) {
-            SUBDBG("Not enough lines in %s\n", pathname);
+            SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
             return 0;
         }
     }
