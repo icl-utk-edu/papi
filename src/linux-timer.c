@@ -13,6 +13,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include <sys/time.h>
+
 #ifdef __ia64__
 /* for mygettid() on ia64 */
 #include "linux-common.h"
