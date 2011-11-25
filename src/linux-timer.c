@@ -9,6 +9,10 @@
 #include "papi.h"
 #include "papi_internal.h"
 
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+
 #ifdef __ia64__
 /* for mygettid() on ia64 */
 #include "linux-common.h"
