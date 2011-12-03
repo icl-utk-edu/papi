@@ -1,0 +1,8 @@
+# $Id$
+
+COMPSRCS += components/net/appio.c
+COMPOBJS += appio.o
+
+appio.o: components/net/appio.c components/net/appio.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/net/appio.c -o $@
+
