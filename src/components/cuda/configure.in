@@ -29,8 +29,24 @@ AC_ARG_WITH(cupti_libdir,
             [AC_MSG_ERROR([Component requires path to cupti library])])
 
 
+nvcc_version=`nvcc -V 2>&1 | tail -n 1 | awk '{printf $5}'`
+major=`echo $nvcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
+minor=`echo $nvcc_version | sed 's/[[^.]][[^.]]*.\([[^.,]][[^.,]]*\).*/\1/'`
+
+if test "$major" -eq 4; then
+	if test "$minor" -ge 1; then
+		echo "CUDA $major.$minor used"
+	else
+        echo "CUDA $major.$minor used"
+		CUDA_VERSION="-DCUDA_4_0"
+	fi
+else
+	echo "CUDA $major.$minor not supported"
+fi
+
+AC_CONFIG_FILES([Makefile.cuda])
+AC_SUBST(CUDA_VERSION)
 AC_SUBST(CUDA_INCDIR)
 AC_SUBST(CUPTI_INCDIR)
 AC_SUBST(CUPTI_LIBDIR)
-AC_CONFIG_FILES([Makefile.cuda])
 AC_OUTPUT

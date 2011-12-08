@@ -130,7 +130,11 @@ typedef struct CUDA_context
  *******************************************************************************/
 
 static int enumEventDomains( CUdevice dev, int deviceId );
+#ifdef CUDA_4_0
+static int enumEvents( CUdevice dev, int domainId, int eventCount );
+#else
 static int enumEvents( int domainId, int eventCount );
+#endif
 
 /* This table contains the CUDA native events */
 static CUDA_native_event_entry_t *cuda_native_table;

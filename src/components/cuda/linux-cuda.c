@@ -144,6 +144,30 @@ enumEventDomains( CUdevice dev, int deviceId )
 
 		/* query domain name */
 		size = PAPI_MIN_STR_LEN;
+#ifdef CUDA_4_0
+		err = cuptiEventDomainGetAttribute( dev,
+										   device[deviceId].domain[id].
+										   domainId,
+										   CUPTI_EVENT_DOMAIN_ATTR_NAME, &size,
+										   ( void * ) device[deviceId].
+										   domain[id].name );
+		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetAttribute" );
+		
+		/* query num of events avaialble in the domain */
+		size = sizeof ( device[deviceId].domain[id].eventCount );
+		err = cuptiEventDomainGetAttribute( dev,
+										   device[deviceId].domain[id].
+										   domainId,
+										   CUPTI_EVENT_DOMAIN_MAX_EVENTS,
+										   &size,
+										   ( void * ) &device[deviceId].
+										   domain[id].eventCount );
+		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetAttribute" );
+		
+		/* enumerate the events for the domain[id] on the device dev */
+		if ( 0 != enumEvents( dev, deviceId, id ) )
+			return -1;
+#else
 		err = cuptiDeviceGetEventDomainAttribute( dev,
 												  device[deviceId].domain[id].domainId,
 												  CUPTI_EVENT_DOMAIN_ATTR_NAME, &size,
@@ -158,6 +182,7 @@ enumEventDomains( CUdevice dev, int deviceId )
 		/* enumerate the events for the domain[id] on the device deviceId */
 		if ( 0 != enumEvents( deviceId, id ) )
 			return -1;
+#endif
 	}
 
 	totalDomainCount += device[deviceId].domainCount;
@@ -169,8 +194,13 @@ enumEventDomains( CUdevice dev, int deviceId )
 /*
  * Detect supported events for specified device domain
  */
+#ifdef CUDA_4_0
+static int
+enumEvents( CUdevice dev, int deviceId, int domainId )
+#else
 static int
 enumEvents( int deviceId, int domainId )
+#endif
 {
 	CUptiResult err = CUPTI_SUCCESS;
 	CUpti_EventID *eventId = NULL;
@@ -198,9 +228,16 @@ enumEvents( int deviceId, int domainId )
 	}
 
 	/* enumerate the events for the domain[domainId] on the device[deviceId] */
+#ifdef CUDA_4_0
+	err =
+	cuptiEventDomainEnumEvents( dev,
+							   ( CUpti_EventDomainID ) device[deviceId].
+							   domain[domainId].domainId, &size, eventId );
+#else
 	err =
 		cuptiEventDomainEnumEvents( ( CUpti_EventDomainID ) device[deviceId].
 									domain[domainId].domainId, &size, eventId );
+#endif
 	CHECK_CUPTI_ERROR( err, "cuptiEventDomainEnumEvents" );
 
 	/* query event info */
@@ -209,20 +246,38 @@ enumEvents( int deviceId, int domainId )
 
 		/* query event name */
 		size = PAPI_MIN_STR_LEN;
+#ifdef CUDA_4_0
+		err = cuptiEventGetAttribute( dev,
+									 device[deviceId].domain[domainId].
+									 event[id].eventId, CUPTI_EVENT_ATTR_NAME,
+									 &size,
+									 ( uint8_t * ) device[deviceId].
+									 domain[domainId].event[id].name );		
+#else
 		err = cuptiEventGetAttribute( device[deviceId].domain[domainId].
 									  event[id].eventId, CUPTI_EVENT_ATTR_NAME,
 									  &size,
 									  ( uint8_t * ) device[deviceId].
 									  domain[domainId].event[id].name );
+#endif
 		CHECK_CUPTI_ERROR( err, "cuptiEventGetAttribute" );
 
 		/* query event description */
 		size = PAPI_2MAX_STR_LEN;
+#ifdef CUDA_4_0
+		err = cuptiEventGetAttribute( dev,
+									 device[deviceId].domain[domainId].
+									 event[id].eventId,
+									 CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &size,
+									 ( uint8_t * ) device[deviceId].
+									 domain[domainId].event[id].desc );		
+#else
 		err = cuptiEventGetAttribute( device[deviceId].domain[domainId].
 									  event[id].eventId,
 									  CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &size,
 									  ( uint8_t * ) device[deviceId].
 									  domain[domainId].event[id].desc );
+#endif
 		CHECK_CUPTI_ERROR( err, "cuptiEventGetAttribute" );
 	}
 

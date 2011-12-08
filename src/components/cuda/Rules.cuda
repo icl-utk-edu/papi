@@ -4,7 +4,7 @@ include components/cuda/Makefile.cuda
 
 COMPSRCS += components/cuda/linux-cuda.c
 COMPOBJS += linux-cuda.o
-CFLAGS += -I$(CUDA_INCDIR) -I$(CUPTI_INCDIR)
+CFLAGS += -I$(CUDA_INCDIR) -I$(CUPTI_INCDIR) $(CUDA_VERSION)
 LDFLAGS += -L$(CUPTI_LIBDIR) -lcupti
 
 linux-cuda.o: components/cuda/linux-cuda.c components/cuda/linux-cuda.h $(HEADERS)
