@@ -208,7 +208,7 @@ load_preset_table( char *pmu_str, int pmu_type,
         /* FIXME -- make sure PAPI_TOT_CYC and PAPI_TOT_INS are #1/#2 */
 
 	/* try the environment variable first */
-	if ( ( tmpn = getenv( "PAPI_PERFMON_EVENT_FILE" ) ) &&
+	if ( ( tmpn = getenv( "PAPI_CSV_EVENT_FILE" ) ) &&
 		 ( strlen( tmpn ) != 0 ) ) {
 		sprintf( name, "%s", tmpn );
 		table = fopen( name, "r" );
@@ -230,7 +230,7 @@ load_preset_table( char *pmu_str, int pmu_type,
 	/* if no valid file or built-in table, bail */
 	if ( table == NULL && tmp_papi_events_table == NULL ) {
 		PAPIERROR
-			( "fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",
+			( "fopen(%s): %s, please set the PAPI_CSV_EVENT_FILE env. variable",
 			  name, strerror( errno ) );
 		return ( PAPI_ESYS );
 	}
