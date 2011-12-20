@@ -1,6 +1,8 @@
 #ifndef _LINUX_LOCK_H
 #define _LINUX_LOCK_H
 
+#include "mb.h"
+
 /* Locking functions */
 
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
@@ -118,6 +120,10 @@ __raw_spin_unlock( volatile unsigned int *lock )
 
 #elif defined(__arm__)
 
+#if 0
+
+/* OLD CODE FROM VINCE BELOW */
+
 /* FIXME */
 /* not sure if this even works            */
 /* also the various flavors of ARM        */
@@ -143,6 +149,25 @@ __raw_spin_unlock( volatile unsigned int *lock )
 
 #define  _papi_hwd_lock(lck) MUTEX_SET(lck)
 #define  _papi_hwd_unlock(lck) (*(volatile int *)(lck) = 0)
+#endif
+
+/* NEW CODE FROM PHIL */
+
+static inline int __arm_papi_spin_lock (volatile unsigned int *lock)
+{
+  unsigned int val;
+
+  do
+    asm volatile ("swp %0, %1, [%2]"
+		  : "=r" (val)
+		  : "0" (1), "r" (lock)
+		  : "memory");
+  while (val != 0);
+
+  return 0;
+}
+#define _papi_hwd_lock(lck)   { mb(); __arm_papi_spin_lock(&_papi_hwd_lock_data[lck]); mb(); }
+#define _papi_hwd_unlock(lck) { mb(); _papi_hwd_lock_data[lck] = 0; mb(); }
 
 #elif defined(__mips__)
 static inline void __raw_spin_lock(volatile unsigned int *lock)
@@ -152,7 +177,7 @@ static inline void __raw_spin_lock(volatile unsigned int *lock)
 		"       .set    noreorder       # __raw_spin_lock       \n"
 		"1:     ll      %1, %2                                  \n"
 		"       bnez    %1, 1b                                  \n"
-		"        li     %1, 1                                   \n"
+		"        li     %1,  1                                   \n"
 		"       sc      %1, %0                                  \n"
 		"       beqzl   %1, 1b                                  \n"
 		"        nop                                            \n"

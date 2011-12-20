@@ -31,7 +31,7 @@ endif
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
-MISCHDRS += perfctr-x86.h $(PAPI_EVENTS_TABLE)
+MISCHDRS += perfctr-x86.h linux-lock.h mb.h $(PAPI_EVENTS_TABLE)
 MISCSRCS +=  perfctr.c $(ARCH_SPEC_EVTS)
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
