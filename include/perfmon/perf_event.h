@@ -62,6 +62,9 @@ enum perf_hw_id {
 	PERF_COUNT_HW_BRANCH_INSTRUCTIONS	= 4,
 	PERF_COUNT_HW_BRANCH_MISSES		= 5,
 	PERF_COUNT_HW_BUS_CYCLES		= 6,
+	PERF_COUNT_HW_STALLED_CYCLES_FRONTEND	= 7,
+	PERF_COUNT_HW_STALLED_CYCLES_BACKEND	= 8,
+	PERF_COUNT_HW_REF_CPU_CYCLES		= 9,
 	PERF_COUNT_HW_MAX
 };
 
@@ -191,7 +194,9 @@ typedef struct perf_event_attr {
 			precise_ip     :  2,
 			mmap_data      :  1,
 			sample_id_all  :  1,
-			__reserved_1   : 45;
+			exclude_host   :  1,
+			exclude_guest  :  1,
+			__reserved_1   : 43;
 
 	union {
 		uint32_t	wakeup_events;
@@ -239,8 +244,10 @@ struct perf_event_mmap_page {
 	int64_t		offset;
 	uint64_t	time_enabled;
 	uint64_t	time_running;
+	uint32_t	time_mult, time_shift;
+	uint64_t	time_offset;
 
-	uint64_t	__reserved[123];
+	uint64_t	__reserved[121];
 	uint64_t  	data_head;
 	uint64_t	data_tail;
 };
@@ -262,6 +269,8 @@ struct perf_event_header {
 #define PERF_EVENT_MISC_KERNEL		(1 << 0)
 #define PERF_EVENT_MISC_USER		(2 << 0)
 #define PERF_EVENT_MISC_HYPERVISOR	(3 << 0)
+#define PERF_RECORD_MISC_GUEST_KERNEL	(4 << 0)
+#define PERF_RECORD_MISC_GUEST_USER	(5 << 0)
 
 #define PERF_RECORD_MISC_EXACT			(1 << 14)
 #define PERF_RECORD_MISC_EXACT_IP               (1 << 14)
