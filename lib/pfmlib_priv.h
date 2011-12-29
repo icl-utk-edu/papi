@@ -200,6 +200,7 @@ extern pfmlib_pmu_t amd64_k8_revg_support;
 extern pfmlib_pmu_t amd64_fam10h_barcelona_support;
 extern pfmlib_pmu_t amd64_fam10h_shanghai_support;
 extern pfmlib_pmu_t amd64_fam10h_istanbul_support;
+extern pfmlib_pmu_t amd64_fam12h_llano_support;
 extern pfmlib_pmu_t amd64_fam14h_bobcat_support;
 extern pfmlib_pmu_t amd64_fam15h_interlagos_support;
 extern pfmlib_pmu_t intel_p6_support;
