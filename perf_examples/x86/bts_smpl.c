@@ -167,7 +167,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 				break;
 			default:
 				printf("unknown sample type %d sz=%d\n", ehdr.type, ehdr.size);
-				perf_skip_buffer(hw->buf, ehdr.size);
+				perf_skip_buffer(hw->buf, ehdr.size - sizeof(ehdr));
 		}
 	}
 }
