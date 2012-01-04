@@ -17,8 +17,20 @@
   *		For each native event, a name, a description, and specific bit patterns are provided.
   *
   *	@section Options
-  *		This utility has no command line options.
   *
+  * --help, -h   print this help message
+  * -d           display detailed information about native events
+  * -e EVENTNAME display detail information about named native event
+  *  --nomasks    suppress display of Unit Mask information
+  *
+  * Processor-specific options
+  * --darr        display events supporting Data Address Range Restriction
+  * --dear        display Data Event Address Register events only
+  * --iarr        display events supporting Instruction Address Range Restriction
+  * --iear        display Instruction Event Address Register events only
+  * --opcm        display events supporting OpCode Matching
+  * --nogroups    suppress display of Event grouping information
+  * 
   *	@section Bugs
   *		There are no known bugs in this utility. 
   *		If you find a bug, it should be reported to the 
@@ -46,55 +58,37 @@ typedef struct command_flags
 } command_flags_t;
 
 static void
-print_help( char **argv, const PAPI_component_info_t * c )
+print_help( char **argv)
 {
 	printf( "This is the PAPI native avail program.\n" );
-	printf
-		( "It provides availability and detail information for PAPI native events.\n" );
+	printf( "It provides availability and detail information for PAPI native events.\n" );
 	printf( "Usage: %s [options]\n", argv[0] );
-	printf( "Options:\n\n" );
-	printf( "  --help, -h    print this help message\n" );
-	printf
-		( "   -d           display detailed information about native events\n" );
-	printf
-		( "   -e EVENTNAME display detail information about named native event\n" );
-
-	if ( c->data_address_range )
-		printf
-			( "  --darr        display events supporting Data Address Range Restriction\n" );
-	if ( c->cntr_DEAR_events )
-		printf
-			( "  --dear        display Data Event Address Register events only\n" );
-	if ( c->instr_address_range )
-		printf
-			( "  --iarr        display events supporting Instruction Address Range Restriction\n" );
-	if ( c->cntr_IEAR_events )
-		printf
-			( "  --iear        display Instruction Event Address Register events only\n" );
-	if ( c->cntr_OPCM_events )
-		printf( "  --opcm        display events supporting OpCode Matching\n" );
-	if ( c->cntr_umasks )
-		printf( "  --nomasks    suppress display of Unit Mask information\n" );
-	if ( c->cntr_groups )
-		printf
-			( "  --nogroups    suppress display of Event grouping information\n" );
+	printf( "\nOptions:\n" );
+	printf( "   --help, -h   print this help message\n" );
+	printf( "   -d           display detailed information about native events\n" );
+	printf( "   -e EVENTNAME display detail information about named native event\n" );
+	printf( "   --nomasks    suppress display of Unit Mask information\n" );
+	printf( "\nProcessor-specific options\n");
+	printf( "  --darr        display events supporting Data Address Range Restriction\n" );
+	printf( "  --dear        display Data Event Address Register events only\n" );
+	printf( "  --iarr        display events supporting Instruction Address Range Restriction\n" );
+	printf( "  --iear        display Instruction Event Address Register events only\n" );
+        printf( "  --opcm        display events supporting OpCode Matching\n" );
+	printf( "  --nogroups    suppress display of Event grouping information\n" );
 	printf( "\n" );
 }
 
 static void
 parse_args( int argc, char **argv, command_flags_t * f )
 {
-	const PAPI_component_info_t *c = NULL;
-	int i;
 
-	c = PAPI_get_component_info( 0 );
+	int i;
 
 	/* Look for all currently defined commands */
 	memset( f, 0, sizeof ( command_flags_t ) );
-	if ( c->cntr_umasks )
-		f->umask = 1;
-	if ( c->cntr_groups )
-		f->groups = 1;
+	f->umask = 1;
+	f->groups = 1;
+
 	for ( i = 1; i < argc; i++ ) {
 		if ( !strcmp( argv[i], "--darr" ) )
 			f->darr = 1;
@@ -115,47 +109,20 @@ parse_args( int argc, char **argv, command_flags_t * f )
 		else if ( !strcmp( argv[i], "-e" ) ) {
 			f->named = 1;
 			f->name = argv[i + 1];
-			if ( ( f->name == NULL ) || ( strlen( f->name ) == 0 ) ||
-				 ( f->name[0] == '-' ) )
+			if ( ( f->name == NULL ) || ( strlen( f->name ) == 0 ) || ( f->name[0] == '-' ) )
 				f->help = 1;
+			i++;
 		} else if ( strstr( argv[i], "-h" ) )
 			f->help = 1;
-		else
+		else {
 			printf( "%s is not supported\n", argv[i] );
+			exit(1);
+		}
 	}
 
 	/* if help requested, print and bail */
 	if ( f->help ) {
-		print_help( argv, c );
-		exit( 1 );
-	}
-
-	/* Look for flags unsupported by this component */
-	if ( f->darr & !( c->data_address_range ) ) {
-		f->darr = 0;
-		printf( "-darr not supported\n" );
-	}
-	if ( f->dear & !( c->cntr_DEAR_events ) ) {
-		f->dear = 0;
-		printf( "-dear not supported\n" );
-	}
-	if ( f->iarr & !( c->instr_address_range ) ) {
-		f->iarr = 0;
-		printf( "-iarr not supported\n" );
-	}
-	if ( f->iear & !( c->cntr_IEAR_events ) ) {
-		f->iear = 0;
-		printf( "-iear not supported\n" );
-	}
-	if ( f->opcm & !( c->cntr_OPCM_events ) ) {
-		f->opcm = 0;
-		printf( "-opcm not supported\n" );
-	}
-
-	/* Look for mutual exclusivity */
-	if ( f->darr + f->dear + f->iarr + f->iear + f->opcm > 1 ) {
-		printf
-			( "-darr, -dear, -iarr, -iear, and -opcm are mutually exclusve\n" );
+		print_help( argv);
 		exit( 1 );
 	}
 }
@@ -174,30 +141,26 @@ print_event( PAPI_event_info_t * info, int offset )
 	char str[EVT_LINE + EVT_LINE];
 
 	/* indent by offset */
-	if ( offset )
-		sprintf( str, "  " );
-	else
-		sprintf( str, "0x" );
-
-	/* copy the code and symbol */
-	sprintf( &str[strlen( str )], "%-11x%s", info->event_code, info->symbol );
-
-	if ( strlen( info->long_descr ) > 0 )
-		strcat( str, "  | " );
+	if ( offset ) {
+	   printf( "|     %-73s|\n", info->symbol );
+	}
+	else {
+	   printf( "| %-77s|\n", info->symbol );
+	}
 
 	while ( j <= strlen( info->long_descr ) ) {
-		i = EVT_LINE - ( unsigned int ) strlen( str ) - 2;
-		if ( i > 0 ) {
-			strncat( str, &info->long_descr[j], i );
-			j += i;
-			i = ( unsigned int ) strlen( str );
-			space_pad( str, EVT_LINE - ( int ) i - 1 );
-			strcat( str, "|" );
-		}
-		printf( "%s\n", str );
-		str[0] = 0;
-		space_pad( str, 11 );
-		strcat( str, "| " );
+	   i = EVT_LINE - 12 - 2;
+	   if ( i > 0 ) {
+	      str[0] = 0;
+	      strcat(str,"| " );
+	      space_pad( str, 11 );
+	      strncat( str, &info->long_descr[j], i );
+	      j += i;
+	      i = ( unsigned int ) strlen( str );
+	      space_pad( str, EVT_LINE - ( int ) i - 1 );
+	      strcat( str, "|" );
+	   }
+	   printf( "%s\n", str );
 	}
 }
 
@@ -238,16 +201,19 @@ main( int argc, char **argv )
 	int enum_modifier;
 	int numcmp, cid;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );
 
 	/* Initialize before parsing the input arguments */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
+	/* Parse the command-line arguments */
 	parse_args( argc, argv, &flags );
 
-	/* Set any needed modifier flags */
+	/* Set enum modifier mask */
 	if ( flags.dear )
 		enum_modifier = PAPI_NTV_ENUM_DEAR;
 	else if ( flags.darr )
@@ -261,145 +227,169 @@ main( int argc, char **argv )
 	else
 		enum_modifier = PAPI_ENUM_EVENTS;
 
+
 	if ( !TESTS_QUIET ) {
-		retval = PAPI_set_debug( PAPI_VERB_ECONT );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	   retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	   if ( retval != PAPI_OK ) {
+	      test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	   }
 	}
 
-	retval =
-		papi_print_header
-		( "Available native events and hardware information.\n", 1, &hwinfo );
-	if ( retval != PAPI_OK )
+	retval = papi_print_header( "Available native events and hardware information.\n", 1, &hwinfo );
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	}
 
+
+	/* Do this code if an event name was specified on the commandline */
 	if ( flags.named ) {
-		if ( PAPI_event_name_to_code( flags.name, &i ) == PAPI_OK ) {
-			if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-				printf( "%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
-						"Event name:", info.symbol, "Event Code:",
-						info.event_code, "Number of Register Values:",
-						info.count );
-				printf( "%-29s|%s|\n", "Description:", info.long_descr );
-				for ( k = 0; k < ( int ) info.count; k++ )
-					printf( " Register[%2d]:   0x%08x  |%s|\n", k, info.code[k],
-							info.name[k] );
+	   if ( PAPI_event_name_to_code( flags.name, &i ) == PAPI_OK ) {
+	      if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
+		 printf( "%-30s%s\n%-30s%d\n",
+			 "Event name:", info.symbol,
+			 "Number of Register Values:", info.count );
+		 printf( "%-29s|%s|\n", "Description:", info.long_descr );
+		 for ( k = 0; k < ( int ) info.count; k++ )
+		     printf( " Register[%2d]:               |%s|\n", 
+			     k, info.name[k] );
 
-				/* if unit masks exist but none are specified, process all */
-				if ( flags.umask && !strchr( flags.name, ':' ) ) {
-					if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) ==
-						 PAPI_OK ) {
-						printf( "\nUnit Masks:\n" );
-						do {
-							retval = PAPI_get_event_info( i, &info );
-							if ( retval == PAPI_OK ) {
-								if ( parse_unit_masks( &info ) ) {
-									printf( "%-29s|%s|%s|\n", " Mask Info:",
-											info.symbol, info.long_descr );
-									for ( k = 0; k < ( int ) info.count; k++ )
-										printf
-											( "  Register[%2d]:  0x%08x  |%s|\n",
-											  k, info.code[k], info.name[k] );
-								}
-							}
-						} while ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) ==
-								  PAPI_OK );
-					}
-				}
+		     /* if unit masks exist but none specified, process all */
+		     if ( !strchr( flags.name, ':' ) ) {
+			if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+			   printf( "\nUnit Masks:\n" );
+			   do {
+			      retval = PAPI_get_event_info( i, &info );
+			      if ( retval == PAPI_OK ) {
+				 if ( parse_unit_masks( &info ) ) {
+				    printf( "%-29s|%s|%s|\n", " Mask Info:",
+					    info.symbol, info.long_descr );
+				    for ( k = 0; k < ( int ) info.count; k++ )
+					printf( "  Register[%2d]:  0x%08x  |%s|\n",
+					       k, info.code[k], info.name[k] );
+				 }
+			      }
+			   } while ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
 			}
-		} else {
-			printf
-				( "Sorry, an event by the name '%s' could not be found.\n Is it typed correctly?\n\n",
-				  flags.name );
-		        exit( 1 );
-		}
+		     }
+	      }
+	   } else {
+	     printf("Sorry, an event by the name '%s' could not be found.\n",
+		    flags.name);
+	     printf("Is it typed correctly?\n\n");
+	     exit( 1 );
+	   }
 	}
         else {
 
-	   printf( "%-12s %s  | %s |\n", "Event Code", "Symbol", "Long Description" );
-	   printf
-		( "--------------------------------------------------------------------------------\n" );
+	   /* Print *ALL* available events */
+
 
 	   numcmp = PAPI_num_components(  );
 
 	   j = 0;
 
-	      for ( cid = 0; cid < numcmp; cid++ ) {
+	   for ( cid = 0; cid < numcmp; cid++ ) {
 
-		   /* For platform independence, always ASK FOR the first event */
-		   /* Don't just assume it'll be the first numeric value */
-		   i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cid );
-		   PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+	       const PAPI_component_info_t *component;
+	       component=PAPI_get_component_info(cid);
 
-		   do {
-			memset( &info, 0, sizeof ( info ) );
-			retval = PAPI_get_event_info( i, &info );
+	       /* Skip if requested enumeration not available */
+	       if (( flags.dear ) && !( component->cntr_DEAR_events )) {
+		 continue;
+	       }
+	       if (( flags.darr ) && !( component->data_address_range)) {
+		 continue;
+	       }
+               if (( flags.iear ) && !( component->cntr_IEAR_events )) {
+		 continue;
+	       }
+	       if (( flags.iarr ) && !( component->instr_address_range )) {
+		 continue;
+	       }
+	       if (( flags.opcm ) && !( component->cntr_OPCM_events )) {
+		 continue;
+	       }
 
-			/* This event may not exist */
-			if ( retval != PAPI_OK )
-				continue;
 
-			/* count only events that as supported by host cpu */
-			j++;
+	       printf( "===============================================================================\n" );
+	       printf( " Events in Component: %s\n",component->name);
+	       printf( "===============================================================================\n" );
+	     
+	       /* Always ASK FOR the first event */
+	       /* Don't just assume it'll be the first numeric value */
+	       i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cid );
 
-			print_event( &info, 0 );
+	       /* UGH PAPI_enum_event() really needs a component field */
+	       PAPI_enum_event( &i, PAPI_ENUM_FIRST );
 
-			if ( flags.details ) {
-				for ( k = 0; k < ( int ) info.count; k++ ) {
-					if ( strlen( info.name[k] ) ) {
-						printf( "  Register[%d] Name: %-20s  Value: 0x%-28x|\n",
-								k, info.name[k], info.code[k] );
-					}
-				}
-			}
+	       do {
+		  memset( &info, 0, sizeof ( info ) );
+		  retval = PAPI_get_event_info( i, &info );
+
+		  /* This event may not exist */
+		  if ( retval != PAPI_OK )
+		     continue;
+
+		  /* count only events that as supported by host cpu */
+		  j++;
+
+		  print_event( &info, 0 );
+
+		  /* Does this matter on anything but perfctr? */
+		  if ( flags.details ) {
+		     for ( k = 0; k < ( int ) info.count; k++ ) {
+			 if ( strlen( info.name[k] ) ) {
+			    printf( "  Register[%d] Name: %-20s  Value: 0x%-28x|\n",
+				    k, info.name[k], info.code[k] );
+			 }
+		     }
+		  }
 
 /*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
 			groups id for each group in which this
 			native event lives, in bits 16 - 23 of event code
 			terminating with PAPI_ENOEVNT at the end of the list.
 */
-			if ( flags.groups ) {
-				k = i;
-				if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_GROUPS ) == PAPI_OK ) {
-					printf( "Groups: " );
-					do {
-						printf( "%4d",
-								( ( k & PAPI_NTV_GROUP_AND_MASK ) >>
-								  PAPI_NTV_GROUP_SHIFT ) - 1 );
-					} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_GROUPS ) ==
-							  PAPI_OK );
-					printf( "\n" );
-				}
-			}
 
-/*		modifier = PAPI_NTV_ENUM_UMASKS returns an event code for each
-			unit mask bit defined for this native event. This can be used
-			to get event info for that mask bit. It terminates
-			with PAPI_ENOEVNT at the end of the list.
-*/
-			if ( flags.umask ) {
-				k = i;
-				if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-					do {
-						retval = PAPI_get_event_info( k, &info );
-						if ( retval == PAPI_OK ) {
-							if ( parse_unit_masks( &info ) )
-								print_event( &info, 2 );
-						}
-					} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) ==
-							  PAPI_OK );
-				}
-				printf
-					( "--------------------------------------------------------------------------------\n" );
-			}
-		} while ( PAPI_enum_event( &i, enum_modifier ) == PAPI_OK );
-	      }
+		  /* This is an IBM Power issue */
+		  if ( flags.groups ) {
+		     k = i;
+		     if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_GROUPS ) == PAPI_OK ) {
+			printf( "Groups: " );
+			do {
+			  printf( "%4d", ( ( k & PAPI_NTV_GROUP_AND_MASK ) >>
+					     PAPI_NTV_GROUP_SHIFT ) - 1 );
+			} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_GROUPS ) ==PAPI_OK );
+			printf( "\n" );
+		     }
+		  }
+
+		  /* Print umasks */
+		  /* components that don't have them can just ignore */
+
+	          if ( flags.umask ) { 
+		     k = i;
+		     if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+		        do {
+			   retval = PAPI_get_event_info( k, &info );
+			   if ( retval == PAPI_OK ) {
+			      if ( parse_unit_masks( &info ) )
+			         print_event( &info, 2 );
+			   }
+		        } while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
+		     }
+
+		  }
+		  printf( "--------------------------------------------------------------------------------\n" );
+
+	       } while ( PAPI_enum_event( &i, enum_modifier ) == PAPI_OK );
+	   }
+	   	   	
 	
-	
-	      printf
-		( "--------------------------------------------------------------------------------\n" );
-	      printf( "Total events reported: %d\n", j );
+	   printf("\n");
+	   printf( "Total events reported: %d\n", j );
 	}
+
 	test_pass( __FILE__, NULL, 0 );
 	exit( 0 );
 }
