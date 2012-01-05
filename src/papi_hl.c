@@ -38,12 +38,12 @@
  */
 typedef struct _HighLevelInfo
 {
-	int EventSet;					   /**< EventSet of the thread */
+	int EventSet;				   /**< EventSet of the thread */
 	short int num_evts;
 	short int running;
 	long long initial_time;			   /**< Start time */
 	float total_proc_time;			   /**< Total processor time */
-	float total_ins;				   /**< Total instructions */
+	float total_ins;			   /**< Total instructions */
 } HighLevelInfo;
 
 extern int init_level;
@@ -166,7 +166,7 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
   *	\#include <papi.h> @n
   *	int PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips );
   *
-  * @param *rtime
+  *     @param *rtime
   *		total realtime since the first PAPI_flips() call
   *	@param *ptime
   *		total process time since the first PAPI_flips() call
@@ -210,11 +210,10 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 	HighLevelInfo *state = NULL;
 	int retval;
 
-	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK ) 
-	{
-	printf("PAPI_flips return %d\n", retval);
+	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK ) {
 		return ( retval );
-}
+        }
+
 	if ( ( retval =
 		   _hl_rate_calls( rtime, ptime, flpins, mflips,
 						   ( unsigned int ) PAPI_FP_INS, state ) ) != PAPI_OK )
@@ -230,17 +229,17 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
   *	\#include <papi.h> @n
   *	int PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops );
   *
-  * @param *rtime
+  *     @param *rtime
   *		total realtime since the first PAPI_flops() call
   *	@param *ptime
   *		total process time since the first PAPI_flops() call
   *	@param *flpins
   *		total floating point instructions since the first call
-  * @param *rtime
+  *     @param *rtime
   *		total realtime since the first PAPI_flops() call
   *	@param *ptime
   *		total process time since the first PAPI_flops() call
-  *	@param *flpins
+  *	@param *flpops
   *		total floating point instructions since the first call
   * 
   *	@retval PAPI_EINVAL 
@@ -252,11 +251,11 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
   *		Insufficient memory to complete the operation. 
   *
   * The first call to PAPI_flops() will initialize the PAPI High Level interface, 
-  * set up the counters to monitor @ref PAPI_FP_INS and @ref PAPI_TOT_CYC events 
+  * set up the counters to monitor @ref PAPI_FP_OPS and @ref PAPI_TOT_CYC events 
   * and start the counters. 
   * Subsequent calls will read the counters and return total real time, 
   * total process time, total floating point instructions since the start of the 
-  * measurement and the Mflip/s rate since latest call to PAPI_flops(). 
+  * measurement and the Mflop/s rate since latest call to PAPI_flops(). 
   * A call to PAPI_stop_counters()  will stop the counters from running and then 
   * calls such as PAPI_start_counters()  can safely be used. 
   *
