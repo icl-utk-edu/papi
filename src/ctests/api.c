@@ -172,21 +172,27 @@ main( int argc, char **argv )
 	//NOTE: There are currently no checks on whether or not returned values are correct 
 
 
+	PAPI_shutdown(  );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT )
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+
+
 	if ( !TESTS_QUIET )
-		printf( "Testing PAPI_flips... " );
+		printf( "Testing PAPI_flops... " );
 	retval = PAPI_flops( NULL, &ptime, &flpops, &mflops );	// pass invalid 1st argument
 	if ( retval != PAPI_EINVAL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
-	retval = PAPI_flips( &rtime, NULL, &flpops, &mflops );	// pass invalid 2nd argument
+	retval = PAPI_flops( &rtime, NULL, &flpops, &mflops );	// pass invalid 2nd argument
 	if ( retval != PAPI_EINVAL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
-	retval = PAPI_flips( &rtime, &ptime, NULL, &mflops );	// pass invalid 3rd argument
+	retval = PAPI_flops( &rtime, &ptime, NULL, &mflops );	// pass invalid 3rd argument
 	if ( retval != PAPI_EINVAL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
-	retval = PAPI_flips( &rtime, &ptime, &flpops, NULL );	// pass invalid 4th argument
+	retval = PAPI_flops( &rtime, &ptime, &flpops, NULL );	// pass invalid 4th argument
 	if ( retval != PAPI_EINVAL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
-	retval = PAPI_flips( &rtime, &ptime, &flpops, &mflops );	// get Mflops/s, real and processor time 
+	retval = PAPI_flops( &rtime, &ptime, &flpops, &mflops );	// get Mflops/s, real and processor time 
 	if ( retval != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
 	else if ( !TESTS_QUIET )
