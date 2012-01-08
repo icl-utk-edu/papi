@@ -54,7 +54,6 @@ pfmlib_pmu_t amd64_k8_##n##_support={				\
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,	\
 								\
 	.pmu_detect		= pfm_amd64_k8_##n##_detect,	\
-	.pmu_init		= pfm_amd64_pmu_init,		\
 	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding, \
 	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),	\
 	.get_event_first	= pfm_amd64_get_event_first,	\
@@ -65,6 +64,7 @@ pfmlib_pmu_t amd64_k8_##n##_support={				\
 	.get_event_attr_info	= pfm_amd64_get_event_attr_info,\
 	 PFMLIB_VALID_PERF_PATTRS(pfm_amd64_perf_validate_pattrs),\
 	.get_event_nattrs	= pfm_amd64_get_event_nattrs,	\
+	.get_num_events		= pfm_amd64_get_num_events,	\
 }
 
 DEFINE_K8_REV(RevB, revb, AMD64_K8_REV_B, PFM_PMU_AMD64_K8_REVB);

@@ -817,16 +817,18 @@ pfm_amd64_get_event_nattrs(void *this, int pidx)
 	return nattrs;
 }
 
-int
-pfm_amd64_pmu_init(void *this)
+int pfm_amd64_get_num_events(void *this)
 {
 	pfmlib_pmu_t *pmu = this;
-	int i, total = 0;
+	int i, num = 0;
 
-	for(i=0; i < pmu->pme_count; i++) {
-		if (pfm_amd64_event_is_valid(this, i))
-			total++;
-	}
-	pmu->pme_count = total;
-	return PFM_SUCCESS;
+	/*
+	 * count actual number of events for specific PMU.
+	 * Table may contain more events for the family than
+	 * what a specific model actually supports.
+	 */
+	for (i = 0; i < pmu->pme_count; i++)
+		if (amd64_event_valid(this, i))
+			num++;
+	return num;
 }

@@ -1570,7 +1570,11 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 	info.is_present = pfmlib_pmu_active(pmu);
 	info.is_dfl     = !!(pmu->flags & PFMLIB_PMU_FL_ARCH_DFL);
 	info.type       = pmu->type;
-	info.nevents    = pmu->pme_count;
+
+	if (pmu->get_num_events)
+		info.nevents = pmu->get_num_events(pmu);
+	else
+		info.nevents    = pmu->pme_count;
 
 	memcpy(uinfo, &info, sz);
 

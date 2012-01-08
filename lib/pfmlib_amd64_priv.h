@@ -205,9 +205,9 @@ extern int pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_
 extern int pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info);
 extern int pfm_amd64_validate_table(void *this, FILE *fp);
 extern int pfm_amd64_detect(void *this);
-extern int pfm_amd64_pmu_init(void *this);
 extern const pfmlib_attr_desc_t amd64_mods[];
 extern int pfm_amd64_get_event_nattrs(void *this, int pidx);
+extern int pfm_amd64_get_num_events(void *this);
 
 extern int pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern void pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
