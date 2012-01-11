@@ -366,6 +366,17 @@ static const intel_x86_umask_t coreduo_fused_uops[]={
    },
 };
 
+static const intel_x86_umask_t coreduo_est_trans[]={
+   { .uname = "ANY",
+     .udesc = "Any Intel Enhanced SpeedStep(R) Technology transitions",
+     .ucode = 0x0,
+   },
+   { .uname = "FREQ",
+     .udesc = "Intel Enhanced SpeedStep Technology frequency transitions",
+     .ucode = 0x1000,
+   },
+};
+
 static const intel_x86_entry_t intel_coreduo_pe[]={
 { .name   = "UNHALTED_CORE_CYCLES",
   .desc   = "Unhalted core cycles",
@@ -620,17 +631,14 @@ static const intel_x86_entry_t intel_coreduo_pe[]={
   .ngrp = 3,
   .umasks = coreduo_l2_rqsts, /* identical to actual umasks list for this event */
 },
-{ .name   = "EST_TRANS_ALL",
-  .desc   = "Any Intel Enhanced SpeedStep(R) Technology transitions",
+{ .name   = "EST_TRANS",
+  .desc   = "Intel Enhanced SpeedStep(R) Technology transitions",
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x3a,
-},
-{ .name   = "EST_TRANS_ALL",
-  .desc   = "Intel Enhanced SpeedStep Technology frequency transitions",
-  .modmsk = INTEL_X86_ATTRS,
-  .cntmsk = 0x3,
-  .code = 0x103a,
+  .numasks= LIBPFM_ARRAY_SIZE(coreduo_est_trans),
+  .ngrp = 1,
+  .umasks = coreduo_est_trans,
 },
 { .name   = "THERMAL_TRIP",
   .desc   = "Duration in a thermal trip based on the current core clock ",

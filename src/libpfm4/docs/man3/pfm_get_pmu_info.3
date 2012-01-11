@@ -66,8 +66,11 @@ die but at the socket level, i.e., capturing events for all cores.
 .TP
 .B nevents
 This is the number of available events for this PMU model based on the
-host processor. It is \fBonly\fR valid is the \fBis_present\fR field
-is set to 1.
+host processor. It is \fBonly\fR valid if the \fBis_present\fR field
+is set to 1. Event identifiers are not guaranteed contiguous. In other words,
+it is not because \fBnevents\fR is equal to 100, that event identifiers go
+from 0 to 99. The iterator function \fBpfm_get_event_next()\fR must be
+used to go from one identifier to the next.
 .TP
 .B first_event
 This field returns the opaque index of the first event for this PMU model. The index
@@ -121,6 +124,8 @@ PMU model is not supported by the library.
 .B PFMLIB_ERR_INVAL
 The \fBpmu\fR argument is invalid or \fBinfo\fR is \fBNULL\fR or \fBsize\fR
 is not zero.
+.SH SEE ALSO
+pfm_get_event_next(3)
 .SH AUTHOR
 Stephane Eranian <eranian@gmail.com>
 .PP
