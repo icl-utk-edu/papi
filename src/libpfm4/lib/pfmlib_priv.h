@@ -127,6 +127,7 @@ typedef struct pfmlib_pmu {
 
 	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 	int		 (*validate_table)(void *this, FILE *fp);
+	int 		 (*get_num_events)(void *this);	/* optional */
 } pfmlib_pmu_t;
 
 typedef struct {
@@ -200,6 +201,7 @@ extern pfmlib_pmu_t amd64_k8_revg_support;
 extern pfmlib_pmu_t amd64_fam10h_barcelona_support;
 extern pfmlib_pmu_t amd64_fam10h_shanghai_support;
 extern pfmlib_pmu_t amd64_fam10h_istanbul_support;
+extern pfmlib_pmu_t amd64_fam12h_llano_support;
 extern pfmlib_pmu_t amd64_fam14h_bobcat_support;
 extern pfmlib_pmu_t amd64_fam15h_interlagos_support;
 extern pfmlib_pmu_t intel_p6_support;

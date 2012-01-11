@@ -143,7 +143,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			attr->freq = 1;
 			break;
 		case PERF_ATTR_PR:
-			if (ival < 0 || ival > 3)
+			if (ival > 3)
 				return PFM_ERR_ATTR_VAL;
 			attr->precise_ip = ival;
 			break;

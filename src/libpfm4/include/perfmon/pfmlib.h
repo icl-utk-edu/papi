@@ -146,6 +146,7 @@ typedef enum {
 	PFM_PMU_AMD64_FAM15H_INTERLAGOS,/* AMD AMD64 Fam15h Interlagos */
 
 	PFM_PMU_INTEL_SNB_EP,		/* Intel SandyBridge EP */
+	PFM_PMU_AMD64_FAM12H_LLANO,	/* AMD AMD64 Fam12h Llano */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

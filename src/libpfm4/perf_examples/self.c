@@ -63,11 +63,52 @@ noploop(void)
 	for(;quit == 0;);
 }
 
+static void
+print_counts(perf_event_desc_t *fds, int num_fds, const char *msg)
+{
+	uint64_t val;
+	uint64_t values[3];
+	double ratio;
+	int i, ret;
+
+	/*
+	 * now read the results. We use pfp_event_count because
+	 * libpfm guarantees that counters for the events always
+	 * come first.
+	 */
+	memset(values, 0, sizeof(values));
+
+	for (i = 0; i < num_fds; i++) {
+
+		ret = read(fds[i].fd, values, sizeof(values));
+		if (ret < sizeof(values)) {
+			if (ret == -1)
+				err(1, "cannot read results: %s", strerror(errno));
+			else
+				warnx("could not read event%d", i);
+		}
+		/*
+		 * scaling is systematic because we may be sharing the PMU and
+		 * thus may be multiplexed
+		 */
+		val = perf_scale(values);
+		ratio = perf_scale_ratio(values);
+
+		printf("%s %'20"PRIu64" %s (%.2f%% scaling, raw=%'"PRIu64", ena=%'"PRIu64", run=%'"PRIu64")\n",
+			msg,
+			val,
+			fds[i].name,
+			(1.0-ratio)*100.0,
+		        values[0],
+			values[1],
+			values[2]);
+	}
+}
+
 int
 main(int argc, char **argv)
 {
 	perf_event_desc_t *fds = NULL;
-	uint64_t values[3];
 	int i, ret, num_fds = 0;
 
 	setlocale(LC_ALL, "");
@@ -104,6 +145,8 @@ main(int argc, char **argv)
 	if (ret)
 		err(1, "prctl(enable) failed");
 
+	print_counts(fds, num_fds, "INITIAL: ");
+
 	alarm(10);
 
 	noploop();
@@ -115,40 +158,12 @@ main(int argc, char **argv)
 	if (ret)
 		err(1, "prctl(disable) failed");
 
-	/*
-	 * now read the results. We use pfp_event_count because
-	 * libpfm guarantees that counters for the events always
-	 * come first.
-	 */
-	memset(values, 0, sizeof(values));
+	printf("Final counts:\n");
+	print_counts(fds, num_fds, "FINAL:  ");
 
-	for (i=0; i < num_fds; i++) {
-		uint64_t val;
-		double ratio;
+	for (i = 0; i < num_fds; i++)
+	  close(fds[i].fd);
 
-		ret = read(fds[i].fd, values, sizeof(values));
-		if (ret < sizeof(values)) {
-			if (ret == -1)
-				err(1, "cannot read results: %s", strerror(errno));
-			else
-				warnx("could not read event%d", i);
-		}
-		/*
-		 * scaling is systematic because we may be sharing the PMU and
-		 * thus may be multiplexed
-		 */
-		val = perf_scale(values);
-		ratio = perf_scale_ratio(values);
-
-		printf("%'20"PRIu64" %s (%.2f%% scaling, ena=%'"PRIu64", run=%'"PRIu64")\n",
-			val,
-			fds[i].name,
-			(1.0-ratio)*100.0,
-			values[1],
-			values[2]);
-
-		close(fds[i].fd);
-	}
 	free(fds);
 
 	/* free libpfm resources cleanly */

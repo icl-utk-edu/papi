@@ -40,6 +40,7 @@ typedef struct {
 	int group_leader;
 	int fd;
 	int max_fds;
+	int idx; /* opaque libpfm event identifier */
 } perf_event_desc_t;
 
 /* handy shortcut */
@@ -71,6 +72,9 @@ static inline uint64_t
 perf_scale(uint64_t *values)
 {
 	uint64_t res = 0;
+
+	if (!values[2] && !values[1] && values[0])
+		warnx("WARNING: time_running = 0 = time_enabled, raw count not zero\n");
 
 	if (values[2] > values[1])
 		warnx("WARNING: time_running > time_enabled\n");

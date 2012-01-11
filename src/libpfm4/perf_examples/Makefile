@@ -31,9 +31,14 @@ ifeq ($(ARCH),ia64)
 #DIRS +=ia64
 endif
 
-ifeq ($(ARCH),x86)
-DIRS +=x86
+ifeq ($(ARCH),x86_64)
+DIRS += x86
 endif
+
+ifeq ($(ARCH),i386)
+DIRS += x86
+endif
+
 
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
 CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
@@ -52,7 +57,7 @@ TARGETS+=self self_basic self_count task task_attach_timeout syst \
 
 EXAMPLESDIR=$(DOCDIR)/perf_examples
 
-all: $(TARGETS) $(XTRA)
+all: $(TARGETS)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # Many systems don't have ncurses-devel installed
@@ -67,7 +72,7 @@ $(LPC_UTILS): $(LPC_UTILS_HDR)
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGETS) $(XTRA) *~
+	$(RM) -f *.o $(TARGETS) *~
 
 distclean: clean
 

@@ -140,7 +140,7 @@ static int check_test_events(FILE *fp)
 		if (fstr)
 			free(fstr);
 	}
-	printf("\t %d MIPS events: %d errors\n", i, errors);
+	printf("\t %d ARM events: %d errors\n", i, errors);
 	return errors;
 }
 
