@@ -155,7 +155,7 @@ static int find_event_no_aliases(char *name) {
 	     SUBDBG("FOUND %s %s %x\n",name,event_info.name,i);
 	     return i;
 	  }
-	  i++;
+	  i=pfm_get_event_next(i);
        }
     }
     return PFM_ERR_NOTFOUND;
@@ -188,7 +188,7 @@ static int find_next_no_aliases(int code) {
   }
 
   current_pmu=event_info.pmu;
-  current_event=code+1;
+  current_event=pfm_get_event_next(code);
 
   SUBDBG("Current is %x guessing next is %x\n",code,current_event);
 
