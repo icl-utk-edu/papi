@@ -118,6 +118,8 @@ CPU,AMD64 (Family 10h RevE)
 CPU,amd64_fam10h_barcelona
 CPU,amd64_fam10h_shanghai
 CPU,amd64_fam10h_istanbul
+CPU,amd64_fam11h_turion
+CPU,amd64_fam12h_llano
 #
 PRESET,PAPI_TOT_INS,NOT_DERIVED,RETIRED_INSTRUCTIONS
 PRESET,PAPI_TOT_CYC,NOT_DERIVED,CPU_CLK_UNHALTED
