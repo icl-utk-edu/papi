@@ -2,64 +2,54 @@ This file has to be modified for the appio component.
 
 COMPONENT
 
-    net
+    appio
 
 SUMMARY
 
-    Linux network component
+    Application I/O component
 
 DESCRIPTION
 
-    This network component enables PAPI-C to access the network
-    statistics exported by the Linux kernel through the /proc
-    pseudo-file system (file /proc/net/dev).
+    This application I/O component enables PAPI-C to determine
+    I/O used by the application. This is to be distinguished
+    from system-wide I/O statistics. The goal of this component
+    is to help the programmer attribute the I/O (read/write) to
+    files and sockets, to the source code.
 
-    This component will dynamically create a native events table
-    based on the number of interfaces listed in /proc/net/dev (16
-    entries for each network interface).
+    Listed below are the events measured by the component:
 
     Event names
     -------------------------
-      "<ifname>.rx.bytes",
-      "<ifname>.rx.packets",
-      "<ifname>.rx.errors",
-      "<ifname>.rx.dropped",
-      "<ifname>.rx.fifo",
-      "<ifname>.rx.frame",
-      "<ifname>.rx.compressed",
-      "<ifname>.rx.multicast",
-      "<ifname>.tx.bytes",
-      "<ifname>.tx.packets",
-      "<ifname>.tx.errors",
-      "<ifname>.tx.dropped",
-      "<ifname>.tx.fifo",
-      "<ifname>.tx.colls",
-      "<ifname>.tx.carrier",
-      "<ifname>.tx.compressed"
+      "READ.BYTES"
+      "READ.CALLS"
+      "READ.ERR"
+      "READ.SHORT"
+      "READ.EOF"
+      "READ.BLOCK_SIZE"
+      "WRITE.BYTES"
+      "WRITE.CALLS"
+      "WRITE.ERR"
+      "WRITE.SHORT"
+      "WRITE.BLOCK_SIZE"
+      "OPEN.CALLS"
+      "OPEN.MAX_FD"
+      "OPEN.ERR"
+      "SEEK.CALLS"
+      "SEEK.ABS_STRIDE"
 
-    By default the Linux kernel only updates the network statistics
-    once every second (see the references listed in the "SEE ALSO"
-    section for some problems you may come across and for how to
-    change the default polling period).
-
-    Note: The Linux network statistics are updated by code that
-    resides in the file net/core/dev.c.
+    The component works by intercepting I/O system calls using the
+    library preloading mechanism available in modern operating
+    systems. This means that this component WILL NOT COLLECT ANY
+    STATISTICS FOR STATICALLY LINKED EXECUTABLES.
 
 AUTHOR
 
-  Initial written by Haihang You <you@cs.utk.edu>.
-  Re-written by Jose Pedro Oliveira <jpo@di.uminho.pt> in order
-  to source data directly from /proc/net/dev.
+  The code is written by Philip Mucci <phil.mucci@samaratechnologygroup.com>
+  and Tushar Mohan <tushar.mohan@samaratechnologygroup.com>. It leverages
+  code written by Jose Pedro Oliveira <jpo@di.uminho.pt> for the PAPI 
+  net component.
 
 SEE ALSO
 
- * Network Stats Anomaly
-   http://collectl.sourceforge.net/NetworkStats.html
 
- * Occasionally corrupted network stats in /proc/net/dev
-   http://kerneltrap.org/mailarchive/linux-netdev/2008/1/14/566936
-   http://kerneltrap.org/mailarchive/linux-netdev/2008/1/14/567512
-
-
-# 2011-11-05 jpo
 # vim:set ai ts=4 sw=4 sts=4 et:
