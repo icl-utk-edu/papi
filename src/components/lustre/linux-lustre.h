@@ -41,8 +41,8 @@ typedef struct
 /** describes the infos collected from a mounted Lustre filesystem */
 typedef struct lustre_fs_struct
 {
-	FILE *proc_fd;
-	FILE *proc_fd_readahead;
+	FILE *proc_file;
+	FILE *proc_file_readahead;
 	counter_info *write_cntr;
 	counter_info *read_cntr;
 	counter_info *readahead_cntr;
