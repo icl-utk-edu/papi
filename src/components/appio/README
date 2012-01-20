@@ -1,5 +1,3 @@
-This file has to be modified for the appio component.
-
 COMPONENT
 
     appio
@@ -20,34 +18,33 @@ DESCRIPTION
 
     Event names
     -------------------------
-      "READ.BYTES"
-      "READ.CALLS"
-      "READ.ERR"
-      "READ.SHORT"
-      "READ.EOF"
-      "READ.BLOCK_SIZE"
-      "WRITE.BYTES"
-      "WRITE.CALLS"
-      "WRITE.ERR"
-      "WRITE.SHORT"
-      "WRITE.BLOCK_SIZE"
-      "OPEN.CALLS"
-      "OPEN.MAX_FD"
-      "OPEN.ERR"
-      "SEEK.CALLS"
-      "SEEK.ABS_STRIDE"
+      "READ_BYTES"
+      "READ_CALLS"
+      "READ_ERR"
+      "READ_SHORT"
+      "READ_EOF"
+      "READ_BLOCK_SIZE"
+      "WRITE_BYTES"
+      "WRITE_CALLS"
+      "WRITE_ERR"
+      "WRITE_SHORT"
+      "WRITE_BLOCK_SIZE"
 
-    The component works by intercepting I/O system calls using the
-    library preloading mechanism available in modern operating
-    systems. This means that this component WILL NOT COLLECT ANY
-    STATISTICS FOR STATICALLY LINKED EXECUTABLES.
+    The component works by intercepting I/O system calls on Linux. At present
+    the code uses a features available in libc on Linux, and is unlikely to
+    work on other platforms at present. 
+
+    At present the code works for static and dynamic linkage. In the future, 
+    if necessary to accomodate a larger number of I/O calls, we may restrict
+    support to dynamically linked executables to take advantage of LD_PRELOAD
+    for interception.
+
 
 AUTHOR
 
   The code is written by Philip Mucci <phil.mucci@samaratechnologygroup.com>
-  and Tushar Mohan <tushar.mohan@samaratechnologygroup.com>. It leverages
-  code written by Jose Pedro Oliveira <jpo@di.uminho.pt> for the PAPI 
-  net component.
+  and Tushar Mohan <tusharmohan@gmail.com>. It leverages code written by 
+  Jose Pedro Oliveira <jpo@di.uminho.pt> for the PAPI net component.
 
 SEE ALSO
 

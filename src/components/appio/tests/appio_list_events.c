@@ -2,13 +2,14 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
- * @author  Jose Pedro Oliveira
+/**
+ * @author  Tushar Mohan
+ * (adapted for appio from original linux-net code)
  *
- * test case for the linux-net component
+ * test case for the appio component
  *
  * @brief
- *   List all net events codes and names
+ *   List all appio events codes and names
  */
 
 #include <stdio.h>
@@ -34,7 +35,7 @@ int main (int argc, char **argv)
     }
 
     if (!TESTS_QUIET) {
-        printf("Listing all net events\n");
+        printf("Listing all appio events\n");
     }
 
     numcmp = PAPI_num_components();
@@ -45,7 +46,7 @@ int main (int argc, char **argv)
             test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n",-1);
         }
 
-        if ( strstr(cmpinfo->name, "linux-net.c") == NULL) {
+        if ( strstr(cmpinfo->name, "appio.c") == NULL) {
             continue;
         }
 
@@ -77,7 +78,7 @@ int main (int argc, char **argv)
     }
 
     if (total_events==0) {
-        test_skip(__FILE__,__LINE__,"No net events found", 0);
+        test_skip(__FILE__,__LINE__,"No appio events found", 0);
     }
 
     test_pass( __FILE__, NULL, 0 );
