@@ -4,11 +4,12 @@
 
 /**
 * @file    linux-lustre.c
-* CVS:     $Id$
 * @author  Haihang You (in collaboration with Michael Kluge, TU Dresden)
 *          you@eecs.utk.edu
 * @author  Heike Jagode
 *          jagode@eecs.utk.edu
+* @author  Vince Weaver
+*          vweaver1@eecs.utk.edu
 * @brief A component for the luster filesystem.
 */
 
@@ -16,41 +17,76 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <stdint.h>
+#include <ctype.h>
 
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
-#include "linux-lustre.h"
+
+/** describes a single counter with its properties */
+typedef struct counter_info_struct
+{
+	int idx;
+	char *name;
+	char *description;
+	char *unit;
+	unsigned long long value;
+} counter_info;
+
+typedef struct
+{
+	int count;
+	char **data;
+} string_list;
+
+
+/** describes the infos collected from a mounted Lustre filesystem */
+typedef struct lustre_fs_struct
+{
+	char *proc_file;
+	char *proc_file_readahead;
+	counter_info *write_cntr;
+	counter_info *read_cntr;
+	counter_info *readahead_cntr;
+	struct lustre_fs_struct *next;
+} lustre_fs;
+
+#define LUSTRE_MAX_COUNTERS 100
+#define LUSTRE_MAX_COUNTER_TERMS  LUSTRE_MAX_COUNTERS
+
+typedef counter_info LUSTRE_register_t;
+typedef counter_info LUSTRE_native_event_entry_t;
+typedef counter_info LUSTRE_reg_alloc_t;
+
+
+typedef struct LUSTRE_control_state
+{
+	long long start_count[LUSTRE_MAX_COUNTERS];
+        long long current_count[LUSTRE_MAX_COUNTERS];
+        long long difference[LUSTRE_MAX_COUNTERS];
+        int which_counter[LUSTRE_MAX_COUNTERS];
+	int num_events;
+} LUSTRE_control_state_t;
+
+
+typedef struct LUSTRE_context
+{
+	LUSTRE_control_state_t state;
+} LUSTRE_context_t;
 
 /* Default path to lustre stats */
-//const char proc_base_path[] = "/proc/fs/lustre/llite";
-const char proc_base_path[] = "./components/lustre/fake_proc";
+const char proc_base_path[] = "/proc/fs/lustre/";
+//const char proc_base_path[] = "./components/lustre/fake_proc/fs/lustre/";
 
-#define BUFFER_SIZE 4096
-static char buffer[BUFFER_SIZE];
-
-static FILE *proc_fd_snmp = NULL;
-static FILE *proc_fd_dev = NULL;
-
-static counter_info *subscriptions[LUSTRE_MAX_COUNTERS];
-static int num_counters = 0;
-static int is_finalized = 0;
-
-/* counters are kept in a list */
-static counter_info *root_counter = NULL;
+static counter_info *lustre_native_table[LUSTRE_MAX_COUNTERS];
+static int num_events = 0;
 
 /* mount Lustre fs are kept in a list */
 static lustre_fs *root_lustre_fs = NULL;
 
-/* network interfaces are kept in a list as well */
-static network_if *root_network_if = NULL;
-
-#define lustre_native_table subscriptions
-
-static long long _papi_hwd_lustre_register_start[LUSTRE_MAX_COUNTERS];
-static long long _papi_hwd_lustre_register[LUSTRE_MAX_COUNTERS];
-
-static int num_events=0;
+papi_vector_t _lustre_vector;
 
 /*******************************************************************************
  ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
@@ -66,31 +102,26 @@ static int num_events=0;
 static counter_info *
 addCounter( const char *name, const char *desc, const char *unit )
 {
-	counter_info *cntr, *last;
+    counter_info *cntr;
 
-	cntr = ( counter_info * ) malloc( sizeof ( counter_info ) );
+    cntr = malloc( sizeof ( counter_info ) );
 
-	if ( cntr == NULL ) {
-		fprintf( stderr, "can not allocate memory for new counter\n" );
-		exit( 1 );
-	}
+    if ( cntr == NULL ) {
+       SUBDBG("can not allocate memory for new counter\n" );
+       return NULL;
+    }
 
-	cntr->name = strdup( name );
-	cntr->description = strdup( desc );
-	cntr->unit = strdup( unit );
-	cntr->value = 0;
-	cntr->next = NULL;
+    cntr->idx=num_events;
+    cntr->name = strdup( name );
+    cntr->description = strdup( desc );
+    cntr->unit = strdup( unit );
+    cntr->value = 0;
 
-	if ( root_counter == NULL ) {
-		root_counter = cntr;
-	} else {
-		last = root_counter;
-		while ( last->next != NULL )
-			last = last->next;
-		last->next = cntr;
-	}
+    lustre_native_table[num_events]=cntr;
 
-	return cntr;
+    num_events++;
+
+    return cntr;
 }
 
 /**
@@ -101,46 +132,56 @@ addCounter( const char *name, const char *desc, const char *unit )
  */
 static int
 addLustreFS( const char *name,
-			 const char *procpath_general, const char *procpath_readahead )
+	     const char *procpath_general, 
+	     const char *procpath_readahead )
 {
 	lustre_fs *fs, *last;
 	char counter_name[512];
+	FILE *fff;
 
-	fs = ( lustre_fs * ) malloc( sizeof ( lustre_fs ) );
+	SUBDBG("Adding lustre fs\n");
+
+	fs = malloc( sizeof ( lustre_fs ) );
 	if ( fs == NULL ) {
 	   SUBDBG("can not allocate memory for new Lustre FS description\n" );
 	   return PAPI_ENOMEM;
 	}
 
-	fs->proc_file = fopen( procpath_general, "r" );
+	fs->proc_file=strdup(procpath_general);
+	fff = fopen( procpath_general, "r" );
 	if ( fs->proc_file == NULL ) {
-	   SUBDBG("can not open '%s'\n", procpath_general );
-	   return PAPI_ESBSTR;
+	  SUBDBG("can not open '%s'\n", procpath_general );
+	  return PAPI_ESBSTR;
 	}
+	fclose(fff);
 
-	fs->proc_file_readahead = fopen( procpath_readahead, "r" );
+	fs->proc_file_readahead = strdup(procpath_readahead);
+	fff = fopen( procpath_readahead, "r" );
 	if ( fs->proc_file_readahead == NULL ) {
-	   SUBDBG("can not open '%s'\n", procpath_readahead );
-	   return PAPI_ESBSTR;
+	  SUBDBG("can not open '%s'\n", procpath_readahead );
+	  return PAPI_ESBSTR;
 	}
+	fclose(fff);
 
 	sprintf( counter_name, "%s_llread", name );
-	fs->read_cntr =
-		addCounter( counter_name, "bytes read on this lustre client", "bytes" );
+	fs->read_cntr = addCounter( counter_name, 
+				    "bytes read on this lustre client", 
+				    "bytes" );
 
 	sprintf( counter_name, "%s_llwrite", name );
-	fs->write_cntr =
-		addCounter( counter_name, "bytes written on this lustre client",
-					"bytes" );
+	fs->write_cntr = addCounter( counter_name, 
+				     "bytes written on this lustre client",
+				     "bytes" );
 
 	sprintf( counter_name, "%s_wrong_readahead", name );
-	fs->readahead_cntr =
-		addCounter( counter_name, "bytes read but discarded due to readahead",
-					"bytes" );
+	fs->readahead_cntr = addCounter( counter_name, 
+					 "bytes read but discarded due to readahead",
+					 "bytes" );
 
 	fs->next = NULL;
-	num_counters += 3;
 
+	/* Insert into the linked list */
+	/* Does this need locking? */
 	if ( root_lustre_fs == NULL ) {
 		root_lustre_fs = fs;
 	} else {
@@ -163,70 +204,83 @@ addLustreFS( const char *name,
  * goes through proc and tries to discover all mounted Lustre fs
  */
 static int
-init_lustre_counter(  )
+init_lustre_counters( void  )
 {
-	const char *proc_base_path = "/proc/fs/lustre/llite";
+        char lustre_dir[PATH_MAX];
 	char path[PATH_MAX];
-	char path_readahead[PATH_MAX];
+	char path_readahead[PATH_MAX],path_stats[PATH_MAX];
 	char *ptr;
 	char fs_name[100];
 	int idx = 0;
 	int tmp_fd;
-	DIR *proc_fd;
+	DIR *proc_dir;
 	struct dirent *entry;
 
-	proc_fd = opendir( proc_base_path );
-	if ( proc_fd == NULL ) {
-	   SUBDBG("we are not able to read this directory\n");
+	sprintf(lustre_dir,"%s/llite",proc_base_path);
+
+	proc_dir = opendir( lustre_dir );
+	if ( proc_dir == NULL ) {
+	   SUBDBG("Cannot open %s\n",lustre_dir);
 	   return PAPI_ESBSTR;
 	}
 
-	entry = readdir( proc_fd );
+	entry = readdir( proc_dir );
+
 	while ( entry != NULL ) {
-		memset( path, 0, PATH_MAX );
-		snprintf( path, PATH_MAX - 1, "%s/%s/stats", proc_base_path,
+	   memset( path, 0, PATH_MAX );
+	   snprintf( path, PATH_MAX - 1, "%s/%s/stats", lustre_dir,
 				  entry->d_name );
-		//fprintf( stderr, "checking for file %s\n", path);
-		if ( ( tmp_fd = open( path, O_RDONLY ) ) != -1 ) {
-			close( tmp_fd );
-			// erase \r and \n at the end of path
-			idx = strlen( path );
-			idx--;
+	   SUBDBG("checking for file %s\n", path);
 
-			while ( path[idx] == '\r' || path[idx] == '\n' )
-				path[idx--] = 0;
+	   if ( ( tmp_fd = open( path, O_RDONLY ) ) != -1 ) {
+	      close( tmp_fd );
 
-			//  /proc/fs/lustre/llite/ has a length of 22 byte
-			memset( fs_name, 0, 100 );
-			idx = 0;
-			ptr = &path[22];
+	      /* erase \r and \n at the end of path */
+	      /* why is this necessary?             */
 
-			while ( *ptr != '-' && idx < 100 ) {
-				fs_name[idx] = *ptr;
-				ptr++;
-				idx++;
-			}
+	      idx = strlen( path );
+	      idx--;
 
-			SUBDBG("found Lustre FS: %s\n", fs_name);
-			strncpy( path_readahead, path, PATH_MAX );
-			ptr = strrchr( path_readahead, '/' );
+	      while ( path[idx] == '\r' || path[idx] == '\n' )
+		    path[idx--] = 0;
 
-			if ( ptr == NULL ) {
-				SUBDBG( "no slash in %s ?\n", path_readahead );
-				return PAPI_ESBSTR;
-			}
+	      /* Lustre paths are of type server-UUID */
 
-			ptr++;
-			strcpy( ptr, "read_ahead_stats" );
-			addLustreFS( fs_name, path, path_readahead );
+	      idx = 0;
 
-			memset( path, 0, PATH_MAX );
-		}
-		entry = readdir( proc_fd );
+	      ptr = strstr(path,"llite/") + 6;
+
+	      while ( *ptr && *ptr != '-' && idx < 100 ) {
+	         fs_name[idx] = *ptr;
+		 ptr++;
+		 idx++;
+	      }
+
+	      SUBDBG("found Lustre FS: %s\n", fs_name);
+
+	      snprintf( path_stats, PATH_MAX - 1, 
+			"%s/%s/stats", 
+			lustre_dir,
+			entry->d_name );
+	      SUBDBG("Found file %s\n", path_stats);
+
+	      snprintf( path_readahead, PATH_MAX - 1, 
+			"%s/%s/read_ahead_stats", 
+			lustre_dir,
+			entry->d_name );
+	      SUBDBG("Now checking for file %s\n", path_readahead);
+
+
+	      strcpy( ptr, "read_ahead_stats" );
+	      addLustreFS( fs_name, path_stats, path_readahead );
+
+	   }
+	   entry = readdir( proc_dir );
 	}
-	closedir( proc_fd );
+	closedir( proc_dir );
 
 	return PAPI_OK;
+
 }
 
 /**
@@ -235,169 +289,45 @@ init_lustre_counter(  )
 static void
 read_lustre_counter(  )
 {
-	char *ptr;
 	lustre_fs *fs = root_lustre_fs;
-	int result;
+	FILE *fff;
+
+        char buffer[BUFSIZ];
 
 	while ( fs != NULL ) {
-	        result=fread( buffer, 1, BUFFER_SIZE, fs->proc_file );
 
-		ptr = strstr( buffer, "write_bytes" );
-		if ( ptr == NULL ) {
-			fs->write_cntr->value = 0;
-		} else {
-			/* goto eol */
-			while ( *ptr != '\n' )
-				ptr++;
+	  /* read values from stats file */
+	  fff=fopen(fs->proc_file,"r" );
+	  
+	  while(1) {
+	    if (fgets(buffer,BUFSIZ,fff)==NULL) break;
 
-			*ptr = 0;
-			while ( *ptr != ' ' )
-				ptr--;
+	    if (strstr( buffer, "write_bytes" )) {
+	      sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->write_cntr->value);
+	      SUBDBG("Read %lld write_bytes\n",fs->write_cntr->value);
+	    }
 
-			ptr++;
-			fs->write_cntr->value = strtoll( ptr, NULL, 10 );
-		}
+	    if (strstr( buffer, "read_bytes" )) {
+	      sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->read_cntr->value);
+	      SUBDBG("Read %lld read_bytes\n",fs->read_cntr->value);
+	    }
+	  }
+	  fclose(fff);
 
-		ptr = strstr( buffer, "read_bytes" );
-		if ( ptr == NULL ) {
-			fs->read_cntr->value = 0;
-		} else {
-			/* goto eol */
-			while ( *ptr != '\n' )
-				ptr++;
+	  fff=fopen(fs->proc_file_readahead,"r");
+	  while(1) {
+	    if (fgets(buffer,BUFSIZ,fff)==NULL) break;
 
-			*ptr = 0;
-			while ( *ptr != ' ' )
-				ptr--;
+	    if (strstr( buffer, "read but discarded")) {
+	       sscanf(buffer,"%*s %*s %*s %lld",&fs->readahead_cntr->value);
+	       SUBDBG("Read %lld discared\n",fs->readahead_cntr->value);
+	       break;
+	    }
 
-			ptr++;
-			fs->read_cntr->value = strtoll( ptr, NULL, 10 );
-		}
+	  }
 
-		result=fread( buffer, 1, BUFFER_SIZE, fs->proc_file_readahead );
-		ptr = strstr( buffer, "read but discarded" );
-		if ( ptr == NULL ) {
-			fs->write_cntr->value = 0;
-		} else {
-			/* goto next number */
-			while ( *ptr < '0' || *ptr > '9' )
-				ptr++;
-
-			fs->readahead_cntr->value = strtoll( ptr, NULL, 10 );
-		}
-		fs = fs->next;
+	  fs = fs->next;
 	}
-}
-
-
-/**
- * read all values for all counters
- */
-static void
-host_read_values( long long *data )
-{
-	int loop;
-
-	read_lustre_counter(  );
-
-	for ( loop = 0; loop < LUSTRE_MAX_COUNTERS; loop++ ) {
-		if ( subscriptions[loop] == NULL )
-			break;
-
-		data[loop] = subscriptions[loop]->value;
-	}
-}
-
-
-/**
- * find the pointer for a counter_info structure based on the counter name
- */
-static counter_info *
-counterFromName( const char *cntr )
-{
-	int loop = 0;
-	char tmp[512];
-	counter_info *local_cntr = root_counter;
-	while ( local_cntr != NULL ) {
-		if ( strcmp( cntr, local_cntr->name ) == 0 )
-			return local_cntr;
-
-		local_cntr = local_cntr->next;
-		loop++;
-	}
-
-	gethostname( tmp, 512 );
-	fprintf( stderr, "can not find host counter: %s on %s\n", cntr, tmp );
-	fprintf( stderr, "we only have: " );
-	local_cntr = root_counter;
-
-	while ( local_cntr != NULL ) {
-		fprintf( stderr, "'%s' ", local_cntr->name );
-		local_cntr = local_cntr->next;
-		loop++;
-	}
-
-	fprintf( stderr, "\n" );
-	exit( 1 );
-	/* never reached */
-	return 0;
-}
-
-
-/**
- * allow external code to subscribe to a counter based on the counter name
- */
-static uint64_t
-host_subscribe( const char *cntr )
-{
-	int loop;
-	counter_info *counter = counterFromName( cntr );
-
-	for ( loop = 0; loop < LUSTRE_MAX_COUNTERS; loop++ ) {
-		if ( subscriptions[loop] == NULL ) {
-			subscriptions[loop] = counter;
-			counter->idx = loop;
-
-			return loop + 1;
-		}
-	}
-
-	fprintf( stderr, "please subscribe only once to each counter\n" );
-	exit( 1 );
-	/* never reached */
-	return 0;
-}
-
-
-/**
- * return a newly allocated list of strings containing all counter names
- */
-static string_list *
-host_listCounter( int num_counters1 )
-{
-	string_list *list;
-	counter_info *cntr = root_counter;
-
-	list = malloc( sizeof ( string_list ) );
-	if ( list == NULL ) {
-		SUBDBG("unable to allocate memory for new string_list" );
-		return NULL;
-	}
-	list->count = 0;
-	list->data = ( char ** ) malloc( num_counters1 * sizeof ( char * ) );
-
-	if ( list->data == NULL ) {
-	   SUBDBG("unable to allocate memory for %d pointers in a new string_list\n",
-				 num_counters1 );
-	   return NULL;
-	}
-
-	while ( cntr != NULL ) {
-		list->data[list->count++] = strdup( cntr->name );
-		cntr = cntr->next;
-	}
-
-	return list;
 }
 
 
@@ -405,74 +335,57 @@ host_listCounter( int num_counters1 )
  * finalizes the library
  */
 static void
-host_finalize(  )
+host_finalize( void )
 {
+        int i;
 	lustre_fs *fs, *next_fs;
-	counter_info *cntr, *next;
-	network_if *nwif, *next_nwif;
+	counter_info *cntr;
 
-	if ( is_finalized )
-		return;
-
-	if ( proc_fd_snmp != NULL )
-		fclose( proc_fd_snmp );
-
-	if ( proc_fd_dev != NULL )
-		fclose( proc_fd_dev );
-
-	proc_fd_snmp = NULL;
-	proc_fd_dev = NULL;
-
-	cntr = root_counter;
-
-	while ( cntr != NULL ) {
-		next = cntr->next;
-		free( cntr->name );
-		free( cntr->description );
-		free( cntr->unit );
-		free( cntr );
-		cntr = next;
+	for(i=0;i<num_events;i++) {
+	   cntr=lustre_native_table[i];
+	   if ( cntr != NULL ) {
+	      free( cntr->name );
+	      free( cntr->description );
+	      free( cntr->unit );
+	      free( cntr );	      
+	   }
+	   lustre_native_table[i]=NULL;
 	}
 
-	root_counter = NULL;
 	fs = root_lustre_fs;
 
 	while ( fs != NULL ) {
 		next_fs = fs->next;
+		free(fs->proc_file);
+		free(fs->proc_file_readahead);
 		free( fs );
 		fs = next_fs;
 	}
 
 	root_lustre_fs = NULL;
-	nwif = root_network_if;
-
-	while ( nwif != NULL ) {
-		next_nwif = nwif->next;
-		free( nwif->name );
-		free( nwif );
-		nwif = next_nwif;
-	}
-
-	root_network_if = NULL;
-	is_finalized = 1;
 }
 
 
 /**
- * delete a list of strings
+ * see if lustre filesystem is supported by kernel
  */
-static void
-host_deleteStringList( string_list * to_delete )
+static int
+detect_lustre()
 {
-	int loop;
+        char lustre_directory[BUFSIZ];
+	DIR *proc_dir;
 
-	if ( to_delete->data != NULL ) {
-		for ( loop = 0; loop < to_delete->count; loop++ )
-			free( to_delete->data[loop] );
+	sprintf(lustre_directory,"%s/llite",proc_base_path);
 
-		free( to_delete->data );
+	proc_dir = opendir( proc_base_path );
+	if ( proc_dir == NULL ) {
+	  SUBDBG("we are not able to read %s\n",lustre_directory);
+	   return PAPI_ESBSTR;
 	}
-	free( to_delete );
+
+	closedir(proc_dir);
+
+	return PAPI_OK;
 }
 
 
@@ -484,26 +397,21 @@ host_deleteStringList( string_list * to_delete )
  * Substrate setup and shutdown
  */
 
-
-/* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
- * PAPI process is initialized (IE PAPI_library_init)
- */
 int
 _lustre_init_substrate(  )
 {
-	int retval = PAPI_OK, i;
-	int ret;
 
-	for ( i = 0; i < LUSTRE_MAX_COUNTERS; i++ ) {
-		_papi_hwd_lustre_register_start[i] = -1;
-		_papi_hwd_lustre_register[i] = -1;
-	}
+	int ret = PAPI_OK;
 
-	ret=init_lustre_counter(  );
+	/* See if lustre filesystem exists */
+	ret=detect_lustre();
 	if (ret!=PAPI_OK) return ret;
 
-	return retval;
+	ret=init_lustre_counters();
+
+	_lustre_vector.cmp_info.num_native_events=num_events;
+
+	return ret;
 }
 
 
@@ -516,23 +424,23 @@ _lustre_init_substrate(  )
 int
 _lustre_init( hwd_context_t * ctx )
 {
+  (void) ctx;
 
-	string_list *counter_list = NULL;
-	int i;
+  return PAPI_OK;
+}
 
-	counter_list = host_listCounter( num_counters );
-	if (counter_list==NULL) return PAPI_ENOMEM;
 
-	for ( i = 0; i < counter_list->count; i++ )
-		host_subscribe( counter_list->data[i] );
+/*
+ *
+ */
+int
+_lustre_shutdown_substrate( void )
+{
 
-	( ( LUSTRE_context_t * ) ctx )->state.ncounter = counter_list->count;
-
-	host_deleteStringList( counter_list );
+	host_finalize(  );
 
 	return PAPI_OK;
 }
-
 
 /*
  *
@@ -541,8 +449,6 @@ int
 _lustre_shutdown( hwd_context_t * ctx )
 {
 	( void ) ctx;
-
-	host_finalize(  );
 
 	return PAPI_OK;
 }
@@ -553,11 +459,14 @@ _lustre_shutdown( hwd_context_t * ctx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup) functions
  */
 int
-_lustre_init_control_state( hwd_control_state_t * ptr )
+_lustre_init_control_state( hwd_control_state_t * ctl )
 {
-	( void ) ptr;
+    LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
 
-	return PAPI_OK;
+    memset(lustre_ctl->start_count,0,sizeof(long long)*LUSTRE_MAX_COUNTERS);
+    memset(lustre_ctl->current_count,0,sizeof(long long)*LUSTRE_MAX_COUNTERS);
+
+    return PAPI_OK;
 }
 
 
@@ -565,19 +474,24 @@ _lustre_init_control_state( hwd_control_state_t * ptr )
  *
  */
 int
-_lustre_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
-							 int count, hwd_context_t * ctx )
+_lustre_update_control_state( hwd_control_state_t *ctl, 
+			      NativeInfo_t *native,
+			      int count, 
+			      hwd_context_t *ctx )
 {
-	( void ) ptr;
-	( void ) ctx;
-	int i, index;
+    LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
+    ( void ) ctx;
+    int i, index;
 
-	for ( i = 0; i < count; i++ ) {
-		index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
-		native[i].ni_position = index;
-	}
+    for ( i = 0; i < count; i++ ) {
+       index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+       lustre_ctl->which_counter[i]=index;
+       native[i].ni_position = i;
+    }
 
-	return PAPI_OK;
+    lustre_ctl->num_events=count;
+
+    return PAPI_OK;
 }
 
 
@@ -585,16 +499,25 @@ _lustre_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
  *
  */
 int
-_lustre_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
+_lustre_start( hwd_context_t * ctx, hwd_control_state_t *ctl )
 {
-	( void ) ctx;
-	( void ) ctrl;
+    ( void ) ctx;
 
-	host_read_values( _papi_hwd_lustre_register_start );
-	memcpy( _papi_hwd_lustre_register, _papi_hwd_lustre_register_start,
-			LUSTRE_MAX_COUNTERS * sizeof ( long long ) );
+    LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
+    int i;
 
-	return PAPI_OK;
+    read_lustre_counter(  );
+
+    for(i=0;i<lustre_ctl->num_events;i++) {
+       lustre_ctl->current_count[i]=
+                 lustre_native_table[lustre_ctl->which_counter[i]]->value;
+    }
+
+    memcpy( lustre_ctl->start_count,
+	    lustre_ctl->current_count,
+	    LUSTRE_MAX_COUNTERS * sizeof ( long long ) );
+
+    return PAPI_OK;
 }
 
 
@@ -602,42 +525,55 @@ _lustre_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
  *
  */
 int
-_lustre_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
+_lustre_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
+{
+
+    (void) ctx;
+    LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
+    int i;
+
+    read_lustre_counter(  );
+
+    for(i=0;i<lustre_ctl->num_events;i++) {
+       lustre_ctl->current_count[i]=
+                 lustre_native_table[lustre_ctl->which_counter[i]]->value;
+    }
+
+    return PAPI_OK;
+
+}
+
+
+
+/*
+ *
+ */
+int
+_lustre_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 			 long long **events, int flags )
 {
-	( void ) flags;
-	int i;
+    (void) ctx;
+    ( void ) flags;
 
-	host_read_values( _papi_hwd_lustre_register );
+    LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
+    int i;
 
-	for ( i = 0; i < ( ( LUSTRE_context_t * ) ctx )->state.ncounter; i++ ) {
-		( ( LUSTRE_control_state_t * ) ctrl )->counts[i] =
-			_papi_hwd_lustre_register[i] - _papi_hwd_lustre_register_start[i];
-	}
+    read_lustre_counter(  );
 
-	*events = ( ( LUSTRE_control_state_t * ) ctrl )->counts;
-	return ( PAPI_OK );
+    for(i=0;i<lustre_ctl->num_events;i++) {
+       lustre_ctl->current_count[i]=
+                 lustre_native_table[lustre_ctl->which_counter[i]]->value;
+       lustre_ctl->difference[i]=lustre_ctl->current_count[i]-
+	                                     lustre_ctl->start_count[i];
+    }
+
+    *events = lustre_ctl->difference;
+
+    return PAPI_OK;
+
 }
 
 
-/*
- *
- */
-int
-_lustre_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
-{
-
-	int i;
-
-	host_read_values( _papi_hwd_lustre_register );
-
-	for ( i = 0; i < ( ( LUSTRE_context_t * ) ctx )->state.ncounter; i++ ) {
-		( ( LUSTRE_control_state_t * ) ctrl )->counts[i] =
-			_papi_hwd_lustre_register[i] - _papi_hwd_lustre_register_start[i];
-	}
-
-	return PAPI_OK;
-}
 
 
 /*
@@ -646,9 +582,12 @@ _lustre_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 _lustre_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
-	_lustre_start( ctx, ctrl );
 
-	return PAPI_OK;
+  /* re-initializes counter_start values to current */
+
+  _lustre_start(ctx,ctrl);
+
+  return PAPI_OK;
 }
 
 
@@ -759,8 +698,9 @@ _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	if ( modifier == PAPI_ENUM_FIRST ) {
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
-		return PAPI_OK;
+	   if (num_events==0) return PAPI_ENOEVNT;
+	   *EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+	   return PAPI_OK;
 	}
 
 	if ( modifier == PAPI_ENUM_EVENTS ) {
@@ -811,20 +751,21 @@ papi_vector_t _lustre_vector = {
   },
 
      /* function pointers in this component */
-  .init = _lustre_init,
-  .init_substrate = _lustre_init_substrate,
-  .init_control_state = _lustre_init_control_state,
-  .start = _lustre_start,
-  .stop = _lustre_stop,
-  .read = _lustre_read,
-  .shutdown = _lustre_shutdown,
-  .ctl = _lustre_ctl,
-  .update_control_state = _lustre_update_control_state,
-  .set_domain = _lustre_set_domain,
-  .reset = _lustre_reset,
+  .init =                  _lustre_init,
+  .init_substrate =        _lustre_init_substrate,
+  .init_control_state =    _lustre_init_control_state,
+  .start =                 _lustre_start,
+  .stop =                  _lustre_stop,
+  .read =                  _lustre_read,
+  .shutdown =              _lustre_shutdown,
+  .shutdown_substrate =    _lustre_shutdown_substrate,
+  .ctl =                   _lustre_ctl,
+  .update_control_state =  _lustre_update_control_state,
+  .set_domain =            _lustre_set_domain,
+  .reset =                 _lustre_reset,
 
-  .ntv_enum_events = _lustre_ntv_enum_events,
-  .ntv_code_to_name = _lustre_ntv_code_to_name,
+  .ntv_enum_events =   _lustre_ntv_enum_events,
+  .ntv_code_to_name =  _lustre_ntv_code_to_name,
   .ntv_code_to_descr = _lustre_ntv_code_to_descr,
 
 };
