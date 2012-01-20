@@ -1416,12 +1416,19 @@ _papi_hwi_init_global( void )
 		retval = _papi_hwi_innoculate_vector( _papi_hwd[i] );
 		if ( retval != PAPI_OK )
 			return ( retval );
+
 		retval = _papi_hwd[i]->init_substrate( i );
-		if ( retval != PAPI_OK )
-			return ( retval );
+		if ( retval != PAPI_OK ) {
+		  /* FIXME!  should we drop them from the list if not */
+		  /*         initialized properly?                    */
+
+		  /* this is currently the way we indicate a component */
+		  /* is not available                                  */
+		  _papi_hwd[i]->cmp_info.num_native_events=0;
+		}
 		i++;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /* Machine info struct initialization using defaults */

@@ -47,9 +47,10 @@ static network_if *root_network_if = NULL;
 
 #define lustre_native_table subscriptions
 
-long long _papi_hwd_lustre_register_start[LUSTRE_MAX_COUNTERS];
-long long _papi_hwd_lustre_register[LUSTRE_MAX_COUNTERS];
+static long long _papi_hwd_lustre_register_start[LUSTRE_MAX_COUNTERS];
+static long long _papi_hwd_lustre_register[LUSTRE_MAX_COUNTERS];
 
+static int num_events=0;
 
 /*******************************************************************************
  ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
@@ -484,20 +485,6 @@ host_deleteStringList( string_list * to_delete )
  */
 
 
-
-/*
- * This function is an internal function and not exposed and thus
- * it can be called anything you want as long as the information
- * for the presets are setup here.
- */
-hwi_search_t lustre_preset_map[] = { {0, {0, {PAPI_NULL, PAPI_NULL}
-										  , {0,}
-										  }
-									  }
-};
-
-
-
 /* Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
@@ -506,17 +493,17 @@ int
 _lustre_init_substrate(  )
 {
 	int retval = PAPI_OK, i;
+	int ret;
 
 	for ( i = 0; i < LUSTRE_MAX_COUNTERS; i++ ) {
 		_papi_hwd_lustre_register_start[i] = -1;
 		_papi_hwd_lustre_register[i] = -1;
 	}
 
-	/* Internal function, doesn't necessarily need to be a function */
+	ret=init_lustre_counter(  );
+	if (ret!=PAPI_OK) return ret;
 
-	_papi_hwi_setup_all_presets( lustre_preset_map, NULL );
-
-	return ( retval );
+	return retval;
 }
 
 
@@ -529,12 +516,9 @@ _lustre_init_substrate(  )
 int
 _lustre_init( hwd_context_t * ctx )
 {
-  /* VMW */
-	string_list *counter_list = NULL;
-	int i,ret;
 
-	ret=init_lustre_counter(  );
-	if (ret!=PAPI_OK) return ret;
+	string_list *counter_list = NULL;
+	int i;
 
 	counter_list = host_listCounter( num_counters );
 	if (counter_list==NULL) return PAPI_ENOMEM;
@@ -738,10 +722,14 @@ _lustre_set_domain( hwd_control_state_t * cntrl, int domain )
 int
 _lustre_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-	strncpy( name, lustre_native_table[EventCode & 
-					   PAPI_NATIVE_AND_MASK &
-					   PAPI_COMPONENT_AND_MASK]->name, len );
-	return PAPI_OK;
+
+  int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+
+  if (event >=0 && event < num_events) {
+     strncpy( name, lustre_native_table[event]->name, len );
+     return PAPI_OK;
+  }
+  return PAPI_ENOEVNT;
 }
 
 
@@ -751,10 +739,14 @@ _lustre_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 _lustre_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-	strncpy( name, lustre_native_table[EventCode & 
-					   PAPI_NATIVE_AND_MASK &
-					   PAPI_COMPONENT_AND_MASK]->description, len );
+
+  int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+
+  if (event >=0 && event < num_events) {
+	strncpy( name, lustre_native_table[event]->description, len );
 	return PAPI_OK;
+  }
+  return PAPI_ENOEVNT;
 }
 
 
