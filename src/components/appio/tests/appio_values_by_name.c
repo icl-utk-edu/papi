@@ -3,37 +3,43 @@
 /****************************/
 
 /** 
- * @author  Jose Pedro Oliveira
+ * @author  Tushar Mohan
  *
- * test case for the linux-net component
+ * test case for the appio component
+ * (adapted from test in linux-net component)
  *
  * @brief
- *   Prints the values of several net events specified by names
+ *   Prints the values of several (but not all) appio events specified by names
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi_test.h"
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-/*
-#define IFNAME     "eth0"
-*/
-#define IFNAME     "lo"
-#define PINGADDR   "127.0.0.1"
 
-#define NUM_EVENTS 4
+#define NUM_EVENTS 9
 
 int main (int argc, char **argv)
 {
     int i, retval;
     int EventSet = PAPI_NULL;
     char *event_name[NUM_EVENTS] = {
-        IFNAME ".rx.bytes",
-        IFNAME ".rx.packets",
-        IFNAME ".tx.bytes",
-        IFNAME ".tx.packets",
+        "READ_BYTES",
+        "READ_CALLS",
+        "READ_EOF",
+        "READ_SHORT",
+        "READ_ERR",
+        "WRITE_BYTES",
+        "WRITE_CALLS",
+        "WRITE_ERR",
+        "WRITE_SHORT"
     };
-    int event_code[NUM_EVENTS] = { 0, 0, 0, 0};
+    int event_code[NUM_EVENTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0};
     long long event_value[NUM_EVENTS];
     int total_events=0;
 
@@ -47,7 +53,7 @@ int main (int argc, char **argv)
     }
 
     if (!TESTS_QUIET) {
-        printf("Net events by name\n");
+        printf("Appio events by name\n");
     }
 
     /* Map names to codes */
@@ -59,6 +65,16 @@ int main (int argc, char **argv)
 
         total_events++;
     }
+
+    int fdin,fdout;
+    const char* infile = "/etc/group";
+    if (!TESTS_QUIET) fprintf(stderr, "This program will read %s and write it to /dev/null\n", infile);
+    fdin=open(infile, O_RDONLY);
+    if (fdin < 0) perror("Could not open file for reading: \n");
+    fdout=open("/dev/null", O_WRONLY);
+    if (fdout < 0) perror("Could not open /dev/null for writing: \n");
+    int bytes = 0;
+    char buf[1024];
 
     /* Create and populate the EventSet */
     EventSet = PAPI_NULL;
@@ -78,10 +94,11 @@ int main (int argc, char **argv)
         test_fail(__FILE__, __LINE__, "PAPI_start()", retval);
     }
 
-    /* generate some traffic
-     * the operation should take more than one second in order
-     * to guarantee that the network counters are updated */
-    system("ping -c 4 " PINGADDR " > /dev/null");
+    while ((bytes = read(fdin, buf, 1024)) > 0) {
+      write(fdout, buf, bytes);
+    }
+    close(fdin);
+    close(fdout);
 
     retval = PAPI_stop( EventSet, event_value );
     if (retval != PAPI_OK) {
@@ -106,7 +123,7 @@ int main (int argc, char **argv)
     }
 
     if (total_events==0) {
-        test_skip(__FILE__,__LINE__,"No net events found", 0);
+        test_skip(__FILE__,__LINE__,"No appio events found", 0);
     }
 
     test_pass( __FILE__, NULL, 0 );

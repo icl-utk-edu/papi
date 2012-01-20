@@ -10,11 +10,14 @@
  *          phil.mucci@samaratechnologygroup.com
  *
  * @author  Tushar Mohan
- *          tushar.mohan@samaratechnologygroup.com
+ *          tusharmohan@gmail.com
  *
- * @author  Jose Pedro Oliveira
+ * Credit to: 
+ *          Jose Pedro Oliveira
  *          jpo@di.uminho.pt
-
+ * whose code in the linux net component was used as a template for
+ * many sections of code in this component.
+ *
  * @ingroup papi_components
  *
  * @brief appio component
@@ -55,21 +58,35 @@ static APPIO_native_event_entry_t * _appio_native_events;
 
 static __thread long long _appio_register_current[APPIO_MAX_COUNTERS];
 
+typedef enum {
+  READ_BYTES = 0,
+  READ_CALLS,
+  READ_ERR,
+  READ_SHORT,
+  READ_EOF,
+  READ_BLOCK_SIZE,
+  WRITE_BYTES,
+  WRITE_CALLS,
+  WRITE_ERR,
+  WRITE_SHORT,
+  WRITE_BLOCK_SIZE
+} _appio_stats_t ;
+
 static const struct appio_counters {
     const char *name;
     const char *description;
 } _appio_counter_info[APPIO_MAX_COUNTERS] = {
-    /* 0 */ { "READ.BYTES",      "Bytes read"},
-    /* 1 */ { "READ.CALLS",      "Number of read calls"},
-    /* 2 */ { "READ.ERR",        "Number of read calls that resulted in an error"},
-    /* 3 */ { "READ.SHORT",      "Number of read calls that returned less bytes than requested"},
-    /* 4 */ { "READ.EOF",        "Number of read calls that returned an EOF"},
-    /* 5 */ { "READ.BLOCK_SIZE", "Average block size of reads"},
-    /* 6 */ { "WRITE.BYTES",     "Bytes written"},
-    /* 7 */ { "WRITE.CALLS",     "Number of write calls"},
-    /* 8 */ { "WRITE.ERR",       "Number of write calls that resulted in an error"},
-    /* 9 */ { "WRITE.SHORT",     "Number of write calls that wrote less bytes than requested"},
-    /*10 */ { "WRITE.BLOCK_SIZE","Mean block size of writes"}
+    { "READ_BYTES",      "Bytes read"},
+    { "READ_CALLS",      "Number of read calls"},
+    { "READ_ERR",        "Number of read calls that resulted in an error"},
+    { "READ_SHORT",      "Number of read calls that returned less bytes than requested"},
+    { "READ_EOF",        "Number of read calls that returned an EOF"},
+    { "READ_BLOCK_SIZE", "Average block size of reads"},
+    { "WRITE_BYTES",     "Bytes written"},
+    { "WRITE_CALLS",     "Number of write calls"},
+    { "WRITE_ERR",       "Number of write calls that resulted in an error"},
+    { "WRITE_SHORT",     "Number of write calls that wrote less bytes than requested"},
+    { "WRITE_BLOCK_SIZE","Mean block size of writes"}
 };
 
 
@@ -83,14 +100,14 @@ ssize_t read(int fd, void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted read(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
   retval = __read(fd,buf, count);
-  int n = _appio_register_current[1]++; // read calls
+  int n = _appio_register_current[READ_CALLS]++; // read calls
   if (retval > 0) {
-    _appio_register_current[5]= (n * _appio_register_current[5] + count)/(n+1); // mean block size
-    _appio_register_current[0]+= retval; // read bytes
-    if (retval < (int)count) _appio_register_current[3]++; // read short
+    _appio_register_current[READ_BLOCK_SIZE]= (n * _appio_register_current[READ_BLOCK_SIZE] + count)/(n+1); // mean size
+    _appio_register_current[READ_BYTES]+= retval; // read bytes
+    if (retval < (int)count) _appio_register_current[READ_SHORT]++; // read short
   }
-  if (retval < 0) _appio_register_current[2]++; // read err
-  if (retval == 0) _appio_register_current[4]++; // read err
+  if (retval < 0) _appio_register_current[READ_ERR]++; // read err
+  if (retval == 0) _appio_register_current[READ_EOF]++; // read eof
   return retval;
 }
 
@@ -99,15 +116,17 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
   size_t retval;
   SUBDBG("appio: intercepted fread(%p,%lu,%lu,%p)\n", ptr, (unsigned long) size, (unsigned long) nmemb, (void*) stream);
   retval = _IO_fread(ptr,size,nmemb,stream);
-  int n = _appio_register_current[1]++; // read calls
+  int n = _appio_register_current[READ_CALLS]++; // read calls
   if (retval > 0) {
-    _appio_register_current[5]= (n * _appio_register_current[5] + size*nmemb)/(n+1); // mean block size
-    _appio_register_current[0]+= retval * size; // read bytes
-    if (retval < nmemb) _appio_register_current[3]++; // read short
+    _appio_register_current[READ_BLOCK_SIZE]= (n * _appio_register_current[READ_BLOCK_SIZE]+ size*nmemb)/(n+1);//mean size
+    _appio_register_current[READ_BYTES]+= retval * size; // read bytes
+    if (retval < nmemb) _appio_register_current[READ_SHORT]++; // read short
   }
+
+  /* A value of zero returned means one of two things..*/
   if (retval == 0) {
-     if (feof(stream)) _appio_register_current[4]++; // read eof
-     else _appio_register_current[2]++; // read err
+     if (feof(stream)) _appio_register_current[READ_EOF]++; // read eof
+     else _appio_register_current[READ_ERR]++; // read err
   }
   return retval;
 }
@@ -117,13 +136,13 @@ ssize_t write(int fd, const void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted write(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
   retval = __write(fd,buf, count);
-  int n = _appio_register_current[7]++; // write calls
+  int n = _appio_register_current[WRITE_CALLS]++; // write calls
   if (retval >= 0) {
-    _appio_register_current[10]= (n * _appio_register_current[10] + count)/(n+1); // mean block size
-    _appio_register_current[6]+= retval; // write bytes
-    if (retval < (int)count) _appio_register_current[9]++; // short write
+    _appio_register_current[WRITE_BLOCK_SIZE]= (n * _appio_register_current[WRITE_BLOCK_SIZE] + count)/(n+1); // mean size
+    _appio_register_current[WRITE_BYTES]+= retval; // write bytes
+    if (retval < (int)count) _appio_register_current[WRITE_SHORT]++; // short write
   }
-  if (retval < 0) _appio_register_current[8]++; // err
+  if (retval < 0) _appio_register_current[WRITE_ERR]++; // err
   return retval;
 }
 
@@ -132,13 +151,13 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
   size_t retval;
   SUBDBG("appio: intercepted fwrite(%p,%lu,%lu,%p)\n", ptr, (unsigned long) size, (unsigned long) nmemb, (void*) stream);
   retval = _IO_fwrite(ptr,size,nmemb,stream);
-  int n = _appio_register_current[7]++; // write calls
+  int n = _appio_register_current[WRITE_CALLS]++; // write calls
   if (retval > 0) {
-    _appio_register_current[10]= (n * _appio_register_current[10] + size*nmemb)/(n+1); // mean block size
-    _appio_register_current[6]+= retval * size; // write bytes
-    if (retval < nmemb) _appio_register_current[9]++; // short write
+    _appio_register_current[WRITE_BLOCK_SIZE]= (n * _appio_register_current[WRITE_BLOCK_SIZE] + size*nmemb)/(n+1); // mean block size
+    _appio_register_current[WRITE_BYTES]+= retval * size; // write bytes
+    if (retval < nmemb) _appio_register_current[WRITE_SHORT]++; // short write
   }
-  if (retval == 0) _appio_register_current[8]++; // err
+  if (retval == 0) _appio_register_current[WRITE_ERR]++; // err
   return retval;
 }
 
@@ -474,7 +493,7 @@ _appio_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 papi_vector_t _appio_vector = {
     .cmp_info = {
         /* default component information (unspecified values are initialized to 0) */
-        .name = "$Id$",
+        .name                  = "appio.c",
         .version               = "$Revision$",
         .CmpIdx                = 0,              /* set by init_substrate */
         .num_mpx_cntrs         = PAPI_MPX_DEF_DEG,

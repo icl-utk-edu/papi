@@ -3,20 +3,19 @@
 /****************************/
 
 /** 
- * @author  Jose Pedro Oliveira
- *
- * test case for the linux-net component
+ * @author  Tushar Mohan
+ * (adapted from code in linux-net)
+ * test case for the appio component
  *
  * @brief
- *   Prints the value of every net event (by code)
+ *   Prints the value of every appio event (by code)
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi_test.h"
 
-#define IFNAME     "lo"
-#define PINGADDR   "127.0.0.1"
+#define MAX_EVENTS 32
 
 int main (int argc, char **argv)
 {
@@ -24,8 +23,10 @@ int main (int argc, char **argv)
     int EventSet = PAPI_NULL;
     long long value;
     int code;
-    char event_name[PAPI_MAX_STR_LEN];
-    int total_events=0;
+    char event_names[MAX_EVENTS][PAPI_MAX_STR_LEN];
+    int event_codes[MAX_EVENTS];
+    long long event_values[MAX_EVENTS];
+    int total_events=0; /* events added so far */
     int r;
     const PAPI_component_info_t *cmpinfo = NULL;
 
@@ -39,7 +40,7 @@ int main (int argc, char **argv)
     }
 
     if (!TESTS_QUIET) {
-        printf("Trying all net events\n");
+        printf("Trying all appio events\n");
     }
 
     numcmp = PAPI_num_components();
@@ -55,78 +56,101 @@ int main (int argc, char **argv)
                 cmpinfo->num_native_events, cmpinfo->name);
         }
 
-        if ( strstr(cmpinfo->name, "linux-net.c") == NULL) {
+        if ( strstr(cmpinfo->name, "appio.c") == NULL) {
             continue;
         }
 
         code = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
 
         r = PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+        /* Create and populate the EventSet */
+        EventSet = PAPI_NULL;
+
+        retval = PAPI_create_eventset( &EventSet );
+         if (retval != PAPI_OK) {
+             test_fail(__FILE__, __LINE__, "PAPI_create_eventset()", retval);
+         }
+
         while ( r == PAPI_OK ) {
 
-            retval = PAPI_event_code_to_name( code, event_name );
+            retval = PAPI_event_code_to_name( code, event_names[total_events] );
             if ( retval != PAPI_OK ) {
                 test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
             }
-
+            
             if (!TESTS_QUIET) {
-                printf("0x%x %-24s = ", code, event_name);
+              printf("Added event %s (code=0x%x)\n", event_names[total_events], code);
             }
-
-            EventSet = PAPI_NULL;
-
-            retval = PAPI_create_eventset( &EventSet );
-            if (retval != PAPI_OK) {
-                test_fail(__FILE__, __LINE__, "PAPI_create_eventset()", retval);
-            }
-
-            retval = PAPI_add_event( EventSet, code );
-            if (retval != PAPI_OK) {
-                test_fail(__FILE__, __LINE__, "PAPI_add_event()", retval);
-            }
-
-            retval = PAPI_start( EventSet );
-            if (retval != PAPI_OK) {
-                test_fail(__FILE__, __LINE__, "PAPI_start()", retval);
-            }
-
-            if (strcmp(event_name, IFNAME ".rx.packets") == 0) {
-                /* generate some traffic
-                 * the operation should take more than one second in order
-                 * to guarantee that the network counters are updated */
-                system("ping -c 4 " PINGADDR " > /dev/null");
-            }
-
-            retval = PAPI_stop( EventSet, &value );
-            if (retval != PAPI_OK) {
-                test_fail(__FILE__, __LINE__, "PAPI_stop()", retval);
-            }
-
-            if (!TESTS_QUIET) printf("%lld\n", value);
-
-            retval = PAPI_cleanup_eventset( EventSet );
-            if (retval != PAPI_OK) {
-                test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset()", retval);
-            }
-
-            retval = PAPI_destroy_eventset( &EventSet );
-            if (retval != PAPI_OK) {
-                test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset()", retval);
-            }
-
-            total_events++;
-
+            event_codes[total_events++] = code;
             r = PAPI_enum_event( &code, PAPI_ENUM_EVENTS );
         }
 
     }
 
+    int fdin,fdout;
+    const char* infile = "/etc/group";
+    fprintf(stderr, "This program will read %s and write it to /dev/null\n", infile);
+    fdin=open(infile, O_RDONLY);
+    if (fdin < 0) perror("Could not open file for reading: \n");
+    fdout = open("/dev/null", O_WRONLY);
+    if (fdout < 0) perror("Could not open /dev/null for writing: \n");
+    int bytes = 0;
+    char buf[1024];
+
+    retval = PAPI_add_events( EventSet, event_codes, total_events);
+    if (retval != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_add_events()", retval);
+    }
+
+    retval = PAPI_start( EventSet );
+    if (retval != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_start()", retval);
+    }
+
+    while ((bytes = read(fdin, buf, 1024)) > 0) {
+      write(fdout, buf, bytes);
+    }
+
+    retval = PAPI_stop( EventSet, event_values );
+    if (retval != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_stop()", retval);
+    }
+    close(fdin);
+    close(fdout);
+
+    int i;
+    if (!TESTS_QUIET) {
+        for ( i=0; i<total_events; i++ ) {
+            printf("0x%x %-24s = %lld\n",
+                event_codes[i], event_names[i], event_values[i]);
+        }
+    }
+
+    retval = PAPI_cleanup_eventset( EventSet );
+    if (retval != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset()", retval);
+    }
+
+    retval = PAPI_destroy_eventset( &EventSet );
+    if (retval != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset()", retval);
+    }
+
     if (total_events==0) {
-        test_skip(__FILE__,__LINE__,"No net events found", 0);
+        test_skip(__FILE__,__LINE__,"No appio events found", 0);
     }
 
     test_pass( __FILE__, NULL, 0 );
 
+    retval = PAPI_cleanup_eventset( EventSet );
+    if (retval != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset()", retval);
+    }
+
+    retval = PAPI_destroy_eventset( &EventSet );
+    if (retval != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset()", retval);
+    }
     return 0;
 }
 
