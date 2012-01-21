@@ -43,8 +43,8 @@ DESCRIPTION
 AUTHOR
 
   The code is written by Philip Mucci <phil.mucci@samaratechnologygroup.com>
-  and Tushar Mohan <tusharmohan@gmail.com>. It leverages code written by 
-  Jose Pedro Oliveira <jpo@di.uminho.pt> for the PAPI net component.
+  and Tushar Mohan <tusharmohan@gmail.com>. The component leverages code 
+  written by Jose Pedro Oliveira <jpo@di.uminho.pt> for the PAPI net component.
 
 SEE ALSO
 

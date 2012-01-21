@@ -294,7 +294,7 @@ _appio_shutdown( hwd_context_t *ctx )
 
 
 /*
- * Clean up what was setup in net_init_substrate().
+ * Clean up what was setup in appio_init_substrate().
  */
 int
 _appio_shutdown_substrate( void )

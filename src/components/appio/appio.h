@@ -12,12 +12,9 @@
  * @author  Tushar Mohan
  *          tushar.mohan@samaratechnologygroup.com
  *
- * @author  Jose Pedro Oliveira
- *          jpo@di.uminho.pt
- *
  * @ingroup papi_components
  *
- * @brief net component
+ * @brief appio component
  *  This file contains the source code for a component that enables
  *  PAPI to access application level file and socket I/O information.
  *  It does this through function replacement in the first person and
