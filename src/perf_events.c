@@ -932,7 +932,7 @@ _papi_sub_pe_init( hwd_context_t * thr_ctx )
 static int
 pe_enable_counters( context_t * ctx, control_state_t * ctl )
 {
-	int ret;
+	int ret = PAPI_OK;
 	int i;
 	int num_fds;
 	int did_something = 0;
@@ -1161,31 +1161,37 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
     } else {
       long long tot_time_running = papi_pe_buffer[get_total_time_running_idx(  )];
       long long tot_time_enabled = papi_pe_buffer[get_total_time_enabled_idx(  )];
+#ifdef BRAINDEAD_MULTIPLEXING
+      if (tot_time_enabled == 0)
+	tot_time_enabled = 1;
+      if (tot_time_running == 0)
+	tot_time_running = 1;
+#else
+      /* If we are convinced this platform's kernel is fully operational, then this stuff will never happen. If it does,
+         then BRAINDEAD_MULTIPLEXING needs to be enabled. */
+      if ((tot_time_running == 0) && (papi_pe_buffer[count_idx])) {
+	PAPIERROR("This platform has a kernel bug in multiplexing, count is %lld (not 0), but time running is 0.\n",papi_pe_buffer[count_idx]);
+	return PAPI_EBUG;
+      }
+      if ((tot_time_enabled == 0) && (papi_pe_buffer[count_idx])) {
+	PAPIERROR("This platform has a kernel bug in multiplexing, count is %lld (not 0), but time enabled is 0.\n",papi_pe_buffer[count_idx]);
+	return PAPI_EBUG;
+      }
+#endif
+      SUBDBG("(papi_pe_buffer[%d] %lld * tot_time_enabled %lld) / tot_time_running %lld\n",count_idx,papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
 
-      SUBDBG("count[%d] = (papi_pe_buffer[%d] %lld * tot_time_enabled %lld) / tot_time_running %lld\n",
-	     i, count_idx,papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
-    
       if (tot_time_running == tot_time_enabled) {
-	/* No scaling needed */
 	pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-      } else if (tot_time_running && tot_time_enabled) {
-	/* Scale factor of 100 to avoid overflows when computing enabled/running */
-	long long scale;
-	scale = (tot_time_enabled * 100LL) / tot_time_running;
+      } else {
+	/* Use a scale factor of 100 */
+	long long scale = (tot_time_enabled * 100LL) / tot_time_running;
 	scale = scale * papi_pe_buffer[count_idx];
 	scale = scale / 100LL;
 	pe_ctl->counts[i] = scale;
-      }	else {
-	/* This should not happen, but does. For example a Intel(R) Pentium(R) M processor 1600MHz (9)
-Linux thinkpad 2.6.38-02063808-generic #201106040910 SMP Sat Jun 4 10:51:30 UTC 2011 i686 GNU/Linux:
-SUBSTRATE:perf_events.c:_papi_pe_read:1148:24625 read: 1 214777 0
-SUBSTRATE:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time_enabled 214777) / tot_time_running 0 */
-	SUBDBG("perf_event kernel bug(?) count, enabled, running: %lld, %lld, %lld\n",papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
-	pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-      }
+      }	     
     }
   }
-    
+
   /*
    * FIXME comments please
    */
