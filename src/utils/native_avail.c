@@ -17,20 +17,23 @@
   *		For each native event, a name, a description, and specific bit patterns are provided.
   *
   *	@section Options
-  *
-  * --help, -h   print this help message
-  * -d           display detailed information about native events
-  * -e EVENTNAME display detail information about named native event
-  *  --nomasks    suppress display of Unit Mask information
+  * <ul>
+  * <li>--help, -h   print this help message
+  * <li>-d           display detailed information about native events
+  * <li>-e EVENTNAME display detail information about named native event
+  * <li>--nomasks    suppress display of Unit Mask information
+  * </ul>
   *
   * Processor-specific options
-  * --darr        display events supporting Data Address Range Restriction
-  * --dear        display Data Event Address Register events only
-  * --iarr        display events supporting Instruction Address Range Restriction
-  * --iear        display Instruction Event Address Register events only
-  * --opcm        display events supporting OpCode Matching
-  * --nogroups    suppress display of Event grouping information
-  * 
+  * <ul>
+  * <li>--darr        display events supporting Data Address Range Restriction
+  * <li>--dear        display Data Event Address Register events only
+  * <li>--iarr        display events supporting Instruction Address Range Restriction
+  * <li>--iear        display Instruction Event Address Register events only
+  * <li>--opcm        display events supporting OpCode Matching
+  * <li>--nogroups    suppress display of Event grouping information
+  * </ul> 
+  *
   *	@section Bugs
   *		There are no known bugs in this utility. 
   *		If you find a bug, it should be reported to the 

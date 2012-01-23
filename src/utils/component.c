@@ -12,8 +12,10 @@
   *		about the components papi was built with.
   *
   *	@section Options
-  *		-h help message
-  *		-d provide detailed information about each component. 
+  *      <ul>
+  *		<li>-h help message
+  *		<li>-d provide detailed information about each component. 
+  *      </ul>
   *
   *	@section Bugs
   *		There are no known bugs in this utility. 

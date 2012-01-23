@@ -14,14 +14,15 @@
  *             can be slow.
  *
  *     @section Options
- *
- * -h   print help message
- * -p   print only preset events
- * -n   print only native events
- * -c COMPONENT  print only events from component number COMPONENT
+ *      <ul>
+ *          <li>-h   print help message
+ *          <li>-p   print only preset events
+ *          <li>-n   print only native events
+ *          <li>-c COMPONENT  print only events from component number COMPONENT
  * event1, event2, ...  Print only events that can be created in the same
  *      event set with the events event1, event2, etc.
- * 
+ *       </ul>
+ *
  *     @section Bugs
  *             There are no known bugs in this utility. 
  *             If you find a bug, it should be reported to the 
