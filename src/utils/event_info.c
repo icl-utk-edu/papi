@@ -1,101 +1,99 @@
+/** file event_info.c
+ *     @page papi_xml_event_info
+ * @brief papi_xml_event_info utility. 
+ *     @section  NAME
+ *             papi_xml_event_info - provides detailed information for PAPI events in XML format
+ *
+ *     @section Synopsis
+ *
+ *     @section Description
+ *             papi_native_avail is a PAPI utility program that reports information 
+ *             about the events available on the current platform in an XML format.
+ *               
+ *             It will attempt to create an EventSet with each event in it, which
+ *             can be slow.
+ *
+ *     @section Options
+ *
+ * -h   print help message
+ * -p   print only preset events
+ * -n   print only native events
+ * -c COMPONENT  print only events from component number COMPONENT
+ * event1, event2, ...  Print only events that can be created in the same
+ *      event set with the events event1, event2, etc.
+ * 
+ *     @section Bugs
+ *             There are no known bugs in this utility. 
+ *             If you find a bug, it should be reported to the 
+ *             PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi.h"
 #include "papi_test.h"
 
-/* if version >= 3.9.x, it's PAPI-C */
-#if (PAPI_VERSION_MAJOR(PAPI_VERSION)>=4 || \
-	(PAPI_VERSION_MAJOR(PAPI_VERSION)==3 && \
-	 PAPI_VERSION_MINOR(PAPI_VERSION)>=9))
+static int EventSet;
+static int preset = 1;
+static int native = 1;
+static int cidx = -1;
 
-#define MAX_COMPONENTS 16
-
-#else
-
-#define MAX_COMPONENTS 1
-
-typedef PAPI_substrate_info_t PAPI_component_info_t;
-
-#define PAPI_COMPONENT_INDEX(a__) 0
-#define PAPI_COMPONENT_MASK
-
-#define PAPI_num_components()  1
-#define PAPI_get_component_info(a__) PAPI_get_substrate_info()
-
-#endif
-
-
-int EventSet[MAX_COMPONENTS];
-int NumEvents[MAX_COMPONENTS];
-
-char *
-xmlize( const char *msg )
+/**********************************************************************/
+/* Take a string and print a version with properly escaped XML        */
+/**********************************************************************/
+static int
+xmlize( const char *msg, FILE *f )
 {
-	char *xmlized_msg, *xp;
 	const char *op;
 
 	if ( !msg )
-		return NULL;
+		return PAPI_OK;
 
-	/* in the worst case, the string will be 5 times longer, so
-	 * rather than constantly checking whether we need to realloc,
-	 * just alloc 5 * strlen(msg) here.
-	 */
-
-	xmlized_msg = ( char * ) malloc( 5 * strlen( msg ) );
-	if ( !xmlized_msg )
-		return NULL;
-
-	for ( op = msg, xp = xmlized_msg; *op != '\0'; op++ ) {
+	for ( op = msg; *op != '\0'; op++ ) {
 		switch ( *op ) {
 		case '"':
-			strcpy( xp, "&quot;" );
-			xp += strlen( "&quot;" );
+			fprintf( f, "&quot;" );
 			break;
 		case '&':
-			strcpy( xp, "&amp;" );
-			xp += strlen( "&amp;" );
+			fprintf( f, "&amp;" );
 			break;
 		case '\'':
-			strcpy( xp, "&apos;" );
-			xp += strlen( "&apos;" );
+			fprintf( f, "&apos;" );
 			break;
 		case '<':
-			strcpy( xp, "&lt;" );
-			xp += strlen( "&lt;" );
+			fprintf( f, "&lt;" );
 			break;
 		case '>':
-			strcpy( xp, "&gt;" );
-			xp += strlen( "&gt;" );
+			fprintf( f, "&gt;" );
 			break;
 		default:
-			*xp++ = *op;
+		        fprintf( f, "%c", *op);
 		}
 	}
 
-	*xp = '\0';
-
-	return xmlized_msg;
+	return PAPI_OK;
 }
 
-
-int
+/*************************************/
+/* print hardware info in XML format */
+/*************************************/
+static int
 papi_xml_hwinfo( FILE * f )
 {
 	const PAPI_hw_info_t *hwinfo;
-	char *xml_string;
 
 	if ( ( hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
 		return ( PAPI_ESBSTR );
 
 	fprintf( f, "<hardware>\n" );
-	xml_string = xmlize( hwinfo->vendor_string );
-	fprintf( f, "  <vendor string=\"%s\"/>\n", xml_string );
-	free( xml_string );
+
+	fprintf( f, "  <vendor string=\"");
+	   xmlize( hwinfo->vendor_string, f );
+	   fprintf( f,"\"/>\n");
 	fprintf( f, "  <vendorCode value=\"%d\"/>\n", hwinfo->vendor );
-	xml_string = xmlize( hwinfo->model_string );
-	fprintf( f, "  <model string=\"%s\"/>\n", hwinfo->model_string );
-	free( xml_string );
+	fprintf( f, "  <model string=\"");
+	xmlize( hwinfo->model_string, f );
+	   fprintf( f, "\"/>\n");
 	fprintf( f, "  <modelCode value=\"%d\"/>\n", hwinfo->model );
 	fprintf( f, "  <cpuRevision value=\"%f\"/>\n", hwinfo->revision );
 	fprintf( f, "  <cpuID>\n" );
@@ -113,98 +111,66 @@ papi_xml_hwinfo( FILE * f )
 	fprintf( f, "  <totalCPUs value=\"%d\"/>\n", hwinfo->totalcpus );
 	fprintf( f, "</hardware>\n" );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 
-void
-papi_init( int argc, char **argv )
-{
-	int i;
-	int retval;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+/****************************************************************/
+/* Test if event can be added to an eventset                    */
+/* (there might be existing events if specified on command line */
+/****************************************************************/
 
-	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
-	retval = PAPI_set_debug( PAPI_VERB_ECONT );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
-
-
-	for ( i = 0; i < MAX_COMPONENTS; i++ ) {
-		EventSet[i] = PAPI_NULL;
-		NumEvents[i] = 0;
-		retval = PAPI_create_eventset( &( EventSet[i] ) );
-		if ( retval != PAPI_OK ) {
-			fprintf( stderr, "PAPI_create_eventset error\n" );
-			exit( 1 );
-		}
-	}
-
-}
-
-/* 
-   1  : can be added 
-   0  : cannot be added 
-*/
-int
-test_event( int cidx, int evt )
+static int
+test_event( int evt )
 {
 	int retval;
 
-	retval = PAPI_add_event( EventSet[cidx], evt );
+	retval = PAPI_add_event( EventSet, evt );
 	if ( retval != PAPI_OK ) {
-		/* fprintf(stdout, "*** Cannot add %d\n", evt); */
-		return 0;
+		return retval;
 	}
 
-	if ( ( retval = PAPI_remove_event( EventSet[cidx], evt ) ) != PAPI_OK ) {
-		fprintf( stderr, "Error removing event from eventset\n" );
-		exit( 1 );
+	if ( ( retval = PAPI_remove_event( EventSet, evt ) ) != PAPI_OK ) {
+	   fprintf( stderr, "Error removing event from eventset\n" );
+	   exit( 1 );
 	}
-	return 1;
+	return PAPI_OK;
 }
 
-char *
-component_type( char *id )
-{
-	char *str = strdup( id );
-	char *s = str + 5;
+/***************************************/
+/* Convert an event to XML             */
+/***************************************/
 
-	while ( *s && *s != '.' )
-		s++;
-
-	*s = 0;
-	return str + 5;
-}
-
-void
+static void
 xmlize_event( FILE * f, PAPI_event_info_t * info, int num )
 {
-	char *xml_symbol, *xml_desc;
 
-	xml_symbol = xmlize( info->symbol );
-	xml_desc = xmlize( info->long_descr );
-	if ( num >= 0 )
-		fprintf( f,
-				 "    <event index=\"%d\" name=\"%s\" desc=\"%s\" code=\"0x%x\">\n",
-				 num, xml_symbol, xml_desc, info->event_code );
-	else
-		fprintf( f,
-				 "        <modifier name=\"%s\" desc=\"%s\" code=\"0x%x\"> </modifier>\n",
-				 xml_symbol, xml_desc, info->event_code );
-	free( xml_symbol );
-	free( xml_desc );
+	if ( num >= 0 ) {
+	   fprintf( f, "    <event index=\"%d\" name=\"",num);
+	   xmlize( info->symbol, f );
+	   fprintf( f, "\" desc=\"");
+	   xmlize( info->long_descr, f );
+	   fprintf( f, "\">\n");
+	}
+	else {
+	   fprintf( f,"        <modifier name=\"");
+	   xmlize( info->symbol, f );
+	   fprintf( f,"\" desc=\"");
+	   xmlize( info->long_descr, f );
+	   fprintf( f,"\"> </modifier>\n");
+	}
+
 }
 
 
-void
-enum_preset_events( FILE * f, int cidx, const PAPI_component_info_t * comp )
+/****************************************/
+/* Print all preset events              */
+/****************************************/
+
+static void
+enum_preset_events( FILE * f, int cidx)
 {
-	( void ) comp;			 /*unused */
 	int i, num;
 	int retval;
 	PAPI_event_info_t info;
@@ -213,24 +179,29 @@ enum_preset_events( FILE * f, int cidx, const PAPI_component_info_t * comp )
 	fprintf( f, "  <eventset type=\"PRESET\">\n" );
 	num = -1;
 	retval = PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+
 	while ( retval == PAPI_OK ) {
-		num++;
-		retval = PAPI_get_event_info( i, &info );
-		if ( retval != PAPI_OK ) {
-			retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
-			continue;
-		}
-		if ( test_event( cidx, i ) ) {
-			xmlize_event( f, &info, num );
-			fprintf( f, "    </event>\n" );
-		}
-		retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
+	   num++;
+	   retval = PAPI_get_event_info( i, &info );
+	   if ( retval != PAPI_OK ) {
+	      retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
+	      continue;
+	   }
+	   if ( test_event( i ) == PAPI_OK ) {
+	      xmlize_event( f, &info, num );
+	      fprintf( f, "    </event>\n" );
+	   }
+	   retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
 	}
 	fprintf( f, "  </eventset>\n" );
 }
 
-void
-enum_native_events( FILE * f, int cidx, const PAPI_component_info_t * comp )
+/****************************************/
+/* Print all native events              */
+/****************************************/
+
+static void
+enum_native_events( FILE * f, int cidx)
 {
 	int i, k, num;
 	int retval;
@@ -240,181 +211,236 @@ enum_native_events( FILE * f, int cidx, const PAPI_component_info_t * comp )
 	fprintf( f, "  <eventset type=\"NATIVE\">\n" );
 	num = -1;
 	retval = PAPI_enum_event( &i, PAPI_ENUM_FIRST );
-	while ( retval == PAPI_OK ) {
-		num++;
-		retval = PAPI_get_event_info( i, &info );
-		if ( retval != PAPI_OK ) {
-			retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
-			continue;
-		}
 
-		/* check if this component supports unit masks on native events */
-		if ( comp->cntr_umasks ) {
-			k = i;
-			/* test if this event has unit masks */
-			if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-				/* add the event */
-				if ( test_event( cidx, k ) ) {
-					xmlize_event( f, &info, num );
-					/* add the event's unit masks */
-					do {
-						retval = PAPI_get_event_info( k, &info );
-						if ( retval == PAPI_OK ) {
-							if ( !test_event( cidx, k ) ) {
-								retval =
-									PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
-								continue;
-							}
-							xmlize_event( f, &info, -1 );
-						}
-					} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) ==
-							  PAPI_OK );
-					fprintf( f, "    </event>\n" );
-				}
-			} else {		 /* this event has no unit masks; test & write the event */
-				if ( test_event( cidx, i ) ) {
-					xmlize_event( f, &info, num );
-					fprintf( f, "    </event>\n" );
-				}
-			}
-		} else {			 /*  unit masks not supported; just test & write the event */
-			if ( test_event( cidx, i ) ) {
-				xmlize_event( f, &info, num );
-				fprintf( f, "    </event>\n" );
-			}
-		}
-		retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
+	while ( retval == PAPI_OK ) {
+
+	   num++;
+	   retval = PAPI_get_event_info( i, &info );
+	   if ( retval != PAPI_OK ) {
+	      retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
+	      continue;
+	   }
+			
+	   /* enumerate any umasks */
+	   k = i;
+	   if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+		 
+	      /* Test if event can be added */
+	      if ( test_event( k ) == PAPI_OK ) {
+
+		 /* add the event */
+		 xmlize_event( f, &info, num );
+		    
+		 /* add the event's unit masks */
+		 do {
+		    retval = PAPI_get_event_info( k, &info );
+		    if ( retval == PAPI_OK ) {
+		       if ( test_event( k )!=PAPI_OK ) {
+			  retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
+			  continue;
+		       }
+		       xmlize_event( f, &info, -1 );
+		    }
+		 } while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
+		 fprintf( f, "    </event>\n" );
+	      }
+	   } else {		 
+              /* this event has no unit masks; test & write the event */
+	      if ( test_event( i ) == PAPI_OK ) {
+		 xmlize_event( f, &info, num );
+		 fprintf( f, "    </event>\n" );
+	      }
+	   }
+	   retval = PAPI_enum_event( &i, PAPI_ENUM_EVENTS );
 	}
 	fprintf( f, "  </eventset>\n" );
 }
 
-void
+/****************************************/
+/* Print usage information              */
+/****************************************/
+
+static void
 usage( char *argv[] )
 {
 	fprintf( stderr, "Usage: %s [options] [[event1] event2 ...]\n", argv[0] );
 	fprintf( stderr, "     options: -h     print help message\n" );
 	fprintf( stderr, "              -p     print only preset events\n" );
 	fprintf( stderr, "              -n     print only native events\n" );
-	fprintf( stderr,
-			 "              -c n   print only events for component index n\n" );
+	fprintf( stderr,"              -c n   print only events for component index n\n" );
+	fprintf( stderr, "If event1, event2, etc., are specified, then only events\n");
+	fprintf( stderr, "that can be run in addition to these events will be printed\n\n");
+}
+
+static void
+parse_command_line (int argc, char **argv, int numc) {
+
+  int i,retval;
+
+     for( i = 1; i < argc; i++ ) {
+	if ( argv[i][0] == '-' ) {
+	   switch ( argv[i][1] ) {
+	      case 'c': 
+      	                 /* only events for specified component */
+
+                         /* UGH, what is this, the IOCCC? */
+                         cidx = (i+1) < argc ? atoi( argv[(i++)+1] ) : -1;
+			 if ( cidx < 0 || cidx >= numc ) {
+			    fprintf( stderr,"Error: component index %d out of bounds (0..%d)\n",
+				     cidx, numc - 1 );
+			    usage( argv );
+			    exit(1);
+			 }
+			 break;
+
+	      case 'p':
+		         /* only preset events */
+			 preset = 1;
+			 native = 0;
+			 break;
+
+	      case 'n':
+		         /* only native events */
+			 native = 1;
+			 preset = 0;
+			 break;
+
+	      case 'h':
+		         /* print help */
+			 usage( argv );
+			 exit(0);
+			 break;
+
+	      default:
+			 fprintf( stderr, 
+				     "Error: unknown option: %s\n", argv[i] );
+			 usage( argv );
+			 exit(1);
+	   }
+	} else {
+
+	   /* If event names are specified, add them to the */
+	   /* EventSet and test if other events can be run with them */
+
+	   int code = -1;
+
+	   retval = PAPI_event_name_to_code( argv[i], &code );
+	   retval = PAPI_query_event( code );
+	   if ( retval != PAPI_OK ) {
+	      fprintf( stderr, "Error: unknown event: %s\n", argv[i] );
+	      usage( argv );
+	      exit(1);
+	   }
+
+	   retval = PAPI_add_event( EventSet, code );
+	   if ( retval != PAPI_OK ) {
+	      fprintf( stderr, 
+                       "Error: event %s cannot be counted with others\n",
+		       argv[i] );
+	      usage( argv );
+	      exit(1);
+	   }
+	}
+     }
+
 }
 
 
 int
-main( int argc, char *argv[] )
+main( int argc, char **argv)
 {
-	int i;
 	int retval;
 	const PAPI_component_info_t *comp;
 
-	int cidx = -1;
 	int numc = 0;
 
-	int preset = -1;
-	int native = -1;
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	
 
-	papi_init( argc, argv );
-
-	numc = PAPI_num_components(  );
-
-	for ( i = 1; i < argc; i++ ) {
-		if ( argv[i][0] == '-' ) {
-			switch ( argv[i][1] ) {
-			case 'c':
-				cidx = ( i + 1 ) < argc ? atoi( argv[( i++ ) + 1] ) : -1;
-				if ( cidx < 0 || cidx >= numc ) {
-					fprintf( stderr,
-							 "Error: component index %d out of bounds (0..%d)\n",
-							 cidx, numc - 1 );
-					usage( argv );
-					return 1;
-				}
-				break;
-
-			case 'p':
-				preset = 1;
-				native = ( native > 0 ? 1 : 0 );
-				break;
-
-			case 'n':
-				native = 1;
-				preset = ( preset > 0 ? 1 : 0 );
-				break;
-
-			case 'h':
-				usage( argv );
-				return 0;
-				break;
-
-			default:
-				fprintf( stderr, "Error: unknown option: %s\n", argv[i] );
-				usage( argv );
-				return 1;
-			}
-		} else {
-			int code = -1;
-			int cidx = 0;
-
-			retval = PAPI_event_name_to_code( argv[i], &code );
-			retval = PAPI_query_event( code );
-			if ( retval != PAPI_OK ) {
-				fprintf( stderr, "Error: unknown event: %s\n", argv[i] );
-				usage( argv );
-				return 1;
-			}
-
-			cidx = PAPI_COMPONENT_INDEX( code );
-			retval = PAPI_add_event( EventSet[cidx], code );
-			if ( retval != PAPI_OK ) {
-				fprintf( stderr,
-						 "Error: event %s cannot be counted with others\n",
-						 argv[i] );
-				usage( argv );
-				return 1;
-			} else
-				NumEvents[cidx]++;
-		}
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	if ( native < 0 && preset < 0 )
-		native = preset = 1;
+	/* report any return codes less than 0? */
+	/* Why? */
+#if 0
+	retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	}
+#endif
 
+	/* Create EventSet to use */
+	EventSet = PAPI_NULL;
+
+	retval = PAPI_create_eventset( &EventSet  );
+	if ( retval != PAPI_OK ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	   return 1;
+	}
+
+	/* Get number of components */
+	numc = PAPI_num_components(  );
+
+	/* parse command line arguments */
+        parse_command_line(argc,argv,numc);
+
+	/* print XML header */
 	fprintf( stdout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
 	fprintf( stdout, "<eventinfo>\n" );
 
+
+	/* print hardware info */
 	papi_xml_hwinfo( stdout );
 
+	/* If a specific component specified, only print events from there */
 	if ( cidx >= 0 ) {
-		comp = PAPI_get_component_info( cidx );
+	   comp = PAPI_get_component_info( cidx );
 
-		fprintf( stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n",
-				 cidx,
-				 cidx ? component_type( ( char * ) ( comp->name ) ) : "CPU",
-				 comp->name );
+	   fprintf( stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n",
+			    cidx, cidx ? "Unknown" : "CPU", comp->name );
 
-		if ( native )
-			enum_native_events( stdout, cidx, comp );
-		if ( preset )
-			enum_preset_events( stdout, cidx, comp );
+	   if ( native )
+	      enum_native_events( stdout, cidx);
+	   if ( preset )
+	      enum_preset_events( stdout, cidx);
 
-		fprintf( stdout, "</component>\n" );
-	} else {
-		for ( cidx = 0; cidx < numc; cidx++ ) {
-			comp = PAPI_get_component_info( cidx );
+	   fprintf( stdout, "</component>\n" );
+	} 
+	else {
+	   /* Otherwise, print info for all components */
+	   for ( cidx = 0; cidx < numc; cidx++ ) {
+	       comp = PAPI_get_component_info( cidx );
 
-			fprintf( stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n",
-					 cidx,
-					 cidx ? component_type( ( char * ) ( comp->name ) ) : "CPU",
-					 comp->name );
+	       fprintf( stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n",
+				cidx, cidx ? "Unknown" : "CPU", comp->name );
 
-			if ( native )
-				enum_native_events( stdout, cidx, comp );
-			if ( preset )
-				enum_preset_events( stdout, cidx, comp );
+	       if ( native )
+		  enum_native_events( stdout, cidx );
+	       if ( preset )
+		  enum_preset_events( stdout, cidx );
 
-			fprintf( stdout, "</component>\n" );
+	       fprintf( stdout, "</component>\n" );
 
-		}
+	       /* clean out eventset */
+	       retval = PAPI_cleanup_eventset( EventSet );
+	       if ( retval != PAPI_OK )
+		  test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
+	       retval = PAPI_destroy_eventset( &EventSet );
+	       if ( retval != PAPI_OK )
+		  test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	       EventSet = PAPI_NULL;
+
+	       retval = PAPI_create_eventset( &EventSet  );
+	       if ( retval != PAPI_OK ) {
+		  test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );	        }
+
+	       /* re-parse command line to set up any events specified */
+	       parse_command_line (argc, argv, numc);
+	       
+
+	   }
 	}
 	fprintf( stdout, "</eventinfo>\n" );
 
