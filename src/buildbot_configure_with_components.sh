@@ -1,2 +1,2 @@
 #!/bin/sh 
-./configure --with-debug --with-components="example acpi net lustre coretemp" $1 
+./configure --with-debug --with-components="example net lustre coretemp" $1 
