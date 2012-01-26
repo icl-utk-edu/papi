@@ -80,4 +80,14 @@ These files have the source code for a component that enables PAPI-C to access h
 coretemp_freebsd/
 This component is intended to access CPU On-Die Thermal Sensors in the Intel Core architecture in a FreeBSD machine using the coretemp.ko kernel module. The returned values represent Kelvin dedegrees.
 
+
+vmware/ 
+
+To make the generic VMware component do --with-vmware_incdir=<path_to_VMWare_Guest_SDK> from the component directory.
+
+For further information see the VMwareComponentDocument.txt file in the component directory, or the ComponentGuide pdf file.
+
+
+
+
 */
