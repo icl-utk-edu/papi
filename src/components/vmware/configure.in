@@ -1,0 +1,14 @@
+AC_INIT
+AC_ARG_WITH(vmware_incdir,
+            [--with-vmware_incdir=<path> Specify path to VMware GuestSDK includes],
+            [VMWARE_INCDIR=$withval
+             CFLAGS="$CFLAGS -I$withval" 
+             AC_CHECK_HEADER([vmGuestLib.h],
+                             [],
+                             [AC_MSG_ERROR([vmGuestLib.h not found])],
+                             [#include <vmGuestLib.h>])],
+            [AC_MSG_ERROR([Component requires path to vmware includes])])	
+
+AC_SUBST(VMWARE_INCDIR)
+AC_CONFIG_FILES([Makefile.vmware])
+AC_OUTPUT
