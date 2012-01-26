@@ -906,7 +906,7 @@ _papi_pe_init_substrate( int cidx )
   /* are any of these needed anymore? */
   /* These settings are exported to userspace.  Ugh */
 #if defined(__i386__)||defined(__x86_64__)
-  MY_VECTOR.cmp_info.fast_counter_read = 1;
+  MY_VECTOR.cmp_info.fast_counter_read = 0;
   MY_VECTOR.cmp_info.fast_real_timer = 1;
 #else
   MY_VECTOR.cmp_info.fast_counter_read = 0;
