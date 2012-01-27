@@ -58,7 +58,8 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_wsm.c  pfmlib_intel_snb.c \
 	  pfmlib_intel_netburst.c \
 	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
-	  pfmlib_amd64_fam12h.c pfmlib_amd64_fam14h.c pfmlib_amd64_fam15h.c
+	  pfmlib_amd64_fam11h.c pfmlib_amd64_fam12h.c \
+	  pfmlib_amd64_fam14h.c pfmlib_amd64_fam15h.c
 
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86
 
@@ -162,9 +163,10 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/amd64_events_k7.h    	\
 	events/amd64_events_k8.h    	\
 	events/amd64_events_fam10h.h	\
+	events/amd64_events_fam11h.h	\
+	events/amd64_events_fam12h.h	\
 	events/amd64_events_fam14h.h	\
 	events/amd64_events_fam15h.h	\
-	events/amd64_events_fam12h.h	\
 	events/intel_p6_events.h	\
 	events/intel_netburst_events.h	\
 	events//intel_x86_arch_events.h \
