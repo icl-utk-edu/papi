@@ -90,7 +90,7 @@ _papi_cleanup_user_events()
   /* cleanup the defines list too */
   for ( a = defines.next; a != NULL; ) {
 	b=a->next;
-	free(a);
+	papi_free(a);
 	a = b;
   }
 }
@@ -116,7 +116,7 @@ append_to_global_list(user_defined_event_t *more )
   }
 }
 
-static inline int 
+int 
 is_operation(char *op) 
 {
   char first = op[0];
@@ -246,28 +246,33 @@ get_event_line( char **place, FILE * table, char **tmp_perfmon_events_table )
 	return ( ret );
 }
 
-void add_define( char *line, list_t* next ) {
+void add_define( char *line, list_t* LIST ) {
   char *t;
-  list_t* temp = next->next;
+  char local_line[USER_EVENT_OPERATION_LEN];
+  list_t *temp;
 
+  strncpy( local_line, line, USER_EVENT_OPERATION_LEN );
 
-  next->next = (list_t*)papi_malloc(sizeof(list_t));
+  temp = (list_t*)papi_malloc(sizeof(list_t));
 
-  if (next->next == NULL) {
+  if ( NULL == temp ) {
 	PAPIERROR("outof memory" );
 	exit(1);
   }
-  next = next->next;
-  t = strtok(line, " "); /* throw out the #define */
-  t = strtok(NULL, " ");
-  strncpy(next->name, t, PAPI_MIN_STR_LEN);
-  t = strtok(NULL," ");
-  t[strlen(t)-1] = '\0';
-  strncpy(next->value, t, PAPI_MIN_STR_LEN);
 
-  if ( temp != NULL ) {
-	next->next = temp;
-  }
+  t = strtok(local_line, " "); /* throw out the #define */
+  
+  /* next token should be the name */
+  t = strtok(NULL, " ");
+  strncpy( temp->name, t, PAPI_MIN_STR_LEN);
+
+  /* next token should be the value */
+  t = strtok(NULL," ");
+  t[strlen(t)] = '\0';
+  strncpy( temp->value, t, PAPI_MIN_STR_LEN);
+
+  temp->next = LIST->next;
+  LIST->next = temp;
 }
 
 int renumber_ops_string(char *dest, char *src, int start) {
