@@ -88,10 +88,9 @@ static lustre_fs *root_lustre_fs = NULL;
 
 papi_vector_t _lustre_vector;
 
-/*******************************************************************************
- ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
- ******************************************************************************/
-
+/******************************************************************************
+ ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
+ *****************************************************************************/
 
 /**
  * add a counter to the list of available counters
@@ -196,10 +195,6 @@ addLustreFS( const char *name,
 }
 
 
-
-
-
-
 /**
  * goes through proc and tries to discover all mounted Lustre fs
  */
@@ -287,7 +282,7 @@ init_lustre_counters( void  )
  * updates all Lustre related counters
  */
 static void
-read_lustre_counter(  )
+read_lustre_counter( )
 {
 	lustre_fs *fs = root_lustre_fs;
 	FILE *fff;
@@ -332,7 +327,7 @@ read_lustre_counter(  )
 
 
 /**
- * finalizes the library
+ * frees all allocated resources
  */
 static void
 host_finalize( void )
@@ -459,7 +454,7 @@ _lustre_shutdown( hwd_context_t * ctx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup) functions
  */
 int
-_lustre_init_control_state( hwd_control_state_t * ctl )
+_lustre_init_control_state( hwd_control_state_t *ctl )
 {
     LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
 
@@ -499,7 +494,7 @@ _lustre_update_control_state( hwd_control_state_t *ctl,
  *
  */
 int
-_lustre_start( hwd_context_t * ctx, hwd_control_state_t *ctl )
+_lustre_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
 
@@ -769,3 +764,6 @@ papi_vector_t _lustre_vector = {
   .ntv_code_to_descr = _lustre_ntv_code_to_descr,
 
 };
+
+
+

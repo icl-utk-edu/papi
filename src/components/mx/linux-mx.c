@@ -280,9 +280,10 @@ _mx_shutdown( hwd_context_t * ctx )
  * functions
  */
 int
-_mx_init_control_state( hwd_control_state_t * ptr )
+_mx_init_control_state( hwd_control_state_t *ctl )
 {
-	( void ) ptr;			 /*unused */
+	( void ) ctl;			 /*unused */
+
 	return PAPI_OK;
 }
 
