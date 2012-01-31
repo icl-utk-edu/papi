@@ -230,8 +230,10 @@ prof_out( caddr_t start, int n, int bucket, int num_buckets,
 				for ( j = 0, buf_16 = 0; j < n; j++ )
 					buf_16 |= ( buf16[j] )[i];
 				if ( buf_16 ) {
+/* On 32bit builds with gcc 4.3 gcc complained about casting caddr_t => long long
+ * Thus the unsigned long to long long cast */
 					printf( "0x%-16llx",
-						(long long) start +
+						(long long) (unsigned long)start +
 						( ( ( long long ) i * scale ) >> 15 ) );
 					for ( j = 0, buf_16 = 0; j < n; j++ )
 						printf( "\t%d", ( buf16[j] )[i] );
@@ -245,7 +247,7 @@ prof_out( caddr_t start, int n, int bucket, int num_buckets,
 					buf_32 |= ( buf32[j] )[i];
 				if ( buf_32 ) {
 					printf( "0x%-16llx",
-						(long long) start +
+						(long long) (unsigned long)start +
 						( ( ( long long ) i * scale ) >> 15 ) );
 					for ( j = 0, buf_32 = 0; j < n; j++ )
 						printf( "\t%d", ( buf32[j] )[i] );
@@ -259,7 +261,7 @@ prof_out( caddr_t start, int n, int bucket, int num_buckets,
 					buf_64 |= ( buf64[j] )[i];
 				if ( buf_64 ) {
 					printf( "0x%-16llx",
-						(long long) start +
+						(long long) (unsigned long)start +
 					        ( ( ( long long ) i * scale ) >> 15 ) );
 					for ( j = 0, buf_64 = 0; j < n; j++ )
 						printf( "\t%lld", ( buf64[j] )[i] );
