@@ -17,7 +17,7 @@ DESCRIPTION
     Listed below are the events measured by the component:
 
     Event names
-    -------------------------
+    -----------
       "READ_BYTES"
       "READ_CALLS"
       "READ_ERR"
@@ -39,7 +39,39 @@ DESCRIPTION
     support to dynamically linked executables to take advantage of LD_PRELOAD
     for interception.
 
+    The component has been tested on 32 and 64-bit Linux. It's also been tested
+    to work for multithreaded programs.
 
+    Limitations and future work:
+    ---------------------------
+    The most important aspect to note is that the code is likely to only work on
+    Linux, given the low-level dependencies on libc features. 
+
+    At present the component intercepts the read(), write(), fread() and fwrite().
+    In the future it's envisaged that these will be expanded to cover open(), close(),
+    lseek(), select(), etc. 
+
+    The component at present doesn't distinguish between network and file I/O. So,
+    any read/writes will count, regardless of whether the underlying descriptor is
+    a socket or a file. Similarly, character and block I/O is not distinguished.
+
+    Threads are handled using thread-specific structures in the backend. However, no 
+    aggregation is currently performed across threads. There is also NO global structure
+    that has the statistics of all the threads. This means the user can call
+    a PAPI read to get statitics for a running thread. However, if the thread has
+    joined, then it's statistics can no longer be queried. 
+
+    TESTING:
+    -------
+    Tests lie in the tests/ sub-directory. All but one test take no argument.
+
+    The iozone test (appio_test_iozone) needs arguments just like iozone does.
+    It is not built by default as part of the PAPI tests. To build it:
+      cd appio/tests; make appio_test_iozone
+    An example run for the iozone test could be:
+      ./appio_test_iozone -s 100m -r 64 -i 0 -i 1 -t 1
+    
+   
 AUTHOR
 
   The code is written by Philip Mucci <phil.mucci@samaratechnologygroup.com>
