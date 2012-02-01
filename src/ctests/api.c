@@ -193,10 +193,12 @@ main( int argc, char **argv )
 	if ( retval != PAPI_EINVAL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
 	retval = PAPI_flops( &rtime, &ptime, &flpops, &mflops );	// get Mflops/s, real and processor time 
-	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
-	else if ( !TESTS_QUIET )
-		printf( "got Mflops/s, real and processor time\n" );
+	if (retval == PAPI_ENOEVNT ) {
+		printf ("PAPI_ENOEVNT, PAPI_FP_OPS probably does not exist on this platform.\n"); }
+	else if ( retval != PAPI_OK ) {
+		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval ); }
+	else if ( !TESTS_QUIET ) {
+		printf( "got Mflops/s, real and processor time\n" ); }
 	//NOTE: There are currently no checks on whether or not returned values are correct 
 
 	/****** Low Level API ******/
