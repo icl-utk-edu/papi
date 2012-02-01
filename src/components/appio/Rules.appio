@@ -1,8 +1,8 @@
 # $Id$
 
-COMPSRCS += components/net/appio.c
+COMPSRCS += components/appio/appio.c
 COMPOBJS += appio.o
 
-appio.o: components/net/appio.c components/net/appio.h $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/net/appio.c -o $@
+appio.o: components/appio/appio.c components/appio/appio.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/appio/appio.c -o $@
 
