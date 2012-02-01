@@ -1,3 +1,13 @@
+/* 
+ * Test case for appio
+ * Author: Tushar Mohan
+ *         tusharmohan@gmail.com
+ * 
+ * Description: This test case reads from standard linux /etc files in
+ *              four separate threads and copies the output to /dev/null
+ *              READ and WRITE statistics for each of the threads is
+ *              summarized at the end.
+ */
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,16 +19,17 @@
 #include <fcntl.h>
 
 #include "papi.h"
+#include "papi_test.h"
 
-#define NUM_EVENTS 4
-const char* names[NUM_EVENTS] = {"READ.CALLS", "READ.BYTES","WRITE.CALLS","WRITE.BYTES"};
+#define NUM_EVENTS 6
+const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES","READ_USEC","WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
 
 #define NUM_INFILES 4
 static const char* files[NUM_INFILES] = {"/etc/passwd", "/etc/group", "/etc/protocols", "/etc/nsswitch.conf"};
 
 void *ThreadIO(void *arg) {
   unsigned long tid = (unsigned long)pthread_self();
-  printf("\nThread 0x%lx: will read %s\n", tid,(const char*) arg);
+  if (!TESTS_QUIET) printf("\nThread 0x%lx: will read %s and write it to /dev/null\n", tid,(const char*) arg);
   int Events[NUM_EVENTS]; 
   long long values[NUM_EVENTS];
   int retval;
@@ -59,8 +70,10 @@ void *ThreadIO(void *arg) {
     fprintf(stderr, "Error in PAPI_stop_counters\n");
   }
 
-  for (e=0; e<NUM_EVENTS; e++)  
-    printf("Thread 0x%lx: %s: %lld\n", tid, names[e], values[e]);
+  if (!TESTS_QUIET) {
+    for (e=0; e<NUM_EVENTS; e++)  
+      printf("Thread 0x%lx: %s: %lld\n", tid, names[e], values[e]);
+  }
   return(NULL);
 }
 
@@ -94,14 +107,7 @@ int main(void) {
 #endif
 
   numthrds = NUM_INFILES;
-  if (getenv("NUM_THREADS")) {
-    numthrds = atoi(getenv("NUM_THREADS"));
-  }
-  printf("%d threads\n",numthrds);
-  if (numthrds > NUM_INFILES) {
-    fprintf(stderr, "This test can only test a maximum of %d threads. Setting num threads to %d\n", NUM_INFILES, NUM_INFILES);
-    numthrds = NUM_INFILES;
-  }
+  if (!TESTS_QUIET) printf("%d threads\n",numthrds);
   callThd = (pthread_t *)malloc(numthrds*sizeof(pthread_t));
 
   for (i=0;i<(numthrds-1);i++) {
@@ -113,5 +119,6 @@ int main(void) {
   for (i=0;i<(numthrds-1);i++)
     pthread_join(callThd[i], NULL);
 
-  exit(0);
+  test_pass( __FILE__, NULL, 0 );
+  return 0;
 }

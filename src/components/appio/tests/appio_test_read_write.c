@@ -1,3 +1,12 @@
+/* 
+ * Test case for appio
+ * Author: Tushar Mohan
+ *         tusharmohan@gmail.com
+ * 
+ * Description: This test case reads from standard linux /etc/group
+ *              and writes the output to  stdout.
+ *              Statistics are printed at the end of the run.,
+ */
 #include <papi.h>
 #include <errno.h>
 #include <stdio.h>
@@ -7,12 +16,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "papi_test.h"
  
-#define NUM_EVENTS 4
+#define NUM_EVENTS 6
  
 int main(int argc, char** argv) {
   int Events[NUM_EVENTS]; 
-  const char* names[NUM_EVENTS] = {"READ.CALLS", "READ.BYTES","WRITE.CALLS","WRITE.BYTES"};
+  const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES", "READ_USEC", "WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
   long long values[NUM_EVENTS];
 
   char *infile = "/etc/group";
@@ -24,9 +34,12 @@ int main(int argc, char** argv) {
   }
 
   int fdin;
-  fprintf(stderr, "This program will read %s and write it to stdout\n", infile);
+  if (!TESTS_QUIET) fprintf(stderr, "This program will read %s and write it to /dev/null\n", infile);
   fdin=open(infile, O_RDONLY);
   if (fdin < 0) perror("Could not open file for reading: \n");
+  int fdout;
+  fdout=open("/dev/null", O_WRONLY);
+  if (fdout < 0) perror("Could not open file for writing: \n");
   int bytes = 0;
   char buf[1024];
 
@@ -51,7 +64,7 @@ int main(int argc, char** argv) {
 //printf("After reading the counters: %lld\n",values[0]);
 
   while ((bytes = read(fdin, buf, 1024)) > 0) {
-    write(1, buf, bytes);
+    write(fdout, buf, bytes);
   }
 
 
@@ -59,9 +72,14 @@ int main(int argc, char** argv) {
   if (PAPI_stop_counters(values, NUM_EVENTS) != PAPI_OK) {
     fprintf(stderr, "Error in PAPI_stop_counters\n");
   }
-  
-  printf("----\n");
-  for (e=0; e<NUM_EVENTS; e++)  
-    printf("%s: %lld\n", names[e], values[e]);
+  close (fdin);
+  close (fdout);
+ 
+  if (!TESTS_QUIET) { 
+    printf("----\n");
+    for (e=0; e<NUM_EVENTS; e++)  
+      printf("%s: %lld\n", names[e], values[e]);
+  }
+  test_pass( __FILE__, NULL, 0 );
   return 0;
 }
