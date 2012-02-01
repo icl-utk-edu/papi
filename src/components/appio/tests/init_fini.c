@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include "papi.h"
 
-#define NUM_EVENTS 4
+#define NUM_EVENTS 6
 static int Events[NUM_EVENTS];
-static const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES","WRITE_CALLS","WRITE_BYTES"};
+static const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES","READ_USEC","WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
 static long long values[NUM_EVENTS];
 
 __attribute__ ((constructor)) void my_init(void) {
