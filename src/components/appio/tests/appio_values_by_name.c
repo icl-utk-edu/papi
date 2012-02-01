@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 
-#define NUM_EVENTS 9
+#define NUM_EVENTS 11
 
 int main (int argc, char **argv)
 {
@@ -31,11 +31,13 @@ int main (int argc, char **argv)
     char *event_name[NUM_EVENTS] = {
         "READ_BYTES",
         "READ_CALLS",
+        "READ_USEC",
         "READ_EOF",
         "READ_SHORT",
         "READ_ERR",
         "WRITE_BYTES",
         "WRITE_CALLS",
+        "WRITE_USEC",
         "WRITE_ERR",
         "WRITE_SHORT"
     };

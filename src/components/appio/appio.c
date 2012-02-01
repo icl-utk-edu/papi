@@ -65,11 +65,13 @@ typedef enum {
   READ_SHORT,
   READ_EOF,
   READ_BLOCK_SIZE,
+  READ_USEC,
   WRITE_BYTES,
   WRITE_CALLS,
   WRITE_ERR,
   WRITE_SHORT,
-  WRITE_BLOCK_SIZE
+  WRITE_BLOCK_SIZE,
+  WRITE_USEC
 } _appio_stats_t ;
 
 static const struct appio_counters {
@@ -82,11 +84,13 @@ static const struct appio_counters {
     { "READ_SHORT",      "Number of read calls that returned less bytes than requested"},
     { "READ_EOF",        "Number of read calls that returned an EOF"},
     { "READ_BLOCK_SIZE", "Average block size of reads"},
+    { "READ_USEC",      "Real microseconds spent in reads"},
     { "WRITE_BYTES",     "Bytes written"},
     { "WRITE_CALLS",     "Number of write calls"},
     { "WRITE_ERR",       "Number of write calls that resulted in an error"},
     { "WRITE_SHORT",     "Number of write calls that wrote less bytes than requested"},
-    { "WRITE_BLOCK_SIZE","Mean block size of writes"}
+    { "WRITE_BLOCK_SIZE","Mean block size of writes"},
+    { "WRITE_USEC",      "Real microseconds spent in writes"}
 };
 
 
@@ -99,12 +103,15 @@ ssize_t __read(int fd, void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted read(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
+  long long start_ts = PAPI_get_real_usec();
   retval = __read(fd,buf, count);
+  long long duration = PAPI_get_real_usec() - start_ts;
   int n = _appio_register_current[READ_CALLS]++; // read calls
   if (retval > 0) {
     _appio_register_current[READ_BLOCK_SIZE]= (n * _appio_register_current[READ_BLOCK_SIZE] + count)/(n+1); // mean size
-    _appio_register_current[READ_BYTES]+= retval; // read bytes
+    _appio_register_current[READ_BYTES] += retval; // read bytes
     if (retval < (int)count) _appio_register_current[READ_SHORT]++; // read short
+    _appio_register_current[READ_USEC] += duration;
   }
   if (retval < 0) _appio_register_current[READ_ERR]++; // read err
   if (retval == 0) _appio_register_current[READ_EOF]++; // read eof
@@ -115,12 +122,15 @@ size_t _IO_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
   size_t retval;
   SUBDBG("appio: intercepted fread(%p,%lu,%lu,%p)\n", ptr, (unsigned long) size, (unsigned long) nmemb, (void*) stream);
+  long long start_ts = PAPI_get_real_usec();
   retval = _IO_fread(ptr,size,nmemb,stream);
+  long long duration = PAPI_get_real_usec() - start_ts;
   int n = _appio_register_current[READ_CALLS]++; // read calls
   if (retval > 0) {
     _appio_register_current[READ_BLOCK_SIZE]= (n * _appio_register_current[READ_BLOCK_SIZE]+ size*nmemb)/(n+1);//mean size
     _appio_register_current[READ_BYTES]+= retval * size; // read bytes
     if (retval < nmemb) _appio_register_current[READ_SHORT]++; // read short
+    _appio_register_current[READ_USEC] += duration;
   }
 
   /* A value of zero returned means one of two things..*/
@@ -135,12 +145,15 @@ ssize_t __write(int fd, const void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted write(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
+  long long start_ts = PAPI_get_real_usec();
   retval = __write(fd,buf, count);
+  long long duration = PAPI_get_real_usec() - start_ts;
   int n = _appio_register_current[WRITE_CALLS]++; // write calls
   if (retval >= 0) {
     _appio_register_current[WRITE_BLOCK_SIZE]= (n * _appio_register_current[WRITE_BLOCK_SIZE] + count)/(n+1); // mean size
     _appio_register_current[WRITE_BYTES]+= retval; // write bytes
     if (retval < (int)count) _appio_register_current[WRITE_SHORT]++; // short write
+    _appio_register_current[WRITE_USEC] += duration;
   }
   if (retval < 0) _appio_register_current[WRITE_ERR]++; // err
   return retval;
@@ -150,12 +163,15 @@ size_t _IO_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
   size_t retval;
   SUBDBG("appio: intercepted fwrite(%p,%lu,%lu,%p)\n", ptr, (unsigned long) size, (unsigned long) nmemb, (void*) stream);
+  long long start_ts = PAPI_get_real_usec();
   retval = _IO_fwrite(ptr,size,nmemb,stream);
+  long long duration = PAPI_get_real_usec() - start_ts;
   int n = _appio_register_current[WRITE_CALLS]++; // write calls
   if (retval > 0) {
     _appio_register_current[WRITE_BLOCK_SIZE]= (n * _appio_register_current[WRITE_BLOCK_SIZE] + size*nmemb)/(n+1); // mean block size
     _appio_register_current[WRITE_BYTES]+= retval * size; // write bytes
     if (retval < nmemb) _appio_register_current[WRITE_SHORT]++; // short write
+    _appio_register_current[WRITE_USEC] += duration;
   }
   if (retval == 0) _appio_register_current[WRITE_ERR]++; // err
   return retval;

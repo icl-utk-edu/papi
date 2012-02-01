@@ -18,17 +18,19 @@ DESCRIPTION
 
     Event names
     -----------
-      "READ_BYTES"
-      "READ_CALLS"
-      "READ_ERR"
-      "READ_SHORT"
-      "READ_EOF"
-      "READ_BLOCK_SIZE"
-      "WRITE_BYTES"
-      "WRITE_CALLS"
-      "WRITE_ERR"
-      "WRITE_SHORT"
-      "WRITE_BLOCK_SIZE"
+      READ_BYTES
+      READ_CALLS
+      READ_ERR
+      READ_SHORT
+      READ_EOF
+      READ_BLOCK_SIZE
+      READ_USEC
+      WRITE_BYTES
+      WRITE_CALLS
+      WRITE_ERR
+      WRITE_SHORT
+      WRITE_BLOCK_SIZE
+      WRITE_USEC
 
     The component works by intercepting I/O system calls on Linux. At present
     the code uses a features available in libc on Linux, and is unlikely to
