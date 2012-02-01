@@ -20,7 +20,7 @@ AC_ARG_WITH(sensors_libdir,
              AC_CHECK_LIB([sensors], 
                           [sensors_init], 
                           [],				          
-                          [AC_MSG_ERROR([libsensors.a not found])])],
+                          [AC_MSG_ERROR([libsensors not found])])],
             [AC_MSG_ERROR([Component requires path to sensors library])])
 
 AC_SUBST(SENSORS_INCDIR)
