@@ -441,10 +441,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DEFGRN  		6       /**< Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /**< Granularity for an eventset */
 #define PAPI_DEF_MPX_NS     8       /**< Multiplexing/overflowing interval in ns, same as PAPI_DEF_ITIMER_NS */
-#define PAPI_EDGE_DETECT    9       /**< Count cycles of events if supported <not implemented> */
-#define PAPI_INVERT         10		/**< Invert count detect if supported <not implemented> */
+#define PAPI_EDGE_DETECT    9       /**< Count cycles of events if supported [not implemented] */
+#define PAPI_INVERT         10		/**< Invert count detect if supported [not implemented] */
 #define PAPI_MAX_MPX_CTRS	11      /**< Maximum number of counters we can multiplex */
-#define PAPI_PROFIL  		12      /**< Option to turn on the overflow/profil reporting software <not implemented> */
+#define PAPI_PROFIL  		12      /**< Option to turn on the overflow/profil reporting software [not implemented] */
 #define PAPI_PRELOAD 		13      /**< Option to find out the environment variable that can preload libraries */
 #define PAPI_CLOCKRATE  	14      /**< Clock rate in MHz */
 #define PAPI_MAX_HWCTRS 	15      /**< Number of physical hardware counters */

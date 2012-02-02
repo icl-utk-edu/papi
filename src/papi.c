@@ -15,8 +15,8 @@
 *	   london@cs.utk.edu
 * @author  Per Ekman
 *          pek@pdc.kth.se
-* Mods:    <Gary Mohr>
-*          <gary.mohr@bull.com>
+* Mods:    Gary Mohr
+*          gary.mohr@bull.com
 *
 * @brief Most of the low-level API is here.
 */
@@ -1567,7 +1567,7 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	handle_error( 1 );
  *	@endcode
  *
- *	@bugs
+ *	@bug
  *	If the user has set profile on an event with the call, then when destroying 
  *	the EventSet the memory allocated by will not be freed. 
  *	The user should turn off profiling on the Events before destroying the 
@@ -2413,7 +2413,7 @@ PAPI_write( int EventSet, long long *values )
  *	handle_error( 1 );
  *	@endcode
  *
- *	@bugs
+ *	@bug
  *	If the user has set profile on an event with the call, then when destroying 
  *	the EventSet the memory allocated by will not be freed. 
  *	The user should turn off profiling on the Events before destroying the 
@@ -5996,7 +5996,7 @@ PAPI_unlock( int lck )
  *	PAPI_is_initialized() returns the status of the PAPI library. 
  *	The PAPI library can be in one of four states, as described under RETURN VALUES. 
  *	@bug	If you don't call this before using any of the low level PAPI calls, your application could core dump.
- *	@See PAPI 
+ *	@see PAPI 
  *	@see PAPI_thread_init
  */
 int
