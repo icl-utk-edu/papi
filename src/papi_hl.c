@@ -182,7 +182,7 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
   *		Insufficient memory to complete the operation. 
   *
   * The first call to PAPI_flips() will initialize the PAPI High Level interface, 
-  * set up the counters to monitor @ref PAPI_FP_INS and @ref PAPI_TOT_CYC events 
+  * set up the counters to monitor PAPI_FP_INS and PAPI_TOT_CYC events 
   * and start the counters. 
   * Subsequent calls will read the counters and return total real time, 
   * total process time, total floating point instructions since the start of the 
@@ -251,7 +251,7 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
   *		Insufficient memory to complete the operation. 
   *
   * The first call to PAPI_flops() will initialize the PAPI High Level interface, 
-  * set up the counters to monitor @ref PAPI_FP_OPS and @ref PAPI_TOT_CYC events 
+  * set up the counters to monitor PAPI_FP_OPS and PAPI_TOT_CYC events 
   * and start the counters. 
   * Subsequent calls will read the counters and return total real time, 
   * total process time, total floating point instructions since the start of the 
