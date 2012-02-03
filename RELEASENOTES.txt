@@ -5,6 +5,109 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
+PAPI 4.2.1 RELEASE NOTES                                            01 Feb 2012
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP421.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+GENERAL NOTES
+===============================================================================
+This is a minor release of PAPI-C. It does not break binary or semantic 
+compatibility with previous versions.
+
+Visit the PAPI Reference pages for more information at:
+http://icl.cs.utk.edu/projects/papi/wiki/Main_Page
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+RECENT CHANGES IN PAPI 4.2.1
+===============================================================================
+Bug Fixes:
+----------
+	* solaris substrate set_domain call was added.
+	* multiplexing math errors were fixed in perf_events.c
+	* more multiplexing read path errors were identified and fixed
+	* src/linux-timer.c: Fix compilation warning if you specify
+	  --with-walltime=gettimeofday
+	* src/linux-timer.c: Fix the build on Linux systems using mmtimer
+	* src/linux-common.c: Update the linux MHz detection code to use
+	  bogoMIPS when there is no MHz field available in /proc/cpuinfo.
+	* src/: configure, configure.in: Fix a typo in the perfctr section;
+	  it was causing a machine to default to perfctr when it had no
+	  performance interface.  ( a centos vm image with a 2.6.18 kernel)
+	  Also checks that we actually have perfctr if we specify
+	  --with-perfctr.
+	* Fix SMP ARM issues reported by Harald Servat.
+	  Also, adds proper header dependency checking in the Rules files.
+	* src/ctests/api.c: Make the api test actually test PAPI_flops() as
+	  it claims to do, rather than PAPI_flips().
+	* src/papi_events.csv: Update the coreduo (not core2) events.  Most
+	  notably the FP events were wrong.
+	* src/papi_events.csv: Modify Intel Sandybridge PAPI_FP_OPS and
+	  PAPI_FP_INS events to not count x87 fp instructions.
+	  The problem is that the current predefines were made by adding 5
+	  events.  With the NMI watchdog stealing an event and/or
+	  hyperthreading reducing the number of available counters by half,
+	  we just couldn't fit.
+	  This now raises the potential for people using x87-compiled
+	  floating point on Sandybridge and getting 0 FP_OPS.  This is only
+	  likely if running a 32-bit kernel and *not* compiling your code
+	  with -msse.
+	  A long-term solution might be trying to find a better set of FP
+	  predefines for sandybridge.
+	* src/components/lmsensors/: Rules.lmsensors, configure.in: Fixed
+	  configure error message and rules link error for shared object
+	  linking. Thanks Will Cohen.
+
+Enhancements:
+-------------
+	* general doxygen cleanups
+	* cleanup output of overflow_allcounters for clarity in debugging
+	* updates to most recent (as of Feb 1) libpfm4
+	* remove now-opaque event codes from papi_native_avail
+	  and papi_xml_event_info
+	* src/: papi_internal.c Update the component initialization code 
+	  so that it can handle a PAPI ERROR return gracefully.  Previously 
+	  there was no way to indicate initialization failure besides just 
+	  setting num_native_events to 0.
+	 
+New Platforms:
+-------------
+ 	* src/libpfm4/lib/: pfmlib_amd64_fam11h.c, events/amd64_events_fam11h.h
+	  Support for AMD Family 11.
+	* src/libpfm4/lib/: pfmlib_amd64_fam12h.c, events/amd64_events_fam12h.h
+	  Support for AMD Family 12.
+	
+Deprecated Platforms:
+---------------------
+	* remove obsolete ACPI component
+	
+New / Improved Components:
+---------------
+	* PAPI CUDA component updated for CUDA / CUPTI 4.1.
+		* SetCudaDevice() now works with the latest CUDA 4.1 version.
+		* Auto-detection of CUDA version for backward compatibility.
+		* PAPI_read() now accumulates event values. This fixes a bug
+		in earlier versions.
+	* extensive updates and cleanups to the example and coretemp components.
+	* updates of net, lustre, and mx components
+
+Open Issues:
+-------------
+	* multiplex1.c was rewritten to expose a multiplexing bug in the perf_events
+	kernel (3.0.3) for MIPS
+	* src/components/lmsensors/: Latest versions of lmsensors are incompatible
+	  with current lmsensors component. Interface needs to be updated for forward
+	  compatibility.
+
+Experimental:
+-------------
+	* a new vmware component has been added to report a variety of soft events
+	  when running as a guest in a VMWare environment
+	
+
+===============================================================================
 PAPI 4.2.0 RELEASE NOTES                                            26 Oct 2011
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
