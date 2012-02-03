@@ -100,6 +100,10 @@ Open Issues:
 	* src/components/lmsensors/: Latest versions of lmsensors are incompatible
 	  with current lmsensors component. Interface needs to be updated for forward
 	  compatibility.
+	* There's a problem with broken overflow on POWER6 linux systems.
+	  We suspect a kernel problem, but don't know exactly which version(s)
+	  We're running a 2.6.36 kernel where the problem has been identified.
+	  It may be fixed in newer versions.
 
 Experimental:
 -------------
