@@ -15,7 +15,7 @@ __ 2. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
 
 __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
-	Doxyfile, Doxyfile-everything, Doxyfile.utils (PROJECT_NUMBER) ; and commit to cvs if needed.
+	Doxyfile-{html,man1,man3} (PROJECT_NUMBER) ; and commit to cvs if needed.
 
 -- 3a. On most icl machines:
 	export PATH=/mnt/scratch/sw/doxygen-1.7.4/bin:$PATH
@@ -26,8 +26,8 @@ __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makef
 	You will want to check if anything needs to be committed to cvs.
 
 -- 3c. Update the website docs; 
-	We use doxygen-full for this, 
-	$(papi_dir)/doc make clean doxygen-full
+	We use Doxyfile-html for this, 
+	$(papi_dir)/doc make clean html
 	rm -rf /silk/homes/icl/projectsdev/papi/docs/* 
 	cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
 	chmod -R 755 /silk/homes/icl/projectsdev/papi/docs

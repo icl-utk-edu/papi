@@ -9,25 +9,16 @@ USAGE
 =======================
 To invoke doxygen, 
    cd $(papi_dir)/doc
-   doxygen 
+   make (alternativly doxygen Doxyfile-{html,man1,man3}
 
-This command produces man-pages for the PAPI user-exposed api and data-structures. 
+This command produces documentation for the PAPI user-exposed api and data-structures. 
 
 There are several different configuration files are present:
-Doxyfile - the default config used when invoking doxygen, creates man-pages 
-	for api and user data-structures.
-Doxyfile-everything - Creates manpages for anything that looks like source code
-	under the src directory. 
-Doxyfile.html - Generates html documentation for user exposed api/data-structures.
-Doxyfile.utils - 
-
-doc/Doxyfile is the configuration file for doxygen.
-Really the only thing to pay attention to in Doxyfile is the INPUT variable,
-which controls which files are parsed by doxygen. Currently files to be
-documented are enumerated, but this can change (see commented
-out declaration to find every file in src and src/utils and lower, the 
-FILE_PATTERNS variable)
-
+Doxyfile-html - generates documentation for everything under src. This will
+take a long time to run, and generates north of 600 megs of files. Requires 
+the program dot, for dependency graphs. 
+Doxyfile-man1 - generates man-pages for the utilities. 
+Doxyfile-man3 - generates man-pages for the API, see papi.h
 
 
 Commenting the Code
@@ -79,18 +70,10 @@ int foo;	/**< This comment is about foo */
 
 TODO
 =======================
-Finish bringing the comments for the low level api up to date 
-(see papi.c:PAPI_destroy_eventset() for an idea of what the comments can look like )
-Taken from the man pages http://icl.cs.utk.edu/projects/papi/wiki/PAPIC:PAPI.3
-
 Doxygen provides options for [ab]using the preprocessor,
-Do we need to look into this?
-
-Fortran Documentation
+Do we need to look into this? Probably not more than we already do -J
 
 Document the ctests?
-
-Document a component/substrate
 
 See 
 http://www.stack.nl/~dimitri/doxygen/docblocks.html
