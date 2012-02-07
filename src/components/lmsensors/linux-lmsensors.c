@@ -179,8 +179,6 @@ LM_SENSORS_init_substrate(  )
 		return res;
 	}
 
-	fprintf( stderr, "Using libsensors version: %s\n", libsensors_version );
-
 	/* Create dyanmic events table */
 	NUM_EVENTS = detectSensors(  );
 
@@ -197,7 +195,6 @@ LM_SENSORS_init_substrate(  )
 		return EXIT_FAILURE;
 	}
 
-	fprintf( stderr, "Number of events created: %d\n", NUM_EVENTS );
 	return ( PAPI_OK );
 }
 
