@@ -4,16 +4,10 @@
 
 /** 
  * @file    linux-cuda.h
- * CVS:     $Id$
  * @author  Heike Jagode (in collaboration with Robert Dietrich, TU Dresden)
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
- * @ingroup papi_components 		
- * 
- * CUDA component 
- * 
- * Tested version of CUPTI (CUDA Tools SDK 4.0)
+ *
+ * @ingroup papi_components
  *
  * @brief
  *  This file has the source code for a component that enables PAPI-C to 

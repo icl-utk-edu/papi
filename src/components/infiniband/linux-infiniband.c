@@ -4,12 +4,21 @@
 
 /** 
  * @file    linux-infiniband.c
- * CVS:     $Id$
  * @author  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
- * @brief A component for Infiniband devices.
+ *
+ * @ingroup papi_components 		
+ * 
+ * InfiniBand component 
+ * 
+ * Tested version of OFED: 1.4
+ *
+ * @brief
+ *  This file has the source code for a component that enables PAPI-C to 
+ *  access hardware monitoring counters for InfiniBand devices through the  
+ *  OFED library. Since a new interface was introduced with OFED version 1.4 
+ *  (released Dec 2008), the current InfiniBand component does not support 
+ *  OFED versions < 1.4.
  */
 
 #include "papi.h"
