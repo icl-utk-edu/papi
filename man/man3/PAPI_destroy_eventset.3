@@ -1,4 +1,4 @@
-.TH "PAPI_destroy_eventset" 3 "Fri Nov 4 2011" "Version 4.2.0.1" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_destroy_eventset" 3 "Tue Feb 7 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -49,7 +49,11 @@ Empty and destroy an EventSet.
 .PP
 .RE
 .PP
+\fBBug\fP
+.RS 4
 If the user has set profile on an event with the call, then when destroying the EventSet the memory allocated by will not be freed. The user should turn off profiling on the Events before destroying the EventSet to prevent this behavior.
+.RE
+.PP
 .PP
 \fBSee also:\fP
 .RS 4
