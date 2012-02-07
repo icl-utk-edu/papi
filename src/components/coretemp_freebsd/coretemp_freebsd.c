@@ -385,7 +385,9 @@ int coretemp_shutdown (hwd_context_t * ctx)
 
 
 /** This function sets various options in the substrate
+  @param ctx unused
   @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
+  @param option unused
  */
 int coretemp_ctl (hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
