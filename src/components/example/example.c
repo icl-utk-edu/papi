@@ -455,11 +455,13 @@ _example_shutdown( hwd_context_t *ctx )
 
 
 /** This function sets various options in the substrate
-  @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, 
+  @param[in] ctx -- hardware context
+  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, 
                         PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
+  @param[in] option -- options to be set
  */
 int
-_example_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
+_example_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
 
         (void) ctx;
