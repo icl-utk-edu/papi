@@ -275,7 +275,7 @@ failure.
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
 #define PAPI_HIGH_LEVEL_INITED 	2       /* High level has called library init */
 #define PAPI_THREAD_LEVEL_INITED 4      /* Threads have been inited */
-/* @} */
+/** @} */
 
 /** @internal 
 @defgroup consts Constants
@@ -300,7 +300,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_HWSPEC  0x80000000     /**< Flag that indicates we are not reading CPU like stuff.
                                            The lower 31 bits can be decoded by the substrate into something
                                            meaningful. i.e. SGI HUB counters */
-/* @} */
+/** @} */
 
 /** @internal 
  *	@defgroup thread_defns Thread Definitions 
@@ -317,7 +317,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
 #define PAPI_TLS_NUM		PAPI_NUM_TLS
 #define PAPI_TLS_ALL_THREADS	0x10
-/* @} */
+/** @} */
 
 /** @internal 
  *	@defgroup locking_defns Locking Mechanisms defines 
@@ -328,7 +328,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_LOCK_USR1          	PAPI_USR1_LOCK
 #define PAPI_LOCK_USR2          	PAPI_USR2_LOCK
 #define PAPI_LOCK_NUM			PAPI_NUM_LOCK
-/* @} */
+/** @} */
 
 /* You really shouldn't use this, use PAPI_get_opt(PAPI_MAX_MPX_CTRS) */
 #define PAPI_MPX_DEF_DEG 32			   /* Maximum number of counters we can mpx */
@@ -345,7 +345,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_FREESCALE 6
 #define PAPI_VENDOR_ARM     7
 #define PAPI_VENDOR_MIPS    8
-/* @} */
+/** @} */
 
 /** @internal 
  *	@defgroup granularity_defns Granularity definitions 
@@ -358,7 +358,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_SYS     0x8    /**< PAPI counters for the current CPU, are you bound? */
 #define PAPI_GRN_SYS_CPU 0x10   /**< PAPI counters for all CPU's individually */
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
-/* @} */
+/** @} */
 
 #if 0
 /* #define PAPI_GRN_DEFAULT PAPI_GRN_THR NOW DEFINED BY SUBSTRATE */
@@ -387,7 +387,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_MULTIPLEXING 0x40  /**< EventSet has multiplexing enabled */
 #define PAPI_ATTACHED	  0x80  /**< EventSet is attached to another thread/process */
 #define PAPI_CPU_ATTACHED 0x100 /**< EventSet is attached to a specific cpu (not counting thread of execution) */
-/* @} */
+/** @} */
 
 /** @internal 
 	@defgroup error_predef Error predefines 
@@ -395,7 +395,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_QUIET       0      /**< Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /**< Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /**< Option to automatically report any return codes < 0 to stderr and exit. */
-/* @} */
+/** @} */
 
 /** @internal 
 	@defgroup profile_defns Profile definitions 
@@ -411,20 +411,20 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_DATA_EAR  0x80       /**< Use data address register profiling */
 #define PAPI_PROFIL_INST_EAR  0x100      /**< Use instruction address register profiling */
 #define PAPI_PROFIL_BUCKETS   (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64)
-/* @} */
+/** @} */
 
-/* @defgroup overflow_defns Overflow definitions */
-/* @{ */
+/* @defgroup overflow_defns Overflow definitions 
+   @{ */
 #define PAPI_OVERFLOW_FORCE_SW 0x40	/**< Force using Software */
 #define PAPI_OVERFLOW_HARDWARE 0x80	/**< Using Hardware */
-/* @} */
+/** @} */
 
 /** @internal 
   *	@defgroup mpx_defns Multiplex flags definitions 
   * @{ */
 #define PAPI_MULTIPLEX_DEFAULT	0x0	/**< Use whatever method is available, prefer kernel of course. */
 #define PAPI_MULTIPLEX_FORCE_SW 0x1	/**< Force PAPI multiplexing instead of kernel */
-/* @} */
+/** @} */
 
 /** @internal 
 	@defgroup option_defns Option definitions 
@@ -474,7 +474,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_HUGE_STR_LEN     1024      /* This should be defined in terms of a system parameter */
 
 #define PAPI_DERIVED           0x1      /* Flag to indicate that the event is derived */
-/* @} */
+/** @} */
 
 /** Possible values for the 'modifier' parameter of the PAPI_enum_event call.
    A value of 0 (PAPI_ENUM_EVENTS) is always assumed to enumerate ALL events on every platform.
@@ -529,7 +529,7 @@ enum {
 
 #define PAPI_NTV_GROUP_AND_MASK		0x00FF0000	/* bits occupied by group number */
 #define PAPI_NTV_GROUP_SHIFT		16			/* bit shift to encode group number */
-/* @} */
+/** @} */
 
 /* 
 The Low Level API
@@ -1028,7 +1028,7 @@ typedef char* PAPI_user_defined_events_file_t;
    int   PAPI_unregister_thread(void); /**< inform PAPI that a previously registered thread is disappearing */
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
 
-   /* @} */
+   /** @} */
    /* These functions are implemented in the hwi layers, but not the hwd layers.
       They shouldn't be exposed to the UI until they are needed somewhere.
    int PAPI_add_pevent(int EventSet, int code, void *inout);
@@ -1053,7 +1053,7 @@ typedef char* PAPI_user_defined_events_file_t;
    int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips); /**< simplified call to get Mflips/s (floating point instruction rate), real and processor time */
    int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
    int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
-/* @} */
+/** @} */
 #ifdef __cplusplus
 }
 #endif
