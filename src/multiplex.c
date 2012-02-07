@@ -1,5 +1,5 @@
 /** 
- * @file    multiplex.c
+ * @file    
  * CVS:     $Id$
  * @author  Philip Mucci
  *          mucci@cs.utk.edu
