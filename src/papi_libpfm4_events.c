@@ -44,7 +44,7 @@ static pfm_pmu_info_t default_pmu;
 /** @class  find_existing_event
  *  @brief  looks up an event, returns it if it exists
  *
- *  @param[name] 
+ *  @param[in] name 
  *             -- name of the event
  *
  *  @returns returns a struct native_event_t *, or NULL if event not found
@@ -112,7 +112,7 @@ static struct native_event_t *find_existing_event_by_number(int eventnum) {
 /** @class  find_event_no_aliases
  *  @brief  looks up an event, avoiding aliases, returns it if it exists
  *
- *  @param[name] 
+ *  @param[in] name
  *             -- name of the event
  *
  *  @returns returns libpfm4 number of the event or PFM_ERR_NOTFOUND
@@ -601,7 +601,7 @@ static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode) {
  *  @param[in] current
  *             -- number of current highest umask.  -1 indicates
  *                start from scratch.
- *  @parm[out] umask_name
+ *  @param[out] umask_name
  *             -- name of next umask
  *
  *  @returns returns next umask value or a libpfm4 error code
