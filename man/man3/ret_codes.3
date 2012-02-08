@@ -1,4 +1,4 @@
-.TH "Return Codes" 3 "Tue Feb 7 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "Return Codes" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -96,12 +96,6 @@ Return Codes \-
 .ti -1c
 .RI "#define \fBPAPI_THREAD_LEVEL_INITED\fP   4"
 .br
-.ti -1c
-.RI "#define \fBPAPI_OVERFLOW_FORCE_SW\fP   0x40"
-.br
-.ti -1c
-.RI "#define \fBPAPI_OVERFLOW_HARDWARE\fP   0x80"
-.br
 .in -1c
 .SH "Detailed Description"
 .PP 
@@ -134,8 +128,6 @@ Return Codes All of the functions contained in the PerfAPI return standardized e
 .SS "#define PAPI_ESYS   -3"A System/C library call failed 
 .SS "#define PAPI_NUM_ERRORS   25"Number of error messages specified in this API 
 .SS "#define PAPI_OK   0"No error 
-.SS "#define PAPI_OVERFLOW_FORCE_SW   0x40"Force using Software 
-.SS "#define PAPI_OVERFLOW_HARDWARE   0x80"Using Hardware 
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for PAPI-C from the source code.
