@@ -27,6 +27,7 @@ __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makef
 
 -- 3c. Update the website docs; 
 	We use Doxyfile-html for this, 
+	newgrp papi		# changes your defacto group to papi (starts a new shell)
 	$(papi_dir)/doc make clean html
 	rm -rf /silk/homes/icl/projectsdev/papi/docs/* 
 	cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
