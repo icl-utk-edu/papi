@@ -1,4 +1,4 @@
-Release Procedure for PAPI  Nov 02, 2011
+Release Procedure for PAPI  Feb 08, 2012
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -24,6 +24,7 @@ __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makef
 
 -- 3b. Rebuild the doxygen manpages (  cd doc && make && make install )
 	You will want to check if anything needs to be committed to cvs.
+	(Usually the $(papi_dir)/man/man1 and man3 directories)
 
 -- 3c. Update the website docs; 
 	We use Doxyfile-html for this, 

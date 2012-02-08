@@ -5,7 +5,7 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
-PAPI 4.2.1 RELEASE NOTES                                            01 Feb 2012
+PAPI 4.2.1 RELEASE NOTES                                            08 Feb 2012
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
 the ChangeLogP421.txt file for keywords of interest or go directly to the PAPI

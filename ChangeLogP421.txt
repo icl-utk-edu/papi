@@ -1,3 +1,66 @@
+2012-02-08
+
+	* man/... : update man pages one more time for 4.2.1
+	  release
+
+	* release_procedure.txt: Make sure generated html has papi group
+	  id.
+
+2012-02-07
+
+	* src/multiplex.c: Fix the @file matching multiple files warning.
+
+	* src/components/README: Cleanup doxygen errors.
+
+	* doc/Doxyfile-html: Typo introduced by the last commit.
+
+	* doc/Doxyfile-html: Exclude linux-bgp.c from doxygen.
+
+	* doc/Doxyfile-html: Make sure the component README file gets
+	  included in doxygen.
+
+	* src/components/coretemp_freebsd/coretemp_freebsd.c: Cleanup
+	  doxygen warnings in freebsd coretemp component.
+
+	* src/papi.h: Cleanup some doxygen warnings related to the
+	  groupings.
+
+	* src/components/example/example.c: fix doxygen warning in the
+	  example component
+
+	* doc/Doxyfile-html: Remove some cruft from doxygen config file.
+
+	  This addresses the warning about dot not found at /sw/bin/dot .
+
+	* src/components/: infiniband/linux-infiniband.c,
+	  infiniband/linux-infiniband.h, cuda/linux-cuda.c,
+	  cuda/linux-cuda.h: Cleaned up some doxygen issues
+
+	* src/components/lmsensors/linux-lmsensors.c: Removed long
+	  forgotten debug outputs
+
+	* src/papi_libpfm4_events.c: Fix minor doxygen typos.
+
+	* src/components/vmware/vmware.c: Add params for doxygen
+
+	* man/... : update man pages
+
+2012-02-06
+
+	* doc/Doxyfile-man1: Fix a typo in a doxygen config file.
+
+2012-02-03
+
+	* release_procedure.txt, doc/Doxyfile, doc/Doxyfile-everything,
+	  doc/Doxyfile-html, doc/Doxyfile.utils, doc/Doxyfile-man1,
+	  doc/Doxyfile-man3, doc/Makefile, doc/doxygen_procedure.txt:
+	  Rework the doxygen configuration files.
+
+	* RELEASENOTES.txt: Update for the impending release.
+
+	* ChangeLogP421.txt, RELEASENOTES.txt: Updates for the impending
+	  release.
+
 2012-02-02
 
 	* src/: papi.c, papi.h: Minor tweaks for doxygen errors
