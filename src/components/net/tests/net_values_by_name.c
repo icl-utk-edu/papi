@@ -81,7 +81,10 @@ int main (int argc, char **argv)
     /* generate some traffic
      * the operation should take more than one second in order
      * to guarantee that the network counters are updated */
-    system("ping -c 4 " PINGADDR " > /dev/null");
+    retval = system("ping -c 4 " PINGADDR " > /dev/null");
+    if (retval < 0) {
+		test_fail(__FILE__, __LINE__, "Unable to start ping", retval);
+	}
 
     retval = PAPI_stop( EventSet, event_value );
     if (retval != PAPI_OK) {
