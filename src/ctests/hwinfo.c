@@ -17,7 +17,7 @@ main( int argc, char **argv )
 
 	retval =
 		papi_print_header
-		( "Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n", 0,
+		( "Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n", 
 		  &hwinfo );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );

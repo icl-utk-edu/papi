@@ -18,8 +18,7 @@ static int TEST_WARN = 0;
 	This may not be the best place for it to live, but it works for now.
  */
 int
-papi_print_header( char *prompt, int event_flag,
-				   const PAPI_hw_info_t ** hwinfo )
+papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 {
 	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
 		return ( PAPI_ESBSTR );
@@ -52,19 +51,16 @@ papi_print_header( char *prompt, int event_flag,
 		printf( "Sockets                  : %d\n", ( *hwinfo )->sockets );
 	if ( ( *hwinfo )->nnodes > 0 )
 		printf( "NUMA Nodes               : %d\n", ( *hwinfo )->nnodes );
-	printf( "CPU's per Node           : %d\n", ( *hwinfo )->ncpu );
-	printf( "Total CPU's              : %d\n", ( *hwinfo )->totalcpus );
+	printf( "CPUs per Node            : %d\n", ( *hwinfo )->ncpu );
+	printf( "Total CPUs               : %d\n", ( *hwinfo )->totalcpus );
 	printf( "Number Hardware Counters : %d\n",
 			PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) );
 	printf( "Max Multiplex Counters   : %d\n",
 			PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL ) );
 	printf
 		( "--------------------------------------------------------------------------------\n" );
-	if ( event_flag )
-		printf
-			( "The following correspond to fields in the PAPI_event_info_t structure.\n" );
 	printf( "\n" );
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 

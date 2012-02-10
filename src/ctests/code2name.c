@@ -28,7 +28,7 @@ main( int argc, char **argv )
 	retval =
 		papi_print_header
 		( "Test case code2name.c: Check limits and indexing of event tables.\n",
-		  0, &hwinfo );
+		  &hwinfo );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 

@@ -60,7 +60,7 @@ struct test_events_t {
 
 extern struct test_events_t test_events[];
 
-int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwinfo);
+int papi_print_header (char *prompt, const PAPI_hw_info_t **hwinfo);
 void validate_string(char *name, char *s);
 void *get_overflow_address(void *context);
 void free_test_space(long long ** values, int num_tests);
