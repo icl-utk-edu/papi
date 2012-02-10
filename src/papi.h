@@ -356,7 +356,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_PROC    0x2    /**< PAPI counters for each individual process */
 #define PAPI_GRN_PROCG   0x4    /**< PAPI counters for each individual process group */
 #define PAPI_GRN_SYS     0x8    /**< PAPI counters for the current CPU, are you bound? */
-#define PAPI_GRN_SYS_CPU 0x10   /**< PAPI counters for all CPU's individually */
+#define PAPI_GRN_SYS_CPU 0x10   /**< PAPI counters for all CPUs individually */
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
 /** @} */
 
@@ -793,7 +793,7 @@ typedef char* PAPI_user_defined_events_file_t;
       int cores;                    /**< Number of cores per socket */
       int sockets;                  /**< Number of sockets */
       int nnodes;                   /**< Total Number of NUMA Nodes */
-      int totalcpus;                /**< Total number of CPU's in the entire system */
+      int totalcpus;                /**< Total number of CPUs in the entire system */
       int vendor;                   /**< Vendor number of CPU */
       char vendor_string[PAPI_MAX_STR_LEN];     /**< Vendor string of CPU */
       int model;                    /**< Model number of CPU */

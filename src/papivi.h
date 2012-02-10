@@ -214,9 +214,9 @@ typedef struct _papi_mh_info
 */
 typedef struct _papi3_hw_info
 {
-	int ncpu;						   /* Number of CPU's in an SMP Node */
+	int ncpu;						   /* Number of CPUs in an SMP Node */
 	int nnodes;						   /* Number of Nodes in the entire system */
-	int totalcpus;					   /* Total number of CPU's in the entire system */
+	int totalcpus;					   /* Total number of CPUs in the entire system */
 	int vendor;						   /* Vendor number of CPU */
 	char vendor_string[PAPI_MAX_STR_LEN];	/* Vendor string of CPU */
 	int model;						   /* Model number of CPU */

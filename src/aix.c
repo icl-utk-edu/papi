@@ -778,7 +778,7 @@ _aix_init_substrate( int cidx )
 	if ( retval )
 		return ( retval );
 
-	SUBDBG( "Found %d %s %s CPU's at %f Mhz.\n",
+	SUBDBG( "Found %d %s %s CPUs at %f Mhz.\n",
 			_papi_hwi_system_info.hw_info.totalcpus,
 			_papi_hwi_system_info.hw_info.vendor_string,
 			_papi_hwi_system_info.hw_info.model_string,

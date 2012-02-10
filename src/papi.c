@@ -5037,7 +5037,7 @@ PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
  *	@arg PAPI_GRN_PROC	-- Count each individual process
  *	@arg PAPI_GRN_PROCG	-- Count each individual process group
  *	@arg PAPI_GRN_SYS	-- Count the current CPU
- *	@arg PAPI_GRN_SYS_CPU	-- Count all CPU's individually
+ *	@arg PAPI_GRN_SYS_CPU	-- Count all CPUs individually
  *	@arg PAPI_GRN_MIN	-- The finest available granularity
  *	@arg PAPI_GRN_MAX	-- The coarsest available granularity 
  *  @manonly
@@ -5093,7 +5093,7 @@ PAPI_set_granularity( int granularity )
  *	@arg PAPI_GRN_PROC	Count each individual process
  *	@arg PAPI_GRN_PROCG	Count each individual process group
  *	@arg PAPI_GRN_SYS	Count the current CPU
- *	@arg PAPI_GRN_SYS_CPU	Count all CPU's individually
+ *	@arg PAPI_GRN_SYS_CPU	Count all CPUs individually
  *	@arg PAPI_GRN_MIN	The finest available granularity
  *	@arg PAPI_GRN_MAX	The coarsest available granularity
  *
@@ -5680,7 +5680,7 @@ PAPI_get_shared_lib_info( void )
  		exit(1);
  		if ((hwinfo = PAPI_get_hardware_info()) == NULL)
  		exit(1);
- 		printf("%d CPU's at %f Mhz.\en",hwinfo->totalcpus,hwinfo->mhz);
+ 		printf("%d CPUs at %f Mhz.\en",hwinfo->totalcpus,hwinfo->mhz);
  *	@endcode	
  *
  *	@see PAPI_hw_info_t

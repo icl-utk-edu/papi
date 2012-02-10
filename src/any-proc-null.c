@@ -35,7 +35,7 @@ _internal_set_domain( hwd_control_state_t * this_state, int domain )
  * PAPI_GRN_PROC are PAPI counters for each individual process
  * PAPI_GRN_PROCG are PAPI counters for each individual process group
  * PAPI_GRN_SYS are PAPI counters for the current CPU
- * PAPI_GRN_SYS_CPU are PAPI counters for all CPU's individually
+ * PAPI_GRN_SYS_CPU are PAPI counters for all CPUs individually
  *
  * If the function works return PAPI_OK, if one of the granularities is
  * not chosen then return PAPI_EINVAL
@@ -194,7 +194,7 @@ _papi_hwd_init_global( void )
 	if ( retval )
 		return ( retval );
 
-	DBG( ( stderr, "Found %d %s %s CPU's at %f Mhz.\n",
+	DBG( ( stderr, "Found %d %s %s CPUs at %f Mhz.\n",
 		   _papi_system_info.hw_info.totalcpus,
 		   _papi_system_info.hw_info.vendor_string,
 		   _papi_system_info.hw_info.model_string,

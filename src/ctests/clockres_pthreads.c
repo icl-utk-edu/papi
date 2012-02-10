@@ -73,8 +73,8 @@ main( int argc, char **argv )
 
 	if ( !TESTS_QUIET ) {
 		printf( "Test case: Clock latency and resolution.\n" );
-		printf( "Note: Virtual timers are proportional to # CPU's.\n" );
-		printf( "-------------------------------------------------\n" );
+		printf( "Note: Virtual timers are proportional to # CPUs.\n" );
+		printf( "------------------------------------------------\n" );
 	}
 
 	pthread_attr_init( &attr );
