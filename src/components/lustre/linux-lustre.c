@@ -148,16 +148,18 @@ addLustreFS( const char *name,
 
 	fs->proc_file=strdup(procpath_general);
 	fff = fopen( procpath_general, "r" );
-	if ( fs->proc_file == NULL ) {
+	if ( fff == NULL ) {
 	  SUBDBG("can not open '%s'\n", procpath_general );
+	  free(fs);
 	  return PAPI_ESBSTR;
 	}
 	fclose(fff);
 
 	fs->proc_file_readahead = strdup(procpath_readahead);
 	fff = fopen( procpath_readahead, "r" );
-	if ( fs->proc_file_readahead == NULL ) {
+	if ( fff == NULL ) {
 	  SUBDBG("can not open '%s'\n", procpath_readahead );
+	  free(fs);
 	  return PAPI_ESBSTR;
 	}
 	fclose(fff);
@@ -191,6 +193,7 @@ addLustreFS( const char *name,
 
 		last->next = fs;
 	}
+	free(fs);
 	return PAPI_OK;
 }
 
@@ -286,41 +289,42 @@ read_lustre_counter( )
 {
 	lustre_fs *fs = root_lustre_fs;
 	FILE *fff;
-
-        char buffer[BUFSIZ];
+	char buffer[BUFSIZ];
 
 	while ( fs != NULL ) {
 
 	  /* read values from stats file */
 	  fff=fopen(fs->proc_file,"r" );
-	  
-	  while(1) {
-	    if (fgets(buffer,BUFSIZ,fff)==NULL) break;
-
-	    if (strstr( buffer, "write_bytes" )) {
-	      sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->write_cntr->value);
-	      SUBDBG("Read %lld write_bytes\n",fs->write_cntr->value);
-	    }
-
-	    if (strstr( buffer, "read_bytes" )) {
-	      sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->read_cntr->value);
-	      SUBDBG("Read %lld read_bytes\n",fs->read_cntr->value);
-	    }
+	  if (fff != NULL) {
+		  while(1) {
+			if (fgets(buffer,BUFSIZ,fff)==NULL) break;
+	
+			if (strstr( buffer, "write_bytes" )) {
+			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->write_cntr->value);
+			  SUBDBG("Read %lld write_bytes\n",fs->write_cntr->value);
+			}
+	
+			if (strstr( buffer, "read_bytes" )) {
+			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->read_cntr->value);
+			  SUBDBG("Read %lld read_bytes\n",fs->read_cntr->value);
+			}
+		  }
+		  fclose(fff);
 	  }
-	  fclose(fff);
 
 	  fff=fopen(fs->proc_file_readahead,"r");
-	  while(1) {
-	    if (fgets(buffer,BUFSIZ,fff)==NULL) break;
-
-	    if (strstr( buffer, "read but discarded")) {
-	       sscanf(buffer,"%*s %*s %*s %lld",&fs->readahead_cntr->value);
-	       SUBDBG("Read %lld discared\n",fs->readahead_cntr->value);
-	       break;
-	    }
-
+	  if (fff != NULL) {
+		  while(1) {
+			if (fgets(buffer,BUFSIZ,fff)==NULL) break;
+	
+			if (strstr( buffer, "read but discarded")) {
+			   sscanf(buffer,"%*s %*s %*s %lld",&fs->readahead_cntr->value);
+			   SUBDBG("Read %lld discared\n",fs->readahead_cntr->value);
+			   break;
+			}
+	  	  }
+		  fclose(fff);
 	  }
-
 	  fs = fs->next;
 	}
 }
@@ -764,6 +768,7 @@ papi_vector_t _lustre_vector = {
   .ntv_code_to_descr = _lustre_ntv_code_to_descr,
 
 };
+
 
 
 

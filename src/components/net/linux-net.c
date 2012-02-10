@@ -128,12 +128,13 @@ generateNetEventList( void )
     for (i=0; i<2; i++) {
         retval = fgets (line, NET_PROC_MAX_LINE, fin);
         if (retval == NULL) {
+        	fclose(fin);
             SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
             return 0;
         }
     }
 
-    while ((retval = fgets (line, NET_PROC_MAX_LINE, fin)) == line) {
+    while ((fgets (line, NET_PROC_MAX_LINE, fin)) == line) {
 
         /* split the interface name from the 16 counters */
         retval = strstr(line, ":");
@@ -211,6 +212,7 @@ read_net_counters( long long *values )
     if (fin == NULL) {
         SUBDBG("Can't find %s, are you sure the /proc file-system is mounted?\n",
            NET_PROC_FILE);
+        fclose(fin);
         return NET_INVALID_RESULT;
     }
 
@@ -223,7 +225,7 @@ read_net_counters( long long *values )
         }
     }
 
-    while ((retval = fgets (line, NET_PROC_MAX_LINE, fin)) == line) {
+    while ((fgets (line, NET_PROC_MAX_LINE, fin)) == line) {
 
         /* split the interface name from its 16 counters */
         retval = strstr(line, ":");
@@ -306,9 +308,9 @@ _net_init_substrate( int cidx  )
     if ( is_initialized )
         return PAPI_OK;
 
-    memset(_net_register_start, NET_MAX_COUNTERS,
+    memset(_net_register_start, (long long)NET_MAX_COUNTERS,
                 sizeof(_net_register_start[0]));
-    memset(_net_register_current, NET_MAX_COUNTERS,
+    memset(_net_register_current, (long long)NET_MAX_COUNTERS,
                 sizeof(_net_register_current[0]));
 
     is_initialized = 1;

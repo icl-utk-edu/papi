@@ -237,7 +237,12 @@ main( int argc, char **argv )
 	papi_init( argc, argv );
 
 	for ( i = 2; i < argc; i++ ) {
-		PAPI_event_name_to_code( argv[i], &pevent );
+		retval = PAPI_event_name_to_code( argv[i], &pevent );
+		if ( retval != PAPI_OK ) {
+			fprintf( stderr, "Event %s can't be found\n",
+					 argv[i] );
+			exit( 1 );
+		}
 		retval = PAPI_add_event( EventSet, pevent );
 		if ( retval != PAPI_OK ) {
 			fprintf( stderr, "Event %s can't be counted with others\n",

@@ -24,12 +24,10 @@ detectSensors( void )
 			  sensors_get_detected_chips( NULL, &chip_nr ) ) != NULL ) {
 		int a = 0, b;
 		const sensors_feature *feature;
-		const sensors_subfeature *sub;
 
 		while ( ( feature = sensors_get_features( chip_name, &a ) ) ) {
 			b = 0;
-			while ( ( sub =
-					  sensors_get_all_subfeatures( chip_name, feature,
+			while ( ( sensors_get_all_subfeatures( chip_name, feature,
 												   &b ) ) ) {
 				id++;
 			}

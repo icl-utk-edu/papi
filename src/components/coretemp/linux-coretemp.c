@@ -276,6 +276,7 @@ generateEventList(char *base_dir)
 	     count++;
 
 	  }
+	  closedir(d);
 	 }
        }
     }

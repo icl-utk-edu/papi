@@ -1334,8 +1334,6 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
       case 3: MEMDBG("L%d Unified Cache\n",cache_level); 
 	c->type=PAPI_MH_TYPE_UNIFIED;
 	break;
-      case 0: break;
-    default: MEMDBG("Unknown Cache Type\n");  
     }
      
     if (cache_selfinit) MEMDBG("\tSelf-init\n");
