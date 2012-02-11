@@ -521,11 +521,11 @@ _papi_hwi_remove_EventSet( EventSetInfo_t * ESI )
 
 	i = ESI->EventSetIndex;
 
+	_papi_hwi_lock( INTERNAL_LOCK );
+
 	_papi_hwi_free_EventSet( ESI );
 
 	/* do bookkeeping for PAPI_EVENTSET_MAP */
-
-	_papi_hwi_lock( INTERNAL_LOCK );
 
 	map->dataSlotArray[i] = NULL;
 	map->availSlots++;

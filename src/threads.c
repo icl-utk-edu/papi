@@ -387,17 +387,26 @@ static int _papi_hwi_thread_free_eventsets(long tid) {
 
    master = _papi_hwi_lookup_thread( tid );
 
-   /* do we need locking around this? */
+   _papi_hwi_lock( INTERNAL_LOCK );
+
    for( i = 0; i < map->totalSlots; i++ ) {
       ESI = map->dataSlotArray[i];
       if ( ( ESI ) && (ESI->master!=NULL) ) {
 
 	 if ( ESI->master == master ) {
 	    THRDBG("Attempting to remove %d from tid %ld\n",ESI->EventSetIndex,tid);
-	    _papi_hwi_remove_EventSet(ESI);
+
+	    /* Code copied from _papi_hwi_remove_EventSet(ESI);      */
+            /* We can't just call that, as it uses INTERNAL_LOCK too */
+	    _papi_hwi_free_EventSet( ESI );
+	    map->dataSlotArray[i] = NULL;
+	    map->availSlots++;
+	    map->fullSlots--;
 	 } 
       }
    }
+
+   _papi_hwi_unlock( INTERNAL_LOCK );
 
    return PAPI_OK;
 }
