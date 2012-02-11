@@ -79,7 +79,7 @@ _windows_get_system_info( papi_mdi_t *mdi ) {
 	if ( retval )
 		return retval;
 
-	SUBDBG( "Found %d %s(%d) %s(%d) CPU's at %f Mhz, clock %d Mhz.\n",
+	SUBDBG( "Found %d %s(%d) %s(%d) CPUs at %f Mhz, clock %d Mhz.\n",
 			mdi->hw_info.totalcpus,
 			mdi->hw_info.vendor_string,
 			mdi->hw_info.vendor, mdi->hw_info.model_string, mdi->hw_info.model,
