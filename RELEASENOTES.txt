@@ -5,7 +5,7 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
-PAPI 4.2.1 RELEASE NOTES                                            08 Feb 2012
+PAPI 4.2.1 RELEASE NOTES                                            13 Feb 2012
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
 the ChangeLogP421.txt file for keywords of interest or go directly to the PAPI
@@ -59,6 +59,23 @@ Bug Fixes:
 	* src/components/lmsensors/: Rules.lmsensors, configure.in: Fixed
 	  configure error message and rules link error for shared object
 	  linking. Thanks Will Cohen.
+	* src/components/lmsensors/linux-lmsensors.h: Added missing string
+	  header
+	* src/components/net/tests/: net_values_by_code.c,
+	  net_values_by_name.c: Apply patch suggested by Will Cohen to
+	  check for system return values.
+	* src/Makefile.inc: Patch to cleanup dependencies, allowing for
+	  parallel makes.  Patch due to Will Cohen from redhat
+	* src/: papi_internal.c, threads.c: Fix two race
+	  conditions that are probably the cause of the pthrtough
+	  double-free error.
+	  When freeing a thread, we remove and free all eventsets belonging
+	  to that thread.  This could race with the thread itself removing
+	  the evenset, causing some ESI fields to be freed twice.
+	  The problem was found by using the Valgrind 3.8 Helgrind tool
+	    valgrind --tool=helgrind --free-is-write=yes ctests/pthrtough
+	  In order for Helgrind to work, I had to temporarily modify PAPI
+	  to use POSIX pthread mutexes for locking.
 
 Enhancements:
 -------------
