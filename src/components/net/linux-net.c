@@ -212,7 +212,6 @@ read_net_counters( long long *values )
     if (fin == NULL) {
         SUBDBG("Can't find %s, are you sure the /proc file-system is mounted?\n",
            NET_PROC_FILE);
-        fclose(fin);
         return NET_INVALID_RESULT;
     }
 
@@ -221,6 +220,7 @@ read_net_counters( long long *values )
         retval = fgets (line, NET_PROC_MAX_LINE, fin);
         if (retval == NULL) {
             SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
+			fclose(fin);
             return 0;
         }
     }
@@ -308,10 +308,10 @@ _net_init_substrate( int cidx  )
     if ( is_initialized )
         return PAPI_OK;
 
-    memset(_net_register_start, (long long)NET_MAX_COUNTERS,
-                sizeof(_net_register_start[0]));
-    memset(_net_register_current, (long long)NET_MAX_COUNTERS,
-                sizeof(_net_register_current[0]));
+    memset(_net_register_start, 0,
+    		NET_MAX_COUNTERS*sizeof(_net_register_start[0]));
+    memset(_net_register_current, 0, 
+    		NET_MAX_COUNTERS*sizeof(_net_register_current[0]));
 
     is_initialized = 1;
 
