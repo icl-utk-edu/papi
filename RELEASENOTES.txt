@@ -108,7 +108,11 @@ New / Improved Components:
 		* PAPI_read() now accumulates event values. This fixes a bug
 		in earlier versions.
 	* extensive updates and cleanups to the example and coretemp components.
-	* updates of net, lustre, and mx components
+	* significant updates of lustre, and mx components
+	* The linux net component underwent extensive updates and cleanups.
+  	  In particular, it nows dynamically detects the network
+	  interface names [1] and export 16 counters for each interface
+  	  (see also src/components/net/{CHANGES,README}).
 
 Open Issues:
 -------------
