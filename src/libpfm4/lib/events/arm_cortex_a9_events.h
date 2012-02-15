@@ -29,10 +29,13 @@
  */
 
 /*
- * Cortex A9 Event Table
- * based on Table 9-2 from the "Cortex A9 Technical Reference Manual
+ * Cortex A9 r2p2 Event Table
+ * based on Table 11-7 from the "Cortex A9 Technical Reference Manual"
  */
 static const arm_entry_t arm_cortex_a9_pe []={
+	/*
+	 * ARMv7 events
+	 */
 	{.name = "PMNC_SW_INCR",
 	 .code = 0x00,
 	 .desc = "Incremented by writes to the Software Increment Register"
@@ -101,17 +104,20 @@ static const arm_entry_t arm_cortex_a9_pe []={
 	 .code = 0x12,
 	 .desc = "Branches that could have been predicted"
 	},
+	/*
+	 * Cortex A9 specific events
+	 */
 	{.name = "JAVA_HW_BYTECODE_EXEC",
 	 .code = 0x40,
-	 .desc = "Java bytecodes decoded, including speculative"
+	 .desc = "Java bytecodes decoded, including speculative (approximate)"
 	},
 	{.name = "JAVA_SW_BYTECODE_EXEC",
 	 .code = 0x41,
-	 .desc = "Software Java bytecodes decoded, including speculative"
+	 .desc = "Software Java bytecodes decoded, including speculative (approximate)"
 	},
 	{.name = "JAZELLE_BRANCH_EXEC",
 	 .code = 0x42,
-	 .desc = "Jazelle backward branches executed"
+	 .desc = "Jazelle backward branches executed. Includes branches that are flushed because of previous load/store which abort late (approximate)"
 	},
 	{.name = "COHERENT_LINE_MISS",
 	 .code = 0x50,
@@ -123,7 +129,7 @@ static const arm_entry_t arm_cortex_a9_pe []={
 	},
 	{.name = "ICACHE_DEP_STALL_CYCLES",
 	 .code = 0x60,
-	 .desc = "Cycles processor is stalled waiting for instruction cache"
+	 .desc = "Cycles processor is stalled waiting for instruction cache and the instruction cache is performing at least one linefill (approximate)"
 	},
 	{.name = "DCACHE_DEP_STALL_CYCLES",
 	 .code = 0x61,
@@ -131,7 +137,7 @@ static const arm_entry_t arm_cortex_a9_pe []={
 	},
 	{.name = "TLB_MISS_DEP_STALL_CYCLES",
 	 .code = 0x62,
-	 .desc = "Cycles processor is stalled waiting for completion of TLB walk"
+	 .desc = "Cycles processor is stalled waiting for completion of TLB walk (approximate)"
 	},     
 	{.name = "STREX_EXECUTED_PASSED",
 	 .code = 0x63,
@@ -155,15 +161,15 @@ static const arm_entry_t arm_cortex_a9_pe []={
 	},  
 	{.name = "INST_OUT_OF_RENAME_STAGE",
 	 .code = 0x68,
-	 .desc = "Number of instructions going through register renaming stage"
+	 .desc = "Number of instructions going through register renaming stage (approximate)"
 	},
 	{.name = "PREDICTABLE_FUNCT_RETURNS",
 	 .code = 0x6e,
-	 .desc = "Number of predictable function returns whose condition codes do not fail"
+	 .desc = "Number of predictable function returns whose condition codes do not fail (approximate)"
 	},
 	{.name = "MAIN_UNIT_EXECUTED_INST",
 	 .code = 0x70,
-	 .desc = "Instructions executed in the main execution pipeline"
+	 .desc = "Instructions executed in the main execution, multiply, ALU pipelines (approximate)"
 	},
 	{.name = "SECOND_UNIT_EXECUTED_INST",
 	 .code = 0x71,
@@ -179,43 +185,43 @@ static const arm_entry_t arm_cortex_a9_pe []={
 	},
 	{.name = "NEON_EXECUTED_INST",
 	 .code = 0x74,
-	 .desc = "NEON instructions going through register renaming stage"
+	 .desc = "NEON instructions going through register renaming stage (approximate)"
 	},
 	{.name = "PLD_FULL_DEP_STALL_CYCLES",
 	 .code = 0x80,
-	 .desc = "Cycles processor is stalled because PLD slots are full"
+	 .desc = "Cycles processor is stalled because PLD slots are full (approximate)"
 	},
 	{.name = "DATA_WR_DEP_STALL_CYCLES",
 	 .code = 0x81,
-	 .desc = "Cycles processor is stalled due to writes to external memory"
+	 .desc = "Cycles processor is stalled due to writes to external memory (approximate)"
 	},
 	{.name = "ITLB_MISS_DEP_STALL_CYCLES",
 	 .code = 0x82,
-	 .desc = "Cycles stalled due to main instruction TLB miss"
+	 .desc = "Cycles stalled due to main instruction TLB miss (approximate)"
 	},
 	{.name = "DTLB_MISS_DEP_STALL_CYCLES",
 	 .code = 0x83,
-	 .desc = "Cycles stalled due to main data TLB miss"
+	 .desc = "Cycles stalled due to main data TLB miss (approximate)"
 	},
 	{.name = "MICRO_ITLB_MISS_DEP_STALL_CYCLES",
 	 .code = 0x84,
-	 .desc = "Cycles stalled due to micro instruction TLB miss"
+	 .desc = "Cycles stalled due to micro instruction TLB miss (approximate)"
 	},  
 	{.name = "MICRO_DTLB_MISS_DEP_STALL_CYCLES",
 	 .code = 0x85,
-	 .desc = "Cycles stalled due to micro data TLB miss"
+	 .desc = "Cycles stalled due to micro data TLB miss (approximate)"
 	},     
 	{.name = "DMB_DEP_STALL_CYCLES",
 	 .code = 0x86,
-	 .desc = "Cycles stalled due to DMB memory barrier"
+	 .desc = "Cycles stalled due to DMB memory barrier (approximate)"
 	},
 	{.name = "INTGR_CLK_ENABLED_CYCLES",
 	 .code = 0x8a,
-	 .desc = "Cycles during which integer core clock is enabled"
+	 .desc = "Cycles during which integer core clock is enabled (approximate)"
 	},
 	{.name = "DATA_ENGINE_CLK_EN_CYCLES",
 	 .code = 0x8b,
-	 .desc = "Cycles during which Data Engine clock is enabled"
+	 .desc = "Cycles during which Data Engine clock is enabled (approximate)"
 	},     
 	{.name = "ISB_INST",
 	 .code = 0x90,
@@ -227,11 +233,11 @@ static const arm_entry_t arm_cortex_a9_pe []={
 	},
 	{.name = "DMB_INST",
 	 .code = 0x92,
-	 .desc = "Number of DMB instructions architecturally executed"
+	 .desc = "Number of DMB instructions architecturally executed (approximate)"
 	},
 	{.name = "EXT_INTERRUPTS",
 	 .code = 0x93,
-	 .desc = "Number of External interrupts"
+	 .desc = "Number of External interrupts (approximate)"
 	},
 	{.name = "PLE_CACHE_LINE_RQST_COMPLETED",
 	 .code = 0xa0,

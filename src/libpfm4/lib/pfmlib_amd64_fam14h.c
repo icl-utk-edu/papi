@@ -44,8 +44,9 @@ pfmlib_pmu_t amd64_fam14h_##n##_support={			\
 	.name			= "amd64_fam14h_"#n,		\
 	.pmu			= pmuid,			\
 	.pmu_rev		= r,				\
-	.pme_count		= PME_AMD64_FAM14H_EVENT_COUNT,	\
+	.pme_count		= LIBPFM_ARRAY_SIZE(amd64_fam14h_pe),\
 	.type			= PFM_PMU_TYPE_CORE,		\
+	.supported_plm		= AMD64_FAM10H_PLM,		\
 	.num_cntrs		= 4,				\
 	.max_encoding		= 1,				\
 	.pe			= amd64_fam14h_pe,		\
@@ -53,7 +54,6 @@ pfmlib_pmu_t amd64_fam14h_##n##_support={			\
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,	\
 								\
 	.pmu_detect		= pfm_amd64_fam14h_##n##_detect,\
-	.pmu_init		= pfm_amd64_pmu_init,		\
 	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,\
 	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),	\
 	.get_event_first	= pfm_amd64_get_event_first,	\

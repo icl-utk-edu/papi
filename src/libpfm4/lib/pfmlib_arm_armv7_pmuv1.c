@@ -75,7 +75,7 @@ pfmlib_pmu_t arm_cortex_a8_support={
 	.desc			= "ARM Cortex A8",
 	.name			= "arm_ac8",
 	.pmu			= PFM_PMU_ARM_CORTEX_A8,
-	.pme_count		= ARM_CORTEX_A8_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_cortex_a8_pe),
 	.type			= PFM_PMU_TYPE_CORE,
 	.pe			= arm_cortex_a8_pe,
 
@@ -100,7 +100,7 @@ pfmlib_pmu_t arm_cortex_a9_support={
 	.desc			= "ARM Cortex A9",
 	.name			= "arm_ac9",
 	.pmu			= PFM_PMU_ARM_CORTEX_A9,
-	.pme_count		= ARM_CORTEX_A9_EVENT_COUNT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_cortex_a9_pe),
 	.type			= PFM_PMU_TYPE_CORE,
 	.pe			= arm_cortex_a9_pe,
 

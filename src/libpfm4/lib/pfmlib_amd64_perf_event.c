@@ -33,13 +33,17 @@
 int
 pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
+	pfmlib_pmu_t *pmu = this;
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
+
+	if (!pmu->get_event_encoding[PFM_OS_NONE])
+		return PFM_ERR_NOTSUPP;
 
 	/*
 	 * use generic raw encoding function first
 	 */
-	ret = pfm_amd64_get_encoding(this, e);
+	ret = pmu->get_event_encoding[PFM_OS_NONE](this, e);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
