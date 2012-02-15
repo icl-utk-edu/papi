@@ -7,6 +7,8 @@ libpfm_intel_snb - support for Intel Sandy Bridge core PMU
 .sp
 .B PMU name: snb
 .B PMU desc: Intel Sandy Bridge
+.B PMU name: snb_ep
+.B PMU desc: Intel Sandy Bridge EP
 .sp
 .SH DESCRIPTION
 The library supports the Intel Sandy Bridge core PMU. It should be noted that
@@ -35,7 +37,9 @@ Invert the meaning of the event. The counter will now count cycles in which the 
 occurring. This is a boolean modifier
 .TP
 .B e
-Enable edge detection, i.e., count only when there is a state transition. This is a boolean modifier.
+Enable edge detection, i.e., count only when there is a state transition from no occurrence of the event
+to at least one occurrence. This modifier must be combined with a counter mask modifier (m) with a value greater or equal to one.
+This is a boolean modifier.
 .TP
 .B c
 Set the counter mask value. The mask acts as a threshold. The counter will count the number of cycles
@@ -45,33 +49,45 @@ modifier with values in the range [0:255].
 .B t
 Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
 
-.SH OFFCORE_RESPONSE_0 event
-The event needs special treatment because it uses two MSRs: a generic counter and MSR @ 0x1a6.
+.SH OFFCORE_RESPONSE events
+Intel Sandy Bridge provides two offcore_response events, like Intel Westmere.
+They are called OFFCORE_RESPONSE_0 and OFFCORE_RESPONSE_1.
 
-The OFFCORE_RESPONSE_0 event is exposed as a normal event with several umasks which are divided in
-two groups: request and response. The user must provide \fBat least\fR one umask from each group.
-For instance, OFFCORE_RESPONSE_0:ANY_DATA:LOCAL_DRAM.
+Those events needs special treatment in the performance monitoring infrastructure
+because each event uses an extra register to store some settings. Thus, in
+case an offcore_response event is monitored simultaneously, the kernel needs
+to manage the sharing of that extra register.
 
-When using \fBpfm_get_event_encoding()\fR, two 64-bit values are returned. The first value, in
-\fBcodes[0]\fR, corresponds to what needs to be programmed into any of the generic counters.
-The second value, \fbcodes[1]\fR, must be programmed into the dedicated MSR 0x1a6.
+The offcore_response events are exposed as a normal events by the library. The extra
+settings are exposed as regular umasks. The library takes care of encoding the
+events according to the underlying kernel interface.
 
-When using an OS-specific encoding routine, the way the event is encoded is OS specific. Refer to
-the corresponding man page for more information.
+On Intel Sandy Bridge, the umasks are divided into three categories: request, supplier
+and snoop. The user must provide at least one umask for each category. The categories
+are shown in the umask descriptions.
 
-.SH OFFCORE_RESPONSE_1 event
-The event needs special treatment because it uses two MSRs: a generic counter and MSR @ 0x1a7.
+There is also the special response umask called \fBANY_RESPONSE\fR. When this umask
+is used then it overrides any supplier and snoop umasks. In other words, users can
+specify either \fBANY_RESPONSE\fR \fBOR\fR any combinations of supplier + snoops.
 
-The OFFCORE_RESPONSE_1 event is exposed as a normal event with several umasks which are divided in
-two groups: request and response. The user must provide \fBat least\fR one umask from each group.
-For instance, OFFCORE_RESPONSE_1:ANY_DATA:LOCAL_DRAM.
+In case no supplier or snoop is specified, the library defaults to using
+\fBANY_RESPONSE\fR.
 
-When using \fBpfm_get_event_encoding()\fR, two 64-bit values are returned. The first value, in
-\fBcodes[0]\fR, corresponds to what needs to be programmed into any of the generic counters.
-The second value, \fbcodes[1]\fR, must be programmed into the dedicated MSR 0x1a7.
+For instance, the following are valid event selections:
+.TP
+.B OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE
+.TP
+.B OFFCORE_RESPONSE_0:ANY_REQUEST
+.TP
+.B OFFCORE_RESPONSE_0:ANY_RFO:LLC_HITM:SNOOP_ANY
 
-When using an OS-specific encoding routine, the way the event is encoded is OS specific. Refer to
-the corresponding man page for more information.
+.P
+But the following are illegal:
+
+.TP
+.B OFFCORE_RESPONSE_0:ANY_RFO:LLC_HITM:ANY_RESPONSE
+.TP
+.B OFFCORE_RESPONSE_0:ANY_RFO:LLC_HITM:SNOOP_ANY:ANY_RESPONSE
 
 .SH AUTHORS
 .nf
