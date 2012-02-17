@@ -39,18 +39,14 @@ detectDevice( void )
 
 	/* CUDA initialization  */
 	err = cuInit( 0 );
-	if ( err != CUDA_SUCCESS ) {
-		printf( "Initialization of CUDA library failed.\n" );
+	if ( err != CUDA_SUCCESS ) 
 		return ( PAPI_ENOSUPP );
-	}
 
 	/* How many gpgpu devices do we have? */
 	err = cuDeviceGetCount( &deviceCount );
 	CHECK_CU_ERROR( err, "cuDeviceGetCount" );
-	if ( deviceCount == 0 ) {
-		printf( "There is no device supporting CUDA.\n" );
+	if ( deviceCount == 0 )
 		return ( PAPI_ENOSUPP );
-	}
 
 	/* allocate memory for device data table */
 	device = ( DeviceData_t * ) malloc( sizeof ( DeviceData_t ) * deviceCount );
@@ -441,12 +437,13 @@ CUDA_init_substrate(  )
 	
 	/* want create a CUDA context for either the default device or
 	 the device specified with cudaSetDevice() in user code */
-	if ( CUDA_SUCCESS != cudaGetDevice( &currentDeviceID ) ) {
-		printf( "There is no device supporting CUDA.\n" );
+	if ( CUDA_SUCCESS != cudaGetDevice( &currentDeviceID ) )
 		return ( PAPI_ENOSUPP );
+	
+	if ( getenv( "PAPI_VERBOSE" ) ) {
+		printf( "DEVICE USED: %s (%d)\n", device[currentDeviceID].name,
+			   currentDeviceID );
 	}
-	printf( "DEVICE USED: %s (%d)\n", device[currentDeviceID].name,
-		   currentDeviceID );
 	
 	/* get the CUDA context from the calling CPU thread */
 	cuErr = cuCtxGetCurrent( &cuCtx );
@@ -464,10 +461,8 @@ CUDA_init_substrate(  )
 	   if cudaFree(NULL) returns success then we are able to use the context in subsequent calls
 	   if cudaFree(NULL) returns an error (or subsequent cupti* calls) then the context is not usable,
 	   and will never be useable */
-	if ( CUDA_SUCCESS != cudaFree( NULL ) ) {
-		printf( "The CUDA context is not initialized and cannot be used.\n" );
+	if ( CUDA_SUCCESS != cudaFree( NULL ) )
 		return ( PAPI_ENOSUPP );
-	}
 		
 	/* Create dynamic event table */
 	cuda_native_table = ( CUDA_native_event_entry_t * )
@@ -477,10 +472,8 @@ CUDA_init_substrate(  )
 		return ( PAPI_ENOSUPP );
 	}
 
-	if ( NUM_EVENTS != createNativeEvents(  ) ) {
-		fprintf( stderr, "Number of CUDA events mismatch!\n" );
+	if ( NUM_EVENTS != createNativeEvents(  ) ) 
 		return ( PAPI_ENOSUPP );
-	}
 	
 	return ( PAPI_OK );
 }
@@ -609,7 +602,8 @@ CUDA_shutdown( hwd_context_t * ctx )
 		
 		/* destroy floating CUDA context */
 		cuErr = cuCtxDestroy( cuCtx );
-		CHECK_CU_ERROR( cuErr, "cuCtxDestroy" );		
+		if ( cuErr != CUDA_SUCCESS )
+			return ( PAPI_ENOSUPP );			// Not supported
 	}
 
 	
@@ -679,8 +673,7 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 		if ( 0 != strncmp( device[currentDeviceID].name,
 						   device_tmp + 1,
 						   strlen( device[currentDeviceID].name ) ) ) {
-			printf
-				( "Device %s is used -- BUT event %s is collected. \n ---> ERROR: Specify events for the device that is used!\n\n",
+			fprintf( stderr, "Device %s is used -- BUT event %s is collected. \n ---> ERROR: Specify events for the device that is used!\n\n",
 				  device[currentDeviceID].name, cuda_native_table[index].name );
 			
 			return ( PAPI_ENOSUPP );	// Not supported 
