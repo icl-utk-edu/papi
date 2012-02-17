@@ -1044,8 +1044,7 @@ _ia64_init_substrate( int cidx )
 		return ( retval );
 
 	/* Name of the substrate we're using */
-	strcpy( MY_VECTOR.cmp_info.name,
-			"$Id$" );
+	strcpy( MY_VECTOR.cmp_info.name,"perfmon-ia64.c" );
 	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
 	sprintf( MY_VECTOR.cmp_info.support_version, "%08x", PFMLIB_VERSION );
 	sprintf( MY_VECTOR.cmp_info.kernel_version, "%08x", 2 << 16 );	/* 2.0 */

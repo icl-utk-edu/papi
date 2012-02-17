@@ -926,8 +926,7 @@ _papi_pfm_init_substrate( int cidx )
 	}
 	SUBDBG( "pfm_get_num_events: %d\n", ncnt );
 	MY_VECTOR.cmp_info.num_native_events = ncnt;
-	strcpy( MY_VECTOR.cmp_info.name,
-			"$Id$" );
+	strcpy( MY_VECTOR.cmp_info.name,"perfmon.c" );
 	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
 	sprintf( buf, "%08x", version );
 

@@ -862,8 +862,7 @@ _papi_pe_init_substrate( int cidx )
   }
 
   /* Set various version strings */
-  strcpy( MY_VECTOR.cmp_info.name,
-	   "$Id$" );
+  strcpy( MY_VECTOR.cmp_info.name,"perf_events.c" );
   strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
 
   /* Setup Kernel Version */
