@@ -439,11 +439,7 @@ should be only used with caution. BEWARE OF WRONG COUNTER RESULTS!
 
 Windows XP/2000/Server 2003 - Intel Pentium III or AMD Athlon / Opteron
 *****************************************************************************
-PAPI 3.5 for Windows runs on Pentium III, Athlon and Opteron, for 
-Windows 2000, Windows XP and Windows Server 2003.
-
-Earlier versions of PAPI for Windows provided a self-installing executable.
-That is not the case with the current release.
+Please use PAPI 3.7 (http://icl.cs.utk.edu/projects/papi/downloads/papi-3.7.2.tar.gz)
 
 The Windows source tree comes with Microsoft Visual Studio Version 8 projects
 to build a graphical shell application, the PAPI library as a DLL, a kernel 
