@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_ppc.c,v 1.3 2004/05/29 11:41:52 mikpe Exp $
  * Descriptions of the events available for different processor types.
  *
  * Copyright (C) 2004  Mikael Pettersson

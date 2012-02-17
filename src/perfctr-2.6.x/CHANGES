@@ -1,10 +1,482 @@
-$Id$
+$Id: CHANGES,v 1.142.2.72 2010/11/07 19:48:14 mikpe Exp $
 
 			CHANGES
 			=======
 
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
+
+Version 2.6.42, 2010-11-07
+- Classify Westmere processors as Westmere not Nehalem.
+- Update update-kernel to install arch-specific header files
+  in arch/$arch/include/asm/ for newer kernels.  Also make
+  update-kernel --test trace file installation steps.
+- Update usr.src/Makefile to use the LD make variable rather
+  than plain 'ld' if set.  Useful for cross-compilation and
+  builds with non-default target options.
+- Updated kernel support: 2.6.18-194.17.4.el5 (RHEL5).
+
+Version 2.6.41, 2010-06-08
+- Extend examples/perfex/ to allow users to set up values for
+  the OFFCORE_RSP MSRs on Nehalem-based processors.
+- Add driver support for OFFCORE_RSP MSRs on Nehalem-based processors.
+- Recognise more Nehalem-based processors (models 30, 37).
+- Renamed PERFCTR_X86_INTEL_COREI7 symbolic CPU/PMU type constant
+  to PERFCTR_X86_INTEL_NHLM, since it denotes the entire Nehalem
+  family not just the (original) Core i7. The old constant is
+  also defined for now, to not break source code compatibility.
+- Correct Core i7 event setup in examples/global/ to actually
+  work. It was rejected by the driver due to a copy-paste error.
+- Rewrite the missing event list message in `perfex -l/-L' to
+  indicate that this is a user-space library omission, not an
+  issue with the driver or the hardware.
+- Updated kernel support: 2.6.18-194.3.1.el5, 2.6.18-194.el5,
+  2.6.18-164.15.1.el5 (RHEL5).
+
+Version 2.6.40, 2010-01-30
+- Preliminary support for Intel Xeon 7500 (Nehalem-based) processors.
+- Preliminary support for Intel i7-980X Gulftown processors.
+- Added support for AMD Family 11h processors (compatible with fam 10h).
+- Updated kernel support: 2.6.32, 2.6.31, 2.6.18-164.11.1.el5 and
+  2.6.18-164.el5 (RHEL5), 2.6.9-89.0.19.EL (RHEL4).
+
+Version 2.6.39, 2009-06-11
+- Updated driver's AMD multicore detection code to actually work.
+  Tested on Istanbul and Shanghai Opterons.
+- Updated driver to allow per-thread counting of Northbridge events
+  on multicore AMD processors. Since the NB is shared between cores,
+  threads counting NB events will be forced via their CPU affinity
+  mask to core0 of the available processors. On early K8 RevE processors
+  NB events remain limited to global-mode counting, due to an erratum.
+- Updated kernel support: 2.6.30, 2.6.29, 2.6.18-128.1.10.el5 (RHEL5),
+  2.6.18-92.1.26.el5 (RHEL5), 2.6.9-89.EL (RHEL4), 2.6.9-78.0.22.EL (RHEL4).
+
+Version 2.6.38, 2009-01-23
+- Added rvperfctr_iresume() procedure to the user-space library.
+  This allows a monitor process to resume overflow counters in a
+  target process after the target has received an overflow signal.
+- Updated kernel support: 2.6.29-rc2, 2.6.28, 2.6.18-128.el5
+  (RHEL5.3), 2.6.9-78.0.13.EL (RHEL4).
+- Removed support for 2.4 kernels. 2.4 kernels have effectively
+  been unsupported since early 2007, this change makes it official
+  by removing all 2.4-specific files and #ifdefs.
+
+Version 2.6.37, 2008-11-30
+- Preliminary support for Intel Core i7 (Nehalem) processors
+  (family 6 model 26). They are currently treated like Core 2s
+  but with four general-purpose counters, and with different
+  events and a new symbolic CPU type. The AnyThread evntsel flag
+  and "uncore" event monitoring are not yet supported.
+- Updated x86 driver to recognise Xeon 7400 (family 6 model 29)
+  as a member of the Core 2 family.
+- Extended x86 driver's CPU initialisation on Intel Core 2 and
+  newer CPUs to work around vtune leaving the performance monitor
+  unit in a "very" disabled state. Thanks to Mark Krentel for
+  reporting the problem and for facilitating tests that allowed
+  the cause of the problem to be identified.
+- Updated kernel support: 2.6.28-rc6, 2.6.18-120.el5 (RHEL5.3 beta),
+  2.6.18-92.1.18.el5 (RHEL5), 2.6.9-78.0.8.EL (RHEL4).
+
+Version 2.6.36, 2008-10-19
+- Fixed a driver error which caused Intel Family 6 Model 23
+  processors to crash kernels with general protection faults
+  if the fixed-function counters ran in interrupt-on-overflow
+  mode. Older Intel Family 6 Model 15 processors tolerate the
+  error which is why it was not detected before. Thanks to
+  Mark Krentel for reporting the problem and for facilitating
+  tests that allowed the cause of the problem to be identified.
+- Updated kernel support: 2.6.27, 2.6.26, 2.6.18-92.1.13.el5
+  (RHEL5), 2.6.9-78.0.5.EL (RHEL4).
+
+Version 2.6.35, 2008-06-30
+- Preliminary support for Intel Atom processors added.
+  These processors are very poorly documented, but they are
+  known to be family 6 model 28, and to support Intel's
+  "architectural performance monitor". Current models seem
+  to have two general-purpose counters, one fixed-function
+  counter, and to support the seven architectural events.
+  Thanks to Steve Blackburn for running tests on his Atom.
+- Updated x86 driver to recognise the Celeron model 16h
+  as a member of the Core2 family.
+- Corrected an error in the x86 driver's control validation
+  procedure. The error was introduced in perfctr-2.6.29 when
+  support for the Core2's fixed-function counters was added.
+  The error made the driver accept some invalid controls
+  (on Core2 processors only), which could result in kernel
+  hangs due to exceptions from invalid register accesses.
+  Thanks to Anton Ertl for reporting the initial problem.
+- Updated README to add Atom and AMD Family 10h to list of
+  supported processors.
+- Updated kernel support: 2.6.26-rc8, 2.6.18-92.1.6.el5 (RHEL5),
+  2.6.18-92.1.1.el5 (RHEL5), 2.6.9-67.0.20.EL (RHEL4).
+
+Version 2.6.35-pre1, 2008-06-23
+- Added optional close-on-exec feature for per-process perfctrs.
+  To enable it, set control.flags |= VPERFCTR_CONTROL_CLOEXEC
+  in a struct vperfctr_control object before passing it to
+  vperfctr_control(). If the flag is set when a thread executes
+  an execve() system call, then its perfctr state is detached
+  from the thread as if a call to vperfctr_unlink() had occurred.
+  If the flag is clear then the state survives execve() just like
+  it always did before.
+- The vperfctr_open() library function now sets close-on-exec
+  on the file descriptor embedded in the returned vperfctr handle.
+- Removed library support for the ancient /proc/<pid>/perfctr
+  kernel interface which hasn't worked since perfctr-2.6.0.
+
+Version 2.6.34, 2008-05-29
+- Updated kernel support: 2.6.26-rc4, 2.6.18-92.el5 (RHEL5U2),
+  2.6.18-53.1.21.el5 (RHEL5), 2.6.16.42-0.12 (SuSE).
+- Corrected the kernel driver's version number: perfctr-2.6.33
+  forgot to increment it.
+
+Version 2.6.33, 2008-05-18
+- x86: The support for Intel Family 6 Model 23 processors added in
+  perfctr-2.6.32 was incomplete, causing overflow interrupts to not
+  work properly on those processors. This has been fixed. (Thanks
+  to Mark Krentel for reporting the issue and testing patches.)
+- Updated kernel support: 2.6.26-rc2, 2.6.18-53.1.19.el5 (RHEL5),
+  2.6.9-67.0.15.EL (RHEL4).
+
+Version 2.6.32, 2008-04-20
+- Library: add experimental vperfctr_open_mode(mode) procedure.
+  The plain vperfctr_open() always opens the perfctr state in
+  O_CREAT|O_EXCL mode, which means that it will fail if the
+  invoking thread already has a perfctr state. The mode parameter
+  to vperfctr_open_mode() can be used to avoid this behaviour:
+  with mode == 0 no state will be created and a handle to the
+  thread's existing state (if any) is returned; to select the
+  current behaviour pass mode == VPERFCTR_OPEN_CREAT_EXCL to
+  vperfctr_open_mode(). For example:
+
+  the_state_is_shared = 0;
+  vperfctr = vperfctr_open_mode(VPERFCTR_OPEN_CREAT_EXCL);
+  if (vperfctr == NULL && errno == EEXIST) {
+     // error out due to the resource conflict, or:
+     vperfctr = vperfctr_open_mode(0);
+     the_state_is_shared = 1;
+  }
+  ...
+
+  The purpose of this API extension is to hopefully allow PAPI
+  to handle some use cases that currently cause it to error out.
+- Fix 'make install' to select the correct file to install
+  as <asm/perfctr.h>. Fixes regression caused by i386/x86_64
+  arch unification in perfctr-2.6.30. ppc32 also needed fixing.
+- x86: Recognize Intel Family 6 Model 23 as Core2.
+- Updated kernel support: 2.6.25, 2.6.18-53.1.14.el5 (RHEL5),
+  2.6.9-67.0.7.EL (RHEL4).
+
+Version 2.6.31, 2008-01-26
+- x86: Barcelona (AMD Family 10h) updates:
+  * Correct CPU type constant to read FAM10H with trailing H.
+    The old spelling also remains, for now.
+  * Barcelona event selectors are 64-bit, not 32-bit as in K8.
+    Add evntsel_high[] array to struct perfctr_cpu_control to
+    allow passing high 32 bits of evntsels to the driver.
+    This array overlaps the p4 control sub-struct. (Uses a GCC
+    anonymous union, to avoid source-incompatible changes.)
+    Currently only some Northbridge events need the high bits.
+  * Update driver to accept and check high evntsel bits on
+    Barcelona, and to maintain all 64 evntsel bits in PMU
+    context switches.
+  * Update examples/perfex/ to indicate how to also set up
+    the high 32 evntsel bits for Barcelona (run perfex -h).
+- Minor coding style (mostly obsolete whitespace style) fixes.
+- Updated kernel support: 2.6.24, 2.6.18-53.1.6.el5 (RHEL5),
+  2.6.9-67.0.1.EL (RHEL4).
+
+Version 2.6.30, 2007-10-28
+- Kernel 2.6.24-rc1 replaced the previously separate i386
+  and x86_64 source code directories with new shared x86
+  directories. Updated the linux/include/ hierarchy and the
+  update-kernel script to handle new and old source layouts.
+- Several driver updates to handle kernel 2.6.24-rc1 changes
+  on both x86 and ppc32.
+- Fixed a problem which could break RHEL5 kernel builds in
+  some configurations.
+- Updated kernel support: 2.6.24-rc1, 2.6.23, 2.6.18-8.1.14.el5
+  (RHEL5), and 2.6.9-55.0.6.EL (RHEL4).
+
+Version 2.6.29, 2007-10-07
+- Added support for the fixed-function counters in Intel Core 2
+  processors. To user-space they look like ordinary P6 counters,
+  except their PMC numbers are 0x40000000..0x40000002, and their
+  evntsels only need Enable, INT, and CPL fields set.
+- Preliminary support for AMD Family 10h processors.
+  Currently only events that do not need to use the high 32 bits
+  of the event select control registers are expected to work.
+- Fixed driver compilation warnings caused by perfctr needing
+  its own definitions of macros/constants that may or may not
+  be defined in the specific kernel version used.
+- Updated kernel support: 2.6.23-rc9, 2.6.5-7.276 (SuSE).
+
+Version 2.6.28, 2007-07-18
+- Fixed path to udev rules file (/etc/udev.d/ -> /etc/udev/).
+- Updated to handle changes in the 2.6.22 kernel on ppc32.
+- Updated to handle changes in the 2.6.22 kernel on x86.
+- Updated kernel support: 2.6.22, 2.6.21, 2.6.18-8.1.8.el5 (RHEL5),
+  2.6.9-55.0.2.EL (RHEL4), and 2.6.9-55.EL (RHEL4).
+
+Version 2.6.27, 2007-04-09
+- Updated INSTALL with instructions for making /dev/perfctr
+  creation and perfctr module autoloading work with udev.
+  These instructions are known to work on Fedora Core 4.
+  Also updated the rpm package accordingly.
+- Updated for the RHEL5 2.6.18-8.1.1.el5 kernel. This kernel
+  removed a ptrace-related function that is used for perfctr's
+  remote-control API. For now, remote-control is disabled in
+  the RHEL5 kernel, but everything else should work.
+- Updated kernel support: 2.6.21-rc6, 2.6.18.2-34 (SuSE),
+  2.6.9-42.0.10.EL (RHEL4).
+
+Version 2.6.26, 2007-02-11
+- My old @csd.uu.se email address no longer works. Updated
+  documentation and kernel messages to show my @it.uu.se address.
+- Added driver support for ARM/XScale processors. Overflow
+  interrupts are not yet supported, in part due to conflicts
+  with Intel's ixp400_eth driver. Plain event counting works.
+- Updated kernel support: 2.6.20, 2.6.19, 2.6.9-42.0.8.EL (RHEL4),
+  2.4.34, 2.4.21-47.0.1.EL (RHEL3), 2.6.16.21 (SLES10).
+
+Version 2.6.25, 2006-10-15
+- The Intel Core 2 processors are substantially different from
+  the old Core processors. Core 2 processors are now mapped to a
+  new cpu_type PERFCTR_X86_INTEL_CORE2, and must be programmed
+  so that every EVNTSEL used has its Enable flag set. This is
+  consistent with Intel's documentation and observations made by
+  others on later steppings of the Core 2. Early steppings may
+  be more P6-like (master Enable in EVNTSEL0), but as long as a
+  control setup includes EVNTSEL0 it should work on any stepping.
+- Major x86 driver updates for changes in kernel 2.6.19-rc1.
+- Updated kernel support: 2.6.19-rc2, 2.6.18, 2.6.9-42.0.3.EL (RHEL4),
+  and 2.4.34-pre4.
+- Fixed perfex -l/-L to handle unavailability of event set data
+  gracefully and not signal an error in those cases.
+
+Version 2.6.24, 2006-09-17
+- Fixed a driver linkage failure in 64-bit x86 kernels when
+  CONFIG_PERFCTR_INIT_TESTS was enabled, caused by an omission
+  in the perfctr-2.6.23 changes to support Intel Core 2 CPUs.
+- Updated kernel support: 2.6.18-rc7, 2.6.9-42.0.2.EL (RHEL4),
+  and 2.4.34-pre2.
+
+Version 2.6.23, 2006-08-20
+- Intel Core 2 fixes: detect Core2 processors (Model 15) and
+  allow them to be used in 64-bit builds.
+- Updated kernel support: 2.6.18-rc4, 2.6.17, 2.6.9-34.0.2.EL (RHEL4),
+  2.4.33, 2.4.34-pre1, and 2.4.21-47.EL (RHEL3).
+- The update-kernel script is now able to automatically identify
+  SuSE Linux kernel versions. A SuSE kernel MUST be configured
+  (".config" exists) for the identification to work.
+
+Version 2.6.22, 2006-06-02
+- Preliminary support for Intel Core (family 6 model 14) processors.
+- A serious error in the x86 driver's code to identify hyper-threads
+  was fixed. The driver logic is correct but it used a kernel function
+  which does not provide the required behaviour in 64-bit kernels or
+  older 32-bit kernels. As a result bogus data could be input to the
+  hyper-thread detection code, leading to various failures.
+- A change in the 2.6.16 32-bit x86 kernel caused a compilation error
+  when CONFIG_PERFCTR_INIT_TESTS was enabled. Fixed this.
+- Updated kernel support: 2.6.9-34.0.1 (RHEL4), 2.6.17-rc5, and
+  2.4.33-pre3.
+
+Version 2.6.21, 2006-04-03
+- Updated kernel support: 2.4.21-40.EL (RHEL3), 2.6.16, and
+  2.6.17-rc1.
+- Updates for internal changes in kernels 2.6.16 and 2.6.17-rc1.
+- Corrected a mistake in perfctr-2.6.20 which caused compilation
+  errors with RHEL3 kernels.
+
+Version 2.6.20, 2006-03-12
+- Updated kernel support: 2.6.9-34 (RHEL4), 2.6.16-rc6, and
+  2.4.33-pre2.
+
+Version 2.6.19, 2006-01-22
+- Updated ppc32 driver for ppc32/ppc64 kernel merging changes
+  in the 2.6.16-rc1 kernel. The driver now dynamically claims
+  and release the hardware, allowing it to coexist with other
+  PMU drivers such as oprofile.
+- Updated kernel support: 2.6.16-rc1, 2.6.9-22.0.2 (RHEL4).
+
+Version 2.6.18, 2006-01-03
+- Added perfctr_get_info() library API procedure, which allows
+  users to acquire information about the system without needing
+  a handle to an open perfctr (per-process or global) state.
+- Rearranged structure marshalling descriptor declarations to
+  increase code sharing for all supported architectures.
+- Updated kernel support: 2.6.15, 2.6.14, 2.6.9-22.0.1 (RHEL4),
+  2.6.5-7.201 (SuSE), 2.4.33-pre1, 2.4.32.
+
+Version 2.6.17, 2005-10-02
+- The x86 kernel driver has been updated to work correctly
+  on dual-core P4 processors. Previous versions would fail
+  during CPU detection (on HT DC P4s) or would erroneously
+  restrict access for one of the cores (non-HT DC P4s).
+- Updated kernel support: 2.4.21-37.EL (RHEL3), 2.4.32-rc1,
+  and 2.6.14-rc3.
+
+Version 2.6.16, 2005-09-04
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
+- Updated kernel support: 2.6.9-11.EL (RHEL4), 2.4.21-32.0.1.EL
+  (RHEL3), 2.6.12, 2.6.13, 2.4.31, and 2.4.32-pre3.
+
+Version 2.6.15, 2005-05-06
+- Preliminary code in the x86/x86-64 low-level driver to detect
+  multicore AMD K8 processors, and to prevent resource conflicts
+  and an erratum related to northbridge events. On multicore K8s,
+  northbridge events are only allowed when using the global-mode
+  counters API.
+- Updated kernel support: 2.6.9-5.0.5.EL (RHEL4), 2.4.21-27.0.4.EL
+  (RHEL3), 2.4.31-pre1, and 2.6.12-rc3.
+
+Version 2.6.14, 2005-04-09
+- Changed vperfctr_open() so that if the thread already has
+  an attached perfctr state, then the call fails with EEXIST.
+  This allows self-monitoring code to detect if it is under
+  the control of an external monitoring agent, before it
+  changes the counters' control setup.
+- Reverted the workaround in perfctr-2.6.13 for the problem
+  that gcc-4.0 snapshots broke the x86/x86-64 low-level driver,
+  as recent gcc-4.0 prereleases seem to work correctly.
+- Updated kernel support: 2.4.30, 2.6.12-rc2, and 2.6.9-5.0.3
+  (RHEL4).
+
+Version 2.6.13, 2005-02-13
+- Changed the global-mode counters to allow user-space to
+  disable the in-kernel sampling timer and to move the sampling
+  points into the read system calls. This may improve sampling
+  precision in some scenarios.
+- gcc-4.0 snapshots broke the x86/x86-64 low-level driver.
+  Changed the driver to prevent those problems.
+- Updated kernel support: 2.6.11-rc4, 2.4.30-pre1, and
+  2.4.21-27.0.2 (RHEL3).
+
+Version 2.6.12, 2004-12-19
+- PPC32 driver updated to be more robust in its detection of
+  timebase and core clock frequencies. Some information sources
+  can give wrong values for those frequencies, so the driver
+  now tries other more reliable methods first.
+- On x86/x86-64, perfctr_event_codes.h now includes P4 events.
+- On x86-64 libraries will now be installed in PREFIX/lib64/,
+  as per current standards, unless overridden by LIBDIR.
+- Perfex had a bug in which it interpreted all numbers as hex,
+  even those without "0x" prefixes. Perfex now emits warnings
+  for ambiguous numbers. To silence the warnings, (a) prefix
+  hex numbers with "0x" (preferred), or (b) use the "-d" option
+  to enable decimal numbers, which requires "0x" prefixes on
+  hex numbers, or (c) use the "-x" option to force all numbers
+  to be interpreted as hex (deprecated). The "-d" option should
+  be the default, but unfortunately that would break user-level
+  scripts that assumed that "0x"-less numbers are still hex.
+- Changes in examples/signal/ to handle glibc-2.3.3 on PPC32.
+
+Version 2.6.11, 2004-11-14
+- Workarounds for a hardware quirk on x86 and x86-64, where
+  interrupts can be delivered some time after the counters have
+  been stopped. Due to scheduling, an interrupt could be taken
+  in the context of an unrelated process, which would prematurely
+  terminate interrupt reporting for the original process.
+- Fixed a bug in the x86 and x86-64 kernels where the context-switch
+  path suspended the previous process' performance counters too late.
+  This could allow an overflow interrupt to be taken in the context
+  of an unrelated process, with effects similar to the hardware quirk
+  described above.
+- PPC32 updates: Enable overflow interrupts on all G4 processors
+  starting with the 7410 Rev 1.3, and all IBM G3 processors starting
+  with the 750FX DD2.3. Add support for MPC7447A and MPC7448.
+- Removed patches for obsolete kernels.
+
+Version 2.6.10.3, 2004-10-24
+- Driver modifications to handle two significant changes in
+  the 2.6.10-rc1 kernel.
+- PPC32: added MPC7447A and MPC7448 support.
+- Cleanups to bring the driver closer to the development version.
+
+Version 2.6.10.2, 2004-10-19
+- Updated kernel support: 2.6.9, 2.4.28-pre4.
+- Corrected the PPC32 driver's handling of MMCR0 changes due
+  to use of the FCECE or TRIGGER control flags.
+- Fixed a synchronisation error in the interface between
+  the per-process counters driver and the low-level drivers.
+  The error triggered warnings in DEBUG_SPINLOCK_SLEEP-
+  enabled kernels.
+
+Version 2.6.10.1, 2004-09-18
+- Fixed a problem causing an incomplete "wrapper" file to be
+  installed as /usr/include/asm/perfctr.h on x86_64 systems.
+
+Version 2.6.10, 2004-09-14
+- Eliminated a potential kernel crash on P4 model 3 Prescott
+  processors, due to the driver initialising two control
+  registers that have been removed from P4M3. The P4M3 Nocona
+  does not appear to have been affected by this error.
+- Fixed install procedure to not fail to install the shared
+  library's symbolic links when updating an older installation.
+- Updated kernel support: 2.4.21-20 (RHEL3), 2.4.28-pre3, 2.6.9-rc2.
+
+Version 2.6.10-pre1, 2004-08-03
+- x86-64 now uses the same driver and data structures as x86.
+  Intel's 64-bit P4 Xeon should work in the x86-64 kernel.
+  x86-64 application-level data structures have changed.
+- Updated library and example applications to include P4
+  support on x86-64.
+- Fixed update-kernel script to use 'head' in a POSIX
+  compliant way.
+- Added kernel support for the Model 13 Pentium-M.
+- Many code cleanups in the x86 driver.
+- Event 0x76 is now officially CPU_CLK_UNHALTED on AMD64.
+- Updated kernel support: 2.4.27-rc4.
+
+Version 2.6.9, 2004-07-27
+- Updated kernel support: 2.4.27-rc3, 2.6.7, 2.6.8-rc2,
+  2.4.21-15.0.3 (RHEL3), 2.6.5-7.95 (SuSE).
+- x86: enforce -fno-unit-at-a-time with gcc-3.4, to prevent
+  kernel crashes due to stack overflow in 2.6 kernels < 2.6.6.
+- x86: do sync_core() before rdtsc() in the internal micro-
+  benchmarking code, to avoid bogus data on K8 processors.
+- x86: prevent stray WRMSR at driver init time, which could
+  disable the NMI watchdog or Oprofile.
+- x86: prevent inlining from breaking code backpatching mechanism.
+- x86: fix CONFIG_X86_LOCAL_APIC=n linkage error in init tests.
+- PPC32: fix to allow 7400/7410 to specify MMCR2[THRESHMULT].
+- PPC32: add support for generic processors using only the
+  timebase register for high-resolution time measurements.
+
+Version 2.6.8, 2004-05-29
+- Added support for the IBM PowerPC 750GX processor.
+- Updated kernel support: 2.4.27-pre3, 2.6.7-rc1, 2.6.7-rc1-mm1,
+  2.4.21-15.EL (RHEL3), 2.6.5-1.358 (FC2).
+- Fixed an error in the 2.4.21-193 SuSE kernel patch file which
+  broke compilation on x86-64.
+- Perfctr and Oprofile can now coexist safely in newer kernels,
+  thanks to changes in kernel 2.6.6. Backported support for
+  those changes from perfctr-2.7.1.
+
+Version 2.6.7, 2004-05-04
+- Merged several x86_64-specific driver files with their x86
+  counterparts, reducing the amount of duplicated code.
+- Added textual descriptions to the library's P6 event sets.
+  From Bryan O'Sullivan.
+- Changed examples/signal/signal to count retired instructions
+  instead of retired micro-operations on AMD K7. Needed to avoid
+  a loop with the same instruction overflowing indefinitely.
+- Updated kernel support: 2.6.6-rc3, 2.4.27-pre1, 2.4.22-1.2188.nptl
+  (FC1), 2.4.21-9.0.1 (RHEL3), 2.4.20-31.9 (RH9).
+
+Version 2.6.6, 2004-02-21
+- Pentium-M has an undocumented local APIC quirk which can stop
+  perfctr interrupt delivery. Added workaround to prevent this.
+- Fixed a bug in x86-64's perfctr interrupt entry code in 2.4 kernels.
+  Luckily, the bug turned out to be harmless (a bogus "rip" value was
+  retrieved, but never used by the higher-level interrupt handler).
+- Added support for Pentium 4 Model 3 processors, which have slight
+  event set changes from earlier models.
+- Updated kernel support: 2.6.3, 2.4.25, 2.4.22-1.2174.nptl (FC1),
+  2.4.20-30.9 (RH9), and 2.4.21-193 (SuSE). Removed support for some
+  obsolete FC1 and RH update kernels.
 
 Version 2.6.5, 2004-01-26
 - Relaxed and corrected control checks on Pentium 4:

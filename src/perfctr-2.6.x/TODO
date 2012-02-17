@@ -6,10 +6,6 @@ Changes after perfctr-2.6.0:
   Assuming 32-bit sampling precision and max sustained rate of
   one event per core clock, then set the sampling timer to a
   value N such that N < (2^32 * HZ) / (cpu_khz * 1000).
-- Add kernel resource manager to avoid oprofile/perfctr conflicts.
-- Move x86_setup.c's interrupt handler code to the kernel patch.
-  Then try to make x86-64 use x86_setup.c instead of x86_64_setup.c.
-- Try to make x86-64 use x86_tests.c instead of x86_64_tests.c.
 - Convert NR_CPUS arrays to per_cpu().
 
 Changes after perfctr-2.7:

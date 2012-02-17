@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Makefile,v 1.26.2.46 2010/11/07 19:48:14 mikpe Exp $
 
 SHELL=/bin/sh
 ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)

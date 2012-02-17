@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set.h,v 1.5 2004/02/20 21:32:06 mikpe Exp $
  * Common definitions used when creating event set descriptions.
  *
  * Copyright (C) 2003-2004  Mikael Pettersson

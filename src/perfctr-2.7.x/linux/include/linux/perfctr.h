@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: perfctr.h,v 1.95 2005/10/02 13:01:30 mikpe Exp $
  * Performance-Monitoring Counters driver
  *
  * Copyright (C) 1999-2005  Mikael Pettersson
@@ -168,7 +168,7 @@ static inline void write_perfseq_begin(__u32 *seq)
 
 static inline void write_perfseq_end(__u32 *seq)
 {
-	++*seq; 
+	++*seq;
 }
 
 #endif	/* __KERNEL__ */

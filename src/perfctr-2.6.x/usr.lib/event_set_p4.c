@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: event_set_p4.c,v 1.5 2004/02/20 21:32:06 mikpe Exp $
  * Performance counter event descriptions for Intel P4.
  *
- * Copyright (C) 2003  Mikael Pettersson
+ * Copyright (C) 2003-2004  Mikael Pettersson
  *
  * This is still preliminary:
  * - need mapping from enum escr_set to <cccr bitmask, escr select>
@@ -197,6 +197,13 @@ static const struct perfctr_unit_mask_2 p4_um_x87_SIMD_moves_uop = {
       .nvalues = 2 },
     { { 0x08, "ALLP0:Count all x87/SIMD store/move uops" },
       { 0x10, "ALLP2:count all x87/SIMD load uops" } }
+};
+
+static const struct perfctr_unit_mask_1 p4_um_TC_misc = {
+    { .type = perfctr_um_type_bitmask,
+      .default_value = 0x10,
+      .nvalues = 1 },
+    { { 0x10, "FLUSH:Number of flushes" } }
 };
 
 static const struct perfctr_unit_mask_1 p4_um_global_power_events = {
@@ -424,6 +431,8 @@ static const struct perfctr_event p4_events[] = {
       "x87 floating-point uops" },
     { 0x2E, FIRM_ESCR_0_1, UM(p4_um_x87_SIMD_moves_uop), "x87_SIMD_moves_uop",
       "x87 FPU, MMX, SSE, or SSE2 load, store, and move uops" },
+    { 0x06, TC_ESCR_0_1, UM(p4_um_TC_misc), "TC_misc",
+      "miscellaneous events detected by the TC" },
     { 0x13, FSB_ESCR_0_1, UM(p4_um_global_power_events), "global_power_events",
       "time during which the processor is not stopped" },
     { 0x05, MS_ESCR_0_1, UM(p4_um_tc_ms_xfer), "tc_ms_xfer",
@@ -485,4 +494,21 @@ const struct perfctr_event_set perfctr_p4_event_set = {
     .include = NULL,
     .nevents = ARRAY_SIZE(p4_events),
     .events = p4_events,
+};
+
+/*
+ * Intel Pentium 4 Model 3 events.
+ */
+
+static const struct perfctr_event p4m3_events[] = {
+    { 0x07, CRU_ESCR_0_1, UM(p4_um_nbogus_bogus), "instr_completed",
+      "retired and completed instructions" },
+};
+
+const struct perfctr_event_set perfctr_p4m3_event_set = {
+    .cpu_type = PERFCTR_X86_INTEL_P4M3,
+    .event_prefix = "P4M3_",
+    .include = &perfctr_p4_event_set,
+    .nevents = ARRAY_SIZE(p4m3_events),
+    .events = p4m3_events,
 };

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_ppc.c,v 1.2.2.1 2004/08/02 22:26:42 mikpe Exp $
  * Descriptions of the events available for different processor types.
  *
  * Copyright (C) 2004  Mikael Pettersson
@@ -369,7 +369,7 @@ const struct perfctr_event_set perfctr_ppc604e_event_set = {
 };
 
 /*
- * PowerPC 750 events. (MPC750, PPC750, PPC750CX, PPC750FX)
+ * PowerPC 750 events. (MPC750, PPC750, PPC750CX, PPC750FX, PPC750GX)
  * Unrelated to PPC604/PPC604e, except for the common events 0-4.
  */
 
@@ -399,7 +399,7 @@ static const struct perfctr_event ppc750_events[] = {
       "branch in the instruction stream" },
     /* XXX: PPC750 defined PMC1 event 0x0D as L1_ICACHE_MISSES, but that
        was probably an error. L1_ICACHE_MISSES is PMC2 event 0x05, and
-       MPC750/PPC750CX/PPC750FX don't define PMC1 event 0x0D at all. */
+       MPC750/PPC750CX/PPC750FX/750GX don't define PMC1 event 0x0D at all. */
     /*
      * PMC2 events
      */
@@ -439,11 +439,11 @@ static const struct perfctr_event ppc750_events[] = {
     { 0x07, 0x04, NULL, "L2_DATA_MISSES",
       "Number of L2 data misses" },
     { 0x08, 0x04, NULL, "TAKEN_BRANCHES",
-      /* XXX: PPC750/PPC750CX describes this as predicted & taken branches */
+      /* XXX: PPC750/PPC750CX/PPC750FX/PPC750GX describe this as predicted & taken branches */
       "Number of taken branches, including predicted branches" },
     { 0x09, 0x04, NULL, "USER_MARKED_UNMARKED_TRANSITIONS",
       /* XXX: PPC750 adds a "RESERVED" after the event description.
-	 PPC750CX and PPC750FX mark event 0x9 as reserved. */
+	 PPC750CX/PPC750FX/PPC750GX mark event 0x9 as reserved. */
       "Number of transitions between marked and unmarked processes while in "
       "user mode. That is, the number of MSR[PM] bit toggles while the "
       "processor is in user mode" },
@@ -472,11 +472,11 @@ static const struct perfctr_event ppc750_events[] = {
       "Number of cycles spent performing table searches for DTLB accesses" },
     /* 0x07: reserved */
     { 0x08, 0x08, NULL, "MISPREDICTED_BRANCHES",
-      /* XXX: PPC750/PPC750CX/PPC750FX add a "RESERVED" after the event description */
+      /* XXX: PPC750/PPC750CX/PPC750FX/PPC750GX add "RESERVED" after the event description */
       "Number of mispredicted branches" },
     { 0x09, 0x08, NULL, "SUPERVISOR_MARKED_UNMARKED_TRANSITIONS",
       /* XXX: In MPC750UM first "supervisor" is "user", presumably a typo.
-	 PPC750/PPC750CX/PPC750FX mark event 0x09 as reserved. */
+	 PPC750/PPC750CX/PPC750FX/PPC750GX mark event 0x09 as reserved. */
       "Number of transitions between marked and unmarked processes while in "
       "supervisor mode. That is, the number of MSR[PM] bit toggles while the "
       "processor is in supervisor mode" },
@@ -494,7 +494,7 @@ static const struct perfctr_event ppc750_events[] = {
       "having two unresolved branches" },
     /* XXX: PPC750 defined PMC4 event 0x1F as L1_DCACHE_MISSES, but that
        was probably an error. L1_DCACHE_MISSES is PMC3 event 0x05, and
-       MPC750/PPC750CX/PPC750FX don't define PMC4 event 0x1F at all. */
+       MPC750/PPC750CX/PPC750FX/PPC750GX don't define PMC4 event 0x1F at all. */
 };
 
 const struct perfctr_event_set perfctr_ppc750_event_set = {

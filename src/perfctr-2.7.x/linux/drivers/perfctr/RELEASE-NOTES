@@ -1,7 +1,43 @@
-$Id$
+$Id: RELEASE-NOTES,v 1.341 2007/10/06 13:02:07 mikpe Exp $
 
 RELEASE NOTES
 =============
+
+Version 2.7.21.1, 2007-10-06
+- Bumped copyright dates.
+
+Version 2.7.21, 2007-10-03
+- Updated many files for <linux/config.h> deprecation change
+  in kernel 2.6.19.
+- Updated log messages containing my email address to use
+  my current @it.uu.se address, as @csd.uu.se == /dev/null.
+- Updated virtual.c for workqueue changes in kernel 2.6.20.
+- Updated virtual.c for i_blksize change in kernel 2.6.19.
+- Updated x86.c to match perfctr-2.6.28, including updates
+  for Intel Core and Core2, a P4 HT detection bug fix, and
+  updates for nmi watchdog changes in kernels 2.6.19, 2.6.21,
+  and 2.6.22.
+- Updated Makefile to unbreak call-site backpatching in x86.c.
+
+Version 2.7.20, 2006-08-20
+- Moved ppc64 perfctr.h from asm-ppc64/ to asm-powerpc/.
+- Updated ppc.c to use {reserve,release}_pmc_hardware()
+  to dynamically claim and release the PMC resources.
+- Updated ppc.c, virtual.c, and x86.c to use new-style
+  mutexes instead of old-style binary semaphores.
+- Updated virtual.c for get_sb_pseudo() change in kernel 2.6.18.
+- Updated x86.c for <asm/nmi.h> change in kernel 2.6.18.
+- Updated x86_tests.c for sync_core() change in kernel 2.6.16.
+
+Version 2.7.19, 2005-11-08
+- Updated ppc64.c to handle that CPU_FTR_PMC8 has been replaced
+  by cur_cpu_spec->num_pmcs. From David Gibson.
+- The dual-core P4s changed the layout rules for the initial
+  APIC ID, which broke the x86 driver on DC P4s. Updated the
+  HT thread ID detection code to match current IA32 SDM Vol3.
+- x86.c: pm_message_t fix for suspend(), from 2.6.13-mm2.
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
 
 Version 2.7.17, 2005-05-26
 - (All archs) Added u32 seqlock to user-visible state, replacing

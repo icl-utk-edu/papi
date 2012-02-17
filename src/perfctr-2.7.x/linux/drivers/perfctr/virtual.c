@@ -1,9 +1,12 @@
-/* $Id$
+/* $Id: virtual.c,v 1.117 2007/10/06 13:02:07 mikpe Exp $
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/compiler.h>	/* for unlikely() in 2.4.18 and older */
 #include <linux/kernel.h>
@@ -88,7 +91,7 @@ static inline void vperfctr_init_bad_cpus_allowed(struct vperfctr *perfctr) { }
  ****************************************************************/
 
 /* XXX: perhaps relax this to number of _live_ perfctrs */
-static DECLARE_MUTEX(nrctrs_mutex);
+static DEFINE_MUTEX(nrctrs_mutex);
 static int nrctrs;
 static const char this_service[] = __FILE__;
 
@@ -97,13 +100,13 @@ static int inc_nrctrs(void)
 	const char *other;
 
 	other = NULL;
-	down(&nrctrs_mutex);
+	mutex_lock(&nrctrs_mutex);
 	if (++nrctrs == 1) {
 		other = perfctr_cpu_reserve(this_service);
 		if (other)
 			nrctrs = 0;
 	}
-	up(&nrctrs_mutex);
+	mutex_unlock(&nrctrs_mutex);
 	if (other) {
 		printk(KERN_ERR __FILE__
 		       ": cannot operate, perfctr hardware taken by '%s'\n",
@@ -116,10 +119,10 @@ static int inc_nrctrs(void)
 
 static void dec_nrctrs(void)
 {
-	down(&nrctrs_mutex);
+	mutex_lock(&nrctrs_mutex);
 	if (--nrctrs == 0)
 		perfctr_cpu_release(this_service);
-	up(&nrctrs_mutex);
+	mutex_unlock(&nrctrs_mutex);
 }
 
 /* Allocate a `struct vperfctr'. Claim and reserve
@@ -164,16 +167,28 @@ static void put_vperfctr(struct vperfctr *perfctr)
 		vperfctr_free(perfctr);
 }
 
-static void scheduled_vperfctr_free(void *perfctr)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+static void scheduled_vperfctr_free(struct work_struct *work)
 {
-	vperfctr_free((struct vperfctr*)perfctr);
+	struct vperfctr *perfctr = container_of(work, struct vperfctr, work);
+	vperfctr_free(perfctr);
 }
+#else
+static void scheduled_vperfctr_free(void *data)
+{
+	vperfctr_free((struct vperfctr*)data);
+}
+#endif
 
 static void schedule_put_vperfctr(struct vperfctr *perfctr)
 {
 	if (!atomic_dec_and_test(&perfctr->count))
 		return;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+	INIT_WORK(&perfctr->work, scheduled_vperfctr_free);
+#else
 	INIT_WORK(&perfctr->work, scheduled_vperfctr_free, perfctr);
+#endif
 	schedule_work(&perfctr->work);
 }
 
@@ -443,9 +458,8 @@ static void do_vperfctr_release(struct vperfctr *child_perfctr, struct task_stru
 	schedule_put_vperfctr(child_perfctr);
 }
 
-static void scheduled_release(void *data)
+static void do_scheduled_release(struct vperfctr *child_perfctr)
 {
-	struct vperfctr *child_perfctr = data;
 	struct task_struct *parent_tsk = child_perfctr->parent_tsk;
 
 	task_lock(parent_tsk);
@@ -453,6 +467,19 @@ static void scheduled_release(void *data)
 	task_unlock(parent_tsk);
 	put_task_struct(parent_tsk);
 }
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+static void scheduled_release(struct work_struct *work)
+{
+	struct vperfctr *perfctr = container_of(work, struct vperfctr, work);
+	do_scheduled_release(perfctr);
+}
+#else
+static void scheduled_release(void *data)
+{
+	do_scheduled_release((struct vperfctr*)data);
+}
+#endif
 
 void __vperfctr_release(struct task_struct *child_tsk)
 {
@@ -464,7 +491,11 @@ void __vperfctr_release(struct task_struct *child_tsk)
 		do_vperfctr_release(child_perfctr, parent_tsk);
 	else {
 		get_task_struct(parent_tsk);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+		INIT_WORK(&child_perfctr->work, scheduled_release);
+#else
 		INIT_WORK(&child_perfctr->work, scheduled_release, child_perfctr);
+#endif
 		child_perfctr->parent_tsk = parent_tsk;
 		schedule_work(&child_perfctr->work);
 	}
@@ -916,12 +947,22 @@ static struct file_operations vperfctr_file_ops = {
    is unfortunately not the same in 2.4 and 2.6. */
 #include <linux/mount.h> /* needed for 2.6, included by fs.h in 2.4 */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+static int
+vperfctrfs_get_sb(struct file_system_type *fs_type,
+		  int flags, const char *dev_name, void *data,
+		  struct vfsmount *mnt)
+{
+	return get_sb_pseudo(fs_type, "vperfctr:", NULL, VPERFCTRFS_MAGIC, mnt);
+}
+#else
 static struct super_block *
 vperfctrfs_get_sb(struct file_system_type *fs_type,
 		  int flags, const char *dev_name, void *data)
 {
 	return get_sb_pseudo(fs_type, "vperfctr:", NULL, VPERFCTRFS_MAGIC);
 }
+#endif
 
 static struct file_system_type vperfctrfs_type = {
 	.name		= "vperfctrfs",
@@ -966,7 +1007,9 @@ static struct inode *vperfctr_get_inode(void)
 	inode->i_uid = current->fsuid;
 	inode->i_gid = current->fsgid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !DONT_HAVE_i_blksize
 	inode->i_blksize = 0;
+#endif
 	return inode;
 }
 

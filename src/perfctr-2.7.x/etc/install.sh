@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id$
+# $Id: install.sh,v 1.2 2005/01/16 22:44:34 mikpe Exp $
 # usage: etc/install.sh PREFIX BINDIR LIBDIR INCLDIR ARCH
 # If unset, {BIN,LIB,INCL}DIR are given default values from PREFIX.
 # Then make install2 is invoked with the final {BIN,LIB,INCL}DIR.

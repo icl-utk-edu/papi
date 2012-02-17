@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_x86.c,v 1.3 2004/08/02 14:36:10 mikpe Exp $
  * Descriptions of the events available for different processor types.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson

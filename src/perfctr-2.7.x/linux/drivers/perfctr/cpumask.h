@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: cpumask.h,v 1.11 2004/07/12 22:44:14 mikpe Exp $
  * Performance-monitoring counters driver.
  * Partial simulation of cpumask_t on non-cpumask_t kernels.
  * Extension to allow inspecting a cpumask_t as array of ulong.

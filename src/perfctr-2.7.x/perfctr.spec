@@ -1,10 +1,10 @@
 Name: perfctr
 Summary: Linux performance monitoring counters software
-Version: 2.7.18
+Version: 2.7.21.1
 Release: 1
 License: LGPL
 Group: Development/Tools
-URL: http://www.csd.uu.se/~mikpe/linux/perfctr/
+URL: http://user.it.uu.se/~mikpe/linux/perfctr/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Source: %{name}-%{version}.tar.gz
 
@@ -67,8 +67,11 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Wed Oct 03 2007 Mikael Pettersson <mikpe@it.uu.se> -
+- Corrected email address and URL.
+
 * Fri Apr 08 2005 Mikael Pettersson <mikpe@csd.uu.se> -
-* Don't create /dev/perfctr or update /etc/modules.conf.
+- Don't create /dev/perfctr or update /etc/modules.conf.
 
 * Tue Sep 16 2004 Mikael Pettersson <mikpe@csd.uu.se> -
 - Dropped obsolete x86 qualification from Summary.

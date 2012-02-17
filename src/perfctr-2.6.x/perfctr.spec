@@ -1,10 +1,10 @@
 Name: perfctr
-Summary: Linux/x86 performance monitoring counters software
-Version: 2.6.5
+Summary: Linux performance monitoring counters software
+Version: 2.6.42
 Release: 1
 License: LGPL
 Group: Development/Tools
-URL: http://www.csd.uu.se/~mikpe/linux/perfctr/
+URL: http://user.it.uu.se/~mikpe/linux/perfctr/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Source: %{name}-%{version}.tar.gz
 
@@ -41,7 +41,8 @@ make install2 \
 	PREFIX=%{buildroot}/%{_prefix} \
 	BINDIR=%{buildroot}/%{_bindir} \
 	LIBDIR=%{buildroot}/%{_libdir} \
-	INCLDIR=%{buildroot}/%{_includedir}
+	INCLDIR=%{buildroot}/%{_includedir} \
+	ETCDIR=%{buildroot}/etc
 /sbin/ldconfig -n %{buildroot}/%{_libdir}
 
 %clean
@@ -51,33 +52,24 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %{_bindir}/perfex
 %{_libdir}/*.so*
+%config /etc/rc.d/init.d/perfctr
+%config /etc/udev/rules.d/*perfctr.rules
 
 %doc README CHANGES TODO OTHER
 
 %post
-function fix_mod_config() {
-    filename="$1"
-    tmpfile="$filename.perfctr-tmp"
-
-    if [ -f "$filename" ]; then
-	if LC_ALL=C fgrep -q 'alias char-major-10-182 perfctr' "$filename" ; then
-	    :
-	else
-	    cat "$filename" > "$tmpfile"
-	    echo 'alias char-major-10-182 perfctr' >> "$tmpfile"
-	    cp -f -- "$tmpfile" "$filename"
-	    rm -f -- "$tmpfile"
-	fi
-    fi
-}
-
-fix_mod_config /etc/modules.conf
-
 if [ ! -c /dev/perfctr ]; then
     mknod -m 644 /dev/perfctr c 10 182
 fi
 
+/sbin/chkconfig --add perfctr
+
 /sbin/ldconfig
+
+%preun
+if [ "$1" = 0 ]; then
+    /sbin/chkconfig --del perfctr
+fi
 
 %postun -p /sbin/ldconfig
 
@@ -89,6 +81,23 @@ fi
 
 
 %changelog
+* Fri Jan 23 2009 Mikael Pettersson <mikpe@it.uu.se> -
+- Remove 2.4 kernel support: do not fix up /etc/modules.conf.
+
+* Sun Oct 07 2007 Mikael Pettersson <mikpe@it.uu.se> -
+- Corrected URL.
+
+* Wed Jul 18 2007 Mikael Pettersson <mikpe@it.uu.se> -
+- Correct udev rules path (/etc/udev.d/ -> /etc/udev/).
+
+* Mon Apr 09 2007 Mikael Pettersson <mikpe@it.uu.se> -
+- Install perfctr udev rules file and perfctr rc script
+  so /dev/perfctr creation with correct permissions and
+  perfctr module autoloading can work with udev.
+
+* Tue Sep 16 2004 Mikael Pettersson <mikpe@csd.uu.se> -
+- Dropped obsolete x86 qualification from Summary.
+
 * Sun Dec 21 2003 Mikael Pettersson <mikpe@csd.uu.se> -
 - Create /dev/perfctr in %post, not in %install and %files.
   This avoids incorrect deletion of the node on package uninstall.

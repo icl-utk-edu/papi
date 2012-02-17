@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ppc.h,v 1.1 2004/01/26 13:21:41 mikpe Exp $
  * PPC32-specific code for performance counters library.
  *
  * Copyright (C) 2004  Mikael Pettersson

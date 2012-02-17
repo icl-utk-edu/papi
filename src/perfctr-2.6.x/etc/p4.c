@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: p4.c,v 1.7 2004/02/20 21:33:25 mikpe Exp $
  *
  * pipe stdout through 'sort -u' to see:
  * - which ESCRs are usable, and the events they support
@@ -123,8 +123,8 @@ enum escr_num {
     IS_ESCR1,	/* UNUSED */
     ITLB_ESCR0,	/* ITLB_reference */
     ITLB_ESCR1,	/* ITLB_reference */
-    CRU_ESCR0,	/* instr_retired, mispred_branch_retired, uops_retired */
-    CRU_ESCR1,	/* instr_retired, mispred_branch_retired, uops_retired */
+    CRU_ESCR0,	/* instr_retired, mispred_branch_retired, uops_retired, instr_completed */
+    CRU_ESCR1,	/* instr_retired, mispred_branch_retired, uops_retired, instr_completed */
     IQ_ESCR0,	/* UNUSED; available in family 0x0F models 1 and 2, removed from later models */
     IQ_ESCR1,	/* UNUSED; available in family 0x0F models 1 and 2, removed from later models */
     RAT_ESCR0,	/* uop_type */
@@ -134,8 +134,8 @@ enum escr_num {
     MS_ESCR1,	/* tc_ms_xfer, uop_queue_writes */
     TBPU_ESCR0,	/* retired_branch_type, retired_mispred_branch_type */
     TBPU_ESCR1,	/* retired_branch_type, retired_mispred_branch_type */
-    TC_ESCR0,	/* TC_deliver_mode */
-    TC_ESCR1,	/* TC_deliver_mode */
+    TC_ESCR0,	/* TC_deliver_mode, TC_misc */
+    TC_ESCR1,	/* TC_deliver_mode, TC_misc */
     IX_ESCR0,	/* UNUSED */
     IX_ESCR1,	/* UNUSED */
     ALF_ESCR0,	/* resource_stall */
@@ -437,6 +437,7 @@ static const struct event events[] = {
     { "128bit_MMX_uop", 0x1A, FIRM_ESCR0, FIRM_ESCR1 },
     { "x87_FP_uop", 0x04, FIRM_ESCR0, FIRM_ESCR1 },
     { "x87_SIMD_moves_uop", 0x2E, FIRM_ESCR0, FIRM_ESCR1 },
+    { "TC_misc", 0x06, TC_ESCR0, TC_ESCR1 },
     { "global_power_events", 0x13, FSB_ESCR0, FSB_ESCR1 },
     { "tc_ms_xfer", 0x05, MS_ESCR0, MS_ESCR1 },
     { "uop_queue_writes", 0x09, MS_ESCR0, MS_ESCR1 },
@@ -459,6 +460,8 @@ static const struct event events[] = {
     { "mispred_branch_retired", 0x03, CRU_ESCR0, CRU_ESCR1 },
     { "x87_assist", 0x03, CRU_ESCR2, CRU_ESCR3 },
     { "machine_clear", 0x02, CRU_ESCR2, CRU_ESCR3 },
+    /* Model 3 only */
+    { "instr_completed", 0x07, CRU_ESCR0, CRU_ESCR1 },
 };
 
 static void do_escr(unsigned int escr_num)

@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: arm.c,v 1.1.2.2 2010/06/08 20:48:56 mikpe Exp $
  * ARM-specific code.
  *
- * Copyright (C) 2005-2007  Mikael Pettersson
+ * Copyright (C) 2005-2010  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +9,7 @@
 #include "arch.h"
 
 void do_print(FILE *resfile,
+	      const struct perfctr_info *info,
 	      const struct perfctr_cpu_control *cpu_control,
 	      const struct perfctr_sum_ctrs *sum)
 {

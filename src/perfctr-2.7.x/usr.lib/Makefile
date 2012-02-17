@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Makefile,v 1.60 2007/10/06 13:02:07 mikpe Exp $
 
 SHELL=/bin/sh
 ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
@@ -37,7 +37,7 @@ AR_OBJS=misc.o virtual.o $(EVENT_SET_OBJS) $(ARCH_OBJS)
 
 SO_OBJS=$(AR_OBJS:.o=.os)
 SO_ABIVER=6
-SO_LIBVER=2.7.18
+SO_LIBVER=2.7.21.1
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 
@@ -45,8 +45,8 @@ HDEP=libperfctr.h $(BUILD_INCLDIR)/linux/perfctr.h $(BUILD_INCLDIR)/asm/perfctr.
 
 i386_ASM_DIR=i386
 x86_64_ASM_DIR=i386
-ppc_ASM_DIR=ppc
-ppc64_ASM_DIR=ppc64
+ppc_ASM_DIR=powerpc
+ppc64_ASM_DIR=powerpc
 ARCH_ASM_DIR=asm-$($(ARCH)_ASM_DIR)
 
 INSTALL_FILES=$(BUILD_INCLDIR)/$(ARCH_ASM_DIR)/perfctr.h $(BUILD_INCLDIR)/linux/perfctr.h\

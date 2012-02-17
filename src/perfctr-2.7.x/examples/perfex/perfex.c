@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: perfex.c,v 1.35 2005/01/16 22:51:20 mikpe Exp $
  *
  * NAME
  *	perfex - a command-line interface to processor performance counters

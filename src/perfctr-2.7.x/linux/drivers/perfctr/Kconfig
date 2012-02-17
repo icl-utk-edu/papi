@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Kconfig,v 1.15 2004/10/10 12:05:42 mikpe Exp $
 # Performance-monitoring counters driver configuration
 #
 

@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Kconfig,v 1.7.2.2 2004/11/13 16:32:05 mikpe Exp $
 # Performance-monitoring counters driver configuration
 #
 
@@ -76,4 +76,16 @@ config PERFCTR_GLOBAL
 	  is currently using virtual-mode performance counters, and vice versa.
 
 	  Say Y.
+
+config PERFCTR_INTERRUPT_SUPPORT
+	prompt "Performance counter overflow interrupt support" if PPC
+	bool
+	depends on PERFCTR
+	default y if X86_LOCAL_APIC
+
+config PERFCTR_CPUS_FORBIDDEN_MASK
+	bool
+	depends on PERFCTR
+	default y if X86 && SMP
+
 endmenu

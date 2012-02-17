@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: perfctr.h,v 1.64 2005/05/26 00:37:36 mikpe Exp $
  * x86/x86_64 Performance-Monitoring Counters driver
  *
  * Copyright (C) 1999-2005  Mikael Pettersson

@@ -1,10 +1,13 @@
-/* $Id$
+/* $Id: init.c,v 1.83 2007/10/06 13:02:07 mikpe Exp $
  * Performance-monitoring counters driver.
  * Top-level initialisation code.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/sched.h>

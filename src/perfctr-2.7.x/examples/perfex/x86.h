@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: x86.h,v 1.1 2004/01/11 22:07:12 mikpe Exp $
  * x86-specific declarations.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson

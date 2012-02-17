@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: global.c,v 1.11 2004/05/13 23:35:27 mikpe Exp $
  * Library interface to global-mode performance counters.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson

@@ -1,8 +1,8 @@
-/* $Id$
+/* $Id: gen-event-codes.c,v 1.7.2.2 2007/02/11 20:15:03 mikpe Exp $
  *
  * Generate symbolic constants for performance counter events.
  *
- * Copyright (C) 2003-2004  Mikael Pettersson
+ * Copyright (C) 2003-2007  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>	/* for exit() */
@@ -66,6 +66,7 @@ int main(void)
     print_cpu_type(PERFCTR_X86_AMD_K7);
 #endif
 #if defined(__i386__) || defined(__x86_64__)
+    print_cpu_type(PERFCTR_X86_INTEL_P4M3);
     print_cpu_type(PERFCTR_X86_AMD_K8);
     print_cpu_type(PERFCTR_X86_AMD_K8C);
 #endif
@@ -73,6 +74,9 @@ int main(void)
     print_cpu_type(PERFCTR_PPC_604);
     print_cpu_type(PERFCTR_PPC_604e);
     print_cpu_type(PERFCTR_PPC_750);
+#endif
+#if defined(__arm__)
+    print_cpu_type(PERFCTR_ARM_XSC1);
 #endif
     return 0;
 }
