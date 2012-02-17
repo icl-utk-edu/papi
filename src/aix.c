@@ -641,7 +641,7 @@ _aix_get_system_info( papi_mdi_t *mdi )
 	if ( retval > 0 )
 		return ( retval );
 
-	strcpy( MY_VECTOR.cmp_info.name, "$Id$" );	/* Name of the substrate we're using */
+	strcpy( MY_VECTOR.cmp_info.name, "aix.c" );	/* Name of the substrate we're using */
 
 	_aix_mdi_init(  );
 

@@ -167,8 +167,7 @@ _perfctr_init_substrate( int cidx )
 	if ( retval )
 		return ( retval );
 
-	strcpy( MY_VECTOR.cmp_info.name,
-			"$Id$" );
+	strcpy( MY_VECTOR.cmp_info.name,"perfctr.c" );
 	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
 	sprintf( abiv, "0x%08X", info.abi_version );
 	strcpy( MY_VECTOR.cmp_info.support_version, abiv );

@@ -786,8 +786,7 @@ INFINIBAND_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _infiniband_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name =
-				 "$Id$",
+				 .name ="linux-infiniband.c",
 				 .version = "$Revision$",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = INFINIBAND_MAX_COUNTERS,

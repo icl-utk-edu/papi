@@ -639,8 +639,7 @@ _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 papi_vector_t _coretemp_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name =
-				 "$Id$",
+				 .name = "linux-coretemp.c",
 				 .version = "$Revision$",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = CORETEMP_MAX_COUNTERS,

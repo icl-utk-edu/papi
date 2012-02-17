@@ -450,7 +450,7 @@ int coretemp_set_domain (hwd_control_state_t * cntrl, int domain)
 papi_vector_t _coretemp_freebsd_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "$Id$",
+				 .name = "coretemp_freebsd.c",
 				 .version = "$Revision$",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = CORETEMP_MAX_COUNTERS,

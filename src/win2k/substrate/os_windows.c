@@ -179,7 +179,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if ( retval ) 
      return(retval);
 
-   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
+   strcpy(_papi_hwi_system_info.sub_info.name, "os_windows.c");
    strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$"); // cvs revision of this file
    dh = pmc_open();
    strcpy(_papi_hwi_system_info.sub_info.support_version, pmc_kernel_version(dh));

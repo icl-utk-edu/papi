@@ -447,8 +447,7 @@ LM_SENSORS_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _lmsensors_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name =
-				 "$Id$",
+				 .name = "linux-lmsensors.c",
 				 .version = "$Revision$",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = LM_SENSORS_MAX_COUNTERS,
