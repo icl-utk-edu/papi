@@ -61,8 +61,8 @@ typedef union {
 		unsigned long sel_sup:1;		/* supervisor level */
 		unsigned long sel_usr:1;		/* user level */
 	        unsigned long sel_int:1;		/* enable intr */
-	  	unsigned long sel_event_mask:4;		/* event mask */
-		unsigned long sel_res1:23;		/* reserved */
+	  	unsigned long sel_event_mask:5;		/* event mask */
+		unsigned long sel_res1:22;		/* reserved */
 		unsigned long sel_res2:32;		/* reserved */
 	} perfsel;
 } pfm_gen_mips64_sel_reg_t;
@@ -73,8 +73,8 @@ typedef union {
 	uint64_t	val;				/* complete register value */
 	struct {
 		unsigned long sel_res2:32;		/* reserved */
-		unsigned long sel_res1:23;		/* reserved */
-	  	unsigned long sel_event_mask:4;		/* event mask */
+		unsigned long sel_res1:22;		/* reserved */
+	  	unsigned long sel_event_mask:5;		/* event mask */
 	        unsigned long sel_int:1;		/* enable intr */
 		unsigned long sel_usr:1;		/* user level */
 		unsigned long sel_sup:1;		/* supervisor level */

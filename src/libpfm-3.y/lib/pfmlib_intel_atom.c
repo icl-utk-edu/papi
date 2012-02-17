@@ -123,6 +123,8 @@ pfm_intel_atom_detect(void)
 static int
 pfm_intel_atom_init(void)
 {
+	int i;
+
 	/* generic counters */
 	pfm_regmask_set(&intel_atom_impl_pmcs, 0);
 	pfm_regmask_set(&intel_atom_impl_pmds, 0);
@@ -136,6 +138,13 @@ pfm_intel_atom_init(void)
 	pfm_regmask_set(&intel_atom_impl_pmds, 16);
 	pfm_regmask_set(&intel_atom_impl_pmds, 17);
 	pfm_regmask_set(&intel_atom_impl_pmds, 18);
+
+	/* lbr */
+	pfm_regmask_set(&intel_atom_impl_pmds, 19);
+	for(i=0; i < 16; i++)
+		pfm_regmask_set(&intel_atom_impl_pmds, i);
+
+	highest_counter = 18;
 
 	/* PEBS */
 	pfm_regmask_set(&intel_atom_impl_pmcs, 17);
@@ -239,7 +248,7 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 		/*
 		 * check for valid flags
 		 */
-		if (e[i].flags & ~PFMLIB_INTEL_ATOM_ALL_FLAGS)
+		if (cntrs && cntrs[i].flags & ~PFMLIB_INTEL_ATOM_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
 
 		if (intel_atom_pe[e[i].event].pme_flags & PFMLIB_INTEL_ATOM_UMASK_NCOMBO
@@ -275,8 +284,8 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 				DPRINT("two events compete for FIXED_CTR2\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
-			if (HAS_OPTIONS(i)) {
-				DPRINT("fixed counters do not support inversion/counter-mask\n");
+			if (cntrs && ((cntrs[i].flags & (PFM_INTEL_ATOM_SEL_EDGE|PFM_INTEL_ATOM_SEL_INV)) || cntrs[i].cnt_mask)) {
+				DPRINT("UNHALTED_REFERENCE_CYCLES only accepts anythr filter\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -345,9 +354,12 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 	if (fixed_ctr) {
 		for(i=0; i < n; i++) {
 			/* fixed counters do not support event options (filters) */
-			if (HAS_OPTIONS(i) || (use_pebs && pfm_intel_atom_has_pebs(e+i)))
-				continue;
-
+			if (HAS_OPTIONS(i)) {
+				if (use_pebs && pfm_intel_atom_has_pebs(e+i))
+					continue;
+				if (cntrs[i].flags != PFM_INTEL_ATOM_SEL_ANYTHR)
+					continue;
+			}
 			if ((fixed_ctr & 0x1) && pfm_intel_atom_is_fixed(e+i, 0)) {
 				assign_pc[i] = 16;
 				fixed_ctr &= ~1;
@@ -394,6 +406,8 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 			val |= 1ULL;
 		if (plm & PFM_PLM3)
 			val |= 2ULL;
+		if (cntrs && cntrs[i].flags & PFM_INTEL_ATOM_SEL_ANYTHR)
+			val |= 4ULL;
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 
 		reg.val |= val << ((assign_pc[i]-16)<<2);
@@ -405,12 +419,15 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 		pc[npc].reg_addr  = 0x38D;
 		pc[npc].reg_alt_addr  = 0x38D;
 
-		__pfm_vbprintf("[FIXED_CTRL(pmc%u)=0x%"PRIx64" pmi0=1 en0=0x%"PRIx64" pmi1=1 en1=0x%"PRIx64" pmi2=1 en2=0x%"PRIx64"] ",
+		__pfm_vbprintf("[FIXED_CTRL(pmc%u)=0x%"PRIx64" pmi0=1 en0=0x%"PRIx64" any0=%d pmi1=1 en1=0x%"PRIx64" any1=%d pmi2=1 en2=0x%"PRIx64" any2=%d] ",
 				pc[npc].reg_num,
 				reg.val,
 				reg.val & 0x3ULL,
+				!!(reg.val & 0x4ULL),
 				(reg.val>>4) & 0x3ULL,
-				(reg.val>>8) & 0x3ULL);
+				!!((reg.val>>4) & 0x4ULL),
+				(reg.val>>8) & 0x3ULL,
+				!!((reg.val>>8) & 0x4ULL));
 
 		if ((fixed_ctr & 0x1) == 0)
 			__pfm_vbprintf("INSTRUCTIONS_RETIRED ");
@@ -639,8 +656,11 @@ pfm_intel_atom_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 static void
 pfm_intel_atom_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
-	/* all pmds are counters */
-	*impl_counters = intel_atom_impl_pmds;
+	pfm_regmask_set(impl_counters, 0);
+	pfm_regmask_set(impl_counters, 1);
+	pfm_regmask_set(impl_counters, 16);
+	pfm_regmask_set(impl_counters, 17);
+	pfm_regmask_set(impl_counters, 18);
 }
 
 /*
@@ -718,7 +738,7 @@ pfm_intel_atom_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned 
 static int
 pfm_intel_atom_get_cycle_event(pfmlib_event_t *e)
 {
-	e->event = PME_INTEL_ATOM_UNHALTED_INTEL_ATOM_CYCLES;
+	e->event = PME_INTEL_ATOM_UNHALTED_CORE_CYCLES;
 	return PFMLIB_SUCCESS;
 }
 
@@ -762,7 +782,7 @@ pfm_pmu_support_t intel_atom_support={
 	.pmu_type		= PFMLIB_INTEL_ATOM_PMU,
 	.pme_count		= PME_INTEL_ATOM_EVENT_COUNT,
 	.pmc_count		= 4,
-	.pmd_count		= 5,
+	.pmd_count		= 22,
 	.num_cnt		= 5,
 	.get_event_code		= pfm_intel_atom_get_event_code,
 	.get_event_name		= pfm_intel_atom_get_event_name,

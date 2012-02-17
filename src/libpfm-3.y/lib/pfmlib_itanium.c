@@ -139,8 +139,8 @@ pfm_ita_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *m
 
 	if (PFMLIB_DEBUG()) {
 		for (m=0; m < cnt; m++) {
-			DPRINT(("ev[%d]=%s counters=0x%lx\n", m, itanium_pe[e[m].event].pme_name,
-				itanium_pe[e[m].event].pme_counters));
+			DPRINT("ev[%d]=%s counters=0x%lx\n", m, itanium_pe[e[m].event].pme_name,
+				itanium_pe[e[m].event].pme_counters);
 		}
 	}
 	if (cnt > PMU_ITA_NUM_COUNTERS) return PFMLIB_ERR_TOOMANY;
@@ -150,7 +150,7 @@ pfm_ita_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *m
 	max_l2 = PMU_ITA_FIRST_COUNTER + PMU_ITA_NUM_COUNTERS*(cnt>2);
 	max_l3 = PMU_ITA_FIRST_COUNTER + PMU_ITA_NUM_COUNTERS*(cnt>3);
 
-	DPRINT(("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3));
+	DPRINT("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3);
 	/*
 	 *  This code needs fixing. It is not very pretty and
 	 *  won't handle more than 4 counters if more become
@@ -267,7 +267,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, p
 		param->pfp_ita_iear.ear_umask = evt_umask(inp->pfp_events[iear_idx].event);
 		param->pfp_ita_iear.ear_ism   = PFMLIB_ITA_ISM_BOTH; /* force both instruction sets */
 
-		DPRINT(("I-EAR event with no info\n"));
+		DPRINT("I-EAR event with no info\n");
 	}
 
 	/* sanity check on the mode */
@@ -355,7 +355,7 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, p
 		param->pfp_ita_dear.ear_umask = evt_umask(inp->pfp_events[dear_idx].event);
 		param->pfp_ita_dear.ear_ism   = PFMLIB_ITA_ISM_BOTH; /* force both instruction sets */
 
-		DPRINT(("D-EAR event with no info\n"));
+		DPRINT("D-EAR event with no info\n");
 	}
 
 
@@ -518,7 +518,7 @@ pfm_dispatch_btb(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, pf
 		param->pfp_ita_btb.btb_tac = 0x1; 	/* capture TAC  */
 		param->pfp_ita_btb.btb_bac = 0x1; 	/* capture BAC  */
 
-		DPRINT(("BTB event with no info\n"));
+		DPRINT("BTB event with no info\n");
 	}
 
 	/*
@@ -610,16 +610,16 @@ do_normal_rr(unsigned long start, unsigned long end,
 
 	size = end - start;
 
-	DPRINT(("start=0x%016lx end=0x%016lx size=0x%lx bytes (%lu bundles) nbr=%d dir=%d\n",
-			start, end, size, size >> 4, nbr, dir));
+	DPRINT("start=0x%016lx end=0x%016lx size=0x%lx bytes (%lu bundles) nbr=%d dir=%d\n",
+			start, end, size, size >> 4, nbr, dir);
 
 	p2 = pfm_ia64_fls(size);
 
 	c = ALIGN_DOWN(end, p2);
 
-	DPRINT(("largest power of two possible: 2^%d=0x%lx, crossing=0x%016lx\n",
+	DPRINT("largest power of two possible: 2^%d=0x%lx, crossing=0x%016lx\n",
 				p2,
-				1UL << p2, c));
+				1UL << p2, c);
 
 	if ((c - (1UL<<p2)) >= start) {
 		l_addr = c - (1UL << p2);
@@ -635,31 +635,31 @@ do_normal_rr(unsigned long start, unsigned long end,
 	l_size = l_addr - start;
 	r_size = end - l_addr-(1UL<<p2);
 
-	DPRINT(("largest chunk: 2^%d=0x%lx @0x%016lx-0x%016lx\n", p2, 1UL<<p2, l_addr, l_addr+(1UL<<p2)));
-	if (l_size) DPRINT(("before: 0x%016lx-0x%016lx\n", start, l_addr));
-	if (r_size) DPRINT(("after : 0x%016lx-0x%016lx\n", l_addr+(1UL<<p2), end));
+	DPRINT("largest chunk: 2^%d=0x%lx @0x%016lx-0x%016lx\n", p2, 1UL<<p2, l_addr, l_addr+(1UL<<p2));
+	if (l_size) DPRINT("before: 0x%016lx-0x%016lx\n", start, l_addr);
+	if (r_size) DPRINT("after : 0x%016lx-0x%016lx\n", l_addr+(1UL<<p2), end);
 
 	if (dir == 0 && l_size != 0 && nbr == 1) {
 		p2++;
 		l_addr = end - (1UL << p2);
 		if (PFMLIB_DEBUG()) {
 			l_offs = start - l_addr;
-			DPRINT((">>l_offs: 0x%lx\n", l_offs));
+			DPRINT(">>l_offs: 0x%lx\n", l_offs);
 		}
 	} else if (dir == 1 && r_size != 0 && nbr == 1) {
 		p2++;
 		l_addr = start;
 		if (PFMLIB_DEBUG()) {
 			r_offs = l_addr+(1UL<<p2) - end;
-			DPRINT((">>r_offs: 0x%lx\n", r_offs));
+			DPRINT(">>r_offs: 0x%lx\n", r_offs);
 		}
 	}
 	l_size = l_addr - start;
 	r_size = end - l_addr-(1UL<<p2);
 	
-	DPRINT((">>largest chunk: 2^%d @0x%016lx-0x%016lx\n", p2, l_addr, l_addr+(1UL<<p2)));
-	if (l_size && !l_offs) DPRINT((">>before: 0x%016lx-0x%016lx\n", start, l_addr));
-	if (r_size && !r_offs) DPRINT((">>after : 0x%016lx-0x%016lx\n", l_addr+(1UL<<p2), end));
+	DPRINT(">>largest chunk: 2^%d @0x%016lx-0x%016lx\n", p2, l_addr, l_addr+(1UL<<p2));
+	if (l_size && !l_offs) DPRINT(">>before: 0x%016lx-0x%016lx\n", start, l_addr);
+	if (r_size && !r_offs) DPRINT(">>after : 0x%016lx-0x%016lx\n", l_addr+(1UL<<p2), end);
 
 	/*
 	 * we initialize the mask to full 0 and
@@ -774,7 +774,7 @@ compute_normal_rr(pfmlib_ita_input_rr_t *irr, int dfl_plm, int n, int *base_idx,
 				&br_index,
 				&reg_idx, in_rr->rr_plm ? in_rr->rr_plm : dfl_plm);
 
-		DPRINT(("br_index=%d reg_idx=%d\n", br_index, reg_idx));
+		DPRINT("br_index=%d reg_idx=%d\n", br_index, reg_idx);
 		/*
 		 * compute offsets
 		 */
@@ -830,7 +830,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in,
 
 	if (n_intervals < 1) return PFMLIB_ERR_IRRINVAL;
 	
-	DPRINT(("n_intervals=%d\n", n_intervals));
+	DPRINT("n_intervals=%d\n", n_intervals);
 
 	ret = compute_normal_rr(irr, inp->pfp_dfl_plm, n_intervals, &base_idx, orr);
 	if (ret != PFMLIB_SUCCESS) {
@@ -882,7 +882,7 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in,
 
 	if (n_intervals < 1) return PFMLIB_ERR_DRRINVAL;
 	
-	DPRINT(("n_intervals=%d\n", n_intervals));
+	DPRINT("n_intervals=%d\n", n_intervals);
 
 	ret = compute_normal_rr(irr, inp->pfp_dfl_plm, n_intervals, &base_idx, orr);
 	if (ret != PFMLIB_SUCCESS) {

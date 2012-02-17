@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: arch.h,v 1.1 2004/01/11 22:07:12 mikpe Exp $
  * Architecture-specific support code.
  *
  * Copyright (C) 2004  Mikael Pettersson

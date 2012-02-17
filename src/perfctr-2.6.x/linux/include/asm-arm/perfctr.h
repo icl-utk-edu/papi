@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: perfctr.h,v 1.1.2.2 2009/06/11 12:33:51 mikpe Exp $
  * ARM/XScale Performance-Monitoring Counters driver
  *
- * Copyright (C) 2005-2007  Mikael Pettersson
+ * Copyright (C) 2005-2007, 2009  Mikael Pettersson
  */
 #ifndef _ASM_ARM_PERFCTR_H
 #define _ASM_ARM_PERFCTR_H
@@ -132,7 +132,7 @@ extern void perfctr_cpu_release(const char *service);
    Check that the new control data is valid.
    Update the driver's private control data.
    Returns a negative error code if the control data is invalid. */
-extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global);
+extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state, cpumask_t *cpumask);
 
 /* Read a-mode counters. Subtract from start and accumulate into sums.
    Must be called with preemption disabled. */

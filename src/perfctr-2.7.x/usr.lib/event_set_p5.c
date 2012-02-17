@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_p5.c,v 1.1 2003/02/16 21:08:54 mikpe Exp $
  * Performance counter event descriptions for Intel P5 and P5 MMX
  * processors, and Cyrix 6x86/MII/III processors.
  *

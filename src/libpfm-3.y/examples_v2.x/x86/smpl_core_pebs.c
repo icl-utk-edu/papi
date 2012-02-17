@@ -47,7 +47,7 @@
 
 #include "../detect_pmcs.h"
 
-#define SMPL_EVENT	"INSTRUCTIONS_RETIRED" /* not all event support PEBS */
+#define SMPL_EVENT	"INST_RETIRED:ANY_P" /* not all events support PEBS */
 
 #define NUM_PMCS	16
 #define NUM_PMDS	16
@@ -217,11 +217,6 @@ main(int argc, char **argv)
 	buf_arg.cnt_reset = -SMPL_PERIOD;
 
 	/*
-	 * we want to block the monitored thread when the buffer becomes full
-	 */
-	ctx.ctx_flags = PFM_FL_NOTIFY_BLOCK;
-
-	/*
 	 * trigger notification (interrupt) when reached 90% of buffer
 	 */
 	buf_arg.intr_thres = (buf_arg.buf_size/sizeof(smpl_entry_t))*90/100;
@@ -286,6 +281,8 @@ main(int argc, char **argv)
 		 * PMC0 is the only counter useable with PEBS. We must disable
 		 * 64-bit emulation to avoid getting interrupts for each
 		 * sampling period, PEBS takes care of this part.
+		 *
+		 * This is obsolete with 2.6.30
 		 */
 		if (pc[i].reg_num == 0)
 			pc[i].reg_flags = PFM_REGFL_NO_EMUL64;
@@ -414,6 +411,8 @@ terminate_session:
 	 * check for any leftover samples
 	 */
 	process_smpl_buf(hdr);
+
+	printf("collected samples %"PRIu64"n", collected_samples);
 
 	/*
 	 * close context

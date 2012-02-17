@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: self.c,v 1.32 2004/01/11 22:07:12 mikpe Exp $
  *
  * This test program illustrates how a process may use the
  * Linux x86 Performance-Monitoring Counters interface to

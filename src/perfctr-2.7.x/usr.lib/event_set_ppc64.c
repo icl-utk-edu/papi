@@ -41,6 +41,7 @@ static const struct perfctr_event_set * const cpu_event_set[] = {
     [PERFCTR_PPC64_POWER4] = &ppc64_common_event_set,
     [PERFCTR_PPC64_POWER4p] = &ppc64_common_event_set,
     [PERFCTR_PPC64_970] = &ppc64_common_event_set,
+    [PERFCTR_PPC64_970MP] = &ppc64_common_event_set,
 //    [PERFCTR_PPC_604e] = &perfctr_ppc604e_event_set,
 //    [PERFCTR_PPC_750] = &perfctr_ppc750_event_set,
 };

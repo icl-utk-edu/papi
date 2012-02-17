@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_p6.c,v 1.5 2004/05/02 21:45:47 mikpe Exp $
  * Performance counter event descriptions for the Intel P6 family.
  *
  * Copyright (C) 2003-2004  Mikael Pettersson

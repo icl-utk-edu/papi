@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: libperfctr.h,v 1.50 2007/10/06 13:02:07 mikpe Exp $
  * Library interface to Linux Performance-Monitoring Counters.
  *
  * Copyright (C) 1999-2007  Mikael Pettersson

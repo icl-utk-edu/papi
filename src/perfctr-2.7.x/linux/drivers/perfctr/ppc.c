@@ -1,9 +1,12 @@
-/* $Id$
+/* $Id: ppc.c,v 1.43 2007/10/06 13:02:07 mikpe Exp $
  * PPC32 performance-monitoring counters driver.
  *
- * Copyright (C) 2004-2005  Mikael Pettersson
+ * Copyright (C) 2004-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/fs.h>
@@ -65,14 +68,28 @@ void do_perfctr_interrupt(struct pt_regs *regs)
 	preempt_enable_no_resched();
 }
 
+static inline int perfctr_reserve_pmc_hardware(void)
+{
+	return reserve_pmc_hardware(do_perfctr_interrupt);
+}
+
 void perfctr_cpu_set_ihandler(perfctr_ihandler_t ihandler)
 {
 	perfctr_ihandler = ihandler ? ihandler : perfctr_default_ihandler;
 }
 
 #else
+static inline int perfctr_reserve_pmc_hardware(void)
+{
+	return reserve_pmc_hardware(NULL);
+}
 #define perfctr_cstatus_has_ictrs(cstatus)	0
 #endif
+
+static inline void perfctr_release_pmc_hardware(void)
+{
+	release_pmc_hardware();
+}
 
 #if defined(CONFIG_SMP) && defined(CONFIG_PERFCTR_INTERRUPT_SUPPORT)
 
@@ -888,6 +905,7 @@ static unsigned int __init pll_to_core_khz(enum pll_type pll_type)
 
 /* Extract core and timebase frequencies from Open Firmware. */
 
+#ifdef CONFIG_PPC_OF
 static unsigned int __init of_to_core_khz(void)
 {
 	struct device_node *cpu;
@@ -905,6 +923,9 @@ static unsigned int __init of_to_core_khz(void)
 	perfctr_info.tsc_to_cpu_mult = core / tb;
 	return core / 1000;
 }
+#else
+static inline unsigned int of_to_core_khz(void) { return 0; }
+#endif
 
 static unsigned int __init detect_cpu_khz(enum pll_type pll_type)
 {
@@ -1045,7 +1066,6 @@ int __init perfctr_cpu_init(void)
 			goto out;
 	}
 
-	perfctr_cpu_reset();
 	init_done = 1;
  out:
 	return err;
@@ -1053,7 +1073,6 @@ int __init perfctr_cpu_init(void)
 
 void __exit perfctr_cpu_exit(void)
 {
-	perfctr_cpu_reset();
 }
 
 /****************************************************************
@@ -1062,7 +1081,7 @@ void __exit perfctr_cpu_exit(void)
  *								*
  ****************************************************************/
 
-static DECLARE_MUTEX(mutex);
+static DEFINE_MUTEX(mutex);
 static const char *current_service = 0;
 
 const char *perfctr_cpu_reserve(const char *service)
@@ -1071,17 +1090,24 @@ const char *perfctr_cpu_reserve(const char *service)
 
 	if (!init_done)
 		return "unsupported hardware";
-	down(&mutex);
+	mutex_lock(&mutex);
 	ret = current_service;
-	if (!ret)
-		current_service = service;
-	up(&mutex);
+	if (ret)
+		goto out_unlock;
+	ret = "unknown driver (oprofile?)";
+	if (perfctr_reserve_pmc_hardware() < 0)
+		goto out_unlock;
+	current_service = service;
+	perfctr_cpu_reset();
+	ret = NULL;
+ out_unlock:
+	mutex_unlock(&mutex);
 	return ret;
 }
 
 void perfctr_cpu_release(const char *service)
 {
-	down(&mutex);
+	mutex_lock(&mutex);
 	if (service != current_service) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
@@ -1089,6 +1115,7 @@ void perfctr_cpu_release(const char *service)
 		/* power down the counters */
 		perfctr_cpu_reset();
 		current_service = 0;
+		perfctr_release_pmc_hardware();
 	}
-	up(&mutex);
+	mutex_unlock(&mutex);
 }

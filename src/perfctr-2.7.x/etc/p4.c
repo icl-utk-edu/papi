@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: p4.c,v 1.7 2004/02/20 21:33:25 mikpe Exp $
  *
  * pipe stdout through 'sort -u' to see:
  * - which ESCRs are usable, and the events they support

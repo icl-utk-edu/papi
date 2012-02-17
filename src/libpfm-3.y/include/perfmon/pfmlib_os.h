@@ -22,6 +22,7 @@
 #ifndef __PFMLIB_OS_H__
 #define __PFMLIB_OS_H__
 
+#ifdef __linux__
 #ifdef __ia64__
 #include <perfmon/pfmlib_os_ia64.h>
 #endif
@@ -53,5 +54,5 @@
 #ifdef __crayx2
 #include <perfmon/pfmlib_os_crayx2.h>
 #endif
-
+#endif /* __linux__ */
 #endif /* __PFMLIB_OS_H__ */

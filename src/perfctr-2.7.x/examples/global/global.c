@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: global.c,v 1.37 2004/01/12 14:25:40 mikpe Exp $
  *
  * usage: ./global [sampling_interval_usec [sleep_interval_sec]]
  *

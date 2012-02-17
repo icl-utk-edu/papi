@@ -102,8 +102,6 @@ static char * pfm_mont_get_event_name(unsigned int i);
  * values on the fly given the base.
  */
 
-static void pfm_mont_get_impl_counters(pfmlib_regmask_t *impl_counters);
-
 static int
 pfm_mont_detect(void)
 {
@@ -156,7 +154,7 @@ check_cross_groups(pfmlib_input_param_t *inp, unsigned int *l1d_event,
 		s = evt_set(e[i].event);
 
 		if (g != PFMLIB_MONT_EVT_L1D_CACHE_GRP) continue;
-		DPRINT(("i=%u g=%d s=%d\n", i, g, s));
+		DPRINT("i=%u g=%d s=%d\n", i, g, s);
 		l1d_event_idx = i;
 		for (j=i+1; j < cnt; j++) {
 			if (evt_grp(e[j].event) != g) continue;
@@ -479,8 +477,8 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 
 	if (PFMLIB_DEBUG())
 		for (m=0; m < cnt; m++) {
-			DPRINT(("ev[%d]=%s counters=0x%lx\n", m, montecito_pe[e[m].event].pme_name,
-				montecito_pe[e[m].event].pme_counters));
+			DPRINT("ev[%d]=%s counters=0x%lx\n", m, montecito_pe[e[m].event].pme_name,
+				montecito_pe[e[m].event].pme_counters);
 		}
 
 	if (cnt > PMU_MONT_NUM_COUNTERS) return PFMLIB_ERR_TOOMANY;
@@ -499,18 +497,18 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	 * 	- cancel events are compatible
 	 */
 
-	DPRINT(("l1d_set=%u l2d_set1_mask=0x%lx l2d_set2_mask=0x%lx\n", l1d_set, l2d_set1_mask, l2d_set2_mask));
+	DPRINT("l1d_set=%u l2d_set1_mask=0x%lx l2d_set2_mask=0x%lx\n", l1d_set, l2d_set1_mask, l2d_set2_mask);
 
 	/*
 	 * first, place L1D cache event in PMC5
 	 *
 	 * this is the strongest constraint
 	 */
-	pfm_mont_get_impl_counters(&impl_cntrs);
+	pfm_get_impl_counters(&impl_cntrs);
 	pfm_regmask_andnot(&avail_cntrs, &impl_cntrs, &inp->pfp_unavail_pmcs);
 	not_assigned_events = 0;
 
-	DPRINT(("avail_cntrs=0x%lx\n", avail_cntrs.bits[0]));
+	DPRINT("avail_cntrs=0x%lx\n", avail_cntrs.bits[0]);
 
 	/*
 	 * we do not check ALL_THRD here because at least
@@ -567,12 +565,12 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 			if (i != l1d_set)
 				not_assigned_events |= evt_mask;
 
-			DPRINT(("phase 1: i=%u avail_cntrs=0x%lx l2d_set1_p=%d l2d_set2_p=%d not_assigned=0x%lx\n", 
+			DPRINT("phase 1: i=%u avail_cntrs=0x%lx l2d_set1_p=%d l2d_set2_p=%d not_assigned=0x%lx\n", 
 				i,
 				avail_cntrs.bits[0],
 				l2d_set1_p,
 				l2d_set2_p,
-				not_assigned_events));
+				not_assigned_events);
 	}
 	/*
 	 * assign BUS_* ER_* events (work only in PMC4-PMC9)
@@ -594,8 +592,8 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 			if ((cnt_mask & 0x1) == 0) 
 				continue;
 
-			DPRINT(("phase 2: i=%d j=%d cnt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
-				i, j, cnt_mask, avail_cntrs.bits[0], not_assigned_events));
+			DPRINT("phase 2: i=%d j=%d cnt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
+				i, j, cnt_mask, avail_cntrs.bits[0], not_assigned_events);
 
 			if (!pfm_regmask_isset(&avail_cntrs, j))
 				continue;
@@ -615,14 +613,14 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	max_cnt = PMU_MONT_FIRST_COUNTER + PMU_MONT_NUM_COUNTERS;
 	for (i=0, j=0; evt_mask ; i++, evt_mask >>=1) {
 
-		DPRINT(("phase 3a: i=%d j=%d evt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
-			i, j, evt_mask, avail_cntrs.bits[0], not_assigned_events));
+		DPRINT("phase 3a: i=%d j=%d evt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
+			i, j, evt_mask, avail_cntrs.bits[0], not_assigned_events);
 		if ((evt_mask & 0x1) == 0)
 			continue;
 
 		while(j < max_cnt && !pfm_regmask_isset(&avail_cntrs, j)) {
-			DPRINT(("phase 3: i=%d j=%d evt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
-				i, j, evt_mask, avail_cntrs.bits[0], not_assigned_events));
+			DPRINT("phase 3: i=%d j=%d evt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
+				i, j, evt_mask, avail_cntrs.bits[0], not_assigned_events);
 			j++;
 		}
 
@@ -640,7 +638,7 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 		 * XXX: we do not support .all placement just yet
 		 */
 		if (param && param->pfp_mont_counters[j].flags & PFMLIB_MONT_FL_EVT_ALL_THRD) {
-			DPRINT((".all mode is not yet supported by libpfm\n"));
+			DPRINT(".all mode is not yet supported by libpfm\n");
 			return PFMLIB_ERR_NOTSUPP;
 		}
 
@@ -738,7 +736,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 		param->pfp_mont_iear.ear_umask = evt_umask(inp->pfp_events[i].event);
 
-		DPRINT(("I-EAR event with no info\n"));
+		DPRINT("I-EAR event with no info\n");
 	}
 
 	/*
@@ -760,7 +758,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 		reg.pmc37_mont_cache_reg.iear_ct    = 0x1;
 		reg.pmc37_mont_cache_reg.iear_umask = param->pfp_mont_iear.ear_umask;
 	} else {
-		DPRINT(("ALAT mode not supported in I-EAR mode\n"));
+		DPRINT("ALAT mode not supported in I-EAR mode\n");
 		return PFMLIB_ERR_INVAL;
 	}
 	if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 37))
@@ -768,7 +766,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 	pc[pos1].reg_num     = 37; /* PMC37 is I-EAR config register */
 	pc[pos1].reg_value   = reg.pmc_val;
-	pc[pos1].reg_addr  = pc[pos1].reg_addr = 37;
+	pc[pos1].reg_addr  = pc[pos1].reg_alt_addr = 37;
 	pos1++;
 
 	pd[pos2].reg_num  = 34;
@@ -837,7 +835,7 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 		param->pfp_mont_dear.ear_umask = evt_umask(inp->pfp_events[i].event);
 
-		DPRINT(("D-EAR event with no info\n"));
+		DPRINT("D-EAR event with no info\n");
 	}
 
 	/* sanity check on the mode */
@@ -1121,7 +1119,7 @@ pfm_dispatch_etb(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, p
 		}
 	}
 
-	DPRINT(("found_etb=%d found_bar_dear=%d\n", found_etb, found_bad_dear));
+	DPRINT("found_etb=%d found_bar_dear=%d\n", found_etb, found_bad_dear);
 
 	/*
 	 * did not find D-EAR TLB/ALAT event, need to check param structure
@@ -1156,7 +1154,7 @@ pfm_dispatch_etb(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, p
 		param->pfp_mont_etb.etb_ppm = 0x3; 	/* all branches */
 		param->pfp_mont_etb.etb_brt = 0x0; 	/* all branches */
 
-		DPRINT(("ETB event with no info\n"));
+		DPRINT("ETB event with no info\n");
 	}
 
 	/*
@@ -1244,16 +1242,16 @@ do_normal_rr(unsigned long start, unsigned long end,
 
 	size = end - start;
 
-	DPRINT(("start=0x%016lx end=0x%016lx size=0x%lx bytes (%lu bundles) nbr=%d dir=%d\n",
-			start, end, size, size >> 4, nbr, dir));
+	DPRINT("start=0x%016lx end=0x%016lx size=0x%lx bytes (%lu bundles) nbr=%d dir=%d\n",
+			start, end, size, size >> 4, nbr, dir);
 
 	p2 = pfm_ia64_fls(size);
 
 	c = ALIGN_DOWN(end, p2);
 
-	DPRINT(("largest power of two possible: 2^%d=0x%lx, crossing=0x%016lx\n",
+	DPRINT("largest power of two possible: 2^%d=0x%lx, crossing=0x%016lx\n",
 				p2,
-				1UL << p2, c));
+				1UL << p2, c);
 
 	if ((c - (1UL<<p2)) >= start) {
 		l_addr = c - (1UL << p2);
@@ -1506,11 +1504,11 @@ compute_single_rr(pfmlib_mont_input_rr_t *irr, int dfl_plm, int *base_idx, pfmli
 		m++;
 	}
 
-	DPRINT(("size=%ld, l=%d m=%d, internal: 0x%lx full: 0x%lx\n",
+	DPRINT("size=%ld, l=%d m=%d, internal: 0x%lx full: 0x%lx\n",
 		size,
 		l, m,
 		1UL << l,
-		1UL << m));
+		1UL << m);
 
 	for (; m < 64; m++) {
 		p_start = ALIGN_DOWN(start, m);
@@ -1519,7 +1517,7 @@ compute_single_rr(pfmlib_mont_input_rr_t *irr, int dfl_plm, int *base_idx, pfmli
 	}
 	return PFMLIB_ERR_IRRINVAL;
 found:
-	DPRINT(("m=%d p_start=0x%lx p_end=0x%lx\n", m, p_start,p_end));
+	DPRINT("m=%d p_start=0x%lx p_end=0x%lx\n", m, p_start,p_end);
 
 	/* when the event is not IA64_INST_RETIRED, then we MUST use ibrp0 */
 	br[0].reg_num   = reg_idx;
@@ -1581,7 +1579,7 @@ compute_normal_rr(pfmlib_mont_input_rr_t *irr, int dfl_plm, int n, int *base_idx
 				&br_index,
 				&reg_idx, in_rr->rr_plm ? in_rr->rr_plm : dfl_plm);
 
-		DPRINT(("br_index=%d reg_idx=%d\n", br_index, reg_idx));
+		DPRINT("br_index=%d reg_idx=%d\n", br_index, reg_idx);
 
 		/*
 		 * compute offsets
@@ -1651,8 +1649,8 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 		         0 : check_fine_mode_possible(irr, n_intervals);
 
 
-	DPRINT(("n_intervals=%d retired_only=%d retired_count=%d fine_mode=%d\n",
-		n_intervals, retired_only, retired_count, fine_mode));
+	DPRINT("n_intervals=%d retired_only=%d retired_count=%d fine_mode=%d\n",
+		n_intervals, retired_only, retired_count, fine_mode);
 	/*
 	 * On montecito, there are more constraints on what can be measured with irange.
 	 *
@@ -1687,7 +1685,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 	if (ret)
 		return ret;
 
-	DPRINT(("prefetch_count=%u base_idx=%d dup=%d\n", prefetch_count, base_idx, dup));
+	DPRINT("prefetch_count=%u base_idx=%d dup=%d\n", prefetch_count, base_idx, dup);
 
 	/*
 	 * CPU_OP_CYCLES.QUAL supports code range restrictions but it returns

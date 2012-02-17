@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id$
+# $Id: update-kernel,v 1.9.2.7 2010/07/01 17:22:27 mikpe Exp $
 # usage:
 #	cd ${kernelsrcdir}
 #	${perfctrsrcdir}/update-kernel
@@ -12,6 +12,7 @@ dryrun=
 sym=
 backup=
 maybe_redhat=
+maybe_suse=
 VERSION=
 PATCHLEVEL=
 SUBLEVEL=
@@ -37,7 +38,8 @@ get_perfctr_srcdir() {
 
 get_arch() {
     if [ -z "$ARCH" ]; then
-	ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+	OLDARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+	ARCH=`echo $OLDARCH | sed -e s/i386/x86/ -e s/x86_64/x86/ -e s/ppc.*/powerpc/`
     fi
 }
 
@@ -79,7 +81,7 @@ get_options() {
 }
 
 check_pwd_is_kernel_srcdir() {
-    if [ ! -f drivers/Makefile -o ! -f "arch/$ARCH/kernel/Makefile" ]; then
+    if [ ! -f drivers/Makefile -o \( ! -f "arch/$ARCH/kernel/Makefile" -a ! -f "arch/$OLDARCH/kernel/Makefile" \) ]; then
 	echo "Error: `pwd` does not appear to be the top-level kernel source directory"
 	usage
     fi
@@ -93,14 +95,31 @@ check_kernel_srcdir_is_clean() {
 }
 
 get_makefile_variable() {
-    eval `grep "^$1 *=" Makefile | head -1 | sed 's/ *= */=/'`
+    eval `grep "^$1 *=" Makefile | head -n 1 | sed 's/ *= */=/'`
+}
+
+get_extra_version() {
+    EXTRAVERSION=`grep "^EXTRAVERSION *=" Makefile | head -n 1 | sed 's/ *= */=/'`
+    case "$EXTRAVERSION" in
+    'EXTRAVERSION=-$(shell echo $(CONFIG_RELEASE)-$(CONFIG_CFGNAME))')
+	maybe_suse=1
+	EXTRAVERSION='EXTRAVERSION=-$(shell echo $(CONFIG_RELEASE))'
+	;;
+    esac
+    MKF=`cat <<EOF
+-include .config
+$EXTRAVERSION
+default:
+	@echo EXTRAVERSION='\\$(EXTRAVERSION)'
+EOF`
+    eval `echo "$MKF" | make -f -`
 }
 
 get_kernel_version() {
     get_makefile_variable VERSION
     get_makefile_variable PATCHLEVEL
     get_makefile_variable SUBLEVEL
-    get_makefile_variable EXTRAVERSION
+    get_extra_version
     case "$EXTRAVERSION" in
     *custom)
 	maybe_redhat=1
@@ -156,10 +175,28 @@ try_redhat() {
     fi
 }
 
+try_suse() {
+    if [ -n "$EXTRAVERSION" -a -n "$maybe_suse" ]; then
+	if [ -f "$perfctr/patches/patch-kernel-$kernel-suse" ]; then
+	    patch="$kernel-suse"
+	    echo Found patch for SuSE kernel "$kernel"
+	else
+	    alias=`grep ^$kernel-suse $perfctr/patches/aliases | awk -F/ '{ print $2 }'`
+	    if [ -n "$alias" -a -f "$perfctr/patches/patch-kernel-$alias" ]; then
+		patch="$alias"
+		echo Using patch "$alias" for SuSE kernel "$kernel"
+	    fi
+	fi
+    fi
+}
+
 deduce_patch() {
     try_standard
     if [ -z "$patch" ]; then
 	try_redhat
+    fi
+    if [ -z "$patch" ]; then
+	try_suse
     fi
     if [ -z "$patch" ]; then
 	echo Error: no suitable patch found for kernel "$kernel"
@@ -188,29 +225,46 @@ apply_patch() {
     patch $dryrun $bVt -p1 < "$perfctr/patches/patch-kernel-$patch"
 }
 
-install_files_by_symlinks() {
-    echo ln -sf ${perfctr}/linux/include/asm-$ARCH/perfctr.h include/asm-$ARCH/
-    ln -sf ${perfctr}/linux/include/asm-$ARCH/perfctr.h include/asm-$ARCH/
-    echo ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
-    ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
-    echo ln -sf ${perfctr}/linux/drivers/perfctr drivers/
-    ln -sf ${perfctr}/linux/drivers/perfctr drivers/
-}
-
-install_files_by_tar() {
-    tar -C "$perfctr/linux" --exclude CVS -cf - . | tar -xf -
-    rm -f include/asm
+install_file() {
+    if [ -n "$sym" ]; then
+	echo ln -sf ${perfctr}/$1/$2 $3/
+	if [ -z "$dryrun" ]; then
+	    ln -sf ${perfctr}/$1/$2 $3/
+	fi
+    else
+	echo tar -C "${perfctr}/$1/" --exclude CVS -cf - $2 '|' tar -C $3/ -xf -
+	if [ -z "$dryrun" ]; then
+	    tar -C "${perfctr}/$1/" --exclude CVS -cf - $2 | tar -C $3/ -xf -
+	fi
+    fi
 }
 
 install_files() {
     echo
     echo Installing new kernel source files
     echo
-    if [ -n "$sym" ]; then
-	install_files_by_symlinks
+    if [ -d arch/x86/include/asm ]; then
+	install_file linux/include/asm-x86 perfctr.h arch/x86/include/asm
+    elif [ -d include/asm-x86 ]; then
+	install_file linux/include/asm-x86 perfctr.h include/asm-x86
     else
-	install_files_by_tar
+	install_file linux/include/asm-x86 perfctr.h include/asm-i386
+	install_file linux/include/asm-x86 perfctr.h include/asm-x86_64
     fi
+    if [ -d arch/powerpc/include/asm ]; then
+	install_file linux/include/asm-powerpc perfctr.h arch/powerpc/include/asm
+    elif [ -d include/asm-powerpc ]; then
+	install_file linux/include/asm-powerpc perfctr.h include/asm-powerpc
+    else
+	install_file linux/include/asm-powerpc perfctr.h include/asm-ppc
+    fi
+    if [ -d arch/arm/include/asm ]; then
+	install_file linux/include/asm-arm perfctr.h arch/arm/include/asm
+    else
+	install_file linux/include/asm-arm perfctr.h include/asm-arm
+    fi
+    install_file linux/include/linux perfctr.h include/linux
+    install_file linux/drivers perfctr drivers
 }
 
 get_perfctr_srcdir
@@ -223,6 +277,4 @@ if [ -z "$nopatch" ]; then
     identify_patch
     apply_patch
 fi
-if [ -z "$dryrun" ]; then
-    install_files
-fi
+install_files

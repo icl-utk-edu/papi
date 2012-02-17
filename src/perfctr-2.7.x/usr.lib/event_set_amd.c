@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_amd.c,v 1.9 2004/07/17 00:41:57 mikpe Exp $
  * Performance counter event descriptions for AMD K7 and K8.
  *
  * Copyright (C) 2003  Mikael Pettersson

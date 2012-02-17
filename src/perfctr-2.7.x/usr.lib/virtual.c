@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: virtual.c,v 1.35 2005/06/06 21:07:58 mikpe Exp $
  * Library interface to virtual per-process performance counters.
  *
  * Copyright (C) 1999-2005  Mikael Pettersson

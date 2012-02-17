@@ -1,13 +1,13 @@
-/* $Id$
+/* $Id: signal.c,v 1.18.2.3 2009/01/23 18:37:41 mikpe Exp $
  *
  * This test program illustrates how performance counter overflow
  * can be caught and sent to the process as a user-specified signal.
  *
  * Limitations:
- * - Requires a 2.4 or newer kernel with local APIC support.
- * - Requires a CPU with a local APIC (P4, P6, K8, K7).
+ * - x86 requires a kernel with local APIC support.
+ * - x86 requires a CPU with a local APIC.
  *
- * Copyright (C) 2001-2004  Mikael Pettersson
+ * Copyright (C) 2001-2004, 2009  Mikael Pettersson
  */
 #define __USE_GNU /* enable symbolic names for gregset_t[] indices */
 #include <sys/ucontext.h>
@@ -36,10 +36,18 @@ static void do_open(void)
 	printf("PCINT not supported -- expect failure\n");
 }
 
+#if defined(__powerpc__)
+/* It seems that the PPC32 Linux kernels do not clear the high
+   bits of the si_code when copying the siginfo_t to user-space.
+   This works around that. */
+#define get_si_code(SI)	((SI) & 0xFFFF)
+#else
+#define get_si_code(SI)	((SI))
+#endif
+
 static void on_sigio(int sig, siginfo_t *si, void *puc)
 {
     struct ucontext *uc;
-    mcontext_t *mc;
     unsigned long pc;
     unsigned int pmc_mask;
 
@@ -47,7 +55,7 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
 	printf("%s: unexpected signal %d\n", __FUNCTION__, sig);
 	return;
     }
-    if( si->si_code != SI_PMC_OVF ) {
+    if( get_si_code(si->si_code) != get_si_code(SI_PMC_OVF) ) {
 	printf("%s: unexpected si_code #%x\n", __FUNCTION__, si->si_code);
 	return;
     }
@@ -56,8 +64,7 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
 	return;
     }
     uc = puc;
-    mc = &uc->uc_mcontext;
-    pc = mcontext_pc(mc);
+    pc = ucontext_pc(uc);
     if( !vperfctr_is_running(vperfctr) ) {
 	/*
 	 * My theory is that this happens if a perfctr overflowed

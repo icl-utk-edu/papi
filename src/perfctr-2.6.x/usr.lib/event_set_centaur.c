@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_centaur.c,v 1.1 2003/02/16 21:08:54 mikpe Exp $
  * Performance counter event descriptions for Centaur chips:
  * IDT WinChip C6/2/3 and VIA C3.
  *

@@ -46,13 +46,19 @@ typedef struct {
 /*
  * pme_flags value (event and unit mask)
  */
+
+/* event or unit-mask level constraints */
+#define PFMLIB_CORE_FIXED0		0x02 /* event supported by FIXED_CTR0, can work on generic counters */
+#define PFMLIB_CORE_FIXED1		0x04 /* event supported by FIXED_CTR1, can work on generic counters */
+#define PFMLIB_CORE_FIXED2_ONLY		0x08 /* works only on FIXED_CTR2 */
+
+/* event-level constraints */
 #define PFMLIB_CORE_UMASK_NCOMBO	0x01 /* unit mask cannot be combined (default: combination ok) */
-#define PFMLIB_CORE_FIXED0		0x02 /* event prefers FIXED_CTR0 */
-#define PFMLIB_CORE_FIXED1		0x04 /* event prefers FIXED_CTR0 */
-#define PFMLIB_CORE_FIXED2		0x08 /* event prefers FIXED_CTR0 */
-#define PFMLIB_CORE_PMC0		0x10 /* works only on IA32_PMC0  */
-#define PFMLIB_CORE_PEBS		0x20 /* support PEBS (precise event) */
+
 #define PFMLIB_CORE_CSPEC		0x40 /* requires a core specification */
+#define PFMLIB_CORE_PEBS		0x20 /* support PEBS (precise event) */
+#define PFMLIB_CORE_PMC0		0x10 /* works only on IA32_PMC0  */
 #define PFMLIB_CORE_PMC1		0x80 /* works only on IA32_PMC1 */
+#define PFMLIB_CORE_MESI		0x100 /* requires MESI */
 
 #endif /* __PFMLIB_CORE_PRIV_H__ */

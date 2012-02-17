@@ -28,7 +28,7 @@ Itanium specific PMU features.
 .sp
 The Itanium specific functions presented here are mostly used to retrieve
 the characteristics of an event. Given a opaque event descriptor, obtained
-by \fBpfm_find_event\fR or its derivatives, they return a boolean value
+by the \fBpfm_find_event()\fR or its derivative functions, they return a boolean value
 indicating whether this event support this features or is of a particular
 kind.
 .sp
@@ -83,7 +83,7 @@ designated by \fBi\fR.
 .sp
 
 When the Itanium specific features are needed to support a measurement their descriptions must be passed
-as model-specific input arguments to the \fBpfm_dispatch_events\fR call. The Itanium specific 
+as model-specific input arguments to the \fBpfm_dispatch_events()\fR function. The Itanium specific 
 input arguments are described in the \fBpfmlib_ita_input_param_t\fR structure and the output
 parameters in \fBpfmlib_ita_output_param_t\fR. They are defined as follows:
 .sp
@@ -207,7 +207,7 @@ for this event. Qualifiers includes opcode matching, code and data range restric
 event is marked as not supporting a particular qualifier, it usually means that it is ignored, i.e.,
 the extra level of filtering is ignored. For instance, the CPU_CYCLES events does not support code
 range restrictions and by default the library will refuse to program it if range restriction is also 
-requested. Using the flag will override the check and the call to \fBpfm_dispatch_events\fR will succeed. 
+requested. Using the flag will override the check and the call to the \fBpfm_dispatch_events()\fR function will succeed. 
 In this case, CPU_CYCLES will be measured for the entire program and not just for the code range requested. 
 For certain measurements this is perfectly acceptable as the range restriction will only be applied relevant
 to events which support it. Make sure you understand which events do not support certain qualifiers before
@@ -324,7 +324,7 @@ the BTB is not programmed.
 .SH DATA AND CODE RANGE RESTRICTIONS
 The \fBpfp_ita_drange\fR and \fBpfp_ita_irange\fR fields control the range restrictions for the data and 
 code respectively. The idea is that the application passes a set of ranges, each designated by a start 
-and end address. Upon return from \fBpfm_dispatch_events()\fR, the application gets back the set of 
+and end address. Upon return from the \fBpfm_dispatch_events()\fR function, the application gets back the set of 
 registers and their values that needs to be programmed via a kernel interface. 
 
 Range restriction is implemented using the debug registers. There is a limited number of debug registers 
@@ -387,7 +387,7 @@ bytes by which the actual range exceeds the requested range.
 .sp
 .LP
 .SH ERRORS
-Refer to the description of \fBpfm_dispatch_events()\fR for errors when using the Itanium
+Refer to the description of the \fBpfm_dispatch_events()\fR function for errors when using the Itanium
 specific input and output arguments.
 .SH SEE ALSO
 pfm_dispatch_events(3) and set of examples shipped with the library

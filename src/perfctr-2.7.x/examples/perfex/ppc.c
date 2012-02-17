@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ppc.c,v 1.5 2005/03/14 01:48:42 mikpe Exp $
  * PPC32-specific code.
  *
  * Copyright (C) 2004  Mikael Pettersson

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: arm_setup.c,v 1.1.2.1 2007/02/11 20:13:45 mikpe Exp $
  * Performance-monitoring counters driver.
  * ARM-specific kernel-resident code.
  *

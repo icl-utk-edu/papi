@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: x86_tests.h,v 1.10 2004/05/22 20:48:57 mikpe Exp $
  * Performance-monitoring counters driver.
  * Optional x86/x86_64-specific init-time tests.
  *

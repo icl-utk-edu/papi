@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: event_set_amd.c,v 1.8.2.1 2004/08/02 22:27:06 mikpe Exp $
  * Performance counter event descriptions for AMD K7 and K8.
  *
  * Copyright (C) 2003  Mikael Pettersson
@@ -13,7 +13,7 @@
  *
  * "BIOS and Kernel Developer's Guide for AMD Athlon 64 and
  * AMD Opteron Processors", Chapter 10: "Performance Monitoring".
- * AMD Publication #26094, Revision 3.04 (at http://www.amd.com).
+ * AMD Publication #26094, Revision 3.14 (at http://www.amd.com).
 
  * "Revision Guide for AMD Opteron Processors",
  * AMD Publication #25759, Revision 3.09
@@ -188,7 +188,7 @@ static const struct perfctr_event k7_unofficial_events[] = {
       "Single-bit ECC errors detected/corrected" },
     { 0x75, 0xF, UM(k7_um_invalidates), "INTERNAL_CACHE_LINE_INVALIDATES", /* not in K8 */
       "Internal cache line invalidates" },
-    { 0x76, 0xF, NULL, "CYCLES_PROCESSOR_IS_RUNNING", /* also in K8, unofficially */
+    { 0x76, 0xF, NULL, "CYCLES_PROCESSOR_IS_RUNNING", /* also in K8 */
       "Cycles processor is running (not in HLT or STPCLK)" },
     { 0x79, 0xF, UM(k7_um_L2_requests), "L2_REQUESTS", /* not in K8 */
       "L2 requests" },
@@ -447,7 +447,7 @@ static const struct perfctr_event k8_common_events[] = {
     { 0x4B, 0xF, UM(k8_um_prefetch), "DISPATCHED_PRE_INSTRS",
       "Dispatched prefetch instructions" },
     /* 0x4C: added in Revision C */
-    { 0x76, 0xF, NULL, "CYCLES_PROCESSOR_IS_RUNNING", /* undocumented */
+    { 0x76, 0xF, NULL, "CPU_CLK_UNHALTED", /* XXX: was CYCLES_PROCESSOR_IS_RUNNING */
       "Cycles processor is running (not in HLT or STPCLK)" },
     { 0x7D, 0xF, UM(k8_um_int_L2_req), "BU_INT_L2_REQ",
       "Internal L2 request" },

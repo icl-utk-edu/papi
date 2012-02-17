@@ -1,10 +1,13 @@
-/* $Id$
+/* $Id: virtual_stub.c,v 1.26.2.9 2009/01/23 17:21:20 mikpe Exp $
  * Kernel stub used to support virtual perfctrs when the
  * perfctr driver is built as a module.
  *
- * Copyright (C) 2000-2003  Mikael Pettersson
+ * Copyright (C) 2000-2009  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
@@ -17,7 +20,7 @@ static void bug_void_perfctr(struct vperfctr *perfctr)
 	BUG();
 }
 
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 static void bug_set_cpus_allowed(struct task_struct *owner, struct vperfctr *perfctr, cpumask_t new_mask)
 {
 	owner->thread.perfctr = NULL;
@@ -27,10 +30,11 @@ static void bug_set_cpus_allowed(struct task_struct *owner, struct vperfctr *per
 
 struct vperfctr_stub vperfctr_stub = {
 	.exit = bug_void_perfctr,
+	.flush = bug_void_perfctr,
 	.suspend = bug_void_perfctr,
 	.resume = bug_void_perfctr,
 	.sample = bug_void_perfctr,
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 	.set_cpus_allowed = bug_set_cpus_allowed,
 #endif
 };
@@ -51,7 +55,7 @@ struct vperfctr_stub vperfctr_stub = {
  * count before the call, and decrement it again afterwards. Thus,
  * the final drop to zero occurs here and not in the module itself.
  * (All other code paths that drop the use count do so via a file
- * object, and VFS in 2.4+ kernels also refcount the module.)
+ * object, and VFS also refcounts the module.)
  */
 void _vperfctr_exit(struct vperfctr *perfctr)
 {
@@ -60,9 +64,21 @@ void _vperfctr_exit(struct vperfctr *perfctr)
 	module_put(vperfctr_stub.owner);
 }
 
+/* __vperfctr_flush() is a conditional __vperfctr_exit(),
+ * so it needs the same protection.
+ */
+void _vperfctr_flush(struct vperfctr *perfctr)
+{
+	__module_get(vperfctr_stub.owner);
+	vperfctr_stub.flush(perfctr);
+	module_put(vperfctr_stub.owner);
+}
+
 EXPORT_SYMBOL(vperfctr_stub);
 EXPORT_SYMBOL___put_task_struct;
 
-#include <linux/mm.h> /* for 2.4.15 and up, except 2.4.20-8-redhat */
-#include <linux/ptrace.h> /* for 2.5.32 and up, and 2.4.20-8-redhat */
+#if !defined(CONFIG_UTRACE)
+#include <linux/mm.h>
+#include <linux/ptrace.h>
 EXPORT_SYMBOL(ptrace_check_attach);
+#endif

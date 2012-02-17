@@ -1,10 +1,54 @@
-$Id$
+$Id: CHANGES,v 1.177 2007/10/06 13:02:07 mikpe Exp $
 
 			CHANGES
 			=======
 
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
+
+Version 2.7.21.1, 2007-10-06
+- ppc64: recognise the PowerPC 970MP.
+- Perfex: On ppc64, do not truncate the MMCR1 value to 32 bits.
+  Bug fix from Philip Mucci.
+
+Version 2.7.21, 2007-10-03
+- Updated to support kernels 2.6.18 to 2.6.22. The system
+  call numbers used in these kernels differs from those used
+  in older kernels. The user-space library has been updated
+  and will support both these newer kernels as well as the
+  older kernels supported by perfctr-2.7.19/2.7.20/2.7.20.2.
+- Corrected kernel driver Makefile to unbreak call-site
+  backpatching in the x86 driver.
+- Updated x86 driver to match the one in perfctr-2.6.28 in
+  terms of fixes, CPU support, and kernel version support.
+- Updated references to my email address and perfctrs' web URL
+  to match current reality.
+
+Version 2.7.20.2, 2006-08-27
+- Changed library to adjust its system call numbers based
+  on the running kernel's version. Provides compatibility
+  with kernels using perfctr-2.7.19 or perfctr-2.7.20.
+
+Version 2.7.20.1, 2006-08-25
+- Added patch file for a SuSE 2.6.16.21-SLES10 kernel.
+  Contributed by Eric Kjeldergaard @ IBM.
+
+Version 2.7.20, 2006-08-20
+- Updated to support kernels 2.6.16, 2.6.17, and 2.6.18-rc4.
+- Migrated ppc64 from include/asm-ppc64/ to include/asm-powerpc/.
+- Updated perfctr system call numbers on all platforms, due to
+  other system call additions since kernel 2.6.14.
+
+Version 2.7.19, 2005-11-08
+- The self and signal examples have been updated for Power5/PPC970.
+- The ppc64 driver has been updated to compile correctly in
+  recent 2.6 kernels.
+- The x86 kernel driver has been updated to work correctly
+  on dual-core P4 processors. Previous versions would fail
+  during CPU detection (on HT DC P4s) or would erroneously
+  restrict access for one of the cores (non-HT DC P4s).
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
 
 Version 2.7.18, 2005-06-06
 - Fixed a 32/64-bit bug in the vperfctr_read_ctrs() library

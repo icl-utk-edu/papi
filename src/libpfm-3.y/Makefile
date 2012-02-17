@@ -27,15 +27,30 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
 include config.mk
 
-DIRS=lib examples include docs libpfms
+DIRS=lib include docs
+
+EXAMPLES_DIRS = examples_v2.x
+
+ifneq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+EXAMPLES_DIRS += examples_v3.x
+endif
 
 ifeq ($(ARCH),ia64)
-DIRS +=old_interface_ia64_examples
+DIRS +=examples_ia64_v2.0
 endif
+
+ifeq ($(SYS),Linux)
+DIRS +=libpfms
+endif
+
+DIRS += $(EXAMPLES_DIRS)
 
 all: 
 	@echo Compiling for \'$(ARCH)\' target
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+
+lib:
+	$(MAKE) -C lib
 
 clean: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
@@ -52,4 +67,10 @@ tarcvs: clean
 	a=`basename $$PWD`; cd ..; tar --exclude=CVS -zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
 install: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+
+install_examples:
+	@set -e ; for d in $(EXAMPLES_DIRS) ; do $(MAKE) -C $$d $@ ; done
+
+.PHONY: tar tarcvs lib
+
 # DO NOT DELETE

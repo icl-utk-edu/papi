@@ -20,7 +20,7 @@ extern "C" {
 
 #define PFM_DFL_SMPL_NAME	"default"
 
-#ifdef PFMLIB_VERSION_22
+#ifdef PFMLIB_OLD_PFMV2
 /*
  * UUID for compatibility with perfmon v2.2 (used by Cray)
  */

@@ -28,7 +28,7 @@ include $(TOPDIR)/rules.mk
 LIBS += -lm
 
 ifeq ($(SYS),Linux)
-TARGETS=smpl_p4_pebs smpl_core_pebs smpl_amd64_ibs
+TARGETS=smpl_p4_pebs smpl_core_pebs smpl_amd64_ibs smpl_nhm_lbr smpl_pebs
 endif
 
 all: $(TARGETS)
@@ -42,11 +42,12 @@ clean:
 distclean: clean
 
 install_examples: $(TARGETS)
+
+install_examples:
 	@echo installing: $(TARGETS)
-	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)/x86
-	$(INSTALL) -m 755 $(TARGETS) $(DESTDIR)$(EXAMPLESDIR)/x86
+	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)/v2/x86
+	$(INSTALL) -m 755 $(TARGETS) $(DESTDIR)$(EXAMPLESDIR)/v2/x86
 
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install depend install_examples

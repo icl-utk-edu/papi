@@ -1,10 +1,13 @@
-/* $Id$
+/* $Id: init.c,v 1.68.2.5 2009/01/23 17:21:20 mikpe Exp $
  * Performance-monitoring counters driver.
  * Top-level initialisation code.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2007, 2009  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/init.h>
@@ -20,13 +23,10 @@
 #include "version.h"
 #include "marshal.h"
 
-MODULE_AUTHOR("Mikael Pettersson <mikpe@csd.uu.se>");
+MODULE_AUTHOR("Mikael Pettersson <mikpe@it.uu.se>");
 MODULE_DESCRIPTION("Performance-monitoring counters driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("char-major-10-182");
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,63)
-EXPORT_NO_SYMBOLS;
-#endif
 
 #ifdef CONFIG_PERFCTR_DEBUG
 #define VERSION_DEBUG " DEBUG"
@@ -89,37 +89,28 @@ int sys_perfctr_cpus_forbidden(struct perfctr_cpu_mask *argp)
 	return cpus_copy_to_user(&cpus, argp);
 }
 
-#ifdef CONFIG_IA32_EMULATION
+#if defined(CONFIG_IA32_EMULATION) && !HAVE_COMPAT_IOCTL
 #include <asm/ioctl32.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,23)
-static int perfctr_ioctl32_handler(unsigned int fd, unsigned int cmd, unsigned long arg, struct file *filp)
-{
-	/* filp->f_op->ioctl is known to exist; see sys32_ioctl() */
-	return filp->f_op->ioctl(filp->f_dentry->d_inode, filp, cmd, arg);
-}
-#else
-#define perfctr_ioctl32_handler	0
-#endif
 
 static void __init perfctr_register_ioctl32_conversions(void)
 {
 	int err;
 
-	err  = register_ioctl32_conversion(PERFCTR_ABI, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(PERFCTR_INFO, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(PERFCTR_CPUS, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(PERFCTR_CPUS_FORBIDDEN, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_CREAT, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_OPEN, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_READ_SUM, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_UNLINK, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_CONTROL, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_IRESUME, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_READ_CONTROL, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_CONTROL, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_READ, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_STOP, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_START, perfctr_ioctl32_handler);
+	err  = register_ioctl32_conversion(PERFCTR_ABI, 0);
+	err |= register_ioctl32_conversion(PERFCTR_INFO, 0);
+	err |= register_ioctl32_conversion(PERFCTR_CPUS, 0);
+	err |= register_ioctl32_conversion(PERFCTR_CPUS_FORBIDDEN, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_CREAT, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_OPEN, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_READ_SUM, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_UNLINK, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_CONTROL, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_IRESUME, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_READ_CONTROL, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_CONTROL, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_READ, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_STOP, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_START, 0);
 	if( err )
 		printk(KERN_ERR "perfctr: register_ioctl32_conversion() failed\n");
 }
@@ -148,8 +139,7 @@ static void __exit perfctr_unregister_ioctl32_conversions(void)
 #define perfctr_unregister_ioctl32_conversions()	do{}while(0)
 #endif
 
-static int dev_perfctr_ioctl(struct inode *inode, struct file *filp,
-			     unsigned int cmd, unsigned long arg)
+static long dev_perfctr_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	switch( cmd ) {
 	case PERFCTR_ABI:
@@ -165,14 +155,30 @@ static int dev_perfctr_ioctl(struct inode *inode, struct file *filp,
 	case VPERFCTR_OPEN:
 		return vperfctr_attach((int)arg, 0);
 	default:
-		return gperfctr_ioctl(inode, filp, cmd, arg);
+		return gperfctr_ioctl(filp, cmd, arg);
 	}
 	return -EINVAL;
 }
 
+#if !HAVE_UNLOCKED_IOCTL
+static int dev_perfctr_ioctl_oldstyle(struct inode *inode, struct file *filp,
+				      unsigned int cmd, unsigned long arg)
+{
+	return dev_perfctr_ioctl(filp, cmd, arg);
+}
+#endif
+
 static struct file_operations dev_perfctr_file_ops = {
 	.owner = THIS_MODULE,
-	.ioctl = dev_perfctr_ioctl,
+	/* 2.6.11-rc2 introduced HAVE_UNLOCKED_IOCTL and HAVE_COMPAT_IOCTL */
+#if HAVE_UNLOCKED_IOCTL
+	.unlocked_ioctl = dev_perfctr_ioctl,
+#else
+	.ioctl = dev_perfctr_ioctl_oldstyle,
+#endif
+#if defined(CONFIG_IA32_EMULATION) && HAVE_COMPAT_IOCTL
+	.compat_ioctl = dev_perfctr_ioctl,
+#endif
 };
 
 static struct miscdevice dev_perfctr = {
