@@ -21,8 +21,6 @@
 
 #define VMWARE_MAX_COUNTERS 256
 
-
-
 #define VMWARE_CPU_LIMIT_MHZ            0
 #define VMWARE_CPU_RESERVATION_MHZ      1
 #define VMWARE_CPU_SHARES               2
@@ -49,7 +47,7 @@
 #define VMWARE_ELAPSED_TIME             19  // --       "   "       --
 #define VMWARE_ELAPSED_APPARENT         20  // --       "   "       --
 
-/*
+/* For Future Use 
  #define VMWARE_HOST_CPU_NUM_CORES       21
  #define VMWARE_HOST_CPU_USED_MS         22
  #define VMWARE_HOST_MEM_SWAPPED_MB      23
@@ -67,16 +65,14 @@
 /* typedef's */
 
 /** Structure that stores private information for each event */
-typedef struct VMWARE_register
-{
+typedef struct VMWARE_register {
 	unsigned int selector;
     /**< Signifies which counter slot is being used */
     /**< Indexed from 1 as 0 has a special meaning  */
 } VMWARE_register_t;
 
 /** This structure is used to build the table of events */
-typedef struct VMWARE_native_event_entry
-{
+typedef struct VMWARE_native_event_entry {
 	VMWARE_register_t resources;        /**< Per counter resources       */
 	char name[PAPI_MAX_STR_LEN];        /**< Name of the counter         */
 	char description[PAPI_HUGE_STR_LEN]; /**< Description of the counter  */
@@ -85,21 +81,18 @@ typedef struct VMWARE_native_event_entry
 } VMWARE_native_event_entry_t;
 
 /** This structure is used when doing register allocation it possibly is not necessary when there are no register constraints */
-typedef struct VMWARE_reg_alloc
-{
+typedef struct VMWARE_reg_alloc {
 	VMWARE_register_t ra_bits;
 } VMWARE_reg_alloc_t;
 
 /** Holds control flags, usually out-of band configuration of the hardware */
-typedef struct VMWARE_control_state
-{
+typedef struct VMWARE_control_state {
 	long_long counter[VMWARE_MAX_COUNTERS];    /**< Copy of counts, used for caching */
 	long_long lastupdate;                       /**< Last update time, used for caching */
 } VMWARE_control_state_t;
 
 /** Holds per-thread information */
-typedef struct VMWARE_context
-{
+typedef struct VMWARE_context {
 	VMWARE_control_state_t state;
 } VMWARE_context_t;
 
@@ -108,6 +101,7 @@ extern "C" {
 #endif
     
     /* function prototypes */
+    	/* There aren't any */
     
 #ifdef __cplusplus
 }  /* extern C */
