@@ -458,7 +458,10 @@ typedef struct _papi_os_option {
    int itimer_ns;                   /**< ns between mpx switching and overflow/profile emulation */
    int itimer_res_ns;               /**< ns of resolution of itimer */
    int clock_ticks;                 /**< clock ticks per second */
+   unsigned long reserved[8];       /* For future expansion */
 } PAPI_os_info_t;
+
+extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 
 #include "threads.h"
 #include "cpus.h"
@@ -569,10 +572,12 @@ int _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI );
 int _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx );
 int _papi_hwi_init_global( void );
 int _papi_hwi_init_global_internal( void );
+PAPI_os_info_t *_papi_hwi_init_os(void);
 void _papi_hwi_shutdown_global_internal( void );
 void _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,
 			      void *context );
 int _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx );
 int _papi_hwi_get_event_info( int EventCode, PAPI_event_info_t * info );
+
 
 #endif /* PAPI_INTERNAL_H */
