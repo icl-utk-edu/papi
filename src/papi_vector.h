@@ -82,6 +82,20 @@ typedef struct papi_vectors {
 
 extern papi_vector_t *_papi_hwd[];
 
+typedef struct papi_os_vectors {
+  long long   (*get_real_cycles)      (void);                   /**< */
+  long long   (*get_real_usec)        (void);                   /**< */
+  long long   (*get_virt_cycles)      (hwd_context_t *);        /**< */
+  long long   (*get_virt_usec)        (hwd_context_t *);        /**< */
+  int         (*update_shlib_info)    (papi_mdi_t * mdi);       /**< */
+  int         (*get_system_info)      (papi_mdi_t * mdi);       /**< */
+  int         (*get_memory_info)      (PAPI_hw_info_t *, int);  /**< */
+  int         (*get_dmem_info)        (PAPI_dmem_info_t *);     /**< */
+} papi_os_vector_t;
+
+extern papi_os_vector_t _papi_os_vector;
+
+
 /* Prototypes */
 int _papi_hwi_innoculate_vector( papi_vector_t * v );
 void *vector_find_dummy( void *func, char **buf );
