@@ -1195,10 +1195,10 @@ _ia64_stop( hwd_context_t * ctx, hwd_control_state_t * zero )
 static inline int
 round_requested_ns( int ns )
 {
-	if ( ns < MY_VECTOR.cmp_info.itimer_res_ns ) {
-		return MY_VECTOR.cmp_info.itimer_res_ns;
+	if ( ns < _papi_os_info.itimer_res_ns ) {
+		return _papi_os_info.itimer_res_ns;
 	} else {
-		int leftover_ns = ns % MY_VECTOR.cmp_info.itimer_res_ns;
+		int leftover_ns = ns % _papi_os_info.itimer_res_ns;
 		return ns + leftover_ns;
 	}
 }
@@ -2116,10 +2116,6 @@ papi_vector_t _ia64_vector = {
 				 .fast_virtual_timer = 0,
 				 .attach = 0,
 				 .attach_must_ptrace = 0,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
-				 .itimer_res_ns = 1,
 				 }
 	,
 

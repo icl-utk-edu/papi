@@ -12,14 +12,57 @@
 #include <errno.h>
 #include <syscall.h>
 #include <sys/utsname.h>
+#include <sys/time.h>
 
 #include "papi.h"
 #include "papi_internal.h"
 
-
-
 #include "linux-memory.h"
 #include "linux-common.h"
+#include "linux-timer.h"
+
+PAPI_os_info_t _papi_os_info;
+
+int 
+_papi_hwi_init_os(void) {
+
+    int major=0,minor=0,sub=0;
+    char *ptr;
+    struct utsname uname_buffer;
+
+    uname(&uname_buffer);
+
+    SUBDBG("Native kernel version %s\n",uname_buffer.release);
+
+    strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
+
+#ifdef ASSUME_KERNEL
+    strncpy(_papi_os_info.version,ASSUME_KERNEL,PAPI_MAX_STR_LEN);
+    SUBDBG("Assuming kernel version %s\n",_papi_os_info.name);
+#else
+    strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
+#endif
+
+    ptr=strtok(_papi_os_info.version,".");
+    if (ptr!=NULL) major=atoi(ptr);
+
+    ptr=strtok(NULL,".");
+    if (ptr!=NULL) minor=atoi(ptr);
+
+    ptr=strtok(NULL,".");
+    if (ptr!=NULL) sub=atoi(ptr);
+
+   _papi_os_info.os_version=LINUX_VERSION(major,minor,sub);
+
+   _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+   _papi_os_info.itimer_num = PAPI_INT_ITIMER;
+   _papi_os_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
+   _papi_os_info.itimer_res_ns = 1;
+   _papi_os_info.clock_ticks = sysconf( _SC_CLK_TCK );
+
+   return PAPI_OK;
+}
+
 
 int
 _linux_get_system_info( papi_mdi_t *mdi ) {
@@ -113,36 +156,6 @@ int _linux_detect_nmi_watchdog() {
   }
 
   return watchdog_detected;
-}
-
-int _linux_get_version() {
-      
-     int major=0,minor=0,sub=0;
-     char *ptr;   
-     char kernel_name[BUFSIZ];
-     struct utsname uname_buffer;
-
-     uname(&uname_buffer); 
-
-     SUBDBG("Native kernel version %s\n",uname_buffer.release);
-   
-#ifdef ASSUME_KERNEL
-     strncpy(kernel_name,ASSUME_KERNEL,BUFSIZ);
-     SUBDBG("Assuming kernel version %s\n",kernel_name);
-#else
-     strncpy(kernel_name,uname_buffer.release,BUFSIZ);
-#endif
-
-     ptr=strtok(kernel_name,".");
-     if (ptr!=NULL) major=atoi(ptr);
-   
-     ptr=strtok(NULL,".");
-     if (ptr!=NULL) minor=atoi(ptr);
-   
-     ptr=strtok(NULL,".");
-     if (ptr!=NULL) sub=atoi(ptr);
-   
-     return LINUX_VERSION(major,minor,sub);
 }
 
 #define _PATH_SYS_SYSTEM "/sys/devices/system"

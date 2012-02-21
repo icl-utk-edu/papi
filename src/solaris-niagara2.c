@@ -54,6 +54,7 @@
 #include <libgen.h>
 #include <ucontext.h>
 #include <sys/regset.h>
+#include <sys/utsname.h>
 
 #define hwd_control_state_t _niagara2_control_state_t
 #define hwd_context_t       _niagara2_context_t
@@ -2248,10 +2249,10 @@ __sol_get_processor_clock( void )
 static inline int
 __sol_get_itimer_ns( int ns )
 {
-	if ( ns < _niagara2_vector.cmp_info.itimer_res_ns ) {
-		return _niagara2_vector.cmp_info.itimer_res_ns;
+	if ( ns < _papi_os_info.itimer_res_ns ) {
+		return _papi_os_info.itimer_res_ns;
 	} else {
-		int leftover_ns = ns % _niagara2_vector.cmp_info.itimer_res_ns;
+		int leftover_ns = ns % _papi_os_info.itimer_res_ns;
 		return ns + leftover_ns;
 	}
 }
@@ -2486,6 +2487,25 @@ __int_walk_synthetic_events_action_store( void )
 }
 #endif
 
+int 
+_papi_hwi_init_os(void) {
+
+  struct utsname uname_buffer;
+
+  uname(&uname_buffer);
+
+  strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
+
+  strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
+
+  _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+  _papi_os_info.itimer_num = PAPI_INT_ITIMER;
+  _papi_os_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
+  _papi_os_info.itimer_res_ns = 1;
+
+  return PAPI_OK;
+}
+
 papi_vector_t _niagara2_vector = {
 /************* SUBSTRATE CAPABILITIES/INFORMATION/ETC *************************/
 	.cmp_info = {
@@ -2500,10 +2520,6 @@ papi_vector_t _niagara2_vector = {
 				 .fast_virtual_timer = 1,
 				 .attach = 1,
 				 .attach_must_ptrace = 1,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
-				 .itimer_res_ns = 1,
 				 .hardware_intr = 1,
 				 .hardware_intr_sig = SIGEMT,
 				 .precise_intr = 1,

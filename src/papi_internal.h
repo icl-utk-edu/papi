@@ -572,7 +572,8 @@ int _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI );
 int _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx );
 int _papi_hwi_init_global( void );
 int _papi_hwi_init_global_internal( void );
-PAPI_os_info_t *_papi_hwi_init_os(void);
+int _papi_hwi_init_os(void);
+PAPI_os_info_t *_papi_hwi_get_os_info(void);
 void _papi_hwi_shutdown_global_internal( void );
 void _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,
 			      void *context );

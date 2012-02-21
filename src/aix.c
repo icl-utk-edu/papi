@@ -7,6 +7,8 @@
   Other routines also include minor conditionally compiled differences.
 */
 
+#include <sys/utsname.h>
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_defines.h"
@@ -927,11 +929,11 @@ _aix_read( hwd_context_t * ctx, hwd_control_state_t * spc,
 inline_static int
 round_requested_ns( int ns )
 {
-	if ( ns <= _aix_vector.cmp_info.itimer_res_ns ) {
-		return _aix_vector.cmp_info.itimer_res_ns;
+	if ( ns <= _papi_os_info.itimer_res_ns ) {
+		return _papi_os_info.itimer_res_ns;
 	} else {
-		int leftover_ns = ns % _aix_vector.cmp_info.itimer_res_ns;
-		return ( ns - leftover_ns + _aix_vector.cmp_info.itimer_res_ns );
+		int leftover_ns = ns % _papi_os_info.itimer_res_ns;
+		return ( ns - leftover_ns + _papi_os_info.itimer_res_ns );
 	}
 }
 
@@ -1272,6 +1274,29 @@ _aix_ntv_name_to_code( char *name, unsigned int *evtcode )
 }
 
 
+PAPI_os_info_t _papi_os_info;
+
+int 
+_papi_hwi_init_os(void) {
+  
+   struct utsname uname_buffer;
+
+   uname(&uname_buffer);
+
+   strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
+
+   strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
+   
+   _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+   _papi_os_info.itimer_num = PAPI_INT_ITIMER;
+   _papi_os_info.itimer_res_ns = 1;
+   _papi_os_info.itimer_ns = 1000 * PAPI_INT_MPX_DEF_US;
+
+   return PAPI_OK;
+
+}
+
+
 papi_vector_t _aix_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
@@ -1280,10 +1305,6 @@ papi_vector_t _aix_vector = {
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_res_ns = 1,
-				 .itimer_ns = 1000 * PAPI_INT_MPX_DEF_US,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */

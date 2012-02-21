@@ -873,10 +873,6 @@ _papi_pfm_init_substrate( int cidx )
 			( &_perfmon2_pfm_unavailable_pmcs, &_perfmon2_pfm_unavailable_pmds,
 			  &min_timeout_ns );
 
-		MY_VECTOR.cmp_info.itimer_ns = 10000000;
-		/* This field represents the minimum timer resolution. Anything lower
-		   is not possible. Anything higher and it must be a multiple of this */
-		MY_VECTOR.cmp_info.itimer_res_ns = min_timeout_ns;
 
 		if ( retval != PAPI_OK )
 			return ( retval );
@@ -1340,11 +1336,11 @@ _papi_pfm_stop( hwd_context_t * ctx0, hwd_control_state_t * ctl0 )
 static inline int
 round_requested_ns( int ns )
 {
-	if ( ns <= MY_VECTOR.cmp_info.itimer_res_ns ) {
-		return MY_VECTOR.cmp_info.itimer_res_ns;
+	if ( ns <= _papi_os_info.itimer_res_ns ) {
+		return _papi_os_info.itimer_res_ns;
 	} else {
-		int leftover_ns = ns % MY_VECTOR.cmp_info.itimer_res_ns;
-		return ( ns - leftover_ns + MY_VECTOR.cmp_info.itimer_res_ns );
+		int leftover_ns = ns % _papi_os_info.itimer_res_ns;
+		return ( ns - leftover_ns + _papi_os_info.itimer_res_ns );
 	}
 }
 
@@ -2416,10 +2412,6 @@ papi_vector_t _papi_pfm_vector = {
 				 .fast_virtual_timer = 0,
 				 .attach = 0,
 				 .attach_must_ptrace = 0,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
-				 .itimer_res_ns = 1,
 				 },
 
 	/* sizes of framework-opaque component-private structures */

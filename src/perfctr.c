@@ -201,8 +201,6 @@ _perfctr_init_substrate( int cidx )
 		MY_VECTOR.cmp_info.hardware_intr = 0;
 	SUBDBG( "Hardware/OS %s support counter generated interrupts\n",
 			MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not" );
-	MY_VECTOR.cmp_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
-	MY_VECTOR.cmp_info.clock_ticks = ( int ) sysconf( _SC_CLK_TCK );
 
 	strcpy( _papi_hwi_system_info.hw_info.model_string,
 			PERFCTR_CPU_NAME( &info ) );
@@ -276,10 +274,10 @@ detach( hwd_control_state_t * ctl )
 static inline int
 round_requested_ns( int ns )
 {
-	if ( ns < MY_VECTOR.cmp_info.itimer_res_ns ) {
-		return MY_VECTOR.cmp_info.itimer_res_ns;
+	if ( ns < _papi_os_info.itimer_res_ns ) {
+		return _papi_os_info.itimer_res_ns;
 	} else {
-		int leftover_ns = ns % MY_VECTOR.cmp_info.itimer_res_ns;
+		int leftover_ns = ns % _papi_os_info.itimer_res_ns;
 		return ns + leftover_ns;
 	}
 }

@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
+#include <sys/utsname.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -937,6 +938,26 @@ int _papi_freebsd_update_shlib_info(papi_mdi_t *mdi){
   return PAPI_OK;
 }
 
+
+int 
+_papi_hwi_init_os(void) {
+
+   struct utsname uname_buffer;
+
+   uname(&uname_buffer);
+
+   strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
+
+   strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
+
+   _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+   _papi_os_info.itimer_num = PAPI_INT_ITIMER;
+   _papi_os_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;	/* Not actually supported */
+   _papi_os_info.itimer_res_ns = 1;
+
+   return PAPI_OK;
+}
+
 papi_vector_t _papi_freebsd_vector = {
   .cmp_info = {
 	/* default component information (unspecified values are initialized to 0) */
@@ -957,10 +978,6 @@ papi_vector_t _papi_freebsd_vector = {
 	.fast_virtual_timer = 0,
 	.attach = 0,
 	.attach_must_ptrace = 0,
-	.itimer_sig = PAPI_INT_MPX_SIGNAL,
-	.itimer_num = PAPI_INT_ITIMER,
-	.itimer_ns = PAPI_INT_MPX_DEF_US * 1000,	/* Not actually supported */
-	.itimer_res_ns = 1,
   } ,
   .size = { 
 	.context = sizeof( hwd_context_t ),

@@ -23,6 +23,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include <sys/utsname.h>
 
 #ifdef CPC_ULTRA3_I
 #define LASTULTRA3 CPC_ULTRA3_I
@@ -1565,6 +1566,25 @@ _papi_hwd_update_shlib_info( papi_mdi_t *mdi )
 }
 #endif
 
+int
+_papi_hwi_init_os(void) {
+
+  struct utsname uname_buffer;
+
+  uname(&uname_buffer);
+
+  strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
+
+  strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
+
+  _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+  _papi_os_info.itimer_num = PAPI_INT_ITIMER;
+  _papi_os_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
+  _papi_os_info.itimer_res_ns = 1;
+
+  return PAPI_OK;
+}
+
 
 papi_vector_t _solaris_vector = {
 	.cmp_info = {
@@ -1578,10 +1598,6 @@ papi_vector_t _solaris_vector = {
 				 .fast_virtual_timer = 1,
 				 .attach = 1,
 				 .attach_must_ptrace = 1,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-                                 .itimer_num = PAPI_INT_ITIMER,
-                                 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
-                                 .itimer_res_ns = 1,
 				 .hardware_intr = 0,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .precise_intr = 0,

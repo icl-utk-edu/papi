@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/utsname.h>
 
 // BG/P macros
 #define get_cycles _bgp_GetTimeBase
@@ -1291,6 +1292,22 @@ _bgp_ntv_bits_to_info( hwd_register_t * bits, char *names,
 
 }
 
+int 
+_papi_hwi_init_os(void) {
+
+    uname(&uname_buffer);
+
+    strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
+
+    strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
+
+    _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+    _papi_os_info.itimer_num = PAPI_INT_ITIMER;
+    _papi_os_info.itimer_res_ns = 1;
+
+    return PAPI_OK;
+}
+
 /*
  * PAPI Vector Table for BG/P
  */
@@ -1306,9 +1323,6 @@ papi_vector_t _bgp_vectors = {
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_res_ns = 1,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
 

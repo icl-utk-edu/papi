@@ -596,6 +596,16 @@ PAPI_library_init( int version )
 		papi_return( PAPI_EINVAL );
 	}
 
+	/* Initialize OS */
+	tmp = _papi_hwi_init_os();
+	if ( tmp ) {
+	   init_retval = tmp;
+	   _papi_hwi_shutdown_global_internal(  );
+	   _in_papi_library_init_cnt--;
+	   _papi_hwi_error_level = tmpel;
+	   papi_return( init_retval );
+	}
+
 	/* Initialize substrate globals */
 
 	tmp = _papi_hwi_init_global(  );
@@ -1741,9 +1751,7 @@ PAPI_start( int EventSet )
 	/* If overflowing is enabled, turn it on */
 	if ( ( ESI->state & PAPI_OVERFLOWING ) &&
 		 !( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) ) {
-		retval =
-			_papi_hwi_start_signal( _papi_hwd[cidx]->cmp_info.itimer_sig,
-									NEED_CONTEXT, cidx );
+		retval = _papi_hwi_start_signal( _papi_os_info.itimer_sig, NEED_CONTEXT, cidx );
 		if ( retval != PAPI_OK )
 			papi_return( retval );
 
@@ -1754,18 +1762,18 @@ PAPI_start( int EventSet )
 
 		retval = _papi_hwd[cidx]->start( context, ESI->ctl_state );
 		if ( retval != PAPI_OK ) {
-			_papi_hwi_stop_signal( _papi_hwd[cidx]->cmp_info.itimer_sig );
+			_papi_hwi_stop_signal( _papi_os_info.itimer_sig );
 			ESI->state ^= PAPI_RUNNING;
 			ESI->state |= PAPI_STOPPED;
 			thread->running_eventset[cidx] = NULL;
 			papi_return( retval );
 		}
 
-		retval = _papi_hwi_start_timer( _papi_hwd[cidx]->cmp_info.itimer_num,
-										_papi_hwd[cidx]->cmp_info.itimer_sig,
-										_papi_hwd[cidx]->cmp_info.itimer_ns );
+		retval = _papi_hwi_start_timer( _papi_os_info.itimer_num,
+						_papi_os_info.itimer_sig,
+						_papi_os_info.itimer_ns );
 		if ( retval != PAPI_OK ) {
-			_papi_hwi_stop_signal( _papi_hwd[cidx]->cmp_info.itimer_sig );
+			_papi_hwi_stop_signal( _papi_os_info.itimer_sig );
 			_papi_hwd[cidx]->stop( context, ESI->ctl_state );
 			ESI->state ^= PAPI_RUNNING;
 			ESI->state |= PAPI_STOPPED;
@@ -1918,12 +1926,11 @@ PAPI_stop( int EventSet, long long *values )
 
 	if ( ESI->state & PAPI_OVERFLOWING ) {
 		if ( !( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) ) {
-			retval =
-				_papi_hwi_stop_timer( _papi_hwd[cidx]->cmp_info.itimer_num,
-									  _papi_hwd[cidx]->cmp_info.itimer_sig );
+			retval = _papi_hwi_stop_timer( _papi_os_info.itimer_num,
+						       _papi_os_info.itimer_sig );
 			if ( retval != PAPI_OK )
 				papi_return( retval );
-			_papi_hwi_stop_signal( _papi_hwd[cidx]->cmp_info.itimer_sig );
+			_papi_hwi_stop_signal( _papi_os_info.itimer_sig );
 		}
 	}
 
@@ -2523,7 +2530,7 @@ PAPI_multiplex_init( void )
 {
 	int retval;
 
-	retval = mpx_init( _papi_hwd[0]->cmp_info.itimer_ns );
+	retval = mpx_init( _papi_os_info.itimer_ns );
 	papi_return( retval );
 }
 
@@ -2893,7 +2900,7 @@ PAPI_set_multiplex( int EventSet )
 	memset( &mpx, 0x0, sizeof ( mpx ) );
 	mpx.multiplex.eventset = EventSet;
 	mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;
-	mpx.multiplex.ns = _papi_hwd[cidx]->cmp_info.itimer_ns;
+	mpx.multiplex.ns = _papi_os_info.itimer_ns;
 	return ( PAPI_set_opt( PAPI_MULTIPLEX, &mpx ) );
 }
 
@@ -3139,7 +3146,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		/* Low level just checks/adjusts the args for this substrate */
 		retval = _papi_hwd[cidx]->ctl( context, PAPI_DEF_MPX_NS, &internal );
 		if ( retval == PAPI_OK ) {
-			_papi_hwd[cidx]->cmp_info.itimer_ns = ( int ) internal.multiplex.ns;
+			_papi_os_info.itimer_ns = ( int ) internal.multiplex.ns;
 			ptr->multiplex.ns = ( int ) internal.multiplex.ns;
 		}
 		papi_return( retval );
@@ -3153,7 +3160,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		/* Low level just checks/adjusts the args for this substrate */
 		retval = _papi_hwd[cidx]->ctl( NULL, PAPI_DEF_ITIMER_NS, &internal );
 		if ( retval == PAPI_OK ) {
-			_papi_hwd[cidx]->cmp_info.itimer_ns = internal.itimer.ns;
+			_papi_os_info.itimer_ns = internal.itimer.ns;
 			ptr->itimer.ns = internal.itimer.ns;
 		}
 		papi_return( retval );
@@ -3168,10 +3175,10 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		/* Low level just checks/adjusts the args for this substrate */
 		retval = _papi_hwd[cidx]->ctl( NULL, PAPI_DEF_ITIMER, &internal );
 		if ( retval == PAPI_OK ) {
-			_papi_hwd[cidx]->cmp_info.itimer_num = ptr->itimer.itimer_num;
-			_papi_hwd[cidx]->cmp_info.itimer_sig = ptr->itimer.itimer_sig;
+			_papi_os_info.itimer_num = ptr->itimer.itimer_num;
+			_papi_os_info.itimer_sig = ptr->itimer.itimer_sig;
 			if ( ptr->itimer.ns > 0 )
-				_papi_hwd[cidx]->cmp_info.itimer_ns = ptr->itimer.ns;
+				_papi_os_info.itimer_ns = ptr->itimer.ns;
 			/* flags are currently ignored, eventually the flags will be able
 			   to specify whether or not we use POSIX itimers (clock_gettimer) */
 		}
@@ -3716,7 +3723,7 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 		/* xxxx for now, assume we only check against cpu component */
 		if ( ptr == NULL )
 			papi_return( PAPI_EINVAL );
-		ptr->multiplex.ns = _papi_hwd[0]->cmp_info.itimer_ns;
+		ptr->multiplex.ns = _papi_os_info.itimer_ns;
 		return ( PAPI_OK );
 	}
 	case PAPI_DEF_ITIMER_NS:
@@ -3724,7 +3731,7 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 		/* xxxx for now, assume we only check against cpu component */
 		if ( ptr == NULL )
 			papi_return( PAPI_EINVAL );
-		ptr->itimer.ns = _papi_hwd[0]->cmp_info.itimer_ns;
+		ptr->itimer.ns = _papi_os_info.itimer_ns;
 		return ( PAPI_OK );
 	}
 	case PAPI_DEF_ITIMER:
@@ -3732,9 +3739,9 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 		/* xxxx for now, assume we only check against cpu component */
 		if ( ptr == NULL )
 			papi_return( PAPI_EINVAL );
-		ptr->itimer.itimer_num = _papi_hwd[0]->cmp_info.itimer_num;
-		ptr->itimer.itimer_sig = _papi_hwd[0]->cmp_info.itimer_sig;
-		ptr->itimer.ns = _papi_hwd[0]->cmp_info.itimer_ns;
+		ptr->itimer.itimer_num = _papi_os_info.itimer_num;
+		ptr->itimer.itimer_sig = _papi_os_info.itimer_sig;
+		ptr->itimer.ns = _papi_os_info.itimer_ns;
 		ptr->itimer.flags = 0;
 		return ( PAPI_OK );
 	}
@@ -5737,6 +5744,7 @@ PAPI_get_real_cyc( void )
  *	@see PAPI_library_init
  */
 
+/* FIXME */
 long long
 PAPI_get_real_nsec( void )
 {

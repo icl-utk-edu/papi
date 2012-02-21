@@ -98,7 +98,7 @@ bug_check_scheduability(void) {
   return 1;
 
 #else
-  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
+  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 #endif
 
   if (nmi_watchdog_active) return 1;
@@ -118,7 +118,7 @@ bug_check_scheduability(void) {
 static inline int 
 bug_multiplex(void) {
 
-  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33)) return 1;
+  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 
   /* No word on when this will be fixed */
   if (nmi_watchdog_active) return 1;
@@ -135,7 +135,7 @@ bug_multiplex(void) {
 static inline int 
 bug_format_group(void) {
 
-  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,34)) return 1;
+  if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) return 1;
 
   /* MIPS, as of version 3.1, does not support this properly */
 
@@ -158,7 +158,7 @@ fcntl_setown_fd(int fd) {
 
    
            /* F_SETOWN_EX is not available until 2.6.32 */
-        if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,32)) {
+        if (_papi_os_info.os_version < LINUX_VERSION(2,6,32)) {
 	   
            /* get ownership of the descriptor */
            ret = fcntl( fd, F_SETOWN, mygettid(  ) );
@@ -192,7 +192,7 @@ processor_supported(int vendor, int family) {
 
         /* Error out if kernel too early to support p4 */
   if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
-            if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,35)) {
+            if (_papi_os_info.os_version < LINUX_VERSION(2,6,35)) {
 	       PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
 	       return 0;
 	    }
@@ -238,7 +238,7 @@ get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader 
 static inline int 
 bug_sync_read(void) {
 
-  if (MY_VECTOR.cmp_info.os_version < LINUX_VERSION(2,6,33))
+  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33))
      return 1;
 
   return 0;
@@ -863,10 +863,7 @@ _papi_pe_init_substrate( int cidx )
 
   /* Set various version strings */
   strcpy( MY_VECTOR.cmp_info.name,"perf_events.c" );
-  strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
-
-  /* Setup Kernel Version */
-  MY_VECTOR.cmp_info.os_version=_linux_get_version();
+  strcpy( MY_VECTOR.cmp_info.version, "4.2.1" );
   
   /* perf_events defaults */
   MY_VECTOR.cmp_info.hardware_intr = 1;
@@ -1251,10 +1248,10 @@ _papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl )
 static inline int
 round_requested_ns( int ns )
 {
-	if ( ns < MY_VECTOR.cmp_info.itimer_res_ns ) {
-		return MY_VECTOR.cmp_info.itimer_res_ns;
+	if ( ns < _papi_os_info.itimer_res_ns ) {
+		return _papi_os_info.itimer_res_ns;
 	} else {
-		int leftover_ns = ns % MY_VECTOR.cmp_info.itimer_res_ns;
+		int leftover_ns = ns % _papi_os_info.itimer_res_ns;
 		return ns + leftover_ns;
 	}
 }
@@ -2096,10 +2093,6 @@ papi_vector_t _papi_pe_vector = {
 				 .attach_must_ptrace = 0,
 				 .cpu = 1,
 				 .inherit = 1,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,	/* Not actually supported */
-				 .itimer_res_ns = 1,
 				 }
 	,
 
@@ -2131,15 +2124,15 @@ papi_vector_t _papi_pe_vector = {
 	.write = _papi_pe_write,
 	.init = _papi_sub_pe_init,
 
-	/* from OS */
-	.get_memory_info =   _linux_get_memory_info,
-	.get_dmem_info =     _linux_get_dmem_info,
-	.get_real_usec =     _linux_get_real_usec,
-	.get_real_cycles =   _linux_get_real_cycles,
-	.get_virt_cycles =   _linux_get_virt_cycles,
-	.get_virt_usec =     _linux_get_virt_usec,
-	.update_shlib_info = _linux_update_shlib_info,
-	.get_system_info =   _linux_get_system_info,
+        /* from OS */
+        .get_memory_info =   _linux_get_memory_info,
+        .get_dmem_info =     _linux_get_dmem_info,
+        .get_real_usec =     _linux_get_real_usec,
+        .get_real_cycles =   _linux_get_real_cycles,
+        .get_virt_cycles =   _linux_get_virt_cycles,
+        .get_virt_usec =     _linux_get_virt_usec,
+        .update_shlib_info = _linux_update_shlib_info,
+        .get_system_info =   _linux_get_system_info,
 
 	/* from counter name mapper */
 	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,
