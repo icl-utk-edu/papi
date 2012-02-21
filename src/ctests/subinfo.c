@@ -41,10 +41,6 @@ main( int argc, char **argv )
 			stringify_granularity( cmpinfo->default_granularity ) );
 	/* The default granularity when this substrate is used */
 	printf( "available_granularities: 0x%x (%s)\n", cmpinfo->available_granularities, stringify_all_granularities( cmpinfo->available_granularities ) );	/* Available granularities */
-	printf( "itimer_sig: %d\n", cmpinfo->itimer_sig );
-	printf( "itimer_num: %d\n", cmpinfo->itimer_num );
-	printf( "itimer_ns: %d\n", cmpinfo->itimer_ns );
-	printf( "itimer_res_ns: %d\n", cmpinfo->itimer_res_ns );
 	printf( "hardware_intr_sig: %d\n", cmpinfo->hardware_intr_sig );	/* Width of opcode matcher if exists, 0 if not */
 	printf( "clock_ticks: %d\n", cmpinfo->clock_ticks );
 	printf( "opcode_match_width: %d\n", cmpinfo->opcode_match_width );	/* Width of opcode matcher if exists, 0 if not */
