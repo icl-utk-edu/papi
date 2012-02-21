@@ -650,15 +650,9 @@ read the documentation carefully.  */
      int available_domains;       /**< Available domains */ 
      int default_granularity;     /**< The default granularity when this substrate is used */
      int available_granularities; /**< Available granularities */
-     int itimer_sig;              /**< Signal number used by the multiplex timer, 0 if not */
-     int itimer_num;              /**< Number of the itimer used by mpx and overflow/profile emulation */
-     int itimer_ns;               /**< ns between mpx switching and overflow/profile emulation */
-     int itimer_res_ns;           /**< ns of resolution of itimer */
      int hardware_intr_sig;       /**< Signal used by hardware to deliver PMC events */
-     int clock_ticks;             /**< clock ticks per second */
      int opcode_match_width;      /**< Width of opcode matcher if exists, 0 if not */
-     int os_version;              /**< Currently running kernel version */
-     int reserved[1];             /* */
+     int reserved[8];             /* */
      unsigned int hardware_intr:1;         /**< hw overflow intr, does not need to be emulated in software*/
      unsigned int precise_intr:1;          /**< Performance interrupts happen precisely */
      unsigned int posix1b_timers:1;        /**< Using POSIX 1b interval timers (timer_create) instead of setitimer */
