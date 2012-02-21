@@ -125,14 +125,6 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 			vec_int_dummy;
 	if ( !v->cleanup_eventset ) 
 		v->cleanup_eventset = ( int ( * )( hwd_control_state_t * ) ) vec_int_ok_dummy;
-	if ( !v->get_real_cycles )
-		v->get_real_cycles = ( long long ( * )(  ) ) vec_long_long_dummy;
-	if ( !v->get_real_usec )
-		v->get_real_usec = ( long long ( * )(  ) ) vec_long_long_dummy;
-	if ( !v->get_virt_cycles )
-		v->get_virt_cycles = vec_long_long_dummy;
-	if ( !v->get_virt_usec )
-		v->get_virt_usec = vec_long_long_dummy;
 	if ( !v->stop_profiling )
 		v->stop_profiling =
 			( int ( * )( ThreadInfo_t *, EventSetInfo_t * ) ) vec_int_dummy;
@@ -143,13 +135,6 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->init_control_state )
 		v->init_control_state =
 			( int ( * )( hwd_control_state_t * ptr ) ) vec_void_dummy;
-	if ( !v->update_shlib_info )
-		v->update_shlib_info = ( int ( * )( papi_mdi_t * ) ) vec_int_dummy;
-	if ( !v->get_system_info )
-		v->get_system_info = ( int ( * )(  ) ) vec_int_dummy;
-	if ( !v->get_memory_info )
-		v->get_memory_info =
-			( int ( * )( PAPI_hw_info_t *, int ) ) vec_int_dummy;
 	if ( !v->update_control_state )
 		v->update_control_state = ( int ( * )
 									( hwd_control_state_t *, NativeInfo_t *,
@@ -210,8 +195,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->bpt_map_update =
 			( void ( * )( hwd_reg_alloc_t *, hwd_reg_alloc_t * ) )
 			vec_void_dummy;
-	if ( !v->get_dmem_info )
-		v->get_dmem_info = ( int ( * )( PAPI_dmem_info_t * ) ) vec_int_dummy;
+
 	if ( !v->shutdown )
 		v->shutdown = ( int ( * )( hwd_context_t * ) ) vec_int_dummy;
 	if ( !v->shutdown_substrate )

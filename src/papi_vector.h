@@ -44,17 +44,10 @@ typedef struct papi_vectors {
     int		(*reset)		(hwd_context_t *, hwd_control_state_t *);		/**< */
     int		(*write)		(hwd_context_t *, hwd_control_state_t *, long long[]);			/**< */
 	int			(*cleanup_eventset)	( hwd_control_state_t * );				/**< */
-    long long	(*get_real_cycles)	(void);									/**< */
-    long long	(*get_real_usec)	(void);									/**< */
-    long long	(*get_virt_cycles)	(hwd_context_t *);				/**< */
-    long long	(*get_virt_usec)	(hwd_context_t *);				/**< */
     int		(*stop_profiling)	(ThreadInfo_t *, EventSetInfo_t *);			/**< */
     int		(*init_substrate)	(int);										/**< */
     int		(*init)			(hwd_context_t *);								/**< */
     int		(*init_control_state)	(hwd_control_state_t * ptr);			/**< */
-    int		(*update_shlib_info)	(papi_mdi_t * mdi);									/**< */
-    int		(*get_system_info)	(papi_mdi_t * mdi);										/**< */
-    int		(*get_memory_info)	(PAPI_hw_info_t *, int);					/**< */
     int		(*update_control_state)	(hwd_control_state_t *, NativeInfo_t *, int, hwd_context_t *);	/**< */
     int		(*ctl)			(hwd_context_t *, int , _papi_int_option_t *);	/**< */
     int		(*set_overflow)		(EventSetInfo_t *, int, int);				/**< */
@@ -74,7 +67,6 @@ typedef struct papi_vectors {
     int		(*bpt_map_shared)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);		/**< */
     void	(*bpt_map_preempt)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);		/**< */
     void	(*bpt_map_update)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);		/**< */
-    int		(*get_dmem_info)	(PAPI_dmem_info_t *);						/**< */
     int		(*shutdown)		(hwd_context_t *);								/**< */
     int		(*shutdown_substrate)	(void);									/**< */
     int		(*user)			(int, void *, void *);							/**< */
