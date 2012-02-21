@@ -27,7 +27,7 @@
 #define DEADBEEF 0xdedbeef
 extern int papi_num_components;
 
-  /********************************************************/
+/********************************************************/
 /* This block provides general strings used in PAPI     */
 /* If a new string is needed for PAPI prompts           */
 /* it should be placed in this file and referenced by   */
@@ -447,6 +447,18 @@ extern int _papi_hwi_error_level;
 extern const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS];
 /*extern volatile int _papi_hwi_using_signal;*/
 extern int _papi_hwi_using_signal[PAPI_NSIG];
+
+/** @ingroup papi_data_structures */
+typedef struct _papi_os_option {
+   char name[PAPI_MAX_STR_LEN];     /**< Name of the operating system */
+   char version[PAPI_MAX_STR_LEN];  /**< descriptive OS Version */
+   int os_version;                  /**< numerical, for workarounds */
+   int itimer_sig;                  /**< Signal used by the multiplex timer, 0 if not */
+   int itimer_num;                  /**< Number of the itimer used by mpx and overflow/profile emulation */
+   int itimer_ns;                   /**< ns between mpx switching and overflow/profile emulation */
+   int itimer_res_ns;               /**< ns of resolution of itimer */
+   int clock_ticks;                 /**< clock ticks per second */
+} PAPI_os_info_t;
 
 #include "threads.h"
 #include "cpus.h"
