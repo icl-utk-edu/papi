@@ -2124,16 +2124,6 @@ papi_vector_t _papi_pe_vector = {
 	.write = _papi_pe_write,
 	.init = _papi_sub_pe_init,
 
-        /* from OS */
-        .get_memory_info =   _linux_get_memory_info,
-        .get_dmem_info =     _linux_get_dmem_info,
-        .get_real_usec =     _linux_get_real_usec,
-        .get_real_cycles =   _linux_get_real_cycles,
-        .get_virt_cycles =   _linux_get_virt_cycles,
-        .get_virt_usec =     _linux_get_virt_usec,
-        .update_shlib_info = _linux_update_shlib_info,
-        .get_system_info =   _linux_get_system_info,
-
 	/* from counter name mapper */
 	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,
 	.ntv_name_to_code =  _papi_libpfm_ntv_name_to_code,

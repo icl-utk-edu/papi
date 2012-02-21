@@ -2229,7 +2229,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 				( size_t ) ESI->NumberOfEvents * sizeof ( long long ) );
 	}
 
-	*cycles = _papi_hwd[cidx]->get_real_cycles(  );
+	*cycles = _papi_os_vector.get_real_cycles(  );
 
 #if defined(DEBUG)
 	if ( ISLEVEL( DEBUG_API ) ) {
@@ -3890,7 +3890,7 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 		int retval;
 		if ( ptr == NULL )
 			papi_return( PAPI_EINVAL );
-		retval = _papi_hwd[cidx]->update_shlib_info( &_papi_hwi_system_info );
+		retval = _papi_os_vector.update_shlib_info( &_papi_hwi_system_info );
 		ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
 		papi_return( retval );
 	}
@@ -5575,7 +5575,7 @@ PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
 		return PAPI_EINVAL;
 
 	memset( ( void * ) dest, 0x0, sizeof ( PAPI_dmem_info_t ) );
-	return ( _papi_hwd[0]->get_dmem_info( dest ) );
+	return ( _papi_os_vector.get_dmem_info( dest ) );
 }
 
 
@@ -5728,7 +5728,7 @@ PAPI_get_hardware_info( void )
 long long
 PAPI_get_real_cyc( void )
 {
-	return ( _papi_hwd[0]->get_real_cycles(  ) );
+	return ( _papi_os_vector.get_real_cycles(  ) );
 }
 
 /** @class PAPI_get_real_nsec
@@ -5748,7 +5748,7 @@ PAPI_get_real_cyc( void )
 long long
 PAPI_get_real_nsec( void )
 {
-	return ( ( _papi_hwd[0]->get_real_cycles(  ) * 1000LL ) /
+	return ( ( _papi_os_vector.get_real_cycles(  ) * 1000LL ) /
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
@@ -5775,7 +5775,7 @@ PAPI_get_real_nsec( void )
 long long
 PAPI_get_real_usec( void )
 {
-	return ( _papi_hwd[0]->get_real_usec(  ) );
+	return ( _papi_os_vector.get_real_usec(  ) );
 }
 
 /**	@class PAPI_get_virt_cyc 
@@ -5819,8 +5819,7 @@ PAPI_get_virt_cyc( void )
 	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
-	return ( ( long long ) _papi_hwd[0]->
-			 get_virt_cycles( master->context[0] ) );
+	return ( ( long long ) _papi_os_vector.get_virt_cycles( master->context[0] ) );
 }
 
 /** @class PAPI_get_virt_nsec
@@ -5857,7 +5856,7 @@ PAPI_get_virt_nsec( void )
 	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
-	return ( ( _papi_hwd[0]->get_virt_cycles( master->context[0] ) * 1000LL ) /
+	return ( ( _papi_os_vector.get_virt_cycles( master->context[0] ) * 1000LL ) /
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
@@ -5904,7 +5903,7 @@ PAPI_get_virt_usec( void )
 	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
-	return ( ( long long ) _papi_hwd[0]->get_virt_usec( master->context[0] ) );
+	return ( ( long long ) _papi_os_vector.get_virt_usec( master->context[0] ) );
 }
 
 int

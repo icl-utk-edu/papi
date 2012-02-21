@@ -19,22 +19,6 @@
 #include <string.h>
 #endif
 
-#ifdef _AIX
-#include <pmapi.h>
-#endif
-
-#ifdef __APPLE__
-#include <sys/sysctl.h>
-#include <sys/types.h>
-#include <errno.h>
-#endif
-
-#ifdef __bgp__
-#include <common/bgp_personality_inlines.h>
-#include <common/bgp_personality.h>
-#include <spi/kernel_interface.h>
-#endif
-
 /* Prototypes */
 int vec_int_ok_dummy(  );
 int vec_int_one_dummy(  );
@@ -44,199 +28,15 @@ void *vec_void_star_dummy(  );
 long long vec_long_long_dummy(  );
 char *vec_char_star_dummy(  );
 long vec_long_dummy(  );
-//long long vec_dummy_get_virt_cycles( hwd_context_t * zero );
-//long long vec_dummy_get_virt_usec( hwd_context_t * zero );
-long long vec_dummy_get_real_usec( void );
-long long vec_dummy_get_real_cycles( void );
 
-extern int compute_freq(  );
-
-static long long frequency = -1;
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 
-#ifndef _WIN32
-static char *
-search_cpu_info( FILE * f, char *search_str, char *line )
-{
-	char *s;
-
-	while ( fgets( line, 256, f ) != NULL ) {
-		if ( strstr( line, search_str ) != NULL ) {
-			/* ignore all characters in line up to : */
-			for ( s = line; *s && ( *s != ':' ); ++s );
-			if ( *s )
-				return s;
-		}
-	}
-	return NULL;
-}
-#endif
-
-void
-set_freq(  )
-{
-#if defined(_AIX)
-	/* pm_cycles() returns cycles per sec --> frequency is cycles per micro-sec */
-	frequency = ( long long ) pm_cycles(  ) / 1000000;
-#elif defined(__bgp__)
-	_BGP_Personality_t bgp;
-	frequency = ( long long ) BGP_Personality_clockMHz( &bgp );
-#elif defined(_WIN32)
-#elif defined(__APPLE__)
-	int mib[2];
-	size_t len = sizeof ( frequency );
-	unsigned long long freq;
-
-	mib[0] = CTL_HW;
-	mib[1] = HW_CPU_FREQ;
-	if ( 0 > sysctl( mib, 2, &freq, &len, NULL, 0 ) )
-		frequency = -1;
-	else
-		frequency = freq;
-#else
-	char maxargs[PAPI_HUGE_STR_LEN], *s;
-	float mhz = 0.0;
-	FILE *f;
-
-	if ( ( f = fopen( "/proc/cpuinfo", "r" ) ) != NULL ) {
-		rewind( f );
-		s = search_cpu_info( f, "clock", maxargs );
-
-		if ( !s ) {
-			rewind( f );
-			s = search_cpu_info( f, "cpu MHz", maxargs );
-		}
-
-		if ( s )
-			sscanf( s + 1, "%f", &mhz );
-
-		frequency = ( long long ) mhz;
-		fclose( f );
-	}
-#endif
- 
-#ifndef _WIN32
-	if ( frequency == -1 )
-		frequency = ( long long ) compute_freq(  );
-#endif
-}
 
 void
 _vectors_error(  )
 {
 	SUBDBG( "function is not implemented in the component!\n" );
 	exit( PAPI_ESBSTR );
-}
-
-long long
-vec_dummy_get_real_usec( void )
-{
-#if defined(__bgp__)
-	return ( long long ) ( _bgp_GetTimeBase(  ) / frequency );
-#elif defined(_WIN32)
-	/*** NOTE: This differs from the code in win32.c ***/
-	LARGE_INTEGER PerformanceCount, Frequency;
-	QueryPerformanceCounter( &PerformanceCount );
-	QueryPerformanceFrequency( &Frequency );
-	return ( ( PerformanceCount.QuadPart * 1000000 ) / Frequency.QuadPart );
-#elif defined(_AIX)   /* Heike:  This needs to be tested on AIX with --with-no-cpu-counters */
-	/* It appears to work on Zeus ( power7 aix 6.1 ) 
-	   in that repeated calls were monotonically increasing -James */
-	long long aix_usec;
-	timebasestruct_t t;
-	t = getticks(  );
-	/* converts time base information to real time, if necessary.
-	   It's recommended that applications unconditionally call time_base_to_time */
-	time_base_to_time( &t, TIMEBASE_SZ );
-	/* convert sec to micro-sec and nano-sec to micro-sec */
-	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
-	/* return real time in micro-sec */
-	return ( aix_usec );
-#else
-	return ( long long ) getticks(  ) / frequency;
-#endif
-}
-
-long long
-vec_dummy_get_real_cycles( void )
-{
-#if defined(__bgp__)
-	return _bgp_GetTimeBase(  );
-#elif defined(_WIN32)
-#elif defined(_AIX)   
-	long long aix_usec;
-	timebasestruct_t t;
-	t = getticks(  );
-	/* converts time base information to real time, if necessary.
-	 It's recommended that applications unconditionally call time_base_to_time */
-	time_base_to_time( &t, TIMEBASE_SZ );
-	/* convert sec to micro-sec and nano-sec to micro-sec */
-	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
-	return ( aix_usec * frequency );
-#else
-	return ( long long ) getticks(  );
-#endif
-}
-
-long long
-vec_dummy_get_virt_usec( hwd_context_t * zero )
-{
-	( void ) zero;			 /*unused */
-#if defined(__bgp__)
-	return ( long long ) ( _bgp_GetTimeBase(  ) / frequency );
-#elif defined(_WIN32)
-	/*** NOTE: This differs from the code in win32.c ***/
-	long long retval;
-	HANDLE p;
-	BOOL ret;
-	FILETIME Creation, Exit, Kernel, User;
-	long long virt;
-	p = GetCurrentProcess(  );
-	ret = GetProcessTimes( p, &Creation, &Exit, &Kernel, &User );
-	if ( ret ) {
-		virt =
-			( ( ( long long ) ( Kernel.dwHighDateTime +
-								User.dwHighDateTime ) ) << 32 )
-			+ Kernel.dwLowDateTime + User.dwLowDateTime;
-		retval = virt / 1000;
-	} else
-		return ( PAPI_ESBSTR );
-#elif defined(_AIX)   
-	long long aix_usec;
-	timebasestruct_t t;
-	t = getticks(  );
-	/* converts time base information to real time, if necessary.
-	 It's recommended that applications unconditionally call time_base_to_time */
-	time_base_to_time( &t, TIMEBASE_SZ );
-	/* convert sec to micro-sec and nano-sec to micro-sec */
-	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
-	/* return real time in micro-sec */
-	return ( aix_usec );
-#else
-	return ( long long ) getticks(  ) / frequency;
-#endif
-}
-
-long long
-vec_dummy_get_virt_cycles( hwd_context_t * zero )
-{
-	( void ) zero;			 /*unused */
-#if defined(__bgp__)
-	return _bgp_GetTimeBase(  );
-#elif defined(_WIN32)
-#elif defined(_AIX)   
-	long long aix_usec;
-	timebasestruct_t t;
-	t = getticks(  );
-	/* converts time base information to real time, if necessary.
-	 It's recommended that applications unconditionally call time_base_to_time */
-	time_base_to_time( &t, TIMEBASE_SZ );
-	/* convert sec to micro-sec and nano-sec to micro-sec */
-	aix_usec = ( t.tb_high * 1000000 ) + t.tb_low / 1000;
-	return ( aix_usec * frequency );
-#else
-	return ( long long ) getticks(  );
-#endif
 }
 
 int
@@ -326,13 +126,13 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->cleanup_eventset ) 
 		v->cleanup_eventset = ( int ( * )( hwd_control_state_t * ) ) vec_int_ok_dummy;
 	if ( !v->get_real_cycles )
-		v->get_real_cycles = ( long long ( * )(  ) ) vec_dummy_get_real_cycles;
+		v->get_real_cycles = ( long long ( * )(  ) ) vec_long_long_dummy;
 	if ( !v->get_real_usec )
-		v->get_real_usec = ( long long ( * )(  ) ) vec_dummy_get_real_usec;
+		v->get_real_usec = ( long long ( * )(  ) ) vec_long_long_dummy;
 	if ( !v->get_virt_cycles )
-		v->get_virt_cycles = vec_dummy_get_virt_cycles;
+		v->get_virt_cycles = vec_long_long_dummy;
 	if ( !v->get_virt_usec )
-		v->get_virt_usec = vec_dummy_get_virt_usec;
+		v->get_virt_usec = vec_long_long_dummy;
 	if ( !v->stop_profiling )
 		v->stop_profiling =
 			( int ( * )( ThreadInfo_t *, EventSetInfo_t * ) ) vec_int_dummy;
@@ -421,6 +221,37 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	return PAPI_OK;
 }
 
+
+int
+_papi_hwi_innoculate_os_vector( papi_os_vector_t * v )
+{
+	if ( !v )
+		return ( PAPI_EINVAL );
+
+	if ( !v->get_real_cycles )
+		v->get_real_cycles = ( long long ( * )(  ) ) vec_long_long_dummy;
+	if ( !v->get_real_usec )
+		v->get_real_usec = ( long long ( * )(  ) ) vec_long_long_dummy;
+	if ( !v->get_virt_cycles )
+		v->get_virt_cycles = vec_long_long_dummy;
+	if ( !v->get_virt_usec )
+		v->get_virt_usec = vec_long_long_dummy;
+
+	if ( !v->update_shlib_info )
+		v->update_shlib_info = ( int ( * )( papi_mdi_t * ) ) vec_int_dummy;
+	if ( !v->get_system_info )
+		v->get_system_info = ( int ( * )(  ) ) vec_int_dummy;
+
+	if ( !v->get_memory_info )
+		v->get_memory_info =
+			( int ( * )( PAPI_hw_info_t *, int ) ) vec_int_dummy;
+
+	if ( !v->get_dmem_info )
+		v->get_dmem_info = ( int ( * )( PAPI_dmem_info_t * ) ) vec_int_dummy;
+
+	return PAPI_OK;
+}
+
 int
 PAPI_user( int func_num, void *input, void *output, int cidx )
 {
@@ -463,24 +294,6 @@ vector_find_dummy( void *func, char **buf )
 		ptr = ( void * ) vec_long_dummy;
 		if ( buf != NULL )
 			*buf = papi_strdup( "vec_long_dummy" );
-	} else if ( vec_dummy_get_real_usec == ( long long ( * )( void ) ) func ) {
-		ptr = ( void * ) vec_dummy_get_real_usec;
-		if ( buf != NULL )
-			*buf = papi_strdup( "vec_dummy_get_real_usec" );
-	} else if ( vec_dummy_get_real_cycles == ( long long ( * )( void ) ) func ) {
-		ptr = ( void * ) vec_dummy_get_real_cycles;
-		if ( buf != NULL )
-			*buf = papi_strdup( "vec_dummy_get_real_cycles" );
-	} else if ( vec_dummy_get_virt_usec ==
-				( long long ( * )( hwd_context_t * ) ) func ) {
-		ptr = ( void * ) vec_dummy_get_virt_usec;
-		if ( buf != NULL )
-			*buf = papi_strdup( "vec_dummy_get_virt_usec" );
-	} else if ( vec_dummy_get_virt_cycles ==
-				( long long ( * )( hwd_context_t * ) ) func ) {
-		ptr = ( void * ) vec_dummy_get_virt_cycles;
-		if ( buf != NULL )
-			*buf = papi_strdup( "vec_dummy_get_virt_cycles" );
 	} else {
 		ptr = NULL;
 	}
@@ -526,14 +339,7 @@ vector_print_table( papi_vector_t * v, int print_func )
 	vector_print_routine( ( void * ) v->write, "_papi_hwd_write", print_func );
 	vector_print_routine( ( void * ) v->cleanup_eventset, 
 						  "_papi_hwd_cleanup_eventset", print_func );
-	vector_print_routine( ( void * ) v->get_real_cycles,
-						  "_papi_hwd_get_real_cycles", print_func );
-	vector_print_routine( ( void * ) v->get_real_usec,
-						  "_papi_hwd_get_real_usec", print_func );
-	vector_print_routine( ( void * ) v->get_virt_cycles,
-						  "_papi_hwd_get_virt_cycles", print_func );
-	vector_print_routine( ( void * ) v->get_virt_usec,
-						  "_papi_hwd_get_virt_usec", print_func );
+
 	vector_print_routine( ( void * ) v->stop_profiling,
 						  "_papi_hwd_stop_profiling", print_func );
 	vector_print_routine( ( void * ) v->init_substrate,
@@ -546,8 +352,6 @@ vector_print_table( papi_vector_t * v, int print_func )
 						  print_func );
 	vector_print_routine( ( void * ) v->set_profile, "_papi_hwd_set_profile",
 						  print_func );
-	vector_print_routine( ( void * ) v->add_prog_event,
-						  "_papi_hwd_add_prog_event", print_func );
 	vector_print_routine( ( void * ) v->set_domain, "_papi_hwd_set_domain",
 						  print_func );
 	vector_print_routine( ( void * ) v->ntv_enum_events,
@@ -574,8 +378,7 @@ vector_print_table( papi_vector_t * v, int print_func )
 						  print_func );
 	vector_print_routine( ( void * ) v->bpt_map_update,
 						  "_papi_hwd_bpt_map_update", print_func );
-	vector_print_routine( ( void * ) v->get_dmem_info,
-						  "_papi_hwd_get_dmem_info", print_func );
+
 	vector_print_routine( ( void * ) v->shutdown, "_papi_hwd_shutdown",
 						  print_func );
 	vector_print_routine( ( void * ) v->shutdown_substrate,

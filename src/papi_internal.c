@@ -1417,6 +1417,10 @@ _papi_hwi_init_global( void )
 		if ( retval != PAPI_OK )
 			return ( retval );
 
+		retval = _papi_hwi_innoculate_os_vector( &_papi_os_vector );
+		if ( retval != PAPI_OK )
+			return ( retval );
+
 		retval = _papi_hwd[i]->init_substrate( i );
 		if ( retval != PAPI_OK ) {
 		  /* FIXME!  should we drop them from the list if not */

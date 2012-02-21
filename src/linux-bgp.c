@@ -1348,17 +1348,10 @@ papi_vector_t _bgp_vectors = {
 	.read = _bgp_read,
 	.reset = _bgp_reset,
 	.write = _bgp_write,
-	.get_real_cycles = _bgp_get_real_cycles,
-	.get_real_usec = _bgp_get_real_usec,
-	.get_virt_cycles = _bgp_get_virt_cycles,
-	.get_virt_usec = _bgp_get_virt_usec,
 	.stop_profiling = _bgp_stop_profiling,
 	.init_substrate = _bgp_init_substrate,
 	.init = _bgp_init,
 	.init_control_state = _bgp_init_control_state,
-	.update_shlib_info = _bgp_update_shlib_info,
-	.get_system_info = _bgp_get_system_info,
-	.get_memory_info = _bgp_get_memory_info,
 	.update_control_state = _bgp_update_control_state,
 	.ctl = _bgp_ctl,
 	.set_overflow = _bgp_set_overflow,
@@ -1377,8 +1370,18 @@ papi_vector_t _bgp_vectors = {
 	.bpt_map_shared = _bgp_bpt_map_shared,
 	.bpt_map_preempt = _bgp_bpt_map_preempt,
 	.bpt_map_update = _bgp_bpt_map_update,
-	.get_dmem_info = _bgp_get_dmem_info,
 	.shutdown = _bgp_shutdown
 //  .shutdown_global      =
 //  .user                 =
+};
+
+papi_os_vector_t _papi_os_vector = {
+	.get_memory_info = _bgp_get_memory_info,
+	.get_dmem_info = _bgp_get_dmem_info,
+	.get_real_cycles = _bgp_get_real_cycles,
+	.get_real_usec = _bgp_get_real_usec,
+	.get_virt_cycles = _bgp_get_virt_cycles,
+	.get_virt_usec = _bgp_get_virt_usec,
+	.update_shlib_info = _bgp_update_shlib_info,
+	.get_system_info = _bgp_get_system_info,
 };

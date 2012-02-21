@@ -2564,12 +2564,15 @@ papi_vector_t _niagara2_vector = {
 	.ntv_bits_to_info = _niagara2_ntv_bits_to_info,
 	.init_substrate = _niagara2_init_substrate,
 	.dispatch_timer = _niagara2_dispatch_timer,
+};
+
+papi_os_vector_t _papi_os_vector = {
+	.get_memory_info = _niagara2_get_memory_info,
+	.get_dmem_info = _niagara2_get_dmem_info,
 	.get_real_usec = _niagara2_get_real_usec,
 	.get_real_cycles = _niagara2_get_real_cycles,
 	.get_virt_cycles = _niagara2_get_virt_cycles,
 	.get_virt_usec = _niagara2_get_virt_usec,
-	.get_memory_info = _niagara2_get_memory_info,
-	.get_dmem_info = _niagara2_get_dmem_info,
 	.update_shlib_info = _niagara2_update_shlib_info,
 	.get_system_info = _niagara2_get_system_info,
 };

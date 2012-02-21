@@ -1644,15 +1644,18 @@ papi_vector_t _solaris_vector = {
 	.ntv_bits_to_info = _ultra_hwd_ntv_bits_to_info,
 	.init_substrate = _ultra_hwd_init_substrate,
 	.dispatch_timer = _ultra_hwd_dispatch_timer,
-	.get_real_usec = _ultra_hwd_get_real_usec,
-	.get_real_cycles = _ultra_hwd_get_real_cycles,
-	.get_virt_cycles = _ultra_hwd_get_virt_cycles,
-	.get_virt_usec = _ultra_hwd_get_virt_usec,
+
+};
+
+papi_os_vector_t _papi_os_vector = {
 
 	/* OS dependent local routines */
         .get_memory_info = _solaris_get_memory_info,
         .get_dmem_info = _solaris_get_dmem_info,
 	.update_shlib_info = _ultra_hwd_update_shlib_info,
-	.get_system_info = get_system_info
+	.get_system_info = get_system_info,
+	.get_real_usec = _ultra_hwd_get_real_usec,
+	.get_real_cycles = _ultra_hwd_get_real_cycles,
+	.get_virt_cycles = _ultra_hwd_get_virt_cycles,
+	.get_virt_usec = _ultra_hwd_get_virt_usec,
 };
-

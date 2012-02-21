@@ -98,6 +98,7 @@ extern papi_os_vector_t _papi_os_vector;
 
 /* Prototypes */
 int _papi_hwi_innoculate_vector( papi_vector_t * v );
+int _papi_hwi_innoculate_os_vector( papi_os_vector_t * v );
 void *vector_find_dummy( void *func, char **buf );
 void vector_print_table( papi_vector_t * v, int print_func );
 

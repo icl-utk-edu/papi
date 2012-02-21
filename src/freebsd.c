@@ -992,16 +992,10 @@ papi_vector_t _papi_freebsd_vector = {
   .read		= _papi_freebsd_read,
   .reset	= _papi_freebsd_reset,
   .write	= _papi_freebsd_write,
-  .get_real_cycles	= _papi_freebsd_get_real_cycles,
-  .get_real_usec	= _papi_freebsd_get_real_usec,
-  .get_virt_cycles	= _papi_freebsd_get_virt_cycles,
-  .get_virt_usec	= _papi_freebsd_get_virt_usec,
   .stop_profiling	= _papi_freebsd_stop_profiling,
   .init_substrate	= _papi_freebsd_init_substrate,
   .init				= _papi_freebsd_init,
   .init_control_state	= _papi_freebsd_init_control_state,
-  .update_shlib_info	= _papi_freebsd_update_shlib_info,
-  //.get_system_info		= _papi_freebsd_get_system_info,
   .update_control_state	= _papi_freebsd_update_control_state,
   .ctl					= _papi_freebsd_ctl,
   .set_overflow		= _papi_freebsd_set_overflow,
@@ -1023,8 +1017,17 @@ papi_vector_t _papi_freebsd_vector = {
   .bpt_map_preempt		= _papi_freebsd_bpt_map_preempt,
   .bpt_map_update		= _papi_freebsd_bpt_map_update,
 
-  .get_dmem_info		= _papi_freebsd_get_dmem_info,
 
   .shutdown				= _papi_freebsd_shutdown,
   .shutdown_substrate	= _papi_freebsd_shutdown_substrate,
+};
+
+papi_os_vector_t _papi_os_vector = {
+  .get_dmem_info	= _papi_freebsd_get_dmem_info,
+  .get_real_cycles	= _papi_freebsd_get_real_cycles,
+  .get_real_usec	= _papi_freebsd_get_real_usec,
+  .get_virt_cycles	= _papi_freebsd_get_virt_cycles,
+  .get_virt_usec	= _papi_freebsd_get_virt_usec,
+  .update_shlib_info	= _papi_freebsd_update_shlib_info,
+  //.get_system_info		= _papi_freebsd_get_system_info,
 };

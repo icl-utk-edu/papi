@@ -1344,17 +1344,20 @@ papi_vector_t _aix_vector = {
 	.ntv_code_to_bits =  _aix_ntv_code_to_bits,
 	.ntv_bits_to_info =  _aix_ntv_bits_to_info,
 
-	/* from OS */
-	.get_memory_info = _aix_get_memory_info,
-	.get_system_info = _aix_get_system_info,
 	.init_substrate = _aix_init_substrate,
 	.ctl = _aix_ctl,
 	.dispatch_timer = _aix_dispatch_timer,
 	.init = _aix_init,
-	.get_dmem_info = _aix_get_dmem_info,
 	.shutdown = _aix_shutdown,
+};
+
+papi_os_vector_t _papi_os_vector = {
+	.get_memory_info = _aix_get_memory_info,
+	.get_dmem_info = _aix_get_dmem_info,
 	.get_real_usec = _aix_get_real_usec,
 	.get_real_cycles = _aix_get_real_cycles,
 	.get_virt_cycles = _aix_get_virt_cycles,
-	.get_virt_usec = _aix_get_virt_usec
+        .get_virt_usec = _aix_get_virt_usec,
+        .update_shlib_info = _aix_update_shlib_info,
+	.get_system_info = _aix_get_system_info,
 };
