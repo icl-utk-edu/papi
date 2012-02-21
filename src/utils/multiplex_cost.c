@@ -93,7 +93,7 @@ init_test(int SoftwareMPX, int KernelMPX, int* Events)
 {
   int i;
   int retval;
-  PAPI_option_t option;
+  PAPI_option_t option, itimer;
   const  PAPI_component_info_t *info;
 
   if ( ( retval = PAPI_assign_eventset_component( SoftwareMPX, 0 ) ) != PAPI_OK )
@@ -105,12 +105,14 @@ init_test(int SoftwareMPX, int KernelMPX, int* Events)
   if ( ( retval = PAPI_set_multiplex( KernelMPX ) ) != PAPI_OK )
 	test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
 
+  PAPI_get_opt(PAPI_DEF_ITIMER,&itimer);
+
   info = PAPI_get_component_info(0);
   memset(&option,0x0,sizeof(option));
 
   option.multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
   option.multiplex.eventset = SoftwareMPX;
-  option.multiplex.ns = info->itimer_ns;
+  option.multiplex.ns = itimer.itimer.ns;
 
   PAPI_set_opt( PAPI_MULTIPLEX, &option );
 
@@ -163,7 +165,7 @@ main( int argc, char **argv )
   long long *array = NULL;
   int event;
 
-  PAPI_option_t option;
+  PAPI_option_t option, itimer;
   const  PAPI_component_info_t *info;
 
   tests_quiet( argc, argv );
@@ -241,11 +243,13 @@ main( int argc, char **argv )
   if ( ( retval = PAPI_assign_eventset_component( SoftwareMPX, 0 ) ) != PAPI_OK )
 	test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
 
+  PAPI_get_opt(PAPI_DEF_ITIMER,&itimer);
+
   memset(&option,0x0,sizeof(option));
 
   option.multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
   option.multiplex.eventset = SoftwareMPX;
-  option.multiplex.ns = info->itimer_ns;
+  option.multiplex.ns = itimer.itimer.ns;
 
   PAPI_set_opt( PAPI_MULTIPLEX, &option );
 
