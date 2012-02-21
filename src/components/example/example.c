@@ -627,15 +627,8 @@ papi_vector_t _example_vector = {
 		.available_domains = PAPI_DOM_USER,
 		.default_granularity = PAPI_GRN_THR,
 		.available_granularities = PAPI_GRN_THR,
-		.itimer_sig = 0,       /* set by init_substrate */
-		.itimer_num = 0,       /* set by init_substrate */
-		.itimer_ns = 0,        /* set by init_substrate */
-		.itimer_res_ns = 0,    /* set by init_substrate */
 		.hardware_intr_sig = PAPI_INT_SIGNAL,
-		.clock_ticks = 0,      /* set by init_substrate */
 		.opcode_match_width = 0, /* set by init_substrate */ 
-		.os_version = 0,       /* set by init_substrate */ 
-
 
 		/* component specific cmp_info initializations */
 		.hardware_intr = 0,
