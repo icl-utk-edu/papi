@@ -861,7 +861,7 @@ int _perfmon2_pfm_pmu_type = -1;
 
 
 int
-_papi_libpfm_init(papi_vector_t *MY_VECTOR) {
+_papi_libpfm_init(papi_vector_t *MY_VECTOR, int cidx) {
 
    int retval;
    unsigned int ncnt;
@@ -917,7 +917,7 @@ _papi_libpfm_init(papi_vector_t *MY_VECTOR) {
    SUBDBG( "PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type );
 
    /* Setup presets */
-   retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
+   retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type, cidx );
    if ( retval )
       return retval;
 

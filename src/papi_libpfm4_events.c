@@ -1208,7 +1208,7 @@ _papi_libpfm_shutdown(void) {
  */
 
 int
-_papi_libpfm_init(papi_vector_t *MY_VECTOR) {
+_papi_libpfm_init(papi_vector_t *MY_VECTOR, int cidx) {
 
    int detected_pmus=0, found_default=0;
    int i, version;
@@ -1308,7 +1308,7 @@ _papi_libpfm_init(papi_vector_t *MY_VECTOR) {
    
    /* Setup presets */
    retval = _papi_libpfm_setup_presets( (char *)default_pmu.name, 
-				     default_pmu.pmu );
+					default_pmu.pmu, cidx );
    if ( retval ) {
       return retval;
    }	

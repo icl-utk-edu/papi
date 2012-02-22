@@ -847,7 +847,7 @@ _papi_pe_init_substrate( int cidx )
   ( void ) cidx;          /*unused */
 
   /* Run the libpfm-specific setup */
-  retval=_papi_libpfm_init(&MY_VECTOR);
+  retval=_papi_libpfm_init(&MY_VECTOR, cidx);
   if (retval) return retval;
 
   /* Detect NMI watchdog which can steal counters */
