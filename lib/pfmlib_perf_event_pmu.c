@@ -71,6 +71,7 @@ typedef struct {
  */
 #define PERF_FL_DEFAULT	0x1	/* umask is default for group */
 
+#define PERF_INVAL_OVFL_IDX ((unsigned long)-1)
 #define PCL_EVT(f, t, m)	\
 	{ .name = #f,		\
 	  .id = (f),		\
@@ -79,7 +80,7 @@ typedef struct {
 	  .numasks = 0,		\
 	  .modmsk = (m),	\
 	  .ngrp = 0,		\
-	  .umask_ovfl_idx = -1,	\
+	  .umask_ovfl_idx = PERF_INVAL_OVFL_IDX,\
 	}
 
 #ifndef MAXPATHLEN
@@ -136,8 +137,8 @@ getl(char **buffer, size_t *len, FILE *fp)
 {
 #define	GETL_DFL_LEN	32
 	char *b;
-	int c, i = 0;
-	size_t maxsz, maxi, d;
+	int c;
+	size_t maxsz, maxi, i = 0, d;
 
 	if (!len || !fp || !buffer)
 		return -1;
@@ -396,7 +397,7 @@ gen_tracepoint_table(void)
 		p->desc = "tracepoint";
 		p->id = -1;
 		p->type = PERF_TYPE_TRACEPOINT;
-		p->umask_ovfl_idx = -1;
+		p->umask_ovfl_idx = PERF_INVAL_OVFL_IDX;
 		p->modmsk = 0,
 		p->ngrp = 1;
 
@@ -488,6 +489,9 @@ gen_tracepoint_table(void)
 static int
 pfm_perf_detect(void *this)
 {
+	/* keep compiler happy about unused this point */
+	if (this == NULL)
+		return PFM_ERR_NOTSUPP;
 #ifdef __linux__
 	/* ought to find a better way of detecting PERF */
 #define PERF_OLD_PROC_FILE "/proc/sys/kernel/perf_counter_paranoid"
@@ -502,6 +506,11 @@ pfm_perf_detect(void *this)
 static int
 pfm_perf_init(void *this)
 {
+	pfmlib_pmu_t *pmu = this;
+	/* keep compiler happy about unused this point */
+	if (pmu == NULL)
+		return PFM_ERR_NOTSUPP;
+
 	perf_pe = perf_static_events;
 
 	gen_tracepoint_table();
@@ -513,12 +522,18 @@ pfm_perf_init(void *this)
 static int
 pfm_perf_get_event_first(void *this)
 {
-	return 0;
+	/* keep compiler happy */
+	return this ? 0 : 0;
 }
 
 static int
 pfm_perf_get_event_next(void *this, int idx)
 {
+	pfmlib_pmu_t *pmu = this;
+	/* keep compiler happy about unused this point */
+	if (pmu == NULL)
+		return -1;
+
 	if (idx < 0 || idx >= (perf_nevents-1))
 		return -1;
 
@@ -786,7 +801,7 @@ static void
 pfm_perf_terminate(void *this)
 {
 	perf_event_t *p;
-	size_t i, j;
+	int i, j;
 
 	if (!(perf_pe && perf_um))
 		return;
@@ -866,12 +881,12 @@ pfm_perf_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
-		if (perf_pe[i].numasks >= PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx == -1) {
+		if (perf_pe[i].numasks >= PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx == PERF_INVAL_OVFL_IDX) {
 			fprintf(fp, "pmu: %s event%d: %s :: numasks too big (<%d)\n", name, i, perf_pe[i].name, PERF_MAX_UMASKS);
 			error++;
 		}
 
-		if (perf_pe[i].numasks < PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx != -1) {
+		if (perf_pe[i].numasks < PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx != PERF_INVAL_OVFL_IDX) {
 			fprintf(fp, "pmu: %s event%d: %s :: overflow umask idx defined but not needed (<%d)\n", name, i, perf_pe[i].name, PERF_MAX_UMASKS);
 			error++;
 		}
@@ -921,7 +936,7 @@ pfm_perf_validate_table(void *this, FILE *fp)
 	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
 }
 
-static int
+static unsigned int
 pfm_perf_get_event_nattrs(void *this, int idx)
 {
 	return perf_pe[idx].numasks;

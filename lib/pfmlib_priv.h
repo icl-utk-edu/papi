@@ -119,7 +119,7 @@ typedef struct pfmlib_pmu {
 	int		 (*get_event_first)(void *this);
 	int		 (*get_event_next)(void *this, int pidx);
 	int		 (*get_event_info)(void *this, int pidx, pfm_event_info_t *info);
-	int		 (*get_event_nattrs)(void *this, int pidx);
+	unsigned int	 (*get_event_nattrs)(void *this, int pidx);
 	int		 (*event_is_valid)(void *this, int pidx);
 
 	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
@@ -320,6 +320,12 @@ pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
 #define PFMLIB_ENCODE_PERF(f)  \
 	.get_event_encoding[PFM_OS_PERF_EVENT] = NULL, \
 	.get_event_encoding[PFM_OS_PERF_EVENT_EXT] = NULL
+#endif
+
+#if __GNUC_MINOR__ >= 3
+# define __used                 __attribute__((__used__))
+#else
+# define __used                 __attribute__((__unused__))
 #endif
 
 #endif /* __PFMLIB_PRIV_H__ */

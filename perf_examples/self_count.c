@@ -130,7 +130,8 @@ read_count(perf_event_desc_t *fds)
 #if 0
 	double ratio;
 #endif
-	int ret, idx;
+	ssize_t ret;
+	int idx;
 
 	hdr = fds->buf;
 
@@ -148,7 +149,7 @@ read_count(perf_event_desc_t *fds)
 			offset = 0;
 			idx = -1;
 			ret = read(fds->fd, values, sizeof(values));
-			if (ret < sizeof(values))
+			if (ret < (ssize_t)sizeof(values))
 				errx(1, "cannot read values");
 			break;
 		}

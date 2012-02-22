@@ -52,8 +52,8 @@ getl(char **buffer, size_t *len, FILE *fp)
 {
 #define	GETL_DFL_LEN	32
 	char *b;
-	int c, i = 0;
-	size_t maxsz, maxi, d;
+	int c;
+	size_t maxsz, maxi, i = 0, d;
 
 	if (!len || !fp || !buffer)
 		return -1;
@@ -367,7 +367,7 @@ pfm_sparc_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	return PFM_SUCCESS;
 }
 
-int
+unsigned int
 pfm_sparc_get_event_nattrs(void *this, int pidx)
 {
 	const sparc_entry_t *pe = this_pe(this);

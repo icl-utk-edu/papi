@@ -69,7 +69,8 @@ print_counts(perf_event_desc_t *fds, int num_fds, const char *msg)
 	uint64_t val;
 	uint64_t values[3];
 	double ratio;
-	int i, ret;
+	int i;
+	ssize_t ret;
 
 	/*
 	 * now read the results. We use pfp_event_count because
@@ -81,7 +82,7 @@ print_counts(perf_event_desc_t *fds, int num_fds, const char *msg)
 	for (i = 0; i < num_fds; i++) {
 
 		ret = read(fds[i].fd, values, sizeof(values));
-		if (ret < sizeof(values)) {
+		if (ret < (ssize_t)sizeof(values)) {
 			if (ret == -1)
 				err(1, "cannot read results: %s", strerror(errno));
 			else

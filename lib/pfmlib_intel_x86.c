@@ -67,7 +67,7 @@ is_model_umask(void *this, int pidx, int attr)
 	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
-	int model;
+	unsigned int model;
 
 	ent = pe + pidx;
 	model = ent->umasks[attr].umodel;
@@ -125,17 +125,17 @@ intel_x86_num_mods(void *this, int idx)
 	return pfmlib_popcnt(mask);
 }
 
-static int
+static unsigned int
 intel_x86_num_umasks(void *this, int pidx)
 {
 	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
-	int i, model, n = 0;
+	unsigned int i, n = 0, model;
 
 	/*
 	 * some umasks may be model specific
 	 */
-	for(i=0; i < pe[pidx].numasks; i++) {
+	for (i = 0; i < pe[pidx].numasks; i++) {
 		model = pe[pidx].umasks[i].umodel;
 		if (model && model != pmu->pmu)
 			continue;
@@ -151,9 +151,9 @@ int
 intel_x86_attr2umask(void *this, int pidx, int attr_idx)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	int i;
+	unsigned int i;
 
-	for(i=0; i < pe[pidx].numasks; i++) {
+	for (i = 0; i < pe[pidx].numasks; i++) {
 
 		if (!is_model_umask(this, pidx, i))
 			continue;
@@ -169,7 +169,8 @@ int
 intel_x86_attr2mod(void *this, int pidx, int attr_idx)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	int x, n, numasks;
+	size_t x;
+	int n, numasks;
 
 	numasks = intel_x86_num_umasks(this, pidx);
 	n = attr_idx - numasks;
@@ -226,11 +227,12 @@ int
 pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
 			   uint64_t *umask,
-			   int max_grpid)
+			   unsigned int max_grpid)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
-	int i, j, k, added, skip;
+	unsigned int i;
+	int j, k, added, skip;
 	int idx;
 
 	k = e->nattrs;
@@ -258,7 +260,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			if (ent->umasks[idx].grpid != i)
 				continue;
 
-			if (max_grpid != -1 && i > max_grpid) {
+			if (max_grpid != INTEL_X86_MAX_GRPID && i > max_grpid) {
 				skip = 1;
 				continue;
 			}
@@ -281,7 +283,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 					goto done;
 
 				if (intel_x86_uflag(this, e->event, idx, INTEL_X86_EXCL_GRP_GT)) {
-					if (max_grpid != -1) {
+					if (max_grpid != INTEL_X86_MAX_GRPID) {
 						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[idx].grpid);
 						return PFM_ERR_UMASK;
 					}
@@ -381,8 +383,10 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	uint64_t umask1, umask2;
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0;
-	int k, ret, grpid, last_grpid = -1, id;
-	int max_grpid = -1;
+	int k, ret, id;
+	unsigned int max_grpid = INTEL_X86_MAX_GRPID;
+	unsigned int last_grpid =  INTEL_X86_MAX_GRPID;
+	unsigned int grpid;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 
@@ -419,7 +423,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			 * exclusive, i.e., only unit masks of one group
 			 * can be used
 			 */
-			if (last_grpid != -1 && grpid != last_grpid
+			if (last_grpid != INTEL_X86_MAX_GRPID && grpid != last_grpid
 			    && intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) {
 				DPRINT("exclusive unit mask group error\n");
 				return PFM_ERR_FEATCOMB;
@@ -543,7 +547,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	/*
 	 * check no umask violates the max_grpid constraint
 	 */
-	if (max_grpid != -1) {
+	if (max_grpid != INTEL_X86_MAX_GRPID) {
 		ret = intel_x86_check_max_grpid(this, e, max_grpid);
 		if (ret != PFM_SUCCESS) {
 			DPRINT("event %s: umask from grp > %d\n", pe[e->event].name, max_grpid);
@@ -681,7 +685,8 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
 	int ndfl[INTEL_X86_NUM_GRP];
-	int i, j, k, error = 0;
+	int i, j, error = 0;
+	unsigned int u, v;
 	int npebs;
 
 	if (!pmu->atdesc) {
@@ -737,7 +742,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
-		for (j=i+1; j < pmu->pme_count; j++) {
+		for (j=i+1; j < (int)pmu->pme_count; j++) {
 			if (pe[i].code == pe[j].code && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
 				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
 			error++;
@@ -747,7 +752,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		for(j=0; j < INTEL_X86_NUM_GRP; j++)
 			ndfl[j] = 0;
 
-		for(j=0, npebs = 0; j < pe[i].numasks; j++) {
+		for(j=0, npebs = 0; j < (int)pe[i].numasks; j++) {
 
 			if (!pe[i].umasks[j].uname) {
 				fprintf(fp, "pmu: %s event%d: %s umask%d :: no name\n", pmu->name, i, pe[i].name, j);
@@ -791,23 +796,23 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		}
 
 		if (pe[i].numasks) {
-			int *dfl_model = malloc(sizeof(*dfl_model) * pe[i].numasks);
+			unsigned int *dfl_model = malloc(sizeof(*dfl_model) * pe[i].numasks);
 			if (!dfl_model)
 				goto skip_dfl;
-			for(j=0; j < pe[i].ngrp; j++) {
-				int k, l = 0, m;
-				for (k = 0; k < pe[i].numasks; k++) {
-					if (pe[i].umasks[k].grpid != j)
+			for(u=0; u < pe[i].ngrp; u++) {
+				int l = 0, m;
+				for (v = 0; v < pe[i].numasks; v++) {
+					if (pe[i].umasks[v].grpid != u)
 						continue;
-					if (pe[i].umasks[k].uflags & INTEL_X86_DFL) {
+					if (pe[i].umasks[v].uflags & INTEL_X86_DFL) {
 						for (m = 0; m < l; m++) {
-							if (dfl_model[m] == pe[i].umasks[k].umodel || dfl_model[m] == 0) {
-								fprintf(fp, "pmu: %s event%d: %s grpid %d has 2 default umasks\n", pmu->name, i, pe[i].name, j);
+							if (dfl_model[m] == pe[i].umasks[v].umodel || dfl_model[m] == 0) {
+								fprintf(fp, "pmu: %s event%d: %s grpid %d has 2 default umasks\n", pmu->name, i, pe[i].name, u);
 								error++;
 							}
 						}
 						if (m == l)
-							dfl_model[l++] = pe[i].umasks[k].umodel;
+							dfl_model[l++] = pe[i].umasks[v].umodel;
 					}
 				}
 			}
@@ -820,23 +825,23 @@ skip_dfl:
 			error++;
 		}
 
-		for(j=0; j < pe[i].numasks; j++) {
+		for(u=0; u < pe[i].numasks; u++) {
 
-			if (pe[i].umasks[j].uequiv)
+			if (pe[i].umasks[u].uequiv)
 				continue;
 
-			if (pe[i].umasks[j].uflags & INTEL_X86_NCOMBO)
+			if (pe[i].umasks[u].uflags & INTEL_X86_NCOMBO)
 				continue;
 
-			for(k=j+1; k < pe[i].numasks; k++) {
-				if (pe[i].umasks[k].uequiv)
+			for(v=j+1; v < pe[i].numasks; v++) {
+				if (pe[i].umasks[v].uequiv)
 					continue;
-				if (pe[i].umasks[k].uflags & INTEL_X86_NCOMBO)
+				if (pe[i].umasks[v].uflags & INTEL_X86_NCOMBO)
 					continue;
-				if (pe[i].umasks[k].grpid != pe[i].umasks[j].grpid)
+				if (pe[i].umasks[v].grpid != pe[i].umasks[u].grpid)
 					continue;
-				if ((pe[i].umasks[j].ucode & pe[i].umasks[k].ucode) && pe[i].umasks[j].umodel == pe[i].umasks[k].umodel) {
-					fprintf(fp, "pmu: %s event%d: %s :: umask %s and %s have overlapping code bits\n", pmu->name, i, pe[i].name, pe[i].umasks[j].uname, pe[i].umasks[k].uname);
+				if ((pe[i].umasks[u].ucode & pe[i].umasks[v].ucode) && pe[i].umasks[u].umodel == pe[i].umasks[v].umodel) {
+					fprintf(fp, "pmu: %s event%d: %s :: umask %s and %s have overlapping code bits\n", pmu->name, i, pe[i].name, pe[i].umasks[u].uname, pe[i].umasks[v].uname);
 					error++;
 				}
 			}
@@ -936,10 +941,10 @@ pfm_intel_x86_valid_pebs(pfmlib_event_desc_t *e)
 	return npebs == numasks ? PFM_SUCCESS : PFM_ERR_FEATCOMB;
 }
 
-int
+unsigned int
 pfm_intel_x86_get_event_nattrs(void *this, int pidx)
 {
-	int nattrs;
+	unsigned int nattrs;
 	nattrs  = intel_x86_num_umasks(this, pidx);
 	nattrs += intel_x86_num_mods(this, pidx);
 	return nattrs;

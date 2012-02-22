@@ -432,10 +432,10 @@ pfm_netburst_validate_table(void *this, FILE *fp)
 }
 
 
-static int
+static unsigned int
 pfm_netburst_get_event_nattrs(void *this, int pidx)
 {
-	int nattrs;
+	unsigned int nattrs;
 	nattrs  = netburst_get_numasks(pidx);
 	nattrs += NETBURST_MODS_COUNT;
 	return nattrs;

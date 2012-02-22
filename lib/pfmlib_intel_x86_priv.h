@@ -50,6 +50,8 @@ typedef struct {
 	unsigned int		modhw;	/* hardwired modifiers, cannot be changed */
 } intel_x86_umask_t;
 
+#define INTEL_X86_MAX_GRPID	(~0U)
+
 /*
  * event-specific encoder (optional)
  */
@@ -235,7 +237,7 @@ intel_x86_uflag(void *this, int idx, int attr, int flag)
 }
 
 extern int pfm_intel_x86_detect(void);
-extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask, int max_grpid);
+extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask, unsigned int max_grpid);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e);
@@ -248,7 +250,7 @@ extern int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, 
 extern int pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info);
 extern int pfm_intel_x86_valid_pebs(pfmlib_event_desc_t *e);
 extern int pfm_intel_x86_perf_event_encoding(pfmlib_event_desc_t *e, void *data);
-extern int pfm_intel_x86_get_event_nattrs(void *this, int pidx);
+extern unsigned int pfm_intel_x86_get_event_nattrs(void *this, int pidx);
 extern int intel_x86_attr2mod(void *this, int pidx, int attr_idx);
 
 extern int pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e);

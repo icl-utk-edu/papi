@@ -109,7 +109,7 @@ extern int pfm_mips_event_is_valid(void *this, int pidx);
 extern int pfm_mips_validate_table(void *this, FILE *fp);
 extern int pfm_mips_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);
 extern int pfm_mips_get_event_info(void *this, int idx, pfm_event_info_t *info);
-extern int pfm_mips_get_event_nattrs(void *this, int pidx);
+extern unsigned int pfm_mips_get_event_nattrs(void *this, int pidx);
 
 extern void pfm_mips_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 extern int pfm_mips_get_perf_encoding(void *this, pfmlib_event_desc_t *e);

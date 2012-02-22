@@ -120,9 +120,9 @@ long bad_msg[MAX_THR];
 long bad_restart[MAX_THR];
 int fown;
 
-static int __thread myid; /* TLS */
-static perf_event_desc_t __thread *fds; /* TLS */
-static int __thread num_fds; /* TLS */
+static __thread int myid; /* TLS */
+static __thread perf_event_desc_t *fds; /* TLS */
+static __thread int num_fds; /* TLS */
 
 pid_t
 gettid(void)
@@ -160,8 +160,6 @@ do_cycles(void)
 				pthread_kill(pthread_self(), SIGUSR1);
 			sum += x;
 		}
-		if (sum < 0)
-			printf("==>>  SUM IS NEGATIVE !!  <<==\n");
 		iter[myid]++;
 
 		gettimeofday(&now, NULL);
@@ -313,7 +311,7 @@ overflow_start(char *name)
 	fown_ex.pid  = gettid();
 	ret = fcntl(fd,
 		    (fown ? F_SETOWN_EX : F_SETOWN), 
-		    (fown ? (unsigned long)&fown_ex: gettid()));
+		    (fown ? (unsigned long)&fown_ex: (unsigned long)gettid()));
 	if (ret)
 		err(1, "fcntl SETOWN failed");
 
