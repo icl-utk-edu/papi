@@ -156,14 +156,13 @@ _perfctr_init_substrate( int cidx )
 #endif
 
 	/* Fill in what we can of the papi_system_info. */
-	retval = MY_VECTOR.get_system_info( &_papi_hwi_system_info );
+	retval = _papi_os_vector.get_system_info( &_papi_hwi_system_info );
 	if ( retval != PAPI_OK )
 		return ( retval );
 
 	/* Setup memory info */
-	retval =
-		MY_VECTOR.get_memory_info( &_papi_hwi_system_info.hw_info,
-								   ( int ) info.cpu_type );
+	retval = _papi_os_vector.get_memory_info( &_papi_hwi_system_info.hw_info,
+						   ( int ) info.cpu_type );
 	if ( retval )
 		return ( retval );
 
