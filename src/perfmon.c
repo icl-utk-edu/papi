@@ -985,7 +985,6 @@ _papi_pfm_init_substrate( int cidx )
 	MY_VECTOR.cmp_info.kernel_profile = 1;
 	MY_VECTOR.cmp_info.profile_ear = 1;
 	MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-	MY_VECTOR.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
 
 #ifdef WIN32
 	/* FIX: For now, use the pmu_type from Perfmon */

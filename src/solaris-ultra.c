@@ -839,8 +839,7 @@ _ultra_hwd_init_substrate( int cidx )
 		return ( retval );
 
 	/* Setup memory info */
-        retval =
-	  MY_VECTOR.get_memory_info( &_papi_hwi_system_info.hw_info,
+        retval = _papi_os_vector.get_memory_info( &_papi_hwi_system_info.hw_info,
 				     0 );
         if ( retval )
 	  return ( retval );

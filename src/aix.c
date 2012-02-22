@@ -771,12 +771,12 @@ _aix_init_substrate( int cidx )
 	int retval = PAPI_OK, procidx;
 
 	/* Fill in what we can of the papi_system_info. */
-	retval = MY_VECTOR.get_system_info( &_papi_hwi_system_info );
+	retval = _papi_os_vector.get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return ( retval );
 
 	/* Setup memory info */
-	retval = MY_VECTOR.get_memory_info( &_papi_hwi_system_info.hw_info, 0 );
+	retval = _papi_os_vector.get_memory_info( &_papi_hwi_system_info.hw_info, 0 );
 	if ( retval )
 		return ( retval );
 
