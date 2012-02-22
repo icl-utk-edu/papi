@@ -3,11 +3,11 @@ CFLAGS += $(EXTRA_CFLAGS)
 SOURCES	  = papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
     papi_data.c threads.c cpus.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
-    papi_vector.c papi_memory.c freq.c papi_user_events.c $(COMPSRCS)
+    papi_vector.c papi_memory.c papi_user_events.c $(COMPSRCS)
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     papi_data.o threads.o cpus.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o \
-    papi_vector.o papi_memory.o freq.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
+    papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h cpus.h papi_protos.h papi_vector.h \
     papi_memory.h config.h papi_user_events.h
