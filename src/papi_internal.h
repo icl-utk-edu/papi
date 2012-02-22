@@ -98,9 +98,6 @@ extern int papi_num_components;
 #define NEED_CONTEXT		1
 #define DONT_NEED_CONTEXT 	0
 
-/* Replacement for bogus supports_multiple_threads item */
-/* xxxx Should this be at the component level or the hw info level? I think it's system wide... */
-#define SUPPORTS_MULTIPLE_THREADS(cmp_info) (cmp_info.available_granularities & PAPI_GRN_THR)
 
 /* This was defined by each substrate as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
     Now it's defined globally as 8 for everything. Mainly applies to max terms in

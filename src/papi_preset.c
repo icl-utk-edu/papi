@@ -24,7 +24,7 @@ extern hwi_presets_t _papi_hwi_presets;
    deleting deprecated events.
 */
 int
-_papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
+_papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes, int cidx )
 {
 	int i, pnum, did_something = 0;
 	unsigned int preset_index, j;
@@ -107,8 +107,8 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 				papi_strdup( notes[pnum].dev_note );
 		}
 	}
-	/* xxxx right now presets are only cpu, component 0 */
-	_papi_hwd[0]->cmp_info.num_preset_events += did_something;
+
+	_papi_hwd[cidx]->cmp_info.num_preset_events += did_something;
 
 	return ( did_something ? PAPI_OK : PAPI_ESBSTR );
 }
@@ -116,7 +116,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 int
 _papi_hwi_cleanup_all_presets( void )
 {
-	int preset_index;
+        int preset_index,cidx;
 
 	for ( preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS;
 		  preset_index++ ) {
@@ -130,8 +130,10 @@ _papi_hwi_cleanup_all_presets( void )
 			_papi_hwi_presets.dev_note[preset_index] = NULL;
 		}
 	}
-	/* xxxx right now presets are only cpu, component 0 */
-	_papi_hwd[0]->cmp_info.num_preset_events = 0;
+	
+	for(cidx=0;cidx<papi_num_components;cidx++) {
+	   _papi_hwd[cidx]->cmp_info.num_preset_events = 0;
+	}
 
 #if defined(ITANIUM2) || defined(ITANIUM3)
 	/* NOTE: This memory may need to be freed for BG/P builds as well */
@@ -141,7 +143,7 @@ _papi_hwi_cleanup_all_presets( void )
 	}
 #endif
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /* The following code is proof of principle for reading preset events from an

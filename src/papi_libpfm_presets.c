@@ -538,7 +538,7 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 }
 
 int
-_papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
+_papi_libpfm_setup_presets( char *pmu_name, int pmu_type, int cidx )
 {
 	int retval;
 	hwi_search_t *preset_search_map = NULL;
@@ -562,7 +562,7 @@ _papi_libpfm_setup_presets( char *pmu_name, int pmu_type )
 
 	if (retval) goto out;
 
-	retval = _papi_hwi_setup_all_presets( preset_search_map, notemap );
+	retval = _papi_hwi_setup_all_presets( preset_search_map, notemap, cidx );
 
 out:
 	free( preset_search_map );

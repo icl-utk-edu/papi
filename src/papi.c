@@ -118,11 +118,6 @@ PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
 	if ( ( init_level & PAPI_THREAD_LEVEL_INITED ) )
 		papi_return( PAPI_OK );
 
-	/* xxxx this looks at vector 0 only -- I think the value should be promoted
-	   out of cmp_info into hw_info. */
-	if ( !SUPPORTS_MULTIPLE_THREADS( _papi_hwd[0]->cmp_info ) )
-		papi_return( PAPI_ESBSTR );
-
 	init_level |= PAPI_THREAD_LEVEL_INITED;
 	papi_return( _papi_hwi_set_thread_id_fn( id_fn ) );
 }
@@ -3873,6 +3868,11 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 int
 PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 {
+
+  if (_papi_hwi_invalid_cmp(cidx)) {
+     return PAPI_ESBSTR;
+  }
+
 	switch ( option ) {
 		/* For now, MAX_HWCTRS and MAX CTRS are identical.
 		   At some future point, they may map onto different values.
@@ -3898,11 +3898,11 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 		if ( ptr == NULL )
 			papi_return( PAPI_EINVAL );
 		ptr->cmp_info = &( _papi_hwd[cidx]->cmp_info );
-		return ( PAPI_OK );
+		return PAPI_OK;
 	default:
-		papi_return( PAPI_EINVAL );
+	  papi_return( PAPI_EINVAL );
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /** @class PAPI_num_components

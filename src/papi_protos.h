@@ -17,7 +17,8 @@
 /* The following PAPI internal functions are defined by the papi_preset.c file. */
 
 int _papi_hwi_setup_all_presets( hwi_search_t * findem,
-								 hwi_dev_notes_t * notes );
+				 hwi_dev_notes_t * notes,
+				 int cidx);
 int _papi_hwi_cleanup_all_presets( void );
 #ifdef XML
 int _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes );

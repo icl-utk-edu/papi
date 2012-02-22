@@ -992,7 +992,7 @@ _papi_pfm_init_substrate( int cidx )
 #endif
 
 	/* Setup presets */
-	retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
+	retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type, cidx );
 	if ( retval )
 		return ( retval );
 
