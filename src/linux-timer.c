@@ -26,6 +26,10 @@
 #include <sys/times.h>
 #endif
 
+#if defined(USE_PROC_PTTIMER)
+#include <fcntl.h>
+#include "linux-common.h"
+#endif
 
 #if defined(HAVE_MMTIMER)
 #include <sys/mman.h>
@@ -337,7 +341,7 @@ _linux_get_virt_usec( hwd_context_t *zero )
 		}
 		retval =
 			( utime +
-			  stime ) * ( long long ) 1000000 / MY_VECTOR.cmp_info.clock_ticks;
+			  stime ) * ( long long ) 1000000 / _papi_os_info.clock_ticks;
 	}
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
 	{

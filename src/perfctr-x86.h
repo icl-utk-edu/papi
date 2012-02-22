@@ -141,6 +141,7 @@ typedef struct X86_perfctr_control
 typedef struct X86_perfctr_context
 {
 	struct vperfctr *perfctr;
+        int stat_fd;
 } X86_perfctr_context_t;
 
 /* Override void* definitions from PAPI framework layer 
