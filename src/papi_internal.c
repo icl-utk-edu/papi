@@ -263,6 +263,9 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 	size_t max_counters;
 	char *ptr;
 
+	/* If component doesn't exist... */
+	if (_papi_hwi_invalid_cmp(cidx)) return PAPI_ESBSTR;
+
 	/* Assigned at create time */
 
 	ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
