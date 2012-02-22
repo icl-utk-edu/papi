@@ -1,6 +1,6 @@
 PAPI_SRCDIR = $(PWD)	
 CFLAGS += $(EXTRA_CFLAGS)
-SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
+SOURCES	  = papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
     papi_data.c threads.c cpus.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
     papi_vector.c papi_memory.c freq.c papi_user_events.c $(COMPSRCS)
