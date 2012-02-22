@@ -19,15 +19,13 @@
 #include <string.h>
 #endif
 
-/* Prototypes */
-int vec_int_ok_dummy(  );
-int vec_int_one_dummy(  );
-int vec_int_dummy(  );
-void vec_void_dummy(  );
-void *vec_void_star_dummy(  );
-long long vec_long_long_dummy(  );
-char *vec_char_star_dummy(  );
-long vec_long_dummy(  );
+#ifdef _AIX
+
+/* needed because the get_virt_usec() code uses a hardware context */
+/* which is a pmapi definition on AIX.                             */
+#include <pmapi.h>
+#endif
+
 
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 
@@ -72,6 +70,14 @@ vec_void_dummy(  )
 long long
 vec_long_long_dummy(  )
 {
+	return PAPI_ESBSTR;
+}
+
+long long
+vec_long_long_context_dummy( hwd_context_t *ignored )
+{
+        (void) ignored;
+
 	return PAPI_ESBSTR;
 }
 
@@ -213,13 +219,13 @@ _papi_hwi_innoculate_os_vector( papi_os_vector_t * v )
 		return ( PAPI_EINVAL );
 
 	if ( !v->get_real_cycles )
-		v->get_real_cycles = ( long long ( * )(  ) ) vec_long_long_dummy;
+		v->get_real_cycles = vec_long_long_dummy;
 	if ( !v->get_real_usec )
-		v->get_real_usec = ( long long ( * )(  ) ) vec_long_long_dummy;
+		v->get_real_usec = vec_long_long_dummy;
 	if ( !v->get_virt_cycles )
-		v->get_virt_cycles = vec_long_long_dummy;
+		v->get_virt_cycles = vec_long_long_context_dummy;
 	if ( !v->get_virt_usec )
-		v->get_virt_usec = vec_long_long_dummy;
+		v->get_virt_usec = vec_long_long_context_dummy;
 
 	if ( !v->update_shlib_info )
 		v->update_shlib_info = ( int ( * )( papi_mdi_t * ) ) vec_int_dummy;
