@@ -928,9 +928,7 @@ _papi_pfm_init_substrate( int cidx )
 
 	pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
 	SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
-	retval = _linux_get_system_info( &_papi_hwi_system_info );
-	if ( retval )
-		return ( retval );
+
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
 		/* powerpc */
 		MY_VECTOR.cmp_info.available_domains |=
@@ -992,7 +990,7 @@ _papi_pfm_init_substrate( int cidx )
 #endif
 
 	/* Setup presets */
-	retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type );
+	retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type, cidx );
 	if ( retval )
 		return ( retval );
 

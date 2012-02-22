@@ -60,6 +60,9 @@ _papi_hwi_init_os(void) {
    _papi_os_info.itimer_res_ns = 1;
    _papi_os_info.clock_ticks = sysconf( _SC_CLK_TCK );
 
+   /* Get Linux-specific system info */
+   _linux_get_system_info( &_papi_hwi_system_info );
+
    return PAPI_OK;
 }
 

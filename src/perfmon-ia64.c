@@ -1028,11 +1028,6 @@ _ia64_init_substrate( int cidx )
 		return ( PAPI_EBUG );
 	}
 
-	/* Fill in what we can of the papi_system_info. */
-	retval = _linux_get_system_info( &_papi_hwi_system_info );
-	if ( retval )
-		return ( retval );
-
 	int ncnt, nnev;
 
 	retval = pfmw_get_num_events( &nnev );

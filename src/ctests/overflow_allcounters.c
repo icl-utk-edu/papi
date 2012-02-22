@@ -60,6 +60,7 @@ main( int argc, char **argv )
 	const PAPI_component_info_t *comp_info = NULL;
 	int using_perfmon = 0;
 	int using_aix = 0;
+	int numcmp, cid;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
@@ -73,17 +74,22 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", retval );
 	}
 
-	comp_info = PAPI_get_component_info( 0 );
-	if ( hw_info == NULL ) {
-	   test_fail( __FILE__, __LINE__, "PAPI_get_component_info", retval );
-	}
+        numcmp = PAPI_num_components(  );
 
-	if ( strstr( comp_info->name, "perfmon.c" ) ) {
-	   using_perfmon = 1;
-	}
+	for ( cid = 0; cid < numcmp; cid++ ) {
 
-	if ( strstr( comp_info->name, "aix.c" ) ) {
-	   using_aix = 1;
+	    comp_info = PAPI_get_component_info( cid );
+	    if ( comp_info == NULL ) {
+	       test_fail( __FILE__, __LINE__, "PAPI_get_component_info", retval );
+	    }
+
+	    if ( strstr( comp_info->name, "perfmon.c" ) ) {
+	       using_perfmon = 1;
+	    }
+
+	    if ( strstr( comp_info->name, "aix.c" ) ) {
+	       using_aix = 1;
+	    }
 	}
 
 	/* add PAPI_TOT_CYC and one of the events in */

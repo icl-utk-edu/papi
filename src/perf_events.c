@@ -850,10 +850,6 @@ _papi_pe_init_substrate( int cidx )
   retval=_papi_libpfm_init(&MY_VECTOR);
   if (retval) return retval;
 
-  /* Get Linux-specific system info */
-  retval = _linux_get_system_info( &_papi_hwi_system_info );
-  if ( retval ) return retval;
-
   /* Detect NMI watchdog which can steal counters */
   nmi_watchdog_active=_linux_detect_nmi_watchdog();
   if (nmi_watchdog_active) {
