@@ -1,28 +1,126 @@
-
-<html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
 <head>
 <title>PAPI</title>
 
-<link rel="stylesheet" href="http://icl.cs.utk.edu/projectsdev/universal/stylesheet_print.css" type="text/css">
-
 </head>
-<body>
 
-<!-- Start of Print header -->
+<body bgcolor="#FFFFFF" text="#000000">
+
+<a name="top"></a>
+<center>
+<table width="75%">
+<tr>
+<td>
+
+<center><h2>PAPI FAQ</h2></center><strong><a href="#9">General Questions (FAQ)</a></strong><br />
+&nbsp; &nbsp; &nbsp; <a href="#88">I have a question that I think should be added here. Where should I send it?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#166">How do I install the PAPI library?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#167">Where do I go for help?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#70">What are the mailing lists and how do I subscribe?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#165">Where are the archives for the mailing lists?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#80">What is needed to use PAPI?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#81">What tools are available for PAPI?</a><br />
+<br />
+<strong><a href="#38">The PAPI Library</a></strong><br />
+&nbsp; &nbsp; &nbsp; <a href="#218">I downloaded the PAPI 3 tarball last week and keep getting a segmentation fault in gcc. What's up?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#219">When I make PAPI, I always get a warning message when compiling fmultiplex2. Why?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#138">How do I convert my code from PAPI 2 to PAPI 3?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#168">How do I compile PAPI with debugging support?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#169">How do I use the debugging features of the PAPI library?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#72">Why does PAPI_overflow, PAPI_profil and PAPI_sprofil work strangely with a small threshold?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#71">How do I stop PAPI_overflow, PAPI_profile or PAPI_sprofil?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#85">What events does PAPI track?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#83">How does PAPI handle threads?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#84">How does PAPI handle fork/exec?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#78">Does PAPI support unbound or non-kernel threads?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#74">How do I encode a native event?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#82">Why is there more than one patch for Linux?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#77">The numbers are funky for event 0xabc on platform XYZ, help me!</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#170">My program runs fine when measuring 1 or 2 events, but when I add more I get a -8, PAPI_ECNFLCT error code. The error text says, "Event exists. but cannot be counted due to hardware resource limitations". What does this mean?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#75">What's multiplexing?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#86">Why am I still getting PAPI_ECNFLCT when using multiplexing?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#171">What's a derived event?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#87">When I compile and run the example program (PAPI_flops.c) on X platform I get the following error message: Error in PAPI_flops: Event exists, but cannot be counted due to hardware resource limits, what is the problem?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#73">Why can't I get my Fortran programs to compile with PAPI on a Cray T3E?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#79">What's wrong with PAPI_LST_INS (hex code 0x43) on my Pentium?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#216">PAPI_create_eventset always returns an error now.</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#233">What's this GCC error about "thread local storage not support for this target"?</a><br />
+<br />
+<strong><a href="#65">The PAPI GIT Source Repository</a></strong><br />
+&nbsp; &nbsp; &nbsp; <a href="#325">Can I browse the source repository on the web?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#326">How do I download a copy of the current PAPI source tree?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#327">Can I commit changes to the PAPI repository?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#328">Are there GUI interfaces available for GIT?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#329">Where can I learn more about GIT?</a><br />
+<br />
+<strong><a href="#40">PAPI on AIX POWER Processors</a></strong><br />
+&nbsp; &nbsp; &nbsp; <a href="#177">General Comments</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#178">Installation notes</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#179">Test case notes</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#180">Counter notes</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#235">Things go haywire on my Power/AIX box with threaded programs?</a><br />
+<br />
+<strong><a href="#45">Linux-IA64</a></strong><br />
+&nbsp; &nbsp; &nbsp; <a href="#189">Floating Point</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#192">Notes on PAPI->Native event mappings</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#220">Why am I getting errors from perfmon and PAPI on my Redhat kernels?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#234">Counter interrupts seem to have stopped on my threaded programs?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#264">WHy can't I build PAPI with the Intel icc compiler?</a><br />
+<br />
+<strong><a href="#46">Linux-Perfctr</a></strong><br />
+&nbsp; &nbsp; &nbsp; <a href="#209">PAPI and the Linux Kernel</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#210">Before you compile</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#211">If you have already patched your kernel</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#121">How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#265">After reboot, the /dev/perfctr file always seems to have the wrong permissions and PAPI fails to initialize. What's going on?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#212">Hardware interrupt driven counters</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#259">Why do PAPI_LD_INS and PAPI_SR_INS give identical results on Pentium 4?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#213">Floating point counts on the Pentium 4 series</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#214">Vector instruction counts on the Pentium 4 series</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#215">The memory test sometimes fails on Athlon Processors.</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#262">Floating Point counts on AMD Opteron</a><br />
+<br />
+<strong><a href="#47">Solaris-Ultra</a></strong><br />
+&nbsp; &nbsp; &nbsp; <a href="#193">General Comments</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#194">Bugs</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#76">My Sun box doesn't have libcpc.h. What should I do?</a><br />
+
+</td>
+</tr>
+
+<tr>
+<td>
+<hr />
+</td>
+</tr>
+
+</table>
+</center>
 
 
+<center>
+<table width="75%">
+<tr>
+<td>
 
-<!-- End of Print header -->
-
-<h1>PAPI FAQ</h1><h2>General Questions (FAQ)</h2>
+<a name="9"></a>
+<h2>General Questions (FAQ)</h2>
 <font color="#666"><p></p></font>
 
+<a name="88"></a>
 <strong>I have a question that I think should be added here. Where should I send it?</strong>
-<p><a href="mailto:ptools-perfapi@ptools.org">ptools-perfapi@ptools.org</a>.</p>
+<blockquote><p><a href="mailto:ptools-perfapi@ptools.org">ptools-perfapi@ptools.org</a>.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="166"></a>
 <strong>How do I install the PAPI library?</strong>
-<p>Please see INSTALL.txt in the papi root directory.</p>
+<blockquote><p>Please see INSTALL.txt in the papi root directory.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="167"></a>
 <strong>Where do I go for help?</strong>
-<p>First, read this document thoroughly. Then consult the PAPI Home Page
+<blockquote><p>First, read this document thoroughly. Then consult the PAPI Home Page
 at <a href="../">http://icl.cs.utk.edu/papi</a>.
 If that doesn't help, then search the archives as mentioned below. If
 that fails, then send mail to one of the two mailing lists, <a href="mailto:ptools-perfapi@eecs.utk.edu">ptools-perfapi@eecs.utk.edu</a> or <a href="mailto:perfapi-devel@eecs.utk.edu">perfapi-devel@eecs.utk.edu</a>.
@@ -30,238 +128,213 @@ The former is a group for general announcements, questions and
 miscellaneous
 topics. The latter is is a discussion group for
 the developers of PAPI and it receives all CVS update messages. (which
-can be a significant amount of mail!)</p>
+can be a significant amount of mail!)</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="70"></a>
 <strong>What are the mailing lists and how do I subscribe?</strong>
-<p>There are currently two mailing lists, ptools-perfapi,  which is a group for general announcements, questions and miscellaneous topics and perfapi-devel, which is a discussion group for the developers of PAPI and it receives all CVS update messages (which can be a significant amount of mail!)</p>
-<p>To subscribe to or maintain your subscription to either of the above groups, go to:<br /> <a href="http://lists.eecs.utk.edu/mailman/listinfo/ptools-perfapi">lists.eecs.utk.edu/mailman/listinfo/ptools-perfapi</a> or <a href="http://lists.eecs.utk.edu/mailman/listinfo/perfapi-devel">lists.eecs.utk.edu/mailman/listinfo/perfapi-devel</a>.</p>
+<blockquote><p>There are currently two mailing lists, ptools-perfapi,  which is a group for general announcements, questions and miscellaneous topics and perfapi-devel, which is a discussion group for the developers of PAPI and it receives all CVS update messages (which can be a significant amount of mail!)</p>
+<p>To subscribe to or maintain your subscription to either of the above groups, go to:<br /> <a href="http://lists.eecs.utk.edu/mailman/listinfo/ptools-perfapi">lists.eecs.utk.edu/mailman/listinfo/ptools-perfapi</a> or <a href="http://lists.eecs.utk.edu/mailman/listinfo/perfapi-devel">lists.eecs.utk.edu/mailman/listinfo/perfapi-devel</a>.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="165"></a>
 <strong>Where are the archives for the mailing lists?</strong>
-<p>The archives for the general PAPI mailing list are located at <a href="http://lists.eecs.utk.edu/pipermail/ptools-perfapi/">lists.eecs.utk.edu/pipermail/ptools-perfapi/</a>.
-The archives for the developers list are located at <a href="http://lists.eecs.utk.edu/pipermail/perfapi-devel/">lists.eecs.utk.edu/pipermail/perfapi-devel/</a>.</p>
+<blockquote><p>The archives for the general PAPI mailing list are located at <a href="http://lists.eecs.utk.edu/pipermail/ptools-perfapi/">lists.eecs.utk.edu/pipermail/ptools-perfapi/</a>.
+The archives for the developers list are located at <a href="http://lists.eecs.utk.edu/pipermail/perfapi-devel/">lists.eecs.utk.edu/pipermail/perfapi-devel/</a>.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="80"></a>
 <strong>What is needed to use PAPI?</strong>
-<p>See the Platform section at <a
- href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&amp;slid=96">http://icl.cs.utk.edu/papi/custom/index.html?lid=62&amp;slid=96.</a>.</p>
+<blockquote><p>See the Platform section at <a
+ href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&amp;slid=96">http://icl.cs.utk.edu/papi/custom/index.html?lid=62&amp;slid=96.</a>.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="81"></a>
 <strong>What tools are available for PAPI?</strong>
-<p>SOme of the more popular tools using PAPI can be found under the Tools link on the PAPI web page at <a href="http://icl.cs.utk.edu/papi">http://icl.cs.utk.edu/papi/</a>.
-You can also see the latest list of third party tools and related software at <a href="http://icl.cs.utk.edu/papi/links/index.html">http://icl.cs.utk.edu/papi/links/index.html</a>. If you have a tool to be posted, send it to the mailing list.</p>
+<blockquote><p>SOme of the more popular tools using PAPI can be found under the Tools link on the PAPI web page at <a href="http://icl.cs.utk.edu/papi">http://icl.cs.utk.edu/papi/</a>.
+You can also see the latest list of third party tools and related software at <a href="http://icl.cs.utk.edu/papi/links/index.html">http://icl.cs.utk.edu/papi/links/index.html</a>. If you have a tool to be posted, send it to the mailing list.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
 <br />
+<a name="38"></a>
 <h2>The PAPI Library</h2>
 <font color="#666"><p></p></font>
 
+<a name="218"></a>
 <strong>I downloaded the PAPI 3 tarball last week and keep getting a segmentation fault in gcc. What's up?</strong>
-<p>SOme versions of GCC have a bug that is triggered by a statement in PAPI 3.0. This (one character) is fixed in the current tar ball, but may not be in the one you downloaded.</p><p>If you see an INTERNAL ERROR from GCC when compiling multiplex.c, do 2 things.</p><p>1) edit multiplex.c, line 1021 to have 2 equal signs instead of 1.</p><p>2 optional) send a message to your local gcc maintainer and complain.</p><p>The actual culprit is:</p><p>assert(retval = PAPI_OK) and it should be
-assert(retval == PAPI_OK)</p><p>Of course, both are legal C and nothing should trigger an internal compiler error, but hey...</p><p>P.S. If your current release compiled with GCC, you&#039;re still ok. As the statement above NEVER gets triggered. It is there as an artifact from the original multiplex.c implementation. So you don&#039;t need to change or upgrade your PAPI or gcc.</p>
+<blockquote><p>SOme versions of GCC have a bug that is triggered by a statement in PAPI 3.0. This (one character) is fixed in the current tar ball, but may not be in the one you downloaded.</p><p>If you see an INTERNAL ERROR from GCC when compiling multiplex.c, do 2 things.</p><p>1) edit multiplex.c, line 1021 to have 2 equal signs instead of 1.</p><p>2 optional) send a message to your local gcc maintainer and complain.</p><p>The actual culprit is:</p><p>assert(retval = PAPI_OK) and it should be
+assert(retval == PAPI_OK)</p><p>Of course, both are legal C and nothing should trigger an internal compiler error, but hey...</p><p>P.S. If your current release compiled with GCC, you&#039;re still ok. As the statement above NEVER gets triggered. It is there as an artifact from the original multiplex.c implementation. So you don&#039;t need to change or upgrade your PAPI or gcc.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="219"></a>
 <strong>When I make PAPI, I always get a warning message when compiling fmultiplex2. Why?</strong>
-<p>The warning message here is benign, but since it occurs on the last file to be compiled, it often looks like the build has been aborted.
-The reason the message occurs is that the compiler thinks it is trying to stuff too many bits into an integer value. You can fix it by rearranging the code a little bit. Or just download the latest copy of fmultiplex2.F from the cvs tree.</p>
+<blockquote><p>The warning message here is benign, but since it occurs on the last file to be compiled, it often looks like the build has been aborted.
+The reason the message occurs is that the compiler thinks it is trying to stuff too many bits into an integer value. You can fix it by rearranging the code a little bit. Or just download the latest copy of fmultiplex2.F from the cvs tree.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="138"></a>
 <strong>How do I convert my code from PAPI 2 to PAPI 3?</strong>
-<p>PAPI 3 represents a major upgrade to the PAPI library.
-Because of this, there have been a number of interface changes. The process to upgrade from PAPI 2 to PAPI 3 is straightforward, and documented in the <a href ="http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_Conversion_Cookbook.htm">PAPI Conversion Cookbook</a>. You can read it online, or<a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=49&slid=79"> download </a>it in a number of different formats.</p>
+<blockquote><p>PAPI 3 represents a major upgrade to the PAPI library.
+Because of this, there have been a number of interface changes. The process to upgrade from PAPI 2 to PAPI 3 is straightforward, and documented in the <a href ="http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_Conversion_Cookbook.htm">PAPI Conversion Cookbook</a>. You can read it online, or<a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=49&slid=79"> download </a>it in a number of different formats.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="168"></a>
 <strong>How do I compile PAPI with debugging support?</strong>
-<p>To compile with debugging, define CFLAGS to include -DDEBUG in the corresponding Makefile or Rules.<platform> file.</p>
+<blockquote><p>To compile with debugging, define CFLAGS to include -DDEBUG in the corresponding Makefile or Rules.<platform> file.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="169"></a>
 <strong>How do I use the debugging features of the PAPI library?</strong>
-<p>To enable debugging messages at run time, set the PAPI_DEBUG environment variable to one or more of the following with any character as a separator.</p><p>SUBSTRATE<br>
+<blockquote><p>To enable debugging messages at run time, set the PAPI_DEBUG environment variable to one or more of the following with any character as a separator.</p><p>SUBSTRATE<br>
 API<br>
 INTERNAL<br>
 THREADS<br>
 MULTIPLEX<br>
 OVERFLOW<br>
 PROFILE<br>
-ALL</p><p>Also, see the man page for <a href="http://icl.cs.utk.edu/projects/papi/files/html_man3/papi_set_debug.html">PAPI_set_debug()</a>.</p>
+ALL</p><p>Also, see the man page for <a href="http://icl.cs.utk.edu/projects/papi/files/html_man3/papi_set_debug.html">PAPI_set_debug()</a>.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="72"></a>
 <strong>Why does PAPI_overflow, PAPI_profil and PAPI_sprofil work strangely with a small threshold?</strong>
-<p>On most systems, overflow must be emulated in software by PAPI. Only on the UltraSparc III, Itanium and IRIX does the operating system support true interrupt on overflow. Therefore the user is advised on most platforms to make sure the overflow value is no more than 1/1000th the clock rate. The emulation handler in PAPI runs every millisecond, therefore the goal of the tool designer should be to pick an value that will overflow frequently but not too frequently. Not following these guidelines could result in either the overflows never occurring or overflows occurring on every interrupt and thus resulting in a flat profile.</p>
+<blockquote><p>On most systems, overflow must be emulated in software by PAPI. Only on the UltraSparc III, Itanium and IRIX does the operating system support true interrupt on overflow. Therefore the user is advised on most platforms to make sure the overflow value is no more than 1/1000th the clock rate. The emulation handler in PAPI runs every millisecond, therefore the goal of the tool designer should be to pick an value that will overflow frequently but not too frequently. Not following these guidelines could result in either the overflows never occurring or overflows occurring on every interrupt and thus resulting in a flat profile.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="71"></a>
 <strong>How do I stop PAPI_overflow, PAPI_profile or PAPI_sprofil?</strong>
-<p>Call PAPI_stop, and then call PAPI_overflow, PAPI_profile or PAPI_sprofil with a threshold value of 0. Since PAPI 3 can overflow and profile on multiple events, you must call the above routines for EACH event that had been previously enabled for overflow or profile.</p>
+<blockquote><p>Call PAPI_stop, and then call PAPI_overflow, PAPI_profile or PAPI_sprofil with a threshold value of 0. Since PAPI 3 can overflow and profile on multiple events, you must call the above routines for EACH event that had been previously enabled for overflow or profile.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="85"></a>
 <strong>What events does PAPI track?</strong>
-<p>PAPI only tracks &#039;hardware events&#039;, the occurrence of signals onboard the microprocessor. It does not count system calls, software interrupts or other software events. The user should remember that by default, PAPI only measures events that occur in User Space.</p>
+<blockquote><p>PAPI only tracks &#039;hardware events&#039;, the occurrence of signals onboard the microprocessor. It does not count system calls, software interrupts or other software events. The user should remember that by default, PAPI only measures events that occur in User Space.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="83"></a>
 <strong>How does PAPI handle threads?</strong>
-<p>Currently, PAPI only supports thread level measurements with kernel or bound threads. Each thread must create, manipulate and read its own counters. When a thread is created, it inherits no PAPI events or information from the calling thread.</p>
+<blockquote><p>Currently, PAPI only supports thread level measurements with kernel or bound threads. Each thread must create, manipulate and read its own counters. When a thread is created, it inherits no PAPI events or information from the calling thread.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="84"></a>
 <strong>How does PAPI handle fork/exec?</strong>
-<p>When a process is created, it inherits no PAPI information from the calling thread.</p>
+<blockquote><p>When a process is created, it inherits no PAPI information from the calling thread.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="78"></a>
 <strong>Does PAPI support unbound or non-kernel threads?</strong>
-<p>Yes, but the counts will reflect the total events for the process. Measurements done in other threads will all get the same values, namely those counts for the total process. For non-bound threads, it is not necessary to call PAPI_thread_init. But in most scenarios like with SMP or OpenMP compiler directives, bound threads will be the default. For those using Pthreads, the user should take care to set the scope of each thread to the PTHREAD_SCOPE_SYSTEM attribute, unless the system is known to have a non hybrid thread library implementation, like Linux.</p>
+<blockquote><p>Yes, but the counts will reflect the total events for the process. Measurements done in other threads will all get the same values, namely those counts for the total process. For non-bound threads, it is not necessary to call PAPI_thread_init. But in most scenarios like with SMP or OpenMP compiler directives, bound threads will be the default. For those using Pthreads, the user should take care to set the scope of each thread to the PTHREAD_SCOPE_SYSTEM attribute, unless the system is known to have a non hybrid thread library implementation, like Linux.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="74"></a>
 <strong>How do I encode a native event?</strong>
-<p>In PAPI2.0:
+<blockquote><p>In PAPI2.0:
 Unless otherwise stated in the FAQ section for your platform, the encoding is as follows:</p><p>event = ((reg_code & 0xffffff) << 8 | (reg_num & 0xff))</p><p>In PAPI3.0:
   Just find the native event name and then call PAPI_event_name_to_code. The code returned can be added directly to an event set.
-The native events can be listed with the test case &#039;native_avail&#039; in the ctests directory.</p>
+The native events can be listed with the test case &#039;native_avail&#039; in the ctests directory.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="82"></a>
 <strong>Why is there more than one patch for Linux?</strong>
-<p>There are numerous patches designed to provide access to the Intel CPU performance counters. As PAPI began, we used the original Beowulf patch (perf) by David Hendriks. However, as PAPI progressed, we needed some addition features, which I graciously added. This patch used a system call approach and has proven to be exceedingly stable. Yes, no crashes reported. I knew that there was a better way to designed a performance counter kernel patch, one that used mmap() to provide direct access to the virtual counts. Mikael Pettersson provided me with exactly that in the form of the perfctr patch. It is also very, very stable. It can be found at <a href="http://www.docs.uu.se/~mikpe/linux/perfctr">http://www.docs.uu.se/~mikpe/linux/perfctr</a>. If you&#039;re starting with PAPI for the first time, we recommend the perfctr patch as included in the papi source distribution.</p>
+<blockquote><p>There are numerous patches designed to provide access to the Intel CPU performance counters. As PAPI began, we used the original Beowulf patch (perf) by David Hendriks. However, as PAPI progressed, we needed some addition features, which I graciously added. This patch used a system call approach and has proven to be exceedingly stable. Yes, no crashes reported. I knew that there was a better way to designed a performance counter kernel patch, one that used mmap() to provide direct access to the virtual counts. Mikael Pettersson provided me with exactly that in the form of the perfctr patch. It is also very, very stable. It can be found at <a href="http://user.it.uu.se/~mikpe/linux/perfctr">http://user.it.uu.se/~mikpe/linux/perfctr</a>. If you're starting with PAPI for the first time, we recommend the perfctr patch as included in the papi source distribution.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="77"></a>
 <strong>The numbers are funky for event 0xabc on platform XYZ, help me!</strong>
-<p>This is not a question, but I&#039;ll help you. We the PAPI developers cannot be experts on the 1000&#039;s of events found across all supported platforms. However, if you are using a PAPI preset, the first thing to do is to look up the corresponding native event code using the test case &#039;avail&#039;. Then the best bet is to always go to the vendor&#039;s technical documentation site and check the processor reference manual. If you&#039;re convinced everything is kosher, then please feel free to send a message to the mailing list and one of the members may be able to help you.</p><p>My program runs fine with 1 or 2 counters, but when I add more I get a -8, PAPI_ECNFLCT error code. The error text says, "Event exists. but cannot be counted due to hardware resource limitations". What does this mean?</p><p>Many systems have only a few hardware performance counter registers thus you can only measure a few metrics at once. Some platforms may support counter multiplexing, which gives the user the illusion of a larger number of registers by time sharing the performance registers. On the R10K series, the IRIX kernel supports multiplexing, allowing up to 32 events to be counted at once. Don&#039;t take fine grained measurements when multiplexing, unless you know what you&#039;re doing.</p>
+<blockquote><p>This is not a question, but I&#039;ll help you. We the PAPI developers cannot be experts on the 1000&#039;s of events found across all supported platforms. However, if you are using a PAPI preset, the first thing to do is to look up the corresponding native event code using the test case &#039;avail&#039;. Then the best bet is to always go to the vendor&#039;s technical documentation site and check the processor reference manual. If you&#039;re convinced everything is kosher, then please feel free to send a message to the mailing list and one of the members may be able to help you.</p><p>My program runs fine with 1 or 2 counters, but when I add more I get a -8, PAPI_ECNFLCT error code. The error text says, "Event exists. but cannot be counted due to hardware resource limitations". What does this mean?</p><p>Many systems have only a few hardware performance counter registers thus you can only measure a few metrics at once. Some platforms may support counter multiplexing, which gives the user the illusion of a larger number of registers by time sharing the performance registers. On the R10K series, the IRIX kernel supports multiplexing, allowing up to 32 events to be counted at once. Don&#039;t take fine grained measurements when multiplexing, unless you know what you&#039;re doing.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="170"></a>
 <strong>My program runs fine when measuring 1 or 2 events, but when I add more I get a -8, PAPI_ECNFLCT error code. The error text says, "Event exists. but cannot be counted due to hardware resource limitations". What does this mean?</strong>
-<p>You have either exceeded the number of available hardware counters or two or more of the events you want to count need the same resources. This can be particularly annoying on machines like the Pentium 4. Although the P4 has 18 nominal counter registers, many events require resources that are restricted to 2 or 3 of these counters. In practice it is often difficult to count more than 4 or 5 simultaneous events on this platform.
-One way around limited counter resources is to use multiplexing.</p>
+<blockquote><p>You have either exceeded the number of available hardware counters or two or more of the events you want to count need the same resources. This can be particularly annoying on machines like the Pentium 4. Although the P4 has 18 nominal counter registers, many events require resources that are restricted to 2 or 3 of these counters. In practice it is often difficult to count more than 4 or 5 simultaneous events on this platform.
+One way around limited counter resources is to use multiplexing.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="75"></a>
 <strong>What's multiplexing?</strong>
-<p>Many systems have only a few hardware performance counter registers; thus you can only measure a few metrics at once. Some platforms may support counter multiplexing, which gives the user the illusion of a larger number of registers by time sharing the performance registers. On the MIPS R10K series, the IRIX kernel supports multiplexing, allowing up to 32 events to be counted at once. On other platforms PAPI does the multiplexing itself, swapping events in and out of the counters based on a timer interrupt. Don&#039;t take fine grained measurements when multiplexing, unless you know what you&#039;re doing.</p>
+<blockquote><p>Many systems have only a few hardware performance counter registers; thus you can only measure a few metrics at once. Some platforms may support counter multiplexing, which gives the user the illusion of a larger number of registers by time sharing the performance registers. On the MIPS R10K series, the IRIX kernel supports multiplexing, allowing up to 32 events to be counted at once. On other platforms PAPI does the multiplexing itself, swapping events in and out of the counters based on a timer interrupt. Don&#039;t take fine grained measurements when multiplexing, unless you know what you&#039;re doing.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="86"></a>
 <strong>Why am I still getting PAPI_ECNFLCT when using multiplexing?</strong>
-<p>PAPI multiplexing currently always uses one hardware counter for Total Cycles. If you are trying to multiplex a derived event on hardware with only two physical counters then you will get a PAPI_ECNFLCT error. This happens on the Intel Pentium IIIs for example.</p><p>Also, enabling multiplexing is a two-step process. You must call PAPI_multiplex_init() to initialize multiplexing system-wide. You must also call PAPI_set_multiplex() for *each* event set that you want to count in multiplexed mode. If you try to add too many events to an event set where multiplexing has not been set, a PAPI_ECNFLCT error will result.</p>
+<blockquote><p>PAPI multiplexing currently always uses one hardware counter for Total Cycles. If you are trying to multiplex a derived event on hardware with only two physical counters then you will get a PAPI_ECNFLCT error. This happens on the Intel Pentium IIIs for example.</p><p>Also, enabling multiplexing is a two-step process. You must call PAPI_multiplex_init() to initialize multiplexing system-wide. You must also call PAPI_set_multiplex() for *each* event set that you want to count in multiplexed mode. If you try to add too many events to an event set where multiplexing has not been set, a PAPI_ECNFLCT error will result.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="171"></a>
 <strong>What's a derived event?</strong>
-<p>Hardware counters count low level events that can be directly measured in the hardware. Often these low level events must be combined to form meaningful PAPI preset events. This linear combination of low level events is called a derived PAPI event. Derived events are usually formed by adding or subtracting 2 &#039;native&#039; events, but occasionally derived events can contain 4 or more terms.</p>
+<blockquote><p>Hardware counters count low level events that can be directly measured in the hardware. Often these low level events must be combined to form meaningful PAPI preset events. This linear combination of low level events is called a derived PAPI event. Derived events are usually formed by adding or subtracting 2 &#039;native&#039; events, but occasionally derived events can contain 4 or more terms.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="87"></a>
 <strong>When I compile and run the example program (PAPI_flops.c) on X platform I get the following error message: Error in PAPI_flops: Event exists, but cannot be counted due to hardware resource limits, what is the problem?</strong>
-<p>Hardware counters are a limited resource. Some PAPI preset events are derived, and require the use of more than one hardware counter. For example, Solaris has 2 counters, both of which are needed to count Floating point instructions. Flops also uses total cycles to measure time. On Solaris this would mean using 3 counters, and those resources aren&#039;t available.<br>
-If you get this error on any platform, run the avail program in the ctests directory and see how many native events have to be monitored. PAPI_num_counters() can be used to determine how many counters exist on your platform. If there are more native events than counters, then this is the reason you are getting the error.</p>
+<blockquote><p>Hardware counters are a limited resource. Some PAPI preset events are derived, and require the use of more than one hardware counter. For example, Solaris has 2 counters, both of which are needed to count Floating point instructions. Flops also uses total cycles to measure time. On Solaris this would mean using 3 counters, and those resources aren&#039;t available.<br>
+If you get this error on any platform, run the avail program in the ctests directory and see how many native events have to be monitored. PAPI_num_counters() can be used to determine how many counters exist on your platform. If there are more native events than counters, then this is the reason you are getting the error.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="73"></a>
 <strong>Why can't I get my Fortran programs to compile with PAPI on a Cray T3E?</strong>
-<p>The Fortran header file you include has to be preprocessed before the Fortran file can use it. To have the cpp process the file before sending the file to the compiler, add the -F flag. For example:</p><p>f90 -F test.F -o test</p>
+<blockquote><p>The Fortran header file you include has to be preprocessed before the Fortran file can use it. To have the cpp process the file before sending the file to the compiler, add the -F flag. For example:</p><p>f90 -F test.F -o test</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="79"></a>
 <strong>What's wrong with PAPI_LST_INS (hex code 0x43) on my Pentium?</strong>
-<p>According to the Intel documentation, the counts from this event are not intuitive relating to it&#039;s description. Older releases of PAPI had this preset available in the Intel ports, but no longer. It does appear to work on the AMD Athlon.</p>
+<blockquote><p>According to the Intel documentation, the counts from this event are not intuitive relating to it&#039;s description. Older releases of PAPI had this preset available in the Intel ports, but no longer. It does appear to work on the AMD Athlon.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="216"></a>
 <strong>PAPI_create_eventset always returns an error now.</strong>
-<p>The EventSet MUST be set to PAPI_NULL before it is passed into PAPI_create_eventset.</p>
+<blockquote><p>The EventSet MUST be set to PAPI_NULL before it is passed into PAPI_create_eventset.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="233"></a>
 <strong>What's this GCC error about "thread local storage not support for this target"?</strong>
-<p>TLS is thread local storage, a high performance mechanism in later GCC&#039;s/GLIBC/pthread to do constant time access to thread local storage. PAPI uses this if available.</p><p>However, many systems (especially IA64 running Debian or SuSE) provide very poor/buggy/non-existent support for this. If you&#039;re getting an error during compile (or seg faults on every program during the run), then please rebuild using ./configure.</p><p>Other systems don&#039;t bother to ship a gcc with this turned on, so you&#039;ll get the above error. </p><p>./configure has a test to make sure that the thread support is working on your platform.</p><p>If you find a case where configure did not detect a broken
-__thread implementation, please report it to us.</p>
+<blockquote><p>TLS is thread local storage, a high performance mechanism in later GCC&#039;s/GLIBC/pthread to do constant time access to thread local storage. PAPI uses this if available.</p><p>However, many systems (especially IA64 running Debian or SuSE) provide very poor/buggy/non-existent support for this. If you&#039;re getting an error during compile (or seg faults on every program during the run), then please rebuild using ./configure.</p><p>Other systems don&#039;t bother to ship a gcc with this turned on, so you&#039;ll get the above error. </p><p>./configure has a test to make sure that the thread support is working on your platform.</p><p>If you find a case where configure did not detect a broken
+__thread implementation, please report it to us.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
 <br />
-<h2>The PAPI CVS Source Repository</h2>
-<font color="#666"><p></p></font>
+<a name="65"></a>
+<h2>The PAPI GIT Source Repository</h2>
 
-<strong>How do I access the PAPI CVS tree remotely?</strong>
-<p>If you would like to interactively browse the PAPI CVS Repository by the WWW, go to the Web based <a href="../../viewcvs/viewcvs.cgi/papi/?cvsroot=PAPI">PAPI CVS Viewer</a>.</p>
-<p>To access cvs directly, do the following:</p>
-<p><em>The first time, the Checkout phase:</em><br /> <br /> &gt; setenv CVSROOT :pserver:anonymous@cvs.eecs.utk.edu:/cvs/homes/papi<br /> &gt; cvs login<br /> &gt; Password:</p>
-<p>Check out the module of interest, usually papi:</p>
-<p>&gt; cvs co papi</p>
-<p>Other possible modules: all|papi|src|man|tools<br /> <br /> <em>The next time, the Update phase:<br /></em> <br /> &gt; cd <br /> &gt; cvs update<br /> <br /> <em>The last time:</em><strong><br /></strong> <br /> &gt; cd <br /> &gt; cvs logout</p>
-<strong>How do I add a user to CVS so he or she can check in files?</strong>
-<p>This question is meant for the CVS development team.<br>
-<br>
-0) You must be in the group papi.<br>
-1) Login to nala.cs.utk.edu.<br>
-2) Make a temporary directory called foo.<br>
-3) Do the following:<br>
-&nbsp;<br>
-&gt; cd foo;<br>
-&gt; cvs -d /cvs/homes/papi co CVSROOT<br>
-.<br>
-.<br>
-.<br>
-&gt; cd CVSROOT<br>
-&gt;<br>
-&nbsp;<br>
-4) Add &#039;username&#039; to the &#039;writers&#039; file.<br>
-5) Add a password to the &#039;passwd&#039; file with htpasswd program.<br>
-&nbsp;<br>
-&gt; /usr/local/apache/bin/htpasswd ~/tmp/CVSROOT/passwd &#039;username&#039;<br>
-New password: &lt;enter password&gt;<br>
-Re-type new password: &lt;again&gt;<br>
-Added password for user &#039;username&#039;<br>
-&gt;<br>
-&nbsp;<br>
-6) Commit the changes back to CVS.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<br>
-&gt; cvs commit -m "Added user &#039;username&#039; to the cvs list"<br>
-.<br>
-.<br>
-.<br>
-cvs commit: Rebuilding administrative file
-database&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<br></p>
-<strong>How do I merge branches of the PAPI project back to the main 'HEAD' trunk?</strong>
-<p>1) Check out the main trunk of the PAPI project:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &gt; cvs checkout -P papi<br>
-2) Update the main trunk by joining with the branch:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &gt; cvs update -j papi-2-3-3<br>
-3) Tag the branch for future updates:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &gt; cvs tag papi-2-3-3m1<br>
-4) Resolve any outstanding conflicts<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<br>
-5) Commit the modified files back to the main trunk:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &gt; cvs commit ...<br>
-...later...<br>
-6) To merge from the same branch again, repeat the steps above,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; but update from the tag
-created in step 3 rather than<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; the branch point. This
-guarantees that only the changes<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; made since the last merge
-are merged.<br></p>
-<strong>How do I add external code (like perfctr) to the papi cvs project?</strong>
-<p>The correct way to do it is:<br>
-                                                                               
-<br>
-Let&#039;s say we&#039;re adding a version of PerfCtr 2.6. PAPI keeps only release and major versions of the PerfCtr patch externally. Internally we track all PerfCtr versions as you will see from the CVS command line.
-                                                                               
-<br>
-1) Untar the new distribution somewhere OUTSIDE of your CVS working dir and cd to it.<br>
-                                                                               
-<br>
-        % cd /tmp; tar xfz perfctr-2.6.17.tar.gz<br>
-        % cd perfctr-2.6.17<br>
-                                                                               <br></p><p>2) Import the sources, these will always appear in the HEAD branch of CVS. To make them appear in other branches, see below. Please make sure you use -ko to avoid substitution of keyworks. <br>
-                                                                               
-<br>
-        % cvs import -ko -m "Import
-of perfctr 2.6.17" papi/src/perfctr-2.6.x PERFCTR_DIST perfctr-2-6-17<br>
-                                                                               
-<br>
-Here PERFCTR_DIST is the "vendor tag" and perfctr-2-6-17 is the release version. ANYONE NOT FOLLOWING THE ABOVE SCHEME WILL BE IN TROUBLE.                                                                                Then IF we have locally modified our copy (made changes to the distro) CVS will warn us to merge in the local changes with the newly imported sources. CVS will tell you how to resolve the conflicts after the import if necessary. <br></p><p><br>                                                                               cd /anywhere/clean<br>
-cvs checkout -jperfctr:yesterday -jperfctr-2-6-17 papi/src/perfctr-2.6.x<br>                                                                               cd papi/src/perfctr-2.6.x<br>
-...edit the conflicting files...<br>
-cvs commit<br></p><p><br>
-CVS will do the merge for us during the checkout. If there are any conflicts, we have to fix them manually. If either occurred, then we must commit the changes. <br></p><p><br>
-*** Note about NON-HEAD branches ***<br></p><p><br>                                                                  CVS imports sources only into the HEAD branch. This means that all the other branches only have the vendor branch from the time the branch was created. To merge in new vendor import trees into other branches, go to your working copy of the branch you are working on, merge the two releases and check in the results as below.<br></p><p><br>
-cd papi-3-0-8-1+/src/perfctr-2.6.x<br>
-cvs update -jperfctr-2-6-13 -jperfctr-2-6-17<br>
-cvs commit<br>
-                                                                               
-<br>
-We should follow this model for all 3rd party sources in the source tree.<br>
-                                                                               
-<br>
-This is all available in further detail in the CVS Manual, under &#039;import&#039;.<br>
-                                                                               
-<br>
-Good information is also available at: <a href="http://efault.net/npat/docs_and_postings/cvs-tracking/cvs-tracking.txt">efault.net/npat/docs_and_postings/cvs-tracking/cvs-tracking.txt</a></p>
-<strong>How do I remove a directory in the CVS repository without hosing it?</strong>
-<p>First you remove all the files in the directory (and all
-subdirectories).<br>
-This can be tedious, so do it like this. This assumes GNU grep.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<br>
-&gt; cd &lt;dir_to_be_removed&gt;<br>
-&gt; find . -type f | grep --invert-match CVS | xargs &gt; /tmp/removeme<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<br>
-Now you have a list of all files in all subdirectories to be removed,<br>
-not including anything under CVS. Now edit the file and put &#039;rm&#039; at the<br>
-start of the file.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<br>
-&gt; vi /tmp/removeme<br>
-&nbsp;<br>
-So the start of the file looks like:<br>
-"rm ./file1 ./dir2/file2 ...."<br>
-&nbsp;<br>
-Now execute the remove.<br>
-&nbsp;<br>
-&gt; sh /tmp/removeme<br>
-&nbsp;<br>
-Good. Now tell CVS to remove the files. We have to edit the
-/tmp/removeme<br>
-again to replace &#039;rm&#039; with &#039;cvs delete&#039;.<br>
-&nbsp;<br>
-&gt; vi /tmp/removeme<br>
-&nbsp;<br>
-So the start of the file looks like:<br>
-"cvs delete ./file1 ./dir2/file2 ...."<br>
-&nbsp;<br>
-&gt; sh /tmp/removeme<br>
-&nbsp;<br>
-[ lots of CVS log messages ]<br>
-&nbsp;<br>
-Now commit the changes with an informative log message.<br>
-&nbsp;<br>
-&gt; cvs commit.<br></p>
-<strong>How do I remove a branch or a tag from a cvs repository?</strong>
-<p>This is not something that needs to happen very often, and because of that, it&#039;s easy to forget how. We&#039;ve done it often enough to want to record what we&#039;ve learned. The cedarqvist manual describes the procedure, but it isn&#039;t completely clear. Here&#039;s what you do:</p><p>> cvs rtag -d <tag> &lt;module&gt;</p><p>- or -</p><p>> cvs rtag -d -B &lt;branch&gt; &lt;module&gt;</p><p>where &lt;tag&gt; or &lt;branch&gt; is the name of the label you want to remove, and &lt;module&gt; is usually &#039;papi&#039;.</p><p>CAUTION: Removing tags is risky, but removing branches is downright dangerous. Do it only if you&#039;re really sure you need to, and as close to the creation date as possible!</p>
-<strong>How do I branch a branch of a cvs repository?</strong>
-<p>Usually, branches or tags are added to the main trunk of a cvs repository. Occasionally it is desirable to add a branch to an existing branch. Here&#039;s how to do it:</p><p>> cvs rtag -b -r &lt;oldtag&gt; -- &lt;newtag&gt; &lt;module&gt;</p><p>Where &lt;oldtag&gt; is the name of the existing branch, &lt;newtag&gt; is the name of the new branch, and &lt;module&gt; is typically &#039;papi&#039;.</p><p>Here&#039;s an example:</p><p>> cvs rtag -b -r papi-3-1-0 -- papi-3-2-0 papi</p>
+<a name="325"></a>
+<strong>Can I browse the source repository on the web?</strong>
+<blockquote><p>Yes. The latest copy of the PAPI source tree is viewable through a web based source browser here:<br /><a href="../../trac/papi/browser">http://icl.cs.utk.edu/trac/papi/browser</a></p>
+<p>This source browser is also accessible through the Trac bug reporting system or directly through the <a href="../../trac/papi/browser">Browse Source</a> link in the menu to the left.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="326"></a>
+<strong>How do I download a copy of the current PAPI source tree?</strong>
+<blockquote><p>Make sure git is installed on your machine. You can download a copy <a href="http://git-scm.com/">here</a>.</p>
+<p>Download the PAPI repository the first time with the following command:</p>
+<p>&gt; git clone https://icl.cs.utk.edu/git/papi.git</p>
+<p>This creates a complete copy of the papi git repository on your computer in a folder called 'papi'.</p>
+<p>To make sure your copy is up to date with the repository:</p>
+<p>&gt; cd papi<br />&gt; git pull https://icl.cs.utk.edu/git/papi.git</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="327"></a>
+<strong>Can I commit changes to the PAPI repository?</strong>
+<blockquote><p>You can always commit changes to your local copy of the PAPI respository using the "git commit" command and its variations. You cannot push those changes to the master copy of the repository without obtaining credentials from the PAPI team.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="328"></a>
+<strong>Are there GUI interfaces available for GIT?</strong>
+<blockquote><p>There are a large number of GUI interfaces to GIT. Some are free and some are commercial. Some are operating system specific and some are cross-platform. Since preferences in GUIs tend to be very personal, no recommendations will be made here. Google is your friend.</p>
+<p>The author has had good success (so far) with SourceTree for Macintosh, available free at: <a href="http://www.sourcetreeapp.com/">http://www.sourcetreeapp.com/</a></p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="329"></a>
+<strong>Where can I learn more about GIT?</strong>
+<blockquote><p>The web has a variety of resources targetted at teaching you how to use GIT. A good place to start is the official <a href="http://git-scm.com/">GIT</a> site.<br />History and background of GIT can be found on <a href="http://en.wikipedia.org/wiki/Git_%28software%29">Wikipedia</a>.<br /><a href="http://rogerdudler.github.com/git-guide/">This</a> user-friendly introduction might help "git" you started.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
 <br />
+<a name="40"></a>
 <h2>PAPI on AIX POWER Processors</h2>
 <font color="#666"><p></p></font>
 
+<a name="177"></a>
 <strong>General Comments</strong>
-<p>If you are running papi-3.0 on aix5.2 &amp; power4 combo, and seeing
+<blockquote><p>If you are running papi-3.0 on aix5.2 &amp; power4 combo, and seeing
 failure. It is<br>
 most likely caused by the BUG in the KERNEL. You need look for efix for
 APAR IY57280, or<br>
@@ -281,9 +354,12 @@ POWER4<br>
 &nbsp;<br>
 For threaded programs, you had better:<br>
 &nbsp;<br>
-setenv AIXTHREAD_SCOPE S<br></p>
+setenv AIXTHREAD_SCOPE S<br></p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="178"></a>
 <strong>Installation notes</strong>
-<p>AIX 4.3.x:<br>
+<blockquote><p>AIX 4.3.x:<br>
 The current source and Makefile is for pmtoolkit 1.3.<br>
 If you have pmtoolkit 1.2 the test cases will fail. For example:<br>
 &nbsp;<br>
@@ -305,9 +381,12 @@ which configuration is targetted. Make sure you select the Makefile that<br>
 matches your configuration:<br>
 - Makefile.aix-power&nbsp;&nbsp;&nbsp; for AIX 4.3.x on POWER3<br>
 - Makefile.aix5-power3&nbsp; for AIX 5.x&nbsp;&nbsp; on POWER3<br>
-- Makefile.aix-power4&nbsp;&nbsp; for AIX 5.x&nbsp;&nbsp; on POWER4<br></p>
+- Makefile.aix-power4&nbsp;&nbsp; for AIX 5.x&nbsp;&nbsp; on POWER4<br></p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="179"></a>
 <strong>Test case notes</strong>
-<p>The POWER3 and POWER4 have a FMADD instruction. Although this
+<blockquote><p>The POWER3 and POWER4 have a FMADD instruction. Although this
 instruction<br>
 performs two Floating Point operations, it is counted as one Floating
 Point<br>
@@ -326,80 +405,41 @@ Correcting for the overcount by Floating Point Stores is more difficult,<br>
 requiring the use of the native events: PM_FPU_LD_ST_ISSUES and
 PM_FPU_LD.<br>
 The complete expression for Floating Point Operations then becomes:<br>
-PAPI_FP_INS + PAPI_FMA_INS - (PM_FPU_LD_ST_ISSUES - PM_FPU_LD)<br></p>
+PAPI_FP_INS + PAPI_FMA_INS - (PM_FPU_LD_ST_ISSUES - PM_FPU_LD)<br></p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="180"></a>
 <strong>Counter notes</strong>
-<p>The POWER architecture supports up to 8 counters. However, in many cases<br>
+<blockquote><p>The POWER architecture supports up to 8 counters. However, in many cases<br>
 events are mutually exclusive and can&#039;t be counted simultaneously.<br>
 &nbsp;<br>
 On POWER4, events are available only as members of predefined groups.<br>
 For more on these groups, see /usr/pmapi/lib/POWER4.gps.<br>
 &nbsp;<br>
 The following table, submitted by Joel Malard, indicates<br>
-events that cannot be counted simultaneously on POWER3:</p>
+events that cannot be counted simultaneously on POWER3:</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="235"></a>
 <strong>Things go haywire on my Power/AIX box with threaded programs?</strong>
-<p>It is very important that you set the environment variable
-AIXTHREAD_SCOPE to "S", which disables user level threads.</p>
+<blockquote><p>It is very important that you set the environment variable
+AIXTHREAD_SCOPE to "S", which disables user level threads.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
 <br />
-<h2>Any-Null</h2>
-<font color="#666"><p></p></font>
-
-<strong>General Comments</strong>
-<p>This substrate works on all platforms. It is for testing purposes only. This substrate emulates hardware that returns a 2 counter history in hardware registers 0 and 1, 1 being the most recent. The values returned represent the number of register reads performed by the substrate on the counter hardware.</p>
-<br />
-<h2>DADD-Alpha</h2>
-<font color="#666"><p></p></font>
-
-<strong>What's DADD and where is it installed?</strong>
-<p>One of the PAPI substrates for HP Alpha Tru64 UNIX uses the Dynamic Access to DCPI Data (DADD) API from Hewlett-Packard.<br>
-DADD is assumed to be installed in<br>
-&nbsp; /usr/lib/dcpi&nbsp; (dadd.a)<br>
-&nbsp; /usr/include/dcpi (dadd.h, virtual_counters.h)<br>
-&nbsp; /usr/local/dadd&nbsp; (dcpid)<br></p>
-<strong>How does DADD work?</strong>
-<p>DCPI uses instruction sampling to collect performance data, and the DADD counts for PAPI events are estimated from these samples.<br>
-For this reason, very short running programs instrumented with PAPI may show undercounts as low as zero.
-Best results are obtained on programs with long execution times.</p>
-<br />
-<h2>Irix-Mips</h2>
-<font color="#666"><p></p></font>
-
-<strong>32 and 64 bit libraries</strong>
-<p>Both n32-bit and 64-bit libraries are built for IRIX.
-To use the shared libraries,
-you will need to set LD_LIBRARYN32_PATH or LD_LIBRARY64_PATH to the location of the n32-bit libpapi.so or 64-bit libpapi64.so.</p>
-<strong>Native Events for IRIX v6.x on MIPS R10K and R12K processors</strong>
-<p>For *all* the native event names, run native_avail in the ctests subdirectory. For an example of how to use the native event names, see native.c</p>
-<strong>Hardware Multiplexing</strong>
-<p>Hardware multiplexing is implemented and in use for IRIX-MIPS. You can count all 32 events simultaneously, but this must be enabled explicitly as with the other substrates.</p>
-<strong>Bugs</strong>
-<p>There may be two bugs in IRIX64 about it&#039;s multiplexing:</p><p>First, It seems when multiplexing is in use, the counter result you get by calling ioctl is not multiplied by the number of events counted by the hardware counter.</p><p>Second, since there are only two hardware counters available in R10K/R12k, if you use multiple overflow and these overflow events are happen to be counted by the same hardware counter, the result is reasonable. However,
-if the overflow events are counted by different hardware counters, then one of the result from hardware counter 1 will be abnormal higher than the reasonable result.
- 
-See: man r10k_counters</p>
-<strong>Why when I compile PAPI 3.0, do I get Dl_info undefined in irix-mips.c?</strong>
-<p>You have an older run-time system than what PAPI was developed on. The fix is to change the definition to &#039;struct Dl_info&#039;.</p>
-<strong>My code forks and my counts are high, what's the problem?</strong>
-<p>IRIX is brain-dead, and subprocesses automatically inherit the counter state of the parent process. Solution: call PAPI_stop() just before you fork and PAPI_start() after you fork.</p>
-<br />
-<h2>Linux-Alpha</h2>
-<font color="#666"><p></p></font>
-
-<strong>General Comments</strong>
-<p>Make sure your /usr/src/linux points to the source tree.</p><p>The PAPI linux-alpha substrate uses the linux iprobe_4.3 driver and library from Compaq (now HP). This needs to be patched, because not all of the EV6 functions are in the library. Unpack the iprobe code in the usual way, and copy the patch in papi/src/alpha-linux/iprobe.patch to the
-top of the iprobe directory. Then<br>
-&nbsp;<br>
-patch -Np1 &lt; iprobe.patch<br>
-&nbsp;<br>
-After that, build and install iprobe according to directions, and set IPROBE_HOME in papi/src/Makefile.linux-alpha.</p>
-<br />
+<a name="45"></a>
 <h2>Linux-IA64</h2>
 <font color="#666"><p></p></font>
 
+<a name="189"></a>
 <strong>Floating Point</strong>
-<p>This version of the substrate always scales PME_FP_OPS_RETIRED_HI, hex code 0xa, even if you are using it as a NATIVE event. Previous versions of PAPI did not scale this event and could produce erroneously low counts for
-PAPI_FP_OPS or PAPI_FP_INS.</p>
+<blockquote><p>This version of the substrate always scales PME_FP_OPS_RETIRED_HI, hex code 0xa, even if you are using it as a NATIVE event. Previous versions of PAPI did not scale this event and could produce erroneously low counts for
+PAPI_FP_OPS or PAPI_FP_INS.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="192"></a>
 <strong>Notes on PAPI->Native event mappings</strong>
-<p>PAPI_CA_SNP<br>
+<blockquote><p>PAPI_CA_SNP<br>
 PAPI_CA_INV<br>
 &nbsp;Only counts snoops and invalidations from the local processor.<br>
 PAPI_TLB_TL<br>
@@ -408,38 +448,51 @@ PAPI_TLB_TL<br>
 PAPI_FP_STAL<br>
 &nbsp;Counts stalls due to register dependencies and load latencies.<br>
 &nbsp;If the FP pipeline can stall for some other reason (I don&#039;t know)<br>
-&nbsp;then those stall cycles won&#039;t be counted.</p>
+&nbsp;then those stall cycles won&#039;t be counted.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="220"></a>
 <strong>Why am I getting errors from perfmon and PAPI on my Redhat kernels?</strong>
-<p>Redhat broke the perfmon kernel interface in their kernels and thus only enabled it for root. In some kernels, its disabled entirely. You can test this by running your papi as root, if it then works, guess what, you have a broken kernel.</p><p>The fix is supposed to be in the latest update to RHEL3 and RHEL4. The best thing to do would be to download a kernel.org kernel, rebuild and go.</p>
-<strong>How do/Should I recompile my (Redhat 2.4.x) IA64 kernel for PAPI?</strong>
-<p>The below is for 2.4 kernels:</p><p>Rebuilding the IA64 kernel is only advised if you&#039;re using Redhat kernels, particularly RedHat Enterprise, which seems to lag in terms of bug support for the perfmon subsystem. We highly advise you to:</p><p>1) Download a stock 2.4 kernel
-2) Apply the IA64 specific patches from <a HREF="http://www.kernel.org/pub/linux/kernel/ports/ia64/v2.4">http://www.kernel.org/pub/linux/kernel/ports/ia64/v2.4</a> .</p><p>Latest info about the 2.4 perfmon support can be found at:
-<a href="http://www.hpl.hp.com/research/linux/perfmon/download.php4">http://www.hpl.hp.com/research/linux/perfmon/download.php4</a></p><p>You&#039;ll then need to reconfigure and rebuild your kernel. Reconfigure your kernel and enable PERFMON support. Then rebuild the kernel. On IA-64 you need to use "make compressed" instead of "make bzImage". You can thank HP for that change.</p>
+<blockquote><p>Redhat broke the perfmon kernel interface in their kernels and thus only enabled it for root. In some kernels, its disabled entirely. You can test this by running your papi as root, if it then works, guess what, you have a broken kernel.</p><p>The fix is supposed to be in the latest update to RHEL3 and RHEL4. The best thing to do would be to download a kernel.org kernel, rebuild and go.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="234"></a>
 <strong>Counter interrupts seem to have stopped on my threaded programs?</strong>
-<p>You are probably on an Altix or a system with a Redhat kernel.  The solution for the later is replace the kernel you have with a patched kernel.org kernel, discussed in this section.</p><p>Please send us the kernel version if this happens to you. You&#039;ll notice it by running the profile_pthreads test case.</p><p>If you&#039;re an Altix user, then it&#039;s best to complain to SGI. But please let us know also.</p>
+<blockquote><p>You are probably on an Altix or a system with a Redhat kernel.  The solution for the later is replace the kernel you have with a patched kernel.org kernel, discussed in this section.</p><p>Please send us the kernel version if this happens to you. You&#039;ll notice it by running the profile_pthreads test case.</p><p>If you&#039;re an Altix user, then it&#039;s best to complain to SGI. But please let us know also.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="264"></a>
 <strong>WHy can't I build PAPI with the Intel icc compiler?</strong>
-<p>The problem is not in PAPI, but in libpfm 3.x. When this library is built using icc, the file pfmlib_gen_ia64.c generates a series of errors. One workaround for this may be to make the libpfm library separately using gcc and then build PAPI with icc. Or just use gcc.</p>
+<blockquote><p>The problem is not in PAPI, but in libpfm 3.x. When this library is built using icc, the file pfmlib_gen_ia64.c generates a series of errors. One workaround for this may be to make the libpfm library separately using gcc and then build PAPI with icc. Or just use gcc.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
 <br />
+<a name="46"></a>
 <h2>Linux-Perfctr</h2>
 <font color="#666"><p></p></font>
 
+<a name="209"></a>
 <strong>PAPI and the Linux Kernel</strong>
-<p>PAPI requires your Linux kernel to be patched with the PerfCtr patch. For compatability reasons, we have included this patch here. You should patch your kernel using the PerfCtr distribution found in the papi/src/perfctr directory.
+<blockquote><p>For Linux kernels more recent than 2.6.32, the perf_events interface is built into the kernel and can be used directly.</p>
+<p>For Linux kernels before 2.6.32, PAPI requires your Linux kernel to be patched with either the PerfCtr patch or the Perfmon patch. For compatability reasons, we have included both of these patches in the tarball. You should patch your kernel with PerfCtr using the distribution found in the papi/src/perfctr-2.6.x directory for x86 hardware, and the papi/src/perfctr-2.7.x directory for IBM POWER hardware.
+If you prefer Perfmon for kernels older than 2.6.30, you should use the distribution found in the papi/src/libpfm-3.y. Prefmon is no longer supported as a Linux patch. 
+The most recent Perfctr distribution can&nbsp; be obtained from Mikael Petterson's web site although it is no longer actively supported and not guaranteed to work. <a href="http://user.it.uu.se/~mikpe/linux/perfctr/">http://user.it.uu.se/~mikpe/linux/perfctr/</a><br /> If you're not sure how to patch, recompile and reinstall your linux kernel, there are a variety of resources on the web.
  
-The latest distribution can always be obtained from Mikael Petterson&#039;s web site although it is not guaranteed to work.
- 
-<br><a href="http://www.csd.uu.se/~mikpe/linux/perfctr/">www.csd.uu.se/~mikpe/linux/perfctr/</a>
-<br>
-If you&#039;re not sure how to patch, recompile and reinstall your linux kernel, check the Linux HOWTO&#039;s on the web.
- 
-<br><a href="http://www.linuxhq.com">www.linuxhq.com</a>.</p>
+Here's one that should help: <a href="http://answers.oreilly.com/topic/36-how-to-patch-a-linux-kernel/">http://answers.oreilly.com/topic/36-how-to-patch-a-linux-kernel/.</a></p>
+<p>&nbsp;</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="210"></a>
 <strong>Before you compile</strong>
-<p>cd perfctr<br>
+<blockquote><p>cd perfctr<br>
 more INSTALL<br>
  
-If you&#039;re getting compilation errors regarding not being able to find include files, then you&#039;re probably running a broken redhat installation.</p><p>Edit the path to your kernel include files at the top of either Makefile.linux-perfctr</p>
+If you&#039;re getting compilation errors regarding not being able to find include files, then you&#039;re probably running a broken redhat installation.</p><p>Edit the path to your kernel include files at the top of either Makefile.linux-perfctr</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="211"></a>
 <strong>If you have already patched your kernel</strong>
-<p>If you have a properly functioning Perfctr patch from a previous release of PAPI, you will obviously not want to repatch your kernel. PAPI is compatible with PerfCtr 2.4.x and Perfctr 2.6.x.<br>
+<blockquote><p>If you have a properly functioning Perfctr patch from a previous release of PAPI, you will obviously not want to repatch your kernel. PAPI is compatible with PerfCtr 2.4.x and Perfctr 2.6.x.<br>
 <br>
 The x86 Makefiles:<br>
 Makefile.linux-perfctr-p3<br>
@@ -457,20 +510,29 @@ make -f Makefile.linux-perfctr-p3<br>
 To use the older version:<br>
 make -f Makefile.linux-perfctr-p3 VERSION=2.4.x<br>
 <br>
-Easy huh?</p>
+Easy huh?</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="121"></a>
 <strong>How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</strong>
-<p>See the INSTALL file in papi/src/perfctr-2.6.x. The instructions are very, very simple. Do not use perfctr-2.4.x unless you have to. There is no link of perfctr version to linux kernel version!</p>
+<blockquote><p>See the INSTALL file in papi/src/perfctr-2.6.x. The instructions are very, very simple. Do not use perfctr-2.4.x unless you have to. There is no link of perfctr version to linux kernel version!</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="265"></a>
 <strong>After reboot, the /dev/perfctr file always seems to have the wrong permissions and PAPI fails to initialize. What's going on?</strong>
-<p>You are probably running udev, which is not smart enough to know the permissions of dynamically created devices. To fix this, find your udev/devices directory, often /lib/udev/devices or /etc/udev/devices and perform the following actions.</p><p> mknod perfctr c 10 182</br>
+<blockquote><p>You are probably running udev, which is not smart enough to know the permissions of dynamically created devices. To fix this, find your udev/devices directory, often /lib/udev/devices or /etc/udev/devices and perform the following actions.</p><p> mknod perfctr c 10 182</br>
  chmod 644 perfctr</p><p>On Ubuntu 6.06 (and probably other debian distros),  add a line to /etc/udev/rules.d/40-permissions.rules like this:</p><p> KERNEL=="perfctr", MODE="0666"</p><p>On SuSE, you may need to add something like the following to
 /etc/udev/rules.d/50-udev-default.rules:
  (SuSE does not have the 40-permissions.rules file in it.]</p><p># cpu devices</br>
 KERNEL=="cpu[0-9]*", NAME="cpu/%n/cpuid"</br>
 KERNEL=="msr[0-9]*", NAME="cpu/%n/msr"</br>
 KERNEL=="microcode", NAME="cpu/microcode", MODE="0600"</br>
-KERNEL=="perfctr", NAME="perfctr", MODE="0644"</br></p><p>These lines tell udev to always create the device file with the appropriate permissions. Use &#039;perfex -i&#039; from the perfctr distribution to test this fix.</p>
+KERNEL=="perfctr", NAME="perfctr", MODE="0644"</br></p><p>These lines tell udev to always create the device file with the appropriate permissions. Use &#039;perfex -i&#039; from the perfctr distribution to test this fix.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="212"></a>
 <strong>Hardware interrupt driven counters</strong>
-<p>YOU MUST COMPILE YOUR KERNEL WITH APIC SUPPORT IF YOU WANT
+<blockquote><p>YOU MUST COMPILE YOUR KERNEL WITH APIC SUPPORT IF YOU WANT
 INTERRUPT SUPPORT!<br>
  
 With Perfctr 2.3.3 or later it is possible to make the performance counters
@@ -488,11 +550,17 @@ Pentiums and early revisions of the AMD K7 or Athlon.<br>
  
 You can verify that all is working by running the perfctr/examples/perfex
 program with the -i flag. If you do not see "pcint" as one of the flags,
-you need to recompile your kernel or buy a real CPU. ;-)</p>
+you need to recompile your kernel or buy a real CPU. ;-)</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="259"></a>
 <strong>Why do PAPI_LD_INS and PAPI_SR_INS give identical results on Pentium 4?</strong>
-<p>Counting memory load and store instructions on the Pentium 4 is a two step process. First the desired events are tagged at the front of the pipeline. Then tagged events are counted as they graduate from the end of the pipeline. Unfortunately, the tags are all the same &#039;color&#039; and can&#039;t be differentiated as they exit the pipe. Thus, you can correctly measure LD instructions, or correctly measure SR instructions, but if you try to measure them both at once, you will always get the sum of both operations in both counters. The same applies to PAPI_LST_INS.</p><p>This behavior is demonstrated in the test program ctests/p4_lst_ins.c.</p><p>The moral of the story is to always use these three events one-at-a-time on Pentium 4 machines.</p>
+<blockquote><p>Counting memory load and store instructions on the Pentium 4 is a two step process. First the desired events are tagged at the front of the pipeline. Then tagged events are counted as they graduate from the end of the pipeline. Unfortunately, the tags are all the same &#039;color&#039; and can&#039;t be differentiated as they exit the pipe. Thus, you can correctly measure LD instructions, or correctly measure SR instructions, but if you try to measure them both at once, you will always get the sum of both operations in both counters. The same applies to PAPI_LST_INS.</p><p>This behavior is demonstrated in the test program ctests/p4_lst_ins.c.</p><p>The moral of the story is to always use these three events one-at-a-time on Pentium 4 machines.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="213"></a>
 <strong>Floating point counts on the Pentium 4 series</strong>
-<p>The Pentium 4 can generate floating point
+<blockquote><p>The Pentium 4 can generate floating point
 instructions either through the x87 floating point unit or with SSE
 instructions.<br>
 Furthermore SSE can generate either packed (multiple operands in one
@@ -560,9 +628,12 @@ instructions<br>
 &nbsp;<br>
 &nbsp;&nbsp; Due to the design of the register set, only 2 of the three
 are countable<br>
-&nbsp;&nbsp; at one time. Sorry folks.</p>
+&nbsp;&nbsp; at one time. Sorry folks.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="214"></a>
 <strong>Vector instruction counts on the Pentium 4 series</strong>
-<p>PAPI can count 2 different types of vector instructions on the Pentium
+<blockquote><p>PAPI can count 2 different types of vector instructions on the Pentium
 4.<br>
 Either MMX instructions or packed SSE floating point instructions. These 
 are supported with 2 methods, in a similar fashion to floating point
@@ -593,11 +664,17 @@ Makefile.linux-perfctr-p4 or<br>
 &nbsp;&nbsp; behavior of PAPI_VEC_INS.<br>
 &nbsp;<br>
 &nbsp;&nbsp; SSE: count all packed SSE SP and DP instructions<br>
-&nbsp;&nbsp; MMX: count all 64 and 128 bit MMX instructions</p>
+&nbsp;&nbsp; MMX: count all 64 and 128 bit MMX instructions</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="215"></a>
 <strong>The memory test sometimes fails on Athlon Processors.</strong>
-<p>This is a known issue and we are looking in to the cause.  Currently, we have no fix or work around.</p>
+<blockquote><p>This is a known issue and we are looking in to the cause.  Currently, we have no fix or work around.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="262"></a>
 <strong>Floating Point counts on AMD Opteron</strong>
-<p>(The following discussion does not apply to newer quad-core and higher Opteron processors)</p>
+<blockquote><p>(The following discussion does not apply to newer quad-core and higher Opteron processors)</p>
 <p>The AMD Opteron is the first chip series from AMD that can measure and report floating point operations. Two native events measure floating point activity. One measures speculative operations that enter the FP units; the other measures operations that retire from the FP units.</p>
 <p>The retired event generates precise event counts that scale with the amount of work done. However, it measures data movement as well as floating point operations, resulting in counts that are consistently significantly higher than the expected theoretical counts, often by factors of 2 or more.</p>
 <p>The speculative event can be configured to generate counts of only the operations typically of interest. Since these counts are speculative, they tend to be higher by often widely variable amounts than expected theoretical counts, especially on complex production codes.</p>
@@ -607,112 +684,38 @@ Makefile.linux-perfctr-p4 or<br>
 <p>As an alternative to counting speculative computations, PAPI_FP_OPS can be configured to retired operations corrected for data movement. Unfortunately, the correction factors themselves are speculative, and can lead to undercounting errors similar in magnitude to those seen in the pure speculative counts.</p>
 <p>Two methods are provided to allow customization of PAPI_FP_OPS:<br /><br /> 1) The PAPI_OPTERON_FP_xxx defines.<br /><br /> Set these in the CFLAGS variable of Makefile.linux-perfctr-opteron.<br /><br /> -DPAPI_OPTERON_FP_RETIRED<br /> -DPAPI_OPTERON_FP_SSE_SP<br /> -DPAPI_OPTERON_FP_SSE_DP<br /> -DPAPI_OPTERON_FP_SPECULATIVE<br /><br /> The default value is equivalent to:<br /><br /> -DPAPI_OPTERON_FP_SPECULATIVE.<br /><br /> 2) The PAPI_OPTERON_FP environment variable.<br /><br /> Set this to one of the following, and it will change the
    behavior of PAPI_FP_OPS.<br /></p>
-<p>RETIRED: count all retired FP instructions<br /> SSE_SP: correct retired counts optimized for single precision<br /> SSE_DP: correct retired counts optimized for double precision<br /> SPECULATIVE: count speculative computations (default)</p>
+<p>RETIRED: count all retired FP instructions<br /> SSE_SP: correct retired counts optimized for single precision<br /> SSE_DP: correct retired counts optimized for double precision<br /> SPECULATIVE: count speculative computations (default)</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
 <br />
+<a name="47"></a>
 <h2>Solaris-Ultra</h2>
 <font color="#666"><p></p></font>
 
+<a name="193"></a>
 <strong>General Comments</strong>
-<p>Assembler stubs for get_tick() and cpu_sync() as well as the following defines have been blatantly stolen from the perfmon code. The author of the package "perfmon" is Richard J. Enbody and the home page for "perfmon" is <a href="http://www.cps.msu.edu/~enbody/perfmon/index.html">www.cps.msu.edu/~enbody/perfmon</a>
- 
-For *all* the native event names, run native_avail in the ctests subdirectory. For how to use the native event names, see native.c</p>
+<blockquote><p>Assembler stubs for get_tick() and cpu_sync() as well as the following defines have been blatantly stolen from the perfmon code. The author of the package "perfmon" is Richard J. Enbody and the home page for "perfmon" is <a href="http://www.cse.msu.edu/~enbody/perfmon.html">http://www.cse.msu.edu/~enbody/perfmon.html</a>. For *all* the native event names, run native_avail in the ctests subdirectory. For how to use the native event names, see native.c</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="194"></a>
 <strong>Bugs</strong>
-<p>1) Ultra I/II/III/III+ are currently supported;</p><p>2) Some of the cache events have documented bugs, see the Sun UltraSparc hardware reference manual.</p><p>3) WARNING FOR PEOPLE USING MULTITHREADED LIBRARIES ON SOLARIS 2.8:
+<blockquote><p>1) Ultra I/II/III/III+ are currently supported;</p><p>2) Some of the cache events have documented bugs, see the Sun UltraSparc hardware reference manual.</p><p>3) WARNING FOR PEOPLE USING MULTITHREADED LIBRARIES ON SOLARIS 2.8:
  
-There is a bug that prevents setitimer() from being called after the process has called pthread() create at any point in time. Therefore if you suspect your communication library is multithreaded, you had better start the instrumentation before initializing it. See multiplex3_pthreads for details.</p>
+There is a bug that prevents setitimer() from being called after the process has called pthread() create at any point in time. Therefore if you suspect your communication library is multithreaded, you had better start the instrumentation before initializing it. See multiplex3_pthreads for details.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="76"></a>
 <strong>My Sun box doesn't have libcpc.h. What should I do?</strong>
-<p>You didn&#039;t check the <a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&slid=96">PAPI Supported Platform Matrix</a>. The hardware counters on SunOS withUltraSparc are only available on Sun OS 5.8 and above. That&#039;s Solaris 2.8 for you SVR4 people.</p>
-<br />
-<h2>Tru64-Alpha</h2>
-<font color="#666"><p></p></font>
+<blockquote><p>You didn&#039;t check the <a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&slid=96">PAPI Supported Platform Matrix</a>. The hardware counters on SunOS withUltraSparc are only available on Sun OS 5.8 and above. That&#039;s Solaris 2.8 for you SVR4 people.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
 
-<strong>General Comments</strong>
-<p>The PAPI alpha-tru64 substrate requires OSF 5.1 and a pfm device driver patch available from Bill Gray at Compaq (bgray@zk3.dec.com).</p>
-<strong>EV6 Native Events</strong>
-<p>The EV6 has a very small number of countable events.&nbsp; Only the following PAPI preset events are available:<br>
-&nbsp;<br>
-&nbsp;EV6<br>
-&nbsp;&nbsp; - PAPI_TOT_CYC<br>
-&nbsp;&nbsp; - PAPI_TOT_INS<br>
-&nbsp;&nbsp; - PAPI_RES_STL<br>
-&nbsp;&nbsp; - PAPI_BR_CN<br>
-&nbsp;<br>
-The native envents in EV6 are<br>
-&nbsp;{"cycles"},<br>
-&nbsp;{"retinst"},<br>
-&nbsp;{"retcondbranch"},<br>
-&nbsp;{"retdtb1miss"},<br>
-&nbsp;{"retdtb2miss"},<br>
-&nbsp;{"retitbmiss"},<br>
-&nbsp;{"retunaltrap"},<br>
-&nbsp;{"replay"}<br></p>
-<strong>Known problems</strong>
-<p>- OSF 5.1 and the pfm device driver do not support saving and restoring the counters on context switch. Whoever opens the driver owns the counters.<br></p><p>- Currently multiplexing is not working and as such the tests are skipped.</p>
-<br />
-<h2>Cray X1</h2>
-<font color="#666"><p></p></font>
+</td>
+</tr>
+</table>
+</center>
 
-<strong>Counters</strong>
-<p>The Cray X-1 has 4 P-Chip counters per MSP (1 for each SSP), in addition there are
-4 E-Chip counters and 16 M-Chip counters.  Currently, PAPI only supports 1 valuefor each counter, and thus we send back an aggregate of all the counters.  For
-P-Chips it may be desirable to see each SSP counter seperately, as is the case
-if a MPI job runs 4 processes on a single MSP and we are looking into ways of
-providing this for the user, but with the current implementation you can only
-obtain an aggregate. This of course only affects MSP applications.
-It is unclear which E-Chip and M-Chip counters should be read depending on the
-MSP the process is running on or if all should be aggregated.  We are still
-examining the correlation between the process and MSP/ssp it is running on and
-the E-Chip/M-Chip counters.  Thus the interface may end up changing to aggregatecertain counters or return all the values as we wish to do for the P-chip.  But
-the user should be aware that all counters are aggregated currently.</p>
-<strong>Overhead</strong>
-<p>Unlike most other platforms, the overhead on the Cray X1 is dependant on what
-events you are monitoring.  Each chip type (P/M/E) requires its own ioctl call
-to start/stop and read the hardware counters.  Because of this if you monitor
-events from multiple chips your overhead will double if monitoring events from
-2 chip types or triple if monitoring from 3 chips types as most of the overhead
-comes from the ioctl calls.</p>
-<strong>Overflow</strong>
-<p>The Cray X-1 has hardware overflow support for the P-Chip, however the M-Chip
-and E-Chip do not support hardware overflow.  Because of this, when overflowing
-on events, if only P-Chip events are being overflowed on then we use hardware
-overflow.  But if we are overflowing on M or E-Chip events (alone, together, or
-in combination with P-Chip events) then we use software overflowing.
-P-Chips: When in software mode the threshold being set is compared to the aggregate
-of all the SSP counters, but when in hardware the threshold is compared against
-each individual SSP.  This means if you have a MSP application and 4 streams andyou want 100,000 threshold, you may want to set the threshold to 25,000 as you could
-possibly hit 399,997 before an overflow happens with a 100,000 overflow.  But this
-depends on your application.</p>
-<strong>Profiling</strong>
-<p>Hardware profiling is not available on the Cray X-1 and so we use overflows and
-return the pc to do profiling.  Because of this we are either using hardware
-or software overflowing.  Read the Overflow section to determine which will be
-used.</p>
-<strong>Multiplexing</strong>
-<p>Only software multiplexing is available, currently software multiplexing only
-monitors 1 event per time slice, and so multiplexing is discouraged for the
-X1 since there are 64 possible counters.</p>
-<strong>Native Events</strong>
-<p>For *all* available native event names, run native_avail under the ctests subdirectory.
- 
-For more information on the native events SEE:  man counters</p>
-<strong>Shared Objects</strong>
-<p>Shared Objects are not supported on the Cray X1 and thus a shared library can not be
-built and we don&#039;t support any shared library information.</p>
-<strong>Cache Information</strong>
-<p>Currently this is none supported, but will be added in future releases.</p>
-<strong>Timer latencies</strong>
-<p>The PAPI_get_real_usec uses the highest resolution timer available on the Cray X1.</p>
-<strong>Other Issues</strong>
-<p>The user should be aware that we do not stop the counters when reading the hardware
-counters as this would require 2 additional ioctl calls per chips (IE worse case scenario 9 ioctl calls to read all chips versus the 3 ioctl calls to read the
-chips if we don&#039;t stop/start the counters). Because of this the PAPI library will
-affect some of the counts.  Since everything is aggregate we loop through the
-P-Chips 32 counters and add them up and then copy that information to the users
-array.  Each is a long long and thus this will effect the instruction count.
-The E and M chip are already aggregated from the hardware and so the PAPI interface
-only has to copy the results.</p>
-<strong>Known Bugs</strong>
-<p>The test pthreads_zero can possibly crash the X1 system if it is not running the most recent kernel.</p>
+</body>
 
+</html>
 
-<hr>
