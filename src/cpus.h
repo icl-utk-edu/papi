@@ -8,10 +8,6 @@
 #ifndef PAPI_CPUS_H
 #define PAPI_CPUS_H
 
-#ifdef NO_CPU_COUNTERS
-#include "papi_lock.h"
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

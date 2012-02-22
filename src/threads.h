@@ -6,10 +6,6 @@
 #ifndef PAPI_THREADS_H
 #define PAPI_THREADS_H
 
-#ifdef NO_CPU_COUNTERS
-#include "papi_lock.h"
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
