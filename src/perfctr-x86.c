@@ -184,7 +184,7 @@ setup_x86_presets( int cputype, int cidx)
 {
 	int retval = PAPI_OK;
 
-        if ( ( retval = _papi_libpfm_init(&MY_VECTOR), cidx ) != PAPI_OK ) {
+        if ( ( retval = _papi_libpfm_init(&MY_VECTOR, cidx ) ) != PAPI_OK ) {
 	   return retval;
 	}
 
