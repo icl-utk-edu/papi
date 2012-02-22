@@ -15,7 +15,6 @@
 #include "components_config.h"
 
 #if !defined(_WIN32)
-#include "cycle.h"
 #include <string.h>
 #endif
 

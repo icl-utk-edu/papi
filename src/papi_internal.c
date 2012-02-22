@@ -42,10 +42,6 @@
 static int default_debug_handler( int errorCode );
 static long long handle_derived( EventInfo_t * evi, long long *from );
 
-#ifdef NO_CPU_COUNTERS
-extern void set_freq(  );
-#endif
-
 /* Defined in papi_data.c */
 extern hwi_presets_t _papi_hwi_presets;
 
@@ -1444,13 +1440,6 @@ _papi_hwi_init_global( void )
 int
 _papi_hwi_init_global_internal( void )
 {
-#ifdef NO_CPU_COUNTERS
-	/* Developer's Note: In the current design, frequency and all other hardware info is set
-	   by the various substrates. In the future, substrate code should be restricted to what
-	   is directly related to counters. For now, the set_freq function is a temporary hack
-	   which allows for the use of high-resolution timers when there is no CPU component. */
-	set_freq(  );
-#endif
 
 	int retval;
 	extern const hwi_preset_info_t
