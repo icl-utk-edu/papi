@@ -53,6 +53,11 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 		printf( "NUMA Nodes               : %d\n", ( *hwinfo )->nnodes );
 	printf( "CPUs per Node            : %d\n", ( *hwinfo )->ncpu );
 	printf( "Total CPUs               : %d\n", ( *hwinfo )->totalcpus );
+	printf( "Running in a VM          : %s\n", ( *hwinfo )->virtualized?
+		"yes":"no");
+	if ( (*hwinfo)->virtualized) {
+           printf( "VM Vendor:               : %s\n", (*hwinfo)->virtual_vendor_string);
+	}
 	printf( "Number Hardware Counters : %d\n",
 			PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) );
 	printf( "Max Multiplex Counters   : %d\n",

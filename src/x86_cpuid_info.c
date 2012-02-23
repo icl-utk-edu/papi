@@ -3,7 +3,7 @@
 /****************************/
 
 /* 
-* File:    x86_cache_info.c
+* File:    x86_cpuid_info.c
 * Author:  Dan Terpstra
 *          terpstra@eecs.utk.edu
 *          complete rewrite of linux-memory.c to conform to latest docs
@@ -36,9 +36,8 @@ cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
   :					  "a"( op ) );
 }
 
-/* This is the only exposed entry point in this file */
 int
-x86_cache_info( PAPI_mh_info_t * mh_info )
+_x86_cache_info( PAPI_mh_info_t * mh_info )
 {
 	int retval = 0;
 	union
@@ -1478,6 +1477,34 @@ init_intel( PAPI_mh_info_t * mh_info, int *levels )
 
   *levels=num_levels;
   return PAPI_OK;
+}
+
+
+/* Returns 1 if hypervisor detected */
+/* Returns 0 if none found.         */
+int 
+_x86_hypervisor_detect(char *vendor_name)
+{
+  unsigned int eax, ebx, ecx, edx;
+  char hyper_vendor_id[13];
+
+  cpuid2(&eax, &ebx, &ecx, &edx,0x1,0);
+  /* This is the hypervisor bit, ecx bit 31 */
+  if  (ecx&0x80000000) {
+    /* There are various values in the 0x4000000X range */
+    /* It is questionable how standard they are         */
+    /* For now we just return the name.                 */
+    cpuid2(&eax, &ebx, &ecx, &edx, 0x40000000,0);
+    memcpy(hyper_vendor_id + 0, &ebx, 4);
+    memcpy(hyper_vendor_id + 4, &ecx, 4);
+    memcpy(hyper_vendor_id + 8, &edx, 4);
+    hyper_vendor_id[12] = '\0';
+    strncpy(vendor_name,hyper_vendor_id,PAPI_MAX_STR_LEN);
+  }
+  else {
+    strncpy(vendor_name,"none",PAPI_MAX_STR_LEN);
+  }
+  return 0;
 }
 
 

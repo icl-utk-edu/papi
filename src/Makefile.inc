@@ -128,8 +128,8 @@ multiplex.o: multiplex.c $(HEADERS)
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
 
-x86_cache_info.o: x86_cache_info.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
+x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cpuid_info.c -o x86_cpuid_info.o
 
 sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o

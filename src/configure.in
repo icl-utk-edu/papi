@@ -277,7 +277,7 @@ AC_ARG_WITH(CPU,
             [CPU=$withval
              case "$CPU" in
                core|core2|i7|atom|p4|p3|opteron|athlon)
-                   MISCSRCS="$MISCSRCS x86_cache_info.c" 
+                   MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
              esac],
 	        [case "$OS" in
                aix)
@@ -301,10 +301,10 @@ AC_ARG_WITH(CPU,
                      elif test "$model" = "28"; then 
                        CPU=atom
                      fi
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     MISCSRCS="$MISCSRCS x86_cpuid_info.c"
                    elif test "$family" = "15"; then
                      CPU=p4
-                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                     MISCSRCS="$MISCSRCS x86_cpuid_info.c"
                    elif test "$family" = "32"; then
 	                 CPU=montecito
 	               elif test "$family" = "31"; then
@@ -317,7 +317,7 @@ AC_ARG_WITH(CPU,
                    elif test "$family" = "6"; then
                      CPU=athlon
                    fi
-                   MISCSRCS="$MISCSRCS x86_cache_info.c"
+                   MISCSRCS="$MISCSRCS x86_cpuid_info.c"
                  else
                    family=`uname -m`
                    if test "$family" = "ppc64"; then
@@ -1319,7 +1319,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     MEMSUBSTR=linux
-    MISCSRCS="x86_cache_info.c linux-common.c linux-timer.c"
+    MISCSRCS="x86_cpuid_info.c linux-common.c linux-timer.c"
   F77=gfortran
   CFLAGS="$CFLAGS -D__crayxt"
   FFLAGS=""

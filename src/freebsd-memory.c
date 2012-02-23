@@ -15,8 +15,6 @@
 
 #define UNREFERENCED(x) (void)x
 
-extern int x86_cache_info( PAPI_mh_info_t *mh_info );
-
 int 
 _freebsd_get_memory_info( PAPI_hw_info_t * hw_info, int id)
 {

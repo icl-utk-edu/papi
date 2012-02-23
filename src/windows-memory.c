@@ -10,6 +10,8 @@
 #include "papi_internal.h"
 #include "papi_memory.h" /* papi_calloc() */
 
+#include "x86_cpuid_info.h"
+
 #include SUBSTRATE
 
 #include <Psapi.h>
@@ -43,12 +45,10 @@ x86_get_memory_info( PAPI_hw_info_t * hw_info )
 {
 	int retval = PAPI_OK;
 
-	extern int x86_cache_info( PAPI_mh_info_t * mh_info );
-
 	switch ( hw_info->vendor ) {
 	case PAPI_VENDOR_AMD:
 	case PAPI_VENDOR_INTEL:
-		retval = x86_cache_info( &hw_info->mem_hierarchy );
+		retval = _x86_cache_info( &hw_info->mem_hierarchy );
 		break;
 	default:
 		PAPIERROR( "Unknown vendor in memory information call for x86." );

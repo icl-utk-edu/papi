@@ -799,6 +799,9 @@ typedef char* PAPI_user_defined_events_file_t;
       float mhz;                    /**< Cycle time of this CPU */
       int clock_mhz;                /**< Cycle time of this CPU's cycle counter */
       PAPI_mh_info_t mem_hierarchy;  /**< PAPI memory heirarchy description */
+      int virtualized;
+      char virtual_vendor_string[PAPI_MAX_STR_LEN];
+      char virtual_vendor_version[PAPI_MAX_STR_LEN];
    } PAPI_hw_info_t;
 
 /** @ingroup papi_data_structures */

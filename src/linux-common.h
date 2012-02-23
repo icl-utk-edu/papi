@@ -36,7 +36,5 @@ mygettid( void )
 #endif
 
 int _linux_detect_nmi_watchdog();
-int _linux_get_cpu_info( PAPI_hw_info_t * hwinfo );
-int _linux_get_system_info( papi_mdi_t * mdi );
 
 #endif

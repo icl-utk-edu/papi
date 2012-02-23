@@ -23,6 +23,9 @@
 
 PAPI_os_info_t _papi_os_info;
 
+int _linux_get_cpu_info( PAPI_hw_info_t * hwinfo );
+int _linux_get_system_info( papi_mdi_t *mdi );
+
 int 
 _papi_hwi_init_os(void) {
 
@@ -141,6 +144,9 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 			mdi->hw_info.vendor_string,
 			mdi->hw_info.vendor, mdi->hw_info.model_string, mdi->hw_info.model,
 			mdi->hw_info.mhz, mdi->hw_info.clock_mhz );
+
+	/* Get virtualization info */
+	mdi->hw_info.virtualized=_x86_hypervisor_detect(mdi->hw_info.virtual_vendor_string);
 
 	return PAPI_OK;
 }
