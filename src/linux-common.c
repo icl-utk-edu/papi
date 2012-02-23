@@ -21,6 +21,8 @@
 #include "linux-common.h"
 #include "linux-timer.h"
 
+#include "x86_cpuid_info.h"
+
 PAPI_os_info_t _papi_os_info;
 
 int _linux_get_cpu_info( PAPI_hw_info_t * hwinfo );
