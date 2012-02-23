@@ -341,19 +341,6 @@ _bgp_init_control_state( hwd_control_state_t * ptr )
 }
 
 /*
- * Add Program Event
- *
- * Error condition, as no program events can be added
- */
-int
-_bgp_add_prog_event( hwd_control_state_t * state, unsigned int code, void *tmp,
-					 EventInfo_t * tmp2 )
-{
-
-	return ( PAPI_ESBSTR );
-}
-
-/*
  * Set Domain
  *
  * All state is kept in BG/P UPC structures
@@ -1356,7 +1343,6 @@ papi_vector_t _bgp_vectors = {
 	.ctl = _bgp_ctl,
 	.set_overflow = _bgp_set_overflow,
 	.set_profile = _bgp_set_profile,
-	.add_prog_event = _bgp_add_prog_event,
 	.set_domain = _bgp_set_domain,
 	.ntv_enum_events = _bgp_ntv_enum_events,
 	.ntv_code_to_name = _bgp_ntv_code_to_name,

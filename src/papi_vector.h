@@ -52,7 +52,6 @@ typedef struct papi_vectors {
     int		(*ctl)			(hwd_context_t *, int , _papi_int_option_t *);	/**< */
     int		(*set_overflow)		(EventSetInfo_t *, int, int);				/**< */
     int		(*set_profile)		(EventSetInfo_t *, int, int);				/**< */
-    int		(*add_prog_event)	(hwd_control_state_t *, unsigned int, void *, EventInfo_t *);		/**< */
     int		(*set_domain)		(hwd_control_state_t *, int);				/**< */
     int		(*ntv_enum_events)	(unsigned int *, int);						/**< */
     int		(*ntv_name_to_code)	(char *, unsigned int *);					/**< */

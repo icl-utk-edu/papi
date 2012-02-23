@@ -269,11 +269,6 @@ _papi_hwd_init_control_state( hwd_control_state_t * ptr )
 	return ( PAPI_OK );
 }
 
-/* No longer needed if not implemented
-int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, void *tmp, EventInfo_t *tmp2) {
-   return (PAPI_ESBSTR);
-} */
-
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 

@@ -1026,12 +1026,6 @@ typedef char* PAPI_user_defined_events_file_t;
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
 
    /** @} */
-   /* These functions are implemented in the hwi layers, but not the hwd layers.
-      They shouldn't be exposed to the UI until they are needed somewhere.
-   int PAPI_add_pevent(int EventSet, int code, void *inout);
-   int PAPI_restore(void);
-   int PAPI_save(void);
-   */
 
 /**@defgroup high_api  The High Level API 
 

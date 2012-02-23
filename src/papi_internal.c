@@ -967,48 +967,6 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
     return retval;
 }
 
-
-int
-_papi_hwi_add_pevent( EventSetInfo_t * ESI, int EventCode, void *inout )
-{
-	int thisindex, retval;
-
-
-	if ( ESI->CmpIdx < 0 ) {
-		if ( ( retval =
-			   _papi_hwi_assign_eventset( ESI,
-										  PAPI_COMPONENT_INDEX( EventCode ) ) )
-			 != PAPI_OK )
-			return retval;
-	}
-
-	/* Make sure the event is not present and get a free slot. */
-
-	thisindex = get_free_EventCodeIndex( ESI, ( unsigned int ) EventCode );
-	if ( thisindex < PAPI_OK )
-		return ( thisindex );
-
-	/* Fill in machine depending info including the EventInfoArray. */
-
-	retval =
-		_papi_hwd[ESI->CmpIdx]->add_prog_event( ESI->ctl_state,
-												( unsigned int ) EventCode,
-												inout,
-												&ESI->
-												EventInfoArray[thisindex] );
-	if ( retval < PAPI_OK )
-		return ( retval );
-
-	/* Initialize everything left over. */
-
-	/* ESI->sw_stop[thisindex]     = 0; */
-	/* ESI->hw_start[thisindex]   = 0; */
-
-	ESI->NumberOfEvents++;
-	return ( retval );
-}
-
-
 static int
 remove_native_events( EventSetInfo_t * ESI, int *nevt, int size )
 {

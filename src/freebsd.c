@@ -721,14 +721,7 @@ long long _papi_freebsd_get_virt_cycles(const hwd_context_t * ctx)
 /*
  * Native Event functions
  */
-int _papi_freebsd_add_prog_event(hwd_control_state_t * ctrl, unsigned int EventCode, void *inout, EventInfo_t * EventInfoArray){
-  (void)ctrl;
-  (void)EventCode;
-  (void)inout;
-  (void)EventInfoArray;
-	SHOW_WHERE_I_AM;
-  return PAPI_OK;
-}
+
 
 int _papi_freebsd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {

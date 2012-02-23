@@ -561,7 +561,6 @@ int _papi_hwi_lookup_EventCodeIndex( const EventSetInfo_t * ESI,
 int _papi_hwi_remove_EventSet( EventSetInfo_t * ESI );
 void _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_events );
 int _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode );
-int _papi_hwi_add_pevent( EventSetInfo_t * ESI, int EventCode, void *inout );
 int _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode );
 int _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 		    long long *values );

@@ -153,10 +153,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->set_profile )
 		v->set_profile =
 			( int ( * )( EventSetInfo_t *, int, int ) ) vec_int_dummy;
-	if ( !v->add_prog_event )
-		v->add_prog_event = ( int ( * )
-							  ( hwd_control_state_t *, unsigned int, void *,
-								EventInfo_t * ) ) vec_int_dummy;
+
 	if ( !v->set_domain )
 		v->set_domain =
 			( int ( * )( hwd_control_state_t *, int ) ) vec_int_dummy;

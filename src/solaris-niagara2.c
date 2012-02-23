@@ -2555,7 +2555,6 @@ papi_vector_t _niagara2_vector = {
 	.set_overflow = _niagara2_set_overflow,
 	.set_profile = _niagara2_set_profile,
 	.stop_profiling = NULL,	 /* NOT IMPLEMENTED */
-	.add_prog_event = NULL,	 /* NOT IMPLEMENTED */
 	.ntv_enum_events = _niagara2_ntv_enum_events,
 	.ntv_name_to_code = NULL,	/* NOT IMPLEMENTED */
 	.ntv_code_to_name = _niagara2_ntv_code_to_name,

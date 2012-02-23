@@ -1634,7 +1634,6 @@ papi_vector_t _solaris_vector = {
 	.set_overflow = _ultra_hwd_set_overflow,
 	/* .set_profile */
 	/* .stop_profiling = _papi_hwd_stop_profiling, */
-        /* .add_prog_event */
 	.ntv_enum_events = _ultra_hwd_ntv_enum_events,
         /* .ntv_name_to_code */
 	.ntv_code_to_name = _ultra_hwd_ntv_code_to_name,

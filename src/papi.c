@@ -1297,33 +1297,6 @@ PAPI_assign_eventset_component( int EventSet, int cidx )
 	return ( _papi_hwi_assign_eventset( ESI, cidx ) );
 }
 
-
-int
-PAPI_add_pevent( int EventSet, int code, void *inout )
-{
-	EventSetInfo_t *ESI;
-
-	/* Is the EventSet already in existence? */
-
-	ESI = _papi_hwi_lookup_EventSet( EventSet );
-	if ( ESI == NULL )
-		papi_return( PAPI_ENOEVST );
-
-	/* Of course, it must be stopped in order to modify it. */
-
-	if ( !( ESI->state & PAPI_STOPPED ) )
-		papi_return( PAPI_EISRUN );
-
-	/* No multiplexing pevents. */
-
-	if ( ESI->state & PAPI_MULTIPLEXING )
-		papi_return( PAPI_EINVAL );
-
-	/* Now do the magic. */
-
-	papi_return( _papi_hwi_add_pevent( ESI, code, inout ) );
-}
-
 /**	@class PAPI_add_event
  *	@brief add PAPI preset or native hardware event to an event set
  *
@@ -5904,20 +5877,6 @@ PAPI_get_virt_usec( void )
 		papi_return( retval );
 
 	return ( ( long long ) _papi_os_vector.get_virt_usec( master->context[0] ) );
-}
-
-int
-PAPI_restore( void )
-{
-	PAPIERROR( "PAPI_restore is currently not implemented" );
-	return ( PAPI_ESBSTR );
-}
-
-int
-PAPI_save( void )
-{
-	PAPIERROR( "PAPI_save is currently not implemented" );
-	return ( PAPI_ESBSTR );
 }
 
 /** @class PAPI_lock
