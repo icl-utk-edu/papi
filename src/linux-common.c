@@ -148,7 +148,7 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 			mdi->hw_info.mhz, mdi->hw_info.clock_mhz );
 
 	/* Get virtualization info */
-	mdi->hw_info.virtualized=_x86_hypervisor_detect(mdi->hw_info.virtual_vendor_string);
+	mdi->hw_info.virtualized=_x86_detect_hypervisor(mdi->hw_info.virtual_vendor_string);
 
 	return PAPI_OK;
 }

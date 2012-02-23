@@ -1483,7 +1483,7 @@ init_intel( PAPI_mh_info_t * mh_info, int *levels )
 /* Returns 1 if hypervisor detected */
 /* Returns 0 if none found.         */
 int 
-_x86_hypervisor_detect(char *vendor_name)
+_x86_detect_hypervisor(char *vendor_name)
 {
   unsigned int eax, ebx, ecx, edx;
   char hyper_vendor_id[13];
@@ -1500,6 +1500,7 @@ _x86_hypervisor_detect(char *vendor_name)
     memcpy(hyper_vendor_id + 8, &edx, 4);
     hyper_vendor_id[12] = '\0';
     strncpy(vendor_name,hyper_vendor_id,PAPI_MAX_STR_LEN);
+    return 1;
   }
   else {
     strncpy(vendor_name,"none",PAPI_MAX_STR_LEN);
