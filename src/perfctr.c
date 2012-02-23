@@ -14,6 +14,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#include "extras.h"
 
 #include "linux-common.h"
 

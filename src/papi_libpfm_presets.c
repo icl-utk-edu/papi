@@ -10,6 +10,8 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_data.h"
+#include "extras.h"
 
 #include "papi_setup_presets.h"
 
