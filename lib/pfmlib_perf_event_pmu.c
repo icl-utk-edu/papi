@@ -489,9 +489,6 @@ gen_tracepoint_table(void)
 static int
 pfm_perf_detect(void *this)
 {
-	/* keep compiler happy about unused this point */
-	if (this == NULL)
-		return PFM_ERR_NOTSUPP;
 #ifdef __linux__
 	/* ought to find a better way of detecting PERF */
 #define PERF_OLD_PROC_FILE "/proc/sys/kernel/perf_counter_paranoid"
@@ -506,11 +503,6 @@ pfm_perf_detect(void *this)
 static int
 pfm_perf_init(void *this)
 {
-	pfmlib_pmu_t *pmu = this;
-	/* keep compiler happy about unused this point */
-	if (pmu == NULL)
-		return PFM_ERR_NOTSUPP;
-
 	perf_pe = perf_static_events;
 
 	gen_tracepoint_table();
@@ -522,18 +514,12 @@ pfm_perf_init(void *this)
 static int
 pfm_perf_get_event_first(void *this)
 {
-	/* keep compiler happy */
-	return this ? 0 : 0;
+	return 0;
 }
 
 static int
 pfm_perf_get_event_next(void *this, int idx)
 {
-	pfmlib_pmu_t *pmu = this;
-	/* keep compiler happy about unused this point */
-	if (pmu == NULL)
-		return -1;
-
 	if (idx < 0 || idx >= (perf_nevents-1))
 		return -1;
 

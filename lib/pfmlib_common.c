@@ -1711,8 +1711,7 @@ error:
 static int
 pfmlib_raw_pmu_detect(void *this)
 {
-	/* keep compiler happy about unused this point */
-	return this ? PFM_SUCCESS : PFM_SUCCESS;
+	return PFM_SUCCESS;
 }
 
 static pfmlib_os_t pfmlib_os_none= {

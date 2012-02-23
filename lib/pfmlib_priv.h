@@ -322,10 +322,4 @@ pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
 	.get_event_encoding[PFM_OS_PERF_EVENT_EXT] = NULL
 #endif
 
-#if __GNUC_MINOR__ >= 3
-# define __used                 __attribute__((__used__))
-#else
-# define __used                 __attribute__((__unused__))
-#endif
-
 #endif /* __PFMLIB_PRIV_H__ */
