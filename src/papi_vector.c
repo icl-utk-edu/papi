@@ -14,9 +14,8 @@
 #include "papi_memory.h"
 #include "components_config.h"
 
-#if !defined(_WIN32)
+
 #include <string.h>
-#endif
 
 #ifdef _AIX
 
@@ -25,7 +24,7 @@
 #include <pmapi.h>
 #endif
 
-
+/* FIXME: need to change this if we disable components at runtime */
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 
 
@@ -238,13 +237,9 @@ _papi_hwi_innoculate_os_vector( papi_os_vector_t * v )
 	return PAPI_OK;
 }
 
-int
-PAPI_user( int func_num, void *input, void *output, int cidx )
-{
-	return ( _papi_hwd[cidx]->user( func_num, input, output ) );
-}
-
-void *
+/* not used?  debug only? */
+#if 0
+static void *
 vector_find_dummy( void *func, char **buf )
 {
 	void *ptr = NULL;
@@ -286,7 +281,8 @@ vector_find_dummy( void *func, char **buf )
 	return ( ptr );
 }
 
-void
+
+static void
 vector_print_routine( void *func, char *fname, int pfunc )
 {
 	void *ptr = NULL;
@@ -302,7 +298,7 @@ vector_print_routine( void *func, char *fname, int pfunc )
 				fname, func );
 }
 
-void
+static void
 vector_print_table( papi_vector_t * v, int print_func )
 {
 
@@ -371,3 +367,5 @@ vector_print_table( papi_vector_t * v, int print_func )
 						  "_papi_hwd_shutdown_substrate", print_func );
 	vector_print_routine( ( void * ) v->user, "_papi_hwd_user", print_func );
 }
+
+#endif

@@ -607,11 +607,9 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 		  j < ( unsigned int ) papi_num_components;
 		  j++, i = 0 | PAPI_NATIVE_MASK ) {
 		/* first check each component for name_to_code */
-		if ( vector_find_dummy
-			 ( ( void * ) _papi_hwd[j]->ntv_name_to_code, NULL ) == NULL ) {
-			/* if ntv_name_to_code is set and != NULL */
-			retval = _papi_hwd[j]->ntv_name_to_code( in, ( unsigned * ) out );
-		} else {
+                retval = _papi_hwd[j]->ntv_name_to_code( in, ( unsigned * ) out );
+		/* If not implemented, work around */
+		if ( retval==PAPI_ESBSTR) {
 			_papi_hwd[j]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
 			_papi_hwi_lock( INTERNAL_LOCK );
 

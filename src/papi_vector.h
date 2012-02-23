@@ -4,15 +4,6 @@
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
-#include "papi.h"
-
-/** Identifier for each component 
- *	@internal */
-typedef struct cmp_id {
-	char name[PAPI_MAX_STR_LEN];
-	char descr[PAPI_MAX_STR_LEN];
-} cmp_id_t;
-
 /** Sizes of structure private to each component 
   */
 typedef struct cmp_struct_sizes {
@@ -90,7 +81,5 @@ extern papi_os_vector_t _papi_os_vector;
 /* Prototypes */
 int _papi_hwi_innoculate_vector( papi_vector_t * v );
 int _papi_hwi_innoculate_os_vector( papi_os_vector_t * v );
-void *vector_find_dummy( void *func, char **buf );
-void vector_print_table( papi_vector_t * v, int print_func );
 
 #endif /* _PAPI_VECTOR_H */
