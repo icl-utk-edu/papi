@@ -157,4 +157,13 @@ _papi_hwi_lookup_or_create_thread( ThreadInfo_t ** here, int tid )
 	return ( retval );
 }
 
+/* Prototypes */
+void _papi_hwi_shutdown_the_thread_list( void );
+void _papi_hwi_cleanup_thread_list( void );
+int _papi_hwi_insert_in_thread_list( ThreadInfo_t * ptr );
+ThreadInfo_t *_papi_hwi_lookup_in_thread_list(  );
+void _papi_hwi_shutdown_the_thread_list( void );
+int _papi_hwi_get_thr_context( void ** );
+int _papi_hwi_gather_all_thrspec_data( int tag, PAPI_all_thr_spec_t * where );
+
 #endif

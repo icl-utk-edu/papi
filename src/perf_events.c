@@ -29,6 +29,7 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include "papi_libpfm_events.h"
+#include "extras.h"
 #include "mb.h"
 #include "syscalls.h"
 

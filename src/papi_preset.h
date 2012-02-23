@@ -4,8 +4,6 @@
 *          you@cs.utk.edu
 */
 
-#include "papi.h"
-
 #ifndef _PAPI_PRESET		 /* _PAPI_PRESET */
 #define _PAPI_PRESET
 
@@ -65,5 +63,11 @@ typedef struct hwi_describe {
 } hwi_describe_t;
 
 extern hwi_search_t *preset_search_map;
+
+int _papi_hwi_setup_all_presets( hwi_search_t * findem,
+                                 hwi_dev_notes_t * notes,
+                                 int cidx);
+int _papi_hwi_cleanup_all_presets( void );
+int _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes );
 
 #endif /* _PAPI_PRESET */

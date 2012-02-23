@@ -463,7 +463,6 @@ extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 #include "threads.h"
 #include "cpus.h"
 #include "papi_vector.h"
-#include "papi_protos.h"
 
 inline_static EventSetInfo_t *
 _papi_hwi_lookup_EventSet( int eventset )

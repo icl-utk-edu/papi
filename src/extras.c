@@ -27,7 +27,11 @@ vendors did in the kernel extensions or performance libraries. */
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include "extras.h"
 
+#if (!defined(HAVE_FFSLL) || defined(__bgp__))
+int ffsll( long long lli );
+#endif
 
 /*******************/
 /* BEGIN EXTERNALS */

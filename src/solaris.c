@@ -2,7 +2,6 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
-#include "papi_protos.h"
 
 /* Dummy *
  *

@@ -27,17 +27,24 @@
 *          <your email address>
 */
 
-#include "papi.h"
-#include "papi_internal.h"
-#include "papi_memory.h"
-#ifdef USER_EVENTS
-#include "papi_user_events.h"
-#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+
+#include "papi.h"
+#include "papi_internal.h"
+#include "papi_memory.h"
+#include "multiplex.h"
+#include "extras.h"
+#include "papi_preset.h"
+#include "papi_data.h"
+
+#ifdef USER_EVENTS
+#include "papi_user_events.h"
+#endif
+
 
 static int default_debug_handler( int errorCode );
 static long long handle_derived( EventInfo_t * evi, long long *from );

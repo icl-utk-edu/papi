@@ -21,16 +21,23 @@
 * @brief Most of the low-level API is here.
 */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h> 
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
 #ifdef USER_EVENTS
 #include "papi_user_events.h"
 #endif
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h> 
+
+#include "extras.h"
+#include "multiplex.h"
+#include "papi_hl.h"
+
+
 
 /* Native events consist of a flag field, an event field, and a unit mask field. 		
  * These variables define the characteristics of the event and unit mask fields. */
