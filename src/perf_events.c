@@ -540,10 +540,10 @@ tune_up_fd( context_t * ctx, int evt_idx )
 	 * event is originating which can be quite useful when monitoring
 	 * multiple tasks from a single thread.
 	 */
-	ret = fcntl( fd, F_SETSIG, MY_VECTOR.cmp_info.hardware_intr_sig );
+	ret = fcntl( fd, F_SETSIG, _papi_pe_vector.cmp_info.hardware_intr_sig );
 	if ( ret == -1 ) {
 		PAPIERROR( "cannot fcntl(F_SETSIG,%d) on %d: %s",
-				   MY_VECTOR.cmp_info.hardware_intr_sig, fd,
+				   _papi_pe_vector.cmp_info.hardware_intr_sig, fd,
 				   strerror( errno ) );
 		return ( PAPI_ESYS );
 	}
@@ -759,7 +759,7 @@ set_domain( hwd_control_state_t * ctl, int domain)
 	
      int i;
      control_state_t *pe_ctl = ( control_state_t * ) ctl;
-     SUBDBG("control %p, old control domain %d, new domain %d, default domain %d\n",ctl,pe_ctl->domain,domain,MY_VECTOR.cmp_info.default_domain);
+     SUBDBG("control %p, old control domain %d, new domain %d, default domain %d\n",ctl,pe_ctl->domain,domain,_papi_pe_vector.cmp_info.default_domain);
 
      pe_ctl->domain = domain;
      for( i = 0; i < pe_ctl->num_events; i++ ) {
@@ -804,32 +804,32 @@ static int pe_vendor_fixups(void) {
      /* powerpc */
      /* On IBM and Power6 Machines default domain should include supervisor */
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
-     MY_VECTOR.cmp_info.available_domains |=
+     _papi_pe_vector.cmp_info.available_domains |=
 		  PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
      if (strcmp(_papi_hwi_system_info.hw_info.model_string, "POWER6" ) == 0 ) {
-        MY_VECTOR.cmp_info.default_domain =
+        _papi_pe_vector.cmp_info.default_domain =
 		  PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
      }
   }
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS ) {
-     MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
+     _papi_pe_vector.cmp_info.available_domains |= PAPI_DOM_KERNEL;
      }
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
       (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))
-     MY_VECTOR.cmp_info.fast_real_timer = 1;
+     _papi_pe_vector.cmp_info.fast_real_timer = 1;
 
      /* ARM */
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
      /* FIXME: this will change with Cortex A15 */
-     MY_VECTOR.cmp_info.available_domains |=
+     _papi_pe_vector.cmp_info.available_domains |=
 	    PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-     MY_VECTOR.cmp_info.default_domain =
+     _papi_pe_vector.cmp_info.default_domain =
 	    PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
   }
 
      /* CRAY */
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
-    MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
+    _papi_pe_vector.cmp_info.available_domains |= PAPI_DOM_OTHER;
   }
 
   return PAPI_OK;
@@ -847,7 +847,7 @@ _papi_pe_init_substrate( int cidx )
   ( void ) cidx;          /*unused */
 
   /* Run the libpfm-specific setup */
-  retval=_papi_libpfm_init(&MY_VECTOR, cidx);
+  retval=_papi_libpfm_init(&_papi_pe_vector, cidx);
   if (retval) return retval;
 
   /* Detect NMI watchdog which can steal counters */
@@ -858,23 +858,23 @@ _papi_pe_init_substrate( int cidx )
   }
 
   /* Set various version strings */
-  strcpy( MY_VECTOR.cmp_info.name,"perf_events.c" );
-  strcpy( MY_VECTOR.cmp_info.version, "4.2.1" );
+  strcpy( _papi_pe_vector.cmp_info.name,"perf_events.c" );
+  strcpy( _papi_pe_vector.cmp_info.version, "4.2.1" );
   
   /* perf_events defaults */
-  MY_VECTOR.cmp_info.hardware_intr = 1;
-  MY_VECTOR.cmp_info.attach = 1;
-  MY_VECTOR.cmp_info.attach_must_ptrace = 1;
-  MY_VECTOR.cmp_info.kernel_profile = 1;
-  MY_VECTOR.cmp_info.profile_ear = 0;
-  MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+  _papi_pe_vector.cmp_info.hardware_intr = 1;
+  _papi_pe_vector.cmp_info.attach = 1;
+  _papi_pe_vector.cmp_info.attach_must_ptrace = 1;
+  _papi_pe_vector.cmp_info.kernel_profile = 1;
+  _papi_pe_vector.cmp_info.profile_ear = 0;
+  _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
   /* hardware multiplex was broken before 2.6.33 */	
   if (bug_multiplex()) {
-     MY_VECTOR.cmp_info.kernel_multiplex = 0;
+     _papi_pe_vector.cmp_info.kernel_multiplex = 0;
   }
   else {
-     MY_VECTOR.cmp_info.kernel_multiplex = 1;
+     _papi_pe_vector.cmp_info.kernel_multiplex = 1;
   }
  
   /* Check that processor is supported */
@@ -893,18 +893,18 @@ _papi_pe_init_substrate( int cidx )
      return retval;
   }
 
-  MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
+  _papi_pe_vector.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
 
   /* are any of these needed anymore? */
   /* These settings are exported to userspace.  Ugh */
 #if defined(__i386__)||defined(__x86_64__)
-  MY_VECTOR.cmp_info.fast_counter_read = 0;
-  MY_VECTOR.cmp_info.fast_real_timer = 1;
+  _papi_pe_vector.cmp_info.fast_counter_read = 0;
+  _papi_pe_vector.cmp_info.fast_real_timer = 1;
 #else
-  MY_VECTOR.cmp_info.fast_counter_read = 0;
-  MY_VECTOR.cmp_info.fast_real_timer = 0;
+  _papi_pe_vector.cmp_info.fast_counter_read = 0;
+  _papi_pe_vector.cmp_info.fast_real_timer = 0;
 #endif
-  MY_VECTOR.cmp_info.cntr_umasks = 1;
+  _papi_pe_vector.cmp_info.cntr_umasks = 1;
 
   /* Run Vendor-specific fixups */
   pe_vendor_fixups();
@@ -1596,7 +1596,7 @@ static void
 mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
 {
 	( void ) evt_index;		 /*unused */
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 	uint64_t head = mmap_read_head( pe );
 	uint64_t old = pe->tail;
 	unsigned char *data = pe->mmap_buf + getpagesize(  );
@@ -1692,7 +1692,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
 {
 	int ret, flags, profile_index;
 	unsigned native_index;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 
 	ret =
 		find_profile_index( ( *thr )->running_eventset[cidx], evt_idx, &flags,
@@ -1719,7 +1719,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	int found_evt_idx = -1, fd = info->si_fd;
 	caddr_t address;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 	int i;
 
 	if ( thread == NULL ) {
@@ -1855,7 +1855,7 @@ _papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 {
 	( void ) ESI;			 /*unused */
 	int i, ret = PAPI_OK;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 
 	/*
 	 * Loop through all of the events and process those which have mmap
@@ -1882,7 +1882,7 @@ _papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 static int
 _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
 	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
 	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
@@ -1947,8 +1947,8 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		
 		/* Enable the signal handler */
 		retval =
-			_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
-									MY_VECTOR.cmp_info.CmpIdx );
+			_papi_hwi_start_signal( _papi_pe_vector.cmp_info.hardware_intr_sig, 1,
+									_papi_pe_vector.cmp_info.CmpIdx );
 	} else {
 		/* turn off internal overflow flag for this event set */
 		ctl->overflow = 0;
@@ -1957,7 +1957,7 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		 * Remove the signal handler, if there are no remaining non-zero
 		 * sample_periods set
 		 */
-		retval = _papi_hwi_stop_signal( MY_VECTOR.cmp_info.hardware_intr_sig );
+		retval = _papi_hwi_stop_signal( _papi_pe_vector.cmp_info.hardware_intr_sig );
 		if ( retval != PAPI_OK )
 			return retval;
 	}
@@ -1977,7 +1977,7 @@ _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	int ret;
 	int evt_idx;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
 	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
 
@@ -2040,7 +2040,7 @@ _papi_pe_init_control_state( hwd_control_state_t * ctl )
 {
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
 	memset( pe_ctl, 0, sizeof ( control_state_t ) );
-	set_domain( ctl, MY_VECTOR.cmp_info.default_domain );
+	set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
 	/* Set cpu number in the control block to show events are not tied to specific cpu */
 	pe_ctl->cpu = -1;
 	return PAPI_OK;

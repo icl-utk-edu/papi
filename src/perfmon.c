@@ -453,12 +453,12 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 
 	SUBDBG
 		( "entry multiplexed %d, pfp_event_count %d, num_cntrs %d, num_sets %d\n",
-		  ctl->multiplexed, inp->pfp_event_count, MY_VECTOR.cmp_info.num_cntrs,
+		  ctl->multiplexed, inp->pfp_event_count, _papi_pfm_vector.cmp_info.num_cntrs,
 		  *num_sets );
 	if ( ( ctl->multiplexed ) &&
 		 ( inp->pfp_event_count >
-		   ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs ) ) {
-		dispatch_count = MY_VECTOR.cmp_info.num_cntrs;
+		   ( unsigned int ) _papi_pfm_vector.cmp_info.num_cntrs ) ) {
+		dispatch_count = _papi_pfm_vector.cmp_info.num_cntrs;
 	}
 
 	while ( togo ) {
@@ -467,7 +467,7 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 		memset( &tmpout, 0x0, sizeof ( tmpout ) );
 
 		SUBDBG( "togo %d, done %d, dispatch_count %d, num_cntrs %d\n", togo,
-				done, dispatch_count, MY_VECTOR.cmp_info.num_cntrs );
+				done, dispatch_count, _papi_pfm_vector.cmp_info.num_cntrs );
 		tmpin.pfp_event_count = dispatch_count;
 		tmpin.pfp_dfl_plm = inp->pfp_dfl_plm;
 
@@ -546,8 +546,8 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 
 		togo -= dispatch_count;
 		done += dispatch_count;
-		if ( togo > MY_VECTOR.cmp_info.num_cntrs )
-			dispatch_count = MY_VECTOR.cmp_info.num_cntrs;
+		if ( togo > _papi_pfm_vector.cmp_info.num_cntrs )
+			dispatch_count = _papi_pfm_vector.cmp_info.num_cntrs;
 		else
 			dispatch_count = togo;
 
@@ -608,10 +608,10 @@ tune_up_fd( int ctx_fd )
 	 * event is originating which can be quite useful when monitoring
 	 * multiple tasks from a single thread.
 	 */
-	ret = fcntl( ctx_fd, F_SETSIG, MY_VECTOR.cmp_info.hardware_intr_sig );
+	ret = fcntl( ctx_fd, F_SETSIG, _papi_pfm_vector.cmp_info.hardware_intr_sig );
 	if ( ret == -1 ) {
 		PAPIERROR( "cannot fcntl(F_SETSIG,%d) on %d: %s",
-				   MY_VECTOR.cmp_info.hardware_intr_sig, ctx_fd,
+				   _papi_pfm_vector.cmp_info.hardware_intr_sig, ctx_fd,
 				   strerror( errno ) );
 		return ( PAPI_ESYS );
 	}
@@ -791,8 +791,8 @@ _papi_pfm_init_substrate( int cidx )
 	char buf[PAPI_HUGE_STR_LEN];
 	/* The following checks the PFMLIB version 
 	   against the perfmon2 kernel version... */
-	strncpy( MY_VECTOR.cmp_info.support_version, buf,
-			 sizeof ( MY_VECTOR.cmp_info.support_version ) );
+	strncpy( _papi_pfm_vector.cmp_info.support_version, buf,
+			 sizeof ( _papi_pfm_vector.cmp_info.support_version ) );
 
 #ifdef WIN32
 	strcpy( _papi_hwi_system_info.sub_info.kernel_version, "PFM for Windows" );
@@ -800,23 +800,23 @@ _papi_pfm_init_substrate( int cidx )
 #else
 	retval =
 		get_string_from_file( "/sys/kernel/perfmon/version",
-							  MY_VECTOR.cmp_info.kernel_version,
-							  sizeof ( MY_VECTOR.cmp_info.kernel_version ) );
+							  _papi_pfm_vector.cmp_info.kernel_version,
+							  sizeof ( _papi_pfm_vector.cmp_info.kernel_version ) );
 	if ( retval != PAPI_OK )
 		return ( retval );
 #ifdef PFM_VERSION
 	sprintf( buf, "%d.%d", PFM_VERSION_MAJOR( PFM_VERSION ),
 			 PFM_VERSION_MINOR( PFM_VERSION ) );
 	SUBDBG( "Perfmon2 library versions...kernel: %s library: %s\n",
-			MY_VECTOR.cmp_info.kernel_version, buf );
-	if ( strcmp( MY_VECTOR.cmp_info.kernel_version, buf ) != 0 ) {
+			_papi_pfm_vector.cmp_info.kernel_version, buf );
+	if ( strcmp( _papi_pfm_vector.cmp_info.kernel_version, buf ) != 0 ) {
 		/* do a little exception processing; 81 is compatible with 80 */
 		if ( !( ( PFM_VERSION_MINOR( PFM_VERSION ) == 81 )
-				&& ( strncmp( MY_VECTOR.cmp_info.kernel_version, "2.8", 3 ) ==
+				&& ( strncmp( _papi_pfm_vector.cmp_info.kernel_version, "2.8", 3 ) ==
 					 0 ) ) ) {
 			PAPIERROR
 				( "Version mismatch of libpfm: compiled %s vs. installed %s\n",
-				  buf, MY_VECTOR.cmp_info.kernel_version );
+				  buf, _papi_pfm_vector.cmp_info.kernel_version );
 			return ( PAPI_ESBSTR );
 		}
 	}
@@ -836,7 +836,7 @@ _papi_pfm_init_substrate( int cidx )
 		return ( PAPI_ESBSTR );
 	}
 
-	sprintf( MY_VECTOR.cmp_info.support_version, "%d.%d",
+	sprintf( _papi_pfm_vector.cmp_info.support_version, "%d.%d",
 			 PFM_VERSION_MAJOR( version ), PFM_VERSION_MINOR( version ) );
 
 	if ( PFM_VERSION_MAJOR( version ) != PFM_VERSION_MAJOR( PFMLIB_VERSION ) ) {
@@ -921,25 +921,25 @@ _papi_pfm_init_substrate( int cidx )
 		return ( PAPI_ESBSTR );
 	}
 	SUBDBG( "pfm_get_num_events: %d\n", ncnt );
-	MY_VECTOR.cmp_info.num_native_events = ncnt;
-	strcpy( MY_VECTOR.cmp_info.name,"perfmon.c" );
-	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
+	_papi_pfm_vector.cmp_info.num_native_events = ncnt;
+	strcpy( _papi_pfm_vector.cmp_info.name,"perfmon.c" );
+	strcpy( _papi_pfm_vector.cmp_info.version, "$Revision$" );
 	sprintf( buf, "%08x", version );
 
-	pfm_get_num_counters( ( unsigned int * ) &MY_VECTOR.cmp_info.num_cntrs );
-	SUBDBG( "pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs );
+	pfm_get_num_counters( ( unsigned int * ) &_papi_pfm_vector.cmp_info.num_cntrs );
+	SUBDBG( "pfm_get_num_counters: %d\n", _papi_pfm_vector.cmp_info.num_cntrs );
 
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
 		/* powerpc */
-		MY_VECTOR.cmp_info.available_domains |=
+		_papi_pfm_vector.cmp_info.available_domains |=
 			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
 		if ( strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" ) ==
 			 0 ) {
-			MY_VECTOR.cmp_info.default_domain =
+			_papi_pfm_vector.cmp_info.default_domain =
 				PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
 		}
 	} else
-		MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
+		_papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_KERNEL;
 
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
 		switch ( _perfmon2_pfm_pmu_type ) {
@@ -953,36 +953,36 @@ _papi_pfm_init_substrate( int cidx )
 			break;
 
 		default:
-			MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
+			_papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
 			break;
 		}
 	}
 
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
-		MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
+		_papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_OTHER;
 	}
 
 	if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
 		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
-		MY_VECTOR.cmp_info.fast_counter_read = 1;
-		MY_VECTOR.cmp_info.fast_real_timer = 1;
-		MY_VECTOR.cmp_info.cntr_umasks = 1;
+		_papi_pfm_vector.cmp_info.fast_counter_read = 1;
+		_papi_pfm_vector.cmp_info.fast_real_timer = 1;
+		_papi_pfm_vector.cmp_info.cntr_umasks = 1;
 	}
 
 #ifdef WIN32
   /****WIN32: can we figure out how to get Windows to support hdw interrupts on
     counter overflow? The hardware supports it; does the OS? */
-	MY_VECTOR.cmp_info.hardware_intr = 0;
+	_papi_pfm_vector.cmp_info.hardware_intr = 0;
 #else
-	MY_VECTOR.cmp_info.hardware_intr = 1;
-	MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+	_papi_pfm_vector.cmp_info.hardware_intr = 1;
+	_papi_pfm_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 #endif
-	MY_VECTOR.cmp_info.attach = 1;
-	MY_VECTOR.cmp_info.attach_must_ptrace = 1;
-	MY_VECTOR.cmp_info.kernel_multiplex = 1;
-	MY_VECTOR.cmp_info.kernel_profile = 1;
-	MY_VECTOR.cmp_info.profile_ear = 1;
-	MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+	_papi_pfm_vector.cmp_info.attach = 1;
+	_papi_pfm_vector.cmp_info.attach_must_ptrace = 1;
+	_papi_pfm_vector.cmp_info.kernel_multiplex = 1;
+	_papi_pfm_vector.cmp_info.kernel_profile = 1;
+	_papi_pfm_vector.cmp_info.profile_ear = 1;
+	_papi_pfm_vector.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
 
 #ifdef WIN32
 	/* FIX: For now, use the pmu_type from Perfmon */
@@ -1838,7 +1838,7 @@ process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 {
 	( void ) num_smpl_pmds;	 /*unused */
 	( void ) entry_size;	 /*unused */
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pfm_vector.cmp_info.CmpIdx;
 	pfm_dfl_smpl_entry_t *ent;
 	size_t pos;
 	uint64_t entry, count;
@@ -1896,11 +1896,11 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	int ret, wanted_fd, fd = info->si_fd;
 	caddr_t address;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pfm_vector.cmp_info.CmpIdx;
 
 	if ( thread == NULL ) {
 		PAPIERROR( "thread == NULL in _papi_pfm_dispatch_timer!" );
-		if ( n == MY_VECTOR.cmp_info.hardware_intr_sig ) {
+		if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
 			ret = read( fd, &msg, sizeof ( msg ) );
 			pfm_restart( fd );
 		}
@@ -1910,7 +1910,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	if ( thread->running_eventset[cidx] == NULL ) {
 		PAPIERROR
 			( "thread->running_eventset == NULL in _papi_pfm_dispatch_timer!" );
-		if ( n == MY_VECTOR.cmp_info.hardware_intr_sig ) {
+		if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
 			ret = read( fd, &msg, sizeof ( msg ) );
 			pfm_restart( fd );
 		}
@@ -1920,7 +1920,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	if ( thread->running_eventset[cidx]->overflow.flags == 0 ) {
 		PAPIERROR
 			( "thread->running_eventset->overflow.flags == 0 in _papi_pfm_dispatch_timer!" );
-		if ( n == MY_VECTOR.cmp_info.hardware_intr_sig ) {
+		if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
 			ret = read( fd, &msg, sizeof ( msg ) );
 			pfm_restart( fd );
 		}
@@ -1947,7 +1947,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 		if ( wanted_fd != fd ) {
 			SUBDBG( "expected fd %d, got %d in _papi_hwi_dispatch_timer!",
 					wanted_fd, fd );
-			if ( n == MY_VECTOR.cmp_info.hardware_intr_sig ) {
+			if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
 				ret = read( fd, &msg, sizeof ( msg ) );
 				pfm_restart( fd );
 			}
@@ -2032,7 +2032,7 @@ _papi_pfm_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 static int
 _papi_pfm_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _papi_pfm_vector.cmp_info.CmpIdx;
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ( ESI->ctl_state );
 	pfm_context_t *ctx = ( pfm_context_t * ) ( ESI->master->context[cidx] );
 	pfarg_ctx_t newctx;
@@ -2179,7 +2179,7 @@ _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 		/* Remove the signal handler */
 
-		retval = _papi_hwi_stop_signal( MY_VECTOR.cmp_info.hardware_intr_sig );
+		retval = _papi_hwi_stop_signal( _papi_pfm_vector.cmp_info.hardware_intr_sig );
 		if ( retval != PAPI_OK )
 			return ( retval );
 
@@ -2207,8 +2207,8 @@ _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		/* Enable the signal handler */
 
 		retval =
-			_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
-									MY_VECTOR.cmp_info.CmpIdx );
+			_papi_hwi_start_signal( _papi_pfm_vector.cmp_info.hardware_intr_sig, 1,
+									_papi_pfm_vector.cmp_info.CmpIdx );
 		if ( retval != PAPI_OK )
 			return ( retval );
 
@@ -2257,7 +2257,7 @@ _papi_pfm_init_control_state( hwd_control_state_t * ctl0 )
 	ctl->ctx = NULL;
 	ctl->ctx_fd = -1;
 	ctl->load = NULL;
-	set_domain( ctl, MY_VECTOR.cmp_info.default_domain );
+	set_domain( ctl, _papi_pfm_vector.cmp_info.default_domain );
 	return ( PAPI_OK );
 }
 

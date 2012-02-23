@@ -29,7 +29,7 @@
 #define MAX_COUNTERS 18
 #define MAX_COUNTER_TERMS 8
 #define HW_OVERFLOW 1
-#define MY_VECTOR _x86_vector
+#define MY_VECTOR _perfctr_vector
 #define hwd_pmc_control vperfctr_control
 
 #include "linux-context.h"

@@ -1208,7 +1208,7 @@ _papi_libpfm_shutdown(void) {
  */
 
 int
-_papi_libpfm_init(papi_vector_t *MY_VECTOR, int cidx) {
+_papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
 
    int detected_pmus=0, found_default=0;
    int i, version;
@@ -1231,7 +1231,7 @@ _papi_libpfm_init(papi_vector_t *MY_VECTOR, int cidx) {
    }
 
    /* Set the version */
-   sprintf( MY_VECTOR->cmp_info.support_version, "%d.%d",
+   sprintf( my_vector->cmp_info.support_version, "%d.%d",
 	    PFM_MAJ_VERSION( version ), PFM_MIN_VERSION( version ) );
 
    /* Complain if the compiled-against version doesn't match current version */
@@ -1297,14 +1297,14 @@ _papi_libpfm_init(papi_vector_t *MY_VECTOR, int cidx) {
      return PAPI_ESBSTR;
    }
 
-   MY_VECTOR->cmp_info.num_native_events = ncnt;
+   my_vector->cmp_info.num_native_events = ncnt;
 
-   MY_VECTOR->cmp_info.num_cntrs = default_pmu.num_cntrs+
+   my_vector->cmp_info.num_cntrs = default_pmu.num_cntrs+
                                   default_pmu.num_fixed_cntrs;
 
-   SUBDBG( "num_counters: %d\n", MY_VECTOR->cmp_info.num_cntrs );
+   SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
 
-   MY_VECTOR->cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
+   my_vector->cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
    
    /* Setup presets */
    retval = _papi_libpfm_setup_presets( (char *)default_pmu.name, 

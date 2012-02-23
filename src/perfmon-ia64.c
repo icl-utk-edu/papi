@@ -307,7 +307,7 @@ _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 
 	tevent = EventCode & PAPI_NATIVE_AND_MASK;
 	major = ( tevent & PAPI_NATIVE_EVENT_AND_MASK ) >> PAPI_NATIVE_EVENT_SHIFT;
-	if ( major >= ( unsigned int ) MY_VECTOR.cmp_info.num_native_events )
+	if ( major >= ( unsigned int ) _ia64_vector.cmp_info.num_native_events )
 		return ( PAPI_ENOEVNT );
 
 	minor = ( tevent & PAPI_NATIVE_UMASK_AND_MASK ) >> PAPI_NATIVE_UMASK_SHIFT;
@@ -376,7 +376,7 @@ _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier )
 	SUBDBG( "This is umask %d of %d\n", umask, num_masks );
 
 	if ( modifier == PAPI_ENUM_EVENTS ) {
-		if ( event < ( unsigned int ) MY_VECTOR.cmp_info.num_native_events - 1 ) {
+		if ( event < ( unsigned int ) _ia64_vector.cmp_info.num_native_events - 1 ) {
 			*EventCode = encode_native_event_raw( event + 1, 0 );
 			return ( PAPI_OK );
 		}
@@ -400,7 +400,7 @@ _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier )
 		return ( PAPI_ENOEVNT );
 	} else {
 		while ( event++ <
-				( unsigned int ) MY_VECTOR.cmp_info.num_native_events - 1 ) {
+				( unsigned int ) _ia64_vector.cmp_info.num_native_events - 1 ) {
 			*EventCode = encode_native_event_raw( event + 1, 0 );
 			if ( _ia64_modify_event( event + 1, modifier ) )
 				return ( PAPI_OK );
@@ -692,7 +692,7 @@ _ia64_ita_set_domain( hwd_control_state_t * this_state, int domain )
 	/* Bug fix in case we don't call pfmw_dispatch_events after this code */
 	/* Who did this? This sucks, we should always call it here -PJM */
 
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		if ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ) {
 			pfm_ita_pmc_reg_t value;
 			SUBDBG( "slot %d, register %lud active, config value 0x%lx\n",
@@ -735,7 +735,7 @@ _ia64_ita2_set_domain( hwd_control_state_t * this_state, int domain )
 	/* Bug fix in case we don't call pfmw_dispatch_events after this code */
 	/* Who did this? This sucks, we should always call it here -PJM */
 
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		if ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ) {
 			pfm_ita2_pmc_reg_t value;
 			SUBDBG( "slot %d, register %lud active, config value 0x%lx\n",
@@ -778,7 +778,7 @@ _ia64_mont_set_domain( hwd_control_state_t * this_state, int domain )
 	/* Bug fix in case we don't call pfmw_dispatch_events after this code */
 	/* Who did this? This sucks, we should always call it here -PJM */
 
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		if ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ) {
 			pfm_mont_pmc_reg_t value;
 			SUBDBG( "slot %d, register %lud active, config value 0x%lx\n",
@@ -841,7 +841,7 @@ _ia64_ita_read( hwd_context_t * ctx, hwd_control_state_t * machdep,
 {
 	( void ) flags;			 /*unused */
 	unsigned int i;
-	pfarg_reg_t readem[MY_VECTOR.cmp_info.num_cntrs];
+	pfarg_reg_t readem[_ia64_vector.cmp_info.num_cntrs];
 
 	pfmw_stop( ( ia64_context_t * ) ctx );
 	memset( readem, 0x0, sizeof readem );
@@ -849,19 +849,19 @@ _ia64_ita_read( hwd_context_t * ctx, hwd_control_state_t * machdep,
 /* read the 4 counters, the high level function will process the 
    mapping for papi event to hardware counter 
 */
-	for ( i = 0; i < ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < ( unsigned int ) _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		readem[i].reg_num = PMU_FIRST_COUNTER + i;
 	}
 
 	if ( pfmw_perfmonctl
 		 ( ( ( ia64_context_t * ) ctx )->tid, ( ( ia64_context_t * ) ctx )->fd,
-		   PFM_READ_PMDS, readem, MY_VECTOR.cmp_info.num_cntrs ) == -1 ) {
+		   PFM_READ_PMDS, readem, _ia64_vector.cmp_info.num_cntrs ) == -1 ) {
 		SUBDBG( "perfmonctl error READ_PMDS errno %d\n", errno );
 		pfmw_start( ( ia64_context_t * ) ctx );
 		return PAPI_ESYS;
 	}
 
-	for ( i = 0; i < ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < ( unsigned int ) _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		( ( ia64_control_state_t * ) machdep )->counters[i] =
 			readem[i].reg_value;
 		SUBDBG( "read counters is %ld\n", readem[i].reg_value );
@@ -888,7 +888,7 @@ _ia64_ita23_read( hwd_context_t * ctx, hwd_control_state_t * machdep,
 {
 	( void ) flags;			 /*unused */
 	int i;
-	pfarg_reg_t readem[MY_VECTOR.cmp_info.num_cntrs];
+	pfarg_reg_t readem[_ia64_vector.cmp_info.num_cntrs];
 
 	pfmw_stop( ( ia64_context_t * ) ctx );
 	memset( readem, 0x0, sizeof readem );
@@ -896,19 +896,19 @@ _ia64_ita23_read( hwd_context_t * ctx, hwd_control_state_t * machdep,
 /* read the 4 counters, the high level function will process the 
    mapping for papi event to hardware counter 
 */
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		readem[i].reg_num = PMU_FIRST_COUNTER + i;
 	}
 
 	if ( pfmw_perfmonctl
 		 ( ( ( ia64_context_t * ) ctx )->tid, ( ( ia64_context_t * ) ctx )->fd,
-		   PFM_READ_PMDS, readem, MY_VECTOR.cmp_info.num_cntrs ) == -1 ) {
+		   PFM_READ_PMDS, readem, _ia64_vector.cmp_info.num_cntrs ) == -1 ) {
 		SUBDBG( "perfmonctl error READ_PMDS errno %d\n", errno );
 		pfmw_start( ( ia64_context_t * ) ctx );
 		return PAPI_ESYS;
 	}
 
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		( ( ia64_control_state_t * ) machdep )->counters[i] =
 			readem[i].reg_value;
 		SUBDBG( "read counters is %ld\n", readem[i].reg_value );
@@ -1039,34 +1039,34 @@ _ia64_init_substrate( int cidx )
 		return ( retval );
 
 	/* Name of the substrate we're using */
-	strcpy( MY_VECTOR.cmp_info.name,"perfmon-ia64.c" );
-	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
-	sprintf( MY_VECTOR.cmp_info.support_version, "%08x", PFMLIB_VERSION );
-	sprintf( MY_VECTOR.cmp_info.kernel_version, "%08x", 2 << 16 );	/* 2.0 */
-	MY_VECTOR.cmp_info.num_native_events = nnev;
-	MY_VECTOR.cmp_info.num_cntrs = ncnt;
+	strcpy( _ia64_vector.cmp_info.name,"perfmon-ia64.c" );
+	strcpy( _ia64_vector.cmp_info.version, "$Revision$" );
+	sprintf( _ia64_vector.cmp_info.support_version, "%08x", PFMLIB_VERSION );
+	sprintf( _ia64_vector.cmp_info.kernel_version, "%08x", 2 << 16 );	/* 2.0 */
+	_ia64_vector.cmp_info.num_native_events = nnev;
+	_ia64_vector.cmp_info.num_cntrs = ncnt;
   /*_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;*/
-	MY_VECTOR.cmp_info.hardware_intr = 1;
-	MY_VECTOR.cmp_info.fast_real_timer = 1;
-	MY_VECTOR.cmp_info.fast_virtual_timer = 0;
-	MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
-	MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
-	MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
-	MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
-	MY_VECTOR.cmp_info.hardware_intr_sig = OVFL_SIGNAL;
-	MY_VECTOR.cmp_info.kernel_profile = 1;
-	MY_VECTOR.cmp_info.data_address_range = 1;	/* Supports data address range limiting */
-	MY_VECTOR.cmp_info.instr_address_range = 1;	/* Supports instruction address range limiting */
+	_ia64_vector.cmp_info.hardware_intr = 1;
+	_ia64_vector.cmp_info.fast_real_timer = 1;
+	_ia64_vector.cmp_info.fast_virtual_timer = 0;
+	_ia64_vector.cmp_info.default_domain = PAPI_DOM_USER;
+	_ia64_vector.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
+	_ia64_vector.cmp_info.default_granularity = PAPI_GRN_THR;
+	_ia64_vector.cmp_info.available_granularities = PAPI_GRN_THR;
+	_ia64_vector.cmp_info.hardware_intr_sig = OVFL_SIGNAL;
+	_ia64_vector.cmp_info.kernel_profile = 1;
+	_ia64_vector.cmp_info.data_address_range = 1;	/* Supports data address range limiting */
+	_ia64_vector.cmp_info.instr_address_range = 1;	/* Supports instruction address range limiting */
 	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
-		MY_VECTOR.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
+		_ia64_vector.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
 
-	MY_VECTOR.cmp_info.cntr_IEAR_events = 1;	/* counters support instr event addr register */
-	MY_VECTOR.cmp_info.cntr_DEAR_events = 1;	/* counters support data event addr register */
-	MY_VECTOR.cmp_info.cntr_OPCM_events = 1;	/* counter events support opcode matching */
-	MY_VECTOR.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
+	_ia64_vector.cmp_info.cntr_IEAR_events = 1;	/* counters support instr event addr register */
+	_ia64_vector.cmp_info.cntr_DEAR_events = 1;	/* counters support data event addr register */
+	_ia64_vector.cmp_info.cntr_OPCM_events = 1;	/* counter events support opcode matching */
+	_ia64_vector.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
 	/* Put the signal handler in use to consume PFM_END_MSG's */
-	_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
-							MY_VECTOR.cmp_info.CmpIdx );
+	_papi_hwi_start_signal( _ia64_vector.cmp_info.hardware_intr_sig, 1,
+							_ia64_vector.cmp_info.CmpIdx );
 
 	retval = mmtimer_setup();
 	if ( retval )
@@ -1074,7 +1074,7 @@ _ia64_init_substrate( int cidx )
 
 	retval =
 		generate_preset_search_map( &preset_search_map, ia_preset_search_map,
-									MY_VECTOR.cmp_info.num_cntrs );
+									_ia64_vector.cmp_info.num_cntrs );
 	if ( retval )
 		return ( retval );
 
@@ -1123,7 +1123,7 @@ _ia64_reset( hwd_context_t * ctx, hwd_control_state_t * machdep )
 
 	pfmw_stop( ctx );
 	memset( writeem, 0, sizeof writeem );
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		/* Writing doesn't matter, we're just zeroing the counter. */
 		writeem[i].reg_num = PMU_FIRST_COUNTER + i;
 		if ( PFMW_PEVT_PFPPC_REG_FLG( pevt, i ) & PFM_REGFL_OVFL_NOTIFY )
@@ -1131,7 +1131,7 @@ _ia64_reset( hwd_context_t * ctx, hwd_control_state_t * machdep )
 	}
 	if ( pfmw_perfmonctl
 		 ( ctx->tid, ctx->fd, PFM_WRITE_PMDS, writeem,
-		   MY_VECTOR.cmp_info.num_cntrs ) == -1 ) {
+		   _ia64_vector.cmp_info.num_cntrs ) == -1 ) {
 		PAPIERROR( "perfmonctl(PFM_WRITE_PMDS) errno %d", errno );
 		return PAPI_ESYS;
 	}
@@ -1164,12 +1164,12 @@ _ia64_start( hwd_context_t * ctx, hwd_control_state_t * current_state )
 /* set the initial value of the hardware counter , if PAPI_overflow or
   PAPI_profil are called, then the initial value is the threshold
 */
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ )
 		current_state->pd[i].reg_num = PMU_FIRST_COUNTER + i;
 
 	if ( pfmw_perfmonctl( ctx->tid, ctx->fd,
 						  PFM_WRITE_PMDS, current_state->pd,
-						  MY_VECTOR.cmp_info.num_cntrs ) == -1 ) {
+						  _ia64_vector.cmp_info.num_cntrs ) == -1 ) {
 		PAPIERROR( "perfmonctl(WRITE_PMDS) errno %d", errno );
 		return ( PAPI_ESYS );
 	}
@@ -1550,7 +1550,7 @@ ia64_dispatch_sigprof( int n, hwd_siginfo_t * info, hwd_ucontext_t *sc )
 	_papi_hwi_context_t ctx;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 	caddr_t address;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _ia64_vector.cmp_info.CmpIdx;
 
 #if defined(DEBUG)
 	if ( thread == NULL ) {
@@ -1647,9 +1647,9 @@ set_notify( EventSetInfo_t * ESI, int index, int value )
 
 	pos = ESI->EventInfoArray[index].pos;
 	count = 0;
-	while ( pos[count] != -1 && count < MY_VECTOR.cmp_info.num_cntrs ) {
+	while ( pos[count] != -1 && count < _ia64_vector.cmp_info.num_cntrs ) {
 		hwcntr = pos[count] + PMU_FIRST_COUNTER;
-		for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+		for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 			if ( PFMW_PEVT_PFPPC_REG_NUM( pevt, i ) == hwcntr ) {
 				SUBDBG( "Found hw counter %d in %d, flags %d\n", hwcntr, i,
 						value );
@@ -1673,7 +1673,7 @@ set_notify( EventSetInfo_t * ESI, int index, int value )
 int
 _ia64_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 {
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _ia64_vector.cmp_info.CmpIdx;
 
 	pfmw_stop( thread->context[cidx] );
 	return ( ia64_process_profile_buffer( thread, ESI ) );
@@ -1683,12 +1683,12 @@ _ia64_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 int
 _ia64_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _ia64_vector.cmp_info.CmpIdx;
 	hwd_control_state_t *this_state = ESI->ctl_state;
 	hwd_context_t *ctx = ESI->master->context[cidx];
 	int ret;
 
-	ret = MY_VECTOR.set_overflow( ESI, EventIndex, threshold );
+	ret = _ia64_vector.set_overflow( ESI, EventIndex, threshold );
 	if ( ret != PAPI_OK )
 		return ret;
 	ret = pfmw_destroy_context( ctx );
@@ -1713,7 +1713,7 @@ _ia64_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	hwd_control_state_t *this_state = ESI->ctl_state;
 	int j, retval = PAPI_OK, *pos;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _ia64_vector.cmp_info.CmpIdx;
 
 	pos = ESI->EventInfoArray[EventIndex].pos;
 	j = pos[0];
@@ -1723,7 +1723,7 @@ _ia64_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	if ( threshold == 0 ) {
 		/* Remove the signal handler */
 
-		retval = _papi_hwi_stop_signal( MY_VECTOR.cmp_info.hardware_intr_sig );
+		retval = _papi_hwi_stop_signal( _ia64_vector.cmp_info.hardware_intr_sig );
 		if ( retval != PAPI_OK )
 			return ( retval );
 
@@ -1736,7 +1736,7 @@ _ia64_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		this_state->pd[j].reg_short_reset = 0;
 	} else {
 		retval =
-			_papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig, 1,
+			_papi_hwi_start_signal( _ia64_vector.cmp_info.hardware_intr_sig, 1,
 									cidx );
 		if ( retval != PAPI_OK )
 			return ( retval );
@@ -1823,7 +1823,7 @@ _ia64_ntv_enum_events( unsigned int *EventCode, int modifier )
 			return ( PAPI_OK );
 		}
 
-		while ( index++ < MY_VECTOR.cmp_info.num_native_events - 1 ) {
+		while ( index++ < _ia64_vector.cmp_info.num_native_events - 1 ) {
 			*EventCode += 1;
 			if ( _ia64_modify_event
 				 ( ( *EventCode ^ PAPI_NATIVE_MASK ), modifier ) )
@@ -1847,7 +1847,7 @@ _ia64_ita_init_control_state( hwd_control_state_t * this_state )
 	memset( evt, 0, sizeof ( pfmw_param_t ) );
 	memset( param, 0, sizeof ( pfmw_ita1_param_t ) );
 
-	_ia64_ita_set_domain( this_state, MY_VECTOR.cmp_info.default_domain );
+	_ia64_ita_set_domain( this_state, _ia64_vector.cmp_info.default_domain );
 /* set library parameter pointer */
 
 	return ( PAPI_OK );
@@ -1867,7 +1867,7 @@ _ia64_ita2_init_control_state( hwd_control_state_t * this_state )
 	memset( evt, 0, sizeof ( pfmw_param_t ) );
 	memset( param, 0, sizeof ( pfmw_ita2_param_t ) );
 
-	_ia64_ita2_set_domain( this_state, MY_VECTOR.cmp_info.default_domain );
+	_ia64_ita2_set_domain( this_state, _ia64_vector.cmp_info.default_domain );
 /* set library parameter pointer */
 	evt->mod_inp = &( param->ita2_input_param );
 	evt->mod_outp = &( param->ita2_output_param );
@@ -1889,7 +1889,7 @@ _ia64_mont_init_control_state( hwd_control_state_t * this_state )
 	memset( evt, 0, sizeof ( pfmw_param_t ) );
 	memset( param, 0, sizeof ( pfmw_mont_param_t ) );
 
-	_ia64_mont_set_domain( this_state, MY_VECTOR.cmp_info.default_domain );
+	_ia64_mont_set_domain( this_state, _ia64_vector.cmp_info.default_domain );
 /* set library parameter pointer */
 	evt->mod_inp = &( param->mont_input_param );
 	evt->mod_outp = &( param->mont_output_param );
@@ -1940,7 +1940,7 @@ _ia64_mont_update_control_state( hwd_control_state_t * this_state,
 	char name[128];
 
 	if ( count == 0 ) {
-		for ( i = 0; i < ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs; i++ )
+		for ( i = 0; i < ( unsigned int ) _ia64_vector.cmp_info.num_cntrs; i++ )
 			PFMW_PEVT_EVENT( evt, i ) = 0;
 		PFMW_PEVT_EVTCOUNT( evt ) = 0;
 		memset( PFMW_PEVT_PFPPC( evt ), 0, sizeof ( PFMW_PEVT_PFPPC( evt ) ) );
@@ -1953,7 +1953,7 @@ _ia64_mont_update_control_state( hwd_control_state_t * this_state,
 
 	memcpy( &copy_evt, evt, sizeof ( pfmw_param_t ) );
 
-	for ( i = 0; i < ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < ( unsigned int ) _ia64_vector.cmp_info.num_cntrs; i++ )
 		PFMW_PEVT_EVENT( evt, i ) = 0;
 	PFMW_PEVT_EVTCOUNT( evt ) = 0;
 	memset( PFMW_PEVT_PFPPC( evt ), 0, sizeof ( PFMW_PEVT_PFPPC( evt ) ) );
@@ -1988,7 +1988,7 @@ _ia64_mont_update_control_state( hwd_control_state_t * this_state,
 		SUBDBG( "pfmw_dispatch_events fail\n" );
 		/* recover the old data */
 		PFMW_PEVT_EVTCOUNT( evt ) = org_cnt;
-		/*for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
+		/*for (i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++)
 		   PFMW_PEVT_EVENT(evt,i) = events[i];
 		 */
 		memcpy( evt, &copy_evt, sizeof ( pfmw_param_t ) );
@@ -2019,7 +2019,7 @@ _ia64_ita_update_control_state( hwd_control_state_t * this_state,
 	pfmw_param_t copy_evt;
 
 	if ( count == 0 ) {
-		for ( i = 0; i < ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs; i++ )
+		for ( i = 0; i < ( unsigned int ) _ia64_vector.cmp_info.num_cntrs; i++ )
 			PFMW_PEVT_EVENT( evt, i ) = 0;
 		PFMW_PEVT_EVTCOUNT( evt ) = 0;
 		memset( PFMW_PEVT_PFPPC( evt ), 0, sizeof ( PFMW_PEVT_PFPPC( evt ) ) );
@@ -2031,7 +2031,7 @@ _ia64_ita_update_control_state( hwd_control_state_t * this_state,
 	org_cnt = PFMW_PEVT_EVTCOUNT( evt );
 
 	memcpy( &copy_evt, evt, sizeof ( pfmw_param_t ) );
-	for ( i = 0; i < ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < ( unsigned int ) _ia64_vector.cmp_info.num_cntrs; i++ )
 		PFMW_PEVT_EVENT( evt, i ) = 0;
 	PFMW_PEVT_EVTCOUNT( evt ) = 0;
 	memset( PFMW_PEVT_PFPPC( evt ), 0, sizeof ( PFMW_PEVT_PFPPC( evt ) ) );
@@ -2050,7 +2050,7 @@ _ia64_ita_update_control_state( hwd_control_state_t * this_state,
 		SUBDBG( "pfmw_dispatch_events fail\n" );
 		/* recover the old data */
 		PFMW_PEVT_EVTCOUNT( evt ) = org_cnt;
-		/*for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
+		/*for (i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++)
 		   PFMW_PEVT_EVENT(evt,i) = events[i];
 		 */
 		memcpy( evt, &copy_evt, sizeof ( pfmw_param_t ) );

@@ -27,7 +27,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 extern pm_groups_info_t pmgroups;
 
 /* define the vector structure at the bottom of this file */
-extern papi_vector_t MY_VECTOR;
+extern papi_vector_t _aix_vector;
 
 /* Locking variables */
 volatile int lock_var[PAPI_MAX_LOCK] = { 0 };
@@ -282,13 +282,13 @@ _aix_init_control_state( hwd_control_state_t * ptr )
 {
 	int i;
 
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _aix_vector.cmp_info.num_cntrs; i++ ) {
 		ptr->counter_cmd.events[i] = COUNT_NOTHING;
 	}
 	ptr->counter_cmd.mode.b.is_group = 1;
 
-	MY_VECTOR.set_domain( ptr, MY_VECTOR.cmp_info.default_domain );
-	_aix_set_granularity( ptr, MY_VECTOR.cmp_info.default_granularity );
+	_aix_vector.set_domain( ptr, _aix_vector.cmp_info.default_domain );
+	_aix_set_granularity( ptr, _aix_vector.cmp_info.default_granularity );
 	/*setup_native_table(); */
 	return ( PAPI_OK );
 }
@@ -342,7 +342,7 @@ int
 _aix_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
 {
 	if ( ( EventCode & PAPI_NATIVE_AND_MASK ) >=
-		 MY_VECTOR.cmp_info.num_native_events )
+		 _aix_vector.cmp_info.num_native_events )
 		return ( PAPI_ENOEVNT );
 	strncpy( ntv_name,
 			 native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name, len );
@@ -357,7 +357,7 @@ int
 _aix_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len )
 {
 	if ( ( EventCode & PAPI_NATIVE_AND_MASK ) >=
-		 MY_VECTOR.cmp_info.num_native_events )
+		 _aix_vector.cmp_info.num_native_events )
 		return ( PAPI_ENOEVNT );
 	strncpy( ntv_descr,
 			 native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].
@@ -643,7 +643,7 @@ _aix_get_system_info( papi_mdi_t *mdi )
 	if ( retval > 0 )
 		return ( retval );
 
-	strcpy( MY_VECTOR.cmp_info.name, "aix.c" );	/* Name of the substrate we're using */
+	strcpy( _aix_vector.cmp_info.name, "aix.c" );	/* Name of the substrate we're using */
 
 	_aix_mdi_init(  );
 
@@ -660,13 +660,13 @@ _aix_get_system_info( papi_mdi_t *mdi )
 		( float ) _system_configuration.version;
 	_papi_hwi_system_info.hw_info.mhz = ( float ) ( pm_cycles(  ) / 1000000.0 );
 /*   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;*/
-	MY_VECTOR.cmp_info.num_cntrs = pminfo.maxpmcs;
-	MY_VECTOR.cmp_info.cntr_groups = 1;
-	MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
+	_aix_vector.cmp_info.num_cntrs = pminfo.maxpmcs;
+	_aix_vector.cmp_info.cntr_groups = 1;
+	_aix_vector.cmp_info.available_granularities = PAPI_GRN_THR;
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
-	MY_VECTOR.cmp_info.available_domains = init_domain(  );
+	_aix_vector.cmp_info.available_domains = init_domain(  );
 	return ( PAPI_OK );
 }
 
@@ -786,8 +786,8 @@ _aix_init_substrate( int cidx )
 			_papi_hwi_system_info.hw_info.model_string,
 			_papi_hwi_system_info.hw_info.mhz );
 
-	MY_VECTOR.cmp_info.CmpIdx = cidx;
-	MY_VECTOR.cmp_info.num_native_events = aix_ppc64_setup_native_table(  );
+	_aix_vector.cmp_info.CmpIdx = cidx;
+	_aix_vector.cmp_info.num_native_events = aix_ppc64_setup_native_table(  );
 
 	procidx = pm_get_procindex(  );
 	switch ( procidx ) {
@@ -848,7 +848,7 @@ set_hwcntr_codes( int selector, unsigned char *from, int *to )
 {
 	int useme, i;
 
-	for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+	for ( i = 0; i < _aix_vector.cmp_info.num_cntrs; i++ ) {
 		useme = ( 1 << i ) & selector;
 		if ( useme ) {
 			to[i] = from[i];
@@ -1006,7 +1006,7 @@ _aix_dispatch_timer( int signal, siginfo_t * si, void *i )
 
 	address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( &ctx ) );
 	_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL, 0, 0,
-										&t, MY_VECTOR.cmp_info.CmpIdx );
+										&t, _aix_vector.cmp_info.CmpIdx );
 }
 
 int

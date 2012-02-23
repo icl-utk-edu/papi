@@ -131,8 +131,8 @@ int init_presets(void)
 		Context.CPUsubstrate = CPU_UNKNOWN;
 
 
-	MY_VECTOR.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
-	MY_VECTOR.cmp_info.attach = 0;
+	_papi_freebsd_vector.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
+	_papi_freebsd_vector.cmp_info.attach = 0;
 
 	_papi_hwi_setup_all_presets(_papi_hwd_native_info[Context.CPUsubstrate].map, NULL);
 
@@ -210,7 +210,7 @@ int init_mdi(void)
 		/* Right now, PMC states that TSC is an additional counter. However
 		   it's only available as a system-wide counter and this requires
 		   root access */
-		MY_VECTOR.cmp_info.num_cntrs = info->pm_npmc - 1;
+		_papi_freebsd_vector.cmp_info.num_cntrs = info->pm_npmc - 1;
 
 		if ( strstr(pmc_name_of_cputype(info->pm_cputype), "INTEL"))
 		  _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
@@ -756,7 +756,7 @@ int _papi_freebsd_ntv_name_to_code(char *name, unsigned int* event_code) {
 
 	int i;
 
-	for (i = 0; i < MY_VECTOR.cmp_info.num_native_events; i++)
+	for (i = 0; i < _papi_freebsd_vector.cmp_info.num_native_events; i++)
 		if (strcmp (name, _papi_hwd_native_info[Context.CPUsubstrate].info[i].name) == 0)
 		{
 			*event_code = i | PAPI_NATIVE_AND_MASK;
@@ -772,7 +772,7 @@ int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int l
 	int nidx;
 
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
-	if (nidx >= MY_VECTOR.cmp_info.num_native_events)
+	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
 	strncpy (ntv_name, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
 	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1)
@@ -786,7 +786,7 @@ int _papi_freebsd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len
 	int nidx;
 
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
-	if (nidx >= MY_VECTOR.cmp_info.num_native_events)
+	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
 	strncpy (descr, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
 	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description) > len-1)

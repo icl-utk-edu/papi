@@ -34,7 +34,7 @@ extern int _perfctr_shutdown( hwd_context_t * ctx );
 
 extern papi_mdi_t _papi_hwi_system_info;
 
-extern papi_vector_t MY_VECTOR;
+extern papi_vector_t _perfctr_vector;
 
 #if defined(PERFCTR26)
 #define evntsel_aux p4.escr
@@ -184,7 +184,7 @@ setup_x86_presets( int cputype, int cidx)
 {
 	int retval = PAPI_OK;
 
-        if ( ( retval = _papi_libpfm_init(&MY_VECTOR, cidx ) ) != PAPI_OK ) {
+        if ( ( retval = _papi_libpfm_init(&_perfctr_vector, cidx ) ) != PAPI_OK ) {
 	   return retval;
 	}
 
@@ -293,7 +293,7 @@ setup_x86_presets( int cputype, int cidx)
 			return PAPI_ESBSTR;
 		}
 		SUBDBG( "Number of native events: %d\n",
-				MY_VECTOR.cmp_info.num_native_events );
+				_perfctr_vector.cmp_info.num_native_events );
 	}
 	return retval;
 }
@@ -304,12 +304,12 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 	int i, def_mode = 0;
 
 	if ( is_pentium4() ) {
-		if ( MY_VECTOR.cmp_info.default_domain & PAPI_DOM_USER )
+		if ( _perfctr_vector.cmp_info.default_domain & PAPI_DOM_USER )
 			def_mode |= ESCR_T0_USR;
-		if ( MY_VECTOR.cmp_info.default_domain & PAPI_DOM_KERNEL )
+		if ( _perfctr_vector.cmp_info.default_domain & PAPI_DOM_KERNEL )
 			def_mode |= ESCR_T0_OS;
 
-		for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+		for ( i = 0; i < _perfctr_vector.cmp_info.num_cntrs; i++ ) {
 			ptr->control.cpu_control.evntsel_aux[i] |= def_mode;
 		}
 		ptr->control.cpu_control.tsc_on = 1;
@@ -322,9 +322,9 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 #endif
 	} else {
 
-		if ( MY_VECTOR.cmp_info.default_domain & PAPI_DOM_USER )
+		if ( _perfctr_vector.cmp_info.default_domain & PAPI_DOM_USER )
 			def_mode |= PERF_USR;
-		if ( MY_VECTOR.cmp_info.default_domain & PAPI_DOM_KERNEL )
+		if ( _perfctr_vector.cmp_info.default_domain & PAPI_DOM_KERNEL )
 			def_mode |= PERF_OS;
 
 		ptr->allocated_registers.selector = 0;
@@ -345,7 +345,7 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 		case PERFCTR_X86_INTEL_PENTM:
 #endif
 			ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
-			for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+			for ( i = 0; i < _perfctr_vector.cmp_info.num_cntrs; i++ ) {
 				ptr->control.cpu_control.evntsel[i] |= def_mode;
 				ptr->control.cpu_control.pmc_map[i] = ( unsigned int ) i;
 			}
@@ -372,7 +372,7 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 		case PERFCTR_X86_AMD_FAM10H:
 #endif
 		case PERFCTR_X86_AMD_K7:
-			for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+			for ( i = 0; i < _perfctr_vector.cmp_info.num_cntrs; i++ ) {
 				ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
 				ptr->control.cpu_control.pmc_map[i] = ( unsigned int ) i;
 			}
@@ -393,26 +393,26 @@ int
 _x86_set_domain( hwd_control_state_t * cntrl, int domain )
 {
 	int i, did = 0;
-	int num_cntrs = MY_VECTOR.cmp_info.num_cntrs;
+	int num_cntrs = _perfctr_vector.cmp_info.num_cntrs;
 
 	/* Clear the current domain set for this event set */
 	/* We don't touch the Enable bit in this code */
 	if ( is_pentium4() ) {
-		for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+		for ( i = 0; i < _perfctr_vector.cmp_info.num_cntrs; i++ ) {
 			cntrl->control.cpu_control.evntsel_aux[i] &=
 				~( ESCR_T0_OS | ESCR_T0_USR );
 		}
 
 		if ( domain & PAPI_DOM_USER ) {
 			did = 1;
-			for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+			for ( i = 0; i < _perfctr_vector.cmp_info.num_cntrs; i++ ) {
 				cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_USR;
 			}
 		}
 
 		if ( domain & PAPI_DOM_KERNEL ) {
 			did = 1;
-			for ( i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++ ) {
+			for ( i = 0; i < _perfctr_vector.cmp_info.num_cntrs; i++ ) {
 				cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_OS;
 			}
 		}
@@ -993,7 +993,7 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 #endif
 
 	/* The correct event to overflow is EventIndex */
-	ncntrs = MY_VECTOR.cmp_info.num_cntrs;
+	ncntrs = _perfctr_vector.cmp_info.num_cntrs;
 	i = ESI->EventInfoArray[EventIndex].pos[0];
 
 	if ( i >= ncntrs ) {
@@ -1002,9 +1002,9 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	}
 
 	if ( threshold != 0 ) {	 /* Set an overflow threshold */
-		retval = _papi_hwi_start_signal( MY_VECTOR.cmp_info.hardware_intr_sig,
+		retval = _papi_hwi_start_signal( _perfctr_vector.cmp_info.hardware_intr_sig,
 										 NEED_CONTEXT,
-										 MY_VECTOR.cmp_info.CmpIdx );
+										 _perfctr_vector.cmp_info.CmpIdx );
 		if ( retval != PAPI_OK )
 			return ( retval );
 
@@ -1021,7 +1021,7 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		contr->cpu_control.nractrs--;
 		nricntrs = ( int ) contr->cpu_control.nrictrs;
 		nracntrs = ( int ) contr->cpu_control.nractrs;
-		contr->si_signo = MY_VECTOR.cmp_info.hardware_intr_sig;
+		contr->si_signo = _perfctr_vector.cmp_info.hardware_intr_sig;
 
 		/* move this event to the bottom part of the list if needed */
 		if ( i < nracntrs )
@@ -1053,7 +1053,7 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 		OVFDBG( "Modified event set\n" );
 
-		retval = _papi_hwi_stop_signal( MY_VECTOR.cmp_info.hardware_intr_sig );
+		retval = _papi_hwi_stop_signal( _perfctr_vector.cmp_info.hardware_intr_sig );
 	}
 
 #ifdef DEBUG
@@ -1073,7 +1073,7 @@ _x86_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 }
 
 
-papi_vector_t _x86_vector = {
+papi_vector_t _perfctr_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,

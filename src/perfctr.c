@@ -17,7 +17,7 @@
 
 #include "linux-common.h"
 
-extern papi_vector_t MY_VECTOR;
+extern papi_vector_t _perfctr_vector;
 
 #ifdef PPC64
 extern int setup_ppc64_presets( int cputype );
@@ -166,40 +166,40 @@ _perfctr_init_substrate( int cidx )
 	if ( retval )
 		return ( retval );
 
-	strcpy( MY_VECTOR.cmp_info.name,"perfctr.c" );
-	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
+	strcpy( _perfctr_vector.cmp_info.name,"perfctr.c" );
+	strcpy( _perfctr_vector.cmp_info.version, "$Revision$" );
 	sprintf( abiv, "0x%08X", info.abi_version );
-	strcpy( MY_VECTOR.cmp_info.support_version, abiv );
-	strcpy( MY_VECTOR.cmp_info.kernel_version, info.driver_version );
-	MY_VECTOR.cmp_info.CmpIdx = cidx;
-	MY_VECTOR.cmp_info.num_cntrs = ( int ) PERFCTR_CPU_NRCTRS( &info );
+	strcpy( _perfctr_vector.cmp_info.support_version, abiv );
+	strcpy( _perfctr_vector.cmp_info.kernel_version, info.driver_version );
+	_perfctr_vector.cmp_info.CmpIdx = cidx;
+	_perfctr_vector.cmp_info.num_cntrs = ( int ) PERFCTR_CPU_NRCTRS( &info );
 	if ( info.cpu_features & PERFCTR_FEATURE_RDPMC )
-		MY_VECTOR.cmp_info.fast_counter_read = 1;
+		_perfctr_vector.cmp_info.fast_counter_read = 1;
 	else
-		MY_VECTOR.cmp_info.fast_counter_read = 0;
-	MY_VECTOR.cmp_info.fast_real_timer = 1;
-	MY_VECTOR.cmp_info.fast_virtual_timer = 1;
-	MY_VECTOR.cmp_info.attach = 1;
-	MY_VECTOR.cmp_info.attach_must_ptrace = 1;
-	MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
+		_perfctr_vector.cmp_info.fast_counter_read = 0;
+	_perfctr_vector.cmp_info.fast_real_timer = 1;
+	_perfctr_vector.cmp_info.fast_virtual_timer = 1;
+	_perfctr_vector.cmp_info.attach = 1;
+	_perfctr_vector.cmp_info.attach_must_ptrace = 1;
+	_perfctr_vector.cmp_info.default_domain = PAPI_DOM_USER;
 #if !defined(PPC64)
 	/* AMD and Intel ia386 processors all support unit mask bits */
-	MY_VECTOR.cmp_info.cntr_umasks = 1;
+	_perfctr_vector.cmp_info.cntr_umasks = 1;
 #endif
 #if defined(PPC64)
-	MY_VECTOR.cmp_info.available_domains =
+	_perfctr_vector.cmp_info.available_domains =
 		PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
 #else
-	MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
+	_perfctr_vector.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
 #endif
-	MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
-	MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
+	_perfctr_vector.cmp_info.default_granularity = PAPI_GRN_THR;
+	_perfctr_vector.cmp_info.available_granularities = PAPI_GRN_THR;
 	if ( info.cpu_features & PERFCTR_FEATURE_PCINT )
-		MY_VECTOR.cmp_info.hardware_intr = 1;
+		_perfctr_vector.cmp_info.hardware_intr = 1;
 	else
-		MY_VECTOR.cmp_info.hardware_intr = 0;
+		_perfctr_vector.cmp_info.hardware_intr = 0;
 	SUBDBG( "Hardware/OS %s support counter generated interrupts\n",
-			MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not" );
+			_perfctr_vector.cmp_info.hardware_intr ? "does" : "does not" );
 
 	strcpy( _papi_hwi_system_info.hw_info.model_string,
 			PERFCTR_CPU_NAME( &info ) );
@@ -289,10 +289,10 @@ _perfctr_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	case PAPI_DOMAIN:
 	case PAPI_DEFDOM:
 #if defined(PPC64)
-		return ( MY_VECTOR.
+		return ( _perfctr_vector.
 				 set_domain( option->domain.ESI, option->domain.domain ) );
 #else
-		return ( MY_VECTOR.
+		return ( _perfctr_vector.
 				 set_domain( option->domain.ESI->ctl_state,
 							 option->domain.domain ) );
 #endif
@@ -347,7 +347,7 @@ _perfctr_dispatch_timer( int signal, siginfo_t * si, void *context )
 	ThreadInfo_t *master = NULL;
 	int isHardware = 0;
 	caddr_t address;
-	int cidx = MY_VECTOR.cmp_info.CmpIdx;
+	int cidx = _perfctr_vector.cmp_info.CmpIdx;
 
 	ctx.si = si;
 	ctx.ucontext = ( ucontext_t * ) context;
@@ -358,7 +358,7 @@ _perfctr_dispatch_timer( int signal, siginfo_t * si, void *context )
 	address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( ctx ) );
 	_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, &isHardware,
 										OVERFLOW_MASK, GEN_OVERFLOW, &master,
-										MY_VECTOR.cmp_info.CmpIdx );
+										_perfctr_vector.cmp_info.CmpIdx );
 
 	/* We are done, resume interrupting counters */
 	if ( isHardware ) {

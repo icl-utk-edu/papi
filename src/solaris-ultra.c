@@ -921,14 +921,14 @@ _ultra_hwd_dispatch_timer( int signal, siginfo_t * si, void *context )
   ThreadInfo_t *master = NULL;
   int isHardware = 0;
   caddr_t address;
-  int cidx = MY_VECTOR.cmp_info.CmpIdx;
+  int cidx = _solaris_vector.cmp_info.CmpIdx;
 
   ctx.si = si;
   ctx.ucontext = ( ucontext_t * ) context;
 
   address = GET_OVERFLOW_ADDRESS( ctx );
   _papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, &isHardware,
-				      0, 0, &master, MY_VECTOR.cmp_info.CmpIdx );
+				      0, 0, &master, _solaris_vector.cmp_info.CmpIdx );
 
   /* We are done, resume interrupting counters */
   if ( isHardware ) {
