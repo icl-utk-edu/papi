@@ -1,7 +1,0 @@
-# $Id$
-
-COMPSRCS += components/acpi/linux-acpi.c
-COMPOBJS += linux-acpi.o
-
-linux-acpi.o: components/acpi/linux-acpi.c components/acpi/linux-acpi.h $(HEADERS) 
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/acpi/linux-acpi.c -o linux-acpi.o 
