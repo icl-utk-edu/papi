@@ -5,10 +5,6 @@
 
 #define DEBUG_FILE_LEN  20
 
-/* define an alternate entry point for compatibility with papi.c for 3.1.x*/
-/* this line should be deleted for the papi 4.0 head */
-#define _papi_cleanup_all_memory _papi_mem_cleanup_all
-
 typedef struct pmem
 {
 	void *ptr;

@@ -4048,7 +4048,7 @@ again:
 
 	init_retval = DEADBEEF;
 	init_level = PAPI_NOT_INITED;
-	_papi_cleanup_all_memory(  );
+	_papi_mem_cleanup_all(  );
 }
 
 /** @class PAPI_strerror
