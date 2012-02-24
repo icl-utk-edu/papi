@@ -749,7 +749,7 @@ int
 _papi_pfm_init_substrate( int cidx )
 {
 	( void ) cidx;			 /*unused */
-	int i, retval;
+	int retval;
 	unsigned int ncnt;
 	unsigned int version;
 	char pmu_name[PAPI_MIN_STR_LEN];

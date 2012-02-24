@@ -12,12 +12,14 @@
 #include "perfctr-x86.h"
 #include "perfmon/pfmlib.h"
 #include "papi_libpfm_events.h"
+#include "extras.h"
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 #include "linux-memory.h"
+
 
 /* Prototypes for entry points found in perfctr.c */
 extern int _perfctr_init_substrate( int );
