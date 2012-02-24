@@ -5,6 +5,26 @@
 
 /* Locking functions */
 
+#if defined(USE_PTHREAD_MUTEXES)
+
+#include <pthread.h>
+
+extern pthread_mutex_t _papi_hwd_lock_data[PAPI_MAX_LOCK];
+
+#define  _papi_hwd_lock(lck)                       \
+do                                                 \
+{                                                  \
+   pthread_mutex_lock (&_papi_hwd_lock_data[lck]); \
+} while(0)
+#define  _papi_hwd_unlock(lck)                     \
+do                                                 \
+{                                                  \
+  pthread_mutex_unlock(&_papi_hwd_lock_data[lck]); \
+} while(0)
+
+
+#else
+
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
@@ -207,3 +227,5 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
 #endif
 
 #endif
+
+#endif /* defined(USE_PTHREAD_MUTEXES) */

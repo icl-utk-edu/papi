@@ -864,6 +864,7 @@ Optional Packages:
   --with-components=<"component1 component2">		Specify which components to build
   --with-debug=<yes,memory>		Yes builds a debug version of the library and memory disables PAPI_NO_MEMORY_MANAGEMENT
   --with-CPU=<cpu>		Specify CPU type
+  --with-pthread-mutexes		Specify use of pthread mutexes rather than custom PAPI locks
   --with-ffsll		Specify use of the ffsll() function
   --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>		Specify realtime timer
   --with-tls=<keyword>		This platform supports thread local storage with a keyword
@@ -2259,7 +2260,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2262:" \
+echo "$as_me:2263:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -4209,6 +4210,15 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+
+# Check whether --with-pthread-mutexes or --without-pthread-mutexes was given.
+if test "${with_pthread_mutexes+set}" = set; then
+  withval="$with_pthread_mutexes"
+  pthread_mutexes=yes
+	      CFLAGS="$CFLAGS -DUSE_PTHREAD_MUTEXES"
+
+fi;
+
 if test "x$ffsll" = "x"; then
 
 # Check whether --with-ffsll or --without-ffsll was given.
@@ -5802,6 +5812,7 @@ if test "${with_pfm_libdir+set}" = set; then
   pfm_libdir=$withval
             user_specified_interface=perfmon
 fi;
+
 
 ##################################################
 #          Linux perf_event/perf_counter

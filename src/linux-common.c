@@ -30,14 +30,23 @@ int _linux_get_system_info( papi_mdi_t *mdi );
 
 /* The locks used by Linux */
 
+#if defined(USE_PTHREAD_MUTEXES)
+pthread_mutex_t _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#else
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#endif
+
 
 static int _linux_init_locks(void) {
 
    int i;
 
    for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
+#if defined(USE_PTHREAD_MUTEXES)
+       pthread_mutex_init(&_papi_hwd_lock_data[i],NULL);
+#else
        _papi_hwd_lock_data[i] = MUTEX_OPEN;
+#endif
    }
 
    return PAPI_OK;
