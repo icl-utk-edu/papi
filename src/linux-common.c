@@ -52,6 +52,18 @@ static int _linux_init_locks(void) {
    return PAPI_OK;
 }
 
+	
+int
+_linux_detect_hypervisor(char *virtual_vendor_name) {
+
+	int retval=0;
+
+#if defined(__i386__)||defined(__x86_64__)
+	retval=_x86_detect_hypervisor(virtual_vendor_name);
+#endif
+	
+	return retval;
+}
 
 int 
 _papi_hwi_init_os(void) {
@@ -177,7 +189,7 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 			mdi->hw_info.mhz, mdi->hw_info.clock_mhz );
 
 	/* Get virtualization info */
-	mdi->hw_info.virtualized=_x86_detect_hypervisor(mdi->hw_info.virtual_vendor_string);
+	mdi->hw_info.virtualized=_linux_detect_hypervisor(mdi->hw_info.virtual_vendor_string);
 
 	return PAPI_OK;
 }
