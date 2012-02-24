@@ -59,7 +59,6 @@
 
 /* Globals declared extern elsewhere */
 hwi_search_t *preset_search_map;
-static volatile unsigned int _papi_pe_lock_data[PAPI_MAX_LOCK];
 extern papi_vector_t _papi_pe_vector;
 
 /* Static globals */
@@ -842,7 +841,6 @@ static int
 _papi_pe_init_substrate( int cidx )
 {
 
-  int i;
   int retval;
 
   ( void ) cidx;          /*unused */
@@ -883,10 +881,6 @@ _papi_pe_init_substrate( int cidx )
 			   _papi_hwi_system_info.hw_info.cpuid_family)) {
      return PAPI_ENOSUPP;
   }
-   
-  /* Setup Locks */
-  for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-      _papi_hwd_lock_data[i] = MUTEX_OPEN;
 
   /* Setup mmtimers */
   retval=mmtimer_setup();

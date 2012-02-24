@@ -88,20 +88,7 @@ xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 }
 #endif
 
-/* volatile uint32_t lock; */
-
-volatile unsigned int lock[PAPI_MAX_LOCK];
-
 long long tb_scale_factor = ( long long ) 1;	/* needed to scale get_cycles on PPC series */
-
-static void
-lock_init( void )
-{
-	int i;
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
-		lock[i] = MUTEX_OPEN;
-	}
-}
 
 int
 _perfctr_init_substrate( int cidx )
@@ -229,8 +216,6 @@ _perfctr_init_substrate( int cidx )
 #endif
 	if ( retval )
 		return ( retval );
-
-	lock_init(  );
 
 	return ( PAPI_OK );
 }

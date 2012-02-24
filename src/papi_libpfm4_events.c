@@ -14,9 +14,6 @@
 #include "perfmon/pfmlib.h"
 #include "perfmon/pfmlib_perf_event.h"
 
-/* Whis is this here? */
-volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-
 #define NATIVE_EVENT_CHUNK 1024
 
 struct native_event_t {

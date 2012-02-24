@@ -1,6 +1,5 @@
 /*
-* File:    perfmon.c
-* CVS:     $Id$
+* File:    windows-perfmon.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Brian Sheely
@@ -41,6 +40,13 @@ typedef unsigned uint;
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
+
+extern int __pfm_getcpuinfo_attr( const char *attr, char *ret_buf,
+						    size_t maxlen );
+extern void OpenWinPMCDriver(  );
+extern void CloseWinPMCDriver(  );
+CRITICAL_SECTION _papi_hwd_lock_data[PAPI_MAX_LOCK];
+
 extern papi_vector_t _papi_pfm_vector;
 
 static int _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex,
@@ -390,12 +396,28 @@ detect_timeout_and_unavail_pmu_regs( pfmlib_regmask_t * r_pmcs,
 			}
 		}
 	check_multiplex_timeout( myfd, timeout_ns );
-	i = close( myfd );
+
 	SUBDBG( "CLOSE fd %d returned %d\n", myfd, i );
 	return PAPI_OK;
 }
 
 /* BEGIN COMMON CODE */
+
+static void
+decode_vendor_string( char *s, int *vendor )
+{
+	if ( strcasecmp( s, "GenuineIntel" ) == 0 )
+		*vendor = PAPI_VENDOR_INTEL;
+	else if ( ( strcasecmp( s, "AMD" ) == 0 ) ||
+			  ( strcasecmp( s, "AuthenticAMD" ) == 0 ) )
+		*vendor = PAPI_VENDOR_AMD;
+	else if ( strcasecmp( s, "IBM" ) == 0 )
+		*vendor = PAPI_VENDOR_IBM;
+	else if ( strcasecmp( s, "Cray" ) == 0 )
+		*vendor = PAPI_VENDOR_CRAY;
+	else
+		*vendor = PAPI_VENDOR_UNKNOWN;
+}
 
 static inline int
 compute_kernel_args( hwd_control_state_t * ctl0 )
@@ -546,121 +568,9 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 int
 tune_up_fd( int ctx_fd )
 {
-	int ret;
-
-	/* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
-	 * fd not visible to child. */
-	ret = fcntl( ctx_fd, F_SETFD, FD_CLOEXEC );
-	if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(FD_CLOEXEC) on %d: %s", ctx_fd,
-				   strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
-	/* setup asynchronous notification on the file descriptor */
-	ret = fcntl( ctx_fd, F_SETFL, fcntl( ctx_fd, F_GETFL, 0 ) | O_ASYNC );
-	if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(O_ASYNC) on %d: %s", ctx_fd,
-				   strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
-	/* get ownership of the descriptor */
-	ret = fcntl( ctx_fd, F_SETOWN, mygettid(  ) );
-	if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", ctx_fd,
-				   strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
-	/*
-	 * when you explicitely declare that you want a particular signal,
-	 * even with you use the default signal, the kernel will send more
-	 * information concerning the event to the signal handler.
-	 *
-	 * In particular, it will send the file descriptor from which the
-	 * event is originating which can be quite useful when monitoring
-	 * multiple tasks from a single thread.
-	 */
-	ret = fcntl( ctx_fd, F_SETSIG, _papi_pfm_vector.cmp_info.hardware_intr_sig );
-	if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(F_SETSIG,%d) on %d: %s",
-				   _papi_pfm_vector.cmp_info.hardware_intr_sig, ctx_fd,
-				   strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
 	return ( PAPI_OK );
 }
 
-static int
-attach( hwd_control_state_t * ctl, unsigned long tid )
-{
-	pfarg_ctx_t *newctx = ( pfarg_ctx_t * ) malloc( sizeof ( pfarg_ctx_t ) );
-	pfarg_load_t *load_args =
-		( pfarg_load_t * ) malloc( sizeof ( pfarg_load_t ) );
-	int ret;
-
-	if ( ( newctx == NULL ) || ( load_args == NULL ) )
-		return ( PAPI_ENOMEM );
-	memset( newctx, 0x0, sizeof ( *newctx ) );
-	memset( load_args, 0, sizeof ( *load_args ) );
-
-	/* Make sure the process exists and is being ptraced() */
-
-	ret = ptrace( PTRACE_ATTACH, tid, NULL, NULL );
-	if ( ret == 0 ) {
-		ptrace( PTRACE_DETACH, tid, NULL, NULL );
-		PAPIERROR( "Process/thread %d is not being ptraced", tid );
-		free( newctx );
-		free( load_args );
-		return ( PAPI_EINVAL );
-	}
-	/* If we get here, then we should hope that the process is being
-	   ptraced, if not, then we probably can't attach to it. */
-
-	if ( ( ret == -1 ) && ( errno != EPERM ) ) {
-		PAPIERROR( "Process/thread %d cannot be ptraced: %s", tid,
-				   strerror( errno ) );
-		free( newctx );
-		free( load_args );
-		return ( PAPI_EINVAL );
-	}
-
-	SUBDBG( "PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n", newctx, NULL, NULL, 0 );
-	if ( ( ret = pfm_create_context( newctx, NULL, NULL, 0 ) ) == -1 ) {
-		PAPIERROR( "attach:pfm_create_context(): %s", strerror( errno ) );
-		free( newctx );
-		free( load_args );
-		return ( PAPI_ESYS );
-	}
-	SUBDBG( "PFM_CREATE_CONTEXT returned fd %d\n", ret );
-	tune_up_fd( ret );
-
-	( ( pfm_control_state_t * ) ctl )->ctx_fd = ret;
-	( ( pfm_control_state_t * ) ctl )->ctx = newctx;
-	load_args->load_pid = tid;
-	( ( pfm_control_state_t * ) ctl )->load = load_args;
-
-	return ( PAPI_OK );
-}
-
-static int
-detach( hwd_context_t * ctx, hwd_control_state_t * ctl )
-{
-	int i;
-
-	i = close( ( ( pfm_control_state_t * ) ctl )->ctx_fd );
-	SUBDBG( "CLOSE fd %d returned %d\n",
-			( ( pfm_control_state_t * ) ctl )->ctx_fd, i );
-
-	/* Restore to main threads context */
-	free( ( ( pfm_control_state_t * ) ctl )->ctx );
-	( ( pfm_control_state_t * ) ctl )->ctx = &( ( pfm_context_t * ) ctx )->ctx;
-	( ( pfm_control_state_t * ) ctl )->ctx_fd =
-		( ( pfm_context_t * ) ctx )->ctx_fd;
-	free( ( ( pfm_control_state_t * ) ctl )->load );
-	( ( pfm_control_state_t * ) ctl )->load =
-		&( ( pfm_context_t * ) ctx )->load;
-
-	return ( PAPI_OK );
-}
 
 static inline int
 set_domain( hwd_control_state_t * ctl0, int domain )
@@ -762,29 +672,9 @@ _papi_pfm_init_substrate( int cidx )
 	strncpy( _papi_pfm_vector.cmp_info.support_version, buf,
 			 sizeof ( _papi_pfm_vector.cmp_info.support_version ) );
 
-	retval =
-		get_string_from_file( "/sys/kernel/perfmon/version",
-							  _papi_pfm_vector.cmp_info.kernel_version,
-							  sizeof ( _papi_pfm_vector.cmp_info.kernel_version ) );
-	if ( retval != PAPI_OK )
-		return ( retval );
-#ifdef PFM_VERSION
-	sprintf( buf, "%d.%d", PFM_VERSION_MAJOR( PFM_VERSION ),
-			 PFM_VERSION_MINOR( PFM_VERSION ) );
-	SUBDBG( "Perfmon2 library versions...kernel: %s library: %s\n",
-			_papi_pfm_vector.cmp_info.kernel_version, buf );
-	if ( strcmp( _papi_pfm_vector.cmp_info.kernel_version, buf ) != 0 ) {
-		/* do a little exception processing; 81 is compatible with 80 */
-		if ( !( ( PFM_VERSION_MINOR( PFM_VERSION ) == 81 )
-				&& ( strncmp( _papi_pfm_vector.cmp_info.kernel_version, "2.8", 3 ) ==
-					 0 ) ) ) {
-			PAPIERROR
-				( "Version mismatch of libpfm: compiled %s vs. installed %s\n",
-				  buf, _papi_pfm_vector.cmp_info.kernel_version );
-			return ( PAPI_ESBSTR );
-		}
-	}
-#endif
+
+	strcpy( _papi_hwi_system_info.sub_info.kernel_version, "PFM for Windows" );
+	OpenWinPMCDriver(  );
 
 	/* The following checks the version of the PFM library 
 	   against the version PAPI linked to... */
@@ -819,15 +709,7 @@ _papi_pfm_init_substrate( int cidx )
 
 		unsigned long min_timeout_ns;
 
-		struct timespec ts;
-		if ( syscall( __NR_clock_getres, CLOCK_REALTIME, &ts ) == -1 ) {
-			PAPIERROR
-				( "Could not detect proper HZ rate, multiplexing may fail\n" );
-			min_timeout_ns = 10000000;
-		} else {
-			min_timeout_ns = ts.tv_nsec;
-		}
-
+		min_timeout_ns = 10000000;
 
 		/* This will fail if we've done timeout detection wrong */
 		retval =
@@ -931,8 +813,11 @@ _papi_pfm_init_substrate( int cidx )
 		_papi_pfm_vector.cmp_info.cntr_umasks = 1;
 	}
 
-	_papi_pfm_vector.cmp_info.hardware_intr = 1;
-	_papi_pfm_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+
+  /****WIN32: can we figure out how to get Windows to support hdw interrupts on
+    counter overflow? The hardware supports it; does the OS? */
+	_papi_pfm_vector.cmp_info.hardware_intr = 0;
+
 	_papi_pfm_vector.cmp_info.attach = 1;
 	_papi_pfm_vector.cmp_info.attach_must_ptrace = 1;
 	_papi_pfm_vector.cmp_info.kernel_multiplex = 1;
@@ -940,11 +825,17 @@ _papi_pfm_init_substrate( int cidx )
 	_papi_pfm_vector.cmp_info.profile_ear = 1;
 	_papi_pfm_vector.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
 
+
+	/* FIX: For now, use the pmu_type from Perfmon */
+	_papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
+
 	/* Setup presets */
 	retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type, cidx );
 	if ( retval )
 		return ( retval );
 
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		InitializeCriticalSection( &_papi_hwd_lock_data[i] );
 
 	return ( PAPI_OK );
 }
@@ -952,6 +843,11 @@ _papi_pfm_init_substrate( int cidx )
 int
 _papi_pfm_shutdown_substrate(  )
 {
+
+	int i;
+	CloseWinPMCDriver(  );
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		DeleteCriticalSection( &_papi_hwd_lock_data[i] );
 
 	return PAPI_OK;
 }
@@ -1293,16 +1189,6 @@ _papi_pfm_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		return ( PAPI_OK );
 	}
 
-	case PAPI_ATTACH:
-		return ( attach
-				 ( ( pfm_control_state_t * ) ( option->attach.ESI->ctl_state ),
-				   option->attach.tid ) );
-	case PAPI_DETACH:
-		return ( detach
-				 ( ctx,
-				   ( pfm_control_state_t * ) ( option->attach.ESI->
-											   ctl_state ) ) );
-
 	case PAPI_DOMAIN:
 		return ( set_domain
 				 ( ( pfm_control_state_t * ) ( option->domain.ESI->ctl_state ),
@@ -1339,27 +1225,6 @@ _papi_pfm_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		return ( PAPI_OK );
 #endif
 
-
-	case PAPI_DEF_ITIMER:
-	{
-		/* flags are currently ignored, eventually the flags will be able
-		   to specify whether or not we use POSIX itimers (clock_gettimer) */
-		if ( ( option->itimer.itimer_num == ITIMER_REAL ) &&
-			 ( option->itimer.itimer_sig != SIGALRM ) )
-			return PAPI_EINVAL;
-		if ( ( option->itimer.itimer_num == ITIMER_VIRTUAL ) &&
-			 ( option->itimer.itimer_sig != SIGVTALRM ) )
-			return PAPI_EINVAL;
-		if ( ( option->itimer.itimer_num == ITIMER_PROF ) &&
-			 ( option->itimer.itimer_sig != SIGPROF ) )
-			return PAPI_EINVAL;
-		if ( option->itimer.ns > 0 )
-			option->itimer.ns = round_requested_ns( option->itimer.ns );
-		/* At this point, we assume the user knows what he or
-		   she is doing, they maybe doing something arch specific */
-		return PAPI_OK;
-	}
-
 	case PAPI_DEF_MPX_NS:
 	{
 		option->multiplex.ns = round_requested_ns( option->multiplex.ns );
@@ -1383,10 +1248,6 @@ _papi_pfm_shutdown( hwd_context_t * ctx0 )
 #if defined(USE_PROC_PTTIMER)
 	close( ctx->stat_fd );
 #endif
-
-
-	ret = close( ctx->ctx_fd );
-	SUBDBG( "CLOSE fd %d returned %d\n", ctx->ctx_fd, ret );
 
 	return ( PAPI_OK );
 }
@@ -1416,9 +1277,6 @@ find_profile_index( EventSetInfo_t * ESI, int pmd, int *flags,
 			break;
 		}
 	}
-
-
-	SUBDBG( "(%p,%d,%p)\n", ESI, pmd, index );
 
 	for ( count = 0; count < ESI->profile.event_counter; count++ ) {
 		/* Find offset of PMD that gets read from the kernel */
@@ -1820,280 +1678,6 @@ process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 	return ( PAPI_OK );
 }
 
-
-/* This function  used when hardware overflows ARE working 
-    or when software overflows are forced					*/
-
-static void
-_papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
-{
-	_papi_hwi_context_t ctx;
-#ifdef HAVE_PFM_MSG_TYPE
-	pfm_msg_t msg;
-#else
-	pfarg_msg_t msg;
-#endif
-	int ret, wanted_fd, fd = info->si_fd;
-	caddr_t address;
-	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
-	int cidx = _papi_pfm_vector.cmp_info.CmpIdx;
-
-	if ( thread == NULL ) {
-		PAPIERROR( "thread == NULL in _papi_pfm_dispatch_timer!" );
-		if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
-			ret = read( fd, &msg, sizeof ( msg ) );
-			pfm_restart( fd );
-		}
-		return;
-	}
-
-	if ( thread->running_eventset[cidx] == NULL ) {
-		PAPIERROR
-			( "thread->running_eventset == NULL in _papi_pfm_dispatch_timer!" );
-		if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
-			ret = read( fd, &msg, sizeof ( msg ) );
-			pfm_restart( fd );
-		}
-		return;
-	}
-
-	if ( thread->running_eventset[cidx]->overflow.flags == 0 ) {
-		PAPIERROR
-			( "thread->running_eventset->overflow.flags == 0 in _papi_pfm_dispatch_timer!" );
-		if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
-			ret = read( fd, &msg, sizeof ( msg ) );
-			pfm_restart( fd );
-		}
-		return;
-	}
-
-	ctx.si = info;
-	ctx.ucontext = ( hwd_ucontext_t * ) uc;
-
-	if ( thread->running_eventset[cidx]->overflow.
-		 flags & PAPI_OVERFLOW_FORCE_SW ) {
-		address = GET_OVERFLOW_ADDRESS( ctx );
-		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL,
-											0, 0, &thread, cidx );
-	} else {
-		if ( thread->running_eventset[cidx]->overflow.flags ==
-			 PAPI_OVERFLOW_HARDWARE ) {
-			wanted_fd =
-				( ( pfm_control_state_t * ) ( thread->running_eventset[cidx]->
-											  ctl_state ) )->ctx_fd;
-		} else {
-			wanted_fd = ( ( pfm_context_t * ) thread->context[cidx] )->ctx_fd;
-		}
-		if ( wanted_fd != fd ) {
-			SUBDBG( "expected fd %d, got %d in _papi_hwi_dispatch_timer!",
-					wanted_fd, fd );
-			if ( n == _papi_pfm_vector.cmp_info.hardware_intr_sig ) {
-				ret = read( fd, &msg, sizeof ( msg ) );
-				pfm_restart( fd );
-			}
-			return;
-		}
-	  retry:
-		ret = read( fd, &msg, sizeof ( msg ) );
-		if ( ret == -1 ) {
-			if ( errno == EINTR ) {
-				SUBDBG( "read(%d) interrupted, retrying\n", fd );
-				goto retry;
-			} else {
-				PAPIERROR( "read(%d): errno %d", fd, errno );
-			}
-		} else if ( ret != sizeof ( msg ) ) {
-			PAPIERROR( "read(%d): short %d vs. %d bytes", fd, ret,
-					   sizeof ( msg ) );
-			ret = -1;
-		}
-
-		if ( msg.type != PFM_MSG_OVFL ) {
-			PAPIERROR( "unexpected msg type %d", msg.type );
-			ret = -1;
-		}
-#if 0
-		if ( msg.pfm_ovfl_msg.msg_ovfl_tid != mygettid(  ) ) {
-			PAPIERROR( "unmatched thread id %lx vs. %lx",
-					   msg.pfm_ovfl_msg.msg_ovfl_tid, mygettid(  ) );
-			ret = -1;
-		}
-#endif
-
-		if ( ret != -1 ) {
-			if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) &&
-				 !( thread->running_eventset[cidx]->profile.
-					flags & PAPI_PROFIL_FORCE_SW ) )
-				process_smpl_buf( 0, sizeof ( pfm_dfl_smpl_entry_t ), &thread );
-			else {
-				/* PAPI assumes that the overflow vector contains the register index of the
-				   overflowing native event. That is generally true, but Stephane used some
-				   tricks to offset the fixed counters on Core2 (Core? i7?) by 16. This hack
-				   corrects for that hack in a (hopefully) transparent manner */
-				unsigned long i, vector = msg.pfm_ovfl_msg.msg_ovfl_pmds[0];
-				pfm_control_state_t *ctl =
-					( pfm_control_state_t * ) thread->running_eventset[cidx]->
-					ctl_state;
-				for ( i = 0; i < ctl->in.pfp_event_count; i++ ) {
-					/* We're only comparing to pmds[0]. A more robust implementation would
-					   compare to pmds[0-3]. The bit mask must be converted to an index
-					   for the comparison to work */
-					if ( ctl->pd[i].reg_num ==
-						 ffsl( msg.pfm_ovfl_msg.msg_ovfl_pmds[0] ) - 1 ) {
-						/* if a match is found, convert the index back to a bitmask */
-						vector = 1 << i;
-						break;
-					}
-				}
-				_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx,
-													( caddr_t ) ( ( size_t )
-																  msg.
-																  pfm_ovfl_msg.
-																  msg_ovfl_ip ),
-													NULL, vector, 0, &thread,
-													cidx );
-			}
-		}
-
-		if ( ( ret = pfm_restart( fd ) ) ) {
-			PAPIERROR( "pfm_restart(%d): %s", fd, strerror( ret ) );
-		}
-	}
-}
-
-static int
-_papi_pfm_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
-{
-	( void ) ESI;			 /*unused */
-	/* Process any remaining samples in the sample buffer */
-	return ( process_smpl_buf( 0, sizeof ( pfm_dfl_smpl_entry_t ), &thread ) );
-}
-
-static int
-_papi_pfm_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
-{
-	int cidx = _papi_pfm_vector.cmp_info.CmpIdx;
-	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ( ESI->ctl_state );
-	pfm_context_t *ctx = ( pfm_context_t * ) ( ESI->master->context[cidx] );
-	pfarg_ctx_t newctx;
-	void *buf_addr = NULL;
-	pfm_dfl_smpl_arg_t buf_arg;
-	pfm_dfl_smpl_hdr_t *hdr;
-	int i, ret, ctx_fd;
-
-	memset( &newctx, 0, sizeof ( newctx ) );
-
-	if ( threshold == 0 ) {
-		SUBDBG( "MUNMAP(%p,%lld)\n", ctx->smpl_buf,
-				( unsigned long long ) ctx->smpl.buf_size );
-		munmap( ctx->smpl_buf, ctx->smpl.buf_size );
-
-		i = close( ctl->ctx_fd );
-		SUBDBG( "CLOSE fd %d returned %d\n", ctl->ctx_fd, i );
-
-		/* Thread has master context */
-
-		ctl->ctx_fd = ctx->ctx_fd;
-		ctl->ctx = &ctx->ctx;
-		memset( &ctx->smpl, 0, sizeof ( buf_arg ) );
-		ctx->smpl_buf = NULL;
-		ret = _papi_pfm_set_overflow( ESI, EventIndex, threshold );
-//#warning "This should be handled somewhere else"
-		ESI->state &= ~( PAPI_OVERFLOWING );
-		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
-
-		return ( ret );
-	}
-
-	memset( &buf_arg, 0, sizeof ( buf_arg ) );
-	buf_arg.buf_size = 2 * getpagesize(  );
-
-	SUBDBG( "PFM_CREATE_CONTEXT(%p,%s,%p,%d)\n", &newctx, PFM_DFL_SMPL_NAME,
-			&buf_arg, ( int ) sizeof ( buf_arg ) );
-	if ( ( ret =
-		   pfm_create_context( &newctx, PFM_DFL_SMPL_NAME, &buf_arg,
-							   sizeof ( buf_arg ) ) ) == -1 ) {
-		DEBUGCALL( DEBUG_SUBSTRATE, dump_smpl_arg( &buf_arg ) );
-		PAPIERROR( "_papi_hwd_set_profile:pfm_create_context(): %s",
-				   strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
-	ctx_fd = ret;
-	SUBDBG( "PFM_CREATE_CONTEXT returned fd %d\n", ctx_fd );
-	tune_up_fd( ret );
-
-	SUBDBG( "MMAP(NULL,%lld,%d,%d,%d,0)\n",
-			( unsigned long long ) buf_arg.buf_size, PROT_READ, MAP_PRIVATE,
-			ctx_fd );
-	buf_addr =
-		mmap( NULL, ( size_t ) buf_arg.buf_size, PROT_READ, MAP_PRIVATE, ctx_fd,
-			  0 );
-	if ( buf_addr == MAP_FAILED ) {
-		PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s", buf_arg.buf_size, PROT_READ,
-				   MAP_PRIVATE, ctx_fd, strerror( errno ) );
-		close( ctx_fd );
-		return ( PAPI_ESYS );
-	}
-	SUBDBG( "Sample buffer is located at %p\n", buf_addr );
-
-	hdr = ( pfm_dfl_smpl_hdr_t * ) buf_addr;
-	SUBDBG( "hdr_cur_offs=%llu version=%u.%u\n",
-			( unsigned long long ) hdr->hdr_cur_offs,
-			PFM_VERSION_MAJOR( hdr->hdr_version ),
-			PFM_VERSION_MINOR( hdr->hdr_version ) );
-
-	if ( PFM_VERSION_MAJOR( hdr->hdr_version ) < 1 ) {
-		PAPIERROR( "invalid buffer format version %d",
-				   PFM_VERSION_MAJOR( hdr->hdr_version ) );
-		munmap( buf_addr, buf_arg.buf_size );
-		close( ctx_fd );
-		return ( PAPI_ESBSTR );
-	}
-
-	ret = _papi_pfm_set_overflow( ESI, EventIndex, threshold );
-	if ( ret != PAPI_OK ) {
-		munmap( buf_addr, buf_arg.buf_size );
-		close( ctx_fd );
-		return ( ret );
-	}
-
-	/* Look up the native event code */
-
-	if ( ESI->profile.flags & ( PAPI_PROFIL_DATA_EAR | PAPI_PROFIL_INST_EAR ) ) {
-		pfarg_pmd_t *pd;
-		int pos, native_index;
-		pd = ctl->pd;
-		pos = ESI->EventInfoArray[EventIndex].pos[0];
-		native_index =
-			( ( pfm_register_t * ) ( ESI->NativeInfoArray[pos].ni_bits ) )->
-			event;
-		setup_ear_event( native_index, &pd[pos], ESI->profile.flags );
-	}
-
-	if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
-		pfarg_pmd_t *pd;
-		int pos;
-		pd = ctl->pd;
-		pos = ESI->EventInfoArray[EventIndex].pos[0];
-		pd[pos].reg_random_seed = 5;
-		pd[pos].reg_random_mask = 0xff;
-	}
-
-	/* Now close our context it is safe */
-
-	// close(ctx->ctx_fd);
-
-	/* Copy the new data to the threads context control block */
-
-	ctl->ctx_fd = ctx_fd;
-	memcpy( &ctx->smpl, &buf_arg, sizeof ( buf_arg ) );
-	ctx->smpl_buf = buf_addr;
-
-	return ( PAPI_OK );
-}
-
-
-
 static int
 _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
@@ -2293,6 +1877,38 @@ _papi_pfm_update_control_state( hwd_control_state_t * ctl0,
 	}
 
 	return ( PAPI_OK );
+}
+
+void CALLBACK
+_papi_hwd_timer_callback( UINT wTimerID, UINT msg,
+						  DWORD dwUser, DWORD dw1, DWORD dw2 )
+{
+	_papi_hwi_context_t ctx;
+	CONTEXT context;				   // processor specific context structure
+	HANDLE threadHandle;
+	BOOL error;
+	ThreadInfo_t *master = NULL;
+	int isHardware = 0;
+
+#define OVERFLOW_MASK 0
+#define GEN_OVERFLOW 1
+
+	ctx.ucontext = &context;
+
+	// dwUser is the threadID passed by timeSetEvent
+	// NOTE: This call requires W2000 or later
+	threadHandle = OpenThread( THREAD_GET_CONTEXT, FALSE, dwUser );
+
+	// retrieve the contents of the control registers only
+	context.ContextFlags = CONTEXT_CONTROL;
+	error = GetThreadContext( threadHandle, &context );
+	CloseHandle( threadHandle );
+
+	// pass a void pointer to cpu register data here
+	_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx,
+										GET_OVERFLOW_ADDRESS( ( &ctx ) ),
+										&isHardware, OVERFLOW_MASK,
+										GEN_OVERFLOW, &master );
 }
 
 

@@ -28,8 +28,6 @@
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
-volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-volatile unsigned int lock[PAPI_MAX_LOCK];
 extern papi_vector_t _ia64_vector;
 extern unsigned int PAPI_NATIVE_EVENT_AND_MASK;
 extern unsigned int PAPI_NATIVE_EVENT_SHIFT;
@@ -978,8 +976,6 @@ _ia64_init_substrate( int cidx )
 	/* Always initialize globals dynamically to handle forks properly. */
 
 	preset_search_map = NULL;
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
-		_papi_hwd_lock_data[i] = MUTEX_OPEN;
 
 	/* Opened once for all threads. */
 	if ( pfm_initialize(  ) != PFMLIB_SUCCESS )

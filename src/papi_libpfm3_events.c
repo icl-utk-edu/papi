@@ -45,8 +45,6 @@ extern unsigned int PAPI_NATIVE_UMASK_SHIFT;
 
 /* Globals declared extern elsewhere */
 
-volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-
 /* NOTE: PAPI stores umask info in a variable sized (16 bit?) bitfield.
     Perfmon2 stores umask info in a large (48 element?) array of values.
     Native event encodings for perfmon2 contain array indices

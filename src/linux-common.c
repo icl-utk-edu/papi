@@ -28,6 +28,22 @@ PAPI_os_info_t _papi_os_info;
 int _linux_get_cpu_info( PAPI_hw_info_t * hwinfo );
 int _linux_get_system_info( papi_mdi_t *mdi );
 
+/* The locks used by Linux */
+
+volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+
+static int _linux_init_locks(void) {
+
+   int i;
+
+   for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
+       _papi_hwd_lock_data[i] = MUTEX_OPEN;
+   }
+
+   return PAPI_OK;
+}
+
+
 int 
 _papi_hwi_init_os(void) {
 
@@ -35,6 +51,10 @@ _papi_hwi_init_os(void) {
     char *ptr;
     struct utsname uname_buffer;
 
+    /* Initialize the locks */
+    _linux_init_locks();
+
+    /* Get the kernel info */
     uname(&uname_buffer);
 
     SUBDBG("Native kernel version %s\n",uname_buffer.release);
@@ -501,6 +521,7 @@ _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 
     return retval;
 }
+
 
 papi_os_vector_t _papi_os_vector = {
   .get_memory_info =   _linux_get_memory_info,
