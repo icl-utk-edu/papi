@@ -94,8 +94,6 @@ trim_note( char *in )
 	return ( note );
 }
 
-extern hwi_presets_t _papi_hwi_presets;
-
 static inline int
 find_preset_code( char *tmp, int *code )
 {
