@@ -46,7 +46,6 @@ typedef struct _HighLevelInfo
 	float total_ins;			   /**< Total instructions */
 } HighLevelInfo;
 
-extern int init_level;
 int _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
 					float *rate, unsigned int EVENT, HighLevelInfo * state );
 void _internal_cleanup_hl_info( HighLevelInfo * state );

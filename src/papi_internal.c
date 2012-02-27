@@ -45,6 +45,7 @@
 #include "papi_user_events.h"
 #endif
 
+int init_level = PAPI_NOT_INITED;
 
 static int default_debug_handler( int errorCode );
 static long long handle_derived( EventInfo_t * evi, long long *from );
