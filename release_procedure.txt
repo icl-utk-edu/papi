@@ -15,7 +15,7 @@ __ 2. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
 
 __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
-	Doxyfile-{html,man1,man3} (PROJECT_NUMBER) ; and commit to cvs if needed.
+	Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
 
 -- 3a. On most icl machines:
 	export PATH=/mnt/scratch/sw/doxygen-1.7.4/bin:$PATH
