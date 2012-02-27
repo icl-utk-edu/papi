@@ -647,8 +647,8 @@ papi_vector_t _net_vector = {
     .cmp_info = {
         /* default component information (unspecified values are initialized to 0) */
         .name = "linux-net.c",
-        .version               = "$Revision$",
-        .CmpIdx                = 0,              /* set by init_substrate */
+        .version               = "4.2.1",
+	.description = "Linux network driver statistics",
         .num_mpx_cntrs         = PAPI_MPX_DEF_DEG,
         .num_cntrs             = NET_MAX_COUNTERS,
         .default_domain        = PAPI_DOM_USER,

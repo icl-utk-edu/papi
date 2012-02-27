@@ -726,6 +726,7 @@ papi_vector_t _lustre_vector = {
         /* component information (unspecified values initialized to 0) */
        .name = "linux-lustre.c",
        .version = "1.9",
+       .description = "Lustre filesystem statistics",
        .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
        .num_cntrs = LUSTRE_MAX_COUNTERS,
        .default_domain = PAPI_DOM_USER,

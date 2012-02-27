@@ -4,11 +4,11 @@
 #include "papi_memory.h"
 #include "linux-lmsensors.h"
 
+papi_vector_t _lmsensors_vector;
 
-
-/*******************************************************************************
- ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
- ******************************************************************************/
+/******************************************************************************
+ ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
+ *****************************************************************************/
 /*
  * Counts number of events available in this system
  */
@@ -50,11 +50,9 @@ createNativeEvents( void )
 	int chip_nr = 0;
 	const sensors_chip_name *chip_name;
 
-	cmp_id_t component;
-
 	/* component name and description */
-	strcpy( component.name, "LM_SENSORS" );
-	strcpy( component.descr,
+	strcpy( _lmsensors_vector.cmp_info.short_name, "LM_SENSORS" );
+	strcpy( _lmsensors_vector.cmp_info.description,
 			"lm-sensors provides tools for monitoring the hardware health" );
 
 
@@ -94,7 +92,7 @@ createNativeEvents( void )
 				/* Save native event data */
 				sprintf( lm_sensors_native_table[id].name,
 						 "%s.%s.%s.%s",
-						 component.name,
+						 _lmsensors_vector.cmp_info.short_name,
 						 chipnamestring, featurelabel, sub->name );
 
 				strncpy( lm_sensors_native_table[id].description,
@@ -445,7 +443,7 @@ papi_vector_t _lmsensors_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name = "linux-lmsensors.c",
-				 .version = "$Revision$",
+				 .version = "4.2.1",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = LM_SENSORS_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,

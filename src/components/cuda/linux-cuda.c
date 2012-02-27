@@ -20,6 +20,8 @@
 #include "papi_memory.h"
 #include "linux-cuda.h"
 
+papi_vector_t _cuda_vector;
+
 
 /*******************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT **********
@@ -290,11 +292,10 @@ createNativeEvents( void )
 	int cuptiDomainId;
 	int i;
 	int devNameLen;
-	cmp_id_t component;
 
 	/* component name and description */
-	strcpy( component.name, "CUDA" );
-	strcpy( component.descr,
+	strcpy( _cuda_vector.cmp_info.short_name, "CUDA" );
+	strcpy( _cuda_vector.cmp_info.description,
 			"CuPTI provides the API for monitoring CUDA hardware events" );
 
 	/* create events for every GPU device and every domain per device  */
@@ -315,7 +316,7 @@ createNativeEvents( void )
 				/* Save native event data */
 				sprintf( cuda_native_table[id].name,
 						 "%s.%s.%s.%s",
-						 component.name,
+						 _cuda_vector.cmp_info.short_name,
 						 device[deviceId].name,
 						 device[deviceId].domain[domainId].name,
 						 device[deviceId].domain[domainId].event[eventId].
@@ -847,8 +848,7 @@ CUDA_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _cuda_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name =
-				 "$Id$",
+				 .name = "linux_cuda.c",
 				 .version = "$Revision$",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = CUDA_MAX_COUNTERS,

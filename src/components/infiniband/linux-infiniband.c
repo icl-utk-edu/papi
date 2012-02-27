@@ -787,7 +787,8 @@ papi_vector_t _infiniband_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name ="linux-infiniband.c",
-				 .version = "$Revision$",
+				 .version = "4.2.1",
+				 .description = "Infiniband statistics",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = INFINIBAND_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
