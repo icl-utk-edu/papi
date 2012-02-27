@@ -93,7 +93,6 @@ typedef struct sigcontext hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx)  (void *)(((hwd_ucontext_t *)(ctx->ucontext))->sc_jmpbuf.jmp_context.iar)
 
 /* define the vector structure at the bottom of this file */
-extern papi_vector_t _aix_vector;
 
 #define MY_VECTOR _aix_vector
 

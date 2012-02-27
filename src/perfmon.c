@@ -40,9 +40,11 @@
 
 typedef unsigned uint;
 
-/* Advance function declaration */
+/* Advance declarations */
 static int _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex,
 							int threshold );
+papi_vector_t _papi_pfm_vector;
+
 
 /* Static locals */
 

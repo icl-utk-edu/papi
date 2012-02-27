@@ -19,6 +19,9 @@
 
 #include "papi_setup_presets.h"
 
+/* Advance declarations */
+papi_vector_t _aix_vector;
+
 /* Locking variables */
 volatile int lock_var[PAPI_MAX_LOCK] = { 0 };
 atomic_p lock[PAPI_MAX_LOCK];
