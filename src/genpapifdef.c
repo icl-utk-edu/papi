@@ -40,11 +40,9 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define NO_LIBPAPI
 #define PAPI_MAX_COUNTER_TERMS 8	/* to satisfy papi_preset.h */
 #include "papi_preset.h"
-#include "papi_data.c"
-#undef NO_LIB_PAPI
+#include "papi_common_strings.h"
 /*
 	The following array is used to create a series of defines
 	for use with PAPI in Fortran programs.
