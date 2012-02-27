@@ -26,6 +26,8 @@
 
 #define DEADBEEF 0xdedbeef
 extern int papi_num_components;
+extern int init_level;
+
 
 /********************************************************/
 /* This block provides general strings used in PAPI     */

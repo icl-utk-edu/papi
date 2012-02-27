@@ -29,6 +29,8 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#include "papi_data.h"
+
 #ifdef USER_EVENTS
 #include "papi_user_events.h"
 #endif
@@ -57,23 +59,7 @@ unsigned int PAPI_NATIVE_UMASK_SHIFT = 10;
 #define papi_return(a) return(a)
 #endif
 
-#ifdef ANY_THREAD_GETS_SIGNAL
-extern int ( *_papi_hwi_thread_kill_fn ) ( int, int );
-#endif
-
-extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
-extern papi_mdi_t _papi_hwi_system_info;
-
-/* papi_data.c */
-
-extern hwi_presets_t _papi_hwi_presets;
-extern const hwi_describe_t _papi_hwi_derived[];
-
-extern int init_retval;
-extern int init_level;
-
-/* Defined by the substrate */
-extern hwi_preset_data_t _papi_hwi_preset_data[];
+static int init_retval = DEADBEEF;
 
 inline_static int
 valid_component( int cidx )

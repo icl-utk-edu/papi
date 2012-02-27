@@ -28,25 +28,11 @@ vendors did in the kernel extensions or performance libraries. */
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include "extras.h"
+#include "threads.h"
 
 #if (!defined(HAVE_FFSLL) || defined(__bgp__))
 int ffsll( long long lli );
 #endif
-
-/*******************/
-/* BEGIN EXTERNALS */
-/*******************/
-
-extern papi_mdi_t _papi_hwi_system_info;
-
-#ifdef ANY_THREAD_GETS_SIGNAL
-extern void _papi_hwi_lookup_thread_symbols( void );
-extern int ( *_papi_hwi_thread_kill_fn ) ( int, int );
-#endif
-
-/*****************/
-/* END EXTERNALS */
-/*****************/
 
 /****************/
 /* BEGIN LOCALS */
@@ -57,8 +43,6 @@ static unsigned int _rnum = DEADBEEF;
 /**************/
 /* END LOCALS */
 /**************/
-
-extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
 
 inline_static unsigned short
 random_ushort( void )

@@ -111,7 +111,6 @@ static void add_preset( hwi_search_t * tab, int *np, einfo_t e );
 static int cpuver;
 static int pcr_shift[2];
 
-extern papi_mdi_t _papi_hwi_system_info;
 extern int _solaris_get_memory_info( PAPI_hw_info_t * hw, int id );
 extern int _solaris_get_dmem_info( PAPI_dmem_info_t * d );
 

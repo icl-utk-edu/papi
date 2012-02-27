@@ -45,18 +45,17 @@
 #include "papi_user_events.h"
 #endif
 
-
+/* Advanced definitons */
 static int default_debug_handler( int errorCode );
 static long long handle_derived( EventInfo_t * evi, long long *from );
 
-/* Defined in papi_data.c */
-extern hwi_presets_t _papi_hwi_presets;
-
-/* Machine dependent info structure */
-extern papi_mdi_t _papi_hwi_system_info;
-
+/* Global definitions used by other files */
+int init_level = PAPI_NOT_INITED;
 int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
+
+
+
 
 /* Utility functions */
 
@@ -1407,9 +1406,6 @@ _papi_hwi_init_global_internal( void )
 {
 
 	int retval;
-	extern const hwi_preset_info_t
-		_papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
-	extern const unsigned int _papi_hwi_preset_type[PAPI_MAX_PRESET_EVENTS];
 
 	memset( &_papi_hwi_presets, 0x0, sizeof ( _papi_hwi_presets ) );
 	/* This member is static */

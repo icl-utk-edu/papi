@@ -56,15 +56,12 @@
 
 #define PERF_EVENTS_RUNNING 0x01
 
-
-/* Globals declared extern elsewhere */
-hwi_search_t *preset_search_map;
-extern papi_vector_t _papi_pe_vector;
-
 /* Static globals */
 
 static int nmi_watchdog_active;
 
+/* Advance declaration */
+papi_vector_t _papi_pe_vector;
 
 /* FIXME */
 /* What the heck are these? -pjm */

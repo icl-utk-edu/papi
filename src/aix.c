@@ -19,15 +19,8 @@
 
 #include "papi_setup_presets.h"
 
-extern int _aix_get_memory_info( PAPI_hw_info_t * mem_info, int type );
-extern int _aix_get_dmem_info( PAPI_dmem_info_t * d );
-
-/* Machine dependent info structure */
-extern papi_mdi_t _papi_hwi_system_info;
-extern pm_groups_info_t pmgroups;
-
-/* define the vector structure at the bottom of this file */
-extern papi_vector_t _aix_vector;
+/* Advance declarations */
+papi_vector_t _aix_vector;
 
 /* Locking variables */
 volatile int lock_var[PAPI_MAX_LOCK] = { 0 };
