@@ -855,6 +855,7 @@ _papi_pe_init_substrate( int cidx )
 
   /* Set various version strings */
   strcpy( _papi_pe_vector.cmp_info.name,"perf_events.c" );
+  strcpy( _papi_pe_vector.cmp_info.description,"Linux perf_event CPU counters" );
   strcpy( _papi_pe_vector.cmp_info.version, "4.2.1" );
   
   /* perf_events defaults */

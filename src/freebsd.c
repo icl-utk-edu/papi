@@ -954,6 +954,8 @@ _papi_hwi_init_os(void) {
 papi_vector_t _papi_freebsd_vector = {
   .cmp_info = {
 	/* default component information (unspecified values are initialized to 0) */
+        .name = "FreeBSD",
+	.description = "FreeBSD CPU counters",
 	.default_domain = PAPI_DOM_USER,
 	.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 	.default_granularity = PAPI_GRN_THR,

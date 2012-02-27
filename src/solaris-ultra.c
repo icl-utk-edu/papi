@@ -1586,6 +1586,8 @@ _papi_hwi_init_os(void) {
 
 papi_vector_t _solaris_vector = {
 	.cmp_info = {
+                                 .name = "solaris.ultra",
+                                 .description = "Solaris CPU counters",
 				 .num_cntrs = MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,

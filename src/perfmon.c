@@ -884,8 +884,11 @@ _papi_pfm_init_substrate( int cidx )
 	}
 	SUBDBG( "pfm_get_num_events: %d\n", ncnt );
 	_papi_pfm_vector.cmp_info.num_native_events = ncnt;
+
 	strcpy( _papi_pfm_vector.cmp_info.name,"perfmon.c" );
-	strcpy( _papi_pfm_vector.cmp_info.version, "$Revision$" );
+	strcpy( _papi_pfm_vector.cmp_info.description,
+		"Linux perfmon2 CPU counters" );
+	strcpy( _papi_pfm_vector.cmp_info.version, "3.8" );
 	sprintf( buf, "%08x", version );
 
 	pfm_get_num_counters( ( unsigned int * ) &_papi_pfm_vector.cmp_info.num_cntrs );

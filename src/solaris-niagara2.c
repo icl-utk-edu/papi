@@ -2509,6 +2509,8 @@ _papi_hwi_init_os(void) {
 papi_vector_t _niagara2_vector = {
 /************* SUBSTRATE CAPABILITIES/INFORMATION/ETC *************************/
 	.cmp_info = {
+                                 .name = "solaris-niagara2",
+                                 .description = "Solaris Counters",
 				 .num_cntrs = MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,

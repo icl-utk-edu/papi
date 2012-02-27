@@ -636,8 +636,6 @@ _aix_get_system_info( papi_mdi_t *mdi )
 	if ( retval > 0 )
 		return ( retval );
 
-	strcpy( _aix_vector.cmp_info.name, "aix.c" );	/* Name of the substrate we're using */
-
 	_aix_mdi_init(  );
 
 	_papi_hwi_system_info.hw_info.nnodes = 1;
@@ -1293,6 +1291,9 @@ _papi_hwi_init_os(void) {
 papi_vector_t _aix_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
+
+                                 .name = "aix.c",
+				 .description = "AIX pmapi CPU counters", 
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,

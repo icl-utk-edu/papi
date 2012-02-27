@@ -1078,6 +1078,8 @@ _x86_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 papi_vector_t _perfctr_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
+                                 .name = "perfctr",
+				 .description = "Linux perfctr CPU counters",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
