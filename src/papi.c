@@ -29,7 +29,6 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
-#include "papi_data.h"
 
 #ifdef USER_EVENTS
 #include "papi_user_events.h"
@@ -58,6 +57,11 @@ unsigned int PAPI_NATIVE_UMASK_SHIFT = 10;
 #else
 #define papi_return(a) return(a)
 #endif
+
+#ifdef DEBUG
+int _papi_hwi_debug;
+#endif
+
 
 static int init_retval = DEADBEEF;
 

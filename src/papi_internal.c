@@ -39,7 +39,8 @@
 #include "multiplex.h"
 #include "extras.h"
 #include "papi_preset.h"
-#include "papi_data.h"
+
+#include "papi_common_strings.h"
 
 #ifdef USER_EVENTS
 #include "papi_user_events.h"
@@ -53,9 +54,7 @@ static long long handle_derived( EventInfo_t * evi, long long *from );
 int init_level = PAPI_NOT_INITED;
 int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
-
-
-
+papi_mdi_t _papi_hwi_system_info;
 
 /* Utility functions */
 
@@ -1821,6 +1820,67 @@ _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 		return 1;
 	}
 }
+
+
+/* table matching derived types to derived strings.                             
+   used by get_info, encode_event, xml translator                               
+*/
+static const hwi_describe_t _papi_hwi_derived[] = {
+  {NOT_DERIVED, "NOT_DERIVED", "Do nothing"},
+  {DERIVED_ADD, "DERIVED_ADD", "Add counters"},
+  {DERIVED_PS, "DERIVED_PS",
+   "Divide by the cycle counter and convert to seconds"},
+  {DERIVED_ADD_PS, "DERIVED_ADD_PS",
+   "Add 2 counters then divide by the cycle counter and xl8 to secs."},
+  {DERIVED_CMPD, "DERIVED_CMPD",
+   "Event lives in first counter but takes 2 or more codes"},
+  {DERIVED_SUB, "DERIVED_SUB", "Sub all counters from first counter"},
+  {DERIVED_POSTFIX, "DERIVED_POSTFIX",
+   "Process counters based on specified postfix string"},
+  {-1, NULL, NULL}
+};
+
+/* _papi_hwi_derived_type:
+   Helper routine to extract a derived type from a derived string
+   returns type value if found, otherwise returns -1
+*/
+int
+_papi_hwi_derived_type( char *tmp, int *code )
+{
+  int i = 0;
+  while ( _papi_hwi_derived[i].name != NULL ) {
+    if ( strcasecmp( tmp, _papi_hwi_derived[i].name ) == 0 ) {
+      *code = _papi_hwi_derived[i].value;
+      return PAPI_OK;
+    }
+    i++;
+  }
+  INTDBG( "Invalid derived string %s\n", tmp );
+  return PAPI_EINVAL;
+}
+
+
+/* _papi_hwi_derived_string:
+   Helper routine to extract a derived string from a derived type  
+   copies derived type string into derived if found,
+   otherwise returns PAPI_EINVAL
+*/
+static int
+_papi_hwi_derived_string( int type, char *derived, int len )
+{
+  int j;
+
+  for ( j = 0; _papi_hwi_derived[j].value != -1; j++ ) {
+    if ( _papi_hwi_derived[j].value == type ) {
+      strncpy( derived, _papi_hwi_derived[j].name, ( size_t )\
+	       len );
+      return PAPI_OK;
+    }
+  }
+  INTDBG( "Invalid derived type %d\n", type );
+  return PAPI_EINVAL;
+}
+
 
 /* _papi_hwi_get_event_info:
    Assumes EventCode contains a valid preset code.

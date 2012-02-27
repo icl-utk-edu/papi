@@ -13,7 +13,9 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 #include "papi_preset.h"
-#include "papi_data.h"
+
+/* Various preset items, why they are separate members no-one knows */
+hwi_presets_t _papi_hwi_presets;
 
 /* This routine copies values from a dense 'findem' array of events into the sparse
    global _papi_hwi_presets array, which is assumed to be empty at initialization. 

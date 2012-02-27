@@ -70,4 +70,8 @@ int _papi_hwi_setup_all_presets( hwi_search_t * findem,
 int _papi_hwi_cleanup_all_presets( void );
 int _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes );
 
+extern hwi_presets_t _papi_hwi_presets;
+extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
+extern const unsigned int _papi_hwi_preset_type[PAPI_MAX_PRESET_EVENTS];
+
 #endif /* _PAPI_PRESET */
