@@ -7,14 +7,13 @@
 *          bsheely@eecs.utk.edu
 */
 
+#include <string.h>
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
 #include "papi_preset.h"
-#include <string.h>
-
-/* Defined in papi_data.c */
-extern hwi_presets_t _papi_hwi_presets;
+#include "papi_data.h"
 
 /* This routine copies values from a dense 'findem' array of events into the sparse
    global _papi_hwi_presets array, which is assumed to be empty at initialization. 
