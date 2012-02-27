@@ -101,6 +101,8 @@ typedef pfm_register_t cmp_register_t;
 typedef pfm_control_state_t cmp_control_state_t;
 typedef pfm_context_t cmp_context_t;
 
+extern papi_vector_t _papi_pfm_vector;
+
 #define MY_VECTOR _papi_pfm_vector
 
 #endif

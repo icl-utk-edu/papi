@@ -27,6 +27,8 @@
 #include "papi_libpfm_events.h"
 #include "extras.h"
 
+#include "perfmon.h"
+
 #include "linux-memory.h"
 #include "linux-timer.h"
 #include "linux-common.h"
@@ -38,11 +40,7 @@
 
 typedef unsigned uint;
 
-/* Globals declared extern elsewhere */
-
-hwi_search_t *preset_search_map;
-extern papi_vector_t _papi_pfm_vector;
-
+/* Advance function declaration */
 static int _papi_pfm_set_overflow( EventSetInfo_t * ESI, int EventIndex,
 							int threshold );
 
