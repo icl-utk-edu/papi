@@ -591,6 +591,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 	unsigned int i, j;
 
 
+	SUBDBG("checking all %d components\n",papi_num_components);
 	for ( j = 0, i = 0 | PAPI_NATIVE_MASK;
 		  j < ( unsigned int ) papi_num_components;
 		  j++, i = 0 | PAPI_NATIVE_MASK ) {

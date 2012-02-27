@@ -733,7 +733,8 @@ add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
 			}
 			/* there is an empty slot for the native event;
 			   initialize the native index for the new added event */
-			INTDBG( "Adding 0x%x\n", nevt[i] );
+			INTDBG( "Adding 0x%x to ESI %p Component %d\n", 
+				nevt[i], ESI, ESI->CmpIdx );
 			ESI->NativeInfoArray[ESI->NativeCount].ni_event = nevt[i];
 			ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
 			ESI->NativeCount++;
@@ -1364,6 +1365,17 @@ _papi_hwi_query( int preset_index, int *flags, char **note )
 }
 #endif
 
+#include "components_config.h"
+
+int _papi_num_compiled_components = ( sizeof ( _papi_compiled_components ) / sizeof ( *_papi_compiled_components ) ) - 1;
+
+/* FIXME: =1 is hack so that _papi_hwi_native_name_to_code works during */
+/* substrate_init */
+int papi_num_components=1;
+
+/* Null terminated list of all active components */
+papi_vector_t **_papi_hwd;
+
 /*
  * Routine that initializes all available components.
  * A component is available if a pointer to its info vector
@@ -1372,28 +1384,39 @@ _papi_hwi_query( int preset_index, int *flags, char **note )
 int
 _papi_hwi_init_global( void )
 {
-	int retval, i = 0;
+        int retval, i = 0, j = 0;
 
-	while ( _papi_hwd[i] ) {
-		retval = _papi_hwi_innoculate_vector( _papi_hwd[i] );
-		if ( retval != PAPI_OK )
-			return ( retval );
 
-		retval = _papi_hwi_innoculate_os_vector( &_papi_os_vector );
-		if ( retval != PAPI_OK )
-			return ( retval );
+	retval = _papi_hwi_innoculate_os_vector( &_papi_os_vector );
+	if ( retval != PAPI_OK ) {
+	   return ( retval );
+	}
 
-		retval = _papi_hwd[i]->init_substrate( i );
+	/* initialize _papi_hwd[], the master initialized component list */
+	/* size is +1 to hold a null terminator                          */
+	_papi_hwd=papi_calloc(_papi_num_compiled_components+1,
+			      sizeof(papi_vector_t *));
+	if (_papi_hwd == NULL) {
+	   return PAPI_ENOMEM;
+	}
+
+	while ( _papi_compiled_components[i] ) {
+		retval = _papi_hwi_innoculate_vector( _papi_compiled_components[i] );
 		if ( retval != PAPI_OK ) {
-		  /* FIXME!  should we drop them from the list if not */
-		  /*         initialized properly?                    */
+			return ( retval );
+		}
 
-		  /* this is currently the way we indicate a component */
-		  /* is not available                                  */
-		  _papi_hwd[i]->cmp_info.num_native_events=0;
+		_papi_hwd[j]=_papi_compiled_components[i];
+
+		retval = _papi_hwd[j]->init_substrate( j );
+		if ( retval == PAPI_OK ) {
+		   j++;
+		} else {
+		   _papi_hwd[j]=NULL;
 		}
 		i++;
 	}
+	papi_num_components=j;
 	return PAPI_OK;
 }
 

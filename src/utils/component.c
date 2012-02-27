@@ -103,6 +103,24 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
 
+	/* Compiled-in Components */
+	numcmp = PAPI_num_compiled_components(  );
+
+	printf("Compiled-in components:\n");
+	for ( cid = 0; cid < numcmp; cid++ ) {
+	  cmpinfo = PAPI_get_compiled_component_info( cid );
+
+	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+
+	  if ( flags.details ) {
+		printf( "Version:\t\t\t%s\n", cmpinfo->version );
+		printf( "Number of native events:\t%d\n", cmpinfo->num_native_events);
+		printf( "Number of preset events:\t%d\n", cmpinfo->num_preset_events); 
+		printf("\n");
+	  }
+	}
+
+	printf("\nActive components:\n");
 	numcmp = PAPI_num_components(  );
 
 	for ( cid = 0; cid < numcmp; cid++ ) {

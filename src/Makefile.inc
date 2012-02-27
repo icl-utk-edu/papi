@@ -12,7 +12,7 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h cpus.h papi_vector.h \
     papi_memory.h config.h papi_user_events.h \
     extras.h multiplex.h papi_hl.h \
-    papi_common_strings.h
+    papi_common_strings.h components_config.h
 LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS = fpapi.h f77papi.h f90papi.h
 

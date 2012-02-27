@@ -12,8 +12,6 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
-#include "components_config.h"
-
 
 #include <string.h>
 
@@ -23,9 +21,6 @@
 /* which is a pmapi definition on AIX.                             */
 #include <pmapi.h>
 #endif
-
-/* FIXME: need to change this if we disable components at runtime */
-int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 
 
 void

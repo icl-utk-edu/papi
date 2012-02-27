@@ -26,6 +26,7 @@
 
 #define DEADBEEF 0xdedbeef
 extern int papi_num_components;
+extern int _papi_num_compiled_components;
 extern int init_level;
 
 

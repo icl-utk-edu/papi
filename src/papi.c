@@ -775,6 +775,45 @@ PAPI_get_component_info( int cidx )
 		return ( &( _papi_hwd[cidx]->cmp_info ) );
 }
 
+/**	@class PAPI_get_compiled_component_info 
+ *	@brief get information about a specific compiled-in component
+ *
+ *	@param cidx
+ *		Component index
+ *
+ *	This function returns a pointer to a structure containing detailed 
+ *	information about a specific software component in the PAPI library. 
+ *	This includes versioning information, preset and native event 
+ *	information, and more. 
+ *	For full details, see @ref PAPI_component_info_t. 
+ *
+ *	@par Examples:
+ *	@code
+ 		const PAPI_component_info_t *cmpinfo = NULL;
+ 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+ 		exit(1);
+ 		if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
+ 		exit(1);
+ 		printf("This component supports %d Preset Events and %d Native events.\n",
+		cmpinfo->num_preset_events, cmpinfo->num_native_events);
+ *	@endcode
+ *
+ *	@see PAPI_get_executable_info
+ *	@see PAPI_get_hardware_info
+ *	@see PAPI_get_dmem_info
+ *	@see PAPI_get_opt
+ *	@see PAPI_component_info_t
+ */
+const PAPI_component_info_t *
+PAPI_get_compiled_component_info( int cidx )
+{
+    if ((cidx<0) || (cidx > _papi_num_compiled_components)) {
+       return NULL;
+    }
+
+    return ( &( _papi_compiled_components[cidx]->cmp_info ) );
+}
+
 /* PAPI_get_event_info:
    tests input EventCode and returns a filled in PAPI_event_info_t 
    structure containing descriptive strings and values for the 
@@ -3878,9 +3917,6 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 /** @class PAPI_num_components
   *	@brief Get the number of components available on the system.
   *
-  * @post 
-  *		initializes the library to PAPI_HIGH_LEVEL_INITED if necessary
-  *
   * @return 
   *		Number of components available on the system
   *
@@ -3893,6 +3929,24 @@ int
 PAPI_num_components( void )
 {
 	return ( papi_num_components );
+}
+
+
+/** @class PAPI_num_compiled_components
+  *	@brief Get the number of compiled-in components (not all may be available)
+  *
+  * @return 
+  *		Number of components compiled into PAPI
+  *
+  *	@code
+// Query the library for a component count. 
+printf("%d components compiled., PAPI_num_components() );
+  * @endcode
+  */
+int
+PAPI_num_compiled_components( void )
+{
+	return ( _papi_num_compiled_components );
 }
 
 /** @class PAPI_num_events

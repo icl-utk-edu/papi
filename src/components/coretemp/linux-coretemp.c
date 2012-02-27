@@ -354,11 +354,11 @@ _coretemp_init_substrate( int cidx )
      num_events = generateEventList("/sys/class/hwmon");
 
      if ( num_events < 0 ) {
-	return num_events;
+	return PAPI_ENOCMP;
      }
 
      if ( num_events == 0 ) {
-	return PAPI_OK;
+	return PAPI_ENOCMP;
      }
 
      t = root;

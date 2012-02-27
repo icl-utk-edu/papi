@@ -3786,7 +3786,7 @@ for comp in $components; do
   echo "extern papi_vector_t _${comp}_vector;" >> components_config.h
 done
 echo "" >> components_config.h
-echo "papi_vector_t *_papi_hwd[] = {" >> components_config.h
+echo "papi_vector_t *_papi_compiled_components[] = {" >> components_config.h
 echo "   &MY_VECTOR," >> components_config.h
 for comp in $components; do
   echo "   &_${comp}_vector," >> components_config.h
