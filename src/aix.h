@@ -92,9 +92,10 @@ typedef struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void *)(((hwd_ucontext_t *)(ctx->ucontext))->sc_jmpbuf.jmp_context.iar)
 
+/* define the vector structure at the bottom of this file */
+extern papi_vector_t _aix_vector;
+
 #define MY_VECTOR _aix_vector
-
-
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
 
@@ -151,6 +152,12 @@ typedef struct hwd_groups {
 /* prototypes */
 extern int _aix_set_granularity( hwd_control_state_t * this_state, int domain );
 extern int _papi_hwd_init_preset_search_map( hwd_pminfo_t * info );
+
+extern int _aix_get_memory_info( PAPI_hw_info_t * mem_info, int type );
+extern int _aix_get_dmem_info( PAPI_dmem_info_t * d );
+
+/* Machine dependent info structure */
+extern pm_groups_info_t pmgroups;
 
 #endif /* _PAPI_AIX */
 
