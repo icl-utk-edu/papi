@@ -615,6 +615,8 @@ papi_vector_t _example_vector = {
                 /* to show what settings are available            */
 
 		.name = "example.c",
+		.short_name = "example",
+		.description = "A simple example component",
 		.version = "1.15",
 		.support_version = "n/a",
 		.kernel_version = "n/a",

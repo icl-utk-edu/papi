@@ -108,7 +108,7 @@ main( int argc, char **argv )
 	for ( cid = 0; cid < numcmp; cid++ ) {
 	  cmpinfo = PAPI_get_component_info( cid );
 
-	  printf( "Name:\t\t\t\t%s\n", cmpinfo->name );
+	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
 
 	  if ( flags.details ) {
 		printf( "Version:\t\t\t%s\n", cmpinfo->version );

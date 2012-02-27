@@ -638,6 +638,9 @@ read the documentation carefully.  */
 /** @ingroup papi_data_structures */
    typedef struct _papi_component_option {
      char name[PAPI_MAX_STR_LEN];            /**< Name of the substrate we're using, usually CVS RCS Id */
+     char short_name[PAPI_MIN_STR_LEN];      /**< Short name of the substrate,
+						to be prepended to event names */
+     char description[PAPI_MAX_STR_LEN];     /**< Description of the component */
      char version[PAPI_MIN_STR_LEN];         /**< Version of this substrate, usually CVS Revision */
      char support_version[PAPI_MIN_STR_LEN]; /**< Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /**< Version of the kernel PMC support driver */
