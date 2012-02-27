@@ -176,32 +176,11 @@ const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
 	/*106 */ {"PAPI_VEC_DP", "DP Vector/SIMD instr",
 			  "Double precision vector/SIMD instructions"},
 	/* empty entries are now null pointers instead of pointers to empty strings */
-#if defined (_BGL)
-	/*107 */ {"PAPI_BGL_OED", "Oedipus operations",
-			  "BGL special event: Oedipus operations"},
-	/*108 */ {"PAPI_BGL_TS_32B", "Torus 32B chunks sent",
-			  "BGL special event: Torus 32B chunks sent"},
-	/*109 */ {"PAPI_BGL_TS_FULL", "Torus no token UPC cycles",
-			  "BGL special event: Torus no token UPC cycles"},
-	/*110 */ {"PAPI_BGL_TR_DPKT", "Tree 256 byte packets",
-			  "BGL special event: Tree 256 byte packets"},
-	/*111 */ {"PAPI_BGL_TR_FULL", "UPC cycles (CLOCKx2) tree rcv is full",
-			  "BGL special event: UPC cycles (CLOCKx2) tree rcv is full"},
-#elif defined (__bgp__)
-	/*107 */ {"PAPI_BGL_TS_32B", "Torus 32B chunks sent",
-			  "BGL special event: Torus 32B chunks sent"},
-	/*108 */ {"PAPI_BGL_TR_DPKT", "Tree 256 byte packets",
-			  "BGL special event: Tree 256 byte packets"},
-	/*109 */ {NULL, NULL, NULL},
-	/*110 */ {NULL, NULL, NULL},
-	/*111 */ {NULL, NULL, NULL},
-#else
 	/*107 */ {NULL, NULL, NULL},
 	/*108 */ {NULL, NULL, NULL},
 	/*109 */ {NULL, NULL, NULL},
 	/*110 */ {NULL, NULL, NULL},
 	/*111 */ {NULL, NULL, NULL},
-#endif
 	/*112 */ {NULL, NULL, NULL},
 	/*113 */ {NULL, NULL, NULL},
 	/*114 */ {NULL, NULL, NULL},
@@ -344,25 +323,11 @@ const unsigned int _papi_hwi_preset_type[] = {
 	/*105: PAPI_VEC_SP */ PAPI_PRESET_BIT_INS + PAPI_PRESET_BIT_FP,
 	/*106: PAPI_VEC_DP */ PAPI_PRESET_BIT_INS + PAPI_PRESET_BIT_FP,
 	/* empty entries are now null pointers instead of pointers to empty strings */
-#if defined (_BGL)
-	/*107: PAPI_BGL_OED */ PAPI_PRESET_BIT_MSC,
-	/*108: PAPI_BGL_TS_32B */ PAPI_PRESET_BIT_MSC,
-	/*109: PAPI_BGL_TS_FULL */ PAPI_PRESET_BIT_MSC,
-	/*110: PAPI_BGL_TR_DPKT */ PAPI_PRESET_BIT_MSC,
-	/*111: PAPI_BGL_TR_FULL */ PAPI_PRESET_BIT_MSC,
-#elif defined (__bgp__)
-	/*107: PAPI_BGL_TS_32B */ PAPI_PRESET_BIT_MSC,
-	/*108: PAPI_BGL_TR_DPKT */ PAPI_PRESET_BIT_MSC,
-	/*109 */ 0,
-	/*110 */ 0,
-	/*111 */ 0,
-#else
-	/*107 */ 0,
+	/*107 */ 0, 
 	/*108 */ 0,
 	/*109 */ 0,
 	/*110 */ 0,
 	/*111 */ 0,
-#endif
 	/*112 */ 0,
 	/*113 */ 0,
 	/*114 */ 0,

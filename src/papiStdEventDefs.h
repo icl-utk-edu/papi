@@ -165,19 +165,6 @@ enum
 	PAPI_DP_OPS_idx,		 /* Floating point operations executed; optimized to count scaled double precision vector operations */
 	PAPI_VEC_SP_idx,		 /* Single precision vector/SIMD instructions */
 	PAPI_VEC_DP_idx,		 /* Double precision vector/SIMD instructions */
-#ifdef _BGL
-	/* 0x67 */
-	PAPI_BGL_OED_idx,		 /*Oedipus operations */
-	PAPI_BGL_TS_32B_idx,	 /*Torus 32B chunks sent */
-	PAPI_BGL_TS_FULL_idx,	 /*Torus no token UPC cycles */
-	PAPI_BGL_TR_DPKT_idx,	 /*Tree 256 byte packets */
-	PAPI_BGL_TR_FULL_idx,	 /*UPC cycles (CLOCKx2) tree rcv is full */
-#endif
-#ifdef __bgp__
-	/* 0x67 */
-	PAPI_BGP_TS_32B_idx,	 /*Torus 32B chunks sent */
-	PAPI_BGP_TS_DPKT_idx,	 /*Torus data packets sent */
-#endif
 	PAPI_END_idx			 /*This should always be last! */
 };
 
@@ -289,27 +276,7 @@ enum
 #define PAPI_VEC_SP  (PAPI_VEC_SP_idx  | PAPI_PRESET_MASK)	/* Single precision vector/SIMD instructions */
 #define PAPI_VEC_DP  (PAPI_VEC_DP_idx  | PAPI_PRESET_MASK)	/* Double precision vector/SIMD instructions */
 
-#ifdef _BGL
-#define PAPI_BGL_OED (PAPI_BGL_OED_idx | PAPI_PRESET_MASK)
-#define PAPI_BGL_TS_32B (PAPI_BGL_TS_32B_idx | PAPI_PRESET_MASK)
-#define PAPI_BGL_TS_FULL (PAPI_BGL_TS_FULL_idx | PAPI_PRESET_MASK)
-#define PAPI_BGL_TR_DPKT (PAPI_BGL_TR_DPKT_idx | PAPI_PRESET_MASK)
-#define PAPI_BGL_TR_FULL (PAPI_BGL_TR_FULL_idx | PAPI_PRESET_MASK)
-#endif
-
-#ifdef __bgp__
-#define PAPI_BGP_TS_32B (PAPI_BGP_TS_32B_idx | PAPI_PRESET_MASK)
-#define PAPI_BGP_TS_DPKT (PAPI_BGP_TS_DPKT_idx | PAPI_PRESET_MASK)
-#endif
-
 #define PAPI_END     (PAPI_END_idx  | PAPI_PRESET_MASK)	/*This should always be last! */
 
 #endif
 
-#ifdef _BGL
-/* used to define edge for native events on BGL*/
-#define EDGE_HI   0x00000000
-#define EDGE_RISE 0x10000000
-#define EDGE_FALL 0x20000000
-#define EDGE_LOW  0x30000000
-#endif
