@@ -10,6 +10,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_memory.h"
 #include "extras.h"
 
 #include "papi_setup_presets.h"
@@ -203,8 +204,6 @@ load_preset_table( char *pmu_str, int pmu_type,
 		pmu_str++;
 	}
 	*tmpn = '\0';
-
-        /* FIXME -- make sure PAPI_TOT_CYC and PAPI_TOT_INS are #1/#2 */
 
 	/* try the environment variable first */
 	if ( ( tmpn = getenv( "PAPI_CSV_EVENT_FILE" ) ) &&
@@ -418,8 +417,9 @@ load_preset_table( char *pmu_str, int pmu_type,
 }
 
 /* Frees memory for all the strdup'd char strings in a preset string array.
-    Assumes the array is initialized to 0 and has at least one 0 entry at the end.
-    free()ing a NULL pointer is a NOP. */
+   Assumes the array is initialized to 0 and has at least one 0 entry at 
+    the end.
+   free()ing a NULL pointer is a NOP. */
 static void
 free_preset_table( pfm_preset_search_entry_t * here )
 {
@@ -433,25 +433,14 @@ free_preset_table( pfm_preset_search_entry_t * here )
 	}
 }
 
-static void
-free_notes( hwi_dev_notes_t * here )
-{
-	int i = 0;
-	while ( here[i].event_code ) {
-		free( here[i].dev_note );
-		i++;
-	}
-}
-
 static int
-generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
-							pfm_preset_search_entry_t * strmap )
+generate_preset_search_map( hwi_search_t ** maploc,
+			    pfm_preset_search_entry_t * strmap )
 {
 
-	int k = 0, term;
+	int term;
 	unsigned int i = 0, j = 0;
 	hwi_search_t *psmap;
-	hwi_dev_notes_t *notemap;
 	int event_idx;
 
 	/* Count up the proposed presets */
@@ -459,24 +448,15 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	  i++;
 	}
 
-	SUBDBG( "generate_preset_search_map(%p,%p,%p) %d proposed presets\n",
-			maploc, noteloc, strmap, i );
+	SUBDBG( "generate_preset_search_map(%p,%p) %d proposed presets\n",
+			maploc, strmap, i );
 	i++;
 
 	/* Add null entry */
-	psmap = ( hwi_search_t * ) malloc( i * sizeof ( hwi_search_t ) );
+	psmap = ( hwi_search_t * ) papi_calloc( i , sizeof ( hwi_search_t ) );
 	if ( psmap == NULL ) {
 	   return PAPI_ENOMEM;
 	}
-
-	notemap = ( hwi_dev_notes_t * ) malloc( i * sizeof ( hwi_dev_notes_t ) );
-	if ( notemap == NULL ) {
-	   free(psmap);
-	   return PAPI_ENOMEM;
-	}
-
-	memset( psmap, 0x0, i * sizeof ( hwi_search_t ) );
-	memset( notemap, 0x0, i * sizeof ( hwi_dev_notes_t ) );
 
 	i = 0;
 	while ( strmap[i].preset ) {
@@ -508,30 +488,25 @@ generate_preset_search_map( hwi_search_t ** maploc, hwi_dev_notes_t ** noteloc,
 	      psmap[j].data.native[term] = PAPI_NULL;
 	   }
 
-	   //if ( ret == PAPI_OK ) {
-	      psmap[j].event_code = ( unsigned int ) strmap[i].preset;
-	      psmap[j].data.derived = strmap[i].derived;
-	      if ( strmap[i].derived == DERIVED_POSTFIX ) {
-		 strncpy( psmap[j].data.operation, strmap[i].operation,
+	   psmap[j].event_code = ( unsigned int ) strmap[i].preset;
+	   psmap[j].data.derived = strmap[i].derived;
+	   if ( strmap[i].derived == DERIVED_POSTFIX ) {
+	      strncpy( psmap[j].data.operation, strmap[i].operation,
 							 PAPI_MIN_STR_LEN );
-	      }
-	      if ( strmap[i].note ) {
-		 notemap[k].event_code = ( unsigned int ) strmap[i].preset;
-		 notemap[k].dev_note = strdup( strmap[i].note );
-		 k++;
-	      }
-	      j++;
-	      //}
+	   }
+	   if ( strmap[i].note ) {
+	      psmap[j].data.note = strdup( strmap[i].note );
+	   }
+	   j++;
 	   i++;
 	}
 	if ( i != j ) {
 		PAPIERROR( "%d of %d events in %s were not valid", i - j, i,
 				   PAPI_EVENT_FILE );
 	}
-	SUBDBG( "generate_preset_search_map(%p,%p,%p) %d actual presets\n", maploc,
-			noteloc, strmap, j );
+	SUBDBG( "generate_preset_search_map(%p,%p) %d actual presets\n", 
+                maploc, strmap, j );
 	*maploc = psmap;
-	*noteloc = notemap;
 
 	return PAPI_OK;
 }
@@ -540,37 +515,31 @@ int
 _papi_libpfm_setup_presets( char *pmu_name, int pmu_type, int cidx )
 {
 	int retval;
-	hwi_search_t *preset_search_map = NULL;
-	hwi_dev_notes_t *notemap = NULL;
-	pfm_preset_search_entry_t *_perfmon2_pfm_preset_search_map;
+	hwi_search_t *hwi_search_map = NULL;
+	pfm_preset_search_entry_t *preset_search_map;
 
 	/* allocate and clear array of search string structures */
-	_perfmon2_pfm_preset_search_map =
-		malloc( sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
-	if ( _perfmon2_pfm_preset_search_map == NULL )
+	preset_search_map = papi_calloc( PAPI_MAX_PRESET_EVENTS,
+					 sizeof ( pfm_preset_search_entry_t ));
+	if ( preset_search_map == NULL )
 		return PAPI_ENOMEM;
-	memset( _perfmon2_pfm_preset_search_map, 0x0,
-		sizeof ( pfm_preset_search_entry_t ) * PAPI_MAX_PRESET_EVENTS );
 
-	retval = load_preset_table( pmu_name, pmu_type,
-				   _perfmon2_pfm_preset_search_map );
+	retval = load_preset_table( pmu_name, pmu_type, preset_search_map );
 	if (retval) goto out1;
 
-	retval = generate_preset_search_map( &preset_search_map, &notemap,
-					    _perfmon2_pfm_preset_search_map );
+	retval = generate_preset_search_map( &hwi_search_map, 
+					    preset_search_map );
 
 	if (retval) goto out;
 
-	retval = _papi_hwi_setup_all_presets( preset_search_map, notemap, cidx );
+	retval = _papi_hwi_setup_all_presets( hwi_search_map, cidx );
 
 out:
-	free( preset_search_map );
-	free_notes( notemap );
-	free( notemap );
+	papi_free( hwi_search_map );
 
 out1:
-	free_preset_table( _perfmon2_pfm_preset_search_map );
-	free( _perfmon2_pfm_preset_search_map );
+	free_preset_table( preset_search_map );
+	papi_free( preset_search_map );
 
 	return retval;
 }

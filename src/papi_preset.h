@@ -28,6 +28,7 @@ typedef struct hwi_preset_data {
 #else
    char operation[PAPI_MIN_STR_LEN]; /**< operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
 #endif
+   char *note;          /**< optional developer notes for this event */
 } hwi_preset_data_t;
 
 /** search element for preset events defined for each platform 
@@ -37,12 +38,6 @@ typedef struct hwi_search {
    unsigned int event_code;   /**< Preset code that keys back to sparse preset array */
    hwi_preset_data_t data;    /**< Event data for this preset event */
 } hwi_search_t;
-
-/** @internal */
-typedef struct hwi_dev_notes {
-   unsigned int event_code;   /**< Preset code that keys back to sparse preset array */
-   char *dev_note;          /**< optional developer notes for this event */
-} hwi_dev_notes_t;
 
 /** collected text and data info for all preset events 
  *	@internal */
@@ -65,10 +60,9 @@ typedef struct hwi_describe {
 extern hwi_search_t *preset_search_map;
 
 int _papi_hwi_setup_all_presets( hwi_search_t * findem,
-                                 hwi_dev_notes_t * notes,
                                  int cidx);
 int _papi_hwi_cleanup_all_presets( void );
-int _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes );
+int _xml_papi_hwi_setup_all_presets( char *arch);
 
 extern hwi_presets_t _papi_hwi_presets;
 extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];

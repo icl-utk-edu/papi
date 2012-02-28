@@ -17,101 +17,83 @@
 /* Various preset items, why they are separate members no-one knows */
 hwi_presets_t _papi_hwi_presets;
 
-/* This routine copies values from a dense 'findem' array of events into the sparse
-   global _papi_hwi_presets array, which is assumed to be empty at initialization. 
-   Multiple dense arrays can be copied into the sparse array, allowing event overloading
-   at run-time, or allowing a baseline table to be augmented by a model specific table
-   at init time. This method supports adding new events; overriding existing events, or
+/* This routine copies values from a dense 'findem' array of events 
+   into the sparse global _papi_hwi_presets array, which is assumed 
+   to be empty at initialization. 
+
+   Multiple dense arrays can be copied into the sparse array, allowing 
+   event overloading at run-time, or allowing a baseline table to be 
+   augmented by a model specific table at init time. 
+
+   This method supports adding new events; overriding existing events, or
    deleting deprecated events.
 */
 int
-_papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes, int cidx )
+_papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 {
-	int i, pnum, did_something = 0;
-	unsigned int preset_index, j;
+    int i, pnum, did_something = 0;
+    unsigned int preset_index, j;
 
-	/* dense array of events is terminated with a 0 preset.
-	   don't do anything if NULL pointer. This allows just notes to be loaded.
-	   It's also good defensive programming. 
-	 */
-	if ( findem != NULL ) {
-		for ( pnum = 0;
-			  ( pnum < PAPI_MAX_PRESET_EVENTS ) &&
+    /* dense array of events is terminated with a 0 preset.
+       don't do anything if NULL pointer. This allows just notes to be loaded.
+       It's also good defensive programming. 
+     */
+    if ( findem != NULL ) {
+       for ( pnum = 0; ( pnum < PAPI_MAX_PRESET_EVENTS ) &&
 			  ( findem[pnum].event_code != 0 ); pnum++ ) {
-			/* find the index for the event to be initialized */
-			preset_index = ( findem[pnum].event_code & PAPI_PRESET_AND_MASK );
-			/* count and set the number of native terms in this event, these items are contiguous.
-			   PAPI_MAX_COUNTER_TERMS is arbitrarily defined in the high level to be a reasonable
-			   number of terms to use in a derived event linear expression, currently 8.
-			   This wastes space for components with less than 8 counters, but keeps the framework
-			   independent of the components.
+	   /* find the index for the event to be initialized */
+	   preset_index = ( findem[pnum].event_code & PAPI_PRESET_AND_MASK );
+	   /* count and set the number of native terms in this event, 
+              these items are contiguous.
 
-			   The 'native' field below is an arbitrary opaque identifier that points to information
-			   on an actual native event. It is not an event code itself (whatever that might mean).
-			   By definition, this value can never == PAPI_NULL.
-			   - dkt */
+	      PAPI_MAX_COUNTER_TERMS is arbitrarily defined in the high 
+              level to be a reasonable number of terms to use in a derived 
+              event linear expression, currently 8.
 
-			INTDBG
-				( "Counting number of terms for preset index %d, search map index %d.\n",
-				  preset_index, pnum );
-			i = 0;
-			j = 0;
-			while ( i < PAPI_MAX_COUNTER_TERMS ) {
-				if ( findem[pnum].data.native[i] != PAPI_NULL )
-					j++;
-				else if ( j )
-					break;
-				i++;
-			}
+	      This wastes space for components with less than 8 counters, 
+              but keeps the framework independent of the components.
 
-			INTDBG( "This preset has %d terms.\n", j );
-			_papi_hwi_presets.count[preset_index] = j;
+	      The 'native' field below is an arbitrary opaque identifier 
+              that points to information on an actual native event. 
+              It is not an event code itself (whatever that might mean).
+	      By definition, this value can never == PAPI_NULL.
+	      - dkt */
 
-			/* if the native event array is empty, free the data pointer.
-			   this allows existing events to be 'undefined' by overloading with nulls */
+	   INTDBG( "Counting number of terms for preset index %d, "
+                   "search map index %d.\n", preset_index, pnum );
+	   i = 0;
+	   j = 0;
+	   while ( i < PAPI_MAX_COUNTER_TERMS ) {
+	      if ( findem[pnum].data.native[i] != PAPI_NULL ) {
+		 j++;
+	      }
+	      else if ( j ) {
+		 break;
+	      }
+	      i++;
+	   }
 
-			/* This also makes no sense at all. This code is called at initialization time. 
-			   Why would a preset be set up with no events. Hello? Please kill this code. -pjm */
+	   INTDBG( "This preset has %d terms.\n", j );
+	   _papi_hwi_presets.count[preset_index] = j;
 
-			if ( j == 0 ) {
-				INTDBG
-					( "WARNING! COUNT == 0 for preset index %d, search map index %d.\n",
-					  preset_index, pnum );
-				if ( _papi_hwi_presets.data[preset_index] != NULL ) {
-					papi_free( _papi_hwi_presets.data[preset_index] );
-					_papi_hwi_presets.data[preset_index] = NULL;
-				}
-			}
-			/* otherwise malloc a data istructure for the sparse array and copy 
-			   the event data into it. Kevin assures me that the data won't 
-			   *actually* be duplicated unless it is modified */
-			else if ( _papi_hwi_presets.data[preset_index] == NULL ) {
-				_papi_hwi_presets.data[preset_index] =
-					papi_malloc( sizeof ( hwi_preset_data_t ) );
-				memcpy( _papi_hwi_presets.data[preset_index],
-						&findem[pnum].data, sizeof ( hwi_preset_data_t ) );
-			}
-			did_something++;
-		}
-	}
+	   /* malloc a data istructure for the sparse array and copy 
+	      the event data into it. 
 
-	/* optional dense array of event notes is terminated with a 0 preset */
-	if ( notes != NULL ) {
-		for ( pnum = 0;
-			  ( pnum < PAPI_MAX_PRESET_EVENTS ) &&
-			  ( notes[pnum].event_code != 0 ); pnum++ ) {
-			/* strdup the note string into the sparse preset data array */
-			preset_index = ( notes[pnum].event_code & PAPI_PRESET_AND_MASK );
-			if ( _papi_hwi_presets.dev_note[preset_index] != NULL )
-				papi_free( _papi_hwi_presets.dev_note[preset_index] );
-			_papi_hwi_presets.dev_note[preset_index] =
-				papi_strdup( notes[pnum].dev_note );
-		}
-	}
+              Kevin assures me that the data won't 
+	      *actually* be duplicated unless it is modified */
+	   if ( _papi_hwi_presets.data[preset_index] == NULL ) {
+	      _papi_hwi_presets.data[preset_index] =
+			  papi_malloc( sizeof ( hwi_preset_data_t ) );
+	      memcpy( _papi_hwi_presets.data[preset_index],
+		      &findem[pnum].data, sizeof ( hwi_preset_data_t ) );
+	   }
+	   did_something++;
+       }
+    }
 
-	_papi_hwd[cidx]->cmp_info.num_preset_events += did_something;
+    _papi_hwd[cidx]->cmp_info.num_preset_events += did_something;
 
-	return ( did_something ? PAPI_OK : PAPI_ESBSTR );
+    return ( did_something ? PAPI_OK : PAPI_ESBSTR );
 }
 
 int
