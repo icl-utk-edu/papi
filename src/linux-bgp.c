@@ -470,111 +470,6 @@ _bgp_shutdown_global( void )
 }
 
 /*
- * BPT Map Availabiliy
- *
- * This function examines the event to determine if it can be mapped
- * to counter location ctr.  If the counter location is equal to the
- * event id modulo BGP_UPC_MAX_MONITORED_EVENTS (256), then the event
- * can be mapped to the specified counter location.
- * Otherwise, the event cannot be mapped.
- */
-int
-_bgp_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
-{
-	// printf("_bgp_bpt_map_avail: Counter = %d\n", ctr);
-	if ( ( int ) get_bgp_native_event_id( dst->id ) %
-		 BGP_UPC_MAX_MONITORED_EVENTS == ctr )
-		return ( 1 );
-
-	return ( 0 );
-}
-
-/*
- * BPT Map Set
- *
- * This function forces the event to be mapped to only counter ctr.
- * Since all events are already exclusively mapped for counter mode 0,
- * there is nothing to do.  Returns nothing.
- */
-void
-_bgp_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
-{
-	// printf("_bgp_bpt_map_set: Counter = %d\n", ctr);
-
-	return;
-}
-
-/*
- * BPT Map Exclusive
- *
- * This function examines the event to determine if it has a single
- * exclusive mapping. Since we are only allowing events from
- * user mode 0 and 1, all events have an exclusive mapping.
- * Always returns true.
- */
-int
-_bgp_bpt_map_exclusive( hwd_reg_alloc_t * dst )
-{
-	// printf("_bgp_bpt_map_exclusive:\n");
-
-	return ( 1 );
-}
-
-/*
- * BPT Map Shared
- *
- * This function compares the dst and src events to determine
- * if any resources are shared. Typically the src event is
- * exclusive, so this detects a conflict if true.
- * Returns true if conflict, false if no conflict.
- * Since we are only allowing events from user mode 0 and 1,
- * all events have an exclusive mapping, and thus, do not
- * share hardware register resources.
- *
- * Always return false, as there are no 'shared' resources.
- */
-int
-_bgp_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
-{
-	// printf("_bgp_bpt_map_shared:\n");
-
-	return ( 0 );
-}
-
-/*
- * BPT Map Pre-empt
- *
- * This function removes shared resources available to the src event
- * from the resources available to the dst event,
- * and reduces the rank of the dst event accordingly. Typically,
- * the src event will be exclusive, but the code shouldn't assume it.
- *
- * There are no shared resources, and thus, returns nothing.  In fact,
- * this routine should never get called because all events are
- * exclusively mapped and no resource are shared.
- */
-void
-_bgp_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
-{
-	// printf("_bgp_bpt_map_preempt:\n");
-
-	return;
-}
-
-/*
- * BPT Map Update
- *
- * Simply returns, as there is nothing to do.
- */
-void
-_bgp_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
-{
-	// printf("_bgp_bpt_map_update:\n");
-
-	return;
-}
-
-/*
  * Register Allocation
  *
  * Sets up the UPC configuration to monitor those events
@@ -1350,12 +1245,6 @@ papi_vector_t _bgp_vectors = {
 	.ntv_code_to_bits = _bgp_ntv_code_to_bits,
 	.ntv_bits_to_info = _bgp_ntv_bits_to_info,
 	.allocate_registers = _bgp_allocate_registers,
-	.bpt_map_avail = _bgp_bpt_map_avail,
-	.bpt_map_set = _bgp_bpt_map_set,
-	.bpt_map_exclusive = _bgp_bpt_map_exclusive,
-	.bpt_map_shared = _bgp_bpt_map_shared,
-	.bpt_map_preempt = _bgp_bpt_map_preempt,
-	.bpt_map_update = _bgp_bpt_map_update,
 	.shutdown = _bgp_shutdown
 //  .shutdown_global      =
 //  .user                 =
