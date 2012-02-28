@@ -841,7 +841,7 @@ PAPI_get_compiled_component_info( int cidx )
  *	In Fortran, some fields of the structure are returned explicitly. 
  *	This function works with existing PAPI preset and native event codes. 
  *
- *	@see PAPI_event_name_to_code PAPI_set_event_info
+ *	@see PAPI_event_name_to_code 
  */
 int
 PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
