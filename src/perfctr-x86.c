@@ -632,8 +632,7 @@ _papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 	tail = 0;				 /* points to bottom of queue */
 	for ( i = 0; i < count; i++ ) {
 		map_q[i] = 0;
-		if ( _papi_hwd[cidx]->
-			 bpt_map_exclusive( ( hwd_reg_alloc_t * ) & ptr[size * i] ) )
+		if ( bpt_map_exclusive( ( hwd_reg_alloc_t * ) & ptr[size * i] ) )
 			idx_q[tail++] = i;
 	}
 	/* scan the single counter queue looking for events that share counters.
@@ -644,25 +643,20 @@ _papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 	while ( head < tail ) {
 		for ( i = 0; i < count; i++ ) {
 			if ( i != idx_q[head] ) {
-				if ( _papi_hwd[cidx]->
-					 bpt_map_shared( ( hwd_reg_alloc_t * ) & ptr[size * i],
+				if ( bpt_map_shared( ( hwd_reg_alloc_t * ) & ptr[size * i],
 									 ( hwd_reg_alloc_t * ) & ptr[size *
 																 idx_q
 																 [head]] ) ) {
 					/* both share a counter; if second is exclusive, mapping fails */
-					if ( _papi_hwd[cidx]->
-						 bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
+					if ( bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
 											ptr[size * i] ) )
 						return 0;
-					else {
-						_papi_hwd[cidx]->
-							bpt_map_preempt( ( hwd_reg_alloc_t * ) &
+					else { bpt_map_preempt( ( hwd_reg_alloc_t * ) &
 											 ptr[size * i],
 											 ( hwd_reg_alloc_t * ) & ptr[size *
 																		 idx_q
 																		 [head]] );
-						if ( _papi_hwd[cidx]->
-							 bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
+						if ( bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
 												ptr[size * i] ) )
 							idx_q[tail++] = i;
 					}
@@ -710,19 +704,15 @@ _papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 		/* try each possible mapping until you fail or find one that works */
 		for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ ) {
 			/* for the first unmapped event, try every possible counter */
-			if ( _papi_hwd[cidx]->
-				 bpt_map_avail( ( hwd_reg_alloc_t * ) rest_event_list, i ) ) {
-				_papi_hwd[cidx]->
-					bpt_map_set( ( hwd_reg_alloc_t * ) rest_event_list, i );
+			if ( bpt_map_avail( ( hwd_reg_alloc_t * ) rest_event_list, i ) ) {
+				bpt_map_set( ( hwd_reg_alloc_t * ) rest_event_list, i );
 				/* remove selected counter from all other unmapped events */
 				for ( j = 1; j < remainder; j++ ) {
-					if ( _papi_hwd[cidx]->
-						 bpt_map_shared( ( hwd_reg_alloc_t * ) &
+					if ( bpt_map_shared( ( hwd_reg_alloc_t * ) &
 										 rest_event_list[size * j],
 										 ( hwd_reg_alloc_t * )
 										 rest_event_list ) )
-						_papi_hwd[cidx]->
-							bpt_map_preempt( ( hwd_reg_alloc_t * ) &
+						bpt_map_preempt( ( hwd_reg_alloc_t * ) &
 											 rest_event_list[size * j],
 											 ( hwd_reg_alloc_t * )
 											 rest_event_list );
@@ -745,8 +735,7 @@ _papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 		}
 		for ( i = 0, j = 0; i < count; i++ ) {
 			if ( map_q[i] == 0 )
-				_papi_hwd[cidx]->
-					bpt_map_update( ( hwd_reg_alloc_t * ) & ptr[size * i],
+				bpt_map_update( ( hwd_reg_alloc_t * ) & ptr[size * i],
 									( hwd_reg_alloc_t * ) & rest_event_list[size
 																			*
 																			j++] );
