@@ -597,6 +597,166 @@ _x86_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 	}
 }
 
+/* This function recursively does Modified Bipartite Graph counter allocation.
+   It used to live in papi_internal so it could be called by multiple cpu
+   components. In reality it was only called by this component, so we moved it.
+   It assumes the existence of a half dozen "bpt_" helper routines. In order to
+   keep this code generic so it can be extracted for reuse if necessary, the
+   names have been preserved as "bpt_xxx_yyy" and mapped to their implementations
+   thru #define statements.
+    success  return 1
+    fail     return 0
+*/
+
+#define _x86_bipartite_alloc	_papi_bipartite_alloc
+#define bpt_map_set				_x86_bpt_map_set
+#define bpt_map_avail			_x86_bpt_map_avail
+#define bpt_map_exclusive		_x86_bpt_map_exclusive
+#define bpt_map_shared			_x86_bpt_map_shared
+#define bpt_map_preempt			_x86_bpt_map_preempt
+#define bpt_map_update			_x86_bpt_map_update
+
+static int
+_papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
+{
+	int i, j;
+	char *ptr = ( char * ) event_list;
+	int idx_q[count];				   /* queue of indexes of lowest rank events */
+	int map_q[count];				   /* queue of mapped events (TRUE if mapped) */
+	int head, tail;
+	int size = _papi_hwd[cidx]->size.reg_alloc;
+
+	/* build a queue of indexes to all events 
+	   that live on one counter only (rank == 1) */
+	head = 0;				 /* points to top of queue */
+	tail = 0;				 /* points to bottom of queue */
+	for ( i = 0; i < count; i++ ) {
+		map_q[i] = 0;
+		if ( _papi_hwd[cidx]->
+			 bpt_map_exclusive( ( hwd_reg_alloc_t * ) & ptr[size * i] ) )
+			idx_q[tail++] = i;
+	}
+	/* scan the single counter queue looking for events that share counters.
+	   If two events can live only on one counter, return failure.
+	   If the second event lives on more than one counter, remove shared counter
+	   from its selector and reduce its rank. 
+	   Mark first event as mapped to its counter. */
+	while ( head < tail ) {
+		for ( i = 0; i < count; i++ ) {
+			if ( i != idx_q[head] ) {
+				if ( _papi_hwd[cidx]->
+					 bpt_map_shared( ( hwd_reg_alloc_t * ) & ptr[size * i],
+									 ( hwd_reg_alloc_t * ) & ptr[size *
+																 idx_q
+																 [head]] ) ) {
+					/* both share a counter; if second is exclusive, mapping fails */
+					if ( _papi_hwd[cidx]->
+						 bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
+											ptr[size * i] ) )
+						return 0;
+					else {
+						_papi_hwd[cidx]->
+							bpt_map_preempt( ( hwd_reg_alloc_t * ) &
+											 ptr[size * i],
+											 ( hwd_reg_alloc_t * ) & ptr[size *
+																		 idx_q
+																		 [head]] );
+						if ( _papi_hwd[cidx]->
+							 bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
+												ptr[size * i] ) )
+							idx_q[tail++] = i;
+					}
+				}
+			}
+		}
+		map_q[idx_q[head]] = 1;	/* mark this event as mapped */
+		head++;
+	}
+	if ( tail == count ) {
+		return 1;			 /* idx_q includes all events; everything is successfully mapped */
+	} else {
+		char *rest_event_list;
+		char *copy_rest_event_list;
+		int remainder;
+
+		rest_event_list =
+			papi_calloc(  _papi_hwd[cidx]->cmp_info.num_cntrs, 
+				      size );
+
+		copy_rest_event_list =
+		        papi_calloc( _papi_hwd[cidx]->cmp_info.num_cntrs,
+				     size );
+
+		if ( !rest_event_list || !copy_rest_event_list ) {
+			if ( rest_event_list )
+				papi_free( rest_event_list );
+			if ( copy_rest_event_list )
+				papi_free( copy_rest_event_list );
+			return ( 0 );
+		}
+
+		/* copy all unmapped events to a second list and make a backup */
+		for ( i = 0, j = 0; i < count; i++ ) {
+			if ( map_q[i] == 0 ) {
+				memcpy( &copy_rest_event_list[size * j++], &ptr[size * i],
+						( size_t ) size );
+			}
+		}
+		remainder = j;
+
+		memcpy( rest_event_list, copy_rest_event_list,
+				( size_t ) size * ( size_t ) remainder );
+
+		/* try each possible mapping until you fail or find one that works */
+		for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ ) {
+			/* for the first unmapped event, try every possible counter */
+			if ( _papi_hwd[cidx]->
+				 bpt_map_avail( ( hwd_reg_alloc_t * ) rest_event_list, i ) ) {
+				_papi_hwd[cidx]->
+					bpt_map_set( ( hwd_reg_alloc_t * ) rest_event_list, i );
+				/* remove selected counter from all other unmapped events */
+				for ( j = 1; j < remainder; j++ ) {
+					if ( _papi_hwd[cidx]->
+						 bpt_map_shared( ( hwd_reg_alloc_t * ) &
+										 rest_event_list[size * j],
+										 ( hwd_reg_alloc_t * )
+										 rest_event_list ) )
+						_papi_hwd[cidx]->
+							bpt_map_preempt( ( hwd_reg_alloc_t * ) &
+											 rest_event_list[size * j],
+											 ( hwd_reg_alloc_t * )
+											 rest_event_list );
+				}
+				/* if recursive call to allocation works, break out of the loop */
+				if ( _papi_bipartite_alloc
+					 ( ( hwd_reg_alloc_t * ) rest_event_list, remainder,
+					   cidx ) )
+					break;
+
+				/* recursive mapping failed; copy the backup list and try the next combination */
+				memcpy( rest_event_list, copy_rest_event_list,
+						( size_t ) size * ( size_t ) remainder );
+			}
+		}
+		if ( i == _papi_hwd[cidx]->cmp_info.num_cntrs ) {
+			papi_free( rest_event_list );
+			papi_free( copy_rest_event_list );
+			return 0;		 /* fail to find mapping */
+		}
+		for ( i = 0, j = 0; i < count; i++ ) {
+			if ( map_q[i] == 0 )
+				_papi_hwd[cidx]->
+					bpt_map_update( ( hwd_reg_alloc_t * ) & ptr[size * i],
+									( hwd_reg_alloc_t * ) & rest_event_list[size
+																			*
+																			j++] );
+		}
+		papi_free( rest_event_list );
+		papi_free( copy_rest_event_list );
+		return 1;
+	}
+}
+
 /* Register allocation */
 static int
 _x86_allocate_registers( EventSetInfo_t * ESI )
@@ -651,7 +811,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 #endif
 		}
 	}
-	if ( _papi_hwi_bipartite_alloc( event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
+	if ( _x86_bipartite_alloc( event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
 		for ( i = 0; i < natNum; i++ ) {
 #ifdef PERFCTR_X86_INTEL_CORE2
 			if ( _papi_hwi_system_info.hw_info.model ==
@@ -1110,12 +1270,6 @@ papi_vector_t _perfctr_vector = {
 	.start = _x86_start,
 	.stop = _x86_stop,
 	.read = _x86_read,
-	.bpt_map_set = _x86_bpt_map_set,
-	.bpt_map_avail = _x86_bpt_map_avail,
-	.bpt_map_exclusive = _x86_bpt_map_exclusive,
-	.bpt_map_shared = _x86_bpt_map_shared,
-	.bpt_map_preempt = _x86_bpt_map_preempt,
-	.bpt_map_update = _x86_bpt_map_update,
 	.allocate_registers = _x86_allocate_registers,
 	.update_control_state = _x86_update_control_state,
 	.set_domain = _x86_set_domain,
