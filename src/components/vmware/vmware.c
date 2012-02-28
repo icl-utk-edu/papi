@@ -582,7 +582,12 @@ VMWARE_init_substrate(  )
 	strcpy( VMWARE_native_table[17].name, "VMWARE_HOST_CPU" );
 	strcpy( VMWARE_native_table[17].description, "Retrieves the speed of the ESX system’s physical CPU in MHz." );
 	VMWARE_native_table[17].writable = 0;
-#ifdef WITH_VMWARE_PPERFCTR
+//#ifdef WITH_VMWARE_PPERFCTR
+
+	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
+		
+	}
+	
 	// For VMWare Pseudo Performance Counters
 	strcpy( VMWARE_native_table[18].name, "VMWARE_HOST_TSC" );
 	strcpy( VMWARE_native_table[18].description, "Physical host TSC" );
@@ -593,7 +598,7 @@ VMWARE_init_substrate(  )
 	strcpy( VMWARE_native_table[20].name, "VMWARE_ELAPSED_APPARENT" );
 	strcpy( VMWARE_native_table[20].description, "Elapsed apparent time in ns." );
 	VMWARE_native_table[20].writable = 0;
-#endif
+//#endif
 	/* The selector has to be !=0 . Starts with 1 */
 	VMWARE_native_table[0].resources.selector = 1;
 	VMWARE_native_table[1].resources.selector = 2;
