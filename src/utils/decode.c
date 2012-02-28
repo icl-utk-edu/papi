@@ -92,7 +92,7 @@ main( int argc, char **argv )
 
 	do {
 		if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-			printf( "%s,%s,%s,", info.symbol, info.derived, info.postfix );
+			printf( "%s,%s,%s,", info.symbol, info.preset_info->derived, info.preset_info->postfix );
 			if ( info.short_descr[0] ) {
 				printf( "\"%s\",", info.short_descr );
 			} else {
@@ -103,11 +103,11 @@ main( int argc, char **argv )
 			} else {
 				printf( "," );
 			}
-			if ( info.note[0] )
-				printf( "\"%s\"", info.note );
+			if ( info.preset_info->note[0] )
+				printf( "\"%s\"", info.preset_info->note );
 
-			for ( j = 0; j < ( int ) info.count; j++ )
-				printf( ",%s", info.name[j] );
+			for ( j = 0; j < ( int ) info.preset_info->count; j++ )
+				printf( ",%s", info.preset_info->name[j] );
 			printf( "\n" );
 		}
 	} while ( PAPI_enum_event( &i, print_avail_only ) == PAPI_OK );

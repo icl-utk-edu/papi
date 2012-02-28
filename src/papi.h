@@ -918,21 +918,15 @@ typedef char* PAPI_user_defined_events_file_t;
       and presenting information for each native event in turn.
    The various fields and their usage is discussed below.
 */
-   typedef struct event_info {
-      unsigned int event_code;               /**< preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+
+   typedef struct preset_info {
+
       unsigned int event_type;               /**< event type or category for preset events only */
       unsigned int count;                    /**< number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
-      char symbol[PAPI_HUGE_STR_LEN];       /**< name of the event
-                                                - for presets, something like PAPI_TOT_INS
-                                                - for native events, something related to the vendor name
-												- for perfmon2:opteron, these can get *very* long! */
-      char short_descr[PAPI_MIN_STR_LEN];    /**< a description suitable for use as a label, typically only
-                                                implemented for preset events */
-      char long_descr[PAPI_HUGE_STR_LEN];    /**< a longer description of the event
-                                                - typically a sentence for presets
-                                                - possibly a paragraph from vendor docs for native events */
+
+
       char derived[PAPI_MIN_STR_LEN];        /**< name of the derived type
                                                 - for presets, usually NOT_DERIVED
                                                 - for native events, empty string 
@@ -950,7 +944,24 @@ typedef char* PAPI_user_defined_events_file_t;
       char note[PAPI_HUGE_STR_LEN];          /**< an optional developer note supplied with a preset event
                                                 to delineate platform specific anomalies or restrictions
                                                 NOTE: could also be implemented for native events. */
+   } PAPI_preset_info_t;
+
+
+   typedef struct event_info {
+      unsigned int event_code;               /**< preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+      char symbol[PAPI_HUGE_STR_LEN];       /**< name of the event
+                                                - for presets, something like PAPI_TOT_INS
+                                                - for native events, something related to the vendor name
+												- for perfmon2:opteron, these can get *very* long! */
+      char short_descr[PAPI_MIN_STR_LEN];    /**< a description suitable for use as a label, typically only
+                                                implemented for preset events */
+      char long_descr[PAPI_HUGE_STR_LEN];    /**< a longer description of the event
+                                                - typically a sentence for presets
+                                                - possibly a paragraph from vendor docs for native events */
+     PAPI_preset_info_t *preset_info;
    } PAPI_event_info_t;
+
+
 
 
 /** @defgroup low_api The Low Level API 

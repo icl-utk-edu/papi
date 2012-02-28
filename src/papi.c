@@ -854,7 +854,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
 	if ( IS_PRESET(EventCode) ) {
 		if ( i >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
-		papi_return( _papi_hwi_get_event_info( EventCode, info ) );
+		papi_return( _papi_hwi_get_preset_event_info( EventCode, info ) );
 	}
 
 	if ( IS_NATIVE(EventCode) ) {

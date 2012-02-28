@@ -30,11 +30,11 @@ int retval;
 static char *
 is_derived( PAPI_event_info_t * info )
 {
-	if ( strlen( info->derived ) == 0 )
+	if ( strlen( info->preset_info->derived ) == 0 )
 		return ( "No" );
-	else if ( strcmp( info->derived, "NOT_DERIVED" ) == 0 )
+	else if ( strcmp( info->preset_info->derived, "NOT_DERIVED" ) == 0 )
 		return ( "No" );
-	else if ( strcmp( info->derived, "DERIVED_CMPD" ) == 0 )
+	else if ( strcmp( info->preset_info->derived, "DERIVED_CMPD" ) == 0 )
 		return ( "No" );
 	else
 		return ( "Yes" );
@@ -65,10 +65,10 @@ show_event_info( int evt )
 		printf( "%s\t0x%x\n |%s|\n",
 				info.symbol, info.event_code, info.long_descr );
 
-		for ( k = 0; k < ( int ) info.count; k++ )
-			if ( strlen( info.name[k] ) )
-				printf( " |Register Value[%d]: 0x%-10x  %s|\n", k, info.code[k],
-						info.name[k] );
+		for ( k = 0; k < ( int ) info.preset_info->count; k++ )
+			if ( strlen( info.preset_info->name[k] ) )
+				printf( " |Register Value[%d]: 0x%-10x  %s|\n", k, info.preset_info->code[k],
+						info.preset_info->name[k] );
 	}
 	return ( retval );
 }
@@ -208,8 +208,8 @@ preset(  )
 				printf( "%-13s0x%x  %-5s%s",
 						info.symbol,
 						info.event_code, is_derived( &info ), info.long_descr );
-				if ( info.note[0] )
-					printf( " (%s)", info.note );
+				if ( info.preset_info->note[0] )
+					printf( " (%s)", info.preset_info->note );
 				printf( "\n" );
 			}
 			if ( ( retval = PAPI_remove_event( EventSet, i ) ) != PAPI_OK )

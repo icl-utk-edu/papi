@@ -141,7 +141,7 @@ main( int argc, char **argv )
 	i = PAPI_PRESET_MASK;
 	do {
 		if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-			if ( info.count == 1 ) {
+			if ( info.preset_info->count == 1 ) {
 				events[numevents++] = ( int ) info.event_code;
 				printf( "Added %s\n", info.symbol );
 			} else {

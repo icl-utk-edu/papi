@@ -576,7 +576,7 @@ void _papi_hwi_shutdown_global_internal( void );
 void _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,
 			      void *context );
 int _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx );
-int _papi_hwi_get_event_info( int EventCode, PAPI_event_info_t * info );
+int _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info );
 int _papi_hwi_derived_type( char *tmp, int *code );
 
 
