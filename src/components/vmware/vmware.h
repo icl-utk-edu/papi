@@ -42,9 +42,13 @@
 
 #define VMWARE_HOST_CPU_MHZ             17
 
+// The following 3 require VMWARE_PSEUDO_PERF env_var to be set. 
+
 #define VMWARE_HOST_TSC					18	// These first 3 can be used for timing
 #define VMWARE_ELAPSED_TIME             19  // --       "   "       --
 #define VMWARE_ELAPSED_APPARENT         20  // --       "   "       --
+
+// End env_var restriction
 
 /* typedef's */
 
