@@ -17,6 +17,9 @@
 #include "winpmc-p3.h"
 #include "papi_memory.h"
 
+/* Contains source for the Modified Bipartite Allocation scheme */
+#include "papi_bipartite.h"
+
 extern hwi_search_t _papi_hwd_p3_preset_map;
 extern hwi_search_t _papi_hwd_pm_preset_map;
 extern hwi_search_t _papi_hwd_core_preset_map;
@@ -223,14 +226,14 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
 /* This function examines the event to determine
     if it can be mapped to counter ctr.
     Returns true if it can, false if it can't. */
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
+int _bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
    return(dst->ra_selector & (1 << ctr));
 }
 
 /* This function forces the event to
     be mapped to only counter ctr.
     Returns nothing.  */
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
+void _bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
    dst->ra_selector = 1 << ctr;
    dst->ra_rank = 1;
 }
@@ -238,7 +241,7 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
 /* This function examines the event to determine
    if it has a single exclusive mapping.
    Returns true if exlusive, false if non-exclusive.  */
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
+int _bpt_map_exclusive(hwd_reg_alloc_t * dst) {
    return (dst->ra_rank == 1);
 }
 
@@ -246,7 +249,7 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
     to determine if any resources are shared. Typically the src event
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.  */
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
+int _bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    return (dst->ra_selector & src->ra_selector);
 }
 
@@ -255,7 +258,7 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
     and reduces the rank of the dst event accordingly. Typically,
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.  */
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
+void _bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    int i;
    unsigned shared;
 
@@ -267,7 +270,7 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
          dst->ra_rank++;
 }
 
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
+void _bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    dst->ra_selector = src->ra_selector;
 }
 
@@ -294,7 +297,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
          }
       }
    }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
+   if(_papi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
@@ -530,12 +533,6 @@ papi_svector_t _p3_vector_table[] = {
   {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
   {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
   {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
-  {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
-  {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
-  {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
-  {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
-  {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
-  {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
   {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
   {(void(*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
   {(void (*))_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},

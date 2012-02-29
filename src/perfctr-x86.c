@@ -20,6 +20,8 @@ extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 #include "linux-memory.h"
 
+/* Contains source for the Modified Bipartite Allocation scheme */
+#include "papi_bipartite.h"
 
 /* Prototypes for entry points found in perfctr.c */
 extern int _perfctr_init_substrate( int );
@@ -448,7 +450,7 @@ _x86_set_domain( hwd_control_state_t * cntrl, int domain )
     if it can be mapped to counter ctr.
     Returns true if it can, false if it can't. */
 static int
-_x86_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
+_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
 {
 	return ( int ) ( dst->ra_selector & ( 1 << ctr ) );
 }
@@ -457,7 +459,7 @@ _x86_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
     be mapped to only counter ctr.
     Returns nothing.  */
 static void
-_x86_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
+_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
 {
 	dst->ra_selector = ( unsigned int ) ( 1 << ctr );
 	dst->ra_rank = 1;
@@ -477,7 +479,7 @@ _x86_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
    if it has a single exclusive mapping.
    Returns true if exlusive, false if non-exclusive.  */
 static int
-_x86_bpt_map_exclusive( hwd_reg_alloc_t * dst )
+_bpt_map_exclusive( hwd_reg_alloc_t * dst )
 {
 	return ( dst->ra_rank == 1 );
 }
@@ -487,7 +489,7 @@ _x86_bpt_map_exclusive( hwd_reg_alloc_t * dst )
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.  */
 static int
-_x86_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
+_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
   if ( is_pentium4() ) {
 		int retval1, retval2;
@@ -524,7 +526,7 @@ _x86_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.  */
 static void
-_x86_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
+_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
 	int i;
 	unsigned shared;
@@ -587,7 +589,7 @@ _x86_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 }
 
 static void
-_x86_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
+_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
 	dst->ra_selector = src->ra_selector;
 
@@ -651,7 +653,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 #endif
 		}
 	}
-	if ( _papi_hwi_bipartite_alloc( event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
+	if ( _papi_bipartite_alloc( event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
 		for ( i = 0; i < natNum; i++ ) {
 #ifdef PERFCTR_X86_INTEL_CORE2
 			if ( _papi_hwi_system_info.hw_info.model ==
@@ -1110,12 +1112,6 @@ papi_vector_t _perfctr_vector = {
 	.start = _x86_start,
 	.stop = _x86_stop,
 	.read = _x86_read,
-	.bpt_map_set = _x86_bpt_map_set,
-	.bpt_map_avail = _x86_bpt_map_avail,
-	.bpt_map_exclusive = _x86_bpt_map_exclusive,
-	.bpt_map_shared = _x86_bpt_map_shared,
-	.bpt_map_preempt = _x86_bpt_map_preempt,
-	.bpt_map_update = _x86_bpt_map_update,
 	.allocate_registers = _x86_allocate_registers,
 	.update_control_state = _x86_update_control_state,
 	.set_domain = _x86_set_domain,

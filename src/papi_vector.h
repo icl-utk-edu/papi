@@ -51,12 +51,6 @@ typedef struct papi_vectors {
     int		(*ntv_code_to_bits)	(unsigned int, hwd_register_t *);			/**< */
     int		(*ntv_bits_to_info)	(hwd_register_t *, char *, unsigned int *, int, int);		/**< */
     int		(*allocate_registers)	(EventSetInfo_t *);						/**< */
-    int		(*bpt_map_avail)	(hwd_reg_alloc_t *, int);					/**< */
-    void	(*bpt_map_set)		(hwd_reg_alloc_t *, int);					/**< */
-    int		(*bpt_map_exclusive)	(hwd_reg_alloc_t *);					/**< */
-    int		(*bpt_map_shared)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);		/**< */
-    void	(*bpt_map_preempt)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);		/**< */
-    void	(*bpt_map_update)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);		/**< */
     int		(*shutdown)		(hwd_context_t *);								/**< */
     int		(*shutdown_substrate)	(void);									/**< */
     int		(*user)			(int, void *, void *);							/**< */

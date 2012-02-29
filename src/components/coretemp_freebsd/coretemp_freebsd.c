@@ -486,12 +486,6 @@ papi_vector_t _coretemp_freebsd_vector = {
 	.write = coretemp_write,
 	.shutdown = coretemp_shutdown,
 	.ctl = coretemp_ctl,
-	.bpt_map_set = NULL,
-	.bpt_map_avail = NULL,
-	.bpt_map_exclusive = NULL,
-	.bpt_map_shared = NULL,
-	.bpt_map_preempt = NULL,
-	.bpt_map_update = NULL,
 
 	.update_control_state = coretemp_update_control_state,
 	.set_domain = coretemp_set_domain,

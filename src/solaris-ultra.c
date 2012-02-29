@@ -1622,12 +1622,6 @@ papi_vector_t _solaris_vector = {
         .shutdown = _ultra_shutdown,
 	.shutdown_substrate = _ultra_hwd_shutdown_substrate,
 	.ctl = _ultra_hwd_ctl,
-        /* .bpt_map_set        */
-        /* .bpt_map_avail      */
-        /* .bpt_map_exclusive  */
-        /* .bpt_map_shared     */
-        /* .bpt_map_preempt    */
-        /* .bpt_map_update     */
 	/* .allocate_registers */
 	.update_control_state = _ultra_hwd_update_control_state,
         .set_domain = _ultra_set_domain,

@@ -861,68 +861,6 @@ int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI)
 	return failed?0:1;
 }
 
-/* Forces the event to be mapped to only counter ctr. */
-void _papi_freebsd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
-  (void)dst;
-  (void)ctr;
-	SHOW_WHERE_I_AM;
-}
-
-/* This function examines the event to determine if it can be mapped 
- * to counter ctr.  Returns true if it can, false if it can't. 
- */
-int _papi_freebsd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
-  (void)dst;
-  (void)ctr;
-	SHOW_WHERE_I_AM;
-	return 1;
-} 
-
-/* This function examines the event to determine if it has a single 
- * exclusive mapping.  Returns true if exlusive, false if 
- * non-exclusive.  
- */
-int _papi_freebsd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
-  (void)dst;
-	SHOW_WHERE_I_AM;
-	return 1;
-}
-
-/* This function compares the dst and src events to determine if any 
- * resources are shared. Typically the src event is exclusive, so 
- * this detects a conflict if true. Returns true if conflict, false 
- * if no conflict.  
- */
-int _papi_freebsd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
-  (void)dst;
-  (void)src;
-	SHOW_WHERE_I_AM;
-  return 0;
-}
-
-/* This function removes shared resources available to the src event
- *  from the resources available to the dst event,
- *  and reduces the rank of the dst event accordingly. Typically,
- *  the src event will be exclusive, but the code shouldn't assume it.
- *  Returns nothing.  
- */
-void _papi_freebsd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
-{
-  (void)dst;
-  (void)src;
-	SHOW_WHERE_I_AM;
-  return;
-}
-
-void _papi_freebsd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
-{
-	SHOW_WHERE_I_AM;
-	(void)dst;
-	(void)src;
-  return;
-}
-
 /*
  * Shared Library Information and other Information Functions
  */
@@ -1005,13 +943,6 @@ papi_vector_t _papi_freebsd_vector = {
   .ntv_bits_to_info		= _papi_freebsd_ntv_bits_to_info,
 
   .allocate_registers	= _papi_freebsd_allocate_registers,
-  .bpt_map_avail		= _papi_freebsd_bpt_map_avail,
-  .bpt_map_set			= _papi_freebsd_bpt_map_set,
-  .bpt_map_exclusive	= _papi_freebsd_bpt_map_exclusive,
-  .bpt_map_shared		= _papi_freebsd_bpt_map_shared,
-  .bpt_map_preempt		= _papi_freebsd_bpt_map_preempt,
-  .bpt_map_update		= _papi_freebsd_bpt_map_update,
-
 
   .shutdown				= _papi_freebsd_shutdown,
   .shutdown_substrate	= _papi_freebsd_shutdown_substrate,
