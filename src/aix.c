@@ -17,8 +17,6 @@
 
 #include "aix.h"
 
-#include "papi_setup_presets.h"
-
 /* Advance declarations */
 papi_vector_t _aix_vector;
 
@@ -783,19 +781,19 @@ _aix_init_substrate( int cidx )
 	procidx = pm_get_procindex(  );
 	switch ( procidx ) {
 	case PM_POWER5:
-	  _papi_libpfm_setup_presets( "POWER5", 0, cidx );
+	  _papi_load_preset_table( "POWER5", 0, cidx );
 		break;
 	case PM_POWER5_II:
-	  _papi_libpfm_setup_presets( "POWER5+", 0, cidx );
+	  _papi_load_preset_table( "POWER5+", 0, cidx );
 		break;
 	case PM_POWER6:
-	  _papi_libpfm_setup_presets( "POWER6", 0, cidx );
+	  _papi_load_preset_table( "POWER6", 0, cidx );
 		break;
 	case PM_PowerPC970:
-	  _papi_libpfm_setup_presets( "PPC970", 0, cidx );
+	  _papi_load_preset_table( "PPC970", 0, cidx );
 		break;
 	case PM_POWER7:
-	  _papi_libpfm_setup_presets( "POWER7", 0, cidx );
+	  _papi_load_preset_table( "POWER7", 0, cidx );
 		break;
 	default:
 		fprintf( stderr, "%s is not supported!\n", pminfo.proc_name );

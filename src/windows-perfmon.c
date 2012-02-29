@@ -830,7 +830,7 @@ _papi_pfm_init_substrate( int cidx )
 	_papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
 
 	/* Setup presets */
-	retval = _papi_libpfm_setup_presets( pmu_name, _perfmon2_pfm_pmu_type, cidx );
+	retval = _papi_load_preset_table( pmu_name, _perfmon2_pfm_pmu_type, cidx );
 	if ( retval )
 		return ( retval );
 

@@ -118,7 +118,7 @@ papi_memory.o: papi_memory.c $(HEADERS)
 papi_vector.o: papi_vector.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_vector.c -o papi_vector.o
 
-papi_preset.o: papi_preset.c $(HEADERS)
+papi_preset.o: papi_preset.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_preset.c -o papi_preset.o 
 
 multiplex.o: multiplex.c $(HEADERS)
@@ -132,9 +132,6 @@ x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
 
 sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o
-
-papi_libpfm_presets.o:	   papi_libpfm_presets.c $(HEADERS) $(PAPI_EVENTS_TABLE)
-			   $(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm_presets.c -o papi_libpfm_presets.o
 
 $(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
 	sh papi_events_table.sh > $@

@@ -44,6 +44,7 @@ extern hwi_search_t *preset_search_map;
 int _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx);
 int _papi_hwi_cleanup_all_presets( void );
 int _xml_papi_hwi_setup_all_presets( char *arch);
+int _papi_load_preset_table( char *name, int type, int cidx );
 
 extern hwi_presets_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS];
 
