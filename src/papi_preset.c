@@ -61,7 +61,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   i = 0;
 	   j = 0;
 	   while ( i < PAPI_MAX_COUNTER_TERMS ) {
-	      if ( findem[pnum].data.native[i] != PAPI_NULL ) {
+	      if ( findem[pnum].native[i] != PAPI_NULL ) {
 		 j++;
 	      }
 	      else if ( j ) {
@@ -73,13 +73,13 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   INTDBG( "This preset has %d terms.\n", j );
 	   _papi_hwi_presets[preset_index].info.count = j;
  
-           _papi_hwi_presets[preset_index].derived = findem[pnum].data.derived;
+           _papi_hwi_presets[preset_index].derived = findem[pnum].derived;
 	   for(k=0;k<j;k++) {
               _papi_hwi_presets[preset_index].info.code[k] = 
-                     findem[pnum].data.native[k];
+                     findem[pnum].native[k];
 	   } 
 	   strcpy(_papi_hwi_presets[preset_index].info.postfix,
-		   findem[pnum].data.operation);
+		   findem[pnum].operation);
 
 	   did_something++;
        }
