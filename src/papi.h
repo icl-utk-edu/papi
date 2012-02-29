@@ -920,19 +920,18 @@ typedef char* PAPI_user_defined_events_file_t;
 */
 
    typedef struct preset_info {
-
-      unsigned int event_type;               /**< event type or category for preset events only */
-      unsigned int count;                    /**< number of terms (usually 1) in the code and name fields
+      unsigned int count;                    /**< number of terms (usually 1) in the code and name fields 
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
 
+      unsigned int event_type;               /**< event type or category for preset events only */
 
       char derived[PAPI_MIN_STR_LEN];        /**< name of the derived type
                                                 - for presets, usually NOT_DERIVED
                                                 - for native events, empty string 
                                                 NOTE: a derived description string is available
                                                    in papi_data.c that is currently not exposed to the user */
-      char postfix[PAPI_MIN_STR_LEN];        /**< string containing postfix operations; only defined for 
+      char postfix[PAPI_2MAX_STR_LEN];        /**< string containing postfix operations; only defined for 
                                                 preset events of derived type DERIVED_POSTFIX */
       unsigned int code[PAPI_MAX_INFO_TERMS];/**< array of values that further describe the event:
                                                 - for presets, native event_code values
@@ -941,7 +940,7 @@ typedef char* PAPI_user_defined_events_file_t;
                [PAPI_2MAX_STR_LEN];           /**< - for presets, native event names, as in symbol, above
                                                 - for native events, descriptive strings for each register
                                                    value presented in the code array */
-      char note[PAPI_HUGE_STR_LEN];          /**< an optional developer note supplied with a preset event
+      char *note;          /**< an optional developer note supplied with a preset event
                                                 to delineate platform specific anomalies or restrictions
                                                 NOTE: could also be implemented for native events. */
    } PAPI_preset_info_t;

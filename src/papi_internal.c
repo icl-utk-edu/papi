@@ -599,7 +599,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 
 	  /* walk all sub-events in the preset */
 	  for( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
-	     nevt = _papi_hwi_presets[preset_index].native[k];
+	     nevt = _papi_hwi_presets[preset_index].info.code[k];
 	     if ( nevt == PAPI_NULL ) {
 		break;
 	     }
@@ -701,7 +701,7 @@ nix: pointer to array of native event table indexes from the preset entry
 size: number of native events to add
 */
 static int
-add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
+add_native_events( EventSetInfo_t * ESI, unsigned int *nevt, int size,
 				   EventInfo_t * out )
 {
 	int nidx, i, j, remap = 0;
@@ -828,7 +828,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  }
 
 	  /* count the number of native events in this preset */
-	  count = ( int ) _papi_hwi_presets[preset_index].count;
+	  count = ( int ) _papi_hwi_presets[preset_index].info.count;
 
 	  /* Check if event exists */
 	  if ( !count ) {
@@ -840,8 +840,8 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  if ( ESI->state & PAPI_OVERFLOWING ) {
 	     for( i = 0; i < count; i++ ) {
 		for( j = 0; j < ESI->overflow.event_counter; j++ ) {
-		   if ( ESI->overflow.EventCode[j] ==
-			( _papi_hwi_presets[preset_index].native[i] ) ) {
+		  if ( ESI->overflow.EventCode[j] ==(int)
+			( _papi_hwi_presets[preset_index].info.code[i] ) ) {
 		      return PAPI_ECNFLCT;
 		   }
 		}
@@ -851,7 +851,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  /* Try to add the preset. */
 
 	  remap = add_native_events( ESI,
-				     _papi_hwi_presets[preset_index].native,
+				     _papi_hwi_presets[preset_index].info.code,
 				     count, &ESI->EventInfoArray[thisindex] );
 	  if ( remap < 0 ) {
 	     return PAPI_ECNFLCT;
@@ -862,7 +862,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	     ESI->EventInfoArray[thisindex].derived =
 					_papi_hwi_presets[preset_index].derived;
 	     ESI->EventInfoArray[thisindex].ops =
-					_papi_hwi_presets[preset_index].operation;
+					_papi_hwi_presets[preset_index].info.postfix;
 	     if ( remap ) {
 		_papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
 	     }
@@ -888,7 +888,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 
 	  /* Try to add the native event. */
 
-	  remap = add_native_events( ESI, &EventCode, 1,
+	  remap = add_native_events( ESI, (unsigned int *)&EventCode, 1,
 				     &ESI->EventInfoArray[thisindex] );
 
 	  if ( remap < 0 ) {
@@ -1083,14 +1083,14 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 				return PAPI_EINVAL;
 
 			/* Check if event exists */
-			if ( !_papi_hwi_presets[preset_index].count )
+			if ( !_papi_hwi_presets[preset_index].info.count )
 				return PAPI_ENOEVNT;
 
 			/* Remove the preset event. */
-			for ( j = 0; _papi_hwi_presets[preset_index].native[j] != 0;
+			for ( j = 0; _papi_hwi_presets[preset_index].info.code[j] != 0;
 				  j++ );
 			retval = remove_native_events( ESI,
-					              _papi_hwi_presets[preset_index].native, j );
+						       (int *)_papi_hwi_presets[preset_index].info.code, j );
 			if ( retval != PAPI_OK )
 				return ( retval );
 		} else if ( IS_NATIVE(EventCode) ) {
@@ -1908,7 +1908,6 @@ int
 _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 {
 	int i = EventCode & PAPI_PRESET_AND_MASK;
-	int j;
 
 	if ( _papi_hwi_presets[i].symbol ) {	/* if the event is in the preset table */
 		memset( info, 0, sizeof ( PAPI_event_info_t ) );
@@ -1928,35 +1927,13 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 
 		/* Preset info */
 
-		info->preset_info=papi_calloc(1,sizeof(PAPI_preset_info_t));
-		if (info->preset_info==NULL) return PAPI_ENOMEM;
+		info->preset_info=&_papi_hwi_presets[i].info;
 
-		info->preset_info->event_type = _papi_hwi_presets[i].type;
-		info->preset_info->count = _papi_hwi_presets[i].count;
-
-		info->preset_info->derived[0] = '\0';
-		info->preset_info->postfix[0] = '\0';
-
-		strncpy( info->preset_info->postfix, 
-                         _papi_hwi_presets[i].operation,
-			  sizeof ( info->preset_info->postfix ) );
+		/* This should be done elsewhere */
 	        _papi_hwi_derived_string( _papi_hwi_presets[i].derived,
 					  info->preset_info->derived, 
                                           sizeof ( info->preset_info->derived ) );
-		for ( j = 0; j < ( int ) info->preset_info->count; j++ ) {
-		    info->preset_info->code[j] =
-			       ( unsigned int ) _papi_hwi_presets[i].native[j];
-		    _papi_hwi_native_code_to_name( info->preset_info->code[j], 
-                                                   info->preset_info->name[j],
-						   sizeof ( info->preset_info->name[j] ) );
-		}
-		
-		if ( _papi_hwi_presets[i].note ) {	/* if a developer's note exists for this event */
-		   strncpy( info->preset_info->note, _papi_hwi_presets[i].note,
-					 sizeof ( info->preset_info->note ) );
-		} else {
-			info->preset_info->note[0] = '\0';
-		}
+
 		return PAPI_OK;
 	} else {
 		return PAPI_ENOEVNT;

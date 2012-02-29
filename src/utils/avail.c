@@ -285,7 +285,7 @@ main( int argc, char **argv )
 									info.event_code,
 									( info.preset_info->count ? "Yes" : "No" ),
 									is_derived( &info ), info.long_descr );
-							if ( info.preset_info->note[0] )
+							if ( info.preset_info->note )
 								printf( " (%s)", info.preset_info->note );
 							printf( "\n" );
 						}

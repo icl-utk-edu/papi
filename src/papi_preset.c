@@ -71,14 +71,14 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   }
 
 	   INTDBG( "This preset has %d terms.\n", j );
-	   _papi_hwi_presets[preset_index].count = j;
+	   _papi_hwi_presets[preset_index].info.count = j;
  
            _papi_hwi_presets[preset_index].derived = findem[pnum].data.derived;
 	   for(k=0;k<j;k++) {
-              _papi_hwi_presets[preset_index].native[k] = 
+              _papi_hwi_presets[preset_index].info.code[k] = 
                      findem[pnum].data.native[k];
 	   } 
-	   strcpy(_papi_hwi_presets[preset_index].operation,
+	   strcpy(_papi_hwi_presets[preset_index].info.postfix,
 		   findem[pnum].data.operation);
 
 	   did_something++;
@@ -97,10 +97,10 @@ _papi_hwi_cleanup_all_presets( void )
 
 	for ( preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS;
 		  preset_index++ ) {
-		if ( _papi_hwi_presets[preset_index].note != NULL ) {
-			papi_free( _papi_hwi_presets[preset_index].note );
-			_papi_hwi_presets[preset_index].note = NULL;
-		}
+	    if ( _papi_hwi_presets[preset_index].info.note != NULL ) {
+	       papi_free( _papi_hwi_presets[preset_index].info.note );
+	       _papi_hwi_presets[preset_index].info.note = NULL;
+	    }
 	}
 	
 	for(cidx=0;cidx<papi_num_components;cidx++) {
