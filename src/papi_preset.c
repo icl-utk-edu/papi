@@ -14,9 +14,6 @@
 #include "papi_memory.h"
 #include "papi_preset.h"
 
-/* Various preset items, why they are separate members no-one knows */
-hwi_presets_t _papi_hwi_presets;
-
 /* This routine copies values from a dense 'findem' array of events 
    into the sparse global _papi_hwi_presets array, which is assumed 
    to be empty at initialization. 
@@ -32,7 +29,7 @@ int
 _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 {
     int i, pnum, did_something = 0;
-    unsigned int preset_index, j;
+    unsigned int preset_index, j, k;
 
     /* dense array of events is terminated with a 0 preset.
        don't do anything if NULL pointer. This allows just notes to be loaded.
@@ -74,19 +71,16 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   }
 
 	   INTDBG( "This preset has %d terms.\n", j );
-	   _papi_hwi_presets.count[preset_index] = j;
+	   _papi_hwi_presets[preset_index].count = j;
+ 
+           _papi_hwi_presets[preset_index].derived = findem[pnum].data.derived;
+	   for(k=0;k<j;k++) {
+              _papi_hwi_presets[preset_index].native[k] = 
+                     findem[pnum].data.native[k];
+	   } 
+	   strcpy(_papi_hwi_presets[preset_index].operation,
+		   findem[pnum].data.operation);
 
-	   /* malloc a data istructure for the sparse array and copy 
-	      the event data into it. 
-
-              Kevin assures me that the data won't 
-	      *actually* be duplicated unless it is modified */
-	   if ( _papi_hwi_presets.data[preset_index] == NULL ) {
-	      _papi_hwi_presets.data[preset_index] =
-			  papi_malloc( sizeof ( hwi_preset_data_t ) );
-	      memcpy( _papi_hwi_presets.data[preset_index],
-		      &findem[pnum].data, sizeof ( hwi_preset_data_t ) );
-	   }
 	   did_something++;
        }
     }
@@ -103,14 +97,9 @@ _papi_hwi_cleanup_all_presets( void )
 
 	for ( preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS;
 		  preset_index++ ) {
-		/* free the data and or note string if they exist */
-		if ( _papi_hwi_presets.data[preset_index] != NULL ) {
-			papi_free( _papi_hwi_presets.data[preset_index] );
-			_papi_hwi_presets.data[preset_index] = NULL;
-		}
-		if ( _papi_hwi_presets.dev_note[preset_index] != NULL ) {
-			papi_free( _papi_hwi_presets.dev_note[preset_index] );
-			_papi_hwi_presets.dev_note[preset_index] = NULL;
+		if ( _papi_hwi_presets[preset_index].note != NULL ) {
+			papi_free( _papi_hwi_presets[preset_index].note );
+			_papi_hwi_presets[preset_index].note = NULL;
 		}
 	}
 	
@@ -167,7 +156,7 @@ _xml_start( void *data, const char *el, const char **attr )
 	if ( location == SPARSE_BEGIN && !strcmp( "papistdevents", el ) ) {
 		location = SPARSE_EVENT_SEARCH;
 	} else if ( location == SPARSE_EVENT_SEARCH && !strcmp( "papievent", el ) ) {
-		_papi_hwi_presets.info[sparse_index].symbol = papi_strdup( attr[1] );
+		_papi_hwi_presets[sparse_index].info.symbol = papi_strdup( attr[1] );
 //      strcpy(_papi_hwi_presets.info[sparse_index].symbol, attr[1]);
 		location = SPARSE_EVENT;
 	} else if ( location == SPARSE_EVENT && !strcmp( "desc", el ) ) {
@@ -188,34 +177,34 @@ _xml_start( void *data, const char *el, const char **attr )
 		sparse_index &= PAPI_PRESET_AND_MASK;
 
 		/* allocate and initialize data space for this event */
-		papi_valid_free( _papi_hwi_presets.data[sparse_index] );
-		_papi_hwi_presets.data[sparse_index] =
+		papi_valid_free( _papi_hwi_presets[sparse_index].data );
+		_papi_hwi_presets[sparse_index].data =
 			papi_malloc( sizeof ( hwi_preset_data_t ) );
 		native_index = 0;
-		_papi_hwi_presets.data[sparse_index]->native[native_index] = PAPI_NULL;
-		_papi_hwi_presets.data[sparse_index]->operation[0] = '\0';
+		_papi_hwi_presets[sparse_index].data->native[native_index] = PAPI_NULL;
+		_papi_hwi_presets[sparse_index].data->operation[0] = '\0';
 
 
 		if ( attr[2] ) {	 /* derived event */
-			_papi_hwi_presets.data[sparse_index]->derived =
+			_papi_hwi_presets[sparse_index].data->derived =
 				_papi_hwi_derived_type( ( char * ) attr[3] );
 			/* where does DERIVED POSTSCRIPT get encoded?? */
-			if ( _papi_hwi_presets.data[sparse_index]->derived == -1 ) {
+			if ( _papi_hwi_presets[sparse_index].data->derived == -1 ) {
 				PAPIERROR( "No derived type match for %s in Preset XML file.",
 						   attr[3] );
 				error = 1;
 			}
 
 			if ( attr[5] ) {
-				_papi_hwi_presets.count[sparse_index] = atoi( attr[5] );
+				_papi_hwi_presets[sparse_index].count = atoi( attr[5] );
 			} else {
 				PAPIERROR( "No count given for %s in Preset XML file.",
 						   attr[1] );
 				error = 1;
 			}
 		} else {
-			_papi_hwi_presets.data[sparse_index]->derived = NOT_DERIVED;
-			_papi_hwi_presets.count[sparse_index] = 1;
+			_papi_hwi_presets[sparse_index].data->derived = NOT_DERIVED;
+			_papi_hwi_presets[sparse_index].count = 1;
 		}
 		location = DENSE_NATIVE_SEARCH;
 	} else if ( location == DENSE_NATIVE_SEARCH && !strcmp( "native", el ) ) {
@@ -229,10 +218,10 @@ _xml_start( void *data, const char *el, const char **attr )
 					   attr[1] );
 			error = 1;
 		}
-		_papi_hwi_presets.data[sparse_index]->native[native_index] =
+		_papi_hwi_presets[sparse_index].data->native[native_index] =
 			native_encoding;
 		native_index++;
-		_papi_hwi_presets.data[sparse_index]->native[native_index] = PAPI_NULL;
+		_papi_hwi_presets[sparse_index].data->native[native_index] = PAPI_NULL;
 	} else if ( location && location != ARCH_SEARCH && location != FINISHED ) {
 		PAPIERROR( "Poorly-formed Preset XML document." );
 		error = 1;
@@ -250,9 +239,9 @@ _xml_end( void *data, const char *el )
 
 	if ( location == SPARSE_EVENT_SEARCH && !strcmp( "papistdevents", el ) ) {
 		for ( i = sparse_index; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
-			_papi_hwi_presets.info[i].symbol = NULL;
-			_papi_hwi_presets.info[i].long_descr = NULL;
-			_papi_hwi_presets.info[i].short_descr = NULL;
+			_papi_hwi_presets[i].info.symbol = NULL;
+			_papi_hwi_presets[i].info.long_descr = NULL;
+			_papi_hwi_presets[i].info.short_descr = NULL;
 		}
 		location = ARCH_SEARCH;
 	} else if ( location == DENSE_NATIVE_DESC && !strcmp( "native", el ) ) {
@@ -272,15 +261,15 @@ _xml_content( void *data, const char *el, const int len )
 {
 	int i;
 	if ( location == SPARSE_DESC ) {
-		_papi_hwi_presets.info[sparse_index].long_descr =
+		_papi_hwi_presets[sparse_index].info.long_descr =
 			papi_malloc( len + 1 );
 		for ( i = 0; i < len; i++ )
-			_papi_hwi_presets.info[sparse_index].long_descr[i] = el[i];
-		_papi_hwi_presets.info[sparse_index].long_descr[len] = '\0';
+			_papi_hwi_presets[sparse_index].info.long_descr[i] = el[i];
+		_papi_hwi_presets[sparse_index].info.long_descr[len] = '\0';
 		/* the XML data currently doesn't contain a short description */
-		_papi_hwi_presets.info[sparse_index].short_descr = NULL;
+		_papi_hwi_presets[sparse_index].info.short_descr = NULL;
 		sparse_index++;
-		_papi_hwi_presets.data[sparse_index] = NULL;
+		_papi_hwi_presets[sparse_index].data = NULL;
 		location = SPARSE_EVENT_SEARCH;
 	}
 }

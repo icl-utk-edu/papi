@@ -99,8 +99,8 @@ find_preset_code( char *tmp, int *code )
 {
 	int i = 0;
 
-	while ( _papi_hwi_presets.info[i].symbol != NULL ) {
-		if ( strcasecmp( tmp, _papi_hwi_presets.info[i].symbol ) == 0 ) {
+	while ( _papi_hwi_presets[i].symbol != NULL ) {
+		if ( strcasecmp( tmp, _papi_hwi_presets[i].symbol ) == 0 ) {
 			*code = ( int ) ( i | PAPI_PRESET_MASK );
 			return ( PAPI_OK );
 		}

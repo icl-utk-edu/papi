@@ -36,17 +36,24 @@ typedef struct hwi_preset_data {
 typedef struct hwi_search {   
   /* eventcode should have a more specific name, like papi_preset! -pjm */
    unsigned int event_code;   /**< Preset code that keys back to sparse preset array */
-   hwi_preset_data_t data;    /**< Event data for this preset event */
+  hwi_preset_data_t data;    /**< Event data for this preset event */
 } hwi_search_t;
 
 /** collected text and data info for all preset events 
  *	@internal */
 typedef struct hwi_presets {  
-   unsigned int count[PAPI_MAX_PRESET_EVENTS];       /**< array of number of terms in this event. 0 = no event */
-   const hwi_preset_info_t *info;   /**< array of descriptive text for all events */
-   const unsigned int *type;						/**< array of event types for all events */
-   hwi_preset_data_t *data[PAPI_MAX_PRESET_EVENTS];  /**< sparse array of pointers to event data including native terms, etc. */
-   char *dev_note[PAPI_MAX_PRESET_EVENTS];           /**< sparse array of pointers to optional developer note strings */
+   char *symbol;      /**< name of the preset event; i.e. PAPI_TOT_INS, etc. */
+   char *short_descr; /**< short description of the event for labels, etc. */
+   char *long_descr;  /**< long description (full sentence) */
+
+   unsigned int count;       /**< number of terms in this event. 0 = no event 
+*/
+   unsigned int type;	     /**< array of event types for all events */
+
+   int derived;                   /**< Derived type code */
+   int native[PAPI_MAX_COUNTER_TERMS];    /**< array of native event code(s) for this preset event */
+   char operation[PAPI_2MAX_STR_LEN]; /**< operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
+   char *note;          /**< optional developer notes for this event */
 } hwi_presets_t;
 
 /** This is a general description structure definition for various parameter lists 
@@ -64,7 +71,7 @@ int _papi_hwi_setup_all_presets( hwi_search_t * findem,
 int _papi_hwi_cleanup_all_presets( void );
 int _xml_papi_hwi_setup_all_presets( char *arch);
 
-extern hwi_presets_t _papi_hwi_presets;
+extern hwi_presets_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS];
 extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
 extern const unsigned int _papi_hwi_preset_type[PAPI_MAX_PRESET_EVENTS];
 

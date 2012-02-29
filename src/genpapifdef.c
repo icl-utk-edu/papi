@@ -264,8 +264,8 @@ main( int argc, char **argv )
 			comment_char, comment_char );
 
 	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
-		if ( _papi_hwi_preset_info[i].symbol ) {	/* if the event is in the preset table */
-			define_val( _papi_hwi_preset_info[i].symbol,
+		if ( _papi_hwi_presets[i].symbol ) {	/* if the event is in the preset table */
+			define_val( _papi_hwi_presets[i].symbol,
 						( i | PAPI_PRESET_MASK ), deftype );
 		}
 	}
