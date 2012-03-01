@@ -441,8 +441,11 @@ PAPI_set_thr_specific( int tag, void *ptr )
 		papi_return( PAPI_EINVAL );
 
 	retval = _papi_hwi_lookup_or_create_thread( &thread, 0 );
-	if ( retval == PAPI_OK )
-		thread->thread_storage[tag] = ptr;
+	if ( retval == PAPI_OK ) {
+	   _papi_hwi_lock( THREADS_LOCK );
+	   thread->thread_storage[tag] = ptr;
+	   _papi_hwi_unlock( THREADS_LOCK );
+	}
 	else
 		return ( retval );
 
