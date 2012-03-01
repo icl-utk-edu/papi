@@ -112,6 +112,12 @@ SHOW_NAMESPACES        = YES
 
 INPUT                  = ../src ../src/components/README
 
+# The RECURSIVE tag can be used to turn specify whether or not subdirectories
+# should be searched for input files as well. Possible values are YES and NO.
+# If left blank NO is used.
+
+RECURSIVE              = YES
+
 #---------------------------------------------------------------------------
 # configuration options related to source browsing
 #---------------------------------------------------------------------------
