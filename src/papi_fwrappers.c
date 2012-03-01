@@ -667,9 +667,18 @@ PAPI_FCALL( papif_get_event_info, PAPIF_GET_EVENT_INFO,
 		strncpy( short_descr, info.short_descr, ( size_t ) short_descr_len );
 		for ( i = ( int ) strlen( info.short_descr ); i < short_descr_len;
 			  short_descr[i++] = ' ' );
-		*count = ( int ) info.count;
-		strncpy( event_note, info.note, ( size_t ) event_note_len );
-		for ( i = ( int ) strlen( info.note ); i < event_note_len;
+
+		*count = ( int ) info.preset_info->count;
+
+		int note_len=0;
+
+		if (info.preset_info->note) {
+		   strncpy( event_note, info.preset_info->note, 
+			    ( size_t ) event_note_len );
+		   note_len=strlen(info.preset_info->note);
+		}
+
+		for ( i =  note_len; i < event_note_len;
 			  event_note[i++] = ' ' );
 	}
 #else
@@ -678,8 +687,10 @@ PAPI_FCALL( papif_get_event_info, PAPIF_GET_EVENT_INFO,
 		strncpy( symbol, info.symbol, PAPI_MAX_STR_LEN );
 		strncpy( long_descr, info.long_descr, PAPI_MAX_STR_LEN );
 		strncpy( short_descr, info.short_descr, PAPI_MAX_STR_LEN );
-		*count = info.count;
-		strncpy( event_note, info.note, PAPI_MAX_STR_LEN );
+		*count = info.preset_info->count;
+		if (info.preset_info->note) 
+                   strncpy( event_note, info.preset_info->note, 
+			    PAPI_MAX_STR_LEN );
 	}
 /*  printf("Check: %d\n", *check); -KSL */
 #endif

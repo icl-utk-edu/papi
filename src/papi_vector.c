@@ -172,25 +172,6 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->allocate_registers )
 		v->allocate_registers =
 			( int ( * )( EventSetInfo_t * ) ) vec_int_one_dummy;
-	if ( !v->bpt_map_avail )
-		v->bpt_map_avail =
-			( int ( * )( hwd_reg_alloc_t *, int ) ) vec_int_dummy;
-	if ( !v->bpt_map_set )
-		v->bpt_map_set =
-			( void ( * )( hwd_reg_alloc_t *, int ) ) vec_void_dummy;
-	if ( !v->bpt_map_exclusive )
-		v->bpt_map_exclusive = ( int ( * )( hwd_reg_alloc_t * ) ) vec_int_dummy;
-	if ( !v->bpt_map_shared )
-		v->bpt_map_shared =
-			( int ( * )( hwd_reg_alloc_t *, hwd_reg_alloc_t * ) ) vec_int_dummy;
-	if ( !v->bpt_map_preempt )
-		v->bpt_map_preempt =
-			( void ( * )( hwd_reg_alloc_t *, hwd_reg_alloc_t * ) )
-			vec_void_dummy;
-	if ( !v->bpt_map_update )
-		v->bpt_map_update =
-			( void ( * )( hwd_reg_alloc_t *, hwd_reg_alloc_t * ) )
-			vec_void_dummy;
 
 	if ( !v->shutdown )
 		v->shutdown = ( int ( * )( hwd_context_t * ) ) vec_int_dummy;
@@ -345,16 +326,6 @@ vector_print_table( papi_vector_t * v, int print_func )
 						  "_papi_hwd_ntv_bits_to_info", print_func );
 	vector_print_routine( ( void * ) v->allocate_registers,
 						  "_papi_hwd_allocate_registers", print_func );
-	vector_print_routine( ( void * ) v->bpt_map_avail,
-						  "_papi_hwd_bpt_map_avail", print_func );
-	vector_print_routine( ( void * ) v->bpt_map_set, "_papi_hwd_bpt_map_set",
-						  print_func );
-	vector_print_routine( ( void * ) v->bpt_map_exclusive,
-						  "_papi_hwd_bpt_map_exclusive", print_func );
-	vector_print_routine( ( void * ) v->bpt_map_shared, "_papi_hwd_bpt_shared",
-						  print_func );
-	vector_print_routine( ( void * ) v->bpt_map_update,
-						  "_papi_hwd_bpt_map_update", print_func );
 
 	vector_print_routine( ( void * ) v->shutdown, "_papi_hwd_shutdown",
 						  print_func );

@@ -713,10 +713,10 @@ PAPI_query_event( int EventCode )
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
 
-		if ( _papi_hwi_presets.count[EventCode] )
-			papi_return( PAPI_OK );
+		if ( _papi_hwi_presets[EventCode].info.count )
+		        papi_return (PAPI_OK);
 		else
-			return ( PAPI_ENOEVNT );
+			return PAPI_ENOEVNT;
 	}
 
 	if ( IS_NATIVE(EventCode) ) {
@@ -841,7 +841,7 @@ PAPI_get_compiled_component_info( int cidx )
  *	In Fortran, some fields of the structure are returned explicitly. 
  *	This function works with existing PAPI preset and native event codes. 
  *
- *	@see PAPI_event_name_to_code PAPI_set_event_info
+ *	@see PAPI_event_name_to_code 
  */
 int
 PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
@@ -854,7 +854,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
 	if ( IS_PRESET(EventCode) ) {
 		if ( i >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
-		papi_return( _papi_hwi_get_event_info( EventCode, info ) );
+		papi_return( _papi_hwi_get_preset_event_info( EventCode, info ) );
 	}
 
 	if ( IS_NATIVE(EventCode) ) {
@@ -929,10 +929,10 @@ PAPI_event_code_to_name( int EventCode, char *out )
 	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( ( EventCode >= PAPI_MAX_PRESET_EVENTS )
-			 || ( _papi_hwi_presets.info[EventCode].symbol == NULL ) )
+			 || ( _papi_hwi_presets[EventCode].symbol == NULL ) )
 			papi_return( PAPI_ENOTPRESET );
 
-		strncpy( out, _papi_hwi_presets.info[EventCode].symbol,
+		strncpy( out, _papi_hwi_presets[EventCode].symbol,
 				 PAPI_MAX_STR_LEN );
 		papi_return( PAPI_OK );
 	}
@@ -1024,8 +1024,8 @@ PAPI_event_name_to_code( char *in, int *out )
 	   if (strncmp(in, "PAPI", 4) == 0) {
 	 */
 	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
-		if ( ( _papi_hwi_presets.info[i].symbol )
-			 && ( strcasecmp( _papi_hwi_presets.info[i].symbol, in ) == 0 ) ) {
+		if ( ( _papi_hwi_presets[i].symbol )
+			 && ( strcasecmp( _papi_hwi_presets[i].symbol, in ) == 0 ) ) {
 			*out = ( int ) ( i | PAPI_PRESET_MASK );
 			papi_return( PAPI_OK );
 		}
@@ -1168,10 +1168,10 @@ PAPI_enum_event( int *EventCode, int modifier )
 		}
 		i &= PAPI_PRESET_AND_MASK;
 		while ( ++i < PAPI_MAX_PRESET_EVENTS ) {
-			if ( _papi_hwi_presets.info[i].symbol == NULL )
+			if ( _papi_hwi_presets[i].symbol == NULL )
 				return ( PAPI_ENOEVNT );	/* NULL pointer terminates list */
 			if ( modifier & PAPI_PRESET_ENUM_AVAIL ) {
-				if ( _papi_hwi_presets.count[i] == 0 )
+				if ( _papi_hwi_presets[i].info.count == 0 )
 					continue;
 			}
 			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );

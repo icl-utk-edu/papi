@@ -137,13 +137,6 @@ allocate_eventset_map( DynamicArray_t * map )
 	return ( PAPI_OK );
 }
 
-static void
-free_eventset_map( DynamicArray_t * map )
-{
-	papi_free( map->dataSlotArray );
-	memset( map, 0x00, sizeof ( DynamicArray_t ) );
-}
-
 static int
 expand_dynamic_array( DynamicArray_t * DA )
 {
@@ -599,7 +592,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 
 	  /* walk all sub-events in the preset */
 	  for( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
-	     nevt = _papi_hwi_presets.data[preset_index]->native[k];
+	     nevt = _papi_hwi_presets[preset_index].info.code[k];
 	     if ( nevt == PAPI_NULL ) {
 		break;
 	     }
@@ -701,7 +694,7 @@ nix: pointer to array of native event table indexes from the preset entry
 size: number of native events to add
 */
 static int
-add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
+add_native_events( EventSetInfo_t * ESI, unsigned int *nevt, int size,
 				   EventInfo_t * out )
 {
 	int nidx, i, j, remap = 0;
@@ -828,7 +821,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  }
 
 	  /* count the number of native events in this preset */
-	  count = ( int ) _papi_hwi_presets.count[preset_index];
+	  count = ( int ) _papi_hwi_presets[preset_index].info.count;
 
 	  /* Check if event exists */
 	  if ( !count ) {
@@ -840,8 +833,8 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  if ( ESI->state & PAPI_OVERFLOWING ) {
 	     for( i = 0; i < count; i++ ) {
 		for( j = 0; j < ESI->overflow.event_counter; j++ ) {
-		   if ( ESI->overflow.EventCode[j] ==
-			( _papi_hwi_presets.data[preset_index]->native[i] ) ) {
+		  if ( ESI->overflow.EventCode[j] ==(int)
+			( _papi_hwi_presets[preset_index].info.code[i] ) ) {
 		      return PAPI_ECNFLCT;
 		   }
 		}
@@ -851,7 +844,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  /* Try to add the preset. */
 
 	  remap = add_native_events( ESI,
-				     _papi_hwi_presets.data[preset_index]->native,
+				     _papi_hwi_presets[preset_index].info.code,
 				     count, &ESI->EventInfoArray[thisindex] );
 	  if ( remap < 0 ) {
 	     return PAPI_ECNFLCT;
@@ -860,9 +853,9 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	     /* Fill in the EventCode (machine independent) information */
 	     ESI->EventInfoArray[thisindex].event_code = ( unsigned int ) EventCode;
 	     ESI->EventInfoArray[thisindex].derived =
-					_papi_hwi_presets.data[preset_index]->derived;
+					_papi_hwi_presets[preset_index].derived;
 	     ESI->EventInfoArray[thisindex].ops =
-					_papi_hwi_presets.data[preset_index]->operation;
+					_papi_hwi_presets[preset_index].info.postfix;
 	     if ( remap ) {
 		_papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
 	     }
@@ -888,7 +881,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 
 	  /* Try to add the native event. */
 
-	  remap = add_native_events( ESI, &EventCode, 1,
+	  remap = add_native_events( ESI, (unsigned int *)&EventCode, 1,
 				     &ESI->EventInfoArray[thisindex] );
 
 	  if ( remap < 0 ) {
@@ -1080,26 +1073,24 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 			/* Check if it's within the valid range */
 			if ( ( preset_index < 0 ) ||
 				 ( preset_index >= PAPI_MAX_PRESET_EVENTS ) )
-				return ( PAPI_EINVAL );
+				return PAPI_EINVAL;
 
 			/* Check if event exists */
-			if ( !_papi_hwi_presets.count[preset_index] )
-				return ( PAPI_ENOEVNT );
+			if ( !_papi_hwi_presets[preset_index].info.count )
+				return PAPI_ENOEVNT;
 
 			/* Remove the preset event. */
-			for ( j = 0; _papi_hwi_presets.data[preset_index]->native[j] != 0;
+			for ( j = 0; _papi_hwi_presets[preset_index].info.code[j] != 0;
 				  j++ );
-			retval =
-				remove_native_events( ESI,
-									  _papi_hwi_presets.data[preset_index]->
-									  native, j );
+			retval = remove_native_events( ESI,
+						       (int *)_papi_hwi_presets[preset_index].info.code, j );
 			if ( retval != PAPI_OK )
 				return ( retval );
 		} else if ( IS_NATIVE(EventCode) ) {
 			/* Check if native event exists */
 			if ( _papi_hwi_query_native_event( ( unsigned int ) EventCode ) !=
 				 PAPI_OK )
-				return ( PAPI_ENOEVNT );
+				return PAPI_ENOEVNT;
 
 			/* Remove the native event. */
 			retval = remove_native_events( ESI, &EventCode, 1 );
@@ -1429,11 +1420,6 @@ _papi_hwi_init_global_internal( void )
 
 	int retval;
 
-	memset( &_papi_hwi_presets, 0x0, sizeof ( _papi_hwi_presets ) );
-	/* This member is static */
-	_papi_hwi_presets.info = _papi_hwi_preset_info;
-	_papi_hwi_presets.type = _papi_hwi_preset_type;
-
 	memset( &_papi_hwi_system_info, 0x0, sizeof ( _papi_hwi_system_info ) );
 #ifndef _WIN32
 	memset( _papi_hwi_using_signal, 0x0, sizeof ( _papi_hwi_using_signal ) );
@@ -1471,7 +1457,15 @@ void
 _papi_hwi_shutdown_global_internal( void )
 {
 	_papi_hwi_cleanup_all_presets(  );
-	free_eventset_map( &_papi_hwi_system_info.global_eventset_map );
+
+	_papi_hwi_lock( INTERNAL_LOCK );
+
+	papi_free(  _papi_hwi_system_info.global_eventset_map.dataSlotArray );
+	memset(  &_papi_hwi_system_info.global_eventset_map, 
+		 0x00, sizeof ( DynamicArray_t ) );
+
+	_papi_hwi_unlock( INTERNAL_LOCK );
+
 	if ( _papi_hwi_system_info.shlib_info.map ) {
 		papi_free( _papi_hwi_system_info.shlib_info.map );
 	}
@@ -1699,151 +1693,6 @@ print_state( EventSetInfo_t * ESI, int cidx )
 }
 #endif
 
-/* this function recusively does Modified Bipartite Graph counter allocation 
-    success  return 1
-    fail     return 0
-*/
-int
-_papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
-{
-	int i, j;
-	char *ptr = ( char * ) event_list;
-	int idx_q[count];				   /* queue of indexes of lowest rank events */
-	int map_q[count];				   /* queue of mapped events (TRUE if mapped) */
-	int head, tail;
-	int size = _papi_hwd[cidx]->size.reg_alloc;
-
-	/* build a queue of indexes to all events 
-	   that live on one counter only (rank == 1) */
-	head = 0;				 /* points to top of queue */
-	tail = 0;				 /* points to bottom of queue */
-	for ( i = 0; i < count; i++ ) {
-		map_q[i] = 0;
-		if ( _papi_hwd[cidx]->
-			 bpt_map_exclusive( ( hwd_reg_alloc_t * ) & ptr[size * i] ) )
-			idx_q[tail++] = i;
-	}
-	/* scan the single counter queue looking for events that share counters.
-	   If two events can live only on one counter, return failure.
-	   If the second event lives on more than one counter, remove shared counter
-	   from its selector and reduce its rank. 
-	   Mark first event as mapped to its counter. */
-	while ( head < tail ) {
-		for ( i = 0; i < count; i++ ) {
-			if ( i != idx_q[head] ) {
-				if ( _papi_hwd[cidx]->
-					 bpt_map_shared( ( hwd_reg_alloc_t * ) & ptr[size * i],
-									 ( hwd_reg_alloc_t * ) & ptr[size *
-																 idx_q
-																 [head]] ) ) {
-					/* both share a counter; if second is exclusive, mapping fails */
-					if ( _papi_hwd[cidx]->
-						 bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
-											ptr[size * i] ) )
-						return 0;
-					else {
-						_papi_hwd[cidx]->
-							bpt_map_preempt( ( hwd_reg_alloc_t * ) &
-											 ptr[size * i],
-											 ( hwd_reg_alloc_t * ) & ptr[size *
-																		 idx_q
-																		 [head]] );
-						if ( _papi_hwd[cidx]->
-							 bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
-												ptr[size * i] ) )
-							idx_q[tail++] = i;
-					}
-				}
-			}
-		}
-		map_q[idx_q[head]] = 1;	/* mark this event as mapped */
-		head++;
-	}
-	if ( tail == count ) {
-		return 1;			 /* idx_q includes all events; everything is successfully mapped */
-	} else {
-		char *rest_event_list;
-		char *copy_rest_event_list;
-		int remainder;
-
-		rest_event_list =
-			papi_calloc(  _papi_hwd[cidx]->cmp_info.num_cntrs, 
-				      size );
-
-		copy_rest_event_list =
-		        papi_calloc( _papi_hwd[cidx]->cmp_info.num_cntrs,
-				     size );
-
-		if ( !rest_event_list || !copy_rest_event_list ) {
-			if ( rest_event_list )
-				papi_free( rest_event_list );
-			if ( copy_rest_event_list )
-				papi_free( copy_rest_event_list );
-			return ( 0 );
-		}
-
-		/* copy all unmapped events to a second list and make a backup */
-		for ( i = 0, j = 0; i < count; i++ ) {
-			if ( map_q[i] == 0 ) {
-				memcpy( &copy_rest_event_list[size * j++], &ptr[size * i],
-						( size_t ) size );
-			}
-		}
-		remainder = j;
-
-		memcpy( rest_event_list, copy_rest_event_list,
-				( size_t ) size * ( size_t ) remainder );
-
-		/* try each possible mapping until you fail or find one that works */
-		for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ ) {
-			/* for the first unmapped event, try every possible counter */
-			if ( _papi_hwd[cidx]->
-				 bpt_map_avail( ( hwd_reg_alloc_t * ) rest_event_list, i ) ) {
-				_papi_hwd[cidx]->
-					bpt_map_set( ( hwd_reg_alloc_t * ) rest_event_list, i );
-				/* remove selected counter from all other unmapped events */
-				for ( j = 1; j < remainder; j++ ) {
-					if ( _papi_hwd[cidx]->
-						 bpt_map_shared( ( hwd_reg_alloc_t * ) &
-										 rest_event_list[size * j],
-										 ( hwd_reg_alloc_t * )
-										 rest_event_list ) )
-						_papi_hwd[cidx]->
-							bpt_map_preempt( ( hwd_reg_alloc_t * ) &
-											 rest_event_list[size * j],
-											 ( hwd_reg_alloc_t * )
-											 rest_event_list );
-				}
-				/* if recursive call to allocation works, break out of the loop */
-				if ( _papi_hwi_bipartite_alloc
-					 ( ( hwd_reg_alloc_t * ) rest_event_list, remainder,
-					   cidx ) )
-					break;
-
-				/* recursive mapping failed; copy the backup list and try the next combination */
-				memcpy( rest_event_list, copy_rest_event_list,
-						( size_t ) size * ( size_t ) remainder );
-			}
-		}
-		if ( i == _papi_hwd[cidx]->cmp_info.num_cntrs ) {
-			papi_free( rest_event_list );
-			papi_free( copy_rest_event_list );
-			return 0;		 /* fail to find mapping */
-		}
-		for ( i = 0, j = 0; i < count; i++ ) {
-			if ( map_q[i] == 0 )
-				_papi_hwd[cidx]->
-					bpt_map_update( ( hwd_reg_alloc_t * ) & ptr[size * i],
-									( hwd_reg_alloc_t * ) & rest_event_list[size
-																			*
-																			j++] );
-		}
-		papi_free( rest_event_list );
-		papi_free( copy_rest_event_list );
-		return 1;
-	}
-}
-
 
 /* table matching derived types to derived strings.                             
    used by get_info, encode_event, xml translator                               
@@ -1905,52 +1754,44 @@ _papi_hwi_derived_string( int type, char *derived, int len )
 }
 
 
-/* _papi_hwi_get_event_info:
+/* _papi_hwi_get_preset_event_info:
    Assumes EventCode contains a valid preset code.
    But defensive programming says check for NULL pointers.
    Returns a filled in PAPI_event_info_t structure containing
    descriptive strings and values for the specified preset event.
 */
 int
-_papi_hwi_get_event_info( int EventCode, PAPI_event_info_t * info )
+_papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 {
 	int i = EventCode & PAPI_PRESET_AND_MASK;
-	int j;
 
-	if ( _papi_hwi_presets.info[i].symbol ) {	/* if the event is in the preset table */
-		memset( info, 0, sizeof ( *info ) );
+	if ( _papi_hwi_presets[i].symbol ) {	/* if the event is in the preset table */
+		memset( info, 0, sizeof ( PAPI_event_info_t ) );
+
 		info->event_code = ( unsigned int ) EventCode;
-		info->event_type = _papi_hwi_presets.type[i];
-		info->count = _papi_hwi_presets.count[i];
-		strcpy( info->symbol, _papi_hwi_presets.info[i].symbol );
-		if ( _papi_hwi_presets.info[i].short_descr != NULL )
-			strncpy( info->short_descr, _papi_hwi_presets.info[i].short_descr,
-					 sizeof ( info->short_descr ) );
-		if ( _papi_hwi_presets.info[i].long_descr != NULL )
-			strncpy( info->long_descr, _papi_hwi_presets.info[i].long_descr,
-					 sizeof ( info->long_descr ) );
-		info->derived[0] = '\0';
-		info->postfix[0] = '\0';
-		if ( _papi_hwi_presets.data[i] ) {	/* if the event exists on this platform */
-			strncpy( info->postfix, _papi_hwi_presets.data[i]->operation,
-					 sizeof ( info->postfix ) );
-			_papi_hwi_derived_string( _papi_hwi_presets.data[i]->derived,
-									  info->derived, sizeof ( info->derived ) );
-			for ( j = 0; j < ( int ) info->count; j++ ) {
-				info->code[j] =
-					( unsigned int ) _papi_hwi_presets.data[i]->native[j];
-				_papi_hwi_native_code_to_name( info->code[j], info->name[j],
-											   sizeof ( info->name[j] ) );
-			}
-		}
-		if ( _papi_hwi_presets.dev_note[i] ) {	/* if a developer's note exists for this event */
-			strncpy( info->note, _papi_hwi_presets.dev_note[i],
-					 sizeof ( info->note ) );
-		} else
-			info->note[0] = '\0';
+		strcpy( info->symbol, _papi_hwi_presets[i].symbol );
 
-		return ( PAPI_OK );
+		if ( _papi_hwi_presets[i].short_descr != NULL )
+			strncpy( info->short_descr, 
+                                 _papi_hwi_presets[i].short_descr,
+				 sizeof ( info->short_descr ) );
+
+		if ( _papi_hwi_presets[i].long_descr != NULL )
+			strncpy( info->long_descr, 
+                                 _papi_hwi_presets[i].long_descr,
+				  sizeof ( info->long_descr ) );
+
+		/* Preset info */
+
+		info->preset_info=&_papi_hwi_presets[i].info;
+
+		/* This should be done elsewhere */
+	        _papi_hwi_derived_string( _papi_hwi_presets[i].derived,
+					  info->preset_info->derived, 
+                                          sizeof ( info->preset_info->derived ) );
+
+		return PAPI_OK;
 	} else {
-		return ( PAPI_ENOEVNT );
+		return PAPI_ENOEVNT;
 	}
 }

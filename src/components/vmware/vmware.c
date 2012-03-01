@@ -937,12 +937,6 @@ papi_vector_t _vmware_vector = {
 	.write = VMWARE_write,
 	.shutdown = VMWARE_shutdown,
 	.ctl = VMWARE_ctl,
-	.bpt_map_set = NULL,
-	.bpt_map_avail = NULL,
-	.bpt_map_exclusive = NULL,
-	.bpt_map_shared = NULL,
-	.bpt_map_preempt = NULL,
-	.bpt_map_update = NULL,
 	
 	.update_control_state = VMWARE_update_control_state,
 	.set_domain = VMWARE_set_domain,

@@ -918,12 +918,36 @@ typedef char* PAPI_user_defined_events_file_t;
       and presenting information for each native event in turn.
    The various fields and their usage is discussed below.
 */
-   typedef struct event_info {
-      unsigned int event_code;               /**< preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
-      unsigned int event_type;               /**< event type or category for preset events only */
-      unsigned int count;                    /**< number of terms (usually 1) in the code and name fields
+
+   typedef struct preset_info {
+      unsigned int count;                    /**< number of terms (usually 1) in the code and name fields 
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
+
+      unsigned int event_type;               /**< event type or category for preset events only */
+
+      char derived[PAPI_MIN_STR_LEN];        /**< name of the derived type
+                                                - for presets, usually NOT_DERIVED
+                                                - for native events, empty string 
+                                                NOTE: a derived description string is available
+                                                   in papi_data.c that is currently not exposed to the user */
+      char postfix[PAPI_2MAX_STR_LEN];        /**< string containing postfix operations; only defined for 
+                                                preset events of derived type DERIVED_POSTFIX */
+      unsigned int code[PAPI_MAX_INFO_TERMS];/**< array of values that further describe the event:
+                                                - for presets, native event_code values
+                                                - for native events, register values for event programming */
+      char name[PAPI_MAX_INFO_TERMS]         /**< names of code terms: */
+               [PAPI_2MAX_STR_LEN];           /**< - for presets, native event names, as in symbol, above
+                                                - for native events, descriptive strings for each register
+                                                   value presented in the code array */
+      char *note;          /**< an optional developer note supplied with a preset event
+                                                to delineate platform specific anomalies or restrictions
+                                                NOTE: could also be implemented for native events. */
+   } PAPI_preset_info_t;
+
+
+   typedef struct event_info {
+      unsigned int event_code;               /**< preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       char symbol[PAPI_HUGE_STR_LEN];       /**< name of the event
                                                 - for presets, something like PAPI_TOT_INS
                                                 - for native events, something related to the vendor name
@@ -933,24 +957,10 @@ typedef char* PAPI_user_defined_events_file_t;
       char long_descr[PAPI_HUGE_STR_LEN];    /**< a longer description of the event
                                                 - typically a sentence for presets
                                                 - possibly a paragraph from vendor docs for native events */
-      char derived[PAPI_MIN_STR_LEN];        /**< name of the derived type
-                                                - for presets, usually NOT_DERIVED
-                                                - for native events, empty string 
-                                                NOTE: a derived description string is available
-                                                   in papi_data.c that is currently not exposed to the user */
-      char postfix[PAPI_MIN_STR_LEN];        /**< string containing postfix operations; only defined for 
-                                                preset events of derived type DERIVED_POSTFIX */
-      unsigned int code[PAPI_MAX_INFO_TERMS];/**< array of values that further describe the event:
-                                                - for presets, native event_code values
-                                                - for native events, register values for event programming */
-      char name[PAPI_MAX_INFO_TERMS]         /**< names of code terms: */
-               [PAPI_2MAX_STR_LEN];           /**< - for presets, native event names, as in symbol, above
-                                                - for native events, descriptive strings for each register
-                                                   value presented in the code array */
-      char note[PAPI_HUGE_STR_LEN];          /**< an optional developer note supplied with a preset event
-                                                to delineate platform specific anomalies or restrictions
-                                                NOTE: could also be implemented for native events. */
+     PAPI_preset_info_t *preset_info;
    } PAPI_event_info_t;
+
+
 
 
 /** @defgroup low_api The Low Level API 

@@ -674,64 +674,53 @@ _papi_hwi_native_code_to_descr( unsigned int EventCode, char *hwi_descr,
 /* The native event equivalent of PAPI_get_event_info */
 int
 _papi_hwi_get_native_event_info( unsigned int EventCode,
-								 PAPI_event_info_t * info )
+				 PAPI_event_info_t * info )
 {
-	hwd_register_t *bits = NULL;
-	int retval;
-	int cidx = ( int ) PAPI_COMPONENT_INDEX( EventCode );
+    hwd_register_t *bits = NULL;
+    int retval;
+    int cidx = ( int ) PAPI_COMPONENT_INDEX( EventCode );
 
-	if ( _papi_hwi_invalid_cmp( cidx ) )
-		return ( PAPI_ENOCMP );
+    if ( _papi_hwi_invalid_cmp( cidx ) )
+       return PAPI_ENOCMP;
 
-	if ( EventCode & PAPI_NATIVE_MASK ) {
-		memset( info, 0, sizeof ( *info ) );
-		retval =
-			_papi_hwd[cidx]->ntv_code_to_name( EventCode, info->symbol,
-											   sizeof ( info->symbol ) );
-		if ( retval == PAPI_OK || retval == PAPI_EBUF ) {
+    if ( EventCode & PAPI_NATIVE_MASK ) {
+       memset( info, 0, sizeof ( PAPI_event_info_t ) );
+       retval = _papi_hwd[cidx]->ntv_code_to_name( EventCode, info->symbol,
+						   sizeof ( info->symbol ) );
 
-			/* Fill in the info structure */
-			info->event_code = ( unsigned int ) EventCode;
-			retval =
-				_papi_hwd[cidx]->ntv_code_to_descr( EventCode, info->long_descr,
-													sizeof ( info->
-															 long_descr ) );
-			if ( retval == PAPI_OK || retval == PAPI_EBUF ) {
-				info->short_descr[0] = '\0';
-				info->derived[0] = '\0';
-				info->postfix[0] = '\0';
+       if ( retval == PAPI_OK || retval == PAPI_EBUF ) {
 
-				/* Convert the register bits structure for this EventCode into
-				   arrays of names and values (substrate dependent).
-				 */
-				bits =
-					papi_malloc( ( size_t ) _papi_hwd[cidx]->size.reg_value );
-				if ( bits == NULL ) {
-					info->count = 0;
-					return ( PAPI_ENOMEM );
-				}
-				retval = _papi_hwd[cidx]->ntv_code_to_bits( EventCode, bits );
-				if ( retval == PAPI_OK )
-					retval =
-						_papi_hwd[cidx]->ntv_bits_to_info( bits,
-														   ( char * ) &info->
-														   name[0][0],
-														   info->code,
-														   PAPI_2MAX_STR_LEN,
-														   PAPI_MAX_INFO_TERMS );
-				if ( retval < 0 )
-					info->count = 0;
-				else
-					info->count = ( unsigned int ) retval;
-				if ( bits )
-					papi_free( bits );
-				return ( PAPI_OK );
-			}
-		}
-	}
-	if ( bits )
-		papi_free( bits );
-	return ( PAPI_ENOEVNT );
+	  /* Fill in the info structure */
+	  info->event_code = ( unsigned int ) EventCode;
+	  retval = _papi_hwd[cidx]->ntv_code_to_descr( EventCode, 
+                                                       info->long_descr,
+						       sizeof ( info->long_descr ) );
+	  if ( retval == PAPI_OK || retval == PAPI_EBUF ) {
+	     info->short_descr[0] = '\0';
+	     /* Convert the register bits structure for this EventCode into
+		arrays of names and values (substrate dependent). */
+	     bits = papi_malloc( ( size_t ) _papi_hwd[cidx]->size.reg_value );
+	     if ( bits == NULL ) {
+		return PAPI_ENOMEM;
+	     }
+	     retval = _papi_hwd[cidx]->ntv_code_to_bits( EventCode, bits );
+	     if ( retval == PAPI_OK )
+	       /*
+	        retval = _papi_hwd[cidx]->ntv_bits_to_info( bits,
+                                                           ( char * ) &info->name[0][0],
+							   info->code,
+							   PAPI_2MAX_STR_LEN,
+							   PAPI_MAX_INFO_TERMS );*/
+
+	        if ( bits )
+		   papi_free( bits );
+		return PAPI_OK;
+	  }
+       }
+    }
+    if ( bits )
+       papi_free( bits );
+    return PAPI_ENOEVNT;
 }
 
 #if (!defined(HAVE_FFSLL) || defined(__bgp__))

@@ -20,6 +20,8 @@ extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 #include "linux-memory.h"
 
+/* Contains source for the Modified Bipartite Allocation scheme */
+#include "papi_bipartite.h"
 
 /* Prototypes for entry points found in perfctr.c */
 extern int _perfctr_init_substrate( int );
@@ -91,7 +93,7 @@ _papi_hwd_fixup_vec( int cidx )
 	} else {
 		strcat( table_name, str );
 	}
-	if ( ( _papi_libpfm_setup_presets( table_name, 0, cidx ) ) != PAPI_OK ) {
+	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
 		PAPIERROR
 			( "Improper usage of PAPI_PENTIUM4_VEC environment variable.\nUse either SSE or MMX" );
 		return ( PAPI_ESBSTR );
@@ -116,7 +118,7 @@ _papi_p4_hwd_fixup_fp( int cidx )
 		if ( strstr( str, "SSE_DP" ) )
 			strcat( table_name, " SSE_DP" );
 	}
-	if ( ( _papi_libpfm_setup_presets( table_name, 0, cidx ) ) != PAPI_OK ) {
+	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
 		PAPIERROR
 			( "Improper usage of PAPI_PENTIUM4_FP environment variable.\nUse one or two of X87,SSE_SP,SSE_DP" );
 		return ( PAPI_ESBSTR );
@@ -139,7 +141,7 @@ _papi_hwd_fixup_fp( char *name, int cidx )
 		strcat( table_name, str );
 	}
 
-	if ( ( _papi_libpfm_setup_presets( table_name, 0, cidx ) ) != PAPI_OK ) {
+	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
 		PAPIERROR
 			( "Improper usage of PAPI_OPTERON_FP environment variable.\nUse one of RETIRED, SPECULATIVE, SSE_SP, SSE_DP" );
 		return ( PAPI_ESBSTR );
@@ -193,7 +195,7 @@ setup_x86_presets( int cputype, int cidx)
 	if ( is_pentium4() ) {
 		/* load the baseline event map for all Pentium 4s */
 
-	  _papi_libpfm_setup_presets( "Intel Pentium4", 0, cidx );	/* base events */
+	  _papi_load_preset_table( "Intel Pentium4", 0, cidx );	/* base events */
 
 		/* fix up the floating point and vector ops */
 		if ( ( retval = _papi_p4_hwd_fixup_fp(cidx  ) ) != PAPI_OK )
@@ -203,7 +205,7 @@ setup_x86_presets( int cputype, int cidx)
 
 		/* install L3 cache events iff 3 levels of cache exist */
 		if ( _papi_hwi_system_info.hw_info.mem_hierarchy.levels == 3 )
-		  _papi_libpfm_setup_presets( "Intel Pentium4 L3", 0, cidx );
+		  _papi_load_preset_table( "Intel Pentium4 L3", 0, cidx );
 
 		/* overload with any model dependent events */
 		if ( cputype == PERFCTR_X86_INTEL_P4 ) {
@@ -230,64 +232,64 @@ setup_x86_presets( int cputype, int cidx)
 			PAPIERROR( MODEL_ERROR );
 			return ( PAPI_ESBSTR );
 		case PERFCTR_X86_INTEL_P6:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
 			break;
 		case PERFCTR_X86_INTEL_PII:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
 			break;
 		case PERFCTR_X86_INTEL_PIII:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
-		  _papi_libpfm_setup_presets( "Intel PentiumIII", 0, cidx );	/* events that differ from Pentium M */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel PentiumIII", 0, cidx );	/* events that differ from Pentium M */
 			break;
 #ifdef PERFCTR_X86_INTEL_PENTM
 		case PERFCTR_X86_INTEL_PENTM:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
-		  _papi_libpfm_setup_presets( "Intel PentiumM", 0, cidx );	/* events that differ from PIII */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel PentiumM", 0, cidx );	/* events that differ from PIII */
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE
 		case PERFCTR_X86_INTEL_CORE:
-		  _papi_libpfm_setup_presets( "Intel Core Duo/Solo", 0, cidx );
+		  _papi_load_preset_table( "Intel Core Duo/Solo", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE2
 		case PERFCTR_X86_INTEL_CORE2:
-		  _papi_libpfm_setup_presets( "Intel Core2", 0, cidx );
+		  _papi_load_preset_table( "Intel Core2", 0, cidx );
 			break;
 #endif
 		case PERFCTR_X86_AMD_K7:
-		  _papi_libpfm_setup_presets( "AMD64 (K7)", 0, cidx );
+		  _papi_load_preset_table( "AMD64 (K7)", 0, cidx );
 			break;
 #ifdef PERFCTR_X86_AMD_K8	 /* this is defined in perfctr 2.5.x */
 		case PERFCTR_X86_AMD_K8:
-		  _papi_libpfm_setup_presets( "AMD64", 0, cidx );
+		  _papi_load_preset_table( "AMD64", 0, cidx );
 		  _papi_hwd_fixup_fp( "AMD64", cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_AMD_K8C	 /* this is defined in perfctr 2.6.x */
 		case PERFCTR_X86_AMD_K8C:
-		  _papi_libpfm_setup_presets( "AMD64", 0, cidx );
+		  _papi_load_preset_table( "AMD64", 0, cidx );
 		  _papi_hwd_fixup_fp( "AMD64", cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_AMD_FAM10 /* this is defined in perfctr 2.6.29 */
 		case PERFCTR_X86_AMD_FAM10:
-		  _papi_libpfm_setup_presets( "AMD64 (Barcelona)", 0, cidx );
+		  _papi_load_preset_table( "AMD64 (Barcelona)", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_ATOM	/* family 6 model 28 */
 		case PERFCTR_X86_INTEL_ATOM:
-		  _papi_libpfm_setup_presets( "Intel Atom", 0, cidx );
+		  _papi_load_preset_table( "Intel Atom", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_NHLM	/* family 6 model 26 */
 		case PERFCTR_X86_INTEL_NHLM:
-		  _papi_libpfm_setup_presets( "Intel Nehalem", 0, cidx );
+		  _papi_load_preset_table( "Intel Nehalem", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_WSTMR
 		case PERFCTR_X86_INTEL_WSTMR:
-		  _papi_libpfm_setup_presets( "Intel Westmere", 0, cidx );
+		  _papi_load_preset_table( "Intel Westmere", 0, cidx );
 			break;
 #endif
 		default:
@@ -448,7 +450,7 @@ _x86_set_domain( hwd_control_state_t * cntrl, int domain )
     if it can be mapped to counter ctr.
     Returns true if it can, false if it can't. */
 static int
-_x86_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
+_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
 {
 	return ( int ) ( dst->ra_selector & ( 1 << ctr ) );
 }
@@ -457,7 +459,7 @@ _x86_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
     be mapped to only counter ctr.
     Returns nothing.  */
 static void
-_x86_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
+_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
 {
 	dst->ra_selector = ( unsigned int ) ( 1 << ctr );
 	dst->ra_rank = 1;
@@ -477,7 +479,7 @@ _x86_bpt_map_set( hwd_reg_alloc_t * dst, int ctr )
    if it has a single exclusive mapping.
    Returns true if exlusive, false if non-exclusive.  */
 static int
-_x86_bpt_map_exclusive( hwd_reg_alloc_t * dst )
+_bpt_map_exclusive( hwd_reg_alloc_t * dst )
 {
 	return ( dst->ra_rank == 1 );
 }
@@ -487,7 +489,7 @@ _x86_bpt_map_exclusive( hwd_reg_alloc_t * dst )
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.  */
 static int
-_x86_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
+_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
   if ( is_pentium4() ) {
 		int retval1, retval2;
@@ -524,7 +526,7 @@ _x86_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.  */
 static void
-_x86_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
+_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
 	int i;
 	unsigned shared;
@@ -587,7 +589,7 @@ _x86_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 }
 
 static void
-_x86_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
+_bpt_map_update( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 {
 	dst->ra_selector = src->ra_selector;
 
@@ -651,7 +653,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 #endif
 		}
 	}
-	if ( _papi_hwi_bipartite_alloc( event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
+	if ( _papi_bipartite_alloc( event_list, natNum, ESI->CmpIdx ) ) {	/* successfully mapped */
 		for ( i = 0; i < natNum; i++ ) {
 #ifdef PERFCTR_X86_INTEL_CORE2
 			if ( _papi_hwi_system_info.hw_info.model ==
@@ -1110,12 +1112,6 @@ papi_vector_t _perfctr_vector = {
 	.start = _x86_start,
 	.stop = _x86_stop,
 	.read = _x86_read,
-	.bpt_map_set = _x86_bpt_map_set,
-	.bpt_map_avail = _x86_bpt_map_avail,
-	.bpt_map_exclusive = _x86_bpt_map_exclusive,
-	.bpt_map_shared = _x86_bpt_map_shared,
-	.bpt_map_preempt = _x86_bpt_map_preempt,
-	.bpt_map_update = _x86_bpt_map_update,
 	.allocate_registers = _x86_allocate_registers,
 	.update_control_state = _x86_update_control_state,
 	.set_domain = _x86_set_domain,

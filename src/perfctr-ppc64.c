@@ -279,46 +279,7 @@ int _papi_hwd_shutdown_global(void) {
    return (PAPI_OK);
 } */
 
-/* This function examines the event to determine
-    if it can be mapped to counter ctr. 
-    Returns true if it can, false if it can't.
-*/
-/*
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
-{
-	return PAPI_OK;
-}
-*/
-/* This function forces the event to
-    be mapped to only counter ctr. 
-    Returns nothing.
-*/
-/*
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
-{
-}
-*/
-/* This function examines the event to determine
-    if it has a single exclusive mapping. 
-    Returns true if exlusive, false if non-exclusive.
-*/
-/*
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
-{
-	return PAPI_OK;
-}
-*/
-/* This function compares the dst and src events
-    to determine if any counters are shared. Typically the src event
-    is exclusive, so this detects a conflict if true.
-    Returns true if conflict, false if no conflict.
-*/
-/*
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-	return PAPI_OK;
-}
-*/
+
 /* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
 	 fail     return 0
@@ -360,20 +321,6 @@ do_counter_allocation( ppc64_reg_alloc_t * event_list, int size )
 	}
 }
 
-
-
-/* This function removes shared resources available to the src event
-    from the resources available to the dst event,
-    and reduces the rank of the dst event accordingly. Typically,
-    the src event will be exclusive, but the code shouldn't assume it.
-    Returns nothing.  */
-/*
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-}
-
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-}
-*/
 
 /* Register allocation */
 int

@@ -24,7 +24,7 @@ endif
 
 CFLAGS += -DSUBSTRATE_USES_LIBPFM -DSUBSTRATE_NAME_$(SUBSTR)
 MISCHDRS += perf_events.h linux-lock.h mb.h perfmon.h papi_libpfm_events.h $(PAPI_EVENTS_TABLE)
-MISCSRCS += papi_libpfm3_events.c papi_libpfm_presets.c
+MISCSRCS += papi_libpfm3_events.c
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
