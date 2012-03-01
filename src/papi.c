@@ -433,8 +433,11 @@ PAPI_set_thr_specific( int tag, void *ptr )
 		papi_return( PAPI_EINVAL );
 
 	retval = _papi_hwi_lookup_or_create_thread( &thread, 0 );
-	if ( retval == PAPI_OK )
-		thread->thread_storage[tag] = ptr;
+	if ( retval == PAPI_OK ) {
+	   _papi_hwi_lock( THREADS_LOCK );
+	   thread->thread_storage[tag] = ptr;
+	   _papi_hwi_unlock( THREADS_LOCK );
+	}
 	else
 		return ( retval );
 
@@ -671,15 +674,13 @@ PAPI_library_init( int version )
  * counted on this architecture. 
  * If the event CAN be counted, the function returns PAPI_OK. 
  * If the event CANNOT be counted, the function returns an error code. 
- * This function also can be used to check the syntax of a native event. 
+ * This function also can be used to check the syntax of native and user events. 
  *
  * @param EventCode
  *    -- a defined event such as PAPI_TOT_INS. 
  *
  *  @retval PAPI_EINVAL 
  *	    One or more of the arguments is invalid.
- *  @retval PAPI_ENOTPRESET 
- *	    The hardware event specified is not a valid PAPI preset.
  *  @retval PAPI_ENOEVNT 
  *	    The PAPI preset is not available on the underlying hardware. 
  *
@@ -713,10 +714,10 @@ PAPI_query_event( int EventCode )
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
 
-		if ( _papi_hwi_presets.count[EventCode] )
-			papi_return( PAPI_OK );
+		if ( _papi_hwi_presets[EventCode].info.count )
+		        papi_return (PAPI_OK);
 		else
-			return ( PAPI_ENOEVNT );
+			return PAPI_ENOEVNT;
 	}
 
 	if ( IS_NATIVE(EventCode) ) {
@@ -734,8 +735,59 @@ PAPI_query_event( int EventCode )
 	}
 #endif
 
-	papi_return( PAPI_ENOTPRESET );
+	papi_return( PAPI_ENOEVNT );
 }
+
+/** @class PAPI_query_named_event
+ *  @brief Query if a named PAPI event exists.
+ *
+ * @par C Interface:
+ * \#include <papi.h> @n
+ * int PAPI_query_named_event(char *EventName);
+ *
+ * PAPI_query_named_event() asks the PAPI library if the PAPI named event can be 
+ * counted on this architecture. 
+ * If the event CAN be counted, the function returns PAPI_OK. 
+ * If the event CANNOT be counted, the function returns an error code. 
+ * This function also can be used to check the syntax of native and user events. 
+ *
+ * @param EventName
+ *    -- a defined event such as PAPI_TOT_INS. 
+ *
+ *  @retval PAPI_EINVAL 
+ *	    One or more of the arguments is invalid.
+ *  @retval PAPI_ENOEVNT 
+ *	    The PAPI preset is not available on the underlying hardware. 
+ *
+ * @par Examples
+ * @code
+ * int retval;
+ * // Initialize the library
+ * retval = PAPI_library_init(PAPI_VER_CURRENT);
+ * if (retval != PAPI_VER_CURRENT) {
+ *   fprintf(stderr,\"PAPI library init error!\\n\");
+ *   exit(1); 
+ * }
+ * if (PAPI_query_named_event("PAPI_TOT_INS") != PAPI_OK) {
+ *   fprintf(stderr,\"No instruction counter? How lame.\\n\");
+ *   exit(1);
+ * }
+ * @endcode
+ *
+ * @bug This function has no known bugs. 
+ *
+ * @see PAPI_query_event 
+ */
+int
+PAPI_query_named_event( char *EventName )
+{
+	int ret, code;
+	
+	ret = PAPI_event_name_to_code( EventName, code );
+	if ( ret == PAPI_OK ) ret = PAPI_query_event( code );
+	papi_return( ret);
+}
+
 
 /**	@class PAPI_get_component_info 
  *	@brief get information about a specific software component 
@@ -841,7 +893,7 @@ PAPI_get_compiled_component_info( int cidx )
  *	In Fortran, some fields of the structure are returned explicitly. 
  *	This function works with existing PAPI preset and native event codes. 
  *
- *	@see PAPI_event_name_to_code PAPI_set_event_info
+ *	@see PAPI_event_name_to_code 
  */
 int
 PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
@@ -854,7 +906,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
 	if ( IS_PRESET(EventCode) ) {
 		if ( i >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
-		papi_return( _papi_hwi_get_event_info( EventCode, info ) );
+		papi_return( _papi_hwi_get_preset_event_info( EventCode, info ) );
 	}
 
 	if ( IS_NATIVE(EventCode) ) {
@@ -929,10 +981,10 @@ PAPI_event_code_to_name( int EventCode, char *out )
 	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( ( EventCode >= PAPI_MAX_PRESET_EVENTS )
-			 || ( _papi_hwi_presets.info[EventCode].symbol == NULL ) )
+			 || ( _papi_hwi_presets[EventCode].symbol == NULL ) )
 			papi_return( PAPI_ENOTPRESET );
 
-		strncpy( out, _papi_hwi_presets.info[EventCode].symbol,
+		strncpy( out, _papi_hwi_presets[EventCode].symbol,
 				 PAPI_MAX_STR_LEN );
 		papi_return( PAPI_OK );
 	}
@@ -977,6 +1029,8 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOTPRESET 
  *		The hardware event specified is not a valid PAPI preset.
+ *	@retval PAPI_ENOINIT 
+ *		The PAPI library has not been initialized.
  *	@retval PAPI_ENOEVNT 
  *		The hardware event is not available on the underlying hardware. 
  *
@@ -1024,8 +1078,8 @@ PAPI_event_name_to_code( char *in, int *out )
 	   if (strncmp(in, "PAPI", 4) == 0) {
 	 */
 	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
-		if ( ( _papi_hwi_presets.info[i].symbol )
-			 && ( strcasecmp( _papi_hwi_presets.info[i].symbol, in ) == 0 ) ) {
+		if ( ( _papi_hwi_presets[i].symbol )
+			 && ( strcasecmp( _papi_hwi_presets[i].symbol, in ) == 0 ) ) {
 			*out = ( int ) ( i | PAPI_PRESET_MASK );
 			papi_return( PAPI_OK );
 		}
@@ -1168,10 +1222,10 @@ PAPI_enum_event( int *EventCode, int modifier )
 		}
 		i &= PAPI_PRESET_AND_MASK;
 		while ( ++i < PAPI_MAX_PRESET_EVENTS ) {
-			if ( _papi_hwi_presets.info[i].symbol == NULL )
+			if ( _papi_hwi_presets[i].symbol == NULL )
 				return ( PAPI_ENOEVNT );	/* NULL pointer terminates list */
 			if ( modifier & PAPI_PRESET_ENUM_AVAIL ) {
-				if ( _papi_hwi_presets.count[i] == 0 )
+				if ( _papi_hwi_presets[i].info.count == 0 )
 					continue;
 			}
 			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );
@@ -1345,8 +1399,8 @@ PAPI_assign_eventset_component( int EventSet, int cidx )
  *	For a list of PAPI preset events, see PAPI_presets or run the avail test case
  *	in the PAPI distribution. PAPI presets can be passed to PAPI_query_event to see
  *	if they exist on the underlying architecture.
- *	For a list of native events available on current platform, run native_avail
- *	test case in the PAPI distribution. For the encoding of native events,
+ *	For a list of native events available on current platform, run the papi_native_avail
+ *	utility in the PAPI distribution. For the encoding of native events,
  *	see PAPI_event_name_to_code to learn how to generate native code for the
  *	supported native event on the underlying architecture.
  *
@@ -1549,6 +1603,156 @@ PAPI_remove_event( int EventSet, int EventCode )
 	/* Now do the magic. */
 
 	papi_return( _papi_hwi_remove_event( ESI, EventCode ) );
+}
+
+/**	@class PAPI_add_named_event
+ *	@brief add PAPI preset or native hardware event by name to an EventSet
+ *
+ *	@par C Interface:
+ *	\#include <papi.h> @n
+ *	int PAPI_add_named_event( int EventSet, char *EventName );
+ *
+ *	PAPI_add_named_event adds one event to a PAPI EventSet. @n
+ *	A hardware event can be either a PAPI preset or a native hardware event code.
+ *	For a list of PAPI preset events, see PAPI_presets or run the avail test case
+ *	in the PAPI distribution. PAPI presets can be passed to PAPI_query_event to see
+ *	if they exist on the underlying architecture.
+ *	For a list of native events available on current platform, run the papi_native_avail
+ *	utility in the PAPI distribution.
+ *
+ *	@param EventSet
+ *		An integer handle for a PAPI Event Set as created by PAPI_create_eventset.
+ *	@param EventCode 
+ *		A defined event such as PAPI_TOT_INS. 
+ *
+ *	@retval Positive-Integer
+ *		The number of consecutive elements that succeeded before the error. 
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOINIT 
+ *		The PAPI library has not been initialized.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events.
+ *	@retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this event and other events 
+ *		in the event set simultaneously.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware.
+ *	@retval PAPI_EBUG 
+ *		Internal error, please send mail to the developers. 
+ *
+ *	@par Examples:
+ *	@code
+ *  char EventName = "PAPI_TOT_INS";
+ *	int EventSet = PAPI_NULL;
+ *	unsigned int native = 0x0;
+ *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	// Add Total Instructions Executed to our EventSet
+ *	if ( PAPI_add_named_event( EventSet, EventName ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	// Add native event PM_CYC to EventSet
+ *	if ( PAPI_add_named_event( EventSet, "PM_CYC" ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	@endcode
+ *
+ *	@bug
+ *	The vector function should take a pointer to a length argument so a proper 
+ *	return value can be set upon partial success.
+ *
+ *	@see PAPI_add_event @n
+ *	PAPI_query_named_event @n
+ *	PAPI_remove_named_event
+ */
+int
+PAPI_add_named_event( int EventSet, char *EventName )
+{
+	int ret, code;
+	
+	ret = PAPI_event_name_to_code( EventName, code );
+	if ( ret == PAPI_OK ) ret = PAPI_add_event( EventSet, code );
+	papi_return( ret );
+}
+
+/**  @class PAPI_remove_named_event
+ *   @brief removes a named hardware event from a PAPI event set. 
+ *
+ *   A hardware event can be either a PAPI Preset or a native hardware 
+ *   event code.  For a list of PAPI preset events, see PAPI_presets or 
+ *   run the papi_avail utility in the PAPI distribution.  PAPI Presets 
+ *   can be passed to PAPI_query_event to see if they exist on the 
+ *   underlying architecture.  For a list of native events available on 
+ *   the current platform, run papi_native_avail in the PAPI distribution. 
+ *
+ *   @par C Interface:
+ *   \#include <papi.h> @n
+ *   int PAPI_remove_event( int  EventSet, int  EventCode );
+ *
+ *   @param[in] EventSet
+ *	   -- an integer handle for a PAPI event set as created 
+ *            by PAPI_create_eventset
+ *   @param[in] EventName
+ *	   -- a defined event such as PAPI_TOT_INS or a native event. 
+ *
+ *   @retval PAPI_OK 
+ *		Everything worked.
+ *   @retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOINIT 
+ *		The PAPI library has not been initialized.
+ *   @retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist.
+ *   @retval PAPI_EISRUN 
+ *		The EventSet is currently counting events.
+ *   @retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this 
+ *              event and other events in the EventSet simultaneously.
+ *   @retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware. 
+ *
+ *   @par Example:
+ *   @code
+ *   char EventName = "PAPI_TOT_INS";
+ *   int EventSet = PAPI_NULL;
+ *   int ret;
+ *
+ *   // Create an empty EventSet
+ *   ret = PAPI_create_eventset(&EventSet);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Add Total Instructions Executed to our EventSet
+ *   ret = PAPI_add_named_event(EventSet, EventName);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Start counting
+ *   ret = PAPI_start(EventSet);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Stop counting, ignore values
+ *   ret = PAPI_stop(EventSet, NULL);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *
+ *   // Remove event
+ *   ret = PAPI_remove_named_event(EventSet, EventName);
+ *   if (ret != PAPI_OK) handle_error(ret);
+ *   @endcode
+ *
+ *   @see PAPI_remove_event @n
+ *	PAPI_query_named_event @n
+ *	PAPI_add_named_event
+ */
+int
+PAPI_remove_named_event( int EventSet, char *EventName )
+{
+	int ret, code;
+	
+	ret = PAPI_event_name_to_code( EventName, code );
+	if ( ret == PAPI_OK ) ret = PAPI_remove_event( EventSet, code );
+	papi_return( ret );
 }
 
 /** @class PAPI_destroy_eventset 
