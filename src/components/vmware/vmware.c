@@ -52,8 +52,6 @@ __asm__ __volatile__("rdpmc" \
 #define SLEEP(x) sleep(x)
 #endif
 
-//static Bool done = FALSE;
-
 /* Functions to dynamically load from the GuestLib library. */
 char const * (*GuestLib_GetErrorText)(VMGuestLibError);
 VMGuestLibError (*GuestLib_OpenHandle)(VMGuestLibHandle*);
@@ -244,7 +242,7 @@ VMWARE_hardware_reset()
 static long_long
 VMWARE_hardware_read( int which_one )
 {
-//	Bool success = TRUE;
+	//	Bool success = TRUE;
 	u_long_long host_tsc = 0;
 	u_long_long elapsed_time = 0;
 	u_long_long elapsed_apparent = 0;
@@ -279,19 +277,12 @@ VMWARE_hardware_read( int which_one )
 	uint64 hostMemUnmappedMB = 0;
 	static VMSessionId sessionId = 0;
 	
-	/* Try to load the library. */
-	//    glError = GuestLib_OpenHandle(&glHandle);
-	//    if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	//        fprintf(stderr,"OpenHandle failed: %s\n", GuestLib_GetErrorText(glError));
-	//        return -1;
-	//    }
-	
 	glError = GuestLib_UpdateInfo(glHandle);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 		fprintf(stderr,"UpdateInfo failed: %s\n", GuestLib_GetErrorText(glError));
 		return -1;
 	}
-
+	
 	/* Retrieve and check the session ID */
 	VMSessionId tmpSession;
 	glError = GuestLib_GetSessionId(glHandle, &tmpSession);
@@ -305,15 +296,13 @@ VMWARE_hardware_read( int which_one )
 	}
 	if (sessionId == 0) {
 		sessionId = tmpSession;
-//		fprintf(stderr, "Initial session ID is 0x%"FMT64"x\n", sessionId);
 	} else if (tmpSession != sessionId) {
 		sessionId = tmpSession;
-//		fprintf(stderr, "SESSION CHANGED: New session ID is 0x%"FMT64"x\n", sessionId);
 	}
 	
 	//If reading one of the pseudoperformance counters, we don't need to try to load the library
 	switch ( which_one ) {
-
+			
 		case VMWARE_CPU_LIMIT_MHZ:          // #define 3
 			glError = GuestLib_GetCpuLimitMHz(glHandle, &cpuLimitMHz);
 			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
@@ -409,8 +398,6 @@ VMWARE_hardware_read( int which_one )
 				return -1;
 			}
 			return memSharedMB;
-			//        case VMWARE_MEM_SHARED_SAVED_MB:  // #define later
-			//            return 0;
 		case VMWARE_MEM_SHARES:             // #define 16
 			glError = GuestLib_GetMemShares(glHandle, &memShares);
 			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
@@ -468,30 +455,6 @@ VMWARE_hardware_read( int which_one )
 			readpmc(0x10002, elapsed_apparent);
 			return elapsed_apparent;
 #endif
-			/*
-			 case VMWARE_HOST_CPU_NUM_CORES:     // #define 21
-			 return 0;
-			 case VMWARE_HOST_CPU_USED_MS:       // #define 22
-			 return 0;
-			 case VMWARE_HOST_MEM_SWAPPED_MB:    // #define 23
-			 return 0;
-			 case VMWARE_HOST_MEM_SHARED_MB:     // #define 24
-			 return 0;
-			 case VMWARE_HOST_MEM_USED_MB:       // #define 25
-			 return 0;
-			 case VMWARE_HOST_MEM_PHYS_MB:       // #define 26
-			 return 0;
-			 case VMWARE_HOST_MEM_PHYS_FREE_MB:  // #define 27
-			 return 0;
-			 case VMWARE_HOST_MEM_KERN_OVHD_MB:  // #define 28
-			 return 0;
-			 case VMWARE_HOST_MEM_MAPPED_MB:     // #define 29
-			 return 0;
-			 case VMWARE_HOST_MEM_UNMAPPED_MB:   // #define 30
-			 return 0;
-			 case VMWARE_SESSION_ID:             // #define 31
-			 return 0;
-			 */
 		default:
 			perror( "Invalid counter read" );
 			return -1;
@@ -526,9 +489,9 @@ VMWARE_init_substrate(  )
 {
 	SUBDBG( "VMWARE_init_substrate..." );
 	
-//#ifdef WITH_VMWARE_PPERFCTR
-//	fprintf(stderr, "IT WORKED!!!!!\n");
-//#endif
+	//#ifdef WITH_VMWARE_PPERFCTR
+	//	fprintf(stderr, "IT WORKED!!!!!\n");
+	//#endif
 	
 	/* Initialize and try to load the VMware library */
 	/* Try to load the library. */
@@ -540,14 +503,11 @@ VMWARE_init_substrate(  )
 	/* we know in advance how many events we want                       */
 	/* for actual hardware this might have to be determined dynamically */
 	
-	
 #ifdef WITH_VMWARE_PPERFCTR
 	NUM_EVENTS = 21; //32;
 #else
 	NUM_EVENTS = 18;
 #endif
-	
-	
 	
 	/* Make sure we don't allocate too many counters.                 */
 	/* This could be avoided if we dynamically allocate counter space */
@@ -564,8 +524,6 @@ VMWARE_init_substrate(  )
 		perror( "malloc():Could not get memory for events table" );
 		return EXIT_FAILURE;
 	}
-	
-	
 	
 	/* fill in the event table parameters */
 	
@@ -609,9 +567,6 @@ VMWARE_init_substrate(  )
 	strcpy( VMWARE_native_table[12].name, "VMWARE_MEM_SHARED" );
 	strcpy( VMWARE_native_table[12].description, "Retrieves the amount of physical memory associated with this virtual machine that is copy‐on‐write (COW) shared on the host in MB." );
 	VMWARE_native_table[12].writable = 0;
-	//  strcpy( VMWARE_native_table[INF].name, "VMWARE_MEM_SHARED_SAVED" );
-	//	strcpy( VMWARE_native_table[INF].description, "Retrieves the estimated amount of physical memory on the host saved from copy‐on‐write (COW) shared guest physical memory." );
-	//	VMWARE_native_table[INF].writable = 0;
 	strcpy( VMWARE_native_table[13].name, "VMWARE_MEM_SHARES" );
 	strcpy( VMWARE_native_table[13].description, "Retrieves the number of memory shares allocated to the virtual machine." );
 	VMWARE_native_table[13].writable = 0;
@@ -627,7 +582,12 @@ VMWARE_init_substrate(  )
 	strcpy( VMWARE_native_table[17].name, "VMWARE_HOST_CPU" );
 	strcpy( VMWARE_native_table[17].description, "Retrieves the speed of the ESX system’s physical CPU in MHz." );
 	VMWARE_native_table[17].writable = 0;
-#ifdef WITH_VMWARE_PPERFCTR
+//#ifdef WITH_VMWARE_PPERFCTR
+
+	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
+		
+	}
+	
 	// For VMWare Pseudo Performance Counters
 	strcpy( VMWARE_native_table[18].name, "VMWARE_HOST_TSC" );
 	strcpy( VMWARE_native_table[18].description, "Physical host TSC" );
@@ -638,7 +598,7 @@ VMWARE_init_substrate(  )
 	strcpy( VMWARE_native_table[20].name, "VMWARE_ELAPSED_APPARENT" );
 	strcpy( VMWARE_native_table[20].description, "Elapsed apparent time in ns." );
 	VMWARE_native_table[20].writable = 0;
-#endif
+//#endif
 	/* The selector has to be !=0 . Starts with 1 */
 	VMWARE_native_table[0].resources.selector = 1;
 	VMWARE_native_table[1].resources.selector = 2;
@@ -663,25 +623,11 @@ VMWARE_init_substrate(  )
 	VMWARE_native_table[19].resources.selector = 20;
 	VMWARE_native_table[20].resources.selector = 21;
 #endif
-	/*
-	 VMWARE_native_table[21].resources.selector = 22;
-	 VMWARE_native_table[22].resources.selector = 23;
-	 VMWARE_native_table[23].resources.selector = 24;
-	 VMWARE_native_table[24].resources.selector = 25;
-	 VMWARE_native_table[25].resources.selector = 26;
-	 VMWARE_native_table[26].resources.selector = 27;
-	 VMWARE_native_table[27].resources.selector = 28;
-	 VMWARE_native_table[28].resources.selector = 29;
-	 VMWARE_native_table[29].resources.selector = 30;
-	 VMWARE_native_table[30].resources.selector = 31;
-	 VMWARE_native_table[31].resources.selector = 32;
-	 */
 	
 	_vmware_vector.cmp_info.num_native_events = NUM_EVENTS;
 	
 	return PAPI_OK;
 }
-
 
 /** Setup the counter control structure */
 int
@@ -698,7 +644,6 @@ VMWARE_init_control_state( hwd_control_state_t * ctrl )
 	return PAPI_OK;
 }
 
-
 /** Enumerate Native Events 
  @param EventCode is the event of interest
  @param modifier is one of PAPI_ENUM_FIRST, PAPI_ENUM_EVENTS
@@ -708,12 +653,12 @@ VMWARE_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 	switch ( modifier ) {
-		/* return EventCode of first event */
+			/* return EventCode of first event */
 		case PAPI_ENUM_FIRST:
 			*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
 			return PAPI_OK;
 			break;
-		/* return EventCode of passed-in Event */
+			/* return EventCode of passed-in Event */
 		case PAPI_ENUM_EVENTS:{
 			int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 			
@@ -804,7 +749,6 @@ VMWARE_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 	return PAPI_OK;
 }
 
-
 /** Triggered by PAPI_stop() */
 int
 VMWARE_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
@@ -823,7 +767,6 @@ VMWARE_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 	
 	return PAPI_OK;
 }
-
 
 /** Triggered by PAPI_read() */
 int
@@ -863,7 +806,6 @@ VMWARE_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long events[
 	return PAPI_OK;
 }
 
-
 /** Triggered by PAPI_reset */
 int
 VMWARE_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
@@ -899,12 +841,10 @@ VMWARE_shutdown( hwd_context_t * ctx )
 	return PAPI_OK;
 }
 
-
-
 /** This function sets various options in the substrate
-  @param ctx
-  @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
-  @param option
+ @param ctx
+ @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
+ @param option
  */
 int
 VMWARE_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
@@ -958,7 +898,6 @@ VMWARE_set_domain( hwd_control_state_t * cntrl, int domain )
 	}
 	return PAPI_OK;
 }
-
 
 /** Vector that points to entry points for our component */
 papi_vector_t _vmware_vector = {
