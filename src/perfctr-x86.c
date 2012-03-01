@@ -93,7 +93,7 @@ _papi_hwd_fixup_vec( int cidx )
 	} else {
 		strcat( table_name, str );
 	}
-	if ( ( _papi_libpfm_setup_presets( table_name, 0, cidx ) ) != PAPI_OK ) {
+	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
 		PAPIERROR
 			( "Improper usage of PAPI_PENTIUM4_VEC environment variable.\nUse either SSE or MMX" );
 		return ( PAPI_ESBSTR );
@@ -118,7 +118,7 @@ _papi_p4_hwd_fixup_fp( int cidx )
 		if ( strstr( str, "SSE_DP" ) )
 			strcat( table_name, " SSE_DP" );
 	}
-	if ( ( _papi_libpfm_setup_presets( table_name, 0, cidx ) ) != PAPI_OK ) {
+	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
 		PAPIERROR
 			( "Improper usage of PAPI_PENTIUM4_FP environment variable.\nUse one or two of X87,SSE_SP,SSE_DP" );
 		return ( PAPI_ESBSTR );
@@ -141,7 +141,7 @@ _papi_hwd_fixup_fp( char *name, int cidx )
 		strcat( table_name, str );
 	}
 
-	if ( ( _papi_libpfm_setup_presets( table_name, 0, cidx ) ) != PAPI_OK ) {
+	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
 		PAPIERROR
 			( "Improper usage of PAPI_OPTERON_FP environment variable.\nUse one of RETIRED, SPECULATIVE, SSE_SP, SSE_DP" );
 		return ( PAPI_ESBSTR );
@@ -195,7 +195,7 @@ setup_x86_presets( int cputype, int cidx)
 	if ( is_pentium4() ) {
 		/* load the baseline event map for all Pentium 4s */
 
-	  _papi_libpfm_setup_presets( "Intel Pentium4", 0, cidx );	/* base events */
+	  _papi_load_preset_table( "Intel Pentium4", 0, cidx );	/* base events */
 
 		/* fix up the floating point and vector ops */
 		if ( ( retval = _papi_p4_hwd_fixup_fp(cidx  ) ) != PAPI_OK )
@@ -205,7 +205,7 @@ setup_x86_presets( int cputype, int cidx)
 
 		/* install L3 cache events iff 3 levels of cache exist */
 		if ( _papi_hwi_system_info.hw_info.mem_hierarchy.levels == 3 )
-		  _papi_libpfm_setup_presets( "Intel Pentium4 L3", 0, cidx );
+		  _papi_load_preset_table( "Intel Pentium4 L3", 0, cidx );
 
 		/* overload with any model dependent events */
 		if ( cputype == PERFCTR_X86_INTEL_P4 ) {
@@ -232,64 +232,64 @@ setup_x86_presets( int cputype, int cidx)
 			PAPIERROR( MODEL_ERROR );
 			return ( PAPI_ESBSTR );
 		case PERFCTR_X86_INTEL_P6:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
 			break;
 		case PERFCTR_X86_INTEL_PII:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
 			break;
 		case PERFCTR_X86_INTEL_PIII:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
-		  _papi_libpfm_setup_presets( "Intel PentiumIII", 0, cidx );	/* events that differ from Pentium M */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel PentiumIII", 0, cidx );	/* events that differ from Pentium M */
 			break;
 #ifdef PERFCTR_X86_INTEL_PENTM
 		case PERFCTR_X86_INTEL_PENTM:
-		  _papi_libpfm_setup_presets( "Intel P6", 0, cidx );	/* base events */
-		  _papi_libpfm_setup_presets( "Intel PentiumM", 0, cidx );	/* events that differ from PIII */
+		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
+		  _papi_load_preset_table( "Intel PentiumM", 0, cidx );	/* events that differ from PIII */
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE
 		case PERFCTR_X86_INTEL_CORE:
-		  _papi_libpfm_setup_presets( "Intel Core Duo/Solo", 0, cidx );
+		  _papi_load_preset_table( "Intel Core Duo/Solo", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE2
 		case PERFCTR_X86_INTEL_CORE2:
-		  _papi_libpfm_setup_presets( "Intel Core2", 0, cidx );
+		  _papi_load_preset_table( "Intel Core2", 0, cidx );
 			break;
 #endif
 		case PERFCTR_X86_AMD_K7:
-		  _papi_libpfm_setup_presets( "AMD64 (K7)", 0, cidx );
+		  _papi_load_preset_table( "AMD64 (K7)", 0, cidx );
 			break;
 #ifdef PERFCTR_X86_AMD_K8	 /* this is defined in perfctr 2.5.x */
 		case PERFCTR_X86_AMD_K8:
-		  _papi_libpfm_setup_presets( "AMD64", 0, cidx );
+		  _papi_load_preset_table( "AMD64", 0, cidx );
 		  _papi_hwd_fixup_fp( "AMD64", cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_AMD_K8C	 /* this is defined in perfctr 2.6.x */
 		case PERFCTR_X86_AMD_K8C:
-		  _papi_libpfm_setup_presets( "AMD64", 0, cidx );
+		  _papi_load_preset_table( "AMD64", 0, cidx );
 		  _papi_hwd_fixup_fp( "AMD64", cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_AMD_FAM10 /* this is defined in perfctr 2.6.29 */
 		case PERFCTR_X86_AMD_FAM10:
-		  _papi_libpfm_setup_presets( "AMD64 (Barcelona)", 0, cidx );
+		  _papi_load_preset_table( "AMD64 (Barcelona)", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_ATOM	/* family 6 model 28 */
 		case PERFCTR_X86_INTEL_ATOM:
-		  _papi_libpfm_setup_presets( "Intel Atom", 0, cidx );
+		  _papi_load_preset_table( "Intel Atom", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_NHLM	/* family 6 model 26 */
 		case PERFCTR_X86_INTEL_NHLM:
-		  _papi_libpfm_setup_presets( "Intel Nehalem", 0, cidx );
+		  _papi_load_preset_table( "Intel Nehalem", 0, cidx );
 			break;
 #endif
 #ifdef PERFCTR_X86_INTEL_WSTMR
 		case PERFCTR_X86_INTEL_WSTMR:
-		  _papi_libpfm_setup_presets( "Intel Westmere", 0, cidx );
+		  _papi_load_preset_table( "Intel Westmere", 0, cidx );
 			break;
 #endif
 		default:

@@ -7074,8 +7074,8 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     SUBSTR=aix
     MEMSUBSTR=aix
     MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
-    MISCSRCS="aix.c papi_libpfm_presets.c"
-    MISCOBJS="aix.o papi_libpfm_presets.o"
+    MISCSRCS="aix.c"
+    MISCOBJS="aix.o"
     CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
 	SAVED_CFLAGS="$CFLAGS"
     CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'

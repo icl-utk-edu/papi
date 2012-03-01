@@ -35,7 +35,6 @@
 #define VMWARE_MEM_OVERHEAD_MB          10
 #define VMWARE_MEM_RESERVATION_MB       11
 #define VMWARE_MEM_SHARED_MB            12
-//#define VMWARE_MEM_SHARED_SAVED_MB    INF
 #define VMWARE_MEM_SHARES               13
 #define VMWARE_MEM_SWAPPED_MB           14
 #define VMWARE_MEM_TARGET_SIZE_MB       15
@@ -43,24 +42,13 @@
 
 #define VMWARE_HOST_CPU_MHZ             17
 
+// The following 3 require VMWARE_PSEUDO_PERF env_var to be set. 
+
 #define VMWARE_HOST_TSC					18	// These first 3 can be used for timing
 #define VMWARE_ELAPSED_TIME             19  // --       "   "       --
 #define VMWARE_ELAPSED_APPARENT         20  // --       "   "       --
 
-/* For Future Use 
- #define VMWARE_HOST_CPU_NUM_CORES       21
- #define VMWARE_HOST_CPU_USED_MS         22
- #define VMWARE_HOST_MEM_SWAPPED_MB      23
- #define VMWARE_HOST_MEM_SHARED_MB       24
- #define VMWARE_HOST_MEM_USED_MB         25
- #define VMWARE_HOST_MEM_PHYS_MB         26
- #define VMWARE_HOST_MEM_PHYS_FREE_MB    27
- #define VMWARE_HOST_MEM_KERN_OVHD_MB    28
- #define VMWARE_HOST_MEM_MAPPED_MB       29
- #define VMWARE_HOST_MEM_UNMAPPED_MB     30
- #define VMWARE_SESSION_ID               31
- */
-
+// End env_var restriction
 
 /* typedef's */
 

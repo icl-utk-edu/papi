@@ -1304,7 +1304,7 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
    my_vector->cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
    
    /* Setup presets */
-   retval = _papi_libpfm_setup_presets( (char *)default_pmu.name, 
+   retval = _papi_load_preset_table( (char *)default_pmu.name, 
 					default_pmu.pmu, cidx );
    if ( retval ) {
       return retval;

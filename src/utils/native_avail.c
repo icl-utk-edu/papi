@@ -248,13 +248,9 @@ main( int argc, char **argv )
 	if ( flags.named ) {
 	   if ( PAPI_event_name_to_code( flags.name, &i ) == PAPI_OK ) {
 	      if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-		 printf( "%-30s%s\n%-30s%d\n",
-			 "Event name:", info.symbol,
-			 "Number of Register Values:", info.count );
+		 printf( "%-30s%s\n",
+			 "Event name:", info.symbol);
 		 printf( "%-29s|%s|\n", "Description:", info.long_descr );
-		 for ( k = 0; k < ( int ) info.count; k++ )
-		     printf( " Register[%2d]:               |%s|\n", 
-			     k, info.name[k] );
 
 		     /* if unit masks exist but none specified, process all */
 		     if ( !strchr( flags.name, ':' ) ) {
@@ -266,9 +262,6 @@ main( int argc, char **argv )
 				 if ( parse_unit_masks( &info ) ) {
 				    printf( "%-29s|%s|%s|\n", " Mask Info:",
 					    info.symbol, info.long_descr );
-				    for ( k = 0; k < ( int ) info.count; k++ )
-					printf( "  Register[%2d]:  0x%08x  |%s|\n",
-					       k, info.code[k], info.name[k] );
 				 }
 			      }
 			   } while ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
@@ -337,16 +330,6 @@ main( int argc, char **argv )
 		  j++;
 
 		  print_event( &info, 0 );
-
-		  /* Does this matter on anything but perfctr? */
-		  if ( flags.details ) {
-		     for ( k = 0; k < ( int ) info.count; k++ ) {
-			 if ( strlen( info.name[k] ) ) {
-			    printf( "  Register[%d] Name: %-20s  Value: 0x%-28x|\n",
-				    k, info.name[k], info.code[k] );
-			 }
-		     }
-		  }
 
 /*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
 			groups id for each group in which this

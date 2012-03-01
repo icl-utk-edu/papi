@@ -95,7 +95,7 @@ endif
 CFLAGS	+= -DPERFCTR_PFM_EVENTS
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 PFM_LIBS=-L$(PFM_LIB_PATH) -lpfm
-MISCSRCS += papi_libpfm3_events.c papi_libpfm_presets.c
+MISCSRCS += papi_libpfm3_events.c 
 MISCOBJS += $(PERFCTR_OBJS) $(PFM_OBJS) $(MISCSRCS:.c=.o)
 MISCHDRS += papi_libpfm_events.h
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr $(PFM_LIBS)

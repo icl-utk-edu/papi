@@ -575,8 +575,7 @@ PAPI_os_info_t *_papi_hwi_get_os_info(void);
 void _papi_hwi_shutdown_global_internal( void );
 void _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,
 			      void *context );
-int _papi_hwi_get_event_info( int EventCode, PAPI_event_info_t * info );
+int _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info );
 int _papi_hwi_derived_type( char *tmp, int *code );
-
 
 #endif /* PAPI_INTERNAL_H */
