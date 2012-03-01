@@ -126,7 +126,7 @@ _papi_hwi_cleanup_all_presets( void )
 			_papi_hwi_presets.data[preset_index] = NULL;
 		}
 		if ( _papi_hwi_presets.dev_note[preset_index] != NULL ) {
-			papi_free( _papi_hwi_presets.dev_note[preset_index] );
+			free( _papi_hwi_presets.dev_note[preset_index] );
 			_papi_hwi_presets.dev_note[preset_index] = NULL;
 		}
 	}
