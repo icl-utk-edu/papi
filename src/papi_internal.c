@@ -136,13 +136,6 @@ allocate_eventset_map( DynamicArray_t * map )
 	return ( PAPI_OK );
 }
 
-static void
-free_eventset_map( DynamicArray_t * map )
-{
-	papi_free( map->dataSlotArray );
-	memset( map, 0x00, sizeof ( DynamicArray_t ) );
-}
-
 static int
 expand_dynamic_array( DynamicArray_t * DA )
 {
@@ -1493,7 +1486,15 @@ void
 _papi_hwi_shutdown_global_internal( void )
 {
 	_papi_hwi_cleanup_all_presets(  );
-	free_eventset_map( &_papi_hwi_system_info.global_eventset_map );
+
+	_papi_hwi_lock( INTERNAL_LOCK );
+
+	papi_free(  _papi_hwi_system_info.global_eventset_map.dataSlotArray );
+	memset(  &_papi_hwi_system_info.global_eventset_map, 
+		 0x00, sizeof ( DynamicArray_t ) );
+
+	_papi_hwi_unlock( INTERNAL_LOCK );
+
 	if ( _papi_hwi_system_info.shlib_info.map ) {
 		papi_free( _papi_hwi_system_info.shlib_info.map );
 	}
