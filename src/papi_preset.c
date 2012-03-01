@@ -106,7 +106,7 @@ _papi_hwi_cleanup_all_presets( void )
 	for ( preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS;
 		  preset_index++ ) {
 	    if ( _papi_hwi_presets[preset_index].info.note != NULL ) {
-	       papi_free( _papi_hwi_presets[preset_index].info.note );
+	       free( _papi_hwi_presets[preset_index].info.note );
 	       _papi_hwi_presets[preset_index].info.note = NULL;
 	    }
 	}
