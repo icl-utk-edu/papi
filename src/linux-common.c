@@ -60,6 +60,8 @@ _linux_detect_hypervisor(char *virtual_vendor_name) {
 
 #if defined(__i386__)||defined(__x86_64__)
 	retval=_x86_detect_hypervisor(virtual_vendor_name);
+#else
+	(void) virtual_vendor_name;
 #endif
 	
 	return retval;
