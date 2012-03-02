@@ -32,6 +32,11 @@
 
 #define PERF_PROC_FILE "/proc/sys/kernel/perf_event_paranoid"
 
+#ifdef min
+#undef min
+#endif
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 /*
  * contains ONLY attributes related to PMU features
  */
@@ -62,11 +67,11 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	pfm_perf_encode_arg_t arg;
 	pfm_perf_encode_arg_t *uarg = data;
 	pfmlib_os_t *os = this;
-	struct perf_event_attr *attr;
+	struct perf_event_attr my_attr, *attr;
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
 	pfm_event_attr_info_t *a;
-	size_t sz = sizeof(arg);
+	size_t orig_sz, asz, sz = sizeof(arg);
 	uint64_t ival;
 	int has_plm = 0;
 	int i, plm = 0, ret;
@@ -78,7 +83,37 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	/* copy input */
 	memcpy(&arg, uarg, sz);
 
-	attr = arg.attr;
+	/* pointer to our internal attr struct */
+	memset(&my_attr, 0, sizeof(my_attr));
+	attr = &my_attr;
+
+	/*
+	 * copy user attr to our internal version
+	 * size == 0 is interpreted minimal possible
+	 * size (ABI_VER0)
+	 */
+
+	/* size of attr struct passed by user */
+	orig_sz = uarg->attr->size;
+
+	if (orig_sz == 0)
+		asz = PERF_ATTR_SIZE_VER0;
+	else
+		asz = min(sizeof(*attr), orig_sz);
+
+	/*
+	 * we copy the user struct to preserve whatever may
+	 * have been initialized but that we do not use
+	 */
+	memcpy(attr, uarg->attr, asz);
+
+	/* restore internal size (just in case we need it) */
+	attr->size = sizeof(my_attr);
+
+	/* useful for debugging */
+	if (asz != sizeof(*attr))
+		__pfm_vbprintf("warning: mismatch attr struct size "
+			       "user=%d libpfm=%zu\n", asz, sizeof(*attr));
 
 	memset(&e, 0, sizeof(e));
 
@@ -187,6 +222,12 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	 */
 	arg.idx = pfmlib_pidx2idx(e.pmu, e.event);
 
+	/* propagate our changes, that overwrites attr->size */
+	memcpy(uarg->attr, attr, asz);
+
+	/* restore user size */
+	uarg->attr->size = orig_sz;
+
 	/*
 	 * fstr not requested, stop here
 	 */
@@ -278,7 +319,6 @@ int
 pfm_get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *attr, char **fstr, int *idx)
 {
 	pfm_perf_encode_arg_t arg;
-	size_t sz;
 	int ret;
 
 	if (PFMLIB_INITIALIZED() == 0)
@@ -293,16 +333,7 @@ pfm_get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr
 
 	memset(&arg, 0, sizeof(arg));
 
-	/*
-	 * zero out everything that is passed
-	 */
-	if (attr->size == 0)
-		sz = sizeof(*attr);
-	else
-		sz = attr->size;
-
-	memset(attr, 0, sz);
-
+	/* do not clear attr, some fields may be initialized by caller already, e.g., size */
 	arg.attr = attr;
 	arg.fstr = fstr;
 
