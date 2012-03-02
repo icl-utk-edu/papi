@@ -1300,8 +1300,6 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
                                   default_pmu.num_fixed_cntrs;
 
    SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
-
-   my_vector->cmp_info.num_mpx_cntrs = MAX_MPX_EVENTS;
    
    /* Setup presets */
    retval = _papi_load_preset_table( (char *)default_pmu.name, 

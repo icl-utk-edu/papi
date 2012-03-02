@@ -17,8 +17,7 @@
 #include "linux-context.h"
 
 
-/* Take a guess at this value for now - FIXME */
-#define MAX_MPX_EVENTS 64
+/* Take a guess at these values for now - FIXME */
 
 #ifndef PFMLIB_MAX_PMCS                                                       
 #define PFMLIB_MAX_PMCS 100                                                   
@@ -45,8 +44,8 @@ typedef struct
 	unsigned int inherit;
 	int cpu;
 	pid_t tid;
-	struct perf_event_attr events[MAX_MPX_EVENTS];
-	per_event_info_t per_event_info[MAX_MPX_EVENTS];
+	struct perf_event_attr events[PAPI_MPX_DEF_DEG];
+	per_event_info_t per_event_info[PAPI_MPX_DEF_DEG];
 	/* Buffer to gather counters */
 	long long counts[PFMLIB_MAX_PMDS];
 } control_state_t;
@@ -68,7 +67,7 @@ typedef struct
 	int cookie;
 	int state;
 	int num_evts;
-	evt_t evt[MAX_MPX_EVENTS];
+	evt_t evt[PAPI_MPX_DEF_DEG];
 } context_t;
 
 #define MY_VECTOR _papi_pe_vector
