@@ -14,8 +14,8 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = inherit hwinfo code2name reset subinfo realtime virttime first exeinfo \
-	zero branches dmem_info all_native_events all_events derived high-level2 describe memory  \
+SERIAL  = inherit hwinfo code2name reset subinfo realtime virttime first exeinfo zero \
+	zero_named branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow \
@@ -186,6 +186,9 @@ derived: derived.c $(UTILOBJS) $(PAPILIB)
 
 zero: zero.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero
+
+zero_named: zero_named.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_named.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_named
 
 nmi_watchdog: nmi_watchdog.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) nmi_watchdog.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o nmi_watchdog

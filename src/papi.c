@@ -783,7 +783,7 @@ PAPI_query_named_event( char *EventName )
 {
 	int ret, code;
 	
-	ret = PAPI_event_name_to_code( EventName, code );
+	ret = PAPI_event_name_to_code( EventName, &code );
 	if ( ret == PAPI_OK ) ret = PAPI_query_event( code );
 	papi_return( ret);
 }
@@ -1673,7 +1673,7 @@ PAPI_add_named_event( int EventSet, char *EventName )
 {
 	int ret, code;
 	
-	ret = PAPI_event_name_to_code( EventName, code );
+	ret = PAPI_event_name_to_code( EventName, &code );
 	if ( ret == PAPI_OK ) ret = PAPI_add_event( EventSet, code );
 	papi_return( ret );
 }
@@ -1750,7 +1750,7 @@ PAPI_remove_named_event( int EventSet, char *EventName )
 {
 	int ret, code;
 	
-	ret = PAPI_event_name_to_code( EventName, code );
+	ret = PAPI_event_name_to_code( EventName, &code );
 	if ( ret == PAPI_OK ) ret = PAPI_remove_event( EventSet, code );
 	papi_return( ret );
 }
