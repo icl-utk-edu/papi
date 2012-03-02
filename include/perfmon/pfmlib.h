@@ -149,6 +149,7 @@ typedef enum {
 	PFM_PMU_AMD64_FAM12H_LLANO,	/* AMD AMD64 Fam12h Llano */
 	PFM_PMU_AMD64_FAM11H_TURION,	/* AMD AMD64 Fam11h Turion */
 	PFM_PMU_INTEL_IVB,		/* Intel IvyBridge */
+	PFM_PMU_ARM_CORTEX_A15,		/* ARM Cortex A15 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
