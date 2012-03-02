@@ -444,7 +444,6 @@ VMWARE_hardware_read( int which_one )
 				return -1;
 			}
 			return hostMHz;
-//#ifdef WITH_VMWARE_PPERFCTR
 		case VMWARE_HOST_TSC:               // #define 0
 			readpmc(0x10000, host_tsc);
 			return host_tsc;
@@ -454,7 +453,6 @@ VMWARE_hardware_read( int which_one )
 		case VMWARE_ELAPSED_APPARENT:       // #define 2
 			readpmc(0x10002, elapsed_apparent);
 			return elapsed_apparent;
-//#endif
 		default:
 			perror( "Invalid counter read" );
 			return -1;
@@ -489,10 +487,6 @@ VMWARE_init_substrate(  )
 {
 	SUBDBG( "VMWARE_init_substrate..." );
 	
-	//#ifdef WITH_VMWARE_PPERFCTR
-	//	fprintf(stderr, "IT WORKED!!!!!\n");
-	//#endif
-	
 	/* Initialize and try to load the VMware library */
 	/* Try to load the library. */
 	if (!LoadFunctions()) {
@@ -503,15 +497,12 @@ VMWARE_init_substrate(  )
 	/* we know in advance how many events we want                       */
 	/* for actual hardware this might have to be determined dynamically */
 	
-	//#ifdef WITH_VMWARE_PPERFCTR
 	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
 		NUM_EVENTS = 21; //32;
 	}
-	//#else
 	else {
 		NUM_EVENTS = 18;
 	}
-	//#endif
 	
 	/* Make sure we don't allocate too many counters.                 */
 	/* This could be avoided if we dynamically allocate counter space */
@@ -587,7 +578,6 @@ VMWARE_init_substrate(  )
 	strcpy( VMWARE_native_table[17].description, "Retrieves the speed of the ESX system’s physical CPU in MHz." );
 	VMWARE_native_table[17].writable = 0;
 	
-	//#ifdef WITH_VMWARE_PPERFCTR
 	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
 		// For VMWare Pseudo Performance Counters
 		strcpy( VMWARE_native_table[18].name, "VMWARE_HOST_TSC" );
@@ -600,7 +590,6 @@ VMWARE_init_substrate(  )
 		strcpy( VMWARE_native_table[20].description, "Elapsed apparent time in ns." );
 		VMWARE_native_table[20].writable = 0;
 	}
-	//#endif
 	
 	/* The selector has to be !=0 . Starts with 1 */
 	VMWARE_native_table[0].resources.selector = 1;
@@ -621,13 +610,11 @@ VMWARE_init_substrate(  )
 	VMWARE_native_table[15].resources.selector = 16;
 	VMWARE_native_table[16].resources.selector = 17;
 	VMWARE_native_table[17].resources.selector = 18;
-	//#ifdef WITH_VMWARE_PPERFCTR
 	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
 		VMWARE_native_table[18].resources.selector = 19;
 		VMWARE_native_table[19].resources.selector = 20;
 		VMWARE_native_table[20].resources.selector = 21;
 	}
-	//#endif
 	
 	_vmware_vector.cmp_info.num_native_events = NUM_EVENTS;
 	
