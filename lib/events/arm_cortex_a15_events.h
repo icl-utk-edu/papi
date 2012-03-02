@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Google, Inc
+ * Copyright (c) 2012 Google, Inc
  * Contributed by Stephane Eranian <eranian@google.com>
  * Contributed by Will Deacon <will.deacon@arm.com>
  *
@@ -20,13 +20,10 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux.
- *
  * Cortex A15 r2p0
  * based on Table 11-6 from the "Cortex A15 Technical Reference Manual"
  */
-static const arm_entry_t arm_cortex_a15_pe []={
+static const arm_entry_t arm_cortex_a15_pe[]={
 	{.name = "SW_INCR",
 	 .modmsk = ARMV7_A15_ATTRS,
 	 .code = 0x00,
@@ -134,7 +131,7 @@ static const arm_entry_t arm_cortex_a15_pe []={
 	 .code = 0x1a,
 	 .desc = "Local memory error"
 	},
-	{.name = "INST_SPEC",
+	{.name = "INST_SPEC_EXEC",
 	 .modmsk = ARMV7_A15_ATTRS,
 	 .code = 0x1b,
 	 .desc = "Instruction speculatively executed"
@@ -149,7 +146,6 @@ static const arm_entry_t arm_cortex_a15_pe []={
 	 .code = 0x1d,
 	 .desc = "Bus cycle"
 	},
-
 	{.name = "L1D_READ_ACCESS",
 	 .modmsk = ARMV7_A15_ATTRS,
 	 .code = 0x40,
@@ -170,7 +166,6 @@ static const arm_entry_t arm_cortex_a15_pe []={
 	 .code = 0x43,
 	 .desc = "Level 1 data cache write refill"
 	},
-
 	{.name = "L1D_WB_VICTIM",
 	 .modmsk = ARMV7_A15_ATTRS,
 	 .code = 0x46,
@@ -231,7 +226,6 @@ static const arm_entry_t arm_cortex_a15_pe []={
 	 .code = 0x58,
 	 .desc = "Level 2 data cache invalidate"
 	},
-
 	{.name = "BUS_READ_ACCESS",
 	 .modmsk = ARMV7_A15_ATTRS,
 	 .code = 0x60,
@@ -302,7 +296,6 @@ static const arm_entry_t arm_cortex_a15_pe []={
 	 .code = 0x6e,
 	 .desc = "STREX fail exclusive instruction speculatively executed"
 	},
-
 	{.name = "INST_SPEC_EXEC_LOAD",
 	 .modmsk = ARMV7_A15_ATTRS,
 	 .code = 0x70,
@@ -338,7 +331,6 @@ static const arm_entry_t arm_cortex_a15_pe []={
 	 .code = 0x76,
 	 .desc = "Software of the PC instruction speculatively executed"
 	},
-
 	{.name = "BRANCH_SPEC_EXEC_IMM_BRANCH",
 	 .modmsk = ARMV7_A15_ATTRS,
 	 .code = 0x78,
