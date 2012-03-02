@@ -10,7 +10,7 @@ OMP	= zero_omp omptough
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads krentel_pthreads
-MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
+MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
@@ -111,6 +111,9 @@ timer_overflow: timer_overflow.c $(UTILOBJS) $(PAPILIB)
 
 mendes-alt: mendes-alt.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DMULTIPLEX mendes-alt.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
+
+max_multiplex: max_multiplex.c $(UTILOBJS) $(PAPILIB) 
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) max_multiplex.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 multiplex1: multiplex1.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiplex1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
