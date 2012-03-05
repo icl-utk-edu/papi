@@ -1259,7 +1259,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 
 	if ( pe_ctx->cookie != CTX_INITIALIZED ) {
 		memset( pe_ctl->events, 0,
-				sizeof ( struct perf_event_attr ) * MAX_MPX_EVENTS );
+		       sizeof ( struct perf_event_attr ) * PAPI_MPX_DEF_DEG );
 		memset( pe_ctx, 0, sizeof ( context_t ) );
 		pe_ctx->cookie = CTX_INITIALIZED;
 	} else {
@@ -2072,7 +2072,7 @@ papi_vector_t _papi_pe_vector = {
 				 .kernel_multiplex = 1,
 				 .kernel_profile = 1,
 				 .profile_ear = 1,
-				 .num_mpx_cntrs = PFMLIB_MAX_PMDS,
+				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */

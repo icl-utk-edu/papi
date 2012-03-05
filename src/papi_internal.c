@@ -941,7 +941,8 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
        /* Multiplexing is special. See multiplex.c */
 
        retval = mpx_add_event( &ESI->multiplex.mpx_evset, EventCode,
-			       ESI->domain.domain, ESI->granularity.granularity );
+			       ESI->domain.domain, 
+			       ESI->granularity.granularity );
 
 
        if ( retval < PAPI_OK ) {
