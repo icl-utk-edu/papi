@@ -1,0 +1,3 @@
+[submodule "src/libpfm4"]
+	path = src/libpfm4
+	url = git://perfmon2.git.sourceforge.net/gitroot/perfmon2/libpfm4
