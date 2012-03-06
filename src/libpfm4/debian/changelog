@@ -1,0 +1,16 @@
+libpfm4 (2.0) unstable; urgency=low
+
+  * updated event tables for Intel X86 processors
+  * new AMD Fam15h support
+  * new MIPS 74k support
+  * updated ARM Cortex A8/A9 support
+  * 30% size reduction for Intel/AMD X86 event tables
+  * bug fixes and other improvements
+
+ -- Stephane Eranian <eranian@gmail.com>  Fri, 7 Oct  2011 15:55:22 +0200
+
+libpfm4 (1.0) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Arun Sharma <aruns@google.com>  Mon, 21 Jun 2010 15:17:22 -0700
