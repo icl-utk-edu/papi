@@ -497,7 +497,7 @@ VMWARE_init_substrate(  )
 	/* we know in advance how many events we want                       */
 	/* for actual hardware this might have to be determined dynamically */
 	
-	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
+	if ( getenv( "PAPI_VMWARE_PSEUDOPERFORMANCE" ) ) {
 		NUM_EVENTS = 21; //32;
 	}
 	else {
@@ -578,7 +578,7 @@ VMWARE_init_substrate(  )
 	strcpy( VMWARE_native_table[17].description, "Retrieves the speed of the ESX system’s physical CPU in MHz." );
 	VMWARE_native_table[17].writable = 0;
 	
-	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
+	if ( getenv( "PAPI_VMWARE_PSEUDOPERFORMANCE" ) ) {
 		// For VMWare Pseudo Performance Counters
 		strcpy( VMWARE_native_table[18].name, "VMWARE_HOST_TSC" );
 		strcpy( VMWARE_native_table[18].description, "Physical host TSC" );
@@ -610,7 +610,7 @@ VMWARE_init_substrate(  )
 	VMWARE_native_table[15].resources.selector = 16;
 	VMWARE_native_table[16].resources.selector = 17;
 	VMWARE_native_table[17].resources.selector = 18;
-	if ( getenv( "VMWARE_PSEUDO_PERF" ) ) {
+	if ( getenv( "PAPI_VMWARE_PSEUDOPERFORMANCE" ) ) {
 		VMWARE_native_table[18].resources.selector = 19;
 		VMWARE_native_table[19].resources.selector = 20;
 		VMWARE_native_table[20].resources.selector = 21;
