@@ -8,12 +8,14 @@ F77	= gfortran
 CFLAGS	= -g -O 
 FFLAGS	= -g -O -ffixed-line-length-132
 
-ALL = strtest zero first  second tenth description fdmemtest accum highlevel cost johnmay2 \
+ALL = strtest zero zeronamed first second tenth description fdmemtest accum highlevel cost \
 	  case1 case2 clockres eventname fmatrixlowpapi fmatrixpapi fmatrixpapi2 flops fmultiplex1 \
-      fmultiplex2 avail 
+      johnmay2 fmultiplex2 avail 
 UTILOBJS = ../testlib/do_loops.o ../testlib/dummy.o ftests_util.o 
 
-default all ftests ftest: $(FTEST_TARGETS)
+default ftests ftest: $(FTEST_TARGETS)
+
+all: $(ALL)
 
 clockres: clockres.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) clockres.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
@@ -59,6 +61,9 @@ highlevel: highlevel.F $(UTILOBJS) $(PAPILIB)
 
 zero: zero.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) zero.F $(UTILOBJS) $(PAPILIB) -o zero $(LDFLAGS)
+
+zeronamed: zeronamed.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) zeronamed.F $(UTILOBJS) $(PAPILIB) -o zeronamed $(LDFLAGS)
 
 first: first.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) first.F $(UTILOBJS) $(PAPILIB) -o first $(LDFLAGS)
