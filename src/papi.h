@@ -4,7 +4,7 @@
 
 /** 
 * @file    papi.h
-* CVS:     $Id$
+*
 * @author  Philip Mucci
 *          mucci@cs.utk.edu
 * @author  dan terpstra
@@ -441,8 +441,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DEFGRN  		6       /**< Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /**< Granularity for an eventset */
 #define PAPI_DEF_MPX_NS     8       /**< Multiplexing/overflowing interval in ns, same as PAPI_DEF_ITIMER_NS */
-#define PAPI_EDGE_DETECT    9       /**< Count cycles of events if supported [not implemented] */
-#define PAPI_INVERT         10		/**< Invert count detect if supported [not implemented] */
+  //#define PAPI_EDGE_DETECT    9       /**< Count cycles of events if supported [not implemented] */
+  //#define PAPI_INVERT         10		/**< Invert count detect if supported [not implemented] */
 #define PAPI_MAX_MPX_CTRS	11      /**< Maximum number of counters we can multiplex */
 #define PAPI_PROFIL  		12      /**< Option to turn on the overflow/profil reporting software [not implemented] */
 #define PAPI_PRELOAD 		13      /**< Option to find out the environment variable that can preload libraries */
@@ -668,8 +668,8 @@ read the documentation carefully.  */
      unsigned int fast_virtual_timer:1;    /**< Supports a fast virtual timer */
      unsigned int attach:1;                /**< Supports attach */
      unsigned int attach_must_ptrace:1;	   /**< Attach must first ptrace and stop the thread/process*/
-     unsigned int edge_detect:1;           /**< Supports edge detection on events */
-     unsigned int invert:1;                /**< Supports invert detection on events */
+     //     unsigned int edge_detect:1;           /**< Supports edge detection on events */
+     //     unsigned int invert:1;                /**< Supports invert detection on events */
      unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
      unsigned int cntr_groups:1;           /**< Underlying hardware uses counter groups (e.g. POWER5)*/
      unsigned int cntr_umasks:1;           /**< counters have unit masks */
@@ -679,7 +679,7 @@ read the documentation carefully.  */
      /* This should be a granularity option */
      unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
      unsigned int inherit:1;               /**< Supports child processes inheriting parents counters */
-     unsigned int reserved_bits:10;
+     unsigned int reserved_bits:12;
    } PAPI_component_info_t;
 
 /**  @ingroup papi_data_structures*/
