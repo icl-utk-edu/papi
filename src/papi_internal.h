@@ -578,4 +578,12 @@ void _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_ve
 int _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info );
 int _papi_hwi_derived_type( char *tmp, int *code );
 
+int _papi_hwi_query_native_event( unsigned int EventCode );
+int _papi_hwi_get_native_event_info( unsigned int EventCode,
+                                     PAPI_event_info_t * info );
+int _papi_hwi_native_name_to_code( char *in, int *out );
+int _papi_hwi_native_code_to_name( unsigned int EventCode, char *hwi_name,
+                                   int len );
+
+
 #endif /* PAPI_INTERNAL_H */

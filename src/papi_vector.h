@@ -49,6 +49,7 @@ typedef struct papi_vectors {
     int		(*ntv_code_to_name)	(unsigned int, char *, int);				/**< */
     int		(*ntv_code_to_descr)	(unsigned int, char *, int);			/**< */
     int		(*ntv_code_to_bits)	(unsigned int, hwd_register_t *);			/**< */
+    int         (*ntv_code_to_info)     (unsigned int, PAPI_event_info_t *);
     int		(*allocate_registers)	(EventSetInfo_t *);						/**< */
     int		(*shutdown)		(hwd_context_t *);								/**< */
     int		(*shutdown_substrate)	(void);									/**< */

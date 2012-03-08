@@ -165,6 +165,10 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->ntv_code_to_bits )
 		v->ntv_code_to_bits =
 			( int ( * )( unsigned int, hwd_register_t * ) ) vec_int_dummy;
+	if ( !v->ntv_code_to_info )
+		v->ntv_code_to_info =
+			( int ( * )( unsigned int, PAPI_event_info_t * ) ) vec_int_dummy;
+
 	if ( !v->allocate_registers )
 		v->allocate_registers =
 			( int ( * )( EventSetInfo_t * ) ) vec_int_one_dummy;
@@ -318,6 +322,8 @@ vector_print_table( papi_vector_t * v, int print_func )
 						  "_papi_hwd_ntv_code_to_descr", print_func );
 	vector_print_routine( ( void * ) v->ntv_code_to_bits,
 						  "_papi_hwd_ntv_code_to_bits", print_func );
+	vector_print_routine( ( void * ) v->ntv_code_to_info,
+						  "_papi_hwd_ntv_code_to_info", print_func );
 
 	vector_print_routine( ( void * ) v->allocate_registers,
 						  "_papi_hwd_allocate_registers", print_func );

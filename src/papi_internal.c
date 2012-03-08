@@ -1807,3 +1807,133 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 	   return PAPI_ENOEVNT;
 	}
 }
+
+
+/* Returns PAPI_OK if native EventCode found, or PAPI_ENOEVNT if not;
+   Used to enumerate the entire array, e.g. for native_avail.c */
+int
+_papi_hwi_query_native_event( unsigned int EventCode )
+{
+	char name[PAPI_HUGE_STR_LEN];	   /* probably overkill, but should always be big enough */
+	int cidx = ( int ) PAPI_COMPONENT_INDEX( EventCode );
+
+	if ( _papi_hwi_invalid_cmp( cidx ) )
+		return ( PAPI_ENOCMP );
+
+	return ( _papi_hwd[cidx]->
+			 ntv_code_to_name( EventCode, name, sizeof ( name ) ) );
+}
+
+/* Converts an ASCII name into a native event code usable by other routines
+   Returns code = 0 and PAPI_OK if name not found.
+   This allows for sparse native event arrays */
+int
+_papi_hwi_native_name_to_code( char *in, int *out )
+{
+    int retval = PAPI_ENOEVNT;
+    char name[PAPI_HUGE_STR_LEN];	   /* make sure it's big enough */
+    unsigned int i, j;
+
+
+    SUBDBG("checking all %d components\n",papi_num_components);
+	
+    for(j=0; j < ( unsigned int ) papi_num_components; j++) {
+
+       /* first check each component for name_to_code */
+       retval = _papi_hwd[j]->ntv_name_to_code( in, ( unsigned * ) out );
+
+       /* If not implemented, work around */
+       if ( retval==PAPI_ESBSTR) {
+          i = 0 | PAPI_NATIVE_MASK;
+	  _papi_hwd[j]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
+	  
+	  _papi_hwi_lock( INTERNAL_LOCK );
+
+	  do {
+	     retval = _papi_hwd[j]->ntv_code_to_name( i, name, sizeof ( name ) );
+             /* printf("name =|%s|\ninput=|%s|\n", name, in); */
+	     if ( retval == PAPI_OK ) {
+		if ( strcasecmp( name, in ) == 0 ) {
+		   *out = ( int ) ( i | PAPI_COMPONENT_MASK( j ) );
+		   break;
+		} else {
+		   retval = PAPI_ENOEVNT;
+		}
+	     } else {
+		  *out = 0;
+		  retval = PAPI_ENOEVNT;
+		  break;
+	     }
+	  } while ( ( _papi_hwd[j]->ntv_enum_events( &i, PAPI_ENUM_EVENTS ) ==
+					  PAPI_OK ) );
+
+	  _papi_hwi_unlock( INTERNAL_LOCK );
+       }
+
+       if ( retval == PAPI_OK ) return ( retval );
+    }
+
+    return retval;
+}
+
+/* Returns event name based on native event code. 
+   Returns NULL if name not found */
+int
+_papi_hwi_native_code_to_name( unsigned int EventCode, char *hwi_name, int len )
+{
+  int cidx = ( int ) PAPI_COMPONENT_INDEX( EventCode );
+
+  if ( _papi_hwi_invalid_cmp( cidx ) )
+    return ( PAPI_ENOCMP );
+
+  if ( EventCode & PAPI_NATIVE_MASK ) {
+    return ( _papi_hwd[cidx]->
+	     ntv_code_to_name( EventCode, hwi_name, len ) );
+  }
+  return ( PAPI_ENOEVNT );
+}
+
+
+
+/* The native event equivalent of PAPI_get_event_info */
+int
+_papi_hwi_get_native_event_info( unsigned int EventCode,
+				 PAPI_event_info_t *info )
+{
+    int retval;
+    int cidx = ( int ) PAPI_COMPONENT_INDEX( EventCode );
+
+    if ( _papi_hwi_invalid_cmp( cidx ) )
+       return PAPI_ENOCMP;
+
+    if ( EventCode & PAPI_NATIVE_MASK ) {
+
+       /* clear the event info */
+       memset( info, 0, sizeof ( PAPI_event_info_t ) );
+       info->event_code = ( unsigned int ) EventCode;
+
+       retval = _papi_hwd[cidx]->ntv_code_to_info( EventCode, info);
+
+       /* If substrate error, it's missing the ntv_code_to_info vector */
+       /* so we'll have to fake it.                                    */
+       if ( retval == PAPI_ESBSTR ) {
+
+	  /* Fill in the info structure */
+
+	  retval = _papi_hwd[cidx]->ntv_code_to_name( EventCode, info->symbol,
+						     sizeof(info->symbol));
+	  if (retval!=PAPI_OK) return retval;
+
+	  retval = _papi_hwd[cidx]->ntv_code_to_descr( EventCode, 
+                                                     info->long_descr,
+						     sizeof ( info->long_descr));
+	  if (retval!=PAPI_OK) return retval;
+
+       }
+
+       return PAPI_OK;
+    }
+
+    return PAPI_ENOEVNT;
+}
+
