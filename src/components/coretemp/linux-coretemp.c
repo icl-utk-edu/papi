@@ -639,7 +639,7 @@ _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 papi_vector_t _coretemp_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "linux-coretemp.c",
+				 .name = "linux-coretemp",
 				 .description = "Linux hwmon temperature and other info",
 				 .version = "4.2.1",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
@@ -685,6 +685,4 @@ papi_vector_t _coretemp_vector = {
 	.ntv_enum_events =      _coretemp_ntv_enum_events,
 	.ntv_code_to_name =     _coretemp_ntv_code_to_name,
 	.ntv_code_to_descr =    _coretemp_ntv_code_to_descr,
-	.ntv_code_to_bits =     NULL,
-	.ntv_bits_to_info =     NULL,
 };

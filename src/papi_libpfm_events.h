@@ -18,9 +18,6 @@ extern int _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *name,
 					int len );
 extern int _papi_libpfm_ntv_code_to_bits( unsigned int EventCode,
 				       hwd_register_t * bits );
-extern int _papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-				       unsigned int *values, int name_len,
-				       int count );
 extern int _papi_libpfm_shutdown(void);
 extern int _papi_libpfm_init(papi_vector_t *my_vector, int cidx);
 

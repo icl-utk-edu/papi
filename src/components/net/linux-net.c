@@ -693,7 +693,6 @@ papi_vector_t _net_vector = {
     .ntv_code_to_name          = _net_ntv_code_to_name,
     .ntv_code_to_descr         = _net_ntv_code_to_descr,
     .ntv_code_to_bits          = _net_ntv_code_to_bits,
-    .ntv_bits_to_info          = NULL,
 };
 
 /* vim:set ts=4 sw=4 sts=4 et: */

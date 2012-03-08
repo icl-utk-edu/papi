@@ -1154,20 +1154,6 @@ copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
 }
 
 int
-_ultra_hwd_ntv_bits_to_info( hwd_register_t * bits, char *names,
-							unsigned int *values, int name_len, int count )
-{
-	int i = 0;
-	copy_value( bits->event[0], "US Ctr 0", &names[i * name_len], &values[i],
-				name_len );
-	if ( ++i == count )
-		return ( i );
-	copy_value( bits->event[1], "US Ctr 1", &names[i * name_len], &values[i],
-				name_len );
-	return ( ++i );
-}
-
-int
 _ultra_hwd_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
 	int index = EventCode & PAPI_NATIVE_AND_MASK;
@@ -1634,7 +1620,6 @@ papi_vector_t _solaris_vector = {
 	.ntv_code_to_name = _ultra_hwd_ntv_code_to_name,
 	.ntv_code_to_descr = _ultra_hwd_ntv_code_to_descr,
 	.ntv_code_to_bits = _ultra_hwd_ntv_code_to_bits,
-	.ntv_bits_to_info = _ultra_hwd_ntv_bits_to_info,
 	.init_substrate = _ultra_hwd_init_substrate,
 	.dispatch_timer = _ultra_hwd_dispatch_timer,
 

@@ -687,7 +687,6 @@ papi_vector_t _example_vector = {
 	/* Which currently only uses the info for printing native   */
 	/* event info, not for any sort of internal use.            */
 	/* .ntv_code_to_bits =  NULL, */
-	/* .ntv_bits_to_info =  NULL, */
 
 };
 

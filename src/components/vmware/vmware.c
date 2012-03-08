@@ -938,6 +938,5 @@ papi_vector_t _vmware_vector = {
 	.ntv_code_to_name = VMWARE_ntv_code_to_name,
 	.ntv_code_to_descr = VMWARE_ntv_code_to_descr,
 	.ntv_code_to_bits = VMWARE_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
 };
 

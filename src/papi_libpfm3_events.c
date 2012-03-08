@@ -10,7 +10,6 @@ xxx - Derived events for all platforms
 xxx - hwd_ntv_name_to_code
 xxx - Make native map carry major events, not umasks
 xxx - Enum event uses native_map not pfm()
-xxx - bits_to_info uses native_map not pfm()
 */
 
 #include <ctype.h>
@@ -490,65 +489,6 @@ _pmc_name( int i )
 	return "Event Code";
 }
 
-int
-_papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-			       unsigned int *values, int name_len, int count )
-{
-	int ret;
-	pfmlib_regmask_t selector;
-	int j, n = MY_VECTOR.cmp_info.num_cntrs;
-	int foo, did_something = 0;
-	unsigned int umask;
-
-	if ( ( ret =
-		   pfm_get_event_counters( ( ( pfm_register_t * ) bits )->event,
-								   &selector ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_event_counters(%d,%p): %s",
-				   ( ( pfm_register_t * ) bits )->event, &selector,
-				   pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
-	}
-
-	for ( j = 0; n; j++ ) {
-		if ( pfm_regmask_isset( &selector, j ) ) {
-			if ( ( ret =
-				   pfm_get_event_code_counter( ( ( pfm_register_t * ) bits )->
-											   event, j,
-											   &foo ) ) != PFMLIB_SUCCESS ) {
-				PAPIERROR( "pfm_get_event_code_counter(%d,%d,%p): %s",
-						   ( ( pfm_register_t * ) bits )->event, j, &foo,
-						   pfm_strerror( ret ) );
-				return ( PAPI_EBUG );
-			}
-			/* Overflow check */
-			if ( ( int )
-				 ( did_something * name_len + strlen( _pmc_name( j ) ) + 1 ) >=
-				 count * name_len ) {
-				SUBDBG( "Would overflow register name array." );
-				return ( did_something );
-			}
-			values[did_something] = foo;
-			strncpy( &names[did_something * name_len], _pmc_name( j ),
-					 name_len );
-			did_something++;
-			if ( did_something == count )
-				break;
-		}
-		n--;
-	}
-	/* assumes umask is unchanged, even if event code changes */
-	umask = convert_pfm_masks( bits );
-	if ( umask && ( did_something < count ) ) {
-		values[did_something] = umask;
-		if ( strlen( &names[did_something * name_len] ) )
-			strncpy( &names[did_something * name_len], " Unit Mask", name_len );
-		else
-			strncpy( &names[did_something * name_len], "Unit Mask", name_len );
-		did_something++;
-	}
-	return ( did_something );
-}
-
 #else
 
 static pentium4_replay_regs_t p4_replay_regs[] = {
@@ -623,42 +563,6 @@ static inline int is_pentium4(void) {
 
 }
 
-
-int
-_papi_libpfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
-							unsigned int *values, int name_len, int count )
-{
-	int i = 0;
-
-	if ( is_pentium4() ) {
-		copy_value( bits->cccr, "P4 CCCR", &names[i * name_len], &values[i],
-					name_len );
-		if ( ++i == count )
-			return ( i );
-		copy_value( bits->event, "P4 Event", &names[i * name_len], &values[i],
-					name_len );
-		if ( ++i == count )
-			return ( i );
-		copy_value( bits->pebs_enable, "P4 PEBS Enable", &names[i * name_len],
-					&values[i], name_len );
-		if ( ++i == count )
-			return ( i );
-		copy_value( bits->pebs_matrix_vert, "P4 PEBS Matrix Vertical",
-					&names[i * name_len], &values[i], name_len );
-		if ( ++i == count )
-			return ( i );
-		copy_value( bits->ireset, "P4 iReset", &names[i * name_len], &values[i],
-					name_len );
-	} else {
-		copy_value( bits->selector, "Event Selector", &names[i * name_len],
-					&values[i], name_len );
-		if ( ++i == count )
-			return ( i );
-		copy_value( ( unsigned int ) bits->counter_cmd, "Event Code",
-					&names[i * name_len], &values[i], name_len );
-	}
-	return ( ++i );
-}
 
 
 /* This call is broken. Selector can be much bigger than 32 bits. It should be a pfmlib_regmask_t - pjm */

@@ -679,57 +679,6 @@ copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
 	names[len - 1] = 0;
 }
 
-int
-_papi_hwd_ntv_bits_to_info( hwd_register_t * bits, char *names,
-							unsigned int *values, int name_len, int count )
-{
-	int i = 0;
-	copy_value( bits->selector, "Available counters", &names[i * name_len],
-				&values[i], name_len );
-	if ( ++i == count )
-		return ( i );
-	int j;
-	int event_found = 0;
-	for ( j = 0; j < 5; j++ ) {
-		if ( bits->counter_cmd[j] >= 0 ) {
-			event_found = 1;
-			break;
-		}
-	}
-	if ( event_found ) {
-		copy_value( bits->counter_cmd[j], "Event on first counter",
-					&names[i * name_len], &values[i], name_len );
-	}
-	if ( ++i == count )
-		return ( i );
-
-	int group_sets = 0;
-	int k;
-	for ( k = 0; k < GROUP_INTS; k++ ) {
-		if ( bits->group[k] )
-			group_sets++;
-	}
-	char *msg_base = "Available group";
-	char *set_id_msg = ", set ";
-	char *msg = ( char * ) malloc( 30 );
-	int current_group_set = 0;
-	for ( k = 0; k < GROUP_INTS; k++ ) {
-		if ( bits->group[k] ) {
-			if ( group_sets > 1 ) {
-				sprintf( msg, "%s%s%d", msg_base, set_id_msg,
-						 ++current_group_set );
-				copy_value( bits->group[k], msg, &names[i * name_len],
-							&values[i], name_len );
-			} else {
-				copy_value( bits->group[k], msg_base, &names[i * name_len],
-							&values[i], name_len );
-			}
-		}
-	}
-
-	return ( ++i );
-}
-
 
 char *
 _papi_hwd_ntv_code_to_descr( unsigned int EventCode )
@@ -803,8 +752,6 @@ papi_svector_t _ppc64_vector_table[] = {
 	 VEC_PAPI_HWD_NTV_CODE_TO_NAME},
 	{( void ( * )(  ) ) _papi_hwd_ntv_code_to_bits,
 	 VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-	{( void ( * )(  ) ) _papi_hwd_ntv_bits_to_info,
-	 VEC_PAPI_HWD_NTV_BITS_TO_INFO},
 	{( void ( * )(  ) ) *_papi_hwd_ntv_code_to_descr,
 	 VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
 	{( void ( * )(  ) ) *_papi_hwd_ntv_enum_events,

@@ -892,5 +892,4 @@ papi_vector_t _cuda_vector = {
 	.ntv_code_to_name = CUDA_ntv_code_to_name,
 	.ntv_code_to_descr = CUDA_ntv_code_to_descr,
 	.ntv_code_to_bits = CUDA_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
 };

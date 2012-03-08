@@ -2119,5 +2119,5 @@ papi_vector_t _papi_pe_vector = {
 	.ntv_code_to_name =  _papi_libpfm_ntv_code_to_name,
 	.ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
 	.ntv_code_to_bits =  _papi_libpfm_ntv_code_to_bits,
-	.ntv_bits_to_info =  _papi_libpfm_ntv_bits_to_info,
+
 };

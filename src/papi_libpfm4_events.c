@@ -1129,37 +1129,6 @@ _papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 }
 
 
-/** @class  _papi_libpfm_ntv_bits_to_info
- *  @brief  Convert native bits to a descriptive string describing registers
- *
- *  @param[in] *bits
- *  @param[out] *names
- *  @param[out] *values
- *  @param[in] name_len
- *  @param[in] count
- *
- *  @retval PAPI_OK       We always return PAPI_OK
- *
- */
-
-int
-_papi_libpfm_ntv_bits_to_info( hwd_register_t *bits, char *names,
-			       unsigned int *values, int name_len, int count )
-{
-
-  (void)bits;
-  (void)names;
-  (void)values;
-  (void)name_len;
-  (void)count;
-
-  /* We do not support this on libpfm4 */
-
-  return PAPI_OK;
-
-}
-
-
 /** @class  _papi_libpfm_shutdown
  *  @brief  Shutdown any initialization done by the libpfm4 code
  *

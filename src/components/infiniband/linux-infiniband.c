@@ -832,5 +832,4 @@ papi_vector_t _infiniband_vector = {
 	.ntv_code_to_name = INFINIBAND_ntv_code_to_name,
 	.ntv_code_to_descr = INFINIBAND_ntv_code_to_descr,
 	.ntv_code_to_bits = INFINIBAND_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
 };

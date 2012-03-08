@@ -486,5 +486,4 @@ papi_vector_t _lmsensors_vector = {
 	.ntv_enum_events = LM_SENSORS_ntv_enum_events,
 	.ntv_code_to_name = LM_SENSORS_ntv_code_to_name,
 	.ntv_code_to_bits = LM_SENSORS_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
 };

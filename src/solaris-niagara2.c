@@ -76,8 +76,6 @@ int _niagara2_get_system_info( papi_mdi_t *mdi );
 int _niagara2_init_control_state( hwd_control_state_t * );
 int _niagara2_init_substrate( int );   // Needs changes
 static void _niagara2_lock_init( void );
-int _niagara2_ntv_bits_to_info( hwd_register_t *, char *, unsigned int *, int,
-								int );
 int _niagara2_ntv_code_to_bits( unsigned int, hwd_register_t * );
 int _niagara2_ntv_code_to_descr( unsigned int, char *, int );
 int _niagara2_ntv_code_to_name( unsigned int, char *, int );
@@ -972,41 +970,6 @@ _niagara2_lock_init( void )
 	SUBDBG( "LEAVING FUNCTION  >>%s<< at %s:%d\n", __func__, __FILE__,
 			__LINE__ );
 #endif
-}
-
-int
-_niagara2_ntv_bits_to_info( hwd_register_t * bits, char *names,
-							unsigned int *values, int name_len, int count )
-{
-	char *pattern = "Niagara 2/PIC#%d";
-	char tmp[PAPI_MIN_STR_LEN];
-	int i;
-
-#ifdef DEBUG
-	SUBDBG( "ENTERING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	if ( count == 0 || count > MAX_COUNTERS ) {
-#ifdef DEBUG
-		SUBDBG( "LEAVING: %s: %s: %d\n", __func__,
-				"number of counters invalid", count );
-#endif
-
-		return 0;
-	}
-
-	for ( i = 0; i < count; i++ ) {
-		snprintf( tmp, PAPI_MIN_STR_LEN, pattern, i );
-		strlcpy( &names[i * name_len], tmp, name_len );
-	}
-
-#ifdef DEBUG
-	SUBDBG( "LEAVING FUNCTION  >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	return i;
 }
 
 int
@@ -2555,7 +2518,6 @@ papi_vector_t _niagara2_vector = {
 	.ntv_code_to_name = _niagara2_ntv_code_to_name,
 	.ntv_code_to_descr = _niagara2_ntv_code_to_descr,
 	.ntv_code_to_bits = _niagara2_ntv_code_to_bits,
-	.ntv_bits_to_info = _niagara2_ntv_bits_to_info,
 	.init_substrate = _niagara2_init_substrate,
 	.dispatch_timer = _niagara2_dispatch_timer,
 };

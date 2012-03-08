@@ -151,20 +151,6 @@ copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
 	names[len - 1] = '\0';
 }
 
-int
-_aix_ntv_bits_to_info( hwd_register_t * bits, char *names,
-					   unsigned int *values, int name_len, int count )
-{
-	int i = 0;
-	copy_value( bits->selector, "PowerPC64 event code", &names[i * name_len],
-				&values[i], name_len );
-	if ( ++i == count )
-		return ( i );
-	copy_value( ( unsigned int ) bits->counter_cmd,
-				"PowerPC64 counter_cmd code", &names[i * name_len], &values[i],
-				name_len );
-	return ( ++i );
-}
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
@@ -1334,7 +1320,6 @@ papi_vector_t _aix_vector = {
 	.ntv_code_to_name =  _aix_ntv_code_to_name,
 	.ntv_code_to_descr = _aix_ntv_code_to_descr,
 	.ntv_code_to_bits =  _aix_ntv_code_to_bits,
-	.ntv_bits_to_info =  _aix_ntv_bits_to_info,
 
 	.init_substrate = _aix_init_substrate,
 	.ctl = _aix_ctl,

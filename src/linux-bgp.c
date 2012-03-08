@@ -1161,19 +1161,6 @@ _bgp_ntv_enum_events( unsigned int *EventCode, int modifier )
 	}
 }
 
-/*
- * Native Bit Configuration to Information
- *
- * No-op for BG/P and simply returns 0
- */
-int
-_bgp_ntv_bits_to_info( hwd_register_t * bits, char *names,
-					   unsigned int *values, int name_len, int count )
-{
-	return ( 0 );
-
-}
-
 int 
 _papi_hwi_init_os(void) {
 
@@ -1243,11 +1230,8 @@ papi_vector_t _bgp_vectors = {
 	.ntv_code_to_name = _bgp_ntv_code_to_name,
 	.ntv_code_to_descr = _bgp_ntv_code_to_descr,
 	.ntv_code_to_bits = _bgp_ntv_code_to_bits,
-	.ntv_bits_to_info = _bgp_ntv_bits_to_info,
 	.allocate_registers = _bgp_allocate_registers,
 	.shutdown = _bgp_shutdown
-//  .shutdown_global      =
-//  .user                 =
 };
 
 papi_os_vector_t _papi_os_vector = {

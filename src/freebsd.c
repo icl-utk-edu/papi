@@ -795,20 +795,6 @@ int _papi_freebsd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 	return PAPI_OK;
 }
 
-int _papi_freebsd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values, int name_len, int count)
-{
-  (void)bits;
-  (void)values;
-  const char str[]="Counter: 0  Event: 0";
-	SHOW_WHERE_I_AM;
-  if ( count == 0 ) return(0);
-
-  if ( strlen(str) > name_len ) return(0);
-
-  strcpy(names, "Counter: 0  Event: 0");
-  return 1;
-}
-
 /* 
  * Counter Allocation Functions, only need to implement if
  *    the substrate needs smart counter allocation.
@@ -940,7 +926,6 @@ papi_vector_t _papi_freebsd_vector = {
   .ntv_code_to_name	= _papi_freebsd_ntv_code_to_name,
   .ntv_code_to_descr	= _papi_freebsd_ntv_code_to_descr,
   .ntv_code_to_bits		= _papi_freebsd_ntv_code_to_bits,
-  .ntv_bits_to_info		= _papi_freebsd_ntv_bits_to_info,
 
   .allocate_registers	= _papi_freebsd_allocate_registers,
 

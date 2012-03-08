@@ -495,6 +495,5 @@ papi_vector_t _coretemp_freebsd_vector = {
 	.ntv_code_to_name = coretemp_ntv_code_to_name,
 	.ntv_code_to_descr = coretemp_ntv_code_to_descr,
 	.ntv_code_to_bits = coretemp_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
 };
 
