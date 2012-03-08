@@ -331,6 +331,13 @@ main( int argc, char **argv )
 
 		  print_event( &info, 0 );
 
+		  if (flags.details) {
+		    if (info.units[0]) printf( "|     Units: %-67s|\n", 
+					       info.units );
+		  }
+		    
+
+
 /*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
 			groups id for each group in which this
 			native event lives, in bits 16 - 23 of event code

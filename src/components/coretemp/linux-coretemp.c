@@ -633,6 +633,30 @@ _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
      return PAPI_ENOEVNT;
 }
 
+int
+_coretemp_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+{
+
+  int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+
+  if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
+
+  info->event_code=EventCode;
+  strncpy( info->symbol, _coretemp_native_events[index].name, 
+	   sizeof(info->symbol));
+
+  strncpy( info->long_descr, _coretemp_native_events[index].description, 
+	   sizeof(info->symbol));
+
+  strncpy( info->units, _coretemp_native_events[index].units, 
+	   sizeof(info->units));
+
+
+  return PAPI_OK;
+}
+
+
+
 /*
  *
  */
@@ -685,4 +709,5 @@ papi_vector_t _coretemp_vector = {
 	.ntv_enum_events =      _coretemp_ntv_enum_events,
 	.ntv_code_to_name =     _coretemp_ntv_code_to_name,
 	.ntv_code_to_descr =    _coretemp_ntv_code_to_descr,
+	.ntv_code_to_info =     _coretemp_ntv_code_to_info,
 };
