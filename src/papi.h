@@ -920,50 +920,98 @@ typedef char* PAPI_user_defined_events_file_t;
 */
 
 
+/** Enum values for event_info location field */
+enum {
+   PAPI_LOCATION_CORE = 0,		/**< Measures local to core      */
+   PAPI_LOCATION_CPU,                   /**< Measures local to CPU (HT?) */
+   PAPI_LOCATION_PACKAGE,               /**< Measures local to package   */
+   PAPI_LOCATION_UNCORE,                /**< Measures uncore             */
+};
 
+/** Enum values for event_info data_type field */
+enum {
+   PAPI_DATATYPE_UINT64 = 0,		/**< Data is a unsigned 64-bit int */
+   PAPI_DATATYPE_INT64,		        /**< Data is a signed 64-bit int   */
+   PAPI_DATATYPE_FP64,		        /**< Data is 64-bit floating pont  */
+};
+
+/** Enum values for event_info value_type field */
+enum {
+   PAPI_VALUETYPE_RUNNING_SUM = 0,	/**< Data is running sum from start */
+   PAPI_VALUETYPE_ABSOLUTE,	        /**< Data is from last read */
+};
+
+/** Enum values for event_info timescope field */
+enum {
+   PAPI_TIMESCOPE_SINCE_START = 0,	/**< Data is cumulative from start */
+   PAPI_TIMESCOPE_SINCE_LAST,	        /**< Data is from last read */
+   PAPI_TIMESCOPE_UNTIL_NEXT,	        /**< Data is until next read */
+   PAPI_TIMESCOPE_POINT,	        /**< Data is an instantaneous value */
+};
+
+/** Enum values for event_info update_type field */
+enum {
+   PAPI_UPDATETYPE_ARBITRARY = 0,	/**< Data is cumulative from start */
+   PAPI_UPDATETYPE_PUSH,	        /**< Data is pushed */
+   PAPI_UPDATETYPE_PULL,	        /**< Data is pulled */
+   PAPI_UPDATETYPE_FIXEDFREQ,	        /**< Data is read periodically */
+};
 
 
    typedef struct event_info {
-      unsigned int event_code;               /**< preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
-      char symbol[PAPI_HUGE_STR_LEN];       /**< name of the event
-                                                - for presets, something like PAPI_TOT_INS
-                                                - for native events, something related to the vendor name
-												- for perfmon2:opteron, these can get *very* long! */
-      char short_descr[PAPI_MIN_STR_LEN];    /**< a description suitable for use as a label, typically only
-                                                implemented for preset events */
-      char long_descr[PAPI_HUGE_STR_LEN];    /**< a longer description of the event
-                                                - typically a sentence for presets
-                                                - possibly a paragraph from vendor docs for native events */
+      unsigned int event_code;             /**< preset (0x8xxxxxxx) or 
+                                                native (0x4xxxxxxx) event code */
+      char symbol[PAPI_HUGE_STR_LEN];      /**< name of the event */
+      char short_descr[PAPI_MIN_STR_LEN];  /**< a short description suitable for 
+                                                use as a label */
+      char long_descr[PAPI_HUGE_STR_LEN];  /**< a longer description:
+                                                typically a sentence for presets,
+                                                possibly a paragraph from vendor
+                                                docs for native events */
 
+      int component_index;           /**< component this event belongs to */
+      char units[PAPI_MIN_STR_LEN];  /**< units event is measured in */
+      int location;                  /**< location event applies to */
+      int data_type;                 /**< data type returned by PAPI */
+      int value_type;                /**< sum or absolute */
+      int timescope;                 /**< from start, etc. */
+      int update_type;               /**< how event is updated */
+      int update_freq;               /**< how frequently event is updated */
 
      /* PRESET SPECIFIC FIELDS FOLLOW */
 
 
 
-      unsigned int count;                    /**< number of terms (usually 1) in the code and name fields 
-                                                - for presets, these terms are native events
-                                                - for native events, these terms are register contents */
+      unsigned int count;                /**< number of terms (usually 1) 
+                                              in the code and name fields 
+                                              - presets: these are native events
+                                              - native: these are unused */
 
-      unsigned int event_type;               /**< event type or category for preset events only */
+      unsigned int event_type;           /**< event type or category 
+                                              for preset events only */
 
-      char derived[PAPI_MIN_STR_LEN];        /**< name of the derived type
-                                                - for presets, usually NOT_DERIVED
-                                                - for native events, empty string 
-                                                NOTE: a derived description string is available
-                                                   in papi_data.c that is currently not exposed to the user */
-      char postfix[PAPI_2MAX_STR_LEN];        /**< string containing postfix operations; only defined for 
-                                                preset events of derived type DERIVED_POSTFIX */
-      unsigned int code[PAPI_MAX_INFO_TERMS];/**< array of values that further describe the event:
-                                                - for presets, native event_code values
-                                                - for native events, register values for event programming */
+      char derived[PAPI_MIN_STR_LEN];    /**< name of the derived type
+                                              - presets: usually NOT_DERIVED
+                                              - native: empty string */
+      char postfix[PAPI_2MAX_STR_LEN];   /**< string containing postfix 
+                                              operations; only defined for 
+                                              preset events of derived type 
+                                              DERIVED_POSTFIX */
+
+      unsigned int code[PAPI_MAX_INFO_TERMS]; /**< array of values that further 
+                                              describe the event:
+                                              - presets: native event_code values
+                                              - native:, register values(?) */
+
       char name[PAPI_MAX_INFO_TERMS]         /**< names of code terms: */
-               [PAPI_2MAX_STR_LEN];           /**< - for presets, native event names, as in symbol, above
-                                                - for native events, descriptive strings for each register
-                                                   value presented in the code array */
-      char note[PAPI_HUGE_STR_LEN];          /**< an optional developer note supplied with a preset event
-                                                to delineate platform specific anomalies or restrictions
-                                                NOTE: could also be implemented for native events. */
+               [PAPI_2MAX_STR_LEN];          /**< - presets: native event names,
+                                                  - native: descriptive strings 
+						  for each register value(?) */
 
+     char note[PAPI_HUGE_STR_LEN];          /**< an optional developer note 
+                                                supplied with a preset event
+                                                to delineate platform specific 
+						anomalies or restrictions */
 
    } PAPI_event_info_t;
 
