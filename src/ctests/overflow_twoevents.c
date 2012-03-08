@@ -96,8 +96,8 @@ find_nonderived_event( void )
 		if ( PAPI_query_event( potential_evt_to_add[i] ) == PAPI_OK ) {
 			if ( PAPI_get_event_info( potential_evt_to_add[i], &info ) ==
 				 PAPI_OK ) {
-				if ( ( info.preset_info->count > 0 ) &&
-					 !strcmp( info.preset_info->derived, "NOT_DERIVED" ) )
+				if ( ( info.count > 0 ) &&
+					 !strcmp( info.derived, "NOT_DERIVED" ) )
 					return ( potential_evt_to_add[i] );
 			}
 		}

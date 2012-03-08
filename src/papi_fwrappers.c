@@ -741,15 +741,12 @@ PAPI_FCALL( papif_get_event_info, PAPIF_GET_EVENT_INFO,
 		for ( i = ( int ) strlen( info.short_descr ); i < short_descr_len;
 			  short_descr[i++] = ' ' );
 
-		*count = ( int ) info.preset_info->count;
+		*count = ( int ) info.count;
 
 		int note_len=0;
 
-		if (info.preset_info->note) {
-		   strncpy( event_note, info.preset_info->note, 
-			    ( size_t ) event_note_len );
-		   note_len=strlen(info.preset_info->note);
-		}
+		strncpy( event_note, info.note,  ( size_t ) event_note_len );
+		note_len=strlen(info.note);
 
 		for ( i =  note_len; i < event_note_len;
 			  event_note[i++] = ' ' );

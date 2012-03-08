@@ -136,7 +136,7 @@ int is_event_derived(unsigned int event) {
 
      PAPI_get_event_info(event,&info);
 
-     if (strcmp(info.preset_info->derived,"NOT_DERIVED")) {
+     if (strcmp(info.derived,"NOT_DERIVED")) {
        //       printf("%x is derived\n",event);
         return 1;
      }
@@ -699,7 +699,7 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
     if ( PAPI_query_event( (int) potential_evt_to_add[i][0] ) == PAPI_OK ) {
 			
        if ( PAPI_get_event_info( (int) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
-	 if ( ( info.preset_info->count > 0 ) && ( (unsigned) counters > info.preset_info->count ) ) {
+	 if ( ( info.count > 0 ) && ( (unsigned) counters > info.count ) ) {
 	     event_found = 1;
 	     break;
 	  }

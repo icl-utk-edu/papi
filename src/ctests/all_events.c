@@ -31,7 +31,7 @@ main( int argc, char **argv )
 	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
 		if ( PAPI_get_event_info( PAPI_PRESET_MASK | i, &info ) != PAPI_OK )
 			continue;
-		if ( !( info.preset_info->count ) )
+		if ( !( info.count ) )
 			continue;
 		printf( "Adding %-14s", info.symbol );
 		retval = PAPI_add_event( EventSet, ( int ) info.event_code );

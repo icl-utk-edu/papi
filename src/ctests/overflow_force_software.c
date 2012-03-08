@@ -85,24 +85,24 @@ main( int argc, char **argv )
 	if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK ) {
 		if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK ) {
 			PAPI_get_event_info( PAPI_FP_INS, &info );
-			if ( info.preset_info->count == 1 || 
-                             !strcmp( info.preset_info->derived, "DERIVED_CMPD" ) )
+			if ( info.count == 1 || 
+                             !strcmp( info.derived, "DERIVED_CMPD" ) )
 				PAPI_event = PAPI_FP_INS;
 		}
 	}
 	if ( PAPI_event == 0 ) {
 		if ( PAPI_query_event( PAPI_FP_OPS ) == PAPI_OK ) {
 			PAPI_get_event_info( PAPI_FP_OPS, &info );
-			if ( info.preset_info->count == 1 || 
-                             !strcmp( info.preset_info->derived, "DERIVED_CMPD" ) )
+			if ( info.count == 1 || 
+                             !strcmp( info.derived, "DERIVED_CMPD" ) )
 				PAPI_event = PAPI_FP_OPS;
 		}
 	}
 	if ( PAPI_event == 0 ) {
 		if ( PAPI_query_event( PAPI_TOT_INS ) == PAPI_OK ) {
 			PAPI_get_event_info( PAPI_TOT_INS, &info );
-			if ( info.preset_info->count == 1 || 
-                             !strcmp( info.preset_info->derived, "DERIVED_CMPD" ) )
+			if ( info.count == 1 || 
+                             !strcmp( info.derived, "DERIVED_CMPD" ) )
 				PAPI_event = PAPI_TOT_INS;
 		}
 	}

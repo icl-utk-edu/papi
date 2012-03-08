@@ -102,7 +102,7 @@ mainloop( int arg )
 		if ( retval != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_get_event_info", retval );
 
-		if ( pset.preset_info->count ) {
+		if ( pset.count ) {
 			printf( "Adding %s\n", pset.symbol );
 
 			retval = PAPI_add_event( EventSet, ( int ) pset.event_code );

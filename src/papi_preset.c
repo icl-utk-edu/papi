@@ -79,15 +79,15 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   }
 
 	   INTDBG( "This preset has %d terms.\n", j );
-	   _papi_hwi_presets[preset_index].info.count = j;
+	   _papi_hwi_presets[preset_index].count = j;
  
-           _papi_hwi_presets[preset_index].derived = findem[pnum].derived;
+           _papi_hwi_presets[preset_index].derived_int = findem[pnum].derived;
 	   for(k=0;k<j;k++) {
-              _papi_hwi_presets[preset_index].info.code[k] = 
+              _papi_hwi_presets[preset_index].code[k] = 
                      findem[pnum].native[k];
 	   } 
-	   strcpy(_papi_hwi_presets[preset_index].info.postfix,
-		   findem[pnum].operation);
+	   _papi_hwi_presets[preset_index].postfix=
+	                                   strdup(findem[pnum].operation);
 
 	   did_something++;
        }
@@ -102,12 +102,20 @@ int
 _papi_hwi_cleanup_all_presets( void )
 {
         int preset_index,cidx;
+	unsigned int j;
 
 	for ( preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS;
 		  preset_index++ ) {
-	    if ( _papi_hwi_presets[preset_index].info.note != NULL ) {
-	       free( _papi_hwi_presets[preset_index].info.note );
-	       _papi_hwi_presets[preset_index].info.note = NULL;
+	    if ( _papi_hwi_presets[preset_index].postfix != NULL ) {
+	       free( _papi_hwi_presets[preset_index].postfix );
+	       _papi_hwi_presets[preset_index].postfix = NULL;
+	    }
+	    if ( _papi_hwi_presets[preset_index].note != NULL ) {
+	       free( _papi_hwi_presets[preset_index].note );
+	       _papi_hwi_presets[preset_index].note = NULL;
+	    }
+	    for(j=0; j<_papi_hwi_presets[preset_index].count;j++) {
+	       free(_papi_hwi_presets[preset_index].name[j]);
 	    }
 	}
 	
@@ -444,7 +452,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	  insert=preset&PAPI_PRESET_AND_MASK;
 
 	  /* _papi_hwi_presets[insert].event_code = preset; */
-	  _papi_hwi_presets[insert].derived = derived;
+	  _papi_hwi_presets[insert].derived_int = derived;
 
 	  /* Derived support starts here */
 	  /* Special handling for postfix */
@@ -459,7 +467,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 
 	     SUBDBG( "Saving PostFix operations %s\n", t );
 
-	     strcpy(_papi_hwi_presets[insert].info.postfix,t);
+	     _papi_hwi_presets[insert].postfix=strdup(t);
 	  }
 			
 	  /* All derived terms collected here */
@@ -469,7 +477,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	     t = trim_string( strtok( NULL, "," ) );
 	     if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) break;
 	     if ( strcasecmp( t, "NOTE" ) == 0 ) break;
-	     strcpy(_papi_hwi_presets[insert].info.name[i],t);
+	     _papi_hwi_presets[insert].name[i]=strdup(t);
 
 	     SUBDBG( "Adding term (%d) %s to preset event 0x%x.\n", 
 		     i, t, preset );
@@ -480,7 +488,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 
 	     if (ret==PAPI_OK) {
 		SUBDBG("Found %x\n",event_idx);
-		_papi_hwi_presets[insert].info.code[i]=event_idx;
+		_papi_hwi_presets[insert].code[i]=event_idx;
 	     }
 	     else {
 		PAPIERROR("papi_preset: Error finding event %s",t);
@@ -491,9 +499,9 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 
 	  if (invalid_event) {
 	    /* We signify a valid preset if count > 0 */
-	     _papi_hwi_presets[insert].info.count=0;
+	     _papi_hwi_presets[insert].count=0;
 	  } else {
-	     _papi_hwi_presets[insert].info.count=i;
+	     _papi_hwi_presets[insert].count=i;
 	  }
 
 	  /* End of derived support */
@@ -519,7 +527,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 			   line_no, name );
 	     }
 	     else {
-	        _papi_hwi_presets[insert].info.note = strdup( t );
+	        _papi_hwi_presets[insert].note = strdup( t );
 		SUBDBG( "NOTE: --%s-- found on line %d\n", t, line_no );
 	     }
 	  }

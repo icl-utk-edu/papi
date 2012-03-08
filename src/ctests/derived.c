@@ -52,7 +52,7 @@ main( int argc, char **argv )
 	i = PAPI_PRESET_MASK;
 	do {
 		if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-			if ( info.preset_info->count > 1 ) {
+			if ( info.count > 1 ) {
 				PAPI_events[0] = ( unsigned int ) info.event_code;
 				break;
 			}

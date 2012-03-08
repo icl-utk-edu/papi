@@ -132,7 +132,7 @@ decide_which_events( int *events, int *nevents )
 
 	for ( i = 0; i < MAXEVENTS; i++ ) {
 		if ( PAPI_get_event_info( events[i], &info ) == PAPI_OK ) {
-			if ( info.preset_info->count && ( strcmp( info.preset_info->derived, "NOT_DERIVED" ) == 0 ) ) {
+			if ( info.count && ( strcmp( info.derived, "NOT_DERIVED" ) == 0 ) ) {
 				printf( "Added %s\n", info.symbol );
 				newevents[j++] = events[i];
 			}

@@ -86,7 +86,7 @@ case1( void )
 	i = PAPI_PRESET_MASK;
 	do {
 		if ( PAPI_get_event_info( i, &pset ) == PAPI_OK ) {
-			if ( pset.preset_info->count && ( strcmp( pset.preset_info->derived, "NOT_DERIVED" ) == 0 ) ) {
+			if ( pset.count && ( strcmp( pset.derived, "NOT_DERIVED" ) == 0 ) ) {
 				retval = PAPI_add_event( EventSet, ( int ) pset.event_code );
 				if ( retval != PAPI_OK ) {
 				   printf("Failed trying to add %s\n",pset.symbol);

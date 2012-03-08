@@ -34,11 +34,11 @@ extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 static char *
 is_derived( PAPI_event_info_t * info )
 {
-	if ( strlen( info->preset_info->derived ) == 0 )
+	if ( strlen( info->derived ) == 0 )
 		return ( "No" );
-	else if ( strcmp( info->preset_info->derived, "NOT_DERIVED" ) == 0 )
+	else if ( strcmp( info->derived, "NOT_DERIVED" ) == 0 )
 		return ( "No" );
-	else if ( strcmp( info->preset_info->derived, "DERIVED_CMPD" ) == 0 )
+	else if ( strcmp( info->derived, "DERIVED_CMPD" ) == 0 )
 		return ( "No" );
 	else
 		return ( "Yes" );
@@ -184,23 +184,23 @@ main( int argc, char **argv )
 					printf( "%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
 							"Event name:", info.symbol, "Event Code:",
 							info.event_code, "Number of Native Events:",
-							info.preset_info->count );
+							info.count );
 					printf( "%-29s|%s|\n%-29s|%s|\n%-29s|%s|\n",
 							"Short Description:", info.short_descr,
 							"Long Description:", info.long_descr,
-							"Developer's Notes:", info.preset_info->note );
+							"Developer's Notes:", info.note );
 					printf( "%-29s|%s|\n%-29s|%s|\n", "Derived Type:",
-							info.preset_info->derived, "Postfix Processing String:",
-							info.preset_info->postfix );
-					for ( j = 0; j < ( int ) info.preset_info->count; j++ ) {
+							info.derived, "Postfix Processing String:",
+							info.postfix );
+					for ( j = 0; j < ( int ) info.count; j++ ) {
 						printf( " Native Code[%d]: 0x%x |%s|\n", j,
-								info.preset_info->code[j], info.preset_info->name[j] );
-						PAPI_get_event_info( ( int ) info.preset_info->code[j], &n_info );
+								info.code[j], info.name[j] );
+						PAPI_get_event_info( ( int ) info.code[j], &n_info );
 						printf( " Number of Register Values: %d\n",
-								n_info.preset_info->count );
-						for ( k = 0; k < ( int ) n_info.preset_info->count; k++ )
+								n_info.count );
+						for ( k = 0; k < ( int ) n_info.count; k++ )
 							printf( " Register[%2d]: 0x%08x |%s|\n", k,
-									n_info.preset_info->code[k], n_info.preset_info->name[k] );
+									n_info.code[k], n_info.name[k] );
 						printf( " Native Event Description: |%s|\n\n",
 								n_info.long_descr );
 					}
@@ -208,11 +208,11 @@ main( int argc, char **argv )
 					printf( "%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
 							"Event name:", info.symbol, "Event Code:",
 							info.event_code, "Number of Register Values:",
-							info.preset_info->count );
+							info.count );
 					printf( "%-29s|%s|\n", "Description:", info.long_descr );
-					for ( k = 0; k < ( int ) info.preset_info->count; k++ )
+					for ( k = 0; k < ( int ) info.count; k++ )
 						printf( " Register[%2d]: 0x%08x |%s|\n", k,
-								info.preset_info->code[k], info.preset_info->name[k] );
+								info.code[k], info.name[k] );
 
 					/* if unit masks exist but none are specified, process all */
 					if ( !strchr( name, ':' ) ) {
@@ -231,12 +231,12 @@ main( int argc, char **argv )
 											printf( "%-29s|%s|%s|\n",
 													" Mask Info:", info.symbol,
 													info.long_descr );
-											for ( k = 0; k < ( int ) info.preset_info->count;
+											for ( k = 0; k < ( int ) info.count;
 												  k++ )
 												printf
 													( "  Register[%2d]:  0x%08x  |%s|\n",
-													  k, info.preset_info->code[k],
-													  info.preset_info->name[k] );
+													  k, info.code[k],
+													  info.name[k] );
 										}
 									}
 								} while ( PAPI_enum_event
@@ -269,46 +269,46 @@ main( int argc, char **argv )
 		do {
 			if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
 				if ( print_tabular ) {
-					if ( filter & info.preset_info->event_type ) {
+					if ( filter & info.event_type ) {
 						if ( print_avail_only ) {
-							if ( info.preset_info->count )
+							if ( info.count )
 								printf( "%-13s0x%x  %-5s%s",
 										info.symbol,
 										info.event_code,
 										is_derived( &info ), info.long_descr );
-							if ( info.preset_info->note[0] )
-								printf( " (%s)", info.preset_info->note );
+							if ( info.note[0] )
+								printf( " (%s)", info.note );
 							printf( "\n" );
 						} else {
 							printf( "%-13s0x%x  %-6s%-4s %s",
 									info.symbol,
 									info.event_code,
-									( info.preset_info->count ? "Yes" : "No" ),
+									( info.count ? "Yes" : "No" ),
 									is_derived( &info ), info.long_descr );
-							if ( info.preset_info->note )
-								printf( " (%s)", info.preset_info->note );
+							if ( info.note[0] )
+								printf( " (%s)", info.note );
 							printf( "\n" );
 						}
 						tot_count++;
-						if ( info.preset_info->count )
+						if ( info.count )
 							avail_count++;
 						if ( !strcmp( is_derived( &info ), "Yes" ) )
 							deriv_count++;
 					}
 				} else {
-					if ( ( print_avail_only && info.preset_info->count ) ||
+					if ( ( print_avail_only && info.count ) ||
 						 ( print_avail_only == 0 ) ) {
 						printf
 							( "%s\t0x%x\t%d\t|%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
-							  info.symbol, info.event_code, info.preset_info->count,
-							  info.short_descr, info.long_descr, info.preset_info->note,
-							  info.preset_info->derived, info.preset_info->postfix );
-						for ( j = 0; j < ( int ) info.preset_info->count; j++ )
+							  info.symbol, info.event_code, info.count,
+							  info.short_descr, info.long_descr, info.note,
+							  info.derived, info.postfix );
+						for ( j = 0; j < ( int ) info.count; j++ )
 							printf( " Native Code[%d]: 0x%x |%s|\n", j,
-									info.preset_info->code[j], info.preset_info->name[j] );
+									info.code[j], info.name[j] );
 					}
 					tot_count++;
-					if ( info.preset_info->count )
+					if ( info.count )
 						avail_count++;
 					if ( !strcmp( is_derived( &info ), "Yes" ) )
 						deriv_count++;

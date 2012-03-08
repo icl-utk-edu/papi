@@ -24,10 +24,14 @@ typedef struct hwi_presets {
    char *symbol;      /**< name of the preset event; i.e. PAPI_TOT_INS, etc. */
    char *short_descr; /**< short description of the event for labels, etc. */
    char *long_descr;  /**< long description (full sentence) */
-   int derived;       /**< Derived type code */
+   int derived_int;   /**< Derived type code */
 
-   PAPI_preset_info_t info;
-
+   unsigned int count;
+   unsigned int event_type;
+   char *postfix;
+   unsigned int code[PAPI_MAX_INFO_TERMS];
+   char *name[PAPI_MAX_INFO_TERMS];
+   char *note;
 } hwi_presets_t;
 
 

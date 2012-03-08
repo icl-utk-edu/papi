@@ -42,7 +42,7 @@ find_derived( int i , char *type)
 
   do {
 	if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-	  if ( strcmp( info.preset_info->derived, type) == 0 )
+	  if ( strcmp( info.derived, type) == 0 )
 		return i;
 	}
   } while ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK );
@@ -361,7 +361,7 @@ main( int argc, char **argv )
 		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
 	  PAPI_get_event_info(event, &info);
-	  printf( "\nPerforming DERIVED_POSTFIX PAPI_read(%d counters)  test...", info.preset_info->count );
+	  printf( "\nPerforming DERIVED_POSTFIX PAPI_read(%d counters)  test...", info.count );
 
 	  if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
@@ -388,7 +388,7 @@ main( int argc, char **argv )
 		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
 	  PAPI_get_event_info(event, &info);
-	  printf( "\nPerforming DERIVED_[ADD|SUB] PAPI_read(%d counters)  test...", info.preset_info->count );
+	  printf( "\nPerforming DERIVED_[ADD|SUB] PAPI_read(%d counters)  test...", info.count );
 
 	  if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );

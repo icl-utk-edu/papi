@@ -714,7 +714,7 @@ PAPI_query_event( int EventCode )
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
 
-		if ( _papi_hwi_presets[EventCode].info.count )
+		if ( _papi_hwi_presets[EventCode].count )
 		        papi_return (PAPI_OK);
 		else
 			return PAPI_ENOEVNT;
@@ -1225,7 +1225,7 @@ PAPI_enum_event( int *EventCode, int modifier )
 			if ( _papi_hwi_presets[i].symbol == NULL )
 				return ( PAPI_ENOEVNT );	/* NULL pointer terminates list */
 			if ( modifier & PAPI_PRESET_ENUM_AVAIL ) {
-				if ( _papi_hwi_presets[i].info.count == 0 )
+				if ( _papi_hwi_presets[i].count == 0 )
 					continue;
 			}
 			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );
