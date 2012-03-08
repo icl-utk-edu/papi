@@ -294,7 +294,8 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
     char *tmpn;
     FILE *table;
     int ret;
-    int event_idx;
+    unsigned int event_idx;
+    int invalid_event;
     int line_no = 1, derived = 0, insert = 0, preset = 0;
     int get_presets = 0;   /* only get PRESETS after CPU is identified      */
     int found_presets = 0; /* only terminate search after PRESETS are found */
@@ -463,6 +464,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 			
 	  /* All derived terms collected here */
 	  i = 0;
+	  invalid_event=0;
 	  do {
 	     t = trim_string( strtok( NULL, "," ) );
 	     if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) break;
@@ -481,12 +483,18 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 		_papi_hwi_presets[insert].info.code[i]=event_idx;
 	     }
 	     else {
-		 SUBDBG("Error finding event %x\n",event_idx);
+		PAPIERROR("papi_preset: Error finding event %s",t);
+		invalid_event=1;
 	     }
 
 	  } while ( ++i < PAPI_MAX_COUNTER_TERMS );
 
-	  _papi_hwi_presets[insert].info.count=i;			
+	  if (invalid_event) {
+	    /* We signify a valid preset if count > 0 */
+	     _papi_hwi_presets[insert].info.count=0;
+	  } else {
+	     _papi_hwi_presets[insert].info.count=i;
+	  }
 
 	  /* End of derived support */
 
