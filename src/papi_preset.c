@@ -474,7 +474,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 
 	     SUBDBG("Looking up: %s\n",t);
 
-	     ret=_papi_hwi_native_name_to_code(t, &event_idx);
+	     ret=_papi_hwd[cidx]->ntv_name_to_code(t, &event_idx);
 
 	     if (ret==PAPI_OK) {
 		SUBDBG("Found %x\n",event_idx);

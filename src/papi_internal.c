@@ -1361,9 +1361,7 @@ _papi_hwi_query( int preset_index, int *flags, char **note )
 
 int _papi_num_compiled_components = ( sizeof ( _papi_compiled_components ) / sizeof ( *_papi_compiled_components ) ) - 1;
 
-/* FIXME: =1 is hack so that _papi_hwi_native_name_to_code works during */
-/* substrate_init */
-int papi_num_components=1;
+int papi_num_components;
 
 /* Null terminated list of all active components */
 papi_vector_t **_papi_hwd;
@@ -1378,6 +1376,7 @@ _papi_hwi_init_global( void )
 {
         int retval, i = 0, j = 0;
 
+	papi_num_components=0;
 
 	retval = _papi_hwi_innoculate_os_vector( &_papi_os_vector );
 	if ( retval != PAPI_OK ) {
