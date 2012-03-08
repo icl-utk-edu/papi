@@ -121,7 +121,8 @@
         print *, "-----------------------------------------------",
      *       "--------------------------"
         
-        print *, "Verification: PAPI_TOT_CYC should be roughly real_cycles"
+        print *, "Verification: PAPI_TOT_CYC should be roughly ",
+     *       "real_cycles"
       endif
       
       call ftests_pass(__FILE__)
