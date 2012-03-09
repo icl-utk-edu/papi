@@ -1771,7 +1771,8 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 	   memset( info, 0, sizeof ( PAPI_event_info_t ) );
 
 	   info->event_code = ( unsigned int ) EventCode;
-	   strcpy( info->symbol, _papi_hwi_presets[i].symbol );
+	   strncpy( info->symbol, _papi_hwi_presets[i].symbol,
+		    sizeof(info->symbol));
 
 	   if ( _papi_hwi_presets[i].short_descr != NULL )
 	      strncpy( info->short_descr, _papi_hwi_presets[i].short_descr,
