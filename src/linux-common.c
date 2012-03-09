@@ -549,10 +549,28 @@ _linux_get_cpu_info( PAPI_hw_info_t * hwinfo )
 papi_os_vector_t _papi_os_vector = {
   .get_memory_info =   _linux_get_memory_info,
   .get_dmem_info =     _linux_get_dmem_info,
-  .get_real_usec =     _linux_get_real_usec,
   .get_real_cycles =   _linux_get_real_cycles,
-  .get_virt_cycles =   _linux_get_virt_cycles,
-  .get_virt_usec =     _linux_get_virt_usec,
   .update_shlib_info = _linux_update_shlib_info,
   .get_system_info =   _linux_get_system_info,
+
+
+#if defined(HAVE_CLOCK_GETTIME_REALTIME)
+  .get_real_usec =  _linux_get_real_usec_gettime,
+#elif defined(HAVE_GETTIMEOFDAY)
+  .get_real_usec =  _linux_get_real_usec_gettimeofday,
+#else
+  .get_real_usec =  _linux_get_real_usec_fallback,
+#endif
+
+
+#if defined(USE_PROC_PTTIMER)
+  .get_virt_usec =   _linux_get_virt_usec_pttimer,
+#elif defined(HAVE_CLOCK_GETTIME_THREAD)
+  .get_virt_usec =   _linux_get_virt_usec_gettime,
+#elif defined(HAVE_PER_THREAD_TIMES)
+  .get_virt_usec =   _linux_get_virt_usec_times,
+#elif defined(HAVE_PER_THREAD_GETRUSAGE)
+  .get_virt_usec =   _linux_get_virt_usec_rusage,
+#endif
+
 };
