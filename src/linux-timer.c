@@ -254,6 +254,12 @@ _linux_get_real_cycles( void )
 
 
 
+
+/********************************************************************
+ * microsecond timers                                               *
+ ********************************************************************/
+
+
 /*******************************
  * HAVE_CLOCK_GETTIME_REALTIME *
  *******************************/
@@ -430,6 +436,49 @@ again:
 }
 
 
+/********************************************************************
+ * nanosecond timers                                                *
+ ********************************************************************/
+
+
+
+/*******************************
+ * HAVE_CLOCK_GETTIME_REALTIME *
+ *******************************/
+
+long long
+_linux_get_real_nsec_gettime( void )
+{
+	
+   long long retval;
+
+   struct timespec foo;
+   syscall( __NR_clock_gettime, HAVE_CLOCK_GETTIME_REALTIME, &foo );
+   retval = ( long long ) foo.tv_sec * ( long long ) 1000000000;
+   retval += ( long long ) ( foo.tv_nsec );
+
+   return retval;
+}
+
+
+/******************************/
+/* HAVE_CLOCK_GETTIME_THREAD  */
+/******************************/
+
+long long
+_linux_get_virt_nsec_gettime( void )
+{
+
+    long long retval;
+
+    struct timespec foo;
+
+    syscall( __NR_clock_gettime, HAVE_CLOCK_GETTIME_THREAD, &foo );
+    retval = ( long long ) foo.tv_sec * ( long long ) 1000000000;
+    retval += ( long long ) foo.tv_nsec ;
+	
+    return retval;
+}
 
 
 

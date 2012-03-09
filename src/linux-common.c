@@ -573,4 +573,14 @@ papi_os_vector_t _papi_os_vector = {
   .get_virt_usec =   _linux_get_virt_usec_rusage,
 #endif
 
+
+#if defined(HAVE_CLOCK_GETTIME_REALTIME)
+  .get_real_nsec =  _linux_get_real_nsec_gettime,
+#endif
+
+#if defined(HAVE_CLOCK_GETTIME_THREAD)
+  .get_virt_nsec =   _linux_get_virt_nsec_gettime,
+#endif
+
+
 };
