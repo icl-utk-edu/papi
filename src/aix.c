@@ -15,6 +15,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
+#include "extras.h"
+
 #include "aix.h"
 
 /* Advance declarations */
@@ -981,7 +983,7 @@ _aix_dispatch_timer( int signal, siginfo_t * si, void *i )
 
 	address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( &ctx ) );
 	_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL, 0, 0,
-										&t, _aix_vector.cmp_info.CmpIdx );
+					    &t, _aix_vector.cmp_info.CmpIdx );
 }
 
 int

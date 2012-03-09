@@ -216,9 +216,9 @@ _papi_hwi_dispatch_profile( EventSetInfo_t * ESI, caddr_t pc,
 
 int
 _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
-									int *isHardware, long long overflow_bit,
-									int genOverflowBit, ThreadInfo_t ** t,
-									int cidx )
+				   int *isHardware, long long overflow_bit,
+				   int genOverflowBit, ThreadInfo_t ** t,
+				   int cidx )
 {
 	int retval, event_counter, i, overflow_flag, pos;
 	int papi_index, j;
