@@ -393,6 +393,8 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 
 	/* Get the global list of threads */
 
+	MPXDBG("Adding %p %x\n",newset,EventCode);
+
 	_papi_hwi_lock( MULTIPLEX_LOCK );
 	t = tlist;
 
@@ -476,7 +478,8 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 	 * the new event set to them, add them to the master list for
 	 the thread, reset master event list for this thread */
 
-	retval = mpx_insert_events( newset, &EventCode, 1, domain, granularity );
+	retval = mpx_insert_events( newset, &EventCode, 1, 
+				    domain, granularity );
 	if ( retval != PAPI_OK ) {
 		if ( alloced_newset ) {
 			papi_free( newset );
@@ -1258,13 +1261,15 @@ mpx_init( int interval_ns )
    MUST BE CALLED WITH THE TIMER INTERRUPT DISABLED */
 
 static int
-mpx_insert_events( MPX_EventSet * mpx_events, int *event_list,
-				   int num_events, int domain, int granularity )
+mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
+		   int num_events, int domain, int granularity )
 {
 	int i, retval = 0, num_events_success = 0;
 	MasterEvent *mev;
 	PAPI_option_t options;
 	MasterEvent **head = &mpx_events->mythr->head;
+
+	MPXDBG("Inserting %p %d\n",mpx_events,mpx_events->num_events );
 
 	/* For each event, see if there is already a corresponding
 	 * event in the master set for this thread.  If not, add it.
@@ -1272,81 +1277,89 @@ mpx_insert_events( MPX_EventSet * mpx_events, int *event_list,
 	for ( i = 0; i < num_events; i++ ) {
 
 		/* Look for a matching event in the master list */
-		for ( mev = *head; mev != NULL; mev = mev->next ) {
-			if ( mev->pi.event_type == event_list[i]
-				 && mev->pi.domain == domain &&
-				 mev->pi.granularity == granularity )
+		for( mev = *head; mev != NULL; mev = mev->next ) {
+		   if ( (mev->pi.event_type == event_list[i]) && 
+			(mev->pi.domain == domain) &&
+			(mev->pi.granularity == granularity ))
 				break;
 		}
 
 		/* No matching event in the list; add a new one */
 		if ( mev == NULL ) {
-			mev = ( MasterEvent * ) papi_malloc( sizeof ( MasterEvent ) );
-			if ( mev == NULL )
-				return ( PAPI_ENOMEM );
+		   mev = (MasterEvent *) papi_malloc( sizeof ( MasterEvent ) );
+		   if ( mev == NULL ) {
+		      return PAPI_ENOMEM;
+		   }
 
-			mev->pi.event_type = event_list[i];
-			mev->pi.domain = domain;
-			mev->pi.granularity = granularity;
-			mev->uses = mev->active = 0;
-			mev->prev_total_c = mev->count = mev->cycles = 0;
-			mev->rate_estimate = 0.0;
-			mev->count_estimate = 0;
-			mev->is_a_rate = 0;
-			mev->papi_event = PAPI_NULL;
-			retval = PAPI_create_eventset( &( mev->papi_event ) );
-			if ( retval != PAPI_OK ) {
-				MPXDBG( "Event %d could not be counted.\n", event_list[i] );
-				goto bail;
-			}
+		   mev->pi.event_type = event_list[i];
+		   mev->pi.domain = domain;
+		   mev->pi.granularity = granularity;
+		   mev->uses = mev->active = 0;
+		   mev->prev_total_c = mev->count = mev->cycles = 0;
+		   mev->rate_estimate = 0.0;
+		   mev->count_estimate = 0;
+		   mev->is_a_rate = 0;
+		   mev->papi_event = PAPI_NULL;
+			
+		   retval = PAPI_create_eventset( &( mev->papi_event ) );
+		   if ( retval != PAPI_OK ) {
+		      MPXDBG( "Event %d could not be counted.\n", 
+			      event_list[i] );
+		      goto bail;
+		   }
 
-			retval = PAPI_add_event( mev->papi_event, event_list[i] );
-			if ( retval != PAPI_OK ) {
-				MPXDBG( "Event %d could not be counted.\n", event_list[i] );
-				goto bail;
-			}
+		   retval = PAPI_add_event( mev->papi_event, event_list[i] );
+		   if ( retval != PAPI_OK ) {
+		      MPXDBG( "Event %d could not be counted.\n", 
+			      event_list[i] );
+		      goto bail;
+		   }
 
-			/* Always count total cycles so we can scale results.
-			 * If user just requested cycles, don't add that event again. */
+		   /* Always count total cycles so we can scale results.
+		    * If user just requested cycles, 
+		    * don't add that event again. */
 
-			if ( event_list[i] != SCALE_EVENT ) {
-				retval = PAPI_add_event( mev->papi_event, SCALE_EVENT );
-				if ( retval != PAPI_OK ) {
-					MPXDBG
-						( "Scale event could not be counted at the same time.\n" );
-					goto bail;
-				}
-			}
-			/* Set the options for the event set */
-			memset( &options, 0x0, sizeof ( options ) );
-			options.domain.eventset = mev->papi_event;
-			options.domain.domain = domain;
-			retval = PAPI_set_opt( PAPI_DOMAIN, &options );
-			if ( retval != PAPI_OK ) {
-				MPXDBG( "PAPI_set_opt(PAPI_DOMAIN, ...) = %d\n", retval );
-				goto bail;
-			}
+		   if ( event_list[i] != SCALE_EVENT ) {
+		      retval = PAPI_add_event( mev->papi_event, SCALE_EVENT );
+		      if ( retval != PAPI_OK ) {
+			 MPXDBG( "Scale event could not be counted "
+				 "at the same time.\n" );
+			 goto bail;
+		      }
+		   }
+			
+		   /* Set the options for the event set */
+		   memset( &options, 0x0, sizeof ( options ) );
+		   options.domain.eventset = mev->papi_event;
+		   options.domain.domain = domain;
+		   retval = PAPI_set_opt( PAPI_DOMAIN, &options );
+		   if ( retval != PAPI_OK ) {
+		      MPXDBG( "PAPI_set_opt(PAPI_DOMAIN, ...) = %d\n", 
+			      retval );
+		      goto bail;
+		   }
 
-			memset( &options, 0x0, sizeof ( options ) );
-			options.granularity.eventset = mev->papi_event;
-			options.granularity.granularity = granularity;
-			retval = PAPI_set_opt( PAPI_GRANUL, &options );
-			if ( retval != PAPI_OK ) {
-				if ( retval != PAPI_ESBSTR ) {
-					/* ignore substrate errors because they typically mean
-					   "not supported by the substrate" */
-					MPXDBG( "PAPI_set_opt(PAPI_GRANUL, ...) = %d\n", retval );
-					goto bail;
-				}
-			}
+		   memset( &options, 0x0, sizeof ( options ) );
+		   options.granularity.eventset = mev->papi_event;
+		   options.granularity.granularity = granularity;
+		   retval = PAPI_set_opt( PAPI_GRANUL, &options );
+		   if ( retval != PAPI_OK ) {
+		      if ( retval != PAPI_ESBSTR ) {
+			 /* ignore substrate errors because they typically mean
+			    "not supported by the substrate" */
+			 MPXDBG( "PAPI_set_opt(PAPI_GRANUL, ...) = %d\n", 
+				 retval );
+			 goto bail;
+		      }
+		   }
 
 
-			/* Chain the event set into the 
-			 * master list of event sets used in
-			 * multiplexing. */
+		   /* Chain the event set into the 
+		    * master list of event sets used in
+		    * multiplexing. */
 
-			mev->next = *head;
-			*head = mev;
+		    mev->next = *head;
+		    *head = mev;
 
 		}
 
@@ -1354,6 +1367,7 @@ mpx_insert_events( MPX_EventSet * mpx_events, int *event_list,
 		 * eventset already in the list, then add the pointer in
 		 * the master list to this threads list. Then we bump the
 		 * number of successfully added events. */
+	MPXDBG("Inserting now %p %d\n",mpx_events,mpx_events->num_events );
 
 		mpx_events->mev[mpx_events->num_events + num_events_success] = mev;
 		mpx_events->mev[mpx_events->num_events + num_events_success]->uses++;
