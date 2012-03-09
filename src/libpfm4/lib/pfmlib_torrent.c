@@ -40,7 +40,8 @@ const pfmlib_attr_desc_t torrent_modifiers[] = {
 static inline int pfm_torrent_attr2mod(void *this, int pidx, int attr_idx)
 {
 	const pme_torrent_entry_t *pe = this_pe(this);
-	int x, n;
+	size_t x;
+	int n;
 
 	n = attr_idx;
 

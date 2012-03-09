@@ -54,7 +54,9 @@ static void
 print_counts(perf_event_desc_t *fds, int num, int do_delta)
 {
 	uint64_t values[3];
-	int i, ret;
+	ssize_t ret;
+	int i;
+
 	/*
 	 * now simply read the results.
 	 */
@@ -63,7 +65,7 @@ print_counts(perf_event_desc_t *fds, int num, int do_delta)
 		double ratio;
 
 		ret = read(fds[i].fd, values, sizeof(values));
-		if (ret < sizeof(values)) {
+		if (ret < (ssize_t)sizeof(values)) {
 			if (ret == -1)
 				err(1, "cannot read values event %s", fds[i].name);
 			else

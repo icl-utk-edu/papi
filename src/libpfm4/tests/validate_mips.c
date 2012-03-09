@@ -145,7 +145,7 @@ static const test_event_t mips_test_events[]={
 	  .fstr = "mips_74k::JR_31_MISPREDICTIONS:k=0:u=0:s=1:e=1",
 	},
 };
-#define NUM_TEST_EVENTS (sizeof(mips_test_events)/sizeof(test_event_t))
+#define NUM_TEST_EVENTS (int)(sizeof(mips_test_events)/sizeof(test_event_t))
 
 static int check_test_events(FILE *fp)
 {

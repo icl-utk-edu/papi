@@ -130,7 +130,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&perf_event_support,
 #endif
 };
-#define PFMLIB_NUM_PMUS	(sizeof(pfmlib_pmus)/sizeof(pfmlib_pmu_t *))
+#define PFMLIB_NUM_PMUS	(int)(sizeof(pfmlib_pmus)/sizeof(pfmlib_pmu_t *))
 
 static pfmlib_os_t pfmlib_os_none;
 
@@ -141,7 +141,7 @@ static pfmlib_os_t *pfmlib_oses[]={
 	&pfmlib_os_perf_ext,
 #endif
 };
-#define PFMLIB_NUM_OSES	(sizeof(pfmlib_oses)/sizeof(pfmlib_os_t *))
+#define PFMLIB_NUM_OSES	(int)(sizeof(pfmlib_oses)/sizeof(pfmlib_os_t *))
 
 /*
  * Mapping table from PMU index to pfmlib_pmu_t
@@ -288,7 +288,10 @@ idx2pmu(int idx)
 static inline pfmlib_pmu_t *
 pmu2pmuidx(pfm_pmu_t pmu)
 {
-	if (pmu < PFM_PMU_NONE || pmu >= PFM_PMU_MAX)
+	/* pfm_pmu_t is unsigned int enum, so
+	 * just need to check for upper bound
+	 */
+	if (pmu >= PFM_PMU_MAX)
 		return NULL;
 
 	return pfmlib_pmus_map[pmu];
@@ -1056,7 +1059,7 @@ static const char *pfmlib_err_list[]=
 	"too many parameters",
 	"parameter is too small",
 };
-static size_t pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
+static int pfmlib_err_count = (int)sizeof(pfmlib_err_list)/sizeof(char *);
 
 const char *
 pfm_strerror(int code)
@@ -1153,7 +1156,7 @@ static int
 pfmlib_check_event_pattrs(pfmlib_pmu_t *pmu, int pidx, pfm_os_t osid, FILE *fp)
 {
 	pfmlib_event_desc_t e;
-	int i, j, ret = PFM_ERR_ATTR;
+	int i, j, ret;
 
 	memset(&e, 0, sizeof(e));
 	e.event = pidx;
@@ -1165,6 +1168,8 @@ pfmlib_check_event_pattrs(pfmlib_pmu_t *pmu, int pidx, pfm_os_t osid, FILE *fp)
 		fprintf(fp, "invalid pattrs for event %d\n", pidx);
 		return ret;
 	}
+
+	ret = PFM_ERR_ATTR;
 
 	for (i = 0; i < e.npattrs; i++) {
 		for (j = i+1; j < e.npattrs; j++) {
@@ -1180,7 +1185,7 @@ error:
 	 * release resources allocated for event
 	 */
 	pfmlib_release_event(&e);
-	return PFM_SUCCESS;
+	return ret;
 }
 
 static int
@@ -1328,7 +1333,7 @@ pfm_pmu_validate(pfm_pmu_t pmu_id, FILE *fp)
 		return PFM_ERR_INVAL;
 	}
 
-	if (pmu->pmu < PFM_PMU_NONE || pmu->pmu >= PFM_PMU_MAX) {
+	if (pmu->pmu >= PFM_PMU_MAX) {
 		fprintf(fp, "pmu: %s :: invalid PMU id\n", pmu->name);
 		return PFM_ERR_INVAL;
 	}
@@ -1536,7 +1541,7 @@ pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *uinfo)
 	if (!PFMLIB_INITIALIZED())
 		return PFM_ERR_NOINIT;
 
-	if (pmuid < PFM_PMU_NONE || pmuid >= PFM_PMU_MAX)
+	if (pmuid >= PFM_PMU_MAX)
 		return PFM_ERR_INVAL;
 
 	if (!uinfo)

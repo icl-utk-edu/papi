@@ -873,7 +873,7 @@ static const test_event_t x86_test_events[]={
 	  .fstr = "amd64_fam11h_turion::RETIRED_UOPS:k=1:u=1:e=0:i=1:c=1:h=0:g=0",
 	},
 };
-#define NUM_TEST_EVENTS (sizeof(x86_test_events)/sizeof(test_event_t))
+#define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
 
 static int check_test_events(FILE *fp)
 {

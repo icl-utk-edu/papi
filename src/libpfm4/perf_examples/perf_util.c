@@ -81,6 +81,9 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 			/* update max size */
 			fd[0].max_fds = max_fds;
 		}
+		/* ABI compatibility, set before calling libpfm */
+		fd[num].hw.size = sizeof(fd[num].hw);
+
 		memset(&arg, 0, sizeof(arg));
 		arg.attr = &fd[num].hw;
 
@@ -89,8 +92,6 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 			warnx("event %s: %s", *argv, pfm_strerror(ret));
 			goto error;
 		}
-		/* ABI compatibility */
-		fd[num].hw.size = sizeof(struct perf_event_attr);
 
 		fd[num].name = *argv;
 		fd[num].group_leader = group_leader;

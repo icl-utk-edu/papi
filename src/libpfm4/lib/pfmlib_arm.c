@@ -46,8 +46,8 @@ getl(char **buffer, size_t *len, FILE *fp)
 {
 #define	GETL_DFL_LEN	32
 	char *b;
-	int c, i = 0;
-	size_t maxsz, maxi, d;
+	int c;
+	size_t maxsz, maxi, i = 0, d;
 
 	if (!len || !fp || !buffer)
 		return -1;
@@ -265,7 +265,7 @@ pfm_arm_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_i
 	return PFM_ERR_INVAL;
 }
 
-int
+unsigned int
 pfm_arm_get_event_nattrs(void *this, int pidx)
 {
 	return 0;
