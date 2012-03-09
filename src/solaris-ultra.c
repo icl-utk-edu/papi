@@ -1297,17 +1297,11 @@ _ultra_hwd_get_real_cycles( void )
 }
 
 long long
-_ultra_hwd_get_virt_usec( hwd_context_t * zero )
+_ultra_hwd_get_virt_usec( void )
 {
 	return ( ( long long ) gethrvtime(  ) / ( long long ) 1000 );
 }
 
-long long
-_ultra_hwd_get_virt_cycles( hwd_context_t * zero )
-{
-	return ( ( ( long long ) gethrvtime(  ) / ( long long ) 1000 ) *
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
-}
 
 int
 _ultra_hwd_update_shlib_info( papi_mdi_t *mdi )
@@ -1634,6 +1628,5 @@ papi_os_vector_t _papi_os_vector = {
 	.get_system_info = get_system_info,
 	.get_real_usec = _ultra_hwd_get_real_usec,
 	.get_real_cycles = _ultra_hwd_get_real_cycles,
-	.get_virt_cycles = _ultra_hwd_get_virt_cycles,
 	.get_virt_usec = _ultra_hwd_get_virt_usec,
 };

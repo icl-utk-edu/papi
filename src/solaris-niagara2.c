@@ -671,7 +671,7 @@ _niagara2_get_real_cycles( void )
 }
 
 long_long
-_niagara2_get_virt_usec( const hwd_context_t * zero )
+_niagara2_get_virt_usec( void )
 {
 	// COPIED FROM THE OLD BACKEND
 
@@ -687,23 +687,6 @@ _niagara2_get_virt_usec( const hwd_context_t * zero )
 	return ( ( long_long ) gethrvtime(  ) / ( long_long ) 1000 );
 }
 
-long_long
-_niagara2_get_virt_cycles( const hwd_context_t * zero )
-{
-	// COPIED FROM THE OLD BACKEND
-
-	/* gethrvtime(3C) recommends these functions for performance measurement as
-	   being very accurate with very low cost for calling. The result is bound to
-	   the calling lwp. */
-
-#ifdef DEBUG
-	SUBDBG( "ENTERING/LEAVING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	return ( ( ( long_long ) gethrvtime(  ) / ( long_long ) 1000 ) *
-			 ( long_long ) _papi_hwi_system_info.hw_info.mhz );
-}
 
 int
 _niagara2_get_system_info( papi_mdi_t *mdi )
@@ -2527,7 +2510,6 @@ papi_os_vector_t _papi_os_vector = {
 	.get_dmem_info = _niagara2_get_dmem_info,
 	.get_real_usec = _niagara2_get_real_usec,
 	.get_real_cycles = _niagara2_get_real_cycles,
-	.get_virt_cycles = _niagara2_get_virt_cycles,
 	.get_virt_usec = _niagara2_get_virt_usec,
 	.update_shlib_info = _niagara2_update_shlib_info,
 	.get_system_info = _niagara2_get_system_info,

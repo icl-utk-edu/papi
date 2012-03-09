@@ -700,22 +700,15 @@ long long _papi_freebsd_get_real_usec(void)
 #endif
 }
 
-long long _papi_freebsd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_freebsd_get_virt_usec(void)
 {
 	struct rusage res;
-	(void)ctx;
 
 	SHOW_WHERE_I_AM;
 
 	if ((getrusage(RUSAGE_SELF, &res) == -1))
 		return PAPI_ESYS;
 	return (res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec;
-}
-
-long long _papi_freebsd_get_virt_cycles(const hwd_context_t * ctx)
-{
-	SHOW_WHERE_I_AM;
-	return ((long long) _papi_freebsd_get_virt_usec(ctx) * _papi_hwi_system_info.hw_info.mhz);
 }
 
 /*
@@ -937,7 +930,6 @@ papi_os_vector_t _papi_os_vector = {
   .get_dmem_info	= _papi_freebsd_get_dmem_info,
   .get_real_cycles	= _papi_freebsd_get_real_cycles,
   .get_real_usec	= _papi_freebsd_get_real_usec,
-  .get_virt_cycles	= _papi_freebsd_get_virt_cycles,
   .get_virt_usec	= _papi_freebsd_get_virt_usec,
   .update_shlib_info	= _papi_freebsd_update_shlib_info,
   //.get_system_info		= _papi_freebsd_get_system_info,

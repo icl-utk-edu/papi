@@ -672,7 +672,7 @@ _aix_get_real_cycles( void )
 }
 
 long long
-_aix_get_virt_usec( const hwd_context_t * context )
+_aix_get_virt_usec( void )
 {
 	long long retval;
 	struct tms buffer;
@@ -686,13 +686,6 @@ _aix_get_virt_usec( const hwd_context_t * context )
 	return ( retval );
 }
 
-long long
-_aix_get_virt_cycles( const hwd_context_t * context )
-{
-	return ( _aix_get_virt_usec( context ) *
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
-}
-
 static void
 _aix_lock_init( void )
 {
@@ -700,41 +693,6 @@ _aix_lock_init( void )
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		lock[i] = ( int * ) ( lock_var + i );
 }
-
-/*
-papi_svector_t  _aix_table[] = {
-     {( void ( * )(  ) ) _papi_hwd_get_overflow_address,
-      VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
-     {( void ( * )(  ) ) _papi_hwd_update_shlib_info,
-      VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
-     {( void ( * )(  ) ) _papi_hwd_init, VEC_PAPI_HWD_INIT},
-     {( void ( * )(  ) ) _papi_hwd_dispatch_timer,
-      VEC_PAPI_HWD_DISPATCH_TIMER},
-     {( void ( * )(  ) ) _papi_hwd_ctl, VEC_PAPI_HWD_CTL},
-     {( void ( * )(  ) ) _papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
-     {( void ( * )(  ) ) _papi_hwd_get_real_cycles,
-      VEC_PAPI_HWD_GET_REAL_CYCLES},
-     {( void ( * )(  ) ) _papi_hwd_get_virt_cycles,
-      VEC_PAPI_HWD_GET_VIRT_CYCLES},
-     {( void ( * )(  ) ) _papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
-     {( void ( * )(  ) ) _papi_hwd_start, VEC_PAPI_HWD_START},
-     {( void ( * )(  ) ) _papi_hwd_stop, VEC_PAPI_HWD_STOP},
-     {( void ( * )(  ) ) _papi_hwd_read, VEC_PAPI_HWD_READ},
-     {( void ( * )(  ) ) _papi_hwd_reset, VEC_PAPI_HWD_RESET},
-     {( void ( * )(  ) ) _papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
-     {( void ( * )(  ) ) _papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-     {( void ( * )(  ) ) _papi_hwd_ntv_enum_events,
-      VEC_PAPI_HWD_NTV_ENUM_EVENTS},
-     {( void ( * )(  ) ) _papi_hwd_ntv_code_to_name,
-      VEC_PAPI_HWD_NTV_CODE_TO_NAME},
-     {( void ( * )(  ) ) _papi_hwd_ntv_code_to_descr,
-      VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
-     {( void ( * )(  ) ) _papi_hwd_ntv_code_to_bits,
-      VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-     {( void ( * )(  ) ) _papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN},
-     {NULL, VEC_PAPI_END}
-};
-*/
 
 int
 _aix_shutdown( hwd_context_t * ctx )
@@ -1335,7 +1293,6 @@ papi_os_vector_t _papi_os_vector = {
 	.get_dmem_info = _aix_get_dmem_info,
 	.get_real_usec = _aix_get_real_usec,
 	.get_real_cycles = _aix_get_real_cycles,
-	.get_virt_cycles = _aix_get_virt_cycles,
         .get_virt_usec = _aix_get_virt_usec,
         .update_shlib_info = _aix_update_shlib_info,
 	.get_system_info = _aix_get_system_info,

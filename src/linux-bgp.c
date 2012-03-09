@@ -986,7 +986,7 @@ _bgp_get_real_cycles( void )
  * Same calc as for BG/L, returns real usec...
  */
 long long
-_bgp_get_virt_usec( const hwd_context_t * zero )
+_bgp_get_virt_usec( void )
 {
 
 	return _bgp_get_real_usec(  );
@@ -998,7 +998,7 @@ _bgp_get_virt_usec( const hwd_context_t * zero )
  * Same calc as for BG/L, returns real cycles...
  */
 long long
-_bgp_get_virt_cycles( const hwd_context_t * zero )
+_bgp_get_virt_cycles( void )
 {
 
 	return _bgp_get_real_cycles(  );

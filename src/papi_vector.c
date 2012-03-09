@@ -86,6 +86,13 @@ vec_long_dummy(  )
 	return PAPI_ESBSTR;
 }
 
+long long vec_virt_cycles(void)
+{
+  return ((long long) _papi_os_vector.get_virt_usec() * 
+	  _papi_hwi_system_info.hw_info.mhz);
+}
+
+
 int
 _papi_hwi_innoculate_vector( papi_vector_t * v )
 {
@@ -194,9 +201,9 @@ _papi_hwi_innoculate_os_vector( papi_os_vector_t * v )
 	if ( !v->get_real_usec )
 		v->get_real_usec = vec_long_long_dummy;
 	if ( !v->get_virt_cycles )
-		v->get_virt_cycles = vec_long_long_context_dummy;
+		v->get_virt_cycles = vec_virt_cycles;
 	if ( !v->get_virt_usec )
-		v->get_virt_usec = vec_long_long_context_dummy;
+		v->get_virt_usec = vec_long_long_dummy;
 
 	if ( !v->update_shlib_info )
 		v->update_shlib_info = ( int ( * )( papi_mdi_t * ) ) vec_int_dummy;

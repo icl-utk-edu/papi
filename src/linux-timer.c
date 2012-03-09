@@ -309,10 +309,8 @@ _linux_get_real_usec_cycles( void )
  *******************************/
 
 long long
-_linux_get_virt_usec_rusage( hwd_context_t *zero )
+_linux_get_virt_usec_rusage( void )
 {
-
-    ( void ) zero;			 /*unused */
 
     long long retval;
 
@@ -333,10 +331,8 @@ _linux_get_virt_usec_rusage( hwd_context_t *zero )
  **************************/
 
 long long
-_linux_get_virt_usec_times( hwd_context_t *zero )
+_linux_get_virt_usec_times( void )
 {
-	
-   ( void ) zero;			 /*unused */
 
    long long retval;
 
@@ -359,10 +355,8 @@ _linux_get_virt_usec_times( hwd_context_t *zero )
 /******************************/
 
 long long
-_linux_get_virt_usec_gettime( hwd_context_t *zero )
+_linux_get_virt_usec_gettime( void )
 {
-
-    ( void ) zero;			 /*unused */
 
     long long retval;
 
@@ -380,10 +374,8 @@ _linux_get_virt_usec_gettime( hwd_context_t *zero )
 /********************/
 
 long long
-_linux_get_virt_usec_pttimer( hwd_context_t *zero )
+_linux_get_virt_usec_pttimer( void )
 {
-
-   ( void ) zero;			 /*unused */
 
    long long retval;
    char buf[LINE_MAX];

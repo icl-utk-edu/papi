@@ -56,10 +56,8 @@ _windows_get_real_cycles( void )
 }
 
 long long
-_windows_get_virt_usec( const hwd_context_t * zero )
+_windows_get_virt_usec( void )
 {
-
-	( void ) zero;			 /*unused */
 
 	long long retval;
 
@@ -82,12 +80,4 @@ _windows_get_virt_usec( const hwd_context_t * zero )
 
 	return retval;
 }
-
-long long
-_windows_get_virt_cycles( const hwd_context_t * zero )
-{
-	return _linux_get_virt_usec( zero ) *
-		( long long ) _papi_hwi_system_info.hw_info.mhz;
-}
-
 

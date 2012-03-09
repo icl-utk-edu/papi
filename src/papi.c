@@ -6047,7 +6047,7 @@ PAPI_get_virt_cyc( void )
 	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
-	return ( ( long long ) _papi_os_vector.get_virt_cycles( master->context[0] ) );
+	return ( ( long long ) _papi_os_vector.get_virt_cycles( ) );
 }
 
 /** @class PAPI_get_virt_nsec
@@ -6084,7 +6084,7 @@ PAPI_get_virt_nsec( void )
 	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
-	return ( ( _papi_os_vector.get_virt_cycles( master->context[0] ) * 1000LL ) /
+	return ( ( _papi_os_vector.get_virt_cycles() * 1000LL ) /
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
@@ -6131,7 +6131,7 @@ PAPI_get_virt_usec( void )
 	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
 		papi_return( retval );
 
-	return ( ( long long ) _papi_os_vector.get_virt_usec( master->context[0] ) );
+	return ( ( long long ) _papi_os_vector.get_virt_usec() );
 }
 
 /** @class PAPI_lock
