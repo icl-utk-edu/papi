@@ -59,61 +59,60 @@ createNativeEvents( void )
 	/* Loop through all the chips found */
 	while ( ( chip_name =
 			  sensors_get_detected_chips( NULL, &chip_nr ) ) != NULL ) {
-		int a, b;
-		const sensors_feature *feature;
-		const sensors_subfeature *sub;
-		char chipnamestring[PAPI_MIN_STR_LEN];
+	   int a, b;
+	   const sensors_feature *feature;
+	   const sensors_subfeature *sub;
+	   char chipnamestring[PAPI_MIN_STR_LEN];
 
-		lm_sensors_native_table[id].count = 0;
+	   //	   lm_sensors_native_table[id].count = 0;
 
 		/* get chip name from its internal representation */
-		sensors_snprintf_chip_name( chipnamestring,
-									PAPI_MIN_STR_LEN, chip_name );
+	   sensors_snprintf_chip_name( chipnamestring,
+					    PAPI_MIN_STR_LEN, chip_name );
 
-		a = 0;
-		/* Loop through all the features found */
-		while ( ( feature = sensors_get_features( chip_name, &a ) ) ) {
-			char *featurelabel;
+	   a = 0;
 
-			if ( !( featurelabel = sensors_get_label( chip_name, feature ) ) ) {
-				fprintf( stderr, "ERROR: Can't get label of feature %s!\n",
+	   /* Loop through all the features found */
+	   while ( ( feature = sensors_get_features( chip_name, &a ) ) ) {
+	      char *featurelabel;
+
+	      if ( !( featurelabel = sensors_get_label( chip_name, feature ))) {
+		 fprintf( stderr, "ERROR: Can't get label of feature %s!\n",
 						 feature->name );
-				continue;
-			}
+		 continue;
+	      }
 
-			b = 0;
+	      b = 0;
 
-			/* Loop through all the subfeatures found */
-			while ( ( sub =
-					  sensors_get_all_subfeatures( chip_name, feature,
-												   &b ) ) ) {
-				count = 0;
+	      /* Loop through all the subfeatures found */
+	      while ((sub=sensors_get_all_subfeatures(chip_name,feature,&b))) {
 
-				/* Save native event data */
-				sprintf( lm_sensors_native_table[id].name,
-						 "%s.%s.%s.%s",
-						 _lmsensors_vector.cmp_info.short_name,
-						 chipnamestring, featurelabel, sub->name );
+	         count = 0;
 
-				strncpy( lm_sensors_native_table[id].description,
-						 lm_sensors_native_table[id].name, PAPI_MAX_STR_LEN );
+		 /* Save native event data */
+		 sprintf( lm_sensors_native_table[id].name, "%s.%s.%s.%s",
+			  _lmsensors_vector.cmp_info.short_name,
+			  chipnamestring, featurelabel, sub->name );
 
-				/* The selector has to be !=0 . Starts with 1 */
-				lm_sensors_native_table[id].resources.selector = id + 1;
+		 strncpy( lm_sensors_native_table[id].description,
+			  lm_sensors_native_table[id].name, PAPI_MAX_STR_LEN );
 
-				/* Save the actual references to this event */
-				lm_sensors_native_table[id].resources.name = chip_name;
-				lm_sensors_native_table[id].resources.subfeat_nr = sub->number;
+		 /* The selector has to be !=0 . Starts with 1 */
+		 lm_sensors_native_table[id].resources.selector = id + 1;
 
-				count = sub->number;
+		 /* Save the actual references to this event */
+		 lm_sensors_native_table[id].resources.name = chip_name;
+		 lm_sensors_native_table[id].resources.subfeat_nr = sub->number;
 
-				/* increment the table index counter */
-				id++;
-			}
+		 count = sub->number;
 
-			lm_sensors_native_table[id].count = count + 1;
-			free( featurelabel );
-		}
+		 /* increment the table index counter */
+		 id++;		 
+	      }
+
+	      //   lm_sensors_native_table[id].count = count + 1;
+	      free( featurelabel );
+	   }
 	}
 
 	/* Return the number of events created */
@@ -177,6 +176,7 @@ LM_SENSORS_init_substrate(  )
 
 	/* Create dyanmic events table */
 	NUM_EVENTS = detectSensors(  );
+	//printf("Found %d sensors\n",NUM_EVENTS);
 
 	if ( ( lm_sensors_native_table =
 		   ( LM_SENSORS_native_event_entry_t * )
@@ -191,7 +191,7 @@ LM_SENSORS_init_substrate(  )
 		return EXIT_FAILURE;
 	}
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 
@@ -222,7 +222,8 @@ LM_SENSORS_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	( void ) ctx;
 	( void ) ctrl;
-	return ( PAPI_OK );
+
+	return PAPI_OK;
 }
 
 
@@ -233,8 +234,9 @@ int
 LM_SENSORS_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
     ( void ) ctx;
-	( void ) ctrl;
-	return ( PAPI_OK );
+    ( void ) ctrl;
+
+    return PAPI_OK;
 }
 
 
