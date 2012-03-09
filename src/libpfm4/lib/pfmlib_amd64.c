@@ -228,13 +228,14 @@ amd64_umask_valid(void *this, int i, int attr)
         return 1;
 }
 
-static int
+static unsigned int
 amd64_num_umasks(void *this, int pidx)
 {
 	const amd64_entry_t *pe = this_pe(this);
-	int i, n;
+	unsigned int i, n = 0;
+
 	/* unit masks + modifiers */
-	for (i=0, n = 0; i < pe[pidx].numasks; i++)
+	for (i = 0; i < pe[pidx].numasks; i++)
 		if (amd64_umask_valid(this, pidx, i))
 			n++;
 	return n;
@@ -244,7 +245,8 @@ static int
 amd64_get_umask(void *this, int pidx, int attr_idx)
 {
 	const amd64_entry_t *pe = this_pe(this);
-	int i, n;
+	unsigned int i;
+	int n;
 
 	for (i=0, n = 0; i < pe[pidx].numasks; i++) {
 		if (!amd64_umask_valid(this, pidx, i))
@@ -259,7 +261,8 @@ static inline int
 amd64_attr2mod(void *this, int pidx, int attr_idx)
 {
 	const amd64_entry_t *pe = this_pe(this);
-	int x, n;
+	size_t x;
+	int n;
 
 	n = attr_idx - amd64_num_umasks(this, pidx);
 
@@ -344,7 +347,8 @@ static int
 amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
 {
 	const amd64_entry_t *ent, *pe = this_pe(this);
-	int i, j, k, added, omit, numasks_grp;
+	unsigned int i;
+	int j, k, added, omit, numasks_grp;
 	int idx;
 
 	k = e->nattrs;
@@ -701,7 +705,8 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 	pfmlib_pmu_t *pmu = this;
 	const amd64_entry_t *pe = this_pe(this);
 	const char *name =  pmu->name;
-	int i, j, k, ndfl;
+	unsigned int j, k;
+	int i, ndfl;
 	int error = 0;
 
 	if (!pmu->atdesc) {
@@ -813,10 +818,10 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
 }
 
-int
+unsigned int
 pfm_amd64_get_event_nattrs(void *this, int pidx)
 {
-	int nattrs;
+	unsigned int nattrs;
 	nattrs  = amd64_num_umasks(this, pidx);
 	nattrs += amd64_num_mods(this, pidx);
 	return nattrs;

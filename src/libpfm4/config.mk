@@ -172,7 +172,17 @@ INSTALL=install
 LN?=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
+#
+# -Wextra: to enable extra compiler sanity checks (e.g., signed vs. unsigned)
+# -Wno-unused-parameter: to avoid warnings on unused foo(void *this) parameter
+#
+ifeq ($(SYS),Darwin)
+# older gcc-4.2 does not like -Wextra and some of our initialization code
 DBG?=-g -Wall -Werror
+else
+DBG?=-g -Wall -Werror -Wextra -Wno-unused-parameter
+endif
+
 CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a

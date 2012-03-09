@@ -92,7 +92,8 @@ The fields are defined as follows:
 .TP
 .B attr
 A pointer to a struct perf_event_attr as defined in perf_event.h. This field cannot be NULL
-on entry. The struct is reset by the call.
+on entry. The struct is not completely overwritten by the call. The library only modifies the
+fields it knows about, thereby allowing perf_event ABI mismatch between caller and library.
 .TP
 .B fstr
 If the caller is interested in retrieving the fully qualified event string where all used unit masks

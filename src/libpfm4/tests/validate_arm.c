@@ -86,7 +86,7 @@ static const test_event_t arm_test_events[]={
 	},
 
 };
-#define NUM_TEST_EVENTS (sizeof(arm_test_events)/sizeof(test_event_t))
+#define NUM_TEST_EVENTS (int)(sizeof(arm_test_events)/sizeof(test_event_t))
 
 static int check_test_events(FILE *fp)
 {

@@ -164,9 +164,10 @@ show_event_info_combo(pfm_event_info_t *info)
 	pfm_event_attr_info_t *ainfo;
 	pfm_pmu_info_t pinfo;
 	char buf[MAXBUF];
-	int len, numasks = 0;
+	size_t len;
+	int numasks = 0;
 	int i, j, ret;
-	uint64_t total, m;
+	uint64_t total, m, u;
 
 	memset(&pinfo, 0, sizeof(pinfo));
 
@@ -204,20 +205,20 @@ show_event_info_combo(pfm_event_info_t *info)
 	}
 
 	if (numasks) {
-		if (info->nattrs > ((sizeof(total)<<3))) {
+		if (info->nattrs > (int)((sizeof(total)<<3))) {
 			warnx("too many umasks, cannot show all combinations for event %s", info->name);
 			goto end;
 		}
 		total = 1ULL << info->nattrs;
 
-		for (i = 1; i < total; i++) {
+		for (u = 1; u < total; u++) {
 			len = sizeof(buf);
 			len -= snprintf(buf, len, "%s::%s", pinfo.name, info->name);
 			if (len <= 0) {
 				warnx("event name too long%s", info->name);
 				goto end;
 			}
-			for(m = i, j= 0; m; m >>=1, j++) {
+			for(m = u, j = 0; m; m >>=1, j++) {
 				if (m & 0x1ULL) {
 					/* we have hit a non umasks attribute, skip */
 					if (ainfo[j].type != PFM_ATTR_UMASK)
@@ -519,7 +520,8 @@ show_info_sorted(char *event, regex_t *preg)
 {
 	pfm_pmu_info_t pinfo;
 	pfm_event_info_t info;
-	int i, j, ret, n, match = 0;
+	unsigned int j;
+	int i, ret, n, match = 0;
 	size_t len, l = 0;
 	char *fullname = NULL;
 	code_info_t *codes;
