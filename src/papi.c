@@ -5976,8 +5976,8 @@ PAPI_get_real_cyc( void )
 long long
 PAPI_get_real_nsec( void )
 {
-	return ( ( _papi_os_vector.get_real_cycles(  ) * 1000LL ) /
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
+  return ( ( _papi_os_vector.get_real_nsec(  )));
+
 }
 
 /**	@class PAPI_get_real_usec
@@ -6039,13 +6039,6 @@ PAPI_get_real_usec( void )
 long long
 PAPI_get_virt_cyc( void )
 {
-	ThreadInfo_t *master;
-	int retval;
-
-	if ( init_level == PAPI_NOT_INITED )
-		papi_return( PAPI_ENOINIT );
-	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
-		papi_return( retval );
 
 	return ( ( long long ) _papi_os_vector.get_virt_cycles( ) );
 }
@@ -6076,16 +6069,9 @@ PAPI_get_virt_cyc( void )
 long long
 PAPI_get_virt_nsec( void )
 {
-	ThreadInfo_t *master;
-	int retval;
 
-	if ( init_level == PAPI_NOT_INITED )
-		papi_return( PAPI_ENOINIT );
-	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
-		papi_return( retval );
+  return ( ( _papi_os_vector.get_virt_nsec()));
 
-	return ( ( _papi_os_vector.get_virt_cycles() * 1000LL ) /
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
 /**	@class PAPI_get_virt_usec
@@ -6125,11 +6111,6 @@ PAPI_get_virt_nsec( void )
 long long
 PAPI_get_virt_usec( void )
 {
-	ThreadInfo_t *master;
-	int retval;
-
-	if ( ( retval = _papi_hwi_lookup_or_create_thread( &master, 0 ) ) != PAPI_OK )
-		papi_return( retval );
 
 	return ( ( long long ) _papi_os_vector.get_virt_usec() );
 }

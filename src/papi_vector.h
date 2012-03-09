@@ -61,9 +61,11 @@ extern papi_vector_t *_papi_compiled_components[];
 
 typedef struct papi_os_vectors {
   long long   (*get_real_cycles)      (void);                   /**< */
-  long long   (*get_real_usec)        (void);                   /**< */
   long long   (*get_virt_cycles)      (void);                   /**< */
+  long long   (*get_real_usec)        (void);                   /**< */
   long long   (*get_virt_usec)        (void);                   /**< */
+  long long   (*get_real_nsec)        (void);                   /**< */
+  long long   (*get_virt_nsec)        (void);                   /**< */
   int         (*update_shlib_info)    (papi_mdi_t * mdi);       /**< */
   int         (*get_system_info)      (papi_mdi_t * mdi);       /**< */
   int         (*get_memory_info)      (PAPI_hw_info_t *, int);  /**< */
