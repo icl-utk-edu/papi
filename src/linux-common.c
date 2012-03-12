@@ -559,7 +559,7 @@ papi_os_vector_t _papi_os_vector = {
 #elif defined(HAVE_GETTIMEOFDAY)
   .get_real_usec =  _linux_get_real_usec_gettimeofday,
 #else
-  .get_real_usec =  _linux_get_real_usec_fallback,
+  .get_real_usec =  _linux_get_real_usec_cycles,
 #endif
 
 
