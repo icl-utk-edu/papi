@@ -482,13 +482,6 @@ _papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 	return ( PAPI_OK );
 }
 
-static char *
-_pmc_name( int i )
-{
-	( void ) i;				 /*unused */
-	return "Event Code";
-}
-
 #else
 
 static pentium4_replay_regs_t p4_replay_regs[] = {
