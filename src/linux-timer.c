@@ -126,7 +126,7 @@ int mmtimer_setup(void) { return PAPI_OK; }
    with:
      #if defined(HAVE_CYCLE)
    which is equivalent to
-     #if !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
+     #if !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME)
 */
 
 /************************/
@@ -213,7 +213,7 @@ get_cycles( void )
 /* POWER get_cycles()   */
 /************************/
 
-#elif defined(__powerpc__)
+#elif (defined(__powerpc__) || defined(__arm__) || defined(__mips__))
 /*
  * It's not possible to read the cycles from user space on ppc970.
  * There is a 64-bit time-base register (TBU|TBL), but its
@@ -223,11 +223,12 @@ get_cycles( void )
  * _papi_hwd_get_real_usec() for the needed functionality.
 */
 
-#elif defined(__arm__)
-/* um same as POWER */
+static inline long long
+get_cycles( void )
+{
+  return 0;
+}
 
-#elif defined(__mips__)
-/* um same as POWER */
 
 #elif !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME)
 #error "No get_cycles support for this architecture. "
@@ -481,7 +482,7 @@ _linux_get_virt_nsec_gettime( void )
 
     struct timespec foo;
 
-    syscall( __NR_clock_gettime, HAVE_CLOCK_GETTIME_THREAD, &foo );
+    syscall( __NR_clock_gettime, CLOCK_THREAD_CPUTIME_ID, &foo );
     retval = ( long long ) foo.tv_sec * ( long long ) 1000000000;
     retval += ( long long ) foo.tv_nsec ;
 	
