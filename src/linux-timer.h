@@ -2,7 +2,7 @@ long long _linux_get_real_cycles( void );
 
 long long _linux_get_virt_usec_pttimers( void );
 long long _linux_get_virt_usec_gettime( void );
-long long _linux_get_virt_usec_timess( void );
+long long _linux_get_virt_usec_times( void );
 long long _linux_get_virt_usec_rusages( void );
 
 long long _linux_get_real_usec_gettime( void );
