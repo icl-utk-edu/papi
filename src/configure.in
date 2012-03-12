@@ -488,9 +488,11 @@ elif test "$walltimer" = "mmtimer"; then
   AC_DEFINE(HAVE_MMTIMER, 1, [Altix memory mapped global cycle counter])
   altix="-DALTIX"
 elif test "$walltimer" = "clock_realtime_hr"; then
-  AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME, CLOCK_REALTIME_HR, [POSIX 1b realtime HR clock])
+  AC_DEFINE(HAVE_CLOCK_GETTIME, 1, [POSIX 1b clock])
+  AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME_HR, 1, [POSIX 1b realtime HR clock])
 elif test "$walltimer" = "clock_realtime"; then
-  AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME, CLOCK_REALTIME, [POSIX 1b realtime clock])
+  AC_DEFINE(HAVE_CLOCK_GETTIME, 1, [POSIX 1b clock])
+  AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME, 1, [POSIX 1b realtime clock])
 elif test "$walltimer" = "cycle"; then
   AC_DEFINE(HAVE_CYCLE, 1, [Native access to a hardware cycle counter])
 else

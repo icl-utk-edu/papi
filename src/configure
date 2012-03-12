@@ -4643,13 +4643,23 @@ _ACEOF
 elif test "$walltimer" = "clock_realtime_hr"; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_CLOCK_GETTIME_REALTIME CLOCK_REALTIME_HR
+#define HAVE_CLOCK_GETTIME 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_CLOCK_GETTIME_REALTIME_HR 1
 _ACEOF
 
 elif test "$walltimer" = "clock_realtime"; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_CLOCK_GETTIME_REALTIME CLOCK_REALTIME
+#define HAVE_CLOCK_GETTIME 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_CLOCK_GETTIME_REALTIME 1
 _ACEOF
 
 elif test "$walltimer" = "cycle"; then

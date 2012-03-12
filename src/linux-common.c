@@ -554,7 +554,7 @@ papi_os_vector_t _papi_os_vector = {
   .get_system_info =   _linux_get_system_info,
 
 
-#if defined(HAVE_CLOCK_GETTIME_REALTIME)
+#if defined(HAVE_CLOCK_GETTIME)
   .get_real_usec =  _linux_get_real_usec_gettime,
 #elif defined(HAVE_GETTIMEOFDAY)
   .get_real_usec =  _linux_get_real_usec_gettimeofday,

@@ -229,7 +229,7 @@ get_cycles( void )
 #elif defined(__mips__)
 /* um same as POWER */
 
-#elif !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
+#elif !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME)
 #error "No get_cycles support for this architecture. "
 #endif
 
@@ -244,7 +244,7 @@ _linux_get_real_cycles( void )
 	long long retval;
 #if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||defined(__arm__)||defined(__mips__)
 	retval =
-		_linux_get_real_usec(  ) *
+		_papi_os_vector.get_real_usec(  ) *
 		( long long ) _papi_hwi_system_info.hw_info.mhz;
 #else
 	retval = get_cycles(  );
@@ -261,7 +261,7 @@ _linux_get_real_cycles( void )
 
 
 /*******************************
- * HAVE_CLOCK_GETTIME_REALTIME *
+ * HAVE_CLOCK_GETTIME          *
  *******************************/
 
 long long
@@ -271,7 +271,11 @@ _linux_get_real_usec_gettime( void )
    long long retval;
 
    struct timespec foo;
-   syscall( __NR_clock_gettime, HAVE_CLOCK_GETTIME_REALTIME, &foo );
+#ifdef HAVE_CLOCK_GETTIME_REALTIME_HR
+   syscall( __NR_clock_gettime, CLOCK_REALTIME_HR, &foo );
+#else
+   syscall( __NR_clock_gettime, CLOCK_REALTIME, &foo );
+#endif
    retval = ( long long ) foo.tv_sec * ( long long ) 1000000;
    retval += ( long long ) ( foo.tv_nsec / 1000 );
 
@@ -368,7 +372,7 @@ _linux_get_virt_usec_gettime( void )
 
     struct timespec foo;
 
-    syscall( __NR_clock_gettime, HAVE_CLOCK_GETTIME_THREAD, &foo );
+    syscall( __NR_clock_gettime, CLOCK_THREAD_CPUTIME_ID, &foo );
     retval = ( long long ) foo.tv_sec * ( long long ) 1000000;
     retval += ( long long ) foo.tv_nsec / 1000;
 	
@@ -443,7 +447,7 @@ again:
 
 
 /*******************************
- * HAVE_CLOCK_GETTIME_REALTIME *
+ * HAVE_CLOCK_GETTIME          *
  *******************************/
 
 long long
@@ -453,7 +457,11 @@ _linux_get_real_nsec_gettime( void )
    long long retval;
 
    struct timespec foo;
-   syscall( __NR_clock_gettime, HAVE_CLOCK_GETTIME_REALTIME, &foo );
+#ifdef HAVE_CLOCK_GETTIME_REALTIME_HR
+   syscall( __NR_clock_gettime, CLOCK_REALTIME_HR, &foo );
+#else
+   syscall( __NR_clock_gettime, CLOCK_REALTIME, &foo );
+#endif
    retval = ( long long ) foo.tv_sec * ( long long ) 1000000000;
    retval += ( long long ) ( foo.tv_nsec );
 
