@@ -328,8 +328,8 @@ _linux_get_virt_usec_rusage( void )
     struct rusage buffer;
 
     getrusage( RUSAGE_SELF, &buffer );
-    SUBDBG( "user %d system %d\n", ( int ) buffer.tms_utime,
-				( int ) buffer.tms_stime );
+    SUBDBG( "user %d system %d\n", ( int ) buffer.ru_utime.tv_sec,
+				( int ) buffer.ru_stime.tv_sec );
     retval = ( long long ) ( buffer.ru_utime.tv_sec + buffer.ru_stime.tv_sec )
              * ( long long ) 1000000;
     retval += (long long) ( buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec );
