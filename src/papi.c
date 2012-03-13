@@ -38,16 +38,6 @@
 #include "multiplex.h"
 #include "papi_hl.h"
 
-
-
-/* Native events consist of a flag field, an event field, and a unit mask field. 		
- * These variables define the characteristics of the event and unit mask fields. */
-unsigned int PAPI_NATIVE_EVENT_AND_MASK = 0x000003ff;
-unsigned int PAPI_NATIVE_EVENT_SHIFT = 0;
-unsigned int PAPI_NATIVE_UMASK_AND_MASK = 0x03fffc00;
-unsigned int PAPI_NATIVE_UMASK_MAX = 16;
-unsigned int PAPI_NATIVE_UMASK_SHIFT = 10;
-
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
@@ -612,24 +602,6 @@ PAPI_library_init( int version )
 		papi_return( init_retval );
 	}
 	
-	/* UGH!  Big hack ! */
-
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) {
-	  /* Pentium4 */
-	   if ( _papi_hwi_system_info.hw_info.cpuid_family == 15 ) {
-	      PAPI_NATIVE_EVENT_AND_MASK = 0x000000ff;
-	      PAPI_NATIVE_UMASK_AND_MASK = 0x0fffff00;
-	      PAPI_NATIVE_UMASK_SHIFT = 8;
-	      /* Itanium2 */
-	   } else if ( _papi_hwi_system_info.hw_info.cpuid_family == 31 || 
-		       _papi_hwi_system_info.hw_info.cpuid_family == 32 ) {
-	      PAPI_NATIVE_EVENT_AND_MASK = 0x00000fff;
-	      PAPI_NATIVE_UMASK_AND_MASK = 0x0ffff000;
-	      PAPI_NATIVE_UMASK_SHIFT = 12;
-	   }
-	}
-	
-
 	/* Initialize thread globals, including the main threads
 	   substrate */
 

@@ -29,11 +29,12 @@
 
 hwi_search_t *preset_search_map;
 extern papi_vector_t _ia64_vector;
-extern unsigned int PAPI_NATIVE_EVENT_AND_MASK;
-extern unsigned int PAPI_NATIVE_EVENT_SHIFT;
-extern unsigned int PAPI_NATIVE_UMASK_AND_MASK;
-extern unsigned int PAPI_NATIVE_UMASK_MAX;
-extern unsigned int PAPI_NATIVE_UMASK_SHIFT;
+
+unsigned int PAPI_NATIVE_EVENT_AND_MASK = 0x000003ff;
+unsigned int PAPI_NATIVE_EVENT_SHIFT = 0;
+unsigned int PAPI_NATIVE_UMASK_AND_MASK = 0x03fffc00;
+unsigned int PAPI_NATIVE_UMASK_MAX = 16;
+unsigned int PAPI_NATIVE_UMASK_SHIFT = 10;
 
 /* Static locals */
 

@@ -649,6 +649,7 @@ detach( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	i = close( ( ( pfm_control_state_t * ) ctl )->ctx_fd );
 	SUBDBG( "CLOSE fd %d returned %d\n",
 			( ( pfm_control_state_t * ) ctl )->ctx_fd, i );
+	(void) i;
 
 	/* Restore to main threads context */
 	free( ( ( pfm_control_state_t * ) ctl )->ctx );
@@ -1390,6 +1391,7 @@ _papi_pfm_shutdown( hwd_context_t * ctx0 )
 
 	ret = close( ctx->ctx_fd );
 	SUBDBG( "CLOSE fd %d returned %d\n", ctx->ctx_fd, ret );
+	(void) ret;
 
 	return ( PAPI_OK );
 }
@@ -1403,11 +1405,9 @@ find_profile_index( EventSetInfo_t * ESI, int pmd, int *flags,
 	int pos, esi_index, count;
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ESI->ctl_state;
 	pfarg_pmd_t *pd;
-	pfarg_pmc_t *pc;
 	unsigned int i;
 
 	pd = ctl->pd;
-	pc = ctl->pc;
 
 	/* Find virtual PMD index, the one we actually read from the physical PMD number that
 	   overflowed. This index is the one related to the profile buffer. */
@@ -1783,7 +1783,6 @@ process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 	( void ) entry_size;	 /*unused */
 	int cidx = _papi_pfm_vector.cmp_info.CmpIdx;
 	pfm_dfl_smpl_entry_t *ent;
-	size_t pos;
 	uint64_t entry, count;
 	pfm_dfl_smpl_hdr_t *hdr =
 		( ( pfm_context_t * ) ( *thr )->context[cidx] )->smpl_buf;
@@ -1795,7 +1794,6 @@ process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 	DEBUGCALL( DEBUG_SUBSTRATE, dump_smpl_hdr( hdr ) );
 	count = hdr->hdr_count;
 	ent = ( pfm_dfl_smpl_entry_t * ) ( hdr + 1 );
-	pos = ( unsigned long ) ent;
 	entry = 0;
 
 	SUBDBG( "This buffer has %llu samples in it.\n",
@@ -1993,6 +1991,7 @@ _papi_pfm_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 		i = close( ctl->ctx_fd );
 		SUBDBG( "CLOSE fd %d returned %d\n", ctl->ctx_fd, i );
+		(void) i;
 
 		/* Thread has master context */
 

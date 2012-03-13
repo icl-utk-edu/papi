@@ -1077,6 +1077,271 @@ _x86_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 }
 
 
+
+/* these define cccr and escr register bits, and the p4 event structure */
+#include "perfmon/pfmlib_pentium4.h"
+#include "../lib/pfmlib_pentium4_priv.h"
+
+#define P4_REPLAY_REAL_MASK 0x00000003
+
+extern pentium4_escr_reg_t pentium4_escrs[];
+extern pentium4_cccr_reg_t pentium4_cccrs[];
+extern pentium4_event_t pentium4_events[];
+
+
+static pentium4_replay_regs_t p4_replay_regs[] = {
+	/* 0 */ {.enb = 0,
+			 /* dummy */
+			 .mat_vert = 0,
+			 },
+	/* 1 */ {.enb = 0,
+			 /* dummy */
+			 .mat_vert = 0,
+			 },
+	/* 2 */ {.enb = 0x01000001,
+			 /* 1stL_cache_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 3 */ {.enb = 0x01000002,
+			 /* 2ndL_cache_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 4 */ {.enb = 0x01000004,
+			 /* DTLB_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 5 */ {.enb = 0x01000004,
+			 /* DTLB_store_miss_retired */
+			 .mat_vert = 0x00000002,
+			 },
+	/* 6 */ {.enb = 0x01000004,
+			 /* DTLB_all_miss_retired */
+			 .mat_vert = 0x00000003,
+			 },
+	/* 7 */ {.enb = 0x01018001,
+			 /* Tagged_mispred_branch */
+			 .mat_vert = 0x00000010,
+			 },
+	/* 8 */ {.enb = 0x01000200,
+			 /* MOB_load_replay_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 9 */ {.enb = 0x01000400,
+			 /* split_load_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 10 */ {.enb = 0x01000400,
+			  /* split_store_retired */
+			  .mat_vert = 0x00000002,
+			  },
+};
+
+/* this maps the arbitrary pmd index in libpfm/pentium4_events.h to the intel documentation */
+static int pfm2intel[] =
+	{ 0, 1, 4, 5, 8, 9, 12, 13, 16, 2, 3, 6, 7, 10, 11, 14, 15, 17 };
+
+
+
+
+/* This call is broken. Selector can be much bigger than 32 bits. It should be a pfmlib_regmask_t - pjm */
+/* Also, libpfm assumes events can live on different counters with different codes. This call only returns
+    the first occurence found. */
+/* Right now its only called by ntv_code_to_bits in perfctr-p3, so we're ok. But for it to be
+    generally useful it should be fixed. - dkt */
+static int
+_pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
+{
+	pfmlib_regmask_t cnt, impl;
+	unsigned int num;
+	unsigned int i, first = 1;
+	int ret;
+
+	if ( ( ret = pfm_get_event_counters( event, &cnt ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_get_event_counters(%d,%p): %s", event, &cnt,
+				   pfm_strerror( ret ) );
+		return ( PAPI_ESBSTR );
+	}
+	if ( ( ret = pfm_get_num_counters( &num ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_get_num_counters(%p): %s", num, pfm_strerror( ret ) );
+		return ( PAPI_ESBSTR );
+	}
+	if ( ( ret = pfm_get_impl_counters( &impl ) ) != PFMLIB_SUCCESS ) {
+		PAPIERROR( "pfm_get_impl_counters(%p): %s", &impl,
+				   pfm_strerror( ret ) );
+		return ( PAPI_ESBSTR );
+	}
+
+	*selector = 0;
+	for ( i = 0; num; i++ ) {
+		if ( pfm_regmask_isset( &impl, i ) )
+			num--;
+		if ( pfm_regmask_isset( &cnt, i ) ) {
+			if ( first ) {
+				if ( ( ret =
+					   pfm_get_event_code_counter( event, i,
+												   code ) ) !=
+					 PFMLIB_SUCCESS ) {
+					PAPIERROR( "pfm_get_event_code_counter(%d, %d, %p): %s",
+						   event, i, code, pfm_strerror( ret ) );
+					return ( PAPI_ESBSTR );
+				}
+				first = 0;
+			}
+			*selector |= 1 << i;
+		}
+	}
+	return ( PAPI_OK );
+}
+
+int
+_papi_libpfm_ntv_code_to_bits_perfctr( unsigned int EventCode, 
+				       hwd_register_t *newbits )
+{
+    unsigned int event, umask;
+
+    X86_register_t *bits = (X86_register_t *)newbits;
+
+    if ( is_pentium4() ) {
+       pentium4_escr_value_t escr_value;
+       pentium4_cccr_value_t cccr_value;
+       unsigned int num_masks, replay_mask, unit_masks[12];
+       unsigned int event_mask;
+       unsigned int tag_value, tag_enable;
+       unsigned int i;
+       int j, escr, cccr, pmd;
+
+       if ( _pfm_decode_native_event( EventCode, &event, &umask ) != PAPI_OK )
+	  return PAPI_ENOEVNT;
+
+       /* for each allowed escr (1 or 2) find the allowed cccrs.
+	  for each allowed cccr find the pmd index
+	  convert to an intel counter number; or it into bits->counter */
+       for ( i = 0; i < MAX_ESCRS_PER_EVENT; i++ ) {
+	  bits->counter[i] = 0;
+	  escr = pentium4_events[event].allowed_escrs[i];
+	  if ( escr < 0 ) {
+	     continue;
+	  }
+
+	  bits->escr[i] = escr;
+
+	  for ( j = 0; j < MAX_CCCRS_PER_ESCR; j++ ) {
+	     cccr = pentium4_escrs[escr].allowed_cccrs[j];
+	     if ( cccr < 0 ) {
+		continue;
+	     }
+
+	     pmd = pentium4_cccrs[cccr].pmd;
+	     bits->counter[i] |= ( 1 << pfm2intel[pmd] );
+	  }
+       }
+
+       /* if there's only one valid escr, copy the values */
+       if ( escr < 0 ) {
+	  bits->escr[1] = bits->escr[0];
+	  bits->counter[1] = bits->counter[0];
+       }
+
+       /* Calculate the event-mask value. Invalid masks
+	* specified by the caller are ignored. */
+       tag_value = 0;
+       tag_enable = 0;
+       event_mask = _pfm_convert_umask( event, umask );
+
+       if ( event_mask & 0xF0000 ) {
+	  tag_enable = 1;
+	  tag_value = ( ( event_mask & 0xF0000 ) >> EVENT_MASK_BITS );
+       }
+
+       event_mask &= 0x0FFFF;	/* mask off possible tag bits */
+
+       /* Set up the ESCR and CCCR register values. */
+       escr_value.val = 0;
+       escr_value.bits.t1_usr = 0;	/* controlled by kernel */
+       escr_value.bits.t1_os = 0;	/* controlled by kernel */
+//    escr_value.bits.t0_usr       = (plm & PFM_PLM3) ? 1 : 0;
+//    escr_value.bits.t0_os        = (plm & PFM_PLM0) ? 1 : 0;
+       escr_value.bits.tag_enable = tag_enable;
+       escr_value.bits.tag_value = tag_value;
+       escr_value.bits.event_mask = event_mask;
+       escr_value.bits.event_select = pentium4_events[event].event_select;
+       escr_value.bits.reserved = 0;
+
+       /* initialize the proper bits in the cccr register */
+       cccr_value.val = 0;
+       cccr_value.bits.reserved1 = 0;
+       cccr_value.bits.enable = 1;
+       cccr_value.bits.escr_select = pentium4_events[event].escr_select;
+       cccr_value.bits.active_thread = 3;	
+       /* FIXME: This is set to count when either logical
+	*        CPU is active. Need a way to distinguish
+	*        between logical CPUs when HT is enabled.
+        *        the docs say these bits should always 
+	*        be set.                                  */
+       cccr_value.bits.compare = 0;	
+       /* FIXME: What do we do with "threshold" settings? */
+       cccr_value.bits.complement = 0;	
+       /* FIXME: What do we do with "threshold" settings? */
+       cccr_value.bits.threshold = 0;	
+       /* FIXME: What do we do with "threshold" settings? */
+       cccr_value.bits.force_ovf = 0;	
+       /* FIXME: Do we want to allow "forcing" overflow
+       	*        interrupts on all counter increments? */
+       cccr_value.bits.ovf_pmi_t0 = 0;
+       cccr_value.bits.ovf_pmi_t1 = 0;	
+       /* PMI taken care of by kernel typically */
+       cccr_value.bits.reserved2 = 0;
+       cccr_value.bits.cascade = 0;	
+       /* FIXME: How do we handle "cascading" counters? */
+       cccr_value.bits.overflow = 0;
+
+       /* these flags are always zero, from what I can tell... */
+       bits->pebs_enable = 0;	/* flag for PEBS counting */
+       bits->pebs_matrix_vert = 0;	
+       /* flag for PEBS_MATRIX_VERT, whatever that is */
+
+       /* ...unless the event is replay_event */
+       if ( !strcmp( pentium4_events[event].name, "replay_event" ) ) {
+	  escr_value.bits.event_mask = event_mask & P4_REPLAY_REAL_MASK;
+	  num_masks = prepare_umask( umask, unit_masks );
+	  for ( i = 0; i < num_masks; i++ ) {
+	     replay_mask = unit_masks[i];
+	     if ( replay_mask > 1 && replay_mask < 11 ) {
+	        /* process each valid mask we find */
+		bits->pebs_enable |= p4_replay_regs[replay_mask].enb;
+		bits->pebs_matrix_vert |= p4_replay_regs[replay_mask].mat_vert;
+	     }
+	  }
+       }
+
+       /* store the escr and cccr values */
+       bits->event = escr_value.val;
+       bits->cccr = cccr_value.val;
+       bits->ireset = 0;	 /* I don't really know what this does */
+       SUBDBG( "escr: 0x%lx; cccr:  0x%lx\n", escr_value.val, cccr_value.val );
+    } else {
+
+       int ret, code;
+
+       if ( _pfm_decode_native_event( EventCode, &event, &umask ) != PAPI_OK )
+	  return PAPI_ENOEVNT;
+
+       if ( ( ret = _pfm_get_counter_info( event, &bits->selector,
+						  &code ) ) != PAPI_OK )
+	  return ret;
+
+       bits->counter_cmd=(int) (code | ((_pfm_convert_umask(event,umask))<< 8) );
+
+       SUBDBG( "selector: 0x%x\n", bits->selector );
+       SUBDBG( "event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n", event,
+	       umask, code, ( ( hwd_register_t * ) bits )->counter_cmd );
+    }
+
+    return PAPI_OK;
+}
+
+
+
 papi_vector_t _perfctr_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
@@ -1130,6 +1395,8 @@ papi_vector_t _perfctr_vector = {
 	.ntv_name_to_code  = _papi_libpfm_ntv_name_to_code,
 	.ntv_code_to_name  = _papi_libpfm_ntv_code_to_name,
 	.ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
-	.ntv_code_to_bits  = _papi_libpfm_ntv_code_to_bits,
+	.ntv_code_to_bits  = _papi_libpfm_ntv_code_to_bits_perfctr,
 
 };
+
+
