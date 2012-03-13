@@ -9,7 +9,7 @@ main( int argc, char **argv )
 {
 	int retval, num_tests = 1, tmp;
 	int EventSet = PAPI_NULL;
-	int num_events;
+	int num_events = 2;
 	long long **values;
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
 	char *event_names[] = {"PAPI_TOT_CYC","PAPI_TOT_INS"};

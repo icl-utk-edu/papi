@@ -94,7 +94,6 @@ init_test(int SoftwareMPX, int KernelMPX, int* Events)
   int i;
   int retval;
   PAPI_option_t option, itimer;
-  const  PAPI_component_info_t *info;
 
   if ( ( retval = PAPI_assign_eventset_component( SoftwareMPX, 0 ) ) != PAPI_OK )
 	test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
@@ -107,7 +106,6 @@ init_test(int SoftwareMPX, int KernelMPX, int* Events)
 
   PAPI_get_opt(PAPI_DEF_ITIMER,&itimer);
 
-  info = PAPI_get_component_info(0);
   memset(&option,0x0,sizeof(option));
 
   option.multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
