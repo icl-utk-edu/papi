@@ -25,7 +25,6 @@
 #include "linux-bgp-native-events.h"
 
 #define GET_OVERFLOW_ADDRESS(ctx) 0x0
-#define MY_VECTOR _bgp_vectors
 
 // Context structure not used...
 typedef struct bgp_context

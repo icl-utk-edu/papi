@@ -175,7 +175,4 @@ typedef ia64_control_state_t hwd_control_state_t;
 #define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
 
-
-#define MY_VECTOR _ia64_vector
-
 #endif /* _PAPI_PERFMON_IA64_H */

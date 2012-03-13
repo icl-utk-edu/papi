@@ -70,7 +70,6 @@ typedef struct
 	evt_t evt[PAPI_MPX_DEF_DEG];
 } context_t;
 
-#define MY_VECTOR _papi_pe_vector
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
 

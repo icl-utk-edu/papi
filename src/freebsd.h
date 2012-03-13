@@ -30,7 +30,6 @@
 
 #include "freebsd-config.h"
 
-#define MY_VECTOR			_papi_freebsd_vector
 #define MAX_COUNTERS		HWPMC_NUM_COUNTERS
 #define MAX_COUNTER_TERMS	MAX_COUNTERS
 

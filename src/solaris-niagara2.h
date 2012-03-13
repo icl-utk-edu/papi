@@ -162,6 +162,4 @@ rwlock_t lock[PAPI_MAX_LOCK];
 #undef  hwd_ucontext_t
 #define hwd_ucontext_t		_niagara2_ucontext_t
 
-#define MY_VECTOR _niagara2_vector
-
 #endif

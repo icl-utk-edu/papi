@@ -94,8 +94,6 @@ typedef struct sigcontext hwd_ucontext_t;
 
 /* define the vector structure at the bottom of this file */
 
-#define MY_VECTOR _aix_vector
-
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
 
 #ifdef PM_INITIALIZE
