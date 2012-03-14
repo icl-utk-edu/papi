@@ -1,0 +1,5 @@
+NVML_INCDIR = /mnt/scratch/tdk_1.285.1/include/
+NVML_LIBDIR = /usr/lib64/
+
+
+

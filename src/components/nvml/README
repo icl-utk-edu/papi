@@ -1,0 +1,12 @@
+PAPI Nvidia Management Library Component offers to provide an interface to measure power and temperature on devices that support  offer to support NVM library fully. Power consumption is instantaneous so we report power from NVIDIA cards at that instance.
+
+Before running the NVML component, the configure script for the NVML component must be executed in order to generate the Makefile which contains the configuration settings. This script needs to be executed only once. The NVML configure script requires the user to specify the following configuration settings:
+    % cd < latest-papi-version >/src/components/nvml
+    % ./configure --with-nvml_incdir=< NVML INCLUDE PATH > --with-nvml_libdir=<NVML LIBRARY PATH >
+
+Furthermore, the NVML component will be added to PAPI during the configuration of PAPI by adding the '--with-components=nvml' command line option to configure.
+    % ./configure --prefix=< your_choice > --with-components=nvml
+
+Attempting to add the NVML component to PAPI - without running the configure script for the NVML component first - will result in a compilation error because the PAPI build environment will be unable to find the Makefile for the NVML component.
+
+Please refer to http://developer.download.nvidia.com/assets/cuda/files/CUDADownloads/NVML/nvml.pdf for details about NVML library

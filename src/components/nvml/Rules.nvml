@@ -1,0 +1,12 @@
+# $Id: Rules.cuda,v 1.1 2011/03/11 23:06:54 jagode Exp $
+
+include components/nvml/Makefile.nvml
+
+COMPSRCS += components/nvml/linux-nvml.c
+COMPOBJS += linux-nvml.o
+CFLAGS +=  -I$(NVML_INCDIR)
+LDFLAGS += -L$(NVML_LIBDIR) -lnvidia-ml -lpthread 
+
+linux-nvml.o: components/nvml/linux-nvml.c components/nvml/linux-nvml.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/nvml/linux-nvml.c -o linux-nvml.o
+
