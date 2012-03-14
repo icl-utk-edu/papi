@@ -1502,7 +1502,12 @@ _papi_hwi_shutdown_global_internal( void )
 		papi_free( _papi_hwi_system_info.shlib_info.map );
 	}
 	memset( &_papi_hwi_system_info, 0x0, sizeof ( _papi_hwi_system_info ) );
+  
+        papi_free( _papi_hwd );
+
 }
+
+
 
 void
 _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,
