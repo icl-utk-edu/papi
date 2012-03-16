@@ -21,4 +21,4 @@
 21 - throwing spagetti at the wall
 22 - hoping something sticks, to the wall
 23 - while loop, again, and again
-24 - its friday
+24 - its friday, sleep
