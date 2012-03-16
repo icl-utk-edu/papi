@@ -14,3 +14,4 @@
 14 - finally
 15 - now no email, whats up with that 
 16 - new script, new perms, no email
+17 - email first, then buildbot
