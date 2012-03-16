@@ -19,4 +19,4 @@
 19 - buildbot embedded in email
 20 - using & on buildbot call
 21 - throwing spagetti at the wall
-22 - hoping something sticks
+22 - hoping something sticks, to the wall
