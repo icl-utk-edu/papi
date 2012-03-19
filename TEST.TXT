@@ -22,3 +22,4 @@
 22 - hoping something sticks, to the wall
 23 - while loop, again, and again
 24 - its friday, sleep
+25 - Monday, back at it
