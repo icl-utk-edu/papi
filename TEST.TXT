@@ -1,1 +1,2 @@
 1 - just want email to work
+2 - email + buildbot
