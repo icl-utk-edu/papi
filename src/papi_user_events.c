@@ -37,8 +37,6 @@
 extern unsigned int PAPI_NATIVE_EVENT_SHIFT;
 extern unsigned int PAPI_NATIVE_UMASK_SHIFT;
 
-extern hwi_presets_t _papi_hwi_presets;
-
 typedef struct def_list {
   char name[PAPI_MIN_STR_LEN];
   char value[PAPI_MIN_STR_LEN];
@@ -368,15 +366,13 @@ check_preset_events (char *target, user_defined_event_t* ue, int* msi)
   int length = PAPI_MIN_STR_LEN;
 
   memset(temp, 0, PAPI_MIN_STR_LEN);
-  while ( _papi_hwi_presets.info[j].symbol != NULL ) {
-	if ( strcasecmp( target, _papi_hwi_presets.info[j].symbol ) == 0) {
+  for ( j = 0; ( j < PAPI_MAX_PRESET_EVENTS) && (_papi_hwi_presets[j].symbol != NULL ); j++ ) {
+	if ( strcasecmp( target, _papi_hwi_presets[j].symbol ) == 0) {
 #ifdef SHOW_LOADS
-	  INTDBG("\tFound a match for preset event %s\n", _papi_hwi_presets.info[j].symbol);
+	  INTDBG("\tFound a match for preset event %s\n", _papi_hwi_presets[j].symbol);
 #endif
-	  length = strlen(ue->operation);
-
 	  /* Check that the preset event we're trying to add is actually available on this system */
-	  if ( _papi_hwi_presets.count[j] == 0 ) {
+	  if ( _papi_hwi_presets[j].count == 0 ) {
 		PAPIERROR("NEXTLINE:\t%s is not available on this platform. Skipping event %s\n", 
 			target, ue->symbol);
 		/* clean up this and ditch this whole line */
@@ -384,7 +380,10 @@ check_preset_events (char *target, user_defined_event_t* ue, int* msi)
 		return -1;
 	  } 
 
-	  if (!_papi_hwi_presets.data[j]->derived) {
+	  length = strlen(ue->operation);
+
+	  /* Deal with singleton events */
+	  if (!_papi_hwi_presets[j].derived_int) {
 		sprintf(temp, "N%d|", magic_string_int++);
 		length = strlen(ue->operation) + strlen(temp);
 		if ( length >= USER_EVENT_OPERATION_LEN ) {
@@ -392,16 +391,16 @@ check_preset_events (char *target, user_defined_event_t* ue, int* msi)
 		  return -1;
 		}
 		strcat(ue->operation, temp);
-		ue->events[ue->count++] = _papi_hwi_presets.data[j]->native[0];
+		ue->events[ue->count++] = _papi_hwi_presets[j].code[0];
 	  } else {
 		op = '-';
-		switch ( _papi_hwi_presets.data[j]->derived ) {
+		switch ( _papi_hwi_presets[j].derived_int ) {
 		  case DERIVED_ADD:
 		  case DERIVED_ADD_PS:
 			op = '+';
 		  case DERIVED_SUB:
-			for ( k = 0; k < (int) _papi_hwi_presets.count[j]; k++) {
-			  ue->events[ue->count++] = _papi_hwi_presets.data[j]->native[k];
+			for ( k = 0; k < (int) _papi_hwi_presets[j].count; k++) {
+			  ue->events[ue->count++] = _papi_hwi_presets[j].code[k];
 			  if (k%2)
 				sprintf(temp, "N%d|%c|", magic_string_int++, op);
 			  else 
@@ -417,13 +416,13 @@ check_preset_events (char *target, user_defined_event_t* ue, int* msi)
 			break;
 
 		  case DERIVED_POSTFIX: 
-			for ( k = 0; k < (int)_papi_hwi_presets.count[j]; k++ ) {
-			  ue->events[ue->count++] = _papi_hwi_presets.data[j]->native[k];
+			for ( k = 0; k < (int)_papi_hwi_presets[j].count; k++ ) {
+			  ue->events[ue->count++] = _papi_hwi_presets[j].code[k];
 			}
 			/* so we need to go through the ops string and renumber the N's
 			   as we place it in our ue ops string */
 			magic_string_int = renumber_ops_string(temp, 
-				_papi_hwi_presets.data[j]->operation, magic_string_int);
+				_papi_hwi_presets[j].postfix, magic_string_int);
 			length = strlen( temp ) + strlen( ue->operation );
 			if ( length >= USER_EVENT_OPERATION_LEN ) {
 			  PAPIERROR( "User Event %s's expression is too long.", ue->symbol );
@@ -438,7 +437,6 @@ check_preset_events (char *target, user_defined_event_t* ue, int* msi)
 	  break;
 	} /* /symbol match */
 
-	j++;
   } /* end while(preset events) */
 
   *msi = magic_string_int;
