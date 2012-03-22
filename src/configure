@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR MEMSUBSTR DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS BGPM_INSTALL_DIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR MEMSUBSTR DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS BGPM_INSTALL_DIR NEED_NO_OVERRIDE_INIT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3875,6 +3875,41 @@ if test "$CC" = "gcc"; then
   else
     EXTRA_CFLAGS="-W"
   fi
+  cat >conftest.$ac_ext <<_ACEOF
+ struct A { int x; int y; };
+	  int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return 0; }
+
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  :
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+NEED_NO_OVERRIDE_INIT=1
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 echo "$as_me:$LINENO: checking for CPU type" >&5
@@ -7508,6 +7543,7 @@ fi
 
 
 
+
 if test "$cross_compiling" = "yes" ; then
   { echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
@@ -8224,6 +8260,7 @@ s,@FTEST_TARGETS@,$FTEST_TARGETS,;t t
 s,@UTIL_TARGETS@,$UTIL_TARGETS,;t t
 s,@EXTRA_CFLAGS@,$EXTRA_CFLAGS,;t t
 s,@BGPM_INSTALL_DIR@,$BGPM_INSTALL_DIR,;t t
+s,@NEED_NO_OVERRIDE_INIT@,$NEED_NO_OVERRIDE_INIT,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
