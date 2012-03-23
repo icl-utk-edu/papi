@@ -3800,6 +3800,11 @@ if test "$CC" = "gcc"; then
   else
     EXTRA_CFLAGS="-W"
   fi
+
+  echo "$as_me:$LINENO: checking for Error: initialized field overwritten gcc warning " >&5
+echo $ECHO_N "checking for Error: initialized field overwritten gcc warning ... $ECHO_C" >&6
+  oldcflags="$CFLAGS"
+  CFLAGS+="-Wall -Wextra -Werror"
   cat >conftest.$ac_ext <<_ACEOF
  struct A { int x; int y; };
 	  int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return 0; }
@@ -3835,6 +3840,9 @@ sed 's/^/| /' conftest.$ac_ext >&5
 NEED_NO_OVERRIDE_INIT=1
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$oldcflags"
+  echo "$as_me:$LINENO: result: $NEED_NO_OVERRIDE_INIT" >&5
+echo "${ECHO_T}$NEED_NO_OVERRIDE_INIT" >&6
 fi
 
 echo "$as_me:$LINENO: checking for CPU type" >&5
