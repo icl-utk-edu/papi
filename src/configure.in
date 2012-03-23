@@ -234,17 +234,19 @@ if test "$CC" = "gcc"; then
     EXTRA_CFLAGS="-W"
   fi
 
-  AC_MSG_CHECKING( for Error: initialized field overwritten gcc warning )
+  # -Wextra => -Woverride-init on gcc >= 4.2
+  # This issues a warning (error under -Werror) for some libpfm4 code. 
+  AC_MSG_CHECKING( for -Wno-override-init)
   oldcflags="$CFLAGS"
-  CFLAGS+="-Wall -Wextra -Werror"
+  CFLAGS+=" -Wall -Wextra -Werror -Wno-override-init"
   AC_COMPILE_IFELSE( 
 	[ struct A { int x; int y; };
-	  int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return 0; }
+	  int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
 	], 
-	,
-	[NEED_NO_OVERRIDE_INIT=1] )
+	[HAVE_NO_OVERRIDE_INIT=1],
+	[HAVE_NO_OVERRIDE_INIT=0] )
   CFLAGS="$oldcflags"
-  AC_MSG_RESULT($NEED_NO_OVERRIDE_INIT)
+  AC_MSG_RESULT($HAVE_NO_OVERRIDE_INIT)
 fi
 
 AC_MSG_CHECKING(for CPU type)
@@ -1607,7 +1609,7 @@ AC_SUBST(COMPONENTS)
 AC_SUBST(FTEST_TARGETS)
 AC_SUBST(UTIL_TARGETS)
 AC_SUBST(EXTRA_CFLAGS)
-AC_SUBST(NEED_NO_OVERRIDE_INIT)
+AC_SUBST(HAVE_NO_OVERRIDE_INIT)
 
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)
