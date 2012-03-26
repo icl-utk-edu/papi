@@ -18,11 +18,11 @@
 
 #include "papi_test.h"
  
-#define NUM_EVENTS 6
+#define NUM_EVENTS 8
  
 int main(int argc, char** argv) {
   int Events[NUM_EVENTS]; 
-  const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES", "READ_USEC", "WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
+  const char* names[NUM_EVENTS] = {"OPEN_CALLS", "OPEN_FDS", "READ_CALLS", "READ_BYTES", "READ_USEC", "WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
   long long values[NUM_EVENTS];
 
   char *infile = "/etc/group";
@@ -35,14 +35,6 @@ int main(int argc, char** argv) {
 
   int fdin;
   if (!TESTS_QUIET) fprintf(stderr, "This program will read %s and write it to /dev/null\n", infile);
-  fdin=open(infile, O_RDONLY);
-  if (fdin < 0) perror("Could not open file for reading: \n");
-  int fdout;
-  fdout=open("/dev/null", O_WRONLY);
-  if (fdout < 0) perror("Could not open file for writing: \n");
-  int bytes = 0;
-  char buf[1024];
-
   int retval;
   int e;
   for (e=0; e<NUM_EVENTS; e++) {
@@ -58,6 +50,15 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Error in PAPI_start_counters\n");
     exit(1);
   }
+
+  fdin=open(infile, O_RDONLY);
+  if (fdin < 0) perror("Could not open file for reading: \n");
+  int fdout;
+  fdout=open("/dev/null", O_WRONLY);
+  if (fdout < 0) perror("Could not open file for writing: \n");
+  int bytes = 0;
+  char buf[1024];
+
  
 //if (PAPI_read_counters(values, NUM_EVENTS) != PAPI_OK)
 //   handle_error(1);

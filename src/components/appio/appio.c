@@ -4,7 +4,7 @@
 
 /**
  * @file    appio.c
- * CVS:     $Id$
+ * CVS:     $Id: appio.c,v 1.1.2.4 2012/02/01 05:01:00 tmohan Exp $
  *
  * @author  Philip Mucci
  *          phil.mucci@samaratechnologygroup.com
@@ -71,7 +71,11 @@ typedef enum {
   WRITE_ERR,
   WRITE_SHORT,
   WRITE_BLOCK_SIZE,
-  WRITE_USEC
+  WRITE_USEC,
+  OPEN_CALLS,
+  OPEN_ERR,
+  OPEN_FDS,
+  OPEN_USEC
 } _appio_stats_t ;
 
 static const struct appio_counters {
@@ -84,13 +88,17 @@ static const struct appio_counters {
     { "READ_SHORT",      "Number of read calls that returned less bytes than requested"},
     { "READ_EOF",        "Number of read calls that returned an EOF"},
     { "READ_BLOCK_SIZE", "Average block size of reads"},
-    { "READ_USEC",      "Real microseconds spent in reads"},
+    { "READ_USEC",       "Real microseconds spent in reads"},
     { "WRITE_BYTES",     "Bytes written"},
     { "WRITE_CALLS",     "Number of write calls"},
     { "WRITE_ERR",       "Number of write calls that resulted in an error"},
     { "WRITE_SHORT",     "Number of write calls that wrote less bytes than requested"},
     { "WRITE_BLOCK_SIZE","Mean block size of writes"},
-    { "WRITE_USEC",      "Real microseconds spent in writes"}
+    { "WRITE_USEC",      "Real microseconds spent in writes"},
+    { "OPEN_CALLS",      "Number of open calls"},
+    { "OPEN_ERR",        "Number of open calls that resulted in an error"},
+    { "OPEN_FDS",        "Number of descriptors opened by application since launch"},
+    { "OPEN_USEC",       "Real microseconds spent in open calls"}
 };
 
 
@@ -98,6 +106,16 @@ static const struct appio_counters {
  ***  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ****
  ********************************************************************/
 
+int __open(const char *pathname, int flags, mode_t mode);
+int open(const char *pathname, int flags, mode_t mode) {
+  int retval;
+  SUBDBG("appio: intercepted open(%s,%d,%d)\n", pathname, flags, mode);
+  retval = __open(pathname,flags,mode);
+  _appio_register_current[OPEN_CALLS]++;
+  if (retval < 0) _appio_register_current[OPEN_ERR]++;
+  else _appio_register_current[OPEN_FDS]++;
+  return retval;
+}
 
 ssize_t __read(int fd, void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count) {
@@ -510,7 +528,7 @@ papi_vector_t _appio_vector = {
     .cmp_info = {
         /* default component information (unspecified values are initialized to 0) */
         .name                  = "appio.c",
-        .version               = "$Revision$",
+        .version               = "$Revision: 1.1.2.4 $",
         .CmpIdx                = 0,              /* set by init_substrate */
         .num_mpx_cntrs         = PAPI_MPX_DEF_DEG,
         .num_cntrs             = APPIO_MAX_COUNTERS,

@@ -4,7 +4,7 @@
 
 /**
  * @file    appio.h
- * CVS:     $Id$
+ * CVS:     $Id: appio.h,v 1.1.2.4 2012/02/01 05:01:00 tmohan Exp $
  *
  * @author  Philip Mucci
  *          phil.mucci@samaratechnologygroup.com
@@ -29,7 +29,7 @@
 /*************************  DEFINES SECTION  ***********************************/
 
 /* Set this equal to the number of elements in _appio_counter_info array */
-#define APPIO_MAX_COUNTERS 13
+#define APPIO_MAX_COUNTERS 17
 
 /** Structure that stores private information of each event */
 typedef struct APPIO_register
