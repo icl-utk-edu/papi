@@ -3,7 +3,7 @@
 /****************************/
 
 /**
- * @file    example.c
+ * @file    linux-nvml.c
  * @author  Kiran Kumar Kasichayanula
  *          kkasicha@utk.edu 
  * @author  James Ralph
@@ -14,8 +14,10 @@
  *	This is an NVML component, it demos the component interface
  *  and implements two counters nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature
  *  from Nvidia Management Library. Please refer to NVML documentation for details
- * about nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature.
+ * about nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature. Power is reported in mW
+ * and temperature in Celcius.
  */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -195,7 +197,6 @@ createNativeEvents( void )
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = 100000;
-    cmp_id_t component;
     /* Initiate NVML library */
         retval = nvmlInit();
     if (retval != NVML_SUCCESS)
@@ -203,9 +204,9 @@ createNativeEvents( void )
         printf(" Initialization of NVML library failed\n");
         return ( PAPI_ENOSUPP );
     }
-    // component name and description 
-     strcpy( component.name, "NVML" );
-    strcpy( component.descr, "NVML provides the API for monitoring power and temperature of GPU" );
+    // component name and description
+    strcpy(  _nvml_vector.cmp_info.short_name, "NVML" );
+    strcpy( _nvml_vector.cmp_info.description, "NVML provides the API for monitoring power and temperature of GPU" );
 
         retval = nvmlDeviceGetHandleByIndex( 0, &handle_device );
         if ( retval != NVML_SUCCESS  )
@@ -227,7 +228,9 @@ createNativeEvents( void )
      retval = nvmlDeviceGetPowerUsage( handle_device, &p );
 	 if (retval == NVML_SUCCESS)
    {
-     sprintf(nvml_native_table[id].name, "%s.%s.Device%d.Device_Get_Power_Usage",component.name, nameDevice,0);
+     sprintf(nvml_native_table[id].name, "NVML.%s.Device0.Device_Get_Power_Usage", nameDevice);
+	sprintf(nvml_native_table[id].description, "Retrieves the power usage reading for the device, in milliwatts.");
+
     nvml_native_table[id].resources.selector = id + 1;
         id++;
     }
@@ -235,7 +238,8 @@ createNativeEvents( void )
     retval = nvmlDeviceGetTemperature(handle_device, temper, &t_d);
     if (retval == NVML_SUCCESS)
     {
-        sprintf(nvml_native_table[id].name, "%s.%s.Device%d.Device_Get_Temperature",component.name, temp,0);
+        sprintf(nvml_native_table[id].name, "NVML.%s.Device0.Device_Get_Temperature",temp);
+		sprintf(nvml_native_table[id].description, "Retrieves the temperature readings for the unit, in degrees C.");
         nvml_native_table[id].resources.selector = id + 1;
     }
     return id;
@@ -463,7 +467,7 @@ _papi_nvml_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	(void) code;
 	(void) option;
 
-	SUBDBG( "example_ctl..." );
+	SUBDBG( "nvml_ctl..." );
 
 	/* FIXME.  This should maybe set up more state, such as which counters are active and */
 	/*         counter mappings. */
@@ -486,7 +490,7 @@ _papi_nvml_set_domain( hwd_control_state_t * cntrl, int domain )
         (void) cntrl;
 
 	int found = 0;
-	SUBDBG( "example_set_domain..." );
+	SUBDBG( "nvml_set_domain..." );
 
 	if ( PAPI_DOM_USER & domain ) {
 		SUBDBG( " PAPI_DOM_USER " );
@@ -606,10 +610,10 @@ papi_vector_t _nvml_vector = {
 	.cmp_info = {
 		/* default component information */
 		/* (unspecified values are initialized to 0) */
-                /* we explicitly set them to zero in this example */
+                /* we explicitly set them to zero in this nvml component */
                 /* to show what settings are available            */
 
-		.name = "$Id: example.c,v 1.15 2011/11/07 18:55:11 vweaver1 Exp $",
+		.name = " linux-nvml.c,v 1.1 2012/03/27 10:15:11 kkasicha Exp $",
 		.version = "$Revision: 1.15 $",
 		.support_version = "n/a",
 		.kernel_version = "n/a",
@@ -622,14 +626,7 @@ papi_vector_t _nvml_vector = {
 		.available_domains = PAPI_DOM_USER,
 		.default_granularity = PAPI_GRN_THR,
 		.available_granularities = PAPI_GRN_THR,
-		.itimer_sig = 0,       /* set by init_substrate */
-		.itimer_num = 0,       /* set by init_substrate */
-		.itimer_ns = 0,        /* set by init_substrate */
-		.itimer_res_ns = 0,    /* set by init_substrate */
 		.hardware_intr_sig = PAPI_INT_SIGNAL,
-		.clock_ticks = 0,      /* set by init_substrate */
-		.opcode_match_width = 0, /* set by init_substrate */ 
-		.os_version = 0,       /* set by init_substrate */ 
 
 
 		/* component specific cmp_info initializations */
@@ -645,8 +642,6 @@ papi_vector_t _nvml_vector = {
 		.fast_virtual_timer = 0,
 		.attach = 0,
 		.attach_must_ptrace = 0,
-		.edge_detect = 0,
-		.invert = 0,
 		.profile_ear = 0,
 		.cntr_groups = 0,
 		.cntr_umasks = 0,
@@ -692,7 +687,7 @@ papi_vector_t _nvml_vector = {
 	.set_overflow =         NULL,
 	.set_profile =          NULL,
 
-	/* OS related functions */
+	/* OS related functions 
 	.get_real_cycles =      NULL,
 	.get_real_usec =        NULL,
 	.get_virt_cycles =      NULL,
@@ -700,15 +695,15 @@ papi_vector_t _nvml_vector = {
 	.update_shlib_info =    NULL,
 	.get_system_info =      NULL,
 	.get_memory_info =      NULL,
-	.get_dmem_info =        NULL,
+	.get_dmem_info =        NULL,*/
 
-	/* bipartite map counter allocation? */
+	/* bipartite map counter allocation? 
 	.bpt_map_avail =        NULL,
 	.bpt_map_set =          NULL,
 	.bpt_map_exclusive =    NULL,
 	.bpt_map_shared =       NULL,
 	.bpt_map_preempt =      NULL,
-	.bpt_map_update =       NULL,
+	.bpt_map_update =       NULL,*/
 
 	/* ??? */
 	.user =                 NULL,
