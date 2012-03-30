@@ -404,7 +404,11 @@ _lustre_init_substrate(  )
 
 	/* See if lustre filesystem exists */
 	ret=detect_lustre();
-	if (ret!=PAPI_OK) return ret;
+	if (ret!=PAPI_OK) {
+	   strncpy(_lustre_vector.cmp_info.disabled_reason,
+		   "No lustre filesystems found",PAPI_MAX_STR_LEN);
+	   return ret;
+	}
 
 	ret=init_lustre_counters();
 

@@ -1400,9 +1400,10 @@ _papi_hwi_init_global( void )
 		_papi_hwd[j]=_papi_compiled_components[i];
 
 		retval = _papi_hwd[j]->init_substrate( j );
+		_papi_compiled_components[i]->cmp_info.disabled=retval;
 		if ( retval == PAPI_OK ) {
 		   j++;
-		} else {
+		} else {   
 		   _papi_hwd[j]=NULL;
 		}
 		i++;

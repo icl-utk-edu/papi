@@ -267,6 +267,8 @@ _rapl_init_substrate( int cidx )
 	PAPI library not done initializing yet */
 
      if (hw_info->vendor!=PAPI_VENDOR_INTEL) {
+        strncpy(_rapl_vector.cmp_info.disabled_reason,
+		"Not an Intel processor",PAPI_MAX_STR_LEN);
         return PAPI_ESBSTR;
      }
 
@@ -289,11 +291,16 @@ _rapl_init_substrate( int cidx )
        }
        else {
 	 /* not a supported model */
+	 strncpy(_rapl_vector.cmp_info.disabled_reason,
+		 "Not a SandyBridge processor",
+		 PAPI_MAX_STR_LEN);
 	 return PAPI_ESBSTR;
        }
      }
      else {
        /* Not a family 6 machine */
+       strncpy(_rapl_vector.cmp_info.disabled_reason,
+	       "Not a SandyBridge processor",PAPI_MAX_STR_LEN);
        return PAPI_ESBSTR;
      }
 
@@ -325,6 +332,8 @@ _rapl_init_substrate( int cidx )
 
      if (num_packages==0) {
         SUBDBG("Can't access /dev/cpu/*/msr\n");
+	strncpy(_rapl_vector.cmp_info.disabled_reason,
+		"Can't access /dev/cpu/*/msr",PAPI_MAX_STR_LEN);
 	return PAPI_ESBSTR;
      }
 
@@ -336,7 +345,11 @@ _rapl_init_substrate( int cidx )
      if (fd_array==NULL) return PAPI_ENOMEM;
 
      fd=open_fd(cpu_to_use[0]);
-     if (fd<0) return PAPI_ESBSTR;
+     if (fd<0) {
+        strncpy(_rapl_vector.cmp_info.disabled_reason,
+		"Can't open fd for cpu0",PAPI_MAX_STR_LEN);
+        return PAPI_ESBSTR;
+     }
 
      /* Calculate the units used */
      result=read_msr(fd,MSR_RAPL_POWER_UNIT);

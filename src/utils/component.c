@@ -112,6 +112,10 @@ main( int argc, char **argv )
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
 
+	  if (cmpinfo->disabled) {
+	    printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
+	  }
+
 	  if ( flags.details ) {
 		printf( "Version:\t\t\t%s\n", cmpinfo->version );
 		printf( "Number of native events:\t%d\n", cmpinfo->num_native_events);

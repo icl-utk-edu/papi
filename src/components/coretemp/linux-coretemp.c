@@ -354,10 +354,14 @@ _coretemp_init_substrate( int cidx )
      num_events = generateEventList("/sys/class/hwmon");
 
      if ( num_events < 0 ) {
+        strncpy(_coretemp_vector.cmp_info.disabled_reason,
+		"Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
 	return PAPI_ENOCMP;
      }
 
      if ( num_events == 0 ) {
+        strncpy(_coretemp_vector.cmp_info.disabled_reason,
+		"No coretemp events found",PAPI_MAX_STR_LEN);
 	return PAPI_ENOCMP;
      }
 

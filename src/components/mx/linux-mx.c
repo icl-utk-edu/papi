@@ -237,6 +237,8 @@ _mx_init_substrate(  )
 	   if (fgets(test_string,BUFSIZ,fff)==NULL) {
 	      pclose(fff);
 	      /* neither real nor fake found */
+	      strncpy(_mx_vector.cmp_info.disabled_reason,
+		      "No MX utilities found",PAPI_MAX_STR_LEN);
 	      return PAPI_ESBSTR;
 	   }
 	}

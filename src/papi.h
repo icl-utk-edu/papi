@@ -644,6 +644,8 @@ read the documentation carefully.  */
      char version[PAPI_MIN_STR_LEN];         /**< Version of this substrate, usually CVS Revision */
      char support_version[PAPI_MIN_STR_LEN]; /**< Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /**< Version of the kernel PMC support driver */
+     char disabled_reason[PAPI_MAX_STR_LEN]; /**< Reason for failure of initialization */
+     int disabled;   /**< 0 if enabled, otherwise error code from initialization */
      int CmpIdx;				/**< Index into the vector array for this component; set at init time */
      int num_cntrs;               /**< Number of hardware counters the substrate supports */
      int num_mpx_cntrs;           /**< Number of hardware counters the substrate or PAPI can multiplex supports */
