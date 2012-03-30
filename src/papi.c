@@ -1135,6 +1135,7 @@ PAPI_event_name_to_code( char *in, int *out )
  *
  *	@see PAPI @n
  *	PAPIF @n
+ *      PAPI_enum_cmp_event @n
  *	PAPI_get_event_info @n
  *	PAPI_event_name_to_code @n
  *	PAPI_preset @n
@@ -1144,6 +1145,7 @@ int
 PAPI_enum_event( int *EventCode, int modifier )
 {
 	int i = *EventCode;
+	int retval;
 	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	if ( _papi_hwi_invalid_cmp( cidx ) ||
@@ -1168,8 +1170,13 @@ PAPI_enum_event( int *EventCode, int modifier )
 		}
 	} else if ( IS_NATIVE(i) ) {
 		/* Should check against num native events here */
-		return ( _papi_hwd[cidx]->
-				 ntv_enum_events( ( unsigned int * ) EventCode, modifier ) );
+
+	    retval = _papi_hwd[cidx]->ntv_enum_events( 
+				   ( unsigned int * ) EventCode, modifier );
+
+	        /* re-apply Component ID to the returned Event */
+	    *EventCode |= PAPI_COMPONENT_MASK( cidx );
+	    return retval;
 	} 
 #ifdef USER_EVENTS
 	else if ( IS_USER_DEFINED(i) ) {
@@ -1186,6 +1193,154 @@ PAPI_enum_event( int *EventCode, int modifier )
 	  return ( PAPI_OK );
 	}
 #endif
+
+	papi_return( PAPI_EINVAL );
+}
+
+
+/** @class PAPI_enum_cmp_event
+ *	@brief Enumerate PAPI preset or native events for a given component
+ *
+ *	@par C Interface:
+ *	\#include <papi.h> @n
+ *	int PAPI_enum_cmp_event( int *EventCode, int  modifer, int cidx );
+ *
+ *	Given an event code, PAPI_enum_event replaces the event 
+ *	code with the next available event.
+ * 
+ *	The modifier argument affects which events are returned. 
+ *	For all platforms and event types, a value of PAPI_ENUM_ALL (zero) 
+ *	directs the function to return all possible events. @n
+ *
+ *	For native events, the effect of the modifier argument may be
+ *      different on each platform. 
+ *	See the discussion below for platform-specific definitions.
+ *
+ *	@param *EventCode
+ *		A defined preset or native event such as PAPI_TOT_INS.
+ *	@param modifier 
+ *		Modifies the search logic. See below for full list.
+ *		For native events, each platform behaves differently. 
+ *		See platform-specific documentation for details.
+ *
+ *      @param cidx
+ *              Specifies the component to search in 
+ *
+ *	@retval PAPI_ENOEVNT 
+ *		The next requested PAPI preset or native event is not available on 
+ *		the underlying hardware.
+ *
+ *	@par Examples:
+ *	@code
+ *	// Scan for all supported native events on the first component
+ *	printf( "Name\t\t\t       Code\t   Description\n" );
+ *	do {
+ *		retval = PAPI_get_event_info( i, &info );
+ *		if ( retval == PAPI_OK ) {
+ *		printf( "%-30s 0x%-10x\n%s\n", info.symbol, info.event_code, info.long_descr );
+ *		}
+ *	} while ( PAPI_enum_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
+ *	@endcode
+ *
+ *      @par Generic Modifiers
+ *	The following values are implemented for preset events
+ *	<ul>
+ *         <li> PAPI_ENUM_EVENTS -- Enumerate all (default)
+ *         <li> PAPI_ENUM_FIRST -- Enumerate first event (preset or native)
+ *                preset/native chosen based on type of EventCode
+ *	</ul>
+ *
+ *      @par Native Modifiers
+ *	The following values are implemented for native events
+ *	<ul>
+ *         <li>PAPI_NTV_ENUM_UMASKS -- Given an event, iterate through
+ *                     possible umasks one at a time
+ *         <li>PAPI_NTV_ENUM_UMASK_COMBOS -- Given an event, iterate
+ *                     through all possible combinations of umasks.
+ *                     This is not implemented on libpfm4.
+ *	</ul>
+ *
+ *	@par Preset Modifiers
+ *	The following values are implemented for preset events
+ *	<ul>
+ *         <li> PAPI_PRESET_ENUM_AVAIL -- enumerate only available presets
+ *         <li> PAPI_PRESET_ENUM_MSC   -- Miscellaneous preset events
+ *         <li> PAPI_PRESET_ENUM_INS   -- Instruction related preset events
+ *         <li> PAPI_PRESET_ENUM_IDL   -- Stalled or Idle preset events
+ *         <li> PAPI_PRESET_ENUM_BR    -- Branch related preset events
+ *         <li> PAPI_PRESET_ENUM_CND   -- Conditional preset events
+ *         <li> PAPI_PRESET_ENUM_MEM   -- Memory related preset events
+ *         <li> PAPI_PRESET_ENUM_CACH  -- Cache related preset events
+ *         <li> PAPI_PRESET_ENUM_L1    -- L1 cache related preset events
+ *         <li> PAPI_PRESET_ENUM_L2    -- L2 cache related preset events
+ *         <li> PAPI_PRESET_ENUM_L3    -- L3 cache related preset events
+ *         <li> PAPI_PRESET_ENUM_TLB   -- Translation Lookaside Buffer events
+ *         <li> PAPI_PRESET_ENUM_FP    -- Floating Point related preset events
+ *	</ul>
+ *
+ *	@par ITANIUM Modifiers
+ *	The following values are implemented for modifier on Itanium: 
+ *	<ul>
+ *	   <li> PAPI_NTV_ENUM_IARR - Enumerate IAR (instruction address ranging) events 
+ *	   <li> PAPI_NTV_ENUM_DARR - Enumerate DAR (data address ranging) events 
+ *	   <li> PAPI_NTV_ENUM_OPCM - Enumerate OPC (opcode matching) events 
+ *	   <li> PAPI_NTV_ENUM_IEAR - Enumerate IEAR (instr event address register) events 
+ *	   <li> PAPI_NTV_ENUM_DEAR - Enumerate DEAR (data event address register) events
+ *	</ul>
+ *
+ *	@par POWER Modifiers
+ *	The following values are implemented for POWER
+ *	<ul>
+ *	   <li> PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
+ *	</ul>
+ *
+ *	@bug 
+ *	No known bugs.
+ *
+ *	@see PAPI @n
+ *	PAPIF @n
+ *      PAPI_enum_event @n
+ *	PAPI_get_event_info @n
+ *	PAPI_event_name_to_code @n
+ *	PAPI_preset @n
+ *	PAPI_native
+ */
+int
+PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
+{
+	int i = *EventCode;
+	int retval;
+
+	if ( _papi_hwi_invalid_cmp(cidx) || ( (IS_PRESET(i)) && cidx > 0 ) ) {
+		return PAPI_ENOCMP;
+	}
+
+	if ( IS_PRESET(i) ) {
+		if ( modifier == PAPI_ENUM_FIRST ) {
+			*EventCode = ( int ) PAPI_PRESET_MASK;
+			return PAPI_OK;
+		}
+		i &= PAPI_PRESET_AND_MASK;
+		while ( ++i < PAPI_MAX_PRESET_EVENTS ) {
+			if ( _papi_hwi_presets[i].symbol == NULL )
+				return ( PAPI_ENOEVNT );	/* NULL pointer terminates list */
+			if ( modifier & PAPI_PRESET_ENUM_AVAIL ) {
+				if ( _papi_hwi_presets[i].count == 0 )
+					continue;
+			}
+			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );
+			return PAPI_OK;
+		}
+	} else if ( IS_NATIVE(i) ) {
+		/* Should we check against num native events here? */
+	    retval = _papi_hwd[cidx]->ntv_enum_events( 
+				   ( unsigned int * ) EventCode, modifier );
+
+	        /* re-apply Component ID to the returned Event */
+	    *EventCode |= PAPI_COMPONENT_MASK( cidx );
+
+	    return retval;
+	} 
 
 	papi_return( PAPI_EINVAL );
 }

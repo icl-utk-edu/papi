@@ -698,11 +698,10 @@ _lustre_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 int
 _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	if ( modifier == PAPI_ENUM_FIRST ) {
 	   if (num_events==0) return PAPI_ENOEVNT;
-	   *EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+	   *EventCode = PAPI_NATIVE_MASK;
 	   return PAPI_OK;
 	}
 

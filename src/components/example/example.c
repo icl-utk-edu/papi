@@ -529,10 +529,6 @@ _example_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
   int cidx,index;
 
-  /* Get our component index number, this can change depending */
-  /* on how PAPI was configured.                               */
-
-  cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
   switch ( modifier ) {
 
@@ -540,7 +536,7 @@ _example_ntv_enum_events( unsigned int *EventCode, int modifier )
 	case PAPI_ENUM_FIRST:
 	   /* return the first event that we support */
 
-	   *EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+	   *EventCode = PAPI_NATIVE_MASK;
 	   return PAPI_OK;
 
 		/* return EventCode of next available event */

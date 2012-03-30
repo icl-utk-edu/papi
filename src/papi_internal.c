@@ -1766,6 +1766,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 
        /* first check each component for name_to_code */
        retval = _papi_hwd[j]->ntv_name_to_code( in, ( unsigned * ) out );
+       *out |= PAPI_COMPONENT_MASK(j);
 
        /* If not implemented, work around */
        if ( retval==PAPI_ESBSTR) {

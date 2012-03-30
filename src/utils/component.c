@@ -40,8 +40,7 @@ static void
 print_help( char **argv )
 {
 	printf( "This is the PAPI component avail program.\n" );
-	printf
-		( "It provides availability of installed PAPI components.\n" );
+	printf( "It provides availability of installed PAPI components.\n" );
 	printf( "Usage: %s [options]\n", argv[0] );
 	printf( "Options:\n\n" );
 	printf( "  --help, -h    print this help message\n" );

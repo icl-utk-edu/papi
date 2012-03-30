@@ -187,13 +187,12 @@ int coretemp_init_control_state (hwd_control_state_t * ctrl)
 */
 int coretemp_ntv_enum_events (unsigned int *EventCode, int modifier)
 {
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	switch ( modifier )
 	{
 		/* return EventCode of first event */
 		case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		*EventCode = PAPI_NATIVE_MASK;
 		return PAPI_OK;
 		break;
 

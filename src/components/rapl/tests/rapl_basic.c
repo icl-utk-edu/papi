@@ -139,9 +139,9 @@ int main (int argc, char **argv)
 
      /* Add all events */
 
-     code = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(rapl_cid);
+     code = PAPI_NATIVE_MASK;
 
-     r = PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+     r = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, rapl_cid );
 
      while ( r == PAPI_OK ) {
 
@@ -166,7 +166,7 @@ int main (int argc, char **argv)
 	}
 	num_events++;
   	      
-        r = PAPI_enum_event( &code, PAPI_ENUM_EVENTS );
+        r = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, rapl_cid );
      }
 
      values=calloc(num_events,sizeof(long long));

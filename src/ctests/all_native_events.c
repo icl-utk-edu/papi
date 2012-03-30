@@ -113,8 +113,8 @@ main( int argc, char **argv )
 
 		/* For platform independence, always ASK FOR the first event */
 		/* Don't just assume it'll be the first numeric value */
-		i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cid );
-		PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+		i = 0 | PAPI_NATIVE_MASK;
+		PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
 		do {
 			retval = PAPI_get_event_info( i, &info );
@@ -130,7 +130,7 @@ main( int argc, char **argv )
 			}
 			if ( s->cntr_umasks ) {
 				k = i;
-				if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+				if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
 					do {
 						retval = PAPI_get_event_info( k, &info1 );
 						event_code = ( int ) info1.event_code;
@@ -139,7 +139,7 @@ main( int argc, char **argv )
 							add_count++;
 						else
 							err_count++;
-					} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) ==
+					} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) ==
 							  PAPI_OK );
 				} else {
 					event_code = ( int ) info.event_code;
@@ -157,7 +157,7 @@ main( int argc, char **argv )
 				else
 					err_count++;
 			}
-		} while ( PAPI_enum_event( &i, PAPI_ENUM_EVENTS ) == PAPI_OK );
+		} while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid ) == PAPI_OK );
 
 	}
 	printf( "\n\nSuccessfully found and added %d events (in %d eventsets).\n",

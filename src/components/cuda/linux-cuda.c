@@ -772,11 +772,10 @@ CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 int
 CUDA_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		*EventCode = PAPI_NATIVE_MASK;
 
 		return ( PAPI_OK );
 		break;

@@ -289,6 +289,9 @@ main( int argc, char **argv )
 	       const PAPI_component_info_t *component;
 	       component=PAPI_get_component_info(cid);
 
+	       /* Skip disabled components */
+	       if (component->disabled) continue;
+
 	       /* Skip if requested enumeration not available */
 	       if (( flags.dear ) && !( component->cntr_DEAR_events )) {
 		 continue;
@@ -313,10 +316,9 @@ main( int argc, char **argv )
 	     
 	       /* Always ASK FOR the first event */
 	       /* Don't just assume it'll be the first numeric value */
-	       i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cid );
+	       i = 0 | PAPI_NATIVE_MASK;
 
-	       /* UGH PAPI_enum_event() really needs a component field */
-	       PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+	       PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
 	       do {
 		  memset( &info, 0, sizeof ( info ) );
@@ -347,12 +349,12 @@ main( int argc, char **argv )
 		  /* This is an IBM Power issue */
 		  if ( flags.groups ) {
 		     k = i;
-		     if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_GROUPS ) == PAPI_OK ) {
+		     if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_GROUPS, cid ) == PAPI_OK ) {
 			printf( "Groups: " );
 			do {
 			  printf( "%4d", ( ( k & PAPI_NTV_GROUP_AND_MASK ) >>
 					     PAPI_NTV_GROUP_SHIFT ) - 1 );
-			} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_GROUPS ) ==PAPI_OK );
+			} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_GROUPS, cid ) ==PAPI_OK );
 			printf( "\n" );
 		     }
 		  }
@@ -362,20 +364,20 @@ main( int argc, char **argv )
 
 	          if ( flags.umask ) { 
 		     k = i;
-		     if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+		     if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
 		        do {
 			   retval = PAPI_get_event_info( k, &info );
 			   if ( retval == PAPI_OK ) {
 			      if ( parse_unit_masks( &info ) )
 			         print_event( &info, 2 );
 			   }
-		        } while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
+		        } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
 		     }
 
 		  }
 		  printf( "--------------------------------------------------------------------------------\n" );
 
-	       } while ( PAPI_enum_event( &i, enum_modifier ) == PAPI_OK );
+	       } while (PAPI_enum_cmp_event( &i, enum_modifier, cid ) == PAPI_OK );
 	   }
 	   	   	
 	

@@ -65,9 +65,9 @@ int main (int argc, char **argv)
 
 
 
-     code = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(coretemp_cid);
+     code = PAPI_NATIVE_MASK;
 
-     r = PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+     r = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, coretemp_cid );
 
      while ( r == PAPI_OK ) {
 
@@ -248,7 +248,7 @@ int main (int argc, char **argv)
 	  /* Skip unknown */
 	}
   	      
-        r = PAPI_enum_event( &code, PAPI_ENUM_EVENTS );
+        r = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, coretemp_cid );
      }
         
      test_pass( __FILE__, NULL, 0 );

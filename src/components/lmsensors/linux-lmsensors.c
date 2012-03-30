@@ -370,13 +370,12 @@ LM_SENSORS_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 LM_SENSORS_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		*EventCode = PAPI_NATIVE_MASK;
 
-		return ( PAPI_OK );
+		return PAPI_OK;
 		break;
 
 	case PAPI_ENUM_EVENTS:

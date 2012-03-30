@@ -86,9 +86,9 @@ int main (int argc, char **argv)
 	/* Listing all available events in this component */
 	/* Along with descriptions                        */
 	/**************************************************/
-	code = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(example_cid);
+	code = PAPI_NATIVE_MASK;
 
-	retval = PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+	retval = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, example_cid );
 
 	while ( retval == PAPI_OK ) {
 	  if (PAPI_event_code_to_name( code, event_name )!=PAPI_OK) {
@@ -110,7 +110,7 @@ int main (int argc, char **argv)
 
 	  maximum_code=code;
 
-	  retval = PAPI_enum_event( &code, PAPI_ENUM_EVENTS );
+	  retval = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, example_cid );
 
 	}
 	if (!TESTS_QUIET) printf("\n");

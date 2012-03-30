@@ -537,14 +537,13 @@ int
 _net_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
     int index;
-    int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
     switch ( modifier ) {
         case PAPI_ENUM_FIRST:
             if (num_events==0) {
                 return PAPI_ENOEVNT;
             }
-            *EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cidx);
+            *EventCode = PAPI_NATIVE_MASK;
             return PAPI_OK;
             break;
 
@@ -576,9 +575,8 @@ _net_ntv_name_to_code( char *name, unsigned int *EventCode )
 
     for ( i=0; i<num_events; i++) {
         if (strcmp(name, _net_native_events[i].name) == 0) {
-            *EventCode = i |
-                PAPI_NATIVE_MASK |
-                PAPI_COMPONENT_MASK(_net_vector.cmp_info.CmpIdx);
+	   *EventCode = i | PAPI_NATIVE_MASK;
+
             return PAPI_OK;
         }
     }

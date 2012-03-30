@@ -573,8 +573,7 @@ _coretemp_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 int
 _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	
-     int cidx = PAPI_COMPONENT_INDEX( *EventCode );
+
      int index;
 
      switch ( modifier ) {
@@ -584,7 +583,7 @@ _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 	   if (num_events==0) {
 	      return PAPI_ENOEVNT;
 	   }
-	   *EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+	   *EventCode = PAPI_NATIVE_MASK;
 
 	   return PAPI_OK;
 		

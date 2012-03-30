@@ -715,12 +715,10 @@ INFINIBAND_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 INFINIBAND_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
-
 	if ( modifier == PAPI_ENUM_FIRST ) {
 		/* assumes first native event is always 0x4000000 */
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
-		return ( PAPI_OK );
+		*EventCode = PAPI_NATIVE_MASK;
+		return PAPI_OK;
 	}
 
 	if ( modifier == PAPI_ENUM_EVENTS ) {

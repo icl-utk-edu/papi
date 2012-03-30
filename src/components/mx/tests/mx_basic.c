@@ -54,9 +54,9 @@ int main (int argc, char **argv)
 	     continue;
 	   }
 
-	   code = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
+	   code = PAPI_NATIVE_MASK;
 
-           r = PAPI_enum_event( &code, PAPI_ENUM_FIRST );
+           r = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, cid );
 
 	   while ( r == PAPI_OK ) {
 	      retval = PAPI_event_code_to_name( code, event_name );
@@ -108,7 +108,7 @@ int main (int argc, char **argv)
 
 	      total_events++;
 	      
-	      r = PAPI_enum_event( &code, PAPI_ENUM_EVENTS );
+	      r = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, cid );
 	   }
         }
 
