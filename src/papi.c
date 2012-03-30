@@ -877,7 +877,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
  *
  *	@see PAPI_remove_event
  *	@see PAPI_get_event_info
- *	@see PAPI_enum_events
+ *	@see PAPI_enum_event
  *	@see PAPI_add_event
  *	@see PAPI_presets
  *	@see PAPI_native
@@ -964,7 +964,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *
  *	@see PAPI_remove_event @n
  *	PAPI_get_event_info @n
- *	PAPI_enum_events @n
+ *	PAPI_enum_event @n
  *	PAPI_add_event @n
  *	PAPI_presets @n
  *	PAPI_native
