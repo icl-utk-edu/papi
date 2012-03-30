@@ -56,8 +56,7 @@ typedef struct papi_vectors {
     int		(*user)			(int, void *, void *);							/**< */
 }papi_vector_t;
 
-extern papi_vector_t **_papi_hwd;
-extern papi_vector_t *_papi_compiled_components[];
+extern papi_vector_t *_papi_hwd[];
 
 typedef struct papi_os_vectors {
   long long   (*get_real_cycles)      (void);                   /**< */

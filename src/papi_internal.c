@@ -1340,31 +1340,9 @@ _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx )
 	return ( PAPI_OK );
 }
 
-#if 0
-int
-_papi_hwi_query( int preset_index, int *flags, char **note )
-{
-	if ( _papi_hwd_preset_map[preset_index].number == 0 )
-		return ( 0 );
-	INTDBG( "preset_index: %d derived: %d\n", preset_index,
-			_papi_hwd_preset_map[preset_index].derived );
-	if ( _papi_hwd_preset_map[preset_index].derived )
-		*flags = PAPI_DERIVED;
-	INTDBG( "note: %s\n", _papi_hwd_preset_map[preset_index].note );
-	if ( _papi_hwd_preset_map[preset_index].note )
-		*note = _papi_hwd_preset_map[preset_index].note;
-	return ( 1 );
-}
-#endif
-
 #include "components_config.h"
 
-int _papi_num_compiled_components = ( sizeof ( _papi_compiled_components ) / sizeof ( *_papi_compiled_components ) ) - 1;
-
-int papi_num_components;
-
-/* Null terminated list of all active components */
-papi_vector_t **_papi_hwd;
+int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 
 /*
  * Routine that initializes all available components.
@@ -1374,41 +1352,23 @@ papi_vector_t **_papi_hwd;
 int
 _papi_hwi_init_global( void )
 {
-        int retval, i = 0, j = 0;
-
-	papi_num_components=0;
+        int retval, i = 0;
 
 	retval = _papi_hwi_innoculate_os_vector( &_papi_os_vector );
 	if ( retval != PAPI_OK ) {
-	   return ( retval );
+	   return retval;
 	}
 
-	/* initialize _papi_hwd[], the master initialized component list */
-	/* size is +1 to hold a null terminator                          */
-	_papi_hwd=papi_calloc(_papi_num_compiled_components+1,
-			      sizeof(papi_vector_t *));
-	if (_papi_hwd == NULL) {
-	   return PAPI_ENOMEM;
+	while ( _papi_hwd[i] ) {
+	   retval = _papi_hwi_innoculate_vector( _papi_hwd[i] );
+	   if ( retval != PAPI_OK ) {
+	      return retval;
+	   }
+
+	   retval = _papi_hwd[i]->init_substrate( i );
+	   _papi_hwd[i]->cmp_info.disabled=retval;
+	   i++;
 	}
-
-	while ( _papi_compiled_components[i] ) {
-		retval = _papi_hwi_innoculate_vector( _papi_compiled_components[i] );
-		if ( retval != PAPI_OK ) {
-			return ( retval );
-		}
-
-		_papi_hwd[j]=_papi_compiled_components[i];
-
-		retval = _papi_hwd[j]->init_substrate( j );
-		_papi_compiled_components[i]->cmp_info.disabled=retval;
-		if ( retval == PAPI_OK ) {
-		   j++;
-		} else {   
-		   _papi_hwd[j]=NULL;
-		}
-		i++;
-	}
-	papi_num_components=j;
 	return PAPI_OK;
 }
 
@@ -1451,7 +1411,7 @@ _papi_hwi_init_global_internal( void )
 	_papi_hwi_system_info.hw_info.cpuid_model = 0;	/* cpuid model */
 	_papi_hwi_system_info.hw_info.cpuid_stepping = 0;	/* cpuid stepping */
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 void
@@ -1471,8 +1431,6 @@ _papi_hwi_shutdown_global_internal( void )
 		papi_free( _papi_hwi_system_info.shlib_info.map );
 	}
 	memset( &_papi_hwi_system_info, 0x0, sizeof ( _papi_hwi_system_info ) );
-  
-        papi_free( _papi_hwd );
 
 }
 
@@ -1657,48 +1615,6 @@ handle_derived( EventInfo_t * evi, long long *from )
 	}
 }
 
-#if 0
-static void
-print_state( EventSetInfo_t * ESI, int cidx )
-{
-	int i;
-
-	APIDBG( "\n\n-----------------------------------------\n" );
-	APIDBG( "numEvent: %d    numNative: %d\n", ESI->NumberOfEvents,
-			ESI->NativeCount );
-
-	APIDBG( "\nnative_event code       " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
-		APIDBG( "0x%15x", ESI->NativeInfoArray[i].ni_event );
-	APIDBG( "\n" );
-
-	APIDBG( "native_event_position     " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
-		APIDBG( "%15d", ESI->NativeInfoArray[i].ni_position );
-	APIDBG( "\n" );
-
-#if 0						 /* This code is specific to POWER */
-	APIDBG( "native_event_selectors    " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
-		APIDBG( "%15d",
-				native_table[ESI->NativeInfoArray[i].ni_event].resources.
-				selector );
-	APIDBG( "\n" );
-
-	APIDBG( "counter_cmd               " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
-		APIDBG( "%15d", ESI->ctl_state->counter_cmd.events[i] );
-	APIDBG( "\n" );
-#endif
-
-	APIDBG( "native links              " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
-		APIDBG( "%15d", ESI->NativeInfoArray[i].ni_owners );
-	APIDBG( "\n" );
-
-}
-#endif
-
 
 /* table matching derived types to derived strings.                             
    used by get_info, encode_event, xml translator                               
@@ -1845,6 +1761,8 @@ _papi_hwi_native_name_to_code( char *in, int *out )
     SUBDBG("checking all %d components\n",papi_num_components);
 	
     for(j=0; j < ( unsigned int ) papi_num_components; j++) {
+
+       if (_papi_hwd[j]->cmp_info.disabled) continue;
 
        /* first check each component for name_to_code */
        retval = _papi_hwd[j]->ntv_name_to_code( in, ( unsigned * ) out );

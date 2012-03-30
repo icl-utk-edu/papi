@@ -104,11 +104,11 @@ main( int argc, char **argv )
 
 
 	/* Compiled-in Components */
-	numcmp = PAPI_num_compiled_components(  );
+	numcmp = PAPI_num_components(  );
 
 	printf("Compiled-in components:\n");
 	for ( cid = 0; cid < numcmp; cid++ ) {
-	  cmpinfo = PAPI_get_compiled_component_info( cid );
+	  cmpinfo = PAPI_get_component_info( cid );
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
 
@@ -129,6 +129,7 @@ main( int argc, char **argv )
 
 	for ( cid = 0; cid < numcmp; cid++ ) {
 	  cmpinfo = PAPI_get_component_info( cid );
+	  if (cmpinfo->disabled) continue;
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
 

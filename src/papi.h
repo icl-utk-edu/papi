@@ -1119,12 +1119,6 @@ enum {
    int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
 /** @} */
 
-
-
-/* Still deciding on these */
-   int PAPI_num_compiled_components(void); /**< get the number of components compiled on the system */
-   const PAPI_component_info_t *PAPI_get_compiled_component_info(int cidx); /**< get information about compiled-in component */
-
 #ifdef __cplusplus
 }
 #endif

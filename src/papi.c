@@ -611,7 +611,9 @@ PAPI_library_init( int version )
 		init_retval = tmp;
 		_papi_hwi_shutdown_global_internal(  );
 		for ( i = 0; i < papi_num_components; i++ ) {
-			_papi_hwd[i]->shutdown_substrate(  );
+		    if (!_papi_hwd[i]->cmp_info.disabled) {
+                       _papi_hwd[i]->shutdown_substrate(  );
+		    }
 		}
 		_in_papi_library_init_cnt--;
 		_papi_hwi_error_level = tmpel;
@@ -797,45 +799,6 @@ PAPI_get_component_info( int cidx )
 		return ( NULL );
 	else
 		return ( &( _papi_hwd[cidx]->cmp_info ) );
-}
-
-/**	@class PAPI_get_compiled_component_info 
- *	@brief get information about a specific compiled-in component
- *
- *	@param cidx
- *		Component index
- *
- *	This function returns a pointer to a structure containing detailed 
- *	information about a specific software component in the PAPI library. 
- *	This includes versioning information, preset and native event 
- *	information, and more. 
- *	For full details, see @ref PAPI_component_info_t. 
- *
- *	@par Examples:
- *	@code
- 		const PAPI_component_info_t *cmpinfo = NULL;
- 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
- 		exit(1);
- 		if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
- 		exit(1);
- 		printf("This component supports %d Preset Events and %d Native events.\n",
-		cmpinfo->num_preset_events, cmpinfo->num_native_events);
- *	@endcode
- *
- *	@see PAPI_get_executable_info
- *	@see PAPI_get_hardware_info
- *	@see PAPI_get_dmem_info
- *	@see PAPI_get_opt
- *	@see PAPI_component_info_t
- */
-const PAPI_component_info_t *
-PAPI_get_compiled_component_info( int cidx )
-{
-    if ((cidx<0) || (cidx > _papi_num_compiled_components)) {
-       return NULL;
-    }
-
-    return ( &( _papi_compiled_components[cidx]->cmp_info ) );
 }
 
 /* PAPI_get_event_info:
@@ -4107,24 +4070,6 @@ PAPI_num_components( void )
 	return ( papi_num_components );
 }
 
-
-/** @class PAPI_num_compiled_components
-  *	@brief Get the number of compiled-in components (not all may be available)
-  *
-  * @return 
-  *		Number of components compiled into PAPI
-  *
-  *	@code
-// Query the library for a component count. 
-printf("%d components compiled., PAPI_num_components() );
-  * @endcode
-  */
-int
-PAPI_num_compiled_components( void )
-{
-	return ( _papi_num_compiled_components );
-}
-
 /** @class PAPI_num_events
   * @brief Return the number of events in an event set.
   * 
@@ -4260,8 +4205,10 @@ again:
 	_papi_hwi_shutdown_highlevel(  );
 	_papi_hwi_shutdown_global_internal(  );
 	_papi_hwi_shutdown_global_threads(  );
-	for ( i = 0; i < papi_num_components; i++ ) {
-		_papi_hwd[i]->shutdown_substrate(  );
+	for( i = 0; i < papi_num_components; i++ ) {
+	   if (!_papi_hwd[i]->cmp_info.disabled) {
+              _papi_hwd[i]->shutdown_substrate(  );
+	   }
 	}
 
 	/* Now it is safe to call re-init */
