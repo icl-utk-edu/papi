@@ -32,7 +32,7 @@ __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makef
 	$(papi_dir)/doc make clean html
 	rm -rf /silk/homes/icl/projectsdev/papi/docs/* 
 	cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
-	chmod -R 755 /silk/homes/icl/projectsdev/papi/docs
+	chmod -R 775 /silk/homes/icl/projectsdev/papi/docs
 
 __ 4. If configure.in is changed, run autoconf (2.59) and commit the resulting
 	configure file.
