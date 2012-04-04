@@ -1360,13 +1360,18 @@ _papi_hwi_init_global( void )
 	}
 
 	while ( _papi_hwd[i] ) {
+
 	   retval = _papi_hwi_innoculate_vector( _papi_hwd[i] );
 	   if ( retval != PAPI_OK ) {
 	      return retval;
 	   }
 
-	   retval = _papi_hwd[i]->init_substrate( i );
-	   _papi_hwd[i]->cmp_info.disabled=retval;
+	   /* We can be disabled by user before init */
+	   if (!_papi_hwd[i]->cmp_info.disabled) {
+	      retval = _papi_hwd[i]->init_substrate( i );
+	      _papi_hwd[i]->cmp_info.disabled=retval;
+	   }
+
 	   i++;
 	}
 	return PAPI_OK;
