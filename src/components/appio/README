@@ -21,6 +21,8 @@ DESCRIPTION
       READ_BYTES
       READ_CALLS
       READ_ERR
+      READ_INTERRUPTED
+      READ_WOULD_BLOCK
       READ_SHORT
       READ_EOF
       READ_BLOCK_SIZE
@@ -31,6 +33,10 @@ DESCRIPTION
       WRITE_SHORT
       WRITE_BLOCK_SIZE
       WRITE_USEC
+      OPEN_CALLS
+      OPEN_ERR
+      OPEN_FDS
+      OPEN_USEC
 
     The component works by intercepting I/O system calls on Linux. At present
     the code uses a features available in libc on Linux, and is unlikely to
@@ -49,7 +55,7 @@ DESCRIPTION
     The most important aspect to note is that the code is likely to only work on
     Linux, given the low-level dependencies on libc features. 
 
-    At present the component intercepts the read(), write(), fread() and fwrite().
+    At present the component intercepts the open(), read(), write(), fread() and fwrite().
     In the future it's envisaged that these will be expanded to cover open(), close(),
     lseek(), select(), etc. 
 

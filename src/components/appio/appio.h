@@ -29,7 +29,7 @@
 /*************************  DEFINES SECTION  ***********************************/
 
 /* Set this equal to the number of elements in _appio_counter_info array */
-#define APPIO_MAX_COUNTERS 17
+#define APPIO_MAX_COUNTERS 19
 
 /** Structure that stores private information of each event */
 typedef struct APPIO_register

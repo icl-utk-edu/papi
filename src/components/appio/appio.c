@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 //#include <dlfcn.h>
 
 /* Headers required by PAPI */
@@ -62,6 +63,8 @@ typedef enum {
   READ_BYTES = 0,
   READ_CALLS,
   READ_ERR,
+  READ_INTERRUPTED,
+  READ_WOULD_BLOCK,
   READ_SHORT,
   READ_EOF,
   READ_BLOCK_SIZE,
@@ -85,6 +88,8 @@ static const struct appio_counters {
     { "READ_BYTES",      "Bytes read"},
     { "READ_CALLS",      "Number of read calls"},
     { "READ_ERR",        "Number of read calls that resulted in an error"},
+    { "READ_INTERRUPTED","Number of read calls that timed out or were interruped"},
+    { "READ_WOULD_BLOCK","Number of read calls that would have blocked on a descriptor marked as non-blocking"},
     { "READ_SHORT",      "Number of read calls that returned less bytes than requested"},
     { "READ_EOF",        "Number of read calls that returned an EOF"},
     { "READ_BLOCK_SIZE", "Average block size of reads"},
@@ -131,7 +136,13 @@ ssize_t read(int fd, void *buf, size_t count) {
     if (retval < (int)count) _appio_register_current[READ_SHORT]++; // read short
     _appio_register_current[READ_USEC] += duration;
   }
-  if (retval < 0) _appio_register_current[READ_ERR]++; // read err
+  if (retval < 0) { 
+    _appio_register_current[READ_ERR]++; // read err
+    if (EINTR == retval)
+      _appio_register_current[READ_INTERRUPTED]++; // signal interrupted the read
+    if ((EAGAIN == retval) || (EWOULDBLOCK == retval)) 
+      _appio_register_current[READ_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
+  }
   if (retval == 0) _appio_register_current[READ_EOF]++; // read eof
   return retval;
 }

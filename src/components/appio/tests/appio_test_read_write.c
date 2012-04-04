@@ -18,11 +18,11 @@
 
 #include "papi_test.h"
  
-#define NUM_EVENTS 8
+#define NUM_EVENTS 11
  
 int main(int argc, char** argv) {
   int Events[NUM_EVENTS]; 
-  const char* names[NUM_EVENTS] = {"OPEN_CALLS", "OPEN_FDS", "READ_CALLS", "READ_BYTES", "READ_USEC", "WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
+  const char* names[NUM_EVENTS] = {"OPEN_CALLS", "OPEN_FDS", "READ_CALLS", "READ_BYTES", "READ_USEC", "READ_ERR", "READ_INTERRUPTED", "READ_WOULD_BLOCK", "WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
   long long values[NUM_EVENTS];
 
   char *infile = "/etc/group";
