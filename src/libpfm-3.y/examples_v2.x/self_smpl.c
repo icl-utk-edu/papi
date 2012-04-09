@@ -82,7 +82,6 @@ process_smpl_buffer(void)
 	smpl_entry_t *ent;
 	unsigned long pos;
 	uint64_t count;
-	int ret;
 
 	hdr = (smpl_hdr_t *)smpl_vaddr;
 
@@ -101,7 +100,6 @@ process_smpl_buffer(void)
 	 * walk through all the entries recored in the buffer
 	 */
 	while(count--) {
-		ret = 0;
 
 		ent = (smpl_entry_t *)pos;
 		/*
