@@ -1269,7 +1269,6 @@ static int create_eventset(int argc, char **argv)
 			return EINVAL;
 		}
 	}
-	(void) exclude_idle;
 
 	if (argc < optind + 2) {
 		USAGE("create_eventset [options] <context_id> <event_set_id>");

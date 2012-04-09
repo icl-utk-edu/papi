@@ -316,7 +316,6 @@ main(int argc, char **argv)
 		nbytes = write(pr[1], "c", 1);
 		nbytes = read(pw[0], &c, 1);	
 	}
-	(void)nbytes;
 
 	if (pfm_stop(ctx_fd))
 		fatal_error("pfm_stop error errno %d\n",errno);

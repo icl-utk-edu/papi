@@ -196,7 +196,6 @@ cleanup_barrier(void *arg)
 	int r;
 	barrier_t *b = (barrier_t *)arg;
 	r = pthread_mutex_unlock(&b->mutex);
-	(void)r;
 }
 
 
@@ -553,7 +552,7 @@ do_measure_one_cpu(void *data)
 	long		mycpu;
 	sem_t		*his_sem;
 	unsigned int	id;
-	int		fd, ret, j;
+	int		fd, ret, j, is_last;
 	int		old_rows;
 	char		cpu_str[16];
 	char		*fn;
@@ -677,6 +676,7 @@ do_measure_one_cpu(void *data)
 	/*
 	 * must wait until we are sure the master is out of its thread_create loop
 	 */
+	is_last  = arg->is_last;
 
 	barrier_wait(&barrier);
 

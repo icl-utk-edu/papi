@@ -709,7 +709,6 @@ measure_one_cpu(char **argv)
 					ssize_t r;
 					pfarg_msg_t msg;
 					r = read(ctxid, &msg, sizeof(msg));
-					(void)r;
 				}
 				switch_sets(ctxid);
 				break;

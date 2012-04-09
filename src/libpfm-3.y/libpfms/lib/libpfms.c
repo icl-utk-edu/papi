@@ -88,7 +88,6 @@ cleanup_barrier(void *arg)
 	int r;
 	r = pthread_mutex_unlock(&b->mutex);
 	dprint("free barrier mutex r=%d\n", r);
-	(void) r;
 }
 
 static int
