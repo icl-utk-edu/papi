@@ -87,6 +87,28 @@ typedef struct {
 } pentium4_cccr_reg_t;
 
 /**
+ * pentium4_replay_regs_t
+ *
+ * Describe one pair of PEBS registers for use with the replay_event event.
+ *
+ * "p4_replay_regs" is a flat array of these structures
+ * that defines all the PEBS pairs per Table A-10 of 
+ * the Intel System Programming Guide Vol 3B.
+ *
+ * @enb:      value for the PEBS_ENABLE register for a given replay metric.
+ * @mat_vert: value for the PEBS_MATRIX_VERT register for a given metric.
+ *            The replay_event event defines a series of virtual mask bits
+ *            that serve as indexes into this array. The values at that index
+ *            provide information programmed into the PEBS registers to count
+ *            specific metrics available to the replay_event event.
+ **/
+
+typedef struct {
+	int enb;
+	int mat_vert;
+} pentium4_replay_regs_t;
+
+/**
  * pentium4_pmc_t
  *
  * Provide a mapping from PMC number to the type of control register and

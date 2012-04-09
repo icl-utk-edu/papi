@@ -25,9 +25,10 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-HEADERS=perfmon/perfmon.h          \
-	perfmon/perfmon_dfl_smpl.h \
+# perfmon/perfmon.h is installed below
+HEADERS=perfmon/perfmon_dfl_smpl.h \
 	perfmon/pfmlib.h           \
+	perfmon/perfmon_v2.h	   \
 	perfmon/pfmlib_comp.h      \
 	perfmon/pfmlib_os.h
 
@@ -45,14 +46,21 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 HEADERS += perfmon/pfmlib_os_x86_64.h   \
+	   perfmon/pfmlib_os_i386.h   	\
 	   perfmon/pfmlib_comp_x86_64.h \
+	   perfmon/pfmlib_comp_i386.h 	\
 	   perfmon/perfmon_x86_64.h     \
 	   perfmon/perfmon_i386.h       \
+	   perfmon/pfmlib_i386_p6.h	\
 	   perfmon/perfmon_pebs_p4_smpl.h  \
 	   perfmon/perfmon_pebs_core_smpl.h  \
+	   perfmon/perfmon_pebs_smpl.h  \
 	   perfmon/pfmlib_amd64.h	\
 	   perfmon/pfmlib_pentium4.h	\
 	   perfmon/pfmlib_core.h	\
+	   perfmon/pfmlib_coreduo.h	\
+	   perfmon/pfmlib_intel_atom.h	\
+	   perfmon/pfmlib_intel_nhm.h	\
 	   perfmon/pfmlib_gen_ia32.h
 
 endif
@@ -61,18 +69,23 @@ ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 HEADERS += perfmon/pfmlib_os_i386.h   	\
 	   perfmon/pfmlib_comp_i386.h 	\
 	   perfmon/perfmon_i386.h     	\
-	   perfmon/perfmon_pebs_p4_smpl.h	\
-	   perfmon/perfmon_pebs_core_smpl.h	\
+	   perfmon/perfmon_pebs_p4_smpl.h \
+	   perfmon/perfmon_pebs_core_smpl.h \
+	   perfmon/perfmon_pebs_smpl.h  \
 	   perfmon/pfmlib_amd64.h       \
 	   perfmon/pfmlib_pentium4.h    \
 	   perfmon/pfmlib_core.h        \
+	   perfmon/pfmlib_coreduo.h	\
+	   perfmon/pfmlib_intel_atom.h	\
+	   perfmon/pfmlib_intel_nhm.h	\
 	   perfmon/pfmlib_i386_p6.h	\
 	   perfmon/pfmlib_gen_ia32.h
 
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
-HEADERS += perfmon/pfmlib_os_powerpc.h   \
+HEADERS += perfmon/pfmlib_cell.h	 \
+	   perfmon/pfmlib_os_powerpc.h   \
 	   perfmon/pfmlib_comp_powerpc.h \
 	   perfmon/perfmon_powerpc.h     \
 	   perfmon/pfmlib_powerpc.h
@@ -89,7 +102,8 @@ ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
 HEADERS += perfmon/pfmlib_os_mips64.h   \
 	   perfmon/pfmlib_comp_mips64.h \
 	   perfmon/perfmon_mips64.h     \
-	   perfmon/pfmlib_gen_mips64.h
+	   perfmon/pfmlib_gen_mips64.h  \
+	   perfmon/pfmlib_sicortex.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
@@ -99,15 +113,25 @@ HEADERS += perfmon/pfmlib_os_crayx2.h   \
 	   perfmon/pfmlib_crayx2.h
 endif
 
-ifeq ($(CONFIG_PFMLIB_CELL),y)
-HEADERS += perfmon/pfmlib_cell.h	 \
-	   perfmon/pfmlib_comp_powerpc.h \
-	   perfmon/pfmlib_os_powerpc.h \
-	   perfmon/perfmon_powerpc.h
+.PHONY:	perfmon.h dir
+
+perfmon.h: dir
+
+perfmon.h:
+ifeq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+	echo "#ifndef PFMLIB_OLD_PFMV2" > $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	echo "#define PFMLIB_OLD_PFMV2" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	echo "#endif" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	cat perfmon/perfmon.h >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	chmod 644 $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+else
+	$(INSTALL) -m 644 perfmon/perfmon.h $(DESTDIR)$(INCDIR)/perfmon
 endif
 
-.PHONY: all clean distclean depend
+dir:
+	mkdir -p $(DESTDIR)$(INCDIR)/perfmon
+
+install: dir perfmon.h $(HEADERS)
 
 install:
-	-mkdir -p $(DESTDIR)$(INCDIR)/perfmon
 	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INCDIR)/perfmon

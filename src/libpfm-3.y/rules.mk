@@ -24,6 +24,8 @@
 #
 .SUFFIXES: .c .S .o .lo .cpp
 
+.PHONY: all clean distclean depend install install_examples
+
 .S.o:
 	$(CC) $(CFLAGS) -c $*.S
 .c.o:

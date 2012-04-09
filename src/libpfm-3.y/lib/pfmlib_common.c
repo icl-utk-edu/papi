@@ -21,7 +21,9 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* for getline */
+#endif
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
@@ -48,6 +50,9 @@ static pfm_pmu_support_t *supported_pmus[]=
 	&amd64_support,
 	&pentium4_support,
 	&core_support,
+	&intel_atom_support,
+	&intel_nhm_support,
+	&intel_wsm_support,
 	&gen_ia32_support, /* must always be last for x86-64 */
 #endif
 
@@ -60,11 +65,18 @@ static pfm_pmu_support_t *supported_pmus[]=
 	&amd64_support,
 	&pentium4_support,
 	&core_support,
+	&intel_atom_support,
+	&intel_nhm_support,
+	&intel_wsm_support,
 	&gen_ia32_support, /* must always be last for i386 */
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_MIPS64
 	&generic_mips64_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
+	&sicortex_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_POWERPC
@@ -89,38 +101,105 @@ static pfm_pmu_support_t *supported_pmus[]=
  * contains runtime configuration options for the library.
  * mostly for debug purposes.
  */
-pfm_config_t pfm_config;
+pfm_config_t pfm_config = {
+       .current = NULL
+};
+
+int forced_pmu = PFMLIB_NO_PMU;
+
+/*
+ * check environment variables for:
+ *  LIBPFM_VERBOSE : enable verbose output (must be 1)
+ *  LIBPFM_DEBUG   : enable debug output (must be 1)
+ */
+static void
+pfm_check_debug_env(void)
+{
+	char *str;
+
+	libpfm_fp = stderr;
+
+	str = getenv("LIBPFM_VERBOSE");
+	if (str && *str >= '0' && *str <= '9') {
+		pfm_config.options.pfm_verbose = *str - '0';
+		pfm_config.options_env_set = 1;
+	}
+
+	str = getenv("LIBPFM_DEBUG");
+	if (str && *str >= '0' && *str <= '9') {
+		pfm_config.options.pfm_debug = *str - '0';
+		pfm_config.options_env_set = 1;
+	}
+
+	str = getenv("LIBPFM_DEBUG_STDOUT");
+	if (str)
+		libpfm_fp = stdout;
+
+	str = getenv("LIBPFM_FORCE_PMU");
+	if (str)
+		forced_pmu = atoi(str);
+}
 
 int
 pfm_initialize(void)
 {
 	pfm_pmu_support_t **p = supported_pmus;
+	int ret;
+
+	pfm_check_debug_env();
+	/*
+ 	 * syscall mapping, no failure on error
+ 	 */	
+	pfm_init_syscalls();
 
 	while(*p) {
-		if ((*p)->pmu_detect() == PFMLIB_SUCCESS)
+		DPRINT("trying %s\n", (*p)->pmu_name);
+		/*
+		 * check for forced_pmu
+		 * pmu_type can never be zero
+		 */
+		if ((*p)->pmu_type == forced_pmu) {
+			__pfm_vbprintf("PMU forced to %s\n", (*p)->pmu_name);
+			goto found;
+		}
+
+		if (forced_pmu == PFMLIB_NO_PMU && (*p)->pmu_detect() == PFMLIB_SUCCESS)
 			goto found;
 		p++;
 	}
 	return PFMLIB_ERR_NOTSUPP;
 found:
+	DPRINT("found %s\n", (*p)->pmu_name);
 	/*
 	 * run a few sanity checks
 	 */
 	if ((*p)->pmc_count >= PFMLIB_MAX_PMCS)
 		return PFMLIB_ERR_NOTSUPP;
+
 	if ((*p)->pmd_count >= PFMLIB_MAX_PMDS)
 		return PFMLIB_ERR_NOTSUPP;
 
+	if ((*p)->pmu_init) {
+		ret = (*p)->pmu_init();
+		if (ret != PFMLIB_SUCCESS)
+			return ret;
+	}
+
 	pfm_current = *p;
+
 	return PFMLIB_SUCCESS;
 }
 
 int
 pfm_set_options(pfmlib_options_t *opt)
 {
-	if (opt == NULL) return PFMLIB_ERR_INVAL;
-
-	pfm_config.options = *opt;
+	if (opt == NULL)
+		return PFMLIB_ERR_INVAL;
+	/*
+	 * environment variables override program presets
+	 */
+	if (pfm_config.options_env_set == 0)
+		pfm_config.options = *opt;
 
 	return PFMLIB_SUCCESS;
 }
@@ -256,6 +335,8 @@ pfm_find_event_byname(const char *n, unsigned int *idx)
 	 */
 	for(i=0; i < pfm_current->pme_count; i++) {
 		e = pfm_current->get_event_name(i);
+		if (!e)
+			continue;
 		if (!strncasecmp(e, n, len)
 		    && len == strlen(e))
 			goto found;
@@ -358,13 +439,21 @@ pfm_do_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 	unsigned int i, c, num_masks = 0;
 	unsigned long mask_val = -1;
 	char *endptr = NULL;
+	char *mask_name;
+
+	/* empty mask name */
+	if (*str == '\0')
+		return PFMLIB_ERR_UMASK;
 
 	num_masks = pfm_num_masks(ev);
 	for (i = 0; i < num_masks; i++) {
-		if (!strcasecmp(pfm_current->get_event_mask_name(ev, i), str)) {
-			*mask_idx = i;
-			return PFMLIB_SUCCESS;
-		}
+		mask_name = pfm_current->get_event_mask_name(ev, i);
+		if (!mask_name)
+			continue;
+		if (strcasecmp(mask_name, str))
+			continue;
+		*mask_idx = i;
+		return PFMLIB_SUCCESS;
 	}
 	/* don't give up yet; check for a exact numerical value */
 	mask_val = strtoul(str, &endptr, 0);
@@ -415,6 +504,10 @@ pfm_add_numeric_masks(pfmlib_event_t *e, const char *str)
 	unsigned long mask_val = -1, m = 0;
 	char *endptr = NULL;
 	int ret = PFMLIB_ERR_UMASK;
+
+	/* empty mask name */
+	if (*str == '\0')
+		return PFMLIB_ERR_UMASK;
 
 	num_masks = pfm_num_masks(e->event);
 
@@ -471,17 +564,32 @@ int
 pfm_get_event_name(unsigned int i, char *name, size_t maxlen)
 {
 	size_t l, j;
+	char *str;
 
-	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+	if (PFMLIB_INITIALIZED() == 0)
+		return PFMLIB_ERR_NOINIT;
 
-	if (i >= pfm_current->pme_count || name == NULL || maxlen < 1) return PFMLIB_ERR_INVAL;
+	if (i >= pfm_current->pme_count || name == NULL || maxlen < 1)
+		return PFMLIB_ERR_INVAL;
 
-	strncpy(name, pfm_current->get_event_name(i), maxlen-1);
+	str = pfm_current->get_event_name(i);
+	if (!str)
+		return PFMLIB_ERR_BADHOST;
+	l = strlen(str);
 
-	name[maxlen-1] = '\0';
-	l = strlen(name);
+	/*
+	 * we fail if buffer is too small, simply because otherwise we
+	 * get partial names which are useless for subsequent calls
+	 * users mus invoke pfm_get_event_name_max_len() to correctly size
+	 * the buffer for this call
+	 */
+	if ((maxlen-1) < l)
+		return PFMLIB_ERR_INVAL;
+
 	for(j=0; j < l; j++)
-		name[j] = (char)toupper(name[j]);
+		name[j] = (char)toupper(str[j]);
+
+	name[l] = '\0';
 
 	return PFMLIB_SUCCESS;
 }
@@ -522,7 +630,7 @@ pfm_get_event_counters(unsigned int i, pfmlib_regmask_t *counters)
 int
 pfm_get_event_mask_name(unsigned int ev, unsigned int mask, char *name, size_t maxlen)
 {
-	char *n;
+	char *str;
 	unsigned int num;
 	size_t l, j;
 
@@ -539,15 +647,14 @@ pfm_get_event_mask_name(unsigned int ev, unsigned int mask, char *name, size_t m
 	if (mask >= num)
 		return PFMLIB_ERR_INVAL;
 
-	n = pfm_current->get_event_mask_name(ev, mask);
-	if (n == NULL)
-		return PFMLIB_ERR_INVAL;
-
-	l = strlen(n);
+	str = pfm_current->get_event_mask_name(ev, mask);
+	if (!str)
+		return PFMLIB_ERR_BADHOST;
+	l = strlen(str);
 	if (l >= (maxlen-1))
 		return PFMLIB_ERR_FULL;
 
-	strcpy(name, n);
+	strcpy(name, str);
 
 	/*
 	 * present nice uniform names
@@ -611,7 +718,9 @@ pfm_check_unavail_pmcs(pfmlib_regmask_t *pmcs)
  * registers. In other words, invalid registers are ignored
  */
 int
-pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
+pfm_dispatch_events(
+	pfmlib_input_param_t *inp, void *model_in,
+	pfmlib_output_param_t *outp, void *model_out)
 {
 	unsigned count;
 	unsigned int i;
@@ -620,21 +729,23 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFMLIB_ERR_NOINIT;
 
-	if (inp == NULL || outp == NULL)
+	/* at least one input and one output set must exist */
+	if (!inp && !model_in)
+		return PFMLIB_ERR_INVAL;
+	if (!outp && !model_out)
 		return PFMLIB_ERR_INVAL;
 
-	/*
-	 * the default priv level must be set to something
-	 */
-	if (inp->pfp_dfl_plm == 0)
+	if (!inp)
+		count = 0;
+	else if (inp->pfp_dfl_plm == 0)
+		/* the default priv level must be set to something */
 		return PFMLIB_ERR_INVAL;
-
-	if (inp->pfp_event_count >= PFMLIB_MAX_PMCS)
+	else if (inp->pfp_event_count >= PFMLIB_MAX_PMCS)
 		return PFMLIB_ERR_INVAL;
-
-	count = inp->pfp_event_count;
-	if (count > pfm_current->num_cnt)
+	else if (inp->pfp_event_count > pfm_current->num_cnt)
 		return PFMLIB_ERR_NOASSIGN;
+	else
+		count = inp->pfp_event_count;
 
 	/*
 	 * check that event and unit masks descriptors are correct
@@ -644,8 +755,10 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 		if (ret != PFMLIB_SUCCESS)
 			return ret;
 	}
+
 	/* reset output data structure */
-	memset(outp, 0, sizeof(*outp));
+	if (outp)
+		memset(outp, 0, sizeof(*outp));
 
 	return pfm_current->dispatch_events(inp, model_in, outp, model_out);
 }
@@ -791,6 +904,7 @@ pfm_get_max_event_name_len(size_t *len)
 {
 	unsigned int i, j, num_masks;
 	size_t max = 0, l;
+	char *str;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFMLIB_ERR_NOINIT;
@@ -798,7 +912,10 @@ pfm_get_max_event_name_len(size_t *len)
 		return PFMLIB_ERR_INVAL;
 
 	for(i=0; i < pfm_current->pme_count; i++) {
-		l = strlen(pfm_current->get_event_name(i));
+		str = pfm_current->get_event_name(i);
+		if (!str)
+			continue;
+		l = strlen(str);
 		if (l > max) max = l;
 
 		num_masks = pfm_num_masks(i);
@@ -808,7 +925,10 @@ pfm_get_max_event_name_len(size_t *len)
 		 * which is inserted as the unit mask separator
 		 */
 		for (j = 0; j < num_masks; j++) {
-			l += 1 + strlen(pfm_current->get_event_mask_name(i, j));
+			str = pfm_current->get_event_mask_name(i, j);
+			if (!str)
+				continue;
+			l += 1 + strlen(str);
 		}
 		if (l > max) max = l;
 	}
@@ -905,7 +1025,7 @@ pfm_get_event_mask_code(unsigned int event_idx, unsigned int mask_idx, unsigned 
 int
 pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen)
 {
-	char *n;
+	char *str;
 	size_t l, j;
 	int ret;
 
@@ -926,21 +1046,25 @@ pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen)
 	 */
 	*name = '\0';
 
-	n = pfm_current->get_event_name(e->event);
-	l = strlen(n);
+	str = pfm_current->get_event_name(e->event);
+	if (!str)
+		return PFMLIB_ERR_BADHOST;
+	l = strlen(str);
 	if (l > (maxlen-1))
 		return PFMLIB_ERR_FULL;
 
-	strcpy(name, n);
+	strcpy(name, str);
 	maxlen -= l + 1;
 	for(j=0; j < e->num_masks; j++) {
-		n = pfm_current->get_event_mask_name(e->event, e->unit_masks[j]);
-		l = strlen(n);
+		str = pfm_current->get_event_mask_name(e->event, e->unit_masks[j]);
+		if (!str)
+			continue;
+		l = strlen(str);
 		if (l > (maxlen-1))
 			return PFMLIB_ERR_FULL;
 
 		strcat(name, ":");
-		strcat(name, n);
+		strcat(name, str);
 		maxlen -= l + 1;
 	}
 	/*
@@ -992,26 +1116,41 @@ pfm_find_full_event(const char *v, pfmlib_event_t *e)
 	 */
 	p = strchr(str, ':');
 
+	/* If no unit masks available and none specified, we're done */
+
+	if ((j == 0) && (p == NULL)) {
+		  free(str);
+		  return PFMLIB_SUCCESS;
+	}
+	
+	ret = PFMLIB_ERR_UMASK;
 	/*
 	 * error if:
-	 * 	- event has unit masks and none is passed
 	 * 	- event has no unit mask and at least one is passed
 	 */
-	if ((!p && j) || (p && !j)) {
-		ret = PFMLIB_ERR_UMASK;
+ 	if (p && !j)
 		goto error;
-	}
 
 	/*
-	 * if no unit mask, then we are done
+	 * error if:
+	 * 	- event has unit masks, no default unit mask, and none is passed
 	 */
-	if (!j) {
-		free(str);
-		return PFMLIB_SUCCESS;
+	if (j && !p) {
+		if (pfm_current->has_umask_default
+		    && pfm_current->has_umask_default(e->event)) {
+			free(str);
+			return PFMLIB_SUCCESS;
+		}
+		goto error;
 	}
 
 	/* skip : */
 	p++;
+	/*
+ 	 * separator is passed but there is nothing behind it
+ 	 */
+	if (!*p)
+		goto error;
 
 	/* parse unit masks */
 	for( q = p; q ; p = q) {

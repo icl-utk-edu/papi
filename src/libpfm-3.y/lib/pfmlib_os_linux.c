@@ -21,34 +21,26 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* for getline */
+#endif
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <syscall.h>
+#include <errno.h>
 #include <sys/utsname.h>
 #include <perfmon/perfmon.h>
 
 #include <perfmon/pfmlib.h>
 #include "pfmlib_priv.h"
 
-#define PFM_pfm_create_context		(sys_base+0)
-#define PFM_pfm_write_pmcs		(sys_base+1)
-#define PFM_pfm_write_pmds		(sys_base+2)
-#define PFM_pfm_read_pmds		(sys_base+3)
-#define PFM_pfm_load_context		(sys_base+4)
-#define PFM_pfm_start			(sys_base+5)
-#define PFM_pfm_stop			(sys_base+6)
-#define PFM_pfm_restart			(sys_base+7)
-#define PFM_pfm_create_evtsets		(sys_base+8)
-#define PFM_pfm_getinfo_evtsets		(sys_base+9)
-#define PFM_pfm_delete_evtsets		(sys_base+10)
-#define PFM_pfm_unload_context		(sys_base+11)
-
-static int sys_base; /* syscall base */
+int _pfmlib_sys_base; /* syscall base */
+int _pfmlib_major_version; /* kernel perfmon major version */
+int _pfmlib_minor_version; /* kernel perfmon minor version */
 
 /*
  * helper function to retrieve one value from /proc/cpuinfo
@@ -112,216 +104,184 @@ error:
 	return ret;
 }
 
-int
-pfm_create_context(pfarg_ctx_t *ctx, char *name, void *smpl_arg, size_t smpl_size)
-{
-#ifdef PFMLIB_VERSION_22
-	/*
- 	 * In perfmon v2.2, the pfm_create_context() call had a different return value.
- 	 * It used to return errno, now it returns the file descriptor.
- 	 */
-	int r = syscall (PFM_pfm_create_context, ctx, smpl_arg, smpl_size);
-	return (r < 0 ? r : ctx->ctx_fd);
-#else
-	return (int)syscall(PFM_pfm_create_context, ctx, name, smpl_arg, smpl_size);
-#endif
-}
-
-int
-pfm_write_pmcs(int fd, pfarg_pmc_t *pmcs, int count)
-{
-	return (int)syscall(PFM_pfm_write_pmcs, fd, pmcs, count);
-}
-
-int
-pfm_write_pmds(int fd, pfarg_pmd_t *pmds, int count)
-{
-	return (int)syscall(PFM_pfm_write_pmds, fd, pmds, count);
-}
-
-int
-pfm_read_pmds(int fd, pfarg_pmd_t *pmds, int count)
-{
-	return (int)syscall(PFM_pfm_read_pmds, fd, pmds, count);
-}
-
-int
-pfm_load_context(int fd, pfarg_load_t *load)
-{
-	return (int)syscall(PFM_pfm_load_context, fd, load);
-}
-
-int
-pfm_start(int fd, pfarg_start_t *start)
-{
-	return (int)syscall(PFM_pfm_start, fd, start);
-}
-
-int
-pfm_stop(int fd)
-{
-	return (int)syscall(PFM_pfm_stop, fd);
-}
-
-int
-pfm_restart(int fd)
-{
-	return (int)syscall(PFM_pfm_restart, fd);
-}
-
-int
-pfm_create_evtsets(int fd, pfarg_setdesc_t *setd, int count)
-{
-	return (int)syscall(PFM_pfm_create_evtsets, fd, setd, count);
-}
-
-int
-pfm_delete_evtsets(int fd, pfarg_setdesc_t *setd, int count)
-{
-	return (int)syscall(PFM_pfm_delete_evtsets, fd, setd, count);
-}
-
-int
-pfm_getinfo_evtsets(int fd, pfarg_setinfo_t *info, int count)
-{
-	return (int)syscall(PFM_pfm_getinfo_evtsets, fd, info, count);
-}
-
-int
-pfm_unload_context(int fd)
-{
-	return (int)syscall(PFM_pfm_unload_context, fd);
-}
-
 #if   defined(__x86_64__)
-static void adjust_sys_base(int version)
+static void adjust__pfmlib_sys_base(int version)
 {
 #ifdef CONFIG_PFMLIB_ARCH_CRAYXT
-	sys_base = 273;
+	_pfmlib_sys_base = 273;
 #else
 	switch(version) {
+		case 29:
+		case 28:
+		case 27:
+			_pfmlib_sys_base = 295;
+			break;
+		case 26:
 		case 25:
-			sys_base = 288;
+			_pfmlib_sys_base = 288;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base = 286;
+			_pfmlib_sys_base = 286;
 	}
 #endif
 }
 #elif defined(__i386__)
-static void adjust_sys_base(int version)
+static void adjust__pfmlib_sys_base(int version)
 {
 	switch(version) {
+		case 29:
+		case 28:
+		case 27:	
+			_pfmlib_sys_base = 333;
+			break;
+		case 26:
 		case 25:
-			sys_base = 327;
+			_pfmlib_sys_base = 327;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base = 327;
+			_pfmlib_sys_base = 325;
 	}
 }
 #elif defined(__mips__)
 #if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
-static void adjust_sys_base(int version)
+static void adjust__pfmlib_sys_base(int version)
 {
-	sys_base = 6000;
+	_pfmlib_sys_base = 6000;
 #ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-	sys_base += 279;
+	_pfmlib_sys_base += 279;
 #else
 	switch(version) {
+		case 29:
+		case 28:
+		case 27:
+			_pfmlib_sys_base += 293;
+			break;
+		case 26:
 		case 25:
-			sys_base += 287;
+			_pfmlib_sys_base += 287;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base += 284;
+			_pfmlib_sys_base += 284;
 	}
 #endif
 }
-#elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
-static void adjust_sys_base(int version)
+#elif (_MIPS_SIM == _ABIO32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
+static void adjust__pfmlib_sys_base(int version)
 {
-	sys_base = 4000;
+	_pfmlib_sys_base = 4000;
 #ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-	sys_base += 316;
+	_pfmlib_sys_base += 316;
 #else
 	switch(version) {
+		case 29:
+		case 28:
+		case 27:
+			_pfmlib_sys_base += 330;
+			break;
+		case 26:
 		case 25:
-			sys_base += 324;
+			_pfmlib_sys_base += 324;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base += 321;
+			_pfmlib_sys_base += 321;
 	}
 #endif
 }
 #elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
-static void adjust_sys_base(int version)
+static void adjust__pfmlib_sys_base(int version)
 {
-	sys_base = 5000;
+	_pfmlib_sys_base = 5000;
 #ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-	sys_base += 275;
+	_pfmlib_sys_base += 275;
 #else
 	switch(version) {
+		case 29:
+		case 28:
+		case 27:
+			_pfmlib_sys_base += 289;
+			break;
+		case 26:
 		case 25:
-			sys_base += 283;
+			_pfmlib_sys_base += 283;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base += 280;
+			_pfmlib_sys_base += 280;
 	}
 #endif
 }
 #endif
 #elif defined(__ia64__)
-static void adjust_sys_base(int version)
+static void adjust__pfmlib_sys_base(int version)
 {
 	switch(version) {
+		case 29:
+		case 28:
+		case 27:
+			_pfmlib_sys_base = 1319;
+			break;
+		case 26:
 		case 25:
-			sys_base = 1313;
+			_pfmlib_sys_base = 1313;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base = 1310;
+			_pfmlib_sys_base = 1310;
 	}
 }
 #elif defined(__powerpc__)
-static void adjust_sys_base(int version)
+static void adjust__pfmlib_sys_base(int version)
 {
 	switch(version) {
+		case 29:
+		case 28:
+		case 27:
+			_pfmlib_sys_base = 319;
+			break;
+		case 26:
 		case 25:
-			sys_base = 313;
+			_pfmlib_sys_base = 313;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base = 310;
+			_pfmlib_sys_base = 310;
 	}
 }
 #elif defined(__sparc__)
-static void adjust_sys_base(int version)
+static void adjust__pfmlib_sys_base(int version)
 {
 	switch(version) {
+		case 28:
+			_pfmlib_sys_base = 324;
+			break;
+		case 27:
+			_pfmlib_sys_base = 323;
+			break;
+		case 26:
 		case 25:
-			sys_base = 317;
+			_pfmlib_sys_base = 317;
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base = 310;
+			_pfmlib_sys_base = 310;
 	}
 }
 #elif defined(__crayx2)
-static inline void adjust_sys_base(int version)
+static inline void adjust__pfmlib_sys_base(int version)
 {
-	sys_base = 294;
+	_pfmlib_sys_base = 294;
 }
 #else
-static inline void adjust_sys_base(int version)
+static inline void adjust__pfmlib_sys_base(int version)
 {}
 #endif
 
-void
-pfm_init_syscalls(void)
+static void
+pfm_init_syscalls_hardcoded(void)
 {
 	struct utsname b;
 	char *p, *s;
@@ -365,21 +325,70 @@ pfm_init_syscalls(void)
 	/* v is subversion: 23, 24 25 */
 	v = atoi(s);
 
-	adjust_sys_base(v);
-	__pfm_vbprintf("sycall base %d\n", sys_base);
+	adjust__pfmlib_sys_base(v);
 }
 
-#ifdef __ia64__
-#define __PFMLIB_OS_COMPILE
-#include <perfmon/pfmlib.h>
-
-/*
- * this is the old perfmon2 interface, maintained for backward
- * compatibility reasons with older applications. This is for IA-64 ONLY.
- */
-int
-perfmonctl(int fd, int cmd, void *arg, int narg)
+static int
+pfm_init_syscalls_sysfs(void)
 {
-	return syscall(__NR_perfmonctl, fd, cmd, arg, narg);
+	FILE *fp;
+	int ret;
+
+	fp = fopen("/sys/kernel/perfmon/syscall", "r");
+	if (!fp)
+		return -1;
+
+	ret = fscanf(fp, "%d", &_pfmlib_sys_base);
+
+	fclose(fp);
+	return ret == 1 ? 0 : -1;
 }
-#endif /* __ia64__ */
+static int
+pfm_init_version_sysfs(void)
+{
+	FILE *fp;
+	char *p;
+	char v[8];
+	int ret;
+
+	fp = fopen("/sys/kernel/perfmon/version", "r");
+	if (!fp)
+		return -1;
+
+	ret = fscanf(fp, "%s", v);
+	if (ret != 1)
+		goto skip;
+	p = strchr(v, '.');
+	if (p) {
+		*p++ = '\0';
+		_pfmlib_major_version = atoi(v);
+		_pfmlib_minor_version = atoi(p);
+	}
+skip:
+	fclose(fp);
+	return ret == 1 ? 0 : -1;
+}
+
+
+void
+pfm_init_syscalls(void)
+{
+	int ret;
+
+	/*
+	 * first try via sysfs
+	 */
+	ret = pfm_init_syscalls_sysfs();
+	if (ret)
+		pfm_init_syscalls_hardcoded();
+
+	ret = pfm_init_version_sysfs();
+	if (ret) {
+		_pfmlib_major_version = 3;
+		_pfmlib_minor_version = 0;
+	}
+	__pfm_vbprintf("sycall base %d\n", _pfmlib_sys_base);
+	__pfm_vbprintf("major version %d\nminor version %d\n",
+		_pfmlib_major_version,
+		_pfmlib_minor_version);
+}

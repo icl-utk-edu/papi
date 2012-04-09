@@ -25,7 +25,7 @@
 
 #define INTEL_CORE_MESI_UMASKS \
 		{ .pme_uname = "MESI",\
-		  .pme_udesc = "Any cacheline access",\
+		  .pme_udesc = "Any cacheline access (default)",\
 		  .pme_ucode = 0xf\
 		},\
 		{ .pme_uname = "I_STATE",\
@@ -87,13 +87,13 @@ static pme_core_entry_t core_pe[]={
 	},
 	{.pme_name = "INSTRUCTIONS_RETIRED",
 	 .pme_code = 0x00c0,
-	 .pme_flags = PFMLIB_CORE_FIXED0|PFMLIB_CORE_PEBS,
-	 .pme_desc =  "count the number of instructions at retirement. For instructions that consists of multiple micro-ops, this event counts the retirement of the last micro-op of the instruction. Alias to event INST_RETIRED:ANY_P",
+	 .pme_flags = PFMLIB_CORE_FIXED0,
+	 .pme_desc =  "count the number of instructions at retirement. Alias to event INST_RETIRED:ANY_P",
 	},
 	{.pme_name = "UNHALTED_REFERENCE_CYCLES",
 	 .pme_code = 0x013c,
-	 .pme_flags = PFMLIB_CORE_FIXED2,
-	 .pme_desc =  "Unhalted reference cycles. Measures bus cycles. Alias to event CPU_CLK_UNHALTED:BUS",
+	 .pme_flags = PFMLIB_CORE_FIXED2_ONLY,
+	 .pme_desc =  "Unhalted reference cycles. Alias to event CPU_CLK_UNHALTED:REF",
 	},
 	{.pme_name = "LAST_LEVEL_CACHE_REFERENCES",
 	 .pme_code = 0x4f2e,
@@ -114,6 +114,9 @@ static pme_core_entry_t core_pe[]={
 	/*
 	 * END: architected events
 	 */
+	/*
+	 * BEGIN: Core 2 Duo events
+	 */
 	{ .pme_name = "RS_UOPS_DISPATCHED_CYCLES",
 	  .pme_code = 0xa1,
 	  .pme_flags = PFMLIB_CORE_PMC0,
@@ -132,7 +135,7 @@ static pme_core_entry_t core_pe[]={
 		  .pme_ucode = 0x4
 		},
 		{ .pme_uname = "PORT_3",
-		  .pme_udesc = "on port 0",
+		  .pme_udesc = "on port 3",
 		  .pme_ucode = 0x8
 		},
 		{ .pme_uname = "PORT_4",
@@ -155,9 +158,10 @@ static pme_core_entry_t core_pe[]={
 	  .pme_code = 0xa0,
 	  .pme_desc =  "Number of micro-ops dispatched for execution",
 	},
-	/*
-	 * BEGIN: Core 2 Duo events
-	 */
+	{ .pme_name = "RS_UOPS_DISPATCHED_NONE",
+	  .pme_code = 0xa0 | (1 << 23 | 1 << 24),
+	  .pme_desc =  "Number of of cycles in which no micro-ops is dispatched for execution",
+	},
 	{ .pme_name = "LOAD_BLOCK",
 	  .pme_code = 0x3,
 	  .pme_flags = 0,
@@ -401,7 +405,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_IFETCH",
 	  .pme_code = 0x28,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 cacheable instruction fetch requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -411,7 +415,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_LD",
 	  .pme_code = 0x29,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 cache reads",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -422,7 +426,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_ST",
 	  .pme_code = 0x2a,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 store requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -432,7 +436,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_LOCK",
 	  .pme_code = 0x2b,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 locked accesses",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -442,7 +446,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_RQSTS",
 	  .pme_code = 0x2e,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 cache requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -453,7 +457,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_REJECT_BUSQ",
 	  .pme_code = 0x30,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "Rejected L2 cache requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -483,29 +487,32 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "CPU_CLK_UNHALTED",
 	  .pme_code = 0x3c,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_UMASK_NCOMBO,
 	  .pme_desc =  "Core cycles when core is not halted",
 	  .pme_umasks = {
 		{ .pme_uname = "CORE_P",
 		  .pme_udesc = "Core cycles when core is not halted",
 		  .pme_ucode = 0x0,
-	  	  .pme_flags = PFMLIB_CORE_FIXED1
+		},
+		{ .pme_uname = "REF",
+		  .pme_udesc = "Reference cycles. This event is not affected by core changes such as P-states or TM2 transitions but counts at the same frequency as the time stamp counter. This event can approximate elapsed time. This event has a constant ratio with the CPU_CLK_UNHALTED:BUS event",
+		  .pme_ucode = 0x1,
+	  	  .pme_flags = PFMLIB_CORE_FIXED2_ONLY /* Can only be measured on FIXED_CTR2 */
 		},
 		{ .pme_uname = "BUS",
-		  .pme_udesc = "Bus cycles when core is not halted",
+		  .pme_udesc = "Bus cycles when core is not halted. This event can give a measurement of the elapsed time. This events has a constant ratio with CPU_CLK_UNHALTED:REF event, which is the maximum bus to processor frequency ratio",
 		  .pme_ucode = 0x1,
-	  	  .pme_flags = PFMLIB_CORE_FIXED2
 		},
 		{ .pme_uname = "NO_OTHER",
 		  .pme_udesc = "Bus cycles when core is active and the other is halted",
 		  .pme_ucode = 0x2
 		}
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "L1D_CACHE_LD",
 	  .pme_code = 0x40,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_MESI,
 	  .pme_desc =  "L1 cacheable data reads",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS
@@ -514,7 +521,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L1D_CACHE_ST",
 	  .pme_code = 0x41,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_MESI,
 	  .pme_desc =  "L1 cacheable data writes",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS
@@ -523,7 +530,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L1D_CACHE_LOCK",
 	  .pme_code = 0x42,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_MESI,
 	  .pme_desc =  "L1 data cacheable locked reads",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS
@@ -593,12 +600,8 @@ static pme_core_entry_t core_pe[]={
 		  .pme_udesc = "Streaming SIMD Extensions (SSE) PrefetchT1 and PrefetchT2 instructions missing all cache levels",
 		  .pme_ucode = 0x2
 		},
-		{ .pme_uname = "STORES",
-		  .pme_udesc = "Streaming SIMD Extensions (SSE) Weakly-ordered store instructions missing all cache levels",
-		  .pme_ucode = 0x3
-		}
 	   },
-	   .pme_numasks = 4
+	   .pme_numasks = 3
 	},
 	{ .pme_name = "LOAD_HIT_PRE",
 	  .pme_code = 0x4c,
@@ -1098,7 +1101,7 @@ static pme_core_entry_t core_pe[]={
 		{ .pme_uname = "ANY_P",
 		  .pme_udesc = "Instructions retired (precise event)",
 		  .pme_ucode = 0x0,
-	  	  .pme_flags = PFMLIB_CORE_PEBS|PFMLIB_CORE_FIXED0
+	  	  .pme_flags = PFMLIB_CORE_PEBS
 		},
 		{ .pme_uname = "LOADS",
 		  .pme_udesc = "Instructions retired, which contain a load",
@@ -1134,7 +1137,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "UOPS_RETIRED",
 	  .pme_code = 0xc2,
-	  .pme_flags = PFMLIB_CORE_PEBS,
+	  .pme_flags = 0,
 	  .pme_desc =  "Fused load+op or load+indirect branch retired",
 	  .pme_umasks = {
 		{ .pme_uname = "LD_IND_BR",
@@ -1266,7 +1269,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "ITLB_MISS_RETIRED",
 	  .pme_code = 0xc9,
-	  .pme_flags = PFMLIB_CORE_PMC0,
+	  .pme_flags = 0,
 	  .pme_desc =  "Retired instructions that missed the ITLB"
 	},
 	{ .pme_name = "SIMD_COMP_INST_RETIRED",

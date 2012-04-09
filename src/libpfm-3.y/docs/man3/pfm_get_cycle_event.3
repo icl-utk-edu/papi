@@ -22,14 +22,14 @@ exact definition of those events. The library provides this information
 on a best effort basis. User must refer to PMU model specific documentation
 to validate the event definition.
 .sp
-The \fBpfm_get_cycle_event\fR function returns in \fBev\fR the event
+The \fBpfm_get_cycle_event()\fR function returns in \fBev\fR the event
 and optional unit mask descriptors for the event that counts elapsed 
 cycles. Depending on the PMU model, there may be unit mask(s) necessary
 to count cycles. Application must check the value returned in
 \fBev->num_masks\fR.
 
 .sp
-The \fBpfm_get_inst_retired_event\fR function returns in \fBev\fR the event
+The \fBpfm_get_inst_retired_event()\fR function returns in \fBev\fR the event
 and optional unit mask descriptors for the event that counts the number
 of returned instruction. Depending on the PMU model, there may be unit
 mask(s) necessary to count retired instructions. Application must check

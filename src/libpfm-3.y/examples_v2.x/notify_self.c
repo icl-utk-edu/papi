@@ -74,14 +74,11 @@ warning(char *fmt, ...)
 }
 
 static void
-sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
+sigio_handler(int n)
 {
 	pfarg_msg_t msg;
 	int fd = ctx_fd;
 	int r;
-
-	if (fd != ctx_fd)
-		fatal_error("handler does not get valid file descriptor\n");
 
 	if (event1_name && pfm_read_pmds(fd, pd+1, 1) == -1)
 		fatal_error("pfm_read_pmds: %s", strerror(errno));
@@ -177,7 +174,7 @@ main(int argc, char **argv)
 	 * Install the signal handler (SIGIO)
 	 */
 	memset(&act, 0, sizeof(act));
-	act.sa_handler = (sig_t)sigio_handler;
+	act.sa_handler = sigio_handler;
 	sigaction (SIGIO, &act, 0);
 
 	memset(pc, 0, sizeof(pc));

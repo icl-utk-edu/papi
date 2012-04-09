@@ -25,23 +25,6 @@
 #define POWER4_NUM_GROUP_VEC 1
 #define POWER4_NUM_CONTROL_REGS 3
 
-typedef struct {
-   char *pme_name;
-   char *pme_short_desc;
-   char *pme_long_desc;
-   int pme_event_ids[POWER4_NUM_EVENT_COUNTERS];
-   unsigned long long pme_group_vector[POWER4_NUM_GROUP_VEC];
-} pme_power4_entry_t;
-
-typedef struct {
-   char *pmg_name;
-   char *pmg_desc;
-   int pmg_event_ids[POWER4_NUM_EVENT_COUNTERS];
-   unsigned long long pmg_mmcr0;
-   unsigned long long pmg_mmcr1;
-   unsigned long long pmg_mmcra;
-} pmg_power4_group_t;
-
 
 #endif
 
