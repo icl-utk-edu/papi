@@ -769,6 +769,7 @@ _papi_pfm_init_substrate( int cidx )
 							  sizeof ( _papi_pfm_vector.cmp_info.kernel_version ) );
 	if ( retval != PAPI_OK )
 		return ( retval );
+
 #ifdef PFM_VERSION
 	sprintf( buf, "%d.%d", PFM_VERSION_MAJOR( PFM_VERSION ),
 			 PFM_VERSION_MINOR( PFM_VERSION ) );
@@ -841,59 +842,14 @@ _papi_pfm_init_substrate( int cidx )
 			return ( retval );
 	}
 
-	/* Always initialize globals dynamically to handle forks properly. */
+	_papi_libpfm_init(&_papi_pfm_vector,cidx);
 
-	_perfmon2_pfm_pmu_type = -1;
-
-	/* Opened once for all threads. */
-	SUBDBG( "pfm_get_pmu_type(%p)\n", &_perfmon2_pfm_pmu_type );
-	if ( pfm_get_pmu_type( &_perfmon2_pfm_pmu_type ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_pmu_type(%p): %s", _perfmon2_pfm_pmu_type,
-				   pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-
-	pmu_name[0] = '\0';
-	if ( pfm_get_pmu_name( pmu_name, PAPI_MIN_STR_LEN ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_pmu_name(%p,%d): %s", pmu_name, PAPI_MIN_STR_LEN,
-				   pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-	SUBDBG( "PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type );
-
-#ifdef DEBUG
-	memset( &pfmlib_options, 0, sizeof ( pfmlib_options ) );
-	if ( ISLEVEL( DEBUG_SUBSTRATE ) ) {
-		pfmlib_options.pfm_debug = 1;
-		pfmlib_options.pfm_verbose = 1;
-	}
-	SUBDBG( "pfm_set_options(%p)\n", &pfmlib_options );
-	if ( pfm_set_options( &pfmlib_options ) ) {
-		PAPIERROR( "pfm_set_options(%p): %s", &pfmlib_options,
-				   pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-#endif
-
-	/* Fill in sub_info */
-
-	SUBDBG( "pfm_get_num_events(%p)\n", &ncnt );
-	if ( ( retval = pfm_get_num_events( &ncnt ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_num_events(%p): %s\n", &ncnt,
-				   pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-	SUBDBG( "pfm_get_num_events: %d\n", ncnt );
-	_papi_pfm_vector.cmp_info.num_native_events = ncnt;
 
 	strcpy( _papi_pfm_vector.cmp_info.name,"perfmon.c" );
 	strcpy( _papi_pfm_vector.cmp_info.description,
 		"Linux perfmon2 CPU counters" );
 	strcpy( _papi_pfm_vector.cmp_info.version, "3.8" );
 	sprintf( buf, "%08x", version );
-
-	pfm_get_num_counters( ( unsigned int * ) &_papi_pfm_vector.cmp_info.num_cntrs );
-	SUBDBG( "pfm_get_num_counters: %d\n", _papi_pfm_vector.cmp_info.num_cntrs );
 
 	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
 		/* powerpc */
