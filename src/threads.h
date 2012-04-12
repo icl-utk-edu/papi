@@ -43,7 +43,7 @@ extern volatile ThreadInfo_t *_papi_hwi_thread_head;
 extern THREAD_LOCAL_STORAGE_KEYWORD ThreadInfo_t *_papi_hwi_my_thread;
 #endif
 
-/** Function that returns and unsigned long int thread identifier 
+/** Function that returns an unsigned long int thread identifier 
  *	@internal */
 
 extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
