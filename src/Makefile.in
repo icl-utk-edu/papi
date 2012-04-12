@@ -65,6 +65,7 @@ PERFCTR_ROOT 	= @perfctr_root@
 PFM_INC_PATH	= @pfm_incdir@
 PFM_LIB_PATH	= @pfm_libdir@
 PFM_OLD_PFMV2	= @old_pfmv2@
+BGPM_INSTALL_DIR = @BGPM_INSTALL_DIR@
 PFM_PREFIX	= @pfm_prefix@ 
 PFM_ROOT  	= @pfm_root@
 POST_BUILD = @POST_BUILD@

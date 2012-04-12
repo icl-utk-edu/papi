@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR MEMSUBSTR DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR MEMSUBSTR DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS BGPM_INSTALL_DIR LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -860,6 +860,7 @@ Optional Packages:
  --with-user-events	Build with support for user defined events.
  --with-static-user-events             Build with a static user events file papi_static_user_events.h.
   --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds
+  --with-bgpm_installdir=<path> Specify the installation path of BGPM
   --with-nativecc=<path>		Specify native C compiler for header generation
   --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
   --with-components=<"component1 component2">		Specify which components to build
@@ -1407,7 +1408,7 @@ if test "${with_OSVER+set}" = set; then
   withval="$with_OSVER"
   OSVER=$withval
 else
-  if test "$OS" != "bgp"; then
+  if test "$OS" != "bgp" -o "$OS" != "bgq"; then
               OSVER="`uname -r`"
             fi
 fi;
@@ -2267,7 +2268,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2270:" \
+echo "$as_me:2271:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3666,6 +3667,20 @@ elif test "$OS" = "bgp"; then
   tls=no
   ffsll=yes
   cross_compiling=yes
+elif test "$OS" = "bgq"; then
+
+# Check whether --with-bgpm_installdir or --without-bgpm_installdir was given.
+if test "${with_bgpm_installdir+set}" = set; then
+  withval="$with_bgpm_installdir"
+  BGPM_INSTALL_DIR=$withval
+              CFLAGS="$CFLAGS -I$withval"
+else
+  { { echo "$as_me:$LINENO: error: BGQ CPU component requires installation path of BGPM (see --with-bgpm_installdir)" >&5
+echo "$as_me: error: BGQ CPU component requires installation path of BGPM (see --with-bgpm_installdir)" >&2;}
+   { (exit 1); exit 1; }; }
+fi;
+  bitmode=64
+  tls=no
 elif test "$OS" = "linux"; then
   if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
     if test "$bitmode" = "64" -a "$libdir" = '${exec_prefix}/lib'; then
@@ -3789,14 +3804,26 @@ if test "${with_components+set}" = set; then
   components=$withval
 fi;
 for comp in $components; do
-  COMPONENT_RULES="$COMPONENT_RULES components/$comp/Rules.$comp"
-  echo "extern papi_vector_t _${comp}_vector;" >> components_config.h
+  idx=`expr index "$comp" /`
+  if test "$idx" = 0; then
+	subcomp=$comp
+  else
+    subcomp=${comp:$idx}
+  fi
+  COMPONENT_RULES="$COMPONENT_RULES components/$comp/Rules.$subcomp"
+  echo "extern papi_vector_t _${subcomp}_vector;" >> components_config.h
 done
 echo "" >> components_config.h
 echo "papi_vector_t *_papi_hwd[] = {" >> components_config.h
 echo "   &MY_VECTOR," >> components_config.h
 for comp in $components; do
-  echo "   &_${comp}_vector," >> components_config.h
+  idx=`expr index "$comp" /`
+  if test "$idx" = 0; then
+	subcomp=$comp
+  else
+    subcomp=${comp:$idx}
+  fi
+  echo "   &_${subcomp}_vector," >> components_config.h
 done
 echo "   NULL" >> components_config.h
 echo "};" >> components_config.h
@@ -4213,6 +4240,8 @@ echo "$as_me: error: Only SPARC processors are supported on Solaris" >&2;}
                  fi ;;
                bgp)
 	             CPU=bgp ;;
+			   bgq)
+	             CPU=bgq ;;
                esac
 fi;
 echo "$as_me:$LINENO: result: $CPU" >&5
@@ -6831,6 +6860,8 @@ case "$OS" in
     MAKEVER="$OS"-"$CPU" ;;
   bgp)
     MAKEVER=bgp ;;
+  bgq)
+    MAKEVER=bgq ;;
   CLE)
     if test "$perfmon2" = "yes"; then
 #  major_version=`echo $OSVER | sed 's/\([[^.]][[^.]]*\).*/\1/'`
@@ -7159,6 +7190,24 @@ elif test "$MAKEVER" = "bgp"; then
   LIBS=static
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   OMPCFLGS=""
+elif test "$MAKEVER" = "bgq"; then
+  FILENAME=Rules.bgpm
+  if test "x$no_cpu_counters" = "x"; then
+    SUBSTR=linux-bgq
+    MEMSUBSTR=linux-bgq
+	MISCSRCS=linux-bgq-common.c
+	MISCOBJS='$(MISCSRCS:.c=.o)'
+	SUBSTR_HEADERS=linux-bgq-common.h
+    #CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
+  else
+    CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include'
+  fi
+  OPTFLAGS="-g -Wall -O3"
+  TOPTFLAGS="-g -Wall -O0"
+  SHLIB=libpapi.so
+  DESCR="Linux for Blue Gene/Q"
+  CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+  OMPCFLGS=""
 elif test "$MAKEVER" = "CLE-perfmon2"; then
   if test "x$no_cpu_counters" = "x"; then
     FILENAME=Rules.pfm_pe
@@ -7375,6 +7424,7 @@ fi
 if test "$USER_EVENTS" = "yes"; then
 	CFLAGS="$CFLAGS -DUSER_EVENTS"
 fi
+
 
 
 
@@ -8171,6 +8221,7 @@ s,@COMPONENTS@,$COMPONENTS,;t t
 s,@FTEST_TARGETS@,$FTEST_TARGETS,;t t
 s,@UTIL_TARGETS@,$UTIL_TARGETS,;t t
 s,@EXTRA_CFLAGS@,$EXTRA_CFLAGS,;t t
+s,@BGPM_INSTALL_DIR@,$BGPM_INSTALL_DIR,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

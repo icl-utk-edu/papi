@@ -16,9 +16,9 @@ static double delta_t = 0.0;
 static struct itimerval first_u;	   /* user time */
 static struct itimerval first_w;	   /* wall time */
 
-int ax = 0;
-int bx = 0;
-int cx = 0;
+static int ax = 0;
+static int bx = 0;
+static int cx = 0;
 
 /* Compute peformance by doing 200 repeated additions */
 static void
