@@ -1,0 +1,7 @@
+# $Id: Rules.bgpm,v 1.1 2011/03/11 23:06:54 jagode Exp $
+
+COMPSRCS += components/bgpm/NWunit/linux-NWunit.c 
+COMPOBJS += linux-NWunit.o 
+
+linux-NWunit.o: components/bgpm/NWunit/linux-NWunit.c components/bgpm/NWunit/linux-NWunit.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/bgpm/NWunit/linux-NWunit.c -o linux-NWunit.o
