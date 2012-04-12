@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
   int retval,max_multiplex,i,EventSet=PAPI_NULL;
   PAPI_event_info_t info;
   int added=0;
+  int events_tried=0;
 
         /* Set TESTS_QUIET variable */
         tests_quiet( argc, argv );      
@@ -69,9 +70,9 @@ int main(int argc, char **argv) {
 	     if (!TESTS_QUIET) printf("Success!\n");
 	     added++;
 	  }
+	  events_tried++;
 
-
-	} while ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK );
+	} while (PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK );
 
 	PAPI_shutdown(  );
 
@@ -79,7 +80,12 @@ int main(int argc, char **argv) {
            printf("Added %d of theoretical max %d\n",added,max_multiplex);
 	}
 
-	if (added!=max_multiplex) {
+	if (events_tried<max_multiplex) {
+	   if (!TESTS_QUIET) {
+              printf("Ran out of events before we ran out of room\n");	      
+	   }
+	}
+	else if (added!=max_multiplex) {
 	   test_fail(__FILE__, __LINE__, 
 		     "Couldn't max out multiplexed events", 1);
 	}
