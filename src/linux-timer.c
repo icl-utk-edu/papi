@@ -410,6 +410,7 @@ again:
 	 goto again;
       }
       PAPIERROR( "read()" );
+      close(stat_fd);
       return PAPI_ESYS;
    }
    lseek( stat_fd, 0, SEEK_SET );
@@ -425,10 +426,12 @@ again:
 
    if ( cnt != 13 ) {
       PAPIERROR( "utime and stime not in thread stat file?" );
+      close(stat_fd);
       return PAPI_ESBSTR;
    }
 
    if ( sscanf( buf + i, "%llu %llu", &utime, &stime ) != 2 ) {
+      close(stat_fd);
       PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
       return PAPI_ESBSTR;
    }
