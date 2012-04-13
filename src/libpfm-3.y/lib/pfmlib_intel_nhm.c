@@ -172,11 +172,31 @@ static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
 }
 #endif
 
-
 static inline pme_nhm_entry_t *
 get_nhm_entry(unsigned int i)
 {
         return i < num_pe ? pe+i : unc_pe+(i-num_pe);
+}
+
+static int
+pfm_nhm_midx2uidx(unsigned int ev, unsigned int midx)
+{
+	int i, num = 0;
+	pme_nhm_entry_t *ne;
+	int model;
+
+	ne = get_nhm_entry(ev);
+
+	for (i=0; i < ne->pme_numasks; i++) {
+		model = ne->pme_umasks[i].pme_umodel;
+		if (!model || model == cpu_model) {
+			if (midx == num) 
+				return i;
+			num++;
+		}
+	}
+	DPRINT("cannot find umask %d for event %s\n", midx, ne->pme_name);
+	return -1;
 }
 
 static int
@@ -437,7 +457,8 @@ pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
 	 */
 	flc = 0;
 	for(i=0; i < e->num_masks; i++) {
-		fl = ne->pme_umasks[e->unit_masks[i]].pme_uflags;
+		int midx = pfm_nhm_midx2uidx(e->event, e->unit_masks[i]);
+		fl = ne->pme_umasks[midx].pme_uflags;
 		if (fl & mask)
 			flc++;
 	}
@@ -461,9 +482,11 @@ pfm_nhm_check_cmask(pfmlib_event_t *e, pme_nhm_entry_t *ne, pfmlib_nhm_counter_t
 		return -1;
 
 	for(i=0; i < e->num_masks; i++) {
-		ref =  ne->pme_umasks[e->unit_masks[i]].pme_ucode;
+		int midx = pfm_nhm_midx2uidx(e->event, e->unit_masks[i]);
+		ref =  ne->pme_umasks[midx].pme_ucode;
 		for(j=i+1; j < e->num_masks; j++) {
-			ucode = ne->pme_umasks[e->unit_masks[j]].pme_ucode;
+			midx = pfm_nhm_midx2uidx(e->event, e->unit_masks[j]);
+			ucode = ne->pme_umasks[midx].pme_ucode;
 			if (ref & ucode)
 				return -1;
 		}
@@ -546,19 +569,6 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				return PFMLIB_ERR_NOASSIGN;
 		}
 		/*
-		 * check for Nehalem-EX specific unit masks */
-		if (ne->pme_flags & PFMLIB_NHM_EX) {
-			int model;
-                	for(j=0; j < e[i].num_masks; j++) {
-				 model = ne->pme_umasks[e[i].unit_masks[j]].pme_umodel;
-				if (model && model != cpu_model) {
-					DPRINT("Unit mask %s is available only on Nehalem-EX processor",
-						ne->pme_umasks[e[i].unit_masks[j]].pme_uname);
-					return PFMLIB_ERR_INVAL;
-				}
-			}
-		}
-		/*
 		 * check event-level single register constraint for uncore fixed
 		 */
 		if (ne->pme_flags & PFMLIB_NHM_UNC_FIXED) {
@@ -606,8 +616,10 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
  		 * must be identical
  		 */
 		umask = 0;
-                for(j=0; j < e[i].num_masks; j++)
-			umask |= ne->pme_umasks[e[i].unit_masks[j]].pme_ucode;
+                for(j=0; j < e[i].num_masks; j++) {
+			int midx = pfm_nhm_midx2uidx(e[i].event, e[i].unit_masks[j]);
+			umask |= ne->pme_umasks[midx].pme_ucode;
+		}
 
 		if (ne->pme_flags & PFMLIB_NHM_OFFCORE_RSP0) {
 			if (offcore_rsp0_value && offcore_rsp0_value != umask) {
@@ -870,8 +882,9 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		 */
 		if (!(ne->pme_flags & (PFMLIB_NHM_OFFCORE_RSP0|PFMLIB_NHM_OFFCORE_RSP1)))
 			for(k=0; k < e[i].num_masks; k++) {
-				umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
-				u_flags |= ne->pme_umasks[e[i].unit_masks[k]].pme_uflags;
+				int midx = pfm_nhm_midx2uidx(e[i].event, e[i].unit_masks[k]);
+				umask |= ne->pme_umasks[midx].pme_ucode;
+				u_flags |= ne->pme_umasks[midx].pme_uflags;
 			}
 		val |= umask << 8;
 
@@ -981,8 +994,10 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 
 		umask = (val >> 8) & 0xff;
 
-		for(k=0; k < e[i].num_masks; k++)
-			umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
+		for(k=0; k < e[i].num_masks; k++) {
+			int midx = pfm_nhm_midx2uidx(e[i].event, e[i].unit_masks[k]);
+			umask |= ne->pme_umasks[midx].pme_ucode;
+		}
 
 		val |= umask << 8;
 
@@ -1439,10 +1454,10 @@ pfm_nhm_get_event_description(unsigned int ev, char **str)
 	}
 	return PFMLIB_SUCCESS;
 }
-
 static char *
 pfm_nhm_get_event_mask_name(unsigned int ev, unsigned int midx)
 {
+	midx = pfm_nhm_midx2uidx(ev, midx);
 	return get_nhm_entry(ev)->pme_umasks[midx].pme_uname;
 }
 
@@ -1451,6 +1466,7 @@ pfm_nhm_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
 {
 	char *s;
 
+	midx = pfm_nhm_midx2uidx(ev, midx);
 	s = get_nhm_entry(ev)->pme_umasks[midx].pme_udesc;
 	if (s) {
 		*str = strdup(s);
@@ -1463,12 +1479,25 @@ pfm_nhm_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
 static unsigned int
 pfm_nhm_get_num_event_masks(unsigned int ev)
 {
-	return get_nhm_entry(ev)->pme_numasks;
+	int i, num = 0;
+	pme_nhm_entry_t *ne;
+	int model;
+
+	ne = get_nhm_entry(ev);
+
+	for (i=0; i < ne->pme_numasks; i++) {
+		model = ne->pme_umasks[i].pme_umodel;
+		if (!model || model == cpu_model)
+			num++;
+	}
+DPRINT("event %s numasks=%d\n", ne->pme_name, num);
+	return num;
 }
 
 static int
 pfm_nhm_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned int *code)
 {
+	midx = pfm_nhm_midx2uidx(ev, midx);
 	*code =get_nhm_entry(ev)->pme_umasks[midx].pme_ucode;
 	return PFMLIB_SUCCESS;
 }
@@ -1518,10 +1547,12 @@ pfm_nhm_is_pebs(pfmlib_event_t *e)
 	 * ALL unit mask must support PEBS for this test to return true
 	 */
 	for(i=0; i < e->num_masks; i++) {
+		int midx;
 		/* check for valid unit mask */
 		if (e->unit_masks[i] >= ne->pme_numasks)
 			return PFMLIB_ERR_INVAL;
-		if (ne->pme_umasks[e->unit_masks[i]].pme_uflags & PFMLIB_NHM_PEBS)
+ 		midx = pfm_nhm_midx2uidx(e->event, e->unit_masks[i]);
+		if (ne->pme_umasks[midx].pme_uflags & PFMLIB_NHM_PEBS)
 			n++;
 	}
 	return n > 0 && n == e->num_masks;
