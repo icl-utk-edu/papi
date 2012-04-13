@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ppc_tests.h,v 1.2 2004/06/21 22:17:15 mikpe Exp $
  * Performance-monitoring counters driver.
  * Optional PPC32-specific init-time tests.
  *

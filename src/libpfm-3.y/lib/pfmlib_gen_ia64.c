@@ -70,7 +70,7 @@ typedef union {
 typedef struct pme_entry {
 	char		 		*pme_name;
 	pme_gen_ia64_entry_code_t	pme_entry_code;	/* event code */
-	pfmlib_regmask_bits_t		pme_counters[PFMLIB_REG_BV]; /* counter bitmask */
+	pfmlib_regmask_t		pme_counters; /* counter bitmask */
 } pme_gen_ia64_entry_t;
 
 /* let's define some handy shortcuts ! */
@@ -92,8 +92,8 @@ static pme_gen_ia64_entry_t generic_pe[PME_GEN_COUNT]={
 
 static int pfm_gen_ia64_counter_width;
 static int pfm_gen_ia64_counters;
-static pfmlib_regmask_bits_t pfm_gen_ia64_impl_pmcs[PFMLIB_REG_BV];
-static pfmlib_regmask_bits_t pfm_gen_ia64_impl_pmds[PFMLIB_REG_BV];
+static pfmlib_regmask_t pfm_gen_ia64_impl_pmcs;
+static pfmlib_regmask_t pfm_gen_ia64_impl_pmds;
 /*
  * Description of the PMC register mappings use by
  * this module (as reported in pfmlib_reg_t.reg_num):
@@ -112,19 +112,13 @@ static pfmlib_regmask_bits_t pfm_gen_ia64_impl_pmds[PFMLIB_REG_BV];
  * range argument is modified
  */
 static int
-parse_counter_range(char *range, unsigned long *bitmask)
+parse_counter_range(char *range, pfmlib_regmask_t *b)
 {
 	char *p, c;
 	int start, end;
 
 	if (range[strlen(range)-1] == '\n')
 		range[strlen(range)-1] = '\0';
-
-	/*
-	 * reset bitmask argument
-	 */
-	for (start=0; start < PFMLIB_REG_BV; start++)
-		bitmask[start] = 0;
 
 	while(range) {
 		p = range;
@@ -150,7 +144,7 @@ parse_counter_range(char *range, unsigned long *bitmask)
 		if (end  >= PFMLIB_REG_MAX|| start >= PFMLIB_REG_MAX)
 			goto invalid;
 		for (; start <= end; start++)
-			bitmask[__PFMLIB_REGMASK_EL(start)] |=  __PFMLIB_REGMASK_MASK(start);
+			pfm_regmask_set(b, start);
 	}
 	return 0;
 invalid:
@@ -199,42 +193,78 @@ pfm_gen_ia64_initialize(void)
 			continue;
 		}
 		if (!strncmp("Cycles count capable", buffer, 20)) {
-			if (parse_counter_range(p+2, generic_pe[0].pme_counters) == -1) return -1;
+			if (parse_counter_range(p+2, &generic_pe[0].pme_counters) == -1) return -1;
 			matches++;
 			continue;
 		}
 		if (!strncmp("Retired bundles count capable", buffer, 29)) {
-			if (parse_counter_range(p+2, generic_pe[1].pme_counters) == -1) return -1;
+			if (parse_counter_range(p+2, &generic_pe[1].pme_counters) == -1) return -1;
 			matches++;
 			continue;
 		}
 		if (!strncmp("Implemented PMC", buffer, 15)) {
-			if (parse_counter_range(p+2, pfm_gen_ia64_impl_pmcs) == -1) return -1;
+			if (parse_counter_range(p+2, &pfm_gen_ia64_impl_pmcs) == -1) return -1;
 			matches++;
 			continue;
 		}
 		if (!strncmp("Implemented PMD", buffer, 15)) {
-			if (parse_counter_range(p+2, pfm_gen_ia64_impl_pmds) == -1) return -1;
+			if (parse_counter_range(p+2, &pfm_gen_ia64_impl_pmds) == -1) return -1;
 			matches++;
 			continue;
 		}
 	}
+	pfm_regmask_weight(&pfm_gen_ia64_impl_pmcs, &generic_ia64_support.pmc_count);
+	pfm_regmask_weight(&pfm_gen_ia64_impl_pmds, &generic_ia64_support.pmd_count);
 
 	fclose(fp);
 	return matches == 8 ? PFMLIB_SUCCESS : PFMLIB_ERR_NOTSUPP;
 }
 
+static void
+pfm_gen_ia64_forced_initialize(void)
+{
+	unsigned int i;
+
+	pfm_gen_ia64_counter_width = 47;
+	pfm_gen_ia64_counters = 4;
+
+	generic_pe[0].pme_entry_code.pme_vcode = 18;
+	generic_pe[1].pme_entry_code.pme_vcode = 8;
+
+	memset(&pfm_gen_ia64_impl_pmcs, 0, sizeof(pfmlib_regmask_t));
+	memset(&pfm_gen_ia64_impl_pmds, 0, sizeof(pfmlib_regmask_t));
+
+	for(i=0; i < 8; i++)
+		pfm_regmask_set(&pfm_gen_ia64_impl_pmcs, i);
+
+	for(i=4; i < 8; i++)
+		pfm_regmask_set(&pfm_gen_ia64_impl_pmds, i);
+	
+	memset(&generic_pe[0].pme_counters, 0, sizeof(pfmlib_regmask_t));
+	memset(&generic_pe[1].pme_counters, 0, sizeof(pfmlib_regmask_t));
+	for(i=4; i < 8; i++) {
+		pfm_regmask_set(&generic_pe[0].pme_counters, i);
+		pfm_regmask_set(&generic_pe[1].pme_counters, i);
+	}
+	generic_ia64_support.pmc_count = 8;
+	generic_ia64_support.pmd_count = 4;
+	generic_ia64_support.num_cnt = 4;
+}
+
 static int
 pfm_gen_ia64_detect(void)
 {
-	static int initialization_done;
+	/* PMU is architected, so guaranteed to be present */
+	return PFMLIB_SUCCESS;
+}
 
-	if (initialization_done) return 0;
-
-	/* always match */
-	if (pfm_gen_ia64_initialize() == -1) return PFMLIB_ERR_NOTSUPP;
-
-	initialization_done = 1;
+static int
+pfm_gen_ia64_init(void)
+{
+	if (forced_pmu != PFMLIB_NO_PMU) {
+		pfm_gen_ia64_forced_initialize();
+	} else if (pfm_gen_ia64_initialize() == -1)
+		return PFMLIB_ERR_NOTSUPP;
 
 	return PFMLIB_SUCCESS;
 }
@@ -261,7 +291,7 @@ valid_assign(unsigned int *as, pfmlib_regmask_t *r_pmcs, unsigned int cnt)
 static int
 pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t *outp)
 {
-#define	has_counter(e,b)	(generic_pe[e].pme_counters[__PFMLIB_REGMASK_EL(b)] & __PFMLIB_REGMASK_MASK(b) ? (b) : 0)
+#define	has_counter(e,b)	(pfm_regmask_isset(&generic_pe[e].pme_counters, b) ? b : 0)
 	unsigned int max_l0, max_l1, max_l2, max_l3;
 	unsigned int assign[PMU_GEN_IA64_MAX_COUNTERS];
 	pfm_gen_ia64_pmc_reg_t reg;
@@ -277,15 +307,6 @@ pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t 
 	cnt    = inp->pfp_event_count;
 	r_pmcs = &inp->pfp_unavail_pmcs;
 
-	if (PFMLIB_DEBUG()) {
-		for (i=0; i < cnt; i++) {
-			DPRINT(("ev[%d]=%s counters=0x%lx\n",
-				i,
-				generic_pe[e[i].event].pme_name,
-				generic_pe[e[i].event].pme_counters[0]));
-		}
-	}
-
 	if (cnt > PMU_GEN_IA64_MAX_COUNTERS) return PFMLIB_ERR_TOOMANY;
 
 	max_l0 = PMU_GEN_IA64_FIRST_COUNTER + PMU_GEN_IA64_MAX_COUNTERS;
@@ -294,7 +315,7 @@ pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t 
 	max_l3 = PMU_GEN_IA64_FIRST_COUNTER + PMU_GEN_IA64_MAX_COUNTERS*(cnt>3);
 
 	if (PFMLIB_DEBUG()) {
-		DPRINT(("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3));
+		DPRINT("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3);
 	}
 	/*
 	 *  This code needs fixing. It is not very pretty and
@@ -399,26 +420,25 @@ static void
 pfm_gen_ia64_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
 	unsigned int i;
-	unsigned long m;
 
 	memset(counters, 0, sizeof(*counters));
 
-	m = generic_pe[j].pme_counters[0];
-	for(i=0; m ; i++, m>>=1) {
-		if (m & 0x1) pfm_regmask_set(counters, i);
+	for(i=0; i < pfm_gen_ia64_counters; i++) {
+		if (pfm_regmask_isset(&generic_pe[j].pme_counters, i))
+			pfm_regmask_set(counters, i);
 	}
 }
 
 static void
 pfm_gen_ia64_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 {
-	memcpy(impl_pmcs->bits, pfm_gen_ia64_impl_pmcs, sizeof(*impl_pmcs));
+	*impl_pmcs = pfm_gen_ia64_impl_pmcs;
 }
 
 static void
 pfm_gen_ia64_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 {
-	memcpy(impl_pmds->bits, pfm_gen_ia64_impl_pmds, sizeof(*impl_pmds));
+	*impl_pmds = pfm_gen_ia64_impl_pmds;
 }
 
 static void
@@ -480,6 +500,7 @@ pfm_pmu_support_t generic_ia64_support={
 	.get_event_counters	= pfm_gen_ia64_get_event_counters,
 	.dispatch_events	= pfm_gen_ia64_dispatch_events,
 	.pmu_detect		= pfm_gen_ia64_detect,
+	.pmu_init		= pfm_gen_ia64_init,
 	.get_impl_pmcs		= pfm_gen_ia64_get_impl_pmcs,
 	.get_impl_pmds		= pfm_gen_ia64_get_impl_pmds,
 	.get_impl_counters	= pfm_gen_ia64_get_impl_counters,

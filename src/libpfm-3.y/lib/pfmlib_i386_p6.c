@@ -113,9 +113,16 @@ pfm_i386_p6_detect_ppro(void)
 	if (model != 1)
 		return PFMLIB_ERR_NOTSUPP;
 
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_ppro(void)
+{
  	i386_pe = i386_ppro_pe;
 	i386_p6_cycle_event = PME_I386_PPRO_CPU_CLK_UNHALTED; 
 	i386_p6_inst_retired_event = PME_I386_PPRO_INST_RETIRED;
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -137,18 +144,24 @@ pfm_i386_p6_detect_pii(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	model = atoi(buffer);
-
 	switch(model) {
                 case 3: /* Pentium II */
                 case 5: /* Pentium II Deschutes */
  		case 6: /* Pentium II Mendocino */
- 			i386_pe = i386_pII_pe;
-			i386_p6_cycle_event = PME_I386_PII_CPU_CLK_UNHALTED; 
-			i386_p6_inst_retired_event = PME_I386_PII_INST_RETIRED;
  			break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_pii(void)
+{
+
+ 	i386_pe = i386_pII_pe;
+	i386_p6_cycle_event = PME_I386_PII_CPU_CLK_UNHALTED; 
+	i386_p6_inst_retired_event = PME_I386_PII_INST_RETIRED;
 	return PFMLIB_SUCCESS;
 }
 
@@ -174,16 +187,22 @@ pfm_i386_p6_detect_piii(void)
 	switch(model) {
 		case 7: /* Pentium III Katmai */
 		case 8: /* Pentium III Coppermine */
-		case 9: /* Mobile Pentium III */
 		case 10:/* Pentium III Cascades */
 		case 11:/* Pentium III Tualatin */
- 			i386_pe = i386_pIII_pe;
-			i386_p6_cycle_event = PME_I386_PIII_CPU_CLK_UNHALTED; 
-			i386_p6_inst_retired_event = PME_I386_PIII_INST_RETIRED;
 			break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_piii(void)
+{
+ 	i386_pe = i386_pIII_pe;
+	i386_p6_cycle_event = PME_I386_PIII_CPU_CLK_UNHALTED; 
+	i386_p6_inst_retired_event = PME_I386_PIII_INST_RETIRED;
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -205,9 +224,20 @@ pfm_i386_p6_detect_pm(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	model = atoi(buffer);
-	if (model != 13)
-		return PFMLIB_ERR_NOTSUPP;
+	switch (model) {
+		case 9:
+		case 13:
+			break;
+		default:
+			return PFMLIB_ERR_NOTSUPP;
+	}
 
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_pm(void)
+{
 	i386_pe = i386_pm_pe;
 	i386_p6_cycle_event = PME_I386_PM_CPU_CLK_UNHALTED; 
 	i386_p6_inst_retired_event = PME_I386_PM_INST_RETIRED;
@@ -240,7 +270,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 
 	if (PFMLIB_DEBUG()) {
 		for (j=0; j < cnt; j++) {
-			DPRINT(("ev[%d]=%s\n", j, i386_pe[e[j].event].pme_name));
+			DPRINT("ev[%d]=%s\n", j, i386_pe[e[j].event].pme_name);
 		}
 	}
 
@@ -250,19 +280,19 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 	pfm_i386_p6_get_impl_counters(&impl_cntrs);
 	pfm_regmask_andnot(&avail_cntrs, &impl_cntrs, &inp->pfp_unavail_pmcs);
 
-	DPRINT(("impl=0x%lx avail=0x%lx unavail=0x%lx\n", impl_cntrs.bits[0], avail_cntrs.bits[0], inp->pfp_unavail_pmcs.bits[0]));
+	DPRINT("impl=0x%lx avail=0x%lx unavail=0x%lx\n", impl_cntrs.bits[0], avail_cntrs.bits[0], inp->pfp_unavail_pmcs.bits[0]);
 
 	for(j=0; j < cnt; j++) {
 		/*
 		 * P6 only supports two priv levels for perf counters
 	 	 */
 		if (e[j].plm & (PFM_PLM1|PFM_PLM2)) {
-			DPRINT(("event=%d invalid plm=%d\n", e[j].event, e[j].plm));
+			DPRINT("event=%d invalid plm=%d\n", e[j].event, e[j].plm);
 			return PFMLIB_ERR_INVAL;
 		}
 
-		if (e[j].flags & ~PFMLIB_I386_P6_ALL_FLAGS) {
-			DPRINT(("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags));
+		if (cntrs && cntrs[j].flags & ~PFMLIB_I386_P6_ALL_FLAGS) {
+			DPRINT("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags);
 			return PFMLIB_ERR_INVAL;
 		}
 
@@ -270,7 +300,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		 * check illegal unit masks combination
 		 */
 		if (e[j].num_masks > 1 && PFMLIB_I386_P6_HAS_COMBO(e[j].event) == 0) {
-			DPRINT(("event does not support unit mask combination\n"));
+			DPRINT("event does not support unit mask combination\n");
 			return PFMLIB_ERR_FEATCOMB;
 		}
 	}
@@ -396,7 +426,7 @@ pfm_i386_p6_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 	pfmlib_i386_p6_input_param_t *mod_in  = (pfmlib_i386_p6_input_param_t *)model_in;
 
 	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+		DPRINT("invalid plm=%x\n", inp->pfp_dfl_plm);
 		return PFMLIB_ERR_INVAL;
 	}
 	return pfm_i386_p6_dispatch_counters(inp, mod_in, outp);
@@ -545,6 +575,7 @@ pfm_pmu_support_t i386_pii_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_pii,
+	.pmu_init		= pfm_i386_p6_init_pii,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -571,6 +602,7 @@ pfm_pmu_support_t i386_p6_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_piii,
+	.pmu_init		= pfm_i386_p6_init_piii,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -596,6 +628,7 @@ pfm_pmu_support_t i386_ppro_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_ppro,
+	.pmu_init		= pfm_i386_p6_init_ppro,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -623,6 +656,7 @@ pfm_pmu_support_t i386_pm_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_pm,
+	.pmu_init		= pfm_i386_p6_init_pm,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,

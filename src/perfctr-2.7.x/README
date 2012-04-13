@@ -1,7 +1,7 @@
-$Id$
+$Id: README,v 1.48 2007/10/06 13:02:07 mikpe Exp $
 
 	   Linux Performance-Monitoring Counters Driver
-		Mikael Pettersson <mikpe@csd.uu.se>
+		Mikael Pettersson <mikpe@it.uu.se>
 ========================================================================
 
 
@@ -100,7 +100,7 @@ Limitations
 Availability
 ------------
 This and future versions of this package can be downloaded from
-<http://www.csd.uu.se/~mikpe/linux/perfctr/>.
+<http://user.it.uu.se/~mikpe/linux/perfctr/>.
 
 The perfctr-devel mailing list is an open forum for driver update
 announcements and general discussions about the perfctr driver
@@ -110,7 +110,7 @@ and its usage. To subscribe to perfctr-devel, visit
 
 Licensing
 ---------
-Copyright (C) 1999-2004  Mikael Pettersson <mikpe@csd.uu.se>
+Copyright (C) 1999-2007  Mikael Pettersson <mikpe@it.uu.se>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

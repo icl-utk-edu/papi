@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: x86.h,v 1.3 2005/04/09 10:25:47 mikpe Exp $
  * x86-specific code for performance counters library.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: virtual.h,v 1.11 2003/10/04 20:29:43 mikpe Exp $
  * Virtual per-process performance counters.
  *
  * Copyright (C) 1999-2003  Mikael Pettersson

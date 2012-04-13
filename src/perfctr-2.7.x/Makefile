@@ -1,5 +1,6 @@
 SHELL=/bin/sh
 ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+ASM_ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/ppc.*/powerpc/)
 SUBDIRS=usr.lib examples
 
 default:	linux/include/asm/perfctr.h
@@ -12,7 +13,7 @@ all-subdirs:
 
 linux/include/asm/perfctr.h config configure:
 	rm -f linux/include/asm
-	ln -s asm-${ARCH} linux/include/asm
+	ln -s asm-${ASM_ARCH} linux/include/asm
 
 install:	default
 	etc/install.sh "$(PREFIX)" "$(BINDIR)" "$(LIBDIR)" "$(INCLDIR)" "$(ARCH)"

@@ -8,14 +8,14 @@ libpfm_core - support for Intel Core processor family
 .sp
 .SH DESCRIPTION
 The libpfm library provides full support for the Intel Core processor family, including
-the Core 2 Duo series. The interface is defined in \fBpfmlib_core.h\fR. It consists
+the Core 2 Duo and Quad series. The interface is defined in \fBpfmlib_core.h\fR. It consists
 of a set of functions and structures which describe and allow access to the
 Intel Core processors specific PMU features.
 .sp
 When Intel Core processor specific features are needed to support a measurement, their descriptions
-must be passed as model-specific input arguments to the \fBpfm_dispatch_events\fR call. The Intel Core
- processors specific input arguments are described in the \fBpfmlib_core_input_param_t\fR structure and
-the output parameters in \fBpfmlib_core_output_param_t\fR. They are defined as follows:
+must be passed as model-specific input arguments to the \fBpfm_dispatch_events()\fR function. The Intel Core
+processors specific input arguments are described in the \fBpfmlib_core_input_param_t\fR structure. No
+output parameters are currently defined. The input parameters are defined as follows:
 .sp
 .nf
 typedef struct {
@@ -32,17 +32,13 @@ typedef struct {
 	pfmlib_core_pebs_t	pfp_core_pebs;
 	uint64_t		reserved[4];
 } pfmlib_core_input_param_t;
-
-typedef struct {
-	uint64_t	reserved[8];
-} pfmlib_core_output_param_t;
 .fi
 .sp
 .sp
 The Intel Core processor provides a few additional per-event features for 
 counters: thresholding, inversion, edge detection. They can be set using the 
 \fBpfp_core_counters\fR data structure for each event.  The \fBflags\fR
-field can be initialized as follows:
+field can be initialized with any combinations of the following values:
 .TP
 .B PFMLIB_CORE_SEL_INV
 Inverse the results of the \fBcnt_mask\fR comparison when set
@@ -50,24 +46,25 @@ Inverse the results of the \fBcnt_mask\fR comparison when set
 .B PFMLIB_CORE_SEL_EDGE
 Enables edge detection of events. 
 .LP
-The \fBcnt_mask\fR field contains is used to set the event threshold.
+The \fBcnt_mask\fR field is used to set the event threshold.
 The value of the counter is incremented each time the number of occurrences
-per cycle of the event is greater or equal to the value of the field. When
-zero all occurrences are counted.
+per cycle of the event is greater or equal to the value of the field.
+Thus the event is modified to actually measure the number of qualifying cycles.
+When zero all occurrences are counted (this is the default).
 .sp
 .SH Support for Precise-Event Based Sampling (PEBS)
 The library can be used to setup the PMC registers when using PEBS. In this case,
 the \fBpfp_core_pebs\fR structure must be used and the \fBpebs_used\fR field must
 be set to 1. When using PEBS, it is not possible to use more than one event.
-.SH  Support for Intel Core 2 Duo processors
-The Intel Core 2 Duo processors are based on the Intel Core micro-architecture.
+.SH  Support for Intel Core 2 Duo and Quad processors
+The Intel Core 2 Duo and Quad processors are based on the Intel Core micro-architecture.
 They implement the Intel architectural PMU and some extensions such as PEBS.
 They support all the architectural events and a lot more Core 2 specific events.
 The library auto-detects the processor and provides access to Core 2 events whenever
 possible.
 .LP
 .SH ERRORS
-Refer to the description of \fBpfm_dispatch_events()\fR for errors.
+Refer to the description of the \fBpfm_dispatch_events()\fR function for errors.
 .SH SEE ALSO
 pfm_dispatch_events(3) and set of examples shipped with the library
 .SH AUTHOR

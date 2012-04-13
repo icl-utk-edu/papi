@@ -1,10 +1,10 @@
-/* $Id$
+/* $Id: perfex.c,v 1.33.2.8 2010/06/08 20:48:56 mikpe Exp $
  *
  * NAME
- *	perfex - a command-line interface to x86 performance counters
+ *	perfex - a command-line interface to processor performance counters
  *
  * SYNOPSIS
- *	perfex [-e event] .. [--p4pe=value] [--p4pmv=value] [-o file] command
+ *	perfex [-e event] .. [--nhlm_offcore_rsp_{0,1}=value] [--p4{pe,pmv}=value] [-o file] command
  *	perfex { -i | -l | -L }
  *
  * DESCRIPTION
@@ -17,27 +17,34 @@
  *		Multiple event specifiers may be given, limited by the
  *		number of available performance counters in the processor.
  *
- *		The full syntax of an event specifier is "evntsel/escr@pmc".
+ *		The full syntax of an event specifier is "evntsel/evntsel2@pmc".
  *		All three components are 32-bit processor-specific numbers,
  *		written in decimal or hexadecimal notation.
  *
  *		"evntsel" is the primary processor-specific event selection
  *		code to use for this event. This field is mandatory.
  *
- *		"/escr" is used to specify additional event selection data
- *		for Pentium 4 processors. "evntsel" is put in the counter's
- *		CCCR register, and "escr" is put in the associated ESCR
- *		register.
+ *		"/evntsel2" provides auxiliary event selection data for this
+ *		event. On a Pentium 4, "evntsel" is put in the counter's
+ *		CCCR register, and "evntsel2" is put in the associated ESCR
+ *		register. On an AMD Family 10h processor, "evntsel2" is put
+ *		in the high 32 bits of the counter's 64-bit EVNTSEL register.
+ *		On other processors "/evntsel2" should be omitted.
  *
  *		"@pmc" describes which CPU counter number to assign this
  *		event to. When omitted, the events are assigned in the
  *		order listed, starting from 0. Either all or none of the
  *		event specifiers should use the "@pmc" notation.
  *		Explicit counter assignment via "@pmc" is required on
- *		Pentium 4 and VIA C3 processors.
+ *		Pentium 4 and VIA C3 processors. It is also required for the
+ *		fixed-function counters on Core 2 and Atom processors.
  *
  *		The counts, together with an event description are written
  *		to the result file (default is stderr).
+ *
+ *	--nhlm_offcore_rsp_{0,1}=value
+ *		Specify the value to be stored in the auxiliary control
+ *		registers OFFCORE_RSP_{0,1} on Nehalem processors.
  *
  *	--p4pe=value | --p4_pebs_enable=value
  *	--p4pmv=value | --p4_pebs_matrix_vert=value
@@ -90,15 +97,15 @@
  *	metric. Note that bit 25 is NOT set in PEBS_ENABLE.
  *
  * DEPENDENCIES
- *	perfex only works on Linux/x86 systems which have been modified
- *	to include the perfctr driver. This driver is available at
- *	http://www.csd.uu.se/~mikpe/linux/perfctr/.
+ *	perfex only works on Linux systems which have been modified
+ *	to include the perfctr kernel extension. Perfctr is available at
+ *	http://user.it.uu.se/~mikpe/linux/perfctr/.
  *
  * NOTES
  *	perfex is superficially similar to IRIX' perfex(1).
  *	The -a, -mp, -s, and -x options are not yet implemented.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2010  Mikael Pettersson
  */
 
 /*
@@ -163,7 +170,7 @@ static int my_send(int sock, int fd, int status)
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
 
-    if( status != 0 ) {	/* errno, don't send fd */
+    if (status != 0) {	/* errno, don't send fd */
 	msg.msg_control = 0;
 	msg.msg_controllen = 0;
     } else {
@@ -208,21 +215,21 @@ static int my_receive(int sock, int *fd)
     msg.msg_control = &cmsg_fd;
     msg.msg_controllen = CMSG_FD_TRUE_SIZE;
 
-    if( recvmsg(sock, &msg, 0) != sizeof buf )
+    if (recvmsg(sock, &msg, 0) != sizeof buf)
 	return -1;
 
-    if( buf[0] == 0 &&
+    if (buf[0] == 0 &&
 	msg.msg_control == &cmsg_fd &&
 	msg.msg_controllen == CMSG_FD_PADDED_SIZE &&
 	cmsg_fd.hdr.cmsg_type == SCM_RIGHTS &&
 	cmsg_fd.hdr.cmsg_level == SOL_SOCKET &&
 	cmsg_fd.hdr.cmsg_len == CMSG_FD_TRUE_SIZE &&
-	cmsg_fd.fd >= 0 ) {
+	cmsg_fd.fd >= 0) {
 	*fd = cmsg_fd.fd;
 	return 0;
     }
 
-    if( msg.msg_controllen == 0 && buf[0] != 0 )
+    if (msg.msg_controllen == 0 && buf[0] != 0)
 	errno = buf[0];
     else
 	errno = EPROTO;
@@ -234,7 +241,7 @@ static int do_open_self(int creat)
     int fd;
 
     fd = _vperfctr_open(creat);
-    if( fd >= 0 && perfctr_abi_check_fd(fd) < 0 ) {
+    if (fd >= 0 && perfctr_abi_check_fd(fd) < 0) {
 	close(fd);
 	return -1;
     }
@@ -246,15 +253,15 @@ static int do_child(int sock, const struct vperfctr_control *control, char **arg
     int fd;
 
     fd = do_open_self(1);
-    if( fd < 0 ) {
+    if (fd < 0) {
 	my_send_err(sock);
 	return 1;
     }
-    if( _vperfctr_control(fd, control) < 0 ) {
+    if (_vperfctr_control(fd, control) < 0) {
 	my_send_err(sock);
 	return 1;
     }
-    if( my_send_fd(sock, fd) < 0 ) {
+    if (my_send_fd(sock, fd) < 0) {
 	my_send_err(sock);	/* well, we can try.. */
 	return 1;
     }
@@ -265,7 +272,7 @@ static int do_child(int sock, const struct vperfctr_control *control, char **arg
     return 1;
 }
 
-static int do_parent(int sock, int child_pid, FILE *resfile)
+static int do_parent(int sock, int child_pid, FILE *resfile, const struct perfctr_info *info)
 {
     int child_status;
     int fd;
@@ -273,55 +280,56 @@ static int do_parent(int sock, int child_pid, FILE *resfile)
     struct vperfctr_control control;
 
     /* this can be done before or after the recvmsg() */
-    if( waitpid(child_pid, &child_status, 0) < 0 ) {
+    if (waitpid(child_pid, &child_status, 0) < 0) {
 	perror("perfex: waitpid");
 	return 1;
     }
-    if( !WIFEXITED(child_status) ) {
+    if (!WIFEXITED(child_status)) {
 	fprintf(stderr, "perfex: child did not exit normally\n");
 	return 1;
     }
-    if( my_receive(sock, &fd) < 0 ) {
+    if (my_receive(sock, &fd) < 0) {
 	perror("perfex: receiving fd/status");
 	return 1;
     }
     close(sock);
     /* XXX: surely we don't need to repeat the ABI check here? */
-    if( _vperfctr_read_sum(fd, &sum) < 0 ) {
+    if (_vperfctr_read_sum(fd, &sum) < 0) {
 	perror("perfex: read_sum");
 	return 1;
     }
-    if( _vperfctr_read_control(fd, &control) < 0 ) {
+    if (_vperfctr_read_control(fd, &control) < 0) {
 	perror("perfex: read_control");
 	return 1;
     }
     close(fd);
 
-    do_print(resfile, &control.cpu_control, &sum);
+    do_print(resfile, info, &control.cpu_control, &sum);
 
     return WEXITSTATUS(child_status);
 }
 
-static int do_perfex(const struct vperfctr_control *control, char **argv, FILE *resfile)
+static int do_perfex(
+    const struct vperfctr_control *control, char **argv, FILE *resfile, const struct perfctr_info *info)
 {
     int pid;
     int sv[2];
 
-    if( socketpair(AF_UNIX, SOCK_DGRAM, 0, sv) < 0 ) {
+    if (socketpair(AF_UNIX, SOCK_DGRAM, 0, sv) < 0) {
 	perror("perfex: socketpair");
 	return 1;
     }
     pid = fork();
-    if( pid < 0 ) {
+    if (pid < 0) {
 	perror("perfex: fork");
 	return 1;
     }
-    if( pid == 0 ) {
+    if (pid == 0) {
 	close(sv[0]);
 	return do_child(sv[1], control, argv);
     } else {
 	close(sv[1]);
-	return do_parent(sv[0], pid, resfile);
+	return do_parent(sv[0], pid, resfile, info);
     }
 }
 
@@ -330,11 +338,11 @@ static int get_info(struct perfctr_info *info)
     int fd;
 
     fd = do_open_self(0);
-    if( fd < 0 ) {
+    if (fd < 0) {
 	perror("perfex: open perfctrs");
 	return -1;
     }
-    if( perfctr_info(fd, info) < 0 ) {
+    if (perfctr_info(fd, info) < 0) {
 	perror("perfex: perfctr_info");
 	close(fd);
 	return -1;
@@ -349,12 +357,12 @@ static struct perfctr_cpus_info *get_cpus_info(void)
     struct perfctr_cpus_info *cpus_info;
 
     fd = do_open_self(0);
-    if( fd < 0 ) {
+    if (fd < 0) {
 	perror("perfex: open perfctrs");
 	return NULL;
     }
     cpus_info = perfctr_cpus_info(fd);
-    if( !cpus_info )
+    if (!cpus_info)
 	perror("perfex: perfctr_cpus_info");
     close(fd);
     return cpus_info;
@@ -367,7 +375,7 @@ static int do_info(const struct perfctr_info *info)
     cpus_info = get_cpus_info();
     printf("PerfCtr Info:\n");
     perfctr_info_print(info);
-    if( cpus_info ) {
+    if (cpus_info) {
 	perfctr_cpus_info_print(cpus_info);
 	free(cpus_info);
     }
@@ -378,7 +386,7 @@ static void do_print_event(const struct perfctr_event *event, int long_format,
 			   const char *event_prefix)
 {
     printf("%s%s", event_prefix, event->name);
-    if( long_format )
+    if (long_format)
 	printf(":0x%02X:0x%X:0x%X",
 	       event->evntsel,
 	       event->counters_set,
@@ -391,13 +399,13 @@ static void do_print_event_set(const struct perfctr_event_set *event_set,
 {
     unsigned int i;
 
-    if( event_set->include )
+    if (event_set->include)
 	do_print_event_set(event_set->include, long_format);
     for(i = 0; i < event_set->nevents; ++i)
 	do_print_event(&event_set->events[i], long_format, event_set->event_prefix);
 }
 
-static int do_list(const struct perfctr_info *info, int long_format)
+static void do_list(const struct perfctr_info *info, int long_format)
 {
     const struct perfctr_event_set *event_set;
     unsigned int nrctrs;
@@ -412,23 +420,41 @@ static int do_list(const struct perfctr_info *info, int long_format)
 	   (info->cpu_features & PERFCTR_FEATURE_PCINT) ? "" : " not");
 
     event_set = perfctr_cpu_event_set(info->cpu_type);
-    if( !event_set ) {
-	fprintf(stderr, "perfex: perfctr_cpu_event_set(%u) failed\n",
-		info->cpu_type);
-	return 1;
+    if (!event_set || !event_set->nevents) {
+	printf("\nThe user-space library does not include an event list for this CPU type (this is not an error)\n");
+	return;
     }
-    if( !event_set->nevents ) /* the 'generic' CPU type */
-	return 0;
     printf("\nEvents Available:\n");
-    if( long_format )
+    if (long_format)
 	printf("Name:EvntSel:CounterSet:DefaultUnitMask\n");
     do_print_event_set(event_set, long_format);
-    return 0;
+    return;
+}
+
+/* Hack while phasing out an old number parsing bug. */
+static unsigned int strtoul_base = 16;
+static unsigned int quiet;
+
+unsigned long my_strtoul(const char *nptr, char **endptr)
+{
+    unsigned long val1;
+
+    val1 = strtoul(nptr, endptr, strtoul_base);
+    if (strtoul_base == 16 && !quiet) {
+	unsigned long val2 = strtoul(nptr, NULL, 0);
+	if (val1 != val2)
+	    fprintf(stderr, "perfex: warning: string '%s' is base-dependent, assuming base 16."
+		    " Please prefix hexadecimal numbers with '0x'.\n",
+		    nptr);
+    }
+    return val1;
 }
 
 static const struct option long_options[] = {
+    { "decimal", 0, NULL, 'd' },
     { "event", 1, NULL, 'e' },
     { "help", 0, NULL, 'h' },
+    { "hex", 0, NULL, 'x' },
     { "info", 0, NULL, 'i' },
     { "list", 0, NULL, 'l' },
     { "long-list", 0, NULL, 'L' },
@@ -450,6 +476,8 @@ static void do_usage(void)
     fprintf(stderr, "\t-i | --info\t\t\tPrint PerfCtr driver information\n");
     fprintf(stderr, "\t-l | --list\t\t\tList available events\n");
     fprintf(stderr, "\t-L | --long-list\t\tList available events in long format\n");
+    fprintf(stderr, "\t-d | --decimal\t\t\tAllow decimal numbers in event specifications\n");
+    fprintf(stderr, "\t-x | --hex\t\t\tOnly accept hexadecimal numbers in event specifications\n");
     do_arch_usage();
 }
 
@@ -461,21 +489,22 @@ int main(int argc, char **argv)
     FILE *resfile;
 
     /* prime info, as we'll need it in most cases */
-    if( get_info(&info) )
+    if (get_info(&info))
 	return 1;
 
+    /* this deliberately also clears CLOEXEC in control.flags */
     memset(&control, 0, sizeof control);
-    if( info.cpu_features & PERFCTR_FEATURE_RDTSC )
+    if (info.cpu_features & PERFCTR_FEATURE_RDTSC)
 	control.cpu_control.tsc_on = 1;
     n = 0;
     resfile = stderr;
 
     for(;;) {
 	/* the '+' is there to prevent permutation of argv[] */
-	int ch = getopt_long(argc, argv, "+e:hilLo:", long_options, NULL);
-	switch( ch ) {
+	int ch = getopt_long(argc, argv, "+de:hilLo:x", long_options, NULL);
+	switch (ch) {
 	  case -1:	/* no more options */
-	    if( optind >= argc ) {
+	    if (optind >= argc) {
 		fprintf(stderr, "perfex: command missing\n");
 		return 1;
 	    }
@@ -487,20 +516,29 @@ int main(int argc, char **argv)
 	  case 'i':
 	    return do_info(&info);
 	  case 'l':
-	    return do_list(&info, 0);
+	    do_list(&info, 0);
+	    return 0;
 	  case 'L':
-	    return do_list(&info, 1);
+	    do_list(&info, 1);
+	    return 0;
 	  case 'o':
-	    if( (resfile = fopen(optarg, "w")) == NULL ) {
+	    if ((resfile = fopen(optarg, "w")) == NULL) {
 		fprintf(stderr, "perfex: %s: %s\n", optarg, strerror(errno));
 		return 1;
 	    }
+	    continue;
+	  case 'd':
+	    strtoul_base = 0;
+	    continue;
+	  case 'x':
+	    strtoul_base = 16;
+	    quiet = 1;
 	    continue;
 	  case 'e':
 	    n = do_event_spec(n, optarg, &control.cpu_control);
 	    continue;
 	  default:
-	    if( do_arch_option(ch, optarg, &control.cpu_control) < 0 ) {
+	    if (do_arch_option(ch, optarg, &control.cpu_control) < 0) {
 		do_usage();
 		return 1;
 	    }
@@ -509,5 +547,5 @@ int main(int argc, char **argv)
 	break;
     }
 
-    return do_perfex(&control, argv, resfile);
+    return do_perfex(&control, argv, resfile, &info);
 }

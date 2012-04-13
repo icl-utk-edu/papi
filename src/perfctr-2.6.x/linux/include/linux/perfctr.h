@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: perfctr.h,v 1.69.2.6 2009/01/23 17:31:57 mikpe Exp $
  * Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 #ifndef _LINUX_PERFCTR_H
 #define _LINUX_PERFCTR_H
@@ -30,26 +30,8 @@ struct perfctr_cpu_mask {
 /* abi_version values: Lower 16 bits contain the CPU data version, upper
    16 bits contain the API version. Each half has a major version in its
    upper 8 bits, and a minor version in its lower 8 bits. */
-#define PERFCTR_API_VERSION	0x0501	/* 5.1 */
+#define PERFCTR_API_VERSION	0x0502	/* 5.2 */
 #define PERFCTR_ABI_VERSION	((PERFCTR_API_VERSION<<16)|PERFCTR_CPU_VERSION)
-
-/* cpu_type values */
-#define PERFCTR_X86_GENERIC	0	/* any x86 with rdtsc */
-#define PERFCTR_X86_INTEL_P5	1	/* no rdpmc */
-#define PERFCTR_X86_INTEL_P5MMX	2
-#define PERFCTR_X86_INTEL_P6	3
-#define PERFCTR_X86_INTEL_PII	4
-#define PERFCTR_X86_INTEL_PIII	5
-#define PERFCTR_X86_CYRIX_MII	6
-#define PERFCTR_X86_WINCHIP_C6	7	/* no rdtsc */
-#define PERFCTR_X86_WINCHIP_2	8	/* no rdtsc */
-#define PERFCTR_X86_AMD_K7	9
-#define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
-#define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
-#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 and above */
-#define PERFCTR_X86_AMD_K8	13
-#define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
-#define PERFCTR_X86_AMD_K8C	15	/* Revision C */
 
 /* cpu_features flag bits */
 #define PERFCTR_FEATURE_RDPMC	0x01
@@ -66,11 +48,14 @@ struct vperfctr_control {
 	int si_signo;
 	struct perfctr_cpu_control cpu_control;
 	unsigned int preserve;
-	unsigned int _reserved1;
+	unsigned int flags;
 	unsigned int _reserved2;
 	unsigned int _reserved3;
 	unsigned int _reserved4;
 };
+
+/* vperfctr_control flags bits */
+#define VPERFCTR_CONTROL_CLOEXEC	0x01	/* close (unlink) state before exec */
 
 /* parameter in GPERFCTR_CONTROL command */
 struct gperfctr_cpu_control {
@@ -133,13 +118,6 @@ extern int sys_perfctr_cpus_forbidden(struct perfctr_cpu_mask*);
 
 #ifdef __KERNEL__
 
-/* Needed for perfctr_set_cpus_allowed() prototype. */
-#include <linux/version.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) && !defined(HAVE_CPUMASK_T)
-typedef unsigned long cpumask_t;
-#define PERFCTR_HAVE_CPUMASK_T
-#endif
-
 #ifdef CONFIG_PERFCTR_VIRTUAL
 
 /*
@@ -148,8 +126,8 @@ typedef unsigned long cpumask_t;
 struct vperfctr;	/* opaque */
 
 /* process management operations */
-extern struct vperfctr *__vperfctr_copy(struct vperfctr*);
 extern void __vperfctr_exit(struct vperfctr*);
+extern void __vperfctr_flush(struct vperfctr*);
 extern void __vperfctr_suspend(struct vperfctr*);
 extern void __vperfctr_resume(struct vperfctr*);
 extern void __vperfctr_sample(struct vperfctr*);
@@ -159,44 +137,60 @@ extern void __vperfctr_set_cpus_allowed(struct task_struct*, struct vperfctr*, c
 extern struct vperfctr_stub {
 	struct module *owner;
 	void (*exit)(struct vperfctr*);
+	void (*flush)(struct vperfctr*);
 	void (*suspend)(struct vperfctr*);
 	void (*resume)(struct vperfctr*);
 	void (*sample)(struct vperfctr*);
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 	void (*set_cpus_allowed)(struct task_struct*, struct vperfctr*, cpumask_t);
 #endif
 } vperfctr_stub;
 extern void _vperfctr_exit(struct vperfctr*);
+extern void _vperfctr_flush(struct vperfctr*);
 #define _vperfctr_suspend(x)	vperfctr_stub.suspend((x))
 #define _vperfctr_resume(x)	vperfctr_stub.resume((x))
 #define _vperfctr_sample(x)	vperfctr_stub.sample((x))
 #define _vperfctr_set_cpus_allowed(x,y,z) (*vperfctr_stub.set_cpus_allowed)((x),(y),(z))
 #else	/* !CONFIG_PERFCTR_MODULE */
 #define _vperfctr_exit(x)	__vperfctr_exit((x))
+#define _vperfctr_flush(x)	__vperfctr_flush((x))
 #define _vperfctr_suspend(x)	__vperfctr_suspend((x))
 #define _vperfctr_resume(x)	__vperfctr_resume((x))
 #define _vperfctr_sample(x)	__vperfctr_sample((x))
 #define _vperfctr_set_cpus_allowed(x,y,z) __vperfctr_set_cpus_allowed((x),(y),(z))
 #endif	/* CONFIG_PERFCTR_MODULE */
 
-static inline void perfctr_copy_thread(struct thread_struct *thread)
+static inline void perfctr_copy_task(struct task_struct *tsk, struct pt_regs *regs)
 {
-	thread->perfctr = NULL;
+	tsk->thread.perfctr = NULL; /* inheritance is not yet implemented */
+}
+
+static inline void perfctr_release_task(struct task_struct *tsk)
+{
+	/* nothing to do until inheritance is implemented */
 }
 
 static inline void perfctr_exit_thread(struct thread_struct *thread)
 {
 	struct vperfctr *perfctr;
 	perfctr = thread->perfctr;
-	if( perfctr )
+	if (perfctr)
 		_vperfctr_exit(perfctr);
+}
+
+static inline void perfctr_flush_thread(struct thread_struct *thread)
+{
+	struct vperfctr *perfctr;
+	perfctr = thread->perfctr;
+	if (perfctr)
+		_vperfctr_flush(perfctr);
 }
 
 static inline void perfctr_suspend_thread(struct thread_struct *prev)
 {
 	struct vperfctr *perfctr;
 	perfctr = prev->perfctr;
-	if( perfctr )
+	if (perfctr)
 		_vperfctr_suspend(perfctr);
 }
 
@@ -204,7 +198,7 @@ static inline void perfctr_resume_thread(struct thread_struct *next)
 {
 	struct vperfctr *perfctr;
 	perfctr = next->perfctr;
-	if( perfctr )
+	if (perfctr)
 		_vperfctr_resume(perfctr);
 }
 
@@ -212,18 +206,18 @@ static inline void perfctr_sample_thread(struct thread_struct *thread)
 {
 	struct vperfctr *perfctr;
 	perfctr = thread->perfctr;
-	if( perfctr )
+	if (perfctr)
 		_vperfctr_sample(perfctr);
 }
 
 static inline void perfctr_set_cpus_allowed(struct task_struct *p, cpumask_t new_mask)
 {
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 	struct vperfctr *perfctr;
 
 	task_lock(p);
 	perfctr = p->thread.perfctr;
-	if( perfctr )
+	if (perfctr)
 		_vperfctr_set_cpus_allowed(p, perfctr, new_mask);
 	task_unlock(p);
 #endif
@@ -231,8 +225,10 @@ static inline void perfctr_set_cpus_allowed(struct task_struct *p, cpumask_t new
 
 #else	/* !CONFIG_PERFCTR_VIRTUAL */
 
-static inline void perfctr_copy_thread(struct thread_struct *t) { }
+static inline void perfctr_copy_task(struct task_struct *p, struct pt_regs *r) { }
+static inline void perfctr_release_task(struct task_struct *p) { }
 static inline void perfctr_exit_thread(struct thread_struct *t) { }
+static inline void perfctr_flush_thread(struct thread_struct *t) { }
 static inline void perfctr_suspend_thread(struct thread_struct *t) { }
 static inline void perfctr_resume_thread(struct thread_struct *t) { }
 static inline void perfctr_sample_thread(struct thread_struct *t) { }

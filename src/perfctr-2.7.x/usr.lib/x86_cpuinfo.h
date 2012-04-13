@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: x86_cpuinfo.h,v 1.1 2004/05/22 20:59:58 mikpe Exp $
  * Copyright (C) 2004  Mikael Pettersson
  */
 

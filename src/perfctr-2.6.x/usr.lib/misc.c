@@ -1,14 +1,16 @@
-/* $Id$
+/* $Id: misc.c,v 1.20.2.1 2005/12/22 22:44:49 mikpe Exp $
  * Miscellaneous perfctr operations.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson
  */
 
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "libperfctr.h"
 #include "marshal.h"
 #include "arch.h"
@@ -38,6 +40,18 @@ int perfctr_info(int fd, struct perfctr_info *info)
 	return err;
     perfctr_info_cpu_init(info);
     return 0;
+}
+
+int perfctr_get_info(struct perfctr_info *info)
+{
+    int fd, ret;
+
+    fd = open("/dev/perfctr", O_RDONLY);
+    if (fd < 0)
+	return -1;
+    ret = perfctr_info(fd, info);
+    close(fd);
+    return ret;
 }
 
 struct perfctr_cpus_info *perfctr_cpus_info(int fd)

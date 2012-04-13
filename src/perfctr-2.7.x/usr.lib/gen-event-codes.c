@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: gen-event-codes.c,v 1.9 2005/03/23 02:02:54 mikpe Exp $
  *
  * Generate symbolic constants for performance counter events.
  *

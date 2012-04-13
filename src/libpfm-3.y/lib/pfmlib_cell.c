@@ -36,11 +36,16 @@
 #include "pfmlib_cell_priv.h"	/* architecture private */
 #include "cell_events.h"	/* PMU private */
 
+#define SIGNAL_TYPE_CYCLES      0
+#define PM_COUNTER_CTRL_CYLES   0x42C00000U
+
 #define PFM_CELL_NUM_PMCS	24
 #define PFM_CELL_EVENT_MIN	1
 #define PFM_CELL_EVENT_MAX	8
 #define PMX_MIN_NUM		1
 #define PMX_MAX_NUM		8
+#define PFM_CELL_16BIT_CNTR_EVENT_MAX 8
+#define PFM_CELL_32BIT_CNTR_EVENT_MAX 4
 
 #define COMMON_REG_NUMS		8
 
@@ -48,21 +53,29 @@
 #define ENABLE_WORD1		1
 #define ENABLE_WORD2		2
 
-#define PFM_CELL_GROUP_CONTROL_REG_GROUP0_BIT	30
-#define PFM_CELL_GROUP_CONTROL_REG_GROUP1_BIT	28
+#define PFM_CELL_GRP_CONTROL_REG_GRP0_BIT	30
+#define PFM_CELL_GRP_CONTROL_REG_GRP1_BIT	28
 #define PFM_CELL_BASE_WORD_UNIT_FIELD_BIT	24
 #define PFM_CELL_WORD_UNIT_FIELD_WIDTH		2
 #define PFM_CELL_MAX_WORD_NUMBER		3
-#define PFM_CELL_COUNTER_CONTROL_GROUP1		0x80000000
+#define PFM_CELL_COUNTER_CONTROL_GRP1		0x80000000U
+#define PFM_CELL_DEFAULT_TRIGGER_EVENT_UNIT     0x00555500U
+#define PFM_CELL_PM_CONTROL_16BIT_CNTR_MASK     0x01E00000U
+#define PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_PROBLEM    0x00080000U
+#define PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_SUPERVISOR 0x00000000U
+#define PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_HYPERVISOR 0x00040000U
+#define PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_ALL        0x000C0000U
+#define PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_MASK       0x000C0000U
 
 #define ONLY_WORD(x) \
-	((x == WORD_0_ONLY)||(x == WORD_2_ONLY)) ? x : 0 
+	((x == WORD_0_ONLY)||(x == WORD_2_ONLY)) ? x : 0
 
 struct pfm_cell_signal_group_desc {
 	unsigned int		signal_type;
 	unsigned int		word_type;
 	unsigned long long	word;
 	unsigned long long	freq;
+	unsigned int            subunit;
 };
 
 #define swap_int(num1, num2) do {	\
@@ -71,16 +84,12 @@ struct pfm_cell_signal_group_desc {
 	num2 = tmp;			\
 } while(0)
 
-static int pmx_ctrl_bits;
-
 static int
 pfm_cell_detect(void)
 {
 	int ret;
 	char buffer[128];
 	
-	pmx_ctrl_bits = 0;
-
 	ret = __pfm_getcpuinfo_attr("cpu", buffer, sizeof(buffer));
 	if (ret == -1) {
 		return PFMLIB_ERR_NOTSUPP;
@@ -93,7 +102,7 @@ pfm_cell_detect(void)
 }
 
 static int
-get_pmx_offset(int pmx_num)
+get_pmx_offset(int pmx_num, unsigned int *pmx_ctrl_bits)
 {
 	/* pmx_num==0 -> not specified
 	 * pmx_num==1 -> pm0
@@ -107,8 +116,8 @@ get_pmx_offset(int pmx_num)
 		/* offset is specified */
 		offset = (pmx_num - 1);
 		
-		if ((~pmx_ctrl_bits >> offset) & 0x1) {
-			pmx_ctrl_bits |= (0x1 << offset);
+		if ((~*pmx_ctrl_bits >> offset) & 0x1) {
+			*pmx_ctrl_bits |= (0x1 << offset);
 			return offset;
 		} else {
 			/* offset is used */
@@ -116,10 +125,10 @@ get_pmx_offset(int pmx_num)
 		}
 	} else if (pmx_num == 0){
 		/* offset is not specified */
-		while (((pmx_ctrl_bits >> i) & 0x1) && (i < PMX_MAX_NUM)) {
+		while (((*pmx_ctrl_bits >> i) & 0x1) && (i < PMX_MAX_NUM)) {
 			i++;
 		}
-		pmx_ctrl_bits |= (0x1 << i);
+		*pmx_ctrl_bits |= (0x1 << i);
 		return i;
 	}
 	/* pmx_num is invalid */
@@ -138,14 +147,70 @@ search_enable_word(int word)
 	return count;
 }
 
+static int get_count_bit(unsigned int type)
+{
+	int count = 0;
+
+	while(type) {
+		if (type & 1) {
+			count++;
+		}
+		type >>= 1;
+	}
+	return count;
+}
+
+
 static int
 get_debug_bus_word(struct pfm_cell_signal_group_desc *group0, struct pfm_cell_signal_group_desc *group1)
 {
-	if (group1->signal_type != NONE_SIGNAL) {
+	unsigned int word_type0, word_type1;
+
+	/* search enable word  */
+	word_type0 = group0->word_type;
+	word_type1 = group1->word_type;
+
+	if (group1->signal_type == NONE_SIGNAL) {
+		group0->word = search_enable_word(word_type0);
+		goto found;
+	}
+
+	/* swap */
+	if ((get_count_bit(word_type0) > get_count_bit(word_type1)) ||
+	    (group0->freq == PFM_CELL_PME_FREQ_SPU)) {
+		swap_int(group0->signal_type, group1->signal_type);
+		swap_int(group0->freq, group1->freq);
+		swap_int(group0->word_type, group1->word_type);
+		swap_int(group0->subunit, group1->subunit);
+		swap_int(word_type0, word_type1);
+	}
+
+	if ((ONLY_WORD(word_type0) != 0) && (word_type0 == word_type1)) {
 		return PFMLIB_ERR_INVAL;
 	}
-	group0->word = search_enable_word(group0->word_type);
 
+	if (ONLY_WORD(word_type0)) {
+		group0->word = search_enable_word(ONLY_WORD(word_type0));
+
+		word_type1 &= ~(1UL << (group0->word));
+		group1->word = search_enable_word(word_type1);
+	} else if (ONLY_WORD(word_type1)) {
+		group1->word = search_enable_word(ONLY_WORD(word_type1));
+
+		word_type0 &= ~(1UL << (group1->word));
+		group0->word = search_enable_word(word_type0);
+	} else {
+		group0->word = ENABLE_WORD0;
+		if (word_type1 == WORD_0_AND_1) {
+			group1->word = ENABLE_WORD1;
+		} else if(word_type1 == WORD_0_AND_2) {
+			group1->word = ENABLE_WORD2;
+		} else {
+			return PFMLIB_ERR_INVAL;
+		}
+	}
+
+found:
 	return PFMLIB_SUCCESS;
 }
 
@@ -159,35 +224,64 @@ static unsigned int get_signal_bit(unsigned long long event_code)
 	return (event_code & 0x00000000FFFFFFFFULL) % 100;
 }	
 
+static int is_spe_signal_group(unsigned int signal_type)
+{
+	if (41 <= signal_type && signal_type <= 56) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 static int
 check_signal_type(pfmlib_input_param_t *inp,
-		  struct pfm_cell_signal_group_desc *group0, struct pfm_cell_signal_group_desc *group1)
+		  pfmlib_cell_input_param_t *mod_in,
+		  struct pfm_cell_signal_group_desc *group0,
+		  struct pfm_cell_signal_group_desc *group1)
 {
 	pfmlib_event_t *e;
 	unsigned int event_cnt;
 	int signal_cnt = 0;
 	int i;
-	unsigned int signal_type;
-	
+	int cycles_signal_cnt = 0;
+	unsigned int signal_type, subunit;
+
 	e		= inp->pfp_events;
 	event_cnt	= inp->pfp_event_count;
 
 	for(i = 0; i < event_cnt; i++) {
 		signal_type = get_signal_type(cell_pe[e[i].event].pme_code);
-			
+
+		if ((signal_type == SIGNAL_SPU_TRIGGER)
+		    || (signal_type == SIGNAL_SPU_EVENT)) {
+			continue;
+		}
+
+		if (signal_type == SIGNAL_TYPE_CYCLES) {
+			cycles_signal_cnt = 1;
+			continue;
+		}
+
+		subunit = 0;
+		if (is_spe_signal_group(signal_type)) {
+			subunit = mod_in->pfp_cell_counters[i].spe_subunit;
+		}
 		switch(signal_cnt) {
 			case 0:
 				group0->signal_type = signal_type;
 				group0->word_type = cell_pe[e[i].event].pme_enable_word;
 				group0->freq = cell_pe[e[i].event].pme_freq;
+				group0->subunit = subunit;
 				signal_cnt++;
 				break;
 				
 			case 1:
-				if (group0->signal_type != signal_type) {
+				if ((group0->signal_type != signal_type) ||
+				    (is_spe_signal_group(signal_type) && group0->subunit != subunit)) {
 					group1->signal_type = signal_type;
 					group1->word_type = cell_pe[e[i].event].pme_enable_word;
 					group1->freq = cell_pe[e[i].event].pme_freq;
+					group1->subunit = subunit;
 					signal_cnt++;
 					
 				}
@@ -196,21 +290,63 @@ check_signal_type(pfmlib_input_param_t *inp,
 			case 2:
 				if ((group0->signal_type != signal_type)
 				  && (group1->signal_type != signal_type)) {
-					DPRINT(("signal count is invalid\n"));
+					DPRINT("signal count is invalid\n");
 					return PFMLIB_ERR_INVAL;
 				}
 				break;
 				
 			default:
-				DPRINT(("signal count is invalid\n"));
+				DPRINT("signal count is invalid\n");
 				return PFMLIB_ERR_INVAL;
 		}
 	}
-	return signal_cnt;
+	return (signal_cnt + cycles_signal_cnt);
+}
+
+/*
+ * The assignment between the privilege leve options
+ * and ppu-count-mode field in pm_control register.
+ *
+ * option         ppu count mode(pm_control)
+ * ---------------------------------
+ * -u(-3)        0b10 : Problem mode
+ * -k(-0)        0b00 : Supervisor mode
+ * -1            0b00 : Supervisor mode
+ * -2            0b01 : Hypervisor mode
+ * two options   0b11 : Any mode
+ *
+ * Note : Hypervisor-mode and Any-mode don't work on PS3.
+ *
+ */
+static unsigned int get_ppu_count_mode(unsigned int plm)
+{
+	unsigned int ppu_count_mode = 0;
+
+	switch (plm) {
+	case PFM_PLM0:
+	case PFM_PLM1:
+		ppu_count_mode = PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_SUPERVISOR;
+		break;
+
+	case PFM_PLM2:
+		ppu_count_mode = PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_HYPERVISOR;
+		break;
+
+	case PFM_PLM3:
+		ppu_count_mode = PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_PROBLEM;
+		break;
+
+	default :
+		ppu_count_mode = PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_ALL;
+		break;
+	}
+	return ppu_count_mode;
 }
 
 static int
-pfm_cell_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_cell_input_param_t *mod_in, pfmlib_output_param_t *outp)
+pfm_cell_dispatch_counters(pfmlib_input_param_t *inp,
+			   pfmlib_cell_input_param_t *mod_in,
+			   pfmlib_output_param_t *outp)
 {
 	pfmlib_event_t *e;
 	pfmlib_reg_t *pc, *pd;
@@ -224,91 +360,124 @@ pfm_cell_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_cell_input_param_t 
 	int input_control, polarity, count_cycle, count_enable;
 	unsigned long long subunit;
 	int shift0, shift1;
+	unsigned int pmx_ctrl_bits;
+	int max_event_cnt = PFM_CELL_32BIT_CNTR_EVENT_MAX;
 	
 	count_enable = 1;
-	
+
 	group[0].signal_type = group[1].signal_type = NONE_SIGNAL;
 	group[0].word = group[1].word = 0L;
 	group[0].freq = group[1].freq = 0L;
+	group[0].subunit = group[1].subunit = 0;
 	group[0].word_type = group[1].word_type = WORD_NONE;
 
 	event_cnt = inp->pfp_event_count;
 	e = inp->pfp_events;
 	pc = outp->pfp_pmcs;
 	pd = outp->pfp_pmds;
-	
+
 	/* check event_cnt */
-	if ((event_cnt < PFM_CELL_EVENT_MIN) || (event_cnt > PFM_CELL_EVENT_MAX)) {
-		DPRINT(("event count is invalid\n"));
-		return PFMLIB_ERR_INVAL;
-	}
+	if (mod_in->control & PFM_CELL_PM_CONTROL_16BIT_CNTR_MASK)
+		max_event_cnt = PFM_CELL_16BIT_CNTR_EVENT_MAX;
+	if (event_cnt < PFM_CELL_EVENT_MIN)
+		return PFMLIB_ERR_NOTFOUND;
+	if (event_cnt > max_event_cnt)
+		return PFMLIB_ERR_TOOMANY;
 
 	/* check signal type */
-	signal_cnt = check_signal_type(inp, &group[0], &group[1]);
-	if (signal_cnt == PFMLIB_ERR_INVAL) {
-		DPRINT(("signal type is invalid\n"));
-		return PFMLIB_ERR_INVAL;
-	}
+	signal_cnt = check_signal_type(inp, mod_in, &group[0], &group[1]);
+	if (signal_cnt == PFMLIB_ERR_INVAL)
+		return PFMLIB_ERR_NOASSIGN;
 
 	/* decide debug_bus word */
-	if (signal_cnt != 0) {
+	if (signal_cnt != 0 && group[0].signal_type != NONE_SIGNAL) {
 		ret = get_debug_bus_word(&group[0], &group[1]);
-		if (ret != PFMLIB_SUCCESS) {
-			return ret;
-		}
+		if (ret != PFMLIB_SUCCESS)
+			return PFMLIB_ERR_NOASSIGN;
 	}
 
 	/* common register setting */
-	pc[0].reg_num	= REG_GROUP_CONTROL;
+	pc[pmcs_cnt].reg_num	= REG_GROUP_CONTROL;
 	if (signal_cnt == 1) {
-		pc[0].reg_value = group[0].word << PFM_CELL_GROUP_CONTROL_REG_GROUP0_BIT;
+		pc[pmcs_cnt].reg_value =
+			group[0].word << PFM_CELL_GRP_CONTROL_REG_GRP0_BIT;
 	} else if (signal_cnt == 2) {
-		pc[0].reg_value = (group[0].word << PFM_CELL_GROUP_CONTROL_REG_GROUP0_BIT) |
-				(group[1].word << PFM_CELL_GROUP_CONTROL_REG_GROUP1_BIT);
+		pc[pmcs_cnt].reg_value =
+			(group[0].word << PFM_CELL_GRP_CONTROL_REG_GRP0_BIT) |
+			(group[1].word << PFM_CELL_GRP_CONTROL_REG_GRP1_BIT);
 	}
-	
-	pc[1].reg_num	= REG_DEBUG_BUS_CONTROL;
-	if (signal_cnt == 1) {
-		shift0 = PFM_CELL_BASE_WORD_UNIT_FIELD_BIT +
-			((PFM_CELL_MAX_WORD_NUMBER - group[0].word) * PFM_CELL_WORD_UNIT_FIELD_WIDTH);
-		pc[1].reg_value = group[0].freq << shift0;
-	} else if (signal_cnt == 2) {
-		shift0 = PFM_CELL_BASE_WORD_UNIT_FIELD_BIT +
-			((PFM_CELL_MAX_WORD_NUMBER - group[0].word) * PFM_CELL_WORD_UNIT_FIELD_WIDTH);
-		shift1 = PFM_CELL_BASE_WORD_UNIT_FIELD_BIT +
-			((PFM_CELL_MAX_WORD_NUMBER - group[1].word) * PFM_CELL_WORD_UNIT_FIELD_WIDTH);
-		pc[1].reg_value = (group[0].freq << shift0) | (group[1].freq << shift1);
-	}
+	pmcs_cnt++;
 
-	pc[2].reg_num	= REG_TRACE_ADDRESS;
-	pc[2].reg_value	= 0;
-	
-	pc[3].reg_num	= REG_EXT_TRACE_TIMER;
-	pc[3].reg_value	= 0;
-	
-	pc[4].reg_num	= REG_PM_STATUS;
-	pc[4].reg_value	= 0;
-	
-	pc[5].reg_num	= REG_PM_CONTROL;
-	pc[5].reg_value	= mod_in->control;
-	
-	pc[6].reg_num	= REG_PM_INTERVAL;
-	pc[6].reg_value	= mod_in->interval;
-	
-	pc[7].reg_num	= REG_PM_START_STOP;
-	pc[7].reg_value	= mod_in->triggers;
-	
-	pmcs_cnt = COMMON_REG_NUMS;
-	
+	pc[pmcs_cnt].reg_num	= REG_DEBUG_BUS_CONTROL;
+	if (signal_cnt == 1) {
+		shift0 = PFM_CELL_BASE_WORD_UNIT_FIELD_BIT +
+			((PFM_CELL_MAX_WORD_NUMBER - group[0].word) *
+			 PFM_CELL_WORD_UNIT_FIELD_WIDTH);
+		pc[pmcs_cnt].reg_value = group[0].freq << shift0;
+	} else if (signal_cnt == 2) {
+		shift0 = PFM_CELL_BASE_WORD_UNIT_FIELD_BIT +
+			((PFM_CELL_MAX_WORD_NUMBER - group[0].word) *
+			 PFM_CELL_WORD_UNIT_FIELD_WIDTH);
+		shift1 = PFM_CELL_BASE_WORD_UNIT_FIELD_BIT +
+			((PFM_CELL_MAX_WORD_NUMBER - group[1].word) *
+			 PFM_CELL_WORD_UNIT_FIELD_WIDTH);
+		pc[pmcs_cnt].reg_value = (group[0].freq << shift0) |
+			(group[1].freq << shift1);
+	}
+	pc[pmcs_cnt].reg_value |= PFM_CELL_DEFAULT_TRIGGER_EVENT_UNIT;
+	pmcs_cnt++;
+
+	pc[pmcs_cnt].reg_num	= REG_TRACE_ADDRESS;
+	pc[pmcs_cnt].reg_value	= 0;
+	pmcs_cnt++;
+
+	pc[pmcs_cnt].reg_num	= REG_EXT_TRACE_TIMER;
+	pc[pmcs_cnt].reg_value	= 0;
+	pmcs_cnt++;
+
+	pc[pmcs_cnt].reg_num	= REG_PM_STATUS;
+	pc[pmcs_cnt].reg_value	= 0;
+	pmcs_cnt++;
+
+	pc[pmcs_cnt].reg_num	= REG_PM_CONTROL;
+	pc[pmcs_cnt].reg_value	=
+		(mod_in->control & ~PFM_CELL_PM_CONTROL_PPU_CNTR_MODE_MASK) |
+		get_ppu_count_mode(inp->pfp_dfl_plm);
+	pmcs_cnt++;
+
+	pc[pmcs_cnt].reg_num	= REG_PM_INTERVAL;
+	pc[pmcs_cnt].reg_value	= mod_in->interval;
+	pmcs_cnt++;
+
+	pc[pmcs_cnt].reg_num	= REG_PM_START_STOP;
+	pc[pmcs_cnt].reg_value	= mod_in->triggers;
+	pmcs_cnt++;
+
+	pmx_ctrl_bits = 0;
+
 	/* pmX register setting */
 	for(i = 0; i < event_cnt; i++) {
 		/* PMX_CONTROL */
-		pmx_offset = get_pmx_offset(mod_in->pfp_cell_counters[i].pmX_control_num);
+		pmx_offset = get_pmx_offset(mod_in->pfp_cell_counters[i].pmX_control_num,
+					    &pmx_ctrl_bits);
 		if (pmx_offset == PFMLIB_ERR_INVAL) {
-			DPRINT(("pmX already used\n"));
+			DPRINT("pmX already used\n");
 			return PFMLIB_ERR_INVAL;
 		}
-		
+
+		signal_type = get_signal_type(cell_pe[e[i].event].pme_code);
+		if (signal_type == SIGNAL_TYPE_CYCLES) {
+			pc[pmcs_cnt].reg_value	= PM_COUNTER_CTRL_CYLES;
+			pc[pmcs_cnt].reg_num	= REG_PM0_CONTROL + pmx_offset;
+			pmcs_cnt++;
+			pc[pmcs_cnt].reg_value  = cell_pe[e[i].event].pme_code;
+			pc[pmcs_cnt].reg_num	= REG_PM0_EVENT + pmx_offset;
+			pmcs_cnt++;
+			pd[i].reg_num = pmx_offset;
+			pd[i].reg_value = 0;
+			continue;
+		}
+
 		switch(cell_pe[e[i].event].pme_type) {
 			case COUNT_TYPE_BOTH_TYPE:
 			case COUNT_TYPE_CUMULATIVE_LEN:
@@ -325,14 +494,12 @@ pfm_cell_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_cell_input_param_t 
 				return PFMLIB_ERR_INVAL;
 		}
 
-		signal_type = get_signal_type(cell_pe[e[i].event].pme_code);
 		signal_bit = get_signal_bit(cell_pe[e[i].event].pme_code);
 		polarity = mod_in->pfp_cell_counters[i].polarity;
 		input_control = mod_in->pfp_cell_counters[i].input_control;
-		if ((41 <= signal_type) && (signal_type <= 56)) {
+		subunit = 0;
+		if (is_spe_signal_group(signal_type)) {
 			subunit = mod_in->pfp_cell_counters[i].spe_subunit;
-		} else {
-			subunit = 0;
 		}
 		
 		pc[pmcs_cnt].reg_value	= ( (signal_bit << (31 - 5))
@@ -342,8 +509,8 @@ pfm_cell_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_cell_input_param_t 
 					  | (count_enable << (31 - 9)) );
 		pc[pmcs_cnt].reg_num	= REG_PM0_CONTROL + pmx_offset;
 
-		if (signal_type == group[1].signal_type) {
-			pc[pmcs_cnt].reg_value |= PFM_CELL_COUNTER_CONTROL_GROUP1;
+		if (signal_type == group[1].signal_type && subunit == group[1].subunit) {
+			pc[pmcs_cnt].reg_value |= PFM_CELL_COUNTER_CONTROL_GRP1;
 		}
 
 		pmcs_cnt++;
@@ -352,23 +519,25 @@ pfm_cell_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_cell_input_param_t 
 		pc[pmcs_cnt].reg_num	= REG_PM0_EVENT + pmx_offset;
 
 		/* debug bus word setting */
-		if (signal_type == group[0].signal_type) {
+		if (signal_type == group[0].signal_type && subunit == group[0].subunit) {
 			pc[pmcs_cnt].reg_value	= (cell_pe[e[i].event].pme_code |
 						   (group[0].word << 48) | (subunit << 32));
-		} else if (signal_type == group[1].signal_type) {
+		} else if (signal_type == group[1].signal_type && subunit == group[1].subunit) {
 			pc[pmcs_cnt].reg_value	= (cell_pe[e[i].event].pme_code |
 						   (group[1].word << 48) | (subunit << 32));
+		} else if ((signal_type == SIGNAL_SPU_TRIGGER)
+		           || (signal_type == SIGNAL_SPU_EVENT)) {
+			pc[pmcs_cnt].reg_value	= cell_pe[e[i].event].pme_code | (subunit << 32);
 		} else {
 			return PFMLIB_ERR_INVAL;
 		}
 		pmcs_cnt++;
-	}
-	/* pmds setting */
-	for(i = 0; i < pmx_offset+1; i++) {
-		pd[i].reg_num = i;
+
+		/* pmd setting */
+		pd[i].reg_num = pmx_offset;
 		pd[i].reg_value = 0;
 	}
-	
+
 	outp->pfp_pmc_count = pmcs_cnt;
 	outp->pfp_pmd_count = event_cnt;
 
@@ -379,18 +548,34 @@ static int
 pfm_cell_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
 {
 	pfmlib_cell_input_param_t *mod_in  = (pfmlib_cell_input_param_t *)model_in;
+        pfmlib_cell_input_param_t default_model_in;
+	int i;
 
-	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
-		return PFMLIB_ERR_INVAL;
+	if (model_in) {
+		mod_in = (pfmlib_cell_input_param_t *)model_in;
+	} else {
+		mod_in = &default_model_in;
+		mod_in->control = 0x80000000;
+		mod_in->interval = 0;
+		mod_in->triggers = 0;
+		for (i = 0; i < PMU_CELL_NUM_COUNTERS; i++) {
+			mod_in->pfp_cell_counters[i].pmX_control_num = 0;
+			mod_in->pfp_cell_counters[i].spe_subunit = 0;
+			mod_in->pfp_cell_counters[i].polarity = 1;
+			mod_in->pfp_cell_counters[i].input_control = 0;
+			mod_in->pfp_cell_counters[i].cnt_mask = 0;
+			mod_in->pfp_cell_counters[i].flags = 0;
+		}
 	}
+
 	return pfm_cell_dispatch_counters(inp, mod_in, outp);
 }
 
 static int
 pfm_cell_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
-	if (cnt != PFMLIB_CNT_FIRST && cnt > 2) {
+//	if (cnt != PFMLIB_CNT_FIRST && cnt > 2) {
+	if (cnt != PFMLIB_CNT_FIRST && cnt > cell_support.num_cnt) {
 		return PFMLIB_ERR_INVAL;
 	}
 
@@ -465,6 +650,28 @@ pfm_cell_get_event_desc(unsigned int ev, char **str)
 	return PFMLIB_SUCCESS;
 }
 
+static int
+pfm_cell_get_cycle_event(pfmlib_event_t *e)
+{
+	int i;
+
+	for (i = 0; i < PME_CELL_EVENT_COUNT; i++) {
+		if (!strcmp(cell_pe[i].pme_name, "CYCLES")) {
+			e->event = i;
+			return PFMLIB_SUCCESS;
+		}
+	}
+	return PFMLIB_ERR_NOTFOUND;
+}
+
+int pfm_cell_spe_event(unsigned int event_index)
+{
+	if (event_index >= PME_CELL_EVENT_COUNT)
+		return 0;
+
+	return is_spe_signal_group(get_signal_type(cell_pe[event_index].pme_code));
+}
+
 pfm_pmu_support_t cell_support={
 	.pmu_name		= "CELL",
 	.pmu_type		= PFMLIB_CELL_PMU,
@@ -480,5 +687,6 @@ pfm_pmu_support_t cell_support={
 	.get_impl_pmcs		= pfm_cell_get_impl_pmcs,
 	.get_impl_pmds		= pfm_cell_get_impl_pmds,
 	.get_impl_counters	= pfm_cell_get_impl_counters,
-	.get_event_desc		= pfm_cell_get_event_desc
+	.get_event_desc		= pfm_cell_get_event_desc,
+	.get_cycle_event        = pfm_cell_get_cycle_event
 };

@@ -1,17 +1,19 @@
-/* $Id$
+/* $Id: ppc.c,v 1.3.2.22 2009/06/11 12:33:51 mikpe Exp $
  * PPC32 performance-monitoring counters driver.
  *
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004-2009  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/fs.h>
 #include <linux/perfctr.h>
-#include <linux/seq_file.h>
-#include <asm/machdep.h>
+#include <asm/prom.h>
 #include <asm/time.h>		/* tb_ticks_per_jiffy, get_tbl() */
 
 #include "compat.h"
@@ -27,6 +29,8 @@ struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 	unsigned int ppc_mmcr[3];
 } ____cacheline_aligned;
 static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
+#define __get_cpu_cache(cpu) (&per_cpu_cache[cpu])
+#define get_cpu_cache()	(&per_cpu_cache[smp_processor_id()])
 
 /* Structure for counter snapshots, as 32-bit values. */
 struct perfctr_low_ctrs {
@@ -35,74 +39,23 @@ struct perfctr_low_ctrs {
 };
 
 enum pm_type {
-    PM_604,
-    PM_604e,
-    PM_750,	/* XXX: Minor event set diffs between IBM and Moto. */
-    PM_7400,
-    PM_7450,
+	PM_NONE,
+	PM_604,
+	PM_604e,
+	PM_750,	/* XXX: Minor event set diffs between IBM and Moto. */
+	PM_7400,
+	PM_7450,
 };
 static enum pm_type pm_type;
 
-#define SPRN_MMCR0	0x3B8	/* 604 and up */
-#define SPRN_PMC1	0x3B9	/* 604 and up */
-#define SPRN_PMC2	0x3BA	/* 604 and up */
-#define SPRN_SIA	0x3BB	/* 604 and up */
-#define SPRN_MMCR1	0x3BC	/* 604e and up */
-#define SPRN_PMC3	0x3BD	/* 604e and up */
-#define SPRN_PMC4	0x3BE	/* 604e and up */
-#define SPRN_MMCR2	0x3B0	/* 7400 and up */
-#define SPRN_BAMR	0x3B7	/* 7400 and up */
-#define SPRN_PMC5	0x3B1	/* 7450 and up */
-#define SPRN_PMC6	0x3B2	/* 7450 and up */
-
-/* MMCR0 layout (74xx terminology) */
-#define MMCR0_FC		0x80000000 /* Freeze counters unconditionally. */
-#define MMCR0_FCS		0x40000000 /* Freeze counters while MSR[PR]=0 (supervisor mode). */
-#define MMCR0_FCP		0x20000000 /* Freeze counters while MSR[PR]=1 (user mode). */
-#define MMCR0_FCM1		0x10000000 /* Freeze counters while MSR[PM]=1. */
-#define MMCR0_FCM0		0x08000000 /* Freeze counters while MSR[PM]=0. */
-#define MMCR0_PMXE		0x04000000 /* Enable performance monitor exceptions.
-					    * Cleared by hardware when a PM exception occurs.
-					    * 604: PMXE is not cleared by hardware.
-					    */
-#define MMCR0_FCECE		0x02000000 /* Freeze counters on enabled condition or event.
-					    * FCECE is treated as 0 if TRIGGER is 1.
-					    * 74xx: FC is set when the event occurs.
-					    * 604/750: ineffective when PMXE=0.
-					    */
-#define MMCR0_TBSEL		0x01800000 /* Time base lower (TBL) bit selector.
-					    * 00: bit 31, 01: bit 23, 10: bit 19, 11: bit 15.
-					    */
-#define MMCR0_TBEE		0x00400000 /* Enable event on TBL bit transition from 0 to 1. */
-#define MMCR0_THRESHOLD		0x003F0000 /* Threshold value for certain events. */
-#define MMCR0_PMC1CE		0x00008000 /* Enable event on PMC1 overflow. */
-#define MMCR0_PMCjCE		0x00004000 /* Enable event on PMC2-PMC6 overflow.
-					    * 604/750: Overrides FCECE (DISCOUNT).
-					    */
-#define MMCR0_TRIGGER		0x00002000 /* Disable PMC2-PMC6 until PMC1 overflow or other event.
-					    * 74xx: cleared by hardware when the event occurs.
-					    */
-#define MMCR0_PMC1SEL		0x00001FB0 /* PMC1 event selector, 7 bits. */
-#define MMCR0_PMC2SEL		0x0000003F /* PMC2 event selector, 6 bits. */
-#define MMCR0_RESERVED		(MMCR0_PMXE | MMCR0_PMC1SEL | MMCR0_PMC2SEL)
-
-/* MMCR1 layout (604e-7457) */
-#define MMCR1_PMC3SEL		0xF8000000 /* PMC3 event selector, 5 bits. */
-#define MMCR1_PMC4SEL		0x07B00000 /* PMC4 event selector, 5 bits. */
-#define MMCR1_PMC5SEL		0x003E0000 /* PMC5 event selector, 5 bits. (745x only) */
-#define MMCR1_PMC6SEL		0x0001F800 /* PMC6 event selector, 6 bits. (745x only) */
-#define MMCR1__RESERVED		0x000007FF /* should be zero */
-
-/* MMCR2 layout (7400-7457) */
-#define MMCR2_THRESHMULT	0x80000000 /* MMCR0[THRESHOLD] multiplier. */
-#define MMCR2_SMCNTEN		0x40000000 /* 7400/7410 only, should be zero. */
-#define MMCR2_SMINTEN		0x20000000 /* 7400/7410 only, should be zero. */
-#define MMCR2__RESERVED		0x1FFFFFFF /* should be zero */
-#define MMCR2_RESERVED		(MMCR2_SMCNTEN | MMCR2_SMINTEN | MMCR2__RESERVED)
+/* Bits users shouldn't set in control.ppc.mmcr0:
+ * - PMC1SEL/PMC2SEL because event selectors are in control.evntsel[]
+ */
+#define MMCR0_RESERVED		(MMCR0_PMC1SEL | MMCR0_PMC2SEL)
 
 static unsigned int new_id(void)
 {
-	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
+	static DEFINE_SPINLOCK(lock);
 	static unsigned int counter;
 	int id;
 
@@ -112,36 +65,46 @@ static unsigned int new_id(void)
 	return id;
 }
 
-#if !defined(PERFCTR_INTERRUPT_SUPPORT)
+#ifndef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 #define perfctr_cstatus_has_ictrs(cstatus)	0
 #endif
 
-#if defined(CONFIG_SMP) && PERFCTR_INTERRUPT_SUPPORT
+#if defined(CONFIG_SMP) && defined(CONFIG_PERFCTR_INTERRUPT_SUPPORT)
 
-static inline void set_isuspend_cpu(struct perfctr_cpu_state *state,
-				    const struct per_cpu_cache *cache)
+static inline void
+set_isuspend_cpu(struct perfctr_cpu_state *state, int cpu)
 {
-	state->k1.isuspend_cpu = cache;
+	state->k1.isuspend_cpu = cpu;
 }
 
-static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state,
-				  const struct per_cpu_cache *cache)
+static inline int
+is_isuspend_cpu(const struct perfctr_cpu_state *state, int cpu)
 {
-	return state->k1.isuspend_cpu == cache;
+	return state->k1.isuspend_cpu == cpu;
 }
 
 static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state)
 {
-	state->k1.isuspend_cpu = NULL;
+	state->k1.isuspend_cpu = NR_CPUS;
 }
 
 #else
-static inline void set_isuspend_cpu(struct perfctr_cpu_state *state,
-				    const struct per_cpu_cache *cache) { }
-static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state,
-				  const struct per_cpu_cache *cache) { return 1; }
+static inline void set_isuspend_cpu(struct perfctr_cpu_state *state, int cpu) { }
+static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state, int cpu) { return 1; }
 static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
 #endif
+
+/* The ppc driver internally uses cstatus & (1<<30) to record that
+   a context has an asynchronously changing MMCR0. */
+static inline unsigned int perfctr_cstatus_set_mmcr0_quirk(unsigned int cstatus)
+{
+	return cstatus | (1 << 30);
+}
+
+static inline int perfctr_cstatus_has_mmcr0_quirk(unsigned int cstatus)
+{
+	return cstatus & (1 << 30);
+}
 
 /****************************************************************
  *								*
@@ -173,14 +136,6 @@ static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
  *   Any performance counter can be programmed to count core clocks, but
  *   doing this (a) reserves one PMC, and (b) needs indirect accesses
  *   since the SPR number in general isn't known at compile-time.
- *
- * Driver notes
- * ------------
- * - The driver currently does not support performance monitor interrupts,
- *   mostly because of the 750/7400/7410 erratum. Working around it would
- *   require disabling the decrementer interrupt, reserving a performance
- *   counter and setting it up for TBL bit-flip events, and having the PMI
- *   handler invoke the decrementer handler.
  *
  * 604
  * ---
@@ -224,6 +179,8 @@ static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
  *
  * 750FX adds dual-PLL support and programmable core frequency switching.
  *
+ * 750FX DD2.3 fixed the DEC/PMI SRR0 corruption erratum.
+ *
  * 74xx
  * ----
  * 7400 adds MMCR2 and BAMR.
@@ -248,7 +205,7 @@ static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
 
 static inline unsigned int read_pmc(unsigned int pmc)
 {
-	switch( pmc ) {
+	switch (pmc) {
 	default: /* impossible, but silences gcc warning */
 	case 0:
 		return mfspr(SPRN_PMC1);
@@ -265,30 +222,24 @@ static inline unsigned int read_pmc(unsigned int pmc)
 	}
 }
 
-static void ppc_read_counters(/*const*/ struct perfctr_cpu_state *state,
+static void ppc_read_counters(struct perfctr_cpu_state *state,
 			      struct perfctr_low_ctrs *ctrs)
 {
 	unsigned int cstatus, nrctrs, i;
 
 	cstatus = state->cstatus;
-	if( perfctr_cstatus_has_tsc(cstatus) )
+	if (perfctr_cstatus_has_tsc(cstatus))
 		ctrs->tsc = get_tbl();
 	nrctrs = perfctr_cstatus_nractrs(cstatus);
 	for(i = 0; i < nrctrs; ++i) {
 		unsigned int pmc = state->pmc[i].map;
 		ctrs->pmc[i] = read_pmc(pmc);
 	}
-	/* handle MMCR0 changes due to FCECE or TRIGGER on 74xx */
-	if( state->cstatus & (1<<30) ) {
-		unsigned int mmcr0 = mfspr(SPRN_MMCR0);
-		state->ppc_mmcr[0] = mmcr0;
-		per_cpu_cache[smp_processor_id()].ppc_mmcr[0] = mmcr0;
-	}
 }
 
 static unsigned int pmc_max_event(unsigned int pmc)
 {
-	switch( pmc ) {
+	switch (pmc) {
 	default: /* impossible, but silences gcc warning */
 	case 0:
 		return 127;
@@ -307,56 +258,71 @@ static unsigned int pmc_max_event(unsigned int pmc)
 
 static unsigned int get_nr_pmcs(void)
 {
-	switch( pm_type ) {
+	switch (pm_type) {
 	case PM_7450:
 		return 6;
 	case PM_7400:
 	case PM_750:
 	case PM_604e:
 		return 4;
-	default: /* impossible, but silences gcc warning */
 	case PM_604:
 		return 2;
+	default: /* PM_NONE, but silences gcc warning */
+		return 0;
 	}
 }
 
 static int ppc_check_control(struct perfctr_cpu_state *state)
 {
-	unsigned int i, nrctrs, pmc_mask, pmc;
+	unsigned int i, nractrs, nrctrs, pmc_mask, pmi_mask, pmc;
 	unsigned int nr_pmcs, evntsel[6];
 
 	nr_pmcs = get_nr_pmcs();
-	nrctrs = state->control.nractrs;
-	if( state->control.nrictrs || nrctrs > nr_pmcs )
+	nractrs = state->control.nractrs;
+	nrctrs = nractrs + state->control.nrictrs;
+	if (nrctrs < nractrs || nrctrs > nr_pmcs)
 		return -EINVAL;
 
 	pmc_mask = 0;
+	pmi_mask = 0;
 	memset(evntsel, 0, sizeof evntsel);
 	for(i = 0; i < nrctrs; ++i) {
 		pmc = state->control.pmc_map[i];
 		state->pmc[i].map = pmc;
-		if( pmc >= nr_pmcs || (pmc_mask & (1<<pmc)) )
+		if (pmc >= nr_pmcs || (pmc_mask & (1<<pmc)))
 			return -EINVAL;
 		pmc_mask |= (1<<pmc);
 
+		if (i >= nractrs)
+			pmi_mask |= (1<<pmc);
+
 		evntsel[pmc] = state->control.evntsel[i];
-		if( evntsel[pmc] > pmc_max_event(pmc) )
+		if (evntsel[pmc] > pmc_max_event(pmc))
 			return -EINVAL;
 	}
 
-	switch( pm_type ) {
+	/* XXX: temporary limitation */
+	if ((pmi_mask & ~1) && (pmi_mask & ~1) != (pmc_mask & ~1))
+		return -EINVAL;
+
+	switch (pm_type) {
 	case PM_7450:
-		if( state->control.ppc.mmcr2 & MMCR2_RESERVED )
+	case PM_7400:
+		if (state->control.ppc.mmcr2 & MMCR2_RESERVED)
 			return -EINVAL;
 		state->ppc_mmcr[2] = state->control.ppc.mmcr2;
 		break;
 	default:
-		if( state->control.ppc.mmcr2 )
+		if (state->control.ppc.mmcr2)
 			return -EINVAL;
 		state->ppc_mmcr[2] = 0;
 	}
 
-	if( state->control.ppc.mmcr0 & MMCR0_RESERVED )
+	/* We do not yet handle TBEE as the only exception cause,
+	   so PMXE requires at least one interrupt-mode counter. */
+	if ((state->control.ppc.mmcr0 & MMCR0_PMXE) && !state->control.nrictrs)
+		return -EINVAL;
+	if (state->control.ppc.mmcr0 & MMCR0_RESERVED)
 		return -EINVAL;
 	state->ppc_mmcr[0] = (state->control.ppc.mmcr0
 			      | (evntsel[0] << (31-25))
@@ -371,30 +337,99 @@ static int ppc_check_control(struct perfctr_cpu_state *state)
 
 	/*
 	 * MMCR0[FC] and MMCR0[TRIGGER] may change on 74xx if FCECE or
-	 * TRIGGER is set. To avoid undoing those changes, we must read
-	 * MMCR0 back into state->ppc_mmcr[0] and the cache at suspends.
+	 * TRIGGER is set. At suspends we must read MMCR0 back into
+	 * the state and the cache and then freeze the counters, and
+	 * at resumes we must unfreeze the counters and reload MMCR0.
 	 */
-	switch( pm_type ) {
+	switch (pm_type) {
 	case PM_7450:
 	case PM_7400:
-		if( state->ppc_mmcr[0] & (MMCR0_FCECE | MMCR0_TRIGGER) )
-			state->cstatus |= (1<<30);
+		if (state->ppc_mmcr[0] & (MMCR0_FCECE | MMCR0_TRIGGER))
+			state->cstatus = perfctr_cstatus_set_mmcr0_quirk(state->cstatus);
 	default:
 		;
 	}
 
+	/* The MMCR0 handling for FCECE and TRIGGER is also needed for PMXE. */
+	if (state->ppc_mmcr[0] & (MMCR0_PMXE | MMCR0_FCECE | MMCR0_TRIGGER))
+		state->cstatus = perfctr_cstatus_set_mmcr0_quirk(state->cstatus);
+
 	return 0;
 }
 
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
+/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
+/* PRE: counters frozen */
 static void ppc_isuspend(struct perfctr_cpu_state *state)
 {
-	// XXX
+	struct per_cpu_cache *cache;
+	unsigned int cstatus, nrctrs, i;
+	int cpu;
+
+	cpu = smp_processor_id();
+	set_isuspend_cpu(state, cpu); /* early to limit cpu's live range */
+	cache = __get_cpu_cache(cpu);
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
+		unsigned int pmc = state->pmc[i].map;
+		unsigned int now = read_pmc(pmc);
+		state->pmc[i].sum += now - state->pmc[i].start;
+		state->pmc[i].start = now;
+	}
+	/* cache->k1.id is still == state->k1.id */
 }
 
 static void ppc_iresume(const struct perfctr_cpu_state *state)
 {
-	// XXX
+	struct per_cpu_cache *cache;
+	unsigned int cstatus, nrctrs, i;
+	int cpu;
+	unsigned int pmc[6];
+
+	cpu = smp_processor_id();
+	cache = __get_cpu_cache(cpu);
+	if (cache->k1.id == state->k1.id) {
+		/* Clearing cache->k1.id to force write_control()
+		   to unfreeze MMCR0 would be done here, but it
+		   is subsumed by resume()'s MMCR0 reload logic. */
+		if (is_isuspend_cpu(state, cpu))
+			return; /* skip reload of PMCs */
+	}
+	/*
+	 * The CPU state wasn't ours.
+	 *
+	 * The counters must be frozen before being reinitialised,
+	 * to prevent unexpected increments and missed overflows.
+	 *
+	 * All unused counters must be reset to a non-overflow state.
+	 */
+	if (!(cache->ppc_mmcr[0] & MMCR0_FC)) {
+		cache->ppc_mmcr[0] |= MMCR0_FC;
+		mtspr(SPRN_MMCR0, cache->ppc_mmcr[0]);
+	}
+	memset(&pmc[0], 0, sizeof pmc);
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i)
+		pmc[state->pmc[i].map] = state->pmc[i].start;
+
+	switch (pm_type) {
+	case PM_7450:
+		mtspr(SPRN_PMC6, pmc[6-1]);
+		mtspr(SPRN_PMC5, pmc[5-1]);
+	case PM_7400:
+	case PM_750:
+	case PM_604e:
+		mtspr(SPRN_PMC4, pmc[4-1]);
+		mtspr(SPRN_PMC3, pmc[3-1]);
+	case PM_604:
+		mtspr(SPRN_PMC2, pmc[2-1]);
+		mtspr(SPRN_PMC1, pmc[1-1]);
+	case PM_NONE:
+		;
+	}
+	/* cache->k1.id remains != state->k1.id */
 }
 #endif
 
@@ -403,11 +438,9 @@ static void ppc_write_control(const struct perfctr_cpu_state *state)
 	struct per_cpu_cache *cache;
 	unsigned int value;
 
-	cache = &per_cpu_cache[smp_processor_id()];
-	if( cache->k1.id == state->k1.id ) {
-		//debug_evntsel_cache(state, cache);
+	cache = get_cpu_cache();
+	if (cache->k1.id == state->k1.id)
 		return;
-	}
 	/*
 	 * Order matters here: update threshmult and event
 	 * selectors before updating global control, which
@@ -422,17 +455,17 @@ static void ppc_write_control(const struct perfctr_cpu_state *state)
 	 * preventing any actual mtspr to it. Ditto for MMCR1.
 	 */
 	value = state->ppc_mmcr[2];
-	if( value != cache->ppc_mmcr[2] ) {
+	if (value != cache->ppc_mmcr[2]) {
 		cache->ppc_mmcr[2] = value;
 		mtspr(SPRN_MMCR2, value);
 	}
 	value = state->ppc_mmcr[1];
-	if( value != cache->ppc_mmcr[1] ) {
+	if (value != cache->ppc_mmcr[1]) {
 		cache->ppc_mmcr[1] = value;
 		mtspr(SPRN_MMCR1, value);
 	}
 	value = state->ppc_mmcr[0];
-	if( value != cache->ppc_mmcr[0] ) {
+	if (value != cache->ppc_mmcr[0]) {
 		cache->ppc_mmcr[0] = value;
 		mtspr(SPRN_MMCR0, value);
 	}
@@ -441,7 +474,7 @@ static void ppc_write_control(const struct perfctr_cpu_state *state)
 
 static void ppc_clear_counters(void)
 {
-	switch( pm_type ) {
+	switch (pm_type) {
 	case PM_7450:
 	case PM_7400:
 		mtspr(SPRN_MMCR2, 0);
@@ -451,8 +484,10 @@ static void ppc_clear_counters(void)
 		mtspr(SPRN_MMCR1, 0);
 	case PM_604:
 		mtspr(SPRN_MMCR0, 0);
+	case PM_NONE:
+		;
 	}
-	switch( pm_type ) {
+	switch (pm_type) {
 	case PM_7450:
 		mtspr(SPRN_PMC6, 0);
 		mtspr(SPRN_PMC5, 0);
@@ -464,6 +499,8 @@ static void ppc_clear_counters(void)
 	case PM_604:
 		mtspr(SPRN_PMC2, 0);
 		mtspr(SPRN_PMC1, 0);
+	case PM_NONE:
+		;
 	}
 }
 
@@ -476,13 +513,13 @@ static void perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
 	return ppc_write_control(state);
 }
 
-static void perfctr_cpu_read_counters(/*const*/ struct perfctr_cpu_state *state,
+static void perfctr_cpu_read_counters(struct perfctr_cpu_state *state,
 				      struct perfctr_low_ctrs *ctrs)
 {
 	return ppc_read_counters(state, ctrs);
 }
 
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 static void perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
 {
 	return ppc_isuspend(state);
@@ -497,10 +534,11 @@ static void perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
    bypass internal caching and force a reload if the I-mode PMCs. */
 void perfctr_cpu_ireload(struct perfctr_cpu_state *state)
 {
+	state->ppc_mmcr[0] |= MMCR0_PMXE;
 #ifdef CONFIG_SMP
 	clear_isuspend_cpu(state);
 #else
-	per_cpu_cache[smp_processor_id()].k1.id = 0;
+	get_cpu_cache()->k1.id = 0;
 #endif
 }
 
@@ -514,15 +552,14 @@ unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state *state)
 	nrctrs = perfctr_cstatus_nrctrs(cstatus);
 
 	for(pmc_mask = 0; pmc < nrctrs; ++pmc) {
-		if( (int)state->pmc[pmc].start < 0 ) { /* PPC-specific */
+		if ((int)state->pmc[pmc].start < 0) { /* PPC-specific */
 			/* XXX: "+=" to correct for overshots */
 			state->pmc[pmc].start = state->control.ireset[pmc];
 			pmc_mask |= (1 << pmc);
 		}
 	}
-	/* XXX: if pmc_mask == 0, then it must have been a TBL bit flip */
-	/* XXX: HW cleared MMCR0[ENINT]. We presumably cleared the entire
-	   MMCR0, so the re-enable occurs automatically later, no? */
+	if (!pmc_mask && (state->ppc_mmcr[0] & MMCR0_TBEE))
+		pmc_mask = (1<<8); /* fake TB bit flip indicator */
 	return pmc_mask;
 }
 
@@ -533,7 +570,7 @@ static inline int check_ireset(const struct perfctr_cpu_state *state)
 	i = state->control.nractrs;
 	nrctrs = i + state->control.nrictrs;
 	for(; i < nrctrs; ++i)
-		if( state->control.ireset[i] < 0 )	/* PPC-specific */
+		if (state->control.ireset[i] < 0)	/* PPC-specific */
 			return -EINVAL;
 	return 0;
 }
@@ -548,49 +585,35 @@ static inline void setup_imode_start_values(struct perfctr_cpu_state *state)
 		state->pmc[i].start = state->control.ireset[i];
 }
 
-static inline void debug_no_imode(const struct perfctr_cpu_state *state)
-{
-#ifdef CONFIG_PERFCTR_DEBUG
-	if( perfctr_cstatus_has_ictrs(state->cstatus) )
-		printk(KERN_ERR "perfctr/%s: BUG! updating control in"
-		       " perfctr %p on cpu %u while it has cstatus %x"
-		       " (pid %d, comm %s)\n",
-		       __FILE__, state, smp_processor_id(), state->cstatus,
-		       current->pid, current->comm);
-#endif
-}
-
-#else	/* PERFCTR_INTERRUPT_SUPPORT */
+#else	/* CONFIG_PERFCTR_INTERRUPT_SUPPORT */
 static inline void perfctr_cpu_isuspend(struct perfctr_cpu_state *state) { }
 static inline void perfctr_cpu_iresume(const struct perfctr_cpu_state *state) { }
 static inline int check_ireset(const struct perfctr_cpu_state *state) { return 0; }
 static inline void setup_imode_start_values(struct perfctr_cpu_state *state) { }
-static inline void debug_no_imode(const struct perfctr_cpu_state *state) { }
-#endif	/* PERFCTR_INTERRUPT_SUPPORT */
+#endif	/* CONFIG_PERFCTR_INTERRUPT_SUPPORT */
 
 static int check_control(struct perfctr_cpu_state *state)
 {
 	return ppc_check_control(state);
 }
 
-int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global)
+int perfctr_cpu_update_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	int err;
 
-	debug_no_imode(state);
 	clear_isuspend_cpu(state);
 	state->cstatus = 0;
 
 	/* disallow i-mode counters if we cannot catch the interrupts */
-	if( !(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
-	    && state->control.nrictrs )
+	if (!(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
+	    && state->control.nrictrs)
 		return -EPERM;
 
 	err = check_ireset(state);
-	if( err < 0 )
+	if (err < 0)
 		return err;
 	err = check_control(state); /* may initialise state->cstatus */
-	if( err < 0 )
+	if (err < 0)
 		return err;
 	state->cstatus |= perfctr_mk_cstatus(state->control.tsc_on,
 					     state->control.nractrs,
@@ -604,11 +627,17 @@ void perfctr_cpu_suspend(struct perfctr_cpu_state *state)
 	unsigned int i, cstatus, nractrs;
 	struct perfctr_low_ctrs now;
 
-	if( perfctr_cstatus_has_ictrs(state->cstatus) )
-	    perfctr_cpu_isuspend(state);
+	if (perfctr_cstatus_has_mmcr0_quirk(state->cstatus)) {
+		unsigned int mmcr0 = mfspr(SPRN_MMCR0);
+		mtspr(SPRN_MMCR0, mmcr0 | MMCR0_FC);
+		get_cpu_cache()->ppc_mmcr[0] = mmcr0 | MMCR0_FC;
+		state->ppc_mmcr[0] = mmcr0;
+	}
+	if (perfctr_cstatus_has_ictrs(state->cstatus))
+		perfctr_cpu_isuspend(state);
 	perfctr_cpu_read_counters(state, &now);
 	cstatus = state->cstatus;
-	if( perfctr_cstatus_has_tsc(cstatus) )
+	if (perfctr_cstatus_has_tsc(cstatus))
 		state->tsc_sum += now.tsc - state->tsc_start;
 	nractrs = perfctr_cstatus_nractrs(cstatus);
 	for(i = 0; i < nractrs; ++i)
@@ -617,8 +646,10 @@ void perfctr_cpu_suspend(struct perfctr_cpu_state *state)
 
 void perfctr_cpu_resume(struct perfctr_cpu_state *state)
 {
-	if( perfctr_cstatus_has_ictrs(state->cstatus) )
+	if (perfctr_cstatus_has_ictrs(state->cstatus))
 	    perfctr_cpu_iresume(state);
+	if (perfctr_cstatus_has_mmcr0_quirk(state->cstatus))
+		get_cpu_cache()->k1.id = 0; /* force reload of MMCR0 */
 	perfctr_cpu_write_control(state);
 	//perfctr_cpu_read_counters(state, &state->start);
 	{
@@ -626,7 +657,7 @@ void perfctr_cpu_resume(struct perfctr_cpu_state *state)
 		unsigned int i, cstatus, nrctrs;
 		perfctr_cpu_read_counters(state, &now);
 		cstatus = state->cstatus;
-		if( perfctr_cstatus_has_tsc(cstatus) )
+		if (perfctr_cstatus_has_tsc(cstatus))
 			state->tsc_start = now.tsc;
 		nrctrs = perfctr_cstatus_nractrs(cstatus);
 		for(i = 0; i < nrctrs; ++i)
@@ -642,7 +673,7 @@ void perfctr_cpu_sample(struct perfctr_cpu_state *state)
 
 	perfctr_cpu_read_counters(state, &now);
 	cstatus = state->cstatus;
-	if( perfctr_cstatus_has_tsc(cstatus) ) {
+	if (perfctr_cstatus_has_tsc(cstatus)) {
 		state->tsc_sum += now.tsc - state->tsc_start;
 		state->tsc_start = now.tsc;
 	}
@@ -657,7 +688,7 @@ static void perfctr_cpu_clear_counters(void)
 {
 	struct per_cpu_cache *cache;
 
-	cache = &per_cpu_cache[smp_processor_id()];
+	cache = get_cpu_cache();
 	memset(cache, 0, sizeof *cache);
 	cache->k1.id = -1;
 
@@ -721,12 +752,12 @@ static unsigned char cfg_ratio_7457[32] __initdata = { // *2
 	16, 28, 12, 32, 27, 56, 0, 25
 };
 
-static unsigned int __init tb_to_core_ratio(enum pll_type pll_type)
+static unsigned int __init pll_tb_to_core(enum pll_type pll_type)
 {
 	unsigned char *cfg_ratio;
 	unsigned int shift = 28, mask = 0xF, hid1, pll_cfg, ratio;
 
-	switch( pll_type ) {
+	switch (pll_type) {
 	case PLL_604e:
 		cfg_ratio = cfg_ratio_604e;
 		break;
@@ -736,7 +767,7 @@ static unsigned int __init tb_to_core_ratio(enum pll_type pll_type)
 	case PLL_750FX:
 		cfg_ratio = cfg_ratio_750FX;
 		hid1 = mfspr(SPRN_HID1);
-		switch( (hid1 >> 16) & 0x3 ) { /* HID1[PI0,PS] */
+		switch ((hid1 >> 16) & 0x3) { /* HID1[PI0,PS] */
 		case 0:		/* PLL0 with external config */
 			shift = 31-4;	/* access HID1[PCE] */
 			break;
@@ -768,115 +799,191 @@ static unsigned int __init tb_to_core_ratio(enum pll_type pll_type)
 	hid1 = mfspr(SPRN_HID1);
 	pll_cfg = (hid1 >> shift) & mask;
 	ratio = cfg_ratio[pll_cfg];
-	if( !ratio )
-		printk(KERN_WARNING "perfctr/%s: unknown PLL_CFG 0x%x\n",
-		       __FILE__, pll_cfg);
+	if (!ratio)
+		printk(KERN_WARNING "perfctr: unknown PLL_CFG 0x%x\n", pll_cfg);
 	return (4/2) * ratio;
 }
 
-static unsigned int __init pll_to_core_khz(enum pll_type pll_type)
+/* Extract core and timebase frequencies from Open Firmware. */
+
+#ifdef CONFIG_PPC_OF
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
+static inline struct device_node *perfctr_of_find_node_by_type(struct device_node *from, const char *type)
 {
-	unsigned int tb_to_core = tb_to_core_ratio(pll_type);
-	perfctr_info.tsc_to_cpu_mult = tb_to_core;
-	return tb_ticks_per_jiffy * tb_to_core * (HZ/10) / (1000/10);
+	return of_find_node_by_type(from, type);
 }
 
-/* Extract the CPU clock frequency from /proc/cpuinfo. */
-
-static unsigned int __init parse_clock_khz(struct seq_file *m)
+static inline void perfctr_of_node_put(struct device_node *node)
 {
-	/* "/proc/cpuinfo" formats:
-	 *
-	 * "core clock\t: %d MHz\n"	// 8260 (show_percpuinfo)
-	 * "clock\t\t: %ldMHz\n"	// 4xx (show_percpuinfo)
-	 * "clock\t\t: %dMHz\n"		// oak (show_percpuinfo)
-	 * "clock\t\t: %ldMHz\n"	// prep (show_percpuinfo)
-	 * "clock\t\t: %dMHz\n"		// pmac (show_percpuinfo)
-	 * "clock\t\t: %dMHz\n"		// gemini (show_cpuinfo!)
-	 */
-	char *p;
-	unsigned int mhz;
+	of_node_put(node);
+}
+#else
+#define of_get_property(a, b, c)	get_property((a), (b), (c))
+static inline struct device_node *perfctr_of_find_node_by_type(struct device_node *from, const char *type)
+{
+	return find_type_devices(type);
+}
 
-	p = m->buf;
-	p[m->count] = '\0';
+static inline void perfctr_of_node_put(struct device_node *node) { }
+#endif
 
-	for(;;) {		/* for each line */
-		if( strncmp(p, "core ", 5) == 0 )
-			p += 5;
-		do {
-			if( strncmp(p, "clock\t", 6) != 0 )
-				break;
-			p += 6;
-			while( *p == '\t' )
-				++p;
-			if( *p != ':' )
-				break;
-			do {
-				++p;
-			} while( *p == ' ' );
-			mhz = simple_strtoul(p, 0, 10);
-			if( mhz )
-				return mhz * 1000;
-		} while( 0 );
-		for(;;) {	/* skip to next line */
-			switch( *p++ ) {
-			case '\n':
-				break;
-			case '\0':
-				return 0;
-			default:
-				continue;
-			}
-			break;
+static unsigned int __init of_core_khz(void)
+{
+	struct device_node *cpu;
+	unsigned int *fp, core;
+
+	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
+	if (!cpu)
+		return 0;
+	fp = (unsigned int*)of_get_property(cpu, "clock-frequency", NULL);
+	core = 0;
+	if (fp)
+		core = *fp;
+	perfctr_of_node_put(cpu);
+	return core / 1000;
+}
+
+static unsigned int __init of_bus_khz(void)
+{
+	struct device_node *cpu;
+	unsigned int *fp, bus;
+
+	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
+	if (!cpu)
+		return 0;
+	fp = (unsigned int*)of_get_property(cpu, "bus-frequency", NULL);
+	bus = 0;
+	if (!fp || !(bus = *fp)) {
+		fp = (unsigned int*)of_get_property(cpu, "config-bus-frequency", NULL);
+		if (fp)
+			bus = *fp;
+	}
+	perfctr_of_node_put(cpu);
+	return bus / 1000;
+}
+
+static unsigned int __init of_bus_to_core_x2(void)
+{
+	struct device_node *cpu;
+	unsigned int *fp, ratio;
+
+	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
+	if (!cpu)
+		return 0;
+	fp = (unsigned int*)of_get_property(cpu, "processor-to-bus-ratio*2", NULL);
+	ratio = 0;
+	if (fp)
+		ratio = *fp;
+	perfctr_of_node_put(cpu);
+	return ratio;
+}
+#else
+static inline unsigned int of_core_khz(void) { return 0; }
+static inline unsigned int of_bus_khz(void) { return 0; }
+static inline unsigned int of_bus_to_core_x2(void) { return 0; }
+#endif
+
+static unsigned int __init detect_tb_khz(unsigned int bus_khz, unsigned int tb_to_bus)
+{
+	unsigned int tb_khz, bus_tb_khz, diff;
+
+	tb_khz = tb_ticks_per_jiffy * (HZ/10) / (1000/10);
+	if (bus_khz && tb_to_bus) {
+		bus_tb_khz = bus_khz / tb_to_bus;
+		if (bus_tb_khz > tb_khz)
+			diff = bus_tb_khz - tb_khz;
+		else
+			diff = tb_khz - bus_tb_khz;
+		if (diff >= bus_tb_khz/20) {
+			printk(KERN_WARNING "perfctr: timebase frequency %u kHz seems"
+			       " out of range, using %u kHz (bus/%u) instead\n",
+			       tb_khz, bus_tb_khz, tb_to_bus);
+			return bus_tb_khz;
 		}
 	}
+	return tb_khz;
 }
 
-static unsigned int __init detect_cpu_khz(enum pll_type pll_type)
+static unsigned int __init detect_tb_to_core(enum pll_type pll_type, unsigned int tb_to_bus)
 {
-	char buf[512];
-	struct seq_file m;
-	unsigned int khz;
+	unsigned int tb_to_core;
+	unsigned int bus_to_core_x2;
 
-	khz = pll_to_core_khz(pll_type);
-	if( khz )
-		return khz;
-
-	memset(&m, 0, sizeof m);
-	m.buf = buf;
-	m.size = (sizeof buf)-1;
-
-	m.count = 0;
-	if( ppc_md.show_percpuinfo != 0 &&
-	    ppc_md.show_percpuinfo(&m, 0) == 0 &&
-	    (khz = parse_clock_khz(&m)) != 0 )
-		return khz;
-
-	m.count = 0;
-	if( ppc_md.show_cpuinfo != 0 &&
-	    ppc_md.show_cpuinfo(&m) == 0 &&
-	    (khz = parse_clock_khz(&m)) != 0 )
-		return khz;
-
-	printk(KERN_WARNING "perfctr/%s: unable to determine CPU speed\n",
-	       __FILE__);
+	tb_to_core = pll_tb_to_core(pll_type);
+	if (tb_to_core)
+		return tb_to_core;
+	if (tb_to_bus) {
+		bus_to_core_x2 = of_bus_to_core_x2();
+		if (bus_to_core_x2)
+			return (tb_to_bus * bus_to_core_x2) / 2;
+	}
 	return 0;
 }
 
-static int __init generic_init(void)
+static unsigned int __init detect_core_khz(unsigned int tb_khz, unsigned int tb_to_core)
 {
-	static char generic_name[] __initdata = "PowerPC 60x/7xx/74xx";
+	unsigned int core_khz;
+
+	if (tb_to_core) {
+		perfctr_info.tsc_to_cpu_mult = tb_to_core;
+		return tb_khz * tb_to_core;
+	}
+	core_khz = of_core_khz();
+	perfctr_info.tsc_to_cpu_mult = core_khz / tb_khz;
+	return core_khz;
+}
+
+/*
+ * Detect the timebase and core clock frequencies.
+ *
+ * Known issues:
+ * 1. The OF timebase-frequency property is sometimes way off, and
+ *    similarly the ppc32 kernel's tb_ticks_per_jiffy variable.
+ *    (Observed on a 7447A-based laptop.)
+ *    Workaround: Compute the TB frequency from the bus frequency
+ *    and the TB-to-bus ratio.
+ * 2. The OF clock-frequency property is sometimes wrong.
+ *    (Observed on a Beige G3 with a 7455 upgrade processor.)
+ *    Workaround: Compute the core frequency from the TB frequency
+ *    and the TB-to-core ratio.
+ * 3. The PLL_CFG details may be unknown.
+ */
+static unsigned int __init detect_cpu_khz(enum pll_type pll_type, unsigned int tb_to_bus)
+{
+	unsigned int bus_khz;
+	unsigned int tb_khz;
+	unsigned int tb_to_core;
+	unsigned int core_khz;
+
+	bus_khz = of_bus_khz();
+	tb_khz = detect_tb_khz(bus_khz, tb_to_bus);
+	tb_to_core = detect_tb_to_core(pll_type, tb_to_bus);
+	core_khz = detect_core_khz(tb_khz, tb_to_core);
+	if (!core_khz)
+		printk(KERN_WARNING "perfctr: unable to determine CPU speed\n");
+	return core_khz;
+}
+
+static int __init known_init(void)
+{
+	static char known_name[] __initdata = "PowerPC 60x/7xx/74xx";
 	unsigned int features;
 	enum pll_type pll_type;
 	unsigned int pvr;
+	int have_mmcr1;
+	unsigned int tb_to_bus;
 
+	tb_to_bus = 4; /* default, overridden below if necessary */
 	features = PERFCTR_FEATURE_RDTSC | PERFCTR_FEATURE_RDPMC;
+	have_mmcr1 = 1;
 	pvr = mfspr(SPRN_PVR);
-	switch( PVR_VER(pvr) ) {
+	switch (PVR_VER(pvr)) {
 	case 0x0004: /* 604 */
 		pm_type = PM_604;
 		pll_type = PLL_NONE;
 		features = PERFCTR_FEATURE_RDTSC;
+		have_mmcr1 = 0;
 		break;
 	case 0x0009: /* 604e;  */
 	case 0x000A: /* 604ev */
@@ -889,6 +996,13 @@ static int __init generic_init(void)
 		pll_type = PLL_750;
 		break;
 	case 0x7000: case 0x7001: /* IBM750FX */
+		if ((pvr & 0xFF0F) >= 0x0203)
+			features |= PERFCTR_FEATURE_PCINT;
+		pm_type = PM_750;
+		pll_type = PLL_750FX;
+		break;
+	case 0x7002: /* IBM750GX */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_750;
 		pll_type = PLL_750FX;
 		break;
@@ -897,75 +1011,91 @@ static int __init generic_init(void)
 		pll_type = PLL_7400;
 		break;
 	case 0x800C: /* 7410 */
+		if ((pvr & 0xFFFF) >= 0x1103)
+			features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7400;
 		pll_type = PLL_7400;
 		break;
 	case 0x8000: /* 7451/7441 */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7450;
 		pll_type = PLL_7450;
 		break;
 	case 0x8001: /* 7455/7445 */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7450;
 		pll_type = ((pvr & 0xFFFF) < 0x0303) ? PLL_7450 : PLL_7457;
 		break;
 	case 0x8002: /* 7457/7447 */
+	case 0x8003: /* 7447A */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7450;
 		pll_type = PLL_7457;
 		break;
+	case 0x8004: /* 7448 */
+		features |= PERFCTR_FEATURE_PCINT;
+		pm_type = PM_7450;
+		pll_type = PLL_NONE; /* known to differ from 7447A, no details yet */
+		break;
 	default:
-		printk(KERN_WARNING "perfctr/%s: unknown PowerPC with "
-		       "PVR 0x%08x -- bailing out\n", __FILE__, pvr);
 		return -ENODEV;
 	}
 	perfctr_info.cpu_features = features;
 	perfctr_info.cpu_type = 0; /* user-space should inspect PVR */
-	perfctr_cpu_name = generic_name;
-	perfctr_info.cpu_khz = detect_cpu_khz(pll_type);
-	perfctr_ppc_init_tests();
+	perfctr_cpu_name = known_name;
+	perfctr_info.cpu_khz = detect_cpu_khz(pll_type, tb_to_bus);
+	perfctr_ppc_init_tests(have_mmcr1);
 	return 0;
 }
 
-static void __init perfctr_cpu_init_one(void *ignore)
+static int __init unknown_init(void)
 {
-	/* PREEMPT note: when called via smp_call_function(),
+	static char unknown_name[] __initdata = "Generic PowerPC with TB";
+	unsigned int khz;
+
+	khz = detect_cpu_khz(PLL_NONE, 0);
+	if (!khz)
+		return -ENODEV;
+	perfctr_info.cpu_features = PERFCTR_FEATURE_RDTSC;
+	perfctr_info.cpu_type = 0;
+	perfctr_cpu_name = unknown_name;
+	perfctr_info.cpu_khz = khz;
+	pm_type = PM_NONE;
+	return 0;
+}
+
+static void perfctr_cpu_clear_one(void *ignore)
+{
+	/* PREEMPT note: when called via on_each_cpu(),
 	   this is in IRQ context with preemption disabled. */
 	perfctr_cpu_clear_counters();
 }
 
-static void __exit perfctr_cpu_exit_one(void *ignore)
+static void perfctr_cpu_reset(void)
 {
-	/* PREEMPT note: when called via smp_call_function(),
-	   this is in IRQ context with preemption disabled. */
-	perfctr_cpu_clear_counters();
+	on_each_cpu(perfctr_cpu_clear_one, NULL, 1);
+	perfctr_cpu_set_ihandler(NULL);
 }
 
 int __init perfctr_cpu_init(void)
 {
 	int err;
 
-	preempt_disable();
-
 	perfctr_info.cpu_features = 0;
 
-	err = generic_init();
-	if( err )
-		goto out;
+	err = known_init();
+	if (err) {
+		err = unknown_init();
+		if (err)
+			goto out;
+	}
 
-	perfctr_cpu_init_one(NULL);
-	smp_call_function(perfctr_cpu_init_one, NULL, 1, 1);
-	perfctr_cpu_set_ihandler(NULL);
  out:
-	preempt_enable();
 	return err;
 }
 
 void __exit perfctr_cpu_exit(void)
 {
-	preempt_disable();
-	perfctr_cpu_exit_one(NULL);
-	smp_call_function(perfctr_cpu_exit_one, NULL, 1, 1);
-	perfctr_cpu_set_ihandler(NULL);
-	preempt_enable();
 }
 
 /****************************************************************
@@ -974,34 +1104,41 @@ void __exit perfctr_cpu_exit(void)
  *								*
  ****************************************************************/
 
+static DEFINE_MUTEX(mutex);
 static const char *current_service = 0;
 
 const char *perfctr_cpu_reserve(const char *service)
 {
-	if( current_service )
-		return current_service;
+	const char *ret;
+
+	mutex_lock(&mutex);
+	ret = current_service;
+	if (ret)
+		goto out_unlock;
+	ret = "unknown driver (oprofile?)";
+	if (perfctr_reserve_pmc_hardware() < 0)
+		goto out_unlock;
 	current_service = service;
 	__module_get(THIS_MODULE);
-	return 0;
-}
-
-static void perfctr_cpu_clear_one(void *ignore)
-{
-	/* PREEMPT note: when called via smp_call_function(),
-	   this is in IRQ context with preemption disabled. */
-	perfctr_cpu_clear_counters();
+	perfctr_cpu_reset();
+	ret = NULL;
+ out_unlock:
+	mutex_unlock(&mutex);
+	return ret;
 }
 
 void perfctr_cpu_release(const char *service)
 {
-	if( service != current_service ) {
+	mutex_lock(&mutex);
+	if (service != current_service) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
 	} else {
 		/* power down the counters */
-		on_each_cpu(perfctr_cpu_clear_one, NULL, 1, 1);
-		perfctr_cpu_set_ihandler(NULL);
+		perfctr_cpu_reset();
 		current_service = 0;
+		perfctr_release_pmc_hardware();
 		module_put(THIS_MODULE);
 	}
+	mutex_unlock(&mutex);
 }

@@ -220,7 +220,6 @@ main(int argc, char **argv)
 {
 	pfarg_pmr_t pd[NUM_PMDS];
 	pfarg_pmr_t pc[NUM_PMCS];
-	pfarg_pmd_attr_t pa[NUM_PMDS];
 	smpl_arg_t buf_arg;
 	pfarg_msg_t msg;
 	smpl_hdr_t *hdr;
@@ -333,9 +332,6 @@ main(int argc, char **argv)
 	pd[0].reg_num = 8;
 	pd[0].reg_flags = PFM_REGFL_OVFL_NOTIFY;
 	pd[0].reg_value = -SMPL_PERIOD;
-
-	pa[0].reg_long_reset = -SMPL_PERIOD;
-	pa[0].reg_short_reset = -SMPL_PERIOD;
 
 	/*
 	 * Now program the registers

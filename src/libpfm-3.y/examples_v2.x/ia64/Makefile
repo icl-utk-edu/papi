@@ -54,6 +54,8 @@ depend:
 	$(MKDEP) $(CFLAGS) $(SRCS)
 
 install_examples: $(TARGETS)
+
+install_examples:
 	@echo installing: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)/ia64
 	$(INSTALL) -m 755 $(TARGETS) $(DESTDIR)$(EXAMPLESDIR)/ia64
@@ -61,4 +63,3 @@ install_examples: $(TARGETS)
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install install_examples

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id$
+# $Id: update-kernel,v 1.14 2006/08/20 19:34:51 mikpe Exp $
 # usage:
 #	cd ${kernelsrcdir}
 #	${perfctrsrcdir}/update-kernel
@@ -37,7 +37,7 @@ get_perfctr_srcdir() {
 
 get_arch() {
     if [ -z "$ARCH" ]; then
-	ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+	ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/ppc.*/powerpc/`
     fi
 }
 
@@ -193,10 +193,8 @@ install_files_by_symlinks() {
     ln -sf ${perfctr}/linux/include/asm-i386/perfctr.h include/asm-i386/
     echo ln -sf ${perfctr}/linux/include/asm-x86_64/perfctr.h include/asm-x86_64/
     ln -sf ${perfctr}/linux/include/asm-x86_64/perfctr.h include/asm-x86_64/
-    echo ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
-    ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
-    echo ln -sf ${perfctr}/linux/include/asm-ppc64/perfctr.h include/asm-ppc64/
-    ln -sf ${perfctr}/linux/include/asm-ppc64/perfctr.h include/asm-ppc64/
+    echo ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-powerpc/
+    ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-powerpc/
     echo ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     echo ln -sf ${perfctr}/linux/drivers/perfctr drivers/

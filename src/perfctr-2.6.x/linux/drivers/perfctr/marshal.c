@@ -1,11 +1,14 @@
-/* $Id$
+/* $Id: marshal.c,v 1.6.2.7 2008/06/22 12:48:56 mikpe Exp $
  * Performance-monitoring counters driver.
  * Structure marshalling support.
  *
- * Copyright (C) 2003-2004  Mikael Pettersson
+ * Copyright (C) 2003-2008  Mikael Pettersson
  */
 #ifdef __KERNEL__
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 struct inode;
 #include <linux/sched.h>
 #include <linux/perfctr.h>
@@ -198,10 +201,11 @@ int perfctr_decode_struct(void *address,
  *								*
  ****************************************************************/
 
+#undef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define STRUCT_ARRAY_SIZE(TYPE, MEMBER) ARRAY_SIZE(((TYPE*)0)->MEMBER)
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__) || defined(__arm__)
 
 #define PERFCTR_TAG_CPU_CONTROL_TSC_ON	32
 #define PERFCTR_TAG_CPU_CONTROL_NRACTRS	33
@@ -209,19 +213,31 @@ int perfctr_decode_struct(void *address,
 #define PERFCTR_TAG_CPU_CONTROL_PMC_MAP	35
 #define PERFCTR_TAG_CPU_CONTROL_EVNTSEL	36
 #define PERFCTR_TAG_CPU_CONTROL_IRESET	37
-#define PERFCTR_TAG_CPU_CONTROL_P4_ESCR	38
-#define PERFCTR_TAG_CPU_CONTROL_P4_PE	39
-#define PERFCTR_TAG_CPU_CONTROL_P4_PMV	40
+/* 38-40 are arch-specific, see below */
 #define PERFCTR_TAG_CPU_CONTROL_RSVD1	41
 #define PERFCTR_TAG_CPU_CONTROL_RSVD2	42
 #define PERFCTR_TAG_CPU_CONTROL_RSVD3	43
 #define PERFCTR_TAG_CPU_CONTROL_RSVD4	44
 #define PERFCTR_CPU_CONTROL_NRFIELDS_0	(7 + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, pmc_map) + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, evntsel) + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, ireset))
-#ifdef __x86_64__
-#define PERFCTR_CPU_CONTROL_NRFIELDS_1	0
-#else
+
+#if defined(__i386__) || defined(__x86_64__)
+#define PERFCTR_TAG_CPU_CONTROL_P4_ESCR	38
+#define PERFCTR_TAG_CPU_CONTROL_P4_PE	39
+#define PERFCTR_TAG_CPU_CONTROL_P4_PMV	40
 #define PERFCTR_CPU_CONTROL_NRFIELDS_1	(2 + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, p4.escr))
+#endif	/* __i386__ || __x86_64__ */
+
+#if defined(__powerpc__)
+#define PERFCTR_TAG_CPU_CONTROL_PPC_MMCR0	38
+#define PERFCTR_TAG_CPU_CONTROL_PPC_MMCR2	39
+/* 40: unused */
+#define PERFCTR_CPU_CONTROL_NRFIELDS_1	2
+#endif	/* __powerpc__ */
+
+#if defined(__arm__)
+#define PERFCTR_CPU_CONTROL_NRFIELDS_1	0
 #endif
+
 #define PERFCTR_CPU_CONTROL_NRFIELDS	(PERFCTR_CPU_CONTROL_NRFIELDS_0 + PERFCTR_CPU_CONTROL_NRFIELDS_1)
 
 #define PERFCTR_TAG_SUM_CTRS_TSC	48
@@ -267,7 +283,7 @@ static const struct perfctr_field_desc perfctr_cpu_control_fields[] = {
 	  .tag = PERFCTR_TAG_CPU_CONTROL_IRESET,
 	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_cpu_control,ireset),
 				     PERFCTR_TYPE_BYTES4) },
-#ifndef __x86_64__
+#if defined(__i386__) || defined(__x86_64__)
 	{ .offset = offsetof(struct perfctr_cpu_control, p4.escr),
 	  .tag = PERFCTR_TAG_CPU_CONTROL_P4_ESCR,
 	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_cpu_control,p4.escr),
@@ -278,95 +294,8 @@ static const struct perfctr_field_desc perfctr_cpu_control_fields[] = {
 	{ .offset = offsetof(struct perfctr_cpu_control, p4.pebs_matrix_vert),
 	  .tag = PERFCTR_TAG_CPU_CONTROL_P4_PMV,
 	  .type = PERFCTR_TYPE_BYTES4 },
-#endif	/* __x86_64__ */
-	{ .offset = offsetof(struct perfctr_cpu_control, _reserved1),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_RSVD1,
-	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct perfctr_cpu_control, _reserved2),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_RSVD2,
-	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct perfctr_cpu_control, _reserved3),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_RSVD3,
-	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct perfctr_cpu_control, _reserved4),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_RSVD4,
-	  .type = PERFCTR_TYPE_BYTES4 },
-};
-
-const struct perfctr_struct_desc perfctr_cpu_control_sdesc = {
-	.total_sizeof = sizeof(struct perfctr_cpu_control),
-	.total_nrfields = PERFCTR_CPU_CONTROL_NRFIELDS,
-	.nrfields = ARRAY_SIZE(perfctr_cpu_control_fields),
-	.fields = perfctr_cpu_control_fields,
-};
-
 #endif	/* __i386__ || __x86_64__ */
-
-#if defined(__powerpc__)	/* XXX: can be merged with x86/amd64 */
-
-#define PERFCTR_TAG_CPU_CONTROL_TSC_ON	32
-#define PERFCTR_TAG_CPU_CONTROL_NRACTRS	33
-#define PERFCTR_TAG_CPU_CONTROL_NRICTRS	34
-#define PERFCTR_TAG_CPU_CONTROL_PMC_MAP	35
-#define PERFCTR_TAG_CPU_CONTROL_EVNTSEL	36
-#define PERFCTR_TAG_CPU_CONTROL_IRESET	37
-#define PERFCTR_TAG_CPU_CONTROL_PPC_MMCR0	38
-#define PERFCTR_TAG_CPU_CONTROL_PPC_MMCR2	39
-/* 40: unused */
-#define PERFCTR_TAG_CPU_CONTROL_RSVD1	41
-#define PERFCTR_TAG_CPU_CONTROL_RSVD2	42
-#define PERFCTR_TAG_CPU_CONTROL_RSVD3	43
-#define PERFCTR_TAG_CPU_CONTROL_RSVD4	44
-#define PERFCTR_CPU_CONTROL_NRFIELDS_0	(7 + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, pmc_map) + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, evntsel) + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, ireset))
-#ifdef __powerpc__
-#define PERFCTR_CPU_CONTROL_NRFIELDS_1	2
-#endif
-#define PERFCTR_CPU_CONTROL_NRFIELDS	(PERFCTR_CPU_CONTROL_NRFIELDS_0 + PERFCTR_CPU_CONTROL_NRFIELDS_1)
-
-#define PERFCTR_TAG_SUM_CTRS_TSC	48
-#define PERFCTR_TAG_SUM_CTRS_PMC	49
-#define PERFCTR_SUM_CTRS_NRFIELDS	(1 + STRUCT_ARRAY_SIZE(struct perfctr_sum_ctrs, pmc))
-
-static const struct perfctr_field_desc perfctr_sum_ctrs_fields[] = {
-	{ .offset = offsetof(struct perfctr_sum_ctrs, tsc),
-	  .tag = PERFCTR_TAG_SUM_CTRS_TSC,
-	  .type = PERFCTR_TYPE_UINT64 },
-	{ .offset = offsetof(struct perfctr_sum_ctrs, pmc),
-	  .tag = PERFCTR_TAG_SUM_CTRS_PMC,
-	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_sum_ctrs,pmc),
-				     PERFCTR_TYPE_UINT64) },
-};
-
-const struct perfctr_struct_desc perfctr_sum_ctrs_sdesc = {
-	.total_sizeof = sizeof(struct perfctr_sum_ctrs),
-	.total_nrfields = PERFCTR_SUM_CTRS_NRFIELDS,
-	.nrfields = ARRAY_SIZE(perfctr_sum_ctrs_fields),
-	.fields = perfctr_sum_ctrs_fields,
-};
-
-static const struct perfctr_field_desc perfctr_cpu_control_fields[] = {
-	{ .offset = offsetof(struct perfctr_cpu_control, tsc_on),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_TSC_ON,
-	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct perfctr_cpu_control, nractrs),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_NRACTRS,
-	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct perfctr_cpu_control, nrictrs),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_NRICTRS,
-	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct perfctr_cpu_control, pmc_map),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_PMC_MAP,
-	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_cpu_control,pmc_map),
-				     PERFCTR_TYPE_BYTES4) },
-	{ .offset = offsetof(struct perfctr_cpu_control, evntsel),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_EVNTSEL,
-	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_cpu_control,evntsel),
-				     PERFCTR_TYPE_BYTES4) },
-	{ .offset = offsetof(struct perfctr_cpu_control, ireset),
-	  .tag = PERFCTR_TAG_CPU_CONTROL_IRESET,
-	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_cpu_control,ireset),
-				     PERFCTR_TYPE_BYTES4) },
-#ifdef __powerpc__
+#if defined(__powerpc__)
 	{ .offset = offsetof(struct perfctr_cpu_control, ppc.mmcr0),
 	  .tag = PERFCTR_TAG_CPU_CONTROL_PPC_MMCR0,
 	  .type = PERFCTR_TYPE_BYTES4 },
@@ -395,7 +324,7 @@ const struct perfctr_struct_desc perfctr_cpu_control_sdesc = {
 	.fields = perfctr_cpu_control_fields,
 };
 
-#endif	/* __powerpc__ */
+#endif	/* __i386__ || __x86_64__ || __powerpc__ */
 
 #define PERFCTR_TAG_INFO_ABI_VERSION		0
 #define PERFCTR_TAG_INFO_DRIVER_VERSION		1
@@ -410,7 +339,7 @@ const struct perfctr_struct_desc perfctr_cpu_control_sdesc = {
 
 #define VPERFCTR_TAG_CONTROL_SIGNO		9
 #define VPERFCTR_TAG_CONTROL_PRESERVE		10
-#define VPERFCTR_TAG_CONTROL_RSVD1		11
+#define VPERFCTR_TAG_CONTROL_FLAGS		11
 #define VPERFCTR_TAG_CONTROL_RSVD2		12
 #define VPERFCTR_TAG_CONTROL_RSVD3		13
 #define VPERFCTR_TAG_CONTROL_RSVD4		14
@@ -476,8 +405,8 @@ static const struct perfctr_field_desc vperfctr_control_fields[] = {
 	{ .offset = offsetof(struct vperfctr_control, preserve),
 	  .tag = VPERFCTR_TAG_CONTROL_PRESERVE,
 	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct vperfctr_control, _reserved1),
-	  .tag = VPERFCTR_TAG_CONTROL_RSVD1,
+	{ .offset = offsetof(struct vperfctr_control, flags),
+	  .tag = VPERFCTR_TAG_CONTROL_FLAGS,
 	  .type = PERFCTR_TYPE_BYTES4 },
 	{ .offset = offsetof(struct vperfctr_control, _reserved2),
 	  .tag = VPERFCTR_TAG_CONTROL_RSVD2,

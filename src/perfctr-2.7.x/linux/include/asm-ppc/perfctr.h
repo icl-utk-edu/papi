@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: perfctr.h,v 1.20 2005/05/26 00:37:36 mikpe Exp $
  * PPC32 Performance-Monitoring Counters driver
  *
  * Copyright (C) 2004-2005  Mikael Pettersson

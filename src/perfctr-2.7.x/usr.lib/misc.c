@@ -1,13 +1,15 @@
-/* $Id$
+/* $Id: misc.c,v 1.26 2006/08/27 07:34:41 mikpe Exp $
  * Miscellaneous perfctr operations.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson
  */
 
+#include <sys/utsname.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libperfctr.h"
 #include "arch.h"
 
@@ -223,4 +225,20 @@ void perfctr_cpus_info_print(const struct perfctr_cpus_info *info)
 {
     printf("cpus\t\t\t"); print_cpus(info->cpus);
     printf("cpus_forbidden\t\t"); print_cpus(info->cpus_forbidden);
+}
+
+unsigned int perfctr_linux_version_code(void)
+{
+    struct utsname utsname;
+    unsigned int version, patchlevel, sublevel;
+
+    if (uname(&utsname) < 0) {
+	fprintf(stderr, "uname: %s\n", strerror(errno));
+	return 0;
+    }
+    if (sscanf(utsname.release, "%u.%u.%u", &version, &patchlevel, &sublevel) != 3) {
+	fprintf(stderr, "uname: unexpected release '%s'\n", utsname.release);
+	return 0;
+    }
+    return PERFCTR_KERNEL_VERSION(version,patchlevel,sublevel);
 }

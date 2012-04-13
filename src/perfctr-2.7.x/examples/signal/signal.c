@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: signal.c,v 1.20 2005/04/08 14:37:55 mikpe Exp $
  *
  * This test program illustrates how performance counter overflow
  * can be caught and sent to the process as a user-specified signal.

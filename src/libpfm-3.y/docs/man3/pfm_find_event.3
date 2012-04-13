@@ -11,7 +11,8 @@ masks
 .BI "int pfm_find_full_event(const char *"str ", pfmlib_event_t *"e ");"
 .BI "int pfm_find_event_bycode(int "code ", unsigned int *"desc ");"
 .BI "int pfm_find_event_bycode_next(unsigned int "desc1 ", int "code ", unsigned int *"desc ");"
-.BI "int pfm_find_event_mask(unsigned int *"idx ", const char *"str ", unsigned int *"mask_idx ");"
+.BI "int pfm_find_event_mask(unsigned int "idx ", const char *"str ", unsigned int *"mask_idx ");"
+
 .sp
 .SH DESCRIPTION
 The PMU counters can be programmed to count the number of occurrences
@@ -30,13 +31,13 @@ The set of functions described here can be used to get an event descriptor
 given either the name of the event or its code. Several events may
 share the same code. An event name is a string structured as: event_name[:unit_mask1[:unit_mask2]].
 .sp
-The \fBpfm_find_event\fR function is a general purpose search routine.
+The \fBpfm_find_event()\fR function is a general purpose search routine.
 Given an event name in \fBstr\fR, it returns the descriptor for the
 corresponding event.  If unit masks are provided, they are not taken
 into account. This function is being \fBdeprecated\fR in favor of
-\fBpfm_find_full_event\fR.
+the \fBpfm_find_full_event()\fR function.
 .sp
-The \fBpfm_find_full_event\fR function is the general purpose search routine.
+The \fBpfm_find_full_event()\fR function is the general purpose search routine.
 Given an event name in \fBstr\fR, it returns in \fBev\fR, the full event descriptor that
 includes the event descriptor in \fBev->event\fR and the unit mask descriptors
 in \fBev->unit_masks\fR. The number of unit masks descriptors returned is
@@ -46,21 +47,21 @@ For instance, if event A supports unit masks M1 (0x1) and M2 (0x40), and
 both unit masks are to be measured, then the following values for
 \fBstr\fR are valid: "A:M1:M2", "A:M1:0x40", "A:M2:0x1", "A:0x1:0x40", "A:0x41".
 .sp 
-The \fBpfm_find_event_bycode\fR function searches for an event given
+The \fBpfm_find_event_bycode()\fR function searches for an event given
 its \fBcode\fR represented as an integer. It returns in \fBdesc\fR,
 the event code. Unit masks are ignored.
 
 .sp
 Because there can be several events with the same code, the library
-provides the \fBpfm_find_event_bycode_next\fR to search for other
+provides the \fBpfm_find_event_bycode_next()\fR function to search for other
 events with the same code. Given an event \fBdesc1\fR and a \fBcode\fR,
 this function will look for the next event with the same code. If
 such an event exists, its descriptor will be stored into \fBdesc\fR.
-It is not necessary to have called \fBpfm_find_event_bycode\fR prior
+It is not necessary to have called the \fBpfm_find_event_bycode()\fR function prior
 to calling this function. This function is fully threadsafe as it does
 not maintain any state between calls.
 .sp
-The \fBpfm_find_event_mask\fR function is used to find the unit mask descriptor
+The \fBpfm_find_event_mask()\fR function is used to find the unit mask descriptor
 based on its name or numerical value passed in \fBstr\fR for the event specified
 in \fBidx\fR. The numeric value must be an exact match of an existing unit mask value,
 i.e., all bits must match. Some events do not have unit masks, in which case this function

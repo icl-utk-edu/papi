@@ -1,13 +1,17 @@
-/* $Id$
+/* $Id: x86.c,v 1.165 2007/10/06 13:02:07 mikpe Exp $
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 #include <linux/perfctr.h>
+#include <linux/mutex.h>
 
 #include <asm/msr.h>
 #undef MSR_P6_PERFCTR0
@@ -17,6 +21,9 @@
 struct hw_interrupt_type;
 #include <asm/hw_irq.h>
 #include <asm/timex.h>	/* cpu_khz */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18) && defined(CONFIG_X86_LOCAL_APIC)
+#include <asm/nmi.h>
+#endif
 
 #include "cpumask.h"
 #include "x86_tests.h"
@@ -45,6 +52,18 @@ struct perfctr_low_ctrs {
 	unsigned int pmc[18];
 };
 
+/* Structures for describing the set of PMU MSRs. */
+struct perfctr_msr_range {
+	unsigned int first_msr;
+	unsigned int nr_msrs;
+};
+
+struct perfctr_pmu_msrs {
+	const struct perfctr_msr_range *perfctrs; /* for {reserve,release}_perfctr_nmi() */
+	const struct perfctr_msr_range *evntsels; /* for {reserve,release}_evntsel_nmi() */
+	const struct perfctr_msr_range *extras;
+};
+
 /* Intel P5, Cyrix 6x86MX/MII/III, Centaur WinChip C6/2/3 */
 #define MSR_P5_CESR		0x11
 #define MSR_P5_CTR0		0x12		/* .. 0x13 */
@@ -69,7 +88,7 @@ struct perfctr_low_ctrs {
 /* AMD K8 */
 #define IS_K8_NB_EVENT(EVNTSEL)	((((EVNTSEL) >> 5) & 0x7) == 0x7)
 
-/* Intel P4, Intel Pentium M */
+/* Intel P4, Intel Pentium M, Intel Core */
 #define MSR_IA32_MISC_ENABLE	0x1A0
 #define MSR_IA32_MISC_ENABLE_PERF_AVAIL (1<<7)	/* read-only status bit */
 #define MSR_IA32_MISC_ENABLE_PEBS_UNAVAIL (1<<12) /* read-only status bit */
@@ -145,7 +164,8 @@ static unsigned int new_id(void)
 	return id;
 }
 
-#ifdef CONFIG_X86_LOCAL_APIC
+#if defined(CONFIG_X86_LOCAL_APIC)
+
 static void perfctr_default_ihandler(unsigned long pc)
 {
 }
@@ -180,13 +200,13 @@ static inline void perfctr_cpu_unmask_interrupts(struct per_cpu_cache *cache)
 	cache->interrupts_masked = 0;
 }
 
-#else
+#else	/* CONFIG_X86_LOCAL_APIC */
 #define perfctr_cstatus_has_ictrs(cstatus)	0
 #undef cpu_has_apic
 #define cpu_has_apic				0
 #undef apic_write
 #define apic_write(reg,vector)			do{}while(0)
-#endif
+#endif	/* CONFIG_X86_LOCAL_APIC */
 
 #if defined(CONFIG_SMP)
 
@@ -207,11 +227,11 @@ static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state)
 	state->isuspend_cpu = NR_CPUS;
 }
 
-#else
+#else	/* CONFIG_SMP */
 static inline void set_isuspend_cpu(struct perfctr_cpu_state *state, int cpu) { }
 static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state, int cpu) { return 1; }
 static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
-#endif
+#endif	/* CONFIG_SMP */
 
 /****************************************************************
  *								*
@@ -322,10 +342,14 @@ static void rdpmc_read_counters(const struct perfctr_cpu_state *state,
 }
 
 /* shared with MII and C6 */
-static void p5_clear_counters(void)
-{
-	clear_msr_range(MSR_P5_CESR, 1+2);
-}
+static const struct perfctr_msr_range p5_extras[] = {
+	{ MSR_P5_CESR, 1+2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs p5_pmu_msrs = {
+	.extras = p5_extras,
+};
 
 /*
  * Cyrix 6x86/MII/III.
@@ -384,11 +408,11 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
 		wrmsr(MSR_P5_CESR, cesr, 0);
 	}
 }
-#endif
+#endif	/* !CONFIG_X86_TSC */
 
 /*
- * Intel P6 family (Pentium Pro, Pentium II, and Pentium III cores,
- * and Xeon and Celeron versions of Pentium II and III cores).
+ * Intel P6 family (Pentium Pro, Pentium II, Pentium III, Pentium M, and
+ * Intel Core, including Xeon and Celeron versions of Pentium II and III).
  * - One TSC and two 40-bit PMCs.
  * - One 32-bit EVNTSEL MSR for each PMC.
  * - EVNTSEL0 contains a global enable/disable bit.
@@ -402,6 +426,7 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  */
 
 static int k8_is_multicore;	/* affects northbridge events */
+static int p6_is_core2;		/* affects P6_EVNTSEL_ENABLE usage */
 
 /* shared with K7 */
 static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int is_global)
@@ -427,7 +452,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 		if (evntsel & P6_EVNTSEL_RESERVED)
 			return -EPERM;
 		/* check ENable bit */
-		if (is_k7) {
+		if (is_k7 || p6_is_core2) {
 			/* ENable bit must be set in each evntsel */
 			if (!(evntsel & P6_EVNTSEL_ENABLE))
 				return -EINVAL;
@@ -575,11 +600,20 @@ static void p6_write_control(const struct perfctr_cpu_state *state)
 	p6_like_write_control(state, MSR_P6_EVNTSEL0);
 }
 
-static void p6_clear_counters(void)
-{
-	clear_msr_range(MSR_P6_EVNTSEL0, 2);
-	clear_msr_range(MSR_P6_PERFCTR0, 2);
-}
+static const struct perfctr_msr_range p6_perfctrs[] = {
+	{ MSR_P6_PERFCTR0, 2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range p6_evntsels[] = {
+	{ MSR_P6_EVNTSEL0, 2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs p6_pmu_msrs = {
+	.perfctrs = p6_perfctrs,
+	.evntsels = p6_evntsels,
+};
 
 /*
  * AMD K7 family (Athlon, Duron).
@@ -620,10 +654,20 @@ static void k7_write_control(const struct perfctr_cpu_state *state)
 	p6_like_write_control(state, MSR_K7_EVNTSEL0);
 }
 
-static void k7_clear_counters(void)
-{
-	clear_msr_range(MSR_K7_EVNTSEL0, 4+4);
-}
+static const struct perfctr_msr_range k7_perfctrs[] = {
+	{ MSR_K7_PERFCTR0, 4 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range k7_evntsels[] = {
+	{ MSR_K7_EVNTSEL0, 4 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs k7_pmu_msrs = {
+	.perfctrs = k7_perfctrs,
+	.evntsels = k7_evntsels,
+};
 
 /*
  * VIA C3 family.
@@ -881,23 +925,42 @@ static void p4_write_control(const struct perfctr_cpu_state *state)
 	cache->id = state->id;
 }
 
-static void p4_clear_counters(void)
-{
+static const struct perfctr_msr_range p4_perfctrs[] = {
+	{ MSR_P4_PERFCTR0, 18 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range p4_evntsels[] = {
+	{ 0x3BA, 2 },	/* IQ_ESCR{0,1}: only models <= 2 have them */
+	{ 0x3A0, 26 },
+	{ 0x3BC, 3 },
+	{ 0x3C0, 6 },
+	{ 0x3C8, 6 },
+	{ 0x3E0, 2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range p4_extras[] = {
 	/* MSR 0x3F0 seems to have a default value of 0xFC00, but current
 	   docs doesn't fully define it, so leave it alone for now. */
-	/* clear PEBS_ENABLE and PEBS_MATRIX_VERT; they handle both PEBS
-	   and ReplayTagging, and should exist even if PEBS is disabled */
-	clear_msr_range(0x3F1, 2);
-	clear_msr_range(0x3A0, 26);
-	if (p4_IQ_ESCR_ok)
-		clear_msr_range(0x3BA, 2);
-	clear_msr_range(0x3BC, 3);
-	clear_msr_range(0x3C0, 6);
-	clear_msr_range(0x3C8, 6);
-	clear_msr_range(0x3E0, 2);
-	clear_msr_range(MSR_P4_CCCR0, 18);
-	clear_msr_range(MSR_P4_PERFCTR0, 18);
-}
+	/* PEBS_ENABLE and PEBS_MATRIX_VERT handle both PEBS and
+	   ReplayTagging, and should exist even if PEBS is disabled */
+	{ 0x3F1, 2 },
+	{ MSR_P4_CCCR0, 18 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs p4_pmu_msrs_models_0to2 = {
+	.perfctrs = p4_perfctrs,
+	.evntsels = p4_evntsels,
+	.extras = p4_extras,
+};
+
+static const struct perfctr_pmu_msrs p4_pmu_msrs_models_3up = {
+	.perfctrs = p4_perfctrs,
+	.evntsels = p4_evntsels+1,
+	.extras = p4_extras,
+};
 
 /*
  * Generic driver for any x86 with a working TSC.
@@ -908,10 +971,6 @@ static int generic_check_control(struct perfctr_cpu_state *state, int is_global)
 	if (state->control.header.nractrs || state->control.header.nrictrs)
 		return -EINVAL;
 	return 0;
-}
-
-static void generic_clear_counters(void)
-{
 }
 
 /*
@@ -1218,10 +1277,38 @@ void perfctr_cpu_sample(struct perfctr_cpu_state *state)
 	write_perfseq_end(&state->user.sequence);
 }
 
-static void (*clear_counters)(void);
+static void (*clear_counters)(void); /* VIA C3 needs non-standard initialisation */
+static const struct perfctr_pmu_msrs *pmu_msrs;
+
 static void perfctr_cpu_clear_counters(void)
 {
-	return clear_counters();
+	const struct perfctr_pmu_msrs *pmu;
+	const struct perfctr_msr_range *msrs;
+	int i;
+
+	if (clear_counters) {
+		clear_counters();
+		return;
+	}
+
+	pmu = pmu_msrs;
+	if (!pmu)
+		return;
+
+	/* The order below is significant: evntsels must be cleared
+	   before the perfctrs. */
+	msrs = pmu->evntsels;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			clear_msr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+	msrs = pmu->extras;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			clear_msr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+	msrs = pmu->perfctrs;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			clear_msr_range(msrs[i].first_msr, msrs[i].nr_msrs);
 }
 
 /****************************************************************
@@ -1277,13 +1364,98 @@ static void __init finalise_backpatching(void)
 
 cpumask_t perfctr_cpus_forbidden_mask;
 
+static inline unsigned int find_mask(unsigned int nrvals)
+{
+	unsigned int tmp = nrvals;
+	unsigned int index_msb = 31;
+
+	if (!tmp)
+		return 0;
+	while (!(tmp & (1<<31))) {
+		tmp <<= 1;
+		--index_msb;
+	}
+	if (nrvals & (nrvals - 1))
+		++index_msb;
+	return ~(~0 << index_msb);
+}
+
 static void __init p4_ht_mask_setup_cpu(void *forbidden)
 {
-	unsigned int local_apic_physical_id = cpuid_ebx(1) >> 24;
-	unsigned int logical_processor_id = local_apic_physical_id & 1;
-	if (logical_processor_id != 0)
+	int cpu = smp_processor_id();
+	unsigned int cpuid_maxlev;
+	unsigned int cpuid1_ebx, cpuid1_edx, cpuid4_eax;
+	unsigned int initial_APIC_ID;
+	unsigned int max_cores_per_package;
+	unsigned int max_lp_per_package;
+	unsigned int max_lp_per_core;
+	unsigned int smt_id;
+
+	/*
+	 * The following big chunk of code detects the current logical processor's
+	 * SMT ID (thread number). This is quite complicated, see AP-485 and Volume 3
+	 * of Intel's IA-32 Manual (especially section 7.10) for details.
+	 */
+
+	/* Ensure that CPUID reports all levels. */
+	if (cpu_data[cpu].x86_model == 3) { /* >= 3? */
+		unsigned int low, high;
+		rdmsr(MSR_IA32_MISC_ENABLE, low, high);
+		if (low & (1<<22)) { /* LIMIT_CPUID_MAXVAL */
+			low &= ~(1<<22);
+			wrmsr(MSR_IA32_MISC_ENABLE, low, high);
+			printk(KERN_INFO "perfctr/x86.c: CPU %d: removed CPUID level limitation\n",
+			       cpu);
+		}
+	}
+
+	/* Find the highest standard CPUID level. */
+	cpuid_maxlev = cpuid_eax(0);
+	if (cpuid_maxlev < 1) {
+		printk(KERN_INFO "perfctr/x86: CPU %d: impossibly low # of CPUID levels: %u\n",
+		       cpu, cpuid_maxlev);
+		return;
+	}
+	cpuid1_ebx = cpuid_ebx(1);
+	cpuid1_edx = cpuid_edx(1);
+
+	/* Find the initial (HW-assigned) APIC ID of this logical processor. */
+	initial_APIC_ID = cpuid1_ebx >> 24;
+
+	/* Find the max number of logical processors per physical processor package. */
+	if (cpuid1_edx & (1 << 28))	/* HT is supported */
+		max_lp_per_package = (cpuid1_ebx >> 16) & 0xFF;
+	else				/* HT is not supported */
+		max_lp_per_package = 1;
+	
+	/* Find the max number of processor cores per physical processor package. */
+	if (cpuid_maxlev >= 4) {
+		/* For CPUID level 4 we need a zero in ecx as input to CPUID, but
+		   cpuid_eax() doesn't do that. So we resort to using cpuid_count()
+		   with reference parameters and dummy outputs. */
+		unsigned int dummy;
+		cpuid_count(4, 0, &cpuid4_eax, &dummy, &dummy, &dummy);
+		max_cores_per_package = (cpuid4_eax >> 26) + 1;
+	} else {
+		cpuid4_eax = 0;
+		max_cores_per_package = 1;
+	}
+
+	max_lp_per_core = max_lp_per_package / max_cores_per_package;
+
+	smt_id = initial_APIC_ID & find_mask(max_lp_per_core);
+
+	printk(KERN_INFO "perfctr/x86.c: CPU %d: cpuid_ebx(1) 0x%08x, cpuid_edx(1) 0x%08x, cpuid_eax(4) 0x%08x, cpuid_maxlev %u, max_cores_per_package %u, SMT_ID %u\n",
+	       cpu, cpuid1_ebx, cpuid1_edx, cpuid4_eax, cpuid_maxlev, max_cores_per_package, smt_id);
+
+	/*
+	 * Now (finally!) check the SMT ID. The CPU numbers for non-zero SMT ID
+	 * threads are recorded in the forbidden set, to allow performance counter
+	 * hardware resource conflicts between sibling threads to be prevented.
+	 */
+	if (smt_id != 0)
 		/* We rely on cpu_set() being atomic! */
-		cpu_set(smp_processor_id(), *(cpumask_t*)forbidden);
+		cpu_set(cpu, *(cpumask_t*)forbidden);
 }
 
 static int __init p4_ht_smp_init(void)
@@ -1316,12 +1488,6 @@ static int __init p4_ht_init(void)
 	if (!cpu_has_ht)
 		return 0;
 	nr_siblings = (cpuid_ebx(1) >> 16) & 0xFF;
-	if (nr_siblings > 2) {
-		printk(KERN_WARNING "perfctr/x86.c: hyper-threaded P4s detected:"
-		       " unsupported number of siblings: %u -- bailing out\n",
-		       nr_siblings);
-		return -ENODEV;
-	}
 	if (nr_siblings < 2)
 		return 0;
 	p4_is_ht = 1;	/* needed even in a UP kernel */
@@ -1356,18 +1522,21 @@ static int __init intel_init(void)
 		perfctr_cpu_name = p5_name;
 		write_control = p5_write_control;
 		check_control = p5_check_control;
-		clear_counters = p5_clear_counters;
+		pmu_msrs = &p5_pmu_msrs;
 		get_reg_offset = p5_reg_offset;
 		return 0;
 	case 6:
-		if (current_cpu_data.x86_model == 9 ||
-		    current_cpu_data.x86_model == 13) {	/* Pentium M */
-			/* Pentium M added the MISC_ENABLE MSR from P4. */
+		/* Check MSR_IA32_MISC_ENABLE_PERF_AVAIL on relevant models. */
+		if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
+		    current_cpu_data.x86_model == 13 || /* Pentium M */
+		    current_cpu_data.x86_model == 14 || /* Intel Core */
+		    current_cpu_data.x86_model == 15) { /* Intel Core 2 */
 			rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 			if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 				break;
-			/* Erratum Y3 probably does not apply since we
-			   read only the low 32 bits. */
+		}
+		if (current_cpu_data.x86_model == 15) {	/* Intel Core 2 */
+			p6_is_core2 = 1;
 		} else if (current_cpu_data.x86_model < 3) {	/* Pentium Pro */
 			/* Avoid Pentium Pro Erratum 26. */
 			if (current_cpu_data.x86_mask < 9)
@@ -1378,7 +1547,7 @@ static int __init intel_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = p6_write_control;
 		check_control = p6_check_control;
-		clear_counters = p6_clear_counters;
+		pmu_msrs = &p6_pmu_msrs;
 		get_reg_offset = p6_reg_offset;
 #ifdef CONFIG_X86_LOCAL_APIC
 		if (cpu_has_apic) {
@@ -1387,7 +1556,9 @@ static int __init intel_init(void)
 			cpu_iresume = p6_iresume;
 			/* P-M apparently inherited P4's LVTPC auto-masking :-( */
 			if (current_cpu_data.x86_model == 9 ||
-			    current_cpu_data.x86_model == 13)
+			    current_cpu_data.x86_model == 13 ||
+			    current_cpu_data.x86_model == 14 ||
+			    current_cpu_data.x86_model == 15)
 				lvtpc_reinit_needed = 1;
 		}
 #endif
@@ -1407,7 +1578,10 @@ static int __init intel_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = p4_write_control;
 		check_control = p4_check_control;
-		clear_counters = p4_clear_counters;
+		if (current_cpu_data.x86_model <= 2)
+			pmu_msrs = &p4_pmu_msrs_models_0to2;
+		else
+			pmu_msrs = &p4_pmu_msrs_models_3up;
 		get_reg_offset = p4_reg_offset;
 #ifdef CONFIG_X86_LOCAL_APIC
 		if (cpu_has_apic) {
@@ -1461,9 +1635,9 @@ static void __init k8_multicore_init(void)
 	printk(KERN_INFO "perfctr/x86.c: multi-core K8s detected:"
 	       " restricting access to northbridge events\n");
 }
-#else
+#else	/* CONFIG_SMP */
 #define k8_multicore_init()	do{}while(0)
-#endif
+#endif	/* CONFIG_SMP */
 
 static int __init amd_init(void)
 {
@@ -1485,7 +1659,7 @@ static int __init amd_init(void)
 	read_counters = rdpmc_read_counters;
 	write_control = k7_write_control;
 	check_control = k7_check_control;
-	clear_counters = k7_clear_counters;
+	pmu_msrs = &k7_pmu_msrs;
 	get_reg_offset = k7_reg_offset;
 #ifdef CONFIG_X86_LOCAL_APIC
 	if (cpu_has_apic) {
@@ -1509,7 +1683,7 @@ static int __init cyrix_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = p5_write_control;
 		check_control = mii_check_control;
-		clear_counters = p5_clear_counters;
+		pmu_msrs = &p5_pmu_msrs;
 		get_reg_offset = p5_reg_offset;
 		return 0;
 	}
@@ -1544,10 +1718,10 @@ static int __init centaur_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = c6_write_control;
 		check_control = c6_check_control;
-		clear_counters = p5_clear_counters;
+		pmu_msrs = &p5_pmu_msrs;
 		get_reg_offset = p5_reg_offset;
 		return 0;
-#endif
+#endif	/* !CONFIG_X86_TSC */
 	case 6: /* VIA C3 */
 		if (!cpu_has_tsc)
 			return -ENODEV;
@@ -1566,6 +1740,7 @@ static int __init centaur_init(void)
 		write_control = p6_write_control;
 		check_control = vc3_check_control;
 		clear_counters = vc3_clear_counters;
+		pmu_msrs = NULL;
 		get_reg_offset = p6_reg_offset;
 		return 0;
 	}
@@ -1583,7 +1758,7 @@ static int __init generic_init(void)
 	check_control = generic_check_control;
 	write_control = p6_write_control;
 	read_counters = rdpmc_read_counters;
-	clear_counters = generic_clear_counters;
+	pmu_msrs = NULL;
 	get_reg_offset = generic_reg_offset;
 	return 0;
 }
@@ -1640,7 +1815,7 @@ static void perfctr_pm_resume(void)
 
 #include <linux/sysdev.h>
 
-static int perfctr_device_suspend(struct sys_device *dev, u32 state)
+static int perfctr_device_suspend(struct sys_device *dev, pm_message_t state)
 {
 	perfctr_pm_suspend();
 	return 0;
@@ -1675,17 +1850,173 @@ static void x86_pm_exit(void)
 	sysdev_class_unregister(&perfctr_sysclass);
 }
 
-#else
+#else	/* CONFIG_X86_LOCAL_APIC && CONFIG_PM */
 
 static inline void x86_pm_init(void) { }
 static inline void x86_pm_exit(void) { }
 
 #endif	/* CONFIG_X86_LOCAL_APIC && CONFIG_PM */
 
-#if !defined(CONFIG_X86_LOCAL_APIC)
+#ifdef CONFIG_X86_LOCAL_APIC
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
+
+static void perfctr_release_perfctr_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		release_perfctr_nmi(first_msr + i);
+}
+
+static int perfctr_reserve_perfctr_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		if (!reserve_perfctr_nmi(first_msr + i)) {
+			printk(KERN_ERR "perfctr/x86.c: failed to reserve perfctr MSR %#x\n",
+			       first_msr + i);
+			perfctr_release_perfctr_range(first_msr, i);
+			return -1;
+		}
+	return 0;
+}
+
+static void perfctr_release_evntsel_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		release_evntsel_nmi(first_msr + i);
+}
+
+static int perfctr_reserve_evntsel_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		if (!reserve_evntsel_nmi(first_msr + i)) {
+			printk(KERN_ERR "perfctr/x86.c: failed to reserve evntsel MSR %#x\n",
+			       first_msr + i);
+			perfctr_release_evntsel_range(first_msr, i);
+			return -1;
+		}
+	return 0;
+}
+
+static void perfctr_release_counters_cpu(void *ignore)
+{
+	const struct perfctr_pmu_msrs *pmu;
+	const struct perfctr_msr_range *msrs;
+	int i;
+
+	pmu = pmu_msrs;
+	if (!pmu)
+		return;
+	msrs = pmu->perfctrs;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			perfctr_release_perfctr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+	msrs = pmu->evntsels;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			perfctr_release_evntsel_range(msrs[i].first_msr, msrs[i].nr_msrs);
+}
+
+static void perfctr_release_counters(void)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
+	perfctr_release_counters_cpu(NULL);
+#else
+	on_each_cpu(perfctr_release_counters_cpu, NULL, 1, 1);
+#endif
+}
+
+static void perfctr_reserve_counters_cpu(void *error)
+{
+	const struct perfctr_pmu_msrs *pmu;
+	const struct perfctr_msr_range *msrs;
+	int i;
+
+	pmu = pmu_msrs;
+	if (!pmu)
+		return;
+	msrs = pmu->perfctrs;
+	if (msrs) {
+		for(i = 0; msrs[i].first_msr; ++i)
+			if (perfctr_reserve_perfctr_range(msrs[i].first_msr, msrs[i].nr_msrs))
+				goto err_perfctrs;
+	}
+	msrs = pmu->evntsels;
+	if (msrs) {
+		for(i = 0; msrs[i].first_msr; ++i)
+			if (perfctr_reserve_evntsel_range(msrs[i].first_msr, msrs[i].nr_msrs))
+				goto err_evntsels;
+	}
+	return;
+
+ err_evntsels:
+	while (--i >= 0)
+		perfctr_release_evntsel_range(msrs[i].first_msr, msrs[i].nr_msrs);
+
+	msrs = pmu->perfctrs;
+	if (!msrs)
+		goto err;
+	for(i = 0; msrs[i].first_msr; ++i)
+		;
+ err_perfctrs:
+	while (--i >= 0)
+		perfctr_release_perfctr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+ err:
+	atomic_set((atomic_t*)error, -1);
+}
+
+static int perfctr_reserve_counters(void)
+{
+	atomic_t error = ATOMIC_INIT(0);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
+	perfctr_reserve_counters_cpu(&error);
+#else
+	on_each_cpu(perfctr_reserve_counters_cpu, &error, 1, 1);
+#endif
+	return atomic_read(&error);
+}
+
+static int reserve_lapic_nmi(void)
+{
+	if (nmi_watchdog != NMI_LOCAL_APIC)
+		return 0;
+	if (atomic_read(&nmi_active) <= 0)
+		return 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
+	disable_lapic_nmi_watchdog();
+#else
+	on_each_cpu(stop_apic_nmi_watchdog, NULL, 1, 1);
+#endif
+	return perfctr_reserve_counters();
+}
+
+static void release_lapic_nmi(void)
+{
+	perfctr_release_counters();
+	if (nmi_watchdog != NMI_LOCAL_APIC)
+		return;
+	if (atomic_read(&nmi_active) != 0)
+		return;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
+	enable_lapic_nmi_watchdog();
+#else
+	on_each_cpu(setup_apic_nmi_watchdog, NULL, 1, 1);
+#endif
+}
+#endif
+
+#else	/* CONFIG_X86_LOCAL_APIC */
 static inline int reserve_lapic_nmi(void) { return 0; }
 static inline void release_lapic_nmi(void) { }
-#endif
+#endif	/* CONFIG_X86_LOCAL_APIC */
 
 static void do_init_tests(void)
 {
@@ -1751,7 +2082,7 @@ void __exit perfctr_cpu_exit(void)
  *								*
  ****************************************************************/
 
-static DECLARE_MUTEX(mutex);
+static DEFINE_MUTEX(mutex);
 static const char *current_service = 0;
 
 const char *perfctr_cpu_reserve(const char *service)
@@ -1760,13 +2091,13 @@ const char *perfctr_cpu_reserve(const char *service)
 
 	if (!init_done)
 		return "unsupported hardware";
-	down(&mutex);
+	mutex_lock(&mutex);
 	ret = current_service;
 	if (ret)
-		goto out_up;
+		goto out_unlock;
 	ret = "unknown driver (oprofile?)";
 	if (reserve_lapic_nmi() < 0)
-		goto out_up;
+		goto out_unlock;
 	current_service = service;
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
 		mmu_cr4_features |= X86_CR4_PCE;
@@ -1774,18 +2105,18 @@ const char *perfctr_cpu_reserve(const char *service)
 	perfctr_cpu_set_ihandler(NULL);
 	x86_pm_init();
 	ret = NULL;
- out_up:
-	up(&mutex);
+ out_unlock:
+	mutex_unlock(&mutex);
 	return ret;
 }
 
 void perfctr_cpu_release(const char *service)
 {
-	down(&mutex);
+	mutex_lock(&mutex);
 	if (service != current_service) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
-		goto out_up;
+		goto out_unlock;
 	}
 	/* power down the counters */
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
@@ -1795,6 +2126,6 @@ void perfctr_cpu_release(const char *service)
 	x86_pm_exit();
 	current_service = 0;
 	release_lapic_nmi();
- out_up:
-	up(&mutex);
+ out_unlock:
+	mutex_unlock(&mutex);
 }

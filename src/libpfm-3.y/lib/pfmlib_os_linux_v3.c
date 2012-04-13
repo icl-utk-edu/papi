@@ -60,6 +60,11 @@ pfm_create(int flags, pfarg_sinfo_t *sif, ...)
 	size_t smpl_size = 0;
 	int ret;
 
+	if (_pfmlib_major_version < 3) {
+		errno = ENOSYS;
+		return -1;
+	}
+
 	if (flags & PFM_FL_SMPL_FMT)
 		va_start(ap, sif);
 	
@@ -80,35 +85,47 @@ pfm_create(int flags, pfarg_sinfo_t *sif, ...)
 int
 pfm_write(int fd, int flags, int type, void *pms, size_t sz)
 {
+	if (_pfmlib_major_version < 3)
+		return -ENOSYS;
 	return (int)syscall(PFM_pfm_write, fd, flags, type, pms, sz);
 }
 
 int
 pfm_read(int fd, int flags, int type, void *pms, size_t sz)
 {
+	if (_pfmlib_major_version < 3)
+		return -ENOSYS;
 	return (int)syscall(PFM_pfm_read, fd, flags, type, pms, sz);
 }
 
 int
 pfm_create_sets(int fd, int flags, pfarg_set_desc_t *setd, size_t sz)
 {
+	if (_pfmlib_major_version < 3)
+		return -ENOSYS;
 	return (int)syscall(PFM_pfm_create_sets, fd, flags, setd, sz);
 }
 
 int
 pfm_getinfo_sets(int fd, int flags, pfarg_set_info_t *info, size_t sz)
 {
+	if (_pfmlib_major_version < 3)
+		return -ENOSYS;
 	return (int)syscall(PFM_pfm_getinfo_sets, fd, flags, info, sz);
 }
 
 int
 pfm_attach(int fd, int flags, int target)
 {
+	if (_pfmlib_major_version < 3)
+		return -ENOSYS;
 	return (int)syscall(PFM_pfm_attach, fd, flags, target);
 }
 
 int
 pfm_set_state(int fd, int flags, int state)
 {
+	if (_pfmlib_major_version < 3)
+		return -ENOSYS;
 	return (int)syscall(PFM_pfm_set_state, fd, flags, state);
 }

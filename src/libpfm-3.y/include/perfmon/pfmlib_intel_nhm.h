@@ -139,7 +139,7 @@ typedef struct {
 typedef struct {
 	pfmlib_nhm_counter_t	pfp_nhm_counters[PMU_NHM_NUM_COUNTERS];
 	pfmlib_nhm_pebs_t	pfp_nhm_pebs;	/* PEBS settings */
-	pfmlib_nhm_lbr_t	pfm_nhm_lbr;	/* LBR settings */
+	pfmlib_nhm_lbr_t	pfp_nhm_lbr;	/* LBR settings */
 	uint64_t		reserved[4];	/* for future use */
 } pfmlib_nhm_input_param_t;
 

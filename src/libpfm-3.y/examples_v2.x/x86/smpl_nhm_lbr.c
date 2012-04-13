@@ -222,8 +222,8 @@ mainloop(char **arg)
 	inp.pfp_event_count = 1;
 
 
-	mod_inp.pfm_nhm_lbr.lbr_used = 1;
-	mod_inp.pfm_nhm_lbr.lbr_plm = 0; /* inherit from pfp_dfl_plm */
+	mod_inp.pfp_nhm_lbr.lbr_used = 1;
+	mod_inp.pfp_nhm_lbr.lbr_plm = 0; /* inherit from pfp_dfl_plm */
 
 	/*
 	 * setup LBR filter
@@ -237,7 +237,7 @@ mainloop(char **arg)
 	 *
 	 * lbr_filter = PFM_NHM_LBR_NEAR_REL_CALL
 	 */
-	mod_inp.pfm_nhm_lbr.lbr_filter = 0;
+	mod_inp.pfp_nhm_lbr.lbr_filter = 0;
 	
 	/*
 	 * the size of the buffer is indicated in bytes (not entries).

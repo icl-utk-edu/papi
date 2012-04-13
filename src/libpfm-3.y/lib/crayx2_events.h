@@ -267,7 +267,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	/* P Counter 3 Event 3 */
 	{
 		.pme_name = "STALL_VU_FUG2",
-		.pme_desc = "CPs VU stalled waiting for FUG.",
+		.pme_desc = "CPs VU stalled waiting for FUG 2.",
 		.pme_code = 15,
 		.pme_flags = 0x0,
 		.pme_numasks = 0,
@@ -537,7 +537,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	/* P Counter 8 Event 1 */
 	{
 		.pme_name = "VTLB_MISS",
-		.pme_desc = "Number of Vector TLB misses.",
+		.pme_desc = "Number of vector TLB misses.",
 		.pme_code = 33,
 		.pme_flags = 0x0,
 		.pme_numasks = 0,
@@ -882,7 +882,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	/* P Counter 14 Event 0 */
 	{
 		.pme_name = "VOPS_EXT_FUG3",
-		.pme_desc = "Number of V FUG 3 external operations g=20-27 f=25,57,77 compress, merge, bmm.",
+		.pme_desc = "Number of vector FUG 3 external operations g=20-27 f=25,57,77 compress, merge, bmm.",
 		.pme_code = 56,
 		.pme_flags = 0x0,
 		.pme_numasks = 0,
@@ -2921,7 +2921,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	},
 	/* M Counter 0 Event 0 */
 	{
-		.pme_name = "W_IN_IDLE_01@0",
+		.pme_name = "W_IN_IDLE_0@0",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 0)",
 		.pme_code = 192,
 		.pme_flags = 0x0,
@@ -2935,7 +2935,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@1",
+		.pme_name = "W_IN_IDLE_0@1",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 1)",
 		.pme_code = 193,
 		.pme_flags = 0x0,
@@ -2949,7 +2949,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@2",
+		.pme_name = "W_IN_IDLE_0@2",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 2)",
 		.pme_code = 194,
 		.pme_flags = 0x0,
@@ -2963,7 +2963,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@3",
+		.pme_name = "W_IN_IDLE_0@3",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 3)",
 		.pme_code = 195,
 		.pme_flags = 0x0,
@@ -2977,7 +2977,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@4",
+		.pme_name = "W_IN_IDLE_0@4",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 4)",
 		.pme_code = 196,
 		.pme_flags = 0x0,
@@ -2991,7 +2991,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@5",
+		.pme_name = "W_IN_IDLE_0@5",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 5)",
 		.pme_code = 197,
 		.pme_flags = 0x0,
@@ -3005,7 +3005,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@6",
+		.pme_name = "W_IN_IDLE_0@6",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 6)",
 		.pme_code = 198,
 		.pme_flags = 0x0,
@@ -3019,7 +3019,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@7",
+		.pme_name = "W_IN_IDLE_0@7",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 7)",
 		.pme_code = 199,
 		.pme_flags = 0x0,
@@ -3033,7 +3033,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@8",
+		.pme_name = "W_IN_IDLE_0@8",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 8)",
 		.pme_code = 200,
 		.pme_flags = 0x0,
@@ -3047,7 +3047,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@9",
+		.pme_name = "W_IN_IDLE_0@9",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 9)",
 		.pme_code = 201,
 		.pme_flags = 0x0,
@@ -3061,7 +3061,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@10",
+		.pme_name = "W_IN_IDLE_0@10",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 10)",
 		.pme_code = 202,
 		.pme_flags = 0x0,
@@ -3075,7 +3075,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@11",
+		.pme_name = "W_IN_IDLE_0@11",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 11)",
 		.pme_code = 203,
 		.pme_flags = 0x0,
@@ -3089,7 +3089,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@12",
+		.pme_name = "W_IN_IDLE_0@12",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 12)",
 		.pme_code = 204,
 		.pme_flags = 0x0,
@@ -3103,7 +3103,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@13",
+		.pme_name = "W_IN_IDLE_0@13",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 13)",
 		.pme_code = 205,
 		.pme_flags = 0x0,
@@ -3117,7 +3117,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@14",
+		.pme_name = "W_IN_IDLE_0@14",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 14)",
 		.pme_code = 206,
 		.pme_flags = 0x0,
@@ -3131,7 +3131,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_IN_IDLE_01@15",
+		.pme_name = "W_IN_IDLE_0@15",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 15)",
 		.pme_code = 207,
 		.pme_flags = 0x0,
@@ -3371,7 +3371,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	},
 	/* M Counter 0 Event 2 */
 	{
-		.pme_name = "W_OUT_IDLE_03@0",
+		.pme_name = "W_OUT_IDLE_0@0",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 0)",
 		.pme_code = 224,
 		.pme_flags = 0x0,
@@ -3385,7 +3385,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@1",
+		.pme_name = "W_OUT_IDLE_0@1",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 1)",
 		.pme_code = 225,
 		.pme_flags = 0x0,
@@ -3399,7 +3399,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@2",
+		.pme_name = "W_OUT_IDLE_0@2",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 2)",
 		.pme_code = 226,
 		.pme_flags = 0x0,
@@ -3413,7 +3413,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@3",
+		.pme_name = "W_OUT_IDLE_0@3",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 3)",
 		.pme_code = 227,
 		.pme_flags = 0x0,
@@ -3427,7 +3427,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@4",
+		.pme_name = "W_OUT_IDLE_0@4",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 4)",
 		.pme_code = 228,
 		.pme_flags = 0x0,
@@ -3441,7 +3441,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@5",
+		.pme_name = "W_OUT_IDLE_0@5",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 5)",
 		.pme_code = 229,
 		.pme_flags = 0x0,
@@ -3455,7 +3455,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@6",
+		.pme_name = "W_OUT_IDLE_0@6",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 6)",
 		.pme_code = 230,
 		.pme_flags = 0x0,
@@ -3469,7 +3469,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@7",
+		.pme_name = "W_OUT_IDLE_0@7",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 7)",
 		.pme_code = 231,
 		.pme_flags = 0x0,
@@ -3483,7 +3483,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@8",
+		.pme_name = "W_OUT_IDLE_0@8",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 8)",
 		.pme_code = 232,
 		.pme_flags = 0x0,
@@ -3497,7 +3497,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@9",
+		.pme_name = "W_OUT_IDLE_0@9",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 9)",
 		.pme_code = 233,
 		.pme_flags = 0x0,
@@ -3511,7 +3511,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@10",
+		.pme_name = "W_OUT_IDLE_0@10",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 10)",
 		.pme_code = 234,
 		.pme_flags = 0x0,
@@ -3525,7 +3525,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@11",
+		.pme_name = "W_OUT_IDLE_0@11",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 11)",
 		.pme_code = 235,
 		.pme_flags = 0x0,
@@ -3539,7 +3539,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@12",
+		.pme_name = "W_OUT_IDLE_0@12",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 12)",
 		.pme_code = 236,
 		.pme_flags = 0x0,
@@ -3553,7 +3553,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@13",
+		.pme_name = "W_OUT_IDLE_0@13",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 13)",
 		.pme_code = 237,
 		.pme_flags = 0x0,
@@ -3567,7 +3567,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@14",
+		.pme_name = "W_OUT_IDLE_0@14",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 14)",
 		.pme_code = 238,
 		.pme_flags = 0x0,
@@ -3581,7 +3581,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "W_OUT_IDLE_03@15",
+		.pme_name = "W_OUT_IDLE_0@15",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 15)",
 		.pme_code = 239,
 		.pme_flags = 0x0,

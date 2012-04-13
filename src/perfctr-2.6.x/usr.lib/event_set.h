@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: event_set.h,v 1.5 2004/02/20 21:32:06 mikpe Exp $
  * Common definitions used when creating event set descriptions.
  *
- * Copyright (C) 2003  Mikael Pettersson
+ * Copyright (C) 2003-2004  Mikael Pettersson
  */
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
 
@@ -86,3 +86,4 @@ extern const struct perfctr_event_set perfctr_k7_event_set;
 extern const struct perfctr_event_set perfctr_k8_event_set;
 extern const struct perfctr_event_set perfctr_pentm_event_set;
 extern const struct perfctr_event_set perfctr_k8c_event_set;
+extern const struct perfctr_event_set perfctr_p4m3_event_set;

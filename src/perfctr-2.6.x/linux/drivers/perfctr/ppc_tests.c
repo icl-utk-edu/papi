@@ -1,10 +1,13 @@
-/* $Id$
+/* $Id: ppc_tests.c,v 1.1.2.7 2007/10/07 17:18:52 mikpe Exp $
  * Performance-monitoring counters driver.
  * Optional PPC32-specific init-time tests.
  *
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/init.h>
@@ -12,7 +15,7 @@
 #include <linux/fs.h>
 #include <linux/perfctr.h>
 #include <asm/processor.h>
-#include <asm/time.h>	/* for tb_ticks_per_jiffy */
+#include "compat.h"
 #include "ppc_compat.h"
 #include "ppc_tests.h"
 
@@ -124,13 +127,15 @@ static void __init init_tests_message(void)
 {
 	unsigned int pvr = mfspr(SPRN_PVR);
 	printk(KERN_INFO "Please email the following PERFCTR INIT lines "
-	       "to mikpe@csd.uu.se\n"
+	       "to mikpe@it.uu.se\n"
 	       KERN_INFO "To remove this message, rebuild the driver "
 	       "with CONFIG_PERFCTR_INIT_TESTS=n\n");
 	printk(KERN_INFO "PERFCTR INIT: PVR 0x%08x, CPU clock %u kHz, TB clock %u kHz\n",
 	       pvr,
 	       perfctr_info.cpu_khz,
-	       tb_ticks_per_jiffy*(HZ/10)/(1000/10));
+	       perfctr_info.tsc_to_cpu_mult
+	       ? (perfctr_info.cpu_khz / perfctr_info.tsc_to_cpu_mult)
+	       : 0);
 }
 
 static void __init clear(int have_mmcr1)
@@ -138,11 +143,11 @@ static void __init clear(int have_mmcr1)
 	mtspr(SPRN_MMCR0, 0);
 	mtspr(SPRN_PMC1, 0);
 	mtspr(SPRN_PMC2, 0);
-	if( have_mmcr1 ) {
+	if (have_mmcr1) {
 		mtspr(SPRN_MMCR1, 0);
 		mtspr(SPRN_PMC3, 0);
 		mtspr(SPRN_PMC4, 0);
-	}		
+	}
 }
 
 static void __init check_fcece(unsigned int pmc1ce)
@@ -168,14 +173,14 @@ static void __init check_fcece(unsigned int pmc1ce)
 	 */
 	mtspr(SPRN_PMC1, 0x80000000-100);
 	mmcr0 = (1<<(31-6)) | (0x01 << 6);
-	if( pmc1ce )
+	if (pmc1ce)
 		mmcr0 |= (1<<(31-16));
 	mtspr(SPRN_MMCR0, mmcr0);
 	do {
 		do_empty_loop(0);
-	} while( !(mfspr(SPRN_PMC1) & 0x80000000) );
+	} while (!(mfspr(SPRN_PMC1) & 0x80000000));
 	do_empty_loop(0);
-	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[FC] is %u, PMC1 is %#x\n",
+	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[FC] is %u, PMC1 is %#lx\n",
 	       __FUNCTION__, pmc1ce,
 	       !!(mfspr(SPRN_MMCR0) & (1<<(31-0))), mfspr(SPRN_PMC1));
 	mtspr(SPRN_MMCR0, 0);
@@ -206,14 +211,14 @@ static void __init check_trigger(unsigned int pmc1ce)
 	mtspr(SPRN_PMC2, 0);
 	mtspr(SPRN_PMC1, 0x80000000-100);
 	mmcr0 = (1<<(31-18)) | (0x01 << 6) | (0x01 << 0);
-	if( pmc1ce )
+	if (pmc1ce)
 		mmcr0 |= (1<<(31-16));
 	mtspr(SPRN_MMCR0, mmcr0);
 	do {
 		do_empty_loop(0);
-	} while( !(mfspr(SPRN_PMC1) & 0x80000000) );
+	} while (!(mfspr(SPRN_PMC1) & 0x80000000));
 	do_empty_loop(0);
-	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[TRIGGER] is %u, PMC1 is %#x, PMC2 is %#x\n",
+	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[TRIGGER] is %u, PMC1 is %#lx, PMC2 is %#lx\n",
 	       __FUNCTION__, pmc1ce,
 	       !!(mfspr(SPRN_MMCR0) & (1<<(31-18))), mfspr(SPRN_PMC1), mfspr(SPRN_PMC2));
 	mtspr(SPRN_MMCR0, 0);
@@ -271,7 +276,7 @@ measure_overheads(int have_mmcr1)
 	printk(KERN_INFO "PERFCTR INIT: loop overhead is %u cycles\n", loop);
 	for(i = 0; i < ARRAY_SIZE(ticks); ++i) {
 		unsigned int x;
-		if( !ticks[i] )
+		if (!ticks[i])
 			continue;
 		x = ((ticks[i] - loop) * 10) / NITER;
 		printk(KERN_INFO "PERFCTR INIT: %s cost is %u.%u cycles (%u total)\n",
@@ -283,7 +288,9 @@ measure_overheads(int have_mmcr1)
 	check_trigger(1);
 }
 
-void __init perfctr_ppc_init_tests(void)
+void __init perfctr_ppc_init_tests(int have_mmcr1)
 {
-	measure_overheads(PVR_VER(mfspr(SPRN_PVR)) != 0x0004);
+	preempt_disable();
+	measure_overheads(have_mmcr1);
+	preempt_enable();
 }

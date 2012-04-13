@@ -59,7 +59,8 @@ TARGET_LINUX +=self task task_attach task_attach_timeout syst \
 	  multiplex multiplex2 set_notify whichpmu \
 	  showreginfo task_smpl task_smpl_user \
 	  pfmsetup self_smpl_multi self_pipe \
-	  notify_self_fork
+	  notify_self_fork self_smpl \
+	  task_attach_timeout_np syst_np syst_multi_np
 
 XTRA += rtop
 endif
@@ -82,11 +83,12 @@ clean:
 distclean: clean
 
 install_examples: $(TARGET_LINUX) $(TARGET_GEN)
+
+install_examples:
 	@echo installing: $(TARGET_LINUX) $(TARGET_GEN)
-	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)
-	$(INSTALL) -m 755 $(TARGET_LINUX) $(TARGET_GEN) $(DESTDIR)$(EXAMPLESDIR)
+	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)/v2
+	$(INSTALL) -m 755 $(TARGET_LINUX) $(TARGET_GEN) $(DESTDIR)$(EXAMPLESDIR)/v2
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install depend install_examples

@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: x86.c,v 1.2.2.11 2010/11/07 19:46:06 mikpe Exp $
  * x86-specific code.
  *
- * Copyright (C) 2000-2004  Mikael Pettersson
+ * Copyright (C) 2000-2010  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,12 +21,13 @@ void setup_control(const struct perfctr_info *info,
 
     /* Attempt to set up control to count clocks via the TSC
        and FLOPS via PMC0. */
-    switch( info->cpu_type ) {
+    switch (info->cpu_type) {
       case PERFCTR_X86_GENERIC:
 	nractrs = 0;		/* no PMCs available */
 	break;
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
+      case PERFCTR_X86_AMD_FAM10H:
 	/* RETIRED_FPU_INSTRS, Unit Mask "x87 instrs", any CPL, Enable */
 	evntsel0 = 0xCB | (0x01 << 8) | (3 << 16) | (1 << 22);
 	break;
@@ -41,10 +42,28 @@ void setup_control(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
+      case PERFCTR_X86_INTEL_CORE:
 	/* note: FLOPS is only available in PERFCTR0 */
 	/* event 0xC1 (FLOPS), any CPL, Enable */
 	evntsel0 = 0xC1 | (3 << 16) | (1 << 22);
 	break;
+#endif
+      case PERFCTR_X86_INTEL_CORE2:
+	/* event 0xC1 umask 0xFE (X87_OPS_RETIRED_ANY), any CPL, Enable */
+	evntsel0 = 0xC1 | (0xFE << 8) | (3 << 16) | (1 << 22);
+	break;
+      case PERFCTR_X86_INTEL_ATOM:
+	/* Atom's architectural events don't include FLOPS */
+	counting_mips = 1;
+	/* event 0xC0 (RETIRED_INSTRUCTIONS), any CPL, Enable */
+	evntsel0 = 0xC0 | (3 << 16) | (1 << 22);
+	break;
+      case PERFCTR_X86_INTEL_NHLM:
+      case PERFCTR_X86_INTEL_WSTMR:
+	/* FP_COMP_OPS_EXE.ANY, any CPL, Enable */
+	evntsel0 = 0x10 | (0xFF << 8) | (3 << 16) | (1 << 22);
+	break;
+#if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:
 	/* K7 apparently can't count FLOPS. */
 	counting_mips = 1;
@@ -68,6 +87,8 @@ void setup_control(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+#endif
+      case PERFCTR_X86_INTEL_P4M3:
 	nractrs = 2;
 	/* set up PMC(1) to produce tagged x87_FP_uop:s */
 	control->pmc_map[1] = 0x8 | (1 << 31);
@@ -78,7 +99,6 @@ void setup_control(const struct perfctr_info *info,
 	evntsel0 = (0x3 << 16) | (5 << 13) | (1 << 12);
 	control->p4.escr[0] = (0xC << 25) | (1 << 9) | (1 << 2);
 	break;
-#endif
       default:
 	fprintf(stderr, "cpu_type %u (%s) not supported\n",
 		info->cpu_type, perfctr_info_cpu_name(info));

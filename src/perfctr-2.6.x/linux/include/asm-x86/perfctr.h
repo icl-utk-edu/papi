@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: perfctr.h,v 1.1.2.16 2010/11/07 19:46:06 mikpe Exp $
  * x86/x86_64 Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2010  Mikael Pettersson
  */
 #ifndef _ASM_X86_PERFCTR_H
 #define _ASM_X86_PERFCTR_H
@@ -25,9 +25,13 @@
 #define PERFCTR_X86_AMD_K8C	15	/* Revision C */
 #define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
 #define PERFCTR_X86_INTEL_CORE	17	/* family 6 model 14 */
-#define PERFCTR_X86_INTEL_CORE2	18	/* family 6 models 15 and 23 */
-#define PERFCTR_X86_AMD_FAM10H	19	/* family 10h */
+#define PERFCTR_X86_INTEL_CORE2	18	/* family 6, models 15, 22, 23, 29 */
+#define PERFCTR_X86_AMD_FAM10H	19	/* family 10h, family 11h */
 #define PERFCTR_X86_AMD_FAM10	PERFCTR_X86_AMD_FAM10H /* XXX: compat crap, delete soon */
+#define PERFCTR_X86_INTEL_ATOM	20	/* family 6 model 28 */
+#define PERFCTR_X86_INTEL_NHLM	21	/* Nehalem: family 6 models 26, 30, 46 */
+#define PERFCTR_X86_INTEL_COREI7 PERFCTR_X86_INTEL_NHLM /* XXX: compat crap, delete soon */
+#define PERFCTR_X86_INTEL_WSTMR	22	/* Westmere: family 6 models 37, 44 */
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;
@@ -48,6 +52,12 @@ struct perfctr_cpu_control {
 			unsigned int pebs_matrix_vert;	/* for replay tagging */
 		} p4;
 		unsigned int evntsel_high[18];
+		/* Note: nhlm.offcore_rsp[] must not overlap evntsel_high[],
+		   instead we make it overlap the p4.pebs_ fields */
+		struct {
+			unsigned int _padding[18];
+			unsigned int offcore_rsp[2];
+		} nhlm;
 	}; /* XXX: should be a named field 'u', but that breaks source-code compatibility */
 	int ireset[18];			/* < 0, for i-mode counters */
 	unsigned int _reserved1;
@@ -162,10 +172,12 @@ extern void perfctr_cpu_release(const char *service);
 /* PRE: state has no running interrupt-mode counters.
    Check that the new control data is valid.
    Update the driver's private control data.
-   is_global should be zero for per-process counters and non-zero
-   for global-mode counters. This matters for HT P4s, alas.
+   cpumask must be NULL for global-mode counters and non-NULL
+   for per-thread counters. If cpumask is non-NULL and the control
+   data requires the task to be restricted to a specific set of
+   CPUs, then *cpumask will be updated accordingly.
    Returns a negative error code if the control data is invalid. */
-extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global);
+extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state, cpumask_t *cpumask);
 
 /* Read a-mode counters. Subtract from start and accumulate into sums.
    Must be called with preemption disabled. */
@@ -206,8 +218,14 @@ static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_sta
 
 #if defined(CONFIG_KPERFCTR) && defined(CONFIG_X86_LOCAL_APIC)
 asmlinkage void perfctr_interrupt(struct pt_regs*);
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)	/* 2.6.27-rc1 */
+#define perfctr_vector_init()	\
+	alloc_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt)
+#else
 #define perfctr_vector_init()	\
 	set_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt)
+#endif
 #else
 #define perfctr_vector_init()	do{}while(0)
 #endif

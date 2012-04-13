@@ -42,26 +42,16 @@ TARGETS=self task task_attach task_attach_timeout syst \
 	whichpmu showreset multiplex\
 	task_smpl notify_self_fork
 
-ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
 SRCS +=ita_rr.c ita_irr.c ita_opcode.c ita_btb.c ita_dear.c
 TARGETS +=ita_rr ita_irr ita_opcode ita_btb ita_dear
-endif
 
-ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
 SRCS +=ita2_opcode.c ita2_rr.c ita2_irr.c ita2_dear.c
 TARGETS +=ita2_dear ita2_btb ita2_opcode ita2_rr ita2_irr
-endif
 
-ifeq ($(CONFIG_PFMLIB_MONTECITO),y)
 SRCS +=mont_opcode.c mont_rr.c mont_irr.c mont_dear.c mont_etb.c
 TARGETS +=mont_dear mont_opcode mont_rr mont_irr mont_etb
-endif
 
 PFMLIB=$(PFMLIBDIR)/libpfm.a
-
-ifeq ($(ARCH),x86_64)
-TARGETS=
-endif
 
 all: $(TARGETS)
 
@@ -81,4 +71,3 @@ depend:
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install

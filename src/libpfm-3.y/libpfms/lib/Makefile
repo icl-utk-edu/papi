@@ -38,27 +38,45 @@ REVISION=1
 AGE=0
 
 SRCS=libpfms.c
+HEADERS=../include/libpfms.h
 
+ALIBPFM=libpfms.a
+TARGETS=$(ALIBPFM)
 ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 SLIBPFM=libpfms.so.$(VERSION).$(REVISION).$(AGE)
+VLIBPFM=libpfms.so.$(VERSION)
 endif
-TARGETS=libpfms.a $(SLIBPFM)
+
 OBJS=$(SRCS:.c=.o)
 SOBJS=$(OBJS:.o=.lo)
 
+
+
+#
+# assume that if llibpfm built static, libpfms should
+# also be static, i.e., likely platform does not support
+# shared libraries.
+#
+ifeq ($(CONFIG_PFMLIB_SHARED),y)
+TARGETS += $(SLIBPFM)
+endif
+
+ifeq ($(SYS),Linux)
+SLDFLAGS=-shared -Wl,-soname -Wl,libpfms.so.$(VERSION)
+endif
 
 CFLAGS+=-I$(PFMSINCDIR)
 
 all: $(TARGETS)
 
-$(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile
+$(OBJS) $(SOBJS): $(HEADERS) $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile
 
-libpfms.a:  $(OBJS)
+libpfms.a: $(OBJS)
 	$(RM) $@
 	$(AR) cru $@ $(OBJS)
 
-$(SLIBPFM):  $(SOBJS)
-	$(CC) -shared -Wl,-soname -Wl,libpfms.so.$(VERSION) -o $@ $(SOBJS)
+$(SLIBPFM): $(SOBJS)
+	$(CC) $(CFLAGS) $(SLDFLAGS) -o $@ $(SOBJS)
 	$(LN) -sf $@ libpfms.so.$(VERSION)
 
 clean:
@@ -66,4 +84,13 @@ clean:
 
 distclean: clean
 
-.PHONY: install depend
+install: $(TARGETS)
+
+install:
+	-mkdir -p $(DESTDIR)$(LIBDIR)
+	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
+	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
+	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfms.so
+	-mkdir -p $(DESTDIR)$(INCDIR)/perfmon
+	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INCDIR)/perfmon

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: x86.c,v 1.7 2005/03/14 01:48:42 mikpe Exp $
  * x86-specific code.
  *
  * Copyright (C) 2001-2004  Mikael Pettersson

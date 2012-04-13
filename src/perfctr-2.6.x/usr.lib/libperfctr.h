@@ -1,7 +1,7 @@
-/* $Id$
+/* $Id: libperfctr.h,v 1.35.2.3 2009/01/23 20:25:42 mikpe Exp $
  * Library interface to Linux x86 Performance-Monitoring Counters.
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 
 #ifndef __LIB_PERFCTR_H
@@ -25,6 +25,9 @@ int _vperfctr_read_control(int fd, struct vperfctr_control*);
 int _vperfctr_read_sum(int fd, struct perfctr_sum_ctrs*);
 
 struct vperfctr;	/* opaque */
+
+struct vperfctr *vperfctr_open_mode(unsigned int mode);
+#define VPERFCTR_OPEN_CREAT_EXCL	3
 
 struct vperfctr *vperfctr_open(void);
 int vperfctr_info(const struct vperfctr*, struct perfctr_info*);
@@ -56,6 +59,7 @@ int rvperfctr_read_state(const struct rvperfctr*, struct perfctr_sum_ctrs*,
 			 struct vperfctr_control*);
 int rvperfctr_control(const struct rvperfctr*, struct vperfctr_control*);
 int rvperfctr_stop(const struct rvperfctr*);
+int rvperfctr_iresume(const struct rvperfctr*);
 int rvperfctr_unlink(const struct rvperfctr*);
 void rvperfctr_close(struct rvperfctr*);
 
@@ -127,6 +131,7 @@ static __inline__ int perfctr_abi_check_fd(int fd)
 }
 
 int perfctr_info(int fd, struct perfctr_info *info);
+int perfctr_get_info(struct perfctr_info *info);
 struct perfctr_cpus_info *perfctr_cpus_info(int fd);
 unsigned int perfctr_info_nrctrs(const struct perfctr_info*);
 const char *perfctr_info_cpu_name(const struct perfctr_info*);

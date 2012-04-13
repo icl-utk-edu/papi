@@ -1,15 +1,20 @@
---- linux-2.6.10.perfctr26/CREDITS.~1~	2004-12-25 12:16:16.000000000 +0100
-+++ linux-2.6.10.perfctr26/CREDITS	2004-12-25 12:39:35.000000000 +0100
-@@ -2592,6 +2592,7 @@ N: Mikael Pettersson
- E: mikpe@csd.uu.se
- W: http://www.csd.uu.se/~mikpe/
+--- linux-2.6.10.perfctr26/CREDITS.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/CREDITS	2008-06-22 20:57:42.000000000 +0200
+@@ -2589,9 +2589,10 @@ S: Ottawa, Ontario
+ S: Canada K2P 0X8
+ 
+ N: Mikael Pettersson
+-E: mikpe@csd.uu.se
+-W: http://www.csd.uu.se/~mikpe/
++E: mikpe@it.uu.se
++W: http://user.it.uu.se/~mikpe/
  D: Miscellaneous fixes
 +D: Performance-monitoring counters driver
  
  N: Reed H. Petty
  E: rhp@draper.net
---- linux-2.6.10.perfctr26/Documentation/ioctl-number.txt.~1~	2004-10-19 13:01:17.000000000 +0200
-+++ linux-2.6.10.perfctr26/Documentation/ioctl-number.txt	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/Documentation/ioctl-number.txt.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/Documentation/ioctl-number.txt	2008-06-22 20:57:10.000000000 +0200
 @@ -188,6 +188,8 @@ Code	Seq#	Include File		Comments
  0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
  0xCB	00-1F	CBM serial IEC bus	in development:
@@ -19,23 +24,23 @@
  0xDD	00-3F	ZFCP device driver	see drivers/s390/scsi/
  					<mailto:aherrman@de.ibm.com>
  0xF3	00-3F	video/sisfb.h		sisfb (in development)
---- linux-2.6.10.perfctr26/MAINTAINERS.~1~	2004-12-25 12:16:16.000000000 +0100
-+++ linux-2.6.10.perfctr26/MAINTAINERS	2004-12-25 12:40:03.000000000 +0100
+--- linux-2.6.10.perfctr26/MAINTAINERS.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/MAINTAINERS	2008-06-22 20:57:42.000000000 +0200
 @@ -1731,6 +1731,12 @@ M:	tsbogend@alpha.franken.de
  L:	linux-net@vger.kernel.org
  S:	Maintained
  
 +PERFORMANCE-MONITORING COUNTERS DRIVER
 +P:	Mikael Pettersson
-+M:	mikpe@csd.uu.se
-+W:	http://www.csd.uu.se/~mikpe/linux/perfctr/
++M:	mikpe@it.uu.se
++W:	http://user.it.uu.se/~mikpe/linux/perfctr/
 +S:	Maintained
 +
  PHRAM MTD DRIVER
  P:	Jörn Engel
  M:	joern@wh.fh-wedel.de
---- linux-2.6.10.perfctr26/arch/i386/Kconfig.~1~	2004-12-25 12:16:17.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/i386/Kconfig	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/i386/Kconfig.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/i386/Kconfig	2008-06-22 20:57:10.000000000 +0200
 @@ -874,6 +874,8 @@ config REGPARM
  	generate incorrect output with certain kernel constructs when
  	-mregparm=3 is used.
@@ -45,8 +50,8 @@
  endmenu
  
  
---- linux-2.6.10.perfctr26/arch/i386/kernel/entry.S.~1~	2004-12-25 12:16:17.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/i386/kernel/entry.S	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/i386/kernel/entry.S.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/i386/kernel/entry.S	2008-06-22 20:57:10.000000000 +0200
 @@ -375,6 +375,16 @@ ENTRY(name)				\
  /* The include is where all of the SMP etc. interrupts come from */
  #include "entry_arch.h"
@@ -64,8 +69,8 @@
  ENTRY(divide_error)
  	pushl $0			# no error code
  	pushl $do_divide_error
---- linux-2.6.10.perfctr26/arch/i386/kernel/i8259.c.~1~	2004-12-25 12:16:17.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/i386/kernel/i8259.c	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/i386/kernel/i8259.c.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/i386/kernel/i8259.c	2008-06-22 20:57:10.000000000 +0200
 @@ -24,6 +24,7 @@
  #include <asm/apic.h>
  #include <asm/arch_hooks.h>
@@ -83,8 +88,8 @@
  	/*
  	 * Set the clock to HZ Hz, we already have a valid
  	 * vector now:
---- linux-2.6.10.perfctr26/arch/i386/kernel/process.c.~1~	2004-12-25 12:16:17.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/i386/kernel/process.c	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/i386/kernel/process.c.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/i386/kernel/process.c	2008-06-22 20:57:10.000000000 +0200
 @@ -32,6 +32,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
@@ -119,8 +124,8 @@
  	return prev_p;
  }
  
---- linux-2.6.10.perfctr26/arch/ppc/Kconfig.~1~	2004-12-25 12:16:18.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/ppc/Kconfig	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/ppc/Kconfig.~1~	2008-06-22 20:48:52.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/ppc/Kconfig	2008-06-22 20:57:10.000000000 +0200
 @@ -236,6 +236,8 @@ config NOT_COHERENT_CACHE
  	depends on 4xx || 8xx
  	default y
@@ -130,8 +135,8 @@
  endmenu
  
  menu "Platform options"
---- linux-2.6.10.perfctr26/arch/ppc/kernel/head.S.~1~	2004-10-19 13:01:17.000000000 +0200
-+++ linux-2.6.10.perfctr26/arch/ppc/kernel/head.S	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/ppc/kernel/head.S.~1~	2008-06-22 20:17:14.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/ppc/kernel/head.S	2008-06-22 20:57:10.000000000 +0200
 @@ -502,7 +502,11 @@ SystemCall:
  Trap_0f:
  	EXCEPTION_PROLOG
@@ -144,8 +149,8 @@
  
  /*
   * Handle TLB miss for instruction on 603/603e.
---- linux-2.6.10.perfctr26/arch/ppc/kernel/process.c.~1~	2004-12-25 12:16:18.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/ppc/kernel/process.c	2004-12-25 12:42:03.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/ppc/kernel/process.c.~1~	2008-06-22 20:48:53.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/ppc/kernel/process.c	2008-06-22 20:57:10.000000000 +0200
 @@ -35,6 +35,7 @@
  #include <linux/init_task.h>
  #include <linux/module.h>
@@ -181,8 +186,8 @@
  	return 0;
  }
  
---- linux-2.6.10.perfctr26/arch/x86_64/Kconfig.~1~	2004-12-25 12:16:18.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/x86_64/Kconfig	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/x86_64/Kconfig.~1~	2008-06-22 20:48:53.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/x86_64/Kconfig	2008-06-22 20:57:10.000000000 +0200
 @@ -338,6 +338,8 @@ config X86_MCE
  	   machine check error logs. See
  	   ftp://ftp.x86-64.org/pub/linux/tools/mcelog
@@ -192,8 +197,8 @@
  endmenu
  
  #
---- linux-2.6.10.perfctr26/arch/x86_64/kernel/entry.S.~1~	2004-12-25 12:16:18.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/x86_64/kernel/entry.S	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/x86_64/kernel/entry.S.~1~	2008-06-22 20:48:53.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/x86_64/kernel/entry.S	2008-06-22 20:57:10.000000000 +0200
 @@ -560,6 +560,11 @@ ENTRY(spurious_interrupt)
  	apicinterrupt SPURIOUS_APIC_VECTOR,smp_spurious_interrupt
  #endif
@@ -206,8 +211,8 @@
  /*
   * Exception entry points.
   */ 		
---- linux-2.6.10.perfctr26/arch/x86_64/kernel/i8259.c.~1~	2004-12-25 12:16:18.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/x86_64/kernel/i8259.c	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/x86_64/kernel/i8259.c.~1~	2008-06-22 20:48:53.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/x86_64/kernel/i8259.c	2008-06-22 20:57:10.000000000 +0200
 @@ -24,6 +24,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
@@ -225,8 +230,8 @@
  	/*
  	 * Set the clock to HZ Hz, we already have a valid
  	 * vector now:
---- linux-2.6.10.perfctr26/arch/x86_64/kernel/process.c.~1~	2004-12-25 12:16:18.000000000 +0100
-+++ linux-2.6.10.perfctr26/arch/x86_64/kernel/process.c	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/arch/x86_64/kernel/process.c.~1~	2008-06-22 20:48:53.000000000 +0200
++++ linux-2.6.10.perfctr26/arch/x86_64/kernel/process.c	2008-06-22 20:57:10.000000000 +0200
 @@ -32,6 +32,7 @@
  #include <linux/delay.h>
  #include <linux/irq.h>
@@ -261,16 +266,34 @@
  	return prev_p;
  }
  
---- linux-2.6.10.perfctr26/drivers/Makefile.~1~	2004-12-25 12:16:18.000000000 +0100
-+++ linux-2.6.10.perfctr26/drivers/Makefile	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/drivers/Makefile.~1~	2008-06-22 20:48:53.000000000 +0200
++++ linux-2.6.10.perfctr26/drivers/Makefile	2008-06-22 20:57:10.000000000 +0200
 @@ -59,4 +59,5 @@ obj-$(CONFIG_MCA)		+= mca/
  obj-$(CONFIG_EISA)		+= eisa/
  obj-$(CONFIG_CPU_FREQ)		+= cpufreq/
  obj-$(CONFIG_MMC)		+= mmc/
 +obj-$(CONFIG_KPERFCTR)		+= perfctr/
  obj-y				+= firmware/
---- linux-2.6.10.perfctr26/include/asm-i386/mach-default/irq_vectors.h.~1~	2004-05-10 11:14:37.000000000 +0200
-+++ linux-2.6.10.perfctr26/include/asm-i386/mach-default/irq_vectors.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/fs/exec.c.~1~	2008-06-22 20:48:53.000000000 +0200
++++ linux-2.6.10.perfctr26/fs/exec.c	2008-06-22 20:57:42.000000000 +0200
+@@ -47,6 +47,7 @@
+ #include <linux/security.h>
+ #include <linux/syscalls.h>
+ #include <linux/rmap.h>
++#include <linux/perfctr.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -843,6 +844,7 @@ int flush_old_exec(struct linux_binprm *
+ 	tcomm[i] = '\0';
+ 	set_task_comm(current, tcomm);
+ 
++	perfctr_flush_thread(&current->thread);
+ 	flush_thread();
+ 
+ 	if (bprm->e_uid != current->euid || bprm->e_gid != current->egid || 
+--- linux-2.6.10.perfctr26/include/asm-i386/mach-default/irq_vectors.h.~1~	2008-06-22 15:56:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-i386/mach-default/irq_vectors.h	2008-06-22 20:57:10.000000000 +0200
 @@ -56,14 +56,15 @@
   * sources per level' errata.
   */
@@ -289,8 +312,8 @@
  
  #define TIMER_IRQ 0
  
---- linux-2.6.10.perfctr26/include/asm-i386/mach-visws/irq_vectors.h.~1~	2004-01-09 13:19:11.000000000 +0100
-+++ linux-2.6.10.perfctr26/include/asm-i386/mach-visws/irq_vectors.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-i386/mach-visws/irq_vectors.h.~1~	2008-06-22 15:56:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-i386/mach-visws/irq_vectors.h	2008-06-22 20:57:10.000000000 +0200
 @@ -35,14 +35,15 @@
   * sources per level' errata.
   */
@@ -309,8 +332,8 @@
  
  #define TIMER_IRQ 0
  
---- linux-2.6.10.perfctr26/include/asm-i386/processor.h.~1~	2004-12-25 12:16:22.000000000 +0100
-+++ linux-2.6.10.perfctr26/include/asm-i386/processor.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-i386/processor.h.~1~	2008-06-22 20:48:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-i386/processor.h	2008-06-22 20:57:10.000000000 +0200
 @@ -436,6 +436,8 @@ struct thread_struct {
  	unsigned long	*io_bitmap_ptr;
  /* max allowed port in the bitmap, in bytes: */
@@ -320,8 +343,8 @@
  };
  
  #define INIT_THREAD  {							\
---- linux-2.6.10.perfctr26/include/asm-i386/system.h.~1~	2004-12-25 12:16:22.000000000 +0100
-+++ linux-2.6.10.perfctr26/include/asm-i386/system.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-i386/system.h.~1~	2008-06-22 20:48:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-i386/system.h	2008-06-22 20:57:10.000000000 +0200
 @@ -14,6 +14,7 @@ extern struct task_struct * FASTCALL(__s
  
  #define switch_to(prev,next,last) do {					\
@@ -330,8 +353,8 @@
  	asm volatile("pushfl\n\t"					\
  		     "pushl %%ebp\n\t"					\
  		     "movl %%esp,%0\n\t"	/* save ESP */		\
---- linux-2.6.10.perfctr26/include/asm-ppc/processor.h.~1~	2004-08-14 13:14:29.000000000 +0200
-+++ linux-2.6.10.perfctr26/include/asm-ppc/processor.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-ppc/processor.h.~1~	2008-06-22 20:48:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-ppc/processor.h	2008-06-22 20:57:10.000000000 +0200
 @@ -126,6 +126,9 @@ struct thread_struct {
  	unsigned long	spefscr;	/* SPE & eFP status */
  	int		used_spe;	/* set if process has used spe */
@@ -342,8 +365,8 @@
  };
  
  #define ARCH_MIN_TASKALIGN 16
---- linux-2.6.10.perfctr26/include/asm-x86_64/hw_irq.h.~1~	2004-12-25 12:16:24.000000000 +0100
-+++ linux-2.6.10.perfctr26/include/asm-x86_64/hw_irq.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-x86_64/hw_irq.h.~1~	2008-06-22 20:48:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-x86_64/hw_irq.h	2008-06-22 20:57:10.000000000 +0200
 @@ -65,14 +65,15 @@ struct hw_interrupt_type;
   * sources per level' errata.
   */
@@ -362,8 +385,8 @@
  
  
  #ifndef __ASSEMBLY__
---- linux-2.6.10.perfctr26/include/asm-x86_64/irq.h.~1~	2004-12-25 12:16:24.000000000 +0100
-+++ linux-2.6.10.perfctr26/include/asm-x86_64/irq.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-x86_64/irq.h.~1~	2008-06-22 19:39:46.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-x86_64/irq.h	2008-06-22 20:57:10.000000000 +0200
 @@ -29,7 +29,7 @@
   */
  #define NR_VECTORS 256
@@ -373,8 +396,8 @@
  
  #ifdef CONFIG_PCI_MSI
  #define NR_IRQS FIRST_SYSTEM_VECTOR
---- linux-2.6.10.perfctr26/include/asm-x86_64/processor.h.~1~	2004-12-25 12:16:24.000000000 +0100
-+++ linux-2.6.10.perfctr26/include/asm-x86_64/processor.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-x86_64/processor.h.~1~	2008-06-22 20:48:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-x86_64/processor.h	2008-06-22 20:57:10.000000000 +0200
 @@ -258,6 +258,8 @@ struct thread_struct {
  	unsigned io_bitmap_max;
  /* cached TLS descriptors. */
@@ -384,8 +407,8 @@
  } __attribute__((aligned(16)));
  
  #define INIT_THREAD  {}
---- linux-2.6.10.perfctr26/include/asm-x86_64/system.h.~1~	2004-12-25 12:16:24.000000000 +0100
-+++ linux-2.6.10.perfctr26/include/asm-x86_64/system.h	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/include/asm-x86_64/system.h.~1~	2008-06-22 20:48:54.000000000 +0200
++++ linux-2.6.10.perfctr26/include/asm-x86_64/system.h	2008-06-22 20:57:10.000000000 +0200
 @@ -26,7 +26,8 @@
  #define __EXTRA_CLOBBER  \
  	,"rcx","rbx","rdx","r8","r9","r10","r11","r12","r13","r14","r15"
@@ -406,8 +429,8 @@
      
  extern void load_gs_index(unsigned); 
  
---- linux-2.6.10.perfctr26/kernel/exit.c.~1~	2004-12-25 12:16:25.000000000 +0100
-+++ linux-2.6.10.perfctr26/kernel/exit.c	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/kernel/exit.c.~1~	2008-06-22 20:48:55.000000000 +0200
++++ linux-2.6.10.perfctr26/kernel/exit.c	2008-06-22 20:57:10.000000000 +0200
 @@ -25,6 +25,7 @@
  #include <linux/mount.h>
  #include <linux/proc_fs.h>
@@ -424,8 +447,8 @@
  	sched_exit(p);
  	write_unlock_irq(&tasklist_lock);
  	spin_unlock(&p->proc_lock);
---- linux-2.6.10.perfctr26/kernel/sched.c.~1~	2004-12-25 12:16:25.000000000 +0100
-+++ linux-2.6.10.perfctr26/kernel/sched.c	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/kernel/sched.c.~1~	2008-06-22 20:48:55.000000000 +0200
++++ linux-2.6.10.perfctr26/kernel/sched.c	2008-06-22 20:57:10.000000000 +0200
 @@ -40,6 +40,7 @@
  #include <linux/rcupdate.h>
  #include <linux/cpu.h>
@@ -443,8 +466,8 @@
  	rq = task_rq_lock(p, &flags);
  	if (!cpus_intersects(new_mask, cpu_online_map)) {
  		ret = -EINVAL;
---- linux-2.6.10.perfctr26/kernel/timer.c.~1~	2004-12-25 12:16:25.000000000 +0100
-+++ linux-2.6.10.perfctr26/kernel/timer.c	2004-12-25 12:39:35.000000000 +0100
+--- linux-2.6.10.perfctr26/kernel/timer.c.~1~	2008-06-22 20:48:55.000000000 +0200
++++ linux-2.6.10.perfctr26/kernel/timer.c	2008-06-22 20:57:10.000000000 +0200
 @@ -31,6 +31,7 @@
  #include <linux/time.h>
  #include <linux/jiffies.h>
