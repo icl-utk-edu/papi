@@ -495,9 +495,6 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
    SUBDBG( "pfm_get_num_counters: %d\n", my_vector->cmp_info.num_cntrs );
 
 
-   my_vector->cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-
-
    if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) {
      /* Pentium4 */
      if ( _papi_hwi_system_info.hw_info.cpuid_family == 15 ) {
