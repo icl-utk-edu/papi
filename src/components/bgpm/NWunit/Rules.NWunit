@@ -1,4 +1,4 @@
-# $Id: Rules.bgpm,v 1.1 2011/03/11 23:06:54 jagode Exp $
+# $Id$
 
 COMPSRCS += components/bgpm/NWunit/linux-NWunit.c 
 COMPOBJS += linux-NWunit.o 

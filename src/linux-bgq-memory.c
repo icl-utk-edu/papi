@@ -1,6 +1,6 @@
 /* 
  * File:    linux-bgq-memory.c
- * CVS:     $Id: Exp $
+ * CVS:     $Id$
  * Author:  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:    
