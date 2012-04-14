@@ -51,8 +51,6 @@
 #include "papi_preset.h"
 #include "papi_defines.h"
 
-#define PAPI_EVENT_FILE "papi_events.csv"
-
 extern hwi_presets_t _papi_hwi_presets;
 
 typedef struct
