@@ -1303,7 +1303,7 @@ elif test "$MAKEVER" = "bgq"; then
   if test "x$no_cpu_counters" = "x"; then
     SUBSTR=linux-bgq
     MEMSUBSTR=linux-bgq
-	MISCSRCS=linux-bgq-common.c
+	MISCSRCS="linux-bgq-common.c papi_libpfm_presets.c"
 	MISCOBJS='$(MISCSRCS:.c=.o)'
 	SUBSTR_HEADERS=linux-bgq-common.h
     #CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
