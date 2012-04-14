@@ -4,7 +4,7 @@
 
 /** 
  * @file    linux-bgq.h
- * CVS:     $Id: Exp $
+ * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
