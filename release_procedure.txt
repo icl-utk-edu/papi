@@ -1,4 +1,4 @@
-Release Procedure for PAPI  Feb 08, 2012
+Release Procedure for PAPI  Apr 17, 2012 (now with git!)
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -8,8 +8,14 @@ Please update it as appropriate.
 One way to use this procedure is to print a copy and check off
 the lines as they are completed to avoid confusion.
 ================================================================================
-__ 1. Notify developers that a release is imminent and the repository should be
+__ 0a. Notify developers that a release is imminent and the repository should be
 	considered frozen.
+
+__ 0b. Update your local copy from git to make sure you have all changes.
+	git pull
+
+__ 1. If this is not an incremental release, branch git. 
+	git checkout -b stable-X.Y [starting point eg master]
 
 __ 2. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
@@ -40,58 +46,53 @@ __ 4. If configure.in is changed, run autoconf (2.59) and commit the resulting
 	inordinate number of extraneous differences between versions.
 
 __ 5. Create a ChangeLog for the current release. 
-	- One handy way to do this is to use the python script that comes with
-	WinCVS:
-	  Macros->CVS->Build ChangeLog (advanced).
-	Use the -r<branch>: command to log commit messages from the previous 
-	branch point to the present.
-	- Another is to use the perl script: cvs2cl.pl as follows:
-	  > perl ./cvs2cl.pl -F trunk --group-within-date -l "-d>2010/09/30"
-	  (where the date is the date of the previous release)
+	We use a python script gitlog2changelog.py to generate is for us. 
+	It expects the tag of the last release as an argument. 
+	./gitlog2changelog.py papi-a-b-c-t
+	mv ChangeLog ChangeLogP4XYZ.txt
 
 __ 6. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
 __ 7. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 
-__ 8. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
+__ 8. Add ChangeLogXYZ.txt to git and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
 
-__ 9a. Update your local copy from cvs to make sure you have all changes.
+__ 9. Tag git: papi-X-Y-Z-t.
+	git tag -a papi-X-Y-Z-t
 
-__ 9b. Tag cvs: papi-X-Y-Z-t.
-      cvs tag papi-X-Y-Z-t
+__ 10. Push everything to the central repo. 
+	git push 
+	-- or -- If you've created a new branch. 
+	git push origin stable-X.Y: 
 
-__ 10. If this is not an incremental release, also branch cvs: papi-X-Y-Z-b.
-      cvs tag -r papi-X-Y-Z-t -b papi-X-Y-Z-b
-
-__ 11. Export the tag to a clean working directory:
-	> cvs export -r <tag> <module> ex:
-	> cvs export -r papi-3-7-2-t papi
+__ 11. Copy your working directory to papi-X.Y.Z
+	> cp -R papi papi-X.Y.X
+	> cd papi-X.Y.Z
 
 __ 12. Delete any unneccessary files or directories
 		particularly .doc and .pdf files in the /doc directory
 	Things needed in /doc {Doxyfile, Doxyfile-everything}
         You can use the delete_before_release.sh script for this.
+	NOTE: This deletes the .git directory, 
 
-__ 13. Rename the directory from papi to papi-X.Y.Z
-
-__ 14. tar the directory:
+__ 13. tar the directory:
 	> tar -cvf papi-X.Y.Z.tar papi-X.Y.Z
 
-__ 15. zip the tarball:
+__ 14. zip the tarball:
 	gzip papi-X.Y.Z.tar
 
-__ 16. Copy the tarball to /silk/homes/icl/projects/papi/downloads
+__ 15. Copy the tarball to /silk/homes/icl/projects/papi/downloads
 
-__ 17. Check permissions on the tarball. 664 is good. 
+__ 16. Check permissions on the tarball. 664 is good. 
 
-__ 18. Create a link with supporting text on the PAPI software web page.
+__ 17. Create a link with supporting text on the PAPI software web page.
 
-__ 19. Create a News item on the PAPI Web page.
+__ 18. Create a News item on the PAPI Web page.
 
-__ 20. Email the papi developer and discussion lists with an announcement.
+__ 19. Email the papi developer and discussion lists with an announcement.
 
-__ 21. Post the announcement on the PAPI User Forum.
+__ 20. Post the announcement on the PAPI User Forum.
 
 ================================================================================
 
