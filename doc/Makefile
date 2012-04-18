@@ -15,7 +15,7 @@ man/man1: ../src/utils/avail.c ../src/utils/clockres.c  ../src/utils/command_lin
 	doxygen Doxyfile-man1
  
 clean:
-	rm -rf man html
+	rm -rf man html doxyerror
 
 install: man
 	-rm -r ../man/man1/*.1 ../man/man3/*.3
