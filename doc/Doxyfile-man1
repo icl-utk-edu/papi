@@ -9,7 +9,7 @@
 #       TAG += value [value, ...]
 # Values that contain spaces should be placed between quotes (" ")
 
-@include				= Doxyfile-common
+@INCLUDE				= Doxyfile-common
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
