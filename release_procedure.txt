@@ -62,9 +62,9 @@ __ 9. Tag git: papi-X-Y-Z-t.
 	git tag -a papi-X-Y-Z-t
 
 __ 10. Push everything to the central repo. 
-	git push 
+	git push --tags 
 	-- or -- If you've created a new branch. 
-	git push origin stable-X.Y: 
+	git push --tags origin stable-X.Y: 
 
 __ 11. Copy your working directory to papi-X.Y.Z
 	> cp -R papi papi-X.Y.X
