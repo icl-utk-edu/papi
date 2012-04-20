@@ -17,6 +17,7 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
+
 /*
  * BG/P specific 'stuff'
  */
@@ -30,7 +31,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/utsname.h>
+#include <linux/utsname.h>
 
 // BG/P macros
 #define get_cycles _bgp_GetTimeBase
@@ -48,6 +49,8 @@ extern int _bgp_get_dmem_info( PAPI_dmem_info_t * pDmemInfo );
 hwi_search_t *preset_search_map;
 volatile unsigned int lock[PAPI_MAX_LOCK];
 const char *BGP_NATIVE_RESERVED_EVENTID = "Reserved";
+
+PAPI_os_info_t _papi_os_info;
 
 
 /*
@@ -1163,6 +1166,8 @@ _bgp_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 int 
 _papi_hwi_init_os(void) {
+
+	struct new_utsname uname_buffer;
 
     uname(&uname_buffer);
 
