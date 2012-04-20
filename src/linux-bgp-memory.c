@@ -16,8 +16,6 @@
  */
 int init_bgp( PAPI_mh_info_t * pMem_Info );
 
-// inline void cpuid(unsigned int *, unsigned int *,unsigned int *,unsigned int *);
-
 /*
  * Get Memory Information
  *
@@ -46,20 +44,6 @@ _bgp_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type )
 extern int
 _bgp_get_dmem_info( PAPI_dmem_info_t * pDmemInfo )
 {
-//  pid_t xPID = getpid();
-//  prpsinfo_t xInfo;
-//  char xFile[256];
-//  int xFD;
-
-//  sprintf(xFile, "/proc/%05d", xPID);
-//  if ((fd = open(xFile, O_RDONLY)) < 0) {
-//     SUBDBG("PAPI_get_dmem_info can't open /proc/%d\n", xPID);
-//     return (PAPI_ESYS);
-//  }
-//  if (ioctl(xFD, PIOCPSINFO, &xInfo) < 0) {
-//     return (PAPI_ESYS);
-//  }
-//  close(xFD);
 
 	pDmemInfo->size = PAPI_EINVAL;
 	pDmemInfo->resident = PAPI_EINVAL;
@@ -82,7 +66,6 @@ int
 init_bgp( PAPI_mh_info_t * pMem_Info )
 {
 	memset( pMem_Info, 0x0, sizeof ( *pMem_Info ) );
-	//fprintf(stderr,"mem_info not est up [%s (%d)]\n",__FUNCTION__,__LINE__);
 
 	return PAPI_OK;
 }

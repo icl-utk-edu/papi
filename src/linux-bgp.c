@@ -37,8 +37,7 @@
 #define get_cycles _bgp_GetTimeBase
 
 // BG/P external structures/functions
-/* Defined in papa_data.c */
-extern papi_mdi_t _papi_hwi_system_info;
+
 /* Defined in linux-bgp-preset-events.c */
 extern hwi_search_t *_bgp_preset_map;
 /* Defined in linux-bgp-memory.c */
@@ -49,7 +48,6 @@ extern int _bgp_get_dmem_info( PAPI_dmem_info_t * pDmemInfo );
 hwi_search_t *preset_search_map;
 volatile unsigned int lock[PAPI_MAX_LOCK];
 const char *BGP_NATIVE_RESERVED_EVENTID = "Reserved";
-
 PAPI_os_info_t _papi_os_info;
 
 
@@ -95,149 +93,7 @@ _papi_hwd_unlock( int lock )
 	return;
 }
 
-/*
- * Update Shared Library Information
- *
- * NOTE:  pid is not set in the _papi_hwi_system_info structure, and thus, the open
- *        of the map file will fail.    We just short circuit this code and return
- *        PAPI_OK.  Commented out code is carry-over from BG/L.
- */
-int
-_bgp_update_shlib_info( papi_mdi_t *mdi )
-{
-//  char fname[PAPI_HUGE_STR_LEN];
-//  PAPI_address_map_t *tmp, *tmp2;
-//  FILE *f;
-//  char find_data_mapname[PAPI_HUGE_STR_LEN] = "";
-//  int upper_bound = 0, i, index = 0, find_data_index = 0, count = 0;
-//  char buf[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PAPI_HUGE_STR_LEN];
-//  unsigned long begin, end, size, inode, foo;
-//
-//  sprintf(fname, "/proc/%ld/maps", (long)_papi_hwi_system_info.pid);
-//  f = fopen(fname, "r");
-//  if (!f) {
-//    PAPIERROR("fopen(%s) returned < 0", fname);
-//    return(PAPI_OK);
-//  }
-//
-//  /* First count up things that look kinda like text segments, this is an upper bound */
-//  while (1) {
-//    if (fgets(buf, sizeof(buf), f) == NULL) {
-//      if (ferror(f)) {
-//        PAPIERROR("fgets(%s, %d) returned < 0", fname, sizeof(buf));
-//        fclose(f);
-//        return(PAPI_OK);
-//      }
-//      else
-//        break;
-//    }
-//    sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm, &foo, dev, &inode, mapname);
-//    if (strlen(mapname) && (perm[0] == 'r') && (perm[1] != 'w') && (perm[2] == 'x') && (inode != 0)) {
-//      upper_bound++;
-//    }
-//  }
-//
-//  if (upper_bound == 0) {
-//    PAPIERROR("No segments found with r-x, inode != 0 and non-NULL mapname");
-//    fclose(f);
-//    return(PAPI_OK);
-//  }
-//
-//  /* Alloc our temporary space */
-//  tmp = (PAPI_address_map_t *) papi_calloc(upper_bound, sizeof(PAPI_address_map_t));
-//  if (tmp == NULL) {
-//    PAPIERROR("calloc(%d) failed", upper_bound*sizeof(PAPI_address_map_t));
-//    fclose(f);
-//    return(PAPI_OK);
-//  }
-//
-//  rewind(f);
-//  while (1) {
-//    if (fgets(buf, sizeof(buf), f) == NULL) {
-//      if (ferror(f)) {
-//        PAPIERROR("fgets(%s, %d) returned < 0", fname, sizeof(buf));
-//        fclose(f);
-//        papi_free(tmp);
-//        return(PAPI_OK);
-//      }
-//      else
-//        break;
-//    }
-//    sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm, &foo, dev, &inode, mapname);
-//    size = end - begin;
-//    if (strlen(mapname) == 0)
-//      continue;
-//    if ((strcmp(find_data_mapname,mapname) == 0) && (perm[0] == 'r') && (perm[1] == 'w') && (inode != 0)) {
-//      tmp[find_data_index].data_start = (caddr_t) begin;
-//      tmp[find_data_index].data_end = (caddr_t) (begin + size);
-//      find_data_mapname[0] = '\0';
-//    }
-//    else
-//      if ((perm[0] == 'r') && (perm[1] != 'w') && (perm[2] == 'x') && (inode != 0)) {
-//        /* Text segment, check if we've seen it before, if so, ignore it. Some entries
-//           have multiple r-xp entires. */
-//
-//        for (i=0;i<upper_bound;i++) {
-//          if (strlen(tmp[i].name)) {
-//            if (strcmp(mapname,tmp[i].name) == 0)
-//              break;
-//          }
-//          else {
-//            /* Record the text, and indicate that we are to find the data segment, following this map */
-//            strcpy(tmp[i].name,mapname);
-//            tmp[i].text_start = (caddr_t) begin;
-//            tmp[i].text_end = (caddr_t) (begin + size);
-//            count++;
-//            strcpy(find_data_mapname,mapname);
-//            find_data_index = i;
-//            break;
-//          }
-//        }
-//      }
-//  }
-//
-//  if (count == 0) {
-//    PAPIERROR("No segments found with r-x, inode != 0 and non-NULL mapname");
-//    fclose(f);
-//    papi_free(tmp);
-//    return(PAPI_OK);
-//  }
-//  fclose(f);
-//
-//  /* Now condense the list and update exe_info */
-//  tmp2 = (PAPI_address_map_t *) papi_calloc(count, sizeof(PAPI_address_map_t));
-//  if (tmp2 == NULL) {
-//    PAPIERROR("calloc(%d) failed", count*sizeof(PAPI_address_map_t));
-//    papi_free(tmp);
-//    fclose(f);
-//    return(PAPI_OK);
-//  }
-//
-//  for (i=0;i<count;i++) {
-//    if (strcmp(tmp[i].name,_papi_hwi_system_info.exe_info.fullname) == 0) {
-//      _papi_hwi_system_info.exe_info.address_info.text_start = tmp[i].text_start;
-//      _papi_hwi_system_info.exe_info.address_info.text_end = tmp[i].text_end;
-//      _papi_hwi_system_info.exe_info.address_info.data_start = tmp[i].data_start;
-//      _papi_hwi_system_info.exe_info.address_info.data_end = tmp[i].data_end;
-//    }
-//    else {
-//      strcpy(tmp2[index].name,tmp[i].name);
-//      tmp2[index].text_start = tmp[i].text_start;
-//      tmp2[index].text_end = tmp[i].text_end;
-//      tmp2[index].data_start = tmp[i].data_start;
-//      tmp2[index].data_end = tmp[i].data_end;
-//      index++;
-//    }
-//  }
-//  papi_free(tmp);
-//
-//  if (_papi_hwi_system_info.shlib_info.map)
-//    papi_free(_papi_hwi_system_info.shlib_info.map);
-//  _papi_hwi_system_info.shlib_info.map = tmp2;
-//  _papi_hwi_system_info.shlib_info.count = index;
 
-	return ( PAPI_OK );
-}
 
 /*
  * Get System Information
@@ -252,15 +108,11 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 	unsigned utmp;
 	char chipID[64];
 
-	// NOTE:  Executable regions, require reading the /proc/pid/maps file
-	//        and the pid is not filled in the system_info structure.
-	//        Basically, _bgp_update_shlib_info() simply returns
-	//        with PAPI_OK
-	_bgp_update_shlib_info( &_papi_hwi_system_info  );
-
 	/* Hardware info */
 	if ( ( tmp = Kernel_GetPersonality( &bgp, sizeof bgp ) ) ) {
+
 #include "error.h"
+
 		fprintf( stdout, "Kernel_GetPersonality returned %d (sys error=%d).\n"
 				 "\t%s\n", tmp, errno, strerror( errno ) );
 		return PAPI_ESYS;
@@ -306,7 +158,7 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 	// The mpx_info structure disappeared in PAPI-C
 	//_papi_hwi_system_info.mpx_info.timer_sig = PAPI_NULL;
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /*
@@ -364,43 +216,7 @@ int
 _bgp_init( hwd_context_t * ctx )
 {
 
-	return ( PAPI_OK );
-
-	/*
-	   // sigaction isn't implemented yet
-	   // commented out code is a carry over from BG/L
-	   {
-	   int errcode;
-
-	   struct sigaction new={{0x0,}}, old={{0x0,}};
-
-	   new.sa_handler=&externally_initiated_hwread;
-	   new.sa_mask=0x0;
-	   new.sa_flags=0x0;
-	   errcode=sigaction(SIGNAL45,&new,&old);
-
-	   if(errcode) {
-	   fprintf(stderr,"Installation of hwread handler failed in %s:%d.\n"
-	   "\t Error(%d): %s\n",__FILE__,__LINE__,errno, strerror(errno));
-	   }
-
-	   if( (old.sa_handler != SIG_IGN ) && (old.sa_handler != SIG_DFL ))
-	   fprintf(stderr,"\n\tSubstituting non-default signal handler for SIGBGLUPS!\n\n");
-	   }
-
-	   // Alternative method using implemented signal(2)
-	   // Virtual counter overflow is now handled in the bgl_perfctr substrate instead
-	   {
-	   sighandler_t old_h;
-	   old_h=signal(SIGNAL45,&externally_initiated_hwread);
-	   if(old_h == SIG_ERR)
-	   fprintf(stderr,"Installation of hwread handler failed in %s:%d.\n",
-	   __FUNCTION__, __LINE__);
-	   if( (old_h != SIG_IGN) &&
-	   (old_h != SIG_DFL) )
-	   fprintf(stderr,"\n\tSubstituting non-default signal handler for SIGBGLUPS!\n\n");
-	   }
-	 */
+	return PAPI_OK;
 }
 
 /*
@@ -426,8 +242,7 @@ _bgp_init_global( void )
 	/*
 	 * Setup presets
 	 */
-	SUBDBG
-		( "Before setup_bgp_presets, _papi_hwi_system_info.hw_info.model=%d...\n",
+	SUBDBG( "Before setup_bgp_presets, _papi_hwi_system_info.hw_info.model=%d...\n",
 		  _papi_hwi_system_info.hw_info.model );
 	retval = setup_bgp_presets( _papi_hwi_system_info.hw_info.model );
 	SUBDBG( "After setup_bgp_presets, retval=%d...\n", retval );
@@ -827,73 +642,9 @@ _bgp_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	new_action.sa_sigaction = ( void * ) user_signal_handler;
 	new_action.sa_flags = SA_RESTART | SA_SIGINFO;
 	sigaction( SIGXCPU, &new_action, NULL );
-	//signal(SIGXCPU, user_signal_handler); 
 
 
-//  hwd_control_state_t *this_state = &ESI->machdep;
-//  struct hwd_pmc_control *contr = &this_state->control;
-//  int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
-//
-//  OVFDBG("EventIndex=%d\n", EventIndex);
-//
-//  /* The correct event to overflow is EventIndex */
-//  ncntrs = _papi_hwi_system_info.num_cntrs;
-//  i = ESI->EventInfoArray[EventIndex].pos[0];
-//  if (i >= ncntrs) {
-//    PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
-//    return PAPI_EBUG;
-//  }
-//  if (threshold != 0) {        /* Set an overflow threshold */
-//    if ((ESI->EventInfoArray[EventIndex].derived) &&
-//        (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)) {
-//       OVFDBG("Can't overflow on a derived event.\n");
-//       return PAPI_EINVAL;
-//    }
-//
-//    if ((retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
-//       return(retval);
-//
-//    /* overflow interrupt occurs on the NEXT event after overflow occurs
-//       thus we subtract 1 from the threshold. */
-//    contr->cpu_control.ireset[i] = (-threshold + 1);
-//    contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
-//    contr->cpu_control.nrictrs++;
-//    contr->cpu_control.nractrs--;
-//    nricntrs = contr->cpu_control.nrictrs;
-//    nracntrs = contr->cpu_control.nractrs;
-//    contr->si_signo = _papi_hwi_system_info.sub_info.hardware_intr_sig;
-//
-//    /* move this event to the bottom part of the list if needed */
-//    if (i < nracntrs)
-//      swap_events(ESI, contr, i, nracntrs);
-//    OVFDBG("Modified event set\n");
-//  }
-//  else {
-//    if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
-//      contr->cpu_control.ireset[i] = 0;
-//      contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
-//      contr->cpu_control.nrictrs--;
-//      contr->cpu_control.nractrs++;
-//    }
-//    nricntrs = contr->cpu_control.nrictrs;
-//    nracntrs = contr->cpu_control.nractrs;
-//
-//    /* move this event to the top part of the list if needed */
-//    if (i >= nracntrs)
-//      swap_events(ESI, contr, i, nracntrs - 1);
-//
-//    if (!nricntrs)
-//      contr->si_signo = 0;
-//
-//    OVFDBG("Modified event set\n");
-//
-//    retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
-//  }
-//  OVFDBG("End of call. Exit code: %d\n", retval);
-//
-//  return (retval);
-
-	return ( 0 );
+	return PAPI_OK;
 }
 
 
@@ -907,7 +658,7 @@ _bgp_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	/* This function is not used and shouldn't be called. */
 
-	return ( PAPI_ESBSTR );
+	return PAPI_ESBSTR;
 }
 
 /*
@@ -918,7 +669,7 @@ _bgp_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 int
 _bgp_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 {
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /*
@@ -935,10 +686,6 @@ _bgp_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	case PAPI_DOMAIN:
 	case PAPI_DEFDOM:
 //    Simply return PAPI_OK, as no state is kept.
-//    Commented out code is carry-over from BG/L, but
-//    does not compile, as machdep does not exist in ESI
-//    for 3.9.0 ...
-//      return (_bgp_set_domain(&option->domain.ESI->machdep, option->domain.domain));
 		return ( PAPI_OK );
 	case PAPI_GRANUL:
 	case PAPI_DEFGRN:
@@ -968,7 +715,7 @@ _bgp_get_real_usec( void )
 //  return (long long)(x/y);
 
 	return ( ( long long ) ( ( ( float ) get_cycles(  ) ) /
-							 ( ( _papi_hwi_system_info.hw_info.mhz ) ) ) );
+	       ( ( _papi_hwi_system_info.hw_info.mhz ) ) ) );
 }
 
 /*
@@ -1018,19 +765,6 @@ int
 _bgp_init_substrate( int cidx )
 {
 	int retval;
-
-	/*
-	 * Setup the vector entries that the OS knows about
-	 * NOTE:  Not needed in version 3.9.0, as the vector
-	 *        table is initialized with the code...
-	 */
-#if 0
-#ifndef PAPI_NO_VECTOR
-	retval = _papi_hwi_setup_vector_table( vtable, _bgp_svector_table );
-	if ( retval != PAPI_OK )
-		return ( retval );
-#endif
-#endif
 
 	retval = _bgp_init_global(  );
 
@@ -1188,7 +922,10 @@ _papi_hwi_init_os(void) {
 papi_vector_t _bgp_vectors = {
 	.cmp_info = {
 				 /* Default component information (unspecified values are initialized to 0) */
-				 .name = "$Id: linux-bgp.c,v 1.00 2007/xx/xx xx:xx:xx dlherms",
+				 .name = "linux-bgp",
+				 .short_name = "bgp",
+				 .description = "BlueGene/P substrate",
+
 				 // NOTE:  PAPI remove event processing depends on
 				 //        num_ctrs and num_mpx_cntrs being the same value.
 				 .num_cntrs = BGP_UPC_MAX_MONITORED_EVENTS,
@@ -1216,7 +953,6 @@ papi_vector_t _bgp_vectors = {
 	,
 	/* Function pointers in this component */
 	.dispatch_timer = _bgp_dispatch_timer,
-//   .get_overflow_address =
 	.start = _bgp_start,
 	.stop = _bgp_stop,
 	.read = _bgp_read,
@@ -1246,6 +982,5 @@ papi_os_vector_t _papi_os_vector = {
 	.get_real_usec = _bgp_get_real_usec,
 	.get_virt_cycles = _bgp_get_virt_cycles,
 	.get_virt_usec = _bgp_get_virt_usec,
-	.update_shlib_info = _bgp_update_shlib_info,
 	.get_system_info = _bgp_get_system_info,
 };
