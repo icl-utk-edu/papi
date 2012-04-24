@@ -595,3 +595,62 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	fputc('\n',fp);
 	return 0;
 }
+
+uint64_t
+display_lost(perf_event_desc_t *hw, perf_event_desc_t *fds, int num_fds, FILE *fp)
+{
+	struct { uint64_t id, lost; } lost;
+	const char *str;
+	int e, ret;
+
+	ret = perf_read_buffer(hw, &lost, sizeof(lost));
+	if (ret) {
+		warnx("cannot read lost info");
+		return 0;
+	}
+
+	e = perf_id2event(fds, num_fds, lost.id);
+	if (e == -1)
+		str = "unknown lost event";
+	else
+		str = fds[e].name;
+
+	fprintf(fp, "<<<LOST %"PRIu64" SAMPLES FOR EVENT %s>>>\n",
+		lost.lost,
+		str);
+
+	return lost.lost;
+}
+
+void
+display_exit(perf_event_desc_t *hw, FILE *fp)
+{
+	struct { pid_t pid, ppid, tid, ptid; } grp;
+	int ret;
+
+	ret = perf_read_buffer(hw, &grp, sizeof(grp));
+	if (ret) {
+		warnx("cannot read exit info");
+		return;
+	}
+
+	fprintf(fp,"[%d] exited\n", grp.pid);
+}
+
+void
+display_freq(int mode, perf_event_desc_t *hw, FILE *fp)
+{
+	struct { uint64_t time, id, stream_id; } thr;
+	int ret;
+
+	ret = perf_read_buffer(hw, &thr, sizeof(thr));
+	if (ret) {
+		warnx("cannot read throttling info");
+		return;
+	}
+
+	fprintf(fp, "%s value=%"PRIu64" event ID=%"PRIu64"\n",
+		mode ? "Throttled" : "Unthrottled",
+		thr.id,
+		thr.stream_id);
+}

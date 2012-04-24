@@ -77,53 +77,6 @@ static struct option the_options[]={
 static const char *gen_events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
 
 static void
-display_lost(perf_event_desc_t *hw)
-{
-	struct { uint64_t id, lost; } lost;
-	const char *str;
-	int e, ret;
-
-	ret = perf_read_buffer(hw, &lost, sizeof(lost));
-	if (ret)
-		errx(1, "cannot read lost info");
-
-	e = perf_id2event(fds, num_fds, lost.id);
-	if (e == -1)
-		str = "unknown lost event";
-	else
-		str = fds[e].name;
-
-	printf("<<<LOST %"PRIu64" SAMPLES FOR EVENT %s>>>\n", lost.lost, str);
-	lost_samples += lost.lost;
-}
-
-static void
-display_exit(perf_event_desc_t *hw)
-{
-	struct { pid_t pid, ppid, tid, ptid; } grp;
-	int ret;
-
-	ret = perf_read_buffer(hw, &grp, sizeof(grp));
-	if (ret)
-		errx(1, "cannot read exit info");
-
-	printf("[%d] exited\n", grp.pid);
-}
-
-static void
-display_freq(int mode, perf_event_desc_t *hw)
-{
-	struct { uint64_t time, id, stream_id; } thr;
-	int ret;
-
-	ret = perf_read_buffer(hw, &thr, sizeof(thr));
-	if (ret)
-		errx(1, "cannot read throttling info");
-
-	printf("%s value=%"PRIu64" event ID=%"PRIu64"\n", mode ? "Throttled" : "Unthrottled", thr.id, thr.stream_id);
-}
-
-static void
 process_smpl_buf(perf_event_desc_t *hw)
 {
 	struct perf_event_header ehdr;
@@ -142,16 +95,16 @@ process_smpl_buf(perf_event_desc_t *hw)
 				collected_samples++;
 				break;
 			case PERF_RECORD_EXIT:
-				display_exit(hw);
+				display_exit(hw, stdout);
 				break;
 			case PERF_RECORD_LOST:
-				display_lost(hw);
+				lost_samples += display_lost(hw, fds, num_fds, stdout);
 				break;
 			case PERF_RECORD_THROTTLE:
-				display_freq(1, hw);
+				display_freq(1, hw, stdout);
 				break;
 			case PERF_RECORD_UNTHROTTLE:
-				display_freq(0, hw);
+				display_freq(0, hw, stdout);
 				break;
 			default:
 				printf("unknown sample type %d\n", ehdr.type);
