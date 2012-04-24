@@ -236,6 +236,7 @@ ifeq ($(CONFIG_PFMLIB_SHARED),y)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.$(SOLIBEXT)
+	$(LDCONFIG)
 endif
 
 tags:

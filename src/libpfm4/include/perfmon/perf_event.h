@@ -128,7 +128,21 @@ enum perf_event_sample_format {
 	PERF_SAMPLE_PERIOD		= 1U << 8,
 	PERF_SAMPLE_STREAM_ID		= 1U << 9,
 	PERF_SAMPLE_RAW			= 1U << 10,
-	PERF_SAMPLE_MAX			= 1U << 11,
+	PERF_SAMPLE_BRANCH_STACK	= 1U << 11,
+	PERF_SAMPLE_MAX			= 1U << 12,
+};
+/*
+ * branch_sample_type values
+ */
+enum perf_branch_sample_type {
+	PERF_SAMPLE_BRANCH_USER		= 1U << 0,
+	PERF_SAMPLE_BRANCH_KERNEL	= 1U << 1,
+	PERF_SAMPLE_BRANCH_HV		= 1U << 2,
+	PERF_SAMPLE_BRANCH_ANY		= 1U << 3,
+	PERF_SAMPLE_BRANCH_ANY_CALL	= 1U << 4,
+	PERF_SAMPLE_BRANCH_ANY_RETURN	= 1U << 5,
+	PERF_SAMPLE_BRANCH_IND_CALL	= 1U << 6,
+	PERF_SAMPLE_BRANCH_MAX		= 1U << 7,
 };
 
 /*
@@ -142,12 +156,9 @@ enum perf_event_read_format {
 	PERF_FORMAT_MAX			= 1U << 4,
 };
 
-/*
- * sizeof(struct perf_event_attr) for the first public
- * release (2.6.31). Used to check for backward compatibility
- * issues
- */
-#define PERF_ATTR_SIZE_VER0	64
+#define PERF_ATTR_SIZE_VER0	64	/* sizeof first published struct */
+#define PERF_ATTR_SIZE_VER1	72	/* add: config2 */
+#define PERF_ATTR_SIZE_VER2	80	/* add: branch_sample_type */
 
 /*
  * SWIG doesn't deal well with anonymous nested structures
@@ -212,6 +223,7 @@ typedef struct perf_event_attr {
 		uint64_t        bp_len;
 		uint64_t	config2; /* extend config1 */
 	} SWIG_NAME(bpb);
+	uint64_t branch_sample_type;
 } perf_event_attr_t;
 
 /*
