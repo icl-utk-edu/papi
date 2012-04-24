@@ -243,7 +243,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 	/*
  	 * read sample header
  	 */
-	ret = perf_read_buffer(fdx[0].buf, fdx[0].pgmsk, &ehdr, sizeof(ehdr));
+	ret = perf_read_buffer(fdx+0, &ehdr, sizeof(ehdr));
 	if (ret) {
 		errx(1, "cannot read event header");
 	}
@@ -258,7 +258,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 	user_callback(myid);
 skip:
 	/* mark sample as consumed */
-	perf_skip_buffer(fdx[0].buf, ehdr.size);
+	perf_skip_buffer(fdx+0, ehdr.size);
 
 	/*
 	 * re-arm period, next notification after wakeup_events

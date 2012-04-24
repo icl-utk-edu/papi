@@ -64,17 +64,17 @@ sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 
 	hdr = fds[id].buf;
 
-	ret = perf_read_buffer(hdr, fds[id].pgmsk, &ehdr, sizeof(ehdr));
+	ret = perf_read_buffer(fds+id, &ehdr, sizeof(ehdr));
 	if (ret)
 		errx(1, "cannot read event header");
 
 	if (ehdr.type != PERF_RECORD_SAMPLE) {
 		warnx("unknown event type %d, skipping", ehdr.type);
-		perf_skip_buffer(hdr, ehdr.size - sizeof(ehdr));
+		perf_skip_buffer(fds+id, ehdr.size - sizeof(ehdr));
 		goto skip;
 	}
 
-	ret = perf_read_buffer(hdr, fds[id].pgmsk, &ip, sizeof(ip));
+	ret = perf_read_buffer(fds+id, &ip, sizeof(ip));
 	if (ret)
 		errx(1, "cannot read IP");
 

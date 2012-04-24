@@ -97,7 +97,7 @@ display_lost(perf_event_desc_t *hw)
 	const char *str;
 	int e, ret;
 
-	ret = perf_read_buffer(hw->buf, hw->pgmsk, &lost, sizeof(lost));
+	ret = perf_read_buffer(hw, &lost, sizeof(lost));
 	if (ret)
 		errx(1, "cannot read lost info");
 
@@ -117,7 +117,7 @@ display_exit(perf_event_desc_t *hw)
 	struct { pid_t pid, ppid, tid, ptid; } grp;
 	int ret;
 
-	ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
+	ret = perf_read_buffer(hw, &grp, sizeof(grp));
 	if (ret)
 		errx(1, "cannot read exit info");
 
@@ -130,7 +130,7 @@ display_freq(int mode, perf_event_desc_t *hw)
 	struct { uint64_t time, id, stream_id; } thr;
 	int ret;
 
-	ret = perf_read_buffer(hw->buf, hw->pgmsk, &thr, sizeof(thr));
+	ret = perf_read_buffer(hw, &thr, sizeof(thr));
 	if (ret)
 		errx(1, "cannot read throttling info");
 
@@ -144,7 +144,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 	int ret;
 
 	for(;;) {
-		ret = perf_read_buffer(hw->buf, hw->pgmsk, &ehdr, sizeof(ehdr));
+		ret = perf_read_buffer(hw, &ehdr, sizeof(ehdr));
 		if (ret)
 			return; /* nothing to read */
 
@@ -167,7 +167,7 @@ process_smpl_buf(perf_event_desc_t *hw)
 				break;
 			default:
 				printf("unknown sample type %d sz=%d\n", ehdr.type, ehdr.size);
-				perf_skip_buffer(hw->buf, ehdr.size - sizeof(ehdr));
+				perf_skip_buffer(hw, ehdr.size - sizeof(ehdr));
 		}
 	}
 }

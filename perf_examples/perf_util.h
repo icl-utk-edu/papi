@@ -48,19 +48,19 @@ typedef struct {
 
 extern int perf_setup_argv_events(const char **argv, perf_event_desc_t **fd, int *num_fds);
 extern int perf_setup_list_events(const char *events, perf_event_desc_t **fd, int *num_fds);
-extern int perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size_t sz);
-extern void perf_skip_buffer(struct perf_event_mmap_page *hdr, size_t sz);
+extern int perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz);
+extern void perf_skip_buffer(perf_event_desc_t *hw, size_t sz);
 
 static inline int
-perf_read_buffer_32(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf)
+perf_read_buffer_32(perf_event_desc_t *hw, void *buf)
 {
-	return perf_read_buffer(hdr, pgmsk, buf, sizeof(uint32_t));
+	return perf_read_buffer(hw, buf, sizeof(uint32_t));
 }
 
 static inline int
-perf_read_buffer_64(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf)
+perf_read_buffer_64(perf_event_desc_t *hw, void *buf)
 {
-	return perf_read_buffer(hdr, pgmsk, buf, sizeof(uint64_t));
+	return perf_read_buffer(hw, buf, sizeof(uint64_t));
 }
 
 /*

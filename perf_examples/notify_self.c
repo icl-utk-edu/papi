@@ -71,13 +71,13 @@ sigio_handler(int n, struct siginfo *info, void *uc)
 	if (id == -1)
 		errx(1, "no event associated with fd=%d", info->si_fd);
 
-	ret = perf_read_buffer(fds[id].buf, fds[id].pgmsk, &ehdr, sizeof(ehdr));
+	ret = perf_read_buffer(fds+id, &ehdr, sizeof(ehdr));
 	if (ret)
 		errx(1, "cannot read event header");
 
 	if (ehdr.type != PERF_RECORD_SAMPLE) {
 		warnx("unexpected sample type=%d, skipping\n", ehdr.type);
-		perf_skip_buffer(fds[id].buf, ehdr.size);
+		perf_skip_buffer(fds+id, ehdr.size);
 		goto skip;
 	}
 	printf("Notification:%lu ", notification_received);

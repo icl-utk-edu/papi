@@ -172,8 +172,10 @@ perf_get_group_nevents(perf_event_desc_t *fds, int num, int idx)
 }
 
 int
-perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size_t sz)
+perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz)
 {
+	struct perf_event_mmap_page *hdr = hw->buf;
+	size_t pgmsk = hw->pgmsk;
 	void *data;
 	unsigned long tail;
 	size_t avail_sz, m, c;
@@ -230,8 +232,10 @@ perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size
 }
 
 void
-perf_skip_buffer(struct perf_event_mmap_page *hdr, size_t sz)
+perf_skip_buffer(perf_event_desc_t *hw, size_t sz)
 {
+	struct perf_event_mmap_page *hdr = hw->buf;
+
 	if ((hdr->data_tail + sz) > hdr->data_head)
 		sz = hdr->data_head - hdr->data_tail;
 
@@ -246,7 +250,7 @@ __perf_handle_raw(perf_event_desc_t *hw)
 	char *buf;
 	int ret;
 
-	ret = perf_read_buffer_32(hw->buf, hw->pgmsk, &raw_sz);
+	ret = perf_read_buffer_32(hw, &raw_sz);
 	if (ret) {
 		warnx("cannot read raw size");
 		return -1;
@@ -263,7 +267,7 @@ __perf_handle_raw(perf_event_desc_t *hw)
 	}
 
 
-	ret = perf_read_buffer(hw->buf, hw->pgmsk, buf, raw_sz);
+	ret = perf_read_buffer(hw, buf, raw_sz);
 	if (ret) {
 		warnx("cannot read raw data");
 		free(buf);
@@ -318,7 +322,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	 */
 	if (type & PERF_SAMPLE_IP) {
 		const char *xtra = " ";
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		ret = perf_read_buffer_64(hw, &val64);
 		if (ret) {
 			warnx("cannot read IP");
 			return -1;
@@ -337,7 +341,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	}
 
 	if (type & PERF_SAMPLE_TID) {
-		ret = perf_read_buffer(hw->buf, hw->pgmsk, &pid, sizeof(pid));
+		ret = perf_read_buffer(hw, &pid, sizeof(pid));
 		if (ret) {
 			warnx( "cannot read PID");
 			return -1;
@@ -348,7 +352,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	}
 
 	if (type & PERF_SAMPLE_TIME) {
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		ret = perf_read_buffer_64(hw, &val64);
 		if (ret) {
 			warnx( "cannot read time");
 			return -1;
@@ -359,7 +363,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	}
 
 	if (type & PERF_SAMPLE_ADDR) {
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		ret = perf_read_buffer_64(hw, &val64);
 		if (ret) {
 			warnx( "cannot read addr");
 			return -1;
@@ -370,7 +374,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	}
 
 	if (type & PERF_SAMPLE_ID) {
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		ret = perf_read_buffer_64(hw, &val64);
 		if (ret) {
 			warnx( "cannot read id");
 			return -1;
@@ -381,7 +385,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	}
 
 	if (type & PERF_SAMPLE_STREAM_ID) {
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		ret = perf_read_buffer_64(hw, &val64);
 		if (ret) {
 			warnx( "cannot read stream_id");
 			return -1;
@@ -392,7 +396,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 
 	if (type & PERF_SAMPLE_CPU) {
 		struct { uint32_t cpu, reserved; } cpu;
-		ret = perf_read_buffer(hw->buf, hw->pgmsk, &cpu, sizeof(cpu));
+		ret = perf_read_buffer(hw, &cpu, sizeof(cpu));
 		if (ret) {
 			warnx( "cannot read cpu");
 			return -1;
@@ -402,7 +406,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	}
 
 	if (type & PERF_SAMPLE_PERIOD) {
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		ret = perf_read_buffer_64(hw, &val64);
 		if (ret) {
 			warnx( "cannot read period");
 			return -1;
@@ -432,7 +436,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 		uint64_t nr;
 
 		if (fmt & PERF_FORMAT_GROUP) {
-			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
+			ret = perf_read_buffer_64(hw, &nr);
 			if (ret) {
 				warnx( "cannot read nr");
 				return -1;
@@ -443,7 +447,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			time_enabled = time_running = 1;
 
 			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
+				ret = perf_read_buffer_64(hw, &time_enabled);
 				if (ret) {
 					warnx( "cannot read timing info");
 					return -1;
@@ -452,7 +456,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			}
 
 			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
+				ret = perf_read_buffer_64(hw, &time_running);
 				if (ret) {
 					warnx( "cannot read timing info");
 					return -1;
@@ -466,7 +470,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			values[2] = time_running;
 			while(nr--) {
 				grp.id = -1;
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &grp.value);
+				ret = perf_read_buffer_64(hw, &grp.value);
 				if (ret) {
 					warnx( "cannot read group value");
 					return -1;
@@ -474,7 +478,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 				sz -= sizeof(grp.value);
 
 				if (fmt & PERF_FORMAT_ID) {
-					ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &grp.id);
+					ret = perf_read_buffer_64(hw, &grp.id);
 					if (ret) {
 						warnx( "cannot read leader id");
 						return -1;
@@ -501,7 +505,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			/*
 			 * this program does not use FORMAT_GROUP when there is only one event
 			 */
-			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+			ret = perf_read_buffer_64(hw, &val64);
 			if (ret) {
 				warnx( "cannot read value");
 				return -1;
@@ -509,7 +513,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			sz -= sizeof(val64);
 
 			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
+				ret = perf_read_buffer_64(hw, &time_enabled);
 				if (ret) {
 					warnx( "cannot read timing info");
 					return -1;
@@ -518,7 +522,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			}
 
 			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
+				ret = perf_read_buffer_64(hw, &time_running);
 				if (ret) {
 					warnx( "cannot read timing info");
 					return -1;
@@ -526,7 +530,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 				sz -= sizeof(time_running);
 			}
 			if (fmt & PERF_FORMAT_ID) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+				ret = perf_read_buffer_64(hw, &val64);
 				if (ret) {
 					warnx( "cannot read leader id");
 					return -1;
@@ -550,7 +554,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	if (type & PERF_SAMPLE_CALLCHAIN) {
 		uint64_t nr, ip;
 
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
+		ret = perf_read_buffer_64(hw, &nr);
 		if (ret) {
 			warnx( "cannot read callchain nr");
 			return -1;
@@ -558,7 +562,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 		sz -= sizeof(nr);
 
 		while(nr--) {
-			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &ip);
+			ret = perf_read_buffer_64(hw, &ip);
 			if (ret) {
 				warnx( "cannot read ip");
 				return -1;
@@ -585,7 +589,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	 */
 	if (sz) {
 		warnx("did not correctly parse sample leftover=%zu", sz);
-		perf_skip_buffer(hw->buf, sz);
+		perf_skip_buffer(hw, sz);
 	}
 
 	fputc('\n',fp);
