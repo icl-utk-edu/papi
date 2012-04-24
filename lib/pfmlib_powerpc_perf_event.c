@@ -52,3 +52,40 @@ pfm_gen_powerpc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	return PFM_SUCCESS;
 }
+
+void
+pfm_gen_powerpc_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	int i, compact;
+
+	for (i = 0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		/*
+		 * remove PMU-provided attributes which are either
+		 * not accessible under perf_events or fully controlled
+		 * by perf_events, e.g., priv levels filters
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+		}
+
+		/*
+		 * remove perf_event generic attributes not supported
+		 * by PPC
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+			/* no precise sampling */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
+}
