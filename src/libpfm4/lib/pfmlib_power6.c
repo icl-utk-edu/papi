@@ -47,6 +47,7 @@ pfmlib_pmu_t power6_support={
 	.pmu_detect		= pfm_power6_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_gen_powerpc_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_gen_powerpc_get_perf_encoding),
+	 PFMLIB_VALID_PERF_PATTRS(pfm_gen_powerpc_perf_validate_pattrs),
 	.get_event_first	= pfm_gen_powerpc_get_event_first,
 	.get_event_next		= pfm_gen_powerpc_get_event_next,
 	.event_is_valid		= pfm_gen_powerpc_event_is_valid,

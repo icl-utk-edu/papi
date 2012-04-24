@@ -223,6 +223,7 @@ pfmlib_pmu_t torrent_support = {
 	.pmu_detect		= pfm_torrent_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_torrent_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_gen_powerpc_get_perf_encoding),
+	 PFMLIB_VALID_PERF_PATTRS(pfm_gen_powerpc_perf_validate_pattrs),
 	.validate_table		= pfm_torrent_validate_table,
 	.get_event_info		= pfm_torrent_get_event_info,
 	.get_event_attr_info	= pfm_torrent_get_event_attr_info,

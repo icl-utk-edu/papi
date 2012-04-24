@@ -169,6 +169,7 @@ endif
 CC?=gcc
 LIBS=
 INSTALL=install
+LDCONFIG=ldconfig
 LN?=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
@@ -181,6 +182,7 @@ ifeq ($(SYS),Darwin)
 DBG?=-g -Wall -Werror
 else
 DBG?=-g -Wall -Werror -Wextra -Wno-unused-parameter
+LDCONFIG=true
 endif
 
 CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)

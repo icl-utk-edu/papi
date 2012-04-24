@@ -100,6 +100,7 @@ extern int pfm_gen_powerpc_get_event_first(void *this);
 extern int pfm_gen_powerpc_get_event_next(void *this, int idx);
 extern int pfm_gen_powerpc_event_is_valid(void *this, int pidx);
 extern int pfm_gen_powerpc_validate_table(void *this, FILE *fp);
+extern void pfm_gen_powerpc_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 
 extern int pfm_gen_powerpc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 #endif /* _POWER_REG_H */

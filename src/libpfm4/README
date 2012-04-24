@@ -118,12 +118,12 @@ PACKAGING
 ---------
 	The library comes with the config files necessary to generate RPMs or
 	Debian packages. The source code produces 3 packages:
-	- libpfm4 : runtime library
-	- libpfm4-dev: development files (headers, manpages, static library)
-	- libpfm4-python: Python bindings for the library
+	- libpfm : runtime library
+	- libpfm-dev: development files (headers, manpages, static library)
+	- libpfm-python: Python bindings for the library
 
 	To generate the RPMs:
-	$ rpmbuild -ba libpfm4.spec
+	$ rpmbuild -ba libpfm.spec
 
 	To generate the Debian packages:
 	$ debuild -i -us -uc -b
