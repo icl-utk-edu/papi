@@ -53,7 +53,6 @@ static int buffer_pages = 1; /* size of buffer payload  (must be power of 2) */
 static void
 sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 {
-	struct perf_event_mmap_page *hdr;
 	struct perf_event_header ehdr;
 	uint64_t ip;
 	int id, ret;
@@ -61,8 +60,6 @@ sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 	id = perf_fd2event(fds, num_fds, info->si_fd);
 	if (id == -1)
 		errx(1, "cannot find event for descriptor %d", info->si_fd);
-
-	hdr = fds[id].buf;
 
 	ret = perf_read_buffer(fds+id, &ehdr, sizeof(ehdr));
 	if (ret)
