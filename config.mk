@@ -180,9 +180,9 @@ PFMLIBDIR=$(TOPDIR)/lib
 ifeq ($(SYS),Darwin)
 # older gcc-4.2 does not like -Wextra and some of our initialization code
 DBG?=-g -Wall -Werror
+LDCONFIG=true
 else
 DBG?=-g -Wall -Werror -Wextra -Wno-unused-parameter
-LDCONFIG=true
 endif
 
 CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)
