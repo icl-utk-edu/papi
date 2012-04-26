@@ -74,7 +74,7 @@ static struct option the_options[]={
 	{ 0, 0, 0, 0}
 };
 
-static const char *gen_events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+static const char *gen_events = "cycles,instructions";
 
 static void
 process_smpl_buf(perf_event_desc_t *hw)

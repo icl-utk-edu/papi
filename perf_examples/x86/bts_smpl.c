@@ -143,7 +143,7 @@ mainloop(char **arg)
 	/*
 	 * does allocate fds
 	 */
-	ret = perf_setup_list_events("PERF_COUNT_HW_BRANCH_INSTRUCTIONS:u", &fds, &num_fds);
+	ret = perf_setup_list_events("branches:u", &fds, &num_fds);
 	if (ret || !num_fds)
 		errx(1, "cannot setup event");
 

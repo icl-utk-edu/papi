@@ -278,7 +278,7 @@ overflow_start(char *name)
 
 	fds = NULL;
 	num_fds = 0;
-	ret = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES", &fds, &num_fds);
+	ret = perf_setup_list_events("cycles", &fds, &num_fds);
 	if (ret || !num_fds)
 		errx(1, "cannot monitor event");
 

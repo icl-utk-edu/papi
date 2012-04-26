@@ -198,7 +198,7 @@ main(int argc, char **argv)
 		options.delay = 20;
 
 	if (!options.events)
-		options.events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+		options.events = "cycles,instructions";
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)

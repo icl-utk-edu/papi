@@ -68,7 +68,7 @@ static struct option the_options[]={
 	{ 0, 0, 0, 0}
 };
 
-static char *gen_events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+static char *gen_events = "cycles,instructions";
 
 static void
 cld_handler(int n)

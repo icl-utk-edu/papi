@@ -128,9 +128,9 @@ main(int argc, char **argv)
 	/*
  	 * allocates fd for us
  	 */
-	ret = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES,"
-				       "PERF_COUNT_HW_CPU_CYCLES,"
-					"PERF_COUNT_HW_CPU_CYCLES",
+	ret = perf_setup_list_events("cycles,"
+				       "instructions,"
+					"cycles",
 				        &fds, &num_fds);
 	if (ret || !num_fds)
 		exit(1);

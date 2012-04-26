@@ -46,8 +46,8 @@
 #include "perf_util.h"
 
 static const char *gen_events[]={
-	"PERF_COUNT_HW_CPU_CYCLES",
-	"PERF_COUNT_HW_INSTRUCTIONS",
+	"cycles",
+	"instructions",
 	NULL
 };
 

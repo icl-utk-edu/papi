@@ -435,7 +435,7 @@ main(int argc, char **argv)
 		options.delay = 20;
 
 	if (!options.events[0]) {
-		options.events[0] = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+		options.events[0] = "cycles,instructions";
 		options.num_groups = 1;
 	}
 

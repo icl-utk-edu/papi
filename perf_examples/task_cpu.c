@@ -408,7 +408,7 @@ main(int argc, char **argv)
 		errx(1, "cannot determine number of online processors");
 
 	if (options.num_groups == 0) {
-		options.events[0] = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+		options.events[0] = "cycles,instructions";
 		options.num_groups = 1;
 	}
 	if (!argv[optind] && !options.pid)

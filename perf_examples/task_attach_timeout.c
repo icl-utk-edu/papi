@@ -187,7 +187,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (!options.events)
-		options.events = strdup("PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS");
+		options.events = strdup("cycles,instructions");
 
 	if (options.delay < 1)
 		options.delay = 10;
