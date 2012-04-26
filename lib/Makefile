@@ -150,7 +150,7 @@ SOBJS=$(OBJS:.o=.lo)
 INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h pfmlib_priv.h
 
 ifeq ($(SYS),Linux)
-INC_COMMON += $(PFMINCDIR)/perfmon/perf_event.h
+INC_COMMON += $(PFMINCDIR)/perfmon/perf_event.h events/perf_events.h
 endif
 
 INC_IA64=pfmlib_ia64_priv.h	 \

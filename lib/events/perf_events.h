@@ -22,25 +22,135 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  */
-static perf_event_t perf_static_events[]={
-	PCL_EVT(PERF_COUNT_HW_CPU_CYCLES, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_INSTRUCTIONS, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_CACHE_REFERENCES, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_CACHE_MISSES, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_BRANCH_INSTRUCTIONS, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_BRANCH_MISSES, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_BUS_CYCLES, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_STALLED_CYCLES_FRONTEND, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_STALLED_CYCLES_BACKEND, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
-	PCL_EVT(PERF_COUNT_HW_REF_CPU_CYCLES, PERF_TYPE_HARDWARE, PERF_ATTR_HW),
 
-        PCL_EVT(PERF_COUNT_SW_CPU_CLOCK, PERF_TYPE_SOFTWARE, PERF_ATTR_SW),
-        PCL_EVT(PERF_COUNT_SW_TASK_CLOCK, PERF_TYPE_SOFTWARE, PERF_ATTR_SW),
-        PCL_EVT(PERF_COUNT_SW_PAGE_FAULTS , PERF_TYPE_SOFTWARE, PERF_ATTR_SW),
-        PCL_EVT(PERF_COUNT_SW_CONTEXT_SWITCHES, PERF_TYPE_SOFTWARE, PERF_ATTR_SW),
-        PCL_EVT(PERF_COUNT_SW_CPU_MIGRATIONS, PERF_TYPE_SOFTWARE, PERF_ATTR_SW),
-        PCL_EVT(PERF_COUNT_SW_PAGE_FAULTS_MIN, PERF_TYPE_SOFTWARE, PERF_ATTR_SW),
-        PCL_EVT(PERF_COUNT_SW_PAGE_FAULTS_MAJ, PERF_TYPE_SOFTWARE, PERF_ATTR_SW),
+#define CACHE_ST_ACCESS(n, d, e) \
+       {\
+	.name = #n"-STORES",\
+	.desc = d" store accesses",\
+	.id   = PERF_COUNT_HW_CACHE_##e,\
+	.type = PERF_TYPE_HW_CACHE,\
+	.modmsk = PERF_ATTR_HW,\
+	.umask_ovfl_idx = -1,\
+	.equiv = "PERF_COUNT_HW_CACHE_"#e":WRITE:ACCESS"\
+       },\
+       {\
+	.name = #n"-STORE-MISSES",\
+	.desc = d" store misses",\
+	.id   = PERF_COUNT_HW_CACHE_##e,\
+	.type = PERF_TYPE_HW_CACHE,\
+	.modmsk = PERF_ATTR_HW,\
+	.umask_ovfl_idx = -1,\
+	.equiv = "PERF_COUNT_HW_CACHE_"#e":WRITE:MISS"\
+       }
+
+#define CACHE_PF_ACCESS(n, d, e) \
+       {\
+	.name = #n"-PREFETCHES",\
+	.desc = d" prefetch accesses",\
+	.id   = PERF_COUNT_HW_CACHE_##e,\
+	.type = PERF_TYPE_HW_CACHE,\
+	.modmsk = PERF_ATTR_HW,\
+	.umask_ovfl_idx = -1,\
+	.equiv = "PERF_COUNT_HW_CACHE_"#e":PREFETCH:ACCESS"\
+       },\
+       {\
+	.name = #n"-PREFETCH-MISSES",\
+	.desc = d" prefetch misses",\
+	.id   = PERF_COUNT_HW_CACHE_##e,\
+	.type = PERF_TYPE_HW_CACHE,\
+	.modmsk = PERF_ATTR_HW,\
+	.umask_ovfl_idx = -1,\
+	.equiv = "PERF_COUNT_HW_CACHE_"#e":PREFETCH:MISS"\
+       }
+
+
+#define CACHE_LD_ACCESS(n, d, e) \
+       {\
+	.name = #n"-LOADS",\
+	.desc = d" load accesses",\
+	.id   = PERF_COUNT_HW_CACHE_##e,\
+	.type = PERF_TYPE_HW_CACHE,\
+	.modmsk = PERF_ATTR_HW,\
+	.umask_ovfl_idx = -1,\
+	.equiv = "PERF_COUNT_HW_CACHE_"#e":READ:ACCESS"\
+       },\
+       {\
+	.name = #n"-LOAD-MISSES",\
+	.desc = d" load misses",\
+	.id   = PERF_COUNT_HW_CACHE_##e,\
+	.type = PERF_TYPE_HW_CACHE,\
+	.modmsk = PERF_ATTR_HW,\
+	.umask_ovfl_idx = -1,\
+	.equiv = "PERF_COUNT_HW_CACHE_"#e":READ:MISS"\
+       }
+
+#define CACHE_ACCESS(n, d, e) \
+	CACHE_LD_ACCESS(n, d, e), \
+	CACHE_ST_ACCESS(n, d, e), \
+	CACHE_PF_ACCESS(n, d, e)
+
+#define ICACHE_ACCESS(n, d, e) \
+	CACHE_LD_ACCESS(n, d, e), \
+	CACHE_PF_ACCESS(n, d, e)
+
+static perf_event_t perf_static_events[]={
+	PCL_EVT_HW(CPU_CYCLES),
+	PCL_EVT_AHW(CYCLES, CPU_CYCLES),
+	PCL_EVT_AHW(CPU-CYCLES, CPU_CYCLES),
+
+	PCL_EVT_HW(INSTRUCTIONS),
+	PCL_EVT_AHW(INSTRUCTIONS, INSTRUCTIONS),
+
+	PCL_EVT_HW(CACHE_REFERENCES),
+	PCL_EVT_AHW(CACHE-REFERENCES, CACHE_REFERENCES),
+
+	PCL_EVT_HW(CACHE_MISSES),
+	PCL_EVT_AHW(CACHE-MISSES,CACHE_MISSES),
+
+	PCL_EVT_HW(BRANCH_INSTRUCTIONS),
+	PCL_EVT_AHW(BRANCH-INSTRUCTIONS, BRANCH_INSTRUCTIONS),
+	PCL_EVT_AHW(BRANCHES, BRANCH_INSTRUCTIONS),
+
+	PCL_EVT_HW(BRANCH_MISSES),
+	PCL_EVT_AHW(BRANCH-MISSES, BRANCH_MISSES),
+
+	PCL_EVT_HW(BUS_CYCLES),
+	PCL_EVT_AHW(BUS-CYCLES, BUS_CYCLES),
+
+	PCL_EVT_HW(STALLED_CYCLES_FRONTEND),
+	PCL_EVT_AHW(STALLED-CYCLES-FRONTEND, STALLED_CYCLES_FRONTEND),
+	PCL_EVT_AHW(IDLE-CYCLES-FRONTEND, STALLED_CYCLES_FRONTEND),
+
+	PCL_EVT_HW(STALLED_CYCLES_BACKEND),
+	PCL_EVT_AHW(STALLED-CYCLES-BACKEND, STALLED_CYCLES_BACKEND),
+	PCL_EVT_AHW(IDLE-CYCLES-BACKEND, STALLED_CYCLES_BACKEND),
+
+	PCL_EVT_HW(REF_CPU_CYCLES),
+	PCL_EVT_AHW(REF-CYCLES,REF_CPU_CYCLES),
+
+        PCL_EVT_SW(CPU_CLOCK),
+        PCL_EVT_ASW(CPU-CLOCK, CPU_CLOCK),
+
+        PCL_EVT_SW(TASK_CLOCK),
+        PCL_EVT_ASW(TASK-CLOCK, TASK_CLOCK),
+
+        PCL_EVT_SW(PAGE_FAULTS),
+        PCL_EVT_ASW(PAGE-FAULTS, PAGE_FAULTS),
+        PCL_EVT_ASW(FAULTS, PAGE_FAULTS),
+
+        PCL_EVT_SW(CONTEXT_SWITCHES),
+        PCL_EVT_ASW(CONTEXT-SWITCHES, CONTEXT_SWITCHES),
+        PCL_EVT_ASW(CS, CONTEXT_SWITCHES),
+
+        PCL_EVT_SW(CPU_MIGRATIONS),
+        PCL_EVT_ASW(CPU-MIGRATIONS, CPU_MIGRATIONS),
+        PCL_EVT_ASW(MIGRATIONS, CPU_MIGRATIONS),
+
+        PCL_EVT_SW(PAGE_FAULTS_MIN),
+        PCL_EVT_ASW(MINOR-FAULTS, PAGE_FAULTS_MIN),
+
+        PCL_EVT_SW(PAGE_FAULTS_MAJ),
+        PCL_EVT_ASW(MAJOR-FAULTS, PAGE_FAULTS_MAJ),
 	{
 	.name = "PERF_COUNT_HW_CACHE_L1D",
 	.desc = "L1 data cache",
@@ -80,6 +190,7 @@ static perf_event_t perf_static_events[]={
 		}
 	}
        },
+       CACHE_ACCESS(L1-DCACHE, "L1 cache", L1D),
        {
 	.name = "PERF_COUNT_HW_CACHE_L1I",
 	.desc = "L1 instruction cache",
@@ -114,6 +225,7 @@ static perf_event_t perf_static_events[]={
 		}
 	}
        },
+       ICACHE_ACCESS(L1-ICACHE, "L1I cache", L1I),
        {
 	.name = "PERF_COUNT_HW_CACHE_LL",
 	.desc = "Last level cache",
@@ -153,6 +265,7 @@ static perf_event_t perf_static_events[]={
 		}
 	}
        },
+       CACHE_ACCESS(LLC, "Last level cache", LL),
        {
 	.name = "PERF_COUNT_HW_CACHE_DTLB",
 	.desc = "Data Translation Lookaside Buffer",
@@ -192,6 +305,7 @@ static perf_event_t perf_static_events[]={
 		}
 	}
        },
+       CACHE_ACCESS(DTLB, "Data TLB", DTLB),
        {
 	.name = "PERF_COUNT_HW_CACHE_ITLB",
 	.desc = "Instruction Translation Lookaside Buffer",
@@ -221,6 +335,7 @@ static perf_event_t perf_static_events[]={
 		}
 	}
        },
+       CACHE_LD_ACCESS(ITLB, "Instruction TLB", ITLB),
        {
 	.name = "PERF_COUNT_HW_CACHE_BPU",
 	.desc = "Branch Prediction Unit",
@@ -250,6 +365,7 @@ static perf_event_t perf_static_events[]={
 		}
 	}
        },
+       CACHE_LD_ACCESS(BRANCH, "Branch ", BPU),
        {
 	.name = "PERF_COUNT_HW_CACHE_NODE",
 	.desc = "Node memory access",
@@ -287,7 +403,8 @@ static perf_event_t perf_static_events[]={
 		  .uflags= PERF_FL_DEFAULT,
 		  .grpid = 1,
 		}
-	}
-       }
+	},
+       },
+       CACHE_ACCESS(NODE, "Node ", NODE)
 };
 #define PME_PERF_EVENT_COUNT (sizeof(perf_static_events)/sizeof(perf_event_t))

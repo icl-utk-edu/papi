@@ -57,6 +57,7 @@ typedef struct {
 typedef struct {
 	const char	*name;			/* name */
 	const char	*desc;			/* description */
+	const char	*equiv;			/* event is aliased to */
 	uint64_t	id;			/* perf_hw_id or equivalent */
 	int		modmsk;			/* modifiers bitmask */
 	int		type;			/* perf_type_id */
@@ -72,16 +73,35 @@ typedef struct {
 #define PERF_FL_DEFAULT	0x1	/* umask is default for group */
 
 #define PERF_INVAL_OVFL_IDX ((unsigned long)-1)
+
 #define PCL_EVT(f, t, m)	\
 	{ .name = #f,		\
 	  .id = (f),		\
 	  .type = (t),		\
 	  .desc = #f,		\
+	  .equiv = NULL,	\
 	  .numasks = 0,		\
 	  .modmsk = (m),	\
 	  .ngrp = 0,		\
 	  .umask_ovfl_idx = PERF_INVAL_OVFL_IDX,\
 	}
+
+#define PCL_EVTA(f, t, m, a)	\
+	{ .name = #f,		\
+	  .id = a,		\
+	  .type = t,		\
+	  .desc = #a,		\
+	  .equiv = #a,		\
+	  .numasks = 0,		\
+	  .modmsk = m,		\
+	  .ngrp = 0,		\
+	  .umask_ovfl_idx = PERF_INVAL_OVFL_IDX,\
+	}
+
+#define PCL_EVT_HW(n) PCL_EVT(PERF_COUNT_HW_##n, PERF_TYPE_HARDWARE, PERF_ATTR_HW)
+#define PCL_EVT_SW(n) PCL_EVT(PERF_COUNT_SW_##n, PERF_TYPE_SOFTWARE, PERF_ATTR_SW)
+#define PCL_EVT_AHW(n, a) PCL_EVTA(n, PERF_TYPE_HARDWARE, PERF_ATTR_HW, PERF_COUNT_HW_##a)
+#define PCL_EVT_ASW(n, a) PCL_EVTA(n, PERF_TYPE_SOFTWARE, PERF_ATTR_SW, PERF_COUNT_SW_##a)
 
 #ifndef MAXPATHLEN
 #define MAXPATHLEN	1024
@@ -772,7 +792,7 @@ pfm_perf_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->name  = perf_pe[idx].name;
 	info->desc  = perf_pe[idx].desc;
 	info->code  = perf_pe[idx].id;
-	info->equiv = NULL;
+	info->equiv = perf_pe[idx].equiv;
 	info->idx   = idx;
 	info->pmu   = pmu->pmu;
 	info->is_precise = 0;
