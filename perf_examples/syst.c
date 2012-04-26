@@ -153,8 +153,8 @@ measure(void)
 		fds = all_fds[c];
 		for(i=0; i < num_fds[c]; i++)
 			close(fds[i].fd);
+		perf_free_fds(fds, num_fds[c]);
 	}
-	free(all_fds);
 }
 
 static void

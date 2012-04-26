@@ -357,7 +357,7 @@ my_thread(void *v)
 	do_cycles();
 	overflow_stop();
 
-	free(fds);
+	perf_free_fds(fds, num_fds);
 
 	pthread_exit((void *)&retval);
 }

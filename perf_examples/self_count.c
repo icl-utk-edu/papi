@@ -245,7 +245,7 @@ main(int argc, char **argv)
 		munmap(fds[i].buf, pgsz);
 		close(fds[i].fd);
 	}
-	free(fds);
+	perf_free_fds(fds, num_fds);
 
 	/* free libpfm resources cleanly */
 	pfm_terminate();

@@ -93,7 +93,7 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 			goto error;
 		}
 
-		fd[num].name = *argv;
+		fd[num].name = strdup(*argv);
 		fd[num].group_leader = group_leader;
 		fd[num].idx = arg.idx;
 
@@ -104,7 +104,7 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 	*fds = fd;
 	return 0;
 error:
-	free(fd);
+	perf_free_fds(fd, num);
 	return -1;
 }
 
@@ -145,7 +145,18 @@ perf_setup_list_events(const char *ev, perf_event_desc_t **fd, int *num_fds)
 	argv[i] = NULL;
 	ret = perf_setup_argv_events(argv, fd, num_fds);
 	free(argv);
+	free(events); /* strdup in perf_setup_argv_events() */
 	return ret;
+}
+
+void
+perf_free_fds(perf_event_desc_t *fds, int num_fds)
+{
+	int i;
+
+	for (i = 0 ; i < num_fds; i++)
+		free(fds[i].name);
+	free(fds);
 }
 
 int

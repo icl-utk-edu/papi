@@ -247,7 +247,7 @@ main(int argc, char **argv)
 	for(i=0; i < num_fds; i++)
 		close(fds[i].fd);
 
-	free(fds);
+	perf_free_fds(fds, num_fds);
 	free(val);
 
 	/* free libpfm resources cleanly */

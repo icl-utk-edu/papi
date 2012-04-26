@@ -33,7 +33,7 @@ typedef struct {
 	struct perf_event_attr hw;
 	uint64_t value, prev_value;
 	uint64_t enabled, running;
-	const char *name;
+	char *name;
 	uint64_t id; /* event id kernel */
 	void *buf;
 	size_t pgmsk;
@@ -49,6 +49,7 @@ typedef struct {
 extern int perf_setup_argv_events(const char **argv, perf_event_desc_t **fd, int *num_fds);
 extern int perf_setup_list_events(const char *events, perf_event_desc_t **fd, int *num_fds);
 extern int perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz);
+extern void perf_free_fds(perf_event_desc_t *fds, int num_fds);
 extern void perf_skip_buffer(perf_event_desc_t *hw, size_t sz);
 
 static inline int

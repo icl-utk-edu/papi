@@ -332,7 +332,7 @@ parent(char **arg)
 		fds = fds_cpus[cpu];
 		for(i=0; i < num_fds; i++)
 			close(fds[i].fd);
-		free(fds);
+		perf_free_fds(fds, num_fds);
 	}
 
 	/* free libpfm resources cleanly */

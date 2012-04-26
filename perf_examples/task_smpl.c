@@ -336,7 +336,7 @@ terminate_session:
 	process_smpl_buf(&fds[0]);
 	munmap(fds[0].buf, map_size);
 
-	free(fds);
+	perf_free_fds(fds, num_fds);
 
 	fprintf(options.output_file,
 		"%"PRIu64" samples collected in %"PRIu64" poll events, %"PRIu64" lost samples\n",
