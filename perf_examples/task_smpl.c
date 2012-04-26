@@ -133,7 +133,7 @@ mainloop(char **arg)
 {
 	static uint64_t ovfl_count; /* static to avoid setjmp issue */
 	struct pollfd pollfds[1];
-	sigset_t bmask, omask;
+	sigset_t bmask;
 	int go[2], ready[2];
 	uint64_t *val;
 	size_t sz, pgsz;
@@ -304,9 +304,8 @@ mainloop(char **arg)
 		goto terminate_session;
 
 	sigemptyset(&bmask);
-	sigemptyset(&omask);
-
 	sigaddset(&bmask, SIGCHLD);
+
 	/*
 	 * core loop
 	 */
@@ -315,11 +314,11 @@ mainloop(char **arg)
 		if (ret < 0 && errno == EINTR)
 			break;
 		ovfl_count++;
-		ret = sigprocmask(SIG_SETMASK, &bmask, &omask);
+		ret = sigprocmask(SIG_SETMASK, &bmask, NULL);
 		if (ret)
 			err(1, "setmask");
 		process_smpl_buf(&fds[0]);
-		ret = sigprocmask(SIG_UNBLOCK, &omask, NULL);
+		ret = sigprocmask(SIG_UNBLOCK, &bmask, NULL);
 		if (ret)
 			err(1, "unblock");
 	}
