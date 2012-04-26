@@ -19,6 +19,12 @@
 #define mb()  rmb()
 #define wmb() rmb()
 
+#elif defined(__ia64__)
+#define ia64_mf() __asm__ __volatile__ ("mf" ::: "memory")
+#define mb()  ia64_mf()
+#define rmb() mb()
+#define wmb() mb()
+
 #elif defined(__x86_64__) || defined(__i386__)
 #ifdef CONFIG_X86_32
 /*
