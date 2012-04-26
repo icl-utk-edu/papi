@@ -954,16 +954,17 @@ pfm_perf_get_event_nattrs(void *this, int idx)
  * first event to determine supported priv level masks.
  */
 static inline int
-pfm_perf_pmu_supported_plm(void)
+pfm_perf_pmu_supported_plm(void *this)
 {
 	pfmlib_pmu_t *pmu;
 
 	pmu = pfmlib_get_pmu_by_type(PFM_PMU_TYPE_CORE);
 	if (!pmu) {
-		DPRINT("no core CPU PMU\n");
-		return 0;
+		DPRINT("no core CPU PMU, going with default\n");
+		pmu = this;
+	} else {
+		DPRINT("guessing plm from %s PMU\n", pmu->name);
 	}
-	DPRINT("guessing plm from %s PMU\n", pmu->name);
 	return pmu->supported_plm;
 }
 
@@ -974,7 +975,7 @@ static void
 pfm_perf_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
 	int i, compact, type;
-	int plm = pfm_perf_pmu_supported_plm();
+	int plm = pfm_perf_pmu_supported_plm(this);
 
 	for (i = 0; i < e->npattrs; i++) {
 		compact = 0;
@@ -991,7 +992,7 @@ pfm_perf_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		 * precise mode or hypervisor mode
 		 *
 		 * there is no way to know for sure for those events
-		 * so we allow the modifiers tand leave it to the kernel
+		 * so we allow the modifiers and leave it to the kernel
 		 * to decide
 		 */
 		type = perf_pe[e->event].type;
@@ -1030,6 +1031,7 @@ pfmlib_pmu_t perf_event_support={
 	.pme_count		= PME_PERF_EVENT_COUNT,
 	.type			= PFM_PMU_TYPE_OS_GENERIC,
 	.max_encoding		= 1,
+	.supported_plm		= PERF_PLM_ALL,
 	.pmu_detect		= pfm_perf_detect,
 	.pmu_init		= pfm_perf_init,
 	.pmu_terminate		= pfm_perf_terminate,
