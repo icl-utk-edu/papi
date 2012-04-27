@@ -32,9 +32,9 @@ ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
 ifeq (1,$(HAVE_NO_OVERRIDE_INIT))
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS) -Wno-override-init" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" lib
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS) -Wno-override-init" lib
 else
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" lib
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" lib
 endif
 else
 	@echo '$@ not installed!'; exit 1
@@ -64,7 +64,7 @@ endif
 
 native_install:
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 	-install -d $(DESTDIR)$(LIBDIR)
 ifneq (,$(findstring shared,$(LIBS)))
