@@ -32,7 +32,11 @@ MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
+ifeq (1, $(HAVE_NO_OVERRIDE_INIT))
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" -Wno-override-init lib
+else
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" lib
+endif
 else
 	@echo '$@ not installed!'; exit 1
 endif
