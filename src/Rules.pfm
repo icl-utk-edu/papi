@@ -31,7 +31,11 @@ MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
+ifeq (1, $(HAVE_NO_OVERRIDE_INIT))
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" OPTIM="$(OPTIM)" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" -Wno-override-init lib
+else
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" OPTIM="$(OPTIM)" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" lib
+endif
 else
 	@echo '$@ not installed!'; exit 1
 endif
