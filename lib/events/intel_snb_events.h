@@ -651,7 +651,7 @@ static const intel_x86_umask_t snb_itlb[]={
      .udesc  = "Number of ITLB flushes, includes 4k/2M/4M pages",
      .ucode = 0x100,
      .uequiv = "ITLB_FLUSH",
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+     .uflags= INTEL_X86_NCOMBO,
    },
 };
 
