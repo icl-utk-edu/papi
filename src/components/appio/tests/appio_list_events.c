@@ -2,8 +2,9 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
- * @author PPhilip J Mucci
+/**
+ * @author  Tushar Mohan
+ * (adapted for appio from original linux-net code)
  *
  * test case for the appio component
  *
@@ -34,7 +35,7 @@ int main (int argc, char **argv)
     }
 
     if (!TESTS_QUIET) {
-        printf("Listing all net events\n");
+        printf("Listing all appio events\n");
     }
 
     numcmp = PAPI_num_components();

@@ -1,8 +1,14 @@
 include ../../Makefile_comp_tests
 
-TESTS = appio_list_events net_values_by_code net_values_by_name
+TESTS = appio_list_events appio_values_by_code appio_values_by_name appio_test_read_write appio_test_pthreads appio_test_fread_fwrite
 
-net_tests: $(TESTS)
+appio_tests: $(TESTS)
+
+ARCH=$(shell uname -m)
+
+ifeq (x86_64,$(ARCH))
+        ARCH_SUFFIX="-AMD64"
+endif
 
 
 %.o:%.c
@@ -11,13 +17,32 @@ net_tests: $(TESTS)
 appio_list_events: appio_list_events.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_list_events.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
-net_values_by_code: net_values_by_code.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ net_values_by_code.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+appio_values_by_code: appio_values_by_code.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_values_by_code.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
-net_values_by_name: net_values_by_name.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ net_values_by_name.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+appio_values_by_name: appio_values_by_name.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_values_by_name.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
+appio_test_read_write: appio_test_read_write.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_test_read_write.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
+appio_test_fread_fwrite: appio_test_fread_fwrite.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_test_fread_fwrite.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
+appio_test_pthreads: appio_test_pthreads.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_test_pthreads.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lpthread
+
+iozone/iozone_linux$(ARCH_SUFFIX).o iozone/libasync.o iozone/libbif.o: 
+	cd iozone; $(MAKE) iozone_linux$(ARCH_SUFFIX).o libasync.o libbif.o
+
+init_fini.o: init_fini.c
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $^
+
+# to test, try:
+# ./appio_test_iozone -s 100m -r 64 -i 0 -i 1 -t 1
+appio_test_iozone: iozone/iozone_linux$(ARCH_SUFFIX).o iozone/libasync.o iozone/libbif.o init_fini.o $(UTILOBJS) $(PAPILIB)
+	$(CC) -g -O2 -o $@ $(LDFLAGS) $^ -lpthread -lrt
 
 clean:
-	rm -f $(TESTS) *.o
+	rm -f $(TESTS) appio_test_iozone *.o
 

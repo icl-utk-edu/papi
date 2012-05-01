@@ -4,17 +4,20 @@
 
 /**
  * @file    appio.c
- * CVS:     $Id$
+ * CVS:     $Id: appio.c,v 1.1.2.4 2012/02/01 05:01:00 tmohan Exp $
  *
  * @author  Philip Mucci
  *          phil.mucci@samaratechnologygroup.com
  *
  * @author  Tushar Mohan
- *          tushar.mohan@samaratechnologygroup.com
+ *          tusharmohan@gmail.com
  *
- * @author  Jose Pedro Oliveira
+ * Credit to: 
+ *          Jose Pedro Oliveira
  *          jpo@di.uminho.pt
-
+ * whose code in the linux net component was used as a template for
+ * many sections of code in this component.
+ *
  * @ingroup papi_components
  *
  * @brief appio component
@@ -24,11 +27,11 @@
  *  by trapping syscalls in the third person.
  */
 
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include <net/if.h>
+#include <errno.h>
+//#include <dlfcn.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -36,6 +39,12 @@
 #include "papi_memory.h"
 
 #include "appio.h"
+
+/*
+#pragma weak dlerror
+static void *_dlsym_fake(void *handle, const char* symbol) { (void) handle; (void) symbol; return NULL; }
+void *dlsym(void *handle, const char* symbol) __attribute__ ((weak, alias ("_dlsym_fake")));
+*/
 
 papi_vector_t _appio_vector;
 
@@ -47,49 +56,54 @@ papi_vector_t _appio_vector;
 
 static APPIO_native_event_entry_t * _appio_native_events;
 
-/* The below do not look thread safe???!!! */
 
-static int num_events       = 0;
-static int is_initialized   = 0;
+static __thread long long _appio_register_current[APPIO_MAX_COUNTERS];
 
-static long long _appio_register_start[APPIO_MAX_COUNTERS];
-static long long _appio_register_current[APPIO_MAX_COUNTERS];
-
-/* temporary event */
-
-struct temp_event {
-    char name[PAPI_MAX_STR_LEN];
-    char description[PAPI_MAX_STR_LEN];
-    struct temp_event *next;
-};
-static struct temp_event* root = NULL;
-
-#define APPIO_FD_COUNTERS 16
+typedef enum {
+  READ_BYTES = 0,
+  READ_CALLS,
+  READ_ERR,
+  READ_INTERRUPTED,
+  READ_WOULD_BLOCK,
+  READ_SHORT,
+  READ_EOF,
+  READ_BLOCK_SIZE,
+  READ_USEC,
+  WRITE_BYTES,
+  WRITE_CALLS,
+  WRITE_ERR,
+  WRITE_SHORT,
+  WRITE_BLOCK_SIZE,
+  WRITE_USEC,
+  OPEN_CALLS,
+  OPEN_ERR,
+  OPEN_FDS,
+  OPEN_USEC
+} _appio_stats_t ;
 
 static const struct appio_counters {
-    char *name;
-    char *description;
-} _appio_counter_info[APPIO_FD_COUNTERS] = {
-    /* Receive */
-#error "start here"
-  /* Leftovers from net */
-    { "rx.bytes",      "receive bytes"},
-    { "rx.packets",    "receive packets"},
-    { "rx.errors",     "receive errors"},
-    { "rx.dropped",    "receive dropped"},
-    { "rx.fifo",       "receive fifo"},
-    { "rx.frame",      "receive frame"},
-    { "rx.compressed", "receive compressed"},
-    { "rx.multicast",  "receive multicast"},
-    /* Transmit */
-    { "tx.bytes",      "transmit bytes"},
-    { "tx.packets",    "transmit packets"},
-    { "tx.errors",     "transmit errors"},
-    { "tx.dropped",    "transmit dropped"},
-    { "tx.fifo",       "transmit fifo"},
-    { "tx.colls",      "transmit colls"},
-    { "tx.carrier",    "transmit carrier"},
-    { "tx.compressed", "transmit compressed"},
+    const char *name;
+    const char *description;
+} _appio_counter_info[APPIO_MAX_COUNTERS] = {
+    { "READ_BYTES",      "Bytes read"},
+    { "READ_CALLS",      "Number of read calls"},
+    { "READ_ERR",        "Number of read calls that resulted in an error"},
+    { "READ_INTERRUPTED","Number of read calls that timed out or were interruped"},
+    { "READ_WOULD_BLOCK","Number of read calls that would have blocked on a descriptor marked as non-blocking"},
+    { "READ_SHORT",      "Number of read calls that returned less bytes than requested"},
+    { "READ_EOF",        "Number of read calls that returned an EOF"},
+    { "READ_BLOCK_SIZE", "Average block size of reads"},
+    { "READ_USEC",       "Real microseconds spent in reads"},
+    { "WRITE_BYTES",     "Bytes written"},
+    { "WRITE_CALLS",     "Number of write calls"},
+    { "WRITE_ERR",       "Number of write calls that resulted in an error"},
+    { "WRITE_SHORT",     "Number of write calls that wrote less bytes than requested"},
+    { "WRITE_BLOCK_SIZE","Mean block size of writes"},
+    { "WRITE_USEC",      "Real microseconds spent in writes"},
+    { "OPEN_CALLS",      "Number of open calls"},
+    { "OPEN_ERR",        "Number of open calls that resulted in an error"},
+    { "OPEN_FDS",        "Number of descriptors opened by application since launch"},
+    { "OPEN_USEC",       "Real microseconds spent in open calls"}
 };
 
 
@@ -97,177 +111,99 @@ static const struct appio_counters {
  ***  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ****
  ********************************************************************/
 
-/*
- * find all network interfaces listed in /proc/net/dev
- */
-static int
-generateNetEventList( void )
-{
-    FILE *fin;
-    char line[NET_PROC_MAX_LINE];
-    char *retval, *ifname;
-    int count = 0;
-    struct temp_event *temp;
-    struct temp_event *last = NULL;
-    int i, j;
-
-    fin = fopen(NET_PROC_FILE, "r");
-    if (fin == NULL) {
-        SUBDBG("Can't find %s, are you sure the /proc file-system is mounted?\n",
-           NET_PROC_FILE);
-        return 0;
-    }
-
-    /* skip the 2 header lines */
-    for (i=0; i<2; i++) {
-        retval = fgets (line, NET_PROC_MAX_LINE, fin);
-        if (retval == NULL) {
-            SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
-            return 0;
-        }
-    }
-
-    while ((retval = fgets (line, NET_PROC_MAX_LINE, fin)) == line) {
-
-        /* split the interface name from the 16 counters */
-        retval = strstr(line, ":");
-        if (retval == NULL) {
-            SUBDBG("Wrong line format <%s>\n", line);
-            continue;
-        }
-
-        *retval = '\0';
-        ifname = line;
-        while (isspace(*ifname)) { ifname++; }
-
-        for (j=0; j<NET_INTERFACE_COUNTERS; j++) {
-
-            /* keep the interface name around */
-            temp = (struct temp_event *)papi_malloc(sizeof(struct temp_event));
-            if (!temp) {
-                PAPIERROR("out of memory!");
-                fclose(fin);
-                return PAPI_ENOMEM;
-            }
-            temp->next = NULL;
-
-            if (root == NULL) {
-                root = temp;
-            } else if (last) {
-                last->next = temp;
-            } else {
-                free(temp);
-                fclose(fin);
-                PAPIERROR("This shouldn't be possible\n");
-                return PAPI_ESBSTR;
-            }
-            last = temp;
-
-            snprintf(temp->name, PAPI_MAX_STR_LEN, "%s.%s",
-                    ifname, _net_counter_info[j].name);
-            snprintf(temp->description, PAPI_MAX_STR_LEN, "%s %s",
-                    ifname, _net_counter_info[j].description);
-
-            count++;
-        }
-    }
-
-    fclose(fin);
-
-    return count;
+int __open(const char *pathname, int flags, mode_t mode);
+int open(const char *pathname, int flags, mode_t mode) {
+  int retval;
+  SUBDBG("appio: intercepted open(%s,%d,%d)\n", pathname, flags, mode);
+  retval = __open(pathname,flags,mode);
+  _appio_register_current[OPEN_CALLS]++;
+  if (retval < 0) _appio_register_current[OPEN_ERR]++;
+  else _appio_register_current[OPEN_FDS]++;
+  return retval;
 }
 
-
-static int
-getInterfaceBaseIndex(const char *ifname)
-{
-    int i;
-
-    for ( i=0; i<num_events; i+=NET_INTERFACE_COUNTERS ) {
-        if (strncmp(_net_native_events[i].name, ifname, strlen(ifname)) == 0) {
-            return i;
-        }
-    }
-
-    return -1;  /* Not found */
+ssize_t __read(int fd, void *buf, size_t count);
+ssize_t read(int fd, void *buf, size_t count) {
+  int retval;
+  SUBDBG("appio: intercepted read(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
+  long long start_ts = PAPI_get_real_usec();
+  retval = __read(fd,buf, count);
+  long long duration = PAPI_get_real_usec() - start_ts;
+  int n = _appio_register_current[READ_CALLS]++; // read calls
+  if (retval > 0) {
+    _appio_register_current[READ_BLOCK_SIZE]= (n * _appio_register_current[READ_BLOCK_SIZE] + count)/(n+1); // mean size
+    _appio_register_current[READ_BYTES] += retval; // read bytes
+    if (retval < (int)count) _appio_register_current[READ_SHORT]++; // read short
+    _appio_register_current[READ_USEC] += duration;
+  }
+  if (retval < 0) { 
+    _appio_register_current[READ_ERR]++; // read err
+    if (EINTR == retval)
+      _appio_register_current[READ_INTERRUPTED]++; // signal interrupted the read
+    if ((EAGAIN == retval) || (EWOULDBLOCK == retval)) 
+      _appio_register_current[READ_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
+  }
+  if (retval == 0) _appio_register_current[READ_EOF]++; // read eof
+  return retval;
 }
 
+size_t _IO_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+  size_t retval;
+  SUBDBG("appio: intercepted fread(%p,%lu,%lu,%p)\n", ptr, (unsigned long) size, (unsigned long) nmemb, (void*) stream);
+  long long start_ts = PAPI_get_real_usec();
+  retval = _IO_fread(ptr,size,nmemb,stream);
+  long long duration = PAPI_get_real_usec() - start_ts;
+  int n = _appio_register_current[READ_CALLS]++; // read calls
+  if (retval > 0) {
+    _appio_register_current[READ_BLOCK_SIZE]= (n * _appio_register_current[READ_BLOCK_SIZE]+ size*nmemb)/(n+1);//mean size
+    _appio_register_current[READ_BYTES]+= retval * size; // read bytes
+    if (retval < nmemb) _appio_register_current[READ_SHORT]++; // read short
+    _appio_register_current[READ_USEC] += duration;
+  }
 
-static int
-read_net_counters( long long *values )
-{
-    FILE *fin;
-    char line[NET_PROC_MAX_LINE];
-    char *retval, *ifname, *data;
-    int i, nf, if_bidx;
+  /* A value of zero returned means one of two things..*/
+  if (retval == 0) {
+     if (feof(stream)) _appio_register_current[READ_EOF]++; // read eof
+     else _appio_register_current[READ_ERR]++; // read err
+  }
+  return retval;
+}
 
-    fin = fopen(NET_PROC_FILE, "r");
-    if (fin == NULL) {
-        SUBDBG("Can't find %s, are you sure the /proc file-system is mounted?\n",
-           NET_PROC_FILE);
-        return NET_INVALID_RESULT;
-    }
+ssize_t __write(int fd, const void *buf, size_t count);
+ssize_t write(int fd, const void *buf, size_t count) {
+  int retval;
+  SUBDBG("appio: intercepted write(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
+  long long start_ts = PAPI_get_real_usec();
+  retval = __write(fd,buf, count);
+  long long duration = PAPI_get_real_usec() - start_ts;
+  int n = _appio_register_current[WRITE_CALLS]++; // write calls
+  if (retval >= 0) {
+    _appio_register_current[WRITE_BLOCK_SIZE]= (n * _appio_register_current[WRITE_BLOCK_SIZE] + count)/(n+1); // mean size
+    _appio_register_current[WRITE_BYTES]+= retval; // write bytes
+    if (retval < (int)count) _appio_register_current[WRITE_SHORT]++; // short write
+    _appio_register_current[WRITE_USEC] += duration;
+  }
+  if (retval < 0) _appio_register_current[WRITE_ERR]++; // err
+  return retval;
+}
 
-    /* skip the 2 header lines */
-    for (i=0; i<2; i++) {
-        retval = fgets (line, NET_PROC_MAX_LINE, fin);
-        if (retval == NULL) {
-            SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
-            return 0;
-        }
-    }
-
-    while ((retval = fgets (line, NET_PROC_MAX_LINE, fin)) == line) {
-
-        /* split the interface name from its 16 counters */
-        retval = strstr(line, ":");
-        if (retval == NULL) {
-            SUBDBG("Wrong line format <%s>\n", line);
-            continue;
-        }
-
-        *retval = '\0';
-        data = retval + 1;
-        ifname = line;
-        while (isspace(*ifname)) { ifname++; }
-
-        if_bidx = getInterfaceBaseIndex(ifname);
-        if (if_bidx < 0) {
-            SUBDBG("Interface <%s> not found\n", ifname);
-        } else {
-            nf = sscanf( data,
-                "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu\n",
-                &values[if_bidx + 0],  &values[if_bidx + 1],
-                &values[if_bidx + 2],  &values[if_bidx + 3],
-                &values[if_bidx + 4],  &values[if_bidx + 5],
-                &values[if_bidx + 6],  &values[if_bidx + 7],
-                &values[if_bidx + 8],  &values[if_bidx + 9],
-                &values[if_bidx + 10], &values[if_bidx + 11],
-                &values[if_bidx + 12], &values[if_bidx + 13],
-                &values[if_bidx + 14], &values[if_bidx + 15]);
-
-            SUBDBG("\nRead "
-                "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu\n",
-                values[if_bidx + 0],  values[if_bidx + 1],
-                values[if_bidx + 2],  values[if_bidx + 3],
-                values[if_bidx + 4],  values[if_bidx + 5],
-                values[if_bidx + 6],  values[if_bidx + 7],
-                values[if_bidx + 8],  values[if_bidx + 9],
-                values[if_bidx + 10], values[if_bidx + 11],
-                values[if_bidx + 12], values[if_bidx + 13],
-                values[if_bidx + 14], values[if_bidx + 15]);
-
-            if ( nf != NET_INTERFACE_COUNTERS ) {
-                /* This shouldn't happen */
-                SUBDBG("/proc line with wrong number of fields\n");
-            }
-        }
-
-    }
-
-    fclose(fin);
-
-    return 0;
+size_t _IO_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+  size_t retval;
+  SUBDBG("appio: intercepted fwrite(%p,%lu,%lu,%p)\n", ptr, (unsigned long) size, (unsigned long) nmemb, (void*) stream);
+  long long start_ts = PAPI_get_real_usec();
+  retval = _IO_fwrite(ptr,size,nmemb,stream);
+  long long duration = PAPI_get_real_usec() - start_ts;
+  int n = _appio_register_current[WRITE_CALLS]++; // write calls
+  if (retval > 0) {
+    _appio_register_current[WRITE_BLOCK_SIZE]= (n * _appio_register_current[WRITE_BLOCK_SIZE] + size*nmemb)/(n+1); // mean block size
+    _appio_register_current[WRITE_BYTES]+= retval * size; // write bytes
+    if (retval < nmemb) _appio_register_current[WRITE_SHORT]++; // short write
+    _appio_register_current[WRITE_USEC] += duration;
+  }
+  if (retval == 0) _appio_register_current[WRITE_ERR]++; // err
+  return retval;
 }
 
 
@@ -279,10 +215,10 @@ read_net_counters( long long *values )
  * This is called whenever a thread is initialized
  */
 int
-_net_init( hwd_context_t *ctx )
+_appio_init( hwd_context_t *ctx )
 {
     ( void ) ctx;
-
+    SUBDBG("_appio_init %p\n", ctx);
     return PAPI_OK;
 }
 
@@ -292,49 +228,28 @@ _net_init( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_net_init_substrate( int cidx  )
+_appio_init_substrate( int cidx  )
 {
-    int i = 0;
-    struct temp_event *t, *last;
 
-    if ( is_initialized )
-        return PAPI_OK;
+    SUBDBG("_appio_substrate %d\n", cidx);
+    _appio_native_events = (APPIO_native_event_entry_t *) papi_calloc(sizeof(APPIO_native_event_entry_t), APPIO_MAX_COUNTERS);
 
-    memset(_net_register_start, NET_MAX_COUNTERS,
-                sizeof(_net_register_start[0]));
-    memset(_net_register_current, NET_MAX_COUNTERS,
-                sizeof(_net_register_current[0]));
-
-    is_initialized = 1;
-
-    /* The network interfaces are listed in /proc/net/dev */
-    num_events = generateNetEventList();
-
-    if ( num_events < 0 )  /* PAPI errors */
-        return num_events;
-
-    if ( num_events == 0 )  /* No network interfaces found */
-        return PAPI_OK;
-
-    t = root;
-    _net_native_events = (NET_native_event_entry_t*)
-        papi_malloc(sizeof(NET_native_event_entry_t) * num_events);
-    do {
-        strncpy(_net_native_events[i].name, t->name, PAPI_MAX_STR_LEN);
-        strncpy(_net_native_events[i].description, t->description, PAPI_MAX_STR_LEN);
-        _net_native_events[i].resources.selector = i + 1;
-        last    = t;
-        t       = t->next;
-        papi_free(last);
-        i++;
-    } while (t != NULL);
-    root = NULL;
-
+    if (_appio_native_events == NULL ) {
+      PAPIERROR( "malloc():Could not get memory for events table" );
+      return PAPI_ENOMEM;
+    }
+    int i;
+    for (i=0; i<APPIO_MAX_COUNTERS; i++) {
+      _appio_native_events[i].name = _appio_counter_info[i].name;
+      _appio_native_events[i].description = _appio_counter_info[i].description;
+      _appio_native_events[i].resources.selector = i + 1;
+    }
+  
     /* Export the total number of events available */
-    _net_vector.cmp_info.num_native_events = num_events;
+    _appio_vector.cmp_info.num_native_events = APPIO_MAX_COUNTERS;;
 
     /* Export the component id */
-    _net_vector.cmp_info.CmpIdx = cidx;
+    _appio_vector.cmp_info.CmpIdx = cidx;
 
     return PAPI_OK;
 }
@@ -345,7 +260,7 @@ _net_init_substrate( int cidx  )
  * functions
  */
 int
-_net_init_control_state( hwd_control_state_t *ctl )
+_appio_init_control_state( hwd_control_state_t *ctl )
 {
     ( void ) ctl;
 
@@ -354,69 +269,58 @@ _net_init_control_state( hwd_control_state_t *ctl )
 
 
 int
-_net_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
+_appio_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
 
-    NET_control_state_t *net_ctl = (NET_control_state_t *) ctl;
-    long long now = PAPI_get_real_usec();
+    SUBDBG("_appio_start %p %p\n", ctx, ctl);
+    APPIO_control_state_t *appio_ctl = (APPIO_control_state_t *) ctl;
 
-    read_net_counters(_net_register_start);
-    memcpy(_net_register_current, _net_register_start,
-            NET_MAX_COUNTERS * sizeof(_net_register_start[0]));
+    /* this memset needs to move to thread_init */
+    memset(_appio_register_current, 0, APPIO_MAX_COUNTERS * sizeof(_appio_register_current[0]));
 
     /* set initial values to 0 */
-    memset(net_ctl->values, 0, NET_MAX_COUNTERS*sizeof(net_ctl->values[0]));
+    memset(appio_ctl->values, 0, APPIO_MAX_COUNTERS*sizeof(appio_ctl->values[0]));
     
-    /* Set last access time for caching purposes */
-    net_ctl->lastupdate = now;
-
     return PAPI_OK;
 }
 
 
 int
-_net_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+_appio_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     long long ** events, int flags )
 {
     (void) flags;
     (void) ctx;
 
-    NET_control_state_t *net_ctl = (NET_control_state_t *) ctl;
-    long long now = PAPI_get_real_usec();
+    SUBDBG("_appio_read %p %p\n", ctx, ctl);
+    APPIO_control_state_t *appio_ctl = (APPIO_control_state_t *) ctl;
     int i;
 
-    /* Caching
-     * Only read new values from /proc if enough time has passed
-     * since the last read.
-     */
-    if ( now - net_ctl->lastupdate > NET_REFRESH_LATENCY ) {
-        read_net_counters(_net_register_current);
-        for ( i=0; i<NET_MAX_COUNTERS; i++ ) {
-            net_ctl->values[i] = _net_register_current[i] - _net_register_start[i];
-        }
-        net_ctl->lastupdate = now;
+    for ( i=0; i<appio_ctl->num_events; i++ ) {
+            int index = appio_ctl->counter_bits[i];
+            SUBDBG("event=%d, index=%d, val=%lld\n", i, index, _appio_register_current[index]);
+            appio_ctl->values[index] = _appio_register_current[index];
     }
-    *events = net_ctl->values;
+    *events = appio_ctl->values;
 
     return PAPI_OK;
 }
 
 
 int
-_net_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
+_appio_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     (void) ctx;
 
-    NET_control_state_t *net_ctl = (NET_control_state_t *) ctl;
-    long long now = PAPI_get_real_usec();
+    SUBDBG("_appio_stop ctx=%p ctl=%p\n", ctx, ctl);
+    APPIO_control_state_t *appio_ctl = (APPIO_control_state_t *) ctl;
     int i;
-
-    read_net_counters(_net_register_current);
-    for ( i=0; i<NET_MAX_COUNTERS; i++ ) {
-        net_ctl->values[i] = _net_register_current[i] - _net_register_start[i];
+    for ( i=0; i<appio_ctl->num_events; i++ ) {
+            int index = appio_ctl->counter_bits[i];
+            SUBDBG("event=%d, index=%d, val=%lld\n", i, index, _appio_register_current[index]);
+            appio_ctl->values[i] = _appio_register_current[index];
     }
-    net_ctl->lastupdate = now;
 
     return PAPI_OK;
 }
@@ -426,7 +330,7 @@ _net_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
  * Thread shutdown
  */
 int
-_net_shutdown( hwd_context_t *ctx )
+_appio_shutdown( hwd_context_t *ctx )
 {
     ( void ) ctx;
 
@@ -435,17 +339,11 @@ _net_shutdown( hwd_context_t *ctx )
 
 
 /*
- * Clean up what was setup in net_init_substrate().
+ * Clean up what was setup in appio_init_substrate().
  */
 int
-_net_shutdown_substrate( void )
+_appio_shutdown_substrate( void )
 {
-    if ( is_initialized ) {
-        is_initialized = 0;
-        papi_free(_net_native_events);
-        _net_native_events = NULL;
-    }
-
     return PAPI_OK;
 }
 
@@ -456,7 +354,7 @@ _net_shutdown_substrate( void )
  * PAPI_SET_INHERIT
  */
 int
-_net_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
+_appio_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
     ( void ) ctx;
     ( void ) code;
@@ -467,18 +365,23 @@ _net_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
 
 int
-_net_update_control_state( hwd_control_state_t *ctl,
+_appio_update_control_state( hwd_control_state_t *ctl,
         NativeInfo_t *native, int count, hwd_context_t *ctx )
 {
     ( void ) ctx;
     ( void ) ctl;
 
+    SUBDBG("_appio_update_control_state ctx=%p ctl=%p num_events=%d\n", ctx, ctl, count);
     int i, index;
+    APPIO_control_state_t *appio_ctl = (APPIO_control_state_t *) ctl;
+    (void) ctx;
 
     for ( i = 0; i < count; i++ ) {
         index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
-        native[i].ni_position = _net_native_events[index].resources.selector - 1;
+        appio_ctl->counter_bits[i] = index;
+        native[i].ni_position = index;
     }
+    appio_ctl->num_events = count;
 
     return PAPI_OK;
 }
@@ -495,7 +398,7 @@ _net_update_control_state( hwd_control_state_t *ctl,
  * PAPI_DOM_ALL    is all of the domains
  */
 int
-_net_set_domain( hwd_control_state_t *ctl, int domain )
+_appio_set_domain( hwd_control_state_t *ctl, int domain )
 {
     ( void ) ctl;
 
@@ -513,7 +416,7 @@ _net_set_domain( hwd_control_state_t *ctl, int domain )
 
 
 int
-_net_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
+_appio_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
     ( void ) ctl;
@@ -526,23 +429,20 @@ _net_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
  * Native Event functions
  */
 int
-_net_ntv_enum_events( unsigned int *EventCode, int modifier )
+_appio_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
     int index;
     int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
     switch ( modifier ) {
         case PAPI_ENUM_FIRST:
-            if (num_events==0) {
-                return PAPI_ENOEVNT;
-            }
             *EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cidx);
             return PAPI_OK;
             break;
 
         case PAPI_ENUM_EVENTS:
             index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
-            if ( index < num_events - 1 ) {
+            if ( index < APPIO_MAX_COUNTERS - 1 ) {
                 *EventCode = *EventCode + 1;
                 return PAPI_OK;
             } else {
@@ -562,15 +462,15 @@ _net_ntv_enum_events( unsigned int *EventCode, int modifier )
  *
  */
 int
-_net_ntv_name_to_code( char *name, unsigned int *EventCode )
+_appio_ntv_name_to_code( char *name, unsigned int *EventCode )
 {
     int i;
 
-    for ( i=0; i<num_events; i++) {
-        if (strcmp(name, _net_native_events[i].name) == 0) {
+    for ( i=0; i<APPIO_MAX_COUNTERS; i++) {
+        if (strcmp(name, _appio_counter_info[i].name) == 0) {
             *EventCode = i |
                 PAPI_NATIVE_MASK |
-                PAPI_COMPONENT_MASK(_net_vector.cmp_info.CmpIdx);
+                PAPI_COMPONENT_MASK(_appio_vector.cmp_info.CmpIdx);
             return PAPI_OK;
         }
     }
@@ -583,12 +483,12 @@ _net_ntv_name_to_code( char *name, unsigned int *EventCode )
  *
  */
 int
-_net_ntv_code_to_name( unsigned int EventCode, char *name, int len )
+_appio_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
     int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-    if ( index >= 0 && index < num_events ) {
-        strncpy( name, _net_native_events[index].name, len );
+    if ( index >= 0 && index < APPIO_MAX_COUNTERS ) {
+        strncpy( name, _appio_counter_info[index].name, len );
         return PAPI_OK;
     }
 
@@ -600,12 +500,12 @@ _net_ntv_code_to_name( unsigned int EventCode, char *name, int len )
  *
  */
 int
-_net_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
+_appio_ntv_code_to_descr( unsigned int EventCode, char *desc, int len )
 {
     int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-    if ( index >= 0 && index < num_events ) {
-        strncpy( name, _net_native_events[index].description, len );
+    if ( index >= 0 && index < APPIO_MAX_COUNTERS ) {
+        strncpy(desc, _appio_counter_info[index].description, len );
         return PAPI_OK;
     }
 
@@ -617,14 +517,14 @@ _net_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
  *
  */
 int
-_net_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
+_appio_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 {
     int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-    if ( index >= 0 && index < num_events ) {
-        memcpy( ( NET_register_t * ) bits,
-                &( _net_native_events[index].resources ),
-                sizeof ( NET_register_t ) );
+    if ( index >= 0 && index < APPIO_MAX_COUNTERS ) {
+        memcpy( ( APPIO_register_t * ) bits,
+                &( _appio_native_events[index].resources ),
+                sizeof ( APPIO_register_t ) );
         return PAPI_OK;
     }
 
@@ -635,14 +535,14 @@ _net_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 /*
  *
  */
-papi_vector_t _net_vector = {
+papi_vector_t _appio_vector = {
     .cmp_info = {
         /* default component information (unspecified values are initialized to 0) */
-        .name = "$Id$",
-        .version               = "$Revision$",
+        .name                  = "appio.c",
+        .version               = "$Revision: 1.1.2.4 $",
         .CmpIdx                = 0,              /* set by init_substrate */
         .num_mpx_cntrs         = PAPI_MPX_DEF_DEG,
-        .num_cntrs             = NET_MAX_COUNTERS,
+        .num_cntrs             = APPIO_MAX_COUNTERS,
         .default_domain        = PAPI_DOM_USER,
         //.available_domains   = PAPI_DOM_USER,
         .default_granularity   = PAPI_GRN_THR,
@@ -659,32 +559,32 @@ papi_vector_t _net_vector = {
 
     /* sizes of framework-opaque component-private structures */
     .size = {
-        .context               = sizeof ( NET_context_t ),
-        .control_state         = sizeof ( NET_control_state_t ),
-        .reg_value             = sizeof ( NET_register_t ),
-        .reg_alloc             = sizeof ( NET_reg_alloc_t ),
+        .context               = sizeof ( APPIO_context_t ),
+        .control_state         = sizeof ( APPIO_control_state_t ),
+        .reg_value             = sizeof ( APPIO_register_t ),
+        .reg_alloc             = sizeof ( APPIO_reg_alloc_t ),
     },
 
     /* function pointers in this component */
-    .init                      = _net_init,
-    .init_substrate            = _net_init_substrate,
-    .init_control_state        = _net_init_control_state,
-    .start                     = _net_start,
-    .stop                      = _net_stop,
-    .read                      = _net_read,
-    .shutdown                  = _net_shutdown,
-    .shutdown_substrate        = _net_shutdown_substrate,
-    .ctl                       = _net_ctl,
+    .init                      = _appio_init,
+    .init_substrate            = _appio_init_substrate,
+    .init_control_state        = _appio_init_control_state,
+    .start                     = _appio_start,
+    .stop                      = _appio_stop,
+    .read                      = _appio_read,
+    .shutdown                  = _appio_shutdown,
+    .shutdown_substrate        = _appio_shutdown_substrate,
+    .ctl                       = _appio_ctl,
 
-    .update_control_state      = _net_update_control_state,
-    .set_domain                = _net_set_domain,
-    .reset                     = _net_reset,
+    .update_control_state      = _appio_update_control_state,
+    .set_domain                = _appio_set_domain,
+    .reset                     = _appio_reset,
 
-    .ntv_enum_events           = _net_ntv_enum_events,
-    .ntv_name_to_code          = _net_ntv_name_to_code,
-    .ntv_code_to_name          = _net_ntv_code_to_name,
-    .ntv_code_to_descr         = _net_ntv_code_to_descr,
-    .ntv_code_to_bits          = _net_ntv_code_to_bits,
+    .ntv_enum_events           = _appio_ntv_enum_events,
+    .ntv_name_to_code          = _appio_ntv_name_to_code,
+    .ntv_code_to_name          = _appio_ntv_code_to_name,
+    .ntv_code_to_descr         = _appio_ntv_code_to_descr,
+    .ntv_code_to_bits          = _appio_ntv_code_to_bits,
     .ntv_bits_to_info          = NULL,
 };
 
