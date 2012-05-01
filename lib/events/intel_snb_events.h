@@ -1108,8 +1108,14 @@ static const intel_x86_umask_t snb_misalign_mem_ref[]={
 };
 
 static const intel_x86_umask_t snb_offcore_requests[]={
+   { .uname  = "ALL_DATA_RD",
+     .udesc  = "Demand and prefetch read requests sent to uncore",
+     .ucode = 0x800,
+     .uflags= INTEL_X86_NCOMBO,
+   },
    { .uname  = "ALL_DATA_READ",
      .udesc  = "Demand and prefetch read requests sent to uncore",
+     .uequiv = "ALL_DATA_RD",
      .ucode = 0x800,
      .uflags= INTEL_X86_NCOMBO,
    },
