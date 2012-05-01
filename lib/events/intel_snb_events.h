@@ -338,9 +338,15 @@ static const intel_x86_umask_t snb_dsb_fill[]={
 };
 
 static const intel_x86_umask_t snb_dtlb_load_misses[]={
+   { .uname  = "MISS_CAUSES_A_WALK",
+     .udesc  = "Demand load miss in all TLB levels which causes an page walk of any page size",
+     .ucode = 0x100,
+     .uflags= INTEL_X86_NCOMBO,
+   },
    { .uname  = "CAUSES_A_WALK",
      .udesc  = "Demand load miss in all TLB levels which causes an page walk of any page size",
      .ucode = 0x100,
+     .uequiv = "MISS_CAUSES_A_WALK",
      .uflags= INTEL_X86_NCOMBO,
    },
    { .uname  = "STLB_HIT",
@@ -361,9 +367,15 @@ static const intel_x86_umask_t snb_dtlb_load_misses[]={
 };
 
 static const intel_x86_umask_t snb_dtlb_store_misses[]={
+   { .uname  = "MISS_CAUSES_A_WALK",
+     .udesc  = "Miss in all TLB levels that causes a page walk of any page size (4K/2M/4M/1G)",
+     .ucode = 0x100,
+     .uflags= INTEL_X86_NCOMBO,
+   },
    { .uname  = "CAUSES_A_WALK",
      .udesc  = "Miss in all TLB levels that causes a page walk of any page size (4K/2M/4M/1G)",
      .ucode = 0x100,
+     .uequiv = "MISS_CAUSES_A_WALK",
      .uflags= INTEL_X86_NCOMBO,
    },
    { .uname  = "STLB_HIT",
