@@ -584,8 +584,8 @@ papi_vector_t _appio_vector = {
     .ntv_name_to_code          = _appio_ntv_name_to_code,
     .ntv_code_to_name          = _appio_ntv_code_to_name,
     .ntv_code_to_descr         = _appio_ntv_code_to_descr,
-    .ntv_code_to_bits          = _appio_ntv_code_to_bits,
-    .ntv_bits_to_info          = NULL,
+    .ntv_code_to_bits          = _appio_ntv_code_to_bits
+    /* .ntv_bits_to_info          = NULL, */
 };
 
 /* vim:set ts=4 sw=4 sts=4 et: */
