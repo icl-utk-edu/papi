@@ -32,6 +32,7 @@ enum
 	CPU_CORE2,
 	CPU_CORE2EXTREME,
 	CPU_COREI7,
+	CPU_COREWESTMERE,
 	CPU_LAST
 };
 
@@ -67,5 +68,6 @@ extern int freebsd_substrate_number_of_events (int processortype);
 #include "map-core2.h"
 #include "map-core2-extreme.h"
 #include "map-i7.h"
+#include "map-westmere.h"
 
 #endif /* _FreeBSD_MAP_H_ */
