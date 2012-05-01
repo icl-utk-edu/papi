@@ -158,8 +158,8 @@ bgp_tests:$(LIBRARY) null
 	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
  
 #Required for freebsd
-freebsd-memory.o: freebsd-memory.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) -c $< -o $@
+#freebsd-memory.o: freebsd-memory.c $(HEADERS)
+#	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd/map.o: freebsd/map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
@@ -205,6 +205,9 @@ freebsd/map-core2-extreme.o: freebsd/map-core2-extreme.c $(HEADERS)
 
 freebsd/map-i7.o: freebsd/map-i7.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-westmere.o: freebsd/map-westmere.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@                                          
 
 # So we already build this for $SUBSTRATE
 #freebsd.o: freebsd.c $(HEADERS)
