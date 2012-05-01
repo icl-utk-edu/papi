@@ -679,9 +679,15 @@ static const intel_x86_umask_t snb_l1d_blocks[]={
 };
 
 static const intel_x86_umask_t snb_l1d_pend_miss[]={
-   { .uname  = "EDGE",
+   { .uname  = "OCCURRENCES",
      .udesc  = "Occurrences of L1D_PEND_MISS going active",
      .uequiv = "PENDING:e=1:c=1",
+     .ucode = 0x100 | INTEL_X86_MOD_EDGE | (0x1 << INTEL_X86_CMASK_BIT),
+     .uflags= INTEL_X86_NCOMBO,
+   },
+   { .uname  = "EDGE",
+     .udesc  = "Occurrences of L1D_PEND_MISS going active",
+     .uequiv = "OCCURRENCES",
      .ucode = 0x100 | INTEL_X86_MOD_EDGE | (0x1 << INTEL_X86_CMASK_BIT),
      .uflags= INTEL_X86_NCOMBO,
    },
