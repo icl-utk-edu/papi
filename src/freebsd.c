@@ -701,7 +701,7 @@ long long _papi_freebsd_get_real_usec(void)
 #endif
 }
 
-long long _papi_freebsd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_freebsd_get_virt_usec(hwd_context_t * ctx)
 {
 	struct rusage res;
 	(void)ctx;
@@ -713,7 +713,7 @@ long long _papi_freebsd_get_virt_usec(const hwd_context_t * ctx)
 	return (res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec;
 }
 
-long long _papi_freebsd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_freebsd_get_virt_cycles(hwd_context_t * ctx)
 {
 	SHOW_WHERE_I_AM;
 	return ((long long) _papi_freebsd_get_virt_usec(ctx) * _papi_hwi_system_info.hw_info.mhz);
@@ -760,7 +760,7 @@ int _papi_freebsd_ntv_name_to_code(char *name, unsigned int* event_code) {
 	for (i = 0; i < MY_VECTOR.cmp_info.num_native_events; i++)
 		if (strcmp (name, _papi_hwd_native_info[Context.CPUsubstrate].info[i].name) == 0)
 		{
-			*event_code = i | PAPI_NATIVE_AND_MASK;
+			*event_code = i | PAPI_NATIVE_MASK;
 			return PAPI_OK;
 		}
 
@@ -811,7 +811,7 @@ int _papi_freebsd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned i
 	SHOW_WHERE_I_AM;
   if ( count == 0 ) return(0);
 
-  if ( strlen(str) > name_len ) return(0);
+  if ( strlen(str) > (size_t)name_len ) return(0);
 
   strcpy(names, "Counter: 0  Event: 0");
   return 1;
@@ -936,6 +936,7 @@ void _papi_freebsd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
  */
 int _papi_freebsd_update_shlib_info(papi_mdi_t *mdi){
 	SHOW_WHERE_I_AM;
+	(void)mdi;
   return PAPI_OK;
 }
 
