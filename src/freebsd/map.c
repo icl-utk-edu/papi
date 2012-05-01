@@ -61,6 +61,9 @@ void init_freebsd_libpmc_mappings (void)
 	_papi_hwd_native_info[CPU_COREI7].map = i7Processor_map;
 	_papi_hwd_native_info[CPU_COREI7].info = i7Processor_info;
 
+	_papi_hwd_native_info[CPU_COREWESTMERE].map = WestmereProcessor_map;
+	_papi_hwd_native_info[CPU_COREWESTMERE].info = WestmereProcessor_info;
+
 	_papi_hwd_native_info[CPU_LAST].map = NULL;
 	_papi_hwd_native_info[CPU_LAST].info = NULL;
 }
