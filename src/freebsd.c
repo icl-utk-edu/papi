@@ -313,7 +313,7 @@ int _papi_freebsd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *n
 	ptr->n_counters = count;
 	ptr->pmcs = (pmc_id_t*) malloc (sizeof(pmc_id_t)*count);
 	ptr->caps = (uint32_t*) malloc (sizeof(uint32_t)*count);
-	ptr->values = (long long*) malloc (sizeof(long long)*count);
+	ptr->values = (pmc_value_t*) malloc (sizeof(pmc_value_t)*count);
 	ptr->counters = (char **) malloc (sizeof(char*)*count);
 	for (i = 0; i < count; i++)
 		ptr->counters[i] = NULL;
@@ -419,7 +419,7 @@ int _papi_freebsd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long 
 #endif
 			return PAPI_ESYS;
 		}
-	*events = ctrl->values;
+	*events = (long long *)ctrl->values;
 
 #if defined(DEBUG)
 	for (i = 0; i < ctrl->n_counters; i++)
@@ -763,7 +763,7 @@ int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int l
 	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
 	strncpy (ntv_name, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1)
+	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name) > (size_t)len-1)
 		return PAPI_EBUF;
 	return PAPI_OK;
 }
@@ -777,7 +777,7 @@ int _papi_freebsd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len
 	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
 	strncpy (descr, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description) > len-1)
+	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description) > (size_t)len-1)
 		return PAPI_EBUF;
 	return PAPI_OK;
 }
