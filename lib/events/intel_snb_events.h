@@ -1658,6 +1658,14 @@ static const intel_x86_umask_t snb_offcore_response[]={
    },
 };
 
+static const intel_x86_umask_t snb_baclears[]={
+   { .uname  = "ANY",
+     .udesc  = "Counts the number of times the front end is resteered, mainly when the BPU cannot provide a correct prediction and this is corrected by other branch handling mechanisms at the front end",
+     .ucode = 0x1f00,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+   },
+};
+
 static const intel_x86_entry_t intel_snb_pe[]={
 { .name   = "AGU_BYPASS_CANCEL",
   .desc   = "Number of executed load operations with all the following traits: 1. addressing of the format [base + offset], 2. the offset is between 1 and 2047, 3. the address specified in the base register is in one page and the address [base+offset] is in another page",
@@ -1676,6 +1684,15 @@ static const intel_x86_entry_t intel_snb_pe[]={
   .numasks = LIBPFM_ARRAY_SIZE(snb_arith),
   .ngrp = 1,
   .umasks = snb_arith,
+},
+{ .name   = "BACLEARS",
+  .desc   = "Branch resteered",
+  .modmsk = INTEL_V3_ATTRS,
+  .cntmsk = 0xff,
+  .code = 0xe6,
+  .numasks = LIBPFM_ARRAY_SIZE(snb_baclears),
+  .ngrp = 1,
+  .umasks = snb_baclears,
 },
 { .name   = "BR_INST_EXEC",
   .desc   = "Branch instructions executed",
