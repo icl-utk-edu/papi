@@ -4,7 +4,6 @@
 
 /* 
 * File:    freebsd.c
-* CVS:     $Id$
 * Author:  Harald Servat
 *          redcrash@gmail.com
 */
@@ -727,14 +726,35 @@ int _papi_freebsd_ntv_enum_events(unsigned int *EventCode, int modifier)
 
 	SUBDBG("Entering\n");
 
-	res = _papi_freebsd_ntv_code_to_name(nextCode, name, sizeof(name));
+	if (modifier==PAPI_ENUM_FIRST) {
 
-	if (res != PAPI_OK)
-		return res;
-	else
-		*EventCode = nextCode;
+	   res = _papi_freebsd_ntv_code_to_name(nextCode, name, sizeof(name));
 
-	return PAPI_OK;
+	   if (res != PAPI_OK)
+	      return res;
+	   else
+	      *EventCode = nextCode;
+
+	   return PAPI_OK;
+	}
+
+	if (modifier==PAPI_ENUM_EVENTS) {
+
+	   res = _papi_freebsd_ntv_code_to_name(nextCode, name, sizeof(name));
+
+	   if (res != PAPI_OK)
+	      return res;
+	   else
+	      *EventCode = nextCode;
+
+	   return PAPI_OK;
+	}
+
+	if (modifier==PAPI_ENUM_EVENTS) {
+	  return PAPI_ENOEVNT;
+	}
+
+	return PAPI_ENOIMPL;
 }
 
 int _papi_freebsd_ntv_name_to_code(char *name, unsigned int* event_code) {
