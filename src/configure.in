@@ -717,7 +717,7 @@ AC_ARG_WITH(papi_events,
              papi_events_table="papi_events_table.h"
              CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"   
              AC_MSG_NOTICE(Generating papi_events_table.h)
-             sh papi_events_table.sh > papi_events_table.h])
+             sh papi_events_table.sh papi_events.csv > papi_events_table.h])
 
 AC_ARG_WITH(static_tools,
             [  --with-static-tools		Specify static build of tests and utilities],
