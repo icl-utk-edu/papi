@@ -22,6 +22,7 @@
 #include "map.h"
 
 #include "freebsd-memory.h"
+#include "x86_cpuid_info.h"
 
 /* Global values referenced externally */
 PAPI_os_info_t _papi_os_info;
@@ -851,12 +852,33 @@ int _papi_freebsd_update_shlib_info(papi_mdi_t *mdi){
 }
 
 
+
+int
+_papi_freebsd_detect_hypervisor(char *virtual_vendor_name) {
+
+  int retval=0;
+
+#if defined(__i386__)||defined(__x86_64__)
+  retval=_x86_detect_hypervisor(virtual_vendor_name);
+#else
+  (void) virtual_vendor_name;
+#endif
+        
+  return retval;
+}
+
+
+
 int
 _papi_freebsd_get_system_info( papi_mdi_t *mdi ) {
 
   int retval;
 
   retval=_freebsd_get_memory_info(&mdi->hw_info, mdi->hw_info.model );
+
+  /* Get virtualization info */
+  mdi->hw_info.virtualized=_papi_freebsd_detect_hypervisor(mdi->hw_info.virtual_vendor_string);
+
   
   return PAPI_OK;
 
