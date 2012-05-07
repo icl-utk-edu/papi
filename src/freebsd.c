@@ -21,9 +21,7 @@
 #include SUBSTRATE
 #include "map.h"
 
-
-/* get rid of */
-extern int _papi_freebsd_get_dmem_info(PAPI_dmem_info_t*);
+#include "freebsd-memory.h"
 
 /* Global values referenced externally */
 PAPI_os_info_t _papi_os_info;
@@ -156,9 +154,9 @@ int init_presets(int cidx)
 
 	init_freebsd_libpmc_mappings();
 
-	if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_P6") == 0) {
+	if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_P6") == 0)
 		Context.CPUsubstrate = CPU_P6;
-	}
+
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PII") == 0)
 		Context.CPUsubstrate = CPU_P6_2;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PIII") == 0)
@@ -221,8 +219,6 @@ int _papi_freebsd_init_substrate(int cidx)
     */
 #endif
 
-   /* Internal function, doesn't necessarily need to be a function */
-   init_mdi();
 
    /* Internal function, doesn't necessarily need to be a function */
    init_presets(cidx);
@@ -855,10 +851,24 @@ int _papi_freebsd_update_shlib_info(papi_mdi_t *mdi){
 }
 
 
+int
+_papi_freebsd_get_system_info( papi_mdi_t *mdi ) {
+
+  int retval;
+
+  retval=_freebsd_get_memory_info(&mdi->hw_info, mdi->hw_info.model );
+  
+  return PAPI_OK;
+
+}
+
 int 
 _papi_hwi_init_os(void) {
 
    struct utsname uname_buffer;
+
+   /* Internal function, doesn't necessarily need to be a function */
+   init_mdi();
 
    uname(&uname_buffer);
 
@@ -870,6 +880,8 @@ _papi_hwi_init_os(void) {
    _papi_os_info.itimer_num = PAPI_INT_ITIMER;
    _papi_os_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;	/* Not actually supported */
    _papi_os_info.itimer_res_ns = 1;
+
+   _papi_freebsd_get_system_info(&_papi_hwi_system_info);
 
    return PAPI_OK;
 }
@@ -938,5 +950,5 @@ papi_os_vector_t _papi_os_vector = {
   .get_real_usec	= _papi_freebsd_get_real_usec,
   .get_virt_usec	= _papi_freebsd_get_virt_usec,
   .update_shlib_info	= _papi_freebsd_update_shlib_info,
-  //.get_system_info		= _papi_freebsd_get_system_info,
+  .get_system_info	= _papi_freebsd_get_system_info,
 };

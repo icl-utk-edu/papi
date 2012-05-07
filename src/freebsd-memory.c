@@ -13,13 +13,41 @@
 #include "papi.h"
 #include "papi_internal.h"
 
+#include "x86_cpuid_info.h"
+
 #define UNREFERENCED(x) (void)x
 
+
+#if defined(__i386__)||defined(__x86_64__)
+static int
+x86_get_memory_info( PAPI_hw_info_t *hw_info )
+{
+  int retval = PAPI_OK;
+
+  switch ( hw_info->vendor ) {
+  case PAPI_VENDOR_AMD:
+  case PAPI_VENDOR_INTEL:
+    retval = _x86_cache_info( &hw_info->mem_hierarchy );
+    break;
+  default:
+    PAPIERROR( "Unknown vendor in memory information call for x86." );
+    return PAPI_ESBSTR;
+  }
+  return retval;
+}
+#endif
+
+
 int 
-_freebsd_get_memory_info( PAPI_hw_info_t * hw_info, int id)
+_freebsd_get_memory_info( PAPI_hw_info_t *hw_info, int id)
 {
 	UNREFERENCED(id);
 	UNREFERENCED(hw_info);
+
+#if defined(__i386__)||defined(__x86_64__)
+        x86_get_memory_info( hw_info );
+#endif
+
 	return PAPI_ESBSTR;
 }
 

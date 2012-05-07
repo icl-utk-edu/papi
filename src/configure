@@ -3865,42 +3865,26 @@ else
                  if test "$CPU" = ""; then
                    CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`"
                  fi ;;
-               linux)
-                 if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
-                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   if test "$family" = "6"; then
-                     if (test "$model" = "7" || test "$model" = "8" || test "$model" = "9" || test "$model" = "10" || test "$model" = "11" || test "$model" = "13"); then
-                       CPU=p3
-                     elif test "$model" = "14"; then
-                       CPU=core
-                     elif (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
-                       CPU=core2
-                     elif (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || test "$model" = "44" || test "$model" = "46"); then
-                       CPU=i7
-                     elif test "$model" = "28"; then
-                       CPU=atom
-                     fi
-                     MISCSRCS="$MISCSRCS x86_cpuid_info.c"
-                   elif test "$family" = "15"; then
-                     CPU=p4
-                     MISCSRCS="$MISCSRCS x86_cpuid_info.c"
-                   elif test "$family" = "32"; then
-	                 CPU=montecito
-	               elif test "$family" = "31"; then
-	                 CPU=itanium2
-                   fi
-                 elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
-                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   if (test "$family" = "15" || test "$family" = "16"); then
-                     CPU=opteron
-                   elif test "$family" = "6"; then
-                     CPU=athlon
-                   fi
-                   MISCSRCS="$MISCSRCS x86_cpuid_info.c"
-                 else
+	       freebsd)
                    family=`uname -m`
-                   if test "$family" = "ppc64"; then
+
+		   if test "$family" = "amd64"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c"
+
+		   elif test "$family" = "i386"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c"
+		   fi ;;
+
+               linux)
+                   family=`uname -m`
+
+		   if test "$family" = "x86_64"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c"
+
+		   elif test "$family" = "i686"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c"
+
+                   elif test "$family" = "ppc64"; then
                      CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
                      case "$CPU_info" in
                        PPC970*) CPU="PPC970";;
@@ -3909,8 +3893,7 @@ else
                        POWER6)  CPU="POWER6";;
                        POWER7)  CPU="POWER7";;
                      esac
-	               fi
-                 fi ;;
+	           fi ;;
                solaris)
                  if test "${ac_cv_header_libcpc_h+set}" = set; then
   echo "$as_me:$LINENO: checking for libcpc.h" >&5
@@ -7177,7 +7160,7 @@ elif test "$MAKEVER" = "freebsd"; then
     PAPI_EVENTS_CSV="freebsd_events.csv"
     MISCHDRS="freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h freebsd/map-westme\
 re.h"
-    MISCSRCS="freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd/map-westme\
+    MISCSRCS="$MISCSRCS freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd/map-westme\
 re.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
   DESCR="FreeBSD -over libpmc- substrate"
@@ -7210,9 +7193,6 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
     MISCOBJS='$(MISCSRCS:.c=.o)'
     MISCHDRS="linux-timer.h linux-common.h"
     VERSION=2.6.x
-    if test "$CPU" = "p4"; then
-      CTEST_TARGETS="$CTEST_TARGETS p4"
-    fi
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-POWER7" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
     FILENAME=Rules.perfctr
     SUBSTR=perfctr-ppc64
