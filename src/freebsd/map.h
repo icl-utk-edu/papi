@@ -46,8 +46,6 @@ typedef struct Native_Event_Info
 {
 	/* Name and description for all native events */
 	Native_Event_LabelDescription_t *info;
-	/* Mapping between native events <-> PAPI events */
-	hwi_search_t *map;
 } Native_Event_Info_t;
 
 extern Native_Event_Info_t _papi_hwd_native_info[CPU_LAST+1];

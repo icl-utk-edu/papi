@@ -145,7 +145,7 @@ int init_mdi(void)
 }
 
 
-int init_presets(void)
+int init_presets(int cidx)
 {
 	const struct pmc_cpuinfo *info;
 
@@ -156,8 +156,9 @@ int init_presets(void)
 
 	init_freebsd_libpmc_mappings();
 
-	if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_P6") == 0)
+	if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_P6") == 0) {
 		Context.CPUsubstrate = CPU_P6;
+	}
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PII") == 0)
 		Context.CPUsubstrate = CPU_P6_2;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PIII") == 0)
@@ -192,9 +193,8 @@ int init_presets(void)
 	_papi_freebsd_vector.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
 	_papi_freebsd_vector.cmp_info.attach = 0;
 
-#if 0
-	_papi_hwi_setup_all_presets(_papi_hwd_native_info[Context.CPUsubstrate].map, NULL);
-#endif
+	_papi_load_preset_table((char *)pmc_name_of_cputype(info->pm_cputype),
+				0,cidx);
 
 	return 0;
 }
@@ -225,7 +225,7 @@ int _papi_freebsd_init_substrate(int cidx)
    init_mdi();
 
    /* Internal function, doesn't necessarily need to be a function */
-   init_presets();
+   init_presets(cidx);
 
    return PAPI_OK;
 }
