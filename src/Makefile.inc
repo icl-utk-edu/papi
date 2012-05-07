@@ -12,7 +12,8 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h cpus.h papi_vector.h \
     papi_memory.h config.h papi_user_events.h \
     extras.h multiplex.h papi_hl.h \
-    papi_common_strings.h components_config.h
+    papi_common_strings.h components_config.h \
+    papi_events_table.h
 LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS = fpapi.h f77papi.h f90papi.h
 
@@ -52,7 +53,7 @@ $(LIBRARY): $(OBJECTS)
 	rm -f $(LIBRARY)
 	$(AR) $(ARG64) rv $(LIBRARY) $(OBJECTS)
 
-$(SHLIB): $(SOURCES) $(SHLIBOBJS) 
+$(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS) 
 	@if test "$(SHLIB)" != "libpapi.so" ; then \
 	    rm -f $(SHLIB) libpapi.so; \
 	fi
