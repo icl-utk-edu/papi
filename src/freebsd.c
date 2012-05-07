@@ -21,6 +21,8 @@
 #include SUBSTRATE
 #include "map.h"
 
+PAPI_os_info_t _papi_os_info;
+
 #if defined(DEBUG)
 # define SHOW_WHERE_I_AM  { fprintf (stderr, "DEBUG: I am at function %s (file: %s, line: %d)\n", __FUNCTION__, __FILE__, __LINE__); }
 #else
@@ -136,8 +138,9 @@ int init_presets(void)
 	_papi_freebsd_vector.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
 	_papi_freebsd_vector.cmp_info.attach = 0;
 
+#if 0
 	_papi_hwi_setup_all_presets(_papi_hwd_native_info[Context.CPUsubstrate].map, NULL);
-
+#endif
 
 
 	/*
@@ -847,6 +850,7 @@ int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI)
  */
 int _papi_freebsd_update_shlib_info(papi_mdi_t *mdi){
 	SHOW_WHERE_I_AM;
+	(void)mdi;
   return PAPI_OK;
 }
 
