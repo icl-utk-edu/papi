@@ -20,6 +20,8 @@
 #include SUBSTRATE
 #include "map.h"
 
+PAPI_os_info_t _papi_os_info;
+
 #if defined(DEBUG)
 # define SHOW_WHERE_I_AM  { fprintf (stderr, "DEBUG: I am at function %s (file: %s, line: %d)\n", __FUNCTION__, __FILE__, __LINE__); }
 #else
@@ -135,8 +137,9 @@ int init_presets(void)
 	MY_VECTOR.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
 	MY_VECTOR.cmp_info.attach = 0;
 
+#if 0
 	_papi_hwi_setup_all_presets(_papi_hwd_native_info[Context.CPUsubstrate].map, NULL);
-
+#endif
 
 
 	/*
@@ -874,6 +877,8 @@ void _papi_freebsd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
   (void)dst;
   (void)ctr;
 	SHOW_WHERE_I_AM;
+	(void)mdi;
+  return PAPI_OK;
 }
 
 /* This function examines the event to determine if it can be mapped 
