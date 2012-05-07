@@ -8,7 +8,7 @@
 
 # print "#define STATIC_PAPI_EVENTS_TABLE 1"
 echo "static char *papi_events_table ="
-cat papi_events.csv | \
+cat $1 | \
 	tr "\"" "'" |
 	sed 's/^/"/' | \
 	sed 's/$/\\n\"/'

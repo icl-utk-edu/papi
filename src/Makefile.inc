@@ -134,7 +134,7 @@ sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o
 
 $(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
-	sh papi_events_table.sh > $@
+	sh papi_events_table.sh papi_events.csv > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
