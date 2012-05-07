@@ -5213,9 +5213,6 @@ else
   papi_events="static"
              papi_events_table="papi_events_table.h"
              CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"
-             { echo "$as_me:$LINENO: Generating papi_events_table.h" >&5
-echo "$as_me: Generating papi_events_table.h" >&6;}
-             sh papi_events_table.sh > papi_events_table.h
 fi;
 
 
