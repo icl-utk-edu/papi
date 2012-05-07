@@ -413,7 +413,8 @@ int _papi_freebsd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long 
 
 #if defined(DEBUG)
 	for (i = 0; i < ctrl->n_counters; i++)
-		fprintf (stderr, "DEBUG: %s counter '%s' has value %lld\n", FUNC, ctrl->counters[i], ctrl->values[i]);
+		fprintf (stderr, "DEBUG: %s counter '%s' has value %lld\n", 
+			 FUNC, ctrl->counters[i], (long long)ctrl->values[i]);
 #endif
 	return PAPI_OK;
 }

@@ -57,6 +57,7 @@ OMPCFLGS = @OMPCFLGS@
 OPTFLAGS = @OPTFLAGS@
 PAPI_EVENTS	= @papi_events@
 PAPI_EVENTS_TABLE= @papi_events_table@
+PAPI_EVENTS_CSV = @PAPI_EVENTS_CSV@
 PEPATH	= @PEPATH@
 PERFCTR_INC_PATH = @perfctr_incdir@
 PERFCTR_LIB_PATH = @perfctr_libdir@

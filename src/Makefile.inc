@@ -134,8 +134,8 @@ x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
 sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o
 
-$(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
-	sh papi_events_table.sh papi_events.csv > $@
+$(PAPI_EVENTS_TABLE):	$(PAPI_EVENTS_CSV) papi_events_table.sh
+	sh papi_events_table.sh $(PAPI_EVENTS_CSV) > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
