@@ -485,8 +485,17 @@ get_event_first_active(void)
 
       pidx=pinfo.first_event;
 
-      return pidx;
+      SUBDBG("First event in %s is %d\n",pinfo.name,pidx);
 
+      if (pidx<0) {
+	/* For some reason no events available */
+	/* despite the PMU being active.       */
+        /* This can happen, for example with ix86arch */
+	/* inside of VMware                           */
+      }
+      else {
+         return pidx;
+      }
     }
 
     pmu_idx++;
@@ -989,6 +998,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
            SUBDBG("ENUM_FIRST\n");
 
 	   code=get_event_first_active();
+	   SUBDBG("ENUM_FIRST code: %d\n",code);
 	   if (code < 0 ) {
 	      return code;
 	   }
