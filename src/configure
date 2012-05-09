@@ -6964,6 +6964,7 @@ echo "$as_me: error: pmc_npmc info returned 0. Determine if the HWPMC module is 
     elif test "$force_perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
     elif test "$force_perfctr" = "yes" ; then
+      MAKEVER="$OS"-perfctr-x86
       case "$CPU" in
         itanium2|montecito)
           if test "$bitmode" = "32"; then
@@ -6973,8 +6974,6 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
           fi
 	  MAKEVER="$OS"-pfm-"$CPU"
 	  ;;
-        athlon|opteron|atom|core|core2|p3|p4|i7)
-	        MAKEVER="$OS"-perfctr-x86 ;;
         POWER5|POWER5+|POWER6|POWER7|PPC970)
           MAKEVER="$OS"-perfctr-"$CPU" ;;
      esac
