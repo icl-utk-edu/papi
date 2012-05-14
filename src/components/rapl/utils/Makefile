@@ -13,4 +13,4 @@ rapl_plot.o:	rapl_plot.c
 	$(CC) $(CFLAGS) -I$(PAPI_INCLUDE) -c rapl_plot.c
 
 clean:	
-	rm -f *~ *.o rapl_plot
+	rm -f *~ *.o rapl_plot results.*
