@@ -105,7 +105,6 @@ typedef struct _rapl_control_state
 {
   int being_measured[RAPL_MAX_COUNTERS];
   long long count[RAPL_MAX_COUNTERS];
-  long long previous_count[RAPL_MAX_COUNTERS];
   int need_difference[RAPL_MAX_COUNTERS];
   long long lastupdate;
 } _rapl_control_state_t;
@@ -113,7 +112,8 @@ typedef struct _rapl_control_state
 
 typedef struct _rapl_context
 {
-	_rapl_control_state_t state;
+  long long start_count[RAPL_MAX_COUNTERS];
+  _rapl_control_state_t state;
 } _rapl_context_t;
 
 
@@ -549,14 +549,14 @@ _rapl_init_control_state( hwd_control_state_t *ctl)
 int 
 _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
-  ( void ) ctx;
+  _rapl_context_t* context = (_rapl_context_t*) ctx;
   _rapl_control_state_t* control = (_rapl_control_state_t*) ctl;
   long long now = PAPI_get_real_usec();
   int i;
 
   for( i = 0; i < RAPL_MAX_COUNTERS; i++ ) {
      if ((control->being_measured[i]) && (control->need_difference[i])) {
-        control->previous_count[i]=read_rapl_energy(i);
+        context->start_count[i]=read_rapl_energy(i);
      }
   }
 
@@ -570,9 +570,9 @@ _rapl_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	    long long **events, int flags)
 {
     (void) flags;
-    (void) ctx;
     (void) events;
 
+    _rapl_context_t* context = (_rapl_context_t*) ctx;
     _rapl_control_state_t* control = (_rapl_control_state_t*) ctl;
     long long now = PAPI_get_real_usec();
     int i;
@@ -591,13 +591,11 @@ _rapl_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	  if (control->need_difference[i]) {
 
 	     temp=read_rapl_energy(i);
-	     control->count[i]=temp - control->previous_count[i];
+	     control->count[i]=temp - context->start_count[i];
 	     /* overflow */
 	     if (control->count[i] < 0 ) {
 	        printf("Error! overflow!\n");
 	     }
-
-	     control->previous_count[i]=temp;
 	  }
 	  else {
 	     control->count[i]=read_rapl_energy(i);
@@ -617,9 +615,9 @@ _rapl_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 int 
 _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-    (void) ctx;
 
     /* read values */
+    _rapl_context_t* context = (_rapl_context_t*) ctx;
     _rapl_control_state_t* control = (_rapl_control_state_t*) ctl;
     long long now = PAPI_get_real_usec();
     int i;
@@ -636,13 +634,12 @@ _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 	  if (control->need_difference[i]) {
 
 	     temp=read_rapl_energy(i);
-	     control->count[i]=temp - control->previous_count[i];
+	     control->count[i]=temp - context->start_count[i];
 	     /* overflow */
 	     if (control->count[i] < 0 ) {
 	        printf("Error! overflow!\n");
 	     }
 
-	     control->previous_count[i]=temp;
 	  }
 	  else {
 	     control->count[i]=read_rapl_energy(i);
