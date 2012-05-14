@@ -7,7 +7,7 @@ static int total = 0;				   /* total overflows */
 static long long values[2];
 static long long rapl_values[2];
 static long long old_rapl_values[2] = {0,0};
-static rapl_backward=0;
+static int rapl_backward=0;
 
 int EventSet2=PAPI_NULL;
 
@@ -17,6 +17,8 @@ void handler( int EventSet, void *address,
 	      long long overflow_vector, void *context ) {
 
 	( void ) context;
+	( void ) address;
+	( void ) overflow_vector;
 
 #if 0
 	fprintf( stderr, "handler(%d ) Overflow at %p! bit=0x%llx \n",
