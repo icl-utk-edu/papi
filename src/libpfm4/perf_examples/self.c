@@ -46,8 +46,8 @@
 #include "perf_util.h"
 
 static const char *gen_events[]={
-	"PERF_COUNT_HW_CPU_CYCLES",
-	"PERF_COUNT_HW_INSTRUCTIONS",
+	"cycles",
+	"instructions",
 	NULL
 };
 
@@ -165,7 +165,7 @@ main(int argc, char **argv)
 	for (i = 0; i < num_fds; i++)
 	  close(fds[i].fd);
 
-	free(fds);
+	perf_free_fds(fds, num_fds);
 
 	/* free libpfm resources cleanly */
 	pfm_terminate();

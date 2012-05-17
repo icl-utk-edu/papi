@@ -243,7 +243,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 	/*
  	 * read sample header
  	 */
-	ret = perf_read_buffer(fdx[0].buf, fdx[0].pgmsk, &ehdr, sizeof(ehdr));
+	ret = perf_read_buffer(fdx+0, &ehdr, sizeof(ehdr));
 	if (ret) {
 		errx(1, "cannot read event header");
 	}
@@ -258,7 +258,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 	user_callback(myid);
 skip:
 	/* mark sample as consumed */
-	perf_skip_buffer(fdx[0].buf, ehdr.size);
+	perf_skip_buffer(fdx+0, ehdr.size);
 
 	/*
 	 * re-arm period, next notification after wakeup_events
@@ -278,7 +278,7 @@ overflow_start(char *name)
 
 	fds = NULL;
 	num_fds = 0;
-	ret = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES", &fds, &num_fds);
+	ret = perf_setup_list_events("cycles", &fds, &num_fds);
 	if (ret || !num_fds)
 		errx(1, "cannot monitor event");
 
@@ -357,7 +357,7 @@ my_thread(void *v)
 	do_cycles();
 	overflow_stop();
 
-	free(fds);
+	perf_free_fds(fds, num_fds);
 
 	pthread_exit((void *)&retval);
 }
