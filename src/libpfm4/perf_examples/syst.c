@@ -153,8 +153,8 @@ measure(void)
 		fds = all_fds[c];
 		for(i=0; i < num_fds[c]; i++)
 			close(fds[i].fd);
+		perf_free_fds(fds, num_fds[c]);
 	}
-	free(all_fds);
 }
 
 static void
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 		options.delay = 20;
 
 	if (!options.events)
-		options.events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+		options.events = "cycles,instructions";
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)

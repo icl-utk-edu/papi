@@ -53,7 +53,6 @@ static int buffer_pages = 1; /* size of buffer payload  (must be power of 2) */
 static void
 sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 {
-	struct perf_event_mmap_page *hdr;
 	struct perf_event_header ehdr;
 	uint64_t ip;
 	int id, ret;
@@ -62,19 +61,17 @@ sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 	if (id == -1)
 		errx(1, "cannot find event for descriptor %d", info->si_fd);
 
-	hdr = fds[id].buf;
-
-	ret = perf_read_buffer(hdr, fds[id].pgmsk, &ehdr, sizeof(ehdr));
+	ret = perf_read_buffer(fds+id, &ehdr, sizeof(ehdr));
 	if (ret)
 		errx(1, "cannot read event header");
 
 	if (ehdr.type != PERF_RECORD_SAMPLE) {
 		warnx("unknown event type %d, skipping", ehdr.type);
-		perf_skip_buffer(hdr, ehdr.size - sizeof(ehdr));
+		perf_skip_buffer(fds+id, ehdr.size - sizeof(ehdr));
 		goto skip;
 	}
 
-	ret = perf_read_buffer(hdr, fds[id].pgmsk, &ip, sizeof(ip));
+	ret = perf_read_buffer(fds+id, &ip, sizeof(ip));
 	if (ret)
 		errx(1, "cannot read IP");
 
@@ -131,9 +128,9 @@ main(int argc, char **argv)
 	/*
  	 * allocates fd for us
  	 */
-	ret = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES,"
-				       "PERF_COUNT_HW_CPU_CYCLES,"
-					"PERF_COUNT_HW_CPU_CYCLES",
+	ret = perf_setup_list_events("cycles,"
+				       "instructions,"
+					"cycles",
 				        &fds, &num_fds);
 	if (ret || !num_fds)
 		exit(1);
@@ -199,7 +196,7 @@ error:
 	for(i=0; i < num_fds; i++)
 		close(fds[i].fd);
 
-	free(fds);
+	perf_free_fds(fds, num_fds);
 
 	/* free libpfm resources cleanly */
 	pfm_terminate();

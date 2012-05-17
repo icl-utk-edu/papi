@@ -282,7 +282,7 @@ pfmlib_pmu_initialized(pfmlib_pmu_t *pmu)
 static inline pfm_pmu_t
 idx2pmu(int idx)
 {
-	return (idx >> PFMLIB_PMU_SHIFT) & PFMLIB_PMU_MASK;
+	return (pfm_pmu_t)(idx >> PFMLIB_PMU_SHIFT) & PFMLIB_PMU_MASK;
 }
 
 static inline pfmlib_pmu_t *
@@ -304,7 +304,7 @@ static pfmlib_pmu_t *
 pfmlib_idx2pidx(int idx, int *pidx)
 {
 	pfmlib_pmu_t *pmu;
-	int pmu_id;
+	pfm_pmu_t pmu_id;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return NULL;
@@ -312,7 +312,7 @@ pfmlib_idx2pidx(int idx, int *pidx)
 	if (idx < 0)
 		return NULL;
 
-	pmu_id = (idx >> PFMLIB_PMU_SHIFT) & PFMLIB_PMU_MASK;
+	pmu_id = idx2pmu(idx);
 
 	pmu = pmu2pmuidx(pmu_id);
 	if (!pmu)
@@ -365,8 +365,8 @@ pfmlib_check_struct(void *st, size_t usz, size_t refsz, size_t sz)
 	 * by caller assuming the library set those bits.
 	 */
 	if (usz > sz) {
-		char *addr = st + sz;
-		char *end = st + usz;
+		char *addr = (char *)st + sz;
+		char *end = (char *)st + usz;
 		while (addr != end) {
 			if (*addr++) {
 				DPRINT("pfmlib_check_struct: invalid extra bits\n");
