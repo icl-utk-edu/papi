@@ -757,9 +757,9 @@ PAPI_FCALL( papif_get_event_info, PAPIF_GET_EVENT_INFO,
 		strncpy( symbol, info.symbol, PAPI_MAX_STR_LEN );
 		strncpy( long_descr, info.long_descr, PAPI_MAX_STR_LEN );
 		strncpy( short_descr, info.short_descr, PAPI_MAX_STR_LEN );
-		*count = info.preset_info->count;
-		if (info.preset_info->note) 
-                   strncpy( event_note, info.preset_info->note, 
+		*count = info.count;
+		if (info.note) 
+                   strncpy( event_note, info.note, 
 			    PAPI_MAX_STR_LEN );
 	}
 /*  printf("Check: %d\n", *check); -KSL */

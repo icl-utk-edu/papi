@@ -1,6 +1,6 @@
 PAPIVER=4
-PAPIREV=2
-PAPIAGE=1
+PAPIREV=9
+PAPIAGE=0
 PAPIINC=0
 PREFIX    = @prefix@
 prefix    = $(PREFIX)
@@ -57,6 +57,7 @@ OMPCFLGS = @OMPCFLGS@
 OPTFLAGS = @OPTFLAGS@
 PAPI_EVENTS	= @papi_events@
 PAPI_EVENTS_TABLE= @papi_events_table@
+PAPI_EVENTS_CSV = @PAPI_EVENTS_CSV@
 PEPATH	= @PEPATH@
 PERFCTR_INC_PATH = @perfctr_incdir@
 PERFCTR_LIB_PATH = @perfctr_libdir@

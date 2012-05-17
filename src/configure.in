@@ -7,7 +7,7 @@
 # cross compiling should work differently...
 
 AC_PREREQ(2.59)
-AC_INIT(PAPI, 4.2.1.0, ptools-perfapi@eecs.utk.edu)
+AC_INIT(PAPI, 4.9.0.0, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -263,42 +263,26 @@ AC_ARG_WITH(CPU,
                  if test "$CPU" = ""; then
                    CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
                  fi ;;
-               linux)
-                 if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
-                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   if test "$family" = "6"; then
-                     if (test "$model" = "7" || test "$model" = "8" || test "$model" = "9" || test "$model" = "10" || test "$model" = "11" || test "$model" = "13"); then
-                       CPU=p3
-                     elif test "$model" = "14"; then
-                       CPU=core
-                     elif (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
-                       CPU=core2
-                     elif (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || test "$model" = "44" || test "$model" = "46"); then
-                       CPU=i7
-                     elif test "$model" = "28"; then 
-                       CPU=atom
-                     fi
-                     MISCSRCS="$MISCSRCS x86_cpuid_info.c"
-                   elif test "$family" = "15"; then
-                     CPU=p4
-                     MISCSRCS="$MISCSRCS x86_cpuid_info.c"
-                   elif test "$family" = "32"; then
-	                 CPU=montecito
-	               elif test "$family" = "31"; then
-	                 CPU=itanium2
-                   fi	
-                 elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
-                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                   if (test "$family" = "15" || test "$family" = "16"); then
-                     CPU=opteron
-                   elif test "$family" = "6"; then
-                     CPU=athlon
-                   fi
-                   MISCSRCS="$MISCSRCS x86_cpuid_info.c"
-                 else
+	       freebsd)
                    family=`uname -m`
-                   if test "$family" = "ppc64"; then
+
+		   if test "$family" = "amd64"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
+
+		   elif test "$family" = "i386"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
+		   fi ;;
+
+               linux)
+                   family=`uname -m`
+
+		   if test "$family" = "x86_64"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
+
+		   elif test "$family" = "i686"; then
+                      MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
+
+                   elif test "$family" = "ppc64"; then
                      CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
                      case "$CPU_info" in
                        PPC970*) CPU="PPC970";;
@@ -307,8 +291,7 @@ AC_ARG_WITH(CPU,
                        POWER6)  CPU="POWER6";;
                        POWER7)  CPU="POWER7";;
                      esac
-	               fi
-                 fi ;;
+	           fi ;;
                solaris)
                  AC_CHECK_HEADER([libcpc.h],
                                  [CFLAGS="$CFLAGS -lcpc"
@@ -715,9 +698,7 @@ AC_ARG_WITH(papi_events,
             [papi_events=$withval],
             [papi_events="static" 
              papi_events_table="papi_events_table.h"
-             CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"   
-             AC_MSG_NOTICE(Generating papi_events_table.h)
-             sh papi_events_table.sh > papi_events_table.h])
+             CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"])
 
 AC_ARG_WITH(static_tools,
             [  --with-static-tools		Specify static build of tests and utilities],
@@ -1135,6 +1116,7 @@ case "$OS" in
     elif test "$force_perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
     elif test "$force_perfctr" = "yes" ; then
+      MAKEVER="$OS"-perfctr-x86
       case "$CPU" in
         itanium2|montecito)
           if test "$bitmode" = "32"; then
@@ -1142,8 +1124,6 @@ case "$OS" in
           fi
 	  MAKEVER="$OS"-pfm-"$CPU"
 	  ;;
-        athlon|opteron|atom|core|core2|p3|p4|i7)
-	        MAKEVER="$OS"-perfctr-x86 ;;
         POWER5|POWER5+|POWER6|POWER7|PPC970)
           MAKEVER="$OS"-perfctr-"$CPU" ;;
      esac
@@ -1231,6 +1211,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     SUBSTR=aix
     VECTOR=_aix_vector
     MEMSUBSTR=aix
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
     MISCSRCS="aix.c"
     MISCOBJS="aix.o"
@@ -1287,6 +1268,7 @@ elif test "$MAKEVER" = "bgp"; then
     SUBSTR=linux-bgp
     VECTOR=_bgp_vectors
     MEMSUBSTR=linux-bgp
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS=linux-bgp-preset-events.c
     MISCOBJS='$(MISCSRCS:.c=.o)'
     SUBSTR_HEADERS=linux-bgp-native-events.h
@@ -1309,6 +1291,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
     SUBSTR=perfmon
     VECTOR=_papi_pfm_vector
     MEMSUBSTR=linux
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="x86_cpuid_info.c linux-common.c linux-timer.c"
   F77=gfortran
   CFLAGS="$CFLAGS -D__crayxt"
@@ -1317,8 +1300,11 @@ elif test "$MAKEVER" = "freebsd"; then
     SUBSTR=freebsd
     VECTOR=_papi_freebsd_vector
     MEMSUBSTR=freebsd
-    MISCHDRS="freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h"
-    MISCSRCS="freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd-memory.c"
+    PAPI_EVENTS_CSV="freebsd_events.csv"
+    MISCHDRS="freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h freebsd/map-westme\
+re.h"
+    MISCSRCS="$MISCSRCS freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd/map-westme\
+re.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
   DESCR="FreeBSD -over libpmc- substrate"
   CFLAGS="$CFLAGS -I. -Ifreebsd -DPIC -fPIC $DEBUGFLAGS"
@@ -1335,6 +1321,7 @@ elif test "$MAKEVER" = "linux-pe"; then
     SUBSTR=perf_events 
     VECTOR=_papi_pe_vector
     MEMSUBSTR=linux
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS sys_perf_event_open.c linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
     MISCHDRS="linux-timer.h linux-common.h"
@@ -1344,18 +1331,17 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
     SUBSTR=perfctr-x86
     VECTOR=_perfctr_vector
     MEMSUBSTR=linux
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
     MISCHDRS="linux-timer.h linux-common.h"
     VERSION=2.6.x  
-    if test "$CPU" = "p4"; then
-      CTEST_TARGETS="$CTEST_TARGETS p4"
-    fi
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-POWER7" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
     FILENAME=Rules.perfctr
     SUBSTR=perfctr-ppc64
     VECTOR=_perfctr_vector
     MEMSUBSTR=linux
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
     MISCHDRS="linux-timer.h linux-common.h"
@@ -1389,6 +1375,7 @@ elif test "$MAKEVER" = "linux-perfmon2"; then
     SUBSTR=perfmon
     VECTOR=_papi_pfm_vector
     MEMSUBSTR=linux
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
     MISCHDRS="linux-timer.h linux-common.h"
@@ -1397,6 +1384,7 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-mon
     SUBSTR=perfmon-ia64
     VECTOR=_ia64_vector
     MEMSUBSTR=linux
+    PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
     MISCHDRS="linux-timer.h linux-common.h"
@@ -1415,6 +1403,7 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     SUBSTR=solaris-ultra
     VECTOR=_solaris_vector
     MEMSUBSTR=solaris
+    PAPI_EVENTS_CSV="papi_events.csv"
   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
   CTEST_TARGETS="serial multiplex_and_pthreads shared"
   if test "$CC" = "gcc"; then
@@ -1450,6 +1439,7 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     SUBSTR=solaris-niagara2
     VECTOR=_niagara2_vector
     MEMSUBSTR=solaris-niagara2
+    PAPI_EVENTS_CSV="papi_events.csv"
     CTEST_TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
     CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__ -DCOMP_VECTOR=_niagara2_vector"
     ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vector"
@@ -1610,6 +1600,7 @@ AC_SUBST(FTEST_TARGETS)
 AC_SUBST(UTIL_TARGETS)
 AC_SUBST(EXTRA_CFLAGS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
+AC_SUBST(PAPI_EVENTS_CSV)
 
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

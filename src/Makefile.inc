@@ -12,7 +12,8 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h cpus.h papi_vector.h \
     papi_memory.h config.h papi_user_events.h \
     extras.h multiplex.h papi_hl.h \
-    papi_common_strings.h components_config.h
+    papi_common_strings.h components_config.h \
+    papi_events_table.h
 LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS = fpapi.h f77papi.h f90papi.h
 
@@ -52,7 +53,7 @@ $(LIBRARY): $(OBJECTS)
 	rm -f $(LIBRARY)
 	$(AR) $(ARG64) rv $(LIBRARY) $(OBJECTS)
 
-$(SHLIB): $(SOURCES) $(SHLIBOBJS) 
+$(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS) 
 	@if test "$(SHLIB)" != "libpapi.so" ; then \
 	    rm -f $(SHLIB) libpapi.so; \
 	fi
@@ -133,8 +134,8 @@ x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
 sys_perf_event_open.o: sys_perf_event_open.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sys_perf_event_open.c -o sys_perf_event_open.o
 
-$(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
-	sh papi_events_table.sh > $@
+$(PAPI_EVENTS_TABLE):	$(PAPI_EVENTS_CSV) papi_events_table.sh
+	sh papi_events_table.sh $(PAPI_EVENTS_CSV) > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
@@ -154,8 +155,8 @@ bgp_tests:$(LIBRARY) null
 	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
  
 #Required for freebsd
-freebsd-memory.o: freebsd-memory.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) -c $< -o $@
+#freebsd-memory.o: freebsd-memory.c $(HEADERS)
+#	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd/map.o: freebsd/map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
@@ -201,6 +202,9 @@ freebsd/map-core2-extreme.o: freebsd/map-core2-extreme.c $(HEADERS)
 
 freebsd/map-i7.o: freebsd/map-i7.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-westmere.o: freebsd/map-westmere.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@                                          
 
 # So we already build this for $SUBSTRATE
 #freebsd.o: freebsd.c $(HEADERS)

@@ -58,7 +58,7 @@ typedef struct hwd_control_state {
 	int hwc_domain;      /* HWC domain {user|kernel} */
 	unsigned *caps;      /* Capabilities for each counter */
 	pmc_id_t *pmcs;      /* PMC identifiers */
-	long long *values;   /* Stored values for each counter */
+	pmc_value_t *values; /* Stored values for each counter */
 	char **counters;     /* Name of each counter (with mode) */
 } hwd_control_state_t;
 

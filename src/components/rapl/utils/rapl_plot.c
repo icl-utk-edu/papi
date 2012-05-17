@@ -20,18 +20,16 @@ char events[NUM_EVENTS][BUFSIZ]={
   "PP0_ENERGY:PACKAGE1",
 };
 
-char filenames[NUM_EVENTS+2][BUFSIZ]={
+char filenames[NUM_EVENTS][BUFSIZ]={
   "results.PACKAGE_ENERGY_PACKAGE0",
   "results.PACKAGE_ENERGY_PACKAGE1",
   "results.DRAM_ENERGY_PACKAGE0",
   "results.DRAM_ENERGY_PACKAGE1",
   "results.PP0_ENERGY_PACKAGE0",
   "results.PP0_ENERGY_PACKAGE1",
-  "results.UNCORE_PACKAGE0",
-  "results.UNCORE_PACKAGE1",
 };
 
-FILE *fff[NUM_EVENTS+2];
+FILE *fff[NUM_EVENTS];
 
 
 int main (int argc, char **argv)
@@ -83,7 +81,7 @@ int main (int argc, char **argv)
 
 
      /* Open output files */
-     for(i=0;i<NUM_EVENTS+2;i++) {
+     for(i=0;i<NUM_EVENTS;i++) {
         fff[i]=fopen(filenames[i],"w");
 	if (fff[i]==NULL) {
 	   fprintf(stderr,"Could not open %s\n",filenames[i]);
@@ -141,16 +139,6 @@ int main (int argc, char **argv)
 		   events[i]);
 	   fflush(fff[i]);
         }
-	fprintf(fff[NUM_EVENTS],"%.4f %.1f (* Average Power for %s *)\n",
-		   total_time,
-		((double)(values[0]-values[4])/1.0e9)/elapsed_time,
-		   "UNCORE_PACKAGE0");
-	fprintf(fff[NUM_EVENTS+1],"%.4f %.1f (* Average Power for %s *)\n",
-		   total_time,
-		((double)(values[1]-values[5])/1.0e9)/elapsed_time,
-		   "UNCORE_PACKAGE1");
-	   fflush(fff[NUM_EVENTS]);
-	   fflush(fff[NUM_EVENTS+1]);
      }
 		
      return 0;
