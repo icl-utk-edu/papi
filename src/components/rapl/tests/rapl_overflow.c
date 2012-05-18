@@ -64,6 +64,8 @@ main( int argc, char **argv )
 	int mythreshold = 1000000;
 	char event_name1[PAPI_MAX_STR_LEN];
         int PAPI_event;
+	int cid,numcmp,rapl_cid;
+	const PAPI_component_info_t *cmpinfo = NULL;
 
 	/* Set TESTS_QUIET variable */
 	tests_quiet( argc, argv );      
@@ -75,6 +77,31 @@ main( int argc, char **argv )
 	if ( retval != PAPI_VER_CURRENT ) {
 	  test_fail(__FILE__, __LINE__,"PAPI_library_init",retval);
 	}
+
+	numcmp = PAPI_num_components();
+
+	for(cid=0; cid<numcmp; cid++) {
+
+	  if ( (cmpinfo = PAPI_get_component_info(cid)) == NULL) {
+	    test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
+	  }
+
+	  if (strstr(cmpinfo->name,"linux-rapl")) {
+	    rapl_cid=cid;
+	    if (!TESTS_QUIET) printf("Found rapl component at cid %d\n",
+				     rapl_cid);
+	    if (cmpinfo->num_native_events==0) {
+              test_skip(__FILE__,__LINE__,"No rapl events found",0);
+	    }
+	    break;
+	  }
+	}
+
+	/* Component not found */
+	if (cid==numcmp) {
+	  test_skip(__FILE__,__LINE__,"No rapl component found\n",0);
+	}
+
 
 	/* add PAPI_TOT_CYC and PAPI_TOT_INS */
 	retval=PAPI_create_eventset(&EventSet);

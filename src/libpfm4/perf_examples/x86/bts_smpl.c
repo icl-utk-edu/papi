@@ -91,60 +91,13 @@ child(char **arg)
 struct timeval last_read, this_read;
 
 static void
-display_lost(perf_event_desc_t *hw)
-{
-	struct { uint64_t id, lost; } lost;
-	const char *str;
-	int e, ret;
-
-	ret = perf_read_buffer(hw->buf, hw->pgmsk, &lost, sizeof(lost));
-	if (ret)
-		errx(1, "cannot read lost info");
-
-	e = perf_id2event(fds, num_fds, lost.id);
-	if (e == -1)
-		str = "unknown lost event";
-	else
-		str = fds[e].name;
-
-	printf("<<<LOST %"PRIu64" SAMPLES FOR EVENT %s (%"PRIu64") >>>\n", lost.lost, str, lost.id);
-	lost_samples += lost.lost;
-}
-
-static void
-display_exit(perf_event_desc_t *hw)
-{
-	struct { pid_t pid, ppid, tid, ptid; } grp;
-	int ret;
-
-	ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
-	if (ret)
-		errx(1, "cannot read exit info");
-
-	printf("[%d] exited\n", grp.pid);
-}
-
-static void
-display_freq(int mode, perf_event_desc_t *hw)
-{
-	struct { uint64_t time, id, stream_id; } thr;
-	int ret;
-
-	ret = perf_read_buffer(hw->buf, hw->pgmsk, &thr, sizeof(thr));
-	if (ret)
-		errx(1, "cannot read throttling info");
-
-	printf("%s value=%"PRIu64" event ID=%"PRIu64"\n", mode ? "Throttled" : "Unthrottled", thr.id, thr.stream_id);
-}
-
-static void
 process_smpl_buf(perf_event_desc_t *hw)
 {
 	struct perf_event_header ehdr;
 	int ret;
 
 	for(;;) {
-		ret = perf_read_buffer(hw->buf, hw->pgmsk, &ehdr, sizeof(ehdr));
+		ret = perf_read_buffer(hw, &ehdr, sizeof(ehdr));
 		if (ret)
 			return; /* nothing to read */
 
@@ -154,20 +107,20 @@ process_smpl_buf(perf_event_desc_t *hw)
 				collected_samples++;
 				break;
 			case PERF_RECORD_EXIT:
-				display_exit(hw);
+				display_exit(hw, stdout);
 				break;
 			case PERF_RECORD_LOST:
-				display_lost(hw);
+				display_lost(hw, fds, num_fds, stdout);
 				break;
 			case PERF_RECORD_THROTTLE:
-				display_freq(1, hw);
+				display_freq(1, hw, stdout);
 				break;
 			case PERF_RECORD_UNTHROTTLE:
-				display_freq(0, hw);
+				display_freq(0, hw, stdout);
 				break;
 			default:
 				printf("unknown sample type %d sz=%d\n", ehdr.type, ehdr.size);
-				perf_skip_buffer(hw->buf, ehdr.size - sizeof(ehdr));
+				perf_skip_buffer(hw, ehdr.size - sizeof(ehdr));
 		}
 	}
 }
@@ -178,6 +131,7 @@ mainloop(char **arg)
 	static uint64_t ovfl_count; /* static to avoid setjmp issue */
 	struct pollfd pollfds[1];
 	size_t map_size = 0;
+	sigset_t bmask;
 	pid_t pid;
 	uint64_t val[2];
 	int status, ret;
@@ -190,7 +144,7 @@ mainloop(char **arg)
 	/*
 	 * does allocate fds
 	 */
-	ret = perf_setup_list_events("PERF_COUNT_HW_BRANCH_INSTRUCTIONS:u", &fds, &num_fds);
+	ret = perf_setup_list_events("branches:u", &fds, &num_fds);
 	if (ret || !num_fds)
 		errx(1, "cannot setup event");
 
@@ -268,6 +222,8 @@ mainloop(char **arg)
 	if (setjmp(jbuf) == 1)
 		goto terminate_session;
 
+	sigemptyset(&bmask);
+	sigaddset(&bmask, SIGCHLD);
 	/*
 	 * core loop
 	 */
@@ -276,7 +232,13 @@ mainloop(char **arg)
 		if (ret < 0 && errno == EINTR)
 			break;
 		ovfl_count++;
+		ret = sigprocmask(SIG_SETMASK, &bmask, NULL);
+		if (ret)
+			err(1, "setmask");
 		process_smpl_buf(&fds[0]);
+		ret = sigprocmask(SIG_UNBLOCK, &bmask, NULL);
+		if (ret)
+			err(1, "unblock");
 	}
 terminate_session:
 	/*

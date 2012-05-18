@@ -527,7 +527,7 @@ _example_set_domain( hwd_control_state_t * cntrl, int domain )
 int
 _example_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-  int cidx,index;
+  int index;
 
 
   switch ( modifier ) {

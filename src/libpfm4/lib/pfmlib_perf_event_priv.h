@@ -40,4 +40,6 @@
 #define _PERF_ATTR_FR (1 << PERF_ATTR_FR)
 #define _PERF_ATTR_PR (1 << PERF_ATTR_PR)
 
+#define PERF_PLM_ALL (PFM_PLM0|PFM_PLM3|PFM_PLMH)
+
 #endif

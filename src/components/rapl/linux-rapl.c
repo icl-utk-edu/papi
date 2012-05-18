@@ -18,6 +18,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -308,11 +309,16 @@ _rapl_init_substrate( int cidx )
      /* Detect how many packages */
      j=0;
      while(1) {
+       int num_read;
+
        sprintf(filename,
 	       "/sys/devices/system/cpu/cpu%d/topology/physical_package_id",j);
        fff=fopen(filename,"r");
        if (fff==NULL) break;
-       fscanf(fff,"%d",&package);
+       num_read=fscanf(fff,"%d",&package);
+       if (num_read!=1) {
+	  fprintf(stderr,"error reading %s\n",filename);
+       }
 
        /* Check if a new package */
        for(i=0;i<num_packages;i++) {
@@ -524,8 +530,6 @@ _rapl_init_substrate( int cidx )
 
      return PAPI_OK;
 }
-
-
 
 
 /*
