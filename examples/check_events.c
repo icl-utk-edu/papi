@@ -49,14 +49,12 @@ int
 main(int argc, const char **argv)
 {
 	pfm_pmu_info_t pinfo;
+	pfm_pmu_encode_arg_t e;
 	const char *arg[3];
 	const char **p;
 	char *fqstr;
 	pfm_event_info_t info;
-	uint64_t *codes;
-	int count;
-	int i, j;
-	int ret, idx;
+	int i, j, ret;
 	int total_supported_events = 0;
 	int total_available_events = 0;
 
@@ -108,8 +106,7 @@ main(int argc, const char **argv)
 	if (!*p)
 		errx(1, "you must pass at least one event");
 
-	codes = NULL;
-	count = 0;
+	memset(&e, 0, sizeof(e));
 	while(*p) {
 		/*
 		 * extract raw event encoding
@@ -120,23 +117,25 @@ main(int argc, const char **argv)
 		 * pfm_get_perf_event_encoding()
 		 */
 		fqstr = NULL;
-		ret = pfm_get_event_encoding(*p, PFM_PLM0|PFM_PLM3, &fqstr, &idx, &codes, &count);
+		e.fstr = &fqstr;
+		ret = pfm_get_os_event_encoding(*p, PFM_PLM0|PFM_PLM3, PFM_OS_NONE, &e);
 		if (ret != PFM_SUCCESS) {
 			/*
 			 * codes is too small for this event
 			 * free and let the library resize
 			 */
 			if (ret == PFM_ERR_TOOSMALL) {
-				free(codes);
-				codes = NULL;
-				count = 0;
+				free(e.codes);
+				e.codes = NULL;
+				e.count = 0;
+				free(fqstr);
 				continue;
 			}
 			if (ret == PFM_ERR_NOTFOUND && strstr(*p, "::"))
 				errx(1, "%s: try setting LIBPFM_ENCODE_INACTIVE=1", pfm_strerror(ret));
 			errx(1, "cannot encode event %s: %s", *p, pfm_strerror(ret));
 		}
-		ret = pfm_get_event_info(idx, PFM_OS_NONE, &info);
+		ret = pfm_get_event_info(e.idx, PFM_OS_NONE, &info);
 		if (ret != PFM_SUCCESS)
 			errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
@@ -147,16 +146,16 @@ main(int argc, const char **argv)
 		printf("Requested Event: %s\n", *p);
 		printf("Actual    Event: %s\n", fqstr);
 		printf("PMU            : %s\n", pinfo.desc);
-		printf("IDX            : %d\n", idx);
+		printf("IDX            : %d\n", e.idx);
 		printf("Codes          :");
-		for(j=0; j < count; j++)
-			printf(" 0x%"PRIx64, codes[j]);
+		for(j=0; j < e.count; j++)
+			printf(" 0x%"PRIx64, e.codes[j]);
 		putchar('\n');
 
 		free(fqstr);
 		p++;
 	}
-	if (codes)
-		free(codes);
+	if (e.codes)
+		free(e.codes);
 	return 0;
 }

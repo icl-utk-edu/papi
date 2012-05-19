@@ -86,6 +86,7 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 
 		memset(&arg, 0, sizeof(arg));
 		arg.attr = &fd[num].hw;
+		arg.fstr = &fd[num].fstr; /* fd[].fstr is NULL */
 
 		ret = pfm_get_os_event_encoding(*argv, PFM_PLM0|PFM_PLM3, PFM_OS_PERF_EVENT_EXT, &arg);
 		if (ret != PFM_SUCCESS) {
@@ -154,8 +155,10 @@ perf_free_fds(perf_event_desc_t *fds, int num_fds)
 {
 	int i;
 
-	for (i = 0 ; i < num_fds; i++)
+	for (i = 0 ; i < num_fds; i++) {
 		free(fds[i].name);
+		free(fds[i].fstr);
+	}
 	free(fds);
 }
 
