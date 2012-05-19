@@ -38,14 +38,10 @@ DESCRIPTION
       OPEN_FDS
       OPEN_USEC
 
-    The component works by intercepting I/O system calls on Linux. At present
+    The component works by intercepting I/O system calls on Linux. At present,
     the code uses a features available in libc on Linux, and is unlikely to
-    work on other platforms at present. 
-
-    At present the code works for static and dynamic linkage. In the future, 
-    if necessary to accomodate a larger number of I/O calls, we may restrict
-    support to dynamically linked executables to take advantage of LD_PRELOAD
-    for interception.
+    work on other platforms without modifications. The code works for static 
+    and shared executables.
 
     The component has been tested on 32 and 64-bit Linux. It's also been tested
     to work for multithreaded programs.
@@ -55,9 +51,9 @@ DESCRIPTION
     The most important aspect to note is that the code is likely to only work on
     Linux, given the low-level dependencies on libc features. 
 
-    At present the component intercepts the open(), read(), write(), fread() and fwrite().
-    In the future it's envisaged that these will be expanded to cover open(), close(),
-    lseek(), select(), etc. 
+    At present the component intercepts the open(), close(), read(), write(), 
+    fread() and fwrite(). In the future it's expected that these will be expanded 
+    to cover lseek(), select(), other I/O calls.
 
     The component at present doesn't distinguish between network and file I/O. So,
     any read/writes will count, regardless of whether the underlying descriptor is

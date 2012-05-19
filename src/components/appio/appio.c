@@ -102,7 +102,7 @@ static const struct appio_counters {
     { "WRITE_USEC",      "Real microseconds spent in writes"},
     { "OPEN_CALLS",      "Number of open calls"},
     { "OPEN_ERR",        "Number of open calls that resulted in an error"},
-    { "OPEN_FDS",        "Number of descriptors opened by application since launch"},
+    { "OPEN_FDS",        "Number of currently open descriptors"},
     { "OPEN_USEC",       "Real microseconds spent in open calls"}
 };
 
@@ -110,6 +110,15 @@ static const struct appio_counters {
 /*********************************************************************
  ***  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ****
  ********************************************************************/
+
+int __close(int fd);
+int close(int fd) {
+  int retval;
+  SUBDBG("appio: intercepted close(%d)\n", fd);
+  retval = __close(fd);
+  if ((retval == 0) && (_appio_register_current[OPEN_FDS]>0)) _appio_register_current[OPEN_FDS]--;
+  return retval;
+}
 
 int __open(const char *pathname, int flags, mode_t mode);
 int open(const char *pathname, int flags, mode_t mode) {

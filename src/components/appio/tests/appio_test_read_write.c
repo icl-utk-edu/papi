@@ -68,13 +68,17 @@ int main(int argc, char** argv) {
     write(fdout, buf, bytes);
   }
 
+  /* Closing the descriptors before doing the PAPI_stop
+     means, OPEN_FDS will be reported as zero, which is
+     right, since at the time of PAPI_stop, the descriptors
+     we opened have been closed */
+  close (fdin);
+  close (fdout);
 
   /* Stop counting events */
   if (PAPI_stop_counters(values, NUM_EVENTS) != PAPI_OK) {
     fprintf(stderr, "Error in PAPI_stop_counters\n");
   }
-  close (fdin);
-  close (fdout);
  
   if (!TESTS_QUIET) { 
     printf("----\n");

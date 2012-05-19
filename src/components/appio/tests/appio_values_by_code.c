@@ -90,10 +90,6 @@ int main (int argc, char **argv)
     int fdin,fdout;
     const char* infile = "/etc/group";
     fprintf(stderr, "This program will read %s and write it to /dev/null\n", infile);
-    fdin=open(infile, O_RDONLY);
-    if (fdin < 0) perror("Could not open file for reading: \n");
-    fdout = open("/dev/null", O_WRONLY);
-    if (fdout < 0) perror("Could not open /dev/null for writing: \n");
     int bytes = 0;
     char buf[1024];
 
@@ -106,6 +102,11 @@ int main (int argc, char **argv)
     if (retval != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_start()", retval);
     }
+
+    fdin=open(infile, O_RDONLY);
+    if (fdin < 0) perror("Could not open file for reading: \n");
+    fdout = open("/dev/null", O_WRONLY);
+    if (fdout < 0) perror("Could not open /dev/null for writing: \n");
 
     while ((bytes = read(fdin, buf, 1024)) > 0) {
       write(fdout, buf, bytes);
