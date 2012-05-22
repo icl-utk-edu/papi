@@ -291,6 +291,13 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 
   int i;
 
+	if (use_pseudo) {
+           context->values[VMWARE_HOST_TSC]=rdpmc(0x10000);
+           context->values[VMWARE_ELAPSED_TIME]=rdpmc(0x10001);
+           context->values[VMWARE_ELAPSED_APPARENT]=rdpmc(0x10002);
+	}
+
+
 #ifdef VMGUESTLIB
 	static VMSessionId sessionId = 0;
 	VMSessionId tmpSession;
@@ -301,7 +308,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"UpdateInfo failed: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   //	   return PAPI_ESBSTR;
 	}
 
 	/* Retrieve and check the session ID */
@@ -483,11 +490,6 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	}
 
 #endif
-	if (use_pseudo) {
-           context->values[VMWARE_HOST_TSC]=rdpmc(0x10000);
-           context->values[VMWARE_ELAPSED_TIME]=rdpmc(0x10001);
-           context->values[VMWARE_ELAPSED_APPARENT]=rdpmc(0x10002);
-	}
 
 	if (starting) {
 
@@ -1002,7 +1004,7 @@ _vmware_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 		fprintf(stderr, "Failed to CloseHandle: %s\n", GuestLib_GetErrorText(glError));
 		//        success = FALSE;
-		return EXIT_FAILURE;
+		return PAPI_ESBSTR;
 	}
 #endif
 
