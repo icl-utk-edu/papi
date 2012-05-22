@@ -39,6 +39,8 @@ int main (int argc, char **argv)
 	   printf("Trying all vmware events\n");
 	}
 
+	/* Find our Component */
+	
         numcmp = PAPI_num_components();
 
 	for(cid=0; cid<numcmp; cid++) {
@@ -54,11 +56,23 @@ int main (int argc, char **argv)
 	     continue;
 	   }
 
+	   PAPI_event_info_t info;
+
+	   /* Try all events one by one */
+
 	   code = PAPI_NATIVE_MASK;
 
            r = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, cid );
 
 	   while ( r == PAPI_OK ) {
+
+	      retval=PAPI_get_event_info(code,&info);
+	      if (retval!=PAPI_OK) {
+		 printf("Error getting event info\n");
+	         test_fail( __FILE__, __LINE__, 
+                            "PAPI_get_event_info", retval );
+	      }
+
 	      retval = PAPI_event_code_to_name( code, event_name );
 	      if ( retval != PAPI_OK ) {
 		 printf("Error translating %x\n",code);
@@ -82,17 +96,23 @@ int main (int argc, char **argv)
                                  "PAPI_add_event()",retval);
 	      }
 
+	      /* start */
 	      retval = PAPI_start( EventSet);
 	      if (retval != PAPI_OK) {
 	            test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
 	      }
 
+	      /* do something */
+	      usleep(100);
+
+	      /* stop */
 	      retval = PAPI_stop( EventSet, values);
 	      if (retval != PAPI_OK) {
 	            test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
 	      }
 
-	      if (!TESTS_QUIET) printf(" value: %lld\n",values[0]);
+	      if (!TESTS_QUIET) printf(" value: %lld %s\n",values[0],
+				       info.units);
 
 	      retval = PAPI_cleanup_eventset( EventSet );
 	      if (retval != PAPI_OK) {
@@ -117,7 +137,7 @@ int main (int argc, char **argv)
 	}
 
 	if (!TESTS_QUIET) {
-	  printf("Note: for this test the values are expected to all be 0\n\t unless run inside a VM on a busy system.\n");
+	  printf("\n");
 	}
 
 	test_pass( __FILE__, NULL, 0 );
