@@ -76,6 +76,7 @@ struct _vmware_native_event_entry {
 	char description[PAPI_HUGE_STR_LEN]; /**< Description of counter     */
         char units[PAPI_MIN_STR_LEN];
         int which_counter;
+        int report_difference;
 };
 
 struct _vmware_reg_alloc {
@@ -85,23 +86,24 @@ struct _vmware_reg_alloc {
 
 /** Holds control flags, usually out-of band configuration of the hardware */
 struct _vmware_control_state {
-	long_long counter[VMWARE_MAX_COUNTERS];
+   long long value[VMWARE_MAX_COUNTERS];
+   int which_counter[VMWARE_MAX_COUNTERS];
+   int num_events;
 };
 
 /** Holds per-thread information */
 struct _vmware_context {
-	struct _vmware_control_state state;
+  long long values[VMWARE_MAX_COUNTERS];
+  long long start_values[VMWARE_MAX_COUNTERS];
 };
 
+inline uint64_t rdpmc(int c)
+{
+  uint32_t low, high;
+  __asm__ __volatile__("rdpmc" : "=a" (low), "=d" (high) : "c" (c));
+  return (uint64_t)high << 32 | (uint64_t)low;
+}
 
-
-
-
-/* For inline assembly */
-#define readpmc(counter, val) \
-__asm__ __volatile__("rdpmc" \
-: "=A" (val) \
-: "c" (counter))
 
 
 #ifdef VMGUESTLIB
@@ -264,226 +266,213 @@ static int use_pseudo=0;
  You might replace this with code that accesses
  hardware or reads values from the operatings system. */
 static long long
-_vmware_hardware_read( int which_one )
+_vmware_hardware_read( struct _vmware_context *context, int starting)
 {
 
-	uint64_t host_tsc = 0;
-	uint64_t elapsed_time = 0;
-	uint64_t elapsed_apparent = 0;
+  int i;
 
 #ifdef VMGUESTLIB
-	uint32_t cpuLimitMHz = 0;
-	uint32_t cpuReservationMHz = 0;
-	uint32_t cpuShares = 0;
-	uint64_t cpuUsedMs = 0;
-	uint32_t hostMHz = 0;
-	uint32_t memReservationMB = 0;
-	uint32_t memLimitMB = 0;
-	uint32_t memShares = 0;
-	uint32_t memMappedMB = 0;
-	uint32_t memActiveMB = 0;
-	uint32_t memOverheadMB = 0;
-	uint32_t memBalloonedMB = 0;
-	uint32_t memSwappedMB = 0;
-	uint32_t memSharedMB = 0;
-	uint32_t memSharedSavedMB = 0;
-	uint32_t memUsedMB = 0;
-	uint64_t elapsedMs = 0;
-	uint64_t cpuStolenMs = 0;
-	uint64_t memTargetSizeMB = 0;
-	uint32_t hostNumCpuCores = 0;
-	uint64_t hostCpuUsedMs = 0;
-	uint64_t hostMemSwappedMB = 0;
-	uint64_t hostMemSharedMB = 0;
-	uint64_t hostMemUsedMB = 0;
-	uint64_t hostMemPhysMB = 0;
-	uint64_t hostMemPhysFreeMB = 0;
-	uint64_t hostMemKernOvhdMB = 0;
-	uint64_t hostMemMappedMB = 0;
-	uint64_t hostMemUnmappedMB = 0;
 	static VMSessionId sessionId = 0;
+	VMSessionId tmpSession;
 
 	glError = GuestLib_UpdateInfo(glHandle);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-		fprintf(stderr,"UpdateInfo failed: %s\n", GuestLib_GetErrorText(glError));
-		return -1;
+	   fprintf(stderr,"UpdateInfo failed: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
 	}
 
 	/* Retrieve and check the session ID */
-	VMSessionId tmpSession;
 	glError = GuestLib_GetSessionId(glHandle, &tmpSession);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-		fprintf(stderr, "Failed to get session ID: %s\n", GuestLib_GetErrorText(glError));
-		return -1;
+	   fprintf(stderr, "Failed to get session ID: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
 	}
+
 	if (tmpSession == 0) {
-		fprintf(stderr, "Error: Got zero sessionId from GuestLib\n");
-		return -1;
+	   fprintf(stderr, "Error: Got zero sessionId from GuestLib\n");
+	   return PAPI_ESBSTR;
 	}
+
 	if (sessionId == 0) {
-		sessionId = tmpSession;
+	   sessionId = tmpSession;
 	} else if (tmpSession != sessionId) {
-		sessionId = tmpSession;
+	   sessionId = tmpSession;
 	}
-#endif
 
-	switch ( which_one ) {
+	glError = GuestLib_GetCpuLimitMHz(glHandle, 
+			   context->values[VMWARE_CPU_LIMIT_MHZ]);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr,"Failed to get CPU limit: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
 
-#ifdef VMGUESTLIB
-		case VMWARE_CPU_LIMIT_MHZ:          // #define 3
-			glError = GuestLib_GetCpuLimitMHz(glHandle, &cpuLimitMHz);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr,"Failed to get CPU limit: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return cpuLimitMHz;
-		case VMWARE_CPU_RESERVATION_MHZ:    // #define 4
-			glError = GuestLib_GetCpuReservationMHz(glHandle, &cpuReservationMHz);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr,"Failed to get CPU reservation: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return cpuReservationMHz;
-		case VMWARE_CPU_SHARES:             // #define 5
-			glError = GuestLib_GetCpuShares(glHandle, &cpuShares);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr,"Failed to get cpu shares: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return cpuShares;
-		case VMWARE_CPU_STOLEN_MS:          // #define 6
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				if (glError == VMGUESTLIB_ERROR_UNSUPPORTED_VERSION) {
-					cpuStolenMs = 0;
-					fprintf(stderr, "Skipping CPU stolen, not supported...\n");
-				} else {
-					fprintf(stderr, "Failed to get CPU stolen: %s\n", GuestLib_GetErrorText(glError));
-					return -1;
-				}
-			}
-			return cpuStolenMs;
-		case VMWARE_CPU_USED_MS:            // #define 7
-			glError = GuestLib_GetCpuUsedMs(glHandle, &cpuUsedMs);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get used ms: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return cpuUsedMs;
+	glError = GuestLib_GetCpuReservationMHz(glHandle, 
+			   context->values[VMWARE_CPU_RESERVATION_MHZ]);
+        if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr,"Failed to get CPU reservation: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+	
+	glError = GuestLib_GetCpuShares(glHandle,
+			   context->values[VMWARE_CPU_SHARES]);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr,"Failed to get cpu shares: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
+	glError = GuestLib_GetCpuStolenMs(glHandle,
+			   context->values[VMWARE_CPU_STOLEN_MS]);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   if (glError == VMGUESTLIB_ERROR_UNSUPPORTED_VERSION) {
+	      cpuStolenMs = 0;
+	      fprintf(stderr, "Skipping CPU stolen, not supported...\n");
+	   } else {
+	      fprintf(stderr, "Failed to get CPU stolen: %s\n", 
+		      GuestLib_GetErrorText(glError));
+	      return PAPI_ESBSTR;
+	   }
+	}
+
+	glError = GuestLib_GetCpuUsedMs(glHandle,
+			   context->values[VMWARE_CPU_USED_MS]);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get used ms: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+	
 		case VMWARE_ELAPSED_MS:             // #define 8
-			glError = GuestLib_GetElapsedMs(glHandle, &elapsedMs);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get elapsed ms: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return elapsedMs;
+	glError = GuestLib_GetElapsedMs(glHandle, &elapsedMs);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get elapsed ms: %s\n",
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
 		case VMWARE_MEM_ACTIVE_MB:          // #define 9
-			glError = GuestLib_GetMemActiveMB(glHandle, &memActiveMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get active mem: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memActiveMB;
+	glError = GuestLib_GetMemActiveMB(glHandle, &memActiveMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get active mem: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+	
 		case VMWARE_MEM_BALLOONED_MB:       // #define 10
-			glError = GuestLib_GetMemBalloonedMB(glHandle, &memBalloonedMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get ballooned mem: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memBalloonedMB;
+	glError = GuestLib_GetMemBalloonedMB(glHandle, &memBalloonedMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get ballooned mem: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+	
 		case VMWARE_MEM_LIMIT_MB:           // #define 11
-			glError = GuestLib_GetMemLimitMB(glHandle, &memLimitMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				printf("Failed to get mem limit: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memLimitMB;
+	glError = GuestLib_GetMemLimitMB(glHandle, &memLimitMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr,"Failed to get mem limit: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
 		case VMWARE_MEM_MAPPED_MB:          // #define 12
-			glError = GuestLib_GetMemMappedMB(glHandle, &memMappedMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get mapped mem: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memMappedMB;
+        glError = GuestLib_GetMemMappedMB(glHandle, &memMappedMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get mapped mem: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
 		case VMWARE_MEM_OVERHEAD_MB:        // #define 13
-			glError = GuestLib_GetMemOverheadMB(glHandle, &memOverheadMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get overhead mem: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memOverheadMB;
+	glError = GuestLib_GetMemOverheadMB(glHandle, &memOverheadMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get overhead mem: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
 		case VMWARE_MEM_RESERVATION_MB:     // #define 14
-			glError = GuestLib_GetMemReservationMB(glHandle, &memReservationMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get mem reservation: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memReservationMB;
+	glError = GuestLib_GetMemReservationMB(glHandle, &memReservationMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get mem reservation: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
 		case VMWARE_MEM_SHARED_MB:          // #define 15
-			glError = GuestLib_GetMemSharedMB(glHandle, &memSharedMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get swapped mem: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memSharedMB;
+        glError = GuestLib_GetMemSharedMB(glHandle, &memSharedMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get swapped mem: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
 		case VMWARE_MEM_SHARES:             // #define 16
-			glError = GuestLib_GetMemShares(glHandle, &memShares);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				if (glError == VMGUESTLIB_ERROR_NOT_AVAILABLE) {
-					memShares = 0;
-					fprintf(stderr, "Skipping mem shares, not supported...\n");
-				} else {
-					fprintf(stderr, "Failed to get mem shares: %s\n", GuestLib_GetErrorText(glError));
-					return -1;
-				}
-			}
-			return memShares;
+	glError = GuestLib_GetMemShares(glHandle, &memShares);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   if (glError == VMGUESTLIB_ERROR_NOT_AVAILABLE) {
+	      memShares = 0;
+	      fprintf(stderr, "Skipping mem shares, not supported...\n");
+	   } else {
+	      fprintf(stderr, "Failed to get mem shares: %s\n", 
+		      GuestLib_GetErrorText(glError));
+	      return PAPI_ESBSTR;
+	   }
+	}
+
 		case VMWARE_MEM_SWAPPED_MB:         // #define 17
-			glError = GuestLib_GetMemSwappedMB(glHandle, &memSwappedMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get swapped mem: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memSwappedMB;
+	glError = GuestLib_GetMemSwappedMB(glHandle, &memSwappedMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get swapped mem: %s\n",
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+	
 		case VMWARE_MEM_TARGET_SIZE_MB:     // #define 18
-			glError = GuestLib_GetMemTargetSizeMB(glHandle, &memTargetSizeMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				if (glError == VMGUESTLIB_ERROR_UNSUPPORTED_VERSION) {
-					memTargetSizeMB = 0;
-					fprintf(stderr, "Skipping target mem size, not supported...\n");
-				} else {
-					fprintf(stderr, "Failed to get target mem size: %s\n", GuestLib_GetErrorText(glError));
-					return -1;
-				}
-			}
-			return memTargetSizeMB;
+	glError = GuestLib_GetMemTargetSizeMB(glHandle, &memTargetSizeMB);
+        if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   if (glError == VMGUESTLIB_ERROR_UNSUPPORTED_VERSION) {
+	      memTargetSizeMB = 0;
+	      fprintf(stderr, "Skipping target mem size, not supported...\n");
+	   } else {
+	      fprintf(stderr, "Failed to get target mem size: %s\n", 
+		      GuestLib_GetErrorText(glError));
+	      return PAPI_ESBSTR;
+	   }
+	}
+
 		case VMWARE_MEM_USED_MB:            // #define 19
-			glError = GuestLib_GetMemUsedMB(glHandle, &memUsedMB);
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get swapped mem: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return memUsedMB;
+        glError = GuestLib_GetMemUsedMB(glHandle, &memUsedMB);
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get swapped mem: %s\n",
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
 
 		case VMWARE_HOST_CPU_MHZ:               // #define 20
-			glError = GuestLib_GetHostProcessorSpeed(glHandle, &hostMHz); 
-			if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-				fprintf(stderr, "Failed to get host proc speed: %s\n", GuestLib_GetErrorText(glError));
-				return -1;
-			}
-			return hostMHz;
+        glError = GuestLib_GetHostProcessorSpeed(glHandle, &hostMHz); 
+	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
+	   fprintf(stderr, "Failed to get host proc speed: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
+	}
+
 #endif
-		case VMWARE_HOST_TSC:
-			readpmc(0x10000, host_tsc);
-			return host_tsc;
-		case VMWARE_ELAPSED_TIME:
-			readpmc(0x10001, elapsed_time);
-			return elapsed_time;
-		case VMWARE_ELAPSED_APPARENT:
-			readpmc(0x10002, elapsed_apparent);
-			return elapsed_apparent;
-		default:
-			perror( "Invalid counter read" );
-			return -1;
+	if (use_pseudo) {
+           context->values[VMWARE_HOST_TSC]=rdpmc(0x10000);
+           context->values[VMWARE_ELAPSED_TIME]=rdpmc(0x10001);
+           context->values[VMWARE_ELAPSED_APPARENT]=rdpmc(0x10002);
+	}
+
+	if (starting) {
+
+	  for(i=0;i<VMWARE_MAX_COUNTERS;i++) {
+	    context->start_values[i]=context->values[i];
+	  }
+
 	}
 
 	return PAPI_OK;
@@ -510,6 +499,9 @@ _vmware_init( hwd_context_t *ctx )
 int
 _vmware_init_substrate( int cidx )
 {
+
+  (void) cidx;
+
   int result;
 
 	SUBDBG( "_vmware_init_substrate..." );
@@ -546,6 +538,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MHz");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_CPU_LIMIT_MHZ;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -557,6 +550,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MHz");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_CPU_RESERVATION_MHZ;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -568,6 +562,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"shares");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_CPU_SHARES;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -580,6 +575,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"ms");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_CPU_STOLEN_MS;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -597,6 +593,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"ms");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_CPU_USED_MS;
+	_vmware_native_table[num_events].report_difference=1;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -616,6 +613,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"ms");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_ELAPSED_MS;
+	_vmware_native_table[num_events].report_difference=1;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -627,6 +625,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
                  VMWARE_MEM_ACTIVE_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -639,6 +638,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_BALLOONED_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -650,6 +650,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_LIMIT_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -662,6 +663,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_MAPPED_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -676,6 +678,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_OVERHEAD_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -687,6 +690,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_RESERVATION_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -699,6 +703,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_SHARED_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -710,6 +715,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"shares");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_SHARES;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -722,6 +728,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_SWAPPED_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -733,6 +740,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_TARGET_SIZE_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -745,6 +753,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MB");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_MEM_USED_MB;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
@@ -756,6 +765,7 @@ _vmware_init_substrate( int cidx )
 	strcpy( _vmware_native_table[num_events].units,"MHz");
 	_vmware_native_table[num_events].which_counter=
 	        VMWARE_HOST_CPU_MHZ;
+	_vmware_native_table[num_events].report_difference=0;
 	num_events++;
 #endif
 
@@ -772,6 +782,7 @@ _vmware_init_substrate( int cidx )
 		strcpy( _vmware_native_table[num_events].units,"cycles");
 		_vmware_native_table[num_events].which_counter=
 		        VMWARE_HOST_TSC;
+	        _vmware_native_table[num_events].report_difference=1;
 		num_events++;
 
 		strcpy( _vmware_native_table[num_events].name,
@@ -782,6 +793,7 @@ _vmware_init_substrate( int cidx )
 	        strcpy( _vmware_native_table[num_events].units,"ns");
 		_vmware_native_table[num_events].which_counter=
 		        VMWARE_ELAPSED_TIME;
+	        _vmware_native_table[num_events].report_difference=1;
 		num_events++;
 
 		strcpy( _vmware_native_table[num_events].name,
@@ -792,6 +804,7 @@ _vmware_init_substrate( int cidx )
 	        strcpy( _vmware_native_table[num_events].units,"ns");
 		_vmware_native_table[num_events].which_counter=
 		        VMWARE_ELAPSED_APPARENT;
+	        _vmware_native_table[num_events].report_difference=1;
 		num_events++;
 	}
 
@@ -898,21 +911,27 @@ _vmware_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 
 /** Triggered by eventset operations like add or remove */
 int
-_vmware_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx )
+_vmware_update_control_state( hwd_control_state_t *ctl, 
+			      NativeInfo_t *native, 
+			      int count, 
+			      hwd_context_t *ctx )
 {
-	int i, index;
-	(void) ptr;
 	(void) ctx;
-	SUBDBG( "_vmware_update_control_state %p %p...", ptr, ctx );
+
+	struct _vmware_control_state *control;
+
+	int i, index;
+
+	control=(struct _vmware_control_state *)ctl;
+
 	for ( i = 0; i < count; i++ ) {
-		index =
-		native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
-		//		native[i].ni_position =
-		  //		_vmware_native_table[index].resources.selector - 1;
-		SUBDBG
-		( "\nnative[%i].ni_position = _vmware_native_table[%i].resources.selector-1 = %i;",
-		 i, index, native[i].ni_position );
+	    index = native[i].ni_event & 
+	            PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	    control->which_counter[i]=_vmware_native_table[index].which_counter;
+	    native[i].ni_position = i;
 	}
+	control->num_events=count;
+
 	return PAPI_OK;
 }
 
@@ -920,27 +939,34 @@ _vmware_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native, 
 int
 _vmware_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-	(void) ctx;
+	struct _vmware_context *context;
 	(void) ctl;
+
+	context=(struct _vmware_context *)ctx;
 
 #ifdef VMGUESTLIB
 	glError = GuestLib_OpenHandle(&glHandle);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-		fprintf(stderr,"OpenHandle failed: %s\n", GuestLib_GetErrorText(glError));
-		return EXIT_FAILURE;
+	   fprintf(stderr,"OpenHandle failed: %s\n", 
+		   GuestLib_GetErrorText(glError));
+	   return PAPI_ESBSTR;
 	}
 #endif
+
+	_vmware_hardware_read( context, 1 );
 
 	return PAPI_OK;
 }
 
 /** Triggered by PAPI_stop() */
 int
-_vmware_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
+_vmware_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-	(void) ctx;
-	(void) ctrl;
-	SUBDBG( "_vmware_stop %p %p...", ctx, ctrl );
+
+	struct _vmware_context *context;
+	(void) ctl;
+
+	context=(struct _vmware_context *)ctx;
 
 #ifdef VMGUESTLIB
 	glError = GuestLib_CloseHandle(glHandle);
@@ -951,6 +977,8 @@ _vmware_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 	}
 #endif
 
+	_vmware_hardware_read( context, 0 );	
+
 	return PAPI_OK;
 }
 
@@ -958,22 +986,38 @@ _vmware_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 _vmware_read( hwd_context_t *ctx, 
 	      hwd_control_state_t *ctl,
-	      long_long ** events, int flags )
+	      long_long **events, int flags )
 {
-	(void) ctx;
-	(void) flags;
-	SUBDBG( "_vmware_read... %p %d", ctx, flags );
 
-	// update this to a for loop to account for all counters, per Vince.
-	int i = 0;
-	for (i=0; i<num_events; ++i) {
-		((struct _vmware_control_state *)ctl)->counter[i] = _vmware_hardware_read(i);
-		if (((struct _vmware_control_state *)ctl)->counter[i] < 0) {
-			return EXIT_FAILURE;
-		}
+	struct _vmware_context *context;
+	struct _vmware_control_state *control;
+
+	(void) flags;
+	int i;
+
+	context=(struct _vmware_context *)ctx;
+	control=(struct _vmware_control_state *)ctl;
+
+	_vmware_hardware_read( context, 0 );
+
+	for (i=0; i<control->num_events; i++) {
+	  
+	  if (_vmware_native_table[
+              _vmware_native_table[control->which_counter[i]].which_counter].
+             report_difference) {
+	     control->value[i]=context->values[control->which_counter[i]]-
+	                       context->start_values[control->which_counter[i]];
+	  } else {
+	     control->value[i]=context->values[control->which_counter[i]];
+	  }
+	  //	  printf("%d %d %lld-%lld=%lld\n",i,control->which_counter[i],
+	  // context->values[control->which_counter[i]],
+	  //	 context->start_values[control->which_counter[i]],
+	  //	 control->value[i]);
+
 	}
 
-	*events = ( ( struct _vmware_control_state *) ctl )->counter;
+	*events = control->value;
 
 	return PAPI_OK;
 }
