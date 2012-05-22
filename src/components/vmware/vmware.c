@@ -200,11 +200,31 @@ LoadFunctions(void)
 	 */
 
 	char const *dlErrStr;
-	dlHandle = dlopen("libvmGuestLib.so", RTLD_NOW);
+	char filename[BUFSIZ];
+
+	sprintf(filename,"%s","libvmGuestLib.so");
+	dlHandle = dlopen(filename, RTLD_NOW);
 	if (!dlHandle) {
-		dlErrStr = dlerror();
-		fprintf(stderr, "dlopen failed: \'%s\'\n", dlErrStr);
-		return FALSE;
+	   dlErrStr = dlerror();
+	   fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename, 
+		   dlErrStr);
+
+	   sprintf(filename,"%s/lib/lib64/libvmGuestLib.so",VMWARE_INCDIR);
+	   dlHandle = dlopen(filename, RTLD_NOW);
+	   if (!dlHandle) {
+	      dlErrStr = dlerror();
+	      fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename, 
+		   dlErrStr);
+
+	      sprintf(filename,"%s/lib/lib32/libvmGuestLib.so",VMWARE_INCDIR);
+	      dlHandle = dlopen(filename, RTLD_NOW);
+	      if (!dlHandle) {
+	         dlErrStr = dlerror();
+	         fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename, 
+		      dlErrStr);
+		 return PAPI_ESBSTR;
+	      }
+	   }
 	}
 
 	/* Load all the individual library functions. */
@@ -274,6 +294,8 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 #ifdef VMGUESTLIB
 	static VMSessionId sessionId = 0;
 	VMSessionId tmpSession;
+	uint32_t temp32;
+	uint64_t temp64;
 
 	glError = GuestLib_UpdateInfo(glHandle);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
@@ -301,35 +323,35 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   sessionId = tmpSession;
 	}
 
-	glError = GuestLib_GetCpuLimitMHz(glHandle, 
-			   context->values[VMWARE_CPU_LIMIT_MHZ]);
+	glError = GuestLib_GetCpuLimitMHz(glHandle,&temp32);
+	context->values[VMWARE_CPU_LIMIT_MHZ]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get CPU limit: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-	glError = GuestLib_GetCpuReservationMHz(glHandle, 
-			   context->values[VMWARE_CPU_RESERVATION_MHZ]);
+	glError = GuestLib_GetCpuReservationMHz(glHandle,&temp32); 
+	context->values[VMWARE_CPU_RESERVATION_MHZ]=temp32;
         if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get CPU reservation: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 	
-	glError = GuestLib_GetCpuShares(glHandle,
-			   context->values[VMWARE_CPU_SHARES]);
+	glError = GuestLib_GetCpuShares(glHandle,&temp32);
+	context->values[VMWARE_CPU_SHARES]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get cpu shares: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-	glError = GuestLib_GetCpuStolenMs(glHandle,
-			   context->values[VMWARE_CPU_STOLEN_MS]);
+	glError = GuestLib_GetCpuStolenMs(glHandle,&temp64);
+	context->values[VMWARE_CPU_STOLEN_MS]=temp64;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   if (glError == VMGUESTLIB_ERROR_UNSUPPORTED_VERSION) {
-	      cpuStolenMs = 0;
+	      context->values[VMWARE_CPU_STOLEN_MS]=0;
 	      fprintf(stderr, "Skipping CPU stolen, not supported...\n");
 	   } else {
 	      fprintf(stderr, "Failed to get CPU stolen: %s\n", 
@@ -338,83 +360,83 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   }
 	}
 
-	glError = GuestLib_GetCpuUsedMs(glHandle,
-			   context->values[VMWARE_CPU_USED_MS]);
+	glError = GuestLib_GetCpuUsedMs(glHandle,&temp64);
+	context->values[VMWARE_CPU_USED_MS]=temp64;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get used ms: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 	
-		case VMWARE_ELAPSED_MS:             // #define 8
-	glError = GuestLib_GetElapsedMs(glHandle, &elapsedMs);
+	glError = GuestLib_GetElapsedMs(glHandle, &temp64);
+	context->values[VMWARE_ELAPSED_MS]=temp64;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get elapsed ms: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-		case VMWARE_MEM_ACTIVE_MB:          // #define 9
-	glError = GuestLib_GetMemActiveMB(glHandle, &memActiveMB);
+	glError = GuestLib_GetMemActiveMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_ACTIVE_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get active mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 	
-		case VMWARE_MEM_BALLOONED_MB:       // #define 10
-	glError = GuestLib_GetMemBalloonedMB(glHandle, &memBalloonedMB);
+	glError = GuestLib_GetMemBalloonedMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_BALLOONED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get ballooned mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 	
-		case VMWARE_MEM_LIMIT_MB:           // #define 11
-	glError = GuestLib_GetMemLimitMB(glHandle, &memLimitMB);
+	glError = GuestLib_GetMemLimitMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_LIMIT_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get mem limit: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-		case VMWARE_MEM_MAPPED_MB:          // #define 12
-        glError = GuestLib_GetMemMappedMB(glHandle, &memMappedMB);
+        glError = GuestLib_GetMemMappedMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_MAPPED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get mapped mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-		case VMWARE_MEM_OVERHEAD_MB:        // #define 13
-	glError = GuestLib_GetMemOverheadMB(glHandle, &memOverheadMB);
+	glError = GuestLib_GetMemOverheadMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_OVERHEAD_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get overhead mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-		case VMWARE_MEM_RESERVATION_MB:     // #define 14
-	glError = GuestLib_GetMemReservationMB(glHandle, &memReservationMB);
+	glError = GuestLib_GetMemReservationMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_RESERVATION_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get mem reservation: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-		case VMWARE_MEM_SHARED_MB:          // #define 15
-        glError = GuestLib_GetMemSharedMB(glHandle, &memSharedMB);
+        glError = GuestLib_GetMemSharedMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_SHARED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get swapped mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-		case VMWARE_MEM_SHARES:             // #define 16
-	glError = GuestLib_GetMemShares(glHandle, &memShares);
+	glError = GuestLib_GetMemShares(glHandle, &temp32);
+	context->values[VMWARE_MEM_SHARES]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   if (glError == VMGUESTLIB_ERROR_NOT_AVAILABLE) {
-	      memShares = 0;
+	      context->values[VMWARE_MEM_SHARES]=0;
 	      fprintf(stderr, "Skipping mem shares, not supported...\n");
 	   } else {
 	      fprintf(stderr, "Failed to get mem shares: %s\n", 
@@ -423,19 +445,19 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   }
 	}
 
-		case VMWARE_MEM_SWAPPED_MB:         // #define 17
-	glError = GuestLib_GetMemSwappedMB(glHandle, &memSwappedMB);
+	glError = GuestLib_GetMemSwappedMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_SWAPPED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get swapped mem: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 	
-		case VMWARE_MEM_TARGET_SIZE_MB:     // #define 18
-	glError = GuestLib_GetMemTargetSizeMB(glHandle, &memTargetSizeMB);
+	glError = GuestLib_GetMemTargetSizeMB(glHandle, &temp64);
+	context->values[VMWARE_MEM_TARGET_SIZE_MB]=temp64;
         if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   if (glError == VMGUESTLIB_ERROR_UNSUPPORTED_VERSION) {
-	      memTargetSizeMB = 0;
+	      context->values[VMWARE_MEM_TARGET_SIZE_MB]=0;
 	      fprintf(stderr, "Skipping target mem size, not supported...\n");
 	   } else {
 	      fprintf(stderr, "Failed to get target mem size: %s\n", 
@@ -444,16 +466,16 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   }
 	}
 
-		case VMWARE_MEM_USED_MB:            // #define 19
-        glError = GuestLib_GetMemUsedMB(glHandle, &memUsedMB);
+        glError = GuestLib_GetMemUsedMB(glHandle, &temp32);
+	context->values[VMWARE_MEM_USED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get swapped mem: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ESBSTR;
 	}
 
-		case VMWARE_HOST_CPU_MHZ:               // #define 20
-        glError = GuestLib_GetHostProcessorSpeed(glHandle, &hostMHz); 
+        glError = GuestLib_GetHostProcessorSpeed(glHandle, &temp32); 
+	context->values[VMWARE_HOST_CPU_MHZ]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get host proc speed: %s\n", 
 		   GuestLib_GetErrorText(glError));
@@ -806,6 +828,13 @@ _vmware_init_substrate( int cidx )
 		        VMWARE_ELAPSED_APPARENT;
 	        _vmware_native_table[num_events].report_difference=1;
 		num_events++;
+	}
+
+	if (num_events==0) {
+	   strncpy(_vmware_vector.cmp_info.disabled_reason,
+		  "VMware SDK not installed, and PAPI_VMWARE_PSEUDOPERFORMANCE not set",
+		   PAPI_MAX_STR_LEN);
+	  return PAPI_ESBSTR;
 	}
 
 	_vmware_vector.cmp_info.num_native_events = num_events;
