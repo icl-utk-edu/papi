@@ -608,7 +608,7 @@ papi_vector_t _stealtime_vector = {
   .ntv_enum_events =   _stealtime_ntv_enum_events,
   .ntv_code_to_name =  _stealtime_ntv_code_to_name,
   .ntv_code_to_descr = _stealtime_ntv_code_to_descr,
-
+  .ntv_code_to_info = _stealtime_ntv_code_to_info,
 };
 
 
