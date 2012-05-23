@@ -21,6 +21,7 @@ struct counter_info
 {
 	char *name;
 	char *description;
+        char *units;
 	unsigned long long value;
 };
 
@@ -178,12 +179,14 @@ _stealtime_init_substrate( int cidx )
 	sysconf(_SC_CLK_TCK);
 	event_info[0].name=strdup("STEAL_TIME:TOTAL");
 	event_info[0].description=strdup("Total amount of steal time");
+	event_info[0].units=strdup("us");
 
 	for(i=1;i<num_events;i++) {
 	   sprintf(string,"STEAL_TIME:CPU%d",i);
 	   event_info[i].name=strdup(string);
 	   sprintf(string,"Steal time for CPU %d",i);
 	   event_info[i].description=strdup(string);
+	   event_info[i].units=strdup("us");
         }
 
 	//	printf("Found %d CPUs\n",num_events-1);
@@ -499,6 +502,32 @@ _stealtime_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 
   return PAPI_ENOEVNT;
 }
+
+
+
+int
+_stealtime_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
+{
+
+  int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+
+  if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
+
+  info->event_code=EventCode;
+  strncpy( info->symbol, event_info[index].name,
+           sizeof(info->symbol));
+
+  strncpy( info->long_descr, event_info[index].description,
+           sizeof(info->symbol));
+
+  strncpy( info->units, event_info[index].units,
+           sizeof(info->units));
+
+  return PAPI_OK;
+
+}
+
+
 
 
 /*
