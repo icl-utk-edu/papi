@@ -669,7 +669,7 @@ _rapl_shutdown( hwd_context_t * ctx )
  * Clean up what was setup in  rapl_init_substrate().
  */
 int 
-_rapl_shutdown_substrate( ) 
+_rapl_shutdown_substrate( void ) 
 {
     int i;
 
