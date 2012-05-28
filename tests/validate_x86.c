@@ -32,7 +32,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <err.h>
 
 #include <perfmon/pfmlib.h>
 
