@@ -1,6 +1,6 @@
 .TH LIBPFM 3  "January, 2011" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_get_event_encoding \- get event encoding for a specific operating system
+pfm_get_os_event_encoding \- get event encoding for a specific operating system
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
@@ -87,7 +87,8 @@ This value causes the event to be encoded for the perf_event Linux kernel interf
 The \fBarg\fR must be a pointer to a \fBpfm_perf_encode_arg_t\fR structure. The PERF_OS_PERF_EVENT layer
 provides the modifiers exported by the underlying PMU hardware, some of which may actually be overridden
 by the perf_event interface, such as the monitoring privilege levels. The \fBPERF_OS_PERF_EVENT_EXT\fR extends
-\fBPERF_OS_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period or frequency.
+\fBPERF_OS_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period (\fBperiod\fR),
+frequency (\fBfreq\fR) and exclusive resource access (\fBexcl\fR).
 
 .nf
 typedef struct {
