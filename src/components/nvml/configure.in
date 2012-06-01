@@ -1,0 +1,42 @@
+# Process this file with autoconf to produce a configure script.
+# File: components/nvml/configure.in
+
+AC_INIT
+AC_ARG_WITH(nvml_incdir,
+            [--with-nvml_incdir=<path> Specify path to NVML includes],
+            [NVML_INCDIR=$withval
+             CFLAGS="$CFLAGS -I$withval"],
+            [AC_MSG_ERROR([Component requires path to NVML includes])])	
+
+
+AC_ARG_WITH(nvml_libdir,
+            [--with-nvml_libdir=<path> Specify path to nvml library],
+            [NVML_LIBDIR=$withval
+             LDFLAGS="$LDFLAGS -L$withval -lnvidia-ml" 
+             AC_SEARCH_LIBS([nvmlInit],
+						  [nvidia-ml],
+                          [],				          
+                          [AC_MSG_ERROR([libnvidia-ml.so not found])])],
+            [AC_MSG_ERROR([Component requires path to nvml library])])
+
+AC_ARG_WITH(cuda_incdir, 
+			[--with-cuda_incdir=<path> Specify path to CUDA includes],
+			[CUDA_INCDIR=$withval
+				CFLAGS="$CFLAGS -I$withval"],
+			[AC_MSG_ERROR([Component requires path to CUDA includes]) ])
+AC_ARG_WITH(cuda_libdir, 
+			[--with-cuda_libdir=<path> Specify path to cuda library], 
+			[ CUDA_LIBDIR=$withval
+				LDFLAGS="$LDFLAGS -L$withval -lcuda"
+				AC_SEARCH_LIBS( [cuInit],
+					[cuda],
+					[],
+					[AC_MSG_ERROR([libcuda.so not found!])])],
+			[ AC_MSG_ERROR([Component requires path to cuda library.])])
+
+AC_CONFIG_FILES([Makefile.nvml])
+AC_SUBST(NVML_INCDIR)
+AC_SUBST(NVML_LIBDIR)
+AC_SUBST(CUDA_INCDIR)
+AC_SUBST(CUDA_LIBDIR)
+AC_OUTPUT
