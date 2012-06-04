@@ -808,7 +808,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
         retval = PAPI_get_event_info( i, &info );
 
 	/* HACK! FIXME */
-        if (no_software_events && strstr(info.symbol,"PERF_COUNT_SW")) {
+        if (no_software_events && ( strstr(info.symbol,"PERF_COUNT_SW") || strstr(info.long_descr, "PERF_COUNT_SW") ) ) {
 	   if (!TESTS_QUIET) {
 	      printf("Blocking event %s as a SW event\n", info.symbol);
 	   }
