@@ -79,7 +79,7 @@ getClockSpeed( nvmlDevice_t dev, nvmlClockType_t which_one )
 		bad = nvmlDeviceGetClockInfo( dev, which_one, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 		return (unsigned long long)ret;
@@ -94,7 +94,7 @@ getEccLocalErrors( nvmlDevice_t dev, nvmlEccBitType_t bits, int which_one)
 		bad = nvmlDeviceGetDetailedEccErrors( dev, bits, NVML_VOLATILE_ECC , &counts);
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -121,7 +121,7 @@ getFanSpeed( nvmlDevice_t dev )
 		bad = nvmlDeviceGetFanSpeed( dev, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -136,7 +136,7 @@ getMaxClockSpeed( nvmlDevice_t dev, nvmlClockType_t which_one)
 		bad = nvmlDeviceGetClockInfo( dev, which_one, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -151,7 +151,7 @@ getMemoryInfo( nvmlDevice_t dev, int which_one )
 		bad = nvmlDeviceGetMemoryInfo( dev, &meminfo );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 		switch (which_one) {
@@ -176,7 +176,7 @@ getPState( nvmlDevice_t dev )
 		bad = nvmlDeviceGetPerformanceState( dev, &state );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -231,7 +231,7 @@ getPowerUsage( nvmlDevice_t dev )
 		bad = nvmlDeviceGetPowerUsage( dev, &power );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -246,7 +246,7 @@ getTemperature( nvmlDevice_t dev )
 		bad = nvmlDeviceGetTemperature( dev, NVML_TEMPERATURE_GPU, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -261,7 +261,7 @@ getTotalEccErrors( nvmlDevice_t dev, nvmlEccBitType_t bits)
 		bad = nvmlDeviceGetTotalEccErrors( dev, bits, NVML_VOLATILE_ECC , &counts);
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -279,7 +279,7 @@ getUtilization( nvmlDevice_t dev, int which_one )
 		bad = nvmlDeviceGetUtilizationRates( dev, &util );
 
 		if ( NVML_SUCCESS != bad ) {
-				fprintf(stderr, "%s: something went wrong %s\n", __func__, nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
 		}
 
 
@@ -394,7 +394,7 @@ _papi_nvml_init( hwd_context_t * ctx )
 		return PAPI_OK;
 }
 
-		static void 
+		static int 
 detectDevices( ) 
 {
 		nvmlReturn_t ret;
@@ -426,12 +426,14 @@ detectDevices( )
 	for (i=0; i < device_count; i++) {
 		ret = nvmlDeviceGetHandleByIndex( i, &handle );	
 		if ( NVML_SUCCESS != ret ) {
-			printf("nvmlDeviceGetHandleByIndex(%d) failed\n", i);
+			SUBDBG("nvmlDeviceGetHandleByIndex(%d) failed\n", i);
+			return PAPI_ESYS;
 		}
 
 		ret = nvmlDeviceGetPciInfo( handle, &info );
 		if ( NVML_SUCCESS != ret ) {
-			printf("nvmlDeviceGetPciInfo() failed %s\n", nvmlErrorString(ret) );
+			SUBDBG("nvmlDeviceGetPciInfo() failed %s\n", nvmlErrorString(ret) );
+			return PAPI_ESYS;
 		}
 
 		strncpy(nvml_busIds[i], info.busId, 16);
@@ -442,17 +444,15 @@ detectDevices( )
 	for (i=0; i < device_count; i++) {
 			cuerr = cudaDeviceGetPCIBusId( busId, 16, i );
 			if ( CUDA_SUCCESS != cuerr ) {
-				printf("cudaDeviceGetPCIBusId failed.\n");
+				SUBDBG("cudaDeviceGetPCIBusId failed.\n");
+				return PAPI_ESYS;
 			}
-			else
-				printf("cudaDeviceGetPCIBusId for %d found %s\n", i, busId );
 			for (j=0; j < device_count; j++ ) {
 					if ( !strncmp( busId, nvml_busIds[j], 16) ) {
 							ret = nvmlDeviceGetHandleByIndex(j, &devices[i] );
 							if ( NVML_SUCCESS != ret )
-								printf("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", j, i);
-							else	
-								printf("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) worked.\n", j, i);
+								SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", j, i);
+								return PAPI_ESYS;
 							break;
 					}
 			}	
@@ -468,7 +468,8 @@ detectDevices( )
 
 				ret = nvmlDeviceGetName( devices[i], name, 64 );
 				if ( NVML_SUCCESS != ret) {
-					printf("nvmlDeviceGetName failed \n");
+					SUBDBG("nvmlDeviceGetName failed \n");
+					return PAPI_ESYS;
 				}
 
 				for (j=0; j < i; j++ ) 
@@ -483,13 +484,14 @@ detectDevices( )
 				if ( isUnique ) {
 						ret = nvmlDeviceGetInforomVersion( devices[i], NVML_INFOROM_ECC, inforomECC, 16);
 						if ( NVML_SUCCESS != ret ) {
-								printf("GetInforomVersion carps %s\n", nvmlErrorString(ret ) );
+								SUBDBG("nvmlGetInforomVersion carps %s\n", nvmlErrorString(ret ) );
 								isFermi = 0;
 						}
 						ret = nvmlDeviceGetInforomVersion( devices[i], NVML_INFOROM_POWER, inforomPower, 16);
 						if ( NVML_SUCCESS != ret ) {
 								/* This implies the card is older then Fermi */
-								printf("GetInforomVersion carps %s\n", nvmlErrorString(ret ) );
+								SUBDBG("nvmlGetInforomVersion carps %s\n", nvmlErrorString(ret ) );
+								SUBDBG("Based upon the return to nvmlGetInforomVersion, we conclude this card is older then Fermi.\n");
 								isFermi = 0;
 						} 
 
@@ -501,7 +503,6 @@ detectDevices( )
 
 						/* For Tesla and Quadro products from Fermi and Kepler families. */
 						if ( isFermi ) {
-								printf("found FEATURE_CLOCK_INFO\n");
 								features[i] |= FEATURE_CLOCK_INFO;
 								num_events += 3;
 						}
@@ -514,12 +515,10 @@ detectDevices( )
 								ret = nvmlDeviceGetEccMode( devices[i], &mode, NULL );
 								if ( NVML_FEATURE_ENABLED == mode) {
 										if ( ecc_version >= 2.0 ) {
-												printf("found Local Ecc errors\n");
 												features[i] |= FEATURE_ECC_LOCAL_ERRORS;
 												num_events += 8; /* {single bit, two bit errors} x { reg, l1, l2, memory } */
 										} 
 										if ( ecc_version >= 1.0 ) {
-												printf("found Total Ecc errors\n");
 												features[i] |= FEATURE_ECC_TOTAL_ERRORS;
 												num_events += 2; /* single bit errors, double bit errors */
 										}
@@ -527,25 +526,21 @@ detectDevices( )
 						}
 
 						/* For all discrete products with dedicated fans */
-						printf("found Fan speed\n");
 						features[i] |= FEATURE_FAN_SPEED;
 						num_events++;
 
 						/* For Tesla and Quadro products from Fermi and Kepler families. */
 						if ( isFermi ) {
-								printf("found Max_clock\n");
 								features[i] |= FEATURE_MAX_CLOCK;
 								num_events += 3;
 						}
 
 						/* For all products */
-						printf("found Memory info\n");
 						features[i] |= FEATURE_MEMORY_INFO;
 						num_events += 3; /* total, free, used */
 
 						/* For Tesla and Quadro products from the Fermi and Kepler families. */
 						if ( isFermi ) {
-								printf("found Perf States\n");
 								features[i] |= FEATURE_PERF_STATES;
 								num_events++;
 						}
@@ -557,20 +552,17 @@ detectDevices( )
 						if ( isFermi ) {
 								ret = nvmlDeviceGetPowerUsage( devices[i], &temp);
 								if ( NVML_SUCCESS == ret ) {
-										printf("found Power\n");
 										features[i] |= FEATURE_POWER;
 										num_events++;
 								}
 						}
 
 						/* For all discrete and S-class products. */
-						printf("found temperature\n");
 						features[i] |= FEATURE_TEMP;
 						num_events++;
 
 						/* For Tesla and Quadro products from the Fermi and Kepler families */
 						if (isFermi) {
-								printf("found Utilization\n");
 								features[i] |= FEATURE_UTILIZATION;
 								num_events += 2;
 						}
@@ -579,7 +571,7 @@ detectDevices( )
 
 				}
 		}
-		printf("We found a total of %d events.\n", num_events);
+		return PAPI_OK;
 
 }
 
@@ -608,13 +600,11 @@ createNativeEvents( )
 
 				for (j=0; j < i; j++ ) 
 				{
-						printf("Checking %s against %s\n", name, names[j]);
 						if ( 0 == strncmp( name, names[j], 64 ) )
 								isUnique = 0;
 				}
 
 				if ( isUnique ) {
-						printf("%s is unique\n", name);
 						nameLen = strlen(name);
 						strncpy(sanitized_name, name, PAPI_MAX_STR_LEN );
 						for (j=0; j < nameLen; j++)
@@ -853,14 +843,11 @@ _papi_nvml_init_substrate( int cidx )
 				goto disable;
 		}
 
-		printf("nvml init found %d devices.\n", nvml_count);
-
 		cuerr = cudaGetDeviceCount( &cuda_count );
 		if ( CUDA_SUCCESS != cuerr ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a device count from CUDA.");
 				goto disable;
 		}
-		printf("\n\n****************************\ncuda found %d devices.\n\n", cuda_count);
 
 		/* We can probably recover from this, when we're clever */
 		if ( nvml_count != cuda_count ) {
@@ -870,8 +857,6 @@ _papi_nvml_init_substrate( int cidx )
 
 		device_count = cuda_count;
 
-		printf("nvml init found %d devices.\n", cuda_count);
-
 		/* A per device representation of what events are present */
 		features = (int*)papi_malloc(sizeof(int) * device_count );
 
@@ -879,13 +864,16 @@ _papi_nvml_init_substrate( int cidx )
 		devices = (nvmlDevice_t*)papi_malloc(sizeof(nvmlDevice_t) * device_count);
 
 		/* Figure out what events are supported on each card. */
-		detectDevices( );
+		if ( (papi_errorcode = detectDevices( ) ) != PAPI_OK ) {
+			papi_free(features);
+			papi_free(devices);
+			sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install." );
+			goto disable;
+		}
 
-
+		/* The assumption is that if everything went swimmingly in detectDevices, 
+			all nvml calls here should be fine. */
 		createNativeEvents( );
-
-
-
 
 		/* Export the total number of events available */
 		_nvml_vector.cmp_info.num_native_events = num_events;
