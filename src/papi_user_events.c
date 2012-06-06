@@ -246,7 +246,7 @@ get_event_line( char **place, FILE * table, char **tmp_perfmon_events_table )
 	return ( ret );
 }
 
-void add_define( char *line, list_t* LIST ) {
+int add_define( char *line, list_t* LIST ) {
   char *t;
   char local_line[USER_EVENT_OPERATION_LEN];
   list_t *temp;
@@ -257,7 +257,7 @@ void add_define( char *line, list_t* LIST ) {
 
   if ( NULL == temp ) {
 	PAPIERROR("outof memory" );
-	exit(1);
+	return PAPI_ENOMEM;
   }
 
   t = strtok(local_line, " "); /* throw out the #define */
@@ -273,6 +273,8 @@ void add_define( char *line, list_t* LIST ) {
 
   temp->next = LIST->next;
   LIST->next = temp;
+
+  return PAPI_OK;
 }
 
 int renumber_ops_string(char *dest, char *src, int start) {
@@ -515,6 +517,7 @@ load_user_event_table( char *file_name)
   int tokens		= 0;
   int found			= 0;
   int error;
+  int oops;
   int len = 0;
   int magic_string_int;
   FILE* table		= NULL;
@@ -565,7 +568,9 @@ load_user_event_table( char *file_name)
 	/* Deal with comments and constants */
 	if (t[0] == '#') {
 	  if ( 0 == strncmp("define",t+1,6) ) {
-		add_define( t , &defines );
+		if ( PAPI_OK != (oops = add_define( t , &defines ) ) )
+			return oops;
+	
 		continue;
 	  }
 	  goto nextline;
