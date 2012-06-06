@@ -46,6 +46,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Atom
 		Intel Nehalem, Westmere
 		Intel Sandy Bridge
+		Intel Ivy Bridge
 		Intel architectural perfmon v1, v2, v3
 
 	- For ARM:
