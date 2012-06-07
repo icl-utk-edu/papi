@@ -589,7 +589,7 @@ static const intel_x86_umask_t snb_idq_uops_not_delivered[]={
 static const intel_x86_umask_t snb_ild_stall[]={
    { .uname  = "LCP",
      .udesc  = "Stall caused by changing prefix length of the instruction",
-     .ucode = 0x400,
+     .ucode = 0x100,
      .uflags= INTEL_X86_NCOMBO,
    },
    { .uname  = "IQ_FULL",
