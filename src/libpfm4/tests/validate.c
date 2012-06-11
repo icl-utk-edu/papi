@@ -32,7 +32,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <err.h>
+#include <perfmon/err.h>
 
 #include <perfmon/pfmlib.h>
 #ifdef __linux__
@@ -40,6 +40,35 @@
 #endif
 
 #define __weak_func	__attribute__((weak))
+
+#ifdef PFMLIB_WINDOWS
+int set_env_var(const char *var, char *value, int ov)
+{
+	size_t len;
+	char *str;
+	int ret;
+
+	len = strlen(var) + 1 + strlen(value) + 1;
+
+	str = malloc(len);
+	if (!str)
+		return PFM_ERR_NOMEM;
+
+	sprintf(str, "%s=%s", var, value);
+
+	ret = putenv(str);
+
+	free(str);
+
+	return ret ? PFM_ERR_INVAL : PFM_SUCCESS;
+}
+#else
+static inline int
+set_env_var(const char *var, char *value, int ov)
+{
+	return setenv(var, value, ov);
+}
+#endif
 
 __weak_func int validate_arch(FILE *fp)
 {
@@ -277,9 +306,9 @@ main(int argc, char **argv)
 		}
 	}
 	/* to allow encoding of events from non detected PMU models */
-	ret = setenv("LIBPFM_ENCODE_INACTIVE", "1", 1);
-	if (ret)
-		err(1, "cannot force inactive encoding");
+	ret = set_env_var("LIBPFM_ENCODE_INACTIVE", "1", 1);
+	if (ret != PFM_SUCCESS)
+		errx(1, "cannot force inactive encoding");
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)

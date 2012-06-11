@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <regex.h>
-#include <err.h>
+#include <perfmon/err.h>
 
 #include <perfmon/pfmlib.h>
 
