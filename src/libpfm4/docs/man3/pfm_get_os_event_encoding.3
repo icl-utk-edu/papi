@@ -1,6 +1,6 @@
 .TH LIBPFM 3  "January, 2011" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_get_event_encoding \- get event encoding for a specific operating system
+pfm_get_os_event_encoding \- get event encoding for a specific operating system
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
@@ -50,10 +50,23 @@ be zero.
 .TP
 .B fstr
 If the caller is interested in retrieving the fully qualified event string where all used unit masks
-and all modifiers are spelled out, this field must be set to a non-null address of a pointer to a string.
-Upon return, if \fBfstr\fR was not NULL on entry, then it points to the event string. The string is
+and all modifiers are spelled out, this field must be set to a non-null address of a pointer to a string (char **).
+Upon return, if \fBfstr\fR was not NULL, then the string pointer passed on entry points to the event string. The string is
 dynamically allocated and needs to eventually be freed. If \fBfstr\fR was NULL on entry, then nothing is returned
-in this field.
+in this field. The typical calling sequence looks as follows:
+.nf
+   char *fstr = NULL
+   pfm_pmu_encode_arg_t arg;
+   arg.fstr = &fstr;
+   ret = pfm_get_os_event_encoding("event",
+                                   PFM_PLM0|PFM_PLM3,
+                                   PFM_OS_NONE,
+                                   &e);
+   if (ret == PFM_SUCCESS) {
+      printf("fstr=%s\n", fstr);
+      free(fstr);
+   }
+.fi
 .TP
 .B size
 This field contains the size of the struct passed. This field is used to provide
@@ -74,7 +87,8 @@ This value causes the event to be encoded for the perf_event Linux kernel interf
 The \fBarg\fR must be a pointer to a \fBpfm_perf_encode_arg_t\fR structure. The PERF_OS_PERF_EVENT layer
 provides the modifiers exported by the underlying PMU hardware, some of which may actually be overridden
 by the perf_event interface, such as the monitoring privilege levels. The \fBPERF_OS_PERF_EVENT_EXT\fR extends
-\fBPERF_OS_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period or frequency.
+\fBPERF_OS_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period (\fBperiod\fR),
+frequency (\fBfreq\fR) and exclusive resource access (\fBexcl\fR).
 
 .nf
 typedef struct {
@@ -86,7 +100,6 @@ typedef struct {
     int flags;
 } pfm_perf_encode_arg_t;
 .fi
-
 The fields are defined as follows:
 .RS
 .TP
@@ -96,11 +109,7 @@ on entry. The struct is not completely overwritten by the call. The library only
 fields it knows about, thereby allowing perf_event ABI mismatch between caller and library.
 .TP
 .B fstr
-If the caller is interested in retrieving the fully qualified event string where all used unit masks
-and all modifiers are spelled out, this field must be set to a non-null address of a pointer to a string.
-Upon return, if \fBfstr\fR was not NULL on entry, then it points to the event string. The string is
-dynamically allocated and needs to eventually be freed. If \fBfstr\fR was NULL on entry, then nothing is returned
-in this field.
+Same behavior as is described for PFM_OS_NONE above.
 .TP
 .B size
 This field contains the size of the struct passed. This field is used to provide

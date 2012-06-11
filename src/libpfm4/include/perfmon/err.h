@@ -1,8 +1,5 @@
 /*
- * pfmlib_perf_events_priv.h: perf_event public attributes
- *
- * Copyright (c) 2011 Google, Inc
- * Contributed by Stephane Eranian <eranian@gmail.com>
+ * err.h: substitute header for compiling on Windows with MingGW
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,28 +17,29 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-#ifndef __PERF_EVENT_PRIV_H__
-#define __PERF_EVENT_PRIV_H__
-#include "pfmlib_priv.h"
-#include "perfmon/pfmlib_perf_event.h"
+  */
+#ifndef __PFM_ERR_H__
+#define __PFM_ERR_H__
 
-#define PERF_ATTR_U	0	/* monitor at user privilege levels */
-#define PERF_ATTR_K	1	/* monitor at kernel privilege levels */
-#define PERF_ATTR_H	2	/* monitor at hypervisor levels */
-#define PERF_ATTR_PE	3	/* sampling period */
-#define PERF_ATTR_FR	4	/* average target sampling rate */
-#define PERF_ATTR_PR	5	/* precise sampling mode */
-#define PERF_ATTR_EX	6	/* exclusive event */
+#ifndef PFMLIB_WINDOWS
+#include <err.h>
+#else /* PFMLIB_WINDOWS */
+#define warnx(...) do { \
+        fprintf (stderr, __VA_ARGS__); \
+        fprintf (stderr, "\n"); \
+} while (0)
 
-#define _PERF_ATTR_U  (1 << PERF_ATTR_U)
-#define _PERF_ATTR_K  (1 << PERF_ATTR_K)
-#define _PERF_ATTR_H  (1 << PERF_ATTR_H)
-#define _PERF_ATTR_PE (1 << PERF_ATTR_PE)
-#define _PERF_ATTR_FR (1 << PERF_ATTR_FR)
-#define _PERF_ATTR_PR (1 << PERF_ATTR_PR)
-#define _PERF_ATTR_EX (1 << PERF_ATTR_EX)
+#define errx(code, ...) do { \
+        fprintf (stderr, __VA_ARGS__); \
+        fprintf (stderr, "\n"); \
+        exit (code); \
+} while (0)
 
-#define PERF_PLM_ALL (PFM_PLM0|PFM_PLM3|PFM_PLMH)
-
+#define err(code, ...) do { \
+        fprintf (stderr, __VA_ARGS__); \
+        fprintf (stderr, " : %s\n", strerror(errno)); \
+        exit (code); \
+} while (0)
 #endif
+
+#endif /* __PFM_ERR_H__ */

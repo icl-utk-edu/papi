@@ -37,6 +37,10 @@ CFLAGS+= -pthread
 LIBS += -lrt
 endif
 
+ifeq ($(SYS),WINDOWS)
+LIBS += -lgnurx
+endif
+
 TARGETS=showevtinfo check_events
 EXAMPLESDIR=$(DESTDIR)$(DOCDIR)/examples
 

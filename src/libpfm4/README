@@ -26,8 +26,8 @@ The current libpfm4 provides support for the perf_events interface which was
 introduced in Linux v2.6.31. Perfmon support is not present yet.
 
 The library does not make any performance monitoring system calls. It is
-portable and supports other operating system environments beyond Linux.
-
+portable and supports other operating system environments beyond Linux,
+such as Mac OS X, and Windows.
 
 The library supports many PMUs. The current version can handle:
 
@@ -46,6 +46,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Atom
 		Intel Nehalem, Westmere
 		Intel Sandy Bridge
+		Intel Ivy Bridge
 		Intel architectural perfmon v1, v2, v3
 
 	- For ARM:
@@ -138,6 +139,12 @@ REQUIREMENTS:
 
 	- to compile the Python bindings, you need to have SWIG and the python
 	  development packages installed
+
+	- To compile on Windows, you need the MinGW and MSYS compiler environment
+	  (see www.mingw.org). The environment needs to be augmented with the
+	  mingw regex user contributed package (mingw-libgnurx-2.5.1.dev.tar.gz).
+
+	- To compile on Mac OS X, you need to have gmake installed.
 
 DOCUMENTATION
 -------------
