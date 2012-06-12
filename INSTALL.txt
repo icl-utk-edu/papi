@@ -1,5 +1,5 @@
 /* 
-* File:    INSTALL_mcc.txt
+* File:    INSTALL.txt
 * CVS:     $Id$
 * Author:  Kevin London
 *          london@cs.utk.edu
