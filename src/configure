@@ -7160,7 +7160,7 @@ elif test "$MAKEVER" = "bgq"; then
   if test "x$no_cpu_counters" = "x"; then
     SUBSTR=linux-bgq
     MEMSUBSTR=linux-bgq
-	MISCSRCS="linux-bgq-common.c papi_libpfm_presets.c"
+	MISCSRCS="linux-bgq-common.c"
 	MISCOBJS='$(MISCSRCS:.c=.o)'
 	SUBSTR_HEADERS=linux-bgq-common.h
     #CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
@@ -7391,8 +7391,14 @@ if test "${with_components+set}" = set; then
   components=$withval
 fi;
 for comp in $components; do
-  COMPONENT_RULES="$COMPONENT_RULES components/$comp/Rules.$comp"
-  echo "extern papi_vector_t _${comp}_vector;" >> components_config.h
+  idx=`expr index "$comp" /`
+  if test "$idx" = 0; then
+	subcomp=$comp
+  else
+    subcomp=${comp:$idx}
+  fi
+  COMPONENT_RULES="$COMPONENT_RULES components/$comp/Rules.$subcomp"
+  echo "extern papi_vector_t _${subcomp}_vector;" >> components_config.h
 done
 echo "" >> components_config.h
 echo "struct papi_vectors *_papi_hwd[] = {" >> components_config.h
@@ -7402,7 +7408,13 @@ if test "x$VECTOR" != "x"; then
 fi
 
 for comp in $components; do
-  echo "   &_${comp}_vector," >> components_config.h
+  idx=`expr index "$comp" /`
+  if test "$idx" = 0; then
+	subcomp=$comp
+  else
+    subcomp=${comp:$idx}
+  fi
+  echo "   &_${subcomp}_vector," >> components_config.h
 done
 echo "   NULL" >> components_config.h
 echo "};" >> components_config.h
