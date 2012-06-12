@@ -801,12 +801,24 @@ typedef char* PAPI_user_defined_events_file_t;
       int cpuid_family;             /**< cpuid family */
       int cpuid_model;              /**< cpuid model */
       int cpuid_stepping;           /**< cpuid stepping */
-      float mhz;                    /**< Cycle time of this CPU */
-      int clock_mhz;                /**< Cycle time of this CPU's cycle counter */
-      PAPI_mh_info_t mem_hierarchy;  /**< PAPI memory heirarchy description */
-      int virtualized;
-      char virtual_vendor_string[PAPI_MAX_STR_LEN];
+
+      int cpu_max_mhz;              /**< Maximum supported CPU speed */
+      int cpu_min_mhz;              /**< Minimum supported CPU speed */
+
+      PAPI_mh_info_t mem_hierarchy; /**< PAPI memory heirarchy description */
+      int virtualized;              /**< Running in virtual machine */
+      char virtual_vendor_string[PAPI_MAX_STR_LEN]; 
+                                    /**< Vendor for virtual machine */
       char virtual_vendor_version[PAPI_MAX_STR_LEN];
+                                    /**< Version of virtual machine */
+
+      /* Legacy Values, do not use */
+      float mhz;                    /**< Deprecated */
+      int clock_mhz;                /**< Deprecated */
+
+      /* For future expansion */
+      int reserved[8];
+
    } PAPI_hw_info_t;
 
 /** @ingroup papi_data_structures */

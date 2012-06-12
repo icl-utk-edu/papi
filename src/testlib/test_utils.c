@@ -41,8 +41,8 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 			( "CPUID Info               : Family: %d  Model: %d  Stepping: %d\n",
 			  ( *hwinfo )->cpuid_family, ( *hwinfo )->cpuid_model,
 			  ( *hwinfo )->cpuid_stepping );
-	printf( "CPU Megahertz            : %f\n", ( *hwinfo )->mhz );
-	printf( "CPU Clock Megahertz      : %d\n", ( *hwinfo )->clock_mhz );
+	printf( "CPU Max Megahertz        : %d\n", ( *hwinfo )->cpu_max_mhz );
+	printf( "CPU Min Megahertz        : %d\n", ( *hwinfo )->cpu_min_mhz );
 	if ( ( *hwinfo )->threads > 0 )
 		printf( "Hdw Threads per core     : %d\n", ( *hwinfo )->threads );
 	if ( ( *hwinfo )->cores > 0 )

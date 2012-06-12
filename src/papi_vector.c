@@ -89,7 +89,7 @@ vec_long_dummy(  )
 long long vec_virt_cycles(void)
 {
   return ((long long) _papi_os_vector.get_virt_usec() * 
-	  _papi_hwi_system_info.hw_info.mhz);
+	  _papi_hwi_system_info.hw_info.cpu_max_mhz);
 }
 
 long long vec_real_nsec_dummy(void)

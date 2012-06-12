@@ -340,78 +340,82 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
 }
 
 int
-_hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
-				unsigned int EVENT, HighLevelInfo * state )
+_hl_rate_calls( float *real_time, float *proc_time, long long *ins, 
+		float *rate, unsigned int EVENT, HighLevelInfo *state )
 {
-	long long values[2] = { 0, 0 };
-	int retval = 0;
-	int level = 0;
+     long long values[2] = { 0, 0 };
+     int retval = 0;
+     int level = 0;
 
+     if ( EVENT == ( unsigned int ) PAPI_FP_INS )
+	level = HL_FLIPS;
+     else if ( EVENT == ( unsigned int ) PAPI_TOT_INS )
+	level = HL_IPC;
+     else if ( EVENT == ( unsigned int ) PAPI_FP_OPS )
+	level = HL_FLOPS;
 
-	if ( EVENT == ( unsigned int ) PAPI_FP_INS )
-		level = HL_FLIPS;
-	else if ( EVENT == ( unsigned int ) PAPI_TOT_INS )
-		level = HL_IPC;
-	else if ( EVENT == ( unsigned int ) PAPI_FP_OPS )
-		level = HL_FLOPS;
+     if ( state->running != 0 && state->running != level ) {
+	return PAPI_EINVAL;
+     }
 
-	if ( state->running != 0 && state->running != level )
-		return ( PAPI_EINVAL );
+     if ( state->running == 0 ) {
+        if ( PAPI_query_event( ( int ) EVENT ) != PAPI_OK ) {
+	   return PAPI_ENOEVNT;
+        }
 
-	if ( state->running == 0 ) {
-		if ( PAPI_query_event( ( int ) EVENT ) != PAPI_OK )
-			return ( PAPI_ENOEVNT );
-
-		if ( ( retval =
-			   PAPI_add_event( state->EventSet, ( int ) EVENT ) ) != PAPI_OK ) {
-			_internal_cleanup_hl_info( state );
-			PAPI_cleanup_eventset( state->EventSet );
-			return ( retval );
-		}
-
-		if ( PAPI_query_event( ( int ) PAPI_TOT_CYC ) != PAPI_OK )
-			return ( PAPI_ENOEVNT );
-
-		if ( ( retval =
-			   PAPI_add_event( state->EventSet,
-							   ( int ) PAPI_TOT_CYC ) ) != PAPI_OK ) {
-			_internal_cleanup_hl_info( state );
-			PAPI_cleanup_eventset( state->EventSet );
-			return ( retval );
-		}
-
-		state->initial_time = PAPI_get_real_usec(  );
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK )
-			return ( retval );
-		state->running = ( short ) level;
-	} else {
-		if ( ( retval = PAPI_stop( state->EventSet, values ) ) != PAPI_OK )
-			return ( retval );
-		/* Use Multiplication because it is much faster */
-		*real_time = ( float ) ( ( double )
-								 ( PAPI_get_real_usec(  ) -
-								   state->initial_time ) * .000001 );
-		*proc_time =
-			( float ) ( ( double ) values[1] * .000001 /
-						( ( _papi_hwi_system_info.hw_info.mhz ==
-							0 ) ? 1 : _papi_hwi_system_info.hw_info.mhz ) );
-		if ( *proc_time > 0 )
-			*rate =
-				( float ) ( ( float ) values[0] *
-							( EVENT ==
-							  ( unsigned int ) PAPI_TOT_INS ? 1 :
-							  _papi_hwi_system_info.hw_info.mhz ) /
-							( float ) ( values[1] == 0 ? 1 : values[1] ) );
-		state->total_proc_time += *proc_time;
-		state->total_ins += ( float ) values[0];
-		*proc_time = state->total_proc_time;
-		*ins = ( long long ) state->total_ins;
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
-			state->running = 0;
-			return ( retval );
-		}
+	if ((retval=PAPI_add_event(state->EventSet,(int)EVENT))!=PAPI_OK ) {
+	   _internal_cleanup_hl_info( state );
+	   PAPI_cleanup_eventset( state->EventSet );
+	   return retval;
 	}
-	return PAPI_OK;
+
+	if ( PAPI_query_event( ( int ) PAPI_TOT_CYC ) != PAPI_OK ) {
+	   return PAPI_ENOEVNT;
+	}
+
+	if ((retval=PAPI_add_event(state->EventSet,(int)PAPI_TOT_CYC))!=PAPI_OK) {
+	   _internal_cleanup_hl_info( state );
+	   PAPI_cleanup_eventset( state->EventSet );
+	   return retval;
+	}
+
+	state->initial_time = PAPI_get_real_usec(  );
+	if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
+	   return retval;
+	}
+
+	state->running = ( short ) level;
+
+     } else {
+        if ( ( retval = PAPI_stop( state->EventSet, values ) ) != PAPI_OK ) {
+	   return retval;
+        }
+
+	/* Use Multiplication because it is much faster */
+	*real_time = (float) ((double) (PAPI_get_real_usec() -
+					state->initial_time ) * .000001 );
+	*proc_time = (float) ((double) values[1] * .000001 /
+			 (( _papi_hwi_system_info.hw_info.cpu_max_mhz == 0 ) ?
+                             1 : _papi_hwi_system_info.hw_info.cpu_max_mhz ) );
+
+	if ( *proc_time > 0 ) {
+	   *rate = (float) ((float)values[0] *
+			   ( EVENT == ( unsigned int ) PAPI_TOT_INS ? 1 :
+			       _papi_hwi_system_info.hw_info.cpu_max_mhz ) /
+			       (float) ( values[1] == 0 ? 1 : values[1] ) );
+	}
+
+	state->total_proc_time += *proc_time;
+	state->total_ins += ( float ) values[0];
+	*proc_time = state->total_proc_time;
+	*ins = ( long long ) state->total_ins;
+	if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
+	   state->running = 0;
+	   return retval;
+	}
+     }
+
+     return PAPI_OK;
 }
 
 /** @class PAPI_num_counters

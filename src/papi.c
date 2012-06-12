@@ -4067,7 +4067,7 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 		ptr->debug.handler = _papi_hwi_debug_handler;
 		break;
 	case PAPI_CLOCKRATE:
-		return ( ( int ) _papi_hwi_system_info.hw_info.mhz );
+		return ( ( int ) _papi_hwi_system_info.hw_info.cpu_max_mhz );
 	case PAPI_MAX_CPUS:
 		return ( _papi_hwi_system_info.hw_info.ncpu );
 		/* For now, MAX_HWCTRS and MAX CTRS are identical.
@@ -4653,7 +4653,7 @@ PAPI_perror( int code, char *destination, int length )
  */
 int
 PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
-			   PAPI_overflow_handler_t handler )
+	       PAPI_overflow_handler_t handler )
 {
 	int retval, cidx, index, i;
 	EventSetInfo_t *ESI;
@@ -4686,7 +4686,7 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 	}
 	
 	if ( ( index = _papi_hwi_lookup_EventCodeIndex( ESI,
-      						( unsigned int ) EventCode ) ) < 0 ) {
+      					( unsigned int ) EventCode ) ) < 0 ) {
 		papi_return( PAPI_ENOEVNT );
 	}
 
@@ -4807,7 +4807,7 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 		ESI->overflow.handler = NULL;
 	}
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /** @class PAPI_sprofil

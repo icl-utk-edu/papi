@@ -83,7 +83,7 @@ main( int argc, char **argv )
 		mythreshold = THRESHOLD;
 	else
 #if defined(linux)
-		mythreshold = ( int ) hw_info->mhz * 10000 * 2;
+		mythreshold = ( int ) hw_info->cpu_max_mhz * 10000 * 2;
 #else
 		mythreshold = THRESHOLD * 2;
 #endif

@@ -1386,35 +1386,23 @@ _papi_hwi_init_global_internal( void )
 
 	int retval;
 
-	memset( &_papi_hwi_system_info, 0x0, sizeof ( _papi_hwi_system_info ) );
+	memset(&_papi_hwi_system_info,0x0,sizeof( _papi_hwi_system_info ));
 #ifndef _WIN32
-	memset( _papi_hwi_using_signal, 0x0, sizeof ( _papi_hwi_using_signal ) );
+
+	/* An array on non-windows, a volatile int on windows? */
+	memset( _papi_hwi_using_signal,0x0,sizeof( _papi_hwi_using_signal ));
 #endif
 
 	/* Global struct to maintain EventSet mapping */
-	retval =
-		allocate_eventset_map( &_papi_hwi_system_info.global_eventset_map );
-	if ( retval != PAPI_OK )
-		return ( retval );
+	retval = allocate_eventset_map( &_papi_hwi_system_info.global_eventset_map );
+	if ( retval != PAPI_OK ) {
+		return retval;
+	}
 
 	_papi_hwi_system_info.pid = 0;	/* Process identifier */
 
-	/* The PAPI_hw_info_t struct defined in papi.h */
-	_papi_hwi_system_info.hw_info.ncpu = 0;	/* ncpu */
-	_papi_hwi_system_info.hw_info.nnodes = 0;	/* nnodes */
-	_papi_hwi_system_info.hw_info.totalcpus = 0;	/* totalcpus */
-	_papi_hwi_system_info.hw_info.vendor = 0;	/* vendor */
-	_papi_hwi_system_info.hw_info.vendor_string[0] = '\0';	/* vendor_string */
-	_papi_hwi_system_info.hw_info.model = 0;	/* model */
-	_papi_hwi_system_info.hw_info.model_string[0] = '\0';	/* model_string */
-	_papi_hwi_system_info.hw_info.revision = 0.0;	/* revision */
-	_papi_hwi_system_info.hw_info.mhz = 0.0;	/* mhz */
-	_papi_hwi_system_info.hw_info.threads = 0;	/* hdw threads per core */
-	_papi_hwi_system_info.hw_info.cores = 0;	/* cores per socket */
-	_papi_hwi_system_info.hw_info.sockets = 0;	/* sockets */
-	_papi_hwi_system_info.hw_info.cpuid_family = 0;	/* cpuid family */
-	_papi_hwi_system_info.hw_info.cpuid_model = 0;	/* cpuid model */
-	_papi_hwi_system_info.hw_info.cpuid_stepping = 0;	/* cpuid stepping */
+	/* PAPI_hw_info_t struct */
+	memset(&(_papi_hwi_system_info.hw_info),0x0,sizeof(PAPI_hw_info_t));
 
 	return PAPI_OK;
 }
@@ -1491,8 +1479,8 @@ handle_derived_subtract( int *position, long long *from )
 static long long
 units_per_second( long long units, long long cycles )
 {
-	return ( ( units * ( long long ) _papi_hwi_system_info.hw_info.mhz *
-			   ( long long ) 1000000 ) / cycles );
+   return ( ( units * (long long) _papi_hwi_system_info.hw_info.cpu_max_mhz *
+		      (long long) 1000000 ) / cycles );
 }
 
 static long long
@@ -1511,7 +1499,7 @@ handle_derived_add_ps( int *position, long long *from )
       |      as delimiter
       N2     indicate No. 2 native event in the derived preset
       +, -, *, /, %  as operator
-      #      as MHZ(million hz) got from  _papi_hwi_system_info.hw_info.mhz*1000000.0
+      #      as MHZ(million hz) got from  _papi_hwi_system_info.hw_info.cpu_max_mhz*1000000.0
 
   Haihang (you@cs.utk.edu)
 */ 
@@ -1538,7 +1526,7 @@ _papi_hwi_postfix_calc( EventInfo_t * evi, long long *hw_counter )
 			top++;
 			point++;
 		} else if ( *point == '#' ) {	/* to get mhz, ignore the rest char's */
-			stack[top] = _papi_hwi_system_info.hw_info.mhz * 1000000.0;
+			stack[top] = _papi_hwi_system_info.hw_info.cpu_max_mhz * 1000000.0;
 			top++;
 			do {
 				point++;

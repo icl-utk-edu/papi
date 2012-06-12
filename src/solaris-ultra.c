@@ -535,6 +535,10 @@ get_system_info( papi_mdi_t *mdi )
 	_papi_hwi_system_info.hw_info.mhz = ( ( float ) hz / 1.0e6 );
 	SUBDBG( "hw_info.mhz = %f\n", _papi_hwi_system_info.hw_info.mhz );
 
+	_papi_hwi_system_info.hw_info.cpu_max_mhz = _papi_hwi_system_info.hw_info.mhz;
+	_papi_hwi_system_info.hw_info.cpu_min_mhz = _papi_hwi_system_info.hw_info.mhz;
+
+
 	/* Number of PMCs */
 
 	retval = cpc_getnpic( cpuver );
@@ -846,11 +850,11 @@ _ultra_hwd_init_substrate( int cidx )
 
 	lock_init(  );
 
-	SUBDBG( "Found %d %s %s CPUs at %f Mhz.\n",
+	SUBDBG( "Found %d %s %s CPUs at %d Mhz.\n",
 			_papi_hwi_system_info.hw_info.totalcpus,
 			_papi_hwi_system_info.hw_info.vendor_string,
 			_papi_hwi_system_info.hw_info.model_string,
-			_papi_hwi_system_info.hw_info.mhz );
+			_papi_hwi_system_info.hw_info.cpu_max_mhz );
 
 	return ( PAPI_OK );
 }
@@ -1293,7 +1297,7 @@ long long
 _ultra_hwd_get_real_cycles( void )
 {
 	return ( _ultra_hwd_get_real_usec(  ) *
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
+			 ( long long ) _papi_hwi_system_info.hw_info.cpu_max_mhz );
 }
 
 long long

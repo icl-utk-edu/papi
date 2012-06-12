@@ -124,8 +124,8 @@ main( int argc, char **argv )
 		if ( tmp ) {
 			mythreshold = atoi( tmp );
 		}
-		else if (hw_info->mhz!=0) {
-		   mythreshold = ( int ) hw_info->mhz * 20000;
+		else if (hw_info->cpu_max_mhz!=0) {
+		   mythreshold = ( int ) hw_info->cpu_max_mhz * 20000;
 		  if (!TESTS_QUIET) printf("Using a threshold of %d (20,000 * MHz)\n",mythreshold);
 
 		}

@@ -102,8 +102,8 @@ papi_xml_hwinfo( FILE * f )
 	fprintf( f, "    <model value=\"%d\"/>\n", hwinfo->cpuid_model );
 	fprintf( f, "    <stepping value=\"%d\"/>\n", hwinfo->cpuid_stepping );
 	fprintf( f, "  </cpuID>\n" );
-	fprintf( f, "  <cpuMegahertz value=\"%f\"/>\n", hwinfo->mhz );
-	fprintf( f, "  <cpuClockMegahertz value=\"%d\"/>\n", hwinfo->clock_mhz );
+	fprintf( f, "  <cpuMaxMegahertz value=\"%d\"/>\n", hwinfo->cpu_max_mhz );
+	fprintf( f, "  <cpuMinMegahertz value=\"%d\"/>\n", hwinfo->cpu_min_mhz );
 	fprintf( f, "  <threads value=\"%d\"/>\n", hwinfo->threads );
 	fprintf( f, "  <cores value=\"%d\"/>\n", hwinfo->cores );
 	fprintf( f, "  <sockets value=\"%d\"/>\n", hwinfo->sockets );

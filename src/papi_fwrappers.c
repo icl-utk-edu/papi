@@ -333,7 +333,7 @@ PAPI_FCALL( papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, ( int *ncpu,
 		*vendor = hwinfo->vendor;
 		*model = hwinfo->model;
 		*revision = hwinfo->revision;
-		*mhz = hwinfo->mhz;
+		*mhz = hwinfo->cpu_max_mhz;
 #if defined(_FORTRAN_STRLEN_AT_END)
 		strncpy( vendor_str, hwinfo->vendor_string, ( size_t ) vendor_len );
 		for ( i = ( int ) strlen( hwinfo->vendor_string ); i < vendor_len;

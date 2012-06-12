@@ -20,8 +20,8 @@ main( int argc, char **argv )
 	elapsed_us = PAPI_get_virt_usec(  );
 	elapsed_cyc = PAPI_get_virt_cyc(  );
 
-	printf( "Testing virt time clock. (CLOCK %d MHz, CPU %f MHz)\n",
-			hw_info->clock_mhz, hw_info->mhz );
+	printf( "Testing virt time clock. (CPU Max %d MHz, CPU Min %d MHz)\n",
+			hw_info->cpu_max_mhz, hw_info->cpu_min_mhz );
 	printf( "Sleeping for 10 seconds.\n" );
 
 	sleep( 10 );

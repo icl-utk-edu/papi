@@ -163,6 +163,9 @@ _bgq_get_system_info( papi_mdi_t *mdi )
 	_papi_hwi_system_info.hw_info.nnodes = Kernel_ProcessCount( );
 	_papi_hwi_system_info.hw_info.totalcpus = _papi_hwi_system_info.hw_info.ncpu;
 	
+	_papi_hwi_system_info.hw_info.cpu_max_mhz = personality.Kernel_Config.FreqMHz;
+	_papi_hwi_system_info.hw_info.cpu_min_mhz = personality.Kernel_Config.FreqMHz;
+
 	_papi_hwi_system_info.hw_info.mhz = ( float ) personality.Kernel_Config.FreqMHz;
 	SUBDBG( "_bgq_get_system_info:  Detected MHZ is %f\n",
 		   _papi_hwi_system_info.hw_info.mhz );
@@ -344,7 +347,7 @@ _bgq_multiplex( hwd_control_state_t * bgq_state )
 #endif
 	
 	// convert Mhz to Hz ( = cycles / sec )
-	Hz = (double) _papi_hwi_system_info.hw_info.mhz * 1000 * 1000;
+	Hz = (double) _papi_hwi_system_info.hw_info.cpu_max_mhz * 1000 * 1000;
 	// convert PAPI multiplex period (in ns) to BGPM period (in cycles)
 	Sec = (double) _bgq_vectors.cmp_info.itimer_ns / ( 1000 * 1000 * 1000 );
 	bgpm_period = Hz * Sec;
@@ -913,7 +916,7 @@ _bgq_get_real_usec( void )
 	 *        by 1.0e12.  To then convert to usec, we have to divide by 1.0e-3.
 	 */
 	return ( ( long long ) ( ( ( float ) get_cycles(  ) ) /
-							 ( ( _papi_hwi_system_info.hw_info.mhz ) ) ) );
+							 ( ( _papi_hwi_system_info.hw_info.cpu_max_mhz ) ) ) );
 
 }
 

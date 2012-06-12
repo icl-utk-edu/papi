@@ -153,6 +153,9 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 	SUBDBG( "_bgp_get_system_info:  Detected MHZ is %f\n",
 			_papi_hwi_system_info.hw_info.mhz );
 
+	_papi_hwi_system_info.cpu_max_mhz=_papi_hwi_system_info.hw_info.mhz;
+	_papi_hwi_system_info.cpu_min_mhz=_papi_hwi_system_info.hw_info.mhz;
+
 	// Memory information structure not filled in - same as BG/L
 	// _papi_hwi_system_info.hw_info.mem_hierarchy = ???;
 	// The mpx_info structure disappeared in PAPI-C
@@ -715,7 +718,7 @@ _bgp_get_real_usec( void )
 //  return (long long)(x/y);
 
 	return ( ( long long ) ( ( ( float ) get_cycles(  ) ) /
-	       ( ( _papi_hwi_system_info.hw_info.mhz ) ) ) );
+	       ( ( _papi_hwi_system_info.hw_info.cpu_max_mhz ) ) ) );
 }
 
 /*

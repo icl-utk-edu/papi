@@ -21,8 +21,8 @@ main( int argc, char **argv )
 
 	elapsed_cyc = PAPI_get_real_cyc(  );
 
-	printf( "Testing real time clock. (CLOCK %d MHz, CPU %f MHz)\n",
-			hw_info->clock_mhz, hw_info->mhz );
+	printf( "Testing real time clock. (CPU Max %d MHz, CPU Min %d MHz)\n",
+			hw_info->cpu_max_mhz, hw_info->cpu_min_mhz );
 	printf( "Sleeping for 10 seconds.\n" );
 
 	sleep( 10 );
@@ -55,9 +55,9 @@ main( int argc, char **argv )
 		printf( "NOTE: Elapsed real time less than 9 seconds!\n" );
 	if ( elapsed_us > 11000000 )
 		printf( "NOTE: Elapsed real time greater than 11 seconds!\n" );
-	if ( ( float ) elapsed_cyc < 9.0 * hw_info->mhz * 1000000.0 )
+	if ( ( float ) elapsed_cyc < 9.0 * hw_info->cpu_max_mhz * 1000000.0 )
 		printf( "NOTE: Elapsed real cycles less than 9*MHz*1000000.0!\n" );
-	if ( ( float ) elapsed_cyc > 11.0 * hw_info->mhz * 1000000.0 )
+	if ( ( float ) elapsed_cyc > 11.0 * hw_info->cpu_max_mhz * 1000000.0 )
 		printf( "NOTE: Elapsed real cycles greater than 11*MHz*1000000.0!\n" );
 
 	test_pass( __FILE__, NULL, 0 );

@@ -121,6 +121,8 @@ int init_mdi(void)
 		sprintf (_papi_hwi_system_info.hw_info.vendor_string, "%s (TSC:%c)", pmc_name_of_cputype(info->pm_cputype), Context.use_rdtsc?'Y':'N');
 		strcpy (_papi_hwi_system_info.hw_info.model_string, hw_model);
 		_papi_hwi_system_info.hw_info.mhz = (float) hw_clockrate;
+		_papi_hwi_system_info.hw_info.cpu_max_mhz = hw_clockrate;
+		_papi_hwi_system_info.hw_info.cpu_min_mhz = hw_clockrate;
 		_papi_hwi_system_info.hw_info.ncpu = info->pm_ncpu;
 		_papi_hwi_system_info.hw_info.nnodes = 1;
 		_papi_hwi_system_info.hw_info.totalcpus = info->pm_ncpu;
@@ -664,7 +666,7 @@ long long _papi_freebsd_get_real_usec(void)
 	SUBDBG("Entering\n");
 	if (Context.use_rdtsc)
 	{
-		return _papi_freebsd_get_real_cycles() / _papi_hwi_system_info.hw_info.mhz;
+		return _papi_freebsd_get_real_cycles() / _papi_hwi_system_info.hw_info.cpu_max_mhz;
 	}
 	else
 	{
@@ -683,7 +685,7 @@ long long _papi_freebsd_get_real_cycles(void)
 #if !defined(__i386__) && !defined(__amd64__)
 	SUBDBG("Entering\n");
 	/* This will surely work, but with low precision and high overhead */
-   return ((long long) _papi_freebsd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
+   return ((long long) _papi_freebsd_get_real_usec() * _papi_hwi_system_info.hw_info.cpu_max_mhz);
 #else
 	SUBDBG("Entering\n");
 	if (Context.use_rdtsc)
@@ -694,7 +696,7 @@ long long _papi_freebsd_get_real_cycles(void)
 	}
 	else
 	{
-		return ((long long) _papi_freebsd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
+		return ((long long) _papi_freebsd_get_real_usec() * _papi_hwi_system_info.hw_info.cpu_max_mhz);
 	}
 #endif
 }

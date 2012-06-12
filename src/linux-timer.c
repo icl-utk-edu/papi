@@ -77,9 +77,8 @@ int mmtimer_setup(void) {
 	  // don't know for sure, but I think this ratio is inverted
 	  //     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
           mmdev_ratio =
-		  ( unsigned long ) _papi_hwi_system_info.hw_info.mhz / ( freq /
-                                                                                        
-									  1000000 );
+		  ( unsigned long ) _papi_hwi_system_info.hw_info.cpu_max_mhz / 
+	                      ( freq / 1000000 );
           SUBDBG( "MMTIMER has a ratio of %ld to the CPU's clock, getting resolution\n",
 		    mmdev_ratio );
           if ( ioctl( mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick ) == -1 ) {
@@ -244,9 +243,11 @@ _linux_get_real_cycles( void )
 {
 	long long retval;
 #if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||defined(__arm__)||defined(__mips__)
-	retval =
-		_papi_os_vector.get_real_usec(  ) *
-		( long long ) _papi_hwi_system_info.hw_info.mhz;
+
+	/* Crude estimate, not accurate in prescence of DVFS */
+
+	retval = _papi_os_vector.get_real_usec(  ) *
+		( long long ) _papi_hwi_system_info.hw_info.cpu_max_mhz;
 #else
 	retval = get_cycles(  );
 #endif
@@ -308,7 +309,10 @@ _linux_get_real_usec_cycles( void )
 	
    long long retval;
 
-   retval = get_cycles(  ) / ( long long ) _papi_hwi_system_info.hw_info.mhz;
+   /* Not accurate in the prescence of DVFS */
+
+   retval = get_cycles(  ) / 
+            ( long long ) _papi_hwi_system_info.hw_info.cpu_max_mhz;
 
    return retval;
 }

@@ -713,6 +713,7 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 
 	fclose( f );
 
+	/*
 	if ( sparc_sysfs_cpu_attr( "clock_tick", &s ) == -1 )
 		return PAPI_ESYS;
 
@@ -721,6 +722,7 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 
 	hw_info->mhz = cycles_per_second / 1000000;
 	hw_info->clock_mhz = hw_info->mhz;
+	*/
 
 	/* Now fetch the cache info */
 	hw_info->mem_hierarchy.levels = 3;
