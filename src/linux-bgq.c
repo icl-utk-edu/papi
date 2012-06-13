@@ -22,9 +22,9 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include "extras.h"
 #include "linux-bgq.h"
 #include "error.h"
-#include "papi_setup_presets.h"
 
 /*
  * BG/Q specific 'stuff'
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <linux/utsname.h>
 #include "spi/include/upci/upci.h"
 
 
@@ -50,9 +51,10 @@ pthread_mutex_t thdLocks[PAPI_MAX_LOCK];
 #endif
 
 /* Defined in papi_data.c */
-extern papi_mdi_t _papi_hwi_system_info;
+//extern papi_mdi_t _papi_hwi_system_info;
 
 extern papi_vector_t MY_VECTOR;
+PAPI_os_info_t _papi_os_info;
 
 /* Defined in linux-bgq-memory.c */
 extern int _bgq_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type );
@@ -107,25 +109,6 @@ _papi_hwd_unlock( int lock )
 }
 
 
-
-/*
- * Update Shared Library Information
- *
- * NOTE:  pid is not set in the _papi_hwi_system_info structure, and thus, the open
- *        of the map file will fail.    We just short circuit this code and return
- *        PAPI_OK.
- */
-int
-_bgq_update_shlib_info( papi_mdi_t *mdi )
-{
-#ifdef DEBUG_BGQ
-	printf( "_bgq_update_shlib_info\n" );
-#endif
-	
-	( void ) mdi;
-	return ( PAPI_OK );
-}
-
 /*
  * Get System Information
  *
@@ -141,12 +124,6 @@ _bgq_get_system_info( papi_mdi_t *mdi )
 	//( void ) mdi;
 	Personality_t personality;
 	int retval;
-
-	// NOTE:  Executable regions, require reading the /proc/pid/maps file
-	//        and the pid is not filled in the system_info structure.
-	//        Basically, _bgq_update_shlib_info() simply returns
-	//        with PAPI_OK
-	_bgq_update_shlib_info( &_papi_hwi_system_info  );
 	
 	/* Hardware info */
 	retval = Kernel_GetPersonality( &personality, sizeof( Personality_t ) );
@@ -169,7 +146,7 @@ _bgq_get_system_info( papi_mdi_t *mdi )
 	_papi_hwi_system_info.hw_info.mhz = ( float ) personality.Kernel_Config.FreqMHz;
 	SUBDBG( "_bgq_get_system_info:  Detected MHZ is %f\n",
 		   _papi_hwi_system_info.hw_info.mhz );
-	
+
 	return ( PAPI_OK );
 }
 
@@ -255,86 +232,6 @@ _bgq_init( hwd_context_t * ctx )
 }
 
 
-/*
- * BPT Map Availabiliy
- *
- * This function examines the event to determine if it can be mapped
- * to counter location ctr.  If the counter location is equal to the
- * event id modulo BGQ_PUNIT_MAX_COUNTERS, then the event
- * can be mapped to the specified counter location.
- * Otherwise, the event cannot be mapped.
- */
-int
-_bgq_bpt_map_avail( hwd_reg_alloc_t * dst, int ctr )
-{
-#ifdef DEBUG_BGQ
-	printf( "_bgq_bpt_map_avail\n" );
-#endif
-	
-	( void ) dst;
-	( void ) ctr;
-	// TODO: HJ Not sure if this fct is needed
-#if 0
-	// printf("_bgq_bpt_map_avail: Counter = %d\n", ctr);
-	if ( ( int ) get_bgq_native_event_id( dst->id ) %
-		 BGQ_PUNIT_MAX_COUNTERS == ctr )
-		return ( 1 );
-#endif
-	return ( 0 );
-}
-
-
-
-/*
- * BPT Map Exclusive
- *
- * This function examines the event to determine if it has a single
- * exclusive mapping. Since we are only allowing events from
- * user mode 0 and 1, all events have an exclusive mapping.
- * Always returns true.
- */
-int
-_bgq_bpt_map_exclusive( hwd_reg_alloc_t * dst )
-{
-#ifdef DEBUG_BGQ
-	printf( "_bgq_bpt_map_exclusive\n" );
-#endif
-	
-	( void ) dst;
-	
-	return ( 1 );
-}
-
-/*
- * BPT Map Shared
- *
- * This function compares the dst and src events to determine
- * if any resources are shared. Typically the src event is
- * exclusive, so this detects a conflict if true.
- * Returns true if conflict, false if no conflict.
- * Since we are only allowing events from user mode 0 and 1,
- * all events have an exclusive mapping, and thus, do not
- * share hardware register resources.
- *
- * Always return false, as there are no 'shared' resources.
- */
-int
-_bgq_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
-{
-#ifdef DEBUG_BGQ
-	printf( "_bgq_bpt_map_shared\n" );
-#endif
-	
-	( void ) dst;
-	( void ) src;
-	
-	return ( 0 );
-}
-
-
-
-
-
 int
 _bgq_multiplex( hwd_control_state_t * bgq_state )
 {
@@ -349,7 +246,7 @@ _bgq_multiplex( hwd_control_state_t * bgq_state )
 	// convert Mhz to Hz ( = cycles / sec )
 	Hz = (double) _papi_hwi_system_info.hw_info.cpu_max_mhz * 1000 * 1000;
 	// convert PAPI multiplex period (in ns) to BGPM period (in cycles)
-	Sec = (double) _bgq_vectors.cmp_info.itimer_ns / ( 1000 * 1000 * 1000 );
+	Sec = (double) _papi_os_info.itimer_ns / ( 1000 * 1000 * 1000 );
 	bgpm_period = Hz * Sec;
 
 	// if EventGroup is not empty -- which is required by BGPM before 
@@ -942,13 +839,11 @@ _bgq_get_real_cycles( void )
  * Same calc as for BG/L/P, returns real usec...
  */
 long long
-_bgq_get_virt_usec( hwd_context_t * zero )
+_bgq_get_virt_usec( void )
 {
 #ifdef DEBUG_BGQ
 	printf( "_bgq_get_virt_usec\n" );
 #endif
-	
-	( void ) zero;
 	
 	return _bgq_get_real_usec(  );
 }
@@ -959,13 +854,11 @@ _bgq_get_virt_usec( hwd_context_t * zero )
  * Same calc as for BG/L/P, returns real cycles...
  */
 long long
-_bgq_get_virt_cycles( hwd_context_t * zero )
+_bgq_get_virt_cycles( void )
 {
 #ifdef DEBUG_BGQ
 	printf( "_bgq_get_virt_cycles\n" );
 #endif
-	
-	( void ) zero;
 	
 	return _bgq_get_real_cycles(  );
 }
@@ -1021,7 +914,7 @@ _bgq_init_substrate( int cidx )
 #endif
 	
 	/* Setup presets */
-	retval = _papi_libpfm_setup_presets( "BGQ", 0 );
+	retval = _papi_load_preset_table( "BGQ", 0, cidx );
 	if ( retval ) {
 		return retval;
 	}	
@@ -1173,23 +1066,26 @@ _bgq_ntv_enum_events( unsigned int *EventCode, int modifier )
 	return ( PAPI_EINVAL );	
 }
 
-/*
- * Native Bit Configuration to Information
- *
- * No-op for BG/Q and simply returns 0
- */
-int
-_bgq_ntv_bits_to_info( hwd_register_t * bits, char *names,
-					   unsigned int *values, int name_len, int count )
-{
-	( void ) bits;
-	( void ) names;
-	( void ) values;
-	( void ) name_len;
-	( void ) count;
+
+int 
+_papi_hwi_init_os(void) {
 	
-	return ( 0 );
+	struct new_utsname uname_buffer;
+	
+	/* Get the kernel info */
+    uname(&uname_buffer);
+	
+    strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
+	
+    strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
+	
+    _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+    _papi_os_info.itimer_num = PAPI_INT_ITIMER;
+    _papi_os_info.itimer_res_ns = 1;
+	
+    return PAPI_OK;
 }
+
 
 /*
  * PAPI Vector Table for BG/Q
@@ -1197,7 +1093,9 @@ _bgq_ntv_bits_to_info( hwd_register_t * bits, char *names,
 papi_vector_t _bgq_vectors = {
 	.cmp_info = {
 				 /* Default component information (unspecified values are initialized to 0) */
-				 .name = "$Id: ",
+				 .name = "linux-bgq",
+				 .short_name = "bgq",
+				 .description = "Blue Gene/Q substrate",
 				 .CmpIdx = 0, 
 				 .num_cntrs = BGQ_PUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
@@ -1205,9 +1103,6 @@ papi_vector_t _bgq_vectors = {
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_res_ns = 1,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
 				 .kernel_multiplex = 1,
@@ -1215,7 +1110,6 @@ papi_vector_t _bgq_vectors = {
 				 /* component specific cmp_info initializations */
 				 .fast_real_timer = 1,
 				 .fast_virtual_timer = 0,
-				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
 				 }
 	,
 
@@ -1234,17 +1128,10 @@ papi_vector_t _bgq_vectors = {
 	.read = _bgq_read,
 	.reset = _bgq_reset,
 	.write = _bgq_write,
-	.get_real_cycles = _bgq_get_real_cycles,
-	.get_real_usec = _bgq_get_real_usec,
-	.get_virt_cycles = _bgq_get_virt_cycles,
-	.get_virt_usec = _bgq_get_virt_usec,
 	.stop_profiling = _bgq_stop_profiling,
 	.init_substrate = _bgq_init_substrate,
 	.init = _bgq_init,
 	.init_control_state = _bgq_init_control_state,
-	.update_shlib_info = _bgq_update_shlib_info,
-	.get_system_info = _bgq_get_system_info,
-	.get_memory_info = _bgq_get_memory_info,
 	.update_control_state = _bgq_update_control_state,
 	.ctl = _bgq_ctl,
 	.set_overflow = _bgq_set_overflow,
@@ -1256,14 +1143,19 @@ papi_vector_t _bgq_vectors = {
 	.ntv_code_to_name = _bgq_ntv_code_to_name,
 	.ntv_code_to_descr = _bgq_ntv_code_to_descr,
 	.ntv_code_to_bits = _bgq_ntv_code_to_bits,
-	.ntv_bits_to_info = _bgq_ntv_bits_to_info,
 	.allocate_registers = _bgq_allocate_registers,
-	.bpt_map_avail = _bgq_bpt_map_avail,
-	.bpt_map_exclusive = _bgq_bpt_map_exclusive,
-	.bpt_map_shared = _bgq_bpt_map_shared,
-	.get_dmem_info = _bgq_get_dmem_info,
 	.cleanup_eventset = _bgq_cleanup_eventset,
 	.shutdown = _bgq_shutdown
 //  .shutdown_global      =
 //  .user                 =
+};
+
+papi_os_vector_t _papi_os_vector = {
+	.get_memory_info = _bgq_get_memory_info,
+	.get_dmem_info = _bgq_get_dmem_info,
+	.get_real_cycles = _bgq_get_real_cycles,
+	.get_real_usec = _bgq_get_real_usec,
+	.get_virt_cycles = _bgq_get_virt_cycles,
+	.get_virt_usec = _bgq_get_virt_usec,
+	.get_system_info = _bgq_get_system_info
 };

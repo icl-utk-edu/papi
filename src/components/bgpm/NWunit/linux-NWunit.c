@@ -18,7 +18,6 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
-
 #include "linux-NWunit.h"
 
 /* Declare our vector in advance */
@@ -504,6 +503,5 @@ papi_vector_t _NWunit_vector = {
 	.ntv_enum_events = NWUNIT_ntv_enum_events,
 	.ntv_code_to_name = NWUNIT_ntv_code_to_name,
 	.ntv_code_to_descr = NWUNIT_ntv_code_to_descr,
-	.ntv_code_to_bits = NWUNIT_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
+	.ntv_code_to_bits = NWUNIT_ntv_code_to_bits
 };

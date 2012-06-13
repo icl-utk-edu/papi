@@ -18,7 +18,6 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
-
 #include "linux-IOunit.h"
 
 /* Declare our vector in advance */
@@ -607,19 +606,15 @@ papi_vector_t _IOunit_vector = {
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
-		
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_res_ns = 1,
+
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
-				 
+				 .hardware_intr = 1,
 		
 				 .kernel_multiplex = 0,
 
 				 /* component specific cmp_info initializations */
 				 .fast_real_timer = 0,
 				 .fast_virtual_timer = 0,
-				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
 				 .attach = 0,
 				 .attach_must_ptrace = 0,
 				 }
@@ -653,6 +648,5 @@ papi_vector_t _IOunit_vector = {
 	.ntv_enum_events = IOUNIT_ntv_enum_events,
 	.ntv_code_to_name = IOUNIT_ntv_code_to_name,
 	.ntv_code_to_descr = IOUNIT_ntv_code_to_descr,
-	.ntv_code_to_bits = IOUNIT_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
+	.ntv_code_to_bits = IOUNIT_ntv_code_to_bits
 };

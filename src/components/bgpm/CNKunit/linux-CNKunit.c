@@ -18,7 +18,6 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
-
 #include "linux-CNKunit.h"
 
 /* Declare our vector in advance */
@@ -463,6 +462,7 @@ papi_vector_t _CNKunit_vector = {
 		
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
+		
 				 .kernel_multiplex = 0,
 
 				 /* component specific cmp_info initializations */
@@ -501,6 +501,5 @@ papi_vector_t _CNKunit_vector = {
 	.ntv_enum_events = CNKUNIT_ntv_enum_events,
 	.ntv_code_to_name = CNKUNIT_ntv_code_to_name,
 	.ntv_code_to_descr = CNKUNIT_ntv_code_to_descr,
-	.ntv_code_to_bits = CNKUNIT_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
+	.ntv_code_to_bits = CNKUNIT_ntv_code_to_bits
 };
