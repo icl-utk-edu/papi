@@ -487,7 +487,7 @@ _lustre_update_control_state( hwd_control_state_t *ctl,
     int i, index;
 
     for ( i = 0; i < count; i++ ) {
-       index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+       index = native[i].ni_event;
        lustre_ctl->which_counter[i]=index;
        native[i].ni_position = i;
     }
@@ -665,7 +665,7 @@ int
 _lustre_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 
-  int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  int event=EventCode;
 
   if (event >=0 && event < num_events) {
      strncpy( name, lustre_native_table[event]->name, len );
@@ -682,7 +682,7 @@ int
 _lustre_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
 
-  int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  int event=EventCode;
 
   if (event >=0 && event < num_events) {
 	strncpy( name, lustre_native_table[event]->description, len );
@@ -701,12 +701,12 @@ _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 	if ( modifier == PAPI_ENUM_FIRST ) {
 	   if (num_events==0) return PAPI_ENOEVNT;
-	   *EventCode = PAPI_NATIVE_MASK;
+	   *EventCode = 0;
 	   return PAPI_OK;
 	}
 
 	if ( modifier == PAPI_ENUM_EVENTS ) {
-		int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		int index = *EventCode;
 
 		if ( lustre_native_table[index + 1] ) {
 			*EventCode = *EventCode + 1;

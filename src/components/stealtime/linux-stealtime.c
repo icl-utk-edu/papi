@@ -297,7 +297,7 @@ _stealtime_update_control_state( hwd_control_state_t *ctl,
 
 
     for ( i = 0; i < count; i++ ) {
-       index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+       index = native[i].ni_event;
        control->which_counter[i]=index;
        native[i].ni_position = i;
     }
@@ -475,7 +475,7 @@ int
 _stealtime_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 
-  int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  int event=EventCode;
 
   if (event >=0 && event < num_events) {
      strncpy( name, event_info[event].name, len );
@@ -493,7 +493,7 @@ int
 _stealtime_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
 
-  int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  int event=EventCode;
 
   if (event >=0 && event < num_events) {
 	strncpy( name, event_info[event].description, len );
@@ -509,7 +509,7 @@ int
 _stealtime_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
-  int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  int index = EventCode;
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
@@ -539,14 +539,14 @@ _stealtime_ntv_enum_events( unsigned int *EventCode, int modifier )
 
      if ( modifier == PAPI_ENUM_FIRST ) {
 	if (num_events==0) return PAPI_ENOEVNT;
-	*EventCode = PAPI_NATIVE_MASK;
+	*EventCode = 0;
 	return PAPI_OK;
      }
 
      if ( modifier == PAPI_ENUM_EVENTS ) {
         int index;
 
-        index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+        index = *EventCode;
 
 	if ( (index+1) < num_events ) {
 	   *EventCode = *EventCode + 1;

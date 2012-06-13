@@ -311,8 +311,7 @@ LM_SENSORS_update_control_state( hwd_control_state_t * ptr,
 	( void ) ptr;
 
 	for ( i = 0; i < count; i++ ) {
-		index =
-			native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		index = native[i].ni_event;
 		native[i].ni_position =
 			lm_sensors_native_table[index].resources.selector - 1;
 	}
@@ -373,14 +372,14 @@ LM_SENSORS_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK;
+		*EventCode = 0;
 
 		return PAPI_OK;
 		break;
 
 	case PAPI_ENUM_EVENTS:
 	{
-		int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		int index = *EventCode;
 
 		if ( index < NUM_EVENTS - 1 ) {
 			*EventCode = *EventCode + 1;
@@ -402,10 +401,10 @@ LM_SENSORS_ntv_enum_events( unsigned int *EventCode, int modifier )
 int
 LM_SENSORS_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	strncpy( name, lm_sensors_native_table[index].name, len );
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /*
@@ -414,10 +413,10 @@ LM_SENSORS_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 LM_SENSORS_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	strncpy( name, lm_sensors_native_table[index].description, len );
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /*
@@ -426,13 +425,13 @@ LM_SENSORS_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 int
 LM_SENSORS_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	memcpy( ( LM_SENSORS_register_t * ) bits,
 			&( lm_sensors_native_table[index].resources ),
 			sizeof ( LM_SENSORS_register_t ) );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 

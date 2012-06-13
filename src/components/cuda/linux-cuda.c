@@ -23,9 +23,9 @@
 papi_vector_t _cuda_vector;
 
 
-/*******************************************************************************
- ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT **********
- ******************************************************************************/
+/******************************************************************************
+ ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
+ *****************************************************************************/
 /*
  * Specify device(s): Counts number of cuda events available in this system
  */
@@ -656,9 +656,7 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 		/* Keep track of events in EventGroup if an event is removed */
 		CUDA_ptr->old_count = count;
 	} else {
-		index =
-			native[count -
-				   1].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		index = native[count - 1].ni_event;
 		native[count - 1].ni_position = index;
 
 		/* store events, that have been added to the CuPTI eveentGroup 
@@ -775,14 +773,14 @@ CUDA_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK;
+		*EventCode = 0;
 
 		return ( PAPI_OK );
 		break;
 
 	case PAPI_ENUM_EVENTS:
 	{
-		int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		int index = *EventCode;
 
 		if ( index < NUM_EVENTS - 1 ) {
 			*EventCode = *EventCode + 1;
@@ -805,7 +803,7 @@ CUDA_ntv_enum_events( unsigned int *EventCode, int modifier )
 int
 CUDA_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	strncpy( name, cuda_native_table[index].name, len );
 	return ( PAPI_OK );
@@ -818,7 +816,7 @@ CUDA_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 CUDA_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	strncpy( name, cuda_native_table[index].description, len );
 	return ( PAPI_OK );
@@ -831,7 +829,7 @@ CUDA_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 int
 CUDA_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	memcpy( ( CUDA_register_t * ) bits,
 			&( cuda_native_table[index].resources ),

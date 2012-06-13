@@ -192,14 +192,14 @@ int coretemp_ntv_enum_events (unsigned int *EventCode, int modifier)
 	{
 		/* return EventCode of first event */
 		case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK;
+		*EventCode = 0;
 		return PAPI_OK;
 		break;
 
 		/* return EventCode of passed-in Event */
 		case PAPI_ENUM_EVENTS:
 		{
-			int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+			int index = *EventCode;
 
 			if ( index < CORETEMP_NUM_EVENTS - 1 )
 			{
@@ -225,7 +225,7 @@ int coretemp_ntv_enum_events (unsigned int *EventCode, int modifier)
  */
 int coretemp_ntv_code_to_name (unsigned int EventCode, char *name, int len)
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	strncpy( name, coretemp_native_table[index].name, len );
 
@@ -239,7 +239,7 @@ int coretemp_ntv_code_to_name (unsigned int EventCode, char *name, int len)
  */
 int coretemp_ntv_code_to_descr (unsigned int EventCode, char *name, int len)
 {
-	int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int index = EventCode;
 
 	strncpy( name, coretemp_native_table[index].description, len );
 
@@ -268,7 +268,7 @@ int coretemp_update_control_state( hwd_control_state_t * ptr,
 
 	for (i = 0; i < count; i++)
 	{
-		index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		index = native[i].ni_event;
 		native[i].ni_position = coretemp_native_table[index].resources.selector - 1;
 		c->added[native[i].ni_position] = TRUE;
 

@@ -291,7 +291,7 @@ static struct native_event_t *allocate_native_event(char *name,
 
   native_events[new_event].component=0;
   native_events[new_event].pmu=strdup(pinfo.name);
-  native_events[new_event].papi_code=new_event | PAPI_NATIVE_MASK;
+  native_events[new_event].papi_code=new_event;
     
   native_events[new_event].libpfm4_idx=find_event_no_aliases(pmuplusbase);
 

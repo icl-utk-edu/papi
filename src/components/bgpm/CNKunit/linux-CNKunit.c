@@ -212,7 +212,7 @@ CNKUNIT_update_control_state( hwd_control_state_t * ptr,
 		
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
-		index = ( native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		index = ( native[i].ni_event ) + OFFSET;
 		
 		native[i].ni_position = i;
 		
@@ -323,18 +323,17 @@ CNKUNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 #ifdef DEBUG_BGQ
 //	printf( "CNKUNIT_ntv_enum_events\n" );
 #endif
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		*EventCode = 0;
 
 		return ( PAPI_OK );
 		break;
 
 	case PAPI_ENUM_EVENTS:
 	{
-		int index = ( *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		int index = ( *EventCode ) + OFFSET;
 
 		if ( index < CNKUNIT_MAX_COUNTERS ) {
 			*EventCode = *EventCode + 1;
@@ -375,7 +374,7 @@ CNKUNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 	else if ( ret < OFFSET || ret > CNKUNIT_MAX_COUNTERS ) // not a CNKUnit event
 		return PAPI_ENOEVNT;
 	else
-		*event_code = ( ret - OFFSET ) | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( _CNKunit_vector.cmp_info.CmpIdx ) ;
+		*event_code = ( ret - OFFSET ) ;
 	
 	return PAPI_OK;
 }
@@ -392,7 +391,7 @@ CNKUNIT_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 #endif
 	int index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 
 	if ( index >= MAX_COUNTERS )
 		return PAPI_ENOEVNT;
@@ -422,7 +421,7 @@ CNKUNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 #endif
 	int retval, index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 	
 	retval = Bgpm_GetLongDesc( index, name, &len );
 	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
