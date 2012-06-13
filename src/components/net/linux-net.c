@@ -1,10 +1,5 @@
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
-
 /**
  * @file    linux-net.c
- * CVS:     $Id$
  *
  * @author  Haihang You
  *          you@cs.utk.edu
@@ -484,7 +479,7 @@ _net_update_control_state( hwd_control_state_t *ctl,
     int i, index;
 
     for ( i = 0; i < count; i++ ) {
-        index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+        index = native[i].ni_event;
         native[i].ni_position = _net_native_events[index].resources.selector - 1;
     }
 
@@ -543,12 +538,12 @@ _net_ntv_enum_events( unsigned int *EventCode, int modifier )
             if (num_events==0) {
                 return PAPI_ENOEVNT;
             }
-            *EventCode = PAPI_NATIVE_MASK;
+            *EventCode = 0;
             return PAPI_OK;
             break;
 
         case PAPI_ENUM_EVENTS:
-            index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+            index = *EventCode;
             if ( index < num_events - 1 ) {
                 *EventCode = *EventCode + 1;
                 return PAPI_OK;
@@ -575,7 +570,7 @@ _net_ntv_name_to_code( char *name, unsigned int *EventCode )
 
     for ( i=0; i<num_events; i++) {
         if (strcmp(name, _net_native_events[i].name) == 0) {
-	   *EventCode = i | PAPI_NATIVE_MASK;
+	   *EventCode = i;
 
             return PAPI_OK;
         }
@@ -591,7 +586,7 @@ _net_ntv_name_to_code( char *name, unsigned int *EventCode )
 int
 _net_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-    int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    int index = EventCode;
 
     if ( index >= 0 && index < num_events ) {
         strncpy( name, _net_native_events[index].name, len );
@@ -608,7 +603,7 @@ _net_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 _net_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-    int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    int index = EventCode;
 
     if ( index >= 0 && index < num_events ) {
         strncpy( name, _net_native_events[index].description, len );
@@ -625,7 +620,7 @@ _net_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 int
 _net_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 {
-    int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    int index = EventCode;
 
     if ( index >= 0 && index < num_events ) {
         memcpy( ( NET_register_t * ) bits,

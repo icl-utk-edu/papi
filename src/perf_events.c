@@ -1250,8 +1250,9 @@ round_requested_ns( int ns )
    in the native info structure array. */
 
 static int
-_papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
-							   int count, hwd_context_t * ctx )
+_papi_pe_update_control_state( hwd_control_state_t *ctl, 
+			       NativeInfo_t *native,
+			       int count, hwd_context_t *ctx )
 {
 	int i = 0, ret;
 	context_t *pe_ctx = ( context_t * ) ctx;

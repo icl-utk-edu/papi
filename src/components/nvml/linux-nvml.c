@@ -926,7 +926,7 @@ _papi_nvml_update_control_state( hwd_control_state_t *ctl,
 		if (count==0) return PAPI_OK;
 
 		for( i = 0; i < count; i++ ) {
-				index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+				index = native[i].ni_event;
 				nvml_ctl->which_counter[i]=index;
 				/* We have no constraints on event position, so any event */
 				/* can be in any slot.                                    */
@@ -1147,12 +1147,7 @@ _papi_nvml_set_domain( hwd_control_state_t * cntrl, int domain )
 		int
 _papi_nvml_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-		int cidx,index;
-
-		/* Get our component index number, this can change depending */
-		/* on how PAPI was configured.                               */
-
-		cidx = PAPI_COMPONENT_INDEX( *EventCode );
+		int index;
 
 		switch ( modifier ) {
 
@@ -1160,12 +1155,12 @@ _papi_nvml_ntv_enum_events( unsigned int *EventCode, int modifier )
 				case PAPI_ENUM_FIRST:
 						/* return the first event that we support */
 
-						*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+						*EventCode = 0;
 						return PAPI_OK;
 
 						/* return EventCode of next available event */
 				case PAPI_ENUM_EVENTS:
-						index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+						index = *EventCode;
 
 						/* Make sure we are in range */
 						if ( index < num_events - 1 ) {
@@ -1195,7 +1190,7 @@ _papi_nvml_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 		int index;
 
-		index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		index = EventCode;
 
 		/* Make sure we are in range */
 		if (index >= num_events) return PAPI_ENOEVNT;
@@ -1214,7 +1209,7 @@ _papi_nvml_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 _papi_nvml_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
 {
 		int index;
-		index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		index = EventCode;
 
 		if (index >= num_events) return PAPI_ENOEVNT;
 

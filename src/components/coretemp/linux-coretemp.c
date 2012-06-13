@@ -518,7 +518,7 @@ _coretemp_update_control_state(	hwd_control_state_t *ptr,
     ( void ) ptr;
 
     for ( i = 0; i < count; i++ ) {
-	index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	index = native[i].ni_event;
 	native[i].ni_position = _coretemp_native_events[index].resources.selector - 1;
     }
     return PAPI_OK;
@@ -583,14 +583,14 @@ _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 	   if (num_events==0) {
 	      return PAPI_ENOEVNT;
 	   }
-	   *EventCode = PAPI_NATIVE_MASK;
+	   *EventCode = 0;
 
 	   return PAPI_OK;
 		
 
 	case PAPI_ENUM_EVENTS:
 	
-	   index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	   index = *EventCode;
 
 	   if ( index < num_events - 1 ) {
 	      *EventCode = *EventCode + 1;
@@ -612,7 +612,7 @@ _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 int
 _coretemp_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-     int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+     int index = EventCode;
 
      if ( index >= 0 && index < num_events ) {
 	strncpy( name, _coretemp_native_events[index].name, len );
@@ -627,7 +627,7 @@ _coretemp_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-     int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+     int index = EventCode;
 
      if ( index >= 0 && index < num_events ) {
 	strncpy( name, _coretemp_native_events[index].description, len );
@@ -640,7 +640,7 @@ int
 _coretemp_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
 {
 
-  int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  int index = EventCode;
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 

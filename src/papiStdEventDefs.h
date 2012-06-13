@@ -29,13 +29,7 @@ platform's documentation carefully.
 #define PAPI_PRESET_MASK ((int)0x80000000)
 #define PAPI_NATIVE_MASK 0x40000000
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
-											/*#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF*//* this masks both native and preset bits */
 #define PAPI_NATIVE_AND_MASK 0xBFFFFFFF	/* this masks just the native bit */
-
-/* These defines allow for 16 possible (4 bits) simultaneous substrates */
-#define PAPI_COMPONENT_INDEX(a) ((0x3c000000&a)>>26)
-#define PAPI_COMPONENT_MASK(a)  (0x3c000000&(a<<26))
-#define PAPI_COMPONENT_AND_MASK  0xc3ffffff
 
 #define PAPI_MAX_PRESET_EVENTS 128	/*The maxmimum number of preset events */
 

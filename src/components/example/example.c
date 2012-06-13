@@ -1,7 +1,3 @@
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
-
 /**
  * @file    example.c
  * @author  Joachim Protze
@@ -122,7 +118,6 @@ example_hardware_reset( example_context_t *ctx )
 static long long
 example_hardware_read( int which_one, example_context_t *ctx )
 {
-
 	long long old_value;
 
 	switch ( which_one ) {
@@ -139,7 +134,7 @@ example_hardware_read( int which_one, example_context_t *ctx )
 		example_global_autoinc_value++;
 		return old_value;
 	default:
-		perror( "Invalid counter read" );
+	        fprintf(stderr,"Invalid counter read %x\n",which_one );
 		return -1;
 	}
 
@@ -298,7 +293,7 @@ _example_update_control_state( hwd_control_state_t *ctl,
    if (count==0) return PAPI_OK;
 
    for( i = 0; i < count; i++ ) {
-      index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+      index = native[i].ni_event;
       
       /* Map counter #i to Measure Event "index" */
       example_ctl->which_counter[i]=index;
@@ -536,12 +531,12 @@ _example_ntv_enum_events( unsigned int *EventCode, int modifier )
 	case PAPI_ENUM_FIRST:
 	   /* return the first event that we support */
 
-	   *EventCode = PAPI_NATIVE_MASK;
+	   *EventCode = 0;
 	   return PAPI_OK;
 
 		/* return EventCode of next available event */
 	case PAPI_ENUM_EVENTS:
-	   index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	   index = *EventCode;
 
 	   /* Make sure we have at least 1 more event after us */
 	   if ( index < num_events - 1 ) {
@@ -571,7 +566,7 @@ _example_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
   int index;
 
-  index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  index = EventCode;
 
   /* Make sure we are in range */
   if (index >= 0 && index < num_events) {
@@ -591,7 +586,7 @@ int
 _example_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
 {
   int index;
-  index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  index = EventCode;
 
   /* make sure event is in range */
   if (index >= 0 && index < num_events) {

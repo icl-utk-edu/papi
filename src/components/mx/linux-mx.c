@@ -299,7 +299,7 @@ _mx_update_control_state( hwd_control_state_t *ctl, NativeInfo_t *native,
 	MX_control_state_t *mx_ctl = (MX_control_state_t *)ctl;
 
 	for(i=0; i<count; i++ ) {
-	    index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	    index = native[i].ni_event;
 	    mx_ctl->which_counter[i]=index;
 	    //	    printf("Mapping event# %d to HW counter %d (count=%d)\n",
 	    //	   i,index,count); 
@@ -451,7 +451,7 @@ int
 _mx_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 
-	int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+	int event=EventCode;
 
 	if (event >=0 && event < num_events) {
 	  strncpy( name, mx_native_table[event].name, len );
@@ -465,7 +465,7 @@ _mx_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 _mx_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-    int event=EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    int event=EventCode;
 
     if (event >=0 && event < num_events) {
        strncpy( name, mx_native_table[event].description, len );
@@ -482,12 +482,12 @@ _mx_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 	if ( modifier == PAPI_ENUM_FIRST ) {
 	   if (num_events==0) return PAPI_ENOEVNT;
-	   *EventCode = PAPI_NATIVE_MASK;
+	   *EventCode = 0;
 	   return PAPI_OK;
 	}
 
 	if ( modifier == PAPI_ENUM_EVENTS ) {
-		int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		int index = *EventCode;
 
 		if ( mx_native_table[index + 1].resources.selector ) {
 			*EventCode = *EventCode + 1;

@@ -1146,12 +1146,15 @@ PAPI_enum_event( int *EventCode, int modifier )
 {
 	int i = *EventCode;
 	int retval;
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
+	int cidx;
+	int event_code;
 
-	if ( _papi_hwi_invalid_cmp( cidx ) ||
-		 ( ( IS_PRESET(i) ) && cidx > 0 ) )
-		return ( PAPI_ENOCMP );
+	cidx = _papi_hwi_component_index( *EventCode );
+	if (cidx < 0) return PAPI_ENOCMP;
 
+	/* Do we handle presets in componets other than CPU? */
+	/* if (( IS_PRESET(i) ) && cidx > 0 )) return PAPI_ENOCMP; */
+		
 	if ( IS_PRESET(i) ) {
 		if ( modifier == PAPI_ENUM_FIRST ) {
 			*EventCode = ( int ) PAPI_PRESET_MASK;
@@ -1171,11 +1174,12 @@ PAPI_enum_event( int *EventCode, int modifier )
 	} else if ( IS_NATIVE(i) ) {
 		/* Should check against num native events here */
 
-	    retval = _papi_hwd[cidx]->ntv_enum_events( 
-				   ( unsigned int * ) EventCode, modifier );
+	    event_code=_papi_hwi_eventcode_to_native((int)*EventCode);
+	    retval = _papi_hwd[cidx]->ntv_enum_events((unsigned int *)&event_code, modifier );
 
 	        /* re-apply Component ID to the returned Event */
-	    *EventCode |= PAPI_COMPONENT_MASK( cidx );
+	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
+
 	    return retval;
 	} 
 #ifdef USER_EVENTS
@@ -1310,6 +1314,7 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 {
 	int i = *EventCode;
 	int retval;
+	int event_code;
 
 	if ( _papi_hwi_invalid_cmp(cidx) || ( (IS_PRESET(i)) && cidx > 0 ) ) {
 		return PAPI_ENOCMP;
@@ -1333,11 +1338,11 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 		}
 	} else if ( IS_NATIVE(i) ) {
 		/* Should we check against num native events here? */
-	    retval = _papi_hwd[cidx]->ntv_enum_events( 
-				   ( unsigned int * ) EventCode, modifier );
-
+	    event_code=_papi_hwi_eventcode_to_native(*EventCode);
+	    retval = _papi_hwd[cidx]->ntv_enum_events((unsigned int *)&event_code, modifier );
+	    
 	        /* re-apply Component ID to the returned Event */
-	    *EventCode |= PAPI_COMPONENT_MASK( cidx );
+	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
 
 	    return retval;
 	} 
