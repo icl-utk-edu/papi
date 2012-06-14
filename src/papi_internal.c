@@ -690,33 +690,32 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 
 
 static int
-add_native_fail_clean( EventSetInfo_t * ESI, int nevt )
+add_native_fail_clean( EventSetInfo_t *ESI, int nevt )
 {
-	int i, max_counters;
-	int cidx;
+   int i, max_counters;
+   int cidx;
 
-	cidx = _papi_hwi_component_index( nevt );
-	if (cidx<0) return PAPI_ENOCMP;
+   cidx = _papi_hwi_component_index( nevt );
+   if (cidx<0) return PAPI_ENOCMP;
 
-	max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs;
+   max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs;
 
-	/* to find the native event from the native events list */
-	for ( i = 0; i < max_counters; i++ ) {
-		if ( nevt == ESI->NativeInfoArray[i].ni_event ) {
-			ESI->NativeInfoArray[i].ni_owners--;
-			/* to clean the entry in the nativeInfo array */
-			if ( ESI->NativeInfoArray[i].ni_owners == 0 ) {
-				ESI->NativeInfoArray[i].ni_event = -1;
-				ESI->NativeInfoArray[i].ni_position = -1;
-				ESI->NativeCount--;
-			}
-			INTDBG
-				( "add_events fail, and remove added native events of the event: 0x%x\n",
-				  nevt );
-			return i;
-		}
-	}
-	return -1;
+   /* to find the native event from the native events list */
+   for( i = 0; i < max_counters; i++ ) {
+     if ( _papi_hwi_eventcode_to_native(nevt) == ESI->NativeInfoArray[i].ni_event ) {
+	 ESI->NativeInfoArray[i].ni_owners--;
+	 /* to clean the entry in the nativeInfo array */
+	 if ( ESI->NativeInfoArray[i].ni_owners == 0 ) {
+	    ESI->NativeInfoArray[i].ni_event = -1;
+	    ESI->NativeInfoArray[i].ni_position = -1;
+	    ESI->NativeCount--;
+	 }
+	 INTDBG( "add_events fail, and remove added native events "
+                 "of the event: 0x%x\n", nevt );
+	 return i;
+      }
+   }
+   return -1;
 }
 
 /* since update_control_state trashes overflow settings, this puts things
@@ -744,48 +743,52 @@ nix: pointer to array of native event table indexes from the preset entry
 size: number of native events to add
 */
 static int
-add_native_events( EventSetInfo_t * ESI, unsigned int *nevt, int size,
-				   EventInfo_t * out )
+add_native_events( EventSetInfo_t *ESI, unsigned int *nevt, 
+                   int size, EventInfo_t *out )
 {
-	int nidx, i, j, remap = 0;
-	int retval, retval2;
-	int max_counters;
-	hwd_context_t *context;
+   int nidx, i, j, remap = 0;
+   int retval, retval2;
+   int max_counters;
+   hwd_context_t *context;
 
-	if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex )
-		max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
-	else
-		max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs;
-	/* if the native event is already mapped, fill in */
-	for ( i = 0; i < size; i++ ) {
-		if ( ( nidx = _papi_hwi_add_native_precheck( ESI, nevt[i] ) ) >= 0 ) {
-			out->pos[i] = ESI->NativeInfoArray[nidx].ni_position;
-		} else {
-			/* all counters have been used, add_native fail */
-			if ( ESI->NativeCount == max_counters ) {
-				/* to clean owners for previous added native events */
-				for ( j = 0; j < i; j++ ) {
-					if ( ( nidx = add_native_fail_clean( ESI, nevt[j] ) ) >= 0 ) {
-						out->pos[j] = -1;
-						continue;
-					}
-					INTDBG( "should not happen!\n" );
-				}
-				INTDBG( "counters are full!\n" );
-				return -1;
-			}
-			/* there is an empty slot for the native event;
-			   initialize the native index for the new added event */
-			INTDBG( "Adding 0x%x to ESI %p Component %d\n", 
-				nevt[i], ESI, ESI->CmpIdx );
-			ESI->NativeInfoArray[ESI->NativeCount].ni_event = 
+   if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
+      max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+   }
+   else {
+      max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs;
+   }
+
+   /* if the native event is already mapped, fill in */
+   for( i = 0; i < size; i++ ) {
+      if ( ( nidx = _papi_hwi_add_native_precheck( ESI, nevt[i] ) ) >= 0 ) {
+	 out->pos[i] = ESI->NativeInfoArray[nidx].ni_position;
+      } else {
+	 /* all counters have been used, add_native fail */
+	 if ( ESI->NativeCount == max_counters ) {
+	    /* to clean owners for previous added native events */
+	    for( j = 0; j < i; j++ ) {
+	       if ( ( nidx = add_native_fail_clean( ESI, nevt[j] ) ) >= 0 ) {
+		  out->pos[j] = -1;
+		  continue;
+	       }
+	       INTDBG( "should not happen!\n" );
+	    }
+	    INTDBG( "counters are full!\n" );
+	    return -1;
+	 }
+			
+         /* there is an empty slot for the native event;
+	    initialize the native index for the new added event */
+	 INTDBG( "Adding 0x%x to ESI %p Component %d\n", 
+		 nevt[i], ESI, ESI->CmpIdx );
+	 ESI->NativeInfoArray[ESI->NativeCount].ni_event = 
 			  _papi_hwi_eventcode_to_native(nevt[i]);
 
-			ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
-			ESI->NativeCount++;
-			remap++;
-		}
-	}
+	 ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
+	 ESI->NativeCount++;
+	 remap++;
+      }
+   }
 
 	/* if remap!=0, we need reallocate counters */
 	if ( remap ) {
@@ -1022,73 +1025,71 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 }
 
 static int
-remove_native_events( EventSetInfo_t * ESI, int *nevt, int size )
+remove_native_events( EventSetInfo_t *ESI, int *nevt, int size )
 {
-	NativeInfo_t *native = ESI->NativeInfoArray;
-	hwd_context_t *context;
-	int i, j, zero = 0, retval;
+   NativeInfo_t *native = ESI->NativeInfoArray;
+   hwd_context_t *context;
+   int i, j, zero = 0, retval;
 
-	/* Remove the references to this event from the native events:
-	   for all the metrics in this event,
-	   compare to each native event in this event set,
-	   and decrement owners if they match  */
-	for ( i = 0; i < size; i++ ) {
-		for ( j = 0; j < ESI->NativeCount; j++ ) {
-			if ( native[j].ni_event == nevt[i] ) {
-				native[j].ni_owners--;
-				if ( native[j].ni_owners == 0 ) {
-					zero++;
-				}
-				break;
-			}
-		}
-	}
+   /* Remove the references to this event from the native events:
+      for all the metrics in this event,
+      compare to each native event in this event set,
+      and decrement owners if they match  */
+   for( i = 0; i < size; i++ ) {
+      for( j = 0; j < ESI->NativeCount; j++ ) {
+	 if ( native[j].ni_event ==  _papi_hwi_eventcode_to_native(nevt[i]) ) {
+	    native[j].ni_owners--;
+	    if ( native[j].ni_owners == 0 ) {
+	       zero++;
+	    }
+	    break;
+	 }
+      }
+   }
 
-	/* Remove any native events from the array if owners dropped to zero.
-	   The NativeInfoArray must be dense, with no empty slots, so if we
-	   remove an element, we must compact the list */
-	for ( i = 0; i < ESI->NativeCount; i++ ) {
-		if ( native[i].ni_event == -1 )
-			continue;
+   /* Remove any native events from the array if owners dropped to zero.
+      The NativeInfoArray must be dense, with no empty slots, so if we
+      remove an element, we must compact the list */
+   for( i = 0; i < ESI->NativeCount; i++ ) {
 
-		if ( native[i].ni_owners == 0 ) {
-			int copy = 0;
-			int sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
-			for ( j = ESI->NativeCount - 1; j > i; j-- ) {
-				if ( native[j].ni_event == -1 || native[j].ni_owners == 0 )
-					continue;
-				else {
-					/* copy j into i */
-					native[i].ni_event = native[j].ni_event;
-					native[i].ni_position = native[j].ni_position;
-					native[i].ni_owners = native[j].ni_owners;
-					/* copy opaque [j].ni_bits to [i].ni_bits */
-					memcpy( native[i].ni_bits, native[j].ni_bits,
-							( size_t ) sz );
-					/* reset j to initialized state */
-					native[j].ni_event = -1;
-					native[j].ni_position = -1;
-					native[j].ni_owners = 0;
-					copy++;
-					break;
-				}
-			}
+      if ( native[i].ni_event == -1 ) continue;
 
-			if ( copy == 0 ) {
-				/* set this structure back to empty state */
-				/* ni_owners is already 0 and contents of ni_bits doesn't matter */
-				native[i].ni_event = -1;
-				native[i].ni_position = -1;
-			}
-		}
-	}
+      if ( native[i].ni_owners == 0 ) {
+	 int copy = 0;
+	 int sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
+	 for( j = ESI->NativeCount - 1; j > i; j-- ) {
+	    if ( native[j].ni_event == -1 || native[j].ni_owners == 0 ) continue;
+	    else {
+	       /* copy j into i */
+	       native[i].ni_event = native[j].ni_event;
+	       native[i].ni_position = native[j].ni_position;
+	       native[i].ni_owners = native[j].ni_owners;
+	       /* copy opaque [j].ni_bits to [i].ni_bits */
+	       memcpy( native[i].ni_bits, native[j].ni_bits, ( size_t ) sz );
+	       /* reset j to initialized state */
+	       native[j].ni_event = -1;
+	       native[j].ni_position = -1;
+	       native[j].ni_owners = 0;
+	       copy++;
+	       break;
+	    }
+	 }
 
-	/* to reset hwd_control_state values */
-	ESI->NativeCount -= zero;
+	 if ( copy == 0 ) {
+	    /* set this structure back to empty state */
+	    /* ni_owners is already 0 and contents of ni_bits doesn't matter */
+	    native[i].ni_event = -1;
+	    native[i].ni_position = -1;
+	 }
+      }
+   }
 
-	/* If we removed any elements, 
-	   clear the now empty slots, reinitialize the index, and update the count.
-	   Then send the info down to the substrate to update the hwd control structure. */
+   /* to reset hwd_control_state values */
+   ESI->NativeCount -= zero;
+
+   /* If we removed any elements, 
+      clear the now empty slots, reinitialize the index, and update the count.
+      Then send the info down to the substrate to update the hwd control structure. */
 	retval = PAPI_OK;
 	if ( zero ) {
       /* get the context we should use for this event set */
