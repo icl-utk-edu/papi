@@ -4,7 +4,7 @@
 
 /* 
 * File:    papi_internal.c
-* CVS:     $Id$
+*
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
@@ -56,7 +56,72 @@ int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 papi_mdi_t _papi_hwi_system_info;
 
-/* Component Code */
+/*****************************/
+/* Native Event Mapping Code */
+/*****************************/
+
+#define NATIVE_EVENT_CHUNKSIZE 1024
+
+struct native_event_info {
+  int cidx;
+  int component_event;
+};
+
+
+static struct native_event_info *_papi_native_events=NULL;
+static int num_native_events=0;
+static int num_native_chunks=0;
+
+static int
+_papi_hwi_find_native_event(int cidx, int event) {
+
+  int i;
+
+  for(i=0;i<num_native_events;i++) {
+    if ((_papi_native_events[i].cidx==cidx) &&
+	(_papi_native_events[i].component_event==event)) {
+       return i|PAPI_NATIVE_MASK;
+    }
+  }
+
+  return PAPI_ENOEVNT;
+
+}
+
+static int
+_papi_hwi_add_native_event(int event, int cidx) {
+
+  int new_native_event;
+
+  SUBDBG("Creating Event %x which is comp %d internal %d\n",
+	 num_native_events|PAPI_NATIVE_MASK,cidx,event);
+  
+  _papi_hwi_lock( INTERNAL_LOCK );
+
+  if (num_native_events>=num_native_chunks*NATIVE_EVENT_CHUNKSIZE) {
+     num_native_chunks++;
+     _papi_native_events=realloc(_papi_native_events,
+				 num_native_chunks*NATIVE_EVENT_CHUNKSIZE*
+				 sizeof(struct native_event_info));
+     if (_papi_native_events==NULL) {
+        new_native_event=PAPI_ENOMEM;
+	goto native_alloc_early_out;
+     }
+  }
+
+  _papi_native_events[num_native_events].cidx=cidx;
+  _papi_native_events[num_native_events].component_event=event;
+  new_native_event=num_native_events|PAPI_NATIVE_MASK;
+
+  num_native_events++;
+
+native_alloc_early_out:
+
+  _papi_hwi_unlock( INTERNAL_LOCK );
+
+  return new_native_event;
+}
+
 
 int
 _papi_hwi_invalid_cmp( int cidx )
@@ -69,41 +134,72 @@ int
 _papi_hwi_component_index( int event_code ) {
 
   int cidx;
+  int event_index;
 
-  cidx=((0x3c000000 & event_code )>>26);
+  SUBDBG("Trying to find component for native_event %x\n",event_code);
+
+  /* currently assume presets are for component 0 only */
+  if (event_code&PAPI_PRESET_MASK) {
+     SUBDBG("Event %x is a PRESET, assigning component %d\n",
+	    event_code,0);
+     return 0;
+  }
+
+  event_index=event_code&PAPI_NATIVE_AND_MASK;
+
+  if ( (event_index < 0) || (event_index>=num_native_events)) {
+     SUBDBG("Event index %x is out of range\n",event_index);
+     return PAPI_ENOEVNT;
+  }
+
+  cidx=_papi_native_events[event_index].cidx;
+
+  SUBDBG("Found event code %d from %d, %x\n",cidx,event_index,event_code);
 
   if ((cidx<0) || (cidx >= papi_num_components)) return PAPI_ENOCMP;
 
   return cidx;
 }
 
-
+/* Convert a compnent and internal event to a native_event */
 int 
 _papi_hwi_native_to_eventcode(int cidx, int event_code) {
 
   int result;
 
-  result=event_code|(cidx<<26)|PAPI_NATIVE_MASK;
+  SUBDBG("Looking for component %d event %d\n",cidx,event_code);
+
+  result=_papi_hwi_find_native_event(cidx,event_code);
+  if (result==PAPI_ENOEVNT) {
+     /* Need to allocate */
+     result=_papi_hwi_add_native_event(event_code,cidx);
+  }
 
   return result;
 }
 
+/* Convert a native_event code to an internal event code */
 int
 _papi_hwi_eventcode_to_native(int event_code) {
 
   int result;
+  int event_index;
 
-  /* strip off component bits */
+  SUBDBG("Looking for event for native_event %x\n",event_code);
 
-  result=event_code&PAPI_NATIVE_AND_MASK&0xc3ffffff;
+  event_index=event_code&PAPI_NATIVE_AND_MASK;
+  if (event_index>=num_native_events) return PAPI_ENOEVNT;
 
+  result=_papi_native_events[event_index].component_event;
+  
   return result;
 
 }
 
 
-
+/*********************/
 /* Utility functions */
+/*********************/
 
 void
 PAPIERROR( char *format, ... )
@@ -1868,7 +1964,7 @@ _papi_hwi_native_code_to_name( unsigned int EventCode,
   int cidx;
 
   cidx = _papi_hwi_component_index( EventCode );
-  if (cidx<0) return PAPI_ENOCMP;
+  if (cidx<0) return PAPI_ENOEVNT;
 
   if ( EventCode & PAPI_NATIVE_MASK ) {
     return ( _papi_hwd[cidx]-> ntv_code_to_name( 
