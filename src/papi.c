@@ -4,7 +4,7 @@
 
 /** 
 * @file:    papi.c
-* CVS:     $Id$
+*
 * @author:  Philip Mucci
 *          mucci@cs.utk.edu
 * @author    dan terpstra
@@ -1008,16 +1008,16 @@ PAPI_event_name_to_code( char *in, int *out )
 	if ( init_level == PAPI_NOT_INITED )
 		papi_return( PAPI_ENOINIT );
 
-	/* With user definable events, we can no longer assume
-	   presets begin with "PAPI"...
-	   if (strncmp(in, "PAPI", 4) == 0) {
-	 */
-	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
-		if ( ( _papi_hwi_presets[i].symbol )
-			 && ( strcasecmp( _papi_hwi_presets[i].symbol, in ) == 0 ) ) {
-			*out = ( int ) ( i | PAPI_PRESET_MASK );
-			papi_return( PAPI_OK );
-		}
+	/* All presets start with "PAPI_" so no need to */
+	/* do an exhaustive search if that's not there  */
+	if (strncmp(in, "PAPI_", 5) == 0) {
+	   for(i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
+	      if ( ( _papi_hwi_presets[i].symbol )
+		   && ( strcasecmp( _papi_hwi_presets[i].symbol, in ) == 0) ) {
+		 *out = ( int ) ( i | PAPI_PRESET_MASK );
+		 papi_return( PAPI_OK );
+	      }
+	   }
 	}
 
 #ifdef USER_EVENTS
