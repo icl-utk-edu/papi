@@ -521,7 +521,7 @@ IOUNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 	else if ( ret < OFFSET || ret > IOUNIT_MAX_COUNTERS ) // not an IOUnit event
 		return PAPI_ENOEVNT;
 	else
-		*event_code = ( ret - OFFSET ) ) ;
+		*event_code = ( ret - OFFSET ) ;
 	
 	return PAPI_OK;
 }

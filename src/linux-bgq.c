@@ -36,7 +36,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <linux/utsname.h>
+#include <sys/utsname.h>
 #include "spi/include/upci/upci.h"
 
 
@@ -53,7 +53,7 @@ pthread_mutex_t thdLocks[PAPI_MAX_LOCK];
 /* Defined in papi_data.c */
 //extern papi_mdi_t _papi_hwi_system_info;
 
-extern papi_vector_t MY_VECTOR;
+papi_vector_t _bgq_vectors;
 PAPI_os_info_t _papi_os_info;
 
 /* Defined in linux-bgq-memory.c */
@@ -873,15 +873,15 @@ _bgq_get_virt_cycles( void )
 int
 _bgq_init_substrate( int cidx )
 {	
-#ifdef DEBUG_BGQ
+//#ifdef DEBUG_BGQ
 	printf("_bgq_init_substrate\n");
 	//printf("_bgq_init_substrate: 1. BGPM_INITIALIZED = %d \n", BGPM_INITIALIZED);
-#endif
+//#endif
 	int retval;
 	int i;
 
 	_bgq_vectors.cmp_info.CmpIdx = cidx;
-	
+
 	/*
 	 * Fill in what we can of the papi_system_info
 	 */
@@ -890,7 +890,7 @@ _bgq_init_substrate( int cidx )
 	SUBDBG( "After _bgq_get_system_info(), retval=%d...\n", retval );
 	if ( retval != PAPI_OK )
 		return ( retval );
-	
+
 	/*
 	 * Setup memory info
 	 */
@@ -902,7 +902,6 @@ _bgq_init_substrate( int cidx )
 	SUBDBG( "After _bgq_get_memory_info, retval=%d...\n", retval );
 	if ( retval )
 		return ( retval );
-
 #if 1
 	/* Setup Locks */
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
@@ -915,6 +914,7 @@ _bgq_init_substrate( int cidx )
 	
 	/* Setup presets */
 	retval = _papi_load_preset_table( "BGQ", 0, cidx );
+	printf("_papi_load_preset_table retval = %d --- cidx = %d\n", retval, cidx);
 	if ( retval ) {
 		return retval;
 	}	
@@ -1070,7 +1070,7 @@ _bgq_ntv_enum_events( unsigned int *EventCode, int modifier )
 int 
 _papi_hwi_init_os(void) {
 	
-	struct new_utsname uname_buffer;
+	struct utsname uname_buffer;
 	
 	/* Get the kernel info */
     uname(&uname_buffer);
@@ -1096,7 +1096,6 @@ papi_vector_t _bgq_vectors = {
 				 .name = "linux-bgq",
 				 .short_name = "bgq",
 				 .description = "Blue Gene/Q substrate",
-				 .CmpIdx = 0, 
 				 .num_cntrs = BGQ_PUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,

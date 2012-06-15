@@ -565,7 +565,7 @@ L2UNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 	else if ( ret < OFFSET || ret > L2UNIT_MAX_COUNTERS ) // not a L2Unit event
 		return PAPI_ENOEVNT;
 	else
-		*event_code = ( ret - OFFSET ) ) ;
+		*event_code = ( ret - OFFSET );
 
 	return PAPI_OK;
 }

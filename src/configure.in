@@ -1293,19 +1293,17 @@ elif test "$MAKEVER" = "bgp"; then
   DESCR="Linux for BlueGene/P"
   LIBS=static
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
-  OMPCFLGS=""
+  OMPCFLGS=""  
 elif test "$MAKEVER" = "bgq"; then
   FILENAME=Rules.bgpm
-  if test "x$no_cpu_counters" = "x"; then
-    SUBSTR=linux-bgq
-    MEMSUBSTR=linux-bgq
-	MISCSRCS="linux-bgq-common.c"
-	MISCOBJS='$(MISCSRCS:.c=.o)'
-	SUBSTR_HEADERS=linux-bgq-common.h
-    #CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
-  else
-    CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include'
-  fi
+  VECTOR=_bgq_vectors
+  SUBSTR=linux-bgq
+  MEMSUBSTR=linux-bgq
+  PAPI_EVENTS_CSV="papi_events.csv"
+  MISCSRCS="linux-bgq-common.c"
+  MISCOBJS='$(MISCSRCS:.c=.o)'
+  SUBSTR_HEADERS=linux-bgq-common.h
+  CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgq_vectors'
   OPTFLAGS="-g -Wall -O3"
   TOPTFLAGS="-g -Wall -O0"
   SHLIB=libpapi.so
