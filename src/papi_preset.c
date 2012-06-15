@@ -487,8 +487,11 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	     ret=_papi_hwd[cidx]->ntv_name_to_code(t, &event_idx);
 
 	     if (ret==PAPI_OK) {
-		SUBDBG("Found %x\n",event_idx);
-		_papi_hwi_presets[insert].code[i]=event_idx;
+		_papi_hwi_presets[insert].code[i]=
+	              _papi_hwi_native_to_eventcode(cidx,event_idx);
+		SUBDBG("Found: %s %x c%d e%d\n",t,
+		       _papi_hwi_presets[insert].code[i],
+		       cidx,event_idx);
 	     }
 	     else {
 		PAPIERROR("papi_preset: Error finding event %s",t);
