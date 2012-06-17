@@ -451,9 +451,9 @@ NWUNIT_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _NWunit_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "$Id: linux-NWunit.c,v 1.2 2011/03/18 21:40:22 jagode Exp $",
-				 .version = "$Revision: 1.2 $",
-				 .CmpIdx = 0,
+				 .name = "bgpm/NWUnit",
+				 .short_name = "NWUnit",
+				 .description = "Blue Gene/Q NWUnit component",
 				 .num_cntrs = NWUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
