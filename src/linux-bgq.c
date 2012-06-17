@@ -914,7 +914,6 @@ _bgq_init_substrate( int cidx )
 	
 	/* Setup presets */
 	retval = _papi_load_preset_table( "BGQ", 0, cidx );
-	printf("_papi_load_preset_table retval = %d --- cidx = %d\n", retval, cidx);
 	if ( retval ) {
 		return retval;
 	}	
@@ -952,7 +951,7 @@ _bgq_ntv_name_to_code( char *name, unsigned int *event_code )
 	else if ( ret > BGQ_PUNIT_MAX_COUNTERS ) // not a PUnit event
 		return PAPI_ENOEVNT;
 	else
-		*event_code = ( ret - 1 ) | PAPI_NATIVE_MASK;
+		*event_code = ( ret - 1 );
 	
 	return PAPI_OK;
 }

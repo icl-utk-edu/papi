@@ -1303,7 +1303,6 @@ elif test "$MAKEVER" = "bgq"; then
   MISCSRCS="linux-bgq-common.c"
   MISCOBJS='$(MISCSRCS:.c=.o)'
   SUBSTR_HEADERS=linux-bgq-common.h
-  CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgq_vectors'
   OPTFLAGS="-g -Wall -O3"
   TOPTFLAGS="-g -Wall -O0"
   SHLIB=libpapi.so
