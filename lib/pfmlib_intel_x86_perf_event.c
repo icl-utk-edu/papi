@@ -25,11 +25,37 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <limits.h>
 
 /* private headers */
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_x86_priv.h"
 #include "pfmlib_perf_event_priv.h"
+
+static int
+find_pmu_type_by_name(const char *name)
+{
+	char filename[PATH_MAX];
+	FILE *fp;
+	int ret, type;
+
+	if (!name)
+		return PFM_ERR_NOTSUPP;
+
+	sprintf(filename, "/sys/bus/event_source/devices/%s/type", name);
+
+	fp = fopen(filename, "r");
+	if (!fp)
+		return PFM_ERR_NOTSUPP;
+
+	ret = fscanf(fp, "%d", &type);
+	if (ret != 1)
+		type = PFM_ERR_NOTSUPP;
+
+	fclose(fp);
+
+	return type;
+}
 
 int
 pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
@@ -80,8 +106,6 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	pfm_intel_x86_reg_t reg;
 	int ret;
 
-	return PFM_ERR_NOTSUPP;
-
 	if (!pmu->get_event_encoding[PFM_OS_NONE])
 		return PFM_ERR_NOTSUPP;
 
@@ -89,7 +113,11 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	//attr->type = PERF_TYPE_UNCORE;
+	ret = find_pmu_type_by_name(pmu->perf_name);
+	if (ret < 0)
+		return ret;
+
+	attr->type = ret;
 
 	reg.val = e->codes[0];
 
