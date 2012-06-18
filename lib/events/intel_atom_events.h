@@ -692,6 +692,7 @@ static const intel_x86_entry_t intel_atom_pe[]={
   .modmsk = INTEL_FIXED3_ATTRS,
   .cntmsk = 0x400000000ull,
   .code = 0x0300, /* pseudo encoding */
+  .flags = INTEL_X86_FIXED,
 },
 { .name   = "INSTRUCTION_RETIRED",
   .desc   = "Instructions retired",
