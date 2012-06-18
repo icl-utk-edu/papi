@@ -77,6 +77,7 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
 	struct perf_event_attr *attr = e->os_data;
+	pfm_intel_x86_reg_t reg;
 	int ret;
 
 	return PFM_ERR_NOTSUPP;
@@ -90,7 +91,23 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	//attr->type = PERF_TYPE_UNCORE;
 
-	attr->config = e->codes[0];
+	reg.val = e->codes[0];
+
+	/*
+	 * encoder treats all events as using the generic
+	 * counters. So here correct fot events that are
+	 * fixed counter only.
+	 */
+	if (intel_x86_eflag(this, e->event, INTEL_X86_FIXED)) {
+		reg.nhm_unc_fixed.usel_en  = 1;
+		reg.nhm_unc_fixed.usel_int = 1;
+	} else {
+		reg.nhm_unc.usel_en  = 1;
+		reg.nhm_unc.usel_int = 1;
+	}
+
+	attr->config = reg.val;
+
 	/*
 	 * uncore measures at all priv levels
 	 *

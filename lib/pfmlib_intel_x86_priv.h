@@ -120,6 +120,13 @@ typedef union pfm_intel_x86_reg {
 	} nhm_unc;
 
 	struct {
+		unsigned long usel_en:1;	/* enable */
+		unsigned long usel_res1:1;
+		unsigned long usel_int:1;	/* PMI enable */
+		unsigned long usel_res2:61;
+	} nhm_unc_fixed;
+
+	struct {
 		unsigned long cpl_eq0:1;	/* filter out branches at pl0 */
 		unsigned long cpl_neq0:1;	/* filter out branches at pl1-pl3 */
 		unsigned long jcc:1;		/* filter out condition branches */
