@@ -2000,19 +2000,26 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
        /* so we'll have to fake it.                                    */
        if ( retval == PAPI_ESBSTR ) {
 
+
+	  SUBDBG("missing NTV_CODE_TO_INFO, faking\n");
 	  /* Fill in the info structure */
 
 	  retval = _papi_hwd[cidx]->ntv_code_to_name( 
 				    _papi_hwi_eventcode_to_native(EventCode), 
 				    info->symbol,
 				    sizeof(info->symbol));
-	  if (retval!=PAPI_OK) return retval;
+	  if (retval!=PAPI_OK) {
+	     SUBDBG("failed ntv_code_to_name\n");
+	     return retval;
+	  }
 
 	  retval = _papi_hwd[cidx]->ntv_code_to_descr( 
 				     _papi_hwi_eventcode_to_native(EventCode), 
                                      info->long_descr,
 				     sizeof ( info->long_descr));
-	  if (retval!=PAPI_OK) return retval;
+	  if (retval!=PAPI_OK) {
+	     SUBDBG("Failed ntv_code_to_descr()\n");
+	  }
 
        }
 
