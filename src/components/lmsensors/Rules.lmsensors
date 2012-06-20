@@ -7,5 +7,5 @@ COMPOBJS += linux-lmsensors.o
 CFLAGS += -I$(SENSORS_INCDIR)
 LDFLAGS += -L$(SENSORS_LIBDIR) -lsensors
 
-linux-lmsensors.o: components/lmsensors/linux-lmsensors.c components/lmsensors/linux-lmsensors.h $(HEADERS)
+linux-lmsensors.o: components/lmsensors/linux-lmsensors.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/lmsensors/linux-lmsensors.c -o linux-lmsensors.o 
