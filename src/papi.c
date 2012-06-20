@@ -4913,186 +4913,219 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *	@see PAPI_profil
  */
 int
-PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
+PAPI_sprofil( PAPI_sprofil_t *prof, int profcnt, int EventSet,
 			  int EventCode, int threshold, int flags )
 {
-	EventSetInfo_t *ESI;
-	int retval, index, i, buckets;
-	int forceSW = 0;
-	int cidx;
+   EventSetInfo_t *ESI;
+   int retval, index, i, buckets;
+   int forceSW = 0;
+   int cidx;
 
-	ESI = _papi_hwi_lookup_EventSet( EventSet );
-	if ( ESI == NULL )
-		papi_return( PAPI_ENOEVST );
+   /* Check to make sure EventSet exists */
+   ESI = _papi_hwi_lookup_EventSet( EventSet );
+   if ( ESI == NULL ) {
+      papi_return( PAPI_ENOEVST );
+   }
 
-	if ( ( ESI->state & PAPI_STOPPED ) != PAPI_STOPPED )
-		papi_return( PAPI_EISRUN );
+   /* Check to make sure EventSet is stopped */
+   if ( ( ESI->state & PAPI_STOPPED ) != PAPI_STOPPED ) {
+      papi_return( PAPI_EISRUN );
+   }
 
-	if ( ESI->state & PAPI_ATTACHED )
-		papi_return( PAPI_EINVAL );
+   /* We cannot profile if attached */
+   if ( ESI->state & PAPI_ATTACHED ) {
+      papi_return( PAPI_EINVAL );
+   }
 
-	if ( ESI->state & PAPI_CPU_ATTACHED )
-		papi_return( PAPI_EINVAL );
+   /* We cannot profile if cpu attached */
+   if ( ESI->state & PAPI_CPU_ATTACHED ) {
+      papi_return( PAPI_EINVAL );
+   }
 
-	cidx = valid_ESI_component( ESI );
-	if ( cidx < 0 )
-		papi_return( cidx );
+   /* Get component for EventSet */
+   cidx = valid_ESI_component( ESI );
+   if ( cidx < 0 ) {
+      papi_return( cidx );
+   }
 
-	if ( ( index = _papi_hwi_lookup_EventCodeIndex( ESI,
-						   (unsigned int) EventCode ) ) < 0 ) {
-	   papi_return( PAPI_ENOEVNT );
-	}
+   /* Get index of the Event we want to profile */
+   if ( ( index = _papi_hwi_lookup_EventCodeIndex( ESI,
+				      (unsigned int) EventCode ) ) < 0 ) {
+      papi_return( PAPI_ENOEVNT );
+   }
 
-	/* We do not support derived events in overflow */
-	/* Unless it's DERIVED_CMPD in which no calculations are done */
-	if ( ( ESI->EventInfoArray[index].derived ) &&
-		 ( ESI->EventInfoArray[index].derived != DERIVED_CMPD ) &&
-		 !( flags & PAPI_PROFIL_FORCE_SW ) )
-		papi_return( PAPI_EINVAL );
+   /* We do not support derived events in overflow */
+   /* Unless it's DERIVED_CMPD in which no calculations are done */
+   if ( ( ESI->EventInfoArray[index].derived ) &&
+	( ESI->EventInfoArray[index].derived != DERIVED_CMPD ) &&
+	!( flags & PAPI_PROFIL_FORCE_SW ) ) {
+      papi_return( PAPI_EINVAL );
+   }
 
-	if ( prof == NULL )
-		profcnt = 0;
+   /* If no prof structures, then make sure count is 0 */
+   if ( prof == NULL ) {
+      profcnt = 0;
+   }
 
-	/* check all profile regions for valid scale factors of:
-	   2 (131072/65536),
-	   1 (65536/65536),
-	   or < 1 (65535 -> 2) as defined in unix profil()
-	   2/65536 is reserved for single bucket profiling
-	   {0,1}/65536 are traditionally used to terminate profiling
-	   but are unused here since PAPI uses threshold instead
-	 */
-	for ( i = 0; i < profcnt; i++ ) {
-		if ( !( ( prof[i].pr_scale == 131072 ) ||
-				( ( prof[i].pr_scale <= 65536 && prof[i].pr_scale > 1 ) ) ) ) {
-			APIDBG( "Improper scale factor: %d\n", prof[i].pr_scale );
-			papi_return( PAPI_EINVAL );
-		}
-	}
+   /* check all profile regions for valid scale factors of:
+      2 (131072/65536),
+      1 (65536/65536),
+      or < 1 (65535 -> 2) as defined in unix profil()
+      2/65536 is reserved for single bucket profiling
+      {0,1}/65536 are traditionally used to terminate profiling
+      but are unused here since PAPI uses threshold instead
+    */
+   for( i = 0; i < profcnt; i++ ) {
+      if ( !( ( prof[i].pr_scale == 131072 ) ||
+	   ( ( prof[i].pr_scale <= 65536 && prof[i].pr_scale > 1 ) ) ) ) {
+	 APIDBG( "Improper scale factor: %d\n", prof[i].pr_scale );
+	 papi_return( PAPI_EINVAL );
+      }
+   }
 
-	if ( threshold < 0 )
-		papi_return( PAPI_EINVAL );
+   /* Make sure threshold is valid */
+   if ( threshold < 0 ) {
+      papi_return( PAPI_EINVAL );
+   }
 
-	/* the first time to call PAPI_sprofil */
-	if ( !( ESI->state & PAPI_PROFILING ) ) {
-		if ( threshold == 0 )
-			papi_return( PAPI_EINVAL );
-	}
-	if ( threshold > 0 &&
-		 ESI->profile.event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs )
-		papi_return( PAPI_ECNFLCT );
+   /* the first time to call PAPI_sprofil */
+   if ( !( ESI->state & PAPI_PROFILING ) ) {
+      if ( threshold == 0 ) {
+	 papi_return( PAPI_EINVAL );
+      }
+   }
 
-	if ( threshold == 0 ) {
-		for ( i = 0; i < ESI->profile.event_counter; i++ ) {
-			if ( ESI->profile.EventCode[i] == EventCode )
-				break;
-		}
-		/* EventCode not found */
-		if ( i == ESI->profile.event_counter )
-			papi_return( PAPI_EINVAL );
-		/* compact these arrays */
-		while ( i < ESI->profile.event_counter - 1 ) {
-			ESI->profile.prof[i] = ESI->profile.prof[i + 1];
-			ESI->profile.count[i] = ESI->profile.count[i + 1];
-			ESI->profile.threshold[i] = ESI->profile.threshold[i + 1];
-			ESI->profile.EventIndex[i] = ESI->profile.EventIndex[i + 1];
-			ESI->profile.EventCode[i] = ESI->profile.EventCode[i + 1];
-			i++;
-		}
-		ESI->profile.prof[i] = NULL;
-		ESI->profile.count[i] = 0;
-		ESI->profile.threshold[i] = 0;
-		ESI->profile.EventIndex[i] = 0;
-		ESI->profile.EventCode[i] = 0;
-		ESI->profile.event_counter--;
-	} else {
-		if ( ESI->profile.event_counter > 0 ) {
-			if ( ( flags & PAPI_PROFIL_FORCE_SW ) &&
-				 !( ESI->profile.flags & PAPI_PROFIL_FORCE_SW ) )
-				papi_return( PAPI_ECNFLCT );
-			if ( !( flags & PAPI_PROFIL_FORCE_SW ) &&
-				 ( ESI->profile.flags & PAPI_PROFIL_FORCE_SW ) )
-				papi_return( PAPI_ECNFLCT );
-		}
+   /* ??? */
+   if ( (threshold > 0) &&
+	(ESI->profile.event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs) ) {
+      papi_return( PAPI_ECNFLCT );
+   }
 
-		for ( i = 0; i < ESI->profile.event_counter; i++ ) {
-			if ( ESI->profile.EventCode[i] == EventCode )
-				break;
-		}
+   if ( threshold == 0 ) {
+      for( i = 0; i < ESI->profile.event_counter; i++ ) {
+	 if ( ESI->profile.EventCode[i] == EventCode ) {
+	    break;
+	 }
+      }
+		
+      /* EventCode not found */
+      if ( i == ESI->profile.event_counter ) {
+	 papi_return( PAPI_EINVAL );
+      }
 
-		if ( i == ESI->profile.event_counter ) {
-			i = ESI->profile.event_counter;
-			ESI->profile.event_counter++;
-			ESI->profile.EventCode[i] = EventCode;
-		}
-		ESI->profile.prof[i] = prof;
-		ESI->profile.count[i] = profcnt;
-		ESI->profile.threshold[i] = threshold;
-		ESI->profile.EventIndex[i] = index;
-	}
+      /* compact these arrays */
+      while ( i < ESI->profile.event_counter - 1 ) {
+         ESI->profile.prof[i] = ESI->profile.prof[i + 1];
+	 ESI->profile.count[i] = ESI->profile.count[i + 1];
+	 ESI->profile.threshold[i] = ESI->profile.threshold[i + 1];
+	 ESI->profile.EventIndex[i] = ESI->profile.EventIndex[i + 1];
+	 ESI->profile.EventCode[i] = ESI->profile.EventCode[i + 1];
+	 i++;
+      }
+      ESI->profile.prof[i] = NULL;
+      ESI->profile.count[i] = 0;
+      ESI->profile.threshold[i] = 0;
+      ESI->profile.EventIndex[i] = 0;
+      ESI->profile.EventCode[i] = 0;
+      ESI->profile.event_counter--;
+   } else {
+      if ( ESI->profile.event_counter > 0 ) {
+	 if ( ( flags & PAPI_PROFIL_FORCE_SW ) &&
+	      !( ESI->profile.flags & PAPI_PROFIL_FORCE_SW ) ) {
+	    papi_return( PAPI_ECNFLCT );
+	 }
+	 if ( !( flags & PAPI_PROFIL_FORCE_SW ) &&
+	      ( ESI->profile.flags & PAPI_PROFIL_FORCE_SW ) ) {
+	    papi_return( PAPI_ECNFLCT );
+	 }
+      }
 
-	APIDBG( "Profile event counter is %d\n", ESI->profile.event_counter );
+      for( i = 0; i < ESI->profile.event_counter; i++ ) {
+	 if ( ESI->profile.EventCode[i] == EventCode ) {
+	    break;
+	 }
+      }
 
-	/* Clear out old flags */
-	if ( threshold == 0 )
-		flags |= ESI->profile.flags;
+      if ( i == ESI->profile.event_counter ) {
+	 i = ESI->profile.event_counter;
+	 ESI->profile.event_counter++;
+	 ESI->profile.EventCode[i] = EventCode;
+      }
+      ESI->profile.prof[i] = prof;
+      ESI->profile.count[i] = profcnt;
+      ESI->profile.threshold[i] = threshold;
+      ESI->profile.EventIndex[i] = index;
+   }
 
-	/* make sure no invalid flags are set */
-	if ( flags &
-		 ~( PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED |
-			PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW |
-			PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR ) )
-		papi_return( PAPI_EINVAL );
+   APIDBG( "Profile event counter is %d\n", ESI->profile.event_counter );
 
-	if ( ( flags & ( PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR ) ) &&
-		 ( _papi_hwd[cidx]->cmp_info.profile_ear == 0 ) )
-		papi_return( PAPI_ESBSTR );
+   /* Clear out old flags */
+   if ( threshold == 0 ) {
+      flags |= ESI->profile.flags;
+   }
 
-	/* if we have kernel-based profiling, then we're just asking for signals on interrupt. */
-	/* if we don't have kernel-based profiling, then we're asking for emulated PMU interrupt */
-	if ( ( flags & PAPI_PROFIL_FORCE_SW ) &&
-		 ( _papi_hwd[cidx]->cmp_info.kernel_profile == 0 ) )
-		forceSW = PAPI_OVERFLOW_FORCE_SW;
+   /* make sure no invalid flags are set */
+   if ( flags &
+	~( PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED |
+	   PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW |
+	   PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR ) ) {
+      papi_return( PAPI_EINVAL );
+   }
 
-	/* make sure one and only one bucket size is set */
-	buckets = flags & PAPI_PROFIL_BUCKETS;
-	if ( !buckets )
-		flags |= PAPI_PROFIL_BUCKET_16;	/* default to 16 bit if nothing set */
-	else {					 /* return error if more than one set */
-		if ( !( ( buckets == PAPI_PROFIL_BUCKET_16 ) ||
-				( buckets == PAPI_PROFIL_BUCKET_32 ) ||
-				( buckets == PAPI_PROFIL_BUCKET_64 ) ) )
-			papi_return( PAPI_EINVAL );
-	}
+   /* if we have kernel-based profiling, then we're just asking for 
+      signals on interrupt. */
+   /* if we don't have kernel-based profiling, then we're asking for 
+      emulated PMU interrupt */
+   if ( ( flags & PAPI_PROFIL_FORCE_SW ) &&
+	( _papi_hwd[cidx]->cmp_info.kernel_profile == 0 ) ) {
+      forceSW = PAPI_OVERFLOW_FORCE_SW;
+   }
 
-	/* Set up the option structure for the low level */
-	ESI->profile.flags = flags;
+   /* make sure one and only one bucket size is set */
+   buckets = flags & PAPI_PROFIL_BUCKETS;
+   if ( !buckets ) {
+      flags |= PAPI_PROFIL_BUCKET_16;	/* default to 16 bit if nothing set */
+   }
+   else {
+      /* return error if more than one set */
+      if ( !( ( buckets == PAPI_PROFIL_BUCKET_16 ) ||
+	      ( buckets == PAPI_PROFIL_BUCKET_32 ) ||
+	      ( buckets == PAPI_PROFIL_BUCKET_64 ) ) ) {
+	 papi_return( PAPI_EINVAL );
+      }
+   }
 
-	if ( _papi_hwd[cidx]->cmp_info.kernel_profile &&
-		 !( ESI->profile.flags & PAPI_PROFIL_FORCE_SW ) ) {
-		retval = _papi_hwd[cidx]->set_profile( ESI, index, threshold );
-		if ( ( retval == PAPI_OK ) && ( threshold > 0 ) ) {
-			/* We need overflowing because we use the overflow dispatch handler */
-			ESI->state |= PAPI_OVERFLOWING;
-			ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
-		}
-	} else {
-		retval =
-			PAPI_overflow( EventSet, EventCode, threshold, forceSW,
-						   _papi_hwi_dummy_handler );
-	}
-	if ( retval < PAPI_OK )
-		papi_return( retval );	/* We should undo stuff here */
+   /* Set up the option structure for the low level */
+   ESI->profile.flags = flags;
 
-	/* Toggle the profiling flags and ESI state */
+   if ( _papi_hwd[cidx]->cmp_info.kernel_profile &&
+	!( ESI->profile.flags & PAPI_PROFIL_FORCE_SW ) ) {
+      retval = _papi_hwd[cidx]->set_profile( ESI, index, threshold );
+      if ( ( retval == PAPI_OK ) && ( threshold > 0 ) ) {
+	 /* We need overflowing because we use the overflow dispatch handler */
+	 ESI->state |= PAPI_OVERFLOWING;
+	 ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+      }
+   } else {
+      retval = PAPI_overflow( EventSet, EventCode, threshold, forceSW,
+			      _papi_hwi_dummy_handler );
+   }
+	
+   if ( retval < PAPI_OK ) {
+      papi_return( retval );	/* We should undo stuff here */
+   }
 
-	if ( ESI->profile.event_counter >= 1 )
-		ESI->state |= PAPI_PROFILING;
-	else {
-		ESI->state ^= PAPI_PROFILING;
-		ESI->profile.flags = 0;
-	}
+   /* Toggle the profiling flags and ESI state */
 
-	return ( PAPI_OK );
+   if ( ESI->profile.event_counter >= 1 ) {
+      ESI->state |= PAPI_PROFILING;
+   }
+   else {
+      ESI->state ^= PAPI_PROFILING;
+      ESI->profile.flags = 0;
+   }
+
+   return PAPI_OK;
 }
 
 /** @class PAPI_profil
