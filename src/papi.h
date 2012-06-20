@@ -664,7 +664,7 @@ read the documentation carefully.  */
      unsigned int kernel_profile:1;        /**< Has kernel profiling support (buffered interrupts or sprofil-like) */
      unsigned int kernel_multiplex:1;      /**< In kernel multiplexing */
 //   unsigned int data_address_range:1;    /**< Supports data address range limiting */
-     unsigned int instr_address_range:1;   /**< Supports instruction address range limiting */
+//   unsigned int instr_address_range:1;   /**< Supports instruction address range limiting */
      unsigned int fast_counter_read:1;     /**< Supports a user level PMC read instruction */
      unsigned int fast_real_timer:1;       /**< Supports a fast real timer */
      unsigned int fast_virtual_timer:1;    /**< Supports a fast virtual timer */

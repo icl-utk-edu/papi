@@ -299,9 +299,6 @@ main( int argc, char **argv )
                if (( flags.iear ) && !( component->cntr_IEAR_events )) {
 		 continue;
 	       }
-	       if (( flags.iarr ) && !( component->instr_address_range )) {
-		 continue;
-	       }
 	       if (( flags.opcm ) && !( component->cntr_OPCM_events )) {
 		 continue;
 	       }

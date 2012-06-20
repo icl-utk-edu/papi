@@ -1052,7 +1052,7 @@ _ia64_init_substrate( int cidx )
 	_ia64_vector.cmp_info.available_granularities = PAPI_GRN_THR;
 	_ia64_vector.cmp_info.hardware_intr_sig = OVFL_SIGNAL;
 	_ia64_vector.cmp_info.kernel_profile = 1;
-	_ia64_vector.cmp_info.instr_address_range = 1;	/* Supports instruction address range limiting */
+
 	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
 		_ia64_vector.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
 
