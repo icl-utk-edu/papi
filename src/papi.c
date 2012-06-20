@@ -831,26 +831,27 @@ PAPI_get_component_info( int cidx )
  *	@see PAPI_event_name_to_code 
  */
 int
-PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
+PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 {
-	int i = EventCode & PAPI_PRESET_AND_MASK;
+        int i;
 
 	if ( info == NULL )
-		papi_return( PAPI_EINVAL );
+	   papi_return( PAPI_EINVAL );
 
 	if ( IS_PRESET(EventCode) ) {
-		if ( i >= PAPI_MAX_PRESET_EVENTS )
-			papi_return( PAPI_ENOTPRESET );
-		papi_return( _papi_hwi_get_preset_event_info( EventCode, info ) );
+           i = EventCode & PAPI_PRESET_AND_MASK;
+	   if ( i >= PAPI_MAX_PRESET_EVENTS )
+	      papi_return( PAPI_ENOTPRESET );
+	   papi_return( _papi_hwi_get_preset_event_info( EventCode, info ) );
 	}
 
 	if ( IS_NATIVE(EventCode) ) {
-		papi_return( _papi_hwi_get_native_event_info
-					 ( ( unsigned int ) EventCode, info ) );
+	   papi_return( _papi_hwi_get_native_event_info
+			  ( ( unsigned int ) EventCode, info ) );
 	}
 
 	if ( IS_USER_DEFINED(EventCode) ) {
-	  papi_return( PAPI_OK );
+	   papi_return( PAPI_OK );
 	}
 	papi_return( PAPI_ENOTPRESET );
 }
@@ -1243,7 +1244,7 @@ PAPI_enum_event( int *EventCode, int modifier )
  *		if ( retval == PAPI_OK ) {
  *		printf( "%-30s 0x%-10x\n%s\n", info.symbol, info.event_code, info.long_descr );
  *		}
- *	} while ( PAPI_enum_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
+ *	} while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
  *	@endcode
  *
  *      @par Generic Modifiers
