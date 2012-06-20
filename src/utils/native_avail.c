@@ -292,10 +292,6 @@ main( int argc, char **argv )
 	       /* Skip disabled components */
 	       if (component->disabled) continue;
 
-	       /* Skip if requested enumeration not available */
-	       if (( flags.dear ) && !( component->cntr_DEAR_events )) {
-		 continue;
-	       }
 	       if (( flags.opcm ) && !( component->cntr_OPCM_events )) {
 		 continue;
 	       }
