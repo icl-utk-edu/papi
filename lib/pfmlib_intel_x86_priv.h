@@ -123,7 +123,8 @@ typedef union pfm_intel_x86_reg {
 		unsigned long usel_en:1;	/* enable */
 		unsigned long usel_res1:1;
 		unsigned long usel_int:1;	/* PMI enable */
-		unsigned long usel_res2:61;
+		unsigned long usel_res2:32;
+		unsigned long usel_res3:29;
 	} nhm_unc_fixed;
 
 	struct {
