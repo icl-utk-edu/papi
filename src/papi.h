@@ -657,6 +657,7 @@ read the documentation carefully.  */
      int available_granularities; /**< Available granularities */
      int hardware_intr_sig;       /**< Signal used by hardware to deliver PMC events */
 //   int opcode_match_width;      /**< Width of opcode matcher if exists, 0 if not */
+     int component_type;          /**< Type of component */
      int reserved[8];             /* */
      unsigned int hardware_intr:1;         /**< hw overflow intr, does not need to be emulated in software*/
      unsigned int precise_intr:1;          /**< Performance interrupts happen precisely */
