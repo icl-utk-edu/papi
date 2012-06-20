@@ -675,7 +675,7 @@ read the documentation carefully.  */
      unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
      unsigned int cntr_groups:1;           /**< Underlying hardware uses counter groups (e.g. POWER5)*/
      unsigned int cntr_umasks:1;           /**< counters have unit masks */
-     unsigned int cntr_IEAR_events:1;      /**< counters support instr event addr register */
+//   unsigned int cntr_IEAR_events:1;      /**< counters support instr event addr register */
      unsigned int cntr_DEAR_events:1;      /**< counters support data event addr register */
      unsigned int cntr_OPCM_events:1;      /**< counter events support opcode matching */
      /* This should be a granularity option */

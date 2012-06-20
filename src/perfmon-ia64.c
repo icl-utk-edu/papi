@@ -1,6 +1,5 @@
 /*
 * File:    perfmon-ia64.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:	   Kevin London
@@ -1056,7 +1055,6 @@ _ia64_init_substrate( int cidx )
 	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
 		_ia64_vector.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
 
-	_ia64_vector.cmp_info.cntr_IEAR_events = 1;	/* counters support instr event addr register */
 	_ia64_vector.cmp_info.cntr_DEAR_events = 1;	/* counters support data event addr register */
 	_ia64_vector.cmp_info.cntr_OPCM_events = 1;	/* counter events support opcode matching */
 	_ia64_vector.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );

@@ -57,7 +57,6 @@ main( int argc, char **argv )
 	printf( "profile_ear: %d\n", cmpinfo->profile_ear );	/* Supports data/instr/tlb miss address sampling */
 	printf( "cntr_groups: %d\n", cmpinfo->cntr_groups );	/* Underlying hardware uses counter groups */
 	printf( "cntr_umasks: %d\n", cmpinfo->cntr_umasks );	/* counters have unit masks */
-	printf( "cntr_IEAR_events: %d\n", cmpinfo->cntr_IEAR_events );	/* counters support instr event addr register */
 	printf( "cntr_DEAR_events: %d\n", cmpinfo->cntr_DEAR_events );	/* counters support data event addr register */
 	printf( "cntr_OPCM_events: %d\n", cmpinfo->cntr_OPCM_events );	/* counter events support opcode matching */
 
