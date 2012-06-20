@@ -1251,7 +1251,6 @@ papi_vector_t _nvml_vector = {
 				.fast_virtual_timer = 0,
 				.attach = 0,
 				.attach_must_ptrace = 0,
-				.profile_ear = 0,
 				.cntr_groups = 0,
 				.cntr_umasks = 0,
 				.cpu = 0,

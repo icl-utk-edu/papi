@@ -51,7 +51,6 @@ main( int argc, char **argv )
 	printf( "fast_virtual_timer: %d\n", cmpinfo->fast_virtual_timer );	/* Has a fast virtual timer */
 	printf( "attach: %d\n", cmpinfo->attach );	/* Supports attach */
 	printf( "attach_must_ptrace: %d\n", cmpinfo->attach_must_ptrace );	/* */
-	printf( "profile_ear: %d\n", cmpinfo->profile_ear );	/* Supports data/instr/tlb miss address sampling */
 	printf( "cntr_groups: %d\n", cmpinfo->cntr_groups );	/* Underlying hardware uses counter groups */
 	printf( "cntr_umasks: %d\n", cmpinfo->cntr_umasks );	/* counters have unit masks */
 

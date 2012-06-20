@@ -943,7 +943,6 @@ papi_vector_t _papi_freebsd_vector = {
 	.hardware_intr = 1,
 	.kernel_multiplex = 1,
 	.kernel_profile = 1,
-	.profile_ear = 1,
 	.num_mpx_cntrs = HWPMC_NUM_COUNTERS, /* ?? */
 	.hardware_intr_sig = PAPI_INT_SIGNAL,
 
