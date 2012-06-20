@@ -296,9 +296,6 @@ main( int argc, char **argv )
 	       if (( flags.dear ) && !( component->cntr_DEAR_events )) {
 		 continue;
 	       }
-	       if (( flags.darr ) && !( component->data_address_range)) {
-		 continue;
-	       }
                if (( flags.iear ) && !( component->cntr_IEAR_events )) {
 		 continue;
 	       }

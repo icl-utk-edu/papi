@@ -663,15 +663,15 @@ read the documentation carefully.  */
      unsigned int posix1b_timers:1;        /**< Using POSIX 1b interval timers (timer_create) instead of setitimer */
      unsigned int kernel_profile:1;        /**< Has kernel profiling support (buffered interrupts or sprofil-like) */
      unsigned int kernel_multiplex:1;      /**< In kernel multiplexing */
-     unsigned int data_address_range:1;    /**< Supports data address range limiting */
+//   unsigned int data_address_range:1;    /**< Supports data address range limiting */
      unsigned int instr_address_range:1;   /**< Supports instruction address range limiting */
      unsigned int fast_counter_read:1;     /**< Supports a user level PMC read instruction */
      unsigned int fast_real_timer:1;       /**< Supports a fast real timer */
      unsigned int fast_virtual_timer:1;    /**< Supports a fast virtual timer */
      unsigned int attach:1;                /**< Supports attach */
      unsigned int attach_must_ptrace:1;	   /**< Attach must first ptrace and stop the thread/process*/
-     //     unsigned int edge_detect:1;           /**< Supports edge detection on events */
-     //     unsigned int invert:1;                /**< Supports invert detection on events */
+//   unsigned int edge_detect:1;           /**< Supports edge detection on events */
+//   unsigned int invert:1;                /**< Supports invert detection on events */
      unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
      unsigned int cntr_groups:1;           /**< Underlying hardware uses counter groups (e.g. POWER5)*/
      unsigned int cntr_umasks:1;           /**< counters have unit masks */

@@ -49,7 +49,6 @@ main( int argc, char **argv )
 	printf( "posix1b_timers: %d\n", cmpinfo->posix1b_timers );	/* Performance interrupts happen precisely */
 	printf( "kernel_profile: %d\n", cmpinfo->kernel_profile );	/* Needs kernel profile support (buffered interrupts) to be emulated */
 	printf( "kernel_multiplex: %d\n", cmpinfo->kernel_multiplex );	/* In kernel multiplexing */
-	printf( "data_address_range: %d\n", cmpinfo->data_address_range );	/* Supports data address range limiting */
 	printf( "instr_address_range: %d\n", cmpinfo->instr_address_range );	/* Supports instruction address range limiting */
 	printf( "fast_counter_read: %d\n", cmpinfo->fast_counter_read );	/* Has a fast counter read */
 	printf( "fast_real_timer: %d\n", cmpinfo->fast_real_timer );	/* Has a fast real timer */

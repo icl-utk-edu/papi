@@ -1223,14 +1223,12 @@ papi_vector_t _nvml_vector = {
 		.cmp_info = {
 				/* default component information */
 				/* (unspecified values are initialized to 0) */
-				/* we explicitly set them to zero in this nvml component */
-				/* to show what settings are available            */
 
 				.name = " linux-nvml.c",
 				.version = "1.0",
 				.support_version = "n/a",
 				.kernel_version = "n/a",
-				.CmpIdx = 0,            /* set by init_substrate */
+
 				.num_cntrs = 0, 		/* set by init_substrate */
 				.num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				.num_preset_events = 0,
@@ -1248,7 +1246,6 @@ papi_vector_t _nvml_vector = {
 				.posix1b_timers = 0,
 				.kernel_profile = 0,
 				.kernel_multiplex = 0,
-				.data_address_range = 0,
 				.instr_address_range = 0,
 				.fast_counter_read = 0,
 				.fast_real_timer = 0,
@@ -1267,10 +1264,10 @@ papi_vector_t _nvml_vector = {
 
 		/* sizes of framework-opaque component-private structures */
 		.size = {
-				.context = sizeof ( nvml_context_t ),
-				.control_state = sizeof ( nvml_control_state_t ),
-				.reg_value = sizeof ( nvml_register_t ),
-				//		.reg_alloc = sizeof ( nvml_reg_alloc_t ),
+		     .context = sizeof ( nvml_context_t ),
+		     .control_state = sizeof ( nvml_control_state_t ),
+		     .reg_value = sizeof ( nvml_register_t ),
+                     //	.reg_alloc = sizeof ( nvml_reg_alloc_t ),
 		},
 
 		/* function pointers */
@@ -1300,43 +1297,11 @@ papi_vector_t _nvml_vector = {
 		.set_overflow =         NULL,
 		.set_profile =          NULL,
 
-		/* OS related functions 
-		   .get_real_cycles =      NULL,
-		   .get_real_usec =        NULL,
-		   .get_virt_cycles =      NULL,
-		   .get_virt_usec =        NULL,
-		   .update_shlib_info =    NULL,
-		   .get_system_info =      NULL,
-		   .get_memory_info =      NULL,
-		   .get_dmem_info =        NULL,*/
-
-		/* bipartite map counter allocation? 
-		   .bpt_map_avail =        NULL,
-		   .bpt_map_set =          NULL,
-		   .bpt_map_exclusive =    NULL,
-		   .bpt_map_shared =       NULL,
-		   .bpt_map_preempt =      NULL,
-		   .bpt_map_update =       NULL,*/
-
-		/* ??? */
-		.user =                 NULL,
-
 		/* Name Mapping Functions */
 		.ntv_enum_events =   _papi_nvml_ntv_enum_events,
 		.ntv_name_to_code  = NULL,
 		.ntv_code_to_name =  _papi_nvml_ntv_code_to_name,
 		.ntv_code_to_descr = _papi_nvml_ntv_code_to_descr,
-
-		/* These are only used by _papi_hwi_get_native_event_info() */
-		/* Which currently only uses the info for printing native   */
-		/* event info, not for any sort of internal use.            */
-		//	.ntv_code_to_bits =  NULL,
-		//	.ntv_bits_to_info =  NULL,
-
-
-		/* Old and should be removed */
-		//	.add_prog_event =       NULL,
-
 
 };
 
