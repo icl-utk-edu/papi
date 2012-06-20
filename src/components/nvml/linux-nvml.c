@@ -1254,7 +1254,6 @@ papi_vector_t _nvml_vector = {
 				.profile_ear = 0,
 				.cntr_groups = 0,
 				.cntr_umasks = 0,
-				.cntr_OPCM_events = 0,
 				.cpu = 0,
 				.inherit = 0,
 		},

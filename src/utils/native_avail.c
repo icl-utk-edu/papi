@@ -292,11 +292,6 @@ main( int argc, char **argv )
 	       /* Skip disabled components */
 	       if (component->disabled) continue;
 
-	       if (( flags.opcm ) && !( component->cntr_OPCM_events )) {
-		 continue;
-	       }
-
-
 	       printf( "===============================================================================\n" );
 	       printf( " Events in Component: %s\n",component->name);
 	       printf( "===============================================================================\n" );

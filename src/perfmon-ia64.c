@@ -1055,7 +1055,6 @@ _ia64_init_substrate( int cidx )
 	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
 		_ia64_vector.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
 
-	_ia64_vector.cmp_info.cntr_OPCM_events = 1;	/* counter events support opcode matching */
 	_ia64_vector.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
 	/* Put the signal handler in use to consume PFM_END_MSG's */
 	_papi_hwi_start_signal( _ia64_vector.cmp_info.hardware_intr_sig, 1,
