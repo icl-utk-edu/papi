@@ -41,10 +41,7 @@ main( int argc, char **argv )
 			stringify_granularity( cmpinfo->default_granularity ) );
 	/* The default granularity when this substrate is used */
 	printf( "available_granularities: 0x%x (%s)\n", cmpinfo->available_granularities, stringify_all_granularities( cmpinfo->available_granularities ) );	/* Available granularities */
-	printf( "hardware_intr_sig: %d\n", cmpinfo->hardware_intr_sig );	/* Width of opcode matcher if exists, 0 if not */
-	printf( "opcode_match_width: %d\n", cmpinfo->opcode_match_width );	/* Width of opcode matcher if exists, 0 if not */
-/*   printf("reserved_ints[4]: %d\n",cmpinfo->reserved_ints[4]); */
-	printf( "hardware_intr: %d\n", cmpinfo->hardware_intr );	/* Needs hw overflow intr to be emulated in software */
+	printf( "hardware_intr_sig: %d\n", cmpinfo->hardware_intr_sig );	       printf( "hardware_intr: %d\n", cmpinfo->hardware_intr );	/* Needs hw overflow intr to be emulated in software */
 	printf( "precise_intr: %d\n", cmpinfo->precise_intr );	/* Performance interrupts happen precisely */
 	printf( "posix1b_timers: %d\n", cmpinfo->posix1b_timers );	/* Performance interrupts happen precisely */
 	printf( "kernel_profile: %d\n", cmpinfo->kernel_profile );	/* Needs kernel profile support (buffered interrupts) to be emulated */
