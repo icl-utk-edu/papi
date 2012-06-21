@@ -649,7 +649,7 @@ _coretemp_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 	   sizeof(info->symbol));
 
   strncpy( info->long_descr, _coretemp_native_events[index].description, 
-	   sizeof(info->symbol));
+	   sizeof(info->long_descr));
 
   strncpy( info->units, _coretemp_native_events[index].units, 
 	   sizeof(info->units));
