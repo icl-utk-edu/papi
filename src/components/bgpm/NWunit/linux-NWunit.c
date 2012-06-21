@@ -18,7 +18,6 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
-
 #include "linux-NWunit.h"
 
 /* Declare our vector in advance */
@@ -217,7 +216,7 @@ NWUNIT_update_control_state( hwd_control_state_t * ptr,
 		
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
-		index = ( native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		index = ( native[i].ni_event ) + OFFSET;
 		
 		native[i].ni_position = i;
 		
@@ -326,18 +325,17 @@ int
 NWUNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 	//printf( "NWUNIT_ntv_enum_events\n" );
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		*EventCode = 0;
 
 		return ( PAPI_OK );
 		break;
 
 	case PAPI_ENUM_EVENTS:
 	{
-		int index = ( *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		int index = ( *EventCode ) + OFFSET;
 
 		if ( index < NWUNIT_MAX_COUNTERS ) {
 			*EventCode = *EventCode + 1;
@@ -378,7 +376,7 @@ NWUNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 	else if ( ret < OFFSET || ret > NWUNIT_MAX_COUNTERS ) // not a NWUnit event
 		return PAPI_ENOEVNT;
 	else
-		*event_code = ( ret - OFFSET ) | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( _NWunit_vector.cmp_info.CmpIdx ) ;
+		*event_code = ( ret - OFFSET ) ;
 	
 	return PAPI_OK;
 }
@@ -395,7 +393,7 @@ NWUNIT_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 #endif
 	int index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 
 	if ( index >= MAX_COUNTERS )
 		return PAPI_ENOEVNT;
@@ -424,7 +422,7 @@ NWUNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 #endif
 	int retval, index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 	
 	retval = Bgpm_GetLongDesc( index, name, &len );
 	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
@@ -453,9 +451,9 @@ NWUNIT_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _NWunit_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "$Id: linux-NWunit.c,v 1.2 2011/03/18 21:40:22 jagode Exp $",
-				 .version = "$Revision: 1.2 $",
-				 .CmpIdx = 0,
+				 .name = "bgpm/NWUnit",
+				 .short_name = "NWUnit",
+				 .description = "Blue Gene/Q NWUnit component",
 				 .num_cntrs = NWUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
@@ -504,6 +502,5 @@ papi_vector_t _NWunit_vector = {
 	.ntv_enum_events = NWUNIT_ntv_enum_events,
 	.ntv_code_to_name = NWUNIT_ntv_code_to_name,
 	.ntv_code_to_descr = NWUNIT_ntv_code_to_descr,
-	.ntv_code_to_bits = NWUNIT_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
+	.ntv_code_to_bits = NWUNIT_ntv_code_to_bits
 };

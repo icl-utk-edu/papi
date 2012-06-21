@@ -58,6 +58,7 @@ static const pfmlib_attr_desc_t perf_event_ext_mods[]={
 	PFM_ATTR_I("period", "sampling period"),     	/* sampling period */
 	PFM_ATTR_I("freq", "sampling frequency (Hz)"),     /* sampling frequency */
 	PFM_ATTR_I("precise", "precise ip"),     		/* anti-skid mechanism */
+	PFM_ATTR_B("excl", "exclusive access"),    	/* exclusive PMU access */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -182,6 +183,10 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 				return PFM_ERR_ATTR_VAL;
 			attr->precise_ip = ival;
 			break;
+		case PERF_ATTR_EX:
+			if (ival && !attr->exclusive)
+				attr->exclusive = 1;
+			break;
 		}
 	}
 
@@ -204,11 +209,12 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	attr->exclude_hv     = !(plm & PFM_PLMH);
 
 	__pfm_vbprintf("PERF[type=%x config=0x%"PRIx64" config1=0x%"PRIx64
-                       " e_u=%d e_k=%d e_hv=%d period=%"PRIu64" freq=%d"
+                       " excl=%d e_u=%d e_k=%d e_hv=%d period=%"PRIu64" freq=%d"
                        " precise=%d] %s\n",
 			attr->type,
 			attr->config,
 			attr->config1,
+			attr->exclusive,
 			attr->exclude_user,
 			attr->exclude_kernel,
 			attr->exclude_hv,

@@ -501,12 +501,6 @@ _papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI )
 		return ( 1 );
 }
 
-inline_static int
-_papi_hwi_invalid_cmp( int cidx )
-{
-	return ( cidx < 0 || cidx >= papi_num_components );
-}
-
 inline_static hwd_context_t *
 _papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty )
 {
@@ -584,5 +578,10 @@ int _papi_hwi_native_name_to_code( char *in, int *out );
 int _papi_hwi_native_code_to_name( unsigned int EventCode, char *hwi_name,
                                    int len );
 
+
+int _papi_hwi_invalid_cmp( int cidx );
+int _papi_hwi_component_index( int event_code );
+int _papi_hwi_native_to_eventcode(int cidx, int event_code);
+int _papi_hwi_eventcode_to_native(int event_code);
 
 #endif /* PAPI_INTERNAL_H */

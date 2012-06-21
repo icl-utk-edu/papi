@@ -18,7 +18,6 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
-
 #include "linux-L2unit.h"
 
 /* Declare our vector in advance */
@@ -421,7 +420,7 @@ L2UNIT_update_control_state( hwd_control_state_t * ptr,
 	
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
-		index = ( native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		index = ( native[i].ni_event ) + OFFSET;
 		
 		native[i].ni_position = i;
 		
@@ -515,18 +514,17 @@ L2UNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 #ifdef DEBUG_BGQ
 	//printf( "L2UNIT_ntv_enum_events, EventCode = %x\n", *EventCode );
 #endif
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		*EventCode = 0;
 
 		return ( PAPI_OK );
 		break;
 
 	case PAPI_ENUM_EVENTS:
 	{
-		int index = ( *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		int index = ( *EventCode ) + OFFSET;
 
 		if ( index < L2UNIT_MAX_COUNTERS ) {
 			*EventCode = *EventCode + 1;
@@ -567,7 +565,7 @@ L2UNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 	else if ( ret < OFFSET || ret > L2UNIT_MAX_COUNTERS ) // not a L2Unit event
 		return PAPI_ENOEVNT;
 	else
-		*event_code = ( ret - OFFSET ) | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( _L2unit_vector.cmp_info.CmpIdx ) ;
+		*event_code = ( ret - OFFSET );
 
 	return PAPI_OK;
 }
@@ -584,7 +582,7 @@ L2UNIT_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 #endif
 	int index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 
 	if ( index >= MAX_COUNTERS )
 		return PAPI_ENOEVNT;
@@ -613,7 +611,7 @@ L2UNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 #endif
 	int retval, index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 	
 	retval = Bgpm_GetLongDesc( index, name, &len );
 	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
@@ -642,9 +640,9 @@ L2UNIT_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _L2unit_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "$Id: linux-L2unit.c,v 1.2 2011/03/18 21:40:22 jagode Exp $",
-				 .version = "$Revision: 1.2 $",
-				 .CmpIdx = 0, 
+				 .name = "bgpm/L2Unit",
+				 .short_name = "L2Unit",
+				 .description = "Blue Gene/Q L2Unit component",
 				 .num_cntrs = L2UNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
@@ -652,9 +650,6 @@ papi_vector_t _L2unit_vector = {
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
 		
-				 .itimer_sig = PAPI_INT_MPX_SIGNAL,
-				 .itimer_num = PAPI_INT_ITIMER,
-				 .itimer_res_ns = 1,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
 		
@@ -663,7 +658,6 @@ papi_vector_t _L2unit_vector = {
 				 /* component specific cmp_info initializations */
 				 .fast_real_timer = 0,
 				 .fast_virtual_timer = 0,
-				 .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
 				 .attach = 0,
 				 .attach_must_ptrace = 0,
 				 }
@@ -697,6 +691,5 @@ papi_vector_t _L2unit_vector = {
 	.ntv_enum_events = L2UNIT_ntv_enum_events,
 	.ntv_code_to_name = L2UNIT_ntv_code_to_name,
 	.ntv_code_to_descr = L2UNIT_ntv_code_to_descr,
-	.ntv_code_to_bits = L2UNIT_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
+	.ntv_code_to_bits = L2UNIT_ntv_code_to_bits
 };

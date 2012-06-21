@@ -30,7 +30,7 @@ main( int argc, char **argv )
 	if ( hwinfo->vendor == PAPI_VENDOR_UNKNOWN )
 		test_fail( __FILE__, __LINE__, "Vendor unknown", 0 );
 
-	if ( hwinfo->mhz == 0.0 )
+	if ( hwinfo->cpu_max_mhz == 0.0 )
 		test_fail( __FILE__, __LINE__, "Mhz unknown", 0 );
 
 	if ( hwinfo->ncpu < 1 )

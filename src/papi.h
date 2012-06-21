@@ -656,28 +656,29 @@ read the documentation carefully.  */
      int default_granularity;     /**< The default granularity when this substrate is used */
      int available_granularities; /**< Available granularities */
      int hardware_intr_sig;       /**< Signal used by hardware to deliver PMC events */
-     int opcode_match_width;      /**< Width of opcode matcher if exists, 0 if not */
+//   int opcode_match_width;      /**< Width of opcode matcher if exists, 0 if not */
+     int component_type;          /**< Type of component */
      int reserved[8];             /* */
      unsigned int hardware_intr:1;         /**< hw overflow intr, does not need to be emulated in software*/
      unsigned int precise_intr:1;          /**< Performance interrupts happen precisely */
      unsigned int posix1b_timers:1;        /**< Using POSIX 1b interval timers (timer_create) instead of setitimer */
      unsigned int kernel_profile:1;        /**< Has kernel profiling support (buffered interrupts or sprofil-like) */
      unsigned int kernel_multiplex:1;      /**< In kernel multiplexing */
-     unsigned int data_address_range:1;    /**< Supports data address range limiting */
-     unsigned int instr_address_range:1;   /**< Supports instruction address range limiting */
+//   unsigned int data_address_range:1;    /**< Supports data address range limiting */
+//   unsigned int instr_address_range:1;   /**< Supports instruction address range limiting */
      unsigned int fast_counter_read:1;     /**< Supports a user level PMC read instruction */
      unsigned int fast_real_timer:1;       /**< Supports a fast real timer */
      unsigned int fast_virtual_timer:1;    /**< Supports a fast virtual timer */
      unsigned int attach:1;                /**< Supports attach */
      unsigned int attach_must_ptrace:1;	   /**< Attach must first ptrace and stop the thread/process*/
-     //     unsigned int edge_detect:1;           /**< Supports edge detection on events */
-     //     unsigned int invert:1;                /**< Supports invert detection on events */
-     unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
-     unsigned int cntr_groups:1;           /**< Underlying hardware uses counter groups (e.g. POWER5)*/
+//   unsigned int edge_detect:1;           /**< Supports edge detection on events */
+//   unsigned int invert:1;                /**< Supports invert detection on events */
+//   unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
+//     unsigned int cntr_groups:1;           /**< Underlying hardware uses counter groups (e.g. POWER5)*/
      unsigned int cntr_umasks:1;           /**< counters have unit masks */
-     unsigned int cntr_IEAR_events:1;      /**< counters support instr event addr register */
-     unsigned int cntr_DEAR_events:1;      /**< counters support data event addr register */
-     unsigned int cntr_OPCM_events:1;      /**< counter events support opcode matching */
+//   unsigned int cntr_IEAR_events:1;      /**< counters support instr event addr register */
+//   unsigned int cntr_DEAR_events:1;      /**< counters support data event addr register */
+//   unsigned int cntr_OPCM_events:1;      /**< counter events support opcode matching */
      /* This should be a granularity option */
      unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
      unsigned int inherit:1;               /**< Supports child processes inheriting parents counters */
@@ -801,12 +802,24 @@ typedef char* PAPI_user_defined_events_file_t;
       int cpuid_family;             /**< cpuid family */
       int cpuid_model;              /**< cpuid model */
       int cpuid_stepping;           /**< cpuid stepping */
-      float mhz;                    /**< Cycle time of this CPU */
-      int clock_mhz;                /**< Cycle time of this CPU's cycle counter */
-      PAPI_mh_info_t mem_hierarchy;  /**< PAPI memory heirarchy description */
-      int virtualized;
-      char virtual_vendor_string[PAPI_MAX_STR_LEN];
+
+      int cpu_max_mhz;              /**< Maximum supported CPU speed */
+      int cpu_min_mhz;              /**< Minimum supported CPU speed */
+
+      PAPI_mh_info_t mem_hierarchy; /**< PAPI memory heirarchy description */
+      int virtualized;              /**< Running in virtual machine */
+      char virtual_vendor_string[PAPI_MAX_STR_LEN]; 
+                                    /**< Vendor for virtual machine */
       char virtual_vendor_version[PAPI_MAX_STR_LEN];
+                                    /**< Version of virtual machine */
+
+      /* Legacy Values, do not use */
+      float mhz;                    /**< Deprecated */
+      int clock_mhz;                /**< Deprecated */
+
+      /* For future expansion */
+      int reserved[8];
+
    } PAPI_hw_info_t;
 
 /** @ingroup papi_data_structures */
@@ -1098,6 +1111,7 @@ enum {
    int   PAPI_unlock(int); /**< unlock one of two PAPI internal user mutex variables */
    int   PAPI_unregister_thread(void); /**< inform PAPI that a previously registered thread is disappearing */
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
+  int   PAPI_get_event_component(int EventCode);  /**< return which component an EventCode belongs to */
 
    /** @} */
 
@@ -1119,6 +1133,11 @@ enum {
    int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
    int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
 /** @} */
+
+
+
+/* Backwards compatability hacks.  Remove eventually? */
+#define PAPI_COMPONENT_INDEX(a) PAPI_get_event_component(a)
 
 #ifdef __cplusplus
 }

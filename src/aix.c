@@ -636,9 +636,11 @@ _aix_get_system_info( papi_mdi_t *mdi )
 	_papi_hwi_system_info.hw_info.revision =
 		( float ) _system_configuration.version;
 	_papi_hwi_system_info.hw_info.mhz = ( float ) ( pm_cycles(  ) / 1000000.0 );
+	_papi_hwi_system_info.hw_info.cpu_max_mhz=_papi_hwi_system_info.hw_info.mhz;
+	_papi_hwi_system_info.hw_info.cpu_min_mhz=_papi_hwi_system_info.hw_info.mhz;
+
 /*   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;*/
 	_aix_vector.cmp_info.num_cntrs = pminfo.maxpmcs;
-	_aix_vector.cmp_info.cntr_groups = 1;
 	_aix_vector.cmp_info.available_granularities = PAPI_GRN_THR;
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
@@ -668,7 +670,7 @@ long long
 _aix_get_real_cycles( void )
 {
 	return ( _aix_get_real_usec(  ) *
-			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
+			 ( long long ) _papi_hwi_system_info.hw_info.cpu_max_mhz );
 }
 
 long long
@@ -715,11 +717,11 @@ _aix_init_substrate( int cidx )
 	if ( retval )
 		return ( retval );
 
-	SUBDBG( "Found %d %s %s CPUs at %f Mhz.\n",
+	SUBDBG( "Found %d %s %s CPUs at %d Mhz.\n",
 			_papi_hwi_system_info.hw_info.totalcpus,
 			_papi_hwi_system_info.hw_info.vendor_string,
 			_papi_hwi_system_info.hw_info.model_string,
-			_papi_hwi_system_info.hw_info.mhz );
+			_papi_hwi_system_info.hw_info.cpu_max_mhz );
 
 	_aix_vector.cmp_info.CmpIdx = cidx;
 	_aix_vector.cmp_info.num_native_events = aix_ppc64_setup_native_table(  );

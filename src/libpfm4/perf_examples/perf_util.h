@@ -41,6 +41,7 @@ typedef struct {
 	int fd;
 	int max_fds;
 	int idx; /* opaque libpfm event identifier */
+	char *fstr; /* fstr from library, must be freed */
 } perf_event_desc_t;
 
 /* handy shortcut */

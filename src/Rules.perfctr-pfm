@@ -102,7 +102,7 @@ SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr $(PFM_LIBS)
 
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" lib
 	$(MAKE)
 endif
 ####################################################################

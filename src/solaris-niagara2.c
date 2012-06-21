@@ -662,12 +662,8 @@ _niagara2_get_real_cycles( void )
 #endif
 
 	return ( _niagara2_get_real_usec(  ) *
-			 ( long_long ) _papi_hwi_system_info.hw_info.mhz );
+			 ( long_long ) _papi_hwi_system_info.hw_info.cpu_max_mhz );
 
-
-	/* 
-	   return (_niagara2_get_real_usec () * (long_long)
-	   _niagara2_vector.cmp_info.mhz); */
 }
 
 long_long
@@ -764,6 +760,8 @@ _niagara2_get_system_info( papi_mdi_t *mdi )
 	/* Clock speed */
 	_papi_hwi_system_info.hw_info.mhz = ( float ) __sol_get_processor_clock(  );
 	_papi_hwi_system_info.hw_info.clock_mhz = __sol_get_processor_clock(  );
+	_papi_hwi_system_info.hw_info.cpu_max_mhz = __sol_get_processor_clock(  );
+	_papi_hwi_system_info.hw_info.cpu_min_mhz = __sol_get_processor_clock(  );
 
 	/* Fill _niagara2_vector.cmp_info.mem_hierarchy */
 
@@ -905,11 +903,11 @@ _niagara2_init_substrate( int cidx )
 	_niagara2_lock_init(  );
 
 	// Copied from the old substrate, _papi_init_substrate()
-	SUBDBG( "Found %d %s %s CPUs at %f Mhz.\n",
+	SUBDBG( "Found %d %s %s CPUs at %d Mhz.\n",
 			_papi_hwi_system_info.hw_info.totalcpus,
 			_papi_hwi_system_info.hw_info.vendor_string,
 			_papi_hwi_system_info.hw_info.model_string,
-			_papi_hwi_system_info.hw_info.mhz );
+			_papi_hwi_system_info.hw_info.cpu_max_mhz );
 
 	/* Build native event table */
 #ifdef DEBUG

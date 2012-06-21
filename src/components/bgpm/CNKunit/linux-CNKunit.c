@@ -18,7 +18,6 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
-
 #include "linux-CNKunit.h"
 
 /* Declare our vector in advance */
@@ -212,7 +211,7 @@ CNKUNIT_update_control_state( hwd_control_state_t * ptr,
 		
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
-		index = ( native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		index = ( native[i].ni_event ) + OFFSET;
 		
 		native[i].ni_position = i;
 		
@@ -323,18 +322,17 @@ CNKUNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 #ifdef DEBUG_BGQ
 //	printf( "CNKUNIT_ntv_enum_events\n" );
 #endif
-	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
 	switch ( modifier ) {
 	case PAPI_ENUM_FIRST:
-		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		*EventCode = 0;
 
 		return ( PAPI_OK );
 		break;
 
 	case PAPI_ENUM_EVENTS:
 	{
-		int index = ( *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+		int index = ( *EventCode ) + OFFSET;
 
 		if ( index < CNKUNIT_MAX_COUNTERS ) {
 			*EventCode = *EventCode + 1;
@@ -375,7 +373,7 @@ CNKUNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 	else if ( ret < OFFSET || ret > CNKUNIT_MAX_COUNTERS ) // not a CNKUnit event
 		return PAPI_ENOEVNT;
 	else
-		*event_code = ( ret - OFFSET ) | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( _CNKunit_vector.cmp_info.CmpIdx ) ;
+		*event_code = ( ret - OFFSET ) ;
 	
 	return PAPI_OK;
 }
@@ -392,7 +390,7 @@ CNKUNIT_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 #endif
 	int index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 
 	if ( index >= MAX_COUNTERS )
 		return PAPI_ENOEVNT;
@@ -422,7 +420,7 @@ CNKUNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 #endif
 	int retval, index;
 	
-	index = ( EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK ) + OFFSET;
+	index = ( EventCode ) + OFFSET;
 	
 	retval = Bgpm_GetLongDesc( index, name, &len );
 	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
@@ -451,9 +449,9 @@ CNKUNIT_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _CNKunit_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "$Id: linux-CNKunit.c,v 1.2 2011/03/18 21:40:22 jagode Exp $",
-				 .version = "$Revision: 1.2 $",
-				 .CmpIdx = 0,
+				 .name = "bgpm/CNKUnit",
+				 .short_name = "CNKUnit",
+				 .description = "Blue Gene/Q CNKUnit component",
 				 .num_cntrs = CNKUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
@@ -463,6 +461,7 @@ papi_vector_t _CNKunit_vector = {
 		
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
+		
 				 .kernel_multiplex = 0,
 
 				 /* component specific cmp_info initializations */
@@ -501,6 +500,5 @@ papi_vector_t _CNKunit_vector = {
 	.ntv_enum_events = CNKUNIT_ntv_enum_events,
 	.ntv_code_to_name = CNKUNIT_ntv_code_to_name,
 	.ntv_code_to_descr = CNKUNIT_ntv_code_to_descr,
-	.ntv_code_to_bits = CNKUNIT_ntv_code_to_bits,
-	.ntv_bits_to_info = NULL,
+	.ntv_code_to_bits = CNKUNIT_ntv_code_to_bits
 };

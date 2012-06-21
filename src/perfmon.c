@@ -1,6 +1,5 @@
 /*
 * File:    perfmon.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Brian Sheely
@@ -897,7 +896,6 @@ _papi_pfm_init_substrate( int cidx )
 	_papi_pfm_vector.cmp_info.attach_must_ptrace = 1;
 	_papi_pfm_vector.cmp_info.kernel_multiplex = 1;
 	_papi_pfm_vector.cmp_info.kernel_profile = 1;
-	_papi_pfm_vector.cmp_info.profile_ear = 1;
 	_papi_pfm_vector.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
 
 	/* Setup presets */
@@ -2265,7 +2263,6 @@ papi_vector_t _papi_pfm_vector = {
 				 .hardware_intr = 1,
 				 .kernel_multiplex = 1,
 				 .kernel_profile = 1,
-				 .profile_ear = 1,
 				 .num_mpx_cntrs = PFMLIB_MAX_PMDS,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 

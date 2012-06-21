@@ -8,3 +8,13 @@
 ctests/burn
 
 # these tests haven't been implemented
+
+
+# Helper scripts for iozone
+components/appio/tests/iozone/Gnuplot.txt
+components/appio/tests/iozone/Generate_Graphs
+components/appio/tests/iozone/report.pl
+components/appio/tests/iozone/iozone_visualizer.pl
+components/appio/tests/iozone/gengnuplot.sh
+components/appio/tests/iozone/gnu3d.dem
+

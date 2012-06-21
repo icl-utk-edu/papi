@@ -4,7 +4,10 @@
 /* Signal handling functions */
 
 #undef hwd_siginfo_t
-typedef struct siginfo hwd_siginfo_t;
+
+/* Changed from struct siginfo due to POSIX and Fedora 18       */
+/* If this breaks anything then we need to add an aufoconf test */
+typedef siginfo_t hwd_siginfo_t;
 
 #undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;

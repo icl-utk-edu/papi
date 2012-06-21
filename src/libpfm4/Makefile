@@ -45,6 +45,7 @@ TARBALL=$(PKG).tar.gz
 
 all: 
 	@echo Compiling for \'$(ARCH)\' target
+	@echo Compiling for \'$(SYS)\' system
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 lib:

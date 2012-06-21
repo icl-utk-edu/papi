@@ -1,6 +1,5 @@
 /*
 * File:    perfmon-ia64.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:	   Kevin London
@@ -1052,14 +1051,10 @@ _ia64_init_substrate( int cidx )
 	_ia64_vector.cmp_info.available_granularities = PAPI_GRN_THR;
 	_ia64_vector.cmp_info.hardware_intr_sig = OVFL_SIGNAL;
 	_ia64_vector.cmp_info.kernel_profile = 1;
-	_ia64_vector.cmp_info.data_address_range = 1;	/* Supports data address range limiting */
-	_ia64_vector.cmp_info.instr_address_range = 1;	/* Supports instruction address range limiting */
+
 	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
 		_ia64_vector.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
 
-	_ia64_vector.cmp_info.cntr_IEAR_events = 1;	/* counters support instr event addr register */
-	_ia64_vector.cmp_info.cntr_DEAR_events = 1;	/* counters support data event addr register */
-	_ia64_vector.cmp_info.cntr_OPCM_events = 1;	/* counter events support opcode matching */
 	_ia64_vector.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
 	/* Put the signal handler in use to consume PFM_END_MSG's */
 	_papi_hwi_start_signal( _ia64_vector.cmp_info.hardware_intr_sig, 1,

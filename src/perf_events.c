@@ -863,7 +863,6 @@ _papi_pe_init_substrate( int cidx )
   _papi_pe_vector.cmp_info.attach = 1;
   _papi_pe_vector.cmp_info.attach_must_ptrace = 1;
   _papi_pe_vector.cmp_info.kernel_profile = 1;
-  _papi_pe_vector.cmp_info.profile_ear = 0;
   _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
   /* hardware multiplex was broken before 2.6.33 */	
@@ -1250,8 +1249,9 @@ round_requested_ns( int ns )
    in the native info structure array. */
 
 static int
-_papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
-							   int count, hwd_context_t * ctx )
+_papi_pe_update_control_state( hwd_control_state_t *ctl, 
+			       NativeInfo_t *native,
+			       int count, hwd_context_t *ctx )
 {
 	int i = 0, ret;
 	context_t *pe_ctx = ( context_t * ) ctx;
@@ -2071,7 +2071,6 @@ papi_vector_t _papi_pe_vector = {
 				 .hardware_intr = 1,
 				 .kernel_multiplex = 1,
 				 .kernel_profile = 1,
-				 .profile_ear = 1,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 

@@ -1,0 +1,21 @@
+The PAPI NVML component provides an interface to the nVidia Management Library (nvml).
+
+The NVIDIA Management Library can be downloaded as part of the Tesla Development Kit.
+<http://developer.nvidia.com/tesla-deployment-kit>
+
+Before running the NVML component, the configure script for the NVML component 
+must be executed in order to generate the Makefile which contains the 
+configuration settings. This script needs to be executed only once. 
+
+    % cd < papi_dir >/src/components/nvml
+    % ./configure --with-nvml_incdir=< NVML INCLUDE PATH > --with-nvml_libdir=<NVML LIBRARY PATH > --with-cuda_incdir=<path> --with-cuda_libdir=<path>
+
+Furthermore, the NVML component will be added to PAPI during the configuration of 
+PAPI by adding the '--with-components=nvml' command line option to configure.
+    % ./configure --with-components=nvml
+
+At build-time the nVidia compiler, nvcc, needs to be in your path, as does the cuda run-time library (libcudart.so).
+
+
+Please refer to http://developer.download.nvidia.com/assets/cuda/files/CUDADownloads/NVML/nvml.pdf 
+for details about NVML library

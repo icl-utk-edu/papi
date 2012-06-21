@@ -45,13 +45,10 @@
 #define BGQ_PUNIT_MAX_COUNTERS PEVT_PUNIT_LAST_EVENT
 #define MAX_COUNTER_TERMS BGQ_PUNIT_MAX_COUNTERS
 
-#define MY_VECTOR _bgq_vectors
-
 #include "papi.h"
 #include "papi_preset.h"
 #include "papi_defines.h"
 
-extern hwi_presets_t _papi_hwi_presets;
 
 typedef struct
 {

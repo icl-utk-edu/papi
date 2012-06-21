@@ -657,8 +657,7 @@ INFINIBAND_update_control_state( hwd_control_state_t * ptr,
 	int i, index;
 
 	for ( i = 0; i < count; i++ ) {
-		index =
-			native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		index = native[i].ni_event;
 		native[i].ni_position = index;
 	}
 
@@ -716,13 +715,12 @@ int
 INFINIBAND_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 	if ( modifier == PAPI_ENUM_FIRST ) {
-		/* assumes first native event is always 0x4000000 */
-		*EventCode = PAPI_NATIVE_MASK;
+		*EventCode = 0;
 		return PAPI_OK;
 	}
 
 	if ( modifier == PAPI_ENUM_EVENTS ) {
-		int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		int index = *EventCode;
 
 		if ( infiniband_native_table[index + 1] ) {
 			*EventCode = *EventCode + 1;
@@ -740,11 +738,9 @@ INFINIBAND_ntv_enum_events( unsigned int *EventCode, int modifier )
 int
 INFINIBAND_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-	strncpy( name,
-			 infiniband_native_table[EventCode & PAPI_NATIVE_AND_MASK &
-									 PAPI_COMPONENT_AND_MASK]->name, len );
+	strncpy( name, infiniband_native_table[EventCode]->name, len );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 
@@ -754,12 +750,9 @@ INFINIBAND_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 INFINIBAND_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-	strncpy( name,
-			 infiniband_native_table[EventCode & PAPI_NATIVE_AND_MASK &
-									 PAPI_COMPONENT_AND_MASK]->description,
-			 len );
+	strncpy( name, infiniband_native_table[EventCode]->description, len );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 
@@ -770,11 +763,10 @@ int
 INFINIBAND_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
 	memcpy( ( INFINIBAND_register_t * ) bits,
-			infiniband_native_table[EventCode & PAPI_NATIVE_AND_MASK &
-									PAPI_COMPONENT_AND_MASK],
+			infiniband_native_table[EventCode],
 			sizeof ( INFINIBAND_register_t ) );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 

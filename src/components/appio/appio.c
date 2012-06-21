@@ -418,7 +418,7 @@ _appio_update_control_state( hwd_control_state_t *ctl,
     (void) ctx;
 
     for ( i = 0; i < count; i++ ) {
-        index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+        index = native[i].ni_event;
         appio_ctl->counter_bits[i] = index;
         native[i].ni_position = index;
     }
@@ -473,16 +473,15 @@ int
 _appio_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
     int index;
-    int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
     switch ( modifier ) {
         case PAPI_ENUM_FIRST:
-            *EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cidx);
+            *EventCode = 0;
             return PAPI_OK;
             break;
 
         case PAPI_ENUM_EVENTS:
-            index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+            index = *EventCode;
             if ( index < APPIO_MAX_COUNTERS - 1 ) {
                 *EventCode = *EventCode + 1;
                 return PAPI_OK;
@@ -509,9 +508,7 @@ _appio_ntv_name_to_code( char *name, unsigned int *EventCode )
 
     for ( i=0; i<APPIO_MAX_COUNTERS; i++) {
         if (strcmp(name, _appio_counter_info[i].name) == 0) {
-            *EventCode = i |
-                PAPI_NATIVE_MASK |
-                PAPI_COMPONENT_MASK(_appio_vector.cmp_info.CmpIdx);
+            *EventCode = i;
             return PAPI_OK;
         }
     }
@@ -526,7 +523,7 @@ _appio_ntv_name_to_code( char *name, unsigned int *EventCode )
 int
 _appio_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-    int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    int index = EventCode;
 
     if ( index >= 0 && index < APPIO_MAX_COUNTERS ) {
         strncpy( name, _appio_counter_info[index].name, len );
@@ -543,7 +540,7 @@ _appio_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 _appio_ntv_code_to_descr( unsigned int EventCode, char *desc, int len )
 {
-    int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    int index = EventCode;
 
     if ( index >= 0 && index < APPIO_MAX_COUNTERS ) {
         strncpy(desc, _appio_counter_info[index].description, len );
@@ -560,7 +557,7 @@ _appio_ntv_code_to_descr( unsigned int EventCode, char *desc, int len )
 int
 _appio_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 {
-    int index = EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    int index = EventCode;
 
     if ( index >= 0 && index < APPIO_MAX_COUNTERS ) {
         memcpy( ( APPIO_register_t * ) bits,

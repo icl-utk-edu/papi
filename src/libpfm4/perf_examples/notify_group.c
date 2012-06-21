@@ -51,7 +51,7 @@ static int num_fds;
 static int buffer_pages = 1; /* size of buffer payload  (must be power of 2) */
 
 static void
-sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
+sigio_handler(int n, siginfo_t *info, struct sigcontext *sc)
 {
 	struct perf_event_header ehdr;
 	uint64_t ip;

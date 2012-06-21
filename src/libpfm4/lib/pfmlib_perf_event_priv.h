@@ -32,6 +32,7 @@
 #define PERF_ATTR_PE	3	/* sampling period */
 #define PERF_ATTR_FR	4	/* average target sampling rate */
 #define PERF_ATTR_PR	5	/* precise sampling mode */
+#define PERF_ATTR_EX	6	/* exclusive event */
 
 #define _PERF_ATTR_U  (1 << PERF_ATTR_U)
 #define _PERF_ATTR_K  (1 << PERF_ATTR_K)
@@ -39,6 +40,7 @@
 #define _PERF_ATTR_PE (1 << PERF_ATTR_PE)
 #define _PERF_ATTR_FR (1 << PERF_ATTR_FR)
 #define _PERF_ATTR_PR (1 << PERF_ATTR_PR)
+#define _PERF_ATTR_EX (1 << PERF_ATTR_EX)
 
 #define PERF_PLM_ALL (PFM_PLM0|PFM_PLM3|PFM_PLMH)
 
