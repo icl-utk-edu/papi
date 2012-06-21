@@ -895,6 +895,7 @@ static const intel_x86_entry_t intel_core_pe[]={
   .modmsk = INTEL_FIXED2_ATTRS,
   .cntmsk = 0x400000000ull,
   .code = 0x0300, /* pseudo encoding */
+  .flags = INTEL_X86_FIXED,
 },
 { .name   = "LLC_REFERENCES",
   .desc   = "Count each request originating equiv the core to reference a cache line in the last level cache. The count may include speculation, but excludes cache line fills due to hardware prefetch. Alias to L2_RQSTS:SELF_DEMAND_MESI",

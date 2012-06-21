@@ -922,6 +922,7 @@ static const intel_x86_entry_t intel_wsm_unc_pe[]={
   .modmsk =0x0,
   .cntmsk = 0x100000,
   .code = 0xff,
+  .flags = INTEL_X86_FIXED,
 },
 { .name   = "UNC_DRAM_OPEN",
   .desc   = "DRAM open comamnds issued for read or write",

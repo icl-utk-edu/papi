@@ -1848,6 +1848,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
   .modmsk = INTEL_FIXED3_ATTRS,
   .cntmsk = 0x400000000ull,
   .code = 0x0300, /* pseudo encoding */
+  .flags = INTEL_X86_FIXED,
 },
 { .name   = "LLC_REFERENCES",
   .desc   = "Count each request originating from the core to reference a cache line in the last level cache. The count may include speculation, but excludes cache line fills due to hardware prefetch.",

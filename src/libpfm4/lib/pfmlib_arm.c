@@ -162,7 +162,7 @@ pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 static void
 pfm_arm_display_reg(pfm_arm_reg_t reg, char *fstr)
 {
-	__pfm_vbprintf("[0x%"PRIx64"] %s\n", reg.val, fstr);
+	__pfm_vbprintf("[0x%x] %s\n", reg.val, fstr);
 }
 
 int

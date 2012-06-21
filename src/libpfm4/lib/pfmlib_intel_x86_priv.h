@@ -85,6 +85,7 @@ typedef struct {
 #define INTEL_X86_GRP_EXCL		0x20	/* only one unit mask group can be selected */
 #define INTEL_X86_NHM_OFFCORE		0x40	/* Nehalem/Westmere offcore_response */
 #define INTEL_X86_EXCL_GRP_GT		0x80	/* exclude use of grp with id > own grp */
+#define INTEL_X86_FIXED			0x100	/* fixed counter only event */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -117,6 +118,14 @@ typedef union pfm_intel_x86_reg {
 		unsigned long usel_cnt_mask:8;	/* counter mask */
 		unsigned long usel_res4:32;	/* reserved */
 	} nhm_unc;
+
+	struct {
+		unsigned long usel_en:1;	/* enable */
+		unsigned long usel_res1:1;
+		unsigned long usel_int:1;	/* PMI enable */
+		unsigned long usel_res2:32;
+		unsigned long usel_res3:29;
+	} nhm_unc_fixed;
 
 	struct {
 		unsigned long cpl_eq0:1;	/* filter out branches at pl0 */

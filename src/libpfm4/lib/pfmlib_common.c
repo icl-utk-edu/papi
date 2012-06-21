@@ -707,6 +707,11 @@ pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 		for(aidx = 0; aidx < d->npattrs; aidx++) {
 			if (!strcasecmp(d->pattrs[aidx].name, s)) {
 				ainfo = d->pattrs + aidx;
+				/* disambiguate modifier and umask
+				 * with the same name : snb::L2_LINES_IN:I:I=1
+				 */
+				if (has_val && ainfo->type == PFM_ATTR_UMASK)
+					continue;
 				goto found_attr;
 			}
 		}

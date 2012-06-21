@@ -390,6 +390,7 @@ static const intel_x86_entry_t intel_coreduo_pe[]={
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x13c,
+  .flags = INTEL_X86_FIXED,
 },
 { .name   = "INSTRUCTION_RETIRED",
   .desc   = "Instructions retired",
