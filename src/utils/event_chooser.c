@@ -46,7 +46,7 @@ add_remove_event( int EventSet, int evt )
     int retval;
 
     if ( ( retval = PAPI_add_event( EventSet, evt ) ) != PAPI_OK ) {
-       printf( "Error adding event.\n" );
+       //printf( "Error adding event.\n" );
     } else {
        if ( ( retval = PAPI_remove_event( EventSet, evt ) ) != PAPI_OK ) {
 	  printf( "Error removing event.\n" );
@@ -78,13 +78,12 @@ show_event_info( int evt )
 
 
 static int
-native( void )
+native( int cidx )
 {
     int i, j, k;
     int retval, added;
     const PAPI_component_info_t *c = NULL;
     PAPI_event_info_t info;
-    int cidx=0;
 
     j = 0;
     c = PAPI_get_component_info( cidx );
@@ -189,7 +188,8 @@ int
 main( int argc, char **argv )
 {
     int i;
-    int pevent;
+    int pevent,cevent;
+    int cidx;
 
     const PAPI_hw_info_t *hwinfo = NULL;
 
@@ -224,6 +224,13 @@ main( int argc, char **argv )
        exit( 1 );
     }
 
+    retval = PAPI_event_name_to_code( argv[2], &cevent );
+    if ( retval != PAPI_OK ) {
+       fprintf( stderr, "Event %s can't be found\n", argv[2] );
+       exit( 1 );
+    }
+    cidx = PAPI_get_event_component(cevent);
+
     for( i = 2; i < argc; i++ ) {
        retval = PAPI_event_name_to_code( argv[i], &pevent );
        if ( retval != PAPI_OK ) {
@@ -238,7 +245,7 @@ main( int argc, char **argv )
     }
 
     if ( !strcmp( "NATIVE", argv[1] ) ) {
-       native(  );
+       native( cidx );
     }
     else if ( !strcmp( "PRESET", argv[1] ) ) {
        preset(  );
