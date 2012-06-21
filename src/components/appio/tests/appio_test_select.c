@@ -25,13 +25,16 @@ int main(int argc, char** argv) {
   const char* names[NUM_EVENTS] = {"SELECT_USEC"};
   long long values[NUM_EVENTS];
 
+  /* Set TESTS_QUIET variable */
+  tests_quiet( argc, argv );
+
   int version = PAPI_library_init (PAPI_VER_CURRENT);
   if (version != PAPI_VER_CURRENT) {
     fprintf(stderr, "PAPI_library_init version mismatch\n");
     exit(1);
   }
 
-  if (!TESTS_QUIET) fprintf(stderr, "This program will read from stdin and echo it to stdout\n");
+  if (!TESTS_QUIET) printf("This program will read from stdin and echo it to stdout\n");
   int retval;
   int e;
   for (e=0; e<NUM_EVENTS; e++) {

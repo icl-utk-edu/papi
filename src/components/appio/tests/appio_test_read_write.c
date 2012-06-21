@@ -27,6 +27,9 @@ int main(int argc, char** argv) {
 
   char *infile = "/etc/group";
 
+  /* Set TESTS_QUIET variable */
+  tests_quiet( argc, argv );
+
   int version = PAPI_library_init (PAPI_VER_CURRENT);
   if (version != PAPI_VER_CURRENT) {
     fprintf(stderr, "PAPI_library_init version mismatch\n");
@@ -34,7 +37,7 @@ int main(int argc, char** argv) {
   }
 
   int fdin;
-  if (!TESTS_QUIET) fprintf(stderr, "This program will read %s and write it to /dev/null\n", infile);
+  if (!TESTS_QUIET) printf("This program will read %s and write it to /dev/null\n", infile);
   int retval;
   int e;
   for (e=0; e<NUM_EVENTS; e++) {

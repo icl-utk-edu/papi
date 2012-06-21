@@ -1,8 +1,12 @@
 include ../../Makefile_comp_tests
 
-TESTS = appio_list_events appio_values_by_code appio_values_by_name appio_test_read_write appio_test_pthreads appio_test_fread_fwrite appio_test_blocking appio_test_select
+TESTS = appio_list_events appio_values_by_code appio_values_by_name appio_test_read_write appio_test_pthreads appio_test_fread_fwrite
+
+ALL_TESTS = $(TESTS) appio_test_blocking appio_test_select
 
 appio_tests: $(TESTS)
+
+all: $(ALL_TESTS)
 
 ARCH=$(shell uname -m)
 
@@ -50,5 +54,5 @@ appio_test_iozone: iozone/iozone_linux$(ARCH_SUFFIX).o iozone/libasync.o iozone/
 	$(CC) -g -O2 -o $@ $(LDFLAGS) $^ -lpthread -lrt
 
 clean:
-	rm -f $(TESTS) appio_test_iozone *.o
+	rm -f $(ALL_TESTS) appio_test_iozone *.o
 

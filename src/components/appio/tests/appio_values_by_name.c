@@ -70,7 +70,7 @@ int main (int argc, char **argv)
 
     int fdin,fdout;
     const char* infile = "/etc/group";
-    if (!TESTS_QUIET) fprintf(stderr, "This program will read %s and write it to /dev/null\n", infile);
+    if (!TESTS_QUIET) printf("This program will read %s and write it to /dev/null\n", infile);
     int bytes = 0;
     char buf[1024];
 

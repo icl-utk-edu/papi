@@ -77,11 +77,14 @@ void *ThreadIO(void *arg) {
   return(NULL);
 }
 
-int main(void) {
+int main(int argc, char** argv) {
   pthread_t *callThd;
   int i, numthrds;
   int retval;
   pthread_attr_t attr;
+
+  /* Set TESTS_QUIET variable */
+  tests_quiet( argc, argv );
 
   int version = PAPI_library_init (PAPI_VER_CURRENT);
   if (version != PAPI_VER_CURRENT) {
