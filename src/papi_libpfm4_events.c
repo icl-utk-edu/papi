@@ -19,7 +19,6 @@
 struct native_event_t {
   int component;
   char *pmu;
-  int papi_code;
   int libpfm4_idx;
   char *allocated_name;
   char *base_name;
@@ -44,14 +43,13 @@ static pfm_pmu_info_t default_pmu;
  *  @param[in] name 
  *             -- name of the event
  *
- *  @returns returns a struct native_event_t *, or NULL if event not found
+ *  @returns returns offset in array
  *
  */
 
-static struct native_event_t *find_existing_event(char *name) {
+static int find_existing_event(char *name) {
 
-  int i;
-  struct native_event_t *temp_event=NULL;
+  int i,event=PAPI_ENOEVNT;
 
   SUBDBG("Looking for %s in %d events\n",name,num_native_events);
 
@@ -60,18 +58,18 @@ static struct native_event_t *find_existing_event(char *name) {
   for(i=0;i<num_native_events;i++) {
 
     if (!strcmp(name,native_events[i].allocated_name)) {
-      SUBDBG("Found %s (%x %x)\n",
+      SUBDBG("Found %s (%x)\n",
 	     native_events[i].allocated_name,
-	     native_events[i].libpfm4_idx,
-	     native_events[i].papi_code);
-       temp_event=&native_events[i];
-       break;
+	     native_events[i].libpfm4_idx);
+      event=i;
+      break;
     }
   }
   _papi_hwi_unlock( NAMELIB_LOCK );
 
-  if (!temp_event) SUBDBG("%s not allocated yet\n",name);
-  return temp_event;
+  if (event<0) SUBDBG("%s not allocated yet\n",name);
+
+  return event;
 }
 
 /** @class  find_existing_event_by_number
@@ -86,18 +84,12 @@ static struct native_event_t *find_existing_event(char *name) {
 
 static struct native_event_t *find_existing_event_by_number(int eventnum) {
 
-  int i;
   struct native_event_t *temp_event=NULL;
 
   _papi_hwi_lock( NAMELIB_LOCK );
 
-  /* Simple linear search for now */
-  for(i=0;i<num_native_events;i++) {
-    if (eventnum==native_events[i].papi_code) {
-       temp_event=&native_events[i];
-       break;
-    }
-  }
+  temp_event=&native_events[eventnum];
+  
   _papi_hwi_unlock( NAMELIB_LOCK );
 
   SUBDBG("Found %p for %x\n",temp_event,eventnum);
@@ -221,7 +213,6 @@ static int find_next_no_aliases(int code) {
 
 }
 
-
 /** @class  allocate_native_event
  *  @brief  Allocates a native event
  *
@@ -248,6 +239,8 @@ static struct native_event_t *allocate_native_event(char *name,
   char fullname[BUFSIZ];
 
   pfm_perf_encode_arg_t perf_arg;
+
+  struct perf_event_attr perf_attr;
 
   /* get the event name from libpfm */
   memset(&info,0,sizeof(pfm_event_info_t));
@@ -291,7 +284,6 @@ static struct native_event_t *allocate_native_event(char *name,
 
   native_events[new_event].component=0;
   native_events[new_event].pmu=strdup(pinfo.name);
-  native_events[new_event].papi_code=new_event;
     
   native_events[new_event].libpfm4_idx=find_event_no_aliases(pmuplusbase);
 
@@ -309,12 +301,13 @@ static struct native_event_t *allocate_native_event(char *name,
   /* clear the attribute structure */
   memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
 
-  /* should do something if this fails */
-  perf_arg.attr=calloc(1,sizeof(struct perf_event_attr));
+  /* clear out the perf_attr struct */
+  memset(&perf_attr,0,sizeof(struct perf_event_attr));
+  perf_arg.attr=&perf_attr;
 
   ret = pfm_get_os_event_encoding(name, 
   				  PFM_PLM0 | PFM_PLM3, 
-                                  PFM_OS_PERF_EVENT_EXT, 
+                                  PFM_OS_PERF_EVENT, 
   				  &perf_arg);
   if (ret!=PFM_SUCCESS) {
      /* should do something! */
@@ -329,9 +322,8 @@ static struct native_event_t *allocate_native_event(char *name,
 	  perf_arg.attr->config1,
 	  perf_arg.attr->type);
 
-  SUBDBG("Creating event %s with papi %x perfidx %x\n",
+  SUBDBG("Creating event %s with perfidx %x\n",
 	 name,
-	 native_events[new_event].papi_code,
 	 native_events[new_event].libpfm4_idx);
 
   num_native_events++;
@@ -349,8 +341,6 @@ static struct native_event_t *allocate_native_event(char *name,
 			   (allocated_native_events+NATIVE_EVENT_CHUNK));
      allocated_native_events+=NATIVE_EVENT_CHUNK;
   }
-
-  free(perf_arg.attr);
 
   _papi_hwi_unlock( NAMELIB_LOCK );
 
@@ -383,6 +373,7 @@ static int find_max_umask(struct native_event_t *current_event) {
   int a, ret, max =0;
   pfm_event_info_t info;
   char event_string[BUFSIZ],*ptr;
+  char temp_string[BUFSIZ];
 
   SUBDBG("Trying to find max umask in %s\n",current_event->allocated_name);
 
@@ -436,10 +427,28 @@ static int find_max_umask(struct native_event_t *current_event) {
 
       SUBDBG("Trying %s with %s\n",ainfo.name,b);
 
-      if (!strcasecmp(ainfo.name, b)) {
-	SUBDBG("Found %s %d\n",b,a);
-	if (a>max) max=a;
-	goto found_attr;
+      if (ainfo.type == PFM_ATTR_MOD_BOOL) {
+	 sprintf(temp_string,"%s=0",ainfo.name);
+         if (!strcasecmp(temp_string, b)) {
+	    SUBDBG("Found %s %d\n",b,a);
+	    if (a>max) max=a;
+	    goto found_attr;
+	 }
+      }
+      else if (ainfo.type == PFM_ATTR_MOD_INTEGER) {
+	 sprintf(temp_string,"%s=0",ainfo.name);
+         if (!strcasecmp(temp_string, b)) {
+	    SUBDBG("Found %s %d\n",b,a);
+	    if (a>max) max=a;
+	    goto found_attr;
+	 }
+      }
+      else {
+         if (!strcasecmp(ainfo.name, b)) {
+	    SUBDBG("Found %s %d\n",b,a);
+	    if (a>max) max=a;
+	    goto found_attr;
+	 }
       }
       a++;
     }
@@ -457,6 +466,8 @@ found_attr:
 
   return max;
 }
+
+
 
 /** @class  get_event_first_active
  *  @brief  return the first available event that's on an active PMU
@@ -622,7 +633,7 @@ static int find_next_umask(struct native_event_t *current_event,
 
   char temp_string[BUFSIZ];
   pfm_event_info_t event_info;
-  pfm_event_attr_info_t *ainfo=NULL;
+  pfm_event_attr_info_t ainfo;
   int num_masks=0;
   pfm_err_t ret;
   int i;
@@ -640,40 +651,61 @@ static int find_next_umask(struct native_event_t *current_event,
 	 event_info.nattrs,
 	 event_info.name);
 
-  ainfo = malloc(event_info.nattrs * sizeof(*ainfo));
-  if (!ainfo) {
-     return PFM_ERR_NOMEM;
-  }
-
   pfm_for_each_event_attr(i, &event_info) {
 
-     ainfo[i].size = sizeof(*ainfo);
+     ainfo.size = sizeof(ainfo);
 
      ret = pfm_get_event_attr_info(event_info.idx, i, PFM_OS_PERF_EVENT, 
-				   &ainfo[i]);
+				   &ainfo);
      if (ret != PFM_SUCCESS) {
         SUBDBG("Not found\n");
-        if (ainfo) free(ainfo);
 	return PFM_ERR_NOTFOUND;
      }
 
-     if (ainfo[i].type == PFM_ATTR_UMASK) {
+     if (ainfo.type == PFM_ATTR_UMASK) {
 	SUBDBG("nm %d looking for %d\n",num_masks,current);
 	if (num_masks==current+1) {	  
 	   SUBDBG("Found attribute %d: %s type: %d\n",
-		  i,ainfo[i].name,ainfo[i].type);
+		  i,ainfo.name,ainfo.type);
 	
-           sprintf(temp_string,"%s",ainfo[i].name);
+           sprintf(temp_string,"%s",ainfo.name);
            strncpy(umask_name,temp_string,BUFSIZ);
 
-	   if (ainfo) free(ainfo);
+	   return current+1;
+	}
+	num_masks++;
+     }
+
+     if (ainfo.type == PFM_ATTR_MOD_BOOL) {
+	SUBDBG("nm %d looking for %d\n",num_masks,current);
+	
+	if (num_masks==current+1) {	  
+	   SUBDBG("Found attribute %d: %s type: %d\n",
+		  i,ainfo.name,ainfo.type);
+	
+           sprintf(temp_string,"%s=0",ainfo.name);
+           strncpy(umask_name,temp_string,BUFSIZ);
+
+	   return current+1;
+	}
+	num_masks++;
+     }
+
+     if (ainfo.type == PFM_ATTR_MOD_INTEGER) {
+	SUBDBG("nm %d looking for %d\n",num_masks,current);
+	if (num_masks==current+1) {	  
+	   SUBDBG("Found attribute %d: %s type: %d\n",
+		  i,ainfo.name,ainfo.type);
+	
+           sprintf(temp_string,"%s=0",ainfo.name);
+           strncpy(umask_name,temp_string,BUFSIZ);
+
 	   return current+1;
 	}
 	num_masks++;
      }
   }
 
-  if (ainfo) free(ainfo);
   return PFM_ERR_ATTR;
 
 }
@@ -734,12 +766,13 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
 
   int actual_idx;
   struct native_event_t *our_event;
+  int event_num;
 
   SUBDBG( "Converting %s\n", name);
 
-  our_event=find_existing_event(name);
+  event_num=find_existing_event(name);
 
-  if (our_event==NULL) {
+  if (event_num<0) {
 
      /* event currently doesn't exist, so try to find it */
      /* using libpfm4                                    */
@@ -755,10 +788,11 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
      /* We were found in libpfm4, so allocate our copy of the event */
 
      our_event=allocate_native_event(name,actual_idx);
+     event_num=find_existing_event(name);
   }
 
-  if (our_event!=NULL) {      
-     *event_code=our_event->papi_code;
+  if (event_num>=0) {      
+     *event_code=event_num;
      SUBDBG("Found code: %x\n",*event_code);
      return PAPI_OK;
   }
@@ -831,7 +865,8 @@ _papi_libpfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len )
 
 
 int
-_papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len )
+_papi_libpfm_ntv_code_to_descr( unsigned int EventCode, 
+				char *ntv_descr, int len )
 {
   int ret,a,first_mask=1;
   char *eventd, *tmp=NULL;
@@ -840,6 +875,7 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
   pfm_event_attr_info_t ainfo;
   char *b;
   char event_string[BUFSIZ],*ptr;
+  char temp_string[BUFSIZ];
 
   struct native_event_t *our_event;
 
@@ -905,6 +941,7 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
      goto descr_in_tmp;
   }
 
+  /* loop through all umasks, seeing which match */
   while(b) {
     a=0;
     while(1) {
@@ -920,27 +957,88 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
 	return _papi_libpfm_error(ret);
       }
 
-      SUBDBG("Trying %s with %s\n",ainfo.name,b);
+      /* Plain UMASK case */
+      if (ainfo.type == PFM_ATTR_UMASK) {
+   
+         SUBDBG("Trying %s with %s\n",ainfo.name,b);
 
-      if (!strcasecmp(ainfo.name, b)) {
-	int new_length;
+         if (!strcasecmp(ainfo.name, b)) {
+	    int new_length;
 
-	 SUBDBG("Found %s\n",b);
-	 new_length=strlen(ainfo.desc);
+	    SUBDBG("Found %s\n",b);
+	    new_length=strlen(ainfo.desc);
 
-	 if (first_mask) {
-	    tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(", masks:"));
-	    strcat(tmp,", masks:");
-	    first_mask=0;
+	    if (first_mask) {
+	       tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(", masks:"));
+	       strcat(tmp,", masks:");
+	       first_mask=0;
+	    }
+	    else {
+	       tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(","));
+	       strcat(tmp,",");
+	    }
+	    strcat(tmp,ainfo.desc);
+
+	    goto found_attr;
 	 }
-	 else {
-	    tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(","));
-	    strcat(tmp,",");
-	 }
-	 strcat(tmp,ainfo.desc);
-
-	 goto found_attr;
       }
+
+      /* Boolean Case */
+      if (ainfo.type == PFM_ATTR_MOD_BOOL) {
+	
+	 sprintf(temp_string,"%s=0",ainfo.name);
+
+         SUBDBG("Trying %s with %s\n",temp_string,b);
+
+         if (!strcasecmp(temp_string, b)) {
+	    int new_length;
+
+	    SUBDBG("Found %s\n",b);
+	    new_length=strlen(ainfo.desc);
+
+	    if (first_mask) {
+	       tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(", masks:"));
+	       strcat(tmp,", masks:");
+	       first_mask=0;
+	    }
+	    else {
+	       tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(","));
+	       strcat(tmp,",");
+	    }
+	    strcat(tmp,ainfo.desc);
+
+	    goto found_attr;
+	 }
+      }
+
+      /* Integer Case */
+      if (ainfo.type == PFM_ATTR_MOD_INTEGER) {
+
+	 sprintf(temp_string,"%s=0",ainfo.name);
+
+         SUBDBG("Trying %s with %s\n",temp_string,b);
+
+         if (!strcasecmp(temp_string, b)) {
+	    int new_length;
+
+	    SUBDBG("Found %s\n",b);
+	    new_length=strlen(ainfo.desc);
+
+	    if (first_mask) {
+	       tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(", masks:"));
+	       strcat(tmp,", masks:");
+	       first_mask=0;
+	    }
+	    else {
+	       tmp=realloc(tmp,strlen(tmp)+new_length+1+strlen(","));
+	       strcat(tmp,",");
+	    }
+	    strcat(tmp,ainfo.desc);
+
+	    goto found_attr;
+	 }
+      }
+
       a++;
     }
 
@@ -966,6 +1064,35 @@ descr_in_tmp:
 
 	return ret;
 }
+
+
+int
+_papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+{
+
+
+  struct native_event_t *our_event;
+
+  SUBDBG("ENTER %x\n",EventCode);
+
+  our_event=find_existing_event_by_number(EventCode);
+  if (our_event==NULL) {
+     return PAPI_ENOEVNT;
+  }
+
+  info->event_code=EventCode;
+
+  strncpy(info->symbol, our_event->allocated_name, sizeof(info->symbol));
+
+  if (strlen(our_event->allocated_name) > sizeof(info->symbol)) {
+     return PAPI_EBUF;
+  }
+
+  //  strncpy( info->long_descr, our_event->description, sizeof(info->long_descr));
+
+  return PAPI_OK;
+}
+
 
 
 /** @class  _papi_libpfm_ntv_enum_events
@@ -1085,6 +1212,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 				      umask_string);
 
 	   SUBDBG("Found next %d\n",next_umask);
+
 	   if (next_umask>=0) {
 
 	      unsigned int papi_event;
@@ -1092,6 +1220,8 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	      sprintf(new_name,"%s:%s",current_event->base_name,
 		     umask_string);
      
+	      SUBDBG("Found new name %s\n",new_name);
+
               ret=_papi_libpfm_ntv_name_to_code(new_name,&papi_event);
 	      if (ret!=PAPI_OK) {
 		 return PAPI_ENOEVNT;
@@ -1099,6 +1229,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	      *PapiEventCode=(unsigned int)papi_event;
 	      SUBDBG("found code %x\n",*PapiEventCode);
+
 	      return PAPI_OK;
 	   }
 
@@ -1328,25 +1459,10 @@ _papi_libpfm_setup_counters( struct perf_event_attr *attr,
   perf_arg.attr->config=our_event->config; 
   perf_arg.attr->config1=our_event->config1;
   perf_arg.attr->type=our_event->type;
-
-  /* convert our code to a name */
-  //  ret=_papi_libpfm_ntv_code_to_name( our_idx,our_name,BUFSIZ);
-  //if (ret!=PAPI_OK) {
-  //   return ret;
-  //}
-
-  //SUBDBG("trying \"%s\" %x\n",our_name,our_idx);
-
-  /* use name of the event to get the perf_event encoding */
-  //ret = pfm_get_os_event_encoding(our_name, 
-  //				  PFM_PLM0 | PFM_PLM3, 
-  //                              PFM_OS_PERF_EVENT_EXT, 
-  //				  &perf_arg);
-  //if (ret!=PFM_SUCCESS) {
-  //   return _papi_libpfm_error(ret);
-  //}
   
-  SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64" type 0x%"PRIx32"\n", 
+  SUBDBG( "pe_event: config 0x%"PRIx64
+          " config1 0x%"PRIx64
+          " type 0x%"PRIx32"\n", 
           perf_arg.attr->config, 
 	  perf_arg.attr->config1,
 	  perf_arg.attr->type);

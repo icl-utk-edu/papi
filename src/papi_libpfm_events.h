@@ -28,6 +28,9 @@ int _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 			      unsigned int *umask );
 unsigned int _pfm_convert_umask( unsigned int event, unsigned int umask );
 int prepare_umask( unsigned int foo, unsigned int *values );
+int _papi_libpfm_ntv_code_to_info(unsigned int EventCode, 
+                                  PAPI_event_info_t *info);
+
 
 
 /* Gross perfctr/perf_events compatability hack */
