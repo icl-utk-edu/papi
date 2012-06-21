@@ -30,13 +30,14 @@ DESCRIPTION
       WRITE_BYTES
       WRITE_CALLS
       WRITE_ERR
+      WRITE_WOULD_BLOCK
       WRITE_SHORT
       WRITE_BLOCK_SIZE
       WRITE_USEC
       OPEN_CALLS
       OPEN_ERR
       OPEN_FDS
-      OPEN_USEC
+      SELECT_USEC
 
     The component works by intercepting I/O system calls on Linux. At present,
     the code uses a features available in libc on Linux, and is unlikely to
@@ -78,9 +79,10 @@ DESCRIPTION
    
 AUTHOR
 
-  The code is written by Philip Mucci <phil.mucci@samaratechnologygroup.com>
-  and Tushar Mohan <tusharmohan@gmail.com>. The component leverages code 
-  written by Jose Pedro Oliveira <jpo@di.uminho.pt> for the PAPI net component.
+  The code is written by Tushar Mohan <tusharmohan@gmail.com> and
+  Philip Mucci <mucci@eecs.utk.edu>. The component leverages code 
+  written by Jose Pedro Oliveira <jpo@di.uminho.pt> for the PAPI 
+  net component.
 
 SEE ALSO
 

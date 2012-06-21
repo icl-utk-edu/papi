@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/select.h>
 //#include <dlfcn.h>
 
 /* Headers required by PAPI */
@@ -52,13 +53,13 @@ papi_vector_t _appio_vector;
  * Private
  ********************************************************************/
 
-#define APPIO_FOO 1
+//#define APPIO_FOO 1
 
 static APPIO_native_event_entry_t * _appio_native_events;
 
 
+/* If you modify the appio_stats_t below, you MUST update APPIO_MAX_COUNTERS */
 static __thread long long _appio_register_current[APPIO_MAX_COUNTERS];
-
 typedef enum {
   READ_BYTES = 0,
   READ_CALLS,
@@ -73,12 +74,13 @@ typedef enum {
   WRITE_CALLS,
   WRITE_ERR,
   WRITE_SHORT,
+  WRITE_WOULD_BLOCK,
   WRITE_BLOCK_SIZE,
   WRITE_USEC,
   OPEN_CALLS,
   OPEN_ERR,
   OPEN_FDS,
-  OPEN_USEC
+  SELECT_USEC
 } _appio_stats_t ;
 
 static const struct appio_counters {
@@ -89,7 +91,7 @@ static const struct appio_counters {
     { "READ_CALLS",      "Number of read calls"},
     { "READ_ERR",        "Number of read calls that resulted in an error"},
     { "READ_INTERRUPTED","Number of read calls that timed out or were interruped"},
-    { "READ_WOULD_BLOCK","Number of read calls that would have blocked on a descriptor marked as non-blocking"},
+    { "READ_WOULD_BLOCK","Number of read calls that would have blocked"},
     { "READ_SHORT",      "Number of read calls that returned less bytes than requested"},
     { "READ_EOF",        "Number of read calls that returned an EOF"},
     { "READ_BLOCK_SIZE", "Average block size of reads"},
@@ -98,12 +100,13 @@ static const struct appio_counters {
     { "WRITE_CALLS",     "Number of write calls"},
     { "WRITE_ERR",       "Number of write calls that resulted in an error"},
     { "WRITE_SHORT",     "Number of write calls that wrote less bytes than requested"},
+    { "WRITE_WOULD_BLOCK","Number of write calls that would have blocked"},
     { "WRITE_BLOCK_SIZE","Mean block size of writes"},
     { "WRITE_USEC",      "Real microseconds spent in writes"},
     { "OPEN_CALLS",      "Number of open calls"},
     { "OPEN_ERR",        "Number of open calls that resulted in an error"},
     { "OPEN_FDS",        "Number of currently open descriptors"},
-    { "OPEN_USEC",       "Real microseconds spent in open calls"}
+    { "SELECT_USEC",     "Real microseconds spent in select calls"}
 };
 
 
@@ -131,10 +134,32 @@ int open(const char *pathname, int flags, mode_t mode) {
   return retval;
 }
 
+/* we use timeval as a zero value timeout to select in read/write
+   for polling if the operation would block */
+struct timeval zerotv; /* this has to be zero, so define it here */
+
+int __select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) {
+  int retval;
+  SUBDBG("appio: intercepted select(%d,%p,%p,%p,%p)\n", nfds,readfds,writefds,exceptfds,timeout);
+  long long start_ts = PAPI_get_real_usec();
+  retval = __select(nfds,readfds,writefds,exceptfds,timeout);
+  long long duration = PAPI_get_real_usec() - start_ts;
+  _appio_register_current[SELECT_USEC] += duration;
+  return retval;
+}
+
 ssize_t __read(int fd, void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted read(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
+
+  // check if read would block on descriptor
+  fd_set readfds;
+  FD_SET(fd, &readfds);
+  int ready = __select(fd+1, &readfds, NULL, NULL, &zerotv);
+  if (ready == 0) _appio_register_current[READ_WOULD_BLOCK]++; 
+
   long long start_ts = PAPI_get_real_usec();
   retval = __read(fd,buf, count);
   long long duration = PAPI_get_real_usec() - start_ts;
@@ -183,6 +208,13 @@ ssize_t __write(int fd, const void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted write(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
+
+  // check if write would block on descriptor
+  fd_set writefds;
+  FD_SET(fd, &writefds);
+  int ready = __select(fd+1, NULL, &writefds, NULL, &zerotv);
+  if (ready == 0) _appio_register_current[WRITE_WOULD_BLOCK]++; 
+
   long long start_ts = PAPI_get_real_usec();
   retval = __write(fd,buf, count);
   long long duration = PAPI_get_real_usec() - start_ts;
