@@ -33,19 +33,30 @@
 int
 pfm_arm_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
+	pfmlib_pmu_t *pmu = this;
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
 
-	ret = pfm_arm_get_encoding(this, e);
+	if (!pmu->get_event_encoding[PFM_OS_NONE])
+		return PFM_ERR_NOTSUPP;
+
+	/*
+	 * use generic raw encoding function first
+	 */
+	ret = pmu->get_event_encoding[PFM_OS_NONE](this, e);
 	if (ret != PFM_SUCCESS)
 		return ret;
+
+	if (e->count > 1) {
+		DPRINT("%s: unsupported count=%d\n", e->count);
+		return PFM_ERR_NOTSUPP;
+	}
 
 	attr->type = PERF_TYPE_RAW;
 	attr->config = e->codes[0];
 
 	return PFM_SUCCESS;
 }
-
 
 void
 pfm_arm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
