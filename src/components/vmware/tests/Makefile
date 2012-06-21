@@ -5,7 +5,7 @@ include ../../Makefile_comp_tests
 
 TESTS = vmware_basic
 
-lustre_tests: $(TESTS)
+vmware_tests: $(TESTS)
 
 vmware_basic: vmware_basic.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o vmware_basic vmware_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
