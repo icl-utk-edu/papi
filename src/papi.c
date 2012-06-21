@@ -6414,3 +6414,26 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 	*number = count;
 	return ( PAPI_OK );
 }
+
+
+/**	@class PAPI_get_event_component
+ *	@brief return component an event belongs to
+ *	@retval ENOCMP
+ *		component does not exist
+ *	
+ *	@param EventCode
+ *              EventCode for which we want to know the component index
+ *	@par Examples:
+ *	@code
+ 		int cidx,eventcode;
+ 		cidx = PAPI_get_event_component(eventcode);
+ *	@endcode
+ *	PAPI_is_initialized() returns the status of the PAPI library. 
+ *	@bug	Doesn't work for preset events
+ *	@see  PAPI_get_event_info
+ */
+int
+PAPI_get_event_component( int EventCode)
+{
+    return _papi_hwi_component_index( EventCode);
+}

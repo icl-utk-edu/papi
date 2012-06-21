@@ -1111,6 +1111,7 @@ enum {
    int   PAPI_unlock(int); /**< unlock one of two PAPI internal user mutex variables */
    int   PAPI_unregister_thread(void); /**< inform PAPI that a previously registered thread is disappearing */
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
+  int   PAPI_get_event_component(int EventCode);  /**< return which component an EventCode belongs to */
 
    /** @} */
 
