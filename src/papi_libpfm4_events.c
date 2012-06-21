@@ -1088,7 +1088,8 @@ _papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
      return PAPI_EBUF;
   }
 
-  //  strncpy( info->long_descr, our_event->description, sizeof(info->long_descr));
+  _papi_libpfm_ntv_code_to_descr(EventCode,info->long_descr,
+				 sizeof(info->long_descr));
 
   return PAPI_OK;
 }

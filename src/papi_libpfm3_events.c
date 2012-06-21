@@ -336,6 +336,25 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode, char *ntv_descr, int len
 	return ( ret );
 }
 
+
+int
+_papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
+{
+
+  SUBDBG("ENTER %x\n",EventCode);
+
+  info->event_code=EventCode;
+
+  _papi_libpfm_ntv_code_to_name(EventCode,info->symbol,
+                                 sizeof(info->symbol));
+
+  _papi_libpfm_ntv_code_to_descr(EventCode,info->long_descr,
+                                 sizeof(info->long_descr));
+
+  return PAPI_OK;
+}
+
+
 int
 _papi_libpfm_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
