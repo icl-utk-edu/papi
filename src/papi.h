@@ -1134,6 +1134,11 @@ enum {
    int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
 /** @} */
 
+
+
+/* Backwards compatability hacks.  Remove eventually? */
+#define PAPI_COMPONENT_INDEX(a) PAPI_get_event_component(a)
+
 #ifdef __cplusplus
 }
 #endif
