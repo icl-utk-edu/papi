@@ -343,8 +343,6 @@ _papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   SUBDBG("ENTER %x\n",EventCode);
 
-  info->event_code=EventCode;
-
   _papi_libpfm_ntv_code_to_name(EventCode,info->symbol,
                                  sizeof(info->symbol));
 

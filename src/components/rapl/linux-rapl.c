@@ -846,7 +846,6 @@ _rapl_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
-  info->event_code=EventCode;
   strncpy( info->symbol, rapl_native_events[index].name, 
 	   sizeof(info->symbol));
 
