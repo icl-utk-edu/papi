@@ -1447,8 +1447,13 @@ echo "${ECHO_T}$assumed_kernel" >&6
 
 CFLAGS="$CFLAGS -g"
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
+# For future reference,  icc --help says
+# Deprecated Options
+# ------------------
+# -wr                      use -diag-remark
 if test "$CC" = "icc"; then
-  CFLAGS="-openmp -wr188"
+  CC="icc -wr188"
+  CFLAGS="$CFLAGS -openmp"
 fi
 #If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
@@ -2261,7 +2266,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2264:" \
+echo "$as_me:2269:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3792,9 +3797,9 @@ if test "${with_debug+set}" = set; then
 fi;
 if test "$debug" = "yes"; then
   if test "$CC" = "gcc"; then
-    CFLAGS="-g3"
+    CFLAGS="$CFLAGS -g3"
   else
-    CFLAGS="-g"
+    CFLAGS="$CFLAGS -g"
   fi
   OPTFLAGS="-O0"
   DEBUGFLAGS="-DDEBUG"
@@ -7201,6 +7206,7 @@ elif test "$MAKEVER" = "linux-generic"; then
     MISCSRCS="$MISCSRCS linux-common.c linux-timer.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
     MISCHDRS="linux-timer.h linux-common.h"
+	VECTOR=_papi_dummy_vector
 
 elif test "$MAKEVER" = "linux-pe"; then
     if test "$force_libpfm4" = "yes"; then
@@ -7377,16 +7383,68 @@ echo "#ifndef COMPONENTS_CONFIG_H" >> components_config.h
 echo "#define COMPONENTS_CONFIG_H" >> components_config.h
 echo "" >> components_config.h
 
-if test "x$VECTOR" != "x"; then
-   echo "extern papi_vector_t ${VECTOR};" >> components_config.h
-fi
-
 
 # Check whether --with-components or --without-components was given.
 if test "${with_components+set}" = set; then
   withval="$with_components"
   components=$withval
 fi;
+
+# This is an ugly hack to keep building on configurations covered by any-null in the past.
+if test "$VECTOR" = "_papi_dummy_vector"; then
+	if test "x$components" = "x"; then
+		echo "papi_vector_t ${VECTOR} = {" >> components_config.h
+ 		echo "	.size = {
+		.context = sizeof ( int ),
+		.control_state = sizeof ( int ),
+		.reg_value = sizeof ( int ),
+		.reg_alloc = sizeof ( int ),
+	},
+	.cmp_info = {
+		.num_native_events = 0,
+		.num_preset_events = 0,
+		.num_cntrs = 0,
+		.name = \"Your system is unsupported! \",
+		.short_name = \"UNSUPPORTED!\"
+	},
+	.dispatch_timer = NULL,
+    .get_overflow_address = NULL,
+    .start = NULL,
+    .stop = NULL,
+    .read = NULL,
+    .reset = NULL,
+    .write = NULL,
+	.cleanup_eventset = NULL,
+    .stop_profiling = NULL,
+    .init_substrate = NULL,
+    .init = NULL,
+    .init_control_state = NULL,
+    .update_control_state = NULL,
+    .ctl = NULL,
+    .set_overflow = NULL,
+    .set_profile	 = NULL,
+    .set_domain = NULL,
+    .ntv_enum_events = NULL,
+    .ntv_name_to_code = NULL,
+    .ntv_code_to_name = NULL,
+    .ntv_code_to_descr = NULL,
+    .ntv_code_to_bits = NULL,
+    .ntv_code_to_info = NULL,
+    .allocate_registers = NULL,
+    .shutdown = NULL,
+    .shutdown_substrate = NULL,
+    .user = NULL,
+};" >> components_config.h
+	# but in the face of actual components, we don't have to do hacky size games
+	else
+		VECTOR=""
+	fi
+elif test "x$VECTOR" != "x"; then
+   echo "extern papi_vector_t ${VECTOR};" >> components_config.h
+fi
+
+
+
 for comp in $components; do
   idx=`expr index "$comp" /`
   if test "$idx" = 0; then
