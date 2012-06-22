@@ -6404,7 +6404,7 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 					   ( ESI->EventInfoArray[j].derived == DERIVED_CMPD ) ) ) {
 					array[count++] = j;
 					if ( count == *number )
-						return ( PAPI_OK );
+						return PAPI_OK;
 
 					break;
 				}
@@ -6412,7 +6412,7 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 		}
 	}
 	*number = count;
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 
@@ -6428,7 +6428,8 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
  		int cidx,eventcode;
  		cidx = PAPI_get_event_component(eventcode);
  *	@endcode
- *	PAPI_is_initialized() returns the status of the PAPI library. 
+ *	PAPI_get_event_component() returns the component an event
+ *      belongs to.
  *	@bug	Doesn't work for preset events
  *	@see  PAPI_get_event_info
  */
@@ -6437,3 +6438,97 @@ PAPI_get_event_component( int EventCode)
 {
     return _papi_hwi_component_index( EventCode);
 }
+
+/**	@class PAPI_get_component_index
+ *	@brief returns the component index for the named component
+ *	@retval ENOCMP
+ *		component does not exist
+ *	
+ *	@param name
+ *              name of component to find index for
+ *	@par Examples:
+ *	@code
+ 		int cidx;
+ 		cidx = PAPI_get_component_index("cuda");
+		if (cidx==PAPI_OK) {
+                   printf("The CUDA component is cidx %d\n",cidx);
+                }
+ *	@endcode
+ *	PAPI_get_component_index() returns the component index of
+ *      the named component.  This is useful for finding out if
+ *      a specified component exists.
+ *	@bug	Doesn't work for preset events
+ *	@see  PAPI_get_event_component
+ */
+int  PAPI_get_component_index(char *name)
+{
+  int cidx;
+
+  const PAPI_component_info_t *cinfo;
+
+  for(cidx=0;cidx<papi_num_components;cidx++) {
+
+     cinfo=PAPI_get_component_info(cidx); 
+     if (cinfo==NULL) return PAPI_ENOCMP;
+
+     if (!strncmp(name,cinfo->name,strlen(cinfo->name))) {
+        return cidx;
+     }
+  }
+
+  return PAPI_ENOCMP;
+}
+
+
+/**	@class PAPI_disable_component
+ *	@brief disables the specified component
+ *	@retval ENOCMP
+ *		component does not exist
+ *      @retval ENOINIT
+ *              cannot disable as PAPI has already been initialized
+ *	
+ *	@param cidx
+ *              component index of component to be disabled
+ *	@par Examples:
+ *	@code
+ 		int cidx;
+ 		cidx = PAPI_get_component_index("cuda");
+		PAPI_disable_component(cidx);
+		if (cidx==PAPI_OK) {
+                   printf("The CUDA component has been disabled\n");
+                }
+ *	@endcode
+ *      PAPI_disable_component() allows the user to disable components
+ *      before PAPI_library_init() time.  This is useful if the user
+ *      knows they do not wish to use events from that component and
+ *      want to reduce the PAPI library overhead.
+ *    
+ *      PAPI_disable_component() must be called before
+ *      PAPI_library_init().
+ *
+ *	@bug  none known
+ *	@see  PAPI_get_event_component
+ *      @see  PAPI_library_init
+ */
+int
+PAPI_disable_component( int cidx )
+{
+
+   const PAPI_component_info_t *cinfo;
+
+   /* Can only run before PAPI_library_init() is called */
+   if (init_level != PAPI_NOT_INITED) {
+      return PAPI_ENOINIT;
+   }
+     
+   cinfo=PAPI_get_component_info(cidx); 
+   if (cinfo==NULL) return PAPI_ENOCMP;
+
+   ((PAPI_component_info_t *)cinfo)->disabled=1;
+   strcpy(((PAPI_component_info_t *)cinfo)->disabled_reason,
+	       "Disabled by PAPI_disable_component()");
+
+   return PAPI_OK;
+ 
+}
+

@@ -18,7 +18,7 @@ SERIAL  = inherit hwinfo code2name reset subinfo realtime virttime first exeinfo
 	zero_named branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog \
-	get_event_component
+	get_event_component disable_component
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow \
 	child_overflow system_child_overflow system_overflow burn zero_fork
 OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn \
@@ -289,6 +289,9 @@ all_native_events: all_native_events.c $(UTILOBJS) $(PAPILIB)
 
 get_event_component: get_event_component.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) get_event_component.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o get_event_component
+
+disable_component: disable_component.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) disable_component.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o disable_component
 
 memory: memory.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) memory.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o memory

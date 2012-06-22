@@ -1075,8 +1075,7 @@ enum {
    int   PAPI_multiplex_init(void); /**< initialize multiplex support in the PAPI library */
    int   PAPI_num_hwctrs(void); /**< return the number of hardware counters for the cpu */
    int   PAPI_num_cmp_hwctrs(int cidx); /**< return the number of hardware counters for a specified component */
-   int   PAPI_num_hwctrs(void); /* for backward compatibility */
-   int   PAPI_num_events(int EventSet); /**< return the number of events in an event set */
+    int   PAPI_num_events(int EventSet); /**< return the number of events in an event set */
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler); /**< set up an event set to begin registering overflows */
    int   PAPI_perror(int code, char *destination, int length); /**< convert PAPI error codes to strings */
@@ -1111,7 +1110,9 @@ enum {
    int   PAPI_unlock(int); /**< unlock one of two PAPI internal user mutex variables */
    int   PAPI_unregister_thread(void); /**< inform PAPI that a previously registered thread is disappearing */
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
-  int   PAPI_get_event_component(int EventCode);  /**< return which component an EventCode belongs to */
+   int   PAPI_get_event_component(int EventCode);  /**< return which component an EventCode belongs to */
+   int   PAPI_get_component_index(char *name); /**> Return component index for component with matching name */
+   int   PAPI_disable_component(int cidx); /**< Disables a component before init */
 
    /** @} */
 
@@ -1136,7 +1137,8 @@ enum {
 
 
 
-/* Backwards compatability hacks.  Remove eventually? */
+/* Backwards compatibility hacks.  Remove eventually? */
+int   PAPI_num_hwctrs(void); /* for backward compatibility. Don't use! */
 #define PAPI_COMPONENT_INDEX(a) PAPI_get_event_component(a)
 
 #ifdef __cplusplus
