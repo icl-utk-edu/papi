@@ -1080,7 +1080,7 @@ _papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
      return PAPI_ENOEVNT;
   }
 
-  info->event_code=EventCode;
+  info->event_code=EventCode | PAPI_NATIVE_MASK;
 
   strncpy(info->symbol, our_event->allocated_name, sizeof(info->symbol));
 
