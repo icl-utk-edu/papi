@@ -1,6 +1,5 @@
 /* 
 * File:    perfctr-x86.c
-* CVS:     $Id$
 * Author:  Brian Sheely
 *          bsheely@eecs.utk.edu
 * Mods:    <your name here>

@@ -605,7 +605,7 @@ papi_vector_t _example_vector = {
                 /* we explicitly set them to zero in this example */
                 /* to show what settings are available            */
 
-		.name = "example.c",
+		.name = "example",
 		.short_name = "example",
 		.description = "A simple example component",
 		.version = "1.15",

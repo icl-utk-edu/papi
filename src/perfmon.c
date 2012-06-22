@@ -844,7 +844,7 @@ _papi_pfm_init_substrate( int cidx )
 	_papi_libpfm_init(&_papi_pfm_vector,cidx);
 
 
-	strcpy( _papi_pfm_vector.cmp_info.name,"perfmon.c" );
+	strcpy( _papi_pfm_vector.cmp_info.name,"perfmon" );
 	strcpy( _papi_pfm_vector.cmp_info.description,
 		"Linux perfmon2 CPU counters" );
 	strcpy( _papi_pfm_vector.cmp_info.version, "3.8" );

@@ -727,7 +727,7 @@ _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 papi_vector_t _lustre_vector = {
    .cmp_info = {
         /* component information (unspecified values initialized to 0) */
-       .name = "linux-lustre.c",
+       .name = "linux-lustre",
        .version = "1.9",
        .description = "Lustre filesystem statistics",
        .num_mpx_cntrs = PAPI_MPX_DEF_DEG,

@@ -853,11 +853,6 @@ _papi_pe_init_substrate( int cidx )
                    "counters, reducing the total number available.\n");
   }
 
-  /* Set various version strings */
-  strcpy( _papi_pe_vector.cmp_info.name,"perf_events.c" );
-  strcpy( _papi_pe_vector.cmp_info.description,"Linux perf_event CPU counters" );
-  strcpy( _papi_pe_vector.cmp_info.version, "4.2.1" );
-  
   /* perf_events defaults */
   _papi_pe_vector.cmp_info.hardware_intr = 1;
   _papi_pe_vector.cmp_info.attach = 1;
@@ -2061,8 +2056,16 @@ _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 
 
 papi_vector_t _papi_pe_vector = {
-	.cmp_info = {
-				 /* default component information (unspecified values are initialized to 0) */
+   .cmp_info = {
+	      /* component information (unspecified values initialized to 0) */
+      .name = "perf_events",
+      .short_name = "pe",
+      .version = "5.0",
+      .description = "Linux perf_event CPU counters",
+    
+  
+
+
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,

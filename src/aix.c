@@ -1238,7 +1238,7 @@ papi_vector_t _aix_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 
-                                 .name = "aix.c",
+                                 .name = "aix",
 				 .description = "AIX pmapi CPU counters", 
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
