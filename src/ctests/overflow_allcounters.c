@@ -57,12 +57,12 @@ main( int argc, char **argv )
 	const PAPI_hw_info_t *hw_info = NULL;
 	int num_events, *ovt;
 	char name[PAPI_MAX_STR_LEN];
-	const PAPI_component_info_t *comp_info = NULL;
 	int using_perfmon = 0;
 	int using_aix = 0;
-	int numcmp, cid;
+	int cid;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT ) {
@@ -74,29 +74,17 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", retval );
 	}
 
-        numcmp = PAPI_num_components(  );
+        cid = PAPI_get_component_index("perfmon");
+	if (cid>=0) using_perfmon = 1;
 
-	for ( cid = 0; cid < numcmp; cid++ ) {
-
-	    comp_info = PAPI_get_component_info( cid );
-	    if ( comp_info == NULL ) {
-	       test_fail( __FILE__, __LINE__, "PAPI_get_component_info", retval );
-	    }
-
-	    if ( strstr( comp_info->name, "perfmon.c" ) ) {
-	       using_perfmon = 1;
-	    }
-
-	    if ( strstr( comp_info->name, "aix.c" ) ) {
-	       using_aix = 1;
-	    }
-	}
+        cid = PAPI_get_component_index("aix");
+	if (cid>=0) using_aix = 1;
 
 	/* add PAPI_TOT_CYC and one of the events in */
 	/* PAPI_FP_INS, PAPI_FP_OPS PAPI_TOT_INS,    */
         /* depending on the availability of the event*/
 	/* on the platform */
-	EventSet = enum_add_native_events( &num_events, &events, 1 , 1);
+	EventSet = enum_add_native_events( &num_events, &events, 1 , 1, 0);
 
 	if (!TESTS_QUIET) printf("Trying %d events\n",num_events);
 

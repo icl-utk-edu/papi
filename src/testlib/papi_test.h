@@ -69,7 +69,7 @@ int add_test_events(int *number, int *mask, int allow_derived);
 int add_two_events(int *num_events, int *papi_event, int *mask);
 int add_two_nonderived_events(int *num_events, int *papi_event, int *mask);
 int add_test_events_r(int *number, int *mask, void *handle);
-int enum_add_native_events(int *num_events, int **evtcodes, int need_interrupts, int no_software_events);
+int enum_add_native_events(int *num_events, int **evtcodes, int need_interrupts, int no_software_events, int cidx);
 int remove_test_events(int *EventSet, int mask);
 void do_flush(void);
 void do_misses(int n, int size);

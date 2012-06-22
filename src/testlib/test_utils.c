@@ -758,7 +758,8 @@ add_two_nonderived_events( int *num_events, int *papi_event, int *mask ) {
 /* add native events to use all counters */
 int
 enum_add_native_events( int *num_events, int **evtcodes, 
-			int need_interrupt, int no_software_events )
+			int need_interrupt, int no_software_events,
+			int cidx)
 {
 	/* query and set up the right event to monitor */
      int EventSet = PAPI_NULL;
@@ -768,7 +769,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
      const PAPI_component_info_t *s = NULL;
      const PAPI_hw_info_t *hw_info = NULL;
    
-     s = PAPI_get_component_info( 0 );
+     s = PAPI_get_component_info( cidx );
      if ( s == NULL ) {
 	test_fail( __FILE__, __LINE__, 
 			   "PAPI_get_component_info", PAPI_ESBSTR );
@@ -807,7 +808,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
      /* For platform independence, always ASK FOR the first event */
      /* Don't just assume it'll be the first numeric value */
      i = 0 | PAPI_NATIVE_MASK;
-     PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+     PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
 
      do {
         retval = PAPI_get_event_info( i, &info );
@@ -823,7 +824,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
 	if ( s->cntr_umasks ) {
 	   k = i;
 			
-	   if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+	   if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK ) {
 	      do {
 	         retval = PAPI_get_event_info( k, &info );
 		 event_code = ( int ) info.event_code;
@@ -842,7 +843,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
 			       event_code, info.symbol );
 		    }
 		 }
-	      } while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK
+	      } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK
 						&& event_found < counters );
 	   } else {
 	      event_code = ( int ) info.event_code;
@@ -871,7 +872,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
 			}
 		}
 	}
-	while ( PAPI_enum_event( &i, PAPI_ENUM_EVENTS ) == PAPI_OK &&
+     while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cidx ) == PAPI_OK &&
 			event_found < counters );
 
 	*num_events = ( int ) event_found;
