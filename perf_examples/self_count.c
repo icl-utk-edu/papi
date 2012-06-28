@@ -184,12 +184,18 @@ int
 main(int argc, char **argv)
 {
 	perf_event_desc_t *fds = NULL;
+	long lret;
 	size_t pgsz;
 	uint64_t val;
 	int i, ret, num_fds = 0;
 	int n = 30;
 
-	pgsz = sysconf(_SC_PAGESIZE);
+	lret = sysconf(_SC_PAGESIZE);
+	if (lret < 0)
+		err(1, "cannot get page size");
+
+	pgsz = (size_t)lret;
+
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */

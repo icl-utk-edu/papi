@@ -269,7 +269,9 @@ show_event_info_compact(pfm_event_info_t *info)
 	pinfo.size = sizeof(pinfo);
 	ainfo.size = sizeof(ainfo);
 
-	pfm_get_pmu_info(info->pmu, &pinfo);
+	ret = pfm_get_pmu_info(info->pmu, &pinfo);
+	if (ret != PFM_SUCCESS)
+		errx(1, "cannot get pmu info: %s", pfm_strerror(ret));
 
 	pfm_for_each_event_attr(i, info) {
 		ret = pfm_get_event_attr_info(info->idx, i, options.os, &ainfo);
@@ -770,6 +772,7 @@ main(int argc, char **argv)
 				break;
 			case 'x':
 				options.csv_sep = optarg;
+				break;
 			case 'O':
 				ostr = optarg;
 				break;

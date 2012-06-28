@@ -328,6 +328,9 @@ measure(void)
 	for(c=cmin ; c < cmax; c++)
 		setup_cpu(c, cfd);
 
+	if (options.cgroup_name)
+		close(cfd);
+
 	printf("<press CTRL-C to quit before %ds time limit>\n", options.delay);
 	/*
 	 * FIX this for hotplug CPU
