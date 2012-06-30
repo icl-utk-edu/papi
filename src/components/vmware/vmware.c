@@ -138,6 +138,22 @@ VMGuestLibError (*GuestLib_GetHostMemUnmappedMB)(VMGuestLibHandle handle, uint64
 static void *dlHandle = NULL;
 
 
+/*
+ * Macro to load a single GuestLib function from the shared library.
+ */
+
+#define LOAD_ONE_FUNC(funcname)                                 \
+do {                                                            \
+funcname = dlsym(dlHandle, "VM" #funcname);                     \
+if ((dlErrStr = dlerror()) != NULL) {                           \
+fprintf(stderr, "Failed to load \'%s\': \'%s\'\n",              \
+#funcname, dlErrStr);                                           \
+return FALSE;                                                   \
+}                                                               \
+} while (0)
+
+#endif
+
 /** Holds control flags, usually out-of band configuration of the hardware */
 struct _vmware_control_state {
    long long value[VMWARE_MAX_COUNTERS];
@@ -157,21 +173,7 @@ struct _vmware_context {
 
 
 
-/*
- * Macro to load a single GuestLib function from the shared library.
- */
 
-#define LOAD_ONE_FUNC(funcname)                                 \
-do {                                                            \
-funcname = dlsym(dlHandle, "VM" #funcname);                     \
-if ((dlErrStr = dlerror()) != NULL) {                           \
-fprintf(stderr, "Failed to load \'%s\': \'%s\'\n",              \
-#funcname, dlErrStr);                                           \
-return FALSE;                                                   \
-}                                                               \
-} while (0)
-
-#endif
 
 /*
  *-----------------------------------------------------------------------------
@@ -1019,7 +1021,7 @@ _vmware_update_control_state( hwd_control_state_t *ctl,
 	control=(struct _vmware_control_state *)ctl;
 
 	for ( i = 0; i < count; i++ ) {
-	    index = native[i].ni_event &;
+	    index = native[i].ni_event;
 	    control->which_counter[i]=_vmware_native_table[index].which_counter;
 	    native[i].ni_position = i;
 	}
