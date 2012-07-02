@@ -947,7 +947,7 @@ enum {
 enum {
    PAPI_DATATYPE_UINT64 = 0,		/**< Data is a unsigned 64-bit int */
    PAPI_DATATYPE_INT64,		        /**< Data is a signed 64-bit int   */
-   PAPI_DATATYPE_FP64,		        /**< Data is 64-bit floating pont  */
+   PAPI_DATATYPE_FP64,		        /**< Data is 64-bit floating point */
 };
 
 /** Enum values for event_info value_type field */

@@ -6491,12 +6491,17 @@ int  PAPI_get_component_index(char *name)
  *              component index of component to be disabled
  *	@par Examples:
  *	@code
- 		int cidx;
- 		cidx = PAPI_get_component_index("cuda");
-		PAPI_disable_component(cidx);
-		if (cidx==PAPI_OK) {
-                   printf("The CUDA component has been disabled\n");
-                }
+               int cidx, result;
+
+               cidx = PAPI_get_component_index("example");
+
+               if (cidx>=0) {
+                  result = PAPI_disable_component(cidx);
+                  if (result==PAPI_OK)
+                     printf("The example component is disabled\n");
+               }
+               // ... 
+               PAPI_library_init();
  *	@endcode
  *      PAPI_disable_component() allows the user to disable components
  *      before PAPI_library_init() time.  This is useful if the user
