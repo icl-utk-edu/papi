@@ -248,7 +248,8 @@ failure.
 #define PAPI_EINVAL     -1     /**< Invalid argument */
 #define PAPI_ENOMEM     -2     /**< Insufficient memory */
 #define PAPI_ESYS       -3     /**< A System/C library call failed */
-#define PAPI_ESBSTR     -4     /**< Not supported by component */
+#define PAPI_ECMP       -4     /**< Not supported by component */
+#define PAPI_ESBSTR     -4     /**< Backwards compatibility */
 #define PAPI_ECLOST     -5     /**< Access to the counters was lost or interrupted */
 #define PAPI_EBUG       -6     /**< Internal error, please send mail to the developers */
 #define PAPI_ENOEVNT    -7     /**< Event does not exist */

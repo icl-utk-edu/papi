@@ -195,7 +195,7 @@ _papi_hwi_initialize_cpu( CpuInfo_t ** dest, unsigned int cpu_num )
 
 	/* Call the component to fill in anything special. */
 	for ( i = 0; i < papi_num_components; i++ ) {
-		retval = _papi_hwd[i]->init( cpu->context[i] );
+		retval = _papi_hwd[i]->init_thread( cpu->context[i] );
 		if ( retval ) {
 			free_cpu( &cpu );
 			*dest = NULL;
@@ -219,7 +219,7 @@ _papi_hwi_shutdown_cpu( CpuInfo_t * cpu )
 	remove_cpu( cpu );
 	THRDBG( "Shutting down cpu %d at %p\n", cpu->cpu_num, cpu );
 	for ( i = 0; i < papi_num_components; i++ ) {
-		retval = _papi_hwd[i]->shutdown( cpu->context[i] );
+		retval = _papi_hwd[i]->shutdown_thread( cpu->context[i] );
 		if ( retval != PAPI_OK )
 			failure = retval;
 	}

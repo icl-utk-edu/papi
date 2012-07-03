@@ -901,7 +901,7 @@ _papi_pe_init_component( int cidx )
 }
 
 static int
-_papi_pe_init_therad( hwd_context_t * thr_ctx )
+_papi_pe_init_thread( hwd_context_t * thr_ctx )
 {
 	( void ) thr_ctx;		 /*unused */
 	/* No initialization is needed */
@@ -1493,7 +1493,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 }
 
 static int
-_papi_pe_shutdown( hwd_context_t * ctx )
+_papi_pe_shutdown_thread( hwd_context_t * ctx )
 {
 	context_t *pe_ctx = ( context_t * ) ctx;
 	int ret;
@@ -2100,7 +2100,7 @@ papi_vector_t _papi_pe_vector = {
 	.start = _papi_pe_start,
 	.stop = _papi_pe_stop,
 	.read = _papi_pe_read,
-	.shutdown = _papi_pe_shutdown,
+	.shutdown_thread = _papi_pe_shutdown_thread,
 	.shutdown_component = _papi_pe_shutdown_component,
 	.ctl = _papi_pe_ctl,
 	.update_control_state = _papi_pe_update_control_state,

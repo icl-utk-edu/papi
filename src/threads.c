@@ -287,7 +287,7 @@ _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 	/* Call the component to fill in anything special. */
 
 	for ( i = 0; i < papi_num_components; i++ ) {
-		retval = _papi_hwd[i]->init( thread->context[i] );
+		retval = _papi_hwd[i]->init_thread( thread->context[i] );
 		if ( retval ) {
 			free_thread( &thread );
 			*dest = NULL;
@@ -438,7 +438,7 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
 		remove_thread( thread );
 		THRDBG( "Shutting down thread %ld at %p\n", thread->tid, thread );
 		for ( i = 0; i < papi_num_components; i++ ) {
-			retval = _papi_hwd[i]->shutdown( thread->context[i] );
+			retval = _papi_hwd[i]->shutdown_thread( thread->context[i] );
 			if ( retval != PAPI_OK )
 				failure = retval;
 		}
