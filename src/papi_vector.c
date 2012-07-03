@@ -1,6 +1,5 @@
 /*
  * File:    papi_vector.c
- * CVS:     $Id$
  * Author:  Kevin London
  *          london@cs.utk.edu
  * Mods:    Haihang You
@@ -146,10 +145,10 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->stop_profiling )
 		v->stop_profiling =
 			( int ( * )( ThreadInfo_t *, EventSetInfo_t * ) ) vec_int_dummy;
-	if ( !v->init_substrate )
-		v->init_substrate = ( int ( * )( int ) ) vec_int_ok_dummy;
-	if ( !v->init )
-		v->init = ( int ( * )( hwd_context_t * ) ) vec_int_ok_dummy;
+	if ( !v->init_component )
+		v->init_component = ( int ( * )( int ) ) vec_int_ok_dummy;
+	if ( !v->init_thread )
+		v->init_thread = ( int ( * )( hwd_context_t * ) ) vec_int_ok_dummy;
 	if ( !v->init_control_state )
 		v->init_control_state =
 			( int ( * )( hwd_control_state_t * ptr ) ) vec_void_dummy;
@@ -192,10 +191,10 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->allocate_registers =
 			( int ( * )( EventSetInfo_t * ) ) vec_int_one_dummy;
 
-	if ( !v->shutdown )
-		v->shutdown = ( int ( * )( hwd_context_t * ) ) vec_int_dummy;
-	if ( !v->shutdown_substrate )
-		v->shutdown_substrate = ( int ( * )( void ) ) vec_int_ok_dummy;
+	if ( !v->shutdown_thread )
+		v->shutdown_thread = ( int ( * )( hwd_context_t * ) ) vec_int_dummy;
+	if ( !v->shutdown_component )
+		v->shutdown_component = ( int ( * )( void ) ) vec_int_ok_dummy;
 	if ( !v->user )
 		v->user = ( int ( * )( int, void *, void * ) ) vec_int_dummy;
 	return PAPI_OK;
@@ -323,9 +322,9 @@ vector_print_table( papi_vector_t * v, int print_func )
 
 	vector_print_routine( ( void * ) v->stop_profiling,
 						  "_papi_hwd_stop_profiling", print_func );
-	vector_print_routine( ( void * ) v->init_substrate,
-						  "_papi_hwd_init_substrate", print_func );
-	vector_print_routine( ( void * ) v->init, "_papi_hwd_init", print_func );
+	vector_print_routine( ( void * ) v->init_component,
+						  "_papi_hwd_init_component", print_func );
+	vector_print_routine( ( void * ) v->init_thread, "_papi_hwd_init_thread", print_func );
 	vector_print_routine( ( void * ) v->init_control_state,
 						  "_papi_hwd_init_control_state", print_func );
 	vector_print_routine( ( void * ) v->ctl, "_papi_hwd_ctl", print_func );
@@ -351,10 +350,10 @@ vector_print_table( papi_vector_t * v, int print_func )
 	vector_print_routine( ( void * ) v->allocate_registers,
 						  "_papi_hwd_allocate_registers", print_func );
 
-	vector_print_routine( ( void * ) v->shutdown, "_papi_hwd_shutdown",
+	vector_print_routine( ( void * ) v->shutdown_thread, "_papi_hwd_shutdown_thread",
 						  print_func );
-	vector_print_routine( ( void * ) v->shutdown_substrate,
-						  "_papi_hwd_shutdown_substrate", print_func );
+	vector_print_routine( ( void * ) v->shutdown_component,
+						  "_papi_hwd_shutdown_component", print_func );
 	vector_print_routine( ( void * ) v->user, "_papi_hwd_user", print_func );
 }
 

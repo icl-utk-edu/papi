@@ -611,7 +611,7 @@ PAPI_library_init( int version )
 		_papi_hwi_shutdown_global_internal(  );
 		for ( i = 0; i < papi_num_components; i++ ) {
 		    if (!_papi_hwd[i]->cmp_info.disabled) {
-                       _papi_hwd[i]->shutdown_substrate(  );
+                       _papi_hwd[i]->shutdown_component(  );
 		    }
 		}
 		_in_papi_library_init_cnt--;
@@ -4371,7 +4371,7 @@ again:
 	_papi_hwi_shutdown_global_threads(  );
 	for( i = 0; i < papi_num_components; i++ ) {
 	   if (!_papi_hwd[i]->cmp_info.disabled) {
-              _papi_hwd[i]->shutdown_substrate(  );
+              _papi_hwd[i]->shutdown_component(  );
 	   }
 	}
 

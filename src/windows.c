@@ -151,7 +151,7 @@ _papi_hwd_init( hwd_context_t * ctx )
 
 /* Called once per process. */
 int
-_papi_hwd_shutdown_substrate( void )
+_papi_hwd_shutdown_component( void )
 {
 	pmc_close( pmc_dev );
 	lock_release(  );

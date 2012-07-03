@@ -822,14 +822,14 @@ lock_init( void )
 }
 
 int
-_ultra_hwd_shutdown_substrate( void )
+_ultra_hwd_shutdown_component( void )
 {
 	( void ) cpc_rele(  );
 	return ( PAPI_OK );
 }
 
 int
-_ultra_hwd_init_substrate( int cidx )
+_ultra_hwd_init_component( int cidx )
 {
 	int retval;
  /* retval = _papi_hwi_setup_vector_table(vtable, _solaris_ultra_table);
@@ -1601,11 +1601,9 @@ papi_vector_t _solaris_vector = {
 	.start = _ultra_hwd_start,
 	.stop = _ultra_hwd_stop,
 	.read = _ultra_hwd_read,
-        /* .write */
         .shutdown = _ultra_shutdown,
-	.shutdown_substrate = _ultra_hwd_shutdown_substrate,
+	.shutdown_component = _ultra_hwd_shutdown_component,
 	.ctl = _ultra_hwd_ctl,
-	/* .allocate_registers */
 	.update_control_state = _ultra_hwd_update_control_state,
         .set_domain = _ultra_set_domain,
 	.reset = _ultra_hwd_reset,
@@ -1617,7 +1615,7 @@ papi_vector_t _solaris_vector = {
 	.ntv_code_to_name = _ultra_hwd_ntv_code_to_name,
 	.ntv_code_to_descr = _ultra_hwd_ntv_code_to_descr,
 	.ntv_code_to_bits = _ultra_hwd_ntv_code_to_bits,
-	.init_substrate = _ultra_hwd_init_substrate,
+	.init_component = _ultra_hwd_init_component,
 	.dispatch_timer = _ultra_hwd_dispatch_timer,
 
 };

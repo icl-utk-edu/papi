@@ -393,11 +393,11 @@ detect_lustre()
  *****************************************************************************/
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  */
 
 int
-_lustre_init_substrate(  )
+_lustre_init_component(  )
 {
 
 	int ret = PAPI_OK;
@@ -425,7 +425,7 @@ _lustre_init_substrate(  )
  * This is called whenever a thread is initialized
  */
 int
-_lustre_init( hwd_context_t * ctx )
+_lustre_init_thread( hwd_context_t * ctx )
 {
   (void) ctx;
 
@@ -437,7 +437,7 @@ _lustre_init( hwd_context_t * ctx )
  *
  */
 int
-_lustre_shutdown_substrate( void )
+_lustre_shutdown_component( void )
 {
 
 	host_finalize(  );
@@ -449,7 +449,7 @@ _lustre_shutdown_substrate( void )
  *
  */
 int
-_lustre_shutdown( hwd_context_t * ctx )
+_lustre_shutdown_thread( hwd_context_t * ctx )
 {
 	( void ) ctx;
 
@@ -612,7 +612,7 @@ _lustre_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from 
  * Functions for setting up various options
  */
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -754,14 +754,14 @@ papi_vector_t _lustre_vector = {
   },
 
      /* function pointers in this component */
-  .init =                  _lustre_init,
-  .init_substrate =        _lustre_init_substrate,
+  .init_thread =           _lustre_init_thread,
+  .init_component =        _lustre_init_component,
   .init_control_state =    _lustre_init_control_state,
   .start =                 _lustre_start,
   .stop =                  _lustre_stop,
   .read =                  _lustre_read,
-  .shutdown =              _lustre_shutdown,
-  .shutdown_substrate =    _lustre_shutdown_substrate,
+  .shutdown_thread =       _lustre_shutdown_thread,
+  .shutdown_component =    _lustre_shutdown_component,
   .ctl =                   _lustre_ctl,
   .update_control_state =  _lustre_update_control_state,
   .set_domain =            _lustre_set_domain,

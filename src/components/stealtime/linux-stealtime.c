@@ -124,11 +124,11 @@ int read_stealtime( struct STEALTIME_context *context, int starting) {
  *****************************************************************************/
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  */
 
 int
-_stealtime_init_substrate( int cidx )
+_stealtime_init_component( int cidx )
 {
 
   (void)cidx;
@@ -205,7 +205,7 @@ _stealtime_init_substrate( int cidx )
  * This is called whenever a thread is initialized
  */
 int
-_stealtime_init( hwd_context_t * ctx )
+_stealtime_init_thread( hwd_context_t * ctx )
 {
   struct STEALTIME_context *context=(struct STEALTIME_context *)ctx;
 
@@ -226,7 +226,7 @@ _stealtime_init( hwd_context_t * ctx )
  *
  */
 int
-_stealtime_shutdown_substrate( void )
+_stealtime_shutdown_component( void )
 {
 
    if (event_info!=NULL) free(event_info);
@@ -238,7 +238,7 @@ _stealtime_shutdown_substrate( void )
  *
  */
 int
-_stealtime_shutdown( hwd_context_t * ctx )
+_stealtime_shutdown_thread( hwd_context_t * ctx )
 {
 
   struct STEALTIME_context *context=(struct STEALTIME_context *)ctx;
@@ -422,7 +422,7 @@ _stealtime_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *fr
  * Functions for setting up various options
  */
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -591,14 +591,14 @@ papi_vector_t _stealtime_vector = {
   },
 
      /* function pointers in this component */
-  .init =                  _stealtime_init,
-  .init_substrate =        _stealtime_init_substrate,
+  .init_thread =           _stealtime_init_thread,
+  .init_component =        _stealtime_init_component,
   .init_control_state =    _stealtime_init_control_state,
   .start =                 _stealtime_start,
   .stop =                  _stealtime_stop,
   .read =                  _stealtime_read,
-  .shutdown =              _stealtime_shutdown,
-  .shutdown_substrate =    _stealtime_shutdown_substrate,
+  .shutdown_thread =       _stealtime_shutdown_thread,
+  .shutdown_component =    _stealtime_shutdown_component,
   .ctl =                   _stealtime_ctl,
   .update_control_state =  _stealtime_update_control_state,
   .set_domain =            _stealtime_set_domain,

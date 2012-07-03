@@ -149,7 +149,7 @@ static int CUDA_FREED = 0;
  * It's possible to create a different context for each thread, but then we are
  * likely running into a limitation that only one context can be profiled at a time.
  * ==> and we don't want this. That's why CUDA context creation is done in 
- * CUDA_init_substrate() (called only by main thread) rather than CUDA_init() 
+ * CUDA_init_component() (called only by main thread) rather than CUDA_init_thread() 
  * or CUDA_init_control_state() (both called by each thread).
  */
 

@@ -443,7 +443,7 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 
 	/* Save old PD array so we can reconstruct certain flags. This can be removed
 	   when we have higher level code call set_profile,set_overflow etc when there
-	   is hardware (substrate) support, but this change won't happen for PAPI 3.5 */
+	   is hardware (component) support, but this change won't happen for PAPI 3.5 */
 
 	SUBDBG
 		( "entry multiplexed %d, pfp_event_count %d, num_cntrs %d, num_sets %d\n",
@@ -656,7 +656,7 @@ get_string_from_file( char *file, char *str, int len )
 }
 
 int
-_papi_pfm_init_substrate( int cidx )
+_papi_pfm_init_component( int cidx )
 {
 	( void ) cidx;			 /*unused */
 	int i, retval;
@@ -840,7 +840,7 @@ _papi_pfm_init_substrate( int cidx )
 }
 
 int
-_papi_pfm_shutdown_substrate(  )
+_papi_pfm_shutdown_component(  )
 {
 
 	int i;
@@ -1945,8 +1945,8 @@ papi_vector_t _papi_pfm_vector = {
 	.start = _papi_pfm_start,
 	.stop = _papi_pfm_stop,
 	.read = _papi_pfm_read,
-	.shutdown = _papi_pfm_shutdown,
-	.shutdown_substrate = _papi_pfm_shutdown_substrate,
+	.shutdown_thread = _papi_pfm_shutdown,
+	.shutdown_component = _papi_pfm_shutdown_component,
 	.ctl = _papi_pfm_ctl,
 	.update_control_state = _papi_pfm_update_control_state,	
 	.set_domain = set_domain,
@@ -1954,9 +1954,9 @@ papi_vector_t _papi_pfm_vector = {
 	.set_overflow = _papi_pfm_set_overflow,
 	.set_profile = _papi_pfm_set_profile,
 	.stop_profiling = _papi_pfm_stop_profiling,
-	.init_substrate = _papi_pfm_init_substrate,
+	.init_component = _papi_pfm_init_component,
 	.dispatch_timer = _papi_pfm_dispatch_timer,
-	.init = _papi_sub_pfm_init,
+	.init_thread = _papi_sub_pfm_init,
 	.allocate_registers = _papi_pfm_allocate_registers,
 	.write = _papi_pfm_write,
 

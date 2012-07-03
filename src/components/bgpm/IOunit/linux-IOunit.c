@@ -4,7 +4,6 @@
 
 /** 
  * @file    linux-IOunit.c
- * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
@@ -31,10 +30,10 @@ papi_vector_t _IOunit_vector;
  * This is called whenever a thread is initialized
  */
 int
-IOUNIT_init( hwd_context_t * ctx )
+IOUNIT_init_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "IOUNIT_init\n" );
+	printf( "IOUNIT_init_thread\n" );
 #endif
 	
 	( void ) ctx;
@@ -47,15 +46,15 @@ IOUNIT_init( hwd_context_t * ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-IOUNIT_init_substrate( int cidx )
+IOUNIT_init_component( int cidx )
 {  
 #ifdef DEBUG_BGQ
-	printf( "IOUNIT_init_substrate\n" );
+	printf( "IOUNIT_init_component\n" );
 #endif
 
 	_IOunit_vector.cmp_info.CmpIdx = cidx;
 #ifdef DEBUG_BGQ
-	printf( "IOUNIT_init_substrate cidx = %d\n", cidx );
+	printf( "IOUNIT_init_component cidx = %d\n", cidx );
 #endif
 	
 	return ( PAPI_OK );
@@ -158,10 +157,10 @@ IOUNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
  *
  */
 int
-IOUNIT_shutdown( hwd_context_t * ctx )
+IOUNIT_shutdown_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "IOUNIT_shutdown\n" );
+	printf( "IOUNIT_shutdown_thread\n" );
 #endif
 	
 	( void ) ctx;
@@ -321,7 +320,7 @@ IOUNIT_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -628,13 +627,13 @@ papi_vector_t _IOunit_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init = IOUNIT_init,
-	.init_substrate = IOUNIT_init_substrate,
+	.init_thread = IOUNIT_init_thread,
+	.init_component = IOUNIT_init_component,
 	.init_control_state = IOUNIT_init_control_state,
 	.start = IOUNIT_start,
 	.stop = IOUNIT_stop,
 	.read = IOUNIT_read,
-	.shutdown = IOUNIT_shutdown,
+	.shutdown_thread = IOUNIT_shutdown_thread,
 	.set_overflow = IOUNIT_set_overflow,
 	.cleanup_eventset = IOUNIT_cleanup_eventset,
 	.ctl = IOUNIT_ctl,

@@ -1523,7 +1523,7 @@ _papi_hwi_init_global( void )
 
 	   /* We can be disabled by user before init */
 	   if (!_papi_hwd[i]->cmp_info.disabled) {
-	      retval = _papi_hwd[i]->init_substrate( i );
+	      retval = _papi_hwd[i]->init_component( i );
 	      _papi_hwd[i]->cmp_info.disabled=retval;
 	   }
 

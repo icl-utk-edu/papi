@@ -75,7 +75,7 @@ long_long _niagara2_get_virt_usec( const hwd_context_t * );
 long_long _niagara2_get_virt_cycles( const hwd_context_t * );
 int _niagara2_get_system_info( papi_mdi_t *mdi );
 int _niagara2_init_control_state( hwd_control_state_t * );
-int _niagara2_init_substrate( int );   // Needs changes
+int _niagara2_init_component( int );
 static void _niagara2_lock_init( void );
 int _niagara2_ntv_code_to_bits( unsigned int, hwd_register_t * );
 int _niagara2_ntv_code_to_descr( unsigned int, char *, int );
@@ -234,24 +234,6 @@ static __t2_pst_table_t __t2_table[] = {
 };
 
 hwi_search_t *preset_table;
-
-/* With these definitions, error handling is working properly. */
-#ifdef DEBUG
-#define SUBDBG(format, ...)  (PAPIDEBUG(DEBUG_SUBSTRATE,format, ## __VA_ARGS__))
-#define APIDBG(format, ...)  (PAPIDEBUG(DEBUG_API,format, ## __VA_ARGS__))
-#define INTDBG(format, ...)  (PAPIDEBUG(DEBUG_INTERNAL,format, ## __VA_ARGS__))
-#define THRDBG(format, ...)  (PAPIDEBUG(DEBUG_THREADS,format, ## __VA_ARGS__))
-#define MPXDBG(format, ...)  (PAPIDEBUG(DEBUG_MULTIPLEX,format, ## __VA_ARGS__))
-#define OVFDBG(format, ...)  (PAPIDEBUG(DEBUG_OVERFLOW,format, ## __VA_ARGS__))
-#define PRFDBG(format, ...)  (PAPIDEBUG(DEBUG_PROFILE,format, ## __VA_ARGS__))
-#define MEMDBG(format, ...)  (PAPIDEBUG(DEBUG_MEMORY,format, ## __VA_ARGS__))
-#define LEAKDBG(format, ...) (PAPIDEBUG(DEBUG_LEAK,format, ## __VA_ARGS__))
-#endif
-
-/* Use these two definitions to debug only the component ******************** *
-#define DEBUG
-#define SUBDBG printf
-/* ************************************************************************** */
 
 #ifdef SYNTHETIC_EVENTS_SUPPORTED
 enum
@@ -862,7 +844,7 @@ _niagara2_init_control_state( hwd_control_state_t * ctrl )
 }
 
 int
-_niagara2_init_substrate( int cidx )
+_niagara2_init_component( int cidx )
 {
 #ifdef DEBUG
 	SUBDBG( "ENTERING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
@@ -903,7 +885,7 @@ _niagara2_init_substrate( int cidx )
 	/* Set up the lock after initialization */
 	_niagara2_lock_init(  );
 
-	// Copied from the old component, _papi_init_substrate()
+	// Copied from the old component, _papi_init_component()
 	SUBDBG( "Found %d %s %s CPUs at %d Mhz.\n",
 			_papi_hwi_system_info.hw_info.totalcpus,
 			_papi_hwi_system_info.hw_info.vendor_string,
@@ -1332,7 +1314,7 @@ _niagara2_shutdown_global( void )
 
 	/* Shutdown libcpc */
 
-	// cpc_open in _papi_init_substrate
+	// cpc_open in _papi_init_component
 	cpc_close( cpc );
 
 #ifdef DEBUG
@@ -2486,8 +2468,8 @@ papi_vector_t _niagara2_vector = {
 	.stop = _niagara2_stop,
 	.read = _niagara2_read,
 	.write = NULL,			 /* NOT IMPLEMENTED */
-	.shutdown = _niagara2_shutdown,
-	.shutdown_substrate = _niagara2_shutdown_global,
+	.shutdown_thread = _niagara2_shutdown,
+	.shutdown_component = _niagara2_shutdown_global,
 	.ctl = _niagara2_ctl,
 	.update_control_state = _niagara2_update_control_state,
 	.set_domain = _niagara2_set_domain,
@@ -2500,7 +2482,7 @@ papi_vector_t _niagara2_vector = {
 	.ntv_code_to_name = _niagara2_ntv_code_to_name,
 	.ntv_code_to_descr = _niagara2_ntv_code_to_descr,
 	.ntv_code_to_bits = _niagara2_ntv_code_to_bits,
-	.init_substrate = _niagara2_init_substrate,
+	.init_component = _niagara2_init_component,
 	.dispatch_timer = _niagara2_dispatch_timer,
 };
 

@@ -207,7 +207,7 @@ int init_presets(int cidx)
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int _papi_freebsd_init_substrate(int cidx)
+int _papi_freebsd_init_component(int cidx)
 {
    (void)cidx;
 
@@ -225,21 +225,21 @@ int _papi_freebsd_init_substrate(int cidx)
 /*
  * This is called whenever a thread is initialized
  */
-int _papi_freebsd_init(hwd_context_t *ctx)
+int _papi_freebsd_init_thread(hwd_context_t *ctx)
 {
   (void)ctx;
 	SUBDBG("Entering\n");
 	return PAPI_OK;
 }
 
-int _papi_freebsd_shutdown(hwd_context_t *ctx)
+int _papi_freebsd_shutdown_thread(hwd_context_t *ctx)
 {
   (void)ctx;
 	SUBDBG("Entering\n");
 	return PAPI_OK;
 }
 
-int _papi_freebsd_shutdown_substrate(void)
+int _papi_freebsd_shutdown_component(void)
 {
 	SUBDBG("Entering\n");
 	return PAPI_OK;
@@ -957,8 +957,8 @@ papi_vector_t _papi_freebsd_vector = {
   .reset	= _papi_freebsd_reset,
   .write	= _papi_freebsd_write,
   .stop_profiling	= _papi_freebsd_stop_profiling,
-  .init_substrate	= _papi_freebsd_init_substrate,
-  .init				= _papi_freebsd_init,
+  .init_component	= _papi_freebsd_init_component,
+  .init_thread				= _papi_freebsd_init_thread,
   .init_control_state	= _papi_freebsd_init_control_state,
   .update_control_state	= _papi_freebsd_update_control_state,
   .ctl					= _papi_freebsd_ctl,
@@ -970,12 +970,12 @@ papi_vector_t _papi_freebsd_vector = {
   .ntv_name_to_code	= _papi_freebsd_ntv_name_to_code,
   .ntv_code_to_name	= _papi_freebsd_ntv_code_to_name,
   .ntv_code_to_descr	= _papi_freebsd_ntv_code_to_descr,
-  .ntv_code_to_bits		= _papi_freebsd_ntv_code_to_bits,
+  .ntv_code_to_bits	= _papi_freebsd_ntv_code_to_bits,
 
   .allocate_registers	= _papi_freebsd_allocate_registers,
 
-  .shutdown				= _papi_freebsd_shutdown,
-  .shutdown_substrate	= _papi_freebsd_shutdown_substrate,
+  .shutdown_thread	= _papi_freebsd_shutdown_thread,
+  .shutdown_component	= _papi_freebsd_shutdown_component,
 };
 
 papi_os_vector_t _papi_os_vector = {

@@ -91,7 +91,7 @@ xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 long long tb_scale_factor = ( long long ) 1;	/* needed to scale get_cycles on PPC series */
 
 int
-_perfctr_init_substrate( int cidx )
+_perfctr_init_component( int cidx )
 {
 	int retval;
 	struct perfctr_info info;
@@ -132,7 +132,7 @@ _perfctr_init_substrate( int cidx )
 		PAPIERROR( VOPEN_ERROR );
 		return ( PAPI_ESYS );
 	}
-	SUBDBG( "_perfctr_init_substrate vperfctr_open = %p\n", dev );
+	SUBDBG( "_perfctr_init_component vperfctr_open = %p\n", dev );
 
 	/* Get info from the kernel */
 	retval = vperfctr_info( dev, &info );

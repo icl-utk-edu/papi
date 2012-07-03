@@ -965,7 +965,7 @@ set_default_granularity( hwd_control_state_t * this_state, int granularity )
 
 
 int
-_ia64_init_substrate( int cidx )
+_ia64_init_component( int cidx )
 {
 	( void ) cidx;			 /*unused */
 	int i, retval, type;
@@ -2109,7 +2109,7 @@ papi_vector_t _ia64_vector = {
 	.start = _ia64_start,
 	.stop = _ia64_stop,
 	.read = _ia64_read,
-	.shutdown = _ia64_shutdown,
+	.shutdown_thread = _ia64_shutdown,
 	.ctl = _ia64_ctl,
 	.update_control_state = _ia64_update_control_state,
 	.set_domain = _ia64_set_domain,
@@ -2117,9 +2117,9 @@ papi_vector_t _ia64_vector = {
 	.set_overflow = _ia64_set_overflow,
 	.set_profile = _ia64_set_profile,
 	.stop_profiling = _ia64_stop_profiling,
-	.init_substrate = _ia64_init_substrate,
+	.init_component = _ia64_init_component,
 	.dispatch_timer = _ia64_dispatch_timer,
-	.init = _ia64_init,
+	.init_thread = _ia64_init,
 
 	.ntv_enum_events = _ia64_ntv_enum_events,
 	.ntv_code_to_name = _ia64_ntv_code_to_name,

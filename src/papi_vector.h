@@ -36,8 +36,8 @@ typedef struct papi_vectors {
     int		(*write)		(hwd_context_t *, hwd_control_state_t *, long long[]);			/**< */
 	int			(*cleanup_eventset)	( hwd_control_state_t * );				/**< */
     int		(*stop_profiling)	(ThreadInfo_t *, EventSetInfo_t *);			/**< */
-    int		(*init_substrate)	(int);										/**< */
-    int		(*init)			(hwd_context_t *);								/**< */
+    int		(*init_component)	(int);										/**< */
+    int		(*init_thread)		 (hwd_context_t *);								/**< */
     int		(*init_control_state)	(hwd_control_state_t * ptr);			/**< */
     int		(*update_control_state)	(hwd_control_state_t *, NativeInfo_t *, int, hwd_context_t *);	/**< */
     int		(*ctl)			(hwd_context_t *, int , _papi_int_option_t *);	/**< */
@@ -51,8 +51,8 @@ typedef struct papi_vectors {
     int		(*ntv_code_to_bits)	(unsigned int, hwd_register_t *);			/**< */
     int         (*ntv_code_to_info)     (unsigned int, PAPI_event_info_t *);
     int		(*allocate_registers)	(EventSetInfo_t *);						/**< */
-    int		(*shutdown)		(hwd_context_t *);								/**< */
-    int		(*shutdown_substrate)	(void);									/**< */
+    int		(*shutdown_thread)	(hwd_context_t *);								/**< */
+    int		(*shutdown_component)	(void);									/**< */
     int		(*user)			(int, void *, void *);							/**< */
 }papi_vector_t;
 

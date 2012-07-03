@@ -1309,7 +1309,7 @@ _papi_libpfm_shutdown(void) {
  *  @brief  Initialize the libpfm4 code
  *
  *  @retval PAPI_OK       We initialized correctly
- *  @retval PAPI_ESBSTR   There was an error initializing the substrate
+ *  @retval PAPI_ECMP     There was an error initializing the component
  *
  */
 

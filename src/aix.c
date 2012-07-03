@@ -690,13 +690,13 @@ _aix_lock_init( void )
 }
 
 int
-_aix_shutdown( hwd_context_t * ctx )
+_aix_shutdown_thread( hwd_context_t * ctx )
 {
 	return ( PAPI_OK );
 }
 
 int
-_aix_init_substrate( int cidx )
+_aix_init_component( int cidx )
 {
 	int retval = PAPI_OK, procidx;
 
@@ -748,7 +748,7 @@ _aix_init_substrate( int cidx )
 
 
 int
-_aix_init( hwd_context_t * context )
+_aix_init_thread( hwd_context_t * context )
 {
 	int retval;
 	/* Initialize our global control state. */
@@ -1276,11 +1276,11 @@ papi_vector_t _aix_vector = {
 	.ntv_code_to_descr = _aix_ntv_code_to_descr,
 	.ntv_code_to_bits =  _aix_ntv_code_to_bits,
 
-	.init_substrate = _aix_init_substrate,
+	.init_component = _aix_init_component,
 	.ctl = _aix_ctl,
 	.dispatch_timer = _aix_dispatch_timer,
-	.init = _aix_init,
-	.shutdown = _aix_shutdown,
+	.init_thread = _aix_init_thread,
+	.shutdown_thread = _aix_shutdown_thread,
 };
 
 papi_os_vector_t _papi_os_vector = {

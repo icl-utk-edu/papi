@@ -490,7 +490,7 @@ host_deleteStringList( string_list * to_delete )
  * This is called whenever a thread is initialized
  */
 int
-INFINIBAND_init( hwd_context_t * ctx )
+INFINIBAND_init_thread( hwd_context_t * ctx )
 {
 	string_list *counter_list = NULL;
 	int i;
@@ -527,7 +527,7 @@ INFINIBAND_init( hwd_context_t * ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-INFINIBAND_init_substrate(  )
+INFINIBAND_init_component(  )
 {
 	int i;
 
@@ -618,7 +618,7 @@ INFINIBAND_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
  *
  */
 int
-INFINIBAND_shutdown( hwd_context_t * ctx )
+INFINIBAND_shutdown_thread( hwd_context_t * ctx )
 {
 	( void ) ctx;
 	host_finalize(  );
@@ -627,7 +627,7 @@ INFINIBAND_shutdown( hwd_context_t * ctx )
 
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -805,13 +805,13 @@ papi_vector_t _infiniband_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init = INFINIBAND_init,
-	.init_substrate = INFINIBAND_init_substrate,
+	.init_thread = INFINIBAND_init_thread,
+	.init_component = INFINIBAND_init_component,
 	.init_control_state = INFINIBAND_init_control_state,
 	.start = INFINIBAND_start,
 	.stop = INFINIBAND_stop,
 	.read = INFINIBAND_read,
-	.shutdown = INFINIBAND_shutdown,
+	.shutdown_thread = INFINIBAND_shutdown_thread,
 	.ctl = INFINIBAND_ctl,
 
 	.update_control_state = INFINIBAND_update_control_state,

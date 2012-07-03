@@ -23,7 +23,7 @@ extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 #include "papi_bipartite.h"
 
 /* Prototypes for entry points found in perfctr.c */
-extern int _perfctr_init_substrate( int );
+extern int _perfctr_init_component( int );
 extern int _perfctr_ctl( hwd_context_t * ctx, int code,
 					   _papi_int_option_t * option );
 extern void _perfctr_dispatch_timer( int signal, hwd_siginfo_t * si,
@@ -1383,11 +1383,11 @@ papi_vector_t _perfctr_vector = {
 	.set_overflow = _x86_set_overflow,
 	.stop_profiling = _x86_stop_profiling,
 
-	.init_substrate = _perfctr_init_substrate,
-	.ctl =            _perfctr_ctl,
-	.dispatch_timer = _perfctr_dispatch_timer,
-	.init =           _perfctr_init,
-	.shutdown =       _perfctr_shutdown,
+	.init_component =  _perfctr_init_component,
+	.ctl =             _perfctr_ctl,
+	.dispatch_timer =  _perfctr_dispatch_timer,
+	.init_thread =     _perfctr_init,
+	.shutdown_thread = _perfctr_shutdown,
 
 	/* from libpfm */
 	.ntv_enum_events   = _papi_libpfm_ntv_enum_events,

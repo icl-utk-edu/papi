@@ -182,10 +182,10 @@ detect_example(void) {
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_example_init_substrate( int cidx )
+_example_init_component( int cidx )
 {
 
-	SUBDBG( "_example_init_substrate..." );
+	SUBDBG( "_example_init_component..." );
 
    
         /* First, detect that our hardware is available */
@@ -243,14 +243,14 @@ _example_init_substrate( int cidx )
 
 /** This is called whenever a thread is initialized */
 int
-_example_init( hwd_context_t *ctx )
+_example_init_thread( hwd_context_t *ctx )
 {
 
         example_context_t *example_context = (example_context_t *)ctx;
 
         example_context->autoinc_value=0;
    
-	SUBDBG( "_example_init %p...", ctx );
+	SUBDBG( "_example_init_thread %p...", ctx );
 
 	return PAPI_OK;
 }
@@ -421,10 +421,10 @@ _example_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /** Triggered by PAPI_shutdown() */
 int
-_example_shutdown_substrate()
+_example_shutdown_component(void)
 {
 
-	SUBDBG( "example_shutdown_substrate..." );
+	SUBDBG( "example_shutdown_component..." );
 
         /* Free anything we allocated */
    
@@ -435,12 +435,12 @@ _example_shutdown_substrate()
 
 /** Called at thread shutdown */
 int
-_example_shutdown( hwd_context_t *ctx )
+_example_shutdown_thread( hwd_context_t *ctx )
 {
 
         (void) ctx;
 
-	SUBDBG( "example_shutdown... %p", ctx );
+	SUBDBG( "example_shutdown_thread... %p", ctx );
 
 	/* Last chance to clean up thread */
 
@@ -449,7 +449,7 @@ _example_shutdown( hwd_context_t *ctx )
 
 
 
-/** This function sets various options in the substrate
+/** This function sets various options in the component
   @param[in] ctx -- hardware context
   @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, 
                         PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
@@ -643,13 +643,13 @@ papi_vector_t _example_vector = {
 	.read =                 _example_read,
 	.reset =                _example_reset,	
 	.write =                _example_write,
-	.init_substrate =       _example_init_substrate,	
-	.init =                 _example_init,
+	.init_component =       _example_init_component,	
+	.init_thread =          _example_init_thread,
 	.init_control_state =   _example_init_control_state,
 	.update_control_state = _example_update_control_state,	
 	.ctl =                  _example_ctl,	
-	.shutdown =             _example_shutdown,
-	.shutdown_substrate =   _example_shutdown_substrate,
+	.shutdown_thread =      _example_shutdown_thread,
+	.shutdown_component =   _example_shutdown_substrate,
 	.set_domain =           _example_set_domain,
 	/* .cleanup_eventset =     NULL, */
 	/* called in add_native_events() */

@@ -516,7 +516,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 
 /** This is called whenever a thread is initialized */
 int
-_vmware_init( hwd_context_t *ctx )
+_vmware_init_thread( hwd_context_t *ctx )
 {
 	(void) ctx;
 
@@ -548,14 +548,14 @@ _vmware_init( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_vmware_init_substrate( int cidx )
+_vmware_init_component( int cidx )
 {
 
   (void) cidx;
 
   int result;
 
-	SUBDBG( "_vmware_init_substrate..." );
+	SUBDBG( "_vmware_init_component..." );
 
 	/* Initialize and try to load the VMware library */
 	/* Try to load the library. */
@@ -1126,7 +1126,7 @@ _vmware_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /** Shutting down a context */
 int
-_vmware_shutdown( hwd_context_t *ctx )
+_vmware_shutdown_thread( hwd_context_t *ctx )
 {
 	(void) ctx;
 
@@ -1151,7 +1151,7 @@ _vmware_shutdown( hwd_context_t *ctx )
 
 /** Triggered by PAPI_shutdown() */
 int
-_vmware_shutdown_substrate( void )
+_vmware_shutdown_component( void )
 {
 
 #ifdef VMGUESTLIB
@@ -1165,7 +1165,7 @@ _vmware_shutdown_substrate( void )
 }
 
 
-/** This function sets various options in the substrate
+/** This function sets various options in the component
  @param ctx
  @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
  @param option
@@ -1252,16 +1252,16 @@ papi_vector_t _vmware_vector = {
 	}
 	,
 	/* function pointers in this component */
-	.init = _vmware_init,
-	.init_substrate = _vmware_init_substrate,
+	.init_thread =        _vmware_init,
+	.init_component =     _vmware_init_component,
 	.init_control_state = _vmware_init_control_state,
-	.start = _vmware_start,
-	.stop = _vmware_stop,
-	.read = _vmware_read,
-	.write = _vmware_write,
-	.shutdown = _vmware_shutdown,
-	.shutdown_substrate = _vmware_shutdown_substrate,
-	.ctl = _vmware_ctl,
+	.start =              _vmware_start,
+	.stop =               _vmware_stop,
+	.read =               _vmware_read,
+	.write =              _vmware_write,
+	.shutdown_thread =    _vmware_shutdown_thread,
+	.shutdown_component = _vmware_shutdown_component,
+	.ctl =                _vmware_ctl,
 
 	.update_control_state = _vmware_update_control_state,
 	.set_domain = _vmware_set_domain,

@@ -870,11 +870,11 @@ _bgq_get_virt_cycles( void )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_bgq_init_substrate( int cidx )
+_bgq_init_component( int cidx )
 {	
 //#ifdef DEBUG_BGQ
-	printf("_bgq_init_substrate\n");
-	//printf("_bgq_init_substrate: 1. BGPM_INITIALIZED = %d \n", BGPM_INITIALIZED);
+	printf("_bgq_init_component\n");
+	//printf("_bgq_init_component: 1. BGPM_INITIALIZED = %d \n", BGPM_INITIALIZED);
 //#endif
 	int retval;
 	int i;
@@ -1126,8 +1126,8 @@ papi_vector_t _bgq_vectors = {
 	.reset = _bgq_reset,
 	.write = _bgq_write,
 	.stop_profiling = _bgq_stop_profiling,
-	.init_substrate = _bgq_init_substrate,
-	.init = _bgq_init,
+	.init_component = _bgq_init_component,
+	.init_thread = _bgq_init,
 	.init_control_state = _bgq_init_control_state,
 	.update_control_state = _bgq_update_control_state,
 	.ctl = _bgq_ctl,
@@ -1142,7 +1142,7 @@ papi_vector_t _bgq_vectors = {
 	.ntv_code_to_bits = _bgq_ntv_code_to_bits,
 	.allocate_registers = _bgq_allocate_registers,
 	.cleanup_eventset = _bgq_cleanup_eventset,
-	.shutdown = _bgq_shutdown
+	.shutdown_thread = _bgq_shutdown
 //  .shutdown_global      =
 //  .user                 =
 };

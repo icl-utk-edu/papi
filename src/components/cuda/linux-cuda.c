@@ -400,7 +400,7 @@ getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t add
  * This is called whenever a thread is initialized
  */
 int
-CUDA_init( hwd_context_t * ctx )
+CUDA_init_thread( hwd_context_t * ctx )
 {
 	CUDA_context_t * CUDA_ctx = ( CUDA_context_t * ) ctx;
 	/* Initialize number of events in EventSet for update_control_state() */
@@ -422,11 +422,11 @@ CUDA_init( hwd_context_t * ctx )
  * It's possible to create a different context for each thread, but then we are
  * likely running into a limitation that only one context can be profiled at a time.
  * ==> and we don't want this. That's why CUDA context creation is done in 
- * CUDA_init_substrate() (called only by main thread) rather than CUDA_init() 
+ * CUDA_init_component() (called only by main thread) rather than CUDA_init() 
  * or CUDA_init_control_state() (both called by each thread).
  */
 int
-CUDA_init_substrate(  )
+CUDA_init_component(  )
 {
 	CUresult cuErr = CUDA_SUCCESS;
 	
@@ -576,7 +576,7 @@ CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
  *
  */
 int
-CUDA_shutdown( hwd_context_t * ctx )
+CUDA_shutdown_thread( hwd_context_t * ctx )
 {
 	CUDA_context_t * CUDA_ctx = ( CUDA_context_t * ) ctx;
 	CUresult cuErr = CUDA_SUCCESS;
@@ -612,7 +612,7 @@ CUDA_shutdown( hwd_context_t * ctx )
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -872,13 +872,13 @@ papi_vector_t _cuda_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init = CUDA_init,
-	.init_substrate = CUDA_init_substrate,
+	.init_thread = CUDA_init_thread,
+	.init_component = CUDA_init_component,
 	.init_control_state = CUDA_init_control_state,
 	.start = CUDA_start,
 	.stop = CUDA_stop,
 	.read = CUDA_read,
-	.shutdown = CUDA_shutdown,
+	.shutdown_thread = CUDA_shutdown_thread,
 	.cleanup_eventset = CUDA_cleanup_eventset,
 	.ctl = CUDA_ctl,
 	.update_control_state = CUDA_update_control_state,

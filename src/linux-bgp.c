@@ -212,7 +212,7 @@ _bgp_set_domain( hwd_control_state_t * cntrl, int domain )
  * All state is kept in BG/P UPC structures
  */
 int
-_bgp_init( hwd_context_t * ctx )
+_bgp_init_thread( hwd_context_t * ctx )
 {
 
 	return PAPI_OK;
@@ -761,7 +761,7 @@ _bgp_get_virt_cycles( void )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_bgp_init_substrate( int cidx )
+_bgp_init_component( int cidx )
 {
 	int retval;
 
@@ -958,8 +958,8 @@ papi_vector_t _bgp_vectors = {
 	.reset = _bgp_reset,
 	.write = _bgp_write,
 	.stop_profiling = _bgp_stop_profiling,
-	.init_substrate = _bgp_init_substrate,
-	.init = _bgp_init,
+	.init_component = _bgp_init_component,
+	.init_thread = _bgp_init,
 	.init_control_state = _bgp_init_control_state,
 	.update_control_state = _bgp_update_control_state,
 	.ctl = _bgp_ctl,

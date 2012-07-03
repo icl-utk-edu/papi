@@ -4,7 +4,6 @@
 
 /** 
  * @file    linux-CNKunit.c
- * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
@@ -31,10 +30,10 @@ papi_vector_t _CNKunit_vector;
  * This is called whenever a thread is initialized
  */
 int
-CNKUNIT_init( hwd_context_t * ctx )
+CNKUNIT_init_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "CNKUNIT_init\n" );
+	printf( "CNKUNIT_init_thread\n" );
 #endif
 	
 	( void ) ctx;
@@ -47,15 +46,15 @@ CNKUNIT_init( hwd_context_t * ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-CNKUNIT_init_substrate( int cidx )
+CNKUNIT_init_component( int cidx )
 {  
 #ifdef DEBUG_BGQ
-	printf( "CNKUNIT_init_substrate\n" );
+	printf( "CNKUNIT_init_component\n" );
 #endif
 
 	_CNKunit_vector.cmp_info.CmpIdx = cidx;
 #ifdef DEBUG_BGQ
-	printf( "CNKUNIT_init_substrate cidx = %d\n", cidx );
+	printf( "CNKUNIT_init_component cidx = %d\n", cidx );
 #endif
 	
 	return ( PAPI_OK );
@@ -163,17 +162,17 @@ CNKUNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
  *
  */
 int
-CNKUNIT_shutdown( hwd_context_t * ctx )
+CNKUNIT_shutdown_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "CNKUNIT_shutdown\n" );
+	printf( "CNKUNIT_shutdown_thread\n" );
 #endif
 	( void ) ctx;
 	return ( PAPI_OK );
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -482,13 +481,13 @@ papi_vector_t _CNKunit_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init = CNKUNIT_init,
-	.init_substrate = CNKUNIT_init_substrate,
+	.init_thread = CNKUNIT_init_thread,
+	.init_component = CNKUNIT_init_component,
 	.init_control_state = CNKUNIT_init_control_state,
 	.start = CNKUNIT_start,
 	.stop = CNKUNIT_stop,
 	.read = CNKUNIT_read,
-	.shutdown = CNKUNIT_shutdown,
+	.shutdown_thread = CNKUNIT_shutdown_thread,
 	.cleanup_eventset = CNKUNIT_cleanup_eventset,
 	.ctl = CNKUNIT_ctl,
 

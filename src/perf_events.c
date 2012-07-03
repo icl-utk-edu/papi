@@ -835,7 +835,7 @@ static int pe_vendor_fixups(void) {
 
 
 static int
-_papi_pe_init_substrate( int cidx )
+_papi_pe_init_component( int cidx )
 {
 
   int retval;
@@ -901,7 +901,7 @@ _papi_pe_init_substrate( int cidx )
 }
 
 static int
-_papi_sub_pe_init( hwd_context_t * thr_ctx )
+_papi_pe_init_therad( hwd_context_t * thr_ctx )
 {
 	( void ) thr_ctx;		 /*unused */
 	/* No initialization is needed */
@@ -1157,8 +1157,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
       }	else {
 	/* This should not happen, but does. For example a Intel(R) Pentium(R) M processor 1600MHz (9)
 Linux thinkpad 2.6.38-02063808-generic #201106040910 SMP Sat Jun 4 10:51:30 UTC 2011 i686 GNU/Linux:
-SUBSTRATE:perf_events.c:_papi_pe_read:1148:24625 read: 1 214777 0
-SUBSTRATE:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time_enabled 214777) / tot_time_running 0 */
+COMPONENT:perf_events.c:_papi_pe_read:1148:24625 read: 1 214777 0
+COMPONENT:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time_enabled 214777) / tot_time_running 0 */
 	SUBDBG("perf_event kernel bug(?) count, enabled, running: %lld, %lld, %lld\n",papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
 	pe_ctl->counts[i] = papi_pe_buffer[count_idx];
       }
@@ -1504,7 +1504,7 @@ _papi_pe_shutdown( hwd_context_t * ctx )
 }
 
 int
-_papi_pe_shutdown_substrate(  ) {
+_papi_pe_shutdown_component(  ) {
 
 	_papi_libpfm_shutdown();
 
@@ -2101,7 +2101,7 @@ papi_vector_t _papi_pe_vector = {
 	.stop = _papi_pe_stop,
 	.read = _papi_pe_read,
 	.shutdown = _papi_pe_shutdown,
-	.shutdown_substrate = _papi_pe_shutdown_substrate,
+	.shutdown_component = _papi_pe_shutdown_component,
 	.ctl = _papi_pe_ctl,
 	.update_control_state = _papi_pe_update_control_state,
 	.set_domain = set_domain,
@@ -2109,11 +2109,11 @@ papi_vector_t _papi_pe_vector = {
 	.set_overflow = _papi_pe_set_overflow,
 	.set_profile = _papi_pe_set_profile,
 	.stop_profiling = _papi_pe_stop_profiling,
-	.init_substrate = _papi_pe_init_substrate,
+	.init_component = _papi_pe_init_component,
 	.dispatch_timer = _papi_pe_dispatch_timer,
 	.allocate_registers = _papi_pe_allocate_registers,
 	.write = _papi_pe_write,
-	.init = _papi_sub_pe_init,
+	.init_thread = _papi_pe_init_thread,
 
 	/* from counter name mapper */
 	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,

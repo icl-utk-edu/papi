@@ -747,7 +747,7 @@ get_string_from_file( char *file, char *str, int len )
 }
 
 int
-_papi_pfm_init_substrate( int cidx )
+_papi_pfm_init_component( int cidx )
 {
 	( void ) cidx;			 /*unused */
 	int retval;
@@ -909,14 +909,14 @@ _papi_pfm_init_substrate( int cidx )
 }
 
 int
-_papi_pfm_shutdown_substrate(  )
+_papi_pfm_shutdown_component(  )
 {
 
 	return PAPI_OK;
 }
 
 static int
-_papi_sub_pfm_init( hwd_context_t * thr_ctx )
+_papi_pfm_init_thread( hwd_context_t * thr_ctx )
 {
 	pfarg_load_t load_args;
 	pfarg_ctx_t newctx;
@@ -2287,8 +2287,8 @@ papi_vector_t _papi_pfm_vector = {
 	.start = _papi_pfm_start,
 	.stop = _papi_pfm_stop,
 	.read = _papi_pfm_read,
-	.shutdown = _papi_pfm_shutdown,
-	.shutdown_substrate = _papi_pfm_shutdown_substrate,
+	.shutdown_thread = _papi_pfm_shutdown,
+	.shutdown_component = _papi_pfm_shutdown_component,
 	.ctl = _papi_pfm_ctl,
 	.update_control_state = _papi_pfm_update_control_state,	
 	.set_domain = set_domain,
@@ -2296,9 +2296,9 @@ papi_vector_t _papi_pfm_vector = {
 	.set_overflow = _papi_pfm_set_overflow,
 	.set_profile = _papi_pfm_set_profile,
 	.stop_profiling = _papi_pfm_stop_profiling,
-	.init_substrate = _papi_pfm_init_substrate,
+	.init_component = _papi_pfm_init_component,
 	.dispatch_timer = _papi_pfm_dispatch_timer,
-	.init = _papi_sub_pfm_init,
+	.init_thread = _papi_pfm_init_thread,
 	.allocate_registers = _papi_pfm_allocate_registers,
 	.write = _papi_pfm_write,
 

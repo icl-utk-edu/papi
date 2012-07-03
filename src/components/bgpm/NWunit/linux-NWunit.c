@@ -4,7 +4,6 @@
 
 /** 
  * @file    linux-NWunit.c
- * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
@@ -31,10 +30,10 @@ papi_vector_t _NWunit_vector;
  * This is called whenever a thread is initialized
  */
 int
-NWUNIT_init( hwd_context_t * ctx )
+NWUNIT_init_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "NWUNIT_init\n" );
+	printf( "NWUNIT_init_thread\n" );
 #endif
 	
 	( void ) ctx;
@@ -47,15 +46,15 @@ NWUNIT_init( hwd_context_t * ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-NWUNIT_init_substrate( int cidx )
+NWUNIT_init_component( int cidx )
 {  
 #ifdef DEBUG_BGQ
-	printf( "NWUNIT_init_substrate\n" );
+	printf( "NWUNIT_init_component\n" );
 #endif
 
 	_NWunit_vector.cmp_info.CmpIdx = cidx;
 #ifdef DEBUG_BGQ
-	printf( "NWUNIT_init_substrate cidx = %d\n", cidx );
+	printf( "NWUNIT_init_component cidx = %d\n", cidx );
 #endif
 	
 	return ( PAPI_OK );
@@ -164,10 +163,10 @@ NWUNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
  *
  */
 int
-NWUNIT_shutdown( hwd_context_t * ctx )
+NWUNIT_shutdown_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "NWUNIT_shutdown\n" );
+	printf( "NWUNIT_shutdown_thread\n" );
 #endif
 	
 	( void ) ctx;
@@ -175,7 +174,7 @@ NWUNIT_shutdown( hwd_context_t * ctx )
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -484,13 +483,13 @@ papi_vector_t _NWunit_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init = NWUNIT_init,
-	.init_substrate = NWUNIT_init_substrate,
+	.init_thread = NWUNIT_init_thread,
+	.init_component = NWUNIT_init_component,
 	.init_control_state = NWUNIT_init_control_state,
 	.start = NWUNIT_start,
 	.stop = NWUNIT_stop,
 	.read = NWUNIT_read,
-	.shutdown = NWUNIT_shutdown,
+	.shutdown_thread = NWUNIT_shutdown_thread,
 	.cleanup_eventset = NWUNIT_cleanup_eventset,
 	.ctl = NWUNIT_ctl,
 

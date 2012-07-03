@@ -4,7 +4,6 @@
 
 /**
  * @file    appio.c
- * CVS:     $Id: appio.c,v 1.1.2.4 2012/02/01 05:01:00 tmohan Exp $
  *
  * @author  Philip Mucci
  *          phil.mucci@samaratechnologygroup.com
@@ -256,10 +255,10 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
  * This is called whenever a thread is initialized
  */
 int
-_appio_init( hwd_context_t *ctx )
+_appio_init_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
-    SUBDBG("_appio_init %p\n", ctx);
+    SUBDBG("_appio_init_thread %p\n", ctx);
     return PAPI_OK;
 }
 
@@ -269,10 +268,10 @@ _appio_init( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_appio_init_substrate( int cidx  )
+_appio_init_component( int cidx  )
 {
 
-    SUBDBG("_appio_substrate %d\n", cidx);
+    SUBDBG("_appio_component %d\n", cidx);
     _appio_native_events = (APPIO_native_event_entry_t *) papi_calloc(sizeof(APPIO_native_event_entry_t), APPIO_MAX_COUNTERS);
 
     if (_appio_native_events == NULL ) {
@@ -371,7 +370,7 @@ _appio_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
  * Thread shutdown
  */
 int
-_appio_shutdown( hwd_context_t *ctx )
+_appio_shutdown_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
 
@@ -380,16 +379,16 @@ _appio_shutdown( hwd_context_t *ctx )
 
 
 /*
- * Clean up what was setup in appio_init_substrate().
+ * Clean up what was setup in appio_init_component().
  */
 int
-_appio_shutdown_substrate( void )
+_appio_shutdown_component( void )
 {
     return PAPI_OK;
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and
  * PAPI_SET_INHERIT
@@ -576,9 +575,9 @@ _appio_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 papi_vector_t _appio_vector = {
     .cmp_info = {
         /* default component information (unspecified values are initialized to 0) */
-        .name                  = "appio.c",
-        .version               = "$Revision: 1.1.2.4 $",
-        .CmpIdx                = 0,              /* set by init_substrate */
+        .name                  = "appio",
+        .version               = "1.1.2.4",
+        .CmpIdx                = 0,              /* set by init_component */
         .num_mpx_cntrs         = PAPI_MPX_DEF_DEG,
         .num_cntrs             = APPIO_MAX_COUNTERS,
         .default_domain        = PAPI_DOM_USER,
@@ -604,14 +603,14 @@ papi_vector_t _appio_vector = {
     },
 
     /* function pointers in this component */
-    .init                      = _appio_init,
-    .init_substrate            = _appio_init_substrate,
+    .init_thread               = _appio_init_thread,
+    .init_component            = _appio_init_component,
     .init_control_state        = _appio_init_control_state,
     .start                     = _appio_start,
     .stop                      = _appio_stop,
     .read                      = _appio_read,
-    .shutdown                  = _appio_shutdown,
-    .shutdown_substrate        = _appio_shutdown_substrate,
+    .shutdown_thread           = _appio_shutdown_thread,
+    .shutdown_component        = _appio_shutdown_component,
     .ctl                       = _appio_ctl,
 
     .update_control_state      = _appio_update_control_state,
