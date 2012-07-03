@@ -4363,7 +4363,7 @@ again:
 }
 
 /** @class PAPI_strerror
- *	@brief Convert PAPI error codes to strings, and return the error string to user. 
+ *	@brief Returns a string describing the PAPI error code. 
  *
  *  @par C Interface:
  *     \#include <papi.h> @n
@@ -4416,37 +4416,11 @@ PAPI_strerror( int errorCode )
 	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
 		return ( NULL );
 
-	return ( ( char * ) _papi_hwi_err[-errorCode].name );
-}
-
-/** @class PAPI_descr_error
- *	@brief Return the PAPI error description string to user. 
- *
- *	@param errorCode 
- *		the error code to interpret
- *
- *	@retval NULL 
- *		The input error code to PAPI_descr_error() is invalid, 
- *		or the description string is empty. 
- *
- *	PAPI_descr_error() returns a pointer to the error message corresponding to the 
- *	error code code . 
- *	If the call fails the function returns the NULL pointer. 
- *	This function is not implemented in Fortran. 
- *
- *	@see  PAPI_strerror PAPI_perror
- */
-char *
-PAPI_descr_error( int errorCode )
-{
-	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
-		return ( NULL );
-
 	return ( ( char * ) _papi_hwi_err[-errorCode].descr );
 }
 
 /** @class PAPI_perror
- *  @brief Convert PAPI error codes to strings, and print error message to stderr. 
+ *  @brief Produces a string on standard error, describing the last library error.
  *
  * @par C Interface:
  *     \#include <papi.h> @n
