@@ -856,7 +856,6 @@ Optional Packages:
   --with-bitmode=<32,64>		Specify bit mode of library
   --with-OS=<os>       		Specify operating system
   --with-OSVER=<ver>		Specify operating system version
- --with-user-events	Build with support for user defined events.
  --with-static-user-events             Build with a static user events file papi_static_user_events.h.
   --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds
   --with-bgpm_installdir=<path> Specify the installation path of BGPM
@@ -1410,14 +1409,6 @@ echo "${ECHO_T}$OSVER" >&6
 
 echo "$as_me:$LINENO: checking for user events" >&5
 echo $ECHO_N "checking for user events... $ECHO_C" >&6
-
-# Check whether --with-user_events or --without-user_events was given.
-if test "${with_user_events+set}" = set; then
-  withval="$with_user_events"
-  USER_EVENTS=yes
-fi;
-echo "$as_me:$LINENO: result: $USER_EVENTS" >&5
-echo "${ECHO_T}$USER_EVENTS" >&6
 
 echo "$as_me:$LINENO: checking for static user events build" >&5
 echo $ECHO_N "checking for static user events build... $ECHO_C" >&6
@@ -2266,7 +2257,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2269:" \
+echo "$as_me:2260:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -7489,11 +7480,6 @@ echo "${ECHO_T}$components" >&6
 
 if test "$STATIC_USER_EVENTS" = "yes"; then
 	CFLAGS="$CFLAGS -DSTATIC_USER_EVENTS"
-	USER_EVENTS="yes"
-fi
-
-if test "$USER_EVENTS" = "yes"; then
-	CFLAGS="$CFLAGS -DUSER_EVENTS"
 fi
 
 if test "x$PAPI_EVENTS_CSV" == "x"; then

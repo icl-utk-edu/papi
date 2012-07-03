@@ -30,9 +30,7 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 
-#ifdef USER_EVENTS
 #include "papi_user_events.h"
-#endif
 
 #include "extras.h"
 #include "multiplex.h"
@@ -476,9 +474,7 @@ PAPI_set_thr_specific( int tag, void *ptr )
 int
 PAPI_library_init( int version )
 {
-#ifdef USER_EVENTS
 	char *filename;
-#endif
 	int tmp = 0, tmpel;
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
@@ -627,11 +623,9 @@ PAPI_library_init( int version )
 	_papi_user_defined_events_setup(NULL);
 #endif
 
-#ifdef USER_EVENTS
 	if ( (filename = getenv( "PAPI_USER_EVENTS_FILE" )) != NULL ) {
 	  _papi_user_defined_events_setup(filename);
 	}
-#endif
 
 	return ( init_retval = PAPI_VER_CURRENT );
 }
@@ -698,7 +692,6 @@ PAPI_query_event( int EventCode )
 					 ( ( unsigned int ) EventCode ) );
 	}
 
-#ifdef USER_EVENTS
 	if ( IS_USER_DEFINED(EventCode) ) {
 	  EventCode &= PAPI_UE_AND_MASK;
 	  if ( EventCode < 0 || EventCode > (int)_papi_user_events_count)
@@ -706,7 +699,6 @@ PAPI_query_event( int EventCode )
 
 	  papi_return( PAPI_OK );
 	}
-#endif
 
 	papi_return( PAPI_ENOEVNT );
 }
@@ -929,7 +921,6 @@ PAPI_event_code_to_name( int EventCode, char *out )
 				 ( ( unsigned int ) EventCode, out, PAPI_MAX_STR_LEN ) );
 	}
 
-#ifdef USER_EVENTS
 	if ( IS_USER_DEFINED(EventCode) ) {
 	  EventCode &= PAPI_UE_AND_MASK;
 
@@ -940,7 +931,6 @@ PAPI_event_code_to_name( int EventCode, char *out )
 		  PAPI_MIN_STR_LEN);
 	  papi_return( PAPI_OK );
 	}
-#endif
 
 	papi_return( PAPI_ENOEVNT );
 }
@@ -1020,14 +1010,12 @@ PAPI_event_name_to_code( char *in, int *out )
 	   }
 	}
 
-#ifdef USER_EVENTS
 	for ( i=0; i < (int)_papi_user_events_count; i++ ) {
 	  if ( strcasecmp( _papi_user_events[i].symbol, in ) == 0 ) {
 		*out = (int) ( i | PAPI_UE_MASK );
 		papi_return( PAPI_OK );
 	  }
 	}
-#endif 
 
 	papi_return( _papi_hwi_native_name_to_code( in, out ) );
 }
@@ -1181,9 +1169,7 @@ PAPI_enum_event( int *EventCode, int modifier )
 	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
 
 	    return retval;
-	} 
-#ifdef USER_EVENTS
-	else if ( IS_USER_DEFINED(i) ) {
+	} else if ( IS_USER_DEFINED(i) ) {
 	  if ( modifier == PAPI_ENUM_FIRST ) {
 		*EventCode = (int) 0x0;
 		return ( PAPI_OK );
@@ -1196,7 +1182,6 @@ PAPI_enum_event( int *EventCode, int modifier )
 		*EventCode = i;
 	  return ( PAPI_OK );
 	}
-#endif
 
 	papi_return( PAPI_EINVAL );
 }
@@ -3734,12 +3719,9 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	}
 	case PAPI_USER_EVENTS_FILE:
 	{
-#ifdef USER_EVENTS
 	  SUBDBG("Filename is -%s-\n", ptr->events_file);
 	  _papi_user_defined_events_setup(ptr->events_file);
 	  return( PAPI_OK );
-#endif
-	  return ( PAPI_ENOIMPL );
 	}
 	default:
 		papi_return( PAPI_EINVAL );
@@ -4362,9 +4344,7 @@ again:
 
 	/* Shutdown the entire component */
 
-#ifdef USER_EVENTS
 	_papi_cleanup_user_events();
-#endif
 
 	_papi_hwi_shutdown_highlevel(  );
 	_papi_hwi_shutdown_global_internal(  );

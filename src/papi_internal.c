@@ -42,9 +42,7 @@
 
 #include "papi_common_strings.h"
 
-#ifdef USER_EVENTS
 #include "papi_user_events.h"
-#endif
 
 /* Advanced definitons */
 static int default_debug_handler( int errorCode );
@@ -764,9 +762,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 		break;
 	     }
 	  }
-       } 
-#ifdef USER_EVENTS 
-	   else if ( IS_USER_DEFINED(head[j].event_code) ) {
+       } else if ( IS_USER_DEFINED(head[j].event_code) ) {
 		 for ( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
 		   nevt = _papi_user_events[preset_index].events[k];
 		   if ( nevt == PAPI_NULL )
@@ -778,7 +774,6 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 		   }
 		 }
 	   }
-#endif
 	   /* end of if */
        j++;
     }						 /* end of for loop */
@@ -1047,9 +1042,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		_papi_hwi_remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
 	     }
 	  }
-       } 
-#ifdef USER_EVENTS
-	   else if ( IS_USER_DEFINED( EventCode ) ) {
+       } else if ( IS_USER_DEFINED( EventCode ) ) {
 		 int count;
 		 int index = EventCode & PAPI_UE_AND_MASK;
 
@@ -1080,9 +1073,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		   if ( remap )
 			 _papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
 		 }
-	   } 
-#endif
-	   else {
+	   } else {
 
 	  /* not Native or Preset events */
 
@@ -1248,9 +1239,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 			retval = remove_native_events( ESI, &EventCode, 1 );
 			if ( retval != PAPI_OK )
 				return ( retval );
-		} 
-#ifdef USER_EVENTS
-		else if ( IS_USER_DEFINED( EventCode ) ) {
+		} else if ( IS_USER_DEFINED( EventCode ) ) {
 		  int index = EventCode & PAPI_UE_AND_MASK;
 
 		  if ( (index < 0) || (index >= (int)_papi_user_events_count) )
@@ -1264,9 +1253,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 			if ( retval != PAPI_OK )
 			  return ( retval );
 		  }
-		} 
-#endif
-		else
+		} else
 			return ( PAPI_ENOEVNT );
 	}
 	array = ESI->EventInfoArray;

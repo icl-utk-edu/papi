@@ -14,7 +14,6 @@
  *		Keywords for getting info out of hw_info or something like it. 
  */
 
-#ifdef USER_EVENTS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -721,4 +720,3 @@ _papi_user_defined_events_setup(char *name)
   return( PAPI_OK );
 }
 
-#endif /* #ifdef USER_EVENTS */
