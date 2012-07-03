@@ -210,7 +210,7 @@ main( int argc, char **argv )
 	}
 
 	/* This code isn't necessary as we know the child has exited,
-	   it *may* return an error if the substrate so chooses. 
+	   it *may* return an error if the component so chooses. 
            You should use read() instead. */
 
 	printf( "Test case: multiple 3rd party attach start, stop.\n" );

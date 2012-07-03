@@ -3,7 +3,6 @@
 
 /*
 * File:    perfmon-ia64-pfm.h
-* CVS:     $Id$
 * Author:  Per Ekman
 *          pek at pdc.kth.se
 * Mods:	   Zhou Min
@@ -353,7 +352,7 @@ pfmw_recreate_context( EventSetInfo_t * ESI, hwd_context_t * thr_ctx,
 			set_pmds_to_write( ESI, EventIndex, MONT_ETB_REGS_MASK );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -403,7 +402,7 @@ pfmw_is_dear( unsigned int i )
 		return ( pfm_mont_is_dear( i ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -423,7 +422,7 @@ pfmw_is_iear( unsigned int i )
 		return ( pfm_mont_is_iear( i ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -443,7 +442,7 @@ pfmw_support_darr( unsigned int i )
 		return ( pfm_mont_support_darr( i ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -463,7 +462,7 @@ pfmw_support_iarr( unsigned int i )
 		return ( pfm_mont_support_iarr( i ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -483,7 +482,7 @@ pfmw_support_opcm( unsigned int i )
 		return ( pfm_mont_support_opcm( i ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -605,7 +604,7 @@ char *retired_events[] = {
 		}
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 	}
 }
@@ -672,7 +671,7 @@ install_irange( hwd_context_t * pctx, hwd_control_state_t * current_state )
 		return ( PAPI_OK );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_ESBSTR );
 	}
@@ -738,7 +737,7 @@ install_drange( hwd_context_t * pctx, hwd_control_state_t * current_state )
 		return ( PAPI_OK );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_ESBSTR );
 	}
@@ -897,7 +896,7 @@ set_drange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_ESBSTR );
 	}
@@ -1034,7 +1033,7 @@ set_irange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_ESBSTR );
 	}

@@ -248,7 +248,7 @@ failure.
 #define PAPI_EINVAL     -1     /**< Invalid argument */
 #define PAPI_ENOMEM     -2     /**< Insufficient memory */
 #define PAPI_ESYS       -3     /**< A System/C library call failed */
-#define PAPI_ESBSTR     -4     /**< Not supported by substrate */
+#define PAPI_ESBSTR     -4     /**< Not supported by component */
 #define PAPI_ECLOST     -5     /**< Access to the counters was lost or interrupted */
 #define PAPI_EBUG       -6     /**< Internal error, please send mail to the developers */
 #define PAPI_ENOEVNT    -7     /**< Event does not exist */
@@ -295,10 +295,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_OTHER	 0x4    /**< Exception/transient mode (like user TLB misses ) */
 #define PAPI_DOM_SUPERVISOR 0x8 /**< Supervisor/hypervisor context counted */
 #define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR) /**< All contexts counted */
-/* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY SUBSTRATE */
+/* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY COMPONENT */
 #define PAPI_DOM_MAX     PAPI_DOM_ALL
 #define PAPI_DOM_HWSPEC  0x80000000     /**< Flag that indicates we are not reading CPU like stuff.
-                                           The lower 31 bits can be decoded by the substrate into something
+                                           The lower 31 bits can be decoded by the component into something
                                            meaningful. i.e. SGI HUB counters */
 /** @} */
 
@@ -359,21 +359,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_SYS_CPU 0x10   /**< PAPI counters for all CPUs individually */
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
 /** @} */
-
-#if 0
-/* #define PAPI_GRN_DEFAULT PAPI_GRN_THR NOW DEFINED BY SUBSTRATE */
-
-#define PAPI_PER_CPU     1			   /*Counts are accumulated on a per cpu basis */
-#define PAPI_PER_NODE    2			   /*Counts are accumulated on a per node or
-									      processor basis */
-#define PAPI_SYSTEM	 3				   /*Counts are accumulated for events occuring in
-									      either the user context or the kernel context */
-#define PAPI_PER_THR     0			   /*Counts are accumulated on a per kernel thread basis */
-#define PAPI_PER_PROC    1			   /*Counts are accumulated on a per process basis */
-#define PAPI_ONESHOT	 1			   /*Option to the overflow handler 2b called once */
-#define PAPI_RANDOMIZE	 2			   /*Option to have the threshold of the overflow
-									      handler randomized */
-#endif
 
 /** @internal 
 	@defgroup evt_states States of an EventSet 
@@ -454,13 +439,13 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_ATTACH			19      /**< Attach to a another tid/pid instead of ourself */
 #define PAPI_SHLIBINFO      20      /**< Shared Library information */
 #define PAPI_LIB_VERSION    21      /**< Option to find out the complete version number of the PAPI library */
-#define PAPI_COMPONENTINFO  22      /**< Find out what the component substrate supports */
+#define PAPI_COMPONENTINFO  22      /**< Find out what the component supports */
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS   23      /**< Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS  24      /**< Option to set instruction address range restriction */
 #define PAPI_DEF_ITIMER		25		/**< Option to set the type of itimer used in both software multiplexing, overflowing and profiling */
 #define PAPI_DEF_ITIMER_NS	26		/**< Multiplexing/overflowing interval in ns, same as PAPI_DEF_MPX_NS */
-/* Currently the following options are only available on systems using the perf_events substrate within papi */
+/* Currently the following options are only available on systems using the perf_events component within papi */
 #define PAPI_CPU_ATTACH		27      /**< Specify a cpu number the event set should be tied to */
 #define PAPI_INHERIT		28      /**< Option to set counter inheritance flag */
 #define PAPI_USER_EVENTS_FILE 29	/**< Option to set file from where to parse user defined events */
@@ -477,10 +462,11 @@ All of the functions in the PerfAPI should use the following set of constants.
 /** @} */
 
 /** Possible values for the 'modifier' parameter of the PAPI_enum_event call.
-   A value of 0 (PAPI_ENUM_EVENTS) is always assumed to enumerate ALL events on every platform.
+   A value of 0 (PAPI_ENUM_EVENTS) is always assumed to enumerate ALL 
+   events on every platform.
    PAPI PRESET events are broken into related event categories.
-   Each supported substrate can have optional values to determine how native events on that
-   substrate are enumerated.
+   Each supported component can have optional values to determine how 
+   native events on that component are enumerated.
 */
 enum {
    PAPI_ENUM_EVENTS = 0,		/**< Always enumerate all events */
@@ -539,7 +525,7 @@ PerfAPI. These functions provide greatly increased efficiency and
 functionality over the high level API presented in the next
 section. All of the following functions are callable from both C and
 Fortran except where noted. As mentioned in the introduction, the low
-level API is only as powerful as the substrate upon which it is
+level API is only as powerful as the component upon which it is
 built. Thus some features may not be available on every platform. The
 converse may also be true, that more advanced features may be
 available and defined in the header file.  The user is encouraged to
@@ -637,23 +623,23 @@ read the documentation carefully.  */
 
 /** @ingroup papi_data_structures */
    typedef struct _papi_component_option {
-     char name[PAPI_MAX_STR_LEN];            /**< Name of the substrate we're using, usually CVS RCS Id */
-     char short_name[PAPI_MIN_STR_LEN];      /**< Short name of the substrate,
+     char name[PAPI_MAX_STR_LEN];            /**< Name of the component we're using */
+     char short_name[PAPI_MIN_STR_LEN];      /**< Short name of component,
 						to be prepended to event names */
      char description[PAPI_MAX_STR_LEN];     /**< Description of the component */
-     char version[PAPI_MIN_STR_LEN];         /**< Version of this substrate, usually CVS Revision */
+     char version[PAPI_MIN_STR_LEN];         /**< Version of this component */
      char support_version[PAPI_MIN_STR_LEN]; /**< Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /**< Version of the kernel PMC support driver */
      char disabled_reason[PAPI_MAX_STR_LEN]; /**< Reason for failure of initialization */
      int disabled;   /**< 0 if enabled, otherwise error code from initialization */
      int CmpIdx;				/**< Index into the vector array for this component; set at init time */
-     int num_cntrs;               /**< Number of hardware counters the substrate supports */
-     int num_mpx_cntrs;           /**< Number of hardware counters the substrate or PAPI can multiplex supports */
-     int num_preset_events;       /**< Number of preset events the substrate supports */
-     int num_native_events;       /**< Number of native events the substrate supports */
-     int default_domain;          /**< The default domain when this substrate is used */
+     int num_cntrs;               /**< Number of hardware counters the component supports */
+     int num_mpx_cntrs;           /**< Number of hardware counters the component or PAPI can multiplex supports */
+     int num_preset_events;       /**< Number of preset events the component supports */
+     int num_native_events;       /**< Number of native events the component supports */
+     int default_domain;          /**< The default domain when this component is used */
      int available_domains;       /**< Available domains */ 
-     int default_granularity;     /**< The default granularity when this substrate is used */
+     int default_granularity;     /**< The default granularity when this component is used */
      int available_granularities; /**< Available granularities */
      int hardware_intr_sig;       /**< Signal used by hardware to deliver PMC events */
 //   int opcode_match_width;      /**< Width of opcode matcher if exists, 0 if not */
@@ -909,7 +895,7 @@ typedef char* PAPI_user_defined_events_file_t;
 #define PAPIF_DMEM_PTE        12
 #define PAPIF_DMEM_MAXVAL     12
 
-/* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
+/* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in COMPONENT */
 /* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
 #ifdef __bgp__
 #define PAPI_MAX_INFO_TERMS  19		   /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */

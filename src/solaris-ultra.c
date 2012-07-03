@@ -1,6 +1,5 @@
 /* 
 * File:    solaris-ultra.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Kevin London
@@ -1588,7 +1587,7 @@ papi_vector_t _solaris_vector = {
 				 }
 	,
 
-	/* substrate data structure sizes */
+	/* component data structure sizes */
 	.size = {
 			 .context = sizeof ( hwd_context_t ),
 			 .control_state = sizeof ( hwd_control_state_t ),
@@ -1597,7 +1596,7 @@ papi_vector_t _solaris_vector = {
 			 }
 	,
 
-	/* substrate interface functions */
+	/* component interface functions */
 	.init_control_state = _ultra_hwd_init_control_state,
 	.start = _ultra_hwd_start,
 	.stop = _ultra_hwd_stop,

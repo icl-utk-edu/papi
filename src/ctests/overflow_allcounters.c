@@ -1,6 +1,5 @@
 /* 
 * File:    overflow_allcounters.c
-* CVS:     $Id$
 * Author:  Haihang You
 *          you@cs.utk.edu
 * Mods:    Vince Weaver
@@ -254,11 +253,11 @@ main( int argc, char **argv )
 
 			if ( using_perfmon )
 				test_warn( __FILE__, __LINE__,
-						   "perfmon substrate handles overflow differently than perf_events",
+						   "perfmon component handles overflow differently than perf_events",
 						   1 );
 			else if ( using_aix )
 				test_warn( __FILE__, __LINE__,
-						   "AIX (pmapi) substrate handles overflow differently than various other substrates",
+						   "AIX (pmapi) component handles overflow differently than various other components",
 						   1 );
 			else {
 				sprintf( error_string,

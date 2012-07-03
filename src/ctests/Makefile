@@ -14,7 +14,7 @@ MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mp
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = inherit hwinfo code2name reset subinfo realtime virttime first exeinfo zero \
+SERIAL  = inherit hwinfo code2name reset cmpinfo realtime virttime first exeinfo zero \
 	zero_named branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog \
@@ -326,8 +326,8 @@ shlib: shlib.c $(UTILOBJS) $(PAPILIB)
 exeinfo: exeinfo.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
 
-subinfo: subinfo.c $(UTILOBJS) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) subinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o subinfo 
+cmpinfo: cmpinfo.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cmpinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o cmpinfo 
 
 hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) hwinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o hwinfo

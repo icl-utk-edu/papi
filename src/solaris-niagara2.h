@@ -13,7 +13,7 @@
  * Author: fg215045
  *
  * Description: Data structures used for the communication between PAPI and the 
- * substrate. Additionally some macros are defined here. See solaris-niagara2.c.
+ * component. Additionally some macros are defined here. See solaris-niagara2.c.
  *
  *      ***** Feel free to convert this header to the PAPI default *****
  *

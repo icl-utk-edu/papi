@@ -1336,7 +1336,7 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 		/* pe_ctl->events[i].freq = 0; */
 
 		/*
-		 * In this substrate, wakeup_events is set to zero when profiling,
+		 * In this component, wakeup_events is set to zero when profiling,
 		 * meaning only alert user space on an "mmap buffer page full"
 		 * condition.  It is set to 1 when PAPI_overflow has been called so
 		 * that user space is alerted on every counter overflow.  In any

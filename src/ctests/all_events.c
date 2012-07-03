@@ -1,6 +1,6 @@
-/* This file tries to add,start,stop all events in a substrate it
+/* This file tries to add,start,stop all events in a component it
  * is meant not to test the accuracy of the mapping but to make sure
- * that all events in the substrate will at least start (Helps to
+ * that all events in the component will at least start (Helps to
  * catch typos.
  *
  * Author: Kevin London

@@ -16,10 +16,10 @@ typedef struct cmp_struct_sizes {
 /** Vector Table Stuff 
  *	@internal */
 typedef struct papi_vectors {
-/** Substrate specific data structure @see papi.h */
+/** Component specific data structure @see papi.h */
     PAPI_component_info_t   cmp_info;
 
-/** Substrate specific structure sizes*/
+/** Component specific structure sizes*/
     cmp_struct_sizes_t size;
 
 /* List of exposed function pointers for this component */

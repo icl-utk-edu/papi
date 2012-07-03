@@ -4,7 +4,6 @@
 
 /** 
  * @file    linux-bgq.c
- * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
@@ -864,7 +863,7 @@ _bgq_get_virt_cycles( void )
 }
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  *
  * Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
@@ -1094,7 +1093,7 @@ papi_vector_t _bgq_vectors = {
 				 /* Default component information (unspecified values are initialized to 0) */
 				 .name = "linux-bgq",
 				 .short_name = "bgq",
-				 .description = "Blue Gene/Q substrate",
+				 .description = "Blue Gene/Q component",
 				 .num_cntrs = BGQ_PUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,

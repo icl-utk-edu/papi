@@ -65,10 +65,10 @@ static hwd_libpmc_context_t Context;
 /*
  * This function is an internal function and not exposed and thus
  * it can be called anything you want as long as the information
- * is setup in _papi_freebsd_init_substrate.  Below is some, but not
+ * is setup in _papi_freebsd_init_component.  Below is some, but not
  * all of the values that will need to be setup.  For a complete
  * list check out papi_mdi_t, though some of the values are setup
- * and used above the substrate level.
+ * and used above the component level.
  */
 int init_mdi(void)
 {
@@ -200,7 +200,7 @@ int init_presets(int cidx)
 }
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  */
 
 /* Initialize hardware counters, setup the function vector table
@@ -212,15 +212,6 @@ int _papi_freebsd_init_substrate(int cidx)
    (void)cidx;
 
    SUBDBG("Entering\n");
-
-#ifdef DEBUG 
-   /* This prints out which functions are mapped to dummy routines
-    * and this should be taken out once the substrate is completed.
-    * The 0 argument will print out only dummy routines, change
-    * it to a 1 to print out all routines.
-    */
-#endif
-
 
    /* Internal function, doesn't necessarily need to be a function */
    init_presets(cidx);
@@ -624,7 +615,7 @@ int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain)
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -814,7 +805,7 @@ int _papi_freebsd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 
 /* 
  * Counter Allocation Functions, only need to implement if
- *    the substrate needs smart counter allocation.
+ *    the component needs smart counter allocation.
  */
 
 /* Here we'll check if PMC can provide all the counters the user want */

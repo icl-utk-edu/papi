@@ -284,7 +284,7 @@ _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 		return PAPI_ENOMEM;
 	}
 
-	/* Call the substrate to fill in anything special. */
+	/* Call the component to fill in anything special. */
 
 	for ( i = 0; i < papi_num_components; i++ ) {
 		retval = _papi_hwd[i]->init( thread->context[i] );

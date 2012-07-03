@@ -418,9 +418,10 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 	unsigned int i, dispatch_count = inp->pfp_event_count;
 	int togo = inp->pfp_event_count, done = 0;
 
-	/* Save old PD array so we can reconstruct certain flags. This can be removed
-	   when we have higher level code call set_profile,set_overflow etc when there
-	   is hardware (substrate) support, but this change won't happen for PAPI 3.5 */
+	/* Save old PD array so we can reconstruct certain flags.  */
+        /* This can be removed when we have higher level code call */
+        /* set_profile,set_overflow etc when there is hardware     */
+        /* (component) support, but this change won't happen for PAPI 3.5 */
 
 	SUBDBG
 		( "entry multiplexed %d, pfp_event_count %d, num_cntrs %d, num_sets %d\n",

@@ -227,7 +227,7 @@ setup_x86_presets( int cputype, int cidx)
 		case PERFCTR_X86_VIA_C3:
 		case PERFCTR_X86_INTEL_P5:
 		case PERFCTR_X86_INTEL_P5MMX:
-			SUBDBG( "This cpu is supported by the perfctr-x86 substrate\n" );
+			SUBDBG( "This cpu is supported by the perfctr-x86 component\n" );
 			PAPIERROR( MODEL_ERROR );
 			return ( PAPI_ESBSTR );
 		case PERFCTR_X86_INTEL_P6:

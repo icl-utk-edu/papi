@@ -287,7 +287,7 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
 	{0, 0, {0}, {0}}
 };
 
-/* This substrate should never malloc anything. All allocation should be
+/* This component should never malloc anything. All allocation should be
    done by the high level API. */
 
 
@@ -809,7 +809,7 @@ _ia64_set_domain( hwd_control_state_t * this_state, int domain )
 		return ( _ia64_mont_set_domain( this_state, domain ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -932,7 +932,7 @@ _ia64_read( hwd_context_t * ctx, hwd_control_state_t * machdep,
 		return ( _ia64_ita23_read( ctx, machdep, events, flags ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -1020,7 +1020,7 @@ _ia64_init_substrate( int cidx )
 		ia_preset_search_map = ia3_preset_search_map;
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate", type );
+		PAPIERROR( "PMU type %d is not supported by this component", type );
 		return ( PAPI_EBUG );
 	}
 
@@ -1034,26 +1034,13 @@ _ia64_init_substrate( int cidx )
 	if ( retval != PAPI_OK )
 		return ( retval );
 
-	/* Name of the substrate we're using */
-	strcpy( _ia64_vector.cmp_info.name,"perfmon-ia64.c" );
-	strcpy( _ia64_vector.cmp_info.version, "$Revision$" );
-	sprintf( _ia64_vector.cmp_info.support_version, "%08x", PFMLIB_VERSION );
-	sprintf( _ia64_vector.cmp_info.kernel_version, "%08x", 2 << 16 );	/* 2.0 */
+	sprintf( _ia64_vector.cmp_info.support_version, 
+		 "%08x", PFMLIB_VERSION );
+	sprintf( _ia64_vector.cmp_info.kernel_version, 
+		 "%08x", 2 << 16 );	/* 2.0 */
+
 	_ia64_vector.cmp_info.num_native_events = nnev;
 	_ia64_vector.cmp_info.num_cntrs = ncnt;
-  /*_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;*/
-	_ia64_vector.cmp_info.hardware_intr = 1;
-	_ia64_vector.cmp_info.fast_real_timer = 1;
-	_ia64_vector.cmp_info.fast_virtual_timer = 0;
-	_ia64_vector.cmp_info.default_domain = PAPI_DOM_USER;
-	_ia64_vector.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
-	_ia64_vector.cmp_info.default_granularity = PAPI_GRN_THR;
-	_ia64_vector.cmp_info.available_granularities = PAPI_GRN_THR;
-	_ia64_vector.cmp_info.hardware_intr_sig = OVFL_SIGNAL;
-	_ia64_vector.cmp_info.kernel_profile = 1;
-
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU )
-		_ia64_vector.cmp_info.cntr_umasks = 1;	/* counters have unit masks */
 
 	_ia64_vector.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
 	/* Put the signal handler in use to consume PFM_END_MSG's */
@@ -1076,7 +1063,7 @@ _ia64_init_substrate( int cidx )
 
 	/* get_memory_info has a CPU model argument that is not used,
 	 * faking it here with hw_info.model which is not set by this
-	 * substrate 
+	 * component 
 	 */
 	retval = _linux_get_memory_info( &_papi_hwi_system_info.hw_info,
 				     _papi_hwi_system_info.hw_info.model );
@@ -1529,7 +1516,7 @@ ia64_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 		return ( ia64_mont_process_profile_buffer( thread, ESI ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -1903,7 +1890,7 @@ _ia64_init_control_state( hwd_control_state_t * this_state )
 		return ( _ia64_mont_init_control_state( this_state ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
@@ -2080,31 +2067,33 @@ _ia64_update_control_state( hwd_control_state_t * this_state,
 				 ( this_state, native, count, zero ) );
 		break;
 	default:
-		PAPIERROR( "PMU type %d is not supported by this substrate",
+		PAPIERROR( "PMU type %d is not supported by this component",
 				   _perfmon2_pfm_pmu_type );
 		return ( PAPI_EBUG );
 	}
 }
 
 papi_vector_t _ia64_vector = {
-	.cmp_info = {
-				 /* default component information (unspecified values are initialized to 0) */
-				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
-				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
-				 .hardware_intr_sig = PAPI_INT_SIGNAL,
+   .cmp_info = {
+      .name = "perfmon-ia64.c",
+      .version = "5.0",
 
-				 .hardware_intr = 1,
-
-				 /* component specific cmp_info initializations */
-				 .fast_real_timer = 1,
-				 .fast_virtual_timer = 0,
-				 .attach = 0,
-				 .attach_must_ptrace = 0,
-				 }
-	,
+      /* default component information (unspecified values initialized to 0) */
+      .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
+      .default_domain = PAPI_DOM_USER,
+      .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+      .default_granularity = PAPI_GRN_THR,
+      .available_granularities = PAPI_GRN_THR,
+      .hardware_intr_sig = PAPI_INT_SIGNAL,
+      .hardware_intr = 1,
+      /* component specific cmp_info initializations */
+      .fast_real_timer = 1,
+      .fast_virtual_timer = 0,
+      .attach = 0,
+      .attach_must_ptrace = 0,
+      .kernel_profile = 1,
+      .cntr_umasks = 1;	
+  },
 
 	/* sizes of framework-opaque component-private structures */
 	.size = {

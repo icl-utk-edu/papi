@@ -1,6 +1,3 @@
-/* This substrate should never malloc anything. All allocation should be
-   done by the high level API. */
-
 /* This file handles the OS dependent part of the POWER5 and POWER6 architectures.
   It supports both AIX 4 and AIX 5. The switch between AIX 4 and 5 is driven by the 
   system defined value _AIX_VERSION_510.
@@ -252,10 +249,6 @@ _aix_allocate_registers( EventSetInfo_t * ESI )
 	}
 }
 
-
-/* This used to be init_config, static to the substrate.
-   Now its exposed to the hwi layer and called when an EventSet is allocated.
-*/
 int
 _aix_init_control_state( hwd_control_state_t * ptr )
 {

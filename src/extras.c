@@ -4,7 +4,6 @@
 
 /* 
 * File:    extras.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
@@ -200,16 +199,16 @@ _papi_hwi_dispatch_profile( EventSetInfo_t * ESI, caddr_t pc,
    _papi_hwi_system_info.supports_hw_overflow is in CRAY some processors
    may use hardware overflow, some may use software overflow.
 
-   overflow_bit: if the substrate can get the overflow bit when overflow
-                 occurs, then this should be passed by the substrate;
+   overflow_bit: if the component can get the overflow bit when overflow
+                 occurs, then this should be passed by the component;
 
    If both genOverflowBit and isHardwareSupport are true, that means
-     the substrate doesn't know how to get the overflow bit from the
+     the component doesn't know how to get the overflow bit from the
      kernel directly, so we generate the overflow bit in this function 
     since this function can access the ESI->overflow struct;
-   (The substrate can only set genOverflowBit parameter to true if the
+   (The component can only set genOverflowBit parameter to true if the
      hardware doesn't support multiple hardware overflow. If the
-     substrate supports multiple hardware overflow and you don't know how 
+     component supports multiple hardware overflow and you don't know how 
      to get the overflow bit, then I don't know how to deal with this 
      situation).
 */

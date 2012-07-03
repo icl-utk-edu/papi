@@ -23,8 +23,8 @@ all: $(SHOW_CONF) $(LIBS) utils tests
 include $(COMPONENT_RULES)
 
 showconf:
-		@echo "Host architecture: $(DESCR)";
-		@echo "Host substrate   : $(SUBSTR).c"; 
+		@echo "Host architecture   : $(DESCR)";
+		@echo "Host CPU component  : $(SUBSTR).c"; 
 		@echo "Installation DESTDIR: $(DESTDIR)"; 
 		@echo "Installation PREFIX : $(PREFIX)"; 
 		@echo "Installation EPREFIX: $(EPREFIX)"; 

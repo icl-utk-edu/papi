@@ -1,6 +1,5 @@
 /** 
- * @file    
- * CVS:     $Id$
+ * @file    multiplex.c
  * @author  Philip Mucci
  *          mucci@cs.utk.edu
  * @author  John May
@@ -1340,8 +1339,8 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 		   retval = PAPI_set_opt( PAPI_GRANUL, &options );
 		   if ( retval != PAPI_OK ) {
 		      if ( retval != PAPI_ESBSTR ) {
-			 /* ignore substrate errors because they typically mean
-			    "not supported by the substrate" */
+			 /* ignore component errors because they typically mean
+			    "not supported by the component" */
 			 MPXDBG( "PAPI_set_opt(PAPI_GRANUL, ...) = %d\n", 
 				 retval );
 			 goto bail;

@@ -179,7 +179,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
        return PAPI_ESYS;
     }
 
-	/* All of this information maybe overwritten by the substrate */
+	/* All of this information maybe overwritten by the component */
 
         /* MHZ */
     rewind( f );

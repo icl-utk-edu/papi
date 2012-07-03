@@ -1,6 +1,5 @@
 /* 
 * File:    cmpinfo.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
@@ -27,19 +26,19 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", retval );
 
 	printf( "name: %s\n", cmpinfo->name );
-	printf( "substrate_version: %s\n", cmpinfo->version );
+	printf( "component_version: %s\n", cmpinfo->version );
 	printf( "support_version: %s\n", cmpinfo->support_version );
 	printf( "kernel_version: %s\n", cmpinfo->kernel_version );
 	printf( "num_cntrs: %d\n", cmpinfo->num_cntrs );
 	printf( "num_mpx_cntrs: %d\n", cmpinfo->num_mpx_cntrs );
-	printf( "num_preset_events: %d\n", cmpinfo->num_preset_events );	/* Number of counters the substrate supports */
-	printf( "num_native_events: %d\n", cmpinfo->num_native_events );	/* Number of counters the substrate supports */
+	printf( "num_preset_events: %d\n", cmpinfo->num_preset_events );	/* Number of counters the component supports */
+	printf( "num_native_events: %d\n", cmpinfo->num_native_events );	/* Number of counters the component supports */
 	printf( "default_domain: 0x%x (%s)\n", cmpinfo->default_domain,
 			stringify_all_domains( cmpinfo->default_domain ) );
 	printf( "available_domains: 0x%x (%s)\n", cmpinfo->available_domains, stringify_all_domains( cmpinfo->available_domains ) );	/* Available domains */
 	printf( "default_granularity: 0x%x (%s)\n", cmpinfo->default_granularity,
 			stringify_granularity( cmpinfo->default_granularity ) );
-	/* The default granularity when this substrate is used */
+	/* The default granularity when this component is used */
 	printf( "available_granularities: 0x%x (%s)\n", cmpinfo->available_granularities, stringify_all_granularities( cmpinfo->available_granularities ) );	/* Available granularities */
 	printf( "hardware_intr_sig: %d\n", cmpinfo->hardware_intr_sig );	       printf( "hardware_intr: %d\n", cmpinfo->hardware_intr );	/* Needs hw overflow intr to be emulated in software */
 	printf( "precise_intr: %d\n", cmpinfo->precise_intr );	/* Performance interrupts happen precisely */

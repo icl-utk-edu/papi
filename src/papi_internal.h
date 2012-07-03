@@ -11,7 +11,6 @@
 *	       london@cs.utk.edu
 * @author  Haihang You
 *          you@cs.utk.edu
-* CVS:     $Id$
 */
 
 #ifndef _PAPI_INTERNAL_H
@@ -91,7 +90,7 @@ extern int init_level;
 #define THREADS_LOCK		PAPI_NUM_LOCK+2	/* threads.c */
 #define HIGHLEVEL_LOCK		PAPI_NUM_LOCK+3	/* papi_hl.c */
 #define MEMORY_LOCK		PAPI_NUM_LOCK+4	/* papi_memory.c */
-#define SUBSTRATE_LOCK          PAPI_NUM_LOCK+5	/* <substrate.c> */
+#define COMPONENT_LOCK          PAPI_NUM_LOCK+5	/* per-component */
 #define GLOBAL_LOCK          	PAPI_NUM_LOCK+6	/* papi.c for global variable (static and non) initialization/shutdown */
 #define CPUS_LOCK		PAPI_NUM_LOCK+7	/* cpus.c */
 #define NAMELIB_LOCK            PAPI_NUM_LOCK+8 /* papi_pfm4_events.c */
@@ -102,7 +101,7 @@ extern int init_level;
 #define DONT_NEED_CONTEXT 	0
 
 
-/* This was defined by each substrate as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
+/* This was defined by each component as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
     Now it's defined globally as 8 for everything. Mainly applies to max terms in
     derived events.
 */
@@ -201,7 +200,7 @@ typedef struct _NativeInfo {
    int ni_event;                /**< native event code; always non-zero unless empty */
    int ni_position;             /**< counter array position where this native event lives */
    int ni_owners;               /**< specifies how many owners share this native event */
-   hwd_register_t *ni_bits;     /**< Substrate defined resources used by this native event */
+   hwd_register_t *ni_bits;     /**< Component defined resources used by this native event */
 } NativeInfo_t;
 
 
@@ -342,7 +341,7 @@ typedef struct _dynamic_array {
    int lowestEmptySlot;         /**< index of lowest empty dataSlotArray    */
 } DynamicArray_t;
 
-/* Substrate option types for _papi_hwd_ctl. */
+/* Component option types for _papi_hwd_ctl. */
 
 typedef struct _papi_int_attach {
    unsigned long tid;
@@ -433,10 +432,8 @@ typedef struct {
 typedef struct _papi_mdi {
    DynamicArray_t global_eventset_map;  /**< Global structure to maintain int<->EventSet mapping */
    pid_t pid;                   /**< Process identifier */
-/*   PAPI_substrate_info_t sub_info; *//* See definition in papi.h */
    PAPI_hw_info_t hw_info;      /**< See definition in papi.h */
    PAPI_exe_info_t exe_info;    /**< See definition in papi.h */
-/*   PAPI_mpx_info_t mpx_info; */   /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /**< See definition in papi.h */
    PAPI_preload_info_t preload_info; /**< See definition in papi.h */ 
 } papi_mdi_t;
@@ -491,7 +488,7 @@ _papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI )
 	/* Are we multiplexing at all */
 	if ( ( ESI->state & PAPI_MULTIPLEXING ) == 0 )
 		return ( 0 );
-	/* Does the substrate support kernel multiplexing */
+	/* Does the component support kernel multiplexing */
 	if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
 		/* Have we forced software multiplexing */
 		if ( ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW )

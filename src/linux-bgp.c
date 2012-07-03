@@ -5,11 +5,6 @@
  */
 
 /*
- * This substrate should never malloc anything.  All allocations should be
- * done by the high level API.
- */
-
-/*
  * PAPI stuff
  */
 #include "papi.h"
@@ -21,7 +16,8 @@
 /*
  * BG/P specific 'stuff'
  */
-// BG/P includes
+
+/* BG/P includes */
 #include <common/bgp_personality_inlines.h>
 #include <spi/bgp_SPI.h>
 #include <ucontext.h>
@@ -33,10 +29,10 @@
 #include <string.h>
 #include <linux/utsname.h>
 
-// BG/P macros
+/* BG/P macros */
 #define get_cycles _bgp_GetTimeBase
 
-// BG/P external structures/functions
+/* BG/P external structures/functions */
 
 /* Defined in linux-bgp-preset-events.c */
 extern hwi_search_t *_bgp_preset_map;
@@ -44,7 +40,7 @@ extern hwi_search_t *_bgp_preset_map;
 extern int _bgp_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type );
 extern int _bgp_get_dmem_info( PAPI_dmem_info_t * pDmemInfo );
 
-// BG/P globals
+/* BG/P globals */
 hwi_search_t *preset_search_map;
 volatile unsigned int lock[PAPI_MAX_LOCK];
 const char *BGP_NATIVE_RESERVED_EVENTID = "Reserved";
@@ -758,7 +754,7 @@ _bgp_get_virt_cycles( void )
 }
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  *
  * Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
@@ -927,7 +923,7 @@ papi_vector_t _bgp_vectors = {
 				 /* Default component information (unspecified values are initialized to 0) */
 				 .name = "linux-bgp",
 				 .short_name = "bgp",
-				 .description = "BlueGene/P substrate",
+				 .description = "BlueGene/P component",
 
 				 // NOTE:  PAPI remove event processing depends on
 				 //        num_ctrs and num_mpx_cntrs being the same value.

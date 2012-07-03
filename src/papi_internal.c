@@ -1185,7 +1185,7 @@ remove_native_events( EventSetInfo_t *ESI, int *nevt, int size )
 
    /* If we removed any elements, 
       clear the now empty slots, reinitialize the index, and update the count.
-      Then send the info down to the substrate to update the hwd control structure. */
+      Then send the info down to the component to update the hwd control structure. */
 	retval = PAPI_OK;
 	if ( zero ) {
       /* get the context we should use for this event set */
@@ -1996,7 +1996,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
        retval = _papi_hwd[cidx]->ntv_code_to_info( 
 			      _papi_hwi_eventcode_to_native(EventCode), info);
 
-       /* If substrate error, it's missing the ntv_code_to_info vector */
+       /* If component error, it's missing the ntv_code_to_info vector */
        /* so we'll have to fake it.                                    */
        if ( retval == PAPI_ESBSTR ) {
 

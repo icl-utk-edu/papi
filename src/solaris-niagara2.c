@@ -12,9 +12,10 @@
  * File:   solaris-niagara2.c
  * Author: fg215045
  * 
- * Description: This source file is the implementation of a PAPI substrate for the
- * Sun Niagara 2 processor (aka UltraSPARC T2) running on Solaris 10 with
- * libcpc 2. The machine for implementing this substrate was in courtesy of RWTH 
+ * Description: This source file is the implementation of a PAPI 
+ * component for the Sun Niagara 2 processor (aka UltraSPARC T2) 
+ * running on Solaris 10 with libcpc 2. 
+ * The machine for implementing this component was courtesy of RWTH 
  * Aachen University, Germany. Thanks to the HPC-Team at RWTH! 
  *
  * Conventions used:
@@ -22,7 +23,7 @@
  *  - __sol_*: Functions, variables, etc. related to Solaris handling
  *  - __int_*: Functions, variables, etc. related to extensions of libcpc
  *  - _niagara*: Functions, variables, etc. needed by PAPI hardware dependent
- *                 layer, i.e. the substrate itself
+ *                 layer, i.e. the component itself
  *
  * 
  *      ***** Feel free to convert this header to the PAPI default *****
@@ -63,7 +64,7 @@
 extern caddr_t _start, _end, _etext, _edata;
 extern papi_vector_t _niagara2_vector;
 
-/* Substrate functions */
+/* Component functions */
 int niagara2_set_domain( hwd_control_state_t *, int );
 int niagara2_ctl( hwd_context_t *, int, _papi_int_option_t * );
 void _niagara2_dispatch_timer( int, siginfo_t *, void * );
@@ -151,7 +152,7 @@ typedef struct __t2_store
 static __t2_store_t __t2_store;
 static char **__t2_ntv_events;
 
-// Variables copied from the old substrate
+// Variables copied from the old component
 static int pid;
 
 // Data types for utility functions
@@ -247,7 +248,7 @@ hwi_search_t *preset_table;
 #define LEAKDBG(format, ...) (PAPIDEBUG(DEBUG_LEAK,format, ## __VA_ARGS__))
 #endif
 
-/* Use these two definitions to debug only the substrate ******************** *
+/* Use these two definitions to debug only the component ******************** *
 #define DEBUG
 #define SUBDBG printf
 /* ************************************************************************** */
@@ -374,7 +375,7 @@ _niagara2_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		/* From papi.h: Multiplexing/overflowing interval in ns, same as
 		   PAPI_DEF_ITIMER_NS */
 
-		/* From the old substrate */
+		/* From the old component */
 		option->itimer.ns = __sol_get_itimer_ns( option->itimer.ns );
 
 #ifdef DEBUG
@@ -383,11 +384,11 @@ _niagara2_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 #endif
 
 		return PAPI_OK;
-	case PAPI_DEF_ITIMER:	 // IN THE OLD SUBSTRATE // USED
+	case PAPI_DEF_ITIMER:	 // IN THE OLD COMPONENT // USED
 		/* From papi.h: Option to set the type of itimer used in both software
 		   multiplexing, overflowing and profiling */
 
-		/* These tests are taken from the old substrate. For Solaris 10 the
+		/* These tests are taken from the old component. For Solaris 10 the
 		   same rules apply as documented in getitimer(2). */
 
 		if ( ( option->itimer.itimer_num == ITIMER_REAL ) &&
@@ -423,7 +424,7 @@ _niagara2_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		}
 
 
-		/* As in the old substrate defined, timer values below 0 are NOT
+		/* As in the old component defined, timer values below 0 are NOT
 		   filtered out, but timer values greater than 0 are rounded, either to
 		   a value which is at least itimer_res_ns or padded to a multiple of
 		   itimer_res_ns. */
@@ -438,11 +439,11 @@ _niagara2_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		}
 
 		return PAPI_OK;
-	case PAPI_DEF_ITIMER_NS:	// IN THE OLD SUBSTRATE // USED
+	case PAPI_DEF_ITIMER_NS:	// IN THE OLD COMPONENT // USED
 		/* From papi.h: Multiplexing/overflowing interval in ns, same as
 		   PAPI_DEF_MPX_NS */
 
-		/* From the old substrate */
+		/* From the old component */
 		option->itimer.ns = __sol_get_itimer_ns( option->itimer.ns );
 
 #ifdef DEBUG
@@ -483,11 +484,11 @@ _niagara2_dispatch_timer( int signal, siginfo_t * si, void *info )
 			signal );
 #endif
 
-	/* From the old substrate */
+	/* From the old component */
 	thread = _papi_hwi_lookup_thread( 0 );
 	ESI = ( EventSetInfo_t * ) thread->running_eventset[cidx];
 
-	/* From the old substrate, modified */
+	/* From the old component, modified */
 	// 
 	if ( ESI == NULL || ESI->master != thread || ESI->ctl_state == NULL ||
 		 ( ( ESI->state & PAPI_OVERFLOWING ) == 0 ) ) {
@@ -737,7 +738,7 @@ _niagara2_get_system_info( papi_mdi_t *mdi )
 	}
 
 	/* Fill _papi_hwi_system_info.exe_info.address_info */
-	// Taken from the old substrate
+	// Taken from the old component
 	strncpy( _papi_hwi_system_info.exe_info.address_info.name,
 			 basename( _papi_hwi_system_info.exe_info.fullname ),
 			 PAPI_HUGE_STR_LEN );
@@ -745,7 +746,7 @@ _niagara2_get_system_info( papi_mdi_t *mdi )
 
 	/* Fill _papi_hwi_system_info.hw_info */
 
-	// Taken from the old substrate
+	// Taken from the old component
 	_papi_hwi_system_info.hw_info.ncpu = sysconf( _SC_NPROCESSORS_ONLN );
 	_papi_hwi_system_info.hw_info.nnodes = 1;
 	_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_SUN;
@@ -902,7 +903,7 @@ _niagara2_init_substrate( int cidx )
 	/* Set up the lock after initialization */
 	_niagara2_lock_init(  );
 
-	// Copied from the old substrate, _papi_init_substrate()
+	// Copied from the old component, _papi_init_substrate()
 	SUBDBG( "Found %d %s %s CPUs at %d Mhz.\n",
 			_papi_hwi_system_info.hw_info.totalcpus,
 			_papi_hwi_system_info.hw_info.vendor_string,
@@ -944,7 +945,7 @@ _niagara2_lock_init( void )
 			__LINE__ );
 #endif
 
-	/* Copied from old substrate, lock_init() */
+	/* Copied from old component, lock_init() */
 	memset( lock, 0x0, sizeof ( rwlock_t ) * PAPI_MAX_LOCK );
 
 #ifdef DEBUG
@@ -1031,7 +1032,7 @@ _niagara2_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
 int
 _niagara2_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	/* This code is very similar to the code from the old substrate. */
+	/* This code is very similar to the code from the old component. */
 
 	int event_code = *EventCode & PAPI_NATIVE_AND_MASK;
 
@@ -2188,7 +2189,7 @@ __sol_get_processor_clock( void )
 /* This function either increases the ns supplied to itimer_res_ns or pads it up
  * to a multiple of itimer_res_ns if the value is bigger than itimer_res_ns.
  *
- * The source is taken from the old substrate.
+ * The source is taken from the old component.
  */
 static inline int
 __sol_get_itimer_ns( int ns )
@@ -2451,7 +2452,7 @@ _papi_hwi_init_os(void) {
 }
 
 papi_vector_t _niagara2_vector = {
-/************* SUBSTRATE CAPABILITIES/INFORMATION/ETC *************************/
+/************* COMPONENT CAPABILITIES/INFORMATION/ETC ************************/
 	.cmp_info = {
                                  .name = "solaris-niagara2",
                                  .description = "Solaris Counters",
@@ -2471,7 +2472,7 @@ papi_vector_t _niagara2_vector = {
 				 .precise_intr = 1,
 				 }
 	,
-/************* SUBSTRATE DATA STRUCTURE SIZES *********************************/
+/************* COMPONENT DATA STRUCTURE SIZES ********************************/
 	.size = {
 			 .context = sizeof ( hwd_context_t ),
 			 .control_state = sizeof ( hwd_control_state_t ),
@@ -2479,7 +2480,7 @@ papi_vector_t _niagara2_vector = {
 			 .reg_alloc = sizeof ( niagara2_reg_alloc_t ),
 			 }
 	,
-/************* SUBSTRATE INTERFACE FUNCTIONS **********************************/
+/************* COMPONENT INTERFACE FUNCTIONS *********************************/
 	.init_control_state = _niagara2_init_control_state,
 	.start = _niagara2_start,
 	.stop = _niagara2_stop,

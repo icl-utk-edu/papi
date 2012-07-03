@@ -32,7 +32,7 @@ main( int argc, char **argv )
 	opt.inherit.eventset = EventSet;
 	if ( ( retval = PAPI_set_opt( PAPI_INHERIT, &opt ) ) != PAPI_OK ) {
 		if ( retval == PAPI_ESBSTR) {
-			test_skip( __FILE__, __LINE__, "Inherit not supported by current substrate.\n", retval );
+			test_skip( __FILE__, __LINE__, "Inherit not supported by current component.\n", retval );
 		} else {
 			test_fail_exit( __FILE__, __LINE__, "PAPI_set_opt", retval );
 		}

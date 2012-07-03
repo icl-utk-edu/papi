@@ -4,7 +4,6 @@
 
 /* 
 * File:    cpus.c
-* CVS:     $Id$
 * Author:  Gary Mohr
 *          gary.mohr@bull.com
 *          - based on threads.c by Philip Mucci -
@@ -194,7 +193,7 @@ _papi_hwi_initialize_cpu( CpuInfo_t ** dest, unsigned int cpu_num )
 		return ( PAPI_ENOMEM );
 	}
 
-	/* Call the substrate to fill in anything special. */
+	/* Call the component to fill in anything special. */
 	for ( i = 0; i < papi_num_components; i++ ) {
 		retval = _papi_hwd[i]->init( cpu->context[i] );
 		if ( retval ) {
