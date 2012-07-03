@@ -369,10 +369,10 @@ int coretemp_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 }
 
 /** Triggered by PAPI_shutdown() */
-int coretemp_shutdown_substrate (void)
+int coretemp_shutdown_component (void)
 {
 
-	SUBDBG( "coretemp_shutdown_substrate... %p\n", ctx );
+	SUBDBG( "coretemp_shutdown_component... %p\n", ctx );
 
 	/* Last chance to clean up */
 	papi_free (coretemp_native_table);
@@ -482,7 +482,7 @@ papi_vector_t _coretemp_freebsd_vector = {
 	.stop = coretemp_stop,
 	.read = coretemp_read,
 	.write = coretemp_write,
-	.shutdown_substrate = coretemp_shutdown_substrate,
+	.shutdown_component = coretemp_shutdown_component,
 	.ctl = coretemp_ctl,
 
 	.update_control_state = coretemp_update_control_state,

@@ -1334,7 +1334,7 @@ re.h"
     MISCSRCS="$MISCSRCS freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd/map-westme\
 re.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
-  DESCR="FreeBSD -over libpmc- substrate"
+  DESCR="FreeBSD -over libpmc- "
   CFLAGS="$CFLAGS -I. -Ifreebsd -DPIC -fPIC $DEBUGFLAGS"
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 elif test "$MAKEVER" = "linux-generic"; then
@@ -1551,8 +1551,8 @@ if test "$VECTOR" = "_papi_dummy_vector"; then
     .write = NULL,
 	.cleanup_eventset = NULL,
     .stop_profiling = NULL,
-    .init_substrate = NULL,
-    .init = NULL,
+    .init_component = NULL,
+    .init_thread = NULL,
     .init_control_state = NULL,
     .update_control_state = NULL,
     .ctl = NULL,
@@ -1566,8 +1566,8 @@ if test "$VECTOR" = "_papi_dummy_vector"; then
     .ntv_code_to_bits = NULL,
     .ntv_code_to_info = NULL,
     .allocate_registers = NULL,
-    .shutdown = NULL,
-    .shutdown_substrate = NULL,
+    .shutdown_thread = NULL,
+    .shutdown_component = NULL,
     .user = NULL,
 };" >> components_config.h
 	# but in the face of actual components, we don't have to do hacky size games

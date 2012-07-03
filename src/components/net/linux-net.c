@@ -668,7 +668,7 @@ papi_vector_t _net_vector = {
 
     /* function pointers in this component */
     .init_thread               = _net_init_thread,
-    .init_component            = _net_init_substrate,
+    .init_component            = _net_init_component,
     .init_control_state        = _net_init_control_state,
     .start                     = _net_start,
     .stop                      = _net_stop,

@@ -157,40 +157,40 @@ int init_presets(int cidx)
 	init_freebsd_libpmc_mappings();
 
 	if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_P6") == 0)
-		Context.CPUsubstrate = CPU_P6;
+		Context.CPU = CPU_P6;
 
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PII") == 0)
-		Context.CPUsubstrate = CPU_P6_2;
+		Context.CPU = CPU_P6_2;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PIII") == 0)
-		Context.CPUsubstrate = CPU_P6_3;
+		Context.CPU = CPU_P6_3;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CL") == 0)
-		Context.CPUsubstrate = CPU_P6_C;
+		Context.CPU = CPU_P6_C;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PM") == 0)
-		Context.CPUsubstrate = CPU_P6_M;
+		Context.CPU = CPU_P6_M;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "AMD_K7") == 0)
-		Context.CPUsubstrate = CPU_K7;
+		Context.CPU = CPU_K7;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "AMD_K8") == 0)
-		Context.CPUsubstrate = CPU_K8;
+		Context.CPU = CPU_K8;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PIV") == 0)
-		Context.CPUsubstrate = CPU_P4;
+		Context.CPU = CPU_P4;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_ATOM") == 0)
-		Context.CPUsubstrate = CPU_ATOM;
+		Context.CPU = CPU_ATOM;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE") == 0)
-		Context.CPUsubstrate = CPU_CORE;
+		Context.CPU = CPU_CORE;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE2") == 0)
-		Context.CPUsubstrate = CPU_CORE2;
+		Context.CPU = CPU_CORE2;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE2EXTREME") == 0)
-		Context.CPUsubstrate = CPU_CORE2EXTREME;
+		Context.CPU = CPU_CORE2EXTREME;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_COREI7") == 0)
-		Context.CPUsubstrate = CPU_COREI7;
+		Context.CPU = CPU_COREI7;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_WESTMERE") == 0)
-		Context.CPUsubstrate = CPU_COREWESTMERE;
+		Context.CPU = CPU_COREWESTMERE;
 	else
 		/* Unknown processor! */
-		Context.CPUsubstrate = CPU_UNKNOWN;
+		Context.CPU = CPU_UNKNOWN;
 
 
-	_papi_freebsd_vector.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
+	_papi_freebsd_vector.cmp_info.num_native_events = freebsd_number_of_events (Context.CPU);
 	_papi_freebsd_vector.cmp_info.attach = 0;
 
 	_papi_load_preset_table((char *)pmc_name_of_cputype(info->pm_cputype),
@@ -306,7 +306,7 @@ int _papi_freebsd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *n
 		native[i].ni_position = i;
 
 		/* Domains can be applied to canonical events in libpmc (not "generic") */
-		if (Context.CPUsubstrate != CPU_UNKNOWN)
+		if (Context.CPU != CPU_UNKNOWN)
 		{
 			if (ptr->hwc_domain == (PAPI_DOM_USER|PAPI_DOM_KERNEL))
 			{
@@ -601,7 +601,7 @@ int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain)
 
 	SUBDBG("Entering\n");
 	/* libpmc supports USER/KERNEL mode only when counters are native */
-	if (Context.CPUsubstrate != CPU_UNKNOWN)
+	if (Context.CPU != CPU_UNKNOWN)
 	{
 		if (domain & (PAPI_DOM_USER|PAPI_DOM_KERNEL))
 		{
@@ -758,7 +758,7 @@ int _papi_freebsd_ntv_name_to_code(char *name, unsigned int* event_code) {
 	int i;
 
 	for (i = 0; i < _papi_freebsd_vector.cmp_info.num_native_events; i++)
-		if (strcmp (name, _papi_hwd_native_info[Context.CPUsubstrate].info[i].name) == 0)
+		if (strcmp (name, _papi_hwd_native_info[Context.CPU].info[i].name) == 0)
 		{
 			*event_code = i | PAPI_NATIVE_AND_MASK;
 			return PAPI_OK;
@@ -775,8 +775,8 @@ int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int l
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
 	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
-	strncpy (ntv_name, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name) > (size_t)len-1)
+	strncpy (ntv_name, _papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
+	if (strlen(_papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].name) > (size_t)len-1)
 		return PAPI_EBUF;
 	return PAPI_OK;
 }
@@ -789,8 +789,8 @@ int _papi_freebsd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
 	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
-	strncpy (descr, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description) > (size_t)len-1)
+	strncpy (descr, _papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
+	if (strlen(_papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].description) > (size_t)len-1)
 		return PAPI_EBUF;
 	return PAPI_OK;
 }

@@ -649,7 +649,7 @@ papi_vector_t _example_vector = {
 	.update_control_state = _example_update_control_state,	
 	.ctl =                  _example_ctl,	
 	.shutdown_thread =      _example_shutdown_thread,
-	.shutdown_component =   _example_shutdown_substrate,
+	.shutdown_component =   _example_shutdown_component,
 	.set_domain =           _example_set_domain,
 	/* .cleanup_eventset =     NULL, */
 	/* called in add_native_events() */
