@@ -23,11 +23,7 @@ typedef struct papi_vectors {
     cmp_struct_sizes_t size;
 
 /* List of exposed function pointers for this component */
-#ifdef _WIN32 /* Windows requires a different callback format */
-    void	(*timer_callback)	(UINT, UINT, DWORD, DWORD, DWORD);
-#else
 	void ( *dispatch_timer ) ( int, hwd_siginfo_t *, void * );
-#endif
     void *	(*get_overflow_address)	(int, char *, int);						/**< */
     int		(*start)		(hwd_context_t *, hwd_control_state_t *);		/**< */
     int		(*stop)			(hwd_context_t *, hwd_control_state_t *);		/**< */

@@ -533,14 +533,7 @@ available and defined in the header file.  The user is encouraged to
 read the documentation carefully.  */
 
 
-/*  Windows needs a few extra headers,
-	and doesn't understand signals. - dkt
-*/
-#ifdef _WIN32						   /* Windows specific definitions are included below */
-#include "win_extras.h"
-#else								   /* This stuff is specific to Linux/Unix */
 #include <signal.h>
-#endif
 
 /*  Earlier versions of PAPI define a special long_long type to mask
 	an incompatibility between the Windows compiler and gcc-style compilers.

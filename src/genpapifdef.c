@@ -26,11 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-  /* Windows doesn't have a unistd.h */
-#ifndef _WIN32
 #include <unistd.h>
-#endif
-
 #include <errno.h>
 #include <sys/types.h>
 #include <memory.h>

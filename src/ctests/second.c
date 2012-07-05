@@ -17,11 +17,7 @@
 
 #include "papi_test.h"
 
-#ifdef _WIN32
-#define TAB_DOM	"%s%12I64d%15I64d%17I64d\n"
-#else
 #define TAB_DOM	"%s%12lld%15lld%17lld\n"
-#endif
 
 #define CASE2 0
 #define CREATE 1

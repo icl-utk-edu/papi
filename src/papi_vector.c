@@ -111,15 +111,9 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		return ( PAPI_EINVAL );
 
 	/* component function pointers */
-#ifdef _WIN32				 /* Windows requires a different callback format */
-	if ( !v->timer_callback )
-		v->timer_callback =
-			( void ( * )( UINT, UINT, DWORD, DWORD, DWORD ) ) vec_void_dummy;
-#else
 	if ( !v->dispatch_timer )
 		v->dispatch_timer =
 			( void ( * )( int, hwd_siginfo_t *, void * ) ) vec_void_dummy;
-#endif
 	if ( !v->get_overflow_address )
 		v->get_overflow_address =
 			( void *( * )( int, char *, int ) ) vec_void_star_dummy;
@@ -303,13 +297,8 @@ vector_print_table( papi_vector_t * v, int print_func )
 	if ( !v )
 		return;
 
-#ifdef _WIN32				 /* Windows requires a different callback format */
-	vector_print_routine( ( void * ) v->timer_callback,
-						  "_papi_hwd_timer_callback", print_func );
-#else
 	vector_print_routine( ( void * ) v->dispatch_timer,
 						  "_papi_hwd_dispatch_timer", print_func );
-#endif
 	vector_print_routine( ( void * ) v->get_overflow_address,
 						  "_papi_hwd_get_overflow_address", print_func );
 	vector_print_routine( ( void * ) v->start, "_papi_hwd_start", print_func );

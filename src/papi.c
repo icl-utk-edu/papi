@@ -494,7 +494,6 @@ PAPI_library_init( int version )
 		sleep( 1 );
 	}
 
-#ifndef _WIN32
 	/* This checks to see if we have forked or called init more than once.
 	   If we have forked, then we continue to init. If we have not forked, 
 	   we check to see the status of initialization. */
@@ -502,7 +501,6 @@ PAPI_library_init( int version )
 	APIDBG( "Initializing library: current PID %d, old PID %d\n", getpid(  ),
 			_papi_hwi_system_info.pid );
 	if ( _papi_hwi_system_info.pid == getpid(  ) )
-#endif
 	{
 		/* If the magic environment variable PAPI_ALLOW_STOLEN is set,
 		   we call shutdown if PAPI has been initialized. This allows

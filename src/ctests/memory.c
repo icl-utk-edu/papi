@@ -12,11 +12,7 @@
 
 #include "papi_test.h"
 
-#if defined(_WIN32)
-#define OUT_FMT		"%12d\t%12I64d\t%12I64d\t%.2f\n"
-#else
 #define OUT_FMT		"%12d\t%12lld\t%12lld\t%.2f\n"
-#endif
 
 
 int

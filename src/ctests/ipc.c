@@ -6,13 +6,7 @@
 #include "papi_test.h"
 
 
-#ifdef _WIN32
-#define INDEX 275			 /* This fixes stack overflow on Windows.
-							    It shouldn't be needed using the Windows /F switch
-							    but I can't seem to make that switch work */
-#else
 #define INDEX 500
-#endif
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 

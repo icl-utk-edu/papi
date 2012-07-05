@@ -46,15 +46,9 @@ extern int init_level;
 
 /* Signal used for overflow delivery */
 
-/****WIN32 We'll need to figure out how to handle this for Windows */
-#ifdef _WIN32
-#define PAPI_INT_SIGNAL 1
-#define PAPI_INT_ITIMER 1
-#else
 #define PAPI_INT_MPX_SIGNAL SIGPROF
 #define PAPI_INT_SIGNAL SIGPROF
 #define PAPI_INT_ITIMER ITIMER_PROF
-#endif
 
 #define PAPI_INT_ITIMER_MS 1
 #if defined(linux)
@@ -123,7 +117,7 @@ extern int init_level;
 
 /* DEFINES END HERE */
 
-#if !(defined(_WIN32) || defined(NO_CONFIG))
+#ifndef NO_CONFI
 #include "config.h"
 #endif
 

@@ -11,15 +11,9 @@
 
 #include "papi_test.h"
 
-#if defined(_WIN32)
-#define OVER_FMT	"handler(%d) Overflow at %p! overflow_vector=0x%x!\n"
-#define OUT_FMT		"%-12s : %18I64d%18I64d%18I64d\n"
-#define VEC_FMT		"   at vector %I64d, event %s: %6d\n"
-#else
 #define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
 #define OUT_FMT		"%-12s : %18lld%18lld%18lld\n"
 #define VEC_FMT		"        at vector 0x%llx, event %-12s : %6d\n"
-#endif
 
 typedef struct
 {

@@ -66,7 +66,7 @@ static char *native_name[] =
 };
 #endif
 
-#elif ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
+#elif ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) )
 static char *p3_native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
 static char *core_native_name[] = { "UnhltCore_Cycles", "Instr_Retired", NULL };
 static char *k7_native_name[] =
@@ -127,7 +127,7 @@ main( int argc, char **argv )
 
 	printf( "Architecture %s, %d\n", hwinfo->model_string, hwinfo->model );
 
-#if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
+#if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) )
 	if ( !strncmp( hwinfo->model_string, "Intel Pentium 4", 15 ) ) {
 		native_name = p4_native_name;
 	} else if ( !strncmp( hwinfo->model_string, "AMD K7", 6 ) ) {

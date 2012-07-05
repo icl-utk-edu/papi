@@ -19,9 +19,6 @@
 /* This file contains portable routines to do things that we wish the
 vendors did in the kernel extensions or performance libraries. */
 
-/* It also contains a new section at the end with Windows routines
- to emulate standard stuff found in Unix/Linux, but not Windows! */
-
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -359,69 +356,6 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
 	return ( PAPI_OK );
 }
 
-#ifdef _WIN32
-
-volatile int _papi_hwi_using_signal = 0;
-static MMRESULT wTimerID;			   // unique ID for referencing this timer
-static UINT wTimerRes;				   // resolution for this timer
-
-int
-_papi_hwi_start_timer( int ns )
-{
-	int retval = PAPI_OK;
-	int milliseconds = ns / 1000000;
-	TIMECAPS tc;
-	DWORD threadID;
-
-	// get the timer resolution capability on this system
-	if ( timeGetDevCaps( &tc, sizeof ( TIMECAPS ) ) != TIMERR_NOERROR )
-		return ( PAPI_ESYS );
-
-	// get the ID of the current thread to read the context later
-	// NOTE: Use of this code is restricted to W2000 and later...
-	threadID = GetCurrentThreadId(  );
-
-	// set the minimum usable resolution of the timer
-	wTimerRes = min( max( tc.wPeriodMin, 1 ), tc.wPeriodMax );
-	timeBeginPeriod( wTimerRes );
-
-	// initialize a periodic timer
-	//    triggering every (milliseconds) 
-	//    and calling (_papi_hwd_timer_callback())
-	//    with no data
-	wTimerID = timeSetEvent( milliseconds, wTimerRes,
-							 ( LPTIMECALLBACK ) _papi_hwd_timer_callback,
-							 threadID, TIME_PERIODIC );
-	if ( !wTimerID )
-		return PAPI_ESYS;
-
-	return ( retval );
-}
-
-int
-_papi_hwi_start_signal( int signal, int need_context, int cidx )
-{
-	return ( PAPI_OK );
-}
-
-int
-_papi_hwi_stop_signal( int signal )
-{
-	return ( PAPI_OK );
-}
-
-int
-_papi_hwi_stop_timer( void )
-{
-	int retval = PAPI_OK;
-
-	if ( timeKillEvent( wTimerID ) != TIMERR_NOERROR )
-		retval = PAPI_ESYS;
-	timeEndPeriod( wTimerRes );
-	return ( retval );
-}
-
-#else
 #include <sys/time.h>
 #include <errno.h>
 #include <string.h>
@@ -547,8 +481,6 @@ _papi_hwi_stop_timer( int timer, int signal )
 	return ( PAPI_OK );
 }
 
-#endif /* _WIN32 */
-
 
 
 #if (!defined(HAVE_FFSLL) || defined(__bgp__))
@@ -576,55 +508,3 @@ ffsll( long long lli )
 	return PAPI_OK;
 }
 #endif
-
-
-/**********************************************************************
-	Windows Compatability stuff
-	Delimited by the _WIN32 define
-**********************************************************************/
-#ifdef _WIN32
-
-/*
- This routine normally lives in <strings> on Unix.
- Microsoft Visual C++ doesn't have this file.
-*/
-extern int
-ffs( int i )
-{
-	int c = 1;
-
-	do {
-		if ( i & 1 )
-			return ( c );
-		i = i >> 1;
-		c++;
-	} while ( i );
-	return ( 0 );
-}
-
-/*
- More Unix routines that I can't find in Windows
- This one returns a pseudo-random integer
- given an unsigned int seed.
-*/
-extern int
-rand_r( unsigned int *Seed )
-{
-	srand( *Seed );
-	return ( rand(  ) );
-}
-
-/*
-  Another Unix routine that doesn't exist in Windows.
-  Kevin uses it in the memory stuff, specifically in PAPI_get_dmem_info().
-*/
-extern int
-getpagesize( void )
-{
-	SYSTEM_INFO SystemInfo;			   // system information structure  
-
-	GetSystemInfo( &SystemInfo );
-	return ( ( int ) SystemInfo.dwPageSize );
-}
-
-#endif /* _WIN32 */

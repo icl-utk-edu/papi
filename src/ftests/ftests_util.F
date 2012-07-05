@@ -1,9 +1,6 @@
 #include "fpapi_test.h"
 
       integer function get_quiet()
-#if _WIN32
-      use dflib
-#endif
       implicit integer (p)
       character*25 chbuf
       integer retval
@@ -250,11 +247,6 @@ C     For every other platform it is a nop.
       integer quiet
       common quiet
 
-#ifdef _WIN32
-      if (quiet .eq. 0) then
-        call cpause()
-      end if
-#endif
       end
 
 C     Print the content of an event set

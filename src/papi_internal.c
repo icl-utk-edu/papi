@@ -1529,11 +1529,8 @@ _papi_hwi_init_global_internal( void )
 	int retval;
 
 	memset(&_papi_hwi_system_info,0x0,sizeof( _papi_hwi_system_info ));
-#ifndef _WIN32
 
-	/* An array on non-windows, a volatile int on windows? */
 	memset( _papi_hwi_using_signal,0x0,sizeof( _papi_hwi_using_signal ));
-#endif
 
 	/* Global struct to maintain EventSet mapping */
 	retval = allocate_eventset_map( &_papi_hwi_system_info.global_eventset_map );

@@ -141,7 +141,6 @@ static unsigned int randomseed;
 
 /* Timer stuff */
 
-#ifndef _WIN32
 #include <sys/time.h>
 #include <string.h>
 #include <errno.h>
@@ -152,10 +151,6 @@ static sigset_t sigreset;
 static struct itimerval itime;
 static const struct itimerval itimestop = { {0, 0}, {0, 0} };
 static struct sigaction oaction;
-#else
-static MMRESULT mpxTimerID;		/**< unique ID for referencing this timer */
-static int mpx_time;
-#endif
 
 /* END Globals */
 
@@ -179,81 +174,6 @@ static void mpx_delete_one_event( MPX_EventSet * mpx_events, int Event );
 static int mpx_insert_events( MPX_EventSet *, int *event_list, int num_events,
 							  int domain, int granularity );
 static void mpx_handler( int signal );
-
-#ifdef _WIN32
-
-static void
-mpx_init_timers( int interval )
-{
-	/* Fill in the interval timer values now to save a
-	 * little time later.
-	 */
-#ifdef OUTSIDE_PAPI
-	interval = MPX_DEFAULT_INTERVAL;
-#endif
-	/* interval is in usec & Windows needs msec resolution */
-	mpx_time = interval / 1000;
-}
-
-void CALLBACK
-mpx_timer_callback( UINT wTimerID, UINT msg,
-					DWORD dwUser, DWORD dw1, DWORD dw2 )
-{
-	mpx_handler( 0 );
-}
-
-
-static int
-mpx_startup_itimer( void )
-{
-	int retval = PAPI_OK;
-
-	TIMECAPS tc;
-	UINT wTimerRes;
-
-	/* get the timer resolution capability on this system */
-	if ( timeGetDevCaps( &tc, sizeof ( TIMECAPS ) ) != TIMERR_NOERROR )
-		return ( PAPI_ESYS );
-
-	wTimerRes = min( max( tc.wPeriodMin, 1 ), tc.wPeriodMax );
-	timeBeginPeriod( wTimerRes );
-
-	/* initialize a periodic timer
-	   triggering every (milliseconds) 
-	   and calling (mpx_timer_callback())
-	   with no data */
-	mpxTimerID = timeSetEvent( mpx_time, wTimerRes,
-							   mpx_timer_callback, ( DWORD ) NULL,
-							   TIME_PERIODIC );
-	if ( !mpxTimerID )
-		return PAPI_ESYS;
-
-	return ( retval );
-}
-
-#define mpx_restore_signal() /* NOP on Windows */
-
-static void
-mpx_shutdown_itimer( void )
-{
-	if ( timeKillEvent( mpxTimerID ) != TIMERR_NOERROR ) {
-		MPXDBG( "setitimer(MPX_ITIMER) in mpx_shutdown_itimer" );
-	}
-}
-
-static void
-mpx_release( void )
-{
-	mpx_startup_itimer(  );
-}
-
-static void
-mpx_hold( void )
-{
-	mpx_shutdown_itimer(  );
-}
-
-#else
 
 inline_static void
 mpx_hold( void )
@@ -342,7 +262,6 @@ mpx_shutdown_itimer( void )
 			PAPIERROR( "setitimer stop errno %d", errno );
 	}
 }
-#endif /* _WIN32 */
 
 static MasterEvent *
 get_my_threads_master_event_list( void )
