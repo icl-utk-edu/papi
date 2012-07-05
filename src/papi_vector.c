@@ -26,7 +26,7 @@ void
 _vectors_error(  )
 {
 	SUBDBG( "function is not implemented in the component!\n" );
-	exit( PAPI_ESBSTR );
+	exit( PAPI_ECMP );
 }
 
 int
@@ -44,7 +44,7 @@ vec_int_one_dummy(  )
 int
 vec_int_dummy(  )
 {
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 void *
@@ -62,7 +62,7 @@ vec_void_dummy(  )
 long long
 vec_long_long_dummy(  )
 {
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 long long
@@ -70,7 +70,7 @@ vec_long_long_context_dummy( hwd_context_t *ignored )
 {
         (void) ignored;
 
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 char *
@@ -82,7 +82,7 @@ vec_char_star_dummy(  )
 long
 vec_long_dummy(  )
 {
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 long long vec_virt_cycles(void)

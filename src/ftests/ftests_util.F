@@ -114,7 +114,7 @@ C     And also to make the test code read cleaner
       integer len_trim
       external len_trim
 
-      if ( retval.eq.PAPI_ESBSTR .OR. retval.eq.PAPI_ENOEVNT
+      if ( retval.eq.PAPI_ECMP .OR. retval.eq.PAPI_ENOEVNT
      &    .OR. retval.eq.PAPI_ECNFLCT .OR. retval.eq.PAPI_EPERM ) then
         call ftest_skip(file, line, callstr, retval)
       end if

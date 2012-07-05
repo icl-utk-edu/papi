@@ -174,7 +174,7 @@ read_mx_counters( long long *counters )
 	fp = popen( mx_counters_exe, "r" );
 	if ( !fp ) {
 	   perror( "popen" );
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 
@@ -239,7 +239,7 @@ _mx_init_component(  )
 	      /* neither real nor fake found */
 	      strncpy(_mx_vector.cmp_info.disabled_reason,
 		      "No MX utilities found",PAPI_MAX_STR_LEN);
-	      return PAPI_ESBSTR;
+	      return PAPI_ECMP;
 	   }
 	}
 	pclose(fff);

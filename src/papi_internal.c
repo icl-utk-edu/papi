@@ -401,7 +401,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 	char *ptr;
 
 	/* If component doesn't exist... */
-	if (_papi_hwi_invalid_cmp(cidx)) return PAPI_ESBSTR;
+	if (_papi_hwi_invalid_cmp(cidx)) return PAPI_ECMP;
 
 	/* Assigned at create time */
 
@@ -1919,7 +1919,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
        *out = _papi_hwi_native_to_eventcode(cidx,*out);
 
        /* If not implemented, work around */
-       if ( retval==PAPI_ESBSTR) {
+       if ( retval==PAPI_ECMP) {
           i = 0;
 	  _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
 	  
@@ -1998,7 +1998,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 
        /* If component error, it's missing the ntv_code_to_info vector */
        /* so we'll have to fake it.                                    */
-       if ( retval == PAPI_ESBSTR ) {
+       if ( retval == PAPI_ECMP ) {
 
 
 	  SUBDBG("missing NTV_CODE_TO_INFO, faking\n");

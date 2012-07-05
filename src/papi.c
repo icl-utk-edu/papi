@@ -170,7 +170,7 @@ PAPI_thread_id( void )
  *	Space could not be allocated to store the new thread information.
  *  @retval PAPI_ESYS 
  *	A system or C library call failed inside PAPI, see the errno variable.
- *  @retval PAPI_ESBSTR 
+ *  @retval PAPI_ECMP 
  *	Hardware counters for this thread could not be initialized. 
  *
  *   @bug No known bugs.
@@ -200,7 +200,7 @@ PAPI_register_thread( void )
  *		Space could not be allocated to store the new thread information.
  *	@retval PAPI_ESYS 
  *		A system or C library call failed inside PAPI, see the errno variable.
- *	@retval PAPI_ESBSTR 
+ *	@retval PAPI_ECMP 
  *		Hardware counters for this thread could not be initialized. 
  *
  *	PAPI_unregister_thread should be called when the user wants to shutdown 
@@ -3338,11 +3338,11 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.attach == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		/* if attached to a cpu, return an error */
 		if (internal.attach.ESI->state & PAPI_CPU_ATTACHED)
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		if ( ( internal.attach.ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
@@ -3372,7 +3372,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.attach == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		if ( ( internal.attach.ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
@@ -3382,7 +3382,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 
 		/* if attached to a cpu, return an error */
 		if (internal.attach.ESI->state & PAPI_CPU_ATTACHED)
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		internal.attach.tid = ptr->attach.tid;
 		/* get the context we should use for this event set */
@@ -3414,7 +3414,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.cpu == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		// can not attach to a cpu if already attached to a process or 
 		// counters set to be inherited by child processes
@@ -3680,14 +3680,14 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.inherit == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		if ( ( ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
 
 		/* if attached to a cpu, return an error */
 		if (ESI->state & PAPI_CPU_ATTACHED)
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		internal.inherit.ESI = ESI;
 		internal.inherit.inherit = ptr->inherit.inherit;
@@ -4182,7 +4182,7 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 {
 
   if (_papi_hwi_invalid_cmp(cidx)) {
-     return PAPI_ESBSTR;
+     return PAPI_ECMP;
   }
 
 	switch ( option ) {

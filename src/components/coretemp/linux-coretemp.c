@@ -70,7 +70,7 @@ insert_in_list(char *name, char *units,
 		   free(temp);
 		   PAPIERROR("This shouldn't be possible\n");
 
-		   return PAPI_ESBSTR;
+		   return PAPI_ECMP;
     }
 
     last = temp;
@@ -287,7 +287,7 @@ generateEventList(char *base_dir)
 done_error:
     closedir(d);
     closedir(dir);
-    return PAPI_ESBSTR;
+    return PAPI_ECMP;
 }
 
 static long long

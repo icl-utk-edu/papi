@@ -121,19 +121,19 @@ void __int_walk_synthetic_events_action_store( void );
 
 /* Simple error handlers for convenience */
 #define __CHECK_ERR_DFLT(retval) \
-    if(retval != 0){ SUBDBG("RETVAL: %d\n", retval); return PAPI_ESBSTR;}
+    if(retval != 0){ SUBDBG("RETVAL: %d\n", retval); return PAPI_ECMP;}
 
 #define __CHECK_ERR_NULL(retval) \
-    if(retval == NULL){ SUBDBG("RETVAL: NULL\n"); return PAPI_ESBSTR;}
+    if(retval == NULL){ SUBDBG("RETVAL: NULL\n"); return PAPI_ECMP;}
 
 #define __CHECK_ERR_PAPI(retval) \
-    if(retval != PAPI_OK){ SUBDBG("RETVAL: %d\n", retval); return PAPI_ESBSTR;}
+    if(retval != PAPI_OK){ SUBDBG("RETVAL: %d\n", retval); return PAPI_ECMP;}
 
 #define __CHECK_ERR_INVA(retval) \
     if(retval != 0){ SUBDBG("RETVAL: %d\n", retval); return PAPI_EINVAL;}
 
 #define __CHECK_ERR_NEGV(retval) \
-    if(retval < 0){ SUBDBG("RETVAL: %d\n", retval); return PAPI_ESBSTR;}
+    if(retval < 0){ SUBDBG("RETVAL: %d\n", retval); return PAPI_ECMP;}
 
 // PAPI defined variables
 extern papi_mdi_t _papi_hwi_system_info;
@@ -696,7 +696,7 @@ _niagara2_get_system_info( papi_mdi_t *mdi )
 	if ( proc_status->pr_flags & PR_MSACCT == 0 ||
 		 proc_status->pr_flags & PR_MSFORK == 0 ) {
 		/* Solaris 10 should have microstate accounting always activated */
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	}
 
 	/* Fill _papi_hwi_system_info.exe_info.fullname */
@@ -1372,7 +1372,7 @@ _niagara2_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 	if ( retval != 0 ) {
 		printf( "%s: cpc_set_sample failed, return=%d, errno=%d\n",
 				__func__, retval, errno );
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	}
 #ifdef DEBUG
 	SUBDBG( "LEAVING FUNCTION  >>%s<< at %s:%d\n", __func__, __FILE__,
@@ -1767,7 +1767,7 @@ __cpc_build_ntv_table( void )
 		SUBDBG( " -> %s: PIC#0 has 0 events\n", __func__ );
 #endif
 
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	}
 
 	/* Check if all PICs have the same number of counters */
@@ -1778,7 +1778,7 @@ __cpc_build_ntv_table( void )
 					__func__, i, __t2_store.pic_ntv_count[i], tmp );
 #endif
 
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 		}
 	}
 

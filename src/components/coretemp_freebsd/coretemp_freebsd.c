@@ -100,7 +100,7 @@ int coretemp_init_thread (hwd_context_t * ctx)
 
 	len = 4;
 	if (sysctlnametomib ("dev.coretemp.0.%driver", mib, &len) == -1)
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 
 	return PAPI_OK;
 }
@@ -157,7 +157,7 @@ int coretemp_init_component ()
 		sprintf (tmp, "dev.cpu.%d.temperature", i);
 		len = 4;
 		if (sysctlnametomib (tmp, coretemp_native_table[i].resources.mib, &len) == -1)
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 
 		coretemp_native_table[i].resources.selector = i+1;
 	}

@@ -190,7 +190,7 @@ _example_init_component( int cidx )
    
         /* First, detect that our hardware is available */
         if (detect_example()!=PAPI_OK) {
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
    
 	/* we know in advance how many events we want                       */

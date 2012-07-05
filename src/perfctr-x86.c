@@ -88,16 +88,16 @@ _papi_hwd_fixup_vec( int cidx )
 
 	/* if the env variable isn't set, use the default */
 	if ( ( str == NULL ) || ( strlen( str ) == 0 ) ) {
-		strcat( table_name, P4_VEC );
+	   strcat( table_name, P4_VEC );
 	} else {
-		strcat( table_name, str );
+	   strcat( table_name, str );
 	}
 	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
-		PAPIERROR
-			( "Improper usage of PAPI_PENTIUM4_VEC environment variable.\nUse either SSE or MMX" );
-		return ( PAPI_ESBSTR );
+	   PAPIERROR( "Improper usage of PAPI_PENTIUM4_VEC environment "
+                      "variable.\nUse either SSE or MMX" );
+	   return PAPI_EINVAL;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 static int
@@ -118,11 +118,11 @@ _papi_p4_hwd_fixup_fp( int cidx )
 			strcat( table_name, " SSE_DP" );
 	}
 	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
-		PAPIERROR
-			( "Improper usage of PAPI_PENTIUM4_FP environment variable.\nUse one or two of X87,SSE_SP,SSE_DP" );
-		return ( PAPI_ESBSTR );
+	   PAPIERROR( "Improper usage of PAPI_PENTIUM4_FP environment "
+                      "variable.\nUse one or two of X87,SSE_SP,SSE_DP" );
+	   return PAPI_EINVAL;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 static int
@@ -141,11 +141,12 @@ _papi_hwd_fixup_fp( char *name, int cidx )
 	}
 
 	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
-		PAPIERROR
-			( "Improper usage of PAPI_OPTERON_FP environment variable.\nUse one of RETIRED, SPECULATIVE, SSE_SP, SSE_DP" );
-		return ( PAPI_ESBSTR );
+	   PAPIERROR( "Improper usage of PAPI_OPTERON_FP environment "
+                      "variable.\nUse one of RETIRED, SPECULATIVE, "
+		      "SSE_SP, SSE_DP" );
+	   return PAPI_EINVAL;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 #ifdef DEBUG
@@ -217,7 +218,7 @@ setup_x86_presets( int cputype, int cidx)
 #endif
 		else {
 			PAPIERROR( MODEL_ERROR );
-			return ( PAPI_ESBSTR );
+			return PAPI_ENOIMPL;
 		}
 	} else {
 		switch ( cputype ) {
@@ -227,9 +228,9 @@ setup_x86_presets( int cputype, int cidx)
 		case PERFCTR_X86_VIA_C3:
 		case PERFCTR_X86_INTEL_P5:
 		case PERFCTR_X86_INTEL_P5MMX:
-			SUBDBG( "This cpu is supported by the perfctr-x86 component\n" );
+			SUBDBG( "This cpu is not supported by the perfctr-x86 component\n" );
 			PAPIERROR( MODEL_ERROR );
-			return ( PAPI_ESBSTR );
+			return PAPI_ENOIMPL;
 		case PERFCTR_X86_INTEL_P6:
 		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
 			break;
@@ -293,7 +294,7 @@ setup_x86_presets( int cputype, int cidx)
 #endif
 		default:
 			PAPIERROR( MODEL_ERROR );
-			return PAPI_ESBSTR;
+			return PAPI_ENOIMPL;
 		}
 		SUBDBG( "Number of native events: %d\n",
 				_perfctr_vector.cmp_info.num_native_events );
@@ -1158,16 +1159,16 @@ _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 	if ( ( ret = pfm_get_event_counters( event, &cnt ) ) != PFMLIB_SUCCESS ) {
 		PAPIERROR( "pfm_get_event_counters(%d,%p): %s", event, &cnt,
 				   pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 	if ( ( ret = pfm_get_num_counters( &num ) ) != PFMLIB_SUCCESS ) {
 		PAPIERROR( "pfm_get_num_counters(%p): %s", num, pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 	if ( ( ret = pfm_get_impl_counters( &impl ) ) != PFMLIB_SUCCESS ) {
 		PAPIERROR( "pfm_get_impl_counters(%p): %s", &impl,
 				   pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 
 	*selector = 0;
@@ -1182,14 +1183,14 @@ _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 					 PFMLIB_SUCCESS ) {
 					PAPIERROR( "pfm_get_event_code_counter(%d, %d, %p): %s",
 						   event, i, code, pfm_strerror( ret ) );
-					return ( PAPI_ESBSTR );
+					return PAPI_ESYS;
 				}
 				first = 0;
 			}
 			*selector |= 1 << i;
 		}
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int

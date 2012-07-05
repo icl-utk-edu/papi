@@ -738,7 +738,7 @@ _aix_init_component( int cidx )
 		break;
 	default:
 		fprintf( stderr, "%s is not supported!\n", pminfo.proc_name );
-		return ( PAPI_ESBSTR );
+		return PAPI_ENOIMPL;
 	}
 
 	_aix_lock_init(  );
@@ -1183,9 +1183,9 @@ _aix_update_shlib_info( papi_mdi_t *mdi )
 	_papi_hwi_system_info.shlib_info.count = t_index + 1;
 	papi_free( tmp1 );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 #else
-	return PAPI_ESBSTR;
+	return PAPI_ENOIMPL;
 #endif
 }
 
@@ -1200,7 +1200,7 @@ _aix_ntv_name_to_code( char *name, unsigned int *evtcode )
                        return PAPI_OK;
                }
 
-       return PAPI_ESBSTR;
+       return PAPI_ENOEVNT;
 }
 
 

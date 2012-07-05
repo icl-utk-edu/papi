@@ -1,6 +1,5 @@
 /* 
 * File:    profile.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Dan Terpstra
@@ -121,17 +120,20 @@ main( int argc, char **argv )
 
 	prof_init( argc, argv, &prginfo );
 
-	if ( ( hw_info = PAPI_get_hardware_info(  ) ) == NULL )
-	   return PAPI_ESBSTR;
+	if ( ( hw_info = PAPI_get_hardware_info(  ) ) == NULL ) {
+	   test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 0 );
+	}
 
 	if ( ( strncasecmp( hw_info->model_string, "Itanium", strlen( "Itanium" ) )
 		   != 0 ) &&
 		 ( strncasecmp( hw_info->model_string, "32", strlen( "32" ) ) != 0 ) )
-		test_skip( __FILE__, __LINE__, "Test unsupported", PAPI_ESBSTR );
+		test_skip( __FILE__, __LINE__, "Test unsupported", PAPI_ENOIMPL );
 
-	if ( TESTS_QUIET )
-		test_skip( __FILE__, __LINE__,
-				   "Test deprecated in quite mode for PAPI 3.6", PAPI_ESBSTR );
+	if ( TESTS_QUIET ) {
+	   test_skip( __FILE__, __LINE__,
+		     "Test deprecated in quiet mode for PAPI 3.6", 0 );
+
+	}
 
 	sprintf( event_name, "DATA_EAR_CACHE_LAT4" );
 	if ( ( retval =

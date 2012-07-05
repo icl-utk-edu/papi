@@ -142,7 +142,7 @@ main( int argc, char **argv )
 		PAPI_thread_init( ( unsigned
 							long ( * )( void ) ) ( omp_get_thread_num ) );
 	if ( retval != PAPI_OK )
-		if ( retval == PAPI_ESBSTR )
+		if ( retval == PAPI_ECMP )
 			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
 		else
 			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );

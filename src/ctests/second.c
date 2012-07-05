@@ -150,9 +150,11 @@ case1( int num )
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-	cmpinfo = PAPI_get_component_info( 0 );	/* get info from cpu component */
-	if ( cmpinfo == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR );
+	/* get info from cpu component */
+	cmpinfo = PAPI_get_component_info( 0 );	
+	if ( cmpinfo == NULL ) {
+	   test_fail( __FILE__, __LINE__,"PAPI_get_component_info", PAPI_ECMP);
+	}
 
 	if ( ( retval = PAPI_query_event( PAPI_TOT_INS ) ) != PAPI_OK )
 		test_skip( __FILE__, __LINE__, "PAPI_query_event", retval );
@@ -231,8 +233,9 @@ case1( int num )
 		options.domain.domain = PAPI_DOM_ALL;
 
 		retval = PAPI_set_opt( PAPI_DOMAIN, &options );
-		if ( retval != PAPI_OK && retval != PAPI_ESBSTR )
-			test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
+		if ( retval != PAPI_OK && retval != PAPI_ECMP ) {
+		   test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
+		}
 
 		options.domain.eventset = EventSet2;
 		options.domain.domain = PAPI_DOM_KERNEL;
@@ -260,9 +263,9 @@ case1( int num )
 		options.domain.domain = PAPI_DOM_ALL;
 
 		retval = PAPI_set_opt( PAPI_DOMAIN, &options );
-		if ( retval != PAPI_OK && retval != PAPI_ESBSTR )
-			test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
-
+		if ( retval != PAPI_OK && retval != PAPI_ECMP ) {
+		   test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
+		}
 		options.domain.eventset = EventSet2;
 		options.domain.domain = PAPI_DOM_KERNEL;
 

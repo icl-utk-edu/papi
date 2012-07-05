@@ -20,8 +20,9 @@ static int TEST_WARN = 0;
 int
 papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 {
-	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
-		return ( PAPI_ESBSTR );
+        if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
+	   return PAPI_ESYS;
+        }
 
 	printf( "%s", prompt );
 	printf
@@ -598,7 +599,7 @@ test_skip( char *file, int line, char *call, int retval )
 		} else if ( retval == PAPI_EPERM ) {
 			fprintf( stdout, "Line # %d\n", line );
 			fprintf( stdout, "Invalid permissions for %s.", call );
-		} else if ( retval == PAPI_ESBSTR ) {
+		} else if ( retval == PAPI_ECMP ) {
 			fprintf( stdout, "Line # %d\n", line );
 			fprintf( stdout, "%s.", call );
 		} else if ( retval >= 0 ) {
@@ -772,7 +773,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
      s = PAPI_get_component_info( cidx );
      if ( s == NULL ) {
 	test_fail( __FILE__, __LINE__, 
-			   "PAPI_get_component_info", PAPI_ESBSTR );
+			   "PAPI_get_component_info", PAPI_ECMP );
      }
 
      hw_info = PAPI_get_hardware_info(  );

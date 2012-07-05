@@ -84,7 +84,7 @@ papi_xml_hwinfo( FILE * f )
 	const PAPI_hw_info_t *hwinfo;
 
 	if ( ( hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 
 	fprintf( f, "<hardware>\n" );
 

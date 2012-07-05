@@ -95,7 +95,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 
     _papi_hwd[cidx]->cmp_info.num_preset_events += did_something;
 
-    return ( did_something ? PAPI_OK : PAPI_ESBSTR );
+    return ( did_something ? PAPI_OK : PAPI_ENOEVNT );
 }
 
 int

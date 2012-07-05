@@ -1326,14 +1326,14 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
       against the version PAPI linked to... */
    if ( ( retval = pfm_initialize(  ) ) != PFM_SUCCESS ) {
       PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    /* get the libpfm4 version */
    SUBDBG( "pfm_get_version()\n");
    if ( (version=pfm_get_version( )) < 0 ) {
       PAPIERROR( "pfm_get_version(): %s", pfm_strerror( retval ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    /* Set the version */
@@ -1345,7 +1345,7 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
       PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
 				   PFM_MAJ_VERSION( LIBPFM_VERSION ),
 				   PFM_MAJ_VERSION( version ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    /* allocate the native event structure */
@@ -1395,12 +1395,12 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
 
    if (!found_default) {
       PAPIERROR("Could not find default PMU\n");
-      return PAPI_ESBSTR;
+      return PAPI_ECMP;
    }
 
    if (found_default>1) {
      PAPIERROR("Found too many default PMUs!\n");
-     return PAPI_ESBSTR;
+     return PAPI_ECMP;
    }
 
    my_vector->cmp_info.num_native_events = ncnt;

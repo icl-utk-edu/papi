@@ -161,7 +161,7 @@ generateNetEventList( void )
                 free(temp);
                 fclose(fin);
                 PAPIERROR("This shouldn't be possible\n");
-                return PAPI_ESBSTR;
+                return PAPI_ECMP;
             }
             last = temp;
 

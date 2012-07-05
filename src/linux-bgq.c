@@ -532,7 +532,7 @@ _bgq_write( hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from )
 	( void ) cntrl;
 	( void ) from;
 	
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 }
 
 /*
@@ -748,7 +748,7 @@ _bgq_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	( void ) EventIndex;
 	( void ) threshold;
 	
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 }
 
 /*

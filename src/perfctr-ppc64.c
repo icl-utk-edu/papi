@@ -4,7 +4,6 @@
 
 /*
 * File:    perfctr-ppc64.c
-* CVS:     $Id$
 * Author:  Maynard Johnson
 *          maynardj@us.ibm.com
 * Mods:    <your name here>
@@ -488,15 +487,6 @@ _papi_hwd_reset( hwd_context_t * ctx, hwd_control_state_t * cntrl )
 	return ( _papi_hwd_start( ctx, cntrl ) );
 }
 
-/*
-int _papi_hwd_setmaxmem() {
-   return (PAPI_OK);
-}
-
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long long * from) {
-   return(PAPI_ESBSTR);
-}
-*/
 
 /* This routine is for shutting down threads, including the
    master thread. */
@@ -629,7 +619,7 @@ int
 _papi_hwd_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	/* This function is not used and shouldn't be called. */
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 }
 
 
@@ -637,7 +627,7 @@ int
 _papi_hwd_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 {
 	ESI->profile.overflowcount = 0;
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int

@@ -50,28 +50,28 @@ int mmtimer_setup(void) {
 	  SUBDBG( "MMTIMER Opening %s\n", MMTIMER_FULLNAME );
 	  if ( ( mmdev_fd = open( MMTIMER_FULLNAME, O_RDONLY ) ) == -1 ) {
 	    PAPIERROR( "Failed to open MM timer %s", MMTIMER_FULLNAME );
-	    return ( PAPI_ESYS );
+	    return PAPI_ESYS;
 	  }
 	  SUBDBG( "MMTIMER checking if we can mmap" );
 	  if ( ioctl( mmdev_fd, MMTIMER_MMAPAVAIL, 0 ) != 1 ) {
 	    PAPIERROR( "mmap of MM timer unavailable" );
-	    return ( PAPI_ESBSTR );
+	    return PAPI_ESYS;
 	  }
 	  SUBDBG( "MMTIMER setting close on EXEC flag\n" );
 	  if ( fcntl( mmdev_fd, F_SETFD, FD_CLOEXEC ) == -1 ) {
 	    PAPIERROR( "Failed to fcntl(FD_CLOEXEC) on MM timer FD %d: %s",
 		       mmdev_fd, strerror( errno ) );
-	    return ( PAPI_ESYS );
+	    return PAPI_ESYS;
 	  }
 	  SUBDBG( "MMTIMER is on FD %d, getting offset\n", mmdev_fd );
 	  if ( ( offset = ioctl( mmdev_fd, MMTIMER_GETOFFSET, 0 ) ) < 0 ) {
 	    PAPIERROR( "Failed to get offset of MM timer" );
-	    return ( PAPI_ESYS );
+	    return PAPI_ESYS;
 	  }
 	  SUBDBG( "MMTIMER has offset of %d, getting frequency\n", offset );
 	  if ( ioctl( mmdev_fd, MMTIMER_GETFREQ, &freq ) == -1 ) {
 	    PAPIERROR( "Failed to get frequency of MM timer" );
-	    return ( PAPI_ESYS );
+	    return PAPI_ESYS;
 	  }
 	  SUBDBG( "MMTIMER has frequency %lu Mhz\n", freq / 1000000 );
 	  // don't know for sure, but I think this ratio is inverted
@@ -83,13 +83,13 @@ int mmtimer_setup(void) {
 		    mmdev_ratio );
           if ( ioctl( mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick ) == -1 ) {
 		  PAPIERROR( "Failed to get femtoseconds per tick" );
-		  return ( PAPI_ESYS );
+		  return PAPI_ESYS;
           }
           SUBDBG( "MMTIMER res is %lu femtosecs/tick (10^-15s) or %f Mhz, getting valid bits\n",
 	  femtosecs_per_tick, 1.0e9 / ( double ) femtosecs_per_tick );
           if ( ( result = ioctl( mmdev_fd, MMTIMER_GETBITS, 0 ) ) == -ENOSYS ) {
 	     PAPIERROR( "Failed to get number of bits in MMTIMER" );
-	     return ( PAPI_ESYS );
+	     return PAPI_ESYS;
           }
           mmdev_mask = ~( 0xffffffffffffffff << result );
           SUBDBG( "MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",
@@ -99,7 +99,7 @@ int mmtimer_setup(void) {
 						 MAP_PRIVATE, mmdev_fd,
 						 0 ) ) == NULL ) {
 	     PAPIERROR( "Failed to mmap MM timer" );
-	     return ( PAPI_ESYS );
+	     return PAPI_ESYS;
           }
           SUBDBG( "MMTIMER page is at %p, actual address is %p\n",
 			mmdev_timer_addr, mmdev_timer_addr + offset );
@@ -431,13 +431,13 @@ again:
    if ( cnt != 13 ) {
       PAPIERROR( "utime and stime not in thread stat file?" );
       close(stat_fd);
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    if ( sscanf( buf + i, "%llu %llu", &utime, &stime ) != 2 ) {
       close(stat_fd);
       PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    retval = ( utime + stime ) * ( long long ) 1000000 /_papi_os_info.clock_ticks;

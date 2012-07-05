@@ -151,7 +151,7 @@ addLustreFS( const char *name,
 	if ( fff == NULL ) {
 	  SUBDBG("can not open '%s'\n", procpath_general );
 	  free(fs);
-	  return PAPI_ESBSTR;
+	  return PAPI_ESYS;
 	}
 	fclose(fff);
 
@@ -160,7 +160,7 @@ addLustreFS( const char *name,
 	if ( fff == NULL ) {
 	  SUBDBG("can not open '%s'\n", procpath_readahead );
 	  free(fs);
-	  return PAPI_ESBSTR;
+	  return PAPI_ESYS;
 	}
 	fclose(fff);
 
@@ -219,7 +219,7 @@ init_lustre_counters( void  )
 	proc_dir = opendir( lustre_dir );
 	if ( proc_dir == NULL ) {
 	   SUBDBG("Cannot open %s\n",lustre_dir);
-	   return PAPI_ESBSTR;
+	   return PAPI_ESYS;
 	}
 
 	entry = readdir( proc_dir );
@@ -379,7 +379,7 @@ detect_lustre()
 	proc_dir = opendir( proc_base_path );
 	if ( proc_dir == NULL ) {
 	  SUBDBG("we are not able to read %s\n",lustre_directory);
-	   return PAPI_ESBSTR;
+	   return PAPI_ESYS;
 	}
 
 	closedir(proc_dir);

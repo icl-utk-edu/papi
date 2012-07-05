@@ -366,7 +366,7 @@ set_granularity( hwd_control_state_t * this_state, int domain )
 	case PAPI_GRN_SYS:
 	case PAPI_GRN_SYS_CPU:
 	case PAPI_GRN_PROC:
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 	case PAPI_GRN_THR:
 		break;
 	default:
@@ -398,18 +398,18 @@ get_system_info( papi_mdi_t *mdi )
 	/* Check counter access */
 
 	if ( cpc_version( CPC_VER_CURRENT ) != CPC_VER_CURRENT )
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 	SUBDBG( "CPC version %d successfully opened\n", CPC_VER_CURRENT );
 
 	if ( cpc_access(  ) == -1 )
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 
 	/* Global variable cpuver */
 
 	cpuver = cpc_getcpuver(  );
 	SUBDBG( "Got %d from cpc_getcpuver()\n", cpuver );
 	if ( cpuver == -1 )
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 
 #ifdef DEBUG
 	{
@@ -451,7 +451,7 @@ get_system_info( papi_mdi_t *mdi )
 		_solaris_vector.cmp_info.hardware_intr = 1;
 		_solaris_vector.cmp_info.hardware_intr_sig = SIGEMT;
 	} else
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 
 	/* Path and args */
 
@@ -522,7 +522,7 @@ get_system_info( papi_mdi_t *mdi )
 
 	retval = scan_prtconf( cpuname, PAPI_MAX_STR_LEN, &hz, &version );
 	if ( retval == -1 )
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 
 	strcpy( _papi_hwi_system_info.hw_info.model_string,
 			cpc_getcciname( cpuver ) );
@@ -542,7 +542,7 @@ get_system_info( papi_mdi_t *mdi )
 
 	retval = cpc_getnpic( cpuver );
 	if ( retval < 0 )
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 
 	_solaris_vector.cmp_info.num_cntrs = retval;
 	_solaris_vector.cmp_info.fast_real_timer = 1;
@@ -620,7 +620,7 @@ build_tables( void )
 		n = sizeof ( us3info ) / sizeof ( einfo_t );
 		ep = us3info;
 	} else
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	preset_table = papi_malloc( ( n + 1 ) * sizeof ( hwi_search_t ) );
 	npresets = 0;
 	for ( i = 0; i < n; ++i ) {
@@ -774,7 +774,7 @@ action( void *arg, int regno, const char *name, uint8_t bits )
 static int
 set_inherit( EventSetInfo_t * global, int arg )
 {
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 
 /*
   hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep;

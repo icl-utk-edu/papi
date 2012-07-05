@@ -270,7 +270,7 @@ _rapl_init_component( int cidx )
      if (hw_info->vendor!=PAPI_VENDOR_INTEL) {
         strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Not an Intel processor",PAPI_MAX_STR_LEN);
-        return PAPI_ESBSTR;
+        return PAPI_ENOSUPP;
      }
 
      /* check if SandyBridge */
@@ -295,14 +295,14 @@ _rapl_init_component( int cidx )
 	 strncpy(_rapl_vector.cmp_info.disabled_reason,
 		 "Not a SandyBridge processor",
 		 PAPI_MAX_STR_LEN);
-	 return PAPI_ESBSTR;
+	 return PAPI_ENOIMPL;
        }
      }
      else {
        /* Not a family 6 machine */
        strncpy(_rapl_vector.cmp_info.disabled_reason,
 	       "Not a SandyBridge processor",PAPI_MAX_STR_LEN);
-       return PAPI_ESBSTR;
+       return PAPI_ENOIMPL;
      }
 
 
@@ -340,7 +340,7 @@ _rapl_init_component( int cidx )
         SUBDBG("Can't access /dev/cpu/*/msr\n");
 	strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Can't access /dev/cpu/*/msr",PAPI_MAX_STR_LEN);
-	return PAPI_ESBSTR;
+	return PAPI_ESYS;
      }
 
      SUBDBG("Found %d packages with %d cpus\n",num_packages,num_cpus);
@@ -354,7 +354,7 @@ _rapl_init_component( int cidx )
      if (fd<0) {
         strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Can't open fd for cpu0",PAPI_MAX_STR_LEN);
-        return PAPI_ESBSTR;
+        return PAPI_ESYS;
      }
 
      /* Calculate the units used */

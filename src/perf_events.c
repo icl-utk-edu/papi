@@ -326,7 +326,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 
 	  if (retval != 0) {
 	    PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	    return PAPI_ESBSTR;
+	    return PAPI_ESYS;
 	  }
 
 #ifdef BRAINDEAD_MULTIPLEXING
@@ -339,7 +339,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 
 	  if (retval != 0) {
 		PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	  }
 
 #ifdef BRAINDEAD_MULTIPLEXING
@@ -354,7 +354,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 	    }
 	   if ( cnt == -1 ) {
 		SUBDBG( "read returned an error!  Should never happen.\n" );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	   }
 	   if ( cnt == 0 ) {
 		return PAPI_ECNFLCT;
@@ -369,7 +369,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 	       retval = ioctl( ctx->evt[idx].event_fd, PERF_EVENT_IOC_RESET, NULL) ;
 	       if (retval != 0) {
 		 PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-		 return PAPI_ESBSTR;
+		 return PAPI_ESYS;
 	       }
 	     } else
 #endif
@@ -378,7 +378,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 			       NULL );
 			if (retval != 0) {
 			  PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-			  return PAPI_ESBSTR;
+			  return PAPI_ESYS;
 			}
 		}
 	   }
@@ -787,7 +787,7 @@ set_granularity( control_state_t * this_state, int domain )
 	case PAPI_GRN_SYS:
 	case PAPI_GRN_SYS_CPU:
 	case PAPI_GRN_PROC:
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	case PAPI_GRN_THR:
 		break;
 	default:
@@ -1132,7 +1132,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
     if ( count_idx == -1 ) {
       PAPIERROR( "get_count_idx_by_id failed for event num %d, id %d", i,
 		 pe_ctx->evt[i].event_id );
-      return PAPI_ESBSTR;
+      return PAPI_ECMP;
     }
 
     if (!pe_ctl->multiplexed) {

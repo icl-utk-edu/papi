@@ -1338,7 +1338,7 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 		   options.granularity.granularity = granularity;
 		   retval = PAPI_set_opt( PAPI_GRANUL, &options );
 		   if ( retval != PAPI_OK ) {
-		      if ( retval != PAPI_ESBSTR ) {
+		      if ( retval != PAPI_ECMP ) {
 			 /* ignore component errors because they typically mean
 			    "not supported by the component" */
 			 MPXDBG( "PAPI_set_opt(PAPI_GRANUL, ...) = %d\n", 

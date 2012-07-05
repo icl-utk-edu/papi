@@ -7,8 +7,6 @@
 #endif
 #include "papi_test.h"
 
-extern int TESTS_QUIET;
-
 int
 main( int argc, char **argv )
 {
@@ -31,7 +29,7 @@ main( int argc, char **argv )
 	opt.inherit.inherit = PAPI_INHERIT_ALL;
 	opt.inherit.eventset = EventSet;
 	if ( ( retval = PAPI_set_opt( PAPI_INHERIT, &opt ) ) != PAPI_OK ) {
-		if ( retval == PAPI_ESBSTR) {
+		if ( retval == PAPI_ECMP) {
 			test_skip( __FILE__, __LINE__, "Inherit not supported by current component.\n", retval );
 		} else {
 			test_fail_exit( __FILE__, __LINE__, "PAPI_set_opt", retval );

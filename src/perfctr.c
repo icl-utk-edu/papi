@@ -1,6 +1,5 @@
 /* 
 * File:    perfctr.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci at cs.utk.edu
 * Mods:    Kevin London
@@ -284,7 +283,7 @@ _perfctr_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 #endif
 	case PAPI_GRANUL:
 	case PAPI_DEFGRN:
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 	case PAPI_ATTACH:
 		return ( attach( option->attach.ESI->ctl_state, option->attach.tid ) );
 	case PAPI_DETACH:

@@ -495,7 +495,7 @@ int _papi_freebsd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 
 		}
 		else
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 	}
 	return PAPI_OK;
 }
@@ -535,7 +535,7 @@ int _papi_freebsd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long
 			}
 		}
 		else
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 	}
 	return PAPI_OK;
 }
@@ -611,7 +611,7 @@ int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain)
 		return found?PAPI_OK:PAPI_EINVAL;
 	}
 	else
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 }
 
 
@@ -631,7 +631,7 @@ int _papi_freebsd_ctl (hwd_context_t *ctx, int code, _papi_int_option_t *option)
 			return _papi_freebsd_set_domain(option->domain.ESI->ctl_state, option->domain.domain);
 		case PAPI_GRANUL:
 		case PAPI_DEFGRN:
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 		default:
 			return PAPI_EINVAL;
    }

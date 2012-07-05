@@ -81,7 +81,7 @@ int read_stealtime( struct STEALTIME_context *context, int starting) {
 
   fff=fopen("/proc/stat","r");
   if (fff==NULL) {
-     return PAPI_ESBSTR; 
+     return PAPI_ESYS; 
   }
 
   for(i=0;i<num_events;i++) {
@@ -98,7 +98,7 @@ int read_stealtime( struct STEALTIME_context *context, int starting) {
 		 &our_stat.softirq,
 		 &our_stat.steal,
 		 &our_stat.guest);
-    if (count<=7) return PAPI_ESBSTR;
+    if (count<=7) return PAPI_ESYS;
 
     if (starting) {
        context->start_count[i]=our_stat.steal;
@@ -142,7 +142,7 @@ _stealtime_init_component( int cidx )
 	if (fff==NULL) {
 	   strncpy(_stealtime_vector.cmp_info.disabled_reason,
 		   "Cannot open /proc/stat",PAPI_MAX_STR_LEN);
-	   return PAPI_ESBSTR;
+	   return PAPI_ESYS;
 	}
 
 	num_events=0;
@@ -167,7 +167,7 @@ _stealtime_init_component( int cidx )
 	   strncpy(_stealtime_vector.cmp_info.disabled_reason,
 		   "Cannot find enough CPU lines in /proc/stat",
 		   PAPI_MAX_STR_LEN);
-	   return PAPI_ESBSTR;
+	   return PAPI_ESYS;
 	}
 
 	event_info=calloc(num_events,sizeof(struct counter_info));
