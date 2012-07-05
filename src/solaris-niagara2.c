@@ -57,6 +57,9 @@
 #include <sys/regset.h>
 #include <sys/utsname.h>
 
+#include "solaris-common.h"
+#include "solaris-memory.h"
+
 #define hwd_control_state_t _niagara2_control_state_t
 #define hwd_context_t       _niagara2_context_t
 #define hwd_register_t      _niagara2_register_t
@@ -64,55 +67,6 @@
 extern caddr_t _start, _end, _etext, _edata;
 extern papi_vector_t _niagara2_vector;
 
-/* Component functions */
-int niagara2_set_domain( hwd_control_state_t *, int );
-int niagara2_ctl( hwd_context_t *, int, _papi_int_option_t * );
-void _niagara2_dispatch_timer( int, siginfo_t *, void * );
-static inline void *_niagara2_get_overflow_address( void * );	// ?
-long_long _niagara2_get_real_usec( void );
-long_long _niagara2_get_real_cycles( void );
-long_long _niagara2_get_virt_usec( const hwd_context_t * );
-long_long _niagara2_get_virt_cycles( const hwd_context_t * );
-int _niagara2_get_system_info( papi_mdi_t *mdi );
-int _niagara2_init_control_state( hwd_control_state_t * );
-int _niagara2_init_component( int );
-static void _niagara2_lock_init( void );
-int _niagara2_ntv_code_to_bits( unsigned int, hwd_register_t * );
-int _niagara2_ntv_code_to_descr( unsigned int, char *, int );
-int _niagara2_ntv_code_to_name( unsigned int, char *, int );
-int _niagara2_ntv_enum_events( unsigned int *, int );
-int _niagara2_read( hwd_context_t *, hwd_control_state_t *, long_long **, int );
-int _niagara2_reset( hwd_context_t *, hwd_control_state_t * );
-int _niagara2_set_profile( EventSetInfo_t *, int, int );
-int _niagara2_set_overflow( EventSetInfo_t *, int, int );
-int _niagara2_shutdown( hwd_context_t * );
-int _niagara2_shutdown_global( void );
-int _niagara2_start( hwd_context_t *, hwd_control_state_t * );
-int _niagara2_stop( hwd_context_t *, hwd_control_state_t * );
-int _niagara2_update_control_state( hwd_control_state_t *, NativeInfo_t *, int,
-									hwd_context_t * );
-int _niagara2_update_shlib_info( papi_mdi_t );
-/* Functions from solaris-niagara2-memory.c */
-extern int _niagara2_get_memory_info( PAPI_hw_info_t *, int );
-extern int _niagara2_get_dmem_info( PAPI_dmem_info_t * );
-/* CPC-related functions */
-void __cpc_walk_events_pic_action_count( void *, uint_t, const char * );
-void __cpc_walk_events_pic_action_store( void *, uint_t, const char * );
-void __cpc_walk_attrs_action( void *, const char * );
-static inline int __cpc_build_ntv_table( void );
-static inline int __cpc_build_pst_table( void );
-static inline int __cpc_domain_translator( const int );
-static inline int __cpc_recreate_set( hwd_control_state_t * );
-int __cpc_enable_sigemt( hwd_control_state_t *, int );
-void __cpc_error_handler( const char *, int, const char *, va_list );
-/* Solaris-related functions */
-static inline int __sol_get_processor_clock( void );
-static inline int __sol_get_itimer_ns( int );
-static inline psinfo_t *__sol_get_proc_info( const pid_t );
-static inline lwpstatus_t *__sol_get_lwp_status( const pid_t, const lwpid_t );
-static inline pstatus_t *__sol_get_proc_status( const pid_t );
-/* Needed by PAPI */
-static void _niagara2_lock_init( void );
 /* Synthetic events */
 int __int_setup_synthetic_event( int, hwd_control_state_t *, void * );
 uint64_t __int_get_synthetic_event( int, hwd_control_state_t *, void * );
@@ -613,158 +567,6 @@ _niagara2_get_overflow_address( void *context )
 	return ( void * ) ctx->uc_mcontext.gregs[REG_PC];
 }
 
-long_long
-_niagara2_get_real_usec( void )
-{
-	// COPIED FROM THE OLD BACKEND
-
-	/* gethrvtime(3C) recommends these functions for performance measurement as
-	   being very accurate with very low cost for calling. The result is bound to
-	   the calling lwp. */
-
-#ifdef DEBUG
-	SUBDBG( "ENTERING/LEAVING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	return ( ( long_long ) gethrtime(  ) / ( long_long ) 1000 );
-}
-
-long_long
-_niagara2_get_real_cycles( void )
-{
-	// COPIED FROM THE OLD BACKEND
-
-	/* gethrvtime(3C) recommends these functions for performance measurement as
-	   being very accurate with very low cost for calling. The result is bound to
-	   the calling lwp. */
-
-#ifdef DEBUG
-	SUBDBG( "ENTERING/LEAVING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	return ( _niagara2_get_real_usec(  ) *
-			 ( long_long ) _papi_hwi_system_info.hw_info.cpu_max_mhz );
-
-}
-
-long_long
-_niagara2_get_virt_usec( void )
-{
-	// COPIED FROM THE OLD BACKEND
-
-	/* gethrvtime(3C) recommends these functions for performance measurement as
-	   being very accurate with very low cost for calling. The result is bound to
-	   the calling lwp. */
-
-#ifdef DEBUG
-	SUBDBG( "ENTERING/LEAVING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	return ( ( long_long ) gethrvtime(  ) / ( long_long ) 1000 );
-}
-
-
-int
-_niagara2_get_system_info( papi_mdi_t *mdi )
-{
-	// Used for evaluating return values
-	int retval = 0;
-	// Check for process settings
-	pstatus_t *proc_status;
-	psinfo_t *proc_info;
-	// Used for string truncating
-	char *c_ptr;
-	// For retrieving the executable full name
-	char exec_name[PAPI_HUGE_STR_LEN];
-	// For retrieving processor information
-	__sol_processor_information_t cpus;
-
-#ifdef DEBUG
-	SUBDBG( "ENTERING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	/* Get and set pid */
-	pid = getpid(  );
-
-	/* Check for microstate accounting */
-	proc_status = __sol_get_proc_status( pid );
-
-	if ( proc_status->pr_flags & PR_MSACCT == 0 ||
-		 proc_status->pr_flags & PR_MSFORK == 0 ) {
-		/* Solaris 10 should have microstate accounting always activated */
-		return PAPI_ECMP;
-	}
-
-	/* Fill _papi_hwi_system_info.exe_info.fullname */
-	proc_info = __sol_get_proc_info( pid );
-
-	// If there are arguments, trim the string to the executable name.
-	if ( proc_info->pr_argc > 1 ) {
-		c_ptr = strchr( proc_info->pr_psargs, ' ' );
-		if ( c_ptr != NULL )
-			c_ptr = '\0';
-	}
-
-	/* If the path can be qualified, use the full path, otherwise the trimmed
-	   name. */
-	if ( realpath( proc_info->pr_psargs, exec_name ) != NULL ) {
-		strncpy( _papi_hwi_system_info.exe_info.fullname, exec_name,
-				 PAPI_HUGE_STR_LEN );
-	} else {
-		strncpy( _papi_hwi_system_info.exe_info.fullname, proc_info->pr_psargs,
-				 PAPI_HUGE_STR_LEN );
-	}
-
-	/* Fill _papi_hwi_system_info.exe_info.address_info */
-	// Taken from the old component
-	strncpy( _papi_hwi_system_info.exe_info.address_info.name,
-			 basename( _papi_hwi_system_info.exe_info.fullname ),
-			 PAPI_HUGE_STR_LEN );
-	__CHECK_ERR_PAPI( _niagara2_update_shlib_info( &_papi_hwi_system_info ) );
-
-	/* Fill _papi_hwi_system_info.hw_info */
-
-	// Taken from the old component
-	_papi_hwi_system_info.hw_info.ncpu = sysconf( _SC_NPROCESSORS_ONLN );
-	_papi_hwi_system_info.hw_info.nnodes = 1;
-	_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_SUN;
-	strcpy( _papi_hwi_system_info.hw_info.vendor_string, "SUN" );
-	_papi_hwi_system_info.hw_info.totalcpus = sysconf( _SC_NPROCESSORS_CONF );
-	_papi_hwi_system_info.hw_info.model = 1;
-	strcpy( _papi_hwi_system_info.hw_info.model_string, cpc_cciname( cpc ) );
-
-	/* The field sparc-version is no longer in prtconf -pv */
-	_papi_hwi_system_info.hw_info.revision = 1;
-
-	/* Clock speed */
-	_papi_hwi_system_info.hw_info.mhz = ( float ) __sol_get_processor_clock(  );
-	_papi_hwi_system_info.hw_info.clock_mhz = __sol_get_processor_clock(  );
-	_papi_hwi_system_info.hw_info.cpu_max_mhz = __sol_get_processor_clock(  );
-	_papi_hwi_system_info.hw_info.cpu_min_mhz = __sol_get_processor_clock(  );
-
-	/* Fill _niagara2_vector.cmp_info.mem_hierarchy */
-
-	_niagara2_get_memory_info( &_papi_hwi_system_info.hw_info, 0 );
-
-	/* Fill _papi_hwi_system_info.sub_info */
-	strcpy( _niagara2_vector.cmp_info.name, "SunNiagara2" );
-	strcpy( _niagara2_vector.cmp_info.version, "ALPHA" );
-	strcpy( _niagara2_vector.cmp_info.support_version, "libcpc2" );
-	strcpy( _niagara2_vector.cmp_info.kernel_version, "libcpc2" );
-
-	/* libcpc2 uses SIGEMT using real hardware signals, no sw emu */
-
-#ifdef DEBUG
-	SUBDBG( "LEAVING FUNCTION  >>%s<< at %s:%d\n", __func__, __FILE__,
-			__LINE__ );
-#endif
-
-	return PAPI_OK;
-}
 
 /** Although the created set in this function will be destroyed by 
  * _papi_update_control_state later, at least the functionality of the
@@ -2414,24 +2216,6 @@ __int_walk_synthetic_events_action_store( void )
 }
 #endif
 
-int 
-_papi_hwi_init_os(void) {
-
-  struct utsname uname_buffer;
-
-  uname(&uname_buffer);
-
-  strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
-
-  strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
-
-  _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
-  _papi_os_info.itimer_num = PAPI_INT_ITIMER;
-  _papi_os_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
-  _papi_os_info.itimer_res_ns = 1;
-
-  return PAPI_OK;
-}
 
 papi_vector_t _niagara2_vector = {
 /************* COMPONENT CAPABILITIES/INFORMATION/ETC ************************/
@@ -2488,10 +2272,11 @@ papi_vector_t _niagara2_vector = {
 
 papi_os_vector_t _papi_os_vector = {
 	.get_memory_info = _niagara2_get_memory_info,
-	.get_dmem_info = _niagara2_get_dmem_info,
-	.get_real_usec = _niagara2_get_real_usec,
-	.get_real_cycles = _niagara2_get_real_cycles,
-	.get_virt_usec = _niagara2_get_virt_usec,
-	.update_shlib_info = _niagara2_update_shlib_info,
-	.get_system_info = _niagara2_get_system_info,
+	.get_dmem_info   = _solaris_get_dmem_info,
+
+	.get_real_usec =     _solaris_get_real_usec,
+	.get_real_cycles =   _solaris_get_real_cycles,
+	.get_virt_usec =     _solaris_get_virt_usec,
+	.update_shlib_info = _solaris_update_shlib_info,
+	.get_system_info =   _solaris_get_system_info,
 };

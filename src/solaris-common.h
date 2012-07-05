@@ -7,10 +7,15 @@
 #include <sys/procset.h>
 #include <syms.h>
 
+int _solaris_update_shlib_info( papi_mdi_t *mdi );
+int _solaris_get_system_info( papi_mdi_t *mdi );
+long long _solaris_get_real_usec( void );
+long long _solaris_get_real_cycles( void );
+long long _solaris_get_virt_usec( void );
+
 /* Assembler prototypes */
 
 extern void cpu_sync( void );
-extern unsigned long long get_tick( void );
 extern caddr_t _start, _end, _etext, _edata;
 
 extern rwlock_t lock[PAPI_MAX_LOCK];
@@ -56,3 +61,8 @@ extern rwlock_t lock[PAPI_MAX_LOCK];
 	SET_SIZE(get_tick)
 
 #endif
+
+
+
+
+
