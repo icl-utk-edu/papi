@@ -1,8 +1,6 @@
 #ifndef _PAPI_SOLARIS_H
 #define _PAPI_SOLARIS_H
 
-#include "papi_sys_headers.h"
-
 #include <synch.h>
 #include <procfs.h>
 #include <libcpc.h>
