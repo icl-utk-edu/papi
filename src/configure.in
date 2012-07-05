@@ -1203,17 +1203,23 @@ FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 # OS Support
 
 if (test "$OS" = "aix"); then
-    MEMSUBSTR=aix
+    OSFILESSRC=aix-memory.c
+    OSFILESOBJ=aix-memory.o
 elif (test "$OS" = "bgp"); then
-    MEMSUBSTR=linux-bgp
+    OSFILESSRC=linux-bgp-memory.c
+    OSFILESOBJ=linux-bgp-memory.o
 elif (test "$OS" = "bgq"); then
-  MEMSUBSTR=linux-bgq
+    OSFILESSRC=linux-bgq-memory.c
+    OSFILESOBJ=linux-bgq-memory.o
 elif (test "$OS" = "freebsd"); then
-    MEMSUBSTR=freebsd
+    OSFILESSRC=freebsd-memory.c
+    OSFILESOBJ=freebsd-memory.o
 elif (test "$OS" = "linux"); then
-    MEMSUBSTR=linux
+    OSFILESSRC=linux-memory.c
+    OSFILESOBJ=linux-memory.o
 elif (test "$OS" = "solaris"); then
-    MEMSUBSTR=solaris
+    OSFILESSRC=solaris-memory.c
+    OSFILESOBJ=solaris-memory.o
 fi
 
 
@@ -1678,7 +1684,8 @@ AC_SUBST(LIBRARY)
 AC_SUBST(SHLIB)
 AC_SUBST(OPTFLAGS)
 AC_SUBST(SUBSTR)
-AC_SUBST(MEMSUBSTR)
+AC_SUBST(OSFILESSRC)
+AC_SUBST(OSFILESOBJ)
 AC_SUBST(DESCR)
 AC_SUBST(LIBS)
 AC_SUBST(CTEST_TARGETS)

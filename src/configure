@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR MEMSUBSTR DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS SUBSTR OSFILESSRC OSFILESOBJ DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7056,6 +7056,29 @@ if test "x$CC" = "xgcc"; then
 fi
 FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 
+# OS Support
+
+if (test "$OS" = "aix"); then
+    OSFILESSRC=aix-memory.c
+    OSFILESOBJ=aix-memory.o
+elif (test "$OS" = "bgp"); then
+    OSFILESSRC=linux-bgp-memory.c
+    OSFILESOBJ=linux-bgp-memory.o
+elif (test "$OS" = "bgq"); then
+    OSFILESSRC=linux-bgq-memory.c
+    OSFILESOBJ=linux-bgq-memory.o
+elif (test "$OS" = "freebsd"); then
+    OSFILESSRC=freebsd-memory.c
+    OSFILESOBJ=freebsd-memory.o
+elif (test "$OS" = "linux"); then
+    OSFILESSRC=linux-memory.c
+    OSFILESOBJ=linux-memory.o
+elif (test "$OS" = "solaris"); then
+    OSFILESSRC=solaris-memory.c
+    OSFILESOBJ=solaris-memory.o
+fi
+
+
 if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$MAKEVER" = "aix-power7"); then
   if test "$bitmode" = "64"; then
     LIBRARY=libpapi64.a
@@ -7075,7 +7098,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
 
     SUBSTR=aix
     VECTOR=_aix_vector
-    MEMSUBSTR=aix
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
     MISCSRCS="aix.c"
@@ -7132,7 +7154,6 @@ elif test "$MAKEVER" = "bgp"; then
   CPP="$CC -E"
     SUBSTR=linux-bgp
     VECTOR=_bgp_vectors
-    MEMSUBSTR=linux-bgp
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS=linux-bgp-preset-events.c
     MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7155,7 +7176,6 @@ elif test "$MAKEVER" = "bgq"; then
   FILENAME=Rules.bgpm
   VECTOR=_bgq_vectors
   SUBSTR=linux-bgq
-  MEMSUBSTR=linux-bgq
   PAPI_EVENTS_CSV="papi_events.csv"
   MISCSRCS="linux-bgq-common.c"
   MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7170,7 +7190,6 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     VECTOR=_papi_pfm_vector
-    MEMSUBSTR=linux
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="x86_cpuid_info.c linux-common.c linux-timer.c"
   F77=gfortran
@@ -7179,20 +7198,18 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
 elif test "$MAKEVER" = "freebsd"; then
     SUBSTR=freebsd
     VECTOR=_papi_freebsd_vector
-    MEMSUBSTR=freebsd
     PAPI_EVENTS_CSV="freebsd_events.csv"
     MISCHDRS="freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h freebsd/map-westme\
 re.h"
     MISCSRCS="$MISCSRCS freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd/map-westme\
 re.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
-  DESCR="FreeBSD -over libpmc- substrate"
+  DESCR="FreeBSD -over libpmc- "
   CFLAGS="$CFLAGS -I. -Ifreebsd -DPIC -fPIC $DEBUGFLAGS"
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 elif test "$MAKEVER" = "linux-generic"; then
 
     SUBSTR=linux-generic
-    MEMSUBSTR=linux
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-common.c linux-timer.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7210,7 +7227,6 @@ elif test "$MAKEVER" = "linux-pe"; then
 
     SUBSTR=perf_events
     VECTOR=_papi_pe_vector
-    MEMSUBSTR=linux
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS sys_perf_event_open.c linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7220,7 +7236,6 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
     FILENAME=Rules.perfctr-pfm
     SUBSTR=perfctr-x86
     VECTOR=_perfctr_vector
-    MEMSUBSTR=linux
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7230,7 +7245,6 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
     FILENAME=Rules.perfctr
     SUBSTR=perfctr-ppc64
     VECTOR=_perfctr_vector
-    MEMSUBSTR=linux
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7264,7 +7278,6 @@ elif test "$MAKEVER" = "linux-perfmon2"; then
     FILENAME=Rules.pfm_pe
     SUBSTR=perfmon
     VECTOR=_papi_pfm_vector
-    MEMSUBSTR=linux
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7273,7 +7286,6 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-mon
     FILENAME=Rules.pfm
     SUBSTR=perfmon-ia64
     VECTOR=_ia64_vector
-    MEMSUBSTR=linux
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS linux-timer.c linux-common.c"
     MISCOBJS='$(MISCSRCS:.c=.o)'
@@ -7292,7 +7304,6 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-mon
 elif test "$MAKEVER" = "solaris-ultra"; then
     SUBSTR=solaris-ultra
     VECTOR=_solaris_vector
-    MEMSUBSTR=solaris
     PAPI_EVENTS_CSV="papi_events.csv"
   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
   CTEST_TARGETS="serial multiplex_and_pthreads shared"
@@ -7328,7 +7339,6 @@ elif test "$MAKEVER" = "solaris-ultra"; then
 elif test "$MAKEVER" = "solaris-niagara2"; then
     SUBSTR=solaris-niagara2
     VECTOR=_niagara2_vector
-    MEMSUBSTR=solaris-niagara2
     PAPI_EVENTS_CSV="papi_events.csv"
     CTEST_TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
     CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__ -DCOMP_VECTOR=_niagara2_vector"
@@ -7407,8 +7417,8 @@ if test "$VECTOR" = "_papi_dummy_vector"; then
     .write = NULL,
 	.cleanup_eventset = NULL,
     .stop_profiling = NULL,
-    .init_substrate = NULL,
-    .init = NULL,
+    .init_component = NULL,
+    .init_thread = NULL,
     .init_control_state = NULL,
     .update_control_state = NULL,
     .ctl = NULL,
@@ -7422,8 +7432,8 @@ if test "$VECTOR" = "_papi_dummy_vector"; then
     .ntv_code_to_bits = NULL,
     .ntv_code_to_info = NULL,
     .allocate_registers = NULL,
-    .shutdown = NULL,
-    .shutdown_substrate = NULL,
+    .shutdown_thread = NULL,
+    .shutdown_component = NULL,
     .user = NULL,
 };" >> components_config.h
 	# but in the face of actual components, we don't have to do hacky size games
@@ -7485,6 +7495,7 @@ fi
 if test "x$PAPI_EVENTS_CSV" == "x"; then
    PAPI_EVENTS_CSV="papi_events.csv"
 fi
+
 
 
 
@@ -8255,7 +8266,8 @@ s,@LIBRARY@,$LIBRARY,;t t
 s,@SHLIB@,$SHLIB,;t t
 s,@OPTFLAGS@,$OPTFLAGS,;t t
 s,@SUBSTR@,$SUBSTR,;t t
-s,@MEMSUBSTR@,$MEMSUBSTR,;t t
+s,@OSFILESSRC@,$OSFILESSRC,;t t
+s,@OSFILESOBJ@,$OSFILESOBJ,;t t
 s,@DESCR@,$DESCR,;t t
 s,@CTEST_TARGETS@,$CTEST_TARGETS,;t t
 s,@CC_R@,$CC_R,;t t

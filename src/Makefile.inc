@@ -2,11 +2,11 @@ PAPI_SRCDIR = $(PWD)
 CFLAGS += $(EXTRA_CFLAGS)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
-    threads.c cpus.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
+    threads.c cpus.c $(OSFILESSRC) $(SUBSTR).c papi_preset.c \
     papi_vector.c papi_memory.c papi_user_events.c $(COMPSRCS)
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
-    threads.o cpus.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o \
+    threads.o cpus.o $(OSFILESOBJ) $(SUBSTR).o papi_preset.o \
     papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h cpus.h papi_vector.h \
@@ -101,8 +101,20 @@ cpus.o: cpus.c $(HEADERS)
 papi_hl.o: papi_hl.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o 
 
-$(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(MEMSUBSTR)-memory.c -o $(MEMSUBSTR)-memory.o
+aix-memory.o: aix-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c aix-memory.c -o aix-memory.o
+
+solaris-memory.o: solaris-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c solaris-memory.c -o solaris-memory.o
+
+linux-bgp-memory.o: linux-bgp-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-bgp-memory.c -o linux-bgp-memory.o
+
+linux-bgq-memory.o: linux-bgq-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-bgq-memory.c -o linux-bgq-memory.o
+
+linux-memory.o: linux-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-memory.c -o linux-memory.o
 
 linux-timer.o: linux-timer.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-timer.c -o linux-timer.o
@@ -155,8 +167,8 @@ bgp_tests:$(LIBRARY) null
 	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
  
 #Required for freebsd
-#freebsd-memory.o: freebsd-memory.c $(HEADERS)
-#	$(CC) $(LIBCFLAGS) -c $< -o $@
+freebsd-memory.o: freebsd-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd/map.o: freebsd/map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
