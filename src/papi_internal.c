@@ -337,7 +337,7 @@ initialize_EventInfoArray( EventSetInfo_t * ESI )
 	tmp.event_code = ( unsigned int ) PAPI_NULL;
 	tmp.ops = NULL;
 	tmp.derived = NOT_DERIVED;
-	for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
+	for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
 		tmp.pos[j] = -1;
 
 	for ( i = 0; i < limit; i++ ) {
@@ -1265,7 +1265,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 
 
 	array[thisindex].event_code = ( unsigned int ) PAPI_NULL;
-	for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
+	for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
 		array[thisindex].pos[j] = -1;
 	array[thisindex].ops = NULL;
 	array[thisindex].derived = NOT_DERIVED;
@@ -1365,7 +1365,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 
       /* do we really need to do this, seeing as we free() it later? */
       ESI->EventInfoArray[i].event_code= ( unsigned int ) PAPI_NULL;
-      for( j = 0; j < MAX_COUNTER_TERMS; j++ ) {
+      for( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ ) {
 	  ESI->EventInfoArray[i].pos[j] = -1;
       }
       ESI->EventInfoArray[i].ops = NULL;
@@ -1587,7 +1587,7 @@ handle_derived_add( int *position, long long *from )
 	long long retval = 0;
 
 	i = 0;
-	while ( i < MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1604,7 +1604,7 @@ handle_derived_subtract( int *position, long long *from )
 	long long retval = from[position[0]];
 
 	i = 1;
-	while ( i < MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;

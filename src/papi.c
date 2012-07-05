@@ -6352,7 +6352,7 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 		set_bit -= 1;
 		overflow_vector ^= ( long long ) 1 << set_bit;
 		for ( j = 0; j < ESI->NumberOfEvents; j++ ) {
-			for ( k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++ ) {
+			for ( k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0; k++ ) {
 				pos = ESI->EventInfoArray[j].pos[k];
 				if ( ( set_bit == pos ) &&
 					 ( ( ESI->EventInfoArray[j].derived == NOT_DERIVED ) ||

@@ -17,7 +17,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 
-#include SUBSTRATE
+#include "freebsd.h"
 #include "map.h"
 
 #include "freebsd-memory.h"

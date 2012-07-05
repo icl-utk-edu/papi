@@ -15,7 +15,7 @@
 * This file MUST be kept synchronised with the events file.
 *
 */
-#include SUBSTRATE
+#include CPUCOMPONENT
 
 PPC64_native_map_t native_name_map[PAPI_MAX_NATIVE_EVENTS] = {
 	{"PM_0INST_FETCH", -1}

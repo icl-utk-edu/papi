@@ -25,8 +25,7 @@
 
 #include "x86_cpuid_info.h"
 
-#include SUBSTRATE
-
+#include "linux-lock.h"
 
 /* 2.6.19 has this:
 VmPeak:     4588 kB

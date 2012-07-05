@@ -1204,18 +1204,22 @@ FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 
 if (test "$OS" = "aix"); then
     OSFILESSRC=aix-memory.c
+    OSLOCK=aix-lock.h
 elif (test "$OS" = "bgp"); then
     OSFILESSRC=linux-bgp-memory.c
 elif (test "$OS" = "bgq"); then
     OSFILESSRC=linux-bgq-memory.c
 elif (test "$OS" = "freebsd"); then
     OSFILESSRC=freebsd-memory.c
+    OSLOCK="freebsd-lock.h"
 elif (test "$OS" = "linux"); then
     OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
     OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
+    OSLOCK="linux-lock.h"
 elif (test "$OS" = "solaris"); then
-    OSFILESSRC="solaris-memory.c"
-    OSFILESHDR="solaris-memory.h"
+    OSFILESSRC="solaris-memory.c solaris-common.c"
+    OSFILESHDR="solaris-memory.h solaris-common.h"
+    OSLOCK="solaris-lock.h"
 fi
 
 OSFILESOBJ='$(OSFILESSRC:.c=.o)'
@@ -1238,12 +1242,11 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     BITFLAGS="-bmaxdata:0x80000000/dsa"
   fi
 
-    SUBSTR=aix
+    CPUCOMPONENT=aix
     VECTOR=_aix_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
     MISCSRCS="aix.c"
-    MISCOBJS="aix.o"
     CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
 	SAVED_CFLAGS="$CFLAGS"
     CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
@@ -1294,12 +1297,10 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   fi
 elif test "$MAKEVER" = "bgp"; then
   CPP="$CC -E"
-    SUBSTR=linux-bgp
+    CPUCOMPONENT=linux-bgp
     VECTOR=_bgp_vectors
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS=linux-bgp-preset-events.c
-    MISCOBJS='$(MISCSRCS:.c=.o)'
-    SUBSTR_HEADERS=linux-bgp-native-events.h
     CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
     tests="$tests bgp_tests"
   SHOW_CONF=show_bgp_conf
@@ -1314,44 +1315,43 @@ elif test "$MAKEVER" = "bgp"; then
   LIBS=static
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   OMPCFLGS=""
+
 elif test "$MAKEVER" = "bgq"; then
   FILENAME=Rules.bgpm
   VECTOR=_bgq_vectors
-  SUBSTR=linux-bgq
+  CPUCOMPONENT=linux-bgq
   PAPI_EVENTS_CSV="papi_events.csv"
   MISCSRCS="linux-bgq-common.c"
-  MISCOBJS='$(MISCSRCS:.c=.o)'
-  SUBSTR_HEADERS=linux-bgq-common.h
   OPTFLAGS="-g -Wall -O3"
   TOPTFLAGS="-g -Wall -O0"
   SHLIB=libpapi.so
   DESCR="Linux for Blue Gene/Q"
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   OMPCFLGS=""
+
 elif test "$MAKEVER" = "CLE-perfmon2"; then 
     FILENAME=Rules.pfm_pe
-    SUBSTR=perfmon
+    CPUCOMPONENT=perfmon
     VECTOR=_papi_pfm_vector
     PAPI_EVENTS_CSV="papi_events.csv"
-    MISCSRCS="x86_cpuid_info.c"
   F77=gfortran
   CFLAGS="$CFLAGS -D__crayxt"
   FFLAGS=""
+
 elif test "$MAKEVER" = "freebsd"; then
-    SUBSTR=freebsd
+    CPUCOMPONENT=freebsd
     VECTOR=_papi_freebsd_vector
     PAPI_EVENTS_CSV="freebsd_events.csv"
     MISCHDRS="freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h freebsd/map-westme\
 re.h"
     MISCSRCS="$MISCSRCS freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd/map-westme\
 re.c"
-    MISCOBJS='$(MISCSRCS:.c=.o)'
   DESCR="FreeBSD -over libpmc- "
   CFLAGS="$CFLAGS -I. -Ifreebsd -DPIC -fPIC $DEBUGFLAGS"
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 
 elif test "$MAKEVER" = "linux-generic"; then
-    SUBSTR=linux-generic
+    CPUCOMPONENT=linux-generic
     PAPI_EVENTS_CSV="papi_events.csv"
     VECTOR=_papi_dummy_vector
 
@@ -1364,21 +1364,21 @@ elif test "$MAKEVER" = "linux-pe"; then
        FILENAME=Rules.pfm4_pe
     fi
 
-    SUBSTR=perf_events 
+    CPUCOMPONENT=perf_events 
     VECTOR=_papi_pe_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS sys_perf_event_open.c"
-    MISCOBJS='$(MISCSRCS:.c=.o)'
 
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
     FILENAME=Rules.perfctr-pfm
-    SUBSTR=perfctr-x86
+    CPUCOMPONENT=perfctr-x86
     VECTOR=_perfctr_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     VERSION=2.6.x  
+
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-POWER7" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
     FILENAME=Rules.perfctr
-    SUBSTR=perfctr-ppc64
+    CPUCOMPONENT=perfctr-ppc64
     VECTOR=_perfctr_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     VERSION=2.7.x
@@ -1406,14 +1406,16 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
     fi
     CFLAGS="$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors"
     FFLAGS='-D_$(CPU_MODEL)'
+
 elif test "$MAKEVER" = "linux-perfmon2"; then
     FILENAME=Rules.pfm_pe
-    SUBSTR=perfmon
+    CPUCOMPONENT=perfmon
     VECTOR=_papi_pfm_vector
     PAPI_EVENTS_CSV="papi_events.csv"
+
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-montecito"); then
     FILENAME=Rules.pfm
-    SUBSTR=perfmon-ia64
+    CPUCOMPONENT=perfmon-ia64
     VECTOR=_ia64_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     VERSION=3.y
@@ -1427,8 +1429,9 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-mon
     FFLAGS="$FFLAGS -DITANIUM$CPU"
 
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+
 elif test "$MAKEVER" = "solaris-ultra"; then
-    SUBSTR=solaris-ultra
+    CPUCOMPONENT=solaris-ultra
     VECTOR=_solaris_vector
     PAPI_EVENTS_CSV="papi_events.csv"
   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
@@ -1462,8 +1465,9 @@ elif test "$MAKEVER" = "solaris-ultra"; then
       CFLAGS="-xtarget=ultra3 -xarch=v9a -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors"
     OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v9a"
   fi
+
 elif test "$MAKEVER" = "solaris-niagara2"; then
-    SUBSTR=solaris-niagara2
+    CPUCOMPONENT=solaris-niagara2
     VECTOR=_niagara2_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     CTEST_TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
@@ -1494,6 +1498,10 @@ elif test "$MAKEVER" = "darwin"; then
 elif test "$MAKEVER" = "generic_platform"; then
   DESCR="Generic platform"
 fi
+
+MISCOBJS='$(MISCSRCS:.c=.o)'
+
+
 
 if test "$F77" = "pgf77"; then
   FFLAGS="$FFLAGS -Wall -Mextend"
@@ -1666,7 +1674,7 @@ AC_SUBST(FILENAME)
 AC_SUBST(LIBRARY)
 AC_SUBST(SHLIB)
 AC_SUBST(OPTFLAGS)
-AC_SUBST(SUBSTR)
+AC_SUBST(CPUCOMPONENT)
 AC_SUBST(OSFILESSRC)
 AC_SUBST(OSFILESOBJ)
 AC_SUBST(OSFILESHDR)

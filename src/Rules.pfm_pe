@@ -1,6 +1,6 @@
 # $Id$
 
-DESCR = "Linux with $(SUBSTR) kernel support and library"
+DESCR = "Linux with perf_event kernel support and library"
 
 ifneq (/usr,$(PFM_PREFIX))
 PWD = $(shell pwd)
@@ -22,7 +22,6 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 endif
 endif
 
-CFLAGS += -DSUBSTRATE_USES_LIBPFM -DSUBSTRATE_NAME_$(SUBSTR)
 MISCHDRS += perf_events.h linux-lock.h mb.h perfmon.h papi_libpfm_events.h $(PAPI_EVENTS_TABLE)
 MISCSRCS += papi_libpfm3_events.c
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
