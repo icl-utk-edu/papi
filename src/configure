@@ -7060,24 +7060,21 @@ FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 
 if (test "$OS" = "aix"); then
     OSFILESSRC=aix-memory.c
-    OSFILESOBJ=aix-memory.o
 elif (test "$OS" = "bgp"); then
     OSFILESSRC=linux-bgp-memory.c
-    OSFILESOBJ=linux-bgp-memory.o
 elif (test "$OS" = "bgq"); then
     OSFILESSRC=linux-bgq-memory.c
-    OSFILESOBJ=linux-bgq-memory.o
 elif (test "$OS" = "freebsd"); then
     OSFILESSRC=freebsd-memory.c
-    OSFILESOBJ=freebsd-memory.o
 elif (test "$OS" = "linux"); then
     OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
-    OSFILESOBJ='$(OSFILESSRC:.c=.o)'
-    OSFILESHDR="linux-timer.h linux-common.h"
+    OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
 elif (test "$OS" = "solaris"); then
-    OSFILESSRC=solaris-memory.c
-    OSFILESOBJ=solaris-memory.o
+    OSFILESSRC="solaris-memory.c"
+    OSFILESHDR="solaris-memory.h"
 fi
+
+OSFILESOBJ='$(OSFILESSRC:.c=.o)'
 
 
 if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$MAKEVER" = "aix-power7"); then
