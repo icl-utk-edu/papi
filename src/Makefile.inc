@@ -8,7 +8,7 @@ OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(SUBSTR).o papi_preset.o \
     papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
+HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h cpus.h papi_vector.h \
     papi_memory.h config.h papi_user_events.h \
     extras.h multiplex.h papi_hl.h \
