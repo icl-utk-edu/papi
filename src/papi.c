@@ -476,6 +476,7 @@ PAPI_library_init( int version )
 {
 	char *filename;
 	int tmp = 0, tmpel;
+
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
 	   true UNIX semaphore. We cannot use PAPI
@@ -498,10 +499,10 @@ PAPI_library_init( int version )
 	   If we have forked, then we continue to init. If we have not forked, 
 	   we check to see the status of initialization. */
 
-	APIDBG( "Initializing library: current PID %d, old PID %d\n", getpid(  ),
-			_papi_hwi_system_info.pid );
-	if ( _papi_hwi_system_info.pid == getpid(  ) )
-	{
+	APIDBG( "Initializing library: current PID %d, old PID %d\n", 
+                getpid(  ), _papi_hwi_system_info.pid );
+
+	if ( _papi_hwi_system_info.pid == getpid(  ) ) {
 		/* If the magic environment variable PAPI_ALLOW_STOLEN is set,
 		   we call shutdown if PAPI has been initialized. This allows
 		   tools that use LD_PRELOAD to run on applications that use PAPI.

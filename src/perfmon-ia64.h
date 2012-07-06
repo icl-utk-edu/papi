@@ -58,8 +58,6 @@
 #include "perfmon/pfmlib_itanium2.h"
 #include "perfmon/pfmlib_itanium.h"
 
-#include "linux-lock.h"
-
 typedef int ia64_register_t;
 typedef int ia64_register_map_t;
 typedef int ia64_reg_alloc_t;

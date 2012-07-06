@@ -750,7 +750,6 @@ int
 _papi_pfm_init_component( int cidx )
 {
    int retval;
-   unsigned int version;
    char buf[PAPI_HUGE_STR_LEN];
 
    /* The following checks the PFMLIB version 
@@ -762,7 +761,9 @@ _papi_pfm_init_component( int cidx )
 			          _papi_pfm_vector.cmp_info.kernel_version,
 			sizeof ( _papi_pfm_vector.cmp_info.kernel_version ) );
    if ( retval != PAPI_OK ) {
-		return retval;
+      strncpy(_papi_pfm_vector.cmp_info.disabled_reason,
+	     "/sys/kernel/perfmon/version not found",PAPI_MAX_STR_LEN);
+      return retval;
    }
 
 #ifdef PFM_VERSION
@@ -782,6 +783,9 @@ _papi_pfm_init_component( int cidx )
       }
    }
 #endif
+
+   _papi_pfm_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2,
+
 
    /* Run the libpfm-specific setup */
    retval=_papi_libpfm_init(&_papi_pfm_vector, cidx);
@@ -2215,7 +2219,6 @@ papi_vector_t _papi_pfm_vector = {
       .kernel_multiplex = 1,
       .kernel_profile = 1,
       .num_mpx_cntrs = PFMLIB_MAX_PMDS,
-      .hardware_intr_sig = SIGRTMIN + 2,
 
       /* component specific cmp_info initializations */
       .fast_real_timer = 1,

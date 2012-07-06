@@ -16,6 +16,7 @@
 #include "papi_vector.h"
 #include "threads.h"
 #include "papi_memory.h"
+#include "papi_lock.h"
 
 #include "linux-memory.h"
 #include "linux-timer.h"

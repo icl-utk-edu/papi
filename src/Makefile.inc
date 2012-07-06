@@ -14,7 +14,7 @@ HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h papiStdEventDefs.h 
     extras.h multiplex.h papi_hl.h \
     papi_common_strings.h components_config.h \
     papi_events_table.h
-LIBCFLAGS += -I. $(CFLAGS) -DCPUCOMPONENT=\"$(CPUCOMPONENT).h\" 
+LIBCFLAGS += -I. $(CFLAGS) -DCPUCOMPONENT=\"$(CPUCOMPONENT).h\" -DOSLOCK=\"$(OSLOCK)\"
 FHEADERS = fpapi.h f77papi.h f90papi.h
 
 all: $(SHOW_CONF) $(LIBS) utils tests

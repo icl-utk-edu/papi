@@ -24,7 +24,6 @@
 #include <assert.h>
 
 #include "papi.h"
-#include "papi_defines.h"
 #include <pmc.h>
 
 #include "freebsd-config.h"

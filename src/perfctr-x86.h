@@ -23,8 +23,10 @@
 
 #include "perfmon/pfmlib.h"
 #include "papi.h"
-#include "papi_defines.h"
 #include "libperfctr.h"
+#include "papi_lock.h"
+
+
 
 #define MAX_COUNTERS 18
 #define MAX_COUNTER_TERMS 8
@@ -45,9 +47,6 @@
 #define CONFIG_SMP
 #endif
 
-/* Lock macros */
-extern volatile unsigned int lock[PAPI_MAX_LOCK];
-#include "linux-lock.h"
 
 /* Used in resources.selector to determine on which counters an event can live. */
 #define CNTR1 0x1

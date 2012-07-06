@@ -2,7 +2,6 @@
 #define _PAPI_PERFMON_H
 /* 
 * File:    perfmon.h
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 *
@@ -31,9 +30,9 @@
 #include <sys/ptrace.h>
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon_dfl_smpl.h"
-#include "papi_defines.h"
+#include "papi_lock.h"
 
-#include "linux-lock.h"
+
 #include "linux-context.h"
 
 #if defined(DEBUG)

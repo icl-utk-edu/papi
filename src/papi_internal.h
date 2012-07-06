@@ -452,6 +452,7 @@ typedef struct _papi_os_option {
 
 extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 
+#include "papi_lock.h"
 #include "threads.h"
 #include "cpus.h"
 #include "papi_vector.h"

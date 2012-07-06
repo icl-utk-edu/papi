@@ -21,6 +21,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include "papi_lock.h"
 #include "extras.h"
 #include "linux-bgq.h"
 #include "error.h"

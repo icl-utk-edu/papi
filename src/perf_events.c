@@ -25,9 +25,10 @@
 #include <sys/ioctl.h>
 
 #include "papi.h"
-#include "papi_internal.h"
-#include "papi_vector.h"
+//#include "papi_vector.h"
 #include "papi_memory.h"
+//#include "papi_lock.h"
+#include "papi_internal.h"
 #include "papi_libpfm_events.h"
 #include "extras.h"
 #include "mb.h"
