@@ -93,6 +93,8 @@ void touch_dummy(double *ptr, int size);
 int approx_equals(double a, double b);
 void init_multiplex(void);
 
+void clockcore(void);
+
 /* Unix systems use %lld to display long long values
 	Windows uses %I64d for the same purpose.
 	Since these occur inside a quoted string,

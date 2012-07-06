@@ -7,9 +7,9 @@ CC	= gcc
 CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
 
-ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
-	  papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost \
-	  papi_component_avail papi_error_codes
+ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail \
+	papi_command_line papi_event_chooser papi_decode papi_xml_event_info \
+	papi_version papi_multiplex_cost papi_component_avail papi_error_codes
 UTILOBJS= ../testlib/do_loops.o ../testlib/dummy.o ../testlib/test_utils.o
 
 default all utils: $(UTIL_TARGETS)
@@ -20,8 +20,9 @@ papi_event_chooser: event_chooser.c $(PAPILIB) $(UTILOBJS)
 papi_xml_event_info: event_info.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) event_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info -lm
 
-papi_clockres: ../ctests/clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) ../ctests/clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
+papi_clockres: clockres.c $(PAPILIB) $(UTILOBJS) ../testlib/clockcore.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) clockres.c $(UTILOBJS) \
+		../testlib/clockcore.o $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
 
 papi_cost: cost.c $(UTILOBJS) $(PAPILIB) cost_utils.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cost.c $(UTILOBJS) cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
