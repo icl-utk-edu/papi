@@ -1061,7 +1061,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		 }
 
 		 remap = add_native_events( ESI,
-			 _papi_user_events[index].events,
+			 (unsigned int*)_papi_user_events[index].events,
 			 count, &ESI->EventInfoArray[thisindex] );
 
 		 if ( remap < 0 )
