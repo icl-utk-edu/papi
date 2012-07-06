@@ -1026,9 +1026,9 @@ _bgq_ntv_name_to_code( char *name, unsigned int *event_code )
 	 mask of instruxction group events to accumulate in the same counter */
 	char *XU_prefix  = "UPC_P_XU_OGRP_";
 	char *AXU_prefix = "UPC_P_AXU_OGRP_";
-
+#ifdef DEBUG_BGPM
 	printf( "name = ===%s===\n", name );
-	
+#endif	
 	if ( 0 == strncmp( name, XU_prefix, strlen( XU_prefix ) ) || 
 		0 == strncmp( name, AXU_prefix, strlen( AXU_prefix ) ) ) {
 
