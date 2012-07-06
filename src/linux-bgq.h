@@ -44,10 +44,14 @@
 /* this number assumes that there will never be more events than indicated */
 #define BGQ_PUNIT_MAX_COUNTERS PEVT_PUNIT_LAST_EVENT
 #define MAX_COUNTER_TERMS BGQ_PUNIT_MAX_COUNTERS
+// keep a large enough gap between actual BGPM events and our local opcode events
+#define OPCODE_BUF ( MAX_COUNTERS + MAX_COUNTERS ) 
+
 
 #include "papi.h"
 #include "papi_preset.h"
 #include "papi_defines.h"
+
 
 
 typedef struct
