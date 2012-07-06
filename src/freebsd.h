@@ -69,13 +69,12 @@ typedef struct hwd_ucontext {
 } hwd_ucontext_t;
 
 typedef struct hwd_libpmc_context {
-	int CPU;
+	int CPUtype;
 	int use_rdtsc;
 } hwd_libpmc_context_t;
 
 #define _papi_hwd_lock_init() { ; }
-#define _papi_hwd_lock(a) { ; }
-#define _papi_hwd_unlock(a) { ; }
+
 #define GET_OVERFLOW_ADDRESS(ctx) (0x80000000)
 
 #endif /* _PAPI_FreeBSD_LIBPMC_H */

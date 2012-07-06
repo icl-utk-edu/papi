@@ -4,7 +4,6 @@
 
 /* 
 * File:    map-westmere.h
-* CVS:     $Id:$
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
 */
