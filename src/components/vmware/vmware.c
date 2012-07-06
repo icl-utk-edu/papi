@@ -138,6 +138,22 @@ VMGuestLibError (*GuestLib_GetHostMemUnmappedMB)(VMGuestLibHandle handle, uint64
 static void *dlHandle = NULL;
 
 
+/*
+ * Macro to load a single GuestLib function from the shared library.
+ */
+
+#define LOAD_ONE_FUNC(funcname)                                 \
+do {                                                            \
+funcname = dlsym(dlHandle, "VM" #funcname);                     \
+if ((dlErrStr = dlerror()) != NULL) {                           \
+fprintf(stderr, "Failed to load \'%s\': \'%s\'\n",              \
+#funcname, dlErrStr);                                           \
+return FALSE;                                                   \
+}                                                               \
+} while (0)
+
+#endif
+
 /** Holds control flags, usually out-of band configuration of the hardware */
 struct _vmware_control_state {
    long long value[VMWARE_MAX_COUNTERS];
@@ -157,21 +173,7 @@ struct _vmware_context {
 
 
 
-/*
- * Macro to load a single GuestLib function from the shared library.
- */
 
-#define LOAD_ONE_FUNC(funcname)                                 \
-do {                                                            \
-funcname = dlsym(dlHandle, "VM" #funcname);                     \
-if ((dlErrStr = dlerror()) != NULL) {                           \
-fprintf(stderr, "Failed to load \'%s\': \'%s\'\n",              \
-#funcname, dlErrStr);                                           \
-return FALSE;                                                   \
-}                                                               \
-} while (0)
-
-#endif
 
 /*
  *-----------------------------------------------------------------------------
@@ -223,7 +225,7 @@ LoadFunctions(void)
 	         dlErrStr = dlerror();
 	         fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename, 
 		      dlErrStr);
-		 return PAPI_ESBSTR;
+		 return PAPI_ECMP;
 	      }
 	   }
 	}
@@ -313,7 +315,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"UpdateInfo failed: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   	   return PAPI_ESBSTR;
+	   	   return PAPI_ECMP;
 	}
 
 	/* Retrieve and check the session ID */
@@ -321,12 +323,12 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get session ID: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	if (tmpSession == 0) {
 	   fprintf(stderr, "Error: Got zero sessionId from GuestLib\n");
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	if (sessionId == 0) {
@@ -340,7 +342,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get CPU limit: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	glError = GuestLib_GetCpuReservationMHz(context->glHandle,&temp32); 
@@ -348,7 +350,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
         if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get CPU reservation: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 	
 	glError = GuestLib_GetCpuShares(context->glHandle,&temp32);
@@ -356,7 +358,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get cpu shares: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	glError = GuestLib_GetCpuStolenMs(context->glHandle,&temp64);
@@ -368,7 +370,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   } else {
 	      fprintf(stderr, "Failed to get CPU stolen: %s\n", 
 		      GuestLib_GetErrorText(glError));
-	      return PAPI_ESBSTR;
+	      return PAPI_ECMP;
 	   }
 	}
 
@@ -377,7 +379,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get used ms: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 	
 	glError = GuestLib_GetElapsedMs(context->glHandle, &temp64);
@@ -385,7 +387,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get elapsed ms: %s\n",
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	glError = GuestLib_GetMemActiveMB(context->glHandle, &temp32);
@@ -393,7 +395,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get active mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 	
 	glError = GuestLib_GetMemBalloonedMB(context->glHandle, &temp32);
@@ -401,7 +403,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get ballooned mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 	
 	glError = GuestLib_GetMemLimitMB(context->glHandle, &temp32);
@@ -409,7 +411,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr,"Failed to get mem limit: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
         glError = GuestLib_GetMemMappedMB(context->glHandle, &temp32);
@@ -417,7 +419,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get mapped mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	glError = GuestLib_GetMemOverheadMB(context->glHandle, &temp32);
@@ -425,7 +427,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get overhead mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	glError = GuestLib_GetMemReservationMB(context->glHandle, &temp32);
@@ -433,7 +435,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get mem reservation: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
         glError = GuestLib_GetMemSharedMB(context->glHandle, &temp32);
@@ -441,7 +443,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get swapped mem: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	glError = GuestLib_GetMemShares(context->glHandle, &temp32);
@@ -453,7 +455,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   } else {
 	      fprintf(stderr, "Failed to get mem shares: %s\n", 
 		      GuestLib_GetErrorText(glError));
-	      return PAPI_ESBSTR;
+	      return PAPI_ECMP;
 	   }
 	}
 
@@ -462,7 +464,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get swapped mem: %s\n",
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 	
 	glError = GuestLib_GetMemTargetSizeMB(context->glHandle, &temp64);
@@ -474,7 +476,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   } else {
 	      fprintf(stderr, "Failed to get target mem size: %s\n", 
 		      GuestLib_GetErrorText(glError));
-	      return PAPI_ESBSTR;
+	      return PAPI_ECMP;
 	   }
 	}
 
@@ -483,7 +485,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get swapped mem: %s\n",
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
         glError = GuestLib_GetHostProcessorSpeed(context->glHandle, &temp32); 
@@ -491,7 +493,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	   fprintf(stderr, "Failed to get host proc speed: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 	}
 
@@ -514,7 +516,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 
 /** This is called whenever a thread is initialized */
 int
-_vmware_init( hwd_context_t *ctx )
+_vmware_init_thread( hwd_context_t *ctx )
 {
 	(void) ctx;
 
@@ -531,7 +533,7 @@ _vmware_init( hwd_context_t *ctx )
 	   if (glError != VMGUESTLIB_ERROR_SUCCESS) {
 	      fprintf(stderr,"OpenHandle failed: %s\n", 
 		   GuestLib_GetErrorText(glError));
-	      return PAPI_ESBSTR;
+	      return PAPI_ECMP;
 	   }
 	}
 
@@ -546,14 +548,14 @@ _vmware_init( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_vmware_init_substrate( int cidx )
+_vmware_init_component( int cidx )
 {
 
   (void) cidx;
 
   int result;
 
-	SUBDBG( "_vmware_init_substrate..." );
+	SUBDBG( "_vmware_init_component..." );
 
 	/* Initialize and try to load the VMware library */
 	/* Try to load the library. */
@@ -563,7 +565,7 @@ _vmware_init_substrate( int cidx )
 	   strncpy(_vmware_vector.cmp_info.disabled_reason,
 		  "GuestLibTest: Failed to load shared library",
 		   PAPI_MAX_STR_LEN);
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 	/* we know in advance how many events we want                       */
@@ -900,7 +902,7 @@ _vmware_init_substrate( int cidx )
 	   strncpy(_vmware_vector.cmp_info.disabled_reason,
 		  "VMware SDK not installed, and PAPI_VMWARE_PSEUDOPERFORMANCE not set",
 		   PAPI_MAX_STR_LEN);
-	  return PAPI_ESBSTR;
+	  return PAPI_ECMP;
 	}
 
 	_vmware_vector.cmp_info.num_native_events = num_events;
@@ -1019,7 +1021,7 @@ _vmware_update_control_state( hwd_control_state_t *ctl,
 	control=(struct _vmware_control_state *)ctl;
 
 	for ( i = 0; i < count; i++ ) {
-	    index = native[i].ni_event &;
+	    index = native[i].ni_event;
 	    control->which_counter[i]=_vmware_native_table[index].which_counter;
 	    native[i].ni_position = i;
 	}
@@ -1124,7 +1126,7 @@ _vmware_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /** Shutting down a context */
 int
-_vmware_shutdown( hwd_context_t *ctx )
+_vmware_shutdown_thread( hwd_context_t *ctx )
 {
 	(void) ctx;
 
@@ -1139,7 +1141,7 @@ _vmware_shutdown( hwd_context_t *ctx )
            if (glError != VMGUESTLIB_ERROR_SUCCESS) {
                fprintf(stderr, "Failed to CloseHandle: %s\n", 
 		       GuestLib_GetErrorText(glError));
-               return PAPI_ESBSTR;
+               return PAPI_ECMP;
 	   }
 	}
 #endif
@@ -1149,7 +1151,7 @@ _vmware_shutdown( hwd_context_t *ctx )
 
 /** Triggered by PAPI_shutdown() */
 int
-_vmware_shutdown_substrate( void )
+_vmware_shutdown_component( void )
 {
 
 #ifdef VMGUESTLIB
@@ -1163,7 +1165,7 @@ _vmware_shutdown_substrate( void )
 }
 
 
-/** This function sets various options in the substrate
+/** This function sets various options in the component
  @param ctx
  @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
  @param option
@@ -1250,16 +1252,16 @@ papi_vector_t _vmware_vector = {
 	}
 	,
 	/* function pointers in this component */
-	.init = _vmware_init,
-	.init_substrate = _vmware_init_substrate,
+	.init_thread =        _vmware_init,
+	.init_component =     _vmware_init_component,
 	.init_control_state = _vmware_init_control_state,
-	.start = _vmware_start,
-	.stop = _vmware_stop,
-	.read = _vmware_read,
-	.write = _vmware_write,
-	.shutdown = _vmware_shutdown,
-	.shutdown_substrate = _vmware_shutdown_substrate,
-	.ctl = _vmware_ctl,
+	.start =              _vmware_start,
+	.stop =               _vmware_stop,
+	.read =               _vmware_read,
+	.write =              _vmware_write,
+	.shutdown_thread =    _vmware_shutdown_thread,
+	.shutdown_component = _vmware_shutdown_component,
+	.ctl =                _vmware_ctl,
 
 	.update_control_state = _vmware_update_control_state,
 	.set_domain = _vmware_set_domain,

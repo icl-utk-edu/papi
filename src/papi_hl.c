@@ -4,7 +4,6 @@
 
 /** 
 * @file		papi_hl.c
-* CVS:		$Id$
 * @author	Philip Mucci
 *			mucci@cs.utk.edu
 * @author	Kevin London
@@ -447,7 +446,7 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
   *	@endcode
   *
   * PAPI_num_counters() returns the optimal length of the values array for the high level functions. 
-  * This value corresponds to the number of hardware counters supported by the current substrate.
+  * This value corresponds to the number of hardware counters supported by the current CPU component.
   *
   * @note This function only works for the CPU component. To determine the number of counters on
   * another component, use the low level PAPI_num_cmp_hwctrs().

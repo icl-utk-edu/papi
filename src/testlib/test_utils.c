@@ -20,8 +20,9 @@ static int TEST_WARN = 0;
 int
 papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 {
-	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
-		return ( PAPI_ESBSTR );
+        if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
+	   return PAPI_ESYS;
+        }
 
 	printf( "%s", prompt );
 	printf
@@ -598,7 +599,7 @@ test_skip( char *file, int line, char *call, int retval )
 		} else if ( retval == PAPI_EPERM ) {
 			fprintf( stdout, "Line # %d\n", line );
 			fprintf( stdout, "Invalid permissions for %s.", call );
-		} else if ( retval == PAPI_ESBSTR ) {
+		} else if ( retval == PAPI_ECMP ) {
 			fprintf( stdout, "Line # %d\n", line );
 			fprintf( stdout, "%s.", call );
 		} else if ( retval >= 0 ) {
@@ -615,36 +616,6 @@ test_skip( char *file, int line, char *call, int retval )
 	exit( 0 );
 }
 
-#ifdef _WIN32
-#undef exit
-void
-wait( char *prompt )
-{
-	HANDLE hStdIn;
-	BOOL bSuccess;
-	INPUT_RECORD inputBuffer;
-	DWORD dwInputEvents;			   /* number of events actually read */
-
-	printf( prompt );
-	hStdIn = GetStdHandle( STD_INPUT_HANDLE );
-	do {
-		bSuccess = ReadConsoleInput( hStdIn, &inputBuffer, 1, &dwInputEvents );
-	}
-	while ( !
-			( inputBuffer.EventType == KEY_EVENT &&
-			  inputBuffer.Event.KeyEvent.bKeyDown ) );
-}
-
-int
-wait_exit( int retval )
-{
-	if ( !TESTS_QUIET )
-		wait( "Press any key to continue...\n" );
-	exit( retval );
-}
-
-#define exit wait_exit
-#endif
 
 void
 test_print_event_header( char *call, int evset )
@@ -772,7 +743,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
      s = PAPI_get_component_info( cidx );
      if ( s == NULL ) {
 	test_fail( __FILE__, __LINE__, 
-			   "PAPI_get_component_info", PAPI_ESBSTR );
+			   "PAPI_get_component_info", PAPI_ECMP );
      }
 
      hw_info = PAPI_get_hardware_info(  );

@@ -25,9 +25,10 @@
 #include <sys/ioctl.h>
 
 #include "papi.h"
-#include "papi_internal.h"
-#include "papi_vector.h"
+//#include "papi_vector.h"
 #include "papi_memory.h"
+//#include "papi_lock.h"
+#include "papi_internal.h"
 #include "papi_libpfm_events.h"
 #include "extras.h"
 #include "mb.h"
@@ -326,7 +327,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 
 	  if (retval != 0) {
 	    PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	    return PAPI_ESBSTR;
+	    return PAPI_ESYS;
 	  }
 
 #ifdef BRAINDEAD_MULTIPLEXING
@@ -339,7 +340,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 
 	  if (retval != 0) {
 		PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	  }
 
 #ifdef BRAINDEAD_MULTIPLEXING
@@ -354,7 +355,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 	    }
 	   if ( cnt == -1 ) {
 		SUBDBG( "read returned an error!  Should never happen.\n" );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	   }
 	   if ( cnt == 0 ) {
 		return PAPI_ECNFLCT;
@@ -369,7 +370,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 	       retval = ioctl( ctx->evt[idx].event_fd, PERF_EVENT_IOC_RESET, NULL) ;
 	       if (retval != 0) {
 		 PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-		 return PAPI_ESBSTR;
+		 return PAPI_ESYS;
 	       }
 	     } else
 #endif
@@ -378,7 +379,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 			       NULL );
 			if (retval != 0) {
 			  PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-			  return PAPI_ESBSTR;
+			  return PAPI_ESYS;
 			}
 		}
 	   }
@@ -787,7 +788,7 @@ set_granularity( control_state_t * this_state, int domain )
 	case PAPI_GRN_SYS:
 	case PAPI_GRN_SYS_CPU:
 	case PAPI_GRN_PROC:
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	case PAPI_GRN_THR:
 		break;
 	default:
@@ -835,7 +836,7 @@ static int pe_vendor_fixups(void) {
 
 
 static int
-_papi_pe_init_substrate( int cidx )
+_papi_pe_init_component( int cidx )
 {
 
   int retval;
@@ -901,7 +902,7 @@ _papi_pe_init_substrate( int cidx )
 }
 
 static int
-_papi_sub_pe_init( hwd_context_t * thr_ctx )
+_papi_pe_init_thread( hwd_context_t * thr_ctx )
 {
 	( void ) thr_ctx;		 /*unused */
 	/* No initialization is needed */
@@ -1132,7 +1133,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
     if ( count_idx == -1 ) {
       PAPIERROR( "get_count_idx_by_id failed for event num %d, id %d", i,
 		 pe_ctx->evt[i].event_id );
-      return PAPI_ESBSTR;
+      return PAPI_ECMP;
     }
 
     if (!pe_ctl->multiplexed) {
@@ -1157,8 +1158,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
       }	else {
 	/* This should not happen, but does. For example a Intel(R) Pentium(R) M processor 1600MHz (9)
 Linux thinkpad 2.6.38-02063808-generic #201106040910 SMP Sat Jun 4 10:51:30 UTC 2011 i686 GNU/Linux:
-SUBSTRATE:perf_events.c:_papi_pe_read:1148:24625 read: 1 214777 0
-SUBSTRATE:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time_enabled 214777) / tot_time_running 0 */
+COMPONENT:perf_events.c:_papi_pe_read:1148:24625 read: 1 214777 0
+COMPONENT:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time_enabled 214777) / tot_time_running 0 */
 	SUBDBG("perf_event kernel bug(?) count, enabled, running: %lld, %lld, %lld\n",papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
 	pe_ctl->counts[i] = papi_pe_buffer[count_idx];
       }
@@ -1336,7 +1337,7 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 		/* pe_ctl->events[i].freq = 0; */
 
 		/*
-		 * In this substrate, wakeup_events is set to zero when profiling,
+		 * In this component, wakeup_events is set to zero when profiling,
 		 * meaning only alert user space on an "mmap buffer page full"
 		 * condition.  It is set to 1 when PAPI_overflow has been called so
 		 * that user space is alerted on every counter overflow.  In any
@@ -1493,7 +1494,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 }
 
 static int
-_papi_pe_shutdown( hwd_context_t * ctx )
+_papi_pe_shutdown_thread( hwd_context_t * ctx )
 {
 	context_t *pe_ctx = ( context_t * ) ctx;
 	int ret;
@@ -1504,7 +1505,7 @@ _papi_pe_shutdown( hwd_context_t * ctx )
 }
 
 int
-_papi_pe_shutdown_substrate(  ) {
+_papi_pe_shutdown_component(  ) {
 
 	_papi_libpfm_shutdown();
 
@@ -2100,8 +2101,8 @@ papi_vector_t _papi_pe_vector = {
 	.start = _papi_pe_start,
 	.stop = _papi_pe_stop,
 	.read = _papi_pe_read,
-	.shutdown = _papi_pe_shutdown,
-	.shutdown_substrate = _papi_pe_shutdown_substrate,
+	.shutdown_thread = _papi_pe_shutdown_thread,
+	.shutdown_component = _papi_pe_shutdown_component,
 	.ctl = _papi_pe_ctl,
 	.update_control_state = _papi_pe_update_control_state,
 	.set_domain = set_domain,
@@ -2109,11 +2110,11 @@ papi_vector_t _papi_pe_vector = {
 	.set_overflow = _papi_pe_set_overflow,
 	.set_profile = _papi_pe_set_profile,
 	.stop_profiling = _papi_pe_stop_profiling,
-	.init_substrate = _papi_pe_init_substrate,
+	.init_component = _papi_pe_init_component,
 	.dispatch_timer = _papi_pe_dispatch_timer,
 	.allocate_registers = _papi_pe_allocate_registers,
 	.write = _papi_pe_write,
-	.init = _papi_sub_pe_init,
+	.init_thread = _papi_pe_init_thread,
 
 	/* from counter name mapper */
 	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,

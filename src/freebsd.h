@@ -3,7 +3,6 @@
 /****************************/
 /* 
 * File:    freebsd-libpmc.c
-* CVS:     $Id$
 * Author:  Kevin London
 *          london@cs.utk.edu
 * Mods:    Harald Servat
@@ -25,7 +24,6 @@
 #include <assert.h>
 
 #include "papi.h"
-#include "papi_defines.h"
 #include <pmc.h>
 
 #include "freebsd-config.h"
@@ -71,7 +69,7 @@ typedef struct hwd_ucontext {
 } hwd_ucontext_t;
 
 typedef struct hwd_libpmc_context {
-	int CPUsubstrate;
+	int CPU;
 	int use_rdtsc;
 } hwd_libpmc_context_t;
 

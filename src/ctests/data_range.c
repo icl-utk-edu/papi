@@ -1,15 +1,13 @@
 /* 
 * File:    data_range.c
-* CVS:     $Id$
 * Author:  Dan Terpstra
 *          terpstra@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
 
-/* This file performs the following test: exercise the Itanium data address range interface
-
-*/
+/* This file performs the following test: */
+/*     exercise the Itanium data address range interface */
 
 #include "papi_test.h"
 #define NUM 16384
@@ -67,7 +65,7 @@ main( int argc, char **argv )
 	PAPI_event_name_to_code( event_name[0], &PAPI_event[0] );
 	PAPI_event_name_to_code( event_name[1], &PAPI_event[1] );
 #else
-	test_fail( __FILE__, __LINE__, "only works for Itanium", PAPI_ESBSTR );
+	test_skip( __FILE__, __LINE__, "only works for Itanium", PAPI_ENOSUPP );
 #endif
 
 	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )

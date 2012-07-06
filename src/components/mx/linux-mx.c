@@ -174,7 +174,7 @@ read_mx_counters( long long *counters )
 	fp = popen( mx_counters_exe, "r" );
 	if ( !fp ) {
 	   perror( "popen" );
-	   return PAPI_ESBSTR;
+	   return PAPI_ECMP;
 	}
 
 
@@ -211,7 +211,7 @@ read_mx_counters( long long *counters )
 
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  */
 
 /* Initialize hardware counters, setup the function vector table
@@ -219,7 +219,7 @@ read_mx_counters( long long *counters )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_mx_init_substrate(  )
+_mx_init_component(  )
 {
 
 	FILE *fff;
@@ -239,7 +239,7 @@ _mx_init_substrate(  )
 	      /* neither real nor fake found */
 	      strncpy(_mx_vector.cmp_info.disabled_reason,
 		      "No MX utilities found",PAPI_MAX_STR_LEN);
-	      return PAPI_ESBSTR;
+	      return PAPI_ECMP;
 	   }
 	}
 	pclose(fff);
@@ -255,7 +255,7 @@ _mx_init_substrate(  )
  * This is called whenever a thread is initialized
  */
 int
-_mx_init( hwd_context_t * ctx )
+_mx_init_thread( hwd_context_t * ctx )
 {
 	( void ) ctx;			 /*unused */
 	return PAPI_OK;
@@ -263,13 +263,13 @@ _mx_init( hwd_context_t * ctx )
 
 
 int
-_mx_shutdown_substrate(void) 
+_mx_shutdown_component(void) 
 {
   return PAPI_OK;
 }
 
 int
-_mx_shutdown( hwd_context_t * ctx )
+_mx_shutdown_thread( hwd_context_t * ctx )
 {
 	( void ) ctx;			 /*unused */
 	return PAPI_OK;
@@ -402,7 +402,7 @@ _mx_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
  * Functions for setting up various options
  */
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -529,14 +529,14 @@ papi_vector_t _mx_vector = {
 	    .reg_alloc = sizeof ( MX_reg_alloc_t ),
   },
         /* function pointers in this component */
-	.init =                 _mx_init,
-	.init_substrate =       _mx_init_substrate,
+	.init_thread =          _mx_init_thread,
+	.init_component =       _mx_init_component,
 	.init_control_state =   _mx_init_control_state,
 	.start =                _mx_start,
 	.stop =                 _mx_stop,
 	.read =                 _mx_read,
-	.shutdown =             _mx_shutdown,
-	.shutdown_substrate =   _mx_shutdown_substrate,
+	.shutdown_thread =      _mx_shutdown_thread,
+	.shutdown_component =   _mx_shutdown_component,
 	.ctl =                  _mx_ctl,
 	.update_control_state = _mx_update_control_state,
 	.set_domain =           _mx_set_domain,

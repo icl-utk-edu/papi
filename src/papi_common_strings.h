@@ -567,7 +567,7 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
     /* 1 */ {PAPI_EINVAL, "PAPI_EINVAL", "Invalid argument"},
     /* 2 */ {PAPI_ENOMEM, "PAPI_ENOMEM", "Insufficient memory"},
     /* 3 */ {PAPI_ESYS, "PAPI_ESYS", "A System/C library call failed"},
-    /* 4 */ {PAPI_ESBSTR, "PAPI_ESBSTR", "Not supported by substrate"},
+    /* 4 */ {PAPI_ECMP, "PAPI_ECMP", "Not supported by component"},
     /* 5 */ {PAPI_ECLOST, "PAPI_ECLOST", "Access to the counters was lost or interrupted"},
     /* 6 */ {PAPI_EBUG, "PAPI_EBUG", "Internal error, please send mail to the developers"},
     /* 7 */ {PAPI_ENOEVNT, "PAPI_ENOEVNT", "Event does not exist"},

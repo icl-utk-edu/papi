@@ -70,7 +70,7 @@ insert_in_list(char *name, char *units,
 		   free(temp);
 		   PAPIERROR("This shouldn't be possible\n");
 
-		   return PAPI_ESBSTR;
+		   return PAPI_ECMP;
     }
 
     last = temp;
@@ -287,7 +287,7 @@ generateEventList(char *base_dir)
 done_error:
     closedir(d);
     closedir(dir);
-    return PAPI_ESBSTR;
+    return PAPI_ECMP;
 }
 
 static long long
@@ -325,7 +325,7 @@ getEventValue( int index )
  * This is called whenever a thread is initialized
  */
 int 
-_coretemp_init( hwd_context_t *ctx )
+_coretemp_init_thread( hwd_context_t *ctx )
 {
   ( void ) ctx;
   return PAPI_OK;
@@ -338,7 +338,7 @@ _coretemp_init( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int 
-_coretemp_init_substrate( int cidx )
+_coretemp_init_component( int cidx )
 {
      int i = 0;
      struct temp_event *t,*last;
@@ -471,7 +471,7 @@ _coretemp_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /* Shutdown a thread */
 int
-_coretemp_shutdown( hwd_context_t * ctx )
+_coretemp_shutdown_thread( hwd_context_t * ctx )
 {
   ( void ) ctx;
   return PAPI_OK;
@@ -479,10 +479,10 @@ _coretemp_shutdown( hwd_context_t * ctx )
 
 
 /*
- * Clean up what was setup in  coretemp_init_substrate().
+ * Clean up what was setup in  coretemp_init_component().
  */
 int 
-_coretemp_shutdown_substrate( ) 
+_coretemp_shutdown_component( ) 
 {
     if ( is_initialized ) {
        is_initialized = 0;
@@ -493,7 +493,7 @@ _coretemp_shutdown_substrate( )
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -694,14 +694,14 @@ papi_vector_t _coretemp_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init =                 _coretemp_init,
-	.init_substrate =       _coretemp_init_substrate,
+	.init_thread =          _coretemp_init_thread,
+	.init_component =       _coretemp_init_component,
 	.init_control_state =   _coretemp_init_control_state,
 	.start =                _coretemp_start,
 	.stop =                 _coretemp_stop,
 	.read =                 _coretemp_read,
-	.shutdown =             _coretemp_shutdown,
-	.shutdown_substrate =   _coretemp_shutdown_substrate,
+	.shutdown_thread =      _coretemp_shutdown_thread,
+	.shutdown_component =   _coretemp_shutdown_component,
 	.ctl =                  _coretemp_ctl,
 
 	.update_control_state = _coretemp_update_control_state,

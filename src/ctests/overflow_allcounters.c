@@ -1,6 +1,5 @@
 /* 
 * File:    overflow_allcounters.c
-* CVS:     $Id$
 * Author:  Haihang You
 *          you@cs.utk.edu
 * Mods:    Vince Weaver
@@ -23,13 +22,8 @@
 
 #include "papi_test.h"
 
-#if defined(_WIN32)
-#define OVER_FMT	"handler(%d ) Overflow at %p! bit=0x%llx \n"
-#define OUT_FMT		"%-12s : %16I64d%16I64d\n"
-#else
 #define OVER_FMT	"handler(%d ) Overflow at %p! bit=0x%llx \n"
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
-#endif
 
 static int total = 0;				   /* total overflows */
 
@@ -254,11 +248,11 @@ main( int argc, char **argv )
 
 			if ( using_perfmon )
 				test_warn( __FILE__, __LINE__,
-						   "perfmon substrate handles overflow differently than perf_events",
+						   "perfmon component handles overflow differently than perf_events",
 						   1 );
 			else if ( using_aix )
 				test_warn( __FILE__, __LINE__,
-						   "AIX (pmapi) substrate handles overflow differently than various other substrates",
+						   "AIX (pmapi) component handles overflow differently than various other components",
 						   1 );
 			else {
 				sprintf( error_string,

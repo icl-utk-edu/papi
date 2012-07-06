@@ -42,9 +42,7 @@
 
 #include "papi_common_strings.h"
 
-#ifdef USER_EVENTS
 #include "papi_user_events.h"
-#endif
 
 /* Advanced definitons */
 static int default_debug_handler( int errorCode );
@@ -339,7 +337,7 @@ initialize_EventInfoArray( EventSetInfo_t * ESI )
 	tmp.event_code = ( unsigned int ) PAPI_NULL;
 	tmp.ops = NULL;
 	tmp.derived = NOT_DERIVED;
-	for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
+	for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
 		tmp.pos[j] = -1;
 
 	for ( i = 0; i < limit; i++ ) {
@@ -401,7 +399,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 	char *ptr;
 
 	/* If component doesn't exist... */
-	if (_papi_hwi_invalid_cmp(cidx)) return PAPI_ESBSTR;
+	if (_papi_hwi_invalid_cmp(cidx)) return PAPI_ECMP;
 
 	/* Assigned at create time */
 
@@ -764,9 +762,7 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 		break;
 	     }
 	  }
-       } 
-#ifdef USER_EVENTS 
-	   else if ( IS_USER_DEFINED(head[j].event_code) ) {
+       } else if ( IS_USER_DEFINED(head[j].event_code) ) {
 		 for ( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
 		   nevt = _papi_user_events[preset_index].events[k];
 		   if ( nevt == PAPI_NULL )
@@ -778,7 +774,6 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 		   }
 		 }
 	   }
-#endif
 	   /* end of if */
        j++;
     }						 /* end of for loop */
@@ -1047,9 +1042,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		_papi_hwi_remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
 	     }
 	  }
-       } 
-#ifdef USER_EVENTS
-	   else if ( IS_USER_DEFINED( EventCode ) ) {
+       } else if ( IS_USER_DEFINED( EventCode ) ) {
 		 int count;
 		 int index = EventCode & PAPI_UE_AND_MASK;
 
@@ -1068,7 +1061,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		 }
 
 		 remap = add_native_events( ESI,
-			 _papi_user_events[index].events,
+			 (unsigned int*)_papi_user_events[index].events,
 			 count, &ESI->EventInfoArray[thisindex] );
 
 		 if ( remap < 0 )
@@ -1080,9 +1073,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		   if ( remap )
 			 _papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
 		 }
-	   } 
-#endif
-	   else {
+	   } else {
 
 	  /* not Native or Preset events */
 
@@ -1185,7 +1176,7 @@ remove_native_events( EventSetInfo_t *ESI, int *nevt, int size )
 
    /* If we removed any elements, 
       clear the now empty slots, reinitialize the index, and update the count.
-      Then send the info down to the substrate to update the hwd control structure. */
+      Then send the info down to the component to update the hwd control structure. */
 	retval = PAPI_OK;
 	if ( zero ) {
       /* get the context we should use for this event set */
@@ -1248,9 +1239,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 			retval = remove_native_events( ESI, &EventCode, 1 );
 			if ( retval != PAPI_OK )
 				return ( retval );
-		} 
-#ifdef USER_EVENTS
-		else if ( IS_USER_DEFINED( EventCode ) ) {
+		} else if ( IS_USER_DEFINED( EventCode ) ) {
 		  int index = EventCode & PAPI_UE_AND_MASK;
 
 		  if ( (index < 0) || (index >= (int)_papi_user_events_count) )
@@ -1264,9 +1253,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 			if ( retval != PAPI_OK )
 			  return ( retval );
 		  }
-		} 
-#endif
-		else
+		} else
 			return ( PAPI_ENOEVNT );
 	}
 	array = ESI->EventInfoArray;
@@ -1278,7 +1265,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 
 
 	array[thisindex].event_code = ( unsigned int ) PAPI_NULL;
-	for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
+	for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
 		array[thisindex].pos[j] = -1;
 	array[thisindex].ops = NULL;
 	array[thisindex].derived = NOT_DERIVED;
@@ -1378,7 +1365,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 
       /* do we really need to do this, seeing as we free() it later? */
       ESI->EventInfoArray[i].event_code= ( unsigned int ) PAPI_NULL;
-      for( j = 0; j < MAX_COUNTER_TERMS; j++ ) {
+      for( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ ) {
 	  ESI->EventInfoArray[i].pos[j] = -1;
       }
       ESI->EventInfoArray[i].ops = NULL;
@@ -1523,7 +1510,7 @@ _papi_hwi_init_global( void )
 
 	   /* We can be disabled by user before init */
 	   if (!_papi_hwd[i]->cmp_info.disabled) {
-	      retval = _papi_hwd[i]->init_substrate( i );
+	      retval = _papi_hwd[i]->init_component( i );
 	      _papi_hwd[i]->cmp_info.disabled=retval;
 	   }
 
@@ -1542,11 +1529,8 @@ _papi_hwi_init_global_internal( void )
 	int retval;
 
 	memset(&_papi_hwi_system_info,0x0,sizeof( _papi_hwi_system_info ));
-#ifndef _WIN32
 
-	/* An array on non-windows, a volatile int on windows? */
 	memset( _papi_hwi_using_signal,0x0,sizeof( _papi_hwi_using_signal ));
-#endif
 
 	/* Global struct to maintain EventSet mapping */
 	retval = allocate_eventset_map( &_papi_hwi_system_info.global_eventset_map );
@@ -1603,7 +1587,7 @@ handle_derived_add( int *position, long long *from )
 	long long retval = 0;
 
 	i = 0;
-	while ( i < MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1620,7 +1604,7 @@ handle_derived_subtract( int *position, long long *from )
 	long long retval = from[position[0]];
 
 	i = 1;
-	while ( i < MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_MAX_COUNTER_TERMS ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1919,7 +1903,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
        *out = _papi_hwi_native_to_eventcode(cidx,*out);
 
        /* If not implemented, work around */
-       if ( retval==PAPI_ESBSTR) {
+       if ( retval==PAPI_ECMP) {
           i = 0;
 	  _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
 	  
@@ -1996,9 +1980,9 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
        retval = _papi_hwd[cidx]->ntv_code_to_info( 
 			      _papi_hwi_eventcode_to_native(EventCode), info);
 
-       /* If substrate error, it's missing the ntv_code_to_info vector */
+       /* If component error, it's missing the ntv_code_to_info vector */
        /* so we'll have to fake it.                                    */
-       if ( retval == PAPI_ESBSTR ) {
+       if ( retval == PAPI_ECMP ) {
 
 
 	  SUBDBG("missing NTV_CODE_TO_INFO, faking\n");

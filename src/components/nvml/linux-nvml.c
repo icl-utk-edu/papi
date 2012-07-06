@@ -62,7 +62,7 @@ typedef struct nvml_context
 /** This table contains the native events */
 static nvml_native_event_entry_t *nvml_native_table;
 
-/** Number of devices detected at substrate_init time */
+/** Number of devices detected at component_init time */
 static int device_count = 0;
 
 /** number of events in the table*/
@@ -385,7 +385,7 @@ nvml_hardware_read( long long *value, int which_one)
 
 /** This is called whenever a thread is initialized */
 		int
-_papi_nvml_init( hwd_context_t * ctx )
+_papi_nvml_init_thread( hwd_context_t * ctx )
 {
 		(void) ctx;
 
@@ -816,7 +816,7 @@ createNativeEvents( )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 		int
-_papi_nvml_init_substrate( int cidx )
+_papi_nvml_init_component( int cidx )
 {
 		nvmlReturn_t ret;
 		cudaError_t cuerr;
@@ -1042,10 +1042,10 @@ _papi_nvml_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 
 /** Triggered by PAPI_shutdown() */
 		int
-_papi_nvml_shutdown_substrate()
+_papi_nvml_shutdown_component()
 {
 
-		SUBDBG( "nvml_shutdown_substrate..." );
+		SUBDBG( "nvml_shutdown_component..." );
 
 		papi_free(nvml_native_table);
 		papi_free(devices);
@@ -1060,12 +1060,12 @@ _papi_nvml_shutdown_substrate()
 
 /** Called at thread shutdown */
 		int
-_papi_nvml_shutdown( hwd_context_t *ctx )
+_papi_nvml_shutdown_thread( hwd_context_t *ctx )
 {
 
 		(void) ctx;
 
-		SUBDBG( "nvml_shutdown... %p", ctx );
+		SUBDBG( "nvml_shutdown_thread... %p", ctx );
 
 		/* Last chance to clean up thread */
 
@@ -1074,7 +1074,7 @@ _papi_nvml_shutdown( hwd_context_t *ctx )
 
 
 
-/** This function sets various options in the substrate
+/** This function sets various options in the component
   @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
  */
 		int
@@ -1229,10 +1229,10 @@ papi_vector_t _nvml_vector = {
 				.support_version = "n/a",
 				.kernel_version = "n/a",
 
-				.num_cntrs = 0, 		/* set by init_substrate */
+				.num_cntrs = 0, 		/* set by init_component */
 				.num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				.num_preset_events = 0,
-				.num_native_events = 0, /* set by init_substrate */
+				.num_native_events = 0, /* set by init_component */
 				.default_domain = PAPI_DOM_USER,
 				.available_domains = PAPI_DOM_USER,
 				.default_granularity = PAPI_GRN_THR,
@@ -1272,13 +1272,13 @@ papi_vector_t _nvml_vector = {
 		.read =                 _papi_nvml_read,
 		.reset =                _papi_nvml_reset,	
 		.write =                _papi_nvml_write,
-		.init_substrate =       _papi_nvml_init_substrate,	
-		.init =                 _papi_nvml_init,
+		.init_component =       _papi_nvml_init_component,	
+		.init_thread =          _papi_nvml_init_thread,
 		.init_control_state =   _papi_nvml_init_control_state,
-		.update_control_state = _papi_nvml_update_control_state,	
+		.update_control_state = _papi_nvml_update_control_state,
 		.ctl =                  _papi_nvml_ctl,	
-		.shutdown =             _papi_nvml_shutdown,
-		.shutdown_substrate =   _papi_nvml_shutdown_substrate,
+		.shutdown_thread =      _papi_nvml_shutdown_thread,
+		.shutdown_component =   _papi_nvml_shutdown_component,
 		.set_domain =           _papi_nvml_set_domain,
 		.cleanup_eventset =     NULL,
 		/* called in add_native_events() */

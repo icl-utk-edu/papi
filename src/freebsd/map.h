@@ -4,7 +4,6 @@
 
 /* 
 * File:    freebsd-map.h
-* CVS:     $Id$
 * Author:  Harald Servat
 *          redcrash@gmail.com
 */
@@ -50,7 +49,7 @@ typedef struct Native_Event_Info
 
 extern Native_Event_Info_t _papi_hwd_native_info[CPU_LAST+1];
 extern void init_freebsd_libpmc_mappings (void);
-extern int freebsd_substrate_number_of_events (int processortype);
+extern int freebsd_number_of_events (int processortype);
 
 #include "map-unknown.h"
 #include "map-p6.h"

@@ -81,7 +81,7 @@ perfctr_ppc64_setup_native_table(  )
 	ntv_event_info_t *info = perfctr_get_native_evt_info(  );
 	if ( info == NULL ) {
 		PAPIERROR( EVENT_INFO_FILE_ERROR );
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	}
 	ntv_event_t *wevp;
 	for ( pmc = 0; pmc < info->maxpmcs; pmc++ ) {
@@ -155,7 +155,7 @@ perfctr_ppc64_setup_native_table(  )
 	if ( gp_info == NULL ) {
 		perfctr_initialize_native_table(  );
 		PAPIERROR( EVENT_INFO_FILE_ERROR );
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	}
 
 	perfctr_ppc64_setup_gps( index, gp_info );

@@ -161,7 +161,7 @@ generateNetEventList( void )
                 free(temp);
                 fclose(fin);
                 PAPIERROR("This shouldn't be possible\n");
-                return PAPI_ESBSTR;
+                return PAPI_ECMP;
             }
             last = temp;
 
@@ -282,7 +282,7 @@ read_net_counters( long long *values )
  * This is called whenever a thread is initialized
  */
 int
-_net_init( hwd_context_t *ctx )
+_net_init_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
 
@@ -295,7 +295,7 @@ _net_init( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_net_init_substrate( int cidx  )
+_net_init_component( int cidx  )
 {
     int i = 0;
     struct temp_event *t, *last;
@@ -429,7 +429,7 @@ _net_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
  * Thread shutdown
  */
 int
-_net_shutdown( hwd_context_t *ctx )
+_net_shutdown_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
 
@@ -438,10 +438,10 @@ _net_shutdown( hwd_context_t *ctx )
 
 
 /*
- * Clean up what was setup in net_init_substrate().
+ * Clean up what was setup in net_init_component().
  */
 int
-_net_shutdown_substrate( void )
+_net_shutdown_component( void )
 {
     if ( is_initialized ) {
         is_initialized = 0;
@@ -453,7 +453,7 @@ _net_shutdown_substrate( void )
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and
  * PAPI_SET_INHERIT
@@ -667,14 +667,14 @@ papi_vector_t _net_vector = {
     },
 
     /* function pointers in this component */
-    .init                      = _net_init,
-    .init_substrate            = _net_init_substrate,
+    .init_thread               = _net_init_thread,
+    .init_component            = _net_init_component,
     .init_control_state        = _net_init_control_state,
     .start                     = _net_start,
     .stop                      = _net_stop,
     .read                      = _net_read,
-    .shutdown                  = _net_shutdown,
-    .shutdown_substrate        = _net_shutdown_substrate,
+    .shutdown_thread           = _net_shutdown_thread,
+    .shutdown_component        = _net_shutdown_component,
     .ctl                       = _net_ctl,
 
     .update_control_state      = _net_update_control_state,

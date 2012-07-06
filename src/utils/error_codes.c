@@ -51,10 +51,9 @@ main( int argc, char **argv )
 	printf( "There are %d error codes defined\n", PAPI_NUM_ERRORS );
 	printf( "----------------------------------\n" );
 	for (i = 0; i < PAPI_NUM_ERRORS; i++) {
-		char *errstr, *errdescr;
+		char *errstr;
 		errstr = PAPI_strerror( -i );
-		errdescr = PAPI_descr_error( -i );
-		printf( "Error code %4d: %-15s | %s\n", -i, errstr, errdescr );
+		printf( "Error code %4d: %s\n", -i, errstr );
 	}
 	printf( "----------------------------------\n\n" );
 	exit( 1 );

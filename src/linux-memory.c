@@ -25,8 +25,7 @@
 
 #include "x86_cpuid_info.h"
 
-#include SUBSTRATE
-
+#include "linux-lock.h"
 
 /* 2.6.19 has this:
 VmPeak:     4588 kB
@@ -55,7 +54,7 @@ _linux_get_dmem_info( PAPI_dmem_info_t * d )
 	f = fopen( fn, "r" );
 	if ( f == NULL ) {
 		PAPIERROR( "fopen(%s): %s\n", fn, strerror( errno ) );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	}
 	while ( 1 ) {
 		if ( fgets( tmp, PATH_MAX, f ) == NULL )
@@ -107,7 +106,7 @@ _linux_get_dmem_info( PAPI_dmem_info_t * d )
 	f = fopen( fn, "r" );
 	if ( f == NULL ) {
 		PAPIERROR( "fopen(%s): %s\n", fn, strerror( errno ) );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	}
 	ret =
 		fscanf( f, "%lld %lld %lld %lld %lld %lld %lld", &dum, &dum, &shr, &dum,
@@ -115,7 +114,7 @@ _linux_get_dmem_info( PAPI_dmem_info_t * d )
 	if ( ret != 7 ) {
 		PAPIERROR( "fscanf(7 items): %d\n", ret );
 		fclose(f);
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	}
 	d->pagesize = getpagesize(  );
 	d->shared = ( shr * d->pagesize ) / 1024;
@@ -142,7 +141,7 @@ x86_get_memory_info( PAPI_hw_info_t * hw_info )
 		break;
 	default:
 		PAPIERROR( "Unknown vendor in memory information call for x86." );
-		return PAPI_ESBSTR;
+		return PAPI_ENOIMPL;
 	}
 	return retval;
 }

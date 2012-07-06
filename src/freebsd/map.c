@@ -4,7 +4,6 @@
 
 /* 
 * File:    freebsd-map.c
-* CVS:     $Id$
 * Author:  Harald Servat
 *          redcrash@gmail.com
 */
@@ -38,7 +37,7 @@ void init_freebsd_libpmc_mappings (void)
 	_papi_hwd_native_info[CPU_LAST].info = NULL;
 }
 
-int freebsd_substrate_number_of_events (int processortype)
+int freebsd_number_of_events (int processortype)
 {
 	int counter = 0;
 

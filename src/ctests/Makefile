@@ -9,22 +9,29 @@ CFLAGS	= -g -O -Wall
 OMP	= zero_omp omptough
 SMP	= zero_smp
 SHMEM	= zero_shmem
-PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads krentel_pthreads
-MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
+PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads \
+	zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads \
+	krentel_pthreads
+MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
+	sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = inherit hwinfo code2name reset subinfo realtime virttime first exeinfo zero \
-	zero_named branches dmem_info all_native_events all_events derived high-level2 describe memory  \
+SERIAL  = inherit hwinfo code2name reset cmpinfo realtime virttime first \
+	exeinfo zero zero_named branches dmem_info all_native_events \
+	all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog \
 	get_event_component disable_component
-FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow \
-	child_overflow system_child_overflow system_overflow burn zero_fork
-OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn \
-	overflow overflow_force_software overflow_single_event overflow_twoevents timer_overflow overflow2 \
+FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
+	fork_overflow exec_overflow child_overflow system_child_overflow \
+	system_overflow burn zero_fork
+OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow \
+	system_overflow burn overflow overflow_force_software \
+	overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	overflow_index overflow_one_and_read overflow_allcounters
-PROFILE  = profile profile_force_software sprofile profile_twoevents byte_profile
+PROFILE  = profile profile_force_software sprofile profile_twoevents \
+	byte_profile
 ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target
 P4_TEST	= p4_lst_ins
 ACPI	= acpi 
@@ -173,8 +180,8 @@ omptough: omptough.c $(UTILOBJS) $(PAPILIB)
 val_omp: val_omp.c $(UTILOBJS) $(PAPILIB)
 	-$(CC_R) $(INCLUDE) $(OMPCFLGS) $(CFLAGS) $(TOPTFLAGS) val_omp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o val_omp $(OMPLIBS)
 
-clockres_pthreads: clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) 
-	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres_pthreads -lpthread -lm
+clockres_pthreads: clockres_pthreads.c $(UTILOBJS) $(PAPILIB)  ../testlib/clockcore.o
+	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) clockres_pthreads.c $(UTILOBJS) ../testlib/clockcore.o $(PAPILIB) $(LDFLAGS) -o clockres_pthreads -lpthread -lm
 
 inherit: inherit.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) inherit.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o inherit
@@ -326,8 +333,8 @@ shlib: shlib.c $(UTILOBJS) $(PAPILIB)
 exeinfo: exeinfo.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
 
-subinfo: subinfo.c $(UTILOBJS) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) subinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o subinfo 
+cmpinfo: cmpinfo.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cmpinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o cmpinfo 
 
 hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) hwinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o hwinfo

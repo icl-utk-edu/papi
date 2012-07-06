@@ -248,11 +248,13 @@ _papi_libpfm_ntv_code_to_name( unsigned int EventCode, char *ntv_name, int len )
 				( "pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
 				  &gete, gete.event, tmp, gete.num_masks, ntv_name, len, ret,
 				  pfm_strerror( ret ) );
-		if ( ret == PFMLIB_ERR_FULL )
-			return ( PAPI_EBUF );
-		return ( PAPI_ESBSTR );
+		if ( ret == PFMLIB_ERR_FULL ) {
+			return PAPI_EBUF;
+		}
+
+		return PAPI_EMISC;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int
@@ -449,14 +451,14 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
    SUBDBG( "pfm_initialize()\n" );
    if ( ( retval = pfm_initialize(  ) ) != PFMLIB_SUCCESS ) {
       PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    /* Get the libpfm3 version */
    SUBDBG( "pfm_get_version(%p)\n", &version );
    if ( pfm_get_version( &version ) != PFMLIB_SUCCESS ) {
       PAPIERROR( "pfm_get_version(%p): %s", version, pfm_strerror( retval ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    /* Set the version */
@@ -468,7 +470,7 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
       PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
 				   PFM_VERSION_MAJOR( PFMLIB_VERSION ),
 				   PFM_VERSION_MAJOR( version ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    /* Always initialize globals dynamically to handle forks properly. */
@@ -480,14 +482,14 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
    if ( pfm_get_pmu_type( &_perfmon2_pfm_pmu_type ) != PFMLIB_SUCCESS ) {
       PAPIERROR( "pfm_get_pmu_type(%p): %s", _perfmon2_pfm_pmu_type,
 				   pfm_strerror( retval ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
 
    pmu_name[0] = '\0';
    if ( pfm_get_pmu_name( pmu_name, PAPI_MIN_STR_LEN ) != PFMLIB_SUCCESS ) {
       PAPIERROR( "pfm_get_pmu_name(%p,%d): %s", pmu_name, PAPI_MIN_STR_LEN,
 				   pfm_strerror( retval ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
    SUBDBG( "PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type );
 
@@ -502,7 +504,7 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
    if ( ( retval = pfm_get_num_events( &ncnt ) ) != PFMLIB_SUCCESS ) {
       PAPIERROR( "pfm_get_num_events(%p): %s\n", &ncnt,
 				   pfm_strerror( retval ) );
-      return PAPI_ESBSTR;
+      return PAPI_ESYS;
    }
    SUBDBG( "pfm_get_num_events: %d\n", ncnt );
    my_vector->cmp_info.num_native_events = ncnt;
@@ -798,7 +800,7 @@ _papi_libpfm_setup_counters( struct perf_event_attr *attr,
     ret = pfm_dispatch_events( &inp, NULL, &outp, NULL );
     if (ret != PFMLIB_SUCCESS) {
        SUBDBG( "Error: pfm_dispatch_events returned: %d\n", ret);
-       return PAPI_ESBSTR;
+       return PAPI_ESYS;
     }
 		   	
        /* Special case p4 */

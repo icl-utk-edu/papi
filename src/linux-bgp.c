@@ -5,11 +5,6 @@
  */
 
 /*
- * This substrate should never malloc anything.  All allocations should be
- * done by the high level API.
- */
-
-/*
  * PAPI stuff
  */
 #include "papi.h"
@@ -21,7 +16,8 @@
 /*
  * BG/P specific 'stuff'
  */
-// BG/P includes
+
+/* BG/P includes */
 #include <common/bgp_personality_inlines.h>
 #include <spi/bgp_SPI.h>
 #include <ucontext.h>
@@ -33,10 +29,10 @@
 #include <string.h>
 #include <linux/utsname.h>
 
-// BG/P macros
+/* BG/P macros */
 #define get_cycles _bgp_GetTimeBase
 
-// BG/P external structures/functions
+/* BG/P external structures/functions */
 
 /* Defined in linux-bgp-preset-events.c */
 extern hwi_search_t *_bgp_preset_map;
@@ -44,7 +40,7 @@ extern hwi_search_t *_bgp_preset_map;
 extern int _bgp_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type );
 extern int _bgp_get_dmem_info( PAPI_dmem_info_t * pDmemInfo );
 
-// BG/P globals
+/* BG/P globals */
 hwi_search_t *preset_search_map;
 volatile unsigned int lock[PAPI_MAX_LOCK];
 const char *BGP_NATIVE_RESERVED_EVENTID = "Reserved";
@@ -216,7 +212,7 @@ _bgp_set_domain( hwd_control_state_t * cntrl, int domain )
  * All state is kept in BG/P UPC structures
  */
 int
-_bgp_init( hwd_context_t * ctx )
+_bgp_init_thread( hwd_context_t * ctx )
 {
 
 	return PAPI_OK;
@@ -307,7 +303,7 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
 	 */
 	if ( BGP_UPC_Check_Active(  ) ) {
 		SUBDBG( "_bgp_allocate_registers:  UPC is active...\n" );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	}
 
 	/*
@@ -315,7 +311,7 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
 	 */
 	if ( BGP_UPC_Get_Counter_Mode(  ) ) {
 		SUBDBG( "_bgp_allocate_registers:  Inconsistent counter mode...\n" );
-		return PAPI_ESBSTR;
+		return PAPI_ESYS;
 	}
 
 	/*
@@ -339,7 +335,7 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
 				if ( BGP_UPC_Monitor_Event( xEventId, BGP_UPC_CFG_EDGE_DEFAULT )
 					 < 0 ) {
 //          printf("_bgp_allocate_registers:  Monitor_Event failed...\n");
-					return PAPI_ESBSTR;
+					return PAPI_ECMP;
 				}
 			}
                         /* here is if we are event 255 */ 
@@ -360,11 +356,11 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
 			if ( ESI->NativeInfoArray[i].ni_event != PNE_BGP_IC_TIMESTAMP ) {
 				if ( BGP_UPC_Zero_Counter_Value( xEventId ) < 0 ) {
 //          printf("_bgp_allocate_registers:  Zero_Counter failed...\n");
-					return PAPI_ESBSTR;
+					return PAPI_ECMP;
 				}
 				if ( BGP_UPC_Set_Counter_Threshold_Value( xEventId, 0 ) < 0 ) {
 //          printf("_bgp_allocate_registers:  Set_Counter_Threshold_Value failed...\n");
-					return PAPI_ESBSTR;
+					return PAPI_ECMP;
 				}
 			}
 		}
@@ -462,7 +458,7 @@ _bgp_read( hwd_context_t * ctx, hwd_control_state_t * this_state,
 		   BGP_UPC_MAXIMUM_LENGTH_READ_COUNTERS_ONLY,
 		   BGP_UPC_READ_EXCLUSIVE ) < 0 ) {
 		sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	}
 	sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
         /* hack to emulate BGP_MISC_ELAPSED_TIME counter */
@@ -535,7 +531,7 @@ int
 _bgp_write( hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from )
 {
 
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 }
 
 /*
@@ -661,7 +657,7 @@ _bgp_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	/* This function is not used and shouldn't be called. */
 
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 /*
@@ -689,12 +685,12 @@ _bgp_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	case PAPI_DOMAIN:
 	case PAPI_DEFDOM:
 //    Simply return PAPI_OK, as no state is kept.
-		return ( PAPI_OK );
+		return PAPI_OK;
 	case PAPI_GRANUL:
 	case PAPI_DEFGRN:
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 	default:
-		return ( PAPI_EINVAL );
+		return PAPI_EINVAL;
 	}
 }
 
@@ -758,14 +754,14 @@ _bgp_get_virt_cycles( void )
 }
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  *
  * Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_bgp_init_substrate( int cidx )
+_bgp_init_component( int cidx )
 {
 	int retval;
 
@@ -871,7 +867,7 @@ _bgp_ntv_enum_events( unsigned int *EventCode, int modifier )
 //  printf("_bgp_ntv_enum_events:  EventCode=%8.8x\n", *EventCode);
 	if ( *EventCode < 0x40000000 || *EventCode > 0x400001FF ||
 		 ( modifier != PAPI_ENUM_ALL && modifier != PAPI_PRESET_ENUM_AVAIL ) )
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 
 	char xNativeEventName[BGP_UPC_MAXIMUM_LENGTH_EVENT_NAME];
 	BGP_UPC_RC_t xRC;
@@ -927,7 +923,7 @@ papi_vector_t _bgp_vectors = {
 				 /* Default component information (unspecified values are initialized to 0) */
 				 .name = "linux-bgp",
 				 .short_name = "bgp",
-				 .description = "BlueGene/P substrate",
+				 .description = "BlueGene/P component",
 
 				 // NOTE:  PAPI remove event processing depends on
 				 //        num_ctrs and num_mpx_cntrs being the same value.
@@ -962,8 +958,8 @@ papi_vector_t _bgp_vectors = {
 	.reset = _bgp_reset,
 	.write = _bgp_write,
 	.stop_profiling = _bgp_stop_profiling,
-	.init_substrate = _bgp_init_substrate,
-	.init = _bgp_init,
+	.init_component = _bgp_init_component,
+	.init_thread = _bgp_init,
 	.init_control_state = _bgp_init_control_state,
 	.update_control_state = _bgp_update_control_state,
 	.ctl = _bgp_ctl,

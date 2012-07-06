@@ -31,7 +31,7 @@ x86_get_memory_info( PAPI_hw_info_t *hw_info )
     break;
   default:
     PAPIERROR( "Unknown vendor in memory information call for x86." );
-    return PAPI_ESBSTR;
+    return PAPI_ENOIMPL;
   }
   return retval;
 }
@@ -48,7 +48,7 @@ _freebsd_get_memory_info( PAPI_hw_info_t *hw_info, int id)
         x86_get_memory_info( hw_info );
 #endif
 
-	return PAPI_ESBSTR;
+	return PAPI_ENOIMPL;
 }
 
 int _papi_freebsd_get_dmem_info(PAPI_dmem_info_t *d)

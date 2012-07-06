@@ -1,6 +1,3 @@
-/* This substrate should never malloc anything. All allocation should be
-   done by the high level API. */
-
 /* This file handles the OS dependent part of the POWER5 and POWER6 architectures.
   It supports both AIX 4 and AIX 5. The switch between AIX 4 and 5 is driven by the 
   system defined value _AIX_VERSION_510.
@@ -11,7 +8,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_defines.h"
+#include "papi_lock.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
 
@@ -252,10 +249,6 @@ _aix_allocate_registers( EventSetInfo_t * ESI )
 	}
 }
 
-
-/* This used to be init_config, static to the substrate.
-   Now its exposed to the hwi layer and called when an EventSet is allocated.
-*/
 int
 _aix_init_control_state( hwd_control_state_t * ptr )
 {
@@ -697,13 +690,13 @@ _aix_lock_init( void )
 }
 
 int
-_aix_shutdown( hwd_context_t * ctx )
+_aix_shutdown_thread( hwd_context_t * ctx )
 {
 	return ( PAPI_OK );
 }
 
 int
-_aix_init_substrate( int cidx )
+_aix_init_component( int cidx )
 {
 	int retval = PAPI_OK, procidx;
 
@@ -745,7 +738,7 @@ _aix_init_substrate( int cidx )
 		break;
 	default:
 		fprintf( stderr, "%s is not supported!\n", pminfo.proc_name );
-		return ( PAPI_ESBSTR );
+		return PAPI_ENOIMPL;
 	}
 
 	_aix_lock_init(  );
@@ -755,7 +748,7 @@ _aix_init_substrate( int cidx )
 
 
 int
-_aix_init( hwd_context_t * context )
+_aix_init_thread( hwd_context_t * context )
 {
 	int retval;
 	/* Initialize our global control state. */
@@ -1190,9 +1183,9 @@ _aix_update_shlib_info( papi_mdi_t *mdi )
 	_papi_hwi_system_info.shlib_info.count = t_index + 1;
 	papi_free( tmp1 );
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 #else
-	return PAPI_ESBSTR;
+	return PAPI_ENOIMPL;
 #endif
 }
 
@@ -1207,7 +1200,7 @@ _aix_ntv_name_to_code( char *name, unsigned int *evtcode )
                        return PAPI_OK;
                }
 
-       return PAPI_ESBSTR;
+       return PAPI_ENOEVNT;
 }
 
 
@@ -1283,11 +1276,11 @@ papi_vector_t _aix_vector = {
 	.ntv_code_to_descr = _aix_ntv_code_to_descr,
 	.ntv_code_to_bits =  _aix_ntv_code_to_bits,
 
-	.init_substrate = _aix_init_substrate,
+	.init_component = _aix_init_component,
 	.ctl = _aix_ctl,
 	.dispatch_timer = _aix_dispatch_timer,
-	.init = _aix_init,
-	.shutdown = _aix_shutdown,
+	.init_thread = _aix_init_thread,
+	.shutdown_thread = _aix_shutdown_thread,
 };
 
 papi_os_vector_t _papi_os_vector = {

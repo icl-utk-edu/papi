@@ -25,11 +25,7 @@ static void headerlines( char *title, int TESTS_QUIET );
 #define INDEX5 500
 
 /* #define DONT_FAIL */
-#if _WIN32					 /* recognize that Windows has more noise */
-#define MAX_ERROR 20
-#else
 #define MAX_ERROR 10
-#endif
 #define MAX_DIFF  14
 
 extern int TESTS_QUIET;

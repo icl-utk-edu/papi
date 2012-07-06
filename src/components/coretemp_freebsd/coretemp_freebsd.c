@@ -90,17 +90,17 @@ static int CORETEMP_NUM_EVENTS = 0;
 /********************************************************************/
 
 /** This is called whenever a thread is initialized */
-int coretemp_init (hwd_context_t * ctx)
+int coretemp_init_thread (hwd_context_t * ctx)
 {
 	int mib[4];
 	size_t len;
 	UNREFERENCED(ctx);
 
-	SUBDBG("coretemp_init %p...\n", ctx);
+	SUBDBG("coretemp_init_thread %p...\n", ctx);
 
 	len = 4;
 	if (sysctlnametomib ("dev.coretemp.0.%driver", mib, &len) == -1)
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 
 	return PAPI_OK;
 }
@@ -110,7 +110,7 @@ int coretemp_init (hwd_context_t * ctx)
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int coretemp_init_substrate ()
+int coretemp_init_component ()
 {
 	int ret;
 	int i;
@@ -118,7 +118,7 @@ int coretemp_init_substrate ()
 	size_t len;
 	char tmp[128];
 
-	SUBDBG("coretemp_init_substrate...\n");
+	SUBDBG("coretemp_init_component...\n");
 
 	/* Count the number of cores (counters) that have sensors allocated */
 	i = 0;
@@ -157,7 +157,7 @@ int coretemp_init_substrate ()
 		sprintf (tmp, "dev.cpu.%d.temperature", i);
 		len = 4;
 		if (sysctlnametomib (tmp, coretemp_native_table[i].resources.mib, &len) == -1)
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 
 		coretemp_native_table[i].resources.selector = i+1;
 	}
@@ -369,11 +369,10 @@ int coretemp_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 }
 
 /** Triggered by PAPI_shutdown() */
-int coretemp_shutdown (hwd_context_t * ctx)
+int coretemp_shutdown_component (void)
 {
-	UNREFERENCED(ctx);
 
-	SUBDBG( "coretemp_shutdown... %p\n", ctx );
+	SUBDBG( "coretemp_shutdown_component... %p\n", ctx );
 
 	/* Last chance to clean up */
 	papi_free (coretemp_native_table);
@@ -383,7 +382,7 @@ int coretemp_shutdown (hwd_context_t * ctx)
 
 
 
-/** This function sets various options in the substrate
+/** This function sets various options in the component
   @param ctx unused
   @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
   @param option unused
@@ -476,14 +475,14 @@ papi_vector_t _coretemp_freebsd_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init = coretemp_init,
-	.init_substrate = coretemp_init_substrate,
+	.init_thread = coretemp_init_thread,
+	.init_component = coretemp_init_component,
 	.init_control_state = coretemp_init_control_state,
 	.start = coretemp_start,
 	.stop = coretemp_stop,
 	.read = coretemp_read,
 	.write = coretemp_write,
-	.shutdown = coretemp_shutdown,
+	.shutdown_component = coretemp_shutdown_component,
 	.ctl = coretemp_ctl,
 
 	.update_control_state = coretemp_update_control_state,

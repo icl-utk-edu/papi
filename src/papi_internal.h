@@ -11,7 +11,6 @@
 *	       london@cs.utk.edu
 * @author  Haihang You
 *          you@cs.utk.edu
-* CVS:     $Id$
 */
 
 #ifndef _PAPI_INTERNAL_H
@@ -47,15 +46,9 @@ extern int init_level;
 
 /* Signal used for overflow delivery */
 
-/****WIN32 We'll need to figure out how to handle this for Windows */
-#ifdef _WIN32
-#define PAPI_INT_SIGNAL 1
-#define PAPI_INT_ITIMER 1
-#else
 #define PAPI_INT_MPX_SIGNAL SIGPROF
 #define PAPI_INT_SIGNAL SIGPROF
 #define PAPI_INT_ITIMER ITIMER_PROF
-#endif
 
 #define PAPI_INT_ITIMER_MS 1
 #if defined(linux)
@@ -91,7 +84,7 @@ extern int init_level;
 #define THREADS_LOCK		PAPI_NUM_LOCK+2	/* threads.c */
 #define HIGHLEVEL_LOCK		PAPI_NUM_LOCK+3	/* papi_hl.c */
 #define MEMORY_LOCK		PAPI_NUM_LOCK+4	/* papi_memory.c */
-#define SUBSTRATE_LOCK          PAPI_NUM_LOCK+5	/* <substrate.c> */
+#define COMPONENT_LOCK          PAPI_NUM_LOCK+5	/* per-component */
 #define GLOBAL_LOCK          	PAPI_NUM_LOCK+6	/* papi.c for global variable (static and non) initialization/shutdown */
 #define CPUS_LOCK		PAPI_NUM_LOCK+7	/* cpus.c */
 #define NAMELIB_LOCK            PAPI_NUM_LOCK+8 /* papi_pfm4_events.c */
@@ -102,7 +95,7 @@ extern int init_level;
 #define DONT_NEED_CONTEXT 	0
 
 
-/* This was defined by each substrate as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
+/* This was defined by each component as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
     Now it's defined globally as 8 for everything. Mainly applies to max terms in
     derived events.
 */
@@ -124,12 +117,11 @@ extern int init_level;
 
 /* DEFINES END HERE */
 
-#if !(defined(_WIN32) || defined(NO_CONFIG))
+#ifndef NO_CONFI
 #include "config.h"
 #endif
 
-//#include OS_HEADER
-#include SUBSTRATE
+#include CPUCOMPONENT
 #include "papi_preset.h"
 
 #ifndef inline_static
@@ -180,14 +172,14 @@ typedef struct _EventSetProfileInfo {
 
 /** This contains info about an individual event added to the EventSet.
   The event can be either PRESET or NATIVE, and either simple or derived.
-  If derived, it can consist of up to MAX_COUNTER_TERMS native events.
+  If derived, it can consist of up to PAPI_MAX_COUNTER_TERMS native events.
   An EventSet contains a pointer to an array of these structures to define
   each added event.
   @internal
  */
 typedef struct _EventInfo {
    unsigned int event_code;     /**< Preset or native code for this event as passed to PAPI_add_event() */
-   int pos[MAX_COUNTER_TERMS];   /**< position in the counter array for this events components */
+   int pos[PAPI_MAX_COUNTER_TERMS];   /**< position in the counter array for this events components */
    char *ops;                   /**< operation string of preset (points into preset event struct) */
    int derived;                 /**< Counter derivation command used for derived events */
 } EventInfo_t;
@@ -201,7 +193,7 @@ typedef struct _NativeInfo {
    int ni_event;                /**< native event code; always non-zero unless empty */
    int ni_position;             /**< counter array position where this native event lives */
    int ni_owners;               /**< specifies how many owners share this native event */
-   hwd_register_t *ni_bits;     /**< Substrate defined resources used by this native event */
+   hwd_register_t *ni_bits;     /**< Component defined resources used by this native event */
 } NativeInfo_t;
 
 
@@ -342,7 +334,7 @@ typedef struct _dynamic_array {
    int lowestEmptySlot;         /**< index of lowest empty dataSlotArray    */
 } DynamicArray_t;
 
-/* Substrate option types for _papi_hwd_ctl. */
+/* Component option types for _papi_hwd_ctl. */
 
 typedef struct _papi_int_attach {
    unsigned long tid;
@@ -433,10 +425,8 @@ typedef struct {
 typedef struct _papi_mdi {
    DynamicArray_t global_eventset_map;  /**< Global structure to maintain int<->EventSet mapping */
    pid_t pid;                   /**< Process identifier */
-/*   PAPI_substrate_info_t sub_info; *//* See definition in papi.h */
    PAPI_hw_info_t hw_info;      /**< See definition in papi.h */
    PAPI_exe_info_t exe_info;    /**< See definition in papi.h */
-/*   PAPI_mpx_info_t mpx_info; */   /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /**< See definition in papi.h */
    PAPI_preload_info_t preload_info; /**< See definition in papi.h */ 
 } papi_mdi_t;
@@ -462,6 +452,7 @@ typedef struct _papi_os_option {
 
 extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 
+#include "papi_lock.h"
 #include "threads.h"
 #include "cpus.h"
 #include "papi_vector.h"
@@ -491,7 +482,7 @@ _papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI )
 	/* Are we multiplexing at all */
 	if ( ( ESI->state & PAPI_MULTIPLEXING ) == 0 )
 		return ( 0 );
-	/* Does the substrate support kernel multiplexing */
+	/* Does the component support kernel multiplexing */
 	if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
 		/* Have we forced software multiplexing */
 		if ( ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW )

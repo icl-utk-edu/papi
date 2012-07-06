@@ -4,7 +4,6 @@
 
 /** 
  * @file    linux-bgq.c
- * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
@@ -22,6 +21,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include "papi_lock.h"
 #include "extras.h"
 #include "linux-bgq.h"
 #include "error.h"
@@ -607,7 +607,7 @@ _bgq_write( hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from )
 	( void ) cntrl;
 	( void ) from;
 	
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 }
 
 /*
@@ -823,7 +823,7 @@ _bgq_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	( void ) EventIndex;
 	( void ) threshold;
 	
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 }
 
 /*
@@ -938,14 +938,14 @@ _bgq_get_virt_cycles( void )
 }
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  *
  * Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_bgq_init_substrate( int cidx )
+_bgq_init_component( int cidx )
 {	
 #ifdef DEBUG_BGQ
 	printf("_bgq_init_substrate\n");
@@ -1243,7 +1243,7 @@ papi_vector_t _bgq_vectors = {
 				 /* Default component information (unspecified values are initialized to 0) */
 				 .name = "linux-bgq",
 				 .short_name = "bgq",
-				 .description = "Blue Gene/Q substrate",
+				 .description = "Blue Gene/Q component",
 				 .num_cntrs = BGQ_PUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
@@ -1276,8 +1276,8 @@ papi_vector_t _bgq_vectors = {
 	.reset = _bgq_reset,
 	.write = _bgq_write,
 	.stop_profiling = _bgq_stop_profiling,
-	.init_substrate = _bgq_init_substrate,
-	.init = _bgq_init,
+	.init_component = _bgq_init_component,
+	.init_thread = _bgq_init,
 	.init_control_state = _bgq_init_control_state,
 	.update_control_state = _bgq_update_control_state,
 	.ctl = _bgq_ctl,
@@ -1292,7 +1292,7 @@ papi_vector_t _bgq_vectors = {
 	.ntv_code_to_bits = _bgq_ntv_code_to_bits,
 	.allocate_registers = _bgq_allocate_registers,
 	.cleanup_eventset = _bgq_cleanup_eventset,
-	.shutdown = _bgq_shutdown
+	.shutdown_thread = _bgq_shutdown
 //  .shutdown_global      =
 //  .user                 =
 };

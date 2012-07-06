@@ -23,14 +23,14 @@ extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 #include "papi_bipartite.h"
 
 /* Prototypes for entry points found in perfctr.c */
-extern int _perfctr_init_substrate( int );
+extern int _perfctr_init_component( int );
 extern int _perfctr_ctl( hwd_context_t * ctx, int code,
 					   _papi_int_option_t * option );
 extern void _perfctr_dispatch_timer( int signal, hwd_siginfo_t * si,
 								   void *context );
 
-extern int _perfctr_init( hwd_context_t * ctx );
-extern int _perfctr_shutdown( hwd_context_t * ctx );
+extern int _perfctr_init_thread( hwd_context_t * ctx );
+extern int _perfctr_shutdown_thread( hwd_context_t * ctx );
 
 #include "linux-common.h"
 #include "linux-timer.h"
@@ -88,16 +88,16 @@ _papi_hwd_fixup_vec( int cidx )
 
 	/* if the env variable isn't set, use the default */
 	if ( ( str == NULL ) || ( strlen( str ) == 0 ) ) {
-		strcat( table_name, P4_VEC );
+	   strcat( table_name, P4_VEC );
 	} else {
-		strcat( table_name, str );
+	   strcat( table_name, str );
 	}
 	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
-		PAPIERROR
-			( "Improper usage of PAPI_PENTIUM4_VEC environment variable.\nUse either SSE or MMX" );
-		return ( PAPI_ESBSTR );
+	   PAPIERROR( "Improper usage of PAPI_PENTIUM4_VEC environment "
+                      "variable.\nUse either SSE or MMX" );
+	   return PAPI_EINVAL;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 static int
@@ -118,11 +118,11 @@ _papi_p4_hwd_fixup_fp( int cidx )
 			strcat( table_name, " SSE_DP" );
 	}
 	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
-		PAPIERROR
-			( "Improper usage of PAPI_PENTIUM4_FP environment variable.\nUse one or two of X87,SSE_SP,SSE_DP" );
-		return ( PAPI_ESBSTR );
+	   PAPIERROR( "Improper usage of PAPI_PENTIUM4_FP environment "
+                      "variable.\nUse one or two of X87,SSE_SP,SSE_DP" );
+	   return PAPI_EINVAL;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 static int
@@ -141,11 +141,12 @@ _papi_hwd_fixup_fp( char *name, int cidx )
 	}
 
 	if ( ( _papi_load_preset_table( table_name, 0, cidx ) ) != PAPI_OK ) {
-		PAPIERROR
-			( "Improper usage of PAPI_OPTERON_FP environment variable.\nUse one of RETIRED, SPECULATIVE, SSE_SP, SSE_DP" );
-		return ( PAPI_ESBSTR );
+	   PAPIERROR( "Improper usage of PAPI_OPTERON_FP environment "
+                      "variable.\nUse one of RETIRED, SPECULATIVE, "
+		      "SSE_SP, SSE_DP" );
+	   return PAPI_EINVAL;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 #ifdef DEBUG
@@ -217,7 +218,7 @@ setup_x86_presets( int cputype, int cidx)
 #endif
 		else {
 			PAPIERROR( MODEL_ERROR );
-			return ( PAPI_ESBSTR );
+			return PAPI_ENOIMPL;
 		}
 	} else {
 		switch ( cputype ) {
@@ -227,9 +228,9 @@ setup_x86_presets( int cputype, int cidx)
 		case PERFCTR_X86_VIA_C3:
 		case PERFCTR_X86_INTEL_P5:
 		case PERFCTR_X86_INTEL_P5MMX:
-			SUBDBG( "This cpu is supported by the perfctr-x86 substrate\n" );
+			SUBDBG( "This cpu is not supported by the perfctr-x86 component\n" );
 			PAPIERROR( MODEL_ERROR );
-			return ( PAPI_ESBSTR );
+			return PAPI_ENOIMPL;
 		case PERFCTR_X86_INTEL_P6:
 		  _papi_load_preset_table( "Intel P6", 0, cidx );	/* base events */
 			break;
@@ -293,7 +294,7 @@ setup_x86_presets( int cputype, int cidx)
 #endif
 		default:
 			PAPIERROR( MODEL_ERROR );
-			return PAPI_ESBSTR;
+			return PAPI_ENOIMPL;
 		}
 		SUBDBG( "Number of native events: %d\n",
 				_perfctr_vector.cmp_info.num_native_events );
@@ -1158,16 +1159,16 @@ _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 	if ( ( ret = pfm_get_event_counters( event, &cnt ) ) != PFMLIB_SUCCESS ) {
 		PAPIERROR( "pfm_get_event_counters(%d,%p): %s", event, &cnt,
 				   pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 	if ( ( ret = pfm_get_num_counters( &num ) ) != PFMLIB_SUCCESS ) {
 		PAPIERROR( "pfm_get_num_counters(%p): %s", num, pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 	if ( ( ret = pfm_get_impl_counters( &impl ) ) != PFMLIB_SUCCESS ) {
 		PAPIERROR( "pfm_get_impl_counters(%p): %s", &impl,
 				   pfm_strerror( ret ) );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 
 	*selector = 0;
@@ -1182,14 +1183,14 @@ _pfm_get_counter_info( unsigned int event, unsigned int *selector, int *code )
 					 PFMLIB_SUCCESS ) {
 					PAPIERROR( "pfm_get_event_code_counter(%d, %d, %p): %s",
 						   event, i, code, pfm_strerror( ret ) );
-					return ( PAPI_ESBSTR );
+					return PAPI_ESYS;
 				}
 				first = 0;
 			}
 			*selector |= 1 << i;
 		}
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 int
@@ -1383,11 +1384,11 @@ papi_vector_t _perfctr_vector = {
 	.set_overflow = _x86_set_overflow,
 	.stop_profiling = _x86_stop_profiling,
 
-	.init_substrate = _perfctr_init_substrate,
-	.ctl =            _perfctr_ctl,
-	.dispatch_timer = _perfctr_dispatch_timer,
-	.init =           _perfctr_init,
-	.shutdown =       _perfctr_shutdown,
+	.init_component =  _perfctr_init_component,
+	.ctl =             _perfctr_ctl,
+	.dispatch_timer =  _perfctr_dispatch_timer,
+	.init_thread =     _perfctr_init_thread,
+	.shutdown_thread = _perfctr_shutdown_thread,
 
 	/* from libpfm */
 	.ntv_enum_events   = _papi_libpfm_ntv_enum_events,

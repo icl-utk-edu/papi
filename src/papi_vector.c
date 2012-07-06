@@ -1,6 +1,5 @@
 /*
  * File:    papi_vector.c
- * CVS:     $Id$
  * Author:  Kevin London
  *          london@cs.utk.edu
  * Mods:    Haihang You
@@ -27,7 +26,7 @@ void
 _vectors_error(  )
 {
 	SUBDBG( "function is not implemented in the component!\n" );
-	exit( PAPI_ESBSTR );
+	exit( PAPI_ECMP );
 }
 
 int
@@ -45,7 +44,7 @@ vec_int_one_dummy(  )
 int
 vec_int_dummy(  )
 {
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 void *
@@ -63,7 +62,7 @@ vec_void_dummy(  )
 long long
 vec_long_long_dummy(  )
 {
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 long long
@@ -71,7 +70,7 @@ vec_long_long_context_dummy( hwd_context_t *ignored )
 {
         (void) ignored;
 
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 char *
@@ -83,7 +82,7 @@ vec_char_star_dummy(  )
 long
 vec_long_dummy(  )
 {
-	return PAPI_ESBSTR;
+	return PAPI_ECMP;
 }
 
 long long vec_virt_cycles(void)
@@ -112,15 +111,9 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		return ( PAPI_EINVAL );
 
 	/* component function pointers */
-#ifdef _WIN32				 /* Windows requires a different callback format */
-	if ( !v->timer_callback )
-		v->timer_callback =
-			( void ( * )( UINT, UINT, DWORD, DWORD, DWORD ) ) vec_void_dummy;
-#else
 	if ( !v->dispatch_timer )
 		v->dispatch_timer =
 			( void ( * )( int, hwd_siginfo_t *, void * ) ) vec_void_dummy;
-#endif
 	if ( !v->get_overflow_address )
 		v->get_overflow_address =
 			( void *( * )( int, char *, int ) ) vec_void_star_dummy;
@@ -146,10 +139,10 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->stop_profiling )
 		v->stop_profiling =
 			( int ( * )( ThreadInfo_t *, EventSetInfo_t * ) ) vec_int_dummy;
-	if ( !v->init_substrate )
-		v->init_substrate = ( int ( * )( int ) ) vec_int_ok_dummy;
-	if ( !v->init )
-		v->init = ( int ( * )( hwd_context_t * ) ) vec_int_ok_dummy;
+	if ( !v->init_component )
+		v->init_component = ( int ( * )( int ) ) vec_int_ok_dummy;
+	if ( !v->init_thread )
+		v->init_thread = ( int ( * )( hwd_context_t * ) ) vec_int_ok_dummy;
 	if ( !v->init_control_state )
 		v->init_control_state =
 			( int ( * )( hwd_control_state_t * ptr ) ) vec_void_dummy;
@@ -192,10 +185,10 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->allocate_registers =
 			( int ( * )( EventSetInfo_t * ) ) vec_int_one_dummy;
 
-	if ( !v->shutdown )
-		v->shutdown = ( int ( * )( hwd_context_t * ) ) vec_int_dummy;
-	if ( !v->shutdown_substrate )
-		v->shutdown_substrate = ( int ( * )( void ) ) vec_int_ok_dummy;
+	if ( !v->shutdown_thread )
+		v->shutdown_thread = ( int ( * )( hwd_context_t * ) ) vec_int_dummy;
+	if ( !v->shutdown_component )
+		v->shutdown_component = ( int ( * )( void ) ) vec_int_ok_dummy;
 	if ( !v->user )
 		v->user = ( int ( * )( int, void *, void * ) ) vec_int_dummy;
 	return PAPI_OK;
@@ -304,13 +297,8 @@ vector_print_table( papi_vector_t * v, int print_func )
 	if ( !v )
 		return;
 
-#ifdef _WIN32				 /* Windows requires a different callback format */
-	vector_print_routine( ( void * ) v->timer_callback,
-						  "_papi_hwd_timer_callback", print_func );
-#else
 	vector_print_routine( ( void * ) v->dispatch_timer,
 						  "_papi_hwd_dispatch_timer", print_func );
-#endif
 	vector_print_routine( ( void * ) v->get_overflow_address,
 						  "_papi_hwd_get_overflow_address", print_func );
 	vector_print_routine( ( void * ) v->start, "_papi_hwd_start", print_func );
@@ -323,9 +311,9 @@ vector_print_table( papi_vector_t * v, int print_func )
 
 	vector_print_routine( ( void * ) v->stop_profiling,
 						  "_papi_hwd_stop_profiling", print_func );
-	vector_print_routine( ( void * ) v->init_substrate,
-						  "_papi_hwd_init_substrate", print_func );
-	vector_print_routine( ( void * ) v->init, "_papi_hwd_init", print_func );
+	vector_print_routine( ( void * ) v->init_component,
+						  "_papi_hwd_init_component", print_func );
+	vector_print_routine( ( void * ) v->init_thread, "_papi_hwd_init_thread", print_func );
 	vector_print_routine( ( void * ) v->init_control_state,
 						  "_papi_hwd_init_control_state", print_func );
 	vector_print_routine( ( void * ) v->ctl, "_papi_hwd_ctl", print_func );
@@ -351,10 +339,10 @@ vector_print_table( papi_vector_t * v, int print_func )
 	vector_print_routine( ( void * ) v->allocate_registers,
 						  "_papi_hwd_allocate_registers", print_func );
 
-	vector_print_routine( ( void * ) v->shutdown, "_papi_hwd_shutdown",
+	vector_print_routine( ( void * ) v->shutdown_thread, "_papi_hwd_shutdown_thread",
 						  print_func );
-	vector_print_routine( ( void * ) v->shutdown_substrate,
-						  "_papi_hwd_shutdown_substrate", print_func );
+	vector_print_routine( ( void * ) v->shutdown_component,
+						  "_papi_hwd_shutdown_component", print_func );
 	vector_print_routine( ( void * ) v->user, "_papi_hwd_user", print_func );
 }
 

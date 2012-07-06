@@ -50,7 +50,6 @@
 
 #include "papi.h"
 #include "papi_preset.h"
-#include "papi_defines.h"
 
 
 

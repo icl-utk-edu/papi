@@ -1,6 +1,5 @@
 /* 
 * File:    perfctr.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci at cs.utk.edu
 * Mods:    Kevin London
@@ -91,7 +90,7 @@ xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 long long tb_scale_factor = ( long long ) 1;	/* needed to scale get_cycles on PPC series */
 
 int
-_perfctr_init_substrate( int cidx )
+_perfctr_init_component( int cidx )
 {
 	int retval;
 	struct perfctr_info info;
@@ -113,14 +112,16 @@ _perfctr_init_substrate( int cidx )
 	 */
 	fd = _vperfctr_open( 0 );
 	if ( fd < 0 ) {
-		PAPIERROR( VOPEN_ERROR );
-		return ( PAPI_ESYS );
+	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
+		  VOPEN_ERROR,PAPI_MAX_STR_LEN);
+	   return PAPI_ESYS;
 	}
 	retval = perfctr_info( fd, &info );
 	close( fd );
 	if ( retval < 0 ) {
-		PAPIERROR( VINFO_ERROR );
-		return ( PAPI_ESYS );
+	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
+		  VINFO_ERROR,PAPI_MAX_STR_LEN);
+	   return PAPI_ESYS;
 	}
 
 	/* copy tsc multiplier to local variable        */
@@ -129,15 +130,17 @@ _perfctr_init_substrate( int cidx )
 #else
 	/* Opened once for all threads. */
 	if ( ( dev = vperfctr_open(  ) ) == NULL ) {
-		PAPIERROR( VOPEN_ERROR );
-		return ( PAPI_ESYS );
+	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
+		  VOPEN_ERROR,PAPI_MAX_STR_LEN);
+	   return PAPI_ESYS;
 	}
-	SUBDBG( "_perfctr_init_substrate vperfctr_open = %p\n", dev );
+	SUBDBG( "_perfctr_init_component vperfctr_open = %p\n", dev );
 
 	/* Get info from the kernel */
 	retval = vperfctr_info( dev, &info );
 	if ( retval < 0 ) {
-		PAPIERROR( VINFO_ERROR );
+	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
+		  VINFO_ERROR,PAPI_MAX_STR_LEN);
 		return ( PAPI_ESYS );
 	}
 	vperfctr_close( dev );
@@ -284,7 +287,7 @@ _perfctr_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 #endif
 	case PAPI_GRANUL:
 	case PAPI_DEFGRN:
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 	case PAPI_ATTACH:
 		return ( attach( option->attach.ESI->ctl_state, option->attach.tid ) );
 	case PAPI_DETACH:
@@ -357,7 +360,7 @@ _perfctr_dispatch_timer( int signal, siginfo_t * si, void *context )
 
 
 int
-_perfctr_init( hwd_context_t * ctx )
+_perfctr_init_thread( hwd_context_t * ctx )
 {
 	struct vperfctr_control tmp;
 	int error;
@@ -370,16 +373,13 @@ _perfctr_init( hwd_context_t * ctx )
 		   a fork and now we're inside a new process that has been exec'd */
 		if ( errno ) {
 			if ( ( ctx->perfctr = vperfctr_open_mode( 0 ) ) == NULL ) {
-				PAPIERROR( VOPEN_ERROR );
-				return ( PAPI_ESYS );
+			   return PAPI_ESYS;
 			}
 		} else {
-			PAPIERROR( VOPEN_ERROR );
-			return ( PAPI_ESYS );
+			return PAPI_ESYS;
 		}
 #else
-		PAPIERROR( VOPEN_ERROR );
-		return ( PAPI_ESYS );
+		return PAPI_ESYS;
 #endif
 	}
 	SUBDBG( "_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr );
@@ -398,18 +398,17 @@ _perfctr_init( hwd_context_t * ctx )
 	if ( error < 0 ) {
 		SUBDBG( "starting virtualized TSC; vperfctr_control returns %d\n",
 				error );
-		PAPIERROR( VCNTRL_ERROR );
-		return ( PAPI_ESYS );
+		return PAPI_ESYS;
 	}
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /* This routine is for shutting down threads, including the
    master thread. */
 
 int
-_perfctr_shutdown( hwd_context_t * ctx )
+_perfctr_shutdown_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG
 	int retval = vperfctr_unlink( ctx->perfctr );

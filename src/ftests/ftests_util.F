@@ -1,9 +1,6 @@
 #include "fpapi_test.h"
 
       integer function get_quiet()
-#if _WIN32
-      use dflib
-#endif
       implicit integer (p)
       character*25 chbuf
       integer retval
@@ -114,7 +111,7 @@ C     And also to make the test code read cleaner
       integer len_trim
       external len_trim
 
-      if ( retval.eq.PAPI_ESBSTR .OR. retval.eq.PAPI_ENOEVNT
+      if ( retval.eq.PAPI_ECMP .OR. retval.eq.PAPI_ENOEVNT
      &    .OR. retval.eq.PAPI_ECNFLCT .OR. retval.eq.PAPI_EPERM ) then
         call ftest_skip(file, line, callstr, retval)
       end if
@@ -250,11 +247,6 @@ C     For every other platform it is a nop.
       integer quiet
       common quiet
 
-#ifdef _WIN32
-      if (quiet .eq. 0) then
-        call cpause()
-      end if
-#endif
       end
 
 C     Print the content of an event set
@@ -310,8 +302,8 @@ C     Get PAPI h/w info
       if ( mstring(1:nchr).EQ."POWER6") then
 C     Setting domain to user+kernel+supervisor is really only necessary when
 C     using PAPI multiplexing on POWER6/perfctr.  But since the Fortran API
-C     does not include access to substrate info, we'll just set the domain
-C     in this manner for all substrates on POWER6.
+C     does not include access to component info, we'll just set the domain
+C     in this manner for all components on POWER6.
       call PAPIf_set_domain(PAPI_DOM_ALL, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,

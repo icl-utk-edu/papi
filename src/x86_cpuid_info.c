@@ -69,7 +69,7 @@ _x86_cache_info( PAPI_mh_info_t * mh_info )
 	  init_amd( mh_info, &mh_info->levels );
 	} else {
 		MEMDBG( "Unsupported cpu type; Not Intel or AMD x86\n" );
-		return ( PAPI_ESBSTR );
+		return PAPI_ENOIMPL;
 	}
 
 	/* This works only because an empty cache element is initialized to 0 */

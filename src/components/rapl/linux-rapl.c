@@ -230,7 +230,7 @@ static long long read_rapl_energy(int index) {
  * This is called whenever a thread is initialized
  */
 int 
-_rapl_init( hwd_context_t *ctx )
+_rapl_init_thread( hwd_context_t *ctx )
 {
   ( void ) ctx;
 
@@ -243,7 +243,7 @@ _rapl_init( hwd_context_t *ctx )
  * Called when PAPI process is initialized (i.e. PAPI_library_init)
  */
 int 
-_rapl_init_substrate( int cidx )
+_rapl_init_component( int cidx )
 {
      int i,j,fd;
      FILE *fff;
@@ -270,7 +270,7 @@ _rapl_init_substrate( int cidx )
      if (hw_info->vendor!=PAPI_VENDOR_INTEL) {
         strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Not an Intel processor",PAPI_MAX_STR_LEN);
-        return PAPI_ESBSTR;
+        return PAPI_ENOSUPP;
      }
 
      /* check if SandyBridge */
@@ -295,14 +295,14 @@ _rapl_init_substrate( int cidx )
 	 strncpy(_rapl_vector.cmp_info.disabled_reason,
 		 "Not a SandyBridge processor",
 		 PAPI_MAX_STR_LEN);
-	 return PAPI_ESBSTR;
+	 return PAPI_ENOIMPL;
        }
      }
      else {
        /* Not a family 6 machine */
        strncpy(_rapl_vector.cmp_info.disabled_reason,
 	       "Not a SandyBridge processor",PAPI_MAX_STR_LEN);
-       return PAPI_ESBSTR;
+       return PAPI_ENOIMPL;
      }
 
 
@@ -340,7 +340,7 @@ _rapl_init_substrate( int cidx )
         SUBDBG("Can't access /dev/cpu/*/msr\n");
 	strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Can't access /dev/cpu/*/msr",PAPI_MAX_STR_LEN);
-	return PAPI_ESBSTR;
+	return PAPI_ESYS;
      }
 
      SUBDBG("Found %d packages with %d cpus\n",num_packages,num_cpus);
@@ -354,7 +354,7 @@ _rapl_init_substrate( int cidx )
      if (fd<0) {
         strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Can't open fd for cpu0",PAPI_MAX_STR_LEN);
-        return PAPI_ESBSTR;
+        return PAPI_ESYS;
      }
 
      /* Calculate the units used */
@@ -658,7 +658,7 @@ _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /* Shutdown a thread */
 int
-_rapl_shutdown( hwd_context_t * ctx )
+_rapl_shutdown_thread( hwd_context_t *ctx )
 {
   ( void ) ctx;
   return PAPI_OK;
@@ -666,10 +666,10 @@ _rapl_shutdown( hwd_context_t * ctx )
 
 
 /*
- * Clean up what was setup in  rapl_init_substrate().
+ * Clean up what was setup in  rapl_init_component().
  */
 int 
-_rapl_shutdown_substrate( void ) 
+_rapl_shutdown_component( void ) 
 {
     int i;
 
@@ -685,7 +685,7 @@ _rapl_shutdown_substrate( void )
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -884,14 +884,14 @@ papi_vector_t _rapl_vector = {
 	.reg_alloc = sizeof ( _rapl_reg_alloc_t ),
     },
 	/* function pointers in this component */
-    .init =                 _rapl_init,
-    .init_substrate =       _rapl_init_substrate,
+    .init_thread =          _rapl_init_thread,
+    .init_component =       _rapl_init_component,
     .init_control_state =   _rapl_init_control_state,
     .start =                _rapl_start,
     .stop =                 _rapl_stop,
     .read =                 _rapl_read,
-    .shutdown =             _rapl_shutdown,
-    .shutdown_substrate =   _rapl_shutdown_substrate,
+    .shutdown_thread =      _rapl_shutdown_thread,
+    .shutdown_component =   _rapl_shutdown_component,
     .ctl =                  _rapl_ctl,
 
     .update_control_state = _rapl_update_control_state,

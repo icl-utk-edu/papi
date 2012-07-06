@@ -4,7 +4,6 @@
 
 /** 
  * @file    linux-L2unit.c
- * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
@@ -31,10 +30,10 @@ papi_vector_t _L2unit_vector;
  * This is called whenever a thread is initialized
  */
 int
-L2UNIT_init( hwd_context_t * ctx )
+L2UNIT_init_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "L2UNIT_init\n" );
+	printf( "L2UNIT_init_thread\n" );
 #endif
 	
 	( void ) ctx;
@@ -47,15 +46,15 @@ L2UNIT_init( hwd_context_t * ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-L2UNIT_init_substrate( int cidx )
+L2UNIT_init_component( int cidx )
 { 
 #ifdef DEBUG_BGQ
-	printf( "L2UNIT_init_substrate\n" );
+	printf( "L2UNIT_init_component\n" );
 #endif
 	
 	_L2unit_vector.cmp_info.CmpIdx = cidx;
 #ifdef DEBUG_BGQ
-	printf( "L2UNIT_init_substrate cidx = %d\n", cidx );
+	printf( "L2UNIT_init_component cidx = %d\n", cidx );
 #endif
 	
 	return ( PAPI_OK );
@@ -169,10 +168,10 @@ L2UNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
  *
  */
 int
-L2UNIT_shutdown( hwd_context_t * ctx )
+L2UNIT_shutdown_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG_BGQ
-	printf( "L2UNIT_shutdown\n" );
+	printf( "L2UNIT_shutdown_thread\n" );
 #endif
 	
 	( void ) ctx;
@@ -355,7 +354,7 @@ L2UNIT_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -672,13 +671,13 @@ papi_vector_t _L2unit_vector = {
 			 }
 	,
 	/* function pointers in this component */
-	.init = L2UNIT_init,
-	.init_substrate = L2UNIT_init_substrate,
+	.init_thread = L2UNIT_init_thread,
+	.init_component = L2UNIT_init_component,
 	.init_control_state = L2UNIT_init_control_state,
 	.start = L2UNIT_start,
 	.stop = L2UNIT_stop,
 	.read = L2UNIT_read,
-	.shutdown = L2UNIT_shutdown,
+	.shutdown_thread = L2UNIT_shutdown_thread,
 	.set_overflow = L2UNIT_set_overflow,
 	.cleanup_eventset = L2UNIT_cleanup_eventset,
 	.ctl = L2UNIT_ctl,

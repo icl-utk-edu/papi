@@ -16,8 +16,9 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_lock.h"
 
-#include SUBSTRATE
+#include "freebsd.h"
 #include "map.h"
 
 #include "freebsd-memory.h"
@@ -65,10 +66,10 @@ static hwd_libpmc_context_t Context;
 /*
  * This function is an internal function and not exposed and thus
  * it can be called anything you want as long as the information
- * is setup in _papi_freebsd_init_substrate.  Below is some, but not
+ * is setup in _papi_freebsd_init_component.  Below is some, but not
  * all of the values that will need to be setup.  For a complete
  * list check out papi_mdi_t, though some of the values are setup
- * and used above the substrate level.
+ * and used above the component level.
  */
 int init_mdi(void)
 {
@@ -157,40 +158,40 @@ int init_presets(int cidx)
 	init_freebsd_libpmc_mappings();
 
 	if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_P6") == 0)
-		Context.CPUsubstrate = CPU_P6;
+		Context.CPU = CPU_P6;
 
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PII") == 0)
-		Context.CPUsubstrate = CPU_P6_2;
+		Context.CPU = CPU_P6_2;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PIII") == 0)
-		Context.CPUsubstrate = CPU_P6_3;
+		Context.CPU = CPU_P6_3;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CL") == 0)
-		Context.CPUsubstrate = CPU_P6_C;
+		Context.CPU = CPU_P6_C;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PM") == 0)
-		Context.CPUsubstrate = CPU_P6_M;
+		Context.CPU = CPU_P6_M;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "AMD_K7") == 0)
-		Context.CPUsubstrate = CPU_K7;
+		Context.CPU = CPU_K7;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "AMD_K8") == 0)
-		Context.CPUsubstrate = CPU_K8;
+		Context.CPU = CPU_K8;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PIV") == 0)
-		Context.CPUsubstrate = CPU_P4;
+		Context.CPU = CPU_P4;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_ATOM") == 0)
-		Context.CPUsubstrate = CPU_ATOM;
+		Context.CPU = CPU_ATOM;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE") == 0)
-		Context.CPUsubstrate = CPU_CORE;
+		Context.CPU = CPU_CORE;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE2") == 0)
-		Context.CPUsubstrate = CPU_CORE2;
+		Context.CPU = CPU_CORE2;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE2EXTREME") == 0)
-		Context.CPUsubstrate = CPU_CORE2EXTREME;
+		Context.CPU = CPU_CORE2EXTREME;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_COREI7") == 0)
-		Context.CPUsubstrate = CPU_COREI7;
+		Context.CPU = CPU_COREI7;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_WESTMERE") == 0)
-		Context.CPUsubstrate = CPU_COREWESTMERE;
+		Context.CPU = CPU_COREWESTMERE;
 	else
 		/* Unknown processor! */
-		Context.CPUsubstrate = CPU_UNKNOWN;
+		Context.CPU = CPU_UNKNOWN;
 
 
-	_papi_freebsd_vector.cmp_info.num_native_events = freebsd_substrate_number_of_events (Context.CPUsubstrate);
+	_papi_freebsd_vector.cmp_info.num_native_events = freebsd_number_of_events (Context.CPU);
 	_papi_freebsd_vector.cmp_info.attach = 0;
 
 	_papi_load_preset_table((char *)pmc_name_of_cputype(info->pm_cputype),
@@ -200,27 +201,18 @@ int init_presets(int cidx)
 }
 
 /*
- * Substrate setup and shutdown
+ * Component setup and shutdown
  */
 
 /* Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int _papi_freebsd_init_substrate(int cidx)
+int _papi_freebsd_init_component(int cidx)
 {
    (void)cidx;
 
    SUBDBG("Entering\n");
-
-#ifdef DEBUG 
-   /* This prints out which functions are mapped to dummy routines
-    * and this should be taken out once the substrate is completed.
-    * The 0 argument will print out only dummy routines, change
-    * it to a 1 to print out all routines.
-    */
-#endif
-
 
    /* Internal function, doesn't necessarily need to be a function */
    init_presets(cidx);
@@ -234,21 +226,21 @@ int _papi_freebsd_init_substrate(int cidx)
 /*
  * This is called whenever a thread is initialized
  */
-int _papi_freebsd_init(hwd_context_t *ctx)
+int _papi_freebsd_init_thread(hwd_context_t *ctx)
 {
   (void)ctx;
 	SUBDBG("Entering\n");
 	return PAPI_OK;
 }
 
-int _papi_freebsd_shutdown(hwd_context_t *ctx)
+int _papi_freebsd_shutdown_thread(hwd_context_t *ctx)
 {
   (void)ctx;
 	SUBDBG("Entering\n");
 	return PAPI_OK;
 }
 
-int _papi_freebsd_shutdown_substrate(void)
+int _papi_freebsd_shutdown_component(void)
 {
 	SUBDBG("Entering\n");
 	return PAPI_OK;
@@ -315,7 +307,7 @@ int _papi_freebsd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *n
 		native[i].ni_position = i;
 
 		/* Domains can be applied to canonical events in libpmc (not "generic") */
-		if (Context.CPUsubstrate != CPU_UNKNOWN)
+		if (Context.CPU != CPU_UNKNOWN)
 		{
 			if (ptr->hwc_domain == (PAPI_DOM_USER|PAPI_DOM_KERNEL))
 			{
@@ -504,7 +496,7 @@ int _papi_freebsd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 
 		}
 		else
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 	}
 	return PAPI_OK;
 }
@@ -544,7 +536,7 @@ int _papi_freebsd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long
 			}
 		}
 		else
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 	}
 	return PAPI_OK;
 }
@@ -610,7 +602,7 @@ int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain)
 
 	SUBDBG("Entering\n");
 	/* libpmc supports USER/KERNEL mode only when counters are native */
-	if (Context.CPUsubstrate != CPU_UNKNOWN)
+	if (Context.CPU != CPU_UNKNOWN)
 	{
 		if (domain & (PAPI_DOM_USER|PAPI_DOM_KERNEL))
 		{
@@ -620,11 +612,11 @@ int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain)
 		return found?PAPI_OK:PAPI_EINVAL;
 	}
 	else
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 }
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -640,7 +632,7 @@ int _papi_freebsd_ctl (hwd_context_t *ctx, int code, _papi_int_option_t *option)
 			return _papi_freebsd_set_domain(option->domain.ESI->ctl_state, option->domain.domain);
 		case PAPI_GRANUL:
 		case PAPI_DEFGRN:
-			return PAPI_ESBSTR;
+			return PAPI_ECMP;
 		default:
 			return PAPI_EINVAL;
    }
@@ -767,7 +759,7 @@ int _papi_freebsd_ntv_name_to_code(char *name, unsigned int* event_code) {
 	int i;
 
 	for (i = 0; i < _papi_freebsd_vector.cmp_info.num_native_events; i++)
-		if (strcmp (name, _papi_hwd_native_info[Context.CPUsubstrate].info[i].name) == 0)
+		if (strcmp (name, _papi_hwd_native_info[Context.CPU].info[i].name) == 0)
 		{
 			*event_code = i | PAPI_NATIVE_AND_MASK;
 			return PAPI_OK;
@@ -784,8 +776,8 @@ int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int l
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
 	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
-	strncpy (ntv_name, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].name) > (size_t)len-1)
+	strncpy (ntv_name, _papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
+	if (strlen(_papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].name) > (size_t)len-1)
 		return PAPI_EBUF;
 	return PAPI_OK;
 }
@@ -798,8 +790,8 @@ int _papi_freebsd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len
 	nidx = EventCode ^ PAPI_NATIVE_MASK;
 	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
 		return PAPI_ENOEVNT;
-	strncpy (descr, _papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUsubstrate].info[EventCode & PAPI_NATIVE_AND_MASK].description) > (size_t)len-1)
+	strncpy (descr, _papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
+	if (strlen(_papi_hwd_native_info[Context.CPU].info[EventCode & PAPI_NATIVE_AND_MASK].description) > (size_t)len-1)
 		return PAPI_EBUF;
 	return PAPI_OK;
 }
@@ -814,7 +806,7 @@ int _papi_freebsd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 
 /* 
  * Counter Allocation Functions, only need to implement if
- *    the substrate needs smart counter allocation.
+ *    the component needs smart counter allocation.
  */
 
 /* Here we'll check if PMC can provide all the counters the user want */
@@ -966,8 +958,8 @@ papi_vector_t _papi_freebsd_vector = {
   .reset	= _papi_freebsd_reset,
   .write	= _papi_freebsd_write,
   .stop_profiling	= _papi_freebsd_stop_profiling,
-  .init_substrate	= _papi_freebsd_init_substrate,
-  .init				= _papi_freebsd_init,
+  .init_component	= _papi_freebsd_init_component,
+  .init_thread				= _papi_freebsd_init_thread,
   .init_control_state	= _papi_freebsd_init_control_state,
   .update_control_state	= _papi_freebsd_update_control_state,
   .ctl					= _papi_freebsd_ctl,
@@ -979,12 +971,12 @@ papi_vector_t _papi_freebsd_vector = {
   .ntv_name_to_code	= _papi_freebsd_ntv_name_to_code,
   .ntv_code_to_name	= _papi_freebsd_ntv_code_to_name,
   .ntv_code_to_descr	= _papi_freebsd_ntv_code_to_descr,
-  .ntv_code_to_bits		= _papi_freebsd_ntv_code_to_bits,
+  .ntv_code_to_bits	= _papi_freebsd_ntv_code_to_bits,
 
   .allocate_registers	= _papi_freebsd_allocate_registers,
 
-  .shutdown				= _papi_freebsd_shutdown,
-  .shutdown_substrate	= _papi_freebsd_shutdown_substrate,
+  .shutdown_thread	= _papi_freebsd_shutdown_thread,
+  .shutdown_component	= _papi_freebsd_shutdown_component,
 };
 
 papi_os_vector_t _papi_os_vector = {

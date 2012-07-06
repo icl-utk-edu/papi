@@ -9,13 +9,8 @@
 
 #define INDEX 1000
 
-#ifdef _WIN32
-char format_string[] =
-	{ "Real_time: %f Proc_time: %f Total flpins: %I64d MFLOPS: %f\n" };
-#else
 char format_string[] =
 	{ "Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n" };
-#endif
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 

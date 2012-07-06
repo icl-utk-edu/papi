@@ -12,8 +12,6 @@
 
 #include "perfmon/pfmlib.h"
 #include PEINCLUDE
-#include "papi_defines.h"
-#include "linux-lock.h"
 #include "linux-context.h"
 
 

@@ -2,19 +2,19 @@ PAPI_SRCDIR = $(PWD)
 CFLAGS += $(EXTRA_CFLAGS)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
-    threads.c cpus.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
+    threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT).c papi_preset.c \
     papi_vector.c papi_memory.c papi_user_events.c $(COMPSRCS)
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
-    threads.o cpus.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o \
+    threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT).o papi_preset.o \
     papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
+HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h papiStdEventDefs.h $(CPUCOMPONENT).h \
     papi_preset.h threads.h cpus.h papi_vector.h \
     papi_memory.h config.h papi_user_events.h \
     extras.h multiplex.h papi_hl.h \
     papi_common_strings.h components_config.h \
     papi_events_table.h
-LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
+LIBCFLAGS += -I. $(CFLAGS) -DCPUCOMPONENT=\"$(CPUCOMPONENT).h\" -DOSLOCK=\"$(OSLOCK)\"
 FHEADERS = fpapi.h f77papi.h f90papi.h
 
 all: $(SHOW_CONF) $(LIBS) utils tests
@@ -23,8 +23,8 @@ all: $(SHOW_CONF) $(LIBS) utils tests
 include $(COMPONENT_RULES)
 
 showconf:
-		@echo "Host architecture: $(DESCR)";
-		@echo "Host substrate   : $(SUBSTR).c"; 
+		@echo "Host architecture   : $(DESCR)";
+		@echo "Host CPU component  : $(CPUCOMPONENT).c"; 
 		@echo "Installation DESTDIR: $(DESTDIR)"; 
 		@echo "Installation PREFIX : $(PREFIX)"; 
 		@echo "Installation EPREFIX: $(EPREFIX)"; 
@@ -101,8 +101,23 @@ cpus.o: cpus.c $(HEADERS)
 papi_hl.o: papi_hl.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o 
 
-$(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(MEMSUBSTR)-memory.c -o $(MEMSUBSTR)-memory.o
+aix-memory.o: aix-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c aix-memory.c -o aix-memory.o
+
+solaris-memory.o: solaris-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c solaris-memory.c -o solaris-memory.o
+
+solaris-common.o: solaris-common.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c solaris-common.c -o solaris-common.o
+
+linux-bgp-memory.o: linux-bgp-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-bgp-memory.c -o linux-bgp-memory.o
+
+linux-bgq-memory.o: linux-bgq-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-bgq-memory.c -o linux-bgq-memory.o
+
+linux-memory.o: linux-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-memory.c -o linux-memory.o
 
 linux-timer.o: linux-timer.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-timer.c -o linux-timer.o
@@ -125,8 +140,8 @@ papi_preset.o: papi_preset.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 multiplex.o: multiplex.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o 
 
-$(SUBSTR).o: $(SUBSTR).c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
+$(CPUCOMPONENT).o: $(CPUCOMPONENT).c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPUCOMPONENT).c -o $(CPUCOMPONENT).o 
 
 x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cpuid_info.c -o x86_cpuid_info.o
@@ -149,14 +164,14 @@ papi_user_events.o: papi_user_events.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 linux-bgp-preset-events.o: linux-bgp-preset-events.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgp_vectors $(OPTFLAGS) -c linux-bgp-preset-events.c -o linux-bgp-preset-events.o
+	$(CC) $(LIBCFLAGS) -DCPUCOMPONENT=\"$(CPUCOMPONENT).h\" -DCOMP_VECTOR=_bgp_vectors $(OPTFLAGS) -c linux-bgp-preset-events.c -o linux-bgp-preset-events.o
 
 bgp_tests:$(LIBRARY) null
 	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
  
 #Required for freebsd
-#freebsd-memory.o: freebsd-memory.c $(HEADERS)
-#	$(CC) $(LIBCFLAGS) -c $< -o $@
+freebsd-memory.o: freebsd-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd/map.o: freebsd/map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
@@ -205,11 +220,6 @@ freebsd/map-i7.o: freebsd/map-i7.c $(HEADERS)
 
 freebsd/map-westmere.o: freebsd/map-westmere.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@                                          
-
-# So we already build this for $SUBSTRATE
-#freebsd.o: freebsd.c $(HEADERS)
-#	$(CC) $(LIBCFLAGS) -c $< -o $@
-
 test: ctests
 	$(SETPATH) ctests/zero
 
@@ -266,10 +276,10 @@ clobber distclean: clean native_clobber
 null:
 
 dist: 
-	$(MAKE) install-all PREFIX=`pwd`/papi-$(SUBSTR)
-	tar cfv ./papi-$(SUBSTR).tar ./papi-$(SUBSTR)
-	gzip ./papi-$(SUBSTR).tar
-	rm -rf ./papi-$(SUBSTR)
+	$(MAKE) install-all PREFIX=`pwd`/papi-$(CPUCOMPONENT)
+	tar cfv ./papi-$(CPUCOMPONENT).tar ./papi-$(CPUCOMPONENT)
+	gzip ./papi-$(CPUCOMPONENT).tar
+	rm -rf ./papi-$(CPUCOMPONENT)
 
 install-all: install install-tests
 

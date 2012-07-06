@@ -418,9 +418,10 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 	unsigned int i, dispatch_count = inp->pfp_event_count;
 	int togo = inp->pfp_event_count, done = 0;
 
-	/* Save old PD array so we can reconstruct certain flags. This can be removed
-	   when we have higher level code call set_profile,set_overflow etc when there
-	   is hardware (substrate) support, but this change won't happen for PAPI 3.5 */
+	/* Save old PD array so we can reconstruct certain flags.  */
+        /* This can be removed when we have higher level code call */
+        /* set_profile,set_overflow etc when there is hardware     */
+        /* (component) support, but this change won't happen for PAPI 3.5 */
 
 	SUBDBG
 		( "entry multiplexed %d, pfp_event_count %d, num_cntrs %d, num_sets %d\n",
@@ -706,13 +707,13 @@ set_granularity( hwd_control_state_t * this_state, int domain )
 	case PAPI_GRN_SYS:
 	case PAPI_GRN_SYS_CPU:
 	case PAPI_GRN_PROC:
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 	case PAPI_GRN_THR:
 		break;
 	default:
-		return ( PAPI_EINVAL );
+		return PAPI_EINVAL;
 	}
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /* This function should tell your kernel extension that your children
@@ -723,7 +724,7 @@ static inline int
 set_inherit( int arg )
 {
 	( void ) arg;			 /*unused */
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 }
 
 static int
@@ -738,7 +739,7 @@ get_string_from_file( char *file, char *str, int len )
 	if ( fscanf( f, "%s\n", buf ) != 1 ) {
 		PAPIERROR( "fscanf(%s, %%s\\n): Unable to scan 1 token", file );
 		fclose( f );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 	strncpy( str, buf, ( len > PAPI_HUGE_STR_LEN ? PAPI_HUGE_STR_LEN : len ) );
 	fclose( f );
@@ -746,176 +747,126 @@ get_string_from_file( char *file, char *str, int len )
 }
 
 int
-_papi_pfm_init_substrate( int cidx )
+_papi_pfm_init_component( int cidx )
 {
-	( void ) cidx;			 /*unused */
-	int retval;
-	unsigned int ncnt;
-	unsigned int version;
-	char pmu_name[PAPI_MIN_STR_LEN];
-#ifdef DEBUG
-	pfmlib_options_t pfmlib_options;
-#endif
-	char buf[PAPI_HUGE_STR_LEN];
-	/* The following checks the PFMLIB version 
-	   against the perfmon2 kernel version... */
-	strncpy( _papi_pfm_vector.cmp_info.support_version, buf,
-			 sizeof ( _papi_pfm_vector.cmp_info.support_version ) );
+   int retval;
+   char buf[PAPI_HUGE_STR_LEN];
 
-	retval =
-		get_string_from_file( "/sys/kernel/perfmon/version",
-							  _papi_pfm_vector.cmp_info.kernel_version,
-							  sizeof ( _papi_pfm_vector.cmp_info.kernel_version ) );
-	if ( retval != PAPI_OK )
-		return ( retval );
+   /* The following checks the PFMLIB version 
+      against the perfmon2 kernel version... */
+   strncpy( _papi_pfm_vector.cmp_info.support_version, buf,
+	    sizeof ( _papi_pfm_vector.cmp_info.support_version ) );
+
+   retval = get_string_from_file( "/sys/kernel/perfmon/version",
+			          _papi_pfm_vector.cmp_info.kernel_version,
+			sizeof ( _papi_pfm_vector.cmp_info.kernel_version ) );
+   if ( retval != PAPI_OK ) {
+      strncpy(_papi_pfm_vector.cmp_info.disabled_reason,
+	     "/sys/kernel/perfmon/version not found",PAPI_MAX_STR_LEN);
+      return retval;
+   }
 
 #ifdef PFM_VERSION
-	sprintf( buf, "%d.%d", PFM_VERSION_MAJOR( PFM_VERSION ),
-			 PFM_VERSION_MINOR( PFM_VERSION ) );
-	SUBDBG( "Perfmon2 library versions...kernel: %s library: %s\n",
+   sprintf( buf, "%d.%d", PFM_VERSION_MAJOR( PFM_VERSION ),
+			  PFM_VERSION_MINOR( PFM_VERSION ) );
+   SUBDBG( "Perfmon2 library versions...kernel: %s library: %s\n",
 			_papi_pfm_vector.cmp_info.kernel_version, buf );
-	if ( strcmp( _papi_pfm_vector.cmp_info.kernel_version, buf ) != 0 ) {
-		/* do a little exception processing; 81 is compatible with 80 */
-		if ( !( ( PFM_VERSION_MINOR( PFM_VERSION ) == 81 )
-				&& ( strncmp( _papi_pfm_vector.cmp_info.kernel_version, "2.8", 3 ) ==
+   if ( strcmp( _papi_pfm_vector.cmp_info.kernel_version, buf ) != 0 ) {
+      /* do a little exception processing; 81 is compatible with 80 */
+      if ( !( ( PFM_VERSION_MINOR( PFM_VERSION ) == 81 ) && 
+            ( strncmp( _papi_pfm_vector.cmp_info.kernel_version, "2.8", 3 ) ==
 					 0 ) ) ) {
-			PAPIERROR
-				( "Version mismatch of libpfm: compiled %s vs. installed %s\n",
-				  buf, _papi_pfm_vector.cmp_info.kernel_version );
-			return ( PAPI_ESBSTR );
-		}
-	}
+	 PAPIERROR( "Version mismatch of libpfm: compiled %s "
+                    "vs. installed %s\n",
+		    buf, _papi_pfm_vector.cmp_info.kernel_version );
+	 return PAPI_ESYS;
+      }
+   }
 #endif
 
-	/* The following checks the version of the PFM library 
-	   against the version PAPI linked to... */
-	SUBDBG( "pfm_initialize()\n" );
-	if ( ( retval = pfm_initialize(  ) ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-
-	SUBDBG( "pfm_get_version(%p)\n", &version );
-	if ( pfm_get_version( &version ) != PFMLIB_SUCCESS ) {
-		PAPIERROR( "pfm_get_version(%p): %s", version, pfm_strerror( retval ) );
-		return ( PAPI_ESBSTR );
-	}
-
-	sprintf( _papi_pfm_vector.cmp_info.support_version, "%d.%d",
-			 PFM_VERSION_MAJOR( version ), PFM_VERSION_MINOR( version ) );
-
-	if ( PFM_VERSION_MAJOR( version ) != PFM_VERSION_MAJOR( PFMLIB_VERSION ) ) {
-		PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
-				   PFM_VERSION_MAJOR( PFMLIB_VERSION ),
-				   PFM_VERSION_MAJOR( version ) );
-		return ( PAPI_ESBSTR );
-	}
-
-	/* Load the module, find out if any PMC's/PMD's are off limits */
-
-	{
-
-		/* Perfmon2 timeouts are based on the clock tick, we need to check
-		   them otherwise it will complain at us when we multiplex */
-
-		unsigned long min_timeout_ns;
-
-		struct timespec ts;
-		if ( syscall( __NR_clock_getres, CLOCK_REALTIME, &ts ) == -1 ) {
-			PAPIERROR
-				( "Could not detect proper HZ rate, multiplexing may fail\n" );
-			min_timeout_ns = 10000000;
-		} else {
-			min_timeout_ns = ts.tv_nsec;
-		}
+   _papi_pfm_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2,
 
 
-		/* This will fail if we've done timeout detection wrong */
-		retval =
-			detect_timeout_and_unavail_pmu_regs
-			( &_perfmon2_pfm_unavailable_pmcs, &_perfmon2_pfm_unavailable_pmds,
-			  &min_timeout_ns );
+   /* Run the libpfm-specific setup */
+   retval=_papi_libpfm_init(&_papi_pfm_vector, cidx);
+   if (retval) return retval;
 
+   /* Load the module, find out if any PMC's/PMD's are off limits */
 
-		if ( retval != PAPI_OK )
-			return ( retval );
-	}
+   /* Perfmon2 timeouts are based on the clock tick, we need to check
+      them otherwise it will complain at us when we multiplex */
 
-	_papi_libpfm_init(&_papi_pfm_vector,cidx);
+   unsigned long min_timeout_ns;
 
+   struct timespec ts;
 
-	strcpy( _papi_pfm_vector.cmp_info.name,"perfmon" );
-	strcpy( _papi_pfm_vector.cmp_info.description,
-		"Linux perfmon2 CPU counters" );
-	strcpy( _papi_pfm_vector.cmp_info.version, "3.8" );
-	sprintf( buf, "%08x", version );
+   if ( syscall( __NR_clock_getres, CLOCK_REALTIME, &ts ) == -1 ) {
+      PAPIERROR( "Could not detect proper HZ rate, multiplexing may fail\n" );
+      min_timeout_ns = 10000000;
+   } else {
+      min_timeout_ns = ts.tv_nsec;
+   }
 
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
-		/* powerpc */
-		_papi_pfm_vector.cmp_info.available_domains |=
-			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-		if ( strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" ) ==
-			 0 ) {
-			_papi_pfm_vector.cmp_info.default_domain =
-				PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-		}
-	} else
-		_papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_KERNEL;
+   /* This will fail if we've done timeout detection wrong */
+   retval=detect_timeout_and_unavail_pmu_regs( &_perfmon2_pfm_unavailable_pmcs,
+					       &_perfmon2_pfm_unavailable_pmds,
+					       &min_timeout_ns );
+   if ( retval != PAPI_OK ) {
+      return ( retval );
+   }	
 
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
-		switch ( _perfmon2_pfm_pmu_type ) {
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
+      /* powerpc */
+      _papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_KERNEL | 
+                                                     PAPI_DOM_SUPERVISOR;
+      if (strcmp(_papi_hwi_system_info.hw_info.model_string, "POWER6" ) == 0) {
+	 _papi_pfm_vector.cmp_info.default_domain = PAPI_DOM_USER | 
+	                                            PAPI_DOM_KERNEL | 
+	                                            PAPI_DOM_SUPERVISOR;
+      }
+   } else {
+      _papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_KERNEL;
+   }
+
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN ) {
+      switch ( _perfmon2_pfm_pmu_type ) {
 #ifdef PFMLIB_SPARC_ULTRA12_PMU
-		case PFMLIB_SPARC_ULTRA12_PMU:
-		case PFMLIB_SPARC_ULTRA3_PMU:
-		case PFMLIB_SPARC_ULTRA3I_PMU:
-		case PFMLIB_SPARC_ULTRA3PLUS_PMU:
-		case PFMLIB_SPARC_ULTRA4PLUS_PMU:
+	     case PFMLIB_SPARC_ULTRA12_PMU:
+	     case PFMLIB_SPARC_ULTRA3_PMU:
+	     case PFMLIB_SPARC_ULTRA3I_PMU:
+	     case PFMLIB_SPARC_ULTRA3PLUS_PMU:
+	     case PFMLIB_SPARC_ULTRA4PLUS_PMU:
+		  break;
 #endif
-			break;
+	     default:
+		   _papi_pfm_vector.cmp_info.available_domains |= 
+                                                      PAPI_DOM_SUPERVISOR;
+		   break;
+      }
+   }
 
-		default:
-			_papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
-			break;
-		}
-	}
+   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
+      _papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_OTHER;
+   }
 
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
-		_papi_pfm_vector.cmp_info.available_domains |= PAPI_DOM_OTHER;
-	}
+   if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
+	( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
+      _papi_pfm_vector.cmp_info.fast_counter_read = 1;
+      _papi_pfm_vector.cmp_info.fast_real_timer = 1;
+      _papi_pfm_vector.cmp_info.cntr_umasks = 1;
+   }
 
-	if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
-		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
-		_papi_pfm_vector.cmp_info.fast_counter_read = 1;
-		_papi_pfm_vector.cmp_info.fast_real_timer = 1;
-		_papi_pfm_vector.cmp_info.cntr_umasks = 1;
-	}
-
-	_papi_pfm_vector.cmp_info.hardware_intr = 1;
-	_papi_pfm_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
-	_papi_pfm_vector.cmp_info.attach = 1;
-	_papi_pfm_vector.cmp_info.attach_must_ptrace = 1;
-	_papi_pfm_vector.cmp_info.kernel_multiplex = 1;
-	_papi_pfm_vector.cmp_info.kernel_profile = 1;
-	_papi_pfm_vector.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-
-	/* Setup presets */
-	retval = _papi_load_preset_table( pmu_name, _perfmon2_pfm_pmu_type, cidx );
-	if ( retval )
-		return ( retval );
-
-
-	return ( PAPI_OK );
+   return PAPI_OK;
 }
 
 int
-_papi_pfm_shutdown_substrate(  )
+_papi_pfm_shutdown_component(  )
 {
-
 	return PAPI_OK;
 }
 
 static int
-_papi_sub_pfm_init( hwd_context_t * thr_ctx )
+_papi_pfm_init_thread( hwd_context_t * thr_ctx )
 {
 	pfarg_load_t load_args;
 	pfarg_ctx_t newctx;
@@ -2003,7 +1954,7 @@ _papi_pfm_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 				   PFM_VERSION_MAJOR( hdr->hdr_version ) );
 		munmap( buf_addr, buf_arg.buf_size );
 		close( ctx_fd );
-		return ( PAPI_ESBSTR );
+		return PAPI_ESYS;
 	}
 
 	ret = _papi_pfm_set_overflow( ESI, EventIndex, threshold );
@@ -2253,59 +2204,61 @@ _papi_pfm_update_control_state( hwd_control_state_t * ctl0,
 
 
 papi_vector_t _papi_pfm_vector = {
-	.cmp_info = {
-				 /* default component information (unspecified values are initialized to 0) */
-				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
+   .cmp_info = {
+      /* default component information (unspecified values initialized to 0) */
+      .name = "perfmon",
+      .description =  "Linux perfmon2 CPU counters",
+      .version = "3.8",
 
-				 .hardware_intr = 1,
-				 .kernel_multiplex = 1,
-				 .kernel_profile = 1,
-				 .num_mpx_cntrs = PFMLIB_MAX_PMDS,
-				 .hardware_intr_sig = PAPI_INT_SIGNAL,
+      .default_domain = PAPI_DOM_USER,
+      .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+      .default_granularity = PAPI_GRN_THR,
+      .available_granularities = PAPI_GRN_THR,
 
-				 /* component specific cmp_info initializations */
-				 .fast_real_timer = 1,
-				 .fast_virtual_timer = 0,
-				 .attach = 0,
-				 .attach_must_ptrace = 0,
-				 },
+      .hardware_intr = 1,
+      .kernel_multiplex = 1,
+      .kernel_profile = 1,
+      .num_mpx_cntrs = PFMLIB_MAX_PMDS,
+
+      /* component specific cmp_info initializations */
+      .fast_real_timer = 1,
+      .fast_virtual_timer = 0,
+      .attach = 1,
+      .attach_must_ptrace = 1,
+  },
 
 	/* sizes of framework-opaque component-private structures */
-	.size = {
-			 .context = sizeof ( pfm_context_t ),
-			 .control_state = sizeof ( pfm_control_state_t ),
-			 .reg_value = sizeof ( pfm_register_t ),
-			 .reg_alloc = sizeof ( pfm_reg_alloc_t ),
-			 }
-	,
+  .size = {
+       .context = sizeof ( pfm_context_t ),
+       .control_state = sizeof ( pfm_control_state_t ),
+       .reg_value = sizeof ( pfm_register_t ),
+       .reg_alloc = sizeof ( pfm_reg_alloc_t ),
+  },
 	/* function pointers in this component */
-	.init_control_state = _papi_pfm_init_control_state,
-	.start = _papi_pfm_start,
-	.stop = _papi_pfm_stop,
-	.read = _papi_pfm_read,
-	.shutdown = _papi_pfm_shutdown,
-	.shutdown_substrate = _papi_pfm_shutdown_substrate,
-	.ctl = _papi_pfm_ctl,
-	.update_control_state = _papi_pfm_update_control_state,	
-	.set_domain = set_domain,
-	.reset = _papi_pfm_reset,
-	.set_overflow = _papi_pfm_set_overflow,
-	.set_profile = _papi_pfm_set_profile,
-	.stop_profiling = _papi_pfm_stop_profiling,
-	.init_substrate = _papi_pfm_init_substrate,
-	.dispatch_timer = _papi_pfm_dispatch_timer,
-	.init = _papi_sub_pfm_init,
-	.allocate_registers = _papi_pfm_allocate_registers,
-	.write = _papi_pfm_write,
+  .init_control_state =   _papi_pfm_init_control_state,
+  .start =                _papi_pfm_start,
+  .stop =                 _papi_pfm_stop,
+  .read =                 _papi_pfm_read,
+  .shutdown_thread =      _papi_pfm_shutdown,
+  .shutdown_component =   _papi_pfm_shutdown_component,
+  .ctl =                  _papi_pfm_ctl,
+  .update_control_state = _papi_pfm_update_control_state,	
+  .set_domain =           set_domain,
+  .reset =                _papi_pfm_reset,
+  .set_overflow =         _papi_pfm_set_overflow,
+  .set_profile =          _papi_pfm_set_profile,
+  .stop_profiling =       _papi_pfm_stop_profiling,
+  .init_component =       _papi_pfm_init_component,
+  .dispatch_timer =       _papi_pfm_dispatch_timer,
+  .init_thread =          _papi_pfm_init_thread,
+  .allocate_registers =   _papi_pfm_allocate_registers,
+  .write =                _papi_pfm_write,
 
 	/* from the counter name library */
-	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,
-	.ntv_name_to_code =  _papi_libpfm_ntv_name_to_code,
-	.ntv_code_to_name =  _papi_libpfm_ntv_code_to_name,
-	.ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
-	.ntv_code_to_bits =  _papi_libpfm_ntv_code_to_bits,
+  .ntv_enum_events =      _papi_libpfm_ntv_enum_events,
+  .ntv_name_to_code =     _papi_libpfm_ntv_name_to_code,
+  .ntv_code_to_name =     _papi_libpfm_ntv_code_to_name,
+  .ntv_code_to_descr =    _papi_libpfm_ntv_code_to_descr,
+  .ntv_code_to_bits =     _papi_libpfm_ntv_code_to_bits,
 
 };

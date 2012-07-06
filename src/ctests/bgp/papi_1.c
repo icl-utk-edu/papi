@@ -939,7 +939,7 @@ void Do_Low_Level_Tests(void) {
 
   printf("\n==>  Perform a PAPI_write (not supported when UPC is running)...\n");
   xRC = PAPI_write(xEventSet, PAPI_Counters);
-  if (xRC == PAPI_ESBSTR) {
+  if (xRC == PAPI_ECMP) {
     printf("SUCCESS:  PAPI_write, not allowed...\n");
   }
   else {

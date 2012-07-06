@@ -41,7 +41,6 @@ Master pthread:
 #include <pthread.h>
 #endif
 
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 void
 Thread( int t, int n )
@@ -119,7 +118,7 @@ main( int argc, char **argv )
 	retval =
 		PAPI_thread_init( ( unsigned long ( * )( void ) ) ( pthread_self ) );
 	if ( retval != PAPI_OK ) {
-		if ( retval == PAPI_ESBSTR )
+		if ( retval == PAPI_ECMP )
 			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
 		else
 			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );

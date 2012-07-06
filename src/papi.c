@@ -30,9 +30,7 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 
-#ifdef USER_EVENTS
 #include "papi_user_events.h"
-#endif
 
 #include "extras.h"
 #include "multiplex.h"
@@ -170,7 +168,7 @@ PAPI_thread_id( void )
  *	Space could not be allocated to store the new thread information.
  *  @retval PAPI_ESYS 
  *	A system or C library call failed inside PAPI, see the errno variable.
- *  @retval PAPI_ESBSTR 
+ *  @retval PAPI_ECMP 
  *	Hardware counters for this thread could not be initialized. 
  *
  *   @bug No known bugs.
@@ -200,7 +198,7 @@ PAPI_register_thread( void )
  *		Space could not be allocated to store the new thread information.
  *	@retval PAPI_ESYS 
  *		A system or C library call failed inside PAPI, see the errno variable.
- *	@retval PAPI_ESBSTR 
+ *	@retval PAPI_ECMP 
  *		Hardware counters for this thread could not be initialized. 
  *
  *	PAPI_unregister_thread should be called when the user wants to shutdown 
@@ -447,8 +445,8 @@ PAPI_set_thr_specific( int tag, void *ptr )
  *		papi.h is different from the version used to compile the PAPI library.
  *	@retval PAPI_ENOMEM 
  *		Insufficient memory to complete the operation.
- *	@retval PAPI_ESBSTR 
- *		This substrate does not support the underlying hardware.
+ *	@retval PAPI_ECMP 
+ *		This component does not support the underlying hardware.
  *	@retval PAPI_ESYS 
  *		A system or C library call failed inside PAPI, see the errno variable. 
  *
@@ -476,10 +474,9 @@ PAPI_set_thr_specific( int tag, void *ptr )
 int
 PAPI_library_init( int version )
 {
-#ifdef USER_EVENTS
 	char *filename;
-#endif
 	int tmp = 0, tmpel;
+
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
 	   true UNIX semaphore. We cannot use PAPI
@@ -498,16 +495,14 @@ PAPI_library_init( int version )
 		sleep( 1 );
 	}
 
-#ifndef _WIN32
 	/* This checks to see if we have forked or called init more than once.
 	   If we have forked, then we continue to init. If we have not forked, 
 	   we check to see the status of initialization. */
 
-	APIDBG( "Initializing library: current PID %d, old PID %d\n", getpid(  ),
-			_papi_hwi_system_info.pid );
-	if ( _papi_hwi_system_info.pid == getpid(  ) )
-#endif
-	{
+	APIDBG( "Initializing library: current PID %d, old PID %d\n", 
+                getpid(  ), _papi_hwi_system_info.pid );
+
+	if ( _papi_hwi_system_info.pid == getpid(  ) ) {
 		/* If the magic environment variable PAPI_ALLOW_STOLEN is set,
 		   we call shutdown if PAPI has been initialized. This allows
 		   tools that use LD_PRELOAD to run on applications that use PAPI.
@@ -591,7 +586,7 @@ PAPI_library_init( int version )
 	   papi_return( init_retval );
 	}
 
-	/* Initialize substrate globals */
+	/* Initialize component globals */
 
 	tmp = _papi_hwi_init_global(  );
 	if ( tmp ) {
@@ -602,8 +597,7 @@ PAPI_library_init( int version )
 		papi_return( init_retval );
 	}
 	
-	/* Initialize thread globals, including the main threads
-	   substrate */
+	/* Initialize thread globals, including the main threads  */
 
 	tmp = _papi_hwi_init_global_threads(  );
 	if ( tmp ) {
@@ -612,7 +606,7 @@ PAPI_library_init( int version )
 		_papi_hwi_shutdown_global_internal(  );
 		for ( i = 0; i < papi_num_components; i++ ) {
 		    if (!_papi_hwd[i]->cmp_info.disabled) {
-                       _papi_hwd[i]->shutdown_substrate(  );
+                       _papi_hwd[i]->shutdown_component(  );
 		    }
 		}
 		_in_papi_library_init_cnt--;
@@ -628,11 +622,9 @@ PAPI_library_init( int version )
 	_papi_user_defined_events_setup(NULL);
 #endif
 
-#ifdef USER_EVENTS
 	if ( (filename = getenv( "PAPI_USER_EVENTS_FILE" )) != NULL ) {
 	  _papi_user_defined_events_setup(filename);
 	}
-#endif
 
 	return ( init_retval = PAPI_VER_CURRENT );
 }
@@ -699,7 +691,6 @@ PAPI_query_event( int EventCode )
 					 ( ( unsigned int ) EventCode ) );
 	}
 
-#ifdef USER_EVENTS
 	if ( IS_USER_DEFINED(EventCode) ) {
 	  EventCode &= PAPI_UE_AND_MASK;
 	  if ( EventCode < 0 || EventCode > (int)_papi_user_events_count)
@@ -707,7 +698,6 @@ PAPI_query_event( int EventCode )
 
 	  papi_return( PAPI_OK );
 	}
-#endif
 
 	papi_return( PAPI_ENOEVNT );
 }
@@ -930,7 +920,6 @@ PAPI_event_code_to_name( int EventCode, char *out )
 				 ( ( unsigned int ) EventCode, out, PAPI_MAX_STR_LEN ) );
 	}
 
-#ifdef USER_EVENTS
 	if ( IS_USER_DEFINED(EventCode) ) {
 	  EventCode &= PAPI_UE_AND_MASK;
 
@@ -941,7 +930,6 @@ PAPI_event_code_to_name( int EventCode, char *out )
 		  PAPI_MIN_STR_LEN);
 	  papi_return( PAPI_OK );
 	}
-#endif
 
 	papi_return( PAPI_ENOEVNT );
 }
@@ -1021,14 +1009,12 @@ PAPI_event_name_to_code( char *in, int *out )
 	   }
 	}
 
-#ifdef USER_EVENTS
 	for ( i=0; i < (int)_papi_user_events_count; i++ ) {
 	  if ( strcasecmp( _papi_user_events[i].symbol, in ) == 0 ) {
 		*out = (int) ( i | PAPI_UE_MASK );
 		papi_return( PAPI_OK );
 	  }
 	}
-#endif 
 
 	papi_return( _papi_hwi_native_name_to_code( in, out ) );
 }
@@ -1182,9 +1168,7 @@ PAPI_enum_event( int *EventCode, int modifier )
 	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
 
 	    return retval;
-	} 
-#ifdef USER_EVENTS
-	else if ( IS_USER_DEFINED(i) ) {
+	} else if ( IS_USER_DEFINED(i) ) {
 	  if ( modifier == PAPI_ENUM_FIRST ) {
 		*EventCode = (int) 0x0;
 		return ( PAPI_OK );
@@ -1197,7 +1181,6 @@ PAPI_enum_event( int *EventCode, int modifier )
 		*EventCode = i;
 	  return ( PAPI_OK );
 	}
-#endif
 
 	papi_return( PAPI_EINVAL );
 }
@@ -1920,7 +1903,7 @@ PAPI_destroy_eventset( int *EventSet )
 	return PAPI_OK;
 }
 
-/* simply checks for valid EventSet, calls substrate start() call */
+/* simply checks for valid EventSet, calls component start() call */
 /** @class PAPI_start
  *	@brief Start counting hardware events in an event set.
  *
@@ -2115,7 +2098,7 @@ PAPI_start( int EventSet )
 	return ( retval );
 }
 
-/* checks for valid EventSet, calls substrate stop() fxn. */
+/* checks for valid EventSet, calls component stop() function. */
 /** @class PAPI_stop
  *	@brief Stop counting hardware events in an event set. 
  *
@@ -2646,17 +2629,19 @@ PAPI_accum( int EventSet, long long *values )
  *
  *	@retval PAPI_ENOEVST 
  *		The EventSet specified does not exist.
- *	@retval PAPI_ESBSTR 
+ *	@retval PAPI_ECMP 
  *		PAPI_write() is not implemented for this architecture. 
- *		PAPI_ESYS The EventSet is currently counting events and 
- *		the substrate could not change the values of the running counters.
+ *      @retval PAPI_ESYS 
+ *              The EventSet is currently counting events and 
+ *		the component could not change the values of the 
+ *              running counters.
  *
  *	PAPI_write() writes the counter values provided in the array values 
  *	into the event set EventSet. 
  *	The virtual counters managed by the PAPI library will be set to the values provided. 
  *	If the event set is running, an attempt will be made to write the values 
  *	to the running counters. 
- *	This operation is not permitted by all substrates and may result in a run-time error. 
+ *	This operation is not permitted by all components and may result in a run-time error. 
  *
  *	@see PAPI_read
  */
@@ -3011,8 +2996,8 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *	@param tid 
  *		A thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id.
  *
- *	@retval PAPI_ESBSTR 
- *		This feature is unsupported on this substrate.
+ *	@retval PAPI_ECMP 
+ *		This feature is unsupported on this component.
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOEVST 
@@ -3070,8 +3055,8 @@ PAPI_attach( int EventSet, unsigned long tid )
  *	@param tid 
  *		A thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id.
  *
- *	@retval PAPI_ESBSTR 
- *		This feature is unsupported on this substrate.
+ *	@retval PAPI_ECMP
+ *		This feature is unsupported on this component.
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOEVST 
@@ -3227,7 +3212,8 @@ PAPI_set_multiplex( int EventSet )
  *	@retval PAPI_EINVAL The specified option or parameter is invalid.
  *	@retval PAPI_ENOEVST The EventSet specified does not exist.
  *	@retval PAPI_EISRUN The EventSet is currently counting events.
- *	@retval PAPI_ESBSTR The option is not implemented for the current substrate.
+ *	@retval PAPI_ECMP
+ *              The option is not implemented for the current component.
  *	@retval PAPI_ENOINIT PAPI has not been initialized.
  *	@retval PAPI_EINVAL_DOM Invalid domain has been requested.
  *
@@ -3336,11 +3322,11 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.attach == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		/* if attached to a cpu, return an error */
 		if (internal.attach.ESI->state & PAPI_CPU_ATTACHED)
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		if ( ( internal.attach.ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
@@ -3370,7 +3356,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.attach == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		if ( ( internal.attach.ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
@@ -3380,7 +3366,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 
 		/* if attached to a cpu, return an error */
 		if (internal.attach.ESI->state & PAPI_CPU_ATTACHED)
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		internal.attach.tid = ptr->attach.tid;
 		/* get the context we should use for this event set */
@@ -3412,7 +3398,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.cpu == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		// can not attach to a cpu if already attached to a process or 
 		// counters set to be inherited by child processes
@@ -3443,11 +3429,11 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( ptr->multiplex.ns < 0 )
 			papi_return( PAPI_EINVAL );
 		/* We should check the resolution here with the system, either
-		   substrate if kernel multiplexing or PAPI if SW multiplexing. */
+		   component if kernel multiplexing or PAPI if SW multiplexing. */
 		internal.multiplex.ns = ( unsigned long ) ptr->multiplex.ns;
 		/* get the context we should use for this event set */
 		context = _papi_hwi_get_context( internal.cpu.ESI, NULL );
-		/* Low level just checks/adjusts the args for this substrate */
+		/* Low level just checks/adjusts the args for this component */
 		retval = _papi_hwd[cidx]->ctl( context, PAPI_DEF_MPX_NS, &internal );
 		if ( retval == PAPI_OK ) {
 			_papi_os_info.itimer_ns = ( int ) internal.multiplex.ns;
@@ -3461,7 +3447,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( ptr->itimer.ns < 0 )
 			papi_return( PAPI_EINVAL );
 		internal.itimer.ns = ptr->itimer.ns;
-		/* Low level just checks/adjusts the args for this substrate */
+		/* Low level just checks/adjusts the args for this component */
 		retval = _papi_hwd[cidx]->ctl( NULL, PAPI_DEF_ITIMER_NS, &internal );
 		if ( retval == PAPI_OK ) {
 			_papi_os_info.itimer_ns = internal.itimer.ns;
@@ -3476,7 +3462,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( PAPI_EINVAL );
 		memcpy( &internal.itimer, &ptr->itimer,
 				sizeof ( PAPI_itimer_option_t ) );
-		/* Low level just checks/adjusts the args for this substrate */
+		/* Low level just checks/adjusts the args for this component */
 		retval = _papi_hwd[cidx]->ctl( NULL, PAPI_DEF_ITIMER, &internal );
 		if ( retval == PAPI_OK ) {
 			_papi_os_info.itimer_num = ptr->itimer.itimer_num;
@@ -3545,13 +3531,13 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( PAPI_EINVAL );
 
 		/* Change the global structure. The _papi_hwd_init_control_state function 
-		   in the substrates gets information from the global structure instead of
+		   in the components gets information from the global structure instead of
 		   per-thread information. */
 		cidx = valid_component( ptr->defdomain.def_cidx );
 		if ( cidx < 0 )
 			papi_return( cidx );
 
-		/* Check what the substrate supports */
+		/* Check what the component supports */
 
 		if ( dom == PAPI_DOM_ALL )
 			dom = _papi_hwd[cidx]->cmp_info.available_domains;
@@ -3577,7 +3563,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( cidx < 0 )
 			papi_return( cidx );
 
-		/* Check what the substrate supports */
+		/* Check what the component supports */
 
 		if ( dom == PAPI_DOM_ALL )
 			dom = _papi_hwd[cidx]->cmp_info.available_domains;
@@ -3617,7 +3603,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		   in the components gets information from the global structure instead of
 		   per-thread information. */
 
-		/* Check what the substrate supports */
+		/* Check what the component supports */
 
 		if ( grn & ~_papi_hwd[cidx]->cmp_info.available_granularities )
 			papi_return( PAPI_EINVAL );
@@ -3646,7 +3632,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		if ( cidx < 0 )
 			papi_return( cidx );
 
-		/* Check what the substrate supports */
+		/* Check what the component supports */
 
 		if ( grn & ~_papi_hwd[cidx]->cmp_info.available_granularities )
 			papi_return( PAPI_EINVAL );
@@ -3678,14 +3664,14 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			papi_return( cidx );
 
 		if ( _papi_hwd[cidx]->cmp_info.inherit == 0 )
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		if ( ( ESI->state & PAPI_STOPPED ) == 0 )
 			papi_return( PAPI_EISRUN );
 
 		/* if attached to a cpu, return an error */
 		if (ESI->state & PAPI_CPU_ATTACHED)
-			papi_return( PAPI_ESBSTR );
+			papi_return( PAPI_ECMP );
 
 		internal.inherit.ESI = ESI;
 		internal.inherit.inherit = ptr->inherit.inherit;
@@ -3732,12 +3718,9 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	}
 	case PAPI_USER_EVENTS_FILE:
 	{
-#ifdef USER_EVENTS
 	  SUBDBG("Filename is -%s-\n", ptr->events_file);
 	  _papi_user_defined_events_setup(ptr->events_file);
 	  return( PAPI_OK );
-#endif
-	  return ( PAPI_ENOIMPL );
 	}
 	default:
 		papi_return( PAPI_EINVAL );
@@ -3901,7 +3884,8 @@ PAPI_get_multiplex( int EventSet )
  *	@retval PAPI_OK
  *	@retval PAPI_EINVAL The specified option or parameter is invalid.
  *	@retval PAPI_ENOEVST The EventSet specified does not exist.
- *	@retval PAPI_ESBSTR The option is not implemented for the current substrate.
+ *	@retval PAPI_ECMP 
+ *              The option is not implemented for the current component.
  *	@retval PAPI_ENOINIT PAPI has not been initialized.
  *
  *	PAPI_get_opt() queries the options of the PAPI library or a specific event set created by 
@@ -4179,7 +4163,7 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 {
 
   if (_papi_hwi_invalid_cmp(cidx)) {
-     return PAPI_ESBSTR;
+     return PAPI_ECMP;
   }
 
 	switch ( option ) {
@@ -4357,18 +4341,16 @@ again:
 	}
 #endif
 
-	/* Shutdown the entire substrate */
+	/* Shutdown the entire component */
 
-#ifdef USER_EVENTS
 	_papi_cleanup_user_events();
-#endif
 
 	_papi_hwi_shutdown_highlevel(  );
 	_papi_hwi_shutdown_global_internal(  );
 	_papi_hwi_shutdown_global_threads(  );
 	for( i = 0; i < papi_num_components; i++ ) {
 	   if (!_papi_hwd[i]->cmp_info.disabled) {
-              _papi_hwd[i]->shutdown_substrate(  );
+              _papi_hwd[i]->shutdown_component(  );
 	   }
 	}
 
@@ -4380,7 +4362,7 @@ again:
 }
 
 /** @class PAPI_strerror
- *	@brief Convert PAPI error codes to strings, and return the error string to user. 
+ *	@brief Returns a string describing the PAPI error code. 
  *
  *  @par C Interface:
  *     \#include <papi.h> @n
@@ -4433,37 +4415,11 @@ PAPI_strerror( int errorCode )
 	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
 		return ( NULL );
 
-	return ( ( char * ) _papi_hwi_err[-errorCode].name );
-}
-
-/** @class PAPI_descr_error
- *	@brief Return the PAPI error description string to user. 
- *
- *	@param errorCode 
- *		the error code to interpret
- *
- *	@retval NULL 
- *		The input error code to PAPI_descr_error() is invalid, 
- *		or the description string is empty. 
- *
- *	PAPI_descr_error() returns a pointer to the error message corresponding to the 
- *	error code code . 
- *	If the call fails the function returns the NULL pointer. 
- *	This function is not implemented in Fortran. 
- *
- *	@see  PAPI_strerror PAPI_perror
- */
-char *
-PAPI_descr_error( int errorCode )
-{
-	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
-		return ( NULL );
-
 	return ( ( char * ) _papi_hwi_err[-errorCode].descr );
 }
 
 /** @class PAPI_perror
- *  @brief Convert PAPI error codes to strings, and print error message to stderr. 
+ *  @brief Produces a string on standard error, describing the last library error.
  *
  * @par C Interface:
  *     \#include <papi.h> @n
@@ -4840,7 +4796,7 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *		This event must already be a member of the EventSet.
  *	@param threshold 
  *		minimum number of events that must occur before the PC is sampled. 
- *		If hardware overflow is supported for your substrate, this threshold will 
+ *		If hardware overflow is supported for your component, this threshold will 
  *		trigger an interrupt when reached. 
  *		Otherwise, the counters will be sampled periodically and the PC will be 
  *		recorded for the first sample that exceeds the threshold. 
@@ -5168,7 +5124,7 @@ PAPI_sprofil( PAPI_sprofil_t *prof, int profcnt, int EventSet,
  *	 This event must already be a member of the EventSet.
  * @param threshold
  *    -- minimum number of events that must occur before the PC is sampled. 
- *	 If hardware overflow is supported for your substrate, this threshold 
+ *	 If hardware overflow is supported for your component, this threshold 
  *	 will trigger an interrupt when reached. 
  *	 Otherwise, the counters will be sampled periodically and the PC will 
  *       be recorded for the first sample that exceeds the threshold. 
@@ -5894,8 +5850,8 @@ PAPI_list_events( int EventSet, int *Events, int *number )
  *	@param dest
  *		structure to be filled in @ref PAPI_dmem_info_t
  *	
- *	@retval PAPI_ESBSTR 
- *		The funtion is not implemented for the current substrate.
+ *	@retval PAPI_ECMP
+ *		The funtion is not implemented for the current component.
  *	@retval PAPI_EINVAL 
  *		Any value in the structure or array may be undefined as indicated by 
  *		this error value.
@@ -6397,7 +6353,7 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 		set_bit -= 1;
 		overflow_vector ^= ( long long ) 1 << set_bit;
 		for ( j = 0; j < ESI->NumberOfEvents; j++ ) {
-			for ( k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++ ) {
+			for ( k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0; k++ ) {
 				pos = ESI->EventInfoArray[j].pos[k];
 				if ( ( set_bit == pos ) &&
 					 ( ( ESI->EventInfoArray[j].derived == NOT_DERIVED ) ||
@@ -6491,12 +6447,17 @@ int  PAPI_get_component_index(char *name)
  *              component index of component to be disabled
  *	@par Examples:
  *	@code
- 		int cidx;
- 		cidx = PAPI_get_component_index("cuda");
-		PAPI_disable_component(cidx);
-		if (cidx==PAPI_OK) {
-                   printf("The CUDA component has been disabled\n");
-                }
+               int cidx, result;
+
+               cidx = PAPI_get_component_index("example");
+
+               if (cidx>=0) {
+                  result = PAPI_disable_component(cidx);
+                  if (result==PAPI_OK)
+                     printf("The example component is disabled\n");
+               }
+               // ... 
+               PAPI_library_init();
  *	@endcode
  *      PAPI_disable_component() allows the user to disable components
  *      before PAPI_library_init() time.  This is useful if the user

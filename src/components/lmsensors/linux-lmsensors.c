@@ -250,7 +250,7 @@ getEventValue( unsigned event_id )
  * This is called whenever a thread is initialized
  */
 int
-_lmsensors_init( hwd_context_t *ctx )
+_lmsensors_init_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
     return PAPI_OK;
@@ -262,7 +262,7 @@ _lmsensors_init( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_lmsensors_init_substrate( int cidx )
+_lmsensors_init_component( int cidx )
 {
     int res;
     (void) cidx;
@@ -289,7 +289,7 @@ _lmsensors_init_substrate( int cidx )
     if ( ( unsigned ) num_events != createNativeEvents(  ) ) {
        strncpy(_lmsensors_vector.cmp_info.disabled_reason,
 	      "LM_SENSOR number mismatch",PAPI_MAX_STR_LEN);
-       return PAPI_ESBSTR;
+       return PAPI_ECMP;
     }
 
     _lmsensors_vector.cmp_info.num_native_events=num_events;
@@ -372,7 +372,7 @@ _lmsensors_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
 
 int
-_lmsensors_shutdown_substrate( void )
+_lmsensors_shutdown_component( void )
 {
 
 	/* Call the libsensors cleaning function before leaving */
@@ -382,7 +382,7 @@ _lmsensors_shutdown_substrate( void )
 }
 
 int
-_lmsensors_shutdown( hwd_context_t *ctx )
+_lmsensors_shutdown_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
 
@@ -391,7 +391,7 @@ _lmsensors_shutdown( hwd_context_t *ctx )
 
 
 
-/* This function sets various options in the substrate
+/* This function sets various options in the component
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
@@ -564,14 +564,14 @@ papi_vector_t _lmsensors_vector = {
 	   .reg_alloc = sizeof ( _lmsensors_reg_alloc_t ),
   },
 	/* function pointers in this component */
-     .init =                 _lmsensors_init,
-     .init_substrate =       _lmsensors_init_substrate,
+     .init_thread =          _lmsensors_init_thread,
+     .init_component =       _lmsensors_init_component,
      .init_control_state =   _lmsensors_init_control_state,
      .start =                _lmsensors_start,
      .stop =                 _lmsensors_stop,
      .read =                 _lmsensors_read,
-     .shutdown =             _lmsensors_shutdown,
-     .shutdown_substrate =   _lmsensors_shutdown_substrate,
+     .shutdown_thread =      _lmsensors_shutdown_thread,
+     .shutdown_component =   _lmsensors_shutdown_component,
      .ctl =                  _lmsensors_ctl,
      .update_control_state = _lmsensors_update_control_state,
      .set_domain =           _lmsensors_set_domain,

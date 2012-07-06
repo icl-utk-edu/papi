@@ -83,7 +83,7 @@ main( int argc, char **argv )
 	cmp_info = PAPI_get_component_info( 0 );
 	if ( cmp_info == NULL ) {
 	   test_fail( __FILE__, __LINE__, 
-                      "PAPI_get_component_info", PAPI_ESBSTR );
+                      "PAPI_get_component_info", PAPI_ECMP );
 	}
 
 	code = PAPI_NATIVE_MASK;

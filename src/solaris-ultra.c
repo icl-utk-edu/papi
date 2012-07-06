@@ -1,6 +1,5 @@
 /* 
 * File:    solaris-ultra.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Kevin London
@@ -24,6 +23,9 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include <sys/utsname.h>
+
+#include "solaris-common.h"
+#include "solaris-memory.h"
 
 #ifdef CPC_ULTRA3_I
 #define LASTULTRA3 CPC_ULTRA3_I
@@ -110,9 +112,6 @@ static void add_preset( hwi_search_t * tab, int *np, einfo_t e );
 
 static int cpuver;
 static int pcr_shift[2];
-
-extern int _solaris_get_memory_info( PAPI_hw_info_t * hw, int id );
-extern int _solaris_get_dmem_info( PAPI_dmem_info_t * d );
 
 hwi_search_t *preset_search_map;
 
@@ -367,7 +366,7 @@ set_granularity( hwd_control_state_t * this_state, int domain )
 	case PAPI_GRN_SYS:
 	case PAPI_GRN_SYS_CPU:
 	case PAPI_GRN_PROC:
-		return ( PAPI_ESBSTR );
+		return PAPI_ECMP;
 	case PAPI_GRN_THR:
 		break;
 	default:
@@ -383,182 +382,6 @@ void
 print_walk_names( void *arg, int regno, const char *name, uint8_t bits )
 {
 	SUBDBG( arg, regno, name, bits );
-}
-
-static int
-get_system_info( papi_mdi_t *mdi )
-{
-	int retval;
-	pid_t pid;
-	char maxargs[PAPI_MAX_STR_LEN] = "<none>";
-	psinfo_t psi;
-	int fd;
-	int hz, version;
-	char cpuname[PAPI_MAX_STR_LEN], pname[PAPI_HUGE_STR_LEN];
-
-	/* Check counter access */
-
-	if ( cpc_version( CPC_VER_CURRENT ) != CPC_VER_CURRENT )
-		return ( PAPI_ESBSTR );
-	SUBDBG( "CPC version %d successfully opened\n", CPC_VER_CURRENT );
-
-	if ( cpc_access(  ) == -1 )
-		return ( PAPI_ESBSTR );
-
-	/* Global variable cpuver */
-
-	cpuver = cpc_getcpuver(  );
-	SUBDBG( "Got %d from cpc_getcpuver()\n", cpuver );
-	if ( cpuver == -1 )
-		return ( PAPI_ESBSTR );
-
-#ifdef DEBUG
-	{
-		if ( ISLEVEL( DEBUG_SUBSTRATE ) ) {
-			const char *name;
-			int i;
-
-			name = cpc_getcpuref( cpuver );
-			if ( name )
-				SUBDBG( "CPC CPU reference: %s\n", name );
-			else
-				SUBDBG( "Could not get a CPC CPU reference\n" );
-
-			for ( i = 0; i < cpc_getnpic( cpuver ); i++ ) {
-				SUBDBG( "\n%6s %-40s %8s\n", "Reg", "Symbolic name", "Code" );
-				cpc_walk_names( cpuver, i, "%6d %-40s %02x\n",
-								print_walk_names );
-			}
-			SUBDBG( "\n" );
-		}
-	}
-#endif
-
-
-	/* Initialize other globals */
-
-	if ( ( retval = build_tables(  ) ) != PAPI_OK )
-		return retval;
-
-	preset_search_map = preset_table;
-	if ( cpuver <= CPC_ULTRA2 ) {
-		SUBDBG( "cpuver (==%d) <= CPC_ULTRA2 (==%d)\n", cpuver, CPC_ULTRA2 );
-		pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
-		pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-	} else if ( cpuver <= LASTULTRA3 ) {
-		SUBDBG( "cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3 );
-		pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
-		pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-		_solaris_vector.cmp_info.hardware_intr = 1;
-		_solaris_vector.cmp_info.hardware_intr_sig = SIGEMT;
-	} else
-		return ( PAPI_ESBSTR );
-
-	/* Path and args */
-
-	pid = getpid(  );
-	if ( pid == -1 )
-		return ( PAPI_ESYS );
-
-	/* Turn on microstate accounting for this process and any LWPs. */
-
-	sprintf( maxargs, "/proc/%d/ctl", ( int ) pid );
-	if ( ( fd = open( maxargs, O_WRONLY ) ) == -1 )
-		return ( PAPI_ESYS );
-	{
-		int retval;
-		struct
-		{
-			long cmd;
-			long flags;
-		} cmd;
-		cmd.cmd = PCSET;
-		cmd.flags = PR_MSACCT | PR_MSFORK;
-		retval = write( fd, &cmd, sizeof ( cmd ) );
-		close( fd );
-		SUBDBG( "Write PCSET returned %d\n", retval );
-		if ( retval != sizeof ( cmd ) )
-			return ( PAPI_ESYS );
-	}
-
-	/* Get executable info */
-
-	sprintf( maxargs, "/proc/%d/psinfo", ( int ) pid );
-	if ( ( fd = open( maxargs, O_RDONLY ) ) == -1 )
-		return ( PAPI_ESYS );
-	read( fd, &psi, sizeof ( psi ) );
-	close( fd );
-
-	/* Cut off any arguments to exe */
-	{
-		char *tmp;
-		tmp = strchr( psi.pr_psargs, ' ' );
-		if ( tmp != NULL )
-			*tmp = '\0';
-	}
-
-	if ( realpath( psi.pr_psargs, pname ) )
-		strncpy( _papi_hwi_system_info.exe_info.fullname, pname,
-				 PAPI_HUGE_STR_LEN );
-	else
-		strncpy( _papi_hwi_system_info.exe_info.fullname, psi.pr_psargs,
-				 PAPI_HUGE_STR_LEN );
-
-	/* please don't use pr_fname here, because it can only store less that 
-	   16 characters */
-	strcpy( _papi_hwi_system_info.exe_info.address_info.name,
-			basename( _papi_hwi_system_info.exe_info.fullname ) );
-
-	SUBDBG( "Full Executable is %s\n",
-			_papi_hwi_system_info.exe_info.fullname );
-
-	/* Executable regions, reading /proc/pid/maps file */
-	retval = _ultra_hwd_update_shlib_info( &_papi_hwi_system_info );
-
-	/* Hardware info */
-
-	_papi_hwi_system_info.hw_info.ncpu = sysconf( _SC_NPROCESSORS_ONLN );
-	_papi_hwi_system_info.hw_info.nnodes = 1;
-	_papi_hwi_system_info.hw_info.totalcpus = sysconf( _SC_NPROCESSORS_CONF );
-
-	retval = scan_prtconf( cpuname, PAPI_MAX_STR_LEN, &hz, &version );
-	if ( retval == -1 )
-		return ( PAPI_ESBSTR );
-
-	strcpy( _papi_hwi_system_info.hw_info.model_string,
-			cpc_getcciname( cpuver ) );
-	_papi_hwi_system_info.hw_info.model = cpuver;
-	strcpy( _papi_hwi_system_info.hw_info.vendor_string, "SUN" );
-	_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_SUN;
-	_papi_hwi_system_info.hw_info.revision = version;
-
-	_papi_hwi_system_info.hw_info.mhz = ( ( float ) hz / 1.0e6 );
-	SUBDBG( "hw_info.mhz = %f\n", _papi_hwi_system_info.hw_info.mhz );
-
-	_papi_hwi_system_info.hw_info.cpu_max_mhz = _papi_hwi_system_info.hw_info.mhz;
-	_papi_hwi_system_info.hw_info.cpu_min_mhz = _papi_hwi_system_info.hw_info.mhz;
-
-
-	/* Number of PMCs */
-
-	retval = cpc_getnpic( cpuver );
-	if ( retval < 0 )
-		return ( PAPI_ESBSTR );
-
-	_solaris_vector.cmp_info.num_cntrs = retval;
-	_solaris_vector.cmp_info.fast_real_timer = 1;
-	_solaris_vector.cmp_info.fast_virtual_timer = 1;
-	_solaris_vector.cmp_info.default_domain = PAPI_DOM_USER;
-	_solaris_vector.cmp_info.available_domains =
-		PAPI_DOM_USER | PAPI_DOM_KERNEL;
-
-	/* Setup presets */
-
-	retval = _papi_hwi_setup_all_presets( preset_search_map, NULL );
-	if ( retval )
-		return ( retval );
-
-	return ( PAPI_OK );
 }
 
 
@@ -621,7 +444,7 @@ build_tables( void )
 		n = sizeof ( us3info ) / sizeof ( einfo_t );
 		ep = us3info;
 	} else
-		return PAPI_ESBSTR;
+		return PAPI_ECMP;
 	preset_table = papi_malloc( ( n + 1 ) * sizeof ( hwi_search_t ) );
 	npresets = 0;
 	for ( i = 0; i < n; ++i ) {
@@ -775,7 +598,7 @@ action( void *arg, int regno, const char *name, uint8_t bits )
 static int
 set_inherit( EventSetInfo_t * global, int arg )
 {
-	return ( PAPI_ESBSTR );
+	return PAPI_ECMP;
 
 /*
   hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep;
@@ -823,21 +646,21 @@ lock_init( void )
 }
 
 int
-_ultra_hwd_shutdown_substrate( void )
+_ultra_hwd_shutdown_component( void )
 {
 	( void ) cpc_rele(  );
 	return ( PAPI_OK );
 }
 
 int
-_ultra_hwd_init_substrate( int cidx )
+_ultra_hwd_init_component( int cidx )
 {
 	int retval;
  /* retval = _papi_hwi_setup_vector_table(vtable, _solaris_ultra_table);
 	if ( retval != PAPI_OK ) return(retval); */
 
 	/* Fill in what we can of the papi_system_info. */
-	retval = get_system_info( &_papi_hwi_system_info );
+	retval = _solaris_get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return ( retval );
 
@@ -1287,285 +1110,7 @@ _ultra_hwd_update_control_state( hwd_control_state_t * this_state,
 	return ( PAPI_OK );
 }
 
-long long
-_ultra_hwd_get_real_usec( void )
-{
-	return ( ( long long ) gethrtime(  ) / ( long long ) 1000 );
-}
 
-long long
-_ultra_hwd_get_real_cycles( void )
-{
-	return ( _ultra_hwd_get_real_usec(  ) *
-			 ( long long ) _papi_hwi_system_info.hw_info.cpu_max_mhz );
-}
-
-long long
-_ultra_hwd_get_virt_usec( void )
-{
-	return ( ( long long ) gethrvtime(  ) / ( long long ) 1000 );
-}
-
-
-int
-_ultra_hwd_update_shlib_info( papi_mdi_t *mdi )
-{
-	/*??? system call takes very long */
-
-	char cmd_line[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], fname[L_tmpnam];
-	char line[256];
-	char address[16], size[10], flags[64], objname[256];
-	PAPI_address_map_t *tmp = NULL;
-
-	FILE *f = NULL;
-	int t_index = 0, i;
-	struct map_record
-	{
-		long address;
-		int size;
-		int flags;
-		char objname[256];
-		struct map_record *next;
-	} *tmpr, *head, *curr;
-
-	tmpnam( fname );
-	SUBDBG( "Temporary name %s\n", fname );
-
-	sprintf( cmd_line, "/bin/pmap %d > %s", ( int ) getpid(  ), fname );
-	if ( system( cmd_line ) != 0 ) {
-		PAPIERROR( "Could not run %s to get shared library address map",
-				   cmd_line );
-		return ( PAPI_OK );
-	}
-
-	f = fopen( fname, "r" );
-	if ( f == NULL ) {
-		PAPIERROR( "fopen(%s) returned < 0", fname );
-		remove( fname );
-		return ( PAPI_OK );
-	}
-
-	/* ignore the first line */
-	fgets( line, 256, f );
-	head = curr = NULL;
-	while ( fgets( line, 256, f ) != NULL ) {
-		/* discard the last line */
-		if ( strncmp( line, " total", 6 ) != 0 ) {
-			sscanf( line, "%s %s %s %s", address, size, flags, objname );
-			if ( objname[0] == '/' ) {
-				tmpr =
-					( struct map_record * )
-					papi_malloc( sizeof ( struct map_record ) );
-				if ( tmpr == NULL )
-					return ( -1 );
-				tmpr->next = NULL;
-				if ( curr ) {
-					curr->next = tmpr;
-					curr = tmpr;
-				}
-				if ( head == NULL ) {
-					curr = head = tmpr;
-				}
-
-				SUBDBG( "%s\n", objname );
-
-				if ( ( strstr( flags, "read" ) && strstr( flags, "exec" ) ) ||
-					 ( strstr( flags, "r" ) && strstr( flags, "x" ) ) ) {
-					if ( !( strstr( flags, "write" ) || strstr( flags, "w" ) ) ) {	/* text segment */
-						t_index++;
-						tmpr->flags = 1;
-					} else {
-						tmpr->flags = 0;
-					}
-					sscanf( address, "%lx", &tmpr->address );
-					sscanf( size, "%d", &tmpr->size );
-					tmpr->size *= 1024;
-					strcpy( tmpr->objname, objname );
-				}
-
-			}
-
-		}
-	}
-	tmp =
-		( PAPI_address_map_t * ) papi_calloc( t_index - 1,
-											  sizeof ( PAPI_address_map_t ) );
-
-	if ( tmp == NULL ) {
-		PAPIERROR( "Error allocating shared library address map" );
-		return ( PAPI_ENOMEM );
-	}
-
-	t_index = -1;
-	tmpr = curr = head;
-	i = 0;
-	while ( curr != NULL ) {
-		if ( strcmp( _papi_hwi_system_info.exe_info.address_info.name,
-					 basename( curr->objname ) ) == 0 ) {
-			if ( curr->flags ) {
-				_papi_hwi_system_info.exe_info.address_info.text_start =
-					( caddr_t ) curr->address;
-				_papi_hwi_system_info.exe_info.address_info.text_end =
-					( caddr_t ) ( curr->address + curr->size );
-			} else {
-				_papi_hwi_system_info.exe_info.address_info.data_start =
-					( caddr_t ) curr->address;
-				_papi_hwi_system_info.exe_info.address_info.data_end =
-					( caddr_t ) ( curr->address + curr->size );
-			}
-		} else {
-			if ( curr->flags ) {
-				t_index++;
-				tmp[t_index].text_start = ( caddr_t ) curr->address;
-				tmp[t_index].text_end =
-					( caddr_t ) ( curr->address + curr->size );
-				strncpy( tmp[t_index].name, curr->objname,
-						 PAPI_HUGE_STR_LEN - 1 );
-				tmp[t_index].name[PAPI_HUGE_STR_LEN - 1] = '\0';
-			} else {
-				if ( t_index < 0 )
-					continue;
-				tmp[t_index].data_start = ( caddr_t ) curr->address;
-				tmp[t_index].data_end =
-					( caddr_t ) ( curr->address + curr->size );
-			}
-		}
-		tmpr = curr->next;
-		/* free the temporary allocated memory */
-		papi_free( curr );
-		curr = tmpr;
-	}						 /* end of while */
-
-	remove( fname );
-	fclose( f );
-	if ( _papi_hwi_system_info.shlib_info.map )
-		papi_free( _papi_hwi_system_info.shlib_info.map );
-	_papi_hwi_system_info.shlib_info.map = tmp;
-	_papi_hwi_system_info.shlib_info.count = t_index + 1;
-
-	return ( PAPI_OK );
-
-}
-
-#if 0
-/* once the bug in dladdr is fixed by SUN, (now dladdr caused deadlock when
-   used with pthreads) this function can be used again */
-int
-_papi_hwd_update_shlib_info( papi_mdi_t *mdi )
-{
-	char fname[80], name[PAPI_HUGE_STR_LEN];
-	prmap_t newp;
-	int count, t_index;
-	FILE *map_f;
-	void *vaddr;
-	Dl_info dlip;
-	PAPI_address_map_t *tmp = NULL;
-
-	sprintf( fname, "/proc/%d/map", getpid(  ) );
-	map_f = fopen( fname, "r" );
-	if ( !map_f ) {
-		PAPIERROR( "fopen(%s) returned < 0", fname );
-		return ( PAPI_OK );
-	}
-
-	/* count the entries we need */
-	count = 0;
-	t_index = 0;
-	while ( fread( &newp, sizeof ( prmap_t ), 1, map_f ) > 0 ) {
-		vaddr = ( void * ) ( 1 + ( newp.pr_vaddr ) );	// map base address 
-		if ( dladdr( vaddr, &dlip ) > 0 ) {
-			count++;
-			if ( ( newp.pr_mflags & MA_EXEC ) && ( newp.pr_mflags & MA_READ ) ) {
-				if ( !( newp.pr_mflags & MA_WRITE ) )
-					t_index++;
-			}
-			strcpy( name, dlip.dli_fname );
-			if ( strcmp( _papi_hwi_system_info.exe_info.address_info.name,
-						 basename( name ) ) == 0 ) {
-				if ( ( newp.pr_mflags & MA_EXEC ) &&
-					 ( newp.pr_mflags & MA_READ ) ) {
-					if ( !( newp.pr_mflags & MA_WRITE ) ) {
-						_papi_hwi_system_info.exe_info.address_info.text_start =
-							( caddr_t ) newp.pr_vaddr;
-						_papi_hwi_system_info.exe_info.address_info.text_end =
-							( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
-					} else {
-						_papi_hwi_system_info.exe_info.address_info.data_start =
-							( caddr_t ) newp.pr_vaddr;
-						_papi_hwi_system_info.exe_info.address_info.data_end =
-							( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
-					}
-				}
-			}
-		}
-
-	}
-	rewind( map_f );
-	tmp =
-		( PAPI_address_map_t * ) papi_calloc( t_index - 1,
-											  sizeof ( PAPI_address_map_t ) );
-
-	if ( tmp == NULL ) {
-		PAPIERROR( "Error allocating shared library address map" );
-		return ( PAPI_ENOMEM );
-	}
-	t_index = -1;
-	while ( fread( &newp, sizeof ( prmap_t ), 1, map_f ) > 0 ) {
-		vaddr = ( void * ) ( 1 + ( newp.pr_vaddr ) );	// map base address
-		if ( dladdr( vaddr, &dlip ) > 0 ) {	// valid name
-			strcpy( name, dlip.dli_fname );
-			if ( strcmp( _papi_hwi_system_info.exe_info.address_info.name,
-						 basename( name ) ) == 0 )
-				continue;
-			if ( ( newp.pr_mflags & MA_EXEC ) && ( newp.pr_mflags & MA_READ ) ) {
-				if ( !( newp.pr_mflags & MA_WRITE ) ) {
-					t_index++;
-					tmp[t_index].text_start = ( caddr_t ) newp.pr_vaddr;
-					tmp[t_index].text_end =
-						( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
-					strncpy( tmp[t_index].name, dlip.dli_fname,
-							 PAPI_HUGE_STR_LEN - 1 );
-					tmp[t_index].name[PAPI_HUGE_STR_LEN - 1] = '\0';
-				} else {
-					if ( t_index < 0 )
-						continue;
-					tmp[t_index].data_start = ( caddr_t ) newp.pr_vaddr;
-					tmp[t_index].data_end =
-						( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
-				}
-			}
-		}
-	}
-
-	fclose( map_f );
-
-	if ( _papi_hwi_system_info.shlib_info.map )
-		papi_free( _papi_hwi_system_info.shlib_info.map );
-	_papi_hwi_system_info.shlib_info.map = tmp;
-	_papi_hwi_system_info.shlib_info.count = t_index + 1;
-
-	return ( PAPI_OK );
-}
-#endif
-
-int
-_papi_hwi_init_os(void) {
-
-  struct utsname uname_buffer;
-
-  uname(&uname_buffer);
-
-  strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
-
-  strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
-
-  _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
-  _papi_os_info.itimer_num = PAPI_INT_ITIMER;
-  _papi_os_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
-  _papi_os_info.itimer_res_ns = 1;
-
-  return PAPI_OK;
-}
 
 
 papi_vector_t _solaris_vector = {
@@ -1588,7 +1133,7 @@ papi_vector_t _solaris_vector = {
 				 }
 	,
 
-	/* substrate data structure sizes */
+	/* component data structure sizes */
 	.size = {
 			 .context = sizeof ( hwd_context_t ),
 			 .control_state = sizeof ( hwd_control_state_t ),
@@ -1597,16 +1142,14 @@ papi_vector_t _solaris_vector = {
 			 }
 	,
 
-	/* substrate interface functions */
+	/* component interface functions */
 	.init_control_state = _ultra_hwd_init_control_state,
 	.start = _ultra_hwd_start,
 	.stop = _ultra_hwd_stop,
 	.read = _ultra_hwd_read,
-        /* .write */
         .shutdown = _ultra_shutdown,
-	.shutdown_substrate = _ultra_hwd_shutdown_substrate,
+	.shutdown_component = _ultra_hwd_shutdown_component,
 	.ctl = _ultra_hwd_ctl,
-	/* .allocate_registers */
 	.update_control_state = _ultra_hwd_update_control_state,
         .set_domain = _ultra_set_domain,
 	.reset = _ultra_hwd_reset,
@@ -1618,7 +1161,7 @@ papi_vector_t _solaris_vector = {
 	.ntv_code_to_name = _ultra_hwd_ntv_code_to_name,
 	.ntv_code_to_descr = _ultra_hwd_ntv_code_to_descr,
 	.ntv_code_to_bits = _ultra_hwd_ntv_code_to_bits,
-	.init_substrate = _ultra_hwd_init_substrate,
+	.init_component = _ultra_hwd_init_component,
 	.dispatch_timer = _ultra_hwd_dispatch_timer,
 
 };
@@ -1626,11 +1169,11 @@ papi_vector_t _solaris_vector = {
 papi_os_vector_t _papi_os_vector = {
 
 	/* OS dependent local routines */
-        .get_memory_info = _solaris_get_memory_info,
-        .get_dmem_info = _solaris_get_dmem_info,
-	.update_shlib_info = _ultra_hwd_update_shlib_info,
-	.get_system_info = get_system_info,
-	.get_real_usec = _ultra_hwd_get_real_usec,
-	.get_real_cycles = _ultra_hwd_get_real_cycles,
-	.get_virt_usec = _ultra_hwd_get_virt_usec,
+        .get_memory_info =    _solaris_get_memory_info,
+        .get_dmem_info =      _solaris_get_dmem_info,
+	.update_shlib_info =  _solaris_update_shlib_info,
+	.get_system_info =    _solaris_get_system_info,
+	.get_real_usec =      _solaris_get_real_usec,
+	.get_real_cycles =    _solaris_get_real_cycles,
+	.get_virt_usec =      _solaris_get_virt_usec,
 };
