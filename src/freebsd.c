@@ -212,12 +212,14 @@ int _papi_freebsd_init_component(int cidx)
 {
    (void)cidx;
 
+   int retval;
+
    SUBDBG("Entering\n");
 
    /* Internal function, doesn't necessarily need to be a function */
-   init_presets(cidx);
-
-   return PAPI_OK;
+   retval=init_presets(cidx);
+   
+   return retval;
 }
 
 
@@ -228,9 +230,9 @@ int _papi_freebsd_init_component(int cidx)
  */
 int _papi_freebsd_init_thread(hwd_context_t *ctx)
 {
-  (void)ctx;
-	SUBDBG("Entering\n");
-	return PAPI_OK;
+    (void)ctx;
+    SUBDBG("Entering\n");
+    return PAPI_OK;
 }
 
 int _papi_freebsd_shutdown_thread(hwd_context_t *ctx)
@@ -713,96 +715,87 @@ long long _papi_freebsd_get_virt_usec(void)
 
 int _papi_freebsd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-	int res;
-	char name[1024];
-	unsigned int nextCode = 1 + *EventCode;
-	(void)modifier;
+     int res;
+     char name[1024];
+     unsigned int nextCode = 1 + *EventCode;
 
-	SUBDBG("Entering\n");
+     SUBDBG("Entering\n");
 
-	if (modifier==PAPI_ENUM_FIRST) {
+     if (modifier==PAPI_ENUM_FIRST) {
 
-	   res = _papi_freebsd_ntv_code_to_name(nextCode, name, sizeof(name));
+       *EventCode=0;
 
-	   if (res != PAPI_OK)
-	      return res;
-	   else
-	      *EventCode = nextCode;
-
-	   return PAPI_OK;
-	}
-
-	if (modifier==PAPI_ENUM_EVENTS) {
-
-	   res = _papi_freebsd_ntv_code_to_name(nextCode, name, sizeof(name));
-
-	   if (res != PAPI_OK)
-	      return res;
-	   else
-	      *EventCode = nextCode;
-
-	   return PAPI_OK;
-	}
-
-	if (modifier==PAPI_ENUM_EVENTS) {
-	  return PAPI_ENOEVNT;
-	}
-
-	return PAPI_ENOIMPL;
-}
-
-int _papi_freebsd_ntv_name_to_code(char *name, unsigned int* event_code) {
-  SUBDBG("Entering\n");
-  (void)name;
-  (void)event_code;
-
-	int i;
-
-	for (i = 0; i < _papi_freebsd_vector.cmp_info.num_native_events; i++)
-		if (strcmp (name, _papi_hwd_native_info[Context.CPUtype].info[i].name) == 0)
-		{
-			*event_code = i | PAPI_NATIVE_AND_MASK;
-			return PAPI_OK;
-		}
-
-	return PAPI_ENOEVNT;
-}
-
-int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
-{
-	SUBDBG("Entering\n");
-	int nidx;
-
-	nidx = EventCode ^ PAPI_NATIVE_MASK;
-	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
-		return PAPI_ENOEVNT;
-	strncpy (ntv_name, _papi_hwd_native_info[Context.CPUtype].info[EventCode & PAPI_NATIVE_AND_MASK].name, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUtype].info[EventCode & PAPI_NATIVE_AND_MASK].name) > (size_t)len-1)
-		return PAPI_EBUF;
 	return PAPI_OK;
+     }
+
+     if (modifier==PAPI_ENUM_EVENTS) {
+
+	res = _papi_freebsd_ntv_code_to_name(nextCode, name, sizeof(name));
+	if (res != PAPI_OK) {
+	      return res;
+	} else {
+	      *EventCode = nextCode;
+	}
+	return PAPI_OK;
+     }
+
+     return PAPI_ENOEVNT;
+
+}
+
+int _papi_freebsd_ntv_name_to_code(char *name, unsigned int *event_code) {
+
+   SUBDBG("Entering\n");
+
+   int i;
+
+   for(i = 0; i < _papi_freebsd_vector.cmp_info.num_native_events; i++) {
+      if (strcmp (name, _papi_hwd_native_info[Context.CPUtype].info[i].name) == 0) {
+	 *event_code = i;
+	 return PAPI_OK;
+      }
+   }
+   return PAPI_ENOEVNT;
+}
+
+int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, 
+                                   int len)
+{
+    SUBDBG("Entering\n");
+
+    int nidx;
+
+    nidx = EventCode & PAPI_NATIVE_AND_MASK;
+	
+    if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events) {
+       return PAPI_ENOEVNT;
+    }
+
+    strncpy (ntv_name, 
+	     _papi_hwd_native_info[Context.CPUtype].info[nidx].name, len);
+    if (strlen(_papi_hwd_native_info[Context.CPUtype].info[nidx].name) > (size_t)len-1) {
+		return PAPI_EBUF;
+    }
+    return PAPI_OK;
 }
 
 int _papi_freebsd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len)
 {
-	SUBDBG("Entering\n");
-	int nidx;
+    SUBDBG("Entering\n");
+    int nidx;
 
-	nidx = EventCode ^ PAPI_NATIVE_MASK;
-	if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events)
-		return PAPI_ENOEVNT;
-	strncpy (descr, _papi_hwd_native_info[Context.CPUtype].info[EventCode & PAPI_NATIVE_AND_MASK].description, len);
-	if (strlen(_papi_hwd_native_info[Context.CPUtype].info[EventCode & PAPI_NATIVE_AND_MASK].description) > (size_t)len-1)
-		return PAPI_EBUF;
-	return PAPI_OK;
+    nidx = EventCode & PAPI_NATIVE_AND_MASK;
+    if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events) {
+       return PAPI_ENOEVNT;
+    }
+
+    strncpy (descr, _papi_hwd_native_info[Context.CPUtype].info[nidx].description, len);
+    if (strlen(_papi_hwd_native_info[Context.CPUtype].info[nidx].description) > (size_t)len-1) {
+       return PAPI_EBUF;
+    }
+    return PAPI_OK;
 }
 
-int _papi_freebsd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
-{
-  (void)EventCode;
-  (void)bits;
-	SUBDBG("Entering\n");
-	return PAPI_OK;
-}
 
 /* 
  * Counter Allocation Functions, only need to implement if
@@ -971,7 +964,6 @@ papi_vector_t _papi_freebsd_vector = {
   .ntv_name_to_code	= _papi_freebsd_ntv_name_to_code,
   .ntv_code_to_name	= _papi_freebsd_ntv_code_to_name,
   .ntv_code_to_descr	= _papi_freebsd_ntv_code_to_descr,
-  .ntv_code_to_bits	= _papi_freebsd_ntv_code_to_bits,
 
   .allocate_registers	= _papi_freebsd_allocate_registers,
 

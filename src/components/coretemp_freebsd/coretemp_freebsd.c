@@ -98,9 +98,13 @@ int coretemp_init_thread (hwd_context_t * ctx)
 
 	SUBDBG("coretemp_init_thread %p...\n", ctx);
 
+#if 0
+	/* what does this do?  VMW */
+
 	len = 4;
 	if (sysctlnametomib ("dev.coretemp.0.%driver", mib, &len) == -1)
 		return PAPI_ECMP;
+#endif
 
 	return PAPI_OK;
 }
@@ -141,7 +145,7 @@ int coretemp_init_component ()
 	if (coretemp_native_table == NULL)
 	{
 		perror( "malloc():Could not get memory for coretemp events table" );
-		return EXIT_FAILURE;
+		return PAPI_ENOMEM;
 	}
 
 	/* Allocate native events internal structures */
