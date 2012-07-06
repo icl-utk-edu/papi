@@ -360,7 +360,7 @@ _perfctr_dispatch_timer( int signal, siginfo_t * si, void *context )
 
 
 int
-_perfctr_init( hwd_context_t * ctx )
+_perfctr_init_thread( hwd_context_t * ctx )
 {
 	struct vperfctr_control tmp;
 	int error;
@@ -408,7 +408,7 @@ _perfctr_init( hwd_context_t * ctx )
    master thread. */
 
 int
-_perfctr_shutdown( hwd_context_t * ctx )
+_perfctr_shutdown_thread( hwd_context_t * ctx )
 {
 #ifdef DEBUG
 	int retval = vperfctr_unlink( ctx->perfctr );

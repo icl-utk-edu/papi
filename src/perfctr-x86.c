@@ -29,8 +29,8 @@ extern int _perfctr_ctl( hwd_context_t * ctx, int code,
 extern void _perfctr_dispatch_timer( int signal, hwd_siginfo_t * si,
 								   void *context );
 
-extern int _perfctr_init( hwd_context_t * ctx );
-extern int _perfctr_shutdown( hwd_context_t * ctx );
+extern int _perfctr_init_thread( hwd_context_t * ctx );
+extern int _perfctr_shutdown_thread( hwd_context_t * ctx );
 
 #include "linux-common.h"
 #include "linux-timer.h"
@@ -1387,8 +1387,8 @@ papi_vector_t _perfctr_vector = {
 	.init_component =  _perfctr_init_component,
 	.ctl =             _perfctr_ctl,
 	.dispatch_timer =  _perfctr_dispatch_timer,
-	.init_thread =     _perfctr_init,
-	.shutdown_thread = _perfctr_shutdown,
+	.init_thread =     _perfctr_init_thread,
+	.shutdown_thread = _perfctr_shutdown_thread,
 
 	/* from libpfm */
 	.ntv_enum_events   = _papi_libpfm_ntv_enum_events,

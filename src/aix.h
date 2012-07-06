@@ -69,19 +69,6 @@ PMINFO_T pminfo;
 /*pm_info_t pminfo;*/
 #endif
 
-/* Locks */
-extern atomic_p lock[];
-
-#define _papi_hwd_lock(lck)                       \
-{                                                 \
-  while(_check_lock(lock[lck],0,1) == TRUE) { ; } \
-}
-
-#define _papi_hwd_unlock(lck)                   \
-{                                               \
-  _clear_lock(lock[lck], 0);                    \
-}
-
 /* overflow */
 /* Override void* definitions from PAPI framework layer */
 /* with typedefs to conform to PAPI component layer code. */
