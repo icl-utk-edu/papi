@@ -4,7 +4,6 @@
 
 /* 
 * File:    threads.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Kevin London
@@ -287,12 +286,13 @@ _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 	/* Call the component to fill in anything special. */
 
 	for ( i = 0; i < papi_num_components; i++ ) {
-		retval = _papi_hwd[i]->init_thread( thread->context[i] );
-		if ( retval ) {
-			free_thread( &thread );
-			*dest = NULL;
-			return retval;
-		}
+	    if (_papi_hwd[i]->cmp_info.disabled) continue;
+	    retval = _papi_hwd[i]->init_thread( thread->context[i] );
+	    if ( retval ) {
+	       free_thread( &thread );
+	       *dest = NULL;
+	       return retval;
+	    }
 	}
 
 	insert_thread( thread, tid );
@@ -437,10 +437,10 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
 
 		remove_thread( thread );
 		THRDBG( "Shutting down thread %ld at %p\n", thread->tid, thread );
-		for ( i = 0; i < papi_num_components; i++ ) {
-			retval = _papi_hwd[i]->shutdown_thread( thread->context[i] );
-			if ( retval != PAPI_OK )
-				failure = retval;
+		for( i = 0; i < papi_num_components; i++ ) {
+		   if (_papi_hwd[i]->cmp_info.disabled) continue;
+		   retval = _papi_hwd[i]->shutdown_thread( thread->context[i]);
+		   if ( retval != PAPI_OK ) failure = retval;
 		}
 		free_thread( &thread );
 		return ( failure );
@@ -544,8 +544,9 @@ _papi_hwi_init_global_threads( void )
 #endif
 
 	retval = _papi_hwi_initialize_thread( &tmp , 0);
-	if ( retval == PAPI_OK )
-		retval = lookup_and_set_thread_symbols(  );
+	if ( retval == PAPI_OK ) {
+	   retval = lookup_and_set_thread_symbols(  );
+	}
 
 	_papi_hwi_unlock( GLOBAL_LOCK );
 
