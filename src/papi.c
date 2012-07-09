@@ -1961,7 +1961,6 @@ int
 PAPI_start( int EventSet )
 {
 	APIDBG("Entry: EventSet: %d\n", EventSet);
-	int i;
 	int is_dirty=0;
 	int retval;
 	EventSetInfo_t *ESI;
