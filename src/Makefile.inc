@@ -116,6 +116,12 @@ linux-bgp-memory.o: linux-bgp-memory.c $(HEADERS)
 linux-bgq-memory.o: linux-bgq-memory.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-bgq-memory.c -o linux-bgq-memory.o
 
+darwin-memory.o: darwin-memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c darwin-memory.c -o darwin-memory.o
+
+darwin-common.o: darwin-common.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c darwin-common.c -o darwin-common.o
+
 linux-memory.o: linux-memory.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-memory.c -o linux-memory.o
 

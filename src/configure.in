@@ -1,6 +1,5 @@
 # Process this file with autoconf to produce a configure script.
 # File: configure.in
-# CVS:  $Id$
 
 # cross compile sample
 # ARCH=mips CC=scgcc ./configure --with-arch=mips --host=mips64el-gentoo-linux-gnu- --with-ffsll --with-libpfm4 --with-perf-events --with-virtualtimer=times --with-walltimer=gettimeofday --with-tls=__thread --with-CPU=mips
@@ -281,6 +280,13 @@ AC_ARG_WITH(CPU,
 		   elif test "$family" = "i386"; then
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
 		   fi ;;
+
+	       darwin)
+                   family=`uname -m`
+
+                   MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
+
+		   ;;
 
                linux)
                    family=`uname -m`
@@ -1222,6 +1228,10 @@ elif (test "$OS" = "solaris"); then
     OSFILESSRC="solaris-memory.c solaris-common.c"
     OSFILESHDR="solaris-memory.h solaris-common.h"
     OSLOCK="solaris-lock.h"
+elif (test "$OS" = "darwin"); then
+    OSFILESSRC="darwin-memory.c darwin-common.c"
+    OSFILESHDR="darwin-memory.h darwin-common.h"
+    OSLOCK="darwin-lock.h"
 fi
 
 OSFILESOBJ='$(OSFILESSRC:.c=.o)'
@@ -1444,7 +1454,7 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     CC_R="$CC" 
     CC_SHR="$CC -shared -fpic"
     OPTFLAGS=-O3
-    CFLAGS="-DNEED_FFSLL"
+    CFLAGS="$CFLAGS -DNEED_FFSLL"
     FFLAGS=$CFLAGS
   else 
     # Sun Workshop compilers: V5.0 and V6.0 R2
@@ -1495,6 +1505,8 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
   fi
 elif test "$MAKEVER" = "darwin"; then
   DESCR="Darwin"
+  CPUCOMPONENT=linux-generic
+  CFLAGS="-DNEED_FFSLL"
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-dylib -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   SHLIB=libpapi.dylib
 elif test "$MAKEVER" = "generic_platform"; then

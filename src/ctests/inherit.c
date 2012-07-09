@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
-#if defined(_AIX) || defined (__FreeBSD__)
+#if defined(_AIX) || defined (__FreeBSD__) || defined (__APPLE__)
 #include <sys/wait.h>		 /* ARGH! */
 #else
 #include <wait.h>
