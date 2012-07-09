@@ -6493,3 +6493,48 @@ PAPI_disable_component( int cidx )
  
 }
 
+/** \class PAPI_disable_component_by_name
+ *	\brief disables the named component
+ *	\retval ENOCMP
+ *		component does not exist
+ *	\retval ENOINIT
+ *		unable to disable the component, the library has already been initialized
+ *	\param component_name
+ *		name of the component to disable.
+ *	\par Example:
+ *	\code
+	int result;
+	result = PAPI_disable_component_by_name("example");
+	if (result==PAPI_OK)
+		printf("component \"example\" has been disabled\n");
+	//...
+	PAPI_library_init(PAPI_VER_CURRENT);
+ *	\endcode
+ *	PAPI_disable_component_by_name() allows the user to disable a component
+ *	before PAPI_library_init() time. This is useful if the user knows they do
+ *	not with to use events from that component and want to reduce the PAPI
+ *	library overhead. 
+ *
+ *	PAPI_disable_component_by_name() must be called before PAPI_library_init().
+ *
+ *	\bug none known
+ *	\see PAPI_library_init
+ *	\see PAPI_disable_component
+*/
+int
+PAPI_disable_component_by_name( char *name )
+{
+	int cidx;
+
+	/* I can only be called before init time */
+	if (init_level!=PAPI_NOT_INITED) {
+		return PAPI_ENOINIT;
+	}
+
+	cidx = PAPI_get_component_index(name);
+	if (cidx>=0) {
+		return PAPI_disable_component(cidx);
+	} 
+
+	return PAPI_ENOCMP;
+}
