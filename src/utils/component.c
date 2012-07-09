@@ -1,4 +1,3 @@
-/* This file performs the following test: hardware info and which native events are available */
 /** file component.c
   *	@page papi_component_avail
   * @brief papi_component_avail utility. 
@@ -24,7 +23,6 @@
  */
 
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 #define EVT_LINE 80
 
@@ -131,6 +129,9 @@ main( int argc, char **argv )
 	  if (cmpinfo->disabled) continue;
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+	  printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n\n", 
+		  " ", cmpinfo->num_native_events, cmpinfo->num_preset_events,
+		  cmpinfo->num_cntrs);
 
 	  if ( flags.details ) {
 		printf( "Version:\t\t\t%s\n", cmpinfo->version );
