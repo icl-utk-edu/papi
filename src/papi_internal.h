@@ -554,7 +554,7 @@ int _papi_hwi_create_eventset( int *EventSet, ThreadInfo_t * handle );
 int _papi_hwi_lookup_EventCodeIndex( const EventSetInfo_t * ESI,
 				     unsigned int EventCode );
 int _papi_hwi_remove_EventSet( EventSetInfo_t * ESI );
-void _papi_hwi_remap_event_position( EventSetInfo_t *ESI, int total_events );
+void _papi_hwi_map_events_to_native( EventSetInfo_t *ESI);
 int _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode );
 int _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode );
 int _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
