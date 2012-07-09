@@ -702,9 +702,8 @@ event_already_in_eventset( EventSetInfo_t * ESI, int nevt )
 /* When do we need to do this? */
 
 void
-_papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_events )
+_papi_hwi_remap_event_position( EventSetInfo_t * ESI, int total_events )
 {
-    (void) thisindex;
 
     EventInfo_t *head;
     int i, j, k, n, preset_index = 0, nevt;
@@ -1021,7 +1020,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	     ESI->EventInfoArray[thisindex].ops =
 					_papi_hwi_presets[preset_index].postfix;
 	     if ( remap ) {
-		_papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
+		_papi_hwi_remap_event_position( ESI, ESI->NumberOfEvents+1 );
 	     }
 	  }
        }
@@ -1055,7 +1054,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	     /* Fill in the EventCode (machine independent) information */
 	     ESI->EventInfoArray[thisindex].event_code = ( unsigned int ) EventCode;
 	     if ( remap ) {
-		_papi_hwi_remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
+		_papi_hwi_remap_event_position( ESI, ESI->NumberOfEvents+1 );
 	     }
 	  }
        } else if ( IS_USER_DEFINED( EventCode ) ) {
@@ -1087,7 +1086,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 		   ESI->EventInfoArray[thisindex].derived          = DERIVED_POSTFIX;
 		   ESI->EventInfoArray[thisindex].ops                      = _papi_user_events[index].operation;
 		   if ( remap )
-			 _papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
+			 _papi_hwi_remap_event_position( ESI, ESI->NumberOfEvents+1 );
 		 }
 	   } else {
 

@@ -2030,9 +2030,8 @@ PAPI_start( int EventSet )
 		
 		/* now that the context contains this event sets information, */
 		/* make sure the position array in the EventInfoArray is correct */
-		for ( i=0 ; i<ESI->NativeCount ; i++ ) {
-			_papi_hwi_remap_event_position( ESI, i, ESI->NumberOfEvents );
-		}
+		_papi_hwi_remap_event_position( ESI, ESI->NumberOfEvents );
+
 	}
 
 	/* If overflowing is enabled, turn it on */
