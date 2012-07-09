@@ -190,10 +190,14 @@ typedef struct _EventInfo {
   @internal 
  */
 typedef struct _NativeInfo {
-   int ni_event;                /**< native event code; always non-zero unless empty */
-   int ni_position;             /**< counter array position where this native event lives */
-   int ni_owners;               /**< specifies how many owners share this native event */
-   hwd_register_t *ni_bits;     /**< Component defined resources used by this native event */
+   int ni_event;                /**< native event code; 
+                                     always non-zero unless empty */
+   int ni_position;             /**< counter array position where this 
+				     native event lives */
+   int ni_owners;               /**< specifies how many owners share 
+				     this native event */
+   hwd_register_t *ni_bits;     /**< Component defined resources used by 
+				     this native event */
 } NativeInfo_t;
 
 
@@ -281,7 +285,7 @@ struct _CpuInfo;
 /** Fields below are ordered by access in PAPI_read for performance 
  @internal */
 typedef struct _EventSetInfo {
-  struct _ThreadInfo *master;  /**< Pointer to the thread that owns this EventSet */
+  struct _ThreadInfo *master;  /**< Pointer to thread that owns this EventSet*/
   struct _CpuInfo    *CpuInfo; /**< Pointer to cpu that owns this EventSet */
   
   int state;                   /**< The state of this entire EventSet; can be
@@ -293,27 +297,32 @@ typedef struct _EventSetInfo {
 				  kernel or the code that directly 
 				  accesses the counters. */
   
-  hwd_control_state_t *ctl_state; /**< This contains the encoding necessary for the 
-                                   hardware to set the counters to the appropriate
-                                   conditions */
+  hwd_control_state_t *ctl_state; /**< This contains the encoding necessary 
+                                       for the hardware to set the counters 
+                                       to the appropriate conditions */
 
-  unsigned long int tid;       /**< Thread ID, only used if PAPI_thread_init() is called  */
+  unsigned long int tid;       /**< Thread ID, only used if 
+                                    PAPI_thread_init() is called  */
   
   int EventSetIndex;           /**< Index of the EventSet in the array  */
 
-   int CmpIdx;		    /**< Which Component this EventSet Belongs to */
+  int CmpIdx;		       /**< Which Component this EventSet Belongs to */
   
   int NumberOfEvents;          /**< Number of events added to EventSet */
   
-  long long *hw_start;         /**< Array of length _papi_hwi_system_info.num_cntrs that contains
-				  unprocessed, out of order, long long counter registers */
+  long long *hw_start;         /**< Array of length num_mpx_cntrs to hold
+				    unprocessed, out of order, 
+                                    long long counter registers */
   
-  long long *sw_stop;          /**< Array of length ESI->NumberOfCounters that contains
-				  processed, in order, PAPI counter values when used or stopped */
+  long long *sw_stop;          /**< Array of length num_mpx_cntrs that 
+                                    contains processed, in order, PAPI 
+                                    counter values when used or stopped */
   
-  int NativeCount;             /**< How many native events in the array below. */
+  int NativeCount;             /**< Number of native events in 
+                                    NativeInfoArray */
   
-  NativeInfo_t *NativeInfoArray;  /**< Info about each native event in the set */
+  NativeInfo_t *NativeInfoArray;  /**< Info about each native event in 
+                                       the set */
   
   EventSetDomainInfo_t domain;
   EventSetGranularityInfo_t granularity;
