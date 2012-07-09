@@ -87,116 +87,127 @@ search_cpu_info( FILE * f, char *search_str, char *line )
 	return NULL;
 }
 
-static void
-decode_vendor_string( char *s, int *vendor )
-{
-	if ( strcasecmp( s, "GenuineIntel" ) == 0 )
-		*vendor = PAPI_VENDOR_INTEL;
-	else if ( ( strcasecmp( s, "AMD" ) == 0 ) ||
-			  ( strcasecmp( s, "AuthenticAMD" ) == 0 ) )
-		*vendor = PAPI_VENDOR_AMD;
-	else if ( strcasecmp( s, "IBM" ) == 0 )
-		*vendor = PAPI_VENDOR_IBM;
-	else if ( strcasecmp( s, "Cray" ) == 0 )
-		*vendor = PAPI_VENDOR_CRAY;
-	else if ( strcasecmp( s, "ARM" ) == 0 )
-		*vendor = PAPI_VENDOR_ARM;
-	else if ( strcasecmp( s, "MIPS" ) == 0 )
-		*vendor = PAPI_VENDOR_MIPS;
-	else if ( strcasecmp( s, "SiCortex" ) == 0 )
-		*vendor = PAPI_VENDOR_MIPS;
-	else
-		*vendor = PAPI_VENDOR_UNKNOWN;
-}
 
-static FILE *
-xfopen( const char *path, const char *mode )
-{
-	FILE *fd = fopen( path, mode );
-	if ( !fd )
-		err( EXIT_FAILURE, "error: %s", path );
-	return fd;
-}
-
-static FILE *
-path_vfopen( const char *mode, const char *path, va_list ap )
-{
-	vsnprintf( pathbuf, sizeof ( pathbuf ), path, ap );
-	return xfopen( pathbuf, mode );
-}
-
-
-static int
-path_sibling( const char *path, ... )
-{
-	int c;
-	long n;
-	int result = 0;
-	char s[2];
-	FILE *fp;
-	va_list ap;
-	va_start( ap, path );
-	fp = path_vfopen( "r", path, ap );
-	va_end( ap );
-
-	while ( ( c = fgetc( fp ) ) != EOF ) {
-		if ( isxdigit( c ) ) {
-			s[0] = ( char ) c;
-			s[1] = '\0';
-			for ( n = strtol( s, NULL, 16 ); n > 0; n /= 2 ) {
-				if ( n % 2 )
-					result++;
-			}
-		}
-	}
-
-	fclose( fp );
-	return result;
-}
-
-static int
-path_exist( const char *path, ... )
-{
-	va_list ap;
-	va_start( ap, path );
-	vsnprintf( pathbuf, sizeof ( pathbuf ), path, ap );
-	va_end( ap );
-	return access( pathbuf, F_OK ) == 0;
-}
 
 int
 _darwin_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 {
 
-    hwinfo->vendor = PAPI_VENDOR_INTEL;
+  int mib[4];
+  size_t len;
+  char buffer[BUFSIZ];
+  long long ll;
+
+  /* "sysctl -a" shows lots of info we can get on OSX */
+
+  /**********/
+  /* Vendor */
+  /**********/
+  len = 3;
+  sysctlnametomib("machdep.cpu.vendor", mib, &len);
+
+  len = BUFSIZ;
+  if (sysctl(mib, 3, &buffer, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
+  strncpy( hwinfo->vendor_string,buffer,len);
+   
+  hwinfo->vendor = PAPI_VENDOR_INTEL;
 
 
-    return PAPI_OK;
-}
+  /**************/
+  /* Model Name */
+  /**************/
+  len = 3;
+  sysctlnametomib("machdep.cpu.brand_string", mib, &len);
 
-int
-_darwin_get_mhz( int *sys_min_mhz, int *sys_max_mhz ) {
+  len = BUFSIZ;
+  if (sysctl(mib, 3, &buffer, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
+  strncpy( hwinfo->model_string,buffer,len);
 
-  FILE *fff;
-  int result;
+  /************/
+  /* Revision */
+  /************/
+  len = 3;
+  sysctlnametomib("machdep.cpu.stepping", mib, &len);
 
-  /* Try checking for min MHz */
-  /* Assume cpu0 exists */
-  fff=fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq","r");
-  if (fff==NULL) return PAPI_EINVAL;
-  result=fscanf(fff,"%d",sys_min_mhz);
-  if (result!=1) return PAPI_EINVAL;
-  fclose(fff);
+  len = BUFSIZ;
+  if (sysctl(mib, 3, &buffer, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
 
-  fff=fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq","r");
-  if (fff==NULL) return PAPI_EINVAL;
-  result=fscanf(fff,"%d",sys_max_mhz);
-  if (result!=1) return PAPI_EINVAL;
-  fclose(fff);
+  hwinfo->cpuid_stepping=buffer[0];
+  hwinfo->revision=(float)(hwinfo->cpuid_stepping);
+
+  /**********/
+  /* Family */
+  /**********/
+  len = 3;
+  sysctlnametomib("machdep.cpu.family", mib, &len);
+
+  len = BUFSIZ;
+  if (sysctl(mib, 3, &buffer, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
+
+  hwinfo->cpuid_family=buffer[0];
+
+  /**********/
+  /* Model  */
+  /**********/
+  len = 3;
+  sysctlnametomib("machdep.cpu.model", mib, &len);
+
+  len = BUFSIZ;
+  if (sysctl(mib, 3, &buffer, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
+
+  hwinfo->cpuid_model=buffer[0];
+  hwinfo->model=hwinfo->cpuid_model;
+   
+  /*************/
+  /* Frequency */
+  /*************/
+  len = 2;
+  sysctlnametomib("hw.cpufrequency_max", mib, &len);
+
+  len = 8;
+  if (sysctl(mib, 2, &ll, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
+
+  hwinfo->cpu_max_mhz=(int)(ll/(1000*1000));
+
+  len = 2;
+  sysctlnametomib("hw.cpufrequency_min", mib, &len);
+
+  len = 8;
+  if (sysctl(mib, 2, &ll, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
+
+  hwinfo->cpu_min_mhz=(int)(ll/(1000*1000));
+
+  /**********/
+  /* ncpu   */
+  /**********/
+  len = 2;
+  sysctlnametomib("hw.ncpu", mib, &len);
+
+  len = BUFSIZ;
+  if (sysctl(mib, 2, &buffer, &len, NULL, 0) == -1) {
+     return PAPI_ESYS;
+  }
+
+  hwinfo->totalcpus=buffer[0];
+
 
   return PAPI_OK;
-
 }
+
 
 int
 _darwin_get_system_info( papi_mdi_t *mdi ) {
@@ -263,30 +274,8 @@ _darwin_get_system_info( papi_mdi_t *mdi ) {
 	/* Hardware info */
 
 	retval = _darwin_get_cpu_info( &mdi->hw_info, &cpuinfo_mhz );
-	if ( retval )
-		return retval;
-
-	/* Handle MHz */
-
-	retval = _darwin_get_mhz( &sys_min_khz, &sys_max_khz );
 	if ( retval ) {
-
-	   mdi->hw_info.cpu_max_mhz=cpuinfo_mhz;
-	   mdi->hw_info.cpu_min_mhz=cpuinfo_mhz;
-
-	   /*
-	   mdi->hw_info.mhz=cpuinfo_mhz;
-	   mdi->hw_info.clock_mhz=cpuinfo_mhz;
-	   */
-	}
-	else {
-	   mdi->hw_info.cpu_max_mhz=sys_max_khz/1000;
-	   mdi->hw_info.cpu_min_mhz=sys_min_khz/1000;
-
-	   /*
-	   mdi->hw_info.mhz=sys_max_khz/1000;
-	   mdi->hw_info.clock_mhz=sys_max_khz/1000;
-	   */
+		return retval;
 	}
 
 	/* Set Up Memory */

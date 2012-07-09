@@ -13,6 +13,26 @@ int
 _darwin_get_dmem_info( PAPI_dmem_info_t * d )
 {
 
+  int mib[4];
+  size_t len;
+  char buffer[BUFSIZ];
+  long long ll;
+
+  /**********/
+  /* memory */
+  /**********/
+  len = 2;
+  sysctlnametomib("hw.memsize", mib, &len);
+
+  len = 8;
+  if (sysctl(mib, 2, &ll, &len, NULL, 0) == -1) {
+    return PAPI_ESYS;
+  }
+
+  d->size=ll;
+
+  d->pagesize = getpagesize(  );
+
 	return PAPI_OK;
 }
 
