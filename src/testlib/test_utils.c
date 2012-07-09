@@ -59,8 +59,6 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	if ( (*hwinfo)->virtualized) {
            printf( "VM Vendor:               : %s\n", (*hwinfo)->virtual_vendor_string);
 	}
-	printf( "Number Hardware Counters : %d\n",
-			PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) );
 	printf( "Max Multiplex Counters   : %d\n",
 			PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL ) );
 	printf
