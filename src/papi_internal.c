@@ -903,7 +903,7 @@ add_native_events( EventSetInfo_t *ESI, unsigned int *nevt,
       /* get the context we should use for this event set */
       context = _papi_hwi_get_context( ESI, NULL );
 	   
-      if ( _papi_hwd[ESI->CmpIdx]->allocate_registers( ESI ) ) {
+      if ( _papi_hwd[ESI->CmpIdx]->allocate_registers( ESI ) == PAPI_OK ) {
 
 	 retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
 		  ESI->NativeInfoArray,

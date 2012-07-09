@@ -183,7 +183,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 
 	if ( !v->allocate_registers )
 		v->allocate_registers =
-			( int ( * )( EventSetInfo_t * ) ) vec_int_one_dummy;
+			( int ( * )( EventSetInfo_t * ) ) vec_int_ok_dummy;
 
 	if ( !v->shutdown_thread )
 		v->shutdown_thread = ( int ( * )( hwd_context_t * ) ) vec_int_dummy;

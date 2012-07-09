@@ -2035,6 +2035,9 @@ _papi_pe_init_control_state( hwd_control_state_t * ctl )
 	return PAPI_OK;
 }
 
+
+/* this was cut and pasted from perfmon              */
+/* we really should do the "will it fit" test here.  */
 static int
 _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 {
@@ -2045,12 +2048,12 @@ _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
 			goto bail;
 	}
-	return 1;
+	return PAPI_OK;
   bail:
 	for ( j = 0; j < i; j++ )
 		memset( ESI->NativeInfoArray[j].ni_bits, 0x0,
 				sizeof ( pfm_register_t ) );
-	return 0;
+	return PAPI_ECNFLCT;
 }
 
 

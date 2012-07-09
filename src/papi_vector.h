@@ -46,7 +46,10 @@ typedef struct papi_vectors {
     int		(*ntv_code_to_descr)	(unsigned int, char *, int);			/**< */
     int		(*ntv_code_to_bits)	(unsigned int, hwd_register_t *);			/**< */
     int         (*ntv_code_to_info)     (unsigned int, PAPI_event_info_t *);
-    int		(*allocate_registers)	(EventSetInfo_t *);						/**< */
+    int		(*allocate_registers)	(EventSetInfo_t *);
+		/**< called when an event is added.  Should make
+                     sure the new EventSet can map to hardware and
+                     any conflicts are addressed */
     int		(*shutdown_thread)	(hwd_context_t *);								/**< */
     int		(*shutdown_component)	(void);									/**< */
     int		(*user)			(int, void *, void *);							/**< */

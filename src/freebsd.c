@@ -846,7 +846,7 @@ int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI)
 	else
 		failed = 1;
 
-	return failed?0:1;
+	return failed?PAPI_ECNFLCT:PAPI_OK;
 }
 
 /*
