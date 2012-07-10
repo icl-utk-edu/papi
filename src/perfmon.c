@@ -2118,12 +2118,12 @@ _papi_pfm_allocate_registers( EventSetInfo_t * ESI )
 			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
 			goto bail;
 	}
-	return ( 1 );
+	return PAPI_OK;
   bail:
 	for ( j = 0; j < i; j++ )
 		memset( ESI->NativeInfoArray[j].ni_bits, 0x0,
 				sizeof ( pfm_register_t ) );
-	return ( 0 );
+	return PAPI_ECNFLCT;
 }
 
 /* This function clears the current contents of the control structure and 
