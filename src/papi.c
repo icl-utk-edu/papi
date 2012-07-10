@@ -1961,7 +1961,6 @@ int
 PAPI_start( int EventSet )
 {
 	APIDBG("Entry: EventSet: %d\n", EventSet);
-	int i;
 	int is_dirty=0;
 	int retval;
 	EventSetInfo_t *ESI;
@@ -1971,13 +1970,15 @@ PAPI_start( int EventSet )
 	int cidx;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
-	if ( ESI == NULL )
-		papi_return( PAPI_ENOEVST );
+	if ( ESI == NULL ) {
+	   papi_return( PAPI_ENOEVST );
+	}
 
 	cidx = valid_ESI_component( ESI );
-	if ( cidx < 0 )
-		papi_return( cidx );
-	
+	if ( cidx < 0 ) {
+	   papi_return( cidx );
+	}
+
 	/* only one event set per thread/cpu can be running at any time, */
 	/* so if another event set is running, the user must stop that   */
         /* event set explicitly */
@@ -1997,105 +1998,117 @@ PAPI_start( int EventSet )
 	} 
 	
 	/* Check that there are added events */
-	if ( ESI->NumberOfEvents < 1 )
-		papi_return( PAPI_EINVAL );
+	if ( ESI->NumberOfEvents < 1 ) {
+	   papi_return( PAPI_EINVAL );
+	}
 
 	/* If multiplexing is enabled for this eventset,
 	   call John May's code. */
 
 	if ( _papi_hwi_is_sw_multiplex( ESI ) ) {
-		retval = MPX_start( ESI->multiplex.mpx_evset );
-		if ( retval != PAPI_OK )
-			papi_return( retval );
+	   retval = MPX_start( ESI->multiplex.mpx_evset );
+	   if ( retval != PAPI_OK ) {
+	      papi_return( retval );
+	   }
 
-		/* Update the state of this EventSet */
-		ESI->state ^= PAPI_STOPPED;
-		ESI->state |= PAPI_RUNNING;
+	   /* Update the state of this EventSet */
+	   ESI->state ^= PAPI_STOPPED;
+	   ESI->state |= PAPI_RUNNING;
 
-		return ( PAPI_OK );
+	   return PAPI_OK;
 	}
 
 	/* get the context we should use for this event set */
 	context = _papi_hwi_get_context( ESI, &is_dirty );
 	if (is_dirty) {
-		/* we need to reset the context state because it was last used for some */
-		/* other event set and does not contain the information for our events. */
-		retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
-														  ESI->NativeInfoArray,
-														  ESI->NativeCount,
-														  context);
-		if ( retval != PAPI_OK ) {
-			papi_return( retval );
-		}
+	   /* we need to reset the context state because it was last used   */
+	   /* for some other event set and does not contain the information */
+           /* for our events.                                               */
+	   retval = _papi_hwd[ESI->CmpIdx]->update_control_state( 
+                                                        ESI->ctl_state,
+							ESI->NativeInfoArray,
+							ESI->NativeCount,
+							context);
+	   if ( retval != PAPI_OK ) {
+	      papi_return( retval );
+	   }
 		
-		/* now that the context contains this event sets information, */
-		/* make sure the position array in the EventInfoArray is correct */
-		for ( i=0 ; i<ESI->NativeCount ; i++ ) {
-			_papi_hwi_remap_event_position( ESI, i, ESI->NumberOfEvents );
-		}
+	   /* now that the context contains this event sets information,    */
+	   /* make sure the position array in the EventInfoArray is correct */
+
+	   /* We have to do this because ->update_control_state() can */
+	   /* in theory re-order the native events out from under us. */
+	   _papi_hwi_map_events_to_native( ESI );
+
 	}
 
 	/* If overflowing is enabled, turn it on */
 	if ( ( ESI->state & PAPI_OVERFLOWING ) &&
-		 !( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) ) {
-		retval = _papi_hwi_start_signal( _papi_os_info.itimer_sig, NEED_CONTEXT, cidx );
-		if ( retval != PAPI_OK )
-			papi_return( retval );
+	     !( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) ) {
+	   retval = _papi_hwi_start_signal( _papi_os_info.itimer_sig, 
+					    NEED_CONTEXT, cidx );
+	   if ( retval != PAPI_OK ) {
+	      papi_return( retval );
+	   }
 
-		/* Update the state of this EventSet and thread before to avoid races */
-		ESI->state ^= PAPI_STOPPED;
-		ESI->state |= PAPI_RUNNING;
-		thread->running_eventset[cidx] = ESI;   /* can not be attached to thread or cpu if overflowing */
+	   /* Update the state of this EventSet and thread */
+	   /* before to avoid races                        */
+	   ESI->state ^= PAPI_STOPPED;
+	   ESI->state |= PAPI_RUNNING;
+           /* can not be attached to thread or cpu if overflowing */
+	   thread->running_eventset[cidx] = ESI;
 
-		retval = _papi_hwd[cidx]->start( context, ESI->ctl_state );
-		if ( retval != PAPI_OK ) {
-			_papi_hwi_stop_signal( _papi_os_info.itimer_sig );
-			ESI->state ^= PAPI_RUNNING;
-			ESI->state |= PAPI_STOPPED;
-			thread->running_eventset[cidx] = NULL;
-			papi_return( retval );
-		}
+	   retval = _papi_hwd[cidx]->start( context, ESI->ctl_state );
+	   if ( retval != PAPI_OK ) {
+	      _papi_hwi_stop_signal( _papi_os_info.itimer_sig );
+	      ESI->state ^= PAPI_RUNNING;
+	      ESI->state |= PAPI_STOPPED;
+	      thread->running_eventset[cidx] = NULL;
+	      papi_return( retval );
+	   }
 
-		retval = _papi_hwi_start_timer( _papi_os_info.itimer_num,
-						_papi_os_info.itimer_sig,
-						_papi_os_info.itimer_ns );
-		if ( retval != PAPI_OK ) {
-			_papi_hwi_stop_signal( _papi_os_info.itimer_sig );
-			_papi_hwd[cidx]->stop( context, ESI->ctl_state );
-			ESI->state ^= PAPI_RUNNING;
-			ESI->state |= PAPI_STOPPED;
-			thread->running_eventset[cidx] = NULL;
-			papi_return( retval );
-		}
+	   retval = _papi_hwi_start_timer( _papi_os_info.itimer_num,
+					   _papi_os_info.itimer_sig,
+					   _papi_os_info.itimer_ns );
+	   if ( retval != PAPI_OK ) {
+	      _papi_hwi_stop_signal( _papi_os_info.itimer_sig );
+	      _papi_hwd[cidx]->stop( context, ESI->ctl_state );
+	      ESI->state ^= PAPI_RUNNING;
+	      ESI->state |= PAPI_STOPPED;
+	      thread->running_eventset[cidx] = NULL;
+	      papi_return( retval );
+	   }
 	} else {
-		/* Update the state of this EventSet and thread before to avoid races */
-		ESI->state ^= PAPI_STOPPED;
-		ESI->state |= PAPI_RUNNING;
-		/* if not attached to cpu or another process */
-		if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
-			if ( !( ESI->state & PAPI_ATTACHED ) ) {
-				thread->running_eventset[cidx] = ESI;
-			}
-		} else {
-			cpu->running_eventset[cidx] = ESI;
-		}
+	   /* Update the state of this EventSet and thread before */
+	   /* to avoid races                                      */
+	   ESI->state ^= PAPI_STOPPED;
+	   ESI->state |= PAPI_RUNNING;
+		
+	   /* if not attached to cpu or another process */
+	   if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
+	      if ( !( ESI->state & PAPI_ATTACHED ) ) {
+		 thread->running_eventset[cidx] = ESI;
+	      }
+	   } else {
+	      cpu->running_eventset[cidx] = ESI;
+	   }
 
-		retval = _papi_hwd[cidx]->start( context, ESI->ctl_state );
-		if ( retval != PAPI_OK ) {
-			_papi_hwd[cidx]->stop( context, ESI->ctl_state );
-			ESI->state ^= PAPI_RUNNING;
-			ESI->state |= PAPI_STOPPED;
-			if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
-				if ( !( ESI->state & PAPI_ATTACHED ) ) 
-					thread->running_eventset[cidx] = NULL;
-			} else {
-				cpu->running_eventset[cidx] = NULL;
-			}
-			papi_return( retval );
-		}
+	   retval = _papi_hwd[cidx]->start( context, ESI->ctl_state );
+	   if ( retval != PAPI_OK ) {
+	      _papi_hwd[cidx]->stop( context, ESI->ctl_state );
+	      ESI->state ^= PAPI_RUNNING;
+	      ESI->state |= PAPI_STOPPED;
+	      if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
+		 if ( !( ESI->state & PAPI_ATTACHED ) ) 
+		    thread->running_eventset[cidx] = NULL;
+	      } else {
+		 cpu->running_eventset[cidx] = NULL;
+	      }
+	      papi_return( retval );
+	   }
 	}
 
-	return ( retval );
+	return retval;
 }
 
 /* checks for valid EventSet, calls component stop() function. */
@@ -6493,3 +6506,48 @@ PAPI_disable_component( int cidx )
  
 }
 
+/** \class PAPI_disable_component_by_name
+ *	\brief disables the named component
+ *	\retval ENOCMP
+ *		component does not exist
+ *	\retval ENOINIT
+ *		unable to disable the component, the library has already been initialized
+ *	\param component_name
+ *		name of the component to disable.
+ *	\par Example:
+ *	\code
+	int result;
+	result = PAPI_disable_component_by_name("example");
+	if (result==PAPI_OK)
+		printf("component \"example\" has been disabled\n");
+	//...
+	PAPI_library_init(PAPI_VER_CURRENT);
+ *	\endcode
+ *	PAPI_disable_component_by_name() allows the user to disable a component
+ *	before PAPI_library_init() time. This is useful if the user knows they do
+ *	not with to use events from that component and want to reduce the PAPI
+ *	library overhead. 
+ *
+ *	PAPI_disable_component_by_name() must be called before PAPI_library_init().
+ *
+ *	\bug none known
+ *	\see PAPI_library_init
+ *	\see PAPI_disable_component
+*/
+int
+PAPI_disable_component_by_name( char *name )
+{
+	int cidx;
+
+	/* I can only be called before init time */
+	if (init_level!=PAPI_NOT_INITED) {
+		return PAPI_ENOINIT;
+	}
+
+	cidx = PAPI_get_component_index(name);
+	if (cidx>=0) {
+		return PAPI_disable_component(cidx);
+	} 
+
+	return PAPI_ENOCMP;
+}

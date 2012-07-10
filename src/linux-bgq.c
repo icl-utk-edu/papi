@@ -56,6 +56,19 @@ pthread_mutex_t thdLocks[PAPI_MAX_LOCK];
 papi_vector_t _bgq_vectors;
 PAPI_os_info_t _papi_os_info;
 
+#define OPCODE_EVENT_CHUNK 8
+static int allocated_opcode_events = 0;
+static int num_opcode_events = 0;
+
+struct bgq_generic_events_t {
+	int idx;
+	int eventId;
+	char mask[PAPI_MIN_STR_LEN];
+	char *opcode;
+};
+
+static struct bgq_generic_events_t *GenericEvent;
+
 /* Defined in linux-bgq-memory.c */
 extern int _bgq_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type );
 extern int _bgq_get_dmem_info( PAPI_dmem_info_t * pDmemInfo );
@@ -351,7 +364,8 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 	printf( _AT_ " _bgq_update_control_state: count = %d, EventGroup=%d\n", count, ptr->EventGroup );
 #endif
 	( void ) ctx;
-	int i, index, retval;
+	int i, j, index, retval;
+	unsigned evtIdx;
 	
 	// Delete and re-create BGPM eventset
 	_common_deleteRecreate( &ptr->EventGroup );
@@ -363,16 +377,68 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 	// add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
 		index = ( native[i].ni_event & PAPI_NATIVE_AND_MASK ) + 1;
-
-#ifdef DEBUG_BGQ
-		printf(_AT_ " _bgq_update_control_state: ADD event: i = %d, index = %d\n", i, index );
-#endif
 		
 		ptr->EventGroup_local[i] = index;
 
-		/* Add events to the BGPM eventGroup */
-		retval = Bgpm_AddEvent( ptr->EventGroup, index );
-		CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );			
+		// HJ test HERE: we found an opcode event
+		if ( index > BGQ_PUNIT_MAX_COUNTERS ) {
+			for( j = 0; j < num_opcode_events; j++ ) {
+#ifdef DEBUG_BGQ
+				printf(_AT_ " _bgq_update_control_state: %d out of %d OPCODES\n",
+					   j, num_opcode_events );
+#endif
+#ifdef DEBUG_BGQ
+				printf(_AT_ " _bgq_update_control_state: j's idx = %d, index = %d\n",
+					   GenericEvent[j].idx, index );
+#endif
+				if ( GenericEvent[j].idx == ( index - 1) ) {
+					/* Add events to the BGPM eventGroup */
+					retval = Bgpm_AddEvent( ptr->EventGroup, GenericEvent[j].eventId );
+					CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
+#ifdef DEBUG_BGQ
+					printf(_AT_ " _bgq_update_control_state: ADD event: i = %d, eventId = %d\n", i, GenericEvent[j].eventId );
+#endif
+					
+					evtIdx = Bgpm_GetEventIndex( ptr->EventGroup,
+												 GenericEvent[j].eventId,
+												 i );
+#ifdef DEBUG_BGQ
+					printf(_AT_ " _bgq_update_control_state: evtIdx in EventGroup = %d\n",
+						   evtIdx );
+#endif
+					if ( 0 == strcmp( GenericEvent[j].mask, "PEVT_INST_XU_GRP_MASK" ) ) {
+						retval = Bgpm_SetXuGrpMask( ptr->EventGroup,
+												    evtIdx,
+												    (uint64_t) GenericEvent[j].opcode );
+						CHECK_BGPM_ERROR( retval, "Bgpm_SetXuGrpMask" );
+#ifdef DEBUG_BGQ
+						printf(_AT_ " _bgq_update_control_state: it's PEVT_INST_XU_GRP_MASK\n" );
+#endif
+					} else if ( 0 == strcmp( GenericEvent[j].mask, "PEVT_INST_QFPU_GRP_MASK" ) ) {
+						retval = Bgpm_SetQfpuGrpMask( ptr->EventGroup,
+												      evtIdx,
+													  (uint64_t) GenericEvent[j].opcode ); //strtoll( GenericEvent[j].opcode, (char **)NULL, 10 )
+						CHECK_BGPM_ERROR( retval, "Bgpm_SetQfpuGrpMask" );
+#ifdef DEBUG_BGQ
+						printf(_AT_ " _bgq_update_control_state: it's PEVT_INST_QFPU_GRP_MASK\n" );
+#endif
+					}
+				}	
+			}
+		}
+		else {
+#ifdef DEBUG_BGQ
+			printf(_AT_ " _bgq_update_control_state: no OPCODE\n" );
+#endif
+			
+			/* Add events to the BGPM eventGroup */
+			retval = Bgpm_AddEvent( ptr->EventGroup, index );
+			CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
+#ifdef DEBUG_BGQ
+			printf(_AT_ " _bgq_update_control_state: ADD event: i = %d, index = %d\n", i, index );
+#endif
+			
+		}
 	}
 	
 	// store how many events we added to an EventSet
@@ -406,6 +472,14 @@ _bgq_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	
 	// set flag to 1: BGPM eventGroup HAS BEEN applied
 	ptr->bgpm_eventset_applied = 1;
+
+#ifdef DEBUG_BGQ
+	int i;
+	int numEvts = Bgpm_NumEvents( ptr->EventGroup );
+	for ( i = 0; i < numEvts; i++ ) {
+		printf("%d = %s\n", i, Bgpm_GetEventLabel( ptr->EventGroup, i) );
+	}
+#endif	
 	
 	/* Bgpm_Apply() does an implicit reset; 
 	 hence no need to use Bgpm_ResetStart */
@@ -873,13 +947,23 @@ _bgq_get_virt_cycles( void )
 int
 _bgq_init_component( int cidx )
 {	
-//#ifdef DEBUG_BGQ
-	printf("_bgq_init_component\n");
-	//printf("_bgq_init_component: 1. BGPM_INITIALIZED = %d \n", BGPM_INITIALIZED);
-//#endif
+#ifdef DEBUG_BGQ
+	printf("_bgq_init_substrate\n");
+	//printf("_bgq_init_substrate: 1. BGPM_INITIALIZED = %d \n", BGPM_INITIALIZED);
+#endif
 	int retval;
 	int i;
-
+		
+	/* allocate the opcode event structure */
+	GenericEvent = calloc( OPCODE_EVENT_CHUNK, sizeof( struct bgq_generic_events_t ) );
+	if ( NULL == GenericEvent ) {
+		return PAPI_ENOMEM;
+	}
+	
+	/* init opcode event stuff */
+	allocated_opcode_events = OPCODE_EVENT_CHUNK;
+	num_opcode_events = 0;
+		
 	_bgq_vectors.cmp_info.CmpIdx = cidx;
 
 	/*
@@ -937,21 +1021,86 @@ _bgq_ntv_name_to_code( char *name, unsigned int *event_code )
 	printf( "_bgq_ntv_name_to_code\n" );
 #endif
 	int ret;
-	
-	/* Return event id matching a given event label string */
-	ret = Bgpm_GetEventIdFromLabel ( name );
-	
-	if ( ret <= 0 ) {
+	/* Treat events differently if BGPM Opcodes are used */
+	/* Opcode group selection values are "OR"ed together to create a desired 
+	 mask of instruxction group events to accumulate in the same counter */
+	char *XU_prefix  = "UPC_P_XU_OGRP_";
+	char *AXU_prefix = "UPC_P_AXU_OGRP_";
 #ifdef DEBUG_BGPM
-		printf ("Error: ret value is %d for BGPM API function '%s'.\n",
-				ret, "Bgpm_GetEventIdFromLabel" );
+	printf( "name = ===%s===\n", name );
+#endif	
+	if ( 0 == strncmp( name, XU_prefix, strlen( XU_prefix ) ) || 
+		0 == strncmp( name, AXU_prefix, strlen( AXU_prefix ) ) ) {
+
+		if ( NULL == ( GenericEvent[num_opcode_events].opcode = malloc( strlen(name) * sizeof(char) ) ) ) {
+			return PAPI_ENOMEM;
+		}
+		strcpy( GenericEvent[num_opcode_events].opcode, name );
+		GenericEvent[num_opcode_events].idx = OPCODE_BUF + num_opcode_events;
+		
+		if ( 0 == strncmp( name, XU_prefix, strlen( XU_prefix ) ) ) {
+			strcpy( GenericEvent[num_opcode_events].mask, "PEVT_INST_XU_GRP_MASK" );
+			/* Return event id matching the generic XU event string */
+			GenericEvent[num_opcode_events].eventId = Bgpm_GetEventIdFromLabel ( "PEVT_INST_XU_GRP_MASK" );
+		}
+		else if ( 0 == strncmp( name, AXU_prefix, strlen( AXU_prefix ) ) ) {
+			strcpy( GenericEvent[num_opcode_events].mask, "PEVT_INST_QFPU_GRP_MASK" );
+			/* Return event id matching the generic QFPU event string */
+			GenericEvent[num_opcode_events].eventId = Bgpm_GetEventIdFromLabel ( "PEVT_INST_QFPU_GRP_MASK" );
+		}
+		
+		if ( GenericEvent[num_opcode_events].eventId <= 0 ) {
+#ifdef DEBUG_BGPM
+			printf ("Error: ret value is %d for BGPM API function '%s'.\n",
+					ret, "Bgpm_GetEventIdFromLabel" );
 #endif
-		return PAPI_ENOEVNT;
+			return PAPI_ENOEVNT;
+		}
+		
+		*event_code = GenericEvent[num_opcode_events].idx;
+		
+		num_opcode_events++;
+		
+		/* If there are too many opcode events than allocated, then allocate more room */
+		if( num_opcode_events >= allocated_opcode_events ) {
+			
+			SUBDBG("Allocating more room for BGPM opcode events (%d %ld)\n",
+				   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ),
+				   ( long )sizeof( struct bgq_generic_events_t ) *
+				   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ) );
+			
+			GenericEvent = realloc( GenericEvent, sizeof( struct bgq_generic_events_t ) *
+								   ( allocated_opcode_events + OPCODE_EVENT_CHUNK ) );
+			if ( NULL == GenericEvent ) {
+				return PAPI_ENOMEM;
+			}
+			allocated_opcode_events += OPCODE_EVENT_CHUNK;
+		}
+		
+#ifdef DEBUG_BGQ
+		printf(_AT_ " _bgq_ntv_name_to_code: GenericEvent no. %d: \n", num_opcode_events-1 );
+		printf(	"idx     = %d\n", GenericEvent[num_opcode_events-1].idx);
+		printf(	"eventId = %d\n", GenericEvent[num_opcode_events-1].eventId);
+		printf(	"mask    = %s\n", GenericEvent[num_opcode_events-1].mask);
+		printf(	"opcode  = %s\n", GenericEvent[num_opcode_events-1].opcode);
+#endif
 	}
-	else if ( ret > BGQ_PUNIT_MAX_COUNTERS ) // not a PUnit event
-		return PAPI_ENOEVNT;
-	else
-		*event_code = ( ret - 1 );
+	else {
+		/* Return event id matching a given event label string */
+		ret = Bgpm_GetEventIdFromLabel ( name );
+		
+		if ( ret <= 0 ) {
+#ifdef DEBUG_BGPM
+			printf ("Error: ret value is %d for BGPM API function '%s'.\n",
+					ret, "Bgpm_GetEventIdFromLabel" );
+#endif
+			return PAPI_ENOEVNT;
+		}
+		else if ( ret > BGQ_PUNIT_MAX_COUNTERS ) // not a PUnit event
+			return PAPI_ENOEVNT;
+		else
+			*event_code = ( ret - 1 );		
+	}
 	
 	return PAPI_OK;
 }
@@ -966,7 +1115,7 @@ int
 _bgq_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {	
 #ifdef DEBUG_BGQ	
-	//printf( "_bgq_ntv_code_to_name\n" );
+	printf( "_bgq_ntv_code_to_name\n" );
 #endif
 	int index = ( EventCode & PAPI_NATIVE_AND_MASK ) + 1;
 	
@@ -994,7 +1143,7 @@ int
 _bgq_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {	
 #ifdef DEBUG_BGQ
-	//printf( "_bgq_ntv_code_to_descr\n" );
+	printf( "_bgq_ntv_code_to_descr\n" );
 #endif
 	int retval;
 	int index = ( EventCode & PAPI_NATIVE_AND_MASK ) + 1;
@@ -1036,7 +1185,7 @@ int
 _bgq_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 #ifdef DEBUG_BGQ
-	//printf( "_bgq_ntv_enum_events\n" );
+	printf( "_bgq_ntv_enum_events\n" );
 #endif
 	
 	switch ( modifier ) {

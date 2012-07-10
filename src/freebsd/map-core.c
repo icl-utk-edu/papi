@@ -4,12 +4,11 @@
 
 /* 
 * File:    map-core.c
-* CVS:     $Id$
 * Author:  Harald Servat
 *          redcrash@gmail.com
 */
 
-#include SUBSTRATE
+#include "freebsd.h"
 #include "papiStdEventDefs.h"
 #include "map.h"
 

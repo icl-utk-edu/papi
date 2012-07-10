@@ -675,62 +675,59 @@ _papi_hwi_remove_EventSet( EventSetInfo_t * ESI )
 }
 
 
-/* this function try to find out whether native event has already been mapped. 
-     Success, return hwd_native_t array index
-     Fail,    return -1;                                                             
+/* this function checks if an event is already in an EventSet
+     Success, return ESI->NativeInfoArray[] index
+     Fail,    return PAPI_ENOEVNT;
 */
 static int
-_papi_hwi_add_native_precheck( EventSetInfo_t * ESI, int nevt )
+event_already_in_eventset( EventSetInfo_t * ESI, int nevt )
 {
    int i;
-   int cidx;
-	
-   cidx = _papi_hwi_component_index( nevt );
-   if (cidx<0) return PAPI_ENOCMP;
 
    /* to find the native event from the native events list */
    for( i = 0; i < ESI->NativeCount; i++ ) {
       if ( _papi_hwi_eventcode_to_native(nevt) == 
                                         ESI->NativeInfoArray[i].ni_event ) {
-	 ESI->NativeInfoArray[i].ni_owners++;
 	 INTDBG( "found native event already mapped: 0x%x\n", nevt );
 	 return i;
       }
    }
-   return -1;
+   return PAPI_ENOEVNT;
 }
 
 /* This function goes through the events in an EventSet's EventInfoArray */
 /* And maps each event (whether native or part of a preset) to           */
 /* an event in the EventSets NativeInfoArray.                            */
-/* The looping is mysterious. */
-/* When do we need to do this? */
+
+/* We need to do this every time a native event is added to or removed   */
+/* from an eventset.                                                     */
+
+/* It is also called after a update controlstate as the components are   */
+/* allowed to re-arrange the native events to fit hardware constraints.  */
 
 void
-_papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_events )
+_papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
 {
-    (void) thisindex;
 
-    EventInfo_t *head;
-    int i, j, k, n, preset_index = 0, nevt;
+    int i, event, k, n, preset_index = 0, nevt;
+    int total_events = ESI->NumberOfEvents;
 
-    APIDBG("Remapping %d events in EventSet %d\n",total_events,ESI->EventSetIndex);
-
-    head = ESI->EventInfoArray;
+    APIDBG("Mapping %d events in EventSet %d\n",
+	   total_events,ESI->EventSetIndex);
    
-    /* Ugh I don't understand this i/j business.  vmw */
-    j = 0;
+
+    event = 0;
     for( i = 0; i < total_events; i++ ) {
 
-       /* find the added event in EventInfoArray    */
        /* find the first event that isn't PAPI_NULL */
-       while ( head[j].event_code == ( unsigned int ) PAPI_NULL ) {
-          j++;
+       /* Is this really necessary? --vmw           */
+       while ( ESI->EventInfoArray[event].event_code == ( unsigned int ) PAPI_NULL ) {
+          event++;
        }
 	   
        /* If it's a preset */
-       if ( IS_PRESET(head[j].event_code) ) {
-	  preset_index = ( int ) head[j].event_code & PAPI_PRESET_AND_MASK;
+       if ( IS_PRESET(ESI->EventInfoArray[event].event_code) ) {
+	  preset_index = ( int ) ESI->EventInfoArray[event].event_code & PAPI_PRESET_AND_MASK;
 
 	  /* walk all sub-events in the preset */
 	  for( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
@@ -738,45 +735,45 @@ _papi_hwi_remap_event_position( EventSetInfo_t * ESI, int thisindex, int total_e
 	     if ( nevt == PAPI_NULL ) {
 		break;
 	     }
+
+	     /* Match each sub-event to something in the Native List */
 	     for( n = 0; n < ESI->NativeCount; n++ ) {
 	        if ( _papi_hwi_eventcode_to_native(nevt) == 
                                  ESI->NativeInfoArray[n].ni_event ) {
-		   head[j].pos[k] = ESI->NativeInfoArray[n].ni_position;
+		   ESI->EventInfoArray[event].pos[k] = ESI->NativeInfoArray[n].ni_position;
 		   break;
 		}
 	     }
 	  }
-	  /*head[j].pos[k]=-1; */
        } 
        /* It's a native event */
-       else if( IS_NATIVE(head[j].event_code) ) {
-	  nevt = ( int ) head[j].event_code;
+       else if( IS_NATIVE(ESI->EventInfoArray[event].event_code) ) {
+	  nevt = ( int ) ESI->EventInfoArray[event].event_code;
 
-	  /* Look for the new event in the NativeInfoArray */
-
+	  /* Look for the event in the NativeInfoArray */
 	  for( n = 0; n < ESI->NativeCount; n++ ) {
 	     if ( _papi_hwi_eventcode_to_native(nevt) == 
                                   ESI->NativeInfoArray[n].ni_event ) {
-		head[j].pos[0] = ESI->NativeInfoArray[n].ni_position;
-		/*head[j].pos[1]=-1; */
+		ESI->EventInfoArray[event].pos[0] = ESI->NativeInfoArray[n].ni_position;
 		break;
 	     }
 	  }
-       } else if ( IS_USER_DEFINED(head[j].event_code) ) {
-		 for ( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
-		   nevt = _papi_user_events[preset_index].events[k];
-		   if ( nevt == PAPI_NULL )
-			 break;
-		   for ( n = 0; n < ESI->NativeCount; n++ ) {
-		     if ( _papi_hwi_eventcode_to_native(nevt) == ESI->NativeInfoArray[n].ni_event ) {
-			   head[j].pos[k] = ESI->NativeInfoArray[n].ni_position;
-			 }
-		   }
+       /* It's a user-defined event */
+       } else if ( IS_USER_DEFINED(ESI->EventInfoArray[event].event_code) ) {
+          for ( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
+	      nevt = _papi_user_events[preset_index].events[k];
+	      if ( nevt == PAPI_NULL ) break;
+
+	      /* Match each sub-event to something in the Native List */
+	      for ( n = 0; n < ESI->NativeCount; n++ ) {
+		 if ( _papi_hwi_eventcode_to_native(nevt) == ESI->NativeInfoArray[n].ni_event ) {
+		    ESI->EventInfoArray[event].pos[k] = ESI->NativeInfoArray[n].ni_position;
 		 }
-	   }
-	   /* end of if */
-       j++;
-    }						 /* end of for loop */
+	      }
+	  }
+       }
+       event++;
+    }
 }
 
 
@@ -830,14 +827,20 @@ update_overflow( EventSetInfo_t * ESI )
 }
 
 /* this function is called by _papi_hwi_add_event when adding native events 
-nix: pointer to array of native event table indexes from the preset entry
-size: number of native events to add
+   ESI:   event set to add the events to
+   nevnt: pointer to array of native event table indexes to add
+   size:  number of native events to add
+   out:   ???
+
+   return:  < 0 = error
+              0 = no new events added
+              1 = new events added
 */
 static int
 add_native_events( EventSetInfo_t *ESI, unsigned int *nevt, 
                    int size, EventInfo_t *out )
 {
-   int nidx, i, j, remap = 0;
+   int nidx, i, j, added_events = 0;
    int retval, retval2;
    int max_counters;
    hwd_context_t *context;
@@ -849,14 +852,25 @@ add_native_events( EventSetInfo_t *ESI, unsigned int *nevt,
       max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs;
    }
 
-   /* if the native event is already mapped, fill in */
+
+   /* Walk through the list of native events, adding them */
    for( i = 0; i < size; i++ ) {
-      if ( ( nidx = _papi_hwi_add_native_precheck( ESI, nevt[i] ) ) >= 0 ) {
+
+      /* Check to see if event is already in EventSet */
+      nidx = event_already_in_eventset( ESI, nevt[i] );
+
+      if ( nidx >= 0 ) {
+	 /* Event is already there.  Set position */
 	 out->pos[i] = ESI->NativeInfoArray[nidx].ni_position;
+	 ESI->NativeInfoArray[nidx].ni_owners++;
+
       } else {
-	 /* all counters have been used, add_native fail */
+
+	 /* Event wasn't already there */
+
 	 if ( ESI->NativeCount == max_counters ) {
-	    /* to clean owners for previous added native events */
+
+	    /* No more room in counters! */
 	    for( j = 0; j < i; j++ ) {
 	       if ( ( nidx = add_native_fail_clean( ESI, nevt[j] ) ) >= 0 ) {
 		  out->pos[j] = -1;
@@ -865,61 +879,65 @@ add_native_events( EventSetInfo_t *ESI, unsigned int *nevt,
 	       INTDBG( "should not happen!\n" );
 	    }
 	    INTDBG( "counters are full!\n" );
-	    return -1;
+	    return PAPI_ECOUNT;
 	 }
+	 else {
 			
-         /* there is an empty slot for the native event;
-	    initialize the native index for the new added event */
-	 INTDBG( "Adding 0x%x to ESI %p Component %d\n", 
-		 nevt[i], ESI, ESI->CmpIdx );
-	 ESI->NativeInfoArray[ESI->NativeCount].ni_event = 
+	    /* there is an empty slot for the native event; */
+	    /* initialize the native index for the new added event */
+	    INTDBG( "Adding 0x%x to ESI %p Component %d\n", 
+		    nevt[i], ESI, ESI->CmpIdx );
+	    ESI->NativeInfoArray[ESI->NativeCount].ni_event = 
 			  _papi_hwi_eventcode_to_native(nevt[i]);
 
-	 ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
-	 ESI->NativeCount++;
-	 remap++;
+	    ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
+	    ESI->NativeCount++;
+	    added_events++;
+	 }
       }
    }
 
-	/* if remap!=0, we need reallocate counters */
-	if ( remap ) {
-		/* get the context we should use for this event set */
-		context = _papi_hwi_get_context( ESI, NULL );
+   /* if we added events we need to tell the component so it */
+   /* can add them too.                                      */
+   if ( added_events ) {
+      /* get the context we should use for this event set */
+      context = _papi_hwi_get_context( ESI, NULL );
 	   
-		if ( _papi_hwd[ESI->CmpIdx]->allocate_registers( ESI ) ) {
+      if ( _papi_hwd[ESI->CmpIdx]->allocate_registers( ESI ) ) {
 
-			retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
-															  ESI->NativeInfoArray,
-															  ESI->NativeCount,
-															  context);
-			if ( retval != PAPI_OK ) {
-			  clean:
-				for ( i = 0; i < size; i++ ) {
-					if ( ( nidx = add_native_fail_clean( ESI, nevt[i] ) ) >= 0 ) {
-						out->pos[i] = -1;
-						continue;
-					}
-					INTDBG( "should not happen!\n" );
-				}
-				/* re-establish the control state after the previous error */
-				retval2 = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
-																  ESI->NativeInfoArray,
-																  ESI->NativeCount,
-																  context);
-				if ( retval2 != PAPI_OK ) {
-					PAPIERROR
-						( "update_control_state failed to re-establish working events!" );
-					return retval2;
-				}
-				return ( retval );
-			}
-			return 1;
-		} else {
-			retval = -1;
-			goto clean;
-		}
-	}
-	return 0;
+	 retval = _papi_hwd[ESI->CmpIdx]->update_control_state( ESI->ctl_state,
+		  ESI->NativeInfoArray,
+		  ESI->NativeCount,
+		  context);
+	 if ( retval != PAPI_OK ) {
+clean:
+	    for( i = 0; i < size; i++ ) {
+	       if ( ( nidx = add_native_fail_clean( ESI, nevt[i] ) ) >= 0 ) {
+		  out->pos[i] = -1;
+		  continue;
+	       }
+	       INTDBG( "should not happen!\n" );
+	    }
+	    /* re-establish the control state after the previous error */
+	    retval2 = _papi_hwd[ESI->CmpIdx]->update_control_state( 
+                       ESI->ctl_state,
+		       ESI->NativeInfoArray,
+		       ESI->NativeCount,
+		       context);
+	    if ( retval2 != PAPI_OK ) {
+	       PAPIERROR("update_control_state failed to re-establish "
+			 "working events!" );
+	       return retval2;
+	    }
+	    return retval;
+	 }
+	 return 1; /* need remap */
+      } else {
+	 retval = PAPI_EMISC;
+	 goto clean;
+      }
+   }
+   return PAPI_OK;
 }
 
 
@@ -999,14 +1017,15 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  }
           else {
 	     /* Fill in the EventCode (machine independent) information */
-	     ESI->EventInfoArray[thisindex].event_code = ( unsigned int ) EventCode;
+	     ESI->EventInfoArray[thisindex].event_code = 
+                                  ( unsigned int ) EventCode;
 	     ESI->EventInfoArray[thisindex].derived =
-					_papi_hwi_presets[preset_index].derived_int;
+				  _papi_hwi_presets[preset_index].derived_int;
 	     ESI->EventInfoArray[thisindex].ops =
-					_papi_hwi_presets[preset_index].postfix;
-	     if ( remap ) {
-		_papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
-	     }
+				  _papi_hwi_presets[preset_index].postfix;
+             ESI->NumberOfEvents++;
+	     _papi_hwi_map_events_to_native( ESI );
+	     
 	  }
        }
        /* Handle adding Native events */
@@ -1037,10 +1056,11 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  } else {
 
 	     /* Fill in the EventCode (machine independent) information */
-	     ESI->EventInfoArray[thisindex].event_code = ( unsigned int ) EventCode;
-	     if ( remap ) {
-		_papi_hwi_remap_event_position( ESI, thisindex,ESI->NumberOfEvents+1 );
-	     }
+	     ESI->EventInfoArray[thisindex].event_code = 
+	                                   ( unsigned int ) EventCode;
+             ESI->NumberOfEvents++;
+	     _papi_hwi_map_events_to_native( ESI );
+	     
 	  }
        } else if ( IS_USER_DEFINED( EventCode ) ) {
 		 int count;
@@ -1064,18 +1084,21 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 			 (unsigned int*)_papi_user_events[index].events,
 			 count, &ESI->EventInfoArray[thisindex] );
 
-		 if ( remap < 0 )
-		   return ( PAPI_ECNFLCT );
-		 else {
-		   ESI->EventInfoArray[thisindex].event_code       = (unsigned int) EventCode;
-		   ESI->EventInfoArray[thisindex].derived          = DERIVED_POSTFIX;
-		   ESI->EventInfoArray[thisindex].ops                      = _papi_user_events[index].operation;
-		   if ( remap )
-			 _papi_hwi_remap_event_position( ESI, thisindex, ESI->NumberOfEvents+1 );
+		 if ( remap < 0 ) {
+		   return PAPI_ECNFLCT;
+		 } else {
+		   ESI->EventInfoArray[thisindex].event_code       
+                                         = (unsigned int) EventCode;
+		   ESI->EventInfoArray[thisindex].derived          
+                                         = DERIVED_POSTFIX;
+		   ESI->EventInfoArray[thisindex].ops                      
+                                         = _papi_user_events[index].operation;
+                   ESI->NumberOfEvents++;
+		   _papi_hwi_map_events_to_native( ESI );
 		 }
-	   } else {
+       } else {
 
-	  /* not Native or Preset events */
+	  /* not Native, Preset, or User events */
 
 	  return PAPI_EBUG;
        }
@@ -1097,13 +1120,12 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
        ESI->EventInfoArray[thisindex].event_code = ( unsigned int ) EventCode;	
        ESI->EventInfoArray[thisindex].derived = NOT_DERIVED;
 
+       ESI->NumberOfEvents++;
+
        /* event is in the EventInfoArray but not mapped to the NativeEvents */
        /* this causes issues if you try to set overflow on the event.       */
        /* in theory this wouldn't matter anyway.                            */
     }
-
-    /* Bump the number of events */
-    ESI->NumberOfEvents++;
 
     /* reinstate the overflows if any */
     retval=update_overflow( ESI );

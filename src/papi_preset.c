@@ -1,6 +1,5 @@
 /* 
 * File:    papi_preset.c
-* CVS:     
 * Author:  Haihang You
 *          you@cs.utk.edu
 * Mods:    Brian Sheely
@@ -534,6 +533,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 		SUBDBG( "NOTE: --%s-- found on line %d\n", t, line_no );
 	     }
 	  }
+	  _papi_hwd[cidx]->cmp_info.num_preset_events++;
 
        } else {
 	  PAPIERROR( "Unrecognized token %s at line %d of %s -- ignoring", 

@@ -1,4 +1,4 @@
-/* This file performs the following test: hardware info and which native events are available */
+/* This file utility reports hardware info and native event availability */
 /** file native_avail.c
   *	@page papi_native_avail
   * @brief papi_native_avail utility. 
@@ -41,7 +41,6 @@
  */
 
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 #define EVT_LINE 80
 
@@ -293,7 +292,7 @@ main( int argc, char **argv )
 	       if (component->disabled) continue;
 
 	       printf( "===============================================================================\n" );
-	       printf( " Events in Component: %s\n",component->name);
+	       printf( " Native Events in Component: %s\n",component->name);
 	       printf( "===============================================================================\n" );
 	     
 	       /* Always ASK FOR the first event */

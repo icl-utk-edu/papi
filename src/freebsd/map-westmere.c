@@ -4,14 +4,13 @@
 
 /* 
 * File:    map-westmere.c
-* CVS:     $Id: map-i7.c,v 1.1.2.2 2010/03/06 16:12:08 servat Exp $
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
 *          Harald Servat
 *          redcrash@gmail.com
 */
 
-#include SUBSTRATE
+#include "freebsd.h"
 #include "papiStdEventDefs.h"
 #include "map.h"
 

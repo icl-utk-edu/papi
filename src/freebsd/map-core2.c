@@ -4,14 +4,13 @@
 
 /* 
 * File:    map-core2.c
-* CVS:     $Id$
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
 *          Harald Servat
 *          redcrash@gmail.com
 */
 
-#include SUBSTRATE
+#include "freebsd.h"
 #include "papiStdEventDefs.h"
 #include "map.h"
 

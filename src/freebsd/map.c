@@ -8,7 +8,7 @@
 *          redcrash@gmail.com
 */
 
-#include SUBSTRATE
+#include "freebsd.h"
 #include "papiStdEventDefs.h"
 #include "map.h"
 
