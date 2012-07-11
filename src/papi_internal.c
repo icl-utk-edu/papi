@@ -845,6 +845,7 @@ add_native_events( EventSetInfo_t *ESI, unsigned int *nevt,
    int max_counters;
    hwd_context_t *context;
 
+   /* Do we need this check?  -- vmw */
    if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
       max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
    }

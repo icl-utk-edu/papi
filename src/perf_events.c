@@ -110,7 +110,7 @@ bug_check_scheduability(void) {
 /*   check schedulability bug, and not an inherent bug  */
 /*   in perf_events.  It might be x86 only too.         */
 /* It's because our multiplex partition code depends on */
-/* incompatible events havng an immediate error         */
+/* incompatible events having an immediate error        */
 
 
 static inline int 
@@ -686,53 +686,51 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 	return ret;
 }
 
-static inline int
+static int
 close_pe_evts( context_t * ctx )
 {
-	int i, ret;
+    int i, ret;
 
-	if ( ctx->state & PERF_EVENTS_RUNNING ) {
-		/* probably a good idea to stop the counters before closing them */
-		for ( i = 0; i < ctx->num_evts; i++ ) {
-			if ( ctx->evt[i].group_leader == i ) {
-				ret =
-					ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-				if ( ret == -1 ) {
-					/* Never should happen */
-					return PAPI_EBUG;
-				}
-			}
-		}
-		ctx->state &= ~PERF_EVENTS_RUNNING;
-	}
+    if ( ctx->state & PERF_EVENTS_RUNNING ) {
+       /* probably a good idea to stop the counters before closing them */
+       for( i = 0; i < ctx->num_evts; i++ ) {
+	  if ( ctx->evt[i].group_leader == i ) {
+	     ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
+	     if ( ret == -1 ) {
+		/* Never should happen */
+		return PAPI_EBUG;
+	     }
+	  }
+       }
+       ctx->state &= ~PERF_EVENTS_RUNNING;
+    }
 
 
-	/*
-	 * Close the hw event fds in reverse order so that the group leader is closed last,
-	 * otherwise we will have counters with dangling group leader pointers.
-	 */
+    /* Close the hw event fds in reverse order so that the group leader is */
+    /* closed last, otherwise we will have counters with dangling group    */
+    /* leader pointers.                                                    */
 
-	for ( i = ctx->num_evts; i > 0; ) {
-		i--;
-		if ( ctx->evt[i].mmap_buf ) {
-			if ( munmap
-				 ( ctx->evt[i].mmap_buf,
-				   ctx->evt[i].nr_mmap_pages * getpagesize(  ) ) ) {
-				PAPIERROR( "munmap of fd = %d returned error: %s",
-						   ctx->evt[i].event_fd, strerror( errno ) );
-				return PAPI_ESYS;
-			}
-		}
-		if ( close( ctx->evt[i].event_fd ) ) {
-			PAPIERROR( "close of fd = %d returned error: %s",
-					   ctx->evt[i].event_fd, strerror( errno ) );
-			return PAPI_ESYS;
-		} else {
-			ctx->num_evts--;
-		}
-	}
+    for ( i = ctx->num_evts; i > 0; ) {
+       i--;
+       if ( ctx->evt[i].mmap_buf ) {
+	  if ( munmap ( ctx->evt[i].mmap_buf,
+			ctx->evt[i].nr_mmap_pages * getpagesize(  ) ) ) {
+	     PAPIERROR( "munmap of fd = %d returned error: %s",
+			ctx->evt[i].event_fd, strerror( errno ) );
+	     return PAPI_ESYS;
+	  }
+       }
 
-	return PAPI_OK;
+       if ( close( ctx->evt[i].event_fd ) ) {
+	  PAPIERROR( "close of fd = %d returned error: %s",
+		     ctx->evt[i].event_fd, strerror( errno ) );
+	  return PAPI_ESYS;
+       } else {
+	  ctx->num_evts--;
+       }
+    }
+
+    return PAPI_OK;
 }
 
 
