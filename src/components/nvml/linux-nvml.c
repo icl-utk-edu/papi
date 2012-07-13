@@ -1224,7 +1224,7 @@ papi_vector_t _nvml_vector = {
 				/* default component information */
 				/* (unspecified values are initialized to 0) */
 
-				.name = " linux-nvml",
+				.name = " nvml",
 				.version = "1.0",
 				.support_version = "n/a",
 				.kernel_version = "n/a",

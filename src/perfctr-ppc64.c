@@ -342,7 +342,7 @@ _papi_hwd_allocate_registers( EventSetInfo_t * ESI )
 				   native_name_map[ESI->NativeInfoArray[i].
 								   ni_event & PAPI_NATIVE_AND_MASK].index ) <
 				 0 )
-				return 0;
+				return PAPI_ECNFLCT;
 			event_list[i].ra_counter_cmd[j] =
 				native_table[index].resources.counter_cmd[j];
 		}
@@ -351,7 +351,7 @@ _papi_hwd_allocate_registers( EventSetInfo_t * ESI )
 				   native_name_map[ESI->NativeInfoArray[i].
 								   ni_event & PAPI_NATIVE_AND_MASK].index ) <
 				 0 )
-				return 0;
+				return PAPI_ECNFLCT;
 			event_list[i].ra_group[j] = native_table[index].resources.group[j];
 		}
 	}
@@ -367,9 +367,9 @@ _papi_hwd_allocate_registers( EventSetInfo_t * ESI )
 		/* update the control structure based on the NativeInfoArray */
 		SUBDBG( "Group ID: %d\n", group );
 
-		return 1;
+		return PAPI_OK;
 	} else {
-		return 0;
+		return PAPI_ECNFLCT;
 	}
 }
 

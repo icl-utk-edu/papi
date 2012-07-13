@@ -91,7 +91,10 @@ native( int cidx )
     /* For platform independence, always ASK FOR the first event */
     /* Don't just assume it'll be the first numeric value */
     i = 0 | PAPI_NATIVE_MASK;
-    PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
+    retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
+    if (retval==PAPI_ENOEVNT) {
+       printf("Cannot find first event in component %d\n",cidx);
+    }
 
     do {
        k = i;
@@ -106,7 +109,7 @@ native( int cidx )
 			   strchr( info.symbol, ':' ),
 			   strchr( info.long_descr, ':' ) + 1 );
 		}
-	     } while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) ==
+	     } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) ==
 							  PAPI_OK );
 	     j++;
 	  }
@@ -239,7 +242,8 @@ main( int argc, char **argv )
        }
        retval = PAPI_add_event( EventSet, pevent );
        if ( retval != PAPI_OK ) {
-	  fprintf( stderr, "Event %s can't be counted with others\n",argv[i] );
+	  fprintf( stderr, "Event %s can't be counted with others %d\n",
+		   argv[i], retval );
 	  exit( 1 );
        }
     }

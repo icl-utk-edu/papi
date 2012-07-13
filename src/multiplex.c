@@ -1170,7 +1170,7 @@ mpx_init( int interval_ns )
 }
 
 /** Inserts a list of events into the master event list, 
-   and add's new mev pointers to the MPX_EventSet. 
+   and adds new mev pointers to the MPX_EventSet. 
    MUST BE CALLED WITH THE TIMER INTERRUPT DISABLED */
 
 static int

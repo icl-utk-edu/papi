@@ -845,7 +845,7 @@ CUDA_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _cuda_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "linux_cuda",
+				 .name = "cuda",
 				 .version = "5.0",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = CUDA_MAX_COUNTERS,

@@ -680,9 +680,9 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 			/* Array order on perfctr is event ADD order, not counter #... */
 			ESI->NativeInfoArray[i].ni_position = i;
 		}
-		return 1;
+		return PAPI_OK;
 	} else
-		return 0;
+		return PAPI_ECNFLCT;
 }
 
 static void

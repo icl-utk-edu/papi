@@ -20,9 +20,11 @@ static int TEST_WARN = 0;
 int
 papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 {
-        if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
-	   return PAPI_ESYS;
-        }
+	int cnt, mpx;
+	
+	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
+   		return PAPI_ESYS;
+	}
 
 	printf( "%s", prompt );
 	printf
@@ -59,10 +61,18 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	if ( (*hwinfo)->virtualized) {
            printf( "VM Vendor:               : %s\n", (*hwinfo)->virtual_vendor_string);
 	}
-	printf( "Number Hardware Counters : %d\n",
-			PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) );
-	printf( "Max Multiplex Counters   : %d\n",
-			PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL ) );
+	cnt = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
+	mpx = PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL );
+	if ( cnt >= 0 ) {
+		printf( "Number Hardware Counters : %d\n",cnt );
+	} else {
+		printf( "Number Hardware Counters : PAPI error %d: %s\n", cnt, PAPI_strerror(cnt));
+	}
+	if ( mpx >= 0 ) {
+		printf( "Max Multiplex Counters   : %d\n", mpx );
+	} else {
+		printf( "Max Multiplex Counters   : PAPI error %d: %s\n", mpx, PAPI_strerror(mpx));
+	}
 	printf
 		( "--------------------------------------------------------------------------------\n" );
 	printf( "\n" );

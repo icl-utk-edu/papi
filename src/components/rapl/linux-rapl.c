@@ -864,7 +864,7 @@ _rapl_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
 papi_vector_t _rapl_vector = {
     .cmp_info = { /* (unspecified values are initialized to 0) */
-       .name = "linux-rapl",
+       .name = "rapl",
        .short_name = "rapl",
        .description = "Linux SandyBridge RAPL energy measurements",
        .version = "4.2.1",

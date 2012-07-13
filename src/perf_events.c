@@ -110,7 +110,7 @@ bug_check_scheduability(void) {
 /*   check schedulability bug, and not an inherent bug  */
 /*   in perf_events.  It might be x86 only too.         */
 /* It's because our multiplex partition code depends on */
-/* incompatible events havng an immediate error         */
+/* incompatible events having an immediate error        */
 
 
 static inline int 
@@ -686,53 +686,51 @@ open_pe_evts( context_t * ctx, control_state_t * ctl )
 	return ret;
 }
 
-static inline int
+static int
 close_pe_evts( context_t * ctx )
 {
-	int i, ret;
+    int i, ret;
 
-	if ( ctx->state & PERF_EVENTS_RUNNING ) {
-		/* probably a good idea to stop the counters before closing them */
-		for ( i = 0; i < ctx->num_evts; i++ ) {
-			if ( ctx->evt[i].group_leader == i ) {
-				ret =
-					ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-				if ( ret == -1 ) {
-					/* Never should happen */
-					return PAPI_EBUG;
-				}
-			}
-		}
-		ctx->state &= ~PERF_EVENTS_RUNNING;
-	}
+    if ( ctx->state & PERF_EVENTS_RUNNING ) {
+       /* probably a good idea to stop the counters before closing them */
+       for( i = 0; i < ctx->num_evts; i++ ) {
+	  if ( ctx->evt[i].group_leader == i ) {
+	     ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
+	     if ( ret == -1 ) {
+		/* Never should happen */
+		return PAPI_EBUG;
+	     }
+	  }
+       }
+       ctx->state &= ~PERF_EVENTS_RUNNING;
+    }
 
 
-	/*
-	 * Close the hw event fds in reverse order so that the group leader is closed last,
-	 * otherwise we will have counters with dangling group leader pointers.
-	 */
+    /* Close the hw event fds in reverse order so that the group leader is */
+    /* closed last, otherwise we will have counters with dangling group    */
+    /* leader pointers.                                                    */
 
-	for ( i = ctx->num_evts; i > 0; ) {
-		i--;
-		if ( ctx->evt[i].mmap_buf ) {
-			if ( munmap
-				 ( ctx->evt[i].mmap_buf,
-				   ctx->evt[i].nr_mmap_pages * getpagesize(  ) ) ) {
-				PAPIERROR( "munmap of fd = %d returned error: %s",
-						   ctx->evt[i].event_fd, strerror( errno ) );
-				return PAPI_ESYS;
-			}
-		}
-		if ( close( ctx->evt[i].event_fd ) ) {
-			PAPIERROR( "close of fd = %d returned error: %s",
-					   ctx->evt[i].event_fd, strerror( errno ) );
-			return PAPI_ESYS;
-		} else {
-			ctx->num_evts--;
-		}
-	}
+    for ( i = ctx->num_evts; i > 0; ) {
+       i--;
+       if ( ctx->evt[i].mmap_buf ) {
+	  if ( munmap ( ctx->evt[i].mmap_buf,
+			ctx->evt[i].nr_mmap_pages * getpagesize(  ) ) ) {
+	     PAPIERROR( "munmap of fd = %d returned error: %s",
+			ctx->evt[i].event_fd, strerror( errno ) );
+	     return PAPI_ESYS;
+	  }
+       }
 
-	return PAPI_OK;
+       if ( close( ctx->evt[i].event_fd ) ) {
+	  PAPIERROR( "close of fd = %d returned error: %s",
+		     ctx->evt[i].event_fd, strerror( errno ) );
+	  return PAPI_ESYS;
+       } else {
+	  ctx->num_evts--;
+       }
+    }
+
+    return PAPI_OK;
 }
 
 
@@ -751,8 +749,8 @@ detach( context_t * ctx, control_state_t * pe_ctl )
 	return PAPI_OK;
 }
 
-static inline int
-set_domain( hwd_control_state_t * ctl, int domain)
+int
+_papi_pe_set_domain( hwd_control_state_t * ctl, int domain)
 {
 	
      int i;
@@ -834,6 +832,7 @@ static int pe_vendor_fixups(void) {
 }
 
 
+/* Initialize the component */
 
 static int
 _papi_pe_init_component( int cidx )
@@ -854,13 +853,6 @@ _papi_pe_init_component( int cidx )
                    "counters, reducing the total number available.\n");
   }
 
-  /* perf_events defaults */
-  _papi_pe_vector.cmp_info.hardware_intr = 1;
-  _papi_pe_vector.cmp_info.attach = 1;
-  _papi_pe_vector.cmp_info.attach_must_ptrace = 1;
-  _papi_pe_vector.cmp_info.kernel_profile = 1;
-  _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
-
   /* hardware multiplex was broken before 2.6.33 */	
   if (bug_multiplex()) {
      _papi_pe_vector.cmp_info.kernel_multiplex = 0;
@@ -868,7 +860,9 @@ _papi_pe_init_component( int cidx )
   else {
      _papi_pe_vector.cmp_info.kernel_multiplex = 1;
   }
- 
+
+  _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+
   /* Check that processor is supported */
   if (!processor_supported(_papi_hwi_system_info.hw_info.vendor,
 			   _papi_hwi_system_info.hw_info.cpuid_family)) {
@@ -881,8 +875,6 @@ _papi_pe_init_component( int cidx )
      return retval;
   }
 
-  _papi_pe_vector.cmp_info.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL;
-
   /* are any of these needed anymore? */
   /* These settings are exported to userspace.  Ugh */
 #if defined(__i386__)||defined(__x86_64__)
@@ -892,7 +884,6 @@ _papi_pe_init_component( int cidx )
   _papi_pe_vector.cmp_info.fast_counter_read = 0;
   _papi_pe_vector.cmp_info.fast_real_timer = 0;
 #endif
-  _papi_pe_vector.cmp_info.cntr_umasks = 1;
 
   /* Run Vendor-specific fixups */
   pe_vendor_fixups();
@@ -1354,7 +1345,7 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 	}
 
 	pe_ctl->num_events = count;
-	set_domain( ctl, pe_ctl->domain );
+	_papi_pe_set_domain( ctl, pe_ctl->domain );
 
 	ret = open_pe_evts( pe_ctx, pe_ctl );
 	if ( ret != PAPI_OK ) {
@@ -1418,7 +1409,7 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 			return PAPI_EPERM;
 		}
 		/* looks like we are allowed so go ahead and store counting domain */
-		return set_domain( option->domain.ESI->ctl_state, option->domain.domain );
+		return _papi_pe_set_domain( option->domain.ESI->ctl_state, option->domain.domain );
 	case PAPI_GRANUL:
 		return
 			set_granularity( ( control_state_t * ) ( option->granularity.ESI->
@@ -2029,12 +2020,15 @@ _papi_pe_init_control_state( hwd_control_state_t * ctl )
 {
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
 	memset( pe_ctl, 0, sizeof ( control_state_t ) );
-	set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
+	_papi_pe_set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
 	/* Set cpu number in the control block to show events are not tied to specific cpu */
 	pe_ctl->cpu = -1;
 	return PAPI_OK;
 }
 
+
+/* this was cut and pasted from perfmon              */
+/* we really should do the "will it fit" test here.  */
 static int
 _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 {
@@ -2045,12 +2039,12 @@ _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
 			goto bail;
 	}
-	return 1;
+	return PAPI_OK;
   bail:
 	for ( j = 0; j < i; j++ )
 		memset( ESI->NativeInfoArray[j].ni_bits, 0x0,
 				sizeof ( pfm_register_t ) );
-	return 0;
+	return PAPI_ECNFLCT;
 }
 
 
@@ -2063,65 +2057,59 @@ papi_vector_t _papi_pe_vector = {
       .short_name = "pe",
       .version = "5.0",
       .description = "Linux perf_event CPU counters",
-    
   
+      .default_domain = PAPI_DOM_USER,
+      .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+      .default_granularity = PAPI_GRN_THR,
+      .available_granularities = PAPI_GRN_THR,
 
+      .hardware_intr = 1,
+      .kernel_profile = 1,
+      .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 
-				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
+      /* component specific cmp_info initializations */
+      .fast_virtual_timer = 0,
+      .attach = 1,
+      .attach_must_ptrace = 1,
+      .cpu = 1,
+      .inherit = 1,
+      .cntr_umasks = 1,
 
-				 .hardware_intr = 1,
-				 .kernel_multiplex = 1,
-				 .kernel_profile = 1,
-				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
-				 .hardware_intr_sig = PAPI_INT_SIGNAL,
+  },
 
-				 /* component specific cmp_info initializations */
-				 .fast_real_timer = 0,
-				 .fast_virtual_timer = 0,
-				 .attach = 1,
-				 .attach_must_ptrace = 0,
-				 .cpu = 1,
-				 .inherit = 1,
-				 }
-	,
+  /* sizes of framework-opaque component-private structures */
+  .size = {
+      .context = sizeof ( context_t ),
+      .control_state = sizeof ( control_state_t ),
+      .reg_value = sizeof ( pfm_register_t ),
+      .reg_alloc = sizeof ( reg_alloc_t ),
+  },
 
-	/* sizes of framework-opaque component-private structures */
-	.size = {
-			 .context = sizeof ( context_t ),
-			 .control_state = sizeof ( control_state_t ),
-			 .reg_value = sizeof ( pfm_register_t ),
-			 .reg_alloc = sizeof ( reg_alloc_t ),
-			 }
-	,
-	/* function pointers in this component */
-	.init_control_state = _papi_pe_init_control_state,
-	.start = _papi_pe_start,
-	.stop = _papi_pe_stop,
-	.read = _papi_pe_read,
-	.shutdown_thread = _papi_pe_shutdown_thread,
-	.shutdown_component = _papi_pe_shutdown_component,
-	.ctl = _papi_pe_ctl,
-	.update_control_state = _papi_pe_update_control_state,
-	.set_domain = set_domain,
-	.reset = _papi_pe_reset,
-	.set_overflow = _papi_pe_set_overflow,
-	.set_profile = _papi_pe_set_profile,
-	.stop_profiling = _papi_pe_stop_profiling,
-	.init_component = _papi_pe_init_component,
-	.dispatch_timer = _papi_pe_dispatch_timer,
-	.allocate_registers = _papi_pe_allocate_registers,
-	.write = _papi_pe_write,
-	.init_thread = _papi_pe_init_thread,
+  /* function pointers in this component */
+  .init_control_state =    _papi_pe_init_control_state,
+  .start =                 _papi_pe_start,
+  .stop =                  _papi_pe_stop,
+  .read =                  _papi_pe_read,
+  .shutdown_thread =       _papi_pe_shutdown_thread,
+  .shutdown_component =    _papi_pe_shutdown_component,
+  .ctl =                   _papi_pe_ctl,
+  .update_control_state =  _papi_pe_update_control_state,
+  .set_domain =            _papi_pe_set_domain,
+  .reset =                 _papi_pe_reset,
+  .set_overflow =          _papi_pe_set_overflow,
+  .set_profile =           _papi_pe_set_profile,
+  .stop_profiling =        _papi_pe_stop_profiling,
+  .init_component =        _papi_pe_init_component,
+  .dispatch_timer =        _papi_pe_dispatch_timer,
+  .allocate_registers =    _papi_pe_allocate_registers,
+  .write =                 _papi_pe_write,
+  .init_thread =           _papi_pe_init_thread,
 
-	/* from counter name mapper */
-	.ntv_enum_events =   _papi_libpfm_ntv_enum_events,
-	.ntv_name_to_code =  _papi_libpfm_ntv_name_to_code,
-	.ntv_code_to_name =  _papi_libpfm_ntv_code_to_name,
-	.ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
-	.ntv_code_to_bits =  _papi_libpfm_ntv_code_to_bits,
-	.ntv_code_to_info =  _papi_libpfm_ntv_code_to_info,
-
+  /* from counter name mapper */
+  .ntv_enum_events =   _papi_libpfm_ntv_enum_events,
+  .ntv_name_to_code =  _papi_libpfm_ntv_name_to_code,
+  .ntv_code_to_name =  _papi_libpfm_ntv_code_to_name,
+  .ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
+  .ntv_code_to_bits =  _papi_libpfm_ntv_code_to_bits,
+  .ntv_code_to_info =  _papi_libpfm_ntv_code_to_info,
 };

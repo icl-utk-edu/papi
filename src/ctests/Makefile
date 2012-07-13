@@ -22,7 +22,7 @@ SERIAL  = inherit hwinfo code2name reset cmpinfo realtime virttime first \
 	all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog \
-	get_event_component disable_component
+	get_event_component disable_component remove_events
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
 	fork_overflow exec_overflow child_overflow system_child_overflow \
 	system_overflow burn zero_fork
@@ -200,6 +200,9 @@ zero: zero.c $(UTILOBJS) $(PAPILIB)
 
 zero_named: zero_named.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_named.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_named
+
+remove_events: remove_events.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) remove_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o remove_events
 
 nmi_watchdog: nmi_watchdog.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) nmi_watchdog.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o nmi_watchdog

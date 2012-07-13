@@ -370,9 +370,8 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
 	}
 
 //  printf("_bgp_allocate_registers:  Exiting normally...\n");
-	// NOTE:  For some unknown reason, a successful return from this routine is
-	//        indicated with a non-zero value...  We choose 1...
-	return 1;
+
+	return PAPI_OK;
 }
 
 /*
