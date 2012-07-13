@@ -38,7 +38,9 @@
 #include <string.h>
 #include <sys/utsname.h>
 #include "spi/include/upci/upci.h"
-
+#ifdef DEBUG_BGQ
+#include <inttypes.h>
+#endif
 
 // BG/Q macros
 #define get_cycles GetTimeBase
@@ -64,7 +66,8 @@ struct bgq_generic_events_t {
 	int idx;
 	int eventId;
 	char mask[PAPI_MIN_STR_LEN];
-	char *opcode;
+	char opcode[PAPI_MIN_STR_LEN];
+	uint64_t opcode_mask;
 };
 
 static struct bgq_generic_events_t *GenericEvent;
@@ -380,7 +383,7 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 		
 		ptr->EventGroup_local[i] = index;
 
-		// HJ test HERE: we found an opcode event
+		// we found an opcode event
 		if ( index > BGQ_PUNIT_MAX_COUNTERS ) {
 			for( j = 0; j < num_opcode_events; j++ ) {
 #ifdef DEBUG_BGQ
@@ -409,7 +412,7 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 					if ( 0 == strcmp( GenericEvent[j].mask, "PEVT_INST_XU_GRP_MASK" ) ) {
 						retval = Bgpm_SetXuGrpMask( ptr->EventGroup,
 												    evtIdx,
-												    (uint64_t) GenericEvent[j].opcode );
+												    GenericEvent[j].opcode_mask );
 						CHECK_BGPM_ERROR( retval, "Bgpm_SetXuGrpMask" );
 #ifdef DEBUG_BGQ
 						printf(_AT_ " _bgq_update_control_state: it's PEVT_INST_XU_GRP_MASK\n" );
@@ -417,7 +420,7 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 					} else if ( 0 == strcmp( GenericEvent[j].mask, "PEVT_INST_QFPU_GRP_MASK" ) ) {
 						retval = Bgpm_SetQfpuGrpMask( ptr->EventGroup,
 												      evtIdx,
-													  (uint64_t) GenericEvent[j].opcode ); //strtoll( GenericEvent[j].opcode, (char **)NULL, 10 )
+													  GenericEvent[j].opcode_mask );
 						CHECK_BGPM_ERROR( retval, "Bgpm_SetQfpuGrpMask" );
 #ifdef DEBUG_BGQ
 						printf(_AT_ " _bgq_update_control_state: it's PEVT_INST_QFPU_GRP_MASK\n" );
@@ -1021,68 +1024,71 @@ _bgq_ntv_name_to_code( char *name, unsigned int *event_code )
 	printf( "_bgq_ntv_name_to_code\n" );
 #endif
 	int ret;
-	/* Treat events differently if BGPM Opcodes are used */
-	/* Opcode group selection values are "OR"ed together to create a desired 
-	 mask of instruxction group events to accumulate in the same counter */
-	char *XU_prefix  = "UPC_P_XU_OGRP_";
-	char *AXU_prefix = "UPC_P_AXU_OGRP_";
-#ifdef DEBUG_BGPM
+#ifdef DEBUG_BGQ
 	printf( "name = ===%s===\n", name );
 #endif	
-	if ( 0 == strncmp( name, XU_prefix, strlen( XU_prefix ) ) || 
-		0 == strncmp( name, AXU_prefix, strlen( AXU_prefix ) ) ) {
 
-		if ( NULL == ( GenericEvent[num_opcode_events].opcode = malloc( strlen(name) * sizeof(char) ) ) ) {
-			return PAPI_ENOMEM;
-		}
-		strcpy( GenericEvent[num_opcode_events].opcode, name );
-		GenericEvent[num_opcode_events].idx = OPCODE_BUF + num_opcode_events;
+	/* Treat events differently if BGPM Opcodes are used */
+	/* Opcode group selection values are "OR"ed together to create a desired 
+	 mask of instruction group events to accumulate in the same counter */	
+	if ( 0 == strncmp( name, "PEVT_INST_", strlen( "PEVT_INST_" ) ) ) {
+
+		char *pcolon;
+		pcolon = strchr( name, ':' );
 		
-		if ( 0 == strncmp( name, XU_prefix, strlen( XU_prefix ) ) ) {
-			strcpy( GenericEvent[num_opcode_events].mask, "PEVT_INST_XU_GRP_MASK" );
-			/* Return event id matching the generic XU event string */
-			GenericEvent[num_opcode_events].eventId = Bgpm_GetEventIdFromLabel ( "PEVT_INST_XU_GRP_MASK" );
-		}
-		else if ( 0 == strncmp( name, AXU_prefix, strlen( AXU_prefix ) ) ) {
-			strcpy( GenericEvent[num_opcode_events].mask, "PEVT_INST_QFPU_GRP_MASK" );
-			/* Return event id matching the generic QFPU event string */
-			GenericEvent[num_opcode_events].eventId = Bgpm_GetEventIdFromLabel ( "PEVT_INST_QFPU_GRP_MASK" );
-		}
-		
-		if ( GenericEvent[num_opcode_events].eventId <= 0 ) {
+		// Found colon separator
+		if ( pcolon != NULL ) {
+			int mask_len = pcolon - name;
+			strncpy( GenericEvent[num_opcode_events].mask, name,  mask_len  );
+			strncpy( GenericEvent[num_opcode_events].opcode, pcolon+1, strlen(name) - 1 - mask_len );
+			/* opcode_mask needs to be 'uint64_t',
+			   hence we use strtoull() which returns an 'unsigned long long int' */
+			GenericEvent[num_opcode_events].opcode_mask = strtoull( GenericEvent[num_opcode_events].opcode, (char **)NULL, 16 );
+			GenericEvent[num_opcode_events].idx = OPCODE_BUF + num_opcode_events;
+			/* Return event id matching the generic XU/QFPU event string */
+			GenericEvent[num_opcode_events].eventId = Bgpm_GetEventIdFromLabel( GenericEvent[num_opcode_events].mask );
+			if ( GenericEvent[num_opcode_events].eventId <= 0 ) {
 #ifdef DEBUG_BGPM
-			printf ("Error: ret value is %d for BGPM API function '%s'.\n",
-					ret, "Bgpm_GetEventIdFromLabel" );
+				printf ("Error: ret value is %d for BGPM API function '%s'.\n",
+						ret, "Bgpm_GetEventIdFromLabel" );
 #endif
+				return PAPI_ENOEVNT;
+			}
+			
+			*event_code = GenericEvent[num_opcode_events].idx;
+			
+			num_opcode_events++;
+			
+			/* If there are too many opcode events than allocated, then allocate more room */
+			if( num_opcode_events >= allocated_opcode_events ) {
+				
+				SUBDBG("Allocating more room for BGPM opcode events (%d %ld)\n",
+					   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ),
+					   ( long )sizeof( struct bgq_generic_events_t ) *
+					   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ) );
+				
+				GenericEvent = realloc( GenericEvent, sizeof( struct bgq_generic_events_t ) *
+									   ( allocated_opcode_events + OPCODE_EVENT_CHUNK ) );
+				if ( NULL == GenericEvent ) {
+					return PAPI_ENOMEM;
+				}
+				allocated_opcode_events += OPCODE_EVENT_CHUNK;
+			}
+        }
+		else {
+			SUBDBG( "Error: Found a generic BGPM event mask without opcode string\n" );
 			return PAPI_ENOEVNT;
 		}
 		
-		*event_code = GenericEvent[num_opcode_events].idx;
-		
-		num_opcode_events++;
-		
-		/* If there are too many opcode events than allocated, then allocate more room */
-		if( num_opcode_events >= allocated_opcode_events ) {
-			
-			SUBDBG("Allocating more room for BGPM opcode events (%d %ld)\n",
-				   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ),
-				   ( long )sizeof( struct bgq_generic_events_t ) *
-				   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ) );
-			
-			GenericEvent = realloc( GenericEvent, sizeof( struct bgq_generic_events_t ) *
-								   ( allocated_opcode_events + OPCODE_EVENT_CHUNK ) );
-			if ( NULL == GenericEvent ) {
-				return PAPI_ENOMEM;
-			}
-			allocated_opcode_events += OPCODE_EVENT_CHUNK;
-		}
 		
 #ifdef DEBUG_BGQ
 		printf(_AT_ " _bgq_ntv_name_to_code: GenericEvent no. %d: \n", num_opcode_events-1 );
-		printf(	"idx     = %d\n", GenericEvent[num_opcode_events-1].idx);
-		printf(	"eventId = %d\n", GenericEvent[num_opcode_events-1].eventId);
-		printf(	"mask    = %s\n", GenericEvent[num_opcode_events-1].mask);
-		printf(	"opcode  = %s\n", GenericEvent[num_opcode_events-1].opcode);
+		printf(	"idx         = %d\n", GenericEvent[num_opcode_events-1].idx);
+		printf(	"eventId     = %d\n", GenericEvent[num_opcode_events-1].eventId);
+		printf(	"mask        = %s\n", GenericEvent[num_opcode_events-1].mask);
+		printf(	"opcode      = %s\n", GenericEvent[num_opcode_events-1].opcode);
+		printf( "opcode_mask = %" PRIX64 " (%" PRIu64 ")\n", GenericEvent[num_opcode_events-1].opcode_mask,
+			   GenericEvent[num_opcode_events-1].opcode_mask );
 #endif
 	}
 	else {
@@ -1130,6 +1136,9 @@ _bgq_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 #endif
 		return PAPI_ENOEVNT;
 	}
+#ifdef DEBUG_BGQ
+	printf( "name = ===%s===\n", name );
+#endif	
 	
 	return ( PAPI_OK );
 }
