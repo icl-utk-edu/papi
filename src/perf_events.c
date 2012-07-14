@@ -25,9 +25,7 @@
 #include <sys/ioctl.h>
 
 #include "papi.h"
-//#include "papi_vector.h"
 #include "papi_memory.h"
-//#include "papi_lock.h"
 #include "papi_internal.h"
 #include "papi_libpfm_events.h"
 #include "extras.h"
@@ -832,7 +830,7 @@ static int pe_vendor_fixups(void) {
 }
 
 
-/* Initialize the component */
+/* Initialize the perf_event component */
 
 static int
 _papi_pe_init_component( int cidx )
@@ -840,7 +838,18 @@ _papi_pe_init_component( int cidx )
 
   int retval;
 
+  FILE *fff;
+
   ( void ) cidx;          /*unused */
+
+  /* The is the official way to detect if perf_event support exists */
+  /* The file is called perf_counter_paranoid on 2.6.31             */
+  /* currently we are lazy and do not support 2.6.31 kernels        */
+  fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
+  if (fff==NULL) {
+     return PAPI_ENOCMP;
+  }
+  fclose(fff);
 
   /* Run the libpfm-specific setup */
   retval=_papi_libpfm_init(&_papi_pe_vector, cidx);
