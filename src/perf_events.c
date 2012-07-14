@@ -837,6 +837,7 @@ _papi_pe_init_component( int cidx )
 {
 
   int retval;
+  int paranoid_level;
 
   FILE *fff;
 
@@ -849,6 +850,13 @@ _papi_pe_init_component( int cidx )
   if (fff==NULL) {
      return PAPI_ENOCMP;
   }
+
+  /* 2 means no measurements allowed          */
+  /* 1 means normal counter access            */
+  /* 0 means you can access CPU-specific data */
+  /* -1 means no restrictions                 */
+  retval=fscanf(fff,"%d",&paranoid_level);
+  if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
   fclose(fff);
 
   /* Run the libpfm-specific setup */
