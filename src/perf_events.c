@@ -829,6 +829,61 @@ static int pe_vendor_fixups(void) {
   return PAPI_OK;
 }
 
+struct perf_event_mmap_page_copy {
+  uint32_t   version;
+  uint32_t   compat_version;
+  uint32_t   lock;                   /* seqlock for synchronization */
+  uint32_t   index;                  /* hardware event identifier */
+  int64_t   offset;                 /* add to hardware event value */
+  uint64_t   time_enabled;           /* time event active */
+  uint64_t   time_running;           /* time event on cpu */
+  union {
+    uint64_t   capabilities;
+    uint64_t   cap_usr_time  : 1,
+      cap_usr_rdpmc : 1,
+      cap_____res   : 62;
+  };
+  uint16_t   pmc_width;
+  uint16_t   time_shift;
+  uint32_t   time_mult;
+  uint64_t   time_offset;
+  uint64_t   __reserved[120];        /* align to 1k */
+};
+
+
+/* Check the mmap page for rdpmc support */
+static int detect_rdpmc(void) {
+
+  struct perf_event_attr pe;
+  int fd,rdpmc_exists=1;
+  void *addr;
+  struct perf_event_mmap_page_copy *our_mmap;
+
+  memset(&pe,0,sizeof(struct perf_event_attr));
+
+  pe.type=PERF_TYPE_HARDWARE;
+  pe.size=sizeof(struct perf_event_attr);
+  pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+
+  fd=sys_perf_event_open(&pe,0,-1,-1,0);
+  if (fd<0) {
+     return PAPI_ESYS;
+  }
+  addr=mmap(NULL, 4096, PROT_READ, MAP_SHARED,fd,0);
+  if (addr == (void *)(-1)) {
+     close(fd);
+     return PAPI_ESYS;
+  }
+  our_mmap=(struct perf_event_mmap_page_copy *)addr;
+  if (our_mmap->cap_usr_rdpmc==0) {
+     rdpmc_exists=0;
+  }
+  close(fd);
+
+  return rdpmc_exists;
+
+} 
+
 
 /* Initialize the perf_event component */
 
@@ -859,10 +914,6 @@ _papi_pe_init_component( int cidx )
   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
   fclose(fff);
 
-  /* Run the libpfm-specific setup */
-  retval=_papi_libpfm_init(&_papi_pe_vector, cidx);
-  if (retval) return retval;
-
   /* Detect NMI watchdog which can steal counters */
   nmi_watchdog_active=_linux_detect_nmi_watchdog();
   if (nmi_watchdog_active) {
@@ -886,24 +937,21 @@ _papi_pe_init_component( int cidx )
      return PAPI_ENOSUPP;
   }
 
-  /* Setup mmtimers */
+  /* Setup mmtimers, if appropriate */
   retval=mmtimer_setup();
   if (retval) {
      return retval;
   }
 
-  /* are any of these needed anymore? */
-  /* These settings are exported to userspace.  Ugh */
-#if defined(__i386__)||defined(__x86_64__)
-  _papi_pe_vector.cmp_info.fast_counter_read = 0;
-  _papi_pe_vector.cmp_info.fast_real_timer = 1;
-#else
-  _papi_pe_vector.cmp_info.fast_counter_read = 0;
-  _papi_pe_vector.cmp_info.fast_real_timer = 0;
-#endif
+  /* Detect if we can use rdpmc (or equivalent) */
+  _papi_pe_vector.cmp_info.fast_counter_read = detect_rdpmc();
 
   /* Run Vendor-specific fixups */
   pe_vendor_fixups();
+
+  /* Run the libpfm-specific setup */
+  retval = _papi_libpfm_init(&_papi_pe_vector, cidx);
+  if (retval) return retval;
 
   return PAPI_OK;
 
