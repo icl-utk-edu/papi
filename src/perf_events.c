@@ -829,6 +829,8 @@ static int pe_vendor_fixups(void) {
   return PAPI_OK;
 }
 
+/* this is needed until the libpfm4 copy of perf_event.h */
+/* we use includes the rdpmc fields                      */
 struct perf_event_mmap_page_copy {
   uint32_t   version;
   uint32_t   compat_version;
@@ -878,6 +880,7 @@ static int detect_rdpmc(void) {
   if (our_mmap->cap_usr_rdpmc==0) {
      rdpmc_exists=0;
   }
+  munmap(addr,4096);
   close(fd);
 
   return rdpmc_exists;
@@ -903,6 +906,8 @@ _papi_pe_init_component( int cidx )
   /* currently we are lazy and do not support 2.6.31 kernels        */
   fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
   if (fff==NULL) {
+     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	    "perf_event support not detected",PAPI_MAX_STR_LEN);
      return PAPI_ENOCMP;
   }
 
@@ -913,6 +918,13 @@ _papi_pe_init_component( int cidx )
   retval=fscanf(fff,"%d",&paranoid_level);
   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
   fclose(fff);
+
+  if (paranoid_level==2) {
+     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	    "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
+	     PAPI_MAX_STR_LEN);
+     return PAPI_ENOCMP;
+  }
 
   /* Detect NMI watchdog which can steal counters */
   nmi_watchdog_active=_linux_detect_nmi_watchdog();
@@ -934,24 +946,36 @@ _papi_pe_init_component( int cidx )
   /* Check that processor is supported */
   if (!processor_supported(_papi_hwi_system_info.hw_info.vendor,
 			   _papi_hwi_system_info.hw_info.cpuid_family)) {
-     return PAPI_ENOSUPP;
+     fprintf(stderr,"warning, your processor is unsupported\n");
+     /* should not return error, as software events should still work */
   }
 
   /* Setup mmtimers, if appropriate */
   retval=mmtimer_setup();
   if (retval) {
+     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	    "Error initializing mmtimer",PAPI_MAX_STR_LEN);
      return retval;
   }
 
   /* Detect if we can use rdpmc (or equivalent) */
   _papi_pe_vector.cmp_info.fast_counter_read = detect_rdpmc();
+  if (_papi_pe_vector.cmp_info.fast_counter_read < 0 ) {
+     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	    "Error detecting rdpmc",PAPI_MAX_STR_LEN);
+     return _papi_pe_vector.cmp_info.fast_counter_read;
+  }
 
   /* Run Vendor-specific fixups */
   pe_vendor_fixups();
 
   /* Run the libpfm-specific setup */
   retval = _papi_libpfm_init(&_papi_pe_vector, cidx);
-  if (retval) return retval;
+  if (retval) {
+     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	    "Error initializing libpfm4",PAPI_MAX_STR_LEN);
+     return retval;
+  }
 
   return PAPI_OK;
 
