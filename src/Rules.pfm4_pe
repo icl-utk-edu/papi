@@ -1,5 +1,5 @@
 
-DESCR = "Linux with perf_event kernel support and library"
+DESCR = "Linux with perf_event kernel support and libpfm4"
 
 ifneq (/usr,$(PFM_PREFIX))
 PWD = $(shell pwd)

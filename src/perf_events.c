@@ -27,7 +27,7 @@
 #include "papi.h"
 #include "papi_memory.h"
 #include "papi_internal.h"
-#include "papi_libpfm_events.h"
+#include "papi_libpfm4_events.h"
 #include "extras.h"
 #include "mb.h"
 #include "syscalls.h"
@@ -969,8 +969,8 @@ _papi_pe_init_component( int cidx )
   /* Run Vendor-specific fixups */
   pe_vendor_fixups();
 
-  /* Run the libpfm-specific setup */
-  retval = _papi_libpfm_init(&_papi_pe_vector, cidx);
+  /* Run the libpfm4-specific setup */
+  retval = _papi_libpfm4_init(&_papi_pe_vector, cidx);
   if (retval) {
      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
 	    "Error initializing libpfm4",PAPI_MAX_STR_LEN);
@@ -979,6 +979,15 @@ _papi_pe_init_component( int cidx )
 
   return PAPI_OK;
 
+}
+
+static int
+_papi_pe_shutdown_component( void ) {
+
+  /* Shutdown libpfm4 */
+  _papi_libpfm4_shutdown();
+
+  return PAPI_OK;
 }
 
 static int
@@ -1329,121 +1338,74 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 			       NativeInfo_t *native,
 			       int count, hwd_context_t *ctx )
 {
-	int i = 0, ret;
-	context_t *pe_ctx = ( context_t * ) ctx;
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
+  int i = 0, ret;
+  context_t *pe_ctx = ( context_t * ) ctx;
+  control_state_t *pe_ctl = ( control_state_t * ) ctl;
 
-	if ( pe_ctx->cookie != CTX_INITIALIZED ) {
-		memset( pe_ctl->events, 0,
-		       sizeof ( struct perf_event_attr ) * PAPI_MPX_DEF_DEG );
-		memset( pe_ctx, 0, sizeof ( context_t ) );
-		pe_ctx->cookie = CTX_INITIALIZED;
-	} else {
-		/* close all of the existing fds and start over again */
-		close_pe_evts( pe_ctx );
-	}
+  if ( pe_ctx->cookie != CTX_INITIALIZED ) {
+     memset( pe_ctl->events, 0,
+	     sizeof ( struct perf_event_attr ) * PAPI_MPX_DEF_DEG );
+     memset( pe_ctx, 0, sizeof ( context_t ) );
+     pe_ctx->cookie = CTX_INITIALIZED;
+  } else {
+     /* close all of the existing fds and start over again */
+     close_pe_evts( pe_ctx );
+  }
 
-	if ( count == 0 ) {
-		SUBDBG( "Called with count == 0\n" );
-		return PAPI_OK;
-	}
+  if ( count == 0 ) {
+     SUBDBG( "Called with count == 0\n" );
+     return PAPI_OK;
+  }
 
 
-	for ( i = 0; i < count; i++ ) {
-		if ( native ) {
-		  ret=_papi_libpfm_setup_counters(&pe_ctl->events[i],
-						native[i].ni_bits);
-		  SUBDBG( "pe_ctl->events[%d].config=%"PRIx64"\n",i,
-			  pe_ctl->events[i].config);
-		   if (ret!=PAPI_OK) return ret;
+  for( i = 0; i < count; i++ ) {
+     if ( native ) {
+	ret=_papi_libpfm4_setup_counters(&pe_ctl->events[i],
+					native[i].ni_event);
+	SUBDBG( "pe_ctl->events[%d].config=%"PRIx64"\n",i,
+		pe_ctl->events[i].config);
+	if (ret!=PAPI_OK) return ret;
 
-		} else {
-		   /* Assume the native events codes are already initialized */
-		}
+     } else {
+	/* Assume the native events codes are already initialized */
+     }
 
-		/* Will be set to the threshold set by PAPI_overflow. */
-		/* pe_ctl->events[i].sample_period = 0; */
+     /* Leave the disabling for when we know which
+	events are the group leaders.  We only disable group leaders. */
+     if (pe_ctx->evt[i].event_fd != -1) {
+	pe_ctl->events[i].disabled = 0;
+     }
 
-		/*
-		 * This field gets modified depending on what the event is being used
-		 * for.  In particular, the PERF_SAMPLE_IP bit is turned on when
-		 * doing profiling.
-		 */
-		/* pe_ctl->events[i].record_type = 0; */
+     /* Copy the inherit flag into the attribute block that will be   */
+     /* passed to the kernel */
+     pe_ctl->events[i].inherit = pe_ctl->inherit;
 
-		/* Leave the disabling for when we know which
-		   events are the group leaders.  We only disable group leaders. */
-                if (pe_ctx->evt[i].event_fd != -1) {
-		   pe_ctl->events[i].disabled = 0;
-                }
+     /* Only the group leader's pinned field must be set to 1.  It's an
+      * error for any other event in the group to have its pinned value
+      * set to 1. */
+     pe_ctl->events[i].pinned = ( i == 0 ) && !( pe_ctl->multiplexed );
 
-		/* Copy the inherit flag into the attribute block that will be passed to the kernel */
-		pe_ctl->events[i].inherit = pe_ctl->inherit;
+     /* set the correct read format, based on kernel version and options 
+        that are set */
+     pe_ctl->events[i].read_format = get_read_format(pe_ctl->multiplexed, 
+						     pe_ctl->inherit, 0);
 
-		/*
-		 * Only the group leader's pinned field must be set to 1.  It's an
-		 * error for any other event in the group to have its pinned value
-		 * set to 1.
-		 */
-		pe_ctl->events[i].pinned = ( i == 0 ) && !( pe_ctl->multiplexed );
+     if ( native ) {
+	native[i].ni_position = i;
+     }
+  }
 
-		/*
-		 * 'exclusive' is used only for arch-specific PMU features which can
-		 * affect the behavior of other groups/counters currently on the PMU.
-		 */
-		/* pe_ctl->events[i].exclusive = 0; */
+  pe_ctl->num_events = count;
+  _papi_pe_set_domain( ctl, pe_ctl->domain );
 
-		/*
-		 * Leave the exclusion bits for when we know what PAPI domain is
-		 * going to be used
-		 */
-		/* pe_ctl->events[i].exclude_user = 0; */
-		/* pe_ctl->events[i].exclude_kernel = 0; */
-		/* pe_ctl->events[i].exclude_hv = 0; */
-		/* pe_ctl->events[i].exclude_idle = 0; */
+  ret = open_pe_evts( pe_ctx, pe_ctl );
+  if ( ret != PAPI_OK ) {
+     SUBDBG("open_pe_evts failed\n");
+     /* Restore values ? */
+     return ret;
+  }
 
-		/*
-		 * We don't need to record mmap's, or process comm data (not sure what
-		 * this is exactly).
-		 *
-		 */
-		/* pe_ctl->events[i].mmap = 0; */
-		/* pe_ctl->events[i].comm = 0; */
-
-		/*
-		 * In its current design, PAPI uses sample periods exclusively, so
-		 * turn off the freq flag.
-		 */
-		/* pe_ctl->events[i].freq = 0; */
-
-		/*
-		 * In this component, wakeup_events is set to zero when profiling,
-		 * meaning only alert user space on an "mmap buffer page full"
-		 * condition.  It is set to 1 when PAPI_overflow has been called so
-		 * that user space is alerted on every counter overflow.  In any
-		 * case, this field is set later.
-		 */
-		/* pe_ctl->events[i].wakeup_events = 0; */
-
-		// set the correct read format, based on kernel version and options that are set
-		pe_ctl->events[i].read_format = get_read_format(pe_ctl->multiplexed, pe_ctl->inherit, 0);
-
-		if ( native ) {
-			native[i].ni_position = i;
-		}
-	}
-
-	pe_ctl->num_events = count;
-	_papi_pe_set_domain( ctl, pe_ctl->domain );
-
-	ret = open_pe_evts( pe_ctx, pe_ctl );
-	if ( ret != PAPI_OK ) {
-	   SUBDBG("open_pe_evts failed\n");
-	      /* Restore values */
-	   return ret;
-	}
-
-	return PAPI_OK;
+  return PAPI_OK;
 }
 
 static int
@@ -1573,6 +1535,8 @@ _papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 	}
 }
 
+
+
 static int
 _papi_pe_shutdown_thread( hwd_context_t * ctx )
 {
@@ -1584,13 +1548,7 @@ _papi_pe_shutdown_thread( hwd_context_t * ctx )
 	return ret;
 }
 
-int
-_papi_pe_shutdown_component(  ) {
 
-	_papi_libpfm_shutdown();
-
-	return PAPI_OK;
-}
 
 
 #define BPL (sizeof(uint64_t)<<3)
@@ -2116,25 +2074,20 @@ _papi_pe_init_control_state( hwd_control_state_t * ctl )
 }
 
 
-/* this was cut and pasted from perfmon              */
-/* we really should do the "will it fit" test here.  */
+/* This routine is called once when an event is added to an eventset */
+
+/* The linux-kernel actually handles allocating registers for us   */
+/* what we do in this routine is map the event names to the config */
+/* bits that are the "true" native events on perf_event systems    */
+
+#if 0
 static int
 _papi_pe_allocate_registers( EventSetInfo_t * ESI )
 {
-	int i, j;
-	for ( i = 0; i < ESI->NativeCount; i++ ) {
-		if ( _papi_libpfm_ntv_code_to_bits
-			 ( ESI->NativeInfoArray[i].ni_event,
-			   ESI->NativeInfoArray[i].ni_bits ) != PAPI_OK )
-			goto bail;
-	}
-	return PAPI_OK;
-  bail:
-	for ( j = 0; j < i; j++ )
-		memset( ESI->NativeInfoArray[j].ni_bits, 0x0,
-				sizeof ( pfm_register_t ) );
-	return PAPI_ECNFLCT;
+
+  return PAPI_OK;
 }
+#endif
 
 
 
@@ -2190,15 +2143,14 @@ papi_vector_t _papi_pe_vector = {
   .stop_profiling =        _papi_pe_stop_profiling,
   .init_component =        _papi_pe_init_component,
   .dispatch_timer =        _papi_pe_dispatch_timer,
-  .allocate_registers =    _papi_pe_allocate_registers,
+   //  .allocate_registers =    _papi_pe_allocate_registers,
   .write =                 _papi_pe_write,
   .init_thread =           _papi_pe_init_thread,
 
   /* from counter name mapper */
-  .ntv_enum_events =   _papi_libpfm_ntv_enum_events,
-  .ntv_name_to_code =  _papi_libpfm_ntv_name_to_code,
-  .ntv_code_to_name =  _papi_libpfm_ntv_code_to_name,
-  .ntv_code_to_descr = _papi_libpfm_ntv_code_to_descr,
-  .ntv_code_to_bits =  _papi_libpfm_ntv_code_to_bits,
-  .ntv_code_to_info =  _papi_libpfm_ntv_code_to_info,
+  .ntv_enum_events =   _papi_libpfm4_ntv_enum_events,
+  .ntv_name_to_code =  _papi_libpfm4_ntv_name_to_code,
+  .ntv_code_to_name =  _papi_libpfm4_ntv_code_to_name,
+  .ntv_code_to_descr = _papi_libpfm4_ntv_code_to_descr,
+  .ntv_code_to_info =  _papi_libpfm4_ntv_code_to_info,
 };

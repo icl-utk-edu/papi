@@ -159,7 +159,7 @@ _papi_hwi_component_index( int event_code ) {
   return cidx;
 }
 
-/* Convert a compnent and internal event to a native_event */
+/* Convert a component and internal event to a native_event */
 int 
 _papi_hwi_native_to_eventcode(int cidx, int event_code) {
 
@@ -1930,7 +1930,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
           i = 0;
 	  _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
 	  
-	  _papi_hwi_lock( INTERNAL_LOCK );
+	  //	  _papi_hwi_lock( INTERNAL_LOCK );
 
 	  do {
 	     retval = _papi_hwd[cidx]->ntv_code_to_name(
@@ -1953,7 +1953,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 							PAPI_ENUM_EVENTS ) ==
 					  PAPI_OK ) );
 
-	  _papi_hwi_unlock( INTERNAL_LOCK );
+	  //	  _papi_hwi_unlock( INTERNAL_LOCK );
        }
 
        if ( retval == PAPI_OK ) return retval;

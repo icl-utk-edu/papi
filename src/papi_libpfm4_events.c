@@ -9,7 +9,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 
-#include "papi_libpfm_events.h"
+#include "papi_libpfm4_events.h"
 
 #include "perfmon/pfmlib.h"
 #include "perfmon/pfmlib_perf_event.h"
@@ -26,6 +26,7 @@ struct native_event_t {
   int users;
   long long config;
   long long config1;
+  long long config2;
   int type;
 };
 
@@ -594,12 +595,12 @@ static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode) {
 
   ret=convert_libpfm4_to_string( code, &name);
   if (ret!=PFM_SUCCESS) {
-     return _papi_libpfm_error(ret);
+     return _papi_libpfm4_error(ret);
   }
 
   SUBDBG("Converted %x to %s\n",code,name);
 
-  ret=_papi_libpfm_ntv_name_to_code(name,PapiEventCode);
+  ret=_papi_libpfm4_ntv_name_to_code(name,PapiEventCode);
 
   SUBDBG("Converted %s to event %x\n",name,*PapiEventCode);
 
@@ -717,7 +718,7 @@ static int find_next_umask(struct native_event_t *current_event,
 /***********************************************************/
 
 
-/** @class  _papi_libpfm_error
+/** @class  _papi_libpfm4_error
  *  @brief  convert libpfm error codes to PAPI error codes
  *
  *  @param[in] pfm_error
@@ -728,7 +729,7 @@ static int find_next_umask(struct native_event_t *current_event,
  */
 
 int
-_papi_libpfm_error( int pfm_error ) {
+_papi_libpfm4_error( int pfm_error ) {
 
   switch ( pfm_error ) {
   case PFM_SUCCESS:      return PAPI_OK;       /* success */
@@ -748,7 +749,7 @@ _papi_libpfm_error( int pfm_error ) {
   }
 }
 
-/** @class  _papi_libpfm_ntv_name_to_code
+/** @class  _papi_libpfm4_ntv_name_to_code
  *  @brief  Take an event name and convert it to an event code.
  *
  *  @param[in] *name
@@ -761,7 +762,7 @@ _papi_libpfm_error( int pfm_error ) {
  */
 
 int
-_papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
+_papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
 {
 
   int actual_idx;
@@ -780,7 +781,7 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
      SUBDBG("Using pfm to look up event %s\n",name);
      actual_idx=pfm_find_event(name);
      if (actual_idx<0) {
-        return _papi_libpfm_error(actual_idx);
+        return _papi_libpfm4_error(actual_idx);
      }
 
      SUBDBG("Using %x as the index\n",actual_idx);
@@ -806,7 +807,7 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
 }
 
 
-/** @class  _papi_libpfm_ntv_code_to_name
+/** @class  _papi_libpfm4_ntv_code_to_name
  *  @brief  Take an event code and convert it to a name
  *
  *  @param[in] EventCode
@@ -822,7 +823,7 @@ _papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
  */
 
 int
-_papi_libpfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len )
+_papi_libpfm4_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
 
         struct native_event_t *our_event;
@@ -844,7 +845,7 @@ _papi_libpfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len )
 }
 
 
-/** @class  _papi_libpfm_ntv_code_to_descr
+/** @class  _papi_libpfm4_ntv_code_to_descr
  *  @brief  Take an event code and convert it to a description
  *
  *  @param[in] EventCode
@@ -865,7 +866,7 @@ _papi_libpfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len )
 
 
 int
-_papi_libpfm_ntv_code_to_descr( unsigned int EventCode, 
+_papi_libpfm4_ntv_code_to_descr( unsigned int EventCode, 
 				char *ntv_descr, int len )
 {
   int ret,a,first_mask=1;
@@ -894,7 +895,7 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode,
   ret=pfm_get_event_info(our_event->libpfm4_idx, PFM_OS_PERF_EVENT, &gete);
   if (ret<0) {
      SUBDBG("Return=%d\n",ret);
-     return _papi_libpfm_error(ret);
+     return _papi_libpfm4_error(ret);
   }
 
   eventd=strdup(gete.desc);
@@ -954,7 +955,7 @@ _papi_libpfm_ntv_code_to_descr( unsigned int EventCode,
 				    PFM_OS_PERF_EVENT, &ainfo);
       if (ret != PFM_SUCCESS) {
 	SUBDBG("get_event_attr failed %s\n",pfm_strerror(ret));
-	return _papi_libpfm_error(ret);
+	return _papi_libpfm4_error(ret);
       }
 
       /* Plain UMASK case */
@@ -1067,7 +1068,7 @@ descr_in_tmp:
 
 
 int
-_papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+_papi_libpfm4_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
 
@@ -1086,7 +1087,7 @@ _papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
      return PAPI_EBUF;
   }
 
-  _papi_libpfm_ntv_code_to_descr(EventCode,info->long_descr,
+  _papi_libpfm4_ntv_code_to_descr(EventCode,info->long_descr,
 				 sizeof(info->long_descr));
 
   return PAPI_OK;
@@ -1094,7 +1095,7 @@ _papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
 
 
-/** @class  _papi_libpfm_ntv_enum_events
+/** @class  _papi_libpfm4_ntv_enum_events
  *  @brief  Walk through all events in a pre-defined order
  *
  *  @param[in,out] *PapiEventCode
@@ -1109,7 +1110,7 @@ _papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
  */
 
 int
-_papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
+_papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
 	int code,ret;
 	struct native_event_t *current_event;
@@ -1203,7 +1204,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 		               /* umask in it.                         */
 	      }
 	      else {
-	         return _papi_libpfm_error(max_umask);
+	         return _papi_libpfm4_error(max_umask);
 	      }
 	   }
 
@@ -1221,7 +1222,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
      
 	      SUBDBG("Found new name %s\n",new_name);
 
-              ret=_papi_libpfm_ntv_name_to_code(new_name,&papi_event);
+              ret=_papi_libpfm4_ntv_name_to_code(new_name,&papi_event);
 	      if (ret!=PAPI_OK) {
 		 return PAPI_ENOEVNT;
 	      }
@@ -1234,7 +1235,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	   SUBDBG("couldn't find umask\n");
 
-	   return _papi_libpfm_error(next_umask);
+	   return _papi_libpfm4_error(next_umask);
 
 	}
 	
@@ -1243,33 +1244,7 @@ _papi_libpfm_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	return PAPI_ENOIMPL;
 }
 
-
-
-/** @class  _papi_libpfm_ntv_code_to_bits
- *  @brief  Convert an EventCode to HW specific event info
- *
- *  @param[in] EventCode
- *        -- PAPI event code
- *  @param[out] *bits
- *        -- an opaque structure that holds HW specific event info
- *
- *  @retval PAPI_OK       We always return PAPI_OK
- *
- */
-
-int
-_papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
-{
-
-  /* on libpfm4 we just use the PAPI EventCode as the value for "bits" */
-
-  *(int *)bits=EventCode;
-
-  return PAPI_OK;
-}
-
-
-/** @class  _papi_libpfm_shutdown
+/** @class  _papi_libpfm4_shutdown
  *  @brief  Shutdown any initialization done by the libpfm4 code
  *
  *  @retval PAPI_OK       We always return PAPI_OK
@@ -1277,7 +1252,7 @@ _papi_libpfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
  */
 
 int 
-_papi_libpfm_shutdown(void) {
+_papi_libpfm4_shutdown(void) {
 
   int i;
 
@@ -1305,7 +1280,7 @@ _papi_libpfm_shutdown(void) {
 }
 
 
-/** @class  _papi_libpfm_init
+/** @class  _papi_libpfm4_init
  *  @brief  Initialize the libpfm4 code
  *
  *  @retval PAPI_OK       We initialized correctly
@@ -1314,7 +1289,7 @@ _papi_libpfm_shutdown(void) {
  */
 
 int
-_papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
+_papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
 
    int detected_pmus=0, found_default=0;
    int i, version;
@@ -1421,7 +1396,7 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
 }
 
 
-/** @class  _papi_libpfm_setup_counters
+/** @class  _papi_libpfm4_setup_counters
  *  @brief  Generate the events HW bits to be programmed into the counters
  *
  *  @param[out] *attr
@@ -1434,13 +1409,9 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
  */
 
 int
-_papi_libpfm_setup_counters( struct perf_event_attr *attr,
-			   hwd_register_t *ni_bits ) {
+_papi_libpfm4_setup_counters( struct perf_event_attr *attr,
+			     int event ) {
 
-  //  int ret;
-  int our_idx;
-  //char our_name[BUFSIZ];
-   
   pfm_perf_encode_arg_t perf_arg;
 
   struct native_event_t *our_event;
@@ -1449,14 +1420,14 @@ _papi_libpfm_setup_counters( struct perf_event_attr *attr,
   memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
   perf_arg.attr=attr;
 
-  our_idx=*(int *)(ni_bits);
-  our_event=find_existing_event_by_number(our_idx);
+  our_event=find_existing_event_by_number(event);
   if (our_event==NULL) {
      return PAPI_ENOEVNT;
   }
 
   perf_arg.attr->config=our_event->config; 
   perf_arg.attr->config1=our_event->config1;
+  perf_arg.attr->config2=our_event->config2;
   perf_arg.attr->type=our_event->type;
   
   SUBDBG( "pe_event: config 0x%"PRIx64
