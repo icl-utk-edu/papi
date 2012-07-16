@@ -30,8 +30,10 @@
 #include "papi_internal.h"
 #include "extras.h"
 
+/* libpfm4 includes */
 #include "papi_libpfm4_events.h"
-#include "perf_events.h"
+#include "perfmon/pfmlib.h"
+#include PEINCLUDE
 
 /* Linux-specific includes */
 #include "mb.h"
@@ -41,7 +43,54 @@
 #include "linux-common.h"
 #include "linux-context.h"
 
+/* Various definitions */
 
+typedef int pfm_register_t;
+typedef int reg_alloc_t;            
+
+typedef struct 
+{
+  unsigned char wakeup_mode;
+} per_event_info_t;
+
+typedef struct
+{
+  int num_events;
+  int num_groups;
+  unsigned int domain;
+  unsigned int multiplexed;
+  unsigned int overflow;
+  unsigned int inherit;
+  int cpu;
+  pid_t tid;
+  struct perf_event_attr events[PAPI_MPX_DEF_DEG];
+  per_event_info_t per_event_info[PAPI_MPX_DEF_DEG];
+  /* Buffer to gather counters */
+  long long counts[100]; /* arbitrary */
+} control_state_t;
+
+typedef struct
+{
+  int group_leader;		  /* index of leader */
+  int event_fd;
+  int event_id;
+  uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
+  void *mmap_buf;		  /* used to contain profiling data samples */
+                                  /* as well as control */
+  uint64_t tail;		  /* current read location in mmap buffer */
+  uint64_t mask;		  /* mask used for wrapping the pages */
+} evt_t;
+
+typedef struct
+{
+  /* Array of event fds, event group leader is event_fd[0] */
+  int cookie;
+  int state;
+  int num_evts;
+  evt_t evt[PAPI_MPX_DEF_DEG];
+} context_t;
+
+#define MAX_COUNTERS 100
 
 
 #if defined(__mips__)
