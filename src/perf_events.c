@@ -1054,21 +1054,7 @@ _papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	int i, ret;
 	context_t *pe_ctx = ( context_t * ) ctx;
 
-#undef SYNCHRONIZED_RESET
-#ifdef SYNCHRONIZED_RESET
-	int saved_state;
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-
-	/*
-	 * Stop the counters so that when they start up again, they will be a
-	 * little better synchronized.  I'm not sure this is really necessary,
-	 * though, so I'm turning this code off by default for performance reasons.
-	 */
-	saved_state = pe_ctx->state;
-	_papi_pe_stop( ctx, ctl );
-#else
 	( void ) ctl;			 /*unused */
-#endif
 
 	/* We need to reset all of the events, not just the group leaders */
 	for ( i = 0; i < pe_ctx->num_evts; i++ ) {
@@ -1080,12 +1066,6 @@ _papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 			return PAPI_EBUG;
 		}
 	}
-
-#ifdef SYNCHRONIZED_RESET
-	if ( saved_state & PERF_EVENTS_RUNNING ) {
-		return pe_enable_counters( pe_ctx, pe_ctl );
-	}
-#endif
 
 	return PAPI_OK;
 }
