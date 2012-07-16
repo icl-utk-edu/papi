@@ -2082,23 +2082,6 @@ _papi_pe_init_control_state( hwd_control_state_t * ctl )
 }
 
 
-/* This routine is called once when an event is added to an eventset */
-
-/* The linux-kernel actually handles allocating registers for us   */
-/* what we do in this routine is map the event names to the config */
-/* bits that are the "true" native events on perf_event systems    */
-
-#if 0
-static int
-_papi_pe_allocate_registers( EventSetInfo_t * ESI )
-{
-
-  return PAPI_OK;
-}
-#endif
-
-
-
 
 papi_vector_t _papi_pe_vector = {
    .cmp_info = {
@@ -2151,7 +2134,6 @@ papi_vector_t _papi_pe_vector = {
   .stop_profiling =        _papi_pe_stop_profiling,
   .init_component =        _papi_pe_init_component,
   .dispatch_timer =        _papi_pe_dispatch_timer,
-   //  .allocate_registers =    _papi_pe_allocate_registers,
   .write =                 _papi_pe_write,
   .init_thread =           _papi_pe_init_thread,
 
