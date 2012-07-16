@@ -64,9 +64,7 @@ typedef struct hwd_context {
 	int placeholder; 
 } hwd_context_t;
 
-typedef struct hwd_ucontext {
-	int placeholder; 
-} hwd_ucontext_t;
+#include "freebsd-context.h"
 
 typedef struct hwd_libpmc_context {
 	int CPUtype;
@@ -75,6 +73,4 @@ typedef struct hwd_libpmc_context {
 
 #define _papi_hwd_lock_init() { ; }
 
-#define GET_OVERFLOW_ADDRESS(ctx) (0x80000000)
-
-#endif /* _PAPI_FreeBSD_LIBPMC_H */
+#endif /* _PAPI_FreeBSD_H */

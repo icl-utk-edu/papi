@@ -8,13 +8,14 @@ OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT).o papi_preset.o \
     papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
-HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h papiStdEventDefs.h $(CPUCOMPONENT).h \
-    papi_preset.h threads.h cpus.h papi_vector.h \
-    papi_memory.h config.h papi_user_events.h \
-    extras.h multiplex.h papi_hl.h \
-    papi_common_strings.h components_config.h \
-    papi_events_table.h
-LIBCFLAGS += -I. $(CFLAGS) -DCPUCOMPONENT=\"$(CPUCOMPONENT).h\" -DOSLOCK=\"$(OSLOCK)\"
+HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h \
+	papiStdEventDefs.h\
+	papi_preset.h threads.h cpus.h papi_vector.h \
+	papi_memory.h config.h papi_user_events.h \
+	extras.h multiplex.h papi_hl.h \
+	papi_common_strings.h components_config.h \
+	papi_events_table.h
+LIBCFLAGS += -I. $(CFLAGS) -DOSLOCK=\"$(OSLOCK)\" -DOSCONTEXT=\"$(OSCONTEXT)\"
 FHEADERS = fpapi.h f77papi.h f90papi.h
 
 all: $(SHOW_CONF) $(LIBS) utils tests

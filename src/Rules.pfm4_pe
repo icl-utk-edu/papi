@@ -21,7 +21,7 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 endif
 endif
 
-MISCHDRS += perf_events.h linux-lock.h mb.h papi_libpfm_events.h $(PAPI_EVENTS_TABLE)
+MISCHDRS += linux-lock.h mb.h papi_libpfm4_events.h $(PAPI_EVENTS_TABLE)
 MISCSRCS += papi_libpfm4_events.c
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)

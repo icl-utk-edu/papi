@@ -121,7 +121,7 @@ extern int init_level;
 #include "config.h"
 #endif
 
-#include CPUCOMPONENT
+#include OSCONTEXT
 #include "papi_preset.h"
 
 #ifndef inline_static

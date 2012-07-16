@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7046,27 +7046,34 @@ FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 if (test "$OS" = "aix"); then
     OSFILESSRC=aix-memory.c
     OSLOCK=aix-lock.h
+    OSCONTEXT=aix-context.h
 elif (test "$OS" = "bgp"); then
     OSFILESSRC=linux-bgp-memory.c
     OSLOCK=linux-bgp-lock.h
+    OSCONTEXT=linux-bgp-context.h
 elif (test "$OS" = "bgq"); then
     OSFILESSRC=linux-bgq-memory.c
     OSLOCK=linux-bgq-lock.h
+    OSCONTEXT=linux-bgq-context.h
 elif (test "$OS" = "freebsd"); then
     OSFILESSRC=freebsd-memory.c
     OSLOCK="freebsd-lock.h"
+    OSCONTEXT="freebsd-context.h"
 elif (test "$OS" = "linux"); then
     OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
     OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
     OSLOCK="linux-lock.h"
+    OSCONTEXT="linux-context.h"
 elif (test "$OS" = "solaris"); then
     OSFILESSRC="solaris-memory.c solaris-common.c"
     OSFILESHDR="solaris-memory.h solaris-common.h"
     OSLOCK="solaris-lock.h"
+    OSCONTEXT="solaris-context.h"
 elif (test "$OS" = "darwin"); then
     OSFILESSRC="darwin-memory.c darwin-common.c"
     OSFILESHDR="darwin-memory.h darwin-common.h"
     OSLOCK="darwin-lock.h"
+    OSCONTEXT="darwin-context.h"
 fi
 
 OSFILESOBJ='$(OSFILESSRC:.c=.o)'
@@ -7473,6 +7480,7 @@ fi
 if test "x$PAPI_EVENTS_CSV" == "x"; then
    PAPI_EVENTS_CSV="papi_events.csv"
 fi
+
 
 
 
@@ -8250,6 +8258,7 @@ s,@OSFILESSRC@,$OSFILESSRC,;t t
 s,@OSFILESOBJ@,$OSFILESOBJ,;t t
 s,@OSFILESHDR@,$OSFILESHDR,;t t
 s,@OSLOCK@,$OSLOCK,;t t
+s,@OSCONTEXT@,$OSCONTEXT,;t t
 s,@DESCR@,$DESCR,;t t
 s,@CTEST_TARGETS@,$CTEST_TARGETS,;t t
 s,@CC_R@,$CC_R,;t t

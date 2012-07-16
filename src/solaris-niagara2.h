@@ -129,8 +129,7 @@ typedef struct _niagara2_control_state
 
 typedef int hwd_register_map_t;
 
-typedef siginfo_t _niagara2_siginfo_t;
-typedef ucontext_t _niagara2_ucontext_t;
+#include "solaris-context.h"
 
 typedef _niagara2_control_state_t _niagara2_context_t;
 
@@ -155,11 +154,5 @@ rwlock_t lock[PAPI_MAX_LOCK];
 
 #undef  hwd_register_t
 #define hwd_register_t		_niagara2_register_t
-
-#undef  hwd_siginfo_t
-#define hwd_siginfo_t		_niagara2_siginfo_t
-
-#undef  hwd_ucontext_t
-#define hwd_ucontext_t		_niagara2_ucontext_t
 
 #endif

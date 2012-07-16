@@ -1197,27 +1197,34 @@ FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
 if (test "$OS" = "aix"); then
     OSFILESSRC=aix-memory.c
     OSLOCK=aix-lock.h
+    OSCONTEXT=aix-context.h
 elif (test "$OS" = "bgp"); then
     OSFILESSRC=linux-bgp-memory.c
     OSLOCK=linux-bgp-lock.h
+    OSCONTEXT=linux-bgp-context.h
 elif (test "$OS" = "bgq"); then
     OSFILESSRC=linux-bgq-memory.c
     OSLOCK=linux-bgq-lock.h
+    OSCONTEXT=linux-bgq-context.h
 elif (test "$OS" = "freebsd"); then
     OSFILESSRC=freebsd-memory.c
     OSLOCK="freebsd-lock.h"
+    OSCONTEXT="freebsd-context.h"
 elif (test "$OS" = "linux"); then
     OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
     OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
     OSLOCK="linux-lock.h"
+    OSCONTEXT="linux-context.h"
 elif (test "$OS" = "solaris"); then
     OSFILESSRC="solaris-memory.c solaris-common.c"
     OSFILESHDR="solaris-memory.h solaris-common.h"
     OSLOCK="solaris-lock.h"
+    OSCONTEXT="solaris-context.h"
 elif (test "$OS" = "darwin"); then
     OSFILESSRC="darwin-memory.c darwin-common.c"
     OSFILESHDR="darwin-memory.h darwin-common.h"
     OSLOCK="darwin-lock.h"
+    OSCONTEXT="darwin-context.h"
 fi
 
 OSFILESOBJ='$(OSFILESSRC:.c=.o)'
@@ -1673,6 +1680,7 @@ AC_SUBST(OSFILESSRC)
 AC_SUBST(OSFILESOBJ)
 AC_SUBST(OSFILESHDR)
 AC_SUBST(OSLOCK)
+AC_SUBST(OSCONTEXT)
 AC_SUBST(DESCR)
 AC_SUBST(LIBS)
 AC_SUBST(CTEST_TARGETS)

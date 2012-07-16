@@ -24,17 +24,25 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 
+/* PAPI-specific includes */
 #include "papi.h"
 #include "papi_memory.h"
 #include "papi_internal.h"
-#include "papi_libpfm4_events.h"
 #include "extras.h"
+
+#include "papi_libpfm4_events.h"
+#include "perf_events.h"
+
+/* Linux-specific includes */
 #include "mb.h"
 #include "syscalls.h"
-
 #include "linux-memory.h"
 #include "linux-timer.h"
 #include "linux-common.h"
+#include "linux-context.h"
+
+
+
 
 #if defined(__mips__)
 #warning "This platform has substandard kernel multiplexing support in perf_events: enabling BRAINDEAD_MULTIPLEXING"
@@ -1739,7 +1747,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
  */
 
 static void
-_papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
+_papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 {
 	( void ) n;				 /*unused */
 	_papi_hwi_context_t ctx;

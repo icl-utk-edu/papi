@@ -5,6 +5,9 @@
 * File:    papi_libpfm4_events.h
 */
 
+#include "perfmon/pfmlib.h"
+#include PEINCLUDE
+
 /* Prototypes for libpfm name library access */
 
 int _papi_libpfm4_error( int pfm_error );
