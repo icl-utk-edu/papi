@@ -50,6 +50,9 @@ main( int argc, char **argv )
 
 	values = allocate_test_space( num_tests, num_events );
 
+	/* warm up the processor to pull it out of idle state */
+	do_flops( NUM_FLOPS*10 );
+
 	/* Gather before stats */
 	elapsed_us = PAPI_get_real_usec(  );
 	elapsed_cyc = PAPI_get_real_cyc(  );
@@ -62,7 +65,7 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 	}
 
-	/* our test code */
+	/* our work code */
 	do_flops( NUM_FLOPS );
 
 	/* Stop PAPI */
@@ -110,9 +113,9 @@ main( int argc, char **argv )
 	   printf( "-------------------------------------------------------------------------\n" );
 
 	   printf( "Verification: PAPI_TOT_CYC should be roughly real_cycles\n" );
-	   cycles_error=100.0*((double)values[0][0] - (double)elapsed_cyc)/
-	     (double)values[0][0];
-	   if (cycles_error>10.0) {
+	   printf( "NOTE: Not true if dynamic frequency scaling is enabled.\n" );
+	   cycles_error=100.0*((double)values[0][0] - (double)elapsed_cyc)/((double)elapsed_cyc);
+	   if ((cycles_error > 10.0) || (cycles_error < -10.0)) {
 	     printf("Error of %.2f%%\n",cycles_error);
 	     test_fail( __FILE__, __LINE__, "validation", 0 );
 	   }

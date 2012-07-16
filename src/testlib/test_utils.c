@@ -663,7 +663,7 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
       {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
     };
   int i = 0;
-  int counters, event_found = 0;
+  int counters = 0;
 
   *mask = 0;
   counters = PAPI_num_hwctrs(  );
@@ -673,26 +673,22 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
   }
 
   /* This code tries to ensure that the event  generated will fit in the */
-  /* number of available counters. It doesn't account for the number     */
-  /* of counters used by the cycle counter.                              */
+  /* number of available counters. It has the potential to leak up to    */
+  /* two event sets if events fail to add successfully.                  */
 
   for(i=0;i<3;i++) {
-    if ( PAPI_query_event( (int) potential_evt_to_add[i][0] ) == PAPI_OK ) {
-			
-       if ( PAPI_get_event_info( (int) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
-	 if ( ( info.count > 0 ) && ( (unsigned) counters > info.count ) ) {
-	     event_found = 1;
-	     break;
-	  }
-       }
-    }
+	if ( PAPI_query_event( (int) potential_evt_to_add[i][0] ) == PAPI_OK ) {
+		if ( PAPI_get_event_info( (int) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
+			if ( ( info.count > 0 ) && ( (unsigned) counters > info.count ) ) {
+				*papi_event = ( int ) potential_evt_to_add[i][0];
+				*mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
+				EventSet = add_test_events( num_events, mask, 1 );
+				if ( *num_events == 2 ) break;
+			}
+		}
+	}
   }
-
-  if ( event_found ) {
-     *papi_event = ( int ) potential_evt_to_add[i][0];
-     *mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
-     EventSet = add_test_events( num_events, mask, 1 );
-  } else {
+  if ( i == 3 ) {
      test_fail( __FILE__, __LINE__, "Not enough room to add an event!", 0 );
   }
   return EventSet;
@@ -715,23 +711,22 @@ add_two_nonderived_events( int *num_events, int *papi_event, int *mask ) {
   int event_found = 0,i;
 
   *mask = 0;
-	
+  
+   /* could leak up to two event sets. */
   for(i=0;i<POTENTIAL_EVENTS;i++) {
 
      if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
        if ( !is_event_derived(potential_evt_to_add[i][0])) {
-	  event_found = 1;
-	  break;
+		 *papi_event = ( int ) potential_evt_to_add[i][0];
+		 *mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
+		 EventSet = add_test_events( num_events, mask, 0 );
+		 if ( *num_events == 2 ) break;
        }
     }
   }
 	
-  if ( event_found ) {
-     *papi_event = ( int ) potential_evt_to_add[i][0];
-     *mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
-     EventSet = add_test_events( num_events, mask, 0 );
-  } else {
-     test_fail( __FILE__, __LINE__, "Not enough room to add an event!", 0 );
+  if ( i == POTENTIAL_EVENTS ) {
+     test_fail( __FILE__, __LINE__, "Can't find a non-derived event!", 0 );
   }
   return EventSet;
 }
