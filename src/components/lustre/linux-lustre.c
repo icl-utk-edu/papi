@@ -23,6 +23,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "papi_memory.h"
 
 /** describes a single counter with its properties */

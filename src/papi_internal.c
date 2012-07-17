@@ -35,6 +35,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "papi_memory.h"
 #include "multiplex.h"
 #include "extras.h"
@@ -2036,3 +2037,79 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
     return PAPI_ENOEVNT;
 }
 
+EventSetInfo_t *
+_papi_hwi_lookup_EventSet( int eventset )
+{
+	const DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
+	EventSetInfo_t *set;
+
+	if ( ( eventset < 0 ) || ( eventset > map->totalSlots ) )
+		return ( NULL );
+
+	set = map->dataSlotArray[eventset];
+#ifdef DEBUG
+	if ( ( ISLEVEL( DEBUG_THREADS ) ) && ( _papi_hwi_thread_id_fn ) &&
+		 ( set->master->tid != _papi_hwi_thread_id_fn(  ) ) )
+		return ( NULL );
+#endif
+
+	return ( set );
+}
+
+int
+_papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI )
+{
+	/* Are we multiplexing at all */
+	if ( ( ESI->state & PAPI_MULTIPLEXING ) == 0 )
+		return ( 0 );
+	/* Does the component support kernel multiplexing */
+	if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
+		/* Have we forced software multiplexing */
+		if ( ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW )
+			return ( 1 );
+		return ( 0 );
+	} else
+		return ( 1 );
+}
+
+hwd_context_t *
+_papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty )
+{
+	INTDBG("Entry: ESI: %p, is_dirty: %p\n", ESI, is_dirty);
+	int dirty_ctx;
+	hwd_context_t *ctx=NULL;
+
+	/* assume for now the control state is clean (last updated by this ESI) */
+	dirty_ctx = 0;
+	
+	/* get a context pointer based on if we are counting for a thread or for a cpu */
+	if (ESI->state & PAPI_CPU_ATTACHED) {
+		/* use cpu context */
+		ctx = ESI->CpuInfo->context[ESI->CmpIdx];
+
+		/* if the user wants to know if the control state was last set by the same event set, tell him */
+		if (is_dirty != NULL) {
+			if (ESI->CpuInfo->from_esi != ESI) {
+				dirty_ctx = 1;
+			}
+			*is_dirty = dirty_ctx;
+		}
+		ESI->CpuInfo->from_esi = ESI;
+	   
+	} else {
+
+		/* use thread context */
+		ctx = ESI->master->context[ESI->CmpIdx];
+
+		/* if the user wants to know if the control state was last set by the same event set, tell him */
+		if (is_dirty != NULL) {
+			if (ESI->master->from_esi != ESI) {
+				dirty_ctx = 1;
+			}
+			*is_dirty = dirty_ctx;
+		}
+		ESI->master->from_esi = ESI;
+
+	}
+	return( ctx );
+}

@@ -8,6 +8,8 @@
 */
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
+
 #include "linux-bgp-native-events.h"
 
 /* PAPI PRESETS */

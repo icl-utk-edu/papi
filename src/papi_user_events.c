@@ -22,6 +22,8 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"  /* for _papi__hwd[].  Should we modify the */
+                          /* code to not depend on component 0?      */
 #include "papi_memory.h"
 #include "papi_user_events.h"
 

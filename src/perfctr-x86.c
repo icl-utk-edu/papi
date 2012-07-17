@@ -6,17 +6,19 @@
 *          <your email address>
 */
 
+#include <string.h>
+#include <linux/unistd.h>
+
+#include "papi.h"
 #include "papi_memory.h"
 #include "papi_internal.h"
 #include "perfctr-x86.h"
 #include "perfmon/pfmlib.h"
-#include "papi_libpfm_events.h"
 #include "extras.h"
+#include "papi_vector.h"
+#include "papi_libpfm_events.h"
 
-extern native_event_entry_t *native_table;
-extern hwi_search_t *preset_search_map;
-extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-
+#include "papi_preset.h"
 #include "linux-memory.h"
 
 /* Contains source for the Modified Bipartite Allocation scheme */
@@ -303,7 +305,7 @@ setup_x86_presets( int cputype, int cidx)
 }
 
 static int
-_x86_init_control_state( hwd_control_state_t * ptr )
+_x86_init_control_state( hwd_control_state_t *ptr )
 {
 	int i, def_mode = 0;
 
@@ -738,7 +740,7 @@ _x86_update_control_state( hwd_control_state_t * this_state,
 {
 	( void ) ctx;			 /*unused */
 	unsigned int i, k, retval = PAPI_OK;
-	hwd_register_t *bits;
+	hwd_register_t *bits,*bits2;
 	struct perfctr_cpu_control *cpu_control = &this_state->control.cpu_control;
 
 	/* clear out the events from the control state */
@@ -803,8 +805,9 @@ _x86_update_control_state( hwd_control_state_t * this_state,
 		case PERFCTR_X86_INTEL_CORE2:
 			/* fill the counters we're using */
 			for ( i = 0; i < ( unsigned int ) count; i++ ) {
+			    bits2 = native[i].ni_bits;
 				for ( k = 0; k < MAX_COUNTERS; k++ )
-					if ( native[i].ni_bits->selector & ( 1 << k ) ) {
+				    if ( bits2->selector & ( 1 << k ) ) {
 						break;
 					}
 				if ( k > 1 )
@@ -815,7 +818,7 @@ _x86_update_control_state( hwd_control_state_t * this_state,
 
 				/* Add counter control command values to eventset */
 				this_state->control.cpu_control.evntsel[i] |=
-					native[i].ni_bits->counter_cmd;
+					bits2->counter_cmd;
 			}
 			break;
 #endif
@@ -823,8 +826,9 @@ _x86_update_control_state( hwd_control_state_t * this_state,
 			/* fill the counters we're using */
 			for ( i = 0; i < ( unsigned int ) count; i++ ) {
 				/* Add counter control command values to eventset */
+			     bits2 = native[i].ni_bits;
 				this_state->control.cpu_control.evntsel[i] |=
-					native[i].ni_bits->counter_cmd;
+					bits2->counter_cmd;
 			}
 		}
 		this_state->control.cpu_control.nractrs = ( unsigned int ) count;
@@ -985,15 +989,16 @@ swap_events( EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int cntr1,
 }
 
 static int
-_x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
+_x86_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
-	struct hwd_pmc_control *contr = &ESI->ctl_state->control;
+       hwd_control_state_t *ctl = ( hwd_control_state_t * ) ( ESI->ctl_state );
+       struct hwd_pmc_control *contr = &(ctl->control);
 	int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 	OVFDBG( "EventIndex=%d\n", EventIndex );
 
 #ifdef DEBUG
 	if ( is_pentium4() )
-		print_control( &ESI->ctl_state->control.cpu_control );
+		print_control( contr->cpu_control );
 #endif
 
 	/* The correct event to overflow is EventIndex */
@@ -1062,7 +1067,7 @@ _x86_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 #ifdef DEBUG
 	if ( is_pentium4() )
-		print_control( &ESI->ctl_state->control.cpu_control );
+		print_control( contr->cpu_control );
 #endif
 	OVFDBG( "End of call. Exit code: %d\n", retval );
 	return ( retval );
@@ -1373,16 +1378,16 @@ papi_vector_t _perfctr_vector = {
 	,
 
 	/* function pointers in this component */
-	.init_control_state = _x86_init_control_state,
-	.start = _x86_start,
-	.stop = _x86_stop,
-	.read = _x86_read,
-	.allocate_registers = _x86_allocate_registers,
+	.init_control_state =   _x86_init_control_state,
+	.start =                _x86_start,
+	.stop =                 _x86_stop,
+	.read =                 _x86_read,
+	.allocate_registers =   _x86_allocate_registers,
 	.update_control_state = _x86_update_control_state,
-	.set_domain = _x86_set_domain,
-	.reset = _x86_reset,
-	.set_overflow = _x86_set_overflow,
-	.stop_profiling = _x86_stop_profiling,
+	.set_domain =           _x86_set_domain,
+	.reset =                _x86_reset,
+	.set_overflow =         _x86_set_overflow,
+	.stop_profiling =       _x86_stop_profiling,
 
 	.init_component =  _perfctr_init_component,
 	.ctl =             _perfctr_ctl,

@@ -128,6 +128,7 @@ for advertising or product endorsement purposes.
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "papi_memory.h"
 
 #define MPX_MINCYC 25000

@@ -31,6 +31,7 @@
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "papi_memory.h"
 
 #define CORETEMP_MAX_COUNTERS 32 /* Can we tune this dynamically? */

@@ -34,6 +34,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "solaris-niagara2.h"
 #include "papi_memory.h"
 

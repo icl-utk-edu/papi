@@ -1,32 +1,9 @@
 #ifndef _PERFCTR_X86_H
 #define _PERFCTR_X86_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <signal.h>
-#include <malloc.h>
-#include <unistd.h>
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <ctype.h>
-#include <limits.h>
-#include <time.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <sys/times.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/ucontext.h>
-#include <linux/unistd.h>
-
 #include "perfmon/pfmlib.h"
-#include "papi.h"
 #include "libperfctr.h"
 #include "papi_lock.h"
-
-
 
 #define MAX_COUNTERS 18
 #define MAX_COUNTER_TERMS 8

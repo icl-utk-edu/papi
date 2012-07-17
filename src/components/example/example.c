@@ -20,6 +20,7 @@
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "papi_memory.h"    /* defines papi_malloc(), etc. */
 
 /** This driver supports three counters counting at once      */

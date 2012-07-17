@@ -763,11 +763,14 @@ long long generate_p4_event(long long escr,
     return pe_event;
 }
 
+typedef pfmlib_event_t pfm_register_t;
+
 int
 _papi_libpfm_setup_counters( struct perf_event_attr *attr, 
 			   hwd_register_t *ni_bits ) {
 
   int ret,pe_event;
+  (void)ni_bits;
 
     /*
      * We need an event code that is common across all counters.

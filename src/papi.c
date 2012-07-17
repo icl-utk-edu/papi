@@ -28,6 +28,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "papi_memory.h"
 
 #include "papi_user_events.h"

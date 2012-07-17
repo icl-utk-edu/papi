@@ -1335,7 +1335,7 @@ elif test "$MAKEVER" = "bgq"; then
   OMPCFLGS=""
 
 elif test "$MAKEVER" = "CLE-perfmon2"; then 
-    FILENAME=Rules.pfm_pe
+    FILENAME=Rules.perfmon2
     CPUCOMPONENT=perfmon
     VECTOR=_papi_pfm_vector
     PAPI_EVENTS_CSV="papi_events.csv"
@@ -1407,7 +1407,7 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
     FFLAGS='-D_$(CPU_MODEL)'
 
 elif test "$MAKEVER" = "linux-perfmon2"; then
-    FILENAME=Rules.pfm_pe
+    FILENAME=Rules.perfmon2
     CPUCOMPONENT=perfmon
     VECTOR=_papi_pfm_vector
     PAPI_EVENTS_CSV="papi_events.csv"

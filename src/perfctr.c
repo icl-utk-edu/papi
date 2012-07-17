@@ -10,12 +10,27 @@
 *          bsheely at eecs.utk.edu
 */
 
+#include <string.h>
+#include <linux/unistd.h>
+#include <errno.h>
+#include <sys/time.h>
+
 #include "papi.h"
 #include "papi_internal.h"
+
+#ifdef PPC64
+#include "perfctr-ppc64.h"
+#else
+#include "perfctr-x86.h"
+#endif
+
+#include "papi_vector.h"
+
 #include "papi_memory.h"
 #include "extras.h"
 
 #include "linux-common.h"
+#include "linux-context.h"
 
 extern papi_vector_t _perfctr_vector;
 
@@ -331,31 +346,33 @@ _perfctr_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 void
 _perfctr_dispatch_timer( int signal, siginfo_t * si, void *context )
 {
-	( void ) signal;		 /*unused */
-	_papi_hwi_context_t ctx;
-	ThreadInfo_t *master = NULL;
-	int isHardware = 0;
-	caddr_t address;
-	int cidx = _perfctr_vector.cmp_info.CmpIdx;
-
-	ctx.si = si;
-	ctx.ucontext = ( ucontext_t * ) context;
+   ( void ) signal;		 /*unused */
+   _papi_hwi_context_t ctx;
+   ThreadInfo_t *master = NULL;
+   int isHardware = 0;
+   caddr_t address;
+   int cidx = _perfctr_vector.cmp_info.CmpIdx;
+   hwd_context_t *our_context;
+   
+   ctx.si = si;
+   ctx.ucontext = ( ucontext_t * ) context;
 
 #define OVERFLOW_MASK si->si_pmc_ovf_mask
 #define GEN_OVERFLOW 0
 
-	address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( ctx ) );
-	_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, &isHardware,
-										OVERFLOW_MASK, GEN_OVERFLOW, &master,
-										_perfctr_vector.cmp_info.CmpIdx );
+   address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( ctx ) );
+   _papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, &isHardware,
+       	      	      			OVERFLOW_MASK, GEN_OVERFLOW, &master,
+	   	      			_perfctr_vector.cmp_info.CmpIdx );
 
-	/* We are done, resume interrupting counters */
-	if ( isHardware ) {
-		errno = vperfctr_iresume( master->context[cidx]->perfctr );
-		if ( errno < 0 ) {
-			PAPIERROR( "vperfctr_iresume errno %d", errno );
-		}
-	}
+   /* We are done, resume interrupting counters */
+   if ( isHardware ) {
+     our_context=(hwd_context_t *) master->context[cidx];
+      errno = vperfctr_iresume( our_context->perfctr );
+      if ( errno < 0 ) {
+	 PAPIERROR( "vperfctr_iresume errno %d", errno );
+      }
+   }
 }
 
 

@@ -23,7 +23,9 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "papi_memory.h"
+
 #include "linux-infiniband.h"
 
 struct ibmad_port *srcport;
