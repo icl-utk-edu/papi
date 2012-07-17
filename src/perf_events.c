@@ -244,15 +244,15 @@ fcntl_setown_fd(int fd) {
 static inline int 
 processor_supported(int vendor, int family) {
 
-        /* Error out if kernel too early to support p4 */
+  /* Error out if kernel too early to support p4 */
   if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
-            if (_papi_os_info.os_version < LINUX_VERSION(2,6,35)) {
-	       PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
-	       return 0;
-	    }
+     if (_papi_os_info.os_version < LINUX_VERSION(2,6,35)) {
+	PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
+	return PAPI_ENOSUPP;
+     }
   }
 
-  return 1;
+  return PAPI_OK;
 }
 
 static inline unsigned int
@@ -833,22 +833,26 @@ set_cpu( control_state_t * ctl, unsigned int cpu_num )
 	return PAPI_OK;
 }
 
+/* Some boilerplate */
+/* We should maybe support this stuff at some point */
 static inline int
-set_granularity( control_state_t * this_state, int domain )
+set_granularity( control_state_t *ctl, int domain )
 {
-	( void ) this_state;	 /*unused */
-	switch ( domain ) {
-	case PAPI_GRN_PROCG:
-	case PAPI_GRN_SYS:
-	case PAPI_GRN_SYS_CPU:
-	case PAPI_GRN_PROC:
+  ( void ) ctl;	 /*unused */
+
+  switch ( domain ) {
+     case PAPI_GRN_PROCG:
+     case PAPI_GRN_SYS:
+     case PAPI_GRN_SYS_CPU:
+     case PAPI_GRN_PROC:
 		return PAPI_ECMP;
-	case PAPI_GRN_THR:
+     /* Currently we only support thread granularity */
+     case PAPI_GRN_THR:
 		break;
-	default:
+     default:
 		return PAPI_EINVAL;
-	}
-	return PAPI_OK;
+  }
+  return PAPI_OK;
 }
 
 static int pe_vendor_fixups(void) {
@@ -863,12 +867,15 @@ static int pe_vendor_fixups(void) {
 		  PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
      }
   }
+
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS ) {
      _papi_pe_vector.cmp_info.available_domains |= PAPI_DOM_KERNEL;
-     }
+  }
+
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
-      (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))
+      (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD)) {
      _papi_pe_vector.cmp_info.fast_real_timer = 1;
+  }
 
      /* ARM */
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
@@ -1002,8 +1009,9 @@ _papi_pe_init_component( int cidx )
   _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
   /* Check that processor is supported */
-  if (!processor_supported(_papi_hwi_system_info.hw_info.vendor,
-			   _papi_hwi_system_info.hw_info.cpuid_family)) {
+  if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
+			   _papi_hwi_system_info.hw_info.cpuid_family)!=
+      PAPI_OK) {
      fprintf(stderr,"warning, your processor is unsupported\n");
      /* should not return error, as software events should still work */
   }
@@ -1356,16 +1364,6 @@ _papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	return PAPI_OK;
 }
 
-static inline int
-round_requested_ns( int ns )
-{
-	if ( ns < _papi_os_info.itimer_res_ns ) {
-		return _papi_os_info.itimer_res_ns;
-	} else {
-		int leftover_ns = ns % _papi_os_info.itimer_res_ns;
-		return ns + leftover_ns;
-	}
-}
 
 /* This function clears the current contents of the control structure and
    updates it with whatever resources are allocated for all the native events
@@ -1447,130 +1445,131 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 }
 
 static int
-_papi_pe_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
+_papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
-	int ret;
-	context_t *pe_ctx = ( context_t * ) ctx;
-	control_state_t *pe_ctl = NULL;
+   int ret;
+   context_t *pe_ctx = ( context_t * ) ctx;
+   control_state_t *pe_ctl = NULL;
 
-	switch ( code ) {
-	case PAPI_MULTIPLEX:
-	{
-		pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 1, pe_ctl->inherit ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		/* looks like we are allowed so go ahead and set multiplexed attribute */
-		pe_ctl->multiplexed = 1;
-		ret = _papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events, pe_ctx );
-		/*
-		 * Variable ns is not supported, but we can clear the pinned
-		 * bits in the events to allow the scheduler to multiplex the
-		 * events onto the physical hardware registers.
-		 */
-		if (ret != PAPI_OK)
-		  pe_ctl->multiplexed = 0;
-		return ret;
-	}
-	case PAPI_ATTACH:
-		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
-		if (check_permissions( option->attach.tid, pe_ctl->cpu, pe_ctl->domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		ret = attach( pe_ctl, option->attach.tid );
-		if (ret == PAPI_OK) {
-		  /* If events have been already been added, something may have been done to the kernel, so update */
-		  ret = _papi_pe_update_control_state( pe_ctl, NULL, pe_ctl->num_events, pe_ctx ); }
-		return ret;
-	case PAPI_DETACH:
-		pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
-		return detach( pe_ctx, pe_ctl );
-	case PAPI_CPU_ATTACH:
-		pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, pe_ctl->domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		/* looks like we are allowed so go ahead and store cpu number */
-		return set_cpu( pe_ctl, option->cpu.cpu_num );
-	case PAPI_DOMAIN:
-		pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu, option->domain.domain, pe_ctl->multiplexed, pe_ctl->inherit ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		/* looks like we are allowed so go ahead and store counting domain */
-		return _papi_pe_set_domain( option->domain.ESI->ctl_state, option->domain.domain );
-	case PAPI_GRANUL:
-		return
-			set_granularity( ( control_state_t * ) ( option->granularity.ESI->
-													 ctl_state ),
-							 option->granularity.granularity );
-	case PAPI_INHERIT:
-		pe_ctl = ( control_state_t * ) ( option->inherit.ESI->ctl_state );
-		if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, pe_ctl->multiplexed, option->inherit.inherit ) != PAPI_OK) {
-			return PAPI_EPERM;
-		}
-		/* looks like we are allowed to set the requested inheritance */
-		if (option->inherit.inherit)
-			pe_ctl->inherit = 1;         // set so children will inherit counters
-		else
-			pe_ctl->inherit = 0;         // set so children will not inherit counters
-		return PAPI_OK;
+   switch ( code ) {
+      case PAPI_MULTIPLEX:
+	   pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
+	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
+				  1, pe_ctl->inherit ) != PAPI_OK) {
+	      return PAPI_EPERM;
+	   }
+
+	   /* looks like we are allowed, so set multiplexed attribute */
+	   pe_ctl->multiplexed = 1;
+	   ret = _papi_pe_update_control_state( pe_ctl, NULL, 
+						pe_ctl->num_events, pe_ctx );
+	   if (ret != PAPI_OK) {
+	      pe_ctl->multiplexed = 0;
+	   }
+	   return ret;
+	
+      case PAPI_ATTACH:
+	   pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+	   if (check_permissions( option->attach.tid, pe_ctl->cpu, 
+				  pe_ctl->domain, pe_ctl->multiplexed, 
+				  pe_ctl->inherit ) != PAPI_OK) {
+	      return PAPI_EPERM;
+	   }
+	   ret = attach( pe_ctl, option->attach.tid );
+	   if (ret == PAPI_OK) {
+	      /* If events have been already been added, something may */
+	      /* have been done to the kernel, so update */
+	      ret = _papi_pe_update_control_state( pe_ctl, NULL, 
+						   pe_ctl->num_events, pe_ctx);
+	   }
+	   return ret;
+
+      case PAPI_DETACH:
+	   pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+	   return detach( pe_ctx, pe_ctl );
+
+      case PAPI_CPU_ATTACH:
+	   pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
+	   if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, 
+				  pe_ctl->domain, pe_ctl->multiplexed, 
+				  pe_ctl->inherit ) != PAPI_OK) {
+	       return PAPI_EPERM;
+	   }
+	   /* looks like we are allowed so set cpu number */
+	   return set_cpu( pe_ctl, option->cpu.cpu_num );
+
+      case PAPI_DOMAIN:
+	   pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
+	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, 
+				  option->domain.domain, pe_ctl->multiplexed,
+				  pe_ctl->inherit ) != PAPI_OK) {
+	      return PAPI_EPERM;
+	   }
+	   /* looks like we are allowed, so set counting domain */
+	   return _papi_pe_set_domain( pe_ctl, option->domain.domain );
+
+      case PAPI_GRANUL:
+	   pe_ctl = (control_state_t *) ( option->granularity.ESI->ctl_state );
+	   return set_granularity( pe_ctl, option->granularity.granularity );
+
+      case PAPI_INHERIT:
+	   pe_ctl = ( control_state_t * ) ( option->inherit.ESI->ctl_state );
+	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
+				  pe_ctl->multiplexed, 
+				  option->inherit.inherit ) != PAPI_OK) {
+	      return PAPI_EPERM;
+	   }
+	   /* looks like we are allowed, so set the requested inheritance */
+	   if (option->inherit.inherit) {
+	      /* children will inherit counters */
+	      pe_ctl->inherit = 1;
+	   } else {
+	      /* children won't inherit counters */
+	      pe_ctl->inherit = 0;
+	   }
+	   return PAPI_OK;
+
+      case PAPI_DATA_ADDRESS:
+	   return PAPI_ENOSUPP;
 #if 0
-	case PAPI_DATA_ADDRESS:
-		ret =
-			set_default_domain( ( control_state_t * ) ( option->address_range.
-														ESI->ctl_state ),
-								option->address_range.domain );
-		if ( ret != PAPI_OK )
-			return ret;
-		set_drange( pe_ctx,
-					( control_state_t * ) ( option->address_range.ESI->
-											ctl_state ), option );
-		return PAPI_OK;
-	case PAPI_INSTR_ADDRESS:
-		ret =
-			set_default_domain( ( control_state_t * ) ( option->address_range.
-														ESI->ctl_state ),
-								option->address_range.domain );
-		if ( ret != PAPI_OK )
-			return ret;
-		set_irange( pe_ctx,
-					( control_state_t * ) ( option->address_range.ESI->
-											ctl_state ), option );
-		return PAPI_OK;
+	   pe_ctl = (control_state_t *) (option->address_range.ESI->ctl_state);
+	   ret = set_default_domain( pe_ctl, option->address_range.domain );
+	   if ( ret != PAPI_OK ) {
+	      return ret;
+	   }
+	   set_drange( pe_ctx, pe_ctl, option );
+	   return PAPI_OK;
 #endif
-	case PAPI_DEF_ITIMER:
-	{
-		/* flags are currently ignored, eventually the flags will be able
-		   to specify whether or not we use POSIX itimers (clock_gettimer) */
-		if ( ( option->itimer.itimer_num == ITIMER_REAL ) &&
-			 ( option->itimer.itimer_sig != SIGALRM ) )
-			return PAPI_EINVAL;
-		if ( ( option->itimer.itimer_num == ITIMER_VIRTUAL ) &&
-			 ( option->itimer.itimer_sig != SIGVTALRM ) )
-			return PAPI_EINVAL;
-		if ( ( option->itimer.itimer_num == ITIMER_PROF ) &&
-			 ( option->itimer.itimer_sig != SIGPROF ) )
-			return PAPI_EINVAL;
-		if ( option->itimer.ns > 0 )
-			option->itimer.ns = round_requested_ns( option->itimer.ns );
-		/* At this point, we assume the user knows what he or
-		   she is doing, they maybe doing something arch specific */
-		return PAPI_OK;
-	}
-	case PAPI_DEF_MPX_NS:
-	{
-		/* Defining a given ns per set is not current supported */
-		return PAPI_ENOSUPP;
-	}
-	case PAPI_DEF_ITIMER_NS:
-	{
-		option->itimer.ns = round_requested_ns( option->itimer.ns );
-		return PAPI_OK;
-	}
-	default:
-		return PAPI_ENOSUPP;
-	}
+      case PAPI_INSTR_ADDRESS:
+	   return PAPI_ENOSUPP;
+#if 0
+	   pe_ctl = (control_state_t *) (option->address_range.ESI->ctl_state);
+	   ret = set_default_domain( pe_ctl, option->address_range.domain );
+	   if ( ret != PAPI_OK ) {
+	      return ret;
+	   }
+	   set_irange( pe_ctx, pe_ctl, option );
+	   return PAPI_OK;
+#endif
+
+      case PAPI_DEF_ITIMER:
+	   /* What should we be checking for here?                   */
+	   /* This seems like it should be OS-specific not component */
+	   /* specific.                                              */
+
+	   return PAPI_OK;
+	
+      case PAPI_DEF_MPX_NS:
+	   /* Defining a given ns per set is not current supported */
+	   return PAPI_ENOSUPP;
+	
+      case PAPI_DEF_ITIMER_NS:
+	   /* We don't support this... */
+	   return PAPI_OK;
+	
+      default:
+	   return PAPI_ENOSUPP;
+   }
 }
 
 
