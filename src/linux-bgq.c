@@ -1029,7 +1029,8 @@ _bgq_ntv_name_to_code( char *name, unsigned int *event_code )
 	/* Treat events differently if BGPM Opcodes are used */
 	/* Opcode group selection values are "OR"ed together to create a desired 
 	 mask of instruction group events to accumulate in the same counter */	
-	if ( 0 == strncmp( name, "PEVT_INST_", strlen( "PEVT_INST_" ) ) ) {
+	if ( 0 == strncmp( name, "PEVT_INST_XU_GRP_MASK", strlen( "PEVT_INST_XU_GRP_MASK" ) ) ||
+		 0 == strncmp( name, "PEVT_INST_QFPU_GRP_MASK", strlen( "PEVT_INST_QFPU_GRP_MASK" ) ) ) {
 
 		char *pcolon;
 		pcolon = strchr( name, ':' );
