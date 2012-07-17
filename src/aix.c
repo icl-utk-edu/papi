@@ -9,12 +9,13 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_lock.h"
-#include "papi_vector.h"
+
 #include "papi_memory.h"
 
 #include "extras.h"
 
 #include "aix.h"
+#include "papi_vector.h"
 
 /* Advance declarations */
 papi_vector_t _aix_vector;
@@ -856,7 +857,7 @@ _aix_read( hwd_context_t * ctx, hwd_control_state_t * spc,
 	return ( PAPI_OK );
 }
 
-inline_static int
+static int
 round_requested_ns( int ns )
 {
 	if ( ns <= _papi_os_info.itimer_res_ns ) {
