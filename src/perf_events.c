@@ -552,11 +552,11 @@ partition_events( context_t * ctx, control_state_t * ctl )
 #define NR_MMAP_PAGES (1 + 8)
 
 static int
-tune_up_fd( context_t * ctx, int evt_idx )
+tune_up_fd( context_t *ctx, int evt_idx )
 {
 	int ret;
 	void *buf_addr;
-	const int fd = ( const int ) ctx->evt[evt_idx].event_fd;
+	int fd = ctx->evt[evt_idx].event_fd;
 
 	/*
 	 * Register that we would like a SIGIO notification when a mmap'd page
@@ -1025,12 +1025,13 @@ _papi_pe_init_component( int cidx )
   }
 
   /* Detect if we can use rdpmc (or equivalent) */
-  _papi_pe_vector.cmp_info.fast_counter_read = detect_rdpmc();
-  if (_papi_pe_vector.cmp_info.fast_counter_read < 0 ) {
+  retval=detect_rdpmc();
+  if (retval < 0 ) {
      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
 	    "Error detecting rdpmc",PAPI_MAX_STR_LEN);
-     return _papi_pe_vector.cmp_info.fast_counter_read;
+     return retval;
   }
+  _papi_pe_vector.cmp_info.fast_counter_read = retval;
 
   /* Run Vendor-specific fixups */
   pe_vendor_fixups();
