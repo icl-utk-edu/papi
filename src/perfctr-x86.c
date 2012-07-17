@@ -998,7 +998,7 @@ _x86_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 
 #ifdef DEBUG
 	if ( is_pentium4() )
-		print_control( contr->cpu_control );
+	  print_control( &(contr->cpu_control) );
 #endif
 
 	/* The correct event to overflow is EventIndex */
@@ -1067,7 +1067,7 @@ _x86_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 
 #ifdef DEBUG
 	if ( is_pentium4() )
-		print_control( contr->cpu_control );
+	  print_control( &(contr->cpu_control) );
 #endif
 	OVFDBG( "End of call. Exit code: %d\n", retval );
 	return ( retval );
