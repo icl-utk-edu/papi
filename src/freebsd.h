@@ -36,7 +36,6 @@
 #undef hwd_reg_alloc_t
 #undef hwd_control_state_t
 #undef hwd_context_t
-#undef hwd_ucontext_t
 #undef hwd_libpmc_context_t
 
 typedef struct hwd_siginfo {

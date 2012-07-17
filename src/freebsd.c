@@ -14,11 +14,13 @@
 #include <sys/utsname.h>
 
 #include "papi.h"
-#include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_lock.h"
 
+#include "papi_internal.h"
+
+#include "papi_lock.h"
 #include "freebsd.h"
+#include "papi_vector.h"
+
 #include "map.h"
 
 #include "freebsd-memory.h"
