@@ -19,11 +19,13 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_memory.h"
 #include "papi_lock.h"
+#include "papi_memory.h"
 #include "extras.h"
+
 #include "linux-bgq.h"
+
+#include "papi_vector.h"
 #include "error.h"
 
 /*
