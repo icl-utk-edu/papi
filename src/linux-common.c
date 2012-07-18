@@ -408,14 +408,14 @@ _linux_get_mhz( int *sys_min_mhz, int *sys_max_mhz ) {
   fff=fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq","r");
   if (fff==NULL) return PAPI_EINVAL;
   result=fscanf(fff,"%d",sys_min_mhz);
-  if (result!=1) return PAPI_EINVAL;
   fclose(fff);
+  if (result!=1) return PAPI_EINVAL;
 
   fff=fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq","r");
   if (fff==NULL) return PAPI_EINVAL;
   result=fscanf(fff,"%d",sys_max_mhz);
-  if (result!=1) return PAPI_EINVAL;
   fclose(fff);
+  if (result!=1) return PAPI_EINVAL;
 
   return PAPI_OK;
 
