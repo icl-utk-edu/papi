@@ -102,9 +102,9 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 			/* strdup the note string into the sparse preset data array */
 			preset_index = ( notes[pnum].event_code & PAPI_PRESET_AND_MASK );
 			if ( _papi_hwi_presets.dev_note[preset_index] != NULL )
-				papi_free( _papi_hwi_presets.dev_note[preset_index] );
+				free( _papi_hwi_presets.dev_note[preset_index] );
 			_papi_hwi_presets.dev_note[preset_index] =
-				papi_strdup( notes[pnum].dev_note );
+				strdup( notes[pnum].dev_note );
 		}
 	}
 	/* xxxx right now presets are only cpu, component 0 */
