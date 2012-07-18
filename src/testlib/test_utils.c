@@ -708,7 +708,7 @@ add_two_nonderived_events( int *num_events, int *papi_event, int *mask ) {
 		  {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
 		};
 
-  int event_found = 0,i;
+  int i;
 
   *mask = 0;
   
