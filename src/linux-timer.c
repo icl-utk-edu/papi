@@ -1,13 +1,14 @@
 /*
-* File:    linux-timer.c
-*
-*/
+ * File:    linux-timer.c
+ *
+ */
 
 #include <time.h>
 #include <sys/syscall.h>
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 
 #include <fcntl.h>
 #include <errno.h>
