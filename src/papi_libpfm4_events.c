@@ -790,6 +790,8 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
      /* We were found in libpfm4, so allocate our copy of the event */
 
      our_event=allocate_native_event(name,actual_idx);
+     if (our_event==NULL) return PAPI_ENOEVNT;
+
      event_num=find_existing_event(name);
   }
 
