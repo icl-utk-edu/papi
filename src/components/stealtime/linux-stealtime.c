@@ -99,7 +99,10 @@ int read_stealtime( struct STEALTIME_context *context, int starting) {
 		 &our_stat.softirq,
 		 &our_stat.steal,
 		 &our_stat.guest);
-    if (count<=7) return PAPI_ESYS;
+    if (count<=7) {
+       fclose(fff);
+       return PAPI_ESYS;
+    }
 
     if (starting) {
        context->start_count[i]=our_stat.steal;
