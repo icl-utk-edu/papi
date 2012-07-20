@@ -1415,30 +1415,24 @@ int
 _papi_libpfm4_setup_counters( struct perf_event_attr *attr,
 			     int event ) {
 
-  pfm_perf_encode_arg_t perf_arg;
-
   struct native_event_t *our_event;
-
-  /* clear the attribute structure */
-  memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
-  perf_arg.attr=attr;
 
   our_event=find_existing_event_by_number(event);
   if (our_event==NULL) {
      return PAPI_ENOEVNT;
   }
 
-  perf_arg.attr->config=our_event->config; 
-  perf_arg.attr->config1=our_event->config1;
-  perf_arg.attr->config2=our_event->config2;
-  perf_arg.attr->type=our_event->type;
+  attr->config=our_event->config; 
+  attr->config1=our_event->config1;
+  attr->config2=our_event->config2;
+  attr->type=our_event->type;
   
   SUBDBG( "pe_event: config 0x%"PRIx64
           " config1 0x%"PRIx64
           " type 0x%"PRIx32"\n", 
-          perf_arg.attr->config, 
-	  perf_arg.attr->config1,
-	  perf_arg.attr->type);
+          attr->config, 
+	  attr->config1,
+	  attr->type);
 	  
 
   return PAPI_OK;

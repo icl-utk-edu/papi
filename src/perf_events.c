@@ -1560,6 +1560,8 @@ _papi_pe_shutdown_thread( hwd_context_t * ctx )
 
 	ret = close_pe_evts( pe_ctx );
 
+	pe_ctx->cookie=0x0;
+
 	return ret;
 }
 
