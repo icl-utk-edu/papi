@@ -641,6 +641,7 @@ papi_vector_t _net_vector = {
     .cmp_info = {
         /* default component information (unspecified values are initialized to 0) */
         .name = "net",
+        .short_name = "net",
         .version               = "4.2.1",
 	.description = "Linux network driver statistics",
         .num_mpx_cntrs         = PAPI_MPX_DEF_DEG,

@@ -577,6 +577,7 @@ papi_vector_t _appio_vector = {
     .cmp_info = {
         /* default component information (unspecified values are initialized to 0) */
         .name                  = "appio",
+        .short_name            = "appio",
         .version               = "1.1.2.4",
         .CmpIdx                = 0,              /* set by init_component */
         .num_mpx_cntrs         = PAPI_MPX_DEF_DEG,

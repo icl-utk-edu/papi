@@ -570,6 +570,7 @@ papi_vector_t _stealtime_vector = {
    .cmp_info = {
         /* component information (unspecified values initialized to 0) */
        .name = "stealtime",
+	   .short_name="stealtime",
        .version = "5.0",
        .description = "Stealtime filesystem statistics",
        .num_mpx_cntrs = PAPI_MPX_DEF_DEG,

@@ -538,7 +538,8 @@ _lmsensors_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 papi_vector_t _lmsensors_vector = {
    .cmp_info = {
         /* component information (unspecified values are initialized to 0) */
-	.name = "linux-lmsensors",
+	.name = "lmsensors",
+	.short_name = "lmsensors",
 	.version = "5.0",
 	.description = "Linux LMsensor statistics",
 	.num_mpx_cntrs = PAPI_MPX_DEF_DEG,

@@ -847,6 +847,7 @@ papi_vector_t _cuda_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name = "cuda",
+				 .short_name = "cuda",
 				 .version = "5.0",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .num_cntrs = CUDA_MAX_COUNTERS,

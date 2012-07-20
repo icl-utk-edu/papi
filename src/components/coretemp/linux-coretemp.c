@@ -667,6 +667,7 @@ papi_vector_t _coretemp_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name = "coretemp",
+				 .short_name = "coretemp",
 				 .description = "Linux hwmon temperature and other info",
 				 .version = "4.2.1",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,

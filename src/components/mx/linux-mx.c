@@ -505,6 +505,7 @@ _mx_ntv_enum_events( unsigned int *EventCode, int modifier )
 papi_vector_t _mx_vector = {
 	.cmp_info = {
 	    .name = "mx",
+		.short_name = "mx",
 	    .version = "1.4",
 	    .description = "Myricom MX (Myrinet Express) statistics",
 	    .num_mpx_cntrs = PAPI_MPX_DEF_DEG,

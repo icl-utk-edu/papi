@@ -779,6 +779,7 @@ papi_vector_t _infiniband_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name ="infiniband",
+				 .short_name="infiniband",
 				 .version = "4.2.1",
 				 .description = "Infiniband statistics",
 				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
