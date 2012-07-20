@@ -894,29 +894,6 @@ static int pe_vendor_fixups(void) {
   return PAPI_OK;
 }
 
-/* this is needed until the libpfm4 copy of perf_event.h */
-/* we use includes the rdpmc fields                      */
-struct perf_event_mmap_page_copy {
-  uint32_t   version;
-  uint32_t   compat_version;
-  uint32_t   lock;                   /* seqlock for synchronization */
-  uint32_t   index;                  /* hardware event identifier */
-  int64_t   offset;                 /* add to hardware event value */
-  uint64_t   time_enabled;           /* time event active */
-  uint64_t   time_running;           /* time event on cpu */
-  union {
-    uint64_t   capabilities;
-    uint64_t   cap_usr_time  : 1,
-      cap_usr_rdpmc : 1,
-      cap_____res   : 62;
-  };
-  uint16_t   pmc_width;
-  uint16_t   time_shift;
-  uint32_t   time_mult;
-  uint64_t   time_offset;
-  uint64_t   __reserved[120];        /* align to 1k */
-};
-
 
 /* Check the mmap page for rdpmc support */
 static int detect_rdpmc(void) {
@@ -924,7 +901,7 @@ static int detect_rdpmc(void) {
   struct perf_event_attr pe;
   int fd,rdpmc_exists=1;
   void *addr;
-  struct perf_event_mmap_page_copy *our_mmap;
+  struct perf_event_mmap_page *our_mmap;
 
   memset(&pe,0,sizeof(struct perf_event_attr));
 
@@ -941,7 +918,7 @@ static int detect_rdpmc(void) {
      close(fd);
      return PAPI_ESYS;
   }
-  our_mmap=(struct perf_event_mmap_page_copy *)addr;
+  our_mmap=(struct perf_event_mmap_page *)addr;
   if (our_mmap->cap_usr_rdpmc==0) {
      rdpmc_exists=0;
   }
