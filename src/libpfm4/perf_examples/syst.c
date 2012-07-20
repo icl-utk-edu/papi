@@ -78,13 +78,20 @@ void
 measure(void)
 {
 	perf_event_desc_t *fds;
+	long lret;
 	int c, cmin, cmax, ncpus;
 	int i, ret, l;
 
 	printf("<press CTRL-C to quit before %ds time limit>\n", options.delay);
 
 	cmin = 0;
-	cmax = (int)sysconf(_SC_NPROCESSORS_ONLN);
+
+	lret = sysconf(_SC_NPROCESSORS_ONLN);
+	if (lret < 0)
+		err(1, "cannot get number of online processors");
+
+	cmax = (int)lret;
+
 	ncpus = cmax;
 	if (options.cpu != -1) {
 		cmin = options.cpu;

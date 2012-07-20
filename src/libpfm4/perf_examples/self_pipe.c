@@ -143,6 +143,7 @@ measure(void)
 	switch(pid=fork()) {
 		case -1:
 			err(1, "cannot create child\n");
+			exit(1); /* not reached */
 		case 0:
 			/* do not inherit session fd */
 			for(i=0; i < num_fds; i++)

@@ -256,10 +256,18 @@ struct perf_event_mmap_page {
 	int64_t		offset;
 	uint64_t	time_enabled;
 	uint64_t	time_running;
-	uint32_t	time_mult, time_shift;
+	union {
+		uint64_t capabilities;
+		uint64_t cap_usr_time:1,
+			 cap_usr_rdpmc:1,
+			 cap_____res:62;
+	};
+	uint16_t	pmc_width;
+	uint16_t	time_shift;
+	uint32_t	time_mult;
 	uint64_t	time_offset;
 
-	uint64_t	__reserved[121];
+	uint64_t	__reserved[120];
 	uint64_t  	data_head;
 	uint64_t	data_tail;
 };

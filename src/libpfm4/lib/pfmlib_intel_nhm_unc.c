@@ -301,6 +301,7 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 pfmlib_pmu_t intel_nhm_unc_support={
 	.desc			= "Intel Nehalem uncore",
 	.name			= "nhm_unc",
+	.perf_name		= "uncore",
 
 	.pmu			= PFM_PMU_INTEL_NHM_UNC,
 	.pme_count		= LIBPFM_ARRAY_SIZE(intel_nhm_unc_pe),
@@ -330,6 +331,7 @@ pfmlib_pmu_t intel_nhm_unc_support={
 pfmlib_pmu_t intel_wsm_unc_support={
 	.desc			= "Intel Westmere uncore",
 	.name			= "wsm_unc",
+	.perf_name		= "uncore",
 
 	.pmu			= PFM_PMU_INTEL_WSM_UNC,
 	.pme_count		= LIBPFM_ARRAY_SIZE(intel_wsm_unc_pe),

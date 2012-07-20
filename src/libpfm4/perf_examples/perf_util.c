@@ -318,7 +318,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	const char *str;
 	int ret, e;
 
-	if (!(fds || fp || ehdr || num_fds < 0 || idx < 0 ||  idx >= num_fds))
+	if (!fds || !fp || !ehdr  || num_fds < 0 || idx < 0 ||  idx >= num_fds)
 		return -1;
 
 	sz = ehdr->size - sizeof(*ehdr);
