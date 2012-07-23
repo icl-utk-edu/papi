@@ -71,6 +71,79 @@ static struct native_event_info *_papi_native_events=NULL;
 static int num_native_events=0;
 static int num_native_chunks=0;
 
+/** @internal
+ * @class _papi_hwi_prefix_component_name
+ * @brief Prefixes a component's name to each of its events. 
+ * @param *component_name
+ * @param *event_name
+ * @param *out
+ * @param *out_len
+ *
+ * Given sane component_name and event_name it returns component_name:::event_name. 
+ * It is safe in the case that event_name == out and it checks against the 
+ * traditional PAPI 'cpu' components, opting to not prepend those. 
+ */
+int
+_papi_hwi_prefix_component_name( char *component_name, char *event_name, char *out, int out_len) 
+{
+	int size1, size2;
+	char temp[out_len];
+
+	size1 = strlen(event_name);
+	size2 = strlen(component_name);
+
+/* sanity check */
+	if ( size1 <= 0 || size2 <= 0 || size1>PAPI_MAX_STR_LEN || size2 > PAPI_MAX_STR_LEN ) {
+		return (PAPI_EINVAL);
+	}
+	
+/* strlen(component_name) + ::: + strlen(event_name) + NULL */
+	if ( size1+size2+3+1 > out_len )
+		return (PAPI_ENOMEM);
+
+/* Guard against event_name == out */
+	memcpy( temp, event_name, out_len );
+
+/* Don't prefix 'cpu' component names for now */
+	if ( strstr(component_name, "pe") ||
+		 strstr(component_name, "bgq") ||
+		 strstr(component_name, "bgp") ) {
+		sprintf( out, "%s%c", temp, '\0'); 
+		return PAPI_OK;
+	}
+		
+	sprintf( out, "%s:::%s%c" , component_name, temp, '\0');
+
+	return (PAPI_OK);
+}
+
+/** @internal
+ *  @class _papi_hwi_strip_component_prefix
+ *  @brief Strip off cmp_name::: from an event name. 
+ *
+ *  @param *event_name
+ *  @return Start of the component consumable portion of the name. 
+ *
+ *  This function checks specifically for ':::' and will return the start of 
+ *  event_name if it doesn't find the ::: .
+ */
+char *_papi_hwi_strip_component_prefix(char *event_name)
+{
+	char *start = NULL;
+/* We assume ::: is the seperator 
+ * eg: 
+ * 		papi_component:::event_name 
+ */
+
+	start = strstr( event_name, ":::" );
+	if ( start != NULL )
+		start+= 3; /* return the actual start of event_name */
+	else
+		start = event_name;
+
+	return (start);
+}
+
 static int
 _papi_hwi_find_native_event(int cidx, int event) {
 
@@ -1889,6 +1962,8 @@ _papi_hwi_native_name_to_code( char *in, int *out )
     int cidx;
 
     SUBDBG("checking all %d components\n",papi_num_components);
+	in = _papi_hwi_strip_component_prefix(in);
+
 	
     for(cidx=0; cidx < papi_num_components; cidx++) {
 
@@ -1910,7 +1985,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 					  i, 
 					  name, sizeof(name));
              /* printf("%x\nname =|%s|\ninput=|%s|\n", i, name, in); */
-	     if ( retval == PAPI_OK ) {
+	     if ( retval == PAPI_OK && in != NULL) {
 		if ( strcasecmp( name, in ) == 0 ) {
 		   *out = _papi_hwi_native_to_eventcode(cidx,i);
 		   break;
@@ -1942,14 +2017,21 @@ _papi_hwi_native_code_to_name( unsigned int EventCode,
 			       char *hwi_name, int len )
 {
   int cidx;
+  int retval; 
 
   cidx = _papi_hwi_component_index( EventCode );
   if (cidx<0) return PAPI_ENOEVNT;
 
   if ( EventCode & PAPI_NATIVE_MASK ) {
-    return ( _papi_hwd[cidx]-> ntv_code_to_name( 
-				   _papi_hwi_eventcode_to_native(EventCode), 
-				   hwi_name, len ) );
+	if ( (retval = _papi_hwd[cidx]->ntv_code_to_name( 
+						_papi_hwi_eventcode_to_native(EventCode), 
+						hwi_name, len) ) == PAPI_OK ) {
+    	return 
+			_papi_hwi_prefix_component_name( _papi_hwd[cidx]->cmp_info.short_name, 
+											 hwi_name, hwi_name, len);
+	} else {
+		return (retval);
+	}
   }
   return PAPI_ENOEVNT;
 }
@@ -1984,11 +2066,12 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 	  SUBDBG("missing NTV_CODE_TO_INFO, faking\n");
 	  /* Fill in the info structure */
 
-	  retval = _papi_hwd[cidx]->ntv_code_to_name( 
+	  if ( (retval = _papi_hwd[cidx]->ntv_code_to_name( 
 				    _papi_hwi_eventcode_to_native(EventCode), 
 				    info->symbol,
-				    sizeof(info->symbol));
-	  if (retval!=PAPI_OK) {
+				    sizeof(info->symbol)) ) == PAPI_OK ) {
+
+	  } else {
 	     SUBDBG("failed ntv_code_to_name\n");
 	     return retval;
 	  }
@@ -2002,8 +2085,13 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 	  }
 
        }
+	   retval = _papi_hwi_prefix_component_name( 
+						_papi_hwd[cidx]->cmp_info.short_name, 
+						info->symbol,
+						info->symbol, 
+						sizeof(info->symbol) );
 
-       return PAPI_OK;
+       return retval;
     }
 
     return PAPI_ENOEVNT;
