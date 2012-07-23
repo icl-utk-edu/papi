@@ -46,7 +46,7 @@ int main (int argc, char **argv)
             test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n",-1);
         }
 
-        if ( strstr(cmpinfo->name, "appio.c") == NULL) {
+        if ( strstr(cmpinfo->name, "appio") == NULL) {
             continue;
         }
 

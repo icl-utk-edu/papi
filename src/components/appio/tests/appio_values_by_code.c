@@ -56,7 +56,7 @@ int main (int argc, char **argv)
                 cmpinfo->num_native_events, cmpinfo->name);
         }
 
-        if ( strstr(cmpinfo->name, "appio.c") == NULL) {
+        if ( strstr(cmpinfo->name, "appio") == NULL) {
             continue;
         }
 
