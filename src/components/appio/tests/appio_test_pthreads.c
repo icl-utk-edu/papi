@@ -113,8 +113,10 @@ int main(int argc, char** argv) {
   if (!TESTS_QUIET) printf("%d threads\n",numthrds);
   callThd = (pthread_t *)malloc(numthrds*sizeof(pthread_t));
 
+  int rc ;
   for (i=0;i<(numthrds-1);i++) {
-    pthread_create(callThd+i, &attr, ThreadIO, (void *) files[i]);
+    rc = pthread_create(callThd+i, &attr, ThreadIO, (void *) files[i]);
+    if (rc != 0) perror("Error creating thread using pthread_create()");
   }
   ThreadIO((void *)files[numthrds-1]);
   pthread_attr_destroy(&attr);

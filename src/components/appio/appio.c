@@ -149,6 +149,7 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
   return retval;
 }
 
+extern int errno;
 ssize_t __read(int fd, void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count) {
   int retval;
@@ -172,9 +173,9 @@ ssize_t read(int fd, void *buf, size_t count) {
   }
   if (retval < 0) { 
     _appio_register_current[READ_ERR]++; // read err
-    if (EINTR == retval)
+    if (EINTR == errno)
       _appio_register_current[READ_INTERRUPTED]++; // signal interrupted the read
-    if ((EAGAIN == retval) || (EWOULDBLOCK == retval)) 
+    if ((EAGAIN == errno) || (EWOULDBLOCK == errno)) 
       _appio_register_current[READ_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
   }
   if (retval == 0) _appio_register_current[READ_EOF]++; // read eof
