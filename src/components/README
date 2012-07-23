@@ -42,6 +42,7 @@ NOTE: there is no need to modify any PAPI code other than adding your tests and 
 example/  
 
 lmsensors/  
+The PAPI lmsensors component requires lmsensors version >= 3.0.0.
 
 lustre/  
 
