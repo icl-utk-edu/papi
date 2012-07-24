@@ -324,27 +324,7 @@ EventInfoArrayLength( const EventSetInfo_t * ESI )
 		return ( _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs );
 }
 
-static void
-initialize_EventInfoArray( EventSetInfo_t * ESI )
-{
-	int i, j, limit;
-	EventInfo_t tmp;
 
-	limit = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
-
-	/* This is an optimization */
-
-	memset( &tmp, 0x0, sizeof ( tmp ) );
-	tmp.event_code = ( unsigned int ) PAPI_NULL;
-	tmp.ops = NULL;
-	tmp.derived = NOT_DERIVED;
-	for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
-		tmp.pos[j] = -1;
-
-	for ( i = 0; i < limit; i++ ) {
-		memcpy( &ESI->EventInfoArray[i], &tmp, sizeof ( tmp ) );
-	}
-}
 
 
 static void
@@ -372,7 +352,7 @@ initialize_NativeInfoArray( EventSetInfo_t * ESI )
 		ESI->NativeInfoArray[i].ni_event = -1;
 		ESI->NativeInfoArray[i].ni_position = -1;
 		ESI->NativeInfoArray[i].ni_owners = 0;
-		ESI->NativeInfoArray[i].ni_bits = ( hwd_register_t * ) ptr;
+		ESI-N>ativeInfoArray[i].ni_bits = ( hwd_register_t * ) ptr;
 		ptr += sz;
 	}
 	ESI->NativeCount = 0;
@@ -381,119 +361,126 @@ initialize_NativeInfoArray( EventSetInfo_t * ESI )
 static int
 create_EventSet( EventSetInfo_t ** here )
 {
-	EventSetInfo_t *ESI;
+   EventSetInfo_t *ESI;
 
-	ESI = ( EventSetInfo_t * ) papi_malloc( sizeof ( EventSetInfo_t ) );
-	if ( ESI == NULL )
-		return PAPI_ENOMEM;
-	memset( ESI, 0x00, sizeof ( EventSetInfo_t ) );
+   ESI = ( EventSetInfo_t * ) papi_calloc( 1, sizeof ( EventSetInfo_t ) );
+   if ( ESI == NULL ) {
+      return PAPI_ENOMEM;
+   }
 
-	*here = ESI;
-	return PAPI_OK;
+   *here = ESI;
+
+   return PAPI_OK;
 }
 
 int
-_papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
+_papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
 {
-        int retval;
-	size_t max_counters;
-	char *ptr;
+   int retval;
+   size_t max_counters;
+   char *ptr;
+   unsigned int i, j;
 
-	/* If component doesn't exist... */
-	if (_papi_hwi_invalid_cmp(cidx)) return PAPI_ECMP;
+   /* If component doesn't exist... */
+   if (_papi_hwi_invalid_cmp(cidx)) return PAPI_ECMP;
 
-	/* Assigned at create time */
+   /* Assigned at create time */
+   ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
+   ESI->granularity.granularity =
+	                         _papi_hwd[cidx]->cmp_info.default_granularity;
+   ESI->CmpIdx = cidx;
 
-	ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
-	ESI->granularity.granularity =
-		_papi_hwd[cidx]->cmp_info.default_granularity;
-	ESI->CmpIdx = cidx;
+   /* ??? */
+   max_counters = ( size_t ) _papi_hwd[cidx]->cmp_info.num_mpx_cntrs;
 
-	max_counters = ( size_t ) _papi_hwd[cidx]->cmp_info.num_mpx_cntrs;
-	ESI->ctl_state =
-		( hwd_control_state_t * ) papi_malloc( ( size_t ) _papi_hwd[cidx]->size.
-											   control_state );
-	ESI->sw_stop =
-		( long long * ) papi_malloc( ( size_t ) max_counters *
-									 sizeof ( long long ) );
-	ESI->hw_start =
-		( long long * ) papi_malloc( ( size_t ) max_counters *
-									 sizeof ( long long ) );
-	ESI->EventInfoArray =
-		( EventInfo_t * ) papi_malloc( ( size_t ) max_counters *
-									   sizeof ( EventInfo_t ) );
-/* allocate room for the native events and for the component-private register structures */
-/* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
-/* ugh is there a cleaner way to allocate this?  vmw */
-	ESI->NativeInfoArray = ( NativeInfo_t * ) 
+   ESI->ctl_state = (hwd_control_state_t *) papi_calloc( 1, (size_t) 
+				   _papi_hwd[cidx]->size.control_state );
+   ESI->sw_stop = (long long *) papi_calloc( ( size_t ) max_counters,
+						      sizeof ( long long ) );
+   ESI->hw_start = ( long long * ) papi_calloc( ( size_t ) max_counters,
+                                                      sizeof ( long long ) );
+   ESI->EventInfoArray = ( EventInfo_t * ) papi_calloc( (size_t) max_counters,
+                                                      sizeof ( EventInfo_t ) );
+
+   /* allocate room for the native events and for the component-private */
+   /* register structures */
+   /* ugh is there a cleaner way to allocate this?  vmw */
+   ESI->NativeInfoArray = ( NativeInfo_t * ) 
              papi_malloc( ( size_t ) max_counters * sizeof ( NativeInfo_t ) +
 			  ( size_t ) max_counters * ( size_t ) _papi_hwd[cidx]->size.reg_value );
 
-	/* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
-	ESI->overflow.deadline = ( long long * )
+   /* NOTE: the next two malloc allocate blocks of memory that are later */
+   /* parcelled into overflow and profile arrays                         */
+   ESI->overflow.deadline = ( long long * )
 		papi_malloc( ( sizeof ( long long ) +
 					   sizeof ( int ) * 3 ) * ( size_t ) max_counters );
-	ESI->profile.prof = ( PAPI_sprofil_t ** )
+
+   ESI->profile.prof = ( PAPI_sprofil_t ** )
 		papi_malloc( ( sizeof ( PAPI_sprofil_t * ) * ( size_t ) max_counters +
 					   ( size_t ) max_counters * sizeof ( int ) * 4 ) );
 
-	if ( ( ESI->ctl_state == NULL ) ||
-		 ( ESI->sw_stop == NULL ) || ( ESI->hw_start == NULL ) ||
-		 ( ESI->NativeInfoArray == NULL ) || ( ESI->EventInfoArray == NULL ) ||
-		 ( ESI->profile.prof == NULL ) || ( ESI->overflow.deadline == NULL ) ) {
-		if ( ESI->sw_stop )
-			papi_free( ESI->sw_stop );
-		if ( ESI->hw_start )
-			papi_free( ESI->hw_start );
-		if ( ESI->EventInfoArray )
-			papi_free( ESI->EventInfoArray );
-		if ( ESI->NativeInfoArray )
-			papi_free( ESI->NativeInfoArray );
-		if ( ESI->ctl_state )
-			papi_free( ESI->ctl_state );
-		if ( ESI->overflow.deadline )
-			papi_free( ESI->overflow.deadline );
-		if ( ESI->profile.prof )
-			papi_free( ESI->profile.prof );
-		papi_free( ESI );
-		return ( PAPI_ENOMEM );
-	}
-	memset( ESI->sw_stop, 0x00, max_counters * sizeof ( long long ) );
-	memset( ESI->hw_start, 0x00, max_counters * sizeof ( long long ) );
-	memset( ESI->ctl_state, 0x00,
-			( size_t ) _papi_hwd[cidx]->size.control_state );
+   /* If any of these allocations failed, free things up and fail */
 
-	/* Carve up the overflow block into separate arrays */
-	ptr = ( char * ) ESI->overflow.deadline;
-	ptr += sizeof ( long long ) * max_counters;
-	ESI->overflow.threshold = ( int * ) ptr;
-	ptr += sizeof ( int ) * max_counters;
-	ESI->overflow.EventIndex = ( int * ) ptr;
-	ptr += sizeof ( int ) * max_counters;
-	ESI->overflow.EventCode = ( int * ) ptr;
+   if ( ( ESI->ctl_state == NULL ) ||
+	( ESI->sw_stop == NULL )   || 
+        ( ESI->hw_start == NULL )  ||
+	( ESI->NativeInfoArray == NULL ) || 
+        ( ESI->EventInfoArray == NULL )  ||
+	( ESI->profile.prof == NULL ) || 
+        ( ESI->overflow.deadline == NULL ) ) {
 
-	/* Carve up the profile block into separate arrays */
-	ptr =
-		( char * ) ESI->profile.prof +
+      if ( ESI->sw_stop ) papi_free( ESI->sw_stop );
+      if ( ESI->hw_start ) papi_free( ESI->hw_start );
+      if ( ESI->EventInfoArray ) papi_free( ESI->EventInfoArray );
+      if ( ESI->NativeInfoArray ) papi_free( ESI->NativeInfoArray );
+      if ( ESI->ctl_state ) papi_free( ESI->ctl_state );
+      if ( ESI->overflow.deadline ) papi_free( ESI->overflow.deadline );
+      if ( ESI->profile.prof ) papi_free( ESI->profile.prof );
+      papi_free( ESI );
+      return PAPI_ENOMEM;
+   }
+
+
+   /* Carve up the overflow block into separate arrays */
+   ptr = ( char * ) ESI->overflow.deadline;
+   ptr += sizeof ( long long ) * max_counters;
+   ESI->overflow.threshold = ( int * ) ptr;
+   ptr += sizeof ( int ) * max_counters;
+   ESI->overflow.EventIndex = ( int * ) ptr;
+   ptr += sizeof ( int ) * max_counters;
+   ESI->overflow.EventCode = ( int * ) ptr;
+
+   /* Carve up the profile block into separate arrays */
+   ptr = ( char * ) ESI->profile.prof +
 		( sizeof ( PAPI_sprofil_t * ) * max_counters );
-	ESI->profile.count = ( int * ) ptr;
-	ptr += sizeof ( int ) * max_counters;
-	ESI->profile.threshold = ( int * ) ptr;
-	ptr += sizeof ( int ) * max_counters;
-	ESI->profile.EventIndex = ( int * ) ptr;
-	ptr += sizeof ( int ) * max_counters;
-	ESI->profile.EventCode = ( int * ) ptr;
+   ESI->profile.count = ( int * ) ptr;
+   ptr += sizeof ( int ) * max_counters;
+   ESI->profile.threshold = ( int * ) ptr;
+   ptr += sizeof ( int ) * max_counters;
+   ESI->profile.EventIndex = ( int * ) ptr;
+   ptr += sizeof ( int ) * max_counters;
+   ESI->profile.EventCode = ( int * ) ptr;
 
-	initialize_EventInfoArray( ESI );
-	initialize_NativeInfoArray( ESI );
+   /* initialize_EventInfoArray */
 
-	ESI->state = PAPI_STOPPED;
+   for ( i = 0; i < max_counters; i++ ) {
+       ESI->EventInfoArray[i].event_code=( unsigned int ) PAPI_NULL;
+       ESI->EventInfoArray[i].ops = NULL;
+       ESI->EventInfoArray[i].derived=NOT_DERIVED;
+       for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ ) {
+	   ESI->EventInfoArray[i].pos[j] = -1;
+       }
+   }
 
-	/* these used to be init_config */
-	retval = _papi_hwd[cidx]->init_control_state( ESI->ctl_state );	
-	retval |= _papi_hwd[cidx]->set_domain( ESI->ctl_state, ESI->domain.domain);
+   initialize_NativeInfoArray( ESI );
 
-	return retval;
+   ESI->state = PAPI_STOPPED;
+
+   /* these used to be init_config */
+   retval = _papi_hwd[cidx]->init_control_state( ESI->ctl_state );	
+   retval |= _papi_hwd[cidx]->set_domain( ESI->ctl_state, ESI->domain.domain);
+
+   return retval;
 }
 
 /*========================================================================*/
