@@ -1,10 +1,10 @@
 PAPI_SRCDIR = $(PWD)	
 CFLAGS += $(EXTRA_CFLAGS)
-SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
+SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
     threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT).c papi_preset.c \
     papi_vector.c papi_memory.c papi_user_events.c $(COMPSRCS)
-OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
+OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o sw_multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT).o papi_preset.o \
     papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
@@ -12,7 +12,7 @@ HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h \
 	papiStdEventDefs.h\
 	papi_preset.h threads.h cpus.h papi_vector.h \
 	papi_memory.h config.h papi_user_events.h \
-	extras.h multiplex.h papi_hl.h \
+	extras.h sw_multiplex.h papi_hl.h \
 	papi_common_strings.h components_config.h \
 	papi_events_table.h
 LIBCFLAGS += -I. $(CFLAGS) -DOSLOCK=\"$(OSLOCK)\" -DOSCONTEXT=\"$(OSCONTEXT)\"
@@ -144,8 +144,8 @@ papi_vector.o: papi_vector.c $(HEADERS)
 papi_preset.o: papi_preset.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_preset.c -o papi_preset.o 
 
-multiplex.o: multiplex.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o 
+sw_multiplex.o: sw_multiplex.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sw_multiplex.c -o sw_multiplex.o 
 
 $(CPUCOMPONENT).o: $(CPUCOMPONENT).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPUCOMPONENT).c -o $(CPUCOMPONENT).o 

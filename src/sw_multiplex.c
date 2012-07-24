@@ -1,5 +1,5 @@
 /** 
- * @file    multiplex.c
+ * @file    sw_multiplex.c
  * @author  Philip Mucci
  *          mucci@cs.utk.edu
  * @author  John May

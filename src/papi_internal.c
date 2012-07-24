@@ -37,7 +37,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
-#include "multiplex.h"
+#include "sw_multiplex.h"
 #include "extras.h"
 #include "papi_preset.h"
 

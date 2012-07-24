@@ -247,7 +247,8 @@ typedef struct _threadlist {
    struct _threadlist *next;
 } Threadlist;
 
-#include "multiplex.h"
+/* Ugh, should move this out and into all callers of papi_internal.h */
+#include "sw_multiplex.h"
 
 /** Opaque struct, not defined yet...due to threads.h <-> papi_internal.h 
  @internal */
