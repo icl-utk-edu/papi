@@ -307,6 +307,16 @@ expand_dynamic_array( DynamicArray_t * DA )
 	return ( PAPI_OK );
 }
 
+static int
+EventInfoArrayLength( const EventSetInfo_t * ESI )
+{
+   return ( _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs );
+}
+
+
+
+
+
 /*========================================================================*/
 /* This function allocates space for one EventSetInfo_t structure and for */
 /* all of the pointers in this structure.  If any malloc in this function */
@@ -314,15 +324,6 @@ expand_dynamic_array( DynamicArray_t * DA )
 /* is returned.  Upon success, a pointer to the EventSetInfo_t data       */
 /* structure is returned.                                                 */
 /*========================================================================*/
-
-static int
-EventInfoArrayLength( const EventSetInfo_t * ESI )
-{
-	if ( ESI->state & PAPI_MULTIPLEXING )
-		return ( _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs );
-	else
-		return ( _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs );
-}
 
 
 static int
@@ -815,14 +816,7 @@ add_native_events( EventSetInfo_t *ESI, unsigned int *nevt,
    int max_counters;
    hwd_context_t *context;
 
-   /* Do we need this check?  -- vmw */
-   if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
-      max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
-   }
-   else {
-      max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs;
-   }
-
+   max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
 
    /* Walk through the list of native events, adding them */
    for( i = 0; i < size; i++ ) {
