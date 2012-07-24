@@ -316,8 +316,7 @@ createNativeEvents( void )
 				  eventId++ ) {
 				/* Save native event data */
 				sprintf( cuda_native_table[id].name,
-						 "%s.%s.%s.%s",
-						 _cuda_vector.cmp_info.short_name,
+						 "%s:%s:%s",
 						 device[deviceId].name,
 						 device[deviceId].domain[domainId].name,
 						 device[deviceId].domain[domainId].event[eventId].

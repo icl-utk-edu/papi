@@ -45,7 +45,7 @@ int main (int argc, char **argv)
 	      test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
 	   }
 
-	   if (strstr(cmpinfo->name,"linux-mx")) {
+	   if (strstr(cmpinfo->name,"mx")) {
 	     if (!TESTS_QUIET) printf("\tFound Myrinet component %d - %s\n", cid, cmpinfo->name);
 	     our_cmp=cid;
 	     break;
@@ -70,7 +70,7 @@ int main (int argc, char **argv)
                               "PAPI_create_eventset()",retval);
 	}
 
-	retval=PAPI_event_name_to_code("COUNTERS_UPTIME",&code);
+	retval=PAPI_event_name_to_code("mx:::COUNTERS_UPTIME",&code);
 	if (retval!=PAPI_OK) {
            test_fail(__FILE__, __LINE__, 
                               "could not add event COUNTERS_UPTIME",retval);
@@ -82,7 +82,7 @@ int main (int argc, char **argv)
                                  "PAPI_add_event()",retval);
 	}
 
-	retval=PAPI_event_name_to_code("PUSH_OBSOLETE",&code);
+	retval=PAPI_event_name_to_code("mx:::PUSH_OBSOLETE",&code);
 	if (retval!=PAPI_OK) {
            test_fail(__FILE__, __LINE__, 
                               "could not add event PUSH_OBSOLETE",retval);
@@ -94,7 +94,7 @@ int main (int argc, char **argv)
                                  "PAPI_add_event()",retval);
 	}
 
-	retval=PAPI_event_name_to_code("PKT_MISROUTED",&code);
+	retval=PAPI_event_name_to_code("mx:::PKT_MISROUTED",&code);
 	if (retval!=PAPI_OK) {
            test_fail(__FILE__, __LINE__, 
                               "could not add event PKT_MISROUTED",retval);

@@ -615,19 +615,19 @@ createNativeEvents( )
 
 
 						if ( HAS_FEATURE( features[i], FEATURE_CLOCK_INFO ) ) {
-								sprintf( entry->name, "NVML.%s.graphics_clock", sanitized_name );
+								sprintf( entry->name, "%s:graphics_clock", sanitized_name );
 								strncpy(entry->description,"Graphics clock domain (MHz).", PAPI_MAX_STR_LEN );
 								entry->options.clock = NVML_CLOCK_GRAPHICS;
 								entry->type = FEATURE_CLOCK_INFO;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.sm_clock", sanitized_name);
+								sprintf( entry->name, "%s:sm_clock", sanitized_name);
 								strncpy(entry->description,"SM clock domain (MHz).", PAPI_MAX_STR_LEN);
 								entry->options.clock = NVML_CLOCK_SM;
 								entry->type = FEATURE_CLOCK_INFO;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.memory_clock", sanitized_name);
+								sprintf( entry->name, "%s:memory_clock", sanitized_name);
 								strncpy(entry->description,"Memory clock domain (MHz).", PAPI_MAX_STR_LEN);
 								entry->options.clock = NVML_CLOCK_MEM;
 								entry->type = FEATURE_CLOCK_INFO;
@@ -635,7 +635,7 @@ createNativeEvents( )
 						}	
 
 						if ( HAS_FEATURE( features[i], FEATURE_ECC_LOCAL_ERRORS ) ) { 
-								sprintf(entry->name, "NVML.%s.l1_single_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:l1_single_ecc_errors", sanitized_name);
 								strncpy(entry->description,"L1 cache single bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_SINGLE_BIT_ECC,
@@ -644,7 +644,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_LOCAL_ERRORS;
 								entry++;
 
-								sprintf(entry->name, "NVML.%s.l2_single_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:l2_single_ecc_errors", sanitized_name);
 								strncpy(entry->description,"L2 cache single bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_SINGLE_BIT_ECC,
@@ -653,7 +653,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_LOCAL_ERRORS;
 								entry++;
 
-								sprintf(entry->name, "NVML.%s.memory_single_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:memory_single_ecc_errors", sanitized_name);
 								strncpy(entry->description,"Device memory single bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_SINGLE_BIT_ECC,
@@ -662,7 +662,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_LOCAL_ERRORS;
 								entry++;
 
-								sprintf(entry->name, "NVML.%s.regfile_single_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:regfile_single_ecc_errors", sanitized_name);
 								strncpy(entry->description,"Register file single bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_SINGLE_BIT_ECC,
@@ -671,7 +671,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_LOCAL_ERRORS;
 								entry++;
 
-								sprintf(entry->name, "NVML.%s.1l_double_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:1l_double_ecc_errors", sanitized_name);
 								strncpy(entry->description,"L1 cache double bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_DOUBLE_BIT_ECC,
@@ -680,7 +680,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_LOCAL_ERRORS;
 								entry++;
 
-								sprintf(entry->name, "NVML.%s.l2_double_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:l2_double_ecc_errors", sanitized_name);
 								strncpy(entry->description,"L2 cache double bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_DOUBLE_BIT_ECC,
@@ -689,7 +689,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_LOCAL_ERRORS;
 								entry++;
 
-								sprintf(entry->name, "NVML.%s.memory_double_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:memory_double_ecc_errors", sanitized_name);
 								strncpy(entry->description,"Device memory double bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_DOUBLE_BIT_ECC,
@@ -698,7 +698,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_LOCAL_ERRORS;
 								entry++;
 
-								sprintf(entry->name, "NVML.%s.regfile_double_ecc_errors", sanitized_name);
+								sprintf(entry->name, "%s:regfile_double_ecc_errors", sanitized_name);
 								strncpy(entry->description,"Register file double bit ECC", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){
 										.bits = NVML_DOUBLE_BIT_ECC,
@@ -709,26 +709,26 @@ createNativeEvents( )
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_FAN_SPEED ) ) {
-								sprintf( entry->name, "NVML.%s.fan_speed", sanitized_name);
+								sprintf( entry->name, "%s:fan_speed", sanitized_name);
 								strncpy(entry->description,"The fan speed expressed as a percent of the maximum, i.e. full speed is 100%", PAPI_MAX_STR_LEN);
 								entry->type = FEATURE_FAN_SPEED;
 								entry++;
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_MAX_CLOCK ) ) {
-								sprintf( entry->name, "NVML.%s.graphics_max_clock", sanitized_name);
+								sprintf( entry->name, "%s:graphics_max_clock", sanitized_name);
 								strncpy(entry->description,"Maximal Graphics clock domain (MHz).", PAPI_MAX_STR_LEN);
 								entry->options.clock = NVML_CLOCK_GRAPHICS;
 								entry->type = FEATURE_MAX_CLOCK;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.sm_max_clock", sanitized_name);
+								sprintf( entry->name, "%s:sm_max_clock", sanitized_name);
 								strncpy(entry->description,"Maximal SM clock domain (MHz).", PAPI_MAX_STR_LEN);
 								entry->options.clock = NVML_CLOCK_SM;
 								entry->type = FEATURE_MAX_CLOCK;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.memory_max_clock", sanitized_name);
+								sprintf( entry->name, "%s:memory_max_clock", sanitized_name);
 								strncpy(entry->description,"Maximal Memory clock domain (MHz).", PAPI_MAX_STR_LEN);
 								entry->options.clock = NVML_CLOCK_MEM;
 								entry->type = FEATURE_MAX_CLOCK;
@@ -736,19 +736,19 @@ createNativeEvents( )
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_MEMORY_INFO ) ) {
-								sprintf( entry->name, "NVML.%s.total_memory", sanitized_name);
+								sprintf( entry->name, "%s:total_memory", sanitized_name);
 								strncpy(entry->description,"Total installed FB memory (in bytes).", PAPI_MAX_STR_LEN);
 								entry->options.which_one = MEMINFO_TOTAL_MEMORY;
 								entry->type = FEATURE_MEMORY_INFO;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.unallocated_memory", sanitized_name);
+								sprintf( entry->name, "%s:unallocated_memory", sanitized_name);
 								strncpy(entry->description,"Uncallocated FB memory (in bytes).", PAPI_MAX_STR_LEN);
 								entry->options.which_one = MEMINFO_UNALLOCED;
 								entry->type = FEATURE_MEMORY_INFO;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.allocated_memory", sanitized_name);
+								sprintf( entry->name, "%s:allocated_memory", sanitized_name);
 								strncpy(entry->description,	"Allocated FB memory (in bytes). Note that the driver/GPU always sets aside a small amount of memory for bookkeeping.", PAPI_MAX_STR_LEN);
 								entry->options.which_one = MEMINFO_ALLOCED;
 								entry->type = FEATURE_MEMORY_INFO;
@@ -756,28 +756,28 @@ createNativeEvents( )
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_PERF_STATES ) ) {
-								sprintf( entry->name, "NVML.%s.pstate", sanitized_name);
+								sprintf( entry->name, "%s:pstate", sanitized_name);
 								strncpy(entry->description,"The performance state of the device.", PAPI_MAX_STR_LEN);
 								entry->type = FEATURE_PERF_STATES;
 								entry++;
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_POWER ) ) {
-								sprintf( entry->name, "NVML.%s.power", sanitized_name);
+								sprintf( entry->name, "%s:power", sanitized_name);
 								strncpy(entry->description,"Power usage reading for the device, in miliwatts. This is the power draw for the entire board, including GPU, memory, etc.\n The reading is accurate to within a range of +/-5 watts.", PAPI_MAX_STR_LEN);
 								entry->type = FEATURE_POWER;
 								entry++;
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_TEMP ) ) {
-								sprintf( entry->name, "NVML.%s.temperature", sanitized_name);
+								sprintf( entry->name, "%s:temperature", sanitized_name);
 								strncpy(entry->description,"Current temperature readings for the device, in degrees C.", PAPI_MAX_STR_LEN);
 								entry->type = FEATURE_TEMP;
 								entry++;
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_ECC_TOTAL_ERRORS ) ) {
-								sprintf( entry->name, "NVML.%s.total_ecc_errors", sanitized_name);
+								sprintf( entry->name, "%s:total_ecc_errors", sanitized_name);
 								strncpy(entry->description,"Total single bit errors.", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){ 
 										.bits = NVML_SINGLE_BIT_ECC, 
@@ -785,7 +785,7 @@ createNativeEvents( )
 								entry->type = FEATURE_ECC_TOTAL_ERRORS;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.total_ecc_errors", sanitized_name);
+								sprintf( entry->name, "%s:total_ecc_errors", sanitized_name);
 								strncpy(entry->description,"Total double bit errors.", PAPI_MAX_STR_LEN);
 								entry->options.ecc_opts = (struct local_ecc){ 
 										.bits = NVML_DOUBLE_BIT_ECC, 
@@ -795,13 +795,13 @@ createNativeEvents( )
 						}
 
 						if ( HAS_FEATURE( features[i], FEATURE_UTILIZATION ) ) {
-								sprintf( entry->name, "NVML.%s.gpu_utilization", sanitized_name);
+								sprintf( entry->name, "%s:gpu_utilization", sanitized_name);
 								strncpy(entry->description,"Percent of time over the past second during which one or more kernels was executing on the GPU.", PAPI_MAX_STR_LEN);
 								entry->options.which_one = GPU_UTILIZATION;
 								entry->type = FEATURE_UTILIZATION;
 								entry++;
 
-								sprintf( entry->name, "NVML.%s.memory_utilization", sanitized_name);
+								sprintf( entry->name, "%s:memory_utilization", sanitized_name);
 								strncpy(entry->description,"Percent of time over the past second during which global (device) memory was being read or written.", PAPI_MAX_STR_LEN);
 								entry->options.which_one = MEMORY_UTILIZATION;
 								entry->type = FEATURE_UTILIZATION;

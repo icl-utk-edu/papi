@@ -114,7 +114,7 @@ int main (int argc, char **argv)
 	   test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
 	}
 
-	if (strstr(cmpinfo->name,"linux-rapl")) {
+	if (strstr(cmpinfo->name,"rapl")) {
 	   rapl_cid=cid;
 	   if (!TESTS_QUIET) printf("Found rapl component at cid %d\n",
 				    rapl_cid);

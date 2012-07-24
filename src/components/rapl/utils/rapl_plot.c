@@ -12,12 +12,12 @@
 #define NUM_EVENTS 6
 
 char events[NUM_EVENTS][BUFSIZ]={
-  "PACKAGE_ENERGY:PACKAGE0",
-  "PACKAGE_ENERGY:PACKAGE1",
-  "DRAM_ENERGY:PACKAGE0",
-  "DRAM_ENERGY:PACKAGE1",
-  "PP0_ENERGY:PACKAGE0",
-  "PP0_ENERGY:PACKAGE1",
+  "rapl:::PACKAGE_ENERGY:PACKAGE0",
+  "rapl:::PACKAGE_ENERGY:PACKAGE1",
+  "rapl:::DRAM_ENERGY:PACKAGE0",
+  "rapl:::DRAM_ENERGY:PACKAGE1",
+  "rapl:::PP0_ENERGY:PACKAGE0",
+  "rapl:::PP0_ENERGY:PACKAGE1",
 };
 
 char filenames[NUM_EVENTS][BUFSIZ]={
@@ -61,7 +61,7 @@ int main (int argc, char **argv)
 	   exit(1);
 	}
 
-	if (strstr(cmpinfo->name,"linux-rapl")) {
+	if (strstr(cmpinfo->name,"rapl")) {
 	   rapl_cid=cid;
 	   printf("Found rapl component at cid %d\n", rapl_cid);
 

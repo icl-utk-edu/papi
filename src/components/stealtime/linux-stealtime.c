@@ -181,12 +181,12 @@ _stealtime_init_component( int cidx )
 
 	
 	sysconf(_SC_CLK_TCK);
-	event_info[0].name=strdup("STEAL_TIME:TOTAL");
+	event_info[0].name=strdup("TOTAL");
 	event_info[0].description=strdup("Total amount of steal time");
 	event_info[0].units=strdup("us");
 
 	for(i=1;i<num_events;i++) {
-	   sprintf(string,"STEAL_TIME:CPU%d",i);
+	   sprintf(string,"CPU%d",i);
 	   event_info[i].name=strdup(string);
 	   sprintf(string,"Steal time for CPU %d",i);
 	   event_info[i].description=strdup(string);

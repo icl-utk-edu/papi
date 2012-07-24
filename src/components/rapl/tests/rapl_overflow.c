@@ -86,7 +86,7 @@ main( int argc, char **argv )
 	    test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
 	  }
 
-	  if (strstr(cmpinfo->name,"linux-rapl")) {
+	  if (strstr(cmpinfo->name,"rapl")) {
 	    rapl_cid=cid;
 	    if (!TESTS_QUIET) printf("Found rapl component at cid %d\n",
 				     rapl_cid);
@@ -125,12 +125,12 @@ main( int argc, char **argv )
 	   test_fail(__FILE__, __LINE__,"PAPI_create_eventset",retval);
 	}
 
-        retval=PAPI_add_named_event(EventSet2,"PACKAGE_ENERGY:PACKAGE0");
+        retval=PAPI_add_named_event(EventSet2,"rapl:::PACKAGE_ENERGY:PACKAGE0");
 	if ( retval != PAPI_OK ) {
 	   test_fail(__FILE__, __LINE__,"PAPI_add_event",retval);
 	}
 
-        retval=PAPI_add_named_event(EventSet2,"PACKAGE_ENERGY:PACKAGE1");
+        retval=PAPI_add_named_event(EventSet2,"rapl:::PACKAGE_ENERGY:PACKAGE1");
 	if ( retval != PAPI_OK ) {
 	   test_fail(__FILE__, __LINE__,"PAPI_add_event",retval);
 	}

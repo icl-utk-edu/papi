@@ -75,23 +75,23 @@ static const struct net_counters {
     char *description;
 } _net_counter_info[NET_INTERFACE_COUNTERS] = {
     /* Receive */
-    { "rx.bytes",      "receive bytes"},
-    { "rx.packets",    "receive packets"},
-    { "rx.errors",     "receive errors"},
-    { "rx.dropped",    "receive dropped"},
-    { "rx.fifo",       "receive fifo"},
-    { "rx.frame",      "receive frame"},
-    { "rx.compressed", "receive compressed"},
-    { "rx.multicast",  "receive multicast"},
+    { "rx:bytes",      "receive bytes"},
+    { "rx:packets",    "receive packets"},
+    { "rx:errors",     "receive errors"},
+    { "rx:dropped",    "receive dropped"},
+    { "rx:fifo",       "receive fifo"},
+    { "rx:frame",      "receive frame"},
+    { "rx:compressed", "receive compressed"},
+    { "rx:multicast",  "receive multicast"},
     /* Transmit */
-    { "tx.bytes",      "transmit bytes"},
-    { "tx.packets",    "transmit packets"},
-    { "tx.errors",     "transmit errors"},
-    { "tx.dropped",    "transmit dropped"},
-    { "tx.fifo",       "transmit fifo"},
-    { "tx.colls",      "transmit colls"},
-    { "tx.carrier",    "transmit carrier"},
-    { "tx.compressed", "transmit compressed"},
+    { "tx:bytes",      "transmit bytes"},
+    { "tx:packets",    "transmit packets"},
+    { "tx:errors",     "transmit errors"},
+    { "tx:dropped",    "transmit dropped"},
+    { "tx:fifo",       "transmit fifo"},
+    { "tx:colls",      "transmit colls"},
+    { "tx:carrier",    "transmit carrier"},
+    { "tx:compressed", "transmit compressed"},
 };
 
 
@@ -166,7 +166,7 @@ generateNetEventList( void )
             }
             last = temp;
 
-            snprintf(temp->name, PAPI_MAX_STR_LEN, "%s.%s",
+            snprintf(temp->name, PAPI_MAX_STR_LEN, "%s:%s",
                     ifname, _net_counter_info[j].name);
             snprintf(temp->description, PAPI_MAX_STR_LEN, "%s %s",
                     ifname, _net_counter_info[j].description);

@@ -55,7 +55,7 @@ int main (int argc, char **argv)
                 cmpinfo->num_native_events, cmpinfo->name);
         }
 
-        if ( strstr(cmpinfo->name, "linux-net.c") == NULL) {
+        if ( strstr(cmpinfo->name, "net") == NULL) {
             continue;
         }
 

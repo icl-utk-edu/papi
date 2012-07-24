@@ -180,7 +180,7 @@ generateEventList(char *base_dir)
 	     if (fff==NULL) continue;
 	     fclose(fff);
 
-	     snprintf(name, PAPI_MAX_STR_LEN, "%s.in%i_input", 
+	     snprintf(name, PAPI_MAX_STR_LEN, "%s:in%i_input", 
 			 hwmonx->d_name, i);
 	     snprintf(units, PAPI_MIN_STR_LEN, "V");
 	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
@@ -222,7 +222,7 @@ generateEventList(char *base_dir)
 	     if (fff==NULL) continue;
 	     fclose(fff);
 
-	     snprintf(name, PAPI_MAX_STR_LEN, "%s.temp%i_input", 
+	     snprintf(name, PAPI_MAX_STR_LEN, "%s:temp%i_input", 
 			 hwmonx->d_name, i);
 	     snprintf(units, PAPI_MIN_STR_LEN, "degrees C");
 	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
@@ -263,7 +263,7 @@ generateEventList(char *base_dir)
 	     if (fff==NULL) continue;
 	     fclose(fff);
 
-	     snprintf(name, PAPI_MAX_STR_LEN, "%s.fan%i_input", 
+	     snprintf(name, PAPI_MAX_STR_LEN, "%s:fan%i_input", 
 			 hwmonx->d_name, i);
 	     snprintf(units, PAPI_MIN_STR_LEN, "RPM");
 	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",

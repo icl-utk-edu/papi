@@ -28,10 +28,10 @@ int main (int argc, char **argv)
     int i, retval;
     int EventSet = PAPI_NULL;
     char *event_name[NUM_EVENTS] = {
-        IFNAME ".rx.bytes",
-        IFNAME ".rx.packets",
-        IFNAME ".tx.bytes",
-        IFNAME ".tx.packets",
+        IFNAME ":rx:bytes",
+        IFNAME ":rx:packets",
+        IFNAME ":tx:bytes",
+        IFNAME ":tx:packets",
     };
     int event_code[NUM_EVENTS] = { 0, 0, 0, 0};
     long long event_value[NUM_EVENTS];

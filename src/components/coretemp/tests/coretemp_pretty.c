@@ -51,7 +51,7 @@ int main (int argc, char **argv)
 	   test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
 	}
 
-	if (strstr(cmpinfo->name,"linux-coretemp")) {
+	if (strstr(cmpinfo->name,"coretemp")) {
 	   coretemp_cid=cid;
 	   if (!TESTS_QUIET) printf("Found coretemp component at cid %d\n",
 				    coretemp_cid);

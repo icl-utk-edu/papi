@@ -619,7 +619,7 @@ _vmware_init_component( int cidx )
 
 	/* fill in the event table parameters */
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_CPU_LIMIT" );
+		"CPU_LIMIT" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the upper limit of processor use in MHz "
 		"available to the virtual machine.",
@@ -631,7 +631,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_CPU_RESERVATION" );
+		"CPU_RESERVATION" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the minimum processing power in MHz "
 		"reserved for the virtual machine.",
@@ -643,7 +643,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_CPU_SHARES" );
+		"CPU_SHARES" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the number of CPU shares allocated "
 		"to the virtual machine.",
@@ -655,7 +655,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_CPU_STOLEN" );
+		"CPU_STOLEN" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the number of milliseconds that the "
 		"virtual machine was in a ready state (able to "
@@ -668,7 +668,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_CPU_USED" );
+		"CPU_USED" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the number of milliseconds during which "
 		"the virtual machine has used the CPU. This value "
@@ -686,7 +686,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_ELAPSED" );
+		"ELAPSED" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the number of milliseconds that have passed "
 		"in the virtual machine since it last started running on "
@@ -706,7 +706,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_ACTIVE" );
+		"MEM_ACTIVE" );
 	strncpy( _vmware_native_table[num_events].description,
 		 "Retrieves the amount of memory the virtual machine is "
 		 "actively using in MB - Its estimated working set size.",
@@ -718,7 +718,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_BALLOONED" );
+		"MEM_BALLOONED" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the amount of memory that has been reclaimed "
 		"from this virtual machine by the vSphere memory balloon "
@@ -731,7 +731,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_LIMIT" );
+		"MEM_LIMIT" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the upper limit of memory that is available "
 		"to the virtual machine in MB.",
@@ -743,7 +743,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_MAPPED" );
+		"MEM_MAPPED" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the amount of memory that is allocated to "
 		"the virtual machine in MB. Memory that is ballooned, "
@@ -756,7 +756,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_OVERHEAD" );
+		"MEM_OVERHEAD" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the amount of 'overhead' memory associated "
 		"with this virtual machine that is currently consumed "
@@ -771,7 +771,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_RESERVATION" );
+		"MEM_RESERVATION" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the minimum amount of memory that is "
 		"reserved for the virtual machine in MB.",
@@ -783,7 +783,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_SHARED" );
+		"MEM_SHARED" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the amount of physical memory associated "
 		"with this virtual machine that is copy-on-write (COW) "
@@ -796,7 +796,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_SHARES" );
+		"MEM_SHARES" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the number of memory shares allocated to "
 		"the virtual machine.",
@@ -808,7 +808,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_SWAPPED" );
+		"MEM_SWAPPED" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the amount of memory that has been reclaimed "
 		"from this virtual machine by transparently swapping "
@@ -821,7 +821,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_TARGET_SIZE" );
+		"MEM_TARGET_SIZE" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the size of the target memory allocation "
 		"for this virtual machine in MB.",
@@ -833,7 +833,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_MEM_USED" );
+		"MEM_USED" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the estimated amount of physical host memory "
 		"currently consumed for this virtual machine's "
@@ -846,7 +846,7 @@ _vmware_init_component( int cidx )
 	num_events++;
 
 	strcpy( _vmware_native_table[num_events].name,
-		"VMWARE_HOST_CPU" );
+		"HOST_CPU" );
 	strncpy( _vmware_native_table[num_events].description,
 		"Retrieves the speed of the ESX system's physical "
 		"CPU in MHz.",
@@ -866,7 +866,7 @@ _vmware_init_component( int cidx )
 	        use_pseudo=1;
 
 		strcpy( _vmware_native_table[num_events].name,
-			"VMWARE_HOST_TSC" );
+			"HOST_TSC" );
 		strncpy( _vmware_native_table[num_events].description,
 			"Physical host TSC",
 			PAPI_HUGE_STR_LEN );
@@ -877,7 +877,7 @@ _vmware_init_component( int cidx )
 		num_events++;
 
 		strcpy( _vmware_native_table[num_events].name,
-			"VMWARE_ELAPSED_TIME" );
+			"ELAPSED_TIME" );
 		strncpy( _vmware_native_table[num_events].description,
 			"Elapsed real time in ns.",
 			PAPI_HUGE_STR_LEN );
@@ -888,7 +888,7 @@ _vmware_init_component( int cidx )
 		num_events++;
 
 		strcpy( _vmware_native_table[num_events].name,
-			"VMWARE_ELAPSED_APPARENT" );
+			"ELAPSED_APPARENT" );
 		strncpy( _vmware_native_table[num_events].description,
 			"Elapsed apparent time in ns.",
 			PAPI_HUGE_STR_LEN );

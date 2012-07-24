@@ -47,7 +47,7 @@ int main (int argc, char **argv)
 	      test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
 	   }
 
-	   if (strstr(cmpinfo->name,"linux-mx")) {
+	   if (strstr(cmpinfo->name,"mx")) {
 	     if (!TESTS_QUIET) printf("\tFound Myrinet component %d - %s\n", cid, cmpinfo->name);
 	   }
 	   else {
