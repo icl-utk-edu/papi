@@ -247,35 +247,7 @@ typedef struct _threadlist {
    struct _threadlist *next;
 } Threadlist;
 
-/* Structure contained in the EventSet structure that
-   holds information about multiplexing. */
-
-typedef enum
-{ MPX_STOPPED, MPX_RUNNING } MPX_status;
-
-/** Structure contained in the EventSet structure that
-    holds information about multiplexing.
- @internal */
-typedef struct _MPX_EventSet {
-   MPX_status status;
-   /** Pointer to this thread's structure */
-   struct _threadlist *mythr;
-   /** Pointers to this EventSet's MPX entries in the master list for this thread */
-   struct _masterevent *(mev[PAPI_MPX_DEF_DEG]);
-   /** Number of entries in above list */
-   int num_events;
-   /** Not sure... */
-   long long start_c, stop_c;
-   long long start_values[PAPI_MPX_DEF_DEG];
-   long long stop_values[PAPI_MPX_DEF_DEG];
-   long long start_hc[PAPI_MPX_DEF_DEG];
-} MPX_EventSet;
-
-typedef struct EventSetMultiplexInfo {
-  MPX_EventSet *mpx_evset;
-  int ns;
-  int flags; 
-} EventSetMultiplexInfo_t;
+#include "multiplex.h"
 
 /** Opaque struct, not defined yet...due to threads.h <-> papi_internal.h 
  @internal */

@@ -2057,19 +2057,27 @@ _papi_hwi_lookup_EventSet( int eventset )
 }
 
 int
-_papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI )
+_papi_hwi_is_sw_multiplex(EventSetInfo_t *ESI)
 {
-	/* Are we multiplexing at all */
-	if ( ( ESI->state & PAPI_MULTIPLEXING ) == 0 )
-		return ( 0 );
-	/* Does the component support kernel multiplexing */
-	if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
-		/* Have we forced software multiplexing */
-		if ( ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW )
-			return ( 1 );
-		return ( 0 );
-	} else
-		return ( 1 );
+   /* Are we multiplexing at all */
+   if ( ( ESI->state & PAPI_MULTIPLEXING ) == 0 ) {
+      return 0;
+   }
+
+   /* Does the component support kernel multiplexing */
+   if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex ) {
+      /* Have we forced software multiplexing */
+      if ( ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW ) {
+	 return 1;
+      }
+      /* Nope, using hardware multiplexing */
+      return 0;
+   } 
+
+   /* We are multiplexing but the component does not support hardware */
+
+   return 1;
+
 }
 
 hwd_context_t *
