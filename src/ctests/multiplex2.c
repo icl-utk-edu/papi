@@ -90,7 +90,7 @@ case1( void )
 				retval = PAPI_add_event( EventSet, ( int ) pset.event_code );
 				if ( retval != PAPI_OK ) {
 				   printf("Failed trying to add %s\n",pset.symbol);
-				   test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
+				   break;
 				}
 				else {
 					printf( "Added %s\n", pset.symbol );

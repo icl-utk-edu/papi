@@ -1186,7 +1186,7 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 	MPXDBG("Inserting %p %d\n",mpx_events,mpx_events->num_events );
 
 	/* Make sure we don't overrun our buffers */
-	if (mpx_events->num_events + num_events >= PAPI_MAX_SW_MPX_EVENTS) {
+	if (mpx_events->num_events + num_events > PAPI_MAX_SW_MPX_EVENTS) {
 	   return PAPI_ECOUNT;
 	}
 
