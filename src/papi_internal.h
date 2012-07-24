@@ -94,16 +94,8 @@ extern int init_level;
 #define NEED_CONTEXT		1
 #define DONT_NEED_CONTEXT 	0
 
+#define PAPI_EVENTS_IN_DERIVED_EVENT	8
 
-/* This was defined by each component as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
-    Now it's defined globally as 8 for everything. Mainly applies to max terms in
-    derived events.
-*/
-#ifdef __bgp__
-#define PAPI_MAX_COUNTER_TERMS	19
-#else
-#define PAPI_MAX_COUNTER_TERMS	8
-#endif
 
 /* these vestigial pointers are to structures defined in the components
     they are opaque to the framework and defined as void at this level
@@ -172,14 +164,15 @@ typedef struct _EventSetProfileInfo {
 
 /** This contains info about an individual event added to the EventSet.
   The event can be either PRESET or NATIVE, and either simple or derived.
-  If derived, it can consist of up to PAPI_MAX_COUNTER_TERMS native events.
+  If derived, it can consist of up to PAPI_EVENTS_IN_DERIVED_EVENT 
+  native events.
   An EventSet contains a pointer to an array of these structures to define
   each added event.
   @internal
  */
 typedef struct _EventInfo {
    unsigned int event_code;     /**< Preset or native code for this event as passed to PAPI_add_event() */
-   int pos[PAPI_MAX_COUNTER_TERMS];   /**< position in the counter array for this events components */
+   int pos[PAPI_EVENTS_IN_DERIVED_EVENT];   /**< position in the counter array for this events components */
    char *ops;                   /**< operation string of preset (points into preset event struct) */
    int derived;                 /**< Counter derivation command used for derived events */
 } EventInfo_t;

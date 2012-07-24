@@ -439,7 +439,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
        ESI->EventInfoArray[i].event_code=( unsigned int ) PAPI_NULL;
        ESI->EventInfoArray[i].ops = NULL;
        ESI->EventInfoArray[i].derived=NOT_DERIVED;
-       for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ ) {
+       for ( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT; j++ ) {
 	   ESI->EventInfoArray[i].pos[j] = -1;
        }
    }
@@ -701,7 +701,7 @@ _papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
 	  preset_index = ( int ) ESI->EventInfoArray[event].event_code & PAPI_PRESET_AND_MASK;
 
 	  /* walk all sub-events in the preset */
-	  for( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
+	  for( k = 0; k < PAPI_EVENTS_IN_DERIVED_EVENT; k++ ) {
 	     nevt = _papi_hwi_presets[preset_index].code[k];
 	     if ( nevt == PAPI_NULL ) {
 		break;
@@ -731,7 +731,7 @@ _papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
 	  }
        /* It's a user-defined event */
        } else if ( IS_USER_DEFINED(ESI->EventInfoArray[event].event_code) ) {
-          for ( k = 0; k < PAPI_MAX_COUNTER_TERMS; k++ ) {
+          for ( k = 0; k < PAPI_EVENTS_IN_DERIVED_EVENT; k++ ) {
 	      nevt = _papi_user_events[preset_index].events[k];
 	      if ( nevt == PAPI_NULL ) break;
 
@@ -1232,7 +1232,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 		  if ( (index < 0) || (index >= (int)_papi_user_events_count) )
 			return ( PAPI_EINVAL );
 
-		  for( j = 0; j < PAPI_MAX_COUNTER_TERMS &&
+		  for( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT &&
 			  _papi_user_events[index].events[j] != 0; j++ ) {
 			retval = remove_native_events( ESI,
 				_papi_user_events[index].events, j);
@@ -1252,7 +1252,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 
 
 	array[thisindex].event_code = ( unsigned int ) PAPI_NULL;
-	for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ )
+	for ( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT; j++ )
 		array[thisindex].pos[j] = -1;
 	array[thisindex].ops = NULL;
 	array[thisindex].derived = NOT_DERIVED;
@@ -1352,7 +1352,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 
       /* do we really need to do this, seeing as we free() it later? */
       ESI->EventInfoArray[i].event_code= ( unsigned int ) PAPI_NULL;
-      for( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ ) {
+      for( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT; j++ ) {
 	  ESI->EventInfoArray[i].pos[j] = -1;
       }
       ESI->EventInfoArray[i].ops = NULL;
@@ -1574,7 +1574,7 @@ handle_derived_add( int *position, long long *from )
 	long long retval = 0;
 
 	i = 0;
-	while ( i < PAPI_MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_EVENTS_IN_DERIVED_EVENT ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1591,7 +1591,7 @@ handle_derived_subtract( int *position, long long *from )
 	long long retval = from[position[0]];
 
 	i = 1;
-	while ( i < PAPI_MAX_COUNTER_TERMS ) {
+	while ( i < PAPI_EVENTS_IN_DERIVED_EVENT ) {
 		pos = position[i++];
 		if ( pos == PAPI_NULL )
 			break;
@@ -1633,10 +1633,10 @@ static long long
 _papi_hwi_postfix_calc( EventInfo_t * evi, long long *hw_counter )
 {
 	char *point = evi->ops, operand[16];
-	double stack[PAPI_MAX_COUNTER_TERMS];
+	double stack[PAPI_EVENTS_IN_DERIVED_EVENT];
 	int i, top = 0;
 
-	memset(&stack,0,PAPI_MAX_COUNTER_TERMS*sizeof(double));
+	memset(&stack,0,PAPI_EVENTS_IN_DERIVED_EVENT*sizeof(double));
 
 	while ( *point != '\0' ) {
 		if ( *point == 'N' ) {	/* to get count for each native event */

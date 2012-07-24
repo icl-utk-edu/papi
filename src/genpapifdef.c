@@ -36,7 +36,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define PAPI_MAX_COUNTER_TERMS 8	/* to satisfy papi_preset.h */
+#define PAPI_EVENTS_IN_DERIVED_EVENT 8	/* to satisfy papi_preset.h */
 #include "papi_preset.h"
 #include "papi_common_strings.h"
 /*

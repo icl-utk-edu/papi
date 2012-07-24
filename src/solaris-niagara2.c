@@ -1677,7 +1677,7 @@ __cpc_build_pst_table( void )
 
 		/* Mark counters as unused. If they are needed, they will be overwritten
 		   later. See papi_preset.c:51 for more details. */
-		for ( j = 0; j < PAPI_MAX_COUNTER_TERMS; j++ ) {
+		for ( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT; j++ ) {
 			tmp.data.native[j] = PAPI_NULL;
 		}
 
@@ -1713,7 +1713,7 @@ __cpc_build_pst_table( void )
 		{
 			int d_i;
 
-			for ( d_i = 0; d_i < PAPI_MAX_COUNTER_TERMS; d_i++ ) {
+			for ( d_i = 0; d_i < PAPI_EVENTS_IN_DERIVED_EVENT; d_i++ ) {
 				SUBDBG( " -> %s: pst row %d - +++ data.native[%d]=%d\n",
 						__func__, i, d_i, tmp.data.native[d_i] );
 			}

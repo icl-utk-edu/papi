@@ -889,13 +889,9 @@ typedef char* PAPI_user_defined_events_file_t;
 #define PAPIF_DMEM_PTE        12
 #define PAPIF_DMEM_MAXVAL     12
 
-/* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in COMPONENT */
-/* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
-#ifdef __bgp__
-#define PAPI_MAX_INFO_TERMS  19		   /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
-#else
-#define PAPI_MAX_INFO_TERMS 12
-#endif
+#define PAPI_MAX_INFO_TERMS  12		   /* should match PAPI_EVENTS_IN_DERIVED_EVENT defined in papi_internal.h */
+
+
 /** @ingroup papi_data_structures 
   *	@brief This structure is the event information that is exposed to the user through the API.
 

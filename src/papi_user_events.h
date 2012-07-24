@@ -13,7 +13,7 @@ extern void _papi_cleanup_user_events();
 
 typedef struct {
   unsigned int count;
-  int events[PAPI_MAX_COUNTER_TERMS];
+  int events[PAPI_EVENTS_IN_DERIVED_EVENT];
    char operation[USER_EVENT_OPERATION_LEN]; /**< operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
    char symbol[PAPI_MIN_STR_LEN];
    char *short_desc;

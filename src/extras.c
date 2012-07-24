@@ -315,7 +315,7 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
 						 * events that contain more than one counter without being  *
 						 * derived. You've gotta scan all terms to make sure you    *
 						 * find the one to profile. */
-						for ( k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0;
+						for ( k = 0, pos = 0; k < PAPI_EVENTS_IN_DERIVED_EVENT && pos >= 0;
 							  k++ ) {
 							pos = ESI->EventInfoArray[papi_index].pos[k];
 							if ( i == pos ) {

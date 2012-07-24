@@ -51,7 +51,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   /* count and set the number of native terms in this event, 
               these items are contiguous.
 
-	      PAPI_MAX_COUNTER_TERMS is arbitrarily defined in the high 
+	      PAPI_EVENTS_IN_DERIVED_EVENT is arbitrarily defined in the high 
               level to be a reasonable number of terms to use in a derived 
               event linear expression, currently 8.
 
@@ -68,7 +68,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
                    "search map index %d.\n", preset_index, pnum );
 	   i = 0;
 	   j = 0;
-	   while ( i < PAPI_MAX_COUNTER_TERMS ) {
+	   while ( i < PAPI_EVENTS_IN_DERIVED_EVENT ) {
 	      if ( findem[pnum].native[i] != PAPI_NULL ) {
 		 j++;
 	      }
@@ -498,7 +498,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 		invalid_event=1;
 	     }
 
-	  } while ( ++i < PAPI_MAX_COUNTER_TERMS );
+	  } while ( ++i < PAPI_EVENTS_IN_DERIVED_EVENT );
 
 	  if (invalid_event) {
 	    /* We signify a valid preset if count > 0 */
@@ -514,7 +514,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 			"line %d of %s -- ignoring", line_no, name );
 	     goto nextline;
 	  }
-	  if ( i == PAPI_MAX_COUNTER_TERMS ) {
+	  if ( i == PAPI_EVENTS_IN_DERIVED_EVENT ) {
 	     t = trim_string( strtok( NULL, "," ) );
 	  }
 			
