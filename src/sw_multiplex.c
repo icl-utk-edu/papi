@@ -411,7 +411,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 
 	*mpx_events = newset;
 
-	return ( retval );
+	return retval;
 }
 
 int
@@ -1184,6 +1184,11 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 	MasterEvent **head = &mpx_events->mythr->head;
 
 	MPXDBG("Inserting %p %d\n",mpx_events,mpx_events->num_events );
+
+	/* Make sure we don't overrun our buffers */
+	if (mpx_events->num_events + num_events >= PAPI_MAX_SW_MPX_EVENTS) {
+	   return PAPI_ECOUNT;
+	}
 
 	/* For each event, see if there is already a corresponding
 	 * event in the master set for this thread.  If not, add it.
