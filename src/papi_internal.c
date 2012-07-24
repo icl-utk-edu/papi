@@ -325,39 +325,6 @@ EventInfoArrayLength( const EventSetInfo_t * ESI )
 }
 
 
-
-
-static void
-initialize_NativeInfoArray( EventSetInfo_t * ESI )
-{
-	int i;
-	/* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
-	int max_counters;
-	int sz;
-	char *ptr;
-
-	max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
-	sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
-
-	/* ugh this is ugly.  Why don't we have a proper date type here? */
-        /* NativeInfoArray is allocated in _papi_hwi_assign_eventset     */
-        /*   as an array of NativeInfo_t, with an array of hwd_register_t */
-        /*   just tacked onto the end.  Then we point to them.  Wouldn't it */
-        /*   be better to have the hwd_register_t values in-line?  vmw    */
-	ptr =
-		( ( ( char * ) ESI->NativeInfoArray ) +
-		  ( ( size_t ) max_counters * sizeof ( NativeInfo_t ) ) );
-
-	for ( i = 0; i < max_counters; i++ ) {
-		ESI->NativeInfoArray[i].ni_event = -1;
-		ESI->NativeInfoArray[i].ni_position = -1;
-		ESI->NativeInfoArray[i].ni_owners = 0;
-		ESI-N>ativeInfoArray[i].ni_bits = ( hwd_register_t * ) ptr;
-		ptr += sz;
-	}
-	ESI->NativeCount = 0;
-}
-
 static int
 create_EventSet( EventSetInfo_t ** here )
 {
@@ -406,8 +373,10 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
    /* register structures */
    /* ugh is there a cleaner way to allocate this?  vmw */
    ESI->NativeInfoArray = ( NativeInfo_t * ) 
-             papi_malloc( ( size_t ) max_counters * sizeof ( NativeInfo_t ) +
-			  ( size_t ) max_counters * ( size_t ) _papi_hwd[cidx]->size.reg_value );
+     papi_calloc( ( size_t ) max_counters, sizeof ( NativeInfo_t ));
+
+   ESI->NativeBits = papi_calloc(( size_t ) max_counters,
+                                 ( size_t ) _papi_hwd[cidx]->size.reg_value );
 
    /* NOTE: the next two malloc allocate blocks of memory that are later */
    /* parcelled into overflow and profile arrays                         */
@@ -425,6 +394,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
 	( ESI->sw_stop == NULL )   || 
         ( ESI->hw_start == NULL )  ||
 	( ESI->NativeInfoArray == NULL ) || 
+	( ESI->NativeBits == NULL ) || 
         ( ESI->EventInfoArray == NULL )  ||
 	( ESI->profile.prof == NULL ) || 
         ( ESI->overflow.deadline == NULL ) ) {
@@ -433,6 +403,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
       if ( ESI->hw_start ) papi_free( ESI->hw_start );
       if ( ESI->EventInfoArray ) papi_free( ESI->EventInfoArray );
       if ( ESI->NativeInfoArray ) papi_free( ESI->NativeInfoArray );
+      if ( ESI->NativeBits ) papi_free( ESI->NativeBits );
       if ( ESI->ctl_state ) papi_free( ESI->ctl_state );
       if ( ESI->overflow.deadline ) papi_free( ESI->overflow.deadline );
       if ( ESI->profile.prof ) papi_free( ESI->profile.prof );
@@ -472,7 +443,16 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
        }
    }
 
-   initialize_NativeInfoArray( ESI );
+   /* initialize_NativeInfoArray */
+   for( i = 0; i < max_counters; i++ ) {
+      ESI->NativeInfoArray[i].ni_event = -1;
+      ESI->NativeInfoArray[i].ni_position = -1;
+      ESI->NativeInfoArray[i].ni_owners = 0;
+      ESI->NativeInfoArray[i].ni_bits = ESI->NativeBits + 
+                                          (i*_papi_hwd[cidx]->size.reg_value);
+   }
+
+   ESI->NativeCount = 0;
 
    ESI->state = PAPI_STOPPED;
 
@@ -498,6 +478,8 @@ _papi_hwi_free_EventSet( EventSetInfo_t * ESI )
 		papi_free( ESI->EventInfoArray );
 	if ( ESI->NativeInfoArray )
 		papi_free( ESI->NativeInfoArray );
+	if ( ESI->NativeBits )
+		papi_free( ESI->NativeBits );
 	if ( ESI->overflow.deadline )
 		papi_free( ESI->overflow.deadline );
 	if ( ESI->profile.prof )

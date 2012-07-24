@@ -296,6 +296,8 @@ typedef struct _EventSetInfo {
   
   NativeInfo_t *NativeInfoArray;  /**< Info about each native event in 
                                        the set */
+  hwd_register_t *NativeBits;     /**< Component-specific bits corresponding
+				       to the native events */
   
   EventSetDomainInfo_t domain;
   EventSetGranularityInfo_t granularity;
