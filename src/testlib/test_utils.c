@@ -630,12 +630,15 @@ test_skip( char *file, int line, char *call, int retval )
 void
 test_print_event_header( char *call, int evset )
 {
-	int ev_ids[PAPI_MAX_HWCTRS + PAPI_MPX_DEF_DEG];
+        int *ev_ids;
 	int i, nev;
 	int retval;
 	char evname[PAPI_MAX_STR_LEN];
 
-	nev = PAPI_MAX_HWCTRS + PAPI_MPX_DEF_DEG;
+	nev = PAPI_get_cmp_opt(PAPI_MAX_MPX_CTRS,NULL,0);
+
+	ev_ids=calloc(nev,sizeof(int));
+
 	retval = PAPI_list_events( evset, ev_ids, &nev );
 
 	if ( *call )

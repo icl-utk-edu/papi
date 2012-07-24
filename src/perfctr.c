@@ -179,6 +179,7 @@ _perfctr_init_component( int cidx )
 	strcpy( _perfctr_vector.cmp_info.kernel_version, info.driver_version );
 	_perfctr_vector.cmp_info.CmpIdx = cidx;
 	_perfctr_vector.cmp_info.num_cntrs = ( int ) PERFCTR_CPU_NRCTRS( &info );
+        _perfctr_vector.cmp_info.num_mpx_cntrs=_perfctr_vector.cmp_info.num_cntrs;
 	if ( info.cpu_features & PERFCTR_FEATURE_RDPMC )
 		_perfctr_vector.cmp_info.fast_counter_read = 1;
 	else

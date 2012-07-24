@@ -2224,7 +2224,7 @@ papi_vector_t _niagara2_vector = {
                                  .name = "solaris-niagara2",
                                  .description = "Solaris Counters",
 				 .num_cntrs = MAX_COUNTERS,
-				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
+				 .num_mpx_cntrs = MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = ( PAPI_DOM_USER | PAPI_DOM_KERNEL
 										| PAPI_DOM_SUPERVISOR ),

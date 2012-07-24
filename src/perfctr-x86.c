@@ -1352,7 +1352,6 @@ papi_vector_t _perfctr_vector = {
 				 /* default component information (unspecified values are initialized to 0) */
                                  .name = "perfctr",
 				 .description = "Linux perfctr CPU counters",
-				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,

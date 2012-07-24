@@ -522,9 +522,9 @@ _rapl_init_component( int cidx )
      /* Export the total number of events available */
      _rapl_vector.cmp_info.num_native_events = num_events;
 
-
-     /* This is overriden by max multiplex events which is 32 */
      _rapl_vector.cmp_info.num_cntrs = num_events;
+     _rapl_vector.cmp_info.num_mpx_cntrs = num_events;
+
 
      /* Export the component id */
      _rapl_vector.cmp_info.CmpIdx = cidx;
@@ -869,7 +869,6 @@ papi_vector_t _rapl_vector = {
        .short_name = "rapl",
        .description = "Linux SandyBridge RAPL energy measurements",
        .version = "4.2.1",
-       .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
        .default_domain = PAPI_DOM_USER,
        .default_granularity = PAPI_GRN_THR,
        .available_granularities = PAPI_GRN_THR,

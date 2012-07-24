@@ -635,12 +635,14 @@ _aix_get_system_info( papi_mdi_t *mdi )
 
 /*   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;*/
 	_aix_vector.cmp_info.num_cntrs = pminfo.maxpmcs;
+	_aix_vector.cmp_info.num_mpx_cntrs = pminfo.maxpmcs,
+
 	_aix_vector.cmp_info.available_granularities = PAPI_GRN_THR;
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
 	_aix_vector.cmp_info.available_domains = init_domain(  );
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 /* Low level functions, should not handle errors, just return codes. */
@@ -1234,7 +1236,6 @@ papi_vector_t _aix_vector = {
 
                                  .name = "aix",
 				 .description = "AIX pmapi CPU counters", 
-				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,

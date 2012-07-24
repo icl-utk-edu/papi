@@ -46,6 +46,10 @@
 
 /* Various definitions */
 
+/* This is arbitrary.  Typically you can add up to ~1000 before */
+/* you run out of fds                                           */
+#define PERF_EVENT_MAX_MPX_COUNTERS 64
+
 typedef int pfm_register_t;
 typedef int reg_alloc_t;            
 
@@ -64,10 +68,10 @@ typedef struct
   unsigned int inherit;
   int cpu;
   pid_t tid;
-  struct perf_event_attr events[PAPI_MPX_DEF_DEG];
-  per_event_info_t per_event_info[PAPI_MPX_DEF_DEG];
+  struct perf_event_attr events[PERF_EVENT_MAX_MPX_COUNTERS];
+  per_event_info_t per_event_info[PERF_EVENT_MAX_MPX_COUNTERS];
   /* Buffer to gather counters */
-  long long counts[100]; /* arbitrary */
+  long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
 } control_state_t;
 
 typedef struct
@@ -88,10 +92,8 @@ typedef struct
   int cookie;
   int state;
   int num_evts;
-  evt_t evt[PAPI_MPX_DEF_DEG];
+  evt_t evt[PERF_EVENT_MAX_MPX_COUNTERS];
 } context_t;
-
-#define MAX_COUNTERS 100
 
 
 #if defined(__mips__)
@@ -123,7 +125,7 @@ papi_vector_t _papi_pe_vector;
 /* FIXME */
 /* What the heck are these? -pjm */
 /* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
-#define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
+#define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * PERF_EVENT_MAX_MPX_COUNTERS)
 #define MAX_READ 8192
 
 
@@ -1358,7 +1360,7 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 
   if ( pe_ctx->cookie != CTX_INITIALIZED ) {
      memset( pe_ctl->events, 0,
-	     sizeof ( struct perf_event_attr ) * PAPI_MPX_DEF_DEG );
+	     sizeof ( struct perf_event_attr ) * PERF_EVENT_MAX_MPX_COUNTERS );
      memset( pe_ctx, 0, sizeof ( context_t ) );
      pe_ctx->cookie = CTX_INITIALIZED;
   } else {
@@ -2107,7 +2109,7 @@ papi_vector_t _papi_pe_vector = {
 
       .hardware_intr = 1,
       .kernel_profile = 1,
-      .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
+      .num_mpx_cntrs = PERF_EVENT_MAX_MPX_COUNTERS,
 
       /* component specific cmp_info initializations */
       .fast_virtual_timer = 0,

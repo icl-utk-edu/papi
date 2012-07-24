@@ -14,8 +14,10 @@
 #define CPP_TEST_SKIP() { fprintf(stderr,"$Id$\n%s:\tSKIPPED\n",__FILE__); exit(0); }
 #endif
 
+#define EVENTSLEN 2
+
 #define QUIETPRINTF if (!TESTS_QUIET) printf
-unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, 0 };
+unsigned int PAPI_events[EVENTSLEN] = { 0, 0 };
 static const int PAPI_events_len = 1;
 extern int TESTS_QUIET;
 

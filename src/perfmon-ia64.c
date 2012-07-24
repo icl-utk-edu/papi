@@ -2092,6 +2092,7 @@ _ia64_init_component( int cidx )
 
 	_ia64_vector.cmp_info.num_native_events = nnev;
 	_ia64_vector.cmp_info.num_cntrs = ncnt;
+	_ia64_vector.cmp_info.num_mpx_cntrs = ncnt;
 
 	_ia64_vector.cmp_info.clock_ticks = sysconf( _SC_CLK_TCK );
 	/* Put the signal handler in use to consume PFM_END_MSG's */
@@ -3130,7 +3131,6 @@ papi_vector_t _ia64_vector = {
       .version = "5.0",
 
       /* default component information (unspecified values initialized to 0) */
-      .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
       .default_domain = PAPI_DOM_USER,
       .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
       .default_granularity = PAPI_GRN_THR,

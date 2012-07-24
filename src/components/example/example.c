@@ -26,6 +26,7 @@
 /** This driver supports three counters counting at once      */
 /*  This is artificially low to allow testing of multiplexing */
 #define EXAMPLE_MAX_SIMULTANEOUS_COUNTERS 3
+#define EXAMPLE_MAX_MULTIPLEX_COUNTERS 4
 
 /* Declare our vector in advance */
 /* This allows us to modify the component info */
@@ -73,7 +74,7 @@ typedef struct example_control_state
   int overflow;
   int inherit;
   int which_counter[EXAMPLE_MAX_SIMULTANEOUS_COUNTERS]; 
-  long long counter[EXAMPLE_MAX_SIMULTANEOUS_COUNTERS];   /**< Copy of counts, holds results when stopped */
+  long long counter[EXAMPLE_MAX_MULTIPLEX_COUNTERS];   /**< Copy of counts, holds results when stopped */
 } example_control_state_t;
 
 /** Holds per-thread information */
@@ -613,7 +614,7 @@ papi_vector_t _example_vector = {
 		.support_version = "n/a",
 		.kernel_version = "n/a",
 		.num_cntrs =               EXAMPLE_MAX_SIMULTANEOUS_COUNTERS, 
-		.num_mpx_cntrs =           PAPI_MPX_DEF_DEG,
+		.num_mpx_cntrs =           EXAMPLE_MAX_SIMULTANEOUS_COUNTERS,
 		.default_domain =          PAPI_DOM_USER,
 		.available_domains =       PAPI_DOM_USER,
 		.default_granularity =     PAPI_GRN_THR,

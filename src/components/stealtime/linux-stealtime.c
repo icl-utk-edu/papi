@@ -197,6 +197,7 @@ _stealtime_init_component( int cidx )
 
 	_stealtime_vector.cmp_info.num_native_events=num_events;
 	_stealtime_vector.cmp_info.num_cntrs=num_events;
+	_stealtime_vector.cmp_info.num_mpx_cntrs=num_events;
 
 	return PAPI_OK;
 }
@@ -573,7 +574,6 @@ papi_vector_t _stealtime_vector = {
 	   .short_name="stealtime",
        .version = "5.0",
        .description = "Stealtime filesystem statistics",
-       .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
        .default_domain = PAPI_DOM_USER,
        .default_granularity = PAPI_GRN_THR,
        .available_granularities = PAPI_GRN_THR,

@@ -1,6 +1,5 @@
 /* 
 * File:    multiplex1_pthreads.c
-* CVS:     $Id$
 * Author:  Rick Kufrin
 *          rkufrin@ncsa.uiuc.edu                    
 * Mods:    Philip Mucci
@@ -12,8 +11,9 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-int events[PAPI_MPX_DEF_DEG];
+int *events;
 int numevents = 0;
+int max_events=0;
 
 double
 loop( long n )
@@ -32,7 +32,7 @@ thread( void *arg )
 {
 	( void ) arg;			 /*unused */
 	int eventset = PAPI_NULL;
-	long long values[PAPI_MPX_DEF_DEG];
+	long long *values;
 
 	int ret = PAPI_register_thread(  );
 	if ( ret != PAPI_OK )
@@ -40,6 +40,8 @@ thread( void *arg )
 	ret = PAPI_create_eventset( &eventset );
 	if ( ret != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
+
+	values=calloc(max_events,sizeof(long long));
 
 	printf( "Event set %d created\n", eventset );
 
@@ -136,6 +138,10 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_multiplex_init", ret );
 	}
 
+	max_events=PAPI_get_cmp_opt(PAPI_MAX_MPX_CTRS,NULL,0);
+
+	events=calloc(max_events,sizeof(int));
+
 	/* Fill up the event set with as many non-derived events as we can */
 
 	i = PAPI_PRESET_MASK;
@@ -149,7 +155,7 @@ main( int argc, char **argv )
 			}
 		}
 	} while ( ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK )
-			  && ( numevents < PAPI_MPX_DEF_DEG ) );
+			  && ( numevents < max_events ) );
 
 	printf( "Found %d events\n", numevents );
 

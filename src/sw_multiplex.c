@@ -937,7 +937,7 @@ int
 MPX_reset( MPX_EventSet * mpx_events )
 {
 	int i, retval;
-	long long values[PAPI_MPX_DEF_DEG];
+	long long values[PAPI_MAX_SW_MPX_EVENTS];
 
 	/* Get the current values from MPX_read */
 	retval = MPX_read( mpx_events, values, 0 );
@@ -976,7 +976,7 @@ MPX_stop( MPX_EventSet * mpx_events, long long *values )
 	int i, cur_mpx_event;
 	int retval = PAPI_OK;
 	long long dummy_value[2];
-	long long dummy_mpx_values[PAPI_MPX_DEF_DEG];
+	long long dummy_mpx_values[PAPI_MAX_SW_MPX_EVENTS];
 	/* long long cycles_this_slice, total_cycles; */
 	MasterEvent *cur_event = NULL, *head;
 	Threadlist *thr = NULL;

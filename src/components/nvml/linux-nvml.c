@@ -884,6 +884,7 @@ _papi_nvml_init_component( int cidx )
 
 		/* Export the number of 'counters' */
 		_nvml_vector.cmp_info.num_cntrs = num_events;
+		_nvml_vector.cmp_info.num_mpx_cntrs = num_events;
 
 		return PAPI_OK;
 
@@ -1231,8 +1232,6 @@ papi_vector_t _nvml_vector = {
 				.support_version = "n/a",
 				.kernel_version = "n/a",
 
-				.num_cntrs = 0, 		/* set by init_component */
-				.num_mpx_cntrs = PAPI_MPX_DEF_DEG,
 				.num_preset_events = 0,
 				.num_native_events = 0, /* set by init_component */
 				.default_domain = PAPI_DOM_USER,

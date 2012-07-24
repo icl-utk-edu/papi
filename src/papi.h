@@ -331,8 +331,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_LOCK_NUM			PAPI_NUM_LOCK
 /** @} */
 
-/* You really shouldn't use this, use PAPI_get_opt(PAPI_MAX_MPX_CTRS) */
-#define PAPI_MPX_DEF_DEG 32			   /* Maximum number of counters we can mpx */
+/* Remove this!  If it breaks userspace we might have to add it back :( */
+/* #define PAPI_MPX_DEF_DEG 32			                        */
 
 /**	@internal 
 	@defgroup papi_vendors  Vendor definitions 

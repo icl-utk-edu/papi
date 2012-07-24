@@ -455,8 +455,8 @@ papi_vector_t _coretemp_freebsd_vector = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name = "coretemp_freebsd",
 				 .short_name = "coretemp",
-				 .version = "$Revision$",
-				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
+				 .version = "5.0",
+				 .num_mpx_cntrs = CORETEMP_MAX_COUNTERS,
 				 .num_cntrs = CORETEMP_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER,

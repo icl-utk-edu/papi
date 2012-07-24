@@ -1,6 +1,8 @@
 #ifndef MULTIPLEX_H
 #define MULTIPLEX_H
 
+#define PAPI_MAX_SW_MPX_EVENTS 32
+
 /* Structure contained in the EventSet structure that 
    holds information about multiplexing. */
 
@@ -16,14 +18,14 @@ typedef struct _MPX_EventSet {
   /** Pointer to this thread's structure */
   struct _threadlist *mythr;
   /** Pointers to this EventSet's MPX entries in the master list for this thread */
-  struct _masterevent *(mev[PAPI_MPX_DEF_DEG]);
+  struct _masterevent *(mev[PAPI_MAX_SW_MPX_EVENTS]);
   /** Number of entries in above list */
   int num_events;
   /** Not sure... */
   long long start_c, stop_c;
-  long long start_values[PAPI_MPX_DEF_DEG];
-  long long stop_values[PAPI_MPX_DEF_DEG];
-  long long start_hc[PAPI_MPX_DEF_DEG];
+  long long start_values[PAPI_MAX_SW_MPX_EVENTS];
+  long long stop_values[PAPI_MAX_SW_MPX_EVENTS];
+  long long start_hc[PAPI_MAX_SW_MPX_EVENTS];
 } MPX_EventSet;
 
 typedef struct EventSetMultiplexInfo {
