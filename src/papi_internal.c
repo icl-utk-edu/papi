@@ -1499,6 +1499,15 @@ _papi_hwi_init_global( void )
 	   if (!_papi_hwd[i]->cmp_info.disabled) {
 	      retval = _papi_hwd[i]->init_component( i );
 	      _papi_hwd[i]->cmp_info.disabled=retval;
+
+	      /* Do some sanity checking */
+	      if (retval==PAPI_OK) {
+		if (_papi_hwd[i]->cmp_info.num_cntrs >
+		    _papi_hwd[i]->cmp_info.num_mpx_cntrs) {
+		  fprintf(stderr,"Warning!  num_cntrs is more than num_mpx_cntrs\n");
+		}
+
+	      }
 	   }
 
 	   i++;
