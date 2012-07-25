@@ -1617,7 +1617,7 @@ static const intel_x86_entry_t intel_ivb_pe[]={
   .umasks = ivb_cpl_cycles,
 },
 { .name   = "CPU_CLK_UNHALTED",
-  .desc   = "Cases when the core is unhalted at 100 Mhz",
+  .desc   = "Cycles when processor is not in halted state",
   .modmsk = INTEL_V3_ATTRS,
   .cntmsk = 0xff,
   .code = 0x3c,
