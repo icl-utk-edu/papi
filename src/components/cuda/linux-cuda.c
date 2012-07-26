@@ -665,12 +665,9 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 		CUDA_ptr->addedEvents.count = count;
 		CUDA_ptr->addedEvents.list[count - 1] = index;
 
-		/* determine the device name from the event name chosen */
-		device_tmp = strchr( cuda_native_table[index].name, '.' );
-
 		/* if this device name is different from the actual device the code is running on, then exit */
 		if ( 0 != strncmp( device[currentDeviceID].name,
-						   device_tmp + 1,
+						   cuda_native_table[index].name,
 						   strlen( device[currentDeviceID].name ) ) ) {
 			fprintf( stderr, "Device %s is used -- BUT event %s is collected. \n ---> ERROR: Specify events for the device that is used!\n\n",
 				  device[currentDeviceID].name, cuda_native_table[index].name );
