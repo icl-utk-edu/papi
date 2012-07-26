@@ -108,7 +108,7 @@ enum
 	PAPI_VEC_INS_idx,		 /*Vector/SIMD instructions executed (could include integer) */
 	PAPI_RES_STL_idx,		 /*Cycles processor is stalled on resource */
 	PAPI_FP_STAL_idx,		 /*Cycles any FP units are stalled */
-	PAPI_TOT_CYC_idx,		 /*Total cycles */
+	PAPI_TOT_CYC_idx,		 /*Total cycles executed */
 	PAPI_LST_INS_idx,		 /*Total load/store inst. executed */
 	PAPI_SYC_INS_idx,		 /*Sync. inst. executed */
 	PAPI_L1_DCH_idx,		 /*L1 D Cache Hit */
@@ -159,6 +159,7 @@ enum
 	PAPI_DP_OPS_idx,		 /* Floating point operations executed; optimized to count scaled double precision vector operations */
 	PAPI_VEC_SP_idx,		 /* Single precision vector/SIMD instructions */
 	PAPI_VEC_DP_idx,		 /* Double precision vector/SIMD instructions */
+	PAPI_REF_CYC_idx,		 /* Reference clock cycles */
 	PAPI_END_idx			 /*This should always be last! */
 };
 
@@ -221,7 +222,7 @@ enum
 #define PAPI_VEC_INS (PAPI_VEC_INS_idx | PAPI_PRESET_MASK)	/*Vector/SIMD instructions executed (could include integer) */
 #define PAPI_RES_STL (PAPI_RES_STL_idx | PAPI_PRESET_MASK)	/*Cycles processor is stalled on resource */
 #define PAPI_FP_STAL (PAPI_FP_STAL_idx | PAPI_PRESET_MASK)	/*Cycles any FP units are stalled */
-#define PAPI_TOT_CYC (PAPI_TOT_CYC_idx | PAPI_PRESET_MASK)	/*Total cycles */
+#define PAPI_TOT_CYC (PAPI_TOT_CYC_idx | PAPI_PRESET_MASK)	/*Total cycles executed */
 #define PAPI_LST_INS (PAPI_LST_INS_idx | PAPI_PRESET_MASK)	/*Total load/store inst. executed */
 #define PAPI_SYC_INS (PAPI_SYC_INS_idx | PAPI_PRESET_MASK)	/*Sync. inst. executed */
 #define PAPI_L1_DCH  (PAPI_L1_DCH_idx  | PAPI_PRESET_MASK)	/*L1 D Cache Hit */
@@ -269,6 +270,7 @@ enum
 #define PAPI_DP_OPS  (PAPI_DP_OPS_idx  | PAPI_PRESET_MASK)	/* Floating point operations executed; optimized to count scaled double precision vector operations */
 #define PAPI_VEC_SP  (PAPI_VEC_SP_idx  | PAPI_PRESET_MASK)	/* Single precision vector/SIMD instructions */
 #define PAPI_VEC_DP  (PAPI_VEC_DP_idx  | PAPI_PRESET_MASK)	/* Double precision vector/SIMD instructions */
+#define PAPI_REF_CYC (PAPI_REF_CYC_idx  | PAPI_PRESET_MASK)	/* Reference clock cycles */
 
 #define PAPI_END     (PAPI_END_idx  | PAPI_PRESET_MASK)	/*This should always be last! */
 
