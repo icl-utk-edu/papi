@@ -92,28 +92,36 @@ _papi_hwi_prefix_component_name( char *component_name, char *event_name, char *o
 	size1 = strlen(event_name);
 	size2 = strlen(component_name);
 
-/* sanity check */
-	if ( size1 <= 0 || size2 <= 0 || size1>PAPI_MAX_STR_LEN || size2 > PAPI_MAX_STR_LEN ) {
-		return (PAPI_EINVAL);
-	}
-	
-/* strlen(component_name) + ::: + strlen(event_name) + NULL */
-	if ( size1+size2+3+1 > out_len )
+/* sanity checks */
+	if ( size1 == 0 ) {
+		return (PAPI_EBUG); /* hopefully event_name always has length?! */
+	}	
+
+	if ( size1 >= out_len )
 		return (PAPI_ENOMEM);
 
 /* Guard against event_name == out */
 	memcpy( temp, event_name, out_len );
 
+/* no component name to prefix */
+	if ( size2 == 0 ) {
+		sprintf(out, "%s%c", temp, '\0' );
+		return (PAPI_OK);
+	}
+	
 /* Don't prefix 'cpu' component names for now */
 	if ( strstr(component_name, "pe") ||
 		 strstr(component_name, "bgq") ||
 		 strstr(component_name, "bgp") ) {
 		sprintf( out, "%s%c", temp, '\0'); 
-		return PAPI_OK;
+		return (PAPI_OK);
 	}
-		
-	sprintf( out, "%s:::%s%c" , component_name, temp, '\0');
 
+/* strlen(component_name) + ::: + strlen(event_name) + NULL */
+	if ( size1+size2+3+1 > out_len )
+		return (PAPI_ENOMEM);
+
+	sprintf( out, "%s:::%s%c" , component_name, temp, '\0');
 	return (PAPI_OK);
 }
 
