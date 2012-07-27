@@ -641,7 +641,6 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 	CUDA_control_state_t * CUDA_ptr = ( CUDA_control_state_t * ) ptr;
 	int index;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
-	char *device_tmp;
 
 	cuptiErr = cuptiEventGroupDisable( CUDA_ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
