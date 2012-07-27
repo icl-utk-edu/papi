@@ -5,9 +5,7 @@
 static void
 test_continue( char *call, int retval )
 {
-	char errstring[PAPI_MAX_STR_LEN];
-	PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-	printf( "Expected error in %s: %s\n", call, errstring );
+	printf( "Expected error in %s: %s\n", call, PAPI_strerror(retval) );
 }
 
 int

@@ -1054,7 +1054,7 @@ enum {
     int   PAPI_num_events(int EventSet); /**< return the number of events in an event set */
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler); /**< set up an event set to begin registering overflows */
-   int   PAPI_perror(int code, char *destination, int length); /**< convert PAPI error codes to strings */
+   void   PAPI_perror(char *msg ); /**< Print a PAPI error message */
    int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, 
 					 unsigned scale, int EventSet, int EventCode, 
 					 int threshold, int flags); /**< generate PC histogram data where hardware counter overflow occurs */

@@ -54,6 +54,7 @@ int init_level = PAPI_NOT_INITED;
 int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 papi_mdi_t _papi_hwi_system_info;
+static int _papi_hwi_errno = PAPI_OK;
 
 /*****************************/
 /* Native Event Mapping Code */
@@ -70,6 +71,10 @@ struct native_event_info {
 static struct native_event_info *_papi_native_events=NULL;
 static int num_native_events=0;
 static int num_native_chunks=0;
+
+static char *_papi_errlist= NULL;
+static int num_errors = 0;
+static int num_error_chunks = 0;
 
 /** @internal
  * @class _papi_hwi_prefix_component_name

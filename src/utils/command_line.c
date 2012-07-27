@@ -72,7 +72,7 @@ main( int argc, char **argv )
 			test_fail_exit( __FILE__, __LINE__, "PAPI_event_name_to_code", retval );
 
 		if ( ( retval = PAPI_add_event( EventSet, event ) ) != PAPI_OK ) {
-			PAPI_perror( retval, errstr, 1024 );
+			PAPI_perror( "PAPI_add_event");
 			printf( "Failed adding: %s\nbecause: %s\n", argv[i], errstr );
 			success[i] = 0;
 		} else {

@@ -41,11 +41,33 @@
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
+
+#ifdef DEBUG
+#define papi_return(a) do { \
+	int b = a; \
+	if (b != PAPI_OK) {\
+		_papi_hwi_errno = b;\
+	} \
+	return((_papi_hwi_debug_handler ? _papi_hwi_debug_handler(b) : b)); \
+} while (0)
+#else
+#define papi_return(a) do { \
+	int b = a; \
+	if (b != PAPI_OK) {\
+		_papi_hwi_errno = b;\
+	} \
+	return(b);\
+} while(0)
+#endif
+
+
+/*
 #ifdef DEBUG
 #define papi_return(a) return((_papi_hwi_debug_handler ? _papi_hwi_debug_handler(a) : a))
 #else
 #define papi_return(a) return(a)
 #endif
+*/
 
 #ifdef DEBUG
 int _papi_hwi_debug;
@@ -486,6 +508,7 @@ PAPI_library_init( int version )
 #ifdef DEBUG
 	char *var;
 #endif
+	_papi_hwi_init_errors();
 
 	if ( version != PAPI_VER_CURRENT )
 		papi_return( PAPI_EINVAL );
@@ -4412,7 +4435,7 @@ again:
  *  ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
  *  if (ret != PAPI_OK)
  *  {
- *     PAPI_perror(ret, error_str, PAPI_MAX_STR_LEN);
+ *     PAPI_perror( "PAPI_add_event");
  *     fprintf(stderr,"PAPI_error %d: %s\n", ret, error_str);
  *     exit(1);
  *  }
@@ -4426,7 +4449,7 @@ again:
 char *
 PAPI_strerror( int errorCode )
 {
-	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
+	if ( ( errorCode > 0 ) || ( -errorCode > _papi_hwi_num_errors ) )
 		return ( NULL );
 
 	return ( ( char * ) _papi_hwi_err[-errorCode].descr );
@@ -4437,31 +4460,21 @@ PAPI_strerror( int errorCode )
  *
  * @par C Interface:
  *     \#include <papi.h> @n
- *     int PAPI_perror( int code, char *destination, int length );
+ *     void PAPI_perror( char *s );
  *
- *  @param[in] code  
- *      -- the error code to interpret 
- *  @param[out] destination  
- *      -- the error message in quotes
- *  @param length 
- *      -- either 0 or strlen(destination)  
+ *  @param[in] s
+ *      -- Optional message to print before the string describing the last error message. 
  * 
- *  @retval PAPI_EINVAL  
- *      One or more of the arguments to PAPI_perror() is invalid. 
- *
- *  PAPI_perror() fills the string destination with the error message 
- *  corresponding to the error code code. 
- *  The function copies length worth of the error description string 
- *  corresponding to code into destination. 
- *  The resulting string is always null terminated. 
- *  If length is 0, then the string is printed on stderr. 
+ * 	The routine PAPI_perror() produces a message on the standard error output,
+ * 	describing the last error encountered during a call to PAPI. 
+ * 	If s is not NULL, s is printed, followed by a colon and a space. 
+ * 	Then the error message and a new-line are printed. 
  *
  *  @par Example:
  *  @code
  *  int ret;
  *  int EventSet = PAPI_NULL;
  *  int native = 0x0;
- *  char error_str[PAPI_MAX_STR_LEN];
  *
  *  ret = PAPI_create_eventset(&EventSet);
  *  if (ret != PAPI_OK)
@@ -4473,8 +4486,7 @@ PAPI_strerror( int errorCode )
  *  ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
  *  if (ret != PAPI_OK)
  *  {
- *     PAPI_perror(ret, error_str, PAPI_MAX_STR_LEN);
- *     fprintf(stderr,\"PAPI_error %d: %s\\n\", ret, error_str);
+ *     PAPI_perror( "PAPI_add_event" );
  *     exit(1);
  *  }
  *  // Start counting
@@ -4484,21 +4496,20 @@ PAPI_strerror( int errorCode )
  *
  *  @see PAPI_strerror
  */
-int
-PAPI_perror( int code, char *destination, int length )
+void
+PAPI_perror( char *msg )
 {
 	char *foo;
 
-	foo = PAPI_strerror( code );
+	foo = PAPI_strerror( _papi_hwi_errno );
 	if ( foo == NULL )
-		papi_return( PAPI_EINVAL );
+		return;
 
-	if ( destination && ( length >= 0 ) )
-		strncpy( destination, foo, ( unsigned int ) length );
-	else
-		fprintf( stderr, "%s\n", foo );
+	if ( msg )
+		if ( *msg )
+				fprintf( stderr, "%s: ", msg );
 
-	return ( PAPI_OK );
+	fprintf( stderr, "%s\n", foo );
 }
 
 /** @class _papi_overflow_handler

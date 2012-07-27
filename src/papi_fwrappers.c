@@ -620,34 +620,26 @@ PAPI_FCALL( papif_set_multiplex, PAPIF_SET_MULTIPLEX,
  *
  * @par Fortran Interface:
  * \#include "fpapi.h" @n
- *     PAPIF_perror( C_INT code, C_STRING destination, C_INT check )
+ *     PAPIF_perror( C_STRING message )
  *
  * @see PAPI_perror
  */
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_perror, PAPIF_PERROR,
-			( int *code, char *destination_str, int *check,
-			  int destination_len ) )
+			( char *message,
+			  int message_len ) )
 #else
 PAPI_FCALL( papif_perror, PAPIF_PERROR,
-			( int *code, char *destination, int *check ) )
+			( char *message ) )
 #endif
 {
 #if defined(_FORTRAN_STRLEN_AT_END)
-	int i;
-	char tmp[PAPI_MAX_STR_LEN];
+		char tmp[PAPI_MAX_STR_LEN];
+		Fortran2cstring( tmp, message, PAPI_MAX_STR_LEN, message_len );
 
-	*check = PAPI_perror( *code, tmp, PAPI_MAX_STR_LEN );
-	/* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
-	strncpy( destination_str, tmp, ( size_t ) destination_len );
-	/* overwrite any NULLs and trailing garbage in destination_str */
-	for ( i = ( int ) strlen( tmp ); i < destination_len;
-		  destination_str[i++] = ' ' );
+	PAPI_perror( tmp );
 #else
-	/* Assume that the underlying Fortran implementation 
-	   can handle \0 terminated strings and that the 
-	   passed array is of sufficient size */
-	*check = PAPI_perror( *code, destination, PAPI_MAX_STR_LEN );
+	PAPI_perror( message );
 #endif
 }
 
