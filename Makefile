@@ -76,6 +76,9 @@ tags:
 	@echo creating tags
 	$(MAKE) -C lib $@
 
-.PHONY: all clean distclean depend tar install install_examples lib
+static:
+	make all CONFIG_PFMLIB_SHARED=n
+
+.PHONY: all clean distclean depend tar install install_examples lib static
 
 # DO NOT DELETE
