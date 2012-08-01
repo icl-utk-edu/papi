@@ -530,7 +530,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
       ESI->NativeInfoArray[i].ni_event = -1;
       ESI->NativeInfoArray[i].ni_position = -1;
       ESI->NativeInfoArray[i].ni_owners = 0;
-      ESI->NativeInfoArray[i].ni_bits = ESI->NativeBits + 
+      ESI->NativeInfoArray[i].ni_bits = ((unsigned char*)ESI->NativeBits) + 
                                           (i*_papi_hwd[cidx]->size.reg_value);
    }
 

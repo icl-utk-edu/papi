@@ -1645,7 +1645,7 @@ mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
 	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 	uint64_t head = mmap_read_head( pe );
 	uint64_t old = pe->tail;
-	unsigned char *data = pe->mmap_buf + getpagesize(  );
+	unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
 	int diff;
 
 	diff = head - old;
@@ -1697,7 +1697,7 @@ mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
 				cpy = min( pe->mask + 1 - ( offset & pe->mask ), len );
 				memcpy( dst, &data[offset & pe->mask], cpy );
 				offset += cpy;
-				dst += cpy;
+				dst = ((unsigned char*)dst) + cpy;
 				len -= cpy;
 			}
 			while ( len );
@@ -1830,7 +1830,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 		evt_t *pe =
 			&( ( context_t * ) thread->context[cidx] )->evt[found_evt_idx];
 
-		unsigned char *data = pe->mmap_buf + getpagesize(  );
+		unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
 
 		/*
 		 * Read up the most recent IP from the sample in the mmap buffer.  To
