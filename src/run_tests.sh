@@ -87,7 +87,7 @@ echo ""
 
 CUDA=`find Makefile | xargs grep cuda`;
 if [ "$CUDA" != "" ]; then
-  EXCLUDE=`grep -v -e '^#' run_tests_exclude_cuda.txt`
+  EXCLUDE=$EXCLUDE `grep -v -e '^#' run_tests_exclude_cuda.txt`
 fi
 
 echo ""
