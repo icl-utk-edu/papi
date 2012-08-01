@@ -183,7 +183,6 @@ struct test_events_t test_events[MAX_TEST_EVENTS] = {
   { MASK_TOT_IIS, PAPI_TOT_IIS},
   { MASK_L1_DCR,  PAPI_L1_DCR},
   { MASK_L1_DCW,  PAPI_L1_DCW},
-  { MASK_L1_DCW,  PAPI_L1_DCW},
   { MASK_L1_DCA,  PAPI_L1_DCA},
   { MASK_FP_OPS,  PAPI_FP_OPS},
 };
