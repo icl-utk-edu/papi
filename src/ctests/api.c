@@ -169,7 +169,9 @@ main( int argc, char **argv )
 	   if ( retval != PAPI_EINVAL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flips", retval );
 	   retval = PAPI_flips( &rtime, &ptime, &flpins, &mflips );	// get Mflips/s, real and processor time 
-	   if ( retval != PAPI_OK )
+	   if ( retval == PAPI_ENOEVNT )
+		test_warn( __FILE__, __LINE__, "PAPI_flips", retval);
+	   else if ( retval != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flips", retval );
 	   else if ( !TESTS_QUIET )
 		printf( "got Mflips/s, real and processor time\n" );
@@ -197,8 +199,8 @@ main( int argc, char **argv )
 	   if ( retval != PAPI_EINVAL )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
 	   retval = PAPI_flops( &rtime, &ptime, &flpops, &mflops );	// get Mflops/s, real and processor time 
-	   if (retval == PAPI_ENOEVNT ) {
-		printf ("PAPI_ENOEVNT, PAPI_FP_OPS probably does not exist on this platform.\n"); }
+	   if ( retval == PAPI_ENOEVNT )
+		test_warn( __FILE__, __LINE__, "PAPI_flops", retval);
 	   else if ( retval != PAPI_OK ) {
 		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval ); }
 	   else if ( !TESTS_QUIET ) {
