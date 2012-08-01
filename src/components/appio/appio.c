@@ -157,6 +157,7 @@ ssize_t read(int fd, void *buf, size_t count) {
 
   // check if read would block on descriptor
   fd_set readfds;
+  FD_ZERO(&readfds);
   FD_SET(fd, &readfds);
   int ready = __select(fd+1, &readfds, NULL, NULL, &zerotv);
   if (ready == 0) _appio_register_current[READ_WOULD_BLOCK]++; 
@@ -212,6 +213,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 
   // check if write would block on descriptor
   fd_set writefds;
+  FD_ZERO(&writefds);
   FD_SET(fd, &writefds);
   int ready = __select(fd+1, NULL, &writefds, NULL, &zerotv);
   if (ready == 0) _appio_register_current[WRITE_WOULD_BLOCK]++; 

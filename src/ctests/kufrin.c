@@ -138,9 +138,13 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_multiplex_init", ret );
 	}
 
-	max_events=PAPI_get_cmp_opt(PAPI_MAX_MPX_CTRS,NULL,0);
+	if ((max_events = PAPI_get_cmp_opt(PAPI_MAX_MPX_CTRS,NULL,0)) <= 0) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_cmp_opt", max_events );
+	}
 
-	events=calloc(max_events,sizeof(int));
+	if ((events = calloc(max_events,sizeof(int))) == NULL) {
+		test_fail( __FILE__, __LINE__, "calloc", PAPI_ESYS );
+	}
 
 	/* Fill up the event set with as many non-derived events as we can */
 

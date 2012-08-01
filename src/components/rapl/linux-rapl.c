@@ -150,7 +150,7 @@ static long long read_msr(int fd, int which) {
 
   uint64_t data;
 
-  if ( pread(fd, &data, sizeof data, which) != sizeof data ) {
+  if ( fd<0 || pread(fd, &data, sizeof data, which) != sizeof data ) {
     perror("rdmsr:pread");
     exit(127);
   }
@@ -224,6 +224,23 @@ static long long read_rapl_energy(int index) {
 
 }
 
+static int
+get_kernel_nr_cpus()
+{
+  FILE *fff;
+  int num_read, nr_cpus = 1;
+  fff=fopen("/sys/devices/system/cpu/kernel_max","r");
+  if (fff==NULL) return nr_cpus;
+  num_read=fscanf(fff,"%d",&nr_cpus);
+  fclose(fff);
+  if (num_read==1) {
+    nr_cpus++;
+  } else {
+    nr_cpus = 1;
+  }
+  return nr_cpus;
+}
+
 /************************* PAPI Functions **********************************/
 
 
@@ -257,9 +274,15 @@ _rapl_init_component( int cidx )
 
      const PAPI_hw_info_t *hw_info;
 
-     /* We should size these automatically */
-     int packages[1024];
-     int cpu_to_use[1024];
+     int nr_cpus = get_kernel_nr_cpus();
+     int packages[nr_cpus];
+     int cpu_to_use[nr_cpus];
+
+     /* Fill with sentinel values */
+     for (i=0; i<nr_cpus; ++i) {
+       packages[i] = -1;
+       cpu_to_use[i] = -1;
+     }
 
 
      /* check if Intel processor */
@@ -317,23 +340,27 @@ _rapl_init_component( int cidx )
        fff=fopen(filename,"r");
        if (fff==NULL) break;
        num_read=fscanf(fff,"%d",&package);
+       fclose(fff);
        if (num_read!=1) {
 	  fprintf(stderr,"error reading %s\n",filename);
        }
 
        /* Check if a new package */
-       for(i=0;i<num_packages;i++) {
-	  if (packages[i]==package) break;
-       }
-       if (i==num_packages) {
-	 packages[i]=package;
-	 num_packages++;
-	 cpu_to_use[i]=j;
-         SUBDBG("Found package %d out of total %d\n",package,num_packages);
+       if (package < nr_cpus) {
+         if (packages[package] == -1) {
+           SUBDBG("Found package %d out of total %d\n",package,num_packages);
+	   packages[package]=package;
+	   cpu_to_use[package]=j;
+	   num_packages++;
+         }
+       } else {
+	 SUBDBG("Package outside of allowed range\n");
+	 strncpy(_rapl_vector.cmp_info.disabled_reason,
+		"Package outside of allowed range",PAPI_MAX_STR_LEN);
+	 return PAPI_ESYS;
        }
 
        j++;
-       fclose(fff);
      }
      num_cpus=j;
 

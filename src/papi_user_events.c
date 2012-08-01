@@ -208,7 +208,7 @@ get_event_line( char **place, FILE * table, char **tmp_perfmon_events_table )
 	int ret = 0;
 	int i;
 	char *line = place[0];
-	char c = 0;
+	int c = 0;
 
 	if ( table ) {
 	  if ( fgets( place[0], USER_EVENT_OPERATION_LEN, table ) ) { 

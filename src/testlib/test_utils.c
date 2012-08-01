@@ -634,14 +634,21 @@ test_print_event_header( char *call, int evset )
 	int retval;
 	char evname[PAPI_MAX_STR_LEN];
 
-	nev = PAPI_get_cmp_opt(PAPI_MAX_MPX_CTRS,NULL,0);
+	if ( *call )
+		fprintf( stdout, "%s", call );
 
-	ev_ids=calloc(nev,sizeof(int));
+	if ((nev = PAPI_get_cmp_opt(PAPI_MAX_MPX_CTRS,NULL,0)) <= 0) {
+		fprintf( stdout, "Can not list event names.\n" );
+		return;
+	}
+
+	if ((ev_ids = calloc(nev,sizeof(int))) == NULL) {
+		fprintf( stdout, "Can not list event names.\n" );
+		return;
+	}
 
 	retval = PAPI_list_events( evset, ev_ids, &nev );
 
-	if ( *call )
-		fprintf( stdout, "%s", call );
 	if ( retval == PAPI_OK ) {
 		for ( i = 0; i < nev; i++ ) {
 			PAPI_event_code_to_name( ev_ids[i], evname );
@@ -651,6 +658,7 @@ test_print_event_header( char *call, int evset )
 		fprintf( stdout, "Can not list event names." );
 	}
 	fprintf( stdout, "\n" );
+	free(ev_ids);
 }
 
 int

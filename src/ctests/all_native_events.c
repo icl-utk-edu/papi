@@ -82,7 +82,6 @@ main( int argc, char **argv )
     const PAPI_hw_info_t *hwinfo = NULL;
     char *Intel_i7;
     int event_code;
-    const PAPI_component_info_t *s = NULL;
     int numcmp, cid;
 
     /* Set TESTS_QUIET variable */
@@ -111,7 +110,7 @@ main( int argc, char **argv )
     /* Loop through all components */
     for( cid = 0; cid < numcmp; cid++ ) {
 
-       if ( ( s = PAPI_get_component_info( cid ) ) == NULL ) {
+       if ( PAPI_get_component_info( cid ) == NULL ) {
 	  test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
        }
 
