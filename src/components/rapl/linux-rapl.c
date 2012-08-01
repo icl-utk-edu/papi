@@ -150,7 +150,7 @@ static long long read_msr(int fd, int which) {
 
   uint64_t data;
 
-  if ( pread(fd, &data, sizeof data, which) != sizeof data ) {
+  if ( fd<0 || pread(fd, &data, sizeof data, which) != sizeof data ) {
     perror("rdmsr:pread");
     exit(127);
   }
