@@ -97,12 +97,10 @@ _papi_hwi_lookup_thread( int custom_tid )
 
 
 	if (custom_tid==0) {
-
 #ifdef HAVE_THREAD_LOCAL_STORAGE
-	THRDBG( "TLS returning %p\n", _papi_hwi_my_thread );
-	return ( _papi_hwi_my_thread );
-#endif
-
+	   THRDBG( "TLS returning %p\n", _papi_hwi_my_thread );
+	   return ( _papi_hwi_my_thread );
+#else
 	   if ( _papi_hwi_thread_id_fn == NULL ) {
 	      THRDBG( "Threads not initialized, returning master thread at %p\n",
 				_papi_hwi_thread_head );
@@ -110,6 +108,7 @@ _papi_hwi_lookup_thread( int custom_tid )
 	   }
 
 	   tid = ( *_papi_hwi_thread_id_fn ) (  );
+#endif
 	}
 	else {
 	  tid=custom_tid;
