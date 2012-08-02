@@ -18,14 +18,14 @@
 
 #include "papi_test.h"
 
-static void resultline( int i, int j, int EventSet );
+static void resultline( int i, int j, int EventSet, int fail );
 static void headerlines( char *title, int TESTS_QUIET );
 
 #define INDEX1 100
 #define INDEX5 500
 
-/* #define DONT_FAIL */
-#define MAX_ERROR 10
+#define MAX_WARN 10
+#define MAX_ERROR 80
 #define MAX_DIFF  14
 
 extern int TESTS_QUIET;
@@ -41,6 +41,7 @@ print_help( char **argv )
 	printf( "\t-d            Double precision data. Default is float.\n" );
 	printf
 		( "\t-e event      Use <event> as PAPI event instead of PAPI_FP_OPS\n" );
+	printf( "\t-f            Suppress failures\n" );
 	printf( "\t-h            Print this help message\n" );
 	printf( "\n" );
 	printf
@@ -138,6 +139,7 @@ main( int argc, char *argv[] )
 	int vector = 0;
 	int matrix = 0;
 	int double_precision = 0;
+	int fail = 1;
 	int retval = PAPI_OK;
 	char papi_event_str[PAPI_MIN_STR_LEN] = "PAPI_FP_OPS";
 	int papi_event;
@@ -147,6 +149,8 @@ main( int argc, char *argv[] )
 	for ( i = 0; i < argc; i++ ) {
 		if ( strstr( argv[i], "-i" ) )
 			inner = 1;
+		else if ( strstr( argv[i], "-f" ) )
+			fail = 0;
 		else if ( strstr( argv[i], "-v" ) )
 			vector = 1;
 		else if ( strstr( argv[i], "-m" ) )
@@ -246,7 +250,7 @@ main( int argc, char *argv[] )
 						aa = inner_single( n, x, y );
 						dummy( ( void * ) &aa );
 					}
-					resultline( n, 1, EventSet );
+					resultline( n, 1, EventSet, fail );
 				}
 			}
 		}
@@ -313,7 +317,7 @@ main( int argc, char *argv[] )
 						vector_single( n, a, x, y );
 						dummy( ( void * ) y );
 					}
-					resultline( n, 2, EventSet );
+					resultline( n, 2, EventSet, fail );
 				}
 			}
 		}
@@ -379,7 +383,7 @@ main( int argc, char *argv[] )
 						matrix_single( n, c, a, b );
 						dummy( ( void * ) c );
 					}
-					resultline( n, 3, EventSet );
+					resultline( n, 3, EventSet, fail );
 				}
 			}
 		}
@@ -436,13 +440,13 @@ headerlines( char *title, int TESTS_QUIET )
 #endif
 
 static void
-resultline( int i, int j, int EventSet )
+resultline( int i, int j, int EventSet, int fail )
 {
 	float ferror = 0;
 	long long flpins = 0;
 	long long papi, theory;
 	int diff, retval;
-	const PAPI_hw_info_t *hwinfo = NULL;
+	char err_str[PAPI_MAX_STR_LEN];
 
 	retval = PAPI_stop( EventSet, &flpins );
 	if ( retval != PAPI_OK )
@@ -460,12 +464,14 @@ resultline( int i, int j, int EventSet )
 
 	printf( "%8d %12lld %12lld %8d %10.4f\n", i, papi, theory, diff, ferror );
 
-#ifndef DONT_FAIL
-	if ( ( hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 1 );
-	if ( hwinfo->vendor != PAPI_VENDOR_AMD && ferror > MAX_ERROR &&
-		 abs( diff ) > MAX_DIFF && i > 20 )
-		test_fail( __FILE__, __LINE__, "Calibrate: error exceeds 10%",
-				   PAPI_EMISC );
-#endif
+	if ( ferror > MAX_WARN && abs( diff ) > MAX_DIFF && i > 20 ) {
+		sprintf( err_str, "Calibrate: error exceeds %d percent", MAX_WARN );
+		test_warn( __FILE__, __LINE__, err_str, PAPI_EMISC );
+	}
+	if (fail) {
+		if ( ferror > MAX_ERROR && abs( diff ) > MAX_DIFF && i > 20 ) {
+			sprintf( err_str, "Calibrate: error exceeds %d percent", MAX_ERROR );
+			test_fail( __FILE__, __LINE__, err_str, PAPI_EMISC );
+		}
+	}
 }
