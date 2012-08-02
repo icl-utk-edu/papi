@@ -61,13 +61,11 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_add_events: PAPI_REF_CYC", retval );
   }
   
-	if ( !TESTS_QUIET ) {
-		retval = papi_print_header
-		( "Test case CycleRatio.c: Compute the ratio of TOT and REF cycles.\n",
-		  &hwinfo );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-	}
+	retval = papi_print_header
+	( "Test case CycleRatio.c: Compute the ratio of TOT and REF cycles.\n",
+	  &hwinfo );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 	
 	/* compute a nominal bus clock frequency */
 	retval = PAPI_start( EventSet );
@@ -89,17 +87,14 @@ main( int argc, char **argv )
 	   test_warn( __FILE__, __LINE__, "PAPI_REF_CYC = 0\nTry upgrading your kernel.", 0 );
 	}
 	
-	if ( !TESTS_QUIET ) {
-	   printf( "CPU Computed Megahertz   : %d\n", mhz );
-	   printf( "Measure TOT and REF cycles from a cold start\n" );
-	}
+    printf( "CPU Computed Megahertz   : %d\n", mhz );
+    printf( "Measure TOT and REF cycles from a cold start\n" );
 
 	work(EventSet, mhz);
 	do_flops(10*numflops);
 	
-	if ( !TESTS_QUIET ) {
-	   printf( "\nMeasure again after working for a while\n" );
-	}
+	printf( "\nMeasure again after working for a while\n" );
+
 	work(EventSet, mhz);
 	test_pass( __FILE__, NULL, 0 );
 	return ( 0 );
@@ -144,27 +139,27 @@ static void work (int EventSet, int mhz)
 	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 
-	if ( !TESTS_QUIET ) {
-	   printf( "-------------------------------------------------------------------------\n" );
-	   printf( "Using %d iterations of c += a*b\n", numflops );
-	   printf( "-------------------------------------------------------------------------\n" );
+   printf( "-------------------------------------------------------------------------\n" );
+   printf( "Using %d iterations of c += a*b\n", numflops );
+   printf( "-------------------------------------------------------------------------\n" );
 
-	   printf( TAB1, "PAPI_TOT_CYC             : \t", values[0] );
-	   printf( TAB1, "PAPI_REF_CYC             : \t", values[1] );
-	   printf( "%-12s %12f\n", "Cycle Ratio              : \t", ratio );
-	   printf( "%-12s %12d\n", "Effective MHz            : \t", (int)(ratio * mhz) );
-	   printf( TAB1, "Real usec                : \t", elapsed_us );
-	   printf( TAB1, "Real cycles              : \t", elapsed_cyc );
-	   printf( TAB1, "Virt usec                : \t", elapsed_virt_us );
-	   printf( TAB1, "Virt cycles              : \t", elapsed_virt_cyc );
+   printf( TAB1, "PAPI_TOT_CYC             : \t", values[0] );
+   printf( TAB1, "PAPI_REF_CYC             : \t", values[1] );
+   printf( "%-12s %12f\n", "Cycle Ratio              : \t", ratio );
+   printf( "%-12s %12d\n", "Effective MHz            : \t", (int)(ratio * mhz) );
+   printf( TAB1, "Real usec                : \t", elapsed_us );
+   printf( TAB1, "Real cycles              : \t", elapsed_cyc );
+   printf( TAB1, "Virt usec                : \t", elapsed_virt_us );
+   printf( TAB1, "Virt cycles              : \t", elapsed_virt_cyc );
 
-	   printf( "-------------------------------------------------------------------------\n" );
+   printf( "-------------------------------------------------------------------------\n" );
 
-	   printf( "Verification: PAPI_REF_CYC should be roughly equal to real_cycles\n" );
-	   cycles_error=100.0*((double)values[1] - (double)elapsed_cyc)/(double)elapsed_cyc;
-	   if ((cycles_error>10.0) || (cycles_error<-10.0)) {
-	     printf("Error of %.2f%%\n",cycles_error);
-	     test_warn( __FILE__, __LINE__, "validation", 0 );
-	   }
-	}
+   printf( "Verification: PAPI_REF_CYC should be roughly equal to real_cycles\n" );
+   cycles_error=100.0*((double)values[1] - (double)elapsed_cyc)/(double)elapsed_cyc;
+
+   if ((cycles_error>10.0) || (cycles_error<-10.0)) {
+	 printf("Error of %.2f%%\n",cycles_error);
+	 test_warn( __FILE__, __LINE__, "validation", 0 );
+   }
+
 }
