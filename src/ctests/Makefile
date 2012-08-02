@@ -208,7 +208,7 @@ nmi_watchdog: nmi_watchdog.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) nmi_watchdog.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o nmi_watchdog
 
 cycle_ratio: cycle_ratio.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o cycle_ratio
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cycle_ratio.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o cycle_ratio
 
 zero_fork: zero_fork.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_fork.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_fork
