@@ -33,7 +33,7 @@ CTESTS=`find ctests/* -prune -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
 COMPTESTS=`find components/*/tests -perm -u+x -type f`;
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
-EXCLUDE=`grep -v -e '^#' run_tests_exclude.txt`
+EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
 ALLTESTS="$CTESTS $FTESTS $COMPTESTS";
 x=0;
@@ -87,7 +87,7 @@ echo ""
 
 CUDA=`find Makefile | xargs grep cuda`;
 if [ "$CUDA" != "" ]; then
-  EXCLUDE=$EXCLUDE `grep -v -e '^#' run_tests_exclude_cuda.txt`
+  EXCLUDE="$EXCLUDE `grep -v -e '^#\|^$' run_tests_exclude_cuda.txt`"
 fi
 
 echo ""
