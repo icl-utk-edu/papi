@@ -635,7 +635,7 @@ _aix_get_system_info( papi_mdi_t *mdi )
 
 /*   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;*/
 	_aix_vector.cmp_info.num_cntrs = pminfo.maxpmcs;
-	_aix_vector.cmp_info.num_mpx_cntrs = pminfo.maxpmcs,
+	_aix_vector.cmp_info.num_mpx_cntrs = MAX_MPX_COUNTERS;   // pminfo.maxpmcs,
 
 	_aix_vector.cmp_info.available_granularities = PAPI_GRN_THR;
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
