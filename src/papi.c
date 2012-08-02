@@ -4452,7 +4452,7 @@ PAPI_strerror( int errorCode )
 	if ( ( errorCode > 0 ) || ( -errorCode > _papi_hwi_num_errors ) )
 		return ( NULL );
 
-	return ( ( char * ) _papi_hwi_err[-errorCode].descr );
+	return ( _papi_errlist[-errorCode] );
 }
 
 /** @class PAPI_perror
