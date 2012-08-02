@@ -114,13 +114,13 @@ main( int argc, char **argv )
 
 	   printf( "Verification: PAPI_TOT_CYC should be roughly real_cycles\n" );
 	   printf( "NOTE: Not true if dynamic frequency scaling is enabled.\n" );
-	   cycles_error=100.0*((double)values[0][0] - (double)elapsed_cyc)/((double)elapsed_cyc);
-	   if ((cycles_error > 10.0) || (cycles_error < -10.0)) {
-	     printf("Error of %.2f%%\n",cycles_error);
-	     test_fail( __FILE__, __LINE__, "validation", 0 );
-	   }
-
 	}
+	cycles_error=100.0*((double)values[0][0] - (double)elapsed_cyc)/((double)elapsed_cyc);
+	if ((cycles_error > 10.0) || (cycles_error < -10.0)) {
+		printf("Error of %.2f%%\n",cycles_error);
+		test_fail( __FILE__, __LINE__, "validation", 0 );
+	}
+	
 	test_pass( __FILE__, values, num_tests );
 	
 	return 0;
