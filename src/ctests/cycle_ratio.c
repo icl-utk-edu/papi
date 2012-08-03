@@ -43,6 +43,11 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
+	retval = PAPI_query_named_event("PAPI_REF_CYC");
+	if (PAPI_OK!=retval) {
+		test_skip( __FILE__, __LINE__, "PAPI_REF_CYC is not defined on this platform.", PAPI_OK );
+	}
+
     /* create an eventset */
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK ) {
