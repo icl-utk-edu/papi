@@ -15,6 +15,8 @@
 
 #include "papi_test.h"
 
+#define MAX_CYCLE_ERROR 30
+
 int
 main( int argc, char **argv )
 {
@@ -114,10 +116,17 @@ main( int argc, char **argv )
 
 	   printf( "Verification: PAPI_TOT_CYC should be roughly real_cycles\n" );
 	   printf( "NOTE: Not true if dynamic frequency scaling is enabled.\n" );
+	   printf( "Verification: PAPI_FP_INS should be roughly %d\n", 2*NUM_FLOPS );
 	}
+	/* Check that TOT_CYC and real_cycles roughly match */
 	cycles_error=100.0*((double)values[0][0] - (double)elapsed_cyc)/((double)elapsed_cyc);
-	if ((cycles_error > 10.0) || (cycles_error < -10.0)) {
-		printf("Error of %.2f%%\n",cycles_error);
+	if ((cycles_error > MAX_CYCLE_ERROR) || (cycles_error < -MAX_CYCLE_ERROR)) {
+		printf("PAPI_TOT_CYC Error of %.2f%%\n",cycles_error);
+		test_fail( __FILE__, __LINE__, "validation", 0 );
+	}
+	/* Check that FP_INS is reasonable */
+	if (abs(values[0][1] - (2*NUM_FLOPS)) > (NUM_FLOPS / 2)) {
+		printf("%s Error of %.2f%%\n", event_name, (100.0 * (double)(values[0][1] - (2*NUM_FLOPS)))/(2*NUM_FLOPS));
 		test_fail( __FILE__, __LINE__, "validation", 0 );
 	}
 	
