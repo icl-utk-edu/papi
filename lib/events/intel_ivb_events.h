@@ -783,7 +783,7 @@ static const intel_x86_umask_t ivb_l2_rqsts[]={
      .ucode = 0xc00,
      .uflags= INTEL_X86_NCOMBO,
    },
-   { .uname  = "RFO_HITS",
+   { .uname  = "RFO_HIT",
      .udesc  = "Store RFO requests that hit L2 cache",
      .ucode = 0x400,
      .uflags= INTEL_X86_NCOMBO,
