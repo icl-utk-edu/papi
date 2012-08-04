@@ -28,10 +28,10 @@ include $(TOPDIR)/rules.mk
 PYTHON_PREFIX=$(PREFIX)
 
 all:
-	./setup.py build
+	CFLAGS="-O2 -g" ./setup.py build
 
 install:
-	./setup.py install --prefix=$(DESTDIR)$(PYTHON_PREFIX)
+	 CFLAGS="-O2 -g" ./setup.py install --prefix=$(DESTDIR)$(PYTHON_PREFIX)
 
 clean:
 	$(RM) src/perfmon_int_wrap.c src/perfmon_int.py src/*.pyc
