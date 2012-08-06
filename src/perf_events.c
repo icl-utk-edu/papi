@@ -72,7 +72,7 @@ typedef struct
   per_event_info_t per_event_info[PERF_EVENT_MAX_MPX_COUNTERS];
   /* Buffer to gather counters */
   long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
-} control_state_t;
+} pe_control_state_t;
 
 typedef struct
 {
@@ -363,7 +363,7 @@ check_permissions( unsigned long tid, unsigned int cpu_num,
  */
 
 static inline int
-check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
+check_scheduability( context_t * ctx, pe_control_state_t *ctl, int idx )
 {
   int retval = 0, cnt = -1;
   ( void ) ctl;			 /*unused */
@@ -448,7 +448,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 
 
 static inline int
-partition_events( context_t * ctx, control_state_t * ctl )
+partition_events( context_t * ctx, pe_control_state_t *ctl )
 {
 	int i, ret;
 
@@ -623,7 +623,7 @@ tune_up_fd( context_t *ctx, int evt_idx )
 }
 
 static inline int
-open_pe_evts( context_t * ctx, control_state_t * ctl )
+open_pe_evts( context_t * ctx, pe_control_state_t *ctl )
 {
 	
      int i, ret = PAPI_OK;
@@ -793,14 +793,14 @@ close_pe_evts( context_t * ctx )
 
 
 static int
-attach( control_state_t * pe_ctl, unsigned long tid )
+attach( pe_control_state_t *pe_ctl, unsigned long tid )
 {
 	pe_ctl->tid = tid;
 	return PAPI_OK;
 }
 
 static int
-detach( context_t * ctx, control_state_t * pe_ctl )
+detach( context_t * ctx, pe_control_state_t *pe_ctl )
 {
 	( void ) ctx;			 /*unused */
 	pe_ctl->tid = 0;
@@ -812,7 +812,7 @@ _papi_pe_set_domain( hwd_control_state_t * ctl, int domain)
 {
 	
      int i;
-     control_state_t *pe_ctl = ( control_state_t * ) ctl;
+     pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
      SUBDBG("control %p, old control domain %d, new domain %d, default domain %d\n",ctl,pe_ctl->domain,domain,_papi_pe_vector.cmp_info.default_domain);
 
      pe_ctl->domain = domain;
@@ -827,7 +827,7 @@ _papi_pe_set_domain( hwd_control_state_t * ctl, int domain)
 }
 
 static inline int
-set_cpu( control_state_t * ctl, unsigned int cpu_num )
+set_cpu( pe_control_state_t *ctl, unsigned int cpu_num )
 {
 	ctl->tid = -1;      /* this tells the kernel not to count for a thread */
 
@@ -838,7 +838,7 @@ set_cpu( control_state_t * ctl, unsigned int cpu_num )
 /* Some boilerplate */
 /* We should maybe support this stuff at some point */
 static inline int
-set_granularity( control_state_t *ctl, int domain )
+set_granularity( pe_control_state_t *ctl, int domain )
 {
   ( void ) ctl;	 /*unused */
 
@@ -1045,7 +1045,7 @@ _papi_pe_init_thread( hwd_context_t * thr_ctx )
 }
 
 static int
-pe_enable_counters( context_t * ctx, control_state_t * ctl )
+pe_enable_counters( context_t * ctx, pe_control_state_t *ctl )
 {
 	int ret = PAPI_OK;
 	int i;
@@ -1201,7 +1201,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
   ( void ) flags;			 /*unused */
   int i, ret = -1;
   context_t *pe_ctx = ( context_t * ) ctx;
-  control_state_t *pe_ctl = ( control_state_t * ) ctl;
+  pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
   long long papi_pe_buffer[READ_BUFFER_SIZE];
 
   /*
@@ -1309,7 +1309,7 @@ static int
 _papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
 	context_t *pe_ctx = ( context_t * ) ctx;
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
+	pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
 	int ret;
 
 	ret = _papi_pe_reset( pe_ctx, pe_ctl );
@@ -1356,7 +1356,7 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 {
   int i = 0, ret;
   context_t *pe_ctx = ( context_t * ) ctx;
-  control_state_t *pe_ctl = ( control_state_t * ) ctl;
+  pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
 
   if ( pe_ctx->cookie != CTX_INITIALIZED ) {
      memset( pe_ctl->events, 0,
@@ -1429,11 +1429,11 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
    int ret;
    context_t *pe_ctx = ( context_t * ) ctx;
-   control_state_t *pe_ctl = NULL;
+   pe_control_state_t *pe_ctl = NULL;
 
    switch ( code ) {
       case PAPI_MULTIPLEX:
-	   pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
+	   pe_ctl = ( pe_control_state_t * ) ( option->multiplex.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
 				  1, pe_ctl->inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
@@ -1449,7 +1449,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	   return ret;
 	
       case PAPI_ATTACH:
-	   pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+	   pe_ctl = ( pe_control_state_t * ) ( option->attach.ESI->ctl_state );
 	   if (check_permissions( option->attach.tid, pe_ctl->cpu, 
 				  pe_ctl->domain, pe_ctl->multiplexed, 
 				  pe_ctl->inherit ) != PAPI_OK) {
@@ -1465,11 +1465,11 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	   return ret;
 
       case PAPI_DETACH:
-	   pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+	   pe_ctl = ( pe_control_state_t *) ( option->attach.ESI->ctl_state );
 	   return detach( pe_ctx, pe_ctl );
 
       case PAPI_CPU_ATTACH:
-	   pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
+	   pe_ctl = ( pe_control_state_t *) ( option->cpu.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, 
 				  pe_ctl->domain, pe_ctl->multiplexed, 
 				  pe_ctl->inherit ) != PAPI_OK) {
@@ -1479,7 +1479,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	   return set_cpu( pe_ctl, option->cpu.cpu_num );
 
       case PAPI_DOMAIN:
-	   pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
+	   pe_ctl = ( pe_control_state_t *) ( option->domain.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, 
 				  option->domain.domain, pe_ctl->multiplexed,
 				  pe_ctl->inherit ) != PAPI_OK) {
@@ -1489,11 +1489,11 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	   return _papi_pe_set_domain( pe_ctl, option->domain.domain );
 
       case PAPI_GRANUL:
-	   pe_ctl = (control_state_t *) ( option->granularity.ESI->ctl_state );
+	   pe_ctl = (pe_control_state_t *) ( option->granularity.ESI->ctl_state );
 	   return set_granularity( pe_ctl, option->granularity.granularity );
 
       case PAPI_INHERIT:
-	   pe_ctl = ( control_state_t * ) ( option->inherit.ESI->ctl_state );
+	   pe_ctl = (pe_control_state_t *) ( option->inherit.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
 				  pe_ctl->multiplexed, 
 				  option->inherit.inherit ) != PAPI_OK) {
@@ -1512,7 +1512,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_DATA_ADDRESS:
 	   return PAPI_ENOSUPP;
 #if 0
-	   pe_ctl = (control_state_t *) (option->address_range.ESI->ctl_state);
+	   pe_ctl = (pe_control_state_t *) (option->address_range.ESI->ctl_state);
 	   ret = set_default_domain( pe_ctl, option->address_range.domain );
 	   if ( ret != PAPI_OK ) {
 	      return ret;
@@ -1523,7 +1523,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_INSTR_ADDRESS:
 	   return PAPI_ENOSUPP;
 #if 0
-	   pe_ctl = (control_state_t *) (option->address_range.ESI->ctl_state);
+	   pe_ctl = (pe_control_state_t *) (option->address_range.ESI->ctl_state);
 	   ret = set_default_domain( pe_ctl, option->address_range.domain );
 	   if ( ret != PAPI_OK ) {
 	      return ret;
@@ -1930,7 +1930,7 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
-	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
+	pe_control_state_t *ctl = (pe_control_state_t *) ( ESI->ctl_state );
 	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
 
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
@@ -2009,7 +2009,7 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	}
 	retval =
 		_papi_pe_update_control_state( ctl, NULL,
-									   ( ( control_state_t * ) ( ESI->
+									   ( ( pe_control_state_t *) ( ESI->
 																 ctl_state ) )->
 									   num_events, ctx );
 
@@ -2025,7 +2025,7 @@ _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	int evt_idx;
 	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
 	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
-	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
+	pe_control_state_t *ctl = ( pe_control_state_t *) ( ESI->ctl_state );
 
 	/*
 	 * Since you can't profile on a derived event, the event is always the
@@ -2082,10 +2082,10 @@ _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 
 
 static int
-_papi_pe_init_control_state( hwd_control_state_t * ctl )
+_papi_pe_init_control_state( hwd_control_state_t *ctl )
 {
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-	memset( pe_ctl, 0, sizeof ( control_state_t ) );
+	pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
+	memset( pe_ctl, 0, sizeof ( pe_control_state_t ) );
 	_papi_pe_set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
 	/* Set cpu number in the control block to show events are not tied to specific cpu */
 	pe_ctl->cpu = -1;
@@ -2124,7 +2124,7 @@ papi_vector_t _papi_pe_vector = {
   /* sizes of framework-opaque component-private structures */
   .size = {
       .context = sizeof ( context_t ),
-      .control_state = sizeof ( control_state_t ),
+      .control_state = sizeof ( pe_control_state_t ),
       .reg_value = sizeof ( pfm_register_t ),
       .reg_alloc = sizeof ( reg_alloc_t ),
   },
