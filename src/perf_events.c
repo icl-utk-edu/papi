@@ -93,7 +93,7 @@ typedef struct
   int state;
   int num_evts;
   evt_t evt[PERF_EVENT_MAX_MPX_COUNTERS];
-} context_t;
+} pe_context_t;
 
 
 #if defined(__mips__)
@@ -363,7 +363,7 @@ check_permissions( unsigned long tid, unsigned int cpu_num,
  */
 
 static inline int
-check_scheduability( context_t * ctx, pe_control_state_t *ctl, int idx )
+check_scheduability( pe_context_t *ctx, pe_control_state_t *ctl, int idx )
 {
   int retval = 0, cnt = -1;
   ( void ) ctl;			 /*unused */
@@ -448,7 +448,7 @@ check_scheduability( context_t * ctx, pe_control_state_t *ctl, int idx )
 
 
 static inline int
-partition_events( context_t * ctx, pe_control_state_t *ctl )
+partition_events( pe_context_t *ctx, pe_control_state_t *ctl )
 {
 	int i, ret;
 
@@ -554,7 +554,7 @@ partition_events( context_t * ctx, pe_control_state_t *ctl )
 #define NR_MMAP_PAGES (1 + 8)
 
 static int
-tune_up_fd( context_t *ctx, int evt_idx )
+tune_up_fd( pe_context_t *ctx, int evt_idx )
 {
 	int ret;
 	void *buf_addr;
@@ -623,7 +623,7 @@ tune_up_fd( context_t *ctx, int evt_idx )
 }
 
 static inline int
-open_pe_evts( context_t * ctx, pe_control_state_t *ctl )
+open_pe_evts( pe_context_t *ctx, pe_control_state_t *ctl )
 {
 	
      int i, ret = PAPI_OK;
@@ -745,7 +745,7 @@ open_pe_evts( context_t * ctx, pe_control_state_t *ctl )
 }
 
 static int
-close_pe_evts( context_t * ctx )
+close_pe_evts( pe_context_t *ctx )
 {
     int i, ret;
 
@@ -800,7 +800,7 @@ attach( pe_control_state_t *pe_ctl, unsigned long tid )
 }
 
 static int
-detach( context_t * ctx, pe_control_state_t *pe_ctl )
+detach( pe_context_t *ctx, pe_control_state_t *pe_ctl )
 {
 	( void ) ctx;			 /*unused */
 	pe_ctl->tid = 0;
@@ -1037,7 +1037,7 @@ _papi_pe_shutdown_component( void ) {
 }
 
 static int
-_papi_pe_init_thread( hwd_context_t * thr_ctx )
+_papi_pe_init_thread( hwd_context_t *thr_ctx )
 {
 	( void ) thr_ctx;		 /*unused */
 	/* No initialization is needed */
@@ -1045,7 +1045,7 @@ _papi_pe_init_thread( hwd_context_t * thr_ctx )
 }
 
 static int
-pe_enable_counters( context_t * ctx, pe_control_state_t *ctl )
+pe_enable_counters( pe_context_t* ctx, pe_control_state_t *ctl )
 {
 	int ret = PAPI_OK;
 	int i;
@@ -1087,10 +1087,10 @@ pe_enable_counters( context_t * ctx, pe_control_state_t *ctl )
 
 /* reset the hardware counters */
 static int
-_papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
+_papi_pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 	int i, ret;
-	context_t *pe_ctx = ( context_t * ) ctx;
+	pe_context_t *pe_ctx = ( pe_context_t *) ctx;
 
 	( void ) ctl;			 /*unused */
 
@@ -1110,7 +1110,7 @@ _papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 
 /* write(set) the hardware counters */
 static int
-_papi_pe_write( hwd_context_t * ctx, hwd_control_state_t * ctl,
+_papi_pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 				long long *from )
 {
 	( void ) ctx;			 /*unused */
@@ -1195,12 +1195,12 @@ get_count_idx_by_id( long long * buf, int multiplexed, int inherit, int64_t id )
 
 
 static int
-_papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
+_papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	       long long **events, int flags )
 {
   ( void ) flags;			 /*unused */
   int i, ret = -1;
-  context_t *pe_ctx = ( context_t * ) ctx;
+  pe_context_t *pe_ctx = ( pe_context_t *) ctx;
   pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
   long long papi_pe_buffer[READ_BUFFER_SIZE];
 
@@ -1306,9 +1306,9 @@ COMPONENT:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time
 }
 
 static int
-_papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
+_papi_pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-	context_t *pe_ctx = ( context_t * ) ctx;
+	pe_context_t *pe_ctx = ( pe_context_t *) ctx;
 	pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
 	int ret;
 
@@ -1320,12 +1320,12 @@ _papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 }
 
 static int
-_papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl )
+_papi_pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 	( void ) ctl;			 /*unused */
 	int ret;
 	int i;
-	context_t *pe_ctx = ( context_t * ) ctx;
+	pe_context_t *pe_ctx = ( pe_context_t *) ctx;
 
 	/* Just disable the group leaders */
 	for ( i = 0; i < pe_ctx->num_evts; i++ )
@@ -1355,13 +1355,13 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 			       int count, hwd_context_t *ctx )
 {
   int i = 0, ret;
-  context_t *pe_ctx = ( context_t * ) ctx;
+  pe_context_t *pe_ctx = ( pe_context_t *) ctx;
   pe_control_state_t *pe_ctl = ( pe_control_state_t *) ctl;
 
   if ( pe_ctx->cookie != CTX_INITIALIZED ) {
      memset( pe_ctl->events, 0,
 	     sizeof ( struct perf_event_attr ) * PERF_EVENT_MAX_MPX_COUNTERS );
-     memset( pe_ctx, 0, sizeof ( context_t ) );
+     memset( pe_ctx, 0, sizeof ( pe_context_t ) );
      pe_ctx->cookie = CTX_INITIALIZED;
   } else {
      /* close all of the existing fds and start over again */
@@ -1428,7 +1428,7 @@ static int
 _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
    int ret;
-   context_t *pe_ctx = ( context_t * ) ctx;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
    pe_control_state_t *pe_ctl = NULL;
 
    switch ( code ) {
@@ -1555,9 +1555,9 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
 
 static int
-_papi_pe_shutdown_thread( hwd_context_t * ctx )
+_papi_pe_shutdown_thread( hwd_context_t *ctx )
 {
-	context_t *pe_ctx = ( context_t * ) ctx;
+	pe_context_t *pe_ctx = ( pe_context_t *) ctx;
 	int ret;
 
 	ret = close_pe_evts( pe_ctx );
@@ -1746,7 +1746,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
 	if ( ret != PAPI_OK )
 		return ( ret );
 
-	mmap_read( thr, &( ( context_t * ) ( *thr )->context[cidx] )->evt[evt_idx],
+	mmap_read( thr, &( ( pe_context_t *) ( *thr )->context[cidx] )->evt[evt_idx],
 			   evt_idx, profile_index );
 
 	return ( PAPI_OK );
@@ -1805,8 +1805,8 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 	}
 
         /* See if the fd is one that's part of the this thread's context */
-	for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts; i++ ) {
-	    if ( fd == ( ( context_t * ) thread->context[cidx] )->evt[i].event_fd ) {
+	for ( i = 0; i < ( ( pe_context_t *) thread->context[cidx] )->num_evts; i++ ) {
+	    if ( fd == ( ( pe_context_t *) thread->context[cidx] )->evt[i].event_fd ) {
 	       found_evt_idx = i;
 	       break;
 	    }
@@ -1828,7 +1828,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 		uint64_t ip;
 		unsigned int head;
 		evt_t *pe =
-			&( ( context_t * ) thread->context[cidx] )->evt[found_evt_idx];
+			&( ( pe_context_t *) thread->context[cidx] )->evt[found_evt_idx];
 
 		unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
 
@@ -1907,12 +1907,12 @@ _papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 	 * Loop through all of the events and process those which have mmap
 	 * buffers attached.
 	 */
-	for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts; i++ ) {
+	for ( i = 0; i < ( ( pe_context_t *) thread->context[cidx] )->num_evts; i++ ) {
 		/*
 		 * Use the mmap_buf field as an indicator of this fd being used for
 		 * profiling
 		 */
-		if ( ( ( context_t * ) thread->context[cidx] )->evt[i].mmap_buf ) {
+		if ( ( ( pe_context_t *) thread->context[cidx] )->evt[i].mmap_buf ) {
 			/* Process any remaining samples in the sample buffer */
 			ret = process_smpl_buf( i, &thread );
 			if ( ret ) {
@@ -1929,7 +1929,7 @@ static int
 _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 {
 	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
-	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
+	pe_context_t *ctx = ( pe_context_t *) ( ESI->master->context[cidx] );
 	pe_control_state_t *ctl = (pe_control_state_t *) ( ESI->ctl_state );
 	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
 
@@ -2024,7 +2024,7 @@ _papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	int ret;
 	int evt_idx;
 	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
-	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
+	pe_context_t *ctx = ( pe_context_t *) ( ESI->master->context[cidx] );
 	pe_control_state_t *ctl = ( pe_control_state_t *) ( ESI->ctl_state );
 
 	/*
@@ -2123,7 +2123,7 @@ papi_vector_t _papi_pe_vector = {
 
   /* sizes of framework-opaque component-private structures */
   .size = {
-      .context = sizeof ( context_t ),
+      .context = sizeof ( pe_context_t ),
       .control_state = sizeof ( pe_control_state_t ),
       .reg_value = sizeof ( pfm_register_t ),
       .reg_alloc = sizeof ( reg_alloc_t ),
