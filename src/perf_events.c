@@ -126,7 +126,6 @@ papi_vector_t _papi_pe_vector;
 /* What the heck are these? -pjm */
 /* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
 #define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * PERF_EVENT_MAX_MPX_COUNTERS)
-#define MAX_READ 8192
 
 
 /******** Kernel Version Dependent Routines  **********************/
