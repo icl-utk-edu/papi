@@ -78,7 +78,7 @@ typedef struct
 {
   int group_leader;		  /* index of leader */
   int event_fd;
-  int event_id;
+  uint64_t event_id;
   uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
   void *mmap_buf;		  /* used to contain profiling data samples */
                                   /* as well as control */
