@@ -299,7 +299,7 @@ main( int argc, char **argv )
 	       /* Don't just assume it'll be the first numeric value */
 	       i = 0 | PAPI_NATIVE_MASK;
 
-	       PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
+	       retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
 	       do {
 		  memset( &info, 0, sizeof ( info ) );

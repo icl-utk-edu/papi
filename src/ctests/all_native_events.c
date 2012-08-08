@@ -117,7 +117,7 @@ main( int argc, char **argv )
        /* For platform independence, always ASK FOR the first event */
        /* Don't just assume it'll be the first numeric value */
        i = 0 | PAPI_NATIVE_MASK;
-       PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
+       retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
        do {
           retval = PAPI_get_event_info( i, &info );

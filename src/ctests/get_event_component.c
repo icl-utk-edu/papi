@@ -35,7 +35,7 @@ main( int argc, char **argv )
     for( cid = 0; cid < numcmp; cid++ ) {
 
        i = 0 | PAPI_NATIVE_MASK;
-       PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
+       retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
        do {
           retval = PAPI_get_event_info( i, &info );
