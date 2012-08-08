@@ -258,7 +258,7 @@ int add_define( char *line, list_t* LIST ) {
 	return PAPI_ENOMEM;
   }
 
-  t = strtok(local_line, " "); /* throw out the #define */
+  strtok(local_line, " "); /* throw out the #define */
   
   /* next token should be the name */
   t = strtok(NULL, " ");
