@@ -53,11 +53,6 @@
 typedef int pfm_register_t;
 typedef int reg_alloc_t;            
 
-typedef struct 
-{
-  unsigned char wakeup_mode;
-} per_event_info_t;
-
 typedef struct
 {
   int num_events;
@@ -69,7 +64,7 @@ typedef struct
   int cpu;
   pid_t tid;
   struct perf_event_attr events[PERF_EVENT_MAX_MPX_COUNTERS];
-  per_event_info_t per_event_info[PERF_EVENT_MAX_MPX_COUNTERS];
+  unsigned char wakeup_mode[PERF_EVENT_MAX_MPX_COUNTERS];
   /* Buffer to gather counters */
   long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
 } pe_control_state_t;
@@ -2009,7 +2004,7 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	 * (WAKEUP_MODE_COUNTER_OVERFLOW) as a result of a call to memset 0 to
 	 * all of the events in the ctl struct.
 	 */
-	switch ( ctl->per_event_info[evt_idx].wakeup_mode ) {
+	switch ( ctl->wakeup_mode[evt_idx] ) {
 	case WAKEUP_MODE_PROFILING:
 		/*
 		 * Setting wakeup_events to special value zero means issue a wakeup
@@ -2030,8 +2025,8 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		break;
 	default:
 		PAPIERROR
-			( "ctl->per_event_info[%d].wakeup_mode set to an unknown value - %u",
-			  evt_idx, ctl->per_event_info[evt_idx].wakeup_mode );
+			( "ctl->wakeup_mode[%d] set to an unknown value - %u",
+			  evt_idx, ctl->wakeup_mode[evt_idx] );
 		return PAPI_EBUG;
 	}
 
