@@ -55,6 +55,18 @@ typedef int reg_alloc_t;
 
 typedef struct
 {
+  int group_leader;		  /* index of leader */
+  int event_fd;
+  uint64_t event_id;
+  uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
+  void *mmap_buf;		  /* used to contain profiling data samples */
+                                  /* as well as control */
+  uint64_t tail;		  /* current read location in mmap buffer */
+  uint64_t mask;		  /* mask used for wrapping the pages */
+} pe_event_info_t;
+
+typedef struct
+{
   int num_events;
   int num_groups;
   unsigned int domain;
@@ -65,21 +77,10 @@ typedef struct
   pid_t tid;
   struct perf_event_attr events[PERF_EVENT_MAX_MPX_COUNTERS];
   unsigned char wakeup_mode[PERF_EVENT_MAX_MPX_COUNTERS];
-  /* Buffer to gather counters */
   long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
 } pe_control_state_t;
 
-typedef struct
-{
-  int group_leader;		  /* index of leader */
-  int event_fd;
-  uint64_t event_id;
-  uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
-  void *mmap_buf;		  /* used to contain profiling data samples */
-                                  /* as well as control */
-  uint64_t tail;		  /* current read location in mmap buffer */
-  uint64_t mask;		  /* mask used for wrapping the pages */
-} evt_t;
+
 
 typedef struct
 {
@@ -87,7 +88,7 @@ typedef struct
   int cookie;
   int state;
   int num_evts;
-  evt_t evt[PERF_EVENT_MAX_MPX_COUNTERS];
+  pe_event_info_t evt[PERF_EVENT_MAX_MPX_COUNTERS];
 } pe_context_t;
 
 
@@ -1659,7 +1660,7 @@ find_profile_index( EventSetInfo_t * ESI, int evt_idx, int *flags,
  */
 
 static uint64_t
-mmap_read_head( evt_t * pe )
+mmap_read_head( pe_event_info_t * pe )
 {
 	struct perf_event_mmap_page *pc = pe->mmap_buf;
 	int head;
@@ -1676,7 +1677,7 @@ mmap_read_head( evt_t * pe )
 }
 
 static void
-mmap_write_tail( evt_t * pe, uint64_t tail )
+mmap_write_tail( pe_event_info_t * pe, uint64_t tail )
 {
 	struct perf_event_mmap_page *pc = pe->mmap_buf;
 
@@ -1688,7 +1689,8 @@ mmap_write_tail( evt_t * pe, uint64_t tail )
 }
 
 static void
-mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
+mmap_read( ThreadInfo_t ** thr, pe_event_info_t * pe, 
+	   int evt_index, int profile_index )
 {
 	( void ) evt_index;		 /*unused */
 	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
@@ -1876,7 +1878,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 	else {
 		uint64_t ip;
 		unsigned int head;
-		evt_t *pe =
+		pe_event_info_t *pe =
 			&( ( pe_context_t *) thread->context[cidx] )->evt[found_evt_idx];
 
 		unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
