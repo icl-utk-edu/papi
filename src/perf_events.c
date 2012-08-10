@@ -84,7 +84,7 @@ typedef struct
 
 typedef struct
 {
-  int cookie;
+  int initialized;
   int state;
 } pe_context_t;
 
@@ -102,9 +102,6 @@ typedef struct
 
 #define WAKEUP_MODE_COUNTER_OVERFLOW 0
 #define WAKEUP_MODE_PROFILING 1
-
-/* just an unlikely magic cookie */
-#define CTX_INITIALIZED 0xdc1dc1
 
 #define PERF_EVENTS_RUNNING 0x01
 
@@ -754,48 +751,49 @@ cleanup:
 static int
 close_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 {
-    int i, ret;
+   int i, ret;
 
-    if ( ctx->state & PERF_EVENTS_RUNNING ) {
-       /* probably a good idea to stop the counters before closing them */
-       for( i = 0; i < ctl->num_events; i++ ) {
-	  if ( ctl->events[i].group_leader == i ) {
-	     ret = ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-	     if ( ret == -1 ) {
-		/* Never should happen */
-		return PAPI_EBUG;
-	     }
-	  }
-       }
-       ctx->state &= ~PERF_EVENTS_RUNNING;
-    }
+   if ( ctx->state & PERF_EVENTS_RUNNING ) {
+      /* probably a good idea to stop the counters before closing them */
+      for( i = 0; i < ctl->num_events; i++ ) {
+	 if ( ctl->events[i].group_leader == i ) {
+	    ret = ioctl( ctl->events[i].event_fd, 
+			 PERF_EVENT_IOC_DISABLE, NULL );
+	    if ( ret == -1 ) {
+	       /* Never should happen */
+	       return PAPI_EBUG;
+	    }
+	 }
+      }
+      ctx->state &= ~PERF_EVENTS_RUNNING;
+   }
 
 
-    /* Close the hw event fds in reverse order so that the group leader is */
-    /* closed last, otherwise we will have counters with dangling group    */
-    /* leader pointers.                                                    */
+   /* Close the hw event fds in reverse order so that the group leader is */
+   /* closed last, otherwise we will have counters with dangling group    */
+   /* leader pointers.                                                    */
 
-    for ( i = ctl->num_events; i > 0; ) {
-       i--;
-       if ( ctl->events[i].mmap_buf ) {
-	  if ( munmap ( ctl->events[i].mmap_buf,
-			ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
-	     PAPIERROR( "munmap of fd = %d returned error: %s",
+   for( i = ctl->num_events; i > 0; ) {
+      i--;
+      if ( ctl->events[i].mmap_buf ) {
+	 if ( munmap ( ctl->events[i].mmap_buf,
+		       ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
+	    PAPIERROR( "munmap of fd = %d returned error: %s",
 			ctl->events[i].event_fd, strerror( errno ) );
-	     return PAPI_ESYS;
-	  }
-       }
+	    return PAPI_ESYS;
+	 }
+      }
 
-       if ( close( ctl->events[i].event_fd ) ) {
-	  PAPIERROR( "close of fd = %d returned error: %s",
+      if ( close( ctl->events[i].event_fd ) ) {
+	 PAPIERROR( "close of fd = %d returned error: %s",
 		     ctl->events[i].event_fd, strerror( errno ) );
-	  return PAPI_ESYS;
-       } else {
-	  ctl->num_events--;
-       }
-    }
+	 return PAPI_ESYS;
+      } else {
+	 ctl->num_events--;
+      }
+   }
 
-    return PAPI_OK;
+   return PAPI_OK;
 }
 
 
@@ -1044,11 +1042,15 @@ _papi_pe_shutdown_component( void ) {
 }
 
 static int
-_papi_pe_init_thread( hwd_context_t *thr_ctx )
+_papi_pe_init_thread( hwd_context_t *ctx )
 {
-	( void ) thr_ctx;		 /*unused */
-	/* No initialization is needed */
-	return PAPI_OK;
+
+  pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+
+  memset( pe_ctx, 0, sizeof ( pe_context_t ) );
+  pe_ctx->initialized=1;
+
+  return PAPI_OK;
 }
 
 static int
@@ -1404,15 +1406,12 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
-  if ( pe_ctx->cookie != CTX_INITIALIZED ) {
-     memset( pe_ctl->events, 0,
-	     sizeof ( struct perf_event_attr ) * PERF_EVENT_MAX_MPX_COUNTERS );
-     memset( pe_ctx, 0, sizeof ( pe_context_t ) );
-     pe_ctx->cookie = CTX_INITIALIZED;
-  } else {
-     /* close all of the existing fds and start over again */
-    close_pe_evts( pe_ctx, pe_ctl );
-  }
+  /* close all of the existing fds and start over again */
+  close_pe_evts( pe_ctx, pe_ctl );
+
+  /* clear out the events and start over */
+  //  memset( pe_ctl->events, 0,
+  //	  sizeof ( struct perf_event_attr ) * PERF_EVENT_MAX_MPX_COUNTERS );
 
   if ( count == 0 ) {
      SUBDBG( "Called with count == 0\n" );
@@ -1605,9 +1604,7 @@ _papi_pe_shutdown_thread( hwd_context_t *ctx )
 {
     pe_context_t *pe_ctx = ( pe_context_t *) ctx;
 
-    int ret;
-
-    pe_ctx->cookie=0x0;
+    pe_ctx->initialized=0;
 
     return PAPI_OK;
 }
@@ -2127,12 +2124,15 @@ _papi_pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 static int
 _papi_pe_init_control_state( hwd_control_state_t *ctl )
 {
-	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
-	memset( pe_ctl, 0, sizeof ( pe_control_t ) );
-	_papi_pe_set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
-	/* Set cpu number in the control block to show events are not tied to specific cpu */
-	pe_ctl->cpu = -1;
-	return PAPI_OK;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+	
+   memset( pe_ctl, 0, sizeof ( pe_control_t ) );
+   _papi_pe_set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
+
+   /* Set cpu number in the control block to show events */
+   /* are not tied to specific cpu                       */
+   pe_ctl->cpu = -1;
+   return PAPI_OK;
 }
 
 
