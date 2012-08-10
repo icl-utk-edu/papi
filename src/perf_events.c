@@ -88,11 +88,7 @@ typedef struct
   int state;
 } pe_context_t;
 
-
-#if defined(__mips__)
-#warning "This platform has substandard kernel multiplexing support in perf_events: enabling BRAINDEAD_MULTIPLEXING"
-#define BRAINDEAD_MULTIPLEXING 1
-#endif
+static int simple_multiplexing=0;
 
 /* These sentinels tell papi_pe_set_overflow() how to set the
  * wakeup_events field in the event descriptor record.
@@ -357,80 +353,97 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
   ( void ) ctx;			 /*unused */
   long long papi_pe_buffer[READ_BUFFER_SIZE];
 
-        if (bug_check_scheduability()) {
+  if (bug_check_scheduability()) {
 
-	   /* This will cause the events in the group to be scheduled */
-	   /* onto the counters by the kernel, and so will force an   */
-	   /* error condition if the events are not compatible.       */
+     /* This will cause the events in the group to be scheduled */
+     /* onto the counters by the kernel, and so will force an   */
+     /* error condition if the events are not compatible.       */
 
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctl->events[idx].group_leader == -1) && (ctl->multiplexed)) 
-	    retval |= ioctl( ctl->events[idx].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ;
-	  else
-#endif
-	   retval |= ioctl( ctl->events[ctl->events[idx].group_leader].event_fd, 
+     if ( (simple_multiplexing) &&
+	  (ctl->events[idx].group_leader == -1) && 
+	  (ctl->multiplexed) ) { 
+	retval |= ioctl( ctl->events[idx].event_fd, 
+			 PERF_EVENT_IOC_ENABLE, NULL) ;
+     }
+     else {
+	retval |= ioctl( ctl->events[ctl->events[idx].group_leader].event_fd, 
 		  PERF_EVENT_IOC_ENABLE, NULL );
+     }
 
-	  if (retval != 0) {
-	    PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	    return PAPI_ESYS;
-	  }
+     if (retval != 0) {
+	PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+	return PAPI_ESYS;
+     }
 
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctl->events[idx].group_leader == -1) && (ctl->multiplexed)) 
-	    retval |= ioctl( ctl->evetn[idx].event_fd, PERF_EVENT_IOC_DISABLE, NULL) ;
-	  else
-#endif
-	   retval |= ioctl( ctl->events[ctl->events[idx].group_leader].event_fd,
+     if ( (simple_multiplexing) &&
+	  (ctl->events[idx].group_leader == -1) && 
+	  (ctl->multiplexed) ) { 
+	retval |= ioctl( ctl->events[idx].event_fd, 
+			 PERF_EVENT_IOC_DISABLE, NULL) ;
+     }
+     else {
+	retval |= ioctl( ctl->events[ctl->events[idx].group_leader].event_fd,
 		   PERF_EVENT_IOC_DISABLE, NULL );
+     }
 
-	  if (retval != 0) {
-		PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
-		return PAPI_ESYS;
-	  }
+     if (retval != 0) {
+	PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
+	return PAPI_ESYS;
+     }
 
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctl->events[idx].group_leader == -1) && (ctl->multiplexed)) {
-	    cnt = read( ctn->events[idx].event_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
-	    SUBDBG("read fd %d, index %d, read %d %lld %lld %lld\n",ctl->events[idx].event_fd,idx,cnt,papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-	  } else
-#endif
-	    {  cnt = read( ctl->events[ctl->events[idx].group_leader].event_fd, 
-			   papi_pe_buffer, sizeof(papi_pe_buffer));
-	      SUBDBG("read fd %d, index %d, grp ldr %d, read %d %lld %lld %lld\n",ctl->events[ctl->events[idx].group_leader].event_fd,idx,ctx->evt[idx].group_leader,cnt,papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-	    }
-	   if ( cnt == -1 ) {
-		SUBDBG( "read returned an error!  Should never happen.\n" );
-		return PAPI_ESYS;
+     if ( (simple_multiplexing) &&
+	  (ctl->events[idx].group_leader == -1) && 
+	  (ctl->multiplexed)) {
+	cnt = read( ctl->events[idx].event_fd, papi_pe_buffer, 
+		    sizeof(papi_pe_buffer));
+	SUBDBG("read fd %d, index %d, read %d %lld %lld %lld\n",
+	       ctl->events[idx].event_fd,idx,cnt,
+	       papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
+     } else {
+	cnt = read( ctl->events[ctl->events[idx].group_leader].event_fd, 
+		    papi_pe_buffer, sizeof(papi_pe_buffer));
+	SUBDBG("read fd %d, index %d, grp ldr %d, read %d %lld %lld %lld\n",
+	       ctl->events[ctl->events[idx].group_leader].event_fd, idx,
+	       ctx->evt[idx].group_leader,cnt,
+	       papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
+     }
+	   
+     if ( cnt == -1 ) {
+	SUBDBG( "read returned an error!  Should never happen.\n" );
+	return PAPI_ESYS;
+     }
+
+     if ( cnt == 0 ) {
+	return PAPI_ECNFLCT;
+     } else {
+	int j;
+
+	/* Reset all of the counters (opened so far) back to zero      */
+	/* from the above brief enable/disable call pair.  I wish      */
+	/* we didn't have to to do this, because it hurts performance, */
+        /* but I don't see any alternative.                            */
+	if ( (simple_multiplexing) &&
+	     (ctl->events[idx].group_leader == -1) && 
+	     (ctl->multiplexed)) {
+	   retval = ioctl( ctl->events[idx].event_fd, 
+			   PERF_EVENT_IOC_RESET, NULL) ;
+	   if (retval != 0) {
+	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
+	      return PAPI_ESYS;
 	   }
-	   if ( cnt == 0 ) {
-		return PAPI_ECNFLCT;
-	   } else {
-	     int j;
-	     /* Reset all of the counters (opened so far) back to zero      */
-	     /* from the above brief enable/disable call pair.  I wish      */
-	     /* we didn't have to to do this, because it hurts performance, */
-	     /* but I don't see any alternative.                            */
-#ifdef BRAINDEAD_MULTIPLEXING
-	     if ((ctl->events[idx].group_leader == -1) && (ctl->multiplexed)) {
-	       retval = ioctl( ctl->events[idx].event_fd, PERF_EVENT_IOC_RESET, NULL) ;
-	       if (retval != 0) {
+	} else {
+	   for( j = ctl->events[idx].group_leader; j <= idx; j++ ) {
+	      retval = ioctl( ctl->events[j].event_fd, PERF_EVENT_IOC_RESET, 
+			       NULL );
+	      if (retval != 0) {
 		 PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
 		 return PAPI_ESYS;
-	       }
-	     } else
-#endif
-		for ( j = ctl->events[idx].group_leader; j <= idx; j++ ) {
-			retval = ioctl( ctl->events[j].event_fd, PERF_EVENT_IOC_RESET, 
-			       NULL );
-			if (retval != 0) {
-			  PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-			  return PAPI_ESYS;
-			}
-		}
+	      }
 	   }
 	}
-	return PAPI_OK;
+     }
+  }
+  return PAPI_OK;
 }
 
 
@@ -438,98 +451,108 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 static int
 partition_events( pe_context_t *ctx, pe_control_t *ctl )
 {
-	int i, ret;
+   int i, ret;
 
-	if ( !ctl->multiplexed ) {
-		/*
-		 * Initialize the group leader fd.  
-		 * The first fd we create will be the
-		 * group leader and so its group_fd value must be set to -1
-		 */
-	   ctl->events[0].event_fd = -1;
-	   for( i = 0; i < ctl->num_events; i++ ) {
-	      ctl->events[i].group_leader = 0;
-	      ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
+   if ( !ctl->multiplexed ) {
+      /*
+       * Initialize the group leader fd.  
+       * The first fd we create will be the
+       * group leader and so its group_fd value must be set to -1
+       */
+      ctl->events[0].event_fd = -1;
+      for( i = 0; i < ctl->num_events; i++ ) {
+	 ctl->events[i].group_leader = 0;
+	 ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
 							   ctl->inherit, !i);
 
-	      if ( i == 0 ) {
-		 ctl->events[i].attr.disabled = 1;
-	      } else {
-		 ctl->events[i].attr.disabled = 0;
-	      }
-	   }
-	} else {
-#ifdef BRAINDEAD_MULTIPLEXING 
-	  /* Ignore grouping and group leaders. Just add each event separately, nice and simple like... */
-	  for ( i = 0; i < ctl->num_events; i++ ) {
+	 if ( i == 0 ) {
+	    ctl->events[i].attr.disabled = 1;
+	 } else {
+	    ctl->events[i].attr.disabled = 0;
+	 }
+      }
+   } else {
+
+      if (simple_multiplexing) {
+	 /* Ignore grouping and group leaders. */
+	 /* Just add each event separately, nice and simple like... */
+	 for( i = 0; i < ctl->num_events; i++ ) {
 	    ctl->events[i].event_fd = -1;
 	    ctl->events[i].group_leader = -1;
 	    ctl->events[i].attr.disabled = 1;
-	    ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, ctl->inherit, 1);
+	    ctl->events[i].attr.read_format = 
+                      get_read_format(ctl->multiplexed, ctl->inherit, 1);
 	    ctl->num_groups++;
-	  }
-	  return PAPI_OK;
-#endif
+	 }
+	 return PAPI_OK;
+      }
+
+      /*
+       * Start with a simple "keep adding events till error, 
+       * then start a new group" algorithm.  IMPROVEME
+       */
+      int final_group = 0;
+
+      ctl->num_groups = 0;
+      for ( i = 0; i < ctl->num_events; i++ ) {
+	  int j = i;
+
+	  /* start of a new group */
+	  final_group = i;
+	  ctl->events[i].event_fd = -1;
+	  for( j = i; j < ctl->num_events; j++ ) {
+	     ctl->events[j].group_leader = i;
+
+	     /* Enable all counters except the group leader, and request 
+	      * that we read up all counters in the group when reading 
+	      * the group leader. */
+	     if ( j == i ) {
+		ctl->events[i].attr.disabled = 1;
+	        ctl->events[i].attr.read_format = 
+                       get_read_format(ctl->multiplexed, ctl->inherit, 1);
+	     } else {
+		ctl->events[i].attr.disabled = 0;
+	     }
+	     ctl->events[j].event_fd = sys_perf_event_open( 
+						 &ctl->events[j].attr,
+						 0, -1,
+						 ctl->events[i].event_fd, 0 );
+	     ret = PAPI_OK;
+	     if ( ctl->events[j].event_fd > -1 ) {
+		ret = check_scheduability( ctx, ctl, i );
+	     }
+				
+	     if ( ( ctl->events[j].event_fd == -1 ) || ( ret != PAPI_OK ) ) {
+		int k;
 		/*
-		 * Start with a simple "keep adding events till error, 
-		 * then start a new group" algorithm.  IMPROVEME
+		 * We have to start a new group for this event, so close the
+		 * fd's we've opened for this group, and start a new group.
 		 */
-		int final_group = 0;
-
-		ctl->num_groups = 0;
-		for ( i = 0; i < ctl->num_events; i++ ) {
-			int j = i;
-
-			/* start of a new group */
-			final_group = i;
-			ctl->events[i].event_fd = -1;
-			for ( j = i; j < ctl->num_events; j++ ) {
-				ctl->events[j].group_leader = i;
-
-				/* Enable all counters except the group leader, and request that we read
-				 * up all counters in the group when reading the group leader. */
-				if ( j == i ) {
-					ctl->events[i].attr.disabled = 1;
-					ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, ctl->inherit, 1);
-				} else {
-					ctl->events[i].attr.disabled = 0;
-				}
-				ctl->events[j].event_fd =
-					sys_perf_event_open( &ctl->events[j].attr, 0, -1,
-										   ctl->events[i].event_fd, 0 );
-				ret = PAPI_OK;
-				if ( ctl->events[j].event_fd > -1 )
-					ret = check_scheduability( ctx, ctl, i );
-
-				if ( ( ctl->events[j].event_fd == -1 ) || ( ret != PAPI_OK ) ) {
-					int k;
-					/*
-					 * We have to start a new group for this event, so close the
-					 * fd's we've opened for this group, and start a new group.
-					 */
-					for ( k = i; k < j; k++ ) {
-						close( ctl->events[k].event_fd );
-					}
-					/* reset the group_leader's fd to -1 */
-					ctl->events[i].event_fd = -1;
-					break;
-				}
-			}
-			ctl->num_groups++;
-			i = j - 1;		 /* i will be incremented again at the end of the loop, so this is sort of i = j */
+		for( k = i; k < j; k++ ) {
+		   close( ctl->events[k].event_fd );
 		}
-		/* The final group we created is still open; close it */
-		for ( i = final_group; i < ctl->num_events; i++ ) {
-		    if (ctl->events[i].event_fd>=0) close( ctl->events[i].event_fd );
-		}
-		ctl->events[final_group].event_fd = -1;
-	}
+		/* reset the group_leader's fd to -1 */
+	        ctl->events[i].event_fd = -1;
+		break;
+	     }
+	  }
+	  ctl->num_groups++;
+	  /* i will be incremented again at the end of the loop, */
+	  /* so this is sort of i = j */
+	  i = j - 1;
+      }
+      /* The final group we created is still open; close it */
+      for( i = final_group; i < ctl->num_events; i++ ) {
+	 if (ctl->events[i].event_fd>=0) close( ctl->events[i].event_fd );
+      }
+      ctl->events[final_group].event_fd = -1;
+   }
 
-	/*
-	 * There are probably error conditions that need to be handled, but for
-	 * now assume this partition worked FIXME
-	 */
-	return PAPI_OK;
+   /*
+    * There are probably error conditions that need to be handled, but for
+    * now assume this partition worked FIXME
+    */
+   return PAPI_OK;
 }
 
 /*
@@ -632,21 +655,19 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
       SUBDBG("sys_perf_event_open() of fd %d in open_pe_evts\n",i);
       SUBDBG("config is %"PRIx64"\n",ctl->events[i].attr.config);
 
-#ifdef BRAINDEAD_MULTIPLEXING
-      ctl->events[i].event_fd = sys_perf_event_open( &ctl->eventss[i], ctl->tid, 
-						  ctl->cpu,
-
+      if (simple_multiplexing) {
+         ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
+							ctl->tid, ctl->cpu,
       (((ctl->events[i].group_leader == -1) && (ctl->multiplexed)) ? -1 : 
        ctl->events[ctl->events[i].group_leader].event_fd),
 						    0 );
-
-#else
-
-      ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, ctl->tid, 
-						  ctl->cpu,
-						  ctl->events[ctl->events[i].group_leader].event_fd, 
-#endif
+      }
+      else {
+	 ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
+							ctl->tid, ctl->cpu,
+			    ctl->events[ctl->events[i].group_leader].event_fd, 
 						    0 );
+      }
 
       if ( ctl->events[i].event_fd == -1 ) {
 	 SUBDBG("sys_perf_event_open returned error on event #%d."
@@ -1042,10 +1063,10 @@ _papi_pe_shutdown_component( void ) {
 }
 
 static int
-_papi_pe_init_thread( hwd_context_t *ctx )
+_papi_pe_init_thread( hwd_context_t *hwd_ctx )
 {
 
-  pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+  pe_context_t *pe_ctx = ( pe_context_t *) hwd_ctx;
 
   memset( pe_ctx, 0, sizeof ( pe_context_t ) );
   pe_ctx->initialized=1;
@@ -1053,45 +1074,52 @@ _papi_pe_init_thread( hwd_context_t *ctx )
   return PAPI_OK;
 }
 
+/* Enable the counters */
+
 static int
-pe_enable_counters( pe_context_t* ctx, pe_control_t *ctl )
+pe_enable_counters( pe_context_t *ctx, pe_control_t *ctl )
 {
-	int ret = PAPI_OK;
-	int i;
-	int num_fds;
-	int did_something = 0;
+   int ret = PAPI_OK;
+   int i;
+   int num_fds;
+   int did_something = 0;
 
-	/* If not multiplexed, just enable the group leader */
-	num_fds = ctl->multiplexed ? ctl->num_events : 1;
+   /* If not multiplexed, just enable the group leader */
+   num_fds = ctl->multiplexed ? ctl->num_events : 1;
 
-	for ( i = 0; i < num_fds; i++ ) {
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctl->events[i].group_leader == -1) && (ctl->multiplexed)) {
-	    SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctl->events[i].event_fd);
-	    ret = ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ; 
+   for( i = 0; i < num_fds; i++ ) {
+      if ( (simple_multiplexing) &&
+	   (ctl->events[i].group_leader == -1) && 
+	   (ctl->multiplexed)) {
+	 SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, 
+		ctl->events[i].event_fd);
+	 ret = ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ; 
+	 did_something++;
+      } else {
+	 if ( ctl->events[i].group_leader == i ) {
+	    /* this should refresh overflow counters too */
+	    SUBDBG("ioctl(enable): ctx: %p, fd: %d\n",
+		   ctx, ctl->events[i].event_fd);
+	    ret = ioctl( ctl->events[i].event_fd,
+			 PERF_EVENT_IOC_ENABLE, NULL );
 	    did_something++;
-	  } else
-#endif
-	    if ( ctl->events[i].group_leader == i ) {
-	      /* this should refresh overflow counters too */
-	      SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctl->events[i].event_fd);
-	      ret = ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
-	      did_something++;
-	    }
-	}
+	 }
+      }
+   }
 
-	if (ret == -1) {
-	  PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	  return PAPI_ESYS;
-	}
+   if (ret == -1) {
+      PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+      return PAPI_ESYS;
+   }
 
-	if (!did_something) {
-	  PAPIERROR("Did not enable any counters.\n");
-	  return PAPI_EBUG;
-	}
+   if (!did_something) {
+      PAPIERROR("Did not enable any counters.\n");
+      return PAPI_EBUG;
+   }
 
-	ctx->state |= PERF_EVENTS_RUNNING;
-	return PAPI_OK;
+   ctx->state |= PERF_EVENTS_RUNNING;
+
+   return PAPI_OK;
 }
 
 /* reset the hardware counters */
