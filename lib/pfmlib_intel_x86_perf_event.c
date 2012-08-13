@@ -123,16 +123,15 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	/*
 	 * encoder treats all events as using the generic
-	 * counters. So here correct fot events that are
-	 * fixed counter only.
+	 * counters.
+	 * perf_events override the enable and int bits, so
+	 * drop them here.
+	 *
+	 * also makes fixed counter special encoding 0xff
+	 * work. kernel checking for perfect match.
 	 */
-	if (intel_x86_eflag(this, e->event, INTEL_X86_FIXED)) {
-		reg.nhm_unc_fixed.usel_en  = 1;
-		reg.nhm_unc_fixed.usel_int = 1;
-	} else {
-		reg.nhm_unc.usel_en  = 1;
-		reg.nhm_unc.usel_int = 1;
-	}
+	reg.nhm_unc.usel_en  = 0;
+	reg.nhm_unc.usel_int = 0;
 
 	attr->config = reg.val;
 
