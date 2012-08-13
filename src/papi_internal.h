@@ -27,6 +27,9 @@
 extern int papi_num_components;
 extern int _papi_num_compiled_components;
 extern int init_level;
+extern int _papi_hwi_errno;
+extern int _papi_hwi_num_errors;
+extern char **_papi_errlist;
 
 
 /********************************************************/
@@ -410,7 +413,7 @@ typedef struct _papi_mdi {
 
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
-extern const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS];
+/* extern const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS]; */
 /*extern volatile int _papi_hwi_using_signal;*/
 extern int _papi_hwi_using_signal[PAPI_NSIG];
 
@@ -456,6 +459,7 @@ int _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx );
 int _papi_hwi_init_global( void );
 int _papi_hwi_init_global_internal( void );
 int _papi_hwi_init_os(void);
+void _papi_hwi_init_errors(void);
 PAPI_os_info_t *_papi_hwi_get_os_info(void);
 void _papi_hwi_shutdown_global_internal( void );
 void _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,

@@ -520,9 +520,7 @@ test_fail( char *file, int line, char *call, int retval )
 		fprintf( stdout, "Error: %s\n", call );
 #endif
   } else {
-     char errstring[PAPI_MAX_STR_LEN];
-     PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-     fprintf( stdout, "Error in %s: %s\n", call, errstring );
+     fprintf( stdout, "Error in %s: %s\n", call, PAPI_strerror( retval ) );
   }
 
   fprintf( stdout, "\n" );
@@ -583,9 +581,7 @@ test_warn( char *file, int line, char *call, int retval )
 	} else if ( retval == 0 ) {
 		fprintf( stdout, "Warning: %s\n", call );
 	} else {
-		char errstring[PAPI_MAX_STR_LEN];
-		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-		fprintf( stdout, "Warning in %s: %s\n", call, errstring );
+		fprintf( stdout, "Warning in %s: %s\n", call, PAPI_strerror( retval ));
 	}
 
 	fprintf( stdout, "\n" );
@@ -615,10 +611,8 @@ test_skip( char *file, int line, char *call, int retval )
 			fprintf( stdout, "Line # %d\n", line );
 			fprintf( stdout, "Error calculating: %s\n", call );
 		} else if ( retval < 0 ) {
-			char errstring[PAPI_MAX_STR_LEN];
 			fprintf( stdout, "Line # %d\n", line );
-			PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-			fprintf( stdout, "Error in %s: %s\n", call, errstring );
+			fprintf( stdout, "Error in %s: %s\n", call, PAPI_strerror(retval) );
 		}
 		fprintf( stdout, "\n" );
 	}

@@ -83,7 +83,7 @@ C     And also to make the test code read cleaner
       implicit integer (p)
       character*(*) test_str
       character*(PAPI_MAX_STR_LEN) papi_errstr
-      integer papiretval,iret
+      integer papiretval
       integer len_trim
       external len_trim
       integer quiet
@@ -92,7 +92,7 @@ C     And also to make the test code read cleaner
       write(*,100) test_str,' SKIPPED'
       if (quiet .eq. 0) then
         if(papiretval.lt.0)then
-          call PAPIF_perror(papiretval,papi_errstr,iret)
+          call PAPIF_perror( NULL )
           write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
         end if
       end if
@@ -106,7 +106,7 @@ C     And also to make the test code read cleaner
       character*(*) file
       integer line
       character*(*) callstr
-      integer retval,ilen,iret
+      integer retval,ilen
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer len_trim
       external len_trim
@@ -133,7 +133,7 @@ C     And also to make the test code read cleaner
       else if(retval.eq.0)then
         write(*,*) 'SGI requires root permissions for this test'
       else
-        call PAPIF_perror(retval,papi_errstr,iret)
+        call PAPIF_perror( NULL )
         ilen=len_trim(callstr)
         write(*,'(T2,3a)') 'PAPI error in ', callstr(1:ilen), 
      *       ': '// papi_errstr(1:len_trim(papi_errstr))
@@ -148,7 +148,7 @@ C     And also to make the test code read cleaner
       character*(*) file
       integer line
       character*(*) callstr
-      integer retval,iret,ilen
+      integer retval,ilen
       integer quiet
       common quiet
 
@@ -164,7 +164,7 @@ C     And also to make the test code read cleaner
         else if (retval.gt.0) then
           write(*,*) "Error calculating: ", callstr
         else
-          call PAPIF_perror(retval,papi_errstr,iret)
+          call PAPIF_perror( NULL )
           ilen=len_trim(callstr)
           write(*,'(T2,3a)') 'Error in ', callstr(1:ilen),
      *         ': ' // papi_errstr(1:len_trim(papi_errstr))

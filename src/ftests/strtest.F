@@ -27,7 +27,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       program strtest
       implicit integer (p)
       
-      CHARACTER*(PAPI_MAX_STR_LEN) papistr,papierr
+      CHARACTER*(PAPI_MAX_STR_LEN) papistr
       CHARACTER*(PAPI_MAX_STR_LEN/2) papihalfstr
       CHARACTER*(PAPI_MAX_STR_LEN*2) papidblstr
 
@@ -50,8 +50,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       check=PAPI_VER_CURRENT
       call PAPIF_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
-           call PAPIF_perror(check,papierr,code)
-           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+           call PAPIF_perror( 'PAPI_library_init' )
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_library_init', check)
       end if
@@ -232,7 +231,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
      . 'PAPIF_event_code_to_name', check)
         else
         if (quiet .EQ. 0) then
-           call PAPIF_perror(check,papierr,code)
+           call PAPIF_perror( 'PAPIF_event_code_to_name' )
            print *,'*ERROR* '//papierr(1:getstrlen(papierr))
            print *,'******* '//'Error in checkstr using '//
      $ 'PAPIF_event_code_to_name'
@@ -252,7 +251,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
      . 'PAPIF_event_name_to_code', check)
       else
       if (quiet .EQ. 0) then
-         call PAPIF_perror(check,papierr,code)
+         call PAPIF_perror( 'PAPIF_event_name_to_code' )
          print *,'*ERROR* '//papierr(1:getstrlen(papierr))
          print *,'******* '//'Error in checkstr using '//
      $   'PAPIF_event_name_to_code'
@@ -279,7 +278,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       i=getstrlen(string)
       code=incode
-      call PAPIF_perror(code,string,check)
+      call PAPIF_perror( NULL )
 
       if (quiet .EQ. 0) then
         print 100,'Testing string of length ',i
@@ -320,7 +319,7 @@ C      call PAPIF_describe_event(name,code,string,check)
 
       if(check.ne.PAPI_OK)then
       if (quiet .EQ. 0) then
-          call PAPIF_perror(check,papierr,code)
+          call PAPIF_perror( 'PAPI_get_event_info' )
           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
           print *,'******* '//'Error in test_papif_descr using '//
      $      'PAPIF_get_event_info'

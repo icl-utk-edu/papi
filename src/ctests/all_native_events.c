@@ -47,13 +47,11 @@ check_event( int event_code, char *name )
 
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-		fprintf( stdout, "Error starting %s : %s\n", name, errstring );
+		PAPI_perror( "PAPI_start" );
 	} else {
 		retval = PAPI_stop( EventSet, &values );
 		if ( retval != PAPI_OK ) {
-			PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-			fprintf( stdout, "Error stopping %s: %s\n", name, errstring );
+			PAPI_perror( "PAPI_stop" );
 			return 0;
 		} else {
 			printf( "Added and Stopped %s successfully.\n", name );

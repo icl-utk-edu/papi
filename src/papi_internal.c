@@ -54,6 +54,8 @@ int init_level = PAPI_NOT_INITED;
 int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 papi_mdi_t _papi_hwi_system_info;
+int _papi_hwi_errno = PAPI_OK;
+int _papi_hwi_num_errors = 0;
 
 /*****************************/
 /* Native Event Mapping Code */
@@ -70,6 +72,11 @@ struct native_event_info {
 static struct native_event_info *_papi_native_events=NULL;
 static int num_native_events=0;
 static int num_native_chunks=0;
+
+char **_papi_errlist= NULL;
+static int num_error_chunks = 0;
+
+
 
 /** @internal
  * @class _papi_hwi_prefix_component_name
@@ -202,6 +209,125 @@ native_alloc_early_out:
   return new_native_event;
 }
 
+/** @internal
+ * @class _papi_hwi_add_error
+ *
+ * Adds a new error string to PAPI's internal store.
+ * MAKE SURE you are not holding INTERNAL_LOCK when you call me!
+ */ 
+static int
+_papi_hwi_add_error( char *error )
+{
+	SUBDBG("Adding a new Error message |%s|\n", error);
+	_papi_hwi_lock(INTERNAL_LOCK);
+
+	if (_papi_hwi_num_errors >= num_error_chunks*NATIVE_EVENT_CHUNKSIZE) {
+		num_error_chunks++;
+		_papi_errlist=realloc(_papi_errlist, 
+						num_error_chunks*NATIVE_EVENT_CHUNKSIZE*sizeof(char *));
+		if (_papi_errlist==NULL) {
+			_papi_hwi_num_errors = -2;
+			goto bail;
+		}
+
+	}
+
+	_papi_errlist[_papi_hwi_num_errors] = strdup( error );
+	if ( _papi_errlist[_papi_hwi_num_errors] == NULL )
+		_papi_hwi_num_errors = -2;
+
+bail:
+	_papi_hwi_unlock(INTERNAL_LOCK);
+
+	return _papi_hwi_num_errors++;
+}
+
+static void
+_papi_hwi_cleanup_errors()
+{
+	int i; 
+	
+	if ( _papi_errlist == NULL || 
+			_papi_hwi_num_errors == 0 )
+		return; 
+
+
+	_papi_hwi_lock( INTERNAL_LOCK );
+	for (i=0; i < _papi_hwi_num_errors; i++ ) {
+		free( _papi_errlist[i]);
+		_papi_errlist[i] = NULL;
+	} 
+
+	free( _papi_errlist );
+	_papi_errlist = NULL;
+	_papi_hwi_num_errors = 0;
+
+	_papi_hwi_unlock( INTERNAL_LOCK );
+}
+
+static int
+_papi_hwi_lookup_error( char *error ) 
+{
+	int i;
+
+	for (i=0; i<_papi_hwi_num_errors; i++) {
+		if ( !strncasecmp( _papi_errlist[i], error, strlen( error ) ) )
+			return i; 
+		
+	} 
+
+	return (-1);
+}
+
+/** @internal
+ *  @class _papi_hwi_publish_error 
+ *
+ *  @return 
+ *  	<= 0 : Code for the error. 
+ *  	< 0  : We couldn't get memory to allocate for your error.
+ *  	 	
+ * 	An internal interface for adding an error code to the library. 
+ * 	The returned code is suitable for returning to users. 
+ *  */
+int _papi_hwi_publish_error( char *error )
+{
+	int error_code = -1;
+
+	if ( (error_code = _papi_hwi_lookup_error( error )) < 0 )
+		error_code = _papi_hwi_add_error(error);
+
+	return (-error_code); /* internally error_code is an index, externally, it should be <= 0 */
+}
+
+void
+_papi_hwi_init_errors(void) {
+/* we use add error to avoid the cost of lookups, we know the errors are not there yet */
+	_papi_hwi_add_error("No error");
+    _papi_hwi_add_error("Invalid argument");
+    _papi_hwi_add_error("Insufficient memory");
+    _papi_hwi_add_error("A System/C library call failed");
+    _papi_hwi_add_error("Not supported by component");
+    _papi_hwi_add_error("Access to the counters was lost or interrupted");
+    _papi_hwi_add_error("Internal error, please send mail to the developers");
+    _papi_hwi_add_error("Event does not exist");
+    _papi_hwi_add_error("Event exists, but cannot be counted due to hardware resource limits");
+    _papi_hwi_add_error("EventSet is currently not running");
+    _papi_hwi_add_error("EventSet is currently counting");
+    _papi_hwi_add_error("No such EventSet available");
+    _papi_hwi_add_error("Event in argument is not a valid preset");
+    _papi_hwi_add_error("Hardware does not support performance counters");
+    _papi_hwi_add_error("Unknown error code");
+    _papi_hwi_add_error("Permission level does not permit operation");
+    _papi_hwi_add_error("PAPI hasn't been initialized yet");
+    _papi_hwi_add_error("Component Index isn't set");
+    _papi_hwi_add_error("Not supported");
+    _papi_hwi_add_error("Not implemented");
+    _papi_hwi_add_error("Buffer size exceeded");
+    _papi_hwi_add_error("EventSet domain is not supported for the operation");
+    _papi_hwi_add_error("Invalid or missing event attributes");
+    _papi_hwi_add_error("Too many events or attributes");
+    _papi_hwi_add_error("Bad combination of features");
+}
 
 int
 _papi_hwi_invalid_cmp( int cidx )
@@ -302,7 +428,7 @@ default_debug_handler( int errorCode )
 
 	if ( errorCode == PAPI_OK )
 		return ( errorCode );
-	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) ) {
+	if ( ( errorCode > 0 ) || ( -errorCode > _papi_hwi_num_errors ) ) {
 		PAPIERROR( "%s %d,%s,Bug! Unknown error code", PAPI_ERROR_CODE_str,
 				   errorCode, "" );
 		return ( PAPI_EBUG );
@@ -314,9 +440,8 @@ default_debug_handler( int errorCode )
 		/* gcc 2.96 bug fix, do not change */
 		/* fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_err[-errorCode].name,_papi_hwi_err[-errorCode].descr); */
 
-		sprintf( str, "%s %d,%s,%s", PAPI_ERROR_CODE_str, errorCode,
-				 _papi_hwi_err[-errorCode].name,
-				 _papi_hwi_err[-errorCode].descr );
+		sprintf( str, "%s %d,%s", PAPI_ERROR_CODE_str, errorCode,
+				 _papi_errlist[-errorCode] );
 		if ( errorCode == PAPI_ESYS )
 			sprintf( str + strlen( str ), ": %s", strerror( errno ) );
 
@@ -1627,6 +1752,8 @@ void
 _papi_hwi_shutdown_global_internal( void )
 {
 	_papi_hwi_cleanup_all_presets(  );
+
+	_papi_hwi_cleanup_errors( );
 
 	_papi_hwi_lock( INTERNAL_LOCK );
 

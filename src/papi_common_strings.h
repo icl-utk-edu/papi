@@ -566,6 +566,7 @@ hwi_presets_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS] = {
 /*127 */ {NULL, NULL, NULL,0,0,0,NULL,{0},{NULL}, NULL},
 };
 
+#if 0
 const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
     /* 0 */ {PAPI_OK, "PAPI_OK", "No error"},
     /* 1 */ {PAPI_EINVAL, "PAPI_EINVAL", "Invalid argument"},
@@ -593,4 +594,5 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
     /*23 */ {PAPI_ECOUNT, "PAPI_ECOUNT", "Too many events or attributes"},
     /*24 */ {PAPI_ECOMBO, "PAPI_ECOMBO", "Bad combination of features"}
 };
+#endif
 
