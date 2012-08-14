@@ -979,7 +979,27 @@ static const test_event_t x86_test_events[]={
 	  .codes[0] = 0xa5704f1,
 	  .fstr = "snb::L2_LINES_IN:E:k=1:u=1:e=1:i=0:c=10:t=0",
 	},
-
+	{ .name = "snb_unc_cbo0::unc_clockticks",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x5000ff,
+	  .fstr = "snb_unc_cbo0::UNC_CLOCKTICKS",
+	},
+	{ .name = "snb_unc_cbo1::unc_clockticks",
+	  .ret  = PFM_ERR_NOTFOUND
+	},
+	{ .name = "snb_unc_cbo2::unc_clockticks",
+	  .ret  = PFM_ERR_NOTFOUND
+	},
+	{ .name = "snb_unc_cbo3::unc_clockticks",
+	  .ret  = PFM_ERR_NOTFOUND
+	},
+	{ .name = "snb_unc_cbo1::UNC_CBO_CACHE_LOOKUP:STATE_MESI:READ_FILTER:c=1:i",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x1d01f34,
+	  .fstr = "snb_unc_cbo1::UNC_CBO_CACHE_LOOKUP:STATE_MESI:READ_FILTER:e=0:i=1:c=1",
+	},
 };
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
 
