@@ -52,9 +52,9 @@ Measure on both threads at the same time assuming hyper-threading is enabled. Th
 Intel Sandy Bridge provides two offcore_response events, like Intel Westmere.
 They are called OFFCORE_RESPONSE_0 and OFFCORE_RESPONSE_1.
 
-Those events needs special treatment in the performance monitoring infrastructure
+Those events need special treatment in the performance monitoring infrastructure
 because each event uses an extra register to store some settings. Thus, in
-case an offcore_response event is monitored simultaneously, the kernel needs
+case multiple offcore_response events are monitored simultaneously, the kernel needs
 to manage the sharing of that extra register.
 
 The offcore_response events are exposed as a normal events by the library. The extra
