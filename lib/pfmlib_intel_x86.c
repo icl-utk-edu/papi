@@ -524,9 +524,9 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	 * then we use the dfl_plm
 	 */
 	if (!(plmmsk & (_INTEL_X86_ATTR_K|_INTEL_X86_ATTR_U))) {
-		if (e->dfl_plm & PFM_PLM0)
+		if ((e->dfl_plm & PFM_PLM0) && (pmu->supported_plm & PFM_PLM0))
 			reg.sel_os = 1;
-		if (e->dfl_plm & PFM_PLM3)
+		if ((e->dfl_plm & PFM_PLM3) && (pmu->supported_plm & PFM_PLM3))
 			reg.sel_usr = 1;
 	}
 	/*
