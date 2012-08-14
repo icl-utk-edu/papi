@@ -1,4 +1,4 @@
-.TH LIBPFM 3  "Janury, 2011" "" "Linux Programmer's Manual"
+.TH LIBPFM 3  "January, 2011" "" "Linux Programmer's Manual"
 .SH NAME
 libpfm_intel_snb - support for Intel Sandy Bridge core PMU
 .SH SYNOPSIS
@@ -12,9 +12,8 @@ libpfm_intel_snb - support for Intel Sandy Bridge core PMU
 .sp
 .SH DESCRIPTION
 The library supports the Intel Sandy Bridge core PMU. It should be noted that
-this PMU model only covers the each core's PMU and not the socket level
-PMU. This PMU model covers only th single socket Sandy Bridge processors, a.k.a.,
-Intel Core I7 2xxx series.
+this PMU model only covers each core's PMU and not the socket level
+PMU. For that refer to the Sandy Bridge uncore PMU support.
 
 On Sandy Bridge, the number of generic counters depends on the Hyperthreading (HT) mode.
 When HT is on, then only 4 generic counters are available. When HT is off, then 8 generic
@@ -88,6 +87,9 @@ But the following are illegal:
 .B OFFCORE_RESPONSE_0:ANY_RFO:LLC_HITM:ANY_RESPONSE
 .TP
 .B OFFCORE_RESPONSE_0:ANY_RFO:LLC_HITM:SNOOP_ANY:ANY_RESPONSE
+
+.SH SEE ALSO
+libpfm_snb_unc(3)
 
 .SH AUTHORS
 .nf
