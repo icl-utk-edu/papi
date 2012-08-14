@@ -51,6 +51,11 @@ endif
 
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
+ARCH_MAN += libpfm_arm_ac15.3
+endif
+
+
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
 ARCH_MAN += libpfm_mips_74k.3
 endif
