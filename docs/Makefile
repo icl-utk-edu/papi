@@ -52,7 +52,7 @@ endif
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
-ARCH_MAN += libpfm_arm_ac15.3
+ARCH_MAN += libpfm_arm_ac15.3 libpfm_arm_ac8.3 libpfm_arm_ac9.3
 endif
 
 
