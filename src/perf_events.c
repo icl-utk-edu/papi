@@ -55,8 +55,8 @@ typedef int reg_alloc_t;
 
 typedef struct
 {
-  int group_leader;		  /* index of leader */
-  int event_fd;
+  int group_leader_fd;            /* fd of group leader */
+  int event_fd;                   /* our fd */
   uint64_t event_id;
   uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
   void *mmap_buf;		  /* used to contain profiling data samples */
@@ -88,8 +88,6 @@ typedef struct
   int state;
 } pe_context_t;
 
-static int simple_multiplexing=0;
-
 /* These sentinels tell papi_pe_set_overflow() how to set the
  * wakeup_events field in the event descriptor record.
  */
@@ -99,7 +97,9 @@ static int simple_multiplexing=0;
 #define WAKEUP_MODE_COUNTER_OVERFLOW 0
 #define WAKEUP_MODE_PROFILING 1
 
-#define PERF_EVENTS_RUNNING 0x01
+/* Defines for ctx->state */
+#define PERF_EVENTS_OPENED  0x01
+#define PERF_EVENTS_RUNNING 0x02
 
 /* Static globals */
 
@@ -107,11 +107,6 @@ static int nmi_watchdog_active;
 
 /* Advance declaration */
 papi_vector_t _papi_pe_vector;
-
-/* FIXME */
-/* What the heck are these? -pjm */
-/* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
-#define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * PERF_EVENT_MAX_MPX_COUNTERS)
 
 
 /******** Kernel Version Dependent Routines  **********************/
@@ -340,6 +335,15 @@ check_permissions( unsigned long tid, unsigned int cpu_num,
       return PAPI_OK;
 }
 
+/* Maximum size we ever expect to read from a perf_event fd   */
+/*  (this is the number of 64-bit values)                     */
+/* We use this to size the read buffers                       */
+/* The three is for event count, time_enabled, time_running   */
+/*  and the counter term is count value and count id for each */
+/*  possible counter value.                                   */
+#define READ_BUFFER_SIZE (3 + (2 * PERF_EVENT_MAX_MPX_COUNTERS))
+
+
 
 /* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
  * implementations (e.g. x86 before 2.6.33) which don't do a static event 
@@ -352,61 +356,36 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
   int retval = 0, cnt = -1;
   ( void ) ctx;			 /*unused */
   long long papi_pe_buffer[READ_BUFFER_SIZE];
+  int i,group_leader_fd;
+
 
   if (bug_check_scheduability()) {
+
+     group_leader_fd=ctl->events[idx].group_leader_fd;
+     if (group_leader_fd==-1) group_leader_fd=ctl->events[idx].event_fd;
 
      /* This will cause the events in the group to be scheduled */
      /* onto the counters by the kernel, and so will force an   */
      /* error condition if the events are not compatible.       */
 
-     if ( (simple_multiplexing) &&
-	  (ctl->events[idx].group_leader == -1) && 
-	  (ctl->multiplexed) ) { 
-	retval |= ioctl( ctl->events[idx].event_fd, 
-			 PERF_EVENT_IOC_ENABLE, NULL) ;
-     }
-     else {
-	retval |= ioctl( ctl->events[ctl->events[idx].group_leader].event_fd, 
-		  PERF_EVENT_IOC_ENABLE, NULL );
-     }
+     retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
 
-     if (retval != 0) {
+     if (retval == -1) {
 	PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
 	return PAPI_ESYS;
      }
 
-     if ( (simple_multiplexing) &&
-	  (ctl->events[idx].group_leader == -1) && 
-	  (ctl->multiplexed) ) { 
-	retval |= ioctl( ctl->events[idx].event_fd, 
-			 PERF_EVENT_IOC_DISABLE, NULL) ;
-     }
-     else {
-	retval |= ioctl( ctl->events[ctl->events[idx].group_leader].event_fd,
-		   PERF_EVENT_IOC_DISABLE, NULL );
-     }
+     retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
 
-     if (retval != 0) {
+     if (retval == -1) {
 	PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
 	return PAPI_ESYS;
      }
 
-     if ( (simple_multiplexing) &&
-	  (ctl->events[idx].group_leader == -1) && 
-	  (ctl->multiplexed)) {
-	cnt = read( ctl->events[idx].event_fd, papi_pe_buffer, 
-		    sizeof(papi_pe_buffer));
-	SUBDBG("read fd %d, index %d, read %d %lld %lld %lld\n",
-	       ctl->events[idx].event_fd,idx,cnt,
-	       papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-     } else {
-	cnt = read( ctl->events[ctl->events[idx].group_leader].event_fd, 
-		    papi_pe_buffer, sizeof(papi_pe_buffer));
-	SUBDBG("read fd %d, index %d, grp ldr %d, read %d %lld %lld %lld\n",
-	       ctl->events[ctl->events[idx].group_leader].event_fd, idx,
-	       ctx->evt[idx].group_leader,cnt,
-	       papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-     }
+     cnt = read( group_leader_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
+     SUBDBG("read fd %d, index %d, read %d %lld %lld %lld\n",
+	    group_leader_fd,idx,cnt,
+	    papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
 	   
      if ( cnt == -1 ) {
 	SUBDBG( "read returned an error!  Should never happen.\n" );
@@ -414,33 +393,27 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
      }
 
      if ( cnt == 0 ) {
+
+        /* We read 0 if we could not schedule the event */
+        /* The kernel should have detected this at open */
+        /* but various bugs (including NMI watchdog)    */
+        /* result in this behavior                      */
+
 	return PAPI_ECNFLCT;
+
      } else {
-	int j;
 
 	/* Reset all of the counters (opened so far) back to zero      */
 	/* from the above brief enable/disable call pair.  I wish      */
 	/* we didn't have to to do this, because it hurts performance, */
         /* but I don't see any alternative.                            */
-	if ( (simple_multiplexing) &&
-	     (ctl->events[idx].group_leader == -1) && 
-	     (ctl->multiplexed)) {
-	   retval = ioctl( ctl->events[idx].event_fd, 
-			   PERF_EVENT_IOC_RESET, NULL) ;
-	   if (retval != 0) {
-	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-	      return PAPI_ESYS;
-	   }
-	} else {
-	   for( j = ctl->events[idx].group_leader; j <= idx; j++ ) {
-	      retval = ioctl( ctl->events[j].event_fd, PERF_EVENT_IOC_RESET, 
-			       NULL );
-	      if (retval != 0) {
-		 PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-		 return PAPI_ESYS;
-	      }
-	   }
-	}
+       for( i = 0; i < ctl->num_events; i++) {
+	  retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+	  if (retval == -1) {
+	     PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
+	     return PAPI_ESYS;
+	  }
+       }
      }
   }
   return PAPI_OK;
@@ -448,112 +421,7 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 
 
 
-static int
-partition_events( pe_context_t *ctx, pe_control_t *ctl )
-{
-   int i, ret;
 
-   if ( !ctl->multiplexed ) {
-      /*
-       * Initialize the group leader fd.  
-       * The first fd we create will be the
-       * group leader and so its group_fd value must be set to -1
-       */
-      ctl->events[0].event_fd = -1;
-      for( i = 0; i < ctl->num_events; i++ ) {
-	 ctl->events[i].group_leader = 0;
-	 ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
-							   ctl->inherit, !i);
-
-	 if ( i == 0 ) {
-	    ctl->events[i].attr.disabled = 1;
-	 } else {
-	    ctl->events[i].attr.disabled = 0;
-	 }
-      }
-   } else {
-
-      if (simple_multiplexing) {
-	 /* Ignore grouping and group leaders. */
-	 /* Just add each event separately, nice and simple like... */
-	 for( i = 0; i < ctl->num_events; i++ ) {
-	    ctl->events[i].event_fd = -1;
-	    ctl->events[i].group_leader = -1;
-	    ctl->events[i].attr.disabled = 1;
-	    ctl->events[i].attr.read_format = 
-                      get_read_format(ctl->multiplexed, ctl->inherit, 1);
-	    ctl->num_groups++;
-	 }
-	 return PAPI_OK;
-      }
-
-      /*
-       * Start with a simple "keep adding events till error, 
-       * then start a new group" algorithm.  IMPROVEME
-       */
-      int final_group = 0;
-
-      ctl->num_groups = 0;
-      for ( i = 0; i < ctl->num_events; i++ ) {
-	  int j = i;
-
-	  /* start of a new group */
-	  final_group = i;
-	  ctl->events[i].event_fd = -1;
-	  for( j = i; j < ctl->num_events; j++ ) {
-	     ctl->events[j].group_leader = i;
-
-	     /* Enable all counters except the group leader, and request 
-	      * that we read up all counters in the group when reading 
-	      * the group leader. */
-	     if ( j == i ) {
-		ctl->events[i].attr.disabled = 1;
-	        ctl->events[i].attr.read_format = 
-                       get_read_format(ctl->multiplexed, ctl->inherit, 1);
-	     } else {
-		ctl->events[i].attr.disabled = 0;
-	     }
-	     ctl->events[j].event_fd = sys_perf_event_open( 
-						 &ctl->events[j].attr,
-						 0, -1,
-						 ctl->events[i].event_fd, 0 );
-	     ret = PAPI_OK;
-	     if ( ctl->events[j].event_fd > -1 ) {
-		ret = check_scheduability( ctx, ctl, i );
-	     }
-				
-	     if ( ( ctl->events[j].event_fd == -1 ) || ( ret != PAPI_OK ) ) {
-		int k;
-		/*
-		 * We have to start a new group for this event, so close the
-		 * fd's we've opened for this group, and start a new group.
-		 */
-		for( k = i; k < j; k++ ) {
-		   close( ctl->events[k].event_fd );
-		}
-		/* reset the group_leader's fd to -1 */
-	        ctl->events[i].event_fd = -1;
-		break;
-	     }
-	  }
-	  ctl->num_groups++;
-	  /* i will be incremented again at the end of the loop, */
-	  /* so this is sort of i = j */
-	  i = j - 1;
-      }
-      /* The final group we created is still open; close it */
-      for( i = final_group; i < ctl->num_events; i++ ) {
-	 if (ctl->events[i].event_fd>=0) close( ctl->events[i].event_fd );
-      }
-      ctl->events[final_group].event_fd = -1;
-   }
-
-   /*
-    * There are probably error conditions that need to be handled, but for
-    * now assume this partition worked FIXME
-    */
-   return PAPI_OK;
-}
 
 /*
  * Just a guess at how many pages would make this relatively efficient.
@@ -639,36 +507,28 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 
    int i, ret = PAPI_OK;
 
-   /*
-    * Partition events into groups that are countable on a set of hardware
-    * counters simultaneously.
-    */
-   partition_events( ctx, ctl );
-
    for( i = 0; i < ctl->num_events; i++ ) {
 
-        /* For now, assume we are always doing per-thread self-monitoring */
-        /* FIXME */
-        /* Flags parameter is currently unused, but needs to be set to 0  */
-        /* for now                                                        */
-	
-      SUBDBG("sys_perf_event_open() of fd %d in open_pe_evts\n",i);
-      SUBDBG("config is %"PRIx64"\n",ctl->events[i].attr.config);
-
-      if (simple_multiplexing) {
-         ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
-							ctl->tid, ctl->cpu,
-      (((ctl->events[i].group_leader == -1) && (ctl->multiplexed)) ? -1 : 
-       ctl->events[ctl->events[i].group_leader].event_fd),
-						    0 );
+      /* group leader (event 0) is special                */
+      /* If we're multiplexed, everyone is a group leader */
+      if (( i == 0 ) || (ctl->multiplexed)) {
+	 ctl->events[i].attr.disabled = 1;
+	 ctl->events[i].group_leader_fd=-1;
+      } else {
+	 ctl->events[i].attr.disabled = 0;
+	 ctl->events[i].group_leader_fd=ctl->events[0].event_fd;
       }
-      else {
-	 ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
-							ctl->tid, ctl->cpu,
-			    ctl->events[ctl->events[i].group_leader].event_fd, 
-						    0 );
-      }
+      ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
+							ctl->inherit, !i);
 
+      /* try to open */
+      ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
+						     ctl->tid,
+						     ctl->cpu,
+			       ctl->events[i].group_leader_fd,
+						     0 /* flags */
+						     );
+      
       if ( ctl->events[i].event_fd == -1 ) {
 	 SUBDBG("sys_perf_event_open returned error on event #%d."
 		"  Error: %s",
@@ -682,7 +542,7 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
               " group_leader/fd: %d/%d, event_fd: %d,"
               " read_format: 0x%"PRIu64"\n",
 	      (long)ctl->tid, ctl->cpu, ctl->events[i].group_leader, 
-	      ctl->events[ctl->events[i].group_leader].event_fd, 
+	      group_leader, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
       ret = check_scheduability( ctx, ctl, i );
@@ -716,7 +576,7 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 	    i++;		 
 	    goto cleanup;
 	 }
-	 if ( i == ctl->events[i].group_leader ) {
+	 if ( ctl->events[i].group_leader_fd == -1 ) {
 	    id_idx = 2;
 	 }
 	 else {
@@ -752,7 +612,7 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
    }
 
    /* Set num_evts only if completely successful */
-   ctx->state |= PERF_EVENTS_RUNNING;
+   ctx->state |= PERF_EVENTS_OPENED;
 
    return PAPI_OK;
 
@@ -772,47 +632,70 @@ cleanup:
 static int
 close_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 {
-   int i, ret;
+   int i;
+   int num_closed=0;
 
    if ( ctx->state & PERF_EVENTS_RUNNING ) {
-      /* probably a good idea to stop the counters before closing them */
-      for( i = 0; i < ctl->num_events; i++ ) {
-	 if ( ctl->events[i].group_leader == i ) {
-	    ret = ioctl( ctl->events[i].event_fd, 
-			 PERF_EVENT_IOC_DISABLE, NULL );
-	    if ( ret == -1 ) {
-	       /* Never should happen */
-	       return PAPI_EBUG;
+      SUBDBG("Closing without stopping first\n");
+   }
+
+   /* Close child events first */
+   for( i=0; i<ctl->num_events; i++ ) {
+
+      if (ctl->events[i].group_leader_fd!=-1) {
+         if ( ctl->events[i].mmap_buf ) {
+	    if ( munmap ( ctl->events[i].mmap_buf,
+		          ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
+	       PAPIERROR( "munmap of fd = %d returned error: %s",
+			  ctl->events[i].event_fd, strerror( errno ) );
+	       return PAPI_ESYS;
 	    }
 	 }
-      }
-      ctx->state &= ~PERF_EVENTS_RUNNING;
-   }
 
-
-   /* Close the hw event fds in reverse order so that the group leader is */
-   /* closed last, otherwise we will have counters with dangling group    */
-   /* leader pointers.                                                    */
-
-   for( i = ctl->num_events; i > 0; ) {
-      i--;
-      if ( ctl->events[i].mmap_buf ) {
-	 if ( munmap ( ctl->events[i].mmap_buf,
-		       ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
-	    PAPIERROR( "munmap of fd = %d returned error: %s",
-			ctl->events[i].event_fd, strerror( errno ) );
+         if ( close( ctl->events[i].event_fd ) ) {
+	    PAPIERROR( "close of fd = %d returned error: %s",
+		       ctl->events[i].event_fd, strerror( errno ) );
 	    return PAPI_ESYS;
+	 } else {
+	    num_closed++;
 	 }
       }
 
-      if ( close( ctl->events[i].event_fd ) ) {
-	 PAPIERROR( "close of fd = %d returned error: %s",
-		     ctl->events[i].event_fd, strerror( errno ) );
-	 return PAPI_ESYS;
-      } else {
-	 ctl->num_events--;
-      }
    }
+
+   /* Close the group leaders last */
+   for( i=0; i<ctl->num_events; i++ ) {
+
+      if (ctl->events[i].group_leader_fd==-1) {
+         if ( ctl->events[i].mmap_buf ) {
+	    if ( munmap ( ctl->events[i].mmap_buf,
+		          ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
+	       PAPIERROR( "munmap of fd = %d returned error: %s",
+			  ctl->events[i].event_fd, strerror( errno ) );
+	       return PAPI_ESYS;
+	    }
+	 }
+
+         if ( close( ctl->events[i].event_fd ) ) {
+	    PAPIERROR( "close of fd = %d returned error: %s",
+		       ctl->events[i].event_fd, strerror( errno ) );
+	    return PAPI_ESYS;
+	 } else {
+	    num_closed++;
+	 }
+      }
+
+   }
+
+
+   if (ctl->num_events!=num_closed) {
+      PAPIERROR("Didn't close all events\n");
+      return PAPI_EBUG;
+   }
+
+   ctl->num_events=0;
+
+   ctx->state &= ~PERF_EVENTS_OPENED;
 
    return PAPI_OK;
 }
@@ -1074,76 +957,32 @@ _papi_pe_init_thread( hwd_context_t *hwd_ctx )
   return PAPI_OK;
 }
 
-/* Enable the counters */
 
+
+/* reset the hardware counters */
+/* Note: PAPI_reset() does not necessarily call this */
 static int
-pe_enable_counters( pe_context_t *ctx, pe_control_t *ctl )
+_papi_pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-   int ret = PAPI_OK;
-   int i;
-   int num_fds;
-   int did_something = 0;
+   int i, ret;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
-   /* If not multiplexed, just enable the group leader */
-   num_fds = ctl->multiplexed ? ctl->num_events : 1;
+   ( void ) ctx;			 /*unused */
 
-   for( i = 0; i < num_fds; i++ ) {
-      if ( (simple_multiplexing) &&
-	   (ctl->events[i].group_leader == -1) && 
-	   (ctl->multiplexed)) {
-	 SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, 
-		ctl->events[i].event_fd);
-	 ret = ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ; 
-	 did_something++;
-      } else {
-	 if ( ctl->events[i].group_leader == i ) {
-	    /* this should refresh overflow counters too */
-	    SUBDBG("ioctl(enable): ctx: %p, fd: %d\n",
-		   ctx, ctl->events[i].event_fd);
-	    ret = ioctl( ctl->events[i].event_fd,
-			 PERF_EVENT_IOC_ENABLE, NULL );
-	    did_something++;
-	 }
+   /* We need to reset all of the events, not just the group leaders */
+   for( i = 0; i < pe_ctl->num_events; i++ ) {
+      ret = ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+      if ( ret == -1 ) {
+	 PAPIERROR("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) "
+		   "returned error, Linux says: %s",
+		   pe_ctl->events[i].event_fd, strerror( errno ) );
+	 return PAPI_ESYS;
       }
    }
-
-   if (ret == -1) {
-      PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-      return PAPI_ESYS;
-   }
-
-   if (!did_something) {
-      PAPIERROR("Did not enable any counters.\n");
-      return PAPI_EBUG;
-   }
-
-   ctx->state |= PERF_EVENTS_RUNNING;
 
    return PAPI_OK;
 }
 
-/* reset the hardware counters */
-static int
-_papi_pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
-{
-	int i, ret;
-	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
-
-	( void ) ctx;			 /*unused */
-
-	/* We need to reset all of the events, not just the group leaders */
-	for ( i = 0; i < pe_ctl->num_events; i++ ) {
-		ret = ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
-		if ( ret == -1 ) {
-			PAPIERROR
-				( "ioctl(%d, PERF_EVENT_IOC_RESET, NULL) returned error, Linux says: %s",
-				  pe_ctl->events[i].event_fd, strerror( errno ) );
-			return PAPI_EBUG;
-		}
-	}
-
-	return PAPI_OK;
-}
 
 /* write(set) the hardware counters */
 static int
@@ -1248,12 +1087,12 @@ static int
 _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	       long long **events, int flags )
 {
-  ( void ) flags;			 /*unused */
-  int i, ret = -1;
-  pe_context_t *pe_ctx = ( pe_context_t *) ctx;
-  pe_control_t *pe_ctl = ( pe_control_t *) ctl;
-  long long papi_pe_buffer[READ_BUFFER_SIZE];
-  int count_idx;
+   ( void ) flags;			 /*unused */
+   int i, ret = -1;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+   long long papi_pe_buffer[READ_BUFFER_SIZE];
+   int count_idx;
 
   /*
    * FIXME this loop should not be needed.  We ought to be able to read up
@@ -1267,7 +1106,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
       for ( i = 0; i < pe_ctl->num_events; i++ )
 	/* disable only the group leaders */
-	if ( pe_ctl->events[i].group_leader == i ) {
+	if ( pe_ctl->events[i].group_leader_fd == -1 ) {
 	  ret = ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
 	  if ( ret == -1 ) {
 	    PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) returned an error: ", strerror( errno ));
@@ -1283,7 +1122,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
   for ( i = 0; i < pe_ctl->num_events; i++ ) {
      if ((bug_format_group()) || 
-	 ( i == pe_ctl->events[i].group_leader ) || 
+	 ( pe_ctl->events[i].group_leader_fd == -1 ) || 
 	 (pe_ctl->inherit)) {
 
         ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
@@ -1359,7 +1198,7 @@ COMPONENT:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time
   if (bug_sync_read()) {
      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
         for ( i = 0; i < pe_ctl->num_events; i++ ) {
-	   if ( pe_ctl->events[i].group_leader == i ) {
+	   if ( pe_ctl->events[i].group_leader_fd == -1 ) {
 	      /* this should refresh any overflow counters too */
 	      ret = ioctl( pe_ctl->events[i].event_fd, 
 			   PERF_EVENT_IOC_ENABLE, NULL );
@@ -1383,6 +1222,8 @@ static int
 _papi_pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    int ret;
+   int i;
+   int did_something = 0;
    pe_context_t *pe_ctx = ( pe_context_t *) ctx;
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
@@ -1390,34 +1231,59 @@ _papi_pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
    if ( ret ) {
       return ret;
    }
-   ret = pe_enable_counters( pe_ctx, pe_ctl );
-	
-   return ret;
+
+   /* Enable all of the group leaders */
+   /* All group leaders have a group_leader_fd of -1 */
+   for( i = 0; i < pe_ctl->num_events; i++ ) {
+      if (pe_ctl->events[i].group_leader_fd == -1) {
+	 SUBDBG("ioctl(enable): fd: %d\n", pe_ctl->events[i].event_fd);
+	 ret=ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ; 
+
+	 /* ioctls always return -1 on failure */
+         if (ret == -1) {
+            PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+            return PAPI_ESYS;
+	 }
+
+	 did_something++;
+      } 
+   }
+
+   if (!did_something) {
+      PAPIERROR("Did not enable any counters.\n");
+      return PAPI_EBUG;
+   }
+
+   pe_ctx->state |= PERF_EVENTS_RUNNING;
+
+   return PAPI_OK;
+
 }
 
 static int
 _papi_pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-	int ret;
-	int i;
-	pe_context_t *pe_ctx = ( pe_context_t *) ctx;
-	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+	
+   int ret;
+   int i;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
-	/* Just disable the group leaders */
-	for ( i = 0; i < pe_ctl->num_events; i++ )
-		if ( pe_ctl->events[i].group_leader == i ) {
-			ret =
-				ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-			if ( ret == -1 ) {
-				PAPIERROR
-					( "ioctl(%d, PERF_EVENT_IOC_DISABLE, NULL) returned error, Linux says: %s",
-					  pe_ctl->events[i].event_fd, strerror( errno ) );
-				return PAPI_EBUG;
-			}
-		}
-	pe_ctx->state &= ~PERF_EVENTS_RUNNING;
+   /* Just disable the group leaders */
+   for ( i = 0; i < pe_ctl->num_events; i++ ) {
+      if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+	 ret=ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
+	 if ( ret == -1 ) {
+	    PAPIERROR( "ioctl(%d, PERF_EVENT_IOC_DISABLE, NULL) "
+		       "returned error, Linux says: %s",
+		       pe_ctl->events[i].event_fd, strerror( errno ) );
+	    return PAPI_EBUG;
+	 }
+      }
+   }
+   pe_ctx->state &= ~PERF_EVENTS_RUNNING;
 
-	return PAPI_OK;
+   return PAPI_OK;
 }
 
 
