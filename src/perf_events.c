@@ -142,27 +142,6 @@ bug_check_scheduability(void) {
   return 0;
 }
 
-/* before 2.6.33 multiplexing did not work */
-
-/* It turns out this is possibly just a symptom of the  */
-/*   check schedulability bug, and not an inherent bug  */
-/*   in perf_events.  It might be x86 only too.         */
-/* It's because our multiplex partition code depends on */
-/* incompatible events having an immediate error        */
-
-
-static int 
-bug_multiplex(void) {
-
-  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
-
-  /* No word on when this will be fixed */
-  if (nmi_watchdog_active) return 1;
-
-  return 0;
-
-}
-
 /* PERF_FORMAT_GROUP allows reading an entire group's counts at once   */
 /* before 2.6.34 PERF_FORMAT_GROUP did not work when reading results   */
 /*  from attached processes.  We are lazy and disable it for all cases */
@@ -886,13 +865,7 @@ _papi_pe_init_component( int cidx )
                    "counters, reducing the total number available.\n");
   }
 
-  /* hardware multiplex was broken before 2.6.33 */	
-  if (bug_multiplex()) {
-     _papi_pe_vector.cmp_info.kernel_multiplex = 0;
-  }
-  else {
-     _papi_pe_vector.cmp_info.kernel_multiplex = 1;
-  }
+  _papi_pe_vector.cmp_info.kernel_multiplex = 1;
 
   _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
