@@ -261,6 +261,7 @@ _papi_hwi_cleanup_errors()
 	free( _papi_errlist );
 	_papi_errlist = NULL;
 	_papi_hwi_num_errors = 0;
+	num_error_chunks=0;
 
 	_papi_hwi_unlock( INTERNAL_LOCK );
 }
