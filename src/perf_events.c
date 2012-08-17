@@ -268,44 +268,45 @@ check_permissions( unsigned long tid, unsigned int cpu_num,
 		   unsigned int domain, unsigned int multiplex, 
 		   unsigned int inherit )
 {
-      int ev_fd;
-      struct perf_event_attr attr;
+   int ev_fd;
+   struct perf_event_attr attr;
 
-      /* clearing this will set a type of hardware and to count all domains */
-      memset(&attr, '\0', sizeof(attr));
-      attr.read_format = get_read_format(multiplex, inherit, 1);
+   /* clearing this will set a type of hardware and to count all domains */
+   memset(&attr, '\0', sizeof(attr));
+   attr.read_format = get_read_format(multiplex, inherit, 1);
 
-      /* set the event id (config field) to instructios */
-      /* (an event that should always exist)            */
-      /* This was cycles but that is missing on Niagara */
-      attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+   /* set the event id (config field) to instructios */
+   /* (an event that should always exist)            */
+   /* This was cycles but that is missing on Niagara */
+   attr.config = PERF_COUNT_HW_INSTRUCTIONS;
 	
-      /* now set up domains this event set will be counting */
-      if (!(domain & PAPI_DOM_SUPERVISOR)) {
-	 attr.exclude_hv = 1;
-      }
-      if (!(domain & PAPI_DOM_USER)) {
-	 attr.exclude_user = 1;
-      }
-      if (!(domain & PAPI_DOM_KERNEL)) {
-	 attr.exclude_kernel = 1;
-      }
+   /* now set up domains this event set will be counting */
+   if (!(domain & PAPI_DOM_SUPERVISOR)) {
+      attr.exclude_hv = 1;
+   }
+   if (!(domain & PAPI_DOM_USER)) {
+      attr.exclude_user = 1;
+   }
+   if (!(domain & PAPI_DOM_KERNEL)) {
+      attr.exclude_kernel = 1;
+   }
 
-      SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
-      SUBDBG("config is %"PRIx64"\n",attr.config);
+   SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
 
-      ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
-      if ( ev_fd == -1 ) {
-	 SUBDBG( "sys_perf_event_open returned error.  Unix says, %s", 
-		   strerror( errno ) );
-	 return PAPI_EPERM;
-      }
+   ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
+   if ( ev_fd == -1 ) {
+      SUBDBG("sys_perf_event_open returned error.  Linux says, %s", 
+	     strerror( errno ) );
+      return PAPI_EPERM;
+   }
 	
-      /* now close it, this was just to make sure we have permissions */
-      /* to set these options                                         */
-      close(ev_fd);
-      return PAPI_OK;
+   /* now close it, this was just to make sure we have permissions */
+   /* to set these options                                         */
+   close(ev_fd);
+   return PAPI_OK;
 }
+
+
 
 /* Maximum size we ever expect to read from a perf_event fd   */
 /*  (this is the number of 64-bit values)                     */
@@ -317,160 +318,147 @@ check_permissions( unsigned long tid, unsigned int cpu_num,
 
 
 
-/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
- * implementations (e.g. x86 before 2.6.33) which don't do a static event 
- * scheduability check in sys_perf_event_open.
- */
+/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch */
+/* implementations (e.g. x86 before 2.6.33) which don't do a static event */
+/* scheduability check in sys_perf_event_open.  It is also needed if the  */
+/* kernel is stealing an event, such as when NMI watchdog is enabled.     */
 
 static int
 check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 {
-  int retval = 0, cnt = -1;
-  ( void ) ctx;			 /*unused */
-  long long papi_pe_buffer[READ_BUFFER_SIZE];
-  int i,group_leader_fd;
+   int retval = 0, cnt = -1;
+   ( void ) ctx;			 /*unused */
+   long long papi_pe_buffer[READ_BUFFER_SIZE];
+   int i,group_leader_fd;
 
-  if (bug_check_scheduability()) {
+   if (bug_check_scheduability()) {
 
-     group_leader_fd=ctl->events[idx].group_leader_fd;
-     if (group_leader_fd==-1) group_leader_fd=ctl->events[idx].event_fd;
+      /* If the kernel isn't tracking scheduability right       */
+      /* Then we need to start/stop/read to force the event     */
+      /* to be scheduled and see if an error condition happens. */
 
-     /* This will cause the events in the group to be scheduled */
-     /* onto the counters by the kernel, and so will force an   */
-     /* error condition if the events are not compatible.       */
+      /* get the proper fd to start */
+      group_leader_fd=ctl->events[idx].group_leader_fd;
+      if (group_leader_fd==-1) group_leader_fd=ctl->events[idx].event_fd;
 
-     retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
+      /* start the event */
+      retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
+      if (retval == -1) {
+	 PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+	 return PAPI_ESYS;
+      }
 
-     if (retval == -1) {
-	PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	return PAPI_ESYS;
-     }
+      /* stop the event */
+      retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
+      if (retval == -1) {
+	 PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
+	 return PAPI_ESYS;
+      }
 
-     retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
+      /* See if a read returns any results */
+      cnt = read( group_leader_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
+      if ( cnt == -1 ) {
+	 SUBDBG( "read returned an error!  Should never happen.\n" );
+	 return PAPI_ESYS;
+      }
 
-     if (retval == -1) {
-	PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
-	return PAPI_ESYS;
-     }
+      if ( cnt == 0 ) {
+         /* We read 0 bytes if we could not schedule the event */
+         /* The kernel should have detected this at open       */
+         /* but various bugs (including NMI watchdog)          */
+         /* result in this behavior                            */
 
-     cnt = read( group_leader_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
-     SUBDBG("read fd %d, index %d, read %d %lld %lld %lld\n",
-	    group_leader_fd,idx,cnt,
-	    papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-	   
-     if ( cnt == -1 ) {
-	SUBDBG( "read returned an error!  Should never happen.\n" );
-	return PAPI_ESYS;
-     }
-
-     if ( cnt == 0 ) {
-
-        /* We read 0 if we could not schedule the event */
-        /* The kernel should have detected this at open */
-        /* but various bugs (including NMI watchdog)    */
-        /* result in this behavior                      */
-
-	return PAPI_ECNFLCT;
+	 return PAPI_ECNFLCT;
 
      } else {
 
 	/* Reset all of the counters (opened so far) back to zero      */
-	/* from the above brief enable/disable call pair.  I wish      */
-	/* we didn't have to to do this, because it hurts performance, */
-        /* but I don't see any alternative.                            */
-       for( i = 0; i < idx; i++) {
-	  retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
-	  if (retval == -1) {
-	     PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d (fd %d)failed.\n",
-			i,ctl->num_events,idx,ctl->events[i].event_fd);
-	     return PAPI_ESYS;
-	  }
-       }
-     }
-  }
-  return PAPI_OK;
+	/* from the above brief enable/disable call pair.              */
+
+	/* We have to reset all events because reset of group leader      */
+        /* does not reset all.                                            */
+	/* we assume that the events are being added one by one and that  */
+        /* we do not need to reset higher events (doing so may reset ones */
+        /* that have not been initialized yet.                            */
+        for( i = 0; i < idx; i++) {
+	   retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+	   if (retval == -1) {
+	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d "
+			 "(fd %d)failed.\n",
+			 i,ctl->num_events,idx,ctl->events[i].event_fd);
+	      return PAPI_ESYS;
+	   }
+	}
+      }
+   }
+   return PAPI_OK;
 }
 
 
-
-
-
-/*
- * Just a guess at how many pages would make this relatively efficient.
- * Note that it's "1 +" because of the need for a control page, and the
- * number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or
- * zero.  This is required to optimize dealing with circular buffer
- * wrapping of the mapped pages.
- */
-#define NR_MMAP_PAGES (1 + 8)
-
+/* Do some extrta work on a perf_event fd if we're doing sampling */
+/* This mostly means setting up the mmap buffer.                  */
 static int
 tune_up_fd( pe_control_t *ctl, int evt_idx )
 {
-	int ret;
-	void *buf_addr;
-	int fd = ctl->events[evt_idx].event_fd;
+   int ret;
+   void *buf_addr;
+   int fd = ctl->events[evt_idx].event_fd;
 
-	/*
-	 * Register that we would like a SIGIO notification when a mmap'd page
-	 * becomes full.
-	 */
-	ret = fcntl( fd, F_SETFL, O_ASYNC | O_NONBLOCK );
-	if ( ret ) {
-		PAPIERROR ( "fcntl(%d, F_SETFL, O_ASYNC | O_NONBLOCK) "
-			    "returned error: %s", fd, strerror( errno ) );
-		return PAPI_ESYS;
-	}
+   /* Register that we would like a SIGIO notification when a mmap'd page */
+   /* becomes full.                                                       */
+   ret = fcntl( fd, F_SETFL, O_ASYNC | O_NONBLOCK );
+   if ( ret ) {
+      PAPIERROR ( "fcntl(%d, F_SETFL, O_ASYNC | O_NONBLOCK) "
+		  "returned error: %s", fd, strerror( errno ) );
+      return PAPI_ESYS;
+   }
 
-	/* Set the F_SETOWN_EX flag on the fd.                          */
-        /* This affects which thread an overflow signal gets sent to    */
-	/* Handled in a subroutine to handle the fact that the behavior */
-        /* is dependent on kernel version.                              */
-	ret=fcntl_setown_fd(fd);
-	if (ret!=PAPI_OK) return ret;
+   /* Set the F_SETOWN_EX flag on the fd.                          */
+   /* This affects which thread an overflow signal gets sent to.   */
+   ret=fcntl_setown_fd(fd);
+   if (ret!=PAPI_OK) return ret;
 	   
-	/* Set FD_CLOEXEC.  Otherwise if we do an exec with an overflow */
-        /* running, the overflow handler will continue into the exec()'d*/
-        /* process and kill it because no signal handler is set up.     */
+   /* Set FD_CLOEXEC.  Otherwise if we do an exec with an overflow */
+   /* running, the overflow handler will continue into the exec()'d*/
+   /* process and kill it because no signal handler is set up.     */
+   ret=fcntl(fd, F_SETFD, FD_CLOEXEC);
+   if (ret) {
+      return PAPI_ESYS;
+   }
 
-	ret=fcntl(fd, F_SETFD, FD_CLOEXEC);
-	if (ret) {
-	   return PAPI_ESYS;
-	}
+   /* when you explicitely declare that you want a particular signal,  */
+   /* even with you use the default signal, the kernel will send more  */
+   /* information concerning the event to the signal handler.          */
+   /*                                                                  */
+   /* In particular, it will send the file descriptor from which the   */
+   /* event is originating which can be quite useful when monitoring   */
+   /* multiple tasks from a single thread.                             */
+   ret = fcntl( fd, F_SETSIG, _papi_pe_vector.cmp_info.hardware_intr_sig );
+   if ( ret == -1 ) {
+      PAPIERROR( "cannot fcntl(F_SETSIG,%d) on %d: %s",
+		 _papi_pe_vector.cmp_info.hardware_intr_sig, fd,
+		 strerror( errno ) );
+      return PAPI_ESYS;
+   }
 
-	/*
-	 * when you explicitely declare that you want a particular signal,
-	 * even with you use the default signal, the kernel will send more
-	 * information concerning the event to the signal handler.
-	 *
-	 * In particular, it will send the file descriptor from which the
-	 * event is originating which can be quite useful when monitoring
-	 * multiple tasks from a single thread.
-	 */
-	ret = fcntl( fd, F_SETSIG, _papi_pe_vector.cmp_info.hardware_intr_sig );
-	if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(F_SETSIG,%d) on %d: %s",
-				   _papi_pe_vector.cmp_info.hardware_intr_sig, fd,
-				   strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
+   /* mmap() the sample buffer */
+   buf_addr = mmap( NULL, ctl->events[evt_idx].nr_mmap_pages * getpagesize(),
+		    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
+   if ( buf_addr == MAP_FAILED ) {
+      PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
+		 ctl->events[evt_idx].nr_mmap_pages * getpagesize(  ), 
+		 PROT_READ, MAP_SHARED, fd, strerror( errno ) );
+      return ( PAPI_ESYS );
+   }
 
-	buf_addr =
-		mmap( NULL, ctl->events[evt_idx].nr_mmap_pages * getpagesize(  ),
-			  PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
-	if ( buf_addr == MAP_FAILED ) {
-		PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
-				   ctl->events[evt_idx].nr_mmap_pages * getpagesize(  ), PROT_READ,
-				   MAP_SHARED, fd, strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
-	SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
-	ctl->events[evt_idx].mmap_buf = ( struct perf_counter_mmap_page * ) buf_addr;
-	ctl->events[evt_idx].tail = 0;
-	ctl->events[evt_idx].mask =
-		( ctl->events[evt_idx].nr_mmap_pages - 1 ) * getpagesize(  ) - 1;
+   SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
 
-	return PAPI_OK;
+   ctl->events[evt_idx].mmap_buf = (struct perf_counter_mmap_page *) buf_addr;
+   ctl->events[evt_idx].tail = 0;
+   ctl->events[evt_idx].mask = ( ctl->events[evt_idx].nr_mmap_pages - 1 ) * 
+                               getpagesize() - 1;
+
+   return PAPI_OK;
 }
 
 static int
@@ -1912,6 +1900,15 @@ _papi_pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 		 */
 		return PAPI_ENOSUPP;
 	}
+
+
+/* Just a guess at how many pages would make this relatively efficient.  */
+/* Note that it's "1 +" because of the need for a control page, and the  */
+/* number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or   */
+/* zero.  This is required to optimize dealing with circular buffer      */
+/* wrapping of the mapped pages.                                         */
+
+#define NR_MMAP_PAGES (1 + 8)
 
 	ctl->events[evt_idx].nr_mmap_pages = NR_MMAP_PAGES;
 	ctl->events[evt_idx].attr.sample_type |= PERF_SAMPLE_IP;
