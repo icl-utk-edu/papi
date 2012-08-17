@@ -21,7 +21,6 @@ static int
 check_event( int event_code, char *name )
 {
 	int retval;
-	char errstring[PAPI_MAX_STR_LEN];
 	long long values;
 	int EventSet = PAPI_NULL;
 

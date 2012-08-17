@@ -15,7 +15,6 @@ main( int argc, char **argv )
 	int EventSet = PAPI_NULL, count = 0, err_count = 0;
 	long long values;
 	PAPI_event_info_t info;
-	char errstring[PAPI_MAX_STR_LEN];
 
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
