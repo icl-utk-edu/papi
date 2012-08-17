@@ -21,7 +21,6 @@
 #include <syscall.h>
 #include <sys/utsname.h>
 #include <sys/mman.h>
-#include <sys/time.h>
 #include <sys/ioctl.h>
 
 /* PAPI-specific includes */
@@ -50,46 +49,42 @@
 /* you run out of fds                                           */
 #define PERF_EVENT_MAX_MPX_COUNTERS 64
 
-typedef int pfm_register_t;
-typedef int reg_alloc_t;            
+/* We really don't need fancy definitions for these */
 
 typedef struct
 {
-  int group_leader_fd;            /* fd of group leader */
-  int event_fd;                   /* our fd */
-  uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
-  void *mmap_buf;		  /* used to contain profiling data samples */
-                                  /* as well as control */
+  int group_leader_fd;            /* fd of group leader                   */
+  int event_fd;                   /* fd of event                          */
+  uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer      */
+  void *mmap_buf;		  /* used for control/profiling           */
   uint64_t tail;		  /* current read location in mmap buffer */
-  uint64_t mask;		  /* mask used for wrapping the pages */
-
-  struct perf_event_attr attr;
-  unsigned int wakeup_mode;
+  uint64_t mask;		  /* mask used for wrapping the pages     */
+  struct perf_event_attr attr;    /* perf_event config structure          */
+  unsigned int wakeup_mode;       /* wakeup mode when sampling            */
 } pe_event_info_t;
 
 typedef struct
 {
-  int num_events;
-  int num_groups;
-  unsigned int domain;
-  unsigned int multiplexed;
-  unsigned int overflow;
-  unsigned int inherit;
-  int cpu;
-  pid_t tid;
+  int num_events;                 /* number of events in control state */
+  unsigned int domain;            /* control-state wide domain         */
+  unsigned int multiplexed;       /* multiplexing enable               */
+  unsigned int overflow;          /* overflow enable                   */
+  unsigned int inherit;           /* inherit enable                    */
+  int cpu;                        /* which cpu to measure              */
+  pid_t tid;                      /* thread we are monitoring          */
   pe_event_info_t events[PERF_EVENT_MAX_MPX_COUNTERS];
   long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
 } pe_control_t;
 
 typedef struct
 {
-  int initialized;
-  int state;
+  int initialized;                /* are we initialized?           */
+  int state;                      /* are we opened and/or running? */
 } pe_context_t;
 
-/* These sentinels tell papi_pe_set_overflow() how to set the
- * wakeup_events field in the event descriptor record.
- */
+/* These sentinels tell papi_pe_set_overflow() how to set the */
+/* wakeup_events field in the event descriptor record.        */
+
 #define WAKEUP_COUNTER_OVERFLOW 0
 #define WAKEUP_PROFILING -1
 
@@ -101,7 +96,6 @@ typedef struct
 #define PERF_EVENTS_RUNNING 0x02
 
 /* Static globals */
-
 static int nmi_watchdog_active;
 
 /* Advance declaration */
@@ -1976,8 +1970,8 @@ papi_vector_t _papi_pe_vector = {
   .size = {
       .context = sizeof ( pe_context_t ),
       .control_state = sizeof ( pe_control_t ),
-      .reg_value = sizeof ( pfm_register_t ),
-      .reg_alloc = sizeof ( reg_alloc_t ),
+      .reg_value = sizeof ( int ),
+      .reg_alloc = sizeof ( int ),
   },
 
   /* function pointers in this component */
