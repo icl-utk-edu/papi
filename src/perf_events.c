@@ -758,59 +758,56 @@ _papi_pe_set_domain( hwd_control_state_t *ctl, int domain)
 }
 
 
-
-
-
-
-
 /* Initialize the perf_event component */
-
 static int
 _papi_pe_init_component( int cidx )
 {
 
-  int retval;
-  int paranoid_level;
+   int retval;
+   int paranoid_level;
 
-  FILE *fff;
+   FILE *fff;
 
-  ( void ) cidx;          /*unused */
+   ( void ) cidx;          /*unused */
 
-  /* The is the official way to detect if perf_event support exists */
-  /* The file is called perf_counter_paranoid on 2.6.31             */
-  /* currently we are lazy and do not support 2.6.31 kernels        */
-  fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
-  if (fff==NULL) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "perf_event support not detected",PAPI_MAX_STR_LEN);
-     return PAPI_ENOCMP;
-  }
+   /* The is the official way to detect if perf_event support exists */
+   /* The file is called perf_counter_paranoid on 2.6.31             */
+   /* currently we are lazy and do not support 2.6.31 kernels        */
+   fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
+   if (fff==NULL) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "perf_event support not detected",PAPI_MAX_STR_LEN);
+      return PAPI_ENOCMP;
+   }
 
-  /* 2 means no measurements allowed          */
-  /* 1 means normal counter access            */
-  /* 0 means you can access CPU-specific data */
-  /* -1 means no restrictions                 */
-  retval=fscanf(fff,"%d",&paranoid_level);
-  if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
-  fclose(fff);
+   /* 2 means no measurements allowed          */
+   /* 1 means normal counter access            */
+   /* 0 means you can access CPU-specific data */
+   /* -1 means no restrictions                 */
+   retval=fscanf(fff,"%d",&paranoid_level);
+   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
+   fclose(fff);
 
-  if (paranoid_level==2) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
-	     PAPI_MAX_STR_LEN);
-     return PAPI_ENOCMP;
-  }
+   if (paranoid_level==2) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
+	      PAPI_MAX_STR_LEN);
+      return PAPI_ENOCMP;
+   }
 
-  /* Detect NMI watchdog which can steal counters */
-  nmi_watchdog_active=_linux_detect_nmi_watchdog();
-  if (nmi_watchdog_active) {
-     SUBDBG("The Linux nmi_watchdog is using one of the performance "
-                   "counters, reducing the total number available.\n");
-  }
+   /* Detect NMI watchdog which can steal counters */
+   nmi_watchdog_active=_linux_detect_nmi_watchdog();
+   if (nmi_watchdog_active) {
+      SUBDBG("The Linux nmi_watchdog is using one of the performance "
+             "counters, reducing the total number available.\n");
+   }
 
-  _papi_pe_vector.cmp_info.kernel_multiplex = 1;
+   /* Kernel multiplexing is broken prior to kernel 2.6.34 */
+   /* The change was probably git commit:                  */
+   /*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
+   _papi_pe_vector.cmp_info.kernel_multiplex = 1;
 
-  _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+   _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
   /* Check that processor is supported */
   if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
