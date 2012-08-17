@@ -121,11 +121,8 @@ bug_check_scheduability(void) {
 #if defined(__powerpc__)
   /* PowerPC not affected by this bug */
 #elif defined(__mips__)
-
   /* MIPS as of kernel 3.1 does not properly detect schedulability */
-
   return 1;
-
 #else
   if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 #endif
@@ -155,60 +152,78 @@ bug_format_group(void) {
 
 }
 
-	/* Set the F_SETOWN_EX flag on the fd.                          */
-        /* This affects which thread an overflow signal gets sent to    */
-	/* Handled in a subroutine to handle the fact that the behavior */
-        /* is dependent on kernel version.                              */
+
+/* There's a bug prior to Linux 2.6.33 where if you are using */
+/* PERF_FORMAT_GROUP, the TOTAL_TIME_ENABLED and              */
+/* TOTAL_TIME_RUNNING fields will be zero unless you disable  */
+/* the counters first                                         */
+static int 
+bug_sync_read(void) {
+
+  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
+
+  return 0;
+
+}
+
+
+/* Set the F_SETOWN_EX flag on the fd.                          */
+/* This affects which thread an overflow signal gets sent to    */
+/* Handled in a subroutine to handle the fact that the behavior */
+/* is dependent on kernel version.                              */
 static int 
 fcntl_setown_fd(int fd) {
 
-  int ret;
+   int ret;
+   struct f_owner_ex fown_ex;
 
-   
-           /* F_SETOWN_EX is not available until 2.6.32 */
-        if (_papi_os_info.os_version < LINUX_VERSION(2,6,32)) {
+      /* F_SETOWN_EX is not available until 2.6.32 */
+   if (_papi_os_info.os_version < LINUX_VERSION(2,6,32)) {
 	   
-           /* get ownership of the descriptor */
-           ret = fcntl( fd, F_SETOWN, mygettid(  ) );
-           if ( ret == -1 ) {
-	      PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd,
-			 strerror( errno ) );
-	      return PAPI_ESYS;
-	   }
-	}
-        else {
-	   
-           struct f_owner_ex fown_ex;
-
-	   /* set ownership of the descriptor */   
-           fown_ex.type = F_OWNER_TID;
-           fown_ex.pid  = mygettid();
-           ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
+      /* get ownership of the descriptor */
+      ret = fcntl( fd, F_SETOWN, mygettid(  ) );
+      if ( ret == -1 ) {
+	 PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd, strerror(errno) );
+	 return PAPI_ESYS;
+      }
+   }
+   else {
+      /* set ownership of the descriptor */   
+      fown_ex.type = F_OWNER_TID;
+      fown_ex.pid  = mygettid();
+      ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
    
-	   if ( ret == -1 ) {
-	      PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", 
-			 fd, strerror( errno ) );
-	      return PAPI_ESYS;
-	   }
-	}
-	return PAPI_OK;
+      if ( ret == -1 ) {
+	 PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", 
+		    fd, strerror( errno ) );
+	 return PAPI_ESYS;
+      }
+   }
+   return PAPI_OK;
 }
 
-
+/* Check for processor support */
+/* Can be used for generic checking, though in general we only     */
+/* check for pentium4 here because support was broken for multiple */
+/* kernel releases and the usual standard detections did not       */
+/* handle this.  So we check for pentium 4 explicitly.             */
 static int 
 processor_supported(int vendor, int family) {
 
-  /* Error out if kernel too early to support p4 */
-  if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
-     if (_papi_os_info.os_version < LINUX_VERSION(2,6,35)) {
-	PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
-	return PAPI_ENOSUPP;
-     }
-  }
-
-  return PAPI_OK;
+   /* Error out if kernel too early to support p4 */
+   if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
+      if (_papi_os_info.os_version < LINUX_VERSION(2,6,35)) {
+	 PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
+	 return PAPI_ENOSUPP;
+      }
+   }
+   return PAPI_OK;
 }
 
+
+/* The read format on perf_event varies based on various flags that */
+/* are passed into it.  This helper avoids copying this logic       */
+/* multiple places.                                                 */
 static unsigned int
 get_read_format( unsigned int multiplex, 
 		 unsigned int inherit, 
@@ -236,20 +251,6 @@ get_read_format( unsigned int multiplex,
    return format;
 }
 
-
-
-/* There's a bug prior to Linux 2.6.33 where if you are using */
-/* PERF_FORMAT_GROUP, the TOTAL_TIME_ENABLED and              */
-/* TOTAL_TIME_RUNNING fields will be zero unless you disable  */
-/* the counters first                                         */
-static int 
-bug_sync_read(void) {
-
-  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
-
-  return 0;
-
-}
 
 /********* End Kernel-version Dependent Routines  ****************/
 
