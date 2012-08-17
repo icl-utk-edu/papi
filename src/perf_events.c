@@ -57,7 +57,6 @@ typedef struct
 {
   int group_leader_fd;            /* fd of group leader */
   int event_fd;                   /* our fd */
-  uint64_t event_id;
   uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
   void *mmap_buf;		  /* used to contain profiling data samples */
                                   /* as well as control */
@@ -217,39 +216,38 @@ processor_supported(int vendor, int family) {
 }
 
 static unsigned int
-get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader )
+get_read_format( unsigned int multiplex, 
+		 unsigned int inherit, 
+		 int format_group )
 {
-	unsigned int format = 0;
+   unsigned int format = 0;
 
-	/* if we need read format options for multiplexing, add them now */
-	if (multiplex) {
-		format |= PERF_FORMAT_TOTAL_TIME_ENABLED;
-		format |= PERF_FORMAT_TOTAL_TIME_RUNNING;
-	}
+   /* if we need read format options for multiplexing, add them now */
+   if (multiplex) {
+      format |= PERF_FORMAT_TOTAL_TIME_ENABLED;
+      format |= PERF_FORMAT_TOTAL_TIME_RUNNING;
+   }
 
-	/* if our kernel supports it and we are not using inherit, */
-	/* add the group read options                              */
+   /* if our kernel supports it and we are not using inherit, */
+   /* add the group read options                              */
+   if ( (!bug_format_group()) && !inherit) {
+      if (format_group) {
+	 format |= PERF_FORMAT_GROUP;
+      }
+   }
 
-	if ( (!bug_format_group()) && !inherit) {
-		format |= PERF_FORMAT_ID;
-		/* if it qualifies for PERF_FORMAT_ID and it is a */
-		/* group leader, it also gets PERF_FORMAT_GROUP   */
-		if (group_leader) {
-			format |= PERF_FORMAT_GROUP;
-		}
-	}
+   SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n",
+	  multiplex, inherit, format_group, format);
 
-	SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n",
-	       multiplex, inherit, group_leader, format);
-
-	return format;
+   return format;
 }
 
 
 
-/* define SYNC_READ for all kernel versions older than 2.6.33 */
-/* as a workaround for kernel bug 14489                       */
-
+/* There's a bug prior to Linux 2.6.33 where if you are using */
+/* PERF_FORMAT_GROUP, the TOTAL_TIME_ENABLED and              */
+/* TOTAL_TIME_RUNNING fields will be zero unless you disable  */
+/* the counters first                                         */
 static int 
 bug_sync_read(void) {
 
@@ -337,7 +335,6 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
   long long papi_pe_buffer[READ_BUFFER_SIZE];
   int i,group_leader_fd;
 
-
   if (bug_check_scheduability()) {
 
      group_leader_fd=ctl->events[idx].group_leader_fd;
@@ -386,10 +383,11 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 	/* from the above brief enable/disable call pair.  I wish      */
 	/* we didn't have to to do this, because it hurts performance, */
         /* but I don't see any alternative.                            */
-       for( i = 0; i < ctl->num_events; i++) {
+       for( i = 0; i < idx; i++) {
 	  retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
 	  if (retval == -1) {
-	     PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
+	     PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d (fd %d)failed.\n",
+			i,ctl->num_events,idx,ctl->events[i].event_fd);
 	     return PAPI_ESYS;
 	  }
        }
@@ -493,12 +491,17 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
       if (( i == 0 ) || (ctl->multiplexed)) {
 	 ctl->events[i].attr.disabled = 1;
 	 ctl->events[i].group_leader_fd=-1;
+         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
+							   ctl->inherit, 
+							   !ctl->multiplexed );
       } else {
 	 ctl->events[i].attr.disabled = 0;
 	 ctl->events[i].group_leader_fd=ctl->events[0].event_fd;
+         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
+							   ctl->inherit, 
+							   0 );
       }
-      ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
-							ctl->inherit, !i);
+
 
       /* try to open */
       ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
@@ -533,39 +536,6 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 	 i++;
 		                          
          goto cleanup;
-      }
-
-      /* If a new enough kernel and counters are not being  */
-      /* inherited by children.  We are using grouped reads */
-      /* so get the events index into the group             */
-      if ((!bug_format_group()) && (!ctl->inherit)) {
-         /* obtain the id of this event assigned by the kernel */
-
-	 uint64_t papi_pe_buffer[READ_BUFFER_SIZE];	/* max size needed */
-	 int id_idx = 1;			   /* position of the id within the buffer for a non-group leader */
-	 int cnt;
-
-	 cnt = read( ctl->events[i].event_fd, papi_pe_buffer, 
-			     sizeof ( papi_pe_buffer ) );
-	 if ( cnt == -1 ) {
-	    SUBDBG( "read of event %d to obtain id returned %d", i, cnt );
-	    ret = PAPI_EBUG;
-	    /* the last event did open, so we need to bump */
-	    /* the counter before doing the cleanup */
-	    i++;		 
-	    goto cleanup;
-	 }
-	 if ( ctl->events[i].group_leader_fd == -1 ) {
-	    id_idx = 2;
-	 }
-	 else {
-	    id_idx = 1;
-	 }
-	 if ( ctl->multiplexed ) {
-	    /* account for the time running and enabled fields */
-	    id_idx += 2; 
-	 }
-	 ctl->events[i].event_id = papi_pe_buffer[id_idx];
       }
 
    }
@@ -974,74 +944,6 @@ _papi_pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
     return PAPI_ENOSUPP;
 }
 
-
-
-#define get_nr_idx() 0
-#define get_total_time_enabled_idx() 1
-#define get_total_time_running_idx() 2
-
-/* Get the index of the id of the n'th counter in the buffer */
-static int
-get_id_idx( int multiplexed, int n )
-{
-   if (!bug_format_group()) {
-      if ( multiplexed ) {
-         return 3 + ( n * 2 ) + 1;
-      }
-      else {
-         return 1 + ( n * 2 ) + 1;
-      }
-   }
-   else {
-      return 1;
-   }
-}
-
-/* Get the index of the n'th counter in the buffer */
-static int
-get_count_idx( int multiplexed, int n )
-{
-  if (!bug_format_group()) {
-               if ( multiplexed )
-                       return 3 + ( n * 2 );
-               else
-                       return 1 + ( n * 2 );
-      }
-       else {
-               return 0;
-       }
-}
-
-/* Return the count index for the event with the given id */
-static int64_t
-get_count_idx_by_id( long long * buf, int multiplexed, int inherit, int64_t id )
-{
-
-  if ((!bug_format_group()) && (!inherit)) {
-               unsigned int i;
-
-               for ( i = 0; i < buf[get_nr_idx(  )]; i++ ) {
-                       unsigned long index = get_id_idx( multiplexed, i );
-
-		   if ( index > READ_BUFFER_SIZE ) {
-			PAPIERROR( "Attempting access beyond buffer" );
-			return -1;
-		   }
-
-		   if ( buf[index] == id ) {
-			return get_count_idx( multiplexed, i );
-		   }
-	   }
-	   PAPIERROR( "Did not find id %d in the buffer!", id );
-	   return -1;
-       }
-       else {
-
-	   return 0;
-       }
-}
-
-
 /*
  * perf_event provides a complicated read interface.
  *  the info returned by read() varies depending on whether
@@ -1065,130 +967,175 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    pe_context_t *pe_ctx = ( pe_context_t *) ctx;
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
    long long papi_pe_buffer[READ_BUFFER_SIZE];
-   int count_idx;
+   long long tot_time_running, tot_time_enabled, scale;
 
-  /*
-   * FIXME this loop should not be needed.  We ought to be able to read up
-   * the counters from the group leader's fd only, but right now
-   * PERF_RECORD_GROUP doesn't work like we need it to.  So for now, disable
-   * the group leader so that the counters are more or less synchronized,
-   * read them up, then re-enable the group leader.
-   */
+   /* On kernels before 2.6.33 the TOTAL_TIME_ENABLED and TOTAL_TIME_RUNNING */
+   /* fields are always 0 unless the counter is disabled.  So if we are on   */
+   /* one of these kernels, then we must disable events before reading.      */
 
-  if (bug_sync_read()) {
-    if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-      for ( i = 0; i < pe_ctl->num_events; i++ )
-	/* disable only the group leaders */
-	if ( pe_ctl->events[i].group_leader_fd == -1 ) {
-	  ret = ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-	  if ( ret == -1 ) {
-	    PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) returned an error: ", strerror( errno ));
-	    return PAPI_ESYS;
-	  }
-	}
-    }
-  }
+   if (bug_sync_read()) {
+      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
+         for ( i = 0; i < pe_ctl->num_events; i++ ) {
+	    /* disable only the group leaders */
+	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+	       ret = ioctl( pe_ctl->events[i].event_fd, 
+			   PERF_EVENT_IOC_DISABLE, NULL );
+	       if ( ret == -1 ) {
+	          PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) "
+			   "returned an error: ", strerror( errno ));
+	          return PAPI_ESYS;
+	       }
+	    }
+	 }
+      }
+   }
 
-  /* 
-   *  FIXME this loop needs some serious tuning and commenting -pjm 
-   */
 
-  for ( i = 0; i < pe_ctl->num_events; i++ ) {
-     if ((bug_format_group()) || 
-	 ( pe_ctl->events[i].group_leader_fd == -1 ) || 
-	 (pe_ctl->inherit)) {
+   /* Handle case where we are multiplexing */
+   if (pe_ctl->multiplexed) {
 
-        ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
+      for ( i = 0; i < pe_ctl->num_events; i++ ) {
+             
+         ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
 		    sizeof ( papi_pe_buffer ) );
-        if ( ret == -1 ) {
-	   PAPIERROR("read returned an error: ", strerror( errno ));
-	   return PAPI_ESYS;
-	}
+         if ( ret == -1 ) {
+	    PAPIERROR("read returned an error: ", strerror( errno ));
+	    return PAPI_ESYS;
+	 }
 
-	if (ret<1) {
-	   PAPIERROR("Error!  short read!\n");
-	   PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
+	 if (ret<(signed)(3*sizeof(long long))) {
+	    PAPIERROR("Error!  short read!\n");	 
+	    return PAPI_ESYS;
+	 }        
+
+         SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
+	        pe_ctl->events[i].event_fd, 
+		(long)pe_ctl->tid, pe_ctl->cpu, ret);
+         SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
+	        papi_pe_buffer[1],papi_pe_buffer[2]);
+
+         tot_time_enabled = papi_pe_buffer[1];     
+         tot_time_running = papi_pe_buffer[2];
+
+         SUBDBG("count[%d] = (papi_pe_buffer[%d] %lld * "
+		"tot_time_enabled %lld) / tot_time_running %lld\n",
+		i, 0,papi_pe_buffer[0],
+		tot_time_enabled,tot_time_running);
+    
+         if (tot_time_running == tot_time_enabled) {
+	    /* No scaling needed */
+	    pe_ctl->counts[i] = papi_pe_buffer[0];
+         } else if (tot_time_running && tot_time_enabled) {
+	    /* Scale factor of 100 to avoid overflows when computing */
+	    /*enabled/running */
+
+	    scale = (tot_time_enabled * 100LL) / tot_time_running;
+	    scale = scale * papi_pe_buffer[0];
+	    scale = scale / 100LL;
+	    pe_ctl->counts[i] = scale;
+	 } else {
+	   /* This should not happen, but Phil reports it sometime does. */
+	    SUBDBG("perf_event kernel bug(?) count, enabled, "
+		   "running: %lld, %lld, %lld\n",
+		   papi_pe_buffer[0],tot_time_enabled,
+		   tot_time_running);
+
+	    pe_ctl->counts[i] = papi_pe_buffer[0];
+	 }
+      }
+   }
+
+   /* Handle cases where we cannot use FORMAT GROUP */
+   else if (bug_format_group() || pe_ctl->inherit) {
+      for ( i = 0; i < pe_ctl->num_events; i++ ) {
+
+         ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
+		    sizeof ( papi_pe_buffer ) );
+         if ( ret == -1 ) {
+	    PAPIERROR("read returned an error: ", strerror( errno ));
+	    return PAPI_ESYS;
+	 }
+
+	 if (ret!=sizeof(long long)) {
+	    PAPIERROR("Error!  short read!\n");
+	    PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
 		   pe_ctl->events[i].event_fd,
 		   (long)pe_ctl->tid, pe_ctl->cpu, ret);
-	   return PAPI_ESYS;
-	}        
+	    return PAPI_ESYS;
+	 }     
 
-        SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
-	       pe_ctl->events[i].event_fd, (long)pe_ctl->tid, pe_ctl->cpu, ret);
-        SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
-	       papi_pe_buffer[1],papi_pe_buffer[2]);
-    }
+         SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
+	        pe_ctl->events[i].event_fd, (long)pe_ctl->tid, 
+		pe_ctl->cpu, ret);
+         SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
+	        papi_pe_buffer[1],papi_pe_buffer[2]);
+     
+	 pe_ctl->counts[i] = papi_pe_buffer[0];
+      }
+   }
 
-    /* Love to know what this does */
-    count_idx = get_count_idx_by_id( papi_pe_buffer, pe_ctl->multiplexed, 
-				     pe_ctl->events[i].attr.inherit,
-				     pe_ctl->events[i].event_id );
-    if ( count_idx == -1 ) {
-       PAPIERROR( "get_count_idx_by_id failed for event num %d, id %d", i,
-		 pe_ctl->events[i].event_id );
-       return PAPI_ECMP;
-    }
+   
+   /* Handle cases where we are using FORMAT_GROUP   */
+   /* We assume only one group leader, in position 0 */
 
-    if (!pe_ctl->multiplexed) {
-       pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-    } else {
-       long long tot_time_running = papi_pe_buffer[get_total_time_running_idx(  )];
-       long long tot_time_enabled = papi_pe_buffer[get_total_time_enabled_idx(  )];
+   else {
+      if (pe_ctl->events[0].group_leader_fd!=-1) {
+	 PAPIERROR("Was expecting group leader!\n");
+      }
 
-       SUBDBG("count[%d] = (papi_pe_buffer[%d] %lld * tot_time_enabled %lld) "
-	      "/ tot_time_running %lld\n",
-	      i, count_idx,papi_pe_buffer[count_idx],
-	      tot_time_enabled,tot_time_running);
-    
-       if (tot_time_running == tot_time_enabled) {
-	  /* No scaling needed */
-	  pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-      } else if (tot_time_running && tot_time_enabled) {
-	  /* Scale factor of 100 to avoid overflows when computing */
-	  /*enabled/running */
-	  long long scale;
-	  scale = (tot_time_enabled * 100LL) / tot_time_running;
-	  scale = scale * papi_pe_buffer[count_idx];
-	  scale = scale / 100LL;
-	  pe_ctl->counts[i] = scale;
-      }	else {
-	/* This should not happen, but does. For example a Intel(R) Pentium(R) M processor 1600MHz (9)
-Linux thinkpad 2.6.38-02063808-generic #201106040910 SMP Sat Jun 4 10:51:30 UTC 2011 i686 GNU/Linux:
-COMPONENT:perf_events.c:_papi_pe_read:1148:24625 read: 1 214777 0
-COMPONENT:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time_enabled 214777) / tot_time_running 0 */
-	 SUBDBG("perf_event kernel bug(?) count, enabled, "
-		"running: %lld, %lld, %lld\n",
-		papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
-	 pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-       }
-    }
-  }
-    
-  /*
-   * FIXME comments please
-   */
+      ret = read( pe_ctl->events[0].event_fd, papi_pe_buffer, 
+		  sizeof ( papi_pe_buffer ) );
 
-  if (bug_sync_read()) {
-     if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-        for ( i = 0; i < pe_ctl->num_events; i++ ) {
-	   if ( pe_ctl->events[i].group_leader_fd == -1 ) {
-	      /* this should refresh any overflow counters too */
-	      ret = ioctl( pe_ctl->events[i].event_fd, 
-			   PERF_EVENT_IOC_ENABLE, NULL );
-	      if ( ret == -1 ) {
-	         /* Should never happen */
-	         PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) returned an error: ",
-			   strerror( errno ));
-	         return PAPI_ESYS;
-	      }
-	   }
-	}
-     }
-  }
+      if ( ret == -1 ) {
+	 PAPIERROR("read returned an error: ", strerror( errno ));
+	 return PAPI_ESYS;
+      }
 
-  *events = pe_ctl->counts;
+      if (ret<(signed)((1+pe_ctl->num_events)*sizeof(long long))) {
+	 PAPIERROR("Error! short read!\n");
+	 return PAPI_ESYS;
+      }
 
-  return PAPI_OK;
+      SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
+	     pe_ctl->events[i].event_fd, 
+	     (long)pe_ctl->tid, pe_ctl->cpu, ret);
+      SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
+	     papi_pe_buffer[1],papi_pe_buffer[2]);
+
+      if (papi_pe_buffer[0]!=pe_ctl->num_events) {
+	 PAPIERROR("Error!  Wrong number of events!\n");
+	 return PAPI_ESYS;
+      }
+
+      for(i=0;i<papi_pe_buffer[0];i++) {
+         pe_ctl->counts[i] = papi_pe_buffer[1+i];
+      }
+   }
+
+
+   /* If we disabled the counters due to the sync_read_bug(), */
+   /* then we need to re-enable them now.                     */
+   if (bug_sync_read()) {
+      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
+         for ( i = 0; i < pe_ctl->num_events; i++ ) {
+	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+	       /* this should refresh any overflow counters too */
+	       ret = ioctl( pe_ctl->events[i].event_fd, 
+			    PERF_EVENT_IOC_ENABLE, NULL );
+	       if ( ret == -1 ) {
+	          /* Should never happen */
+	          PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) returned an error: ",
+			    strerror( errno ));
+	          return PAPI_ESYS;
+	       }
+	    }
+	 }
+      }
+   }
+
+   *events = pe_ctl->counts;
+
+   return PAPI_OK;
 }
 
 static int
@@ -1312,11 +1259,6 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
       * error for any other event in the group to have its pinned value
       * set to 1. */
      pe_ctl->events[i].attr.pinned = ( i == 0 ) && !( pe_ctl->multiplexed );
-
-     /* set the correct read format, based on kernel version and options 
-        that are set */
-     pe_ctl->events[i].attr.read_format = get_read_format(pe_ctl->multiplexed, 
-						     pe_ctl->inherit, 0);
 
      if ( native ) {
 	native[i].ni_position = i;
