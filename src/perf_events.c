@@ -453,6 +453,7 @@ tune_up_fd( pe_control_t *ctl, int evt_idx )
 
    SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
 
+   /* Set up the mmap buffer and its associated helpers */
    ctl->events[evt_idx].mmap_buf = (struct perf_counter_mmap_page *) buf_addr;
    ctl->events[evt_idx].tail = 0;
    ctl->events[evt_idx].mask = ( ctl->events[evt_idx].nr_mmap_pages - 1 ) * 
@@ -461,13 +462,18 @@ tune_up_fd( pe_control_t *ctl, int evt_idx )
    return PAPI_OK;
 }
 
+
+/* Open all events in the control state */
 static int
-open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
+open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
 
    int i, ret = PAPI_OK;
 
    for( i = 0; i < ctl->num_events; i++ ) {
+
+      /* set up the attr structure.  We don't set up all fields here */
+      /* as some have already been set up previously.                */
 
       /* group leader (event 0) is special                */
       /* If we're multiplexed, everyone is a group leader */
@@ -500,7 +506,7 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 		i, strerror( errno ) );
 			
 	 ret = PAPI_ECNFLCT;
-	 goto cleanup;
+	 goto open_pe_cleanup;
       }
 		
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
@@ -509,35 +515,37 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 	      (long)ctl->tid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
+
+      /* in many situations the kernel will indicate we opened fine */
+      /* yet things will fail later.  So we need to double check    */
+      /* we actually can use the events we've set up.               */
       ret = check_scheduability( ctx, ctl, i );
 
       if ( ret != PAPI_OK ) {
-	 /* the last event did open, so we  */
-	 /* need to bump the counter before */
-	 /* doing the cleanup               */
+	 /* the last event did open, so we need to bump the counter before */
+	 /* doing the cleanup                                              */
 	 i++;
 		                          
-         goto cleanup;
+         goto open_pe_cleanup;
       }
 
    }
 
-   /* Now that we've successfully opened all of the events, do whatever
-    * "tune-up" is needed to attach the mmap'd buffers, signal handlers,
-    * and so on.
-    */
+   /* Now that we've successfully opened all of the events, do whatever  */
+   /* "tune-up" is needed to attach the mmap'd buffers, signal handlers, */
+   /* and so on.                                                         */
    for ( i = 0; i < ctl->num_events; i++ ) {
+
+      /* If sampling is enabled, hook up signal handler */
       if ( ctl->events[i].attr.sample_period ) {
 	 ret = tune_up_fd( ctl, i );
 	 if ( ret != PAPI_OK ) {
 	    /* All of the fds are open, so we need to clean up all of them */
 	    i = ctl->num_events;
-	    goto cleanup;
+	    goto open_pe_cleanup;
 	 }
       } else {
-	 /* Null is used as a sentinel in pe_close_evts, since it doesn't
-	  * have access to the ctl array
-	  */
+	 /* Make sure this is NULL so close_pe_events works right */
 	 ctl->events[i].mmap_buf = NULL;
       }
    }
@@ -547,11 +555,10 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
 
    return PAPI_OK;
 
-cleanup:
-   /*
-    * We encountered an error, close up the fd's we successfully opened, if
-    * any.
-    */
+open_pe_cleanup:
+   /* We encountered an error, close up the fds we successfully opened.  */
+   /* We go backward in an attempt to close group leaders last, although */
+   /* That's probably not strictly necessary.                            */
    while ( i > 0 ) {
       i--;
       if (ctl->events[i].event_fd>=0) close( ctl->events[i].event_fd );
@@ -560,12 +567,14 @@ cleanup:
    return ret;
 }
 
+/* Close all of the opened events */
 static int
-close_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
+close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
    int i;
    int num_closed=0;
 
+   /* should this be a more serious error? */
    if ( ctx->state & PERF_EVENTS_RUNNING ) {
       SUBDBG("Closing without stopping first\n");
    }
@@ -1203,7 +1212,7 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
   /* close all of the existing fds and start over again */
-  close_pe_evts( pe_ctx, pe_ctl );
+  close_pe_events( pe_ctx, pe_ctl );
 
   /* clear out the events and start over */
   //  memset( pe_ctl->events, 0,
@@ -1250,9 +1259,9 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
   pe_ctl->num_events = count;
   _papi_pe_set_domain( ctl, pe_ctl->domain );
 
-  ret = open_pe_evts( pe_ctx, pe_ctl );
+  ret = open_pe_events( pe_ctx, pe_ctl );
   if ( ret != PAPI_OK ) {
-     SUBDBG("open_pe_evts failed\n");
+     SUBDBG("open_pe_events failed\n");
      /* Restore values ? */
      return ret;
   }
