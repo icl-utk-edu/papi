@@ -640,74 +640,10 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
    return PAPI_OK;
 }
 
-
-static int
-attach( pe_control_t *pe_ctl, unsigned long tid )
+/* Fix up the config based on what CPU/Vendor we are running on */
+static int 
+pe_vendor_fixups(void) 
 {
-	pe_ctl->tid = tid;
-	return PAPI_OK;
-}
-
-static int
-detach( pe_context_t *ctx, pe_control_t *pe_ctl )
-{
-	( void ) ctx;			 /*unused */
-	pe_ctl->tid = 0;
-	return PAPI_OK;
-}
-
-int
-_papi_pe_set_domain( hwd_control_state_t * ctl, int domain)
-{
-	
-     int i;
-     pe_control_t *pe_ctl = ( pe_control_t *) ctl;
-     SUBDBG("control %p, old control domain %d, new domain %d, default domain %d\n",ctl,pe_ctl->domain,domain,_papi_pe_vector.cmp_info.default_domain);
-
-     pe_ctl->domain = domain;
-     for( i = 0; i < pe_ctl->num_events; i++ ) {
-	pe_ctl->events[i].attr.exclude_user = !( pe_ctl->domain & PAPI_DOM_USER );
-	pe_ctl->events[i].attr.exclude_kernel =
-			!( pe_ctl->domain & PAPI_DOM_KERNEL );
-	pe_ctl->events[i].attr.exclude_hv =
-			!( pe_ctl->domain & PAPI_DOM_SUPERVISOR );
-     }
-     return PAPI_OK;
-}
-
-static int
-set_cpu( pe_control_t *ctl, unsigned int cpu_num )
-{
-	ctl->tid = -1;      /* this tells the kernel not to count for a thread */
-
-	ctl->cpu = cpu_num;
-	return PAPI_OK;
-}
-
-/* Some boilerplate */
-/* We should maybe support this stuff at some point */
-static int
-set_granularity( pe_control_t *ctl, int domain )
-{
-  ( void ) ctl;	 /*unused */
-
-  switch ( domain ) {
-     case PAPI_GRN_PROCG:
-     case PAPI_GRN_SYS:
-     case PAPI_GRN_SYS_CPU:
-     case PAPI_GRN_PROC:
-		return PAPI_ECMP;
-     /* Currently we only support thread granularity */
-     case PAPI_GRN_THR:
-		break;
-     default:
-		return PAPI_EINVAL;
-  }
-  return PAPI_OK;
-}
-
-static int pe_vendor_fixups(void) {
-
      /* powerpc */
      /* On IBM and Power6 Machines default domain should include supervisor */
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
@@ -749,36 +685,82 @@ static int pe_vendor_fixups(void) {
 /* Check the mmap page for rdpmc support */
 static int detect_rdpmc(void) {
 
-  struct perf_event_attr pe;
-  int fd,rdpmc_exists=1;
-  void *addr;
-  struct perf_event_mmap_page *our_mmap;
+   struct perf_event_attr pe;
+   int fd,rdpmc_exists=1;
+   void *addr;
+   struct perf_event_mmap_page *our_mmap;
 
-  memset(&pe,0,sizeof(struct perf_event_attr));
+   /* Create a fake instructions event so we can read a mmap page */
+   memset(&pe,0,sizeof(struct perf_event_attr));
 
-  pe.type=PERF_TYPE_HARDWARE;
-  pe.size=sizeof(struct perf_event_attr);
-  pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+   pe.type=PERF_TYPE_HARDWARE;
+   pe.size=sizeof(struct perf_event_attr);
+   pe.config=PERF_COUNT_HW_INSTRUCTIONS;
 
-  fd=sys_perf_event_open(&pe,0,-1,-1,0);
-  if (fd<0) {
-     return PAPI_ESYS;
-  }
-  addr=mmap(NULL, 4096, PROT_READ, MAP_SHARED,fd,0);
-  if (addr == (void *)(-1)) {
-     close(fd);
-     return PAPI_ESYS;
-  }
-  our_mmap=(struct perf_event_mmap_page *)addr;
-  if (our_mmap->cap_usr_rdpmc==0) {
-     rdpmc_exists=0;
-  }
-  munmap(addr,4096);
-  close(fd);
+   fd=sys_perf_event_open(&pe,0,-1,-1,0);
+   if (fd<0) {
+      return PAPI_ESYS;
+   }
 
-  return rdpmc_exists;
+   /* create the mmap page */
+   addr=mmap(NULL, 4096, PROT_READ, MAP_SHARED,fd,0);
+   if (addr == (void *)(-1)) {
+      close(fd);
+      return PAPI_ESYS;
+   }
+
+   /* get the rdpmc info */
+   our_mmap=(struct perf_event_mmap_page *)addr;
+   if (our_mmap->cap_usr_rdpmc==0) {
+      rdpmc_exists=0;
+   }
+
+   /* close the fake event */
+   munmap(addr,4096);
+   close(fd);
+
+   return rdpmc_exists;
 
 } 
+
+
+/********************************************************************/
+/********************************************************************/
+/* Start with functions that are exported via the module interface  */
+/********************************************************************/
+/********************************************************************/
+
+
+/* set the domain. FIXME: perf_events allows per-event control of this. */
+/* we do not handle that yet.                                           */
+int
+_papi_pe_set_domain( hwd_control_state_t *ctl, int domain)
+{
+	
+   int i;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+
+   SUBDBG("old control domain %d, new domain %d, default domain %d\n",
+	  pe_ctl->domain,domain,_papi_pe_vector.cmp_info.default_domain);
+
+   pe_ctl->domain = domain;
+     
+   /* Force the domain on all events */
+   for( i = 0; i < pe_ctl->num_events; i++ ) {
+      pe_ctl->events[i].attr.exclude_user = 
+	                !( pe_ctl->domain & PAPI_DOM_USER );
+      pe_ctl->events[i].attr.exclude_kernel =
+			!( pe_ctl->domain & PAPI_DOM_KERNEL );
+      pe_ctl->events[i].attr.exclude_hv =
+			!( pe_ctl->domain & PAPI_DOM_SUPERVISOR );
+   }
+   return PAPI_OK;
+}
+
+
+
+
+
 
 
 /* Initialize the perf_event component */
@@ -1300,18 +1282,21 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 				  pe_ctl->inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
 	   }
-	   ret = attach( pe_ctl, option->attach.tid );
-	   if (ret == PAPI_OK) {
-	      /* If events have been already been added, something may */
-	      /* have been done to the kernel, so update */
-	      ret = _papi_pe_update_control_state( pe_ctl, NULL, 
-						   pe_ctl->num_events, pe_ctx);
-	   }
+
+	   pe_ctl->tid = option->attach.tid;
+
+	   /* If events have been already been added, something may */
+	   /* have been done to the kernel, so update */
+	   ret = _papi_pe_update_control_state( pe_ctl, NULL, 
+						pe_ctl->num_events, pe_ctx);
+	   
 	   return ret;
 
       case PAPI_DETACH:
 	   pe_ctl = ( pe_control_t *) ( option->attach.ESI->ctl_state );
-	   return detach( pe_ctx, pe_ctl );
+
+	   pe_ctl->tid = 0;
+	   return PAPI_OK;
 
       case PAPI_CPU_ATTACH:
 	   pe_ctl = ( pe_control_t *) ( option->cpu.ESI->ctl_state );
@@ -1321,7 +1306,15 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	       return PAPI_EPERM;
 	   }
 	   /* looks like we are allowed so set cpu number */
-	   return set_cpu( pe_ctl, option->cpu.cpu_num );
+
+	   /* this tells the kernel not to count for a thread   */
+	   /* should we warn if we try to set both?  perf_event */
+	   /* will reject it.                                   */
+	   pe_ctl->tid = -1;      
+
+	   pe_ctl->cpu = option->cpu.cpu_num;
+
+	   return PAPI_OK;
 
       case PAPI_DOMAIN:
 	   pe_ctl = ( pe_control_t *) ( option->domain.ESI->ctl_state );
@@ -1335,7 +1328,24 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_GRANUL:
 	   pe_ctl = (pe_control_t *) ( option->granularity.ESI->ctl_state );
-	   return set_granularity( pe_ctl, option->granularity.granularity );
+
+	   /* FIXME: we really don't support this yet */
+
+           switch ( option->granularity.granularity  ) {
+              case PAPI_GRN_PROCG:
+              case PAPI_GRN_SYS:
+              case PAPI_GRN_SYS_CPU:
+              case PAPI_GRN_PROC:
+		   return PAPI_ECMP;
+     
+	      /* Currently we only support thread granularity */
+              case PAPI_GRN_THR:
+		   break;
+
+              default:
+		   return PAPI_EINVAL;
+	   }
+           return PAPI_OK;
 
       case PAPI_INHERIT:
 	   pe_ctl = (pe_control_t *) ( option->inherit.ESI->ctl_state );
