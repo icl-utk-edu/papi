@@ -803,7 +803,7 @@ _papi_pe_init_component( int cidx )
    }
 
    /* Kernel multiplexing is broken prior to kernel 2.6.34 */
-   /* The change was probably git commit:                  */
+   /* The fix was probably git commit:                     */
    /*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
    if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) {
       _papi_pe_vector.cmp_info.kernel_multiplex = 0;
@@ -812,48 +812,52 @@ _papi_pe_init_component( int cidx )
       _papi_pe_vector.cmp_info.kernel_multiplex = 1;
    }
 
+   /* We use the RealTime signal for some reason */
    _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
-  /* Check that processor is supported */
-  if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
+   /* Check that processor is supported */
+   if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
 			   _papi_hwi_system_info.hw_info.cpuid_family)!=
       PAPI_OK) {
-     fprintf(stderr,"warning, your processor is unsupported\n");
-     /* should not return error, as software events should still work */
-  }
+      fprintf(stderr,"warning, your processor is unsupported\n");
+      /* should not return error, as software events should still work */
+   }
 
-  /* Setup mmtimers, if appropriate */
-  retval=mmtimer_setup();
-  if (retval) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "Error initializing mmtimer",PAPI_MAX_STR_LEN);
-     return retval;
-  }
+   /* Setup mmtimers, if appropriate */
+   retval=mmtimer_setup();
+   if (retval) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "Error initializing mmtimer",PAPI_MAX_STR_LEN);
+      return retval;
+   }
 
-  /* Detect if we can use rdpmc (or equivalent) */
-  retval=detect_rdpmc();
-  if (retval < 0 ) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "Error detecting rdpmc",PAPI_MAX_STR_LEN);
-     return retval;
-  }
-  _papi_pe_vector.cmp_info.fast_counter_read = retval;
+   /* Detect if we can use rdpmc (or equivalent) */
+   /* We currently do not use rdpmc as it is slower in tests */
+   /* than regular read (as of Linux 3.5)                    */
+   retval=detect_rdpmc();
+   if (retval < 0 ) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	     "Error detecting rdpmc",PAPI_MAX_STR_LEN);
+      return retval;
+   }
+   _papi_pe_vector.cmp_info.fast_counter_read = retval;
 
-  /* Run Vendor-specific fixups */
-  pe_vendor_fixups();
+   /* Run Vendor-specific fixups */
+   pe_vendor_fixups();
 
-  /* Run the libpfm4-specific setup */
-  retval = _papi_libpfm4_init(&_papi_pe_vector, cidx);
-  if (retval) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "Error initializing libpfm4",PAPI_MAX_STR_LEN);
-     return retval;
-  }
+   /* Run the libpfm4-specific setup */
+   retval = _papi_libpfm4_init(&_papi_pe_vector, cidx);
+   if (retval) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "Error initializing libpfm4",PAPI_MAX_STR_LEN);
+      return retval;
+   }
 
-  return PAPI_OK;
+   return PAPI_OK;
 
 }
 
+/* Shutdown the perf_event component */
 static int
 _papi_pe_shutdown_component( void ) {
 
@@ -863,12 +867,15 @@ _papi_pe_shutdown_component( void ) {
   return PAPI_OK;
 }
 
+
+/* Initialize a thread */
 static int
 _papi_pe_init_thread( hwd_context_t *hwd_ctx )
 {
 
   pe_context_t *pe_ctx = ( pe_context_t *) hwd_ctx;
 
+  /* clear the context structure and mark as initialized */
   memset( pe_ctx, 0, sizeof ( pe_context_t ) );
   pe_ctx->initialized=1;
 
@@ -879,6 +886,7 @@ _papi_pe_init_thread( hwd_context_t *hwd_ctx )
 
 /* reset the hardware counters */
 /* Note: PAPI_reset() does not necessarily call this */
+/* unless the events are actually running.           */
 static int
 _papi_pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
@@ -902,10 +910,11 @@ _papi_pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 
-/* write(set) the hardware counters */
+/* write (set) the hardware counters */
+/* Current we do not support this.   */
 static int
 _papi_pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
-				long long *from )
+		long long *from )
 {
    ( void ) ctx;			 /*unused */
    ( void ) ctl;			 /*unused */
@@ -948,6 +957,9 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    /* fields are always 0 unless the counter is disabled.  So if we are on   */
    /* one of these kernels, then we must disable events before reading.      */
 
+   /* Elsewhere though we disable multiplexing on kernels before 2.6.34 */
+   /* so maybe this isn't even necessary.                               */
+
    if (bug_sync_read()) {
       if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
          for ( i = 0; i < pe_ctl->num_events; i++ ) {
@@ -969,6 +981,9 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    /* Handle case where we are multiplexing */
    if (pe_ctl->multiplexed) {
 
+      /* currently we handle multiplexing by having individual events */
+      /* so we read from each in turn.                                */
+
       for ( i = 0; i < pe_ctl->num_events; i++ ) {
              
          ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
@@ -978,6 +993,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	    return PAPI_ESYS;
 	 }
 
+	 /* We should read 3 64-bit values from the counter */
 	 if (ret<(signed)(3*sizeof(long long))) {
 	    PAPIERROR("Error!  short read!\n");	 
 	    return PAPI_ESYS;
@@ -1022,6 +1038,8 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
    /* Handle cases where we cannot use FORMAT GROUP */
    else if (bug_format_group() || pe_ctl->inherit) {
+
+      /* we must read each counter individually */
       for ( i = 0; i < pe_ctl->num_events; i++ ) {
 
          ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
@@ -1031,6 +1049,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	    return PAPI_ESYS;
 	 }
 
+	 /* we should read one 64-bit value from each counter */
 	 if (ret!=sizeof(long long)) {
 	    PAPIERROR("Error!  short read!\n");
 	    PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
@@ -1066,6 +1085,8 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	 return PAPI_ESYS;
       }
 
+      /* we read 1 64-bit value (number of events) then     */
+      /* num_events more 64-bit values that hold the counts */
       if (ret<(signed)((1+pe_ctl->num_events)*sizeof(long long))) {
 	 PAPIERROR("Error! short read!\n");
 	 return PAPI_ESYS;
@@ -1077,11 +1098,13 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
 	     papi_pe_buffer[1],papi_pe_buffer[2]);
 
+      /* Make sure the kernel agrees with how many events we have */
       if (papi_pe_buffer[0]!=pe_ctl->num_events) {
 	 PAPIERROR("Error!  Wrong number of events!\n");
 	 return PAPI_ESYS;
       }
 
+      /* put the count values in their proper location */
       for(i=0;i<papi_pe_buffer[0];i++) {
          pe_ctl->counts[i] = papi_pe_buffer[1+i];
       }
@@ -1108,6 +1131,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       }
    }
 
+   /* point PAPI to the values we read */
    *events = pe_ctl->counts;
 
    return PAPI_OK;
