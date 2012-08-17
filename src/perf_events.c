@@ -805,7 +805,12 @@ _papi_pe_init_component( int cidx )
    /* Kernel multiplexing is broken prior to kernel 2.6.34 */
    /* The change was probably git commit:                  */
    /*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
-   _papi_pe_vector.cmp_info.kernel_multiplex = 1;
+   if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) {
+      _papi_pe_vector.cmp_info.kernel_multiplex = 0;
+   }
+   else {
+      _papi_pe_vector.cmp_info.kernel_multiplex = 1;
+   }
 
    _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
