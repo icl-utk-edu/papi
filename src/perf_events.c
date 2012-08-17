@@ -521,10 +521,9 @@ open_pe_evts( pe_context_t *ctx, pe_control_t *ctl )
       }
 		
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
-              " group_leader/fd: %d/%d, event_fd: %d,"
+              " group_leader/fd: %d, event_fd: %d,"
               " read_format: 0x%"PRIu64"\n",
-	      (long)ctl->tid, ctl->cpu, ctl->events[i].group_leader, 
-	      group_leader, 
+	      (long)ctl->tid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
       ret = check_scheduability( ctx, ctl, i );
@@ -1785,7 +1784,7 @@ _papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
 	SUBDBG("Attempting to set overflow for index %d (%d) of EventSet %d\n",
-	       evt_idx,EventIndex,ESI->eventsSetIndex);
+	       evt_idx,EventIndex,ESI->EventSetIndex);
 
 	if (evt_idx<0) {
 	   return PAPI_EINVAL;
