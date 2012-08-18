@@ -1592,6 +1592,9 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 	
    if ( ESI->NativeInfoArray ) 
       papi_free( ESI->NativeInfoArray );
+
+   if ( ESI->NativeBits ) 
+      papi_free( ESI->NativeBits );
 	
    if ( ESI->overflow.deadline )
       papi_free( ESI->overflow.deadline );
@@ -1604,6 +1607,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
    ESI->hw_start = NULL;
    ESI->EventInfoArray = NULL;
    ESI->NativeInfoArray = NULL;
+   ESI->NativeBits = NULL;
 
    memset( &ESI->domain, 0x0, sizeof(EventSetDomainInfo_t) );
    memset( &ESI->granularity, 0x0, sizeof(EventSetGranularityInfo_t) );
