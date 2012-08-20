@@ -122,12 +122,16 @@ main( int argc, char **argv )
 	cycles_error=100.0*((double)values[0][0] - (double)elapsed_cyc)/((double)elapsed_cyc);
 	if ((cycles_error > MAX_CYCLE_ERROR) || (cycles_error < -MAX_CYCLE_ERROR)) {
 		printf("PAPI_TOT_CYC Error of %.2f%%\n",cycles_error);
-		test_fail( __FILE__, __LINE__, "validation", 0 );
+		test_fail( __FILE__, __LINE__, "Cycles validation", 0 );
 	}
 	/* Check that FP_INS is reasonable */
-	if (abs(values[0][1] - (2*NUM_FLOPS)) > (NUM_FLOPS / 2)) {
+	if (abs(values[0][1] - (2*NUM_FLOPS)) > (2*NUM_FLOPS)) {
 		printf("%s Error of %.2f%%\n", event_name, (100.0 * (double)(values[0][1] - (2*NUM_FLOPS)))/(2*NUM_FLOPS));
-		test_fail( __FILE__, __LINE__, "validation", 0 );
+		test_fail( __FILE__, __LINE__, "FLOPS validation", 0 );
+	}
+	if (abs(values[0][1] - (2*NUM_FLOPS)) > (NUM_FLOPS/2)) {
+		printf("%s Error of %.2f%%\n", event_name, (100.0 * (double)(values[0][1] - (2*NUM_FLOPS)))/(2*NUM_FLOPS));
+		test_warn( __FILE__, __LINE__, "FLOPS validation", 0 );
 	}
 	
 	test_pass( __FILE__, values, num_tests );
