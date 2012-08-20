@@ -380,6 +380,10 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 	/* we assume that the events are being added one by one and that  */
         /* we do not need to reset higher events (doing so may reset ones */
         /* that have not been initialized yet.                            */
+
+	/* Note... PERF_EVENT_IOC_RESET does not reset time running       */
+	/* info if multiplexing, so we should avoid coming here if        */
+	/* we are multiplexing the event.                                 */
         for( i = 0; i < idx; i++) {
 	   retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
 	   if (retval == -1) {
@@ -521,14 +525,20 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
       /* in many situations the kernel will indicate we opened fine */
       /* yet things will fail later.  So we need to double check    */
       /* we actually can use the events we've set up.               */
-      ret = check_scheduability( ctx, ctl, i );
 
-      if ( ret != PAPI_OK ) {
-	 /* the last event did open, so we need to bump the counter before */
-	 /* doing the cleanup                                              */
-	 i++;
+      /* This is not necessary if we are multiplexing, and in fact */
+      /* we cannot do this properly if multiplexed because         */
+      /* PERF_EVENT_IOC_RESET does not reset the time running info */
+      if (!ctl->multiplexed) {
+	 ret = check_scheduability( ctx, ctl, i );
+
+         if ( ret != PAPI_OK ) {
+	    /* the last event did open, so we need to bump the counter */
+	    /* before doing the cleanup                                */
+	    i++;
 		                          
-         goto open_pe_cleanup;
+            goto open_pe_cleanup;
+	 }
       }
 
    }
