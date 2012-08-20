@@ -561,8 +561,8 @@ static int PAPI_get_multiplex(int EventSet)
           PAPI_num_hwctrs
 #define PAPIvi_overflow(EventSet, EventCode, threshold, flags, handler) \
           PAPI_overflow(EventSet, EventCode, threshold, flags, handler)
-#define PAPIvi_perror(code, destination, length) \
-          PAPI_perror(code, destination, length)
+#define PAPIvi_perror( s ) \
+          PAPI_perror( s )
 #define PAPIvi_query_event(EventCode) \
           PAPI_query_event(EventCode)
 #define PAPIvi_read(EventSet, values) \
@@ -759,8 +759,8 @@ int PAPI_save(void);
           PAPI_num_events(EventSet)
 #define PAPIvi_overflow(EventSet, EventCode, threshold, flags, handler) \
           PAPI_overflow(EventSet, EventCode, threshold, flags, handler)
-#define PAPIvi_perror(code, destination, length) \
-          PAPI_perror(code, destination, length)
+#define PAPIvi_perror( s ) \
+          PAPI_perror( s )
 #define PAPIvi_profil(buf, bufsiz, offset, scale, EventSet, EventCode, threshold, flags) \
           PAPI_profil(buf, bufsiz, offset, scale, EventSet, EventCode, threshold, flags)
 #define PAPIvi_query_event(EventCode) \

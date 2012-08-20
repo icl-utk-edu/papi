@@ -29,17 +29,19 @@
  */
 
 #include "papi_test.h"
+extern int _papi_hwi_num_errors;
 
 int
 main( int argc, char **argv )
 {
 	int i;
+	int retval;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-// 	if ( ( retval =
-// 		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
-// 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+ 	if ( ( retval =
+ 		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+ 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 
 	printf( "\n----------------------------------\n" );
@@ -48,9 +50,9 @@ main( int argc, char **argv )
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ),
 			PAPI_VERSION_INCREMENT( PAPI_VERSION ) );
-	printf( "There are %d error codes defined\n", PAPI_NUM_ERRORS );
+	printf( "There are %d error codes defined\n", _papi_hwi_num_errors );
 	printf( "----------------------------------\n" );
-	for (i = 0; i < PAPI_NUM_ERRORS; i++) {
+	for (i = 0; i < _papi_hwi_num_errors; i++) {
 		char *errstr;
 		errstr = PAPI_strerror( -i );
 		printf( "Error code %4d: %s\n", -i, errstr );

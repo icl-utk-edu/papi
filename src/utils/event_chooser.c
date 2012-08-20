@@ -82,11 +82,9 @@ native( int cidx )
 {
     int i, j, k;
     int retval, added;
-    const PAPI_component_info_t *c = NULL;
     PAPI_event_info_t info;
 
     j = 0;
-    c = PAPI_get_component_info( cidx );
 
     /* For platform independence, always ASK FOR the first event */
     /* Don't just assume it'll be the first numeric value */

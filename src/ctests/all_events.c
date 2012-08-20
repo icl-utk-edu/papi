@@ -15,7 +15,6 @@ main( int argc, char **argv )
 	int EventSet = PAPI_NULL, count = 0, err_count = 0;
 	long long values;
 	PAPI_event_info_t info;
-	char errstring[PAPI_MAX_STR_LEN];
 
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
@@ -36,20 +35,17 @@ main( int argc, char **argv )
 		printf( "Adding %-14s", info.symbol );
 		retval = PAPI_add_event( EventSet, ( int ) info.event_code );
 		if ( retval != PAPI_OK ) {
-			PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-			fprintf( stdout, "Error: %s\n", errstring );
+			PAPI_perror( "PAPI_add_event" );
 			err_count++;
 		} else {
 			retval = PAPI_start( EventSet );
 			if ( retval != PAPI_OK ) {
-				PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-				fprintf( stdout, "Error Starting: %s\n", errstring );
+				PAPI_perror( "PAPI_start" );
 				err_count++;
 			} else {
 				retval = PAPI_stop( EventSet, &values );
 				if ( retval != PAPI_OK ) {
-					PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-					fprintf( stdout, "Error Stopping: %s\n", errstring );
+					PAPI_perror( "PAPI_stop" );
 					err_count++;
 				} else {
 					printf( "successful\n" );

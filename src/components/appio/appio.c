@@ -31,7 +31,6 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/select.h>
-//#include <dlfcn.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -40,6 +39,11 @@
 #include "papi_memory.h"
 
 #include "appio.h"
+
+// The PIC test implies it's built for shared linkage
+#ifdef PIC
+#  include "dlfcn.h"
+#endif
 
 /*
 #pragma weak dlerror
@@ -80,7 +84,16 @@ typedef enum {
   OPEN_CALLS,
   OPEN_ERR,
   OPEN_FDS,
-  SELECT_USEC
+  SELECT_USEC,
+  RECV_BYTES,
+  RECV_CALLS,
+  RECV_ERR,
+  RECV_INTERRUPTED,
+  RECV_WOULD_BLOCK,
+  RECV_SHORT,
+  RECV_EOF,
+  RECV_BLOCK_SIZE,
+  RECV_USEC
 } _appio_stats_t ;
 
 static const struct appio_counters {
@@ -106,7 +119,16 @@ static const struct appio_counters {
     { "OPEN_CALLS",      "Number of open calls"},
     { "OPEN_ERR",        "Number of open calls that resulted in an error"},
     { "OPEN_FDS",        "Number of currently open descriptors"},
-    { "SELECT_USEC",     "Real microseconds spent in select calls"}
+    { "SELECT_USEC",     "Real microseconds spent in select calls"},
+    { "RECV_BYTES",      "Bytes read in recv/recvmsg/recvfrom"},
+    { "RECV_CALLS",      "Number of recv/recvmsg/recvfrom calls"},
+    { "RECV_ERR",        "Number of recv/recvmsg/recvfrom calls that resulted in an error"},
+    { "RECV_INTERRUPTED","Number of recv/recvmsg/recvfrom calls that timed out or were interruped"},
+    { "RECV_WOULD_BLOCK","Number of recv/recvmsg/recvfrom calls that would have blocked"},
+    { "RECV_SHORT",      "Number of recv/recvmsg/recvfrom calls that returned less bytes than requested"},
+    { "RECV_EOF",        "Number of recv/recvmsg/recvfrom calls that returned an EOF"},
+    { "RECV_BLOCK_SIZE", "Average block size of recv/recvmsg/recvfrom"},
+    { "RECV_USEC",       "Real microseconds spent in recv/recvmsg/recvfrom"}
 };
 
 
@@ -231,6 +253,46 @@ ssize_t write(int fd, const void *buf, size_t count) {
   if (retval < 0) _appio_register_current[WRITE_ERR]++; // err
   return retval;
 }
+
+// The PIC test implies it's built for shared linkage
+#ifdef PIC
+static ssize_t (*__recv)(int sockfd, void *buf, size_t len, int flags) = NULL;
+ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
+  int retval;
+  SUBDBG("appio: intercepted recv(%d,%p,%lu,%d)\n", sockfd, buf, (unsigned long)len, flags);
+  if (!__recv) __recv  = dlsym(RTLD_NEXT, "recv");
+  if (!__recv) {
+    fprintf(stderr, "appio,c Internal Error: Could not obtain handle for real recv\n");
+    exit(1);
+  }
+  // check if recv would block on descriptor
+  fd_set readfds;
+  FD_ZERO(&readfds);
+  FD_SET(sockfd, &readfds);
+  int ready = __select(sockfd+1, &readfds, NULL, NULL, &zerotv);
+  if (ready == 0) _appio_register_current[RECV_WOULD_BLOCK]++; 
+
+  long long start_ts = PAPI_get_real_usec();
+  retval = __recv(sockfd, buf, len, flags);
+  long long duration = PAPI_get_real_usec() - start_ts;
+  int n = _appio_register_current[RECV_CALLS]++; // read calls
+  if (retval > 0) {
+    _appio_register_current[RECV_BLOCK_SIZE]= (n * _appio_register_current[RECV_BLOCK_SIZE] + len)/(n+1); // mean size
+    _appio_register_current[RECV_BYTES] += retval; // read bytes
+    if (retval < (int)len) _appio_register_current[RECV_SHORT]++; // read short
+    _appio_register_current[RECV_USEC] += duration;
+  }
+  if (retval < 0) { 
+    _appio_register_current[RECV_ERR]++; // read err
+    if (EINTR == errno)
+      _appio_register_current[RECV_INTERRUPTED]++; // signal interrupted the read
+    if ((EAGAIN == errno) || (EWOULDBLOCK == errno)) 
+      _appio_register_current[RECV_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
+  }
+  if (retval == 0) _appio_register_current[RECV_EOF]++; // read eof
+  return retval;
+}
+#endif /* PIC */
 
 size_t _IO_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {

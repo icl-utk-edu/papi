@@ -27,8 +27,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       program strtest
       implicit integer (p)
       
-      CHARACTER*(PAPI_MAX_STR_LEN) papistr,papierr
-      CHARACTER*(PAPI_MAX_STR_LEN/2) papihalfstr
+      CHARACTER*(PAPI_MAX_STR_LEN) papistr
       CHARACTER*(PAPI_MAX_STR_LEN*2) papidblstr
 
       CHARACTER*(PAPI_MAX_STR_LEN) ckstr
@@ -50,8 +49,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       check=PAPI_VER_CURRENT
       call PAPIF_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
-           call PAPIF_perror(check,papierr,code)
-           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+           call PAPIF_perror( 'PAPI_library_init' )
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_library_init', check)
       end if
@@ -83,25 +81,6 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       call checkstr(code,invstr4,check,lastchar,tests_quiet)
 
       call checkstr(code,invstr5,check,lastchar,tests_quiet)
-
- 100  format(t1,a,i4)
-
-      if (tests_quiet .EQ. 0) then
-         print *,'---------------------------------------------------'
-         print *,'          Testing PAPIF_perror                     '
-         print *,'---------------------------------------------------'
-         print 100,' These tests should return a PAPI error string'//
-     $    ' for error',ERRCODE
-         print *,' On no occasion should a NULL character be found(+)'
-         print *
-      end if
-
-      call test_papif_perror(ERRCODE,papistr,check,tests_quiet)
-      call test_papif_perror(ERRCODE,papihalfstr,check,tests_quiet)
-      call test_papif_perror(ERRCODE,papidblstr,check,tests_quiet)
-      call test_papif_perror(ERRCODE,invstr1,check,tests_quiet)
-      call test_papif_perror(ERRCODE,invstr5,check,tests_quiet)
-
 
       if (tests_quiet .EQ. 0) then
          print *,'---------------------------------------------------'
@@ -210,7 +189,6 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       integer incode
       integer check,lastchar, quiet
       character*(*) string
-      character*(PAPI_MAX_STR_LEN) papierr
       integer code
       integer getstrlen
       external getstrlen
@@ -232,8 +210,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
      . 'PAPIF_event_code_to_name', check)
         else
         if (quiet .EQ. 0) then
-           call PAPIF_perror(check,papierr,code)
-           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+           call PAPIF_perror( 'PAPIF_event_code_to_name' )
+           print *,'*ERROR* '
            print *,'******* '//'Error in checkstr using '//
      $ 'PAPIF_event_code_to_name'
         end if
@@ -252,8 +230,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
      . 'PAPIF_event_name_to_code', check)
       else
       if (quiet .EQ. 0) then
-         call PAPIF_perror(check,papierr,code)
-         print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+         call PAPIF_perror( 'PAPIF_event_name_to_code' )
+         print *,'*ERROR* '
          print *,'******* '//'Error in checkstr using '//
      $   'PAPIF_event_name_to_code'
       end if
@@ -269,42 +247,13 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       return
       end
 
-      subroutine test_papif_perror(incode,string,check,quiet)
-      implicit integer (P)
-      integer incode,check,quiet
-      character*(*) string
-      integer code,i
-      integer getstrlen
-      external getstrlen
-
-      i=getstrlen(string)
-      code=incode
-      call PAPIF_perror(code,string,check)
-
-      if (quiet .EQ. 0) then
-        print 100,'Testing string of length ',i
-        print 200,
-     .    '1234567890....5...20....5...30....5...40....5...50...'
-        print 200,string(1:i)
-      end if
-
-      call findnull(string,quiet)
-
-      if (quiet .EQ. 0) then
-          print *
-      end if
-
- 100  format(t1,a,i4)
- 200  format(t1,'"',a,'"')
-      end
-
       subroutine test_papif_descr(name,code,string,check,quiet)
       implicit integer (P)
       integer code,count,flags
       integer check,quiet
       character*(*) name,string
 
-      character*(PAPI_MAX_STR_LEN) label,note,papierr
+      character*(PAPI_MAX_STR_LEN) label,note
       integer getstrlen
       external getstrlen
 
@@ -320,8 +269,8 @@ C      call PAPIF_describe_event(name,code,string,check)
 
       if(check.ne.PAPI_OK)then
       if (quiet .EQ. 0) then
-          call PAPIF_perror(check,papierr,code)
-          print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+          call PAPIF_perror( 'PAPI_get_event_info' )
+          print *,'*ERROR* '
           print *,'******* '//'Error in test_papif_descr using '//
      $      'PAPIF_get_event_info'
       else

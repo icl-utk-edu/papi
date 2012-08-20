@@ -21,7 +21,6 @@ static int
 check_event( int event_code, char *name )
 {
 	int retval;
-	char errstring[PAPI_MAX_STR_LEN];
 	long long values;
 	int EventSet = PAPI_NULL;
 
@@ -47,13 +46,11 @@ check_event( int event_code, char *name )
 
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-		fprintf( stdout, "Error starting %s : %s\n", name, errstring );
+		PAPI_perror( "PAPI_start" );
 	} else {
 		retval = PAPI_stop( EventSet, &values );
 		if ( retval != PAPI_OK ) {
-			PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
-			fprintf( stdout, "Error stopping %s: %s\n", name, errstring );
+			PAPI_perror( "PAPI_stop" );
 			return 0;
 		} else {
 			printf( "Added and Stopped %s successfully.\n", name );
@@ -117,7 +114,7 @@ main( int argc, char **argv )
        /* For platform independence, always ASK FOR the first event */
        /* Don't just assume it'll be the first numeric value */
        i = 0 | PAPI_NATIVE_MASK;
-       PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
+       retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
        do {
           retval = PAPI_get_event_info( i, &info );

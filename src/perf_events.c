@@ -21,7 +21,6 @@
 #include <syscall.h>
 #include <sys/utsname.h>
 #include <sys/mman.h>
-#include <sys/time.h>
 #include <sys/ioctl.h>
 
 /* PAPI-specific includes */
@@ -50,83 +49,57 @@
 /* you run out of fds                                           */
 #define PERF_EVENT_MAX_MPX_COUNTERS 64
 
-typedef int pfm_register_t;
-typedef int reg_alloc_t;            
-
-typedef struct 
-{
-  unsigned char wakeup_mode;
-} per_event_info_t;
+/* We really don't need fancy definitions for these */
 
 typedef struct
 {
-  int num_events;
-  int num_groups;
-  unsigned int domain;
-  unsigned int multiplexed;
-  unsigned int overflow;
-  unsigned int inherit;
-  int cpu;
-  pid_t tid;
-  struct perf_event_attr events[PERF_EVENT_MAX_MPX_COUNTERS];
-  per_event_info_t per_event_info[PERF_EVENT_MAX_MPX_COUNTERS];
-  /* Buffer to gather counters */
-  long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
-} control_state_t;
-
-typedef struct
-{
-  int group_leader;		  /* index of leader */
-  int event_fd;
-  int event_id;
-  uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer */
-  void *mmap_buf;		  /* used to contain profiling data samples */
-                                  /* as well as control */
+  int group_leader_fd;            /* fd of group leader                   */
+  int event_fd;                   /* fd of event                          */
+  uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer      */
+  void *mmap_buf;		  /* used for control/profiling           */
   uint64_t tail;		  /* current read location in mmap buffer */
-  uint64_t mask;		  /* mask used for wrapping the pages */
-} evt_t;
+  uint64_t mask;		  /* mask used for wrapping the pages     */
+  struct perf_event_attr attr;    /* perf_event config structure          */
+  unsigned int wakeup_mode;       /* wakeup mode when sampling            */
+} pe_event_info_t;
 
 typedef struct
 {
-  /* Array of event fds, event group leader is event_fd[0] */
-  int cookie;
-  int state;
-  int num_evts;
-  evt_t evt[PERF_EVENT_MAX_MPX_COUNTERS];
-} context_t;
+  int num_events;                 /* number of events in control state */
+  unsigned int domain;            /* control-state wide domain         */
+  unsigned int multiplexed;       /* multiplexing enable               */
+  unsigned int overflow;          /* overflow enable                   */
+  unsigned int inherit;           /* inherit enable                    */
+  int cpu;                        /* which cpu to measure              */
+  pid_t tid;                      /* thread we are monitoring          */
+  pe_event_info_t events[PERF_EVENT_MAX_MPX_COUNTERS];
+  long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
+} pe_control_t;
 
+typedef struct
+{
+  int initialized;                /* are we initialized?           */
+  int state;                      /* are we opened and/or running? */
+} pe_context_t;
 
-#if defined(__mips__)
-#warning "This platform has substandard kernel multiplexing support in perf_events: enabling BRAINDEAD_MULTIPLEXING"
-#define BRAINDEAD_MULTIPLEXING 1
-#endif
+/* These sentinels tell papi_pe_set_overflow() how to set the */
+/* wakeup_events field in the event descriptor record.        */
 
-/* These sentinels tell papi_pe_set_overflow() how to set the
- * wakeup_events field in the event descriptor record.
- */
 #define WAKEUP_COUNTER_OVERFLOW 0
 #define WAKEUP_PROFILING -1
 
 #define WAKEUP_MODE_COUNTER_OVERFLOW 0
 #define WAKEUP_MODE_PROFILING 1
 
-/* just an unlikely magic cookie */
-#define CTX_INITIALIZED 0xdc1dc1
-
-#define PERF_EVENTS_RUNNING 0x01
+/* Defines for ctx->state */
+#define PERF_EVENTS_OPENED  0x01
+#define PERF_EVENTS_RUNNING 0x02
 
 /* Static globals */
-
 static int nmi_watchdog_active;
 
 /* Advance declaration */
 papi_vector_t _papi_pe_vector;
-
-/* FIXME */
-/* What the heck are these? -pjm */
-/* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
-#define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * PERF_EVENT_MAX_MPX_COUNTERS)
-#define MAX_READ 8192
 
 
 /******** Kernel Version Dependent Routines  **********************/
@@ -142,17 +115,14 @@ papi_vector_t _papi_pe_vector;
  *       A sys_perf_open() will seem to succeed but will fail
  *       at read time.  So re-use this work around code.
  */
-static inline int 
+static int 
 bug_check_scheduability(void) {
 
 #if defined(__powerpc__)
   /* PowerPC not affected by this bug */
 #elif defined(__mips__)
-
   /* MIPS as of kernel 3.1 does not properly detect schedulability */
-
   return 1;
-
 #else
   if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 #endif
@@ -162,33 +132,12 @@ bug_check_scheduability(void) {
   return 0;
 }
 
-/* before 2.6.33 multiplexing did not work */
-
-/* It turns out this is possibly just a symptom of the  */
-/*   check schedulability bug, and not an inherent bug  */
-/*   in perf_events.  It might be x86 only too.         */
-/* It's because our multiplex partition code depends on */
-/* incompatible events having an immediate error        */
-
-
-static inline int 
-bug_multiplex(void) {
-
-  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
-
-  /* No word on when this will be fixed */
-  if (nmi_watchdog_active) return 1;
-
-  return 0;
-
-}
-
 /* PERF_FORMAT_GROUP allows reading an entire group's counts at once   */
 /* before 2.6.34 PERF_FORMAT_GROUP did not work when reading results   */
 /*  from attached processes.  We are lazy and disable it for all cases */
 /*  commit was:  050735b08ca8a016bbace4445fa025b88fee770b              */
 
-static inline int 
+static int 
 bug_format_group(void) {
 
   if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) return 1;
@@ -203,103 +152,105 @@ bug_format_group(void) {
 
 }
 
-	/* Set the F_SETOWN_EX flag on the fd.                          */
-        /* This affects which thread an overflow signal gets sent to    */
-	/* Handled in a subroutine to handle the fact that the behavior */
-        /* is dependent on kernel version.                              */
-static inline int 
-fcntl_setown_fd(int fd) {
 
-  int ret;
-
-   
-           /* F_SETOWN_EX is not available until 2.6.32 */
-        if (_papi_os_info.os_version < LINUX_VERSION(2,6,32)) {
-	   
-           /* get ownership of the descriptor */
-           ret = fcntl( fd, F_SETOWN, mygettid(  ) );
-           if ( ret == -1 ) {
-	      PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd,
-			 strerror( errno ) );
-	      return PAPI_ESYS;
-	   }
-	}
-        else {
-	   
-           struct f_owner_ex fown_ex;
-
-	   /* set ownership of the descriptor */   
-           fown_ex.type = F_OWNER_TID;
-           fown_ex.pid  = mygettid();
-           ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
-   
-	   if ( ret == -1 ) {
-	      PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", 
-			 fd, strerror( errno ) );
-	      return PAPI_ESYS;
-	   }
-	}
-	return PAPI_OK;
-}
-
-
-static inline int 
-processor_supported(int vendor, int family) {
-
-  /* Error out if kernel too early to support p4 */
-  if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
-     if (_papi_os_info.os_version < LINUX_VERSION(2,6,35)) {
-	PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
-	return PAPI_ENOSUPP;
-     }
-  }
-
-  return PAPI_OK;
-}
-
-static inline unsigned int
-get_read_format( unsigned int multiplex, unsigned int inherit, int group_leader )
-{
-	unsigned int format = 0;
-
-	/* if we need read format options for multiplexing, add them now */
-	if (multiplex) {
-		format |= PERF_FORMAT_TOTAL_TIME_ENABLED;
-		format |= PERF_FORMAT_TOTAL_TIME_RUNNING;
-	}
-
-	/* if our kernel supports it and we are not using inherit, */
-	/* add the group read options                              */
-
-	if ( (!bug_format_group()) && !inherit) {
-		format |= PERF_FORMAT_ID;
-		/* if it qualifies for PERF_FORMAT_ID and it is a */
-		/* group leader, it also gets PERF_FORMAT_GROUP   */
-		if (group_leader) {
-			format |= PERF_FORMAT_GROUP;
-		}
-	}
-
-	SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n",
-	       multiplex, inherit, group_leader, format);
-
-	return format;
-}
-
-
-
-/* define SYNC_READ for all kernel versions older than 2.6.33 */
-/* as a workaround for kernel bug 14489                       */
-
-static inline int 
+/* There's a bug prior to Linux 2.6.33 where if you are using */
+/* PERF_FORMAT_GROUP, the TOTAL_TIME_ENABLED and              */
+/* TOTAL_TIME_RUNNING fields will be zero unless you disable  */
+/* the counters first                                         */
+static int 
 bug_sync_read(void) {
 
-  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33))
-     return 1;
+  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
 
   return 0;
 
 }
+
+
+/* Set the F_SETOWN_EX flag on the fd.                          */
+/* This affects which thread an overflow signal gets sent to    */
+/* Handled in a subroutine to handle the fact that the behavior */
+/* is dependent on kernel version.                              */
+static int 
+fcntl_setown_fd(int fd) {
+
+   int ret;
+   struct f_owner_ex fown_ex;
+
+      /* F_SETOWN_EX is not available until 2.6.32 */
+   if (_papi_os_info.os_version < LINUX_VERSION(2,6,32)) {
+	   
+      /* get ownership of the descriptor */
+      ret = fcntl( fd, F_SETOWN, mygettid(  ) );
+      if ( ret == -1 ) {
+	 PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd, strerror(errno) );
+	 return PAPI_ESYS;
+      }
+   }
+   else {
+      /* set ownership of the descriptor */   
+      fown_ex.type = F_OWNER_TID;
+      fown_ex.pid  = mygettid();
+      ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
+   
+      if ( ret == -1 ) {
+	 PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s", 
+		    fd, strerror( errno ) );
+	 return PAPI_ESYS;
+      }
+   }
+   return PAPI_OK;
+}
+
+/* Check for processor support */
+/* Can be used for generic checking, though in general we only     */
+/* check for pentium4 here because support was broken for multiple */
+/* kernel releases and the usual standard detections did not       */
+/* handle this.  So we check for pentium 4 explicitly.             */
+static int 
+processor_supported(int vendor, int family) {
+
+   /* Error out if kernel too early to support p4 */
+   if (( vendor == PAPI_VENDOR_INTEL ) && (family == 15)) {   
+      if (_papi_os_info.os_version < LINUX_VERSION(2,6,35)) {
+	 PAPIERROR("Pentium 4 not supported on kernels before 2.6.35");
+	 return PAPI_ENOSUPP;
+      }
+   }
+   return PAPI_OK;
+}
+
+
+/* The read format on perf_event varies based on various flags that */
+/* are passed into it.  This helper avoids copying this logic       */
+/* multiple places.                                                 */
+static unsigned int
+get_read_format( unsigned int multiplex, 
+		 unsigned int inherit, 
+		 int format_group )
+{
+   unsigned int format = 0;
+
+   /* if we need read format options for multiplexing, add them now */
+   if (multiplex) {
+      format |= PERF_FORMAT_TOTAL_TIME_ENABLED;
+      format |= PERF_FORMAT_TOTAL_TIME_RUNNING;
+   }
+
+   /* if our kernel supports it and we are not using inherit, */
+   /* add the group read options                              */
+   if ( (!bug_format_group()) && !inherit) {
+      if (format_group) {
+	 format |= PERF_FORMAT_GROUP;
+      }
+   }
+
+   SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n",
+	  multiplex, inherit, format_group, format);
+
+   return format;
+}
+
 
 /********* End Kernel-version Dependent Routines  ****************/
 
@@ -312,553 +263,389 @@ bug_sync_read(void) {
 /*  on the assumption it is available on all             */
 /*  platforms.                                           */
 
-static inline int
+static int
 check_permissions( unsigned long tid, unsigned int cpu_num, 
 		   unsigned int domain, unsigned int multiplex, 
 		   unsigned int inherit )
 {
-      int ev_fd;
-      struct perf_event_attr attr;
+   int ev_fd;
+   struct perf_event_attr attr;
 
-      /* clearing this will set a type of hardware and to count all domains */
-      memset(&attr, '\0', sizeof(attr));
-      attr.read_format = get_read_format(multiplex, inherit, 1);
+   /* clearing this will set a type of hardware and to count all domains */
+   memset(&attr, '\0', sizeof(attr));
+   attr.read_format = get_read_format(multiplex, inherit, 1);
 
-      /* set the event id (config field) to instructios */
-      /* (an event that should always exist)            */
-      /* This was cycles but that is missing on Niagara */
-      attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+   /* set the event id (config field) to instructios */
+   /* (an event that should always exist)            */
+   /* This was cycles but that is missing on Niagara */
+   attr.config = PERF_COUNT_HW_INSTRUCTIONS;
 	
-      /* now set up domains this event set will be counting */
-      if (!(domain & PAPI_DOM_SUPERVISOR)) {
-	 attr.exclude_hv = 1;
-      }
-      if (!(domain & PAPI_DOM_USER)) {
-	 attr.exclude_user = 1;
-      }
-      if (!(domain & PAPI_DOM_KERNEL)) {
-	 attr.exclude_kernel = 1;
-      }
+   /* now set up domains this event set will be counting */
+   if (!(domain & PAPI_DOM_SUPERVISOR)) {
+      attr.exclude_hv = 1;
+   }
+   if (!(domain & PAPI_DOM_USER)) {
+      attr.exclude_user = 1;
+   }
+   if (!(domain & PAPI_DOM_KERNEL)) {
+      attr.exclude_kernel = 1;
+   }
 
-      SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
-      SUBDBG("config is %"PRIx64"\n",attr.config);
+   SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
 
-      ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
-      if ( ev_fd == -1 ) {
-	 SUBDBG( "sys_perf_event_open returned error.  Unix says, %s", 
-		   strerror( errno ) );
-	 return PAPI_EPERM;
-      }
+   ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
+   if ( ev_fd == -1 ) {
+      SUBDBG("sys_perf_event_open returned error.  Linux says, %s", 
+	     strerror( errno ) );
+      return PAPI_EPERM;
+   }
 	
-      /* now close it, this was just to make sure we have permissions */
-      /* to set these options                                         */
-      close(ev_fd);
-      return PAPI_OK;
-}
-
-
-/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
- * implementations (e.g. x86 before 2.6.33) which don't do a static event 
- * scheduability check in sys_perf_event_open.
- */
-
-static inline int
-check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
-{
-  int retval = 0, cnt = -1;
-  ( void ) ctl;			 /*unused */
-  long long papi_pe_buffer[READ_BUFFER_SIZE];
-
-        if (bug_check_scheduability()) {
-
-	   /* This will cause the events in the group to be scheduled */
-	   /* onto the counters by the kernel, and so will force an   */
-	   /* error condition if the events are not compatible.       */
-
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctx->evt[idx].group_leader == -1) && (ctl->multiplexed)) 
-	    retval |= ioctl( ctx->evt[idx].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ;
-	  else
-#endif
-	   retval |= ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd, 
-		  PERF_EVENT_IOC_ENABLE, NULL );
-
-	  if (retval != 0) {
-	    PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	    return PAPI_ESYS;
-	  }
-
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctx->evt[idx].group_leader == -1) && (ctl->multiplexed)) 
-	    retval |= ioctl( ctx->evt[idx].event_fd, PERF_EVENT_IOC_DISABLE, NULL) ;
-	  else
-#endif
-	   retval |= ioctl( ctx->evt[ctx->evt[idx].group_leader].event_fd,
-		   PERF_EVENT_IOC_DISABLE, NULL );
-
-	  if (retval != 0) {
-		PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
-		return PAPI_ESYS;
-	  }
-
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctx->evt[idx].group_leader == -1) && (ctl->multiplexed)) {
-	    cnt = read( ctx->evt[idx].event_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
-	    SUBDBG("read fd %d, index %d, read %d %lld %lld %lld\n",ctx->evt[idx].event_fd,idx,cnt,papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-	  } else
-#endif
-	    {  cnt = read( ctx->evt[ctx->evt[idx].group_leader].event_fd, 
-			   papi_pe_buffer, sizeof(papi_pe_buffer));
-	      SUBDBG("read fd %d, index %d, grp ldr %d, read %d %lld %lld %lld\n",ctx->evt[ctx->evt[idx].group_leader].event_fd,idx,ctx->evt[idx].group_leader,cnt,papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-	    }
-	   if ( cnt == -1 ) {
-		SUBDBG( "read returned an error!  Should never happen.\n" );
-		return PAPI_ESYS;
-	   }
-	   if ( cnt == 0 ) {
-		return PAPI_ECNFLCT;
-	   } else {
-	     int j;
-	     /* Reset all of the counters (opened so far) back to zero      */
-	     /* from the above brief enable/disable call pair.  I wish      */
-	     /* we didn't have to to do this, because it hurts performance, */
-	     /* but I don't see any alternative.                            */
-#ifdef BRAINDEAD_MULTIPLEXING
-	     if ((ctx->evt[idx].group_leader == -1) && (ctl->multiplexed)) {
-	       retval = ioctl( ctx->evt[idx].event_fd, PERF_EVENT_IOC_RESET, NULL) ;
-	       if (retval != 0) {
-		 PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-		 return PAPI_ESYS;
-	       }
-	     } else
-#endif
-		for ( j = ctx->evt[idx].group_leader; j <= idx; j++ ) {
-			retval = ioctl( ctx->evt[j].event_fd, PERF_EVENT_IOC_RESET, 
-			       NULL );
-			if (retval != 0) {
-			  PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) failed.\n" );
-			  return PAPI_ESYS;
-			}
-		}
-	   }
-	}
-	return PAPI_OK;
+   /* now close it, this was just to make sure we have permissions */
+   /* to set these options                                         */
+   close(ev_fd);
+   return PAPI_OK;
 }
 
 
 
-static inline int
-partition_events( context_t * ctx, control_state_t * ctl )
-{
-	int i, ret;
+/* Maximum size we ever expect to read from a perf_event fd   */
+/*  (this is the number of 64-bit values)                     */
+/* We use this to size the read buffers                       */
+/* The three is for event count, time_enabled, time_running   */
+/*  and the counter term is count value and count id for each */
+/*  possible counter value.                                   */
+#define READ_BUFFER_SIZE (3 + (2 * PERF_EVENT_MAX_MPX_COUNTERS))
 
-	if ( !ctl->multiplexed ) {
-		/*
-		 * Initialize the group leader fd.  
-		 * The first fd we create will be the
-		 * group leader and so its group_fd value must be set to -1
-		 */
-	   ctx->evt[0].event_fd = -1;
-	   for( i = 0; i < ctl->num_events; i++ ) {
-	      ctx->evt[i].group_leader = 0;
-	      ctl->events[i].read_format = get_read_format(ctl->multiplexed, 
-							   ctl->inherit, !i);
 
-	      if ( i == 0 ) {
-		 ctl->events[i].disabled = 1;
-	      } else {
-		 ctl->events[i].disabled = 0;
-	      }
-	   }
-	} else {
-#ifdef BRAINDEAD_MULTIPLEXING 
-	  /* Ignore grouping and group leaders. Just add each event separately, nice and simple like... */
-	  for ( i = 0; i < ctl->num_events; i++ ) {
-	    ctx->evt[i].event_fd = -1;
-	    ctx->evt[i].group_leader = -1;
-	    ctl->events[i].disabled = 1;
-	    ctl->events[i].read_format = get_read_format(ctl->multiplexed, ctl->inherit, 1);
-	    ctl->num_groups++;
-	  }
-	  return PAPI_OK;
-#endif
-		/*
-		 * Start with a simple "keep adding events till error, 
-		 * then start a new group" algorithm.  IMPROVEME
-		 */
-		int final_group = 0;
 
-		ctl->num_groups = 0;
-		for ( i = 0; i < ctl->num_events; i++ ) {
-			int j = i;
-
-			/* start of a new group */
-			final_group = i;
-			ctx->evt[i].event_fd = -1;
-			for ( j = i; j < ctl->num_events; j++ ) {
-				ctx->evt[j].group_leader = i;
-
-				/* Enable all counters except the group leader, and request that we read
-				 * up all counters in the group when reading the group leader. */
-				if ( j == i ) {
-					ctl->events[i].disabled = 1;
-					ctl->events[i].read_format = get_read_format(ctl->multiplexed, ctl->inherit, 1);
-				} else {
-					ctl->events[i].disabled = 0;
-				}
-				ctx->evt[j].event_fd =
-					sys_perf_event_open( &ctl->events[j], 0, -1,
-										   ctx->evt[i].event_fd, 0 );
-				ret = PAPI_OK;
-				if ( ctx->evt[j].event_fd > -1 )
-					ret = check_scheduability( ctx, ctl, i );
-
-				if ( ( ctx->evt[j].event_fd == -1 ) || ( ret != PAPI_OK ) ) {
-					int k;
-					/*
-					 * We have to start a new group for this event, so close the
-					 * fd's we've opened for this group, and start a new group.
-					 */
-					for ( k = i; k < j; k++ ) {
-						close( ctx->evt[k].event_fd );
-					}
-					/* reset the group_leader's fd to -1 */
-					ctx->evt[i].event_fd = -1;
-					break;
-				}
-			}
-			ctl->num_groups++;
-			i = j - 1;		 /* i will be incremented again at the end of the loop, so this is sort of i = j */
-		}
-		/* The final group we created is still open; close it */
-		for ( i = final_group; i < ctl->num_events; i++ ) {
-		    if (ctx->evt[i].event_fd>=0) close( ctx->evt[i].event_fd );
-		}
-		ctx->evt[final_group].event_fd = -1;
-	}
-
-	/*
-	 * There are probably error conditions that need to be handled, but for
-	 * now assume this partition worked FIXME
-	 */
-	return PAPI_OK;
-}
-
-/*
- * Just a guess at how many pages would make this relatively efficient.
- * Note that it's "1 +" because of the need for a control page, and the
- * number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or
- * zero.  This is required to optimize dealing with circular buffer
- * wrapping of the mapped pages.
- */
-#define NR_MMAP_PAGES (1 + 8)
+/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch */
+/* implementations (e.g. x86 before 2.6.33) which don't do a static event */
+/* scheduability check in sys_perf_event_open.  It is also needed if the  */
+/* kernel is stealing an event, such as when NMI watchdog is enabled.     */
 
 static int
-tune_up_fd( context_t *ctx, int evt_idx )
+check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 {
-	int ret;
-	void *buf_addr;
-	int fd = ctx->evt[evt_idx].event_fd;
+   int retval = 0, cnt = -1;
+   ( void ) ctx;			 /*unused */
+   long long papi_pe_buffer[READ_BUFFER_SIZE];
+   int i,group_leader_fd;
 
-	/*
-	 * Register that we would like a SIGIO notification when a mmap'd page
-	 * becomes full.
-	 */
-	ret = fcntl( fd, F_SETFL, O_ASYNC | O_NONBLOCK );
-	if ( ret ) {
-		PAPIERROR ( "fcntl(%d, F_SETFL, O_ASYNC | O_NONBLOCK) "
-			    "returned error: %s", fd, strerror( errno ) );
-		return PAPI_ESYS;
+   if (bug_check_scheduability()) {
+
+      /* If the kernel isn't tracking scheduability right       */
+      /* Then we need to start/stop/read to force the event     */
+      /* to be scheduled and see if an error condition happens. */
+
+      /* get the proper fd to start */
+      group_leader_fd=ctl->events[idx].group_leader_fd;
+      if (group_leader_fd==-1) group_leader_fd=ctl->events[idx].event_fd;
+
+      /* start the event */
+      retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
+      if (retval == -1) {
+	 PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+	 return PAPI_ESYS;
+      }
+
+      /* stop the event */
+      retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
+      if (retval == -1) {
+	 PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
+	 return PAPI_ESYS;
+      }
+
+      /* See if a read returns any results */
+      cnt = read( group_leader_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
+      if ( cnt == -1 ) {
+	 SUBDBG( "read returned an error!  Should never happen.\n" );
+	 return PAPI_ESYS;
+      }
+
+      if ( cnt == 0 ) {
+         /* We read 0 bytes if we could not schedule the event */
+         /* The kernel should have detected this at open       */
+         /* but various bugs (including NMI watchdog)          */
+         /* result in this behavior                            */
+
+	 return PAPI_ECNFLCT;
+
+     } else {
+
+	/* Reset all of the counters (opened so far) back to zero      */
+	/* from the above brief enable/disable call pair.              */
+
+	/* We have to reset all events because reset of group leader      */
+        /* does not reset all.                                            */
+	/* we assume that the events are being added one by one and that  */
+        /* we do not need to reset higher events (doing so may reset ones */
+        /* that have not been initialized yet.                            */
+        for( i = 0; i < idx; i++) {
+	   retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+	   if (retval == -1) {
+	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d "
+			 "(fd %d)failed.\n",
+			 i,ctl->num_events,idx,ctl->events[i].event_fd);
+	      return PAPI_ESYS;
+	   }
 	}
+      }
+   }
+   return PAPI_OK;
+}
 
-	/* Set the F_SETOWN_EX flag on the fd.                          */
-        /* This affects which thread an overflow signal gets sent to    */
-	/* Handled in a subroutine to handle the fact that the behavior */
-        /* is dependent on kernel version.                              */
-	ret=fcntl_setown_fd(fd);
-	if (ret!=PAPI_OK) return ret;
+
+/* Do some extrta work on a perf_event fd if we're doing sampling */
+/* This mostly means setting up the mmap buffer.                  */
+static int
+tune_up_fd( pe_control_t *ctl, int evt_idx )
+{
+   int ret;
+   void *buf_addr;
+   int fd = ctl->events[evt_idx].event_fd;
+
+   /* Register that we would like a SIGIO notification when a mmap'd page */
+   /* becomes full.                                                       */
+   ret = fcntl( fd, F_SETFL, O_ASYNC | O_NONBLOCK );
+   if ( ret ) {
+      PAPIERROR ( "fcntl(%d, F_SETFL, O_ASYNC | O_NONBLOCK) "
+		  "returned error: %s", fd, strerror( errno ) );
+      return PAPI_ESYS;
+   }
+
+   /* Set the F_SETOWN_EX flag on the fd.                          */
+   /* This affects which thread an overflow signal gets sent to.   */
+   ret=fcntl_setown_fd(fd);
+   if (ret!=PAPI_OK) return ret;
 	   
-	/* Set FD_CLOEXEC.  Otherwise if we do an exec with an overflow */
-        /* running, the overflow handler will continue into the exec()'d*/
-        /* process and kill it because no signal handler is set up.     */
+   /* Set FD_CLOEXEC.  Otherwise if we do an exec with an overflow */
+   /* running, the overflow handler will continue into the exec()'d*/
+   /* process and kill it because no signal handler is set up.     */
+   ret=fcntl(fd, F_SETFD, FD_CLOEXEC);
+   if (ret) {
+      return PAPI_ESYS;
+   }
 
-	ret=fcntl(fd, F_SETFD, FD_CLOEXEC);
-	if (ret) {
-	   return PAPI_ESYS;
-	}
+   /* when you explicitely declare that you want a particular signal,  */
+   /* even with you use the default signal, the kernel will send more  */
+   /* information concerning the event to the signal handler.          */
+   /*                                                                  */
+   /* In particular, it will send the file descriptor from which the   */
+   /* event is originating which can be quite useful when monitoring   */
+   /* multiple tasks from a single thread.                             */
+   ret = fcntl( fd, F_SETSIG, _papi_pe_vector.cmp_info.hardware_intr_sig );
+   if ( ret == -1 ) {
+      PAPIERROR( "cannot fcntl(F_SETSIG,%d) on %d: %s",
+		 _papi_pe_vector.cmp_info.hardware_intr_sig, fd,
+		 strerror( errno ) );
+      return PAPI_ESYS;
+   }
 
-	/*
-	 * when you explicitely declare that you want a particular signal,
-	 * even with you use the default signal, the kernel will send more
-	 * information concerning the event to the signal handler.
-	 *
-	 * In particular, it will send the file descriptor from which the
-	 * event is originating which can be quite useful when monitoring
-	 * multiple tasks from a single thread.
-	 */
-	ret = fcntl( fd, F_SETSIG, _papi_pe_vector.cmp_info.hardware_intr_sig );
-	if ( ret == -1 ) {
-		PAPIERROR( "cannot fcntl(F_SETSIG,%d) on %d: %s",
-				   _papi_pe_vector.cmp_info.hardware_intr_sig, fd,
-				   strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
+   /* mmap() the sample buffer */
+   buf_addr = mmap( NULL, ctl->events[evt_idx].nr_mmap_pages * getpagesize(),
+		    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
+   if ( buf_addr == MAP_FAILED ) {
+      PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
+		 ctl->events[evt_idx].nr_mmap_pages * getpagesize(  ), 
+		 PROT_READ, MAP_SHARED, fd, strerror( errno ) );
+      return ( PAPI_ESYS );
+   }
 
-	buf_addr =
-		mmap( NULL, ctx->evt[evt_idx].nr_mmap_pages * getpagesize(  ),
-			  PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
-	if ( buf_addr == MAP_FAILED ) {
-		PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
-				   ctx->evt[evt_idx].nr_mmap_pages * getpagesize(  ), PROT_READ,
-				   MAP_SHARED, fd, strerror( errno ) );
-		return ( PAPI_ESYS );
-	}
-	SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
-	ctx->evt[evt_idx].mmap_buf = ( struct perf_counter_mmap_page * ) buf_addr;
-	ctx->evt[evt_idx].tail = 0;
-	ctx->evt[evt_idx].mask =
-		( ctx->evt[evt_idx].nr_mmap_pages - 1 ) * getpagesize(  ) - 1;
+   SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
 
-	return PAPI_OK;
+   /* Set up the mmap buffer and its associated helpers */
+   ctl->events[evt_idx].mmap_buf = (struct perf_counter_mmap_page *) buf_addr;
+   ctl->events[evt_idx].tail = 0;
+   ctl->events[evt_idx].mask = ( ctl->events[evt_idx].nr_mmap_pages - 1 ) * 
+                               getpagesize() - 1;
+
+   return PAPI_OK;
 }
 
-static inline int
-open_pe_evts( context_t * ctx, control_state_t * ctl )
+
+/* Open all events in the control state */
+static int
+open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
-	
-     int i, ret = PAPI_OK;
 
-     /*
-      * Partition events into groups that are countable on a set of hardware
-      * counters simultaneously.
-      */
-     partition_events( ctx, ctl );
+   int i, ret = PAPI_OK;
 
-     for( i = 0; i < ctl->num_events; i++ ) {
+   for( i = 0; i < ctl->num_events; i++ ) {
 
-        /* For now, assume we are always doing per-thread self-monitoring */
-        /* FIXME */
-        /* Flags parameter is currently unused, but needs to be set to 0  */
-        /* for now                                                        */
-	
-        SUBDBG("sys_perf_event_open() of fd %d in open_pe_evts\n",i);
-        SUBDBG("config is %"PRIx64"\n",ctl->events[i].config);
+      /* set up the attr structure.  We don't set up all fields here */
+      /* as some have already been set up previously.                */
 
-        ctx->evt[i].event_fd = sys_perf_event_open( &ctl->events[i], ctl->tid, ctl->cpu,
-#ifdef BRAINDEAD_MULTIPLEXING
-						    (((ctx->evt[i].group_leader == -1) && (ctl->multiplexed)) ? -1 : ctx->evt[ctx->evt[i].group_leader].event_fd),
-#else
-						    ctx->evt[ctx->evt[i].group_leader].event_fd, 
-#endif
-						    0 );
+      /* group leader (event 0) is special                */
+      /* If we're multiplexed, everyone is a group leader */
+      if (( i == 0 ) || (ctl->multiplexed)) {
+         ctl->events[i].attr.pinned = !ctl->multiplexed;
+	 ctl->events[i].attr.disabled = 1;
+	 ctl->events[i].group_leader_fd=-1;
+         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
+							   ctl->inherit, 
+							   !ctl->multiplexed );
+      } else {
+	 ctl->events[i].attr.pinned=0;
+	 ctl->events[i].attr.disabled = 0;
+	 ctl->events[i].group_leader_fd=ctl->events[0].event_fd;
+         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
+							   ctl->inherit, 
+							   0 );
+      }
 
-	if ( ctx->evt[i].event_fd == -1 ) {
-	   SUBDBG("sys_perf_event_open returned error on event #%d."
-		  "  Error: %s",
-		  i, strerror( errno ) );
+
+      /* try to open */
+      ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
+						     ctl->tid,
+						     ctl->cpu,
+			       ctl->events[i].group_leader_fd,
+						     0 /* flags */
+						     );
+      
+      if ( ctl->events[i].event_fd == -1 ) {
+	 SUBDBG("sys_perf_event_open returned error on event #%d."
+		"  Error: %s",
+		i, strerror( errno ) );
 			
-	   ret = PAPI_ECNFLCT;
-	   goto cleanup;
-	}
+	 ret = PAPI_ECNFLCT;
+	 goto open_pe_cleanup;
+      }
 		
- 	SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
-                " group_leader/fd: %d/%d, event_fd: %d,"
-                " read_format: 0x%"PRIu64"\n",
-		(long)ctl->tid, ctl->cpu, ctx->evt[i].group_leader, 
-		ctx->evt[ctx->evt[i].group_leader].event_fd, 
-		ctx->evt[i].event_fd, ctl->events[i].read_format);
+      SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
+              " group_leader/fd: %d, event_fd: %d,"
+              " read_format: 0x%"PRIu64"\n",
+	      (long)ctl->tid, ctl->cpu, ctl->events[i].group_leader_fd, 
+	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
-		ret = check_scheduability( ctx, ctl, i );
 
-		if ( ret != PAPI_OK ) {
-		   i++;		          /* the last event did open, so we  */
-		                          /* need to bump the counter before */
-                                          /* doing the cleanup               */
-		   goto cleanup;
-		}
+      /* in many situations the kernel will indicate we opened fine */
+      /* yet things will fail later.  So we need to double check    */
+      /* we actually can use the events we've set up.               */
+      ret = check_scheduability( ctx, ctl, i );
 
-		/* If a new enough kernel and counters are not being  */
-                /* inherited by children.  We are using grouped reads */
-                /* so get the events index into the group             */
-		if ((!bug_format_group()) && (!ctl->inherit)) {
-                       /* obtain the id of this event assigned by the kernel */
+      if ( ret != PAPI_OK ) {
+	 /* the last event did open, so we need to bump the counter before */
+	 /* doing the cleanup                                              */
+	 i++;
+		                          
+         goto open_pe_cleanup;
+      }
 
-		  uint64_t papi_pe_buffer[READ_BUFFER_SIZE];	/* max size needed */
-			int id_idx = 1;			   /* position of the id within the buffer for a non-group leader */
-			int cnt;
+   }
 
-			cnt = read( ctx->evt[i].event_fd, papi_pe_buffer, sizeof ( papi_pe_buffer ) );
-			if ( cnt == -1 ) {
-				SUBDBG( "read of event %d to obtain id returned %d", i, cnt );
-				ret = PAPI_EBUG;
-				i++;		 /* the last event did open, so we need to bump the counter before doing the cleanup */
-				goto cleanup;
-			}
-			if ( i == ctx->evt[i].group_leader )
-				id_idx = 2;
-			else
-				id_idx = 1;
-			if ( ctl->multiplexed ) {
-				id_idx += 2; /* account for the time running and enabled fields */
-			}
-			ctx->evt[i].event_id = papi_pe_buffer[id_idx];
-		}
+   /* Now that we've successfully opened all of the events, do whatever  */
+   /* "tune-up" is needed to attach the mmap'd buffers, signal handlers, */
+   /* and so on.                                                         */
+   for ( i = 0; i < ctl->num_events; i++ ) {
 
-	}
+      /* If sampling is enabled, hook up signal handler */
+      if ( ctl->events[i].attr.sample_period ) {
+	 ret = tune_up_fd( ctl, i );
+	 if ( ret != PAPI_OK ) {
+	    /* All of the fds are open, so we need to clean up all of them */
+	    i = ctl->num_events;
+	    goto open_pe_cleanup;
+	 }
+      } else {
+	 /* Make sure this is NULL so close_pe_events works right */
+	 ctl->events[i].mmap_buf = NULL;
+      }
+   }
 
-	/* Now that we've successfully opened all of the events, do whatever
-	 * "tune-up" is needed to attach the mmap'd buffers, signal handlers,
-	 * and so on.
-	 */
-	for ( i = 0; i < ctl->num_events; i++ ) {
-		if ( ctl->events[i].sample_period ) {
-			ret = tune_up_fd( ctx, i );
-			if ( ret != PAPI_OK ) {
-				/* All of the fds are open, so we need to clean up all of them */
-				i = ctl->num_events;
-				goto cleanup;
-			}
-		} else {
-			/* Null is used as a sentinel in pe_close_evts, since it doesn't
-			 * have access to the ctl array
-			 */
-			ctx->evt[i].mmap_buf = NULL;
-		}
-	}
+   /* Set num_evts only if completely successful */
+   ctx->state |= PERF_EVENTS_OPENED;
 
-	/* Set num_evts only if completely successful */
-	ctx->num_evts = ctl->num_events;
-	ctx->state |= PERF_EVENTS_RUNNING;
-	return PAPI_OK;
+   return PAPI_OK;
 
-  cleanup:
-	/*
-	 * We encountered an error, close up the fd's we successfully opened, if
-	 * any.
-	 */
-	while ( i > 0 ) {
-		i--;
-		if (ctx->evt[i].event_fd>=0) close( ctx->evt[i].event_fd );
-	}
+open_pe_cleanup:
+   /* We encountered an error, close up the fds we successfully opened.  */
+   /* We go backward in an attempt to close group leaders last, although */
+   /* That's probably not strictly necessary.                            */
+   while ( i > 0 ) {
+      i--;
+      if (ctl->events[i].event_fd>=0) close( ctl->events[i].event_fd );
+   }
 
-	return ret;
+   return ret;
 }
 
+/* Close all of the opened events */
 static int
-close_pe_evts( context_t * ctx )
+close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
-    int i, ret;
+   int i;
+   int num_closed=0;
 
-    if ( ctx->state & PERF_EVENTS_RUNNING ) {
-       /* probably a good idea to stop the counters before closing them */
-       for( i = 0; i < ctx->num_evts; i++ ) {
-	  if ( ctx->evt[i].group_leader == i ) {
-	     ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-	     if ( ret == -1 ) {
-		/* Never should happen */
-		return PAPI_EBUG;
-	     }
-	  }
-       }
-       ctx->state &= ~PERF_EVENTS_RUNNING;
-    }
+   /* should this be a more serious error? */
+   if ( ctx->state & PERF_EVENTS_RUNNING ) {
+      SUBDBG("Closing without stopping first\n");
+   }
+
+   /* Close child events first */
+   for( i=0; i<ctl->num_events; i++ ) {
+
+      if (ctl->events[i].group_leader_fd!=-1) {
+         if ( ctl->events[i].mmap_buf ) {
+	    if ( munmap ( ctl->events[i].mmap_buf,
+		          ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
+	       PAPIERROR( "munmap of fd = %d returned error: %s",
+			  ctl->events[i].event_fd, strerror( errno ) );
+	       return PAPI_ESYS;
+	    }
+	 }
+
+         if ( close( ctl->events[i].event_fd ) ) {
+	    PAPIERROR( "close of fd = %d returned error: %s",
+		       ctl->events[i].event_fd, strerror( errno ) );
+	    return PAPI_ESYS;
+	 } else {
+	    num_closed++;
+	 }
+      }
+
+   }
+
+   /* Close the group leaders last */
+   for( i=0; i<ctl->num_events; i++ ) {
+
+      if (ctl->events[i].group_leader_fd==-1) {
+         if ( ctl->events[i].mmap_buf ) {
+	    if ( munmap ( ctl->events[i].mmap_buf,
+		          ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
+	       PAPIERROR( "munmap of fd = %d returned error: %s",
+			  ctl->events[i].event_fd, strerror( errno ) );
+	       return PAPI_ESYS;
+	    }
+	 }
+
+         if ( close( ctl->events[i].event_fd ) ) {
+	    PAPIERROR( "close of fd = %d returned error: %s",
+		       ctl->events[i].event_fd, strerror( errno ) );
+	    return PAPI_ESYS;
+	 } else {
+	    num_closed++;
+	 }
+      }
+
+   }
 
 
-    /* Close the hw event fds in reverse order so that the group leader is */
-    /* closed last, otherwise we will have counters with dangling group    */
-    /* leader pointers.                                                    */
+   if (ctl->num_events!=num_closed) {
+      PAPIERROR("Didn't close all events\n");
+      return PAPI_EBUG;
+   }
 
-    for ( i = ctx->num_evts; i > 0; ) {
-       i--;
-       if ( ctx->evt[i].mmap_buf ) {
-	  if ( munmap ( ctx->evt[i].mmap_buf,
-			ctx->evt[i].nr_mmap_pages * getpagesize(  ) ) ) {
-	     PAPIERROR( "munmap of fd = %d returned error: %s",
-			ctx->evt[i].event_fd, strerror( errno ) );
-	     return PAPI_ESYS;
-	  }
-       }
+   ctl->num_events=0;
 
-       if ( close( ctx->evt[i].event_fd ) ) {
-	  PAPIERROR( "close of fd = %d returned error: %s",
-		     ctx->evt[i].event_fd, strerror( errno ) );
-	  return PAPI_ESYS;
-       } else {
-	  ctx->num_evts--;
-       }
-    }
+   ctx->state &= ~PERF_EVENTS_OPENED;
 
-    return PAPI_OK;
+   return PAPI_OK;
 }
 
-
-static int
-attach( control_state_t * pe_ctl, unsigned long tid )
+/* Fix up the config based on what CPU/Vendor we are running on */
+static int 
+pe_vendor_fixups(void) 
 {
-	pe_ctl->tid = tid;
-	return PAPI_OK;
-}
-
-static int
-detach( context_t * ctx, control_state_t * pe_ctl )
-{
-	( void ) ctx;			 /*unused */
-	pe_ctl->tid = 0;
-	return PAPI_OK;
-}
-
-int
-_papi_pe_set_domain( hwd_control_state_t * ctl, int domain)
-{
-	
-     int i;
-     control_state_t *pe_ctl = ( control_state_t * ) ctl;
-     SUBDBG("control %p, old control domain %d, new domain %d, default domain %d\n",ctl,pe_ctl->domain,domain,_papi_pe_vector.cmp_info.default_domain);
-
-     pe_ctl->domain = domain;
-     for( i = 0; i < pe_ctl->num_events; i++ ) {
-	pe_ctl->events[i].exclude_user = !( pe_ctl->domain & PAPI_DOM_USER );
-	pe_ctl->events[i].exclude_kernel =
-			!( pe_ctl->domain & PAPI_DOM_KERNEL );
-	pe_ctl->events[i].exclude_hv =
-			!( pe_ctl->domain & PAPI_DOM_SUPERVISOR );
-     }
-     return PAPI_OK;
-}
-
-static inline int
-set_cpu( control_state_t * ctl, unsigned int cpu_num )
-{
-	ctl->tid = -1;      /* this tells the kernel not to count for a thread */
-
-	ctl->cpu = cpu_num;
-	return PAPI_OK;
-}
-
-/* Some boilerplate */
-/* We should maybe support this stuff at some point */
-static inline int
-set_granularity( control_state_t *ctl, int domain )
-{
-  ( void ) ctl;	 /*unused */
-
-  switch ( domain ) {
-     case PAPI_GRN_PROCG:
-     case PAPI_GRN_SYS:
-     case PAPI_GRN_SYS_CPU:
-     case PAPI_GRN_PROC:
-		return PAPI_ECMP;
-     /* Currently we only support thread granularity */
-     case PAPI_GRN_THR:
-		break;
-     default:
-		return PAPI_EINVAL;
-  }
-  return PAPI_OK;
-}
-
-static int pe_vendor_fixups(void) {
-
      /* powerpc */
      /* On IBM and Power6 Machines default domain should include supervisor */
   if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
@@ -900,133 +687,355 @@ static int pe_vendor_fixups(void) {
 /* Check the mmap page for rdpmc support */
 static int detect_rdpmc(void) {
 
-  struct perf_event_attr pe;
-  int fd,rdpmc_exists=1;
-  void *addr;
-  struct perf_event_mmap_page *our_mmap;
+   struct perf_event_attr pe;
+   int fd,rdpmc_exists=1;
+   void *addr;
+   struct perf_event_mmap_page *our_mmap;
 
-  memset(&pe,0,sizeof(struct perf_event_attr));
+   /* Create a fake instructions event so we can read a mmap page */
+   memset(&pe,0,sizeof(struct perf_event_attr));
 
-  pe.type=PERF_TYPE_HARDWARE;
-  pe.size=sizeof(struct perf_event_attr);
-  pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+   pe.type=PERF_TYPE_HARDWARE;
+   pe.size=sizeof(struct perf_event_attr);
+   pe.config=PERF_COUNT_HW_INSTRUCTIONS;
 
-  fd=sys_perf_event_open(&pe,0,-1,-1,0);
-  if (fd<0) {
-     return PAPI_ESYS;
-  }
-  addr=mmap(NULL, 4096, PROT_READ, MAP_SHARED,fd,0);
-  if (addr == (void *)(-1)) {
-     close(fd);
-     return PAPI_ESYS;
-  }
-  our_mmap=(struct perf_event_mmap_page *)addr;
-  if (our_mmap->cap_usr_rdpmc==0) {
-     rdpmc_exists=0;
-  }
-  munmap(addr,4096);
-  close(fd);
+   fd=sys_perf_event_open(&pe,0,-1,-1,0);
+   if (fd<0) {
+      return PAPI_ESYS;
+   }
 
-  return rdpmc_exists;
+   /* create the mmap page */
+   addr=mmap(NULL, 4096, PROT_READ, MAP_SHARED,fd,0);
+   if (addr == (void *)(-1)) {
+      close(fd);
+      return PAPI_ESYS;
+   }
+
+   /* get the rdpmc info */
+   our_mmap=(struct perf_event_mmap_page *)addr;
+   if (our_mmap->cap_usr_rdpmc==0) {
+      rdpmc_exists=0;
+   }
+
+   /* close the fake event */
+   munmap(addr,4096);
+   close(fd);
+
+   return rdpmc_exists;
 
 } 
 
+/* Find a native event specified by a profile index */
+static int
+find_profile_index( EventSetInfo_t *ESI, int evt_idx, int *flags,
+		    unsigned int *native_index, int *profile_index )
+{
+   int pos, esi_index, count;
+
+   for ( count = 0; count < ESI->profile.event_counter; count++ ) {
+       esi_index = ESI->profile.EventIndex[count];
+       pos = ESI->EventInfoArray[esi_index].pos[0];
+		
+       if ( pos == evt_idx ) {
+	  *profile_index = count;
+	  *native_index = ESI->NativeInfoArray[pos].ni_event & 
+	                  PAPI_NATIVE_AND_MASK;
+	  *flags = ESI->profile.flags;
+	  SUBDBG( "Native event %d is at profile index %d, flags %d\n",
+		  *native_index, *profile_index, *flags );
+	  return PAPI_OK;
+       }
+   }
+
+   PAPIERROR( "wrong count: %d vs. ESI->profile.event_counter %d", count,
+	      ESI->profile.event_counter );
+   return PAPI_EBUG;
+}
+
+
+/* These functions are based on builtin-record.c in the  */
+/* kernel's tools/perf directory.                        */
+
+static uint64_t
+mmap_read_head( pe_event_info_t *pe )
+{
+   struct perf_event_mmap_page *pc = pe->mmap_buf;
+   int head;
+
+   if ( pc == NULL ) {
+      PAPIERROR( "perf_event_mmap_page is NULL" );
+      return 0;
+   }
+
+   head = pc->data_head;
+   rmb(  );
+
+   return head;
+}
+
+static void
+mmap_write_tail( pe_event_info_t *pe, uint64_t tail )
+{
+   struct perf_event_mmap_page *pc = pe->mmap_buf;
+
+   /* ensure all reads are done before we write the tail out. */
+   mb(  );
+   pc->data_tail = tail;
+}
+
+/* Does the kernel define these somewhere? */
+struct ip_event {
+   struct perf_event_header header;
+   uint64_t ip;
+};
+struct lost_event {
+   struct perf_event_header header;
+   uint64_t id;
+   uint64_t lost;
+};
+typedef union event_union {
+   struct perf_event_header header;
+   struct ip_event ip;
+   struct lost_event lost;
+} perf_sample_event_t;
+
+
+/* Should re-write with comments if we ever figure out what's */
+/* going on here.                                             */
+static void
+mmap_read( ThreadInfo_t **thr, pe_event_info_t *pe, 
+	   int profile_index )
+{
+   int cidx = _papi_pe_vector.cmp_info.CmpIdx;
+   uint64_t head = mmap_read_head( pe );
+   uint64_t old = pe->tail;
+   unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
+   int diff;
+
+   diff = head - old;
+   if ( diff < 0 ) {
+      SUBDBG( "WARNING: failed to keep up with mmap data. head = %" PRIu64
+	      ",  tail = %" PRIu64 ". Discarding samples.\n", head, old );
+      /* head points to a known good entry, start there. */
+      old = head;
+   }
+
+   for( ; old != head; ) {
+
+      perf_sample_event_t *event = ( perf_sample_event_t * ) 
+	                           & data[old & pe->mask];
+      perf_sample_event_t event_copy;
+      size_t size = event->header.size;
+
+      /* Event straddles the mmap boundary -- header should always */
+      /* be inside due to u64 alignment of output.                 */
+      if ( ( old & pe->mask ) + size != ( ( old + size ) & pe->mask ) ) {
+	 uint64_t offset = old;
+	 uint64_t len = min( sizeof ( *event ), size ), cpy;
+	 void *dst = &event_copy;
+
+	 do {
+	    cpy = min( pe->mask + 1 - ( offset & pe->mask ), len );
+	    memcpy( dst, &data[offset & pe->mask], cpy );
+	    offset += cpy;
+	    dst = ((unsigned char*)dst) + cpy;
+	    len -= cpy;
+	 } while ( len );
+
+	 event = &event_copy;
+      }
+
+      old += size;
+
+      SUBDBG( "event->type = %08x\n", event->header.type );
+      SUBDBG( "event->size = %d\n", event->header.size );
+
+      switch ( event->header.type ) {
+         case PERF_RECORD_SAMPLE:
+	      _papi_hwi_dispatch_profile( ( *thr )->running_eventset[cidx],
+				( caddr_t ) ( unsigned long ) event->ip.ip, 
+					  0, profile_index );
+	      break;
+
+	 case PERF_RECORD_LOST:
+	      SUBDBG( "Warning: because of a mmap buffer overrun, %" PRId64
+		      " events were lost.\n"
+		      "Loss was recorded when counter id 0x%"PRIx64 
+		      " overflowed.\n", event->lost.lost, event->lost.id );
+	      break;
+
+	 default:
+	      SUBDBG( "Error: unexpected header type - %d\n",
+					event->header.type );
+	      break;
+      }
+   }
+
+   pe->tail = old;
+   mmap_write_tail( pe, old );
+}
+
+/* What exactly does this do? */
+static int
+process_smpl_buf( int evt_idx, ThreadInfo_t **thr )
+{
+   int ret, flags, profile_index;
+   unsigned native_index;
+   int cidx = _papi_pe_vector.cmp_info.CmpIdx;
+   pe_control_t *ctl;
+
+   ret = find_profile_index( ( *thr )->running_eventset[cidx], evt_idx, 
+			     &flags, &native_index, &profile_index );
+   if ( ret != PAPI_OK ) {
+      return ret;
+   }
+
+   ctl= (*thr)->running_eventset[cidx]->ctl_state;
+
+   mmap_read( thr, 
+	      &(ctl->events[evt_idx]),
+	      profile_index );
+
+   return PAPI_OK;
+}
+
+
+
+
+/********************************************************************/
+/********************************************************************/
+/* Start with functions that are exported via the module interface  */
+/********************************************************************/
+/********************************************************************/
+
+
+/* set the domain. FIXME: perf_events allows per-event control of this. */
+/* we do not handle that yet.                                           */
+int
+_papi_pe_set_domain( hwd_control_state_t *ctl, int domain)
+{
+	
+   int i;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+
+   SUBDBG("old control domain %d, new domain %d, default domain %d\n",
+	  pe_ctl->domain,domain,_papi_pe_vector.cmp_info.default_domain);
+
+   pe_ctl->domain = domain;
+     
+   /* Force the domain on all events */
+   for( i = 0; i < pe_ctl->num_events; i++ ) {
+      pe_ctl->events[i].attr.exclude_user = 
+	                !( pe_ctl->domain & PAPI_DOM_USER );
+      pe_ctl->events[i].attr.exclude_kernel =
+			!( pe_ctl->domain & PAPI_DOM_KERNEL );
+      pe_ctl->events[i].attr.exclude_hv =
+			!( pe_ctl->domain & PAPI_DOM_SUPERVISOR );
+   }
+   return PAPI_OK;
+}
+
 
 /* Initialize the perf_event component */
-
 static int
 _papi_pe_init_component( int cidx )
 {
 
-  int retval;
-  int paranoid_level;
+   int retval;
+   int paranoid_level;
 
-  FILE *fff;
+   FILE *fff;
 
-  ( void ) cidx;          /*unused */
+   ( void ) cidx;          /*unused */
 
-  /* The is the official way to detect if perf_event support exists */
-  /* The file is called perf_counter_paranoid on 2.6.31             */
-  /* currently we are lazy and do not support 2.6.31 kernels        */
-  fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
-  if (fff==NULL) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "perf_event support not detected",PAPI_MAX_STR_LEN);
-     return PAPI_ENOCMP;
-  }
+   /* The is the official way to detect if perf_event support exists */
+   /* The file is called perf_counter_paranoid on 2.6.31             */
+   /* currently we are lazy and do not support 2.6.31 kernels        */
+   fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
+   if (fff==NULL) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "perf_event support not detected",PAPI_MAX_STR_LEN);
+      return PAPI_ENOCMP;
+   }
 
-  /* 2 means no measurements allowed          */
-  /* 1 means normal counter access            */
-  /* 0 means you can access CPU-specific data */
-  /* -1 means no restrictions                 */
-  retval=fscanf(fff,"%d",&paranoid_level);
-  if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
-  fclose(fff);
+   /* 2 means no measurements allowed          */
+   /* 1 means normal counter access            */
+   /* 0 means you can access CPU-specific data */
+   /* -1 means no restrictions                 */
+   retval=fscanf(fff,"%d",&paranoid_level);
+   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
+   fclose(fff);
 
-  if (paranoid_level==2) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
-	     PAPI_MAX_STR_LEN);
-     return PAPI_ENOCMP;
-  }
+   if (paranoid_level==2) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
+	      PAPI_MAX_STR_LEN);
+      return PAPI_ENOCMP;
+   }
 
-  /* Detect NMI watchdog which can steal counters */
-  nmi_watchdog_active=_linux_detect_nmi_watchdog();
-  if (nmi_watchdog_active) {
-     SUBDBG("The Linux nmi_watchdog is using one of the performance "
-                   "counters, reducing the total number available.\n");
-  }
+   /* Detect NMI watchdog which can steal counters */
+   nmi_watchdog_active=_linux_detect_nmi_watchdog();
+   if (nmi_watchdog_active) {
+      SUBDBG("The Linux nmi_watchdog is using one of the performance "
+             "counters, reducing the total number available.\n");
+   }
 
-  /* hardware multiplex was broken before 2.6.33 */	
-  if (bug_multiplex()) {
-     _papi_pe_vector.cmp_info.kernel_multiplex = 0;
-  }
-  else {
-     _papi_pe_vector.cmp_info.kernel_multiplex = 1;
-  }
+   /* Kernel multiplexing is broken prior to kernel 2.6.34 */
+   /* The fix was probably git commit:                     */
+   /*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
+   if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) {
+      _papi_pe_vector.cmp_info.kernel_multiplex = 0;
+   }
+   else {
+      _papi_pe_vector.cmp_info.kernel_multiplex = 1;
+   }
 
-  _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
+   /* We use the RealTime signal for some reason */
+   _papi_pe_vector.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
-  /* Check that processor is supported */
-  if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
+   /* Check that processor is supported */
+   if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
 			   _papi_hwi_system_info.hw_info.cpuid_family)!=
       PAPI_OK) {
-     fprintf(stderr,"warning, your processor is unsupported\n");
-     /* should not return error, as software events should still work */
-  }
+      fprintf(stderr,"warning, your processor is unsupported\n");
+      /* should not return error, as software events should still work */
+   }
 
-  /* Setup mmtimers, if appropriate */
-  retval=mmtimer_setup();
-  if (retval) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "Error initializing mmtimer",PAPI_MAX_STR_LEN);
-     return retval;
-  }
+   /* Setup mmtimers, if appropriate */
+   retval=mmtimer_setup();
+   if (retval) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "Error initializing mmtimer",PAPI_MAX_STR_LEN);
+      return retval;
+   }
 
-  /* Detect if we can use rdpmc (or equivalent) */
-  retval=detect_rdpmc();
-  if (retval < 0 ) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "Error detecting rdpmc",PAPI_MAX_STR_LEN);
-     return retval;
-  }
-  _papi_pe_vector.cmp_info.fast_counter_read = retval;
+   /* Detect if we can use rdpmc (or equivalent) */
+   /* We currently do not use rdpmc as it is slower in tests */
+   /* than regular read (as of Linux 3.5)                    */
+   retval=detect_rdpmc();
+   if (retval < 0 ) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	     "Error detecting rdpmc",PAPI_MAX_STR_LEN);
+      return retval;
+   }
+   _papi_pe_vector.cmp_info.fast_counter_read = retval;
 
-  /* Run Vendor-specific fixups */
-  pe_vendor_fixups();
+   /* Run Vendor-specific fixups */
+   pe_vendor_fixups();
 
-  /* Run the libpfm4-specific setup */
-  retval = _papi_libpfm4_init(&_papi_pe_vector, cidx);
-  if (retval) {
-     strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	    "Error initializing libpfm4",PAPI_MAX_STR_LEN);
-     return retval;
-  }
+   /* Run the libpfm4-specific setup */
+   retval = _papi_libpfm4_init(&_papi_pe_vector, cidx);
+   if (retval) {
+      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
+	      "Error initializing libpfm4",PAPI_MAX_STR_LEN);
+      return retval;
+   }
 
-  return PAPI_OK;
+   return PAPI_OK;
 
 }
 
+/* Shutdown the perf_event component */
 static int
 _papi_pe_shutdown_component( void ) {
 
@@ -1036,312 +1045,372 @@ _papi_pe_shutdown_component( void ) {
   return PAPI_OK;
 }
 
+
+/* Initialize a thread */
 static int
-_papi_pe_init_thread( hwd_context_t * thr_ctx )
-{
-	( void ) thr_ctx;		 /*unused */
-	/* No initialization is needed */
-	return PAPI_OK;
-}
-
-static int
-pe_enable_counters( context_t * ctx, control_state_t * ctl )
-{
-	int ret = PAPI_OK;
-	int i;
-	int num_fds;
-	int did_something = 0;
-
-	/* If not multiplexed, just enable the group leader */
-	num_fds = ctl->multiplexed ? ctx->num_evts : 1;
-
-	for ( i = 0; i < num_fds; i++ ) {
-#ifdef BRAINDEAD_MULTIPLEXING
-	  if ((ctx->evt[i].group_leader == -1) && (ctl->multiplexed)) {
-	    SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
-	    ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ; 
-	    did_something++;
-	  } else
-#endif
-	    if ( ctx->evt[i].group_leader == i ) {
-	      /* this should refresh overflow counters too */
-	      SUBDBG("ioctl(enable): ctx: %p, fd: %d\n", ctx, ctx->evt[i].event_fd);
-	      ret = ioctl( ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
-	      did_something++;
-	    }
-	}
-
-	if (ret == -1) {
-	  PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	  return PAPI_ESYS;
-	}
-
-	if (!did_something) {
-	  PAPIERROR("Did not enable any counters.\n");
-	  return PAPI_EBUG;
-	}
-
-	ctx->state |= PERF_EVENTS_RUNNING;
-	return PAPI_OK;
-}
-
-/* reset the hardware counters */
-static int
-_papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
-{
-	int i, ret;
-	context_t *pe_ctx = ( context_t * ) ctx;
-
-	( void ) ctl;			 /*unused */
-
-	/* We need to reset all of the events, not just the group leaders */
-	for ( i = 0; i < pe_ctx->num_evts; i++ ) {
-		ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
-		if ( ret == -1 ) {
-			PAPIERROR
-				( "ioctl(%d, PERF_EVENT_IOC_RESET, NULL) returned error, Linux says: %s",
-				  pe_ctx->evt[i].event_fd, strerror( errno ) );
-			return PAPI_EBUG;
-		}
-	}
-
-	return PAPI_OK;
-}
-
-/* write(set) the hardware counters */
-static int
-_papi_pe_write( hwd_context_t * ctx, hwd_control_state_t * ctl,
-				long long *from )
-{
-	( void ) ctx;			 /*unused */
-	( void ) ctl;			 /*unused */
-	( void ) from;			 /*unused */
-	/*
-	 * Counters cannot be written.  Do we need to virtualize the
-	 * counters so that they can be written, or perhaps modify code so that
-	 * they can be written? FIXME ?
-	 */
-	return PAPI_ENOSUPP;
-}
-
-/*
- * These are functions which define the indexes in the read buffer of the
- * various fields.  See include/linux/perf_counter.h for more details about
- * the layout.
- */
-
-#define get_nr_idx() 0
-#define get_total_time_enabled_idx() 1
-#define get_total_time_running_idx() 2
-
-/* Get the index of the id of the n'th counter in the buffer */
-static int
-get_id_idx( int multiplexed, int n )
-{
-  if (!bug_format_group()) {
-               if ( multiplexed )
-                       return 3 + ( n * 2 ) + 1;
-               else
-                       return 1 + ( n * 2 ) + 1;
-       }
-       else {
-               return 1;
-       }
-}
-
-/* Get the index of the n'th counter in the buffer */
-static int
-get_count_idx( int multiplexed, int n )
-{
-  if (!bug_format_group()) {
-               if ( multiplexed )
-                       return 3 + ( n * 2 );
-               else
-                       return 1 + ( n * 2 );
-      }
-       else {
-               return 0;
-       }
-}
-
-/* Return the count index for the event with the given id */
-static int64_t
-get_count_idx_by_id( long long * buf, int multiplexed, int inherit, int64_t id )
+_papi_pe_init_thread( hwd_context_t *hwd_ctx )
 {
 
-  if ((!bug_format_group()) && (!inherit)) {
-               unsigned int i;
+  pe_context_t *pe_ctx = ( pe_context_t *) hwd_ctx;
 
-               for ( i = 0; i < buf[get_nr_idx(  )]; i++ ) {
-                       unsigned long index = get_id_idx( multiplexed, i );
-
-		   if ( index > READ_BUFFER_SIZE ) {
-			PAPIERROR( "Attempting access beyond buffer" );
-			return -1;
-		   }
-
-		   if ( buf[index] == id ) {
-			return get_count_idx( multiplexed, i );
-		   }
-	   }
-	   PAPIERROR( "Did not find id %d in the buffer!", id );
-	   return -1;
-       }
-       else {
-
-	   return 0;
-       }
-}
-
-
-static int
-_papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
-	       long long **events, int flags )
-{
-  ( void ) flags;			 /*unused */
-  int i, ret = -1;
-  context_t *pe_ctx = ( context_t * ) ctx;
-  control_state_t *pe_ctl = ( control_state_t * ) ctl;
-  long long papi_pe_buffer[READ_BUFFER_SIZE];
-
-  /*
-   * FIXME this loop should not be needed.  We ought to be able to read up
-   * the counters from the group leader's fd only, but right now
-   * PERF_RECORD_GROUP doesn't work like we need it to.  So for now, disable
-   * the group leader so that the counters are more or less synchronized,
-   * read them up, then re-enable the group leader.
-   */
-
-  if (bug_sync_read()) {
-    if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-      for ( i = 0; i < pe_ctx->num_evts; i++ )
-	/* disable only the group leaders */
-	if ( pe_ctx->evt[i].group_leader == i ) {
-	  ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-	  if ( ret == -1 ) {
-	    PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) returned an error: ", strerror( errno ));
-	    return PAPI_ESYS;
-	  }
-	}
-    }
-  }
-
-  /* 
-   *  FIXME this loop needs some serious tuning and commenting -pjm 
-   */
-
-  for ( i = 0; i < pe_ctl->num_events; i++ ) {
-    if ((bug_format_group()) || ( i == pe_ctx->evt[i].group_leader ) || (pe_ctl->inherit)) {
-      ret = read( pe_ctx->evt[i].event_fd, papi_pe_buffer, sizeof ( papi_pe_buffer ) );
-      if ( ret == -1 ) {
-	PAPIERROR("read returned an error: ", strerror( errno ));
-	return PAPI_ESYS;
-      }
-      /* Check for short read here! */
-      SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
-	     pe_ctx->evt[i].event_fd, (long)pe_ctl->tid, pe_ctl->cpu, ret);
-      SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],papi_pe_buffer[1],papi_pe_buffer[2]);
-    }
-    /* Love to know what this does */
-    int count_idx = get_count_idx_by_id( papi_pe_buffer, pe_ctl->multiplexed, pe_ctl->events[i].inherit,
-					 pe_ctx->evt[i].event_id );
-    if ( count_idx == -1 ) {
-      PAPIERROR( "get_count_idx_by_id failed for event num %d, id %d", i,
-		 pe_ctx->evt[i].event_id );
-      return PAPI_ECMP;
-    }
-
-    if (!pe_ctl->multiplexed) {
-      pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-    } else {
-      long long tot_time_running = papi_pe_buffer[get_total_time_running_idx(  )];
-      long long tot_time_enabled = papi_pe_buffer[get_total_time_enabled_idx(  )];
-
-      SUBDBG("count[%d] = (papi_pe_buffer[%d] %lld * tot_time_enabled %lld) / tot_time_running %lld\n",
-	     i, count_idx,papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
-    
-      if (tot_time_running == tot_time_enabled) {
-	/* No scaling needed */
-	pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-      } else if (tot_time_running && tot_time_enabled) {
-	/* Scale factor of 100 to avoid overflows when computing enabled/running */
-	long long scale;
-	scale = (tot_time_enabled * 100LL) / tot_time_running;
-	scale = scale * papi_pe_buffer[count_idx];
-	scale = scale / 100LL;
-	pe_ctl->counts[i] = scale;
-      }	else {
-	/* This should not happen, but does. For example a Intel(R) Pentium(R) M processor 1600MHz (9)
-Linux thinkpad 2.6.38-02063808-generic #201106040910 SMP Sat Jun 4 10:51:30 UTC 2011 i686 GNU/Linux:
-COMPONENT:perf_events.c:_papi_pe_read:1148:24625 read: 1 214777 0
-COMPONENT:perf_events.c:_papi_pe_read:1181:24625 (papi_pe_buffer[3] 0 * tot_time_enabled 214777) / tot_time_running 0 */
-	SUBDBG("perf_event kernel bug(?) count, enabled, running: %lld, %lld, %lld\n",papi_pe_buffer[count_idx],tot_time_enabled,tot_time_running);
-	pe_ctl->counts[i] = papi_pe_buffer[count_idx];
-      }
-    }
-  }
-    
-  /*
-   * FIXME comments please
-   */
-
-  if (bug_sync_read()) {
-    if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-      for ( i = 0; i < pe_ctx->num_evts; i++ )
-	if ( pe_ctx->evt[i].group_leader == i ) {
-	  /* this should refresh any overflow counters too */
-	  ret = ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
-	  if ( ret == -1 ) {
-	    /* Should never happen */
-	    PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) returned an error: ", strerror( errno ));
-	    return PAPI_ESYS;
-	  }
-	}
-    }
-  }
-
-  *events = pe_ctl->counts;
+  /* clear the context structure and mark as initialized */
+  memset( pe_ctx, 0, sizeof ( pe_context_t ) );
+  pe_ctx->initialized=1;
 
   return PAPI_OK;
 }
 
+/* Shutdown a thread */
 static int
-_papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
+_papi_pe_shutdown_thread( hwd_context_t *ctx )
 {
-	context_t *pe_ctx = ( context_t * ) ctx;
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-	int ret;
+    pe_context_t *pe_ctx = ( pe_context_t *) ctx;
 
-	ret = _papi_pe_reset( pe_ctx, pe_ctl );
-	if ( ret )
-		return ret;
-	ret = pe_enable_counters( pe_ctx, pe_ctl );
-	return ret;
+    pe_ctx->initialized=0;
+
+    return PAPI_OK;
 }
 
+
+/* reset the hardware counters */
+/* Note: PAPI_reset() does not necessarily call this */
+/* unless the events are actually running.           */
 static int
-_papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl )
+_papi_pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-	( void ) ctl;			 /*unused */
-	int ret;
-	int i;
-	context_t *pe_ctx = ( context_t * ) ctx;
+   int i, ret;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
-	/* Just disable the group leaders */
-	for ( i = 0; i < pe_ctx->num_evts; i++ )
-		if ( pe_ctx->evt[i].group_leader == i ) {
-			ret =
-				ioctl( pe_ctx->evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
-			if ( ret == -1 ) {
-				PAPIERROR
-					( "ioctl(%d, PERF_EVENT_IOC_DISABLE, NULL) returned error, Linux says: %s",
-					  pe_ctx->evt[i].event_fd, strerror( errno ) );
-				return PAPI_EBUG;
-			}
-		}
-	pe_ctx->state &= ~PERF_EVENTS_RUNNING;
+   ( void ) ctx;			 /*unused */
 
-	return PAPI_OK;
+   /* We need to reset all of the events, not just the group leaders */
+   for( i = 0; i < pe_ctl->num_events; i++ ) {
+      ret = ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+      if ( ret == -1 ) {
+	 PAPIERROR("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) "
+		   "returned error, Linux says: %s",
+		   pe_ctl->events[i].event_fd, strerror( errno ) );
+	 return PAPI_ESYS;
+      }
+   }
+
+   return PAPI_OK;
+}
+
+
+/* write (set) the hardware counters */
+/* Current we do not support this.   */
+static int
+_papi_pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
+		long long *from )
+{
+   ( void ) ctx;			 /*unused */
+   ( void ) ctl;			 /*unused */
+   ( void ) from;			 /*unused */
+   /*
+    * Counters cannot be written.  Do we need to virtualize the
+    * counters so that they can be written, or perhaps modify code so that
+    * they can be written? FIXME ?
+    */
+	
+    return PAPI_ENOSUPP;
+}
+
+/*
+ * perf_event provides a complicated read interface.
+ *  the info returned by read() varies depending on whether
+ *  you have PERF_FORMAT_GROUP, PERF_FORMAT_TOTAL_TIME_ENABLED,
+ *  PERF_FORMAT_TOTAL_TIME_RUNNING, or PERF_FORMAT_ID set
+ *
+ * To simplify things we just always ask for everything.  This might
+ * lead to overhead when reading more than we need, but it makes the
+ * read code a lot simpler than the original implementation we had here.
+ *
+ * For more info on the layout see include/linux/perf_event.h
+ *
+ */
+
+static int
+_papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+	       long long **events, int flags )
+{
+   ( void ) flags;			 /*unused */
+   int i, ret = -1;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+   long long papi_pe_buffer[READ_BUFFER_SIZE];
+   long long tot_time_running, tot_time_enabled, scale;
+
+   /* On kernels before 2.6.33 the TOTAL_TIME_ENABLED and TOTAL_TIME_RUNNING */
+   /* fields are always 0 unless the counter is disabled.  So if we are on   */
+   /* one of these kernels, then we must disable events before reading.      */
+
+   /* Elsewhere though we disable multiplexing on kernels before 2.6.34 */
+   /* so maybe this isn't even necessary.                               */
+
+   if (bug_sync_read()) {
+      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
+         for ( i = 0; i < pe_ctl->num_events; i++ ) {
+	    /* disable only the group leaders */
+	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+	       ret = ioctl( pe_ctl->events[i].event_fd, 
+			   PERF_EVENT_IOC_DISABLE, NULL );
+	       if ( ret == -1 ) {
+	          PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) "
+			   "returned an error: ", strerror( errno ));
+	          return PAPI_ESYS;
+	       }
+	    }
+	 }
+      }
+   }
+
+
+   /* Handle case where we are multiplexing */
+   if (pe_ctl->multiplexed) {
+
+      /* currently we handle multiplexing by having individual events */
+      /* so we read from each in turn.                                */
+
+      for ( i = 0; i < pe_ctl->num_events; i++ ) {
+             
+         ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
+		    sizeof ( papi_pe_buffer ) );
+         if ( ret == -1 ) {
+	    PAPIERROR("read returned an error: ", strerror( errno ));
+	    return PAPI_ESYS;
+	 }
+
+	 /* We should read 3 64-bit values from the counter */
+	 if (ret<(signed)(3*sizeof(long long))) {
+	    PAPIERROR("Error!  short read!\n");	 
+	    return PAPI_ESYS;
+	 }        
+
+         SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
+	        pe_ctl->events[i].event_fd, 
+		(long)pe_ctl->tid, pe_ctl->cpu, ret);
+         SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
+	        papi_pe_buffer[1],papi_pe_buffer[2]);
+
+         tot_time_enabled = papi_pe_buffer[1];     
+         tot_time_running = papi_pe_buffer[2];
+
+         SUBDBG("count[%d] = (papi_pe_buffer[%d] %lld * "
+		"tot_time_enabled %lld) / tot_time_running %lld\n",
+		i, 0,papi_pe_buffer[0],
+		tot_time_enabled,tot_time_running);
+    
+         if (tot_time_running == tot_time_enabled) {
+	    /* No scaling needed */
+	    pe_ctl->counts[i] = papi_pe_buffer[0];
+         } else if (tot_time_running && tot_time_enabled) {
+	    /* Scale factor of 100 to avoid overflows when computing */
+	    /*enabled/running */
+
+	    scale = (tot_time_enabled * 100LL) / tot_time_running;
+	    scale = scale * papi_pe_buffer[0];
+	    scale = scale / 100LL;
+	    pe_ctl->counts[i] = scale;
+	 } else {
+	   /* This should not happen, but Phil reports it sometime does. */
+	    SUBDBG("perf_event kernel bug(?) count, enabled, "
+		   "running: %lld, %lld, %lld\n",
+		   papi_pe_buffer[0],tot_time_enabled,
+		   tot_time_running);
+
+	    pe_ctl->counts[i] = papi_pe_buffer[0];
+	 }
+      }
+   }
+
+   /* Handle cases where we cannot use FORMAT GROUP */
+   else if (bug_format_group() || pe_ctl->inherit) {
+
+      /* we must read each counter individually */
+      for ( i = 0; i < pe_ctl->num_events; i++ ) {
+
+         ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
+		    sizeof ( papi_pe_buffer ) );
+         if ( ret == -1 ) {
+	    PAPIERROR("read returned an error: ", strerror( errno ));
+	    return PAPI_ESYS;
+	 }
+
+	 /* we should read one 64-bit value from each counter */
+	 if (ret!=sizeof(long long)) {
+	    PAPIERROR("Error!  short read!\n");
+	    PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
+		   pe_ctl->events[i].event_fd,
+		   (long)pe_ctl->tid, pe_ctl->cpu, ret);
+	    return PAPI_ESYS;
+	 }     
+
+         SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
+	        pe_ctl->events[i].event_fd, (long)pe_ctl->tid, 
+		pe_ctl->cpu, ret);
+         SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
+	        papi_pe_buffer[1],papi_pe_buffer[2]);
+     
+	 pe_ctl->counts[i] = papi_pe_buffer[0];
+      }
+   }
+
+   
+   /* Handle cases where we are using FORMAT_GROUP   */
+   /* We assume only one group leader, in position 0 */
+
+   else {
+      if (pe_ctl->events[0].group_leader_fd!=-1) {
+	 PAPIERROR("Was expecting group leader!\n");
+      }
+
+      ret = read( pe_ctl->events[0].event_fd, papi_pe_buffer, 
+		  sizeof ( papi_pe_buffer ) );
+
+      if ( ret == -1 ) {
+	 PAPIERROR("read returned an error: ", strerror( errno ));
+	 return PAPI_ESYS;
+      }
+
+      /* we read 1 64-bit value (number of events) then     */
+      /* num_events more 64-bit values that hold the counts */
+      if (ret<(signed)((1+pe_ctl->num_events)*sizeof(long long))) {
+	 PAPIERROR("Error! short read!\n");
+	 return PAPI_ESYS;
+      }
+
+      SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
+	     pe_ctl->events[i].event_fd, 
+	     (long)pe_ctl->tid, pe_ctl->cpu, ret);
+      SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
+	     papi_pe_buffer[1],papi_pe_buffer[2]);
+
+      /* Make sure the kernel agrees with how many events we have */
+      if (papi_pe_buffer[0]!=pe_ctl->num_events) {
+	 PAPIERROR("Error!  Wrong number of events!\n");
+	 return PAPI_ESYS;
+      }
+
+      /* put the count values in their proper location */
+      for(i=0;i<papi_pe_buffer[0];i++) {
+         pe_ctl->counts[i] = papi_pe_buffer[1+i];
+      }
+   }
+
+
+   /* If we disabled the counters due to the sync_read_bug(), */
+   /* then we need to re-enable them now.                     */
+   if (bug_sync_read()) {
+      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
+         for ( i = 0; i < pe_ctl->num_events; i++ ) {
+	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+	       /* this should refresh any overflow counters too */
+	       ret = ioctl( pe_ctl->events[i].event_fd, 
+			    PERF_EVENT_IOC_ENABLE, NULL );
+	       if ( ret == -1 ) {
+	          /* Should never happen */
+	          PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) returned an error: ",
+			    strerror( errno ));
+	          return PAPI_ESYS;
+	       }
+	    }
+	 }
+      }
+   }
+
+   /* point PAPI to the values we read */
+   *events = pe_ctl->counts;
+
+   return PAPI_OK;
+}
+
+/* Start counting events */
+static int
+_papi_pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
+{
+   int ret;
+   int i;
+   int did_something = 0;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+
+   /* Reset the counters first.  Is this necessary? */
+   ret = _papi_pe_reset( pe_ctx, pe_ctl );
+   if ( ret ) {
+      return ret;
+   }
+
+   /* Enable all of the group leaders                */
+   /* All group leaders have a group_leader_fd of -1 */
+   for( i = 0; i < pe_ctl->num_events; i++ ) {
+      if (pe_ctl->events[i].group_leader_fd == -1) {
+	 SUBDBG("ioctl(enable): fd: %d\n", pe_ctl->events[i].event_fd);
+	 ret=ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ; 
+
+	 /* ioctls always return -1 on failure */
+         if (ret == -1) {
+            PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+            return PAPI_ESYS;
+	 }
+
+	 did_something++;
+      } 
+   }
+
+   if (!did_something) {
+      PAPIERROR("Did not enable any counters.\n");
+      return PAPI_EBUG;
+   }
+
+   pe_ctx->state |= PERF_EVENTS_RUNNING;
+
+   return PAPI_OK;
+
+}
+
+/* Stop all of the counters */
+static int
+_papi_pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
+{
+	
+   int ret;
+   int i;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+
+   /* Just disable the group leaders */
+   for ( i = 0; i < pe_ctl->num_events; i++ ) {
+      if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+	 ret=ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
+	 if ( ret == -1 ) {
+	    PAPIERROR( "ioctl(%d, PERF_EVENT_IOC_DISABLE, NULL) "
+		       "returned error, Linux says: %s",
+		       pe_ctl->events[i].event_fd, strerror( errno ) );
+	    return PAPI_EBUG;
+	 }
+      }
+   }
+
+   pe_ctx->state &= ~PERF_EVENTS_RUNNING;
+
+   return PAPI_OK;
+}
+
+/* Initialize a new control state */
+static int
+_papi_pe_init_control_state( hwd_control_state_t *ctl )
+{
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+	
+   /* clear the contents */
+   memset( pe_ctl, 0, sizeof ( pe_control_t ) );
+   _papi_pe_set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
+
+   /* Set cpu number in the control block to show events */
+   /* are not tied to specific cpu                       */
+   pe_ctl->cpu = -1;
+   return PAPI_OK;
 }
 
 
@@ -1354,86 +1423,74 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
 			       NativeInfo_t *native,
 			       int count, hwd_context_t *ctx )
 {
-  int i = 0, ret;
-  context_t *pe_ctx = ( context_t * ) ctx;
-  control_state_t *pe_ctl = ( control_state_t * ) ctl;
+   int i = 0, ret;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
-  if ( pe_ctx->cookie != CTX_INITIALIZED ) {
-     memset( pe_ctl->events, 0,
-	     sizeof ( struct perf_event_attr ) * PERF_EVENT_MAX_MPX_COUNTERS );
-     memset( pe_ctx, 0, sizeof ( context_t ) );
-     pe_ctx->cookie = CTX_INITIALIZED;
-  } else {
-     /* close all of the existing fds and start over again */
-     close_pe_evts( pe_ctx );
-  }
+   /* close all of the existing fds and start over again */
+   /* In theory we could have finer-grained control and know if             */
+   /* things were changed, but it's easier to tear things down and rebuild. */
+   close_pe_events( pe_ctx, pe_ctl );
 
-  if ( count == 0 ) {
-     SUBDBG( "Called with count == 0\n" );
-     return PAPI_OK;
-  }
+   /* Calling with count==0 should be OK, it's how things are deallocated */
+   /* when an eventset is destroyed.                                      */
+   if ( count == 0 ) {
+      SUBDBG( "Called with count == 0\n" );
+      return PAPI_OK;
+   }
 
+   /* set up all the events */
+   for( i = 0; i < count; i++ ) {
+      if ( native ) {
+	 /* Have libpfm4 set the config values for the event */
+	 ret=_papi_libpfm4_setup_counters(&pe_ctl->events[i].attr,
+					 native[i].ni_event);
+	 SUBDBG( "pe_ctl->eventss[%d].config=%"PRIx64"\n",i,
+		 pe_ctl->events[i].attr.config);
+	 if (ret!=PAPI_OK) return ret;
 
-  for( i = 0; i < count; i++ ) {
-     if ( native ) {
-	ret=_papi_libpfm4_setup_counters(&pe_ctl->events[i],
-					native[i].ni_event);
-	SUBDBG( "pe_ctl->events[%d].config=%"PRIx64"\n",i,
-		pe_ctl->events[i].config);
-	if (ret!=PAPI_OK) return ret;
+      } else {
+	  /* I'm not sure how we'd end up in this case */
+          /* should it be an error?                    */
+      }
 
-     } else {
-	/* Assume the native events codes are already initialized */
-     }
+      /* Copy the inherit flag into the attribute block that will be   */
+      /* passed to the kernel */
+      pe_ctl->events[i].attr.inherit = pe_ctl->inherit;
 
-     /* Leave the disabling for when we know which
-	events are the group leaders.  We only disable group leaders. */
-     if (pe_ctx->evt[i].event_fd != -1) {
-	pe_ctl->events[i].disabled = 0;
-     }
+      /* Set the position in the native structure */
+      /* We just set up events linearly           */
+      if ( native ) {
+	 native[i].ni_position = i;
+      }
+   }
 
-     /* Copy the inherit flag into the attribute block that will be   */
-     /* passed to the kernel */
-     pe_ctl->events[i].inherit = pe_ctl->inherit;
+   pe_ctl->num_events = count;
+   _papi_pe_set_domain( ctl, pe_ctl->domain );
 
-     /* Only the group leader's pinned field must be set to 1.  It's an
-      * error for any other event in the group to have its pinned value
-      * set to 1. */
-     pe_ctl->events[i].pinned = ( i == 0 ) && !( pe_ctl->multiplexed );
+   /* actuall open the events */
+   /* (why is this a separate function?) */
+   ret = open_pe_events( pe_ctx, pe_ctl );
+   if ( ret != PAPI_OK ) {
+      SUBDBG("open_pe_events failed\n");
+      /* Restore values ? */
+      return ret;
+   }
 
-     /* set the correct read format, based on kernel version and options 
-        that are set */
-     pe_ctl->events[i].read_format = get_read_format(pe_ctl->multiplexed, 
-						     pe_ctl->inherit, 0);
-
-     if ( native ) {
-	native[i].ni_position = i;
-     }
-  }
-
-  pe_ctl->num_events = count;
-  _papi_pe_set_domain( ctl, pe_ctl->domain );
-
-  ret = open_pe_evts( pe_ctx, pe_ctl );
-  if ( ret != PAPI_OK ) {
-     SUBDBG("open_pe_evts failed\n");
-     /* Restore values ? */
-     return ret;
-  }
-
-  return PAPI_OK;
+   return PAPI_OK;
 }
 
+/* Set various options on a control state */
 static int
 _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
    int ret;
-   context_t *pe_ctx = ( context_t * ) ctx;
-   control_state_t *pe_ctl = NULL;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = NULL;
 
    switch ( code ) {
       case PAPI_MULTIPLEX:
-	   pe_ctl = ( control_state_t * ) ( option->multiplex.ESI->ctl_state );
+	   pe_ctl = ( pe_control_t * ) ( option->multiplex.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
 				  1, pe_ctl->inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
@@ -1449,37 +1506,48 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	   return ret;
 	
       case PAPI_ATTACH:
-	   pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
+	   pe_ctl = ( pe_control_t * ) ( option->attach.ESI->ctl_state );
 	   if (check_permissions( option->attach.tid, pe_ctl->cpu, 
 				  pe_ctl->domain, pe_ctl->multiplexed, 
 				  pe_ctl->inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
 	   }
-	   ret = attach( pe_ctl, option->attach.tid );
-	   if (ret == PAPI_OK) {
-	      /* If events have been already been added, something may */
-	      /* have been done to the kernel, so update */
-	      ret = _papi_pe_update_control_state( pe_ctl, NULL, 
-						   pe_ctl->num_events, pe_ctx);
-	   }
+
+	   pe_ctl->tid = option->attach.tid;
+
+	   /* If events have been already been added, something may */
+	   /* have been done to the kernel, so update */
+	   ret = _papi_pe_update_control_state( pe_ctl, NULL, 
+						pe_ctl->num_events, pe_ctx);
+	   
 	   return ret;
 
       case PAPI_DETACH:
-	   pe_ctl = ( control_state_t * ) ( option->attach.ESI->ctl_state );
-	   return detach( pe_ctx, pe_ctl );
+	   pe_ctl = ( pe_control_t *) ( option->attach.ESI->ctl_state );
+
+	   pe_ctl->tid = 0;
+	   return PAPI_OK;
 
       case PAPI_CPU_ATTACH:
-	   pe_ctl = ( control_state_t * ) ( option->cpu.ESI->ctl_state );
+	   pe_ctl = ( pe_control_t *) ( option->cpu.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, 
 				  pe_ctl->domain, pe_ctl->multiplexed, 
 				  pe_ctl->inherit ) != PAPI_OK) {
 	       return PAPI_EPERM;
 	   }
 	   /* looks like we are allowed so set cpu number */
-	   return set_cpu( pe_ctl, option->cpu.cpu_num );
+
+	   /* this tells the kernel not to count for a thread   */
+	   /* should we warn if we try to set both?  perf_event */
+	   /* will reject it.                                   */
+	   pe_ctl->tid = -1;      
+
+	   pe_ctl->cpu = option->cpu.cpu_num;
+
+	   return PAPI_OK;
 
       case PAPI_DOMAIN:
-	   pe_ctl = ( control_state_t * ) ( option->domain.ESI->ctl_state );
+	   pe_ctl = ( pe_control_t *) ( option->domain.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, 
 				  option->domain.domain, pe_ctl->multiplexed,
 				  pe_ctl->inherit ) != PAPI_OK) {
@@ -1489,11 +1557,28 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	   return _papi_pe_set_domain( pe_ctl, option->domain.domain );
 
       case PAPI_GRANUL:
-	   pe_ctl = (control_state_t *) ( option->granularity.ESI->ctl_state );
-	   return set_granularity( pe_ctl, option->granularity.granularity );
+	   pe_ctl = (pe_control_t *) ( option->granularity.ESI->ctl_state );
+
+	   /* FIXME: we really don't support this yet */
+
+           switch ( option->granularity.granularity  ) {
+              case PAPI_GRN_PROCG:
+              case PAPI_GRN_SYS:
+              case PAPI_GRN_SYS_CPU:
+              case PAPI_GRN_PROC:
+		   return PAPI_ECMP;
+     
+	      /* Currently we only support thread granularity */
+              case PAPI_GRN_THR:
+		   break;
+
+              default:
+		   return PAPI_EINVAL;
+	   }
+           return PAPI_OK;
 
       case PAPI_INHERIT:
-	   pe_ctl = ( control_state_t * ) ( option->inherit.ESI->ctl_state );
+	   pe_ctl = (pe_control_t *) ( option->inherit.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
 				  pe_ctl->multiplexed, 
 				  option->inherit.inherit ) != PAPI_OK) {
@@ -1512,7 +1597,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_DATA_ADDRESS:
 	   return PAPI_ENOSUPP;
 #if 0
-	   pe_ctl = (control_state_t *) (option->address_range.ESI->ctl_state);
+	   pe_ctl = (pe_control_t *) (option->address_range.ESI->ctl_state);
 	   ret = set_default_domain( pe_ctl, option->address_range.domain );
 	   if ( ret != PAPI_OK ) {
 	      return ret;
@@ -1523,7 +1608,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_INSTR_ADDRESS:
 	   return PAPI_ENOSUPP;
 #if 0
-	   pe_ctl = (control_state_t *) (option->address_range.ESI->ctl_state);
+	   pe_ctl = (pe_control_t *) (option->address_range.ESI->ctl_state);
 	   ret = set_default_domain( pe_ctl, option->address_range.domain );
 	   if ( ret != PAPI_OK ) {
 	      return ret;
@@ -1553,205 +1638,6 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-
-static int
-_papi_pe_shutdown_thread( hwd_context_t * ctx )
-{
-	context_t *pe_ctx = ( context_t * ) ctx;
-	int ret;
-
-	ret = close_pe_evts( pe_ctx );
-
-	pe_ctx->cookie=0x0;
-
-	return ret;
-}
-
-
-
-
-#define BPL (sizeof(uint64_t)<<3)
-#define LBPL	6
-static inline void
-pfm_bv_set( uint64_t * bv, uint16_t rnum )
-{
-	bv[rnum >> LBPL] |= 1UL << ( rnum & ( BPL - 1 ) );
-}
-
-static inline int
-find_profile_index( EventSetInfo_t * ESI, int evt_idx, int *flags,
-					unsigned int *native_index, int *profile_index )
-{
-	int pos, esi_index, count;
-
-	for ( count = 0; count < ESI->profile.event_counter; count++ ) {
-		esi_index = ESI->profile.EventIndex[count];
-		pos = ESI->EventInfoArray[esi_index].pos[0];
-		// PMU_FIRST_COUNTER
-		if ( pos == evt_idx ) {
-			*profile_index = count;
-			*native_index =
-				ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
-			*flags = ESI->profile.flags;
-			SUBDBG( "Native event %d is at profile index %d, flags %d\n",
-					*native_index, *profile_index, *flags );
-			return ( PAPI_OK );
-		}
-	}
-
-	PAPIERROR( "wrong count: %d vs. ESI->profile.event_counter %d", count,
-			   ESI->profile.event_counter );
-	return ( PAPI_EBUG );
-}
-
-/*
- * These functions were shamelessly stolen from builtin-record.c in the
- * kernel's tools/perf directory and then hacked up.
- */
-
-static uint64_t
-mmap_read_head( evt_t * pe )
-{
-	struct perf_event_mmap_page *pc = pe->mmap_buf;
-	int head;
-
-	if ( pc == NULL ) {
-		PAPIERROR( "perf_event_mmap_page is NULL" );
-		return 0;
-	}
-
-	head = pc->data_head;
-	rmb(  );
-
-	return head;
-}
-
-static void
-mmap_write_tail( evt_t * pe, uint64_t tail )
-{
-	struct perf_event_mmap_page *pc = pe->mmap_buf;
-
-	/*
-	 * ensure all reads are done before we write the tail out.
-	 */
-	mb(  );
-	pc->data_tail = tail;
-}
-
-static void
-mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
-{
-	( void ) evt_index;		 /*unused */
-	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
-	uint64_t head = mmap_read_head( pe );
-	uint64_t old = pe->tail;
-	unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
-	int diff;
-
-	diff = head - old;
-	if ( diff < 0 ) {
-		SUBDBG( "WARNING: failed to keep up with mmap data. head = %" PRIu64
-				",  tail = %" PRIu64 ". Discarding samples.\n", head, old );
-		/*
-		 * head points to a known good entry, start there.
-		 */
-		old = head;
-	}
-
-	for ( ; old != head; ) {
-		struct ip_event
-		{
-			struct perf_event_header header;
-			uint64_t ip;
-		};
-		struct lost_event
-		{
-			struct perf_event_header header;
-			uint64_t id;
-			uint64_t lost;
-		};
-		typedef union event_union
-		{
-			struct perf_event_header header;
-			struct ip_event ip;
-			struct lost_event lost;
-		} event_t;
-
-		event_t *event = ( event_t * ) & data[old & pe->mask];
-
-		event_t event_copy;
-
-		size_t size = event->header.size;
-
-
-		/*
-		 * Event straddles the mmap boundary -- header should always
-		 * be inside due to u64 alignment of output.
-		 */
-		if ( ( old & pe->mask ) + size != ( ( old + size ) & pe->mask ) ) {
-			uint64_t offset = old;
-			uint64_t len = min( sizeof ( *event ), size ), cpy;
-			void *dst = &event_copy;
-
-			do {
-				cpy = min( pe->mask + 1 - ( offset & pe->mask ), len );
-				memcpy( dst, &data[offset & pe->mask], cpy );
-				offset += cpy;
-				dst = ((unsigned char*)dst) + cpy;
-				len -= cpy;
-			}
-			while ( len );
-
-			event = &event_copy;
-		}
-
-		old += size;
-
-	        SUBDBG( "event->type = %08x\n", event->header.type );
-	        SUBDBG( "event->size = %d\n", event->header.size );
-
-		switch ( event->header.type ) {
-		case PERF_RECORD_SAMPLE:
-			_papi_hwi_dispatch_profile( ( *thr )->running_eventset[cidx],
-										( caddr_t ) ( unsigned long ) event->ip.
-										ip, 0, profile_index );
-			break;
-		case PERF_RECORD_LOST:
-			SUBDBG( "Warning: because of a mmap buffer overrun, %" PRId64
-					" events were lost.\nLoss was recorded when counter id 0x%"
-					PRIx64 " overflowed.\n", event->lost.lost, event->lost.id );
-			break;
-		default:
-			SUBDBG( "Error: unexpected header type - %d\n",
-					event->header.type );
-			break;
-		}
-	}
-
-	pe->tail = old;
-	mmap_write_tail( pe, old );
-}
-
-
-static inline int
-process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
-{
-	int ret, flags, profile_index;
-	unsigned native_index;
-	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
-
-	ret =
-		find_profile_index( ( *thr )->running_eventset[cidx], evt_idx, &flags,
-							&native_index, &profile_index );
-	if ( ret != PAPI_OK )
-		return ( ret );
-
-	mmap_read( thr, &( ( context_t * ) ( *thr )->context[cidx] )->evt[evt_idx],
-			   evt_idx, profile_index );
-
-	return ( PAPI_OK );
-}
-
 /*
  * This function is used when hardware overflows are working or when
  * software overflows are forced
@@ -1760,339 +1646,326 @@ process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
 static void
 _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 {
-	( void ) n;				 /*unused */
-	_papi_hwi_context_t ctx;
-	int found_evt_idx = -1, fd = info->si_fd;
-	caddr_t address;
-	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
-	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
-	int i;
+   ( void ) n;				 /*unused */
+   _papi_hwi_context_t hw_context;
+   int found_evt_idx = -1, fd = info->si_fd;
+   caddr_t address;
+   ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
+   int cidx = _papi_pe_vector.cmp_info.CmpIdx;
+   int i;
+   pe_control_t *ctl;
 
-	if ( thread == NULL ) {
-		PAPIERROR( "thread == NULL in _papi_pe_dispatch_timer for fd %d!", fd );
-		return;
-	}
+   /* convoluted way to get ctl */
+   ctl= thread->running_eventset[cidx]->ctl_state;
 
-	if ( thread->running_eventset[cidx] == NULL ) {
-		PAPIERROR
-			( "thread->running_eventset == NULL in _papi_pe_dispatch_timer for fd %d!",
-			  fd );
-		return;
-	}
+   if ( thread == NULL ) {
+      PAPIERROR( "thread == NULL in _papi_pe_dispatch_timer for fd %d!", fd );
+      return;
+   }
 
-	if ( thread->running_eventset[cidx]->overflow.flags == 0 ) {
-		PAPIERROR
-			( "thread->running_eventset->overflow.flags == 0 in _papi_pe_dispatch_timer for fd %d!",
-			  fd );
-		return;
-	}
+   if ( thread->running_eventset[cidx] == NULL ) {
+      PAPIERROR( "thread->running_eventset == NULL in "
+		 "_papi_pe_dispatch_timer for fd %d!",fd );
+      return;
+   }
+
+   if ( thread->running_eventset[cidx]->overflow.flags == 0 ) {
+      PAPIERROR( "thread->running_eventset->overflow.flags == 0 in "
+		 "_papi_pe_dispatch_timer for fd %d!", fd );
+      return;
+   }
 	
-	ctx.si = info;
-	ctx.ucontext = ( hwd_ucontext_t * ) uc;
+   hw_context.si = info;
+   hw_context.ucontext = ( hwd_ucontext_t * ) uc;
 
-	if ( thread->running_eventset[cidx]->overflow.flags & 
-	     PAPI_OVERFLOW_FORCE_SW ) {
-		address = GET_OVERFLOW_ADDRESS( ctx );
-		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL, 0,
-						    0, &thread, cidx );
-	   return;
-	}
-	if ( thread->running_eventset[cidx]->overflow.flags !=
+   if ( thread->running_eventset[cidx]->overflow.flags & 
+	PAPI_OVERFLOW_FORCE_SW ) {
+      address = GET_OVERFLOW_ADDRESS( hw_context );
+      _papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context, 
+					  address, NULL, 0,
+					  0, &thread, cidx );
+      return;
+   }
+
+   if ( thread->running_eventset[cidx]->overflow.flags !=
 		 PAPI_OVERFLOW_HARDWARE ) {
-		PAPIERROR
-			( "thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
-			  fd , thread->running_eventset[cidx]->overflow.flags);
-	}
+      PAPIERROR( "thread->running_eventset->overflow.flags is set to "
+		 "something other than PAPI_OVERFLOW_HARDWARE or "
+		 "PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
+		 fd , thread->running_eventset[cidx]->overflow.flags);
+   }
 
-        /* See if the fd is one that's part of the this thread's context */
-	for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts; i++ ) {
-	    if ( fd == ( ( context_t * ) thread->context[cidx] )->evt[i].event_fd ) {
-	       found_evt_idx = i;
-	       break;
-	    }
-	}
+   /* See if the fd is one that's part of the this thread's context */
+   for( i=0; i < ctl->num_events; i++ ) {
+      if ( fd == ctl->events[i].event_fd ) {
+	 found_evt_idx = i;
+	 break;
+      }
+   }
 
-        if ( found_evt_idx == -1 ) {
-	   PAPIERROR( "Unable to find fd %d among the open event fds "
-		      "_papi_hwi_dispatch_timer!", fd );
-	   return;
-	}
+   if ( found_evt_idx == -1 ) {
+      PAPIERROR( "Unable to find fd %d among the open event fds "
+		 "_papi_hwi_dispatch_timer!", fd );
+      return;
+   }
 	
-	ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL );
+   ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL );
 
-	if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING )
-		 && !( thread->running_eventset[cidx]->profile.
-			   flags & PAPI_PROFIL_FORCE_SW ) )
-		process_smpl_buf( found_evt_idx, &thread );
-	else {
-		uint64_t ip;
-		unsigned int head;
-		evt_t *pe =
-			&( ( context_t * ) thread->context[cidx] )->evt[found_evt_idx];
+   if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) && 
+	!( thread->running_eventset[cidx]->profile.flags & 
+	   PAPI_PROFIL_FORCE_SW ) ) {
+      process_smpl_buf( found_evt_idx, &thread );
+   }
+   else {
+      uint64_t ip;
+      unsigned int head;
+      pe_event_info_t *pe = &(ctl->events[found_evt_idx]);
+      unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
 
-		unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize(  );
+      /*
+       * Read up the most recent IP from the sample in the mmap buffer.  To
+       * do this, we make the assumption that all of the records in the
+       * mmap buffer are the same size, and that they all contain the IP as
+       * their only record element.  This means that we can use the
+       * data_head element from the user page and move backward one record
+       * from that point and read the data.  Since we don't actually need
+       * to access the header of the record, we can just subtract 8 (size
+       * of the IP) from data_head and read up that word from the mmap
+       * buffer.  After we subtract 8, we account for mmap buffer wrapping
+       * by AND'ing this offset with the buffer mask.
+       */
+      head = mmap_read_head( pe );
 
-		/*
-		 * Read up the most recent IP from the sample in the mmap buffer.  To
-		 * do this, we make the assumption that all of the records in the
-		 * mmap buffer are the same size, and that they all contain the IP as
-		 * their only record element.  This means that we can use the
-		 * data_head element from the user page and move backward one record
-		 * from that point and read the data.  Since we don't actually need
-		 * to access the header of the record, we can just subtract 8 (size
-		 * of the IP) from data_head and read up that word from the mmap
-		 * buffer.  After we subtract 8, we account for mmap buffer wrapping
-		 * by AND'ing this offset with the buffer mask.
-		 */
-		head = mmap_read_head( pe );
+      if ( head == 0 ) {
+	 PAPIERROR( "Attempting to access memory which may be inaccessable" );
+	 return;
+      }
 
-		if ( head == 0 ) {
-			PAPIERROR
-				( "Attempting to access memory which may be inaccessable" );
-			return;
-		}
+      ip = *( uint64_t * ) ( data + ( ( head - 8 ) & pe->mask ) );
+      /*
+       * Update the tail to the current head pointer. 
+       *
+       * Note: that if we were to read the record at the tail pointer,
+       * rather than the one at the head (as you might otherwise think
+       * would be natural), we could run into problems.  Signals don't
+       * stack well on Linux, particularly if not using RT signals, and if
+       * they come in rapidly enough, we can lose some.  Overtime, the head
+       * could catch up to the tail and monitoring would be stopped, and
+       * since no more signals are coming in, this problem will never be
+       * resolved, resulting in a complete loss of overflow notification
+       * from that point on.  So the solution we use here will result in
+       * only the most recent IP value being read every time there are two
+       * or more samples in the buffer (for that one overflow signal).  But
+       * the handler will always bring up the tail, so the head should
+       * never run into the tail.
+       */
+      mmap_write_tail( pe, head );
 
-		ip = *( uint64_t * ) ( data + ( ( head - 8 ) & pe->mask ) );
-		/*
-		 * Update the tail to the current head pointer. 
-		 *
-		 * Note: that if we were to read the record at the tail pointer,
-		 * rather than the one at the head (as you might otherwise think
-		 * would be natural), we could run into problems.  Signals don't
-		 * stack well on Linux, particularly if not using RT signals, and if
-		 * they come in rapidly enough, we can lose some.  Overtime, the head
-		 * could catch up to the tail and monitoring would be stopped, and
-		 * since no more signals are coming in, this problem will never be
-		 * resolved, resulting in a complete loss of overflow notification
-		 * from that point on.  So the solution we use here will result in
-		 * only the most recent IP value being read every time there are two
-		 * or more samples in the buffer (for that one overflow signal).  But
-		 * the handler will always bring up the tail, so the head should
-		 * never run into the tail.
-		 */
-		mmap_write_tail( pe, head );
+      /*
+       * The fourth parameter is supposed to be a vector of bits indicating
+       * the overflowed hardware counters, but it's not really clear that
+       * it's useful, because the actual hardware counters used are not
+       * exposed to the PAPI user.  For now, I'm just going to set the bit
+       * that indicates which event register in the array overflowed.  The
+       * result is that the overflow vector will not be identical to the
+       * perfmon implementation, and part of that is due to the fact that
+       * which hardware register is actually being used is opaque at the
+       * user level (the kernel event dispatcher hides that info).
+       */
 
-		/*
-		 * The fourth parameter is supposed to be a vector of bits indicating
-		 * the overflowed hardware counters, but it's not really clear that
-		 * it's useful, because the actual hardware counters used are not
-		 * exposed to the PAPI user.  For now, I'm just going to set the bit
-		 * that indicates which event register in the array overflowed.  The
-		 * result is that the overflow vector will not be identical to the
-		 * perfmon implementation, and part of that is due to the fact that
-		 * which hardware register is actually being used is opaque at the
-		 * user level (the kernel event dispatcher hides that info).
-		 */
+      _papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context,
+					  ( caddr_t ) ( unsigned long ) ip,
+					  NULL, ( 1 << found_evt_idx ), 0,
+					  &thread, cidx );
 
-		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx,
-											( caddr_t ) ( unsigned long ) ip,
-											NULL, ( 1 << found_evt_idx ), 0,
-											&thread, cidx );
+   }
 
-	}
-
-	/* Restart the counters */
-	if (ioctl( fd, PERF_EVENT_IOC_REFRESH, 1 ) == -1)
-			PAPIERROR( "overflow refresh failed", 0 );
+   /* Restart the counters */
+   if (ioctl( fd, PERF_EVENT_IOC_REFRESH, 1 ) == -1) {
+      PAPIERROR( "overflow refresh failed", 0 );
+   }
 }
 
+/* Stop profiling */
 static int
-_papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
+_papi_pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 {
-	( void ) ESI;			 /*unused */
-	int i, ret = PAPI_OK;
-	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
+   int i, ret = PAPI_OK;
+   pe_control_t *ctl;
 
-	/*
-	 * Loop through all of the events and process those which have mmap
-	 * buffers attached.
-	 */
-	for ( i = 0; i < ( ( context_t * ) thread->context[cidx] )->num_evts; i++ ) {
-		/*
-		 * Use the mmap_buf field as an indicator of this fd being used for
-		 * profiling
-		 */
-		if ( ( ( context_t * ) thread->context[cidx] )->evt[i].mmap_buf ) {
-			/* Process any remaining samples in the sample buffer */
-			ret = process_smpl_buf( i, &thread );
-			if ( ret ) {
-				PAPIERROR( "process_smpl_buf returned error %d", ret );
-				return ret;
-			}
-		}
-	}
-	return ret;
+   ctl=ESI->ctl_state;
+
+   /* Loop through all of the events and process those which have mmap */
+   /* buffers attached.                                                */
+   for ( i = 0; i < ctl->num_events; i++ ) {
+      /* Use the mmap_buf field as an indicator of this fd being used for */
+      /* profiling.                                                       */
+      if ( ctl->events[i].mmap_buf ) {
+	 /* Process any remaining samples in the sample buffer */
+	 ret = process_smpl_buf( i, &thread );
+	 if ( ret ) {
+	    PAPIERROR( "process_smpl_buf returned error %d", ret );
+	    return ret;
+	 }
+      }
+   }
+   return ret;
 }
 
 
+/* Setup an event to cause overflow */
 static int
-_papi_pe_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
+_papi_pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
-	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
-	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
-	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
-	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
+   int cidx = _papi_pe_vector.cmp_info.CmpIdx;
+   pe_context_t *ctx = ( pe_context_t *) ( ESI->master->context[cidx] );
+   pe_control_t *ctl = (pe_control_t *) ( ESI->ctl_state );
+   int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
 
-	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
+   evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
-	SUBDBG("Attempting to set overflow for index %d (%d) of EventSet %d\n",
-	       evt_idx,EventIndex,ESI->EventSetIndex);
+   SUBDBG("Attempting to set overflow for index %d (%d) of EventSet %d\n",
+	  evt_idx,EventIndex,ESI->EventSetIndex);
 
-	if (evt_idx<0) {
-	   return PAPI_EINVAL;
-	}
+   if (evt_idx<0) {
+      return PAPI_EINVAL;
+   }
 
-	if ( threshold == 0 ) {
-		/* If this counter isn't set to overflow, it's an error */
-		if ( ctl->events[evt_idx].sample_period == 0 )
-			return PAPI_EINVAL;
-	}
+   if ( threshold == 0 ) {
+      /* If this counter isn't set to overflow, it's an error */
+      if ( ctl->events[evt_idx].attr.sample_period == 0 ) return PAPI_EINVAL;
+   }
 
-	ctl->events[evt_idx].sample_period = threshold;
+   ctl->events[evt_idx].attr.sample_period = threshold;
 
-	/*
-	 * Note that the wakeup_mode field initially will be set to zero
-	 * (WAKEUP_MODE_COUNTER_OVERFLOW) as a result of a call to memset 0 to
-	 * all of the events in the ctl struct.
-	 */
-	switch ( ctl->per_event_info[evt_idx].wakeup_mode ) {
+   /*
+    * Note that the wakeup_mode field initially will be set to zero
+    * (WAKEUP_MODE_COUNTER_OVERFLOW) as a result of a call to memset 0 to
+    * all of the events in the ctl struct.
+    *
+    * Is it even set to any other value elsewhere?
+    */
+   switch ( ctl->events[evt_idx].wakeup_mode ) {
 	case WAKEUP_MODE_PROFILING:
-		/*
-		 * Setting wakeup_events to special value zero means issue a wakeup
-		 * (signal) on every mmap page overflow.
-		 */
-		ctl->events[evt_idx].wakeup_events = 0;
-		break;
+	     /* Setting wakeup_events to special value zero means issue a */
+	     /* wakeup (signal) on every mmap page overflow.              */
+	     ctl->events[evt_idx].attr.wakeup_events = 0;
+	     break;
+
 	case WAKEUP_MODE_COUNTER_OVERFLOW:
-		/*
-		 * Setting wakeup_events to one means issue a wakeup on every counter
-		 * overflow (not mmap page overflow).
-		 */
-		ctl->events[evt_idx].wakeup_events = 1;
-		/* We need the IP to pass to the overflow handler */
-		ctl->events[evt_idx].sample_type = PERF_SAMPLE_IP;
-		/* one for the user page, and two to take IP samples */
-		ctx->evt[evt_idx].nr_mmap_pages = 1 + 2;
-		break;
+	     /* Can this code ever be called? */
+
+	     /* Setting wakeup_events to one means issue a wakeup on every */
+             /* counter overflow (not mmap page overflow).                 */
+	     ctl->events[evt_idx].attr.wakeup_events = 1;
+	     /* We need the IP to pass to the overflow handler */
+	     ctl->events[evt_idx].attr.sample_type = PERF_SAMPLE_IP;
+	     /* one for the user page, and two to take IP samples */
+	     ctl->events[evt_idx].nr_mmap_pages = 1 + 2;
+	     break;
 	default:
-		PAPIERROR
-			( "ctl->per_event_info[%d].wakeup_mode set to an unknown value - %u",
-			  evt_idx, ctl->per_event_info[evt_idx].wakeup_mode );
-		return PAPI_EBUG;
-	}
+	     PAPIERROR( "ctl->wakeup_mode[%d] set to an unknown value - %u",
+			 evt_idx, ctl->events[evt_idx].wakeup_mode);
+	     return PAPI_EBUG;
+   }
 
-	for ( i = 0; i < ctl->num_events; i++ ) {
-		if ( ctl->events[evt_idx].sample_period ) {
-			found_non_zero_sample_period = 1;
-			break;
-		}
-	}
-	if ( found_non_zero_sample_period ) {
-		/* turn on internal overflow flag for this event set */
-		ctl->overflow = 1;
+   /* Check for non-zero sample period */
+   for ( i = 0; i < ctl->num_events; i++ ) {
+      if ( ctl->events[evt_idx].attr.sample_period ) {
+	 found_non_zero_sample_period = 1;
+	 break;
+      }
+   }
+
+   if ( found_non_zero_sample_period ) {
+      /* turn on internal overflow flag for this event set */
+      ctl->overflow = 1;
 		
-		/* Enable the signal handler */
-		retval =
-			_papi_hwi_start_signal( _papi_pe_vector.cmp_info.hardware_intr_sig, 1,
-									_papi_pe_vector.cmp_info.CmpIdx );
-	} else {
-		/* turn off internal overflow flag for this event set */
-		ctl->overflow = 0;
+      /* Enable the signal handler */
+      retval = _papi_hwi_start_signal( 
+				  _papi_pe_vector.cmp_info.hardware_intr_sig, 
+				  1, _papi_pe_vector.cmp_info.CmpIdx );
+   } else {
+      /* turn off internal overflow flag for this event set */
+      ctl->overflow = 0;
 		
-		/*
-		 * Remove the signal handler, if there are no remaining non-zero
-		 * sample_periods set
-		 */
-		retval = _papi_hwi_stop_signal( _papi_pe_vector.cmp_info.hardware_intr_sig );
-		if ( retval != PAPI_OK )
-			return retval;
-	}
-	retval =
-		_papi_pe_update_control_state( ctl, NULL,
-									   ( ( control_state_t * ) ( ESI->
-																 ctl_state ) )->
-									   num_events, ctx );
+      /* Remove the signal handler, if there are no remaining non-zero */
+      /* sample_periods set                                            */
+      retval = _papi_hwi_stop_signal( 
+				 _papi_pe_vector.cmp_info.hardware_intr_sig );
+      if ( retval != PAPI_OK ) return retval;
+   }
+	
+   retval = _papi_pe_update_control_state( ctl, NULL,
+			    ( (pe_control_t *) (ESI->ctl_state) )->num_events,
+					   ctx );
 
-	return retval;
+   return retval;
 }
 
-
-
+/* Enable profiling */
 static int
-_papi_pe_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
+_papi_pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
-	int ret;
-	int evt_idx;
-	int cidx = _papi_pe_vector.cmp_info.CmpIdx;
-	context_t *ctx = ( context_t * ) ( ESI->master->context[cidx] );
-	control_state_t *ctl = ( control_state_t * ) ( ESI->ctl_state );
+   int ret;
+   int evt_idx;
+   pe_control_t *ctl = ( pe_control_t *) ( ESI->ctl_state );
 
-	/*
-	 * Since you can't profile on a derived event, the event is always the
-	 * first and only event in the native event list.
-	 */
-	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
+   /* Since you can't profile on a derived event, the event is always the */
+   /* first and only event in the native event list.                      */
+   evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
-	if ( threshold == 0 ) {
-		SUBDBG( "MUNMAP(%p,%"PRIu64")\n", ctx->evt[evt_idx].mmap_buf,
-				( uint64_t ) ctx->evt[evt_idx].nr_mmap_pages *
-				getpagesize(  ) );
+   if ( threshold == 0 ) {
+      SUBDBG( "MUNMAP(%p,%"PRIu64")\n", ctl->events[evt_idx].mmap_buf,
+	      ( uint64_t ) ctl->events[evt_idx].nr_mmap_pages *
+	      getpagesize(  ) );
 
-		if ( ctx->evt[evt_idx].mmap_buf ) {
-			munmap( ctx->evt[evt_idx].mmap_buf,
-					ctx->evt[evt_idx].nr_mmap_pages * getpagesize(  ) );
-		}
+      if ( ctl->events[evt_idx].mmap_buf ) {
+	 munmap( ctl->events[evt_idx].mmap_buf,
+		 ctl->events[evt_idx].nr_mmap_pages * getpagesize() );
+      }
 
-		ctx->evt[evt_idx].mmap_buf = NULL;
-		ctx->evt[evt_idx].nr_mmap_pages = 0;
-		ctl->events[evt_idx].sample_type &= ~PERF_SAMPLE_IP;
-		ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
-// #warning "This should be handled somewhere else"
-		ESI->state &= ~( PAPI_OVERFLOWING );
-		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
+      ctl->events[evt_idx].mmap_buf = NULL;
+      ctl->events[evt_idx].nr_mmap_pages = 0;
+      ctl->events[evt_idx].attr.sample_type &= ~PERF_SAMPLE_IP;
+      ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
+      /* ??? #warning "This should be handled somewhere else" */
+      ESI->state &= ~( PAPI_OVERFLOWING );
+      ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
 
-		return ( ret );
-	}
+      return ret;
+   }
 
-	/* Look up the native event code */
-	if ( ESI->profile.flags & ( PAPI_PROFIL_DATA_EAR | PAPI_PROFIL_INST_EAR ) ) {
-		/*
-		 * These are NYI x86-specific features.  FIXME
-		 */
-		return PAPI_ENOSUPP;
-	}
+   /* Look up the native event code */
+   if ( ESI->profile.flags & (PAPI_PROFIL_DATA_EAR | PAPI_PROFIL_INST_EAR)) {
+      /* Not supported yet... */
 
-	if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
-		/*
-		 * This requires an ability to randomly alter the sample_period within a
-		 * given range.  Kernel does not have this ability. FIXME ?
-		 */
-		return PAPI_ENOSUPP;
-	}
+      return PAPI_ENOSUPP;
+   }
 
-	ctx->evt[evt_idx].nr_mmap_pages = NR_MMAP_PAGES;
-	ctl->events[evt_idx].sample_type |= PERF_SAMPLE_IP;
+   if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
+      /* This requires an ability to randomly alter the sample_period within */
+      /* a given range.  Kernel does not have this ability. FIXME            */
+      return PAPI_ENOSUPP;
+   }
 
-	ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
-	if ( ret != PAPI_OK )
-		return ret;
+   /* Just a guess at how many pages would make this relatively efficient.  */
+   /* Note that it's "1 +" because of the need for a control page, and the  */
+   /* number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or   */
+   /* zero.  This is required to optimize dealing with circular buffer      */
+   /* wrapping of the mapped pages.                                         */
 
-	return PAPI_OK;
+   ctl->events[evt_idx].nr_mmap_pages = (1+8);
+   ctl->events[evt_idx].attr.sample_type |= PERF_SAMPLE_IP;
+
+   ret = _papi_pe_set_overflow( ESI, EventIndex, threshold );
+   if ( ret != PAPI_OK ) return ret;
+
+   return PAPI_OK;
 }
 
 
-static int
-_papi_pe_init_control_state( hwd_control_state_t * ctl )
-{
-	control_state_t *pe_ctl = ( control_state_t * ) ctl;
-	memset( pe_ctl, 0, sizeof ( control_state_t ) );
-	_papi_pe_set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
-	/* Set cpu number in the control block to show events are not tied to specific cpu */
-	pe_ctl->cpu = -1;
-	return PAPI_OK;
-}
-
-
+/* Our component vector */
 
 papi_vector_t _papi_pe_vector = {
    .cmp_info = {
@@ -2123,10 +1996,10 @@ papi_vector_t _papi_pe_vector = {
 
   /* sizes of framework-opaque component-private structures */
   .size = {
-      .context = sizeof ( context_t ),
-      .control_state = sizeof ( control_state_t ),
-      .reg_value = sizeof ( pfm_register_t ),
-      .reg_alloc = sizeof ( reg_alloc_t ),
+      .context = sizeof ( pe_context_t ),
+      .control_state = sizeof ( pe_control_t ),
+      .reg_value = sizeof ( int ),
+      .reg_alloc = sizeof ( int ),
   },
 
   /* function pointers in this component */
