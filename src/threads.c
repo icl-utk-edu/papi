@@ -398,7 +398,6 @@ static int _papi_hwi_thread_free_eventsets(long tid) {
 	    THRDBG("Attempting to remove %d from tid %ld\n",ESI->EventSetIndex,tid);
 
 	    /* Code copied from _papi_hwi_remove_EventSet(ESI);      */
-            /* We can't just call that, as it uses INTERNAL_LOCK too */
 	    _papi_hwi_free_EventSet( ESI );
 	    map->dataSlotArray[i] = NULL;
 	    map->availSlots++;
