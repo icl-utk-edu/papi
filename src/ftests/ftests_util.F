@@ -92,7 +92,7 @@ C     And also to make the test code read cleaner
       write(*,100) test_str,' SKIPPED'
       if (quiet .eq. 0) then
         if(papiretval.lt.0)then
-          call PAPIF_perror( NULL )
+          call PAPIF_perror( )
           write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
         end if
       end if
@@ -133,7 +133,7 @@ C     And also to make the test code read cleaner
       else if(retval.eq.0)then
         write(*,*) 'SGI requires root permissions for this test'
       else
-        call PAPIF_perror( NULL )
+        call PAPIF_perror( )
         ilen=len_trim(callstr)
         write(*,'(T2,3a)') 'PAPI error in ', callstr(1:ilen), 
      *       ': '// papi_errstr(1:len_trim(papi_errstr))
@@ -164,7 +164,7 @@ C     And also to make the test code read cleaner
         else if (retval.gt.0) then
           write(*,*) "Error calculating: ", callstr
         else
-          call PAPIF_perror( NULL )
+          call PAPIF_perror( )
           ilen=len_trim(callstr)
           write(*,'(T2,3a)') 'Error in ', callstr(1:ilen),
      *         ': ' // papi_errstr(1:len_trim(papi_errstr))
