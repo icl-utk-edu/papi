@@ -1665,9 +1665,6 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
    int i;
    pe_control_t *ctl;
 
-   /* convoluted way to get ctl */
-   ctl= thread->running_eventset[cidx]->ctl_state;
-
    if ( thread == NULL ) {
       PAPIERROR( "thread == NULL in _papi_pe_dispatch_timer for fd %d!", fd );
       return;
@@ -1704,6 +1701,9 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 		 "PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
 		 fd , thread->running_eventset[cidx]->overflow.flags);
    }
+
+   /* convoluted way to get ctl */
+   ctl= thread->running_eventset[cidx]->ctl_state;
 
    /* See if the fd is one that's part of the this thread's context */
    for( i=0; i < ctl->num_events; i++ ) {
