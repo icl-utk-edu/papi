@@ -12,8 +12,8 @@
       integer status
       integer retval
 
-      Integer last_char
-      External last_char
+      Integer len_trim
+      External len_trim
       integer tests_quiet, get_quiet
       external get_quiet
 

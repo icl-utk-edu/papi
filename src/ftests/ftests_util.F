@@ -28,14 +28,14 @@ C     And also to make the test code read cleaner
       end
 
 
-      integer function last_char(string)
+      integer function len_trim(string)
       implicit integer (p)
       character*(*) string
 
-      do last_char=len(string),1,-1
-        if(string(last_char:last_char).NE.' ') return
+      do len_trim=len(string),1,-1
+        if(string(len_trim:len_trim).NE.' ') return
       end do
-      last_char=0
+      len_trim=0
       end
 
       subroutine ftests_warning(line,msg)
@@ -84,8 +84,8 @@ C     And also to make the test code read cleaner
       character*(*) test_str
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer papiretval
-      integer last_char
-      external last_char
+      integer len_trim
+      external len_trim
       integer quiet
       common quiet
 
@@ -93,7 +93,7 @@ C     And also to make the test code read cleaner
       if (quiet .eq. 0) then
         if(papiretval.lt.0)then
           call PAPIF_perror( )
-          write(*,*) 'PAPI error: ',papi_errstr(1:last_char(papi_errstr))
+          write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
         end if
       end if
       call pause()
@@ -108,8 +108,8 @@ C     And also to make the test code read cleaner
       character*(*) callstr
       integer retval,ilen
       character*(PAPI_MAX_STR_LEN) papi_errstr
-      integer last_char
-      external last_char
+      integer len_trim
+      external len_trim
 
       if ( retval.eq.PAPI_ECMP .OR. retval.eq.PAPI_ENOEVNT
      &    .OR. retval.eq.PAPI_ECNFLCT .OR. retval.eq.PAPI_EPERM ) then
@@ -134,9 +134,9 @@ C     And also to make the test code read cleaner
         write(*,*) 'SGI requires root permissions for this test'
       else
         call PAPIF_perror( )
-        ilen=last_char(callstr)
+        ilen=len_trim(callstr)
         write(*,'(T2,3a)') 'PAPI error in ', callstr(1:ilen), 
-     *       ': '// papi_errstr(1:last_char(papi_errstr))
+     *       ': '// papi_errstr(1:len_trim(papi_errstr))
       end if
       call pause()
       stop
@@ -153,8 +153,8 @@ C     And also to make the test code read cleaner
       common quiet
 
       character*(PAPI_MAX_STR_LEN) papi_errstr
-      integer last_char
-      external last_char
+      integer len_trim
+      external len_trim
 
       write(*,100) file, ' SKIPPED'
       if (quiet .eq. 0) then
@@ -165,9 +165,9 @@ C     And also to make the test code read cleaner
           write(*,*) "Error calculating: ", callstr
         else
           call PAPIF_perror( )
-          ilen=last_char(callstr)
+          ilen=len_trim(callstr)
           write(*,'(T2,3a)') 'Error in ', callstr(1:ilen),
-     *         ': ' // papi_errstr(1:last_char(papi_errstr))
+     *         ': ' // papi_errstr(1:len_trim(papi_errstr))
         end if
       end if
       call pause()
@@ -205,7 +205,7 @@ C       Is there a better way to write this?
         if (idx .NE. 1) then
 C         Eliminate the first + character
           str = str(2:LEN(str))
-C         Blank-fill the rest of the string so last_char works correctly
+C         Blank-fill the rest of the string so len_trim works correctly
           str(idx:) = ' '
         else
           print *, 'error in stringify_domain'

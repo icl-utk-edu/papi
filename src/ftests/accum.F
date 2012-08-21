@@ -10,8 +10,8 @@
       integer retval
       integer tests_quiet, get_quiet
       external get_quiet
-      integer last_char, n
-      external last_char
+      integer len_trim, n
+      external len_trim
 
       tests_quiet = get_quiet()
       es1 = PAPI_NULL
@@ -116,7 +116,7 @@
             call ftest_fail(__FILE__, __LINE__, 
      *        'PAPIf_event_code_to_name', retval)
         end if
-        n=last_char(name)
+        n=len_trim(name)
         print *, "Test case accum: Test of PAPI_add_events, ",
      *  "PAPI_remove_events, PAPI_accum"
         print *, "------------------------------------------",

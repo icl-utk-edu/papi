@@ -8,8 +8,8 @@
       integer retval
       character*PAPI_MAX_STR_LEN name
 
-      Integer last_char, n
-      External last_char
+      Integer len_trim, n
+      External len_trim
       integer tests_quiet, get_quiet
       external get_quiet
 
@@ -110,7 +110,7 @@
           call ftest_fail(__FILE__, __LINE__, 
      * 'PAPIf_event_code_to_name', retval)
         end if
-        n=last_char(name)
+        n=len_trim(name)
         print *, "Test case John May 2: cleanup / ",
      * "destroy eventset."
         print *, "--------------------------------",

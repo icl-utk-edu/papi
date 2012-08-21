@@ -8,8 +8,8 @@ C Hardware info
       INTEGER ncpu,nnodes,totalcpus,vendor,model, check, handle, n
       CHARACTER*(PAPI_MAX_STR_LEN) vstring, mstring
       REAL revision, mhz
-      integer last_char
-      external last_char
+      integer len_trim
+      external len_trim
       integer i, avail_flag, flags,k,l
       CHARACTER*(PAPI_MAX_STR_LEN) event_name, event_descr, 
      *event_label, event_note
@@ -34,10 +34,10 @@ C Hardware info
       print *, 'Hardware information and available events'
       print *, '--------------------------------------'//
      .'---------------------------------------'
-      n=last_char(vstring)
+      n=len_trim(vstring)
       print *, 'Vendor string and code   : ',vstring(1:n),
      &' (',vendor,')'
-      n=last_char(mstring)
+      n=len_trim(mstring)
       print *, 'Model string and code    : ',mstring(1:n),' (',model,')'
       print *, 'CPU revision             : ',revision 
       print *, 'CPU Megahertz            : ',mhz
