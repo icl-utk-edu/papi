@@ -39,8 +39,8 @@
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       integer retval
 
-      Integer len_trim
-      External len_trim
+      Integer last_char
+      External last_char
       integer tests_quiet, get_quiet
       external get_quiet
 
