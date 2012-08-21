@@ -19,9 +19,8 @@ C 2 counters.
       INTEGER n
       INTEGER EventSet
       INTEGER retval
-      INTEGER I,j, errorcode
+      INTEGER I,j 
       INTEGER*8 gl(3)
-      CHARACTER*(PAPI_MAX_STR_LEN) errorstring
 
       INTEGER len_trim
       EXTERNAL len_trim
