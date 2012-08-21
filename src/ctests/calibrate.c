@@ -465,8 +465,8 @@ resultline( int i, int j, int EventSet, int fail )
 	printf( "%8d %12lld %12lld %8d %10.4f\n", i, papi, theory, diff, ferror );
 
 	if ( ferror > MAX_WARN && abs( diff ) > MAX_DIFF && i > 20 ) {
-		sprintf( err_str, "Calibrate: error exceeds %d percent", MAX_WARN );
-		test_warn( __FILE__, __LINE__, err_str, PAPI_EMISC );
+		sprintf( err_str, "Calibrate: difference exceeds %d percent", MAX_WARN );
+		test_warn( __FILE__, __LINE__, err_str, 0 );
 	}
 	if (fail) {
 		if ( ferror > MAX_ERROR && abs( diff ) > MAX_DIFF && i > 20 ) {
