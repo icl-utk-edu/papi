@@ -123,10 +123,9 @@ read_groups(perf_event_desc_t *fds, int num)
 			 * scaling because we may be sharing the PMU and
 			 * thus may be multiplexed
 			 */
-			fds[i].prev_value = fds[i].value;
-			fds[i].value = perf_scale(values);
-			fds[i].enabled = values[1];
-			fds[i].running = values[2];
+			fds[i].values[0] = values[0];
+			fds[i].values[1] = values[1];
+			fds[i].values[2] = values[2];
 		}
 		evt += num_evts_to_read;
 	}
@@ -137,35 +136,38 @@ read_groups(perf_event_desc_t *fds, int num)
 static void
 print_counts(perf_event_desc_t *fds, int num, int cpu)
 {
+	double ratio;
+	uint64_t val, delta;
 	int i;
 
 	read_groups(fds, num);
 
 	for(i=0; i < num; i++) {
-		double ratio;
-		uint64_t val;
-
-		val = fds[i].value - fds[i].prev_value;
-
-		ratio = 0.0;
-		if (fds[i].enabled)
-			ratio = 1.0 * fds[i].running / fds[i].enabled;
+		val   = perf_scale(fds[i].values);
+		delta = perf_scale_delta(fds[i].values, fds[i].prev_values);
+		ratio = perf_scale_ratio(fds[i].values);
 
 		/* separate groups */
 		if (perf_is_group_leader(fds, i))
 			putchar('\n');
 
-		if (fds[i].value < fds[i].prev_value) {
-			printf("inconsistent scaling %s (cur=%'"PRIu64" : prev=%'"PRIu64")\n", fds[i].name, fds[i].value, fds[i].prev_value);
-			continue;
-		}
-		printf("CPU%-2d %'20"PRIu64" %s (%.2f%% scaling, ena=%'"PRIu64", run=%'"PRIu64")\n",
-			cpu,
-			val,
-			fds[i].name,
-			(1.0-ratio)*100.0,
-			fds[i].enabled,
-			fds[i].running);
+		if (options.print)
+			printf("CPU%-2d %'20"PRIu64" %'20"PRIu64" %s (%.2f%% scaling, ena=%'"PRIu64", run=%'"PRIu64")\n",
+				cpu,
+				val,
+				delta,
+				fds[i].name,
+				(1.0-ratio)*100.0,
+				fds[i].values[1],
+				fds[i].values[2]);
+		else
+			printf("CPU%-2d %'20"PRIu64" %s (%.2f%% scaling, ena=%'"PRIu64", run=%'"PRIu64")\n",
+				cpu,
+				val,
+				fds[i].name,
+				(1.0-ratio)*100.0,
+				fds[i].values[1],
+				fds[i].values[2]);
 	}
 }
 
