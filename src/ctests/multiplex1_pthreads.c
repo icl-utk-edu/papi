@@ -168,7 +168,10 @@ case1_pthreads( void *arg )
 
 	if ( ( retval = PAPI_cleanup_eventset( EventSet ) ) != PAPI_OK )	/* JT */
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
-
+	
+	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
@@ -236,6 +239,9 @@ case2_pthreads( void *arg )
 	if ( ( retval = PAPI_cleanup_eventset( EventSet ) ) != PAPI_OK )	/* JT */
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
 
+	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
@@ -294,6 +300,9 @@ case3_pthreads( void *arg )
 	if ( ( retval = PAPI_cleanup_eventset( EventSet ) ) != PAPI_OK )	/* JT */
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
 
+	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
@@ -357,6 +366,9 @@ case4_pthreads( void *arg )
 	if ( ( retval = PAPI_cleanup_eventset( EventSet ) ) != PAPI_OK )	/* JT */
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
 
+	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
