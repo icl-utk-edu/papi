@@ -571,14 +571,23 @@ CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 	return ( PAPI_OK );
 }
 
+/* 
+ *
+ */
+int
+CUDA_shutdown_thread( hwd_context_t *ctx )
+{
+	CUDA_context_t *CUDA_ctx = (CUDA_context_t*)ctx;
+	free( CUDA_ctx->state.addedEvents.list );
+	return (PAPI_OK);
+}
 
 /*
  *
  */
 int
-CUDA_shutdown_thread( hwd_context_t * ctx )
+CUDA_shutdown_component( void )
 {
-	CUDA_context_t * CUDA_ctx = ( CUDA_context_t * ) ctx;
 	CUresult cuErr = CUDA_SUCCESS;
 	
 	/* if running a threaded application, we need to make sure that 
@@ -599,7 +608,6 @@ CUDA_shutdown_thread( hwd_context_t * ctx )
 
 		free( device );
 		free( cuda_native_table );
-		free( CUDA_ctx->state.addedEvents.list );
 		
 		/* destroy floating CUDA context */
 		cuErr = cuCtxDestroy( cuCtx );
@@ -875,6 +883,7 @@ papi_vector_t _cuda_vector = {
 	.start = CUDA_start,
 	.stop = CUDA_stop,
 	.read = CUDA_read,
+	.shutdown_component = CUDA_shutdown_component,
 	.shutdown_thread = CUDA_shutdown_thread,
 	.cleanup_eventset = CUDA_cleanup_eventset,
 	.ctl = CUDA_ctl,
