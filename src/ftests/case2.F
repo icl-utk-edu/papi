@@ -90,7 +90,7 @@ C 2 counters.
          if ( retval .NE. PAPI_OK )then
            if ( retval .NE. PAPI_ECNFLCT ) then
             if (tests_quiet .EQ. 0) then
-                call PAPIf_perror( retval, errorstring, errorcode)
+                call PAPIf_perror( 'PAPIf_add_event' )
             end if
           end if
          end if
