@@ -11,7 +11,7 @@ int
 main( int argc, char **argv )
 {
 	int retval, pid, status, EventSet = PAPI_NULL;
-	long long int values[2];
+	long long int values[] = {0,0};
 	PAPI_option_t opt;
 
         tests_quiet( argc, argv );
@@ -64,7 +64,6 @@ main( int argc, char **argv )
 	  exit( 1 );
 	}
 
-
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
 
@@ -87,7 +86,7 @@ main( int argc, char **argv )
 	}
 
 	if ( values[0] < values[1]) {
-		test_fail( __FILE__, __LINE__, "PAPI_TOT_CYC", 1 );
+		test_fail( __FILE__, __LINE__, "PAPI_TOT_CYC < PAPI_FP_INS", 1 );
 	}
 
 	test_pass( __FILE__, NULL, 0 );
