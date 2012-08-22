@@ -78,26 +78,6 @@ handler_interleaf( int EventSet, void *address, long long overflow_vector,
 	handler( 1, address, overflow_vector, context );
 }
 
-static int
-find_nonderived_event( void )
-{
-	/* query and set up the right event to monitor */
-	PAPI_event_info_t info;
-	int potential_evt_to_add[3] = { PAPI_FP_OPS, PAPI_FP_INS, PAPI_TOT_INS };
-	int i;
-
-	for ( i = 0; i < 3; i++ ) {
-		if ( PAPI_query_event( potential_evt_to_add[i] ) == PAPI_OK ) {
-			if ( PAPI_get_event_info( potential_evt_to_add[i], &info ) ==
-				 PAPI_OK ) {
-				if ( ( info.count > 0 ) &&
-					 !strcmp( info.derived, "NOT_DERIVED" ) )
-					return ( potential_evt_to_add[i] );
-			}
-		}
-	}
-	return ( 0 );
-}
 
 int
 main( int argc, char **argv )
