@@ -1291,7 +1291,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       }
 
       SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
-	     pe_ctl->events[i].event_fd, 
+	     pe_ctl->events[0].event_fd, 
 	     (long)pe_ctl->tid, pe_ctl->cpu, ret);
       SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
 	     papi_pe_buffer[1],papi_pe_buffer[2]);
