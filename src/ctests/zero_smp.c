@@ -96,6 +96,7 @@ Thread( int t, int n )
 		printf( "Thread 0x%x Real usec    : \t%lld\n", t, elapsed_us );
 		printf( "Thread 0x%x Real cycles  : \t%lld\n", t, elapsed_cyc );
 	}
+	PAPI_unregister_thread(  );
 }
 
 int
