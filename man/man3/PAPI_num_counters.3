@@ -1,4 +1,4 @@
-.TH "PAPI_num_counters" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_num_counters" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -49,7 +49,7 @@ Initializes the library to PAPI_HIGH_LEVEL_INITED if necessary.
 .PP
 .RE
 .PP
-\fBPAPI_num_counters()\fP returns the optimal length of the values array for the high level functions. This value corresponds to the number of hardware counters supported by the current substrate.
+\fBPAPI_num_counters()\fP returns the optimal length of the values array for the high level functions. This value corresponds to the number of hardware counters supported by the current CPU component.
 .PP
 \fBNote:\fP
 .RS 4
@@ -60,4 +60,4 @@ This function only works for the CPU component. To determine the number of count
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

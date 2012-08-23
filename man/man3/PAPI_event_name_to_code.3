@@ -1,4 +1,4 @@
-.TH "PAPI_event_name_to_code" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_event_name_to_code" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -33,6 +33,8 @@ Convert a name to a numeric hardware event code.
 .br
 \fIPAPI_ENOTPRESET\fP The hardware event specified is not a valid PAPI preset. 
 .br
+\fIPAPI_ENOINIT\fP The PAPI library has not been initialized. 
+.br
 \fIPAPI_ENOEVNT\fP The hardware event is not available on the underlying hardware.
 .RE
 .PP
@@ -59,11 +61,6 @@ Convert a name to a numeric hardware event code.
 .PP
 .RE
 .PP
-\fBBug\fP
-.RS 4
-No known bugs.
-.RE
-.PP
 .PP
 \fBSee also:\fP
 .RS 4
@@ -71,7 +68,7 @@ No known bugs.
 .br
  \fBPAPI_get_event_info\fP 
 .br
- PAPI_enum_events 
+ \fBPAPI_enum_event\fP 
 .br
  \fBPAPI_add_event\fP 
 .br
@@ -84,4 +81,4 @@ No known bugs.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

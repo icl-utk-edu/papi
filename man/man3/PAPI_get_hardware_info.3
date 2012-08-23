@@ -1,4 +1,4 @@
-.TH "PAPI_get_hardware_info" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_get_hardware_info" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -18,11 +18,6 @@ In C, this function returns a pointer to a structure containing information abou
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid.
 .RE
 .PP
-\fBBug\fP
-.RS 4
-If called before the behavior of the routine is undefined. 
-.RE
-.PP
 .PP
 \fBNote:\fP
 .RS 4
@@ -39,7 +34,7 @@ The C structure contains detailed information about cache and TLB sizes. This in
         exit(1);
         if ((hwinfo = PAPI_get_hardware_info()) == NULL)
         exit(1);
-        printf('%d CPU's at %f Mhz.\en',hwinfo->totalcpus,hwinfo->mhz);
+        printf('%d CPUs at %f Mhz.\en',hwinfo->totalcpus,hwinfo->mhz);
 
 .fi
 .PP
@@ -56,4 +51,4 @@ The C structure contains detailed information about cache and TLB sizes. This in
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

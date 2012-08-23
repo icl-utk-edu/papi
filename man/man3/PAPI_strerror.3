@@ -1,10 +1,10 @@
-.TH "PAPI_strerror" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_strerror" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_strerror \- 
 .PP
-Convert PAPI error codes to strings, and return the error string to user.  
+Returns a string describing the PAPI error code.  
 
 .SH SYNOPSIS
 .br
@@ -52,7 +52,7 @@ Convert PAPI error codes to strings, and return the error string to user.
   ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
   if (ret != PAPI_OK)
   {
-     PAPI_perror(ret, error_str, PAPI_MAX_STR_LEN);
+     PAPI_perror( 'PAPI_add_event');
      fprintf(stderr,'PAPI_error %d: %s\n', ret, error_str);
      exit(1);
   }
@@ -73,4 +73,4 @@ Convert PAPI error codes to strings, and return the error string to user.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

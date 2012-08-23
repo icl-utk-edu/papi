@@ -1,4 +1,4 @@
-.TH "PAPI_add_event" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_add_event" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -20,7 +20,7 @@ add PAPI preset or native hardware event to an event set
 .PP
 \fBPAPI_add_event\fP adds one event to a PAPI Event Set. 
 .br
- A hardware event can be either a PAPI preset or a native hardware event code. For a list of PAPI preset events, see PAPI_presets or run the avail test case in the PAPI distribution. PAPI presets can be passed to \fBPAPI_query_event\fP to see if they exist on the underlying architecture. For a list of native events available on current platform, run native_avail test case in the PAPI distribution. For the encoding of native events, see \fBPAPI_event_name_to_code\fP to learn how to generate native code for the supported native event on the underlying architecture.
+ A hardware event can be either a PAPI preset or a native hardware event code. For a list of PAPI preset events, see PAPI_presets or run the avail test case in the PAPI distribution. PAPI presets can be passed to \fBPAPI_query_event\fP to see if they exist on the underlying architecture. For a list of native events available on current platform, run the papi_native_avail utility in the PAPI distribution. For the encoding of native events, see \fBPAPI_event_name_to_code\fP to learn how to generate native code for the supported native event on the underlying architecture.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -70,11 +70,6 @@ add PAPI preset or native hardware event to an event set
 .PP
 .RE
 .PP
-\fBBug\fP
-.RS 4
-The vector function should take a pointer to a length argument so a proper return value can be set upon partial success.
-.RE
-.PP
 .PP
 \fBSee also:\fP
 .RS 4
@@ -99,4 +94,4 @@ The vector function should take a pointer to a length argument so a proper retur
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

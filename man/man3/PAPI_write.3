@@ -1,4 +1,4 @@
-.TH "PAPI_write" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_write" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -22,10 +22,12 @@ Write counter values into counters.
 .RS 4
 \fIPAPI_ENOEVST\fP The EventSet specified does not exist. 
 .br
-\fIPAPI_ESBSTR\fP \fBPAPI_write()\fP is not implemented for this architecture. PAPI_ESYS The EventSet is currently counting events and the substrate could not change the values of the running counters.
+\fIPAPI_ECMP\fP \fBPAPI_write()\fP is not implemented for this architecture. 
+.br
+\fIPAPI_ESYS\fP The EventSet is currently counting events and the component could not change the values of the running counters.
 .RE
 .PP
-\fBPAPI_write()\fP writes the counter values provided in the array values into the event set EventSet. The virtual counters managed by the PAPI library will be set to the values provided. If the event set is running, an attempt will be made to write the values to the running counters. This operation is not permitted by all substrates and may result in a run-time error.
+\fBPAPI_write()\fP writes the counter values provided in the array values into the event set EventSet. The virtual counters managed by the PAPI library will be set to the values provided. If the event set is running, an attempt will be made to write the values to the running counters. This operation is not permitted by all components and may result in a run-time error.
 .PP
 \fBSee also:\fP
 .RS 4
@@ -36,4 +38,4 @@ Write counter values into counters.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.
