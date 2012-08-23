@@ -3,6 +3,75 @@ order.
 
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
+===============================================================================
+PAPI 5.0.0 RELEASE NOTES                                            23 Aug 2012
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP500.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+This is a major release of PAPI. Parts of both the internal component and 
+external low-level interfaces have changed, this will break your 4.4 compliant 
+components. Numerous bug fixes are also included in this release.  
+
+New Platforms:
+-------------
+  * Intel IvyBridge
+  * Intel Atom Cedarview
+
+New / Improved Components:
+---------------
+  * nVidia Management library component - support for various system health
+    and power measurements on supported nVidia gpus.
+  * stealtime - When running in a VM, this provides information on how much 
+    time was "stolen" by the hypervisor due to the VM being disabled.  
+    This is currently only supported on KVM.
+  * RAPL - a SandyBridge RAPL (Running Average Power Level) Component  
+    providing for energy measurement at the package-level. 
+  * VMware component for VMware pseudo-counters
+  * appio - This application I/O component enables PAPI-C to determine
+    I/O used by the application.
+
+Bug Fixes:
+----------
+  * Numerous memory leaks, thread races, and compiler warnings corrected.
+
+Enhancements:
+-------------
+  * Major overhaul of the component interface. 
+  * Update perf_event.c rdpmc support  
+  * Minor uncore fixes plus changes for rdpmc.
+  * Add a PAPI_REF_CYC preset event, defined as UNHALTED_REFERENCE_CYCLES for
+    all Intel platforms on which this native event is supported.
+  * Component names are now standardized in a meaningful way. 
+  * Multiplexing under perf_events has been improved. 
+  * FreeBSD cleanup/updates 
+  * appio component now intercepts recv()
+  * Power7 definition of L1_DCA and LST_INS updated to a countable definition
+  * Added BGPM's opcode and generic event functionality to PAPI for BG/Q
+    (requires Q32 driver V1R1M2).
+
+Open Issues:
+-------------
+  * SandyBridge PAPI_FP_* events only produce reasonable results when counted 
+    bythemselves.
+  * Ivy Bridge does not support floating point events.
+
+Experimental:
+-------------
+
+Known Bugs:
+-----------
+  * Software multiplexing is known to have a memory leak.
+  * The byte-profile test is known to fail on Power7/AIX
+
+Deprecated:
+---------------------
+  * Java PAPI wrappers
+  * Windows
+
 
 ===============================================================================
 PAPI 4.4.0 RELEASE NOTES                                            17 Apr 2012
