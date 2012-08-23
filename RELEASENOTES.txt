@@ -56,7 +56,7 @@ Enhancements:
 Open Issues:
 -------------
   * SandyBridge PAPI_FP_* events only produce reasonable results when counted 
-    bythemselves.
+    by themselves.
   * Ivy Bridge does not support floating point events.
 
 Experimental:
