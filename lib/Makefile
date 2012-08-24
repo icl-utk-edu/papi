@@ -48,15 +48,26 @@ ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
 
 ifeq ($(SYS),Linux)
 SRCS += pfmlib_intel_x86_perf_event.c pfmlib_amd64_perf_event.c \
-	pfmlib_intel_netburst_perf_event.c
+	pfmlib_intel_netburst_perf_event.c \
+	pfmlib_intel_snbep_unc_perf_event.c
 endif
 
 INCARCH = $(INC_X86)
 SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
 	  pfmlib_intel_nhm_unc.c pfmlib_intel_nhm.c \
-	  pfmlib_intel_wsm.c  pfmlib_intel_snb.c pfmlib_intel_snb_unc.c \
+	  pfmlib_intel_wsm.c  \
+	  pfmlib_intel_snb.c pfmlib_intel_snb_unc.c \
 	  pfmlib_intel_ivb.c \
+	  pfmlib_intel_snbep_unc.c \
+	  pfmlib_intel_snbep_unc_cbo.c \
+	  pfmlib_intel_snbep_unc_ha.c \
+	  pfmlib_intel_snbep_unc_imc.c \
+	  pfmlib_intel_snbep_unc_pcu.c \
+	  pfmlib_intel_snbep_unc_qpi.c \
+	  pfmlib_intel_snbep_unc_ubo.c \
+	  pfmlib_intel_snbep_unc_r2pcie.c \
+	  pfmlib_intel_snbep_unc_r3qpi.c \
 	  pfmlib_intel_netburst.c \
 	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
 	  pfmlib_amd64_fam11h.c pfmlib_amd64_fam12h.c \
@@ -180,7 +191,16 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_wsm_unc_events.h	\
 	events/intel_snb_events.h	\
 	events/intel_snb_unc_events.h	\
-	events/intel_ivb_events.h
+	events/intel_ivb_events.h	\
+	pfmlib_intel_snbep_unc_priv.h	\
+	events/intel_snbep_unc_cbo_events.h \
+	events/intel_snbep_unc_ha_events.h \
+	events/intel_snbep_unc_imc_events.h \
+	events/intel_snbep_unc_pcu_events.h \
+	events/intel_snbep_unc_qpi_events.h \
+	events/intel_snbep_unc_ubo_events.h \
+	events/intel_snbep_unc_r2pcie_events.h \
+	events/intel_snbep_unc_r3qpi_events.h
 
 INC_MIPS=events/mips_74k_events.h events/mips_74k_events.h
 

@@ -262,4 +262,6 @@ extern int intel_x86_attr2mod(void *this, int pidx, int attr_idx);
 extern int pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern void pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_intel_x86_can_auto_encode(void *this, int pidx, int uidx);
+
 #endif /* __PFMLIB_INTEL_X86_PRIV_H__ */

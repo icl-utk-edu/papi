@@ -761,9 +761,9 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		for (j=i+1; j < (int)pmu->pme_count; j++) {
 			if (pe[i].code == pe[j].code && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
 				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
-			error++;
+				error++;
+				}
 			}
-		}
 
 		for(j=0; j < INTEL_X86_NUM_GRP; j++)
 			ndfl[j] = 0;
@@ -968,4 +968,19 @@ pfm_intel_x86_get_event_nattrs(void *this, int pidx)
 	nattrs  = intel_x86_num_umasks(this, pidx);
 	nattrs += intel_x86_num_mods(this, pidx);
 	return nattrs;
+}
+
+int
+pfm_intel_x86_can_auto_encode(void *this, int pidx, int uidx)
+{
+	int numasks;
+
+	if (intel_x86_eflag(this, pidx, INTEL_X86_NO_AUTOENCODE))
+		return 0;
+
+	numasks = intel_x86_num_umasks(this, pidx);
+	if (uidx >= numasks)
+		return 0;
+
+	return !intel_x86_uflag(this, pidx, uidx, INTEL_X86_NO_AUTOENCODE);
 }
