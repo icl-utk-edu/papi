@@ -322,8 +322,9 @@ _papi_mem_cleanup_all(  )
 	}
 	_papi_hwi_unlock( MEMORY_LOCK );
 #ifdef DEBUG
-	if ( cnt )
+	if ( 0 != cnt ) { 
 		LEAKDBG( "TOTAL MEMORY LEAK: %d bytes.\n", cnt );
+	}
 #endif
 }
 
