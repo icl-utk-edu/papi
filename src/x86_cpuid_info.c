@@ -1335,8 +1335,8 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
 	break;
     }
      
-    if (cache_selfinit) MEMDBG("\tSelf-init\n");
-    if (cache_fullyassoc) MEMDBG("\tFully Associtative\n");
+    if (cache_selfinit) { MEMDBG("\tSelf-init\n"); }
+    if (cache_fullyassoc) { MEMDBG("\tFully Associtative\n"); }
      
     //MEMDBG("\tMax logical processors sharing cache: %d\n",cache_maxshare);
     //MEMDBG("\tMax logical processors sharing package: %d\n",cache_maxpackage);

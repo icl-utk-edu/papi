@@ -2274,8 +2274,9 @@ PAPI_stop( int EventSet, long long *values )
 #if defined(DEBUG)
 	if ( _papi_hwi_debug & DEBUG_API ) {
 		int i;
-		for ( i = 0; i < ESI->NumberOfEvents; i++ )
+		for ( i = 0; i < ESI->NumberOfEvents; i++ ) {
 			APIDBG( "PAPI_stop ESI->sw_stop[%d]:\t%llu\n", i, ESI->sw_stop[i] );
+		}
 	}
 #endif
 
@@ -2467,8 +2468,9 @@ PAPI_read( int EventSet, long long *values )
 #if defined(DEBUG)
 	if ( ISLEVEL( DEBUG_API ) ) {
 		int i;
-		for ( i = 0; i < ESI->NumberOfEvents; i++ )
+		for ( i = 0; i < ESI->NumberOfEvents; i++ ) {
 			APIDBG( "PAPI_read values[%d]:\t%lld\n", i, values[i] );
+		}
 	}
 #endif
 
@@ -2558,8 +2560,9 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 #if defined(DEBUG)
 	if ( ISLEVEL( DEBUG_API ) ) {
 		int i;
-		for ( i = 0; i < ESI->NumberOfEvents; i++ )
+		for ( i = 0; i < ESI->NumberOfEvents; i++ ) {
 			APIDBG( "PAPI_read values[%d]:\t%lld\n", i, values[i] );
+		}
 	}
 #endif
 

@@ -433,20 +433,24 @@ _niagara2_dispatch_timer( int signal, siginfo_t * si, void *info )
 		SUBDBG( " -> %s: Problems with ESI, not necessarily serious\n",
 				__func__ );
 
-		if ( ESI == NULL )
+		if ( ESI == NULL ) {
 			SUBDBG( " -> %s: +++ ESI is NULL\n", __func__ );
+		}
 
-		if ( ESI->master != thread )
+		if ( ESI->master != thread ) {
 			SUBDBG( " -> %s: +++ Thread mismatch, ESI->master=%x thread=%x\n",
 					__func__, ESI->master, thread );
+		}
 
-		if ( ESI->ctl_state == NULL )
+		if ( ESI->ctl_state == NULL ) {
 			SUBDBG( " -> %s: +++ Counter state invalid\n", __func__ );
+		}
 
-		if ( ( ( ESI->state & PAPI_OVERFLOWING ) == 0 ) )
+		if ( ( ( ESI->state & PAPI_OVERFLOWING ) == 0 ) ) {
 			SUBDBG
 				( " -> %s: +++ Overflow flag missing, ESI->overflow.flags=%x\n",
 				  __func__, ESI->overflow.flags );
+		}
 #endif
 
 		return;
@@ -1300,8 +1304,9 @@ _niagara2_update_control_state( hwd_control_state_t * ctrl,
 	}
 
 #ifdef DEBUG
-	if ( i == 0 )
+	if ( i == 0 ) {
 		SUBDBG( " -> %s: nothing added\n", __func__ );
+	}
 #endif
 
 	ctrl->counter_buffer = cpc_buf_create( cpc, ctrl->set );
@@ -1617,8 +1622,9 @@ __cpc_build_ntv_table( void )
 #endif
 
 #ifdef DEBUG
-	for ( i = 1; i < __t2_store.pic_ntv_count[0]; i++ )
+	for ( i = 1; i < __t2_store.pic_ntv_count[0]; i++ ) {
 		SUBDBG( " -> %s: Event #%d: %s\n", __func__, i, __t2_ntv_events[i] );
+	}
 #endif
 
 #ifdef DEBUG

@@ -614,10 +614,12 @@ _solaris_get_system_info( papi_mdi_t *mdi )
 			int i;
 
 			name = cpc_getcpuref( cpuver );
-			if ( name )
+			if ( name ) {
 				SUBDBG( "CPC CPU reference: %s\n", name );
-			else
+			}
+			else {
 				SUBDBG( "Could not get a CPC CPU reference\n" );
+			}
 
 			for ( i = 0; i < cpc_getnpic( cpuver ); i++ ) {
 				SUBDBG( "\n%6s %-40s %8s\n", "Reg", "Symbolic name", "Code" );
