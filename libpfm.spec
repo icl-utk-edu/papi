@@ -70,6 +70,7 @@ make \
     LIBDIR=$RPM_BUILD_ROOT%{_libdir} \
     PYTHON_PREFIX=$RPM_BUILD_ROOT/%{python_prefix} \
     %{python_config} \
+    LDCONFIG=/bin/true \
     install
 
 %clean
