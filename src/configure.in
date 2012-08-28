@@ -821,11 +821,11 @@ if test "$perfctr" != 0; then
   dotest=0
   if test "x$perfctr_root" != "x"; then
     LIBS="-L$perfctr_root/usr.lib -lperfctr"
-    CPPFLAGS="-I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
+    CPPFLAGS="$CPPFLAGS -I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
     dotest=1
   elif test "x$perfctr_prefix" != "x"; then
     LIBS="-L$perfctr_prefix/lib -lperfctr"
-    CPPFLAGS="-I$perfctr_prefix/include"
+    CPPFLAGS="$CPPFLAGS -I$perfctr_prefix/include"
     perfctr_libdir="$perfctr_prefix/lib"
     perfctr_incdir="$perfctr_prefix/include"
     dotest=1
@@ -839,6 +839,7 @@ if test "$perfctr" != 0; then
       dotest=1
     fi
   fi
+
   if test "$dotest" = 1; then
     AC_CHECK_LIB([perfctr], [vperfctr_open], 
                  [AC_CHECK_HEADERS([libperfctr.h], 
@@ -1004,11 +1005,11 @@ if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
   dotest=0
   if test "x$pfm_root" != "x"; then
     LIBS="-L$pfm_root/lib -lpfm"
-    CPPFLAGS="-I$pfm_root/include"
+    CPPFLAGS="$CPPFLAGS -I$pfm_root/include"
     dotest=1
   elif test "x$pfm_prefix" != "x"; then
     LIBS="-L$pfm_prefix/lib -lpfm"
-    CPPFLAGS="-I$pfm_prefix/include"
+    CPPFLAGS="$CPPFLAGS -I$pfm_prefix/include"
     if test "x$pfm_libdir" = "x"; then
       pfm_libdir="$pfm_prefix/lib"
     fi
@@ -1022,8 +1023,7 @@ if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
       dotest=1
     fi
     if test "x$pfm_incdir" != "x"; then
-      CPPFLAGS="-I$pfm_incdir"
-      dotest=1
+      CPPFLAGS="$CPPFLAGS -I$pfm_incdir"
     fi
   fi
   if test "$dotest" = 1; then
