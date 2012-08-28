@@ -451,8 +451,9 @@ detectDevices( )
 			for (j=0; j < device_count; j++ ) {
 					if ( !strncmp( busId, nvml_busIds[j], 16) ) {
 							ret = nvmlDeviceGetHandleByIndex(j, &devices[i] );
-							if ( NVML_SUCCESS != ret )
+							if ( NVML_SUCCESS != ret ) {
 								SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", j, i);
+							}
 								return PAPI_ESYS;
 							break;
 					}
