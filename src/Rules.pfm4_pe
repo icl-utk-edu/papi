@@ -2,23 +2,23 @@
 DESCR = "Linux with perf_event kernel support and libpfm4"
 
 ifneq (/usr,$(PFM_PREFIX))
-PWD = $(shell pwd)
-ifeq (,$(PFM_LIB_PATH))
-ifeq (,$(PFM_ROOT))
-        PFM_ROOT := $(PWD)/libpfm4
-endif
-        PFM_LIB_PATH := $(PFM_ROOT)/lib
-	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
-endif
-ifeq (,$(PFM_INC_PATH))
-ifeq (,$(PFM_ROOT))
-        PFM_ROOT := $(PWD)/libpfm4
-endif
-        PFM_INC_PATH := $(PFM_ROOT)/include
-endif
-ifneq (/usr/include,$(PFM_INC_PATH))
-CFLAGS	+= -I$(PFM_INC_PATH)
-endif
+   PWD = $(shell pwd)
+   ifeq (,$(PFM_LIB_PATH))
+      ifeq (,$(PFM_ROOT))
+         PFM_ROOT := $(PWD)/libpfm4
+      endif
+      PFM_LIB_PATH := $(PFM_ROOT)/lib
+      CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
+   endif
+   ifeq (,$(PFM_INC_PATH))
+      ifeq (,$(PFM_ROOT))
+         PFM_ROOT := $(PWD)/libpfm4
+      endif
+      PFM_INC_PATH := $(PFM_ROOT)/include
+   endif
+   ifneq (/usr/include,$(PFM_INC_PATH))
+      CFLAGS	+= -I$(PFM_INC_PATH)
+   endif
 endif
 
 MISCHDRS += linux-lock.h mb.h papi_libpfm4_events.h $(PAPI_EVENTS_TABLE)
