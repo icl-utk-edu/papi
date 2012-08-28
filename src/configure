@@ -5290,6 +5290,9 @@ fi
 echo "$as_me:$LINENO: result: $shlib" >&5
 echo "${ECHO_T}$shlib" >&6
 
+# default
+pfm_incdir="libpfm4/include/"
+
 ##################################################
 #          perfctr
 ##################################################
@@ -5358,6 +5361,7 @@ fi
 fi
 
 if test "$perfctr" != 0; then
+  pfm_incdir="libpfm-3.y/include/"
   echo "$as_me:$LINENO: checking for perfctr version" >&5
 echo $ECHO_N "checking for perfctr version... $ECHO_C" >&6
   if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
@@ -5717,6 +5721,7 @@ if test "${with_perfmon+set}" = set; then
   perfmon=$withval
              user_specified_interface=perfmon
 	     force_perfmon2=yes
+	     pfm_incdir="libpfm-3.y/include"
              perfmon=`echo ${perfmon} | sed 's/^ \t*//;s/ \t*$//'`
              perfmon=`echo ${perfmon} | grep -e '[1-9]\.[0-9][0-9]*'`
              if test "x$perfmon" = "x"; then
@@ -5797,32 +5802,30 @@ fi
 fi;
 
 
+
+
 # Check whether --with-pfm_root or --without-pfm_root was given.
 if test "${with_pfm_root+set}" = set; then
   withval="$with_pfm_root"
   pfm_root=$withval
-            user_specified_interface=perfmon
 fi;
 
 # Check whether --with-pfm_prefix or --without-pfm_prefix was given.
 if test "${with_pfm_prefix+set}" = set; then
   withval="$with_pfm_prefix"
   pfm_prefix=$withval
-            user_specified_interface=perfmon
 fi;
 
 # Check whether --with-pfm_incdir or --without-pfm_incdir was given.
 if test "${with_pfm_incdir+set}" = set; then
   withval="$with_pfm_incdir"
   pfm_incdir=$withval
-            user_specified_interface=perfmon
 fi;
 
 # Check whether --with-pfm_libdir or --without-pfm_libdir was given.
 if test "${with_pfm_libdir+set}" = set; then
   withval="$with_pfm_libdir"
   pfm_libdir=$withval
-            user_specified_interface=perfmon
 fi;
 
 
@@ -5831,7 +5834,7 @@ fi;
 ##################################################
 perf_events=no
 force_perf_events=no
-pe_incdir="libpfm4/include/perfmon"
+pe_incdir="$pfm_incdir/perfmon"
 
 
 # Check whether --with-perf_events or --without-perf_events was given.
