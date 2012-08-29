@@ -5787,6 +5787,7 @@ fi
 fi
 
                if test "$perfmon" != 0; then
+	         pfm_incdir="libpfm-3.y/include"
                  perfmon=`echo ${perfmon} | sed 's/^ \t*//;s/ \t*$//'`
                  perfmon=`echo ${perfmon} | grep -e '[1-9]\.[0-9][0-9]*'`
                  perfmon=`echo ${perfmon} | sed 's/\.//'`
