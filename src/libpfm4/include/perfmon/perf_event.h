@@ -261,7 +261,7 @@ struct perf_event_mmap_page {
 		uint64_t cap_usr_time:1,
 			 cap_usr_rdpmc:1,
 			 cap_____res:62;
-	};
+	} SWIG_NAME(rdmap_cap);
 	uint16_t	pmc_width;
 	uint16_t	time_shift;
 	uint32_t	time_mult;

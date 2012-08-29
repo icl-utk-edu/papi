@@ -236,7 +236,7 @@ void stop_cpu(int c)
 void read_cpu(int c)
 {
 	perf_event_desc_t *fds;
-	uint64_t values[3];
+	uint64_t val, delta;
 	double ratio;
 	int i, j, n, ret;
 
@@ -249,9 +249,9 @@ void read_cpu(int c)
 
 	for(i=0, j = 0; i < options.num_groups; i++) {
 		for(n = 0; n < options.nevents[i]; n++, j++) {
-			memset(values, 0, sizeof(values));
-			ret = read(fds[j].fd, values, sizeof(values));
-			if (ret != sizeof(values)) {
+
+			ret = read(fds[j].fd, fds[j].values, sizeof(fds[j].values));
+			if (ret != sizeof(fds[j].values)) {
 				if (ret == -1)
 					err(1, "cannot read event %s : %d", fds[j].name, ret);
 				else {
@@ -263,20 +263,27 @@ void read_cpu(int c)
 			 * scaling because we may be sharing the PMU and
 			 * thus may be multiplexed
 			 */
-			fds[j].value = perf_scale(values);
-			ratio = perf_scale_ratio(values);
+			delta = perf_scale_delta(fds[j].values, fds[j].prev_values);
+			val = perf_scale(fds[j].values);
+			ratio = perf_scale_ratio(fds[j].values);
 
-			printf("CPU%-3d G%-2d %'-20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64") %s\n",
+			printf("CPU%-3d G%-2d %'-20"PRIu64" %-20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64") %s\n",
 				c,
 				i,
-				fds[j].value,
+				val,
+				delta,
 				fds[j].name,
 				(1.0-ratio)*100,
-				values[1],
-				values[2],
+				fds[j].values[1],
+				fds[j].values[2],
 				options.cgroup_name ? options.cgroup_name : "");
-	if (values[2] > values[1])
-		errx(1, "WARNING: time_running > time_enabled %"PRIu64"\n", values[2] - values[1]);
+
+			fds[j].prev_values[0] = fds[j].values[0];
+			fds[j].prev_values[1] = fds[j].values[1];
+			fds[j].prev_values[2] = fds[j].values[2];
+
+			if (fds[j].values[2] > fds[j].values[1])
+				errx(1, "WARNING: time_running > time_enabled %"PRIu64"\n", fds[j].values[2] - fds[j].values[1]);
 		}
 	}
 }

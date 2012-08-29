@@ -33,6 +33,13 @@
 #include "pfmlib_priv.h"			/* library private */
 #include "pfmlib_arm_priv.h"
 
+const pfmlib_attr_desc_t arm_mods[]={
+	PFM_ATTR_B("k", "monitor at kernel level"),
+	PFM_ATTR_B("u", "monitor at user level"),
+	PFM_ATTR_B("hv", "monitor in hypervisor"),
+	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
+};
+
 pfm_arm_config_t pfm_arm_cfg;
 
 #ifdef CONFIG_PFMLIB_OS_LINUX
@@ -159,10 +166,37 @@ pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 }
 #endif
 
-static void
-pfm_arm_display_reg(pfm_arm_reg_t reg, char *fstr)
+static int
+arm_num_mods(void *this, int idx)
 {
-	__pfm_vbprintf("[0x%x] %s\n", reg.val, fstr);
+	const arm_entry_t *pe = this_pe(this);
+	unsigned int mask;
+
+	mask = pe[idx].modmsk;
+	return pfmlib_popcnt(mask);
+}
+
+static inline int
+arm_attr2mod(void *this, int pidx, int attr_idx)
+{
+	const arm_entry_t *pe = this_pe(this);
+	size_t x;
+	int n;
+
+	n = attr_idx;
+
+	pfmlib_for_each_bit(x, pe[pidx].modmsk) {
+		if (n == 0)
+			break;
+		n--;
+	}
+	return x;
+}
+
+static void
+pfm_arm_display_reg(void *this, pfmlib_event_desc_t *e, pfm_arm_reg_t reg)
+{
+	__pfm_vbprintf("[0x%x] %s\n", reg.val, e->fstr);
 }
 
 int
@@ -199,16 +233,80 @@ pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 
 	const arm_entry_t *pe = this_pe(this);
+	pfm_event_attr_info_t *a;
 	pfm_arm_reg_t reg;
+	unsigned int plm = 0;
+	int i, idx, has_plm = 0;
 
 	reg.val = pe[e->event].code;
   
-	e->codes[0] = reg.val;
-	e->count    = 1;
+
+	for (i = 0; i < e->nattrs; i++) {
+		a = attr(e, i);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (a->type > PFM_ATTR_UMASK) {
+			uint64_t ival = e->attrs[i].ival;
+
+			switch(a->idx) {
+				case ARM_ATTR_U: /* USR */
+					if (ival)
+						plm |= PFM_PLM3;
+					has_plm = 1;
+					break;
+				case ARM_ATTR_K: /* OS */
+					if (ival)
+						plm |= PFM_PLM0;
+					has_plm = 1;
+					break;
+				case ARM_ATTR_HV: /* HYPERVISOR */
+					if (ival)
+						plm |= PFM_PLMH;
+					has_plm = 1;
+					break;
+				default:
+					return PFM_ERR_ATTR;
+			}
+		}
+	}
+
+	if (arm_has_plm(this, e)) {
+		if (!has_plm)
+			plm = e->dfl_plm;
+		reg.evtsel.excl_pl1 = !(plm & PFM_PLM0);
+		reg.evtsel.excl_usr = !(plm & PFM_PLM3);
+		reg.evtsel.excl_hyp = !(plm & PFM_PLMH);
+	}
 
         evt_strcat(e->fstr, "%s", pe[e->event].name);
 
-        pfm_arm_display_reg(reg, e->fstr);
+	e->codes[0] = reg.val;
+	e->count    = 1;
+
+	for (i = 0; i < e->npattrs; i++) {
+		if (e->pattrs[i].ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		idx = e->pattrs[i].idx;
+		switch(idx) {
+		case ARM_ATTR_K:
+			evt_strcat(e->fstr, ":%s=%lu", arm_mods[idx].name, !reg.evtsel.excl_pl1);
+			break;
+		case ARM_ATTR_U:
+			evt_strcat(e->fstr, ":%s=%lu", arm_mods[idx].name, !reg.evtsel.excl_usr);
+			break;
+		case ARM_ATTR_HV:
+			evt_strcat(e->fstr, ":%s=%lu", arm_mods[idx].name, !reg.evtsel.excl_hyp);
+			break;
+		}
+	}
+
+        pfm_arm_display_reg(this, e, reg);
    
 	return PFM_SUCCESS;
 }
@@ -262,13 +360,29 @@ pfm_arm_validate_table(void *this, FILE *fp)
 int
 pfm_arm_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
 {
-	return PFM_ERR_INVAL;
+	int idx;
+
+	idx = arm_attr2mod(this, pidx, attr_idx);
+	info->name = arm_mods[idx].name;
+	info->desc = arm_mods[idx].desc;
+	info->type = arm_mods[idx].type;
+	info->code = idx;
+
+	info->is_dfl = 0;
+	info->equiv  = NULL;
+	info->ctrl   = PFM_ATTR_CTRL_PMU;
+	info->idx    = idx; /* namespace specific index */
+
+	info->dfl_val64  = 0;
+	info->is_precise = 0;
+
+	return PFM_SUCCESS;
 }
 
 unsigned int
 pfm_arm_get_event_nattrs(void *this, int pidx)
 {
-	return 0;
+	return arm_num_mods(this, pidx);
 }
 
 int

@@ -120,7 +120,6 @@ measure(void)
 	}
 
 	for(l=0; l < options.delay; l++) {
-		uint64_t values[3];
 
 		sleep(1);
 
@@ -128,10 +127,11 @@ measure(void)
 		for(c = cmin; c < cmax; c++) {
 			fds = all_fds[c];
 			for(i=0; i < num_fds[c]; i++) {
+				uint64_t val, delta;
 				double ratio;
 
-				ret = read(fds[i].fd, values, sizeof(values));
-				if (ret != sizeof(values)) {
+				ret = read(fds[i].fd, fds[i].values, sizeof(fds[i].values));
+				if (ret != sizeof(fds[i].values)) {
 					if (ret == -1)
 						err(1, "cannot read event %d:%d", i, ret);
 					else
@@ -142,17 +142,20 @@ measure(void)
 				 * scaling because we may be sharing the PMU and
 				 * thus may be multiplexed
 				 */
-				fds[i].prev_value = fds[i].value;
-				fds[i].value = perf_scale(values);
-				ratio = perf_scale_ratio(values);
+				val = perf_scale(fds[i].values);
+				ratio = perf_scale_ratio(fds[i].values);
+				delta = perf_scale_delta(fds[i].values, fds[i].prev_values);
 
-				printf("CPU%d val=%-20"PRIu64" raw=%"PRIu64" ena=%"PRIu64" run=%"PRIu64" ratio=%.2f delta=%-20"PRIu64" %s\n",
+				printf("CPU%d val=%-20"PRIu64" %-20"PRIu64" raw=%"PRIu64" ena=%"PRIu64" run=%"PRIu64" ratio=%.2f %s\n",
 					c,
-					fds[i].value,
-					values[0],
-					values[1], values[2], ratio,
-					fds[i].value - fds[i].prev_value,
+					val,
+					delta,
+					fds[i].values[0],
+					fds[i].values[1], fds[i].values[2], ratio,
 					fds[i].name);
+				fds[i].prev_values[0] = fds[i].values[0];
+				fds[i].prev_values[1] = fds[i].values[1];
+				fds[i].prev_values[2] = fds[i].values[2];
 			}
 		}
 	}

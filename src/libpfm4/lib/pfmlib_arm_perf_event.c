@@ -71,14 +71,17 @@ pfm_arm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			continue;
 
 		/*
-		 * with perf_events, u and k are handled at the OS level
-		 * via attr.exclude_* fields
+		 * with perf_events, u and k, hv are handled at the OS
+		 * level via attr.exclude_* fields
 		 */
+		if (arm_has_plm(this, e) && e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
+			if (   e->pattrs[i].idx == ARM_ATTR_U
+			    || e->pattrs[i].idx == ARM_ATTR_K
+			    || e->pattrs[i].idx == ARM_ATTR_HV)
+				compact = 1;
+		}
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
-			if (  e->pattrs[i].idx == PERF_ATTR_U
-			    ||e->pattrs[i].idx == PERF_ATTR_K
-			    ||e->pattrs[i].idx == PERF_ATTR_H
-			    ||e->pattrs[i].idx == PERF_ATTR_PR)
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
 				compact = 1;
 		}
 

@@ -53,7 +53,6 @@ static options_t options;
 static void
 print_counts(perf_event_desc_t *fds, int num, int do_delta)
 {
-	uint64_t values[3];
 	ssize_t ret;
 	int i;
 
@@ -64,23 +63,22 @@ print_counts(perf_event_desc_t *fds, int num, int do_delta)
 		uint64_t val;
 		double ratio;
 
-		ret = read(fds[i].fd, values, sizeof(values));
-		if (ret < (ssize_t)sizeof(values)) {
+		ret = read(fds[i].fd, fds[i].values, sizeof(fds[i].values));
+		if (ret < (ssize_t)sizeof(fds[i].values)) {
 			if (ret == -1)
 				err(1, "cannot read values event %s", fds[i].name);
 			else
 				warnx("could not read event%d", i);
 		}
 
-		/*
-		 * scaling because we may be sharing the PMU and
-		 * thus may be multiplexed
-		 */
-		fds[i].prev_value = fds[i].value;
-		fds[i].value = val = perf_scale(values);
-		ratio = perf_scale_ratio(values);
+		val = perf_scale(fds[i].values);
+		ratio = perf_scale_ratio(fds[i].values);
 
-		val = do_delta ? (val - fds[i].prev_value): val;
+		val = do_delta ? perf_scale_delta(fds[i].values, fds[i].prev_values) : val;
+
+		fds[i].prev_values[0] = fds[i].values[0];
+		fds[i].prev_values[1] = fds[i].values[1];
+		fds[i].prev_values[2] = fds[i].values[2];
 
 		if (ratio == 1.0)
 			printf("%20"PRIu64" %s\n", val, fds[i].name);
@@ -89,7 +87,6 @@ print_counts(perf_event_desc_t *fds, int num, int do_delta)
 				printf("%20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", val, fds[i].name);
 			else
 				printf("%20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
-
 	}
 }
 

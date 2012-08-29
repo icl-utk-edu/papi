@@ -37,14 +37,18 @@ typedef struct {
 	const char			*name;	/* event name */
 	const char			*desc;	/* event description */
 	unsigned int			code; 	/* event code */
+	unsigned int			modmsk; /* modifiers bitmask */
 } arm_entry_t;
 
 typedef union pfm_arm_reg {
 	unsigned int val;			/* complete register value */
-   
 	struct {
-		unsigned int sel:8;	        /* counter */
-		unsigned int reserved:24;
+		unsigned int sel:8;
+		unsigned int reserved1:19;
+		unsigned int excl_hyp:1;
+		unsigned int reserved2:2;
+		unsigned int excl_pl1:1;
+		unsigned int excl_usr:1;
 	} evtsel;
 } pfm_arm_reg_t;
 
@@ -68,5 +72,26 @@ extern unsigned int pfm_arm_get_event_nattrs(void *this, int pidx);
 
 extern void pfm_arm_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 extern int pfm_arm_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
+
+#define ARM_ATTR_K	0 /* pl1 priv level */
+#define ARM_ATTR_U	1 /* user priv level */
+#define ARM_ATTR_HV	2 /* hypervisor priv level */
+
+#define _ARM_ATTR_K	(1 << ARM_ATTR_K)
+#define _ARM_ATTR_U	(1 << ARM_ATTR_U)
+#define _ARM_ATTR_HV	(1 << ARM_ATTR_HV)
+
+#define ARM_ATTR_PLM_ALL (_ARM_ATTR_K|_ARM_ATTR_U|_ARM_ATTR_HV)
+
+#define ARMV7_A15_ATTRS	(_ARM_ATTR_K|_ARM_ATTR_U|_ARM_ATTR_HV)
+#define ARMV7_A15_PLM	(PFM_PLM0|PFM_PLM3|PFM_PLMH)
+
+static inline int
+arm_has_plm(void *this, pfmlib_event_desc_t *e)
+{
+	const arm_entry_t *pe = this_pe(this);
+
+	return pe[e->event].modmsk & ARM_ATTR_PLM_ALL;
+}
 
 #endif /* __PFMLIB_ARM_PRIV_H__ */

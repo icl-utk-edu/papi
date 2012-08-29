@@ -95,7 +95,7 @@ endif
 # Library version
 #
 VERSION=4
-REVISION=2
+REVISION=3
 AGE=0
 
 #
@@ -186,11 +186,7 @@ ifeq ($(SYS),Darwin)
 DBG?=-g -Wall -Werror
 LDCONFIG=true
 else
-ifeq (icc,$(findstring icc,$(CC)))
-DBG?=-g -Wall -Werror -Wextra
-else
 DBG?=-g -Wall -Werror -Wextra -Wno-unused-parameter
-endif
 endif
 
 CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)

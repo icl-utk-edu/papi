@@ -221,6 +221,10 @@ extern pfmlib_pmu_t intel_nhm_support;
 extern pfmlib_pmu_t intel_nhm_ex_support;
 extern pfmlib_pmu_t intel_nhm_unc_support;
 extern pfmlib_pmu_t intel_snb_support;
+extern pfmlib_pmu_t intel_snb_unc_cbo0_support;
+extern pfmlib_pmu_t intel_snb_unc_cbo1_support;
+extern pfmlib_pmu_t intel_snb_unc_cbo2_support;
+extern pfmlib_pmu_t intel_snb_unc_cbo3_support;
 extern pfmlib_pmu_t intel_snb_ep_support;
 extern pfmlib_pmu_t intel_ivb_support;
 extern pfmlib_pmu_t power4_support;
@@ -246,6 +250,7 @@ extern pfmlib_pmu_t intel_wsm_dp_support;
 extern pfmlib_pmu_t intel_wsm_unc_support;
 extern pfmlib_pmu_t arm_cortex_a8_support;
 extern pfmlib_pmu_t arm_cortex_a9_support;
+extern pfmlib_pmu_t arm_cortex_a15_support;
 extern pfmlib_pmu_t mips_74k_support;
 
 extern pfmlib_os_t pfmlib_os_perf;

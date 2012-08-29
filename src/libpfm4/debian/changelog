@@ -1,3 +1,22 @@
+libpfm4 (3.0) unstable; urgency=low
+
+  * ARM Cortex A15 support
+  * updated Intel Sandy Bridge core PMU events
+  * Intel Sandy Bridge desktop (model 42) uncore PMU support
+  * Intel Ivy Bridge support
+  * full perf_events generic event support
+  * updated perf_examples
+  * enabled Intel Nehalem/Westmere uncore PMU support
+  * AMD LLano processor supoprt (Fam 12h)
+  * AMD Turion rocessor supoprt (Fam 11h)
+  * Intel Atom Cedarview processor support
+  * Win32 compilation support
+  * perf_events excl attribute
+  * perf_events generic hw event aliases support
+  * many bug fixes
+
+ -- Stephane Eranian <eranian@gmail.com>  Mon, 27 Aug  2012 17:45:22 +0200
+
 libpfm4 (2.0) unstable; urgency=low
 
   * updated event tables for Intel X86 processors
