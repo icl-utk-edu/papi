@@ -3,8 +3,8 @@
 %define python_prefix %(python -c "import sys; print sys.prefix")
 
 Name:		libpfm
-Version:	4.2.0
-Release:	2%{?dist}
+Version:	4.3.0
+Release:	1%{?dist}
 
 Summary:	Library to encode performance events for use by perf tool
 
@@ -70,6 +70,7 @@ make \
     LIBDIR=$RPM_BUILD_ROOT%{_libdir} \
     PYTHON_PREFIX=$RPM_BUILD_ROOT/%{python_prefix} \
     %{python_config} \
+    LDCONFIG=/bin/true \
     install
 
 %clean
@@ -96,6 +97,22 @@ rm -fr $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Aug 28 2012 Stephane Eranian  <eranian@gmail.com> 4.3.0-1
+- ARM Cortex A15 support
+- updated Intel Sandy Bridge core PMU events
+- Intel Sandy Bridge desktop (model 42) uncore PMU support
+- Intel Ivy Bridge support
+- full perf_events generic event support
+- updated perf_examples
+- enabled Intel Nehalem/Westmere uncore PMU support
+- AMD LLano processor supoprt (Fam 12h)
+- AMD Turion rocessor supoprt (Fam 11h)
+- Intel Atom Cedarview processor support
+- Win32 compilation support
+- perf_events excl attribute
+- perf_events generic hw event aliases support
+- many bug fixes
+
 * Wed Mar 14 2012 William Cohen <wcohen@redhat.com> 4.2.0-2
 - Some spec file fixup.
 

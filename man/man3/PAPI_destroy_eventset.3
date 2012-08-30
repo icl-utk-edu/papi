@@ -1,4 +1,4 @@
-.TH "PAPI_destroy_eventset" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_destroy_eventset" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -49,11 +49,6 @@ Empty and destroy an EventSet.
 .PP
 .RE
 .PP
-\fBBug\fP
-.RS 4
-If the user has set profile on an event with the call, then when destroying the EventSet the memory allocated by will not be freed. The user should turn off profiling on the Events before destroying the EventSet to prevent this behavior.
-.RE
-.PP
 .PP
 \fBSee also:\fP
 .RS 4
@@ -70,4 +65,4 @@ If the user has set profile on an event with the call, then when destroying the 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

@@ -69,7 +69,7 @@ static int find_existing_event(char *name) {
   }
   _papi_hwi_unlock( NAMELIB_LOCK );
 
-  if (event<0) SUBDBG("%s not allocated yet\n",name);
+  if (event<0) { SUBDBG("%s not allocated yet\n",name); }
 
   return event;
 }

@@ -55,6 +55,7 @@ typedef struct
 {
   int group_leader_fd;            /* fd of group leader                   */
   int event_fd;                   /* fd of event                          */
+  int event_opened;               /* event successfully opened            */
   uint32_t nr_mmap_pages;	  /* number pages in the mmap buffer      */
   void *mmap_buf;		  /* used for control/profiling           */
   uint64_t tail;		  /* current read location in mmap buffer */
@@ -476,6 +477,8 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
    for( i = 0; i < ctl->num_events; i++ ) {
 
+      ctl->events[i].event_opened=0;
+
       /* set up the attr structure.  We don't set up all fields here */
       /* as some have already been set up previously.                */
 
@@ -508,13 +511,12 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
       
       if ( ctl->events[i].event_fd == -1 ) {
 	 SUBDBG("sys_perf_event_open returned error on event #%d."
-		"  Error: %s",
+		"  Error: %s\n",
 		i, strerror( errno ) );
-			
 	 ret = PAPI_ECNFLCT;
 	 goto open_pe_cleanup;
       }
-		
+
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
               " group_leader/fd: %d, event_fd: %d,"
               " read_format: 0x%"PRIu64"\n",
@@ -540,7 +542,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
             goto open_pe_cleanup;
 	 }
       }
-
+      ctl->events[i].event_opened=1;
    }
 
    /* Now that we've successfully opened all of the events, do whatever  */
@@ -564,7 +566,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
    /* Set num_evts only if completely successful */
    ctx->state |= PERF_EVENTS_OPENED;
-
+		
    return PAPI_OK;
 
 open_pe_cleanup:
@@ -573,7 +575,10 @@ open_pe_cleanup:
    /* That's probably not strictly necessary.                            */
    while ( i > 0 ) {
       i--;
-      if (ctl->events[i].event_fd>=0) close( ctl->events[i].event_fd );
+      if (ctl->events[i].event_fd>=0) {
+	 close( ctl->events[i].event_fd );
+	 ctl->events[i].event_opened=0;
+      }
    }
 
    return ret;
@@ -594,49 +599,56 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
    /* Close child events first */
    for( i=0; i<ctl->num_events; i++ ) {
 
-      if (ctl->events[i].group_leader_fd!=-1) {
-         if ( ctl->events[i].mmap_buf ) {
-	    if ( munmap ( ctl->events[i].mmap_buf,
-		          ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
-	       PAPIERROR( "munmap of fd = %d returned error: %s",
-			  ctl->events[i].event_fd, strerror( errno ) );
-	       return PAPI_ESYS;
-	    }
-	 }
+      if (ctl->events[i].event_opened) {
 
-         if ( close( ctl->events[i].event_fd ) ) {
-	    PAPIERROR( "close of fd = %d returned error: %s",
+         if (ctl->events[i].group_leader_fd!=-1) {
+            if ( ctl->events[i].mmap_buf ) {
+	       if ( munmap ( ctl->events[i].mmap_buf,
+		             ctl->events[i].nr_mmap_pages * getpagesize() ) ) {
+	          PAPIERROR( "munmap of fd = %d returned error: %s",
+			     ctl->events[i].event_fd, strerror( errno ) );
+	          return PAPI_ESYS;
+	       }
+	    }
+
+            if ( close( ctl->events[i].event_fd ) ) {
+	       PAPIERROR( "close of fd = %d returned error: %s",
 		       ctl->events[i].event_fd, strerror( errno ) );
-	    return PAPI_ESYS;
-	 } else {
-	    num_closed++;
+	       return PAPI_ESYS;
+	    } else {
+	       num_closed++;
+	    }
+	    ctl->events[i].event_opened=0;
 	 }
       }
-
    }
 
    /* Close the group leaders last */
    for( i=0; i<ctl->num_events; i++ ) {
 
-      if (ctl->events[i].group_leader_fd==-1) {
-         if ( ctl->events[i].mmap_buf ) {
-	    if ( munmap ( ctl->events[i].mmap_buf,
-		          ctl->events[i].nr_mmap_pages * getpagesize(  ) ) ) {
-	       PAPIERROR( "munmap of fd = %d returned error: %s",
-			  ctl->events[i].event_fd, strerror( errno ) );
-	       return PAPI_ESYS;
-	    }
-	 }
+      if (ctl->events[i].event_opened) {
 
-         if ( close( ctl->events[i].event_fd ) ) {
-	    PAPIERROR( "close of fd = %d returned error: %s",
+         if (ctl->events[i].group_leader_fd==-1) {
+            if ( ctl->events[i].mmap_buf ) {
+	       if ( munmap ( ctl->events[i].mmap_buf,
+		             ctl->events[i].nr_mmap_pages * getpagesize() ) ) {
+	          PAPIERROR( "munmap of fd = %d returned error: %s",
+			     ctl->events[i].event_fd, strerror( errno ) );
+	          return PAPI_ESYS;
+	       }
+	    }
+
+
+            if ( close( ctl->events[i].event_fd ) ) {
+	       PAPIERROR( "close of fd = %d returned error: %s",
 		       ctl->events[i].event_fd, strerror( errno ) );
-	    return PAPI_ESYS;
-	 } else {
-	    num_closed++;
+	       return PAPI_ESYS;
+	    } else {
+	       num_closed++;
+	    }
+	    ctl->events[i].event_opened=0;
 	 }
       }
-
    }
 
 
@@ -1291,7 +1303,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       }
 
       SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
-	     pe_ctl->events[i].event_fd, 
+	     pe_ctl->events[0].event_fd, 
 	     (long)pe_ctl->tid, pe_ctl->cpu, ret);
       SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
 	     papi_pe_buffer[1],papi_pe_buffer[2]);

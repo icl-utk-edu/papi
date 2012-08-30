@@ -1,10 +1,10 @@
-.TH "PAPI_perror" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_perror" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_perror \- 
 .PP
-Convert PAPI error codes to strings, and print error message to stderr.  
+Produces a string on standard error, describing the last library error.  
 
 .SH SYNOPSIS
 .br
@@ -15,24 +15,15 @@ Convert PAPI error codes to strings, and print error message to stderr.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_perror( int code, char *destination, int length )\fP;
+ void \fBPAPI_perror( char *s )\fP;
 .RE
 .PP
 \fBParameters:\fP
 .RS 4
-\fIcode\fP -- the error code to interpret 
-.br
-\fIdestination\fP -- the error message in quotes 
-.br
-\fIlength\fP -- either 0 or strlen(destination)
+\fIs\fP -- Optional message to print before the string describing the last error message.
 .RE
 .PP
-\fBReturn values:\fP
-.RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments to \fBPAPI_perror()\fP is invalid.
-.RE
-.PP
-\fBPAPI_perror()\fP fills the string destination with the error message corresponding to the error code code. The function copies length worth of the error description string corresponding to code into destination. The resulting string is always null terminated. If length is 0, then the string is printed on stderr.
+The routine \fBPAPI_perror()\fP produces a message on the standard error output, describing the last error encountered during a call to PAPI. If s is not NULL, s is printed, followed by a colon and a space. Then the error message and a new-line are printed.
 .PP
 \fBExample:\fP
 .RS 4
@@ -42,7 +33,6 @@ Convert PAPI error codes to strings, and print error message to stderr.
   int ret;
   int EventSet = PAPI_NULL;
   int native = 0x0;
-  char error_str[PAPI_MAX_STR_LEN];
 
   ret = PAPI_create_eventset(&EventSet);
   if (ret != PAPI_OK)
@@ -54,8 +44,7 @@ Convert PAPI error codes to strings, and print error message to stderr.
   ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
   if (ret != PAPI_OK)
   {
-     PAPI_perror(ret, error_str, PAPI_MAX_STR_LEN);
-     fprintf(stderr,\'PAPI_error %d: %s\\n\', ret, error_str);
+     PAPI_perror( 'PAPI_add_event' );
      exit(1);
   }
   // Start counting
@@ -75,4 +64,4 @@ Convert PAPI error codes to strings, and print error message to stderr.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

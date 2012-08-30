@@ -1,4 +1,4 @@
-.TH "PAPI_sprofil" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_sprofil" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -39,7 +39,7 @@ scale -- broadly and historically speaking, a contraction factor that indicates 
 .br
 \fIEventCode\fP Code of the Event in the EventSet to profile. This event must already be a member of the EventSet. 
 .br
-\fIthreshold\fP minimum number of events that must occur before the PC is sampled. If hardware overflow is supported for your substrate, this threshold will trigger an interrupt when reached. Otherwise, the counters will be sampled periodically and the PC will be recorded for the first sample that exceeds the threshold. If the value of threshold is 0, profiling will be disabled for this event. 
+\fIthreshold\fP minimum number of events that must occur before the PC is sampled. If hardware overflow is supported for your component, this threshold will trigger an interrupt when reached. Otherwise, the counters will be sampled periodically and the PC will be recorded for the first sample that exceeds the threshold. If the value of threshold is 0, profiling will be disabled for this event. 
 .br
 \fIflags\fP bit pattern to control profiling behavior. Defined values are given in a table in the documentation for PAPI_pofil  
 
@@ -114,4 +114,4 @@ scale -- broadly and historically speaking, a contraction factor that indicates 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

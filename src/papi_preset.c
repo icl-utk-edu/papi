@@ -245,8 +245,9 @@ open_event_table( char *name )
 		sprintf( name, "../%s", PAPI_EVENT_FILE );
 		table = fopen( name, "r" );
 	}
-	if ( table )
+	if ( table ) {
 		SUBDBG( "Open %s succeeded.\n", name );
+	}
 	return table;
 }
 

@@ -41,13 +41,20 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_nhm_unc.3 \
 	 libpfm_intel_wsm.3	\
 	 libpfm_intel_wsm_unc.3 \
-	 libpfm_intel_snb.3
+	 libpfm_intel_snb.3	\
+	 libpfm_intel_snb_unc.3 \
+	 libpfm_intel_ivb.3
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 ARCH_MAN += libpfm_intel_p6.3 libpfm_intel_coreduo.3
 endif
 
 endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
+ARCH_MAN += libpfm_arm_ac15.3 libpfm_arm_ac8.3 libpfm_arm_ac9.3
+endif
+
 
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
 ARCH_MAN += libpfm_mips_74k.3

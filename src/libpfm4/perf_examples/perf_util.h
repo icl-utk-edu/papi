@@ -31,8 +31,8 @@
 
 typedef struct {
 	struct perf_event_attr hw;
-	uint64_t value, prev_value;
-	uint64_t enabled, running;
+	uint64_t values[3];
+	uint64_t prev_values[3];
 	char *name;
 	uint64_t id; /* event id kernel */
 	void *buf;
@@ -85,6 +85,23 @@ perf_scale(uint64_t *values)
 		res = (uint64_t)((double)values[0] * values[1]/values[2]);
 	return res;
 }
+
+static inline uint64_t
+perf_scale_delta(uint64_t *values, uint64_t *prev_values)
+{
+	uint64_t res = 0;
+
+	if (!values[2] && !values[1] && values[0])
+		warnx("WARNING: time_running = 0 = time_enabled, raw count not zero\n");
+
+	if (values[2] > values[1])
+		warnx("WARNING: time_running > time_enabled\n");
+
+	if (values[2] - prev_values[2])
+		res = (uint64_t)((double)((values[0] - prev_values[0]) * (values[1] - prev_values[1])/ (values[2] - prev_values[2])));
+	return res;
+}
+
 
 /*
  * TIME_RUNNING/TIME_ENABLED

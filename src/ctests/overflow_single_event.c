@@ -76,17 +76,10 @@ main( int argc, char **argv )
 		}
 	} else {
 		/* query and set up the right instruction to monitor */
-		if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK ) {
-			PAPI_event = PAPI_FP_INS;
-		} else {
-			if ( PAPI_query_event( PAPI_FP_OPS ) == PAPI_OK )
-				PAPI_event = PAPI_FP_OPS;
-			else
-				PAPI_event = PAPI_TOT_INS;
-		}
+		PAPI_event = find_nonderived_event( );
 	}
 
-	if ( PAPI_event == PAPI_FP_INS )
+	if (( PAPI_event == PAPI_FP_OPS ) || ( PAPI_event == PAPI_FP_INS ))
 		mythreshold = THRESHOLD;
 	else
 #if defined(linux)

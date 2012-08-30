@@ -52,6 +52,7 @@ The library supports many PMUs. The current version can handle:
 	- For ARM:
 		ARMV7 Cortex A8
 		ARMV7 Cortex A9
+		ARMV7 Cortex A15
 
 	- For SPARC
 		Ultra I, II

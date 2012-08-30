@@ -238,8 +238,9 @@ print_control( const struct perfctr_cpu_control *control )
 
 	for ( i = 0; i < ( control->nractrs + control->nrictrs ); ++i ) {
 		SUBDBG( "pmc_map[%u]\t\t%u\n", i, control->pmc_map[i] );
-		if ( control->ireset[i] )
+		if ( control->ireset[i] ) {
 			SUBDBG( "ireset[%d]\t%X\n", i, control->ireset[i] );
+		}
 	}
 
 }

@@ -177,8 +177,9 @@ print_control( const struct perfctr_cpu_control *control )
 			SUBDBG( "pmc_map[%u]\t\t%u\n", i, control->pmc_map[i] );
 		}
 		SUBDBG( "evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i] );
-		if ( control->ireset[i] )
+		if ( control->ireset[i] ) {
 			SUBDBG( "ireset[%u]\t%d\n", i, control->ireset[i] );
+		}
 	}
 }
 #endif
@@ -514,8 +515,9 @@ _bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 				  src->ra_bits.pebs_matrix_vert ) &&
 				( dst->ra_bits.pebs_matrix_vert !=
 				  src->ra_bits.pebs_matrix_vert ) ) );
-		if ( retval2 )
+		if ( retval2 ) {
 			SUBDBG( "pebs conflict!\n" );
+		}
 		return ( retval1 | retval2 );
 	}
 
@@ -613,8 +615,9 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 	   for counter allocation and optimization. */
 	natNum = ESI->NativeCount;
 
-	if ( is_pentium4() )
+	if ( is_pentium4() ) {
 		SUBDBG( "native event count: %d\n", natNum );
+	}
 
 	for ( i = 0; i < natNum; i++ ) {
 		/* retrieve the mapping information about this native event */

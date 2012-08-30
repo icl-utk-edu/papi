@@ -149,6 +149,12 @@ typedef enum {
 	PFM_PMU_AMD64_FAM12H_LLANO,	/* AMD AMD64 Fam12h Llano */
 	PFM_PMU_AMD64_FAM11H_TURION,	/* AMD AMD64 Fam11h Turion */
 	PFM_PMU_INTEL_IVB,		/* Intel IvyBridge */
+	PFM_PMU_ARM_CORTEX_A15,		/* ARM Cortex A15 */
+
+	PFM_PMU_INTEL_SNB_UNC_CB0,	/* Intel SandyBridge C-box 0 uncore PMU */
+	PFM_PMU_INTEL_SNB_UNC_CB1,	/* Intel SandyBridge C-box 1 uncore PMU */
+	PFM_PMU_INTEL_SNB_UNC_CB2,	/* Intel SandyBridge C-box 2 uncore PMU */
+	PFM_PMU_INTEL_SNB_UNC_CB3,	/* Intel SandyBridge C-box 3 uncore PMU */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

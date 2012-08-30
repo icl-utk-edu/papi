@@ -6,7 +6,7 @@
 # cross compiling should work differently...
 
 AC_PREREQ(2.59)
-AC_INIT(PAPI, 4.9.0.0, ptools-perfapi@eecs.utk.edu)
+AC_INIT(PAPI, 5.0.0.0, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -766,6 +766,9 @@ if test "$papiLIBS" != "shared static"; then
 fi
 AC_MSG_RESULT($shlib)
 
+# default
+pfm_incdir="libpfm4/include/"
+
 ##################################################
 #          perfctr
 ##################################################
@@ -788,6 +791,7 @@ if test "$cross_compiling" = "no" ; then
 fi 
 
 if test "$perfctr" != 0; then 
+  pfm_incdir="libpfm-3.y/include/"
   AC_MSG_CHECKING(for perfctr version)
   if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
     AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Patch kernel with 2.6.x.])
@@ -817,11 +821,11 @@ if test "$perfctr" != 0; then
   dotest=0
   if test "x$perfctr_root" != "x"; then
     LIBS="-L$perfctr_root/usr.lib -lperfctr"
-    CPPFLAGS="-I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
+    CPPFLAGS="$CPPFLAGS -I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
     dotest=1
   elif test "x$perfctr_prefix" != "x"; then
     LIBS="-L$perfctr_prefix/lib -lperfctr"
-    CPPFLAGS="-I$perfctr_prefix/include"
+    CPPFLAGS="$CPPFLAGS -I$perfctr_prefix/include"
     perfctr_libdir="$perfctr_prefix/lib"
     perfctr_incdir="$perfctr_prefix/include"
     dotest=1
@@ -835,6 +839,7 @@ if test "$perfctr" != 0; then
       dotest=1
     fi
   fi
+
   if test "$dotest" = 1; then
     AC_CHECK_LIB([perfctr], [vperfctr_open], 
                  [AC_CHECK_HEADERS([libperfctr.h], 
@@ -871,6 +876,7 @@ AC_ARG_WITH(perfmon,
             [perfmon=$withval 
              user_specified_interface=perfmon
 	     force_perfmon2=yes
+	     pfm_incdir="libpfm-3.y/include"
              perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
              perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
              if test "x$perfmon" = "x"; then
@@ -892,6 +898,7 @@ AC_ARG_WITH(perfmon,
                                             [perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`],
                                             [perfmon=0])])
                if test "$perfmon" != 0; then
+	         pfm_incdir="libpfm-3.y/include"
                  perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
                  perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
                  perfmon=`echo ${perfmon} | sed 's/\.//'`
@@ -906,22 +913,20 @@ AC_ARG_WITH(perfmon,
                fi
 	         fi])
 
+
+
 AC_ARG_WITH(pfm_root,
            [  --with-pfm-root=<path>		Specify path to source tree (for use by developers only) ],
-           [pfm_root=$withval
-            user_specified_interface=perfmon])
+           [pfm_root=$withval])
 AC_ARG_WITH(pfm_prefix,
            [  --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution ],
-           [pfm_prefix=$withval
-            user_specified_interface=perfmon])
+           [pfm_prefix=$withval])
 AC_ARG_WITH(pfm_incdir,
            [  --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location ],
-           [pfm_incdir=$withval
-            user_specified_interface=perfmon])
+           [pfm_incdir=$withval])
 AC_ARG_WITH(pfm_libdir,
            [  --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location ],
-           [pfm_libdir=$withval
-            user_specified_interface=perfmon])
+           [pfm_libdir=$withval])
 
 
 ##################################################
@@ -929,7 +934,7 @@ AC_ARG_WITH(pfm_libdir,
 ##################################################
 perf_events=no
 force_perf_events=no
-pe_incdir="libpfm4/include/perfmon"
+pe_incdir="$pfm_incdir/perfmon"
 
 AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
@@ -1001,11 +1006,11 @@ if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
   dotest=0
   if test "x$pfm_root" != "x"; then
     LIBS="-L$pfm_root/lib -lpfm"
-    CPPFLAGS="-I$pfm_root/include"
+    CPPFLAGS="$CPPFLAGS -I$pfm_root/include"
     dotest=1
   elif test "x$pfm_prefix" != "x"; then
     LIBS="-L$pfm_prefix/lib -lpfm"
-    CPPFLAGS="-I$pfm_prefix/include"
+    CPPFLAGS="$CPPFLAGS -I$pfm_prefix/include"
     if test "x$pfm_libdir" = "x"; then
       pfm_libdir="$pfm_prefix/lib"
     fi
@@ -1019,8 +1024,7 @@ if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
       dotest=1
     fi
     if test "x$pfm_incdir" != "x"; then
-      CPPFLAGS="-I$pfm_incdir"
-      dotest=1
+      CPPFLAGS="$CPPFLAGS -I$pfm_incdir"
     fi
   fi
   if test "$dotest" = 1; then

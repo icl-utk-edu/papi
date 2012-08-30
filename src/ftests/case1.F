@@ -20,8 +20,8 @@ C count the first event?
       INTEGER n
       REAL c,a,b
 
-      INTEGER len_trim
-      EXTERNAL len_trim
+      INTEGER last_char
+      EXTERNAL last_char
       integer tests_quiet, get_quiet
       external get_quiet
 

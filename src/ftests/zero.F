@@ -10,8 +10,8 @@
       character*(PAPI_MAX_STR_LEN) name
       integer retval
 
-      Integer len_trim, n
-      External len_trim
+      Integer last_char, n
+      External last_char
       integer tests_quiet, get_quiet
       external get_quiet
 
@@ -103,7 +103,7 @@
           call ftest_fail(__FILE__, __LINE__, 
      *         'PAPIf_event_code_to_name', retval)
         end if
-        n=len_trim(name)
+        n=last_char(name)
         write (*,800) "Default granularity is:", granularity, grnstr
  800    format(a25, i3, " ", a70)
         write (*,810) "Using", NUM_FLOPS,

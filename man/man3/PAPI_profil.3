@@ -1,4 +1,4 @@
-.TH "PAPI_profil" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_profil" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -37,7 +37,7 @@ The profiling routines have no Fortran interface.
 .br
 \fIEventCode\fP -- Code of the Event in the EventSet to profile. This event must already be a member of the EventSet. 
 .br
-\fIthreshold\fP -- minimum number of events that must occur before the PC is sampled. If hardware overflow is supported for your substrate, this threshold will trigger an interrupt when reached. Otherwise, the counters will be sampled periodically and the PC will be recorded for the first sample that exceeds the threshold. If the value of threshold is 0, profiling will be disabled for this event. 
+\fIthreshold\fP -- minimum number of events that must occur before the PC is sampled. If hardware overflow is supported for your component, this threshold will trigger an interrupt when reached. Otherwise, the counters will be sampled periodically and the PC will be recorded for the first sample that exceeds the threshold. If the value of threshold is 0, profiling will be disabled for this event. 
 .br
 \fIflags\fP -- bit pattern to control profiling behavior. Defined values are shown in the table above.
 .RE
@@ -167,11 +167,6 @@ PAPI_PROFIL_FORCE_SW Force software overflow in profiling.
 .PP
 .RE
 .PP
-\fBBug\fP
-.RS 4
-If you call \fBPAPI_profil\fP, PAPI allocates buffer space that will not be freed if you call \fBPAPI_shutdown\fP or \fBPAPI_cleanup_eventset\fP. To clean all memory, you must call \fBPAPI_profil\fP on the Events with a 0 threshold. 
-.RE
-.PP
 .PP
 \fBSee also:\fP
 .RS 4
@@ -184,4 +179,4 @@ If you call \fBPAPI_profil\fP, PAPI allocates buffer space that will not be free
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

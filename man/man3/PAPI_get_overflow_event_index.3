@@ -1,4 +1,4 @@
-.TH "PAPI_get_overflow_event_index" 3 "Wed Feb 8 2012" "Version 4.2.1.0" "PAPI-C" \" -*- nroff -*-
+.TH "PAPI_get_overflow_event_index" 3 "Thu Aug 23 2012" "Version 5.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -51,11 +51,6 @@ converts an overflow vector into an array of indexes to overflowing events
  
 .RE
 .PP
-\fBBug\fP
-.RS 4
-This function may not return all overflowing events if used with software-driven overflow of multiple derived events. \fBPAPI_get_overflow_event_index\fP decomposes an overflow_vector into an event index array in which the first element corresponds to the least significant set bit in overflow_vector and so on. Based on overflow_vector, the user can only tell which physical counters overflowed. Using this function, the user can map overflowing counters to specific events in the event set. An array is used in this function to support the possibility of multiple simultaneous overflow events.
-.RE
-.PP
 .PP
 \fBSee also:\fP
 .RS 4
@@ -66,4 +61,4 @@ This function may not return all overflowing events if used with software-driven
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI-C from the source code.
+Generated automatically by Doxygen for PAPI from the source code.

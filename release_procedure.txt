@@ -14,25 +14,22 @@ __ 0a. Notify developers that a release is imminent and the repository should be
 __ 0b. Update your local copy from git to make sure you have all changes.
 	git pull
 
-__ 1. If this is not an incremental release, branch git. 
-	git checkout -b stable-X.Y [starting point eg master]
-
-__ 2. Update any documentation that may have changed. Pay particular attention
+__ 1. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
 
-__ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
+__ 2. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
 	Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
 
--- 3a. On most icl machines:
+-- 2a. On most icl machines:
 	export PATH=/mnt/scratch/sw/doxygen-1.7.4/bin:$PATH
 	-- or --
 	setenv PATH /mnt/scratch/sw/doxygen-1.7.4/bin:$PATH
 
--- 3b. Rebuild the doxygen manpages (  cd doc && make && make install )
-	You will want to check if anything needs to be committed to cvs.
+-- 2b. Rebuild the doxygen manpages (  cd doc && make && make install )
+	You will want to check if anything needs to be committed to git.
 	(Usually the $(papi_dir)/man/man1 and man3 directories)
 
--- 3c. Update the website docs; 
+-- 2c. Update the website docs; 
 	We use Doxyfile-html for this, 
 	newgrp papi		# changes your defacto group to papi (starts a new shell)
 	$(papi_dir)/doc make clean html
@@ -40,23 +37,26 @@ __ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makef
 	cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
 	chmod -R 775 /silk/homes/icl/projectsdev/papi/docs
 
-__ 4. If configure.in is changed, run autoconf (2.59) and commit the resulting
+__ 3. If configure.in is changed, run autoconf (2.59) and commit the resulting
 	configure file.
 	NOTE: Using an autoconf version >2.59 will work, but will produce an 
 	inordinate number of extraneous differences between versions.
 
-__ 5. Create a ChangeLog for the current release. 
+__ 4. Create a ChangeLog for the current release. 
 	We use a python script gitlog2changelog.py to generate is for us. 
 	It expects the tag of the last release as an argument. 
 	./gitlog2changelog.py papi-a-b-c-t
 	mv ChangeLog ChangeLogP4XYZ.txt
 
-__ 6. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
+__ 5. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
-__ 7. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
+__ 6. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 
-__ 8. Add ChangeLogXYZ.txt to git and commit both ChangeLogXYZ.txt and 
+__ 7. Add ChangeLogXYZ.txt to git and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
+
+__ 8. If this is not an incremental release, branch git. 
+	git checkout -b stable-X.Y [starting point eg master]
 
 __ 9. Tag git: papi-X-Y-Z-t.
 	git tag -a papi-X-Y-Z-t
