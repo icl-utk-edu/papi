@@ -1345,6 +1345,9 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 			return PAPI_OK;
 		}
 	} else if ( IS_NATIVE(i) ) {
+	    if (!_papi_hwd[cidx]->cmp_info.disabled) {
+                return PAPI_ENOEVNT 
+            }
 		/* Should we check against num native events here? */
 	    event_code=_papi_hwi_eventcode_to_native(*EventCode);
 	    retval = _papi_hwd[cidx]->ntv_enum_events((unsigned int *)&event_code, modifier );
@@ -1354,6 +1357,13 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 
 	    return retval;
 	} 
+
+
+
+           if (!_papi_hwd[i]->cmp_info.disabled) {
+              _papi_hwd[i]->shutdown_component(  );
+           }
+
 
 	papi_return( PAPI_EINVAL );
 }
