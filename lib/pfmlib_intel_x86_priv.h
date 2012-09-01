@@ -86,6 +86,7 @@ typedef struct {
 #define INTEL_X86_NHM_OFFCORE		0x40	/* Nehalem/Westmere offcore_response */
 #define INTEL_X86_EXCL_GRP_GT		0x80	/* exclude use of grp with id > own grp */
 #define INTEL_X86_FIXED			0x100	/* fixed counter only event */
+#define INTEL_X86_NO_AUTOENCODE		0x200	/* does not support auto encoding validation */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */

@@ -1285,6 +1285,10 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 			sprintf(buf, "%s::%s:%s", pmu->name, einfo.name, ainfo.name);
 			ret = pfmlib_validate_encoding(buf, PFM_PLM3|PFM_PLM0);
 			if (ret != PFM_SUCCESS) {
+				if (pmu->can_auto_encode) {
+					if (!pmu->can_auto_encode(pmu, i, u))
+						continue;
+				}
 				/*
 				 * some PMU may not support raw encoding
 				 */
@@ -1300,6 +1304,10 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 			sprintf(buf, "%s::%s", pmu->name, einfo.name);
 			ret = pfmlib_validate_encoding(buf, PFM_PLM3|PFM_PLM0);
 			if (ret != PFM_SUCCESS) {
+				if (pmu->can_auto_encode) {
+					if (!pmu->can_auto_encode(pmu, i, u))
+						continue;
+				}
 				if (ret != PFM_ERR_NOTSUPP) {
 					fprintf(fp, "cannot encode event %s : %s\n", buf, pfm_strerror(ret));
 					retval = ret;

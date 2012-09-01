@@ -122,6 +122,7 @@ typedef struct pfmlib_pmu {
 	int		 (*get_event_info)(void *this, int pidx, pfm_event_info_t *info);
 	unsigned int	 (*get_event_nattrs)(void *this, int pidx);
 	int		 (*event_is_valid)(void *this, int pidx);
+	int		 (*can_auto_encode)(void *this, int pidx, int uidx);
 
 	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
 	int		 (*get_event_encoding[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
