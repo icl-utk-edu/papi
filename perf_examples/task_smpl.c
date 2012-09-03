@@ -270,7 +270,7 @@ mainloop(char **arg)
 	 * We are skipping the first 3 values (nr, time_enabled, time_running)
 	 * and then for each event we get a pair of values.
 	 */
-	if (num_fds > 1) {
+	if (num_fds > 1 && fds[0].fd > -1) {
 		sz = (3+2*num_fds)*sizeof(uint64_t);
 		val = malloc(sz);
 		if (!val)

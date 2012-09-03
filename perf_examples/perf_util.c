@@ -516,6 +516,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 
 			}
 		} else {
+			time_enabled = time_running = 0;
 			/*
 			 * this program does not use FORMAT_GROUP when there is only one event
 			 */

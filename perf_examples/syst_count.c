@@ -190,7 +190,8 @@ setup_cpu(int cpu, int cfd)
 	return;
 error:
 	for (i=0; i < j; i++) {
-		close(fds[i].fd);
+		if (fds[i].fd > -1)
+			close(fds[i].fd);
 		fds[i].fd = -1;
 	}
 }

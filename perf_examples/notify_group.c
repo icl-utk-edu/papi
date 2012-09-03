@@ -194,7 +194,8 @@ error:
 	 * destroy our session
 	 */
 	for(i=0; i < num_fds; i++)
-		close(fds[i].fd);
+		if (fds[i].fd > -1)
+			close(fds[i].fd);
 
 	perf_free_fds(fds, num_fds);
 

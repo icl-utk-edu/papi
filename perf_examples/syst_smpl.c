@@ -118,7 +118,7 @@ setup_cpu(int cpu, int fd)
 {
 	uint64_t *val;
 	int ret, flags;
-	int i;
+	int i, pid;
 
 	/*
 	 * does allocate fds
@@ -137,8 +137,10 @@ setup_cpu(int cpu, int fd)
 
 		if (options.cgroup) {
 			flags = PERF_FLAG_PID_CGROUP;
+			pid = fd;
 		} else {
 			flags = 0;
+			pid = -1;
 		}
 
 		if (options.pin)
@@ -164,7 +166,7 @@ setup_cpu(int cpu, int fd)
 				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
 		}
 
-		fds[i].fd = perf_event_open(&fds[i].hw, -1, cpu, fds[0].fd, flags);
+		fds[i].fd = perf_event_open(&fds[i].hw, pid, cpu, fds[0].fd, flags);
 		if (fds[i].fd == -1) {
 			if (fds[i].hw.precise_ip)
 				err(1, "cannot attach event %s: precise mode may not be supported", fds[i].name);
@@ -207,14 +209,16 @@ setup_cpu(int cpu, int fd)
 	 * We are skipping the first 3 values (nr, time_enabled, time_running)
 	 * and then for each event we get a pair of values.
 	 */
-	if (num_fds > 1) {
+	if (num_fds > 1 && fds[0].fd > -1) {
+		ssize_t sret;
+
 		sz = (3+2*num_fds)*sizeof(uint64_t);
 		val = malloc(sz);
 		if (!val)
 			err(1, "cannot allocated memory");
 
-		ret = read(fds[0].fd, val, sz);
-		if (ret == -1)
+		sret = read(fds[0].fd, val, sz);
+		if (sret == (ssize_t)sz)
 			err(1, "cannot read id %zu", sizeof(val));
 
 		for(i=0; i < num_fds; i++) {
@@ -309,6 +313,10 @@ mainloop(char **arg)
 	}
 
 	setup_cpu(options.cpu, fd);
+
+	/* done with cgroup */
+	if (fd != -1)
+		close(fd);
 
 	signal(SIGALRM, handler);
 	signal(SIGINT, handler);
