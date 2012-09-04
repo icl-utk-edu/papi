@@ -1180,6 +1180,7 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 {
 	int i, retval = 0, num_events_success = 0;
 	MasterEvent *mev;
+	MasterEvent *tmp;
 	PAPI_option_t options;
 	MasterEvent **head = &mpx_events->mythr->head;
 
@@ -1303,6 +1304,7 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 	return ( PAPI_OK );
 
   bail:
+    
 	/* If there is a current mev, it is currently not linked into the list
 	 * of multiplexing events, so we can just delete that
 	 */
@@ -1314,10 +1316,24 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 	     PAPIERROR("Destory eventset\n");
 	   }
 	}
-	if ( mev )
+    
+    
+	if ( mev ) {
 		papi_free( mev );
+	}
 	mev = NULL;
 
+	if (*head) {
+        tmp = (*head)->next;
+        papi_free(*head);
+        while (tmp != NULL) {
+        	*head = tmp;
+        	tmp = (*head)->next;
+        	papi_free(*head);
+        }
+        	*head = NULL;
+  	}
+    
 	/* Decrease the usage count of events */
 	for ( i = 0; i < num_events_success; i++ ) {
 		mpx_events->mev[mpx_events->num_events + i]->uses--;
