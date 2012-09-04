@@ -181,12 +181,17 @@ PFMLIBDIR=$(TOPDIR)/lib
 # -Wextra: to enable extra compiler sanity checks (e.g., signed vs. unsigned)
 # -Wno-unused-parameter: to avoid warnings on unused foo(void *this) parameter
 #
+DBG?=-g -Wall -Werror -Wextra -Wno-unused-parameter
+
 ifeq ($(SYS),Darwin)
 # older gcc-4.2 does not like -Wextra and some of our initialization code
 DBG?=-g -Wall -Werror
 LDCONFIG=true
-else
-DBG?=-g -Wall -Werror -Wextra -Wno-unused-parameter
+endif
+
+ifeq ($(SYS),FreeBSD)
+# gcc-4.2 does not like -Wextra and some of our initialization code
+DBG=-g -Wall -Werror
 endif
 
 CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)
