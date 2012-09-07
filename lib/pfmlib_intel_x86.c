@@ -380,7 +380,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	const intel_x86_entry_t *pe;
 	pfm_intel_x86_reg_t reg;
 	unsigned int grpmsk, ugrpmsk = 0;
-	uint64_t umask1, umask2;
+	uint64_t umask1, umask2, ucode, last_ucode = ~0ULL;
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0;
 	int k, ret, id;
@@ -462,10 +462,19 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			}
 
 			last_grpid = grpid;
+			ucode     = pe[e->event].umasks[a->idx].ucode;
 			modhw    |= pe[e->event].umasks[a->idx].modhw;
-			umask2   |= pe[e->event].umasks[a->idx].ucode >> 8;
+			umask2   |= ucode >> 8;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->idx].grpid;
 
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_CODE_OVERRIDE)) {
+				if (last_ucode != ~0ULL && (ucode & 0xff) != last_ucode) {
+					DPRINT("cannot override event with two different codes for %s\n", pe[e->event].name);
+					return PFM_ERR_FEATCOMB;
+				}
+				last_ucode = ucode & 0xff;
+				reg.sel_event_select = last_ucode;
+			}
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
 
 			/* there can only be one RAW_UMASK per event */
@@ -863,7 +872,11 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_
 		info->name = pe[pidx].umasks[idx].uname;
 		info->desc = pe[pidx].umasks[idx].udesc;
 		info->equiv= pe[pidx].umasks[idx].uequiv;
-		info->code = pe[pidx].umasks[idx].ucode >> 8; /* show actual umask code */
+
+		info->code = pe[pidx].umasks[idx].ucode;
+		if (!intel_x86_uflag(this, pidx, idx, INTEL_X86_CODE_OVERRIDE))
+			info->code >>= 8;
+
 		info->type = PFM_ATTR_UMASK;
 		info->is_dfl = intel_x86_uflag(this, pidx, idx, INTEL_X86_DFL);
 		info->is_precise = intel_x86_uflag(this, pidx, idx, INTEL_X86_PEBS);
