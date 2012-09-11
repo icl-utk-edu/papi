@@ -1271,8 +1271,7 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
          SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
 	        pe_ctl->events[i].event_fd, (long)pe_ctl->tid, 
 		pe_ctl->cpu, ret);
-         SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
-	        papi_pe_buffer[1],papi_pe_buffer[2]);
+         SUBDBG("read: %lld\n",papi_pe_buffer[0]);
      
 	 pe_ctl->counts[i] = papi_pe_buffer[0];
       }
