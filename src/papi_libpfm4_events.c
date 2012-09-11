@@ -124,7 +124,6 @@ static int find_event_no_aliases(char *name) {
        memset(&pinfo,0,sizeof(pfm_pmu_info_t));
        pfm_get_pmu_info(j, &pinfo);
        if (!pinfo.is_present) {
-          SUBDBG("PMU %d not present, skipping...\n",j);
           continue;
        }
 
