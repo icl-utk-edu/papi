@@ -1305,8 +1305,12 @@ _papi_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n", 
 	     pe_ctl->events[0].event_fd, 
 	     (long)pe_ctl->tid, pe_ctl->cpu, ret);
-      SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
-	     papi_pe_buffer[1],papi_pe_buffer[2]);
+      { 
+	 int j;
+	 for(j=0;j<ret/8;j++) {
+            SUBDBG("read %d: %lld\n",j,papi_pe_buffer[j]);
+	 }
+      }
 
       /* Make sure the kernel agrees with how many events we have */
       if (papi_pe_buffer[0]!=pe_ctl->num_events) {
