@@ -1042,7 +1042,7 @@ found:
 	for (i = 0; i < d->nattrs; i++) {
 		pfm_event_attr_info_t *a = attr(d, i);
 		if (a->type != PFM_ATTR_RAW_UMASK)
-			DPRINT("%d %d %d %s\n", d->event, i, a->idx, d->pattrs[a->idx].name);
+			DPRINT("%d %d %d %s\n", d->event, i, a->idx, d->pattrs[d->attrs[i].id].name);
 		else
 			DPRINT("%d %d RAW_UMASK (0x%x)\n", d->event, i, a->idx);
 	}
