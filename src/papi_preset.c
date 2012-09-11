@@ -548,6 +548,8 @@ nextline:
     if ( table ) {
        fclose( table );
     }
+
+    SUBDBG("Done parsing preset table\n");
 	
     return PAPI_OK;
 }
