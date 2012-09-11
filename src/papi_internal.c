@@ -649,7 +649,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
        ESI->EventInfoArray[i].ops = NULL;
        ESI->EventInfoArray[i].derived=NOT_DERIVED;
        for ( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT; j++ ) {
-	   ESI->EventInfoArray[i].pos[j] = -1;
+	   ESI->EventInfoArray[i].pos[j] = PAPI_NULL;
        }
    }
 
@@ -1466,7 +1466,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 
 	array[thisindex].event_code = ( unsigned int ) PAPI_NULL;
 	for ( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT; j++ )
-		array[thisindex].pos[j] = -1;
+		array[thisindex].pos[j] = PAPI_NULL;
 	array[thisindex].ops = NULL;
 	array[thisindex].derived = NOT_DERIVED;
 	ESI->NumberOfEvents--;
@@ -1566,7 +1566,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
       /* do we really need to do this, seeing as we free() it later? */
       ESI->EventInfoArray[i].event_code= ( unsigned int ) PAPI_NULL;
       for( j = 0; j < PAPI_EVENTS_IN_DERIVED_EVENT; j++ ) {
-	  ESI->EventInfoArray[i].pos[j] = -1;
+	  ESI->EventInfoArray[i].pos[j] = PAPI_NULL;
       }
       ESI->EventInfoArray[i].ops = NULL;
       ESI->EventInfoArray[i].derived = NOT_DERIVED;
