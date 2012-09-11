@@ -1350,7 +1350,6 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
       memset(&pinfo,0,sizeof(pfm_pmu_info_t));
       retval=pfm_get_pmu_info(i, &pinfo);
       if (retval!=PFM_SUCCESS) {
-	 SUBDBG("%d\n",retval);
 	 continue;
       }
       if (pinfo.is_present) {
