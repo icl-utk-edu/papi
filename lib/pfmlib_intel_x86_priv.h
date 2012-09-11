@@ -48,6 +48,7 @@ typedef struct {
 	unsigned int		umodel; /* only available on this PMU model */
 	unsigned int		grpid;	/* unit mask group id */
 	unsigned int		modhw;	/* hardwired modifiers, cannot be changed */
+	unsigned int		umodmsk_req; /* bitmask of required modifiers */
 } intel_x86_umask_t;
 
 #define INTEL_X86_MAX_GRPID	(~0U)
@@ -64,6 +65,7 @@ typedef struct {
 	unsigned int			numasks;/* number of umasks */
 	unsigned int			flags;	/* flags */
 	unsigned int			modmsk;	/* bitmask of modifiers for this event */
+	unsigned int			modmsk_req; /* bitmask of required modifiers */
 	unsigned int			ngrp;	/* number of unit masks groups */
 	const intel_x86_umask_t		*umasks; /* umask desc */
 } intel_x86_entry_t;

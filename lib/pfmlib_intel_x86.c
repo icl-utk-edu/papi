@@ -383,6 +383,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	uint64_t umask1, umask2, ucode, last_ucode = ~0ULL;
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0;
+	int umodmsk = 0, modmsk_r = 0;
 	int k, ret, id;
 	unsigned int max_grpid = INTEL_X86_MAX_GRPID;
 	unsigned int last_grpid =  INTEL_X86_MAX_GRPID;
@@ -408,6 +409,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	/* take into account hardcoded umask */
 	umask1 = (reg.val >> 8) & 0xff;
 	umask2 = 0;
+
+	modmsk_r = pe[e->event].modmsk_req;
 
 	for (k = 0; k < e->nattrs; k++) {
 		a = attr(e, k);
@@ -467,6 +470,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			umask2   |= ucode >> 8;
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->idx].grpid;
 
+			modmsk_r |= pe[e->event].umasks[a->idx].umodmsk_req;
+
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_CODE_OVERRIDE)) {
 				if (last_ucode != ~0ULL && (ucode & 0xff) != last_ucode) {
 					DPRINT("cannot override event with two different codes for %s\n", pe[e->event].name);
@@ -494,11 +499,13 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 					if (modhw & _INTEL_X86_ATTR_I)
 						return PFM_ERR_ATTR_SET;
 					reg.sel_inv = !!ival;
+					umodmsk |= _INTEL_X86_ATTR_I;
 					break;
 				case INTEL_X86_ATTR_E: /* edge */
 					if (modhw & _INTEL_X86_ATTR_E)
 						return PFM_ERR_ATTR_SET;
 					reg.sel_edge = !!ival;
+					umodmsk |= _INTEL_X86_ATTR_E;
 					break;
 				case INTEL_X86_ATTR_C: /* counter-mask */
 					if (modhw & _INTEL_X86_ATTR_C)
@@ -506,23 +513,27 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 					if (ival > 255)
 						return PFM_ERR_ATTR_VAL;
 					reg.sel_cnt_mask = ival;
+					umodmsk |= _INTEL_X86_ATTR_C;
 					break;
 				case INTEL_X86_ATTR_U: /* USR */
 					if (modhw & _INTEL_X86_ATTR_U)
 						return PFM_ERR_ATTR_SET;
 					reg.sel_usr = !!ival;
 					plmmsk |= _INTEL_X86_ATTR_U;
+					umodmsk |= _INTEL_X86_ATTR_U;
 					break;
 				case INTEL_X86_ATTR_K: /* OS */
 					if (modhw & _INTEL_X86_ATTR_K)
 						return PFM_ERR_ATTR_SET;
 					reg.sel_os = !!ival;
 					plmmsk |= _INTEL_X86_ATTR_K;
+					umodmsk |= _INTEL_X86_ATTR_K;
 					break;
 				case INTEL_X86_ATTR_T: /* anythread (v3 and above) */
 					if (modhw & _INTEL_X86_ATTR_T)
 						return PFM_ERR_ATTR_SET;
 					reg.sel_anythr = !!ival;
+					umodmsk |= _INTEL_X86_ATTR_T;
 					break;
 			}
 		}
@@ -564,6 +575,10 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 		}
 	}
 
+	if (modmsk_r && (umodmsk ^ modmsk_r)) {
+		DPRINT("required modifiers missing: 0x%x\n", modmsk_r);
+		return PFM_ERR_ATTR;
+	}
 	/*
 	 * reorder all the attributes such that the fstr appears always
 	 * the same regardless of how the attributes were submitted.
