@@ -364,7 +364,6 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
        } 
 
        if ( strcasecmp( t, "CPU" ) == 0 ) {
-	  SUBDBG( "CPU token found on line %d\n", line_no );
 
 	  if ( get_presets != 0 && found_presets != 0 ) {
 	     SUBDBG( "Ending preset scanning at line %d of %s.\n", 
