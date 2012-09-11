@@ -1423,7 +1423,7 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 				return PAPI_ENOEVNT;
 
 			/* Remove the preset event. */
-			for ( j = 0; _papi_hwi_presets[preset_index].code[j] != 0;
+			for ( j = 0; _papi_hwi_presets[preset_index].code[j] != (unsigned int)PAPI_NULL;
 				  j++ );
 			retval = remove_native_events( ESI,
 						       (int *)_papi_hwi_presets[preset_index].code, j );

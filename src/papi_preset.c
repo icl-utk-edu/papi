@@ -85,7 +85,12 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   for(k=0;k<j;k++) {
               _papi_hwi_presets[preset_index].code[k] = 
                      findem[pnum].native[k];
-	   } 
+	   }
+	   /* preset code list must be PAPI_NULL terminated */
+	   if (k<PAPI_EVENTS_IN_DERIVED_EVENT) {
+              _papi_hwi_presets[preset_index].code[k] = PAPI_NULL;
+	   }
+
 	   _papi_hwi_presets[preset_index].postfix=
 	                                   strdup(findem[pnum].operation);
 
@@ -499,6 +504,11 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	     }
 
 	  } while ( ++i < PAPI_EVENTS_IN_DERIVED_EVENT );
+
+	  /* preset code list must be PAPI_NULL terminated */
+	  if (i<PAPI_EVENTS_IN_DERIVED_EVENT) {
+             _papi_hwi_presets[insert].code[i] = PAPI_NULL;
+	  }
 
 	  if (invalid_event) {
 	    /* We signify a valid preset if count > 0 */
