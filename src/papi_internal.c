@@ -399,6 +399,8 @@ _papi_hwi_eventcode_to_native(int event_code) {
 
   result=_papi_native_events[event_index].component_event;
   
+  SUBDBG("Found result %x\n",result);
+
   return result;
 
 }
@@ -893,7 +895,6 @@ _papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
     APIDBG("Mapping %d events in EventSet %d\n",
 	   total_events,ESI->EventSetIndex);
    
-
     event = 0;
     for( i = 0; i < total_events; i++ ) {
 
@@ -914,10 +915,15 @@ _papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
 		break;
 	     }
 
+	     APIDBG("Loking for subevent %x\n",nevt);
+
 	     /* Match each sub-event to something in the Native List */
 	     for( n = 0; n < ESI->NativeCount; n++ ) {
 	        if ( _papi_hwi_eventcode_to_native(nevt) == 
                                  ESI->NativeInfoArray[n].ni_event ) {
+		   APIDBG("Found event %x at position %d\n",
+			  nevt,
+			  ESI->NativeInfoArray[n].ni_position);
 		   ESI->EventInfoArray[event].pos[k] = ESI->NativeInfoArray[n].ni_position;
 		   break;
 		}
