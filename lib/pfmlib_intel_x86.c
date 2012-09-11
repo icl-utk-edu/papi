@@ -643,15 +643,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 int
 pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
-	const intel_x86_entry_t *pe = this_pe(this);
 	int ret;
-
-	/*
-	 * If event requires special encoding, then invoke
-	 * model specific encoding function
-	 */
-	if (intel_x86_eflag(this, e->event, INTEL_X86_ENCODER))
-		return pe[e->event].encoder(this, e);
 
 	ret = pfm_intel_x86_encode_gen(this, e);
 	if (ret != PFM_SUCCESS)
