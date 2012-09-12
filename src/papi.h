@@ -1020,7 +1020,6 @@ enum {
    int   PAPI_cleanup_eventset(int EventSet); /**< remove all PAPI events from an event set */
    int   PAPI_create_eventset(int *EventSet); /**< create a new empty PAPI event set */
    int   PAPI_detach(int EventSet); /**< detach specified event set from a previously specified process or thread id */
-   char *PAPI_descr_error(int); /**< return a pointer to the error message corresponding to a specified error code */
    int   PAPI_destroy_eventset(int *EventSet); /**< deallocates memory associated with an empty PAPI event set */
    int   PAPI_enum_event(int *EventCode, int modifier); /**< return the event code for the next available preset or natvie event */
    int   PAPI_enum_cmp_event(int *EventCode, int modifier, int cidx); /**< return the event code for the next available component event */
@@ -1118,6 +1117,7 @@ enum {
 /* Backwards compatibility hacks.  Remove eventually? */
 int   PAPI_num_hwctrs(void); /* for backward compatibility. Don't use! */
 #define PAPI_COMPONENT_INDEX(a) PAPI_get_event_component(a)
+#define PAPI_descr_error(a) PAPI_strerror(a)
 
 #ifdef __cplusplus
 }
