@@ -37,7 +37,7 @@
 pfmlib_pmu_t intel_snbep_unc_r3qpi##n##_support = {\
 	.desc			= "Intel Sandy Bridge-EP R3QPI"#n" uncore", \
 	.name			= "snbep_unc_r3qpi"#n,\
-	.perf_name		= "uncore_r3qpi"#n, \
+	.perf_name		= "uncore_r3qpi_"#n, \
 	.pmu			= PFM_PMU_INTEL_SNBEP_UNC_R3QPI##n, \
 	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snbep_unc_r3_pe),\
 	.type			= PFM_PMU_TYPE_UNCORE,\
