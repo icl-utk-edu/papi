@@ -174,7 +174,8 @@ typedef enum {
 	PFM_PMU_INTEL_SNBEP_UNC_QPI1,	/* Intel SandyBridge-EP QPI link 1 uncore */
 	PFM_PMU_INTEL_SNBEP_UNC_UBOX,	/* Intel SandyBridge-EP U-Box uncore */
 	PFM_PMU_INTEL_SNBEP_UNC_R2PCIE,	/* Intel SandyBridge-EP R2PCIe uncore */
-	PFM_PMU_INTEL_SNBEP_UNC_R3QPI,	/* Intel SandyBridge-EP R3QPI uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_R3QPI0,	/* Intel SandyBridge-EP R3QPI 0 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_R3QPI1,	/* Intel SandyBridge-EP R3QPI 1 uncore */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

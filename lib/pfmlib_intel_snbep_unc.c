@@ -225,7 +225,8 @@ static const struct {
 	SNBEP_UNC_DISP("QPI1", display_qpi),
 	SNBEP_UNC_DISP("UBOX", display_com),
 	SNBEP_UNC_DISP("R2PCIE", display_com),
-	SNBEP_UNC_DISP("R3QPI", display_com)
+	SNBEP_UNC_DISP("R3QPI0", display_com),
+	SNBEP_UNC_DISP("R3QPI1", display_com),
 };
 
 static void

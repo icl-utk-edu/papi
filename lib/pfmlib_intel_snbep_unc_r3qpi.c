@@ -33,28 +33,31 @@
 #include "pfmlib_intel_snbep_unc_priv.h"
 #include "events/intel_snbep_unc_r3qpi_events.h"
 
-pfmlib_pmu_t intel_snbep_unc_r3qpi_support = {
-	.desc			= "Intel Sandy Bridge-EP R3QPI uncore",
-	.name			= "snbep_unc_r3qpi",
-	.perf_name		= "uncore_r3qpi",
-	.pmu			= PFM_PMU_INTEL_SNBEP_UNC_R3QPI,
-	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snbep_unc_r3_pe),
-	.type			= PFM_PMU_TYPE_UNCORE,
-	.num_cntrs		= 4,
-	.num_fixed_cntrs	= 1,
-	.max_encoding		= 2,
-	.pe			= intel_snbep_unc_r3_pe,
-	.atdesc			= snbep_unc_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
-	.pmu_detect		= pfm_intel_snbep_unc_detect,
-	.get_event_encoding[PFM_OS_NONE] = pfm_intel_snbep_unc_get_encoding,
-	 PFMLIB_ENCODE_PERF(pfm_intel_snbep_unc_get_perf_encoding),
-	.get_event_first	= pfm_intel_x86_get_event_first,
-	.get_event_next		= pfm_intel_x86_get_event_next,
-	.event_is_valid		= pfm_intel_x86_event_is_valid,
-	.validate_table		= pfm_intel_x86_validate_table,
-	.get_event_info		= pfm_intel_x86_get_event_info,
-	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
-	PFMLIB_VALID_PERF_PATTRS(pfm_intel_snbep_unc_perf_validate_pattrs),
-	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
-};
+#define DEFINE_R3QPI_BOX(n) \
+pfmlib_pmu_t intel_snbep_unc_r3qpi##n##_support = {\
+	.desc			= "Intel Sandy Bridge-EP R3QPI"#n" uncore", \
+	.name			= "snbep_unc_r3qpi"#n,\
+	.perf_name		= "uncore_r3qpi"#n, \
+	.pmu			= PFM_PMU_INTEL_SNBEP_UNC_R3QPI##n, \
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snbep_unc_r3_pe),\
+	.type			= PFM_PMU_TYPE_UNCORE,\
+	.num_cntrs		= 4,\
+	.num_fixed_cntrs	= 1,\
+	.max_encoding		= 2,\
+	.pe			= intel_snbep_unc_r3_pe,\
+	.atdesc			= snbep_unc_mods,\
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,\
+	.pmu_detect		= pfm_intel_snbep_unc_detect,\
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_snbep_unc_get_encoding,\
+	 PFMLIB_ENCODE_PERF(pfm_intel_snbep_unc_get_perf_encoding),\
+	.get_event_first	= pfm_intel_x86_get_event_first,\
+	.get_event_next		= pfm_intel_x86_get_event_next,\
+	.event_is_valid		= pfm_intel_x86_event_is_valid,\
+	.validate_table		= pfm_intel_x86_validate_table,\
+	.get_event_info		= pfm_intel_x86_get_event_info,\
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,\
+	PFMLIB_VALID_PERF_PATTRS(pfm_intel_snbep_unc_perf_validate_pattrs),\
+	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,\
+}
+DEFINE_R3QPI_BOX(0);
+DEFINE_R3QPI_BOX(1);

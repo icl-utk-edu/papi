@@ -5,13 +5,13 @@ libpfm_intel_snbep_unc_r3qpi - support for Intel Sandy Bridge-EP R3QPI uncore PM
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.B PMU name: snbep_unc_r3qpi
-.B PMU desc: Intel Sandy Bridge-EP R3QPI  uncore PMU
+.B PMU name: snbep_unc_r3qpi0, snbep_unc_r3qpi0
+.B PMU desc: Intel Sandy Bridge-EP R3QPI uncore PMU
 .sp
 .SH DESCRIPTION
 The library supports the Intel Sandy Bridge R3QPI uncore PMU.
-This PMU model only exists on Sandy Bridge model 45. There is only one R3QPI  PMU
-per processor socket.
+This PMU model only exists on Sandy Bridge model 45. There are
+two R3QPI PMUs per processor socket.
 
 .SH MODIFIERS
 The following modifiers are supported on Intel Sandy Bridge R3PQI  uncore PMU:
