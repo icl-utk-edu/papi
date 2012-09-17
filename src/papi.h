@@ -1048,7 +1048,6 @@ enum {
    int   PAPI_list_threads(unsigned long *tids, int *number); /**< list the thread ids currently known to PAPI */
    int   PAPI_lock(int); /**< lock one of two PAPI internal user mutex variables */
    int   PAPI_multiplex_init(void); /**< initialize multiplex support in the PAPI library */
-   int   PAPI_num_hwctrs(void); /**< return the number of hardware counters for the cpu */
    int   PAPI_num_cmp_hwctrs(int cidx); /**< return the number of hardware counters for a specified component */
     int   PAPI_num_events(int EventSet); /**< return the number of events in an event set */
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
@@ -1115,7 +1114,7 @@ enum {
 
 
 /* Backwards compatibility hacks.  Remove eventually? */
-int   PAPI_num_hwctrs(void); /* for backward compatibility. Don't use! */
+int   PAPI_num_hwctrs(void); /**< return the number of hardware counters for the cpu. for backward compatibility. Don't use! */
 #define PAPI_COMPONENT_INDEX(a) PAPI_get_event_component(a)
 #define PAPI_descr_error(a) PAPI_strerror(a)
 
