@@ -33,15 +33,16 @@ nvcc_version=`nvcc -V 2>&1 | tail -n 1 | awk '{printf $5}'`
 major=`echo $nvcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
 minor=`echo $nvcc_version | sed 's/[[^.]][[^.]]*.\([[^.,]][[^.,]]*\).*/\1/'`
 
+echo "CUDA $major.$minor used"
+
+if test "$major" -lt 4; then
+	echo "CUDA $major.$minor not supported"
+fi
+
 if test "$major" -eq 4; then
-	if test "$minor" -ge 1; then
-		echo "CUDA $major.$minor used"
-	else
-        echo "CUDA $major.$minor used"
+	if test "$minor" -eq 0; then
 		CUDA_VERSION="-DCUDA_4_0"
 	fi
-else
-	echo "CUDA $major.$minor not supported"
 fi
 
 AC_CONFIG_FILES([Makefile.cuda])
