@@ -5291,7 +5291,7 @@ echo "$as_me:$LINENO: result: $shlib" >&5
 echo "${ECHO_T}$shlib" >&6
 
 # default
-pfm_incdir="libpfm4/include/"
+pfm_incdir="libpfm4/include"
 
 ##################################################
 #          perfctr

@@ -767,7 +767,7 @@ fi
 AC_MSG_RESULT($shlib)
 
 # default
-pfm_incdir="libpfm4/include/"
+pfm_incdir="libpfm4/include"
 
 ##################################################
 #          perfctr
