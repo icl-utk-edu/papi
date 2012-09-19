@@ -103,57 +103,32 @@ Below is a step-wise procedure for making a PAPI patch.
 One way to use this procedure is to print a copy and check off
 the lines as they are completed to avoid confusion.
 ================================================================================
-__ 0. Make sure that the version of cvs that you are using to create the patch is the same 
-        as the version used to create the tarball to be patched. Versions before 1.12.9 use
-        backslashes in date strings; versions after that use hyphens. The two don't mix!
+__ 0. Make sure you're on the branch you want to patch against. 
+	> git branch 
+	* stable-5.0
 
-__ 1. Export the tagged version of PAPI that you want to patch against:
-	> cvs export -r <tag> <module> ex:
-	> cvs export -r papi-4-0-0-t papi
-	Exporting eliminates the cvs directories that will change between versions.
+__1. Generate the patch. 
+	> git diff -p papi-5-0-0-t stable-5.0 > papi-5-0-1.patch
 
-__ 2. Rename the tagged directory:
-	mv papi papi400t
+__ 2. Apply the patch.
+	> wget http://icl.cs.utk.edu/projects/papi/downloads/papi-5.0.0.tar.gz
+	> tar xzf papi-5.0.0.tar.gz && cd papi-5.0.0
+	> patch -p1 ../papi-5-0-1.patch
 
-__ 3. Export the branch of PAPI that you want to patch with:
-	> cvs export -r <branch> <module> ex:
-	> cvs export -r papi-4-0-0-b papi
-
-__ 4. Rename the branch directory:
-	mv papi papi400b
-
-__ 5. Diff the two directories:
-	> diff -rupwBN <original> <new> > <output.diff> ex:
-	> diff -rupwBN papi 400t papi400b > papi400patch1.diff
-	
-	The flags for diff are:
-	-r: recursive
-	-u: unified
-	-p: show function names
-	-w: ignore all white space
-	-B: ignore changes whose lines are blank
-	-N: treat absent files as empty
-
-__ 6. Create a copy of the directory to be patched and cd into it.
-
-__ 7. Apply the patch:
-                > patch -p1 ../<patchfile>
-                > patch -p1 ../papi400patch3.diff
-
-__ 8. If the patch applied cleanly, build and test on affected platforms;
+__ 3. If the patch applied cleanly, build and test on affected platforms;
          otherwise clean up the patch and try again.
 
-__ 9. Copy the diff file to icl:/sw/www/icl/projects/papi/downloads/patches
+__ 4. Copy the diff file to icl:/sw/www/icl/projects/papi/downloads/patches
 
-__ 10. Check permissions on the diff. 644 is good. 
+__ 5. Check permissions on the diff. 644 is good. 
 
-__ 11. Create a link with supporting text on the PAPI software web page.
+__ 6. Create a link with supporting text on the PAPI software web page.
 
-__ 12. Create a News item on the PAPI Web page.
+__ 7. Create a News item on the PAPI Web page.
 
-__ 13. Email the papi discussion list with an announcement.
+__ 8. Email the papi discussion list with an announcement.
 
-__ 14. Post the announcement on the PAPI User Forum.
+__ 9. Post the announcement on the PAPI User Forum.
 
 
 
