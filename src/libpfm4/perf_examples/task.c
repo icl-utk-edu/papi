@@ -185,6 +185,8 @@ parent(char **arg)
 	char buf;
 	pid_t pid;
 
+	go[0] = go[1] = -1;
+
 	if (pfm_initialize() != PFM_SUCCESS)
 		errx(1, "libpfm initialization failed");
 
@@ -282,7 +284,7 @@ parent(char **arg)
 		}
 	}
 
-	if (!options.pid)
+	if (!options.pid && go[1] > -1)
 		close(go[1]);
 
 	if (options.print) {

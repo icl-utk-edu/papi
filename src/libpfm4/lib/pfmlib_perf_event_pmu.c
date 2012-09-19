@@ -905,7 +905,7 @@ pfm_perf_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
-		if (perf_pe[i].numasks >= PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx == PERF_INVAL_OVFL_IDX) {
+		if (perf_pe[i].numasks > PERF_MAX_UMASKS && perf_pe[i].umask_ovfl_idx == PERF_INVAL_OVFL_IDX) {
 			fprintf(fp, "pmu: %s event%d: %s :: numasks too big (<%d)\n", name, i, perf_pe[i].name, PERF_MAX_UMASKS);
 			error++;
 		}

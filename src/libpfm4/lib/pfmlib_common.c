@@ -91,6 +91,26 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_snb_unc_cbo3_support,
 	&intel_snb_ep_support,
 	&intel_ivb_support,
+	&intel_snbep_unc_cb0_support,
+	&intel_snbep_unc_cb1_support,
+	&intel_snbep_unc_cb2_support,
+	&intel_snbep_unc_cb3_support,
+	&intel_snbep_unc_cb4_support,
+	&intel_snbep_unc_cb5_support,
+	&intel_snbep_unc_cb6_support,
+	&intel_snbep_unc_cb7_support,
+	&intel_snbep_unc_ha_support,
+	&intel_snbep_unc_imc0_support,
+	&intel_snbep_unc_imc1_support,
+	&intel_snbep_unc_imc2_support,
+	&intel_snbep_unc_imc3_support,
+	&intel_snbep_unc_pcu_support,
+	&intel_snbep_unc_qpi0_support,
+	&intel_snbep_unc_qpi1_support,
+	&intel_snbep_unc_ubo_support,
+	&intel_snbep_unc_r2pcie_support,
+	&intel_snbep_unc_r3qpi0_support,
+	&intel_snbep_unc_r3qpi1_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
@@ -1042,7 +1062,7 @@ found:
 	for (i = 0; i < d->nattrs; i++) {
 		pfm_event_attr_info_t *a = attr(d, i);
 		if (a->type != PFM_ATTR_RAW_UMASK)
-			DPRINT("%d %d %d %s\n", d->event, i, a->idx, d->pattrs[a->idx].name);
+			DPRINT("%d %d %d %s\n", d->event, i, a->idx, d->pattrs[d->attrs[i].id].name);
 		else
 			DPRINT("%d %d RAW_UMASK (0x%x)\n", d->event, i, a->idx);
 	}
@@ -1285,6 +1305,10 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 			sprintf(buf, "%s::%s:%s", pmu->name, einfo.name, ainfo.name);
 			ret = pfmlib_validate_encoding(buf, PFM_PLM3|PFM_PLM0);
 			if (ret != PFM_SUCCESS) {
+				if (pmu->can_auto_encode) {
+					if (!pmu->can_auto_encode(pmu, i, u))
+						continue;
+				}
 				/*
 				 * some PMU may not support raw encoding
 				 */
@@ -1300,6 +1324,10 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 			sprintf(buf, "%s::%s", pmu->name, einfo.name);
 			ret = pfmlib_validate_encoding(buf, PFM_PLM3|PFM_PLM0);
 			if (ret != PFM_SUCCESS) {
+				if (pmu->can_auto_encode) {
+					if (!pmu->can_auto_encode(pmu, i, u))
+						continue;
+				}
 				if (ret != PFM_ERR_NOTSUPP) {
 					fprintf(fp, "cannot encode event %s : %s\n", buf, pfm_strerror(ret));
 					retval = ret;

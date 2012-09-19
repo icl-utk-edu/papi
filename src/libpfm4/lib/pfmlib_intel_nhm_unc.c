@@ -116,6 +116,7 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	pfm_event_attr_info_t *a;
 	const intel_x86_entry_t *pe = this_pe(this);
 	unsigned int grpmsk, ugrpmsk = 0;
+	int umodmsk = 0, modmsk_r = 0;
 	uint64_t val;
 	uint64_t umask;
 	unsigned int modhw = 0;
@@ -139,6 +140,8 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 	/* take into account hardcoded umask */
 	umask = (val >> 8) & 0xff;
+
+	modmsk_r = pe[e->event].modmsk_req;
 
 	for(k=0; k < e->nattrs; k++) {
 		a = attr(e, k);
@@ -185,6 +188,9 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			ugrpmsk  |= 1 << pe[e->event].umasks[a->idx].grpid;
 
 			reg.val |= umask << 8;
+
+			modmsk_r |= pe[e->event].umasks[a->idx].umodmsk_req;
+
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
 
 			/* there can only be one RAW_UMASK per event */
@@ -202,18 +208,22 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			switch(a->idx) {
 				case NHM_UNC_ATTR_I: /* invert */
 					reg.nhm_unc.usel_inv = !!ival;
+					umodmsk |= _NHM_UNC_ATTR_I;
 					break;
 				case NHM_UNC_ATTR_E: /* edge */
 					reg.nhm_unc.usel_edge = !!ival;
+					umodmsk |= _NHM_UNC_ATTR_E;
 					break;
 				case NHM_UNC_ATTR_C: /* counter-mask */
 					/* already forced, cannot overwrite */
 					if (ival > 255)
 						return PFM_ERR_INVAL;
 					reg.nhm_unc.usel_cnt_mask = ival;
+					umodmsk |= _NHM_UNC_ATTR_C;
 					break;
 				case NHM_UNC_ATTR_O: /* occupancy */
 					reg.nhm_unc.usel_occ = !!ival;
+					umodmsk |= _NHM_UNC_ATTR_O;
 					break;
 			}
 		}
@@ -238,6 +248,12 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
+
+	if (modmsk_r && (umodmsk ^ modmsk_r)) {
+		DPRINT("required modifiers missing: 0x%x\n", modmsk_r);
+		return PFM_ERR_ATTR;
+	}
+
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
 	pfmlib_sort_attr(e);
 	for(k=0; k < e->nattrs; k++) {

@@ -137,13 +137,15 @@ perf_setup_list_events(const char *ev, perf_event_desc_t **fd, int *num_fds)
 		return -1;
 	}
 
-	for(i=0, q = events; i < num-2; i++, q = p + 1) {
-		p = strchr(q, ',');
+	i = 0; q = events;
+	while((p = strchr(q, ','))) {
 		*p = '\0';
-		argv[i] = q;
+		argv[i++] = q;
+		q = p + 1;
 	}
 	argv[i++] = q;
 	argv[i] = NULL;
+
 	ret = perf_setup_argv_events(argv, fd, num_fds);
 	free(argv);
 	free(events); /* strdup in perf_setup_argv_events() */
@@ -516,6 +518,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 
 			}
 		} else {
+			time_enabled = time_running = 0;
 			/*
 			 * this program does not use FORMAT_GROUP when there is only one event
 			 */

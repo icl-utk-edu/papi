@@ -177,6 +177,9 @@ main(int argc, char **argv)
 	 * PERF_FORMAT_ID: returns unique 64-bit identifier in addition
 	 * to event value.
 	 */
+	if (fds[0].fd == -1)
+		errx(1, "cannot create event 0");
+
 	ret = read(fds[0].fd, val, sz);
 	if (ret == -1)
 		err(1, "cannot read id %zu", sizeof(val));

@@ -173,7 +173,9 @@ show_event_info_combo(pfm_event_info_t *info)
 
 	pinfo.size = sizeof(pinfo);
 
-	pfm_get_pmu_info(info->pmu, &pinfo);
+	ret = pfm_get_pmu_info(info->pmu, &pinfo);
+	if (ret != PFM_SUCCESS)
+		errx(1, "cannot get PMU info");
 
 	ainfo = calloc(info->nattrs, sizeof(*ainfo));
 	if (!ainfo)
@@ -647,7 +649,7 @@ static const struct attr_flags  event_flags[]={
 	EVENT_FLAGS(NULL, 0, 0)
 };
 
-	static void
+static void
 parse_filters(char *arg)
 {
 	const struct attr_flags *attr;

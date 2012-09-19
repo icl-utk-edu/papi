@@ -155,6 +155,27 @@ typedef enum {
 	PFM_PMU_INTEL_SNB_UNC_CB1,	/* Intel SandyBridge C-box 1 uncore PMU */
 	PFM_PMU_INTEL_SNB_UNC_CB2,	/* Intel SandyBridge C-box 2 uncore PMU */
 	PFM_PMU_INTEL_SNB_UNC_CB3,	/* Intel SandyBridge C-box 3 uncore PMU */
+
+	PFM_PMU_INTEL_SNBEP_UNC_CB0,	/* Intel SandyBridge-EP C-Box core 0 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_CB1,	/* Intel SandyBridge-EP C-Box core 1 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_CB2,	/* Intel SandyBridge-EP C-Box core 2 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_CB3,	/* Intel SandyBridge-EP C-Box core 3 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_CB4,	/* Intel SandyBridge-EP C-Box core 4 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_CB5,	/* Intel SandyBridge-EP C-Box core 5 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_CB6,	/* Intel SandyBridge-EP C-Box core 6 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_CB7,	/* Intel SandyBridge-EP C-Box core 7 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_HA,	/* Intel SandyBridge-EP HA uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_IMC0,	/* Intel SandyBridge-EP IMC socket 0 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_IMC1,	/* Intel SandyBridge-EP IMC socket 1 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_IMC2,	/* Intel SandyBridge-EP IMC socket 2 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_IMC3,	/* Intel SandyBridge-EP IMC socket 3 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_PCU,	/* Intel SandyBridge-EP PCU uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_QPI0,	/* Intel SandyBridge-EP QPI link 0 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_QPI1,	/* Intel SandyBridge-EP QPI link 1 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_UBOX,	/* Intel SandyBridge-EP U-Box uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_R2PCIE,	/* Intel SandyBridge-EP R2PCIe uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_R3QPI0,	/* Intel SandyBridge-EP R3QPI 0 uncore */
+	PFM_PMU_INTEL_SNBEP_UNC_R3QPI1,	/* Intel SandyBridge-EP R3QPI 1 uncore */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

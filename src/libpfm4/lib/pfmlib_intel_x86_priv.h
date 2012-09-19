@@ -48,14 +48,10 @@ typedef struct {
 	unsigned int		umodel; /* only available on this PMU model */
 	unsigned int		grpid;	/* unit mask group id */
 	unsigned int		modhw;	/* hardwired modifiers, cannot be changed */
+	unsigned int		umodmsk_req; /* bitmask of required modifiers */
 } intel_x86_umask_t;
 
 #define INTEL_X86_MAX_GRPID	(~0U)
-
-/*
- * event-specific encoder (optional)
- */
-typedef int (*intel_x86_encoder_t)(void *this, pfmlib_event_desc_t *e);
 
 /*
  * event description
@@ -69,8 +65,8 @@ typedef struct {
 	unsigned int			numasks;/* number of umasks */
 	unsigned int			flags;	/* flags */
 	unsigned int			modmsk;	/* bitmask of modifiers for this event */
+	unsigned int			modmsk_req; /* bitmask of required modifiers */
 	unsigned int			ngrp;	/* number of unit masks groups */
-	intel_x86_encoder_t		encoder; /* event-specific encoder (optional) */
 	const intel_x86_umask_t		*umasks; /* umask desc */
 } intel_x86_entry_t;
 
@@ -80,12 +76,13 @@ typedef struct {
 #define INTEL_X86_NCOMBO		0x01	/* unit masks within group cannot be combined */
 #define INTEL_X86_FALLBACK_GEN		0x02	/* fallback from fixed to generic counter possible */
 #define INTEL_X86_PEBS			0x04 	/* event supports PEBS or at least one umask supports PEBS */
-#define INTEL_X86_ENCODER		0x08 	/* event requires model-specific encoding */
-#define INTEL_X86_DFL			0x10	/* unit mask is default choice */
-#define INTEL_X86_GRP_EXCL		0x20	/* only one unit mask group can be selected */
-#define INTEL_X86_NHM_OFFCORE		0x40	/* Nehalem/Westmere offcore_response */
-#define INTEL_X86_EXCL_GRP_GT		0x80	/* exclude use of grp with id > own grp */
-#define INTEL_X86_FIXED			0x100	/* fixed counter only event */
+#define INTEL_X86_DFL			0x08	/* unit mask is default choice */
+#define INTEL_X86_GRP_EXCL		0x10	/* only one unit mask group can be selected */
+#define INTEL_X86_NHM_OFFCORE		0x20	/* Nehalem/Westmere offcore_response */
+#define INTEL_X86_EXCL_GRP_GT		0x40	/* exclude use of grp with id > own grp */
+#define INTEL_X86_FIXED			0x80	/* fixed counter only event */
+#define INTEL_X86_NO_AUTOENCODE		0x100	/* does not support auto encoding validation */
+#define INTEL_X86_CODE_OVERRIDE		0x200	/* umask overrides event code */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -265,4 +262,6 @@ extern int intel_x86_attr2mod(void *this, int pidx, int attr_idx);
 extern int pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern void pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_intel_x86_can_auto_encode(void *this, int pidx, int uidx);
+
 #endif /* __PFMLIB_INTEL_X86_PRIV_H__ */
