@@ -4,6 +4,31 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 ===============================================================================
+PAPI 5.0.1 RELEASE NOTES                                            20 Sep 2012
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP500.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+This in a bug fix release of PAPI. Including a major bug fix in the preset
+code, we recommend that all users of PAPI 5.0 upgrade; see commit 866bd51c
+for a detailed discussion.  
+
+Bug Fixes:
+----------
+	* Debugging macros with out variadic macro support. 
+	* Building PAPI with an external libpfm4 installation.
+	* Fix a major bug in the preset code. 
+
+Enhancements:
+-------------
+	* CUDA configure script better supports Kepler architecture.
+	* rapl support for IvyBridge.
+	* Libpfm4 updates for SandyBridge-EP counters.
+ 
+===============================================================================
 PAPI 5.0.0 RELEASE NOTES                                            23 Aug 2012
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
