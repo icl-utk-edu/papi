@@ -166,7 +166,8 @@ typedef union {
 	} ha_addr;
 	struct {
 		unsigned long opc:6; /* opcode match */
-		unsigned long res1:58; /* reserved */
+		unsigned long res1:26; /* reserved */
+		unsigned long res2:32; /* reserved */
 	} ha_opc;
 } pfm_snbep_unc_reg_t;
 
