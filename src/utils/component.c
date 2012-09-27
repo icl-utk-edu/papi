@@ -26,6 +26,7 @@
 
 #define EVT_LINE 80
 
+/** @htmlonly */
 typedef struct command_flags
 {
 	int help;

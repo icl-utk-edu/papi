@@ -33,6 +33,7 @@
 #define PAPI_HL_ACCUM		2
 
 /** @internal 
+ * @htmlonly
  * This is stored per thread
  */
 typedef struct _HighLevelInfo

@@ -4520,6 +4520,7 @@ PAPI_perror( char *msg )
 
 /** @class _papi_overflow_handler
  *  @brief User defined function to process overflow events.
+ *  @htmlonly
  *
  *  @see PAPI_overflow
  */

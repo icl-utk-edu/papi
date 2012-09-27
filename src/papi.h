@@ -85,6 +85,7 @@
  */
 
 /** @page CDI PAPI Component Development Interface
+  * @htmlonly
   * @par \em Introduction
   *		PAPI-C consists of a Framework and between 1 and 16 Components. 
   *		The Framework is platform independent and exposes the PAPI API to end users. 

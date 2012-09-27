@@ -43,6 +43,7 @@
 /* The Low Level Wrappers */
 
 /** @defgroup PAPIF PAPI Fortran API 
+ *  @htmlonly
  *	*/
 
 /* helper routine to convert Fortran strings to C strings */
