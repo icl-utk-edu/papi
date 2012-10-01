@@ -1,18 +1,18 @@
-.TH LIBPFM 3  "September, 2009" "" "Linux Programmer's Manual"
+.TH LIBPFM 3  "September, 2012" "" "Linux Programmer's Manual"
 .SH NAME
-libpfm_intel_atom - support for Intel Atom processors
+libpfm_intel_knc - support for Intel Knights Corner
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.B PMU name: atom
-.B PMU desc: Intel Atom
+.B PMU name: knc
+.B PMU desc: Intel Knights Corner
 .sp
 .SH DESCRIPTION
-The library supports all Intel Atom-based processors that includes family 6 model 28.
+The library supports Intel Knights Corner processors.
 
 .SH MODIFIERS
-The following modifiers are supported on Intel Atom processors:
+The following modifiers are supported on Intel Knights Corner processors:
 .TP
 .B u
 Measure at user level which includes privilege levels 1, 2, 3. This corresponds to \fBPFM_PLM3\fR.
@@ -35,7 +35,7 @@ in which the number of occurrences of the event is greater or equal to the thres
 modifier with values in the range [0:255].
 .TP
 .B t
-Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
+Measure on all threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
 .SH AUTHORS
 .nf
 Stephane Eranian <eranian@gmail.com>
