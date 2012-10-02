@@ -34,6 +34,10 @@
 #define mb() alternative("lock; addl $0,0(%%esp)", "mfence", X86_FEATURE_XMM2)
 #define rmb() alternative("lock; addl $0,0(%%esp)", "lfence", X86_FEATURE_XMM2)
 #define wmb() alternative("lock; addl $0,0(%%esp)", "sfence", X86_FEATURE_XMM)
+#elif defined(__KNC__)
+#define mb()  __sync_synchronize()
+#define rmb() __sync_synchronize()
+#define wmb() __sync_synchronize()
 #else
 #define mb()    asm volatile("mfence":::"memory")
 #define rmb()   asm volatile("lfence":::"memory")
