@@ -1037,7 +1037,7 @@ _papi_pe_init_component( int cidx )
    retval=detect_rdpmc();
    if (retval < 0 ) {
       strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	     "Error detecting rdpmc",PAPI_MAX_STR_LEN);
+	     "sys_perf_event_open() failed, perf_event support for this platform may be broken",PAPI_MAX_STR_LEN);
       return retval;
    }
    _papi_pe_vector.cmp_info.fast_counter_read = retval;
