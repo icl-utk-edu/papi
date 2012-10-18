@@ -5,48 +5,64 @@
    the needed definitions in here */
 
 #ifdef __powerpc__
-#define mb()   __asm__ __volatile__ ("sync" : : : "memory")
-#define rmb()  __asm__ __volatile__ ("sync" : : : "memory")
-#define wmb()  __asm__ __volatile__ ("sync" : : : "memory")
+#define rmb() asm volatile ("sync" : : : "memory")
 
-#elif defined(__mips__)
-#define mb()   __asm__ __volatile__ ("sync" : : : "memory")
-#define rmb()  __asm__ __volatile__ ("sync" : : : "memory")
-#define wmb()  __asm__ __volatile__ ("sync" : : : "memory")
+#elif defined (__s390__)
+#define rmb() asm volatile("bcr 15,0" ::: "memory")
 
-#elif defined(__arm__)
-#define rmb() __sync_synchronize()
-#define mb()  rmb()
-#define wmb() rmb()
+#elif defined (__sh__)
+#if defined(__SH4A__) || defined(__SH5__)
+#define rmb()          asm volatile("synco" ::: "memory")
+#else
+#define rmb()          asm volatile("" ::: "memory")
+#endif
+
+#elif defined (__hppa__)
+#define rmb()           asm volatile("" ::: "memory")
+
+#elif defined (__sparc__)
+#define rmb()           asm volatile("":::"memory")
+
+#elif defined (__alpha__)
+#define rmb()           asm volatile("mb" ::: "memory")
 
 #elif defined(__ia64__)
-#define ia64_mf() __asm__ __volatile__ ("mf" ::: "memory")
-#define mb()  ia64_mf()
-#define rmb() mb()
-#define wmb() mb()
+#define rmb()           asm volatile ("mf" ::: "memory")
 
-#elif defined(__x86_64__) || defined(__i386__)
-#ifdef CONFIG_X86_32
+#elif defined(__arm__)
 /*
- * Some non-Intel clones support out of order store. wmb() ceases to be a
- * nop for these.
+ * Use the __kuser_memory_barrier helper in the CPU helper page. See
+ * arch/arm/kernel/entry-armv.S in the kernel source for details.
  */
-#define mb() alternative("lock; addl $0,0(%%esp)", "mfence", X86_FEATURE_XMM2)
-#define rmb() alternative("lock; addl $0,0(%%esp)", "lfence", X86_FEATURE_XMM2)
-#define wmb() alternative("lock; addl $0,0(%%esp)", "sfence", X86_FEATURE_XMM)
-#elif defined(__KNC__)
-#define mb()  __sync_synchronize()
+#define rmb()           ((void(*)(void))0xffff0fa0)()
+
+#elif defined(__aarch64__)
+#define rmb()           asm volatile("dmb ld" ::: "memory")
+
+#elif defined(__mips__)
+#define rmb()           asm volatile(                                   \
+                                ".set   mips2\n\t"                      \
+                                "sync\n\t"                              \
+                                ".set   mips0"                          \
+				: /* no output */                       \
+				: /* no input */                        \
+				: "memory")
+
+#elif defined(__i386__)
+#define rmb() asm volatile("lock; addl $0,0(%%esp)" ::: "memory")
+
+#elif defined(__x86_64)
+
+#if defined(__KNC__)
 #define rmb() __sync_synchronize()
-#define wmb() __sync_synchronize()
+
 #else
-#define mb()    asm volatile("mfence":::"memory")
-#define rmb()   asm volatile("lfence":::"memory")
-#define wmb()   asm volatile("sfence" ::: "memory")
+#define rmb() asm volatile("lfence":::"memory")
 #endif
 
 #else
-#error Need to define mb and rmb for this architecture!
-#error See the kernel source directory: arch/<arch>/include/asm/system.h file
+#error Need to define rmb for this architecture!
+#error See the kernel source directory: tools/perf/perf.h file
 #endif
 
 #endif

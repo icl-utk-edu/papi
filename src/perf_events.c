@@ -801,7 +801,6 @@ mmap_write_tail( pe_event_info_t *pe, uint64_t tail )
    struct perf_event_mmap_page *pc = pe->mmap_buf;
 
    /* ensure all reads are done before we write the tail out. */
-   mb(  );
    pc->data_tail = tail;
 }
 
