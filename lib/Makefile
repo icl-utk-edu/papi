@@ -191,6 +191,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_wsm_events.h	\
 	events/intel_wsm_unc_events.h	\
 	events/intel_snb_events.h	\
+	events/intel_snbep_events.h	\
 	events/intel_snb_unc_events.h	\
 	events/intel_ivb_events.h	\
 	pfmlib_intel_snbep_unc_priv.h	\
