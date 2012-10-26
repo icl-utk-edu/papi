@@ -68,6 +68,7 @@ typedef struct
 {
   int num_events;                 /* number of events in control state */
   unsigned int domain;            /* control-state wide domain         */
+  unsigned int granularity;       /* granularity                       */
   unsigned int multiplexed;       /* multiplexing enable               */
   unsigned int overflow;          /* overflow enable                   */
   unsigned int inherit;           /* inherit enable                    */
@@ -113,7 +114,7 @@ papi_vector_t _papi_pe_vector;
  * Also! Kernels newer than 2.6.34 will fail in a similar way
  *       if the nmi_watchdog has stolen a performance counter
  *       and we try to use the maximum number of counters.
- *       A sys_perf_open() will seem to succeed but will fail
+ *       A sys_perf_event_open() will seem to succeed but will fail
  *       at read time.  So re-use this work around code.
  */
 static int 
@@ -265,12 +266,17 @@ get_read_format( unsigned int multiplex,
 /*  platforms.                                           */
 
 static int
-check_permissions( unsigned long tid, unsigned int cpu_num, 
-		   unsigned int domain, unsigned int multiplex, 
+check_permissions( unsigned long tid, 
+		   unsigned int cpu_num, 
+		   unsigned int domain, 
+		   unsigned int granularity,
+		   unsigned int multiplex, 
 		   unsigned int inherit )
 {
    int ev_fd;
    struct perf_event_attr attr;
+
+   long pid;
 
    /* clearing this will set a type of hardware and to count all domains */
    memset(&attr, '\0', sizeof(attr));
@@ -292,9 +298,15 @@ check_permissions( unsigned long tid, unsigned int cpu_num,
       attr.exclude_kernel = 1;
    }
 
+   if (granularity==PAPI_GRN_SYS) {
+      pid = -1;
+   } else {
+      pid = tid;
+   }
+
    SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
 
-   ev_fd = sys_perf_event_open( &attr, tid, cpu_num, -1, 0 );
+   ev_fd = sys_perf_event_open( &attr, pid, cpu_num, -1, 0 );
    if ( ev_fd == -1 ) {
       SUBDBG("sys_perf_event_open returned error.  Linux says, %s", 
 	     strerror( errno ) );
@@ -474,6 +486,14 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
 
    int i, ret = PAPI_OK;
+   long pid;
+
+   if (ctl->granularity==PAPI_GRN_SYS) {
+      pid = -1;
+   }
+   else {
+      pid = ctl->tid;
+   }
 
    for( i = 0; i < ctl->num_events; i++ ) {
 
@@ -503,7 +523,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
       /* try to open */
       ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
-						     ctl->tid,
+						     pid,
 						     ctl->cpu,
 			       ctl->events[i].group_leader_fd,
 						     0 /* flags */
@@ -520,7 +540,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
               " group_leader/fd: %d, event_fd: %d,"
               " read_format: 0x%"PRIu64"\n",
-	      (long)ctl->tid, ctl->cpu, ctl->events[i].group_leader_fd, 
+	      pid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
 
@@ -1431,6 +1451,9 @@ _papi_pe_init_control_state( hwd_control_state_t *ctl )
    memset( pe_ctl, 0, sizeof ( pe_control_t ) );
    _papi_pe_set_domain( ctl, _papi_pe_vector.cmp_info.default_domain );
 
+   /* default granularity */
+   pe_ctl->granularity=PAPI_GRN_THR;
+
    /* Set cpu number in the control block to show events */
    /* are not tied to specific cpu                       */
    pe_ctl->cpu = -1;
@@ -1515,7 +1538,8 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
    switch ( code ) {
       case PAPI_MULTIPLEX:
 	   pe_ctl = ( pe_control_t * ) ( option->multiplex.ESI->ctl_state );
-	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
+	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain,
+				  pe_ctl->granularity,
 				  1, pe_ctl->inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
 	   }
@@ -1532,7 +1556,8 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_ATTACH:
 	   pe_ctl = ( pe_control_t * ) ( option->attach.ESI->ctl_state );
 	   if (check_permissions( option->attach.tid, pe_ctl->cpu, 
-				  pe_ctl->domain, pe_ctl->multiplexed, 
+				  pe_ctl->domain, pe_ctl->granularity,
+				  pe_ctl->multiplexed, 
 				  pe_ctl->inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
 	   }
@@ -1555,7 +1580,8 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_CPU_ATTACH:
 	   pe_ctl = ( pe_control_t *) ( option->cpu.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, 
-				  pe_ctl->domain, pe_ctl->multiplexed, 
+				  pe_ctl->domain, pe_ctl->granularity,
+				  pe_ctl->multiplexed, 
 				  pe_ctl->inherit ) != PAPI_OK) {
 	       return PAPI_EPERM;
 	   }
@@ -1573,7 +1599,9 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_DOMAIN:
 	   pe_ctl = ( pe_control_t *) ( option->domain.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, 
-				  option->domain.domain, pe_ctl->multiplexed,
+				  option->domain.domain,
+				  pe_ctl->granularity,
+				  pe_ctl->multiplexed,
 				  pe_ctl->inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
 	   }
@@ -1587,14 +1615,19 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
            switch ( option->granularity.granularity  ) {
               case PAPI_GRN_PROCG:
-              case PAPI_GRN_SYS:
               case PAPI_GRN_SYS_CPU:
               case PAPI_GRN_PROC:
 		   return PAPI_ECMP;
      
-	      /* Currently we only support thread granularity */
-              case PAPI_GRN_THR:
+	      /* Currently we only support thread and CPU granularity */
+              case PAPI_GRN_SYS:
+	 	   pe_ctl->granularity=PAPI_GRN_SYS;
 		   break;
+
+              case PAPI_GRN_THR:
+	 	   pe_ctl->granularity=PAPI_GRN_SYS;
+		   break;
+
 
               default:
 		   return PAPI_EINVAL;
@@ -1604,7 +1637,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_INHERIT:
 	   pe_ctl = (pe_control_t *) ( option->inherit.ESI->ctl_state );
 	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
-				  pe_ctl->multiplexed, 
+				  pe_ctl->granularity, pe_ctl->multiplexed, 
 				  option->inherit.inherit ) != PAPI_OK) {
 	      return PAPI_EPERM;
 	   }
@@ -2002,7 +2035,7 @@ papi_vector_t _papi_pe_vector = {
       .default_domain = PAPI_DOM_USER,
       .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
       .default_granularity = PAPI_GRN_THR,
-      .available_granularities = PAPI_GRN_THR,
+      .available_granularities = PAPI_GRN_THR | PAPI_GRN_SYS,
 
       .hardware_intr = 1,
       .kernel_profile = 1,
