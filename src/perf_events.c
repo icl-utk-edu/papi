@@ -2033,7 +2033,7 @@ papi_vector_t _papi_pe_vector = {
       .description = "Linux perf_event CPU counters",
   
       .default_domain = PAPI_DOM_USER,
-      .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+      .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR,
       .default_granularity = PAPI_GRN_THR,
       .available_granularities = PAPI_GRN_THR | PAPI_GRN_SYS,
 
