@@ -1625,7 +1625,7 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 		   break;
 
               case PAPI_GRN_THR:
-	 	   pe_ctl->granularity=PAPI_GRN_SYS;
+	 	   pe_ctl->granularity=PAPI_GRN_THR;
 		   break;
 
 
