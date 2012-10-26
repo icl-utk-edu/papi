@@ -1173,7 +1173,7 @@ fi
 ##################################################
 FILENAME=Makefile.inc
 SHOW_CONF=showconf
-CTEST_TARGETS="papi_api serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared "
+CTEST_TARGETS="papi_api serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared perf_event "
 FTEST_TARGETS="all"
 UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost papi_component_avail papi_error_codes"
 LIBRARY=libpapi.a
@@ -1256,7 +1256,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
     MISCSRCS="aix.c"
-    CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
+    CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp perf_event "
 	SAVED_CFLAGS="$CFLAGS"
     CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
 	CFLAGS="$SAVED_CFLAGS $CFLAGS"
