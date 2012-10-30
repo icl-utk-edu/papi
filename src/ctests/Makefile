@@ -1,5 +1,4 @@
 # File: ctests/Makefile
-# CVS:  $Id$
 INCLUDE = -I.. -I. -I../testlib
 PAPILIB = ../libpapi.a
 CC	= gcc
@@ -39,8 +38,9 @@ EAR	= earprofile
 RANGE	= data_range
 BROKEN	= pernode
 API = api
+PERF_EVENT = perf_event_uncore
 ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
-	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH) $(API)
+	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH) $(API) $(PERF_EVENT)
 UTILOBJS= ../testlib/do_loops.o ../testlib/test_utils.o ../testlib/dummy.o
 
 default all ctests ctest: $(CTEST_TARGETS)
@@ -80,6 +80,8 @@ overflow_tests: $(OVERFLOW)
 profile_tests: $(PROFILE)
 
 papi_api: $(API)
+
+perf_event: $(PERF_EVENT)
 
 api: api.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) api.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@
@@ -194,6 +196,9 @@ describe: describe.c $(UTILOBJS) $(PAPILIB)
 
 derived: derived.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) derived.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o derived
+
+perf_event_uncore:	perf_event_uncore.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) perf_event_uncore.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o perf_event_uncore
 
 zero: zero.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero
