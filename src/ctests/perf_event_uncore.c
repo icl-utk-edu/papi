@@ -51,7 +51,7 @@ main( int argc, char **argv )
 	cpu_opt.eventset=EventSet;
 	cpu_opt.cpu_num=0;
 
-	retval = PAPI_set_opt(PAPI_CPU_ATTACH,&cpu_opt);
+	retval = PAPI_set_opt(PAPI_CPU_ATTACH,(PAPI_option_t*)&cpu_opt);
 	if (retval != PAPI_OK) {
 	   test_fail(__FILE__, __LINE__, "PAPI_CPU_ATTACH",retval);
 	}
@@ -64,7 +64,7 @@ main( int argc, char **argv )
 	gran_opt.eventset=EventSet;
 	gran_opt.granularity=PAPI_GRN_SYS;
 
-	retval = PAPI_set_opt(PAPI_GRANUL,&gran_opt);
+	retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
 	if (retval != PAPI_OK) {
 	   test_fail(__FILE__, __LINE__, "PAPI_GRANUL",retval);
 	}
@@ -77,7 +77,7 @@ main( int argc, char **argv )
 	domain_opt.eventset=EventSet;
 	domain_opt.domain=PAPI_DOM_ALL;
 
-	retval = PAPI_set_opt(PAPI_DOMAIN,&domain_opt);
+	retval = PAPI_set_opt(PAPI_DOMAIN,(PAPI_option_t*)&domain_opt);
 	if (retval != PAPI_OK) {
 	   test_fail(__FILE__, __LINE__, "PAPI_DOMAIN",retval);
 	}
