@@ -13,6 +13,7 @@ main( int argc, char **argv )
 	int retval;
 	int EventSet = PAPI_NULL;
 	long long values[1];
+	const PAPI_hw_info_t *hwinfo;
 
 	/* Set TESTS_QUIET variable */
 	tests_quiet( argc, argv );	
@@ -21,6 +22,17 @@ main( int argc, char **argv )
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT ) {
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
+
+	hwinfo = PAPI_get_hardware_info();
+	if ( hwinfo == NULL ) {
+		test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info failed, THIS should not happen.", PAPI_ESYS);
+	}
+	if ( hwinfo->vendor != PAPI_VENDOR_INTEL ) {
+		test_skip( __FILE__, __LINE__, "This test is only for Intel Processors, for now.", PAPI_OK );
+	}
+	if (( hwinfo->cpuid_family != 6) || (hwinfo->cpuid_model != 45) ) {
+		test_skip( __FILE__, __LINE__, "This test is only implemented for SandyBridge-EP series processors for now.", PAPI_OK );
 	}
 
 	retval = PAPI_create_eventset(&EventSet);
