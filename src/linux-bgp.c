@@ -13,6 +13,7 @@
 #include "papi_memory.h"
 #include "extras.h"
 
+#include "linux-bgp.h"
 /*
  * BG/P specific 'stuff'
  */
@@ -33,6 +34,8 @@
 #define get_cycles _bgp_GetTimeBase
 
 /* BG/P external structures/functions */
+
+papi_vector_t _bgp_vectors;
 
 /* Defined in linux-bgp-memory.c */
 extern int _bgp_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type );
@@ -169,10 +172,10 @@ _bgp_init_control_state( hwd_control_state_t *ctl )
 {
 	int i;
 
-	bgp_control_state_t *bgp_ctl = (bgp_control_state_t *)ctl;
+	//bgp_control_state_t *bgp_ctl = (bgp_control_state_t *)ctl;
 
 	for ( i = 1; i < BGP_UPC_MAX_MONITORED_EVENTS; i++ )
-		bgp_ctl->counters[i] = 0;
+		ctl->counters[i] = 0;
 
 	return PAPI_OK;
 }
@@ -211,7 +214,8 @@ int
 _bgp_init_global( void )
 {
 	int retval;
-
+	int cidx = _bgp_vectors.cmp_info.CmpIdx;
+	
 	/*
 	 * Fill in what we can of the papi_system_info
 	 */
@@ -226,7 +230,7 @@ _bgp_init_global( void )
 	 */
 	SUBDBG( "Before setup_bgp_presets, _papi_hwi_system_info.hw_info.model=%d...\n",
 		  _papi_hwi_system_info.hw_info.model );
-	retval = _papi_load_preset_table( "BGP", 0, cidx);
+	retval = _papi_load_preset_table( "BGP", 0, cidx );
 	SUBDBG( "After setup_bgp_presets, retval=%d...\n", retval );
 	if ( retval )
 		return ( retval );
@@ -430,7 +434,7 @@ _bgp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 //  printf("_bgp_read:  (long_long*)&this_state->counters[0] = %p\n", (long_long*)&this_state->counters[0]);
 //  printf("_bgp_read:  (long_long*)&this_state->counters[1] = %p\n", (long_long*)&this_state->counters[1]);
 
-	bgp_control_state_t *bgp_ctl = (bgp_control_state_t *)ctl;
+	
 	sigset_t mask_set;
 	sigset_t old_set;
 	sigemptyset( &mask_set );
@@ -438,7 +442,7 @@ _bgp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	sigprocmask( SIG_BLOCK, &mask_set, &old_set );
 
 	if ( BGP_UPC_Read_Counters
-		 ( ( long_long * ) & bgp_ctl->counters[0],
+		 ( ( long_long * ) & ctl->counters[0],
 		   BGP_UPC_MAXIMUM_LENGTH_READ_COUNTERS_ONLY,
 		   BGP_UPC_READ_EXCLUSIVE ) < 0 ) {
 		sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
@@ -446,8 +450,8 @@ _bgp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	}
 	sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
         /* hack to emulate BGP_MISC_ELAPSED_TIME counter */
-        bgp_ctl->counters[255]=_bgp_GetTimeBase()-begin_cycles;
-	*dp = ( long_long * ) & bgp_ctl->counters[0];
+        ctl->counters[255]=_bgp_GetTimeBase()-begin_cycles;
+	*dp = ( long_long * ) & ctl->counters[0];
 
 //  printf("_bgp_read:  dp = %p\n", dp);
 //  printf("_bgp_read:  *dp = %p\n", *dp);
@@ -749,8 +753,9 @@ _bgp_init_component( int cidx )
 {
 	int retval;
 
+	_bgp_vectors.cmp_info.CmpIdx = cidx;
 	retval = _bgp_init_global(  );
-
+	
 	return ( retval );
 }
 

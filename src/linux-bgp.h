@@ -21,7 +21,7 @@
 
 #include "papi.h"
 #include "papi_preset.h"
-#include "papi_defines.h"
+//#include "papi_defines.h"
 #include "linux-bgp-native-events.h"
 
 // Context structure not used...
