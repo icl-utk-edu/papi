@@ -11,7 +11,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
-
+#include "extras.h"
 
 /*
  * BG/P specific 'stuff'
@@ -27,7 +27,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <linux/utsname.h>
+#include <sys/utsname.h>
 
 /* BG/P macros */
 #define get_cycles _bgp_GetTimeBase
@@ -149,8 +149,8 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 	SUBDBG( "_bgp_get_system_info:  Detected MHZ is %f\n",
 			_papi_hwi_system_info.hw_info.mhz );
 
-	_papi_hwi_system_info.cpu_max_mhz=_papi_hwi_system_info.hw_info.mhz;
-	_papi_hwi_system_info.cpu_min_mhz=_papi_hwi_system_info.hw_info.mhz;
+	_papi_hwi_system_info.hw_info.cpu_max_mhz=_papi_hwi_system_info.hw_info.mhz;
+	_papi_hwi_system_info.hw_info.cpu_min_mhz=_papi_hwi_system_info.hw_info.mhz;
 
 	// Memory information structure not filled in - same as BG/L
 	// _papi_hwi_system_info.hw_info.mem_hierarchy = ???;
@@ -185,13 +185,16 @@ setup_bgp_presets( int cpu_type )
  * All state is kept in BG/P UPC structures
  */
 int
-_bgp_init_control_state( hwd_control_state_t * ptr )
+_bgp_init_control_state( hwd_control_state_t *ctl )
 {
 	int i;
-	for ( i = 1; i < BGP_UPC_MAX_MONITORED_EVENTS; i++ )
-		ptr->counters[i] = 0;
 
-	return ( PAPI_OK );
+	bgp_control_state_t *bgp_ctl = (bgp_control_state_t *)ctl;
+
+	for ( i = 1; i < BGP_UPC_MAX_MONITORED_EVENTS; i++ )
+		bgp_ctl->counters[i] = 0;
+
+	return PAPI_OK;
 }
 
 /*
@@ -385,9 +388,9 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
  * nothing to update and we simply return.
  */
 int
-_bgp_update_control_state( hwd_control_state_t * this_state,
-						   NativeInfo_t * native, int count,
-						   hwd_context_t * ctx )
+_bgp_update_control_state( hwd_control_state_t *ctl,
+			   NativeInfo_t *native, int count,
+			   hwd_context_t *ctx )
 {
 
 	return PAPI_OK;
@@ -440,12 +443,14 @@ _bgp_stop( hwd_context_t * ctx, hwd_control_state_t * state )
  * Read the counters into local storage
  */
 int
-_bgp_read( hwd_context_t * ctx, hwd_control_state_t * this_state,
+_bgp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		   long_long ** dp, int flags )
 {
 //  printf("_bgp_read:  this_state* = %p\n", this_state);
 //  printf("_bgp_read:  (long_long*)&this_state->counters[0] = %p\n", (long_long*)&this_state->counters[0]);
 //  printf("_bgp_read:  (long_long*)&this_state->counters[1] = %p\n", (long_long*)&this_state->counters[1]);
+
+	bgp_control_state_t *bgp_ctl = (bgp_control_state_t *)ctl;
 	sigset_t mask_set;
 	sigset_t old_set;
 	sigemptyset( &mask_set );
@@ -453,7 +458,7 @@ _bgp_read( hwd_context_t * ctx, hwd_control_state_t * this_state,
 	sigprocmask( SIG_BLOCK, &mask_set, &old_set );
 
 	if ( BGP_UPC_Read_Counters
-		 ( ( long_long * ) & this_state->counters[0],
+		 ( ( long_long * ) & bgp_ctl->counters[0],
 		   BGP_UPC_MAXIMUM_LENGTH_READ_COUNTERS_ONLY,
 		   BGP_UPC_READ_EXCLUSIVE ) < 0 ) {
 		sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
@@ -461,8 +466,8 @@ _bgp_read( hwd_context_t * ctx, hwd_control_state_t * this_state,
 	}
 	sigprocmask( SIG_UNBLOCK, &mask_set, NULL );
         /* hack to emulate BGP_MISC_ELAPSED_TIME counter */
-        this_state->counters[255]=_bgp_GetTimeBase()-begin_cycles;
-	*dp = ( long_long * ) & this_state->counters[0];
+        bgp_ctl->counters[255]=_bgp_GetTimeBase()-begin_cycles;
+	*dp = ( long_long * ) & bgp_ctl->counters[0];
 
 //  printf("_bgp_read:  dp = %p\n", dp);
 //  printf("_bgp_read:  *dp = %p\n", *dp);
@@ -899,7 +904,7 @@ _bgp_ntv_enum_events( unsigned int *EventCode, int modifier )
 int 
 _papi_hwi_init_os(void) {
 
-	struct new_utsname uname_buffer;
+    struct utsname uname_buffer;
 
     uname(&uname_buffer);
 
@@ -919,58 +924,50 @@ _papi_hwi_init_os(void) {
  */
 papi_vector_t _bgp_vectors = {
 	.cmp_info = {
-				 /* Default component information (unspecified values are initialized to 0) */
-				 .name = "linux-bgp",
-				 .short_name = "bgp",
-				 .description = "BlueGene/P component",
+             .name = "linux-bgp",
+	     .short_name = "bgp",
+	     .description = "BlueGene/P component",
+	     .num_cntrs = BGP_UPC_MAX_MONITORED_EVENTS,
+	     .num_mpx_cntrs = BGP_UPC_MAX_MONITORED_EVENTS,
+	     .default_domain = PAPI_DOM_USER,
+	     .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+	     .default_granularity = PAPI_GRN_THR,
+	     .available_granularities = PAPI_GRN_THR,
+	     .hardware_intr_sig = PAPI_INT_SIGNAL,
+	     .hardware_intr = 1,
+	     .fast_real_timer = 1,
+	     .fast_virtual_timer = 0,
+  },
 
-				 // NOTE:  PAPI remove event processing depends on
-				 //        num_ctrs and num_mpx_cntrs being the same value.
-				 .num_cntrs = BGP_UPC_MAX_MONITORED_EVENTS,
-				 .num_mpx_cntrs = BGP_UPC_MAX_MONITORED_EVENTS,
-				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
-				 .hardware_intr_sig = PAPI_INT_SIGNAL,
-				 .hardware_intr = 1,
-
-				 /* component specific cmp_info initializations */
-				 .fast_real_timer = 1,
-				 .fast_virtual_timer = 0,
-				 }
-	,
-
-	/* Sizes of framework-opaque component-private structures */
-	.size = {
-			 .context = sizeof ( bgp_context_t ),
-			 .control_state = sizeof ( bgp_control_state_t ),
-			 .reg_value = sizeof ( bgp_register_t ),
-			 .reg_alloc = sizeof ( bgp_reg_alloc_t ),
-			 }
-	,
-	/* Function pointers in this component */
-	.dispatch_timer = _bgp_dispatch_timer,
-	.start = _bgp_start,
-	.stop = _bgp_stop,
-	.read = _bgp_read,
-	.reset = _bgp_reset,
-	.write = _bgp_write,
-	.stop_profiling = _bgp_stop_profiling,
-	.init_component = _bgp_init_component,
-	.init_thread = _bgp_init,
-	.init_control_state = _bgp_init_control_state,
-	.update_control_state = _bgp_update_control_state,
-	.ctl = _bgp_ctl,
-	.set_overflow = _bgp_set_overflow,
-	.set_profile = _bgp_set_profile,
-	.set_domain = _bgp_set_domain,
-	.ntv_enum_events = _bgp_ntv_enum_events,
-	.ntv_code_to_name = _bgp_ntv_code_to_name,
-	.ntv_code_to_descr = _bgp_ntv_code_to_descr,
-	.ntv_code_to_bits = _bgp_ntv_code_to_bits,
-	.allocate_registers = _bgp_allocate_registers,
-	.shutdown = _bgp_shutdown
+  /* Sizes of framework-opaque component-private structures */
+  .size = {
+	     .context = sizeof ( hwd_context_t ),
+	     .control_state = sizeof ( hwd_control_state_t ),
+	     .reg_value = sizeof ( hwd_register_t ),
+	     .reg_alloc = sizeof ( hwd_reg_alloc_t ),
+  },
+  /* Function pointers in this component */
+  .dispatch_timer = _bgp_dispatch_timer,
+  .start = _bgp_start,
+  .stop = _bgp_stop,
+  .read = _bgp_read,
+  .reset = _bgp_reset,
+  .write = _bgp_write,
+  .stop_profiling = _bgp_stop_profiling,
+  .init_component = _bgp_init_component,
+  .init_thread = _bgp_init_thread,
+  .init_control_state = _bgp_init_control_state,
+  .update_control_state = _bgp_update_control_state,
+  .ctl = _bgp_ctl,
+  .set_overflow = _bgp_set_overflow,
+  .set_profile = _bgp_set_profile,
+  .set_domain = _bgp_set_domain,
+  .ntv_enum_events = _bgp_ntv_enum_events,
+  .ntv_code_to_name = _bgp_ntv_code_to_name,
+  .ntv_code_to_descr = _bgp_ntv_code_to_descr,
+  .ntv_code_to_bits = _bgp_ntv_code_to_bits,
+  .allocate_registers = _bgp_allocate_registers,
+  .shutdown_thread = _bgp_shutdown
 };
 
 papi_os_vector_t _papi_os_vector = {
