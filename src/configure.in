@@ -1309,7 +1309,7 @@ elif test "$MAKEVER" = "bgp"; then
     CPUCOMPONENT=linux-bgp
     VECTOR=_bgp_vectors
     PAPI_EVENTS_CSV="papi_events.csv"
-    MISCSRCS=linux-bgp-preset-events.c
+    MISCSRCS=
     CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
     tests="$tests bgp_tests"
   SHOW_CONF=show_bgp_conf

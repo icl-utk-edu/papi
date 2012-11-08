@@ -34,8 +34,6 @@
 
 /* BG/P external structures/functions */
 
-/* Defined in linux-bgp-preset-events.c */
-extern hwi_search_t *_bgp_preset_map;
 /* Defined in linux-bgp-memory.c */
 extern int _bgp_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type );
 extern int _bgp_get_dmem_info( PAPI_dmem_info_t * pDmemInfo );
@@ -160,24 +158,6 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 	return PAPI_OK;
 }
 
-/*
- * Setup BG/P Presets
- *
- * Assign the global native and preset table pointers, find the native
- * table's size in memory and then call the preset setup routine.
- */
-static inline int
-setup_bgp_presets( int cpu_type )
-{
-	switch ( cpu_type ) {
-	default:
-		SUBDBG( "Before setting preset_search_map...\n" );
-		preset_search_map = ( hwi_search_t * ) & _bgp_preset_map;
-		SUBDBG( "After setting preset_search_map...\n" );
-	}
-	SUBDBG( "Before calling _papi_hwi_setup_all_presets...\n" );
-	return _papi_hwi_setup_all_presets( preset_search_map, NULL );
-}
 
 /*
  * Initialize Control State
@@ -246,7 +226,7 @@ _bgp_init_global( void )
 	 */
 	SUBDBG( "Before setup_bgp_presets, _papi_hwi_system_info.hw_info.model=%d...\n",
 		  _papi_hwi_system_info.hw_info.model );
-	retval = setup_bgp_presets( _papi_hwi_system_info.hw_info.model );
+	retval = _papi_load_preset_table( "BGP", 0, cidx);
 	SUBDBG( "After setup_bgp_presets, retval=%d...\n", retval );
 	if ( retval )
 		return ( retval );

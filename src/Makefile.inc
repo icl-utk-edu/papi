@@ -170,9 +170,6 @@ papi_user_events.o: papi_user_events.c $(HEADERS)
 .c.rts.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
-linux-bgp-preset-events.o: linux-bgp-preset-events.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DCPUCOMPONENT=\"$(CPUCOMPONENT).h\" -DCOMP_VECTOR=_bgp_vectors $(OPTFLAGS) -c linux-bgp-preset-events.c -o linux-bgp-preset-events.o
-
 bgp_tests:$(LIBRARY) null
 	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
  
