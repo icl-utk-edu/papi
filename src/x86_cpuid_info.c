@@ -1418,6 +1418,10 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 		  reg.descrip[12], reg.descrip[13], reg.descrip[14], reg.descrip[15] );
 
 	count = reg.descrip[0];	 /* # times to repeat CPUID call. Not implemented. */
+
+	/* Knights Corner at least returns 0 here */
+	if (count==0) goto early_exit;
+
 	size = ( sizeof ( intel_cache ) / sizeof ( struct _intel_cache_info ) );	/* # descriptors */
 	MEMDBG( "Repeat cpuid(2,...) %d times. If not 1, code is broken.\n",
 			count );
@@ -1450,6 +1454,7 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 			}
 		}
 	}
+early_exit:
 	MEMDBG( "# of Levels: %d\n", last_level );
 	*num_levels=last_level;
 	if (need_leaf4) {
