@@ -543,7 +543,8 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	 SUBDBG("sys_perf_event_open returned error on event #%d."
 		"  Error: %s\n",
 		i, strerror( errno ) );
-	 ret = PAPI_ECNFLCT;
+	 if (errno == EPERM) ret = PAPI_EPERM;
+	 else ret = PAPI_ECNFLCT;
 	 goto open_pe_cleanup;
       }
 
