@@ -621,6 +621,7 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
    int i;
    int num_closed=0;
+   int events_not_opened=0;
 
    /* should this be a more serious error? */
    if ( ctx->state & PERF_EVENTS_RUNNING ) {
@@ -651,6 +652,9 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	    }
 	    ctl->events[i].event_opened=0;
 	 }
+      }
+      else {
+	events_not_opened++;
       }
    }
 
@@ -684,8 +688,12 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
 
    if (ctl->num_events!=num_closed) {
-      PAPIERROR("Didn't close all events\n");
-      return PAPI_EBUG;
+      if (ctl->num_events!=(num_closed+events_not_opened)) {
+         PAPIERROR("Didn't close all events: "
+		   "Closed %d Not Opened: %d Expected %d\n",
+		   num_closed,events_not_opened,ctl->num_events);
+         return PAPI_EBUG;
+      }
    }
 
    ctl->num_events=0;
