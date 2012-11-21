@@ -253,6 +253,16 @@ get_read_format( unsigned int multiplex,
    return format;
 }
 
+/* The kernel developers say to never use a refresh value of 0        */
+/* See https://lkml.org/lkml/2011/5/24/172                            */
+/* However, on some platforms (like Power) a value of 1 does not work */
+/* We're still tracking down why this happens.                        */
+
+#if defined(__powerpc__)
+#define PAPI_REFRESH_VALUE 0
+#else
+#define PAPI_REFRESH_VALUE 1
+#endif
 
 /********* End Kernel-version Dependent Routines  ****************/
 
@@ -1838,7 +1848,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
    }
 
    /* Restart the counters */
-   if (ioctl( fd, PERF_EVENT_IOC_REFRESH, 1 ) == -1) {
+   if (ioctl( fd, PERF_EVENT_IOC_REFRESH, PAPI_REFRESH_VALUE ) == -1) {
       PAPIERROR( "overflow refresh failed", 0 );
    }
 }
