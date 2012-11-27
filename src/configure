@@ -3896,9 +3896,11 @@ else
 
 		   if test "$family" = "x86_64"; then
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c"
+		      CPU="x86"
 
 		   elif test "$family" = "i686"; then
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c"
+		      CPU="x86"
 
                    elif test "$family" = "ppc64"; then
                      CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
@@ -6988,7 +6990,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
           fi
 	  MAKEVER="$OS"-pfm-"$CPU"
 	  ;;
-        athlon|opteron|atom|core|core2|p3|p4|i7)
+        x86)
 	        MAKEVER="$OS"-perfctr-x86 ;;
         POWER5|POWER5+|POWER6|POWER7|PPC970)
           MAKEVER="$OS"-perfctr-"$CPU" ;;
