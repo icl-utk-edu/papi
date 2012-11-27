@@ -253,6 +253,16 @@ get_read_format( unsigned int multiplex,
    return format;
 }
 
+/* The kernel developers say to never use a refresh value of 0        */
+/* See https://lkml.org/lkml/2011/5/24/172                            */
+/* However, on some platforms (like Power) a value of 1 does not work */
+/* We're still tracking down why this happens.                        */
+
+#if defined(__powerpc__)
+#define PAPI_REFRESH_VALUE 0
+#else
+#define PAPI_REFRESH_VALUE 1
+#endif
 
 /********* End Kernel-version Dependent Routines  ****************/
 
@@ -533,7 +543,8 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	 SUBDBG("sys_perf_event_open returned error on event #%d."
 		"  Error: %s\n",
 		i, strerror( errno ) );
-	 ret = PAPI_ECNFLCT;
+	 if (errno == EPERM) ret = PAPI_EPERM;
+	 else ret = PAPI_ECNFLCT;
 	 goto open_pe_cleanup;
       }
 
@@ -610,6 +621,7 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
    int i;
    int num_closed=0;
+   int events_not_opened=0;
 
    /* should this be a more serious error? */
    if ( ctx->state & PERF_EVENTS_RUNNING ) {
@@ -640,6 +652,9 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	    }
 	    ctl->events[i].event_opened=0;
 	 }
+      }
+      else {
+	events_not_opened++;
       }
    }
 
@@ -673,8 +688,12 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
 
    if (ctl->num_events!=num_closed) {
-      PAPIERROR("Didn't close all events\n");
-      return PAPI_EBUG;
+      if (ctl->num_events!=(num_closed+events_not_opened)) {
+         PAPIERROR("Didn't close all events: "
+		   "Closed %d Not Opened: %d Expected %d\n",
+		   num_closed,events_not_opened,ctl->num_events);
+         return PAPI_EBUG;
+      }
    }
 
    ctl->num_events=0;
@@ -1838,7 +1857,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
    }
 
    /* Restart the counters */
-   if (ioctl( fd, PERF_EVENT_IOC_REFRESH, 1 ) == -1) {
+   if (ioctl( fd, PERF_EVENT_IOC_REFRESH, PAPI_REFRESH_VALUE ) == -1) {
       PAPIERROR( "overflow refresh failed", 0 );
    }
 }

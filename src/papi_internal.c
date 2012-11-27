@@ -1191,7 +1191,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 				     _papi_hwi_presets[preset_index].code,
 				     count, &ESI->EventInfoArray[thisindex] );
 	  if ( remap < 0 ) {
-	     return PAPI_ECNFLCT;
+	     return remap;
 	  }
           else {
 	     /* Fill in the EventCode (machine independent) information */
@@ -1230,7 +1230,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 				     &ESI->EventInfoArray[thisindex] );
 
 	  if ( remap < 0 ) {
-	     return PAPI_ECNFLCT;
+	     return remap;
 	  } else {
 
 	     /* Fill in the EventCode (machine independent) information */
@@ -1263,7 +1263,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 			 count, &ESI->EventInfoArray[thisindex] );
 
 		 if ( remap < 0 ) {
-		   return PAPI_ECNFLCT;
+		   return remap;
 		 } else {
 		   ESI->EventInfoArray[thisindex].event_code       
                                          = (unsigned int) EventCode;

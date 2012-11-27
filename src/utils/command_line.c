@@ -36,7 +36,6 @@ main( int argc, char **argv )
 	char *success;
 	int EventSet = PAPI_NULL;
 	int i, j, event;
-	char errstr[PAPI_HUGE_STR_LEN];
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
@@ -72,8 +71,8 @@ main( int argc, char **argv )
 			test_fail_exit( __FILE__, __LINE__, "PAPI_event_name_to_code", retval );
 
 		if ( ( retval = PAPI_add_event( EventSet, event ) ) != PAPI_OK ) {
-			PAPI_perror( "PAPI_add_event");
-			printf( "Failed adding: %s\nbecause: %s\n", argv[i], errstr );
+			printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
+				PAPI_strerror(retval));
 			success[i] = 0;
 		} else {
 			success[i] = 1;
@@ -85,8 +84,9 @@ main( int argc, char **argv )
 	do_flops( 1 );
 	do_flush(  );
 
-	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK ) {
+	   test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( NUM_FLOPS );
 	do_misses( 1, L1_MISS_BUFFER_SIZE_INTS );
