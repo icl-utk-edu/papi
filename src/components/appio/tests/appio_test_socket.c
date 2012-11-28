@@ -11,11 +11,11 @@
 #include "papi_test.h"
 
 #define PORT 3490
-#define NUM_EVENTS 8
+#define NUM_EVENTS 15
 
 main(int argc, char *argv[]) {
   int Events[NUM_EVENTS]; 
-  const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES", "READ_USEC", "READ_WOULD_BLOCK", "SOCK_READ_CALLS", "SOCK_READ_BYTES", "SOCK_READ_USEC", "SOCK_READ_WOULD_BLOCK"};
+  const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES", "READ_USEC", "READ_WOULD_BLOCK", "SOCK_READ_CALLS", "SOCK_READ_BYTES", "SOCK_READ_USEC", "SOCK_READ_WOULD_BLOCK", "WRITE_BYTES", "WRITE_CALLS", "WRITE_WOULD_BLOCK", "WRITE_USEC", "SOCK_WRITE_BYTES", "SOCK_WRITE_CALLS", "SOCK_WRITE_USEC"};
   long long values[NUM_EVENTS];
 
   /* Set TESTS_QUIET variable */
@@ -27,7 +27,12 @@ main(int argc, char *argv[]) {
     exit(1);
   }
 
-  if (!TESTS_QUIET) printf("This program will listen on port 3490, and write data received to standard output\n");
+  if (!TESTS_QUIET) 
+    printf("This program will listen on port 3490, and write data received to standard output AND socket\n"
+           "In the output ensure that the following identities hold:\n"
+           "READ_* == SOCK_READ_*\n"
+           "WRITE_{CALLS,BYTES} = 2 * SOCK_WRITE_{CALLS,BYTES}\n"
+           "SOCK_READ_BYTES == SOCK_WRITE_BYTES\n");
   int retval;
   int e;
   for (e=0; e<NUM_EVENTS; e++) {
@@ -73,6 +78,7 @@ main(int argc, char *argv[]) {
 
   while ((bytes = read(n_sockfd, buf, 1024)) > 0) {
     write(1, buf, bytes);
+    write(n_sockfd, buf, bytes);
   }
 
   close(n_sockfd);

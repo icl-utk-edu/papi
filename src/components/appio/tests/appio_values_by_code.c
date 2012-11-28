@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include "papi_test.h"
 
-#define MAX_EVENTS 32
+#define MAX_EVENTS 48
 
 int main (int argc, char **argv)
 {

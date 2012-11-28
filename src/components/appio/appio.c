@@ -31,6 +31,9 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/select.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -78,6 +81,7 @@ typedef enum {
   WRITE_CALLS,
   WRITE_ERR,
   WRITE_SHORT,
+  WRITE_INTERRUPTED,
   WRITE_WOULD_BLOCK,
   WRITE_BLOCK_SIZE,
   WRITE_USEC,
@@ -93,7 +97,19 @@ typedef enum {
   RECV_SHORT,
   RECV_EOF,
   RECV_BLOCK_SIZE,
-  RECV_USEC
+  RECV_USEC,
+  SOCK_READ_BYTES,
+  SOCK_READ_CALLS,
+  SOCK_READ_ERR,
+  SOCK_READ_SHORT,
+  SOCK_READ_WOULD_BLOCK,
+  SOCK_READ_USEC,
+  SOCK_WRITE_BYTES,
+  SOCK_WRITE_CALLS,
+  SOCK_WRITE_ERR,
+  SOCK_WRITE_SHORT,
+  SOCK_WRITE_WOULD_BLOCK,
+  SOCK_WRITE_USEC
 } _appio_stats_t ;
 
 static const struct appio_counters {
@@ -113,6 +129,7 @@ static const struct appio_counters {
     { "WRITE_CALLS",     "Number of write calls"},
     { "WRITE_ERR",       "Number of write calls that resulted in an error"},
     { "WRITE_SHORT",     "Number of write calls that wrote less bytes than requested"},
+    { "WRITE_INTERRUPTED","Number of write calls that timed out or were interrupted"},
     { "WRITE_WOULD_BLOCK","Number of write calls that would have blocked"},
     { "WRITE_BLOCK_SIZE","Mean block size of writes"},
     { "WRITE_USEC",      "Real microseconds spent in writes"},
@@ -128,7 +145,19 @@ static const struct appio_counters {
     { "RECV_SHORT",      "Number of recv/recvmsg/recvfrom calls that returned less bytes than requested"},
     { "RECV_EOF",        "Number of recv/recvmsg/recvfrom calls that returned an EOF"},
     { "RECV_BLOCK_SIZE", "Average block size of recv/recvmsg/recvfrom"},
-    { "RECV_USEC",       "Real microseconds spent in recv/recvmsg/recvfrom"}
+    { "RECV_USEC",       "Real microseconds spent in recv/recvmsg/recvfrom"},
+    { "SOCK_READ_BYTES", "Bytes read from socket"},
+    { "SOCK_READ_CALLS", "Number of read calls on socket"},
+    { "SOCK_READ_ERR",   "Number of read calls on socket that resulted in an error"},
+    { "SOCK_READ_SHORT", "Number of read calls on socket that returned less bytes than requested"},
+    { "SOCK_READ_WOULD_BLOCK", "Number of read calls on socket that would have blocked"},
+    { "SOCK_READ_USEC",  "Real microseconds spent in read(s) on socket(s)"},
+    { "SOCK_WRITE_BYTES","Bytes written to socket"},
+    { "SOCK_WRITE_CALLS","Number of write calls to socket"},
+    { "SOCK_WRITE_ERR",  "Number of write calls to socket that resulted in an error"},
+    { "SOCK_WRITE_SHORT","Number of write calls to socket that wrote less bytes than requested"},
+    { "SOCK_WRITE_WOULD_BLOCK","Number of write calls to socket that would have blocked"},
+    { "SOCK_WRITE_USEC", "Real microseconds spent in write(s) to socket(s)"}
 };
 
 
@@ -177,29 +206,46 @@ ssize_t read(int fd, void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted read(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
 
+  struct stat st;
+  int issocket = 0;
+  if (fstat(fd, &st) == 0) {
+    if ((st.st_mode & S_IFMT) == S_IFSOCK) issocket = 1;
+  }
   // check if read would block on descriptor
   fd_set readfds;
   FD_ZERO(&readfds);
   FD_SET(fd, &readfds);
   int ready = __select(fd+1, &readfds, NULL, NULL, &zerotv);
-  if (ready == 0) _appio_register_current[READ_WOULD_BLOCK]++; 
+  if (ready == 0) {
+     _appio_register_current[READ_WOULD_BLOCK]++; 
+     if (issocket) _appio_register_current[SOCK_READ_WOULD_BLOCK]++; 
+  }
 
   long long start_ts = PAPI_get_real_usec();
   retval = __read(fd,buf, count);
   long long duration = PAPI_get_real_usec() - start_ts;
   int n = _appio_register_current[READ_CALLS]++; // read calls
+  if (issocket) _appio_register_current[SOCK_READ_CALLS]++; // read calls
   if (retval > 0) {
     _appio_register_current[READ_BLOCK_SIZE]= (n * _appio_register_current[READ_BLOCK_SIZE] + count)/(n+1); // mean size
     _appio_register_current[READ_BYTES] += retval; // read bytes
-    if (retval < (int)count) _appio_register_current[READ_SHORT]++; // read short
+    if (issocket) _appio_register_current[SOCK_READ_BYTES] += retval;
+    if (retval < (int)count) {
+       _appio_register_current[READ_SHORT]++; // read short
+       if (issocket) _appio_register_current[SOCK_READ_SHORT]++; // read short
+    }
     _appio_register_current[READ_USEC] += duration;
+    if (issocket) _appio_register_current[SOCK_READ_USEC] += duration;
   }
   if (retval < 0) { 
     _appio_register_current[READ_ERR]++; // read err
+    if (issocket) _appio_register_current[SOCK_READ_ERR]++; // read err
     if (EINTR == errno)
       _appio_register_current[READ_INTERRUPTED]++; // signal interrupted the read
-    if ((EAGAIN == errno) || (EWOULDBLOCK == errno)) 
-      _appio_register_current[READ_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
+    //if ((EAGAIN == errno) || (EWOULDBLOCK == errno)) {
+    //  _appio_register_current[READ_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
+    //  if (issocket) _appio_register_current[SOCK_READ_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
+    //}
   }
   if (retval == 0) _appio_register_current[READ_EOF]++; // read eof
   return retval;
@@ -232,25 +278,48 @@ ssize_t __write(int fd, const void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count) {
   int retval;
   SUBDBG("appio: intercepted write(%d,%p,%lu)\n", fd, buf, (unsigned long)count);
+  struct stat st;
+  int issocket = 0;
+  if (fstat(fd, &st) == 0) {
+    if ((st.st_mode & S_IFMT) == S_IFSOCK) issocket = 1;
+  }
 
   // check if write would block on descriptor
   fd_set writefds;
   FD_ZERO(&writefds);
   FD_SET(fd, &writefds);
   int ready = __select(fd+1, NULL, &writefds, NULL, &zerotv);
-  if (ready == 0) _appio_register_current[WRITE_WOULD_BLOCK]++; 
+  if (ready == 0) {
+    _appio_register_current[WRITE_WOULD_BLOCK]++; 
+    if (issocket) _appio_register_current[SOCK_WRITE_WOULD_BLOCK]++; 
+  }
 
   long long start_ts = PAPI_get_real_usec();
   retval = __write(fd,buf, count);
   long long duration = PAPI_get_real_usec() - start_ts;
   int n = _appio_register_current[WRITE_CALLS]++; // write calls
+  if (issocket) _appio_register_current[SOCK_WRITE_CALLS]++; // socket write
   if (retval >= 0) {
     _appio_register_current[WRITE_BLOCK_SIZE]= (n * _appio_register_current[WRITE_BLOCK_SIZE] + count)/(n+1); // mean size
     _appio_register_current[WRITE_BYTES]+= retval; // write bytes
-    if (retval < (int)count) _appio_register_current[WRITE_SHORT]++; // short write
+    if (issocket) _appio_register_current[SOCK_WRITE_BYTES] += retval;
+    if (retval < (int)count) {
+      _appio_register_current[WRITE_SHORT]++; // short write
+      if (issocket) _appio_register_current[SOCK_WRITE_SHORT]++; 
+    }
     _appio_register_current[WRITE_USEC] += duration;
+    if (issocket) _appio_register_current[SOCK_WRITE_USEC] += duration;
   }
-  if (retval < 0) _appio_register_current[WRITE_ERR]++; // err
+  if (retval < 0) {
+    _appio_register_current[WRITE_ERR]++; // err
+    if (issocket) _appio_register_current[SOCK_WRITE_ERR]++;
+    if (EINTR == errno)
+      _appio_register_current[WRITE_INTERRUPTED]++; // signal interrupted the op
+    //if ((EAGAIN == errno) || (EWOULDBLOCK == errno)) {
+    //  _appio_register_current[WRITE_WOULD_BLOCK]++; //op would block on descriptor marked as non-blocking
+    //  if (issocket) _appio_register_current[SOCK_WRITE_WOULD_BLOCK]++;
+    //}
+  }
   return retval;
 }
 
