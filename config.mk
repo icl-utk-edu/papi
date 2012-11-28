@@ -146,6 +146,10 @@ ifeq ($(ARCH),arm)
 CONFIG_PFMLIB_ARCH_ARM=y
 endif
 
+ifeq ($(ARCH),s390x)
+CONFIG_PFMLIB_ARCH_S390X=y
+endif
+
 ifeq ($(XTPE_COMPILE_TARGET),linux)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
 endif

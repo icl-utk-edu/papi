@@ -68,6 +68,7 @@ The library supports many PMUs. The current version can handle:
 		Power 7
 		PPC970
 		Torrent
+		System z (s390x)
 
 	- For MIPS
 		Mips 74k
