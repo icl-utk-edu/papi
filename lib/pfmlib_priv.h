@@ -169,6 +169,7 @@ extern pfmlib_config_t pfm_cfg;
 extern void __pfm_vbprintf(const char *fmt,...);
 extern void __pfm_dbprintf(const char *fmt,...);
 extern void pfmlib_strconcat(char *str, size_t max, const char *fmt, ...);
+extern int pfmlib_getl(char **buffer, size_t *len, FILE *fp);
 extern void pfmlib_compact_pattrs(pfmlib_event_desc_t *e, int i);
 #define evt_strcat(str, fmt, a...) pfmlib_strconcat(str, PFMLIB_EVT_MAX_NAME_LEN, fmt, a)
 
