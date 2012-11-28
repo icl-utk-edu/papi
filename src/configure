@@ -1440,6 +1440,8 @@ CFLAGS="$CFLAGS -g"
 # Deprecated Options
 # ------------------
 # -wr                      use -diag-remark
+# Note: Rules.pfm4_pe is critically dependent upon matching the value of CC
+#		for building with icc, so if you change this, update Rules.pfm4_pe aswell
 if test "$CC" = "icc"; then
   CC="icc -wr188"
   CFLAGS="$CFLAGS -openmp"
@@ -2255,7 +2257,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2258:" \
+echo "$as_me:2260:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5

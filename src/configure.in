@@ -88,6 +88,8 @@ CFLAGS="$CFLAGS -g"
 # Deprecated Options
 # ------------------
 # -wr                      use -diag-remark
+# Note: Rules.pfm4_pe is critically dependent upon matching the value of CC
+#		for building with icc, so if you change this, update Rules.pfm4_pe aswell
 if test "$CC" = "icc"; then
   CC="icc -wr188"
   CFLAGS="$CFLAGS -openmp"
