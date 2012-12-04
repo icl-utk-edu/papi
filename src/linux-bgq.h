@@ -77,6 +77,9 @@ typedef struct bgq_control_state
 	int count;
 	long_long counters[BGQ_PUNIT_MAX_COUNTERS];
 	int muxOn;					// multiplexing on or off flag
+	int overflow;				// overflow enable
+	int overflow_threshold;
+	int overflow_EventIndex;
 	int bgpm_eventset_applied;	// BGPM eventGroup applied yes or no flag
 } bgq_control_state_t;
 

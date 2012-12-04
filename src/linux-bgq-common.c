@@ -101,5 +101,51 @@ _common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr
 }
 
 
+/*
+ * _common_set_overflow_BGPM
+ *
+ * since update_control_state trashes overflow settings, this puts things
+ * back into balance for BGPM 
+ */
+void
+_common_set_overflow_BGPM( int EventGroup, 
+						   int evt_idx,
+						   int threshold, 
+						   void (*handler)(int, uint64_t, uint64_t, const ucontext_t *) )
+{
+	int retval;
+	uint64_t threshold_for_bgpm;
+	
+	/* convert threadhold value assigned by PAPI user to value that is
+	 * programmed into the counter. This value is required by Bgpm_SetOverflow() */ 
+	threshold_for_bgpm = BGPM_PERIOD2THRES( threshold );
+	
+#ifdef DEBUG_BGQ
+	printf("_common_set_overflow_BGPM\n");
+	
+	int i;
+	int numEvts = Bgpm_NumEvents( EventGroup );
+	for ( i = 0; i < numEvts; i++ ) {
+		printf("_common_set_overflow_BGPM: %d = %s\n", i, Bgpm_GetEventLabel( EventGroup, i) );
+	}
+#endif	
+	
+	
+	retval = Bgpm_SetOverflow( EventGroup, 
+							   evt_idx,
+							   threshold_for_bgpm );
+	CHECK_BGPM_ERROR( retval, "Bgpm_SetOverflow" );
+	
+	retval = Bgpm_SetEventUser1( EventGroup, 
+								 evt_idx,
+								 1024 );
+	CHECK_BGPM_ERROR( retval, "Bgpm_SetEventUser1" );
+	
+	/* user signal handler for overflow case */
+	retval = Bgpm_SetOverflowHandler( EventGroup, 
+									  handler );
+	CHECK_BGPM_ERROR( retval, "Bgpm_SetOverflowHandler" );		
+}
+
 
 

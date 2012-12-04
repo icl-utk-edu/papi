@@ -43,4 +43,7 @@ void        _check_BGPM_error( int err, char* bgpmfunc );
 long_long	_common_getEventValue( unsigned event_id, int EventGroup );
 void		_common_deleteRecreate( int *EventGroup_ptr );
 void		_common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr );
-
+void		_common_set_overflow_BGPM( int EventGroup, 
+									   int evt_idx,
+									   int threshold, 
+									   void (*handler)(int, uint64_t, uint64_t, const ucontext_t *) );
