@@ -158,12 +158,6 @@ ifeq ($(ARCH),cell)
 CONFIG_PFMLIB_CELL=y
 endif
 
-# handle special cases for 64-bit builds
-ifeq ($(BITMODE),64)
-ifeq ($(ARCH),powerpc)
-CONFIG_PFMLIB_ARCH_POWERPC64=y
-endif
-endif
 
 #
 # you shouldn't have to touch anything beyond this point
@@ -201,12 +195,6 @@ endif
 CFLAGS+=$(OPTIM) $(DBG) -I$(SYSINCDIR) -I$(PFMINCDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a
-
-ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC64),y)
-CFLAGS+= -m64
-LDFLAGS+= -m64
-LIBDIR=$(DESTDIR)/lib64
-endif
 
 ifeq ($(CONFIG_PFMLIB_DEBUG),y)
 CFLAGS += -DCONFIG_PFMLIB_DEBUG

@@ -113,11 +113,6 @@ INSTALLATION
 	  follows (assuming you have the multilib version of gcc):
 		$ make OPTIM="-m32 -O2"
 
-	- to compile and install the library for 64-bit Power processors,
-	  invoke make as follows:
-		$ make BITMODE=64
-		$ make BITMODE=64 install
-
 PACKAGING
 ---------
 	The library comes with the config files necessary to generate RPMs or
