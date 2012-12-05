@@ -134,7 +134,8 @@ main( int argc, char **argv )
 					printf( "%s : \t%llu(u)", argv[i], (unsigned long long)values[j++] );
 					break;
 				  case PAPI_DATATYPE_FP64:
-					printf( "%s : \t%f", argv[i], (double)values[j++] );
+					printf( "%s : \t%0.3f", argv[i], *((double *)(&values[j])) );
+					j++;
 					break;
 				  case PAPI_DATATYPE_BIT64:
 					printf( "%s : \t0x%llX", argv[i], values[j++] );
