@@ -50,8 +50,9 @@ main( int argc, char **argv )
 	int num_events;
 	long long *values;
 	char *success;
+	PAPI_event_info_t info;
 	int EventSet = PAPI_NULL;
-	int i, j, event;
+	int i, j, data_type, event;
 	int u_format = 0;
 	int hex_format = 0;
 
@@ -94,11 +95,7 @@ main( int argc, char **argv )
 			hex_format = 1;
 			num_events--;
 		} else {
-			if ( ( retval =
-				   PAPI_event_name_to_code( argv[i], &event ) ) != PAPI_OK )
-				test_fail_exit( __FILE__, __LINE__, "PAPI_event_name_to_code", retval );
-	
-			if ( ( retval = PAPI_add_event( EventSet, event ) ) != PAPI_OK ) {
+			if ( ( retval = PAPI_add_named_event( EventSet, argv[i] ) ) != PAPI_OK ) {
 				printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
 					PAPI_strerror(retval));
 				success[i] = 0;
@@ -125,7 +122,31 @@ main( int argc, char **argv )
 
 	for ( i = 1, j = 0; i <= num_events; i++ ) {
 		if ( success[i] ) {
-			if (! (u_format || hex_format) ) printf( "%s : \t%lld\n", argv[i], values[j++] );
+			if (! (u_format || hex_format) ) {
+				retval = PAPI_event_name_to_code( argv[i], &event );
+				if (retval == PAPI_OK) {
+					retval = PAPI_get_event_info(event, &info);
+					if (retval == PAPI_OK) data_type = info.data_type;
+					else data_type = PAPI_DATATYPE_INT64;
+				}
+				switch (data_type) {
+				  case PAPI_DATATYPE_UINT64:
+					printf( "%s : \t%llu(u)", argv[i], (unsigned long long)values[j++] );
+					break;
+				  case PAPI_DATATYPE_FP64:
+					printf( "%s : \t%f", argv[i], (double)values[j++] );
+					break;
+				  case PAPI_DATATYPE_BIT64:
+					printf( "%s : \t0x%llX", argv[i], values[j++] );
+					break;
+				  case PAPI_DATATYPE_INT64:
+				  default:
+					printf( "%s : \t%lld", argv[i], values[j++] );
+					break;
+				}
+				if (retval == PAPI_OK)  printf( " %s", info.units );
+				printf( "\n" );
+			}
 			if (u_format) printf( "%s : \t%llu(u)\n", argv[i], (unsigned long long)values[j++] );
 			if (u_format && hex_format) j--;
 			if (hex_format) printf( "%s : \t0x%llX\n", argv[i], values[j++] );
