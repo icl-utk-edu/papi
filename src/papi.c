@@ -1493,6 +1493,51 @@ PAPI_assign_eventset_component( int EventSet, int cidx )
 	return ( _papi_hwi_assign_eventset( ESI, cidx ) );
 }
 
+/**	@class PAPI_get_eventset_component
+ *	@brief return index for component an eventset is assigned to
+ *	@retval PAPI_ENOEVST
+ *		eventset does not exist
+ *	@retval PAPI_ENOCMP
+ *		component is invalid or does not exist
+ *	@retval positive value
+ *		valid component index
+ *	
+ *	@param EventSet
+ *              EventSet for which we want to know the component index
+ *	@par Examples:
+ *	@code
+ 		int cidx,eventcode;
+ 		cidx = PAPI_get_eventset_component(eventset);
+ *	@endcode
+ *	PAPI_get_eventset_component() returns the component an event
+ *      belongs to.
+ *	@see  PAPI_get_event_component
+ */
+int
+PAPI_get_eventset_component( int EventSet)
+{
+	EventSetInfo_t *ESI;
+	int retval;
+
+/* validate eventset */
+	ESI = _papi_hwi_lookup_EventSet( EventSet );
+	if ( ESI == NULL )
+		papi_return( PAPI_ENOEVST );
+
+/* check if a component has been assigned */ 
+	if ( ESI->CmpIdx < 0 )
+	  papi_return( PAPI_ENOCMP );
+
+/* validate CmpIdx */
+	retval = valid_component( ESI->CmpIdx );
+	if ( retval < 0 )
+		papi_return( retval );
+
+/* return the index */
+	return ( ESI->CmpIdx );
+}
+
+
 /**	@class PAPI_add_event
  *	@brief add PAPI preset or native hardware event to an event set
  *
@@ -4520,7 +4565,6 @@ PAPI_perror( char *msg )
 
 /** @class _papi_overflow_handler
  *  @brief User defined function to process overflow events.
- *  @htmlonly
  *
  *  @see PAPI_overflow
  */
