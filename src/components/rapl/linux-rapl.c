@@ -188,6 +188,7 @@ static long long read_rapl_energy(int index) {
       double fp;
    } return_val;
 
+   return_val.ll = 0; /* initialize to satisfy compiler */
    fd=open_fd(rapl_native_events[index].fd_offset);
    result=read_msr(fd,rapl_native_events[index].msr);
 
