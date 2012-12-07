@@ -453,8 +453,8 @@ detectDevices( )
 							ret = nvmlDeviceGetHandleByIndex(j, &devices[i] );
 							if ( NVML_SUCCESS != ret ) {
 								SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", j, i);
-							}
 								return PAPI_ESYS;
+							}
 							break;
 					}
 			}	
