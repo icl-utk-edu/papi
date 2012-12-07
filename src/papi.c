@@ -4304,14 +4304,14 @@ PAPI_num_components( void )
   * 
   * PAPI_num_events() returns the number of preset and/or native events 
   * contained in an event set. 
-  * The event set should be created by @ref PAPI_create_eventset() .
+  * The event set should be created by @ref PAPI_create_eventset .
   *
   * @par C Interface:
   * \#include <papi.h> @n
   * int PAPI_num_events(int  EventSet );
   *
   * @param[in] EventSet -- 
-  *   an integer handle for a PAPI event set created by PAPI_create_eventset().
+  *   an integer handle for a PAPI event set created by PAPI_create_eventset.
   * @param[out] *count -- (Fortran only) 
   *   On output the variable contains the number of events in the event set
   *
@@ -4559,12 +4559,6 @@ PAPI_perror( char *msg )
 	fprintf( stderr, "%s\n", foo );
 }
 
-/** @class _papi_overflow_handler
- *  @brief User defined function to process overflow events.
- *
- *  @see PAPI_overflow
- */
-
 /** @class PAPI_overflow
  *  @brief Set up an event set to begin registering overflows.
  *
@@ -4616,7 +4610,7 @@ PAPI_perror( char *msg )
  *
  * @param[in] EventSet
  *	      -- an integer handle to a PAPI event set as created by 
- *            @ref PAPI_create_eventset()
+ *            @ref PAPI_create_eventset
  * @param[in] EventCode
  *	      -- the preset or native event code to be set for overflow 
  *            detection. 
@@ -4625,7 +4619,7 @@ PAPI_perror( char *msg )
  *	      -- the overflow threshold value for this EventCode.
  * @param[in] flags
  *	      -- bitmap that controls the overflow mode of operation. 
- *	      Set to @ref PAPI_OVERFLOW_FORCE_SW to force software 
+ *	      Set to PAPI_OVERFLOW_FORCE_SW to force software 
  *            overflowing, even if hardware overflow support is available. 
  *	      If hardware overflow support is available on a given system, 
  *            it will be the default mode of operation. 
