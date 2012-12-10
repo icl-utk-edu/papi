@@ -3466,10 +3466,8 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 		internal.attach.ESI->state |= PAPI_ATTACHED;
 		internal.attach.ESI->attach.tid = ptr->attach.tid;
 
-		_papi_hwi_lookup_or_create_thread( 
-				      &(internal.attach.ESI->master), ptr->attach.tid );
-
-		return ( PAPI_OK );
+		papi_return (_papi_hwi_lookup_or_create_thread( 
+				      &(internal.attach.ESI->master), ptr->attach.tid ));
 	}
 	case PAPI_CPU_ATTACH:
 	{
@@ -3740,8 +3738,6 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	}
 	case PAPI_INHERIT:
 	{
-		if ( ptr == NULL )
-			papi_return( PAPI_EINVAL );
 		EventSetInfo_t *ESI;
 		ESI = _papi_hwi_lookup_EventSet( ptr->inherit.eventset );
 		if ( ESI == NULL )

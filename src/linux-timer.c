@@ -420,6 +420,7 @@ again:
    }
    lseek( stat_fd, 0, SEEK_SET );
 
+   if (rv == LINE_MAX) rv--;
    buf[rv] = '\0';
    SUBDBG( "Thread stat file is:%s\n", buf );
    while ( ( cnt != 13 ) && ( i < rv ) ) {
