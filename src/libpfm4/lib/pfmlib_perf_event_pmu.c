@@ -163,60 +163,6 @@ perf_attridx2um(int idx, int attr_idx)
 }
 
 /*
- * getl(): our own equivalent to GNU getline() extension.
- * This avoids a dependency on having a C library with
- * support for getline().
- */
-static int
-getl(char **buffer, size_t *len, FILE *fp)
-{
-#define	GETL_DFL_LEN	32
-	char *b;
-	int c;
-	size_t maxsz, maxi, i = 0, d;
-
-	if (!len || !fp || !buffer)
-		return -1;
-
-	b = *buffer;
-
-	if (!b)
-		*len = 0;
-
-	maxsz = *len;
-	maxi = maxsz - 2;
-
-	while ((c = fgetc(fp)) != EOF) {
-		if (maxsz == 0 || i == maxi) {
-			if (maxsz == 0)
-				maxsz = GETL_DFL_LEN;
-			else
-				maxsz <<= 1;
-
-			if (*buffer)
-				d = &b[i] - *buffer;
-			else
-				d = 0;
-
-			*buffer = realloc(*buffer, maxsz);
-			if (!*buffer)
-				return -1;
-
-			b = *buffer + d;
-			maxi = maxsz - d - 2;
-			i = 0;
-			*len = maxsz;
-		}
-		b[i++] = c;
-		if (c == '\n')
-			break;
-	}
-	b[i] = '\0';
-	return c != EOF ? 0 : -1;
-}
-
-
-/*
  * figure out the mount point of the debugfs filesystem
  *
  * returns -1 if none is found
@@ -234,7 +180,7 @@ get_debugfs_mnt(void)
 	if (!fp)
 		return -1;
 
-	while(getl(&buffer, &len, fp) != -1) {
+	while(pfmlib_getl(&buffer, &len, fp) != -1) {
 
 		q = strchr(buffer, ' ');
 		if (!q)

@@ -44,6 +44,8 @@ static const pfmlib_attr_desc_t perf_event_mods[]={
 	PFM_ATTR_B("u", "monitor at user level"),	/* monitor user level */
 	PFM_ATTR_B("k", "monitor at kernel level"),	/* monitor kernel level */
 	PFM_ATTR_B("h", "monitor at hypervisor level"),	/* monitor hypervisor level */
+	PFM_ATTR_B("mg", "monitor guest execution"),	/* monitor guest level */
+	PFM_ATTR_B("mh", "monitor host execution"),	/* monitor host level */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -56,9 +58,11 @@ static const pfmlib_attr_desc_t perf_event_ext_mods[]={
 	PFM_ATTR_B("k", "monitor at kernel level"),	/* monitor kernel level */
 	PFM_ATTR_B("h", "monitor at hypervisor level"),	/* monitor hypervisor level */
 	PFM_ATTR_I("period", "sampling period"),     	/* sampling period */
-	PFM_ATTR_I("freq", "sampling frequency (Hz)"),     /* sampling frequency */
-	PFM_ATTR_I("precise", "precise ip"),     		/* anti-skid mechanism */
+	PFM_ATTR_I("freq", "sampling frequency (Hz)"),	/* sampling frequency */
+	PFM_ATTR_I("precise", "precise ip"),     	/* anti-skid mechanism */
 	PFM_ATTR_B("excl", "exclusive access"),    	/* exclusive PMU access */
+	PFM_ATTR_B("mg", "monitor guest execution"),	/* monitor guest level */
+	PFM_ATTR_B("mh", "monitor host execution"),	/* monitor host level */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -74,8 +78,8 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	pfm_event_attr_info_t *a;
 	size_t orig_sz, asz, sz = sizeof(arg);
 	uint64_t ival;
-	int has_plm = 0;
-	int i, plm = 0, ret;
+	int has_plm = 0, has_vmx_plm = 0;
+	int i, plm = 0, ret, vmx_plm = 0;
 
 	sz = pfmlib_check_struct(uarg, uarg->size, PFM_PERF_ENCODE_ABI0, sz);
 	if (!sz)
@@ -187,9 +191,16 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			if (ival && !attr->exclusive)
 				attr->exclusive = 1;
 			break;
+		case PERF_ATTR_MG:
+			vmx_plm |= PFM_PLM3;
+			has_vmx_plm = 1;
+			break;
+		case PERF_ATTR_MH:
+			vmx_plm |= PFM_PLM0;
+			has_vmx_plm = 1;
+			break;
 		}
 	}
-
 	/*
 	 * if no priv level mask was provided
 	 * with the event, then use dfl_plm
@@ -197,6 +208,9 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	if (!has_plm)
 		plm = dfl_plm;
 
+	/* exclude_guest by default */
+	if (!has_vmx_plm)
+		vmx_plm = PFM_PLM0;
 	/*
 	 * perf_event plm work by exclusion, so use logical or
 	 * goal here is to set to zero any exclude_* not supported
@@ -207,9 +221,11 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	attr->exclude_user   = !(plm & PFM_PLM3);
 	attr->exclude_kernel = !(plm & PFM_PLM0);
 	attr->exclude_hv     = !(plm & PFM_PLMH);
+	attr->exclude_guest  = !(vmx_plm & PFM_PLM3);
+	attr->exclude_host   = !(vmx_plm & PFM_PLM0);
 
 	__pfm_vbprintf("PERF[type=%x config=0x%"PRIx64" config1=0x%"PRIx64
-                       " excl=%d e_u=%d e_k=%d e_hv=%d period=%"PRIu64" freq=%d"
+                       " excl=%d e_u=%d e_k=%d e_hv=%d e_host=%d e_gu=%d period=%"PRIu64" freq=%d"
                        " precise=%d] %s\n",
 			attr->type,
 			attr->config,
@@ -218,6 +234,8 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			attr->exclude_user,
 			attr->exclude_kernel,
 			attr->exclude_hv,
+			attr->exclude_host,
+			attr->exclude_guest,
 			attr->sample_period,
 			attr->freq,
 			attr->precise_ip,
@@ -269,6 +287,12 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 				evt_strcat(e.fstr, ":%s=%"PRIu64, perf_event_ext_mods[idx].name, attr->sample_period);
 			else if (attr->sample_period)
 				evt_strcat(e.fstr, ":%s=%"PRIu64, perf_event_ext_mods[idx].name, attr->sample_period);
+		case PERF_ATTR_MG:
+			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !attr->exclude_guest);
+			break;
+		case PERF_ATTR_MH:
+			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !attr->exclude_host);
+			break;
 		}
 	}
 

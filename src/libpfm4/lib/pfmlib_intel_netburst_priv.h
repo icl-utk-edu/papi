@@ -139,8 +139,8 @@ typedef union {
  * @bit: The bit position within the event_mask field.
  **/
 typedef struct {
-	char *name;
-	char *desc;
+	const char *name;
+	const char *desc;
 	unsigned int bit;
 	unsigned int flags;
 } netburst_event_mask_t;
@@ -206,8 +206,8 @@ enum netburst_events {
 };
 
 typedef struct {
-	char *name;
-	char *desc;
+	const char *name;
+	const char *desc;
 	unsigned int event_select;
 	unsigned int escr_select;
 	enum netburst_events perf_code;	/* perf_event event code, enum P4_EVENTS */

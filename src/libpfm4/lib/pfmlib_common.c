@@ -153,6 +153,9 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_cortex_a9_support,
 	&arm_cortex_a15_support,
 #endif
+#ifdef CONFIG_PFMLIB_ARCH_S390X
+	&s390x_cpum_cf_support,
+#endif
 #ifdef __linux__
 	&perf_event_support,
 #endif
@@ -223,6 +226,61 @@ __pfm_vbprintf(const char *fmt, ...)
 	vfprintf(pfm_cfg.fp, fmt, ap);
 	va_end(ap);
 }
+
+/*
+ * pfmlib_getl: our own equivalent to GNU getline() extension.
+ * This avoids a dependency on having a C library with
+ * support for getline().
+ */
+int
+pfmlib_getl(char **buffer, size_t *len, FILE *fp)
+{
+#define	GETL_DFL_LEN	32
+	char *b;
+	int c;
+	size_t maxsz, maxi, d, i = 0;
+
+	if (!len || !fp || !buffer)
+		return -1;
+
+	b = *buffer;
+
+	if (!b)
+		*len = 0;
+
+	maxsz = *len;
+	maxi = maxsz - 2;
+
+	while ((c = fgetc(fp)) != EOF) {
+		if (maxsz == 0 || i == maxi) {
+			if (maxsz == 0)
+				maxsz = GETL_DFL_LEN;
+			else
+				maxsz <<= 1;
+
+			if (*buffer)
+				d = &b[i] - *buffer;
+			else
+				d = 0;
+
+			*buffer = realloc(*buffer, maxsz);
+			if (!*buffer)
+				return -1;
+
+			b = *buffer + d;
+			maxi = maxsz - d - 2;
+			i = 0;
+			*len = maxsz;
+		}
+		b[i++] = c;
+		if (c == '\n')
+			break;
+	}
+	b[i] = '\0';
+	return c != EOF ? 0 : -1;
+}
+
+
 
 /*
  * append fmt+args to str such that the string is no

@@ -25,6 +25,7 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_x86_priv.h"
 #include "events/intel_snb_events.h"
+#include "events/intel_snbep_events.h"
 
 static int
 pfm_snb_detect(void *this)
@@ -107,13 +108,13 @@ pfmlib_pmu_t intel_snb_ep_support={
 	.desc			= "Intel Sandy Bridge EP",
 	.name			= "snb_ep",
 	.pmu			= PFM_PMU_INTEL_SNB_EP,
-	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snb_pe),
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_snbep_pe),
 	.type			= PFM_PMU_TYPE_CORE,
 	.supported_plm		= INTEL_X86_PLM,
 	.num_cntrs		= 8, /* consider with HT off by default */
 	.num_fixed_cntrs	= 3,
 	.max_encoding		= 2, /* offcore_response */
-	.pe			= intel_snb_pe,
+	.pe			= intel_snbep_pe,
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,

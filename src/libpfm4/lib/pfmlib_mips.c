@@ -45,59 +45,6 @@ static const pfmlib_attr_desc_t mips_mods[]={
 
 #ifdef CONFIG_PFMLIB_OS_LINUX
 /*
- * getl(): our own equivalent to GNU getline() extension.
- * This avoids a dependency on having a C library with
- * support for getline().
- */
-static int
-getl(char **buffer, size_t *len, FILE *fp)
-{
-#define	GETL_DFL_LEN	32
-	char *b;
-	int c;
-	size_t maxsz, maxi, i = 0, d;
-
-	if (!len || !fp || !buffer)
-		return -1;
-
-	b = *buffer;
-
-	if (!b)
-		*len = 0;
-
-	maxsz = *len;
-	maxi = maxsz - 2;
-
-	while ((c = fgetc(fp)) != EOF) {
-		if (maxsz == 0 || i == maxi) {
-			if (maxsz == 0)
-				maxsz = GETL_DFL_LEN;
-			else
-				maxsz <<= 1;
-
-			if (*buffer)
-				d = &b[i] - *buffer;
-			else
-				d = 0;
-
-			*buffer = realloc(*buffer, maxsz);
-			if (!*buffer)
-				return -1;
-
-			b = *buffer + d;
-			maxi = maxsz - d - 2;
-			i = 0;
-			*len = maxsz;
-		}
-		b[i++] = c;
-		if (c == '\n')
-			break;
-	}
-	b[i] = '\0';
-	return c != EOF ? 0 : -1;
-}
-
-/*
  * helper function to retrieve one value from /proc/cpuinfo
  * for internal libpfm use only
  * attr: the attribute (line) to look for
@@ -129,7 +76,7 @@ pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 	if (fp == NULL)
 		return -1;
 
-	while(getl(&buffer, &buf_len, fp) != -1){
+	while(pfmlib_getl(&buffer, &buf_len, fp) != -1){
 
 		/* skip  blank lines */
 		if (*buffer == '\n')

@@ -546,7 +546,7 @@ load_user_event_table( char *file_name)
 
   }
 
-  line = (char*) malloc( USER_EVENT_OPERATION_LEN + 1 );
+  line = (char*) papi_malloc( USER_EVENT_OPERATION_LEN + 1 );
   /* Main parse loop */
   while (get_event_line(&line, table, ptr) > 0 ) {
 	magic_string_int	= 0;
@@ -564,6 +564,7 @@ load_user_event_table( char *file_name)
 	  if ( 0 == strncmp("define",t+1,6) ) {
 		if ( PAPI_OK != (oops = add_define( t , &defines ) ) ) {
 		  papi_free(foo);
+		  papi_free(line);
 		  if (table)
 		    fclose(table);
 		  return oops;
@@ -696,7 +697,7 @@ nextline:
   if (table)
 	fclose(table);
 
-  free(line); 
+  papi_free(line);
   return insert;
 }
 

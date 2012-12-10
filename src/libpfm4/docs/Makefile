@@ -52,7 +52,7 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_snbep_unc_ubo.3 \
 	 libpfm_intel_snbep_unc_r2pcie.3 \
 	 libpfm_intel_snbep_unc_r3qpi.3 \
-	 libpfm_intel_phi.3
+	 libpfm_intel_knc.3
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 ARCH_MAN += libpfm_intel_p6.3 libpfm_intel_coreduo.3
