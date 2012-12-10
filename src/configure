@@ -1433,19 +1433,7 @@ fi;
 echo "$as_me:$LINENO: result: $assumed_kernel" >&5
 echo "${ECHO_T}$assumed_kernel" >&6
 
-
 CFLAGS="$CFLAGS -g"
-#prevent icc warnings about overriding optimization settings set by AC_PROG_CC
-# For future reference,  icc --help says
-# Deprecated Options
-# ------------------
-# -wr                      use -diag-remark
-# Note: Rules.pfm4_pe is critically dependent upon matching the value of CC
-#		for building with icc, so if you change this, update Rules.pfm4_pe aswell
-if test "$CC" = "icc"; then
-  CC="icc -wr188"
-  CFLAGS="$CFLAGS -openmp"
-fi
 #If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
   FFLAGS=""
@@ -1458,7 +1446,7 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in xlc gcc cc
+  for ac_prog in xlc icc gcc cc
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -1500,7 +1488,7 @@ fi
 fi
 if test -z "$CC"; then
   ac_ct_CC=$CC
-  for ac_prog in xlc gcc cc
+  for ac_prog in xlc icc gcc cc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -2257,7 +2245,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2260:" \
+echo "$as_me:2248:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -2404,6 +2392,33 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test "x$F77" = "x"; then
    F77="@echo nof77 "
 fi
+
+# Lets figure out what CC actually is...
+# Used in later checks to set compiler specific options
+if `$CC -V 2>&1 | grep '^Intel(R) C' >/dev/null 2>&1` ; then
+	CC_COMMON_NAME="icc"
+elif `$CC -v 2>&1 | grep 'gcc version' >/dev/null 2>&1` ; then
+	CC_COMMON_NAME="gcc"
+elif `$CC -qversion 2>&1 | grep 'IBM XL C' >/dev/null 2>&1`; then
+	CC_COMMON_NAME="xlc"
+else
+	CC_COMMON_NAME="unknown"
+fi
+echo "$as_me:$LINENO: result: I think the compiler, $CC, is $CC_COMMON_NAME." >&5
+echo "${ECHO_T}I think the compiler, $CC, is $CC_COMMON_NAME." >&6
+
+#prevent icc warnings about overriding optimization settings set by AC_PROG_CC
+# For future reference,  icc --help says
+# Deprecated Options
+# ------------------
+# -wr                      use -diag-remark
+# Note: Rules.pfm4_pe is critically dependent upon matching the value of CC
+#		for building with icc, so if you change this, update Rules.pfm4_pe aswell
+if test "$CC_COMMON_NAME" = "icc"; then
+  CC="$CC -wr188"
+  CFLAGS="$CFLAGS -openmp"
+fi
+
 for ac_prog in gawk mawk nawk awk
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -3787,7 +3802,7 @@ if test "${with_debug+set}" = set; then
   debug=$withval
 fi;
 if test "$debug" = "yes"; then
-  if test "$CC" = "gcc"; then
+  if test "$CC_COMMON_NAME" = "gcc"; then
     CFLAGS="$CFLAGS -g3"
   else
     CFLAGS="$CFLAGS -g"
@@ -3802,7 +3817,7 @@ fi
 echo "$as_me:$LINENO: result: $debug" >&5
 echo "${ECHO_T}$debug" >&6
 
-if test "$CC" = "gcc"; then
+if test "$CC_COMMON_NAME" = "gcc"; then
   gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
   major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
   minor=`echo $gcc_version | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
@@ -3811,16 +3826,15 @@ if test "$CC" = "gcc"; then
   else
     EXTRA_CFLAGS="-W"
   fi
-
-  # -Wextra => -Woverride-init on gcc >= 4.2
-  # This issues a warning (error under -Werror) for some libpfm4 code.
-  echo "$as_me:$LINENO: checking for -Wno-override-init" >&5
+# -Wextra => -Woverride-init on gcc >= 4.2
+# This issues a warning (error under -Werror) for some libpfm4 code.
+	echo "$as_me:$LINENO: checking for -Wno-override-init" >&5
 echo $ECHO_N "checking for -Wno-override-init... $ECHO_C" >&6
-  oldcflags="$CFLAGS"
-  CFLAGS+=" -Wall -Wextra -Werror -Wno-override-init"
-  cat >conftest.$ac_ext <<_ACEOF
+		oldcflags="$CFLAGS"
+		CFLAGS+=" -Wall -Wextra -Werror -Wno-override-init"
+		cat >conftest.$ac_ext <<_ACEOF
  struct A { int x; int y; };
-	  int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
+						int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
 
 _ACEOF
 rm -f conftest.$ac_objext
@@ -3853,11 +3867,11 @@ sed 's/^/| /' conftest.$ac_ext >&5
 HAVE_NO_OVERRIDE_INIT=0
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS="$oldcflags"
-  echo "$as_me:$LINENO: result: $HAVE_NO_OVERRIDE_INIT" >&5
+		CFLAGS="$oldcflags"
+echo "$as_me:$LINENO: result: $HAVE_NO_OVERRIDE_INIT" >&5
 echo "${ECHO_T}$HAVE_NO_OVERRIDE_INIT" >&6
-fi
 
+fi
 echo "$as_me:$LINENO: checking for CPU type" >&5
 echo $ECHO_N "checking for CPU type... $ECHO_C" >&6
 
@@ -7034,7 +7048,7 @@ SHLIB='libpapi.so.$(PAPIVER)'
 OMPCFLGS=-fopenmp
 CC_R='$(CC) -pthread'
 CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
-if test "$CC" = "gcc"; then
+if test "$CC_COMMON_NAME" = "gcc"; then
 	if test "$bitmode" = "32"; then
 		BITFLAGS=-m32
 	elif test "$bitmode" = "64"; then
@@ -7044,7 +7058,7 @@ fi
 
 OPTFLAGS="$OPTFLAGS $DEBUGFLAGS"
 CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE $NOTLS $BITFLAGS"
-if test "x$CC" = "xgcc"; then
+if test "$CC_COMMON_NAME" = "gcc"; then
 	CFLAGS="$CFLAGS -Wall"
 fi
 FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
