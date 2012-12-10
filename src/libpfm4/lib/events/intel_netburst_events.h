@@ -44,7 +44,7 @@
  *
  * Array of events that can be counted on Pentium4.
  **/
-netburst_entry_t netburst_events[] = {
+static const netburst_entry_t netburst_events[] = {
 
 	/* 0 */
 	{.name = "TC_deliver_mode",

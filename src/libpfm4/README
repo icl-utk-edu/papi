@@ -68,6 +68,7 @@ The library supports many PMUs. The current version can handle:
 		Power 7
 		PPC970
 		Torrent
+		System z (s390x)
 
 	- For MIPS
 		Mips 74k
@@ -103,6 +104,20 @@ INSTALLATION
 	- type make
 	- type make install
 
+	- The default installation location is /usr/local. You can specify
+	  a diffierent install location as follows:
+	        $ make PREFIX=<install-dir> install
+	  Depending on your install location, you may need to run the 'ldconfig'
+	  command or use LD_LIBRARY_PATH when you build and run tools that
+	  link to the libpfm4 library.
+
+	- By default, libpfm library files are installed in <install-dir>/lib.
+	  If 'make' builds 64-bit libraries on your system, and your target
+	  architecture expects 64-bit libraries to be located in a library
+	  named "lib64", then you should use the LIBDIR variable when installing,
+	  as follows:
+	        $ make LIBDIR=<install-dir>/lib64 install
+
  	- To compile and install the Python bindings, you need to go to the
 	  python sub-directory and type make. Python may not be systematically
 	  built.
@@ -111,11 +126,6 @@ INSTALLATION
 	  64-bit x86) system, you can pass the ABI flag to the compiler as
 	  follows (assuming you have the multilib version of gcc):
 		$ make OPTIM="-m32 -O2"
-
-	- to compile and install the library for 64-bit Power processors,
-	  invoke make as follows:
-		$ make BITMODE=64
-		$ make BITMODE=64 install
 
 PACKAGING
 ---------

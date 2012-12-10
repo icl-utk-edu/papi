@@ -178,6 +178,8 @@ typedef enum {
 	PFM_PMU_INTEL_SNBEP_UNC_R3QPI1,	/* Intel SandyBridge-EP R3QPI 1 uncore */
 	PFM_PMU_INTEL_KNC,		/* Intel Knights Corner (Xeon Phi) */
 
+	PFM_PMU_S390X_CPUM_CF,		/* s390x: CPU-M counter facility */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

@@ -268,7 +268,7 @@ void read_cpu(int c)
 			val = perf_scale(fds[j].values);
 			ratio = perf_scale_ratio(fds[j].values);
 
-			printf("CPU%-3d G%-2d %'-20"PRIu64" %-20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64") %s\n",
+			printf("CPU%-3d G%-2d %'20"PRIu64" %'20"PRIu64" %s (scaling %.2f%%, ena=%'"PRIu64", run=%'"PRIu64") %s\n",
 				c,
 				i,
 				val,

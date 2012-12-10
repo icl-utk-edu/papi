@@ -98,6 +98,17 @@ SRCS   += pfmlib_powerpc.c pfmlib_power4.c pfmlib_ppc970.c pfmlib_power5.c pfmli
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_S390X),y)
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_s390x_perf_event.c
+endif
+
+INCARCH = $(INC_S390X)
+SRCS   += pfmlib_s390x_cpumf.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_S390X
+endif
+
 ifeq ($(CONFIG_PFMLIB_ARCH_SPARC),y)
 
 ifeq ($(SYS),Linux)
@@ -191,6 +202,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_wsm_events.h	\
 	events/intel_wsm_unc_events.h	\
 	events/intel_snb_events.h	\
+	events/intel_snbep_events.h	\
 	events/intel_snb_unc_events.h	\
 	events/intel_ivb_events.h	\
 	pfmlib_intel_snbep_unc_priv.h	\
@@ -214,6 +226,9 @@ INC_POWERPC=events/ppc970_events.h	\
 	events/power6_events.h		\
 	events/power7_events.h		\
 	events/torrent_events.h
+
+INC_S390X=pfmlib_s390x_priv.h \
+	events/s390x_cpumf_events.h
 
 INC_SPARC=events/sparc_ultra12_events.h		\
 	events/sparc_ultra3_events.h		\

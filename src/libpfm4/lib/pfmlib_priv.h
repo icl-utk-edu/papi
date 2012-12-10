@@ -169,6 +169,7 @@ extern pfmlib_config_t pfm_cfg;
 extern void __pfm_vbprintf(const char *fmt,...);
 extern void __pfm_dbprintf(const char *fmt,...);
 extern void pfmlib_strconcat(char *str, size_t max, const char *fmt, ...);
+extern int pfmlib_getl(char **buffer, size_t *len, FILE *fp);
 extern void pfmlib_compact_pattrs(pfmlib_event_desc_t *e, int i);
 #define evt_strcat(str, fmt, a...) pfmlib_strconcat(str, PFMLIB_EVT_MAX_NAME_LEN, fmt, a)
 
@@ -274,6 +275,7 @@ extern pfmlib_pmu_t arm_cortex_a8_support;
 extern pfmlib_pmu_t arm_cortex_a9_support;
 extern pfmlib_pmu_t arm_cortex_a15_support;
 extern pfmlib_pmu_t mips_74k_support;
+extern pfmlib_pmu_t s390x_cpum_cf_support;
 
 extern pfmlib_os_t pfmlib_os_perf;
 extern pfmlib_os_t pfmlib_os_perf_ext;

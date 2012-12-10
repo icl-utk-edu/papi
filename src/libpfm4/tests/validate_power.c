@@ -1,7 +1,7 @@
 /*
- * validate_mips.c - validate MIPS event tables + encodings
+ * validate_power.c - validate PowerPC event tables + encodings
  *
- * Copyright (c) 2011 Google, Inc
+ * Copyright (c) 2012 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,7 +33,8 @@
 
 #include <perfmon/pfmlib.h>
 
-#define MAX_ENCODING	2
+#define MAX_ENCODING	1
+
 #define SRC_LINE	.line = __LINE__
 
 typedef struct {
@@ -43,123 +44,107 @@ typedef struct {
 	int ret, count, line;
 } test_event_t;
 
-static const test_event_t mips_test_events[]={
+static const test_event_t ppc_test_events[]={
 	{ SRC_LINE,
-	  .name = "mips_74k::cycles",
+	  .name = "ppc970::PM_CYC",
 	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0xa,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::CYCLES:k=1:u=1:s=0:e=0",
+	  .count = 1,
+	  .codes[0] = 0x7,
+	  .fstr = "ppc970::PM_CYC",
 	},
 	{ SRC_LINE,
-	  .name = "mips_74k::cycles:k",
+	  .name = "ppc970::PM_INST_DISP",
 	  .ret  = PFM_SUCCESS,
-	  .count = 2,
+	  .count = 1,
+	  .codes[0] = 0x320,
+	  .fstr = "ppc970::PM_INST_DISP",
+	},
+	{ SRC_LINE,
+	  .name = "ppc970mp::PM_CYC",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x7,
+	  .fstr = "ppc970mp::PM_CYC",
+	},
+	{ SRC_LINE,
+	  .name = "ppc970mp::PM_INST_DISP",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x320,
+	  .fstr = "ppc970mp::PM_INST_DISP",
+	},
+	{ SRC_LINE,
+	  .name = "power4::PM_CYC",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x7,
+	  .fstr = "power4::PM_CYC",
+	},
+	{ SRC_LINE,
+	  .name = "power4::PM_INST_DISP",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x221,
+	  .fstr = "power4::PM_INST_DISP",
+	},
+	{ SRC_LINE,
+	  .name = "power5::PM_CYC",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0xf,
+	  .fstr = "power5::PM_CYC",
+	},
+	{ SRC_LINE,
+	  .name = "power5::PM_INST_DISP",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x300009,
+	  .fstr = "power5::PM_INST_DISP",
+	},
+	{ SRC_LINE,
+	  .name = "power5p::PM_CYC",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0xf,
+	  .fstr = "power5p::PM_CYC",
+	},
+	{ SRC_LINE,
+	  .name = "power5p::PM_INST_DISP",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x300009,
+	  .fstr = "power5p::PM_INST_DISP",
+	},
+	{ SRC_LINE,
+	  .name = "power6::PM_INST_CMPL",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
 	  .codes[0] = 0x2,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::CYCLES:k=1:u=0:s=0:e=0",
+	  .fstr = "power6::PM_INST_CMPL",
 	},
 	{ SRC_LINE,
-	  .name = "mips_74k::cycles:u",
+	  .name = "power6::PM_THRD_CONC_RUN_INST",
 	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x8,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::CYCLES:k=0:u=1:s=0:e=0",
+	  .count = 1,
+	  .codes[0] = 0x300026,
+	  .fstr = "power6::PM_THRD_CONC_RUN_INST",
 	},
 	{ SRC_LINE,
-	  .name = "mips_74k::cycles:s",
+	  .name = "power7::PM_CYC",
 	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x4,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::CYCLES:k=0:u=0:s=1:e=0",
+	  .count = 1,
+	  .codes[0] = 0x1e,
+	  .fstr = "power7::PM_CYC",
 	},
 	{ SRC_LINE,
-	  .name = "mips_74k::cycles:e",
+	  .name = "power7::PM_INST_DISP",
 	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x1,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::CYCLES:k=0:u=0:s=0:e=1",
-	},
-	{ SRC_LINE,
-	  .name = "mips_74k::cycles:u:k",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0xa,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::CYCLES:k=1:u=1:s=0:e=0",
-	},
-
-	{ SRC_LINE,
-	  .name = "mips_74k::instructions",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x2a,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::INSTRUCTIONS:k=1:u=1:s=0:e=0",
-	},
-	{ SRC_LINE,
-	  .name = "mips_74k::instructions:k",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x22,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::INSTRUCTIONS:k=1:u=0:s=0:e=0",
-	},
-	{ SRC_LINE,
-	  .name = "mips_74k::instructions:u",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x28,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::INSTRUCTIONS:k=0:u=1:s=0:e=0",
-	},
-	{ SRC_LINE,
-	  .name = "mips_74k::instructions:s",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x24,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::INSTRUCTIONS:k=0:u=0:s=1:e=0",
-	},
-	{ SRC_LINE,
-	  .name = "mips_74k::instructions:e",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x21,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::INSTRUCTIONS:k=0:u=0:s=0:e=1",
-	},
-	{ SRC_LINE,
-	  .name = "mips_74k::instructions:u:k",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x2a,
-	  .codes[1] = 0xf,
-	  .fstr = "mips_74k::INSTRUCTIONS:k=1:u=1:s=0:e=0",
-	},
-
-	{ SRC_LINE,
-	  .name = "mips_74k::PREDICTED_JR_31:u:k",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x4a,
-	  .codes[1] = 0x5,
-	  .fstr = "mips_74k::PREDICTED_JR_31:k=1:u=1:s=0:e=0",
-	},
-	{ SRC_LINE,
-	  .name = "mips_74k::JR_31_MISPREDICTIONS:s:e",
-	  .ret  = PFM_SUCCESS,
-	  .count = 2,
-	  .codes[0] = 0x45,
-	  .codes[1] = 0xa,
-	  .fstr = "mips_74k::JR_31_MISPREDICTIONS:k=0:u=0:s=1:e=1",
+	  .count = 1,
+	  .codes[0] = 0x200f2,
+	  .fstr = "power7::PM_INST_DISP",
 	},
 };
-#define NUM_TEST_EVENTS (int)(sizeof(mips_test_events)/sizeof(test_event_t))
+#define NUM_TEST_EVENTS (int)(sizeof(ppc_test_events)/sizeof(test_event_t))
 
 static int check_test_events(FILE *fp)
 {
@@ -169,7 +154,7 @@ static int check_test_events(FILE *fp)
 	int count, i, j;
 	int ret, errors = 0;
 
-	for (i = 0, e = mips_test_events; i < NUM_TEST_EVENTS; i++, e++) {
+	for (i = 0, e = ppc_test_events; i < NUM_TEST_EVENTS; i++, e++) {
 		codes = NULL;
 		count = 0;
 		fstr = NULL;
@@ -213,7 +198,7 @@ static int check_test_events(FILE *fp)
 		if (fstr)
 			free(fstr);
 	}
-	printf("\t %d MIPS events: %d errors\n", i, errors);
+	printf("\t %d PowerPC events: %d errors\n", i, errors);
 	return errors;
 }
 

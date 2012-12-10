@@ -35,7 +35,8 @@ extern "C" {
 /*
  * avoid clashes with actual kernel header file
  */
-#ifndef _LINUX_PERF_EVENT_H
+#if !(defined(_LINUX_PERF_EVENT_H) || defined(_UAPI_LINUX_PERF_EVENT_H))
+
 /*
  * attr->type field values
  */

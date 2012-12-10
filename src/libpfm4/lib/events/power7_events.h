@@ -557,6 +557,16 @@
 #define POWER7_PME_PM_DTLB_MISS_16M 534
 #define POWER7_PME_PM_LSU1_LMQ_LHR_MERGE 535
 #define POWER7_PME_PM_IFU_FIN 536
+#define POWER7_PME_PM_1THRD_CON_RUN_INSTR 537
+#define POWER7_PME_PM_CMPLU_STALL_COUNT 538
+#define POWER7_PME_PM_MEM0_PB_RD_CL 539
+#define POWER7_PME_PM_THRD_1_RUN_CYC 540
+#define POWER7_PME_PM_THRD_2_CONC_RUN_INSTR 541
+#define POWER7_PME_PM_THRD_2_RUN_CYC 542
+#define POWER7_PME_PM_THRD_3_CONC_RUN_INST 543
+#define POWER7_PME_PM_THRD_3_RUN_CYC 544
+#define POWER7_PME_PM_THRD_4_CONC_RUN_INST 545
+#define POWER7_PME_PM_THRD_4_RUN_CYC 546
 
 static const pme_power_entry_t power7_pe[] = {
 	[ POWER7_PME_PM_IC_DEMAND_L2_BR_ALL ] = {
@@ -3780,7 +3790,67 @@ static const pme_power_entry_t power7_pe[] = {
 		.pme_code = 0x40066,
 		.pme_short_desc = "IFU Finished a (non-branch) instruction",
 		.pme_long_desc = "The Instruction Fetch Unit finished an instruction",
-	}
+	},
+	[ POWER7_PME_PM_1THRD_CON_RUN_INSTR ] = {
+		.pme_name = "PM_1THRD_CON_RUN_INSTR",
+		.pme_code = 0x30062,
+		.pme_short_desc = "1 thread Concurrent Run Instructions",
+		.pme_long_desc = "1 thread Concurrent Run Instructions",
+	},
+	[ POWER7_PME_PM_CMPLU_STALL_COUNT ] = {
+		.pme_name = "PM_CMPLU_STALL_COUNT",
+		.pme_code = 0x4000B,
+		.pme_short_desc = "Marked LSU instruction finished",
+		.pme_long_desc = "One of the Load/Store Units finished a marked instruction. Instructions that finish may not necessary complete",
+	},
+	[ POWER7_PME_PM_MEM0_PB_RD_CL ] = {
+		.pme_name = "PM_MEM0_PB_RD_CL",
+		.pme_code = 0x30083,
+		.pme_short_desc = "Nest events (MC0/MC1/PB/GX), Pair2 Bit1",
+		.pme_long_desc = "Nest events (MC0/MC1/PB/GX), Pair2 Bit1",
+	},
+	[ POWER7_PME_PM_THRD_1_RUN_CYC ] = {
+		.pme_name = "PM_THRD_1_RUN_CYC",
+		.pme_code = 0x10060,
+		.pme_short_desc = "1 thread in Run Cycles",
+		.pme_long_desc = "At least one thread has set its run latch. Operating systems use the run latch to indicate when they are doing useful work.  The run latch is typically cleared in the OS idle loop. This event does not respect FCWAIT.",
+	},
+	[ POWER7_PME_PM_THRD_2_CONC_RUN_INSTR ] = {
+		.pme_name = "PM_THRD_2_CONC_RUN_INSTR",
+		.pme_code = 0x40062,
+		.pme_short_desc = "2 thread Concurrent Run Instructions",
+		.pme_long_desc = "2 thread Concurrent Run Instructions",
+	},
+	[ POWER7_PME_PM_THRD_2_RUN_CYC ] = {
+		.pme_name = "PM_THRD_2_RUN_CYC",
+		.pme_code = 0x20060,
+		.pme_short_desc = "2 thread in Run Cycles",
+		.pme_long_desc = "2 thread in Run Cycles",
+	},
+	[ POWER7_PME_PM_THRD_3_CONC_RUN_INST ] = {
+		.pme_name = "PM_THRD_3_CONC_RUN_INST",
+		.pme_code = 0x10062,
+		.pme_short_desc = "3 thread in Run Cycles",
+		.pme_long_desc = "3 thread in Run Cycles",
+	},
+	[ POWER7_PME_PM_THRD_3_RUN_CYC ] = {
+		.pme_name = "PM_THRD_3_RUN_CYC",
+		.pme_code = 0x30060,
+		.pme_short_desc = "3 thread in Run Cycles",
+		.pme_long_desc = "3 thread in Run Cycles",
+	},
+	[ POWER7_PME_PM_THRD_4_CONC_RUN_INST ] = {
+		.pme_name = "PM_THRD_4_CONC_RUN_INST",
+		.pme_code = 0x20062,
+		.pme_short_desc = "4 thread in Run Cycles",
+		.pme_long_desc = "4 thread in Run Cycles",
+	},
+	[ POWER7_PME_PM_THRD_4_RUN_CYC ] = {
+		.pme_name = "PM_THRD_4_RUN_CYC",
+		.pme_code = 0x40060,
+		.pme_short_desc = "4 thread in Run Cycles",
+		.pme_long_desc = "4 thread in Run Cycles",
+	},
 };
 #endif
 
