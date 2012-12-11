@@ -108,14 +108,10 @@ fi
 AC_MSG_RESULT([I think the compiler, $CC, is $CC_COMMON_NAME.])
 
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
-# For future reference,  icc --help says
-# Deprecated Options
-# ------------------
-# -wr                      use -diag-remark
-# Note: Rules.pfm4_pe is critically dependent upon matching the value of CC
-#		for building with icc, so if you change this, update Rules.pfm4_pe aswell
+# remark #869: parameter was never referenced 
+# remark #271: trailing comma is nonstandard
 if test "$CC_COMMON_NAME" = "icc"; then
-  CC="$CC -wr188"
+  CC="$CC -diag-disable 188,869,271"
   CFLAGS="$CFLAGS -openmp"
 fi
 
@@ -1735,6 +1731,7 @@ AC_SUBST(EXTRA_CFLAGS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
 AC_SUBST(PAPI_EVENTS_CSV)
 AC_SUBST(BGPM_INSTALL_DIR)
+AC_SUBST(CC_COMMON_NAME)
 
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR CC_COMMON_NAME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2408,14 +2408,10 @@ echo "$as_me:$LINENO: result: I think the compiler, $CC, is $CC_COMMON_NAME." >&
 echo "${ECHO_T}I think the compiler, $CC, is $CC_COMMON_NAME." >&6
 
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
-# For future reference,  icc --help says
-# Deprecated Options
-# ------------------
-# -wr                      use -diag-remark
-# Note: Rules.pfm4_pe is critically dependent upon matching the value of CC
-#		for building with icc, so if you change this, update Rules.pfm4_pe aswell
+# remark #869: parameter was never referenced
+# remark #271: trailing comma is nonstandard
 if test "$CC_COMMON_NAME" = "icc"; then
-  CC="$CC -wr188"
+  CC="$CC -diag-disable 188,869,271"
   CFLAGS="$CFLAGS -openmp"
 fi
 
@@ -7591,6 +7587,7 @@ fi
 
 
 
+
 if test "$cross_compiling" = "yes" ; then
   { echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
@@ -8313,6 +8310,7 @@ s,@EXTRA_CFLAGS@,$EXTRA_CFLAGS,;t t
 s,@HAVE_NO_OVERRIDE_INIT@,$HAVE_NO_OVERRIDE_INIT,;t t
 s,@PAPI_EVENTS_CSV@,$PAPI_EVENTS_CSV,;t t
 s,@BGPM_INSTALL_DIR@,$BGPM_INSTALL_DIR,;t t
+s,@CC_COMMON_NAME@,$CC_COMMON_NAME,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

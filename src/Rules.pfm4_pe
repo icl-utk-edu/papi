@@ -30,7 +30,7 @@ MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-ifeq ("$(CC)","icc -wr188")
+ifeq ("$(CC_COMMON_NAME)","icc")
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" DBG="-g -Wall -Werror" lib
 else
 ifeq (1,$(HAVE_NO_OVERRIDE_INIT))
