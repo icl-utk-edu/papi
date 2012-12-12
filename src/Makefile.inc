@@ -58,7 +58,7 @@ $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 	@if test "$(SHLIB)" != "libpapi.so" ; then \
 	    rm -f $(SHLIB) libpapi.so; \
 	fi
-	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS) $(LDFLAGS)
 	@if test "$(POST_BUILD)" != "" ; then \
 		-$(POST_BUILD) ; \
 	fi
