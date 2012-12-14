@@ -1495,6 +1495,7 @@ PAPI_assign_eventset_component( int EventSet, int cidx )
 
 /**	@class PAPI_get_eventset_component
  *	@brief return index for component an eventset is assigned to
+ *
  *	@retval PAPI_ENOEVST
  *		eventset does not exist
  *	@retval PAPI_ENOCMP
