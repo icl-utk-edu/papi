@@ -683,27 +683,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
 void
 _papi_hwi_free_EventSet( EventSetInfo_t * ESI )
 {
-
-	if ( ESI->EventInfoArray )
-		papi_free( ESI->EventInfoArray );
-	if ( ESI->NativeInfoArray )
-		papi_free( ESI->NativeInfoArray );
-	if ( ESI->NativeBits )
-		papi_free( ESI->NativeBits );
-	if ( ESI->overflow.deadline )
-		papi_free( ESI->overflow.deadline );
-	if ( ESI->profile.prof )
-		papi_free( ESI->profile.prof );
-	if ( ESI->ctl_state )
-		papi_free( ESI->ctl_state );
-	if ( ESI->sw_stop )
-		papi_free( ESI->sw_stop );
-	if ( ESI->hw_start )
-		papi_free( ESI->hw_start );
-	if ( ( ESI->state & PAPI_MULTIPLEXING ) && ESI->multiplex.mpx_evset )
-		papi_free( ESI->multiplex.mpx_evset );
-	if ( ( ESI->state & PAPI_CPU_ATTACH ) && ESI->CpuInfo )
-		_papi_hwi_shutdown_cpu( ESI->CpuInfo );
+	_papi_hwi_cleanup_eventset( ESI );
 
 #ifdef DEBUG
 	memset( ESI, 0x00, sizeof ( EventSetInfo_t ) );
@@ -1531,7 +1511,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
    hwd_context_t *context;
    int EventCode;
    NativeInfo_t *native;
-
+   if ( !_papi_hwi_invalid_cmp( ESI->CmpIdx ) ) {
    num_cntrs = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
 
    for(i=0;i<num_cntrs;i++) {
@@ -1579,10 +1559,17 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
    if (retval!=PAPI_OK) {
      return retval;
    }
+   }
 
    ESI->CmpIdx = -1;
    ESI->NumberOfEvents = 0;
    ESI->NativeCount = 0;
+
+   if ( ( ESI->state & PAPI_MULTIPLEXING ) && ESI->multiplex.mpx_evset )
+		   papi_free( ESI->multiplex.mpx_evset );
+
+   if ( ( ESI->state & PAPI_CPU_ATTACH ) && ESI->CpuInfo )
+		   _papi_hwi_shutdown_cpu( ESI->CpuInfo );
 
    if ( ESI->ctl_state )
       papi_free( ESI->ctl_state );

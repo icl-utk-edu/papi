@@ -54,6 +54,9 @@ typedef struct IOUNIT_reg_alloc
 typedef struct IOUNIT_control_state
 {
 	int EventGroup;
+	int overflow;				// overflow enable
+	int overflow_threshold;
+	int overflow_EventIndex;		
 	long long counts[IOUNIT_MAX_COUNTERS];
 } IOUNIT_control_state_t;
 

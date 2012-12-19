@@ -27,6 +27,22 @@
 
 #include "papi_test.h"
 
+static void
+print_help( char **argv )
+{
+	printf( "Usage: %s [options] [EVENTNAMEs]\n", argv[0] );
+	printf( "Options:\n\n" );
+	printf( "General command options:\n" );
+	printf( "\t-u          Display output values as unsigned integers\n" );
+	printf( "\t-x          Display output values as hexadecimal\n" );
+	printf( "\t-h          Print this help message\n" );
+	printf( "\tEVENTNAMEs  Specify one or more preset or native events\n" );
+	printf( "\n" );
+	printf( "This utility performs work while measuring the specified events.\n" );
+	printf( "It can be useful for sanity checks on given events and sets of events.\n" );
+}
+
+
 int
 main( int argc, char **argv )
 {
@@ -34,8 +50,11 @@ main( int argc, char **argv )
 	int num_events;
 	long long *values;
 	char *success;
+	PAPI_event_info_t info;
 	int EventSet = PAPI_NULL;
-	int i, j, event;
+	int i, j, data_type, event;
+	int u_format = 0;
+	int hex_format = 0;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
@@ -66,17 +85,24 @@ main( int argc, char **argv )
 		test_fail_exit( __FILE__, __LINE__, "malloc", PAPI_ESYS );
 
 	for ( ; i < argc; i++ ) {
-		if ( ( retval =
-			   PAPI_event_name_to_code( argv[i], &event ) ) != PAPI_OK )
-			test_fail_exit( __FILE__, __LINE__, "PAPI_event_name_to_code", retval );
-
-		if ( ( retval = PAPI_add_event( EventSet, event ) ) != PAPI_OK ) {
-			printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
-				PAPI_strerror(retval));
-			success[i] = 0;
+		if ( strstr( argv[i], "-h" ) ) {
+			print_help( argv );
+			exit( 1 );
+		} else if ( strstr( argv[i], "-u" ) ) {
+			u_format = 1;
+			num_events--;
+		} else if ( strstr( argv[i], "-x" ) ) {
+			hex_format = 1;
+			num_events--;
 		} else {
-			success[i] = 1;
-			printf( "Successfully added: %s\n", argv[i] );
+			if ( ( retval = PAPI_add_named_event( EventSet, argv[i] ) ) != PAPI_OK ) {
+				printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
+					PAPI_strerror(retval));
+				success[i] = 0;
+			} else {
+				success[i] = 1;
+				printf( "Successfully added: %s\n", argv[i] );
+			}
 		}
 	}
 	printf( "\n" );
@@ -94,9 +120,37 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	for ( i = 1, j = 0; i < argc; i++ ) {
+	for ( i = 1, j = 0; i <= num_events; i++ ) {
 		if ( success[i] ) {
-			printf( "%s : \t%lld\n", argv[i], values[j++] );
+			if (! (u_format || hex_format) ) {
+				retval = PAPI_event_name_to_code( argv[i], &event );
+				if (retval == PAPI_OK) {
+					retval = PAPI_get_event_info(event, &info);
+					if (retval == PAPI_OK) data_type = info.data_type;
+					else data_type = PAPI_DATATYPE_INT64;
+				}
+				switch (data_type) {
+				  case PAPI_DATATYPE_UINT64:
+					printf( "%s : \t%llu(u)", argv[i], (unsigned long long)values[j++] );
+					break;
+				  case PAPI_DATATYPE_FP64:
+					printf( "%s : \t%0.3f", argv[i], *((double *)(&values[j])) );
+					j++;
+					break;
+				  case PAPI_DATATYPE_BIT64:
+					printf( "%s : \t0x%llX", argv[i], values[j++] );
+					break;
+				  case PAPI_DATATYPE_INT64:
+				  default:
+					printf( "%s : \t%lld", argv[i], values[j++] );
+					break;
+				}
+				if (retval == PAPI_OK)  printf( " %s", info.units );
+				printf( "\n" );
+			}
+			if (u_format) printf( "%s : \t%llu(u)\n", argv[i], (unsigned long long)values[j++] );
+			if (u_format && hex_format) j--;
+			if (hex_format) printf( "%s : \t0x%llX\n", argv[i], values[j++] );
 		} else {
 			printf( "%s : \t---------\n", argv[i] );
 		}

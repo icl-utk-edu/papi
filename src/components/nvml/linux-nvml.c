@@ -453,8 +453,8 @@ detectDevices( )
 							ret = nvmlDeviceGetHandleByIndex(j, &devices[i] );
 							if ( NVML_SUCCESS != ret ) {
 								SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", j, i);
-							}
 								return PAPI_ESYS;
+							}
 							break;
 					}
 			}	
@@ -822,6 +822,7 @@ _papi_nvml_init_component( int cidx )
 {
 		nvmlReturn_t ret;
 		cudaError_t cuerr;
+		int papi_errorcode;
 
 		int cuda_count = 0;
 		unsigned int nvml_count = 0;

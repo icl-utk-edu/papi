@@ -39,6 +39,10 @@ ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
 SRCS += validate_arm.c
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
+SRCS += validate_power.c
+endif
+
 CFLAGS+= -I. -D_GNU_SOURCE
 LIBS += -lm
 

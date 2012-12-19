@@ -78,6 +78,8 @@ static struct bgq_generic_events_t *GenericEvent;
 extern int _bgq_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type );
 extern int _bgq_get_dmem_info( PAPI_dmem_info_t * pDmemInfo );
 
+/* prototypes */
+void user_signal_handler( int hEvtSet, uint64_t address, uint64_t ovfVector, const ucontext_t *pContext );
 
 /*******************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT **********
@@ -185,6 +187,10 @@ _bgq_init_control_state( hwd_control_state_t * ptr )
 	
 	// initialize multiplexing flag to OFF (0)
 	ptr->muxOn = 0;
+	// initialize overflow flag to OFF (0)
+	ptr->overflow = 0;
+	ptr->overflow_threshold = 0;
+	ptr->overflow_EventIndex = 0;
 	// initialized BGPM eventGroup flag to NOT applied yet (0)
 	ptr->bgpm_eventset_applied = 0;
 	
@@ -344,6 +350,10 @@ _bgq_cleanup_eventset( hwd_control_state_t * ctrl )
 	
 	// set multiplexing flag to OFF (0)
 	ctrl->muxOn = 0;
+	// set overflow flag to OFF (0)
+	ctrl->overflow = 0;
+	ctrl->overflow_threshold = 0;
+	ctrl->overflow_EventIndex = 0;
 	// set BGPM eventGroup flag back to NOT applied yet (0)
 	ctrl->bgpm_eventset_applied = 0;
 
@@ -374,7 +384,8 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 	_common_deleteRecreate( &ptr->EventGroup );
 	
 #ifdef DEBUG_BGQ
-    printf( _AT_ " _bgq_update_control_state: EventGroup=%d, muxOn = %d\n", ptr->EventGroup, ptr->muxOn );
+    printf( _AT_ " _bgq_update_control_state: EventGroup=%d, muxOn = %d, overflow = %d\n",
+		   ptr->EventGroup, ptr->muxOn, ptr->overflow );
 #endif
 	
 	// add the events to the eventset
@@ -450,9 +461,19 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 	// if muxOn and EventGroup is not empty -- which is required by BGPM before 
 	// we can call SetMultiplex() -- then drain the events from the 
 	// BGPM EventGroup, turn on multiplex flag, and rebuild BGPM EventGroup.
-	if ( 1 == ptr->muxOn ) 
+	if ( 1 == ptr->muxOn ) {
 		retval = _bgq_multiplex( ptr );
-	
+	}
+		
+	// since update_control_state trashes overflow settings, this puts things
+	// back into balance for BGPM 
+	if ( 1 == ptr->overflow ) {
+		_common_set_overflow_BGPM( ptr->EventGroup, 
+								   ptr->overflow_EventIndex, 
+								   ptr->overflow_threshold,
+								   user_signal_handler );
+	}
+		
 	return ( PAPI_OK );
 }
 
@@ -738,7 +759,6 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	hwd_control_state_t * this_state = ( hwd_control_state_t * ) ESI->ctl_state;
 	int retval;
 	int evt_idx;
-	uint64_t threshold_for_bgpm;
 	
 	/*
 	 * In case an BGPM eventGroup HAS BEEN applied or attached before
@@ -760,9 +780,6 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		this_state->bgpm_eventset_applied = 0;
 	}
 	
-	/* convert threadhold value assigned by PAPI user to value that is
-	 * programmed into the counter. This value is required by Bgpm_SetOverflow() */ 
-	threshold_for_bgpm = BGPM_PERIOD2THRES( threshold );
 	
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 	//evt_id = ( ESI->NativeInfoArray[EventIndex].ni_event & PAPI_NATIVE_AND_MASK ) + 1;
@@ -772,6 +789,7 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	printf( "Hardware counter %d (vs %d) used in overflow, threshold %d\n",
 		    evt_idx, EventIndex, threshold );
 #endif
+	
 	/* If this counter isn't set to overflow, it's an error */
 	if ( threshold == 0 ) {
 		/* Remove the signal handler */
@@ -780,6 +798,10 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 			return ( retval );
 	}
 	else {
+		this_state->overflow = 1;
+		this_state->overflow_threshold = threshold;
+		this_state->overflow_EventIndex = evt_idx;
+	
 #ifdef DEBUG_BGQ
 		printf( "_bgq_set_overflow: Enable the signal handler\n" );
 #endif		
@@ -789,21 +811,12 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 										 _bgq_vectors.cmp_info.CmpIdx );
 		if ( retval != PAPI_OK )
 			return ( retval );
-		
-		retval = Bgpm_SetOverflow( this_state->EventGroup, 
-								   evt_idx,
-								   threshold_for_bgpm );
 
-		CHECK_BGPM_ERROR( retval, "Bgpm_SetOverflow" );
 		
-        retval = Bgpm_SetEventUser1( this_state->EventGroup, 
-									 evt_idx,
-									 1024 );
-		CHECK_BGPM_ERROR( retval, "Bgpm_SetEventUser1" );
-
-		/* user signal handler for overflow case */
-		retval = Bgpm_SetOverflowHandler( this_state->EventGroup, user_signal_handler );
-		CHECK_BGPM_ERROR( retval, "Bgpm_SetOverflowHandler" );
+		_common_set_overflow_BGPM( this_state->EventGroup, 
+								   this_state->overflow_EventIndex, 
+								   this_state->overflow_threshold,
+								   user_signal_handler );
 	}
 
 	return ( PAPI_OK );

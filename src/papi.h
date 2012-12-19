@@ -914,17 +914,18 @@ typedef char* PAPI_user_defined_events_file_t;
 
 /** Enum values for event_info location field */
 enum {
-   PAPI_LOCATION_CORE = 0,		/**< Measures local to core      */
-   PAPI_LOCATION_CPU,                   /**< Measures local to CPU (HT?) */
-   PAPI_LOCATION_PACKAGE,               /**< Measures local to package   */
-   PAPI_LOCATION_UNCORE,                /**< Measures uncore             */
+   PAPI_LOCATION_CORE = 0,			/**< Measures local to core      */
+   PAPI_LOCATION_CPU,				/**< Measures local to CPU (HT?) */
+   PAPI_LOCATION_PACKAGE,			/**< Measures local to package   */
+   PAPI_LOCATION_UNCORE,			/**< Measures uncore             */
 };
 
 /** Enum values for event_info data_type field */
 enum {
-   PAPI_DATATYPE_UINT64 = 0,		/**< Data is a unsigned 64-bit int */
-   PAPI_DATATYPE_INT64,		        /**< Data is a signed 64-bit int   */
-   PAPI_DATATYPE_FP64,		        /**< Data is 64-bit floating point */
+   PAPI_DATATYPE_INT64 = 0,			/**< Default: Data is a signed 64-bit int   */
+   PAPI_DATATYPE_UINT64,			/**< Data is a unsigned 64-bit int */
+   PAPI_DATATYPE_FP64,				/**< Data is 64-bit floating point */
+   PAPI_DATATYPE_BIT64,				/**< Data is 64-bit binary */
 };
 
 /** Enum values for event_info value_type field */
@@ -936,9 +937,9 @@ enum {
 /** Enum values for event_info timescope field */
 enum {
    PAPI_TIMESCOPE_SINCE_START = 0,	/**< Data is cumulative from start */
-   PAPI_TIMESCOPE_SINCE_LAST,	        /**< Data is from last read */
-   PAPI_TIMESCOPE_UNTIL_NEXT,	        /**< Data is until next read */
-   PAPI_TIMESCOPE_POINT,	        /**< Data is an instantaneous value */
+   PAPI_TIMESCOPE_SINCE_LAST,		/**< Data is from last read */
+   PAPI_TIMESCOPE_UNTIL_NEXT,		/**< Data is until next read */
+   PAPI_TIMESCOPE_POINT,			/**< Data is an instantaneous value */
 };
 
 /** Enum values for event_info update_type field */
@@ -946,7 +947,7 @@ enum {
    PAPI_UPDATETYPE_ARBITRARY = 0,	/**< Data is cumulative from start */
    PAPI_UPDATETYPE_PUSH,	        /**< Data is pushed */
    PAPI_UPDATETYPE_PULL,	        /**< Data is pulled */
-   PAPI_UPDATETYPE_FIXEDFREQ,	        /**< Data is read periodically */
+   PAPI_UPDATETYPE_FIXEDFREQ,	    /**< Data is read periodically */
 };
 
 
@@ -1086,6 +1087,7 @@ enum {
    int   PAPI_unregister_thread(void); /**< inform PAPI that a previously registered thread is disappearing */
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
    int   PAPI_get_event_component(int EventCode);  /**< return which component an EventCode belongs to */
+   int   PAPI_get_eventset_component(int EventSet);  /**< return which component an EventSet is assigned to */
    int   PAPI_get_component_index(char *name); /**> Return component index for component with matching name */
    int   PAPI_disable_component(int cidx); /**< Disables a component before init */
    int	 PAPI_disable_component_by_name( char *name ); /**< Disable, before library init, a component by name. */

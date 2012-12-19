@@ -58,6 +58,9 @@ typedef struct L2UNIT_control_state
 	int EventGroup_local[512];
 	int count;
 	long long counters[L2UNIT_MAX_COUNTERS];
+	int overflow;				// overflow enable
+	int overflow_threshold;
+	int overflow_EventIndex;	
 	int bgpm_eventset_applied;	// BGPM eventGroup applied yes or no flag
 } L2UNIT_control_state_t;
 
