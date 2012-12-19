@@ -109,7 +109,10 @@ typedef enum {
   SOCK_WRITE_ERR,
   SOCK_WRITE_SHORT,
   SOCK_WRITE_WOULD_BLOCK,
-  SOCK_WRITE_USEC
+  SOCK_WRITE_USEC,
+  SEEK_CALLS,
+  SEEK_ABS_STRIDE_SIZE,
+  SEEK_USEC
 } _appio_stats_t ;
 
 static const struct appio_counters {
@@ -157,7 +160,10 @@ static const struct appio_counters {
     { "SOCK_WRITE_ERR",  "Number of write calls to socket that resulted in an error"},
     { "SOCK_WRITE_SHORT","Number of write calls to socket that wrote less bytes than requested"},
     { "SOCK_WRITE_WOULD_BLOCK","Number of write calls to socket that would have blocked"},
-    { "SOCK_WRITE_USEC", "Real microseconds spent in write(s) to socket(s)"}
+    { "SOCK_WRITE_USEC", "Real microseconds spent in write(s) to socket(s)"},
+    { "SEEK_CALLS",      "Number of seek calls"},
+    { "SEEK_ABS_STRIDE_SIZE", "Average absolute stride size of seeks"},
+    { "SEEK_USEC",       "Real microseconds spent in seek calls"}
 };
 
 
@@ -197,6 +203,20 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
   retval = __select(nfds,readfds,writefds,exceptfds,timeout);
   long long duration = PAPI_get_real_usec() - start_ts;
   _appio_register_current[SELECT_USEC] += duration;
+  return retval;
+}
+
+off_t __lseek(int fd, off_t offset, int whence);
+off_t lseek(int fd, off_t offset, int whence) {
+  off_t retval;
+  SUBDBG("appio: intercepted lseek(%d,%ld,%d)\n", fd, offset, whence);
+  long long start_ts = PAPI_get_real_usec();
+  retval = __lseek(fd, offset, whence);
+  long long duration = PAPI_get_real_usec() - start_ts;
+  int n = _appio_register_current[SEEK_CALLS]++;
+  _appio_register_current[SEEK_USEC] += duration;
+  if (offset < 0) offset = -offset; // get abs offset
+  _appio_register_current[SEEK_ABS_STRIDE_SIZE]= (n * _appio_register_current[SEEK_ABS_STRIDE_SIZE] + offset)/(n+1); // mean absolute stride size
   return retval;
 }
 

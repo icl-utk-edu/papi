@@ -27,6 +27,8 @@ DESCRIPTION
       SOCK_READ_BYTES SOCK_READ_CALLS SOCK_READ_ERR SOCK_READ_SHORT SOCK_READ_WOULD_BLOCK SOCK_READ_USEC 
       SOCK_WRITE_BYTES SOCK_WRITE_CALLS SOCK_WRITE_ERR SOCK_WRITE_SHORT SOCK_WRITE_WOULD_BLOCK SOCK_WRITE_USEC
 
+      SEEK_CALLS SEEK_ABS_BLOCK_SIZE SEEK_USEC
+
     The component works by intercepting I/O system calls on Linux. At present,
     the code uses a features available in libc on Linux, and is unlikely to
     work on other platforms without modifications. The code works for static 
