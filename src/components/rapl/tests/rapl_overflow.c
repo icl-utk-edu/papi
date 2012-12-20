@@ -66,6 +66,7 @@ main( int argc, char **argv )
         int PAPI_event;
 	int cid,numcmp,rapl_cid;
 	const PAPI_component_info_t *cmpinfo = NULL;
+	int i;
 
 	/* Set TESTS_QUIET variable */
 	tests_quiet( argc, argv );      
@@ -125,16 +126,19 @@ main( int argc, char **argv )
 	   test_fail(__FILE__, __LINE__,"PAPI_create_eventset",retval);
 	}
 
-        retval=PAPI_add_named_event(EventSet2,"rapl:::PACKAGE_ENERGY:PACKAGE0");
-	if ( retval != PAPI_OK ) {
+	/* Add an event for each packages 0-n  */
+	i = 0;
+	do {
+		char buffer[80];
+		sprintf(&(buffer[0]), "rapl:::PACKAGE_ENERGY:PACKAGE%d", i);
+		retval=PAPI_add_named_event(EventSet2,buffer);
+		++i;
+	} while (retval);
+
+	if ( i>1 && retval != PAPI_OK ) {
 	   test_fail(__FILE__, __LINE__,"PAPI_add_event",retval);
 	}
 
-        retval=PAPI_add_named_event(EventSet2,"rapl:::PACKAGE_ENERGY:PACKAGE1");
-	if ( retval != PAPI_OK ) {
-	   test_fail(__FILE__, __LINE__,"PAPI_add_event",retval);
-	}
-	
 	PAPI_event=PAPI_TOT_CYC;
 
 	/* arbitrary */
