@@ -47,7 +47,6 @@ static int first_time = 1;
 static int skip = 0;
 static FILE* fp;
 
-/** @htmlonly */
 typedef struct {
   int first_time;
   int force_sw;

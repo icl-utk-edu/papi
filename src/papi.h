@@ -84,8 +84,8 @@
  * @see The PAPI Website http://icl.cs.utk.edu/papi
  */
 
-/** @page CDI PAPI Component Development Interface
-  * @htmlonly
+/** \htmlonly
+  * @page CDI PAPI Component Development Interface
   * @par \em Introduction
   *		PAPI-C consists of a Framework and between 1 and 16 Components. 
   *		The Framework is platform independent and exposes the PAPI API to end users. 
@@ -238,7 +238,8 @@ extern "C"
 #include <limits.h>
 #include "papiStdEventDefs.h"
 
-/** @defgroup ret_codes Return Codes
+/** \internal 
+@defgroup ret_codes Return Codes
 Return Codes
 All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
@@ -1012,7 +1013,8 @@ enum {
 
 
 
-/** @defgroup low_api The Low Level API 
+/** \internal
+  * @defgroup low_api The Low Level API 
   @{ */
    int   PAPI_accum(int EventSet, long long * values); /**< accumulate and reset hardware events from an event set */
    int   PAPI_add_event(int EventSet, int Event); /**< add single PAPI preset or native hardware event to an event set */
@@ -1089,15 +1091,15 @@ enum {
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
    int   PAPI_get_event_component(int EventCode);  /**< return which component an EventCode belongs to */
    int   PAPI_get_eventset_component(int EventSet);  /**< return which component an EventSet is assigned to */
-   int   PAPI_get_component_index(char *name); /**> Return component index for component with matching name */
+   int   PAPI_get_component_index(char *name); /**< Return component index for component with matching name */
    int   PAPI_disable_component(int cidx); /**< Disables a component before init */
    int	 PAPI_disable_component_by_name( char *name ); /**< Disable, before library init, a component by name. */
 
 
    /** @} */
 
-/**@defgroup high_api  The High Level API 
-@defgroup high_api  The High Level API 
+/** \internal
+  @defgroup high_api  The High Level API 
 
    The simple interface implemented by the following eight routines
    allows the user to access and count specific hardware events from

@@ -29,6 +29,12 @@ FILE_PATTERNS          = *.c
 
 RECURSIVE              = YES
 
+# If the EXTRACT_LOCAL_CLASSES tag is set to YES classes (and structs)
+# defined locally in source files will be included in the documentation.
+# If set to NO only classes defined in header files are included.
+
+EXTRACT_LOCAL_CLASSES  = NO
+
 #---------------------------------------------------------------------------
 # configuration options related to the man page output
 #---------------------------------------------------------------------------

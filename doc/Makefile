@@ -18,6 +18,8 @@ clean:
 	rm -rf man html doxyerror
 
 install: man
+	-rm -f man/man3/HighLevelInfo.3
+	-rm -f man/man3/papi_data_structures.3
 	-rm -r ../man/man1/*.1 ../man/man3/*.3
 	-cp -R man/man1/*.1 ../man/man1
 	-cp -R man/man3/*.3 ../man/man3

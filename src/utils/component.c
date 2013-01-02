@@ -26,14 +26,13 @@
 
 #define EVT_LINE 80
 
-/** @htmlonly */
 typedef struct command_flags
 {
 	int help;
 	int details;
 	int named;
 	char *name;
-} command_flags_t;
+} command_flags_t; 
 
 static void
 print_help( char **argv )

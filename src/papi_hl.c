@@ -32,7 +32,7 @@
 #define PAPI_HL_READ		1
 #define PAPI_HL_ACCUM		2
 
-/** @internal 
+/** \internal 
  * This is stored per thread
  */
 typedef struct _HighLevelInfo
