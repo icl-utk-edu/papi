@@ -5,7 +5,6 @@
 #define _PAPI_VECTOR_H
 
 /** Sizes of structure private to each component 
-  * @htmlonly
   */
 typedef struct cmp_struct_sizes {
     int		context;
@@ -15,8 +14,7 @@ typedef struct cmp_struct_sizes {
 } cmp_struct_sizes_t;
 
 /** Vector Table Stuff 
- *	@internal 
- *  @htmlonly */
+ *	@internal */
 typedef struct papi_vectors {
 /** Component specific data structure @see papi.h */
     PAPI_component_info_t   cmp_info;
@@ -59,7 +57,6 @@ typedef struct papi_vectors {
 
 extern papi_vector_t *_papi_hwd[];
 
-/** @htmlonly */
 typedef struct papi_os_vectors {
   long long   (*get_real_cycles)      (void);                   /**< */
   long long   (*get_virt_cycles)      (void);                   /**< */

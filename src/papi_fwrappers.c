@@ -42,9 +42,7 @@
 #endif
 /* The Low Level Wrappers */
 
-/** @defgroup PAPIF PAPI Fortran API 
- *  @htmlonly
- *	*/
+/** @defgroup PAPIF PAPI Fortran API */
 
 /* helper routine to convert Fortran strings to C strings */
 #if defined(_FORTRAN_STRLEN_AT_END)

@@ -200,6 +200,7 @@
   *		Issues must then be resolved relating to which cpu time-base is used, 
   *		how are interrupts handled, etc. 
   *	</ul>
+  * \endhtmlonly
   */
 
 /* Definition of PAPI_VERSION format.  Note that each of the four 
@@ -1096,6 +1097,7 @@ enum {
    /** @} */
 
 /**@defgroup high_api  The High Level API 
+@defgroup high_api  The High Level API 
 
    The simple interface implemented by the following eight routines
    allows the user to access and count specific hardware events from

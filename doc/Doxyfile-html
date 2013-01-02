@@ -11,7 +11,6 @@
 # Values that contain spaces should be placed between quotes (" ")
 @INCLUDE				= Doxyfile-common
 
-
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
