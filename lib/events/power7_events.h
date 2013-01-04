@@ -19,6 +19,8 @@
 * Note: This code was automatically generated and should not be modified by
 * hand.
 *
+* Documentation on the PMU events can be found at:
+*  http://www.power.org/documentation/comprehensive-pmu-event-reference-power7
 */
 #define POWER7_PME_PM_IC_DEMAND_L2_BR_ALL 0
 #define POWER7_PME_PM_GCT_UTIL_7_TO_10_SLOTS 1
