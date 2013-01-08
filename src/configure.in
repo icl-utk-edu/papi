@@ -156,7 +156,22 @@ else
 	fi
 fi
 AC_SUBST(LDL)
-	    
+        
+AC_MSG_CHECKING([for if MIC should be used])
+		AC_ARG_WITH(mic,
+						[ --with-mic To compile for Intel MIC ],
+						[MIC=yes
+						tls=__thread
+						virtualtimer=cputime_id
+						perf_events=yes
+						walltimer=clock_realtime_hr
+						ffsll=no
+						arch=k1om],
+						[MIC=no])
+AC_MSG_RESULT($MIC)
+AC_SUBST(MIC)
+ 
+    
 if test "$OS" = "CLE"; then
   virtualtimer=times
   tls=__thread
@@ -945,7 +960,11 @@ AC_ARG_WITH(pfm_libdir,
 ##################################################
 #          Linux perf_event/perf_counter
 ##################################################
-perf_events=no
+
+if test "x$mic" = "xno"; then
+       perf_events=no
+fi
+
 force_perf_events=no
 pe_incdir="$pfm_incdir/perfmon"
 

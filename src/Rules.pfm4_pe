@@ -27,16 +27,20 @@ SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
+ifeq (yes,$(MIC))
+	FORCE_PFM_ARCH="CONFIG_PFMLIB_ARCH_X86=y"
+endif
+
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
 ifeq ("$(CC_COMMON_NAME)","icc")
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" DBG="-g -Wall -Werror" lib
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" DBG="-g -Wall -Werror" $(FORCE_PFM_ARCH) lib
 else
 ifeq (1,$(HAVE_NO_OVERRIDE_INIT))
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS) -Wno-override-init" lib
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS) -Wno-override-init" $(FORCE_PFM_ARCH) lib
 else 
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" lib
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" $(FORCE_PFM_ARCH) lib
 endif
 endif
 else
