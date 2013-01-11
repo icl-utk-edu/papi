@@ -1,4 +1,4 @@
-.TH "PAPI_set_debug" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_debug" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Set the current debug level for error output from PAPI.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_set_debug( int level )\fP;
+ int PAPI_set_debug( int level );
 .RE
 .PP
 \fBParameters:\fP
@@ -68,7 +68,7 @@ The PAPI error handler prints out messages in the following form:
 .PP
 \fBNote:\fP
 .RS 4
-This is the ONLY function that may be called BEFORE \fBPAPI_library_init()\fP. 
+This is the ONLY function that may be called BEFORE PAPI_library_init(). 
 .br
  
 .RE

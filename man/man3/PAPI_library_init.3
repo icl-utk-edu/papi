@@ -1,4 +1,4 @@
-.TH "PAPI_library_init" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_library_init" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -27,7 +27,7 @@ initialize the PAPI library.
 \fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable.
 .RE
 .PP
-\fBPAPI_library_init()\fP initializes the PAPI library. \fBPAPI_is_initialized()\fP check for initialization. It must be called before any low level PAPI functions can be used. If your application is making use of threads \fBPAPI_thread_init\fP must also be called prior to making any calls to the library other than \fBPAPI_library_init()\fP . 
+PAPI_library_init() initializes the PAPI library. PAPI_is_initialized() check for initialization. It must be called before any low level PAPI functions can be used. If your application is making use of threads \fBPAPI_thread_init\fP must also be called prior to making any calls to the library other than PAPI_library_init() . 
 .PP
 \fBExamples:\fP
 .RS 4

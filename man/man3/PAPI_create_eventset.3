@@ -1,4 +1,4 @@
-.TH "PAPI_create_eventset" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_create_eventset" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Create a new empty PAPI EventSet.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- \fBPAPI_create_eventset( int * EventSet )\fP;
+ PAPI_create_eventset( int * EventSet );
 .RE
 .PP
 \fBPAPI_create_eventset\fP creates a new EventSet pointed to by EventSet, which must be initialized to PAPI_NULL before calling this routine. The user may then add hardware events to the event set by calling \fBPAPI_add_event\fP or similar routines.

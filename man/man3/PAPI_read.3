@@ -1,4 +1,4 @@
-.TH "PAPI_read" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_read" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -18,17 +18,17 @@ Read hardware counters from an event set.
  int PAPI_read(int  EventSet, long_long * values );
 .RE
 .PP
-\fBPAPI_read()\fP copies the counters of the indicated event set into the provided array.
+PAPI_read() copies the counters of the indicated event set into the provided array.
 .PP
 The counters continue counting after the read.
 .PP
-Note the differences between \fBPAPI_read()\fP and \fBPAPI_accum()\fP, specifically that \fBPAPI_accum()\fP resets the values array to zero.
+Note the differences between PAPI_read() and PAPI_accum(), specifically that PAPI_accum() resets the values array to zero.
 .PP
-\fBPAPI_read()\fP assumes an initialized PAPI library and a properly added event set.
+PAPI_read() assumes an initialized PAPI library and a properly added event set.
 .PP
 \fBParameters:\fP
 .RS 4
-\fIEventSet\fP -- an integer handle for a PAPI Event Set as created by \fBPAPI_create_eventset()\fP 
+\fIEventSet\fP -- an integer handle for a PAPI Event Set as created by PAPI_create_eventset() 
 .br
 \fI*values\fP -- an array to hold the counter values of the counting events
 .RE

@@ -1,4 +1,4 @@
-.TH "PAPI_disable_component" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_disable_component" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -42,10 +42,10 @@ disables the specified component
 
 .fi
 .PP
- \fBPAPI_disable_component()\fP allows the user to disable components before \fBPAPI_library_init()\fP time. This is useful if the user knows they do not wish to use events from that component and want to reduce the PAPI library overhead.
+ PAPI_disable_component() allows the user to disable components before PAPI_library_init() time. This is useful if the user knows they do not wish to use events from that component and want to reduce the PAPI library overhead.
 .RE
 .PP
-\fBPAPI_disable_component()\fP must be called before \fBPAPI_library_init()\fP.
+PAPI_disable_component() must be called before PAPI_library_init().
 .PP
 \fBSee also:\fP
 .RS 4

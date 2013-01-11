@@ -1,4 +1,4 @@
-.TH "PAPI_list_events" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_list_events" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -26,7 +26,7 @@ List the events in an event set.
 .RS 4
 \fIPAPI_EINVAL\fP 
 .br
-\fIPAPI_ENOEVST\fP * PAPIF_list_events(C_INT EventSet, C_INT(*) Events, C_INT number, C_INT check ) \fBPAPI_list_events()\fP decomposes an event set into the hardware events it contains. This call assumes an initialized PAPI library and a successfully added event set. 
+\fIPAPI_ENOEVST\fP * PAPIF_list_events(C_INT EventSet, C_INT(*) Events, C_INT number, C_INT check ) PAPI_list_events() decomposes an event set into the hardware events it contains. This call assumes an initialized PAPI library and a successfully added event set. 
 .RE
 .PP
 \fBExamples:\fP

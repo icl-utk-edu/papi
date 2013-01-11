@@ -1,4 +1,4 @@
-.TH "PAPI_thread_init" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_thread_init" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,7 +16,7 @@ Initialize thread support in the PAPI library.
 \fI*id_fn\fP Pointer to a function that returns current thread ID.
 .RE
 .PP
-\fBPAPI_thread_init\fP initializes thread support in the PAPI library. Applications that make no use of threads do not need to call this routine. This function MUST return a UNIQUE thread ID for every new thread/LWP created. The OpenMP call omp_get_thread_num() violates this rule, as the underlying LWPs may have been killed off by the run-time system or by a call to omp_set_num_threads() . In that case, it may still possible to use omp_get_thread_num() in conjunction with \fBPAPI_unregister_thread()\fP when the OpenMP thread has finished. However it is much better to use the underlying thread subsystem's call, which is pthread_self() on Linux platforms.
+\fBPAPI_thread_init\fP initializes thread support in the PAPI library. Applications that make no use of threads do not need to call this routine. This function MUST return a UNIQUE thread ID for every new thread/LWP created. The OpenMP call omp_get_thread_num() violates this rule, as the underlying LWPs may have been killed off by the run-time system or by a call to omp_set_num_threads() . In that case, it may still possible to use omp_get_thread_num() in conjunction with PAPI_unregister_thread() when the OpenMP thread has finished. However it is much better to use the underlying thread subsystem's call, which is pthread_self() on Linux platforms.
 .PP
 .PP
 .nf

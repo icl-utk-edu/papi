@@ -1,4 +1,4 @@
-.TH "PAPI_accum_counters" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_accum_counters" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Accumulate and reset counters.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_accum_counters( long long *values, int array_len )\fP;
+ int PAPI_accum_counters( long long *values, int array_len );
 .RE
 .PP
 \fBParameters:\fP
@@ -42,7 +42,7 @@ The counters are reset and left running after the call.
 \fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable.
 .RE
 .PP
-\fBPAPI_accum_counters()\fP adds the event counters into the array *values.
+PAPI_accum_counters() adds the event counters into the array *values.
 .PP
 .PP
 .nf
@@ -64,7 +64,7 @@ if ( PAPI_accum_counters(values, num_hwcntrs ) != PAPI_OK )
 .PP
 \fBSee also:\fP
 .RS 4
-\fBPAPI_set_opt()\fP \fBPAPI_start_counters()\fP 
+PAPI_set_opt() PAPI_start_counters() 
 .RE
 .PP
 

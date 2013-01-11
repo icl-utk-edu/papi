@@ -1,4 +1,4 @@
-.TH "PAPI_list_threads" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_list_threads" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,7 +11,7 @@ List the registered thread ids.
 .PP
 .SH "Detailed Description"
 .PP 
-\fBPAPI_list_threads()\fP returns to the caller a list of all thread IDs known to PAPI.
+PAPI_list_threads() returns to the caller a list of all thread IDs known to PAPI.
 .PP
 This call assumes an initialized PAPI library.
 .PP
@@ -19,7 +19,7 @@ This call assumes an initialized PAPI library.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_list_threads(PAPI_thread_id_t *tids, int * number )\fP;
+ int PAPI_list_threads(PAPI_thread_id_t *tids, int * number );
 .RE
 .PP
 \fBParameters:\fP

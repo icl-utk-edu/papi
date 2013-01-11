@@ -4,10 +4,37 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 ===============================================================================
+PAPI 5.1.0 RELEASE NOTES                                            11 Jan 2013
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP510.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+New Platform:
+-------------
+	* Intel Xeon Phi ( Knight's Corner or KNC or MIC )
+
+Bug Fixes:
+----------
+	* Various build system fixes. 
+	* NVML component fix.
+	* Work around a sampling bug on Power Linux
+
+Enhancements:
+------------
+	* ARM Cortex A15 support.
+	* New API entry, PAPI_get_eventset_component
+	* Add options to papi_command_line to print in hex and unsigned formats
+
+New Components:
+---------------
+	* MIC Power component. 
+
+===============================================================================
 PAPI 5.0.1 RELEASE NOTES                                            20 Sep 2012
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
-ChangeLogP500.txt for keywords of interest or go directly to the PAPI git
+ChangeLogP501.txt for keywords of interest or go directly to the PAPI git
 repo.
 
 GENERAL NOTES
