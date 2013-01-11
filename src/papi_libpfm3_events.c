@@ -14,6 +14,7 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
+#include "perfmon/perfmon.h"
 #include "perfmon/pfmlib.h"
 
 #include "papi_libpfm_events.h"
