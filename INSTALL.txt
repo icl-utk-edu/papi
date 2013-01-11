@@ -242,6 +242,40 @@ Intel Pentium 4, AMD K7 (AMD Athlon) and AMD K8 (AMD Athlon64 / Opteron).
 FreeBSD 8 also adds support for Core/Core2/Core-i[357]/Atom processors.
 There is also a patch for FreeBSD 7/7.1 in http://wiki.freebsd.org/PmcTools
 
+Linux - Xeon Phi [MIC, KNC, Knight's Corner]
+*****************************************************************************
+Full PAPI support of the MIC card requires building a patched kernel and a
+cross-compilation toolchain from Intel.
+
+Patching Intel's Kernel for MIC
+-----------------------------------------------------------------------------
+* First download one of the KNC beta source trees from here
+	[http://software.intel.com/en-us/forums/topic/278102]
+* Make a directory called build and unpack gpl/package-full_src-k1om.tar.bz2
+	from the package you downloaded.
+* Untar gpl/package-cross-k1om.tar.bz2 into the same directory
+* Copy gpl/package-cross-k1om.tar.bz2 into the same directory
+* Go into the card/kernel directory and apply this patch: mic.patch11 (patch -p1
+< mic.patch11) [http://www.eece.maine.edu/~vweaver/projects/mic/mic.patch11]
+* Run intel-mic-gpl.sh build release. This takes a while, and uses a lot of disk
+	space!
+* Copy card/kernel/arch/x86/boot/bzImage to uos.img
+* Copy uos.img to /lib/firmware/mic/
+* Reboot the MIC card, and check the dmesg for "Perf" messages to verify the
+	setup.
+
+Building PAPI
+-----------------------------------------------------------------------------
+* Add build/usr/linux-k1om-4.7/bin or equivalent to your PATH so PAPI can find the
+	cross-build utils. (see above for instructions on acquiring the cross
+	compilation toolchain)
+* You will need to invoke configure with options:
+	> ./configure --with-mic --host=x86_64-k10m-linux
+
+	This sets up cross-compilation and sets options needed by PAPI.
+* Run make to build the library.
+
+
 Linux - Itanium II & Montecito
 *****************************************************************************
 PAPI on Itanium Linux links to the perfmon library. The library version and 
