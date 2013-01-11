@@ -1,4 +1,4 @@
-.TH "PAPI_set_opt" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_opt" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Set PAPI library or event set options.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_set_opt(  int option, PAPI_option_t * ptr )\fP;
+ int PAPI_set_opt(  int option, PAPI_option_t * ptr );
 .RE
 .PP
 \fBParameters:\fP
@@ -42,7 +42,7 @@ Set PAPI library or event set options.
 \fIPAPI_EINVAL_DOM\fP Invalid domain has been requested.
 .RE
 .PP
-\fBPAPI_set_opt()\fP changes the options of the PAPI library or a specific EventSet created by \fBPAPI_create_eventset\fP. Some options may require that the EventSet be bound to a component before they can execute successfully. This can be done either by adding an event or by explicitly calling \fBPAPI_assign_eventset_component\fP.
+PAPI_set_opt() changes the options of the PAPI library or a specific EventSet created by \fBPAPI_create_eventset\fP. Some options may require that the EventSet be bound to a component before they can execute successfully. This can be done either by adding an event or by explicitly calling \fBPAPI_assign_eventset_component\fP.
 .PP
 Ptr is a pointer to the \fBPAPI_option_t\fP structure, which is actually a union of different structures for different options. Not all options require or return information in these structures. Each requires different values to be set. Some options require a component index to be provided. These options are handled implicitly through the option structures.
 .PP

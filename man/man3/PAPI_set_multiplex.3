@@ -1,4 +1,4 @@
-.TH "PAPI_set_multiplex" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_multiplex" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -38,7 +38,7 @@ Convert a standard event set to a multiplexed event set.
 \fIPAPI_ENOMEM\fP -- Insufficient memory to complete the operation.
 .RE
 .PP
-\fBPAPI_set_multiplex\fP converts a standard PAPI event set created by a call to \fBPAPI_create_eventset\fP into an event set capable of handling multiplexed events. This must be done after calling \fBPAPI_multiplex_init\fP, and either \fBPAPI_add_event\fP or \fBPAPI_assign_eventset_component\fP, but prior to calling \fBPAPI_start()\fP.
+\fBPAPI_set_multiplex\fP converts a standard PAPI event set created by a call to \fBPAPI_create_eventset\fP into an event set capable of handling multiplexed events. This must be done after calling \fBPAPI_multiplex_init\fP, and either \fBPAPI_add_event\fP or \fBPAPI_assign_eventset_component\fP, but prior to calling PAPI_start().
 .PP
 Events can be added to an event set either before or after converting it into a multiplexed set, but the conversion must be done prior to using it as a multiplexed set.
 .PP

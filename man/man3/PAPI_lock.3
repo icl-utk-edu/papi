@@ -1,4 +1,4 @@
-.TH "PAPI_lock" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_lock" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,13 +11,13 @@ Lock one of two mutex variables defined in \fBpapi.h\fP.
 .PP
 .SH "Detailed Description"
 .PP 
-\fBPAPI_lock()\fP grabs access to one of the two PAPI mutex variables. This function is provided to the user to have a platform independent call to a (hopefully) efficiently implemented mutex.
+PAPI_lock() grabs access to one of the two PAPI mutex variables. This function is provided to the user to have a platform independent call to a (hopefully) efficiently implemented mutex.
 .PP
 \fBC Interface:\fP
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- void \fBPAPI_lock(int lock)\fP;
+ void PAPI_lock(int lock);
 .RE
 .PP
 \fBParameters:\fP

@@ -1,4 +1,4 @@
-.TH "PAPI_register_thread" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_register_thread" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -18,7 +18,7 @@ Notify PAPI that a thread has 'appeared'.
  int \fBPAPI_register_thread\fP (void);
 .RE
 .PP
-\fBPAPI_register_thread()\fP should be called when the user wants to force PAPI to initialize a thread that PAPI has not seen before.
+PAPI_register_thread() should be called when the user wants to force PAPI to initialize a thread that PAPI has not seen before.
 .PP
 Usually this is not necessary as PAPI implicitly detects the thread when an eventset is created or other thread local PAPI functions are called. However, it can be useful for debugging and performance enhancements in the run-time systems of performance tools.
 .PP

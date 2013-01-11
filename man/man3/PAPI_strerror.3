@@ -1,4 +1,4 @@
-.TH "PAPI_strerror" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_strerror" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Returns a string describing the PAPI error code.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- char * \fBPAPI_strerror( int errorCode )\fP;
+ char * PAPI_strerror( int errorCode );
 .RE
 .PP
 \fBParameters:\fP
@@ -27,10 +27,10 @@ Returns a string describing the PAPI error code.
 .RS 4
 \fI*error\fP -- a pointer to the error string. 
 .br
-\fINULL\fP -- the input error code to \fBPAPI_strerror()\fP is invalid.
+\fINULL\fP -- the input error code to PAPI_strerror() is invalid.
 .RE
 .PP
-\fBPAPI_strerror()\fP returns a pointer to the error message corresponding to the error code code. If the call fails the function returns the NULL pointer. This function is not implemented in Fortran.
+PAPI_strerror() returns a pointer to the error message corresponding to the error code code. If the call fails the function returns the NULL pointer. This function is not implemented in Fortran.
 .PP
 \fBExample:\fP
 .RS 4

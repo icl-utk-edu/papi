@@ -1,4 +1,4 @@
-.TH "PAPI_perror" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_perror" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Produces a string on standard error, describing the last library error.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- void \fBPAPI_perror( char *s )\fP;
+ void PAPI_perror( char *s );
 .RE
 .PP
 \fBParameters:\fP
@@ -23,7 +23,7 @@ Produces a string on standard error, describing the last library error.
 \fIs\fP -- Optional message to print before the string describing the last error message.
 .RE
 .PP
-The routine \fBPAPI_perror()\fP produces a message on the standard error output, describing the last error encountered during a call to PAPI. If s is not NULL, s is printed, followed by a colon and a space. Then the error message and a new-line are printed.
+The routine PAPI_perror() produces a message on the standard error output, describing the last error encountered during a call to PAPI. If s is not NULL, s is printed, followed by a colon and a space. Then the error message and a new-line are printed.
 .PP
 \fBExample:\fP
 .RS 4

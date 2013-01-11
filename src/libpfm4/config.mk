@@ -183,6 +183,8 @@ DBG?=-g -Wall -Werror -Wextra -Wno-unused-parameter
 
 ifeq ($(SYS),Darwin)
 # older gcc-4.2 does not like -Wextra and some of our initialization code
+# Xcode uses a gcc version which is too old for some static initializers
+CC=clang
 DBG?=-g -Wall -Werror
 LDCONFIG=true
 endif

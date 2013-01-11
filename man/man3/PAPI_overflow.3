@@ -1,4 +1,4 @@
-.TH "PAPI_overflow" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_overflow" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,7 +11,7 @@ Set up an event set to begin registering overflows.
 .PP
 .SH "Detailed Description"
 .PP 
-\fBPAPI_overflow()\fP marks a specific EventCode in an EventSet to generate an overflow signal after every threshold events are counted. More than one event in an event set can be used to trigger overflows. In such cases, the user must call this function once for each overflowing event. To turn off overflow on a specified event, call this function with a threshold value of 0.
+PAPI_overflow() marks a specific EventCode in an EventSet to generate an overflow signal after every threshold events are counted. More than one event in an event set can be used to trigger overflows. In such cases, the user must call this function once for each overflowing event. To turn off overflow on a specified event, call this function with a threshold value of 0.
 .PP
 Overflows can be implemented in either software or hardware, but the scope is the entire event set. PAPI defaults to hardware overflow if it is available. In the case of software overflow, a periodic timer interrupt causes PAPI to compare the event counts against the threshold values and call the overflow handler if one or more events have exceeded their threshold. In the case of hardware overflow, the counters are typically set to the negative of the threshold value and count up to 0. This zero-crossing triggers a hardware interrupt that calls the overflow handler. Because of this counter interrupt, the counter values for overflowing counters may be very small or even negative numbers, and cannot be relied upon as accurate. In such cases the overflow handler can approximate the counts by supplying the threshold value whenever an overflow occurs.
 .PP
@@ -25,7 +25,7 @@ _papi_overflow_handler() is a placeholder for a user-defined function to process
 .br
 
 .br
- (*PAPI_overflow_handler_t) \fB_papi_overflow_handler\fP (int EventSet, void *address, long_long overflow_vector, void *context );
+ (*PAPI_overflow_handler_t) _papi_overflow_handler (int EventSet, void *address, long_long overflow_vector, void *context );
 .RE
 .PP
 \fBFortran Interface:\fP
@@ -35,13 +35,13 @@ Not implemented
 .PP
 \fBParameters:\fP
 .RS 4
-\fIEventSet\fP -- an integer handle to a PAPI event set as created by \fBPAPI_create_eventset()\fP 
+\fIEventSet\fP -- an integer handle to a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
 \fIEventCode\fP -- the preset or native event code to be set for overflow detection. This event must have already been added to the EventSet. 
 .br
 \fIthreshold\fP -- the overflow threshold value for this EventCode. 
 .br
-\fIflags\fP -- bitmap that controls the overflow mode of operation. Set to \fBPAPI_OVERFLOW_FORCE_SW\fP to force software overflowing, even if hardware overflow support is available. If hardware overflow support is available on a given system, it will be the default mode of operation. There are situations where it is advantageous to use software overflow instead. Although software overflow is inherently less accurate, with more latency and processing overhead, it does allow for overflowing on derived events, and for the accurate recording of overflowing event counts. These two features are typically not available with hardware overflow. Only one type of overflow is allowed per event set, so setting one event to hardware overflow and another to forced software overflow will result in an error being returned. 
+\fIflags\fP -- bitmap that controls the overflow mode of operation. Set to PAPI_OVERFLOW_FORCE_SW to force software overflowing, even if hardware overflow support is available. If hardware overflow support is available on a given system, it will be the default mode of operation. There are situations where it is advantageous to use software overflow instead. Although software overflow is inherently less accurate, with more latency and processing overhead, it does allow for overflowing on derived events, and for the accurate recording of overflowing event counts. These two features are typically not available with hardware overflow. Only one type of overflow is allowed per event set, so setting one event to hardware overflow and another to forced software overflow will result in an error being returned. 
 .br
 \fIhandler\fP -- pointer to the user supplied handler function to call upon overflow 
 .br

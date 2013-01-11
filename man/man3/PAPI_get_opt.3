@@ -1,4 +1,4 @@
-.TH "PAPI_get_opt" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_opt" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Get PAPI library or event set options.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_get_opt(  int option, PAPI_option_t * ptr )\fP;
+ int PAPI_get_opt(  int option, PAPI_option_t * ptr );
 .RE
 .PP
 \fBParameters:\fP
@@ -38,9 +38,9 @@ Get PAPI library or event set options.
 \fIPAPI_ENOINIT\fP PAPI has not been initialized.
 .RE
 .PP
-\fBPAPI_get_opt()\fP queries the options of the PAPI library or a specific event set created by \fBPAPI_create_eventset\fP. Some options may require that the eventset be bound to a component before they can execute successfully. This can be done either by adding an event or by explicitly calling \fBPAPI_assign_eventset_component\fP.
+PAPI_get_opt() queries the options of the PAPI library or a specific event set created by \fBPAPI_create_eventset\fP. Some options may require that the eventset be bound to a component before they can execute successfully. This can be done either by adding an event or by explicitly calling \fBPAPI_assign_eventset_component\fP.
 .PP
-Ptr is a pointer to the \fBPAPI_option_t\fP structure, which is actually a union of different structures for different options. Not all options require or return information in these structures. Each returns different values in the structure. Some options require a component index to be provided. These options are handled explicitly by the \fBPAPI_get_cmp_opt()\fP call.
+Ptr is a pointer to the \fBPAPI_option_t\fP structure, which is actually a union of different structures for different options. Not all options require or return information in these structures. Each returns different values in the structure. Some options require a component index to be provided. These options are handled explicitly by the PAPI_get_cmp_opt() call.
 .PP
 \fBNote:\fP
 .RS 4

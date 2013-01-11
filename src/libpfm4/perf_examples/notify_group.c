@@ -108,6 +108,7 @@ int
 main(int argc, char **argv)
 {
 	struct sigaction act;
+	sigset_t new, old;
 	size_t pgsz;
 	int ret, i;
 
@@ -124,6 +125,21 @@ main(int argc, char **argv)
 	act.sa_sigaction = (void *)sigio_handler;
 	act.sa_flags = SA_SIGINFO;
 	sigaction (SIGIO, &act, 0);
+
+	sigemptyset(&old);
+	sigemptyset(&new);
+	sigaddset(&new, SIGIO);
+
+	ret = sigprocmask(SIG_SETMASK, NULL, &old);
+	if (ret)
+		err(1, "sigprocmask failed");
+
+	if (sigismember(&old, SIGIO)) {
+		warnx("program started with SIGIO masked, unmasking it now\n");
+		ret = sigprocmask(SIG_UNBLOCK, &new, NULL);
+		if (ret)
+			err(1, "sigprocmask failed");
+	}
 
 	/*
  	 * allocates fd for us

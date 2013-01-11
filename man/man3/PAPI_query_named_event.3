@@ -1,4 +1,4 @@
-.TH "PAPI_query_named_event" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_query_named_event" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,10 +15,10 @@ Query if a named PAPI event exists.
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_query_named_event(char *EventName)\fP;
+ int PAPI_query_named_event(char *EventName);
 .RE
 .PP
-\fBPAPI_query_named_event()\fP asks the PAPI library if the PAPI named event can be counted on this architecture. If the event CAN be counted, the function returns PAPI_OK. If the event CANNOT be counted, the function returns an error code. This function also can be used to check the syntax of native and user events.
+PAPI_query_named_event() asks the PAPI library if the PAPI named event can be counted on this architecture. If the event CAN be counted, the function returns PAPI_OK. If the event CANNOT be counted, the function returns an error code. This function also can be used to check the syntax of native and user events.
 .PP
 \fBParameters:\fP
 .RS 4

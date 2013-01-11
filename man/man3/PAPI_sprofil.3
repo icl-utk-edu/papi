@@ -1,4 +1,4 @@
-.TH "PAPI_sprofil" 3 "Thu Sep 20 2012" "Version 5.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_sprofil" 3 "Fri Jan 11 2013" "Version 5.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ Generate PC histogram data from multiple code regions where hardware counter ove
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags )\fP;
+ int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags );
 .RE
 .PP
 \fBParameters:\fP
@@ -35,7 +35,7 @@ scale -- broadly and historically speaking, a contraction factor that indicates 
 .br
 \fIprofcnt\fP number of structures in the prof array for hardware profiling. 
 .br
-\fIEventSet\fP The PAPI EventSet to profile. This EventSet is marked as profiling-ready, but profiling doesn't actually start until a \fBPAPI_start()\fP call is issued. 
+\fIEventSet\fP The PAPI EventSet to profile. This EventSet is marked as profiling-ready, but profiling doesn't actually start until a PAPI_start() call is issued. 
 .br
 \fIEventCode\fP Code of the Event in the EventSet to profile. This event must already be a member of the EventSet. 
 .br
@@ -48,12 +48,12 @@ scale -- broadly and historically speaking, a contraction factor that indicates 
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIReturn\fP values for \fBPAPI_sprofil()\fP are identical to those for \fBPAPI_profil\fP. Please refer to that page for further details.  
+\fIReturn\fP values for PAPI_sprofil() are identical to those for \fBPAPI_profil\fP. Please refer to that page for further details.  
 
 	
 .RE
 .PP
-\fBPAPI_sprofil()\fP is a structure driven profiler that profiles one or more disjoint regions of code in a single call. It accepts a pointer to a preinitialized array of sprofil structures, and initiates profiling based on the values contained in the array. Each structure in the array defines the profiling parameters that are normally passed to \fBPAPI_profil()\fP. For more information on profiling, \fBPAPI_profil\fP  
+PAPI_sprofil() is a structure driven profiler that profiles one or more disjoint regions of code in a single call. It accepts a pointer to a preinitialized array of sprofil structures, and initiates profiling based on the values contained in the array. Each structure in the array defines the profiling parameters that are normally passed to PAPI_profil(). For more information on profiling, \fBPAPI_profil\fP  
 
 	
 .PP

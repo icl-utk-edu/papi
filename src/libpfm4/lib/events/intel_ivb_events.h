@@ -217,6 +217,16 @@ static const intel_x86_umask_t ivb_br_misp_retired[]={
      .ucode = 0x100,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
+   { .uname  = "NEAR_CALL",
+     .udesc  = "All macro direct and indirect near calls (Precise Event)",
+     .ucode = 0x200,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
+   { .uname  = "NOT_TAKEN",
+     .udesc  = "Number of branch instructions retired that were mispredicted and not-taken (Precise Event)",
+     .ucode = 0x1000,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
    { .uname  = "TAKEN",
      .udesc  = "Number of branch instructions retired that were mispredicted and taken (Precise Event)",
      .ucode = 0x2000,
@@ -328,8 +338,13 @@ static const intel_x86_umask_t ivb_dtlb_load_misses[]={
    },
    { .uname  = "STLB_HIT",
      .udesc  = "Number of load operations that missed L1TLB but hit L2TLB",
-     .ucode = 0x15f, /* override event code */
+     .ucode = 0x45f, /* override event code */
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_CODE_OVERRIDE,
+   },
+   { .uname  = "LARGE_WALK_COMPLETED",
+     .udesc  = "Number of large page walks completed for demand loads",
+     .ucode = 0x8800,
+     .uflags= INTEL_X86_NCOMBO,
    },
 };
 
@@ -981,6 +996,11 @@ static const intel_x86_umask_t ivb_mem_uops_retired[]={
      .ucode = 0x8200,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
+   { .uname  = "LOCK_LOADS",
+     .udesc  = "Locked retired loads (Precise Event)",
+     .ucode = 0x2100,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
    { .uname  = "ANY_STORES",
      .udesc  = "Any retired stores (Precise Event)",
      .ucode = 0x8200,
@@ -1099,11 +1119,6 @@ static const intel_x86_umask_t ivb_offcore_requests_outstanding[]={
 };
 
 static const intel_x86_umask_t ivb_other_assists[]={
-   { .uname  = "ITLB_MISS_RETIRED",
-     .udesc  = "Number of instructions that experienced an ITLB miss",
-     .ucode = 0x200,
-     .uflags= INTEL_X86_NCOMBO,
-   },
    { .uname  = "AVX_TO_SSE",
      .udesc  = "Number of transitions from AVX-256 to legacy SSE when penalty applicable",
      .ucode = 0x1000,
@@ -1160,7 +1175,7 @@ static const intel_x86_umask_t ivb_rs_events[]={
 static const intel_x86_umask_t ivb_tlb_access[]={
    { .uname  = "LOAD_STLB_HIT",
      .udesc  = "Number of load operations that missed L1TLN but hit L2TLB",
-     .ucode = 0x100,
+     .ucode = 0x400,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
 };
