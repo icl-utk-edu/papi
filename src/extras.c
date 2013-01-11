@@ -460,6 +460,8 @@ _papi_hwi_stop_signal( int signal )
 int
 _papi_hwi_stop_timer( int timer, int signal )
 {
+	struct itimerval value;
+
 #ifdef ANY_THREAD_GETS_SIGNAL
 	_papi_hwi_lock( INTERNAL_LOCK );
 	if ( _papi_hwi_using_signal[signal] > 1 ) {
@@ -472,13 +474,18 @@ _papi_hwi_stop_timer( int timer, int signal )
 	( void ) signal;		 /*unused */
 #endif
 
+	value.it_interval.tv_sec = 0;
+	value.it_interval.tv_usec = 0;
+	value.it_value.tv_sec = 0;
+	value.it_value.tv_usec = 0;
+
 	INTDBG( "turning off timer\n" );
-	if ( setitimer( timer, NULL, NULL ) == -1 ) {
+	if ( setitimer( timer, &value, NULL ) == -1 ) {
 		PAPIERROR( "setitimer errno %d", errno );
-		return ( PAPI_ESYS );
+		return PAPI_ESYS;
 	}
 
-	return ( PAPI_OK );
+	return PAPI_OK;
 }
 
 
