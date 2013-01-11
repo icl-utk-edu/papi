@@ -905,6 +905,11 @@ static const intel_x86_umask_t wsm_itlb_misses[]={
      .ucode = 0x8000,
      .uflags= INTEL_X86_NCOMBO,
    },
+   { .uname  = "STLB_HIT",
+     .udesc  = "ITLB misses hitting second level TLB",
+     .ucode = 0x1000,
+     .uflags= INTEL_X86_NCOMBO,
+   },
 };
 
 static const intel_x86_umask_t wsm_l1d_prefetch[]={

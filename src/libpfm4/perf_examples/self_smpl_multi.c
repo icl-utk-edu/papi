@@ -381,7 +381,7 @@ main(int argc, char **argv)
 {
 	struct sigaction sa;
 	pthread_t allthr[MAX_THR];
-	sigset_t set;
+	sigset_t set, old, new;
 	int i, ret, max_thr = 1;
 
 	while((i=getopt(argc, argv, "t:p:s:fhn:")) != EOF) {
@@ -459,6 +459,17 @@ main(int argc, char **argv)
 	sigaddset(&set, SIGIO);
 	if (pthread_sigmask(SIG_BLOCK, &set, NULL))
 		err(1, "cannot mask SIGIO in main thread");
+
+	ret = sigprocmask(SIG_SETMASK, NULL, &old);
+	if (ret)
+		err(1, "sigprocmask failed");
+
+	if (sigismember(&old, SIGIO)) {
+		warnx("program started with SIGIO masked, unmasking it now\n");
+		ret = sigprocmask(SIG_UNBLOCK, &new, NULL);
+		if (ret)
+			err(1, "sigprocmask failed");
+	}
 
 	pthread_barrier_wait(&barrier);
 	printf("\n\n");
