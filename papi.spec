@@ -1,6 +1,6 @@
 Summary: Performance Application Programming Interface
 Name: papi
-Version: 5.1.0.0
+Version: 5.1.0.2
 Release: 1%{?dist}
 License: BSD
 Group: Development/System
