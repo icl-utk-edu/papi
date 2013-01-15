@@ -28,10 +28,8 @@
 void _check_BGPM_error( int err, char* bgpmfunc )
 {
 	if ( err < 0 ) {
-#ifdef DEBUG_BGPM
 		printf ( "Error: ret value is %d for BGPM API function '%s'.\n",
 				 err, bgpmfunc);
-#endif
 	}
 }
 

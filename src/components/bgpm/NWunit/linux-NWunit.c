@@ -437,9 +437,10 @@ int
 NWUNIT_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
 #ifdef DEBUG_BGQ
-	//printf( "NWUNIT_ntv_code_to_bits\n" );
+	printf( "NWUNIT_ntv_code_to_bits\n" );
 #endif
-
+	( void ) EventCode;
+	( void ) bits;
 	return ( PAPI_OK );
 }
 
