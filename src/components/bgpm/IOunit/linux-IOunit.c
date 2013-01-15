@@ -188,8 +188,9 @@ user_signal_handler_IOUNIT( int hEvtSet, uint64_t address, uint64_t ovfVector, c
 #ifdef DEBUG_BGQ
 	printf( "user_signal_handler_IOUNIT\n" );
 #endif
-	
-	int retval, i;
+	( void ) address;
+	int retval;
+	unsigned i;
 	int isHardware = 1;
 	int cidx = _IOunit_vector.cmp_info.CmpIdx;
 	long_long overflow_bit = 0;
@@ -600,9 +601,10 @@ int
 IOUNIT_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
 #ifdef DEBUG_BGQ
-	//printf( "IOUNIT_ntv_code_to_bits\n" );
+	printf( "IOUNIT_ntv_code_to_bits\n" );
 #endif
-
+	( void ) EventCode;
+	( void ) bits;
 	return ( PAPI_OK );
 }
 

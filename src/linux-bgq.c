@@ -141,7 +141,7 @@ _bgq_get_system_info( papi_mdi_t *mdi )
 	printf( "_bgq_get_system_info\n" );
 #endif
 	
-	//( void ) mdi;
+	( void ) mdi;
 	Personality_t personality;
 	int retval;
 	
@@ -644,6 +644,9 @@ _bgq_write( hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from )
 void
 _bgq_dispatch_timer( int signal, hwd_siginfo_t * info, void *uc )
 {
+	( void ) signal;
+	( void ) info;
+	( void ) uc;
 #ifdef DEBUG_BGQ
 	printf("BEGIN _bgq_dispatch_timer\n");
 #endif
@@ -665,8 +668,9 @@ user_signal_handler( int hEvtSet, uint64_t address, uint64_t ovfVector, const uc
 #ifdef DEBUG_BGQ
 	printf( "user_signal_handler start\n" );
 #endif
-	
-	int retval, i;
+	( void ) address;
+	int retval; 
+	unsigned i;
 	int isHardware = 1;
 	int cidx = _bgq_vectors.cmp_info.CmpIdx;
 	long_long overflow_bit = 0;
@@ -871,7 +875,7 @@ _bgq_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_ctl\n" );
 #endif
-
+	( void ) ctx;
 	int retval;
 	
 	switch ( code ) {
