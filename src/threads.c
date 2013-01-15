@@ -217,6 +217,8 @@ insert_thread( ThreadInfo_t * entry, int tid )
 	   THRDBG( "TLS for thread %ld is now %p\n", entry->tid,
 			_papi_hwi_my_thread );
 	}
+#else
+	( void ) tid;
 #endif
 }
 
