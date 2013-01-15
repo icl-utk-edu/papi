@@ -1,12 +1,37 @@
+2013-01-15  
+
+  * 0917f567 src/threads.c: Cleaned up compiler warning (gcc version 4.4.6)
+
+  * 06ca3faa src/components/bgpm/CNKunit/linux-CNKunit.c
+  src/components/bgpm/IOunit/linux-IOunit.c
+  src/components/bgpm/L2unit/linux-L2unit.c...: Cleaned up compiler warnings on
+  BG/Q (gcc version 4.4.6 (BGQ-V1R1M2-120920))
+
+2013-01-14  
+
+  * 56400627 .../build/lib.linux-x86_64-2.7/perfmon/__init__.py
+  .../lib.linux-x86_64-2.7/perfmon/perfmon_int.py
+  .../build/lib.linux-x86_64-2.7/perfmon/pmu.py...: libpfm4: remove extraneous
+  build artifacts.  Steve Kaufmann reported differences between the libpfm4 I
+  imported into PAPI and the libpfm4 that can be attained with a git clone
+  git://perfmon2.git.sourceforge.net/gitroot/perfmon2/libpfm4  Self: Do libpfm4
+  imports from a fresh clone of libpfm4.
+
 2013-01-11  
 
-  * fc07d957 ChangeLogP510.txt RELEASENOTES.txt doc/Doxyfile-common...: Prepare
+  * 4ad994bc src/papi_events.csv: Clean up armv7 cortex a15 presets  Clean up
+  armv7 cortex a15 presets and add presets for L1 and L2 cache 
+
+  * d54dabf5 ChangeLogP510.txt RELEASENOTES.txt doc/Doxyfile-common...: Prepare
   the repo for a 5.1 release.  * Bump the version number to 5.1 * Update the
   man pages * Create a changelog for 5.1 * Update RELEASENOTES
 
-  * 558fb0fe INSTALL.txt: Update INSTALL.txt  Add information about installing
+  * 8816a3b8 INSTALL.txt: Update INSTALL.txt  Add information about installing
   PAPI on Intel MIC. Based upon information from Vince Weaver's PAPI MIC
   support page. http://www.eece.maine.edu/~vweaver/projects/mic/
+
+  * 8dc1ca23 TEST.TXT: Remove TEST.TXT  This was a leftover from a switch over
+  to git.
 
   * 292d6c9b src/papi_libpfm3_events.c: Fix build on ia64  When trying to build
   papi 5.0.1 for IA64, my collegue got compile errors due to perfmon.h not
