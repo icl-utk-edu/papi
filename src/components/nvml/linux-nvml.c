@@ -1053,6 +1053,7 @@ _papi_nvml_shutdown_component()
 
 		papi_free(nvml_native_table);
 		papi_free(devices);
+		papi_free(features);
 
 		nvmlShutdown();
 
