@@ -24,8 +24,10 @@
 
 #include <sys/times.h>
 
-
-
+#ifdef __ia64__
+#include "perfmon/pfmlib_itanium2.h"
+#include "perfmon/pfmlib_montecito.h"
+#endif
 
 #if defined(HAVE_MMTIMER)
 #include <sys/mman.h>
