@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "papi.h"
 #include "papi_internal.h"
