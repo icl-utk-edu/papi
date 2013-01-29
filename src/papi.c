@@ -194,8 +194,6 @@ PAPI_thread_id( void )
  *  @retval PAPI_ECMP 
  *	Hardware counters for this thread could not be initialized. 
  *
- *   @bug No known bugs.
- *
  *   @see PAPI_unregister_thread 
  *   @see PAPI_thread_id 
  *   @see PAPI_thread_init
@@ -270,8 +268,6 @@ PAPI_unregister_thread( void )
  *
  * @retval PAPI_OK The call returned successfully.
  * @retval PAPI_EINVAL *number has an improper value
- *
- * @bug This function has no known bugs.
  *
  * @see PAPI_get_thr_specific 
  * @see PAPI_set_thr_specific 
@@ -689,8 +685,6 @@ PAPI_library_init( int version )
  * }
  * @endcode
  *
- * @bug These functions have no known bugs. 
- *
  * @see PAPI_remove_event 
  * @see PAPI_remove_events 
  * @see PAPI_presets 
@@ -761,8 +755,6 @@ PAPI_query_event( int EventCode )
  *   exit(1);
  * }
  * @endcode
- *
- * @bug This function has no known bugs. 
  *
  * @see PAPI_query_event 
  */
@@ -898,23 +890,24 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
  *	@par Examples:
  *	@code
  *	int EventCode, EventSet = PAPI_NULL;
+ *  int Event, number;
  *	char EventCodeStr[PAPI_MAX_STR_LEN];
- *	char EventDescr[PAPI_MAX_STR_LEN];
- *	char EventLabel[20];
- *	// Convert to integer
- *	if ( PAPI_event_name_to_code( "PAPI_TOT_INS", &EventCode ) != PAPI_OK )
- *	handle_error( 1 );
  *	// Create the EventSet
  *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
  *	handle_error( 1 );
  *	// Add Total Instructions Executed to our EventSet
- *	if ( PAPI_add_event( EventSet, EventCode ) != PAPI_OK )
+ *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
  *	handle_error( 1 );
+ *	number = 1;
+ *	if ( PAPI_list_events( EventSet, &Event, &number ) != PAPI_OK )
+ *	handle_error(1);
+ *	// Convert integer code to name string
+ *	if ( PAPI_event_code_to_name( Event, EventCodeStr ) != PAPI_OK )
+ *	handle_error( 1 );
+ *	printf( "Event Name: %s\n", EventCodeStr );
  *	@endcode
  *
- *	@bug 
- *	No known bugs.
- *
+ *	@see PAPI_event_name_to_code
  *	@see PAPI_remove_event
  *	@see PAPI_get_event_info
  *	@see PAPI_enum_event
@@ -985,9 +978,6 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *	@par Examples:
  *	@code
  *	int EventCode, EventSet = PAPI_NULL;
- *	char EventCodeStr[PAPI_MAX_STR_LEN];
- *	char EventDescr[PAPI_MAX_STR_LEN];
- *	char EventLabel[20];
  *	// Convert to integer
  *	if ( PAPI_event_name_to_code( "PAPI_TOT_INS", &EventCode ) != PAPI_OK )
  *	handle_error( 1 );
@@ -999,15 +989,14 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *	handle_error( 1 );
  *	@endcode
  *
- *	@bug 
- *	No known bugs.
- *
- *	@see PAPI_remove_event @n
- *	PAPI_get_event_info @n
- *	PAPI_enum_event @n
- *	PAPI_add_event @n
- *	PAPI_presets @n
- *	PAPI_native
+ *	@see PAPI_event_code_to_name
+ *	@see PAPI_remove_event
+ *	@see PAPI_get_event_info
+ *	@see PAPI_enum_event
+ *	@see PAPI_add_event
+ *	@see PAPI_add_named_event
+ *	@see PAPI_presets
+ *	@see PAPI_native
  */
 int
 PAPI_event_name_to_code( char *in, int *out )
@@ -1140,9 +1129,6 @@ PAPI_event_name_to_code( char *in, int *out )
  *	<ul>
  *	   <li> PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
  *	</ul>
- *
- *	@bug 
- *	No known bugs.
  *
  *	@see PAPI @n
  *	PAPIF @n
@@ -1306,9 +1292,6 @@ PAPI_enum_event( int *EventCode, int modifier )
  *	   <li> PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
  *	</ul>
  *
- *	@bug 
- *	No known bugs.
- *
  *	@see PAPI @n
  *	PAPIF @n
  *      PAPI_enum_event @n
@@ -1399,9 +1382,6 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
  *	handle_error( 1 ); 
  *	@endcode
  *
- *	@bug 
- *	No known bugs.
- *
  *	@see PAPI_add_event @n
  *	PAPI_assign_eventset_component @n
  *	PAPI_destroy_eventset @n
@@ -1462,9 +1442,6 @@ PAPI_create_eventset( int *EventSet )
  *	if ( PAPI_set_multiplex( EventSet ) != PAPI_OK )
  *	handle_error( 1 );
  *	@endcode
- *
- *	@bug 
- *	No known bugs.
  *
  *	@see PAPI_set_opt @n
  *	PAPI_create_eventset @n
@@ -2474,8 +2451,6 @@ PAPI_reset( int EventSet )
  * // values[0] now equals 0 
  * @endcode
  *
- * @bug These functions have no known bugs.
- *
  * @see PAPI_accum 
  * @see PAPI_start 
  * @see PAPI_stop 
@@ -2562,8 +2537,6 @@ PAPI_read( int EventSet, long long *values )
  * @par Examples
  * @code
  * @endcode
- *
- * @bug This function has no known bugs.
  *
  * @see PAPI_read 
  * @see PAPI_accum 
@@ -2898,8 +2871,6 @@ PAPI_cleanup_eventset( int EventSet )
 
  * @retval PAPI_OK This call always returns PAPI_OK
  *
- * @bug This function has no known bugs.
- *
  * @see PAPI_set_multiplex 
  * @see PAPI_get_multiplex
  */
@@ -3111,9 +3082,6 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *	exit( 1 );
  *	@endcode
  *
- *	@bug 
- *	No known bugs.
- *
  *	@see PAPI_set_opt
  *	@see PAPI_list_threads
  *	@see PAPI_thread_id
@@ -3169,9 +3137,6 @@ PAPI_attach( int EventSet, unsigned long tid )
  *	if ( PAPI_attach( EventSet, pid ) != PAPI_OK )
  *	exit( 1 );
  *	@endcode
- *
- *	@bug 
- *	No known bugs.
  *
  *	@see PAPI_set_opt @n
  *	PAPI_list_threads @n
@@ -4328,8 +4293,6 @@ PAPI_num_components( void )
   * printf(\"%d events found in EventSet.\\n\", PAPI_num_events(EventSet));
   * @endcode
   *
-  * @bug This function has no known bugs. 
-  *
   * @see PAPI_add_event 
   * @see PAPI_create_eventset
   *
@@ -4675,7 +4638,6 @@ PAPI_perror( char *msg )
  * retval = PAPI_overflow(EventSet, PAPI_TOT_INS, 100000, 0, handler);
  * @endcode
  *
- * @bug This function has no known bugs.
  *
  * @see PAPI_get_overflow_event_index
  *
@@ -5979,9 +5941,6 @@ PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
  *	printf( "Bss start: %p, Bss end: %p\n", exeinfo->address_info.bss_start, exeinfo->address_info.bss_end );
  *	@endcode
  *
- *	@bug 
- *	No known bugs.
- *
  *	@see PAPI_get_opt 
  *	@see PAPI_get_hardware_info 
  *	@see PAPI_exe_info_t
@@ -6008,7 +5967,7 @@ PAPI_get_executable_info( void )
  *	There is no Fortran equivalent call. 
  *	@note This data will be incorporated into the PAPI_get_executable_info call in the future. PAPI_get_shared_lib_info will be deprecated and should be used with caution.
  *
- *	@bug If called before the behavior of the routine is undefined.
+ *	@bug If called before initialization the behavior of the routine is undefined.
  *
  *	@see PAPI_shlib_info_t
  *	@see PAPI_get_hardware_info
@@ -6039,7 +5998,7 @@ PAPI_get_shared_lib_info( void )
  *		One or more of the arguments is invalid.
  *
  *	@bug
- *		If called before the behavior of the routine is undefined. 
+ *		If called before initialization the behavior of the routine is undefined. 
  *	
  *	@note The C structure contains detailed information about cache and TLB sizes. 
  *		This information is not available from Fortran.
@@ -6269,8 +6228,6 @@ PAPI_get_virt_usec( void )
  *      There is no return value for this call. 
  *      Upon return from  PAPI_lock the current thread has acquired 
  *      exclusive access to the specified PAPI mutex.
- *
- *  @bug This function has no known bugs
  *
  *  @see PAPI_unlock 
  *  @see PAPI_thread_init
@@ -6534,7 +6491,6 @@ int  PAPI_get_component_index(char *name)
  *      PAPI_disable_component() must be called before
  *      PAPI_library_init().
  *
- *	@bug  none known
  *	@see  PAPI_get_event_component
  *      @see  PAPI_library_init
  */
