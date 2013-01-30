@@ -432,7 +432,6 @@ gen_tracepoint_table(void)
 
 			um->uname = strdup(d2->d_name);
 			if (!um->uname) {
-				close(fd);
 				err = -1;
 				break;
 			}
