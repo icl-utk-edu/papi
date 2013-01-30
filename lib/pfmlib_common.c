@@ -862,10 +862,6 @@ handle_bool:
 
 			endptr = NULL;
 			switch(type) {
-			case PFM_ATTR_UMASK:
-			case PFM_ATTR_RAW_UMASK:
-				/* unit mask has no value */
-				goto error;
 			case PFM_ATTR_MOD_BOOL:
 				if (strlen(s) > 1)
 					goto error;

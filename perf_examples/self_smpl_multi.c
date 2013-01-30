@@ -384,7 +384,7 @@ main(int argc, char **argv)
 	sigset_t set, old, new;
 	int i, ret, max_thr = 1;
 
-	while((i=getopt(argc, argv, "t:p:s:fhn:")) != EOF) {
+	while ((i=getopt(argc, argv, "t:p:s:fhn:")) != EOF) {
 		switch(i) {
 		case 'h':
 			usage();
@@ -456,7 +456,10 @@ main(int argc, char **argv)
 	}
 	myid = i;
 	sigemptyset(&set);
+	sigemptyset(&new);
 	sigaddset(&set, SIGIO);
+	sigaddset(&new, SIGIO);
+
 	if (pthread_sigmask(SIG_BLOCK, &set, NULL))
 		err(1, "cannot mask SIGIO in main thread");
 

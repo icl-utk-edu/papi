@@ -287,6 +287,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 				evt_strcat(e.fstr, ":%s=%"PRIu64, perf_event_ext_mods[idx].name, attr->sample_period);
 			else if (attr->sample_period)
 				evt_strcat(e.fstr, ":%s=%"PRIu64, perf_event_ext_mods[idx].name, attr->sample_period);
+			break;
 		case PERF_ATTR_MG:
 			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !attr->exclude_guest);
 			break;

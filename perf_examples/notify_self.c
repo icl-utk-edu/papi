@@ -135,6 +135,10 @@ main(int argc, char **argv)
 	act.sa_flags = SA_SIGINFO;
 	sigaction (SIGIO, &act, 0);
 
+	sigemptyset(&old);
+	sigemptyset(&new);
+	sigaddset(&new, SIGIO);
+
 	ret = sigprocmask(SIG_SETMASK, NULL, &old);
 	if (ret)
 		err(1, "sigprocmask failed");
