@@ -853,7 +853,7 @@ _papi_nvml_init_component( int cidx )
 		}
 
 		/* We can probably recover from this, when we're clever */
-		if ( nvml_count != cuda_count ) {
+		if ( (cuda_count > 0) && (nvml_count != (unsigned int)cuda_count ) ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "Cuda and the NVIDIA managament library have different device counts.");
 				goto disable;
 		}
