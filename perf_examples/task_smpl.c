@@ -50,6 +50,8 @@
 typedef struct {
 	int opt_no_show;
 	int opt_inherit;
+	int mem_mode;
+	int branch_mode;
 	int cpu;
 	int mmap_pages;
 	char *events;
@@ -226,6 +228,13 @@ mainloop(char **arg)
 
 			if (fds[i].hw.freq)
 				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
+
+			if (options.mem_mode)
+				fds[i].hw.sample_type |= PERF_SAMPLE_WEIGHT | PERF_SAMPLE_DATA_SRC;
+			if (options.branch_mode) {
+				fds[i].hw.sample_type |= PERF_SAMPLE_BRANCH_STACK;
+				fds[i].hw.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
+			}
 		}
 
 		fds[i].fd = perf_event_open(&fds[i].hw, pid, options.cpu, fds[0].fd, 0);
@@ -353,7 +362,7 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [-i] [-c cpu] [-m mmap_pages] [-o output_file] [-e event1,...,eventn] cmd\n");
+	printf("usage: task_smpl [-h] [--help] [-i] [-c cpu] [-m mmap_pages] [-M] [-b] [-o output_file] [-e event1,...,eventn] cmd\n");
 }
 
 int
@@ -366,7 +375,7 @@ main(int argc, char **argv)
 	options.cpu = -1;
 	options.output_file=stdout;
 
-	while ((c=getopt_long(argc, argv,"+he:m:ic:o:", the_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"+he:m:ic:o:Mb", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 			case 'e':
@@ -381,6 +390,12 @@ main(int argc, char **argv)
 				if (options.mmap_pages)
 					errx(1, "mmap pages already set\n");
 				options.mmap_pages = atoi(optarg);
+				break;
+			case 'M':
+				options.mem_mode = 1;
+				break;
+			case 'b':
+				options.branch_mode = 1;
 				break;
 			case 'c':
 				options.cpu = atoi(optarg);
