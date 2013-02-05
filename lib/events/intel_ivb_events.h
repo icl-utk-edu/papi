@@ -968,9 +968,9 @@ static const intel_x86_umask_t ivb_mem_load_uops_retired[]={
 
 static const intel_x86_umask_t ivb_mem_trans_retired[]={
    { .uname  = "LATENCY_ABOVE_THRESHOLD",
-     .udesc  = "Memory load instructions retired above programmed clocks, minimum value threshold is 4 (Precise Event required)",
+     .udesc  = "Memory load instructions retired above programmed clocks, minimum threshold value is 3 (Precise Event and ldlat required)",
      .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS | INTEL_X86_LDLAT | INTEL_X86_NO_AUTOENCODE,
    },
    { .uname  = "PRECISE_STORE",
      .udesc  = "Capture where stores occur, must use with PEBS (Precise Event required)",
@@ -1966,7 +1966,7 @@ static const intel_x86_entry_t intel_ivb_pe[]={
 },
 { .name   = "MEM_TRANS_RETIRED",
   .desc   = "Memory transactions retired",
-  .modmsk = INTEL_V3_ATTRS,
+  .modmsk = INTEL_V3_ATTRS | _INTEL_X86_ATTR_LDLAT,
   .cntmsk = 0x8,
   .code = 0xcd,
   .flags= INTEL_X86_PEBS,

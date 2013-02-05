@@ -43,6 +43,11 @@ modifier with values in the range [0:255].
 .TP
 .B t
 Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
+.TP
+.B ldlat
+Pass a latency threshold to the MEM_INST_RETIRED:LATENCY_ABOVE_THRESHOLD event.
+This is an integer attribute that must be in the range [3:65535]. It is required
+for this event.  Note that the event must be used with precise sampling (PEBS).
 
 .SH OFFCORE_RESPONSE events
 The library is able to encode the OFFCORE_RESPONSE_0 and OFFCORE_RESPONSE_1 events.

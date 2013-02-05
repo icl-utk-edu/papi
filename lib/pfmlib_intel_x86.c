@@ -39,6 +39,7 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("i", "invert"),				/* invert */
 	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
 	PFM_ATTR_B("t", "measure any thread"),			/* monitor on both threads */
+	PFM_ATTR_I("ldlat", "load latency threshold (cycles, [3-65535])"),	/* load latency threshold */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -388,6 +389,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int max_grpid = INTEL_X86_MAX_GRPID;
 	unsigned int last_grpid =  INTEL_X86_MAX_GRPID;
 	unsigned int grpid;
+	int ldlat = 0, ldlat_um = 0;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 
@@ -454,6 +456,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_NCOMBO))
 				ncombo[grpid] = 1;
 
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_LDLAT))
+				ldlat_um = 1;
 			/*
 			 * if more than one umask in this group but one is marked
 			 * with ncombo, then fail. It is okay to combine umask within
@@ -535,6 +539,12 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 					reg.sel_anythr = !!ival;
 					umodmsk |= _INTEL_X86_ATTR_T;
 					break;
+				case INTEL_X86_ATTR_LDLAT: /* load latency */
+					if (ival < 3 || ival > 65535)
+						return PFM_ERR_ATTR_VAL;
+					ldlat = ival;
+					break;
+
 			}
 		}
 	}
@@ -603,6 +613,21 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 		e->count = 1;
 	}
 
+	if (ldlat && !ldlat_um) {
+		DPRINT("passed ldlat= but not using ldlat umask\n");
+		return PFM_ERR_ATTR;
+	}
+
+	if (ldlat_um && !ldlat) {
+		DPRINT("missing ldlat= for umask\n");
+		return PFM_ERR_ATTR;
+	}
+
+	if (ldlat && ldlat_um) {
+		e->codes[1] = ldlat;
+		e->count = 2;
+	}
+
 	/* take into account hardcoded modifiers, so use or on reg.val */
 	reg.val     |= (umask1 | umask2)  << 8;
 
@@ -649,6 +674,9 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			break;
 		case INTEL_X86_ATTR_T:
 			evt_strcat(e->fstr, ":%s=%lu", intel_x86_mods[id].name, reg.sel_anythr);
+			break;
+		case INTEL_X86_ATTR_LDLAT:
+			evt_strcat(e->fstr, ":%s=%d", intel_x86_mods[id].name, ldlat);
 			break;
 		}
 	}
