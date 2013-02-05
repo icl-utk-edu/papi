@@ -230,7 +230,7 @@ mainloop(char **arg)
 				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
 
 			if (options.mem_mode)
-				fds[i].hw.sample_type |= PERF_SAMPLE_WEIGHT | PERF_SAMPLE_DATA_SRC;
+				fds[i].hw.sample_type |= PERF_SAMPLE_WEIGHT | PERF_SAMPLE_DATA_SRC | PERF_SAMPLE_ADDR;
 			if (options.branch_mode) {
 				fds[i].hw.sample_type |= PERF_SAMPLE_BRANCH_STACK;
 				fds[i].hw.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
