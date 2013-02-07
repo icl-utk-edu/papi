@@ -624,10 +624,14 @@ static const test_event_t x86_test_events[]={
 	},
 	{ SRC_LINE,
 	  .name = "amd64_fam10h_barcelona::DISPATCHED_FPU:0x4ff:u",
+	  .ret  = PFM_ERR_ATTR
+	},
+	{ SRC_LINE,
+	  .name = "amd64_fam10h_barcelona::DISPATCHED_FPU:0xff:u",
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
-	  .codes[0] = 0x40051ff00ull,
-	  .fstr = "amd64_fam10h_barcelona::DISPATCHED_FPU:0x4ff:k=0:u=1:e=0:i=0:c=0:h=0:g=0"
+	  .codes[0] = 0x51ff00ull,
+	  .fstr = "amd64_fam10h_barcelona::DISPATCHED_FPU:0xff:k=0:u=1:e=0:i=0:c=0:h=0:g=0"
 	},
 	{ SRC_LINE,
 	  .name = "wsm::inst_retired:0xff:k",
@@ -1802,6 +1806,17 @@ static const test_event_t x86_test_events[]={
 	  .count = 1,
 	  .codes[0] = 0x5303f6,
 	  .fstr = "amd64_fam15h_interlagos::LINK_TRANSMIT_BANDWIDTH_LINK_0:COMMAND_DW_SENT:DATA_DW_SENT:SUBLINK_0",
+	},
+	{ SRC_LINE,
+	  .name = "amd64_fam15h_interlagos::DISPATCHED_FPU_OPS:0x4ff:u",
+	  .ret  = PFM_ERR_ATTR
+	},
+	{ SRC_LINE,
+	  .name = "amd64_fam15h_interlagos::DISPATCHED_FPU_OPS:0xff:u",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x51ff00ull,
+	  .fstr = "amd64_fam15h_interlagos::DISPATCHED_FPU_OPS:0xff:k=0:u=1:e=0:i=0:c=0:h=0:g=0"
 	},
 };
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))

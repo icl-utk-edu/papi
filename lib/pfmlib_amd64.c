@@ -278,7 +278,7 @@ void amd64_display_reg(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t reg)
 {
 	pfmlib_pmu_t *pmu = this;
 
-	if (IS_FAMILY_10H(pmu))
+	if (IS_FAMILY_10H(pmu) || IS_FAMILY_15H(pmu))
 		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d guest=%d host=%d] %s\n",
 			reg.val,
 			reg.sel_event_mask | (reg.sel_event_mask2 << 8),
@@ -406,7 +406,6 @@ amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_
 int
 pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
-	pfmlib_pmu_t *pmu = this;
 	const amd64_entry_t *pe = this_pe(this);
 	pfm_amd64_reg_t reg;
 	pfm_event_attr_info_t *a;
@@ -472,14 +471,12 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 			/* there can only be one RAW_UMASK per event */
 
 			/* sanity checks */
-			if (((a->idx & ~0xff) && !IS_FAMILY_10H(pmu))
-			   || ((a->idx & ~0xfff) && IS_FAMILY_10H(pmu))) {
+			if (a->idx & ~0xff) {
 				DPRINT("raw umask is invalid\n");
 				return PFM_ERR_ATTR;
 			}
-			/* override umask and extended umask */
+			/* override umask */
 			umask = a->idx & 0xff;
-			reg.sel_event_mask2 = a->idx >> 8;
 			ugrpmsk = grpmsk;
 
 		} else { /* modifiers */
@@ -526,7 +523,8 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 			reg.sel_os = 1;
 		if (e->dfl_plm & PFM_PLM3)
 			reg.sel_usr = 1;
-		if (IS_FAMILY_10H(this) && e->dfl_plm & PFM_PLMH)
+		if ((IS_FAMILY_10H(this) || IS_FAMILY_15H(this))
+		     && e->dfl_plm & PFM_PLMH)
 			reg.sel_host = 1;
 	}
 
