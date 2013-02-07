@@ -127,7 +127,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM
 endif
 
