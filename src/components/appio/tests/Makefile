@@ -62,6 +62,15 @@ init_fini.o: init_fini.c
 appio_test_iozone: iozone/iozone_linux$(ARCH_SUFFIX).o iozone/libasync.o iozone/libbif.o init_fini.o $(UTILOBJS) $(PAPILIB)
 	$(CC) -g -O2 -o $@ $(LDFLAGS) $^ -lpthread -lrt
 
+install:
+	@echo "APPIO tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/appio/tests
+	-chmod go+rx $(DATADIR)/
+	-chmod go+rx $(DATADIR)/appio/tests
+	-cp $(ALL_TESTS) $(DATADIR)/appio/tests
+	-chmod go+rx $(DATADIR)/appio/tests/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/appio/tests \;
+
 clean:
 	rm -f $(ALL_TESTS) appio_test_iozone *.o
 

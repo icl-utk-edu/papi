@@ -316,9 +316,25 @@ install-man:
 install-utils: 
 	$(SETPATH) cd utils; $(MAKE) BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install
 	
-install-tests:
+install-tests:  install-comp_tests
+	$(SETPATH) cd testlib; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install
 	$(SETPATH) cd ctests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install
 	$(SETPATH) cd ftests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install
+	-cp run_tests.sh $(DESTDIR)$(DATADIR)
+	-cp run_tests_exclude_cuda.txt $(DESTDIR)$(DATADIR)
+	-cp run_tests_exclude.txt $(DESTDIR)$(DATADIR)
+	-chmod go+rx $(DESTDIR)$(DATADIR)/run_tests.sh
+	-chmod go+r $(DESTDIR)$(DATADIR)/run_tests_exclude_cuda.txt $(DESTDIR)$(DATADIR)/run_tests_exclude.txt
+
+# Component tests installing
+install-comp_tests:
+ifneq (${COMPONENTS},)
+	@for comp in ${COMPONENTS} ; do \
+		cd components/$$comp/tests ; \
+		$(MAKE) DATADIR="$(DESTDIR)$(DATADIR)/components" install  ; \
+		cd ../../.. ; \
+	done 
+endif
 
 #
 # Dummy targets for configurations that do not also include a Rules file with targets

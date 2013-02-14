@@ -24,7 +24,7 @@ There is one final very important naming convention that applies to components. 
 Adding tests to the components:
 -------------------------------
 
-In order to add tests to a component that will be compiled together with PAPI when typing 'make' (as well as cleaned up when 'make clean' or 'make clobber' is typed), the following steps need to be carried out:
+In order to add tests to a component that will be compiled together with PAPI when typing 'make' (as well as cleaned up when 'make clean' or 'make clobber' is typed and installed when 'make install-all' or 'make install-tests' is called), the following steps need to be carried out:
 
     1. create a directory with name 'tests' in the specific component directory
     2. add your test files and a Makefile to the 'tests' directory (see the example test and Makefile in components/example/tests)
@@ -33,6 +33,7 @@ In order to add tests to a component that will be compiled together with PAPI wh
 	example_tests: $(TESTS)
     4. Include components/Makefile_comp_tests to your component test Makefile
 	(see components/example/tests/Makefile for more details)
+	5. You may also define 'clean' and/or 'install' targets (as shown in the example) which will be called during those parts of the build.  If these targets are missing it will just print a message reporting the missing target and continue.
 
 NOTE: there is no need to modify any PAPI code other than adding your tests and a Makefile to your component and follow step 1 to 4 listed above.
 

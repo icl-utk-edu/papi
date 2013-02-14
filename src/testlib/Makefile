@@ -25,3 +25,11 @@ clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
 install: 
+	@echo "Papi testlib (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/testlib
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/testlib
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/testlib \;
+	-chmod go+rx $(DATADIR)/testlib/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/testlib \;
+	
