@@ -24,6 +24,12 @@
 #ifndef __PFMLIB_INTEL_SNBEP_UNC_PRIV_H__
 #define __PFMLIB_INTEL_SNBEP_UNC_PRIV_H__
 
+/*
+ * Intel x86 specific pmu flags (pmu->flags 16 MSB)
+ */
+#define INTEL_PMU_FL_UNC_OCC 0x10000	/* PMU has occupancy counter filters */
+
+
 #define SNBEP_UNC_ATTR_E		0
 #define SNBEP_UNC_ATTR_I		1
 #define SNBEP_UNC_ATTR_T8		2

@@ -240,8 +240,10 @@ display_reg(void *this, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
 static inline int
 is_occ_event(void *this, int idx)
 {
+	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
-	return pe[idx].code & 0x80;
+
+	return (pmu->flags & INTEL_PMU_FL_UNC_OCC) && (pe[idx].code & 0x80);
 }
 
 static inline int
@@ -515,7 +517,6 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(e->fstr, ":0x%x", a->idx);
 	}
 	e->count = 0;
-
 	reg.val |= (umask1 | umask2)  << 8;
 
 	e->codes[e->count++] = reg.val;
