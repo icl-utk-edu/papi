@@ -130,6 +130,7 @@ typedef struct pfmlib_pmu {
 	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 	int		 (*validate_table)(void *this, FILE *fp);
 	int 		 (*get_num_events)(void *this);	/* optional */
+	void		 (*display_reg)(void *this, pfmlib_event_desc_t *e, void *val); /* optional */
 } pfmlib_pmu_t;
 
 typedef struct {

@@ -66,175 +66,31 @@ pfm_intel_snbep_unc_detect(void *this)
 }
 
 static void
-display_cbox(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
+display_com(void *this, pfmlib_event_desc_t *e, void *val)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_snbep_unc_reg_t f;
+	pfm_snbep_unc_reg_t *reg = val;
 
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
-		       "inv=%d edge=%d thres=%d tid_en=%d] %s\n",
-			msg,
-			reg.val,
-			reg.cbo.unc_event,
-			reg.cbo.unc_umask,
-			reg.cbo.unc_en,
-			reg.cbo.unc_inv,
-			reg.cbo.unc_edge,
-			reg.cbo.unc_thres,
-			reg.cbo.unc_tid,
-			pe[e->event].name);
-
-	if (e->count == 1)
-		return;
-
-	f.val = e->codes[1];
-
-	__pfm_vbprintf("[UNC_CBOX_FILTER=0x%"PRIx64" tid=%d core=0x%x nid=0x%x"
-		       " state=0x%x opc=0x%x]\n",
-			f.val,
-			f.cbo_filt.tid,
-			f.cbo_filt.cid,
-			f.cbo_filt.nid,
-			f.cbo_filt.state,
-			f.cbo_filt.opc);
-}
-
-static void
-display_com(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
+	__pfm_vbprintf("[UNC=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
 		       "inv=%d edge=%d thres=%d] %s\n",
-			msg,
-			reg.val,
-			reg.com.unc_event,
-			reg.com.unc_umask,
-			reg.com.unc_en,
-			reg.com.unc_inv,
-			reg.com.unc_edge,
-			reg.com.unc_thres,
+			reg->val,
+			reg->com.unc_event,
+			reg->com.unc_umask,
+			reg->com.unc_en,
+			reg->com.unc_inv,
+			reg->com.unc_edge,
+			reg->com.unc_thres,
 			pe[e->event].name);
 }
-
-static void
-display_qpi(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x sel_ext=%d umask=0x%x en=%d "
-		       "inv=%d edge=%d thres=%d] %s\n",
-			msg,
-			reg.val,
-			reg.qpi.unc_event,
-			reg.qpi.unc_event_ext,
-			reg.qpi.unc_umask,
-			reg.qpi.unc_en,
-			reg.qpi.unc_inv,
-			reg.qpi.unc_edge,
-			reg.qpi.unc_thres,
-			pe[e->event].name);
-}
-
-static void
-display_pcu(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_snbep_unc_reg_t f;
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x occ_sel=0x%x en=%d "
-			"inv=%d edge=%d thres=%d occ_inv=%d occ_edge=%d] %s\n",
-			msg,
-			reg.val,
-			reg.pcu.unc_event,
-			reg.pcu.unc_occ,
-			reg.pcu.unc_en,
-			reg.pcu.unc_inv,
-			reg.pcu.unc_edge,
-			reg.pcu.unc_thres,
-			reg.pcu.unc_occ_inv,
-			reg.pcu.unc_occ_edge,
-			pe[e->event].name);
-
-	if (e->count == 1)
-		return;
-
-	f.val = e->codes[1];
-
-	__pfm_vbprintf("[UNC_PCU_FILTER=0x%"PRIx64" band0=%u band1=%u band2=%u band3=%u]\n",
-			f.val,
-			f.pcu_filt.filt0,
-			f.pcu_filt.filt1,
-			f.pcu_filt.filt2,
-			f.pcu_filt.filt3);
-}
-
-static void
-display_ha(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_snbep_unc_reg_t f;
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
-		       "inv=%d edge=%d thres=%d] %s\n",
-			msg,
-			reg.val,
-			reg.com.unc_event,
-			reg.com.unc_umask,
-			reg.com.unc_en,
-			reg.com.unc_inv,
-			reg.com.unc_edge,
-			reg.com.unc_thres,
-			pe[e->event].name);
-
-	if (e->count == 1)
-		return;
-
-	f.val = e->codes[1];
-	__pfm_vbprintf("[UNC_HA_ADDR=0x%"PRIx64" lo_addr=0x%x hi_addr=0x%x]\n",
-			f.val,
-			f.ha_addr.lo_addr,
-			f.ha_addr.hi_addr);
-
-	f.val = e->codes[2];
-	__pfm_vbprintf("[UNC_HA_OPC=0x%"PRIx64" opc=0x%x]\n", f.val, f.ha_opc.opc);
-}
-
-
-
-#define SNBEP_UNC_DISP(a, b) { .name = a, .disp = b }
-static const struct {
-	const char *name;
-	void (*disp)(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg);
-} snbep_unc_disp[] = {
-	SNBEP_UNC_DISP("CBOX0", display_cbox),
-	SNBEP_UNC_DISP("CBOX1", display_cbox),
-	SNBEP_UNC_DISP("CBOX2", display_cbox),
-	SNBEP_UNC_DISP("CBOX3", display_cbox),
-	SNBEP_UNC_DISP("CBOX4", display_cbox),
-	SNBEP_UNC_DISP("CBOX5", display_cbox),
-	SNBEP_UNC_DISP("CBOX6", display_cbox),
-	SNBEP_UNC_DISP("CBOX7", display_cbox),
-	SNBEP_UNC_DISP("HA", display_ha),
-	SNBEP_UNC_DISP("IMC0", display_com),
-	SNBEP_UNC_DISP("IMC1", display_com),
-	SNBEP_UNC_DISP("IMC2", display_com),
-	SNBEP_UNC_DISP("IMC3", display_com),
-	SNBEP_UNC_DISP("PCU", display_pcu),
-	SNBEP_UNC_DISP("QPI0", display_qpi),
-	SNBEP_UNC_DISP("QPI1", display_qpi),
-	SNBEP_UNC_DISP("UBOX", display_com),
-	SNBEP_UNC_DISP("R2PCIE", display_com),
-	SNBEP_UNC_DISP("R3QPI0", display_com),
-	SNBEP_UNC_DISP("R3QPI1", display_com),
-};
 
 static void
 display_reg(void *this, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
 {
 	pfmlib_pmu_t *pmu = this;
-	int idx = pmu->pmu - PFM_PMU_INTEL_SNBEP_UNC_CB0;
-	snbep_unc_disp[idx].disp(this, snbep_unc_disp[idx].name, e, reg);
+	if (pmu->display_reg)
+		pmu->display_reg(this, e, &reg);
+	else
+		display_com(this, e, &reg);
 }
 
 static inline int

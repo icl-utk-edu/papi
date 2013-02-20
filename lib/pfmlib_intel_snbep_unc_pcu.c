@@ -33,6 +33,39 @@
 #include "pfmlib_intel_snbep_unc_priv.h"
 #include "events/intel_snbep_unc_pcu_events.h"
 
+static void
+display_pcu(void *this, pfmlib_event_desc_t *e, void *val)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	pfm_snbep_unc_reg_t *reg = val;
+	pfm_snbep_unc_reg_t f;
+
+	__pfm_vbprintf("[UNC_PCU=0x%"PRIx64" event=0x%x occ_sel=0x%x en=%d "
+			"inv=%d edge=%d thres=%d occ_inv=%d occ_edge=%d] %s\n",
+			reg->val,
+			reg->pcu.unc_event,
+			reg->pcu.unc_occ,
+			reg->pcu.unc_en,
+			reg->pcu.unc_inv,
+			reg->pcu.unc_edge,
+			reg->pcu.unc_thres,
+			reg->pcu.unc_occ_inv,
+			reg->pcu.unc_occ_edge,
+			pe[e->event].name);
+
+	if (e->count == 1)
+		return;
+
+	f.val = e->codes[1];
+
+	__pfm_vbprintf("[UNC_PCU_FILTER=0x%"PRIx64" band0=%u band1=%u band2=%u band3=%u]\n",
+			f.val,
+			f.pcu_filt.filt0,
+			f.pcu_filt.filt1,
+			f.pcu_filt.filt2,
+			f.pcu_filt.filt3);
+}
+
 pfmlib_pmu_t intel_snbep_unc_pcu_support = {
 	.desc			= "Intel Sandy Bridge-EP PCU uncore",
 	.name			= "snbep_unc_pcu",
@@ -58,4 +91,5 @@ pfmlib_pmu_t intel_snbep_unc_pcu_support = {
 	PFMLIB_VALID_PERF_PATTRS(pfm_intel_snbep_unc_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
 	.can_auto_encode	= pfm_intel_snbep_unc_can_auto_encode,
+	.display_reg		= display_pcu,
 };
