@@ -58,7 +58,6 @@ main( int argc, char **argv )
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-
 	if ( ( retval =
 		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
@@ -66,45 +65,43 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 
-	if ( TESTS_QUIET )
-		i = 2;
-	else
-		i = 1;
-
-	num_events = argc - i;
-
 	/* Automatically pass if no events, for run_tests.sh */
-	if ( num_events == 0 )
+	if ((( TESTS_QUIET ) && ( argc == 2)) || ( argc == 1 )) {
 		test_pass( __FILE__, NULL, 0 );
+	}
 
 	values =
-		( long long * ) malloc( sizeof ( long long ) * ( size_t ) num_events );
+		( long long * ) malloc( sizeof ( long long ) * ( size_t ) argc );
 	success = ( char * ) malloc( ( size_t ) argc );
 
 	if ( success == NULL || values == NULL )
 		test_fail_exit( __FILE__, __LINE__, "malloc", PAPI_ESYS );
 
-	for ( ; i < argc; i++ ) {
+	for ( num_events = 0, i = 1; i < argc; i++ ) {
 		if ( strstr( argv[i], "-h" ) ) {
 			print_help( argv );
 			exit( 1 );
 		} else if ( strstr( argv[i], "-u" ) ) {
 			u_format = 1;
-			num_events--;
 		} else if ( strstr( argv[i], "-x" ) ) {
 			hex_format = 1;
-			num_events--;
 		} else {
 			if ( ( retval = PAPI_add_named_event( EventSet, argv[i] ) ) != PAPI_OK ) {
 				printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
 					PAPI_strerror(retval));
-				success[i] = 0;
 			} else {
-				success[i] = 1;
+				success[num_events++] = i;
 				printf( "Successfully added: %s\n", argv[i] );
 			}
 		}
 	}
+
+	/* Automatically pass if no events, for run_tests.sh */
+	if ( num_events == 0 ) {
+		test_pass( __FILE__, NULL, 0 );
+	}
+
+
 	printf( "\n" );
 
 	do_flops( 1 );
@@ -120,40 +117,36 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	for ( i = 1, j = 0; i <= num_events; i++ ) {
-		if ( success[i] ) {
-			if (! (u_format || hex_format) ) {
-				retval = PAPI_event_name_to_code( argv[i], &event );
-				if (retval == PAPI_OK) {
-					retval = PAPI_get_event_info(event, &info);
-					if (retval == PAPI_OK) data_type = info.data_type;
-					else data_type = PAPI_DATATYPE_INT64;
-				}
-				switch (data_type) {
-				  case PAPI_DATATYPE_UINT64:
-					printf( "%s : \t%llu(u)", argv[i], (unsigned long long)values[j++] );
-					break;
-				  case PAPI_DATATYPE_FP64:
-					printf( "%s : \t%0.3f", argv[i], *((double *)(&values[j])) );
-					j++;
-					break;
-				  case PAPI_DATATYPE_BIT64:
-					printf( "%s : \t0x%llX", argv[i], values[j++] );
-					break;
-				  case PAPI_DATATYPE_INT64:
-				  default:
-					printf( "%s : \t%lld", argv[i], values[j++] );
-					break;
-				}
-				if (retval == PAPI_OK)  printf( " %s", info.units );
-				printf( "\n" );
+	for ( j = 0; j < num_events; j++ ) {
+		i = success[j];
+		if (! (u_format || hex_format) ) {
+			retval = PAPI_event_name_to_code( argv[i], &event );
+			if (retval == PAPI_OK) {
+				retval = PAPI_get_event_info(event, &info);
+				if (retval == PAPI_OK) data_type = info.data_type;
+				else data_type = PAPI_DATATYPE_INT64;
 			}
-			if (u_format) printf( "%s : \t%llu(u)\n", argv[i], (unsigned long long)values[j++] );
-			if (u_format && hex_format) j--;
-			if (hex_format) printf( "%s : \t0x%llX\n", argv[i], values[j++] );
-		} else {
-			printf( "%s : \t---------\n", argv[i] );
+			switch (data_type) {
+			  case PAPI_DATATYPE_UINT64:
+				printf( "%s : \t%llu(u)", argv[i], (unsigned long long)values[j] );
+				break;
+			  case PAPI_DATATYPE_FP64:
+				printf( "%s : \t%0.3f", argv[i], *((double *)(&values[j])) );
+				j++;
+				break;
+			  case PAPI_DATATYPE_BIT64:
+				printf( "%s : \t0x%llX", argv[i], values[j] );
+				break;
+			  case PAPI_DATATYPE_INT64:
+			  default:
+				printf( "%s : \t%lld", argv[i], values[j] );
+				break;
+			}
+			if (retval == PAPI_OK)  printf( " %s", info.units );
+			printf( "\n" );
 		}
+		if (u_format) printf( "%s : \t%llu(u)\n", argv[i], (unsigned long long)values[j] );
+		if (hex_format) printf( "%s : \t0x%llX\n", argv[i], values[j] );
 	}
 
 	printf( "\n----------------------------------\n" );
