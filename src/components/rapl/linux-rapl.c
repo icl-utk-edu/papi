@@ -732,8 +732,6 @@ _rapl_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
     ( void ) code;
     ( void ) option;
 
-  printf("CTL\n");
-
     return PAPI_OK;
 }
 
