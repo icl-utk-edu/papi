@@ -956,6 +956,7 @@ _papi_libpfm4_ntv_code_to_descr( unsigned int EventCode,
       ret = pfm_get_event_attr_info(our_event->libpfm4_idx, a, 
 				    PFM_OS_PERF_EVENT, &ainfo);
       if (ret != PFM_SUCCESS) {
+	free( tmp );
 	SUBDBG("get_event_attr failed %s\n",pfm_strerror(ret));
 	return _papi_libpfm4_error(ret);
       }

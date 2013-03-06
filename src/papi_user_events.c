@@ -562,8 +562,8 @@ load_user_event_table( char *file_name)
 	/* Deal with comments and constants */
 	if (t[0] == '#') {
 	  if ( 0 == strncmp("define",t+1,6) ) {
+		papi_free(foo);
 		if ( PAPI_OK != (oops = add_define( t , &defines ) ) ) {
-		  papi_free(foo);
 		  papi_free(line);
 		  if (table)
 		    fclose(table);
