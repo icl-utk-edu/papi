@@ -539,12 +539,23 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 						     0 /* flags */
 						     );
       
+      /* Try to match Linux errors to PAPI errors */
       if ( ctl->events[i].event_fd == -1 ) {
 	 SUBDBG("sys_perf_event_open returned error on event #%d."
 		"  Error: %s\n",
 		i, strerror( errno ) );
-	 if (errno == EPERM) ret = PAPI_EPERM;
-	 else ret = PAPI_ECNFLCT;
+
+	 if (errno == EPERM) {
+            ret = PAPI_EPERM;
+	 }
+	 else if (errno == ENOENT) {
+	    /* There are a lot of varied reasons for getting ENOENT */
+	    /* So this might not be the right mapping */
+	    ret = PAPI_ENOEVNT;
+	 }
+	 else { 
+            ret = PAPI_ECNFLCT;
+	 }
 	 goto open_pe_cleanup;
       }
 
