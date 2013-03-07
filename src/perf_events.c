@@ -545,16 +545,33 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 		"  Error: %s\n",
 		i, strerror( errno ) );
 
-	 if (errno == EPERM) {
-            ret = PAPI_EPERM;
-	 }
-	 else if (errno == ENOENT) {
-	    /* There are a lot of varied reasons for getting ENOENT */
-	    /* So this might not be the right mapping */
-	    ret = PAPI_ENOEVNT;
-	 }
-	 else { 
-            ret = PAPI_ECNFLCT;
+         /* These mappings are approximate.
+            EINVAL in particular can mean lots of different things */
+	 switch(errno) {
+	    case EPERM:
+	    case EACCES:
+                 ret = PAPI_EPERM;
+	         break;
+	    case ENODEV:
+            case EOPNOTSUPP:
+	         ret = PAPI_ENOSUPP;
+                 break;
+	    case ENOENT:
+	         ret = PAPI_ENOEVNT;
+                 break;
+	    case ENOSYS:
+	    case EAGAIN:
+	    case EBUSY:
+	    case E2BIG:
+	         ret = PAPI_ESYS;
+	         break;
+	    case ENOMEM:
+	         ret = PAPI_ENOMEM;
+	         break;
+	    case EINVAL:
+	    default:
+	         ret = PAPI_ECNFLCT;
+                 break;
 	 }
 	 goto open_pe_cleanup;
       }
