@@ -57,12 +57,6 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
    
 	ret =
 		syscall( __NR_perf_event_open, hw_event, pid, cpu, group_fd, flags );
-#if defined(__x86_64__) || defined(__i386__)
-	if ( ret < 0 && ret > -4096 ) {
-		errno = -ret;
-		ret = -1;
-	}
-#endif
 	SUBDBG("Returned %d %d %s\n",ret,
 	       ret<0?errno:0,
 	       ret<0?strerror(errno):" ");
