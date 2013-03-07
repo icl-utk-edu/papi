@@ -16,6 +16,8 @@
 *          memory detection info this file.
 */
 
+#include <dirent.h>
+#include <fcntl.h>
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
@@ -598,6 +600,8 @@ ppc64_get_memory_info( PAPI_hw_info_t * hw_info )
 }
 #endif
 
+
+
 #if defined(__sparc__)
 static int
 sparc_sysfs_cpu_attr( char *name, char **result )
@@ -680,9 +684,9 @@ static int
 sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 {
 	unsigned long long cache_size, cache_line_size;
-	unsigned long long cycles_per_second;
+	/* unsigned long long cycles_per_second; */
 	char maxargs[PAPI_HUGE_STR_LEN];
-	PAPI_mh_tlb_info_t *tlb;
+	/* PAPI_mh_tlb_info_t *tlb; */
 	PAPI_mh_level_t *level;
 	char *s, *t;
 	FILE *f;
@@ -753,7 +757,8 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 	level[1].cache[0].num_lines = cache_size / cache_line_size;
 	level[1].cache[0].associativity = 1;
 
-	tlb = &hw_info->mem_hierarchy.level[0].tlb[0];
+#if 0
+   	tlb = &hw_info->mem_hierarchy.level[0].tlb[0];
 	switch ( _perfmon2_pfm_pmu_type ) {
 	case PFMLIB_SPARC_ULTRA12_PMU:
 		tlb[0].type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_PSEUDO_LRU;
@@ -812,7 +817,7 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 		tlb[1].associativity = SHRT_MAX;
 		break;
 	}
-
+#endif
 	return 0;
 }
 #endif
