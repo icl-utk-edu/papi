@@ -229,11 +229,11 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 		if ( s ) {
 		   strcpy( hwinfo->vendor_string, "ARM" );
 		}
-	     }			
+	     }
 	  }
        }
     }
-	
+
     if ( strlen( hwinfo->vendor_string ) ) {
        decode_vendor_string( hwinfo->vendor_string, &hwinfo->vendor );
     }
@@ -366,17 +366,17 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	/* This is missing from cpuinfo on ARM and MIPS */
      if (*cpuinfo_mhz < 1.0) {
 	rewind( f );
-	
+
 	s = search_cpu_info( f, "BogoMIPS", maxargs );
 	if ((!s) || (sscanf( s + 1, "%f", &mhz ) != 1)) {
-	   PAPIERROR("Mhz detection failed. Please edit file %s at line %d.\n",
+	   INTDBG("Mhz detection failed. Please edit file %s at line %d.\n",
 		     __FILE__,__LINE__);
 	}
 
 	if (hwinfo->vendor == PAPI_VENDOR_MIPS) {
 	    /* MIPS has 2x clock multiplier */
 	    *cpuinfo_mhz = 2*(((int)mhz)+1);
-	
+
 	    /* Also update version info on MIPS */
 	    rewind( f );
 	    s = search_cpu_info( f, "cpu model", maxargs );
@@ -387,7 +387,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	else {
 	    /* In general bogomips is proportional to number of CPUs */
 	    if (hwinfo->totalcpus) {
-	       *cpuinfo_mhz = mhz / hwinfo->totalcpus;
+	       if (mhz!=0) *cpuinfo_mhz = mhz / hwinfo->totalcpus;
 	    }
 	}
      }
