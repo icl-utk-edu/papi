@@ -11,7 +11,7 @@ TESTS = HelloWorld
 cuda_tests: $(TESTS) 
 
 HelloWorld: HelloWorld.o $(UTILOBJS) $(PAPILIB)
-	$(NVCC) $(INCLUDE) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+	$(CC) $(INCLUDE) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 install:
 	@echo "CUDA tests (DATADIR) being installed in: \"$(DATADIR)\""; 

@@ -4,29 +4,28 @@
 
 
 AC_INIT
-AC_ARG_WITH(cuda_incdir,
-            [--with-cuda_incdir=<path> Specify path to CUDA includes],
-            [CUDA_INCDIR=$withval
-             CFLAGS="$CFLAGS -I$withval"],
-            [AC_MSG_ERROR([Component requires path to CUDA includes])])	
+AC_ARG_WITH(cuda_dir,
+		[  --with-cuda-dir=<path>  Specify path to CUDA root directory],
+		[CUDA_DIR=$withval
+		CFLAGS="$CFLAGS -I$withval/include"
+		LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath-link -Wl,$withval/lib64"
+		AC_CHECK_LIB([cudart],  
+			[cudaMalloc], 
+			[],  
+			[AC_MSG_ERROR([CUDA cudart library not found])])],
+		[AC_MSG_ERROR([Component requires path to CUDA root directory])])
 
+AC_ARG_WITH(cupti_dir,
+		[  --with-cupti-dir=<path> Specify path to CuPTI root directory],
+		[CUPTI_DIR=$withval
+		CFLAGS="$CFLAGS -I$withval/include"
+		LDFLAGS="$LDFLAGS -L$CUDA_DIR/lib64 -lcudart  -L$withval/lib64 -lcupti -Wl,-rpath,$CUDA_DIR/lib64  -Wl,-rpath,$withval/lib64"
+		AC_CHECK_LIB([cupti], 
+			[cuptiSubscribe], 
+			[],                         
+			[AC_MSG_ERROR([CuPTI library not found])])],
+		[AC_MSG_ERROR([Component requires path to CuPTI root directory])])	
 
-AC_ARG_WITH(cupti_incdir,
-            [--with-cupti_incdir=<path> Specify path to CuPTI includes],
-            [CUPTI_INCDIR=$withval
-             CFLAGS="$CFLAGS -I$withval"],
-            [AC_MSG_ERROR([Component requires path to CuPTI includes])])	
-
-
-AC_ARG_WITH(cupti_libdir,
-            [--with-cupti_libdir=<path> Specify path to cupti library],
-            [CUPTI_LIBDIR=$withval
-             LDFLAGS="$LDFLAGS -L$withval -lcupti" 
-             AC_CHECK_LIB([cupti], 
-                          [cuptiSubscribe], 
-                          [],				          
-                          [AC_MSG_ERROR([libcupti.a not found])])],
-            [AC_MSG_ERROR([Component requires path to cupti library])])
 
 
 nvcc_version=`nvcc -V 2>&1 | tail -n 1 | awk '{printf $5}'`
@@ -47,7 +46,6 @@ fi
 
 AC_CONFIG_FILES([Makefile.cuda])
 AC_SUBST(CUDA_VERSION)
-AC_SUBST(CUDA_INCDIR)
-AC_SUBST(CUPTI_INCDIR)
-AC_SUBST(CUPTI_LIBDIR)
+AC_SUBST(CUDA_DIR)
+AC_SUBST(CUPTI_DIR)
 AC_OUTPUT
