@@ -271,7 +271,7 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT NVML_INCDIR NVML_LIBDIR CUDA_INCDIR CUDA_LIBDIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT NVML_DIR CUDA_DIR LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -798,10 +798,8 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
---with-nvml_incdir=<path> Specify path to NVML includes
---with-nvml_libdir=<path> Specify path to nvml library
---with-cuda_incdir=<path> Specify path to CUDA includes
---with-cuda_libdir=<path> Specify path to cuda library
+--with-nvml-dir=<path> Specify path to nvml library
+--with-cuda-dir=<path> Specify path to cuda library
 
 Some influential environment variables:
   CC          C compiler command
@@ -1248,18 +1246,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-
-
-# Check whether --with-nvml_incdir or --without-nvml_incdir was given.
-if test "${with_nvml_incdir+set}" = set; then
-  withval="$with_nvml_incdir"
-  NVML_INCDIR=$withval
-             CFLAGS="$CFLAGS -I$withval"
-else
-  { { echo "$as_me:$LINENO: error: Component requires path to NVML includes" >&5
-echo "$as_me: error: Component requires path to NVML includes" >&2;}
-   { (exit 1); exit 1; }; }
-fi;
 
 
 ac_ext=c
@@ -2194,11 +2180,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-# Check whether --with-nvml_libdir or --without-nvml_libdir was given.
-if test "${with_nvml_libdir+set}" = set; then
-  withval="$with_nvml_libdir"
-  NVML_LIBDIR=$withval
-             LDFLAGS="$LDFLAGS -L$withval -lnvidia-ml"
+# Check whether --with-nvml-dir or --without-nvml-dir was given.
+if test "${with_nvml_dir+set}" = set; then
+  withval="$with_nvml_dir"
+  NVML_DIR=$withval
+	     CFLAGS="$CFLAGS -I$withval/include"
+             LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64 -lnvidia-ml"
              echo "$as_me:$LINENO: checking for library containing nvmlInit" >&5
 echo $ECHO_N "checking for library containing nvmlInit... $ECHO_C" >&6
 if test "${ac_cv_search_nvmlInit+set}" = set; then
@@ -2336,29 +2323,19 @@ echo "$as_me: error: Component requires path to nvml library" >&2;}
 fi;
 
 
-# Check whether --with-cuda_incdir or --without-cuda_incdir was given.
-if test "${with_cuda_incdir+set}" = set; then
-  withval="$with_cuda_incdir"
-  CUDA_INCDIR=$withval
-				CFLAGS="$CFLAGS -I$withval"
-else
-  { { echo "$as_me:$LINENO: error: Component requires path to CUDA includes" >&5
-echo "$as_me: error: Component requires path to CUDA includes" >&2;}
-   { (exit 1); exit 1; }; }
-fi;
+# Check whether --with-cuda-dir or --without-cuda-dir was given.
+if test "${with_cuda_dir+set}" = set; then
+  withval="$with_cuda_dir"
+   CUDA_DIR=$withval
+				LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64 -lcudart"
 
-# Check whether --with-cuda_libdir or --without-cuda_libdir was given.
-if test "${with_cuda_libdir+set}" = set; then
-  withval="$with_cuda_libdir"
-   CUDA_LIBDIR=$withval
-				LDFLAGS="$LDFLAGS -L$withval -lcuda"
-				echo "$as_me:$LINENO: checking for library containing cuInit" >&5
-echo $ECHO_N "checking for library containing cuInit... $ECHO_C" >&6
-if test "${ac_cv_search_cuInit+set}" = set; then
+echo "$as_me:$LINENO: checking for cudaMalloc in -lcudart" >&5
+echo $ECHO_N "checking for cudaMalloc in -lcudart... $ECHO_C" >&6
+if test "${ac_cv_lib_cudart_cudaMalloc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_func_search_save_LIBS=$LIBS
-ac_cv_search_cuInit=no
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcudart  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -2372,11 +2349,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char cuInit ();
+char cudaMalloc ();
 int
 main ()
 {
-cuInit ();
+cudaMalloc ();
   ;
   return 0;
 }
@@ -2403,82 +2380,29 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_search_cuInit="none required"
+  ac_cv_lib_cudart_cudaMalloc=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+ac_cv_lib_cudart_cudaMalloc=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-if test "$ac_cv_search_cuInit" = no; then
-  for ac_lib in cuda; do
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-    cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_cudart_cudaMalloc" >&5
+echo "${ECHO_T}$ac_cv_lib_cudart_cudaMalloc" >&6
+if test $ac_cv_lib_cudart_cudaMalloc = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBCUDART 1
 _ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char cuInit ();
-int
-main ()
-{
-cuInit ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_search_cuInit="-l$ac_lib"
-break
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-  done
-fi
-LIBS=$ac_func_search_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_search_cuInit" >&5
-echo "${ECHO_T}$ac_cv_search_cuInit" >&6
-if test "$ac_cv_search_cuInit" != no; then
-  test "$ac_cv_search_cuInit" = "none required" || LIBS="$ac_cv_search_cuInit $LIBS"
+  LIBS="-lcudart $LIBS"
 
 else
-  { { echo "$as_me:$LINENO: error: libcuda.so not found!" >&5
-echo "$as_me: error: libcuda.so not found!" >&2;}
+  { { echo "$as_me:$LINENO: error: CUDA cudart library not found!" >&5
+echo "$as_me: error: CUDA cudart library not found!" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -2489,8 +2413,6 @@ echo "$as_me: error: Component requires path to cuda library." >&2;}
 fi;
 
           ac_config_files="$ac_config_files Makefile.nvml"
-
-
 
 
 
@@ -3135,10 +3057,8 @@ s,@CPPFLAGS@,$CPPFLAGS,;t t
 s,@ac_ct_CC@,$ac_ct_CC,;t t
 s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
-s,@NVML_INCDIR@,$NVML_INCDIR,;t t
-s,@NVML_LIBDIR@,$NVML_LIBDIR,;t t
-s,@CUDA_INCDIR@,$CUDA_INCDIR,;t t
-s,@CUDA_LIBDIR@,$CUDA_LIBDIR,;t t
+s,@NVML_DIR@,$NVML_DIR,;t t
+s,@CUDA_DIR@,$CUDA_DIR,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

@@ -2,8 +2,8 @@ include components/nvml/Makefile.nvml
 
 COMPSRCS += components/nvml/linux-nvml.c
 COMPOBJS += linux-nvml.o
-CFLAGS +=  -I$(NVML_INCDIR) -I$(CUDA_INCDIR)
-LDFLAGS += -L$(NVML_LIBDIR) -L$(CUDA_LIBDIR) -lnvidia-ml -lcuda -lcudart
+CFLAGS +=  -I$(NVML_DIR)/include -I$(CUDA_DIR)/include
+LDFLAGS += -L$(NVML_DIR)/lib64 -L$(CUDA_DIR)/lib64 -Wl,-rpath,$(NVML_DIR)/lib64 -Wl,-rpath,$(CUDA_DIR)/lib64 -lnvidia-ml -lcuda -lcudart
 
 linux-nvml.o: components/nvml/linux-nvml.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/nvml/linux-nvml.c -o linux-nvml.o
