@@ -50,13 +50,18 @@ typedef struct IOUNIT_reg_alloc
 	IOUNIT_register_t ra_bits;
 } IOUNIT_reg_alloc_t;
 
+typedef struct IOUNIT_overflow
+{
+  	int threshold;
+	int EventIndex;
+} IOUNIT_overflow_t;
 
 typedef struct IOUNIT_control_state
 {
 	int EventGroup;
 	int overflow;				// overflow enable
-	int overflow_threshold;
-	int overflow_EventIndex;		
+    int overflow_count;
+    IOUNIT_overflow_t overflow_list[512];
 	long long counts[IOUNIT_MAX_COUNTERS];
 } IOUNIT_control_state_t;
 

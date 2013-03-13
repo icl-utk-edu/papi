@@ -69,6 +69,12 @@ typedef struct bgq_context
 	int reserved;
 } bgq_context_t;
 
+typedef struct bgq_overflow
+{
+  	int threshold;
+	int EventIndex;
+} bgq_overflow_t;
+
 // Control state structure...  Holds local copy of read counters...
 typedef struct bgq_control_state
 {
@@ -78,8 +84,8 @@ typedef struct bgq_control_state
 	long_long counters[BGQ_PUNIT_MAX_COUNTERS];
 	int muxOn;					// multiplexing on or off flag
 	int overflow;				// overflow enable
-	int overflow_threshold;
-	int overflow_EventIndex;
+    int overflow_count;
+    bgq_overflow_t overflow_list[512];
 	int bgpm_eventset_applied;	// BGPM eventGroup applied yes or no flag
 } bgq_control_state_t;
 
