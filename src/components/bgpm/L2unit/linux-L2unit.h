@@ -50,6 +50,11 @@ typedef struct L2UNIT_reg_alloc
 	L2UNIT_register_t ra_bits;
 } L2UNIT_reg_alloc_t;
 
+typedef struct L2UNIT_overflow
+{
+  	int threshold;
+	int EventIndex;
+} L2UNIT_overflow_t;
 
 /* Holds control flags */
 typedef struct L2UNIT_control_state
@@ -59,8 +64,8 @@ typedef struct L2UNIT_control_state
 	int count;
 	long long counters[L2UNIT_MAX_COUNTERS];
 	int overflow;				// overflow enable
-	int overflow_threshold;
-	int overflow_EventIndex;	
+    int overflow_count;
+    L2UNIT_overflow_t overflow_list[512];
 	int bgpm_eventset_applied;	// BGPM eventGroup applied yes or no flag
 } L2UNIT_control_state_t;
 

@@ -82,8 +82,7 @@ L2UNIT_init_control_state( hwd_control_state_t * ptr )
 
 	// initialize overflow flag to OFF (0)
 	this_state->overflow = 0;
-	this_state->overflow_threshold = 0;
-	this_state->overflow_EventIndex = 0;	
+    this_state->overflow_count = 0;
 	// initialized BGPM eventGroup flag to NOT applied yet (0)
 	this_state->bgpm_eventset_applied = 0;
 
@@ -328,8 +327,9 @@ L2UNIT_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	}
 	else {
 		this_state->overflow = 1;
-		this_state->overflow_threshold = threshold;
-		this_state->overflow_EventIndex = evt_idx;
+        this_state->overflow_count++;
+		this_state->overflow_list[this_state->overflow_count-1].threshold = threshold;
+		this_state->overflow_list[this_state->overflow_count-1].EventIndex = evt_idx;
 		
 #ifdef DEBUG_BGQ
 		printf( "L2UNIT_set_overflow: Enable the signal handler\n" );
@@ -341,10 +341,10 @@ L2UNIT_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		if ( retval != PAPI_OK )
 			return ( retval );
 
-		_common_set_overflow_BGPM( this_state->EventGroup, 
-								  this_state->overflow_EventIndex, 
-								  this_state->overflow_threshold,
-								  user_signal_handler_L2UNIT );
+        _common_set_overflow_BGPM( this_state->EventGroup,
+                                  this_state->overflow_list[this_state->overflow_count-1].EventIndex,
+                                  this_state->overflow_list[this_state->overflow_count-1].threshold,
+                                  user_signal_handler_L2UNIT );
 	}
 	
 	return ( PAPI_OK );
@@ -390,8 +390,7 @@ L2UNIT_cleanup_eventset( hwd_control_state_t * ctrl )
 
 	// set overflow flag to OFF (0)
 	this_state->overflow = 0;
-	this_state->overflow_threshold = 0;
-	this_state->overflow_EventIndex = 0;	
+    this_state->overflow_count = 0;
 	// set BGPM eventGroup flag back to NOT applied yet (0)
 	this_state->bgpm_eventset_applied = 0;
 	
@@ -412,7 +411,7 @@ L2UNIT_update_control_state( hwd_control_state_t * ptr,
 #endif	
 	
 	( void ) ctx;
-	int retval, index, i;
+	int retval, index, i, k;
 	L2UNIT_control_state_t * this_state = ( L2UNIT_control_state_t * ) ptr;
 	
 	// Delete and re-create BGPM eventset
@@ -445,14 +444,16 @@ L2UNIT_update_control_state( hwd_control_state_t * ptr,
 	// store how many events we added to an EventSet
 	this_state->count = count;
 
-	// since update_control_state trashes overflow settings, this puts things
-	// back into balance for BGPM 
-	if ( 1 == this_state->overflow ) {
-		_common_set_overflow_BGPM( this_state->EventGroup, 
-								  this_state->overflow_EventIndex, 
-								  this_state->overflow_threshold,
-								  user_signal_handler_L2UNIT );
-	}
+    // since update_control_state trashes overflow settings, this puts things
+    // back into balance for BGPM
+    if ( 1 == this_state->overflow ) {
+        for ( k = 0; k < this_state->overflow_count; k++ ) {
+            _common_set_overflow_BGPM( this_state->EventGroup,
+                                      this_state->overflow_list[k].EventIndex,
+                                      this_state->overflow_list[k].threshold,
+                                      user_signal_handler_L2UNIT );
+        }
+    }
 	
 	return ( PAPI_OK );
 }
