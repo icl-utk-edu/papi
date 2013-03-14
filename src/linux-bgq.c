@@ -770,10 +770,10 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	 * and rebuild as it was prior to deletion
 	 */
 #ifdef DEBUG_BGQ
-	printf( "_bgq_set_overflow: bgpm_eventset_applied = %d\n",
-		    this_state->bgpm_eventset_applied );
+	printf( "_bgq_set_overflow: bgpm_eventset_applied = %d, threshold = %d\n",
+		    this_state->bgpm_eventset_applied, threshold );
 #endif	
-	if ( 1 == this_state->bgpm_eventset_applied ) {
+	if ( 1 == this_state->bgpm_eventset_applied && 0 != threshold ) {
 		_common_deleteRecreate( &this_state->EventGroup );
 		_common_rebuildEventgroup( this_state->count,
 								   this_state->EventGroup_local,
