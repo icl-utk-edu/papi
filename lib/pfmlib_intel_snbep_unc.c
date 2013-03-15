@@ -109,6 +109,85 @@ get_pcu_filt_band(void *this, pfm_snbep_unc_reg_t reg)
 	return reg.pcu.unc_event - PCU_FREQ_BAND0_CODE;
 }
 
+int
+snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
+			   unsigned int msk,
+			   uint64_t *umask,
+			   pfm_snbep_unc_reg_t *filter,
+			   unsigned int max_grpid)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	const intel_x86_entry_t *ent;
+	unsigned int i;
+	int j, k, added, skip;
+	int idx;
+
+	k = e->nattrs;
+	ent = pe+e->event;
+
+	for(i=0; msk; msk >>=1, i++) {
+
+		if (!(msk & 0x1))
+			continue;
+
+		added = skip = 0;
+
+		for (j = 0; j < e->npattrs; j++) {
+			if (e->pattrs[j].ctrl != PFM_ATTR_CTRL_PMU)
+				continue;
+
+			if (e->pattrs[j].type != PFM_ATTR_UMASK)
+				continue;
+
+			idx = e->pattrs[j].idx;
+
+			if (ent->umasks[idx].grpid != i)
+				continue;
+
+			if (max_grpid != INTEL_X86_MAX_GRPID && i > max_grpid) {
+				skip = 1;
+				continue;
+			}
+
+			/* umask is default for group */
+			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_DFL)) {
+				DPRINT("added default %s for group %d j=%d idx=%d\n", ent->umasks[idx].uname, i, j, idx);
+				/*
+				 * default could be an alias, but
+				 * ucode must reflect actual code
+				 */
+				*umask |= ent->umasks[idx].ucode >> 8;
+				filter->val |= pe[e->event].umasks[idx].ufilters[0];
+
+				e->attrs[k].id = j; /* pattrs index */
+				e->attrs[k].ival = 0;
+				k++;
+
+				added++;
+				if (intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL))
+					goto done;
+
+				if (intel_x86_uflag(this, e->event, idx, INTEL_X86_EXCL_GRP_GT)) {
+					if (max_grpid != INTEL_X86_MAX_GRPID) {
+						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[idx].grpid);
+						return PFM_ERR_UMASK;
+					}
+					max_grpid = ent->umasks[idx].grpid;
+				}
+			}
+		}
+		if (!added && !skip) {
+			DPRINT("no default found for event %s unit mask group %d (max_grpid=%d)\n", ent->name, i, max_grpid);
+			return PFM_ERR_UMASK;
+		}
+	}
+	DPRINT("max_grpid=%d nattrs=%d k=%d\n", max_grpid, e->nattrs, k);
+done:
+	e->nattrs = k;
+	return PFM_SUCCESS;
+}
+
+
 /*
  * common encoding routine
  */
@@ -221,10 +300,8 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			last_grpid = grpid;
 
 			um = pe[e->event].umasks[a->idx].ucode;
-			if (um & ~((1ULL << 32)-1)) {
-				filter.val |= um >> 32;
-				um &= (1ULL << 32) - 1;
-			}
+			filter.val |= pe[e->event].umasks[a->idx].ufilters[0];
+
 			um >>= 8;
 			umask2  |= um;
 			ugrpmsk |= 1 << pe[e->event].umasks[a->idx].grpid;
@@ -334,15 +411,9 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	if (pe[e->event].numasks && (ugrpmsk != grpmsk || ugrpmsk == 0)) {
 		uint64_t um = 0;
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &um, max_grpid);
+		ret = snbep_unc_add_defaults(this, e, ugrpmsk, &um, &filter, max_grpid);
 		if (ret != PFM_SUCCESS)
 			return ret;
-
-		/* handles filter encoding in umasks */
-		if (um & ~((1ULL << (32-8))-1)) {
-			filter.val |= um >> (32-8);
-			um &= (1ULL << (32-8)) - 1;
-		}
 		um >>= 8;
 		umask2 = um;
 	}

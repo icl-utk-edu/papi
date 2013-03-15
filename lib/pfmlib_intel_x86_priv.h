@@ -34,6 +34,7 @@
  * maximum number of unit masks groups per event
  */
 #define INTEL_X86_NUM_GRP	8
+#define INTEL_X86_MAX_FILTERS	2
 
 /*
  * unit mask description
@@ -44,6 +45,7 @@ typedef struct {
 	const char		*uequiv;/* name of event from which this one is derived, NULL if none */
 	uint64_t		ucntmsk;/* supported counters for umask (if set, supersedes cntmsk) */
 	uint64_t		ucode;  /* unit mask code */
+	uint64_t		ufilters[INTEL_X86_MAX_FILTERS]; /* extra encoding for event */
 	unsigned int		uflags;	/* unit mask flags */
 	unsigned int		umodel; /* only available on this PMU model */
 	unsigned int		grpid;	/* unit mask group id */
