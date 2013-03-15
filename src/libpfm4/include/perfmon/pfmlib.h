@@ -180,6 +180,8 @@ typedef enum {
 
 	PFM_PMU_S390X_CPUM_CF,		/* s390x: CPU-M counter facility */
 
+	PFM_PMU_ARM_1176,		/* ARM 1176 */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

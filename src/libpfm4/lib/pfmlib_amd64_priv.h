@@ -196,6 +196,7 @@ typedef union {
 #define sel_host	perfsel.sel_host
 
 #define IS_FAMILY_10H(p) (((pfmlib_pmu_t *)(p))->pmu_rev >= AMD64_FAM10H)
+#define IS_FAMILY_15H(p) (((pfmlib_pmu_t *)(p))->pmu == PFM_PMU_AMD64_FAM15H_INTERLAGOS)
 
 extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_amd64_get_event_first(void *this);

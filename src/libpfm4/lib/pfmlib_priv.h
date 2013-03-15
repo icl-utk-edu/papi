@@ -130,6 +130,7 @@ typedef struct pfmlib_pmu {
 	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 	int		 (*validate_table)(void *this, FILE *fp);
 	int 		 (*get_num_events)(void *this);	/* optional */
+	void		 (*display_reg)(void *this, pfmlib_event_desc_t *e, void *val); /* optional */
 } pfmlib_pmu_t;
 
 typedef struct {
@@ -274,6 +275,7 @@ extern pfmlib_pmu_t intel_wsm_unc_support;
 extern pfmlib_pmu_t arm_cortex_a8_support;
 extern pfmlib_pmu_t arm_cortex_a9_support;
 extern pfmlib_pmu_t arm_cortex_a15_support;
+extern pfmlib_pmu_t arm_1176_support;
 extern pfmlib_pmu_t mips_74k_support;
 extern pfmlib_pmu_t s390x_cpum_cf_support;
 

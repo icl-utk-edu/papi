@@ -28,7 +28,7 @@
 #define CBO_FILT_MESIF(a, b, c, d) \
    { .uname  = "STATE_"#a,\
      .udesc  = #b" cacheline state",\
-     .ucode = 1ULL << (32 + 18 + (c)),\
+     .ufilters[0] = 1ULL << (18 + (c)),\
      .grpid = d, \
    }
 
@@ -40,7 +40,7 @@
    CBO_FILT_MESIF(F, Forward, 4, d), \
    { .uname  = "STATE_MESIF",\
      .udesc  = "Any cache line state",\
-     .ucode = 0x1fULL << (32 + 18),\
+     .ufilters[0] = 0x1fULL << 18,\
      .grpid = d, \
      .uflags = INTEL_X86_NCOMBO | INTEL_X86_DFL, \
    }
@@ -48,115 +48,115 @@
 #define CBO_FILT_OPC(d) \
    { .uname  = "OPC_RFO",\
      .udesc  = "Demand data RFO (combine with any OPCODE umask)",\
-     .ucode = 0x180ULL << (32 + 23), \
+     .ufilters[0] = 0x180ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_CRD",\
      .udesc  = "Demand code read (combine with any OPCODE umask)",\
-     .ucode = 0x181ULL << (32 + 23), \
+     .ufilters[0] = 0x181ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_DRD",\
      .udesc  = "Demand data read (combine with any OPCODE umask)",\
-     .ucode = 0x182ULL << (32 + 23), \
+     .ufilters[0] = 0x182ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PRD",\
      .udesc  = "Partial reads (UC) (combine with any OPCODE umask)",\
-     .ucode = 0x187ULL << (32 + 23), \
+     .ufilters[0] = 0x187ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_WCILF",\
      .udesc  = "Full Stream store (combine with any OPCODE umask)", \
-     .ucode = 0x18cULL << (32 + 23), \
+     .ufilters[0] = 0x18cULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_WCIL",\
      .udesc  = "Partial Stream store (combine with any OPCODE umask)", \
-     .ucode = 0x18dULL << (32 + 23), \
+     .ufilters[0] = 0x18dULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PF_RFO",\
      .udesc  = "Prefetch RFO into LLC but do not pass to L2 (includes hints) (combine with any OPCODE umask)", \
-     .ucode = 0x190ULL << (32 + 23), \
+     .ufilters[0] = 0x190ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PF_CODE",\
      .udesc  = "Prefetch code into LLC but do not pass to L2 (includes hints) (combine with any OPCODE umask)", \
-     .ucode = 0x191ULL << (32 + 23), \
+     .ufilters[0] = 0x191ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PF_DATA",\
      .udesc  = "Prefetch data into LLC but do not pass to L2 (includes hints) (combine with any OPCODE umask)", \
-     .ucode = 0x192ULL << (32 + 23), \
+     .ufilters[0] = 0x192ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PCIWILF",\
      .udesc  = "PCIe write (non-allocating) (combine with any OPCODE umask)", \
-     .ucode = 0x194ULL << (32 + 23), \
+     .ufilters[0] = 0x194ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PCIPRD",\
      .udesc  = "PCIe UC read (combine with any OPCODE umask)", \
-     .ucode = 0x195ULL << (32 + 23), \
+     .ufilters[0] = 0x195ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PCIITOM",\
      .udesc  = "PCIe write (allocating) (combine with any OPCODE umask)", \
-     .ucode = 0x19cULL << (32 + 23), \
+     .ufilters[0] = 0x19cULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PCIRDCUR",\
      .udesc  = "PCIe read current (combine with any OPCODE umask)", \
-     .ucode = 0x19eULL << (32 + 23), \
+     .ufilters[0] = 0x19eULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_WBMTOI",\
      .udesc  = "Request writeback modified invalidate line (combine with any OPCODE umask)", \
-     .ucode = 0x1c4ULL << (32 + 23), \
+     .ufilters[0] = 0x1c4ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_WBMTOE",\
      .udesc  = "Request writeback modified set to exclusive (combine with any OPCODE umask)", \
-     .ucode = 0x1c5ULL << (32 + 23), \
+     .ufilters[0] = 0x1c5ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_ITOM",\
      .udesc  = "Request invalidate line (combine with any OPCODE umask)", \
-     .ucode = 0x1c8ULL << (32 + 23), \
+     .ufilters[0] = 0x1c8ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PCINSRD",\
      .udesc  = "PCIe non-snoop read (combine with any OPCODE umask)", \
-     .ucode = 0x1e4ULL << (32 + 23), \
+     .ufilters[0] = 0x1e4ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PCINSWR",\
      .udesc  = "PCIe non-snoop write (partial) (combine with any OPCODE umask)", \
-     .ucode = 0x1e5ULL << (32 + 23), \
+     .ufilters[0] = 0x1e5ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }, \
    { .uname  = "OPC_PCINSWRF",\
      .udesc  = "PCIe non-snoop write (full) (combine with any OPCODE umask)", \
-     .ucode = 0x1e6ULL << (32 + 23), \
+     .ufilters[0] = 0x1e6ULL << 23, \
      .uflags = INTEL_X86_NCOMBO, \
      .grpid = d, \
    }

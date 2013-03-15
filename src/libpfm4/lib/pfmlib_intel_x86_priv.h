@@ -34,6 +34,7 @@
  * maximum number of unit masks groups per event
  */
 #define INTEL_X86_NUM_GRP	8
+#define INTEL_X86_MAX_FILTERS	2
 
 /*
  * unit mask description
@@ -44,6 +45,7 @@ typedef struct {
 	const char		*uequiv;/* name of event from which this one is derived, NULL if none */
 	uint64_t		ucntmsk;/* supported counters for umask (if set, supersedes cntmsk) */
 	uint64_t		ucode;  /* unit mask code */
+	uint64_t		ufilters[INTEL_X86_MAX_FILTERS]; /* extra encoding for event */
 	unsigned int		uflags;	/* unit mask flags */
 	unsigned int		umodel; /* only available on this PMU model */
 	unsigned int		grpid;	/* unit mask group id */
@@ -83,6 +85,7 @@ typedef struct {
 #define INTEL_X86_FIXED			0x80	/* fixed counter only event */
 #define INTEL_X86_NO_AUTOENCODE		0x100	/* does not support auto encoding validation */
 #define INTEL_X86_CODE_OVERRIDE		0x200	/* umask overrides event code */
+#define INTEL_X86_LDLAT			0x400	/* needs load latency modifier (ldlat) */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -138,12 +141,14 @@ typedef union pfm_intel_x86_reg {
 		unsigned long reserved2:32;	/* reserved */
 	} nhm_lbr_select;
 } pfm_intel_x86_reg_t;
+
 #define INTEL_X86_ATTR_K	0 /* kernel (0) */
 #define INTEL_X86_ATTR_U	1 /* user (1, 2, 3) */
 #define INTEL_X86_ATTR_E	2 /* edge */
 #define INTEL_X86_ATTR_I	3 /* invert */
 #define INTEL_X86_ATTR_C	4 /* counter mask */
 #define INTEL_X86_ATTR_T	5 /* any thread */
+#define INTEL_X86_ATTR_LDLAT	6 /* load latency threshold */
 
 #define _INTEL_X86_ATTR_U  (1 << INTEL_X86_ATTR_U)
 #define _INTEL_X86_ATTR_K  (1 << INTEL_X86_ATTR_K)
@@ -151,6 +156,7 @@ typedef union pfm_intel_x86_reg {
 #define _INTEL_X86_ATTR_E  (1 << INTEL_X86_ATTR_E)
 #define _INTEL_X86_ATTR_C  (1 << INTEL_X86_ATTR_C)
 #define _INTEL_X86_ATTR_T  (1 << INTEL_X86_ATTR_T)
+#define _INTEL_X86_ATTR_LDLAT  (1 << INTEL_X86_ATTR_LDLAT)
 
 #define INTEL_X86_ATTRS \
 	(_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E|_INTEL_X86_ATTR_C|_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)

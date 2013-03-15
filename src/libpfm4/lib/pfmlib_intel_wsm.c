@@ -104,6 +104,7 @@ pfmlib_pmu_t intel_wsm_sp_support={
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 	PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
+	.can_auto_encode	= pfm_intel_x86_can_auto_encode,
 };
 
 pfmlib_pmu_t intel_wsm_dp_support={
@@ -134,4 +135,5 @@ pfmlib_pmu_t intel_wsm_dp_support={
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 	PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
+	.can_auto_encode	= pfm_intel_x86_can_auto_encode,
 };

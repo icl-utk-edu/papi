@@ -90,6 +90,7 @@ typedef struct {
 #define PV_970FX	0x003C
 #define PV_POWER6	0x003E
 #define PV_POWER7	0x003F
+#define PV_POWER7p	0x004a
 #define PV_970MP	0x0044
 #define PV_970GX	0x0045
 

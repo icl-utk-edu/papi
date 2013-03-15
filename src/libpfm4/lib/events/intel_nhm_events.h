@@ -1077,9 +1077,9 @@ static const intel_x86_umask_t nhm_memory_disambiguation[]={
 
 static const intel_x86_umask_t nhm_mem_inst_retired[]={
    { .uname  = "LATENCY_ABOVE_THRESHOLD",
-     .udesc  = "Memory instructions retired above programmed clocks, minimum value threhold is 4, requires PEBS",
+     .udesc  = "Memory instructions retired above programmed clocks, minimum threshold value is 3, (Precise Event and ldlat required)",
      .ucode = 0x1000,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS | INTEL_X86_LDLAT | INTEL_X86_NO_AUTOENCODE,
    },
    { .uname  = "LOADS",
      .udesc  = "Instructions retired which contains a load (Precise Event)",
@@ -2294,7 +2294,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 },
 { .name   = "MEM_INST_RETIRED",
   .desc   = "Memory instructions retired",
-  .modmsk = INTEL_V3_ATTRS,
+  .modmsk = INTEL_V3_ATTRS | _INTEL_X86_ATTR_LDLAT,
   .cntmsk = 0xf,
   .code = 0xb,
   .flags= INTEL_X86_PEBS,

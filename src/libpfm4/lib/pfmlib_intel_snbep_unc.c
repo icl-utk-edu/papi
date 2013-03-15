@@ -66,182 +66,40 @@ pfm_intel_snbep_unc_detect(void *this)
 }
 
 static void
-display_cbox(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
+display_com(void *this, pfmlib_event_desc_t *e, void *val)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_snbep_unc_reg_t f;
+	pfm_snbep_unc_reg_t *reg = val;
 
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
-		       "inv=%d edge=%d thres=%d tid_en=%d] %s\n",
-			msg,
-			reg.val,
-			reg.cbo.unc_event,
-			reg.cbo.unc_umask,
-			reg.cbo.unc_en,
-			reg.cbo.unc_inv,
-			reg.cbo.unc_edge,
-			reg.cbo.unc_thres,
-			reg.cbo.unc_tid,
-			pe[e->event].name);
-
-	if (e->count == 1)
-		return;
-
-	f.val = e->codes[1];
-
-	__pfm_vbprintf("[UNC_CBOX_FILTER=0x%"PRIx64" tid=%d core=0x%x nid=0x%x"
-		       " state=0x%x opc=0x%x]\n",
-			f.val,
-			f.cbo_filt.tid,
-			f.cbo_filt.cid,
-			f.cbo_filt.nid,
-			f.cbo_filt.state,
-			f.cbo_filt.opc);
-}
-
-static void
-display_com(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
+	__pfm_vbprintf("[UNC=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
 		       "inv=%d edge=%d thres=%d] %s\n",
-			msg,
-			reg.val,
-			reg.com.unc_event,
-			reg.com.unc_umask,
-			reg.com.unc_en,
-			reg.com.unc_inv,
-			reg.com.unc_edge,
-			reg.com.unc_thres,
+			reg->val,
+			reg->com.unc_event,
+			reg->com.unc_umask,
+			reg->com.unc_en,
+			reg->com.unc_inv,
+			reg->com.unc_edge,
+			reg->com.unc_thres,
 			pe[e->event].name);
 }
-
-static void
-display_qpi(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x sel_ext=%d umask=0x%x en=%d "
-		       "inv=%d edge=%d thres=%d] %s\n",
-			msg,
-			reg.val,
-			reg.qpi.unc_event,
-			reg.qpi.unc_event_ext,
-			reg.qpi.unc_umask,
-			reg.qpi.unc_en,
-			reg.qpi.unc_inv,
-			reg.qpi.unc_edge,
-			reg.qpi.unc_thres,
-			pe[e->event].name);
-}
-
-static void
-display_pcu(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_snbep_unc_reg_t f;
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x occ_sel=0x%x en=%d "
-			"inv=%d edge=%d thres=%d occ_inv=%d occ_edge=%d] %s\n",
-			msg,
-			reg.val,
-			reg.pcu.unc_event,
-			reg.pcu.unc_occ,
-			reg.pcu.unc_en,
-			reg.pcu.unc_inv,
-			reg.pcu.unc_edge,
-			reg.pcu.unc_thres,
-			reg.pcu.unc_occ_inv,
-			reg.pcu.unc_occ_edge,
-			pe[e->event].name);
-
-	if (e->count == 1)
-		return;
-
-	f.val = e->codes[1];
-
-	__pfm_vbprintf("[UNC_PCU_FILTER=0x%"PRIx64" band0=%u band1=%u band2=%u band3=%u]\n",
-			f.val,
-			f.pcu_filt.filt0,
-			f.pcu_filt.filt1,
-			f.pcu_filt.filt2,
-			f.pcu_filt.filt3);
-}
-
-static void
-display_ha(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_snbep_unc_reg_t f;
-
-	__pfm_vbprintf("[UNC_%s=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
-		       "inv=%d edge=%d thres=%d] %s\n",
-			msg,
-			reg.val,
-			reg.com.unc_event,
-			reg.com.unc_umask,
-			reg.com.unc_en,
-			reg.com.unc_inv,
-			reg.com.unc_edge,
-			reg.com.unc_thres,
-			pe[e->event].name);
-
-	if (e->count == 1)
-		return;
-
-	f.val = e->codes[1];
-	__pfm_vbprintf("[UNC_HA_ADDR=0x%"PRIx64" lo_addr=0x%x hi_addr=0x%x]\n",
-			f.val,
-			f.ha_addr.lo_addr,
-			f.ha_addr.hi_addr);
-
-	f.val = e->codes[2];
-	__pfm_vbprintf("[UNC_HA_OPC=0x%"PRIx64" opc=0x%x]\n", f.val, f.ha_opc.opc);
-}
-
-
-
-#define SNBEP_UNC_DISP(a, b) { .name = a, .disp = b }
-static const struct {
-	const char *name;
-	void (*disp)(void *this, const char *msg, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg);
-} snbep_unc_disp[] = {
-	SNBEP_UNC_DISP("CBOX0", display_cbox),
-	SNBEP_UNC_DISP("CBOX1", display_cbox),
-	SNBEP_UNC_DISP("CBOX2", display_cbox),
-	SNBEP_UNC_DISP("CBOX3", display_cbox),
-	SNBEP_UNC_DISP("CBOX4", display_cbox),
-	SNBEP_UNC_DISP("CBOX5", display_cbox),
-	SNBEP_UNC_DISP("CBOX6", display_cbox),
-	SNBEP_UNC_DISP("CBOX7", display_cbox),
-	SNBEP_UNC_DISP("HA", display_ha),
-	SNBEP_UNC_DISP("IMC0", display_com),
-	SNBEP_UNC_DISP("IMC1", display_com),
-	SNBEP_UNC_DISP("IMC2", display_com),
-	SNBEP_UNC_DISP("IMC3", display_com),
-	SNBEP_UNC_DISP("PCU", display_pcu),
-	SNBEP_UNC_DISP("QPI0", display_qpi),
-	SNBEP_UNC_DISP("QPI1", display_qpi),
-	SNBEP_UNC_DISP("UBOX", display_com),
-	SNBEP_UNC_DISP("R2PCIE", display_com),
-	SNBEP_UNC_DISP("R3QPI0", display_com),
-	SNBEP_UNC_DISP("R3QPI1", display_com),
-};
 
 static void
 display_reg(void *this, pfmlib_event_desc_t *e, pfm_snbep_unc_reg_t reg)
 {
 	pfmlib_pmu_t *pmu = this;
-	int idx = pmu->pmu - PFM_PMU_INTEL_SNBEP_UNC_CB0;
-	snbep_unc_disp[idx].disp(this, snbep_unc_disp[idx].name, e, reg);
+	if (pmu->display_reg)
+		pmu->display_reg(this, e, &reg);
+	else
+		display_com(this, e, &reg);
 }
 
 static inline int
 is_occ_event(void *this, int idx)
 {
+	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
-	return pe[idx].code & 0x80;
+
+	return (pmu->flags & INTEL_PMU_FL_UNC_OCC) && (pe[idx].code & 0x80);
 }
 
 static inline int
@@ -250,6 +108,85 @@ get_pcu_filt_band(void *this, pfm_snbep_unc_reg_t reg)
 #define PCU_FREQ_BAND0_CODE	0xb /* event code for UNC_P_FREQ_BAND0_CYCLES */
 	return reg.pcu.unc_event - PCU_FREQ_BAND0_CODE;
 }
+
+int
+snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
+			   unsigned int msk,
+			   uint64_t *umask,
+			   pfm_snbep_unc_reg_t *filter,
+			   unsigned int max_grpid)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	const intel_x86_entry_t *ent;
+	unsigned int i;
+	int j, k, added, skip;
+	int idx;
+
+	k = e->nattrs;
+	ent = pe+e->event;
+
+	for(i=0; msk; msk >>=1, i++) {
+
+		if (!(msk & 0x1))
+			continue;
+
+		added = skip = 0;
+
+		for (j = 0; j < e->npattrs; j++) {
+			if (e->pattrs[j].ctrl != PFM_ATTR_CTRL_PMU)
+				continue;
+
+			if (e->pattrs[j].type != PFM_ATTR_UMASK)
+				continue;
+
+			idx = e->pattrs[j].idx;
+
+			if (ent->umasks[idx].grpid != i)
+				continue;
+
+			if (max_grpid != INTEL_X86_MAX_GRPID && i > max_grpid) {
+				skip = 1;
+				continue;
+			}
+
+			/* umask is default for group */
+			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_DFL)) {
+				DPRINT("added default %s for group %d j=%d idx=%d\n", ent->umasks[idx].uname, i, j, idx);
+				/*
+				 * default could be an alias, but
+				 * ucode must reflect actual code
+				 */
+				*umask |= ent->umasks[idx].ucode >> 8;
+				filter->val |= pe[e->event].umasks[idx].ufilters[0];
+
+				e->attrs[k].id = j; /* pattrs index */
+				e->attrs[k].ival = 0;
+				k++;
+
+				added++;
+				if (intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL))
+					goto done;
+
+				if (intel_x86_uflag(this, e->event, idx, INTEL_X86_EXCL_GRP_GT)) {
+					if (max_grpid != INTEL_X86_MAX_GRPID) {
+						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[idx].grpid);
+						return PFM_ERR_UMASK;
+					}
+					max_grpid = ent->umasks[idx].grpid;
+				}
+			}
+		}
+		if (!added && !skip) {
+			DPRINT("no default found for event %s unit mask group %d (max_grpid=%d)\n", ent->name, i, max_grpid);
+			return PFM_ERR_UMASK;
+		}
+	}
+	DPRINT("max_grpid=%d nattrs=%d k=%d\n", max_grpid, e->nattrs, k);
+done:
+	e->nattrs = k;
+	return PFM_SUCCESS;
+}
+
 
 /*
  * common encoding routine
@@ -363,10 +300,8 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			last_grpid = grpid;
 
 			um = pe[e->event].umasks[a->idx].ucode;
-			if (um & ~((1ULL << 32)-1)) {
-				filter.val |= um >> 32;
-				um &= (1ULL << 32) - 1;
-			}
+			filter.val |= pe[e->event].umasks[a->idx].ufilters[0];
+
 			um >>= 8;
 			umask2  |= um;
 			ugrpmsk |= 1 << pe[e->event].umasks[a->idx].grpid;
@@ -476,15 +411,9 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	if (pe[e->event].numasks && (ugrpmsk != grpmsk || ugrpmsk == 0)) {
 		uint64_t um = 0;
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &um, max_grpid);
+		ret = snbep_unc_add_defaults(this, e, ugrpmsk, &um, &filter, max_grpid);
 		if (ret != PFM_SUCCESS)
 			return ret;
-
-		/* handles filter encoding in umasks */
-		if (um & ~((1ULL << (32-8))-1)) {
-			filter.val |= um >> (32-8);
-			um &= (1ULL << (32-8)) - 1;
-		}
 		um >>= 8;
 		umask2 = um;
 	}
@@ -515,7 +444,6 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(e->fstr, ":0x%x", a->idx);
 	}
 	e->count = 0;
-
 	reg.val |= (umask1 | umask2)  << 8;
 
 	e->codes[e->count++] = reg.val;

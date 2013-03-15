@@ -33,6 +33,25 @@
 #include "pfmlib_intel_snbep_unc_priv.h"
 #include "events/intel_snbep_unc_qpi_events.h"
 
+static void
+display_qpi(void *this, pfmlib_event_desc_t *e, void *val)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	pfm_snbep_unc_reg_t *reg = val;
+
+	__pfm_vbprintf("[UNC_QPI=0x%"PRIx64" event=0x%x sel_ext=%d umask=0x%x en=%d "
+		       "inv=%d edge=%d thres=%d] %s\n",
+			reg->val,
+			reg->qpi.unc_event,
+			reg->qpi.unc_event_ext,
+			reg->qpi.unc_umask,
+			reg->qpi.unc_en,
+			reg->qpi.unc_inv,
+			reg->qpi.unc_edge,
+			reg->qpi.unc_thres,
+			pe[e->event].name);
+}
+
 #define DEFINE_QPI_BOX(n) \
 pfmlib_pmu_t intel_snbep_unc_qpi##n##_support = {\
 	.desc			= "Intel Sandy Bridge-EP QPI"#n" uncore",\
@@ -58,6 +77,7 @@ pfmlib_pmu_t intel_snbep_unc_qpi##n##_support = {\
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,\
 	PFMLIB_VALID_PERF_PATTRS(pfm_intel_snbep_unc_perf_validate_pattrs),\
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,\
+	.display_reg		= display_qpi,\
 }
 DEFINE_QPI_BOX(0);
 DEFINE_QPI_BOX(1);
