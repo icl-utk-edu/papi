@@ -10,7 +10,10 @@ Upstream Author(s):
 
 Stephane Eranian <eranian@gmail.com>
 
-Library is released under the following license:
+Packaging by:
+Copyright (C) 2010 Arun Sharma <aruns@google.com>
+
+Library and packaging released under the following license:
 
 Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 
@@ -30,11 +33,3 @@ PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIG
 HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-The Debian packaging is:
-
-    Copyright (C) 2010 Arun Sharma <aruns@google.com>
-
-and is licensed under the GPL version 2. On Debian systems, the complete text
-of the GNU General Public License (GPL) version 2 can be found in
-`/usr/share/common-licenses/GPL-2'.

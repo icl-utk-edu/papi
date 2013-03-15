@@ -57,6 +57,9 @@ endif
 ifeq (sparc64,$(findstring sparc64,$(ARCH)))
 override ARCH=sparc
 endif
+ifeq (armv6,$(findstring armv6,$(ARCH)))
+override ARCH=arm
+endif
 ifeq (armv7,$(findstring armv7,$(ARCH)))
 override ARCH=arm
 endif

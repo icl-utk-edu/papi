@@ -152,6 +152,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_cortex_a8_support,
 	&arm_cortex_a9_support,
 	&arm_cortex_a15_support,
+	&arm_1176_support,
 #endif
 #ifdef CONFIG_PFMLIB_ARCH_S390X
 	&s390x_cpum_cf_support,
@@ -862,10 +863,6 @@ handle_bool:
 
 			endptr = NULL;
 			switch(type) {
-			case PFM_ATTR_UMASK:
-			case PFM_ATTR_RAW_UMASK:
-				/* unit mask has no value */
-				goto error;
 			case PFM_ATTR_MOD_BOOL:
 				if (strlen(s) > 1)
 					goto error;

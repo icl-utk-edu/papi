@@ -33,6 +33,40 @@
 #include "pfmlib_intel_snbep_unc_priv.h"
 #include "events/intel_snbep_unc_cbo_events.h"
 
+static void
+display_cbo(void *this, pfmlib_event_desc_t *e, void *val)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	pfm_snbep_unc_reg_t *reg = val;
+	pfm_snbep_unc_reg_t f;
+
+	__pfm_vbprintf("[UNC_CBO=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
+		       "inv=%d edge=%d thres=%d tid_en=%d] %s\n",
+			reg->val,
+			reg->cbo.unc_event,
+			reg->cbo.unc_umask,
+			reg->cbo.unc_en,
+			reg->cbo.unc_inv,
+			reg->cbo.unc_edge,
+			reg->cbo.unc_thres,
+			reg->cbo.unc_tid,
+			pe[e->event].name);
+
+	if (e->count == 1)
+		return;
+
+	f.val = e->codes[1];
+
+	__pfm_vbprintf("[UNC_CBOX_FILTER=0x%"PRIx64" tid=%d core=0x%x nid=0x%x"
+		       " state=0x%x opc=0x%x]\n",
+			f.val,
+			f.cbo_filt.tid,
+			f.cbo_filt.cid,
+			f.cbo_filt.nid,
+			f.cbo_filt.state,
+			f.cbo_filt.opc);
+}
+
 #define DEFINE_C_BOX(n) \
 pfmlib_pmu_t intel_snbep_unc_cb##n##_support = {\
 	.desc			= "Intel Sandy Bridge-EP C-Box "#n" uncore",\
@@ -59,6 +93,7 @@ pfmlib_pmu_t intel_snbep_unc_cb##n##_support = {\
 	PFMLIB_VALID_PERF_PATTRS(pfm_intel_snbep_unc_perf_validate_pattrs),\
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,\
 	.can_auto_encode	= pfm_intel_x86_can_auto_encode, \
+	.display_reg		= display_cbo,\
 }
 
 DEFINE_C_BOX(0);

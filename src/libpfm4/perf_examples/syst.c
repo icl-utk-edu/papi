@@ -97,7 +97,7 @@ measure(void)
 		cmin = options.cpu;
 		cmax = cmin + 1;
 	}
-	all_fds = calloc(ncpus, sizeof(perf_event_desc_t));
+	all_fds = calloc(ncpus, sizeof(perf_event_desc_t *));
 	num_fds = calloc(ncpus, sizeof(int));
 
 	if (!all_fds || !num_fds)

@@ -29,7 +29,7 @@
 static int
 pfm_power7_detect(void* this)
 {
-	if (__is_processor(PV_POWER7))
+	if (__is_processor(PV_POWER7) || __is_processor(PV_POWER7p))
 		return PFM_SUCCESS;
 	return PFM_ERR_NOTSUPP;
 }

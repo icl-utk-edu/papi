@@ -306,6 +306,70 @@ __perf_handle_raw(perf_event_desc_t *hw)
 	return sz + raw_sz;
 }
 
+static int
+perf_display_branch_stack(perf_event_desc_t *desc, FILE *fp)
+{
+	struct perf_branch_entry b;
+	uint64_t nr, n;
+	int ret;
+
+	ret = perf_read_buffer(desc, &n, sizeof(n));
+	if (ret)
+		errx(1, "cannot read branch stack nr");
+
+	fprintf(fp, "\n\tBRANCH_STACK:%"PRIu64"\n", n);
+	nr = n;
+	/*
+	 * from most recent to least recent take branch
+	 */
+	while (nr--) {
+		ret = perf_read_buffer(desc, &b, sizeof(b));
+		if (ret)
+			errx(1, "cannot read branch stack entry");
+
+		fprintf(fp, "\tFROM:0x%016"PRIx64" TO:0x%016"PRIx64" MISPRED:%c\n",
+			b.from,
+			b.to,
+			!(b.mispred || b.predicted) ? '-':
+			(b.mispred ? 'Y' :'N'));
+	}
+	return (int)(n * sizeof(b) + sizeof(n));
+}
+
+static int
+perf_display_regs_user(perf_event_desc_t *hw, FILE *fp)
+{
+	return 0;
+}
+
+static int
+perf_display_stack_user(perf_event_desc_t *hw, FILE *fp)
+{
+	uint64_t nr;
+	char buf[512];
+	size_t sz;
+	int ret;
+
+	ret = perf_read_buffer(hw, &nr, sizeof(hw));
+	if (ret)
+		errx(1, "cannot user stack size");
+
+	fprintf(fp, "USER_STACK: SZ:%"PRIu64"\n", nr);
+
+	/* consume content */
+	while (nr) {
+		sz = nr;
+		if (sz > sizeof(buf))
+			sz = sizeof(buf);
+
+		ret = perf_read_buffer(hw, buf, sz);
+		if (ret)
+			errx(1, "cannot user stack content");
+		nr -= sz;
+	}
+
+	return 0;
+}
 
 int
 perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_event_header *ehdr, FILE *fp)
@@ -596,6 +660,41 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 		if (ret == -1)
 			return -1;
 		sz -= ret;
+	}
+
+	if (type & PERF_SAMPLE_BRANCH_STACK) {
+		ret = perf_display_branch_stack(hw, fp);
+		sz -= ret;
+	}
+
+	if (type & PERF_SAMPLE_REGS_USER) {
+		ret = perf_display_regs_user(hw, fp);
+		sz -= ret;
+	}
+
+	if (type & PERF_SAMPLE_STACK_USER) {
+		ret = perf_display_stack_user(hw, fp);
+		sz -= ret;
+	}
+
+	if (type & PERF_SAMPLE_WEIGHT) {
+		ret = perf_read_buffer_64(hw, &val64);
+		if (ret) {
+			warnx( "cannot read weight");
+			return -1;
+		}
+		fprintf(fp, "WEIGHT:%'"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_DATA_SRC) {
+		ret = perf_read_buffer_64(hw, &val64);
+		if (ret) {
+			warnx( "cannot read data src");
+			return -1;
+		}
+		fprintf(fp, "DATA_SRC:%'"PRIu64" ", val64);
+		sz -= sizeof(val64);
 	}
 
 	/*

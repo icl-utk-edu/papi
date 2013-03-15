@@ -130,8 +130,13 @@ enum perf_event_sample_format {
 	PERF_SAMPLE_STREAM_ID		= 1U << 9,
 	PERF_SAMPLE_RAW			= 1U << 10,
 	PERF_SAMPLE_BRANCH_STACK	= 1U << 11,
-	PERF_SAMPLE_MAX			= 1U << 12,
+	PERF_SAMPLE_REGS_USER		= 1U << 12,
+	PERF_SAMPLE_STACK_USER		= 1U << 13,
+	PERF_SAMPLE_WEIGHT		= 1U << 14,
+	PERF_SAMPLE_DATA_SRC		= 1U << 15,
+	PERF_SAMPLE_MAX			= 1U << 16,
 };
+
 /*
  * branch_sample_type values
  */
@@ -144,6 +149,12 @@ enum perf_branch_sample_type {
 	PERF_SAMPLE_BRANCH_ANY_RETURN	= 1U << 5,
 	PERF_SAMPLE_BRANCH_IND_CALL	= 1U << 6,
 	PERF_SAMPLE_BRANCH_MAX		= 1U << 7,
+};
+
+enum perf_sample_regs_abi {
+	PERF_SAMPLE_REGS_ABI_NONE	= 0,
+	PERF_SAMPLE_REGS_ABI_32		= 1,
+	PERF_SAMPLE_REGS_ABI_64		= 2,
 };
 
 /*
@@ -226,6 +237,28 @@ typedef struct perf_event_attr {
 	} SWIG_NAME(bpb);
 	uint64_t branch_sample_type;
 } perf_event_attr_t;
+
+struct perf_branch_entry {
+	uint64_t	from;
+	uint64_t	to;
+	uint64_t	mispred:1,  /* target mispredicted */
+			predicted:1,/* target predicted */
+			reserved:62;
+};
+
+/*
+ * branch stack layout:
+ *  nr: number of taken branches stored in entries[]
+ *
+ * Note that nr can vary from sample to sample
+ * branches (to, from) are stored from most recent
+ * to least recent, i.e., entries[0] contains the most
+ * recent branch.
+ */
+struct perf_branch_stack {
+	uint64_t			nr;
+	struct perf_branch_entry        entries[0];
+};
 
 /*
  * perf_events ioctl commands, use with event fd
@@ -389,6 +422,70 @@ perf_event_open(
 #define PR_TASK_PERF_EVENTS_ENABLE	32
 #define PR_TASK_PERF_EVENTS_DISABLE	31
 #endif
+
+union perf_mem_data_src {
+	uint64_t val;
+	struct {
+		uint64_t   mem_op:5,	/* type of opcode */
+			   mem_lvl:14,	/* memory hierarchy level */
+			   mem_snoop:5,	/* snoop mode */
+			   mem_lock:2,	/* lock instr */
+			   mem_dtlb:7,	/* tlb access */
+			   mem_rsvd:31;
+	};
+};
+
+/* type of opcode (load/store/prefetch,code) */
+#define PERF_MEM_OP_NA		0x01 /* not available */
+#define PERF_MEM_OP_LOAD	0x02 /* load instruction */
+#define PERF_MEM_OP_STORE	0x04 /* store instruction */
+#define PERF_MEM_OP_PFETCH	0x08 /* prefetch */
+#define PERF_MEM_OP_EXEC	0x10 /* code (execution) */
+#define PERF_MEM_OP_SHIFT	0
+
+/* memory hierarchy (memory level, hit or miss) */
+#define PERF_MEM_LVL_NA		0x01  /* not available */
+#define PERF_MEM_LVL_HIT	0x02  /* hit level */
+#define PERF_MEM_LVL_MISS	0x04  /* miss level  */
+#define PERF_MEM_LVL_L1		0x08  /* L1 */
+#define PERF_MEM_LVL_LFB	0x10  /* Line Fill Buffer */
+#define PERF_MEM_LVL_L2		0x20  /* L2 hit */
+#define PERF_MEM_LVL_L3		0x40  /* L3 hit */
+#define PERF_MEM_LVL_LOC_RAM	0x80  /* Local DRAM */
+#define PERF_MEM_LVL_REM_RAM1	0x100 /* Remote DRAM (1 hop) */
+#define PERF_MEM_LVL_REM_RAM2	0x200 /* Remote DRAM (2 hops) */
+#define PERF_MEM_LVL_REM_CCE1	0x400 /* Remote Cache (1 hop) */
+#define PERF_MEM_LVL_REM_CCE2	0x800 /* Remote Cache (2 hops) */
+#define PERF_MEM_LVL_IO		0x1000 /* I/O memory */
+#define PERF_MEM_LVL_UNC	0x2000 /* Uncached memory */
+#define PERF_MEM_LVL_SHIFT	5
+
+/* snoop mode */
+#define PERF_MEM_SNOOP_NA	0x01 /* not available */
+#define PERF_MEM_SNOOP_NONE	0x02 /* no snoop */
+#define PERF_MEM_SNOOP_HIT	0x04 /* snoop hit */
+#define PERF_MEM_SNOOP_MISS	0x08 /* snoop miss */
+#define PERF_MEM_SNOOP_HITM	0x10 /* snoop hit modified */
+#define PERF_MEM_SNOOP_SHIFT	19
+
+/* locked instruction */
+#define PERF_MEM_LOCK_NA	0x01 /* not available */
+#define PERF_MEM_LOCK_LOCKED	0x02 /* locked transaction */
+#define PERF_MEM_LOCK_SHIFT	24
+
+/* TLB access */
+#define PERF_MEM_TLB_NA		0x01 /* not available */
+#define PERF_MEM_TLB_HIT	0x02 /* hit level */
+#define PERF_MEM_TLB_MISS	0x04 /* miss level */
+#define PERF_MEM_TLB_L1		0x08 /* L1 */
+#define PERF_MEM_TLB_L2		0x10 /* L2 */
+#define PERF_MEM_TLB_WK		0x20 /* Hardware Walker*/
+#define PERF_MEM_TLB_OS		0x40 /* OS fault handler */
+#define PERF_MEM_TLB_SHIFT	26
+
+#define PERF_MEM_S(a, s) \
+	(((u64)PERF_MEM_##a##_##s) << PERF_MEM_##a##_SHIFT)
+
 
 #ifdef __cplusplus /* extern C */
 }

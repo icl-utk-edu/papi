@@ -54,6 +54,8 @@ pfm_intel_atom_detect(void *this)
 	switch(pfm_intel_x86_cfg.model) {
 	case 28: /* Pineview/Silverthorne */
 	case 38: /* Lincroft */
+	case 39: /* Penwell */
+	case 53: /* Cloverview */
 	case 54: /* Cedarview */
 		break;
 	default:

@@ -57,6 +57,27 @@ find_pmu_type_by_name(const char *name)
 	return type;
 }
 
+static int
+has_ldlat(void *this, pfmlib_event_desc_t *e)
+{
+	pfm_event_attr_info_t *a;
+	int i;
+
+	for (i = 0; i < e->nattrs; i++) {
+		a = attr(e, i);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (a->type != PFM_ATTR_UMASK)
+			continue;
+
+		if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_LDLAT))
+			return 1;
+	}
+	return 0;
+}
+
 int
 pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
@@ -82,18 +103,32 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	attr->type = PERF_TYPE_RAW;
 	attr->config = e->codes[0];
 
-	/*
-	 * Nehalem/Westmere/Sandy Bridge OFFCORE_RESPONSE events
-	 * take two MSRs. lower level returns two codes:
-	 * - codes[0] goes to regular counter config
-	 * - codes[1] goes into extra MSR
-	 */
-	if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
-		if (e->count != 2) {
-			DPRINT("perf_encoding: offcore=1 count=%d\n", e->count);
-			return PFM_ERR_INVAL;
+	if (e->count > 1) {
+		/*
+		 * Nehalem/Westmere/Sandy Bridge OFFCORE_RESPONSE events
+		 * take two MSRs. lower level returns two codes:
+		 * - codes[0] goes to regular counter config
+		 * - codes[1] goes into extra MSR
+		 */
+		if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
+			if (e->count != 2) {
+				DPRINT("perf_encoding: offcore=1 count=%d\n", e->count);
+				return PFM_ERR_INVAL;
+			}
+			attr->config1 = e->codes[1];
 		}
-		attr->config1 = e->codes[1];
+		/*
+		 * Load Latency threshold (NHM/WSM/SNB)
+		 * - codes[0] goes to regular counter config
+		 * - codes[1] LD_LAT MSR value (LSB 16 bits)
+		 */
+		if (has_ldlat(this, e)) {
+			if (e->count != 2) {
+				DPRINT("perf_encoding: ldlat count=%d\n", e->count);
+				return PFM_ERR_INVAL;
+			}
+			attr->config1 = e->codes[1];
+		}
 	}
 	return PFM_SUCCESS;
 }
