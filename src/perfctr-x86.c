@@ -189,12 +189,13 @@ print_control( const struct perfctr_cpu_control *control )
 int
 setup_x86_presets( int cputype, int cidx)
 {
-	int retval = PAPI_OK;
 
-        if ( ( retval = _papi_libpfm_init(&_perfctr_vector, cidx ) ) != PAPI_OK ) {
-	   return retval;
-	}
+   int retval = PAPI_OK;
 
+   if ( ( retval = _papi_libpfm_init(&_perfctr_vector, cidx ) ) != PAPI_OK ) {
+      return retval;
+   }
+# if 0
 	if ( is_pentium4() ) {
 		/* load the baseline event map for all Pentium 4s */
 
@@ -302,7 +303,8 @@ setup_x86_presets( int cputype, int cidx)
 		SUBDBG( "Number of native events: %d\n",
 				_perfctr_vector.cmp_info.num_native_events );
 	}
-	return retval;
+#endif
+   return retval;
 }
 
 static int
