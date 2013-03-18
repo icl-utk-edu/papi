@@ -35,9 +35,9 @@
 extern papi_vector_t _perfctr_vector;
 
 #ifdef PPC64
-extern int setup_ppc64_presets( int cputype );
+extern int setup_ppc64_presets( int cputype, int cidx );
 #else
-extern int setup_x86_presets( int cputype );
+extern int setup_x86_presets( int cputype, int cidx );
 #endif
 
 /* This should be in a linux.h header file maybe. */
@@ -224,14 +224,14 @@ _perfctr_init_component( int cidx )
 #if !defined(PPC64)
 //     retval = setup_p3_vector_table(vtable);
 		if ( !retval )
-			retval = setup_x86_presets( ( int ) info.cpu_type );
+		  retval = setup_x86_presets( ( int ) info.cpu_type, cidx );
 #else
 	/* Setup native and preset events */
 //  retval = ppc64_setup_vector_table(vtable);
 	if ( !retval )
 		retval = perfctr_ppc64_setup_native_table(  );
 	if ( !retval )
-		retval = setup_ppc64_presets( info.cpu_type );
+	  retval = setup_ppc64_presets( info.cpu_type, cidx );
 #endif
 	if ( retval )
 		return ( retval );
