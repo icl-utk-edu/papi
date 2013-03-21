@@ -36,7 +36,7 @@ const pfmlib_attr_desc_t snbep_unc_mods[]={
 	PFM_ATTR_B("e", "edge detect"),			/* edge */
 	PFM_ATTR_B("i", "invert"),			/* invert */
 	PFM_ATTR_I("t", "threshold in range [0-255]"),	/* threshold */
-	PFM_ATTR_I("t", "threshold in range [0-15]"),	/* threshold */
+	PFM_ATTR_I("t", "threshold in range [0-31]"),	/* threshold */
 	PFM_ATTR_I("tf", "thread id filter [0-1]"),	/* thread id */
 	PFM_ATTR_I("cf", "core id filter [0-7]"),	/* core id */
 	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask */
@@ -353,12 +353,12 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					reg.com.unc_thres = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_T8;
 					break;
-				case SNBEP_UNC_ATTR_T4: /* pcu counter-mask */
+				case SNBEP_UNC_ATTR_T5: /* pcu counter-mask */
 					/* already forced, cannot overwrite */
-					if (ival > 15)
+					if (ival > 31)
 						return PFM_ERR_ATTR_VAL;
 					reg.pcu.unc_thres = ival;
-					umodmsk |= _SNBEP_UNC_ATTR_T4;
+					umodmsk |= _SNBEP_UNC_ATTR_T5;
 					break;
 				case SNBEP_UNC_ATTR_TF: /* thread id */
 					if (ival > 1) {
@@ -484,7 +484,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		case SNBEP_UNC_ATTR_T8:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.com.unc_thres);
 			break;
-		case SNBEP_UNC_ATTR_T4:
+		case SNBEP_UNC_ATTR_T5:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.pcu.unc_thres);
 			break;
 		case SNBEP_UNC_ATTR_TF:
