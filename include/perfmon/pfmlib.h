@@ -183,6 +183,7 @@ typedef enum {
 	PFM_PMU_ARM_1176,		/* ARM 1176 */
 
 	PFM_PMU_INTEL_IVB_EP,		/* Intel IvyBridge EP */
+	PFM_PMU_INTEL_HSW,		/* Intel Haswell */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 
