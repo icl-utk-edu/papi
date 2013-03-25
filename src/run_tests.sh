@@ -19,9 +19,6 @@ else
   export TESTS_QUIET
 fi
 
-chmod -x ctests/*.[ch]
-chmod -x ftests/*.[Fch]
-
 if [ "x$VALGRIND" = "x" ]; then
 # Uncomment the following line to run tests using Valgrind
 # VALGRIND="valgrind --leak-check=full";
@@ -29,9 +26,9 @@ if [ "x$VALGRIND" = "x" ]; then
 fi
 
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
-CTESTS=`find ctests/* -prune -perm -u+x -type f`;
-FTESTS=`find ftests -perm -u+x -type f`;
-COMPTESTS=`find components/*/tests -perm -u+x -type f`;
+CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
+FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
+COMPTESTS=`find components/*/tests -perm -u+x -type f ! -name "*.[c|h]"`;
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
