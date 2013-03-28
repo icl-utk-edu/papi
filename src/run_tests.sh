@@ -28,7 +28,7 @@ fi
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
 FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
-COMPTESTS=`find components/*/tests -perm -u+x -type f ! -name "*.[c|h]"`;
+COMPTESTS=`find components/*/tests -perm -u+x -type f \( ! -name "*.[c|h]" -o -name "*.cu" \)`;
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
