@@ -228,13 +228,6 @@ static const intel_x86_umask_t ivb_br_misp_retired[]={
      .ucode = 0x2000,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
-
-   { .uname  = "TAKEN",
-     .udesc  = "Number of branch instructions retired that were mispredicted and taken (Precise Event)",
-     .ucode = 0x2000,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
-     .uequiv = "NEAR_TAKEN",
-   },
 };
 
 static const intel_x86_umask_t ivb_lock_cycles[]={
@@ -962,9 +955,19 @@ static const intel_x86_umask_t ivb_mem_load_uops_retired[]={
      .ucode = 0x200,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
+   { .uname  = "L2_MISS",
+     .udesc  = "Load misses in mid-level (L2) cache (Precise Event)",
+     .ucode = 0x1000,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
    { .uname  = "L3_HIT",
      .udesc  = "Load hit in last-level (L3) cache with no snoop needed (Precise Event)",
      .ucode = 0x400,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
+   { .uname  = "L3_MISS",
+     .udesc  = "Load miss in last-level (L3) cache (Precise Event)",
+     .ucode = 0x2000,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
 };
