@@ -402,9 +402,7 @@ getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t add
 int
 CUDA_init_thread( hwd_context_t * ctx )
 {
-	CUDA_context_t * CUDA_ctx = ( CUDA_context_t * ) ctx;
-	/* Initialize number of events in EventSet for update_control_state() */
-	CUDA_ctx->state.old_count = 0;
+	( void ) ctx;
 	
 	return PAPI_OK;
 }
@@ -647,30 +645,30 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 {
 	( void ) ctx;
 	CUDA_control_state_t * CUDA_ptr = ( CUDA_control_state_t * ) ptr;
-	int index;
+	int index, i;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 
+    
 	cuptiErr = cuptiEventGroupDisable( CUDA_ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
-	
-	/* Remove or Add events */
-	if ( CUDA_ptr->old_count > count ) {
-		cuptiErr =
-			cuptiEventGroupRemoveEvent( CUDA_ptr->eventGroup,
-										cuda_native_table[CUDA_ptr->addedEvents.list[0]].
-										resources.eventId );
+    
+    cuptiErr =
+    cuptiEventGroupRemoveEvent( CUDA_ptr->eventGroup,
+                               cuda_native_table[CUDA_ptr->addedEvents.list[0]].
+                               resources.eventId );
+   
+    
+	// otherwise, add the events to the eventset
+	for ( i = 0; i < count; i++ ) {
+        
+		index = native[i].ni_event;
+		native[i].ni_position = index;
 
-		/* Keep track of events in EventGroup if an event is removed */
-		CUDA_ptr->old_count = count;
-	} else {
-		index = native[count - 1].ni_event;
-		native[count - 1].ni_position = index;
-
-		/* store events, that have been added to the CuPTI eveentGroup 
+		/* store events, that have been added to the CuPTI eveentGroup
 		   in a seperate place (addedEvents).
 		   Needed, so that we can read the values for the added events only */
 		CUDA_ptr->addedEvents.count = count;
-		CUDA_ptr->addedEvents.list[count - 1] = index;
+		CUDA_ptr->addedEvents.list[i] = index;
 
 		/* if this device name is different from the actual device the code is running on, then exit */
 		if ( 0 != strncmp( device[currentDeviceID].name,
@@ -688,9 +686,6 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 									 cuda_native_table[index].resources.
 									 eventId );
 		CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupAddEvent" );
-
-		/* Keep track of events in EventGroup if an event is removed */
-		CUDA_ptr->old_count = count;
 	}
 
 	return ( PAPI_OK );
