@@ -110,7 +110,6 @@ typedef struct CUDA_control_state
 	AddedEvents_t addedEvents;
 	long long counts[CUDA_MAX_COUNTERS];
 	int ncounter;
-	int old_count;
 } CUDA_control_state_t;
 
 /* Holds per-thread information */
