@@ -12,7 +12,7 @@
 
 The first step in creating a new component is to create a new directory inside the components directory. The naming convention is to use lower case letters for the directory name. At a minimum, this directory will contain all header files and source code required to build the component along with a Rules file which contains the build rules and compiler settings specific to that component. The Rules file must be named using the format Rules.x where x is the name of the directory. There are no restrictions on the naming of header or source files.
 
-If the component requires user input for any of the compiler settings, then the component directory will also contain the files required to generate a configure script using autoconf. The configure script can be used to generate a Makefile which will the Rules file will include. The file configure.in is required in order to generate configure. It should specify that the Makefile that gets generated is named Makefile.x where x is the name of the component directory. Finally, configure also needs an input file to create the Makefile. That file must be named Makefile.x.in where x is the name of the component directory.
+If the component requires user input for any of the compiler settings, then the component directory will also contain the files required to generate a configure script using autoconf. The configure script can be used to generate a Makefile which the Rules file will include. The file configure.in is required in order to generate configure. It should specify that the Makefile that gets generated is named Makefile.x where x is the name of the component directory. Finally, configure also needs an input file to create the Makefile. That file must be named Makefile.x.in where x is the name of the component directory.
 
 The following comments apply to components that are under source control. Although configure is generated, it requires the correct version of autoconf. For that reason, configure should be placed under source control. The generated Makefile should not be placed under source control.
 
@@ -39,64 +39,8 @@ NOTE: there is no need to modify any PAPI code other than adding your tests and 
 
 
 
-@section Existing Components
-example/  
+@section Component Specific Information
 
-lmsensors/  
-The PAPI lmsensors component requires lmsensors version >= 3.0.0.
-
-lustre/  
-
-mx/  
-
-net/ 
-
-
-
-cuda/
-The PAPI CUDA component is a hardware performance counter measurement technology for the NVIDIA CUDA platform which provides access to the hardware counters inside the GPU. PAPI CUDA is based on CUPTI support in the NVIDIA driver library. In any environment where the CUPTI-enabled driver is installed, the PAPI CUDA component can provide detailed performance counter information regarding the execution of GPU kernels.
-NOTE: In order to disable and destroy the CUDA eventGroup properly, the user has to call PAPI_cleanup_eventset( EventSet ) before calling PAPI_shutdown() in the application. This is important since it also frees the performance monitoring hardware on the GPU.
-
-How to install PAPI with the CUDA component?
---------------------------------------------
-The PAPI CUDA component requires CUDA version >= 4.0 as well as the CUPTI library. CUPTI is released with the CUDA Tools SDK.
-
-Before running the CUDA component, the configure script for the CUDA component must be executed in order to generate the Makefile which contains the configuration settings. This script needs to be executed only once. The CUDA configure script requires the user to specify the following configuration settings:
-    % cd < latest-papi-version >/src/components/cuda
-    % ./configure --with-cuda_incdir=< CUDA INCLUDE PATH > --with-cupti_incdir=< CUPTI INCLUDE PATH > --with-cupti_libdir=< CUPTI LIBRARY PATH >
-
-Furthermore, the CUDA component will be added to PAPI during the configuration of PAPI by adding the '--with-components=cuda' command line option to configure. 
-    % ./configure --prefix=< your_choice > --with-components=cuda
-
-Attempting to add the CUDA component to PAPI - without running the configure script for the CUDA component first - will result in a compilation error because the PAPI build environment will be unable to find the Makefile for the CUDA component.
-
-For general information on how to create and run components, the user is referred to the INSTALL.txt section "CREATING AND RUNNING COMPONENTS".
-
-
-
-infiniband/
-These files have the source code for a component that enables PAPI-C to access hardware monitoring counters for InfiniBand devices through the OFED library. Since a new interface was introduced with OFED version 1.4 (released Dec 2008), the current InfiniBand component does not support OFED versions < 1.4.
-
-
-
-coretemp_freebsd/
-This component is intended to access CPU On-Die Thermal Sensors in the Intel Core architecture in a FreeBSD machine using the coretemp.ko kernel module. The returned values represent Kelvin dedegrees.
-
-
-vmware/ 
-
-To make the generic VMware component do --with-vmware_incdir=< path_to_VMWare_Guest_SDK > from the component directory.
-
-For further information see the VMwareComponentDocument.txt file in the component directory, or the ComponentGuide pdf file.
-
-
-bgpm/
-Five new components have been added to PAPI to support hardware performance monitoring for the BG/Q platform; in particular the BG/Q network, the I/O system, the Compute Node Kernel in addition to the processing core. There are no specific component configure scripts for L2unit, IOunit, NWunit, CNKunit. In order to configure PAPI for BG/Q, use the following configure options at the papi/src level:
-    % ./configure --prefix=< your_choice >  \
-                  --with-OS=bgq  \
-                  --with-bgpm_installdir=/bgsys/drivers/ppcfloor  \
-                  CC=/bgsys/drivers/ppcfloor/gnu-linux/bin/powerpc64-bgq-linux-gcc  \
-                  F77=/bgsys/drivers/ppcfloor/gnu-linux/bin/powerpc64-bgq-linux-gfortran  \
-                  --with-components="bgpm/L2unit bgpm/CNKunit bgpm/IOunit bgpm/NWunit"
+Some components under source control have additional information specific to their build process or operation. That information can be found in a README file inside the component directory. If the README doesn't exist, no special information is necessary.
 
 */

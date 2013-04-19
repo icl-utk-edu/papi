@@ -1,0 +1,17 @@
+/** 
+* @file:   README
+* CVS:     $Id$
+* @author: Dan Terpstra
+*          terpstra@icl.utk.edu
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: lmsensors
+*/
+
+/** @page component_readme Component Readme 
+
+@section Component Specific Information
+
+lmsensors/  
+The PAPI lmsensors component requires lmsensors version >= 3.0.0.
+
+*/

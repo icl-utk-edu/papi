@@ -1,0 +1,33 @@
+/** 
+* @file:   README
+* CVS:     $Id$
+* @author: Dan Terpstra
+*          terpstra@icl.utk.edu
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: CUDA
+*/
+
+/** @page component_readme Component Readme 
+
+@section Component Specific Information
+
+cuda/
+The PAPI CUDA component is a hardware performance counter measurement technology for the NVIDIA CUDA platform which provides access to the hardware counters inside the GPU. PAPI CUDA is based on CUPTI support in the NVIDIA driver library. In any environment where the CUPTI-enabled driver is installed, the PAPI CUDA component can provide detailed performance counter information regarding the execution of GPU kernels.
+NOTE: In order to disable and destroy the CUDA eventGroup properly, the user has to call PAPI_cleanup_eventset( EventSet ) before calling PAPI_shutdown() in the application. This is important since it also frees the performance monitoring hardware on the GPU.
+
+How to install PAPI with the CUDA component?
+--------------------------------------------
+The PAPI CUDA component requires CUDA version >= 4.0 as well as the CUPTI library. CUPTI is released with the CUDA Tools SDK.
+
+Before running the CUDA component, the configure script for the CUDA component must be executed in order to generate the Makefile which contains the configuration settings. This script needs to be executed only once. The CUDA configure script requires the user to specify the following configuration settings:
+    % cd < latest-papi-version >/src/components/cuda
+    % ./configure --with-cuda_incdir=< CUDA INCLUDE PATH > --with-cupti_incdir=< CUPTI INCLUDE PATH > --with-cupti_libdir=< CUPTI LIBRARY PATH >
+
+Furthermore, the CUDA component will be added to PAPI during the configuration of PAPI by adding the '--with-components=cuda' command line option to configure. 
+    % ./configure --prefix=< your_choice > --with-components=cuda
+
+Attempting to add the CUDA component to PAPI - without running the configure script for the CUDA component first - will result in a compilation error because the PAPI build environment will be unable to find the Makefile for the CUDA component.
+
+For general information on how to create and run components, the user is referred to the INSTALL.txt section "CREATING AND RUNNING COMPONENTS".
+
+*/

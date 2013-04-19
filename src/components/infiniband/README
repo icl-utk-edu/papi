@@ -1,0 +1,17 @@
+/** 
+* @file:   README
+* CVS:     $Id$
+* @author: Dan Terpstra
+*          terpstra@icl.utk.edu
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: Infiniband
+*/
+
+/** @page component_readme Component Readme 
+
+@section Component Specific Information
+
+infiniband/
+These files have the source code for a component that enables PAPI-C to access hardware monitoring counters for InfiniBand devices through the OFED library. Since a new interface was introduced with OFED version 1.4 (released Dec 2008), the current InfiniBand component does not support OFED versions < 1.4.
+
+*/

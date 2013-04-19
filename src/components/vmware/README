@@ -1,0 +1,20 @@
+/** 
+* @file:   README
+* CVS:     $Id$
+* @author: Dan Terpstra
+*          terpstra@icl.utk.edu
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: VMware
+*/
+
+/** @page component_readme Component Readme 
+
+@section Component Specific Information
+
+vmware/ 
+
+To make the generic VMware component do --with-vmware_incdir=< path_to_VMWare_Guest_SDK > from the component directory.
+
+For further information see the VMwareComponentDocument.txt file in the component directory, or the ComponentGuide pdf file.
+
+*/
