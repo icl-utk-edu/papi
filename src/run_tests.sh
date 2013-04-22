@@ -19,10 +19,8 @@ else
   export TESTS_QUIET
 fi
 
-if [ "x$VALGRIND" = "x" ]; then
-# Uncomment the following line to run tests using Valgrind
-# VALGRIND="valgrind --leak-check=full";
-    VALGRIND="";
+if [ "x$VALGRIND" != "x" ]; then
+  VALGRIND="valgrind --leak-check=full";
 fi
 
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
