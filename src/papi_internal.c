@@ -374,7 +374,7 @@ _papi_hwi_native_to_eventcode(int cidx, int event_code) {
 
   int result;
 
-  SUBDBG("Looking for component %d event %d\n",cidx,event_code);
+  SUBDBG("Looking for component %d event %x\n",cidx,event_code);
 
   result=_papi_hwi_find_native_event(cidx,event_code);
   if (result==PAPI_ENOEVNT) {
