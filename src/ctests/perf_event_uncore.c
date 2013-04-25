@@ -5,7 +5,6 @@
 
 #define MAX_CYCLE_ERROR 30
 
-char uncore_event[]="snbep_unc_imc0::UNC_M_CLOCKTICKS";
 
 int
 main( int argc, char **argv )
@@ -14,6 +13,9 @@ main( int argc, char **argv )
 	int EventSet = PAPI_NULL;
 	long long values[1];
 	const PAPI_hw_info_t *hwinfo;
+        char *uncore_event=NULL;
+        char *cpu_type=NULL;
+        char skip_message[BUFSIZ];
 
 	/* Set TESTS_QUIET variable */
 	tests_quiet( argc, argv );	
@@ -26,13 +28,34 @@ main( int argc, char **argv )
 
 	hwinfo = PAPI_get_hardware_info();
 	if ( hwinfo == NULL ) {
-		test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info failed, THIS should not happen.", PAPI_ESYS);
+	   test_fail(__FILE__, __LINE__, 
+		     "PAPI_get_hardware_info failed, THIS should not happen.", 
+		     PAPI_ESYS);
 	}
 	if ( hwinfo->vendor != PAPI_VENDOR_INTEL ) {
-		test_skip( __FILE__, __LINE__, "This test is only for Intel Processors, for now.", PAPI_OK );
+	   test_skip( __FILE__, __LINE__, 
+		      "This test is only for Intel Processors, for now.", 
+		      PAPI_OK );
 	}
-	if (( hwinfo->cpuid_family != 6) || (hwinfo->cpuid_model != 45) ) {
-		test_skip( __FILE__, __LINE__, "This test is only implemented for SandyBridge-EP series processors for now.", PAPI_OK );
+   
+        /* Find out what processor we are running on */
+	if ( hwinfo->cpuid_family == 6) {
+	   if (hwinfo->cpuid_model == 45) {
+	      /* SandyBridge EP */
+	      cpu_type=strdup("SandyBridge EP");
+	      uncore_event=strdup("snbep_unc_imc0::UNC_M_CLOCKTICKS");
+	   }
+	   if (hwinfo->cpuid_model == 58) {
+	      /* IvyBridge */
+	      cpu_type=strdup("IvyBridge");
+	   }	   	   
+	}
+   
+        if (uncore_event==NULL) {
+	   sprintf(skip_message,
+		   "This test currently does not support family %d model %d CPUs",
+		   hwinfo->cpuid_family, hwinfo->cpuid_model);
+	   test_skip( __FILE__, __LINE__, skip_message, PAPI_OK );
 	}
 
 	retval = PAPI_create_eventset(&EventSet);
@@ -107,6 +130,7 @@ main( int argc, char **argv )
 
 	if ( !TESTS_QUIET ) {
 	   printf("Uncore test:\n");
+	   printf("Using event %s on %s\n",uncore_event,cpu_type);
 	   printf("\t%s: %lld\n",uncore_event,values[0]);
 	}
 
