@@ -41,7 +41,7 @@ typedef struct _HighLevelInfo
 	short int num_evts;
 	short int running;
 	long long initial_time;			   /**< Start time */
-	float total_proc_time;			   /**< Total processor time */
+	float initial_proc_time;		   /**< Start processor time */
 	float total_ins;			   /**< Total instructions */
 } HighLevelInfo;
 
@@ -152,7 +152,7 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
 	state->num_evts = 0;
 	state->running = 0;
 	state->initial_time = -1;
-	state->total_proc_time = 0;
+   	state->initial_proc_time = -1;
 	state->total_ins = 0;
 	return;
 }
@@ -214,7 +214,7 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 
 	if ( ( retval =
 		   _hl_rate_calls( rtime, ptime, flpins, mflips,
-						   ( unsigned int ) PAPI_FP_INS, state ) ) != PAPI_OK )
+		       ( unsigned int ) PAPI_FP_INS, state ) ) != PAPI_OK )
 		return ( retval );
 
 	return ( PAPI_OK );
@@ -282,7 +282,7 @@ PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
 
 	if ( ( retval =
 		   _hl_rate_calls( rtime, ptime, flpops, mflops,
-						   ( unsigned int ) PAPI_FP_OPS, state ) ) != PAPI_OK )
+			( unsigned int ) PAPI_FP_OPS, state ) ) != PAPI_OK )
 		return ( retval );
 
 	return ( PAPI_OK );
@@ -335,7 +335,7 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
 		return ( retval );
 
 	return _hl_rate_calls( rtime, ptime, ins, ipc,
-						   ( unsigned int ) PAPI_TOT_INS, state );
+			       ( unsigned int ) PAPI_TOT_INS, state );
 }
 
 int
@@ -346,6 +346,9 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
      int retval = 0;
      int level = 0;
 
+     (void) rate; /* The code used to sometimes estimate cycles */
+                  /* based on instructions / IPC (rate)         */
+                  /* that no longer seems necessary             */
      if ( EVENT == ( unsigned int ) PAPI_FP_INS )
 	level = HL_FLIPS;
      else if ( EVENT == ( unsigned int ) PAPI_TOT_INS )
@@ -379,6 +382,8 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
 	}
 
 	state->initial_time = PAPI_get_real_usec(  );
+	state->initial_proc_time = PAPI_get_virt_usec();
+	
 	if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 	   return retval;
 	}
@@ -393,20 +398,11 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
 	/* Use Multiplication because it is much faster */
 	*real_time = (float) ((double) (PAPI_get_real_usec() -
 					state->initial_time ) * .000001 );
-	*proc_time = (float) ((double) values[1] * .000001 /
-			 (( _papi_hwi_system_info.hw_info.cpu_max_mhz == 0 ) ?
-                             1 : _papi_hwi_system_info.hw_info.cpu_max_mhz ) );
-
-	if ( *proc_time > 0 ) {
-	   *rate = (float) ((float)values[0] *
-			   ( EVENT == ( unsigned int ) PAPI_TOT_INS ? 1 :
-			       _papi_hwi_system_info.hw_info.cpu_max_mhz ) /
-			       (float) ( values[1] == 0 ? 1 : values[1] ) );
-	}
-
-	state->total_proc_time += *proc_time;
+	*proc_time = (float) ((double) (PAPI_get_virt_usec() -
+					state->initial_proc_time) * .000001);
+	
 	state->total_ins += ( float ) values[0];
-	*proc_time = state->total_proc_time;
+	
 	*ins = ( long long ) state->total_ins;
 	if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 	   state->running = 0;
