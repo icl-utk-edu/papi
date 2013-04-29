@@ -93,7 +93,7 @@ int main (int argc, char **argv)
 
     if (!TESTS_QUIET) {
         for ( i=0; i<NUM_EVENTS; i++ ) {
-            printf("0x%x %-24s = %lld\n",
+            printf("%#x %-24s = %lld\n",
                 event_code[i], event_name[i], event_value[i]);
         }
     }

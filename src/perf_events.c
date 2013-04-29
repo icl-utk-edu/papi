@@ -247,7 +247,7 @@ get_read_format( unsigned int multiplex,
       }
    }
 
-   SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: 0x%x\n",
+   SUBDBG("multiplex: %d, inherit: %d, group_leader: %d, format: %#x\n",
 	  multiplex, inherit, format_group, format);
 
    return format;
@@ -1792,7 +1792,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
 		 PAPI_OVERFLOW_HARDWARE ) {
       PAPIERROR( "thread->running_eventset->overflow.flags is set to "
 		 "something other than PAPI_OVERFLOW_HARDWARE or "
-		 "PAPI_OVERFLOW_FORCE_SW for fd %d (%x)",
+		 "PAPI_OVERFLOW_FORCE_SW for fd %d (%#x)",
 		 fd , thread->running_eventset[cidx]->overflow.flags);
    }
 

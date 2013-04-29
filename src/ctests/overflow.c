@@ -73,7 +73,7 @@ main( int argc, char **argv )
 	EventSet =
 		add_two_nonderived_events( &num_events, &PAPI_event, &mask );
 
-	printf("Using %x for the overflow event\n",PAPI_event);
+	printf("Using %#x for the overflow event\n",PAPI_event);
 
 	if ( PAPI_event == PAPI_FP_INS ) {
 		mythreshold = THRESHOLD;

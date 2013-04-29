@@ -156,9 +156,9 @@ static void
 print_alloc( X86_reg_alloc_t * a )
 {
 	SUBDBG( "X86_reg_alloc:\n" );
-	SUBDBG( "  selector: 0x%x\n", a->ra_selector );
-	SUBDBG( "  rank: 0x%x\n", a->ra_rank );
-	SUBDBG( "  escr: 0x%x 0x%x\n", a->ra_escr[0], a->ra_escr[1] );
+	SUBDBG( "  selector: %#x\n", a->ra_selector );
+	SUBDBG( "  rank: %#x\n", a->ra_rank );
+	SUBDBG( "  escr: %#x %#x\n", a->ra_escr[0], a->ra_escr[1] );
 }
 
 void
@@ -1342,8 +1342,8 @@ _papi_libpfm_ntv_code_to_bits_perfctr( unsigned int EventCode,
 
        bits->counter_cmd=(int) (code | ((_pfm_convert_umask(event,umask))<< 8) );
 
-       SUBDBG( "selector: 0x%x\n", bits->selector );
-       SUBDBG( "event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n", event,
+       SUBDBG( "selector: %#x\n", bits->selector );
+       SUBDBG( "event: %#x; umask: %#x; code: %#x; cmd: %#x\n", event,
 	       umask, code, ( ( hwd_register_t * ) bits )->counter_cmd );
     }
 

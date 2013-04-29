@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 
   printf("1 ports\n");
   for(i=0;i<MAX_LABELS;i++) {
-    printf("%s:%12d (0x%x)\n",labels[i],i*multiplier,i*multiplier);
+    printf("%s:%12d (%#x)\n",labels[i],i*multiplier,i*multiplier);
   }
   return 0;
 }

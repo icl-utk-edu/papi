@@ -1486,7 +1486,7 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 		if ( ( !load_addr.pmd36_mont_reg.dear_vl ) ||
 			 ( !load_addr.pmd33_mont_reg.dear_stat ) ) {
 			SUBDBG
-				( "Invalid DEAR sample found, dear_vl = %d, dear_stat = 0x%x\n",
+				( "Invalid DEAR sample found, dear_vl = %d, dear_stat = %#x\n",
 				  load_addr.pmd36_mont_reg.dear_vl,
 				  load_addr.pmd33_mont_reg.dear_stat );
 		  bail1:
@@ -1538,7 +1538,7 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 				( unsigned long long ) latency.pmd_val );
 
 		if ( ( icache_line_addr.pmd34_mont_reg.iear_stat & 0x1 ) == 0 ) {
-			SUBDBG( "Invalid IEAR sample found, iear_stat = 0x%x\n",
+			SUBDBG( "Invalid IEAR sample found, iear_stat = %#x\n",
 					icache_line_addr.pmd34_mont_reg.iear_stat );
 		  bail2:
 			newent = ( unsigned long ) *ent;
@@ -1592,7 +1592,7 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 		if ( ( !load_addr.pmd17_ita2_reg.dear_vl ) ||
 			 ( !load_addr.pmd3_ita2_reg.dear_stat ) ) {
 			SUBDBG
-				( "Invalid DEAR sample found, dear_vl = %d, dear_stat = 0x%x\n",
+				( "Invalid DEAR sample found, dear_vl = %d, dear_stat = %#x\n",
 				  load_addr.pmd17_ita2_reg.dear_vl,
 				  load_addr.pmd3_ita2_reg.dear_stat );
 		  bail3:
@@ -1643,7 +1643,7 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 		SUBDBG( "PMD[1]: 0x%016llx\n", ( unsigned long long ) latency.pmd_val );
 
 		if ( ( icache_line_addr.pmd0_ita2_reg.iear_stat & 0x1 ) == 0 ) {
-			SUBDBG( "Invalid IEAR sample found, iear_stat = 0x%x\n",
+			SUBDBG( "Invalid IEAR sample found, iear_stat = %#x\n",
 					icache_line_addr.pmd0_ita2_reg.iear_stat );
 		  bail4:
 			newent = ( unsigned long ) *ent;
@@ -2156,7 +2156,7 @@ _papi_pfm_update_control_state( hwd_control_state_t * ctl0,
 
 	for ( i = 0; i < count; i++ ) {
 		SUBDBG
-			( "Stuffing native event index %d (code 0x%x) into input structure.\n",
+			( "Stuffing native event index %d (code %#x) into input structure.\n",
 			  i, ( ( pfm_register_t * ) native[i].ni_bits )->event );
 		memcpy( inp->pfp_events + i, native[i].ni_bits,
 				sizeof ( pfmlib_event_t ) );
@@ -2184,7 +2184,7 @@ _papi_pfm_update_control_state( hwd_control_state_t * ctl0,
 		reg_set_done++;
 
 		native[i].ni_position = i;
-		SUBDBG( "native event index %d (code 0x%x) is at PMD offset %d\n", i,
+		SUBDBG( "native event index %d (code %#x) is at PMD offset %d\n", i,
 				( ( pfm_register_t * ) native[i].ni_bits )->event,
 				native[i].ni_position );
 	}

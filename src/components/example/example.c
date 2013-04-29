@@ -136,7 +136,7 @@ example_hardware_read( int which_one, example_context_t *ctx )
 		example_global_autoinc_value++;
 		return old_value;
 	default:
-	        fprintf(stderr,"Invalid counter read %x\n",which_one );
+	        fprintf(stderr,"Invalid counter read %#x\n",which_one );
 		return -1;
 	}
 

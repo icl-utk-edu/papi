@@ -70,7 +70,7 @@ int main (int argc, char **argv)
             }
 
             if (!TESTS_QUIET) {
-                printf("0x%x %-24s = ", code, event_name);
+                printf("%#x %-24s = ", code, event_name);
             }
 
             EventSet = PAPI_NULL;

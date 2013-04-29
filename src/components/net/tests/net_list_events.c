@@ -66,7 +66,7 @@ int main (int argc, char **argv)
             }
 
             if (!TESTS_QUIET) {
-                printf("0x%x %s\n", code, event_name);
+                printf("%#x %s\n", code, event_name);
             }
 
             total_events++;

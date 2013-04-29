@@ -268,7 +268,7 @@ user_signal_handler_L2UNIT( int hEvtSet, uint64_t address, uint64_t ovfVector, c
 #ifdef DEBUG_BGQ
 		printf("OVERFLOW_NONE\n");
 #endif
-		PAPIERROR( "ESI->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW (%x)", thread->running_eventset[cidx]->overflow.flags);
+		PAPIERROR( "ESI->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW (%#x)", thread->running_eventset[cidx]->overflow.flags);
 	}
 }
 
@@ -528,7 +528,7 @@ int
 L2UNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 #ifdef DEBUG_BGQ
-	//printf( "L2UNIT_ntv_enum_events, EventCode = %x\n", *EventCode );
+	//printf( "L2UNIT_ntv_enum_events, EventCode = %#x\n", *EventCode );
 #endif
 
 	switch ( modifier ) {

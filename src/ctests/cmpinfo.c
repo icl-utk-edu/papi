@@ -33,13 +33,13 @@ main( int argc, char **argv )
 	printf( "num_mpx_cntrs: %d\n", cmpinfo->num_mpx_cntrs );
 	printf( "num_preset_events: %d\n", cmpinfo->num_preset_events );	/* Number of counters the component supports */
 	printf( "num_native_events: %d\n", cmpinfo->num_native_events );	/* Number of counters the component supports */
-	printf( "default_domain: 0x%x (%s)\n", cmpinfo->default_domain,
+	printf( "default_domain: %#x (%s)\n", cmpinfo->default_domain,
 			stringify_all_domains( cmpinfo->default_domain ) );
-	printf( "available_domains: 0x%x (%s)\n", cmpinfo->available_domains, stringify_all_domains( cmpinfo->available_domains ) );	/* Available domains */
-	printf( "default_granularity: 0x%x (%s)\n", cmpinfo->default_granularity,
+	printf( "available_domains: %#x (%s)\n", cmpinfo->available_domains, stringify_all_domains( cmpinfo->available_domains ) );	/* Available domains */
+	printf( "default_granularity: %#x (%s)\n", cmpinfo->default_granularity,
 			stringify_granularity( cmpinfo->default_granularity ) );
 	/* The default granularity when this component is used */
-	printf( "available_granularities: 0x%x (%s)\n", cmpinfo->available_granularities, stringify_all_granularities( cmpinfo->available_granularities ) );	/* Available granularities */
+	printf( "available_granularities: %#x (%s)\n", cmpinfo->available_granularities, stringify_all_granularities( cmpinfo->available_granularities ) );	/* Available granularities */
 	printf( "hardware_intr_sig: %d\n", cmpinfo->hardware_intr_sig );	       printf( "hardware_intr: %d\n", cmpinfo->hardware_intr );	/* Needs hw overflow intr to be emulated in software */
 	printf( "precise_intr: %d\n", cmpinfo->precise_intr );	/* Performance interrupts happen precisely */
 	printf( "posix1b_timers: %d\n", cmpinfo->posix1b_timers );	/* Performance interrupts happen precisely */

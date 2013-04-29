@@ -84,7 +84,7 @@ prof_print_address( char *title, const PAPI_exe_info_t * prginfo )
 	printf( "%s\n", title );
 	printf
 		( "----------------------------------------------------------------\n" );
-	printf( "Text start: %p, Text end: %p, Text length: 0x%x\n",
+	printf( "Text start: %p, Text end: %p, Text length: %#x\n",
 			prginfo->address_info.text_start, prginfo->address_info.text_end,
 			( unsigned int ) ( prginfo->address_info.text_end -
 							   prginfo->address_info.text_start ) );
@@ -223,7 +223,7 @@ prof_out( caddr_t start, int n, int bucket, int num_buckets,
 
 	if ( !TESTS_QUIET ) {
 		/* printf("0x%lx\n",(unsigned long) start + (unsigned long) (2 * i)); */
-		/* printf("start: %p; i: %x; scale: %x; i*scale: %x; i*scale >>15: %x\n", start, i, scale, i*scale, (i*scale)>>15); */
+		/* printf("start: %p; i: %#x; scale: %#x; i*scale: %#x; i*scale >>15: %#x\n", start, i, scale, i*scale, (i*scale)>>15); */
 		switch ( bucket ) {
 		case PAPI_PROFIL_BUCKET_16:
 			for ( i = 0; i < num_buckets; i++ ) {

@@ -438,7 +438,7 @@ _niagara2_dispatch_timer( int signal, siginfo_t * si, void *info )
 		}
 
 		if ( ESI->master != thread ) {
-			SUBDBG( " -> %s: +++ Thread mismatch, ESI->master=%x thread=%x\n",
+			SUBDBG( " -> %s: +++ Thread mismatch, ESI->master=%#x thread=%#x\n",
 					__func__, ESI->master, thread );
 		}
 
@@ -448,7 +448,7 @@ _niagara2_dispatch_timer( int signal, siginfo_t * si, void *info )
 
 		if ( ( ( ESI->state & PAPI_OVERFLOWING ) == 0 ) ) {
 			SUBDBG
-				( " -> %s: +++ Overflow flag missing, ESI->overflow.flags=%x\n",
+				( " -> %s: +++ Overflow flag missing, ESI->overflow.flags=%#x\n",
 				  __func__, ESI->overflow.flags );
 		}
 #endif
@@ -1008,7 +1008,7 @@ _niagara2_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 #ifdef DEBUG
 	SUBDBG( "ENTERING FUNCTION >>%s<< at %s:%d\n", __func__, __FILE__,
 			__LINE__ );
-	SUBDBG( " -> %s: Overflow handling for 0x%x on PIC#%d requested\n",
+	SUBDBG( " -> %s: Overflow handling for %#x on PIC#%d requested\n",
 			__func__, ctrl, EventIndex );
 	SUBDBG( " -> %s: ESI->overflow.flags=%#x\n\n", __func__, ctrl,
 			ESI->overflow.flags );
@@ -1267,7 +1267,7 @@ _niagara2_update_control_state( hwd_control_state_t * ctrl,
 			if ( syn_code >= 0 ) {
 #ifdef DEBUG
 				SUBDBG
-					( " -> %s: Adding synthetic event 0x%x (%s) on position %d\n",
+					( " -> %s: Adding synthetic event %#x (%s) on position %d\n",
 					  __func__, native[i].ni_event,
 					  __t2_ntv_events[ctrl->code[i].event_code], i );
 #endif
@@ -1289,7 +1289,7 @@ _niagara2_update_control_state( hwd_control_state_t * ctrl,
 #endif
 
 #ifdef DEBUG
-		SUBDBG( " -> %s: Adding native event 0x%x (%s) on position %d\n",
+		SUBDBG( " -> %s: Adding native event %#x (%s) on position %d\n",
 				__func__, native[i].ni_event,
 				__t2_ntv_events[ctrl->code[i].event_code], i );
 #endif
@@ -1506,12 +1506,12 @@ _niagara2_update_shlib_info( papi_mdi_t *mdi )
 
 #ifdef DEBUG
 	SUBDBG( " -> %s: Analysis of memory maps done, results:\n", __func__ );
-	SUBDBG( " -> %s: text_start=%x, text_end=%x, text_size=%lld\n", __func__,
+	SUBDBG( " -> %s: text_start=%#x, text_end=%#x, text_size=%lld\n", __func__,
 			_papi_hwi_system_info.exe_info.address_info.text_start,
 			_papi_hwi_system_info.exe_info.address_info.text_end,
 			_papi_hwi_system_info.exe_info.address_info.text_end
 			- _papi_hwi_system_info.exe_info.address_info.text_start );
-	SUBDBG( " -> %s: data_start=%x, data_end=%x, data_size=%lld\n", __func__,
+	SUBDBG( " -> %s: data_start=%#x, data_end=%#x, data_size=%lld\n", __func__,
 			_papi_hwi_system_info.exe_info.address_info.data_start,
 			_papi_hwi_system_info.exe_info.address_info.data_end,
 			_papi_hwi_system_info.exe_info.address_info.data_end
@@ -1775,14 +1775,14 @@ __cpc_recreate_set( hwd_control_state_t * ctrl )
 
 	for ( i = 0; i < ctrl->count; i++ ) {
 #ifdef DEBUG
-		SUBDBG( " -> %s: Adding native event 0x%x (%s) on position %d\n",
+		SUBDBG( " -> %s: Adding native event %#x (%s) on position %d\n",
 				__func__, ctrl->code[i].event_code,
 				__t2_ntv_events[ctrl->code[i].event_code], i );
-		SUBDBG( " -> %s: Event setup: ctrl->code[%d].event_code=0x%x\n",
+		SUBDBG( " -> %s: Event setup: ctrl->code[%d].event_code=%#x\n",
 				__func__, i, ctrl->code[i].event_code );
 		SUBDBG( " -> %s: Event setup: ctrl->preset[%d]=%d\n",
 				__func__, i, ctrl->preset[i] );
-		SUBDBG( " -> %s: Event setup: ctrl->flags[%d]=0x%x\n",
+		SUBDBG( " -> %s: Event setup: ctrl->flags[%d]=%#x\n",
 				__func__, i, ctrl->flags[i] );
 #endif
 

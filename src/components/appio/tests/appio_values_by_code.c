@@ -79,7 +79,7 @@ int main (int argc, char **argv)
             }
             
             if (!TESTS_QUIET) {
-              printf("Added event %s (code=0x%x)\n", event_names[total_events], code);
+              printf("Added event %s (code=%#x)\n", event_names[total_events], code);
             }
             event_codes[total_events++] = code;
             r = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, cid );
@@ -122,7 +122,7 @@ int main (int argc, char **argv)
     int i;
     if (!TESTS_QUIET) {
         for ( i=0; i<total_events; i++ ) {
-            printf("0x%x %-24s = %lld\n",
+            printf("%#x %-24s = %lld\n",
                 event_codes[i], event_names[i], event_values[i]);
         }
     }

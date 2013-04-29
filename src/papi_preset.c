@@ -451,7 +451,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	  /****************************************/
 
 	  SUBDBG( "Found %d for %s\n", derived, t );
-	  SUBDBG( "Adding 0x%x,%d to preset search table.\n", 
+	  SUBDBG( "Adding %#x,%d to preset search table.\n", 
 		  preset, derived );
 	  
 	  insert=preset&PAPI_PRESET_AND_MASK;
@@ -484,7 +484,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	     if ( strcasecmp( t, "NOTE" ) == 0 ) break;
 	     _papi_hwi_presets[insert].name[i]=strdup(t);
 
-	     SUBDBG( "Adding term (%d) %s to preset event 0x%x.\n", 
+	     SUBDBG( "Adding term (%d) %s to preset event %#x.\n", 
 		     i, t, preset );
 
 	     SUBDBG("Looking up: %s\n",t);
@@ -494,7 +494,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	     if (ret==PAPI_OK) {
 		_papi_hwi_presets[insert].code[i]=
 	              _papi_hwi_native_to_eventcode(cidx,event_idx);
-		SUBDBG("Found: %s %x c%d e%d\n",t,
+		SUBDBG("Found: %s %#x c%d e%d\n",t,
 		       _papi_hwi_presets[insert].code[i],
 		       cidx,event_idx);
 	     }

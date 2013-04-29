@@ -65,7 +65,7 @@ main( int argc, char *argv[] )
 	retval = PAPI_get_opt( PAPI_HWINFO, &options );
 	if ( retval < 0 )
 		test_fail( __FILE__, __LINE__, "PAPI_get_opt", retval );
-	printf( "ovf_info = %d (%x)\n", options.ovf_info.type,
+	printf( "ovf_info = %d (%#x)\n", options.ovf_info.type,
 			options.ovf_info.type );
 
 	retval = PAPI_get_opt( PAPI_SUBSTRATEINFO, &options2 );

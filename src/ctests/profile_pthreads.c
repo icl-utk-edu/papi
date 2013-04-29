@@ -74,21 +74,21 @@ Thread( void *arg )
 
 	if ( !TESTS_QUIET ) {
 		if ( mask1 == 0x3 ) {
-			printf( "Thread 0x%x PAPI_TOT_INS : \t%lld\n",
+			printf( "Thread %#x PAPI_TOT_INS : \t%lld\n",
 					( int ) pthread_self(  ), ( values[0] )[0] );
 		} else {
-			printf( "Thread 0x%x PAPI_FP_INS : \t%lld\n",
+			printf( "Thread %#x PAPI_FP_INS : \t%lld\n",
 					( int ) pthread_self(  ), ( values[0] )[0] );
 		}
-		printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x PAPI_TOT_CYC: \t%lld\n", ( int ) pthread_self(  ),
 				( values[0] )[1] );
-		printf( "Thread 0x%x Real usec   : \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x Real usec   : \t%lld\n", ( int ) pthread_self(  ),
 				elapsed_us );
-		printf( "Thread 0x%x Real cycles : \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x Real cycles : \t%lld\n", ( int ) pthread_self(  ),
 				elapsed_cyc );
 
 		printf( "Test case: PAPI_profil() for pthreads\n" );
-		printf( "----Profile buffer for Thread 0x%x---\n",
+		printf( "----Profile buffer for Thread %#x---\n",
 				( int ) pthread_self(  ) );
 		for ( i = 0; i < ( int ) length; i++ ) {
 			if ( profbuf[i] )

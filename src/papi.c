@@ -1588,7 +1588,7 @@ PAPI_get_eventset_component( int EventSet)
 int
 PAPI_add_event( int EventSet, int EventCode )
 {
-   APIDBG("Entry: EventSet: %d, EventCode: 0x%x\n", EventSet, EventCode);
+   APIDBG("Entry: EventSet: %d, EventCode: %#x\n", EventSet, EventCode);
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */

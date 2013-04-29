@@ -458,7 +458,7 @@ parse_groupfile( FILE * grp_file )
 			break;
 		case 2:
 			/* get mmcr values */
-			if ( sscanf( data, "%x,%x,%x,%x", &mmcr0, &mmcr1H, &mmcr1L, &mmcra )
+			if ( sscanf( data, "%#x,%#x,%#x,%#x", &mmcr0, &mmcr1H, &mmcr1L, &mmcra )
 				 != 4 ) {
 				fprintf( stderr, "GPS file format error 1 (%s)\n", data );
 				return NULL;

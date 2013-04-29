@@ -85,16 +85,16 @@ Thread( int t, int n )
 	remove_test_events( &EventSet1, mask1 );
 
 	if ( !TESTS_QUIET ) {
-		printf( "Thread 0x%x %-12s : \t%lld\n", t, event_name,
+		printf( "Thread %#x %-12s : \t%lld\n", t, event_name,
 				values[0][1] );
-		printf( "Thread 0x%x PAPI_TOT_CYC : \t%lld\n", t, 
+		printf( "Thread %#x PAPI_TOT_CYC : \t%lld\n", t, 
 			values[0][0] );
 	}
 
 	free_test_space( values, num_tests );
 	if ( !TESTS_QUIET ) {
-		printf( "Thread 0x%x Real usec    : \t%lld\n", t, elapsed_us );
-		printf( "Thread 0x%x Real cycles  : \t%lld\n", t, elapsed_cyc );
+		printf( "Thread %#x Real usec    : \t%lld\n", t, elapsed_us );
+		printf( "Thread %#x Real cycles  : \t%lld\n", t, elapsed_cyc );
 	}
 	PAPI_unregister_thread(  );
 }

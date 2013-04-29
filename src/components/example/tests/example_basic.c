@@ -92,19 +92,19 @@ int main (int argc, char **argv)
 
 	while ( retval == PAPI_OK ) {
 	  if (PAPI_event_code_to_name( code, event_name )!=PAPI_OK) {
-	     printf("Error translating %x\n",code);
+	     printf("Error translating %#x\n",code);
 	     test_fail( __FILE__, __LINE__, 
 		       "PAPI_event_code_to_name", retval );
 	  }
 
 	  if (PAPI_get_event_info( code, &event_info)!=PAPI_OK) {
-	     printf("Error getting info for event %x\n",code);
+	     printf("Error getting info for event %#x\n",code);
 	     test_fail( __FILE__, __LINE__, 
 		       "PAPI_get_event_info()", retval );
 	  }
 
 	  if (!TESTS_QUIET) {
-	    printf("\tEvent 0x%x: %s -- %s\n",
+	    printf("\tEvent %#x: %s -- %s\n",
 		   code,event_name,event_info.long_descr);
 	  }
 

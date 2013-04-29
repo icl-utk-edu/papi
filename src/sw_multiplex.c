@@ -311,7 +311,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 
 	/* Get the global list of threads */
 
-	MPXDBG("Adding %p %x\n",newset,EventCode);
+	MPXDBG("Adding %p %#x\n",newset,EventCode);
 
 	_papi_hwi_lock( MULTIPLEX_LOCK );
 	t = tlist;
@@ -505,20 +505,20 @@ mpx_handler( int signal )
 		MPXDBG( "last signal was %lld usec ago\n", thiscall - lastcall );
 		lastcall = thiscall;
 #endif
-		MPXDBG( "%x caught it, tlist is %p\n", self, tlist );
+		MPXDBG( "%#x caught it, tlist is %p\n", self, tlist );
 		for ( t = tlist; t != NULL; t = t->next ) {
 			if ( pthread_equal( t->thr, self ) == 0 ) {
 				++threads_responding;
 				retval = pthread_kill( t->thr, _papi_os_info.itimer_sig );
 				assert( retval == 0 );
 #ifdef MPX_DEBUG_SIGNALS
-				MPXDBG( "%x signaling %x\n", self, t->thr );
+				MPXDBG( "%#x signaling %#x\n", self, t->thr );
 #endif
 			}
 		}
 	} else {
 #ifdef MPX_DEBUG_SIGNALS
-		MPXDBG( "%x was tapped, tr = %d\n", self, threads_responding );
+		MPXDBG( "%#x was tapped, tr = %d\n", self, threads_responding );
 #endif
 		--threads_responding;
 	}
@@ -667,7 +667,7 @@ mpx_handler( int signal )
 
 #ifdef MPX_DEBUG_OVERHEAD
 	usec = _papi_hwd_get_real_usec(  ) - usec;
-	MPXDBG( "handler %x did %swork in %lld usec\n",
+	MPXDBG( "handler %#x did %swork in %lld usec\n",
 			self, ( didwork ? "" : "no " ), usec );
 #endif
 }
@@ -1142,7 +1142,7 @@ mpx_check( int EventSet )
 		if ( ( ESI->domain.domain & chk_domain ) != chk_domain ) {
 			PAPIERROR
 				( "This platform requires PAPI_DOM_USER+PAPI_DOM_KERNEL+PAPI_DOM_SUPERVISOR\n"
-				  "to be set in the domain when using multiplexing.  Instead, found 0X%x\n",
+				  "to be set in the domain when using multiplexing.  Instead, found %#x\n",
 				  ESI->domain.domain );
 			return ( PAPI_EINVAL_DOM );
 		}

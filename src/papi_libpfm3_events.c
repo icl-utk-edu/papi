@@ -89,7 +89,7 @@ _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 	minor = ( tevent & PAPI_NATIVE_UMASK_AND_MASK ) >> PAPI_NATIVE_UMASK_SHIFT;
 	*event = major;
 	*umask = minor;
-	SUBDBG( "EventCode 0x%08x is event %d, umask 0x%x\n", EventCode, major,
+	SUBDBG( "EventCode 0x%08x is event %d, umask %#x\n", EventCode, major,
 			minor );
 	return PAPI_OK;
 }
@@ -101,7 +101,7 @@ prepare_umask( unsigned int foo, unsigned int *values )
 	unsigned int tmp = foo, i;
 	int j = 0;
 
-	SUBDBG( "umask 0x%x\n", tmp );
+	SUBDBG( "umask %#x\n", tmp );
 	while ( ( i = ( unsigned int ) ffs( ( int ) tmp ) ) ) {
 		tmp = tmp ^ ( 1 << ( i - 1 ) );
 		values[j] = i - 1;
@@ -125,7 +125,7 @@ convert_pfm_masks( pfmlib_event_t * gete )
 			SUBDBG( "Mask value is 0x%08x\n", code );
 			tmp |= code;
 		} else {
-			PAPIERROR( "pfm_get_event_mask_code(0x%x,%d,%p): %s", gete->event,
+			PAPIERROR( "pfm_get_event_mask_code(%#x,%d,%p): %s", gete->event,
 					   i, &code, pfm_strerror( ret ) );
 		}
 	}
@@ -344,7 +344,7 @@ int
 _papi_libpfm_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
-  SUBDBG("ENTER %x\n",EventCode);
+  SUBDBG("ENTER %#x\n",EventCode);
 
   _papi_libpfm_ntv_code_to_name(EventCode,info->symbol,
                                  sizeof(info->symbol));
@@ -468,7 +468,7 @@ _papi_libpfm_init(papi_vector_t *my_vector, int cidx) {
 
    /* Complain if the compiled-against version doesn't match current version */
    if ( PFM_VERSION_MAJOR( version ) != PFM_VERSION_MAJOR( PFMLIB_VERSION ) ) {
-      PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
+      PAPIERROR( "Version mismatch of libpfm: compiled %#x vs. installed %#x\n",
 				   PFM_VERSION_MAJOR( PFMLIB_VERSION ),
 				   PFM_VERSION_MAJOR( version ) );
       return PAPI_ESYS;
@@ -787,7 +787,7 @@ _papi_libpfm_setup_counters( struct perf_event_attr *attr,
        return PAPI_EBUG;
     }
     pe_event = code;
-    SUBDBG( "Stuffing native event index (code 0x%x, raw code 0x%x) into events array.\n",
+    SUBDBG( "Stuffing native event index (code %#x, raw code %#x) into events array.\n",
 				  ( ( pfm_register_t * ) ni_bits )->event, code );
 #else
 

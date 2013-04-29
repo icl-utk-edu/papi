@@ -53,7 +53,7 @@ Thread( int n )
 	long long elapsed_us, elapsed_cyc;
 	char event_name[PAPI_MAX_STR_LEN];
 
-	/* printf("Thread(n=%d) 0x%x started\n", n, omp_get_thread_num()); */
+	/* printf("Thread(n=%d) %#x started\n", n, omp_get_thread_num()); */
 	num_events1 = 2;
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
@@ -92,14 +92,14 @@ Thread( int n )
 	remove_test_events( &EventSet1, mask1 );
 
 	if ( !TESTS_QUIET ) {
-		/*printf("Thread 0x%x %-12s : \t%lld\t%d\n", omp_get_thread_num(), event_name,
+		/*printf("Thread %#x %-12s : \t%lld\t%d\n", omp_get_thread_num(), event_name,
 		   (values[0])[0], n); */
 #if 0
-		printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", omp_get_thread_num(  ),
+		printf( "Thread %#x PAPI_TOT_CYC: \t%lld\n", omp_get_thread_num(  ),
 				values[0][0] );
-		printf( "Thread 0x%x Real usec   : \t%lld\n", omp_get_thread_num(  ),
+		printf( "Thread %#x Real usec   : \t%lld\n", omp_get_thread_num(  ),
 				elapsed_us );
-		printf( "Thread 0x%x Real cycles : \t%lld\n", omp_get_thread_num(  ),
+		printf( "Thread %#x Real cycles : \t%lld\n", omp_get_thread_num(  ),
 				elapsed_cyc );
 #endif
 	}
@@ -109,7 +109,7 @@ Thread( int n )
 	free_test_space( values, num_tests );
 
 	PAPI_unregister_thread(  );
-	/* printf("Thread 0x%x finished\n", omp_get_thread_num()); */
+	/* printf("Thread %#x finished\n", omp_get_thread_num()); */
 	return flops;
 }
 
@@ -161,11 +161,11 @@ main( int argc, char **argv )
 		if ( flops[tid] < flopi[tid] ) {
 			printf( "test iteration=%d\n", i );
 			for ( int j = 0; j < omp_get_num_threads(  ); j++ ) {
-				printf( "Thread 0x%x Value %6lld %c %6lld", j, flops[j],
+				printf( "Thread %#x Value %6lld %c %6lld", j, flops[j],
 						( flops[j] < flopi[j] ) ? '<' : '=', flopi[j] );
 				for ( int k = 0; k < omp_get_num_threads(  ); k++ )
 					if ( ( k != j ) && ( flops[k] == flops[j] ) )
-						printf( " == Thread 0x%x!", k );
+						printf( " == Thread %#x!", k );
 				printf( "\n" );
 			}
 			test_fail( __FILE__, __LINE__, "value returned for thread",

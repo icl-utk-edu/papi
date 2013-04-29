@@ -104,13 +104,13 @@ Thread( void *arg )
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
 
 	if ( !TESTS_QUIET ) {
-		printf( "Thread 0x%x %s : \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x %s : \t%lld\n", ( int ) pthread_self(  ),
 				event_name, ( values[0] )[0] );
-		printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x PAPI_TOT_CYC: \t%lld\n", ( int ) pthread_self(  ),
 				( values[0] )[1] );
-		printf( "Thread 0x%x Real usec   : \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x Real usec   : \t%lld\n", ( int ) pthread_self(  ),
 				elapsed_us );
-		printf( "Thread 0x%x Real cycles : \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x Real cycles : \t%lld\n", ( int ) pthread_self(  ),
 				elapsed_cyc );
 	}
 	free_test_space( values, num_tests );

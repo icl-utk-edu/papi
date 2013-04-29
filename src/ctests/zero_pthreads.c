@@ -48,7 +48,7 @@ Thread( void *arg )
 	   test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 	}
 
-	printf( "Thread 0x%x started\n", ( int ) pthread_self(  ) );
+	printf( "Thread %#x started\n", ( int ) pthread_self(  ) );
 
 	/* add PAPI_TOT_CYC and one of the events in 
 	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
@@ -84,14 +84,14 @@ Thread( void *arg )
 	remove_test_events( &EventSet1, mask1 );
 
 	if ( !TESTS_QUIET ) {
-	   printf( "Thread 0x%x %-12s : \t%lld\n", ( int ) pthread_self(  ),
+	   printf( "Thread %#x %-12s : \t%lld\n", ( int ) pthread_self(  ),
 				event_name, values[0][1] );
-	   printf( "Thread 0x%x PAPI_TOT_CYC : \t%lld\n", (int) pthread_self(),
+	   printf( "Thread %#x PAPI_TOT_CYC : \t%lld\n", (int) pthread_self(),
 				values[0][0] );
-	   printf( "Thread 0x%x Real usec    : \t%lld\n", 
+	   printf( "Thread %#x Real usec    : \t%lld\n", 
 			( int ) pthread_self(  ),
 				elapsed_us );
-	   printf( "Thread 0x%x Real cycles  : \t%lld\n", (int) pthread_self(),
+	   printf( "Thread %#x Real cycles  : \t%lld\n", (int) pthread_self(),
 				elapsed_cyc );
 	}
 

@@ -124,7 +124,7 @@ dump_cmd( papi_cpc_event_t * t )
 	SUBDBG( "ce_pic[0] %llu ce_pic[1] %llu\n", t->cmd.ce_pic[0],
 			t->cmd.ce_pic[1] );
 	SUBDBG( "ce_pcr 0x%llx\n", t->cmd.ce_pcr );
-	SUBDBG( "flags %x\n", t->flags );
+	SUBDBG( "flags %#x\n", t->flags );
 }
 #endif
 
@@ -297,11 +297,11 @@ scan_prtconf( char *cpuname, int len_cpuname, int *hz, int *ver )
 				matched |= 0x1;
 				SUBDBG( "Found 'cpu'. (0x%2.2x)\n", matched );
 			} else if ( !strcmp( cmd, "sparc-version:" ) &&
-						( sscanf( line, "%s %x", cmd, &version ) == 2 ) ) {
+						( sscanf( line, "%s %#x", cmd, &version ) == 2 ) ) {
 				matched |= 0x2;
 				SUBDBG( "Found version=%d. (0x%2.2x)\n", version, matched );
 			} else if ( !strcmp( cmd, "clock-frequency:" ) &&
-						( sscanf( line, "%s %x", cmd, &ihz ) == 2 ) ) {
+						( sscanf( line, "%s %#x", cmd, &ihz ) == 2 ) ) {
 				matched |= 0x4;
 				SUBDBG( "Found ihz=%d. (0x%2.2x)\n", ihz, matched );
 			} else if ( !strcmp( cmd, "name:" ) &&
@@ -411,7 +411,7 @@ build_tables( void )
 #if DEBUG
 	if ( ISLEVEL( DEBUG_SUBSTRATE ) ) {
 		for ( i = 0; i < nctrs; ++i ) {
-			SUBDBG( "%s: bits (%x,%x) pics %x\n", ctrs[i].name, ctrs[i].bits[0],
+			SUBDBG( "%s: bits (%#x,%#x) pics %#x\n", ctrs[i].name, ctrs[i].bits[0],
 					ctrs[i].bits[1], ctrs[i].bitmask );
 		}
 	}
@@ -796,7 +796,7 @@ _ultra_hwd_dispatch_timer( int signal, siginfo_t * si, void *context )
 	     PAPIERROR( "ESI is NULL\n");
 
 	  if ( ESI->master != thread )
-	     PAPIERROR( "Thread mismatch, ESI->master=%x thread=%x\n",
+	     PAPIERROR( "Thread mismatch, ESI->master=%#x thread=%#x\n",
 		        ESI->master, thread );
 
 	  if ( ESI->ctl_state == NULL )

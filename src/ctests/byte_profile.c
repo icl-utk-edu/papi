@@ -128,7 +128,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 		      break;
 		   }
                    else {
-		        printf("Failed with event %d 0x%x\n",i,events[i]);
+		        printf("Failed with event %d %#x\n",i,events[i]);
 			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
 		   }
 		}

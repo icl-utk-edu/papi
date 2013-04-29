@@ -73,7 +73,7 @@ int main (int argc, char **argv)
 
         retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK ) {
-	   printf("Error translating %x\n",code);
+	   printf("Error translating %#x\n",code);
 	   test_fail( __FILE__, __LINE__, 
                             "PAPI_event_code_to_name", retval );
 	}

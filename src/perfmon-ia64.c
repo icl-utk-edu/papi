@@ -1362,7 +1362,7 @@ _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 	minor = ( tevent & PAPI_NATIVE_UMASK_AND_MASK ) >> PAPI_NATIVE_UMASK_SHIFT;
 	*event = major;
 	*umask = minor;
-	SUBDBG( "EventCode 0x%08x is event %d, umask 0x%x\n", EventCode, major,
+	SUBDBG( "EventCode 0x%08x is event %d, umask %#x\n", EventCode, major,
 			minor );
 	return ( PAPI_OK );
 }
@@ -1386,7 +1386,7 @@ prepare_umask( unsigned int foo, unsigned int *values )
 {
 	unsigned int tmp = foo, i, j = 0;
 
-	SUBDBG( "umask 0x%x\n", tmp );
+	SUBDBG( "umask %#x\n", tmp );
 	if ( foo == 0 )
 		return 0;
 	while ( ( i = ffs( tmp ) ) ) {
@@ -1484,7 +1484,7 @@ _papi_pfm_ntv_name_to_code( char *name, unsigned int *event_code )
 				mask |= 1 << event.unit_masks[i];
 			}
 			*event_code = encode_native_event_raw( event.event, mask );
-			SUBDBG( "event_code: 0x%x  event: %d  num_masks: %d\n", *event_code,
+			SUBDBG( "event_code: %#x  event: %d  num_masks: %d\n", *event_code,
 					event.event, event.num_masks );
 			return ( PAPI_OK );
 		}
@@ -2036,7 +2036,7 @@ _ia64_init_component( int cidx )
 		return PAPI_ECMP;
 
 	if ( PFM_VERSION_MAJOR( version ) != PFM_VERSION_MAJOR( PFMLIB_VERSION ) ) {
-		PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x",
+		PAPIERROR( "Version mismatch of libpfm: compiled %#x vs. installed %#x",
 				   PFM_VERSION_MAJOR( PFMLIB_VERSION ),
 				   PFM_VERSION_MAJOR( version ) );
 		return PAPI_ECMP;
@@ -3000,7 +3000,7 @@ _ia64_mont_update_control_state( hwd_control_state_t * this_state,
 		if ( _pfm_decode_native_event( EventCode, &event, &umask ) != PAPI_OK )
 			return ( PAPI_ENOEVNT );
 
-		SUBDBG( " evtcode=0x%x evtindex=%d name: %s\n", EventCode, event,
+		SUBDBG( " evtcode=%#x evtindex=%d name: %s\n", EventCode, event,
 				name );
 
 		PFMW_PEVT_EVENT( evt, i ) = event;

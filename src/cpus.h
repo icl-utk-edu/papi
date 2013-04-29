@@ -37,7 +37,7 @@ _papi_hwi_lookup_cpu( unsigned int cpu_num )
 
 	tmp = ( CpuInfo_t * ) _papi_hwi_cpu_head;
 	while ( tmp != NULL ) {
-		THRDBG( "Examining cpu 0x%x at %p\n", tmp->cpu_num, tmp );
+		THRDBG( "Examining cpu %#x at %p\n", tmp->cpu_num, tmp );
 		if ( tmp->cpu_num == cpu_num )
 			break;
 		tmp = tmp->next;
@@ -49,9 +49,9 @@ _papi_hwi_lookup_cpu( unsigned int cpu_num )
 
 	if ( tmp ) {
 		_papi_hwi_cpu_head = tmp;
-		THRDBG( "Found cpu 0x%x at %p\n", cpu_num, tmp );
+		THRDBG( "Found cpu %#x at %p\n", cpu_num, tmp );
 	} else {
-		THRDBG( "Did not find cpu 0x%x\n", cpu_num );
+		THRDBG( "Did not find cpu %#x\n", cpu_num );
 	}
 
 	_papi_hwi_unlock( CPUS_LOCK );

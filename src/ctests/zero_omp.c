@@ -58,7 +58,7 @@ Thread( int n )
 	long long elapsed_us, elapsed_cyc;
 	char event_name[PAPI_MAX_STR_LEN];
 
-	printf( "Thread 0x%x started\n", omp_get_thread_num(  ) );
+	printf( "Thread %#x started\n", omp_get_thread_num(  ) );
 	num_events1 = 2;
 
 	/* add PAPI_TOT_CYC and one of the events in 
@@ -94,13 +94,13 @@ Thread( int n )
 	remove_test_events( &EventSet1, mask1 );
 
 	if ( !TESTS_QUIET ) {
-		printf( "Thread 0x%x %-12s : \t%lld\n", omp_get_thread_num(  ),
+		printf( "Thread %#x %-12s : \t%lld\n", omp_get_thread_num(  ),
 				event_name, values[0][1] );
-		printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", omp_get_thread_num(  ),
+		printf( "Thread %#x PAPI_TOT_CYC: \t%lld\n", omp_get_thread_num(  ),
 				values[0][0] );
-		printf( "Thread 0x%x Real usec   : \t%lld\n", omp_get_thread_num(  ),
+		printf( "Thread %#x Real usec   : \t%lld\n", omp_get_thread_num(  ),
 				elapsed_us );
-		printf( "Thread 0x%x Real cycles : \t%lld\n", omp_get_thread_num(  ),
+		printf( "Thread %#x Real cycles : \t%lld\n", omp_get_thread_num(  ),
 				elapsed_cyc );
 	}
 
@@ -109,7 +109,7 @@ Thread( int n )
 	free_test_space( values, num_tests );
 
 	PAPI_unregister_thread(  );
-	printf( "Thread 0x%x finished\n", omp_get_thread_num(  ) );
+	printf( "Thread %#x finished\n", omp_get_thread_num(  ) );
 }
 
 int

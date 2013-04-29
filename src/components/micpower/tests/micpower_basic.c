@@ -58,13 +58,13 @@ int main (int argc, char **argv)
 	   while ( r == PAPI_OK ) {
 	      retval = PAPI_event_code_to_name( code, event_name );
 	      if ( retval != PAPI_OK ) {
-		 printf("Error translating %x\n",code);
+		 printf("Error translating %#x\n",code);
 	         test_fail( __FILE__, __LINE__, 
                             "PAPI_event_code_to_name", retval );
 	      }
 
 	      if (!strncmp(event_name,"micpower",8)) {
-	         if (!TESTS_QUIET) printf("0x%x %s ",code,event_name);
+	         if (!TESTS_QUIET) printf("%#x %s ",code,event_name);
 	     
 	         EventSet = PAPI_NULL;
 

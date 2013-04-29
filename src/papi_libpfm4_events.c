@@ -60,7 +60,7 @@ static int find_existing_event(char *name) {
   for(i=0;i<num_native_events;i++) {
 
     if (!strcmp(name,native_events[i].allocated_name)) {
-      SUBDBG("Found %s (%x)\n",
+      SUBDBG("Found %s (%#x)\n",
 	     native_events[i].allocated_name,
 	     native_events[i].libpfm4_idx);
       event=i;
@@ -94,7 +94,7 @@ static struct native_event_t *find_existing_event_by_number(int eventnum) {
   
   _papi_hwi_unlock( NAMELIB_LOCK );
 
-  SUBDBG("Found %p for %x\n",temp_event,eventnum);
+  SUBDBG("Found %p for %#x\n",temp_event,eventnum);
 
   return temp_event;
 }
@@ -137,12 +137,12 @@ static int find_event_no_aliases(char *name) {
 	  sprintf(full_name,"%s::%s",pinfo.name,event_info.name);
 
 	  if (!strcmp(name,full_name)) {
-	     SUBDBG("FOUND %s %s %x\n",name,full_name,i);
+	     SUBDBG("FOUND %s %s %#x\n",name,full_name,i);
 	     return i;
 	  }
 
 	  if (!strcmp(name,event_info.name)) {
-	     SUBDBG("FOUND %s %s %x\n",name,event_info.name,i);
+	     SUBDBG("FOUND %s %s %#x\n",name,event_info.name,i);
 	     return i;
 	  }
 	  i=pfm_get_event_next(i);
@@ -180,14 +180,14 @@ static int find_next_no_aliases(int code) {
   current_pmu=event_info.pmu;
   current_event=pfm_get_event_next(code);
 
-  SUBDBG("Current is %x guessing next is %x\n",code,current_event);
+  SUBDBG("Current is %#x guessing next is %#x\n",code,current_event);
 
   while(1) {
 
      memset(&event_info,0,sizeof(pfm_event_info_t));
      ret=pfm_get_event_info(current_event, PFM_OS_PERF_EVENT, &event_info);
      if (ret==PFM_SUCCESS) {
-        SUBDBG("Returning %x\n",current_event);
+        SUBDBG("Returning %#x\n",current_event);
         return current_event;
      }
 
@@ -196,7 +196,7 @@ static int find_next_no_aliases(int code) {
      while(1) {
 
         current_pmu++;
-        SUBDBG("Incrementing PMU: %x\n",current_pmu);
+        SUBDBG("Incrementing PMU: %#x\n",current_pmu);
 
 	/* Off the end, so done iterating */
         if (current_pmu>PFM_PMU_MAX) {
@@ -288,7 +288,7 @@ static struct native_event_t *allocate_native_event(char *name,
     
   native_events[new_event].libpfm4_idx=find_event_no_aliases(pmuplusbase);
 
-  SUBDBG("Using %x as index instead of %x for %s\n",
+  SUBDBG("Using %#x as index instead of %#x for %s\n",
 	 native_events[new_event].libpfm4_idx,event_idx,pmuplusbase);
 
   native_events[new_event].allocated_name=strdup(name);
@@ -323,7 +323,7 @@ static struct native_event_t *allocate_native_event(char *name,
 	  perf_arg.attr->config1,
 	  perf_arg.attr->type);
 
-  SUBDBG("Creating event %s with perfidx %x\n",
+  SUBDBG("Creating event %s with perfidx %#x\n",
 	 name,
 	 native_events[new_event].libpfm4_idx);
 
@@ -414,7 +414,7 @@ static int find_max_umask(struct native_event_t *current_event) {
     a=0;
     while(1) {
 
-      SUBDBG("get_event_attr %x %d %p\n",current_event->libpfm4_idx,a,&ainfo);
+      SUBDBG("get_event_attr %#x %d %p\n",current_event->libpfm4_idx,a,&ainfo);
 
       memset(&ainfo,0,sizeof(pfm_event_attr_info_t));
 
@@ -543,7 +543,7 @@ convert_libpfm4_to_string( int code, char **event_name)
   pfm_pmu_info_t pinfo;
   char name[BUFSIZ];
 
-  SUBDBG("ENTER %x\n",code);
+  SUBDBG("ENTER %#x\n",code);
 
   /* Clear structures, as wanted by libpfm4 */
   memset( &gete, 0, sizeof (pfm_event_info_t) );
@@ -598,11 +598,11 @@ static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode) {
      return _papi_libpfm4_error(ret);
   }
 
-  SUBDBG("Converted %x to %s\n",code,name);
+  SUBDBG("Converted %#x to %s\n",code,name);
 
   ret=_papi_libpfm4_ntv_name_to_code(name,PapiEventCode);
 
-  SUBDBG("Converted %s to event %x\n",name,*PapiEventCode);
+  SUBDBG("Converted %s to event %#x\n",name,*PapiEventCode);
 
   if (name) free(name);
 
@@ -784,7 +784,7 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
         return _papi_libpfm4_error(actual_idx);
      }
 
-     SUBDBG("Using %x as the index\n",actual_idx);
+     SUBDBG("Using %#x as the index\n",actual_idx);
 
      /* We were found in libpfm4, so allocate our copy of the event */
 
@@ -796,7 +796,7 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
 
   if (event_num>=0) {      
      *event_code=event_num;
-     SUBDBG("Found code: %x\n",*event_code);
+     SUBDBG("Found code: %#x\n",*event_code);
      return PAPI_OK;
   }
 
@@ -830,7 +830,7 @@ _papi_libpfm4_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 
         struct native_event_t *our_event;
 
-        SUBDBG("ENTER %x\n",EventCode);
+        SUBDBG("ENTER %#x\n",EventCode);
 
         our_event=find_existing_event_by_number(EventCode);
 	if (our_event==NULL) {
@@ -882,14 +882,14 @@ _papi_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 
   struct native_event_t *our_event;
 
-  SUBDBG("ENTER %x\n",EventCode);
+  SUBDBG("ENTER %#x\n",EventCode);
 
   our_event=find_existing_event_by_number(EventCode);
   if (our_event==NULL) {
      return PAPI_ENOEVNT;
   }
 
-  SUBDBG("Getting info on %x\n",our_event->libpfm4_idx);
+  SUBDBG("Getting info on %#x\n",our_event->libpfm4_idx);
 	
   /* libpfm requires the structure be zeroed */
   memset( &gete, 0, sizeof ( gete ) );
@@ -949,7 +949,7 @@ _papi_libpfm4_ntv_code_to_descr( unsigned int EventCode,
     a=0;
     while(1) {
 
-      SUBDBG("get_event_attr %x %p\n",our_event->libpfm4_idx,&ainfo);
+      SUBDBG("get_event_attr %#x %p\n",our_event->libpfm4_idx,&ainfo);
 
       memset(&ainfo,0,sizeof(pfm_event_attr_info_t));
 
@@ -1064,7 +1064,7 @@ descr_in_tmp:
 		ret = PAPI_OK;
 	free( tmp );
 
-	SUBDBG("PFM4 Code: %x %s\n",EventCode,ntv_descr);
+	SUBDBG("PFM4 Code: %#x %s\n",EventCode,ntv_descr);
 
 	return ret;
 }
@@ -1077,7 +1077,7 @@ _papi_libpfm4_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   struct native_event_t *our_event;
 
-  SUBDBG("ENTER %x\n",EventCode);
+  SUBDBG("ENTER %#x\n",EventCode);
 
   our_event=find_existing_event_by_number(EventCode);
   if (our_event==NULL) {
@@ -1138,7 +1138,7 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	   *PapiEventCode=(unsigned int)papi_event;
 
-           SUBDBG("FOUND %x (from %x) ret=%d\n",*PapiEventCode,code,ret);
+           SUBDBG("FOUND %#x (from %#x) ret=%d\n",*PapiEventCode,code,ret);
 
 	   return ret;
 	}
@@ -1147,7 +1147,7 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	/* next-event.  So gather info on the current one */
 	current_event=find_existing_event_by_number(*PapiEventCode);
 	if (current_event==NULL) {
-           SUBDBG("EVENTS %x not found\n",*PapiEventCode);
+           SUBDBG("EVENTS %#x not found\n",*PapiEventCode);
 	   return PAPI_ENOEVNT;
 	}
 
@@ -1158,12 +1158,12 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	   unsigned int papi_event=0;
 
-	   SUBDBG("PAPI_ENUM_EVENTS %x\n",*PapiEventCode);
+	   SUBDBG("PAPI_ENUM_EVENTS %#x\n",*PapiEventCode);
 
 	   code=current_event->libpfm4_idx;
 
 	   ret=find_next_no_aliases(code);
-	   SUBDBG("find_next_no_aliases() Returned %x\n",ret);
+	   SUBDBG("find_next_no_aliases() Returned %#x\n",ret);
 	   if (ret<0) {
 	      return ret;
 	   }
@@ -1231,7 +1231,7 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	      }
 
 	      *PapiEventCode=(unsigned int)papi_event;
-	      SUBDBG("found code %x\n",*PapiEventCode);
+	      SUBDBG("found code %#x\n",*PapiEventCode);
 
 	      return PAPI_OK;
 	   }
@@ -1320,7 +1320,7 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
 
    /* Complain if the compiled-against version doesn't match current version */
    if ( PFM_MAJ_VERSION( version ) != PFM_MAJ_VERSION( LIBPFM_VERSION ) ) {
-      PAPIERROR( "Version mismatch of libpfm: compiled %x vs. installed %x\n",
+      PAPIERROR( "Version mismatch of libpfm: compiled %#x vs. installed %#x\n",
 				   PFM_MAJ_VERSION( LIBPFM_VERSION ),
 				   PFM_MAJ_VERSION( version ) );
       return PAPI_ESYS;

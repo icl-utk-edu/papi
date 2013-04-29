@@ -37,7 +37,7 @@ main( int argc, char **argv )
 	printf( "Found |%s|\n", event_name );
 
 	code = PAPI_FP_OPS;
-	printf( "Looking for highest defined preset event (PAPI_FP_OPS): 0x%x...\n",
+	printf( "Looking for highest defined preset event (PAPI_FP_OPS): %#x...\n",
 			code );
 	retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK )
@@ -45,7 +45,7 @@ main( int argc, char **argv )
 	printf( "Found |%s|\n", event_name );
 
 	code = PAPI_PRESET_MASK | ( PAPI_MAX_PRESET_EVENTS - 1 );
-	printf( "Looking for highest allocated preset event: 0x%x...\n", code );
+	printf( "Looking for highest allocated preset event: %#x...\n", code );
 	retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK )
 		test_continue( "PAPI_event_code_to_name", retval );
@@ -53,7 +53,7 @@ main( int argc, char **argv )
 		printf( "Found |%s|\n", event_name );
 
 	code = PAPI_PRESET_MASK | ( int ) PAPI_NATIVE_AND_MASK;
-	printf( "Looking for highest possible preset event: 0x%x...\n", code );
+	printf( "Looking for highest possible preset event: %#x...\n", code );
 	retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK )
 		test_continue( "PAPI_event_code_to_name", retval );
@@ -66,7 +66,7 @@ main( int argc, char **argv )
 	code = PAPI_NATIVE_MASK;
 	PAPI_enum_event( &code, PAPI_ENUM_FIRST );
 
-	printf( "Looking for first native event: 0x%x...\n", code );
+	printf( "Looking for first native event: %#x...\n", code );
 	retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK ) {
 	  test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
@@ -92,7 +92,7 @@ main( int argc, char **argv )
 	}
 
 	code = last;
-	printf( "Looking for last native event: 0x%x...\n", code );
+	printf( "Looking for last native event: %#x...\n", code );
 	retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
@@ -104,7 +104,7 @@ main( int argc, char **argv )
 	/* Highly doubtful we have this many natives */
 	/* Turn on all bits *except* PRESET bit and COMPONENT bits */
 	code = PAPI_PRESET_AND_MASK;
-	printf( "Looking for highest definable native event: 0x%x...\n", code );
+	printf( "Looking for highest definable native event: %#x...\n", code );
 	retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK )
 		test_continue( "PAPI_event_code_to_name", retval );

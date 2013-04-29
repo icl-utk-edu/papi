@@ -148,7 +148,7 @@ int is_event_derived(unsigned int event) {
      PAPI_get_event_info(event,&info);
 
      if (strcmp(info.derived,"NOT_DERIVED")) {
-       //       printf("%x is derived\n",event);
+       //       printf("%#x is derived\n",event);
         return 1;
      }
   }
@@ -262,7 +262,7 @@ add_test_events( int *number, int *mask, int allow_derived )
 	else {
 	   if ( !TESTS_QUIET ) {
 	     PAPI_event_code_to_name(test_events[i].event,name_string);
-	     fprintf( stdout, "%x %s is not available.\n", 
+	     fprintf( stdout, "%#x %s is not available.\n", 
 		      test_events[i].event,name_string);
 	   }
 	   *mask = *mask ^ test_events[i].mask;
@@ -834,13 +834,13 @@ enum_add_native_events( int *num_events, int **evtcodes,
 		 if ( retval == PAPI_OK ) {
 		    ( *evtcodes )[event_found] = event_code;
 		    if ( !TESTS_QUIET ) {
-		       printf( "event_code[%d] = 0x%x (%s)\n",
+		       printf( "event_code[%d] = %#x (%s)\n",
 			       event_found, event_code, info.symbol );
 		    }
 		    event_found++;
 		 } else {
 		    if ( !TESTS_QUIET ) {
-		       printf( "0x%x (%s) can't be added to the EventSet.\n",
+		       printf( "%#x (%s) can't be added to the EventSet.\n",
 			       event_code, info.symbol );
 		    }
 		 }
@@ -852,7 +852,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
 	      if ( retval == PAPI_OK ) {
 		  ( *evtcodes )[event_found] = event_code;
 		  if ( !TESTS_QUIET ) {
-		     printf( "event_code[%d] = 0x%x (%s)\n",
+		     printf( "event_code[%d] = %#x (%s)\n",
 			       event_found, event_code, info.symbol );
 		  }
 		  event_found++;
@@ -869,7 +869,7 @@ enum_add_native_events( int *num_events, int **evtcodes,
 				event_found++;
 			} else {
 				if ( !TESTS_QUIET )
-					fprintf( stdout, "0x%x is not available.\n", event_code );
+					fprintf( stdout, "%#x is not available.\n", event_code );
 			}
 		}
 	}

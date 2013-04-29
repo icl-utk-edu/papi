@@ -144,7 +144,7 @@ main( int argc, char **argv )
 	/* arbitrary */
 	mythreshold = 2000000;
 	if (!TESTS_QUIET) {
-	   printf("Using %x for the overflow event, threshold %d\n",
+	   printf("Using %#x for the overflow event, threshold %d\n",
 		  PAPI_event,mythreshold);
 	}
 

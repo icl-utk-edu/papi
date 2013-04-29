@@ -140,7 +140,7 @@ init_amd( PAPI_mh_info_t * mh_info, int *num_levels )
 	MEMDBG( "e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
 			reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx );
 	MEMDBG
-		( ":\neax: %x %x %x %x\nebx: %x %x %x %x\necx: %x %x %x %x\nedx: %x %x %x %x\n",
+		( ":\neax: %#x %#x %#x %#x\nebx: %#x %#x %#x %#x\necx: %#x %#x %#x %#x\nedx: %#x %#x %#x %#x\n",
 		  reg.byt[0], reg.byt[1], reg.byt[2], reg.byt[3], reg.byt[4],
 		  reg.byt[5], reg.byt[6], reg.byt[7], reg.byt[8], reg.byt[9],
 		  reg.byt[10], reg.byt[11], reg.byt[12], reg.byt[13], reg.byt[14],
@@ -228,7 +228,7 @@ init_amd( PAPI_mh_info_t * mh_info, int *num_levels )
 	MEMDBG( "e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
 			reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx );
 	MEMDBG
-		( ":\neax: %x %x %x %x\nebx: %x %x %x %x\necx: %x %x %x %x\nedx: %x %x %x %x\n",
+		( ":\neax: %#x %#x %#x %#x\nebx: %#x %#x %#x %#x\necx: %#x %#x %#x %#x\nedx: %#x %#x %#x %#x\n",
 		  reg.byt[0], reg.byt[1], reg.byt[2], reg.byt[3], reg.byt[4],
 		  reg.byt[5], reg.byt[6], reg.byt[7], reg.byt[8], reg.byt[9],
 		  reg.byt[10], reg.byt[11], reg.byt[12], reg.byt[13], reg.byt[14],
@@ -1176,7 +1176,7 @@ print_intel_cache_table(  )
 		( int ) ( sizeof ( intel_cache ) /
 				  sizeof ( struct _intel_cache_info ) );
 	for ( i = 0; i < k; i++ ) {
-		printf( "%d.\tDescriptor: 0x%x\n", i, intel_cache[i].descriptor );
+		printf( "%d.\tDescriptor: %#x\n", i, intel_cache[i].descriptor );
 		printf( "\t  Level:     %d\n", intel_cache[i].level );
 		printf( "\t  Type:      %d\n", intel_cache[i].type );
 		printf( "\t  Size(s):   " );
@@ -1220,7 +1220,7 @@ intel_decode_descriptor( struct _intel_cache_info *d, PAPI_mh_level_t * L )
 		/* expand TLB entries for multiple possible page sizes */
 		for ( i = 0; i < TLB_SIZES && next < PAPI_MH_MAX_LEVELS && d->size[i];
 			  i++, next++ ) {
-//          printf("Level %d Descriptor: %x TLB type %x next: %d, i: %d\n", level, d->descriptor, d->type, next, i);
+//          printf("Level %d Descriptor: %#x TLB type %#x next: %d, i: %d\n", level, d->descriptor, d->type, next, i);
 			t = &L[level].tlb[next];
 			t->type = PAPI_MH_CACHE_TYPE( d->type );
 			t->num_entries = d->entries;
@@ -1235,7 +1235,7 @@ intel_decode_descriptor( struct _intel_cache_info *d, PAPI_mh_level_t * L )
 			if ( L[level].cache[next].type == PAPI_MH_TYPE_EMPTY )
 				break;
 		}
-//      printf("Level %d Descriptor: %x Cache type %x next: %d\n", level, d->descriptor, d->type, next);
+//      printf("Level %d Descriptor: %#x Cache type %#x next: %d\n", level, d->descriptor, d->type, next);
 		c = &L[level].cache[next];
 		c->type = PAPI_MH_CACHE_TYPE( d->type );
 		c->size = d->size[0] << 10;	/* convert from KB to bytes */
@@ -1411,7 +1411,7 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 	MEMDBG( "e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
 			reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx );
 	MEMDBG
-		( ":\nd0: %x %x %x %x\nd1: %x %x %x %x\nd2: %x %x %x %x\nd3: %x %x %x %x\n",
+		( ":\nd0: %#x %#x %#x %#x\nd1: %#x %#x %#x %#x\nd2: %#x %#x %#x %#x\nd3: %#x %#x %#x %#x\n",
 		  reg.descrip[0], reg.descrip[1], reg.descrip[2], reg.descrip[3],
 		  reg.descrip[4], reg.descrip[5], reg.descrip[6], reg.descrip[7],
 		  reg.descrip[8], reg.descrip[9], reg.descrip[10], reg.descrip[11],

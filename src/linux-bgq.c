@@ -741,7 +741,7 @@ user_signal_handler( int hEvtSet, uint64_t address, uint64_t ovfVector, const uc
 #ifdef DEBUG_BGQ
 		printf("OVERFLOW_NONE\n");
 #endif
-		PAPIERROR( "ESI->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW (%x)", thread->running_eventset[cidx]->overflow.flags);
+		PAPIERROR( "ESI->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW (%#x)", thread->running_eventset[cidx]->overflow.flags);
 	}
 }
 

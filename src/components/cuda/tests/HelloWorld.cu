@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 			continue;
 		}
 		eventCount++;
-		printf( "Name %s --- Code: %x\n", EventName[i], events[i] );
+		printf( "Name %s --- Code: %#x\n", EventName[i], events[i] );
 	}
 
 	/* if we did not find any valid events, just report test failed. */

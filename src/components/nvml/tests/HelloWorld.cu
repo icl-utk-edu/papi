@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 		if( retval != PAPI_OK )
 			fprintf( stderr, "PAPI_event_name_to_code failed\n" );
 		else
-			printf( "Name %s --- Code: %x\n", EventName[i], events[i] );
+			printf( "Name %s --- Code: %#x\n", EventName[i], events[i] );
 	}
 
 	retval = PAPI_create_eventset( &EventSet );

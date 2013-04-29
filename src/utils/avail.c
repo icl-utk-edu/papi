@@ -209,7 +209,7 @@ main( int argc, char **argv )
 			  info.postfix );
 
 		  for( j = 0; j < ( int ) info.count; j++ ) {
-		     printf( " Native Code[%d]: 0x%x |%s|\n", j,
+		     printf( " Native Code[%d]: %#x |%s|\n", j,
 			     info.code[j], info.name[j] );
 		     PAPI_get_event_info( (int) info.code[j], &n_info );
 		     printf(" Number of Register Values: %d\n", n_info.count );
@@ -286,7 +286,7 @@ main( int argc, char **argv )
 		  if ( filter & info.event_type ) {
 		     if ( print_avail_only ) {
 		        if ( info.count ) {
-			   printf( "%-13s0x%x  %-5s%s",
+			   printf( "%-13s%#x  %-5s%s",
 				   info.symbol,
 				   info.event_code,
 				   is_derived( &info ), info.long_descr );
@@ -296,7 +296,7 @@ main( int argc, char **argv )
 			}
 			printf( "\n" );
 		     } else {
-			printf( "%-13s0x%x  %-6s%-4s %s",
+			printf( "%-13s%#x  %-6s%-4s %s",
 				info.symbol,
 				info.event_code,
 				( info.count ? "Yes" : "No" ),
@@ -317,13 +317,13 @@ main( int argc, char **argv )
 	       } else {
 		  if ( ( print_avail_only && info.count ) ||
 		       ( print_avail_only == 0 ) ) {
-		     printf( "%s\t0x%x\t%d\t|%s|\n |%s|\n"
+		     printf( "%s\t%#x\t%d\t|%s|\n |%s|\n"
 			     " |%s|\n |%s|\n |%s|\n",
 			     info.symbol, info.event_code, info.count,
 			     info.short_descr, info.long_descr, info.note,
 			     info.derived, info.postfix );
 		     for ( j = 0; j < ( int ) info.count; j++ ) {
-			printf( " Native Code[%d]: 0x%x |%s|\n", j,
+			printf( " Native Code[%d]: %#x |%s|\n", j,
 				info.code[j], info.name[j] );
 		     }
 		  }

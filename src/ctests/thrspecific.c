@@ -15,7 +15,7 @@ Thread( void *arg )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 
-	printf( "Thread 0x%x started, specific data is at %p\n",
+	printf( "Thread %#x started, specific data is at %p\n",
 			( int ) pthread_self(  ), arg );
 
 	retval = PAPI_set_thr_specific( PAPI_USR1_TLS, arg );

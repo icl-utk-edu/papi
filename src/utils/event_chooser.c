@@ -63,7 +63,7 @@ show_event_info( int evt )
     PAPI_event_info_t info;
 
     if ( ( retval = PAPI_get_event_info( evt, &info ) ) == PAPI_OK ) {
-       printf( "%s\t0x%x\n |%s|\n",
+       printf( "%s\t%#x\n |%s|\n",
 	       info.symbol, info.event_code, info.long_descr );
 
        for( k = 0; k < ( int ) info.count; k++ ) {
@@ -165,7 +165,7 @@ preset( void )
 		retval = PAPI_add_event( EventSet, i );
 		if ( retval == PAPI_OK ) {
 			if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-				printf( "%-13s0x%x  %-5s%s",
+				printf( "%-13s%#x  %-5s%s",
 						info.symbol,
 						info.event_code, is_derived( &info ), info.long_descr );
 				if ( info.note[0] )

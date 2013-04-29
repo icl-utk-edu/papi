@@ -454,12 +454,12 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 
 #ifdef DEBUG
 	SUBDBG( " -> %s: Analysis of memory maps done, results:\n", __func__ );
-	SUBDBG( " -> %s: text_start=%x, text_end=%x, text_size=%lld\n", __func__,
+	SUBDBG( " -> %s: text_start=%#x, text_end=%#x, text_size=%lld\n", __func__,
 			_papi_hwi_system_info.exe_info.address_info.text_start,
 			_papi_hwi_system_info.exe_info.address_info.text_end,
 			_papi_hwi_system_info.exe_info.address_info.text_end
 			- _papi_hwi_system_info.exe_info.address_info.text_start );
-	SUBDBG( " -> %s: data_start=%x, data_end=%x, data_size=%lld\n", __func__,
+	SUBDBG( " -> %s: data_start=%#x, data_end=%#x, data_size=%lld\n", __func__,
 			_papi_hwi_system_info.exe_info.address_info.data_start,
 			_papi_hwi_system_info.exe_info.address_info.data_end,
 			_papi_hwi_system_info.exe_info.address_info.data_end

@@ -85,7 +85,7 @@ allocate_cpu( unsigned int cpu_num )
 static void
 free_cpu( CpuInfo_t ** cpu )
 {
-   THRDBG( "Entry: *cpu: %p, cpu_num: 0x%x\n", *cpu, ( *cpu )->cpu_num);
+   THRDBG( "Entry: *cpu: %p, cpu_num: %#x\n", *cpu, ( *cpu )->cpu_num);
 	int i;
 	for ( i = 0; i < papi_num_components; i++ ) {
 		if ( ( *cpu )->context[i] )

@@ -35,40 +35,40 @@ _solaris_get_memory_info( PAPI_hw_info_t * hw, int id )
 	   if (fgets(line,BUFSIZ,pipe)==NULL) break;
 
            if (strstr(line,"icache-size:")) {
-	      sscanf(line,"%*s %x",&mem[0].cache[0].size);
+	      sscanf(line,"%*s %#x",&mem[0].cache[0].size);
 	   }
            if (strstr(line,"icache-line-size:")) {
-	      sscanf(line,"%*s %x",&mem[0].cache[0].line_size);
+	      sscanf(line,"%*s %#x",&mem[0].cache[0].line_size);
 	   }
            if (strstr(line,"icache-associativity:")) {
-	      sscanf(line,"%*s %x",&mem[0].cache[0].associativity);
+	      sscanf(line,"%*s %#x",&mem[0].cache[0].associativity);
 	   }
 
            if (strstr(line,"dcache-size:")) {
-	      sscanf(line,"%*s %x",&mem[0].cache[1].size);
+	      sscanf(line,"%*s %#x",&mem[0].cache[1].size);
 	   }
            if (strstr(line,"dcache-line-size:")) {
-	      sscanf(line,"%*s %x",&mem[0].cache[1].line_size);
+	      sscanf(line,"%*s %#x",&mem[0].cache[1].line_size);
 	   }
            if (strstr(line,"dcache-associativity:")) {
-	      sscanf(line,"%*s %x",&mem[0].cache[1].associativity);
+	      sscanf(line,"%*s %#x",&mem[0].cache[1].associativity);
 	   }
 
            if (strstr(line,"ecache-size:")) {
-	      sscanf(line,"%*s %x",&mem[1].cache[0].size);
+	      sscanf(line,"%*s %#x",&mem[1].cache[0].size);
 	   }
            if (strstr(line,"ecache-line-size:")) {
-	      sscanf(line,"%*s %x",&mem[1].cache[0].line_size);
+	      sscanf(line,"%*s %#x",&mem[1].cache[0].line_size);
 	   }
            if (strstr(line,"ecache-associativity:")) {
-	      sscanf(line,"%*s %x",&mem[1].cache[0].associativity);
+	      sscanf(line,"%*s %#x",&mem[1].cache[0].associativity);
 	   }
 
            if (strstr(line,"#itlb-entries:")) {
-	      sscanf(line,"%*s %x",&mem[0].tlb[0].num_entries);
+	      sscanf(line,"%*s %#x",&mem[0].tlb[0].num_entries);
 	   }
            if (strstr(line,"#dtlb-entries:")) {
-	      sscanf(line,"%*s %x",&mem[0].tlb[1].num_entries);
+	      sscanf(line,"%*s %#x",&mem[0].tlb[1].num_entries);
 	   }
 
 	}

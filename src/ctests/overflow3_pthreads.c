@@ -90,9 +90,9 @@ mainloop( int arg )
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
 
 	if ( !TESTS_QUIET ) {
-		printf( "Thread 0x%x %s : \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x %s : \t%lld\n", ( int ) pthread_self(  ),
 				event_name, ( values[0] )[0] );
-		printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", ( int ) pthread_self(  ),
+		printf( "Thread %#x PAPI_TOT_CYC: \t%lld\n", ( int ) pthread_self(  ),
 				( values[0] )[1] );
 	}
 
