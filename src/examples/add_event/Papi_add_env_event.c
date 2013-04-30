@@ -121,7 +121,7 @@ int PAPI_add_env_event(int *EventSet, int *EventCode, char *env_variable){
         }
         else{
            if ( strlen(eventname)>1 && eventname[1]=='x')
-                sscanf(eventname, "%x", &real_event);
+                sscanf(eventname, "%#x", &real_event);
            else
                real_event = atoi(eventname);
         }

@@ -108,7 +108,7 @@ void *Thread(void *arg)
     if (retval != PAPI_OK)
     	ERROR_RETURN(retval);
 
-    printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n",(int)PAPI_thread_id(),
+    printf("Thread %#x PAPI_TOT_INS : \t%lld\n",(int)PAPI_thread_id(),
 	 values[0]);
     printf("            PAPI_TOT_CYC: \t%lld\n", values[1]);
     printf("            Real usec   : \t%lld\n", elapsed_us);
