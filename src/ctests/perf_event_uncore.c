@@ -48,6 +48,7 @@ main( int argc, char **argv )
 	   if (hwinfo->cpuid_model == 58) {
 	      /* IvyBridge */
 	      cpu_type=strdup("IvyBridge");
+              uncore_event=strdup("snb_unc_cbo0::UNC_CLOCKTICKS");
 	   }	   	   
 	}
    
