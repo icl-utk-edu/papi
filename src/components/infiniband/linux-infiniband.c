@@ -20,6 +20,7 @@
  *  (released Dec 2008), the current InfiniBand component does not support 
  *  OFED versions < 1.4.
  */
+#include <dlfcn.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -27,6 +28,50 @@
 #include "papi_memory.h"
 
 #include "linux-infiniband.h"
+
+
+/********  CHANGE PROTOTYPES TO DECLARE Infiniband LIBRARY SYMBOLS AS WEAK  **********
+ *  This is done so that a version of PAPI built with the infiniband component can   *
+ *  be installed on a system which does not have the infiniband libraries installed. *
+ *                                                                                   *
+ *  If this is done without these prototypes, then all papi services on the system   *
+ *  without the infiniband libraries installed will fail.  The PAPI libraries        *
+ *  contain references to the infiniband libraries which are not installed.  The     *
+ *  load of PAPI commands fails because the infiniband library references can not    *
+ *  be resolved.                                                                     *
+ *                                                                                   *
+ *  This also defines pointers to the infiniband library functions that we call.     *
+ *  These function pointers will be resolved with dlopen/dlsym calls at component    *
+ *  initialization time.  The component then calls the infiniband library functions  *
+ *  through these function pointers.                                                 *
+ *************************************************************************************/
+int                 __attribute__((weak)) umad_init              ( void );
+int                 __attribute__((weak)) umad_get_cas_names     ( char [][UMAD_CA_NAME_LEN], int  );
+int                 __attribute__((weak)) umad_get_ca            ( char *, umad_ca_t * );
+void                __attribute__((weak)) mad_decode_field       ( unsigned char *, enum MAD_FIELDS, void *);
+struct ibmad_port * __attribute__((weak)) mad_rpc_open_port      ( char *, int, int *, int );
+int                 __attribute__((weak)) ib_resolve_self_via    ( ib_portid_t *, int *, ibmad_gid_t *, const struct ibmad_port * );
+uint8_t *           __attribute__((weak)) performance_reset_via  ( void *, ib_portid_t *, int, unsigned, unsigned, unsigned, const struct ibmad_port * );
+uint8_t *           __attribute__((weak)) pma_query_via          ( void *, ib_portid_t *, int, unsigned, unsigned, const struct ibmad_port * );
+
+int                  (*umad_initPtr)             ( void );
+int                  (*umad_get_cas_namesPtr)    ( char [][UMAD_CA_NAME_LEN], int );
+int                  (*umad_get_caPtr)           ( char *, umad_ca_t * );
+void                 (*mad_decode_fieldPtr)      ( unsigned char *, enum MAD_FIELDS, void * );
+struct ibmad_port *  (*mad_rpc_open_portPtr)     ( char *, int, int *, int );
+int                  (*ib_resolve_self_viaPtr)   (ib_portid_t *, int *, ibmad_gid_t *, const struct ibmad_port * );
+uint8_t *            (*performance_reset_viaPtr) (void *, ib_portid_t *, int, unsigned, unsigned, unsigned, const struct ibmad_port * );
+uint8_t *            (*pma_query_viaPtr)         (void *, ib_portid_t *, int, unsigned, unsigned, const struct ibmad_port * );
+
+// file handles used to access Infiniband libraries with dlopen
+static void* dl1 = NULL;
+static void* dl2 = NULL;
+
+static int linkInfinibandLibraries ();
+
+papi_vector_t _infiniband_vector;
+
+
 
 struct ibmad_port *srcport;
 static ib_portid_t portid;
@@ -69,12 +114,12 @@ init_ib_counter(  )
 	int r;
 	int portnum;
 
-	if ( umad_init(  ) < 0 ) {
-		fprintf( stderr, "can't init UMAD library\n" );
-		exit( 1 );
-	}
+//	if ( umad_init(  ) < 0 ) {
+//		fprintf( stderr, "can't init UMAD library\n" );
+//		exit( 1 );
+//	}
 
-	if ( ( n = umad_get_cas_names( ( void * ) names, UMAD_CA_NAME_LEN ) ) < 0 ) {
+	if ( ( n = (*umad_get_cas_namesPtr)( ( void * ) names, UMAD_CA_NAME_LEN ) ) < 0 ) {
 		fprintf( stderr, "can't list IB device names\n" );
 		exit( 1 );
 	}
@@ -82,7 +127,7 @@ init_ib_counter(  )
 	for ( i = 0; i < n; i++ ) {
 		ca_name = names[i];
 
-		if ( ( r = umad_get_ca( ca_name, &ca ) ) < 0 ) {
+		if ( ( r = (*umad_get_caPtr)( ca_name, &ca ) ) < 0 ) {
 			fprintf( stderr, "can't read ca from IB device\n" );
 			exit( 1 );
 		}
@@ -191,37 +236,34 @@ init_ib_port( ib_port * portdata )
 	static uint8_t pc[1024];
 	int mask = 0xFFFF;
 
-	srcport = mad_rpc_open_port( ca, portdata->port_number, mgmt_classes, 4 );
+	srcport = (*mad_rpc_open_portPtr)( ca, portdata->port_number, mgmt_classes, 4 );
 	if ( !srcport ) {
 		fprintf( stderr, "Failed to open '%s' port '%d'\n", ca,
 				 portdata->port_number );
 		exit( 1 );
 	}
 
-	if ( ib_resolve_self_via( &portid, &ibportnum, 0, srcport ) < 0 ) {
+	if ( (*ib_resolve_self_viaPtr)( &portid, &ibportnum, 0, srcport ) < 0 ) {
 		fprintf( stderr, "can't resolve self port\n" );
 		exit( 1 );
 	}
 
 	/* PerfMgt ClassPortInfo is a required attribute */
 	/* might be redundant, could be left out for fast implementation */
-	if ( !pma_query_via
-		 ( pc, &portid, ibportnum, ib_timeout, CLASS_PORT_INFO, srcport ) ) {
+	if ( !(*pma_query_viaPtr) ( pc, &portid, ibportnum, ib_timeout, CLASS_PORT_INFO, srcport ) ) {
 		fprintf( stderr, "classportinfo query\n" );
 		exit( 1 );
 	}
 
-	if ( !performance_reset_via
-		 ( pc, &portid, ibportnum, mask, ib_timeout, IB_GSI_PORT_COUNTERS,
-		   srcport ) ) {
+	if ( !(*performance_reset_viaPtr) ( pc, &portid, ibportnum, mask, ib_timeout, IB_GSI_PORT_COUNTERS, srcport ) ) {
 		fprintf( stderr, "perf reset\n" );
 		exit( 1 );
 	}
 
 	/* read the initial values */
-	mad_decode_field( pc, IB_PC_XMT_BYTES_F, &portdata->last_send_val );
+	(*mad_decode_fieldPtr)( pc, IB_PC_XMT_BYTES_F, &portdata->last_send_val );
 	portdata->sum_send_val = 0;
-	mad_decode_field( pc, IB_PC_RCV_BYTES_F, &portdata->last_recv_val );
+	(*mad_decode_fieldPtr)( pc, IB_PC_RCV_BYTES_F, &portdata->last_recv_val );
 	portdata->sum_recv_val = 0;
 
 	portdata->is_initialized = 1;
@@ -249,15 +291,13 @@ read_ib_counter(  )
 		return 0;
 
 	/* reading cost ~70 mirco secs */
-	if ( !pma_query_via
-		 ( pc, &portid, ibportnum, ib_timeout, IB_GSI_PORT_COUNTERS,
-		   srcport ) ) {
+	if ( !(*pma_query_viaPtr) ( pc, &portid, ibportnum, ib_timeout, IB_GSI_PORT_COUNTERS, srcport ) ) {
 		fprintf( stderr, "perfquery\n" );
 		exit( 1 );
 	}
 
-	mad_decode_field( pc, IB_PC_XMT_BYTES_F, &send_val );
-	mad_decode_field( pc, IB_PC_RCV_BYTES_F, &recv_val );
+	(*mad_decode_fieldPtr)( pc, IB_PC_XMT_BYTES_F, &send_val );
+	(*mad_decode_fieldPtr)( pc, IB_PC_RCV_BYTES_F, &recv_val );
 
 	/* multiply the numbers read by 4 as the IB port counters are not
 	   counting bytes. they always count 32dwords. see man page of
@@ -273,17 +313,13 @@ read_ib_counter(  )
 
 	if ( send_val > reset_limit || recv_val > reset_limit ) {
 		/* reset cost ~70 mirco secs */
-		if ( !performance_reset_via
-			 ( pc, &portid, ibportnum, mask, ib_timeout, IB_GSI_PORT_COUNTERS,
-			   srcport ) ) {
+		if ( !(*performance_reset_viaPtr) ( pc, &portid, ibportnum, mask, ib_timeout, IB_GSI_PORT_COUNTERS, srcport ) ) {
 			fprintf( stderr, "perf reset\n" );
 			exit( 1 );
 		}
 
-		mad_decode_field( pc, IB_PC_XMT_BYTES_F,
-						  &active_ib_port->last_send_val );
-		mad_decode_field( pc, IB_PC_RCV_BYTES_F,
-						  &active_ib_port->last_recv_val );
+		(*mad_decode_fieldPtr)( pc, IB_PC_XMT_BYTES_F, &active_ib_port->last_send_val );
+		(*mad_decode_fieldPtr)( pc, IB_PC_RCV_BYTES_F, &active_ib_port->last_recv_val );
 	} else {
 		active_ib_port->last_send_val = send_val;
 		active_ib_port->last_recv_val = recv_val;
@@ -529,13 +565,109 @@ INFINIBAND_init_thread( hwd_context_t * ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-INFINIBAND_init_component(  )
+INFINIBAND_init_component( int cidx )
 {
+	SUBDBG ("Entry: cidx: %d\n", cidx);
 	int i;
+
+	/* link in all the infiniband libraries and resolve the symbols we need to use */
+	if (linkInfinibandLibraries() != PAPI_OK) {
+		SUBDBG ("Dynamic link of Infiniband libraries failed, component will be disabled.\n");
+		SUBDBG ("See disable reason in papi_component_avail output for more details.\n");
+		return (PAPI_ENOSUPP);
+	}
+
+	/* make sure that the infiniband library finds the kernel module loaded. */
+	if ( (*umad_initPtr)(  ) < 0 ) {
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Call to initialize umad library failed.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
 
 	for ( i = 0; i < INFINIBAND_MAX_COUNTERS; i++ ) {
 		_papi_hwd_infiniband_register_start[i] = -1;
 		_papi_hwd_infiniband_register[i] = -1;
+	}
+
+	/* Export the component id */
+	_infiniband_vector.cmp_info.CmpIdx = cidx;
+
+	return ( PAPI_OK );
+}
+
+
+/*
+ * Link the necessary Infiniband libraries to use the Infiniband component.  If any of them can not be found, then
+ * the Infiniband component will just be disabled.  This is done at runtime so that a version of PAPI built
+ * with the Infiniband component can be installed and used on systems which have the Infiniband libraries installed
+ * and on systems where these libraries are not installed.
+ */
+static int
+linkInfinibandLibraries ()
+{
+	char *error;
+
+	/* Need to link in the Infiniband libraries, if not found disable the component */
+	dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);
+	if (!dl1)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband library libibumad.so not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	umad_initPtr = dlsym(dl1, "umad_init");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function umad_init not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	umad_get_cas_namesPtr = dlsym(dl1, "umad_get_cas_names");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function umad_get_cas_names not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	umad_get_caPtr = dlsym(dl1, "umad_get_ca");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function umad_get_ca not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+
+	/* Need to link in the Infiniband libraries, if not found disable the component */
+	dl2 = dlopen("libibmad.so", RTLD_NOW | RTLD_GLOBAL);
+	if (!dl2)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband library libibmad.so not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	mad_decode_fieldPtr = dlsym(dl2, "mad_decode_field");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function mad_decode_field not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	mad_rpc_open_portPtr = dlsym(dl2, "mad_rpc_open_port");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function mad_rpc_open_port not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	ib_resolve_self_viaPtr = dlsym(dl2, "ib_resolve_self_via");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function ib_resolve_self_via not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	performance_reset_viaPtr = dlsym(dl2, "performance_reset_via");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function performance_reset_via not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	pma_query_viaPtr = dlsym(dl2, "pma_query_via");
+	if ((error = dlerror()) != NULL)
+	{
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function pma_query_via not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
 	}
 
 	return ( PAPI_OK );
@@ -627,6 +759,19 @@ INFINIBAND_shutdown_thread( hwd_context_t * ctx )
 	return ( PAPI_OK );
 }
 
+
+/*
+ *
+ */
+int
+INFINIBAND_shutdown_component( void )
+{
+	// close the dynamic libraries needed by this component (opened in the init substrate call)
+	dlclose(dl1);
+	dlclose(dl2);
+
+	return ( PAPI_OK );
+}
 
 
 /* This function sets various options in the component
@@ -814,6 +959,7 @@ papi_vector_t _infiniband_vector = {
 	.start = INFINIBAND_start,
 	.stop = INFINIBAND_stop,
 	.read = INFINIBAND_read,
+	.shutdown_component = INFINIBAND_shutdown_component,
 	.shutdown_thread = INFINIBAND_shutdown_thread,
 	.ctl = INFINIBAND_ctl,
 
