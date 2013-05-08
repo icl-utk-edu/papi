@@ -375,6 +375,16 @@ AC_ARG_WITH(CPU,
 AC_MSG_RESULT($CPU)
 AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type])
 
+# First set pthread-mutexes based on arch                                       
+case $arch in
+  arm*)
+    pthread_mutexes=yes
+    CFLAGS="$CFLAGS -DUSE_PTHREAD_MUTEXES"
+    echo "forcing use of pthread mutexes... " >&6
+  ;;
+esac
+
+
 AC_ARG_WITH(pthread-mutexes,
               [  --with-pthread-mutexes		Specify use of pthread mutexes rather than custom PAPI locks],
               [pthread_mutexes=yes

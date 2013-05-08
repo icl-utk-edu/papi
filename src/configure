@@ -4251,6 +4251,16 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+# First set pthread-mutexes based on arch
+case $arch in
+  arm*)
+    pthread_mutexes=yes
+    CFLAGS="$CFLAGS -DUSE_PTHREAD_MUTEXES"
+    echo "forcing use of pthread mutexes... " >&6
+  ;;
+esac
+
+
 
 # Check whether --with-pthread-mutexes or --without-pthread-mutexes was given.
 if test "${with_pthread_mutexes+set}" = set; then
