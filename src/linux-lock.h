@@ -186,8 +186,8 @@ static inline int __arm_papi_spin_lock (volatile unsigned int *lock)
 
   return 0;
 }
-#define _papi_hwd_lock(lck)   { mb(); __arm_papi_spin_lock(&_papi_hwd_lock_data[lck]); mb(); }
-#define _papi_hwd_unlock(lck) { mb(); _papi_hwd_lock_data[lck] = 0; mb(); }
+#define _papi_hwd_lock(lck)   { rmb(); __arm_papi_spin_lock(&_papi_hwd_lock_data[lck]); rmb(); }
+#define _papi_hwd_unlock(lck) { rmb(); _papi_hwd_lock_data[lck] = 0; rmb(); }
 
 #elif defined(__mips__)
 static inline void __raw_spin_lock(volatile unsigned int *lock)
