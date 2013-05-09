@@ -798,8 +798,8 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
---with-nvml-dir=<path> Specify path to nvml library
---with-cuda-dir=<path> Specify path to cuda library
+--with-nvml-dir=<path> Specify path to nvml library root directory
+--with-cuda-dir=<path> Specify path to cuda root directory
 
 Some influential environment variables:
   CC          C compiler command

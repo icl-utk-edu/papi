@@ -4,7 +4,7 @@
 AC_INIT
 
 AC_ARG_WITH(nvml-dir,
-            [--with-nvml-dir=<path> Specify path to nvml library],
+            [--with-nvml-dir=<path> Specify path to nvml library root directory],
             [NVML_DIR=$withval
 	     CFLAGS="$CFLAGS -I$withval/include"
              LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64 -lnvidia-ml" 
@@ -15,7 +15,7 @@ AC_ARG_WITH(nvml-dir,
             [AC_MSG_ERROR([Component requires path to nvml library])])
 
 AC_ARG_WITH(cuda-dir, 
-			[--with-cuda-dir=<path> Specify path to cuda library], 
+			[--with-cuda-dir=<path> Specify path to cuda root directory], 
 			[ CUDA_DIR=$withval
 				LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64 -lcudart"
 				AC_CHECK_LIB( [cudart],

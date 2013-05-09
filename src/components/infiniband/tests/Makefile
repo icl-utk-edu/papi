@@ -1,4 +1,7 @@
 include ../../Makefile_comp_tests
+include ../Makefile.infiniband
+
+INFINIBANDLIBS = -L$(INFINIBAND_LIBDIR) -libumad -libmad
 
 TESTS = infiniband_list_events infiniband_values_by_code 
 
@@ -9,10 +12,10 @@ infiniband_tests: $(TESTS)
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
 infiniband_list_events: infiniband_list_events.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ $(LDFLAGS) $(INFINIBANDLIBS)
 
 infiniband_values_by_code: infiniband_values_by_code.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ $(LDFLAGS) $(INFINIBANDLIBS)
 
 install:
 	@echo "Infiniband tests (DATADIR) being installed in: \"$(DATADIR)\""; 
