@@ -266,6 +266,41 @@ get_read_format( unsigned int multiplex,
 
 /********* End Kernel-version Dependent Routines  ****************/
 
+static int map_perf_event_errors_to_papi(int perf_event_error) {
+
+   int ret;
+
+   /* These mappings are approximate.
+      EINVAL in particular can mean lots of different things */
+   switch(perf_event_error) {
+      case EPERM:
+      case EACCES:
+           ret = PAPI_EPERM;
+	   break;
+      case ENODEV:
+      case EOPNOTSUPP:
+	   ret = PAPI_ENOSUPP;
+           break;
+      case ENOENT:
+	   ret = PAPI_ENOEVNT;
+           break;
+      case ENOSYS:
+      case EAGAIN:
+      case EBUSY:
+      case E2BIG:
+	   ret = PAPI_ESYS;
+	   break;
+      case ENOMEM:
+	   ret = PAPI_ENOMEM;
+	   break;
+      case EINVAL:
+      default:
+	   ret = PAPI_EINVAL;
+           break;
+   }
+   return ret;
+}
+
 
 /** Check if the current set of options is supported by  */
 /*  perf_events.                                         */
@@ -320,7 +355,7 @@ check_permissions( unsigned long tid,
    if ( ev_fd == -1 ) {
       SUBDBG("sys_perf_event_open returned error.  Linux says, %s", 
 	     strerror( errno ) );
-      return PAPI_EPERM;
+      return map_perf_event_errors_to_papi(errno);
    }
 	
    /* now close it, this was just to make sure we have permissions */
@@ -544,35 +579,8 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	 SUBDBG("sys_perf_event_open returned error on event #%d."
 		"  Error: %s\n",
 		i, strerror( errno ) );
+         ret=map_perf_event_errors_to_papi(errno);
 
-         /* These mappings are approximate.
-            EINVAL in particular can mean lots of different things */
-	 switch(errno) {
-	    case EPERM:
-	    case EACCES:
-                 ret = PAPI_EPERM;
-	         break;
-	    case ENODEV:
-            case EOPNOTSUPP:
-	         ret = PAPI_ENOSUPP;
-                 break;
-	    case ENOENT:
-	         ret = PAPI_ENOEVNT;
-                 break;
-	    case ENOSYS:
-	    case EAGAIN:
-	    case EBUSY:
-	    case E2BIG:
-	         ret = PAPI_ESYS;
-	         break;
-	    case ENOMEM:
-	         ret = PAPI_ENOMEM;
-	         break;
-	    case EINVAL:
-	    default:
-	         ret = PAPI_ECNFLCT;
-                 break;
-	 }
 	 goto open_pe_cleanup;
       }
 
@@ -1585,10 +1593,11 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
    switch ( code ) {
       case PAPI_MULTIPLEX:
 	   pe_ctl = ( pe_control_t * ) ( option->multiplex.ESI->ctl_state );
-	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain,
-				  pe_ctl->granularity,
-				  1, pe_ctl->inherit ) != PAPI_OK) {
-	      return PAPI_EPERM;
+	   ret = check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain,
+				    pe_ctl->granularity,
+				    1, pe_ctl->inherit );
+           if (ret != PAPI_OK) {
+	      return ret;
 	   }
 
 	   /* looks like we are allowed, so set multiplexed attribute */
@@ -1602,11 +1611,12 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	
       case PAPI_ATTACH:
 	   pe_ctl = ( pe_control_t * ) ( option->attach.ESI->ctl_state );
-	   if (check_permissions( option->attach.tid, pe_ctl->cpu, 
+	   ret = check_permissions( option->attach.tid, pe_ctl->cpu, 
 				  pe_ctl->domain, pe_ctl->granularity,
 				  pe_ctl->multiplexed, 
-				  pe_ctl->inherit ) != PAPI_OK) {
-	      return PAPI_EPERM;
+				    pe_ctl->inherit );
+	   if (ret != PAPI_OK) {
+	      return ret;
 	   }
 
 	   pe_ctl->tid = option->attach.tid;
@@ -1626,11 +1636,12 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_CPU_ATTACH:
 	   pe_ctl = ( pe_control_t *) ( option->cpu.ESI->ctl_state );
-	   if (check_permissions( pe_ctl->tid, option->cpu.cpu_num, 
-				  pe_ctl->domain, pe_ctl->granularity,
-				  pe_ctl->multiplexed, 
-				  pe_ctl->inherit ) != PAPI_OK) {
-	       return PAPI_EPERM;
+	   ret = check_permissions( pe_ctl->tid, option->cpu.cpu_num, 
+				    pe_ctl->domain, pe_ctl->granularity,
+				    pe_ctl->multiplexed, 
+				    pe_ctl->inherit );
+           if (ret != PAPI_OK) {
+	       return ret;
 	   }
 	   /* looks like we are allowed so set cpu number */
 
@@ -1645,12 +1656,13 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_DOMAIN:
 	   pe_ctl = ( pe_control_t *) ( option->domain.ESI->ctl_state );
-	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, 
-				  option->domain.domain,
-				  pe_ctl->granularity,
-				  pe_ctl->multiplexed,
-				  pe_ctl->inherit ) != PAPI_OK) {
-	      return PAPI_EPERM;
+	   ret = check_permissions( pe_ctl->tid, pe_ctl->cpu, 
+				    option->domain.domain,
+				    pe_ctl->granularity,
+				    pe_ctl->multiplexed,
+				    pe_ctl->inherit );
+           if (ret != PAPI_OK) {
+	      return ret;
 	   }
 	   /* looks like we are allowed, so set counting domain */
 	   return _papi_pe_set_domain( pe_ctl, option->domain.domain );
@@ -1683,10 +1695,11 @@ _papi_pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_INHERIT:
 	   pe_ctl = (pe_control_t *) ( option->inherit.ESI->ctl_state );
-	   if (check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
+	   ret = check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain, 
 				  pe_ctl->granularity, pe_ctl->multiplexed, 
-				  option->inherit.inherit ) != PAPI_OK) {
-	      return PAPI_EPERM;
+				    option->inherit.inherit );
+           if (ret != PAPI_OK) {
+	      return ret;
 	   }
 	   /* looks like we are allowed, so set the requested inheritance */
 	   if (option->inherit.inherit) {
