@@ -1,5 +1,6 @@
 /*
- * This file tests uncore events on perf_event kernels
+ * This test tries to provoke failures in measuring perf_event
+ * by not properly setting up the EventSet paramaters.
  */
 
 #include "papi_test.h"
@@ -52,7 +53,7 @@ int main( int argc, char **argv ) {
    }
 
    /* we need to set the granularity to system-wide for uncore to work */
-
+#if 0
    PAPI_granularity_option_t gran_opt;
 
    gran_opt.def_cidx=0;
@@ -65,6 +66,7 @@ int main( int argc, char **argv ) {
 		      "this test; trying to set PAPI_GRN_SYS",
 		      retval);
    }
+#endif
 
    /* we need to set domain to be as inclusive as possible */
 

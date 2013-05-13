@@ -1,5 +1,7 @@
 /*
- * This file tests uncore events on perf_event kernels
+ * This file tests uncore events on perf_event kernels,
+ * specifically, how they interact in the same EventSet with
+ * non-uncore events
  */
 
 #include "papi_test.h"
@@ -10,7 +12,7 @@ int main( int argc, char **argv ) {
 
    int retval;
    int EventSet = PAPI_NULL;
-   long long values[1];
+   long long values[2];
    char *uncore_event=NULL;
    char event_name[BUFSIZ];
 
@@ -87,7 +89,16 @@ int main( int argc, char **argv ) {
       if ( !TESTS_QUIET ) {
          fprintf(stderr,"Error trying to use event %s\n", uncore_event);
       }
-      test_fail(__FILE__, __LINE__, "adding uncore event",retval);
+      test_fail(__FILE__, __LINE__, "adding uncore event ",retval);
+   }
+
+   /* Add PAPI_TOT_CYC */
+   retval = PAPI_add_named_event(EventSet, "PAPI_TOT_CYC");
+   if (retval != PAPI_OK) {
+      if ( !TESTS_QUIET ) {
+         fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
+      }
+      test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
    }
 
 
@@ -110,6 +121,7 @@ int main( int argc, char **argv ) {
       printf("Uncore test:\n");
       printf("Using event %s\n",uncore_event);
       printf("\t%s: %lld\n",uncore_event,values[0]);
+      printf("\t%s: %lld\n","PAPI_TOT_CYC",values[1]);
    }
 
    test_pass( __FILE__, NULL, 0 );
