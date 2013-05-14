@@ -48,7 +48,9 @@ char *get_uncore_event(char *event, int size) {
    }
    else if (hwinfo->vendor == PAPI_VENDOR_AMD) {
       if ( hwinfo->cpuid_family == 21) {
-      /* TODO: fill in when AMD fam15h northbridge events added to libpfm4 */
+         /* For kernel 3.9 at least */
+	 strncpy(event,"DRAM_ACCESSES:ALL",size);
+         return event;
       }
       return NULL;
    }
