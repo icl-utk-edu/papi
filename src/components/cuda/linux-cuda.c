@@ -382,11 +382,6 @@ createNativeEvents( void )
 	int i;
 	int devNameLen;
 
-	/* component name and description */
-	strcpy( _cuda_vector.cmp_info.short_name, "CUDA" );
-	strcpy( _cuda_vector.cmp_info.description,
-			"CuPTI provides the API for monitoring CUDA hardware events" );
-
 	/* create events for every GPU device and every domain per device  */
 	for ( deviceId = 0; deviceId < deviceCount; deviceId++ ) {
 		/* for the event names, replace blanks in the device name with underscores */
@@ -1146,6 +1141,7 @@ papi_vector_t _cuda_vector = {
 				 .name = "cuda",
 				 .short_name = "cuda",
 				 .version = "5.0",
+				 .description = "CuPTI provides the API for monitoring NVIDIA GPU hardware events",
 				 .num_mpx_cntrs = CUDA_MAX_COUNTERS,
 				 .num_cntrs = CUDA_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
