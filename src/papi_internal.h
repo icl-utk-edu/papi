@@ -434,7 +434,6 @@ extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 
 #include "papi_lock.h"
 #include "threads.h"
-#include "cpus.h"
 
 EventSetInfo_t *_papi_hwi_lookup_EventSet( int eventset );
 int _papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI );
