@@ -11,9 +11,10 @@ typedef struct _CpuInfo
 {
 	unsigned int cpu_num;
 	struct _CpuInfo *next;
-	hwd_context_t **context;
+  	hwd_context_t **context;
 	EventSetInfo_t **running_eventset;
-	EventSetInfo_t *from_esi;          /* ESI used for last update this control state */
+  	EventSetInfo_t *from_esi;          /* ESI used for last update this control state */
+        int num_users;
 } CpuInfo_t;
 
 int _papi_hwi_initialize_cpu( CpuInfo_t **dest, unsigned int cpu_num );

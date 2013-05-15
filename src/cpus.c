@@ -32,8 +32,6 @@ _papi_hwi_lookup_cpu( unsigned int cpu_num )
 
    CpuInfo_t *tmp;
 
-   _papi_hwi_lock( CPUS_LOCK );
-
    tmp = ( CpuInfo_t * ) _papi_hwi_cpu_head;
    while ( tmp != NULL ) {
       THRDBG( "Examining cpu %#x at %p\n", tmp->cpu_num, tmp );
@@ -54,8 +52,6 @@ _papi_hwi_lookup_cpu( unsigned int cpu_num )
       THRDBG( "Did not find cpu %#x\n", cpu_num );
    }
 
-   _papi_hwi_unlock( CPUS_LOCK );
-	
    return tmp;
 }
 
@@ -67,14 +63,22 @@ _papi_hwi_lookup_or_create_cpu( CpuInfo_t **here, unsigned int cpu_num )
    CpuInfo_t *tmp = NULL;
    int retval = PAPI_OK;
 
+   _papi_hwi_lock( CPUS_LOCK );
+
    tmp = _papi_hwi_lookup_cpu(cpu_num);
    if ( tmp == NULL ) {
       retval = _papi_hwi_initialize_cpu( &tmp, cpu_num );
    }
 
-   if ( retval == PAPI_OK )
-      *here = tmp;
+   /* Increment use count */
+   tmp->num_users++;
 
+   if ( retval == PAPI_OK ) {
+      *here = tmp;
+   }
+
+   _papi_hwi_unlock( CPUS_LOCK );
+	
    return retval;
 }
 
@@ -120,6 +124,8 @@ allocate_cpu( unsigned int cpu_num )
        }
    }
 
+   cpu->num_users=0;
+
    THRDBG( "Allocated CpuInfo: %p\n", cpu );
 
    return cpu;
@@ -134,12 +140,87 @@ allocate_error:
    return NULL;
 }
 
-static void
-free_cpu( CpuInfo_t ** cpu )
+/* Must be called with CPUS_LOCK held! */
+static int
+remove_cpu( CpuInfo_t * entry )
 {
-   APIDBG( "Entry: *cpu: %p, cpu_num: %#x\n", *cpu, ( *cpu )->cpu_num);
+   APIDBG("Entry: entry: %p\n", entry);
 	
-   int i;
+   CpuInfo_t *tmp = NULL, *prev = NULL;
+
+   THRDBG( "_papi_hwi_cpu_head was cpu %d at %p\n",
+			_papi_hwi_cpu_head->cpu_num, _papi_hwi_cpu_head );
+
+	/* Find the preceding element and the matched element,
+	   short circuit if we've seen the head twice */
+
+   for ( tmp = ( CpuInfo_t * ) _papi_hwi_cpu_head;
+       ( entry != tmp ) || ( prev == NULL ); tmp = tmp->next ) {
+       prev = tmp;
+   }
+
+   if ( tmp != entry ) {
+      THRDBG( "Cpu %d at %p was not found in the cpu list!\n",
+				entry->cpu_num, entry );
+      return PAPI_EBUG;
+   }
+
+   /* Only 1 element in list */
+
+   if ( prev == tmp ) {
+      _papi_hwi_cpu_head = NULL;
+      tmp->next = NULL;
+      THRDBG( "_papi_hwi_cpu_head now NULL\n" );
+   } else {
+      prev->next = tmp->next;
+      /* If we're removing the head, better advance it! */
+      if ( _papi_hwi_cpu_head == tmp ) {
+	 _papi_hwi_cpu_head = tmp->next;
+	 THRDBG( "_papi_hwi_cpu_head now cpu %d at %p\n",
+		 _papi_hwi_cpu_head->cpu_num, _papi_hwi_cpu_head );
+      }
+      THRDBG( "Removed cpu %p from list\n", tmp );
+   }
+
+   return PAPI_OK;
+}
+
+
+static void
+free_cpu( CpuInfo_t **cpu )
+{
+   APIDBG( "Entry: *cpu: %p, cpu_num: %d, cpu_users: %d\n", 
+	   *cpu, ( *cpu )->cpu_num, (*cpu)->num_users);
+	
+   int i,users,retval;
+
+   _papi_hwi_lock( CPUS_LOCK );
+
+   (*cpu)->num_users--;
+
+   users=(*cpu)->num_users;
+
+   /* Remove from linked list if no users */
+   if (!users) remove_cpu( *cpu );
+
+   _papi_hwi_unlock( CPUS_LOCK );
+
+   /* Exit early if still users of this CPU */
+   if (users!=0) return;
+
+
+
+
+
+   THRDBG( "Shutting down cpu %d at %p\n", cpu->cpu_num, cpu );
+
+   for ( i = 0; i < papi_num_components; i++ ) {
+     retval = _papi_hwd[i]->shutdown_thread( (*cpu)->context[i] );
+      if ( retval != PAPI_OK ) {
+	//	 failure = retval;
+      }
+   }
+
    for ( i = 0; i < papi_num_components; i++ ) {
       if ( ( *cpu )->context[i] ) {
 	 papi_free( ( *cpu )->context[i] );
@@ -194,56 +275,10 @@ insert_cpu( CpuInfo_t * entry )
 
 }
 
-static int
-remove_cpu( CpuInfo_t * entry )
-{
-   APIDBG("Entry: entry: %p\n", entry);
-	
-   CpuInfo_t *tmp = NULL, *prev = NULL;
 
-   _papi_hwi_lock( CPUS_LOCK );
-
-   THRDBG( "_papi_hwi_cpu_head was cpu %d at %p\n",
-			_papi_hwi_cpu_head->cpu_num, _papi_hwi_cpu_head );
-
-	/* Find the preceding element and the matched element,
-	   short circuit if we've seen the head twice */
-
-   for ( tmp = ( CpuInfo_t * ) _papi_hwi_cpu_head;
-       ( entry != tmp ) || ( prev == NULL ); tmp = tmp->next ) {
-       prev = tmp;
-   }
-
-   if ( tmp != entry ) {
-      THRDBG( "Cpu %d at %p was not found in the cpu list!\n",
-				entry->cpu_num, entry );
-      return PAPI_EBUG;
-   }
-
-   /* Only 1 element in list */
-
-   if ( prev == tmp ) {
-      _papi_hwi_cpu_head = NULL;
-      tmp->next = NULL;
-      THRDBG( "_papi_hwi_cpu_head now NULL\n" );
-   } else {
-      prev->next = tmp->next;
-      /* If we're removing the head, better advance it! */
-      if ( _papi_hwi_cpu_head == tmp ) {
-	 _papi_hwi_cpu_head = tmp->next;
-	 THRDBG( "_papi_hwi_cpu_head now cpu %d at %p\n",
-		 _papi_hwi_cpu_head->cpu_num, _papi_hwi_cpu_head );
-      }
-      THRDBG( "Removed cpu %p from list\n", tmp );
-   }
-
-   _papi_hwi_unlock( CPUS_LOCK );
-
-   return PAPI_OK;
-}
 
 int
-_papi_hwi_initialize_cpu( CpuInfo_t ** dest, unsigned int cpu_num )
+_papi_hwi_initialize_cpu( CpuInfo_t **dest, unsigned int cpu_num )
 {
    APIDBG("Entry: dest: %p, *dest: %p, cpu_num: %d\n", dest, *dest, cpu_num);
 
@@ -277,20 +312,7 @@ _papi_hwi_shutdown_cpu( CpuInfo_t *cpu )
 {
    APIDBG("Entry: cpu: %p, cpu_num: %d\n", cpu, cpu->cpu_num);
 
-   int retval = PAPI_OK;
-   int i, failure = 0;
-
-   remove_cpu( cpu );
-
-   THRDBG( "Shutting down cpu %d at %p\n", cpu->cpu_num, cpu );
-
-   for ( i = 0; i < papi_num_components; i++ ) {
-      retval = _papi_hwd[i]->shutdown_thread( cpu->context[i] );
-      if ( retval != PAPI_OK ) {
-	 failure = retval;
-      }
-   }
    free_cpu( &cpu );
 
-   return failure;
+   return PAPI_OK;
 }
