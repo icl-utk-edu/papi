@@ -36,50 +36,55 @@ static CpuInfo_t *
 allocate_cpu( unsigned int cpu_num )
 {
    THRDBG("Entry: cpu_num: %d\n", cpu_num);
-	CpuInfo_t *cpu;
-	int i;
 
-	cpu = ( CpuInfo_t * ) papi_malloc( sizeof ( CpuInfo_t ) );
-	if ( cpu == NULL )
-		return ( NULL );
-	memset( cpu, 0x00, sizeof ( CpuInfo_t ) );
+   CpuInfo_t *cpu;
+   int i;
+
+   /* Allocate new CpuInfo structure */
+   cpu = ( CpuInfo_t * ) papi_calloc( 1, sizeof ( CpuInfo_t ) );
+   if ( cpu == NULL ) {
+      goto allocate_error;
+   }
 	
-	/* identify the cpu this info structure represents */
-	cpu->cpu_num = cpu_num;
-
-	cpu->context = ( hwd_context_t ** ) papi_malloc( sizeof ( hwd_context_t * ) *
-										  ( size_t ) papi_num_components );
-	if ( !cpu->context ) {
-		papi_free( cpu );
-		return ( NULL );
-	}
+   /* identify the cpu this info structure represents */
+   cpu->cpu_num = cpu_num;
+   cpu->context = ( hwd_context_t ** ) 
+                  papi_calloc( ( size_t ) papi_num_components ,
+			       sizeof ( hwd_context_t * ) );
+   if ( !cpu->context ) {
+      goto error_free_cpu;
+   }
+ 
+   /* Allocate an eventset per component per cpu?  Why? */
 	
-	cpu->running_eventset =
-		( EventSetInfo_t ** ) papi_malloc( sizeof ( EventSetInfo_t * ) *
-										   ( size_t ) papi_num_components );
-	if ( !cpu->running_eventset ) {
-		papi_free( cpu->context );
-		papi_free( cpu );
-		return ( NULL );
-	}
+   cpu->running_eventset = ( EventSetInfo_t ** ) 
+                           papi_calloc(( size_t ) papi_num_components, 
+                                       sizeof ( EventSetInfo_t * ) );
+   if ( !cpu->running_eventset ) {
+      goto error_free_context;
+   }
 
-	for ( i = 0; i < papi_num_components; i++ ) {
-		cpu->context[i] =
-			( void * ) papi_malloc( ( size_t ) _papi_hwd[i]->size.context );
-		cpu->running_eventset[i] = NULL;
-		if ( cpu->context[i] == NULL ) {
-			for ( i--; i >= 0; i-- )
-				papi_free( cpu->context[i] );
-			papi_free( cpu->context );
-			papi_free( cpu );
-			return ( NULL );
-		}
-		memset( cpu->context[i], 0x00,
-				( size_t ) _papi_hwd[i]->size.context );
-	}
+   for ( i = 0; i < papi_num_components; i++ ) {
+       cpu->context[i] =
+	 ( void * ) papi_calloc( 1, ( size_t ) _papi_hwd[i]->size.context );
+       cpu->running_eventset[i] = NULL;
+       if ( cpu->context[i] == NULL ) {
+	  goto error_free_contexts;
+       }
+   }
 
-	THRDBG( "Allocated CpuInfo: %p\n", cpu );
-	return ( cpu );
+   THRDBG( "Allocated CpuInfo: %p\n", cpu );
+
+   return cpu;
+
+ error_free_contexts:
+   for ( i--; i >= 0; i-- ) papi_free( cpu->context[i] );
+error_free_context:
+   papi_free( cpu->context );
+error_free_cpu:
+   papi_free( cpu );
+allocate_error:
+   return NULL;
 }
 
 static void
