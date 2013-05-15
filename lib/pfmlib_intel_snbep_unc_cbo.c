@@ -89,7 +89,7 @@ pfmlib_pmu_t intel_snbep_unc_cb##n##_support = {\
 	.event_is_valid		= pfm_intel_x86_event_is_valid,\
 	.validate_table		= pfm_intel_x86_validate_table,\
 	.get_event_info		= pfm_intel_x86_get_event_info,\
-	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,\
+	.get_event_attr_info	= pfm_intel_snbep_unc_get_event_attr_info,\
 	PFMLIB_VALID_PERF_PATTRS(pfm_intel_snbep_unc_perf_validate_pattrs),\
 	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,\
 	.can_auto_encode	= pfm_intel_x86_can_auto_encode, \

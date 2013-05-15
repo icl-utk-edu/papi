@@ -183,4 +183,5 @@ extern const pfmlib_attr_desc_t snbep_unc_mods[];
 extern int  pfm_intel_snbep_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int  pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx);
+extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);
 #endif /* __PFMLIB_INTEL_SNBEP_UNC_PRIV_H__ */
