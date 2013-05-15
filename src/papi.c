@@ -33,6 +33,7 @@
 
 #include "papi_user_events.h"
 
+#include "cpus.h"
 #include "extras.h"
 #include "sw_multiplex.h"
 #include "papi_hl.h"

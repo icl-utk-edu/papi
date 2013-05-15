@@ -15,6 +15,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include "cpus.h"
 #include <string.h>
 #include <unistd.h>
 
@@ -25,12 +26,63 @@
 /* The following globals get initialized and cleared by:
    extern int _papi_hwi_init_global_cpus(void);
    extern int _papi_hwi_shutdown_cpu(CpuInfo_t *cpu); */
+/* The list of cpus, gets built as user apps set the cpu papi option on an event set */
 
+/* Why is this volatile? */
 volatile CpuInfo_t *_papi_hwi_cpu_head;
 
 /*****************/
 /*  END  GLOBALS */
 /*****************/
+
+static CpuInfo_t *
+_papi_hwi_lookup_cpu( unsigned int cpu_num )
+{
+	THRDBG("Entry:\n");
+	CpuInfo_t *tmp;
+
+	_papi_hwi_lock( CPUS_LOCK );
+
+	tmp = ( CpuInfo_t * ) _papi_hwi_cpu_head;
+	while ( tmp != NULL ) {
+		THRDBG( "Examining cpu %#x at %p\n", tmp->cpu_num, tmp );
+		if ( tmp->cpu_num == cpu_num )
+			break;
+		tmp = tmp->next;
+		if ( tmp == _papi_hwi_cpu_head ) {
+			tmp = NULL;
+			break;
+		}
+	}
+
+	if ( tmp ) {
+		_papi_hwi_cpu_head = tmp;
+		THRDBG( "Found cpu %#x at %p\n", cpu_num, tmp );
+	} else {
+		THRDBG( "Did not find cpu %#x\n", cpu_num );
+	}
+
+	_papi_hwi_unlock( CPUS_LOCK );
+	return ( tmp );
+}
+
+int
+_papi_hwi_lookup_or_create_cpu( CpuInfo_t ** here, unsigned int cpu_num )
+{
+	THRDBG("Entry: here: %p\n", here);
+	CpuInfo_t *tmp = NULL;
+	int retval = PAPI_OK;
+
+	tmp = _papi_hwi_lookup_cpu(cpu_num);
+	if ( tmp == NULL )
+		retval = _papi_hwi_initialize_cpu( &tmp, cpu_num );
+
+	if ( retval == PAPI_OK )
+		*here = tmp;
+
+	return ( retval );
+}
+
 
 static CpuInfo_t *
 allocate_cpu( unsigned int cpu_num )

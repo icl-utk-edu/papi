@@ -40,6 +40,7 @@
 #include "sw_multiplex.h"
 #include "extras.h"
 #include "papi_preset.h"
+#include "cpus.h"
 
 #include "papi_common_strings.h"
 
