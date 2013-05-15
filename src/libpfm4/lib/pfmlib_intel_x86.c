@@ -62,20 +62,6 @@ cpuid(unsigned int op, unsigned int *a, unsigned int *b, unsigned int *c, unsign
        : "a" (op));
 }
 
-static inline int
-is_model_umask(void *this, int pidx, int attr)
-{
-	pfmlib_pmu_t *pmu = this;
-	const intel_x86_entry_t *pe = this_pe(this);
-	const intel_x86_entry_t *ent;
-	unsigned int model;
-
-	ent = pe + pidx;
-	model = ent->umasks[attr].umodel;
-
-	return model == 0 || model == pmu->pmu;
-}
-
 static void
 pfm_intel_x86_display_reg(void *this, pfmlib_event_desc_t *e)
 {
@@ -124,46 +110,6 @@ intel_x86_num_mods(void *this, int idx)
 
 	mask = pe[idx].modmsk;
 	return pfmlib_popcnt(mask);
-}
-
-static unsigned int
-intel_x86_num_umasks(void *this, int pidx)
-{
-	pfmlib_pmu_t *pmu = this;
-	const intel_x86_entry_t *pe = this_pe(this);
-	unsigned int i, n = 0, model;
-
-	/*
-	 * some umasks may be model specific
-	 */
-	for (i = 0; i < pe[pidx].numasks; i++) {
-		model = pe[pidx].umasks[i].umodel;
-		if (model && model != pmu->pmu)
-			continue;
-		n++;
-	}
-	return n;
-}
-
-/*
- * find actual index of umask based on attr_idx
- */
-int
-intel_x86_attr2umask(void *this, int pidx, int attr_idx)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	unsigned int i;
-
-	for (i = 0; i < pe[pidx].numasks; i++) {
-
-		if (!is_model_umask(this, pidx, i))
-			continue;
-
-		if (attr_idx == 0)
-			break;
-		attr_idx--;
-	}
-	return i;
 }
 
 int

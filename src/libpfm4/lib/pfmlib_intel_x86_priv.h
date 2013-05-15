@@ -242,10 +242,64 @@ intel_x86_eflag(void *this, int idx, int flag)
 }
 
 static inline int
+is_model_umask(void *this, int pidx, int attr)
+{
+	pfmlib_pmu_t *pmu = this;
+	const intel_x86_entry_t *pe = this_pe(this);
+	const intel_x86_entry_t *ent;
+	unsigned int model;
+
+	ent = pe + pidx;
+	model = ent->umasks[attr].umodel;
+
+	return model == 0 || model == pmu->pmu;
+}
+
+static inline int
 intel_x86_uflag(void *this, int idx, int attr, int flag)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	return !!(pe[idx].umasks[attr].uflags & flag);
+}
+
+static inline unsigned int
+intel_x86_num_umasks(void *this, int pidx)
+{
+	pfmlib_pmu_t *pmu = this;
+	const intel_x86_entry_t *pe = this_pe(this);
+	unsigned int i, n = 0, model;
+
+	/*
+	 * some umasks may be model specific
+	 */
+	for (i = 0; i < pe[pidx].numasks; i++) {
+		model = pe[pidx].umasks[i].umodel;
+		if (model && model != pmu->pmu)
+			continue;
+		n++;
+	}
+	return n;
+}
+
+/*
+ * find actual index of umask based on attr_idx
+ */
+static inline int
+intel_x86_attr2umask(void *this, int pidx, int attr_idx)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	unsigned int i;
+
+	for (i = 0; i < pe[pidx].numasks; i++) {
+
+		if (!is_model_umask(this, pidx, i))
+			continue;
+
+		if (attr_idx == 0)
+			break;
+		attr_idx--;
+	}
+	return i;
 }
 
 extern int pfm_intel_x86_detect(void);

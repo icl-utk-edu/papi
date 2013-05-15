@@ -39,7 +39,28 @@ pfm_ivb_detect(void *this)
 		return PFM_ERR_NOTSUPP;
 
 	switch (pfm_intel_x86_cfg.model) {
-		case 58: /* Ivy Bridge (Core i3/i5/i7 3xxx) */
+		case 58: /* IvyBridge (Core i3/i5/i7 3xxx) */
+			break;
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_ivbep_detect(void *this)
+{
+	int ret;
+
+	ret = pfm_intel_x86_detect();
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_intel_x86_cfg.family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	switch (pfm_intel_x86_cfg.model) {
+		case 62: /* IvyTown */
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
@@ -69,6 +90,35 @@ pfmlib_pmu_t intel_ivb_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_ivb_detect,
+	.pmu_init		= pfm_ivb_init,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+	.get_event_first	= pfm_intel_x86_get_event_first,
+	.get_event_next		= pfm_intel_x86_get_event_next,
+	.event_is_valid		= pfm_intel_x86_event_is_valid,
+	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
+	.can_auto_encode	= pfm_intel_x86_can_auto_encode,
+};
+
+pfmlib_pmu_t intel_ivb_ep_support={
+	.desc			= "Intel Ivy Bridge EP",
+	.name			= "ivb_ep",
+	.pmu			= PFM_PMU_INTEL_IVB_EP,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_ivb_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
+	.num_cntrs		= 8, /* consider with HT off by default */
+	.num_fixed_cntrs	= 3,
+	.max_encoding		= 2, /* offcore_response */
+	.pe			= intel_ivb_pe,
+	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
+	.pmu_detect		= pfm_ivbep_detect,
 	.pmu_init		= pfm_ivb_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),

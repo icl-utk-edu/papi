@@ -36,7 +36,7 @@ const pfmlib_attr_desc_t snbep_unc_mods[]={
 	PFM_ATTR_B("e", "edge detect"),			/* edge */
 	PFM_ATTR_B("i", "invert"),			/* invert */
 	PFM_ATTR_I("t", "threshold in range [0-255]"),	/* threshold */
-	PFM_ATTR_I("t", "threshold in range [0-15]"),	/* threshold */
+	PFM_ATTR_I("t", "threshold in range [0-31]"),	/* threshold */
 	PFM_ATTR_I("tf", "thread id filter [0-1]"),	/* thread id */
 	PFM_ATTR_I("cf", "core id filter [0-7]"),	/* core id */
 	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask */
@@ -353,12 +353,12 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					reg.com.unc_thres = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_T8;
 					break;
-				case SNBEP_UNC_ATTR_T4: /* pcu counter-mask */
+				case SNBEP_UNC_ATTR_T5: /* pcu counter-mask */
 					/* already forced, cannot overwrite */
-					if (ival > 15)
+					if (ival > 31)
 						return PFM_ERR_ATTR_VAL;
 					reg.pcu.unc_thres = ival;
-					umodmsk |= _SNBEP_UNC_ATTR_T4;
+					umodmsk |= _SNBEP_UNC_ATTR_T5;
 					break;
 				case SNBEP_UNC_ATTR_TF: /* thread id */
 					if (ival > 1) {
@@ -484,7 +484,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		case SNBEP_UNC_ATTR_T8:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.com.unc_thres);
 			break;
-		case SNBEP_UNC_ATTR_T4:
+		case SNBEP_UNC_ATTR_T5:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.pcu.unc_thres);
 			break;
 		case SNBEP_UNC_ATTR_TF:
@@ -513,4 +513,47 @@ pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx)
 		return 0;
 
 	return !intel_x86_uflag(this, pidx, uidx, INTEL_X86_NO_AUTOENCODE);
+}
+
+int
+pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	const pfmlib_attr_desc_t *atdesc = this_atdesc(this);
+	int numasks, idx;
+
+	numasks = intel_x86_num_umasks(this, pidx);
+	if (attr_idx < numasks) {
+		idx = intel_x86_attr2umask(this, pidx, attr_idx);
+		info->name = pe[pidx].umasks[idx].uname;
+		info->desc = pe[pidx].umasks[idx].udesc;
+		info->equiv= pe[pidx].umasks[idx].uequiv;
+
+		info->code = pe[pidx].umasks[idx].ucode;
+
+		if (!intel_x86_uflag(this, pidx, idx, INTEL_X86_CODE_OVERRIDE))
+			info->code >>= 8;
+
+		if (info->code == 0)
+			info->code = pe[pidx].umasks[idx].ufilters[0];
+
+		info->type = PFM_ATTR_UMASK;
+		info->is_dfl = intel_x86_uflag(this, pidx, idx, INTEL_X86_DFL);
+		info->is_precise = intel_x86_uflag(this, pidx, idx, INTEL_X86_PEBS);
+	} else {
+		idx = intel_x86_attr2mod(this, pidx, attr_idx);
+		info->name = atdesc[idx].name;
+		info->desc = atdesc[idx].desc;
+		info->type = atdesc[idx].type;
+		info->equiv= NULL;
+		info->code = idx;
+		info->is_dfl = 0;
+		info->is_precise = 0;
+	}
+
+	info->ctrl = PFM_ATTR_CTRL_PMU;
+	info->idx = idx; /* namespace specific index */
+	info->dfl_val64 = 0;
+
+	return PFM_SUCCESS;
 }
