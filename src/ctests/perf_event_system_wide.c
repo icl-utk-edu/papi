@@ -19,14 +19,14 @@ int main( int argc, char **argv ) {
    PAPI_domain_option_t domain_opt;
    PAPI_granularity_option_t gran_opt;
 
-   long long user_values[1],userkernel_values[1],all_values[1];
+   long long dom_user_values[1],dom_userkernel_values[1],dom_all_values[1];
    long long grn_thr_values[1],grn_proc_values[1];
    long long grn_sys_values[1],grn_sys_cpu_values[1];
    long long total_values[1];
 
-   user_values[0]=0;
-   userkernel_values[0]=0;
-   all_values[0]=0;
+   dom_user_values[0]=0;
+   dom_userkernel_values[0]=0;
+   dom_all_values[0]=0;
    grn_thr_values[0]=0;
    grn_proc_values[0]=0;
    grn_sys_values[0]=0;
@@ -48,6 +48,14 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
+   if (!TESTS_QUIET) {
+      printf("\nTrying PAPI_TOT_CYC with different domains:\n");
+   }
+
+   if (!TESTS_QUIET) {
+      printf("\tPAPI_DOM_USER:\t\t\t");
+   }
+
    retval = PAPI_create_eventset(&EventSet1);
    if (retval != PAPI_OK) {
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
@@ -68,13 +76,13 @@ int main( int argc, char **argv ) {
 
    do_flops( NUM_FLOPS );
 
-   retval = PAPI_stop( EventSet1, user_values );
+   retval = PAPI_stop( EventSet1, dom_user_values );
    if ( retval != PAPI_OK ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
 
    if ( !TESTS_QUIET ) {
-      printf("User PAPI_TOT_CYC: %lld\n",user_values[0]);
+      printf("%lld\n",dom_user_values[0]);
    }
 
 
@@ -83,6 +91,10 @@ int main( int argc, char **argv ) {
    /* User+Kernel events      */
    /***************************/
    /***************************/
+
+   if (!TESTS_QUIET) {
+      printf("\tPAPI_DOM_USER|PAPI_DOM_KERNEL:\t");
+   }
 
    retval = PAPI_create_eventset(&EventSet2);
    if (retval != PAPI_OK) {
@@ -126,22 +138,24 @@ int main( int argc, char **argv ) {
 
    do_flops( NUM_FLOPS );
 
-   retval = PAPI_stop( EventSet2, userkernel_values );
+   retval = PAPI_stop( EventSet2, dom_userkernel_values );
    if ( retval != PAPI_OK ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
 
    if ( !TESTS_QUIET ) {
-      printf("User+Kernel PAPI_TOT_CYC: %lld\n",userkernel_values[0]);
+      printf("%lld\n",dom_userkernel_values[0]);
    }
-
-
 
    /***************************/
    /***************************/
    /* DOMAIN_ALL  events      */
    /***************************/
    /***************************/
+
+   if (!TESTS_QUIET) {
+      printf("\tPAPI_DOM_ALL:\t\t\t");
+   }
 
    retval = PAPI_create_eventset(&EventSet3);
    if (retval != PAPI_OK) {
@@ -185,13 +199,13 @@ int main( int argc, char **argv ) {
 
    do_flops( NUM_FLOPS );
 
-   retval = PAPI_stop( EventSet3, all_values );
+   retval = PAPI_stop( EventSet3, dom_all_values );
    if ( retval != PAPI_OK ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
 
    if ( !TESTS_QUIET ) {
-      printf("DOM_ALL PAPI_TOT_CYC: %lld\n",all_values[0]);
+      printf("%lld\n",dom_all_values[0]);
    }
 
 
@@ -200,6 +214,14 @@ int main( int argc, char **argv ) {
    /* PAPI_GRN_THR  events */
    /***************************/
    /***************************/
+
+   if ( !TESTS_QUIET ) {
+      printf("\nTrying different granularities:\n");
+   }
+
+   if ( !TESTS_QUIET ) {
+      printf("\tPAPI_GRN_THR:\t\t\t");
+   }
 
    retval = PAPI_create_eventset(&EventSet4);
    if (retval != PAPI_OK) {
@@ -243,7 +265,7 @@ int main( int argc, char **argv ) {
    }
 
    if ( !TESTS_QUIET ) {
-      printf("GRN_THR PAPI_TOT_CYC: %lld\n",grn_thr_values[0]);
+      printf("%lld\n",grn_thr_values[0]);
    }
 
 
@@ -252,6 +274,10 @@ int main( int argc, char **argv ) {
    /* PAPI_GRN_PROC  events   */
    /***************************/
    /***************************/
+
+   if ( !TESTS_QUIET ) {
+      printf("\tPAPI_GRN_PROC:\t\t\t");
+   }
 
    retval = PAPI_create_eventset(&EventSet5);
    if (retval != PAPI_OK) {
@@ -276,7 +302,7 @@ int main( int argc, char **argv ) {
       retval = PAPI_add_named_event(EventSet5, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
          if ( !TESTS_QUIET ) {
-            fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_CYC\n");
          }
          test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
       }
@@ -294,7 +320,7 @@ int main( int argc, char **argv ) {
       }
 
       if ( !TESTS_QUIET ) {
-         printf("GRN_PROC PAPI_TOT_CYC: %lld\n",grn_proc_values[0]);
+         printf("%lld\n",grn_proc_values[0]);
       }
    }
 
@@ -305,6 +331,10 @@ int main( int argc, char **argv ) {
    /* PAPI_GRN_SYS  events    */
    /***************************/
    /***************************/
+
+   if ( !TESTS_QUIET ) {
+      printf("\tPAPI_GRN_SYS:\t\t\t");
+   }
 
    retval = PAPI_create_eventset(&EventSet6);
    if (retval != PAPI_OK) {
@@ -329,34 +359,39 @@ int main( int argc, char **argv ) {
       retval = PAPI_add_named_event(EventSet6, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
          if ( !TESTS_QUIET ) {
-            fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_CYC\n");
          }
-         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+      } else {
+
+         retval = PAPI_start( EventSet6 );
+         if ( retval != PAPI_OK ) {
+            test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+         }
+
+         do_flops( NUM_FLOPS );
+
+         retval = PAPI_stop( EventSet6, grn_sys_values );
+         if ( retval != PAPI_OK ) {
+            test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+         }
+
+         if ( !TESTS_QUIET ) {
+            printf("GRN_SYS PAPI_TOT_CYC: %lld\n",grn_sys_values[0]);
+         }
       }
 
-      retval = PAPI_start( EventSet6 );
-      if ( retval != PAPI_OK ) {
-         test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-      }
-
-      do_flops( NUM_FLOPS );
-
-      retval = PAPI_stop( EventSet6, grn_sys_values );
-      if ( retval != PAPI_OK ) {
-         test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
-      }
-
-      if ( !TESTS_QUIET ) {
-         printf("GRN_SYS PAPI_TOT_CYC: %lld\n",grn_sys_values[0]);
-      }
    }
 
 
-   /***************************/
-   /***************************/
-   /* PAPI_GRN_SYS_CPU  events    */
-   /***************************/
-   /***************************/
+   /****************************/
+   /****************************/
+   /* PAPI_GRN_SYS_CPU  events */
+   /****************************/
+   /****************************/
+
+   if ( !TESTS_QUIET ) {
+      printf("\tPAPI_GRN_SYS_CPU:\t\t");
+   }
 
    retval = PAPI_create_eventset(&EventSet7);
    if (retval != PAPI_OK) {
@@ -381,7 +416,7 @@ int main( int argc, char **argv ) {
       retval = PAPI_add_named_event(EventSet7, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
          if ( !TESTS_QUIET ) {
-            fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_CYC\n");
          }
          test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
       }
@@ -399,16 +434,24 @@ int main( int argc, char **argv ) {
       }
 
       if ( !TESTS_QUIET ) {
-         printf("GRN_SYS_CPU PAPI_TOT_CYC: %lld\n",grn_sys_cpu_values[0]);
+         printf("%lld\n",grn_sys_cpu_values[0]);
       }
    }
 
 
    /***************************/
    /***************************/
-   /* BLARGH  events    */
+   /* SYS and ATTACH  events  */
    /***************************/
    /***************************/
+
+   if ( !TESTS_QUIET ) {
+      printf("\nPAPI_GRN_SYS plus CPU attach:\n");
+   }
+
+   if ( !TESTS_QUIET ) {
+      printf("\tPAPI_GRN_SYS plus CPU attach:\t");
+   }
 
    retval = PAPI_create_eventset(&EventSet8);
    if (retval != PAPI_OK) {
@@ -444,7 +487,7 @@ int main( int argc, char **argv ) {
       retval = PAPI_add_named_event(EventSet8, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
          if ( !TESTS_QUIET ) {
-            fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_CYC\n");
          }
          test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
       }
@@ -462,10 +505,28 @@ int main( int argc, char **argv ) {
       }
 
       if ( !TESTS_QUIET ) {
-         printf("TOTAL PAPI_TOT_CYC: %lld\n",total_values[0]);
+         printf("%lld\n",total_values[0]);
       }
    }
 
+   if ( !TESTS_QUIET ) {
+      printf("\n");
+   }
+
+   /* Validation */
+
+   if ( !TESTS_QUIET ) {
+      printf("Validating:\n");
+      printf("\tDOM_USER|DOM_KERNEL (%lld) > DOM_USER (%lld)\n",
+             dom_user_values[0],dom_userkernel_values[0]);
+   }
+   if (dom_user_values[0]>dom_userkernel_values[0]) {
+      test_fail( __FILE__, __LINE__, "DOM_USER too high", 0 );
+   }
+
+   if ( !TESTS_QUIET ) {
+      printf("\n");
+   }
 
    test_pass( __FILE__, NULL, 0 );
 
