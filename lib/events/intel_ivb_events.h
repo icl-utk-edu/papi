@@ -25,6 +25,7 @@
  * This file has been automatically generated.
  *
  * PMU: ivb (Intel Ivy Bridge)
+ * PMU: ivb_ep (Intel Ivy Bridge EP)
  */
 
 static const intel_x86_umask_t ivb_arith[]={
@@ -931,11 +932,29 @@ static const intel_x86_umask_t ivb_mem_load_uops_llc_hit_retired[]={
    },
 };
 
-static const intel_x86_umask_t ivb_mem_load_uops_llc_miss[]={
+static const intel_x86_umask_t ivb_mem_load_uops_llc_miss_retired[]={
    { .uname  = "LOCAL_DRAM",
      .udesc  = "Number of retired load uops that missed L3 but were service by local RAM (Precise Event)",
      .ucode  = 0x100,
      .uflags = INTEL_X86_DFL | INTEL_X86_PEBS,
+   },
+   { .uname  = "REMOTE_DRAM",
+     .udesc  = "Number of retired load uops that missed L3 but were service by remote RAM, snoop not needed, snoop miss, snoop hit data not forwarded (Precise Event)",
+     .ucode = 0xc00,
+     .umodel = PFM_PMU_INTEL_IVB_EP,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
+   { .uname  = "REMOTE_HITM",
+     .udesc  = "Number of retired load uops whose data sources was remote HITM (Precise Event)",
+     .ucode = 0x1000,
+     .umodel = PFM_PMU_INTEL_IVB_EP,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
+   { .uname  = "REMOTE_FWD",
+     .udesc  = "Load uops that miss in the L3 whose data source was forwarded from a remote cache (Precise Event)",
+     .ucode = 0x2000,
+     .umodel = PFM_PMU_INTEL_IVB_EP,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
 };
 
@@ -1433,6 +1452,19 @@ static const intel_x86_umask_t ivb_offcore_response[]={
    { .uname  = "LLC_MISS_LOCAL",
      .udesc  = "Supplier: counts L3 misses to local DRAM",
      .ucode = 1ULL << (22+8),
+     .grpid = 1,
+   },
+   { .uname  = "LLC_MISS_REMOTE",
+     .udesc  = "Supplier: counts L3 misses to remote DRAM",
+     .ucode = 0xffULL << (23+8),
+     .uequiv = "LLC_MISS_REMOTE_DRAM",
+     .umodel = PFM_PMU_INTEL_IVB_EP,
+     .grpid = 1,
+   },
+   { .uname  = "LLC_MISS_REMOTE_DRAM",
+     .udesc  = "Supplier: counts L3 misses to remote DRAM",
+     .ucode = 0xffULL << (23+8),
+     .umodel = PFM_PMU_INTEL_IVB_EP,
      .grpid = 1,
    },
    { .uname  = "LLC_HITMESF",
@@ -1938,9 +1970,9 @@ static const intel_x86_entry_t intel_ivb_pe[]={
   .cntmsk = 0xff,
   .code = 0xd3,
   .flags= INTEL_X86_PEBS,
-  .numasks = LIBPFM_ARRAY_SIZE(ivb_mem_load_uops_llc_miss),
+  .numasks = LIBPFM_ARRAY_SIZE(ivb_mem_load_uops_llc_miss_retired),
   .ngrp = 1,
-  .umasks = ivb_mem_load_uops_llc_miss,
+  .umasks = ivb_mem_load_uops_llc_miss_retired,
 },
 { .name   = "MEM_LOAD_UOPS_RETIRED",
   .desc   = "Memory loads uops retired",
