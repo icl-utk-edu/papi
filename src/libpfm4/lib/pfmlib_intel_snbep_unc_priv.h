@@ -33,7 +33,7 @@
 #define SNBEP_UNC_ATTR_E		0
 #define SNBEP_UNC_ATTR_I		1
 #define SNBEP_UNC_ATTR_T8		2
-#define SNBEP_UNC_ATTR_T4		3
+#define SNBEP_UNC_ATTR_T5		3
 #define SNBEP_UNC_ATTR_TF		4
 #define SNBEP_UNC_ATTR_CF		5
 #define SNBEP_UNC_ATTR_NF		6
@@ -43,7 +43,7 @@
 #define _SNBEP_UNC_ATTR_I	(1 << SNBEP_UNC_ATTR_I)
 #define _SNBEP_UNC_ATTR_E	(1 << SNBEP_UNC_ATTR_E)
 #define _SNBEP_UNC_ATTR_T8	(1 << SNBEP_UNC_ATTR_T8)
-#define _SNBEP_UNC_ATTR_T4	(1 << SNBEP_UNC_ATTR_T4)
+#define _SNBEP_UNC_ATTR_T5	(1 << SNBEP_UNC_ATTR_T5)
 #define _SNBEP_UNC_ATTR_TF	(1 << SNBEP_UNC_ATTR_TF)
 #define _SNBEP_UNC_ATTR_CF	(1 << SNBEP_UNC_ATTR_CF)
 #define _SNBEP_UNC_ATTR_NF	(1 << SNBEP_UNC_ATTR_NF)
@@ -63,7 +63,7 @@
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
 #define SNBEP_UNC_PCU_ATTRS \
-	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T4)
+	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T5)
 
 #define SNBEP_UNC_PCU_BAND_ATTRS \
 	(SNBEP_UNC_PCU_ATTRS | _SNBEP_UNC_ATTR_FF)
@@ -183,4 +183,5 @@ extern const pfmlib_attr_desc_t snbep_unc_mods[];
 extern int  pfm_intel_snbep_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int  pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx);
+extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);
 #endif /* __PFMLIB_INTEL_SNBEP_UNC_PRIV_H__ */

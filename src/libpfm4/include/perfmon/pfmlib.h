@@ -182,6 +182,8 @@ typedef enum {
 
 	PFM_PMU_ARM_1176,		/* ARM 1176 */
 
+	PFM_PMU_INTEL_IVB_EP,		/* Intel IvyBridge EP */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
