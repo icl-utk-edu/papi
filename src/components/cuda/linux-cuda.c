@@ -509,6 +509,7 @@ CUDA_init_thread( hwd_context_t * ctx )
 int
 CUDA_init_component( int cidx )
 {
+	SUBDBG ("Entry: cidx: %d\n", cidx);
 	CUresult cuErr = CUDA_SUCCESS;
 
 	/* link in all the cuda libraries and resolve the symbols we need to use */
@@ -590,7 +591,6 @@ CUDA_init_component( int cidx )
 static int 
 linkCudaLibraries ()
 {
-	SUBDBG ("Entry:\n");
 	char *error;
 
 	/* Need to link in the cuda libraries, if not found disable the component */

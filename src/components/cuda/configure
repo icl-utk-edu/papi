@@ -271,7 +271,7 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CUDA_VERSION CUDA_DIR CUPTI_DIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CUDA_VERSION CUDRV_DIR CUDA_DIR CUPTI_DIR LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -798,6 +798,7 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-cudrv-dir=<path> Specify path to CUDA driver root directory
   --with-cuda-dir=<path>  Specify path to CUDA root directory
   --with-cupti-dir=<path> Specify path to CuPTI root directory
 
@@ -2179,6 +2180,95 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+# Check whether --with-cudrv_dir or --without-cudrv_dir was given.
+if test "${with_cudrv_dir+set}" = set; then
+  withval="$with_cudrv_dir"
+  CUDRV_DIR=$withval
+		CFLAGS="$CFLAGS -I$withval/include"
+		LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath-link -Wl,$withval/lib64"
+
+echo "$as_me:$LINENO: checking for cuDeviceGet in -lcuda" >&5
+echo $ECHO_N "checking for cuDeviceGet in -lcuda... $ECHO_C" >&6
+if test "${ac_cv_lib_cuda_cuDeviceGet+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcuda  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char cuDeviceGet ();
+int
+main ()
+{
+cuDeviceGet ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_cuda_cuDeviceGet=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_cuda_cuDeviceGet=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_cuda_cuDeviceGet" >&5
+echo "${ECHO_T}$ac_cv_lib_cuda_cuDeviceGet" >&6
+if test $ac_cv_lib_cuda_cuDeviceGet = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBCUDA 1
+_ACEOF
+
+  LIBS="-lcuda $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: Library cuda not found" >&5
+echo "$as_me: error: Library cuda not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+else
+  CUDRV_DIR="/usr"
+fi;
+
+
 # Check whether --with-cuda_dir or --without-cuda_dir was given.
 if test "${with_cuda_dir+set}" = set; then
   withval="$with_cuda_dir"
@@ -2258,8 +2348,8 @@ _ACEOF
   LIBS="-lcudart $LIBS"
 
 else
-  { { echo "$as_me:$LINENO: error: CUDA cudart library not found" >&5
-echo "$as_me: error: CUDA cudart library not found" >&2;}
+  { { echo "$as_me:$LINENO: error: Library cudart not found" >&5
+echo "$as_me: error: Library cudart not found" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -2349,8 +2439,8 @@ _ACEOF
   LIBS="-lcupti $LIBS"
 
 else
-  { { echo "$as_me:$LINENO: error: CuPTI library not found" >&5
-echo "$as_me: error: CuPTI library not found" >&2;}
+  { { echo "$as_me:$LINENO: error: library cupti not found" >&5
+echo "$as_me: error: library cupti not found" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -2379,6 +2469,7 @@ if test "$major" -eq 4; then
 fi
 
           ac_config_files="$ac_config_files Makefile.cuda"
+
 
 
 
@@ -3025,6 +3116,7 @@ s,@ac_ct_CC@,$ac_ct_CC,;t t
 s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
 s,@CUDA_VERSION@,$CUDA_VERSION,;t t
+s,@CUDRV_DIR@,$CUDRV_DIR,;t t
 s,@CUDA_DIR@,$CUDA_DIR,;t t
 s,@CUPTI_DIR@,$CUPTI_DIR,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t

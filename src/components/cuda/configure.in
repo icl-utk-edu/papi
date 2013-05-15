@@ -4,6 +4,17 @@
 
 
 AC_INIT
+AC_ARG_WITH(cudrv_dir,
+		[  --with-cudrv-dir=<path> Specify path to CUDA driver root directory],
+		[CUDRV_DIR=$withval
+		CFLAGS="$CFLAGS -I$withval/include"
+		LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath-link -Wl,$withval/lib64"
+		AC_CHECK_LIB([cuda],  
+			[cuDeviceGet], 
+			[],  
+			[AC_MSG_ERROR([Library cuda not found])])],
+		[CUDRV_DIR="/usr"])
+
 AC_ARG_WITH(cuda_dir,
 		[  --with-cuda-dir=<path>  Specify path to CUDA root directory],
 		[CUDA_DIR=$withval
@@ -12,7 +23,7 @@ AC_ARG_WITH(cuda_dir,
 		AC_CHECK_LIB([cudart],  
 			[cudaMalloc], 
 			[],  
-			[AC_MSG_ERROR([CUDA cudart library not found])])],
+			[AC_MSG_ERROR([Library cudart not found])])],
 		[AC_MSG_ERROR([Component requires path to CUDA root directory])])
 
 AC_ARG_WITH(cupti_dir,
@@ -23,7 +34,7 @@ AC_ARG_WITH(cupti_dir,
 		AC_CHECK_LIB([cupti], 
 			[cuptiSubscribe], 
 			[],                         
-			[AC_MSG_ERROR([CuPTI library not found])])],
+			[AC_MSG_ERROR([library cupti not found])])],
 		[AC_MSG_ERROR([Component requires path to CuPTI root directory])])	
 
 
@@ -46,6 +57,7 @@ fi
 
 AC_CONFIG_FILES([Makefile.cuda])
 AC_SUBST(CUDA_VERSION)
+AC_SUBST(CUDRV_DIR)
 AC_SUBST(CUDA_DIR)
 AC_SUBST(CUPTI_DIR)
 AC_OUTPUT
