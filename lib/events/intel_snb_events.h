@@ -1549,7 +1549,7 @@ static const intel_x86_umask_t snb_offcore_response[]={
    { .uname  = "ANY_IFETCH",
      .udesc  = "Request: combination of PF_IFETCH | DMND_IFETCH | PF_LLC_IFETCH",
      .uequiv = "PF_IFETCH:DMND_IFETCH:PF_LLC_IFETCH",
-     .ucode = 0x24100,
+     .ucode = 0x24400,
      .grpid = 0,
    },
    { .uname  = "ANY_REQUEST",
@@ -1568,7 +1568,7 @@ static const intel_x86_umask_t snb_offcore_response[]={
    { .uname  = "ANY_RFO",
      .udesc  = "Request: combination of DMND_RFO | PF_RFO | PF_LLC_RFO",
      .uequiv = "DMND_RFO:PF_RFO:PF_LLC_RFO",
-     .ucode = 0x10300,
+     .ucode = 0x12200,
      .grpid = 0,
    },
 
