@@ -2010,7 +2010,7 @@ PAPI_destroy_eventset( int *EventSet )
 int
 PAPI_start( int EventSet )
 {
-	APIDBG("Entry: EventSet: %d\n", EventSet);
+
 	int is_dirty=0;
 	int retval;
 	EventSetInfo_t *ESI;
@@ -2019,10 +2019,14 @@ PAPI_start( int EventSet )
 	hwd_context_t *context;
 	int cidx;
 
+	APIDBG("Entry: EventSet: %d\n", EventSet);
+
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL ) {
 	   papi_return( PAPI_ENOEVST );
 	}
+
+	APIDBG("EventSet: %p\n", ESI);
 
 	cidx = valid_ESI_component( ESI );
 	if ( cidx < 0 ) {
@@ -2039,10 +2043,12 @@ PAPI_start( int EventSet )
 	/* check cpu attached case first */
 	if (ESI->state & PAPI_CPU_ATTACHED) {
 	   if ( cpu->running_eventset[cidx] ) {
+              APIDBG("CPU Running already\n");
 	      papi_return( PAPI_EISRUN );
 	   }
 	} else {
 	    if ( thread->running_eventset[cidx] ) {
+               APIDBG("Thread Running already (Only one active Eventset per component)\n");
 	       papi_return( PAPI_EISRUN );
 	    }
 	} 
