@@ -1429,11 +1429,13 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
 
    SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
    
-   /* Setup presets */
-   retval = _papi_load_preset_table( (char *)event_table->default_pmu.name, 
+   /* Setup presets, only if Component 0 */
+   if (cidx==0) {
+      retval = _papi_load_preset_table( (char *)event_table->default_pmu.name, 
 				     event_table->default_pmu.pmu, cidx );
-   if ( retval ) {
-      return retval;
+      if ( retval ) {
+         return retval;
+      }
    }	
 
    return PAPI_OK;
