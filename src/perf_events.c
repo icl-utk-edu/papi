@@ -1031,6 +1031,7 @@ _papi_pe_set_domain( hwd_control_state_t *ctl, int domain)
    return PAPI_OK;
 }
 
+struct native_event_table_t native_event_table;
 
 /* Initialize the perf_event component */
 static int
@@ -1120,7 +1121,7 @@ _papi_pe_init_component( int cidx )
    pe_vendor_fixups();
 
    /* Run the libpfm4-specific setup */
-   retval = _papi_libpfm4_init(&_papi_pe_vector, cidx);
+   retval = _papi_libpfm4_init(&_papi_pe_vector, cidx, &native_event_table);
    if (retval) {
       strncpy(_papi_pe_vector.cmp_info.disabled_reason,
 	      "Error initializing libpfm4",PAPI_MAX_STR_LEN);
@@ -1136,7 +1137,7 @@ static int
 _papi_pe_shutdown_component( void ) {
 
   /* Shutdown libpfm4 */
-  _papi_libpfm4_shutdown();
+  _papi_libpfm4_shutdown(&native_event_table);
 
   return PAPI_OK;
 }
@@ -1546,7 +1547,8 @@ _papi_pe_update_control_state( hwd_control_state_t *ctl,
       if ( native ) {
 	 /* Have libpfm4 set the config values for the event */
 	 ret=_papi_libpfm4_setup_counters(&pe_ctl->events[i].attr,
-					 native[i].ni_event);
+					  native[i].ni_event,
+					  &native_event_table);
 	 SUBDBG( "pe_ctl->eventss[%d].config=%"PRIx64"\n",i,
 		 pe_ctl->events[i].attr.config);
 	 if (ret!=PAPI_OK) return ret;
@@ -2082,6 +2084,43 @@ _papi_pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 }
 
 
+int
+_papi_pe_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
+{
+  return _papi_libpfm4_ntv_enum_events(PapiEventCode, modifier,
+				       &native_event_table);
+}
+
+int
+_papi_pe_ntv_name_to_code( char *name, unsigned int *event_code) {
+  return _papi_libpfm4_ntv_name_to_code(name,event_code,
+					&native_event_table);
+}
+
+int
+_papi_pe_ntv_code_to_name(unsigned int EventCode,
+                          char *ntv_name, int len) {
+   return _papi_libpfm4_ntv_code_to_name(EventCode,
+					 ntv_name, len, &native_event_table);
+}
+
+int
+_papi_pe_ntv_code_to_descr( unsigned int EventCode,
+			    char *ntv_descr, int len) {
+
+   return _papi_libpfm4_ntv_code_to_descr(EventCode,ntv_descr,len,
+					  &native_event_table);
+}
+
+int
+_papi_pe_ntv_code_to_info(unsigned int EventCode,
+                          PAPI_event_info_t *info) {
+
+  return _papi_libpfm4_ntv_code_to_info(EventCode, info,
+					&native_event_table);
+}
+
+
 /* Our component vector */
 
 papi_vector_t _papi_pe_vector = {
@@ -2139,9 +2178,9 @@ papi_vector_t _papi_pe_vector = {
   .init_thread =           _papi_pe_init_thread,
 
   /* from counter name mapper */
-  .ntv_enum_events =   _papi_libpfm4_ntv_enum_events,
-  .ntv_name_to_code =  _papi_libpfm4_ntv_name_to_code,
-  .ntv_code_to_name =  _papi_libpfm4_ntv_code_to_name,
-  .ntv_code_to_descr = _papi_libpfm4_ntv_code_to_descr,
-  .ntv_code_to_info =  _papi_libpfm4_ntv_code_to_info,
+  .ntv_enum_events =   _papi_pe_ntv_enum_events,
+  .ntv_name_to_code =  _papi_pe_ntv_name_to_code,
+  .ntv_code_to_name =  _papi_pe_ntv_code_to_name,
+  .ntv_code_to_descr = _papi_pe_ntv_code_to_descr,
+  .ntv_code_to_info =  _papi_pe_ntv_code_to_info,
 };

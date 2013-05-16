@@ -1,6 +1,6 @@
 /*
 * File:    papi_libpfm4_events.c
-* Author:  Vince Weaver vweaver1 @ eecs.utk.edu
+* Author:  Vince Weaver vincent.weaver @ maine.edu
 *          based heavily on existing papi_libpfm3_events.c
 */
 
@@ -17,52 +17,34 @@
 
 #define NATIVE_EVENT_CHUNK 1024
 
-struct native_event_t {
-  int component;
-  char *pmu;
-  int libpfm4_idx;
-  char *allocated_name;
-  char *base_name;
-  char *pmu_plus_name;
-  int users;
-  long long config;
-  long long config1;
-  long long config2;
-  int type;
-};
-
-static struct native_event_t *native_events;
-
-static int num_native_events=0;
-static int allocated_native_events=0;
-
-static pfm_pmu_info_t default_pmu;
-
-
 /** @class  find_existing_event
  *  @brief  looks up an event, returns it if it exists
  *
  *  @param[in] name 
  *             -- name of the event
+ *  @param[in] event_table
+ *             -- native_event_table structure
  *
  *  @returns returns offset in array
  *
  */
 
-static int find_existing_event(char *name) {
+static int find_existing_event(char *name, 
+                               struct native_event_table_t *event_table) {
 
   int i,event=PAPI_ENOEVNT;
 
-  SUBDBG("Looking for %s in %d events\n",name,num_native_events);
+  SUBDBG("Looking for %s in %d events\n",
+         name,event_table->num_native_events);
 
   _papi_hwi_lock( NAMELIB_LOCK );
 
-  for(i=0;i<num_native_events;i++) {
+  for(i=0;i<event_table->num_native_events;i++) {
 
-    if (!strcmp(name,native_events[i].allocated_name)) {
+    if (!strcmp(name,event_table->native_events[i].allocated_name)) {
       SUBDBG("Found %s (%#x)\n",
-	     native_events[i].allocated_name,
-	     native_events[i].libpfm4_idx);
+	     event_table->native_events[i].allocated_name,
+	     event_table->native_events[i].libpfm4_idx);
       event=i;
       break;
     }
@@ -79,18 +61,21 @@ static int find_existing_event(char *name) {
  *
  *  @param[in] eventnum
  *             -- a PAPI event number
+ *  @param[in] event_table
+ *             -- a native event table struct
  *
  *  @returns returns a struct native_event_t *, or NULL if event not found
  *
  */
 
-static struct native_event_t *find_existing_event_by_number(int eventnum) {
+static struct native_event_t *find_existing_event_by_number(int eventnum,
+       struct native_event_table_t *event_table) {
 
   struct native_event_t *temp_event=NULL;
 
   _papi_hwi_lock( NAMELIB_LOCK );
 
-  temp_event=&native_events[eventnum];
+  temp_event=&(event_table->native_events[eventnum]);
   
   _papi_hwi_unlock( NAMELIB_LOCK );
 
@@ -221,13 +206,16 @@ static int find_next_no_aliases(int code) {
  *             -- name of the event
  *  @param[in] event_idx
  *             -- libpfm4 identifier for the event
+ *  @param[in] event_table
+ *             -- native event table struct
  *
  *  @returns returns a native_event_t or NULL
  *
  */
 
 static struct native_event_t *allocate_native_event(char *name, 
-						    int event_idx) {
+						    int event_idx,
+			  struct native_event_table_t *event_table) {
 
   int new_event;
 
@@ -274,27 +262,29 @@ static struct native_event_t *allocate_native_event(char *name,
   /* add the event */
   _papi_hwi_lock( NAMELIB_LOCK );
 
-  new_event=num_native_events;
+  new_event=event_table->num_native_events;
 
-  native_events[new_event].base_name=strdup(base_start);
+  event_table->native_events[new_event].base_name=strdup(base_start);
 
   sprintf(fullname,"%s::%s",pinfo.name,info.name);
-  native_events[new_event].pmu_plus_name=strdup(fullname);
+  event_table->native_events[new_event].pmu_plus_name=strdup(fullname);
 
   sprintf(pmuplusbase,"%s::%s",pinfo.name,base_start);
 
-  native_events[new_event].component=0;
-  native_events[new_event].pmu=strdup(pinfo.name);
+  event_table->native_events[new_event].component=0;
+  event_table->native_events[new_event].pmu=strdup(pinfo.name);
     
-  native_events[new_event].libpfm4_idx=find_event_no_aliases(pmuplusbase);
+  event_table->native_events[new_event].libpfm4_idx=
+              find_event_no_aliases(pmuplusbase);
 
   SUBDBG("Using %#x as index instead of %#x for %s\n",
-	 native_events[new_event].libpfm4_idx,event_idx,pmuplusbase);
+	 event_table->native_events[new_event].libpfm4_idx,
+	 event_idx,pmuplusbase);
 
-  native_events[new_event].allocated_name=strdup(name);
+  event_table->native_events[new_event].allocated_name=strdup(name);
 
   /* is this needed? */
-  native_events[new_event].users=0;
+  event_table->native_events[new_event].users=0;
 
 
   /* use name of the event to get the perf_event encoding */
@@ -314,9 +304,9 @@ static struct native_event_t *allocate_native_event(char *name,
      /* should do something! */
   }
   
-  native_events[new_event].config=perf_arg.attr->config;
-  native_events[new_event].config1=perf_arg.attr->config1;
-  native_events[new_event].type=perf_arg.attr->type;
+  event_table->native_events[new_event].config=perf_arg.attr->config;
+  event_table->native_events[new_event].config1=perf_arg.attr->config1;
+  event_table->native_events[new_event].type=perf_arg.attr->type;
 
   SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64" type 0x%"PRIx32"\n", 
           perf_arg.attr->config, 
@@ -325,31 +315,32 @@ static struct native_event_t *allocate_native_event(char *name,
 
   SUBDBG("Creating event %s with perfidx %#x\n",
 	 name,
-	 native_events[new_event].libpfm4_idx);
+	 event_table->native_events[new_event].libpfm4_idx);
 
-  num_native_events++;
+  event_table->num_native_events++;
 
   /* If we've allocated too many native events, then allocate more room */
-  if (num_native_events >= allocated_native_events) {
+  if (event_table->num_native_events >= 
+      event_table->allocated_native_events) {
 
      SUBDBG("Allocating more room for native events (%d %ld)\n",
-	    (allocated_native_events+NATIVE_EVENT_CHUNK),
+	    (event_table->allocated_native_events+NATIVE_EVENT_CHUNK),
 	    (long)sizeof(struct native_event_t) *
-	    (allocated_native_events+NATIVE_EVENT_CHUNK));
+	    (event_table->allocated_native_events+NATIVE_EVENT_CHUNK));
 
-     native_events=realloc(native_events,
+     event_table->native_events=realloc(event_table->native_events,
 			   sizeof(struct native_event_t) * 
-			   (allocated_native_events+NATIVE_EVENT_CHUNK));
-     allocated_native_events+=NATIVE_EVENT_CHUNK;
+			   (event_table->allocated_native_events+NATIVE_EVENT_CHUNK));
+     event_table->allocated_native_events+=NATIVE_EVENT_CHUNK;
   }
 
   _papi_hwi_unlock( NAMELIB_LOCK );
 
-  if (native_events==NULL) {
+  if (event_table->native_events==NULL) {
      return NULL;
   }
 
-  return &native_events[new_event];
+  return &event_table->native_events[new_event];
 
 }
 
@@ -527,6 +518,8 @@ get_event_first_active(void)
  *        -- libpfm4 code to convert
  *  @param[out] **event_name
  *        -- pointer to a string pointer that will be allocated
+ *  @param[in] default_pmu
+ *        -- the default pmu for this component
  *
  *  @returns returns a libpfm error condition
  *
@@ -535,7 +528,8 @@ get_event_first_active(void)
  */
 
 static int
-convert_libpfm4_to_string( int code, char **event_name)
+convert_libpfm4_to_string( int code, char **event_name,
+			   pfm_pmu_info_t *default_pmu)
 {
 
   int ret;
@@ -561,7 +555,7 @@ convert_libpfm4_to_string( int code, char **event_name)
 
   /* Only prepend PMU name if not on the "default" PMU */
 
-  if (pinfo.pmu == default_pmu.pmu) {
+  if (pinfo.pmu == default_pmu->pmu) {
      *event_name=strdup(gete.name);
   }
   else {
@@ -583,24 +577,27 @@ convert_libpfm4_to_string( int code, char **event_name)
  *        -- libpfm4 code to convert
  *  @param[out] *PapiEventCode
  *        -- PAPI event code
+ *  @param[in] event_table
+ *        -- native event table struct
  *
  *  @returns returns a PAPI error code
  *
  */
 
-static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode) {
+static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode,
+				    struct native_event_table_t *event_table) {
 
   int ret;
   char *name=NULL;
 
-  ret=convert_libpfm4_to_string( code, &name);
+  ret=convert_libpfm4_to_string( code, &name, &event_table->default_pmu);
   if (ret!=PFM_SUCCESS) {
      return _papi_libpfm4_error(ret);
   }
 
   SUBDBG("Converted %#x to %s\n",code,name);
 
-  ret=_papi_libpfm4_ntv_name_to_code(name,PapiEventCode);
+  ret=_papi_libpfm4_ntv_name_to_code(name,PapiEventCode,event_table);
 
   SUBDBG("Converted %s to event %#x\n",name,*PapiEventCode);
 
@@ -756,13 +753,16 @@ _papi_libpfm4_error( int pfm_error ) {
  *        -- name of event to convert
  *  @param[out] *event_code
  *        -- pointer to an integer to hold the event code
+ *  @param[in] event_table
+ *        -- native event table struct
  *
  *  @retval PAPI_OK event was found and an event assigned
  *  @retval PAPI_ENOEVENT event was not found
  */
 
 int
-_papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
+_papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
+				struct native_event_table_t *event_table)
 {
 
   int actual_idx;
@@ -771,7 +771,7 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
 
   SUBDBG( "Converting %s\n", name);
 
-  event_num=find_existing_event(name);
+  event_num=find_existing_event(name,event_table);
 
   if (event_num<0) {
 
@@ -788,10 +788,10 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
 
      /* We were found in libpfm4, so allocate our copy of the event */
 
-     our_event=allocate_native_event(name,actual_idx);
+     our_event=allocate_native_event(name,actual_idx,event_table);
      if (our_event==NULL) return PAPI_ENOEVNT;
 
-     event_num=find_existing_event(name);
+     event_num=find_existing_event(name,event_table);
   }
 
   if (event_num>=0) {      
@@ -818,6 +818,8 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
  *        -- pointer to a string to hold the name
  *  @param[in] len
  *        -- length of ntv_name string
+ *  @param[in] event_table
+ *        -- native event table struct
  *
  *  @retval PAPI_OK       The event was found and converted to a name
  *  @retval PAPI_ENOEVENT The event does not exist
@@ -825,14 +827,16 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code )
  */
 
 int
-_papi_libpfm4_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+_papi_libpfm4_ntv_code_to_name(unsigned int EventCode, 
+			       char *ntv_name, int len,
+			       struct native_event_table_t *event_table)
 {
 
         struct native_event_t *our_event;
 
         SUBDBG("ENTER %#x\n",EventCode);
 
-        our_event=find_existing_event_by_number(EventCode);
+        our_event=find_existing_event_by_number(EventCode,event_table);
 	if (our_event==NULL) {
 	  return PAPI_ENOEVNT;
 	}
@@ -856,6 +860,8 @@ _papi_libpfm4_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
  *        -- pointer to a string to hold the description
  *  @param[in] len
  *        -- length of ntv_descr string
+ *  @param[in] event_table
+ *        -- native event table struct
  *
  *  @retval PAPI_OK       The event was found and converted to a description
  *  @retval PAPI_ENOEVENT The event does not exist
@@ -869,7 +875,8 @@ _papi_libpfm4_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 
 int
 _papi_libpfm4_ntv_code_to_descr( unsigned int EventCode, 
-				char *ntv_descr, int len )
+				 char *ntv_descr, int len,
+			         struct native_event_table_t *event_table)
 {
   int ret,a,first_mask=1;
   char *eventd, *tmp=NULL;
@@ -884,7 +891,7 @@ _papi_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 
   SUBDBG("ENTER %#x\n",EventCode);
 
-  our_event=find_existing_event_by_number(EventCode);
+  our_event=find_existing_event_by_number(EventCode,event_table);
   if (our_event==NULL) {
      return PAPI_ENOEVNT;
   }
@@ -1071,7 +1078,9 @@ descr_in_tmp:
 
 
 int
-_papi_libpfm4_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
+_papi_libpfm4_ntv_code_to_info(unsigned int EventCode, 
+			       PAPI_event_info_t *info,
+			       struct native_event_table_t *event_table)
 {
 
 
@@ -1079,7 +1088,7 @@ _papi_libpfm4_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   SUBDBG("ENTER %#x\n",EventCode);
 
-  our_event=find_existing_event_by_number(EventCode);
+  our_event=find_existing_event_by_number(EventCode,event_table);
   if (our_event==NULL) {
      return PAPI_ENOEVNT;
   }
@@ -1091,7 +1100,7 @@ _papi_libpfm4_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
   }
 
   _papi_libpfm4_ntv_code_to_descr(EventCode,info->long_descr,
-				 sizeof(info->long_descr));
+				  sizeof(info->long_descr),event_table);
 
   return PAPI_OK;
 }
@@ -1105,6 +1114,8 @@ _papi_libpfm4_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
  *        -- PAPI event code to start with
  *  @param[in] modifier
  *        -- describe how to enumerate
+ *  @param[in] event_table
+ *        -- native event table struct
  *
  *  @retval PAPI_OK       The event was found and converted to a description
  *  @retval PAPI_ENOEVENT The event does not exist
@@ -1113,8 +1124,10 @@ _papi_libpfm4_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
  */
 
 int
-_papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
-{
+_papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
+			       int modifier,
+			       struct native_event_table_t *event_table) {
+
 	int code,ret;
 	struct native_event_t *current_event;
 
@@ -1134,7 +1147,7 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	   }
 
 	   /* convert the libpfm4 event to a PAPI event */
-	   ret=convert_pfmidx_to_native(code, &papi_event);
+	   ret=convert_pfmidx_to_native(code, &papi_event,event_table);
 
 	   *PapiEventCode=(unsigned int)papi_event;
 
@@ -1145,7 +1158,8 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 
 	/* If we get this far, we're looking for a        */
 	/* next-event.  So gather info on the current one */
-	current_event=find_existing_event_by_number(*PapiEventCode);
+	current_event=find_existing_event_by_number(*PapiEventCode,
+						    event_table);
 	if (current_event==NULL) {
            SUBDBG("EVENTS %#x not found\n",*PapiEventCode);
 	   return PAPI_ENOEVNT;
@@ -1169,7 +1183,7 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	   }
 
 	   /* Convert libpfm4 event code to PAPI event code */
-	   ret=convert_pfmidx_to_native(ret, &papi_event);
+	   ret=convert_pfmidx_to_native(ret, &papi_event, event_table);
 	   if (ret<0) {
 	       SUBDBG("Couldn't convert to native %d %s\n",
 		      ret,PAPI_strerror(ret));
@@ -1225,7 +1239,8 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
      
 	      SUBDBG("Found new name %s\n",new_name);
 
-              ret=_papi_libpfm4_ntv_name_to_code(new_name,&papi_event);
+              ret=_papi_libpfm4_ntv_name_to_code(new_name,&papi_event,
+						 event_table);
 	      if (ret!=PAPI_OK) {
 		 return PAPI_ENOEVNT;
 	      }
@@ -1247,36 +1262,49 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 	return PAPI_ENOIMPL;
 }
 
+static int libpfm4_users=0;
+
 /** @class  _papi_libpfm4_shutdown
  *  @brief  Shutdown any initialization done by the libpfm4 code
+ *
+ *  @param[in] event_table
+ *        -- native event table struct
  *
  *  @retval PAPI_OK       We always return PAPI_OK
  *
  */
 
 int 
-_papi_libpfm4_shutdown(void) {
+_papi_libpfm4_shutdown(struct native_event_table_t *event_table) {
 
   int i;
 
-  SUBDBG("shutdown\n");
+  APIDBG("Entry\n");
 
   /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
 
-  /* free memory allocate with strdup */
-  for( i=0; i<num_native_events; i++) {
-     free(native_events[i].base_name);
-     free(native_events[i].pmu_plus_name);
-     free(native_events[i].pmu);
-     free(native_events[i].allocated_name);
+  libpfm4_users--;
+
+  /* Only free if we're the last user */
+
+  if (!libpfm4_users) {
+
+     /* free memory allocate with strdup */
+     for( i=0; i<event_table->num_native_events; i++) {
+        free(event_table->native_events[i].base_name);
+        free(event_table->native_events[i].pmu_plus_name);
+        free(event_table->native_events[i].pmu);
+        free(event_table->native_events[i].allocated_name);
+     }
+
+     memset(event_table->native_events,0,
+	 sizeof(struct native_event_t)*event_table->allocated_native_events);
+     event_table->num_native_events=0;
+     event_table->allocated_native_events=0;
+     free(event_table->native_events);
   }
 
-  memset(native_events,0,
-	 sizeof(struct native_event_t)*allocated_native_events);
-  num_native_events=0;
-  allocated_native_events=0;
-  free(native_events);
   _papi_hwi_unlock( NAMELIB_LOCK );
 
   return PAPI_OK;
@@ -1286,23 +1314,35 @@ _papi_libpfm4_shutdown(void) {
 /** @class  _papi_libpfm4_init
  *  @brief  Initialize the libpfm4 code
  *
+ *  @param[in] event_table
+ *        -- native event table struct
+ *
  *  @retval PAPI_OK       We initialized correctly
  *  @retval PAPI_ECMP     There was an error initializing the component
  *
  */
 
 int
-_papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
+_papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
+			      struct native_event_table_t *event_table) {
 
    int detected_pmus=0, found_default=0;
    int i, version;
-   pfm_err_t retval;
+   pfm_err_t retval = PFM_SUCCESS;
    unsigned int ncnt;
    pfm_pmu_info_t pinfo;
 
-   /* The following checks the version of the PFM library
-      against the version PAPI linked to... */
-   if ( ( retval = pfm_initialize(  ) ) != PFM_SUCCESS ) {
+   _papi_hwi_lock( NAMELIB_LOCK );
+
+   if (!libpfm4_users) {
+      retval = pfm_initialize();
+      if ( retval != PFM_SUCCESS ) libpfm4_users--;
+   }
+   libpfm4_users++;
+
+   _papi_hwi_unlock( NAMELIB_LOCK );
+
+   if ( retval != PFM_SUCCESS ) {
       PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
       return PAPI_ESYS;
    }
@@ -1328,22 +1368,23 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
 
    /* allocate the native event structure */
 
-   num_native_events=0;
+   event_table->num_native_events=0;
 
-   native_events=calloc(NATIVE_EVENT_CHUNK,sizeof(struct native_event_t));
-   if (native_events==NULL) {
+   event_table->native_events=calloc(NATIVE_EVENT_CHUNK,
+					   sizeof(struct native_event_t));
+   if (event_table->native_events==NULL) {
       return PAPI_ENOMEM;
    }
-   allocated_native_events=NATIVE_EVENT_CHUNK;
+   event_table->allocated_native_events=NATIVE_EVENT_CHUNK;
 
    /* Count number of present PMUs */
    detected_pmus=0;
    ncnt=0;
 
    /* need to init pinfo or pfmlib might complain */
-   memset(&default_pmu, 0, sizeof(pfm_pmu_info_t));
+   memset(&(event_table->default_pmu), 0, sizeof(pfm_pmu_info_t));
    /* init default pmu */
-   retval=pfm_get_pmu_info(0, &default_pmu);
+   retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
    
    SUBDBG("Detected pmus:\n");
    for(i=0;i<PFM_PMU_MAX;i++) {
@@ -1363,7 +1404,8 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
               strcmp(pinfo.name,"ix86arch")) {
 
 	    SUBDBG("\t  %s is default\n",pinfo.name);
-	    memcpy(&default_pmu,&pinfo,sizeof(pfm_pmu_info_t));
+	    memcpy(&(event_table->default_pmu),
+		   &pinfo,sizeof(pfm_pmu_info_t));
 	    found_default++;
 	 }
       }
@@ -1382,14 +1424,14 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
 
    my_vector->cmp_info.num_native_events = ncnt;
 
-   my_vector->cmp_info.num_cntrs = default_pmu.num_cntrs+
-                                  default_pmu.num_fixed_cntrs;
+   my_vector->cmp_info.num_cntrs = event_table->default_pmu.num_cntrs+
+                                   event_table->default_pmu.num_fixed_cntrs;
 
    SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
    
    /* Setup presets */
-   retval = _papi_load_preset_table( (char *)default_pmu.name, 
-					default_pmu.pmu, cidx );
+   retval = _papi_load_preset_table( (char *)event_table->default_pmu.name, 
+				     event_table->default_pmu.pmu, cidx );
    if ( retval ) {
       return retval;
    }	
@@ -1403,8 +1445,10 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
  *
  *  @param[out] *attr
  *        -- perf_event compatible attr structure
- *  @param[in] *ni_bits
- *        -- an opaque structure that holds HW specific event info
+ *  @param[in] event
+ *        -- the event to set up
+ *  @param[in] event_table
+ *        -- native event table struct
  *
  *  @retval PAPI_OK       We generated the event properly
  *
@@ -1412,11 +1456,12 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx) {
 
 int
 _papi_libpfm4_setup_counters( struct perf_event_attr *attr,
-			     int event ) {
+			      int event,
+			      struct native_event_table_t *event_table) {
 
   struct native_event_t *our_event;
 
-  our_event=find_existing_event_by_number(event);
+  our_event=find_existing_event_by_number(event,event_table);
   if (our_event==NULL) {
      return PAPI_ENOEVNT;
   }
