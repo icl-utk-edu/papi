@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
 * @file		papi_hl.c
 * @author	Philip Mucci
 *			mucci@cs.utk.edu
@@ -10,7 +10,7 @@
 *           london@cs.utk.edu
 * @author	dan terpstra
 *			terpstra@cs.utk.edu
-* @brief This file contains the 'high level' interface to PAPI. 
+* @brief This file contains the 'high level' interface to PAPI.
 *  BASIC is a high level language. ;-) */
 
 #include "papi.h"
@@ -346,9 +346,6 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
      int retval = 0;
      int level = 0;
 
-     (void) rate; /* The code used to sometimes estimate cycles */
-                  /* based on instructions / IPC (rate)         */
-                  /* that no longer seems necessary             */
      if ( EVENT == ( unsigned int ) PAPI_FP_INS )
 	level = HL_FLIPS;
      else if ( EVENT == ( unsigned int ) PAPI_TOT_INS )
@@ -383,7 +380,7 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
 
 	state->initial_time = PAPI_get_real_usec(  );
 	state->initial_proc_time = PAPI_get_virt_usec();
-	
+
 	if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 	   return retval;
 	}
@@ -400,9 +397,20 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins,
 					state->initial_time ) * .000001 );
 	*proc_time = (float) ((double) (PAPI_get_virt_usec() -
 					state->initial_proc_time) * .000001);
-	
+
 	state->total_ins += ( float ) values[0];
-	
+
+        /* Calculate IPC */
+        if ( *proc_time > 0 ) {
+           if (EVENT==(unsigned int)PAPI_TOT_INS) {
+              if (values[1]!=0) {
+                 *rate = (float) ((float)values[0] /
+                              (float) ( values[1]));
+              }
+           }
+        }
+
+
 	*ins = ( long long ) state->total_ins;
 	if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 	   state->running = 0;
