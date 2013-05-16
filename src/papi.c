@@ -6458,7 +6458,7 @@ int  PAPI_get_component_index(char *name)
      cinfo=PAPI_get_component_info(cidx); 
      if (cinfo==NULL) return PAPI_ENOCMP;
 
-     if (!strncmp(name,cinfo->name,strlen(cinfo->name))) {
+     if (!strcmp(name,cinfo->name)) {
         return cidx;
      }
   }
