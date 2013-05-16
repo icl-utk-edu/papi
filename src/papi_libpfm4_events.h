@@ -22,11 +22,16 @@ struct native_event_t {
   int type;
 };
 
+#define PMU_TYPE_CORE   1
+#define PMU_TYPE_UNCORE 2
+#define PMU_TYPE_OS     4
+
 struct native_event_table_t {
    struct native_event_t *native_events;
    int num_native_events;
    int allocated_native_events;
    pfm_pmu_info_t default_pmu;
+   int pmu_type;
 };
 
 
@@ -47,7 +52,8 @@ int _papi_libpfm4_ntv_code_to_descr( unsigned int EventCode, char *name,
 		       struct native_event_table_t *event_table);
 int _papi_libpfm4_shutdown(struct native_event_table_t *event_table);
 int _papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
-		       struct native_event_table_t *event_table);
+		       struct native_event_table_t *event_table,
+		       int pmu_type);
 
 int _papi_libpfm4_ntv_code_to_info(unsigned int EventCode, 
 				   PAPI_event_info_t *info,

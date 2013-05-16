@@ -84,6 +84,17 @@ static struct native_event_t *find_existing_event_by_number(int eventnum,
   return temp_event;
 }
 
+static int pmu_is_present_and_right_type(pfm_pmu_info_t *pinfo, int type) {
+
+  if (!pinfo->is_present) return 0;
+
+  if ((pinfo->type==PFM_PMU_TYPE_UNCORE) && (type&PMU_TYPE_UNCORE)) return 1;
+  if ((pinfo->type==PFM_PMU_TYPE_CORE) && (type&PMU_TYPE_CORE)) return 1;
+  if ((pinfo->type==PFM_PMU_TYPE_OS_GENERIC) && (type&PMU_TYPE_OS)) return 1;
+
+  return 0;
+}
+
 
 /** @class  find_event_no_aliases
  *  @brief  looks up an event, avoiding aliases, returns it if it exists
@@ -95,7 +106,7 @@ static struct native_event_t *find_existing_event_by_number(int eventnum,
  *
  */
 
-static int find_event_no_aliases(char *name) {
+static int find_event_no_aliases(char *name, int pmu_type) {
 
     int j,i, ret;
     pfm_pmu_info_t pinfo;
@@ -108,7 +119,7 @@ static int find_event_no_aliases(char *name) {
 
        memset(&pinfo,0,sizeof(pfm_pmu_info_t));
        pfm_get_pmu_info(j, &pinfo);
-       if (!pinfo.is_present) {
+       if (!pmu_is_present_and_right_type(&pinfo,pmu_type)) {
           continue;
        }
 
@@ -147,7 +158,7 @@ static int find_event_no_aliases(char *name) {
  *
  */
 
-static int find_next_no_aliases(int code) {
+static int find_next_no_aliases(int code, int pmu_type) {
 
   int current_pmu=0,current_event=0;
   pfm_err_t ret;
@@ -190,7 +201,7 @@ static int find_next_no_aliases(int code) {
  
         memset(&pinfo,0,sizeof(pfm_pmu_info_t));
         pfm_get_pmu_info(current_pmu, &pinfo);
-        if (pinfo.is_present) break;
+        if (pmu_is_present_and_right_type(&pinfo,pmu_type)) break;
      }
 
      current_event=pinfo.first_event;
@@ -275,7 +286,7 @@ static struct native_event_t *allocate_native_event(char *name,
   event_table->native_events[new_event].pmu=strdup(pinfo.name);
     
   event_table->native_events[new_event].libpfm4_idx=
-              find_event_no_aliases(pmuplusbase);
+    find_event_no_aliases(pmuplusbase,event_table->pmu_type);
 
   SUBDBG("Using %#x as index instead of %#x for %s\n",
 	 event_table->native_events[new_event].libpfm4_idx,
@@ -470,7 +481,7 @@ found_attr:
  */
 
 static int
-get_event_first_active(void)
+get_event_first_active(int pmu_type)
 {
   int pidx, pmu_idx, ret;
 
@@ -484,7 +495,7 @@ get_event_first_active(void)
     memset(&pinfo,0,sizeof(pfm_pmu_info_t));
     ret=pfm_get_pmu_info(pmu_idx, &pinfo);
 
-    if ((ret==PFM_SUCCESS) && pinfo.is_present) {
+    if ((ret==PFM_SUCCESS) && pmu_is_present_and_right_type(&pinfo,pmu_type)) {
 
       pidx=pinfo.first_event;
 
@@ -1140,7 +1151,7 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 
            SUBDBG("ENUM_FIRST\n");
 
-	   code=get_event_first_active();
+	   code=get_event_first_active(event_table->pmu_type);
 	   SUBDBG("ENUM_FIRST code: %d\n",code);
 	   if (code < 0 ) {
 	      return code;
@@ -1176,7 +1187,7 @@ _papi_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 
 	   code=current_event->libpfm4_idx;
 
-	   ret=find_next_no_aliases(code);
+	   ret=find_next_no_aliases(code,event_table->pmu_type);
 	   SUBDBG("find_next_no_aliases() Returned %#x\n",ret);
 	   if (ret<0) {
 	      return ret;
@@ -1324,7 +1335,8 @@ _papi_libpfm4_shutdown(struct native_event_table_t *event_table) {
 
 int
 _papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
-			      struct native_event_table_t *event_table) {
+		   struct native_event_table_t *event_table,
+		   int pmu_type) {
 
    int detected_pmus=0, found_default=0;
    int i, version;
@@ -1369,6 +1381,7 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
    /* allocate the native event structure */
 
    event_table->num_native_events=0;
+   event_table->pmu_type=pmu_type;
 
    event_table->native_events=calloc(NATIVE_EVENT_CHUNK,
 					   sizeof(struct native_event_t));
@@ -1393,27 +1406,39 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
       if (retval!=PFM_SUCCESS) {
 	 continue;
       }
-      if (pinfo.is_present) {
+
+      if (pmu_is_present_and_right_type(&pinfo,pmu_type)) {
 	 SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
 
          detected_pmus++;
 	 ncnt+=pinfo.nevents;
+       
+         if (pmu_type&PMU_TYPE_CORE) {
 
-	 /* Choose default PMU */
-	 if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
-              strcmp(pinfo.name,"ix86arch")) {
+	    /* Hack to have "default" PMU */
+	    if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
+                  strcmp(pinfo.name,"ix86arch")) {
 
-	    SUBDBG("\t  %s is default\n",pinfo.name);
-	    memcpy(&(event_table->default_pmu),
-		   &pinfo,sizeof(pfm_pmu_info_t));
-	    found_default++;
+	       SUBDBG("\t  %s is default\n",pinfo.name);
+	       memcpy(&(event_table->default_pmu),
+		      &pinfo,sizeof(pfm_pmu_info_t));
+	       found_default++;
+	    }
+	 }
+         if (pmu_type==PMU_TYPE_UNCORE) {
+	     /* Just use the first one */
+	    if (found_default==0) {
+	       memcpy(&(event_table->default_pmu),
+		      &pinfo,sizeof(pfm_pmu_info_t));
+	       found_default++;
+	    }
 	 }
       }
    }
    SUBDBG("%d native events detected on %d pmus\n",ncnt,detected_pmus);
 
    if (!found_default) {
-      PAPIERROR("Could not find default PMU\n");
+      SUBDBG("Could not find default PMU\n");
       return PAPI_ECMP;
    }
 
