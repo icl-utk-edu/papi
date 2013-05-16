@@ -208,11 +208,7 @@ free_cpu( CpuInfo_t **cpu )
    /* Exit early if still users of this CPU */
    if (users!=0) return;
 
-
-
-
-
-   THRDBG( "Shutting down cpu %d at %p\n", cpu->cpu_num, cpu );
+   THRDBG( "Shutting down cpu %d at %p\n", (*cpu)->cpu_num, cpu );
 
    for ( i = 0; i < papi_num_components; i++ ) {
      retval = _papi_hwd[i]->shutdown_thread( (*cpu)->context[i] );
