@@ -1121,7 +1121,9 @@ _papi_pe_init_component( int cidx )
    pe_vendor_fixups();
 
    /* Run the libpfm4-specific setup */
-   retval = _papi_libpfm4_init(&_papi_pe_vector, cidx, &native_event_table);
+   retval = _papi_libpfm4_init(&_papi_pe_vector, cidx, 
+			       &native_event_table,
+			       PMU_TYPE_CORE | PMU_TYPE_UNCORE | PMU_TYPE_OS);
    if (retval) {
       strncpy(_papi_pe_vector.cmp_info.disabled_reason,
 	      "Error initializing libpfm4",PAPI_MAX_STR_LEN);
