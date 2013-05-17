@@ -651,12 +651,9 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
     
 	cuptiErr = cuptiEventGroupDisable( CUDA_ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
-    
-    cuptiErr =
-    cuptiEventGroupRemoveEvent( CUDA_ptr->eventGroup,
-                               cuda_native_table[CUDA_ptr->addedEvents.list[0]].
-                               resources.eventId );
-   
+
+    cuptiErr = cuptiEventGroupRemoveAllEvents( CUDA_ptr->eventGroup );
+	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupRemoveAllEvents" );
     
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
