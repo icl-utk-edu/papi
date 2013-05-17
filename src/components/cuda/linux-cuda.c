@@ -82,7 +82,7 @@ CUptiResult CUPTIAPI cuptiEventGroupDestroy(CUpti_EventGroup);
 CUptiResult CUPTIAPI cuptiEventGroupDisable(CUpti_EventGroup);
 CUptiResult CUPTIAPI cuptiEventGroupEnable(CUpti_EventGroup);
 CUptiResult CUPTIAPI cuptiEventGroupReadAllEvents(CUpti_EventGroup, CUpti_ReadEventFlags, size_t *, uint64_t *, size_t *, CUpti_EventID *, size_t *);
-CUptiResult CUPTIAPI cuptiEventGroupRemoveEvent(CUpti_EventGroup, CUpti_EventID);
+CUptiResult CUPTIAPI cuptiEventGroupRemoveAllEvents(CUpti_EventGroup);
 CUptiResult CUPTIAPI cuptiEventGroupResetAllEvents(CUpti_EventGroup);
 
 CUptiResult (*cuptiDeviceEnumEventDomainsPtr)(CUdevice, size_t *, CUpti_EventDomainID *);
@@ -97,7 +97,7 @@ CUptiResult (*cuptiEventGroupDestroyPtr)(CUpti_EventGroup);
 CUptiResult (*cuptiEventGroupDisablePtr)(CUpti_EventGroup);
 CUptiResult (*cuptiEventGroupEnablePtr)(CUpti_EventGroup);
 CUptiResult (*cuptiEventGroupReadAllEventsPtr)(CUpti_EventGroup, CUpti_ReadEventFlags, size_t *, uint64_t *, size_t *, CUpti_EventID *, size_t *);
-CUptiResult (*cuptiEventGroupRemoveEventPtr)(CUpti_EventGroup, CUpti_EventID);
+CUptiResult (*cuptiEventGroupRemoveAllEventsPtr)(CUpti_EventGroup);
 CUptiResult (*cuptiEventGroupResetAllEventsPtr)(CUpti_EventGroup);
 
 // file handles used to access cuda libraries with dlopen
@@ -752,10 +752,10 @@ linkCudaLibraries ()
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupReadAllEvents not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
-	cuptiEventGroupRemoveEventPtr = dlsym(dl3, "cuptiEventGroupRemoveEvent");
+    cuptiEventGroupRemoveAllEventsPtr = dlsym(dl3, "cuptiEventGroupRemoveAllEvents");
 	if ((error = dlerror()) != NULL)
 	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupRemoveEvent not found.",PAPI_MAX_STR_LEN);
+		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupRemoveAllEvents not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupResetAllEventsPtr = dlsym(dl3, "cuptiEventGroupResetAllEvents");
@@ -945,13 +945,10 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 
 	cuptiErr = (*cuptiEventGroupDisablePtr)( CUDA_ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
-	
-		cuptiErr =
-			(*cuptiEventGroupRemoveEventPtr)( CUDA_ptr->eventGroup,
-										cuda_native_table[CUDA_ptr->addedEvents.list[0]].
-										resources.eventId );
 
-
+    cuptiErr = (*cuptiEventGroupRemoveAllEventsPtr)( CUDA_ptr->eventGroup );
+	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupRemoveAllEvents" );
+    
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
         
