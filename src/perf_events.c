@@ -795,6 +795,7 @@ static int detect_rdpmc(void) {
    pe.type=PERF_TYPE_HARDWARE;
    pe.size=sizeof(struct perf_event_attr);
    pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+   pe.exclude_kernel=1;
 
    fd=sys_perf_event_open(&pe,0,-1,-1,0);
    if (fd<0) {
@@ -1055,7 +1056,7 @@ _papi_pe_init_component( int cidx )
       return PAPI_ENOCMP;
    }
 
-   /* 2 means no measurements allowed          */
+   /* 2 means no kernel measurements allowed   */
    /* 1 means normal counter access            */
    /* 0 means you can access CPU-specific data */
    /* -1 means no restrictions                 */
@@ -1064,10 +1065,8 @@ _papi_pe_init_component( int cidx )
    fclose(fff);
 
    if (paranoid_level==2) {
-      strncpy(_papi_pe_vector.cmp_info.disabled_reason,
-	      "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
-	      PAPI_MAX_STR_LEN);
-      return PAPI_ENOCMP;
+      SUBDBG("/proc/sys/kernel/perf_event_paranoid prohibits kernel counts");
+      _papi_pe_vector.cmp_info.available_domains &=~PAPI_DOM_KERNEL;
    }
 
    /* Detect NMI watchdog which can steal counters */
