@@ -1040,6 +1040,8 @@ CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 {
+    ( void ) ctrl;
+    
     // TODO: after cleanup_eventset() which destroys the eventset, update_control_state()
     // is called, which operates on the already destroyed eventset. Bad!
 #if 0
