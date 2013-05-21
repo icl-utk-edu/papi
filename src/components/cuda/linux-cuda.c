@@ -1040,12 +1040,13 @@ CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 {
+    // TODO: after cleanup_eventset() which destroys the eventset, update_control_state()
+    // is called, which operates on the already destroyed eventset. Bad!
+#if 0
 	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
-    // TODO: after cleanup_eventset() which destroys the eventset, update_control_state()
-    // is called, which operates on the already destroyed eventset. Bad! 
-#if 0 
-	/* Disable the CUDA eventGroup; 
+
+	/* Disable the CUDA eventGroup;
 	   it also frees the perfmon hardware on the GPU */
 	cuptiErr = (*cuptiEventGroupDisablePtr)( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
