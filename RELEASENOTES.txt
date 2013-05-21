@@ -4,6 +4,33 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 ===============================================================================
+PAPI 5.1.1 RELEASE NOTES                                            21 May 2013
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP511.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+This is a bug fix release.  
+
+New Platform:
+-------------
+	* Intel IvyBridge-EP
+
+Bug Fixes:
+----------
+	* Many perf_event fixes
+	* Cuda component fixes
+	* IA64 and SPARC build fixes
+
+Enhancements:
+------------
+	* Better logic in run_tests.sh script
+	* ARM builds now use pthread_mutexes
+	* BG/Q overflow enhancements
+
+===============================================================================
 PAPI 5.1.0 RELEASE NOTES                                            11 Jan 2013
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
