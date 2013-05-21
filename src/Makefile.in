@@ -1,7 +1,7 @@
 PAPIVER=5
 PAPIREV=1
-PAPIAGE=0
-PAPIINC=2
+PAPIAGE=1
+PAPIINC=0
 PREFIX    = @prefix@
 prefix    = $(PREFIX)
 exec_prefix = $(EPREFIX)
