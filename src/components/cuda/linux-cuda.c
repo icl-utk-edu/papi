@@ -943,15 +943,17 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
 	int index, i;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 
+    /* Disable the CUDA eventGroup;
+     it also frees the perfmon hardware on the GPU */
 	cuptiErr = (*cuptiEventGroupDisablePtr)( CUDA_ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
 
     cuptiErr = (*cuptiEventGroupRemoveAllEventsPtr)( CUDA_ptr->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupRemoveAllEvents" );
     
-	// otherwise, add the events to the eventset
+    // otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
-        
+       
 		index = native[i].ni_event;
 		native[i].ni_position = index;
 
@@ -1040,7 +1042,9 @@ CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 {
 	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
-
+    // TODO: after cleanup_eventset() which destroys the eventset, update_control_state()
+    // is called, which operates on the already destroyed eventset. Bad! 
+#if 0 
 	/* Disable the CUDA eventGroup; 
 	   it also frees the perfmon hardware on the GPU */
 	cuptiErr = (*cuptiEventGroupDisablePtr)( CUDA_ctrl->eventGroup );
@@ -1049,7 +1053,7 @@ CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 	/* Call the CuPTI cleaning function before leaving */
 	cuptiErr = (*cuptiEventGroupDestroyPtr)( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDestroy" );
-
+#endif
 	return ( PAPI_OK );
 }
 
