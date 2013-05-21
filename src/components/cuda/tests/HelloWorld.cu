@@ -123,6 +123,16 @@ int main(int argc, char** argv)
 	if( retval != PAPI_OK )
 		fprintf( stderr, "PAPI_stop failed\n" );
 
+	retval = PAPI_cleanup_eventset(EventSet);
+	if ( retval != PAPI_OK )
+		fprintf(stderr, "PAPI_cleanup_eventset failed\n");
+
+	retval = PAPI_destroy_eventset(&EventSet);
+	if (retval != PAPI_OK)
+		fprintf(stderr, "PAPI_destroy_eventset failed\n");
+
+	PAPI_shutdown();
+
 	for( i = 0; i < NUM_EVENTS; i++ )
 		printf( "%12lld \t\t --> %s \n", values[i], EventName[i] );
 #endif

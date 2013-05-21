@@ -744,6 +744,11 @@ CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 int
 CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 {
+	( void ) ctrl;
+
+	// TODO: after cleanup_eventset() which destroys the eventset, update_control_state()
+	// is called, which operates on the already destroyed eventset. Bad!
+#if 0
 	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
 	CUptiResult cuptiErr = CUPTI_SUCCESS;
 
@@ -755,7 +760,7 @@ CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
 	/* Call the CuPTI cleaning function before leaving */
 	cuptiErr = cuptiEventGroupDestroy( CUDA_ctrl->eventGroup );
 	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDestroy" );
-
+#endif
 	return ( PAPI_OK );
 }
 
