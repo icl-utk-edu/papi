@@ -1829,7 +1829,7 @@ static const test_event_t x86_test_events[]={
 	  .name = "ivb_ep::mem_load_uops_llc_miss_retired:local_dram",
 	  .ret = PFM_SUCCESS,
 	  .count = 1,
-	  .codes[0] = 0x5301d3,
+	  .codes[0] = 0x5303d3,
 	  .fstr = "ivb_ep::MEM_LOAD_UOPS_LLC_MISS_RETIRED:LOCAL_DRAM:k=1:u=1:e=0:i=0:c=0:t=0",
 	},
 	{ SRC_LINE,

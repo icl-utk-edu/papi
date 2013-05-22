@@ -219,7 +219,9 @@ typedef struct perf_event_attr {
 			sample_id_all  :  1,
 			exclude_host   :  1,
 			exclude_guest  :  1,
-			__reserved_1   : 43;
+			exclude_callchain_kernel : 1,
+			exclude_callchain_user   : 1,
+			__reserved_1   : 41;
 
 	union {
 		uint32_t	wakeup_events;
@@ -236,6 +238,9 @@ typedef struct perf_event_attr {
 		uint64_t	config2; /* extend config1 */
 	} SWIG_NAME(bpb);
 	uint64_t branch_sample_type;
+	uint64_t sample_regs_user;
+	uint32_t sample_stack_user;
+	uint32_t __reserved_2;
 } perf_event_attr_t;
 
 struct perf_branch_entry {
