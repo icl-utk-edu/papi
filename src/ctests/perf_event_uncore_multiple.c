@@ -1,7 +1,12 @@
 /*
- * This file tests uncore events on perf_event kernels,
- * specifically, how they interact in the same EventSet with
- * non-uncore events
+ * This file tests measuring uncore and non-uncore events at the same time
+ *
+ * Despite perf_event supporting this, PAPI had to do this with
+ * separate event sets on separate components.
+ *
+ * PAPI does not allow two eventsets to be running simultaneously
+ * on the same component, nor does it allow events in the same
+ * event set to have different domains/granularities.
  */
 
 #include "papi_test.h"
@@ -12,7 +17,8 @@ int main( int argc, char **argv ) {
 
    int retval;
    int EventSet = PAPI_NULL;
-   long long values[2];
+   int EventSet2 = PAPI_NULL;
+   long long values[1],values2[1];
    char *uncore_event=NULL;
    char event_name[BUFSIZ];
 
@@ -34,6 +40,12 @@ int main( int argc, char **argv ) {
 
    /* Create an eventset */
    retval = PAPI_create_eventset(&EventSet);
+   if (retval != PAPI_OK) {
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
+   }
+
+   /* Create another eventset */
+   retval = PAPI_create_eventset(&EventSet2);
    if (retval != PAPI_OK) {
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
    }
@@ -93,7 +105,7 @@ int main( int argc, char **argv ) {
    }
 
    /* Add PAPI_TOT_CYC */
-   retval = PAPI_add_named_event(EventSet, "PAPI_TOT_CYC");
+   retval = PAPI_add_named_event(EventSet2, "PAPI_TOT_CYC");
    if (retval != PAPI_OK) {
       if ( !TESTS_QUIET ) {
          fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
@@ -108,6 +120,11 @@ int main( int argc, char **argv ) {
       test_fail( __FILE__, __LINE__, "PAPI_start", retval );
    }
 
+   retval = PAPI_start( EventSet2 );
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+   }
+
    /* our work code */
    do_flops( NUM_FLOPS );
 
@@ -116,12 +133,16 @@ int main( int argc, char **argv ) {
    if ( retval != PAPI_OK ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
+   retval = PAPI_stop( EventSet2, values2 );
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+   }
 
    if ( !TESTS_QUIET ) {
-      printf("Uncore test:\n");
-      printf("Using event %s\n",uncore_event);
+      printf("Uncore and regular event test:\n");
+      printf("Using uncore event %s\n",uncore_event);
       printf("\t%s: %lld\n",uncore_event,values[0]);
-      printf("\t%s: %lld\n","PAPI_TOT_CYC",values[1]);
+      printf("\t%s: %lld\n","PAPI_TOT_CYC",values2[0]);
    }
 
    test_pass( __FILE__, NULL, 0 );
