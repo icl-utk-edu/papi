@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL MIC datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR CC_COMMON_NAME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL MIC datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT_NAME CPUCOMPONENT_C CPUCOMPONENT_OBJ OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR CC_COMMON_NAME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7150,7 +7150,9 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     BITFLAGS="-bmaxdata:0x80000000/dsa"
   fi
 
-    CPUCOMPONENT=aix
+    CPUCOMPONENT_NAME=aix
+    CPUCOMPONENT_C=aix.c
+    CPUCOMPONENT_OBJ=aix.o
     VECTOR=_aix_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
@@ -7205,7 +7207,9 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   fi
 elif test "$MAKEVER" = "bgp"; then
   CPP="$CC -E"
-    CPUCOMPONENT=linux-bgp
+    CPUCOMPONENT_NAME=linux-bgp
+    CPUCOMPONENT_C=linux-bgp.c
+    CPUCOMPONENT_OBJ=linux-bgp.o
     VECTOR=_bgp_vectors
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS=
@@ -7227,7 +7231,9 @@ elif test "$MAKEVER" = "bgp"; then
 elif test "$MAKEVER" = "bgq"; then
   FILENAME=Rules.bgpm
   VECTOR=_bgq_vectors
-  CPUCOMPONENT=linux-bgq
+  CPUCOMPONENT_NAME=linux-bgq
+  CPUCOMPONENT_C=linux-bgq.c
+  CPUCOMPONENT_OBJ=linux-bgq.o
   PAPI_EVENTS_CSV="papi_events.csv"
   MISCSRCS="linux-bgq-common.c"
   OPTFLAGS="-g -Wall -O3"
@@ -7239,7 +7245,9 @@ elif test "$MAKEVER" = "bgq"; then
 
 elif test "$MAKEVER" = "CLE-perfmon2"; then
     FILENAME=Rules.perfmon2
-    CPUCOMPONENT=perfmon
+    CPUCOMPONENT_NAME=perfmon
+    CPUCOMPONENT_C=perfmon.c
+    CPUCOMPONENT_OBJ=perfmon.o
     VECTOR=_papi_pfm_vector
     PAPI_EVENTS_CSV="papi_events.csv"
   F77=gfortran
@@ -7247,7 +7255,9 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
   FFLAGS=""
 
 elif test "$MAKEVER" = "freebsd"; then
-    CPUCOMPONENT=freebsd
+    CPUCOMPONENT_NAME=freebsd
+    CPUCOMPONENT_C=freebsd.c
+    CPUCOMPONENT_OBJ=freebsd.o
     VECTOR=_papi_freebsd_vector
     PAPI_EVENTS_CSV="freebsd_events.csv"
     MISCHDRS="freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h freebsd/map-westme\
@@ -7259,29 +7269,32 @@ re.c"
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 
 elif test "$MAKEVER" = "linux-generic"; then
-    CPUCOMPONENT=linux-generic
+    CPUCOMPONENT_NAME=linux-generic
+    CPUCOMPONENT_C=linux-generic.c
+    CPUCOMPONENT_OBJ=linux-generic.o
     PAPI_EVENTS_CSV="papi_events.csv"
     VECTOR=_papi_dummy_vector
 
 elif test "$MAKEVER" = "linux-pe"; then
 
     FILENAME=Rules.pfm4_pe
-    CPUCOMPONENT=perf_events
-    VECTOR=_papi_pe_vector
-    PAPI_EVENTS_CSV="papi_events.csv"
-    MISCSRCS="$MISCSRCS sys_perf_event_open.c"
+    CPUCOMPONENT_NAME=perf_event
     components="perf_event perf_event_uncore"
 
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
     FILENAME=Rules.perfctr-pfm
-    CPUCOMPONENT=perfctr-x86
+    CPUCOMPONENT_NAME=perfctr-x86
+    CPUCOMPONENT_C=perfctr-x86.c
+    CPUCOMPONENT_OBJ=perfctr-x86.o
     VECTOR=_perfctr_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     VERSION=2.6.x
 
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-POWER7" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
     FILENAME=Rules.perfctr
-    CPUCOMPONENT=perfctr-ppc64
+    CPUCOMPONENT_NAME=perfctr-ppc64
+    CPUCOMPONENT_C=perfctr-ppc64.c
+    CPUCOMPONENT_OBJ=perfctr-ppc64.o
     VECTOR=_perfctr_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     VERSION=2.7.x
@@ -7312,13 +7325,17 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
 
 elif test "$MAKEVER" = "linux-perfmon2"; then
     FILENAME=Rules.perfmon2
-    CPUCOMPONENT=perfmon
+    CPUCOMPONENT_NAME=perfmon
+    CPUCOMPONENT_C=perfmon.c
+    CPUCOMPONENT_OBJ=perfmon.obj
     VECTOR=_papi_pfm_vector
     PAPI_EVENTS_CSV="papi_events.csv"
 
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-montecito"); then
     FILENAME=Rules.pfm
-    CPUCOMPONENT=perfmon-ia64
+    CPUCOMPONENT_NAME=perfmon-ia64
+    CPUCOMPONENT_C=perfmon-ia64.c
+    CPUCOMPONENT_OBJ=perfmon-ia64.obj
     VECTOR=_ia64_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     VERSION=3.y
@@ -7334,7 +7351,9 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-mon
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
 
 elif test "$MAKEVER" = "solaris-ultra"; then
-    CPUCOMPONENT=solaris-ultra
+    CPUCOMPONENT_NAME=solaris-ultra
+    CPUCOMPONENT_C=solaris-ultra.c
+    CPUCOMPONENT_OBJ=solaris-ultra.obj
     VECTOR=_solaris_vector
     PAPI_EVENTS_CSV="papi_events.csv"
   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
@@ -7370,7 +7389,9 @@ elif test "$MAKEVER" = "solaris-ultra"; then
   fi
 
 elif test "$MAKEVER" = "solaris-niagara2"; then
-    CPUCOMPONENT=solaris-niagara2
+    CPUCOMPONENT_NAME=solaris-niagara2
+    CPUCOMPONENT_C=solaris-niagara2.c
+    CPUCOMPONENT_OBJ=solaris-niagara2.obj
     VECTOR=_niagara2_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     CTEST_TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
@@ -7396,7 +7417,9 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
   fi
 elif test "$MAKEVER" = "darwin"; then
   DESCR="Darwin"
-  CPUCOMPONENT=linux-generic
+  CPUCOMPONENT_NAME=darwin
+  CPUCOMPONENT=linux-generic.c
+  CPUCOMPONENT=linux-generic.obj
   CFLAGS="-DNEED_FFSLL"
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-dylib -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   SHLIB=libpapi.dylib
@@ -7535,6 +7558,8 @@ fi
 if test "x$PAPI_EVENTS_CSV" == "x"; then
    PAPI_EVENTS_CSV="papi_events.csv"
 fi
+
+
 
 
 
@@ -8310,7 +8335,9 @@ s,@FILENAME@,$FILENAME,;t t
 s,@LIBRARY@,$LIBRARY,;t t
 s,@SHLIB@,$SHLIB,;t t
 s,@OPTFLAGS@,$OPTFLAGS,;t t
-s,@CPUCOMPONENT@,$CPUCOMPONENT,;t t
+s,@CPUCOMPONENT_NAME@,$CPUCOMPONENT_NAME,;t t
+s,@CPUCOMPONENT_C@,$CPUCOMPONENT_C,;t t
+s,@CPUCOMPONENT_OBJ@,$CPUCOMPONENT_OBJ,;t t
 s,@OSFILESSRC@,$OSFILESSRC,;t t
 s,@OSFILESOBJ@,$OSFILESOBJ,;t t
 s,@OSFILESHDR@,$OSFILESHDR,;t t

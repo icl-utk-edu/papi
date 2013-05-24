@@ -2,11 +2,11 @@ PAPI_SRCDIR = $(PWD)
 CFLAGS += $(EXTRA_CFLAGS)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
-    threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT).c papi_preset.c \
+    threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT_C) papi_preset.c \
     papi_vector.c papi_memory.c papi_user_events.c $(COMPSRCS)
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o sw_multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
-    threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT).o papi_preset.o \
+    threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT_OBJ) papi_preset.o \
     papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
 HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h \
 	papiStdEventDefs.h\
@@ -25,7 +25,7 @@ include $(COMPONENT_RULES)
 
 showconf:
 		@echo "Host architecture   : $(DESCR)";
-		@echo "Host CPU component  : $(CPUCOMPONENT).c"; 
+		@echo "Host CPU component  : $(CPUCOMPONENT_NAME)"; 
 		@echo "Installation DESTDIR: $(DESTDIR)"; 
 		@echo "Installation PREFIX : $(PREFIX)"; 
 		@echo "Installation EPREFIX: $(EPREFIX)"; 
@@ -147,8 +147,8 @@ papi_preset.o: papi_preset.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 sw_multiplex.o: sw_multiplex.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sw_multiplex.c -o sw_multiplex.o 
 
-$(CPUCOMPONENT).o: $(CPUCOMPONENT).c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPUCOMPONENT).c -o $(CPUCOMPONENT).o 
+$(CPUCOMPONENT_OBJ): $(CPUCOMPONENT_C) $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPUCOMPONENT_C) -o $(CPUCOMPONENT_OBJ) 
 
 x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cpuid_info.c -o x86_cpuid_info.o
@@ -280,10 +280,10 @@ clobber distclean: clean native_clobber
 null:
 
 dist: 
-	$(MAKE) install-all PREFIX=`pwd`/papi-$(CPUCOMPONENT)
-	tar cfv ./papi-$(CPUCOMPONENT).tar ./papi-$(CPUCOMPONENT)
-	gzip ./papi-$(CPUCOMPONENT).tar
-	rm -rf ./papi-$(CPUCOMPONENT)
+	$(MAKE) install-all PREFIX=`pwd`/papi-$(CPUCOMPONENT_NAME)
+	tar cfv ./papi-$(CPUCOMPONENT).tar ./papi-$(CPUCOMPONENT_NAME)
+	gzip ./papi-$(CPUCOMPONENT_NAME).tar
+	rm -rf ./papi-$(CPUCOMPONENT_NAME)
 
 install-all: install install-tests
 
