@@ -4,7 +4,9 @@
 
 #include "papi_test.h"
 
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
 
 /* For sched_setaffinity() */
 #include <sched.h>
@@ -486,13 +488,19 @@ int main( int argc, char **argv ) {
       }
    }
    else {
-      /* we need to set to a certain cpu for uncore to work */
+      /* we need to set to a certain cpu */
 
       cpu_opt.eventset=EventSet8;
       cpu_opt.cpu_num=0;
 
       retval = PAPI_set_opt(PAPI_CPU_ATTACH,(PAPI_option_t*)&cpu_opt);
       if (retval != PAPI_OK) {
+	 if (retval==PAPI_EPERM) {
+            test_skip( __FILE__, __LINE__,
+		    "this test; trying to CPU_ATTACH; need to run as root",
+		    retval);
+	 }
+
          test_fail(__FILE__, __LINE__, "PAPI_CPU_ATTACH",retval);
       }
 
