@@ -1050,6 +1050,11 @@ static const intel_x86_umask_t snbep_mem_load_uops_retired[]={
      .ucode = 0x400,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
+   { .uname  = "L3_MISS",
+     .udesc  = "Retired load uops which data sources were data missed LLC (excluding unknown data source)",
+     .ucode = 0x2000,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
 };
 
 static const intel_x86_umask_t snbep_mem_trans_retired[]={
