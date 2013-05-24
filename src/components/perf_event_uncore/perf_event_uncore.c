@@ -143,7 +143,7 @@ _peu_init_component( int cidx )
    if (retval) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "Error initializing libpfm4",PAPI_MAX_STR_LEN);
-     return retval;
+     return PAPI_ENOCMP;
    }
 
    return PAPI_OK;

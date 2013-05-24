@@ -1312,6 +1312,10 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 		return PAPI_ENOCMP;
 	}
 
+	if (_papi_hwd[cidx]->cmp_info.disabled) {
+	  return PAPI_ENOCMP;
+	}
+
 	if ( IS_PRESET(i) ) {
 		if ( modifier == PAPI_ENUM_FIRST ) {
 			*EventCode = ( int ) PAPI_PRESET_MASK;
@@ -1329,14 +1333,17 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 			return PAPI_OK;
 		}
 	} else if ( IS_NATIVE(i) ) {
-//	    if (!_papi_hwd[cidx]->cmp_info.disabled) {
-//                return PAPI_ENOEVNT 
-//            }
+
 		/* Should we check against num native events here? */
 	    event_code=_papi_hwi_eventcode_to_native(*EventCode);
 	    retval = _papi_hwd[cidx]->ntv_enum_events((unsigned int *)&event_code, modifier );
-	    
-	        /* re-apply Component ID to the returned Event */
+
+	    if (retval!=PAPI_OK) {
+	       SUBDBG("VMW: retval=%d\n",retval);
+	       return PAPI_EINVAL;
+	    }
+
+	       /* re-apply Component ID to the returned Event */
 	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
 
 	    return retval;
