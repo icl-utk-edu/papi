@@ -7270,6 +7270,7 @@ elif test "$MAKEVER" = "linux-pe"; then
     VECTOR=_papi_pe_vector
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCSRCS="$MISCSRCS sys_perf_event_open.c"
+    components="perf_event perf_event_uncore"
 
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
     FILENAME=Rules.perfctr-pfm
@@ -7427,7 +7428,7 @@ echo "" >> components_config.h
 # Check whether --with-components or --without-components was given.
 if test "${with_components+set}" = set; then
   withval="$with_components"
-  components=$withval
+  components="$components $withval"
 fi;
 
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
