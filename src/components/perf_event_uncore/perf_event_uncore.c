@@ -162,12 +162,19 @@ int _peu_shutdown_component( void ) {
 int
 _peu_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
+
+  if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
+
+
   return _papi_libpfm4_ntv_enum_events(PapiEventCode, modifier,
                                        &uncore_native_event_table);
 }
 
 int
 _peu_ntv_name_to_code( char *name, unsigned int *event_code) {
+
+  if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
+
   return _papi_libpfm4_ntv_name_to_code(name,event_code,
                                         &uncore_native_event_table);
 }
@@ -175,6 +182,9 @@ _peu_ntv_name_to_code( char *name, unsigned int *event_code) {
 int
 _peu_ntv_code_to_name(unsigned int EventCode,
                           char *ntv_name, int len) {
+
+   if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
+
    return _papi_libpfm4_ntv_code_to_name(EventCode,
                                          ntv_name, len, 
 					 &uncore_native_event_table);
@@ -184,6 +194,8 @@ int
 _peu_ntv_code_to_descr( unsigned int EventCode,
                             char *ntv_descr, int len) {
 
+   if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
+
    return _papi_libpfm4_ntv_code_to_descr(EventCode,ntv_descr,len,
                                           &uncore_native_event_table);
 }
@@ -191,6 +203,8 @@ _peu_ntv_code_to_descr( unsigned int EventCode,
 int
 _peu_ntv_code_to_info(unsigned int EventCode,
                           PAPI_event_info_t *info) {
+
+  if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
 
   return _papi_libpfm4_ntv_code_to_info(EventCode, info,
                                         &uncore_native_event_table);
