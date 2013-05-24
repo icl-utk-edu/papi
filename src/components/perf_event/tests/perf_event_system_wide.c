@@ -4,6 +4,8 @@
 
 #include "papi_test.h"
 
+#define __USE_GNU
+
 /* For sched_setaffinity() */
 #include <sched.h>
 
