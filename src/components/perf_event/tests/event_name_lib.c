@@ -53,3 +53,35 @@ char *get_offcore_event(char *event, int size) {
 
    return NULL;
 }
+
+char *get_instructions_event(char *event, int size) {
+
+   const PAPI_hw_info_t *hwinfo;
+
+   hwinfo = PAPI_get_hardware_info();
+   if ( hwinfo == NULL ) {
+	return NULL;
+   }
+
+   if (hwinfo->vendor == PAPI_VENDOR_INTEL) {
+
+      if ( hwinfo->cpuid_family == 6) {
+	 strncpy(event,"INSTRUCTIONS_RETIRED",size);
+	 return event;
+      }
+
+      if ( hwinfo->cpuid_family == 15) {
+	 strncpy(event,"INSTR_RETIRED:NBOGUSNTAG",size);
+	 return event;
+      }
+
+
+      return NULL;
+   }
+   else if (hwinfo->vendor == PAPI_VENDOR_AMD) {
+	 strncpy(event,"RETIRED_INSTRUCTIONS",size);
+	 return event;
+   }
+
+   return NULL;
+}
