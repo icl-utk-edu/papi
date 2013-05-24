@@ -36,12 +36,16 @@ main( int argc, char **argv )
 
        i = 0 | PAPI_NATIVE_MASK;
        retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
+       if (retval!=PAPI_OK) continue;
 
        do {
           retval = PAPI_get_event_info( i, &info );
 	  our_cid=PAPI_get_event_component(i);
 
 	  if (our_cid!=cid) {
+	     if (!TESTS_QUIET) {
+	        printf("%d %d %s\n",cid,our_cid,info.symbol);
+	     }
              test_fail( __FILE__, __LINE__, "component mismatch", 1 );
 	  }
 

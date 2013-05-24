@@ -2183,6 +2183,8 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
     cidx = _papi_hwi_component_index( EventCode );
     if (cidx<0) return PAPI_ENOCMP;
 
+    if (_papi_hwd[cidx]->cmp_info.disabled) return PAPI_ENOCMP;
+
     if ( EventCode & PAPI_NATIVE_MASK ) {
 
        /* clear the event info */
