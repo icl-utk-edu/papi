@@ -200,6 +200,11 @@ typedef union pfm_intel_x86_reg {
  */
 #define INTEL_X86_PMU_FL_ECMASK 0x10000	/* edge requires cmask >=1 */
 
+/*
+ * default ldlat value for PEBS-LL events. Used when ldlat= is missing
+ */
+#define INTEL_X86_LDLAT_DEFAULT	3 /* default ldlat value in core cycles */
+
 typedef struct {
 	unsigned int version:8;
 	unsigned int num_cnt:8;
