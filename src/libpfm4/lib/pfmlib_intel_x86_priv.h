@@ -166,6 +166,7 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_FIXED2_ATTRS	(_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
 #define INTEL_FIXED3_ATTRS	(INTEL_FIXED2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V3_ATTRS 		(INTEL_V2_ATTRS|_INTEL_X86_ATTR_T)
+#define INTEL_V4_ATTRS 		(INTEL_V3_ATTRS)
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -199,6 +200,11 @@ typedef union pfm_intel_x86_reg {
  * Intel x86 specific pmu flags (pmu->flags 16 MSB)
  */
 #define INTEL_X86_PMU_FL_ECMASK 0x10000	/* edge requires cmask >=1 */
+
+/*
+ * default ldlat value for PEBS-LL events. Used when ldlat= is missing
+ */
+#define INTEL_X86_LDLAT_DEFAULT	3 /* default ldlat value in core cycles */
 
 typedef struct {
 	unsigned int version:8;

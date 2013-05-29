@@ -59,6 +59,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_wsm.c  \
 	  pfmlib_intel_snb.c pfmlib_intel_snb_unc.c \
 	  pfmlib_intel_ivb.c \
+	  pfmlib_intel_hsw.c \
 	  pfmlib_intel_snbep_unc.c \
 	  pfmlib_intel_snbep_unc_cbo.c \
 	  pfmlib_intel_snbep_unc_ha.c \
@@ -205,6 +206,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_snbep_events.h	\
 	events/intel_snb_unc_events.h	\
 	events/intel_ivb_events.h	\
+	events/intel_hsw_events.h	\
 	pfmlib_intel_snbep_unc_priv.h	\
 	events/intel_snbep_unc_cbo_events.h \
 	events/intel_snbep_unc_ha_events.h \

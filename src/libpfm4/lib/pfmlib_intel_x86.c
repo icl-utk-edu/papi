@@ -564,9 +564,12 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 		return PFM_ERR_ATTR;
 	}
 
+	/*
+	 * force a default ldlat (will not appear in display_reg)
+	 */
 	if (ldlat_um && !ldlat) {
-		DPRINT("missing ldlat= for umask\n");
-		return PFM_ERR_ATTR;
+		DPRINT("missing ldlat= for umask, forcing to default %d cycles\n", INTEL_X86_LDLAT_DEFAULT);
+		ldlat = INTEL_X86_LDLAT_DEFAULT;
 	}
 
 	if (ldlat && ldlat_um) {
