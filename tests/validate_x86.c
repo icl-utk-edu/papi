@@ -1938,6 +1938,17 @@ static const test_event_t x86_test_events[]={
 	  .codes[0] = 0x5304c9,
 	  .fstr = "hsw::RTM_RETIRED:ABORTED:k=1:u=1:e=0:i=0:c=0:t=0",
 	},
+	{ SRC_LINE,
+	  .name = "ivb_unc_cbo0::unc_clockticks",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x5000ff,
+	  .fstr = "ivb_unc_cbo0::UNC_CLOCKTICKS",
+	},
+	{ SRC_LINE,
+	  .name = "ivb_unc_cbo1::unc_clockticks",
+	  .ret  = PFM_ERR_NOTFOUND
+	},
 };
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
 
