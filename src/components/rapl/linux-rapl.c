@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdint.h>
+#include <errno.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -226,7 +227,7 @@ static long long read_rapl_energy(int index) {
 }
 
 static int
-get_kernel_nr_cpus()
+get_kernel_nr_cpus(void)
 {
   FILE *fff;
   int num_read, nr_cpus = 1;
@@ -332,7 +333,7 @@ _rapl_init_component( int cidx )
        else {
 	 /* not a supported model */
 	 strncpy(_rapl_vector.cmp_info.disabled_reason,
-		 "Not a SandyBridge processor",
+		 "CPU model not supported",
 		 PAPI_MAX_STR_LEN);
 	 return PAPI_ENOIMPL;
        }
@@ -340,7 +341,7 @@ _rapl_init_component( int cidx )
      else {
        /* Not a family 6 machine */
        strncpy(_rapl_vector.cmp_info.disabled_reason,
-	       "Not a SandyBridge processor",PAPI_MAX_STR_LEN);
+	       "CPU family not supported",PAPI_MAX_STR_LEN);
        return PAPI_ENOIMPL;
      }
 
@@ -395,8 +396,8 @@ _rapl_init_component( int cidx )
 
      fd=open_fd(cpu_to_use[0]);
      if (fd<0) {
-        strncpy(_rapl_vector.cmp_info.disabled_reason,
-		"Can't open fd for cpu0",PAPI_MAX_STR_LEN);
+        sprintf(_rapl_vector.cmp_info.disabled_reason,
+		"Can't open fd for cpu0: %s",strerror(errno));
         return PAPI_ESYS;
      }
 
