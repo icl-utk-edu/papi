@@ -47,6 +47,7 @@ int main(int argc, char** argv)
 	   supported on your machine */
     char *EventName[] = { "PAPI_FP_OPS" };
 	int events[NUM_EVENTS];
+	int eventCount = 0;
 	
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -61,17 +62,25 @@ int main(int argc, char** argv)
 	/* convert PAPI native events to PAPI code */
 	for( i = 0; i < NUM_EVENTS; i++ ){
 		retval = PAPI_event_name_to_code( EventName[i], &events[i] );
-		if( retval != PAPI_OK )
+		if( retval != PAPI_OK ) {
 			fprintf( stderr, "PAPI_event_name_to_code failed\n" );
-		else
+			continue;
+		}
+		eventCount++;
 			printf( "Name %s --- Code: %#x\n", EventName[i], events[i] );
 	}
 
+	/* if we did not find any valid events, just report test failed. */
+	if (eventCount == 0) {
+		printf( "Test FAILED: no valid events found.\n");
+		return 1;
+	}
+	
 	retval = PAPI_create_eventset( &EventSet );
 	if( retval != PAPI_OK )
 		fprintf( stderr, "PAPI_create_eventset failed\n" );
 	
-	retval = PAPI_add_events( EventSet, events, NUM_EVENTS );
+	retval = PAPI_add_events( EventSet, events, eventCount );
 	if( retval != PAPI_OK )
 		fprintf( stderr, "PAPI_add_events failed\n" );
 #endif
@@ -131,7 +140,7 @@ int main(int argc, char** argv)
 			if( retval != PAPI_OK )
 					fprintf( stderr, "PAPI_stop failed\n" );
 
-			for( i = 0; i < NUM_EVENTS; i++ )
+			for( i = 0; i < eventCount; i++ )
 					printf( "On device %d: %12lld \t\t --> %s \n", cuda_device, values[i], EventName[i] );
 #endif
 	}

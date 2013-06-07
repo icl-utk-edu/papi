@@ -17,14 +17,13 @@
  * about nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature. Power is reported in mW
  * and temperature in Celcius.
  */
-
+#include <dlfcn.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
-#include <nvml.h>
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"
@@ -36,6 +35,86 @@
 #include "nvml.h"
 #include "cuda.h"
 #include "cuda_runtime_api.h"
+
+
+/*****  CHANGE PROTOTYPES TO DECLARE CUDA AND NVML LIBRARY SYMBOLS AS WEAK  *****
+ *  This is done so that a version of PAPI built with the nvml component can    *
+ *  be installed on a system which does not have the cuda libraries installed.  *
+ *                                                                              *
+ *  If this is done without these prototypes, then all papi services on the     *
+ *  system without the cuda libraries installed will fail.  The PAPI libraries  *
+ *  contain references to the cuda libraries which are not installed.  The      *
+ *  load of PAPI commands fails because the cuda library references can not be  *
+ *  resolved.                                                                   *
+ *                                                                              *
+ *  This also defines pointers to the cuda library functions that we call.      *
+ *  These function pointers will be resolved with dlopen/dlsym calls at         *
+ *  component initialization time.  The component then calls the cuda library   *
+ *  functions through these function pointers.                                  *
+ ********************************************************************************/
+#undef CUDAAPI
+#define CUDAAPI __attribute__((weak))
+CUresult CUDAAPI cuInit(unsigned int);
+
+CUresult (*cuInitPtr)(unsigned int);
+
+#undef CUDARTAPI
+#define CUDARTAPI __attribute__((weak))
+cudaError_t CUDARTAPI cudaGetDevice(int *);
+cudaError_t CUDARTAPI cudaGetDeviceCount(int *);
+cudaError_t CUDARTAPI cudaDeviceGetPCIBusId(char *, int, int);
+
+cudaError_t (*cudaGetDevicePtr)(int *);
+cudaError_t (*cudaGetDeviceCountPtr)(int *);
+cudaError_t (*cudaDeviceGetPCIBusIdPtr)(char *, int, int);
+
+#undef DECLDIR
+#define DECLDIR __attribute__((weak))
+nvmlReturn_t DECLDIR nvmlDeviceGetClockInfo                (nvmlDevice_t, nvmlClockType_t, unsigned int *);
+const char*  DECLDIR nvmlErrorString                       (nvmlReturn_t);
+nvmlReturn_t DECLDIR nvmlDeviceGetDetailedEccErrors        (nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, nvmlEccErrorCounts_t *);
+nvmlReturn_t DECLDIR nvmlDeviceGetFanSpeed                 (nvmlDevice_t, unsigned int *);
+nvmlReturn_t DECLDIR nvmlDeviceGetMemoryInfo               (nvmlDevice_t, nvmlMemory_t *);
+nvmlReturn_t DECLDIR nvmlDeviceGetPerformanceState         (nvmlDevice_t, nvmlPstates_t *);
+nvmlReturn_t DECLDIR nvmlDeviceGetPowerUsage               (nvmlDevice_t, unsigned int *);
+nvmlReturn_t DECLDIR nvmlDeviceGetTemperature              (nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int *);
+nvmlReturn_t DECLDIR nvmlDeviceGetTotalEccErrors           (nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, unsigned long long *);
+nvmlReturn_t DECLDIR nvmlDeviceGetUtilizationRates         (nvmlDevice_t, nvmlUtilization_t *);
+nvmlReturn_t DECLDIR nvmlDeviceGetHandleByIndex            (unsigned int, nvmlDevice_t *);
+nvmlReturn_t DECLDIR nvmlDeviceGetPciInfo                  (nvmlDevice_t, nvmlPciInfo_t *);
+nvmlReturn_t DECLDIR nvmlDeviceGetName                     (nvmlDevice_t, char *, unsigned int);
+nvmlReturn_t DECLDIR nvmlDeviceGetInforomVersion           (nvmlDevice_t, nvmlInforomObject_t, char *, unsigned int);
+nvmlReturn_t DECLDIR nvmlDeviceGetEccMode                  (nvmlDevice_t, nvmlEnableState_t *, nvmlEnableState_t *);
+nvmlReturn_t DECLDIR nvmlInit                              (void);
+nvmlReturn_t DECLDIR nvmlDeviceGetCount                    (unsigned int *);
+nvmlReturn_t DECLDIR nvmlShutdown                          (void);
+
+nvmlReturn_t       (*nvmlDeviceGetClockInfoPtr)            (nvmlDevice_t, nvmlClockType_t, unsigned int *);
+char*              (*nvmlErrorStringPtr)                   (nvmlReturn_t);
+nvmlReturn_t       (*nvmlDeviceGetDetailedEccErrorsPtr)    (nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, nvmlEccErrorCounts_t *);
+nvmlReturn_t       (*nvmlDeviceGetFanSpeedPtr)             (nvmlDevice_t, unsigned int *);
+nvmlReturn_t       (*nvmlDeviceGetMemoryInfoPtr)           (nvmlDevice_t, nvmlMemory_t *);
+nvmlReturn_t       (*nvmlDeviceGetPerformanceStatePtr)     (nvmlDevice_t, nvmlPstates_t *);
+nvmlReturn_t       (*nvmlDeviceGetPowerUsagePtr)           (nvmlDevice_t, unsigned int *);
+nvmlReturn_t       (*nvmlDeviceGetTemperaturePtr)          (nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int *);
+nvmlReturn_t       (*nvmlDeviceGetTotalEccErrorsPtr)       (nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, unsigned long long *);
+nvmlReturn_t       (*nvmlDeviceGetUtilizationRatesPtr)     (nvmlDevice_t, nvmlUtilization_t *);
+nvmlReturn_t       (*nvmlDeviceGetHandleByIndexPtr)        (unsigned int, nvmlDevice_t *);
+nvmlReturn_t       (*nvmlDeviceGetPciInfoPtr)              (nvmlDevice_t, nvmlPciInfo_t *);
+nvmlReturn_t       (*nvmlDeviceGetNamePtr)                 (nvmlDevice_t, char *, unsigned int);
+nvmlReturn_t       (*nvmlDeviceGetInforomVersionPtr)       (nvmlDevice_t, nvmlInforomObject_t, char *, unsigned int);
+nvmlReturn_t       (*nvmlDeviceGetEccModePtr)              (nvmlDevice_t, nvmlEnableState_t *, nvmlEnableState_t *);
+nvmlReturn_t       (*nvmlInitPtr)                          (void);
+nvmlReturn_t       (*nvmlDeviceGetCountPtr)                (unsigned int *);
+nvmlReturn_t       (*nvmlShutdownPtr)                      (void);
+
+
+// file handles used to access cuda libraries with dlopen
+static void* dl1 = NULL;
+static void* dl2 = NULL;
+static void* dl3 = NULL;
+
+static int linkCudaLibraries ();
 
 
 /* Declare our vector in advance */
@@ -61,7 +140,7 @@ typedef struct nvml_context
 } nvml_context_t;
 
 /** This table contains the native events */
-static nvml_native_event_entry_t *nvml_native_table;
+static nvml_native_event_entry_t *nvml_native_table=NULL;
 
 /** Number of devices detected at component_init time */
 static int device_count = 0;
@@ -69,18 +148,18 @@ static int device_count = 0;
 /** number of events in the table*/
 static int num_events = 0;
 
-static nvmlDevice_t* devices;
-static int*			 features;
+static nvmlDevice_t* devices=NULL;
+static int*			 features=NULL;
 
 unsigned long long
 getClockSpeed( nvmlDevice_t dev, nvmlClockType_t which_one )
 {
 		unsigned int ret = 0;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetClockInfo( dev, which_one, &ret );
+		bad = (*nvmlDeviceGetClockInfoPtr)( dev, which_one, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 		return (unsigned long long)ret;
@@ -92,10 +171,10 @@ getEccLocalErrors( nvmlDevice_t dev, nvmlEccBitType_t bits, int which_one)
 		nvmlEccErrorCounts_t counts;
 
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetDetailedEccErrors( dev, bits, NVML_VOLATILE_ECC , &counts);
+		bad = (*nvmlDeviceGetDetailedEccErrorsPtr)( dev, bits, NVML_VOLATILE_ECC , &counts);
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -119,10 +198,10 @@ getFanSpeed( nvmlDevice_t dev )
 {
 		unsigned int ret = 0;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetFanSpeed( dev, &ret );
+		bad = (*nvmlDeviceGetFanSpeedPtr)( dev, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -134,10 +213,10 @@ getMaxClockSpeed( nvmlDevice_t dev, nvmlClockType_t which_one)
 {
 		unsigned int ret = 0;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetClockInfo( dev, which_one, &ret );
+		bad = (*nvmlDeviceGetClockInfoPtr)( dev, which_one, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -149,10 +228,10 @@ getMemoryInfo( nvmlDevice_t dev, int which_one )
 {
 		nvmlMemory_t meminfo;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetMemoryInfo( dev, &meminfo );
+		bad = (*nvmlDeviceGetMemoryInfoPtr)( dev, &meminfo );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 		switch (which_one) {
@@ -174,10 +253,10 @@ getPState( nvmlDevice_t dev )
 		unsigned int ret = 0;
 		nvmlPstates_t state = NVML_PSTATE_15;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetPerformanceState( dev, &state );
+		bad = (*nvmlDeviceGetPerformanceStatePtr)( dev, &state );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -229,10 +308,10 @@ getPowerUsage( nvmlDevice_t dev )
 {
 		unsigned int power;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetPowerUsage( dev, &power );
+		bad = (*nvmlDeviceGetPowerUsagePtr)( dev, &power );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -244,10 +323,10 @@ getTemperature( nvmlDevice_t dev )
 {
 		unsigned int ret = 0;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetTemperature( dev, NVML_TEMPERATURE_GPU, &ret );
+		bad = (*nvmlDeviceGetTemperaturePtr)( dev, NVML_TEMPERATURE_GPU, &ret );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -259,10 +338,10 @@ getTotalEccErrors( nvmlDevice_t dev, nvmlEccBitType_t bits)
 {
 		unsigned long long counts = 0;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetTotalEccErrors( dev, bits, NVML_VOLATILE_ECC , &counts);
+		bad = (*nvmlDeviceGetTotalEccErrorsPtr)( dev, bits, NVML_VOLATILE_ECC , &counts);
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -277,10 +356,10 @@ getUtilization( nvmlDevice_t dev, int which_one )
 {
 		nvmlUtilization_t util;
 		nvmlReturn_t bad; 
-		bad = nvmlDeviceGetUtilizationRates( dev, &util );
+		bad = (*nvmlDeviceGetUtilizationRatesPtr)( dev, &util );
 
 		if ( NVML_SUCCESS != bad ) {
-				SUBDBG( "something went wrong %s\n", nvmlErrorString(bad));
+				SUBDBG( "something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
 		}
 
 
@@ -322,7 +401,7 @@ nvml_hardware_read( long long *value, int which_one)
 		entry = &nvml_native_table[which_one];
 		*value = (long long) -1;
 		/* replace entry->resources with the current cuda_device->nvml device */
-		cudaGetDevice( &cudaIdx );
+		(*cudaGetDevicePtr)( &cudaIdx );
 
 		if ( cudaIdx < 0 || cudaIdx > device_count )
 			return PAPI_EINVAL;
@@ -390,7 +469,7 @@ _papi_nvml_init_thread( hwd_context_t * ctx )
 {
 		(void) ctx;
 
-		SUBDBG( "_papi_nvml_init %p...", ctx );
+		SUBDBG( "Enter: ctx: %p\n", ctx );
 
 		return PAPI_OK;
 }
@@ -425,32 +504,30 @@ detectDevices( )
 
 		/* list of nvml pci_busids */
 	for (i=0; i < device_count; i++) {
-		ret = nvmlDeviceGetHandleByIndex( i, &handle );	
+		ret = (*nvmlDeviceGetHandleByIndexPtr)( i, &handle );
 		if ( NVML_SUCCESS != ret ) {
 			SUBDBG("nvmlDeviceGetHandleByIndex(%d) failed\n", i);
 			return PAPI_ESYS;
 		}
 
-		ret = nvmlDeviceGetPciInfo( handle, &info );
+		ret = (*nvmlDeviceGetPciInfoPtr)( handle, &info );
 		if ( NVML_SUCCESS != ret ) {
-			SUBDBG("nvmlDeviceGetPciInfo() failed %s\n", nvmlErrorString(ret) );
+			SUBDBG("nvmlDeviceGetPciInfo() failed %s\n", (*nvmlErrorStringPtr)(ret) );
 			return PAPI_ESYS;
 		}
-
 		strncpy(nvml_busIds[i], info.busId, 16);
-		
 	}
 
 	/* We want to key our list of nvmlDevice_ts by each device's cuda index */
 	for (i=0; i < device_count; i++) {
-			cuerr = cudaDeviceGetPCIBusId( busId, 16, i );
+			cuerr = (*cudaDeviceGetPCIBusIdPtr)( busId, 16, i );
 			if ( CUDA_SUCCESS != cuerr ) {
 				SUBDBG("cudaDeviceGetPCIBusId failed.\n");
 				return PAPI_ESYS;
 			}
 			for (j=0; j < device_count; j++ ) {
 					if ( !strncmp( busId, nvml_busIds[j], 16) ) {
-							ret = nvmlDeviceGetHandleByIndex(j, &devices[i] );
+							ret = (*nvmlDeviceGetHandleByIndexPtr)(j, &devices[i] );
 							if ( NVML_SUCCESS != ret ) {
 								SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", j, i);
 								return PAPI_ESYS;
@@ -468,7 +545,7 @@ detectDevices( )
 				isUnique = 1;
 				features[i] = 0;
 
-				ret = nvmlDeviceGetName( devices[i], name, 64 );
+				ret = (*nvmlDeviceGetNamePtr)( devices[i], name, 64 );
 				if ( NVML_SUCCESS != ret) {
 					SUBDBG("nvmlDeviceGetName failed \n");
 					return PAPI_ESYS;
@@ -484,15 +561,15 @@ detectDevices( )
 						}
 
 				if ( isUnique ) {
-						ret = nvmlDeviceGetInforomVersion( devices[i], NVML_INFOROM_ECC, inforomECC, 16);
+						ret = (*nvmlDeviceGetInforomVersionPtr)( devices[i], NVML_INFOROM_ECC, inforomECC, 16);
 						if ( NVML_SUCCESS != ret ) {
-								SUBDBG("nvmlGetInforomVersion carps %s\n", nvmlErrorString(ret ) );
+								SUBDBG("nvmlGetInforomVersion carps %s\n", (*nvmlErrorStringPtr)(ret ) );
 								isFermi = 0;
 						}
-						ret = nvmlDeviceGetInforomVersion( devices[i], NVML_INFOROM_POWER, inforomPower, 16);
+						ret = (*nvmlDeviceGetInforomVersionPtr)( devices[i], NVML_INFOROM_POWER, inforomPower, 16);
 						if ( NVML_SUCCESS != ret ) {
 								/* This implies the card is older then Fermi */
-								SUBDBG("nvmlGetInforomVersion carps %s\n", nvmlErrorString(ret ) );
+								SUBDBG("nvmlGetInforomVersion carps %s\n", (*nvmlErrorStringPtr)(ret ) );
 								SUBDBG("Based upon the return to nvmlGetInforomVersion, we conclude this card is older then Fermi.\n");
 								isFermi = 0;
 						} 
@@ -500,7 +577,7 @@ detectDevices( )
 						ecc_version = strtof(inforomECC, NULL );
 						power_version = strtof( inforomPower, NULL);
 
-						ret = nvmlDeviceGetName( devices[i], name, 64 );
+						ret = (*nvmlDeviceGetNamePtr)( devices[i], name, 64 );
 						isTesla = ( NULL == strstr(name, "Tesla") ) ? 0:1;
 
 						/* For Tesla and Quadro products from Fermi and Kepler families. */
@@ -514,7 +591,7 @@ detectDevices( )
 							requires NVML_INFOROM_ECC 1.0 or higher for all other ECC counts
 							requires ECC mode to be enabled. */
 						if ( isFermi ) {
-								ret = nvmlDeviceGetEccMode( devices[i], &mode, NULL );
+								ret = (*nvmlDeviceGetEccModePtr)( devices[i], &mode, NULL );
 								if ( NVML_FEATURE_ENABLED == mode) {
 										if ( ecc_version >= 2.0 ) {
 												features[i] |= FEATURE_ECC_LOCAL_ERRORS;
@@ -552,7 +629,7 @@ detectDevices( )
 							For Tesla and Quadro products from the Kepler family
 							does not require NVML_INFOROM_POWER */
 						if ( isFermi ) {
-								ret = nvmlDeviceGetPowerUsage( devices[i], &temp);
+								ret = (*nvmlDeviceGetPowerUsagePtr)( devices[i], &temp);
 								if ( NVML_SUCCESS == ret ) {
 										features[i] |= FEATURE_POWER;
 										num_events++;
@@ -574,7 +651,6 @@ detectDevices( )
 				}
 		}
 		return PAPI_OK;
-
 }
 
 		static void
@@ -598,7 +674,7 @@ createNativeEvents( )
 		for (i=0; i < device_count; i++ ) {
 				memset( names[i], 0x0, 64 );
 				isUnique = 1;
-				ret = nvmlDeviceGetName( devices[i], name, 64 );
+				ret = (*nvmlDeviceGetNamePtr)( devices[i], name, 64 );
 
 				for (j=0; j < i; j++ ) 
 				{
@@ -820,6 +896,7 @@ createNativeEvents( )
 		int
 _papi_nvml_init_component( int cidx )
 {
+		SUBDBG ("Entry: cidx: %d\n", cidx);
 		nvmlReturn_t ret;
 		cudaError_t cuerr;
 		int papi_errorcode;
@@ -827,35 +904,42 @@ _papi_nvml_init_component( int cidx )
 		int cuda_count = 0;
 		unsigned int nvml_count = 0;
 
-		ret = nvmlInit();
-		if ( NVML_SUCCESS != ret ) {
-				strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA managament library failed to initialize.");
-				goto disable;
+		/* link in the cuda and nvml libraries and resolve the symbols we need to use */
+		if (linkCudaLibraries() != PAPI_OK) {
+			SUBDBG ("Dynamic link of CUDA libraries failed, component will be disabled.\n");
+			SUBDBG ("See disable reason in papi_component_avail output for more details.\n");
+			return (PAPI_ENOSUPP);
 		}
 
-		cuerr = cuInit( 0 );
+		ret = (*nvmlInitPtr)();
+		if ( NVML_SUCCESS != ret ) {
+				strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA managament library failed to initialize.");
+				return PAPI_ENOSUPP;
+		}
+
+		cuerr = (*cuInitPtr)( 0 );
 		if ( CUDA_SUCCESS != cuerr ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "The CUDA library failed to initialize.");
-				goto disable;
+				return PAPI_ENOSUPP;
 		}
 
 		/* Figure out the number of CUDA devices in the system */
-		ret = nvmlDeviceGetCount( &nvml_count );
+		ret = (*nvmlDeviceGetCountPtr)( &nvml_count );
 		if ( NVML_SUCCESS != ret ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA managament library.");
-				goto disable;
+				return PAPI_ENOSUPP;
 		}
 
-		cuerr = cudaGetDeviceCount( &cuda_count );
+		cuerr = (*cudaGetDeviceCountPtr)( &cuda_count );
 		if ( CUDA_SUCCESS != cuerr ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a device count from CUDA.");
-				goto disable;
+				return PAPI_ENOSUPP;
 		}
 
 		/* We can probably recover from this, when we're clever */
 		if ( (cuda_count > 0) && (nvml_count != (unsigned int)cuda_count ) ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "Cuda and the NVIDIA managament library have different device counts.");
-				goto disable;
+				return PAPI_ENOSUPP;
 		}
 
 		device_count = cuda_count;
@@ -871,7 +955,7 @@ _papi_nvml_init_component( int cidx )
 			papi_free(features);
 			papi_free(devices);
 			sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install." );
-			goto disable;
+			return PAPI_ENOSUPP;
 		}
 
 		/* The assumption is that if everything went swimmingly in detectDevices, 
@@ -889,10 +973,173 @@ _papi_nvml_init_component( int cidx )
 		_nvml_vector.cmp_info.num_mpx_cntrs = num_events;
 
 		return PAPI_OK;
+}
 
-disable:
-		_nvml_vector.cmp_info.num_cntrs = 0;
-		return PAPI_OK;	
+
+/*
+ * Link the necessary CUDA libraries to use the cuda component.  If any of them can not be found, then
+ * the CUDA component will just be disabled.  This is done at runtime so that a version of PAPI built
+ * with the CUDA component can be installed and used on systems which have the CUDA libraries installed
+ * and on systems where these libraries are not installed.
+ */
+static int
+linkCudaLibraries ()
+{
+	/* Need to link in the cuda libraries, if not found disable the component */
+	dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
+	if (!dl1)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDA library libcuda.so not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	cuInitPtr = dlsym(dl1, "cuInit");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDA function cuInit not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+
+	dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);
+	if (!dl2)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDA runtime library libcudart.so not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	cudaGetDevicePtr = dlsym(dl2, "cudaGetDevice");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDART function cudaGetDevice not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	cudaGetDeviceCountPtr = dlsym(dl2, "cudaGetDeviceCount");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDART function cudaGetDeviceCount not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	cudaDeviceGetPCIBusIdPtr = dlsym(dl2, "cudaDeviceGetPCIBusId");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDART function cudaDeviceGetPCIBusId not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+
+	dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
+	if (!dl3)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML runtime library libnvidia-ml.so not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetClockInfoPtr = dlsym(dl3, "nvmlDeviceGetClockInfo");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetClockInfo not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlErrorStringPtr = dlsym(dl3, "nvmlErrorString");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlErrorString not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetDetailedEccErrorsPtr = dlsym(dl3, "nvmlDeviceGetDetailedEccErrors");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetDetailedEccErrors not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetFanSpeedPtr = dlsym(dl3, "nvmlDeviceGetFanSpeed");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetFanSpeed not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetMemoryInfoPtr = dlsym(dl3, "nvmlDeviceGetMemoryInfo");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetMemoryInfo not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetPerformanceStatePtr = dlsym(dl3, "nvmlDeviceGetPerformanceState");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetPerformanceState not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetPowerUsagePtr = dlsym(dl3, "nvmlDeviceGetPowerUsage");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetPowerUsage not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetTemperaturePtr = dlsym(dl3, "nvmlDeviceGetTemperature");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetTemperature not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetTotalEccErrorsPtr = dlsym(dl3, "nvmlDeviceGetTotalEccErrors");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetTotalEccErrors not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetUtilizationRatesPtr = dlsym(dl3, "nvmlDeviceGetUtilizationRates");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetUtilizationRates not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetHandleByIndexPtr = dlsym(dl3, "nvmlDeviceGetHandleByIndex");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetHandleByIndex not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetPciInfoPtr = dlsym(dl3, "nvmlDeviceGetPciInfo");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetPciInfo not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetNamePtr = dlsym(dl3, "nvmlDeviceGetName");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetName not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetInforomVersionPtr = dlsym(dl3, "nvmlDeviceGetInforomVersion");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetInforomVersion not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetEccModePtr = dlsym(dl3, "nvmlDeviceGetEccMode");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetEccMode not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlInitPtr = dlsym(dl3, "nvmlInit");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlInit not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlDeviceGetCountPtr = dlsym(dl3, "nvmlDeviceGetCount");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetCount not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	nvmlShutdownPtr = dlsym(dl3, "nvmlShutdown");
+	if (dlerror() != NULL)
+	{
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlShutdown not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+
+	return ( PAPI_OK );
 }
 
 
@@ -919,12 +1166,12 @@ _papi_nvml_update_control_state( hwd_control_state_t *ctl,
 				int count, 
 				hwd_context_t *ctx )
 {
+		SUBDBG( "Enter: ctl: %p, ctx: %p\n", ctl, ctx );
 		int i, index;
 
 		nvml_control_state_t *nvml_ctl = ( nvml_control_state_t * ) ctl;   
 		(void) ctx;
 
-		SUBDBG( "_papi_nvml_update_control_state %p %p...", ctl, ctx );
 
 		/* if no events, return */
 		if (count==0) return PAPI_OK;
@@ -943,11 +1190,11 @@ _papi_nvml_update_control_state( hwd_control_state_t *ctl,
 		int
 _papi_nvml_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
+		SUBDBG( "Enter: ctx: %p, ctl: %p\n", ctx, ctl );
 
 		(void) ctx;
 		(void) ctl;
 
-		SUBDBG( "nvml_start %p %p...", ctx, ctl );
 		/* anything that would need to be set at counter start time */
 
 		/* reset */
@@ -961,11 +1208,12 @@ _papi_nvml_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 		int
 _papi_nvml_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
+		SUBDBG( "Enter: ctx: %p, ctl: %p\n", ctx, ctl );
+
 		int i;
 		(void) ctx;
 		(void) ctl;
 		int ret;
-		SUBDBG( "nvml_stop %p %p...", ctx, ctl );
 
 		nvml_control_state_t* nvml_ctl = ( nvml_control_state_t*) ctl;
 
@@ -986,6 +1234,7 @@ _papi_nvml_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 _papi_nvml_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 				long long **events, int flags )
 {
+		SUBDBG( "Enter: ctx: %p, flags: %d\n", ctx, flags );
 
 		(void) ctx;
 		(void) flags;
@@ -993,7 +1242,6 @@ _papi_nvml_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		int ret;
 		nvml_control_state_t* nvml_ctl = ( nvml_control_state_t*) ctl;   
 
-		SUBDBG( "nvml_read... %p %d", ctx, flags );
 
 		for (i=0;i<nvml_ctl->num_events;i++) {
 				if ( PAPI_OK != 
@@ -1013,12 +1261,12 @@ _papi_nvml_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 _papi_nvml_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 				long long *events )
 {
+		SUBDBG( "Enter: ctx: %p, ctl: %p\n", ctx, ctl );
 
 		(void) ctx;
 		(void) ctl;
 		(void) events;
 
-		SUBDBG( "nvml_write... %p %p", ctx, ctl );
 
 		/* You can change ECC mode and compute exclusivity modes on the cards */
 		/* But I don't see this as a function of a PAPI component at this time */
@@ -1033,10 +1281,10 @@ _papi_nvml_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		int
 _papi_nvml_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
+		SUBDBG( "Enter: ctx: %p, ctl: %p\n", ctx, ctl );
+		
 		(void) ctx;
 		(void) ctl;
-
-		SUBDBG( "nvml_reset ctx=%p ctrl=%p...", ctx, ctl );
 
 		/* Reset the hardware */
 		nvml_hardware_reset(  );
@@ -1048,17 +1296,24 @@ _papi_nvml_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 		int
 _papi_nvml_shutdown_component()
 {
+		SUBDBG( "Enter:\n" );
 
-		SUBDBG( "nvml_shutdown_component..." );
-
+	if (nvml_native_table != NULL)
 		papi_free(nvml_native_table);
+	if (devices != NULL)
 		papi_free(devices);
+	if (features != NULL)
 		papi_free(features);
 
-		nvmlShutdown();
+		(*nvmlShutdownPtr)();
 
 		device_count = 0;
 		num_events = 0;
+
+		// close the dynamic libraries needed by this component (opened in the init component call)
+		dlclose(dl1);
+		dlclose(dl2);
+		dlclose(dl3);
 
 		return PAPI_OK;
 }
@@ -1067,10 +1322,9 @@ _papi_nvml_shutdown_component()
 		int
 _papi_nvml_shutdown_thread( hwd_context_t *ctx )
 {
+		SUBDBG( "Enter: ctx: %p\n", ctx );
 
 		(void) ctx;
-
-		SUBDBG( "nvml_shutdown_thread... %p", ctx );
 
 		/* Last chance to clean up thread */
 
@@ -1085,12 +1339,12 @@ _papi_nvml_shutdown_thread( hwd_context_t *ctx )
 		int
 _papi_nvml_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
+		SUBDBG( "Enter: ctx: %p, code: %d\n", ctx, code );
 
 		(void) ctx;
 		(void) code;
 		(void) option;
 
-		SUBDBG( "nvml_ctl..." );
 
 		/* FIXME.  This should maybe set up more state, such as which counters are active and */
 		/*         counter mappings. */
@@ -1110,25 +1364,26 @@ _papi_nvml_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 		int
 _papi_nvml_set_domain( hwd_control_state_t * cntrl, int domain )
 {
+		SUBDBG( "Enter: cntrl: %p, domain: %d\n", cntrl, domain );
+
 		(void) cntrl;
 
 		int found = 0;
-		SUBDBG( "nvml_set_domain..." );
 
 		if ( PAPI_DOM_USER & domain ) {
-				SUBDBG( " PAPI_DOM_USER " );
+				SUBDBG( " PAPI_DOM_USER \n" );
 				found = 1;
 		}
 		if ( PAPI_DOM_KERNEL & domain ) {
-				SUBDBG( " PAPI_DOM_KERNEL " );
+				SUBDBG( " PAPI_DOM_KERNEL \n" );
 				found = 1;
 		}
 		if ( PAPI_DOM_OTHER & domain ) {
-				SUBDBG( " PAPI_DOM_OTHER " );
+				SUBDBG( " PAPI_DOM_OTHER \n" );
 				found = 1;
 		}
 		if ( PAPI_DOM_ALL & domain ) {
-				SUBDBG( " PAPI_DOM_ALL " );
+				SUBDBG( " PAPI_DOM_ALL \n" );
 				found = 1;
 		}
 		if ( !found )
@@ -1193,6 +1448,7 @@ _papi_nvml_ntv_enum_events( unsigned int *EventCode, int modifier )
 		int
 _papi_nvml_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
+		SUBDBG("Entry: EventCode: %#x, name: %s, len: %d\n", EventCode, name, len);
 		int index;
 
 		index = EventCode;
@@ -1232,6 +1488,7 @@ papi_vector_t _nvml_vector = {
 				.name = "nvml",
 				.short_name="nvml",
 				.version = "1.0",
+				.description = "NVML provides the API for monitoring NVIDIA hardware (power usage, temperature, fan speed, etc)",
 				.support_version = "n/a",
 				.kernel_version = "n/a",
 

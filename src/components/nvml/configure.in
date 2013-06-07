@@ -7,9 +7,9 @@ AC_ARG_WITH(nvml-dir,
             [--with-nvml-dir=<path> Specify path to nvml library root directory],
             [NVML_DIR=$withval
 	     CFLAGS="$CFLAGS -I$withval/include"
-             LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64 -lnvidia-ml" 
-             AC_SEARCH_LIBS([nvmlInit],
-						  [nvidia-ml],
+             LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64" 
+             AC_CHECK_LIB([nvidia-ml],
+						  [nvmlInit],
                           [],				          
                           [AC_MSG_ERROR([libnvidia-ml.so not found])])],
             [AC_MSG_ERROR([Component requires path to nvml library])])
@@ -17,7 +17,7 @@ AC_ARG_WITH(nvml-dir,
 AC_ARG_WITH(cuda-dir, 
 			[--with-cuda-dir=<path> Specify path to cuda root directory], 
 			[ CUDA_DIR=$withval
-				LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64 -lcudart"
+				LDFLAGS="$LDFLAGS -L$withval/lib64 -Wl,-rpath,$withval/lib64"
 				AC_CHECK_LIB( [cudart],
 					[cudaMalloc],
 					[],
