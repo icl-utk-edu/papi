@@ -47,6 +47,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Nehalem, Westmere
 		Intel Sandy Bridge
 		Intel Ivy Bridge
+		Intel Haswell
 		Intel Knights Corner
 		Intel architectural perfmon v1, v2, v3
 
