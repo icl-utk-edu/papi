@@ -1,5 +1,5 @@
-/*  This examples show the essentials in using the PAPI high-level
-    interface. The program consists of 4 work-loops. The programer
+/*  These examples show the essentials in using the PAPI high-level
+    interface. The program consists of 4 work-loops. The programmer
     intends to count the total events for loop 1, 2 and 4, but not 
     include the number of events in loop 3.
 

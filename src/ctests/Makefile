@@ -18,7 +18,7 @@ MPI	= mpifirst
 SHARED  = shlib
 SERIAL  = inherit hwinfo code2name reset cmpinfo realtime virttime first \
 	exeinfo zero zero_named branches dmem_info all_native_events \
-	all_events derived high-level2 describe memory  \
+	all_events derived high-level2 hl_rates describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog \
 	get_event_component disable_component remove_events cycle_ratio
@@ -325,6 +325,9 @@ low-level: low-level.c $(UTILOBJS) $(PAPILIB)
 
 matrix-hl: matrix-hl.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS)  matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
+
+hl_rates: hl_rates.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) hl_rates.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o hl_rates
 
 high-level: high-level.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level

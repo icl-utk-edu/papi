@@ -1251,6 +1251,36 @@ PAPI_FCALL( papif_ipc, PAPIF_IPC,
 	*check = PAPI_ipc( rtime, ptime, ins, ipc );
 }
 
+/** @class PAPIF_epc
+ *	@ingroup PAPIF
+ *	@brief Get named events per cycle, real and processor time, reference and core cycles.
+ *	
+ *	@par Fortran Interface:
+ *	\#include "fpapi.h" @n
+ *	PAPIF_epc( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ref, C_LONG_LONG core, C_LONG_LONG evt, C_FLOAT epc, C_INT check )
+ *
+ * @see PAPI_epc
+ */
+#if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_epc, PAPIF_EPC,
+			( char *EventName, float *rtime, float *ptime, 
+			  long long *ref, long long *core, long long *evt, float *epc,
+			  int *check, int Event_len) )
+{
+	char tmp[PAPI_MAX_STR_LEN];
+	Fortran2cstring( tmp, EventName, PAPI_MAX_STR_LEN, Event_len );
+	*check = PAPI_epc( EventName, rtime, ptime, ref, core, evt, epc );
+}
+#else
+PAPI_FCALL( papif_epc, PAPIF_EPC,
+			( char *EventName, float *rtime, float *ptime, 
+			  long long *ref, long long *core, long long *evt, float *epc,
+			  int *check) )
+{
+	*check = PAPI_epc( EventName, rtime, ptime, ref, core, evt, epc );
+}
+#endif
+
 /** @class PAPIF_flips
  *	@ingroup PAPIF
  *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
