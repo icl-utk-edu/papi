@@ -98,7 +98,7 @@ endif
 # Library version
 #
 VERSION=4
-REVISION=3
+REVISION=4
 AGE=0
 
 #
