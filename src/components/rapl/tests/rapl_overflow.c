@@ -135,10 +135,6 @@ main( int argc, char **argv )
 		++i;
 	} while (retval);
 
-	if ( i>1 && retval != PAPI_OK ) {
-	   test_fail(__FILE__, __LINE__,"PAPI_add_event",retval);
-	}
-
 	PAPI_event=PAPI_TOT_CYC;
 
 	/* arbitrary */
