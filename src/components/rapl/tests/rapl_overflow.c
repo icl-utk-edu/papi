@@ -133,7 +133,9 @@ main( int argc, char **argv )
 		sprintf(&(buffer[0]), "rapl:::PACKAGE_ENERGY:PACKAGE%d", i);
 		retval=PAPI_add_named_event(EventSet2,buffer);
 		++i;
-	} while (retval);
+	/* protect against insane PAPI library, the value 64 is the same value as 
+     * RAPL_MAX_COUNTERS in linux-rapl.c, and feels reasonable. */
+	} while ( 0 < retval && i < 64 );
 
 	PAPI_event=PAPI_TOT_CYC;
 
