@@ -214,6 +214,7 @@ enumEventDomains( CUdevice dev, int deviceId )
 								   device[deviceId].domainCount );
 	if ( device[deviceId].domain == NULL ) {
 		perror( "malloc(): Failed to allocate memory to PAPI domain struct" );
+		free(domainId);
 		return -1;
 	}
 
@@ -307,6 +308,7 @@ enumEvents( int deviceId, int domainId )
 								  eventCount );
 	if ( device[deviceId].domain[domainId].event == NULL ) {
 		perror( "malloc(): Failed to allocate memory to PAPI event struct" );
+		free(eventId);
 		return -1;
 	}
 
@@ -591,8 +593,6 @@ CUDA_init_component( int cidx )
 static int 
 linkCudaLibraries ()
 {
-	char *error;
-
 	/* Need to link in the cuda libraries, if not found disable the component */
 	dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
 	if (!dl1)
@@ -601,43 +601,43 @@ linkCudaLibraries ()
 		return ( PAPI_ENOSUPP );
 	}
 	cuCtxCreatePtr = dlsym(dl1, "cuCtxCreate_v2");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuCtxCreate not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuCtxDestroyPtr = dlsym(dl1, "cuCtxDestroy_v2");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuCtxDestroy not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuCtxGetCurrentPtr = dlsym(dl1, "cuCtxGetCurrent");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuCtxGetCurrent not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuDeviceGetPtr = dlsym(dl1, "cuDeviceGet");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuDeviceGet not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuDeviceGetCountPtr = dlsym(dl1, "cuDeviceGetCount");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuDeviceGetCount not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuDeviceGetNamePtr = dlsym(dl1, "cuDeviceGetName");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuDeviceGetName not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuInitPtr = dlsym(dl1, "cuInit");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuInit not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
@@ -650,25 +650,25 @@ linkCudaLibraries ()
 		return ( PAPI_ENOSUPP );
 	}
 	cudaFreePtr = dlsym(dl2, "cudaFree");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaFree not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cudaGetDevicePtr = dlsym(dl2, "cudaGetDevice");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaGetDevice not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cudaRuntimeGetVersionPtr = dlsym(dl2, "cudaRuntimeGetVersion");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaRuntimeGetVersion not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cudaDriverGetVersionPtr = dlsym(dl2, "cudaDriverGetVersion");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaDriverGetVersion not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
@@ -681,85 +681,85 @@ linkCudaLibraries ()
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiDeviceEnumEventDomainsPtr = dlsym(dl3, "cuptiDeviceEnumEventDomains");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiDeviceEnumEventDomains not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiDeviceGetEventDomainAttributePtr = dlsym(dl3, "cuptiDeviceGetEventDomainAttribute");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiDeviceGetEventDomainAttribute not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiDeviceGetNumEventDomainsPtr = dlsym(dl3, "cuptiDeviceGetNumEventDomains");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiDeviceGetNumEventDomains not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventDomainEnumEventsPtr = dlsym(dl3, "cuptiEventDomainEnumEvents");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventDomainEnumEvents not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventDomainGetNumEventsPtr = dlsym(dl3, "cuptiEventDomainGetNumEvents");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventDomainGetNumEvents not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGetAttributePtr = dlsym(dl3, "cuptiEventGetAttribute");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGetAttribute not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupAddEventPtr = dlsym(dl3, "cuptiEventGroupAddEvent");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupAddEvent not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupCreatePtr = dlsym(dl3, "cuptiEventGroupCreate");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupCreate not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupDestroyPtr = dlsym(dl3, "cuptiEventGroupDestroy");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupDestroy not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupDisablePtr = dlsym(dl3, "cuptiEventGroupDisable");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupDisable not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupEnablePtr = dlsym(dl3, "cuptiEventGroupEnable");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupEnable not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupReadAllEventsPtr = dlsym(dl3, "cuptiEventGroupReadAllEvents");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupReadAllEvents not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupRemoveEventPtr = dlsym(dl3, "cuptiEventGroupRemoveEvent");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupRemoveEvent not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	cuptiEventGroupResetAllEventsPtr = dlsym(dl3, "cuptiEventGroupResetAllEvents");
-	if ((error = dlerror()) != NULL)
+	if (dlerror() != NULL)
 	{
 		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupResetAllEvents not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
