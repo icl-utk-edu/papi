@@ -108,10 +108,6 @@ int main (int argc, char **argv)
         test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset()", retval);
     }
 
-    if (total_events==0) {
-        test_skip(__FILE__,__LINE__,"No net events found", 0);
-    }
-
     test_pass( __FILE__, NULL, 0 );
 
     return 0;
