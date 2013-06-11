@@ -8,4 +8,7 @@
 ctests/burn
 ctests/shlib
 
+# Template PBS Job Script for Parallel Job on Myrinet Nodes
+ctests/cpi.pbs
+
 # these tests haven't been implemented

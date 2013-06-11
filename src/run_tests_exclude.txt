@@ -7,6 +7,9 @@
 # Time wasting support program, not a standalone test
 ctests/burn
 
+# Template PBS Job Script for Parallel Job on Myrinet Nodes
+ctests/cpi.pbs
+
 # these tests haven't been implemented
 
 
