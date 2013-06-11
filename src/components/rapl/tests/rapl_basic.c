@@ -115,11 +115,19 @@ int main (int argc, char **argv)
 	}
 
 	if (strstr(cmpinfo->name,"rapl")) {
+
 	   rapl_cid=cid;
-	   if (!TESTS_QUIET) printf("Found rapl component at cid %d\n",
-				    rapl_cid);
-           if (cmpinfo->num_native_events==0) {
-              test_skip(__FILE__,__LINE__,"No rapl events found",0);
+
+	   if (!TESTS_QUIET) {
+	      printf("Found rapl component at cid %d\n",rapl_cid);
+	   }
+
+           if (cmpinfo->disabled) {
+	      if (!TESTS_QUIET) {
+		 printf("RAPL component disabled: %s\n",
+                        cmpinfo->disabled_reason);
+	      } 
+              test_skip(__FILE__,__LINE__,"RAPL component disabled",0);
            }
 	   break;
 	}
