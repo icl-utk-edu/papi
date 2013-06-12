@@ -1,7 +1,7 @@
 include ../../Makefile_comp_tests
 include ../Makefile.infiniband
 
-INFINIBANDLIBS = -L$(INFINIBAND_LIBDIR) -libumad -libmad
+INFINIBANDLIBS = -L$(INFINIBAND_IBMAD_DIR)/lib64 -L$(INFINIBAND_IBUMAD_DIR)/lib64 -libumad -libmad
 
 TESTS = infiniband_list_events infiniband_values_by_code 
 

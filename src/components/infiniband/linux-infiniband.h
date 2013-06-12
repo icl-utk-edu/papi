@@ -26,8 +26,8 @@
 
 #define __BUILD_VERSION_TAG__ 1.2
 
-#include <umad.h>
-#include <mad.h>
+#include <infiniband/umad.h>
+#include <infiniband/mad.h>
 
 /* describes a single counter with its properties */
 typedef struct counter_info_struct
