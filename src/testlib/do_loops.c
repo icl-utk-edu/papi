@@ -116,7 +116,6 @@ do_misses( int n, int bytes )
 	dummy( ( void * ) buf );
 	dummy( ( void * ) &buf_dummy );
 	assert( len <= CACHE_FLUSH_BUFFER_SIZE_INTS );
-	n = n / 2;
 	for ( j = 0; j < n; j++ ) {
 		for ( i = 0; i < len; i++ ) {
 			/* We need to read, modify, write here to look
