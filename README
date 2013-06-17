@@ -67,6 +67,7 @@ The library supports many PMUs. The current version can handle:
 		Power 5
 		Power 6
 		Power 7
+		Power 8
 		PPC970
 		Torrent
 		System z (s390x)

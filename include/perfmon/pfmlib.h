@@ -190,6 +190,8 @@ typedef enum {
 	PFM_PMU_INTEL_IVB_UNC_CB2,	/* Intel IvyBridge C-box 2 uncore PMU */
 	PFM_PMU_INTEL_IVB_UNC_CB3,	/* Intel IvyBridge C-box 3 uncore PMU */
 
+	PFM_PMU_POWER8,			/* IBM POWER8 */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

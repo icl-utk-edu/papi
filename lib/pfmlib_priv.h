@@ -264,6 +264,7 @@ extern pfmlib_pmu_t power5_support;
 extern pfmlib_pmu_t power5p_support;
 extern pfmlib_pmu_t power6_support;
 extern pfmlib_pmu_t power7_support;
+extern pfmlib_pmu_t power8_support;
 extern pfmlib_pmu_t torrent_support;
 extern pfmlib_pmu_t sparc_support;
 extern pfmlib_pmu_t sparc_ultra12_support;
