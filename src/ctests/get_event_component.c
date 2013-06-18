@@ -18,6 +18,7 @@ main( int argc, char **argv )
     int retval;
     PAPI_event_info_t info;
     int numcmp, cid, our_cid;
+    const PAPI_component_info_t* cmpinfo;
 
     /* Set TESTS_QUIET variable */
     tests_quiet( argc, argv );
@@ -32,7 +33,22 @@ main( int argc, char **argv )
 
 
     /* Loop through all components */
-    for( cid = 0; cid < numcmp; cid++ ) {
+    for( cid = 0; cid < numcmp; cid++ )
+    {
+        cmpinfo = PAPI_get_component_info( cid );
+
+         if (cmpinfo  == NULL)
+         {
+            test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
+         }
+
+         if (cmpinfo->disabled)
+         {
+           printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+           printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
+           continue;
+         }
+
 
        i = 0 | PAPI_NATIVE_MASK;
        retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );

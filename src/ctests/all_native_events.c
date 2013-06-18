@@ -77,6 +77,7 @@ main( int argc, char **argv )
     int retval;
     PAPI_event_info_t info, info1;
     const PAPI_hw_info_t *hwinfo = NULL;
+    const PAPI_component_info_t* cmpinfo;
     char *Intel_i7;
     int event_code;
     int numcmp, cid;
@@ -107,9 +108,22 @@ main( int argc, char **argv )
     /* Loop through all components */
     for( cid = 0; cid < numcmp; cid++ ) {
 
-       if ( PAPI_get_component_info( cid ) == NULL ) {
-	  test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
-       }
+
+       cmpinfo = PAPI_get_component_info( cid );
+
+        if (cmpinfo  == NULL)
+        {
+           test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
+        }
+
+        if (cmpinfo->disabled)
+        {
+          printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+          printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
+          continue;
+        }
+
+
 
        /* For platform independence, always ASK FOR the first event */
        /* Don't just assume it'll be the first numeric value */
