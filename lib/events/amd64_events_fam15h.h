@@ -2277,7 +2277,7 @@ static const amd64_entry_t amd64_fam15h_pe[]={
   .ngrp    = 1,
   .umasks  = amd64_fam15h_thermal_status,
 },
-{ .name    = "CPU_0O_REQUESTS_TO_MEMORY_IO",
+{ .name    = "CPU_IO_REQUESTS_TO_MEMORY_IO",
   .desc    = "CPU/IO Requests to Memory/IO",
   .code    = 0xe9,
   .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_cpu_io_requests_to_memory_io),
