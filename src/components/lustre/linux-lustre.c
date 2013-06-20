@@ -194,7 +194,6 @@ addLustreFS( const char *name,
 
 		last->next = fs;
 	}
-	free(fs);
 	return PAPI_OK;
 }
 
