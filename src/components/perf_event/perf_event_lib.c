@@ -679,7 +679,7 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 }
 
 /* Check the mmap page for rdpmc support */
-int _pe_detect_rdpmc(void) {
+int _pe_detect_rdpmc(int default_domain) {
 
    struct perf_event_attr pe;
    int fd,rdpmc_exists=1;
@@ -692,7 +692,15 @@ int _pe_detect_rdpmc(void) {
    pe.type=PERF_TYPE_HARDWARE;
    pe.size=sizeof(struct perf_event_attr);
    pe.config=PERF_COUNT_HW_INSTRUCTIONS;
-   pe.exclude_kernel=1;
+
+   /* There should probably be a helper function to handle this      */
+   /* we break on some ARM because there is no support for excluding */
+   /* kernel.                                                        */
+   if (default_domain & PAPI_DOM_KERNEL ) {
+   }
+   else {
+      pe.exclude_kernel=1;
+   }
 
    fd=sys_perf_event_open2(&pe,0,-1,-1,0);
    if (fd<0) {
