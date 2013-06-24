@@ -60,7 +60,7 @@ int _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI );
 int _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold );
 int _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold );
 void _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc, int cidx );
-int _pe_detect_rdpmc(void);
+int _pe_detect_rdpmc(int default_domain);
 
 long
 sys_perf_event_open2( struct perf_event_attr *hw_event, pid_t pid, int cpu,

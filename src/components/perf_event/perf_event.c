@@ -221,23 +221,23 @@ _pe_init_component( int cidx )
     return retval;
   }
 
-  /* Detect if we can use rdpmc (or equivalent) */
-  /* We currently do not use rdpmc as it is slower in tests */
-  /* than regular read (as of Linux 3.5)                    */
-  retval=_pe_detect_rdpmc();
-  if (retval < 0 ) {
-    strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-	    "sys_perf_event_open() failed, perf_event support for this platform may be broken",PAPI_MAX_STR_LEN);
-
-      return retval;
-   }
-   _papi_hwd[cidx]->cmp_info.fast_counter_read = retval;
-
    /* Set the overflow signal */
    _papi_hwd[cidx]->cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
    /* Run Vendor-specific fixups */
    pe_vendor_fixups(_papi_hwd[cidx]);
+
+   /* Detect if we can use rdpmc (or equivalent) */
+   /* We currently do not use rdpmc as it is slower in tests */
+   /* than regular read (as of Linux 3.5)                    */
+   retval=_pe_detect_rdpmc(_papi_hwd[cidx]->cmp_info.default_domain);
+   if (retval < 0 ) {
+      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+	    "sys_perf_event_open() failed, perf_event support for this platform may be broken",PAPI_MAX_STR_LEN);
+
+       return retval;
+    }
+   _papi_hwd[cidx]->cmp_info.fast_counter_read = retval;
 
    /* Run the libpfm4-specific setup */
    retval = _papi_libpfm4_init(_papi_hwd[cidx], cidx, 
