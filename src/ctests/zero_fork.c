@@ -1,14 +1,38 @@
 /* 
 * File:    zero_fork.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
 
-/* This file performs the following test: start, stop and timer
-functionality for a parent and a forked child. */
+/* This file performs the following test: 
+
+        PAPI_library_init()
+        Add two events
+        PAPI_start()
+          fork()
+         /      \
+      parent     child
+        |       PAPI_library_init()
+        |       Add two events
+        |       PAPI_start()
+        |       PAPI_stop()
+        |
+      fork()-----\
+        |        child
+      parent    PAPI_library_init()
+        |       Add two events
+        |       PAPI_start()
+        |       PAPI_stop()
+        |
+      wait()
+      wait()
+        |
+      PAPI_stop()
+
+     No validation is done
+ */
 
 #include "papi_test.h"
 #include <sys/wait.h>
