@@ -19,8 +19,9 @@ int main()
    long long values[NUM_EVENTS];
    /*This is where we store the values we read from the eventset */
     
-   int retval,number=NUM_EVENTS,Events[NUM_EVENTS];
    /* We use number to keep track of the number of events in the EventSet */ 
+   int retval, number;
+   
    char errstring[PAPI_MAX_STR_LEN];
   
    /*************************************************************************** 
@@ -48,7 +49,8 @@ int main()
       ERROR_RETURN(retval);
 
    /* get the number of events in the event set */
-   if ( (retval = PAPI_list_events(EventSet, Events, &number)) != PAPI_OK)
+   number = 0;
+   if ( (retval = PAPI_list_events(EventSet, NULL, &number)) != PAPI_OK)
       ERROR_RETURN(retval);
 
    printf("There are %d events in the event set\n", number);
@@ -93,7 +95,8 @@ int main()
    printf("Removing PAPI_TOT_INS from the eventset\n"); 
 
    /* Now we list how many events are left on the event set */
-   if ((retval=PAPI_list_events(EventSet, Events, &number))!= PAPI_OK)
+   number = 0;
+   if ((retval=PAPI_list_events(EventSet, NULL, &number))!= PAPI_OK)
       ERROR_RETURN(retval);
 
    printf("There is only %d event left in the eventset now\n", number);
