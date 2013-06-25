@@ -5816,24 +5816,30 @@ PAPI_remove_events( int EventSet, int *Events, int number )
 }
 
 /**	@class PAPI_list_events
- *	@brief list the events in an event set 
- *	@param EventSet
+ *	@brief list the events in an event set
+ *
+ *	PAPI_list_events() returns an array of events and a count of the
+ *  total number of events in an event set.
+ *	This call assumes an initialized PAPI library and a successfully created event set.
+ *
+ * @par C Interface
+ * \#include <papi.h> @n
+ * int PAPI_list_events(int *EventSet, int *Events, int *number );
+*
+ *	@param[in] EventSet
  *		An integer handle for a PAPI event set as created by PAPI_create_eventset 
- *	@param *Events 
- *		An array of codes for events, such as PAPI_INT_INS. 
+ *	@param[in,out] *Events 
+ *		A pointer to a preallocated array of codes for events, such as PAPI_INT_INS. 
  *		No more than *number codes will be stored into the array.
- *	@param *number 
- *		On input the variable determines the size of the Events array. 
- *		On output the variable contains the number of counters in the event set.
- *		Note that if the given array Events is too short to hold all the counters 
- *		in the event set the *number variable will be greater than the actually 
- *		stored number of counter codes. 
+ *	@param[in,out] *number 
+ *		On input, the size of the Events array, or maximum number of event codes
+ *		to be returned. A value of 0 can be used to probe an event set.
+ *		On output, the number of events actually in the event set.
+ *		This value may be greater than the actually stored number of event codes. 
  *
  *	@retval PAPI_EINVAL
- *	@retval PAPI_ENOEVST *	
- *	PAPIF_list_events(C_INT  EventSet,  C_INT(*)  Events,  C_INT  number,  C_INT  check )
- *	PAPI_list_events() decomposes an event set into the hardware events it contains.
- *	This call assumes an initialized PAPI library and a successfully added event set. 
+ *	@retval PAPI_ENOEVST
+ *	
  *	@par Examples:
  *	@code
  		if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
@@ -5845,15 +5851,18 @@ PAPI_remove_events( int EventSet, int *Events, int number )
  		exit(1);
  		if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
  		exit(1);
- 		number = 4;
- 		if(PAPI_list_events(EventSet, Events, &number))
+ 		number = 0;
+ 		if(PAPI_list_events(EventSet, NULL, &number))
  		exit(1);
  		if(number != 2)
+ 		exit(1);
+ 		if(PAPI_list_events(EventSet, Events, &number))
  		exit(1);
  *	@endcode
  *	@see PAPI_event_code_to_name 
  *	@see PAPI_event_name_to_code 
- *	@see PAPI_add_event PAPI_create_eventset
+ *	@see PAPI_add_event
+ *	@see PAPI_create_eventset
  */
 int
 PAPI_list_events( int EventSet, int *Events, int *number )
@@ -5861,12 +5870,20 @@ PAPI_list_events( int EventSet, int *Events, int *number )
 	EventSetInfo_t *ESI;
 	int i, j;
 
-	if ( ( Events == NULL ) || ( *number <= 0 ) )
+	if ( *number < 0 )
+		papi_return( PAPI_EINVAL );
+
+	if ( ( Events == NULL ) && ( *number > 0 ) )
 		papi_return( PAPI_EINVAL );
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( !ESI )
 		papi_return( PAPI_ENOEVST );
+
+	if ( ( Events == NULL ) || ( *number == 0 ) ) {
+		*number = ESI->NumberOfEvents;
+		papi_return( PAPI_OK );
+	}
 
 	for ( i = 0, j = 0; j < ESI->NumberOfEvents; i++ ) {
 		if ( ( int ) ESI->EventInfoArray[i].event_code != PAPI_NULL ) {
