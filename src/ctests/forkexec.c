@@ -1,14 +1,22 @@
 /* 
-* File:    zero_fork.c
-* CVS:     $Id$
+* File:    forkexec.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
 
-/* This file performs the following test: start, stop and timer
-functionality for a parent and a forked child. */
+/* This file performs the following test: 
+   
+            PAPI_library_init();
+	    PAPI_shutdown()
+	        fork()
+               /      \
+            parent   child
+	    wait()   execlp()
+                     PAPI_library_init()
+
+ */
 
 #include "papi_test.h"
 #include <sys/wait.h>
