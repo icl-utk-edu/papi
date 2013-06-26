@@ -7,8 +7,17 @@
 *          <your email address>
 */
 
-/* This file performs the following test: start, stop and timer
-functionality for a parent and a forked child. */
+/* This file performs the following test: 
+
+   PAPI_library_init()
+         fork();
+         /    \ 
+     parent   child
+     wait()   PAPI_shutdown()
+              PAPI_library_init()
+
+ */
+
 
 #include "papi_test.h"
 #include <sys/wait.h>
@@ -26,6 +35,8 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "main PAPI_library_init", retval );
 
 	if ( fork(  ) == 0 ) {
+		PAPI_shutdown();
+
 		retval = PAPI_library_init( PAPI_VER_CURRENT );
 		if ( retval != PAPI_VER_CURRENT )
 			test_fail( __FILE__, __LINE__, "forked PAPI_library_init", retval );
