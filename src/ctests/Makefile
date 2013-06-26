@@ -22,7 +22,7 @@ SERIAL  = inherit hwinfo code2name reset cmpinfo realtime virttime first \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc nmi_watchdog \
 	get_event_component disable_component remove_events cycle_ratio
-FORKEXEC  = fork exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
+FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
 	fork_overflow exec_overflow child_overflow system_child_overflow \
 	system_overflow burn zero_fork
 OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow \
@@ -394,6 +394,9 @@ exec: exec.c $(UTILOBJS) $(PAPILIB)
 
 exec2: exec2.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exec2 
+
+fork2: fork2.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fork2 
 
 forkexec: forkexec.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec 
