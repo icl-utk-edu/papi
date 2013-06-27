@@ -192,8 +192,11 @@ parse_unit_masks( PAPI_event_info_t * info )
 {
   char *pmask,*ptr;
 
+  /* handle the PAPI component-style events which have a component:::event type */
+  if ((ptr=strstr(info->symbol, ":::"))) {
+    ptr+=3;
   /* handle libpfm4-style events which have a pmu::event type event name */
-  if ((ptr=strstr(info->symbol, "::"))) {
+  } else if ((ptr=strstr(info->symbol, "::"))) {
     ptr+=2;
   }
   else {
