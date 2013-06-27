@@ -42,6 +42,8 @@ typedef struct _HighLevelInfo
 	short int running;				/**< STOP, START, or RATE */
 	long long initial_real_time;	/**< Start real time */
 	long long initial_proc_time;	/**< Start processor time */
+	long long last_real_time;		/**< Previous value of real time */
+	long long last_proc_time;		/**< Previous value of processor time */
 	long long total_ins;			/**< Total instructions */
 } HighLevelInfo;
 
@@ -164,40 +166,39 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
   *	\#include <papi.h> @n
   *	int PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips );
   *
-  *     @param *rtime
-  *		total realtime since the first PAPI_flips() call
+  * @param *rtime
+  *		total realtime since the first call
   *	@param *ptime
-  *		total process time since the first PAPI_flips() call
+  *		total process time since the first call
   *	@param *flpins
   *		total floating point instructions since the first call
+  *	@param *mflips
+  *		incremental (Mega) floating point instructions per seconds since the last call
   *  
   *	@retval PAPI_EINVAL 
-  *		The counters were already started by something other than: PAPI_flips() or PAPI_flops().
+  *		The counters were already started by something other than PAPI_flips().
   *	@retval PAPI_ENOEVNT 
-  *		The floating point operations, floating point instructions or total cycles 
-  *		event does not exist.
+  *		The floating point instructions event does not exist.
   *	@retval PAPI_ENOMEM 
   *		Insufficient memory to complete the operation. 
   *
   * The first call to PAPI_flips() will initialize the PAPI High Level interface, 
-  * set up the counters to monitor PAPI_FP_INS and PAPI_TOT_CYC events 
-  * and start the counters. 
+  * set up the counters to monitor the PAPI_FP_INS event and start the counters.
+  *
   * Subsequent calls will read the counters and return total real time, 
   * total process time, total floating point instructions since the start of the 
   * measurement and the Mflip/s rate since latest call to PAPI_flips(). 
-  * A call to PAPI_stop_counters()  will stop the counters from running and then 
-  * calls such as PAPI_start_counters()  can safely be used. 
+  * A call to PAPI_stop_counters() will stop the counters from running and then 
+  * calls such as PAPI_start_counters() or other rate calls can safely be used. 
   *
-  * @internal
-  * The next three calls all use _hl_rate_calls() to return an instruction rate value.
   * PAPI_flips returns information related to floating point instructions using 
   * the PAPI_FP_INS event. This is intended to measure instruction rate through the 
   * floating point pipe with no massaging.
-  * PAPI_flops return information related to theoretical floating point operations
-  * rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 
-  * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
   *
-  * @see PAPI_stop_counters() PAPI_ipc() PAPI_set_opt()
+  * @see PAPI_flops()
+  * @see PAPI_ipc()
+  * @see PAPI_epc()
+  * @see PAPI_stop_counters()
  */
 int
 PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
@@ -214,52 +215,45 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 }
 
 /** @class PAPI_flops
-  *	@brief Simplified call to get Mflops/s (floating point instruction rate), real and processor time. 
+  *	@brief Simplified call to get Mflops/s (floating point operation rate), real and processor time. 
   *
   *	@par C Interface: 
   *	\#include <papi.h> @n
   *	int PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops );
   *
-  *     @param *rtime
-  *		total realtime since the first PAPI_flops() call
+  * @param *rtime
+  *		total realtime since the first call
   *	@param *ptime
-  *		total process time since the first PAPI_flops() call
-  *	@param *flpins
-  *		total floating point instructions since the first call
-  *     @param *rtime
-  *		total realtime since the first PAPI_flops() call
-  *	@param *ptime
-  *		total process time since the first PAPI_flops() call
+  *		total process time since the first call
   *	@param *flpops
-  *		total floating point instructions since the first call
+  *		total floating point operations since the first call
+  *	@param *mflops
+  *		incremental (Mega) floating point operations per seconds since the last call
   * 
   *	@retval PAPI_EINVAL 
-  *		The counters were already started by something other than: PAPI_flips() or PAPI_flops().
+  *		The counters were already started by something other than PAPI_flops().
   *	@retval PAPI_ENOEVNT 
-  *		The floating point operations, floating point instructions or total cycles 
-  *		event does not exist.
+  *		The floating point operations event does not exist.
   *	@retval PAPI_ENOMEM 
   *		Insufficient memory to complete the operation. 
   *
   * The first call to PAPI_flops() will initialize the PAPI High Level interface, 
-  * set up the counters to monitor PAPI_FP_OPS and PAPI_TOT_CYC events 
-  * and start the counters. 
-  * Subsequent calls will read the counters and return total real time, 
-  * total process time, total floating point instructions since the start of the 
-  * measurement and the Mflop/s rate since latest call to PAPI_flops(). 
-  * A call to PAPI_stop_counters()  will stop the counters from running and then 
-  * calls such as PAPI_start_counters()  can safely be used. 
+  * set up the counters to monitor the PAPI_FP_OPS event and start the counters. 
   *
-  * @internal
-  * The next three calls all use _hl_rate_calls() to return an instruction rate value.
-  * PAPI_flops returns information related to floating point instructions using 
-  * the PAPI_FP_INS event. This is intended to measure instruction rate through the 
-  * floating point pipe with no massaging.
-  * PAPI_flops return information related to theoretical floating point operations
+  * Subsequent calls will read the counters and return total real time, 
+  * total process time, total floating point operations since the start of the 
+  * measurement and the Mflop/s rate since latest call to PAPI_flops(). 
+  * A call to PAPI_stop_counters() will stop the counters from running and then 
+  * calls such as PAPI_start_counters() or other rate calls can safely be used.
+  *
+  * PAPI_flops returns information related to theoretical floating point operations
   * rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 
   * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
   *
-  * @see PAPI_stop_counters() PAPI_ipc() PAPI_set_opt()
+  * @see PAPI_flips()
+  * @see PAPI_ipc()
+  * @see PAPI_epc()
+  * @see PAPI_stop_counters()
  */
 int
 PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
@@ -275,6 +269,49 @@ PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
 	return ( retval );
 }
 
+/** @class PAPI_ipc
+  *	@brief Simplified call to get instructions per cycle, real and processor time. 
+  *
+  *	@par C Interface: 
+  *	\#include <papi.h> @n
+  *	int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
+  *
+  * @param *rtime
+  *		total realtime since the first call
+  *	@param *ptime
+  *		total process time since the first call
+  *	@param *ins
+  *		total instructions since the first call
+  *	@param *ipc
+  *		incremental instructions per cycle since the last call
+  * 
+  *	@retval PAPI_EINVAL 
+  *		The counters were already started by something other than PAPI_ipc().
+  *	@retval PAPI_ENOEVNT 
+  *		The floating point operations event does not exist.
+  *	@retval PAPI_ENOMEM 
+  *		Insufficient memory to complete the operation. 
+  *
+  * The first call to PAPI_ipc() will initialize the PAPI High Level interface, 
+  * set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events 
+  * and start the counters. 
+  *
+  * Subsequent calls will read the counters and return total real time, 
+  * total process time, total instructions since the start of the 
+  * measurement and the IPC rate since the latest call to PAPI_ipc().
+  *
+  * A call to PAPI_stop_counters() will stop the counters from running and then 
+  * calls such as PAPI_start_counters() or other rate calls can safely be used.
+  *
+  * PAPI_ipc should return a ratio greater than 1.0, indicating instruction level
+  * parallelism within the chip. The larger this ratio the more effeciently the program
+  * is running.
+  *
+  * @see PAPI_flips()
+  * @see PAPI_flops()
+  * @see PAPI_epc()
+  * @see PAPI_stop_counters()
+ */
 int
 PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
 {
@@ -289,8 +326,61 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
 	return ( retval );
 }
 
+/** @class PAPI_epc
+  *	@brief Simplified call to get arbitrary events per cycle, real and processor time. 
+  *
+  *	@par C Interface: 
+  *	\#include <papi.h> @n
+  *	int PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc );
+  *
+  * @param event
+  *		event code to be measured (0 defaults to PAPI_TOT_INS)
+  * @param *rtime
+  *		total realtime since the first call
+  *	@param *ptime
+  *		total process time since the first call
+  *	@param *ref
+  *		incremental reference clock cycles since the last call
+  *	@param *core
+  *		incremental core clock cycles since the last call
+  *	@param *evt
+  *		total events since the first call
+  *	@param *epc
+  *		incremental events per cycle since the last call
+  * 
+  *	@retval PAPI_EINVAL 
+  *		The counters were already started by something other than PAPI_epc().
+  *	@retval PAPI_ENOEVNT 
+  *		One of the requested events does not exist.
+  *	@retval PAPI_ENOMEM 
+  *		Insufficient memory to complete the operation. 
+  *
+  * The first call to PAPI_epc() will initialize the PAPI High Level interface, 
+  * set up the counters to monitor the user specified event, PAPI_TOT_CYC, 
+  * and PAPI_REF_CYC (if it exists) and start the counters. 
+  *
+  * Subsequent calls will read the counters and return total real time, 
+  * total process time, total event counts since the start of the 
+  * measurement and the core and reference cycle count and EPC rate since the 
+  * latest call to PAPI_epc(). 
+  
+  * A call to PAPI_stop_counters() will stop the counters from running and then 
+  * calls such as PAPI_start_counters() or other rate calls can safely be used.
+  *
+  * PAPI_epc can provide a more detailed look at algorithm efficiency in light of clock
+  * variability in modern cpus. MFLOPS is no longer an adequate description of peak
+  * performance if clock rates can arbitrarily speed up or slow down. By allowing a
+  * user specified event and reporting reference cycles, core cycles and real time,
+  * PAPI_epc provides the information to compute an accurate effective clock rate, and
+  * an accurate measure of computational throughput.
+  *
+  * @see PAPI_flips()
+  * @see PAPI_flops()
+  * @see PAPI_ipc()
+  * @see PAPI_stop_counters()
+ */
 int
-PAPI_epc( char *name, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )
+PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )
 {
 	long long values[3] = { 0, 0, 0 };
 	int events[3] = {PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_REF_CYC};
@@ -299,18 +389,15 @@ PAPI_epc( char *name, float *rtime, float *ptime, long long *ref, long long *cor
 	if ( rtime == NULL || ptime == NULL || ref == NULL ||core == NULL || evt == NULL || epc == NULL )
 		return PAPI_EINVAL;
 
-	if (name != NULL ) {
-		if ( PAPI_event_name_to_code(name, &events[0]) != PAPI_OK ) {
-			return PAPI_ENOEVNT;
-		}
-	}
+	// if an event is provided, use it; otherwise use TOT_INS
+	if (event != 0 ) events[0] = event;
 	
 	if ( PAPI_query_event( ( int ) PAPI_REF_CYC ) != PAPI_OK )
 		events[2] = 0;
 
 	retval = _hl_rate_calls( rtime, ptime, events, values, evt, epc, HL_EPC );
-	*ref = values[2];
 	*core = values[1];
+	*ref = values[2];
 	return ( retval );
 }
 
@@ -318,7 +405,7 @@ int
 _hl_rate_calls( float *real_time, float *proc_time, int *events,
 		long long *values, long long *ins, float *rate, int mode )
 {
-	float rt, pt; // real and process times in usec
+	long long rt, pt; // current elapsed real and process times in usec
 	int num_events = 2;
 	int retval = 0;
 	HighLevelInfo *state = NULL;
@@ -338,13 +425,14 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 			case HL_FLIP:
 				num_events = 1;
 				break;
+			case HL_IPC:
+				break;
 			case HL_EPC:
 				if ( events[2] != 0 ) num_events = 3;
 				break;
 			default:
 				return PAPI_EINVAL;
 		}
-		
 		if (( retval = PAPI_add_events( state->EventSet, events, num_events )) != PAPI_OK ) {
 			_internal_cleanup_hl_info( state );
 			PAPI_cleanup_eventset( state->EventSet );
@@ -352,14 +440,18 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 		}
 
 		state->total_ins = 0;
-		state->initial_real_time = PAPI_get_real_usec( );
-		state->initial_proc_time = PAPI_get_virt_usec( );
+		state->initial_real_time = state->last_real_time = PAPI_get_real_usec( );
+		state->initial_proc_time = state->last_proc_time = PAPI_get_virt_usec( );
 
 		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 			return retval;
 		}
-
+		
+		/* Initialize the interface */
 		state->running = mode;
+		*real_time 	= 0.0;
+		*proc_time 	= 0.0;
+		*rate 		= 0.0;
 
 	} else {
 		if ( ( retval = PAPI_stop( state->EventSet, values ) ) != PAPI_OK ) {
@@ -367,13 +459,13 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 			return retval;
 		}
 
-		/* Compute elapsed real and process times  */
-		rt = (float) ( PAPI_get_real_usec() - state->initial_real_time );
-		pt = (float) ( PAPI_get_virt_usec() - state->initial_proc_time );
+		/* Read elapsed real and process times  */
+		rt = PAPI_get_real_usec();
+		pt = PAPI_get_virt_usec();
 
 		/* Convert to seconds with multiplication because it is much faster */
-		*real_time = rt * .000001;
-		*proc_time = pt * .000001;
+		*real_time = ((float)( rt - state->initial_real_time )) * .000001;
+		*proc_time = ((float)( pt - state->initial_proc_time )) * .000001;
 
 		state->total_ins += values[0];
 
@@ -381,8 +473,8 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 			case HL_FLOP:
 			case HL_FLIP:
 				/* Calculate MFLOP and MFLIP rates */
-				if ( *proc_time > 0 ) {
-					 *rate = (float)values[0] / pt;
+				if ( pt > 0 ) {
+					 *rate = (float)values[0] / (pt - state->last_proc_time);
 				} else *rate = 0;
 				break;
 			case HL_IPC:
@@ -395,7 +487,9 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 			default:
 				return PAPI_EINVAL;
 		}
-
+		state->last_real_time = rt;
+		state->last_proc_time = pt;
+	
 		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 			state->running = HL_STOP;
 			return retval;
@@ -404,250 +498,6 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 	*ins = state->total_ins;
 	return PAPI_OK;
 }
-
-#if 0
-/** @class PAPI_ipc
- *	@brief Get instructions per cycle, real and processor time.
- *	
- *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
- *
- *	@param *rtime
- *		total realtime since the first PAPI_flops() call
- *	@param *ptime
- *		total process time since the first PAPI_flops() call
- *	@param *ins
- *		total instructions since the first call
- *	@param *ipc
- *		instructions per cycle achieved since the previous call
- *
- *	@retval PAPI_EINVAL 
- *		The counters were already started by something other than: PAPI_ipc()
- *	@retval PAPI_ENOEVNT 
- *		The total instructions or total cycles event does not exist.
- *	@retval PAPI_ENOMEM 
- *		Insufficient memory to complete the operation. 
- *
- * The first call to PAPI_ipc() will initialize the PAPI High Level interface,
- * set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events 
- * and start the counters. 
- * Subsequent calls will read the counters and return total real time, 
- * total process time, total instructions since the start of the measurement 
- * and the instructions per cycle rate since latest call to PAPI_ipc(). 
- * A call to PAPI_stop_counters()  will stop the counters from running and then 
- * calls such as PAPI_start_counters()  can safely be used. 
- *
- * @see PAPI_flops() PAPI_stop_counters() PAPI_set_opt() PAPI_flips()
- */
-int
-PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
-{
-	long long values[2] = { 0, 0 };
-	int events[2];
-    float rt, pt; // real and process times in usec
-    int retval = 0;
-	int num_events = 0;
-	HighLevelInfo *state = NULL;
-
-	if ( rtime == NULL || ptime == NULL || ins == NULL || ipc == NULL )
-		return PAPI_EINVAL;
-
-	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK ) {
-		return ( retval );
-	}
-	
-	if ( state->running != HL_STOP && state->running != HL_IPC ) {
-		return PAPI_EINVAL;
-	}
-
-	if ( state->running == HL_STOP ) {
-		if ( PAPI_query_event( PAPI_TOT_INS ) != PAPI_OK ) {
-			return PAPI_ENOEVNT;
-		}
-		events[0] = PAPI_TOT_INS;
-		
-		if ( PAPI_query_event( ( int ) PAPI_TOT_CYC ) != PAPI_OK ) {
-		   return PAPI_ENOEVNT;
-		}
-		events[1] = PAPI_TOT_CYC;
-		num_events = 2;
-
-		if (( retval = PAPI_add_events( state->EventSet, events, num_events )) != PAPI_OK ) {
-			_internal_cleanup_hl_info( state );
-			PAPI_cleanup_eventset( state->EventSet );
-			return retval;
-		}
-
-		state->initial_real_time = PAPI_get_real_usec(  );
-		state->initial_proc_time = PAPI_get_virt_usec();
-
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
-		   return retval;
-		}
-
-		state->running = HL_IPC;
-
-	} else {
-		if ( ( retval = PAPI_stop( state->EventSet, values ) ) != PAPI_OK ) {
-			state->running = HL_STOP;
-			return retval;
-		}
-
-		/* Compute elapsed real and process times  */
-		rt = (float) ( PAPI_get_real_usec() - state->initial_real_time );
-		pt = (float) ( PAPI_get_virt_usec() - state->initial_proc_time );
-
-		/* Convert to seconds with multiplication because it is much faster */
-		*rtime = rt * .000001;
-		*ptime = pt * .000001;
-
-		state->total_ins += values[0];
-
-        /* Calculate IPC */
-		if (values[1]!=0) {
-			*ipc = (float) ((float)values[0] / (float) ( values[1]));
-		}
-
-		*ins = state->total_ins;
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
-			state->running = HL_STOP;
-			return retval;
-		}
-	}
-
-	return PAPI_OK;
-}
-
-/** @class PAPI_epc
- *	@brief Get events per cycle, real and processor time, core and ref cycles.
- *	
- *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_epc( char *name, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc );
- *
- *	@param *name
- *		name of the event to be measured
- *	@param *rtime
- *		total realtime since the first PAPI_flops() call
- *	@param *ptime
- *		total process time since the first PAPI_flops() call
- *	@param *ref
- *		total reference cycles since the first call (where supported; otherwise 0)
- *	@param *core
- *		total core cycles since the first call
- *	@param *evt
- *		total events since the first call
- *	@param *ipc
- *		events per core cycle achieved since the previous call
- *
- *	@retval PAPI_EINVAL 
- *		The counters were already started by something other than: PAPI_epc()
- *	@retval PAPI_ENOEVNT 
- *		The total events or total cycles event does not exist.
- *	@retval PAPI_ENOMEM 
- *		Insufficient memory to complete the operation. 
- *
- * The first call to PAPI_epc() will initialize the PAPI High Level interface,
- * set up the counters to monitor the named event, PAPI_REF_CYC (where available),
- * and PAPI_TOT_CYC events, and start the counters. 
- * Subsequent calls will read the counters and return total real time, 
- * total process time, total reference and core cycles, and total events 
- * since the start of the measurement and the event per cycle rate 
- * since latest call to PAPI_epc(). 
- * A call to PAPI_stop_counters()  will stop the counters from running and then 
- * calls such as PAPI_start_counters()  can safely be used. 
- *
- * @see PAPI_flops()  PAPI_flips()  PAPI_ipc() PAPI_stop_counters() PAPI_set_opt()
- */
-int
-PAPI_epc( char *name, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )
-{
-	long long values[3] = { 0, 0, 0 };
-	int events[3];
-    float rt, pt; // real and process times in usec
-	int retval = 0;
-	int num_events = 0;
-	HighLevelInfo *state = NULL;
-
-	if ( rtime == NULL || ptime == NULL || core == NULL || evt == NULL || epc == NULL )
-		return PAPI_EINVAL;
-
-	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK )
-		return ( retval );
-
-	if ( state->running != HL_STOP && state->running != HL_EPC ) {
-		return PAPI_EINVAL;
-	}
-
-	if ( state->running == HL_STOP ) {
-		if (name == NULL ) events[0] = PAPI_TOT_INS;
-		else {
-	        if ( PAPI_event_name_to_code(name, &events[0]) != PAPI_OK ) {
-				return PAPI_ENOEVNT;
-        	}
-        }
-
-		if ( PAPI_query_event( ( int ) PAPI_TOT_CYC ) != PAPI_OK ) {
-		   return PAPI_ENOEVNT;
-		}
-		events[1] = PAPI_TOT_CYC;
-		num_events = 2;
-		
-		if ( PAPI_query_event( ( int ) PAPI_REF_CYC ) == PAPI_OK ) {
-			events[2] = PAPI_REF_CYC;
-			num_events = 3;
-		}
-
-		if (( retval = PAPI_add_events( state->EventSet, events, num_events )) != PAPI_OK ) {
-			_internal_cleanup_hl_info( state );
-			PAPI_cleanup_eventset( state->EventSet );
-			return retval;
-		}
-
-		state->initial_real_time = PAPI_get_real_usec(  );
-		state->initial_proc_time = PAPI_get_virt_usec();
-
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
-		   return retval;
-		}
-
-		state->running = HL_EPC;
-
-	} else {
-		if ( ( retval = PAPI_stop( state->EventSet, values ) ) != PAPI_OK ) {
-			state->running = HL_STOP;
-			return retval;
-		}
-
-		/* Compute elapsed real and process times  */
-		rt = (float) ( PAPI_get_real_usec() - state->initial_real_time );
-		pt = (float) ( PAPI_get_virt_usec() - state->initial_proc_time );
-
-		/* Convert to seconds with multiplication because it is much faster */
-		*rtime = rt * .000001;
-		*ptime = pt * .000001;
-
-		state->total_ins += values[0];
-	
-		*evt = state->total_ins;
-		*core = values[1];
-		*ref = values[2];
-	
-	    /* Calculate EPC */
-		if (values[1]!=0) {
-			*epc = (float) ((float)values[0] / (float) ( values[1]));
-		}
-
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
-			state->running = HL_STOP;
-			return retval;
-		}
-	}
-
-    return PAPI_OK;
-}
-#endif
 
 /** @class PAPI_num_counters
   *	@brief Get the number of hardware counters available on the system.

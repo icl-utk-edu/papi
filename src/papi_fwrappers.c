@@ -1261,25 +1261,13 @@ PAPI_FCALL( papif_ipc, PAPIF_IPC,
  *
  * @see PAPI_epc
  */
-#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_epc, PAPIF_EPC,
-			( char *EventName, float *rtime, float *ptime, 
-			  long long *ref, long long *core, long long *evt, float *epc,
-			  int *check, int Event_len) )
-{
-	char tmp[PAPI_MAX_STR_LEN];
-	Fortran2cstring( tmp, EventName, PAPI_MAX_STR_LEN, Event_len );
-	*check = PAPI_epc( EventName, rtime, ptime, ref, core, evt, epc );
-}
-#else
-PAPI_FCALL( papif_epc, PAPIF_EPC,
-			( char *EventName, float *rtime, float *ptime, 
+			( int event, float *rtime, float *ptime, 
 			  long long *ref, long long *core, long long *evt, float *epc,
 			  int *check) )
 {
-	*check = PAPI_epc( EventName, rtime, ptime, ref, core, evt, epc );
+	*check = PAPI_epc( event, rtime, ptime, ref, core, evt, epc );
 }
-#endif
 
 /** @class PAPIF_flips
  *	@ingroup PAPIF

@@ -1,37 +1,23 @@
 /* file hl_rates.c
- * This simply tries to add the events listed on the command line one at a time
- * then starts and stops the counters and prints the results
-*/
-
-/** 
-  *	@page papi_command_line 
-  * @brief executes PAPI preset or native events from the command line. 
-  *
-  *	@section Synopsis
-  *		papi_command_line < event > < event > ...
-  *
-  *	@section Description
-  *		papi_command_line is a PAPI utility program that adds named events from the 
-  *		command line to a PAPI EventSet and does some work with that EventSet. 
-  *		This serves as a handy way to see if events can be counted together, 
-  *		and if they give reasonable results for known work.
-  *
-  *	@section Options
-  *		This utility has no command line options.
-  *
-  *	@section Bugs
-  *		There are no known bugs in this utility. 
-  *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+ * This test exercises the four PAPI High Level rate calls:
+ *    PAPI_flops, PAPI_flips, PAPI_ipc, and PAPI_epc
+ * flops and flips report cumulative real and process time since the first call,
+ * and either floating point operations or instructions since the first call.
+ * Also reported is incremental flop or flip rate since the last call.
+ *
+ * PAPI_ipc reports the same cumulative information, substituting total instructions
+ * for flops or flips, and also reports instructions per (process) cycle as
+ * a measure of execution efficiency.
+ *
+ * PAPI_epc is new in PAPI 5.2. It reports the same information as PAPI_IPC, but 
+ * for an arbitrary event instead of total cycles. It also reports incremental 
+ * core and (where available) reference cycles to allow the computation of 
+ * effective clock rates in the presence of clock scaling like speed step or turbo-boost.
+ * 
+ * This test computes a 1000 x 1000 matrix multiply for orders of indexing for
+ * each of the four rate calls. It also accepts a command line parameter for the
+ * event to be measured for PAPI_epc. If not provided, PAPI_TOT_INS is measured.
  */
-
-
-/*
-   int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips);
-   int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops);
-   int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc);
-   int PAPI_epc(char *name, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc);
-*/
 
 #include "papi_test.h"
 
@@ -42,7 +28,7 @@ static float matrix_a[ROWS][COLUMNS], matrix_b[ROWS][COLUMNS],matrix_c[ROWS][COL
 
 static void init_mat()
 {
-	// Multiply the two matrices
+	// Initialize the two matrices
 	int i, j;
 	for (i = 0; i < ROWS; i++) {
 		for (j = 0; j < COLUMNS; j++) {
@@ -86,86 +72,151 @@ static void swapped_matmul()
 int
 main( int argc, char **argv )
 {
-	int retval;
-	float rtime, ptime, mflips, mflops, ipc;
-	long long flpins, flpops, ins;
+	int retval, event = 0;
+	float rtime, ptime, mflips, mflops, ipc, epc;
+	long long flpins, flpops, ins, ref, core, evt;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	init_mat();
-	printf( "PAPI_flips\n");
-	retval = PAPI_flips(&rtime, &ptime, &flpins, &mflips);
-	printf( "Start\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "FP Instructions: %lld\n", flpins);
-	printf( "MFLIPS %f\n", mflips);
-	classic_matmul();
-	retval = PAPI_flips(&rtime, &ptime, &flpins, &mflips);
-	printf( "Classic\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "FP Instructions: %lld\n", flpins);
-	printf( "MFLIPS %f\n", mflips);
-	swapped_matmul();
-	retval = PAPI_flips(&rtime, &ptime, &flpins, &mflips);
-	printf( "Swapped\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "FP Instructions: %lld\n", flpins);
-	printf( "MFLIPS %f\n", mflips);
 
-	PAPI_stop_counters(NULL, 0); // turn off flips
+	printf( "\n----------------------------------\n" );
+	printf( "PAPI_flips\n");
+	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
+		PAPI_perror( "PAPI_flips" );
+	printf( "\nStart\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "FP Instructions: %lld\n", flpins);
+	printf( "MFLIPS           %f\n", mflips);
+	classic_matmul();
+	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
+		PAPI_perror( "PAPI_flips" );
+	printf( "\nClassic\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "FP Instructions: %lld\n", flpins);
+	printf( "MFLIPS           %f\n", mflips);
+	swapped_matmul();
+	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
+		PAPI_perror( "PAPI_flips" );
+	printf( "\nSwapped\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "FP Instructions: %lld\n", flpins);
+	printf( "MFLIPS           %f\n", mflips);
+
+	// turn off flips
+	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
+		PAPI_perror( "PAPI_stop_counters" );
 	printf( "\n----------------------------------\n" );
 
 	printf( "PAPI_flops\n");
-	retval = PAPI_flops(&rtime, &ptime, &flpops, &mflops);
-	printf( "Start\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "FP Operations: %lld\n", flpops);
-	printf( "MFLOPS %f\n", mflops);
+	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
+		PAPI_perror( "PAPI_flops" );
+	printf( "\nStart\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "FP Operations:   %lld\n", flpops);
+	printf( "MFLOPS           %f\n", mflops);
 	classic_matmul();
-	retval = PAPI_flops(&rtime, &ptime, &flpops, &mflops);
-	printf( "Classic\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "FP Operations: %lld\n", flpops);
-	printf( "MFLOPS %f\n", mflops);
+	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
+		PAPI_perror( "PAPI_flops" );
+	printf( "\nClassic\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "FP Operations:   %lld\n", flpops);
+	printf( "MFLOPS           %f\n", mflops);
 	swapped_matmul();
-	retval = PAPI_flops(&rtime, &ptime, &flpops, &mflops);
-	printf( "Swapped\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "FP Operations: %lld\n", flpops);
-	printf( "MFLOPS %f\n", mflops);
+	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
+		PAPI_perror( "PAPI_flops" );
+	printf( "\nSwapped\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "FP Operations:   %lld\n", flpops);
+	printf( "MFLOPS           %f\n", mflops);
 
-	PAPI_stop_counters(NULL, 0); // turn off flops
+	// turn off flops
+	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
+		PAPI_perror( "PAPI_stop_counters" );
 	printf( "\n----------------------------------\n" );
 
 	printf( "PAPI_ipc\n");
-	retval = PAPI_ipc(&rtime, &ptime, &ins, &ipc);
-	printf( "Start\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "Instructions: %lld\n", ins);
-	printf( "IPC %f\n", ipc);
+	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
+		PAPI_perror( "PAPI_ipc" );
+	printf( "\nStart\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "Instructions:    %lld\n", ins);
+	printf( "IPC              %f\n", ipc);
 	classic_matmul();
-	retval = PAPI_ipc(&rtime, &ptime, &ins, &ipc);
-	printf( "Classic\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "Instructions: %lld\n", ins);
-	printf( "IPC %f\n", ipc);
+	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
+		PAPI_perror( "PAPI_ipc" );
+	printf( "\nClassic\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "Instructions:    %lld\n", ins);
+	printf( "IPC              %f\n", ipc);
 	swapped_matmul();
-	retval = PAPI_ipc(&rtime, &ptime, &ins, &ipc);
-	printf( "Swapped\n");
-	printf( "real time: %f\n", rtime);
-	printf( "process time: %f\n", ptime);
-	printf( "Instructions: %lld\n", ins);
-	printf( "IPC %f\n", ipc);
+	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
+		PAPI_perror( "PAPI_ipc" );
+	printf( "\nSwapped\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "Instructions:    %lld\n", ins);
+	printf( "IPC              %f\n", ipc);
 
-	PAPI_stop_counters(NULL, 0); // turn off ipc
+	// turn off ipc
+	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
+		PAPI_perror( "PAPI_stop_counters" );
+	printf( "\n----------------------------------\n" );
+
+	printf( "PAPI_epc\n");
+	
+	if ( argc >= 2) {
+		retval = PAPI_event_name_to_code( argv[1], &event );
+		if (retval != PAPI_OK) {
+		 	PAPI_perror("PAPI_event_name_to_code");
+		 	printf("Can't find %s; Using PAPI_TOT_INS\n", argv[1]);
+		 	event = 0;
+		} else {
+		 	printf("Using event %s\n", argv[1]);
+		}
+	}
+
+	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK )
+		PAPI_perror( "PAPI_epc" );
+	printf( "\nStart\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "Ref Cycles:      %lld\n", ref);
+	printf( "Core Cycles:     %lld\n", core);
+	printf( "Events:          %lld\n", evt);
+	printf( "EPC:             %f\n", epc);
+	classic_matmul();
+	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK )
+		PAPI_perror( "PAPI_epc" );
+	printf( "\nClassic\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "Ref Cycles:      %lld\n", ref);
+	printf( "Core Cycles:     %lld\n", core);
+	printf( "Events:          %lld\n", evt);
+	printf( "EPC:             %f\n", epc);
+	swapped_matmul();
+	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK )
+		PAPI_perror( "PAPI_epc" );
+	printf( "\nSwapped\n");
+	printf( "real time:       %f\n", rtime);
+	printf( "process time:    %f\n", ptime);
+	printf( "Ref Cycles:      %lld\n", ref);
+	printf( "Core Cycles:     %lld\n", core);
+	printf( "Events:          %lld\n", evt);
+	printf( "EPC:             %f\n", epc);
+
+	// turn off epc
+	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
+		PAPI_perror( "PAPI_stop_counters" );
 	printf( "\n----------------------------------\n" );
 	exit( 1 );
 }
