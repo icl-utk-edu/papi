@@ -1461,19 +1461,13 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
 
 elif test "$MAKEVER" = "linux-perfmon2"; then
     FILENAME=Rules.perfmon2
-    CPUCOMPONENT_NAME=perfmon
-    CPUCOMPONENT_C=perfmon.c
-    CPUCOMPONENT_OBJ=perfmon.obj
-    VECTOR=_papi_pfm_vector
-    PAPI_EVENTS_CSV="papi_events.csv"
+    CPUCOMPONENT_NAME=perfmon2
+    components="perfmon2"
 
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-montecito"); then
     FILENAME=Rules.pfm
     CPUCOMPONENT_NAME=perfmon-ia64
-    CPUCOMPONENT_C=perfmon-ia64.c
-    CPUCOMPONENT_OBJ=perfmon-ia64.obj
-    VECTOR=_ia64_vector
-    PAPI_EVENTS_CSV="papi_events.csv"
+    components="perfmon_ia64"
     VERSION=3.y
     if test "$MAKEVER" = "linux-pfm-itanium2"; then
       CPU=2
