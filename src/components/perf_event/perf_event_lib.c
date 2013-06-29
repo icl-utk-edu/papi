@@ -37,7 +37,6 @@
 
 /* Linux-specific includes */
 #include "mb.h"
-#include "syscalls.h"
 #include "linux-memory.h"
 #include "linux-timer.h"
 #include "linux-common.h"
