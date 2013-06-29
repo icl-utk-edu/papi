@@ -1,5 +1,3 @@
-# $Id$
-
 DESCR = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm library" 
 
 ifneq (/usr,$(PERFCTR_PREFIX))
@@ -31,8 +29,8 @@ endif
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
-MISCHDRS += perfctr-x86.h linux-lock.h mb.h $(PAPI_EVENTS_TABLE)
-MISCSRCS +=  perfctr.c $(ARCH_SPEC_EVTS)
+MISCHDRS += linux-lock.h mb.h $(PAPI_EVENTS_TABLE)
+MISCSRCS +=  $(ARCH_SPEC_EVTS)
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
 ifeq (,$(PERFCTR_OBJS))
@@ -118,8 +116,8 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
 
-perfctr.o: perfctr.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c perfctr.c -o $@
+#perfctr.o: perfctr.c $(HEADERS)
+#	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c perfctr.c -o $@
 
 papi_libpfm3_events.o: papi_libpfm3_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_libpfm3_events.c -o $@

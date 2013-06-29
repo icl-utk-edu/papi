@@ -1419,7 +1419,6 @@ elif test "$MAKEVER" = "linux-generic"; then
     VECTOR=_papi_dummy_vector
 
 elif test "$MAKEVER" = "linux-pe"; then
-
     FILENAME=Rules.pfm4_pe
     CPUCOMPONENT_NAME=perf_event 
     components="perf_event perf_event_uncore"
@@ -1427,20 +1426,14 @@ elif test "$MAKEVER" = "linux-pe"; then
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
     FILENAME=Rules.perfctr-pfm
     CPUCOMPONENT_NAME=perfctr-x86
-    CPUCOMPONENT_C=perfctr-x86.c
-    CPUCOMPONENT_OBJ=perfctr-x86.o
-    VECTOR=_perfctr_vector
-    PAPI_EVENTS_CSV="papi_events.csv"
     VERSION=2.6.x  
+    components="perfctr"
 
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-POWER7" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
     FILENAME=Rules.perfctr
-    CPUCOMPONENT_NAME=perfctr-ppc64
-    CPUCOMPONENT_C=perfctr-ppc64.c
-    CPUCOMPONENT_OBJ=perfctr-ppc64.o
-    VECTOR=_perfctr_vector
-    PAPI_EVENTS_CSV="papi_events.csv"
+    CPUCOMPONENT_NAME=perfctr-ppc
     VERSION=2.7.x
+    components="perfctr_ppc"
     CPU=ppc64
     if test "$MAKEVER" = "linux-perfctr-POWER5"; then
       CPU_MODEL=POWER5

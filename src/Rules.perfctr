@@ -1,5 +1,3 @@
-# $Id$
-
 DESCR = "Linux with PerfCtr $(VERSION) patch and library"
 
 ifneq (/usr,$(PERFCTR_PREFIX))
@@ -31,8 +29,8 @@ endif
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
-MISCHDRS += perfctr-$(CPU).h linux-lock.h mb.h
-MISCSRCS +=  $(CPU)_events.c perfctr.c $(ARCH_SPEC_EVTS)
+MISCHDRS += linux-lock.h mb.h
+MISCSRCS +=  $(ARCH_SPEC_EVTS)
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
@@ -83,8 +81,8 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 $(CPU)_events.o: $(CPU)_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
 
-perfctr.o: perfctr.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c perfctr.c -o $@
+#perfctr.o: perfctr.c $(HEADERS)
+#	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c perfctr.c -o $@
 
 native_clean:
 	-rm -f $(MISCOBJS) libperfctr.so*
