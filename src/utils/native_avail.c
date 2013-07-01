@@ -23,7 +23,7 @@
   * <li>-e EVENTNAME  display detailed information about named native event
   * <li>-i EVENTSTR   include only event names that contain EVENTSTR
   * <li>-x EVENTSTR   exclude any event names that contain EVENTSTR
-  * <li>--nomasks     suppress display of Unit Mask information
+  * <li>--noumasks    suppress display of Unit Mask information
   * </ul>
   *
   * Processor-specific options
@@ -75,7 +75,7 @@ print_help( char **argv )
 	printf( "   -e EVENTNAME display detailed information about named native event\n" );
 	printf( "   -i EVENTSTR  include only event names that contain EVENTSTR\n" );
 	printf( "   -x EVENTSTR  exclude any event names that contain EVENTSTR\n" );
-	printf( "   --nomasks    suppress display of Unit Mask information\n" );
+	printf( "   --noumasks   suppress display of Unit Mask information\n" );
 	printf( "\nProcessor-specific options\n");
 	printf( "  --darr        display events supporting Data Address Range Restriction\n" );
 	printf( "  --dear        display Data Event Address Register events only\n" );
@@ -122,20 +122,29 @@ parse_args( int argc, char **argv, command_flags_t * f )
 			f->details = 1;
 		else if ( !strcmp( argv[i], "-e" ) ) {
 			f->named = 1;
-			f->name = argv[i + 1];
-			if ( no_str_arg( f->name ) ) f->help = 1;
 			i++;
+			f->name = argv[i];
+			if ( i >= argc || no_str_arg( f->name ) ) {
+				printf( "Invalid argument for -e\n");
+				exit(1);
+			}
 		} else if ( !strcmp( argv[i], "-i" ) ) {
 			f->include = 1;
-			f->istr = argv[i + 1];
-			if ( no_str_arg( f->istr ) ) f->help = 1;
 			i++;
+			f->istr = argv[i];
+			if ( i >= argc || no_str_arg( f->istr ) ) {
+				printf( "Invalid argument for -i\n");
+				exit(1);
+			}
 		} else if ( !strcmp( argv[i], "-x" ) ) {
 			f->xclude = 1;
-			f->xstr = argv[i + 1];
-			if ( no_str_arg( f->xstr ) ) f->help = 1;
 			i++;
-		} else if ( strstr( argv[i], "-h" ) )
+			f->xstr = argv[i];
+			if ( i >= argc || no_str_arg( f->xstr ) ) {
+				printf( "Invalid argument for -x\n");
+				exit(1);
+			}
+		} else if ( !strcmp( argv[i], "-h" ) || !strcmp( argv[i], "--help" ) )
 			f->help = 1;
 		else {
 			printf( "%s is not supported\n", argv[i] );
