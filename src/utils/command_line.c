@@ -17,7 +17,11 @@
   *		and if they give reasonable results for known work.
   *
   *	@section Options
-  *		This utility has no command line options.
+  * <ul>
+  *		<li>-u          Display output values as unsigned integers
+  *		<li>-x          Display output values as hexadecimal
+  *		<li>-h          Display help information about this utility.
+  *	</ul>
   *
   *	@section Bugs
   *		There are no known bugs in this utility. 
@@ -78,12 +82,12 @@ main( int argc, char **argv )
 		test_fail_exit( __FILE__, __LINE__, "malloc", PAPI_ESYS );
 
 	for ( num_events = 0, i = 1; i < argc; i++ ) {
-		if ( strstr( argv[i], "-h" ) ) {
+		if ( !strcmp( argv[i], "-h" ) ) {
 			print_help( argv );
 			exit( 1 );
-		} else if ( strstr( argv[i], "-u" ) ) {
+		} else if ( !strcmp( argv[i], "-u" ) ) {
 			u_format = 1;
-		} else if ( strstr( argv[i], "-x" ) ) {
+		} else if ( !strcmp( argv[i], "-x" ) ) {
 			hex_format = 1;
 		} else {
 			if ( ( retval = PAPI_add_named_event( EventSet, argv[i] ) ) != PAPI_OK ) {
