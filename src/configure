@@ -849,6 +849,11 @@ if test -n "$ac_init_help"; then
    esac
   cat <<\_ACEOF
 
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-perf-event-uncore		Disable perf_event uncore component
+
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
@@ -2246,7 +2251,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2249:" \
+echo "$as_me:2254:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5886,6 +5891,7 @@ if test "x$mic" = "xno"; then
 fi
 
 force_perf_events=no
+disable_uncore=yes
 pe_incdir="$pfm_incdir/perfmon"
 
 
@@ -5895,6 +5901,19 @@ if test "${with_perf_events+set}" = set; then
   force_perf_events=yes
 	       user_specified_interface=pe
 fi;
+
+# Check whether --enable-perf_event_uncore or --disable-perf_event_uncore was given.
+if test "${enable_perf_event_uncore+set}" = set; then
+  enableval="$enable_perf_event_uncore"
+
+fi;
+
+if test "x$enable_perf_event_uncore" != "xno"; then
+
+	disable_uncore=no
+
+fi
+
 
 
 # Check whether --with-pe_incdir or --without-pe_incdir was given.
@@ -7278,7 +7297,10 @@ elif test "$MAKEVER" = "linux-generic"; then
 elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm4_pe
     CPUCOMPONENT_NAME=perf_event
-    components="perf_event perf_event_uncore"
+    components="perf_event"
+    if test "$disable_uncore" = "no"; then
+       components="$components perf_event_uncore"
+    fi
 
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
     FILENAME=Rules.perfctr-pfm

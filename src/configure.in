@@ -976,12 +976,20 @@ if test "x$mic" = "xno"; then
 fi
 
 force_perf_events=no
+disable_uncore=yes
 pe_incdir="$pfm_incdir/perfmon"
 
 AC_ARG_WITH(perf_events,
               [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
               [force_perf_events=yes
 	       user_specified_interface=pe])
+
+AC_ARG_ENABLE(perf_event_uncore,
+		[  --disable-perf-event-uncore		Disable perf_event uncore component])
+
+AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
+	disable_uncore=no
+])
 
 AC_ARG_WITH(pe_incdir,
 	          [  --with-pe-incdir=<path>		Specify path to the correct perf header file],
@@ -1421,7 +1429,10 @@ elif test "$MAKEVER" = "linux-generic"; then
 elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm4_pe
     CPUCOMPONENT_NAME=perf_event 
-    components="perf_event perf_event_uncore"
+    components="perf_event"
+    if test "$disable_uncore" = "no"; then
+       components="$components perf_event_uncore"
+    fi
 
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
     FILENAME=Rules.perfctr-pfm
