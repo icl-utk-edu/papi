@@ -66,11 +66,14 @@ main( int argc, char **argv )
 	PAPI_event_info_t info;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
-	for ( i = 0; i < argc; i++ )
+	for ( i = 1; i < argc; i++ )
 		if ( argv[i] ) {
-			if ( strstr( argv[i], "-a" ) )
+			if ( !strcmp( argv[i], "-a" ) )
 				print_avail_only = PAPI_PRESET_ENUM_AVAIL;
-			if ( strstr( argv[i], "-h" ) ) {
+			else if ( !strcmp( argv[i], "-h" ) ) {
+				print_help(  );
+				exit( 1 );
+			} else {
 				print_help(  );
 				exit( 1 );
 			}
