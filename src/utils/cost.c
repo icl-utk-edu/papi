@@ -182,34 +182,33 @@ main( int argc, char **argv )
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-	for ( i = 0; i < argc; i++ ) {
-		if ( argv[i] ) {
-			if ( strstr( argv[i], "-b" ) ) {
-				bins = atoi( argv[i + 1] );
-				if ( bins )
-					i++;
-				else {
-					printf( "-b requires a bin count!\n" );
-					exit( 1 );
-				}
-			}
-			if ( strstr( argv[i], "-d" ) )
-				show_dist = 1;
-			if ( strstr( argv[i], "-h" ) ) {
-				print_help(  );
+	for ( i = 1; i < argc; i++ ) {
+		if ( !strcmp( argv[i], "-b" ) ) {
+			i++;
+			if ( i >= argc || (bins = atoi( argv[i] ) > 0 ) ) {
+				printf( "-b requires a positive bin count!\n" );
 				exit( 1 );
 			}
-			if ( strstr( argv[i], "-s" ) )
-				show_std_dev = 1;
-			if ( strstr( argv[i], "-t" ) ) {
-				num_iters = ( int ) atol( argv[i + 1] );
-				if ( num_iters )
-					i++;
-				else {
-					printf( "-t requires a threshold value!\n" );
-					exit( 1 );
-				}
+		}
+		else if ( !strcmp( argv[i], "-d" ) )
+			show_dist = 1;
+		else if ( !strcmp( argv[i], "-h" ) ) {
+			print_help(  );
+			exit( 1 );
+		}
+		else if ( !strcmp( argv[i], "-s" ) )
+			show_std_dev = 1;
+		else if ( !strcmp( argv[i], "-t" ) ) {
+			i++;
+			if ( i >= argc || (num_iters = ( int ) atol( argv[i] ) > 0) ) {
+				printf( "-t requires a positive threshold value!\n" );
+				exit( 1 );
 			}
+		}
+		else {
+			/* If not a valid option, print out some help information */
+			print_help( );
+			exit( 1 );
 		}
 	}
 
