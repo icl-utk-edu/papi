@@ -1101,6 +1101,13 @@ static const intel_x86_umask_t hsw_uops_executed[]={
     .ucode  = 0x200,
     .uflags = INTEL_X86_DFL,
   },
+  { .uname = "STALL_CYCLES",
+    .udesc  = "Number of cycles with no uops executed",
+    .ucode  = 0x200 | INTEL_X86_MOD_INV | (1 << INTEL_X86_CMASK_BIT), /* inv=1 cnt=1 */
+    .uequiv = "CORE:c=1:i=1",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_I | _INTEL_X86_ATTR_C,
+  },
 };
 
 static const intel_x86_umask_t hsw_uops_executed_port[]={
