@@ -55,7 +55,7 @@ parse_args( int argc, char **argv, command_flags_t * f )
 	for ( i = 1; i < argc; i++ ) {
 		if ( !strcmp( argv[i], "-d" ) ) {
 			f->details = 1;
-		} else if ( strstr( argv[i], "-h" ) )
+		} else if ( !strcmp( argv[i], "-h" ) || !strcmp( argv[i], "--help" ) )
 			f->help = 1;
 		else
 			printf( "%s is not supported\n", argv[i] );
