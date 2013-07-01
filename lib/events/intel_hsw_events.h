@@ -2228,7 +2228,7 @@ static const intel_x86_entry_t intel_hsw_pe[]={
   },
   { .name = "LSD",
     .desc   = "Loop stream detector",
-    .code = 0xa0,
+    .code = 0xa8,
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
