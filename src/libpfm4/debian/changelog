@@ -1,3 +1,14 @@
+libpfm4 (4.0) unstable; urgency=low
+  * Intel IVB-EP support
+  * Intel IVB updates support
+  * Intel SNB updates support
+  * Intel SNB-EP uncore support
+  * ldlat support (PEBS-LL)
+  * New Intel Atom support
+  * bug fixes
+
+ -- Stephane Eranian <eranian@gmail.com>  Fri, 08 JUn  2013 18:45:01 +0200
+
 libpfm4 (3.0) unstable; urgency=low
 
   * ARM Cortex A15 support

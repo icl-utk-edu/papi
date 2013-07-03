@@ -93,6 +93,7 @@ typedef struct {
 #define PV_POWER7p	0x004a
 #define PV_970MP	0x0044
 #define PV_970GX	0x0045
+#define PV_POWER8	0x004b
 
 extern int pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info);
 extern int pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);

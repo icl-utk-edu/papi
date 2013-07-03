@@ -58,7 +58,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_nhm_unc.c pfmlib_intel_nhm.c \
 	  pfmlib_intel_wsm.c  \
 	  pfmlib_intel_snb.c pfmlib_intel_snb_unc.c \
-	  pfmlib_intel_ivb.c \
+	  pfmlib_intel_ivb.c pfmlib_intel_ivb_unc.c \
 	  pfmlib_intel_hsw.c \
 	  pfmlib_intel_snbep_unc.c \
 	  pfmlib_intel_snbep_unc_cbo.c \
@@ -95,7 +95,7 @@ SRCS += pfmlib_powerpc_perf_event.c
 endif
 
 INCARCH = $(INC_POWERPC)
-SRCS   += pfmlib_powerpc.c pfmlib_power4.c pfmlib_ppc970.c pfmlib_power5.c pfmlib_power6.c pfmlib_power7.c pfmlib_torrent.c
+SRCS   += pfmlib_powerpc.c pfmlib_power4.c pfmlib_ppc970.c pfmlib_power5.c pfmlib_power6.c pfmlib_power7.c pfmlib_torrent.c pfmlib_power8.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 
@@ -227,6 +227,7 @@ INC_POWERPC=events/ppc970_events.h	\
 	events/power5+_events.h		\
 	events/power6_events.h		\
 	events/power7_events.h		\
+	events/power8_events.h		\
 	events/torrent_events.h
 
 INC_S390X=pfmlib_s390x_priv.h \

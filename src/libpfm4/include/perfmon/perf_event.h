@@ -24,10 +24,10 @@
 
 #include <sys/types.h>
 #include <unistd.h>		/* for syscall numbers */
+#include <inttypes.h>
 #include <sys/syscall.h>	/* for syscall stub macros */
 #include <sys/ioctl.h>		/* for _IO */
 #include <sys/prctl.h>		/* for prctl() comamnds */
-#include <perfmon/pfmlib.h>	/* for os_err_t */
 
 #ifdef __cplusplus
 extern "C" {
@@ -407,7 +407,7 @@ enum perf_callchain_context {
 /*
  * perf_event_open() syscall stub
  */
-static inline os_err_t
+static inline int
 perf_event_open(
 	struct perf_event_attr		*hw_event_uptr,
 	pid_t				pid,
