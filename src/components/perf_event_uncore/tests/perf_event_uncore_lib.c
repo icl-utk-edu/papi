@@ -37,11 +37,13 @@ char *get_uncore_event(char *event, int size) {
 		    return event;
 		    break;
 	   case 42: /* SandyBridge */
-	   case 58: /* IvyBridge */
 	            strncpy(event,"snb_unc_cbo0::UNC_CLOCKTICKS",size);
 		    return event;
 		    break;
-
+	   case 58: /* IvyBridge */
+	            strncpy(event,"ivb_unc_cbo0::UNC_CLOCKTICKS",size);
+		    return event;
+		    break;
 	 }
       }
       return NULL;
