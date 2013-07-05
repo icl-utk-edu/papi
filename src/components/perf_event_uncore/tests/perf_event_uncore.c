@@ -13,6 +13,8 @@ int main( int argc, char **argv ) {
    long long values[1];
    char *uncore_event=NULL;
    char event_name[BUFSIZ];
+   int cidx,numcmp,uncore_cidx=-1;
+   const PAPI_component_info_t *cmpinfo = NULL;
 
    /* Set TESTS_QUIET variable */
    tests_quiet( argc, argv );
@@ -21,6 +23,33 @@ int main( int argc, char **argv ) {
    retval = PAPI_library_init( PAPI_VER_CURRENT );
    if ( retval != PAPI_VER_CURRENT ) {
       test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+   }
+
+   /* Find the uncore PMU */
+   numcmp = PAPI_num_components();
+
+   for(cidx=0; cidx<numcmp; cidx++) {
+
+      if ( (cmpinfo = PAPI_get_component_info(cidx)) == NULL) {
+         test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
+      }
+
+      if (!strcmp(cmpinfo->name,"perf_event_uncore")) {
+         uncore_cidx=cidx;
+
+         if (cmpinfo->disabled) {
+            if (!TESTS_QUIET) {
+               printf("perf_event_uncore component disabled: %s\n",
+                        cmpinfo->disabled_reason);
+            }
+            test_skip(__FILE__,__LINE__,"perf_event_uncore component disabled",0);
+         }
+         break;
+      }
+   }
+
+   if (uncore_cidx<0) {
+      test_skip(__FILE__,__LINE__,"perf_event_uncore component not found",0);
    }
 
    /* Get a relevant event name */
@@ -37,7 +66,7 @@ int main( int argc, char **argv ) {
    }
 
    /* Set a component for the EventSet */
-   retval = PAPI_assign_eventset_component(EventSet, 0);
+   retval = PAPI_assign_eventset_component(EventSet, uncore_cidx);
 
    /* we need to set to a certain cpu for uncore to work */
 
