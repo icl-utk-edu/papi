@@ -77,7 +77,9 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_set_opt(PAPI_CPU_ATTACH,(PAPI_option_t*)&cpu_opt);
    if (retval != PAPI_OK) {
-      test_fail(__FILE__, __LINE__, "PAPI_CPU_ATTACH",retval);
+      test_skip( __FILE__, __LINE__,
+		      "this test; trying to PAPI_CPU_ATTACH; need to run as root",
+		      retval);
    }
 
    /* we need to set the granularity to system-wide for uncore to work */
