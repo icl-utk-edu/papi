@@ -96,12 +96,53 @@ static int pmu_is_present_and_right_type(pfm_pmu_info_t *pinfo, int type) {
 }
 
 
+/** @class  find_event
+ *  @brief  looks up an event, returns it if it exists
+ *
+ *  @param[in] name
+ *		-- name of the event
+ *  @param[in] pmu_type
+ *		-- type of the PMU
+ *  @returns returns libpfm4 number of the event or PFM_ERR_NOTFOUND
+ *
+ */
+
+static int find_event(char *name, int pmu_type) {
+
+    int ret, actual_idx;
+    pfm_pmu_info_t pinfo;
+    pfm_event_info_t event_info;
+
+    SUBDBG("Looking for %s\n",name);
+
+    actual_idx=pfm_find_event(name);
+    if (actual_idx<0) {
+    	return PFM_ERR_NOTFOUND;
+    }
+
+    memset(&event_info,0,sizeof(pfm_event_info_t));
+    ret=pfm_get_event_info(actual_idx, PFM_OS_PERF_EVENT, &event_info);
+    if (ret<0) {
+	return PFM_ERR_NOTFOUND;
+    }
+
+    memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+    pfm_get_pmu_info(event_info.pmu, &pinfo);
+    if (pmu_is_present_and_right_type(&pinfo,pmu_type)) {
+       return actual_idx;
+    }
+
+    return PFM_ERR_NOTFOUND;
+}
+
+
 /** @class  find_event_no_aliases
  *  @brief  looks up an event, avoiding aliases, returns it if it exists
  *
  *  @param[in] name
  *             -- name of the event
- *
+ *  @param[in] pmu-type
+ *             -- type of PMU
  *  @returns returns libpfm4 number of the event or PFM_ERR_NOTFOUND
  *
  */
@@ -146,6 +187,7 @@ static int find_event_no_aliases(char *name, int pmu_type) {
     }
     return PFM_ERR_NOTFOUND;
 }
+
 
 /** @class  find_next_no_aliases
  *  @brief  finds the event after this one, avoiding any event alias issues
@@ -790,7 +832,8 @@ _papi_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
      /* using libpfm4                                    */
 
      SUBDBG("Using pfm to look up event %s\n",name);
-     actual_idx=pfm_find_event(name);
+
+     actual_idx=find_event(name, event_table->pmu_type);
      if (actual_idx<0) {
         return _papi_libpfm4_error(actual_idx);
      }
