@@ -1469,12 +1469,8 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
 	    }
 	 }
          if (pmu_type==PMU_TYPE_UNCORE) {
-	     /* Just use the first one */
-	    if (found_default==0) {
-	       memcpy(&(event_table->default_pmu),
-		      &pinfo,sizeof(pfm_pmu_info_t));
-	       found_default++;
-	    }
+	     /* To avoid confusion, no "default" CPU for uncore */
+	       found_default=1;
 	 }
       }
    }
