@@ -13,8 +13,7 @@ int main( int argc, char **argv ) {
    long long values[1];
    char *uncore_event=NULL;
    char event_name[BUFSIZ];
-   int cidx,numcmp,uncore_cidx=-1;
-   const PAPI_component_info_t *cmpinfo = NULL;
+   int uncore_cidx=-1;
 
    /* Set TESTS_QUIET variable */
    tests_quiet( argc, argv );
@@ -26,28 +25,7 @@ int main( int argc, char **argv ) {
    }
 
    /* Find the uncore PMU */
-   numcmp = PAPI_num_components();
-
-   for(cidx=0; cidx<numcmp; cidx++) {
-
-      if ( (cmpinfo = PAPI_get_component_info(cidx)) == NULL) {
-         test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n", 0);
-      }
-
-      if (!strcmp(cmpinfo->name,"perf_event_uncore")) {
-         uncore_cidx=cidx;
-
-         if (cmpinfo->disabled) {
-            if (!TESTS_QUIET) {
-               printf("perf_event_uncore component disabled: %s\n",
-                        cmpinfo->disabled_reason);
-            }
-            test_skip(__FILE__,__LINE__,"perf_event_uncore component disabled",0);
-         }
-         break;
-      }
-   }
-
+   uncore_cidx=PAPI_get_component_index("perf_event_uncore");
    if (uncore_cidx<0) {
       test_skip(__FILE__,__LINE__,"perf_event_uncore component not found",0);
    }
