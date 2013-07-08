@@ -475,7 +475,7 @@ _micpower_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 papi_vector_t _micpower_vector = {
 		.cmp_info = {
 				/* default component information (unspecified values are initialized to 0) */
-				.name = "mic-power",
+				.name = "micpower",
 				.short_name = "micpower",
 				.description = "Component for reading power on Intel Xeon Phi (MIC)",
 				.version = "5.1",
