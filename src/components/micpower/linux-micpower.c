@@ -91,17 +91,17 @@ static MICPOWER_native_event_entry_t _micpower_native_events[] = {
 		},
 		{ 	.name 				= "vddq:pwr",
 				.units 				= "uW",
-				.description 		= "Memory sybsystem rail; Power reading", 
+				.description 		= "Memory subsystem rail; Power reading", 
 				.resources.selector	= 14
 		},
 		{ 	.name 				= "vddq:cur",
 				.units 				= "uA",
-				.description 		= "Memory sybsystem rail; Current", 
+				.description 		= "Memory subsystem rail; Current", 
 				.resources.selector	= 15
 		},
 		{ 	.name 				= "vddq:volt",
 				.units 				= "uV",
-				.description 		= "Memory sybsystem rail; Voltage", 
+				.description 		= "Memory subsystem rail; Voltage", 
 				.resources.selector	= 16
 		}
 };
@@ -475,7 +475,7 @@ _micpower_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 papi_vector_t _micpower_vector = {
 		.cmp_info = {
 				/* default component information (unspecified values are initialized to 0) */
-				.name = "mic-power",
+				.name = "micpower",
 				.short_name = "micpower",
 				.description = "Component for reading power on Intel Xeon Phi (MIC)",
 				.version = "5.1",
