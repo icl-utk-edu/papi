@@ -363,7 +363,6 @@ enum perf_callchain_context {
 	PERF_CONTEXT_MAX		= (uint64_t)-4095,
 };
 
-#endif /* _LINUX_PERF_EVENT_H */
 /*
  * flags for perf_event_open()
  */
@@ -371,6 +370,7 @@ enum perf_callchain_context {
 #define PERF_FLAG_FD_OUTPUT	(1U << 1)
 #define PERF_FLAG_PID_CGROUP	(1U << 2)
 
+#endif /* _LINUX_PERF_EVENT_H */
 
 #ifndef __NR_perf_event_open
 #ifdef __x86_64__
@@ -427,6 +427,9 @@ perf_event_open(
 #define PR_TASK_PERF_EVENTS_ENABLE	32
 #define PR_TASK_PERF_EVENTS_DISABLE	31
 #endif
+
+/* handle case of older system perf_event.h included before this file */
+#ifndef PERF_MEM_OP_NA
 
 union perf_mem_data_src {
 	uint64_t val;
@@ -491,6 +494,7 @@ union perf_mem_data_src {
 #define PERF_MEM_S(a, s) \
 	(((u64)PERF_MEM_##a##_##s) << PERF_MEM_##a##_SHIFT)
 
+#endif /* PERF_MEM_OP_NA */
 
 #ifdef __cplusplus /* extern C */
 }
