@@ -13,7 +13,6 @@ int main( int argc, char **argv ) {
    int retval;
    int EventSet = PAPI_NULL;
    long long values[1];
-   char *uncore_event=NULL;
    char event_name[BUFSIZ];
    int uncore_cidx=-1;
    const PAPI_hw_info_t *hwinfo;
@@ -125,10 +124,10 @@ int main( int argc, char **argv ) {
    }
 
    /* Add our uncore event */
-   retval = PAPI_add_named_event(EventSet, uncore_event);
+   retval = PAPI_add_named_event(EventSet, event_name);
    if (retval != PAPI_OK) {
       if ( !TESTS_QUIET ) {
-         fprintf(stderr,"Error trying to use event %s\n", uncore_event);
+         fprintf(stderr,"Error trying to use event %s\n", event_name);
       }
       test_fail(__FILE__, __LINE__, "adding uncore event",retval);
    }
@@ -151,8 +150,8 @@ int main( int argc, char **argv ) {
 
    if ( !TESTS_QUIET ) {
       printf("AMD fam15h Northbridge test:\n");
-      printf("Using event %s\n",uncore_event);
-      printf("\t%s: %lld\n",uncore_event,values[0]);
+      printf("Using event %s\n",event_name);
+      printf("\t%s: %lld\n",event_name,values[0]);
    }
 
    test_pass( __FILE__, NULL, 0 );
