@@ -5855,6 +5855,7 @@ fi
 fi;
 
 
+force_pfm_incdir=no
 
 
 # Check whether --with-pfm_root or --without-pfm_root was given.
@@ -5872,7 +5873,8 @@ fi;
 # Check whether --with-pfm_incdir or --without-pfm_incdir was given.
 if test "${with_pfm_incdir+set}" = set; then
   withval="$with_pfm_incdir"
-  pfm_incdir=$withval
+  force_pfm_incdir=yes
+            pfm_incdir=$withval
 fi;
 
 # Check whether --with-pfm_libdir or --without-pfm_libdir was given.
@@ -5892,7 +5894,6 @@ fi
 
 force_perf_events=no
 disable_uncore=yes
-pe_incdir="$pfm_incdir/perfmon"
 
 
 # Check whether --with-perf_events or --without-perf_events was given.
@@ -5914,6 +5915,13 @@ if test "x$enable_perf_event_uncore" != "xno"; then
 
 fi
 
+
+if test "$force_pfm_incdir" != "yes"; then
+  if test "$force_perf_events" = "yes"; then
+	pfm_incdir="libpfm4/include"
+  fi
+fi
+pe_incdir="$pfm_incdir/perfmon"
 
 
 # Check whether --with-pe_incdir or --without-pe_incdir was given.
