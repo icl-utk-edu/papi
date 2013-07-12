@@ -76,9 +76,6 @@ _peu_init_control_state( hwd_control_state_t *ctl )
   /* Set the default granularity */
   pe_ctl->granularity=_perf_event_uncore_vector.cmp_info.default_granularity;
 
-  /* Set the overflow signal */
-  pe_ctl->overflow_signal=_perf_event_uncore_vector.cmp_info.hardware_intr_sig;
-
   pe_ctl->cidx=our_cidx;
 
   /* Set cpu number in the control block to show events */
@@ -129,9 +126,6 @@ _peu_init_component( int cidx )
   /* Check that processor is supported */
 
   /* Run Vendor-specific fixups */
-
-  /* Set the overflow signal */
-  _papi_hwd[cidx]->cmp_info.hardware_intr_sig = SIGRTMIN + 2;
    
   /* Run the libpfm4-specific setup */
    retval = _papi_libpfm4_init(_papi_hwd[cidx], cidx, 
@@ -222,8 +216,6 @@ papi_vector_t _perf_event_uncore_vector = {
       .default_granularity = PAPI_GRN_SYS,
       .available_granularities = PAPI_GRN_SYS,
 
-      .hardware_intr = 1,
-      .kernel_profile = 1,
       .num_mpx_cntrs = PERF_EVENT_MAX_MPX_COUNTERS,
 
       /* component specific cmp_info initializations */
@@ -259,9 +251,6 @@ papi_vector_t _perf_event_uncore_vector = {
   .update_control_state =  _pe_update_control_state,
   .set_domain =            _pe_set_domain,
   .reset =                 _pe_reset,
-  .set_overflow =          _pe_set_overflow,
-  .set_profile =           _pe_set_profile,
-  .stop_profiling =        _pe_stop_profiling,
   .write =                 _pe_write,
 
   /* from counter name mapper */
