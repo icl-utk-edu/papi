@@ -183,9 +183,9 @@ _pe_init_component( int cidx )
   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
   fclose(fff);
 
-  if (paranoid_level==2) {
-    SUBDBG("/proc/sys/kernel/perf_event_paranoid prohibits kernel counts");
-    _papi_hwd[cidx]->cmp_info.available_domains &=~PAPI_DOM_KERNEL;
+  if ((paranoid_level==2) && (getuid()!=0)) {
+     SUBDBG("/proc/sys/kernel/perf_event_paranoid prohibits kernel counts");
+     _papi_hwd[cidx]->cmp_info.available_domains &=~PAPI_DOM_KERNEL;
   }
 
   /* Detect NMI watchdog which can steal counters */
