@@ -289,7 +289,7 @@ check_permissions( unsigned long tid,
 
    SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
 
-   ev_fd = sys_perf_event_open2( &attr, pid, cpu_num, -1, 0 );
+   ev_fd = sys_perf_event_open( &attr, pid, cpu_num, -1, 0 );
    if ( ev_fd == -1 ) {
       SUBDBG("sys_perf_event_open returned error.  Linux says, %s", 
 	     strerror( errno ) );
@@ -505,7 +505,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
 
       /* try to open */
-      ctl->events[i].event_fd = sys_perf_event_open2( &ctl->events[i].attr, 
+      ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
 						     pid,
 						     ctl->cpu,
 			       ctl->events[i].group_leader_fd,
@@ -701,7 +701,7 @@ int _pe_detect_rdpmc(int default_domain) {
       pe.exclude_kernel=1;
    }
 
-   fd=sys_perf_event_open2(&pe,0,-1,-1,0);
+   fd=sys_perf_event_open(&pe,0,-1,-1,0);
    if (fd<0) {
       return PAPI_ESYS;
    }
@@ -1863,7 +1863,7 @@ _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 #endif
 
 long
-sys_perf_event_open2( struct perf_event_attr *hw_event, pid_t pid, int cpu,
+sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 					   int group_fd, unsigned long flags )
 {
 	int ret;

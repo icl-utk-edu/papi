@@ -63,7 +63,7 @@ void _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc, int cidx );
 int _pe_detect_rdpmc(int default_domain);
 
 long
-sys_perf_event_open2( struct perf_event_attr *hw_event, pid_t pid, int cpu,
+sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 		     int group_fd, unsigned long flags );
 
 
