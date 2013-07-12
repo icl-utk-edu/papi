@@ -267,9 +267,11 @@ _pe_init_component( int cidx )
   /*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
   if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) {
     _papi_hwd[cidx]->cmp_info.kernel_multiplex = 0;
+    _papi_hwd[cidx]->cmp_info.num_mpx_cntrs = PAPI_MAX_SW_MPX_EVENTS;
   }
   else {
     _papi_hwd[cidx]->cmp_info.kernel_multiplex = 1;
+    _papi_hwd[cidx]->cmp_info.num_mpx_cntrs = PERF_EVENT_MAX_MPX_COUNTERS;
   }
 
   /* Check that processor is supported */
@@ -884,7 +886,6 @@ papi_vector_t _perf_event_vector = {
 
       .hardware_intr = 1,
       .kernel_profile = 1,
-      .num_mpx_cntrs = PERF_EVENT_MAX_MPX_COUNTERS,
 
       /* component specific cmp_info initializations */
       .fast_virtual_timer = 0,
