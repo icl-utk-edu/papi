@@ -111,7 +111,7 @@ _peu_init_component( int cidx )
     return PAPI_ENOCMP;
   }
 
-  /* 2 means no measurements allowed          */
+  /* 2 means no kernel measurements allowed   */
   /* 1 means normal counter access            */
   /* 0 means you can access CPU-specific data */
   /* -1 means no restrictions                 */
@@ -119,16 +119,14 @@ _peu_init_component( int cidx )
   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
   fclose(fff);
 
-  if (paranoid_level==2) {
-    strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-	    "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
+  if ((paranoid_level>0) && (getuid()!=0)) {
+     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+	    "Insufficient permissions for uncore access.  Set /proc/sys/kernel/perf_event_paranoid to 0 or run as root.",
 	    PAPI_MAX_STR_LEN);
     return PAPI_ENOCMP;
   }
 
   /* Check that processor is supported */
-
-  /* Detect if we can use rdpmc (or equivalent) */
 
   /* Run Vendor-specific fixups */
 
