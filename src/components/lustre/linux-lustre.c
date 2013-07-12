@@ -96,17 +96,19 @@ papi_vector_t _lustre_vector;
 /******************************************************************************
  ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
  *****************************************************************************/
-static void resize_native_table() {
-	printf("\n\nresizing us %d to %d\n\n", table_size, 2*table_size);
+static int resize_native_table() {
 	counter_info** new_table;
 	int new_size = table_size*2;
 	new_table = (counter_info**)papi_malloc(sizeof(counter_info*) * new_size);
+	if (NULL==new_table)
+		return PAPI_ENOMEM;
 	if ( lustre_native_table) {
 		memcpy(new_table, lustre_native_table, sizeof(counter_info*) * table_size );
 		papi_free(lustre_native_table);
 	}
 	lustre_native_table = new_table;
 	table_size*=2;
+	return PAPI_OK;
 }
 
 /**
@@ -121,7 +123,8 @@ addCounter( const char *name, const char *desc, const char *unit )
     counter_info *cntr;
 
 	if ( num_events >= table_size )
-		resize_native_table();
+		if (PAPI_OK != resize_native_table())
+			return NULL;
 
     cntr = malloc( sizeof ( counter_info ) );
 
@@ -187,17 +190,29 @@ addLustreFS( const char *name,
 	sprintf( counter_name, "%s_llread", name );
 	if (NULL == (fs->read_cntr = addCounter( counter_name, 
 				    "bytes read on this lustre client", 
-				    "bytes" );
+				    "bytes" ))) {
+			free(fs);
+			return PAPI_ENOMEM;
+	}
 
 	sprintf( counter_name, "%s_llwrite", name );
 	if ( NULL == (fs->write_cntr = addCounter( counter_name, 
 				     "bytes written on this lustre client",
-				     "bytes" );
+				     "bytes" ))) {
+			free(fs->read_cntr);
+			free(fs);
+			return PAPI_ENOMEM;
+	}
 
 	sprintf( counter_name, "%s_wrong_readahead", name );
 	if ( NULL == (fs->readahead_cntr = addCounter( counter_name, 
 					 "bytes read but discarded due to readahead",
-					 "bytes" );
+					 "bytes" ))) {
+			free(fs->read_cntr);
+			free(fs->write_cntr);
+			free(fs);
+			return PAPI_ENOMEM;
+	}
 
 	fs->next = NULL;
 
