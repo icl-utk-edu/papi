@@ -282,7 +282,7 @@ init_lustre_counters( void  )
 
 	      ptr = strstr(path,"llite/") + 6;
 
-	      while ( *ptr && *ptr != '-' && idx < 100 ) {
+	      while ( *ptr && idx < 100 ) {
 	         fs_name[idx] = *ptr;
 		 ptr++;
 		 idx++;
