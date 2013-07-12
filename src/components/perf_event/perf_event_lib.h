@@ -56,14 +56,9 @@ int _pe_update_control_state( hwd_control_state_t *ctl,
 			       NativeInfo_t *native,
 				   int count, hwd_context_t *ctx );
 int _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
-int _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI );
-int _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold );
-int _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold );
-void _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc, int cidx );
-int _pe_detect_rdpmc(int default_domain);
 
 long
-sys_perf_event_open2( struct perf_event_attr *hw_event, pid_t pid, int cpu,
+sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 		     int group_fd, unsigned long flags );
 
 

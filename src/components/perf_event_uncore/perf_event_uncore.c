@@ -76,9 +76,6 @@ _peu_init_control_state( hwd_control_state_t *ctl )
   /* Set the default granularity */
   pe_ctl->granularity=_perf_event_uncore_vector.cmp_info.default_granularity;
 
-  /* Set the overflow signal */
-  pe_ctl->overflow_signal=_perf_event_uncore_vector.cmp_info.hardware_intr_sig;
-
   pe_ctl->cidx=our_cidx;
 
   /* Set cpu number in the control block to show events */
@@ -111,7 +108,7 @@ _peu_init_component( int cidx )
     return PAPI_ENOCMP;
   }
 
-  /* 2 means no measurements allowed          */
+  /* 2 means no kernel measurements allowed   */
   /* 1 means normal counter access            */
   /* 0 means you can access CPU-specific data */
   /* -1 means no restrictions                 */
@@ -119,21 +116,16 @@ _peu_init_component( int cidx )
   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
   fclose(fff);
 
-  if (paranoid_level==2) {
-    strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-	    "/proc/sys/kernel/perf_event_paranoid prohibits using counters",
+  if ((paranoid_level>0) && (getuid()!=0)) {
+     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+	    "Insufficient permissions for uncore access.  Set /proc/sys/kernel/perf_event_paranoid to 0 or run as root.",
 	    PAPI_MAX_STR_LEN);
     return PAPI_ENOCMP;
   }
 
   /* Check that processor is supported */
 
-  /* Detect if we can use rdpmc (or equivalent) */
-
   /* Run Vendor-specific fixups */
-
-  /* Set the overflow signal */
-  _papi_hwd[cidx]->cmp_info.hardware_intr_sig = SIGRTMIN + 2;
    
   /* Run the libpfm4-specific setup */
    retval = _papi_libpfm4_init(_papi_hwd[cidx], cidx, 
@@ -209,18 +201,6 @@ _peu_ntv_code_to_info(unsigned int EventCode,
                                         &uncore_native_event_table);
 }
 
-/*
- * This function is used when hardware overflows are working or when
- * software overflows are forced
- */
-
-void
-_peu_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
-{
-  _pe_dispatch_timer(n,info,uc,our_cidx);
-}
-
-
 /* Our component vector */
 
 papi_vector_t _perf_event_uncore_vector = {
@@ -236,8 +216,6 @@ papi_vector_t _perf_event_uncore_vector = {
       .default_granularity = PAPI_GRN_SYS,
       .available_granularities = PAPI_GRN_SYS,
 
-      .hardware_intr = 1,
-      .kernel_profile = 1,
       .num_mpx_cntrs = PERF_EVENT_MAX_MPX_COUNTERS,
 
       /* component specific cmp_info initializations */
@@ -263,7 +241,6 @@ papi_vector_t _perf_event_uncore_vector = {
   .shutdown_component =    _peu_shutdown_component,
   .init_thread =           _peu_init_thread,
   .init_control_state =    _peu_init_control_state,
-  .dispatch_timer =        _peu_dispatch_timer,
 
   /* common with regular perf_event lib */
   .start =                 _pe_start,
@@ -274,9 +251,6 @@ papi_vector_t _perf_event_uncore_vector = {
   .update_control_state =  _pe_update_control_state,
   .set_domain =            _pe_set_domain,
   .reset =                 _pe_reset,
-  .set_overflow =          _pe_set_overflow,
-  .set_profile =           _pe_set_profile,
-  .stop_profiling =        _pe_stop_profiling,
   .write =                 _pe_write,
 
   /* from counter name mapper */
