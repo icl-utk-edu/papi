@@ -1,5 +1,5 @@
 /*
-* File:    perf_events.c
+* File:    perf_event_lib.c
 *
 * Author:  Corey Ashford
 *          cjashfor@us.ibm.com
@@ -305,7 +305,7 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
    int retval = 0, cnt = -1;
    ( void ) ctx;			 /*unused */
    long long papi_pe_buffer[READ_BUFFER_SIZE];
-   int i,group_leader_fd;
+   int group_leader_fd;
 
    if (bug_check_scheduability()) {
 
@@ -351,23 +351,19 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 	/* Reset all of the counters (opened so far) back to zero      */
 	/* from the above brief enable/disable call pair.              */
 
-	/* We have to reset all events because reset of group leader      */
-        /* does not reset all.                                            */
-	/* we assume that the events are being added one by one and that  */
-        /* we do not need to reset higher events (doing so may reset ones */
-        /* that have not been initialized yet.                            */
+	/* PERF_IOC_FLAG_GROUP tells ioctl to reset all in a group     */
 
 	/* Note... PERF_EVENT_IOC_RESET does not reset time running       */
 	/* info if multiplexing, so we should avoid coming here if        */
 	/* we are multiplexing the event.                                 */
-        for( i = 0; i < idx; i++) {
-	   retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
-	   if (retval == -1) {
-	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d "
-			 "(fd %d)failed.\n",
-			 i,ctl->num_events,idx,ctl->events[i].event_fd);
-	      return PAPI_ESYS;
-	   }
+	retval=ioctl( ctl->events[0].event_fd, 
+		      PERF_EVENT_IOC_RESET, 
+		      PERF_IOC_FLAG_GROUP );
+	if (retval == -1) {
+	   PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) %d "
+		       "(fd %d)failed.\n",
+		       0,ctl->events[0].event_fd);
+	   return PAPI_ESYS;
 	}
       }
    }
@@ -714,14 +710,29 @@ _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
    ( void ) ctx;			 /*unused */
 
-   /* We need to reset all of the events, not just the group leaders */
-   for( i = 0; i < pe_ctl->num_events; i++ ) {
-      ret = ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+   if (!pe_ctl->multiplexed) {
+
+     /* PERF_IOC_FLAG_GROUP says to reset all events in a group */
+      ret = ioctl( pe_ctl->events[0].event_fd, PERF_EVENT_IOC_RESET, 
+		PERF_IOC_FLAG_GROUP );
       if ( ret == -1 ) {
-	 PAPIERROR("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) "
+         PAPIERROR("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) "
+		"returned error, Linux says: %s",
+		pe_ctl->events[0].event_fd, strerror( errno ) );
+      }
+   }
+   else {
+     
+     /* When multiplexing we have discrete events */
+     /* so we have to reset all of them           */
+      for( i = 0; i < pe_ctl->num_events; i++ ) {
+         ret = ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, 0);
+         if ( ret == -1 ) {
+	    PAPIERROR("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) "
 		   "returned error, Linux says: %s",
 		   pe_ctl->events[i].event_fd, strerror( errno ) );
-	 return PAPI_ESYS;
+	    return PAPI_ESYS;
+         }
       }
    }
 
