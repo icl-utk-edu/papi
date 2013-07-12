@@ -12,7 +12,7 @@ PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads \
 	zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads \
 	krentel_pthreads
 MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
-	sdsc4-mpx
+	sdsc4-mpx reset_multiplex
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
@@ -370,6 +370,9 @@ attach2: attach2.c attach_target $(UTILOBJS) $(PAPILIB)
 
 reset: reset.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o reset 
+
+reset_multiplex: reset_multiplex.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset_multiplex.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o reset_multiplex 
 
 fork_overflow: fork_exec_overflow.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork_exec_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fork_overflow
