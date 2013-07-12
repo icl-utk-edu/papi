@@ -207,18 +207,6 @@ _peu_ntv_code_to_info(unsigned int EventCode,
                                         &uncore_native_event_table);
 }
 
-/*
- * This function is used when hardware overflows are working or when
- * software overflows are forced
- */
-
-void
-_peu_dispatch_timer( int n, hwd_siginfo_t *info, void *uc )
-{
-  _pe_dispatch_timer(n,info,uc,our_cidx);
-}
-
-
 /* Our component vector */
 
 papi_vector_t _perf_event_uncore_vector = {
@@ -261,7 +249,6 @@ papi_vector_t _perf_event_uncore_vector = {
   .shutdown_component =    _peu_shutdown_component,
   .init_thread =           _peu_init_thread,
   .init_control_state =    _peu_init_control_state,
-  .dispatch_timer =        _peu_dispatch_timer,
 
   /* common with regular perf_event lib */
   .start =                 _pe_start,
