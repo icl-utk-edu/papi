@@ -152,6 +152,55 @@ _pe_init_control_state( hwd_control_state_t *ctl )
   return PAPI_OK;
 }
 
+/* Check the mmap page for rdpmc support */
+static int _pe_detect_rdpmc(int default_domain) {
+
+  struct perf_event_attr pe;
+  int fd,rdpmc_exists=1;
+  void *addr;
+  struct perf_event_mmap_page *our_mmap;
+
+  /* Create a fake instructions event so we can read a mmap page */
+  memset(&pe,0,sizeof(struct perf_event_attr));
+
+  pe.type=PERF_TYPE_HARDWARE;
+  pe.size=sizeof(struct perf_event_attr);
+  pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+
+  /* There should probably be a helper function to handle this      */
+  /* we break on some ARM because there is no support for excluding */
+  /* kernel.                                                        */
+  if (default_domain & PAPI_DOM_KERNEL ) {
+  }
+  else {
+    pe.exclude_kernel=1;
+  }
+  fd=sys_perf_event_open(&pe,0,-1,-1,0);
+  if (fd<0) {
+    return PAPI_ESYS;
+  }
+
+  /* create the mmap page */
+  addr=mmap(NULL, 4096, PROT_READ, MAP_SHARED,fd,0);
+  if (addr == (void *)(-1)) {
+    close(fd);
+    return PAPI_ESYS;
+  }
+
+  /* get the rdpmc info */
+  our_mmap=(struct perf_event_mmap_page *)addr;
+  if (our_mmap->cap_usr_rdpmc==0) {
+    rdpmc_exists=0;
+  }
+
+  /* close the fake event */
+  munmap(addr,4096);
+  close(fd);
+
+  return rdpmc_exists;
+
+}
+
 
 /* Initialize the perf_event component */
 int
