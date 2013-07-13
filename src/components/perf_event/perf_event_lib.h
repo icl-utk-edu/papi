@@ -52,15 +52,5 @@ int _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		   long long **events, int flags );
 int _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl );
 int _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl );
-int _pe_update_control_state( hwd_control_state_t *ctl, 
-			       NativeInfo_t *native,
-				   int count, hwd_context_t *ctx );
 int _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
 
-long
-sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
-		     int group_fd, unsigned long flags );
-
-
-/* fix this */
-extern int nmi_watchdog_active;
