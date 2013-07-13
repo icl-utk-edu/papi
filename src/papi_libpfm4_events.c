@@ -1377,15 +1377,10 @@ _papi_libpfm4_shutdown(struct native_event_table_t *event_table) {
  */
 
 int
-_papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
-		   struct native_event_table_t *event_table,
-		   int pmu_type) {
+_papi_libpfm4_init(papi_vector_t *my_vector) {
 
-   int detected_pmus=0, found_default=0;
-   int i, version;
+   int version;
    pfm_err_t retval = PFM_SUCCESS;
-   unsigned int ncnt;
-   pfm_pmu_info_t pinfo;
 
    _papi_hwi_lock( NAMELIB_LOCK );
 
@@ -1420,6 +1415,31 @@ _papi_libpfm4_init(papi_vector_t *my_vector, int cidx,
 				   PFM_MAJ_VERSION( version ) );
       return PAPI_ESYS;
    }
+
+   return PAPI_OK;
+}
+
+/** @class  _pe_libpfm4_init
+ *  @brief  Initialize the libpfm4 code
+ *
+ *  @param[in] event_table
+ *        -- native event table struct
+ *
+ *  @retval PAPI_OK       We initialized correctly
+ *  @retval PAPI_ECMP     There was an error initializing the component
+ *
+ */
+
+int
+_pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
+		   struct native_event_table_t *event_table,
+		   int pmu_type) {
+
+   int detected_pmus=0, found_default=0;
+   int i;
+   pfm_err_t retval = PFM_SUCCESS;
+   unsigned int ncnt;
+   pfm_pmu_info_t pinfo;
 
    /* allocate the native event structure */
 

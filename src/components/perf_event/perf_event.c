@@ -309,7 +309,14 @@ _pe_init_component( int cidx )
    _papi_hwd[cidx]->cmp_info.fast_counter_read = retval;
 
    /* Run the libpfm4-specific setup */
-   retval = _papi_libpfm4_init(_papi_hwd[cidx], cidx, 
+   retval = _papi_libpfm4_init(_papi_hwd[cidx]);
+   if (retval) {
+     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+	     "Error initializing libpfm4",PAPI_MAX_STR_LEN);
+     return retval;
+   }
+
+   retval = _pe_libpfm4_init(_papi_hwd[cidx], cidx, 
 			       &perf_native_event_table,
                                PMU_TYPE_CORE | PMU_TYPE_OS);
    if (retval) {
