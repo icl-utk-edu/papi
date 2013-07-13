@@ -663,12 +663,12 @@ _peu_init_component( int cidx )
 
 
   /* Run the libpfm4-specific setup */
-   retval = _peu_libpfm4_init(_papi_hwd[cidx], cidx,
+   retval = _peu_libpfm4_init(_papi_hwd[cidx], 
 			       &uncore_native_event_table,
                                PMU_TYPE_UNCORE);
    if (retval) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-	     "Error initializing libpfm4",PAPI_MAX_STR_LEN);
+	     "Error setting up libpfm4",PAPI_MAX_STR_LEN);
      return PAPI_ENOCMP;
    }
 

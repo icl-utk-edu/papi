@@ -573,8 +573,6 @@ get_event_first_active(int pmu_type)
  *        -- libpfm4 code to convert
  *  @param[out] **event_name
  *        -- pointer to a string pointer that will be allocated
- *  @param[in] default_pmu
- *        -- the default pmu for this component
  *
  *  @returns returns a libpfm error condition
  *
@@ -583,8 +581,7 @@ get_event_first_active(int pmu_type)
  */
 
 static int
-convert_libpfm4_to_string( int code, char **event_name,
-			   pfm_pmu_info_t *default_pmu)
+convert_libpfm4_to_string( int code, char **event_name)
 {
 
   int ret;
@@ -608,15 +605,8 @@ convert_libpfm4_to_string( int code, char **event_name,
      return ret;
   }
 
-  /* Only prepend PMU name if not on the "default" PMU */
-
-  if (pinfo.pmu == default_pmu->pmu) {
-     *event_name=strdup(gete.name);
-  }
-  else {
-     sprintf(name,"%s::%s",pinfo.name,gete.name);
-     *event_name=strdup(name);
-  }
+  sprintf(name,"%s::%s",pinfo.name,gete.name);
+  *event_name=strdup(name);
 
   SUBDBG("Found name: %s\n",*event_name);
 
@@ -645,7 +635,7 @@ static int convert_pfmidx_to_native(int code, unsigned int *PapiEventCode,
   int ret;
   char *name=NULL;
 
-  ret=convert_libpfm4_to_string( code, &name, &event_table->default_pmu);
+  ret=convert_libpfm4_to_string( code, &name);
   if (ret!=PFM_SUCCESS) {
      return _papi_libpfm4_error(ret);
   }
@@ -1308,26 +1298,24 @@ _peu_libpfm4_shutdown(struct native_event_table_t *event_table) {
 
   /* Only free if we're the last user */
 
-     /* free memory allocate with strdup */
-     for( i=0; i<event_table->num_native_events; i++) {
-        free(event_table->native_events[i].base_name);
-        free(event_table->native_events[i].pmu_plus_name);
-        free(event_table->native_events[i].pmu);
-        free(event_table->native_events[i].allocated_name);
-     }
+  /* free memory allocated with strdup */
+  for( i=0; i<event_table->num_native_events; i++) {
+     free(event_table->native_events[i].base_name);
+     free(event_table->native_events[i].pmu_plus_name);
+     free(event_table->native_events[i].pmu);
+     free(event_table->native_events[i].allocated_name);
+  }
 
-     memset(event_table->native_events,0,
+  memset(event_table->native_events,0,
 	 sizeof(struct native_event_t)*event_table->allocated_native_events);
-     event_table->num_native_events=0;
-     event_table->allocated_native_events=0;
-     free(event_table->native_events);
+  event_table->num_native_events=0;
+  event_table->allocated_native_events=0;
+  free(event_table->native_events);
 
   _papi_hwi_unlock( NAMELIB_LOCK );
 
   return PAPI_OK;
 }
-
-
 
 /** @class  _peu_libpfm4_init
  *  @brief  Initialize the libpfm4 code
@@ -1341,11 +1329,11 @@ _peu_libpfm4_shutdown(struct native_event_table_t *event_table) {
  */
 
 int
-_peu_libpfm4_init(papi_vector_t *my_vector, int cidx,
+_peu_libpfm4_init(papi_vector_t *my_vector, 
 		   struct native_event_table_t *event_table,
 		   int pmu_type) {
 
-   int detected_pmus=0, found_default=0;
+   int detected_pmus=0;
    int i;
    pfm_err_t retval = PFM_SUCCESS;
    unsigned int ncnt;
@@ -1367,10 +1355,7 @@ _peu_libpfm4_init(papi_vector_t *my_vector, int cidx,
    detected_pmus=0;
    ncnt=0;
 
-   /* need to init pinfo or pfmlib might complain */
-   memset(&(event_table->default_pmu), 0, sizeof(pfm_pmu_info_t));
-   /* init default pmu */
-   retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
+   my_vector->cmp_info.num_cntrs=0;
 
    SUBDBG("Detected pmus:\n");
    for(i=0;i<PFM_PMU_MAX;i++) {
@@ -1386,51 +1371,15 @@ _peu_libpfm4_init(papi_vector_t *my_vector, int cidx,
          detected_pmus++;
 	 ncnt+=pinfo.nevents;
 
-         if (pmu_type&PMU_TYPE_CORE) {
-
-	    /* Hack to have "default" PMU */
-	    if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
-                  strcmp(pinfo.name,"ix86arch")) {
-
-	       SUBDBG("\t  %s is default\n",pinfo.name);
-	       memcpy(&(event_table->default_pmu),
-		      &pinfo,sizeof(pfm_pmu_info_t));
-	       found_default++;
-	    }
-	 }
-         if (pmu_type==PMU_TYPE_UNCORE) {
-	     /* To avoid confusion, no "default" CPU for uncore */
-	       found_default=1;
-	 }
+         my_vector->cmp_info.num_cntrs += pinfo.num_cntrs+
+                                   pinfo.num_fixed_cntrs;
       }
    }
    SUBDBG("%d native events detected on %d pmus\n",ncnt,detected_pmus);
 
-   if (!found_default) {
-      SUBDBG("Could not find default PMU\n");
-      return PAPI_ECMP;
-   }
-
-   if (found_default>1) {
-     PAPIERROR("Found too many default PMUs!\n");
-     return PAPI_ECMP;
-   }
-
    my_vector->cmp_info.num_native_events = ncnt;
 
-   my_vector->cmp_info.num_cntrs = event_table->default_pmu.num_cntrs+
-                                   event_table->default_pmu.num_fixed_cntrs;
-
    SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
-
-   /* Setup presets, only if Component 0 */
-   if (cidx==0) {
-      retval = _papi_load_preset_table( (char *)event_table->default_pmu.name, 
-				     event_table->default_pmu.pmu, cidx );
-      if ( retval ) {
-         return retval;
-      }
-   }
 
    return PAPI_OK;
 }
