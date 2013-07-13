@@ -333,8 +333,11 @@ _pe_init_component( int cidx )
 int
 _pe_shutdown_component( void ) {
 
+  /* deallocate our event table */
+  _pe_libpfm4_shutdown(&perf_native_event_table);
+
   /* Shutdown libpfm4 */
-  _papi_libpfm4_shutdown(&perf_native_event_table);
+  _papi_libpfm4_shutdown();
 
   return PAPI_OK;
 }

@@ -1329,9 +1329,8 @@ static int libpfm4_users=0;
  */
 
 int 
-_papi_libpfm4_shutdown(struct native_event_table_t *event_table) {
+_papi_libpfm4_shutdown(void) {
 
-  int i;
 
   APIDBG("Entry\n");
 
@@ -1343,6 +1342,33 @@ _papi_libpfm4_shutdown(struct native_event_table_t *event_table) {
   /* Only free if we're the last user */
 
   if (!libpfm4_users) {
+     pfm_terminate();
+  }
+
+  _papi_hwi_unlock( NAMELIB_LOCK );
+
+  return PAPI_OK;
+}
+
+/** @class  _pe_libpfm4_shutdown
+ *  @brief  Shutdown any initialization done by the libpfm4 code
+ *
+ *  @param[in] event_table
+ *        -- native event table struct
+ *
+ *  @retval PAPI_OK       We always return PAPI_OK
+ *
+ */
+
+int 
+_pe_libpfm4_shutdown(struct native_event_table_t *event_table) {
+
+  int i;
+
+  APIDBG("Entry\n");
+
+  /* clean out and free the native events structure */
+  _papi_hwi_lock( NAMELIB_LOCK );
 
      /* free memory allocate with strdup */
      for( i=0; i<event_table->num_native_events; i++) {
@@ -1357,7 +1383,6 @@ _papi_libpfm4_shutdown(struct native_event_table_t *event_table) {
      event_table->num_native_events=0;
      event_table->allocated_native_events=0;
      free(event_table->native_events);
-  }
 
   _papi_hwi_unlock( NAMELIB_LOCK );
 

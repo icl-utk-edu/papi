@@ -153,8 +153,11 @@ _peu_init_component( int cidx )
 /* Shutdown the perf_event component */
 int _peu_shutdown_component( void ) {
 
+  /* deallocate our event table */
+  _pe_libpfm4_shutdown(&uncore_native_event_table);
+
   /* Shutdown libpfm4 */
-  _papi_libpfm4_shutdown(&uncore_native_event_table);
+  _papi_libpfm4_shutdown();
 
   return PAPI_OK;
 }
