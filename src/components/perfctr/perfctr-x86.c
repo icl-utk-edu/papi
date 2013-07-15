@@ -186,6 +186,8 @@ print_control( const struct perfctr_cpu_control *control )
 
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
+#if 0 
+/* This only calls _papi_libpfm_init, so call it directly in _perfctr_init_component */
 int
 setup_x86_presets( int cputype, int cidx)
 {
@@ -306,6 +308,7 @@ setup_x86_presets( int cputype, int cidx)
 #endif
    return retval;
 }
+#endif
 
 static int
 _x86_init_control_state( hwd_control_state_t *ptr )
