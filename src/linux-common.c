@@ -333,10 +333,6 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 			path_sibling( _PATH_SYS_CPU0 "/topology/core_siblings" ) /
 			hwinfo->threads;
 
-	/* Number of sockets */
-	if ( hwinfo->threads > 0 && hwinfo->cores > 0 )
-		hwinfo->sockets = hwinfo->ncpu / hwinfo->cores / hwinfo->threads;
-
 	/* Number of NUMA nodes */
 	/* The following line assumes nnodes was initialized to zero! */
 	while ( path_exist( _PATH_SYS_SYSTEM "/node/node%d", hwinfo->nnodes ) )
@@ -346,6 +342,11 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	hwinfo->ncpu =
 		hwinfo->nnodes >
 		1 ? hwinfo->totalcpus / hwinfo->nnodes : hwinfo->totalcpus;
+
+	/* Number of sockets */
+	if ( hwinfo->threads > 0 && hwinfo->cores > 0 )
+		hwinfo->sockets = hwinfo->ncpu / hwinfo->cores / hwinfo->threads;
+
 #if 0
 	int *nodecpu;
 	/* cpumap data is not currently part of the _papi_hw_info struct */
