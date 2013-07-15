@@ -105,7 +105,6 @@ elif `$CC -qversion 2>&1 | grep 'IBM XL C' >/dev/null 2>&1`; then
 else
 	CC_COMMON_NAME="unknown"
 fi
-AC_MSG_RESULT([I think the compiler, $CC, is $CC_COMMON_NAME.])
 
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
 # remark #869: parameter was never referenced 
