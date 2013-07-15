@@ -1,5 +1,7 @@
 #ifndef _PAPI_LIBPFM_EVENTS_H
 #define _PAPI_LIBPFM_EVENTS_H
+#include "papi.h" /* For PAPI_event_info_t */
+#include "papi_vector.h" /* For papi_vector_t */
 
 /* 
 * File:    papi_libpfm_events.h
