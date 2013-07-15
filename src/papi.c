@@ -2041,26 +2041,21 @@ PAPI_start( int EventSet )
 	   papi_return( cidx );
 	}
 
-	/* only one event set per thread/cpu can be running at any time, */
+	/* only one event set per thread  can be running at any time,    */
 	/* so if another event set is running, the user must stop that   */
         /* event set explicitly */
+
+	/* We used to check and not let multiple events be attached */
+	/* to the same CPU, but this was unnecessary?               */
 
       	thread = ESI->master;
 	cpu = ESI->CpuInfo;
 
-	/* check cpu attached case first */
-	if (ESI->state & PAPI_CPU_ATTACHED) {
-	   if ( cpu->running_eventset[cidx] ) {
-              APIDBG("CPU Running already\n");
-	      papi_return( PAPI_EISRUN );
-	   }
-	} else {
-	    if ( thread->running_eventset[cidx] ) {
-               APIDBG("Thread Running already (Only one active Eventset per component)\n");
-	       papi_return( PAPI_EISRUN );
-	    }
-	} 
-	
+	if ( thread->running_eventset[cidx] ) {
+           APIDBG("Thread Running already (Only one active Eventset per component)\n");
+	   papi_return( PAPI_EISRUN );
+	}
+
 	/* Check that there are added events */
 	if ( ESI->NumberOfEvents < 1 ) {
 	   papi_return( PAPI_EINVAL );
@@ -2088,7 +2083,7 @@ PAPI_start( int EventSet )
 	   /* we need to reset the context state because it was last used   */
 	   /* for some other event set and does not contain the information */
            /* for our events.                                               */
-	   retval = _papi_hwd[ESI->CmpIdx]->update_control_state( 
+	   retval = _papi_hwd[ESI->CmpIdx]->update_control_state(
                                                         ESI->ctl_state,
 							ESI->NativeInfoArray,
 							ESI->NativeCount,
@@ -2096,7 +2091,7 @@ PAPI_start( int EventSet )
 	   if ( retval != PAPI_OK ) {
 	      papi_return( retval );
 	   }
-		
+
 	   /* now that the context contains this event sets information,    */
 	   /* make sure the position array in the EventInfoArray is correct */
 
@@ -2109,7 +2104,7 @@ PAPI_start( int EventSet )
 	/* If overflowing is enabled, turn it on */
 	if ( ( ESI->state & PAPI_OVERFLOWING ) &&
 	     !( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) ) {
-	   retval = _papi_hwi_start_signal( _papi_os_info.itimer_sig, 
+	   retval = _papi_hwi_start_signal( _papi_os_info.itimer_sig,
 					    NEED_CONTEXT, cidx );
 	   if ( retval != PAPI_OK ) {
 	      papi_return( retval );
@@ -2147,7 +2142,7 @@ PAPI_start( int EventSet )
 	   /* to avoid races                                      */
 	   ESI->state ^= PAPI_STOPPED;
 	   ESI->state |= PAPI_RUNNING;
-		
+
 	   /* if not attached to cpu or another process */
 	   if ( !(ESI->state & PAPI_CPU_ATTACHED) ) {
 	      if ( !( ESI->state & PAPI_ATTACHED ) ) {
