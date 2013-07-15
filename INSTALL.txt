@@ -260,7 +260,7 @@ Building PAPI
 	cross-build utils. (see above for instructions on acquiring the cross
 	compilation toolchain)
 * You will need to invoke configure with options:
-	> ./configure --with-mic --host=x86_64-k1om-linux --arch=k1om
+	> ./configure --with-mic --host=x86_64-k1om-linux --with-arch=k1om
 
 	This sets up cross-compilation and sets options needed by PAPI.
 * Run make to build the library.
