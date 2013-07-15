@@ -22,6 +22,7 @@
 #include "perfctr-ppc64.h"
 #else
 #include "perfctr-x86.h"
+#include "papi_libpfm_events.h"
 #endif
 
 #include "papi_vector.h"
