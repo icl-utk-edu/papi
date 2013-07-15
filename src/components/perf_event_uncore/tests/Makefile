@@ -1,7 +1,7 @@
 include ../../Makefile_comp_tests
 
 TESTS = perf_event_uncore perf_event_uncore_multiple perf_event_uncore_nogran \
-	perf_event_amd_northbridge
+	perf_event_amd_northbridge perf_event_uncore_cbox
 
 
 perf_event_uncore_tests: $(TESTS)
@@ -36,6 +36,13 @@ perf_event_uncore_nogran.o:	perf_event_uncore_nogran.c perf_event_uncore_lib.h
 
 perf_event_uncore_nogran:	perf_event_uncore_nogran.o perf_event_uncore_lib.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o perf_event_uncore_nogran perf_event_uncore_nogran.o perf_event_uncore_lib.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+
+
+perf_event_uncore_cbox.o:	perf_event_uncore_cbox.c perf_event_uncore_lib.h
+	$(CC) $(LFLAGS) $(INCLUDE) -c perf_event_uncore_cbox.c
+
+perf_event_uncore_cbox:	perf_event_uncore_cbox.o perf_event_uncore_lib.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o perf_event_uncore_cbox perf_event_uncore_cbox.o perf_event_uncore_lib.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
 
 
 
