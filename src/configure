@@ -7180,15 +7180,15 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     CPUCOMPONENT_OBJ=aix.o
     VECTOR=_aix_vector
     PAPI_EVENTS_CSV="papi_events.csv"
-    MISCHDRS="aix.h ppc64_events.h papi_events_table.h"
+    MISCHDRS="aix.h components/perfctr_ppc/ppc64_events.h papi_events_table.h"
     MISCSRCS="aix.c"
     CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp "
 	SAVED_CFLAGS="$CFLAGS"
-    CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
+    CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -Icomponents/perfctr_ppc -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
 	CFLAGS="$SAVED_CFLAGS $CFLAGS"
     FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
 
-  FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
+  FLAGS='-I$(PMAPI)/include -Icomponents/perfctr_ppc -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
   if test $debug != "yes"; then
 	OPTFLAGS='-O3 -qstrict $(PMINIT)'
   else
