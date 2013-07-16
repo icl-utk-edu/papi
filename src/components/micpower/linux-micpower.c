@@ -328,7 +328,7 @@ _micpower_update_control_state(	hwd_control_state_t *ptr,
 		( void ) ptr;
 
 		for ( i = 0; i < count; i++ ) {
-				index = native[i].ni_event;
+				index = native[i].ni_event&PAPI_NATIVE_AND_MASK;
 				native[i].ni_position = _micpower_native_events[index].resources.selector - 1;
 		}
 		return PAPI_OK;
@@ -400,7 +400,7 @@ _micpower_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 				case PAPI_ENUM_EVENTS:
 
-						index = *EventCode;
+						index = *EventCode&PAPI_NATIVE_AND_MASK;
 
 						if ( index < num_events - 1 ) {
 								*EventCode = *EventCode + 1;
@@ -422,7 +422,7 @@ _micpower_ntv_enum_events( unsigned int *EventCode, int modifier )
 		int
 _micpower_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-		int index = EventCode;
+		int index = EventCode&PAPI_NATIVE_AND_MASK;
 
 		if ( index >= 0 && index < num_events ) {
 				strncpy( name, _micpower_native_events[index].name, len );
@@ -437,7 +437,7 @@ _micpower_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 		int
 _micpower_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-		int index = EventCode;
+		int index = EventCode&PAPI_NATIVE_AND_MASK;
 
 		if ( index >= 0 && index < num_events ) {
 				strncpy( name, _micpower_native_events[index].description, len );
@@ -450,7 +450,7 @@ _micpower_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 _micpower_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
 {
 
-		int index = EventCode;
+		int index = EventCode&PAPI_NATIVE_AND_MASK;
 
 		if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
