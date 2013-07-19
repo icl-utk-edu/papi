@@ -163,7 +163,7 @@ read_sysfs_file( long long* counts)
 				retval&= fscanf(fp, "%lld %lld %lld", &counts[i], &counts[i+1], &counts[i+2] );
 		}
 
-		return !retval;
+		return retval;
 }
 
 /*****************************************************************************
@@ -248,7 +248,7 @@ _micpower_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 {
 		(void) flags;
 		(void) ctx;
-		int retval = 0;
+		int retval = 1;
 
 		MICPOWER_control_state_t* control = (MICPOWER_control_state_t*) ctl;
 		long long now = PAPI_get_real_usec();
@@ -271,12 +271,15 @@ _micpower_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 _micpower_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 		(void) ctx;
-		int retval = 0;
+		int retval = 1;
+		long long now = PAPI_get_real_usec();
 		/* read values */
 		MICPOWER_control_state_t* control = (MICPOWER_control_state_t*) ctl;
 
-		retval = read_sysfs_file(control->counts);
-		control->lastupdate = PAPI_get_real_usec();
+		if ( now - control->lastupdate > REFRESH_LAT ) {
+				retval = read_sysfs_file(control->counts);
+				control->lastupdate = now;
+		}
 		return (retval)?PAPI_OK:PAPI_ESYS;
 }
 
