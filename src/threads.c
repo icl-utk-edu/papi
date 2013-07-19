@@ -414,10 +414,8 @@ static int _papi_hwi_thread_free_eventsets(long tid) {
 }
 
 
-
-
 int
-_papi_hwi_shutdown_thread( ThreadInfo_t * thread )
+_papi_hwi_shutdown_thread( ThreadInfo_t * thread, int force_shutdown )
 {
 	int retval = PAPI_OK;
 	unsigned long tid;
@@ -433,7 +431,7 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread )
 	       thread->allocator_tid,
 	       tid);
 
-	if ((thread->tid==tid) || ( thread->allocator_tid == tid )) {
+	if ((thread->tid==tid) || ( thread->allocator_tid == tid ) || force_shutdown) {
 
                 _papi_hwi_thread_free_eventsets(tid);
 
@@ -473,8 +471,7 @@ _papi_hwi_shutdown_global_threads( void )
 
 	   THRDBG("Shutting down %ld\n",our_tid);
 
-	   err = _papi_hwi_shutdown_thread( tmp );
-
+	   err = _papi_hwi_shutdown_thread( tmp, 1 );
 
 	   /* count threads */
 	   tmp = ( ThreadInfo_t * ) _papi_hwi_thread_head;
@@ -497,10 +494,8 @@ _papi_hwi_shutdown_global_threads( void )
 	      THRDBG("looking at #%d %ld our_tid: %ld alloc_tid: %ld\n",
 		     i,tmp->tid,our_tid,tmp->allocator_tid);
 	    
-	      if (tmp->allocator_tid==our_tid) {
 		 THRDBG("Also removing thread %ld\n",tmp->tid);
-	         err = _papi_hwi_shutdown_thread( tmp );
-	      }
+	         err = _papi_hwi_shutdown_thread( tmp, 1 );
   
 	      tmp=next;
 

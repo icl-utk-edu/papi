@@ -55,7 +55,7 @@ extern int ( *_papi_hwi_thread_kill_fn ) ( int, int );
 
 extern int _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid );
 extern int _papi_hwi_init_global_threads( void );
-extern int _papi_hwi_shutdown_thread( ThreadInfo_t * thread );
+extern int _papi_hwi_shutdown_thread( ThreadInfo_t * thread, int force );
 extern int _papi_hwi_shutdown_global_threads( void );
 extern int _papi_hwi_broadcast_signal( unsigned int mytid );
 extern int _papi_hwi_set_thread_id_fn( unsigned long int ( *id_fn ) ( void ) );

@@ -241,7 +241,7 @@ PAPI_unregister_thread( void )
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 
 	if ( thread )
-		papi_return( _papi_hwi_shutdown_thread( thread ) );
+		papi_return( _papi_hwi_shutdown_thread( thread, 0 ) );
 
 	papi_return( PAPI_EMISC );
 }
