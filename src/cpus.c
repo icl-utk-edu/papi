@@ -238,12 +238,11 @@ free_cpu( CpuInfo_t **cpu )
    *cpu = NULL;
 }
 
+/* Must be called with CPUS_LOCK held! */
 static void
 insert_cpu( CpuInfo_t * entry )
 {
    APIDBG("Entry: entry: %p\n", entry);
-
-   _papi_hwi_lock( CPUS_LOCK );
 
    if ( _papi_hwi_cpu_head == NULL ) {	
       /* 0 elements */
@@ -267,13 +266,11 @@ insert_cpu( CpuInfo_t * entry )
 
    THRDBG( "_papi_hwi_cpu_head now cpu %d at %p\n",
 	   _papi_hwi_cpu_head->cpu_num, _papi_hwi_cpu_head );
-
-   _papi_hwi_unlock( CPUS_LOCK );
-
 }
 
 
 
+/* Must be called with CPUS_LOCK held! */
 int
 _papi_hwi_initialize_cpu( CpuInfo_t **dest, unsigned int cpu_num )
 {
