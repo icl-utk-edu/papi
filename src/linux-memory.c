@@ -486,7 +486,7 @@ PAPI_mh_info_t sys_mem_info[4] = {
 		,
 		.cache = {
 		[0] = { .type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_PSEUDO_LRU,
-				.size = 262144, .line_size = 128, .num_lines = 256,
+				.size = 524288, .line_size = 128, .num_lines = 256,
 				.associativity = 8 }
 		,
 		[1] = { .type = PAPI_MH_TYPE_EMPTY, .size = -1, .line_size = -1,
@@ -514,7 +514,74 @@ PAPI_mh_info_t sys_mem_info[4] = {
 	   }
 	  ,
 	  }
-	 }						 // POWER7 end
+	 },						 // POWER7 end
+		{3,
+		 {
+		  [0] = { // level 1 begins
+			.tlb = {
+			/// POWER8 has an ERAT (Effective to Real Address
+			/// Translation) instead of a TLB.  For the purposes of this
+			/// data, we will treat it like a TLB.
+			[0] = { .type = PAPI_MH_TYPE_INST,
+					.num_entries = 72, .page_size = 0,
+					.associativity = SHRT_MAX }
+			,
+			[1] = { .type = PAPI_MH_TYPE_DATA,
+					.num_entries = 48, .page_size = 0,
+					.associativity = SHRT_MAX }
+			}
+			,
+			.cache = { // level 1 caches begin
+			[0] = { .type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_PSEUDO_LRU,
+					.size = 32768, .line_size = 128, .num_lines = 64,
+					.associativity = 8 }
+			,
+			[1] = { .type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_LRU,
+					.size = 65536, .line_size = 128, .num_lines = 512,
+					.associativity = 8 }
+			}
+		   }
+		  ,
+		  [1] = { // level 2 begins
+			.tlb = {
+			[0] = { .type = PAPI_MH_TYPE_UNIFIED, .num_entries = 2048,
+				.page_size = 0, .associativity = 4 }
+			,
+			[1] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+				.page_size = -1, .associativity = -1 }
+			}
+			,
+			.cache = {
+			[0] = { .type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_PSEUDO_LRU,
+					.size = 262144, .line_size = 128, .num_lines = 256,
+					.associativity = 8 }
+			,
+			[1] = { .type = PAPI_MH_TYPE_EMPTY, .size = -1, .line_size = -1,
+					.num_lines = -1, .associativity = -1 }
+			}
+		   }
+		  ,
+		  [2] = { // level 3 begins
+			.tlb = {
+			[0] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+				.page_size = -1, .associativity = -1 }
+			,
+			[1] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+				.page_size = -1, .associativity = -1 }
+			}
+			,
+			.cache = {
+			[0] = { .type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_PSEUDO_LRU,
+					.size = 8388608, .line_size = 128, .num_lines = 65536,
+					.associativity = 8 }
+			,
+			[1] = { .type = PAPI_MH_TYPE_EMPTY, .size = -1, .line_size = -1,
+					.num_lines = -1, .associativity = -1 }
+			}
+		   }
+		  ,
+		  }
+		 }						 // POWER8 end
 };
 
 #define SPRN_PVR 0x11F		 /* Processor Version Register */
@@ -551,6 +618,9 @@ ppc64_get_memory_info( PAPI_hw_info_t * hw_info )
 		break;
 	case 0x3F:				 /* POWER7 */
 		index = 3;
+		break;
+	case 0x4b:				 /*POWER8*/
+		index = 4;
 		break;
 	default:
 		index = -1;
