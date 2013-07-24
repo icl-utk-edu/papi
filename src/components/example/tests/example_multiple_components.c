@@ -60,7 +60,7 @@ int main (int argc, char **argv)
 		     cmpinfo->num_native_events,
 		     cmpinfo->name);
 	   }
-	   if (strstr(cmpinfo->name,"example.c")) {
+	   if (strstr(cmpinfo->name,"example")) {
 	      /* FOUND! */
 	      example_cid=cid;
 	   }
