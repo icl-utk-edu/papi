@@ -38,6 +38,7 @@
  *  component initialization time.  The component then calls the cuda library  *
  *  functions through these function pointers.                                 *
  *******************************************************************************/
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));
 #undef CUDAAPI
 #define CUDAAPI __attribute__((weak))
 CUresult CUDAAPI cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev);
@@ -593,6 +594,11 @@ CUDA_init_component( int cidx )
 static int 
 linkCudaLibraries ()
 {
+		/* Attempt to guess if we were statically linked to libc, if so bail */
+		if ( _dl_non_dynamic_init != NULL ) {
+				strncpy(_cuda_vector.cmp_info.disabled_reason, "The cuda component does not support statically linking to libc.",PAPI_MAX_STR_LEN);
+				return PAPI_ENOSUPP;
+		}
 	/* Need to link in the cuda libraries, if not found disable the component */
 	dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
 	if (!dl1)
