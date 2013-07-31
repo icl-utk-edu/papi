@@ -171,6 +171,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #define PFMLIB_NUM_PMUS	(int)(sizeof(pfmlib_pmus)/sizeof(pfmlib_pmu_t *))
 
 static pfmlib_os_t pfmlib_os_none;
+pfmlib_os_t *pfmlib_os = &pfmlib_os_none;
 
 static pfmlib_os_t *pfmlib_oses[]={
 	&pfmlib_os_none,
@@ -611,6 +612,17 @@ pfmlib_init_pmus(void)
 		if (ret != PFM_SUCCESS)
 			continue;
 
+		/*
+		 * check if exported by OS if needed
+		 */
+		if (p->os_detect[pfmlib_os->id]) {
+			ret = p->os_detect[pfmlib_os->id](p);
+			if (ret != PFM_SUCCESS) {
+				DPRINT("%s PMU not exported by OS\n", p->name);
+				continue;
+			}
+		}
+
 		ret = pfmlib_pmu_activate(p);
 		if (ret == PFM_SUCCESS)
 			nsuccess++;
@@ -642,9 +654,13 @@ pfmlib_init_os(void)
 		if (os->detect(os) != PFM_SUCCESS)
 			continue;
 
+		if (os != &pfmlib_os_none && pfmlib_os == &pfmlib_os_none)
+			pfmlib_os = os;
+
 		DPRINT("OS layer %s activated\n", os->name);
 		os->flags = PFMLIB_OS_FL_ACTIVATED;
 	}
+	DPRINT("default OS layer: %s\n", pfmlib_os->name);
 }
 
 int
@@ -667,11 +683,13 @@ pfm_initialize(void)
 
 	pfmlib_init_env();
 
+	/* must be done before pfmlib_init_pmus() */
+	pfmlib_init_os();
+
 	ret = pfmlib_init_pmus();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	pfmlib_init_os();
 
 	pfm_cfg.initdone = 1;
 
