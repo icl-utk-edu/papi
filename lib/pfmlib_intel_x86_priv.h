@@ -322,6 +322,7 @@ extern int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, 
 extern int pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info);
 extern int pfm_intel_x86_valid_pebs(pfmlib_event_desc_t *e);
 extern int pfm_intel_x86_perf_event_encoding(pfmlib_event_desc_t *e, void *data);
+extern int pfm_intel_x86_perf_detect(void *this);
 extern unsigned int pfm_intel_x86_get_event_nattrs(void *this, int pidx);
 extern int intel_x86_attr2mod(void *this, int pidx, int attr_idx);
 
