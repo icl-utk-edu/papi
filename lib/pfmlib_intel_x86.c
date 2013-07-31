@@ -40,6 +40,8 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
 	PFM_ATTR_B("t", "measure any thread"),			/* monitor on both threads */
 	PFM_ATTR_I("ldlat", "load latency threshold (cycles, [3-65535])"),	/* load latency threshold */
+	PFM_ATTR_B("intx", "monitor only inside transactional memory region"),
+	PFM_ATTR_B("intxcp", "do not count occurrences inside aborted transactional memory region"),
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -490,7 +492,18 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 						return PFM_ERR_ATTR_VAL;
 					ldlat = ival;
 					break;
-
+				case INTEL_X86_ATTR_INTX: /* in_tx */
+					if (modhw & _INTEL_X86_ATTR_INTX)
+						return PFM_ERR_ATTR_SET;
+					reg.sel_intx = !!ival;
+					umodmsk |= _INTEL_X86_ATTR_INTX;
+					break;
+				case INTEL_X86_ATTR_INTXCP: /* in_tx_cp */
+					if (modhw & _INTEL_X86_ATTR_INTXCP)
+						return PFM_ERR_ATTR_SET;
+					reg.sel_intxcp = !!ival;
+					umodmsk |= _INTEL_X86_ATTR_INTXCP;
+					break;
 			}
 		}
 	}
@@ -626,6 +639,12 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			break;
 		case INTEL_X86_ATTR_LDLAT:
 			evt_strcat(e->fstr, ":%s=%d", intel_x86_mods[id].name, ldlat);
+			break;
+		case INTEL_X86_ATTR_INTX:
+			evt_strcat(e->fstr, ":%s=%lu", intel_x86_mods[id].name, reg.sel_intx);
+			break;
+		case INTEL_X86_ATTR_INTXCP:
+			evt_strcat(e->fstr, ":%s=%lu", intel_x86_mods[id].name, reg.sel_intxcp);
 			break;
 		}
 	}

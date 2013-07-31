@@ -101,7 +101,9 @@ typedef union pfm_intel_x86_reg {
 		unsigned long sel_en:1;			/* enable */
 		unsigned long sel_inv:1;		/* invert counter mask */
 		unsigned long sel_cnt_mask:8;		/* counter mask */
-		unsigned long sel_res2:32;
+		unsigned long sel_intx:1;		/* only in tx region */
+		unsigned long sel_intxcp:1;		/* excl. aborted tx region */
+		unsigned long sel_res2:30;
 	} perfevtsel;
 
 	struct {
@@ -149,14 +151,18 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_X86_ATTR_C	4 /* counter mask */
 #define INTEL_X86_ATTR_T	5 /* any thread */
 #define INTEL_X86_ATTR_LDLAT	6 /* load latency threshold */
+#define INTEL_X86_ATTR_INTX	7 /* in transaction */
+#define INTEL_X86_ATTR_INTXCP	8 /* not aborted transaction */
 
-#define _INTEL_X86_ATTR_U  (1 << INTEL_X86_ATTR_U)
-#define _INTEL_X86_ATTR_K  (1 << INTEL_X86_ATTR_K)
-#define _INTEL_X86_ATTR_I  (1 << INTEL_X86_ATTR_I)
-#define _INTEL_X86_ATTR_E  (1 << INTEL_X86_ATTR_E)
-#define _INTEL_X86_ATTR_C  (1 << INTEL_X86_ATTR_C)
-#define _INTEL_X86_ATTR_T  (1 << INTEL_X86_ATTR_T)
-#define _INTEL_X86_ATTR_LDLAT  (1 << INTEL_X86_ATTR_LDLAT)
+#define _INTEL_X86_ATTR_U	(1 << INTEL_X86_ATTR_U)
+#define _INTEL_X86_ATTR_K	(1 << INTEL_X86_ATTR_K)
+#define _INTEL_X86_ATTR_I	(1 << INTEL_X86_ATTR_I)
+#define _INTEL_X86_ATTR_E	(1 << INTEL_X86_ATTR_E)
+#define _INTEL_X86_ATTR_C  	(1 << INTEL_X86_ATTR_C)
+#define _INTEL_X86_ATTR_T  	(1 << INTEL_X86_ATTR_T)
+#define _INTEL_X86_ATTR_INTX	(1 << INTEL_X86_ATTR_INTX)
+#define _INTEL_X86_ATTR_INTXCP	(1 << INTEL_X86_ATTR_INTXCP)
+#define _INTEL_X86_ATTR_LDLAT	(1 << INTEL_X86_ATTR_LDLAT)
 
 #define INTEL_X86_ATTRS \
 	(_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E|_INTEL_X86_ATTR_C|_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
@@ -166,7 +172,7 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_FIXED2_ATTRS	(_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
 #define INTEL_FIXED3_ATTRS	(INTEL_FIXED2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V3_ATTRS 		(INTEL_V2_ATTRS|_INTEL_X86_ATTR_T)
-#define INTEL_V4_ATTRS 		(INTEL_V3_ATTRS)
+#define INTEL_V4_ATTRS 		(INTEL_V3_ATTRS | _INTEL_X86_ATTR_INTX | _INTEL_X86_ATTR_INTXCP)
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -180,6 +186,8 @@ typedef union pfm_intel_x86_reg {
 #define sel_inv		 perfevtsel.sel_inv
 #define sel_cnt_mask	 perfevtsel.sel_cnt_mask
 #define sel_anythr	 perfevtsel.sel_anythr
+#define sel_intx	 perfevtsel.sel_intx
+#define sel_intxcp	 perfevtsel.sel_intxcp
 
 /*
  * shift relative to start of register
