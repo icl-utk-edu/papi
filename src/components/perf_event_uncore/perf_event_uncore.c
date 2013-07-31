@@ -47,30 +47,7 @@ static int our_cidx;
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
 
-/******************************************************************/
-/******** Kernel Version Dependent Routines  **********************/
-/******************************************************************/
 
-/* not a problem on the 3.6 and newer that uncore works on */
-static int
-bug_check_scheduability(void) {
-
-  return 0;
-}
-
-static int
-bug_format_group(void) {
-
-  return 0;
-
-}
-
-static int
-bug_sync_read(void) {
-
-  return 0;
-
-}
 /* The read format on perf_event varies based on various flags that */
 /* are passed into it.  This helper avoids copying this logic       */
 /* multiple places.                                                 */
@@ -87,9 +64,8 @@ get_read_format( unsigned int multiplex,
       format |= PERF_FORMAT_TOTAL_TIME_RUNNING;
    }
 
-   /* if our kernel supports it and we are not using inherit, */
-   /* add the group read options                              */
-   if ( (!bug_format_group()) && !inherit) {
+   /* If we are not using inherit, add the group read options     */
+   if (!inherit) {
       if (format_group) {
 	 format |= PERF_FORMAT_GROUP;
       }
@@ -271,93 +247,6 @@ check_permissions( unsigned long tid,
 /*  possible counter value.                                   */
 #define READ_BUFFER_SIZE (3 + (2 * PERF_EVENT_MAX_MPX_COUNTERS))
 
-
-
-/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch */
-/* implementations (e.g. x86 before 2.6.33) which don't do a static event */
-/* scheduability check in sys_perf_event_open.  It is also needed if the  */
-/* kernel is stealing an event, such as when NMI watchdog is enabled.     */
-
-static int
-check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
-{
-   int retval = 0, cnt = -1;
-   ( void ) ctx;			 /*unused */
-   long long papi_pe_buffer[READ_BUFFER_SIZE];
-   int i,group_leader_fd;
-
-   if (bug_check_scheduability()) {
-
-      /* If the kernel isn't tracking scheduability right       */
-      /* Then we need to start/stop/read to force the event     */
-      /* to be scheduled and see if an error condition happens. */
-
-      /* get the proper fd to start */
-      group_leader_fd=ctl->events[idx].group_leader_fd;
-      if (group_leader_fd==-1) group_leader_fd=ctl->events[idx].event_fd;
-
-      /* start the event */
-      retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
-      if (retval == -1) {
-	 PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
-	 return PAPI_ESYS;
-      }
-
-      /* stop the event */
-      retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
-      if (retval == -1) {
-	 PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
-	 return PAPI_ESYS;
-      }
-
-      /* See if a read returns any results */
-      cnt = read( group_leader_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
-      if ( cnt == -1 ) {
-	 SUBDBG( "read returned an error!  Should never happen.\n" );
-	 return PAPI_ESYS;
-      }
-
-      if ( cnt == 0 ) {
-         /* We read 0 bytes if we could not schedule the event */
-         /* The kernel should have detected this at open       */
-         /* but various bugs (including NMI watchdog)          */
-         /* result in this behavior                            */
-
-	 return PAPI_ECNFLCT;
-
-     } else {
-
-	/* Reset all of the counters (opened so far) back to zero      */
-	/* from the above brief enable/disable call pair.              */
-
-	/* We have to reset all events because reset of group leader      */
-        /* does not reset all.                                            */
-	/* we assume that the events are being added one by one and that  */
-        /* we do not need to reset higher events (doing so may reset ones */
-        /* that have not been initialized yet.                            */
-
-	/* Note... PERF_EVENT_IOC_RESET does not reset time running       */
-	/* info if multiplexing, so we should avoid coming here if        */
-	/* we are multiplexing the event.                                 */
-        for( i = 0; i < idx; i++) {
-	   retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
-	   if (retval == -1) {
-	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d "
-			 "(fd %d)failed.\n",
-			 i,ctl->num_events,idx,ctl->events[i].event_fd);
-	      return PAPI_ESYS;
-	   }
-	}
-      }
-   }
-   return PAPI_OK;
-}
-
-
-
-
-
-
 /* Open all events in the control state */
 static int
 open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
@@ -423,24 +312,6 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	      pid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
-
-      /* in many situations the kernel will indicate we opened fine */
-      /* yet things will fail later.  So we need to double check    */
-      /* we actually can use the events we've set up.               */
-
-      /* This is not necessary if we are multiplexing, and in fact */
-      /* we cannot do this properly if multiplexed because         */
-      /* PERF_EVENT_IOC_RESET does not reset the time running info */
-      if (!ctl->multiplexed) {
-	 ret = check_scheduability( ctx, ctl, i );
-
-         if ( ret != PAPI_OK ) {
-	    /* the last event did open, so we need to bump the counter */
-	    /* before doing the cleanup                                */
-	    i++;
-            goto open_pe_cleanup;
-	 }
-      }
       ctl->events[i].event_opened=1;
    }
 
@@ -869,31 +740,6 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    long long papi_pe_buffer[READ_BUFFER_SIZE];
    long long tot_time_running, tot_time_enabled, scale;
 
-   /* On kernels before 2.6.33 the TOTAL_TIME_ENABLED and TOTAL_TIME_RUNNING */
-   /* fields are always 0 unless the counter is disabled.  So if we are on   */
-   /* one of these kernels, then we must disable events before reading.      */
-
-   /* Elsewhere though we disable multiplexing on kernels before 2.6.34 */
-   /* so maybe this isn't even necessary.                               */
-
-   if (bug_sync_read()) {
-      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-         for ( i = 0; i < pe_ctl->num_events; i++ ) {
-	    /* disable only the group leaders */
-	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
-	       ret = ioctl( pe_ctl->events[i].event_fd, 
-			   PERF_EVENT_IOC_DISABLE, NULL );
-	       if ( ret == -1 ) {
-	          PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) "
-			   "returned an error: ", strerror( errno ));
-	          return PAPI_ESYS;
-	       }
-	    }
-	 }
-      }
-   }
-
-
    /* Handle case where we are multiplexing */
    if (pe_ctl->multiplexed) {
 
@@ -953,7 +799,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    }
 
    /* Handle cases where we cannot use FORMAT GROUP */
-   else if (bug_format_group() || pe_ctl->inherit) {
+   else if (pe_ctl->inherit) {
 
       /* we must read each counter individually */
       for ( i = 0; i < pe_ctl->num_events; i++ ) {
@@ -1026,27 +872,6 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       /* put the count values in their proper location */
       for(i=0;i<papi_pe_buffer[0];i++) {
          pe_ctl->counts[i] = papi_pe_buffer[1+i];
-      }
-   }
-
-
-   /* If we disabled the counters due to the sync_read_bug(), */
-   /* then we need to re-enable them now.                     */
-   if (bug_sync_read()) {
-      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-         for ( i = 0; i < pe_ctl->num_events; i++ ) {
-	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
-	       /* this should refresh any overflow counters too */
-	       ret = ioctl( pe_ctl->events[i].event_fd,
-			    PERF_EVENT_IOC_ENABLE, NULL );
-	       if ( ret == -1 ) {
-	          /* Should never happen */
-	          PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) returned an error: ",
-			    strerror( errno ));
-	          return PAPI_ESYS;
-	       }
-	    }
-	 }
       }
    }
 
