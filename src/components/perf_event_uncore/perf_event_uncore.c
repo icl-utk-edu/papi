@@ -100,7 +100,7 @@ static long
 sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 					   int group_fd, unsigned long flags )
 {
-	int ret;
+   int ret;
 
    SUBDBG("sys_perf_event_open(%p,%d,%d,%d,%lx\n",hw_event,pid,cpu,group_fd,flags);
    SUBDBG("   type: %d\n",hw_event->type);

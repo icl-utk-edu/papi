@@ -353,38 +353,38 @@ static struct native_event_t *allocate_native_event(char *name,
   				  PFM_PLM0 | PFM_PLM3, 
                                   PFM_OS_PERF_EVENT, 
   				  &perf_arg);
-  if (ret!=PFM_SUCCESS) {
-     /* should do something! */
-  }
+  if (ret==PFM_SUCCESS) {
   
-  event_table->native_events[new_event].config=perf_arg.attr->config;
-  event_table->native_events[new_event].config1=perf_arg.attr->config1;
-  event_table->native_events[new_event].type=perf_arg.attr->type;
+     event_table->native_events[new_event].config=perf_arg.attr->config;
+     event_table->native_events[new_event].config1=perf_arg.attr->config1;
+     event_table->native_events[new_event].type=perf_arg.attr->type;
 
-  SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64" type 0x%"PRIx32"\n", 
-          perf_arg.attr->config, 
-	  perf_arg.attr->config1,
-	  perf_arg.attr->type);
+     SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64
+             " type 0x%"PRIx32"\n", 
+             perf_arg.attr->config, 
+	     perf_arg.attr->config1,
+	     perf_arg.attr->type);
 
-  SUBDBG("Creating event %s with perfidx %#x\n",
+     SUBDBG("Creating event %s with perfidx %#x\n",
 	 name,
 	 event_table->native_events[new_event].libpfm4_idx);
 
-  event_table->num_native_events++;
+     event_table->num_native_events++;
 
-  /* If we've allocated too many native events, then allocate more room */
-  if (event_table->num_native_events >= 
-      event_table->allocated_native_events) {
+     /* If we've allocated too many native events, then allocate more room */
+     if (event_table->num_native_events >= 
+         event_table->allocated_native_events) {
 
-     SUBDBG("Allocating more room for native events (%d %ld)\n",
+        SUBDBG("Allocating more room for native events (%d %ld)\n",
 	    (event_table->allocated_native_events+NATIVE_EVENT_CHUNK),
 	    (long)sizeof(struct native_event_t) *
 	    (event_table->allocated_native_events+NATIVE_EVENT_CHUNK));
 
-     event_table->native_events=realloc(event_table->native_events,
+        event_table->native_events=realloc(event_table->native_events,
 			   sizeof(struct native_event_t) * 
 			   (event_table->allocated_native_events+NATIVE_EVENT_CHUNK));
-     event_table->allocated_native_events+=NATIVE_EVENT_CHUNK;
+        event_table->allocated_native_events+=NATIVE_EVENT_CHUNK;
+     }
   }
 
   _papi_hwi_unlock( NAMELIB_LOCK );
