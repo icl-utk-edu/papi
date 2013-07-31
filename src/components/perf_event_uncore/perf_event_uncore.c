@@ -77,10 +77,6 @@ get_read_format( unsigned int multiplex,
    return format;
 }
 
-/*****************************************************************/
-/********* End Kernel-version Dependent Routines  ****************/
-/*****************************************************************/
-
 /********************************************************************/
 /* Low-level perf_event calls                                       */
 /********************************************************************/
@@ -173,71 +169,6 @@ static int map_perf_event_errors_to_papi(int perf_event_error) {
    }
    return ret;
 }
-
-
-/** Check if the current set of options is supported by  */
-/*  perf_events.                                         */
-/*  We do this by temporarily opening an event with the  */
-/*  desired options then closing it again.  We use the   */
-/*  PERF_COUNT_HW_INSTRUCTION event as a dummy event     */
-/*  on the assumption it is available on all             */
-/*  platforms.                                           */
-
-static int
-check_permissions( unsigned long tid,
-		   unsigned int cpu_num,
-		   unsigned int domain,
-		   unsigned int granularity,
-		   unsigned int multiplex,
-		   unsigned int inherit )
-{
-   int ev_fd;
-   struct perf_event_attr attr;
-
-   long pid;
-
-   /* clearing this will set a type of hardware and to count all domains */
-   memset(&attr, '\0', sizeof(attr));
-   attr.read_format = get_read_format(multiplex, inherit, 1);
-
-   /* set the event id (config field) to instructios */
-   /* (an event that should always exist)            */
-   /* This was cycles but that is missing on Niagara */
-   attr.config = PERF_COUNT_HW_INSTRUCTIONS;
-
-   /* now set up domains this event set will be counting */
-   if (!(domain & PAPI_DOM_SUPERVISOR)) {
-      attr.exclude_hv = 1;
-   }
-   if (!(domain & PAPI_DOM_USER)) {
-      attr.exclude_user = 1;
-   }
-   if (!(domain & PAPI_DOM_KERNEL)) {
-      attr.exclude_kernel = 1;
-   }
-
-   if (granularity==PAPI_GRN_SYS) {
-      pid = -1;
-   } else {
-      pid = tid;
-   }
-
-   SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
-
-   ev_fd = sys_perf_event_open( &attr, pid, cpu_num, -1, 0 );
-   if ( ev_fd == -1 ) {
-      SUBDBG("sys_perf_event_open returned error.  Linux says, %s",
-	     strerror( errno ) );
-      return map_perf_event_errors_to_papi(errno);
-   }
-
-   /* now close it, this was just to make sure we have permissions */
-   /* to set these options                                         */
-   close(ev_fd);
-   return PAPI_OK;
-}
-
-
 
 /* Maximum size we ever expect to read from a perf_event fd   */
 /*  (this is the number of 64-bit values)                     */
@@ -964,14 +895,7 @@ _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
    switch ( code ) {
       case PAPI_MULTIPLEX:
 	   pe_ctl = ( pe_control_t * ) ( option->multiplex.ESI->ctl_state );
-	   ret = check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain,
-				    pe_ctl->granularity,
-				    1, pe_ctl->inherit );
-           if (ret != PAPI_OK) {
-	      return ret;
-	   }
 
-	   /* looks like we are allowed, so set multiplexed attribute */
 	   pe_ctl->multiplexed = 1;
 	   ret = _peu_update_control_state( pe_ctl, NULL,
 						pe_ctl->num_events, pe_ctx );
@@ -982,13 +906,6 @@ _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_ATTACH:
 	   pe_ctl = ( pe_control_t * ) ( option->attach.ESI->ctl_state );
-	   ret = check_permissions( option->attach.tid, pe_ctl->cpu,
-				  pe_ctl->domain, pe_ctl->granularity,
-				  pe_ctl->multiplexed,
-				    pe_ctl->inherit );
-	   if (ret != PAPI_OK) {
-	      return ret;
-	   }
 
 	   pe_ctl->tid = option->attach.tid;
 
@@ -1007,14 +924,6 @@ _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_CPU_ATTACH:
 	   pe_ctl = ( pe_control_t *) ( option->cpu.ESI->ctl_state );
-	   ret = check_permissions( pe_ctl->tid, option->cpu.cpu_num,
-				    pe_ctl->domain, pe_ctl->granularity,
-				    pe_ctl->multiplexed,
-				    pe_ctl->inherit );
-           if (ret != PAPI_OK) {
-	       return ret;
-	   }
-	   /* looks like we are allowed so set cpu number */
 
 	   /* this tells the kernel not to count for a thread   */
 	   /* should we warn if we try to set both?  perf_event */
@@ -1027,14 +936,7 @@ _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_DOMAIN:
 	   pe_ctl = ( pe_control_t *) ( option->domain.ESI->ctl_state );
-	   ret = check_permissions( pe_ctl->tid, pe_ctl->cpu,
-				    option->domain.domain,
-				    pe_ctl->granularity,
-				    pe_ctl->multiplexed,
-				    pe_ctl->inherit );
-           if (ret != PAPI_OK) {
-	      return ret;
-	   }
+
 	   /* looks like we are allowed, so set counting domain */
 	   return _pe_set_domain( pe_ctl, option->domain.domain );
 
@@ -1066,13 +968,7 @@ _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_INHERIT:
 	   pe_ctl = (pe_control_t *) ( option->inherit.ESI->ctl_state );
-	   ret = check_permissions( pe_ctl->tid, pe_ctl->cpu, pe_ctl->domain,
-				  pe_ctl->granularity, pe_ctl->multiplexed,
-				    option->inherit.inherit );
-           if (ret != PAPI_OK) {
-	      return ret;
-	   }
-	   /* looks like we are allowed, so set the requested inheritance */
+
 	   if (option->inherit.inherit) {
 	      /* children will inherit counters */
 	      pe_ctl->inherit = 1;
@@ -1084,41 +980,18 @@ _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
       case PAPI_DATA_ADDRESS:
 	   return PAPI_ENOSUPP;
-#if 0
-	   pe_ctl = (pe_control_t *) (option->address_range.ESI->ctl_state);
-	   ret = set_default_domain( pe_ctl, option->address_range.domain );
-	   if ( ret != PAPI_OK ) {
-	      return ret;
-	   }
-	   set_drange( pe_ctx, pe_ctl, option );
-	   return PAPI_OK;
-#endif
+
       case PAPI_INSTR_ADDRESS:
 	   return PAPI_ENOSUPP;
-#if 0
-	   pe_ctl = (pe_control_t *) (option->address_range.ESI->ctl_state);
-	   ret = set_default_domain( pe_ctl, option->address_range.domain );
-	   if ( ret != PAPI_OK ) {
-	      return ret;
-	   }
-	   set_irange( pe_ctx, pe_ctl, option );
-	   return PAPI_OK;
-#endif
 
       case PAPI_DEF_ITIMER:
-	   /* What should we be checking for here?                   */
-	   /* This seems like it should be OS-specific not component */
-	   /* specific.                                              */
-
-	   return PAPI_OK;
+	   return PAPI_ENOSUPP;
 
       case PAPI_DEF_MPX_NS:
-	   /* Defining a given ns per set is not current supported */
 	   return PAPI_ENOSUPP;
 
       case PAPI_DEF_ITIMER_NS:
-	   /* We don't support this... */
-	   return PAPI_OK;
+	   return PAPI_ENOSUPP;
 
       default:
 	   return PAPI_ENOSUPP;
