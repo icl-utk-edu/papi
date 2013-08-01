@@ -29,6 +29,7 @@
 
 #include "linux-infiniband.h"
 
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));
 
 /********  CHANGE PROTOTYPES TO DECLARE Infiniband LIBRARY SYMBOLS AS WEAK  **********
  *  This is done so that a version of PAPI built with the infiniband component can   *
@@ -604,6 +605,12 @@ INFINIBAND_init_component( int cidx )
 static int
 linkInfinibandLibraries ()
 {
+	/* Attempt to guess if we were statically linked to libc, if so bail */
+	if ( _dl_non_dynamic_init != NULL ) {
+		strncpy(_infiniband_vector.cmp_info.disabled_reason, "The Infiniband component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
+		return PAPI_ENOSUPP;
+	}
+
 	/* Need to link in the Infiniband libraries, if not found disable the component */
 	dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);
 	if (!dl1)

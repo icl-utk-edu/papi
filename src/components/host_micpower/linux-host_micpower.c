@@ -28,6 +28,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));
+
 /* This is a guess, refine this later */
 #define UPDATEFREQ 500000
 
@@ -113,6 +115,12 @@ static power_t cached_values[MAX_DEVICES];
 static int 
 loadFunctionPtrs()
 {
+	/* Attempt to guess if we were statically linked to libc, if so bail */
+	if ( _dl_non_dynamic_init != NULL ) {
+		strncpy(_host_micpower_vector.cmp_info.disabled_reason, "The host_micpower component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
+		return PAPI_ENOSUPP;
+	}
+
 	  /* Need to link in the cuda libraries, if not found disable the component */
 	scif_access = dlopen("libscif.so", RTLD_NOW | RTLD_GLOBAL);
     if (NULL == scif_access)

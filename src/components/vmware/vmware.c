@@ -63,6 +63,11 @@
 #define VMWARE_ELAPSED_TIME             19
 #define VMWARE_ELAPSED_APPARENT         20
 
+/* Begin PAPI definitions */
+papi_vector_t _vmware_vector;
+
+
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));
 
 /** Structure that stores private information for each event */
 struct _vmware_register {
@@ -203,6 +208,12 @@ LoadFunctions(void)
 	 * First, try to load the shared library.
 	 */
 
+	/* Attempt to guess if we were statically linked to libc, if so bail */
+	if ( _dl_non_dynamic_init != NULL ) {
+		strncpy(_vmware_vector.cmp_info.disabled_reason, "The VMware component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
+		return PAPI_ENOSUPP;
+	}
+
 	char const *dlErrStr;
 	char filename[BUFSIZ];
 
@@ -272,9 +283,6 @@ LoadFunctions(void)
 }
 
 
-
-/* Begin PAPI definitions */
-papi_vector_t _vmware_vector;
 
 /** This table contains the native events */
 static struct _vmware_native_event_entry *_vmware_native_table;

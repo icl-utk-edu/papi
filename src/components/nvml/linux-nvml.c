@@ -36,6 +36,7 @@
 #include "cuda.h"
 #include "cuda_runtime_api.h"
 
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));
 
 /*****  CHANGE PROTOTYPES TO DECLARE CUDA AND NVML LIBRARY SYMBOLS AS WEAK  *****
  *  This is done so that a version of PAPI built with the nvml component can    *
@@ -985,6 +986,12 @@ _papi_nvml_init_component( int cidx )
 static int
 linkCudaLibraries ()
 {
+	/* Attempt to guess if we were statically linked to libc, if so bail */
+	if ( _dl_non_dynamic_init != NULL ) {
+		strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
+		return PAPI_ENOSUPP;
+	}
+
 	/* Need to link in the cuda libraries, if not found disable the component */
 	dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
 	if (!dl1)
