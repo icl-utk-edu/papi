@@ -50,6 +50,14 @@ Measure on both threads at the same time assuming hyper-threading is enabled. Th
 Pass a latency threshold to the MEM_TRANS_RETIRED:LOAD_LATENCY event.
 This is an integer attribute that must be in the range [3:65535]. It is required
 for this event.  Note that the event must be used with precise sampling (PEBS).
+.TP
+.B intx
+Monitor the event only when executing inside a transactional memory region (in tx). Event
+does not count otherwise. This is a boolean modifiers. Default value is 0.
+.TP
+.B intxcp
+Do not count occurrences of the event when they are inside an aborted transactional memory
+region. This is a boolean modifier. Default value is 0.
 
 .SH OFFCORE_RESPONSE events
 Intel Haswell provides two offcore_response events. They are called OFFCORE_RESPONSE_0 and OFFCORE_RESPONSE_1.
