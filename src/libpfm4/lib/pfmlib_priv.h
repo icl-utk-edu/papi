@@ -128,6 +128,7 @@ typedef struct pfmlib_pmu {
 	int		 (*get_event_encoding[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 
 	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
+	int		 (*os_detect[PFM_OS_MAX])(void *this);
 	int		 (*validate_table)(void *this, FILE *fp);
 	int 		 (*get_num_events)(void *this);	/* optional */
 	void		 (*display_reg)(void *this, pfmlib_event_desc_t *e, void *val); /* optional */
@@ -286,6 +287,7 @@ extern pfmlib_pmu_t arm_1176_support;
 extern pfmlib_pmu_t mips_74k_support;
 extern pfmlib_pmu_t s390x_cpum_cf_support;
 
+extern pfmlib_os_t *pfmlib_os;
 extern pfmlib_os_t pfmlib_os_perf;
 extern pfmlib_os_t pfmlib_os_perf_ext;
 
@@ -352,6 +354,10 @@ pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
 #define PFMLIB_ENCODE_PERF(f)  \
 	.get_event_encoding[PFM_OS_PERF_EVENT] = f, \
 	.get_event_encoding[PFM_OS_PERF_EVENT_EXT] = f
+
+#define PFMLIB_OS_DETECT(f)  \
+	.os_detect[PFM_OS_PERF_EVENT] = f, \
+	.os_detect[PFM_OS_PERF_EVENT_EXT] = f
 #else
 #define PFMLIB_VALID_PERF_PATTRS(f) \
 	.validate_pattrs[PFM_OS_PERF_EVENT] = NULL, \
@@ -360,6 +366,10 @@ pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
 #define PFMLIB_ENCODE_PERF(f)  \
 	.get_event_encoding[PFM_OS_PERF_EVENT] = NULL, \
 	.get_event_encoding[PFM_OS_PERF_EVENT_EXT] = NULL
+
+#define PFMLIB_OS_DETECT(f)  \
+	.os_detect[PFM_OS_PERF_EVENT] = NULL, \
+	.os_detect[PFM_OS_PERF_EVENT_EXT] = NULL
 #endif
 
 #endif /* __PFMLIB_PRIV_H__ */

@@ -68,6 +68,7 @@ pfmlib_pmu_t intel_snb_unc_cbo##n##_support={ \
 	.pmu_detect		= pfm_snb_unc_detect, \
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding, \
 	 PFMLIB_ENCODE_PERF(pfm_intel_nhm_unc_get_perf_encoding), \
+	 PFMLIB_OS_DETECT(pfm_intel_x86_perf_detect), \
 	.get_event_first	= pfm_intel_x86_get_event_first, \
 	.get_event_next		= pfm_intel_x86_get_event_next, \
 	.event_is_valid		= pfm_intel_x86_event_is_valid, \
