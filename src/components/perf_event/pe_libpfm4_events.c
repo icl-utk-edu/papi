@@ -353,7 +353,9 @@ static struct native_event_t *allocate_native_event(char *name,
   				  PFM_PLM0 | PFM_PLM3, 
                                   PFM_OS_PERF_EVENT, 
   				  &perf_arg);
-  if (ret==PFM_SUCCESS) {
+
+  /* If we error out on UMASK then enumeration doesn't work */
+  if ((ret==PFM_SUCCESS) || (ret==PFM_ERR_UMASK)) {
   
      event_table->native_events[new_event].config=perf_arg.attr->config;
      event_table->native_events[new_event].config1=perf_arg.attr->config1;
