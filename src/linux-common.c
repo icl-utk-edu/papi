@@ -345,7 +345,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 
 	/* Number of sockets */
 	if ( hwinfo->threads > 0 && hwinfo->cores > 0 )
-		hwinfo->sockets = hwinfo->ncpu / hwinfo->cores / hwinfo->threads;
+		hwinfo->sockets = hwinfo->totalcpus / hwinfo->cores / hwinfo->threads;
 
 #if 0
 	int *nodecpu;
