@@ -474,6 +474,12 @@ _peu_init_component( int cidx )
      return PAPI_ENOCMP;
    }
 
+
+   if (_papi_hwd[cidx]->cmp_info.num_native_events==0) {
+     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+	     "No uncore PMUs or events found",PAPI_MAX_STR_LEN);
+     return PAPI_ENOCMP;
+   }
    return PAPI_OK;
 
 }
