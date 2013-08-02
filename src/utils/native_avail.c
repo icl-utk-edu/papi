@@ -333,6 +333,8 @@ main( int argc, char **argv )
 
 	       retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
+	       if (retval==PAPI_OK) 
+
 	       do {
 			  memset( &info, 0, sizeof ( info ) );
 			  retval = PAPI_get_event_info( i, &info );
