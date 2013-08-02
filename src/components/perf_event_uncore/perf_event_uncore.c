@@ -419,43 +419,30 @@ int
 _peu_init_component( int cidx )
 {
 
-  int retval;
-  int paranoid_level;
+   int retval;
+   int paranoid_level;
 
-  FILE *fff;
+   FILE *fff;
 
-  our_cidx=cidx;
+   our_cidx=cidx;
 
-  /* The is the official way to detect if perf_event support exists */
-  /* The file is called perf_counter_paranoid on 2.6.31             */
-  /* currently we are lazy and do not support 2.6.31 kernels        */
-  fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
-  if (fff==NULL) {
-    strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-	    "perf_event support not detected",PAPI_MAX_STR_LEN);
-    return PAPI_ENOCMP;
-  }
+   /* The is the official way to detect if perf_event support exists */
+   /* The file is called perf_counter_paranoid on 2.6.31             */
+   /* currently we are lazy and do not support 2.6.31 kernels        */
 
-  /* 2 means no kernel measurements allowed   */
-  /* 1 means normal counter access            */
-  /* 0 means you can access CPU-specific data */
-  /* -1 means no restrictions                 */
-  retval=fscanf(fff,"%d",&paranoid_level);
-  if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
-  fclose(fff);
-
-  if ((paranoid_level>0) && (getuid()!=0)) {
+   fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
+   if (fff==NULL) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-	    "Insufficient permissions for uncore access.  Set /proc/sys/kernel/perf_event_paranoid to 0 or run as root.",
-	    PAPI_MAX_STR_LEN);
-    return PAPI_ENOCMP;
-  }
+	    "perf_event support not detected",PAPI_MAX_STR_LEN);
+     return PAPI_ENOCMP;
+   }
+   retval=fscanf(fff,"%d",&paranoid_level);
+   if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
+   fclose(fff);
 
-  /* Check that processor is supported */
 
-  /* Run Vendor-specific fixups */
+   /* Run the libpfm4-specific setup */
 
-  /* Run the libpfm4-specific setup */
    retval = _papi_libpfm4_init(_papi_hwd[cidx]);
    if (retval) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
@@ -464,7 +451,8 @@ _peu_init_component( int cidx )
    }
 
 
-  /* Run the libpfm4-specific setup */
+   /* Run the uncore specific libpfm4 setup */
+
    retval = _peu_libpfm4_init(_papi_hwd[cidx], 
 			       &uncore_native_event_table,
                                PMU_TYPE_UNCORE);
@@ -474,12 +462,28 @@ _peu_init_component( int cidx )
      return PAPI_ENOCMP;
    }
 
+   /* Check if no uncore events found */
 
    if (_papi_hwd[cidx]->cmp_info.num_native_events==0) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "No uncore PMUs or events found",PAPI_MAX_STR_LEN);
      return PAPI_ENOCMP;
    }
+
+   /* Check if we have enough permissions for uncore */
+
+   /* 2 means no kernel measurements allowed   */
+   /* 1 means normal counter access            */
+   /* 0 means you can access CPU-specific data */
+   /* -1 means no restrictions                 */
+
+   if ((paranoid_level>0) && (getuid()!=0)) {
+      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+	    "Insufficient permissions for uncore access.  Set /proc/sys/kernel/perf_event_paranoid to 0 or run as root.",
+	    PAPI_MAX_STR_LEN);
+     return PAPI_ENOCMP;
+   }
+
    return PAPI_OK;
 
 }
