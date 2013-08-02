@@ -1,4 +1,4 @@
-.TH "PAPI_event_code_to_name" 3 "Tue Jan 15 2013" "Version 5.1.0.2" "PAPI" \" -*- nroff -*-
+.TH "PAPI_event_code_to_name" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -42,26 +42,30 @@ Convert a numeric hardware event code to a name.
 .PP
 .nf
     int EventCode, EventSet = PAPI_NULL;
+  int Event, number;
     char EventCodeStr[PAPI_MAX_STR_LEN];
-    char EventDescr[PAPI_MAX_STR_LEN];
-    char EventLabel[20];
-    // Convert to integer
-    if ( PAPI_event_name_to_code( 'PAPI_TOT_INS', &EventCode ) != PAPI_OK )
-    handle_error( 1 );
     // Create the EventSet
     if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
     handle_error( 1 );
     // Add Total Instructions Executed to our EventSet
-    if ( PAPI_add_event( EventSet, EventCode ) != PAPI_OK )
+    if ( PAPI_add_event( EventSet, PAPI_TOT_INS ) != PAPI_OK )
     handle_error( 1 );
+    number = 1;
+    if ( PAPI_list_events( EventSet, &Event, &number ) != PAPI_OK )
+    handle_error(1);
+    // Convert integer code to name string
+    if ( PAPI_event_code_to_name( Event, EventCodeStr ) != PAPI_OK )
+    handle_error( 1 );
+    printf( 'Event Name: %s\n', EventCodeStr );
 
 .fi
 .PP
 .RE
 .PP
-.PP
 \fBSee also:\fP
 .RS 4
+\fBPAPI_event_name_to_code\fP 
+.PP
 \fBPAPI_remove_event\fP 
 .PP
 \fBPAPI_get_event_info\fP 

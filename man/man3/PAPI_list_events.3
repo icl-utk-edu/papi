@@ -1,4 +1,4 @@
-.TH "PAPI_list_events" 3 "Tue Jan 15 2013" "Version 5.1.0.2" "PAPI" \" -*- nroff -*-
+.TH "PAPI_list_events" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -13,20 +13,29 @@ list the events in an event set
 .PP 
 List the events in an event set.
 .PP
+PAPI_list_events() returns an array of events and a count of the total number of events in an event set. This call assumes an initialized PAPI library and a successfully created event set.
+.PP
+\fBC Interface\fP
+.RS 4
+#include <\fBpapi.h\fP> 
+.br
+ int PAPI_list_events(int *EventSet, int *Events, int *number );
+.RE
+.PP
 \fBParameters:\fP
 .RS 4
 \fIEventSet\fP An integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
-\fI*Events\fP An array of codes for events, such as PAPI_INT_INS. No more than *number codes will be stored into the array. 
+\fI*Events\fP A pointer to a preallocated array of codes for events, such as PAPI_INT_INS. No more than *number codes will be stored into the array. 
 .br
-\fI*number\fP On input the variable determines the size of the Events array. On output the variable contains the number of counters in the event set. Note that if the given array Events is too short to hold all the counters in the event set the *number variable will be greater than the actually stored number of counter codes.
+\fI*number\fP On input, the size of the Events array, or maximum number of event codes to be returned. A value of 0 can be used to probe an event set. On output, the number of events actually in the event set. This value may be greater than the actually stored number of event codes.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
 \fIPAPI_EINVAL\fP 
 .br
-\fIPAPI_ENOEVST\fP * PAPIF_list_events(C_INT EventSet, C_INT(*) Events, C_INT number, C_INT check ) PAPI_list_events() decomposes an event set into the hardware events it contains. This call assumes an initialized PAPI library and a successfully added event set. 
+\fIPAPI_ENOEVST\fP 
 .RE
 .PP
 \fBExamples:\fP
@@ -43,10 +52,12 @@ List the events in an event set.
         exit(1);
         if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
         exit(1);
-        number = 4;
-        if(PAPI_list_events(EventSet, Events, &number))
+        number = 0;
+        if(PAPI_list_events(EventSet, NULL, &number))
         exit(1);
         if(number != 2)
+        exit(1);
+        if(PAPI_list_events(EventSet, Events, &number))
         exit(1);
 
 .fi
@@ -60,7 +71,9 @@ List the events in an event set.
 .PP
 \fBPAPI_event_name_to_code\fP 
 .PP
-\fBPAPI_add_event\fP \fBPAPI_create_eventset\fP
+\fBPAPI_add_event\fP 
+.PP
+\fBPAPI_create_eventset\fP
 .RE
 .PP
 \fBFortran Interface:\fP

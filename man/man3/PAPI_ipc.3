@@ -1,17 +1,17 @@
-.TH "PAPI_ipc" 3 "Tue Jan 15 2013" "Version 5.1.0.2" "PAPI" \" -*- nroff -*-
+.TH "PAPI_ipc" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_ipc \- 
 .PP
-Get instructions per cycle, real and processor time.  
+Simplified call to get instructions per cycle, real and processor time.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBC Interface:\fP
+\fBC Interface: \fP
 .RS 4
 #include <\fBpapi.h\fP> 
 .br
@@ -20,29 +20,41 @@ Get instructions per cycle, real and processor time.
 .PP
 \fBParameters:\fP
 .RS 4
-\fI*rtime\fP total realtime since the first PAPI_flops() call 
+\fI*rtime\fP total realtime since the first call 
 .br
-\fI*ptime\fP total process time since the first PAPI_flops() call 
+\fI*ptime\fP total process time since the first call 
 .br
 \fI*ins\fP total instructions since the first call 
 .br
-\fI*ipc\fP instructions per cycle achieved since the previous call
+\fI*ipc\fP incremental instructions per cycle since the last call
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP The counters were already started by something other than: PAPI_ipc() 
+\fIPAPI_EINVAL\fP The counters were already started by something other than PAPI_ipc(). 
 .br
-\fIPAPI_ENOEVNT\fP The total instructions or total cycles event does not exist. 
+\fIPAPI_ENOEVNT\fP The floating point operations event does not exist. 
 .br
 \fIPAPI_ENOMEM\fP Insufficient memory to complete the operation.
 .RE
 .PP
-The first call to PAPI_ipc() will initialize the PAPI High Level interface, set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters. Subsequent calls will read the counters and return total real time, total process time, total instructions since the start of the measurement and the instructions per cycle rate since latest call to PAPI_ipc(). A call to PAPI_stop_counters() will stop the counters from running and then calls such as PAPI_start_counters() can safely be used.
+The first call to PAPI_ipc() will initialize the PAPI High Level interface, set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters.
+.PP
+Subsequent calls will read the counters and return total real time, total process time, total instructions since the start of the measurement and the IPC rate since the latest call to PAPI_ipc().
+.PP
+A call to PAPI_stop_counters() will stop the counters from running and then calls such as PAPI_start_counters() or other rate calls can safely be used.
+.PP
+\fBPAPI_ipc\fP should return a ratio greater than 1.0, indicating instruction level parallelism within the chip. The larger this ratio the more effeciently the program is running.
 .PP
 \fBSee also:\fP
 .RS 4
-PAPI_flops() PAPI_stop_counters() PAPI_set_opt() PAPI_flips() 
+PAPI_flips() 
+.PP
+PAPI_flops() 
+.PP
+PAPI_epc() 
+.PP
+PAPI_stop_counters() 
 .RE
 .PP
 

@@ -1,4 +1,4 @@
-.TH "PAPI_event_name_to_code" 3 "Tue Jan 15 2013" "Version 5.1.0.2" "PAPI" \" -*- nroff -*-
+.TH "PAPI_event_name_to_code" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -44,9 +44,6 @@ Convert a name to a numeric hardware event code.
 .PP
 .nf
     int EventCode, EventSet = PAPI_NULL;
-    char EventCodeStr[PAPI_MAX_STR_LEN];
-    char EventDescr[PAPI_MAX_STR_LEN];
-    char EventLabel[20];
     // Convert to integer
     if ( PAPI_event_name_to_code( 'PAPI_TOT_INS', &EventCode ) != PAPI_OK )
     handle_error( 1 );
@@ -61,20 +58,23 @@ Convert a name to a numeric hardware event code.
 .PP
 .RE
 .PP
-.PP
 \fBSee also:\fP
 .RS 4
+\fBPAPI_event_code_to_name\fP 
+.PP
 \fBPAPI_remove_event\fP 
-.br
- \fBPAPI_get_event_info\fP 
-.br
- \fBPAPI_enum_event\fP 
-.br
- \fBPAPI_add_event\fP 
-.br
- PAPI_presets 
-.br
- PAPI_native 
+.PP
+\fBPAPI_get_event_info\fP 
+.PP
+\fBPAPI_enum_event\fP 
+.PP
+\fBPAPI_add_event\fP 
+.PP
+\fBPAPI_add_named_event\fP 
+.PP
+PAPI_presets 
+.PP
+PAPI_native 
 .RE
 .PP
 
