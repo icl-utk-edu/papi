@@ -14,6 +14,7 @@ int main( int argc, char **argv ) {
    char *uncore_event=NULL;
    char event_name[BUFSIZ];
    int uncore_cidx=-1;
+   const PAPI_component_info_t *info;
 
    /* Set TESTS_QUIET variable */
    tests_quiet( argc, argv );
@@ -28,6 +29,12 @@ int main( int argc, char **argv ) {
    uncore_cidx=PAPI_get_component_index("perf_event_uncore");
    if (uncore_cidx<0) {
       test_skip(__FILE__,__LINE__,"perf_event_uncore component not found",0);
+   }
+
+   /* Check if component disabled */
+   info=PAPI_get_component_info(uncore_cidx);
+   if (info->disabled) {
+      test_skip(__FILE__,__LINE__,"uncore component disabled",0);
    }
 
    /* Get a relevant event name */
