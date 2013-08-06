@@ -4,6 +4,39 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 ===============================================================================
+PAPI 5.2.0 RELEASE NOTES                                            06 Aug 2013
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP520.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+This release represents a major overhaul of several components. Support for
+Intel Haswell and Power 8 has been added. Processor support code has been 
+moved to the components directory.
+
+New Platform:
+-------------
+	* Intel Haswell (initial support)
+	* Power 8 (initial support)
+
+New Components:
+---------------
+	* Host-side MIC power component
+
+Enhancements:
+------------
+	* Component tests are now included with install-tests make target.
+	* Components with external library dependencies load them at runtime 
+		allowing better distribution (infiniband, cuda, vmware, nvml and
+		host-side micpower)
+	* Perf_events, perfctr[_ppc] and perfmon2[_ia64] have been moved under the
+	 	components directory
+	* (Intel) Uncore support has been split into its own component
+	* Lustre component better handles large numbers of filesystems
+
+===============================================================================
 PAPI 5.1.1 RELEASE NOTES                                            21 May 2013
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
