@@ -1,4 +1,4 @@
-Release Procedure for PAPI  Apr 17, 2012 (now with git!)
+Release Procedure for PAPI  06 Aug, 2013 (now with better git!)
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -66,15 +66,16 @@ __ 10. Push everything to the central repo.
 	-- or -- If you've created a new branch. 
 	git push --tags origin stable-X.Y: 
 
-__ 11. Copy your working directory to papi-X.Y.Z
-	> cp -R papi papi-X.Y.X
+__ 11. Create a fresh clone of the papi repository.
+	> git clone https://icl.cs.utk.edu/git/papi.git papi-X.Y.Z
 	> cd papi-X.Y.Z
 
 __ 12. Delete any unneccessary files or directories
 		particularly .doc and .pdf files in the /doc directory
 	Things needed in /doc {Doxyfile, Doxyfile-everything}
         You can use the delete_before_release.sh script for this.
-	NOTE: This deletes the .git directory, 
+	NOTE: This deletes the .git directory, don't release out of your normal
+		  work directory, you will loose all the marbles this way.
 
 __ 13. tar the directory:
 	> tar -cvf papi-X.Y.Z.tar papi-X.Y.Z
