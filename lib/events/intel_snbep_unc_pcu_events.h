@@ -72,73 +72,49 @@ static const intel_x86_entry_t intel_snbep_unc_p_pe[]={
     .desc = "Core C State Transition Cycles",
     .code = 0x3 | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_CORE1_TRANSITION_CYCLES",
     .desc = "Core C State Transition Cycles",
     .code = 0x4 | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_CORE2_TRANSITION_CYCLES",
     .desc = "Core C State Transition Cycles",
     .code = 0x5 | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_CORE3_TRANSITION_CYCLES",
     .desc = "Core C State Transition Cycles",
     .code = 0x6 | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_CORE4_TRANSITION_CYCLES",
     .desc = "Core C State Transition Cycles",
     .code = 0x7 | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_CORE5_TRANSITION_CYCLES",
     .desc = "Core C State Transition Cycles",
     .code = 0x8 | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_CORE6_TRANSITION_CYCLES",
     .desc = "Core C State Transition Cycles",
     .code = 0x9 | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_CORE7_TRANSITION_CYCLES",
     .desc = "Core C State Transition Cycles",
     .code = 0xa | (1ULL << 21), /* sel_ext */
     .cntmsk = 0xf,
-    .ngrp = 1,
     .modmsk = SNBEP_UNC_PCU_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_p_occupancy_counters),
-    .umasks  = snbep_unc_p_occupancy_counters
   },
   { .name = "UNC_P_DEMOTIONS_CORE0",
     .desc = "Core C State Demotions",
