@@ -707,6 +707,7 @@ sparc_sysfs_cpu_attr( char *name, char **result )
 			return 0;
 		}
 	}
+	closedir( sys_cpu );
 	return -1;
 }
 

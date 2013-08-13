@@ -732,12 +732,14 @@ _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes )
 
 	if ( !p ) {
 		PAPIERROR( "Couldn't allocate memory for XML parser." );
+		fclose(fp);
 		return ( PAPI_ESYS );
 	}
 	XML_SetElementHandler( p, _xml_start, _xml_end );
 	XML_SetCharacterDataHandler( p, _xml_content );
 	if ( fp == NULL ) {
 		PAPIERROR( "Error opening Preset XML file." );
+		fclose(fp);
 		return ( PAPI_ESYS );
 	}
 
@@ -749,11 +751,13 @@ _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes )
 
 		if ( buffer == NULL ) {
 			PAPIERROR( "Couldn't allocate memory for XML buffer." );
+			fclose(fp);
 			return ( PAPI_ESYS );
 		}
 		len = fread( buffer, 1, BUFFSIZE, fp );
 		if ( ferror( fp ) ) {
 			PAPIERROR( "XML read error." );
+			fclose(fp);
 			return ( PAPI_ESYS );
 		}
 		done = feof( fp );
@@ -761,10 +765,13 @@ _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes )
 			PAPIERROR( "Parse error at line %d:\n%s\n",
 					   XML_GetCurrentLineNumber( p ),
 					   XML_ErrorString( XML_GetErrorCode( p ) ) );
+			fclose(fp);
 			return ( PAPI_ESYS );
 		}
-		if ( error )
+		if ( error ) {
+			fclose(fp);
 			return ( PAPI_ESYS );
+		}
 	} while ( !done );
 	XML_ParserFree( p );
 	fclose( fp );

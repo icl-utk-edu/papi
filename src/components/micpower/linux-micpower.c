@@ -163,6 +163,7 @@ read_sysfs_file( long long* counts)
 				retval&= fscanf(fp, "%lld %lld %lld", &counts[i], &counts[i+1], &counts[i+2] );
 		}
 
+		fclose(fp);
 		return retval;
 }
 
