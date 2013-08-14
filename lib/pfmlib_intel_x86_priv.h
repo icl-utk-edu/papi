@@ -242,6 +242,7 @@ typedef struct {
 	int model;
 	int family; /* 0 means nothing detected yet */
 	int arch_version;
+	int stepping;
 } pfm_intel_x86_config_t;
 
 extern pfm_intel_x86_config_t pfm_intel_x86_cfg;
