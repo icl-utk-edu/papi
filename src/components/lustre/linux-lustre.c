@@ -436,7 +436,6 @@ _lustre_init_component( int cidx )
 
 	int ret = PAPI_OK;
 
-	resize_native_table();
 	/* See if lustre filesystem exists */
 	ret=detect_lustre();
 	if (ret!=PAPI_OK) {
@@ -445,6 +444,7 @@ _lustre_init_component( int cidx )
 	   return ret;
 	}
 
+	resize_native_table();
 	ret=init_lustre_counters();
 
 	_lustre_vector.cmp_info.num_native_events=num_events;
