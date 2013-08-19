@@ -426,7 +426,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		return PFM_ERR_ATTR;
 	}
 
-	if (modmsk_r && (umodmsk ^ modmsk_r)) {
+	if (modmsk_r && !(umodmsk & modmsk_r)) {
 		DPRINT("required modifiers missing: 0x%x\n", modmsk_r);
 		return PFM_ERR_ATTR;
 	}
