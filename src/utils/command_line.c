@@ -136,7 +136,6 @@ main( int argc, char **argv )
 				break;
 			  case PAPI_DATATYPE_FP64:
 				printf( "%s : \t%0.3f", argv[i], *((double *)(&values[j])) );
-				j++;
 				break;
 			  case PAPI_DATATYPE_BIT64:
 				printf( "%s : \t0x%llX", argv[i], values[j] );
