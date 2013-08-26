@@ -44,6 +44,10 @@ static const pfmlib_attr_desc_t perf_event_mods[]={
 	PFM_ATTR_B("u", "monitor at user level"),	/* monitor user level */
 	PFM_ATTR_B("k", "monitor at kernel level"),	/* monitor kernel level */
 	PFM_ATTR_B("h", "monitor at hypervisor level"),	/* monitor hypervisor level */
+	PFM_ATTR_SKIP,
+	PFM_ATTR_SKIP,
+	PFM_ATTR_SKIP,
+	PFM_ATTR_SKIP,
 	PFM_ATTR_B("mg", "monitor guest execution"),	/* monitor guest level */
 	PFM_ATTR_B("mh", "monitor host execution"),	/* monitor host level */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
@@ -312,11 +316,12 @@ static int
 perf_get_os_nattrs(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_os_t *os = this;
-	int i = 0;
+	int i, n = 0;
 
-	for (; os->atdesc[i].name; i++);
-
-	return i;
+	for (i = 0; os->atdesc[i].name; i++)
+		if (!is_empty_attr(os->atdesc+i))
+			n++;
+	return n;
 }
 
 static int
@@ -324,10 +329,14 @@ perf_get_os_attr_info(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_os_t *os = this;
 	pfm_event_attr_info_t *info;
-	int i, j = e->npattrs;
+	int i, k, j = e->npattrs;
 
-	for (i = 0; os->atdesc[i].name; i++, j++) {
-		info = e->pattrs+j;
+	for (i = k = 0; os->atdesc[i].name; i++) {
+		/* skip padding entries */
+		if (is_empty_attr(os->atdesc+i))
+			continue;
+
+		info = e->pattrs + j + k;
 
 		info->name = os->atdesc[i].name;
 		info->desc = os->atdesc[i].desc;
@@ -337,8 +346,9 @@ perf_get_os_attr_info(void *this, pfmlib_event_desc_t *e)
 		info->type = os->atdesc[i].type;
 		info->is_dfl = 0;
 		info->ctrl = PFM_ATTR_CTRL_PERF_EVENT;
+		k++;
 	}
-	e->npattrs += i;
+	e->npattrs += k;
 
 	return PFM_SUCCESS;
 }

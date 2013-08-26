@@ -25,6 +25,7 @@
 #ifndef __PFMLIB_PRIV_H__
 #define __PFMLIB_PRIV_H__
 #include <perfmon/pfmlib.h>
+#include <string.h>
 
 #define PFM_PLM_ALL (PFM_PLM0|PFM_PLM1|PFM_PLM2|PFM_PLM3|PFM_PLMH)
 
@@ -34,6 +35,7 @@
 
 #define PFM_ATTR_I(y, d) { .name = (y), .type = PFM_ATTR_MOD_INTEGER, .desc = (d) }
 #define PFM_ATTR_B(y, d) { .name = (y), .type = PFM_ATTR_MOD_BOOL, .desc = (d) }
+#define PFM_ATTR_SKIP	 { .name = "" } /* entry not populated (skipped) */
 #define PFM_ATTR_NULL	{ .name = NULL }
 
 #define PFMLIB_EVT_MAX_NAME_LEN	256
@@ -371,5 +373,11 @@ pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
 	.os_detect[PFM_OS_PERF_EVENT] = NULL, \
 	.os_detect[PFM_OS_PERF_EVENT_EXT] = NULL
 #endif
+
+static inline int
+is_empty_attr(const pfmlib_attr_desc_t *a)
+{
+	return !a || !a->name || strlen(a->name) == 0 ? 1 : 0;
+}
 
 #endif /* __PFMLIB_PRIV_H__ */

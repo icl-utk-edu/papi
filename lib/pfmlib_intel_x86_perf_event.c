@@ -271,7 +271,9 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		}
 
 		if (compact) {
+			/* e->npattrs modified by call */
 			pfmlib_compact_pattrs(e, i);
+			/* compensate for i++ */
 			i--;
 		}
 	}
