@@ -181,7 +181,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			attr->sample_period = ival;
 			break;
 		case PERF_ATTR_FR:
-			if (!ival)
+			if (!ival || attr->sample_period)
 				return PFM_ERR_ATTR_VAL;
 			attr->sample_freq = ival;
 			attr->freq = 1;
