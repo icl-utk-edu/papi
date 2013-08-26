@@ -298,6 +298,9 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 		case PERF_ATTR_MH:
 			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !attr->exclude_host);
 			break;
+		case PERF_ATTR_EX:
+			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, attr->exclusive);
+			break;
 		}
 	}
 
