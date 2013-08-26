@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL MIC datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT_NAME CPUCOMPONENT_C CPUCOMPONENT_OBJ OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR CC_COMMON_NAME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS MIC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT_NAME CPUCOMPONENT_C CPUCOMPONENT_OBJ OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MPICC MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR CC_COMMON_NAME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1439,6 +1439,26 @@ fi;
 echo "$as_me:$LINENO: result: $assumed_kernel" >&5
 echo "${ECHO_T}$assumed_kernel" >&6
 
+echo "$as_me:$LINENO: checking for if MIC should be used" >&5
+echo $ECHO_N "checking for if MIC should be used... $ECHO_C" >&6
+
+# Check whether --with-mic or --without-mic was given.
+if test "${with_mic+set}" = set; then
+  withval="$with_mic"
+  MIC=yes
+						tls=__thread
+						virtualtimer=cputime_id
+						perf_events=yes
+						walltimer=clock_realtime_hr
+						ffsll=no
+						arch=k1om
+else
+  MIC=no
+fi;
+echo "$as_me:$LINENO: result: $MIC" >&5
+echo "${ECHO_T}$MIC" >&6
+
+
 CFLAGS="$CFLAGS -g"
 #If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
@@ -2251,7 +2271,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2254:" \
+echo "$as_me:2274:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -2417,6 +2437,13 @@ fi
 if test "$CC_COMMON_NAME" = "icc"; then
   CC="$CC -diag-disable 188,869,271"
   CFLAGS="$CFLAGS -openmp"
+  if test "$MIC" = "yes"; then
+     CC="$CC -mmic -fPIC"
+  fi
+fi
+
+if test "$F77" = "ifort" -a "$MIC" = "yes"; then
+  F77="$F77 -mmic -fPIC"
 fi
 
 for ac_prog in gawk mawk nawk awk
@@ -3591,26 +3618,6 @@ echo "$as_me: error: cannot find dlopen and dlerror symbols neither in the base 
    { (exit 1); exit 1; }; }
 	fi
 fi
-
-
-echo "$as_me:$LINENO: checking for if MIC should be used" >&5
-echo $ECHO_N "checking for if MIC should be used... $ECHO_C" >&6
-
-# Check whether --with-mic or --without-mic was given.
-if test "${with_mic+set}" = set; then
-  withval="$with_mic"
-  MIC=yes
-						tls=__thread
-						virtualtimer=cputime_id
-						perf_events=yes
-						walltimer=clock_realtime_hr
-						ffsll=no
-						arch=k1om
-else
-  MIC=no
-fi;
-echo "$as_me:$LINENO: result: $MIC" >&5
-echo "${ECHO_T}$MIC" >&6
 
 
 
@@ -8299,6 +8306,7 @@ s,@ECHO_C@,$ECHO_C,;t t
 s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
+s,@MIC@,$MIC,;t t
 s,@CC@,$CC,;t t
 s,@CFLAGS@,$CFLAGS,;t t
 s,@LDFLAGS@,$LDFLAGS,;t t
@@ -8317,7 +8325,6 @@ s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@EGREP@,$EGREP,;t t
 s,@LDL@,$LDL,;t t
-s,@MIC@,$MIC,;t t
 s,@datarootdir@,$datarootdir,;t t
 s,@docdir@,$docdir,;t t
 s,@arch@,$arch,;t t

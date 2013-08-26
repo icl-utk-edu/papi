@@ -81,6 +81,20 @@ AC_ARG_WITH(assumed_kernel,
 		)		
 AC_MSG_RESULT($assumed_kernel)
 
+AC_MSG_CHECKING([for if MIC should be used])
+		AC_ARG_WITH(mic,
+						[ --with-mic To compile for Intel MIC ],
+						[MIC=yes
+						tls=__thread
+						virtualtimer=cputime_id
+						perf_events=yes
+						walltimer=clock_realtime_hr
+						ffsll=no
+						arch=k1om],
+						[MIC=no])
+AC_MSG_RESULT($MIC)
+AC_SUBST(MIC)
+
 CFLAGS="$CFLAGS -g"
 #If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
@@ -112,6 +126,13 @@ fi
 if test "$CC_COMMON_NAME" = "icc"; then
   CC="$CC -diag-disable 188,869,271"
   CFLAGS="$CFLAGS -openmp"
+  if test "$MIC" = "yes"; then
+     CC="$CC -mmic -fPIC"
+  fi
+fi
+
+if test "$F77" = "ifort" -a "$MIC" = "yes"; then
+  F77="$F77 -mmic -fPIC"
 fi
 
 AC_PROG_AWK
@@ -156,20 +177,6 @@ else
 fi
 AC_SUBST(LDL)
         
-AC_MSG_CHECKING([for if MIC should be used])
-		AC_ARG_WITH(mic,
-						[ --with-mic To compile for Intel MIC ],
-						[MIC=yes
-						tls=__thread
-						virtualtimer=cputime_id
-						perf_events=yes
-						walltimer=clock_realtime_hr
-						ffsll=no
-						arch=k1om],
-						[MIC=no])
-AC_MSG_RESULT($MIC)
-AC_SUBST(MIC)
- 
     
 if test "$OS" = "CLE"; then
   virtualtimer=times
