@@ -5,9 +5,11 @@ CC	= gcc
 CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
 
-UTILOBJS= do_loops.o test_utils.o dummy.o clockcore.o
+UTILSRCS= do_loops.c test_utils.c dummy.c clockcore.c ftests_util.F
+UTILOBJS=$(UTILSRCS:.c=.o) ftests_util.o
 
 all:	$(UTILOBJS)
+	$(AR) $(ARG64) rv libtestlib.a $(UTILOBJS)
 
 do_loops.o: do_loops.c papi_test.h test_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c do_loops.c
@@ -21,8 +23,11 @@ dummy.o: dummy.c
 test_utils.o: test_utils.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c test_utils.c
 
+ftests_util.o: ftests_util.F fpapi_test.h 
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c ftests_util.F
+
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(ALL)
+	rm -f *.o *.stderr *.stdout core *~ $(ALL) libtestlib.a libtestlib.so
 
 install: 
 	@echo "Papi testlib (DATADIR) being installed in: \"$(DATADIR)\""; 
