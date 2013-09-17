@@ -676,7 +676,8 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 {
    ( void ) flags;			 /*unused */
    int i, ret = -1;
-   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   /* pe_context_t *pe_ctx = ( pe_context_t *) ctx; */ 
+   (void) ctx; /*unused*/
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
    long long papi_pe_buffer[READ_BUFFER_SIZE];
    long long tot_time_running, tot_time_enabled, scale;
