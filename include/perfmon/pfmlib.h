@@ -193,6 +193,8 @@ typedef enum {
 	PFM_PMU_POWER8,			/* IBM POWER8 */
 	PFM_PMU_INTEL_RAPL,		/* Intel RAPL */
 
+	PFM_PMU_INTEL_SLM,		/* Intel Silvermont */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

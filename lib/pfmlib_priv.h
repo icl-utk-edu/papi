@@ -262,6 +262,7 @@ extern pfmlib_pmu_t intel_snbep_unc_r2pcie_support;
 extern pfmlib_pmu_t intel_snbep_unc_r3qpi0_support;
 extern pfmlib_pmu_t intel_snbep_unc_r3qpi1_support;
 extern pfmlib_pmu_t intel_knc_support;
+extern pfmlib_pmu_t intel_slm_support;
 extern pfmlib_pmu_t power4_support;
 extern pfmlib_pmu_t ppc970_support;
 extern pfmlib_pmu_t ppc970mp_support;

@@ -599,6 +599,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 	e->codes[0] = reg.val;
 
+DPRINT("sel_edge=%d cnt=%d\n", reg.sel_edge, reg.sel_cnt_mask);
 	/*
 	 * on recent processors (except Atom), edge requires cmask >=1
 	 */

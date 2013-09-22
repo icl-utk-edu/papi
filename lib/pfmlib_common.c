@@ -119,6 +119,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_snbep_unc_r3qpi0_support,
 	&intel_snbep_unc_r3qpi1_support,
 	&intel_knc_support,
+	&intel_slm_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
@@ -826,6 +827,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 				goto found_attr;
 			}
 		}
+		DPRINT("cannot find attribute %s\n", s);
 		return PFM_ERR_ATTR;
 found_attr:
 		type = ainfo->type;
