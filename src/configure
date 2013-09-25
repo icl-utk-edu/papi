@@ -2436,7 +2436,6 @@ fi
 # remark #271: trailing comma is nonstandard
 if test "$CC_COMMON_NAME" = "icc"; then
   CC="$CC -diag-disable 188,869,271"
-  CFLAGS="$CFLAGS -openmp"
   if test "$MIC" = "yes"; then
      CC="$CC -mmic -fPIC"
   fi
@@ -7459,6 +7458,10 @@ elif test "$F77" = "ifort"; then
   FFLAGS="$FFLAGS -warn all"
 elif test "$F77" != "xlf"; then
   FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
+fi
+
+if test "$CC_COMMON_NAME" = "icc"; then
+    OMPCFLGS=-openmp
 fi
 
 echo "$as_me:$LINENO: checking for components to build" >&5
