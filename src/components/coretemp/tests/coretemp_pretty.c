@@ -55,6 +55,12 @@ int main (int argc, char **argv)
 	   coretemp_cid=cid;
 	   if (!TESTS_QUIET) printf("Found coretemp component at cid %d\n",
 				    coretemp_cid);
+	   if (cmpinfo->disabled) {
+	       if (!TESTS_QUIET) fprintf(stderr,"Coretemp component disabled: %s\n",
+		       cmpinfo->disabled_reason);
+	       test_skip(__FILE__, __LINE__,
+		       "Component disabled\n", 0);
+	   }
            if (cmpinfo->num_native_events==0) {
               test_skip(__FILE__,__LINE__,"No coretemp events found",0);
            }

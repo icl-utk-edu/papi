@@ -59,9 +59,9 @@ int main (int argc, char **argv)
 	      }
 
 	      if (cmpinfo->disabled) {
-	         fprintf(stderr,"Coretemp component disabled: %s\n",
+	         if (!TESTS_QUIET) fprintf(stderr,"Coretemp component disabled: %s\n",
 		         cmpinfo->disabled_reason);
-	         test_fail(__FILE__, __LINE__,
+	         test_skip(__FILE__, __LINE__,
                            "Component disabled\n", 0);
 	      }
 	   }
