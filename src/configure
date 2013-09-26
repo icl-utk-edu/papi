@@ -7103,7 +7103,7 @@ fi
 ##################################################
 FILENAME=Makefile.inc
 SHOW_CONF=showconf
-CTEST_TARGETS="papi_api serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared "
+CTEST_TARGETS="all"
 FTEST_TARGETS="all"
 UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost papi_component_avail papi_error_codes"
 LIBRARY=libpapi.a
@@ -7188,7 +7188,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     PAPI_EVENTS_CSV="papi_events.csv"
     MISCHDRS="aix.h components/perfctr_ppc/ppc64_events.h papi_events_table.h"
     MISCSRCS="aix.c"
-    CTEST_TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp "
 	SAVED_CFLAGS="$CFLAGS"
     CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -Icomponents/perfctr_ppc -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
 	CFLAGS="$SAVED_CFLAGS $CFLAGS"
@@ -7365,7 +7364,6 @@ elif (test "$MAKEVER" = "linux-pfm-ia64" || test "$MAKEVER" = "linux-pfm-itanium
     else
       CPU=3
     fi
-    CTEST_TARGETS="$CTEST_TARGETS range ear"
     CFLAGS="$CFLAGS -DITANIUM$CPU"
     FFLAGS="$FFLAGS -DITANIUM$CPU"
 
@@ -7378,7 +7376,6 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     VECTOR=_solaris_vector
     PAPI_EVENTS_CSV="papi_events.csv"
   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
-  CTEST_TARGETS="serial multiplex_and_pthreads shared"
   if test "$CC" = "gcc"; then
     F77=g77
     CPP="$CC -E"
@@ -7389,7 +7386,6 @@ elif test "$MAKEVER" = "solaris-ultra"; then
     FFLAGS=$CFLAGS
   else
     # Sun Workshop compilers: V5.0 and V6.0 R2
-    CTEST_TARGETS="$CTEST_TARGETS smp omp"
     CPP="$CC -E"
     CC_R="$CC -mt"
     CC_SHR="$CC -ztext -G -Kpic"
@@ -7415,7 +7411,6 @@ elif test "$MAKEVER" = "solaris-niagara2"; then
     CPUCOMPONENT_OBJ=solaris-niagara2.obj
     VECTOR=_niagara2_vector
     PAPI_EVENTS_CSV="papi_events.csv"
-    CTEST_TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
     CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__ -DCOMP_VECTOR=_niagara2_vector"
     ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vector"
   DESCR="Solaris 10 with libcpc2 and UltraSPARC T2 (Niagara 2)"
