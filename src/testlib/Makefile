@@ -5,8 +5,10 @@ CC	= gcc
 CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
 
-UTILSRCS= do_loops.c test_utils.c dummy.c clockcore.c ftests_util.F
-UTILOBJS=$(UTILSRCS:.c=.o) ftests_util.o
+UTILSRCS:= do_loops.c test_utils.c dummy.c clockcore.c
+UTILOBJS:=$(UTILSRCS:.c=.o)
+UTILSRCS+= ftests_util.F
+UTILOBJS+= ftests_util.o
 
 all:	$(UTILOBJS)
 	$(AR) $(ARG64) rv libtestlib.a $(UTILOBJS)
