@@ -29,7 +29,7 @@ ftests_util.o: ftests_util.F fpapi_test.h
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c ftests_util.F
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(ALL) libtestlib.a libtestlib.so
+	rm -f *.o *genmod.f90 *genmod.mod *.stderr *.stdout core *~ $(ALL) libtestlib.a libtestlib.so
 
 install: 
 	@echo "Papi testlib (DATADIR) being installed in: \"$(DATADIR)\""; 

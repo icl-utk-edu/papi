@@ -87,7 +87,7 @@ fmultiplex2: fmultiplex2.F $(TESTLIB) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) fmultiplex2.F $(TESTLIB) $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(ALL)
+	rm -f *.o *genmod.f90 *genmod.mod *.stderr *.stdout core *~ $(ALL)
 
 install: $(FTEST_TARGETS)
 	@echo "Fortran tests (DATADIR) being installed in: \"$(DATADIR)\""; 
