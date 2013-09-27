@@ -34,6 +34,7 @@ Master pthread:
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
+#include <pthread.h>
 #include "papi_test.h"
 
 void
