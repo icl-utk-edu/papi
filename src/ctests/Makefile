@@ -42,7 +42,9 @@ ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(M
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH) $(API)
 TESTLIB= ../testlib/libtestlib.a
 
-default all ctests ctest: $(CTEST_TARGETS)
+all: $(ALL)
+
+default ctests ctest: $(CTEST_TARGETS)
 
 attach: $(ATTACH)
 
