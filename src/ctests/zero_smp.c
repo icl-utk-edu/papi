@@ -141,7 +141,7 @@ main( int argc, char **argv )
 	}
 #pragma MP taskloop private(i)
 #else
-#error "Architecture not included in this test file yet."
+    test_skip(__FILE__, __LINE__, "Architecture not included in this test file yet.", 0);
 #endif
 	for ( i = 1; i < 3; i++ )
 		Thread( i, 10000000 * i );
