@@ -33,7 +33,6 @@ PROFILE  = profile profile_force_software sprofile profile_twoevents \
 	byte_profile
 ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target
 P4_TEST	= p4_lst_ins
-ACPI	= acpi 
 EAR	= earprofile
 RANGE	= data_range
 BROKEN	= pernode
@@ -49,8 +48,6 @@ default ctests ctest: $(CTEST_TARGETS)
 attach: $(ATTACH)
 
 p4: $(P4_TEST)
-
-acpi_test: $(ACPI)
 
 ear: $(EAR)
 
