@@ -47,7 +47,7 @@ Thread( int n )
 	long long **values;
 	long long elapsed_us, elapsed_cyc;
 
-	EventSet1 = add_test_events( &num_events1, &mask1 );
+	EventSet1 = add_test_events( &num_events1, &mask1, 1 );
 
 	/* num_events1 is greater than num_events2 so don't worry. */
 
@@ -95,8 +95,12 @@ main(  )
 
 	elapsed_cyc = PAPI_get_real_cyc(  );
 
+#ifdef HAVE_OPENSHMEM
 	start_pes( 2 );
 	Thread( 1000000 * ( _my_pe(  ) + 1 ) );
+#else
+	test_skip( __FILE__, __LINE__, "OpenSHMEM support not found, skipping.", 0);
+#endif
 
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 
