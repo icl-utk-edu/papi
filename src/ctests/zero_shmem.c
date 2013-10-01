@@ -40,7 +40,7 @@ Master pthread:
 void
 Thread( int n )
 {
-	int retval, num_tests = 1, tmp;
+	int retval, num_tests = 1;
 	int EventSet1 = PAPI_NULL;
 	int mask1 = 0x5;
 	int num_events1;
@@ -88,7 +88,6 @@ Thread( int n )
 int
 main(  )
 {
-	int i, rc;
 	long long elapsed_us, elapsed_cyc;
 
 	elapsed_us = PAPI_get_real_usec(  );
