@@ -114,8 +114,8 @@ main( int argc, char **argv )
 	int num_events, num_tests = 6;
 	long length;
 	int retval, retval2;
-	PAPI_hw_info_t *hw_info;
-	PAPI_exe_info_t *prginfo;
+	const PAPI_hw_info_t *hw_info;
+	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
 
 	prof_init( argc, argv, &prginfo );
