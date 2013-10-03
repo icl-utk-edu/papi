@@ -99,8 +99,24 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 		DPRINT("%s: unsupported count=%d\n", e->count);
 		return PFM_ERR_NOTSUPP;
 	}
-
+	/* default PMU type */
 	attr->type = PERF_TYPE_RAW;
+
+	/*
+	 * if PMU specifies a perf PMU name, then grab the type
+	 * from sysfs as it is most likely dynamically assigned.
+	 * This allows this function to use used by some uncore PMUs
+	 */
+	if (pmu->perf_name) {
+		int type = find_pmu_type_by_name(pmu->perf_name);
+		if (type == PFM_ERR_NOTSUPP) {
+			DPRINT("perf PMU %s, not supported by OS\n", pmu->perf_name);
+		} else {
+			DPRINT("PMU %s perf type=%d\n", pmu->name, type);
+			attr->type = type;
+		}
+	}
+
 	attr->config = e->codes[0];
 
 	if (e->count > 1) {
