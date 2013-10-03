@@ -220,7 +220,8 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	 * goal here is to set to zero any exclude_* not supported
 	 * by underlying PMU
 	 */
-	plm |= (~pmu->supported_plm) & PFM_PLM_ALL;
+	plm     |= (~pmu->supported_plm) & PFM_PLM_ALL;
+	vmx_plm |= (~pmu->supported_plm) & PFM_PLM_ALL;
 
 	attr->exclude_user   = !(plm & PFM_PLM3);
 	attr->exclude_kernel = !(plm & PFM_PLM0);
