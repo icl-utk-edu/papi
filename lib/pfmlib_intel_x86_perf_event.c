@@ -233,6 +233,7 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 	pfmlib_pmu_t *pmu = this;
 	int i, compact;
 	int has_pebs = intel_x86_event_has_pebs(this, e);
+	int no_smpl = pmu->flags & PFMLIB_PMU_FL_NO_SMPL;
 
 	for (i = 0; i < e->npattrs; i++) {
 		compact = 0;
@@ -261,12 +262,19 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			if (e->pattrs[i].idx == PERF_ATTR_H)
 				compact = 1;
 
+			if (no_smpl
+			    && (   e->pattrs[i].idx == PERF_ATTR_FR
+			        || e->pattrs[i].idx == PERF_ATTR_PR
+			        || e->pattrs[i].idx == PERF_ATTR_PE))
+				compact = 1;
 			/*
-			 * uncore has no priv level support
+			 * no priv level support
 			 */
-			if (pmu->type == PFM_PMU_TYPE_UNCORE
-			    && (e->pattrs[i].idx == PERF_ATTR_U
-			        || e->pattrs[i].idx == PERF_ATTR_K))
+			if (pmu->supported_plm == 0
+			    && (   e->pattrs[i].idx == PERF_ATTR_U
+			        || e->pattrs[i].idx == PERF_ATTR_K
+			        || e->pattrs[i].idx == PERF_ATTR_MG
+			        || e->pattrs[i].idx == PERF_ATTR_MH))
 				compact = 1;
 		}
 

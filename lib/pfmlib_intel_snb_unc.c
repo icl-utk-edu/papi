@@ -64,7 +64,8 @@ pfmlib_pmu_t intel_snb_unc_cbo##n##_support={ \
 	.max_encoding		= 1,\
 	.pe			= intel_snb_unc_##p##_pe, \
 	.atdesc			= intel_x86_mods, \
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK, \
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK\
+				| PFMLIB_PMU_FL_NO_SMPL,\
 	.pmu_detect		= pfm_snb_unc_detect, \
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding, \
 	 PFMLIB_ENCODE_PERF(pfm_intel_nhm_unc_get_perf_encoding), \

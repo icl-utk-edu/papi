@@ -76,7 +76,8 @@ pfmlib_pmu_t intel_snbep_unc_ha_support = {
 	.max_encoding		= 3, /* address matchers */
 	.pe			= intel_snbep_unc_h_pe,
 	.atdesc			= snbep_unc_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| PFMLIB_PMU_FL_NO_SMPL,
 	.pmu_detect		= pfm_intel_snbep_unc_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_snbep_unc_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_snbep_unc_get_perf_encoding),

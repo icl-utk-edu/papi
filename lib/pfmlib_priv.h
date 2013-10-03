@@ -156,6 +156,7 @@ typedef struct {
 #define PFMLIB_PMU_FL_ACTIVE	0x2	/* PMU is initialized + detected on host */
 #define PFMLIB_PMU_FL_RAW_UMASK	0x4	/* PMU supports PFM_ATTR_RAW_UMASKS */
 #define PFMLIB_PMU_FL_ARCH_DFL	0x8	/* PMU is arch default */
+#define PFMLIB_PMU_FL_NO_SMPL	0x10	/* PMU does not support sampling */
 
 typedef struct {
 	int	initdone;
