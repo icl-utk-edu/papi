@@ -60,6 +60,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_snb.c pfmlib_intel_snb_unc.c \
 	  pfmlib_intel_ivb.c pfmlib_intel_ivb_unc.c \
 	  pfmlib_intel_hsw.c \
+	  pfmlib_intel_rapl.c \
 	  pfmlib_intel_snbep_unc.c \
 	  pfmlib_intel_snbep_unc_cbo.c \
 	  pfmlib_intel_snbep_unc_ha.c \

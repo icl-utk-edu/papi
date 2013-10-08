@@ -97,6 +97,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_ivb_unc_cbo3_support,
 	&intel_ivb_ep_support,
 	&intel_hsw_support,
+	&intel_rapl_support,
 	&intel_snbep_unc_cb0_support,
 	&intel_snbep_unc_cb1_support,
 	&intel_snbep_unc_cb2_support,

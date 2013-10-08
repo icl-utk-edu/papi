@@ -2074,6 +2074,24 @@ static const test_event_t x86_test_events[]={
 	  .name = "ivb_unc_cbo1::unc_clockticks",
 	  .ret  = PFM_ERR_NOTFOUND
 	},
+	{ SRC_LINE,
+	  .name = "rapl::rapl_energy_cores",
+	  .ret = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x1,
+	  .fstr = "rapl::RAPL_ENERGY_CORES",
+	},
+	{ SRC_LINE,
+	  .name = "rapl::rapl_energy_pkg",
+	  .ret = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x2,
+	  .fstr = "rapl::RAPL_ENERGY_PKG",
+	},
+	{ SRC_LINE,
+	  .name = "rapl::rapl_energy_cores:u",
+	  .ret = PFM_ERR_ATTR,
+	},
 };
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
 
