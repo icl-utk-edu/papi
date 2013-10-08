@@ -263,6 +263,8 @@ main( int argc, char **argv )
 			printf( "\n" );
 	}
 
+	if ( ( retval = PAPI_stop( eventset, values ) ) )
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
 	if ( !TESTS_QUIET ) {
 		printf( "\n\nEstimated variance relative to average counts:\n" );
