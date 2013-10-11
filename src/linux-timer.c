@@ -215,7 +215,7 @@ get_cycles( void )
 /* POWER get_cycles()   */
 /************************/
 
-#elif (defined(__powerpc__) || defined(__arm__) || defined(__mips__))
+#elif (defined(__powerpc__) || defined(__arm__) || defined(__mips__) || defined(__aarch64__))
 /*
  * It's not possible to read the cycles from user space on ppc970.
  * There is a 64-bit time-base register (TBU|TBL), but its
