@@ -2002,6 +2002,34 @@ static const test_event_t x86_test_events[]={
 };
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
 
+static int
+check_pmu_supported(const char *evt)
+{
+	pfm_pmu_info_t info;
+	char *p;
+	int i, ret;
+
+	memset(&info, 0, sizeof(info));
+	info.size = sizeof(info);
+
+	/* look for pmu_name::.... */
+	p = strchr(evt, ':');
+	if (!p)
+		return 1;
+	if (*(p+1) != ':')
+		return 1;
+
+	pfm_for_all_pmus(i) {
+		ret = pfm_get_pmu_info(i, &info);
+		if (ret != PFM_SUCCESS)
+			continue;
+		if (!strncmp(info.name, evt, p - evt))
+			return 1;
+	}
+	/* PMU not there */
+	return 0;
+}
+
 static int check_test_events(FILE *fp)
 {
 	const test_event_t *e;
@@ -2016,6 +2044,10 @@ static int check_test_events(FILE *fp)
 		fstr = NULL;
 		ret = pfm_get_event_encoding(e->name, PFM_PLM0 | PFM_PLM3, &fstr, NULL, &codes, &count);
 		if (ret != e->ret) {
+			if (ret == PFM_ERR_NOTFOUND && !check_pmu_supported(e->name)) {
+				fprintf(fp,"Line %d, Event%d %s, skipped because no PMU support\n", e->line, i, e->name);
+				continue;
+			}
 			fprintf(fp,"Line %d, Event%d %s, ret=%s(%d) expected %s(%d)\n", e->line, i, e->name, pfm_strerror(ret), ret, pfm_strerror(e->ret), e->ret);
 			errors++;
 		} else {
