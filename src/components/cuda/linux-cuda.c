@@ -581,6 +581,9 @@ CUDA_init_component( int cidx )
 	/* Export the component id */
 	_cuda_vector.cmp_info.CmpIdx = cidx;
 
+	/* Number of events */
+	_cuda_vector.cmp_info.num_native_events = NUM_EVENTS;
+
 	return ( PAPI_OK );
 }
 
