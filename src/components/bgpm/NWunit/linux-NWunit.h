@@ -54,7 +54,6 @@ typedef struct NWUNIT_reg_alloc
 typedef struct NWUNIT_control_state
 {
 	int EventGroup;
-	int AttachedEventGroup;
 	long long counts[NWUNIT_MAX_COUNTERS];
 } NWUNIT_control_state_t;
 

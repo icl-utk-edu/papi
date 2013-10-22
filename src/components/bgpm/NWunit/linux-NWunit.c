@@ -94,13 +94,11 @@ NWUNIT_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	( void ) ctx;
 	int retval;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
-	
-	retval = Bgpm_Attach( this_state->EventGroup, 
-						  UPC_NW_ALL_LINKS, 
-						  ( uint64_t ) ( this_state->AttachedEventGroup ) ); 
+
+	retval = Bgpm_Attach( this_state->EventGroup, UPC_NW_ALL_LINKS, 0); 
 	CHECK_BGPM_ERROR( retval, "Bgpm_Attach" );
 
-	retval = Bgpm_ResetStart( this_state->AttachedEventGroup );
+	retval = Bgpm_ResetStart( this_state->EventGroup );
 	CHECK_BGPM_ERROR( retval, "Bgpm_ResetStart" );
 	
 	return ( PAPI_OK );
@@ -120,7 +118,7 @@ NWUNIT_stop( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	int retval;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
 	
-	retval = Bgpm_Stop( this_state->AttachedEventGroup );
+	retval = Bgpm_Stop( this_state->EventGroup );
 	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
 	
 	return ( PAPI_OK );
@@ -142,7 +140,7 @@ NWUNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
 	int i, numEvts;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
 	
-	numEvts = Bgpm_NumEvents( this_state->AttachedEventGroup );
+	numEvts = Bgpm_NumEvents( this_state->EventGroup );
 	if ( numEvts == 0 ) {
 #ifdef DEBUG_BGPM
 		printf ("Error: ret value is %d for BGPM API function Bgpm_NumEvents.\n", numEvts );
@@ -151,7 +149,7 @@ NWUNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
 	}
 		
 	for ( i = 0; i < numEvts; i++ )
-		this_state->counts[i] = _common_getEventValue( i, this_state->AttachedEventGroup );
+		this_state->counts[i] = _common_getEventValue( i, this_state->EventGroup );
 
 	*events = this_state->counts;
 	
@@ -284,10 +282,10 @@ NWUNIT_reset( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	 restriction that an EventSet has to be stopped before resetting is
 	 possible. However, BGPM does have this restriction. 
 	 Hence we need to stop, reset and start */
-	retval = Bgpm_Stop( this_state->AttachedEventGroup );
+	retval = Bgpm_Stop( this_state->EventGroup );
 	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
 	
-	retval = Bgpm_ResetStart( this_state->AttachedEventGroup );
+	retval = Bgpm_ResetStart( this_state->EventGroup );
 	CHECK_BGPM_ERROR( retval, "Bgpm_ResetStart" );
 	
 	return ( PAPI_OK );
