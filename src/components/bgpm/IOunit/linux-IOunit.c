@@ -74,12 +74,14 @@ IOUNIT_init_control_state( hwd_control_state_t * ptr )
 #ifdef DEBUG_BGQ
 	printf( "IOUNIT_init_control_state\n" );
 #endif
+	int retval;
 
 	IOUNIT_control_state_t * this_state = ( IOUNIT_control_state_t * ) ptr;
 	
 	this_state->EventGroup = Bgpm_CreateEventSet();
-	CHECK_BGPM_ERROR( this_state->EventGroup, "Bgpm_CreateEventSet" );
-	
+	retval = _check_BGPM_error( this_state->EventGroup, "Bgpm_CreateEventSet" );
+	if ( retval < 0 ) return retval;
+
 	// initialize overflow flag to OFF (0)
 	this_state->overflow = 0;
     this_state->overflow_count = 0;
@@ -102,8 +104,9 @@ IOUNIT_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	IOUNIT_control_state_t * this_state = ( IOUNIT_control_state_t * ) ptr;
 	
 	retval = Bgpm_ResetStart( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_ResetStart" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_ResetStart" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -122,8 +125,9 @@ IOUNIT_stop( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	IOUNIT_control_state_t * this_state = ( IOUNIT_control_state_t * ) ptr;
 	
 	retval = Bgpm_Stop( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -309,10 +313,11 @@ IOUNIT_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		if ( retval != PAPI_OK )
 			return ( retval );
 
-        _common_set_overflow_BGPM( this_state->EventGroup,
+        retval = _common_set_overflow_BGPM( this_state->EventGroup,
                                   this_state->overflow_list[this_state->overflow_count-1].EventIndex,
                                   this_state->overflow_list[this_state->overflow_count-1].threshold,
                                   user_signal_handler_IOUNIT );
+		if ( retval < 0 ) return retval;
 	}
 	
 	return ( PAPI_OK );
@@ -353,7 +358,8 @@ IOUNIT_update_control_state( hwd_control_state_t * ptr,
 	IOUNIT_control_state_t * this_state = ( IOUNIT_control_state_t * ) ptr;
 	
 	// Delete and re-create BGPM eventset
-	_common_deleteRecreate( &this_state->EventGroup );
+	retval = _common_deleteRecreate( &this_state->EventGroup );
+	if ( retval < 0 ) return retval;
 
 #ifdef DEBUG_BGQ
     printf( "IOUNIT_update_control_state: EventGroup=%d, overflow = %d\n",
@@ -372,17 +378,19 @@ IOUNIT_update_control_state( hwd_control_state_t * ptr,
 				
 		/* Add events to the BGPM eventGroup */
 		retval = Bgpm_AddEvent( this_state->EventGroup, index );
-		CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
+		retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
+		if ( retval < 0 ) return retval;
 	}
 
     // since update_control_state trashes overflow settings, this puts things
     // back into balance for BGPM
     if ( 1 == this_state->overflow ) {
         for ( k = 0; k < this_state->overflow_count; k++ ) {
-            _common_set_overflow_BGPM( this_state->EventGroup,
+            retval = _common_set_overflow_BGPM( this_state->EventGroup,
                                       this_state->overflow_list[k].EventIndex,
                                       this_state->overflow_list[k].threshold,
                                       user_signal_handler_IOUNIT );
+			if ( retval < 0 ) return retval;
         }
     }
 
@@ -443,11 +451,13 @@ IOUNIT_reset( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	 possible. However, BGPM does have this restriction. 
 	 Hence we need to stop, reset and start */
 	retval = Bgpm_Stop( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
+
 	retval = Bgpm_ResetStart( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_ResetStart" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_ResetStart" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -463,13 +473,15 @@ IOUNIT_cleanup_eventset( hwd_control_state_t * ctrl )
 #ifdef DEBUG_BGQ
 	printf( "IOUNIT_cleanup_eventset\n" );
 #endif
-	
+	int retval;
+
 	IOUNIT_control_state_t * this_state = ( IOUNIT_control_state_t * ) ctrl;
 		
 	// create a new empty bgpm eventset
 	// reason: bgpm doesn't permit to remove events from an eventset; 
 	// hence we delete the old eventset and create a new one
-	_common_deleteRecreate( &this_state->EventGroup ); // HJ try to use delete() only
+	retval = _common_deleteRecreate( &this_state->EventGroup ); // HJ try to use delete() only
+	if ( retval < 0 ) return retval;
 
 	// set overflow flag to OFF (0)
 	this_state->overflow = 0;
@@ -588,8 +600,9 @@ IOUNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 	index = ( EventCode ) + OFFSET;
 	
 	retval = Bgpm_GetLongDesc( index, name, &len );
-	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
-	
+	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );						 
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 

@@ -18,24 +18,30 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
-#include "papi.h"
 #include "linux-bgq-common.h"
 
 /*******************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT **********
  ******************************************************************************/
 
-void _check_BGPM_error( int err, char* bgpmfunc )
+int _check_BGPM_error( int err, char* bgpmfunc )
 {
+    char  buffer[PAPI_MAX_STR_LEN];
+    int retval;
+    
 	if ( err < 0 ) {
-		printf ( "Error: ret value is %d for BGPM API function '%s'.\n",
-				 err, bgpmfunc);
+        sprintf( buffer, "Error: ret value is %d for BGPM API function '%s'.",
+                err, bgpmfunc);
+        retval =  _papi_hwi_publish_error( buffer );
+        return retval;
 	}
+    
+    return PAPI_OK;
 }
 
 
 /*
- * Returns all event values from the BGPM eventGroup 
+ * Returns all event values from the BGPM eventGroup
  */
 long_long
 _common_getEventValue( unsigned event_id, int EventGroup )
@@ -44,8 +50,9 @@ _common_getEventValue( unsigned event_id, int EventGroup )
     int retval;
 	
 	retval = Bgpm_ReadEvent( EventGroup, event_id, &value );
-	CHECK_BGPM_ERROR( retval, "Bgpm_ReadEvent" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_ReadEvent" );
+	if ( retval < 0 ) return retval;
+
 	return ( ( long_long ) value );	
 }
 
@@ -53,7 +60,7 @@ _common_getEventValue( unsigned event_id, int EventGroup )
 /*
  * Delete BGPM eventGroup and create an new empty one
  */
-void
+int
 _common_deleteRecreate( int *EventGroup_ptr )
 {
 #ifdef DEBUG_BGQ
@@ -63,22 +70,25 @@ _common_deleteRecreate( int *EventGroup_ptr )
 	
 	// delete previous bgpm eventset
 	retval = Bgpm_DeleteEventSet( *EventGroup_ptr );
-	CHECK_BGPM_ERROR( retval, "Bgpm_DeleteEventSet" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_DeleteEventSet" );
+	if ( retval < 0 ) return retval;
+
 	// create a new empty bgpm eventset
 	*EventGroup_ptr = Bgpm_CreateEventSet();
-	CHECK_BGPM_ERROR( *EventGroup_ptr, "Bgpm_CreateEventSet" );
+	retval = _check_BGPM_error( *EventGroup_ptr, "Bgpm_CreateEventSet" );
+	if ( retval < 0 ) return retval;
 
 #ifdef DEBUG_BGQ
 	printf( _AT_ " _common_deleteRecreate: *EventGroup_ptr=%d\n", *EventGroup_ptr);
-#endif	
+#endif
+	return PAPI_OK;
 }
 
 
 /*
  * Rebuild BGPM eventGroup with the events as it was prior to deletion 
  */
-void
+int
 _common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr )
 {
 #ifdef DEBUG_BGQ
@@ -89,13 +99,15 @@ _common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr
 	// rebuild BGPM EventGroup
 	for ( i = 0; i < count; i++ ) {
 		retval = Bgpm_AddEvent( *EventGroup_ptr, EventGroup_local[i] );
-		CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
-	
+		retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
+		if ( retval < 0 ) return retval;
+
 #ifdef DEBUG_BGQ
 		printf( "_common_rebuildEventgroup: After emptying EventGroup, event re-added: %d\n",
 			    EventGroup_local[i] );
 #endif
 	}
+	return PAPI_OK;
 }
 
 
@@ -105,7 +117,7 @@ _common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr
  * since update_control_state trashes overflow settings, this puts things
  * back into balance for BGPM 
  */
-void
+int
 _common_set_overflow_BGPM( int EventGroup, 
 						   int evt_idx,
 						   int threshold, 
@@ -132,17 +144,22 @@ _common_set_overflow_BGPM( int EventGroup,
 	retval = Bgpm_SetOverflow( EventGroup, 
 							   evt_idx,
 							   threshold_for_bgpm );
-	CHECK_BGPM_ERROR( retval, "Bgpm_SetOverflow" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_SetOverflow" );
+	if ( retval < 0 ) return retval;
+
 	retval = Bgpm_SetEventUser1( EventGroup, 
 								 evt_idx,
 								 1024 );
-	CHECK_BGPM_ERROR( retval, "Bgpm_SetEventUser1" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_SetEventUser1" );
+	if ( retval < 0 ) return retval;
+
 	/* user signal handler for overflow case */
 	retval = Bgpm_SetOverflowHandler( EventGroup, 
 									  handler );
-	CHECK_BGPM_ERROR( retval, "Bgpm_SetOverflowHandler" );		
+	retval = _check_BGPM_error( retval, "Bgpm_SetOverflowHandler" );	
+	if ( retval < 0 ) return retval;
+
+	return PAPI_OK;
 }
 
 

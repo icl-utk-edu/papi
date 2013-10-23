@@ -181,10 +181,12 @@ _bgq_init_control_state( hwd_control_state_t * ptr )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_init_control_state\n" );
 #endif
+	int retval;
 	
 	ptr->EventGroup = Bgpm_CreateEventSet();
-	CHECK_BGPM_ERROR( ptr->EventGroup, "Bgpm_CreateEventSet" );
-	
+	retval = _check_BGPM_error( ptr->EventGroup, "Bgpm_CreateEventSet" );
+	if ( retval < 0 ) return retval;
+
 	// initialize multiplexing flag to OFF (0)
 	ptr->muxOn = 0;
 	// initialize overflow flag to OFF (0)
@@ -247,7 +249,8 @@ _bgq_init( hwd_context_t * ctx )
 #endif
 	
 	retval = Bgpm_Init( BGPM_MODE_SWDISTRIB );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Init" );
+	retval = _check_BGPM_error( retval, "Bgpm_Init" );
+	if ( retval < 0 ) return retval;
 
 	//_common_initBgpm();
 	
@@ -277,23 +280,27 @@ _bgq_multiplex( hwd_control_state_t * bgq_state )
 	// BGPM EventGroup, turn on multiplex flag, and rebuild BGPM EventGroup.
 	if ( 0 < bgq_state->count ) {
 		// Delete and re-create BGPM eventset
-		_common_deleteRecreate( &bgq_state->EventGroup );
-		
+		retval = _common_deleteRecreate( &bgq_state->EventGroup );
+		if ( retval < 0 ) return retval;
+
 		// turn on multiplex for BGPM
 		retval = Bgpm_SetMultiplex( bgq_state->EventGroup, bgpm_period, BGPM_NORMAL ); 		
-		CHECK_BGPM_ERROR( retval, "Bgpm_SetMultiplex" );
-		
+		retval = _check_BGPM_error( retval, "Bgpm_SetMultiplex" );
+		if ( retval < 0 ) return retval;
+
 		// rebuild BGPM EventGroup
-		_common_rebuildEventgroup( bgq_state->count, 
+		retval = _common_rebuildEventgroup( bgq_state->count, 
 								   bgq_state->EventGroup_local, 
-								   &bgq_state->EventGroup );		
+								   &bgq_state->EventGroup );	
+		if ( retval < 0 ) return retval;
 	}
 	else {
 		// need to pass either BGPM_NORMAL or BGPM_NOTNORMAL 
 		// BGPM_NORMAL: numbers reported by Bgpm_ReadEvent() are normalized 
 		// to the maximum time spent in a multiplexed group
 		retval = Bgpm_SetMultiplex( bgq_state->EventGroup, bgpm_period, BGPM_NORMAL ); 		
-		CHECK_BGPM_ERROR( retval, "Bgpm_SetMultiplex" );				
+		retval = _check_BGPM_error( retval, "Bgpm_SetMultiplex" );
+		if ( retval < 0 ) return retval;
 	}
 
 #ifdef DEBUG_BGQ
@@ -379,8 +386,9 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 	unsigned evtIdx;
 	
 	// Delete and re-create BGPM eventset
-	_common_deleteRecreate( &ptr->EventGroup );
-	
+	retval = _common_deleteRecreate( &ptr->EventGroup );
+	if ( retval < 0 ) return retval;
+
 #ifdef DEBUG_BGQ
     printf( _AT_ " _bgq_update_control_state: EventGroup=%d, muxOn = %d, overflow = %d\n",
 		   ptr->EventGroup, ptr->muxOn, ptr->overflow );
@@ -406,7 +414,8 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 				if ( GenericEvent[j].idx == ( index - 1) ) {
 					/* Add events to the BGPM eventGroup */
 					retval = Bgpm_AddEvent( ptr->EventGroup, GenericEvent[j].eventId );
-					CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
+					retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
+					if ( retval < 0 ) return retval;
 #ifdef DEBUG_BGQ
 					printf(_AT_ " _bgq_update_control_state: ADD event: i = %d, eventId = %d\n", i, GenericEvent[j].eventId );
 #endif
@@ -422,7 +431,8 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 						retval = Bgpm_SetXuGrpMask( ptr->EventGroup,
 												    evtIdx,
 												    GenericEvent[j].opcode_mask );
-						CHECK_BGPM_ERROR( retval, "Bgpm_SetXuGrpMask" );
+						retval = _check_BGPM_error( retval, "Bgpm_SetXuGrpMask" );
+						if ( retval < 0 ) return retval;
 #ifdef DEBUG_BGQ
 						printf(_AT_ " _bgq_update_control_state: it's PEVT_INST_XU_GRP_MASK\n" );
 #endif
@@ -430,7 +440,8 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 						retval = Bgpm_SetQfpuGrpMask( ptr->EventGroup,
 												      evtIdx,
 													  GenericEvent[j].opcode_mask );
-						CHECK_BGPM_ERROR( retval, "Bgpm_SetQfpuGrpMask" );
+						retval = _check_BGPM_error( retval, "Bgpm_SetQfpuGrpMask" );
+						if ( retval < 0 ) return retval;
 #ifdef DEBUG_BGQ
 						printf(_AT_ " _bgq_update_control_state: it's PEVT_INST_QFPU_GRP_MASK\n" );
 #endif
@@ -445,7 +456,8 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 			
 			/* Add events to the BGPM eventGroup */
 			retval = Bgpm_AddEvent( ptr->EventGroup, index );
-			CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
+			retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
+			if ( retval < 0 ) return retval;
 #ifdef DEBUG_BGQ
 			printf(_AT_ " _bgq_update_control_state: ADD event: i = %d, index = %d\n", i, index );
 #endif
@@ -467,10 +479,11 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
     // back into balance for BGPM
     if ( 1 == ptr->overflow ) {
         for ( k = 0; k < ptr->overflow_count; k++ ) {
-            _common_set_overflow_BGPM( ptr->EventGroup,
+            retval = _common_set_overflow_BGPM( ptr->EventGroup,
                                        ptr->overflow_list[k].EventIndex,
                                        ptr->overflow_list[k].threshold,
                                        user_signal_handler );
+			if ( retval < 0 ) return retval;
         }
     }
 		
@@ -492,7 +505,8 @@ _bgq_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	int retval;
 		
 	retval = Bgpm_Apply( ptr->EventGroup ); 
-	CHECK_BGPM_ERROR( retval, "Bgpm_Apply" );
+	retval = _check_BGPM_error( retval, "Bgpm_Apply" );
+	if ( retval < 0 ) return retval;
 	
 	// set flag to 1: BGPM eventGroup HAS BEEN applied
 	ptr->bgpm_eventset_applied = 1;
@@ -508,7 +522,8 @@ _bgq_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	/* Bgpm_Apply() does an implicit reset; 
 	 hence no need to use Bgpm_ResetStart */
 	retval = Bgpm_Start( ptr->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Start" );
+	retval = _check_BGPM_error( retval, "Bgpm_Start" );
+	if ( retval < 0 ) return retval;
 	
 	return ( PAPI_OK );
 }
@@ -526,7 +541,8 @@ _bgq_stop( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	int retval;
 	
 	retval = Bgpm_Stop( ptr->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
 	
 	return ( PAPI_OK );
 }
@@ -582,10 +598,12 @@ _bgq_reset( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	   possible. However, BGPM does have this restriction. 
 	   Hence we need to stop, reset and start */
 	retval = Bgpm_Stop( ptr->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
 	
 	retval = Bgpm_ResetStart( ptr->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_ResetStart" );
+	retval = _check_BGPM_error( retval, "Bgpm_ResetStart" );
+	if ( retval < 0 ) return retval;
 
 	return ( PAPI_OK );
 }
@@ -609,10 +627,10 @@ _bgq_shutdown( hwd_context_t * ctx )
 	
 	/* Disable BGPM library */	
 	retval = Bgpm_Disable();
-	CHECK_BGPM_ERROR( retval, "Bgpm_Disable" );
+	retval = _check_BGPM_error( retval, "Bgpm_Disable" );
+	if ( retval < 0 ) return retval;
 
 	return ( PAPI_OK );
-	
 }
 
 /*
@@ -774,11 +792,14 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		    this_state->bgpm_eventset_applied, threshold );
 #endif	
 	if ( 1 == this_state->bgpm_eventset_applied && 0 != threshold ) {
-		_common_deleteRecreate( &this_state->EventGroup );
-		_common_rebuildEventgroup( this_state->count,
+		retval = _common_deleteRecreate( &this_state->EventGroup );
+		if ( retval < 0 ) return retval;
+
+		retval = _common_rebuildEventgroup( this_state->count,
 								   this_state->EventGroup_local,
 								   &this_state->EventGroup );
-		
+		if ( retval < 0 ) return retval;
+
 		/* set BGPM eventGroup flag back to NOT applied yet (0) 
 		 * because the eventGroup has been recreated from scratch */
 		this_state->bgpm_eventset_applied = 0;
@@ -817,10 +838,11 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		if ( retval != PAPI_OK )
 			return ( retval );
 		
-		_common_set_overflow_BGPM( this_state->EventGroup,
+		retval = _common_set_overflow_BGPM( this_state->EventGroup,
                                   this_state->overflow_list[this_state->overflow_count-1].EventIndex,
                                   this_state->overflow_list[this_state->overflow_count-1].threshold,
                                   user_signal_handler );
+		if ( retval < 0 ) return retval;
 	}
 
 	return ( PAPI_OK );
@@ -1176,7 +1198,8 @@ _bgq_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 	int index = ( EventCode & PAPI_NATIVE_AND_MASK ) + 1;
 
 	retval = Bgpm_GetLongDesc( index, name, &len );
-	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
+	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );						 
+	if ( retval < 0 ) return retval;
 
 	return ( PAPI_OK );
 }

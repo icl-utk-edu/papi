@@ -71,12 +71,14 @@ CNKUNIT_init_control_state( hwd_control_state_t * ptr )
 #ifdef DEBUG_BGQ
 	printf( "CNKUNIT_init_control_state\n" );
 #endif
+	int retval;
 
 	CNKUNIT_control_state_t * this_state = ( CNKUNIT_control_state_t * ) ptr;
 	
 	this_state->EventGroup = Bgpm_CreateEventSet();
-	CHECK_BGPM_ERROR( this_state->EventGroup, "Bgpm_CreateEventSet" );
-	
+	retval = _check_BGPM_error( this_state->EventGroup, "Bgpm_CreateEventSet" );
+	if ( retval < 0 ) return retval;
+
 	return PAPI_OK;
 }
 
@@ -95,13 +97,15 @@ CNKUNIT_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	CNKUNIT_control_state_t * this_state = ( CNKUNIT_control_state_t * ) ptr;
 	
 	retval = Bgpm_Apply( this_state->EventGroup ); 
-	CHECK_BGPM_ERROR( retval, "Bgpm_Apply" );
+	retval = _check_BGPM_error( retval, "Bgpm_Apply" );
+	if ( retval < 0 ) return retval;
 
 	/* Bgpm_Apply() does an implicit reset; 
 	 hence no need to use Bgpm_ResetStart */
 	retval = Bgpm_Start( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Start" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Start" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -120,8 +124,9 @@ CNKUNIT_stop( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	CNKUNIT_control_state_t * this_state = ( CNKUNIT_control_state_t * ) ptr;
 	
 	retval = Bgpm_Stop( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -206,8 +211,9 @@ CNKUNIT_update_control_state( hwd_control_state_t * ptr,
 	CNKUNIT_control_state_t * this_state = ( CNKUNIT_control_state_t * ) ptr;
 	
 	// Delete and re-create BGPM eventset
-	_common_deleteRecreate( &this_state->EventGroup );
-		
+	retval = _common_deleteRecreate( &this_state->EventGroup );
+	if ( retval < 0 ) return retval;
+	
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
 		index = ( native[i].ni_event ) + OFFSET;
@@ -220,7 +226,8 @@ CNKUNIT_update_control_state( hwd_control_state_t * ptr,
 		
 		/* Add events to the BGPM eventGroup */
 		retval = Bgpm_AddEvent( this_state->EventGroup, index );
-		CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
+		retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
+		if ( retval < 0 ) return retval;
 	}
 	
 	return ( PAPI_OK );
@@ -280,10 +287,12 @@ CNKUNIT_reset( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	 possible. However, BGPM does have this restriction. 
 	 Hence we need to stop, reset and start */
 	retval = Bgpm_Stop( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
+
 	retval = Bgpm_ResetStart( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_ResetStart" );
+	retval = _check_BGPM_error( retval, "Bgpm_ResetStart" );
+	if ( retval < 0 ) return retval;
 
 	return ( PAPI_OK );
 }
@@ -300,14 +309,16 @@ CNKUNIT_cleanup_eventset( hwd_control_state_t * ctrl )
 #ifdef DEBUG_BGQ
 	printf( "CNKUNIT_cleanup_eventset\n" );
 #endif
-	
+	int retval;
+
 	CNKUNIT_control_state_t * this_state = ( CNKUNIT_control_state_t * ) ctrl;
 		
 	// create a new empty bgpm eventset
 	// reason: bgpm doesn't permit to remove events from an eventset; 
 	// hence we delete the old eventset and create a new one
-	_common_deleteRecreate( &this_state->EventGroup ); // HJ try to use delete() only
-	
+	retval = _common_deleteRecreate( &this_state->EventGroup ); // HJ try to use delete() only
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -422,8 +433,9 @@ CNKUNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 	index = ( EventCode ) + OFFSET;
 	
 	retval = Bgpm_GetLongDesc( index, name, &len );
-	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
-	
+	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );						 
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 

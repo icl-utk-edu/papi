@@ -18,11 +18,11 @@
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
+#include "papi.h"
 /* Header required by BGPM */
 #include "bgpm/include/bgpm.h"
 
-/* Specific errors from BGPM lib */
-#define CHECK_BGPM_ERROR(err, bgpmfunc) _check_BGPM_error( err, bgpmfunc );
+extern int _papi_hwi_publish_error( char *error );
 
 // Define gymnastics to create a compile time AT string.
 #define STRINGIFY(x) #x
@@ -39,11 +39,11 @@
  *******************************************************************************/
 
 /* common prototypes for BGQ sustrate and BGPM components */
-void        _check_BGPM_error( int err, char* bgpmfunc );
+int         _check_BGPM_error( int err, char* bgpmfunc );
 long_long	_common_getEventValue( unsigned event_id, int EventGroup );
-void		_common_deleteRecreate( int *EventGroup_ptr );
-void		_common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr );
-void		_common_set_overflow_BGPM( int EventGroup, 
+int 		_common_deleteRecreate( int *EventGroup_ptr );
+int 		_common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr );
+int 		_common_set_overflow_BGPM( int EventGroup, 
 									   int evt_idx,
 									   int threshold, 
 									   void (*handler)(int, uint64_t, uint64_t, const ucontext_t *) );

@@ -74,11 +74,13 @@ L2UNIT_init_control_state( hwd_control_state_t * ptr )
 #ifdef DEBUG_BGQ
 	printf( "L2UNIT_init_control_state\n" );
 #endif
+	int retval;
 
 	L2UNIT_control_state_t * this_state = ( L2UNIT_control_state_t * ) ptr;
 	
 	this_state->EventGroup = Bgpm_CreateEventSet();
-	CHECK_BGPM_ERROR( this_state->EventGroup, "Bgpm_CreateEventSet" );
+	retval = _check_BGPM_error( this_state->EventGroup, "Bgpm_CreateEventSet" );
+	if ( retval < 0 ) return retval;
 
 	// initialize overflow flag to OFF (0)
 	this_state->overflow = 0;
@@ -104,7 +106,8 @@ L2UNIT_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	L2UNIT_control_state_t * this_state = ( L2UNIT_control_state_t * ) ptr;
 	
 	retval = Bgpm_Apply( this_state->EventGroup ); 
-	CHECK_BGPM_ERROR( retval, "Bgpm_Apply" );
+	retval = _check_BGPM_error( retval, "Bgpm_Apply" );
+	if ( retval < 0 ) return retval;
 
 	// set flag to 1: BGPM eventGroup HAS BEEN applied
 	this_state->bgpm_eventset_applied = 1;
@@ -112,8 +115,9 @@ L2UNIT_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	/* Bgpm_Apply() does an implicit reset; 
 	 hence no need to use Bgpm_ResetStart */
 	retval = Bgpm_Start( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Start" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Start" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -132,8 +136,9 @@ L2UNIT_stop( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	L2UNIT_control_state_t * this_state = ( L2UNIT_control_state_t * ) ptr;
 	
 	retval = Bgpm_Stop( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -301,11 +306,13 @@ L2UNIT_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		   this_state->bgpm_eventset_applied, threshold );
 #endif	
 	if ( 1 == this_state->bgpm_eventset_applied && 0 != threshold ) {
-		_common_deleteRecreate( &this_state->EventGroup );
-		_common_rebuildEventgroup( this_state->count,
+		retval = _common_deleteRecreate( &this_state->EventGroup );
+		if ( retval < 0 ) return retval;
+		retval = _common_rebuildEventgroup( this_state->count,
 								  this_state->EventGroup_local,
 								  &this_state->EventGroup );
-		
+		if ( retval < 0 ) return retval;
+
 		/* set BGPM eventGroup flag back to NOT applied yet (0) 
 		 * because the eventGroup has been recreated from scratch */
 		this_state->bgpm_eventset_applied = 0;
@@ -341,10 +348,11 @@ L2UNIT_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 		if ( retval != PAPI_OK )
 			return ( retval );
 
-        _common_set_overflow_BGPM( this_state->EventGroup,
+        retval = _common_set_overflow_BGPM( this_state->EventGroup,
                                   this_state->overflow_list[this_state->overflow_count-1].EventIndex,
                                   this_state->overflow_list[this_state->overflow_count-1].threshold,
                                   user_signal_handler_L2UNIT );
+		if ( retval < 0 ) return retval;
 	}
 	
 	return ( PAPI_OK );
@@ -380,13 +388,15 @@ L2UNIT_cleanup_eventset( hwd_control_state_t * ctrl )
 #ifdef DEBUG_BGQ
 	printf( "L2UNIT_cleanup_eventset\n" );
 #endif
-	
+	int retval;
+
 	L2UNIT_control_state_t * this_state = ( L2UNIT_control_state_t * ) ctrl;
 	
 	// create a new empty bgpm eventset
 	// reason: bgpm doesn't permit to remove events from an eventset; 
 	// hence we delete the old eventset and create a new one
-	_common_deleteRecreate( &this_state->EventGroup ); 
+	retval = _common_deleteRecreate( &this_state->EventGroup ); 
+	if ( retval < 0 ) return retval;
 
 	// set overflow flag to OFF (0)
 	this_state->overflow = 0;
@@ -415,7 +425,8 @@ L2UNIT_update_control_state( hwd_control_state_t * ptr,
 	L2UNIT_control_state_t * this_state = ( L2UNIT_control_state_t * ) ptr;
 	
 	// Delete and re-create BGPM eventset
-	_common_deleteRecreate( &this_state->EventGroup );
+	retval = _common_deleteRecreate( &this_state->EventGroup );
+	if ( retval < 0 ) return retval;
 
 #ifdef DEBUG_BGQ
     printf( "L2UNIT_update_control_state: EventGroup=%d, overflow = %d\n",
@@ -438,7 +449,8 @@ L2UNIT_update_control_state( hwd_control_state_t * ptr,
 		
 		/* Add events to the BGPM eventGroup */
 		retval = Bgpm_AddEvent( this_state->EventGroup, index );
-		CHECK_BGPM_ERROR( retval, "Bgpm_AddEvent" );
+		retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
+		if ( retval < 0 ) return retval;
 	}
 	
 	// store how many events we added to an EventSet
@@ -448,10 +460,11 @@ L2UNIT_update_control_state( hwd_control_state_t * ptr,
     // back into balance for BGPM
     if ( 1 == this_state->overflow ) {
         for ( k = 0; k < this_state->overflow_count; k++ ) {
-            _common_set_overflow_BGPM( this_state->EventGroup,
+            retval = _common_set_overflow_BGPM( this_state->EventGroup,
                                       this_state->overflow_list[k].EventIndex,
                                       this_state->overflow_list[k].threshold,
                                       user_signal_handler_L2UNIT );
+			if ( retval < 0 ) return retval;
         }
     }
 	
@@ -512,11 +525,13 @@ L2UNIT_reset( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	 possible. However, BGPM does have this restriction. 
 	 Hence we need to stop, reset and start */
 	retval = Bgpm_Stop( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_Stop" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
+	if ( retval < 0 ) return retval;
+
 	retval = Bgpm_ResetStart( this_state->EventGroup );
-	CHECK_BGPM_ERROR( retval, "Bgpm_ResetStart" );
-	
+	retval = _check_BGPM_error( retval, "Bgpm_ResetStart" );
+	if ( retval < 0 ) return retval;
+
 	return ( PAPI_OK );
 }
 
@@ -630,7 +645,8 @@ L2UNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 	index = ( EventCode ) + OFFSET;
 	
 	retval = Bgpm_GetLongDesc( index, name, &len );
-	CHECK_BGPM_ERROR( retval, "Bgpm_GetLongDesc" );						 
+	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );						 
+	if ( retval < 0 ) return retval;
 
 	return ( PAPI_OK );
 }
