@@ -1,3 +1,4 @@
+NAME=rapl
 include ../../Makefile_comp_tests
 
 TESTS = rapl_basic rapl_busy rapl_overflow
@@ -21,15 +22,6 @@ rapl_basic: rapl_basic.o $(UTILOBJS) $(PAPILIB)
 
 rapl_busy: rapl_busy.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o rapl_busy rapl_busy.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
-
-install:
-	@echo "RAPL tests (DATADIR) being installed in: \"$(DATADIR)\""; 
-	-mkdir -p $(DATADIR)/rapl/tests
-	-chmod go+rx $(DATADIR)
-	-chmod go+rx $(DATADIR)/rapl/tests
-	-find . -perm -100 -type f -exec cp {} $(DATADIR)/rapl/tests \;
-	-chmod go+rx $(DATADIR)/rapl/tests/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/rapl/tests \;
 
 clean:
 	rm -f $(TESTS) *.o *~

@@ -1815,4 +1815,5 @@ AC_MSG_NOTICE(Generating f90papi.h)
 
 AC_MSG_NOTICE($FILENAME will be included in the generated Makefile)
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([components/Makefile_comp_tests.target testlib/Makefile.target ctests/Makefile.target ftests/Makefile.target])
 AC_OUTPUT

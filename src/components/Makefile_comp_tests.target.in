@@ -1,0 +1,31 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+datadir = @datadir@/${PACKAGE_TARNAME}
+testlibdir = $(datadir)/testlib
+INCLUDE = -I. -I@includedir@ -I$(testlibdir)
+LIBDIR  = @libdir@
+PAPILIB = $(LIBDIR)/@LIBRARY@
+TESTLIB = $(testlibdir)/libtestlib.a
+LDFLAGS = @LDL@
+CC	= @CC@
+F77	= @F77@
+CC_R	= @CC_R@
+CFLAGS	= @CFLAGS@ 
+OMPCFLGS = @OMPCFLGS@
+UTILOBJS = $(TESTLIB)
+
+tests: $(NAME)_tests
+
+install:
+	@echo "$(NAME) tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/$(NAME)/tests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/$(NAME)/tests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/$(NAME)/tests \;
+	-chmod go+rx $(DATADIR)/$(NAME)/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/$(NAME)/tests \;
+	-cp Makefile $(DATADIR)/$(NAME)/tests
+	-cp ../../Makefile_comp_tests $(DATADIR)
+
+

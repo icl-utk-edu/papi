@@ -1,14 +1,14 @@
-INCLUDE = -I.
-LIBRARY = -lpapi
+prefix = @prefix@
+LIBRARY = @LIBRARY@ 
 PAPILIB = $(LIBRARY)
-CC	= gcc
-CC_R	= $(CC) -pthread
-CFLAGS	= -g -O -Wall
+INCLUDE = -I. -I@includedir@
+CC	= @CC@
+F77	= @F77@
+CC_R	= @CC_R@
+CFLAGS	= @CFLAGS@ 
 
-UTILSRCS:= do_loops.c test_utils.c dummy.c clockcore.c
-UTILOBJS:=$(UTILSRCS:.c=.o)
-UTILSRCS+= ftests_util.F
-UTILOBJS+= ftests_util.o
+UTILSRCS= do_loops.c test_utils.c dummy.c clockcore.c ftests_util.F
+UTILOBJS=$(UTILSRCS:.c=.o) ftests_util.o
 
 all:	$(UTILOBJS)
 	$(AR) $(ARG64) rv libtestlib.a $(UTILOBJS)
@@ -29,7 +29,7 @@ ftests_util.o: ftests_util.F fpapi_test.h
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c ftests_util.F
 
 clean:
-	rm -f *.o *genmod.f90 *genmod.mod *.stderr *.stdout core *~ $(ALL) libtestlib.a libtestlib.so
+	rm -f *.o *.stderr *.stdout core *~ $(ALL) libtestlib.a libtestlib.so
 
 install: 
 	@echo "Papi testlib (DATADIR) being installed in: \"$(DATADIR)\""; 
@@ -38,5 +38,5 @@ install:
 	-chmod go+rx $(DATADIR)/testlib
 	-find . -perm -100 -type f -exec cp {} $(DATADIR)/testlib \;
 	-chmod go+rx $(DATADIR)/testlib/*
-	-find . -name "*.[chaF]" -type f -exec cp {} $(DATADIR)/testlib \;
-	-cp Makefile.target $(DATADIR)/testlib/Makefile
+	-find . -name "*.[cha]" -type f -exec cp {} $(DATADIR)/testlib \;
+	-cp Makefile $(DATADIR)/testlib

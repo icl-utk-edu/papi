@@ -1,4 +1,8 @@
+NAME=appio
 include ../../Makefile_comp_tests
+
+%.o:%.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
 TESTS = appio_list_events appio_values_by_code appio_values_by_name appio_test_read_write appio_test_pthreads appio_test_fread_fwrite appio_test_seek
 
@@ -61,15 +65,6 @@ init_fini.o: init_fini.c
 # ./appio_test_iozone -s 100m -r 64 -i 0 -i 1 -t 1
 appio_test_iozone: iozone/iozone_linux$(ARCH_SUFFIX).o iozone/libasync.o iozone/libbif.o init_fini.o $(UTILOBJS) $(PAPILIB)
 	$(CC) -g -O2 -o $@ $(LDFLAGS) $^ -lpthread -lrt
-
-install:
-	@echo "APPIO tests (DATADIR) being installed in: \"$(DATADIR)\""; 
-	-mkdir -p $(DATADIR)/appio/tests
-	-chmod go+rx $(DATADIR)/
-	-chmod go+rx $(DATADIR)/appio/tests
-	-cp $(ALL_TESTS) $(DATADIR)/appio/tests
-	-chmod go+rx $(DATADIR)/appio/tests/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/appio/tests \;
 
 clean:
 	rm -f $(ALL_TESTS) appio_test_iozone *.o

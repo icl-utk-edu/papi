@@ -9,6 +9,16 @@
 #          Philip Mucci
 #          mucci@cs.utk.edu
 
+# if make sure that the tests are built
+if [ "x$BUILD" != "x" ]; then
+    cd testlib; make; cd ..
+    cd ctests; make; cd ..
+    cd ftests; make; cd ..
+    for comp in `ls components/*/tests` ; do \
+	cd components/$$comp/tests ; make; cd ../../.. ;
+    done 
+fi
+
 AIXTHREAD_SCOPE=S
 export AIXTHREAD_SCOPE
 if [ "X$1" = "X-v" ]; then

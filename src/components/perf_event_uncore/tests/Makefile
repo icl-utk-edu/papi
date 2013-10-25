@@ -1,4 +1,8 @@
+NAME=perf_event_uncore
 include ../../Makefile_comp_tests
+
+%.o:%.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
 TESTS = perf_event_uncore perf_event_uncore_multiple \
 	perf_event_amd_northbridge perf_event_uncore_cbox
@@ -38,15 +42,6 @@ perf_event_uncore_cbox:	perf_event_uncore_cbox.o perf_event_uncore_lib.o $(UTILO
 	$(CC) $(CFLAGS) $(INCLUDE) -o perf_event_uncore_cbox perf_event_uncore_cbox.o perf_event_uncore_lib.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
 
 
-
-install:
-	@echo "perf_event_uncore tests (DATADIR) being installed in: \"$(DATADIR)\""; 
-	-mkdir -p $(DATADIR)/perf_event_uncore/tests
-	-chmod go+rx $(DATADIR)
-	-chmod go+rx $(DATADIR)/perf_event_uncore/tests
-	-find . -perm -100 -type f -exec cp {} $(DATADIR)/perf_event_uncore/tests \;
-	-chmod go+rx $(DATADIR)/perf_event_uncore/tests/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/perf_event_uncore/tests \;
 
 clean:
 	rm -f $(TESTS) *.o *~

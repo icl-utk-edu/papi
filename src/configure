@@ -7694,6 +7694,8 @@ echo "$as_me: Generating f90papi.h" >&6;}
 echo "$as_me: $FILENAME will be included in the generated Makefile" >&6;}
           ac_config_files="$ac_config_files Makefile"
 
+                                        ac_config_files="$ac_config_files components/Makefile_comp_tests.target testlib/Makefile.target ctests/Makefile.target ftests/Makefile.target"
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -8219,6 +8221,10 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+  "components/Makefile_comp_tests.target" ) CONFIG_FILES="$CONFIG_FILES components/Makefile_comp_tests.target" ;;
+  "testlib/Makefile.target" ) CONFIG_FILES="$CONFIG_FILES testlib/Makefile.target" ;;
+  "ctests/Makefile.target" ) CONFIG_FILES="$CONFIG_FILES ctests/Makefile.target" ;;
+  "ftests/Makefile.target" ) CONFIG_FILES="$CONFIG_FILES ftests/Makefile.target" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
