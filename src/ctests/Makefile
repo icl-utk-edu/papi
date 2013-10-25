@@ -349,8 +349,8 @@ hwinfo: hwinfo.c $(TESTLIB) $(PAPILIB)
 code2name: code2name.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) code2name.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o code2name
 
-attach_target: ../testlib/do_loops.c
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DDUMMY_DRIVER ../testlib/do_loops.c ../testlib/dummy.c -o attach_target 
+attach_target: attach_target.c
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_target.c -o attach_target $(TESTLIB)
 
 zero_attach: zero_attach.c $(TESTLIB) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_attach.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o zero_attach 
