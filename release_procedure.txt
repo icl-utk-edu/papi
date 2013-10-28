@@ -1,4 +1,4 @@
-Release Procedure for PAPI  06 Aug, 2013 (now with better git!)
+Release Procedure for PAPI  28 Oct, 2013
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -20,10 +20,10 @@ __ 1. Update any documentation that may have changed. Pay particular attention
 __ 2. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
 	Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
 
--- 2a. On most icl machines:
-	export PATH=/mnt/scratch/sw/doxygen-1.7.4/bin:$PATH
+-- 2a. On the icl machine gonzo:
+	export PATH=/mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
 	-- or --
-	setenv PATH /mnt/scratch/sw/doxygen-1.7.4/bin:$PATH
+	setenv PATH /mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
 
 -- 2b. Rebuild the doxygen manpages (  cd doc && make && make install )
 	You will want to check if anything needs to be committed to git.
