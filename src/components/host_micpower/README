@@ -1,0 +1,7 @@
+This is a component that exports power information for Intel Xeon Phi cards (MIC).
+The component makes use of the MicAccessAPI distributed with the Intel Manycore Platform Software Stack.
+(http://software.intel.com/en-us/articles/intel-manycore-platform-software-stack-mpss)
+Specifically in the intel-mic-sysmgmt package.
+
+A configure script allows for non-default locations for the sysmgmt sdk. see ./configure --help
+
