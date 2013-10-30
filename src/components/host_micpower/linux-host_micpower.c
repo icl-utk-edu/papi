@@ -327,7 +327,7 @@ int _host_micpower_init_thread( hwd_context_t *ctx) {
 }
 
 int
-_host_micpower_shutdown_component() {
+_host_micpower_shutdown_component( void ) {
 	U32 i = 0;
 	for( i=0; i<nAdapters; i++) {
 		MicCloseAdapterPtr( handles[i] );
@@ -338,7 +338,8 @@ _host_micpower_shutdown_component() {
 }
 	
 int
-_host_micpower_shutdown_thread() {
+_host_micpower_shutdown_thread( hwd_context_t *ctx ) {
+    (void) ctx;
 	return PAPI_OK;
 }
 
