@@ -5,6 +5,7 @@ include ../../Makefile_comp_tests
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
 TESTS = host_micpower_basic 
+host_micpower_tests : $(TESTS)
 
 micpower_tests: $(TESTS)
 

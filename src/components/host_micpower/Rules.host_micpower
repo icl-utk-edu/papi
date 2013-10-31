@@ -1,6 +1,6 @@
 include components/host_micpower/Makefile.host_micpower
 
-COMPSRCES += components/host_micpower/linux-host_micpower.c
+COMPSRCS += components/host_micpower/linux-host_micpower.c
 COMPOBJS += linux-host_micpower.o
 
 CFLAGS += -D MICACCESSAPI -D LINUX
@@ -13,8 +13,8 @@ LIBPATH = -L$(SYSMGT)/lib/Linux
 #SCIF_LIBPATH=/usr/lib64
 
 #LDFLAGS += $(LIBPATH) $(SCIF_LIBPATH) -lpthread -ldl
-LDFLAGS += -ldl -lpthread
-CFLAGS += -I$(SYSMGT)/include
+LDFLAGS += -pthread $(LDL) $(SYSMGMT_LIBS)
+CFLAGS += $(SYSMGMT_CFLAGS)
 
 linux-host_micpower.o: components/host_micpower/linux-host_micpower.c $(HEADERS) 
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/host_micpower/linux-host_micpower.c -o linux-host_micpower.o 
