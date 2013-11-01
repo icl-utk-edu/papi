@@ -253,55 +253,54 @@ _host_micpower_init_component( int cidx )
 	}
 	for (adapterNum=0; adapterNum < nAdapters; adapterNum++) {
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].name, PAPI_MAX_STR_LEN, "mic%d:tot0", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].description, PAPI_MAX_STR_LEN, "Total power, window 0");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].description, PAPI_MAX_STR_LEN, "Total power utilization, Averaged over Time Window 0 (uWatts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE].resources.selector = adapterNum*EVENTS_PER_DEVICE + 1;
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].units, PAPI_MIN_STR_LEN, "uW");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].name, PAPI_MAX_STR_LEN, "mic%d:tot1", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].description, PAPI_MAX_STR_LEN, "Total power, window 1");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].description, PAPI_MAX_STR_LEN, "Total power utilization, Averaged over Time Window 1 (uWatts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].resources.selector = adapterNum*EVENTS_PER_DEVICE + 2;
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].units, PAPI_MIN_STR_LEN, "uW");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].name, PAPI_MAX_STR_LEN, "mic%d:pcie", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].description, PAPI_MAX_STR_LEN, "PCI-E connector power");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].description, PAPI_MAX_STR_LEN, "PCI-E connector power (uWatts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].resources.selector = adapterNum*EVENTS_PER_DEVICE + 3;
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].units, PAPI_MIN_STR_LEN, "uW");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].name, PAPI_MAX_STR_LEN, "mic%d:inst", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].description, PAPI_MAX_STR_LEN, "Instantaneous power");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].description, PAPI_MAX_STR_LEN, "Instantaneous power (uWatts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].resources.selector = adapterNum*EVENTS_PER_DEVICE + 4;
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].units, PAPI_MIN_STR_LEN, "uW");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].name, PAPI_MAX_STR_LEN, "mic%d:imax", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].description, PAPI_MAX_STR_LEN, "Max Instantaneous power");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].description, PAPI_MAX_STR_LEN, "Max instantaneous power (uWatts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].resources.selector = adapterNum*EVENTS_PER_DEVICE + 5;
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].units, PAPI_MIN_STR_LEN, "uW");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].name, PAPI_MAX_STR_LEN, "mic%d:c2x3", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].description, PAPI_MAX_STR_LEN, "2x3 connector power");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].description, PAPI_MAX_STR_LEN, "2x3 connector power (uWatts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].resources.selector = adapterNum*EVENTS_PER_DEVICE + 6;
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].units, PAPI_MIN_STR_LEN, "uW");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].name, PAPI_MAX_STR_LEN, "mic%d:c2x4", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].description, PAPI_MAX_STR_LEN, "2x4 connector power");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].description, PAPI_MAX_STR_LEN, "2x4 connector power (uWatts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].resources.selector = adapterNum*EVENTS_PER_DEVICE + 7;
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].units, PAPI_MIN_STR_LEN, "uW");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].name, PAPI_MAX_STR_LEN, "mic%d:vccp", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].description, PAPI_MAX_STR_LEN, "Core rail");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].description, PAPI_MAX_STR_LEN, "Core rail (uVolts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].resources.selector = adapterNum*EVENTS_PER_DEVICE + 8;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].units, PAPI_MIN_STR_LEN, "uW");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].units, PAPI_MIN_STR_LEN, "uV");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].name, PAPI_MAX_STR_LEN, "mic%d:vddg", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].description, PAPI_MAX_STR_LEN, "Uncore rail");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].description, PAPI_MAX_STR_LEN, "Uncore rail (uVolts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].resources.selector = adapterNum*EVENTS_PER_DEVICE + 9;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].units, PAPI_MIN_STR_LEN, "uW");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].units, PAPI_MIN_STR_LEN, "uV");
 
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].name, PAPI_MAX_STR_LEN, "mic%d:vddq", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].description, PAPI_MAX_STR_LEN, "Memory subsystem rail");
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].description, PAPI_MAX_STR_LEN, "Memory subsystem rail (uVolts)");
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].resources.selector = adapterNum*EVENTS_PER_DEVICE + 10;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].units, PAPI_MIN_STR_LEN, "uW");
-
+        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].units, PAPI_MIN_STR_LEN, "uV");
 	}
 
 	_host_micpower_vector.cmp_info.num_cntrs = EVENTS_PER_DEVICE*nAdapters;
