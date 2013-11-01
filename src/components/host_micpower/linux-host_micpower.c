@@ -125,7 +125,7 @@ loadFunctionPtrs()
 	scif_access = dlopen("libscif.so", RTLD_NOW | RTLD_GLOBAL);
     if (NULL == scif_access)
     {
-        strncpy(_host_micpower_vector.cmp_info.disabled_reason, "SCIF library libscif.so is required by libMicAccessSDK.so, it was not found.",PAPI_MAX_STR_LEN);
+        snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Problem loading the SCIF library: %s\n", dlerror());
 			_host_micpower_vector.cmp_info.disabled = 1;
         return ( PAPI_ENOSUPP );
     }
@@ -133,7 +133,7 @@ loadFunctionPtrs()
     mic_access = dlopen("libMicAccessSDK.so", RTLD_NOW | RTLD_GLOBAL);
     if (NULL == mic_access)
     {
-        strncpy(_host_micpower_vector.cmp_info.disabled_reason, "MicAccessSDK library libMicAccessSDK.so not found.",PAPI_MAX_STR_LEN);
+        snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Problem loading libMicAccessSDK.so: %s\n", dlerror());
 			_host_micpower_vector.cmp_info.disabled = 1;
         return ( PAPI_ENOSUPP );
     }
