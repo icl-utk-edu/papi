@@ -1062,7 +1062,21 @@ static const test_event_t x86_test_events[]={
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
 	  .codes[0] = 0x53045f,
-	  .fstr = "ivb::TLB_ACCESS:LOAD_STLB_HIT:k=1:u=1:e=0:i=0:c=0:t=0",
+	  .fstr = "ivb::DTLB_LOAD_ACCESS:STLB_HIT:k=1:u=1:e=0:i=0:c=0:t=0",
+	},
+	{ SRC_LINE,
+	  .name = "ivb::TLB_ACCESS:STLB_HIT",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x53045f,
+	  .fstr = "ivb::DTLB_LOAD_ACCESS:STLB_HIT:k=1:u=1:e=0:i=0:c=0:t=0",
+	},
+	{ SRC_LINE,
+	  .name = "ivb::DTLB_LOAD_ACCESS:STLB_HIT",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x53045f,
+	  .fstr = "ivb::DTLB_LOAD_ACCESS:STLB_HIT:k=1:u=1:e=0:i=0:c=0:t=0",
 	},
 	{ SRC_LINE,
 	  .name = "ivb::MOVE_ELIMINATION:INT_NOT_ELIMINATED",
@@ -1084,6 +1098,31 @@ static const test_event_t x86_test_events[]={
 	  .count = 1,
 	  .codes[0] = 0x5314a2,
 	  .fstr = "ivb::RESOURCE_STALLS:RS:ROB:k=1:u=1:e=0:i=0:c=0:t=0",
+	},
+	{ SRC_LINE,
+	  .name = "ivb::UOPS_EXECUTED:THREAD",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x5301b1,
+	  .fstr = "ivb::UOPS_EXECUTED:THREAD:k=1:u=1:e=0:i=0:c=0:t=0",
+	},
+	{ SRC_LINE,
+	  .name = "ivb::UOPS_EXECUTED:THREAD:e:c=1",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x15701b1,
+	  .fstr = "ivb::UOPS_EXECUTED:THREAD:k=1:u=1:e=1:i=0:c=1:t=0",
+	},
+	{ SRC_LINE,
+	  .name = "ivb::UOPS_EXECUTED:THREAD:e",
+	  .ret  = PFM_ERR_ATTR,
+	},
+	{ SRC_LINE,
+	  .name = "ivb::UOPS_EXECUTED:THREAD:c=1:i",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x1d301b1,
+	  .fstr = "ivb::UOPS_EXECUTED:THREAD:k=1:u=1:e=0:i=1:c=1:t=0",
 	},
 	{ SRC_LINE,
 	  .name = "ivb::CPU_CLK_UNHALTED:REF_P",
@@ -1346,11 +1385,11 @@ static const test_event_t x86_test_events[]={
 	  .fstr = "snbep_unc_pcu::UNC_P_CLOCKTICKS:e=0:i=0:t=1",
 	},
 	{ SRC_LINE,
-	  .name = "snbep_unc_pcu::UNC_P_CORE0_TRANSITION_CYCLES:C6",
+	  .name = "snbep_unc_pcu::UNC_P_CORE0_TRANSITION_CYCLES",
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
-	  .codes[0] = 0x200303,
-	  .fstr = "snbep_unc_pcu::UNC_P_CORE0_TRANSITION_CYCLES:C6:e=0:i=0:t=0",
+	  .codes[0] = 0x200003,
+	  .fstr = "snbep_unc_pcu::UNC_P_CORE0_TRANSITION_CYCLES:e=0:i=0:t=0",
 	},
 	{ SRC_LINE,
 	  .name = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES",
@@ -1399,6 +1438,38 @@ static const test_event_t x86_test_events[]={
 	  .codes[0] = 0xe,
 	  .codes[1] = 0x28000000,
 	  .fstr = "snbep_unc_pcu::UNC_P_FREQ_BAND3_CYCLES:e=0:i=0:t=0:ff=40",
+	},
+	{ SRC_LINE,
+	  .name = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:ff=32:e",
+	  .ret  = PFM_SUCCESS,
+	  .count = 2,
+	  .codes[0] = 0x4000b,
+	  .codes[1] = 0x20,
+	  .fstr = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:e=1:i=0:t=0:ff=32",
+	},
+	{ SRC_LINE,
+	  .name = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:ff=32:i",
+	  .ret  = PFM_SUCCESS,
+	  .count = 2,
+	  .codes[0] = 0x80000b,
+	  .codes[1] = 0x20,
+	  .fstr = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:e=0:i=1:t=0:ff=32",
+	},
+	{ SRC_LINE,
+	  .name = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:ff=32:e:i",
+	  .ret  = PFM_SUCCESS,
+	  .count = 2,
+	  .codes[0] = 0x84000b,
+	  .codes[1] = 0x20,
+	  .fstr = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:e=1:i=1:t=0:ff=32",
+	},
+	{ SRC_LINE,
+	  .name = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:ff=32:e:i:t=4",
+	  .ret  = PFM_SUCCESS,
+	  .count = 2,
+	  .codes[0] = 0x484000b,
+	  .codes[1] = 0x20,
+	  .fstr = "snbep_unc_pcu::UNC_P_FREQ_BAND0_CYCLES:e=1:i=1:t=4:ff=32",
 	},
 	{ SRC_LINE,
 	  .name = "SNBEP_UNC_PCU::UNC_P_POWER_STATE_OCCUPANCY:CORES_C0",
@@ -1970,6 +2041,34 @@ static const test_event_t x86_test_events[]={
 };
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
 
+static int
+check_pmu_supported(const char *evt)
+{
+	pfm_pmu_info_t info;
+	char *p;
+	int i, ret;
+
+	memset(&info, 0, sizeof(info));
+	info.size = sizeof(info);
+
+	/* look for pmu_name::.... */
+	p = strchr(evt, ':');
+	if (!p)
+		return 1;
+	if (*(p+1) != ':')
+		return 1;
+
+	pfm_for_all_pmus(i) {
+		ret = pfm_get_pmu_info(i, &info);
+		if (ret != PFM_SUCCESS)
+			continue;
+		if (!strncmp(info.name, evt, p - evt))
+			return 1;
+	}
+	/* PMU not there */
+	return 0;
+}
+
 static int check_test_events(FILE *fp)
 {
 	const test_event_t *e;
@@ -1984,6 +2083,10 @@ static int check_test_events(FILE *fp)
 		fstr = NULL;
 		ret = pfm_get_event_encoding(e->name, PFM_PLM0 | PFM_PLM3, &fstr, NULL, &codes, &count);
 		if (ret != e->ret) {
+			if (ret == PFM_ERR_NOTFOUND && !check_pmu_supported(e->name)) {
+				fprintf(fp,"Line %d, Event%d %s, skipped because no PMU support\n", e->line, i, e->name);
+				continue;
+			}
 			fprintf(fp,"Line %d, Event%d %s, ret=%s(%d) expected %s(%d)\n", e->line, i, e->name, pfm_strerror(ret), ret, pfm_strerror(e->ret), e->ret);
 			errors++;
 		} else {

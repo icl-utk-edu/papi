@@ -89,6 +89,7 @@ perf_scale(uint64_t *values)
 static inline uint64_t
 perf_scale_delta(uint64_t *values, uint64_t *prev_values)
 {
+	double pval[3], val[3];
 	uint64_t res = 0;
 
 	if (!values[2] && !values[1] && values[0])
@@ -97,8 +98,16 @@ perf_scale_delta(uint64_t *values, uint64_t *prev_values)
 	if (values[2] > values[1])
 		warnx("WARNING: time_running > time_enabled\n");
 
-	if (values[2] - prev_values[2])
-		res = (uint64_t)((double)((values[0] - prev_values[0]) * (values[1] - prev_values[1])/ (values[2] - prev_values[2])));
+	if (values[2] - prev_values[2]) {
+		/* covnert everything to double to avoid overflows! */
+		pval[0] = prev_values[0];
+		pval[1] = prev_values[1];
+		pval[2] = prev_values[2];
+		val[0] = values[0];
+		val[1] = values[1];
+		val[2] = values[2];
+		res = (uint64_t)(((val[0] - pval[0]) * (val[1] - pval[1])/ (val[2] - pval[2])));
+	}
 	return res;
 }
 

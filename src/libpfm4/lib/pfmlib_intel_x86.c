@@ -160,6 +160,7 @@ pfm_intel_x86_detect(void)
 
 	pfm_intel_x86_cfg.family = (a >> 8) & 0xf;  // bits 11 - 8
 	pfm_intel_x86_cfg.model  = (a >> 4) & 0xf;  // Bits  7 - 4
+	pfm_intel_x86_cfg.stepping = a & 0xf;	    // Bits 0 - 3
 
 	/* extended family */
 	if (pfm_intel_x86_cfg.family == 0xf)
