@@ -73,13 +73,13 @@ Thread( int n )
 
 	remove_test_events( &EventSet1, mask1 );
 
-	printf( "Thread %#x PAPI_FP_INS : \t%lld\n", pthread_self(  ),
+	printf( "Thread %#x PAPI_FP_INS : \t%lld\n", n / 1000000,
 			( values[0] )[0] );
-	printf( "Thread %#x PAPI_TOT_CYC: \t%lld\n", pthread_self(  ),
+	printf( "Thread %#x PAPI_TOT_CYC: \t%lld\n", n / 1000000,
 			( values[0] )[1] );
-	printf( "Thread %#x Real usec   : \t%lld\n", pthread_self(  ),
+	printf( "Thread %#x Real usec   : \t%lld\n", n / 1000000,
 			elapsed_us );
-	printf( "Thread %#x Real cycles : \t%lld\n", pthread_self(  ),
+	printf( "Thread %#x Real cycles : \t%lld\n", n / 1000000,
 			elapsed_cyc );
 
 	free_test_space( values, num_tests );
