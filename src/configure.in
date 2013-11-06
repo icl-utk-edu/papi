@@ -1339,7 +1339,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   CC_R=xlc_r
   CC=xlc
   CC_SHR="xlc -G -bnoentry"
-  MPICC=mpcc
+  AC_CHECK_PROGS( [MPICC], [mpicc mpcc], [])
   F77=xlf
   CPP='xlc -E $(CPPFLAGS)'
   if test "$MAKEVER" = "aix-power5"; then
