@@ -9,6 +9,7 @@ PAPILIB = $(LIBDIR)/@LIBRARY@
 TESTLIB = $(testlibdir)/libtestlib.a
 LDFLAGS = @LDL@
 CC	= @CC@
+MPICC	= @MPICC@
 F77	= @F77@
 CC_R	= @CC_R@
 CFLAGS	= @CFLAGS@ 
