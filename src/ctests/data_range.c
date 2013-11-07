@@ -30,6 +30,9 @@ main( int argc, char **argv )
 	int retval;
 	const PAPI_exe_info_t *prginfo = NULL;
 	const PAPI_hw_info_t *hw_info;
+	  
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );
 
 #if !defined(ITANIUM2) && !defined(ITANIUM3)
 	test_skip( __FILE__, __LINE__, "Currently only works on itanium2", 0 );

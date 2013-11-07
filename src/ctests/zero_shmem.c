@@ -86,8 +86,11 @@ Thread( int n )
 }
 
 int
-main(  )
+main( int argc, char **argv )
 {
+    /* Set TESTS_QUIET variable */
+    tests_quiet( argc, argv );
+
 	long long elapsed_us, elapsed_cyc;
 
 	elapsed_us = PAPI_get_real_usec(  );
