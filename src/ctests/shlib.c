@@ -12,6 +12,9 @@ void print_shlib_info_map(const PAPI_shlib_info_t *shinfo)
 {
 	PAPI_address_map_t *map = shinfo->map;
 	int i;
+	if (NULL == map) {
+	    test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
+	}
 
 	for ( i = 0; i < shinfo->count; i++ ) {
 		printf( "Library: %s\n", map->name );
