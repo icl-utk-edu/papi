@@ -112,7 +112,8 @@ init_test(int SoftwareMPX, int KernelMPX, int* Events)
   option.multiplex.eventset = SoftwareMPX;
   option.multiplex.ns = itimer.itimer.ns;
 
-  PAPI_set_opt( PAPI_MULTIPLEX, &option );
+  if ( (retval = PAPI_set_opt( PAPI_MULTIPLEX, &option )) != PAPI_OK )
+      test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval);
 
   for (i = 0; i < options.min - 1; i++) {
 	if ( options.kernel_mpx ) {
@@ -249,7 +250,8 @@ main( int argc, char **argv )
   option.multiplex.eventset = SoftwareMPX;
   option.multiplex.ns = itimer.itimer.ns;
 
-  PAPI_set_opt( PAPI_MULTIPLEX, &option );
+  if ( PAPI_OK != (retval = PAPI_set_opt( PAPI_MULTIPLEX, &option )))
+      test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval);
 
   if ( !options.kernel_mpx && !options.force_sw ) {
 	test_fail(__FILE__, __LINE__, "No tests to run.", -1);

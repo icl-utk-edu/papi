@@ -1909,7 +1909,9 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
     return;
   }
         
-  ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL );
+  if (ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL ) == -1 ) {
+      PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) failed.\n");
+  }
 
   if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) && 
        !( thread->running_eventset[cidx]->profile.flags & 

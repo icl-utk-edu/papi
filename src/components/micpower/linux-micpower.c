@@ -155,6 +155,8 @@ read_sysfs_file( long long* counts)
 		int i;
 		int retval = 1;
 		fp = fopen( "/sys/class/micras/power", "r" );
+		if (!fp)
+		    return 0;
 
 		for (i=0; i < MICPOWER_MAX_COUNTERS-9; i++) {
 				retval&= fscanf(fp, "%lld", &counts[i]);
