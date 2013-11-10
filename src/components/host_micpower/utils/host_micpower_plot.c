@@ -31,6 +31,7 @@ int main (int argc, char **argv)
     const PAPI_component_info_t *cmpinfo = NULL;
     long long start_time,before_time,after_time;
     double elapsed_time,total_time;
+	double energy = 0.0;
     char event_name[BUFSIZ];
 
 	/* PAPI Initialization */
@@ -161,15 +162,24 @@ int main (int argc, char **argv)
 			   ((double)values[i]/1.0e6),
 			   events[i]);
 		} else {
-			fprintf(fff[i],"%.4f %.1f (* Average Power (Watt) for %s *)\n",
+			if( strstr(events[i],"tot0") != NULL ){
+			energy += elapsed_time*((double)values[i]/1.0e6);
+			fprintf(fff[i],"%.4f %.1f %.1f (* Average Power (Watt) and Energy consumption (kWs) for %s *)\n",
 				total_time,
 				((double)values[i]/1.0e6),
+				energy/1.0e3,
 				events[i]);
+			} else {
+				fprintf(fff[i],"%.4f %.1f (* Average Power (Watt) for %s *)\n",
+						total_time,
+						((double)values[i]/1.0e6),
+						events[i]);
+			}
 		}
-	   fflush(fff[i]);
-        }
-     }
-		
-     return 0;
+		fflush(fff[i]);
+		}
+	 }
+
+	 return 0;
 }
 
