@@ -32,6 +32,9 @@ main( int argc, char **argv )
 		test_skip( __FILE__, __LINE__,
 			"This test is intended only for Pentium 4.", 1 );
 	    }
+	} else {
+	    test_skip( __FILE__, __LINE__, 
+		    "This test is intended only for Pentium 4.", 1 );
 	}
 
 	retval = PAPI_create_eventset( &EventSet );
