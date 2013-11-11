@@ -40,6 +40,62 @@
  * Processors, Rev 0.90, May 18, 2010
  */
 
+#define CORE_SELECT(b) \
+   { .uname  = "CORE_0",\
+     .udesc  = "Measure on Core0",\
+     .ucode = 0 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "CORE_1",\
+     .udesc  = "Measure on Core1",\
+     .ucode = 1 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "CORE_2",\
+     .udesc  = "Measure on Core2",\
+     .ucode = 2 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "CORE_3",\
+     .udesc  = "Measure on Core3",\
+     .ucode = 3 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "CORE_4",\
+     .udesc  = "Measure on Core4",\
+     .ucode = 4 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "CORE_5",\
+     .udesc  = "Measure on Core5",\
+     .ucode = 5 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "CORE_6",\
+     .udesc  = "Measure on Core6",\
+     .ucode = 6 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "CORE_7",\
+     .udesc  = "Measure on Core7",\
+     .ucode = 7 << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO,\
+   },\
+   { .uname  = "ANY_CORE",\
+     .udesc  = "Measure on any core",\
+     .ucode = 0xf << 4,\
+     .grpid = b,\
+     .uflags= AMD64_FL_NCOMBO | AMD64_FL_DFL,\
+   }
+
 static const amd64_umask_t amd64_fam15h_dispatched_fpu_ops[]={
    { .uname  = "OPS_PIPE0",
      .udesc  = "Total number uops assigned to Pipe 0",
@@ -1639,20 +1695,30 @@ static const amd64_umask_t amd64_fam15h_read_request_to_l3_cache[]={
    { .uname = "READ_BLOCK_EXCLUSIVE",
      .udesc = "Read Block Exclusive (Data cache read)",
      .ucode = 0x1,
+     .grpid = 0,
    },
    { .uname = "READ_BLOCK_SHARED",
      .udesc = "Read Block Shared (Instruction cache read)",
      .ucode = 0x2,
+     .grpid = 0,
    },
    { .uname = "READ_BLOCK_MODIFY",
      .udesc = "Read Block Modify",
      .ucode = 0x4,
+     .grpid = 0,
    },
-   { .uname  = "ALL",
-     .udesc  = "All sub-events selected",
+   { .uname = "PREFETCH",
+     .udesc = "Count prefetches honly",
+     .ucode = 0x8,
+     .grpid = 0,
+   },
+   { .uname  = "READ_BLOCK_ANY",
+     .udesc  = "Count any read request",
      .ucode = 0x7,
-     .uflags= AMD64_FL_NCOMBO | AMD64_FL_DFL,
+     .grpid = 0,
+     .uflags= AMD64_FL_DFL | AMD64_FL_NCOMBO,
    },
+  CORE_SELECT(1),
 };
 
 static const amd64_umask_t amd64_fam15h_l3_fills_caused_by_l2_evictions[]={
@@ -1682,13 +1748,7 @@ static const amd64_umask_t amd64_fam15h_l3_fills_caused_by_l2_evictions[]={
      .uflags= AMD64_FL_NCOMBO | AMD64_FL_DFL,
      .grpid = 0,
    },
-   { .uname = "ALL_CORES",
-     .udesc = "All core",
-     .ucode = 0xf0,
-     .uflags= AMD64_FL_NCOMBO | AMD64_FL_DFL,
-     .grpid = 1,
-   },
-
+   CORE_SELECT(1),
  };
 
 static const amd64_umask_t amd64_fam15h_l3_evictions[]={
@@ -2421,7 +2481,7 @@ static const amd64_entry_t amd64_fam15h_pe[]={
   .desc    = "Read Request to L3 Cache",
   .code    = 0x4e0,
   .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_read_request_to_l3_cache),
-  .ngrp    = 1,
+  .ngrp    = 2,
   .umasks  = amd64_fam15h_read_request_to_l3_cache,
 },
 { .name    = "L3_CACHE_MISSES",
@@ -2449,7 +2509,7 @@ static const amd64_entry_t amd64_fam15h_pe[]={
   .desc    = "Non-canceled L3 Read Requests",
   .code    = 0x4ed,
   .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_read_request_to_l3_cache),
-  .ngrp    = 1,
+  .ngrp    = 2,
   .umasks  = amd64_fam15h_read_request_to_l3_cache,
 },
 { .name    = "L3_LATENCY",
