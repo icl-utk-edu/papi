@@ -6,8 +6,8 @@
  * @file    linux-bgq.c
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
+ * Mods:	< your name here >
+ *			< your email address >
  * Blue Gene/Q CPU component: BGPM / Punit
  * 
  * Tested version of bgpm (early access)

@@ -6,8 +6,8 @@
  * @file    linux-CNKunit.c
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
+ * Mods:	< your name here >
+ *			< your email address >
  * BGPM / CNKunit component 
  * 
  * Tested version of bgpm (early access)

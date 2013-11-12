@@ -7,8 +7,8 @@
  * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
+ * Mods:	< your name here >
+ *			< your email address >
  * BGPM component 
  * 
  * Tested version of bgpm (early access)

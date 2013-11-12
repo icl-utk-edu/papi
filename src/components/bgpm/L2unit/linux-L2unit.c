@@ -6,8 +6,8 @@
  * @file    linux-L2unit.c
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
+ * Mods:	< your name here >
+ *			< your email address >
  * BGPM / L2unit component 
  * 
  * Tested version of bgpm (early access)
