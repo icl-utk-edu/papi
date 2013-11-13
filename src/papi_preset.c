@@ -261,31 +261,31 @@ open_event_table( char *name )
 static int
 get_event_line( char *line, FILE * table, char **tmp_perfmon_events_table )
 {
-	int ret;
 	int i;
 
 	if ( table ) {
-		if ( fgets( line, LINE_MAX, table ) ) {
-			ret = 1;
-			i = ( int ) strlen( line );
-			if ( line[i - 1] == '\n' )
-				line[i - 1] = '\0';
-		} else
-			ret = 0;
+	    if ( fgets( line, LINE_MAX, table ) == NULL)
+		return 0;
+
+	    i = ( int ) strlen( line );
+	    if (i == 0)
+		return 0;
+	    if ( line[i-1] == '\n' )
+		line[i-1] = '\0';
+	    return 1;
 	} else {
 		for ( i = 0;
 			  **tmp_perfmon_events_table && **tmp_perfmon_events_table != '\n';
-			  i++ ) {
+			  i++, ( *tmp_perfmon_events_table )++ ) 
 			line[i] = **tmp_perfmon_events_table;
-			( *tmp_perfmon_events_table )++;
-		}
-		if ( **tmp_perfmon_events_table == '\n' ) {
-			( *tmp_perfmon_events_table )++;
+		if (i == 0)
+		    return 0;
+		if ( **tmp_perfmon_events_table && **tmp_perfmon_events_table == '\n' ) {
+		    ( *tmp_perfmon_events_table )++;
 		}
 		line[i] = '\0';
-		ret = **tmp_perfmon_events_table;
+		return 1;
 	}
-	return ret;
 }
 
 /* Static version of the events file. */
