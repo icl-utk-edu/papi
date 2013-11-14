@@ -3,8 +3,7 @@
 /****************************/
 
 /** 
- * @file    linux-mic-power.h
- * CVS:     $Id$
+ * @file    linux-micpower.h
  * @author  James Ralph
  *			ralph@eecs.utk.edu
  *

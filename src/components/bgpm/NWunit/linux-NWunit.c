@@ -6,8 +6,8 @@
  * @file    linux-NWunit.c
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
- * Mods:	<your name here>
- *			<your email address>
+ * Mods:	< your name here >
+ *			< your email address >
  * BGPM / NWunit component 
  * 
  * Tested version of bgpm (early access)

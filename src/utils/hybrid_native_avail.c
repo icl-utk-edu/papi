@@ -26,7 +26,7 @@
   * <li>-i EVENTSTR   include only event names that contain EVENTSTR
   * <li>-x EVENTSTR   exclude any event names that contain EVENTSTR
   * <li>--noumasks    suppress display of Unit Mask information
-  * <li>--mic <index> report events on the specified target MIC device
+  * <li>--mic < index > report events on the specified target MIC device
   * </ul>
   *
   * Processor-specific options
