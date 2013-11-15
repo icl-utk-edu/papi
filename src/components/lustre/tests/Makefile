@@ -1,4 +1,4 @@
-NAME=luster
+NAME=lustre
 include ../../Makefile_comp_tests
 
 %.o:%.c
