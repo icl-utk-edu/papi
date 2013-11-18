@@ -791,13 +791,13 @@ AC_ARG_WITH(shlib,
 	        [  --with-shlib		Specify dynamic linking of papi library with test cases and utilities],
  	        [shlib=yes
              SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm4/lib;export LIBPATH=.:./libpfm-3.y/lib:./libpfm4/lib;'   
-             LINKLIB='../$(SHLIB)'],
+             LINKLIB='$(SHLIB)'],
  	        [if test "$papiLIBS" = "shared"; then
                shlib=yes
                SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm4/lib;export LIBPATH=.:./libpfm-3.y/lib:./libpfm4/lib;'   
-               LINKLIB='../$(SHLIB)'
+               LINKLIB='$(SHLIB)'
              else
-               LINKLIB='../$(LIBRARY)'
+               LINKLIB='$(LIBRARY)'
              fi])
 if test "$papiLIBS" != "shared static"; then
   if test "$shlib" = "yes"; then

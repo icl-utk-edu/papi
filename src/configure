@@ -5354,14 +5354,14 @@ if test "${with_shlib+set}" = set; then
   withval="$with_shlib"
   shlib=yes
              SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm4/lib;export LIBPATH=.:./libpfm-3.y/lib:./libpfm4/lib;'
-             LINKLIB='../$(SHLIB)'
+             LINKLIB='$(SHLIB)'
 else
   if test "$papiLIBS" = "shared"; then
                shlib=yes
                SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm4/lib;export LIBPATH=.:./libpfm-3.y/lib:./libpfm4/lib;'
-               LINKLIB='../$(SHLIB)'
+               LINKLIB='$(SHLIB)'
              else
-               LINKLIB='../$(LIBRARY)'
+               LINKLIB='$(LIBRARY)'
              fi
 fi;
 if test "$papiLIBS" != "shared static"; then
