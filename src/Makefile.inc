@@ -226,7 +226,7 @@ test: ctests
 	$(SETPATH) ctests/zero
 
 fulltest: tests
-	sh run_tests.sh
+	$(SETPATH) sh run_tests.sh
 
 tests: $(TESTS) 
 
