@@ -1,7 +1,6 @@
 # File: ctests/Makefile
 INCLUDE = -I.. -I../testlib
-LIBRARY = -lpapi -ldl
-PAPILIB = ../libpapi.a
+PAPILIB=$(LIBRARY)
 CC	= gcc
 CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
