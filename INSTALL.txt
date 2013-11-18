@@ -245,7 +245,8 @@ There is also a patch for FreeBSD 7/7.1 in http://wiki.freebsd.org/PmcTools
 Linux - Xeon Phi [MIC, KNC, Knight's Corner]
 *****************************************************************************
 Full PAPI support of the MIC card requires MPSS Gold Update 2 or above, and a
-cross-compilation toolchain from Intel.
+cross-compilation toolchain from Intel, the Intel C compiler is also
+supported.
 
 The compiler
 -----------------------------------------------------------------------------
@@ -254,7 +255,7 @@ The compiler
 * Untar the download. 
 * Extract gpl/package-cross-k1om.tar.bz2
 
-Building PAPI
+Building PAPI - gcc cross compiler
 -----------------------------------------------------------------------------
 * Add usr/linux-k1om-4.7/bin or equivalent to your PATH so PAPI can find the
 	cross-build utils. (see above for instructions on acquiring the cross
@@ -265,6 +266,26 @@ Building PAPI
 	This sets up cross-compilation and sets options needed by PAPI.
 * Run make to build the library.
 
+Building PAPI - icc
+-----------------------------------------------------------------------------
+If icc is in your path,
+    > ./configure --with-mic
+Builds a mic native version of the library. 
+
+Offload Code
+------------
+To use PAPI in MIC offload code, build a mic-native version of PAPI using icc,
+as detailed above. 
+
+Then in your program, wrap the papi.h header as follows:
+#pragma offload_attribute (push,target(mic))
+#include "papi.h"
+#pragma offload_attribute (pop)
+
+Make PAPI calls from offload code as normal.
+
+Finally add -offload-option,mic,ld,$(path_to_papi)/libpapi.a
+to your compile incantation.
 
 Linux - Itanium II & Montecito
 *****************************************************************************
