@@ -35,7 +35,7 @@
 
 #include "perf_util.h"
 
-#define MAX_GROUPS 16
+#define MAX_GROUPS 256
 
 typedef struct {
 	const char *events[MAX_GROUPS];
