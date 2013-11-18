@@ -1,4 +1,4 @@
-.TH "PAPIF_get_exe_info" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_get_exe_info" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,11 +11,13 @@ get information about the dynamic memory usage of the current program
 .PP
 .SH "Detailed Description"
 .PP 
+
+.PP
 \fBFortran Interface:\fP
 .RS 4
-#include 'fpapi.h' 
+#include 'fpapi\&.h' 
 .br
- \fBPAPIF_get_exe_info\fP( C_STRING fullname, C_STRING name, 
+\fBPAPIF_get_exe_info\fP( C_STRING fullname, C_STRING name, 
 .br
  C_LONG_LONG text_start, C_LONG_LONG text_end, 
 .br
@@ -24,7 +26,7 @@ get information about the dynamic memory usage of the current program
  C_LONG_LONG bss_start, C_LONG_LONG bss_end, C_INT check )
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_executable_info\fP 
 .RE
@@ -33,4 +35,4 @@ get information about the dynamic memory usage of the current program
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

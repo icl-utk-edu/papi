@@ -1,4 +1,4 @@
-.TH "PAPI_get_hardware_info" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_hardware_info" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,22 +11,27 @@ get information about the system hardware
 .PP
 .SH "Detailed Description"
 .PP 
-In C, this function returns a pointer to a structure containing information about the hardware on which the program runs. In Fortran, the values of the structure are returned explicitly.
-.PP
-\fBReturn values:\fP
-.RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid.
-.RE
-.PP
-.PP
-\fBNote:\fP
-.RS 4
-The C structure contains detailed information about cache and TLB sizes. This information is not available from Fortran.
-.RE
-.PP
-\fBExamples:\fP
-.RS 4
 
+.PP
+.nf
+In C, this function returns a pointer to a structure containing information about the hardware on which the program runs. 
+    In Fortran, the values of the structure are returned explicitly.
+
+@retval PAPI_EINVAL 
+    One or more of the arguments is invalid.
+
+.fi
+.PP
+.PP
+.PP
+.nf
+@note The C structure contains detailed information about cache and TLB sizes. 
+    This information is not available from Fortran.
+
+@par Examples:
+.fi
+.PP
+ 
 .PP
 .nf
         const PAPI_hw_info_t *hwinfo = NULL;
@@ -34,13 +39,13 @@ The C structure contains detailed information about cache and TLB sizes. This in
         exit(1);
         if ((hwinfo = PAPI_get_hardware_info()) == NULL)
         exit(1);
-        printf('%d CPUs at %f Mhz.\en',hwinfo->totalcpus,hwinfo->mhz);
+        printf("%d CPUs at %f Mhz\&.\en",hwinfo->totalcpus,hwinfo->mhz);
+*   
 
 .fi
 .PP
-.RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_hw_info_t\fP 
 .PP
@@ -51,4 +56,4 @@ The C structure contains detailed information about cache and TLB sizes. This in
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

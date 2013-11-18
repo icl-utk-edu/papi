@@ -1,23 +1,23 @@
-.TH "PAPI_lock" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_lock" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_lock \- 
 .PP
-Lock one of two mutex variables defined in \fBpapi.h\fP.  
+Lock one of two mutex variables defined in \fBpapi\&.h\fP\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-PAPI_lock() grabs access to one of the two PAPI mutex variables. This function is provided to the user to have a platform independent call to a (hopefully) efficiently implemented mutex.
+\fBPAPI_lock()\fP grabs access to one of the two PAPI mutex variables\&. This function is provided to the user to have a platform independent call to a (hopefully) efficiently implemented mutex\&.
 .PP
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi.h\fP> 
+#include <\fBpapi\&.h\fP> 
 .br
- void PAPI_lock(int lock);
+void \fBPAPI_lock(int lock)\fP;
 .RE
 .PP
 \fBParameters:\fP
@@ -27,10 +27,10 @@ PAPI_lock() grabs access to one of the two PAPI mutex variables. This function i
 .PP
 \fBReturns:\fP
 .RS 4
-There is no return value for this call. Upon return from \fBPAPI_lock\fP the current thread has acquired exclusive access to the specified PAPI mutex.
+There is no return value for this call\&. Upon return from \fBPAPI_lock\fP the current thread has acquired exclusive access to the specified PAPI mutex\&.
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_unlock\fP 
 .PP
@@ -41,4 +41,4 @@ There is no return value for this call. Upon return from \fBPAPI_lock\fP the cur
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

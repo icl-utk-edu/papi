@@ -1,32 +1,34 @@
-.TH "PAPI_read_ts" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_read_ts" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_read_ts \- 
 .PP
-Read hardware counters with a timestamp.  
+Read hardware counters with a timestamp\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
+
+.PP
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi.h\fP> 
+#include <\fBpapi\&.h\fP> 
 .br
- int PAPI_read_ts(int EventSet, long long *values, long long *cycles );
+ int \fBPAPI_read_ts(int EventSet, long long *values, long long *cycles )\fP;
 .RE
 .PP
-PAPI_read_ts() copies the counters of the indicated event set into the provided array. It also places a real-time cycle timestamp into the cycles array.
+\fBPAPI_read_ts()\fP copies the counters of the indicated event set into the provided array\&. It also places a real-time cycle timestamp into the cycles array\&.
 .PP
-The counters continue counting after the read.
+The counters continue counting after the read\&.
 .PP
-PAPI_read_ts() assumes an initialized PAPI library and a properly added event set.
+\fBPAPI_read_ts()\fP assumes an initialized PAPI library and a properly added event set\&.
 .PP
 \fBParameters:\fP
 .RS 4
-\fIEventSet\fP -- an integer handle for a PAPI Event Set as created by PAPI_create_eventset() 
+\fIEventSet\fP -- an integer handle for a PAPI Event Set as created by \fBPAPI_create_eventset()\fP 
 .br
 \fI*values\fP -- an array to hold the counter values of the counting events 
 .br
@@ -35,11 +37,11 @@ PAPI_read_ts() assumes an initialized PAPI library and a properly added event se
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
-\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable. 
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable\&. 
 .br
-\fIPAPI_ENOEVST\fP The event set specified does not exist.
+\fIPAPI_ENOEVST\fP The event set specified does not exist\&.
 .RE
 .PP
 \fBExamples\fP
@@ -47,12 +49,13 @@ PAPI_read_ts() assumes an initialized PAPI library and a properly added event se
 
 .PP
 .nf
+* 
 
 .fi
 .PP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_read\fP 
 .PP
@@ -69,4 +72,4 @@ PAPI_read_ts() assumes an initialized PAPI library and a properly added event se
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

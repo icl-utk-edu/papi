@@ -1,61 +1,67 @@
-.TH "PAPI_enum_cmp_event" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_enum_cmp_event" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_enum_cmp_event \- 
 .PP
-Enumerate PAPI preset or native events for a given component.  
+Enumerate PAPI preset or native events for a given component\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBC Interface:\fP
-.RS 4
-#include <\fBpapi.h\fP> 
-.br
- int PAPI_enum_cmp_event( int *EventCode, int  modifer, int cidx );
-.RE
-.PP
-Given an event code, \fBPAPI_enum_event\fP replaces the event code with the next available event.
-.PP
-The modifier argument affects which events are returned. For all platforms and event types, a value of PAPI_ENUM_ALL (zero) directs the function to return all possible events. 
-.br
-.PP
-For native events, the effect of the modifier argument may be different on each platform. See the discussion below for platform-specific definitions.
-.PP
-\fBParameters:\fP
-.RS 4
-\fI*EventCode\fP A defined preset or native event such as PAPI_TOT_INS. 
-.br
-\fImodifier\fP Modifies the search logic. See below for full list. For native events, each platform behaves differently. See platform-specific documentation for details.
-.br
-\fIcidx\fP Specifies the component to search in
-.RE
-.PP
-\fBReturn values:\fP
-.RS 4
-\fIPAPI_ENOEVNT\fP The next requested PAPI preset or native event is not available on the underlying hardware.
-.RE
-.PP
-\fBExamples:\fP
-.RS 4
 
 .PP
 .nf
-    // Scan for all supported native events on the first component
-    printf( 'Name\t\t\t       Code\t   Description\n' );
-    do {
-        retval = PAPI_get_event_info( i, &info );
-        if ( retval == PAPI_OK ) {
-        printf( '%-30s 0x%-10x\n%s\n', info.symbol, info.event_code, info.long_descr );
-        }
-    } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
+@par C Interface:
+\#include <papi.h> @n
+int PAPI_enum_cmp_event( int *EventCode, int  modifer, int cidx );
+
+Given an event code, PAPI_enum_event replaces the event 
+code with the next available event.
+
+The modifier argument affects which events are returned. 
+For all platforms and event types, a value of PAPI_ENUM_ALL (zero) 
+directs the function to return all possible events. @n
+
+For native events, the effect of the modifier argument may be
+   different on each platform. 
+See the discussion below for platform-specific definitions.
+
+@param *EventCode
+    A defined preset or native event such as PAPI_TOT_INS.
+@param modifier 
+    Modifies the search logic. See below for full list.
+    For native events, each platform behaves differently. 
+    See platform-specific documentation for details.
+
+   @param cidx
+           Specifies the component to search in 
+
+@retval PAPI_ENOEVNT 
+    The next requested PAPI preset or native event is not available on 
+    the underlying hardware.
+
+@par Examples:
 
 .fi
 .PP
-.RE
+ 
+.PP
+.nf
+*   // Scan for all supported native events on the first component
+*   printf( "Name\t\t\t       Code\t   Description\n" );
+*   do {
+*       retval = PAPI_get_event_info( i, &info );
+*       if ( retval == PAPI_OK ) {
+*       printf( "%-30s 0x%-10x\n%s\n", info\&.symbol, info\&.event_code, info\&.long_descr );
+*       }
+*   } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
+*   
+
+.fi
+.PP
 .PP
 \fBGeneric Modifiers\fP
 .RS 4
@@ -77,7 +83,7 @@ The following values are implemented for native events
 .IP "\(bu" 2
 PAPI_NTV_ENUM_UMASKS -- Given an event, iterate through possible umasks one at a time 
 .IP "\(bu" 2
-PAPI_NTV_ENUM_UMASK_COMBOS -- Given an event, iterate through all possible combinations of umasks. This is not implemented on libpfm4. 
+PAPI_NTV_ENUM_UMASK_COMBOS -- Given an event, iterate through all possible combinations of umasks\&. This is not implemented on libpfm4\&. 
 .PP
 .RE
 .PP
@@ -143,7 +149,7 @@ PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
 .PP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 PAPI 
 .br
@@ -164,4 +170,4 @@ PAPI
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

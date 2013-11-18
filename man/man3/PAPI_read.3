@@ -1,45 +1,47 @@
-.TH "PAPI_read" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_read" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_read \- 
 .PP
-Read hardware counters from an event set.  
+Read hardware counters from an event set\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
+
+.PP
 \fBC Interface:\fP
 .RS 4
-#include <\fBpapi.h\fP> 
+#include <\fBpapi\&.h\fP> 
 .br
- int PAPI_read(int  EventSet, long_long * values );
+ int \fBPAPI_read(int  EventSet, long_long * values )\fP;
 .RE
 .PP
-PAPI_read() copies the counters of the indicated event set into the provided array.
+\fBPAPI_read()\fP copies the counters of the indicated event set into the provided array\&.
 .PP
-The counters continue counting after the read.
+The counters continue counting after the read\&.
 .PP
-Note the differences between PAPI_read() and PAPI_accum(), specifically that PAPI_accum() resets the values array to zero.
+Note the differences between \fBPAPI_read()\fP and \fBPAPI_accum()\fP, specifically that \fBPAPI_accum()\fP resets the values array to zero\&.
 .PP
-PAPI_read() assumes an initialized PAPI library and a properly added event set.
+\fBPAPI_read()\fP assumes an initialized PAPI library and a properly added event set\&.
 .PP
 \fBParameters:\fP
 .RS 4
-\fIEventSet\fP -- an integer handle for a PAPI Event Set as created by PAPI_create_eventset() 
+\fIEventSet\fP -- an integer handle for a PAPI Event Set as created by \fBPAPI_create_eventset()\fP 
 .br
 \fI*values\fP -- an array to hold the counter values of the counting events
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
-\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable. 
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable\&. 
 .br
-\fIPAPI_ENOEVST\fP The event set specified does not exist.
+\fIPAPI_ENOEVST\fP The event set specified does not exist\&.
 .RE
 .PP
 \fBExamples\fP
@@ -47,25 +49,26 @@ PAPI_read() assumes an initialized PAPI library and a properly added event set.
 
 .PP
 .nf
- do_100events();
- if (PAPI_read(EventSet, values) != PAPI_OK)
-    handle_error(1);
- // values[0] now equals 100
- do_100events();
- if (PAPI_accum(EventSet, values) != PAPI_OK)
-    handle_error(1);
- // values[0] now equals 200
- values[0] = -100;
- do_100events();
- if (PAPI_accum(EventSet, values) != PAPI_OK)
-     handle_error(1);
- // values[0] now equals 0 
+* do_100events();
+* if (PAPI_read(EventSet, values) != PAPI_OK)
+*    handle_error(1);
+* // values[0] now equals 100
+* do_100events();
+* if (PAPI_accum(EventSet, values) != PAPI_OK)
+*    handle_error(1);
+* // values[0] now equals 200
+* values[0] = -100;
+* do_100events();
+* if (PAPI_accum(EventSet, values) != PAPI_OK)
+*     handle_error(1);
+* // values[0] now equals 0 
+* 
 
 .fi
 .PP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_accum\fP 
 .PP
@@ -80,4 +83,4 @@ PAPI_read() assumes an initialized PAPI library and a properly added event set.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

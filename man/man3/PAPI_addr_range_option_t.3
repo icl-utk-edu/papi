@@ -1,4 +1,4 @@
-.TH "PAPI_addr_range_option_t" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_addr_range_option_t" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -30,12 +30,17 @@ address range specification for range restricted counting if both are zero, rang
 .in -1c
 .SH "Field Documentation"
 .PP 
-.SS "caddr_t \fBPAPI_addr_range_option_t::end\fP"user requested end address of an address range 
-.SS "int \fBPAPI_addr_range_option_t::end_off\fP"hardware specified offset from end address 
-.SS "int \fBPAPI_addr_range_option_t::eventset\fP"eventset to restrict 
-.SS "caddr_t \fBPAPI_addr_range_option_t::start\fP"user requested start address of an address range 
-.SS "int \fBPAPI_addr_range_option_t::start_off\fP"hardware specified offset from start address 
+.SS "caddr_t PAPI_addr_range_option_t::end"
+user requested end address of an address range 
+.SS "int PAPI_addr_range_option_t::end_off"
+hardware specified offset from end address 
+.SS "int PAPI_addr_range_option_t::eventset"
+eventset to restrict 
+.SS "caddr_t PAPI_addr_range_option_t::start"
+user requested start address of an address range 
+.SS "int PAPI_addr_range_option_t::start_off"
+hardware specified offset from start address 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

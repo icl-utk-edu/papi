@@ -1,4 +1,4 @@
-.TH "PAPI_get_event_component" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_event_component" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,30 +11,30 @@ return component an event belongs to
 .PP
 .SH "Detailed Description"
 .PP 
-\fBReturn values:\fP
-.RS 4
-\fIENOCMP\fP component does not exist
-.RE
-.PP
-\fBParameters:\fP
-.RS 4
-\fIEventCode\fP EventCode for which we want to know the component index 
-.RE
-.PP
-\fBExamples:\fP
-.RS 4
 
+.PP
+.nf
+@retval ENOCMP
+    component does not exist
+
+@param EventCode
+           EventCode for which we want to know the component index
+@par Examples:
+
+.fi
+.PP
+ 
 .PP
 .nf
         int cidx,eventcode;
         cidx = PAPI_get_event_component(eventcode);
+*   
 
 .fi
 .PP
- PAPI_get_event_component() returns the component an event belongs to. 
-.RE
+ \fBPAPI_get_event_component()\fP returns the component an event belongs to\&.  
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_event_info\fP 
 .RE
@@ -43,4 +43,4 @@ return component an event belongs to
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

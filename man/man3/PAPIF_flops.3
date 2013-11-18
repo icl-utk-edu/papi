@@ -1,24 +1,26 @@
-.TH "PAPIF_flops" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_flops" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPIF_flops \- 
 .PP
-Simplified call to get Mflops/s (floating point instruction rate), real and processor time.  
+Simplified call to get Mflops/s (floating point instruction rate), real and processor time\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
+
+.PP
 \fBFortran Interface:\fP
 .RS 4
-#include 'fpapi.h' 
+#include 'fpapi\&.h' 
 .br
- PAPIF_flops( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
+ \fBPAPIF_flops( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )\fP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_flops\fP 
 .RE
@@ -27,4 +29,4 @@ Simplified call to get Mflops/s (floating point instruction rate), real and proc
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

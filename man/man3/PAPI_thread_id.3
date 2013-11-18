@@ -1,24 +1,30 @@
-.TH "PAPI_thread_id" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_thread_id" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_thread_id \- 
 .PP
-Get the thread identifier of the current thread.  
+Get the thread identifier of the current thread\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBReturn values:\fP
-.RS 4
-\fIPAPI_EMISC\fP is returned if there are no threads registered. 
-.br
-\fI-1\fP is returned if the thread id function returns an error.
-.RE
+
 .PP
-This function returns a valid thread identifier. It calls the function registered with PAPI through a call to PAPI_thread_init().
+.nf
+@retval PAPI_EMISC 
+    is returned if there are no threads registered.
+@retval -1 
+    is returned if the thread id function returns an error. 
+
+This function returns a valid thread identifier. 
+It calls the function registered with PAPI through a call to 
+PAPI_thread_init().
+
+.fi
+.PP
 .PP
 .PP
 .nf
@@ -27,12 +33,13 @@ unsigned long tid;
 if ((tid = PAPI_thread_id()) == (unsigned long int)-1 )
     exit(1);
 
-printf('Initial thread id is: %lu\n', tid );
+printf("Initial thread id is: %lu\n", tid );
+ *  
 .fi
 .PP
  
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_thread_init\fP 
 .RE
@@ -41,4 +48,4 @@ printf('Initial thread id is: %lu\n', tid );
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

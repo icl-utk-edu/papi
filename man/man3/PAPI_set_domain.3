@@ -1,55 +1,46 @@
-.TH "PAPI_set_domain" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_domain" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_set_domain \- 
 .PP
-Set the default counting domain for new event sets bound to the cpu component.  
+Set the default counting domain for new event sets bound to the cpu component\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBC Prototype:\fP
-.RS 4
-#include <\fBpapi.h\fP> 
-.br
- int PAPI_set_domain( int domain );
-.RE
-.PP
-\fBParameters:\fP
-.RS 4
-\fIdomain\fP one of the following constants as defined in the \fBpapi.h\fP header file 
-.PD 0
 
-.IP "\(bu" 2
-PAPI_DOM_USER User context counted 
-.IP "\(bu" 2
-PAPI_DOM_KERNEL Kernel/OS context counted 
-.IP "\(bu" 2
-PAPI_DOM_OTHER Exception/transient mode counted 
-.IP "\(bu" 2
-PAPI_DOM_SUPERVISOR Supervisor/hypervisor context counted 
-.IP "\(bu" 2
-PAPI_DOM_ALL All above contexts counted 
-.IP "\(bu" 2
-PAPI_DOM_MIN The smallest available context 
-.IP "\(bu" 2
-PAPI_DOM_MAX The largest available context  
-  
 .PP
-.RE
+.nf
+@par C Prototype:
+    \#include <papi.h> @n
+    int PAPI_set_domain( int domain );
+
+@param domain one of the following constants as defined in the papi.h header file
+@arg PAPI_DOM_USER User context counted
+@arg PAPI_DOM_KERNEL  Kernel/OS context counted
+@arg PAPI_DOM_OTHER Exception/transient mode counted
+@arg PAPI_DOM_SUPERVISOR Supervisor/hypervisor context counted
+@arg PAPI_DOM_ALL All above contexts counted
+@arg PAPI_DOM_MIN The smallest available context
+@arg PAPI_DOM_MAX The largest available context 
+
+.fi
+.PP
+  
+    
 .PP
 \fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid.  
-  
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&.  
+    
 .RE
 .PP
-\fBPAPI_set_domain\fP sets the default counting domain for all new event sets created by \fBPAPI_create_eventset\fP in all threads. This call implicitly sets the domain for the cpu component (component 0) and is included to preserve backward compatibility.
+\fBPAPI_set_domain\fP sets the default counting domain for all new event sets created by \fBPAPI_create_eventset\fP in all threads\&. This call implicitly sets the domain for the cpu component (component 0) and is included to preserve backward compatibility\&.
 .PP
 \fBExample:\fP
 .RS 4
@@ -61,7 +52,7 @@ int ret;
 // Initialize the library
 ret = PAPI_library_init(PAPI_VER_CURRENT);
 if (ret > 0 && ret != PAPI_VER_CURRENT) {
-  fprintf(stderr,'PAPI library version mismatch!\n');
+  fprintf(stderr,"PAPI library version mismatch!\n");
   exit(1); 
 }
 if (ret < 0) handle_error(ret);
@@ -71,12 +62,13 @@ ret = PAPI_set_domain(PAPI_DOM_KERNEL);
 if (ret != PAPI_OK) handle_error(ret);
 ret = PAPI_create_eventset(&EventSet);
 if (ret != PAPI_OK) handle_error(ret);
+ *  
 
 .fi
 .PP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_set_cmp_domain\fP \fBPAPI_set_granularity\fP \fBPAPI_set_opt\fP \fBPAPI_get_opt\fP 
 .RE
@@ -85,4 +77,4 @@ if (ret != PAPI_OK) handle_error(ret);
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

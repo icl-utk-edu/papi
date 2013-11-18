@@ -1,4 +1,4 @@
-.TH "PAPI_sprofil_t" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_sprofil_t" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -27,11 +27,15 @@ PAPI_sprofil_t \-
 
 .SH "Field Documentation"
 .PP 
-.SS "void* \fBPAPI_sprofil_t::pr_base\fP"buffer base 
-.SS "caddr_t \fBPAPI_sprofil_t::pr_off\fP"pc start address (offset) 
-.SS "unsigned \fBPAPI_sprofil_t::pr_scale\fP"pc scaling factor: fixed point fraction 0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc. also, two extensions 0x1000 == 1, 0x2000 == 2 
-.SS "unsigned \fBPAPI_sprofil_t::pr_size\fP"buffer size 
+.SS "void* PAPI_sprofil_t::pr_base"
+buffer base 
+.SS "caddr_t PAPI_sprofil_t::pr_off"
+pc start address (offset) 
+.SS "unsigned PAPI_sprofil_t::pr_scale"
+pc scaling factor: fixed point fraction 0xffff ~= 1, 0x8000 == \&.5, 0x4000 == \&.25, etc\&. also, two extensions 0x1000 == 1, 0x2000 == 2 
+.SS "unsigned PAPI_sprofil_t::pr_size"
+buffer size 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

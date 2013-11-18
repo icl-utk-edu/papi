@@ -1,61 +1,54 @@
-.TH "PAPI_set_cmp_granularity" 3 "Fri Aug 2 2013" "Version 5.2.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_cmp_granularity" 3 "Mon Nov 18 2013" "Version 5.3.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_set_cmp_granularity \- 
 .PP
-Set the default counting granularity for eventsets bound to the specified component.  
+Set the default counting granularity for eventsets bound to the specified component\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBC Prototype:\fP
-.RS 4
-#include <\fBpapi.h\fP> 
-.br
- int PAPI_set_cmp_granularity( int granularity, int cidx );
-.RE
-.PP
-\fBParameters:\fP
-.RS 4
-\fIgranularity\fP one of the following constants as defined in the \fBpapi.h\fP header file 
-.PD 0
 
-.IP "\(bu" 2
-PAPI_GRN_THR Count each individual thread 
-.IP "\(bu" 2
-PAPI_GRN_PROC Count each individual process 
-.IP "\(bu" 2
-PAPI_GRN_PROCG Count each individual process group 
-.IP "\(bu" 2
-PAPI_GRN_SYS Count the current CPU 
-.IP "\(bu" 2
-PAPI_GRN_SYS_CPU Count all CPUs individually 
-.IP "\(bu" 2
-PAPI_GRN_MIN The finest available granularity 
-.IP "\(bu" 2
-PAPI_GRN_MAX The coarsest available granularity
 .PP
-.br
-\fIcidx\fP An integer identifier for a component. By convention, component 0 is always the cpu component.  
+.nf
+@par C Prototype:
+    \#include <papi.h> @n
+    int PAPI_set_cmp_granularity( int granularity, int cidx );
+
+@param granularity one of the following constants as defined in the papi.h header file
+@arg PAPI_GRN_THR   Count each individual thread
+@arg PAPI_GRN_PROC  Count each individual process
+@arg PAPI_GRN_PROCG Count each individual process group
+@arg PAPI_GRN_SYS   Count the current CPU
+@arg PAPI_GRN_SYS_CPU   Count all CPUs individually
+@arg PAPI_GRN_MIN   The finest available granularity
+@arg PAPI_GRN_MAX   The coarsest available granularity
+
+@param cidx
+    An integer identifier for a component. 
+    By convention, component 0 is always the cpu component. 
+
+.fi
+.PP
   
-.RE
+    
 .PP
 \fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
-\fIPAPI_ENOCMP\fP The argument cidx is not a valid component.  
-  
+\fIPAPI_ENOCMP\fP The argument cidx is not a valid component\&.  
+    
 .RE
 .PP
-\fBPAPI_set_cmp_granularity\fP sets the default counting granularity for all new event sets, and requires an explicit component argument. Event sets that are already in existence are not affected.
+\fBPAPI_set_cmp_granularity\fP sets the default counting granularity for all new event sets, and requires an explicit component argument\&. Event sets that are already in existence are not affected\&.
 .PP
-To change the granularity of an existing event set, please see \fBPAPI_set_opt\fP. The reader should note that the granularity of an event set affects only the mode in which the counter continues to run.
+To change the granularity of an existing event set, please see \fBPAPI_set_opt\fP\&. The reader should note that the granularity of an event set affects only the mode in which the counter continues to run\&.
 .PP
 \fBExample:\fP
 .RS 4
@@ -67,7 +60,7 @@ int ret;
 // Initialize the library
 ret = PAPI_library_init(PAPI_VER_CURRENT);
 if (ret > 0 && ret != PAPI_VER_CURRENT) {
-  fprintf(stderr,'PAPI library version mismatch!\n');
+  fprintf(stderr,"PAPI library version mismatch!\n");
   exit(1); 
 }
 if (ret < 0) handle_error(ret);
@@ -77,12 +70,13 @@ ret = PAPI_set_cmp_granularity(PAPI_GRN_PROC, 0);
 if (ret != PAPI_OK) handle_error(ret);
 ret = PAPI_create_eventset(&EventSet);
 if (ret != PAPI_OK) handle_error(ret);
+ *  
 
 .fi
 .PP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_set_granularity\fP \fBPAPI_set_domain\fP \fBPAPI_set_opt\fP \fBPAPI_get_opt\fP 
 .RE
@@ -91,4 +85,4 @@ if (ret != PAPI_OK) handle_error(ret);
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.
