@@ -4,6 +4,35 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 ===============================================================================
+PAPI 5.3.0 RELEASE NOTES                                            18 Nov 2013
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP530.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+New Platforms:
+-------------
+    * Intel Xeon Phi ( for offload code )
+
+Enhancements:
+------------
+    * RAPL component better deals with counter wrap 
+    * Floating support added for Intel IvyBridge
+    * PAPI_L1_ICM event added for Intel Haswell
+    * AMD Fam15h gets Core select umasks
+    * CUDA component now sets the number of native events supported
+    * Installed tests' code can now be built.
+    * host-micpower utility
+
+Bug Fixes:
+----------
+    * command_line utility event skipping bug
+    * remove extranious -openmp flag from icc builds
+    * Default to building all ctests, clean up much bit rot
+
+===============================================================================
 PAPI 5.2.0 RELEASE NOTES                                            06 Aug 2013
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
