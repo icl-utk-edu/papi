@@ -247,7 +247,7 @@ comp_tests:	$(LIBS) testlib
 ifneq (${COMPONENTS},)
 		@for comp in ${COMPONENTS} ; do \
 			$$comp_tests: $(LIBS) testlib null ; \
-			$(SETPATH) cd components/$$comp/tests ; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../../../$(SHLIB)"; \
+			$(SETPATH) cd components/$$comp/tests ; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../../../$(LINKLIB)"; \
 			$(SETPATH) cd ../../.. ; done 
 endif
 
