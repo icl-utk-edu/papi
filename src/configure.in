@@ -90,6 +90,7 @@ AC_MSG_CHECKING([for if MIC should be used])
 						perf_events=yes
 						walltimer=clock_realtime_hr
 						ffsll=no
+						cross_compiling=yes
 						arch=k1om],
 						[MIC=no])
 AC_MSG_RESULT($MIC)

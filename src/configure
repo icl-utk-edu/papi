@@ -1451,6 +1451,7 @@ if test "${with_mic+set}" = set; then
 						perf_events=yes
 						walltimer=clock_realtime_hr
 						ffsll=no
+						cross_compiling=yes
 						arch=k1om
 else
   MIC=no
@@ -2271,7 +2272,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2274:" \
+echo "$as_me:2275:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
