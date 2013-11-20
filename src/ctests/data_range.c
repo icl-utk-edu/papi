@@ -169,10 +169,16 @@ measure_event( int index, PAPI_option_t * option )
 			  option->addr.end + option->addr.end_off );
 	}
 
-	PAPI_start( EventSet );
+	retval = PAPI_start( EventSet );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 	do_malloc_work( NUM );
 	do_static_work( NUM );
-	PAPI_stop( EventSet, &value );
+	retval = PAPI_stop( EventSet, &value );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
 	printf( "%s:  %lld\n", event_name[index], value );
 
