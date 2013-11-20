@@ -59,7 +59,8 @@ main( int argc, char **argv )
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
-	if ( ( prginfo = PAPI_get_executable_info(  ) ) == NULL )
+	prginfo = PAPI_get_executable_info(  );
+	if ( prginfo == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
 
 #if defined(linux) && defined(__ia64__)
