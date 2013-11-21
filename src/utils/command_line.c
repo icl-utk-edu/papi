@@ -56,7 +56,7 @@ main( int argc, char **argv )
 	char *success;
 	PAPI_event_info_t info;
 	int EventSet = PAPI_NULL;
-	int i, j, data_type, event;
+	int i, j, event, data_type = PAPI_DATATYPE_INT64;
 	int u_format = 0;
 	int hex_format = 0;
 
