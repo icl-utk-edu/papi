@@ -8,3 +8,10 @@ rm doc/README
 rm src/buildbot_configure_with_components.sh
 rm -rf .git
 rm delete_before_release.sh
+rm src/ctests/.gitignore
+rm src/libpfm4/.gitignore
+rm src/utils/.gitignore
+rm src/.gitignore
+rm src/ftests/.gitignore
+rm src/testlib/.gitignore
+rm src/components/.gitignore
