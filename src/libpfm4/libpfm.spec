@@ -3,7 +3,7 @@
 %define python_prefix %(python -c "import sys; print sys.prefix")
 
 Name:		libpfm
-Version:	4.3.0
+Version:	4.4.0
 Release:	1%{?dist}
 
 Summary:	Library to encode performance events for use by perf tool
@@ -97,6 +97,15 @@ rm -fr $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Nov 13 2013 Lukas Berk <lberk@redhat.com> 4.4.0-1
+- Intel IVB-EP support
+- Intel IVB updates support
+- Intel SNB updates support
+- Intel SNB-EP uncore support
+- ldlat support (PEBS-LL)
+- New Intel Atom support
+- bug fixes
+
 * Tue Aug 28 2012 Stephane Eranian  <eranian@gmail.com> 4.3.0-1
 - ARM Cortex A15 support
 - updated Intel Sandy Bridge core PMU events

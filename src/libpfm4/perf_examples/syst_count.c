@@ -37,7 +37,7 @@
 
 #include "perf_util.h"
 
-#define MAX_GROUPS	16
+#define MAX_GROUPS	256
 #define MAX_PATH	1024
 
 #ifndef STR
