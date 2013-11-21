@@ -1,3 +1,36 @@
+2013-11-21  
+
+  * 78192de9 delete_before_release.sh: Kill the .gitignore files in
+  delete_before_release
+
+  * 60fb1dd4 src/utils/command_line.c: command_line utility: Initialize a
+  variable  Initialize data_type to PAPI_DATATYPE_INT64 Addresses a coverity
+  error Error: COMPILER_WARNING: [#def19]
+  papi-5.2.0/src/utils/command_line.c:133:4: warning: 'data_type' may be used
+  uninitialized in this function [-Wmaybe-uninitialized] switch (data_type) { ^
+
+2013-11-20  
+
+  * da2925f6 src/ctests/data_range.c: Make data_range test use prginfo 
+  Coverity complained about prginfo being an unused variable for data_range.c. 
+  The code is modified to be stylistically like the code for hw_info in the
+  preceding lines which also is not used elsewhere in the test.  This is more
+  to reduce the amount of output in the Coverity scan than to fix this minor
+  issue. 
+
+  * 3386953d src/ctests/data_range.c: Check the return values of PAPI_start()
+  and PAPI_stop() for the data_range test  The ia64 data_range test did not
+  check the return values of PAPI_start() or PAPI_stop().  There are propbably
+  few people running this test on ia64 machine, but this is more to eliminate a
+  couple errors noted by a Coverity scan and reduce the clutter in the Coverity
+  scan. 
+
+2013-11-19  
+
+  * e704e8f1 src/configure src/configure.in: configure: Build fpapi.h and co
+  for mic  When building for mic, set the cross_compiling var in configure to
+  use a native c compiler to build genpapif.
+
 2013-11-18  
 
   * d32b1dae man/man1/papi_avail.1 man/man1/papi_clockres.1
