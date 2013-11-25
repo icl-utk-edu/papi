@@ -591,18 +591,21 @@ detectDevices( )
 							requires NVML_INFOROM_ECC 2.0 or higher for location-based counts
 							requires NVML_INFOROM_ECC 1.0 or higher for all other ECC counts
 							requires ECC mode to be enabled. */
-						if ( isFermi ) {
-								ret = (*nvmlDeviceGetEccModePtr)( devices[i], &mode, NULL );
-								if ( NVML_FEATURE_ENABLED == mode) {
-										if ( ecc_version >= 2.0 ) {
-												features[i] |= FEATURE_ECC_LOCAL_ERRORS;
-												num_events += 8; /* {single bit, two bit errors} x { reg, l1, l2, memory } */
-										} 
-										if ( ecc_version >= 1.0 ) {
-												features[i] |= FEATURE_ECC_TOTAL_ERRORS;
-												num_events += 2; /* single bit errors, double bit errors */
-										}
-								}	
+						ret = (*nvmlDeviceGetEccModePtr)( devices[i], &mode, NULL );
+						if ( NVML_SUCCESS == ret ) {
+						    if ( NVML_FEATURE_ENABLED == mode) {
+							if ( ecc_version >= 2.0 ) {
+							    features[i] |= FEATURE_ECC_LOCAL_ERRORS;
+							    num_events += 8; /* {single bit, two bit errors} x { reg, l1, l2, memory } */
+							}
+							if ( ecc_version >= 1.0 ) {
+							    features[i] |= FEATURE_ECC_TOTAL_ERRORS;
+							    num_events += 2; /* single bit errors, double bit errors */
+							}
+						    }
+						} else {
+						    SUBDBG("nvmlDeviceGetEccMode does not appear to be supported. (nvml\
+return code %d)\n", ret);
 						}
 
 						/* For all discrete products with dedicated fans */
@@ -629,13 +632,14 @@ detectDevices( )
 							requires NVML_INFOROM_POWER 3.0 or higher
 							For Tesla and Quadro products from the Kepler family
 							does not require NVML_INFOROM_POWER */
-						if ( isFermi ) {
-								ret = (*nvmlDeviceGetPowerUsagePtr)( devices[i], &temp);
-								if ( NVML_SUCCESS == ret ) {
-										features[i] |= FEATURE_POWER;
-										num_events++;
-								}
-						}
+						/* Just try reading power, if it works, enable it*/
+						ret = (*nvmlDeviceGetPowerUsagePtr)( devices[i], &temp);
+						if ( NVML_SUCCESS == ret ) {
+						    features[i] |= FEATURE_POWER;
+						    num_events++;
+						} else {
+						    SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on\
+this card. (nvml return code %d)\n", ret );
 
 						/* For all discrete and S-class products. */
 						features[i] |= FEATURE_TEMP;
