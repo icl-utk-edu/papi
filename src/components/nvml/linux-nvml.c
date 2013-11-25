@@ -640,6 +640,7 @@ return code %d)\n", ret);
 						} else {
 						    SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on\
 this card. (nvml return code %d)\n", ret );
+						}
 
 						/* For all discrete and S-class products. */
 						features[i] |= FEATURE_TEMP;
@@ -658,7 +659,7 @@ this card. (nvml return code %d)\n", ret );
 		return PAPI_OK;
 }
 
-		static void
+    static void
 createNativeEvents( )
 {
 		char name[64];
