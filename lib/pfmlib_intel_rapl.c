@@ -96,11 +96,7 @@ static int
 pfm_intel_rapl_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 {
-	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe;
-
-	/* shut up the compiler */
-	pmu = pmu;
 
 	pe = this_pe(this);
 
