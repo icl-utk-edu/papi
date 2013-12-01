@@ -76,6 +76,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&amd64_fam12h_llano_support,
 	&amd64_fam14h_bobcat_support,
 	&amd64_fam15h_interlagos_support,
+	&amd64_fam15h_nb_support,
 	&intel_core_support,
 	&intel_atom_support,
 	&intel_nhm_support,
