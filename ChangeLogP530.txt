@@ -1,3 +1,12 @@
+2013-11-25  
+
+  * a40c96c5 src/components/nvml/linux-nvml.c: nvml component: Add missing }
+
+  * 166971ba src/components/nvml/linux-nvml.c: nvml component: modify api
+  checks  To check if nvmlDeviceGetEccMode and nvmlDeviceGetPowerUsage are
+  supported, we just call the functions and see if nvml thinks its supported by
+  the card.
+
 2013-11-21  
 
   * 78192de9 delete_before_release.sh: Kill the .gitignore files in
