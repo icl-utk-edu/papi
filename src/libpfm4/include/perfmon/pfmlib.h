@@ -191,6 +191,10 @@ typedef enum {
 	PFM_PMU_INTEL_IVB_UNC_CB3,	/* Intel IvyBridge C-box 3 uncore PMU */
 
 	PFM_PMU_POWER8,			/* IBM POWER8 */
+	PFM_PMU_INTEL_RAPL,		/* Intel RAPL */
+
+	PFM_PMU_INTEL_SLM,		/* Intel Silvermont */
+	PFM_PMU_AMD64_FAM15H_NB,	/* AMD AMD64 Fam15h NorthBridge */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 

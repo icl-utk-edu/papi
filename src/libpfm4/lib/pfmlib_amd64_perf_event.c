@@ -24,11 +24,37 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 /* private headers */
 #include "pfmlib_priv.h"		/* library private */
 #include "pfmlib_amd64_priv.h"		/* architecture private */
 #include "pfmlib_perf_event_priv.h"
+
+static int
+find_pmu_type_by_name(const char *name)
+{
+	char filename[PATH_MAX];
+	FILE *fp;
+	int ret, type;
+
+	if (!name)
+		return PFM_ERR_NOTSUPP;
+
+	sprintf(filename, "/sys/bus/event_source/devices/%s/type", name);
+
+	fp = fopen(filename, "r");
+	if (!fp)
+		return PFM_ERR_NOTSUPP;
+
+	ret = fscanf(fp, "%d", &type);
+	if (ret != 1)
+		type = PFM_ERR_NOTSUPP;
+
+	fclose(fp);
+
+	return type;
+}
 
 int
 pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
@@ -52,8 +78,20 @@ pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 		return PFM_ERR_NOTSUPP;
 	}
 
-	/* all events treated as raw for now */
-	attr->type = PERF_TYPE_RAW;
+	ret = PERF_TYPE_RAW;
+
+	/*
+	 * if specific perf PMU is provided then try to locate it
+	 * otherwise assume core PMU and thus type RAW
+	 */
+	if (pmu->perf_name) {
+		/* greab PMU type from sysfs */
+		ret = find_pmu_type_by_name(pmu->perf_name);
+		if (ret < 0)
+			return ret;
+	}
+	DPRINT("amd64_get_perf_encoding: PMU type=%d\n", ret);
+	attr->type = ret;
 	attr->config = e->codes[0];
 
 	return PFM_SUCCESS;
@@ -80,8 +118,8 @@ pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PMU) {
 
 			if (e->pattrs[i].idx == AMD64_ATTR_U
-					|| e->pattrs[i].idx == AMD64_ATTR_K
-					|| e->pattrs[i].idx == AMD64_ATTR_H)
+			    || e->pattrs[i].idx == AMD64_ATTR_K
+			    || e->pattrs[i].idx == AMD64_ATTR_H)
 				compact = 1;
 		}
 
@@ -94,6 +132,33 @@ pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			/* older processors do not support hypervisor priv level */
 			if (!IS_FAMILY_10H(pmu) && e->pattrs[i].idx == PERF_ATTR_H)
 				compact = 1;
+		}
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
+}
+
+void
+pfm_amd64_nb_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	int i, compact;
+
+	for (i=0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		/*
+		 * no perf_events attr is supported by AMD64 Northbridge PMU
+		 * sampling is not supported
+		 */
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+			compact = 1;
 		}
 
 		if (compact) {

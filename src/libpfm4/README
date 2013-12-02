@@ -37,7 +37,7 @@ The library supports many PMUs. The current version can handle:
 		AMD64 Fam11h (Turion)
 		AMD64 Fam12h (Llano)
 		AMD64 Fam14h (Bobcat)
-		AMD64 Fam15h (Bulldozer)
+		AMD64 Fam15h (Bulldozer) (core and uncore)
 
 	- For Intel X86: 
 		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)
@@ -48,6 +48,8 @@ The library supports many PMUs. The current version can handle:
 		Intel Sandy Bridge
 		Intel Ivy Bridge
 		Intel Haswell
+		Intel Silvermont
+		Intel RAPL (energy consumption)
 		Intel Knights Corner
 		Intel architectural perfmon v1, v2, v3
 

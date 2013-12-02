@@ -12,7 +12,7 @@ This function returns a string which describes the libpfm error
 value in \fBcode\fR. The string returned by the call is \fBread-only\fR.
 
 The function must \fBonly\fR be used with libpfm calls documented to return
-specific error codes. The value -1 is not considered a specific error code.
+specific error codes. The value \-1 is not considered a specific error code.
 Strings and \fBpfm_pmu_t\fR return values cannot be used with this function.
 Typically \fBNULL\fR is returned in case of error for string values, and
 \fBPFM_PMU_NONE\fR is returned for \fBpfm_pmu_t\fR values.

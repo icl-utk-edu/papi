@@ -350,7 +350,7 @@ perf_display_stack_user(perf_event_desc_t *hw, FILE *fp)
 	size_t sz;
 	int ret;
 
-	ret = perf_read_buffer(hw, &nr, sizeof(hw));
+	ret = perf_read_buffer(hw, &nr, sizeof(nr));
 	if (ret)
 		errx(1, "cannot user stack size");
 

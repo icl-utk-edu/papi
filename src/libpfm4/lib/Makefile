@@ -60,6 +60,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_snb.c pfmlib_intel_snb_unc.c \
 	  pfmlib_intel_ivb.c pfmlib_intel_ivb_unc.c \
 	  pfmlib_intel_hsw.c \
+	  pfmlib_intel_rapl.c \
 	  pfmlib_intel_snbep_unc.c \
 	  pfmlib_intel_snbep_unc_cbo.c \
 	  pfmlib_intel_snbep_unc_ha.c \
@@ -70,6 +71,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_snbep_unc_r2pcie.c \
 	  pfmlib_intel_snbep_unc_r3qpi.c \
 	  pfmlib_intel_knc.c \
+	  pfmlib_intel_slm.c \
 	  pfmlib_intel_netburst.c \
 	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
 	  pfmlib_amd64_fam11h.c pfmlib_amd64_fam12h.c \
@@ -216,7 +218,8 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_snbep_unc_ubo_events.h \
 	events/intel_snbep_unc_r2pcie_events.h \
 	events/intel_snbep_unc_r3qpi_events.h \
-	events/intel_knc_events.h
+	events/intel_knc_events.h \
+	events/intel_slm_events.h
 
 INC_MIPS=events/mips_74k_events.h events/mips_74k_events.h
 

@@ -27,43 +27,72 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_amd64_priv.h"
 #include "events/amd64_events_fam15h.h"
+#include "events/amd64_events_fam15h_nb.h"
 
-#define DEFINE_FAM15H_REV(d, n, r, pmuid) \
-static int							\
-pfm_amd64_fam15h_##n##_detect(void *this)			\
-{								\
-	int ret;						\
-	ret = pfm_amd64_detect(this);				\
-	if (ret != PFM_SUCCESS)					\
-		return ret;					\
-	ret = pfm_amd64_cfg.revision;				\
-	return ret == pmuid ? PFM_SUCCESS : PFM_ERR_NOTSUPP;	\
-}								\
-pfmlib_pmu_t amd64_fam15h_##n##_support={			\
-	.desc			= "AMD64 Fam15h "#d,		\
-	.name			= "amd64_fam15h_"#n,		\
-	.pmu			= pmuid,			\
-	.pmu_rev		= r,				\
-	.pme_count		= LIBPFM_ARRAY_SIZE(amd64_fam15h_pe),\
-	.type			= PFM_PMU_TYPE_CORE,		\
-	.supported_plm		= AMD64_FAM10H_PLM,		\
-	.num_cntrs		= 6,				\
-	.max_encoding		= 1,				\
-	.pe			= amd64_fam15h_pe,		\
-	.atdesc			= amd64_mods,			\
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,	\
-								\
-	.pmu_detect		= pfm_amd64_fam15h_##n##_detect,\
-	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,\
-	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),	\
-	.get_event_first	= pfm_amd64_get_event_first,	\
-	.get_event_next		= pfm_amd64_get_event_next,	\
-	.event_is_valid		= pfm_amd64_event_is_valid,	\
-	.validate_table		= pfm_amd64_validate_table,	\
-	.get_event_info		= pfm_amd64_get_event_info,	\
-	.get_event_attr_info	= pfm_amd64_get_event_attr_info,\
-	 PFMLIB_VALID_PERF_PATTRS(pfm_amd64_perf_validate_pattrs),\
-	.get_event_nattrs	= pfm_amd64_get_event_nattrs,	\
+static int
+pfm_amd64_fam15h_detect(void *this)
+{
+	int ret;
+
+	ret = pfm_amd64_detect(this);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_amd64_cfg.revision == PFM_PMU_AMD64_FAM15H_INTERLAGOS)
+		return PFM_SUCCESS;
+
+	return PFM_ERR_NOTSUPP;
 }
 
-DEFINE_FAM15H_REV(Interlagos, interlagos, 0, PFM_PMU_AMD64_FAM15H_INTERLAGOS);
+pfmlib_pmu_t amd64_fam15h_interlagos_support={
+	.desc			= "AMD64 Fam15h Interlagos",
+	.name			= "amd64_fam15h_interlagos",
+	.pmu			= PFM_PMU_AMD64_FAM15H_INTERLAGOS,
+	.pmu_rev		= 0,
+	.pme_count		= LIBPFM_ARRAY_SIZE(amd64_fam15h_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= AMD64_FAM10H_PLM,
+	.num_cntrs		= 6,
+	.max_encoding		= 1,
+	.pe			= amd64_fam15h_pe,
+	.atdesc			= amd64_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.pmu_detect		= pfm_amd64_fam15h_detect,
+	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),
+	.get_event_first	= pfm_amd64_get_event_first,
+	.get_event_next		= pfm_amd64_get_event_next,
+	.event_is_valid		= pfm_amd64_event_is_valid,
+	.validate_table		= pfm_amd64_validate_table,
+	.get_event_info		= pfm_amd64_get_event_info,
+	.get_event_attr_info	= pfm_amd64_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_amd64_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_amd64_get_event_nattrs,
+};
+
+pfmlib_pmu_t amd64_fam15h_nb_support={
+	.desc			= "AMD64 Fam15h NorthBridge",
+	.name			= "amd64_fam15h_nb",
+	.pmu			= PFM_PMU_AMD64_FAM15H_NB,
+	.perf_name		= "amd_nb",
+	.pmu_rev		= 0,
+	.pme_count		= LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_pe),
+	.type			= PFM_PMU_TYPE_UNCORE,
+	.supported_plm		= 0, /* no plm support */
+	.num_cntrs		= 4,
+	.max_encoding		= 1,
+	.pe			= amd64_fam15h_nb_pe,
+	.atdesc			= amd64_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.pmu_detect		= pfm_amd64_fam15h_detect,
+	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),
+	.get_event_first	= pfm_amd64_get_event_first,
+	.get_event_next		= pfm_amd64_get_event_next,
+	.event_is_valid		= pfm_amd64_event_is_valid,
+	.validate_table		= pfm_amd64_validate_table,
+	.get_event_info		= pfm_amd64_get_event_info,
+	.get_event_attr_info	= pfm_amd64_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_amd64_nb_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_amd64_get_event_nattrs,
+};

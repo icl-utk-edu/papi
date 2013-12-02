@@ -76,6 +76,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&amd64_fam12h_llano_support,
 	&amd64_fam14h_bobcat_support,
 	&amd64_fam15h_interlagos_support,
+	&amd64_fam15h_nb_support,
 	&intel_core_support,
 	&intel_atom_support,
 	&intel_nhm_support,
@@ -97,6 +98,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_ivb_unc_cbo3_support,
 	&intel_ivb_ep_support,
 	&intel_hsw_support,
+	&intel_rapl_support,
 	&intel_snbep_unc_cb0_support,
 	&intel_snbep_unc_cb1_support,
 	&intel_snbep_unc_cb2_support,
@@ -118,6 +120,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_snbep_unc_r3qpi0_support,
 	&intel_snbep_unc_r3qpi1_support,
 	&intel_knc_support,
+	&intel_slm_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
@@ -825,6 +828,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 				goto found_attr;
 			}
 		}
+		DPRINT("cannot find attribute %s\n", s);
 		return PFM_ERR_ATTR;
 found_attr:
 		type = ainfo->type;

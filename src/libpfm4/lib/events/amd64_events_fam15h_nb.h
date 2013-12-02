@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Google, Inc
+ * Copyright (c) 2013 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,12 +24,15 @@
  *
  * This file has been automatically generated.
  *
- * PMU: amd64_fam15h (AMD64 Fam15h Interlagos)
+ * PMU: amd64_fam15h_nb_nb (AMD64 Fam15h Interlagos NorthBridge)
  *
  * Based on libpfm patch by Robert Richter <robert.richter@amd.com>:
  * Family 15h Microarchitecture performance monitor events
  *
  * History:
+ *
+ * Nov 30 2013 -- Stephane Eranian , eranian@gmail.com:
+ * Split core and Northbridge events as PMU is distinct
  *
  * Apr 29 2011 -- Robert Richter, robert.richter@amd.com:
  * Source: BKDG for AMD Family 15h Models 00h-0Fh Processors,
@@ -96,7 +99,7 @@
      .uflags= AMD64_FL_NCOMBO | AMD64_FL_DFL,\
    }
 
-static const amd64_umask_t amd64_fam15h_dispatched_fpu_ops[]={
+static const amd64_umask_t amd64_fam15h_nb_dispatched_fpu_ops[]={
    { .uname  = "OPS_PIPE0",
      .udesc  = "Total number uops assigned to Pipe 0",
      .ucode = 0x1,
@@ -136,7 +139,7 @@ static const amd64_umask_t amd64_fam15h_dispatched_fpu_ops[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_retired_sse_ops[]={
+static const amd64_umask_t amd64_fam15h_nb_retired_sse_ops[]={
    { .uname  = "SINGLE_ADD_SUB_OPS",
      .udesc  = "Single-precision add/subtract FLOPS",
      .ucode = 0x1,
@@ -176,7 +179,7 @@ static const amd64_umask_t amd64_fam15h_retired_sse_ops[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_move_scalar_optimization[]={
+static const amd64_umask_t amd64_fam15h_nb_move_scalar_optimization[]={
    { .uname  = "SSE_MOVE_OPS",
      .udesc  = "Number of SSE Move Ops",
      .ucode = 0x1,
@@ -200,7 +203,7 @@ static const amd64_umask_t amd64_fam15h_move_scalar_optimization[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_retired_serializing_ops[]={
+static const amd64_umask_t amd64_fam15h_nb_retired_serializing_ops[]={
    { .uname  = "SSE_RETIRED",
      .udesc  = "SSE bottom-executing uops retired",
      .ucode = 0x1,
@@ -224,7 +227,7 @@ static const amd64_umask_t amd64_fam15h_retired_serializing_ops[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_segment_register_loads[]={
+static const amd64_umask_t amd64_fam15h_nb_segment_register_loads[]={
    { .uname  = "ES",
      .udesc  = "ES",
      .ucode = 0x1,
@@ -260,7 +263,7 @@ static const amd64_umask_t amd64_fam15h_segment_register_loads[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_load_q_store_q_full[]={
+static const amd64_umask_t amd64_fam15h_nb_load_q_store_q_full[]={
    { .uname  = "LOAD_QUEUE",
      .udesc  = "The number of cycles that the load buffer is full",
      .ucode = 0x1,
@@ -276,7 +279,7 @@ static const amd64_umask_t amd64_fam15h_load_q_store_q_full[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_locked_ops[]={
+static const amd64_umask_t amd64_fam15h_nb_locked_ops[]={
    { .uname  = "EXECUTED",
      .udesc  = "Number of locked instructions executed",
      .ucode = 0x1,
@@ -296,7 +299,7 @@ static const amd64_umask_t amd64_fam15h_locked_ops[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_cancelled_store_to_load[]={
+static const amd64_umask_t amd64_fam15h_nb_cancelled_store_to_load[]={
    { .uname  = "SIZE_ADDRESS_MISMATCHES",
      .udesc  = "Store is smaller than load or different starting byte but partial overlap",
      .ucode = 0x1,
@@ -308,7 +311,7 @@ static const amd64_umask_t amd64_fam15h_cancelled_store_to_load[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_data_cache_misses[]={
+static const amd64_umask_t amd64_fam15h_nb_data_cache_misses[]={
    { .uname  = "DC_MISS_STREAMING_STORE",
      .udesc  = "First data cache miss or streaming store to a 64B cache line",
      .ucode = 0x1,
@@ -324,7 +327,7 @@ static const amd64_umask_t amd64_fam15h_data_cache_misses[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_data_cache_refills_from_l2_or_northbridge[]={
+static const amd64_umask_t amd64_fam15h_nb_data_cache_refills_from_l2_or_northbridge[]={
    { .uname  = "GOOD",
      .udesc  = "Fill with good data. (Final valid status is valid)",
      .ucode = 0x1,
@@ -348,7 +351,7 @@ static const amd64_umask_t amd64_fam15h_data_cache_refills_from_l2_or_northbridg
    },
 };
 
-static const amd64_umask_t amd64_fam15h_unified_tlb_hit[]={
+static const amd64_umask_t amd64_fam15h_nb_unified_tlb_hit[]={
    { .uname  = "4K_DATA",
      .udesc  = "4 KB unified TLB hit for data",
      .ucode = 0x1,
@@ -380,7 +383,7 @@ static const amd64_umask_t amd64_fam15h_unified_tlb_hit[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_unified_tlb_miss[]={
+static const amd64_umask_t amd64_fam15h_nb_unified_tlb_miss[]={
    { .uname  = "4K_DATA",
      .udesc  = "4 KB unified TLB miss for data",
      .ucode = 0x1,
@@ -412,7 +415,7 @@ static const amd64_umask_t amd64_fam15h_unified_tlb_miss[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_prefetch_instructions_dispatched[]={
+static const amd64_umask_t amd64_fam15h_nb_prefetch_instructions_dispatched[]={
    { .uname  = "LOAD",
      .udesc  = "Load (Prefetch, PrefetchT0/T1/T2)",
      .ucode = 0x1,
@@ -432,7 +435,7 @@ static const amd64_umask_t amd64_fam15h_prefetch_instructions_dispatched[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_ineffective_sw_prefetches[]={
+static const amd64_umask_t amd64_fam15h_nb_ineffective_sw_prefetches[]={
    { .uname  = "SW_PREFETCH_HIT_IN_L1",
      .udesc  = "Software prefetch hit in the L1",
      .ucode = 0x1,
@@ -448,7 +451,7 @@ static const amd64_umask_t amd64_fam15h_ineffective_sw_prefetches[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_memory_requests[]={
+static const amd64_umask_t amd64_fam15h_nb_memory_requests[]={
    { .uname  = "NON_CACHEABLE",
      .udesc  = "Requests to non-cacheable (UC) memory",
      .ucode = 0x1,
@@ -468,7 +471,7 @@ static const amd64_umask_t amd64_fam15h_memory_requests[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_data_prefetcher[]={
+static const amd64_umask_t amd64_fam15h_nb_data_prefetcher[]={
    { .uname  = "ATTEMPTED",
      .udesc  = "Prefetch attempts",
      .ucode = 0x2,
@@ -480,7 +483,7 @@ static const amd64_umask_t amd64_fam15h_data_prefetcher[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_mab_reqs[]={
+static const amd64_umask_t amd64_fam15h_nb_mab_reqs[]={
    { .uname  = "BUFFER_BIT_0",
      .udesc  = "Buffer entry index bit 0",
      .ucode = 0x1,
@@ -520,7 +523,7 @@ static const amd64_umask_t amd64_fam15h_mab_reqs[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_system_read_responses[]={
+static const amd64_umask_t amd64_fam15h_nb_system_read_responses[]={
    { .uname  = "EXCLUSIVE",
      .udesc  = "Exclusive",
      .ucode = 0x1,
@@ -552,7 +555,7 @@ static const amd64_umask_t amd64_fam15h_system_read_responses[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_octword_write_transfers[]={
+static const amd64_umask_t amd64_fam15h_nb_octword_write_transfers[]={
    { .uname  = "OCTWORD_WRITE_TRANSFER",
      .udesc  = "OW write transfer",
      .ucode = 0x1,
@@ -564,7 +567,7 @@ static const amd64_umask_t amd64_fam15h_octword_write_transfers[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_requests_to_l2[]={
+static const amd64_umask_t amd64_fam15h_nb_requests_to_l2[]={
    { .uname  = "INSTRUCTIONS",
      .udesc  = "IC fill",
      .ucode = 0x1,
@@ -596,7 +599,7 @@ static const amd64_umask_t amd64_fam15h_requests_to_l2[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_l2_cache_miss[]={
+static const amd64_umask_t amd64_fam15h_nb_l2_cache_miss[]={
    { .uname  = "INSTRUCTIONS",
      .udesc  = "IC fill",
      .ucode = 0x1,
@@ -620,7 +623,7 @@ static const amd64_umask_t amd64_fam15h_l2_cache_miss[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_l2_cache_fill_writeback[]={
+static const amd64_umask_t amd64_fam15h_nb_l2_cache_fill_writeback[]={
    { .uname  = "L2_FILLS",
      .udesc  = "L2 fills from system",
      .ucode = 0x1,
@@ -640,7 +643,7 @@ static const amd64_umask_t amd64_fam15h_l2_cache_fill_writeback[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_page_splintering[]={
+static const amd64_umask_t amd64_fam15h_nb_page_splintering[]={
    { .uname  = "GUEST_LARGER",
      .udesc  = "Guest page size is larger than host page size when nested paging is enabled",
      .ucode = 0x1,
@@ -660,7 +663,7 @@ static const amd64_umask_t amd64_fam15h_page_splintering[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_l1_itlb_miss_and_l2_itlb_miss[]={
+static const amd64_umask_t amd64_fam15h_nb_l1_itlb_miss_and_l2_itlb_miss[]={
    { .uname  = "4K_PAGE_FETCHES",
      .udesc  = "Instruction fetches to a 4 KB page",
      .ucode = 0x1,
@@ -680,7 +683,7 @@ static const amd64_umask_t amd64_fam15h_l1_itlb_miss_and_l2_itlb_miss[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_instruction_cache_invalidated[]={
+static const amd64_umask_t amd64_fam15h_nb_instruction_cache_invalidated[]={
    { .uname  = "NON_SMC_PROBE_MISS",
      .udesc  = "Non-SMC invalidating probe that missed on in-flight instructions",
      .ucode = 0x1,
@@ -704,7 +707,7 @@ static const amd64_umask_t amd64_fam15h_instruction_cache_invalidated[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_retired_mmx_fp_instructions[]={
+static const amd64_umask_t amd64_fam15h_nb_retired_mmx_fp_instructions[]={
    { .uname  = "X87",
      .udesc  = "X87 instructions",
      .ucode = 0x1,
@@ -724,7 +727,7 @@ static const amd64_umask_t amd64_fam15h_retired_mmx_fp_instructions[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_fpu_exceptions[]={
+static const amd64_umask_t amd64_fam15h_nb_fpu_exceptions[]={
    { .uname  = "TOTAL_FAULTS",
      .udesc  = "Total microfaults",
      .ucode = 0x1,
@@ -752,7 +755,7 @@ static const amd64_umask_t amd64_fam15h_fpu_exceptions[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_ibs_ops_tagged[]={
+static const amd64_umask_t amd64_fam15h_nb_ibs_ops_tagged[]={
    { .uname  = "TAGGED",
      .udesc  = "Number of ops tagged by IBS",
      .ucode = 0x1,
@@ -772,7 +775,7 @@ static const amd64_umask_t amd64_fam15h_ibs_ops_tagged[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_ls_dispatch[]={
+static const amd64_umask_t amd64_fam15h_nb_ls_dispatch[]={
    { .uname  = "LOADS",
      .udesc  = "Loads",
      .ucode = 0x1,
@@ -792,7 +795,7 @@ static const amd64_umask_t amd64_fam15h_ls_dispatch[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_l2_prefetcher_trigger_events[]={
+static const amd64_umask_t amd64_fam15h_nb_l2_prefetcher_trigger_events[]={
    { .uname  = "LOAD_L1_MISS_SEEN_BY_PREFETCHER",
      .udesc  = "Load L1 miss seen by prefetcher",
      .ucode = 0x1,
@@ -808,7 +811,7 @@ static const amd64_umask_t amd64_fam15h_l2_prefetcher_trigger_events[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_dram_accesses[]={
+static const amd64_umask_t amd64_fam15h_nb_dram_accesses[]={
    { .uname = "DCT0_PAGE_HIT",
      .udesc = "DCT0 Page hit",
      .ucode = 0x1,
@@ -840,7 +843,7 @@ static const amd64_umask_t amd64_fam15h_dram_accesses[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_dram_controller_page_table_overflows[]={
+static const amd64_umask_t amd64_fam15h_nb_dram_controller_page_table_overflows[]={
    { .uname = "DCT0_PAGE_TABLE_OVERFLOW",
      .udesc = "DCT0 Page Table Overflow",
      .ucode = 0x1,
@@ -856,7 +859,7 @@ static const amd64_umask_t amd64_fam15h_dram_controller_page_table_overflows[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_memory_controller_dram_command_slots_missed[]={
+static const amd64_umask_t amd64_fam15h_nb_memory_controller_dram_command_slots_missed[]={
    { .uname = "DCT0_COMMAND_SLOTS_MISSED",
      .udesc = "DCT0 Command Slots Missed (in MemClks)",
      .ucode = 0x1,
@@ -872,7 +875,7 @@ static const amd64_umask_t amd64_fam15h_memory_controller_dram_command_slots_mis
    },
 };
 
-static const amd64_umask_t amd64_fam15h_memory_controller_turnarounds[]={
+static const amd64_umask_t amd64_fam15h_nb_memory_controller_turnarounds[]={
    { .uname = "DCT0_DIMM_TURNAROUND",
      .udesc = "DCT0 DIMM (chip select) turnaround",
      .ucode = 0x1,
@@ -904,7 +907,7 @@ static const amd64_umask_t amd64_fam15h_memory_controller_turnarounds[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_memory_controller_bypass_counter_saturation[]={
+static const amd64_umask_t amd64_fam15h_nb_memory_controller_bypass_counter_saturation[]={
    { .uname = "MEMORY_CONTROLLER_HIGH_PRIORITY_BYPASS",
      .udesc = "Memory controller high priority bypass",
      .ucode = 0x1,
@@ -928,7 +931,7 @@ static const amd64_umask_t amd64_fam15h_memory_controller_bypass_counter_saturat
    },
 };
 
-static const amd64_umask_t amd64_fam15h_thermal_status[]={
+static const amd64_umask_t amd64_fam15h_nb_thermal_status[]={
    { .uname = "NUM_HTC_TRIP_POINT_CROSSED",
      .udesc = "Number of times the HTC trip point is crossed",
      .ucode = 0x4,
@@ -948,7 +951,7 @@ static const amd64_umask_t amd64_fam15h_thermal_status[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_cpu_io_requests_to_memory_io[]={
+static const amd64_umask_t amd64_fam15h_nb_cpu_io_requests_to_memory_io[]={
    { .uname = "REMOTE_IO_TO_LOCAL_IO",
      .udesc = "Remote IO to Local IO",
      .ucode = 0x61,
@@ -1001,7 +1004,7 @@ static const amd64_umask_t amd64_fam15h_cpu_io_requests_to_memory_io[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_cache_block_commands[]={
+static const amd64_umask_t amd64_fam15h_nb_cache_block_commands[]={
    { .uname = "VICTIM_BLOCK",
      .udesc = "Victim Block (Writeback)",
      .ucode = 0x1,
@@ -1029,7 +1032,7 @@ static const amd64_umask_t amd64_fam15h_cache_block_commands[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_sized_commands[]={
+static const amd64_umask_t amd64_fam15h_nb_sized_commands[]={
    { .uname = "NON-POSTED_SZWR_BYTE",
      .udesc = "Non-Posted SzWr Byte (1-32 bytes). Typical Usage: Legacy or mapped IO, typically 1-4 bytes.",
      .ucode = 0x1,
@@ -1061,7 +1064,7 @@ static const amd64_umask_t amd64_fam15h_sized_commands[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_probe_responses_and_upstream_requests[]={
+static const amd64_umask_t amd64_fam15h_nb_probe_responses_and_upstream_requests[]={
    { .uname = "PROBE_MISS",
      .udesc = "Probe miss",
      .ucode = 0x1,
@@ -1101,7 +1104,7 @@ static const amd64_umask_t amd64_fam15h_probe_responses_and_upstream_requests[]=
    },
 };
 
-static const amd64_umask_t amd64_fam15h_gart_events[]={
+static const amd64_umask_t amd64_fam15h_nb_gart_events[]={
    { .uname = "GART_APERTURE_HIT_ON_ACCESS_FROM_CPU",
      .udesc = "GART aperture hit on access from CPU",
      .ucode = 0x1,
@@ -1129,7 +1132,7 @@ static const amd64_umask_t amd64_fam15h_gart_events[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_link_transmit_bandwidth[]={
+static const amd64_umask_t amd64_fam15h_nb_link_transmit_bandwidth[]={
    { .uname = "COMMAND_DW_SENT",
      .udesc = "Command DW sent",
      .ucode = 0x1,
@@ -1182,7 +1185,7 @@ static const amd64_umask_t amd64_fam15h_link_transmit_bandwidth[]={
 
 };
 
-static const amd64_umask_t amd64_fam15h_cpu_to_dram_requests_to_target_node[]={
+static const amd64_umask_t amd64_fam15h_nb_cpu_to_dram_requests_to_target_node[]={
    { .uname = "LOCAL_TO_NODE_0",
      .udesc = "From Local node to Node 0",
      .ucode = 0x1,
@@ -1222,7 +1225,7 @@ static const amd64_umask_t amd64_fam15h_cpu_to_dram_requests_to_target_node[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_io_to_dram_requests_to_target_node[]={
+static const amd64_umask_t amd64_fam15h_nb_io_to_dram_requests_to_target_node[]={
    { .uname = "LOCAL_TO_NODE_0",
      .udesc = "From Local node to Node 0",
      .ucode = 0x1,
@@ -1262,7 +1265,7 @@ static const amd64_umask_t amd64_fam15h_io_to_dram_requests_to_target_node[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_cpu_read_command_requests_to_target_node_0_3[]={
+static const amd64_umask_t amd64_fam15h_nb_cpu_read_command_requests_to_target_node_0_3[]={
    { .uname = "READ_BLOCK_LOCAL_TO_NODE_0",
      .udesc = "Read block From Local node to Node 0",
      .ucode = 0x11,
@@ -1350,7 +1353,7 @@ static const amd64_umask_t amd64_fam15h_cpu_read_command_requests_to_target_node
    },
 };
 
-static const amd64_umask_t amd64_fam15h_cpu_read_command_requests_to_target_node_4_7[]={
+static const amd64_umask_t amd64_fam15h_nb_cpu_read_command_requests_to_target_node_4_7[]={
    { .uname = "READ_BLOCK_LOCAL_TO_NODE_4",
      .udesc = "Read block From Local node to Node 4",
      .ucode = 0x11,
@@ -1438,7 +1441,7 @@ static const amd64_umask_t amd64_fam15h_cpu_read_command_requests_to_target_node
    },
 };
 
-static const amd64_umask_t amd64_fam15h_cpu_command_requests_to_target_node[]={
+static const amd64_umask_t amd64_fam15h_nb_cpu_command_requests_to_target_node[]={
    { .uname = "READ_SIZED_LOCAL_TO_NODE_0",
      .udesc = "Read Sized From Local node to Node 0",
      .ucode = 0x11,
@@ -1571,7 +1574,7 @@ static const amd64_umask_t amd64_fam15h_cpu_command_requests_to_target_node[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_request_cache_status_0[]={
+static const amd64_umask_t amd64_fam15h_nb_request_cache_status_0[]={
    { .uname = "PROBE_HIT_S",
      .udesc = "Probe Hit S",
      .ucode = 0x1,
@@ -1611,7 +1614,7 @@ static const amd64_umask_t amd64_fam15h_request_cache_status_0[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_request_cache_status_1[]={
+static const amd64_umask_t amd64_fam15h_nb_request_cache_status_1[]={
    { .uname = "PROBE_HIT_S",
      .udesc = "Probe Hit S",
      .ucode = 0x1,
@@ -1651,7 +1654,7 @@ static const amd64_umask_t amd64_fam15h_request_cache_status_1[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_memory_controller_requests[]={
+static const amd64_umask_t amd64_fam15h_nb_memory_controller_requests[]={
    { .uname = "WRITE_REQUESTS_TO_DCT",
      .udesc = "Write requests sent to the DCT",
      .ucode = 0x1,
@@ -1691,7 +1694,7 @@ static const amd64_umask_t amd64_fam15h_memory_controller_requests[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_read_request_to_l3_cache[]={
+static const amd64_umask_t amd64_fam15h_nb_read_request_to_l3_cache[]={
    { .uname = "READ_BLOCK_EXCLUSIVE",
      .udesc = "Read Block Exclusive (Data cache read)",
      .ucode = 0x1,
@@ -1721,7 +1724,7 @@ static const amd64_umask_t amd64_fam15h_read_request_to_l3_cache[]={
   CORE_SELECT(1),
 };
 
-static const amd64_umask_t amd64_fam15h_l3_fills_caused_by_l2_evictions[]={
+static const amd64_umask_t amd64_fam15h_nb_l3_fills_caused_by_l2_evictions[]={
    { .uname = "SHARED",
      .udesc = "Shared",
      .ucode = 0x1,
@@ -1751,7 +1754,7 @@ static const amd64_umask_t amd64_fam15h_l3_fills_caused_by_l2_evictions[]={
    CORE_SELECT(1),
  };
 
-static const amd64_umask_t amd64_fam15h_l3_evictions[]={
+static const amd64_umask_t amd64_fam15h_nb_l3_evictions[]={
    { .uname = "SHARED",
      .udesc = "Shared",
      .ucode = 0x1,
@@ -1775,7 +1778,7 @@ static const amd64_umask_t amd64_fam15h_l3_evictions[]={
    },
 };
 
-static const amd64_umask_t amd64_fam15h_l3_latency[]={
+static const amd64_umask_t amd64_fam15h_nb_l3_latency[]={
    { .uname = "L3_REQUEST_CYCLE",
      .udesc = "L3 Request cycle count.",
      .ucode = 0x1,
@@ -1791,508 +1794,229 @@ static const amd64_umask_t amd64_fam15h_l3_latency[]={
    },
 };
 
-static const amd64_entry_t amd64_fam15h_pe[]={
-{ .name    = "DISPATCHED_FPU_OPS",
-  .desc    = "FPU Pipe Assignment",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x0,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_dispatched_fpu_ops),
+static const amd64_entry_t amd64_fam15h_nb_pe[]={
+{ .name    = "DRAM_ACCESSES",
+  .desc    = "DRAM Accesses",
+  .code    = 0xe0,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_dram_accesses),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_dispatched_fpu_ops,
+  .umasks  = amd64_fam15h_nb_dram_accesses,
 },
-{ .name    = "CYCLES_FPU_EMPTY",
-  .desc    = "FP Scheduler Empty",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x1,
-},
-{ .name    = "RETIRED_SSE_OPS",
-  .desc    = "Retired SSE/BNI Ops",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x3,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_retired_sse_ops),
+{ .name    = "DRAM_CONTROLLER_PAGE_TABLE_OVERFLOWS",
+  .desc    = "DRAM Controller Page Table Overflows",
+  .code    = 0xe1,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_dram_controller_page_table_overflows),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_retired_sse_ops,
+  .umasks  = amd64_fam15h_nb_dram_controller_page_table_overflows,
 },
-{ .name    = "MOVE_SCALAR_OPTIMIZATION",
-  .desc    = "Number of Move Elimination and Scalar Op Optimization",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x4,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_move_scalar_optimization),
+{ .name    = "MEMORY_CONTROLLER_DRAM_COMMAND_SLOTS_MISSED",
+  .desc    = "Memory Controller DRAM Command Slots Missed",
+  .code    = 0xe2,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_memory_controller_dram_command_slots_missed),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_move_scalar_optimization,
+  .umasks  = amd64_fam15h_nb_memory_controller_dram_command_slots_missed,
 },
-{ .name    = "RETIRED_SERIALIZING_OPS",
-  .desc    = "Retired Serializing Ops",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x5,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_retired_serializing_ops),
+{ .name    = "MEMORY_CONTROLLER_TURNAROUNDS",
+  .desc    = "Memory Controller Turnarounds",
+  .code    = 0xe3,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_memory_controller_turnarounds),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_retired_serializing_ops,
+  .umasks  = amd64_fam15h_nb_memory_controller_turnarounds,
 },
-{ .name    = "BOTTOM_EXECUTE_OP",
-  .desc    = "Number of Cycles that a Bottom-Execute uop is in the FP Scheduler",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x6,
-},
-{ .name    = "SEGMENT_REGISTER_LOADS",
-  .desc    = "Segment Register Loads",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x20,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_segment_register_loads),
+{ .name    = "MEMORY_CONTROLLER_BYPASS_COUNTER_SATURATION",
+  .desc    = "Memory Controller Bypass Counter Saturation",
+  .code    = 0xe4,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_memory_controller_bypass_counter_saturation),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_segment_register_loads,
+  .umasks  = amd64_fam15h_nb_memory_controller_bypass_counter_saturation,
 },
-{ .name    = "PIPELINE_RESTART_DUE_TO_SELF_MODIFYING_CODE",
-  .desc    = "Pipeline Restart Due to Self-Modifying Code",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x21,
-},
-{ .name    = "PIPELINE_RESTART_DUE_TO_PROBE_HIT",
-  .desc    = "Pipeline Restart Due to Probe Hit",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x22,
-},
-{ .name    = "LOAD_Q_STORE_Q_FULL",
-  .desc    = "Load Queue/Store Queue Full",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x23,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_load_q_store_q_full),
+{ .name    = "THERMAL_STATUS",
+  .desc    = "Thermal Status",
+  .code    = 0xe8,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_thermal_status),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_load_q_store_q_full,
+  .umasks  = amd64_fam15h_nb_thermal_status,
 },
-{ .name    = "LOCKED_OPS",
-  .desc    = "Locked Operations",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x24,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_locked_ops),
+{ .name    = "CPU_IO_REQUESTS_TO_MEMORY_IO",
+  .desc    = "CPU/IO Requests to Memory/IO",
+  .code    = 0xe9,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_io_requests_to_memory_io),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_locked_ops,
+  .umasks  = amd64_fam15h_nb_cpu_io_requests_to_memory_io,
 },
-{ .name    = "RETIRED_CLFLUSH_INSTRUCTIONS",
-  .desc    = "Retired CLFLUSH Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x26,
-},
-{ .name    = "RETIRED_CPUID_INSTRUCTIONS",
-  .desc    = "Retired CPUID Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x27,
-},
-{ .name    = "CANCELLED_STORE_TO_LOAD",
-  .desc    = "Canceled Store to Load Forward Operations",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x2a,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_cancelled_store_to_load),
+{ .name    = "CACHE_BLOCK_COMMANDS",
+  .desc    = "Cache Block Commands",
+  .code    = 0xea,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cache_block_commands),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_cancelled_store_to_load,
+  .umasks  = amd64_fam15h_nb_cache_block_commands,
 },
-{ .name    = "SMIS_RECEIVED",
-  .desc    = "SMIs Received",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x2b,
-},
-{ .name    = "DATA_CACHE_ACCESSES",
-  .desc    = "Data Cache Accesses",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x40,
-},
-{ .name    = "DATA_CACHE_MISSES",
-  .desc    = "Data Cache Misses",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x41,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_data_cache_misses),
+{ .name    = "SIZED_COMMANDS",
+  .desc    = "Sized Commands",
+  .code    = 0xeb,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_sized_commands),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_data_cache_misses,
+  .umasks  = amd64_fam15h_nb_sized_commands,
 },
-{ .name    = "DATA_CACHE_REFILLS_FROM_L2_OR_NORTHBRIDGE",
-  .desc    = "Data Cache Refills from L2 or System",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x42,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_data_cache_refills_from_l2_or_northbridge),
+{ .name    = "PROBE_RESPONSES_AND_UPSTREAM_REQUESTS",
+  .desc    = "Probe Responses and Upstream Requests",
+  .code    = 0xec,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_probe_responses_and_upstream_requests),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_data_cache_refills_from_l2_or_northbridge,
+  .umasks  = amd64_fam15h_nb_probe_responses_and_upstream_requests,
 },
-{ .name    = "DATA_CACHE_REFILLS_FROM_NORTHBRIDGE",
-  .desc    = "Data Cache Refills from System",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x43,
-},
-{ .name    = "UNIFIED_TLB_HIT",
-  .desc    = "Unified TLB Hit",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x45,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_unified_tlb_hit),
+{ .name    = "GART_EVENTS",
+  .desc    = "GART Events",
+  .code    = 0xee,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_gart_events),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_unified_tlb_hit,
+  .umasks  = amd64_fam15h_nb_gart_events,
 },
-{ .name    = "UNIFIED_TLB_MISS",
-  .desc    = "Unified TLB Miss",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x46,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_unified_tlb_miss),
+{ .name    = "LINK_TRANSMIT_BANDWIDTH_LINK_0",
+  .desc    = "Link Transmit Bandwidth Link 0",
+  .code    = 0xf6,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_link_transmit_bandwidth),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_link_transmit_bandwidth,
+},
+{ .name    = "LINK_TRANSMIT_BANDWIDTH_LINK_1",
+  .desc    = "Link Transmit Bandwidth Link 1",
+  .code    = 0xf7,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_link_transmit_bandwidth),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_link_transmit_bandwidth,
+},
+{ .name    = "LINK_TRANSMIT_BANDWIDTH_LINK_2",
+  .desc    = "Link Transmit Bandwidth Link 2",
+  .code    = 0xf8,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_link_transmit_bandwidth),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_link_transmit_bandwidth,
+},
+{ .name    = "LINK_TRANSMIT_BANDWIDTH_LINK_3",
+  .desc    = "Link Transmit Bandwidth Link 3",
+  .code    = 0x1f9,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_link_transmit_bandwidth),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_link_transmit_bandwidth,
+},
+{ .name    = "CPU_TO_DRAM_REQUESTS_TO_TARGET_NODE",
+  .desc    = "CPU to DRAM Requests to Target Node",
+  .code    = 0x1e0,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_to_dram_requests_to_target_node),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_unified_tlb_miss,
+  .umasks  = amd64_fam15h_nb_cpu_to_dram_requests_to_target_node,
 },
-{ .name    = "MISALIGNED_ACCESSES",
-  .desc    = "Misaligned Accesses",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x47,
-},
-{ .name    = "PREFETCH_INSTRUCTIONS_DISPATCHED",
-  .desc    = "Prefetch Instructions Dispatched",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x4b,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_prefetch_instructions_dispatched),
+{ .name    = "IO_TO_DRAM_REQUESTS_TO_TARGET_NODE",
+  .desc    = "IO to DRAM Requests to Target Node",
+  .code    = 0x1e1,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_io_to_dram_requests_to_target_node),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_prefetch_instructions_dispatched,
+  .umasks  = amd64_fam15h_nb_io_to_dram_requests_to_target_node,
 },
-{ .name    = "INEFFECTIVE_SW_PREFETCHES",
-  .desc    = "Ineffective Software Prefetches",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x52,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_ineffective_sw_prefetches),
+{ .name    = "CPU_READ_COMMAND_LATENCY_TO_TARGET_NODE_0_3",
+  .desc    = "CPU Read Command Latency to Target Node 0-3",
+  .code    = 0x1e2,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_read_command_requests_to_target_node_0_3),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_ineffective_sw_prefetches,
+  .umasks  = amd64_fam15h_nb_cpu_read_command_requests_to_target_node_0_3,
 },
-{ .name    = "MEMORY_REQUESTS",
-  .desc    = "Memory Requests by Type",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x65,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_memory_requests),
+{ .name    = "CPU_READ_COMMAND_REQUESTS_TO_TARGET_NODE_0_3",
+  .desc    = "CPU Read Command Requests to Target Node 0-3",
+  .code    = 0x1e3,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_read_command_requests_to_target_node_0_3),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_memory_requests,
+  .umasks  = amd64_fam15h_nb_cpu_read_command_requests_to_target_node_0_3,
 },
-{ .name    = "DATA_PREFETCHER",
-  .desc    = "Data Prefetcher",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x67,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_data_prefetcher),
+{ .name    = "CPU_READ_COMMAND_LATENCY_TO_TARGET_NODE_4_7",
+  .desc    = "CPU Read Command Latency to Target Node 4-7",
+  .code    = 0x1e4,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_read_command_requests_to_target_node_4_7),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_data_prefetcher,
+  .umasks  = amd64_fam15h_nb_cpu_read_command_requests_to_target_node_4_7,
 },
-{ .name    = "MAB_REQS",
-  .desc    = "MAB Requests",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x68,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_mab_reqs),
+{ .name    = "CPU_READ_COMMAND_REQUESTS_TO_TARGET_NODE_4_7",
+  .desc    = "CPU Read Command Requests to Target Node 4-7",
+  .code    = 0x1e5,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_read_command_requests_to_target_node_4_7),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_mab_reqs,
+  .umasks  = amd64_fam15h_nb_cpu_read_command_requests_to_target_node_4_7,
 },
-{ .name    = "MAB_WAIT",
-  .desc    = "MAB Wait Cycles",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x69,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_mab_reqs),
+{ .name    = "CPU_COMMAND_LATENCY_TO_TARGET_NODE",
+  .desc    = "CPU Command Latency to Target Node",
+  .code    = 0x1e6,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_command_requests_to_target_node),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_mab_reqs, /* identical to actual umasks list for this event */
+  .umasks  = amd64_fam15h_nb_cpu_command_requests_to_target_node,
 },
-{ .name    = "SYSTEM_READ_RESPONSES",
-  .desc    = "Response From System on Cache Refills",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x6c,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_system_read_responses),
+{ .name    = "CPU_REQUESTS_TO_TARGET_NODE",
+  .desc    = "CPU Requests to Target Node",
+  .code    = 0x1e7,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_cpu_command_requests_to_target_node),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_system_read_responses,
+  .umasks  = amd64_fam15h_nb_cpu_command_requests_to_target_node,
 },
-{ .name    = "OCTWORD_WRITE_TRANSFERS",
-  .desc    = "Octwords Written to System",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x6d,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_octword_write_transfers),
+{ .name    = "REQUEST_CACHE_STATUS_0",
+  .desc    = "Request Cache Status 0",
+  .code    = 0x1ea,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_request_cache_status_0),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_octword_write_transfers,
+  .umasks  = amd64_fam15h_nb_request_cache_status_0,
 },
-{ .name    = "CPU_CLK_UNHALTED",
-  .desc    = "CPU Clocks not Halted",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x76,
-},
-{ .name    = "REQUESTS_TO_L2",
-  .desc    = "Requests to L2 Cache",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x7d,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_requests_to_l2),
+{ .name    = "REQUEST_CACHE_STATUS_1",
+  .desc    = "Request Cache Status 1",
+  .code    = 0x1eb,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_request_cache_status_1),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_requests_to_l2,
+  .umasks  = amd64_fam15h_nb_request_cache_status_1,
 },
-{ .name    = "L2_CACHE_MISS",
-  .desc    = "L2 Cache Misses",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x7e,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_l2_cache_miss),
+{ .name    = "MEMORY_CONTROLLER_REQUESTS",
+  .desc    = "Memory Controller Requests",
+  .code    = 0x1f0,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_memory_controller_requests),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_l2_cache_miss,
+  .umasks  = amd64_fam15h_nb_memory_controller_requests,
 },
-{ .name    = "L2_CACHE_FILL_WRITEBACK",
-  .desc    = "L2 Fill/Writeback",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x7f,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_l2_cache_fill_writeback),
+{ .name    = "READ_REQUEST_TO_L3_CACHE",
+  .desc    = "Read Request to L3 Cache",
+  .code    = 0x4e0,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_read_request_to_l3_cache),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_read_request_to_l3_cache,
+},
+{ .name    = "L3_CACHE_MISSES",
+  .desc    = "L3 Cache Misses",
+  .code    = 0x4e1,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_read_request_to_l3_cache),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_read_request_to_l3_cache,
+},
+{ .name    = "L3_FILLS_CAUSED_BY_L2_EVICTIONS",
+  .desc    = "L3 Fills caused by L2 Evictions",
+  .code    = 0x4e2,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_l3_fills_caused_by_l2_evictions),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_l3_fills_caused_by_l2_evictions,
+},
+{ .name    = "L3_EVICTIONS",
+  .desc    = "L3 Evictions",
+  .code    = 0x4e3,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_l3_evictions),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_l2_cache_fill_writeback,
+  .umasks  = amd64_fam15h_nb_l3_evictions,
 },
-{ .name    = "PAGE_SPLINTERING",
-  .desc    = "Page Splintering",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x165,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_page_splintering),
+{ .name    = "NON_CANCELED_L3_READ_REQUESTS",
+  .desc    = "Non-canceled L3 Read Requests",
+  .code    = 0x4ed,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_read_request_to_l3_cache),
+  .ngrp    = 2,
+  .umasks  = amd64_fam15h_nb_read_request_to_l3_cache,
+},
+{ .name    = "L3_LATENCY",
+  .desc    = "L3 Latency",
+  .code    = 0x4ef,
+  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_nb_l3_latency),
   .ngrp    = 1,
-  .umasks  = amd64_fam15h_page_splintering,
-},
-{ .name    = "INSTRUCTION_CACHE_FETCHES",
-  .desc    = "Instruction Cache Fetches",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x80,
-},
-{ .name    = "INSTRUCTION_CACHE_MISSES",
-  .desc    = "Instruction Cache Misses",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x81,
-},
-{ .name    = "INSTRUCTION_CACHE_REFILLS_FROM_L2",
-  .desc    = "Instruction Cache Refills from L2",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x82,
-},
-{ .name    = "INSTRUCTION_CACHE_REFILLS_FROM_SYSTEM",
-  .desc    = "Instruction Cache Refills from System",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x83,
-},
-{ .name    = "L1_ITLB_MISS_AND_L2_ITLB_HIT",
-  .desc    = "L1 ITLB Miss, L2 ITLB Hit",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x84,
-},
-{ .name    = "L1_ITLB_MISS_AND_L2_ITLB_MISS",
-  .desc    = "L1 ITLB Miss, L2 ITLB Miss",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x85,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_l1_itlb_miss_and_l2_itlb_miss),
-  .ngrp    = 1,
-  .umasks  = amd64_fam15h_l1_itlb_miss_and_l2_itlb_miss,
-},
-{ .name    = "PIPELINE_RESTART_DUE_TO_INSTRUCTION_STREAM_PROBE",
-  .desc    = "Pipeline Restart Due to Instruction Stream Probe",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x86,
-},
-{ .name    = "INSTRUCTION_FETCH_STALL",
-  .desc    = "Instruction Fetch Stall",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x87,
-},
-{ .name    = "RETURN_STACK_HITS",
-  .desc    = "Return Stack Hits",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x88,
-},
-{ .name    = "RETURN_STACK_OVERFLOWS",
-  .desc    = "Return Stack Overflows",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x89,
-},
-{ .name    = "INSTRUCTION_CACHE_VICTIMS",
-  .desc    = "Instruction Cache Victims",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x8b,
-},
-{ .name    = "INSTRUCTION_CACHE_INVALIDATED",
-  .desc    = "Instruction Cache Lines Invalidated",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x8c,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_instruction_cache_invalidated),
-  .ngrp    = 1,
-  .umasks  = amd64_fam15h_instruction_cache_invalidated,
-},
-{ .name    = "ITLB_RELOADS",
-  .desc    = "ITLB Reloads",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x99,
-},
-{ .name    = "ITLB_RELOADS_ABORTED",
-  .desc    = "ITLB Reloads Aborted",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x9a,
-},
-{ .name    = "RETIRED_INSTRUCTIONS",
-  .desc    = "Retired Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc0,
-},
-{ .name    = "RETIRED_UOPS",
-  .desc    = "Retired uops",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc1,
-},
-{ .name    = "RETIRED_BRANCH_INSTRUCTIONS",
-  .desc    = "Retired Branch Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc2,
-},
-{ .name    = "RETIRED_MISPREDICTED_BRANCH_INSTRUCTIONS",
-  .desc    = "Retired Mispredicted Branch Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc3,
-},
-{ .name    = "RETIRED_TAKEN_BRANCH_INSTRUCTIONS",
-  .desc    = "Retired Taken Branch Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc4,
-},
-{ .name    = "RETIRED_TAKEN_BRANCH_INSTRUCTIONS_MISPREDICTED",
-  .desc    = "Retired Taken Branch Instructions Mispredicted",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc5,
-},
-{ .name    = "RETIRED_FAR_CONTROL_TRANSFERS",
-  .desc    = "Retired Far Control Transfers",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc6,
-},
-{ .name    = "RETIRED_BRANCH_RESYNCS",
-  .desc    = "Retired Branch Resyncs",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc7,
-},
-{ .name    = "RETIRED_NEAR_RETURNS",
-  .desc    = "Retired Near Returns",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc8,
-},
-{ .name    = "RETIRED_NEAR_RETURNS_MISPREDICTED",
-  .desc    = "Retired Near Returns Mispredicted",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xc9,
-},
-{ .name    = "RETIRED_INDIRECT_BRANCHES_MISPREDICTED",
-  .desc    = "Retired Indirect Branches Mispredicted",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xca,
-},
-{ .name    = "RETIRED_MMX_FP_INSTRUCTIONS",
-  .desc    = "Retired MMX/FP Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xcb,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_retired_mmx_fp_instructions),
-  .ngrp    = 1,
-  .umasks  = amd64_fam15h_retired_mmx_fp_instructions,
-},
-{ .name    = "INTERRUPTS_MASKED_CYCLES",
-  .desc    = "Interrupts-Masked Cycles",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xcd,
-},
-{ .name    = "INTERRUPTS_MASKED_CYCLES_WITH_INTERRUPT_PENDING",
-  .desc    = "Interrupts-Masked Cycles with Interrupt Pending",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xce,
-},
-{ .name    = "INTERRUPTS_TAKEN",
-  .desc    = "Interrupts Taken",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xcf,
-},
-{ .name    = "DECODER_EMPTY",
-  .desc    = "Decoder Empty",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd0,
-},
-{ .name    = "DISPATCH_STALLS",
-  .desc    = "Dispatch Stalls",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd1,
-},
-{ .name    = "DISPATCH_STALL_FOR_SERIALIZATION",
-  .desc    = "Microsequencer Stall due to Serialization",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd3,
-},
-{ .name    = "DISPATCH_STALL_FOR_RETIRE_QUEUE_FULL",
-  .desc    = "Dispatch Stall for Instruction Retire Q Full",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd5,
-},
-{ .name    = "DISPATCH_STALL_FOR_INT_SCHED_QUEUE_FULL",
-  .desc    = "Dispatch Stall for Integer Scheduler Queue Full",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd6,
-},
-{ .name    = "DISPATCH_STALL_FOR_FPU_FULL",
-  .desc    = "Dispatch Stall for FP Scheduler Queue Full",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd7,
-},
-{ .name    = "DISPATCH_STALL_FOR_LDQ_FULL",
-  .desc    = "Dispatch Stall for LDQ Full",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd8,
-},
-{ .name    = "MICROSEQ_STALL_WAITING_FOR_ALL_QUIET",
-  .desc    = "Microsequencer Stall Waiting for All Quiet",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xd9,
-},
-{ .name    = "FPU_EXCEPTIONS",
-  .desc    = "FPU Exceptions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xdb,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_fpu_exceptions),
-  .ngrp    = 1,
-  .umasks  = amd64_fam15h_fpu_exceptions,
-},
-{ .name    = "DR0_BREAKPOINTS",
-  .desc    = "DR0 Breakpoint Match",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xdc,
-},
-{ .name    = "DR1_BREAKPOINTS",
-  .desc    = "DR1 Breakpoint Match",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xdd,
-},
-{ .name    = "DR2_BREAKPOINTS",
-  .desc    = "DR2 Breakpoint Match",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xde,
-},
-{ .name    = "DR3_BREAKPOINTS",
-  .desc    = "DR3 Breakpoint Match",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0xdf,
-},
-{ .name    = "IBS_OPS_TAGGED",
-  .desc    = "Tagged IBS Ops",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x1cf,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_ibs_ops_tagged),
-  .ngrp    = 1,
-  .umasks  = amd64_fam15h_ibs_ops_tagged,
-},
-{ .name    = "LS_DISPATCH",
-  .desc    = "LS Dispatch",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x29,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_ls_dispatch),
-  .ngrp    = 1,
-  .umasks  = amd64_fam15h_ls_dispatch,
-},
-{ .name    = "EXECUTED_CLFLUSH_INSTRUCTIONS",
-  .desc    = "Executed CLFLUSH Instructions",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x30,
-},
-{ .name    = "L2_PREFETCHER_TRIGGER_EVENTS",
-  .desc    = "L2 Prefetcher Trigger Events",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x16c,
-  .numasks = LIBPFM_ARRAY_SIZE(amd64_fam15h_l2_prefetcher_trigger_events),
-  .ngrp    = 1,
-  .umasks  = amd64_fam15h_l2_prefetcher_trigger_events,
-},
-{ .name    = "DISPATCH_STALL_FOR_STQ_FULL",
-  .desc    = "Dispatch Stall for STQ Full",
-  .modmsk  = AMD64_FAM15H_ATTRS,
-  .code    = 0x1d8,
+  .umasks  = amd64_fam15h_nb_l3_latency,
 },
 };

@@ -59,7 +59,7 @@ specific man page.
 The raw encoding means the encoding as mandated by the underlying PMU model. It may not be directly suitable
 to pass to a kernel API. You may want to use API-specific library calls to ensure the correct encoding is passed.
 
-If \fBfstr\fR is not NULL, it will point to the fully qualified event string upon succesful return. The string
+If \fBfstr\fR is not NULL, it will point to the fully qualified event string upon successful return. The string
 contains the event name, any umask set, and the value of all the modifiers. It reflects what the encoding will
 actually measure. The function allocates the memory to store the string. The caller must eventually free the
 string.
