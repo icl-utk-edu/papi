@@ -164,6 +164,7 @@ typedef struct {
 	int	debug;
 	int	inactive;
 	char	*forced_pmu;
+	char	*blacklist_pmus;
 	FILE 	*fp;	/* verbose and debug file descriptor, default stderr or PFMLIB_DEBUG_STDOUT */
 } pfmlib_config_t;	
 
