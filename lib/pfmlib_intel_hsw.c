@@ -40,6 +40,10 @@ pfm_hsw_detect(void *this)
 
 	switch (pfm_intel_x86_cfg.model) {
 		case 60: /* Haswell */
+		case 63: /* Haswell */
+		case 69: /* Haswell */
+		case 70: /* Haswell */
+		case 71: /* Haswell */
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
