@@ -503,6 +503,10 @@ pfmlib_init_env(void)
 	str = getenv("LIBPFM_ENCODE_INACTIVE");
 	if (str)
 		pfm_cfg.inactive = 1;
+
+	str = getenv("LIBPFM_DISABLED_PMUS");
+	if (str)
+		pfm_cfg.blacklist_pmus = str;
 }
 
 static int
@@ -574,6 +578,30 @@ pfmlib_match_forced_pmu(const char *name)
 }
 
 static int
+pfmlib_is_blacklisted_pmu(pfmlib_pmu_t *p)
+{
+	const char *a, *b;
+
+	if (!pfm_cfg.blacklist_pmus)
+		return 0;
+
+	/*
+	 * scan list for matching PMU names, we accept substrings.
+	 * for instance: snbep does match snbep*
+	 */
+	for (a = pfm_cfg.blacklist_pmus, b = p->name; *a && *b; a++) {
+		if (*a != *b++) {
+			char *n = strchr(a, ',');
+			if (!n)
+				break;
+			a = n;
+			b = p->name;
+		}
+	}
+	return *a == ',' || !*a;
+}
+
+static int
 pfmlib_init_pmus(void)
 {
 	pfmlib_pmu_t *p;
@@ -605,6 +633,10 @@ pfmlib_init_pmus(void)
 		if (pfmlib_pmu_sanity_checks(p) != PFM_SUCCESS)
 			continue;
 
+		if (pfmlib_is_blacklisted_pmu(p)) {
+			DPRINT("%d PMU blacklisted, skipping initialization\n");
+			continue;
+		}
 		p->flags |= PFMLIB_PMU_FL_INIT;
 
 		/*
