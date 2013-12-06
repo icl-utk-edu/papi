@@ -113,6 +113,12 @@ LIBPFM_FORCE_PMU=amd64,16,2,1.
 .B LIBPFM_ENCODE_INACTIVE
 Set this variable to 1 to enable encoding of events for non detected, but supported,
 PMUs models.
+.TP
+.B LIBPFM_DISABLED_PMUS
+Provides a list of PMU models to disable. This is a comma separated list of PMU
+models. The PMU model is the string in \fBname\fR field of the \fBpfm_pmu_info_t\fR
+structure. For instance: LIBPFM_DISABLE_PMUS=core,snb, will disable both the Intel
+Core and SandyBridge core PMU support.
 
 .SH AUTHORS
 .nf
