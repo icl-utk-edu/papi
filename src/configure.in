@@ -1140,7 +1140,7 @@ case "$OS" in
     MAKEVER="freebsd"
     LDFLAGS="-lpmc"
     # HWPMC driver is available for FreeBSD >= 6
-    FREEBSD_VERSION=`uname -r | cut -c 1`
+    FREEBSD_VERSION=`uname -r | cut -d'.' -f1`
     if test "${FREEBSD_VERSION}" -lt 6 ; then
       AC_MSG_ERROR([PAPI requires FreeBSD 6 or greater])
     fi
