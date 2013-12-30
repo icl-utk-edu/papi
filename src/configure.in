@@ -1661,11 +1661,11 @@ fi
 
 
 for comp in $components; do
-  idx=`expr index "$comp" /`
+  idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c`
   if test "$idx" = 0; then
 	subcomp=$comp
   else
-    subcomp=${comp:$idx}
+      subcomp=`echo $comp | sed -E "s/^.{${idx}}//"`
   fi
   COMPONENT_RULES="$COMPONENT_RULES components/$comp/Rules.$subcomp"
   echo "extern papi_vector_t _${subcomp}_vector;" >> components_config.h
@@ -1678,11 +1678,11 @@ if test "x$VECTOR" != "x"; then
 fi
 
 for comp in $components; do
-  idx=`expr index "$comp" /`
+  idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c` 
   if test "$idx" = 0; then
 	subcomp=$comp
   else
-    subcomp=${comp:$idx}
+      subcomp=`echo $comp | sed -E "s/^.{${idx}}//"`
   fi
   echo "   &_${subcomp}_vector," >> components_config.h
 done
