@@ -140,6 +140,9 @@ int coretemp_init_component ()
 		ret = sysctlnametomib (tmp, mib, &len);
 	}
 
+	if (CORETEMP_NUM_EVENTS == 0)
+		return PAPI_OK;
+
 	/* Allocate memory for the our event table */
 	coretemp_native_table = (coretemp_native_event_entry_t *)
 		papi_malloc (sizeof (coretemp_native_event_entry_t) * CORETEMP_NUM_EVENTS);
@@ -377,7 +380,7 @@ int coretemp_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 int coretemp_shutdown_component (void)
 {
 
-	SUBDBG( "coretemp_shutdown_component... %p\n", ctx );
+	SUBDBG( "coretemp_shutdown_component... %p\n");
 
 	/* Last chance to clean up */
 	papi_free (coretemp_native_table);
