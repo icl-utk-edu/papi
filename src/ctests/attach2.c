@@ -24,7 +24,7 @@
 
 #if defined(__FreeBSD__)
 # define PTRACE_ATTACH PT_ATTACH
-# define PTRACE_CONT PT_CONTINUE
+# define PTRACE_TRACEME PT_TRACE_ME
 #endif
 
 int
@@ -148,7 +148,11 @@ main( int argc, char **argv )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
 
 	printf("Continuing\n");
+#if defined(__FreeBSD__)
+	if ( ptrace( PT_CONTINUE, pid, (caddr_t) 1, 0 ) == -1 ) {
+#else
 	if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
+#endif
 	  perror( "ptrace(PTRACE_CONT)" );
 	  return 1;
 	}
