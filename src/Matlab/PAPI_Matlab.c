@@ -54,7 +54,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
       mexPrintf("Error code: %d\n", result);
       mexErrMsgTxt("Error reading counters.");
     }
-    plhs[0] = mxCreateScalarDouble((double)result);
+    plhs[0] = mxCreateDoubleScalar((double)result);
   }
 
   else if((!strncmp(input, "flip", 4)) || (!strncmp(input, "flop", 4))) {
@@ -101,12 +101,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
        }
     }
     if(nlhs > 0) {
-     plhs[0] = mxCreateScalarDouble((double)(ins - accum_error));
+     plhs[0] = mxCreateDoubleScalar((double)(ins - accum_error));
       /* this call adds 7 fp instructions to the total */
       /* but apparently not on Pentium M with Matlab 7.0.4 */
 /*      accum_error += 7; */
       if(nlhs == 2) {
-        plhs[1] = mxCreateScalarDouble((double)rate);
+        plhs[1] = mxCreateDoubleScalar((double)rate);
         /* the second call adds 4 fp instructions to the total */
       /* but apparently not on Pentium M with Matlab 7.0.4 */
 /*        accum_error += 4; */
@@ -181,7 +181,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 	}
 	accum_error = 0;
 	for(i = 0; i < nlhs; i++) {
-	  plhs[i] = mxCreateScalarDouble((double)values[i]);
+	  plhs[i] = mxCreateDoubleScalar((double)values[i]);
 	}
 	mxFree(values);
   }
@@ -199,7 +199,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
       mexErrMsgTxt(error_reading);
     }
     for(i = 0; i < nlhs; i++) {
-      plhs[i] = mxCreateScalarDouble((double)values[i]);
+      plhs[i] = mxCreateDoubleScalar((double)values[i]);
     }
     mxFree(values);
   }
@@ -220,7 +220,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
       mexErrMsgTxt(error_reading);
     }
     for(i = 0; i < nlhs; i++) {
-      plhs[i] = mxCreateScalarDouble((double)values[i]);
+      plhs[i] = mxCreateDoubleScalar((double)values[i]);
     }
     mxFree(values);
   }
@@ -235,9 +235,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
       mexErrMsgTxt("Error getting instruction rate.");
     }
     if(nlhs > 0) {
-      plhs[0] = mxCreateScalarDouble((double)ins);
+      plhs[0] = mxCreateDoubleScalar((double)ins);
       if(nlhs == 2) {
-        plhs[1] = mxCreateScalarDouble((double)rate);
+        plhs[1] = mxCreateDoubleScalar((double)rate);
       }
     }
   }
