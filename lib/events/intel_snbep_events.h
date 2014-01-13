@@ -24,7 +24,7 @@
  *
  * This file has been automatically generated.
  *
- * PMU: snb (Intel Sandy Bridge EP)
+ * PMU: snb_ep (Intel Sandy Bridge EP)
  */
 
 static const intel_x86_umask_t snbep_agu_bypass_cancel[]={
