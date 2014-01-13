@@ -51,7 +51,12 @@ extern pfmlib_pmu_t intel_rapl_support;
   }
 
 static const intel_x86_entry_t intel_rapl_cln_pe[]={
-	RAPL_COMMON_EVENTS
+  RAPL_COMMON_EVENTS,
+  { .name   = "RAPL_ENERGY_GPU",
+    .desc   = "Number of Joules consumed by the builtin GPU. Unit is 2^-32 Joules",
+    .cntmsk = 0x8,
+    .code   = 0x4,
+  }
 };
 
 static const intel_x86_entry_t intel_rapl_srv_pe[]={
