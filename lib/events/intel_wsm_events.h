@@ -299,7 +299,7 @@ static const intel_x86_umask_t wsm_dtlb_load_misses[]={
 
 static const intel_x86_umask_t wsm_l2_lines_in[]={
    { .uname  = "ANY",
-     .udesc  = "L2 lines alloacated",
+     .udesc  = "L2 lines allocated",
      .ucode = 0x700,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
@@ -1993,7 +1993,7 @@ static const intel_x86_entry_t intel_wsm_pe[]={
   .umasks = wsm_dtlb_load_misses,
 },
 { .name   = "L2_LINES_IN",
-  .desc   = "L2 lines alloacated",
+  .desc   = "L2 lines allocated",
   .modmsk = INTEL_V3_ATTRS,
   .cntmsk = 0xf,
   .code = 0xf1,

@@ -121,7 +121,7 @@ static const arm_entry_t arm_1176_pe []={
 	},
 	{.name = "PROC_RET_EXEC_PRED",
 	 .code = 0x25,
-	 .desc = "Proceudre return instruction executed and address predicted"
+	 .desc = "Procedure return instruction executed and address predicted"
 	},
 	{.name = "PROC_RET_EXEC_PRED_INCORRECT",
 	 .code = 0x26,

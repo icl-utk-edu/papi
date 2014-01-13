@@ -1708,7 +1708,7 @@ static const amd64_umask_t amd64_fam15h_read_request_to_l3_cache[]={
      .grpid = 0,
    },
    { .uname = "PREFETCH",
-     .udesc = "Count prefetches honly",
+     .udesc = "Count prefetches only",
      .ucode = 0x8,
      .grpid = 0,
    },

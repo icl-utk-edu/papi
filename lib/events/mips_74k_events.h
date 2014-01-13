@@ -224,7 +224,7 @@ static const mips_entry_t mips_74k_pe []={
   {
     .name = "DCACHE_MISSES",
     .code = 0x98,
-    .desc = "D-cache misses. This count is per instruction at grad- uation and includes load, store, prefetch, synci and address based cacheops",
+    .desc = "D-cache misses. This count is per instruction at graduation and includes load, store, prefetch, synci and address based cacheops",
   },
   {
     .name = "JTLB_DATA_ACCESSES",
@@ -244,7 +244,7 @@ static const mips_entry_t mips_74k_pe []={
   {
     .name = "DCACHE_VTAG_MISMATCH",
     .code = 0x9a,
-    .desc = "The 74K core's D-cache has an auxiliary virtual tag, used to pick the right line early. When (occasionally) the physical tag match and virtual tag match do not line up, it is treated as a cache miss - in processing the miss the virtual tag is correcyed for future accesses. This event counts those bogus misses",
+    .desc = "The 74K core's D-cache has an auxiliary virtual tag, used to pick the right line early. When (occasionally) the physical tag match and virtual tag match do not line up, it is treated as a cache miss - in processing the miss the virtual tag is corrected for future accesses. This event counts those bogus misses",
   },
   {
     .name = "L2_CACHE_WRITEBACKS",
@@ -349,7 +349,7 @@ static const mips_entry_t mips_74k_pe []={
   {
     .name = "INTEGER_INSNS",
     .code = 0x28,
-    .desc = "Integer instructions graduated (includes nop, ssnop, ehb as well as all arithmetic, locial, shift and extract type operations)",
+    .desc = "Integer instructions graduated (includes nop, ssnop, ehb as well as all arithmetic, logical, shift and extract type operations)",
   },
   {
     .name = "FPU_INSNS",

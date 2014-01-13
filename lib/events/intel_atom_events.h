@@ -85,7 +85,7 @@ static const intel_x86_umask_t atom_icache[]={
      .uflags= INTEL_X86_NCOMBO,
    },
    { .uname  = "MISSES",
-     .udesc  = "Count all instructions fetches that miss tha icache or produce memory requests. This includes uncacheache fetches. Any instruction fetch miss is counted only once and not once for every cycle it is outstanding",
+     .udesc  = "Count all instructions fetches that miss the icache or produce memory requests. This includes uncacheache fetches. Any instruction fetch miss is counted only once and not once for every cycle it is outstanding",
      .ucode = 0x200,
    },
 };

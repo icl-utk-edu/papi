@@ -61,7 +61,7 @@ static const intel_x86_umask_t nhm_baclear[]={
 
 static const intel_x86_umask_t nhm_bpu_clears[]={
    { .uname  = "EARLY",
-     .udesc  = "Early Branch Prediciton Unit clears",
+     .udesc  = "Early Branch Prediction Unit clears",
      .ucode = 0x100,
      .uflags= INTEL_X86_NCOMBO,
    },
@@ -332,7 +332,7 @@ static const intel_x86_umask_t nhm_fp_assist[]={
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS | INTEL_X86_DFL,
    },
    { .uname  = "INPUT",
-     .udesc  = "Floating poiint assists for invalid input value (Precise Event)",
+     .udesc  = "Floating point assists for invalid input value (Precise Event)",
      .ucode = 0x400,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
@@ -740,7 +740,7 @@ static const intel_x86_umask_t nhm_l2_hw_prefetch[]={
 
 static const intel_x86_umask_t nhm_l2_lines_in[]={
    { .uname  = "ANY",
-     .udesc  = "L2 lines alloacated",
+     .udesc  = "L2 lines allocated",
      .ucode = 0x700,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
@@ -1976,7 +1976,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
   .umasks = nhm_fp_assist,
 },
 { .name   = "FP_COMP_OPS_EXE",
-  .desc   = "Floating poing computational micro-ops",
+  .desc   = "Floating point computational micro-ops",
   .modmsk = INTEL_V3_ATTRS,
   .cntmsk = 0xf,
   .code = 0x10,
@@ -2179,7 +2179,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
   .umasks = nhm_l2_hw_prefetch,
 },
 { .name   = "L2_LINES_IN",
-  .desc   = "L2 lines alloacated",
+  .desc   = "L2 lines allocated",
   .modmsk = INTEL_V3_ATTRS,
   .cntmsk = 0xf,
   .code = 0xf1,
@@ -2348,7 +2348,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
   .code = 0x1b2,
 },
 { .name   = "PARTIAL_ADDRESS_ALIAS",
-  .desc   = "False dependencies due to partial address froming",
+  .desc   = "False dependencies due to partial address forming",
   .modmsk = INTEL_V3_ATTRS,
   .cntmsk = 0xf,
   .code = 0x107,

@@ -20,7 +20,7 @@ static const sparc_entry_t ultra3plus_pe[] = {
 	},
 	{
 		.name = "IC_ref",
-		.desc = "I-cache refrences",
+		.desc = "I-cache references",
 		.ctrl = PME_CTRL_S0,
 		.code = 0x8,
 	},
@@ -84,13 +84,13 @@ static const sparc_entry_t ultra3plus_pe[] = {
 	},
 	{
 		.name = "Rstall_storeQ",
-		.desc = "R-stage stall for a store instruction which is the next instruction to be executed, but it stailled due to the store queue being full",
+		.desc = "R-stage stall for a store instruction which is the next instruction to be executed, but it stalled due to the store queue being full",
 		.ctrl = PME_CTRL_S0,
 		.code = 0x5,
 	},
 	{
 		.name = "Rstall_IU_use",
-		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceeding integer instruction in the pipeline that is not yet available",
+		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceding integer instruction in the pipeline that is not yet available",
 		.ctrl = PME_CTRL_S0,
 		.code = 0x6,
 	},
@@ -204,7 +204,7 @@ static const sparc_entry_t ultra3plus_pe[] = {
 	},
 	{
 		.name = "Rstall_FP_use",
-		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceeding floating-point instruction in the pipeline that is not yet available",
+		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceding floating-point instruction in the pipeline that is not yet available",
 		.ctrl = PME_CTRL_S1,
 		.code = 0xb,
 	},
@@ -421,7 +421,7 @@ static const sparc_entry_t ultra3plus_pe[] = {
 	/* PIC1 events specific to UltraSPARC-III+/IIIi processors */
 	{
 		.name = "Re_DC_missovhd",
-		.desc = "Used to measure D-cache stall counts seperatedly for L2-cache hits and misses.  This counter is used with the recirculation and cache access events to seperately calculate the D-cache loads that hit and miss the L2-cache",
+		.desc = "Used to measure D-cache stall counts separately for L2-cache hits and misses.  This counter is used with the recirculation and cache access events to separately calculate the D-cache loads that hit and miss the L2-cache",
 		.ctrl = PME_CTRL_S1,
 		.code = 0x4,
 	},
