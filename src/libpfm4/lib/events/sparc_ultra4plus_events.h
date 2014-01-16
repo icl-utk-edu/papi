@@ -32,13 +32,13 @@ static const sparc_entry_t ultra4plus_pe[] = {
 	},
 	{
 		.name = "Rstall_storeQ",
-		.desc = "R-stage stall for a store instruction which is the next instruction to be executed, but it stailled due to the store queue being full",
+		.desc = "R-stage stall for a store instruction which is the next instruction to be executed, but it stalled due to the store queue being full",
 		.ctrl = PME_CTRL_S0,
 		.code = 0x5,
 	},
 	{
 		.name = "Rstall_IU_use",
-		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceeding integer instruction in the pipeline that is not yet available",
+		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceding integer instruction in the pipeline that is not yet available",
 		.ctrl = PME_CTRL_S0,
 		.code = 0x6,
 	},
@@ -50,7 +50,7 @@ static const sparc_entry_t ultra4plus_pe[] = {
 	},
 	{
 		.name = "IC_ref",
-		.desc = "I-cache refrences",
+		.desc = "I-cache references",
 		.ctrl = PME_CTRL_S0,
 		.code = 0x8,
 	},
@@ -62,7 +62,7 @@ static const sparc_entry_t ultra4plus_pe[] = {
 	},
 	{
 		.name = "Rstall_FP_use",
-		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceeding floating-point instruction in the pipeline that is not yet available",
+		.desc = "R-stage stall for an event that the next instruction to be executed depends on the result of a preceding floating-point instruction in the pipeline that is not yet available",
 		.ctrl = PME_CTRL_S0,
 		.code = 0xa,
 	},
@@ -179,7 +179,7 @@ static const sparc_entry_t ultra4plus_pe[] = {
 	},
 	{
 		.name = "IPB_to_IC_fill",
-		.desc = "I-cache filles from the instruction prefetch buffer",
+		.desc = "I-cache fills from the instruction prefetch buffer",
 		.ctrl = PME_CTRL_S0,
 		.code = 0x1e,
 	},
@@ -577,7 +577,7 @@ static const sparc_entry_t ultra4plus_pe[] = {
 	},
 	{
 		.name = "L3_miss",
-		.desc = "Number of L3 cache misses sent out to SIU from this core by cacheable I-cache, D-cache, P-cache, and W-cache (exclusing block stores) requests",
+		.desc = "Number of L3 cache misses sent out to SIU from this core by cacheable I-cache, D-cache, P-cache, and W-cache (excluding block stores) requests",
 		.ctrl = PME_CTRL_S1,
 		.code = 0x31,
 	},

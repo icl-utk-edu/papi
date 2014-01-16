@@ -42,7 +42,7 @@ static intel_x86_entry_t intel_x86_arch_pe[]={
 	{.name = "UNHALTED_REFERENCE_CYCLES",
 	 .code = 0x013c,
 	 .cntmsk = 0x400000000ull, /* temporary */
-	 .desc =  "count reference clock cycles while the clock signal on the specific core is running. The reference clock operates at a fixed frequency, irrespective of core freqeuncy changes due to performance state transitions",
+	 .desc =  "count reference clock cycles while the clock signal on the specific core is running. The reference clock operates at a fixed frequency, irrespective of core frequency changes due to performance state transitions",
 	},
 	{.name = "LLC_REFERENCES",
 	 .code = 0x4f2e,

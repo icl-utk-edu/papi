@@ -32,7 +32,7 @@ static const intel_x86_umask_t slm_icache[]={
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
    { .uname  = "MISSES",
-     .udesc  = "Count all instructions fetches that miss tha icache or produce memory requests. This includes uncacheache fetches. Any instruction fetch miss is counted only once and not once for every cycle it is outstanding",
+     .udesc  = "Count all instructions fetches that miss the icache or produce memory requests. This includes uncacheache fetches. Any instruction fetch miss is counted only once and not once for every cycle it is outstanding",
      .ucode = 0x200,
      .uflags= INTEL_X86_NCOMBO,
    },
@@ -97,7 +97,7 @@ static const intel_x86_umask_t slm_inst_retired[]={
 
 static const intel_x86_umask_t slm_l2_reject_xq[]={
    { .uname  = "ALL",
-     .udesc  = "Number of demand and prefetch transactions that the L2 XQ rejects due to a full or near full condition which likely indictes back pressure from the IDI link. The XQ may reject transactions fro mthe L2Q (non-cacheable requests), BBS (L2 misses) and WOB (L2 write-back victims)",
+     .udesc  = "Number of demand and prefetch transactions that the L2 XQ rejects due to a full or near full condition which likely indicates back pressure from the IDI link. The XQ may reject transactions fro mthe L2Q (non-cacheable requests), BBS (L2 misses) and WOB (L2 write-back victims)",
      .ucode = 0x000,
      .uflags= INTEL_X86_DFL,
    },
@@ -345,7 +345,7 @@ static const intel_x86_umask_t slm_rehabq[]={
      .uflags= INTEL_X86_NCOMBO,
    },
    { .uname  = "STA_FULL",
-     .udesc  = "Number of retired stores that are delayed becuase there is not a store address buffer available",
+     .udesc  = "Number of retired stores that are delayed because there is not a store address buffer available",
      .ucode = 0x2000,
      .uflags= INTEL_X86_NCOMBO,
    },
@@ -625,7 +625,7 @@ static const intel_x86_umask_t slm_ms_decoded[]={
 
 static const intel_x86_umask_t slm_decode_restriction[]={
    { .uname  = "PREDECODE_WRONG",
-     .udesc  = "Number of times the prediction (from the predecode cache) for intruction length is incorrect",
+     .udesc  = "Number of times the prediction (from the predecode cache) for instruction length is incorrect",
      .ucode = 0x0100,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },

@@ -86,7 +86,7 @@ static const arm_entry_t arm_cortex_a9_pe []={
 	},
 	{.name = "PC_IMM_BRANCH",
 	 .code = 0x0d,
-	 .desc = "Immedidate branches architecturally executed"
+	 .desc = "Immediate branches architecturally executed"
 	},
 	{.name = "UNALIGNED_ACCESS",
 	 .code = 0x0f,

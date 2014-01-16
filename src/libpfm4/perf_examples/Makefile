@@ -55,7 +55,7 @@ TARGETS+=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
 	self_pipe syst_count task_cpu syst_smpl evt2raw
 
-EXAMPLESDIR=$(DOCDIR)/perf_examples
+EXAMPLESDIR=$(DESTDIR)$(DOCDIR)/perf_examples
 
 all: $(TARGETS)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done

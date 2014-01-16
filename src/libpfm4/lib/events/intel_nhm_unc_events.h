@@ -29,15 +29,15 @@
 
 static const intel_x86_umask_t nhm_unc_unc_dram_open[]={
    { .uname  = "CH0",
-     .udesc  = "DRAM Channel 0 open comamnds issued for read or write",
+     .udesc  = "DRAM Channel 0 open commands issued for read or write",
      .ucode = 0x100,
    },
    { .uname  = "CH1",
-     .udesc  = "DRAM Channel 1 open comamnds issued for read or write",
+     .udesc  = "DRAM Channel 1 open commands issued for read or write",
      .ucode = 0x200,
    },
    { .uname  = "CH2",
-     .udesc  = "DRAM Channel 2 open comamnds issued for read or write",
+     .udesc  = "DRAM Channel 2 open commands issued for read or write",
      .ucode = 0x400,
    },
 };
@@ -878,7 +878,7 @@ static const intel_x86_entry_t intel_nhm_unc_pe[]={
   .flags = INTEL_X86_FIXED,
 },
 { .name   = "UNC_DRAM_OPEN",
-  .desc   = "DRAM open comamnds issued for read or write",
+  .desc   = "DRAM open commands issued for read or write",
   .modmsk = NHM_UNC_ATTRS,
   .cntmsk = 0x1fe00000,
   .code = 0x60,

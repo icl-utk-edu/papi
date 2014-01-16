@@ -86,7 +86,7 @@ static const arm_entry_t arm_cortex_a8_pe []={
 	},
 	{.name = "PC_IMM_BRANCH",
 	 .code = 0x0d,
-	 .desc = "Immedidate branches architecturally executed"
+	 .desc = "Immediate branches architecturally executed"
 	},
 	{.name = "PC_PROC_RETURN",
 	 .code = 0x0e,
@@ -194,7 +194,7 @@ static const arm_entry_t arm_cortex_a8_pe []={
 	},  
 	{.name = "OP_EXECUTED",
 	 .code = 0x55,
-	 .desc = "Operations excuted (includes sub-ops in multi-cycle instructions)"
+	 .desc = "Operations executed (includes sub-ops in multi-cycle instructions)"
 	},
 	{.name = "CYCLES_INST_STALL",
 	 .code = 0x56,

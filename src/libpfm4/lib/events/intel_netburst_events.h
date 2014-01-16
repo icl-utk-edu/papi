@@ -1495,7 +1495,7 @@ static const netburst_entry_t netburst_events[] = {
 
 	/* 44 */
 	{.name = "machine_clear",
-	 .desc = "Number of occurances when the entire "
+	 .desc = "Number of occurrences when the entire "
 		 "pipeline of the machine is cleared",
 	 .event_select = 0x2,
 	 .escr_select = 0x5,
@@ -1506,7 +1506,7 @@ static const netburst_entry_t netburst_events[] = {
 		 .desc = "Counts for a portion of the many cycles while the "
 			 "machine is cleared for any cause. Use edge-"
 			 "triggering for this bit only to get a count of "
-			 "occurances versus a duration",
+			 "occurrences versus a duration",
 		 .bit = 0,
 		},
 		{.name = "MOCLEAR",
