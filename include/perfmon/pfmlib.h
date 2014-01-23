@@ -196,6 +196,8 @@ typedef enum {
 	PFM_PMU_INTEL_SLM,		/* Intel Silvermont */
 	PFM_PMU_AMD64_FAM15H_NB,	/* AMD AMD64 Fam15h NorthBridge */
 
+	PFM_PMU_ARM_QCOM_KRAIT,		/* Qualcomm Krait */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
