@@ -34,7 +34,7 @@
  * maximum number of unit masks groups per event
  */
 #define INTEL_X86_NUM_GRP	8
-#define INTEL_X86_MAX_FILTERS	2
+#define INTEL_X86_MAX_FILTERS	3
 
 /*
  * unit mask description

@@ -83,14 +83,21 @@ pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	attr->config = reg.val;
 
-	/*
-	 * various filters
-	 */
-	if (e->count == 2)
-		attr->config1 = e->codes[1];
+	if (is_cbo_filt_event(this, reg) && e->count > 1) {
+		if (e->count >= 2)
+			attr->config1 = e->codes[1];
+		if (e->count >= 3)
+			attr->config1 |= e->codes[2] << 32;
+	} else {
+		/*
+		 * various filters
+		 */
+		if (e->count >= 2)
+			attr->config1 = e->codes[1];
 
-	if (e->count == 3)
-		attr->config2 = e->codes[2];
+		if (e->count >= 3)
+			attr->config2 = e->codes[2];
+	}
 
 	/*
 	 * uncore measures at all priv levels

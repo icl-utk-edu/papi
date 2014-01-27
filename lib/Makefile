@@ -70,6 +70,15 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_snbep_unc_ubo.c \
 	  pfmlib_intel_snbep_unc_r2pcie.c \
 	  pfmlib_intel_snbep_unc_r3qpi.c \
+	  pfmlib_intel_ivbep_unc_cbo.c \
+	  pfmlib_intel_ivbep_unc_ha.c \
+	  pfmlib_intel_ivbep_unc_imc.c \
+	  pfmlib_intel_ivbep_unc_pcu.c \
+	  pfmlib_intel_ivbep_unc_qpi.c \
+	  pfmlib_intel_ivbep_unc_ubo.c \
+	  pfmlib_intel_ivbep_unc_r2pcie.c \
+	  pfmlib_intel_ivbep_unc_r3qpi.c \
+	  pfmlib_intel_ivbep_unc_irp.c \
 	  pfmlib_intel_knc.c \
 	  pfmlib_intel_slm.c \
 	  pfmlib_intel_netburst.c \
@@ -219,6 +228,15 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_snbep_unc_r2pcie_events.h \
 	events/intel_snbep_unc_r3qpi_events.h \
 	events/intel_knc_events.h \
+	events/intel_ivbep_unc_cbo_events.h \
+	events/intel_ivbep_unc_ha_events.h \
+	events/intel_ivbep_unc_imc_events.h \
+	events/intel_ivbep_unc_pcu_events.h \
+	events/intel_ivbep_unc_qpi_events.h \
+	events/intel_ivbep_unc_ubo_events.h \
+	events/intel_ivbep_unc_r2pcie_events.h \
+	events/intel_ivbep_unc_r3qpi_events.h \
+	events/intel_ivbep_unc_irp_events.h \
 	events/intel_slm_events.h
 
 INC_MIPS=events/mips_74k_events.h events/mips_74k_events.h

@@ -58,6 +58,15 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_snbep_unc_ubo.3 \
 	 libpfm_intel_snbep_unc_r2pcie.3 \
 	 libpfm_intel_snbep_unc_r3qpi.3 \
+	 libpfm_intel_ivbep_unc_cbo.3 \
+	 libpfm_intel_ivbep_unc_ha.3 \
+	 libpfm_intel_ivbep_unc_imc.3 \
+	 libpfm_intel_ivbep_unc_pcu.3 \
+	 libpfm_intel_ivbep_unc_qpi.3 \
+	 libpfm_intel_ivbep_unc_ubo.3 \
+	 libpfm_intel_ivbep_unc_r2pcie.3 \
+	 libpfm_intel_ivbep_unc_r3qpi.3 \
+	 libpfm_intel_ivbep_unc_irp.3 \
 	 libpfm_intel_knc.3
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
