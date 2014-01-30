@@ -21,7 +21,6 @@ int main (int argc, char **argv)
 {
     int retval,cid,numcmp;
     int EventSet = PAPI_NULL;
-    long long value;
     int code;
     char event_names[MAX_EVENTS][PAPI_MAX_STR_LEN];
     int event_codes[MAX_EVENTS];
