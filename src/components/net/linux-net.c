@@ -240,7 +240,7 @@ read_net_counters( long long *values )
             SUBDBG("Interface <%s> not found\n", ifname);
         } else {
             nf = sscanf( data,
-                "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu\n",
+                "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld\n",
                 &values[if_bidx + 0],  &values[if_bidx + 1],
                 &values[if_bidx + 2],  &values[if_bidx + 3],
                 &values[if_bidx + 4],  &values[if_bidx + 5],
@@ -251,7 +251,7 @@ read_net_counters( long long *values )
                 &values[if_bidx + 14], &values[if_bidx + 15]);
 
             SUBDBG("\nRead "
-                "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu\n",
+                "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld\n",
                 values[if_bidx + 0],  values[if_bidx + 1],
                 values[if_bidx + 2],  values[if_bidx + 3],
                 values[if_bidx + 4],  values[if_bidx + 5],

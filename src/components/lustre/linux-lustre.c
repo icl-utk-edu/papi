@@ -334,13 +334,13 @@ read_lustre_counter( )
 			if (fgets(buffer,BUFSIZ,fff)==NULL) break;
 	
 			if (strstr( buffer, "write_bytes" )) {
-			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->write_cntr->value);
-			  SUBDBG("Read %lld write_bytes\n",fs->write_cntr->value);
+			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %llu",&fs->write_cntr->value);
+			  SUBDBG("Read %llu write_bytes\n",fs->write_cntr->value);
 			}
 	
 			if (strstr( buffer, "read_bytes" )) {
-			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %lld",&fs->read_cntr->value);
-			  SUBDBG("Read %lld read_bytes\n",fs->read_cntr->value);
+			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %llu",&fs->read_cntr->value);
+			  SUBDBG("Read %llu read_bytes\n",fs->read_cntr->value);
 			}
 		  }
 		  fclose(fff);
@@ -352,8 +352,8 @@ read_lustre_counter( )
 			if (fgets(buffer,BUFSIZ,fff)==NULL) break;
 	
 			if (strstr( buffer, "read but discarded")) {
-			   sscanf(buffer,"%*s %*s %*s %lld",&fs->readahead_cntr->value);
-			   SUBDBG("Read %lld discared\n",fs->readahead_cntr->value);
+			   sscanf(buffer,"%*s %*s %*s %llu",&fs->readahead_cntr->value);
+			   SUBDBG("Read %llu discared\n",fs->readahead_cntr->value);
 			   break;
 			}
 	  	  }
