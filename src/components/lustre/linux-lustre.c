@@ -678,18 +678,9 @@ int
 _lustre_set_domain( hwd_control_state_t * cntrl, int domain )
 {
 	( void ) cntrl;
-	int found = 0;
-	if ( PAPI_DOM_USER & domain ) {
-		found = 1;
-	}
-	if ( PAPI_DOM_KERNEL & domain ) {
-		found = 1;
-	}
-	if ( PAPI_DOM_OTHER & domain ) {
-		found = 1;
-	}
-	if ( !found )
+	if ( PAPI_DOM_USER != domain ) {
 		return PAPI_EINVAL;
+	}
 
 	return PAPI_OK;
 }
@@ -770,9 +761,9 @@ papi_vector_t _lustre_vector = {
        .description = "Lustre filesystem statistics",
        .num_mpx_cntrs = LUSTRE_MAX_COUNTERS,
        .num_cntrs = LUSTRE_MAX_COUNTERS,
-       .default_domain = PAPI_DOM_USER,
-       .default_granularity = PAPI_GRN_THR,
-       .available_granularities = PAPI_GRN_THR,
+       .default_domain = PAPI_DOM_ALL,
+       .default_granularity = PAPI_GRN_SYS,
+       .available_granularities = PAPI_GRN_SYS,
        .hardware_intr_sig = PAPI_INT_SIGNAL,
 
        /* component specific cmp_info initializations */
@@ -780,7 +771,7 @@ papi_vector_t _lustre_vector = {
        .fast_virtual_timer = 0,
        .attach = 0,
        .attach_must_ptrace = 0,
-       .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+       .available_domains = PAPI_DOM_ALL,
   },
 
      /* sizes of framework-opaque component-private structures */

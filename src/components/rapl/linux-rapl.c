@@ -868,10 +868,11 @@ int
 _rapl_set_domain( hwd_control_state_t *ctl, int domain )
 {
     ( void ) ctl;
-    (void) domain;
     
     /* In theory we only support system-wide mode */
     /* How to best handle that? */
+    if ( PAPI_DOM_ALL != domain )
+	return PAPI_EINVAL;
 
     return PAPI_OK;
 }
@@ -989,11 +990,11 @@ papi_vector_t _rapl_vector = {
        .short_name = "rapl",
        .description = "Linux SandyBridge RAPL energy measurements",
        .version = "5.3.0",
-       .default_domain = PAPI_DOM_USER,
-       .default_granularity = PAPI_GRN_THR,
-       .available_granularities = PAPI_GRN_THR,
+       .default_domain = PAPI_DOM_ALL,
+       .default_granularity = PAPI_GRN_SYS,
+       .available_granularities = PAPI_GRN_SYS,
        .hardware_intr_sig = PAPI_INT_SIGNAL,
-       .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+       .available_domains = PAPI_DOM_ALL,
     },
 
 	/* sizes of framework-opaque component-private structures */

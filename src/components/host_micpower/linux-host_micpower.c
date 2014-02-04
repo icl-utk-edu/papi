@@ -566,7 +566,8 @@ int
 _host_micpower_set_domain( hwd_control_state_t* ctl, int domain)
 {
 	(void)ctl;
-	(void)domain;
+	if ( PAPI_DOM_ALL != domain )
+	    return PAPI_EINVAL;
 	return PAPI_OK;
 }
 
@@ -582,8 +583,8 @@ papi_vector_t _host_micpower_vector = {
 		.num_mpx_cntrs = 0,
 		.default_domain 			= PAPI_DOM_ALL,
 		.available_domains 			= PAPI_DOM_ALL,
-		.default_granularity 		= PAPI_GRN_THR,
-		.available_granularities 	= PAPI_GRN_THR,
+		.default_granularity 		= PAPI_GRN_SYS,
+		.available_granularities 	= PAPI_GRN_SYS,
 		.hardware_intr_sig 			= PAPI_INT_SIGNAL,
 	}, 
 

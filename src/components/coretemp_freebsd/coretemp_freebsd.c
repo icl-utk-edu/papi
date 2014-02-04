@@ -420,35 +420,17 @@ int coretemp_ctl (hwd_context_t * ctx, int code, _papi_int_option_t * option)
  */
 int coretemp_set_domain (hwd_control_state_t * cntrl, int domain)
 {
-	int found = 0;
 	UNREFERENCED(cntrl);
 
 	SUBDBG ("coretemp_set_domain... %p %d\n", cntrl, domain);
 
-	if (PAPI_DOM_USER & domain)
-	{
-		SUBDBG( " PAPI_DOM_USER \n" );
-		found = 1;
-	}
-	if (PAPI_DOM_KERNEL & domain)
-	{
-		SUBDBG( " PAPI_DOM_KERNEL \n" );
-		found = 1;
-	}
-	if (PAPI_DOM_OTHER & domain)
-	{
-		SUBDBG( " PAPI_DOM_OTHER \n" );
-		found = 1;
-	}
 	if (PAPI_DOM_ALL & domain)
 	{
 		SUBDBG( " PAPI_DOM_ALL \n" );
-		found = 1;
+		return PAPI_OK;
 	}
-	if (!found)
-		return PAPI_EINVAL ;
+	return PAPI_EINVAL ;
 
-	return PAPI_OK;
 }
 
 
@@ -461,10 +443,10 @@ papi_vector_t _coretemp_freebsd_vector = {
 				 .version = "5.0",
 				 .num_mpx_cntrs = CORETEMP_MAX_COUNTERS,
 				 .num_cntrs = CORETEMP_MAX_COUNTERS,
-				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
+				 .default_domain = PAPI_DOM_ALL,
+				 .available_domains = PAPI_DOM_ALL,
+				 .default_granularity = PAPI_GRN_SYS,
+				 .available_granularities = PAPI_GRN_SYS,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */

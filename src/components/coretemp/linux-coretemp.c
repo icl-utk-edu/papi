@@ -539,19 +539,8 @@ _coretemp_update_control_state(	hwd_control_state_t *ptr,
 int
 _coretemp_set_domain( hwd_control_state_t * cntl, int domain )
 {
-    int found = 0;
-    ( void ) cntl;
-	
-    if ( PAPI_DOM_USER & domain )
-       found = 1;
-
-       if ( PAPI_DOM_KERNEL & domain )
-		found = 1;
-
-       if ( PAPI_DOM_OTHER & domain )
-		found = 1;
-
-       if ( !found )
+       (void) cntl;
+       if ( PAPI_DOM_ALL != domain )
 		return PAPI_EINVAL;
 
        return PAPI_OK;
@@ -672,10 +661,10 @@ papi_vector_t _coretemp_vector = {
 				 .version = "4.2.1",
 				 .num_mpx_cntrs = CORETEMP_MAX_COUNTERS,
 				 .num_cntrs = CORETEMP_MAX_COUNTERS,
-				 .default_domain = PAPI_DOM_USER,
-				 //.available_domains = PAPI_DOM_USER,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
+				 .default_domain = PAPI_DOM_ALL,
+				 .available_domains = PAPI_DOM_ALL,
+				 .default_granularity = PAPI_GRN_SYS,
+				 .available_granularities = PAPI_GRN_SYS,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */

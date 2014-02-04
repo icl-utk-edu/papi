@@ -818,31 +818,13 @@ INFINIBAND_update_control_state( hwd_control_state_t * ptr,
 
 
 /*
- * This function has to set the bits needed to count different domains
- * In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
- * By default return PAPI_EINVAL if none of those are specified
- * and PAPI_OK with success
- * PAPI_DOM_USER is only user context is counted
- * PAPI_DOM_KERNEL is only the Kernel/OS context is counted
- * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
- * PAPI_DOM_ALL   is all of the domains
+ * Infiniband counts are system wide, so this is the only domain we will respond to
  */
 int
 INFINIBAND_set_domain( hwd_control_state_t * cntrl, int domain )
 {
-	int found = 0;
-	( void ) cntrl;
-
-	if ( PAPI_DOM_USER & domain )
-		found = 1;
-
-	if ( PAPI_DOM_KERNEL & domain )
-		found = 1;
-
-	if ( PAPI_DOM_OTHER & domain )
-		found = 1;
-
-	if ( !found )
+	(void) cntrl;
+	if ( PAPI_DOM_ALL != domain )
 		return ( PAPI_EINVAL );
 
 	return ( PAPI_OK );
@@ -934,10 +916,10 @@ papi_vector_t _infiniband_vector = {
 				 .description = "Infiniband statistics",
 				 .num_mpx_cntrs = INFINIBAND_MAX_COUNTERS,
 				 .num_cntrs = INFINIBAND_MAX_COUNTERS,
-				 .default_domain = PAPI_DOM_USER,
-				 .available_domains = PAPI_DOM_USER,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
+				 .default_domain = PAPI_DOM_ALL,
+				 .available_domains = PAPI_DOM_ALL,
+				 .default_granularity = PAPI_GRN_SYS,
+				 .available_granularities = PAPI_GRN_SYS,
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
 				 /* component specific cmp_info initializations */
@@ -945,7 +927,6 @@ papi_vector_t _infiniband_vector = {
 				 .fast_virtual_timer = 0,
 				 .attach = 0,
 				 .attach_must_ptrace = 0,
-				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 }
 	,
 
