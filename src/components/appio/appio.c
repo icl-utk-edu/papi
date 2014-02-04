@@ -599,9 +599,7 @@ _appio_set_domain( hwd_control_state_t *ctl, int domain )
 
     int found = 0;
 
-    if ( PAPI_DOM_USER & domain )   found = 1;
-    if ( PAPI_DOM_KERNEL & domain ) found = 1;
-    if ( PAPI_DOM_OTHER & domain )  found = 1;
+    if ( PAPI_DOM_USER == domain )   found = 1;
 
     if ( !found )
         return PAPI_EINVAL;
@@ -737,7 +735,7 @@ papi_vector_t _appio_vector = {
         .num_mpx_cntrs         = APPIO_MAX_COUNTERS,
         .num_cntrs             = APPIO_MAX_COUNTERS,
         .default_domain        = PAPI_DOM_USER,
-        //.available_domains   = PAPI_DOM_USER,
+        .available_domains   = PAPI_DOM_USER,
         .default_granularity   = PAPI_GRN_THR,
         .available_granularities = PAPI_GRN_THR,
         .hardware_intr_sig     = PAPI_INT_SIGNAL,
@@ -747,7 +745,6 @@ papi_vector_t _appio_vector = {
         .fast_virtual_timer    = 0,
         .attach                = 0,
         .attach_must_ptrace    = 0,
-        .available_domains     = PAPI_DOM_USER | PAPI_DOM_KERNEL,
     },
 
     /* sizes of framework-opaque component-private structures */
