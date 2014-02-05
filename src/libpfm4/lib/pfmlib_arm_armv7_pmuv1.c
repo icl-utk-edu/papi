@@ -36,6 +36,7 @@
 #include "events/arm_cortex_a8_events.h"        /* event tables */
 #include "events/arm_cortex_a9_events.h"
 #include "events/arm_cortex_a15_events.h"
+#include "events/arm_qcom_krait_events.h"
 
 static int
 pfm_arm_detect_cortex_a8(void *this)
@@ -87,6 +88,29 @@ pfm_arm_detect_cortex_a15(void *this)
 	}
 	return PFM_ERR_NOTSUPP;
 }
+
+static int
+pfm_arm_detect_krait(void *this)
+{
+
+	int ret;
+
+	ret = pfm_arm_detect(this);
+	if (ret != PFM_SUCCESS)
+		return PFM_ERR_NOTSUPP;
+
+	/* Check for Qualcomm */
+	if (pfm_arm_cfg.implementer == 0x51) {
+		/* Check that [15:10] of midr is 0x01 which	*/
+		/* indicates Krait rather than Scorpion	CPU	*/
+		/* pfm_arm_cfg.part is (midr>>4)&0xfff		*/
+		if (pfm_arm_cfg.part >> 6 == 0x1) {
+			return PFM_SUCCESS;
+		}
+	}
+	return PFM_ERR_NOTSUPP;
+}
+
 
 /* Cortex A8 support */
 pfmlib_pmu_t arm_cortex_a8_support={
@@ -150,6 +174,32 @@ pfmlib_pmu_t arm_cortex_a15_support={
 	.pmu_detect		= pfm_arm_detect_cortex_a15,
 	.max_encoding		= 1,
 	.num_cntrs		= 6,
+	.supported_plm		= ARMV7_A15_PLM,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first	= pfm_arm_get_event_first,
+	.get_event_next		= pfm_arm_get_event_next,
+	.event_is_valid		= pfm_arm_event_is_valid,
+	.validate_table		= pfm_arm_validate_table,
+	.get_event_info		= pfm_arm_get_event_info,
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
+};
+
+/* Qualcomm Krait support */
+pfmlib_pmu_t arm_qcom_krait_support={
+	.desc			= "ARM Qualcomm Krait",
+	.name			= "qcom_krait",
+	.pmu			= PFM_PMU_ARM_QCOM_KRAIT,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_qcom_krait_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.pe			= arm_qcom_krait_pe,
+
+	.pmu_detect		= pfm_arm_detect_krait,
+	.max_encoding		= 1,
+	.num_cntrs		= 5,
 	.supported_plm		= ARMV7_A15_PLM,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
