@@ -165,7 +165,7 @@ static const intel_x86_umask_t snbep_unc_c_llc_lookup[]={
    { .uname  = "DATA_READ",
      .udesc  = "Data read requests",
      .grpid  = 0,
-     .uflags = INTEL_X86_NCOMBO,
+     .uflags = INTEL_X86_NCOMBO | INTEL_X86_DFL,
      .ucode = 0x300,
    },
    { .uname  = "WRITE",
@@ -182,12 +182,12 @@ static const intel_x86_umask_t snbep_unc_c_llc_lookup[]={
    },
    { .uname  = "NID",
      .udesc  = "Match a given RTID destination NID",
-     .uflags = INTEL_X86_NCOMBO,
+     .uflags = INTEL_X86_NCOMBO | INTEL_X86_GRP_DFL_NONE,
      .umodmsk_req = _SNBEP_UNC_ATTR_NF,
-     .grpid  = 0,
+     .grpid  = 1,
      .ucode = 0x4100,
    },
-   CBO_FILT_MESIFS(1),
+   CBO_FILT_MESIFS(2),
 };
 
 static const intel_x86_umask_t snbep_unc_c_llc_victims[]={
@@ -626,7 +626,7 @@ static const intel_x86_entry_t intel_snbep_unc_c_pe[]={
     .modmsk = SNBEP_UNC_CBO_NID_ATTRS,
     .cntmsk = 0x3,
     .code = 0x34,
-    .ngrp = 2,
+    .ngrp = 3,
     .flags = INTEL_X86_NO_AUTOENCODE,
     .numasks = LIBPFM_ARRAY_SIZE(snbep_unc_c_llc_lookup),
     .umasks = snbep_unc_c_llc_lookup,
