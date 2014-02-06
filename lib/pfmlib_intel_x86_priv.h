@@ -86,6 +86,7 @@ typedef struct {
 #define INTEL_X86_NO_AUTOENCODE		0x100	/* does not support auto encoding validation */
 #define INTEL_X86_CODE_OVERRIDE		0x200	/* umask overrides event code */
 #define INTEL_X86_LDLAT			0x400	/* needs load latency modifier (ldlat) */
+#define INTEL_X86_GRP_DFL_NONE		0x800	/* ok if umask group defaults to no umask */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */

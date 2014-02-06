@@ -149,9 +149,19 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 				continue;
 			}
 
+			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_GRP_DFL_NONE)) {
+				skip = 1;
+				continue;
+			}
+
 			/* umask is default for group */
 			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_DFL)) {
-				DPRINT("added default %s for group %d j=%d idx=%d\n", ent->umasks[idx].uname, i, j, idx);
+				DPRINT("added default %s for group %d j=%d idx=%d ucode=0x%"PRIx64"\n",
+					ent->umasks[idx].uname,
+					i,	
+					j,
+					idx,
+					ent->umasks[idx].ucode);
 				/*
 				 * default could be an alias, but
 				 * ucode must reflect actual code
@@ -181,7 +191,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 			return PFM_ERR_UMASK;
 		}
 	}
-	DPRINT("max_grpid=%d nattrs=%d k=%d\n", max_grpid, e->nattrs, k);
+	DPRINT("max_grpid=%d nattrs=%d k=%d umask=0x%"PRIx64"\n", max_grpid, e->nattrs, k, *umask);
 done:
 	e->nattrs = k;
 	return PFM_SUCCESS;
