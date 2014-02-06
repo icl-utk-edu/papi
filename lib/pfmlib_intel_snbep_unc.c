@@ -424,8 +424,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		ret = snbep_unc_add_defaults(this, e, ugrpmsk, &um, &filter, max_grpid);
 		if (ret != PFM_SUCCESS)
 			return ret;
-		um >>= 8;
-		umask2 = um;
+		umask2 |= um;
 	}
 
 	/*
