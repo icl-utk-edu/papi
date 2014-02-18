@@ -132,8 +132,12 @@ typedef struct pfmlib_pmu {
 	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 	int		 (*os_detect[PFM_OS_MAX])(void *this);
 	int		 (*validate_table)(void *this, FILE *fp);
-	int 		 (*get_num_events)(void *this);	/* optional */
-	void		 (*display_reg)(void *this, pfmlib_event_desc_t *e, void *val); /* optional */
+	/*
+	 * optional callbacks
+	 */
+	int 		 (*get_num_events)(void *this);
+	void		 (*display_reg)(void *this, pfmlib_event_desc_t *e, void *val);
+	int 		 (*match_event)(void *this, pfmlib_event_desc_t *d, const char *e, const char *s);
 } pfmlib_pmu_t;
 
 typedef struct {

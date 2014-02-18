@@ -1026,10 +1026,17 @@ pfmlib_release_event(pfmlib_event_desc_t *e)
 }
 
 static int
+match_event(void *this, pfmlib_event_desc_t *d, const char *e, const char *s)
+{
+	return strcasecmp(e, s);
+}
+
+static int
 pfmlib_parse_equiv_event(const char *event, pfmlib_event_desc_t *d)
 {
 	pfmlib_pmu_t *pmu = d->pmu;
 	pfm_event_info_t einfo;
+	int (*match)(void *this, pfmlib_event_desc_t *d, const char *e, const char *s);
 	char *str, *s, *p;
 	int i;
 	int ret;
@@ -1045,11 +1052,13 @@ pfmlib_parse_equiv_event(const char *event, pfmlib_event_desc_t *d)
 	if (p)
 		*p++ = '\0';
 
+	match = pmu->match_event ? pmu->match_event : match_event;
+
 	pfmlib_for_each_pmu_event(pmu, i) {
 		ret = pmu->get_event_info(pmu, i, &einfo);
 		if (ret != PFM_SUCCESS)
 			goto error;
-		if (!strcasecmp(einfo.name, s))
+		if (!match(pmu, d, einfo.name, s))
 			goto found;
 	}
 	free(str);
@@ -1085,6 +1094,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	pfm_event_info_t einfo;
 	char *str, *s, *p;
 	pfmlib_pmu_t *pmu;
+	int (*match)(void *this, pfmlib_event_desc_t *d, const char *e, const char *s);
 	const char *pname = NULL;
 	int i, j, ret;
 
@@ -1138,6 +1148,8 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		 */
 		if (pname && !pfmlib_pmu_active(pmu) && !pfm_cfg.inactive)
 			continue;
+
+		match = pmu->match_event ? pmu->match_event : match_event;
 		/*
 		 * for each event
 		 */
@@ -1145,7 +1157,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 			ret = pmu->get_event_info(pmu, i, &einfo);
 			if (ret != PFM_SUCCESS)
 				goto error;
-			if (!strcasecmp(einfo.name, s))
+			if (!match(pmu, d, einfo.name, s))
 				goto found;
 		}
 	}
