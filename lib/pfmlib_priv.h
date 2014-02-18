@@ -288,6 +288,7 @@ extern pfmlib_pmu_t sparc_niagara1_support;
 extern pfmlib_pmu_t sparc_niagara2_support;
 extern pfmlib_pmu_t cell_support;
 extern pfmlib_pmu_t perf_event_support;
+extern pfmlib_pmu_t perf_event_raw_support;
 extern pfmlib_pmu_t intel_wsm_sp_support;
 extern pfmlib_pmu_t intel_wsm_dp_support;
 extern pfmlib_pmu_t intel_wsm_unc_support;

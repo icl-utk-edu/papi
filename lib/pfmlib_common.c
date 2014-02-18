@@ -170,6 +170,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 #ifdef __linux__
 	&perf_event_support,
+	&perf_event_raw_support,
 #endif
 };
 #define PFMLIB_NUM_PMUS	(int)(sizeof(pfmlib_pmus)/sizeof(pfmlib_pmu_t *))

@@ -197,6 +197,7 @@ typedef enum {
 	PFM_PMU_AMD64_FAM15H_NB,	/* AMD AMD64 Fam15h NorthBridge */
 
 	PFM_PMU_ARM_QCOM_KRAIT,		/* Qualcomm Krait */
+	PFM_PMU_PERF_EVENT_RAW,		/* perf_events RAW event syntax */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 
