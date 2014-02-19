@@ -28,6 +28,7 @@ include $(TOPDIR)/rules.mk
 .PHONY: all clean distclean depend
 
 ARCH_MAN=
+SYS_MAN=
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86),y)
 ARCH_MAN=libpfm_intel_core.3	\
@@ -69,7 +70,6 @@ ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
 ARCH_MAN += libpfm_arm_ac15.3 libpfm_arm_ac8.3 libpfm_arm_ac9.3 libpfm_arm_qcom_krait.3
 endif
 
-
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
 ARCH_MAN += libpfm_mips_74k.3
 endif
@@ -81,14 +81,17 @@ GEN_MAN= libpfm.3 \
 	pfm_get_event_encoding.3 \
 	pfm_get_event_next.3 \
 	pfm_get_pmu_info.3 \
-	pfm_get_perf_event_encoding.3 \
 	pfm_get_os_event_encoding.3 \
 	pfm_get_version.3 \
 	pfm_initialize.3 \
 	pfm_terminate.3 \
 	pfm_strerror.3
 
-MAN=$(GEN_MAN) $(ARCH_MAN)
+ifeq ($(SYS),Linux)
+SYS_MAN=pfm_get_perf_event_encoding.3 
+endif
+
+MAN=$(GEN_MAN) $(ARCH_MAN) $(SYS_MAN)
 
 install:
 
