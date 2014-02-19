@@ -88,7 +88,7 @@ GEN_MAN= libpfm.3 \
 	pfm_strerror.3
 
 ifeq ($(SYS),Linux)
-SYS_MAN=pfm_get_perf_event_encoding.3 
+SYS_MAN=pfm_get_perf_event_encoding.3 libpfm_perf_event_raw.3
 endif
 
 MAN=$(GEN_MAN) $(ARCH_MAN) $(SYS_MAN)
