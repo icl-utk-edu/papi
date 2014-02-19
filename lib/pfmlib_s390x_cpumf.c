@@ -107,13 +107,13 @@ static int pfm_cpumcf_init(void *this)
 	switch (get_machine_type()) {
 	case 2097:  /* IBM System z10 EC */
 	case 2098:  /* IBM System z10 BC */
-		ext_set = cpumf_ctr_set_ext_z10;
-		ext_set_count = LIBPFM_ARRAY_SIZE(cpumf_ctr_set_ext_z10);
+		ext_set = cpumcf_z10_counters,
+		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z10_counters);
 		break;
 	case 2817:  /* IBM zEnterprise 196 */
 	case 2818:  /* IBM zEnterprise 114 */
-		ext_set = cpumf_ctr_set_ext_z196;
-		ext_set_count = LIBPFM_ARRAY_SIZE(cpumf_ctr_set_ext_z196);
+		ext_set = cpumcf_z196_counters;
+		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z196_counters);
 		break;
 	default:
 		/* No extended counter set for this machine type or there
@@ -123,13 +123,14 @@ static int pfm_cpumcf_init(void *this)
 		break;
 	}
 
-	generic_count = LIBPFM_ARRAY_SIZE(cpumf_generic_ctr);
+	generic_count = LIBPFM_ARRAY_SIZE(cpumcf_generic_counters);
 
 	cpumcf_pe = calloc(sizeof(*cpumcf_pe), generic_count + ext_set_count);
 	if (cpumcf_pe == NULL)
 		return PFM_ERR_NOMEM;
 
-	memcpy(cpumcf_pe, cpumf_generic_ctr, sizeof(*cpumcf_pe) * generic_count);
+	memcpy(cpumcf_pe, cpumcf_generic_counters,
+	       sizeof(*cpumcf_pe) * generic_count);
 	if (ext_set_count)
 		memcpy((void *) (cpumcf_pe + generic_count),
 		       ext_set, sizeof(*cpumcf_pe) * ext_set_count);
@@ -250,8 +251,8 @@ pfmlib_pmu_t s390x_cpum_cf_support = {
 	.num_fixed_cntrs = CPUMF_COUNTER_MAX,	/* fixed counters only */
 	.max_encoding	 = 1,
 
-	.pe		 = cpumf_generic_ctr,
-	.pme_count	 = LIBPFM_ARRAY_SIZE(cpumf_generic_ctr),
+	.pe		 = cpumcf_generic_counters,
+	.pme_count	 = LIBPFM_ARRAY_SIZE(cpumcf_generic_counters),
 
 	.pmu_detect    = pfm_cpumcf_detect,
 	.pmu_init      = pfm_cpumcf_init,
