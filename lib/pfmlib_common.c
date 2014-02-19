@@ -202,6 +202,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 #ifdef CONFIG_PFMLIB_ARCH_S390X
 	&s390x_cpum_cf_support,
+	&s390x_cpum_sf_support,
 #endif
 #ifdef __linux__
 	&perf_event_support,

@@ -235,6 +235,8 @@ typedef enum {
 	PFM_PMU_INTEL_IVBEP_UNC_R3QPI2,	/* Intel IvyBridge-EP R3QPI 2 uncore */
 	PFM_PMU_INTEL_IVBEP_UNC_IRP,	/* Intel IvyBridge-EP IRP uncore */
 
+	PFM_PMU_S390X_CPUM_SF,		/* s390x: CPU-M sampling facility */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

@@ -1,7 +1,7 @@
 /*
- * PMU support for the CPU-measurement counter facility
+ * PMU support for the CPU-measurement facilities
  *
- * Copyright IBM Corp. 2012
+ * Copyright IBM Corp. 2012, 2014
  * Contributed by Hendrik Brueckner <brueckner@linux.vnet.ibm.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,17 +34,25 @@
 #include "events/s390x_cpumf_events.h"
 
 
-#define CPUMF_DEVICE_DIR  "/sys/bus/event_source/devices/cpum_cf"
-#define SYS_INFO	  "/proc/sysinfo"
+#define CPUM_CF_DEVICE_DIR  "/sys/bus/event_source/devices/cpum_cf"
+#define CPUM_SF_DEVICE_DIR  "/sys/bus/event_source/devices/cpum_sf"
+#define SYS_INFO	    "/proc/sysinfo"
 
 
 /* CPU-measurement counter list (pmu events) */
 static pme_cpumf_ctr_t *cpumcf_pe = NULL;
 
-/* Detect the CPU-measurement facility */
+/* Detect the CPU-measurement counter and sampling facilities */
 static int pfm_cpumcf_detect(void *this)
 {
-	if (access(CPUMF_DEVICE_DIR, R_OK))
+	if (access(CPUM_CF_DEVICE_DIR, R_OK))
+		return PFM_ERR_NOTSUPP;
+	return PFM_SUCCESS;
+}
+
+static int pfm_cpumsf_detect(void *this)
+{
+	if (access(CPUM_SF_DEVICE_DIR, R_OK))
 		return PFM_ERR_NOTSUPP;
 	return PFM_SUCCESS;
 }
@@ -156,7 +164,7 @@ static void pfm_cpumcf_exit(void *this)
 	free(cpumcf_pe);
 }
 
-static int pfm_cpumcf_get_encoding(void *this, pfmlib_event_desc_t *e)
+static int pfm_cpumf_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	const pme_cpumf_ctr_t *pe = this_pe(this);
 
@@ -167,12 +175,12 @@ static int pfm_cpumcf_get_encoding(void *this, pfmlib_event_desc_t *e)
 	return PFM_SUCCESS;
 }
 
-static int pfm_cpumcf_get_event_first(void *this)
+static int pfm_cpumf_get_event_first(void *this)
 {
 	return 0;
 }
 
-static int pfm_cpumcf_get_event_next(void *this, int idx)
+static int pfm_cpumf_get_event_next(void *this, int idx)
 {
 	pfmlib_pmu_t *pmu = this;
 
@@ -181,26 +189,20 @@ static int pfm_cpumcf_get_event_next(void *this, int idx)
 	return idx + 1;
 }
 
-static int pfm_cpumcf_event_is_valid(void *this, int idx)
+static int pfm_cpumf_event_is_valid(void *this, int idx)
 {
 	pfmlib_pmu_t *pmu = this;
 
 	return (idx >= 0 && idx < pmu->pme_count);
 }
 
-static int pfm_cpumcf_validate_table(void *this, FILE *fp)
+static int pfm_cpumf_validate_table(void *this, FILE *fp)
 {
 	pfmlib_pmu_t *pmu = this;
 	const pme_cpumf_ctr_t *pe = this_pe(this);
 	int i, rc;
 
 	rc = PFM_ERR_INVAL;
-	if (pmu->pme_count > CPUMF_COUNTER_MAX) {
-		fprintf(fp, "pmu: %s: pme number exceeded maximum\n",
-			pmu->name);
-		goto failed;
-	}
-
 	for (i = 0; i < pmu->pme_count; i++) {
 		if (!pe[i].name) {
 			fprintf(fp, "pmu: %s event: %i: No name\n",
@@ -219,7 +221,20 @@ failed:
 	return rc;
 }
 
-static int pfm_cpumcf_get_event_info(void *this, int idx,
+static int pfm_cpumcf_validate_table(void *this, FILE *fp)
+{
+	pfmlib_pmu_t *pmu = this;
+
+	if (pmu->pme_count > CPUMF_COUNTER_MAX) {
+		fprintf(fp, "pmu: %s: pme number exceeded maximum\n",
+			pmu->name);
+		return PFM_ERR_INVAL;
+	}
+
+	return pfm_cpumf_validate_table(this, fp);
+}
+
+static int pfm_cpumf_get_event_info(void *this, int idx,
 				    pfm_event_info_t *info)
 {
 	pfmlib_pmu_t *pmu = this;
@@ -238,7 +253,7 @@ static int pfm_cpumcf_get_event_info(void *this, int idx,
 	return PFM_SUCCESS;
 }
 
-static int pfm_cpumcf_get_event_attr_info(void *this, int idx, int umask_idx,
+static int pfm_cpumf_get_event_attr_info(void *this, int idx, int umask_idx,
 					 pfm_event_attr_info_t *info)
 {
 	/* Attributes are not supported */
@@ -263,12 +278,38 @@ pfmlib_pmu_t s390x_cpum_cf_support = {
 	.pmu_init      = pfm_cpumcf_init,
 	.pmu_terminate = pfm_cpumcf_exit,
 
-	.get_event_encoding[PFM_OS_NONE] = pfm_cpumcf_get_encoding,
+	.get_event_encoding[PFM_OS_NONE] = pfm_cpumf_get_encoding,
 		PFMLIB_ENCODE_PERF(pfm_s390x_get_perf_encoding),
-	.get_event_first	= pfm_cpumcf_get_event_first,
-	.get_event_next		= pfm_cpumcf_get_event_next,
-	.event_is_valid		= pfm_cpumcf_event_is_valid,
+	.get_event_first	= pfm_cpumf_get_event_first,
+	.get_event_next		= pfm_cpumf_get_event_next,
+	.event_is_valid		= pfm_cpumf_event_is_valid,
 	.validate_table		= pfm_cpumcf_validate_table,
-	.get_event_info		= pfm_cpumcf_get_event_info,
-	.get_event_attr_info	= pfm_cpumcf_get_event_attr_info,
+	.get_event_info		= pfm_cpumf_get_event_info,
+	.get_event_attr_info	= pfm_cpumf_get_event_attr_info,
+};
+
+pfmlib_pmu_t s390x_cpum_sf_support = {
+	.desc	   = "CPU-measurement sampling facility",
+	.name	   = "cpum_sf",
+	.pmu	   = PFM_PMU_S390X_CPUM_SF,
+	.type	   = PFM_PMU_TYPE_CORE,
+	.flags	   = PFMLIB_PMU_FL_ARCH_DFL,
+
+	.num_cntrs	 = 0,	/* no general-purpose counters */
+	.num_fixed_cntrs = 2,	/* fixed counters only */
+	.max_encoding	 = 1,
+
+	.pe	   = cpumsf_counters,
+	.pme_count = LIBPFM_ARRAY_SIZE(cpumsf_counters),
+
+	.pmu_detect = pfm_cpumsf_detect,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_cpumf_get_encoding,
+		PFMLIB_ENCODE_PERF(pfm_s390x_get_perf_encoding),
+	.get_event_first	= pfm_cpumf_get_event_first,
+	.get_event_next		= pfm_cpumf_get_event_next,
+	.event_is_valid		= pfm_cpumf_event_is_valid,
+	.validate_table		= pfm_cpumf_validate_table,
+	.get_event_info		= pfm_cpumf_get_event_info,
+	.get_event_attr_info	= pfm_cpumf_get_event_attr_info,
 };

@@ -840,4 +840,20 @@ static const pme_cpumf_ctr_t cpumcf_zec12_counters[] = {
 	},
 };
 
+static const pme_cpumf_ctr_t cpumsf_counters[] = {
+	{
+		.ctrnum = 720896,
+		.ctrset = CPUMF_CTRSET_NONE,
+		.name = "SF_CYCLES_BASIC",
+		.desc = "Sample CPU cycles using basic-sampling mode",
+	},
+	{
+		.ctrnum = 774144,
+		.ctrset = CPUMF_CTRSET_NONE,
+		.name = "SF_CYCLES_BASIC_DIAG",
+		.desc = "Sample CPU cycle using diagnostic-sampling mode"
+			" (not for ordinary use)",
+	},
+};
+
 #endif /* __S390X_CPUMF_EVENTS_H__ */
