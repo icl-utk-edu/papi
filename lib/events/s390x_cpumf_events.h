@@ -557,4 +557,287 @@ static const pme_cpumf_ctr_t cpumcf_z196_counters[] = {
 	},
 };
 
+static const pme_cpumf_ctr_t cpumcf_zec12_counters[] = {
+	{
+		.ctrnum = 128,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "DTLB1_MISSES",
+		.desc = "Level-1 Data TLB miss in progress. Incremented by"
+			" one for every cycle a DTLB1 miss is in progress.",
+	},
+	{
+		.ctrnum = 129,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "ITLB1_MISSES",
+		.desc = "Level-1 Instruction TLB miss in progress."
+			" Incremented by one for every cycle a ITLB1 miss is"
+			" in progress.",
+	},
+	{
+		.ctrnum = 130,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_L2I_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from the Level-2 Instruction cache",
+	},
+	{
+		.ctrnum = 131,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_L2I_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from the Level-2 Instruction cache",
+	},
+	{
+		.ctrnum = 132,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_L2D_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from the Level-2 Data cache",
+	},
+	{
+		.ctrnum = 133,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "DTLB1_WRITES",
+		.desc = "A translation entry has been written to the Level-1"
+			" Data Translation Lookaside Buffer",
+	},
+	{
+		.ctrnum = 135,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_LMEM_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache where"
+			" the installed cache line was sourced from memory"
+			" that is attached to the same book as the Data cache"
+			" (Local Memory)",
+	},
+	{
+		.ctrnum = 137,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_LMEM_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" where the installed cache line was sourced from"
+			" memory that is attached to the same book as the"
+			" Instruction cache (Local Memory)",
+	},
+	{
+		.ctrnum = 138,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_RO_EXCL_WRITES",
+		.desc = "A directory write to the Level-1 D-Cache where the"
+			" line was originally in a Read-Only state in the"
+			" cache but has been updated to be in the Exclusive"
+			" state that allows stores to the cache line",
+	},
+	{
+		.ctrnum = 139,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "DTLB1_HPAGE_WRITES",
+		.desc = "A translation entry has been written to the Level-1"
+			" Data Translation Lookaside Buffer for a one-"
+			" megabyte page",
+	},
+	{
+		.ctrnum = 140,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "ITLB1_WRITES",
+		.desc = "A translation entry has been written to the Level-1"
+			" Instruction Translation Lookaside Buffer",
+	},
+	{
+		.ctrnum = 141,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TLB2_PTE_WRITES",
+		.desc = "A translation entry has been written to the Level-2"
+			" TLB Page Table Entry arrays",
+	},
+	{
+		.ctrnum = 142,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TLB2_CRSTE_HPAGE_WRITES",
+		.desc = "A translation entry has been written to the Level-2"
+			" TLB Common Region Segment Table Entry arrays for a"
+			" one-megabyte large page translation",
+	},
+	{
+		.ctrnum = 143,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TLB2_CRSTE_WRITES",
+		.desc = "A translation entry has been written to the Level-2"
+			" TLB Common Region Segment Table Entry arrays",
+	},
+	{
+		.ctrnum = 144,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_ONCHIP_L3_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from an On Chip Level-3 cache without intervention",
+	},
+	{
+		.ctrnum = 145,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_OFFCHIP_L3_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Chip/On Book Level-3 cache without"
+			" intervention",
+	},
+	{
+		.ctrnum = 146,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_OFFBOOK_L3_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Book Level-3 cache without intervention",
+	},
+	{
+		.ctrnum = 147,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_ONBOOK_L4_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from an On Book Level-4 cache",
+	},
+	{
+		.ctrnum = 148,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_OFFBOOK_L4_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Book Level-4 cache",
+	},
+	{
+		.ctrnum = 149,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TX_NC_TEND",
+		.desc = "A TEND instruction has completed in a"
+			" nonconstrained transactional-execution mode",
+	},
+	{
+		.ctrnum = 150,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_ONCHIP_L3_SOURCED_WRITES_IV",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from a On Chip Level-3 cache with intervention",
+	},
+	{
+		.ctrnum = 151,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_OFFCHIP_L3_SOURCED_WRITES_IV",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Chip/On Book Level-3 cache with"
+			" intervention",
+	},
+	{
+		.ctrnum = 152,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1D_OFFBOOK_L3_SOURCED_WRITES_IV",
+		.desc = "A directory write to the Level-1 Data cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Book Level-3 cache with intervention",
+	},
+	{
+		.ctrnum = 153,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_ONCHIP_L3_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an On Chip Level-3 cache without intervention",
+	},
+	{
+		.ctrnum = 154,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_OFFCHIP_L3_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Chip/On Book Level-3 cache without"
+			" intervention",
+	},
+	{
+		.ctrnum = 155,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_OFFBOOK_L3_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Book Level-3 cache without intervention",
+	},
+	{
+		.ctrnum = 156,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_ONBOOK_L4_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an On Book Level-4 cache",
+	},
+	{
+		.ctrnum = 157,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_OFFBOOK_L4_SOURCED_WRITES",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Book Level-4 cache",
+	},
+	{
+		.ctrnum = 158,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TX_C_TEND",
+		.desc = "A TEND instruction has completed in a constrained"
+			" transactional-execution mode",
+	},
+	{
+		.ctrnum = 159,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_ONCHIP_L3_SOURCED_WRITES_IV",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an On Chip Level-3 cache with intervention",
+	},
+	{
+		.ctrnum = 160,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_OFFCHIP_L3_SOURCED_WRITES_IV",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Chip/On Book Level-3 cache with"
+			" intervention",
+	},
+	{
+		.ctrnum = 161,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "L1I_OFFBOOK_L3_SOURCED_WRITES_IV",
+		.desc = "A directory write to the Level-1 Instruction cache"
+			" directory where the returned cache line was sourced"
+			" from an Off Book Level-3 cache with intervention",
+	},
+	{
+		.ctrnum = 177,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TX_NC_TABORT",
+		.desc = "A transaction abort has occurred in a"
+			" nonconstrained transactional-execution mode",
+	},
+	{
+		.ctrnum = 178,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TX_C_TABORT_NO_SPECIAL",
+		.desc = "A transaction abort has occurred in a constrained"
+			" transactional-execution mode and the CPU is not"
+			" using any special logic to allow the transaction to"
+			" complete",
+	},
+	{
+		.ctrnum = 179,
+		.ctrset = CPUMF_CTRSET_EXTENDED,
+		.name = "TX_C_TABORT_SPECIAL",
+		.desc = "A transaction abort has occurred in a constrained"
+			" transactional-execution mode and the CPU is using"
+			" special logic to allow the transaction to complete",
+	},
+};
+
 #endif /* __S390X_CPUMF_EVENTS_H__ */
