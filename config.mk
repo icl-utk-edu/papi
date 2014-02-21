@@ -45,6 +45,9 @@ endif
 ifeq (i86pc,$(findstring i86pc,$(ARCH)))
 override ARCH=i386
 endif
+ifeq (x86,$(findstring x86,$(ARCH)))
+override ARCH=x86_64
+endif
 ifeq ($(ARCH),x86_64)
 override ARCH=x86_64
 endif
