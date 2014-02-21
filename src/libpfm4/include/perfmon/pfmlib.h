@@ -197,6 +197,45 @@ typedef enum {
 	PFM_PMU_AMD64_FAM15H_NB,	/* AMD AMD64 Fam15h NorthBridge */
 
 	PFM_PMU_ARM_QCOM_KRAIT,		/* Qualcomm Krait */
+	PFM_PMU_PERF_EVENT_RAW,		/* perf_events RAW event syntax */
+
+	PFM_PMU_INTEL_IVBEP_UNC_CB0,	/* Intel IvyBridge-EP C-Box core 0 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB1,	/* Intel IvyBridge-EP C-Box core 1 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB2,	/* Intel IvyBridge-EP C-Box core 2 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB3,	/* Intel IvyBridge-EP C-Box core 3 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB4,	/* Intel IvyBridge-EP C-Box core 4 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB5,	/* Intel IvyBridge-EP C-Box core 5 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB6,	/* Intel IvyBridge-EP C-Box core 6 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB7,	/* Intel IvyBridge-EP C-Box core 7 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB8,	/* Intel IvyBridge-EP C-Box core 8 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB9,	/* Intel IvyBridge-EP C-Box core 9 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB10,	/* Intel IvyBridge-EP C-Box core 10 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB11,	/* Intel IvyBridge-EP C-Box core 11 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB12,	/* Intel IvyBridge-EP C-Box core 12 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB13,	/* Intel IvyBridge-EP C-Box core 13 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_CB14,	/* Intel IvyBridge-EP C-Box core 14 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_HA0,	/* Intel IvyBridge-EP HA 0 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_HA1,	/* Intel IvyBridge-EP HA 1 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC0,	/* Intel IvyBridge-EP IMC socket 0 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC1,	/* Intel IvyBridge-EP IMC socket 1 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC2,	/* Intel IvyBridge-EP IMC socket 2 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC3,	/* Intel IvyBridge-EP IMC socket 3 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC4,	/* Intel IvyBridge-EP IMC socket 4 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC5,	/* Intel IvyBridge-EP IMC socket 5 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC6,	/* Intel IvyBridge-EP IMC socket 6 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IMC7,	/* Intel IvyBridge-EP IMC socket 7 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_PCU,	/* Intel IvyBridge-EP PCU uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_QPI0,	/* Intel IvyBridge-EP QPI link 0 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_QPI1,	/* Intel IvyBridge-EP QPI link 1 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_QPI2,	/* Intel IvyBridge-EP QPI link 2 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_UBOX,	/* Intel IvyBridge-EP U-Box uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_R2PCIE,	/* Intel IvyBridge-EP R2PCIe uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_R3QPI0,	/* Intel IvyBridge-EP R3QPI 0 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_R3QPI1,	/* Intel IvyBridge-EP R3QPI 1 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_R3QPI2,	/* Intel IvyBridge-EP R3QPI 2 uncore */
+	PFM_PMU_INTEL_IVBEP_UNC_IRP,	/* Intel IvyBridge-EP IRP uncore */
+
+	PFM_PMU_S390X_CPUM_SF,		/* s390x: CPU-M sampling facility */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 

@@ -3,7 +3,7 @@
 %define python_prefix %(python -c "import sys; print sys.prefix")
 
 Name:		libpfm
-Version:	4.4.0
+Version:	4.5.0
 Release:	1%{?dist}
 
 Summary:	Library to encode performance events for use by perf tool

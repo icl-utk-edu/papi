@@ -132,8 +132,12 @@ typedef struct pfmlib_pmu {
 	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 	int		 (*os_detect[PFM_OS_MAX])(void *this);
 	int		 (*validate_table)(void *this, FILE *fp);
-	int 		 (*get_num_events)(void *this);	/* optional */
-	void		 (*display_reg)(void *this, pfmlib_event_desc_t *e, void *val); /* optional */
+	/*
+	 * optional callbacks
+	 */
+	int 		 (*get_num_events)(void *this);
+	void		 (*display_reg)(void *this, pfmlib_event_desc_t *e, void *val);
+	int 		 (*match_event)(void *this, pfmlib_event_desc_t *d, const char *e, const char *s);
 } pfmlib_pmu_t;
 
 typedef struct {
@@ -263,6 +267,41 @@ extern pfmlib_pmu_t intel_snbep_unc_ubo_support;
 extern pfmlib_pmu_t intel_snbep_unc_r2pcie_support;
 extern pfmlib_pmu_t intel_snbep_unc_r3qpi0_support;
 extern pfmlib_pmu_t intel_snbep_unc_r3qpi1_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb0_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb1_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb2_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb3_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb4_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb5_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb6_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb7_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb8_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb9_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb10_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb11_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb12_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb13_support;
+extern pfmlib_pmu_t intel_ivbep_unc_cb14_support;
+extern pfmlib_pmu_t intel_ivbep_unc_ha0_support;
+extern pfmlib_pmu_t intel_ivbep_unc_ha1_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc0_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc1_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc2_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc3_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc4_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc5_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc6_support;
+extern pfmlib_pmu_t intel_ivbep_unc_imc7_support;
+extern pfmlib_pmu_t intel_ivbep_unc_pcu_support;
+extern pfmlib_pmu_t intel_ivbep_unc_qpi0_support;
+extern pfmlib_pmu_t intel_ivbep_unc_qpi1_support;
+extern pfmlib_pmu_t intel_ivbep_unc_qpi2_support;
+extern pfmlib_pmu_t intel_ivbep_unc_ubo_support;
+extern pfmlib_pmu_t intel_ivbep_unc_r2pcie_support;
+extern pfmlib_pmu_t intel_ivbep_unc_r3qpi0_support;
+extern pfmlib_pmu_t intel_ivbep_unc_r3qpi1_support;
+extern pfmlib_pmu_t intel_ivbep_unc_r3qpi2_support;
+extern pfmlib_pmu_t intel_ivbep_unc_irp_support;
 extern pfmlib_pmu_t intel_knc_support;
 extern pfmlib_pmu_t intel_slm_support;
 extern pfmlib_pmu_t power4_support;
@@ -284,6 +323,7 @@ extern pfmlib_pmu_t sparc_niagara1_support;
 extern pfmlib_pmu_t sparc_niagara2_support;
 extern pfmlib_pmu_t cell_support;
 extern pfmlib_pmu_t perf_event_support;
+extern pfmlib_pmu_t perf_event_raw_support;
 extern pfmlib_pmu_t intel_wsm_sp_support;
 extern pfmlib_pmu_t intel_wsm_dp_support;
 extern pfmlib_pmu_t intel_wsm_unc_support;
@@ -294,6 +334,7 @@ extern pfmlib_pmu_t arm_1176_support;
 extern pfmlib_pmu_t arm_qcom_krait_support;
 extern pfmlib_pmu_t mips_74k_support;
 extern pfmlib_pmu_t s390x_cpum_cf_support;
+extern pfmlib_pmu_t s390x_cpum_sf_support;
 
 extern pfmlib_os_t *pfmlib_os;
 extern pfmlib_os_t pfmlib_os_perf;

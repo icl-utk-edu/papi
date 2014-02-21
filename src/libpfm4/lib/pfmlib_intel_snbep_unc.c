@@ -39,9 +39,10 @@ const pfmlib_attr_desc_t snbep_unc_mods[]={
 	PFM_ATTR_I("t", "threshold in range [0-31]"),	/* threshold */
 	PFM_ATTR_I("tf", "thread id filter [0-1]"),	/* thread id */
 	PFM_ATTR_I("cf", "core id filter [0-7]"),	/* core id */
-	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask */
+	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask filter0 */
 	PFM_ATTR_I("ff", "frequency >= 100Mhz * [0-255]"),/* freq filter */
 	PFM_ATTR_I("addr", "physical address matcher [40 bits]"),/* address matcher */
+	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask filter1 */
 	PFM_ATTR_NULL
 };
 
@@ -63,6 +64,26 @@ pfm_intel_snbep_unc_detect(void *this)
 			return PFM_ERR_NOTSUPP;
 	}
 	return PFM_SUCCESS;
+}
+
+int
+pfm_intel_ivbep_unc_detect(void *this)
+{
+       int ret;
+
+       ret = pfm_intel_x86_detect();
+       if (ret != PFM_SUCCESS)
+
+       if (pfm_intel_x86_cfg.family != 6)
+               return PFM_ERR_NOTSUPP;
+
+       switch(pfm_intel_x86_cfg.model) {
+               case 62: /* SandyBridge-EP */
+                         break;
+               default:
+                       return PFM_ERR_NOTSUPP;
+       }
+       return PFM_SUCCESS;
 }
 
 static void
@@ -113,7 +134,7 @@ int
 snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
 			   uint64_t *umask,
-			   pfm_snbep_unc_reg_t *filter,
+			   pfm_snbep_unc_reg_t *filters,
 			   unsigned int max_grpid)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
@@ -149,15 +170,27 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 				continue;
 			}
 
+			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_GRP_DFL_NONE)) {
+				skip = 1;
+				continue;
+			}
+
 			/* umask is default for group */
 			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_DFL)) {
-				DPRINT("added default %s for group %d j=%d idx=%d\n", ent->umasks[idx].uname, i, j, idx);
+				DPRINT("added default %s for group %d j=%d idx=%d ucode=0x%"PRIx64"\n",
+					ent->umasks[idx].uname,
+					i,	
+					j,
+					idx,
+					ent->umasks[idx].ucode);
 				/*
 				 * default could be an alias, but
 				 * ucode must reflect actual code
 				 */
 				*umask |= ent->umasks[idx].ucode >> 8;
-				filter->val |= pe[e->event].umasks[idx].ufilters[0];
+
+				filters[0].val |= pe[e->event].umasks[idx].ufilters[0];
+				filters[1].val |= pe[e->event].umasks[idx].ufilters[1];
 
 				e->attrs[k].id = j; /* pattrs index */
 				e->attrs[k].ival = 0;
@@ -181,7 +214,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 			return PFM_ERR_UMASK;
 		}
 	}
-	DPRINT("max_grpid=%d nattrs=%d k=%d\n", max_grpid, e->nattrs, k);
+	DPRINT("max_grpid=%d nattrs=%d k=%d umask=0x%"PRIx64"\n", max_grpid, e->nattrs, k, *umask);
 done:
 	e->nattrs = k;
 	return PFM_SUCCESS;
@@ -201,7 +234,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	int umodmsk = 0, modmsk_r = 0;
 	int pcu_filt_band = -1;
 	pfm_snbep_unc_reg_t reg;
-	pfm_snbep_unc_reg_t filter;
+	pfm_snbep_unc_reg_t filters[INTEL_X86_MAX_FILTERS];
 	pfm_snbep_unc_reg_t addr;
 	pfm_event_attr_info_t *a;
 	uint64_t val, umask1, umask2;
@@ -214,8 +247,8 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 	memset(grpcounts, 0, sizeof(grpcounts));
 	memset(ncombo, 0, sizeof(ncombo));
+	memset(filters, 0, sizeof(filters));
 
-	filter.val = 0;
 	addr.val = 0;
 
 	pe = this_pe(this);
@@ -300,10 +333,12 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			last_grpid = grpid;
 
 			um = pe[e->event].umasks[a->idx].ucode;
-			filter.val |= pe[e->event].umasks[a->idx].ufilters[0];
+			filters[0].val |= pe[e->event].umasks[a->idx].ufilters[0];
+			filters[1].val |= pe[e->event].umasks[a->idx].ufilters[1];
 
 			um >>= 8;
 			umask2  |= um;
+
 			ugrpmsk |= 1 << pe[e->event].umasks[a->idx].grpid;
 
 			/* PCU occ event */
@@ -367,30 +402,38 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					}
 					reg.cbo.unc_tid = 1;
 					has_cbo_tid = 1;
-					filter.cbo_filt.tid = ival;
+					filters[0].cbo_filt.tid = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_TF;
 					break;
 				case SNBEP_UNC_ATTR_CF: /* core id */
 					if (ival > 7)
 						return PFM_ERR_ATTR_VAL;
 					reg.cbo.unc_tid = 1;
-					filter.cbo_filt.cid = ival;
+					filters[0].cbo_filt.cid = ival;
 					has_cbo_tid = 1;
 					umodmsk |= _SNBEP_UNC_ATTR_CF;
 					break;
-				case SNBEP_UNC_ATTR_NF: /* node id */
+				case SNBEP_UNC_ATTR_NF: /* node id filter0 */
 					if (ival > 255 || ival == 0) {
 						DPRINT("invalid nf,  0 < nf < 256\n");
 						return PFM_ERR_ATTR_VAL;
 					}
-					filter.cbo_filt.nid = ival;
+					filters[0].cbo_filt.nid = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_NF;
+					break;
+				case SNBEP_UNC_ATTR_NF1: /* node id filter1 */
+					if (ival > 255 || ival == 0) {
+						DPRINT("invalid nf,  0 < nf < 256\n");
+						return PFM_ERR_ATTR_VAL;
+					}
+					filters[1].ivbep_cbo_filt1.nid = ival;
+					umodmsk |= _SNBEP_UNC_ATTR_NF1;
 					break;
 				case SNBEP_UNC_ATTR_FF: /* freq band filter */
 					if (ival > 255)
 						return PFM_ERR_ATTR_VAL;
 					pcu_filt_band = get_pcu_filt_band(this, reg);
-					filter.val = ival << (pcu_filt_band * 8);
+					filters[0].val = ival << (pcu_filt_band * 8);
 					umodmsk |= _SNBEP_UNC_ATTR_FF;
 					break;
 				case SNBEP_UNC_ATTR_A: /* addr filter */
@@ -411,17 +454,20 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	if (pe[e->event].numasks && (ugrpmsk != grpmsk || ugrpmsk == 0)) {
 		uint64_t um = 0;
 		ugrpmsk ^= grpmsk;
-		ret = snbep_unc_add_defaults(this, e, ugrpmsk, &um, &filter, max_grpid);
+		ret = snbep_unc_add_defaults(this, e, ugrpmsk, &um, filters, max_grpid);
 		if (ret != PFM_SUCCESS)
 			return ret;
-		um >>= 8;
-		umask2 = um;
+		umask2 |= um;
 	}
 
 	/*
 	 * nf= is only required on some events in CBO
 	 */
 	if (!(modmsk_r & _SNBEP_UNC_ATTR_NF) && (umodmsk & _SNBEP_UNC_ATTR_NF)) {
+		DPRINT("using nf= on an umask which does not require it\n");
+		return PFM_ERR_ATTR;
+	}
+	if (!(modmsk_r & _SNBEP_UNC_ATTR_NF1) && (umodmsk & _SNBEP_UNC_ATTR_NF1)) {
 		DPRINT("using nf= on an umask which does not require it\n");
 		return PFM_ERR_ATTR;
 	}
@@ -443,6 +489,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		else if (a->type == PFM_ATTR_RAW_UMASK)
 			evt_strcat(e->fstr, ":0x%x", a->idx);
 	}
+	DPRINT("umask2=0x%"PRIx64" umask1=0x%"PRIx64"\n", umask2, umask1);
 	e->count = 0;
 	reg.val |= (umask1 | umask2)  << 8;
 
@@ -451,8 +498,10 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	/*
 	 * handles C-box filter
 	 */
-	if (filter.val || has_cbo_tid)
-		e->codes[e->count++] = filter.val;
+	if (filters[0].val || filters[1].val || has_cbo_tid)
+		e->codes[e->count++] = filters[0].val;
+	if (filters[1].val)
+		e->codes[e->count++] = filters[1].val;
 
 	/* HA address matcher */
 	if (addr.val)
@@ -491,10 +540,15 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.cbo.unc_tid);
 			break;
 		case SNBEP_UNC_ATTR_FF:
-			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, (filter.val >> (pcu_filt_band*8)) & 0xff);
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, (filters[0].val >> (pcu_filt_band*8)) & 0xff);
 			break;
 		case SNBEP_UNC_ATTR_NF:
-			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filter.cbo_filt.nid);
+			if (modmsk_r & _SNBEP_UNC_ATTR_NF)
+				evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].cbo_filt.nid);
+			break;
+		case SNBEP_UNC_ATTR_NF1:
+			if (modmsk_r & _SNBEP_UNC_ATTR_NF1)
+				evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[1].ivbep_cbo_filt1.nid);
 			break;
 		case SNBEP_UNC_ATTR_A:
 			evt_strcat(e->fstr, ":%s=0x%lx", snbep_unc_mods[idx].name,

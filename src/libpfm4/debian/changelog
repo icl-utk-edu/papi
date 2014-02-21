@@ -1,3 +1,16 @@
+libpfm4 (5.0) unstable; urgency=low
+  * Intel IVB-EP uncore PMU support
+  * Intel Silvermont support
+  * Perf raw event syntax support
+  * Intel RAPL event support
+  * AMD Fam15h northbridge support
+  * Qualcomm Krait support
+  * IBM Power 8 support
+  * IBM s390 updates
+  * AMD Fam15h fixes
+  * various IVB, SNB, HSW event table updates
+  * more bug fixes
+
 libpfm4 (4.0) unstable; urgency=low
   * Intel IVB-EP support
   * Intel IVB updates support

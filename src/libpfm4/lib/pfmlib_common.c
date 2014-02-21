@@ -121,6 +121,41 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_snbep_unc_r3qpi1_support,
 	&intel_knc_support,
 	&intel_slm_support,
+	&intel_ivbep_unc_cb0_support,
+	&intel_ivbep_unc_cb1_support,
+	&intel_ivbep_unc_cb2_support,
+	&intel_ivbep_unc_cb3_support,
+	&intel_ivbep_unc_cb4_support,
+	&intel_ivbep_unc_cb5_support,
+	&intel_ivbep_unc_cb6_support,
+	&intel_ivbep_unc_cb7_support,
+	&intel_ivbep_unc_cb8_support,
+	&intel_ivbep_unc_cb9_support,
+	&intel_ivbep_unc_cb10_support,
+	&intel_ivbep_unc_cb11_support,
+	&intel_ivbep_unc_cb12_support,
+	&intel_ivbep_unc_cb13_support,
+	&intel_ivbep_unc_cb14_support,
+	&intel_ivbep_unc_ha0_support,
+	&intel_ivbep_unc_ha1_support,
+	&intel_ivbep_unc_imc0_support,
+	&intel_ivbep_unc_imc1_support,
+	&intel_ivbep_unc_imc2_support,
+	&intel_ivbep_unc_imc3_support,
+	&intel_ivbep_unc_imc4_support,
+	&intel_ivbep_unc_imc5_support,
+	&intel_ivbep_unc_imc6_support,
+	&intel_ivbep_unc_imc7_support,
+	&intel_ivbep_unc_pcu_support,
+	&intel_ivbep_unc_qpi0_support,
+	&intel_ivbep_unc_qpi1_support,
+	&intel_ivbep_unc_qpi2_support,
+	&intel_ivbep_unc_ubo_support,
+	&intel_ivbep_unc_r2pcie_support,
+	&intel_ivbep_unc_r3qpi0_support,
+	&intel_ivbep_unc_r3qpi1_support,
+	&intel_ivbep_unc_r3qpi2_support,
+	&intel_ivbep_unc_irp_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
@@ -167,9 +202,11 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 #ifdef CONFIG_PFMLIB_ARCH_S390X
 	&s390x_cpum_cf_support,
+	&s390x_cpum_sf_support,
 #endif
 #ifdef __linux__
 	&perf_event_support,
+	&perf_event_raw_support,
 #endif
 };
 #define PFMLIB_NUM_PMUS	(int)(sizeof(pfmlib_pmus)/sizeof(pfmlib_pmu_t *))
@@ -1026,10 +1063,17 @@ pfmlib_release_event(pfmlib_event_desc_t *e)
 }
 
 static int
+match_event(void *this, pfmlib_event_desc_t *d, const char *e, const char *s)
+{
+	return strcasecmp(e, s);
+}
+
+static int
 pfmlib_parse_equiv_event(const char *event, pfmlib_event_desc_t *d)
 {
 	pfmlib_pmu_t *pmu = d->pmu;
 	pfm_event_info_t einfo;
+	int (*match)(void *this, pfmlib_event_desc_t *d, const char *e, const char *s);
 	char *str, *s, *p;
 	int i;
 	int ret;
@@ -1045,11 +1089,13 @@ pfmlib_parse_equiv_event(const char *event, pfmlib_event_desc_t *d)
 	if (p)
 		*p++ = '\0';
 
+	match = pmu->match_event ? pmu->match_event : match_event;
+
 	pfmlib_for_each_pmu_event(pmu, i) {
 		ret = pmu->get_event_info(pmu, i, &einfo);
 		if (ret != PFM_SUCCESS)
 			goto error;
-		if (!strcasecmp(einfo.name, s))
+		if (!match(pmu, d, einfo.name, s))
 			goto found;
 	}
 	free(str);
@@ -1085,6 +1131,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	pfm_event_info_t einfo;
 	char *str, *s, *p;
 	pfmlib_pmu_t *pmu;
+	int (*match)(void *this, pfmlib_event_desc_t *d, const char *e, const char *s);
 	const char *pname = NULL;
 	int i, j, ret;
 
@@ -1138,6 +1185,8 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		 */
 		if (pname && !pfmlib_pmu_active(pmu) && !pfm_cfg.inactive)
 			continue;
+
+		match = pmu->match_event ? pmu->match_event : match_event;
 		/*
 		 * for each event
 		 */
@@ -1145,7 +1194,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 			ret = pmu->get_event_info(pmu, i, &einfo);
 			if (ret != PFM_SUCCESS)
 				goto error;
-			if (!strcasecmp(einfo.name, s))
+			if (!match(pmu, d, einfo.name, s))
 				goto found;
 		}
 	}
