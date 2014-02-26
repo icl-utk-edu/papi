@@ -4315,7 +4315,6 @@ if test "${with_pthread_mutexes+set}" = set; then
 
 fi;
 
-if test "x$ffsll" = "x"; then
 
 # Check whether --with-ffsll or --without-ffsll was given.
 if test "${with_ffsll+set}" = set; then
@@ -4425,7 +4424,6 @@ else
 fi
 
 fi;
-fi
 if test "$didcheck" != "1"; then
   echo "$as_me:$LINENO: checking for ffsll" >&5
 echo $ECHO_N "checking for ffsll... $ECHO_C" >&6
@@ -4530,7 +4528,6 @@ fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 
-if test "x$walltimer" = "x"; then
 
 # Check whether --with-walltimer or --without-walltimer was given.
 if test "${with_walltimer+set}" = set; then
@@ -4720,7 +4717,6 @@ fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 fi;
-fi
 echo "$as_me:$LINENO: checking for real time clock or cycle counter" >&5
 echo $ECHO_N "checking for real time clock or cycle counter... $ECHO_C" >&6
 if test "$walltimer" = "gettimeofday"; then
@@ -4769,8 +4765,6 @@ else
 echo "$as_me: error: Unknown value for walltimer" >&2;}
    { (exit 1); exit 1; }; }
 fi
-echo "$as_me:$LINENO: result: $walltimer" >&5
-echo "${ECHO_T}$walltimer" >&6
 
 SAVED_LIBS=$LIBS
 SAVED_LDFLAGS=$LDFLAGS
@@ -4779,7 +4773,6 @@ LIBS=""
 LDFLAGS=""
 CFLAGS="-pthread"
 
-if test "x$tls" = "x"; then
 
 # Check whether --with-tls or --without-tls was given.
 if test "${with_tls+set}" = set; then
@@ -4872,7 +4865,6 @@ echo "$as_me: WARNING: Disabling usage of __thread." >&2;};
                  fi
                fi
 fi;
-fi
 echo "$as_me:$LINENO: checking for high performance thread local storage" >&5
 echo $ECHO_N "checking for high performance thread local storage... $ECHO_C" >&6
 if test "$tls" = "no"; then
@@ -4891,7 +4883,6 @@ fi
 echo "$as_me:$LINENO: result: $tls" >&5
 echo "${ECHO_T}$tls" >&6
 
-if test "x$virtualtimer" = "x"; then
 
 # Check whether --with-virtualtimer or --without-virtualtimer was given.
 if test "${with_virtualtimer+set}" = set; then
@@ -5100,8 +5091,6 @@ fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 fi;
-fi
-
 LDFLAGS=$SAVED_LDFLAGS
 CFLAGS=$SAVED_CFLAGS
 LIBS=$SAVED_LIBS

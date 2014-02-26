@@ -398,7 +398,6 @@ AC_ARG_WITH(pthread-mutexes,
 	      CFLAGS="$CFLAGS -DUSE_PTHREAD_MUTEXES"
 	      ])
 
-if test "x$ffsll" = "x"; then
   AC_ARG_WITH(ffsll,
 	          [  --with-ffsll		Specify use of the ffsll() function ],
 	          [ffsll=$withval],
@@ -407,7 +406,6 @@ if test "x$ffsll" = "x"; then
 		       fi
                didcheck=1
                AC_CHECK_FUNC(ffsll,[ffsll=yes],[ffsll=no]) ])
-fi
 if test "$didcheck" != "1"; then
   AC_MSG_CHECKING(for ffsll)
   if test "$ffsll" = "yes" ; then
@@ -430,7 +428,6 @@ AC_LINK_IFELSE([#include <sys/types.h>
                                 AC_DEFINE(HAVE_SYSCALL_GETTID, 1, [gettid syscall function])],
                                [AC_MSG_RESULT(no)]) ])
 
-if test "x$walltimer" = "x"; then
 AC_ARG_WITH(walltimer,
             [  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>		Specify realtime timer ],
             [walltimer=$withval],
@@ -503,7 +500,6 @@ AC_ARG_WITH(walltimer,
 	                                             AC_MSG_RESULT(yes)	],
                                                 [walltimer="cycle"
 	                                             AC_MSG_RESULT(no)]) ]) ])  ])
-fi
 AC_MSG_CHECKING(for real time clock or cycle counter)
 if test "$walltimer" = "gettimeofday"; then
   AC_DEFINE(HAVE_GETTIMEOFDAY, 1, [Normal gettimeofday timer])
@@ -521,7 +517,6 @@ elif test "$walltimer" = "cycle"; then
 else
   AC_MSG_ERROR([Unknown value for walltimer])
 fi
-AC_MSG_RESULT($walltimer)
 
 SAVED_LIBS=$LIBS
 SAVED_LDFLAGS=$LDFLAGS
@@ -530,8 +525,7 @@ LIBS=""
 LDFLAGS=""
 CFLAGS="-pthread"
 
-if test "x$tls" = "x"; then
-  AC_ARG_WITH(tls,
+AC_ARG_WITH(tls,
               [  --with-tls=<keyword>		This platform supports thread local storage with a keyword ],
               [tls=$withval],
               [if test "$cross_compiling" = "yes" ; then
@@ -579,7 +573,6 @@ if test "x$tls" = "x"; then
                    rm -f conftest.c conftest.so conftest
                  fi
                fi])
-fi
 AC_MSG_CHECKING(for high performance thread local storage)
 if test "$tls" = "no"; then
   NOTLS="-DNO_TLS"
@@ -592,8 +585,7 @@ elif test "x$tls" != "x"; then
 fi
 AC_MSG_RESULT($tls)
 
-if test "x$virtualtimer" = "x"; then
-  AC_ARG_WITH(virtualtimer,
+AC_ARG_WITH(virtualtimer,
               [  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>		Specify per-thread virtual timer ],
               [virtualtimer=$withval],
               [if test "$cross_compiling" = "yes" ; then
@@ -721,8 +713,6 @@ if test "x$virtualtimer" = "x"; then
 	                                   virtualtimer="times"],
                                       [AC_MSG_RESULT(no)
 	                                   virtualtimer="default"]) ]) ])
-fi
-
 LDFLAGS=$SAVED_LDFLAGS
 CFLAGS=$SAVED_CFLAGS
 LIBS=$SAVED_LIBS
