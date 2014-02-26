@@ -359,6 +359,13 @@ _rapl_init_component( int cidx )
 		  pp0_avail=1;
 		  pp1_avail=1;dram_avail=0;
 	   }
+	else if ( hw_info->cpuid_model==63) {
+		/* Haswell-EP */
+		package_avail=1;
+		pp0_avail=1;
+		pp1_avail=0;
+		dram_avail=1;
+	}
        else {
 	 /* not a supported model */
 	 strncpy(_rapl_vector.cmp_info.disabled_reason,
