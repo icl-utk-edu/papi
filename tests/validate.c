@@ -42,7 +42,7 @@
 #define __weak_func	__attribute__((weak))
 
 #ifdef PFMLIB_WINDOWS
-int set_env_var(const char *var, char *value, int ov)
+int set_env_var(const char *var, const char *value, int ov)
 {
 	size_t len;
 	char *str;
@@ -64,7 +64,7 @@ int set_env_var(const char *var, char *value, int ov)
 }
 #else
 static inline int
-set_env_var(const char *var, char *value, int ov)
+set_env_var(const char *var, const char *value, int ov)
 {
 	return setenv(var, value, ov);
 }
