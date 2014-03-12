@@ -286,7 +286,12 @@ static const intel_x86_umask_t ivb_cpu_clk_unhalted[]={
 static const intel_x86_umask_t ivb_dsb2mite_switches[]={
    { .uname  = "COUNT",
      .udesc  = "Number of DSB to MITE switches",
-     .ucode = 0x100,
+     .ucode = 0x0100,
+     .uflags= INTEL_X86_NCOMBO,
+   },
+   { .uname  = "PENALTY_CYCLES",
+     .udesc  = "Number of DSB to MITE switch true penalty cycles",
+     .ucode = 0x0200,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
 };
@@ -1652,6 +1657,20 @@ static const intel_x86_umask_t ivb_lsd[]={
    },
 };
 
+static const intel_x86_umask_t ivb_int_misc[]={
+  { .uname = "RECOVERY_CYCLES",
+    .udesc  = "Number of cycles waiting for Machine Clears  except JEClear",
+    .ucode  = 0x300,
+    .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "RECOVERY_STALLS_COUNT",
+    .udesc  = "Number of occurrences waiting for Machine Clears",
+    .ucode  = 0x300 | INTEL_X86_MOD_EDGE | (1 << INTEL_X86_CMASK_BIT), /* edge=1 cnt=1 */
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_E | _INTEL_X86_ATTR_C,
+  },
+};
+
 static const intel_x86_entry_t intel_ivb_pe[]={
 { .name   = "ARITH",
   .desc   = "Counts arithmetic multiply operations",
@@ -2297,6 +2316,15 @@ static const intel_x86_entry_t intel_ivb_pe[]={
   .ngrp = 1,
   .umasks = ivb_lsd,
 },
+  { .name = "INT_MISC",
+    .desc = "Miscellaneous interruptions",
+    .code = 0xd,
+    .cntmsk = 0xff,
+    .ngrp = 1,
+    .modmsk = INTEL_V3_ATTRS,
+    .numasks = LIBPFM_ARRAY_SIZE(ivb_int_misc),
+    .umasks  = ivb_int_misc
+  },
 { .name   = "OFFCORE_RESPONSE_0",
   .desc   = "Offcore response event (must provide at least one request type and either any_response or any combination of supplier + snoop)",
   .modmsk = INTEL_V3_ATTRS,
