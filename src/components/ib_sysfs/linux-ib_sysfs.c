@@ -1,0 +1,797 @@
+/** 
+ * @file    linux-ib_sysfs.c
+ * @author  Gabriel Marin
+ *          gmarin@eecs.utk.edu
+ *
+ * @ingroup papi_components
+ *
+ *
+ * IB_SYSFS component 
+ * 
+ *
+ * @brief 
+ *  This file has the source code for a component that enables PAPI-C to access
+ *  the infiniband performance monitor through the Linux sysfs interface.
+ *  This code will dynamically create a native events table for all the events 
+ *  that can be accesed through the sysfs interface. The counters exported by 
+ *  this component cannot be reset programatically.
+ */
+
+
+/* Headers required by ib_sysfs */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <ctype.h>
+#include <string.h>
+#include <dirent.h>
+#include <error.h>
+#include <time.h>
+#include "pscanf.h"
+
+/* Headers required by PAPI */
+#include "papi.h"
+#include "papi_internal.h"
+#include "papi_vector.h"
+#include "papi_memory.h"
+
+/*************************  DEFINES SECTION  ***********************************
+ *******************************************************************************/
+/* this number assumes that there will never be more events than indicated */
+#define IB_SYSFS_MAX_COUNTERS 128
+
+/** Structure that stores private information of each event */
+typedef struct ib_sysfs_register
+{
+   /* This is used by the framework.It likes it to be !=0 to do somehting */
+   unsigned int selector;
+} ib_sysfs_register_t;
+
+/*
+ * The following structures mimic the ones used by other components. It is more
+ * convenient to use them like that as programming with PAPI makes specific
+ * assumptions for them.
+ */
+
+typedef struct _ib_device_type
+{
+   char* dev_name;
+   int   dev_port;
+   struct _ib_device_type *next;
+} ib_device_t;
+
+typedef struct _ib_counter_type
+{
+   char* ev_name;
+   char* ev_file_name;
+   ib_device_t* ev_device;
+   int extended;   // if this is an extended (64-bit) counter
+   struct _ib_counter_type *next;
+} ib_counter_t;
+
+static const char *ib_dir_path = "/sys/class/infiniband";
+
+/** This structure is used to build the table of events */
+typedef struct _ib_sysfs_native_event_entry
+{
+   ib_sysfs_register_t resources;
+   char *name;
+   char *description;
+   char* file_name;
+   ib_device_t* device;
+   int extended;   /* if this is an extended (64-bit) counter */
+} ib_sysfs_native_event_entry_t;
+
+
+typedef struct _ib_sysfs_control_state
+{
+   long long counts[IB_SYSFS_MAX_COUNTERS];
+   int being_measured[IB_SYSFS_MAX_COUNTERS];
+   /* all IB counters need difference, but use a flag for generality */
+   int need_difference[IB_SYSFS_MAX_COUNTERS];
+   long long lastupdate;
+} ib_sysfs_control_state_t;
+
+
+typedef struct _ib_sysfs_context
+{
+   ib_sysfs_control_state_t state;
+   long long start_value[IB_SYSFS_MAX_COUNTERS];
+} ib_sysfs_context_t;
+
+
+
+/*************************  GLOBALS SECTION  ***********************************
+ *******************************************************************************/
+/* This table contains the component native events */
+static ib_sysfs_native_event_entry_t *ib_sysfs_native_events = 0;
+/* number of events in the table*/
+static int num_events = 0;
+
+
+papi_vector_t _ib_sysfs_vector;
+
+/******************************************************************************
+ ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
+ *****************************************************************************/
+
+static ib_device_t *root_device = 0;
+static ib_counter_t *root_counter = 0;
+
+static char*
+make_ib_event_description(const char* input_str, int extended)
+{
+   int i, len;
+   char *desc = 0;
+   if (! input_str)
+      return (0);
+   
+   desc = (char*) papi_calloc(PAPI_MAX_STR_LEN, 1);
+   if (desc == 0) {
+      PAPIERROR("cannot allocate memory for event description");
+      return (0);
+   }
+   len = strlen(input_str);
+   
+   snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+           input_str, (extended ? "free-running 64bit counter" :
+            "overflowing, auto-resetting counter"));
+   desc[0] = toupper(desc[0]);
+   for (i=0 ; i<len ; ++i)
+      if (desc[i] == '_')
+         desc[i] = ' ';
+   
+   return (desc);
+}
+
+static ib_device_t*
+add_ib_device(const char* name, int port)
+{
+   ib_device_t *new_dev = (ib_device_t*) papi_calloc(sizeof(ib_device_t), 1);
+   if (new_dev == 0) {
+      PAPIERROR("cannot allocate memory for new IB device structure");
+      return (0);
+   }
+   
+   new_dev->dev_name = strdup(name);
+   new_dev->dev_port = port;
+   if (new_dev->dev_name==0)
+   {
+      PAPIERROR("cannot allocate memory for device internal fields");
+      papi_free(new_dev);
+      return (0);
+   }
+
+   // prepend the new device to the device list
+   new_dev->next = root_device;
+   root_device = new_dev;
+   
+   return (new_dev);
+}
+
+static ib_counter_t*
+add_ib_counter(const char* name, const char* file_name, int extended, ib_device_t *device)
+{
+   ib_counter_t *new_cnt = (ib_counter_t*) papi_calloc(sizeof(ib_counter_t), 1);
+   if (new_cnt == 0) {
+      PAPIERROR("cannot allocate memory for new IB counter structure");
+      return (0);
+   }
+   
+   new_cnt->ev_name = strdup(name);
+   new_cnt->ev_file_name = strdup(file_name);
+   new_cnt->extended = extended;
+   new_cnt->ev_device = device;
+   if (new_cnt->ev_name==0 || new_cnt->ev_file_name==0)
+   {
+      PAPIERROR("cannot allocate memory for counter internal fields");
+      papi_free(new_cnt);
+      return (0);
+   }
+
+   // prepend the new counter to the counter list
+   new_cnt->next = root_counter;
+   root_counter = new_cnt;
+   
+   return (new_cnt);
+}
+
+
+static int
+find_ib_device_events(ib_device_t *dev, int extended)
+{
+   int nevents = 0;
+   DIR *cnt_dir = NULL;
+   char counters_path[128];
+   snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s", 
+          ib_dir_path, dev->dev_name, dev->dev_port, (extended?"_ext":""));
+   
+   cnt_dir = opendir(counters_path);
+   if (cnt_dir == NULL) {
+      SUBDBG("cannot open counters directory `%s'\n", counters_path);
+      goto out;
+   }
+   
+   struct dirent *ev_ent;
+   /* iterate over all the events */
+   while ((ev_ent = readdir(cnt_dir)) != NULL) {
+      char *ev_name = ev_ent->d_name;
+      long long value = -1;
+      char event_path[160];
+      char counter_name[80];
+
+      if (ev_name[0] == '.')
+         continue;
+
+      /* Check that we can read an integer from the counter file */
+      snprintf(event_path, sizeof(event_path), "%s/%s", counters_path, ev_name);
+      if (pscanf(event_path, "%lld", &value) != 1) {
+        SUBDBG("cannot read value for event '%s'\n", ev_name);
+        continue;
+      }
+
+      /* Create new counter */
+      snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
+            dev->dev_name, dev->dev_port, (extended?"_ext":""), ev_name);
+      if (add_ib_counter(counter_name, ev_name, extended, dev))
+      {
+         SUBDBG("Added new counter `%s'\n", counter_name);
+         nevents += 1;
+      }
+   }
+
+ out:
+  if (cnt_dir != NULL)
+    closedir(cnt_dir);
+
+  return (nevents);
+}
+
+static int 
+find_ib_devices() 
+{
+  DIR *ib_dir = NULL;
+  int result = PAPI_OK;
+  num_events = 0;
+
+  ib_dir = opendir(ib_dir_path);
+  if (ib_dir == NULL) {
+     SUBDBG("cannot open `%s'\n", ib_dir_path);
+     strncpy(_ib_sysfs_vector.cmp_info.disabled_reason,
+                 "Infiniband sysfs interface not found", PAPI_MAX_STR_LEN);
+     result = PAPI_ENOSUPP;
+     goto out;
+  }
+
+  struct dirent *hca_ent;
+  while ((hca_ent = readdir(ib_dir)) != NULL) {
+     char *hca = hca_ent->d_name;
+     char ports_path[80];
+     DIR *ports_dir = NULL;
+
+     if (hca[0] == '.')
+        goto next_hca;
+
+     snprintf(ports_path, sizeof(ports_path), "%s/%s/ports", ib_dir_path, hca);
+     ports_dir = opendir(ports_path);
+     if (ports_dir == NULL) {
+        SUBDBG("cannot open `%s'\n", ports_path);
+        goto next_hca;
+     }
+
+     struct dirent *port_ent;
+     while ((port_ent = readdir(ports_dir)) != NULL) {
+        int port = atoi(port_ent->d_name);
+        if (port <= 0)
+           continue;
+
+        /* Check that port is active. .../HCA/ports/PORT/state should read "4: ACTIVE." */
+        int state = -1;
+        char state_path[80];
+        snprintf(state_path, sizeof(state_path), "%s/%s/ports/%d/state", ib_dir_path, hca, port);
+        if (pscanf(state_path, "%d", &state) != 1) {
+           SUBDBG("cannot read state of IB HCA `%s' port %d\n", hca, port);
+           continue;
+        }
+
+        if (state != 4) {
+           SUBDBG("skipping inactive IB HCA `%s', port %d, state %d\n", hca, port, state);
+           continue;
+        }
+
+        /* Create dev name (HCA/PORT) and get stats for dev. */
+        SUBDBG("Found IB device `%s', port %d\n", hca, port);
+        ib_device_t *dev = add_ib_device(hca, port);
+        if (!dev)
+           continue;
+        // do we want to check for short counters only if no extended counters found?
+        num_events += find_ib_device_events(dev, 1);  // check if we have extended (64bit) counters
+        num_events += find_ib_device_events(dev, 0);  // check also for short counters
+     }
+
+   next_hca:
+      if (ports_dir != NULL)
+         closedir(ports_dir);
+   }
+
+   if (root_device == 0)  // no active devices found
+   {
+     strncpy(_ib_sysfs_vector.cmp_info.disabled_reason,
+                 "No active Infiniband ports found", PAPI_MAX_STR_LEN);
+     result = PAPI_ENOIMPL;
+   } else if (num_events == 0)
+   {
+     strncpy(_ib_sysfs_vector.cmp_info.disabled_reason,
+                 "No supported Infiniband events found", PAPI_MAX_STR_LEN);
+     result = PAPI_ENOIMPL;
+   } else
+   {
+      // Events are stored in a linked list, in reverse order than how I found them
+      // Revert them again, so that they are in finding order, not that it matters.
+      int i = num_events - 1;
+      // now allocate memory to store the counters into the native table
+      ib_sysfs_native_events = (ib_sysfs_native_event_entry_t*)
+           papi_calloc(sizeof(ib_sysfs_native_event_entry_t), num_events);
+      ib_counter_t *iter = root_counter;
+      while (iter != 0)
+      {
+         ib_sysfs_native_events[i].name = iter->ev_name;
+         ib_sysfs_native_events[i].file_name = iter->ev_file_name;
+         ib_sysfs_native_events[i].device = iter->ev_device;
+         ib_sysfs_native_events[i].extended = iter->extended;
+         ib_sysfs_native_events[i].resources.selector = i + 1;
+         ib_sysfs_native_events[i].description = 
+                  make_ib_event_description(iter->ev_file_name, iter->extended);
+         
+         ib_counter_t *tmp = iter;
+         iter = iter->next;
+         papi_free(tmp);
+         -- i;
+      }
+      root_counter = 0;
+   }
+   
+   out:
+      if (ib_dir != NULL)
+         closedir(ib_dir);
+    
+   return (result);
+}
+
+static long long
+read_ib_counter_value(int index)
+{
+   char ev_file[128];
+   long long value = 0ll;
+   ib_sysfs_native_event_entry_t *iter = &ib_sysfs_native_events[index];
+   snprintf(ev_file, sizeof(ev_file), "%s/%s/ports/%d/counters%s/%s",
+           ib_dir_path, iter->device->dev_name,
+           iter->device->dev_port, (iter->extended?"_ext":""),
+           iter->file_name);
+
+   if (pscanf(ev_file, "%lld", &value) != 1) {
+      PAPIERROR("cannot read value for counter '%s'\n", iter->name);
+   } else
+   {
+      SUBDBG("Counter '%s': %lld\n", iter->name, value);
+   }
+   return (value);
+}
+
+static void
+deallocate_ib_sysfs_resources()
+{
+   int i;
+   
+   if (ib_sysfs_native_events)
+   {
+      for (i=0 ; i<num_events ; ++i) {
+         if (ib_sysfs_native_events[i].name)
+            free(ib_sysfs_native_events[i].name);
+         if (ib_sysfs_native_events[i].file_name)
+            free(ib_sysfs_native_events[i].file_name);
+         if (ib_sysfs_native_events[i].description)
+            papi_free(ib_sysfs_native_events[i].description);
+      }
+      papi_free(ib_sysfs_native_events);
+   }
+   
+   ib_device_t *iter = root_device;
+   while (iter != 0) 
+   {
+      if (iter->dev_name)
+         free(iter->dev_name);
+   
+      ib_device_t *tmp = iter;
+      iter = iter->next;
+      papi_free(tmp);
+   }
+   root_device = 0;
+}
+
+/*****************************************************************************
+ *******************  BEGIN PAPI's COMPONENT REQUIRED FUNCTIONS  *************
+ *****************************************************************************/
+
+/*
+ * This is called whenever a thread is initialized
+ */
+int
+_ib_sysfs_init_thread( hwd_context_t *ctx )
+{
+   (void) ctx;
+   return PAPI_OK;
+}
+
+
+/* Initialize hardware counters, setup the function vector table
+ * and get hardware information, this routine is called when the 
+ * PAPI process is initialized (IE PAPI_library_init)
+ */
+int
+_ib_sysfs_init_component( int cidx )
+{
+   /* discover Infiniband devices and available events */
+   int result = find_ib_devices();
+   
+   if (result != PAPI_OK)  // we couldn't initialize the component
+   {
+      // deallocate any eventually allocated memory
+      deallocate_ib_sysfs_resources();
+   }
+    
+   _ib_sysfs_vector.cmp_info.num_native_events = num_events;
+
+   _ib_sysfs_vector.cmp_info.num_cntrs = num_events;
+   _ib_sysfs_vector.cmp_info.num_mpx_cntrs = num_events;
+
+
+   /* Export the component id */
+   _ib_sysfs_vector.cmp_info.CmpIdx = cidx;
+
+   return (result);
+}
+
+
+/*
+ * Control of counters (Reading/Writing/Starting/Stopping/Setup)
+ * functions
+ */
+int
+_ib_sysfs_init_control_state( hwd_control_state_t *ctl )
+{
+   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   int i;
+
+   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+      control->being_measured[i] = 0;
+   }
+
+   return PAPI_OK;
+}
+
+/*
+ *
+ */
+int
+_ib_sysfs_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
+{
+   ib_sysfs_context_t* context = (ib_sysfs_context_t*) ctx;
+   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   long long now = PAPI_get_real_usec();
+   int i;
+
+   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+      if (control->being_measured[i] && control->need_difference[i]) {
+         context->start_value[i] = read_ib_counter_value(i);
+      }
+   }
+   control->lastupdate = now;
+
+   return PAPI_OK;
+}
+
+
+/*
+ *
+ */
+int
+_ib_sysfs_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
+{
+   ib_sysfs_context_t* context = (ib_sysfs_context_t*) ctx;
+   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   long long now = PAPI_get_real_usec();
+   int i;
+   long long temp;
+
+   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+      if (control->being_measured[i])
+      {
+         temp = read_ib_counter_value(i);
+         if (context->start_value[i] && control->need_difference[i]) {
+            /* Must subtract values, but check for wraparound. 
+             * We cannot even detect all wraparound cases. Using the short,
+             * auto-resetting IB counters is error prone.
+             */
+            if (temp < context->start_value[i]) {
+               SUBDBG("Wraparound!\nstart:\t0x%016x\ttemp:\t0x%016x",
+                        (unsigned)context->start_value[i], (unsigned)temp);
+               /* The counters auto-reset. I cannot even adjust them to 
+                * account for a simple wraparound. 
+                * Just use the current reading of the counter, which is useless.
+                */
+            } else
+               temp -= context->start_value[i];
+         }
+         control->counts[i] = temp;
+      }
+   }
+   control->lastupdate = now;
+
+   return PAPI_OK;
+}
+
+
+/*
+ *
+ */
+int
+_ib_sysfs_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+		 long_long ** events, int flags )
+{
+   ( void ) flags;
+    
+   _ib_sysfs_stop(ctx, ctl);  /* we cannot actually stop the counters */
+   /* Pass back a pointer to our results */
+   *events = ((ib_sysfs_control_state_t*) ctl)->counts;
+   
+   return PAPI_OK;
+}
+
+
+int
+_ib_sysfs_shutdown_component( void )
+{
+   /* Cleanup resources used by this component before leaving */
+   deallocate_ib_sysfs_resources();
+   
+   return PAPI_OK;
+}
+
+int
+_ib_sysfs_shutdown_thread( hwd_context_t *ctx )
+{
+   ( void ) ctx;
+
+   return PAPI_OK;
+}
+
+
+
+/* This function sets various options in the component
+ * The valid codes being passed in are PAPI_SET_DEFDOM,
+ * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
+ */
+int
+_ib_sysfs_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
+{
+   ( void ) ctx;
+   ( void ) code;
+   ( void ) option;
+   return PAPI_OK;
+}
+
+
+int
+_ib_sysfs_update_control_state( hwd_control_state_t *ctl,
+				 NativeInfo_t * native, 
+				 int count,
+				 hwd_context_t *ctx )
+{
+   int i, index;
+   ( void ) ctx;
+    
+   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   
+   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+      control->being_measured[i] = 0;
+   }
+   
+   for (i=0 ; i<count ; ++i) {
+      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
+      native[i].ni_position =
+                  ib_sysfs_native_events[index].resources.selector - 1;
+      control->being_measured[index] = 1;
+      control->need_difference[index] = 1;
+   }
+   return PAPI_OK;
+}
+
+
+/*
+ * This function has to set the bits needed to count different domains
+ * In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
+ * By default return PAPI_EINVAL if none of those are specified
+ * and PAPI_OK with success
+ * PAPI_DOM_USER is only user context is counted
+ * PAPI_DOM_KERNEL is only the Kernel/OS context is counted
+ * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
+ * PAPI_DOM_ALL   is all of the domains
+ */
+int
+_ib_sysfs_set_domain( hwd_control_state_t *ctl, int domain )
+{
+   int found = 0;
+   (void) ctl;
+	
+   if (PAPI_DOM_USER & domain)
+      found = 1;
+
+   if (PAPI_DOM_KERNEL & domain)
+      found = 1;
+
+   if (PAPI_DOM_OTHER & domain)
+      found = 1;
+
+   if (!found)
+      return (PAPI_EINVAL);
+
+   return (PAPI_OK);
+}
+
+
+/*
+ * Cannot reset the counters using the sysfs interface.
+ */
+int
+_ib_sysfs_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
+{
+   (void) ctx;
+   (void) ctl;
+   return PAPI_OK;
+}
+
+
+/*
+ * Native Event functions
+ */
+int
+_ib_sysfs_ntv_enum_events( unsigned int *EventCode, int modifier )
+{
+   switch (modifier) {
+      case PAPI_ENUM_FIRST:
+         if (num_events == 0)
+            return (PAPI_ENOEVNT);
+            
+         *EventCode = 0;
+         return PAPI_OK;
+
+      case PAPI_ENUM_EVENTS:
+      {
+         int index = *EventCode & PAPI_NATIVE_AND_MASK;
+
+         if (index < num_events - 1) {
+            *EventCode = *EventCode + 1;
+            return PAPI_OK;
+         } else
+            return PAPI_ENOEVNT;
+
+         break;
+      }
+      default:
+         return PAPI_EINVAL;
+   }
+   return PAPI_EINVAL;
+}
+
+/*
+ *
+ */
+int
+_ib_sysfs_ntv_code_to_name( unsigned int EventCode, char *name, int len )
+{
+   int index = EventCode;
+
+   if (index>=0 && index<num_events) {
+      strncpy( name, ib_sysfs_native_events[index].name, len );
+   }
+
+   return PAPI_OK;
+}
+
+/*
+ *
+ */
+int
+_ib_sysfs_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
+{
+   int index = EventCode;
+
+   if (index>=0 && index<num_events) {
+      strncpy(name, ib_sysfs_native_events[index].description, len);
+   }
+   return PAPI_OK;
+}
+
+int
+_ib_sysfs_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
+{
+   int index = EventCode;
+
+   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT; 
+
+   if (ib_sysfs_native_events[index].name)
+   {
+      unsigned int len = strlen(ib_sysfs_native_events[index].name);
+      if (len > sizeof(info->symbol)) len = sizeof(info->symbol);
+      strncpy(info->symbol, ib_sysfs_native_events[index].name, len);
+   }
+   if (ib_sysfs_native_events[index].description)
+   {
+      unsigned int len = strlen(ib_sysfs_native_events[index].description);
+      if (len > sizeof(info->long_descr)) len = sizeof(info->long_descr);
+      strncpy(info->long_descr, 
+                ib_sysfs_native_events[index].description, len);
+   }
+
+   strncpy(info->units, "\0", 1);
+       /* ib_sysfs_native_events[index].units, sizeof(info->units)); */
+
+/*   info->data_type = ib_sysfs_native_events[index].return_type;
+ */
+   return PAPI_OK;
+}
+
+
+/*
+ *
+ */
+papi_vector_t _ib_sysfs_vector = {
+   .cmp_info = {
+        /* component information (unspecified values are initialized to 0) */
+	.name = "ib_sysfs",
+	.short_name = "ib_sysfs",
+	.version = "5.3.0",
+	.description = "Linux Infiniband statistics using the sysfs interface",
+	.num_mpx_cntrs = IB_SYSFS_MAX_COUNTERS,
+	.num_cntrs = IB_SYSFS_MAX_COUNTERS,
+	.default_domain = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+	.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+	.default_granularity = PAPI_GRN_SYS,
+	.available_granularities = PAPI_GRN_SYS,
+	.hardware_intr_sig = PAPI_INT_SIGNAL,
+
+	/* component specific cmp_info initializations */
+	.fast_real_timer = 0,
+	.fast_virtual_timer = 0,
+	.attach = 0,
+	.attach_must_ptrace = 0,
+  },
+
+        /* sizes of framework-opaque component-private structures */
+	.size = {
+	   .context = sizeof (ib_sysfs_context_t),
+	   .control_state = sizeof (ib_sysfs_control_state_t),
+	   .reg_value = sizeof (ib_sysfs_register_t),
+	   /* .reg_alloc = sizeof (ib_sysfs_reg_alloc_t), */
+  },
+	/* function pointers in this component */
+     .init_thread =          _ib_sysfs_init_thread,
+     .init_component =       _ib_sysfs_init_component,
+     .init_control_state =   _ib_sysfs_init_control_state,
+     .start =                _ib_sysfs_start,
+     .stop =                 _ib_sysfs_stop,
+     .read =                 _ib_sysfs_read,
+     .shutdown_thread =      _ib_sysfs_shutdown_thread,
+     .shutdown_component =   _ib_sysfs_shutdown_component,
+     .ctl =                  _ib_sysfs_ctl,
+     .update_control_state = _ib_sysfs_update_control_state,
+     .set_domain =           _ib_sysfs_set_domain,
+     .reset =                _ib_sysfs_reset,
+	
+     .ntv_enum_events =      _ib_sysfs_ntv_enum_events,
+     .ntv_code_to_name =     _ib_sysfs_ntv_code_to_name,
+     .ntv_code_to_descr =    _ib_sysfs_ntv_code_to_descr,
+     .ntv_code_to_info =     _ib_sysfs_ntv_code_to_info,
+};
