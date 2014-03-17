@@ -2517,7 +2517,7 @@ fi
 
 
 ## AC_SUBST(infiniband_libdir)
-          ac_config_files="$ac_config_files Makefile.infiniband"
+          ac_config_files="$ac_config_files Makefile.infiniband_umad"
 
 
 cat >confcache <<\_ACEOF
@@ -3070,7 +3070,7 @@ for ac_config_target in $ac_config_targets
 do
   case "$ac_config_target" in
   # Handling of arguments.
-  "Makefile.infiniband" ) CONFIG_FILES="$CONFIG_FILES Makefile.infiniband" ;;
+  "Makefile.infiniband_umad" ) CONFIG_FILES="$CONFIG_FILES Makefile.infiniband_umad" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -3427,3 +3427,4 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
+

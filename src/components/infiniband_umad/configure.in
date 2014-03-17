@@ -52,6 +52,6 @@ AC_CHECK_LIB([ibmad],
 AC_SUBST(infiniband_ibmad_dir)
 AC_SUBST(infiniband_ibumad_dir)
 ## AC_SUBST(infiniband_libdir)
-AC_CONFIG_FILES([Makefile.infiniband])
+AC_CONFIG_FILES([Makefile.infiniband_umad])
 
 AC_OUTPUT

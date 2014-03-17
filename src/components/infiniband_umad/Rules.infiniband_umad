@@ -1,0 +1,11 @@
+# $Id$
+
+include components/infiniband_umad/Makefile.infiniband_umad
+
+COMPSRCS += components/infiniband_umad/linux-infiniband_umad.c
+COMPOBJS += linux-infiniband_umad.o
+CFLAGS += -I$(INFINIBAND_IBMAD_DIR)/include -I$(INFINIBAND_IBUMAD_DIR)/include
+LDFLAGS += $(LDL)
+
+linux-infiniband_umad.o: components/infiniband_umad/linux-infiniband_umad.c components/infiniband_umad/linux-infiniband_umad.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/infiniband_umad/linux-infiniband_umad.c -o linux-infiniband_umad.o
