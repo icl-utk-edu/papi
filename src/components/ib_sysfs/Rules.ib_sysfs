@@ -1,6 +1,0 @@
-
-COMPSRCS += components/ib_sysfs/linux-ib_sysfs.c 
-COMPOBJS += linux-ib_sysfs.o
-
-linux-ib_sysfs.o: components/ib_sysfs/linux-ib_sysfs.c components/ib_sysfs/pscanf.h $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/ib_sysfs/linux-ib_sysfs.c -o linux-ib_sysfs.o 

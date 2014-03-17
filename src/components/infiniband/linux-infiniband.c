@@ -1,12 +1,12 @@
 /** 
- * @file    linux-ib_sysfs.c
+ * @file    linux-infiniband.c
  * @author  Gabriel Marin
  *          gmarin@eecs.utk.edu
  *
  * @ingroup papi_components
  *
  *
- * IB_SYSFS component 
+ * Infiniband component 
  * 
  *
  * @brief 
@@ -18,7 +18,7 @@
  */
 
 
-/* Headers required by ib_sysfs */
+/* Headers required by infiniband */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -39,14 +39,14 @@
 /*************************  DEFINES SECTION  ***********************************
  *******************************************************************************/
 /* this number assumes that there will never be more events than indicated */
-#define IB_SYSFS_MAX_COUNTERS 128
+#define INFINIBAND_MAX_COUNTERS 128
 
 /** Structure that stores private information of each event */
-typedef struct ib_sysfs_register
+typedef struct infiniband_register
 {
    /* This is used by the framework.It likes it to be !=0 to do somehting */
    unsigned int selector;
-} ib_sysfs_register_t;
+} infiniband_register_t;
 
 /*
  * The following structures mimic the ones used by other components. It is more
@@ -73,44 +73,44 @@ typedef struct _ib_counter_type
 static const char *ib_dir_path = "/sys/class/infiniband";
 
 /** This structure is used to build the table of events */
-typedef struct _ib_sysfs_native_event_entry
+typedef struct _infiniband_native_event_entry
 {
-   ib_sysfs_register_t resources;
+   infiniband_register_t resources;
    char *name;
    char *description;
    char* file_name;
    ib_device_t* device;
    int extended;   /* if this is an extended (64-bit) counter */
-} ib_sysfs_native_event_entry_t;
+} infiniband_native_event_entry_t;
 
 
-typedef struct _ib_sysfs_control_state
+typedef struct _infiniband_control_state
 {
-   long long counts[IB_SYSFS_MAX_COUNTERS];
-   int being_measured[IB_SYSFS_MAX_COUNTERS];
+   long long counts[INFINIBAND_MAX_COUNTERS];
+   int being_measured[INFINIBAND_MAX_COUNTERS];
    /* all IB counters need difference, but use a flag for generality */
-   int need_difference[IB_SYSFS_MAX_COUNTERS];
+   int need_difference[INFINIBAND_MAX_COUNTERS];
    long long lastupdate;
-} ib_sysfs_control_state_t;
+} infiniband_control_state_t;
 
 
-typedef struct _ib_sysfs_context
+typedef struct _infiniband_context
 {
-   ib_sysfs_control_state_t state;
-   long long start_value[IB_SYSFS_MAX_COUNTERS];
-} ib_sysfs_context_t;
+   infiniband_control_state_t state;
+   long long start_value[INFINIBAND_MAX_COUNTERS];
+} infiniband_context_t;
 
 
 
 /*************************  GLOBALS SECTION  ***********************************
  *******************************************************************************/
 /* This table contains the component native events */
-static ib_sysfs_native_event_entry_t *ib_sysfs_native_events = 0;
+static infiniband_native_event_entry_t *infiniband_native_events = 0;
 /* number of events in the table*/
 static int num_events = 0;
 
 
-papi_vector_t _ib_sysfs_vector;
+papi_vector_t _infiniband_vector;
 
 /******************************************************************************
  ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
@@ -258,7 +258,7 @@ find_ib_devices()
   ib_dir = opendir(ib_dir_path);
   if (ib_dir == NULL) {
      SUBDBG("cannot open `%s'\n", ib_dir_path);
-     strncpy(_ib_sysfs_vector.cmp_info.disabled_reason,
+     strncpy(_infiniband_vector.cmp_info.disabled_reason,
                  "Infiniband sysfs interface not found", PAPI_MAX_STR_LEN);
      result = PAPI_ENOSUPP;
      goto out;
@@ -317,12 +317,12 @@ find_ib_devices()
 
    if (root_device == 0)  // no active devices found
    {
-     strncpy(_ib_sysfs_vector.cmp_info.disabled_reason,
+     strncpy(_infiniband_vector.cmp_info.disabled_reason,
                  "No active Infiniband ports found", PAPI_MAX_STR_LEN);
      result = PAPI_ENOIMPL;
    } else if (num_events == 0)
    {
-     strncpy(_ib_sysfs_vector.cmp_info.disabled_reason,
+     strncpy(_infiniband_vector.cmp_info.disabled_reason,
                  "No supported Infiniband events found", PAPI_MAX_STR_LEN);
      result = PAPI_ENOIMPL;
    } else
@@ -331,17 +331,17 @@ find_ib_devices()
       // Revert them again, so that they are in finding order, not that it matters.
       int i = num_events - 1;
       // now allocate memory to store the counters into the native table
-      ib_sysfs_native_events = (ib_sysfs_native_event_entry_t*)
-           papi_calloc(sizeof(ib_sysfs_native_event_entry_t), num_events);
+      infiniband_native_events = (infiniband_native_event_entry_t*)
+           papi_calloc(sizeof(infiniband_native_event_entry_t), num_events);
       ib_counter_t *iter = root_counter;
       while (iter != 0)
       {
-         ib_sysfs_native_events[i].name = iter->ev_name;
-         ib_sysfs_native_events[i].file_name = iter->ev_file_name;
-         ib_sysfs_native_events[i].device = iter->ev_device;
-         ib_sysfs_native_events[i].extended = iter->extended;
-         ib_sysfs_native_events[i].resources.selector = i + 1;
-         ib_sysfs_native_events[i].description = 
+         infiniband_native_events[i].name = iter->ev_name;
+         infiniband_native_events[i].file_name = iter->ev_file_name;
+         infiniband_native_events[i].device = iter->ev_device;
+         infiniband_native_events[i].extended = iter->extended;
+         infiniband_native_events[i].resources.selector = i + 1;
+         infiniband_native_events[i].description = 
                   make_ib_event_description(iter->ev_file_name, iter->extended);
          
          ib_counter_t *tmp = iter;
@@ -364,7 +364,7 @@ read_ib_counter_value(int index)
 {
    char ev_file[128];
    long long value = 0ll;
-   ib_sysfs_native_event_entry_t *iter = &ib_sysfs_native_events[index];
+   infiniband_native_event_entry_t *iter = &infiniband_native_events[index];
    snprintf(ev_file, sizeof(ev_file), "%s/%s/ports/%d/counters%s/%s",
            ib_dir_path, iter->device->dev_name,
            iter->device->dev_port, (iter->extended?"_ext":""),
@@ -380,21 +380,21 @@ read_ib_counter_value(int index)
 }
 
 static void
-deallocate_ib_sysfs_resources()
+deallocate_infiniband_resources()
 {
    int i;
    
-   if (ib_sysfs_native_events)
+   if (infiniband_native_events)
    {
       for (i=0 ; i<num_events ; ++i) {
-         if (ib_sysfs_native_events[i].name)
-            free(ib_sysfs_native_events[i].name);
-         if (ib_sysfs_native_events[i].file_name)
-            free(ib_sysfs_native_events[i].file_name);
-         if (ib_sysfs_native_events[i].description)
-            papi_free(ib_sysfs_native_events[i].description);
+         if (infiniband_native_events[i].name)
+            free(infiniband_native_events[i].name);
+         if (infiniband_native_events[i].file_name)
+            free(infiniband_native_events[i].file_name);
+         if (infiniband_native_events[i].description)
+            papi_free(infiniband_native_events[i].description);
       }
-      papi_free(ib_sysfs_native_events);
+      papi_free(infiniband_native_events);
    }
    
    ib_device_t *iter = root_device;
@@ -418,7 +418,7 @@ deallocate_ib_sysfs_resources()
  * This is called whenever a thread is initialized
  */
 int
-_ib_sysfs_init_thread( hwd_context_t *ctx )
+_infiniband_init_thread( hwd_context_t *ctx )
 {
    (void) ctx;
    return PAPI_OK;
@@ -430,7 +430,7 @@ _ib_sysfs_init_thread( hwd_context_t *ctx )
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
-_ib_sysfs_init_component( int cidx )
+_infiniband_init_component( int cidx )
 {
    /* discover Infiniband devices and available events */
    int result = find_ib_devices();
@@ -438,17 +438,17 @@ _ib_sysfs_init_component( int cidx )
    if (result != PAPI_OK)  // we couldn't initialize the component
    {
       // deallocate any eventually allocated memory
-      deallocate_ib_sysfs_resources();
+      deallocate_infiniband_resources();
    }
     
-   _ib_sysfs_vector.cmp_info.num_native_events = num_events;
+   _infiniband_vector.cmp_info.num_native_events = num_events;
 
-   _ib_sysfs_vector.cmp_info.num_cntrs = num_events;
-   _ib_sysfs_vector.cmp_info.num_mpx_cntrs = num_events;
+   _infiniband_vector.cmp_info.num_cntrs = num_events;
+   _infiniband_vector.cmp_info.num_mpx_cntrs = num_events;
 
 
    /* Export the component id */
-   _ib_sysfs_vector.cmp_info.CmpIdx = cidx;
+   _infiniband_vector.cmp_info.CmpIdx = cidx;
 
    return (result);
 }
@@ -459,12 +459,12 @@ _ib_sysfs_init_component( int cidx )
  * functions
  */
 int
-_ib_sysfs_init_control_state( hwd_control_state_t *ctl )
+_infiniband_init_control_state( hwd_control_state_t *ctl )
 {
-   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   infiniband_control_state_t* control = (infiniband_control_state_t*) ctl;
    int i;
 
-   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+   for (i=0 ; i<INFINIBAND_MAX_COUNTERS ; ++i) {
       control->being_measured[i] = 0;
    }
 
@@ -475,14 +475,14 @@ _ib_sysfs_init_control_state( hwd_control_state_t *ctl )
  *
  */
 int
-_ib_sysfs_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
+_infiniband_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-   ib_sysfs_context_t* context = (ib_sysfs_context_t*) ctx;
-   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   infiniband_context_t* context = (infiniband_context_t*) ctx;
+   infiniband_control_state_t* control = (infiniband_control_state_t*) ctl;
    long long now = PAPI_get_real_usec();
    int i;
 
-   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+   for (i=0 ; i<INFINIBAND_MAX_COUNTERS ; ++i) {
       if (control->being_measured[i] && control->need_difference[i]) {
          context->start_value[i] = read_ib_counter_value(i);
       }
@@ -497,15 +497,15 @@ _ib_sysfs_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
  *
  */
 int
-_ib_sysfs_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
+_infiniband_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-   ib_sysfs_context_t* context = (ib_sysfs_context_t*) ctx;
-   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   infiniband_context_t* context = (infiniband_context_t*) ctx;
+   infiniband_control_state_t* control = (infiniband_control_state_t*) ctl;
    long long now = PAPI_get_real_usec();
    int i;
    long long temp;
 
-   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+   for (i=0 ; i<INFINIBAND_MAX_COUNTERS ; ++i) {
       if (control->being_measured[i])
       {
          temp = read_ib_counter_value(i);
@@ -537,30 +537,30 @@ _ib_sysfs_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
  *
  */
 int
-_ib_sysfs_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+_infiniband_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		 long_long ** events, int flags )
 {
    ( void ) flags;
     
-   _ib_sysfs_stop(ctx, ctl);  /* we cannot actually stop the counters */
+   _infiniband_stop(ctx, ctl);  /* we cannot actually stop the counters */
    /* Pass back a pointer to our results */
-   *events = ((ib_sysfs_control_state_t*) ctl)->counts;
+   *events = ((infiniband_control_state_t*) ctl)->counts;
    
    return PAPI_OK;
 }
 
 
 int
-_ib_sysfs_shutdown_component( void )
+_infiniband_shutdown_component( void )
 {
    /* Cleanup resources used by this component before leaving */
-   deallocate_ib_sysfs_resources();
+   deallocate_infiniband_resources();
    
    return PAPI_OK;
 }
 
 int
-_ib_sysfs_shutdown_thread( hwd_context_t *ctx )
+_infiniband_shutdown_thread( hwd_context_t *ctx )
 {
    ( void ) ctx;
 
@@ -574,7 +574,7 @@ _ib_sysfs_shutdown_thread( hwd_context_t *ctx )
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
 int
-_ib_sysfs_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
+_infiniband_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
    ( void ) ctx;
    ( void ) code;
@@ -584,7 +584,7 @@ _ib_sysfs_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
 
 int
-_ib_sysfs_update_control_state( hwd_control_state_t *ctl,
+_infiniband_update_control_state( hwd_control_state_t *ctl,
 				 NativeInfo_t * native, 
 				 int count,
 				 hwd_context_t *ctx )
@@ -592,16 +592,16 @@ _ib_sysfs_update_control_state( hwd_control_state_t *ctl,
    int i, index;
    ( void ) ctx;
     
-   ib_sysfs_control_state_t* control = (ib_sysfs_control_state_t*) ctl;
+   infiniband_control_state_t* control = (infiniband_control_state_t*) ctl;
    
-   for (i=0 ; i<IB_SYSFS_MAX_COUNTERS ; ++i) {
+   for (i=0 ; i<INFINIBAND_MAX_COUNTERS ; ++i) {
       control->being_measured[i] = 0;
    }
    
    for (i=0 ; i<count ; ++i) {
       index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
       native[i].ni_position =
-                  ib_sysfs_native_events[index].resources.selector - 1;
+                  infiniband_native_events[index].resources.selector - 1;
       control->being_measured[index] = 1;
       control->need_difference[index] = 1;
    }
@@ -620,7 +620,7 @@ _ib_sysfs_update_control_state( hwd_control_state_t *ctl,
  * PAPI_DOM_ALL   is all of the domains
  */
 int
-_ib_sysfs_set_domain( hwd_control_state_t *ctl, int domain )
+_infiniband_set_domain( hwd_control_state_t *ctl, int domain )
 {
    int found = 0;
    (void) ctl;
@@ -645,7 +645,7 @@ _ib_sysfs_set_domain( hwd_control_state_t *ctl, int domain )
  * Cannot reset the counters using the sysfs interface.
  */
 int
-_ib_sysfs_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
+_infiniband_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    (void) ctx;
    (void) ctl;
@@ -657,7 +657,7 @@ _ib_sysfs_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
  * Native Event functions
  */
 int
-_ib_sysfs_ntv_enum_events( unsigned int *EventCode, int modifier )
+_infiniband_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
    switch (modifier) {
       case PAPI_ENUM_FIRST:
@@ -689,12 +689,12 @@ _ib_sysfs_ntv_enum_events( unsigned int *EventCode, int modifier )
  *
  */
 int
-_ib_sysfs_ntv_code_to_name( unsigned int EventCode, char *name, int len )
+_infiniband_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
    int index = EventCode;
 
    if (index>=0 && index<num_events) {
-      strncpy( name, ib_sysfs_native_events[index].name, len );
+      strncpy( name, infiniband_native_events[index].name, len );
    }
 
    return PAPI_OK;
@@ -704,41 +704,41 @@ _ib_sysfs_ntv_code_to_name( unsigned int EventCode, char *name, int len )
  *
  */
 int
-_ib_sysfs_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
+_infiniband_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
    int index = EventCode;
 
    if (index>=0 && index<num_events) {
-      strncpy(name, ib_sysfs_native_events[index].description, len);
+      strncpy(name, infiniband_native_events[index].description, len);
    }
    return PAPI_OK;
 }
 
 int
-_ib_sysfs_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
+_infiniband_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
    int index = EventCode;
 
    if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT; 
 
-   if (ib_sysfs_native_events[index].name)
+   if (infiniband_native_events[index].name)
    {
-      unsigned int len = strlen(ib_sysfs_native_events[index].name);
+      unsigned int len = strlen(infiniband_native_events[index].name);
       if (len > sizeof(info->symbol)) len = sizeof(info->symbol);
-      strncpy(info->symbol, ib_sysfs_native_events[index].name, len);
+      strncpy(info->symbol, infiniband_native_events[index].name, len);
    }
-   if (ib_sysfs_native_events[index].description)
+   if (infiniband_native_events[index].description)
    {
-      unsigned int len = strlen(ib_sysfs_native_events[index].description);
+      unsigned int len = strlen(infiniband_native_events[index].description);
       if (len > sizeof(info->long_descr)) len = sizeof(info->long_descr);
       strncpy(info->long_descr, 
-                ib_sysfs_native_events[index].description, len);
+                infiniband_native_events[index].description, len);
    }
 
    strncpy(info->units, "\0", 1);
-       /* ib_sysfs_native_events[index].units, sizeof(info->units)); */
+       /* infiniband_native_events[index].units, sizeof(info->units)); */
 
-/*   info->data_type = ib_sysfs_native_events[index].return_type;
+/*   info->data_type = infiniband_native_events[index].return_type;
  */
    return PAPI_OK;
 }
@@ -747,15 +747,15 @@ _ib_sysfs_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 /*
  *
  */
-papi_vector_t _ib_sysfs_vector = {
+papi_vector_t _infiniband_vector = {
    .cmp_info = {
         /* component information (unspecified values are initialized to 0) */
-	.name = "ib_sysfs",
-	.short_name = "ib_sysfs",
+	.name = "infiniband",
+	.short_name = "infiniband",
 	.version = "5.3.0",
 	.description = "Linux Infiniband statistics using the sysfs interface",
-	.num_mpx_cntrs = IB_SYSFS_MAX_COUNTERS,
-	.num_cntrs = IB_SYSFS_MAX_COUNTERS,
+	.num_mpx_cntrs = INFINIBAND_MAX_COUNTERS,
+	.num_cntrs = INFINIBAND_MAX_COUNTERS,
 	.default_domain = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 	.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 	.default_granularity = PAPI_GRN_SYS,
@@ -771,27 +771,27 @@ papi_vector_t _ib_sysfs_vector = {
 
         /* sizes of framework-opaque component-private structures */
 	.size = {
-	   .context = sizeof (ib_sysfs_context_t),
-	   .control_state = sizeof (ib_sysfs_control_state_t),
-	   .reg_value = sizeof (ib_sysfs_register_t),
-	   /* .reg_alloc = sizeof (ib_sysfs_reg_alloc_t), */
+	   .context = sizeof (infiniband_context_t),
+	   .control_state = sizeof (infiniband_control_state_t),
+	   .reg_value = sizeof (infiniband_register_t),
+	   /* .reg_alloc = sizeof (infiniband_reg_alloc_t), */
   },
 	/* function pointers in this component */
-     .init_thread =          _ib_sysfs_init_thread,
-     .init_component =       _ib_sysfs_init_component,
-     .init_control_state =   _ib_sysfs_init_control_state,
-     .start =                _ib_sysfs_start,
-     .stop =                 _ib_sysfs_stop,
-     .read =                 _ib_sysfs_read,
-     .shutdown_thread =      _ib_sysfs_shutdown_thread,
-     .shutdown_component =   _ib_sysfs_shutdown_component,
-     .ctl =                  _ib_sysfs_ctl,
-     .update_control_state = _ib_sysfs_update_control_state,
-     .set_domain =           _ib_sysfs_set_domain,
-     .reset =                _ib_sysfs_reset,
+     .init_thread =          _infiniband_init_thread,
+     .init_component =       _infiniband_init_component,
+     .init_control_state =   _infiniband_init_control_state,
+     .start =                _infiniband_start,
+     .stop =                 _infiniband_stop,
+     .read =                 _infiniband_read,
+     .shutdown_thread =      _infiniband_shutdown_thread,
+     .shutdown_component =   _infiniband_shutdown_component,
+     .ctl =                  _infiniband_ctl,
+     .update_control_state = _infiniband_update_control_state,
+     .set_domain =           _infiniband_set_domain,
+     .reset =                _infiniband_reset,
 	
-     .ntv_enum_events =      _ib_sysfs_ntv_enum_events,
-     .ntv_code_to_name =     _ib_sysfs_ntv_code_to_name,
-     .ntv_code_to_descr =    _ib_sysfs_ntv_code_to_descr,
-     .ntv_code_to_info =     _ib_sysfs_ntv_code_to_info,
+     .ntv_enum_events =      _infiniband_ntv_enum_events,
+     .ntv_code_to_name =     _infiniband_ntv_code_to_name,
+     .ntv_code_to_descr =    _infiniband_ntv_code_to_descr,
+     .ntv_code_to_info =     _infiniband_ntv_code_to_info,
 };

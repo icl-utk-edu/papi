@@ -5,7 +5,7 @@
 /** 
  * @author  Jose Pedro Oliveira
  *
- * test case for the linux-ib_sysfs component
+ * test case for the linux-infiniband component
  * Adapted from its counterpart in the net component.
  *
  * @brief
@@ -35,7 +35,7 @@ int main (int argc, char **argv)
     }
 
     if (!TESTS_QUIET) {
-        printf("Listing all ib_sysfs events\n");
+        printf("Listing all infiniband events\n");
     }
 
     numcmp = PAPI_num_components();
@@ -46,7 +46,7 @@ int main (int argc, char **argv)
             test_fail(__FILE__, __LINE__,"PAPI_get_component_info failed\n",-1);
         }
 
-        if ( strstr(cmpinfo->name, "ib_sysfs") == NULL) {
+        if ( strstr(cmpinfo->name, "infiniband") == NULL) {
             continue;
         }
 
@@ -56,7 +56,7 @@ int main (int argc, char **argv)
                 cmpinfo->num_native_events, cmpinfo->name);
         }
         if (cmpinfo->disabled) {
-            test_skip(__FILE__,__LINE__,"Component ib_sysfs is disabled", 0);
+            test_skip(__FILE__,__LINE__,"Component infiniband is disabled", 0);
             continue;
         }
 
@@ -82,7 +82,7 @@ int main (int argc, char **argv)
     }
 
     if (total_events==0) {
-        test_skip(__FILE__,__LINE__,"No ib_sysfs events found", 0);
+        test_skip(__FILE__,__LINE__,"No infiniband events found", 0);
     }
 
     test_pass( __FILE__, NULL, 0 );

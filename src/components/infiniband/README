@@ -4,15 +4,15 @@
 * @author: Gabriel Marin
 *          gmarin@eecs.utk.edu
 * @defgroup papi_components Components
-* @brief Component Specific Readme file: ib_sysfs
+* @brief Component Specific Readme file: infiniband
 */
 
 /** @page component_readme Component Readme 
 
 @section Component Specific Information
 
-ib_sysfs/  
-The PAPI ib_sysfs component uses the sysfs interface to access infiniband
+infiniband/  
+The PAPI infiniband component uses the sysfs interface to access infiniband
 performance counters from user space. On initialization, it checks for the  
 existence of folder /sys/class/infiniband/ and it auto-detects all the
 active IB devices and associated ports.
