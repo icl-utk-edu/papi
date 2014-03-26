@@ -46,6 +46,7 @@ typedef struct nvml_native_event_entry
 {
 	nvml_resource_options_t options;
 	char name[PAPI_MAX_STR_LEN];
+	char units[PAPI_MIN_STR_LEN];
 	char description[PAPI_MAX_STR_LEN];
 	int type;
 } nvml_native_event_entry_t;
