@@ -847,7 +847,9 @@ createNativeEvents( )
 
 						if ( HAS_FEATURE( features[i], FEATURE_POWER ) ) {
 								sprintf( entry->name, "%s:power", sanitized_name);
-								strncpy(entry->description,"Power usage reading for the device, in miliwatts. This is the power draw for the entire board, including GPU, memory, etc.\n The reading is accurate to within a range of +/-5 watts.", PAPI_MAX_STR_LEN);
+								// set the power event units value to "mW" for miliwatts
+								strncpy( entry->units, "mW",PAPI_MIN_STR_LEN);
+								strncpy(entry->description,"Power usage reading for the device, in miliwatts. This is the power draw (+/-5 watts) for the entire board: GPU, memory, etc.", PAPI_MAX_STR_LEN);
 								entry->type = FEATURE_POWER;
 								entry++;
 						}
@@ -1491,6 +1493,32 @@ _papi_nvml_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
 		return PAPI_OK;
 }
 
+/** Takes a native event code and passes back the event info
+ * @param EventCode is the native event code
+ * @param info is a pointer for the info to be copied to
+ */
+int
+_papi_nvml_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+{
+
+  int index = EventCode;
+
+  if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
+
+  strncpy( info->symbol, nvml_native_table[index].name, 
+     sizeof(info->symbol));
+
+  strncpy( info->units, nvml_native_table[index].units, 
+     sizeof(info->units));
+
+  strncpy( info->long_descr, nvml_native_table[index].description, 
+     sizeof(info->symbol));
+
+//  info->data_type = nvml_native_table[index].return_type;
+
+  return PAPI_OK;
+}
+
 /** Vector that points to entry points for our component */
 papi_vector_t _nvml_vector = {
 		.cmp_info = {
@@ -1567,8 +1595,9 @@ papi_vector_t _nvml_vector = {
 		/* Name Mapping Functions */
 		.ntv_enum_events =   _papi_nvml_ntv_enum_events,
 		.ntv_name_to_code  = NULL,
-		.ntv_code_to_name =  _papi_nvml_ntv_code_to_name,
-		.ntv_code_to_descr = _papi_nvml_ntv_code_to_descr,
+    .ntv_code_to_name =  _papi_nvml_ntv_code_to_name,
+    .ntv_code_to_descr = _papi_nvml_ntv_code_to_descr,
+    .ntv_code_to_info = _papi_nvml_ntv_code_to_info,
 
 };
 
