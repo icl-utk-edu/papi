@@ -13,6 +13,7 @@ main( int argc, char **argv )
 	int retval, pid, status, EventSet = PAPI_NULL;
 	long long int values[] = {0,0};
 	PAPI_option_t opt;
+	char event_name[BUFSIZ];
 
         tests_quiet( argc, argv );
 
@@ -42,14 +43,16 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_add_event( EventSet, PAPI_TOT_CYC ) ) != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
 
-	retval = PAPI_query_event( PAPI_FP_INS );
-	if ( retval == PAPI_ENOEVNT ) {
-		test_warn( __FILE__, __LINE__, "PAPI_FP_INS", retval);
-		values[1] = NUM_FLOPS; /* fake a return value to pass the test */
-	} else if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_query_event", retval );
-	else if ( ( retval = PAPI_add_event( EventSet, PAPI_FP_INS ) ) != PAPI_OK )
+	strcpy(event_name,"PAPI_FP_INS");
+	retval = PAPI_add_named_event( EventSet, event_name );
+	if (retval == PAPI_ENOEVNT) {
+		strcpy(event_name,"PAPI_TOT_INS");
+		retval = PAPI_add_named_event( EventSet, event_name );
+	}
+
+	if ( retval != PAPI_OK ) {
 		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
+	}
 
 	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
@@ -72,7 +75,7 @@ main( int argc, char **argv )
 	   printf( "------------------------------------------------------------\n" );
 
 	   printf( "Test run    : \t1\n" );
-	   printf( "PAPI_FP_INS : \t%lld\n", values[1] );
+	   printf( "%s : \t%lld\n", event_name, values[1] );
 	   printf( "PAPI_TOT_CYC: \t%lld\n", values[0] );
 	   printf( "------------------------------------------------------------\n" );
 
@@ -81,12 +84,12 @@ main( int argc, char **argv )
 	   printf( "Row 2 greater than row 1\n");
 	}
 
-	if ( values[1] < NUM_FLOPS) {
-		test_fail( __FILE__, __LINE__, "PAPI_FP_INS", 1 );
+	if ( values[1] < 100 ) {
+		test_fail( __FILE__, __LINE__, event_name, 1 );
 	}
 
-	if ( values[0] < values[1]) {
-		test_fail( __FILE__, __LINE__, "PAPI_TOT_CYC < PAPI_FP_INS", 1 );
+	if ( (!strcmp(event_name,"PAPI_FP_INS")) && (values[1] < NUM_FLOPS)) {
+		test_fail( __FILE__, __LINE__, "PAPI_FP_INS", 1 );
 	}
 
 	test_pass( __FILE__, NULL, 0 );
