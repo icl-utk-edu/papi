@@ -106,18 +106,24 @@ main( int argc, char **argv )
 	if ( retval != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
 
-	sprintf(event_name,"PAPI_TOT_CYC");
+
 
 	retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
 	if ( retval != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
-	retval = PAPI_add_event(EventSet1, PAPI_FP_INS);
+
+
+	strcpy(event_name,"PAPI_FP_INS");
+	retval = PAPI_add_named_event(EventSet1, event_name);
 	if ( retval == PAPI_ENOEVNT ) {
-		test_warn( __FILE__, __LINE__, "PAPI_FP_INS", retval);
-	} else if ( retval != PAPI_OK ) {
+		strcpy(event_name,"PAPI_TOT_INS");
+		retval = PAPI_add_named_event(EventSet1, event_name);
+	}
+
+	if ( retval != PAPI_OK ) {
 		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
 	}
-	
+
 	values = allocate_test_space( 1, 2);
 
 	elapsed_us = PAPI_get_real_usec(  );
@@ -213,7 +219,7 @@ main( int argc, char **argv )
 	printf( "Test type    : \t           1\n" );
 
 	printf( TAB1, "PAPI_TOT_CYC : \t", ( values[0] )[0] );
-	printf( TAB1, "PAPI_FP_INS  : \t", ( values[0] )[1] );
+	printf( "%s : \t %12lld\n", event_name, ( values[0] )[1] );
 	printf( TAB1, "Real usec    : \t", elapsed_us );
 	printf( TAB1, "Real cycles  : \t", elapsed_cyc );
 	printf( TAB1, "Virt usec    : \t", elapsed_virt_us );
