@@ -200,6 +200,30 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
       /* set up the attr structure.  We don't set up all fields here */
       /* as some have already been set up previously.                */
 
+/*
+ * The following code controls how the uncore component interfaces with the 
+ * kernel for uncore events.  The code inside the ifdef will use grouping of 
+ * uncore events which can make the cost of reading the results more efficient.
+ * The problem with it is that the uncore component supports 20 different uncore 
+ * PMU's.  The kernel requires that all events in a group must be for the same PMU.
+ * This means that with grouping enabled papi applications can count events on only
+ * one of the 20 PMU's during a run.
+ * 
+ * The code inside the else clause treats each event in the event set as 
+ * independent.  When running in this mode the kernel allows the papi multiple 
+ * uncore PMU's at the same time.
+ * 
+ * Example:
+ *  An application wants to measure all the L3 cache write requests.
+ *  The event to do this is part of a cbox pmu (there are 8 cbox pmu's).
+ *  When built with the code in the ifdef, the application would have to be 
+ *    run 8 times and count write requests from one pmu at a time.
+ *  When built with the code in the else, the write requests in all 8 cbox 
+ *    pmu's could be counted in the same run.
+ * 
+ */
+// #define GROUPIT 1       // remove the comment on this line to force event grouping
+#ifdef GROUPIT
       /* group leader (event 0) is special                */
       /* If we're multiplexed, everyone is a group leader */
       if (( i == 0 ) || (ctl->multiplexed)) {
@@ -217,6 +241,13 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 							   ctl->inherit,
 							   0 );
       }
+#else
+             ctl->events[i].attr.pinned = !ctl->multiplexed;
+         	 ctl->events[i].attr.disabled = 1;
+         	 ctl->inherit = 1;
+         	 ctl->events[i].group_leader_fd=-1;
+             ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, ctl->inherit, 0 );
+#endif
 
 
       /* try to open */
