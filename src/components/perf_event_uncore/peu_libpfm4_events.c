@@ -19,6 +19,9 @@
 
 #define NATIVE_EVENT_CHUNK 1024
 
+
+static int enum_call = 0;   // When true we are listing events (we called _peu_libpfm4_ntv_name_to_code from _peu_libpfm4_ntv_enum_events).
+
 /** @class  find_existing_event
  *  @brief  looks up an event, returns it if it exists
  *
@@ -271,6 +274,7 @@ static int find_next_no_aliases(int code, int pmu_type) {
 static struct native_event_t *allocate_native_event(char *name, 
 						    int event_idx,
 			  struct native_event_table_t *event_table) {
+SUBDBG("Entry: name: %s, event_idx: %#x\n", name, event_idx);
 
   int new_event;
 
@@ -351,7 +355,49 @@ static struct native_event_t *allocate_native_event(char *name,
   memset(&perf_attr,0,sizeof(struct perf_event_attr));
   perf_arg.attr=&perf_attr;
 
-  ret = pfm_get_os_event_encoding(name,
+  // Put the event name into a work area that we can change if the umasks need to be adjusted.
+  // This may be necessary when we are doing a list, but we do not want to change the callers copy.
+  char new_name[BUFSIZ];
+  strcpy(new_name, name);
+
+  // This code gets called both when setting up to count events and when just trying to list
+  // uncore events.  When setting up to count, it is the users responsibility to provide the umasks.
+  // If we got here through _peu_libpfm4_ntv_enum_events (listing events), then we need to make
+  // sure that umasks which need to be used together are both provided so the pfm_get_os_event_encoding
+  // function below does not return an error.  When and error is returned it gets sent back to the enum code
+  // which causes the loop looking for umasks to quit.  This causes the event list to not report all of
+  // the umask's which are valid for some events.  When listing events, there is always only one umask
+  // provided and it is always at the end of the event name string.
+  
+  // if we are listing events
+  if (enum_call != 0) {
+	// if these are sandy bridge uncore events
+	if (strstr(new_name, "snbep_unc_") != NULL) {
+		// If this event has an NID, NID_ALL, NID_EVECTION, NID_MISS_ALL, NID_MISS_OPCODE, or NID_OPCODE mask,
+		// then a nf= needs to be added.  Since the NIDxxx mask will always be at the end of the event name
+		// string we can just concatenate the new nf= to the end of the name.
+		if (strstr(new_name, "NID") != NULL) {
+			strcat(new_name, ":nf=1");
+		} else {
+			// If this event has a nf= umask, then we need to insert an NID mask.  If the event name is UNC_C_LLC_LOOKUP
+			// or UNC_C_LLC_VICTIMS then we need to use the NID umask.  But if the event name is UNC_C_TOR_INSERTS or
+			// UNC_C_TOR_OCCUPANCY then we will always use NID_ALL.  The purpose of adding the NIDxxx umask is just to
+			// get the nf= to show up in the list so it should not matter which NID type mask is used (but it must be
+			// valid for that event).
+			char *wrk;
+			if ((wrk = strstr(new_name, "nf=")) != NULL) {
+				if (strstr(new_name, "UNC_C_LLC_") != NULL) {
+					strcpy(wrk, "NID:nf=1");
+				}
+				if (strstr(new_name, "UNC_C_TOR_") != NULL) {
+					strcpy(wrk, "NID_ALL:nf=1");
+				}
+			}
+		}
+	}
+  }
+
+  ret = pfm_get_os_event_encoding(new_name,
   				  PFM_PLM0 | PFM_PLM3,
                                   PFM_OS_PERF_EVENT,
   				  &perf_arg);
@@ -390,9 +436,11 @@ static struct native_event_t *allocate_native_event(char *name,
   _papi_hwi_unlock( NAMELIB_LOCK );
 
   if (event_table->native_events==NULL) {
+	 SUBDBG("Event name: %s not found.\n", name);
      return NULL;
   }
 
+  SUBDBG("Event name: %s found.\n", name);
   return &event_table->native_events[new_event];
 
 }
@@ -447,10 +495,10 @@ static int find_max_umask(struct native_event_t *current_event) {
      return PFM_ERR_NOTFOUND;
   }
 
-  /* skip first */
-  b=strtok(NULL,":");
+  /* skip event name, get first mask */
+  b=strtok(NULL,":=");
   if (!b) {
-     SUBDBG("Skipping first failed\n");
+     SUBDBG("Skipping to first mask failed\n");
      return PFM_ERR_UMASK; /* Must be this value!! */
   }
 
@@ -470,23 +518,23 @@ static int find_max_umask(struct native_event_t *current_event) {
 	return ret;
       }
 
-      SUBDBG("Trying %s with %s\n",ainfo.name,b);
+      SUBDBG("Compare: ainfo.name: %s, ainfo.type: %d, with event mask: %s\n", ainfo.name, ainfo.type, b);
 
       if (ainfo.type == PFM_ATTR_MOD_BOOL) {
-	 sprintf(temp_string,"%s=0",ainfo.name);
-         if (!strcasecmp(temp_string, b)) {
-	    SUBDBG("Found %s %d\n",b,a);
-	    if (a>max) max=a;
-	    goto found_attr;
-	 }
+         if (!strcasecmp(ainfo.name, b)) {
+            SUBDBG("Found attr name: %s, attr idx: %d\n", b, a);
+	        b=strtok(NULL,":");  // skip the value provided with this attribute
+	        if (a>max) max=a;
+	           goto found_attr;
+	     }
       }
       else if (ainfo.type == PFM_ATTR_MOD_INTEGER) {
-	 sprintf(temp_string,"%s=0",ainfo.name);
-         if (!strcasecmp(temp_string, b)) {
-	    SUBDBG("Found %s %d\n",b,a);
-	    if (a>max) max=a;
-	    goto found_attr;
-	 }
+        if (!strcasecmp(ainfo.name, b)) {
+           SUBDBG("Found attr name: %s, attr idx: %d\n", b, a);
+	       b=strtok(NULL,":");  // skip the value provided with this attribute
+	       if (a>max) max=a;
+	          goto found_attr;
+	    }
       }
       else {
          if (!strcasecmp(ainfo.name, b)) {
@@ -504,7 +552,7 @@ static int find_max_umask(struct native_event_t *current_event) {
 
 found_attr:
 
-    b=strtok(NULL,":");
+    b=strtok(NULL,":=");
   }
 
   SUBDBG("Found max %d\n", max);
@@ -541,7 +589,7 @@ get_event_first_active(int pmu_type)
 
       pidx=pinfo.first_event;
 
-      SUBDBG("First event in %s is %d\n",pinfo.name,pidx);
+      SUBDBG("First event in %s is %#x\n",pinfo.name,pidx);
 
       if (pidx<0) {
 	/* For some reason no events available */
@@ -703,10 +751,11 @@ static int find_next_umask(struct native_event_t *current_event,
 	return PFM_ERR_NOTFOUND;
      }
 
-     if (ainfo.type == PFM_ATTR_UMASK) {
-	SUBDBG("nm %d looking for %d\n",num_masks,current);
+ 	SUBDBG("Looking at attribute idx: %d, mask number: %d, current: %d\n", i, num_masks, current);
+
+ 	if (ainfo.type == PFM_ATTR_UMASK) {
 	if (num_masks==current+1) {
-	   SUBDBG("Found attribute %d: %s type: %d\n",
+	   SUBDBG("Found attribute index: %d, name: %s, type: %d\n",
 		  i,ainfo.name,ainfo.type);
 
            sprintf(temp_string,"%s",ainfo.name);
@@ -714,14 +763,11 @@ static int find_next_umask(struct native_event_t *current_event,
 
 	   return current+1;
 	}
-	num_masks++;
      }
 
-     if (ainfo.type == PFM_ATTR_MOD_BOOL) {
-	SUBDBG("nm %d looking for %d\n",num_masks,current);
-
+ 	if (ainfo.type == PFM_ATTR_MOD_BOOL) {
 	if (num_masks==current+1) {
-	   SUBDBG("Found attribute %d: %s type: %d\n",
+	   SUBDBG("Found attribute index: %d, name: %s, type: %d\n",
 		  i,ainfo.name,ainfo.type);
 
            sprintf(temp_string,"%s=0",ainfo.name);
@@ -729,13 +775,11 @@ static int find_next_umask(struct native_event_t *current_event,
 
 	   return current+1;
 	}
-	num_masks++;
      }
 
      if (ainfo.type == PFM_ATTR_MOD_INTEGER) {
-	SUBDBG("nm %d looking for %d\n",num_masks,current);
 	if (num_masks==current+1) {
-	   SUBDBG("Found attribute %d: %s type: %d\n",
+	   SUBDBG("Found attribute index: %d, name: %s, type: %d\n",
 		  i,ainfo.name,ainfo.type);
 
            sprintf(temp_string,"%s=0",ainfo.name);
@@ -743,10 +787,11 @@ static int find_next_umask(struct native_event_t *current_event,
 
 	   return current+1;
 	}
-	num_masks++;
      }
+ 	num_masks++;
   }
 
+  SUBDBG("Attribute index: %d not found.\n", current+1);
   return PFM_ERR_ATTR;
 
 }
@@ -897,7 +942,6 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
   pfm_event_attr_info_t ainfo;
   char *b;
   char event_string[BUFSIZ],*ptr;
-  char temp_string[BUFSIZ];
 
   struct native_event_t *our_event;
 
@@ -956,10 +1000,10 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
      goto descr_in_tmp;
   }
 
-  /* skip first */
-  b=strtok(NULL,":");
+  /* skip event name, get first umask (but if it is a bool or int mask type, we only want the name part not the =x part) */
+  b=strtok(NULL,":=");
   if (!b) {
-     SUBDBG("Skipping first failed\n");
+     SUBDBG("Skipping to first mask failed\n");
      goto descr_in_tmp;
   }
 
@@ -968,7 +1012,6 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
     a=0;
     while(1) {
 
-      SUBDBG("get_event_attr %#x %p\n",our_event->libpfm4_idx,&ainfo);
 
       memset(&ainfo,0,sizeof(pfm_event_attr_info_t));
 
@@ -980,11 +1023,10 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 	return _papi_libpfm4_error(ret);
       }
 
+      SUBDBG("Compare: ainfo.name: %s, ainfo.type: %d, with event mask: %s\n", ainfo.name, ainfo.type, b);
+
       /* Plain UMASK case */
       if (ainfo.type == PFM_ATTR_UMASK) {
-
-         SUBDBG("Trying %s with %s\n",ainfo.name,b);
-
          if (!strcasecmp(ainfo.name, b)) {
 	    int new_length;
 
@@ -1008,12 +1050,7 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 
       /* Boolean Case */
       if (ainfo.type == PFM_ATTR_MOD_BOOL) {
-
-	 sprintf(temp_string,"%s=0",ainfo.name);
-
-         SUBDBG("Trying %s with %s\n",temp_string,b);
-
-         if (!strcasecmp(temp_string, b)) {
+         if (!strcasecmp(ainfo.name, b)) {
 	    int new_length;
 
 	    SUBDBG("Found %s\n",b);
@@ -1030,18 +1067,14 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 	    }
 	    strcat(tmp,ainfo.desc);
 
+	    b=strtok(NULL,":");            // skip value provided with this attribute
 	    goto found_attr;
 	 }
       }
 
       /* Integer Case */
       if (ainfo.type == PFM_ATTR_MOD_INTEGER) {
-
-	 sprintf(temp_string,"%s=0",ainfo.name);
-
-         SUBDBG("Trying %s with %s\n",temp_string,b);
-
-         if (!strcasecmp(temp_string, b)) {
+         if (!strcasecmp(ainfo.name, b)) {
 	    int new_length;
 
 	    SUBDBG("Found %s\n",b);
@@ -1058,6 +1091,7 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 	    }
 	    strcat(tmp,ainfo.desc);
 
+	    b=strtok(NULL,":");            // skip value provided with this attribute
 	    goto found_attr;
 	 }
       }
@@ -1071,7 +1105,7 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 
 found_attr:
 
-    b=strtok(NULL,":");
+    b=strtok(NULL,":=");
   }
 
   /* We are done and the description to copy is in tmp */
@@ -1153,7 +1187,7 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
            SUBDBG("ENUM_FIRST\n");
 
 	   code=get_event_first_active(event_table->pmu_type);
-	   SUBDBG("ENUM_FIRST code: %d\n",code);
+	   SUBDBG("ENUM_FIRST code: %#x\n",code);
 	   if (code < 0 ) {
 	      return code;
 	   }
@@ -1240,19 +1274,23 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 	   next_umask=find_next_umask(current_event,max_umask,
 				      umask_string);
 
-	   SUBDBG("Found next %d\n",next_umask);
+	   SUBDBG("Found next umask index %d, umask_string: %s\n",next_umask, umask_string);
 
 	   if (next_umask>=0) {
 
 	      unsigned int papi_event;
 
-	      sprintf(new_name,"%s:%s",current_event->base_name,
-		     umask_string);
+         //  Build the event name of next event to be listed (include pmu, event, and mask)
+		 sprintf(new_name,"%s::%s:%s",current_event->pmu,current_event->base_name, umask_string);
 
 	      SUBDBG("Found new name %s\n",new_name);
 
-              ret=_peu_libpfm4_ntv_name_to_code(new_name,&papi_event,
+	      // The _peu_libpfm4_ntv_name_to_code function calls code that needs to know if we are listing events or counting them.  
+	      // If listing, then there is some special things it has to do with umasks to get the listing to work correctly.
+		  enum_call = 1;
+          ret=_peu_libpfm4_ntv_name_to_code(new_name,&papi_event,
 						 event_table);
+		  enum_call = 0;
 	      if (ret!=PAPI_OK) {
 		 return PAPI_ENOEVNT;
 	      }
