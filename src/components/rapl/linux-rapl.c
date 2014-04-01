@@ -1,4 +1,4 @@
-/** 
+/**
  * @file    linux-rapl.c
  * @author  Vince Weaver
  *
@@ -6,10 +6,10 @@
  *
  * @brief rapl component
  *
- *  This component enables RAPL (Running Average Power Level) 
- *  energy measurements on Intel SandyBridge processors.
+ *  This component enables RAPL (Running Average Power Level)
+ *  energy measurements on Intel SandyBridge/IvyBridge/Haswell
  *
- *  To work, the x86 generic MSR driver must be installed 
+ *  To work, the x86 generic MSR driver must be installed
  *    (CONFIG_X86_MSR) and the /dev/cpu/?/msr files must have read permissions
  */
 
@@ -190,7 +190,7 @@ static long long read_rapl_value(int index) {
 
    fd=open_fd(rapl_native_events[index].fd_offset);
    return read_msr(fd,rapl_native_events[index].msr);
-   
+
 }
 
 static long long convert_rapl_energy(int index, long long value) {
@@ -272,7 +272,7 @@ get_kernel_nr_cpus(void)
 /*
  * This is called whenever a thread is initialized
  */
-int 
+int
 _rapl_init_thread( hwd_context_t *ctx )
 {
   ( void ) ctx;
@@ -282,10 +282,10 @@ _rapl_init_thread( hwd_context_t *ctx )
 
 
 
-/* 
+/*
  * Called when PAPI process is initialized (i.e. PAPI_library_init)
  */
-int 
+int
 _rapl_init_component( int cidx )
 {
      int i,j,k,fd;
@@ -313,7 +313,7 @@ _rapl_init_component( int cidx )
      /* check if Intel processor */
      hw_info=&(_papi_hwi_system_info.hw_info);
 
-     /* Ugh can't use PAPI_get_hardware_info() if 
+     /* Ugh can't use PAPI_get_hardware_info() if
 	PAPI library not done initializing yet */
 
      if (hw_info->vendor!=PAPI_VENDOR_INTEL) {
@@ -345,7 +345,7 @@ _rapl_init_component( int cidx )
           pp0_avail=1;
           pp1_avail=1;
           dram_avail=0;
-       }	
+       }
        else if (hw_info->cpuid_model==62) {
 	  /* IvyBridge-EP */
           package_avail=1;
@@ -354,10 +354,12 @@ _rapl_init_component( int cidx )
           dram_avail=1;
        }
        else if (hw_info->cpuid_model==60 || hw_info->cpuid_model==69 || hw_info->cpuid_model==70 ) {
-	  /* Haswell */
-		  package_avail=1;
-		  pp0_avail=1;
-		  pp1_avail=1;dram_avail=0;
+		/* Haswell */
+		package_avail=1;
+		pp0_avail=1;
+		pp1_avail=1;
+		/* Not documented by Intel but seems to work */
+		dram_avail=1;
 	   }
 	else if ( hw_info->cpuid_model==63) {
 		/* Haswell-EP */
