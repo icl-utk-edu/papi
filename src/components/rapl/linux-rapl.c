@@ -322,8 +322,7 @@ _rapl_init_component( int cidx )
         return PAPI_ENOSUPP;
      }
 
-     /* check if SandyBridge */
-
+     /* check model to support */
      if (hw_info->cpuid_family==6) {
        if (hw_info->cpuid_model==42) {
 	  /* SandyBridge */
@@ -997,7 +996,7 @@ papi_vector_t _rapl_vector = {
     .cmp_info = { /* (unspecified values are initialized to 0) */
        .name = "rapl",
        .short_name = "rapl",
-       .description = "Linux SandyBridge RAPL energy measurements",
+       .description = "Linux RAPL energy measurements",
        .version = "5.3.0",
        .default_domain = PAPI_DOM_ALL,
        .default_granularity = PAPI_GRN_SYS,
