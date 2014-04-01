@@ -102,7 +102,25 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 {
    int ret;
 
-   SUBDBG("sys_perf_event_open(%p,%d,%d,%d,%lx\n",hw_event,pid,cpu,group_fd,flags);
+// If the comments on the following define symbol are removed, then applications that do not pass 
+// cpu numbers can be used with uncore events.  They will always get counts from the package which 
+// contains cpu 0 but at least they will work.  For instance this allows you to do uncore event testing 
+// with the papi_command_line utility.  But normally the cpu number to identify which package should 
+// be counted should be provided by the papi application so this should be commented out by default.
+// #define UNCORE_HELP 1
+#ifdef UNCORE_HELP
+   // A cpu number of -1 normally indicates that the caller does not want to limit counting to a specified cpu.
+   // But if a negative cpu number is passed to the kernel when counting uncore events, it will return an
+   // invalid argument error so we force the cpu number to zero in this case.  In uncore the cpu number is
+   // used by the kernel to specify which package should be counted so this code will set the default for
+   // counting uncore events to the package that contains cpu 0 (when not specified by the calling
+   // applicaiton).  Since uncore events are not associated with any cpu, it really does not matter
+   // which cpu number is used as a default.
+   if (cpu < 0)
+     cpu = 0;
+#endif
+
+   SUBDBG("sys_perf_event_open(hw_event: %p, pid: %d, cpu: %d, group_fd: %d, flags: %lx\n",hw_event,pid,cpu,group_fd,flags);
    SUBDBG("   type: %d\n",hw_event->type);
    SUBDBG("   size: %d\n",hw_event->size);
    SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",hw_event->config,
@@ -125,6 +143,20 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
    SUBDBG("   enable_on_exec: %d\n",hw_event->enable_on_exec);
    SUBDBG("   task: %d\n",hw_event->task);
    SUBDBG("   watermark: %d\n",hw_event->watermark);
+   SUBDBG("   precise_ip: %d\n",hw_event->precise_ip);
+   SUBDBG("   mmap_data: %d\n",hw_event->mmap_data);
+   SUBDBG("   sample_id_all: %d\n",hw_event->sample_id_all);
+   SUBDBG("   exclude_host: %d\n",hw_event->exclude_host);
+   SUBDBG("   exclude_guest: %d\n",hw_event->exclude_guest);
+   SUBDBG("   exclude_callchain_kernel: %d\n",hw_event->exclude_callchain_kernel);
+   SUBDBG("   exclude_callchain_user: %d\n",hw_event->exclude_callchain_user);
+   SUBDBG("   wakeup_watermark: %d\n",hw_event->wakeup_watermark);
+   SUBDBG("   bp_type: %d\n",hw_event->bp_type);
+   SUBDBG("   config1: %"PRIx64" (%"PRIu64")\n",hw_event->config1,hw_event->config1);
+   SUBDBG("   config2: %"PRIx64" (%"PRIu64")\n",hw_event->config2,hw_event->config2);
+   SUBDBG("   branch_sample_type: %"PRIu64"\n",hw_event->branch_sample_type);
+   SUBDBG("   sample_regs_user: %"PRIu64"\n",hw_event->sample_regs_user);
+   SUBDBG("   sample_stack_user: %d\n",hw_event->sample_stack_user);
 
 	ret =
 		syscall( __NR_perf_event_open, hw_event, pid, cpu, group_fd, flags );
