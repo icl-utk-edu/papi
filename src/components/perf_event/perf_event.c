@@ -353,12 +353,16 @@ static int map_perf_event_errors_to_papi(int perf_event_error) {
       case ENOSYS:
       case EAGAIN:
       case EBUSY:
-      case E2BIG:
+      case E2BIG:	/* Only happens if attr is the wrong size somehow */
+      case EBADF:	/* We are attempting to group with an invalid file descriptor */
 	   ret = PAPI_ESYS;
 	   break;
       case ENOMEM:
 	   ret = PAPI_ENOMEM;
 	   break;
+      case EMFILE:	/* Out of file descriptors.  Typically max out at 1024 */
+           ret = PAPI_ECOUNT;
+           break;
       case EINVAL:
       default:
 	   ret = PAPI_EINVAL;
