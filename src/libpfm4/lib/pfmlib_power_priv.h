@@ -18,16 +18,16 @@
 *
 */
 typedef struct {
-   char *pme_name;
    unsigned pme_code;
-   char *pme_short_desc;
-   char *pme_long_desc;
+   const char *pme_name;
+   const char *pme_short_desc;
+   const char *pme_long_desc;
 } pme_power_entry_t;
 
 typedef struct {
-   char *pme_name;
+   const char *pme_name;
+   const char *pme_desc;
    unsigned pme_code;
-   char *pme_desc;
    uint64_t pme_modmsk;
 } pme_torrent_entry_t;
 

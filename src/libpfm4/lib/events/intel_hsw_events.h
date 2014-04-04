@@ -1737,6 +1737,14 @@ static const intel_x86_umask_t hsw_lsd[]={
    },
 };
 
+static const intel_x86_umask_t hsw_dsb2mite_switches[]={
+   { .uname  = "PENALTY_CYCLES",
+     .udesc  = "Number of DSB to MITE switch true penalty cycles",
+     .ucode = 0x0200,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+   },
+};
+
 static const intel_x86_entry_t intel_hsw_pe[]={
   { .name   = "UNHALTED_CORE_CYCLES",
     .desc   = "Count core clock cycles whenever the clock signal on the specific core is running (not halted)",
@@ -2301,6 +2309,15 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .umasks = hsw_page_walker_loads,
   },
+{ .name   = "DSB2MITE_SWITCHES",
+  .desc   = "Number of DSB to MITE switches",
+  .modmsk = INTEL_V4_ATTRS,
+  .cntmsk = 0xff,
+  .code = 0xab,
+  .numasks = LIBPFM_ARRAY_SIZE(hsw_dsb2mite_switches),
+  .ngrp = 1,
+  .umasks = hsw_dsb2mite_switches,
+},
   { .name   = "OFFCORE_RESPONSE_0",
     .desc   = "Offcore response event (must provide at least one request type and either any_response or any combination of supplier + snoop)",
     .modmsk = INTEL_V4_ATTRS,
