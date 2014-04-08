@@ -539,6 +539,7 @@ _appio_shutdown_thread( hwd_context_t *ctx )
 int
 _appio_shutdown_component( void )
 {
+    papi_free( _appio_native_events );
     return PAPI_OK;
 }
 
