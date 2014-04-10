@@ -181,7 +181,7 @@ _papi_hwi_add_native_event(int event, int cidx) {
 
   int new_native_event;
 
-  SUBDBG("Creating Event %#x which is comp %d internal %d\n",
+  SUBDBG("Creating Event %#x which is comp %d internal %#x\n",
 	 num_native_events|PAPI_NATIVE_MASK,cidx,event);
   
   _papi_hwi_lock( INTERNAL_LOCK );
