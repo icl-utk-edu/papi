@@ -568,11 +568,11 @@ static const intel_x86_umask_t ivbep_unc_h_snp_resp_recv_local[]={
 
 static const intel_x86_umask_t ivbep_unc_h_tracker_cycles_full[]={
   { .uname = "GP",
-    .udesc  = "Number of cycles when the general purpose (GP) HA trakcer pool is completely used. It will not return valid count when BT is disabled",
+    .udesc  = "Number of cycles when the general purpose (GP) HA tracker pool is completely used. It will not return valid count when BT is disabled",
     .ucode  = 0x100,
   },
   { .uname = "ALL",
-    .udesc  = "Number of cycles when the general purpose (GP) HA trakcer pool is completely used including reserved HT entries. It will not return vaid count when BT is disabled",
+    .udesc  = "Number of cycles when the general purpose (GP) HA tracker pool is completely used including reserved HT entries. It will not return vaid count when BT is disabled",
     .ucode  = 0x200,
     .uflags = INTEL_X86_DFL,
   },
