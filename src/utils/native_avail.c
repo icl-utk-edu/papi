@@ -53,6 +53,7 @@ typedef struct command_flags
 	int named;
 	int include;
 	int xclude;
+	int validate;
 	char *name, *istr, *xstr;
 	int darr;
 	int dear;
@@ -72,6 +73,7 @@ print_help( char **argv )
 	printf( "\nOptions:\n" );
 	printf( "   --help, -h   print this help message\n" );
 	printf( "   -d           display detailed information about native events\n" );
+	printf( "   --validate   attempts to add each event\n");
 	printf( "   -e EVENTNAME display detailed information about named native event\n" );
 	printf( "   -i EVENTSTR  include only event names that contain EVENTSTR\n" );
 	printf( "   -x EVENTSTR  exclude any event names that contain EVENTSTR\n" );
@@ -144,9 +146,11 @@ parse_args( int argc, char **argv, command_flags_t * f )
 				printf( "Invalid argument for -x\n");
 				exit(1);
 			}
-		} else if ( !strcmp( argv[i], "-h" ) || !strcmp( argv[i], "--help" ) )
+		} else if ( !strcmp( argv[i], "-h" ) || !strcmp( argv[i], "--help" ) ) {
 			f->help = 1;
-		else {
+		} else if ( !strcmp( argv[i], "--validate" ) ) {
+			f->validate = 1;
+		} else {
 			printf( "%s is not supported\n", argv[i] );
 			exit(1);
 		}
@@ -167,17 +171,25 @@ space_pad( char *str, int spaces )
 }
 
 static void
-print_event( PAPI_event_info_t * info, int offset )
+print_event( PAPI_event_info_t * info, int offset, int validate )
 {
-	unsigned int i, j = 0;
+	unsigned int i, j = 0, na = 0;
 	char str[EVT_LINE + EVT_LINE];
+	int EventSet = PAPI_NULL;
+
+	if (validate && PAPI_create_eventset (&EventSet) == PAPI_OK) {
+		if (PAPI_add_named_event (EventSet, info->symbol) != PAPI_OK) {
+			na = 1;
+		}
+		PAPI_destroy_eventset (&EventSet);
+	}
 
 	/* indent by offset */
 	if ( offset ) {
-	   printf( "|     %-73s|\n", info->symbol );
+	   printf( "|     %-69s%4s|\n", info->symbol, (na ? "<NA>" : "") );
 	}
 	else {
-	   printf( "| %-77s|\n", info->symbol );
+	   printf( "| %-73s%4s|\n", info->symbol, (na ? "<NA>" : "") );
 	}
 
 	while ( j <= strlen( info->long_descr ) ) {
@@ -275,7 +287,6 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 	}
 
-
 	/* Do this code if the event name option was specified on the commandline */
 	if ( flags.named ) {
 	   if ( PAPI_event_name_to_code( flags.name, &i ) == PAPI_OK ) {
@@ -359,7 +370,7 @@ main( int argc, char **argv )
 			  /* count only events that are actually processed */
 			  j++;
 
-			  print_event( &info, 0 );
+			  print_event( &info, 0, flags.validate );
 
 			  if (flags.details) {
 				if (info.units[0]) printf( "|     Units: %-67s|\n", 
@@ -395,7 +406,7 @@ main( int argc, char **argv )
 				   retval = PAPI_get_event_info( k, &info );
 				   if ( retval == PAPI_OK ) {
 					  if ( parse_unit_masks( &info ) )
-						 print_event( &info, 2 );
+						 print_event( &info, 2, 0 );
 				   }
 					} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
 				 }
