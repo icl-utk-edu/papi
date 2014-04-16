@@ -188,7 +188,7 @@ static const intel_x86_entry_t intel_ivbep_unc_r2_pe[]={
     .umasks  = ivbep_unc_r2_rxr_ak_bounces
   },
   { .name = "UNC_R2_RXR_OCCUPANCY",
-    .desc = "Ingress occpancy accumulator",
+    .desc = "Ingress occupancy accumulator",
     .code = 0x13,
     .cntmsk = 0x1,
     .modmsk = IVBEP_UNC_R2PCIE_ATTRS,

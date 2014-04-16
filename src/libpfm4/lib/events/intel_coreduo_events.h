@@ -525,7 +525,7 @@ static const intel_x86_entry_t intel_coreduo_pe[]={
   .umasks = coreduo_l2_ads,
 },
 { .name   = "DBUS_BUSY",
-  .desc   = "Core cycle during which data buswas busy (increments by 4)",
+  .desc   = "Core cycle during which data bus was busy (increments by 4)",
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x22,

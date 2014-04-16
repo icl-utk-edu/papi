@@ -1076,7 +1076,7 @@ static const amd64_entry_t amd64_fam14h_pe[]={
   .code    = 0x22,
 },
 { .name    = "RSQ_FULL",
-  .desc    = "Number of cycles that the RSQ holds retired stores. This buffer holds the stores waiting to retired as well as requests that missed the data cacge and waiting on a refill",
+  .desc    = "Number of cycles that the RSQ holds retired stores. This buffer holds the stores waiting to retired as well as requests that missed the data cache and waiting on a refill",
   .modmsk  = AMD64_FAM10H_ATTRS,
   .code    = 0x23,
 },
