@@ -78,7 +78,7 @@ static const intel_x86_umask_t snbep_unc_m_dram_refresh[]={
 
 static const intel_x86_umask_t snbep_unc_m_major_modes[]={
   { .uname = "ISOCH",
-    .udesc  = "Counts cycles in ISOCH Major maode",
+    .udesc  = "Counts cycles in ISOCH Major mode",
     .ucode  = 0x800,
     .uflags = INTEL_X86_NCOMBO,
   },

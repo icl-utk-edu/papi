@@ -216,7 +216,7 @@ static const intel_x86_entry_t intel_p6_pe[]={
   .code = 0x85,
 },
 { .name   = "IFU_MEM_STALL",
-  .desc   = "Number of cycles instruction fetch is stalled for any reason. Includs IFU cache misses, ITLB misses, ITLB faults, and other minor stalls",
+  .desc   = "Number of cycles instruction fetch is stalled for any reason. Includes IFU cache misses, ITLB misses, ITLB faults, and other minor stalls",
   .modmsk = INTEL_X86_ATTRS,
   .cntmsk = 0x3,
   .code = 0x86,

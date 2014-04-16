@@ -33,7 +33,7 @@ static const intel_x86_umask_t ivbep_unc_i_address_match[]={
     .ucode  = 0x100,
   },
   { .uname = "MERGE_COUNT",
-    .udesc  = "Number of times when two reuqests to the same address from the same source are received back to back, it is possible to merge them",
+    .udesc  = "Number of times when two requests to the same address from the same source are received back to back, it is possible to merge them",
     .ucode  = 0x200,
   },
 };

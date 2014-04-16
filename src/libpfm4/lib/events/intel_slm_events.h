@@ -97,7 +97,7 @@ static const intel_x86_umask_t slm_inst_retired[]={
 
 static const intel_x86_umask_t slm_l2_reject_xq[]={
    { .uname  = "ALL",
-     .udesc  = "Number of demand and prefetch transactions that the L2 XQ rejects due to a full or near full condition which likely indicates back pressure from the IDI link. The XQ may reject transactions fro mthe L2Q (non-cacheable requests), BBS (L2 misses) and WOB (L2 write-back victims)",
+     .udesc  = "Number of demand and prefetch transactions that the L2 XQ rejects due to a full or near full condition which likely indicates back pressure from the IDI link. The XQ may reject transactions from the L2Q (non-cacheable requests), BBS (L2 misses) and WOB (L2 write-back victims)",
      .ucode = 0x000,
      .uflags= INTEL_X86_DFL,
    },

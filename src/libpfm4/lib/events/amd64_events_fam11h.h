@@ -1033,7 +1033,7 @@ static const amd64_entry_t amd64_fam11h_pe[]={
   .umasks  = amd64_fam11h_system_read_responses,
 },
 { .name    = "QUADWORDS_WRITTEN_TO_SYSTEM",
-  .desc    = "Quawords Written to System",
+  .desc    = "Quadwords Written to System",
   .modmsk  = AMD64_FAM10H_ATTRS,
   .code    = 0x6d,
   .numasks = LIBPFM_ARRAY_SIZE(amd64_fam11h_quadwords_written_to_system),
