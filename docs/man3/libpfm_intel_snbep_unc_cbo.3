@@ -40,11 +40,11 @@ the threshold.  This is an integer modifier with values in the range [0:255].
 Node filter. Certain events, such as UNC_C_LLC_LOOKUP, UNC_C_LLC_VICTIMS, provide a \fBNID\fR umask.
 Sometimes the \fBNID\fR is combined with other filtering capabilities, such as opcodes.
 The node filter is an 8-bit max bitmask. A node corresponds to a processor
-socket. The legal values therefore depdend on the underlying hardware configuration. For
+socket. The legal values therefore depend on the underlying hardware configuration. For
 dual-socket systems, the bitmask has two valid bits [0:1].
 .TP
 .B cf
-Core Filter. This is a 3-bit filter which is used to filter based on phyiscal core origin
+Core Filter. This is a 3-bit filter which is used to filter based on physical core origin
 of the C-Box request. Possible values are 0-7. If the filter is not specified, then no
 filtering takes place.
 .TP
@@ -57,7 +57,7 @@ specified, then no filtering takes place.
 
 Certain events, such as UNC_C_TOR_INSERTS supports opcode matching on the C-BOX transaction
 type. To use this feature, first an opcode matching umask must be selected, e.g., MISS_OPCODE.
-Second, the opcode to match on must be selected via a second umasks amongs the OPC_* umasks.
+Second, the opcode to match on must be selected via a second umask among the OPC_* umasks.
 For instance, UNC_C_TOR_INSERTS:OPCODE:OPC_RFO, counts the number of TOR insertions for RFO
 transactions. 
 
