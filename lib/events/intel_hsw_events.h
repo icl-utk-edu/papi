@@ -578,6 +578,14 @@ static const intel_x86_umask_t hsw_l1d_pend_miss[]={
     .uflags = INTEL_X86_NCOMBO,
     .modhw  = _INTEL_X86_ATTR_E | _INTEL_X86_ATTR_C,
   },
+  { .uname = "EDGE",
+    .udesc  = "Number L1D miss outstanding",
+    .ucode  = 0x100 | INTEL_X86_MOD_EDGE | (1 << INTEL_X86_CMASK_BIT), /* edge=1 cnt=1 */
+    .uequiv = "PENDING:c=1:e=1",
+    .ucntmsk = 0x4,
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_E | _INTEL_X86_ATTR_C,
+  },
 };
 
 static const intel_x86_umask_t hsw_l2_demand_rqsts[]={
