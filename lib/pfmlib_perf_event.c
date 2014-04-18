@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <perfmon/pfmlib_perf_event.h>
 
 #include "pfmlib_priv.h"
@@ -67,6 +68,7 @@ static const pfmlib_attr_desc_t perf_event_ext_mods[]={
 	PFM_ATTR_B("excl", "exclusive access"),    	/* exclusive PMU access */
 	PFM_ATTR_B("mg", "monitor guest execution"),	/* monitor guest level */
 	PFM_ATTR_B("mh", "monitor host execution"),	/* monitor host level */
+	PFM_ATTR_I("cpu", "CPU to program"),		/* CPU to program */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -84,6 +86,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	uint64_t ival;
 	int has_plm = 0, has_vmx_plm = 0;
 	int i, plm = 0, ret, vmx_plm = 0;
+	int cpu = -1;
 
 	sz = pfmlib_check_struct(uarg, uarg->size, PFM_PERF_ENCODE_ABI0, sz);
 	if (!sz)
@@ -203,6 +206,11 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			vmx_plm |= PFM_PLM0;
 			has_vmx_plm = 1;
 			break;
+		case PERF_ATTR_CPU:
+			if (ival >= INT_MAX)
+				return PFM_ERR_ATTR_VAL;
+			cpu = (int)ival;
+			break;
 		}
 	}
 	/*
@@ -250,6 +258,9 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	 * propagate event index if necessary
 	 */
 	arg.idx = pfmlib_pidx2idx(e.pmu, e.event);
+
+	/* propagate cpu */
+	arg.cpu = cpu;
 
 	/* propagate our changes, that overwrites attr->size */
 	memcpy(uarg->attr, attr, asz);

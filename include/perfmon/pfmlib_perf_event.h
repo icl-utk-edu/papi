@@ -37,7 +37,7 @@ typedef struct {
 	char **fstr;			/* out/in: fully qualified event string */
 	size_t size;			/* sizeof struct */
 	int idx;			/* out: opaque event identifier */
-	int cpu;			/* out: cpu to program */
+	int cpu;			/* out: cpu to program, -1 = not set */
 	int flags;			/* out: perf_event_open() flags */
 	int pad0;			/* explicit 64-bit mode padding */
 } pfm_perf_encode_arg_t;
