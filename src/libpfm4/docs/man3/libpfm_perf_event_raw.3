@@ -22,7 +22,7 @@ The syntax is very simple: rX. X is the hexadecimal 64-bit value for the event.
 It may include event filters on some PMU models. The hexadecimal number is passed
 without the 0x prefix, e.g., r01c4.
 
-The library's standard perf_events attributes are supported oby this PMU model.
+The library's standard perf_events attributes are supported by this PMU model.
 They are separated with colons as is customary with the library.
 
 .SH MODIFIERS
@@ -59,7 +59,7 @@ event should be sampled 100 times per second on average. There is no default val
 .TP
 .B excl
 The associated event is the only event measured on the PMU. This applies only to hardware
-events. This atrtribute requires admin privileges. Default is off.
+events. This attribute requires admin privileges. Default is off.
 .TP
 .B precise
 Enables precise sampling mode. This option is only valid on sampling events. This is an
