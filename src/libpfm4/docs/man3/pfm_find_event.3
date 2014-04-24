@@ -16,7 +16,7 @@ and try to find the matching event.
 
 The event string is a structured string and it is composed as follows:
 .TP
-.B [pmu_name::]event_name[:unit_mask][:modifer|:modifier=val]
+.B [pmu_name::]event_name[:unit_mask][:modifier|:modifier=val]
 .PP
 
 The various components are separated by \fB:\fR or \fB::\fR, they
@@ -24,7 +24,7 @@ are defined as follows:
 
 .TP
 .B pmu_name
-This is an optional prefix to designte a specific PMU model. With the
+This is an optional prefix to designate a specific PMU model. With the
 prefix the event which matches the event_name is used. In case multiple
 PMU models are activated, there may be conflict with identical event
 names to mean the same or different things. In that case, it is necessary
