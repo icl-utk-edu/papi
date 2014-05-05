@@ -1,6 +1,6 @@
 UTILOBJS= ../../../testlib/libtestlib.a
 INCLUDE = -I../../../testlib -I../../.. -I.
-LIBRARY = -lpapi
+LIBRARY = -L../../../ -lpapi
 PAPILIB = $(LIBRARY)
 
 tests: $(NAME)_tests
