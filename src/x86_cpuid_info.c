@@ -22,6 +22,7 @@ static int init_amd( PAPI_mh_info_t * mh_info, int *levels );
 static short int _amd_L2_L3_assoc( unsigned short int pattern );
 static int init_intel( PAPI_mh_info_t * mh_info , int *levels);
 
+#ifdef __i386__
 static inline void
 cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
 {
@@ -35,6 +36,16 @@ cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
 						  ( *d )
   :					  "a"( op ) );
 }
+#elif defined( __amd64__ )
+static inline void
+cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
+{
+	unsigned int op = *a;
+	__asm__("cpuid;"
+		: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
+		: "a" (op) );
+}
+#endif
 
 int
 _x86_cache_info( PAPI_mh_info_t * mh_info )
@@ -1247,6 +1258,7 @@ intel_decode_descriptor( struct _intel_cache_info *d, PAPI_mh_level_t * L )
 	}
 }
 
+#ifdef __i386__
 static inline void
 cpuid2 ( unsigned int* eax, unsigned int* ebx, 
                     unsigned int* ecx, unsigned int* edx, 
@@ -1258,6 +1270,17 @@ cpuid2 ( unsigned int* eax, unsigned int* ebx,
 		: "0" (index), "2"(ecx_in) );
   *eax = a; *ebx = b; *ecx = c; *edx = d;
 }
+#elif defined(__amd64__)
+static inline void
+cpuid2( unsigned int*eax, unsigned int* ebx,
+		unsigned int*ecx, unsigned int *edx,
+		unsigned int index, unsigned int ecx_in )
+{
+	__asm__ __volatile__ ("cpuid;"
+		: "=a" (*eax), "=b" (*ebx), "=c" (*ecx), "=d" (*edx)
+		: "0" (index), "2"(ecx_in) );
+}
+#endif
 
 
 static int
