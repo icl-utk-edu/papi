@@ -237,6 +237,8 @@ typedef enum {
 
 	PFM_PMU_S390X_CPUM_SF,		/* s390x: CPU-M sampling facility */
 
+	PFM_PMU_ARM_CORTEX_A57,		/* ARM Cortex A57 (ARMv8) */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

@@ -66,6 +66,15 @@ endif
 ifeq (armv7,$(findstring armv7,$(ARCH)))
 override ARCH=arm
 endif
+ifeq (armv7,$(findstring armv7,$(ARCH)))
+override ARCH=arm
+endif
+ifeq (aarch32,$(findstring aarch32,$(ARCH)))
+override ARCH=arm
+endif
+ifeq (armv8l,$(findstring armv8l,$(ARCH)))
+override ARCH=arm
+endif
 ifeq (mips64,$(findstring mips64,$(ARCH)))
 override ARCH=mips
 endif
@@ -150,6 +159,14 @@ endif
 
 ifeq ($(ARCH),arm)
 CONFIG_PFMLIB_ARCH_ARM=y
+endif
+
+ifeq ($(ARCH),aarch64)
+CONFIG_PFMLIB_ARCH_ARM64=y
+endif
+
+ifeq ($(ARCH),arm64)
+CONFIG_PFMLIB_ARCH_ARM64=y
 endif
 
 ifeq ($(ARCH),s390x)

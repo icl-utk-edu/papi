@@ -139,8 +139,19 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c pfmlib_arm_armv8.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_ARM64),y)
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_arm_perf_event.c
+endif
+
+INCARCH = $(INC_ARM64)
+SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM64
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)
@@ -271,6 +282,8 @@ INC_ARM=pfmlib_arm_priv.h			\
 	events/arm_cortex_a8_events.h		\
 	events/arm_cortex_a9_events.h		\
 	events/arm_cortex_a15_events.h
+
+INC_ARM64=events/arm_cortex_a57_events.h
 
 INCDEP=$(INC_COMMON) $(INCARCH)
 
