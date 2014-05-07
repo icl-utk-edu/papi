@@ -494,6 +494,7 @@ PAPI_set_thr_specific( int tag, void *ptr )
 int
 PAPI_library_init( int version )
 {
+    APIDBG( "Entry: version: 0x%#x\n", version);
 	char *filename;
 	int tmp = 0, tmpel;
 
@@ -694,6 +695,7 @@ PAPI_library_init( int version )
 int
 PAPI_query_event( int EventCode )
 {
+    APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
 	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
@@ -802,6 +804,7 @@ PAPI_query_named_event( char *EventName )
 const PAPI_component_info_t *
 PAPI_get_component_info( int cidx )
 {
+	APIDBG( "Entry: Component Index %d\n", cidx);
 	if ( _papi_hwi_invalid_cmp( cidx ) )
 		return ( NULL );
 	else
@@ -841,6 +844,7 @@ int
 PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 {
         int i;
+	APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
 
 	if ( info == NULL )
 	   papi_return( PAPI_EINVAL );
@@ -919,6 +923,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 int
 PAPI_event_code_to_name( int EventCode, char *out )
 {
+    APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
 	if ( out == NULL )
 		papi_return( PAPI_EINVAL );
 
@@ -1147,6 +1152,7 @@ PAPI_enum_event( int *EventCode, int modifier )
 	int cidx;
 	int event_code;
 
+	APIDBG( "Entry: EventCode: 0x%#x, modifier: %d\n", *EventCode, modifier);
 	cidx = _papi_hwi_component_index( *EventCode );
 	if (cidx < 0) return PAPI_ENOCMP;
 
@@ -1308,6 +1314,7 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 	int retval;
 	int event_code;
 
+	APIDBG( "Entry: EventCode: 0x%#x, modifier: %d, cidx: %d\n", *EventCode, modifier, cidx);
 	if ( _papi_hwi_invalid_cmp(cidx) || ( (IS_PRESET(i)) && cidx > 0 ) ) {
 		return PAPI_ENOCMP;
 	}
@@ -2472,6 +2479,7 @@ PAPI_read( int EventSet, long long *values )
 	hwd_context_t *context;
 	int cidx, retval = PAPI_OK;
 
+	APIDBG( "Entry: EventSet: %d\n", EventSet );
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
@@ -2560,6 +2568,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 	hwd_context_t *context;
 	int cidx, retval = PAPI_OK;
 
+	APIDBG( "Entry: EventSet: %d\n", EventSet );
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
@@ -2723,6 +2732,7 @@ PAPI_write( int EventSet, long long *values )
 	EventSetInfo_t *ESI;
 	hwd_context_t *context;
 
+	APIDBG( "Entry: EventSet: %d\n", EventSet );
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
@@ -3099,6 +3109,7 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
 int
 PAPI_attach( int EventSet, unsigned long tid )
 {
+    APIDBG( "Entry: EventSet: %d\n", EventSet);
 	return ( _papi_set_attach( PAPI_ATTACH, EventSet, tid ) );
 }
 
@@ -4031,6 +4042,7 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 {
 	EventSetInfo_t *ESI;
 
+	APIDBG( "Entry: option: %d\n", option);
 	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) )
 		papi_return( PAPI_ENOINIT );
 
@@ -4221,6 +4233,7 @@ int
 PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 {
 
+    APIDBG( "Entry: option: %d, cidx: %d\n", option, cidx);
   if (_papi_hwi_invalid_cmp(cidx)) {
      return PAPI_ECMP;
   }
@@ -4343,13 +4356,13 @@ PAPI_num_events( int EventSet )
 void
 PAPI_shutdown( void )
 {
+	APIDBG( "Enter\n" );
         EventSetInfo_t *ESI;
         ThreadInfo_t *master;
         DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
         int i, j = 0, retval;
 
 
-	APIDBG( "Enter\n" );
 	if ( init_retval == DEADBEEF ) {
 		PAPIERROR( PAPI_SHUTDOWN_str );
 		return;
@@ -6442,6 +6455,7 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 int
 PAPI_get_event_component( int EventCode)
 {
+    APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
     return _papi_hwi_component_index( EventCode);
 }
 
@@ -6472,6 +6486,7 @@ int  PAPI_get_component_index(char *name)
 
   const PAPI_component_info_t *cinfo;
 
+  APIDBG( "Entry:\n" );
   for(cidx=0;cidx<papi_num_components;cidx++) {
 
      cinfo=PAPI_get_component_info(cidx); 
