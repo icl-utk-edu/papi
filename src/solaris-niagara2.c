@@ -1249,7 +1249,7 @@ _niagara2_update_control_state( hwd_control_state_t * ctrl,
 
 #ifdef DEBUG
 		SUBDBG
-			( " -> %s: EventSet@0x%p/PIC#%d - ntv request >>%s<< (%d), flags=%#x\n",
+			( " -> %s: EventSet@%p/PIC#%d - ntv request >>%s<< (%d), flags=%#x\n",
 			  __func__, ctrl, i, __t2_ntv_events[ctrl->code[i].event_code],
 			  ctrl->code[i].event_code, ctrl->flags[i] );
 #endif

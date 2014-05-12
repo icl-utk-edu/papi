@@ -515,7 +515,7 @@ _infiniband_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
              * auto-resetting IB counters is error prone.
              */
             if (temp < context->start_value[i]) {
-               SUBDBG("Wraparound!\nstart:\t0x%016x\ttemp:\t0x%016x",
+               SUBDBG("Wraparound!\nstart:\t%#016x\ttemp:\t%#016x",
                         (unsigned)context->start_value[i], (unsigned)temp);
                /* The counters auto-reset. I cannot even adjust them to 
                 * account for a simple wraparound. 

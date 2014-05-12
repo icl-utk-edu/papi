@@ -95,7 +95,7 @@ int mmtimer_setup(void) {
 	     return PAPI_ESYS;
           }
           mmdev_mask = ~( 0xffffffffffffffff << result );
-          SUBDBG( "MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",
+          SUBDBG( "MMTIMER has %d valid bits, mask %#16lx, getting mmaped page\n",
 		    result, mmdev_mask );
           if ( ( mmdev_timer_addr =
 		       ( unsigned long * ) mmap( 0, getpagesize(  ), PROT_READ,

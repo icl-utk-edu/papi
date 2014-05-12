@@ -306,7 +306,7 @@ static int openSckt( const char *service,
          fprintf( stderr,
                   "Setting up a passive socket based on the "
                   "following address info:\n"
-                  "   ai_flags     = 0x%02X\n"
+                  "   ai_flags     = %#02X\n"
                   "   ai_family    = %d (PF_INET = %d, PF_INET6 = %d)\n"
                   "   ai_socktype  = %d (SOCK_STREAM = %d, SOCK_DGRAM = %d)\n"
                   "   ai_protocol  = %d (IPPROTO_TCP = %d, IPPROTO_UDP = %d)\n"
@@ -588,7 +588,7 @@ static void pit( int    tSckt[ ],
             default:       /* Invalid poll events.                      */
             {
                fprintf( stderr,
-                        "%s (line %d): ERROR - Invalid poll event (0x%02X).\n",
+                        "%s (line %d): ERROR - Invalid poll event (%#02X).\n",
                         pgmName,
                         __LINE__,
                         desc[ idx ].revents );

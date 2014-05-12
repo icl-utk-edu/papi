@@ -494,7 +494,7 @@ PAPI_set_thr_specific( int tag, void *ptr )
 int
 PAPI_library_init( int version )
 {
-    APIDBG( "Entry: version: 0x%#x\n", version);
+    APIDBG( "Entry: version: %#x\n", version);
 	char *filename;
 	int tmp = 0, tmpel;
 
@@ -695,7 +695,7 @@ PAPI_library_init( int version )
 int
 PAPI_query_event( int EventCode )
 {
-    APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
+    APIDBG( "Entry: EventCode: %#x\n", EventCode);
 	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
@@ -844,7 +844,7 @@ int
 PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 {
         int i;
-	APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
+	APIDBG( "Entry: EventCode: %#x\n", EventCode);
 
 	if ( info == NULL )
 	   papi_return( PAPI_EINVAL );
@@ -923,7 +923,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 int
 PAPI_event_code_to_name( int EventCode, char *out )
 {
-    APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
+    APIDBG( "Entry: EventCode: %#x\n", EventCode);
 	if ( out == NULL )
 		papi_return( PAPI_EINVAL );
 
@@ -1079,7 +1079,7 @@ PAPI_event_name_to_code( char *in, int *out )
  *	do {
  *		retval = PAPI_get_event_info( i, &info );
  *		if ( retval == PAPI_OK ) {
- *		printf( "%-30s 0x%-10x\n%s\n", info.symbol, info.event_code, info.long_descr );
+ *		printf( "%-30s %#-10x\n%s\n", info.symbol, info.event_code, info.long_descr );
  *		}
  *	} while ( PAPI_enum_event( &i, PAPI_ENUM_ALL ) == PAPI_OK );
  *	@endcode
@@ -1152,7 +1152,7 @@ PAPI_enum_event( int *EventCode, int modifier )
 	int cidx;
 	int event_code;
 
-	APIDBG( "Entry: EventCode: 0x%#x, modifier: %d\n", *EventCode, modifier);
+	APIDBG( "Entry: EventCode: %#x, modifier: %d\n", *EventCode, modifier);
 	cidx = _papi_hwi_component_index( *EventCode );
 	if (cidx < 0) return PAPI_ENOCMP;
 
@@ -1242,7 +1242,7 @@ PAPI_enum_event( int *EventCode, int modifier )
  *	do {
  *		retval = PAPI_get_event_info( i, &info );
  *		if ( retval == PAPI_OK ) {
- *		printf( "%-30s 0x%-10x\n%s\n", info.symbol, info.event_code, info.long_descr );
+ *		printf( "%-30s %#-10x\n%s\n", info.symbol, info.event_code, info.long_descr );
  *		}
  *	} while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
  *	@endcode
@@ -1314,7 +1314,7 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 	int retval;
 	int event_code;
 
-	APIDBG( "Entry: EventCode: 0x%#x, modifier: %d, cidx: %d\n", *EventCode, modifier, cidx);
+	APIDBG( "Entry: EventCode: %#x, modifier: %d, cidx: %d\n", *EventCode, modifier, cidx);
 	if ( _papi_hwi_invalid_cmp(cidx) || ( (IS_PRESET(i)) && cidx > 0 ) ) {
 		return PAPI_ENOCMP;
 	}
@@ -4651,7 +4651,7 @@ PAPI_perror( char *msg )
  * // Define a simple overflow handler:
  * void handler(int EventSet, void *address, long_long overflow_vector, void *context)
  * {
- *    fprintf(stderr,\"Overflow at %p! bit=0x%llx \\n\",
+ *    fprintf(stderr,\"Overflow at %p! bit=%#llx \\n\",
  *             address,overflow_vector);
  * }
  *
@@ -6372,7 +6372,7 @@ PAPI_is_initialized( void )
  		void handler(int EventSet, void *address, long_long overflow_vector, void *context){
  		int Events[4], number, i;
  		int total = 0, retval;
- 		printf("Overflow #%d\n  Handler(%d) Overflow at %p! vector=0x%llx\n",
+ 		printf("Overflow #%d\n  Handler(%d) Overflow at %p! vector=%#llx\n",
  		total, EventSet, address, overflow_vector);
  		total++;
  		number = 4;
@@ -6455,7 +6455,7 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 int
 PAPI_get_event_component( int EventCode)
 {
-    APIDBG( "Entry: EventCode: 0x%#x\n", EventCode);
+    APIDBG( "Entry: EventCode: %#x\n", EventCode);
     return _papi_hwi_component_index( EventCode);
 }
 

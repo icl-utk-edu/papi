@@ -24,7 +24,7 @@
 
 #include "papi_test.h"
 
-#define OVER_FMT	"handler(%d ) Overflow at %p overflow_vector=0x%llx!\n"
+#define OVER_FMT	"handler(%d ) Overflow at %p overflow_vector=%#llx!\n"
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
 
 static int total = 0;				   /* total overflows */

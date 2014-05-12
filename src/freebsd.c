@@ -827,7 +827,7 @@ int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI)
 			if ( (ret = pmc_allocate (name, PMC_MODE_TC, 0, PMC_CPU_ANY, &pmcs[i])) < 0)
 			{
 #if defined(DEBUG)
-				fprintf (stderr, "DEBUG: %s FAILED to allocate '%s' (0x%08x) [%d of %d] ERROR = %d\n", FUNC, name, ESI->NativeInfoArray[i].ni_event, i+1, ESI->NativeCount, ret);
+				fprintf (stderr, "DEBUG: %s FAILED to allocate '%s' (%#08x) [%d of %d] ERROR = %d\n", FUNC, name, ESI->NativeInfoArray[i].ni_event, i+1, ESI->NativeCount, ret);
 #endif
 				failed = 1;
 				break;
@@ -835,7 +835,7 @@ int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI)
 			else
 			{
 #if defined(DEBUG)
-				fprintf (stderr, "DEBUG: %s SUCCEEDED allocating '%s' (0x%08x) [%d of %d]\n", FUNC, name, ESI->NativeInfoArray[i].ni_event, i+1, ESI->NativeCount);
+				fprintf (stderr, "DEBUG: %s SUCCEEDED allocating '%s' (%#08x) [%d of %d]\n", FUNC, name, ESI->NativeInfoArray[i].ni_event, i+1, ESI->NativeCount);
 #endif
 				allocated_counters++;
 			}

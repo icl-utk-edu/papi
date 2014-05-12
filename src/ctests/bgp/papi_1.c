@@ -1212,10 +1212,10 @@ void Do_High_Level_Tests(void) {
           case 0x80000063:
           case 0x80000064:
           case 0x80000065:
-            printf("FAILURE:  Do_High_Level_Tests, preset event code 0x%8.8x added to list of events to be started, but should not be allowed...\n", xEventCode);
+            printf("FAILURE:  Do_High_Level_Tests, preset event code %#8.8x added to list of events to be started, but should not be allowed...\n", xEventCode);
             break;
           default:
-            printf("SUCCESS:  Do_High_Level_Tests, preset event code 0x%8.8x added to list of events to be started...\n", xEventCode);
+            printf("SUCCESS:  Do_High_Level_Tests, preset event code %#8.8x added to list of events to be started...\n", xEventCode);
         }
         PAPI_Events[xNumEvents] = xEventCode;
         xNumEvents++;
@@ -1293,10 +1293,10 @@ void Do_High_Level_Tests(void) {
           case 0x80000063:
           case 0x80000064:
           case 0x80000065:
-            printf("SUCCESS:  Do_High_Level_Tests, preset event code 0x%8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
+            printf("SUCCESS:  Do_High_Level_Tests, preset event code %#8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
             break;
           default:
-            printf("FAILURE:  Do_High_Level_Tests, preset event code 0x%8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
+            printf("FAILURE:  Do_High_Level_Tests, preset event code %#8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
         }
       }
       xEventId++;
@@ -1370,10 +1370,10 @@ void Do_High_Level_Tests(void) {
           case 0x400001EA:
           case 0x400001EB:
           case 0x400001FE:
-            printf("FAILURE:  Do_High_Level_Tests, native event code 0x%8.8x added to list of events to be started, but should not be allowed...\n", xEventCode);
+            printf("FAILURE:  Do_High_Level_Tests, native event code %#8.8x added to list of events to be started, but should not be allowed...\n", xEventCode);
             break;
           default:
-            printf("SUCCESS:  Do_High_Level_Tests, native event code 0x%8.8x added to list of events to be started...\n", xEventCode);
+            printf("SUCCESS:  Do_High_Level_Tests, native event code %#8.8x added to list of events to be started...\n", xEventCode);
         }
         PAPI_Events[xNumEvents] = xEventCode;
         xNumEvents++;
@@ -1437,10 +1437,10 @@ void Do_High_Level_Tests(void) {
           case 0x400001EA:
           case 0x400001EB:
           case 0x400001FE:
-            printf("SUCCESS:  Do_High_Level_Tests, native event code 0x%8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
+            printf("SUCCESS:  Do_High_Level_Tests, native event code %#8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
             break;
           default:
-            printf("FAILURE:  Do_High_Level_Tests, native event code 0x%8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
+            printf("FAILURE:  Do_High_Level_Tests, native event code %#8.8x cannot be added to list of events to be started, xRC = %d...\n", xEventCode, xRC);
         }
       }
       xEventId++;
@@ -1889,19 +1889,19 @@ void Print_Native_Counters_for_PAPI_Counters_From_List(const int* pEvents, const
         printf("FAILURE:  PAPI_get_event_info failed for %s, xRC=%d\n", xName, xRC);
         exit(1);
       }
-      printf("\n     *** PAPI Counter Location %3.3d:  0x%8.8x %s\n", i, PAPI_Events[i], xName);
+      printf("\n     *** PAPI Counter Location %3.3d:  %#8.8x %s\n", i, PAPI_Events[i], xName);
       if (PAPI_Events[i] & 0x80000000) {
         // Preset event
         for (j=0; j<xEventInfo.count; j++) {
           xNativeEventId = (BGP_UPC_Event_Id_t)(xEventInfo.code[j]&0xBFFFFFFF);
-//          printf("Preset:  j=%d, xEventInfo.code[j]=0x%8.8x, xNativeEventId=0x%8.8x\n", j, xEventInfo.code[j], xNativeEventId);
+//          printf("Preset:  j=%d, xEventInfo.code[j]=%#8.8x, xNativeEventId=%#8.8x\n", j, xEventInfo.code[j], xNativeEventId);
           BGP_UPC_Print_Counter_Value(xNativeEventId, BGP_UPC_READ_EXCLUSIVE);
         }
       }
       else {
         // Native event
         xNativeEventId = (BGP_UPC_Event_Id_t)(PAPI_Events[i]&0xBFFFFFFF);
-//        printf("Native:  i=%d, PAPI_Events[i]=0x%8.8x, xNativeEventId=0x%8.8x\n", i, PAPI_Events[i], xNativeEventId);
+//        printf("Native:  i=%d, PAPI_Events[i]=%#8.8x, xNativeEventId=%#8.8x\n", i, PAPI_Events[i], xNativeEventId);
         BGP_UPC_Print_Counter_Value(xNativeEventId, BGP_UPC_READ_EXCLUSIVE);
       }
     }
@@ -1948,7 +1948,7 @@ void Print_PAPI_Counters(const int pEventSet, const long long* pCounters) {
         printf("PAPI_event_code_to_name failed on event code %d\n", PAPI_Events[i]);
         exit(1);
       }
-      printf("%20llu      %3d   0x%8.8x %s\n", pCounters[i], i, PAPI_Events[i], xName);
+      printf("%20llu      %3d   %#8.8x %s\n", pCounters[i], i, PAPI_Events[i], xName);
     }
   }
   printf("*****  End Print of PAPI Counter Values  *****\n");
@@ -1974,7 +1974,7 @@ void Print_PAPI_Counters_From_List(const int* pEventList, const int pNumEvents, 
         printf("PAPI_event_code_to_name failed on event code %d\n", pEventList[i]);
         exit(1);
       }
-      printf("%20llu      %3d   0x%8.8x %s\n", pCounters[i], i, pEventList[i], xName);
+      printf("%20llu      %3d   %#8.8x %s\n", pCounters[i], i, pEventList[i], xName);
     }
   }
   printf("*****  End Print of PAPI Counter Values  *****\n");
@@ -2060,7 +2060,7 @@ void Print_PAPI_Events(const int pEventSet) {
   List_PAPI_Events(pEventSet, PAPI_Events, &pNumEvents);
   for (i=0; i<pNumEvents; i++) {
     if (!PAPI_event_code_to_name(PAPI_Events[i], xName))
-      printf("PAPI Counter Location %3.3d:  0x%8.8x %s\n", i, PAPI_Events[i], xName);
+      printf("PAPI Counter Location %3.3d:  %#8.8x %s\n", i, PAPI_Events[i], xName);
     else
       printf("PAPI Counter Location %3.3d:  Not mapped\n", i);
   }

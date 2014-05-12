@@ -9,9 +9,9 @@
 
 #include "papi_test.h"
 
-#define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
+#define OVER_FMT	"handler(%d) Overflow at %p! vector=%#llx\n"
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
-#define INDEX_FMT   "Overflows vector 0x%llx: \n"
+#define INDEX_FMT   "Overflows vector %#llx: \n"
 
 typedef struct
 {

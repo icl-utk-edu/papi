@@ -161,11 +161,11 @@ measure_event( int index, PAPI_option_t * option )
 	      test_fail(__FILE__, __LINE__, "PAPI_get_opt(PAPI_DATA_ADDRESS)", retval);
 */
 		printf
-			( "Requested Start Address: %p; Start Offset: 0x%5x; Actual Start Address: %p\n",
+			( "Requested Start Address: %p; Start Offset: %#5x; Actual Start Address: %p\n",
 			  option->addr.start, option->addr.start_off,
 			  option->addr.start - option->addr.start_off );
 		printf
-			( "Requested End   Address: %p; End   Offset: 0x%5x; Actual End   Address: %p\n",
+			( "Requested End   Address: %p; End   Offset: %#5x; Actual End   Address: %p\n",
 			  option->addr.end, option->addr.end_off,
 			  option->addr.end + option->addr.end_off );
 	}

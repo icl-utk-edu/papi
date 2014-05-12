@@ -8,7 +8,7 @@
 #include "papi.h"		/* This needs to be included every time you use PAPI */
 #include <pthread.h>
 
-#define OVER_FMT    "handler(%d ) Overflow at %p! bit=0x%llx \n"
+#define OVER_FMT    "handler(%d ) Overflow at %p! bit=%#llx \n"
 #define THRESHOLD 100000 
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 

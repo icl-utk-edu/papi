@@ -123,7 +123,7 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
    SUBDBG("sys_perf_event_open(hw_event: %p, pid: %d, cpu: %d, group_fd: %d, flags: %lx\n",hw_event,pid,cpu,group_fd,flags);
    SUBDBG("   type: %d\n",hw_event->type);
    SUBDBG("   size: %d\n",hw_event->size);
-   SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",hw_event->config,
+   SUBDBG("   config: %#"PRIx64" (%"PRIu64")\n",hw_event->config,
 	  hw_event->config);
    SUBDBG("   sample_period: %"PRIu64"\n",hw_event->sample_period);
    SUBDBG("   sample_type: %"PRIu64"\n",hw_event->sample_type);
@@ -152,10 +152,10 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
    SUBDBG("   exclude_callchain_user: %d\n",hw_event->exclude_callchain_user);
    SUBDBG("   wakeup_watermark: %d\n",hw_event->wakeup_watermark);
    SUBDBG("   bp_type: %d\n",hw_event->bp_type);
-   SUBDBG("   config1: %"PRIx64" (%"PRIu64")\n",hw_event->config1,hw_event->config1);
-   SUBDBG("   config2: %"PRIx64" (%"PRIu64")\n",hw_event->config2,hw_event->config2);
-   SUBDBG("   branch_sample_type: %"PRIu64"\n",hw_event->branch_sample_type);
-   SUBDBG("   sample_regs_user: %"PRIu64"\n",hw_event->sample_regs_user);
+   SUBDBG("   config1: %#lx (%lu)\n",hw_event->config1,hw_event->config1);
+   SUBDBG("   config2: %#lx (%lu)\n",hw_event->config2,hw_event->config2);
+   SUBDBG("   branch_sample_type: %lu\n",hw_event->branch_sample_type);
+   SUBDBG("   sample_regs_user: %lu\n",hw_event->sample_regs_user);
    SUBDBG("   sample_stack_user: %d\n",hw_event->sample_stack_user);
 
 	ret =
@@ -302,7 +302,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
               " group_leader/fd: %d, event_fd: %d,"
-              " read_format: 0x%"PRIu64"\n",
+              " read_format: %#"PRIu64"\n",
 	      pid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
@@ -595,7 +595,7 @@ _peu_update_control_state( hwd_control_state_t *ctl,
 	 ret=_peu_libpfm4_setup_counters(&pe_ctl->events[i].attr,
 					native[i].ni_event,
 					pe_ctx->event_table);
-	 SUBDBG( "pe_ctl->eventss[%d].config=%"PRIx64"\n",i,
+	 SUBDBG( "pe_ctl->eventss[%d].config=%#"PRIx64"\n",i,
 		 pe_ctl->events[i].attr.config);
 	 if (ret!=PAPI_OK) return ret;
 

@@ -133,7 +133,7 @@ int main()
    for (i = 0; i < (int) length/2; i++) 
    {
       if (profbuf[i]) 
-         printf("0x%lx\t%d \n",
+         printf("%#lx\t%d \n",
                (unsigned long) start + (unsigned long) (2 * i), profbuf[i]);
    }
 

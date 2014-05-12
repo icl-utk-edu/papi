@@ -138,7 +138,7 @@ main( int argc, char **argv )
 				printf( "%s : \t%0.3f", argv[i], *((double *)(&values[j])) );
 				break;
 			  case PAPI_DATATYPE_BIT64:
-				printf( "%s : \t0x%llX", argv[i], values[j] );
+				printf( "%s : \t%#llX", argv[i], values[j] );
 				break;
 			  case PAPI_DATATYPE_INT64:
 			  default:
@@ -149,7 +149,7 @@ main( int argc, char **argv )
 			printf( "\n" );
 		}
 		if (u_format) printf( "%s : \t%llu(u)\n", argv[i], (unsigned long long)values[j] );
-		if (hex_format) printf( "%s : \t0x%llX\n", argv[i], values[j] );
+		if (hex_format) printf( "%s : \t%#llX\n", argv[i], values[j] );
 	}
 
 	printf( "\n----------------------------------\n" );

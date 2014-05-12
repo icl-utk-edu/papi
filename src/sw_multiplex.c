@@ -356,7 +356,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 
 		while ( t ) {
 			if ( t->tid == tid ) {
-				MPXDBG( "Found thread 0x%lx\n", t->tid );
+				MPXDBG( "Found thread %#lx\n", t->tid );
 				break;
 			}
 			t = t->next;

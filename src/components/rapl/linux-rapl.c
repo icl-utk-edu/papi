@@ -757,10 +757,10 @@ _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 			if (control->need_difference[i]) {
 				/* test for wrap around */
 				if (temp < context->start_value[i] ) {
-	        		SUBDBG("Wraparound!\nstart:\t0x%016x\ttemp:\t0x%016x",
+	        		SUBDBG("Wraparound!\nstart:\t%#016x\ttemp:\t%#016x",
 	        			(unsigned)context->start_value[i], (unsigned)temp);
 	           		temp += (0x100000000 - context->start_value[i]);
-	           		SUBDBG("\tresult:\t0x%016x\n", (unsigned)temp);
+	           		SUBDBG("\tresult:\t%#016x\n", (unsigned)temp);
 		  		} else {
 					temp -= context->start_value[i];
 		  		}

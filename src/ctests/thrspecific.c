@@ -52,7 +52,7 @@ Thread( void *arg )
 				test_fail( __FILE__, __LINE__, "data.num != 5", 0 );
 
 			for ( i = 0; i < data.num; i++ )
-				printf( "Entry %d, Thread 0x%lx, Data Pointer %p, Value %d\n",
+				printf( "Entry %d, Thread %#lx, Data Pointer %p, Value %d\n",
 						i, data.id[i], data.data[i], *( int * ) data.data[i] );
 
 			processing = 0;

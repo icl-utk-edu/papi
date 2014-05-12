@@ -134,7 +134,7 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 	strcpy( _papi_hwi_system_info.hw_info.vendor_string, "IBM" );
 	tmp = snprintf( _papi_hwi_system_info.hw_info.model_string,
 					sizeof _papi_hwi_system_info.hw_info.model_string,
-					"PVR=0x%4.4x:0x%4.4x",
+					"PVR=%#4.4x:%#4.4x",
 					( utmp >> ( 31 - 15 ) ) & 0xFFFF, ( utmp & 0xFFFF ) );
 
 	BGP_Personality_getLocationString( &bgp, chipID );

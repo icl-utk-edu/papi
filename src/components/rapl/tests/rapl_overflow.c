@@ -21,7 +21,7 @@ void handler( int EventSet, void *address,
 	( void ) overflow_vector;
 
 #if 0
-	fprintf( stderr, "handler(%d ) Overflow at %p! bit=0x%llx \n",
+	fprintf( stderr, "handler(%d ) Overflow at %p! bit=%#llx \n",
                          EventSet, address, overflow_vector );
 #endif
 	

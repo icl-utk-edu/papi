@@ -55,7 +55,7 @@ See the discussion below for platform-specific definitions.
 *   do {
 *       retval = PAPI_get_event_info( i, &info );
 *       if ( retval == PAPI_OK ) {
-*       printf( "%-30s 0x%-10x\n%s\n", info\&.symbol, info\&.event_code, info\&.long_descr );
+*       printf( "%-30s %#-10x\n%s\n", info\&.symbol, info\&.event_code, info\&.long_descr );
 *       }
 *   } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
 *   

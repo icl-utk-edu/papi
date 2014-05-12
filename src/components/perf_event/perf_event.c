@@ -655,7 +655,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
               " group_leader/fd: %d, event_fd: %d,"
-              " read_format: 0x%"PRIu64"\n",
+              " read_format: %#"PRIu64"\n",
 	      pid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
@@ -1776,7 +1776,7 @@ mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe,
     case PERF_RECORD_LOST:
       SUBDBG( "Warning: because of a mmap buffer overrun, %" PRId64
                       " events were lost.\n"
-                      "Loss was recorded when counter id 0x%"PRIx64 
+                      "Loss was recorded when counter id %#"PRIx64 
 	      " overflowed.\n", event->lost.lost, event->lost.id );
       break;
 

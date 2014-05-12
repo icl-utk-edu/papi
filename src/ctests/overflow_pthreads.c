@@ -27,7 +27,7 @@ void
 handler( int EventSet, void *address, long long overflow_vector, void *context )
 {
 #if 0
-	printf( "handler(%d,0x%lx,%llx) Overflow %d in thread %lx\n",
+	printf( "handler(%d,%#lx,%llx) Overflow %d in thread %lx\n",
 			EventSet, ( unsigned long ) address, overflow_vector,
 			total[EventSet], PAPI_thread_id(  ) );
 	printf( "%lx vs %lx\n", myid[EventSet], PAPI_thread_id(  ) );

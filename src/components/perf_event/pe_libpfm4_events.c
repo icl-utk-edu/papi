@@ -361,8 +361,7 @@ static struct native_event_t *allocate_native_event(char *name,
      event_table->native_events[new_event].config1=perf_arg.attr->config1;
      event_table->native_events[new_event].type=perf_arg.attr->type;
 
-     SUBDBG( "pe_event: config 0x%"PRIx64" config1 0x%"PRIx64
-             " type 0x%"PRIx32"\n", 
+     SUBDBG( "pe_event: config %#lx config1 %#lx type %#x\n", 
              perf_arg.attr->config, 
 	     perf_arg.attr->config1,
 	     perf_arg.attr->type);
@@ -1466,9 +1465,7 @@ _pe_libpfm4_setup_counters( struct perf_event_attr *attr,
   attr->config2=our_event->config2;
   attr->type=our_event->type;
   
-  SUBDBG( "pe_event: config 0x%"PRIx64
-          " config1 0x%"PRIx64
-          " type 0x%"PRIx32"\n", 
+  SUBDBG( "pe_event: config %#lx config1 %#lx type %#x\n", 
           attr->config, 
 	  attr->config1,
 	  attr->type);
