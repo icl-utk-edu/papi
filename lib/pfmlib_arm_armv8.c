@@ -42,7 +42,7 @@ pfm_arm_detect_cortex_a57(void *this)
 		return PFM_ERR_NOTSUPP;
 
 	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
-		(pfm_arm_cfg.part == 0xc00)) { /* Cortex A57 */
+		(pfm_arm_cfg.part == 0xd07)) { /* Cortex A57 */
 			return PFM_SUCCESS;
 	}
 	return PFM_ERR_NOTSUPP;
