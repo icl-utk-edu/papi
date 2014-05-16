@@ -29,7 +29,7 @@ static const char* files[NUM_INFILES] = {"/etc/passwd", "/etc/group", "/etc/prot
 
 void *ThreadIO(void *arg) {
   unsigned long tid = (unsigned long)pthread_self();
-  if (!TESTS_QUIET) printf("\nThread 0x%lx: will read %s and write it to /dev/null\n", tid,(const char*) arg);
+  if (!TESTS_QUIET) printf("\nThread %#lx: will read %s and write it to /dev/null\n", tid,(const char*) arg);
   int Events[NUM_EVENTS]; 
   long long values[NUM_EVENTS];
   int retval;
@@ -72,7 +72,7 @@ void *ThreadIO(void *arg) {
 
   if (!TESTS_QUIET) {
     for (e=0; e<NUM_EVENTS; e++)  
-      printf("Thread 0x%lx: %s: %lld\n", tid, names[e], values[e]);
+      printf("Thread %#lx: %s: %lld\n", tid, names[e], values[e]);
   }
   return(NULL);
 }

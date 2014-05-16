@@ -802,8 +802,8 @@ set_drange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end =
 			( unsigned long ) option->address_range.end;
 		SUBDBG
-			( "++++ before data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ before data range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start,
 			  ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end,
 			  ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end -
@@ -820,8 +820,8 @@ set_drange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		}
 
 		SUBDBG
-			( "++++ data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ data range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start,
 			  ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end,
 			  ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end -
@@ -866,8 +866,8 @@ set_drange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		mont_inp->pfp_mont_drange.rr_limits[0].rr_end =
 			( unsigned long ) option->address_range.end;
 		SUBDBG
-			( "++++ before data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ before data range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  mont_inp->pfp_mont_drange.rr_limits[0].rr_start,
 			  mont_inp->pfp_mont_drange.rr_limits[0].rr_end,
 			  mont_inp->pfp_mont_drange.rr_limits[0].rr_end -
@@ -883,8 +883,8 @@ set_drange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		}
 
 		SUBDBG
-			( "++++ data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ data range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  mont_inp->pfp_mont_drange.rr_limits[0].rr_start,
 			  mont_inp->pfp_mont_drange.rr_limits[0].rr_end,
 			  mont_inp->pfp_mont_drange.rr_limits[0].rr_end -
@@ -954,8 +954,8 @@ set_irange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end =
 			( unsigned long ) option->address_range.end;
 		SUBDBG
-			( "++++ before code range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ before code range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start,
 			  ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end,
 			  ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end -
@@ -972,8 +972,8 @@ set_irange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		}
 
 		SUBDBG
-			( "++++ code range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ code range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start,
 			  ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end,
 			  ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end -
@@ -1010,8 +1010,8 @@ set_irange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		mont_inp->pfp_mont_irange.rr_limits[0].rr_end =
 			( unsigned long ) option->address_range.end;
 		SUBDBG
-			( "++++ before code range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ before code range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  mont_inp->pfp_mont_irange.rr_limits[0].rr_start,
 			  mont_inp->pfp_mont_irange.rr_limits[0].rr_end,
 			  mont_inp->pfp_mont_irange.rr_limits[0].rr_end -
@@ -1028,8 +1028,8 @@ set_irange( hwd_context_t * ctx, hwd_control_state_t * current_state,
 		}
 
 		SUBDBG
-			( "++++ code range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n"
-			  "     start_offset:-0x%lx end_offset:+0x%lx\n",
+			( "++++ code range  : [%#016lx-%#016lx=%ld]: %d pair of debug registers used\n"
+			  "     start_offset:-%#lx end_offset:+%#lx\n",
 			  mont_inp->pfp_mont_irange.rr_limits[0].rr_start,
 			  mont_inp->pfp_mont_irange.rr_limits[0].rr_end,
 			  mont_inp->pfp_mont_irange.rr_limits[0].rr_end -
@@ -1362,7 +1362,7 @@ _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 	minor = ( tevent & PAPI_NATIVE_UMASK_AND_MASK ) >> PAPI_NATIVE_UMASK_SHIFT;
 	*event = major;
 	*umask = minor;
-	SUBDBG( "EventCode 0x%08x is event %d, umask %#x\n", EventCode, major,
+	SUBDBG( "EventCode %#08x is event %d, umask %#x\n", EventCode, major,
 			minor );
 	return ( PAPI_OK );
 }
@@ -1374,9 +1374,9 @@ static  int
 encode_native_event_raw( unsigned int event, unsigned int mask )
 {
 	unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
-	SUBDBG( "Old native index was 0x%08x with 0x%08x mask\n", tmp, mask );
+	SUBDBG( "Old native index was %#08x with %#08x mask\n", tmp, mask );
 	tmp = tmp | ( mask << PAPI_NATIVE_UMASK_SHIFT );
-	SUBDBG( "New encoding is 0x%08x\n", tmp | PAPI_NATIVE_MASK );
+	SUBDBG( "New encoding is %#08x\n", tmp | PAPI_NATIVE_MASK );
 	return ( tmp | PAPI_NATIVE_MASK );
 }
 
@@ -1744,7 +1744,7 @@ _ia64_ita_set_domain( hwd_control_state_t * this_state, int domain )
 	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		if ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ) {
 			pfm_ita_pmc_reg_t value;
-			SUBDBG( "slot %d, register %lud active, config value 0x%lx\n",
+			SUBDBG( "slot %d, register %lud active, config value %#lx\n",
 					i, ( unsigned long ) ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ),
 					PFMW_PEVT_PFPPC_REG_VAL( evt, i ) );
 
@@ -1752,7 +1752,7 @@ _ia64_ita_set_domain( hwd_control_state_t * this_state, int domain )
 			value.pmc_ita_count_reg.pmc_plm = mode;
 			PFMW_PEVT_PFPPC_REG_VAL( evt, i ) = PFMW_ARCH_REG_PMCVAL( value );
 
-			SUBDBG( "new config value 0x%lx\n",
+			SUBDBG( "new config value %#lx\n",
 					PFMW_PEVT_PFPPC_REG_VAL( evt, i ) );
 		}
 	}
@@ -1787,7 +1787,7 @@ _ia64_ita2_set_domain( hwd_control_state_t * this_state, int domain )
 	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		if ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ) {
 			pfm_ita2_pmc_reg_t value;
-			SUBDBG( "slot %d, register %lud active, config value 0x%lx\n",
+			SUBDBG( "slot %d, register %lud active, config value %#lx\n",
 					i, ( unsigned long ) ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ),
 					PFMW_PEVT_PFPPC_REG_VAL( evt, i ) );
 
@@ -1795,7 +1795,7 @@ _ia64_ita2_set_domain( hwd_control_state_t * this_state, int domain )
 			value.pmc_ita2_counter_reg.pmc_plm = mode;
 			PFMW_PEVT_PFPPC_REG_VAL( evt, i ) = PFMW_ARCH_REG_PMCVAL( value );
 
-			SUBDBG( "new config value 0x%lx\n",
+			SUBDBG( "new config value %#lx\n",
 					PFMW_PEVT_PFPPC_REG_VAL( evt, i ) );
 		}
 	}
@@ -1830,7 +1830,7 @@ _ia64_mont_set_domain( hwd_control_state_t * this_state, int domain )
 	for ( i = 0; i < _ia64_vector.cmp_info.num_cntrs; i++ ) {
 		if ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ) {
 			pfm_mont_pmc_reg_t value;
-			SUBDBG( "slot %d, register %lud active, config value 0x%lx\n",
+			SUBDBG( "slot %d, register %lud active, config value %#lx\n",
 					i, ( unsigned long ) ( PFMW_PEVT_PFPPC_REG_NUM( evt, i ) ),
 					PFMW_PEVT_PFPPC_REG_VAL( evt, i ) );
 
@@ -1838,7 +1838,7 @@ _ia64_mont_set_domain( hwd_control_state_t * this_state, int domain )
 			value.pmc_mont_counter_reg.pmc_plm = mode;
 			PFMW_PEVT_PFPPC_REG_VAL( evt, i ) = PFMW_ARCH_REG_PMCVAL( value );
 
-			SUBDBG( "new config value 0x%lx\n",
+			SUBDBG( "new config value %#lx\n",
 					PFMW_PEVT_PFPPC_REG_VAL( evt, i ) );
 		}
 	}
@@ -2341,7 +2341,7 @@ ia64_ita_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 		/* PFM30 only one PMD overflows in each sample */
 		overflow_vector = 1 << ent->ovfl_pmd;
 
-		SUBDBG( "Entry %d PID:%d CPU:%d ovfl_vector:0x%lx IIP:0x%016lx\n",
+		SUBDBG( "Entry %d PID:%d CPU:%d ovfl_vector:%#lx IIP:%#016lx\n",
 				i, ent->pid, ent->cpu, overflow_vector, ent->ip );
 
 		while ( overflow_vector ) {
@@ -2422,7 +2422,7 @@ ia64_ita2_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 		/* PFM30 only one PMD overflows in each sample */
 		overflow_vector = 1 << ent->ovfl_pmd;
 
-		SUBDBG( "Entry %d PID:%d CPU:%d ovfl_vector:0x%lx IIP:0x%016lx\n",
+		SUBDBG( "Entry %d PID:%d CPU:%d ovfl_vector:%#lx IIP:%#016lx\n",
 				i, ent->pid, ent->cpu, overflow_vector, ent->ip );
 
 		while ( overflow_vector ) {
@@ -2505,7 +2505,7 @@ ia64_mont_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 		/* PFM30 only one PMD overflows in each sample */
 		overflow_vector = 1 << ent->ovfl_pmd;
 
-		SUBDBG( "Entry %d PID:%d CPU:%d ovfl_vector:0x%lx IIP:0x%016lx\n",
+		SUBDBG( "Entry %d PID:%d CPU:%d ovfl_vector:%#lx IIP:%#016lx\n",
 				i, ent->pid, ent->cpu, overflow_vector, ent->ip );
 
 		while ( overflow_vector ) {

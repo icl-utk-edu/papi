@@ -48,9 +48,9 @@ static inline int
 encode_native_event_raw( unsigned int event, unsigned int mask )
 {
 	unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
-	SUBDBG( "Old native index was 0x%08x with 0x%08x mask\n", tmp, mask );
+	SUBDBG( "Old native index was %#08x with %#08x mask\n", tmp, mask );
 	tmp = tmp | ( mask << PAPI_NATIVE_UMASK_SHIFT );
-	SUBDBG( "New encoding is 0x%08x\n", tmp | PAPI_NATIVE_MASK );
+	SUBDBG( "New encoding is %#08x\n", tmp | PAPI_NATIVE_MASK );
 	return ( int ) ( tmp | PAPI_NATIVE_MASK );
 }
 
@@ -64,9 +64,9 @@ encode_native_event( unsigned int event, unsigned int num_mask,
 {
 	unsigned int i;
 	unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
-	SUBDBG( "Native base event is 0x%08x with %d masks\n", tmp, num_mask );
+	SUBDBG( "Native base event is %#08x with %d masks\n", tmp, num_mask );
 	for ( i = 0; i < num_mask; i++ ) {
-		SUBDBG( "Mask index is 0x%08x\n", mask_values[i] );
+		SUBDBG( "Mask index is %#08x\n", mask_values[i] );
 		tmp = tmp | ( ( 1 << mask_values[i] ) << PAPI_NATIVE_UMASK_SHIFT );
 	}
 	SUBDBG( "Full native encoding is 0x%08x\n", tmp | PAPI_NATIVE_MASK );
@@ -89,7 +89,7 @@ _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 	minor = ( tevent & PAPI_NATIVE_UMASK_AND_MASK ) >> PAPI_NATIVE_UMASK_SHIFT;
 	*event = major;
 	*umask = minor;
-	SUBDBG( "EventCode 0x%08x is event %d, umask %#x\n", EventCode, major,
+	SUBDBG( "EventCode %#08x is event %d, umask %#x\n", EventCode, major,
 			minor );
 	return PAPI_OK;
 }
@@ -122,7 +122,7 @@ convert_pfm_masks( pfmlib_event_t * gete )
 		if ( ( ret =
 			   pfm_get_event_mask_code( gete->event, gete->unit_masks[i],
 										&code ) ) == PFMLIB_SUCCESS ) {
-			SUBDBG( "Mask value is 0x%08x\n", code );
+			SUBDBG( "Mask value is %#08x\n", code );
 			tmp |= code;
 		} else {
 			PAPIERROR( "pfm_get_event_mask_code(%#x,%d,%p): %s", gete->event,
@@ -818,7 +818,7 @@ _papi_libpfm_setup_counters( struct perf_event_attr *attr,
     else {
         pe_event = outp.pfp_pmcs[0].reg_value;   
     }
-    SUBDBG( "pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value );
+    SUBDBG( "pe_event: %#llx\n", outp.pfp_pmcs[0].reg_value );
 #endif
 
     attr->config=pe_event;

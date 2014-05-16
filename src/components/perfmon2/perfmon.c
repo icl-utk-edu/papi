@@ -74,7 +74,7 @@ dump_sets( pfarg_setdesc_t * set, int num_sets )
 		SUBDBG( "SET[%d].set_flags = %d\n", i, set[i].set_flags );
 		SUBDBG( "SET[%d].set_timeout = %llu\n", i,
 				( unsigned long long ) set[i].set_timeout );
-		//  SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)set[i].set_mmap_offset);
+		//  SUBDBG("SET[%d].set_mmap_offset = %#016llx\n",i,(unsigned long long)set[i].set_mmap_offset);
 	}
 }
 
@@ -88,7 +88,7 @@ dump_setinfo( pfarg_setinfo_t * setinfo, int num_sets )
 		SUBDBG( "SETINFO[%d].set_id = %d\n", i, setinfo[i].set_id );
 		// SUBDBG("SETINFO[%d].set_id_next = %d\n",i,setinfo[i].set_id_next);
 		SUBDBG( "SETINFO[%d].set_flags = %d\n", i, setinfo[i].set_flags );
-		SUBDBG( "SETINFO[%d].set_ovfl_pmds[0] = 0x%016llx\n", i,
+		SUBDBG( "SETINFO[%d].set_ovfl_pmds[0] = %#016llx\n", i,
 				( unsigned long long ) setinfo[i].set_ovfl_pmds[0] );
 		SUBDBG( "SETINFO[%d].set_runs = %llu\n", i,
 				( unsigned long long ) setinfo[i].set_runs );
@@ -96,10 +96,10 @@ dump_setinfo( pfarg_setinfo_t * setinfo, int num_sets )
 				( unsigned long long ) setinfo[i].set_timeout );
 		SUBDBG( "SETINFO[%d].set_act_duration = %llu\n", i,
 				( unsigned long long ) setinfo[i].set_act_duration );
-		// SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_mmap_offset);
-		SUBDBG( "SETINFO[%d].set_avail_pmcs[0] = 0x%016llx\n", i,
+		// SUBDBG("SETINFO[%d].set_mmap_offset = %#016llx\n",i,(unsigned long long)setinfo[i].set_mmap_offset);
+		SUBDBG( "SETINFO[%d].set_avail_pmcs[0] = %#016llx\n", i,
 				( unsigned long long ) setinfo[i].set_avail_pmcs[0] );
-		SUBDBG( "SETINFO[%d].set_avail_pmds[0] = 0x%016llx\n", i,
+		SUBDBG( "SETINFO[%d].set_avail_pmds[0] = %#016llx\n", i,
 				( unsigned long long ) setinfo[i].set_avail_pmds[0] );
 	}
 }
@@ -114,8 +114,8 @@ dump_pmc( pfm_control_state_t * ctl )
 		SUBDBG( "PC[%d]\n", i );
 		SUBDBG( "PC[%d].reg_num = %d\n", i, pc[i].reg_num );
 		SUBDBG( "PC[%d].reg_set = %d\n", i, pc[i].reg_set );
-		SUBDBG( "PC[%d].reg_flags = 0x%08x\n", i, pc[i].reg_flags );
-		SUBDBG( "PC[%d].reg_value = 0x%016llx\n", i,
+		SUBDBG( "PC[%d].reg_flags = %#08x\n", i, pc[i].reg_flags );
+		SUBDBG( "PC[%d].reg_value = %#016llx\n", i,
 				( unsigned long long ) pc[i].reg_value );
 	}
 }
@@ -130,8 +130,8 @@ dump_pmd( pfm_control_state_t * ctl )
 		SUBDBG( "PD[%d]\n", i );
 		SUBDBG( "PD[%d].reg_num = %d\n", i, pd[i].reg_num );
 		SUBDBG( "PD[%d].reg_set = %d\n", i, pd[i].reg_set );
-		SUBDBG( "PD[%d].reg_flags = 0x%08x\n", i, pd[i].reg_flags );
-		SUBDBG( "PD[%d].reg_value = 0x%016llx\n", i,
+		SUBDBG( "PD[%d].reg_flags = %#08x\n", i, pd[i].reg_flags );
+		SUBDBG( "PD[%d].reg_value = %#016llx\n", i,
 				( unsigned long long ) pd[i].reg_value );
 		SUBDBG( "PD[%d].reg_long_reset = %llu\n", i,
 				( unsigned long long ) pd[i].reg_long_reset );
@@ -141,9 +141,9 @@ dump_pmd( pfm_control_state_t * ctl )
 				( unsigned long long ) pd[i].reg_last_reset_val );
 		SUBDBG( "PD[%d].reg_ovfl_switch_cnt = %llu\n", i,
 				( unsigned long long ) pd[i].reg_ovfl_switch_cnt );
-		SUBDBG( "PD[%d].reg_reset_pmds[0] = 0x%016llx\n", i,
+		SUBDBG( "PD[%d].reg_reset_pmds[0] = %#016llx\n", i,
 				( unsigned long long ) pd[i].reg_reset_pmds[0] );
-		SUBDBG( "PD[%d].reg_smpl_pmds[0] = 0x%016llx\n", i,
+		SUBDBG( "PD[%d].reg_smpl_pmds[0] = %#016llx\n", i,
 				( unsigned long long ) pd[i].reg_smpl_pmds[0] );
 		SUBDBG( "PD[%d].reg_smpl_eventid = %llu\n", i,
 				( unsigned long long ) pd[i].reg_smpl_eventid );
@@ -177,7 +177,7 @@ dump_smpl( pfm_dfl_smpl_entry_t * entry )
 	SUBDBG( "SMPL.ovfl_pmd = %d\n", entry->ovfl_pmd );
 	SUBDBG( "SMPL.last_reset_val = %llu\n",
 			( unsigned long long ) entry->last_reset_val );
-	SUBDBG( "SMPL.ip = 0x%llx\n", ( unsigned long long ) entry->ip );
+	SUBDBG( "SMPL.ip = %#llx\n", ( unsigned long long ) entry->ip );
 	SUBDBG( "SMPL.tstamp = %llu\n", ( unsigned long long ) entry->tstamp );
 	SUBDBG( "SMPL.cpu = %d\n", entry->cpu );
 	SUBDBG( "SMPL.set = %d\n", entry->set );
@@ -1476,11 +1476,11 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 										sizeof ( data_addr ) +
 										sizeof ( latency ) );
 
-		SUBDBG( "PMD[32]: 0x%016llx\n",
+		SUBDBG( "PMD[32]: %#016llx\n",
 				( unsigned long long ) data_addr.pmd_val );
-		SUBDBG( "PMD[33]: 0x%016llx\n",
+		SUBDBG( "PMD[33]: %#016llx\n",
 				( unsigned long long ) latency.pmd_val );
-		SUBDBG( "PMD[36]: 0x%016llx\n",
+		SUBDBG( "PMD[36]: %#016llx\n",
 				( unsigned long long ) load_addr.pmd_val );
 
 		if ( ( !load_addr.pmd36_mont_reg.dear_vl ) ||
@@ -1532,9 +1532,9 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 			*( pfm_mont_pmd_reg_t * ) ( ( unsigned long ) *ent +
 										sizeof ( icache_line_addr ) );
 
-		SUBDBG( "PMD[34]: 0x%016llx\n",
+		SUBDBG( "PMD[34]: %#016llx\n",
 				( unsigned long long ) icache_line_addr.pmd_val );
-		SUBDBG( "PMD[35]: 0x%016llx\n",
+		SUBDBG( "PMD[35]: %#016llx\n",
 				( unsigned long long ) latency.pmd_val );
 
 		if ( ( icache_line_addr.pmd34_mont_reg.iear_stat & 0x1 ) == 0 ) {
@@ -1583,10 +1583,10 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 										sizeof ( data_addr ) +
 										sizeof ( latency ) );
 
-		SUBDBG( "PMD[2]: 0x%016llx\n",
+		SUBDBG( "PMD[2]: %#016llx\n",
 				( unsigned long long ) data_addr.pmd_val );
-		SUBDBG( "PMD[3]: 0x%016llx\n", ( unsigned long long ) latency.pmd_val );
-		SUBDBG( "PMD[17]: 0x%016llx\n",
+		SUBDBG( "PMD[3]: %#016llx\n", ( unsigned long long ) latency.pmd_val );
+		SUBDBG( "PMD[17]: %#016llx\n",
 				( unsigned long long ) load_addr.pmd_val );
 
 		if ( ( !load_addr.pmd17_ita2_reg.dear_vl ) ||
@@ -1638,9 +1638,9 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 			*( pfm_ita2_pmd_reg_t * ) ( ( unsigned long ) *ent +
 										sizeof ( icache_line_addr ) );
 
-		SUBDBG( "PMD[0]: 0x%016llx\n",
+		SUBDBG( "PMD[0]: %#016llx\n",
 				( unsigned long long ) icache_line_addr.pmd_val );
-		SUBDBG( "PMD[1]: 0x%016llx\n", ( unsigned long long ) latency.pmd_val );
+		SUBDBG( "PMD[1]: %#016llx\n", ( unsigned long long ) latency.pmd_val );
 
 		if ( ( icache_line_addr.pmd0_ita2_reg.iear_stat & 0x1 ) == 0 ) {
 			SUBDBG( "Invalid IEAR sample found, iear_stat = %#x\n",

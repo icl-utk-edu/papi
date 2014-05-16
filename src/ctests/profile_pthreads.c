@@ -92,7 +92,7 @@ Thread( void *arg )
 				( int ) pthread_self(  ) );
 		for ( i = 0; i < ( int ) length; i++ ) {
 			if ( profbuf[i] )
-				printf( "0x%lx\t%d\n", ( unsigned long ) ( my_start + 2 * i ),
+				printf( "%#lx\t%d\n", ( unsigned long ) ( my_start + 2 * i ),
 						profbuf[i] );
 		}
 	}

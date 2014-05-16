@@ -196,7 +196,7 @@ main( int argc, char **argv )
 	    if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
 
 	       if ( event_code & PAPI_PRESET_MASK ) {
-		  printf( "%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
+		  printf( "%-30s%s\n%-30s%#-10x\n%-30s%d\n",
 			  "Event name:", info.symbol, "Event Code:",
 			  info.event_code, "Number of Native Events:",
 			  info.count );
@@ -214,20 +214,20 @@ main( int argc, char **argv )
 		     PAPI_get_event_info( (int) info.code[j], &n_info );
 		     printf(" Number of Register Values: %d\n", n_info.count );
 		     for( k = 0; k < ( int ) n_info.count; k++ ) {
-			printf( " Register[%2d]: 0x%08x |%s|\n", k,
+			printf( " Register[%2d]: %#08x |%s|\n", k,
 				n_info.code[k], n_info.name[k] );
 		     }
 		     printf( " Native Event Description: |%s|\n\n",
 			     n_info.long_descr );
 		  }
 	       } else {	 /* must be a native event code */
-		  printf( "%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
+		  printf( "%-30s%s\n%-30s%#-10x\n%-30s%d\n",
 			  "Event name:", info.symbol, "Event Code:",
 			  info.event_code, "Number of Register Values:",
 			  info.count );
 		  printf( "%-29s|%s|\n", "Description:", info.long_descr );
 		  for ( k = 0; k < ( int ) info.count; k++ ) {
-		      printf( " Register[%2d]: 0x%08x |%s|\n", k,
+		      printf( " Register[%2d]: %#08x |%s|\n", k,
 			      info.code[k], info.name[k] );
 		  }
 
@@ -244,7 +244,7 @@ main( int argc, char **argv )
 					    " Mask Info:", info.symbol,
 					    info.long_descr );
 				    for ( k = 0; k < ( int ) info.count;k++ ) {
-					printf( "  Register[%2d]:  0x%08x  |%s|\n",
+					printf( "  Register[%2d]:  %#08x  |%s|\n",
 						k, info.code[k], info.name[k] );
 				    }
 				 }

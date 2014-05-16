@@ -33,7 +33,7 @@ handler( int EventSet, void *address, long long overflow_vector, void *context )
 	( void ) overflow_vector;
 	( void ) context;
 	if ( !TESTS_QUIET ) {
-		fprintf( stderr, "handler(%d ) Overflow at %p, thread 0x%lux!\n",
+		fprintf( stderr, "handler(%d ) Overflow at %p, thread %#lux!\n",
 				 EventSet, address, PAPI_thread_id(  ) );
 	}
 	total++;

@@ -109,13 +109,13 @@ main( int argc, char **argv )
 		printf( "---------Buffer 1--------\n" );
 		for ( i = 0; i < ( int ) length / 2; i++ ) {
 			if ( buf[0][i] )
-				printf( "0x%lx\t%d\n", DO_FLOPS + 2 * ( unsigned long ) i,
+				printf( "%#lx\t%d\n", DO_FLOPS + 2 * ( unsigned long ) i,
 						buf[0][i] );
 		}
 		printf( "---------Buffer 2--------\n" );
 		for ( i = 0; i < ( int ) length / 2; i++ ) {
 			if ( buf[1][i] )
-				printf( "0x%lx\t%d\n", DO_READS + 2 * ( unsigned long ) i,
+				printf( "%#lx\t%d\n", DO_READS + 2 * ( unsigned long ) i,
 						buf[1][i] );
 		}
 		printf( "-------------------------\n" );

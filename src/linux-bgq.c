@@ -1127,7 +1127,7 @@ _bgq_ntv_name_to_code( char *name, unsigned int *event_code )
 		printf(	"eventId     = %d\n", GenericEvent[num_opcode_events-1].eventId);
 		printf(	"mask        = %s\n", GenericEvent[num_opcode_events-1].mask);
 		printf(	"opcode      = %s\n", GenericEvent[num_opcode_events-1].opcode);
-		printf( "opcode_mask = %" PRIX64 " (%" PRIu64 ")\n", GenericEvent[num_opcode_events-1].opcode_mask,
+		printf( "opcode_mask = %#lX (%lu)\n", GenericEvent[num_opcode_events-1].opcode_mask,
 			   GenericEvent[num_opcode_events-1].opcode_mask );
 #endif
 	}

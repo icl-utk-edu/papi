@@ -50,7 +50,7 @@ extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
 #define FUNC "?"
 #endif
 
-#define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:%d:0x%lx ",a,__FILE__, FUNC, __LINE__,(int)getpid(),_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d:%d ",a,__FILE__, FUNC, __LINE__, (int)getpid())
+#define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:%d:%#lx ",a,__FILE__, FUNC, __LINE__,(int)getpid(),_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d:%d ",a,__FILE__, FUNC, __LINE__, (int)getpid())
 #define ISLEVEL(a) (_papi_hwi_debug&a)
 
 #define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":(a&DEBUG_LEAK)?"LEAK":"UNKNOWN")

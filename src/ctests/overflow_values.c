@@ -36,7 +36,7 @@ handler( int EventSet, void *address, long long overflow_vector, void *context )
 	int i;
 	long long vals[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	printf( "\nOverflow at %p! bit=0x%llx \n", address, overflow_vector );
+	printf( "\nOverflow at %p! bit=%#llx \n", address, overflow_vector );
 	ret = PAPI_read( EventSet, vals );
 	printf( "Overflow read vals :" );
 	for ( i = 0; i < 3 /* 8 */ ; i++ )

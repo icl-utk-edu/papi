@@ -123,7 +123,7 @@ dump_cmd( papi_cpc_event_t * t )
 	SUBDBG( "ce_tick %llu\n", t->cmd.ce_tick );
 	SUBDBG( "ce_pic[0] %llu ce_pic[1] %llu\n", t->cmd.ce_pic[0],
 			t->cmd.ce_pic[1] );
-	SUBDBG( "ce_pcr 0x%llx\n", t->cmd.ce_pcr );
+	SUBDBG( "ce_pcr %#llx\n", t->cmd.ce_pcr );
 	SUBDBG( "flags %#x\n", t->flags );
 }
 #endif
@@ -155,7 +155,7 @@ dispatch_emt( int signal, siginfo_t * sip, void *arg )
 
 		if ( ESI->master != thread ) {
 			PAPIERROR
-				( "eventset->thread 0x%lx vs. current thread 0x%lx mismatch",
+				( "eventset->thread %%lx vs. current thread %#lx mismatch",
 				  ESI->master, thread );
 			return;
 		}
@@ -291,23 +291,23 @@ scan_prtconf( char *cpuname, int len_cpuname, int *hz, int *ver )
 		if ( ( sscanf( line, "%s", cmd ) == 1 )
 			 && strstr( line, "Node 0x" ) ) {
 			matched = 0x0;
-			/*SUBDBG("Found 'Node' -- search reset. (0x%2.2x)\n",matched); */
+			/*SUBDBG("Found 'Node' -- search reset. (%#2.2x)\n",matched); */
 		} else {
 			if ( strstr( cmd, "device_type:" ) && strstr( line, "'cpu'" ) ) {
 				matched |= 0x1;
-				SUBDBG( "Found 'cpu'. (0x%2.2x)\n", matched );
+				SUBDBG( "Found 'cpu'. (%#2.2x)\n", matched );
 			} else if ( !strcmp( cmd, "sparc-version:" ) &&
 						( sscanf( line, "%s %#x", cmd, &version ) == 2 ) ) {
 				matched |= 0x2;
-				SUBDBG( "Found version=%d. (0x%2.2x)\n", version, matched );
+				SUBDBG( "Found version=%d. (%#2.2x)\n", version, matched );
 			} else if ( !strcmp( cmd, "clock-frequency:" ) &&
 						( sscanf( line, "%s %#x", cmd, &ihz ) == 2 ) ) {
 				matched |= 0x4;
-				SUBDBG( "Found ihz=%d. (0x%2.2x)\n", ihz, matched );
+				SUBDBG( "Found ihz=%d. (%#2.2x)\n", ihz, matched );
 			} else if ( !strcmp( cmd, "name:" ) &&
 						( sscanf( line, "%s %s", cmd, name ) == 2 ) ) {
 				matched |= 0x8;
-				SUBDBG( "Found name: %s. (0x%2.2x)\n", name, matched );
+				SUBDBG( "Found name: %s. (%#2.2x)\n", name, matched );
 			}
 		}
 		if ( ( matched & 0xF ) == 0xF )

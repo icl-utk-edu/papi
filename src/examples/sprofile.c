@@ -153,13 +153,13 @@ int main(int argc, char **argv)
    for (i = 0; i < length / 2; i++) 
    {
       if (profbuf[i])
-	printf("0x%lx\t%d\n", strtoul(DO_FLOPS2,NULL,0) + 2 * i, profbuf[i]);
+	printf("%#lx\t%d\n", strtoul(DO_FLOPS2,NULL,0) + 2 * i, profbuf[i]);
    }
    printf("---------Buffer 2--------\n");
    for (i = 0; i < length / 2; i++) 
    {
       if (profbuf2[i])
-	printf("0x%lx\t%d\n", strtoul(DO_FLOPS1,NULL,0) + 2 * i, profbuf2[i]);
+	printf("%#lx\t%d\n", strtoul(DO_FLOPS1,NULL,0) + 2 * i, profbuf2[i]);
    }
    printf("-------------------------\n");
    printf("%u samples fell outside the regions.\n", *profbuf3);

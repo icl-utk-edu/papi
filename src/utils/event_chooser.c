@@ -68,7 +68,7 @@ show_event_info( int evt )
 
        for( k = 0; k < ( int ) info.count; k++ ) {
 	  if ( strlen( info.name[k] ) ) {
-	     printf( " |Register Value[%d]: 0x%-10x  %s|\n", 
+	     printf( " |Register Value[%d]: %#-10x  %s|\n", 
                      k, info.code[k], info.name[k] );
 	  }
        }
@@ -103,7 +103,7 @@ native( int cidx )
 	     do {
 		retval = PAPI_get_event_info( k, &info );
 		if ( retval == PAPI_OK ) {
-		   printf( "    0x%-10x%s  |%s|\n", info.event_code,
+		   printf( "    %#-10x%s  |%s|\n", info.event_code,
 			   strchr( info.symbol, ':' ),
 			   strchr( info.long_descr, ':' ) + 1 );
 		}

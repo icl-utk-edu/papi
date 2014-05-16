@@ -171,7 +171,7 @@ _papi_hwi_dispatch_profile( EventSetInfo_t * ESI, caddr_t pc,
 	int best_index = -1;
 	int i;
 
-	PRFDBG( "handled IP 0x%p\n", pc );
+	PRFDBG( "handled IP %p\n", pc );
 
 	sprof = profile->prof[profile_index];
 	count = profile->count[profile_index];
@@ -250,7 +250,7 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
 
 		if ( ESI->master != thread ) {
 			PAPIERROR
-				( "eventset->thread 0x%lx vs. current thread 0x%lx mismatch",
+				( "eventset->thread %#lx vs. current thread %#lx mismatch",
 				  ESI->master, thread );
 			return ( PAPI_EBUG );
 		}

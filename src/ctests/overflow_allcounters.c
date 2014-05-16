@@ -22,7 +22,7 @@
 
 #include "papi_test.h"
 
-#define OVER_FMT	"handler(%d ) Overflow at %p! bit=0x%llx \n"
+#define OVER_FMT	"handler(%d ) Overflow at %p! bit=%#llx \n"
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
 
 static int total = 0;				   /* total overflows */

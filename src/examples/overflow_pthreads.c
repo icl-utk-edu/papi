@@ -22,7 +22,7 @@
 #include "papi.h"
 
 #define THRESHOLD 200000
-#define OVER_FMT    "handler(%d ) Overflow at %p! bit=0x%llx \n"
+#define OVER_FMT    "handler(%d ) Overflow at %p! bit=%#llx \n"
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 

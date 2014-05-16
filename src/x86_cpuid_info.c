@@ -148,7 +148,7 @@ init_amd( PAPI_mh_info_t * mh_info, int *num_levels )
 	reg.e.ax = 0x80000005;	 /* extended function code 5: L1 Cache and TLB Identifiers */
 	cpuid( &reg.e.ax, &reg.e.bx, &reg.e.cx, &reg.e.dx );
 
-	MEMDBG( "e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
+	MEMDBG( "e.ax=%#8.8x e.bx=%#8.8x e.cx=%#8.8x e.dx=%#8.8x\n",
 			reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx );
 	MEMDBG
 		( ":\neax: %#x %#x %#x %#x\nebx: %#x %#x %#x %#x\necx: %#x %#x %#x %#x\nedx: %#x %#x %#x %#x\n",
@@ -236,7 +236,7 @@ init_amd( PAPI_mh_info_t * mh_info, int *num_levels )
 	reg.e.ax = 0x80000006;	 /* extended function code 6: L2/L3 Cache and L2 TLB Identifiers */
 	cpuid( &reg.e.ax, &reg.e.bx, &reg.e.cx, &reg.e.dx );
 
-	MEMDBG( "e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
+	MEMDBG( "e.ax=%#8.8x e.bx=%#8.8x e.cx=%#8.8x e.dx=%#8.8x\n",
 			reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx );
 	MEMDBG
 		( ":\neax: %#x %#x %#x %#x\nebx: %#x %#x %#x %#x\necx: %#x %#x %#x %#x\nedx: %#x %#x %#x %#x\n",
@@ -1431,7 +1431,7 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 	reg.e.ax = 0x2;			 /* function code 2: cache descriptors */
 	cpuid( &reg.e.ax, &reg.e.bx, &reg.e.cx, &reg.e.dx );
 
-	MEMDBG( "e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
+	MEMDBG( "e.ax=%#8.8x e.bx=%#8.8x e.cx=%#8.8x e.dx=%#8.8x\n",
 			reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx );
 	MEMDBG
 		( ":\nd0: %#x %#x %#x %#x\nd1: %#x %#x %#x %#x\nd2: %#x %#x %#x %#x\nd3: %#x %#x %#x %#x\n",

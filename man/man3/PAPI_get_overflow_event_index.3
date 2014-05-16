@@ -40,7 +40,7 @@ The EventSet specified does not exist.
         void handler(int EventSet, void *address, long_long overflow_vector, void *context){
         int Events[4], number, i;
         int total = 0, retval;
-        printf("Overflow #%d\n  Handler(%d) Overflow at %p! vector=0x%llx\n",
+        printf("Overflow #%d\n  Handler(%d) Overflow at %p! vector=%#llx\n",
         total, EventSet, address, overflow_vector);
         total++;
         number = 4;

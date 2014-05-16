@@ -1490,14 +1490,14 @@ _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 
 		if ( ESI->EventInfoArray[i].derived == NOT_DERIVED ) {
 			values[i] = dp[index];
-			INTDBG( "value: 0x%llx\n", values[i] );
+			INTDBG( "value: %#llx\n", values[i] );
 		} else {			 /* If this is a derived event */
 			values[i] = handle_derived( &ESI->EventInfoArray[i], dp );
 #ifdef DEBUG
 			if ( values[i] < ( long long ) 0 ) {
 				INTDBG( "Derived Event is negative!!: %lld\n", values[i] );
 			}
-			INTDBG( "derived value: 0x%llx \n", values[i] );
+			INTDBG( "derived value: %#llx \n", values[i] );
 #endif
 		}
 	}

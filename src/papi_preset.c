@@ -430,7 +430,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	     goto nextline;
 	  }
 
-	  SUBDBG( "Found 0x%08x for %s\n", preset, t );
+	  SUBDBG( "Found %#08x for %s\n", preset, t );
 
 	  t = trim_string( strtok( NULL, "," ) );
 	  if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
