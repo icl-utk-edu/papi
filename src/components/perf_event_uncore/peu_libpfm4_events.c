@@ -465,7 +465,6 @@ static int find_max_umask(struct native_event_t *current_event) {
   int a, ret, max =0;
   pfm_event_info_t info;
   char event_string[BUFSIZ],*ptr;
-  char temp_string[BUFSIZ];
 
   SUBDBG("Trying to find max umask in %s\n",current_event->allocated_name);
 
