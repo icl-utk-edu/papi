@@ -113,7 +113,7 @@ _papi_hwi_lookup_thread( int custom_tid )
 	else {
 	  tid=custom_tid;
 	}
-	THRDBG( "Threads initialized, looking for thread %%lx\n", tid );
+	THRDBG( "Threads initialized, looking for thread %#lx\n", tid );
 
 	_papi_hwi_lock( THREADS_LOCK );
 
