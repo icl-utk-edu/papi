@@ -30,7 +30,8 @@
 #include "pfmlib_priv.h"			/* library private */
 #include "pfmlib_arm_priv.h"
 
-#include "events/arm_cortex_a57_events.h"    /* event tables */
+#include "events/arm_cortex_a57_events.h"    /* A57 event tables */
+#include "events/arm_cortex_a53_events.h"    /* A53 event tables */
 
 static int
 pfm_arm_detect_cortex_a57(void *this)
@@ -48,6 +49,22 @@ pfm_arm_detect_cortex_a57(void *this)
 	return PFM_ERR_NOTSUPP;
 }
 
+static int
+pfm_arm_detect_cortex_a53(void *this)
+{
+	int ret;
+
+	ret = pfm_arm_detect(this);
+	if (ret != PFM_SUCCESS)
+		return PFM_ERR_NOTSUPP;
+
+	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
+		(pfm_arm_cfg.part == 0xd03)) { /* Cortex A53 */
+			return PFM_SUCCESS;
+	}
+	return PFM_ERR_NOTSUPP;
+}
+
 /* ARM Cortex A57 support */
 pfmlib_pmu_t arm_cortex_a57_support={
 	.desc			= "ARM Cortex A57",
@@ -58,6 +75,31 @@ pfmlib_pmu_t arm_cortex_a57_support={
 	.pe			= arm_cortex_a57_pe,
 
 	.pmu_detect		= pfm_arm_detect_cortex_a57,
+	.max_encoding		= 1,
+	.num_cntrs		= 6,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first	= pfm_arm_get_event_first,
+	.get_event_next		= pfm_arm_get_event_next,
+	.event_is_valid		= pfm_arm_event_is_valid,
+	.validate_table		= pfm_arm_validate_table,
+	.get_event_info		= pfm_arm_get_event_info,
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
+};
+
+/* ARM Cortex A53 support */
+pfmlib_pmu_t arm_cortex_a53_support={
+	.desc			= "ARM Cortex A53",
+	.name			= "arm_ac53",
+	.pmu			= PFM_PMU_ARM_CORTEX_A53,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_cortex_a53_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.pe			= arm_cortex_a53_pe,
+
+	.pmu_detect		= pfm_arm_detect_cortex_a53,
 	.max_encoding		= 1,
 	.num_cntrs		= 6,
 
