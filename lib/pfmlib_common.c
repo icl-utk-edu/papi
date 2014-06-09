@@ -194,6 +194,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_ARM
+	&arm_cortex_a7_support,
 	&arm_cortex_a8_support,
 	&arm_cortex_a9_support,
 	&arm_cortex_a15_support,
