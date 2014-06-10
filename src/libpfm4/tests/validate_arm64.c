@@ -1,7 +1,7 @@
 /*
- * validate_arm.c - validate ARM event tables + encodings
+ * validate_arm64.c - validate ARM64 event tables + encodings
  *
- * Copyright (c) 2011 Google, Inc
+ * Copyright (c) 2014 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -43,122 +43,7 @@ typedef struct {
 	int ret, count, line;
 } test_event_t;
 
-static const test_event_t arm_test_events[]={
-	{ SRC_LINE,
-	  .name = "arm_ac8::NEON_CYCLES",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x5a,
-	  .fstr = "arm_ac8::NEON_CYCLES",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac8::NEON_CYCLES:k",
-	  .ret  = PFM_ERR_ATTR,
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac8::CPU_CYCLES",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0xff,
-	  .fstr = "arm_ac8::CPU_CYCLES",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac8::CPU_CYCLES_HALTED",
-	  .ret  = PFM_ERR_NOTFOUND,
-	},
-
-	{ SRC_LINE,
-	  .name = "arm_ac9::CPU_CYCLES",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0xff,
-	  .fstr = "arm_ac9::CPU_CYCLES",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac9::DMB_DEP_STALL_CYCLES",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x86,
-	  .fstr = "arm_ac9::DMB_DEP_STALL_CYCLES",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac9::CPU_CYCLES:u",
-	  .ret  = PFM_ERR_ATTR,
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac9::JAVA_HW_BYTECODE_EXEC",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x40,
-	  .fstr = "arm_ac9::JAVA_HW_BYTECODE_EXEC",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac15::CPU_CYCLES",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x8000011,
-	  .fstr = "arm_ac15::CPU_CYCLES:k=1:u=1:hv=0",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac15::CPU_CYCLES:k",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x88000011,
-	  .fstr = "arm_ac15::CPU_CYCLES:k=1:u=0:hv=0",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac15::CPU_CYCLES:k:u",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x8000011,
-	  .fstr = "arm_ac15::CPU_CYCLES:k=1:u=1:hv=0",
-	},
-	{ SRC_LINE,
-	  .name = "arm_ac15::INST_RETIRED",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x8000008,
-	  .fstr = "arm_ac15::INST_RETIRED:k=1:u=1:hv=0",
-	},
-	{ SRC_LINE,
-	  .name = "arm_1176::CPU_CYCLES",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0xff,
-	  .fstr = "arm_1176::CPU_CYCLES",
-	},
-	{ SRC_LINE,
-	  .name = "arm_1176::CPU_CYCLES:k",
-	  .ret  = PFM_ERR_ATTR,
-	},
-	{ SRC_LINE,
-	  .name = "arm_1176::INSTR_EXEC",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x07,
-	  .fstr = "arm_1176::INSTR_EXEC",
-	},
-	{ SRC_LINE,
-	  .name = "qcom_krait::CPU_CYCLES",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x80000ff,
-	  .fstr = "qcom_krait::CPU_CYCLES:k=1:u=1:hv=0",
-	},
-	{ SRC_LINE,
-	  .name = "qcom_krait::CPU_CYCLES:k:u",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x80000ff,
-	  .fstr = "qcom_krait::CPU_CYCLES:k=1:u=1:hv=0",
-	},
-	{ SRC_LINE,
-	  .name = "qcom_krait::CPU_CYCLES:u",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x480000ff,
-	  .fstr = "qcom_krait::CPU_CYCLES:k=0:u=1:hv=0",
-	},
+static const test_event_t arm64_test_events[]={
 	{ SRC_LINE,
 	  .name = "arm_ac57::CPU_CYCLES",
 	  .ret  = PFM_SUCCESS,
@@ -230,7 +115,7 @@ static const test_event_t arm_test_events[]={
 	  .fstr = "arm_ac53::ST_RETIRED:k=1:u=1:hv=0",
 	},
 };
-#define NUM_TEST_EVENTS (int)(sizeof(arm_test_events)/sizeof(test_event_t))
+#define NUM_TEST_EVENTS (int)(sizeof(arm64_test_events)/sizeof(test_event_t))
 
 static int check_test_events(FILE *fp)
 {
@@ -240,41 +125,41 @@ static int check_test_events(FILE *fp)
 	int count, i, j;
 	int ret, errors = 0;
 
-	for (i = 0, e = arm_test_events; i < NUM_TEST_EVENTS; i++, e++) {
+	for (i = 0, e = arm64_test_events; i < NUM_TEST_EVENTS; i++, e++) {
 		codes = NULL;
 		count = 0;
 		fstr = NULL;
 		ret = pfm_get_event_encoding(e->name, PFM_PLM0 | PFM_PLM3, &fstr, NULL, &codes, &count);
 		if (ret != e->ret) {
-			fprintf(fp,"Event%d %s, ret=%s(%d) expected %s(%d)\n", i, e->name, pfm_strerror(ret), ret, pfm_strerror(e->ret), e->ret);
+			fprintf(fp,"Line %d, Event%d %s, ret=%s(%d) expected %s(%d)\n", e->line, i, e->name, pfm_strerror(ret), ret, pfm_strerror(e->ret), e->ret);
 			errors++;
 		} else {
 			if (ret != PFM_SUCCESS) {
 				if (fstr) {
-					fprintf(fp,"Event%d %s, expected fstr NULL but it is not\n", i, e->name);
+					fprintf(fp,"Line %d, Event%d %s, expected fstr NULL but it is not\n", e->line, i, e->name);
 					errors++;
 				}
 				if (count != 0) {
-					fprintf(fp,"Event%d %s, expected count=0 instead of %d\n", i, e->name, count);
+					fprintf(fp,"Line %d, Event%d %s, expected count=0 instead of %d\n", e->line, i, e->name, count);
 					errors++;
 				}
 				if (codes) {
-					fprintf(fp,"Event%d %s, expected codes[] NULL but it is not\n", i, e->name);
+					fprintf(fp,"Line %d, Event%d %s, expected codes[] NULL but it is not\n", e->line, i, e->name);
 					errors++;
 				}
 			} else {
 				if (count != e->count) {
-					fprintf(fp,"Event%d %s, count=%d expected %d\n", i, e->name, count, e->count);
+					fprintf(fp,"Line %d, Event%d %s, count=%d expected %d\n", e->line, i, e->name, count, e->count);
 					errors++;
 				}
 				for (j=0; j < count; j++) {
 					if (codes[j] != e->codes[j]) {
-						fprintf(fp,"Event%d %s, codes[%d]=%#"PRIx64" expected %#"PRIx64"\n", i, e->name, j, codes[j], e->codes[j]);
+						fprintf(fp,"Line %d, Event%d %s, codes[%d]=%#"PRIx64" expected %#"PRIx64"\n", e->line, i, e->name, j, codes[j], e->codes[j]);
 						errors++;
 					}
 				}
 				if (e->fstr && strcmp(fstr, e->fstr)) {
-					fprintf(fp,"Event%d %s, fstr=%s expected %s\n", i, e->name, fstr, e->fstr);
+					fprintf(fp,"Line %d, Event%d %s, fstr=%s expected %s\n", e->line, i, e->name, fstr, e->fstr);
 					errors++;
 				}
 			}
@@ -284,7 +169,7 @@ static int check_test_events(FILE *fp)
 		if (fstr)
 			free(fstr);
 	}
-	printf("\t %d ARM events: %d errors\n", i, errors);
+	printf("\t %d ARM64 events: %d errors\n", i, errors);
 	return errors;
 }
 

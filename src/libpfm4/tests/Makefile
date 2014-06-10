@@ -39,6 +39,10 @@ ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
 SRCS += validate_arm.c
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_ARM64),y)
+SRCS += validate_arm64.c
+endif
+
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
 SRCS += validate_power.c
 endif

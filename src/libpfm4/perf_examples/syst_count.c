@@ -182,17 +182,10 @@ setup_cpu(int cpu, int cfd)
 				if (errno == EACCES)
 					err(1, "you need to be root to run system-wide on this machine");
 
-				warn("cannot attach event %s to CPU%ds, skipping it", fds[j].name, cpu);
-				goto error;
+				warn("cannot attach event %s to CPU%ds, aborting", fds[j].name, cpu);
+				exit(1);
 			}
 		}
-	}
-	return;
-error:
-	for (i=0; i < j; i++) {
-		if (fds[i].fd > -1)
-			close(fds[i].fd);
-		fds[i].fd = -1;
 	}
 }
 
