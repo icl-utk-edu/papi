@@ -1113,7 +1113,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
     /* as previous events.                                            */
     
     if ( ESI->CmpIdx < 0 ) {
-       if ( ( retval = _papi_hwi_assign_eventset( ESI, cidx) != PAPI_OK )) {
+       if ( ( retval = _papi_hwi_assign_eventset( ESI, cidx)) != PAPI_OK ) {
           return retval;
        }
     } else {
