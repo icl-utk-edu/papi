@@ -79,9 +79,6 @@ do
       break
     fi;
   done
-  if [ `basename $i` = "Makefile" ]; then
-    MATCH=1
-  fi;
   if [ $MATCH -ne 1 ]; then
 	LIST="$LIST $i"
   fi;
@@ -125,18 +122,11 @@ do
       break
     fi;
   done
-  if [ `basename $i` = "Makefile" ]; then
-    MATCH=1
-  fi;
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-      if [ "$i" = "ctests/timer_overflow" ]; then
-        echo Skipping test $i, it takes too long...
-      else
 	  RAN="$i $RAN"
       printf "Running $i:";
       $VALGRIND ./$i $TESTS_QUIET
-      fi;
     fi;
   fi;
   MATCH=0
@@ -155,9 +145,6 @@ do
       break
     fi;
   done
-  if [ `basename $i` = "Makefile" ]; then
-    MATCH=1
-  fi;
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	RAN="$i $RAN"
@@ -181,9 +168,6 @@ do
       break
     fi;
   done
-  if [ `basename $i` = "Makefile" ]; then
-    MATCH=1
-  fi;
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	RAN="$i $RAN"
