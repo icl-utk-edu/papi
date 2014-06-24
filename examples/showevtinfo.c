@@ -67,6 +67,35 @@ static const char *srcs[PFM_ATTR_CTRL_MAX]={
 	[PFM_ATTR_CTRL_PERF_EVENT] = "perf_event",
 };
 
+#ifdef PFMLIB_WINDOWS
+int set_env_var(const char *var, const char *value, int ov)
+{
+	size_t len;
+	char *str;
+	int ret;
+
+	len = strlen(var) + 1 + strlen(value) + 1;
+
+	str = malloc(len);
+	if (!str)
+		return PFM_ERR_NOMEM;
+
+	sprintf(str, "%s=%s", var, value);
+
+	ret = putenv(str);
+
+	free(str);
+
+	return ret ? PFM_ERR_INVAL : PFM_SUCCESS;
+}
+#else
+static inline int
+set_env_var(const char *var, const char *value, int ov)
+{
+	return setenv(var, value, ov);
+}
+#endif
+
 static int
 event_has_pname(char *s)
 {
@@ -790,6 +819,12 @@ main(int argc, char **argv)
 				errx(1, "unknown option error");
 		}
 	}
+	/* to allow encoding of events from non detected PMU models */
+	ret = set_env_var("LIBPFM_ENCODE_INACTIVE", "1", 1);
+	if (ret != PFM_SUCCESS)
+		errx(1, "cannot force inactive encoding");
+
+
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
 		errx(1, "cannot initialize libpfm: %s", pfm_strerror(ret));
