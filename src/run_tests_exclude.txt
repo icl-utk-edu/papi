@@ -31,9 +31,9 @@ ctests/cpi.pbs
 # Time wasting support program, not a standalone test
 ctests/burn
 
-# long running tests (if you are not in a hurry remove comment from these lines)
-#ctests/pthrtough2
-#ctests/timer_overflow
+# long running tests (if you are not in a hurry comment these lines)
+ctests/pthrtough2
+ctests/timer_overflow
 
 # these tests haven't been implemented
 
