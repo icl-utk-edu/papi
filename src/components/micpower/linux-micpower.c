@@ -488,7 +488,6 @@ papi_vector_t _micpower_vector = {
 				.fast_virtual_timer = 0,
 				.attach = 0,
 				.attach_must_ptrace = 0,
-				.available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 		}
 		,
 
