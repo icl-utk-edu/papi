@@ -86,6 +86,9 @@ extern int pfm_arm_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 #define ARMV7_A15_ATTRS	(_ARM_ATTR_K|_ARM_ATTR_U|_ARM_ATTR_HV)
 #define ARMV7_A15_PLM	(PFM_PLM0|PFM_PLM3|PFM_PLMH)
 
+#define ARMV7_A7_ATTRS	(_ARM_ATTR_K|_ARM_ATTR_U|_ARM_ATTR_HV)
+#define ARMV7_A7_PLM	(PFM_PLM0|PFM_PLM3|PFM_PLMH)
+
 #define ARMV8_ATTRS	(_ARM_ATTR_K|_ARM_ATTR_U|_ARM_ATTR_HV)
 #define ARMV8_PLM	(PFM_PLM0|PFM_PLM3|PFM_PLMH)
 
