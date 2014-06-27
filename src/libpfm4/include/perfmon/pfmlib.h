@@ -240,6 +240,8 @@ typedef enum {
 	PFM_PMU_ARM_CORTEX_A57,		/* ARM Cortex A57 (ARMv8) */
 	PFM_PMU_ARM_CORTEX_A53,		/* ARM Cortex A53 (ARMv8) */
 
+	PFM_PMU_ARM_CORTEX_A7,		/* ARM Cortex A7 */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

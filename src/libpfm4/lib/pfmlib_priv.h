@@ -327,6 +327,7 @@ extern pfmlib_pmu_t perf_event_raw_support;
 extern pfmlib_pmu_t intel_wsm_sp_support;
 extern pfmlib_pmu_t intel_wsm_dp_support;
 extern pfmlib_pmu_t intel_wsm_unc_support;
+extern pfmlib_pmu_t arm_cortex_a7_support;
 extern pfmlib_pmu_t arm_cortex_a8_support;
 extern pfmlib_pmu_t arm_cortex_a9_support;
 extern pfmlib_pmu_t arm_cortex_a15_support;
