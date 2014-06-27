@@ -650,7 +650,6 @@ papi_vector_t _net_vector = {
         .fast_virtual_timer    = 0,
         .attach                = 0,
         .attach_must_ptrace    = 0,
-        .available_domains     = PAPI_DOM_ALL,
     },
 
     /* sizes of framework-opaque component-private structures */
