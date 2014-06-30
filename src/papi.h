@@ -219,7 +219,7 @@
 
 /* This is the official PAPI version */
 /* The final digit represents the patch count */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(5,3,0,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(5,4,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
   /* Tests for checking event code type */
