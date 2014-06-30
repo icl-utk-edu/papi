@@ -4,6 +4,35 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 ===============================================================================
+PAPI 5.3.2 RELEASE NOTES                                            30 Jun 2014
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP532.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+An internal 5.3.1 is skipped, changes since 5.3 are detailed below.
+
+New Platforms:
+-------------
+    * Intel Silvermont
+    * ARM Qualcomm Krait
+
+Enhancements:
+------------
+    * Rapl component support for Intel Haswell-EP
+    * Add units to NVML component
+    * Refine the definition of a Flop on the *-Bridge Intel chips. 
+    * Updated Intel Haswell presets
+
+Bug Fixes:
+----------
+    * FreeBSD build and component fixes
+    * Uncore enumeration
+    * Printf format specifiers standardized (use # for hex)
+
+===============================================================================
 PAPI 5.3.0 RELEASE NOTES                                            18 Nov 2013
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
