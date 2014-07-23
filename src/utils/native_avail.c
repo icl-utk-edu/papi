@@ -178,10 +178,15 @@ print_event( PAPI_event_info_t * info, int offset, int validate )
 	int EventSet = PAPI_NULL;
 
 	if (validate && PAPI_create_eventset (&EventSet) == PAPI_OK) {
-		if (PAPI_add_named_event (EventSet, info->symbol) != PAPI_OK) {
+		if (PAPI_add_named_event (EventSet, info->symbol) == PAPI_OK) {
+			PAPI_remove_named_event (EventSet, info->symbol);
+		} else {
 			na = 1;
 		}
-		PAPI_destroy_eventset (&EventSet);
+		if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK ) {
+			printf("**********  Call to destroy eventset failed when trying to validate event '%s'  **********\n", info->symbol);
+			na = 1;
+		}
 	}
 
 	/* indent by offset */
@@ -227,13 +232,19 @@ parse_unit_masks( PAPI_event_info_t * info )
 	if ( ( pmask = strchr( ptr, ':' ) ) == NULL ) {
 		return ( 0 );
 	}
-	memmove( info->symbol, pmask, ( strlen( pmask ) + 1 ) * sizeof ( char ) );
-	pmask = strchr( info->long_descr, ':' );
-	if ( pmask == NULL )
+	memmove( info->symbol, pmask, ( strlen(pmask) + 1 ) * sizeof(char) );
+
+	//  The description field contains the event description followed by a tag 'masks:'
+	//  and then the mask description (if there was a mask with this event).  The following
+	//  code isolates the mask description part of this information.
+
+	pmask = strstr( info->long_descr, "masks:" );
+	if ( pmask == NULL ) {
 		info->long_descr[0] = 0;
-	else
-		memmove( info->long_descr, pmask + sizeof ( char ),
-				 ( strlen( pmask ) + 1 ) * sizeof ( char ) );
+	} else {
+		pmask += 6;        // bump pointer past 'masks:' identifier in description
+		memmove( info->long_descr, pmask, (strlen(pmask) + 1) * sizeof(char) );
+	}
 	return ( 1 );
 }
 
@@ -295,8 +306,20 @@ main( int argc, char **argv )
 			 "Event name:", info.symbol);
 		 printf( "%-29s|%s|\n", "Description:", info.long_descr );
 
+		  /* handle the PAPI component-style events which have a component:::event type */
+		  char *ptr;
+		  if ((ptr=strstr(flags.name, ":::"))) {
+		    ptr+=3;
+		  /* handle libpfm4-style events which have a pmu::event type event name */
+		  } else if ((ptr=strstr(flags.name, "::"))) {
+		    ptr+=2;
+		  }
+		  else {
+		    ptr=flags.name;
+		  }
+
 		     /* if unit masks exist but none specified, process all */
-		     if ( !strchr( flags.name, ':' ) ) {
+		     if ( !strchr( ptr, ':' ) ) {
 			if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
 			   printf( "\nUnit Masks:\n" );
 			   do {
