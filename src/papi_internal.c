@@ -70,6 +70,7 @@ struct native_event_info {
 };
 
 
+// The following array is indexed by the papi event code (after the native bit has been removed)
 static struct native_event_info *_papi_native_events=NULL;
 static int num_native_events=0;
 static int num_native_chunks=0;
@@ -207,6 +208,7 @@ native_alloc_early_out:
 
   _papi_hwi_unlock( INTERNAL_LOCK );
 
+  INTDBG("EXIT: new_native_event: %#x, num_native_events: %d\n", new_native_event, num_native_events);
   return new_native_event;
 }
 
@@ -219,7 +221,7 @@ native_alloc_early_out:
 static int
 _papi_hwi_add_error( char *error )
 {
-	SUBDBG("Adding a new Error message |%s|\n", error);
+	INTDBG("Adding a new Error message |%s|\n", error);
 	_papi_hwi_lock(INTERNAL_LOCK);
 
 	if (_papi_hwi_num_errors >= num_error_chunks*NATIVE_EVENT_CHUNKSIZE) {
@@ -344,11 +346,11 @@ _papi_hwi_component_index( int event_code ) {
   int cidx;
   int event_index;
 
-  SUBDBG("Trying to find component for native_event %#x\n",event_code);
+  INTDBG("Trying to find component for native_event %#x\n",event_code);
 
   /* currently assume presets are for component 0 only */
   if (event_code&PAPI_PRESET_MASK) {
-     SUBDBG("Event %#x is a PRESET, assigning component %d\n",
+     INTDBG("Event %#x is a PRESET, assigning component %d\n",
 	    event_code,0);
      return 0;
   }
@@ -356,20 +358,20 @@ _papi_hwi_component_index( int event_code ) {
   event_index=event_code&PAPI_NATIVE_AND_MASK;
 
   if ( (event_index < 0) || (event_index>=num_native_events)) {
-     SUBDBG("Event index %#x is out of range\n",event_index);
+     INTDBG("Event index %#x is out of range\n",event_index);
      return PAPI_ENOEVNT;
   }
 
   cidx=_papi_native_events[event_index].cidx;
 
-  SUBDBG("Found event code %d from %d, %#x\n",cidx,event_index,event_code);
+  INTDBG("Found event code %d from %d, %#x\n",cidx,event_index,event_code);
 
   if ((cidx<0) || (cidx >= papi_num_components)) return PAPI_ENOCMP;
 
   return cidx;
 }
 
-/* Convert a component and internal event to a native_event */
+/* Convert an internal component event to a papi event code */
 int 
 _papi_hwi_native_to_eventcode(int cidx, int event_code) {
 
@@ -383,25 +385,27 @@ _papi_hwi_native_to_eventcode(int cidx, int event_code) {
      result=_papi_hwi_add_native_event(event_code,cidx);
   }
 
+  INTDBG("EXIT: result: %#x\n", result);
   return result;
 }
 
 /* Convert a native_event code to an internal event code */
 int
 _papi_hwi_eventcode_to_native(int event_code) {
+	INTDBG("ENTER: event_code: %#x\n", event_code);
 
   int result;
   int event_index;
 
-  SUBDBG("Looking for event for native_event %#x\n",event_code);
-
   event_index=event_code&PAPI_NATIVE_AND_MASK;
-  if (event_index>=num_native_events) return PAPI_ENOEVNT;
+ if (event_index>=num_native_events) {
+    INTDBG("EXIT: PAPI_ENOEVNT\n");
+    return PAPI_ENOEVNT;
+  }
 
   result=_papi_native_events[event_index].component_event;
   
-  SUBDBG("Found result %#x\n",result);
-
+  INTDBG("EXIT: result: %#x\n", result);
   return result;
 
 }
@@ -843,16 +847,18 @@ _papi_hwi_remove_EventSet( EventSetInfo_t * ESI )
 static int
 event_already_in_eventset( EventSetInfo_t * ESI, int nevt )
 {
+   INTDBG( "ENTER: ESI: %p, nevt: %#x\n", ESI, nevt);
    int i;
 
    /* to find the native event from the native events list */
    for( i = 0; i < ESI->NativeCount; i++ ) {
       if ( _papi_hwi_eventcode_to_native(nevt) == 
                                         ESI->NativeInfoArray[i].ni_event ) {
-	 INTDBG( "found native event already mapped: %#x\n", nevt );
+	 INTDBG( "EXIT: found native event already mapped: %#x\n", nevt );
 	 return i;
       }
    }
+   INTDBG( "EXIT: PAPI_ENOEVNT\n");
    return PAPI_ENOEVNT;
 }
 
@@ -869,12 +875,10 @@ event_already_in_eventset( EventSetInfo_t * ESI, int nevt )
 void
 _papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
 {
+    INTDBG("ENTER: ESI: %p, ESI->EventInfoArray: %p, ESI->NativeInfoArray: %p, ESI->NumberOfEvents: %d, ESI->NativeCount: %d\n", ESI, ESI->EventInfoArray, ESI->NativeInfoArray, ESI->NumberOfEvents, ESI->NativeCount);
 
     int i, event, k, n, preset_index = 0, nevt;
     int total_events = ESI->NumberOfEvents;
-
-    APIDBG("Mapping %d events in EventSet %d\n",
-	   total_events,ESI->EventSetIndex);
    
     event = 0;
     for( i = 0; i < total_events; i++ ) {
@@ -896,13 +900,13 @@ _papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
 		break;
 	     }
 
-	     APIDBG("Loking for subevent %#x\n",nevt);
+	     INTDBG("Looking for subevent %#x\n",nevt);
 
 	     /* Match each sub-event to something in the Native List */
 	     for( n = 0; n < ESI->NativeCount; n++ ) {
 	        if ( _papi_hwi_eventcode_to_native(nevt) == 
                                  ESI->NativeInfoArray[n].ni_event ) {
-		   APIDBG("Found event %#x at position %d\n",
+		   INTDBG("Found event %#x at position %d\n",
 			  nevt,
 			  ESI->NativeInfoArray[n].ni_position);
 		   ESI->EventInfoArray[event].pos[k] = ESI->NativeInfoArray[n].ni_position;
@@ -1005,6 +1009,7 @@ static int
 add_native_events( EventSetInfo_t *ESI, unsigned int *nevt, 
                    int size, EventInfo_t *out )
 {
+	INTDBG ("ENTER: ESI: %p, nevt: %p, size: %d, out: %p\n", ESI, nevt, size, out);
    int nidx, i, j, added_events = 0;
    int retval, retval2;
    int max_counters;
@@ -1044,8 +1049,8 @@ add_native_events( EventSetInfo_t *ESI, unsigned int *nevt,
 			
 	    /* there is an empty slot for the native event; */
 	    /* initialize the native index for the new added event */
-	    INTDBG( "Adding %#x to ESI %p Component %d\n", 
-		    nevt[i], ESI, ESI->CmpIdx );
+	    INTDBG( "Adding nevt[%d]: %#x, ESI->NativeInfoArray[%d]: %p, Component: %d\n",
+		    i, nevt[i], ESI->NativeCount, &ESI->NativeInfoArray[ESI->NativeCount], ESI->CmpIdx );
 	    ESI->NativeInfoArray[ESI->NativeCount].ni_event = 
 			  _papi_hwi_eventcode_to_native(nevt[i]);
 
@@ -1128,7 +1133,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
        return thisindex;
     }
 
-    APIDBG("Adding event to slot %d of EventSet %d\n",thisindex,ESI->EventSetIndex);
+    INTDBG("Adding event to slot %d of EventSet %d\n",thisindex,ESI->EventSetIndex);
 
     /* If it is a software MPX EventSet, add it to the multiplex data structure */
     /* and this thread's multiplex list                                         */
@@ -1352,6 +1357,8 @@ remove_native_events( EventSetInfo_t *ESI, int *nevt, int size )
       }
    }
 
+	INTDBG( "ESI->NativeCount: %d, zero: %d\n", ESI->NativeCount, zero);
+
    /* to reset hwd_control_state values */
    ESI->NativeCount -= zero;
 
@@ -1484,7 +1491,7 @@ _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 		if ( index == -1 )
 			continue;
 
-		INTDBG( "Event index %d, position is %#x\n", i, index );
+		INTDBG( "ESI->EventInfoArray: %p, pos[%d]: %d, dp[%d]: %lld\n", ESI->EventInfoArray, i, index, index, dp[index] );
 
 		/* If this is not a derived event */
 
@@ -2020,6 +2027,8 @@ _papi_hwi_derived_string( int type, char *derived, int len )
 int
 _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 {
+	INTDBG("ENTER: EventCode: %#x, info: %p\n", EventCode, info);
+
 	int i = EventCode & PAPI_PRESET_AND_MASK;
 	unsigned int j;
 
@@ -2072,6 +2081,7 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 int
 _papi_hwi_query_native_event( unsigned int EventCode )
 {
+	INTDBG("ENTER: EventCode: %#x\n", EventCode);
    char name[PAPI_HUGE_STR_LEN];      /* probably overkill, */
                                       /* but should always be big enough */
    int cidx;
@@ -2090,12 +2100,13 @@ _papi_hwi_query_native_event( unsigned int EventCode )
 int
 _papi_hwi_native_name_to_code( char *in, int *out )
 {
+    INTDBG("ENTER: in: %s, checking all %d components\n", in, papi_num_components);
+
     int retval = PAPI_ENOEVNT;
     char name[PAPI_HUGE_STR_LEN];	   /* make sure it's big enough */
     unsigned int i;
     int cidx;
 
-    SUBDBG("checking all %d components\n",papi_num_components);
 	in = _papi_hwi_strip_component_prefix(in);
 
 	
@@ -2150,6 +2161,7 @@ int
 _papi_hwi_native_code_to_name( unsigned int EventCode, 
 			       char *hwi_name, int len )
 {
+	INTDBG("ENTER: EventCode: %#x, hwi_name: %p, len: %d\n", EventCode, hwi_name, len);
   int cidx;
   int retval; 
 
@@ -2177,6 +2189,7 @@ int
 _papi_hwi_get_native_event_info( unsigned int EventCode,
 				 PAPI_event_info_t *info )
 {
+	  INTDBG("ENTER: EventCode: %#x, info: %p\n", EventCode, info);
     int retval;
     int cidx;
 
@@ -2199,7 +2212,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
        if ( retval == PAPI_ECMP ) {
 
 
-	  SUBDBG("missing NTV_CODE_TO_INFO, faking\n");
+	  INTDBG("missing NTV_CODE_TO_INFO, faking\n");
 	  /* Fill in the info structure */
 
 	  if ( (retval = _papi_hwd[cidx]->ntv_code_to_name( 
@@ -2208,7 +2221,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 				    sizeof(info->symbol)) ) == PAPI_OK ) {
 
 	  } else {
-	     SUBDBG("failed ntv_code_to_name\n");
+	     INTDBG("EXIT: retval: %d\n", retval);
 	     return retval;
 	  }
 
@@ -2217,7 +2230,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
                                      info->long_descr,
 				     sizeof ( info->long_descr));
 	  if (retval!=PAPI_OK) {
-	     SUBDBG("Failed ntv_code_to_descr()\n");
+	     INTDBG("Failed ntv_code_to_descr()\n");
 	  }
 
        }
@@ -2227,6 +2240,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 						info->symbol, 
 						sizeof(info->symbol) );
 
+       INTDBG("EXIT: retval: %d\n", retval);
        return retval;
     }
 
