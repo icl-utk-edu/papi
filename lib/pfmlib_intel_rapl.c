@@ -83,7 +83,10 @@ pfm_rapl_detect(void *this)
 	switch(pfm_intel_x86_cfg.model) {
 		case 42: /* Sandy Bridge */
 		case 58: /* Ivy Bridge */
+		case 60: /* Haswell */
+		case 69: /* Haswell */
 		case 70: /* Haswell */
+		case 71: /* Haswell */
 			 /* already setup by default */
 			  break;
 		case 45: /* Sandy Bridg-EP  */
