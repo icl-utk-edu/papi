@@ -843,8 +843,8 @@ PAPI_get_component_info( int cidx )
 int
 PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 {
+	APIDBG( "Entry: EventCode: 0x%x, info: %p\n", EventCode, info);
         int i;
-	APIDBG( "Entry: EventCode: %#x\n", EventCode);
 
 	if ( info == NULL )
 	   papi_return( PAPI_EINVAL );
@@ -923,7 +923,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 int
 PAPI_event_code_to_name( int EventCode, char *out )
 {
-    APIDBG( "Entry: EventCode: %#x\n", EventCode);
+	APIDBG( "Entry: EventCode: %#x, out: %p\n", EventCode, out);
 	if ( out == NULL )
 		papi_return( PAPI_EINVAL );
 
@@ -1147,12 +1147,12 @@ PAPI_event_name_to_code( char *in, int *out )
 int
 PAPI_enum_event( int *EventCode, int modifier )
 {
+	APIDBG( "Entry: EventCode: %#x, modifier: %d\n", EventCode, modifier);
 	int i = *EventCode;
 	int retval;
 	int cidx;
 	int event_code;
 
-	APIDBG( "Entry: EventCode: %#x, modifier: %d\n", *EventCode, modifier);
 	cidx = _papi_hwi_component_index( *EventCode );
 	if (cidx < 0) return PAPI_ENOCMP;
 
@@ -1310,11 +1310,11 @@ PAPI_enum_event( int *EventCode, int modifier )
 int
 PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 {
+	APIDBG( "Entry: EventCode: %#x, modifier: %d, cidx: %d\n", *EventCode, modifier, cidx);
 	int i = *EventCode;
 	int retval;
 	int event_code;
 
-	APIDBG( "Entry: EventCode: %#x, modifier: %d, cidx: %d\n", *EventCode, modifier, cidx);
 	if ( _papi_hwi_invalid_cmp(cidx) || ( (IS_PRESET(i)) && cidx > 0 ) ) {
 		return PAPI_ENOCMP;
 	}
@@ -1346,13 +1346,14 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 	    retval = _papi_hwd[cidx]->ntv_enum_events((unsigned int *)&event_code, modifier );
 
 	    if (retval!=PAPI_OK) {
-	       SUBDBG("VMW: retval=%d\n",retval);
+	       APIDBG("VMW: retval=%d\n",retval);
 	       return PAPI_EINVAL;
 	    }
 
 	       /* re-apply Component ID to the returned Event */
 	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
 
+	    APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 	    return retval;
 	} 
 
@@ -1698,6 +1699,7 @@ PAPI_add_event( int EventSet, int EventCode )
 int
 PAPI_remove_event( int EventSet, int EventCode )
 {
+	APIDBG("Entry: EventSet: %d, EventCode: %#x\n", EventSet, EventCode);
 	EventSetInfo_t *ESI;
 	int i,retval;
 
@@ -1815,6 +1817,7 @@ PAPI_remove_event( int EventSet, int EventCode )
 int
 PAPI_add_named_event( int EventSet, char *EventName )
 {
+	APIDBG("Entry: EventSet: %d, EventName: %s\n", EventSet, EventName);
 	int ret, code;
 	
 	ret = PAPI_event_name_to_code( EventName, &code );
@@ -1892,6 +1895,7 @@ PAPI_add_named_event( int EventSet, char *EventName )
 int
 PAPI_remove_named_event( int EventSet, char *EventName )
 {
+	APIDBG("Entry: EventSet: %d, EventName: %s\n", EventSet, EventName);
 	int ret, code;
 	
 	ret = PAPI_event_name_to_code( EventName, &code );
@@ -1943,9 +1947,9 @@ PAPI_remove_named_event( int EventSet, char *EventName )
 int
 PAPI_destroy_eventset( int *EventSet )
 {
-	EventSetInfo_t *ESI;
+	APIDBG("Entry: EventSet: %p, *EventSet: %d\n", EventSet, *EventSet);
 
-	APIDBG("Destroying Eventset %d\n",*EventSet);
+	EventSetInfo_t *ESI;
 
 	/* check for pre-existing ESI */
 
@@ -2025,6 +2029,7 @@ PAPI_destroy_eventset( int *EventSet )
 int
 PAPI_start( int EventSet )
 {
+	APIDBG("Entry: EventSet: %d\n", EventSet);
 
 	int is_dirty=0;
 	int retval;
@@ -2033,8 +2038,6 @@ PAPI_start( int EventSet )
 	CpuInfo_t *cpu = NULL;
 	hwd_context_t *context;
 	int cidx;
-
-	APIDBG("Entry: EventSet: %d\n", EventSet);
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL ) {
@@ -2376,6 +2379,7 @@ if (ret != PAPI_OK) handle_error(ret);
 int
 PAPI_reset( int EventSet )
 {
+	APIDBG("Entry: EventSet: %d\n", EventSet);
 	int retval = PAPI_OK;
 	EventSetInfo_t *ESI;
 	hwd_context_t *context;
@@ -2414,7 +2418,7 @@ PAPI_reset( int EventSet )
 				( size_t ) ESI->NumberOfEvents * sizeof ( long long ) );
 	}
 
-	APIDBG( "PAPI_reset returns %d\n", retval );
+	APIDBG( "EXIT: retval %d\n", retval );
 	papi_return( retval );
 }
 
@@ -2475,11 +2479,11 @@ PAPI_reset( int EventSet )
 int
 PAPI_read( int EventSet, long long *values )
 {
+	APIDBG( "Entry: EventSet: %d, values: %p\n", EventSet, values);
 	EventSetInfo_t *ESI;
 	hwd_context_t *context;
 	int cidx, retval = PAPI_OK;
 
-	APIDBG( "Entry: EventSet: %d\n", EventSet );
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
@@ -2564,11 +2568,11 @@ PAPI_read( int EventSet, long long *values )
 int
 PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 {
+	APIDBG( "Entry: EventSet: %d, values: %p, cycles: %p\n", EventSet, values, cycles);
 	EventSetInfo_t *ESI;
 	hwd_context_t *context;
 	int cidx, retval = PAPI_OK;
 
-	APIDBG( "Entry: EventSet: %d\n", EventSet );
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
@@ -2661,6 +2665,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
 int
 PAPI_accum( int EventSet, long long *values )
 {
+	APIDBG("Entry: EventSet: %d, values: %p\n", EventSet, values);
 	EventSetInfo_t *ESI;
 	hwd_context_t *context;
 	int i, cidx, retval;
@@ -2728,11 +2733,12 @@ PAPI_accum( int EventSet, long long *values )
 int
 PAPI_write( int EventSet, long long *values )
 {
+	APIDBG("Entry: EventSet: %d, values: %p\n", EventSet, values);
+
 	int cidx, retval = PAPI_OK;
 	EventSetInfo_t *ESI;
 	hwd_context_t *context;
 
-	APIDBG( "Entry: EventSet: %d\n", EventSet );
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
 	if ( ESI == NULL )
 		papi_return( PAPI_ENOEVST );
@@ -2804,10 +2810,10 @@ PAPI_write( int EventSet, long long *values )
 int
 PAPI_cleanup_eventset( int EventSet )
 {
+	APIDBG("Entry: EventSet: %d\n",EventSet);
+
 	EventSetInfo_t *ESI;
 	int i, cidx, total, retval;
-
-	APIDBG("Attempting to cleanup Eventset %d\n",EventSet);
 
 	/* Is the EventSet already in existence? */
 
@@ -2896,6 +2902,8 @@ PAPI_cleanup_eventset( int EventSet )
 int
 PAPI_multiplex_init( void )
 {
+	APIDBG("Entry:\n");
+
 	int retval;
 
 	retval = mpx_init( _papi_os_info.itimer_ns );
@@ -2965,6 +2973,8 @@ PAPI_multiplex_init( void )
 int
 PAPI_state( int EventSet, int *status )
 {
+	APIDBG("Entry: EventSet: %d, status: %p\n", EventSet, status);
+
 	EventSetInfo_t *ESI;
 
 	if ( status == NULL )
@@ -3036,6 +3046,7 @@ PAPI_state( int EventSet, int *status )
 int
 PAPI_set_debug( int level )
 {
+	APIDBG("Entry: level: %d\n", level);
 	PAPI_option_t option;
 
 	memset( &option, 0x0, sizeof ( option ) );
@@ -3048,6 +3059,7 @@ PAPI_set_debug( int level )
 inline_static int
 _papi_set_attach( int option, int EventSet, unsigned long tid )
 {
+	APIDBG("Entry: option: %d, EventSet: %d, tid: %u\n", option, EventSet, tid);
 	PAPI_option_t attach;
 
 	memset( &attach, 0x0, sizeof ( attach ) );
@@ -3109,7 +3121,7 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
 int
 PAPI_attach( int EventSet, unsigned long tid )
 {
-    APIDBG( "Entry: EventSet: %d\n", EventSet);
+	APIDBG( "Entry: EventSet: %d, tid: %u\n", EventSet, tid);
 	return ( _papi_set_attach( PAPI_ATTACH, EventSet, tid ) );
 }
 
@@ -3166,6 +3178,7 @@ PAPI_attach( int EventSet, unsigned long tid )
 int
 PAPI_detach( int EventSet )
 {
+	APIDBG( "Entry: EventSet: %d\n", EventSet);
 	return ( _papi_set_attach( PAPI_DETACH, EventSet, 0 ) );
 }
 
@@ -3240,6 +3253,8 @@ PAPI_detach( int EventSet )
 int
 PAPI_set_multiplex( int EventSet )
 {
+	APIDBG( "Entry: EventSet: %d\n", EventSet);
+
 	PAPI_option_t mpx;
 	EventSetInfo_t *ESI;
 	int cidx;
@@ -3788,7 +3803,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	}
 	case PAPI_USER_EVENTS_FILE:
 	{
-	  SUBDBG("Filename is -%s-\n", ptr->events_file);
+	  APIDBG("Filename is -%s-\n", ptr->events_file);
 	  _papi_user_defined_events_setup(ptr->events_file);
 	  return( PAPI_OK );
 	}
@@ -3809,6 +3824,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 int
 PAPI_num_hwctrs( void )
 {
+	APIDBG( "Entry:\n");
 	return ( PAPI_num_cmp_hwctrs( 0 ) );
 }
 
@@ -3864,6 +3880,7 @@ PAPI_num_hwctrs( void )
 int
 PAPI_num_cmp_hwctrs( int cidx )
 {
+	APIDBG( "Entry: cidx: %d\n", cidx);
 	return ( PAPI_get_cmp_opt( PAPI_MAX_HWCTRS, NULL, cidx ) );
 }
 
@@ -3926,6 +3943,7 @@ PAPI_num_cmp_hwctrs( int cidx )
 int
 PAPI_get_multiplex( int EventSet )
 {
+	APIDBG( "Entry: EventSet: %d\n", EventSet);
 	PAPI_option_t popt;
 	int retval;
 
@@ -4040,9 +4058,9 @@ PAPI_get_multiplex( int EventSet )
 int
 PAPI_get_opt( int option, PAPI_option_t * ptr )
 {
+	APIDBG( "Entry: option: %d, ptr: %p\n", option, ptr);
 	EventSetInfo_t *ESI;
 
-	APIDBG( "Entry: option: %d\n", option);
 	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) )
 		papi_return( PAPI_ENOINIT );
 
@@ -4232,8 +4250,8 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 int
 PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 {
+	APIDBG( "Entry: option: %d, ptr: %p, cidx: %d\n", option, ptr, cidx);
 
-    APIDBG( "Entry: option: %d, cidx: %d\n", option, cidx);
   if (_papi_hwi_invalid_cmp(cidx)) {
      return PAPI_ECMP;
   }
@@ -4284,6 +4302,7 @@ printf("%d components installed., PAPI_num_components() );
 int
 PAPI_num_components( void )
 {
+	APIDBG( "Entry:\n");
 	return ( papi_num_components );
 }
 
@@ -4322,6 +4341,7 @@ PAPI_num_components( void )
 int
 PAPI_num_events( int EventSet )
 {
+	APIDBG( "Entry: EventSet: %d\n", EventSet);
 	EventSetInfo_t *ESI;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -4356,7 +4376,8 @@ PAPI_num_events( int EventSet )
 void
 PAPI_shutdown( void )
 {
-	APIDBG( "Enter\n" );
+	APIDBG( "Entry:\n");
+
         EventSetInfo_t *ESI;
         ThreadInfo_t *master;
         DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
@@ -4668,6 +4689,7 @@ int
 PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 	       PAPI_overflow_handler_t handler )
 {
+	APIDBG( "Entry: EventSet: %d, EventCode: %#x, threshold: %d, flags: %#x, handler: %p\n", EventSet, EventCode, threshold, flags, handler);
 	int retval, cidx, index, i;
 	EventSetInfo_t *ESI;
 
@@ -4923,6 +4945,7 @@ int
 PAPI_sprofil( PAPI_sprofil_t *prof, int profcnt, int EventSet,
 			  int EventCode, int threshold, int flags )
 {
+	APIDBG( "Entry: prof: %p, profcnt, EventSet: %d, EventCode: %#x, threshold: %d, flags: %#x\n", prof, profcnt, EventSet, EventCode, threshold, flags);
    EventSetInfo_t *ESI;
    int retval, index, i, buckets;
    int forceSW = 0;
@@ -5317,6 +5340,7 @@ PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
 			 unsigned scale, int EventSet, int EventCode, int threshold,
 			 int flags )
 {
+	APIDBG( "Entry: buf: %p, bufsiz: %d, offset: %p, scale: %u, EventSet: %d, EventCode: %#x, threshold: %d, flags: %#x\n", buf, bufsiz, offset, scale, EventSet, EventCode, threshold, flags);
 	EventSetInfo_t *ESI;
 	int i;
 	int retval;
@@ -5719,6 +5743,7 @@ PAPI_set_cmp_domain( int domain, int cidx )
 int
 PAPI_add_events( int EventSet, int *Events, int number )
 {
+	APIDBG( "Entry: EventSet: %d, Events: %p, number: %d\n", EventSet, Events, number);
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
@@ -5806,6 +5831,7 @@ if (ret != PAPI_OK) handle_error(ret);
 int
 PAPI_remove_events( int EventSet, int *Events, int number )
 {
+	APIDBG( "Entry: EventSet: %d, Events: %p, number: %d\n", EventSet, Events, number);
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
@@ -5875,6 +5901,7 @@ PAPI_remove_events( int EventSet, int *Events, int number )
 int
 PAPI_list_events( int EventSet, int *Events, int *number )
 {
+	APIDBG( "Entry: EventSet: %d, Events: %p, number: %p\n", EventSet, Events, number);
 	EventSetInfo_t *ESI;
 	int i, j;
 
@@ -6391,6 +6418,7 @@ int
 PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
 							   int *array, int *number )
 {
+	APIDBG( "Entry: EventSet: %d, overflow_vector: %lld, array: %p, number: %p\n", EventSet, overflow_vector, array, number);
 	EventSetInfo_t *ESI;
 	int set_bit, j, pos;
 	int count = 0, k;
@@ -6482,11 +6510,11 @@ PAPI_get_event_component( int EventCode)
  */
 int  PAPI_get_component_index(char *name)
 {
+	APIDBG( "Entry: name: %s\n", name);
   int cidx;
 
   const PAPI_component_info_t *cinfo;
 
-  APIDBG( "Entry:\n" );
   for(cidx=0;cidx<papi_num_components;cidx++) {
 
      cinfo=PAPI_get_component_info(cidx); 
@@ -6538,6 +6566,7 @@ int  PAPI_get_component_index(char *name)
 int
 PAPI_disable_component( int cidx )
 {
+	APIDBG( "Entry: cidx: %d\n", cidx);
 
    const PAPI_component_info_t *cinfo;
 
@@ -6588,6 +6617,7 @@ PAPI_disable_component( int cidx )
 int
 PAPI_disable_component_by_name( char *name )
 {
+	APIDBG( "Entry: name: %s\n", name);
 	int cidx;
 
 	/* I can only be called before init time */
