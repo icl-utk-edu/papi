@@ -300,11 +300,10 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
 {
 	int ret;
 
-   SUBDBG("sys_perf_event_open(%p,%d,%d,%d,%lx\n",hw_event,pid,cpu,group_fd,flags);
+   SUBDBG("sys_perf_event_open(hw_event: %p, pid: %d, cpu: %d, group_fd: %d, flags: %lx\n", hw_event, pid, cpu, group_fd, flags);
    SUBDBG("   type: %d\n",hw_event->type);
    SUBDBG("   size: %d\n",hw_event->size);
-   SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",hw_event->config,
-	  hw_event->config);
+   SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",hw_event->config, hw_event->config);
    SUBDBG("   sample_period: %"PRIu64"\n",hw_event->sample_period);
    SUBDBG("   sample_type: %"PRIu64"\n",hw_event->sample_type);
    SUBDBG("   read_format: %"PRIu64"\n",hw_event->read_format);
@@ -323,6 +322,21 @@ sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
    SUBDBG("   enable_on_exec: %d\n",hw_event->enable_on_exec);
    SUBDBG("   task: %d\n",hw_event->task);
    SUBDBG("   watermark: %d\n",hw_event->watermark);
+   SUBDBG("   precise_ip: %d\n",hw_event->precise_ip);
+   SUBDBG("   mmap_data: %d\n",hw_event->mmap_data);
+   SUBDBG("   sample_id_all: %d\n",hw_event->sample_id_all);
+   SUBDBG("   exclude_host: %d\n",hw_event->exclude_host);
+   SUBDBG("   exclude_guest: %d\n",hw_event->exclude_guest);
+   SUBDBG("   exclude_callchain_kernel: %d\n",hw_event->exclude_callchain_kernel);
+   SUBDBG("   exclude_callchain_user: %d\n",hw_event->exclude_callchain_user);
+   SUBDBG("   wakeup_events: %"PRIx32" (%"PRIu32")\n", hw_event->wakeup_events, hw_event->wakeup_events);
+   SUBDBG("   bp_type: %"PRIx32" (%"PRIu32")\n", hw_event->bp_type, hw_event->bp_type);
+   SUBDBG("   config1: %"PRIx64" (%"PRIu64")\n", hw_event->config1, hw_event->config1);
+   SUBDBG("   config2: %"PRIx64" (%"PRIu64")\n", hw_event->config2, hw_event->config2);
+   SUBDBG("   branch_sample_type: %"PRIx64" (%"PRIu64")\n", hw_event->branch_sample_type, hw_event->branch_sample_type);
+   SUBDBG("   sample_regs_user: %"PRIx64" (%"PRIu64")\n", hw_event->sample_regs_user, hw_event->sample_regs_user);
+   SUBDBG("   sample_stack_user: %"PRIx32" (%"PRIu32")\n", hw_event->sample_stack_user, hw_event->sample_stack_user);
+
 	ret =
 		syscall( __NR_perf_event_open, hw_event, pid, cpu, group_fd, flags );
 	SUBDBG("Returned %d %d %s\n",ret,
@@ -470,14 +484,14 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
       /* start the event */
       retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
       if (retval == -1) {
-	 PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+	 PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed");
 	 return PAPI_ESYS;
       }
 
       /* stop the event */
       retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
       if (retval == -1) {
-	 PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed.\n" );
+	 PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed" );
 	 return PAPI_ESYS;
       }
 
@@ -514,7 +528,7 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 	   retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
 	   if (retval == -1) {
 	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d "
-			 "(fd %d)failed.\n",
+			 "(fd %d)failed",
 			 i,ctl->num_events,idx,ctl->events[i].event_fd);
 	      return PAPI_ESYS;
 	   }
@@ -794,7 +808,7 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
    if (ctl->num_events!=num_closed) {
       if (ctl->num_events!=(num_closed+events_not_opened)) {
          PAPIERROR("Didn't close all events: "
-		   "Closed %d Not Opened: %d Expected %d\n",
+		   "Closed %d Not Opened: %d Expected %d",
 		   num_closed,events_not_opened,ctl->num_events);
          return PAPI_EBUG;
       }
@@ -824,9 +838,7 @@ _pe_set_domain( hwd_control_state_t *ctl, int domain)
    int i;
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
-   SUBDBG("old control domain %d, new domain %d\n",
-	  pe_ctl->domain,domain);
-
+   SUBDBG("old control domain %d, new domain %d\n", pe_ctl->domain,domain);
    pe_ctl->domain = domain;
 
    /* Force the domain on all events */
@@ -915,6 +927,8 @@ int
 _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	       long long **events, int flags )
 {
+	SUBDBG("ENTER: ctx: %p, ctl: %p, events: %p, flags: %#x\n", ctx, ctl, events, flags);
+
    ( void ) flags;			 /*unused */
    int i, ret = -1;
    pe_context_t *pe_ctx = ( pe_context_t *) ctx;
@@ -964,7 +978,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
 	 /* We should read 3 64-bit values from the counter */
 	 if (ret<(signed)(3*sizeof(long long))) {
-	    PAPIERROR("Error!  short read!\n");
+	    PAPIERROR("Error!  short read");
 	    return PAPI_ESYS;
 	 }
 
@@ -1020,8 +1034,8 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
 	 /* we should read one 64-bit value from each counter */
 	 if (ret!=sizeof(long long)) {
-	    PAPIERROR("Error!  short read!\n");
-	    PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
+	    PAPIERROR("Error!  short read");
+	    PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d",
 		   pe_ctl->events[i].event_fd,
 		   (long)pe_ctl->tid, pe_ctl->cpu, ret);
 	    return PAPI_ESYS;
@@ -1042,7 +1056,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
    else {
       if (pe_ctl->events[0].group_leader_fd!=-1) {
-	 PAPIERROR("Was expecting group leader!\n");
+	 PAPIERROR("Was expecting group leader");
       }
 
       ret = read( pe_ctl->events[0].event_fd, papi_pe_buffer,
@@ -1056,7 +1070,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       /* we read 1 64-bit value (number of events) then     */
       /* num_events more 64-bit values that hold the counts */
       if (ret<(signed)((1+pe_ctl->num_events)*sizeof(long long))) {
-	 PAPIERROR("Error! short read!\n");
+	 PAPIERROR("Error! short read");
 	 return PAPI_ESYS;
       }
 
@@ -1072,7 +1086,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
       /* Make sure the kernel agrees with how many events we have */
       if (papi_pe_buffer[0]!=pe_ctl->num_events) {
-	 PAPIERROR("Error!  Wrong number of events!\n");
+	 PAPIERROR("Error!  Wrong number of events");
 	 return PAPI_ESYS;
       }
 
@@ -1106,6 +1120,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    /* point PAPI to the values we read */
    *events = pe_ctl->counts;
 
+   SUBDBG("EXIT: *events: %p\n", *events);
    return PAPI_OK;
 }
 
@@ -1134,7 +1149,7 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 	 /* ioctls always return -1 on failure */
          if (ret == -1) {
-            PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed.\n");
+            PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed");
             return PAPI_ESYS;
 	 }
 
@@ -1143,7 +1158,7 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
    }
 
    if (!did_something) {
-      PAPIERROR("Did not enable any counters.\n");
+      PAPIERROR("Did not enable any counters");
       return PAPI_EBUG;
    }
 
@@ -1157,6 +1172,7 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 int
 _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
+	SUBDBG( "ENTER: ctx: %p, ctl: %p\n", ctx, ctl);
 
    int ret;
    int i;
@@ -1178,6 +1194,7 @@ _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
    pe_ctx->state &= ~PERF_EVENTS_RUNNING;
 
+	SUBDBG( "EXIT:\n");
    return PAPI_OK;
 }
 
@@ -1190,6 +1207,7 @@ _pe_update_control_state( hwd_control_state_t *ctl,
 			       NativeInfo_t *native,
 			       int count, hwd_context_t *ctx )
 {
+   SUBDBG( "ENTER: ctl: %p, native: %p, count: %d, ctx: %p\n", ctl, native, count, ctx);
    int i = 0, ret;
    pe_context_t *pe_ctx = ( pe_context_t *) ctx;
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
@@ -1202,7 +1220,7 @@ _pe_update_control_state( hwd_control_state_t *ctl,
    /* Calling with count==0 should be OK, it's how things are deallocated */
    /* when an eventset is destroyed.                                      */
    if ( count == 0 ) {
-      SUBDBG( "Called with count == 0\n" );
+      SUBDBG( "EXIT: Called with count == 0\n" );
       return PAPI_OK;
    }
 
@@ -1236,15 +1254,16 @@ _pe_update_control_state( hwd_control_state_t *ctl,
    pe_ctl->num_events = count;
    _pe_set_domain( ctl, pe_ctl->domain );
 
-   /* actuall open the events */
+   /* actually open the events */
    /* (why is this a separate function?) */
    ret = open_pe_events( pe_ctx, pe_ctl );
    if ( ret != PAPI_OK ) {
-      SUBDBG("open_pe_events failed\n");
+      SUBDBG("EXIT: open_pe_events returned: %d\n", ret);
       /* Restore values ? */
       return ret;
    }
 
+   SUBDBG( "EXIT:\n" );
    return PAPI_OK;
 }
 
@@ -1914,7 +1933,7 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
   }
         
   if (ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL ) == -1 ) {
-      PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) failed.\n");
+      PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) failed");
   }
 
   if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) && 
