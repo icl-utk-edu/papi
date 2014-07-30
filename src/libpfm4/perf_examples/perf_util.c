@@ -97,6 +97,7 @@ perf_setup_argv_events(const char **argv, perf_event_desc_t **fds, int *num_fds)
 		fd[num].name = strdup(*argv);
 		fd[num].group_leader = group_leader;
 		fd[num].idx = arg.idx;
+		fd[num].cpu = arg.cpu;
 
 		num++;
 		argv++;
