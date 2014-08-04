@@ -8,7 +8,7 @@ must be executed in order to generate the Makefile which contains the
 configuration settings. This script needs to be executed only once. 
 
     % cd < papi_dir >/src/components/nvml
-    % ./configure --with-nvml_incdir=< NVML INCLUDE PATH > --with-nvml_libdir=<NVML LIBRARY PATH > --with-cuda_incdir=<path> --with-cuda_libdir=<path>
+    % ./configure --with-nvml-dir=< NVML PATH > --with-cuda-dir=<path>
 
 Furthermore, the NVML component will be added to PAPI during the configuration of 
 PAPI by adding the '--with-components=nvml' command line option to configure.
