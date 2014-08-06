@@ -586,7 +586,7 @@ pfmlib_build_fstr(pfmlib_event_desc_t *e, char **fstr)
 	if (*fstr)
 		sprintf(*fstr, "%s::%s", e->pmu->name, e->fstr);
 
-	return fstr ? PFM_SUCCESS : PFM_ERR_NOMEM;
+	return *fstr ? PFM_SUCCESS : PFM_ERR_NOMEM;
 }
 
 static int
