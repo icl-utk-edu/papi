@@ -218,7 +218,7 @@ setup_cpu(int cpu, int fd)
 			err(1, "cannot allocated memory");
 
 		sret = read(fds[0].fd, val, sz);
-		if (sret == (ssize_t)sz)
+		if (sret != (ssize_t)sz)
 			err(1, "cannot read id %zu", sizeof(val));
 
 		for(i=0; i < num_fds; i++) {
