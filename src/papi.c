@@ -1147,7 +1147,7 @@ PAPI_event_name_to_code( char *in, int *out )
 int
 PAPI_enum_event( int *EventCode, int modifier )
 {
-	APIDBG( "Entry: EventCode: %#x, modifier: %d\n", EventCode, modifier);
+	APIDBG( "Entry: EventCode: %#x, modifier: %d\n", *EventCode, modifier);
 	int i = *EventCode;
 	int retval;
 	int cidx;
@@ -3059,7 +3059,7 @@ PAPI_set_debug( int level )
 inline_static int
 _papi_set_attach( int option, int EventSet, unsigned long tid )
 {
-	APIDBG("Entry: option: %d, EventSet: %d, tid: %u\n", option, EventSet, tid);
+	APIDBG("Entry: option: %d, EventSet: %d, tid: %lu\n", option, EventSet, tid);
 	PAPI_option_t attach;
 
 	memset( &attach, 0x0, sizeof ( attach ) );
@@ -3121,7 +3121,7 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
 int
 PAPI_attach( int EventSet, unsigned long tid )
 {
-	APIDBG( "Entry: EventSet: %d, tid: %u\n", EventSet, tid);
+	APIDBG( "Entry: EventSet: %d, tid: %lu\n", EventSet, tid);
 	return ( _papi_set_attach( PAPI_ATTACH, EventSet, tid ) );
 }
 
@@ -4406,10 +4406,12 @@ again:
       if ( ESI ) {
 	 if ( ESI->master == master ) {
 	    if ( ESI->state & PAPI_RUNNING ) {
-	       retval=PAPI_stop( i, NULL );
+	       if((retval = PAPI_stop( i, NULL )) != PAPI_OK) {
+	    	   APIDBG("Call to PAPI_stop failed: %d\n", retval);
+	       }
 	    }
 	    retval=PAPI_cleanup_eventset( i );
-	    if (retval!=PAPI_OK) PAPIERROR("Error during cleanup.\n");
+	    if (retval!=PAPI_OK) PAPIERROR("Error during cleanup.");
 	    _papi_hwi_free_EventSet( ESI );
 	 } 
          else {
@@ -4945,7 +4947,7 @@ int
 PAPI_sprofil( PAPI_sprofil_t *prof, int profcnt, int EventSet,
 			  int EventCode, int threshold, int flags )
 {
-	APIDBG( "Entry: prof: %p, profcnt, EventSet: %d, EventCode: %#x, threshold: %d, flags: %#x\n", prof, profcnt, EventSet, EventCode, threshold, flags);
+	APIDBG( "Entry: prof: %p, profcnt: %d, EventSet: %d, EventCode: %#x, threshold: %d, flags: %#x\n", prof, profcnt, EventSet, EventCode, threshold, flags);
    EventSetInfo_t *ESI;
    int retval, index, i, buckets;
    int forceSW = 0;

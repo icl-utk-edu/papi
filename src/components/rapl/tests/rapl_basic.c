@@ -232,7 +232,7 @@ int main (int argc, char **argv)
 
 		for(i=0;i<num_events;i++) {
 		   if (strstr(event_names[i],"ENERGY_CNT")) {
-			  printf("%-40s%12lld\t%#08x\n", event_names[i], values[i], values[i]);
+			  printf("%-40s%12lld\t%#08llx\n", event_names[i], values[i], values[i]);
 		   }
 		}
 
@@ -260,7 +260,7 @@ int main (int argc, char **argv)
 		for(i=0;i<num_events;i++) {
 		   if (!strstr(event_names[i],"ENERGY")) {
 			  if (data_type[i] == PAPI_DATATYPE_UINT64) {
-				printf("%-40s%12lld\t%#08x\n", event_names[i], values[i], values[i]);
+				printf("%-40s%12lld\t%#08llx\n", event_names[i], values[i], values[i]);
 			  }
 		   }
 		}
@@ -274,7 +274,7 @@ int main (int argc, char **argv)
 	
 	for(i=0;i<num_events;i++) {
 		if (strstr(event_names[i],"ENERGY_CNT")) {
-			if (max_value < values[i]) {
+			if (max_value < (unsigned) values[i]) {
 				max_value = values[i];
 		  	}
 		}
@@ -327,7 +327,7 @@ int main (int argc, char **argv)
 
 		for(i=0;i<num_events;i++) {
 		   if (strstr(event_names[i],"ENERGY_CNT")) {
-			  printf("%-40s%12lld\t%#08x\n", event_names[i], values[i], values[i]);
+			  printf("%-40s%12lld\t%#08llx\n", event_names[i], values[i], values[i]);
 		   }
 		}
 	}

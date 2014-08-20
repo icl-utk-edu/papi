@@ -34,13 +34,11 @@ static int enum_call = 0;   // When true we are listing events (we called _peu_l
  *
  */
 
-static int find_existing_event(char *name,
+static int find_existing_event(char *name, 
                                struct native_event_table_t *event_table) {
+  SUBDBG("Entry: name: %s, event_table: %p, num_native_events: %d\n", name, event_table, event_table->num_native_events);
 
   int i,event=PAPI_ENOEVNT;
-
-  SUBDBG("Looking for %s in %d events\n",
-         name,event_table->num_native_events);
 
   _papi_hwi_lock( NAMELIB_LOCK );
 
@@ -56,8 +54,7 @@ static int find_existing_event(char *name,
   }
   _papi_hwi_unlock( NAMELIB_LOCK );
 
-  if (event<0) { SUBDBG("%s not allocated yet\n",name); }
-
+  SUBDBG("EXIT: returned: %d\n", event);
   return event;
 }
 
@@ -90,13 +87,26 @@ static struct native_event_t *find_existing_event_by_number(int eventnum,
 }
 
 static int pmu_is_present_and_right_type(pfm_pmu_info_t *pinfo, int type) {
+//   SUBDBG("ENTER: pinfo: %p, pinfo->is_present: %d, pinfo->type: %#x, type: %#x\n", pinfo, pinfo->is_present, pinfo->type, type);
+  if (!pinfo->is_present) {
+//	  SUBDBG("EXIT: not present\n");
+	  return 0;
+  }
 
-  if (!pinfo->is_present) return 0;
+  if ((pinfo->type==PFM_PMU_TYPE_UNCORE) && (type&PMU_TYPE_UNCORE)) {
+//	  SUBDBG("EXIT: found PFM_PMU_TYPE_UNCORE\n");
+	  return 1;
+  }
+  if ((pinfo->type==PFM_PMU_TYPE_CORE) && (type&PMU_TYPE_CORE)) {
+//	  SUBDBG("EXIT: found PFM_PMU_TYPE_CORE\n");
+	  return 1;
+  }
+  if ((pinfo->type==PFM_PMU_TYPE_OS_GENERIC) && (type&PMU_TYPE_OS)) {
+//	  SUBDBG("EXIT: found PFM_PMU_TYPE_OS_GENERIC\n");
+	  return 1;
+  }
 
-  if ((pinfo->type==PFM_PMU_TYPE_UNCORE) && (type&PMU_TYPE_UNCORE)) return 1;
-  if ((pinfo->type==PFM_PMU_TYPE_CORE) && (type&PMU_TYPE_CORE)) return 1;
-  if ((pinfo->type==PFM_PMU_TYPE_OS_GENERIC) && (type&PMU_TYPE_OS)) return 1;
-
+//  SUBDBG("EXIT: not right type\n");
   return 0;
 }
 
@@ -818,12 +828,11 @@ int
 _peu_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
 				struct native_event_table_t *event_table)
 {
+  SUBDBG( "ENTER: name: %s, event_code: %p, *event_code: %#x, event_table: %p\n", name, event_code, *event_code, event_table);
 
   int actual_idx;
   struct native_event_t *our_event;
   int event_num;
-
-  SUBDBG( "Converting %s\n", name);
 
   event_num=find_existing_event(name,event_table);
 
@@ -851,7 +860,7 @@ _peu_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
 
   if (event_num>=0) {
      *event_code=event_num;
-     SUBDBG("Found code: %#x\n",*event_code);
+     SUBDBG("EXIT: Found code: %#x\n",*event_code);
      return PAPI_OK;
   }
 
@@ -886,10 +895,9 @@ _peu_libpfm4_ntv_code_to_name(unsigned int EventCode,
 			       char *ntv_name, int len,
 			       struct native_event_table_t *event_table)
 {
+	SUBDBG("ENTER: EventCode: %#x, ntv_name: %p, len: %d, event_table: %p\n", EventCode, ntv_name, len, event_table);
 
         struct native_event_t *our_event;
-
-        SUBDBG("ENTER %#x\n",EventCode);
 
         our_event=find_existing_event_by_number(EventCode,event_table);
 	if (our_event==NULL) {
@@ -933,6 +941,8 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 				 char *ntv_descr, int len,
 			         struct native_event_table_t *event_table)
 {
+	SUBDBG("ENTER: EventCode: %#x, ntv_descr: %p, len: %d: event_table: %p\n", EventCode, ntv_descr, len, event_table);
+
   int ret,a,first_mask=1;
   char *eventd, *tmp=NULL;
   pfm_event_info_t gete;
@@ -942,8 +952,6 @@ _peu_libpfm4_ntv_code_to_descr( unsigned int EventCode,
   char event_string[BUFSIZ],*ptr;
 
   struct native_event_t *our_event;
-
-  SUBDBG("ENTER %#x\n",EventCode);
 
   our_event=find_existing_event_by_number(EventCode,event_table);
   if (our_event==NULL) {
@@ -1126,11 +1134,9 @@ _peu_libpfm4_ntv_code_to_info(unsigned int EventCode,
 			       PAPI_event_info_t *info,
 			       struct native_event_table_t *event_table)
 {
-
+	SUBDBG("ENTER: EventCode: %#x\n",EventCode);
 
   struct native_event_t *our_event;
-
-  SUBDBG("ENTER %#x\n",EventCode);
 
   our_event=find_existing_event_by_number(EventCode,event_table);
   if (our_event==NULL) {

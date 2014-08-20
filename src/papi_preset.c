@@ -536,7 +536,7 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 	     t = trim_note( strtok( NULL, "" ) );
 	
 	     if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-		PAPIERROR( "Expected Note string at line %d of %s\n",
+		PAPIERROR( "Expected Note string at line %d of %s",
 			   line_no, name );
 	     }
 	     else {
@@ -663,7 +663,7 @@ _xml_start( void *data, const char *el, const char **attr )
 			 PAPI_OK ) {
 			printf( "Improper Native name given in XML file for %s\n",
 					attr[1] );
-			PAPIERROR( "Improper Native name given in XML file for %s\n",
+			PAPIERROR( "Improper Native name given in XML file for %s",
 					   attr[1] );
 			error = 1;
 		}
@@ -762,7 +762,7 @@ _xml_papi_hwi_setup_all_presets( char *arch, hwi_dev_notes_t * notes )
 		}
 		done = feof( fp );
 		if ( !XML_ParseBuffer( p, len, len == 0 ) ) {
-			PAPIERROR( "Parse error at line %d:\n%s\n",
+			PAPIERROR( "Parse error at line %d:\n%s",
 					   XML_GetCurrentLineNumber( p ),
 					   XML_ErrorString( XML_GetErrorCode( p ) ) );
 			fclose(fp);

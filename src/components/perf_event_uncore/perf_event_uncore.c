@@ -47,6 +47,8 @@ static int our_cidx;
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
 
+static int _peu_set_domain( hwd_control_state_t *ctl, int domain);
+
 
 /* The read format on perf_event varies based on various flags that */
 /* are passed into it.  This helper avoids copying this logic       */
@@ -302,7 +304,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
               " group_leader/fd: %d, event_fd: %d,"
-              " read_format: %#"PRIu64"\n",
+              " read_format: %"PRIu64"\n",
 	      pid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
@@ -462,7 +464,7 @@ _peu_init_control_state( hwd_control_state_t *ctl )
   memset( pe_ctl, 0, sizeof ( pe_control_t ) );
 
   /* Set the default domain */
-  _pe_set_domain( ctl, _perf_event_uncore_vector.cmp_info.default_domain );
+  _peu_set_domain( ctl, _perf_event_uncore_vector.cmp_info.default_domain );
 
   /* Set the default granularity */
   pe_ctl->granularity=_perf_event_uncore_vector.cmp_info.default_granularity;
@@ -600,12 +602,11 @@ _peu_update_control_state( hwd_control_state_t *ctl,
 	 if (ret!=PAPI_OK) return ret;
 
       } else {
-	  /* I'm not sure how we'd end up in this case */
-          /* should it be an error?                    */
+    	  // This case happens when called from _pe_set_overflow and _pe_ctl
+          // Those callers put things directly into the pe_ctl structure so it is already set for the open call
       }
 
-      /* Copy the inherit flag into the attribute block that will be   */
-      /* passed to the kernel */
+      // Copy the inherit flag into the attribute block that will be passed to the kernel
       pe_ctl->events[i].attr.inherit = pe_ctl->inherit;
 
       /* Set the position in the native structure */
@@ -627,6 +628,7 @@ _peu_update_control_state( hwd_control_state_t *ctl,
       return ret;
    }
 
+   SUBDBG( "EXIT: PAPI_OK\n" );
    return PAPI_OK;
 }
 
@@ -897,7 +899,7 @@ _peu_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
    /* Reset the counters first.  Is this necessary? */
-   ret = _pe_reset( pe_ctx, pe_ctl );
+   ret = _peu_reset( pe_ctx, pe_ctl );
    if ( ret ) {
       return ret;
    }

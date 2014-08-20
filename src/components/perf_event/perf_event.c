@@ -669,7 +669,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
               " group_leader/fd: %d, event_fd: %d,"
-              " read_format: %#"PRIu64"\n",
+              " read_format: %"PRIu64"\n",
 	      pid, ctl->cpu, ctl->events[i].group_leader_fd, 
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
@@ -700,7 +700,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
    for ( i = 0; i < ctl->num_events; i++ ) {
 
       /* If sampling is enabled, hook up signal handler */
-      if ( ctl->events[i].attr.sample_period ) {
+      if ((ctl->events[i].attr.sample_period)  &&  (ctl->events[i].nr_mmap_pages > 0)) {
 	 ret = tune_up_fd( ctl, i );
 	 if ( ret != PAPI_OK ) {
 	    /* All of the fds are open, so we need to clean up all of them */
@@ -1236,12 +1236,11 @@ _pe_update_control_state( hwd_control_state_t *ctl,
 	 if (ret!=PAPI_OK) return ret;
 
       } else {
-	  /* I'm not sure how we'd end up in this case */
-          /* should it be an error?                    */
+    	  // This case happens when called from _pe_set_overflow and _pe_ctl
+          // Those callers put things directly into the pe_ctl structure so it is already set for the open call
       }
 
-      /* Copy the inherit flag into the attribute block that will be   */
-      /* passed to the kernel */
+      // Copy the inherit flag into the attribute block that will be passed to the kernel
       pe_ctl->events[i].attr.inherit = pe_ctl->inherit;
 
       /* Set the position in the native structure */
@@ -1263,7 +1262,7 @@ _pe_update_control_state( hwd_control_state_t *ctl,
       return ret;
    }
 
-   SUBDBG( "EXIT:\n" );
+   SUBDBG( "EXIT: PAPI_OK\n" );
    return PAPI_OK;
 }
 
@@ -2043,6 +2042,7 @@ _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 int
 _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
+	SUBDBG("ENTER: ESI: %p, EventIndex: %d, threshold: %d\n", ESI, EventIndex, threshold);
 
   pe_context_t *ctx;
   pe_control_t *ctl = (pe_control_t *) ( ESI->ctl_state );
@@ -2058,12 +2058,16 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	 evt_idx,EventIndex,ESI->EventSetIndex);
 
   if (evt_idx<0) {
+	SUBDBG("EXIT: evt_idx: %d\n", evt_idx);
     return PAPI_EINVAL;
   }
 
   if ( threshold == 0 ) {
     /* If this counter isn't set to overflow, it's an error */
-    if ( ctl->events[evt_idx].attr.sample_period == 0 ) return PAPI_EINVAL;
+    if ( ctl->events[evt_idx].attr.sample_period == 0 ) {
+    	SUBDBG("EXIT: PAPI_EINVAL, Tried to clear sample threshold when it was not set\n");
+    	return PAPI_EINVAL;
+    }
   }
 
   ctl->events[evt_idx].attr.sample_period = threshold;
@@ -2096,6 +2100,7 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
   default:
     PAPIERROR( "ctl->wakeup_mode[%d] set to an unknown value - %u",
 	       evt_idx, ctl->events[evt_idx].wakeup_mode);
+	SUBDBG("EXIT: PAPI_EBUG\n");
     return PAPI_EBUG;
   }
 
@@ -2115,6 +2120,9 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
     retval = _papi_hwi_start_signal( 
 				    ctl->overflow_signal, 
 				    1, ctl->cidx );
+    if (retval != PAPI_OK) {
+    	SUBDBG("Call to _papi_hwi_start_signal returned: %d\n", retval);
+    }
   } else {
     /* turn off internal overflow flag for this event set */
     ctl->overflow = 0;
@@ -2122,13 +2130,17 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
     /* Remove the signal handler, if there are no remaining non-zero */
     /* sample_periods set                                            */
     retval = _papi_hwi_stop_signal(ctl->overflow_signal);
-    if ( retval != PAPI_OK ) return retval;
+    if ( retval != PAPI_OK ) {
+    	SUBDBG("Call to _papi_hwi_stop_signal returned: %d\n", retval);
+    	return retval;
+    }
   }
 
   retval = _pe_update_control_state( ctl, NULL,
 				     ( (pe_control_t *) (ESI->ctl_state) )->num_events,
 				     ctx );
 
+  SUBDBG("EXIT: return: %d\n", retval);
   return retval;
 }
 
