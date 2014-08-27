@@ -11,7 +11,16 @@
 * Mods:    Vince Weaver
 *          vweaver1@eecs.utk.edu
 * Mods:	   Philip Mucci
-*	   mucci@eecs.utk.edu */
+*	   mucci@eecs.utk.edu
+* Mods:    Gary Mohr
+*          gary.mohr@bull.com
+*          Modified the perf_event component to use PFM_OS_PERF_EVENT_EXT mode in libpfm4.
+*          This adds several new event masks, including cpu=, u=, and k= which give the user
+*          the ability to set cpu number to use or control the domain (user, kernel, or both)
+*          in which the counter should be incremented.  These are event masks so it is now 
+*          possible to have multiple events in the same event set that count activity from 
+*          differennt cpu's or count activity in different domains.
+*/
 
 
 #include <fcntl.h>
@@ -57,7 +66,11 @@ papi_vector_t _perf_event_vector;
 
 /* Globals */
 struct native_event_table_t perf_native_event_table;
-int our_cidx;
+static int our_cidx;
+int
+_pe_libpfm4_get_cidx() {
+	return our_cidx;
+}
 
 /* These sentinels tell _pe_set_overflow() how to set the */
 /* wakeup_events field in the event descriptor record.        */
@@ -78,6 +91,8 @@ int our_cidx;
 #else
 #define PAPI_REFRESH_VALUE 1
 #endif
+
+static int _pe_set_domain( hwd_control_state_t *ctl, int domain);
 
 /* Check for processor support */
 /* Can be used for generic checking, though in general we only     */
@@ -652,7 +667,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
       /* try to open */
       ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
 						     pid,
-						     ctl->cpu,
+						     ctl->events[i].cpu,
 			       ctl->events[i].group_leader_fd,
 						     0 /* flags */
 						     );
@@ -670,7 +685,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
               " group_leader/fd: %d, event_fd: %d,"
               " read_format: %"PRIu64"\n",
-	      pid, ctl->cpu, ctl->events[i].group_leader_fd, 
+	      pid, ctl->events[i].cpu, ctl->events[i].group_leader_fd,
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
 
@@ -829,27 +844,15 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 /********************************************************************/
 
 
-/* set the domain. FIXME: perf_events allows per-event control of this. */
-/* we do not handle that yet.                                           */
-int
+/* set the domain. perf_events allows per-event control of this, papi allows it to be set at the event level or at the event set level. */
+/* this will set the event set level domain values but they only get used if no event level domain mask (u= or k=) was specified. */
+static int
 _pe_set_domain( hwd_control_state_t *ctl, int domain)
 {
-
-   int i;
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
    SUBDBG("old control domain %d, new domain %d\n", pe_ctl->domain,domain);
    pe_ctl->domain = domain;
-
-   /* Force the domain on all events */
-   for( i = 0; i < pe_ctl->num_events; i++ ) {
-      pe_ctl->events[i].attr.exclude_user =
-	                !( pe_ctl->domain & PAPI_DOM_USER );
-      pe_ctl->events[i].attr.exclude_kernel =
-			!( pe_ctl->domain & PAPI_DOM_KERNEL );
-      pe_ctl->events[i].attr.exclude_hv =
-			!( pe_ctl->domain & PAPI_DOM_SUPERVISOR );
-   }
    return PAPI_OK;
 }
 
@@ -984,7 +987,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
          SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
 	        pe_ctl->events[i].event_fd,
-		(long)pe_ctl->tid, pe_ctl->cpu, ret);
+		(long)pe_ctl->tid, pe_ctl->events[i].cpu, ret);
          SUBDBG("read: %lld %lld %lld\n",papi_pe_buffer[0],
 	        papi_pe_buffer[1],papi_pe_buffer[2]);
 
@@ -1037,13 +1040,13 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	    PAPIERROR("Error!  short read");
 	    PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d",
 		   pe_ctl->events[i].event_fd,
-		   (long)pe_ctl->tid, pe_ctl->cpu, ret);
+		   (long)pe_ctl->tid, pe_ctl->events[i].cpu, ret);
 	    return PAPI_ESYS;
 	 }
 
          SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
 	        pe_ctl->events[i].event_fd, (long)pe_ctl->tid,
-		pe_ctl->cpu, ret);
+		pe_ctl->events[i].cpu, ret);
          SUBDBG("read: %lld\n",papi_pe_buffer[0]);
 
 	 pe_ctl->counts[i] = papi_pe_buffer[0];
@@ -1076,7 +1079,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
       SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
 	     pe_ctl->events[0].event_fd,
-	     (long)pe_ctl->tid, pe_ctl->cpu, ret);
+	     (long)pe_ctl->tid, pe_ctl->events[0].cpu, ret);
       {
 	 int j;
 	 for(j=0;j<ret/8;j++) {
@@ -1208,7 +1211,11 @@ _pe_update_control_state( hwd_control_state_t *ctl,
 			       int count, hwd_context_t *ctx )
 {
    SUBDBG( "ENTER: ctl: %p, native: %p, count: %d, ctx: %p\n", ctl, native, count, ctx);
-   int i = 0, ret;
+	int i;
+	int j;
+	int ret;
+	int skipped_events=0;
+	struct native_event_t *ntv_evt;
    pe_context_t *pe_ctx = ( pe_context_t *) ctx;
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 
@@ -1227,14 +1234,67 @@ _pe_update_control_state( hwd_control_state_t *ctl,
    /* set up all the events */
    for( i = 0; i < count; i++ ) {
       if ( native ) {
-	 /* Have libpfm4 set the config values for the event */
-	 ret=_pe_libpfm4_setup_counters(&pe_ctl->events[i].attr,
-					native[i].ni_event,
-					pe_ctx->event_table);
-	 SUBDBG( "pe_ctl->eventss[%d].config=%"PRIx64"\n",i,
-		 pe_ctl->events[i].attr.config);
-	 if (ret!=PAPI_OK) return ret;
+			// get the native event pointer used for this papi event
+			int ntv_idx = _papi_hwi_get_ntv_idx((unsigned)(native[i].ni_papi_code));
+			if (ntv_idx < -1) {
+				SUBDBG("papi_event_code: %#x known by papi but not by the component\n", native[i].ni_papi_code);
+				continue;
+			}
+			// if native index is -1, then we have an event without a mask and need to find the right native index to use
+			if (ntv_idx == -1) {
+				// find the native event index we want by matching for the right papi event code
+				for (j=0 ; j<pe_ctx->event_table->num_native_events ; j++) {
+					if (pe_ctx->event_table->native_events[j].papi_event_code == native[i].ni_papi_code) {
+						ntv_idx = j;
+					}
+				}
+			}
 
+			// if native index is still negative, we did not find event we wanted so just return error
+			if (ntv_idx < 0) {
+				SUBDBG("papi_event_code: %#x not found in native event tables\n", native[i].ni_papi_code);
+				continue;
+			}
+
+			// this native index is positive so there was a mask with the event, the ntv_idx identifies which native event to use
+			ntv_evt = (struct native_event_t *)(&(pe_ctx->event_table->native_events[ntv_idx]));
+			SUBDBG("ntv_evt: %p\n", ntv_evt);
+
+			SUBDBG("i: %d, pe_ctx->event_table->num_native_events: %d\n", i, pe_ctx->event_table->num_native_events);
+
+	    	// Move this events hardware config values and other attributes to the perf_events attribute structure
+			memcpy (&pe_ctl->events[i].attr, &ntv_evt->attr, sizeof(perf_event_attr_t));
+
+			// may need to update the attribute structure with information from event set level domain settings (values set by PAPI_set_domain)
+			// only done if the event mask which controls each counting domain was not provided
+
+			// get pointer to allocated name, will be NULL when adding preset events to event set
+			char *aName = ntv_evt->allocated_name;
+			if ((aName == NULL)  ||  (strstr(aName, ":u=") == NULL)) {
+				SUBDBG("set exclude_user attribute from eventset level domain flags, encode: %d, eventset: %d\n", pe_ctl->events[i].attr.exclude_user, !(pe_ctl->domain & PAPI_DOM_USER));
+				pe_ctl->events[i].attr.exclude_user = !(pe_ctl->domain & PAPI_DOM_USER);
+			}
+			if ((aName == NULL)  ||  (strstr(aName, ":k=") == NULL)) {
+				SUBDBG("set exclude_kernel attribute from eventset level domain flags, encode: %d, eventset: %d\n", pe_ctl->events[i].attr.exclude_kernel, !(pe_ctl->domain & PAPI_DOM_KERNEL));
+				pe_ctl->events[i].attr.exclude_kernel = !(pe_ctl->domain & PAPI_DOM_KERNEL);
+			}
+			pe_ctl->events[i].attr.exclude_guest = 1;
+
+			// libpfm4 supports mh (monitor host) and mg (monitor guest) event masks
+			// perf_events supports exclude_hv and exclude_idle attributes
+			// PAPI_set_domain supports PAPI_DOM_SUPERVISOR and PAPI_DOM_OTHER domain attributes
+			// not sure how these libpfm4 masks, perf_event attributes, and PAPI domain attributes relate to each other, the code sample below is one possibility
+//			if (strstr(ntv_evt->allocated_name, ":mg=") == NULL) {
+//				SUBDBG("set exclude_hv attribute from eventset level domain flags, encode: %d, eventset: %d\n", pe_ctl->events[i].attr.exclude_hv, !(pe_ctl->domain & PAPI_DOM_SUPERVISOR));
+//				pe_ctl->events[i].attr.exclude_hv = !(pe_ctl->domain & PAPI_DOM_SUPERVISOR);
+//			}
+
+			// set the cpu number provided with an event mask if there was one (will be -1 if mask not provided)
+			pe_ctl->events[i].cpu = ntv_evt->cpu;
+			// if cpu event mask not provided, then set the cpu to use to what may have been set on call to PAPI_set_opt (will still be -1 if not called)
+			if (pe_ctl->events[i].cpu == -1) {
+				pe_ctl->events[i].cpu = pe_ctl->cpu;
+			}
       } else {
     	  // This case happens when called from _pe_set_overflow and _pe_ctl
           // Those callers put things directly into the pe_ctl structure so it is already set for the open call
@@ -1246,12 +1306,18 @@ _pe_update_control_state( hwd_control_state_t *ctl,
       /* Set the position in the native structure */
       /* We just set up events linearly           */
       if ( native ) {
-	 native[i].ni_position = i;
+    	  native[i].ni_position = i;
+    	  SUBDBG( "&native[%d]: %p, ni_papi_code: %#x, ni_event: %#x, ni_position: %d, ni_owners: %d\n",
+			i, &(native[i]), native[i].ni_papi_code, native[i].ni_event, native[i].ni_position, native[i].ni_owners);
       }
    }
 
-   pe_ctl->num_events = count;
-   _pe_set_domain( ctl, pe_ctl->domain );
+	if (count <= skipped_events) {
+		SUBDBG("EXIT: No events to count, they all contained invalid umasks\n");
+		return PAPI_ENOEVNT;
+	}
+
+   pe_ctl->num_events = count - skipped_events;
 
    /* actually open the events */
    /* (why is this a separate function?) */
@@ -1348,8 +1414,9 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
            if (ret != PAPI_OK) {
 	      return ret;
 	   }
-	   /* looks like we are allowed, so set counting domain */
-	   return _pe_set_domain( pe_ctl, option->domain.domain );
+	   /* looks like we are allowed, so set event set level counting domains */
+       pe_ctl->domain = option->domain.domain;
+	   return PAPI_OK;
 
       case PAPI_GRANUL:
 	   pe_ctl = (pe_control_t *) ( option->granularity.ESI->ctl_state );
