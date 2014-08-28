@@ -49,6 +49,7 @@
 	if (b != PAPI_OK) {\
 		_papi_hwi_errno = b;\
 	} \
+	APIDBG("EXIT: return: %d\n", b);\
 	return((_papi_hwi_debug_handler ? _papi_hwi_debug_handler(b) : b)); \
 } while (0)
 #else
@@ -57,6 +58,7 @@
 	if (b != PAPI_OK) {\
 		_papi_hwi_errno = b;\
 	} \
+	APIDBG("EXIT: return: %d\n", b);\
 	return(b);\
 } while(0)
 #endif
@@ -1152,6 +1154,7 @@ PAPI_enum_event( int *EventCode, int modifier )
 	int retval;
 	int cidx;
 	int event_code;
+	char *evt_name;
 
 	cidx = _papi_hwi_component_index( *EventCode );
 	if (cidx < 0) return PAPI_ENOCMP;
@@ -1176,14 +1179,24 @@ PAPI_enum_event( int *EventCode, int modifier )
 			return ( PAPI_OK );
 		}
 	} else if ( IS_NATIVE(i) ) {
+	    // save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
+	    _papi_hwi_set_papi_event_code(*EventCode, 0);
+
 		/* Should check against num native events here */
 
 	    event_code=_papi_hwi_eventcode_to_native((int)*EventCode);
 	    retval = _papi_hwd[cidx]->ntv_enum_events((unsigned int *)&event_code, modifier );
 
-	        /* re-apply Component ID to the returned Event */
-	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
+	    if (retval!=PAPI_OK) {
+	       APIDBG("VMW: retval=%d\n",retval);
+	       return PAPI_EINVAL;
+	    }
 
+	    evt_name = _papi_hwi_get_papi_event_string();
+    	*EventCode = _papi_hwi_native_to_eventcode(cidx, event_code, -1, evt_name);
+	    _papi_hwi_free_papi_event_string();
+
+	    APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 	    return retval;
 	} else if ( IS_USER_DEFINED(i) ) {
 	  if ( modifier == PAPI_ENUM_FIRST ) {
@@ -1314,6 +1327,7 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 	int i = *EventCode;
 	int retval;
 	int event_code;
+	char *evt_name;
 
 	if ( _papi_hwi_invalid_cmp(cidx) || ( (IS_PRESET(i)) && cidx > 0 ) ) {
 		return PAPI_ENOCMP;
@@ -1340,6 +1354,8 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 			return PAPI_OK;
 		}
 	} else if ( IS_NATIVE(i) ) {
+	    // save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
+	    _papi_hwi_set_papi_event_code(*EventCode, 0);
 
 		/* Should we check against num native events here? */
 	    event_code=_papi_hwi_eventcode_to_native(*EventCode);
@@ -1350,8 +1366,9 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 	       return PAPI_EINVAL;
 	    }
 
-	       /* re-apply Component ID to the returned Event */
-	    *EventCode = _papi_hwi_native_to_eventcode(cidx,event_code);
+	    evt_name = _papi_hwi_get_papi_event_string();
+	    *EventCode = _papi_hwi_native_to_eventcode(cidx, event_code, -1, evt_name);
+	    _papi_hwi_free_papi_event_string();
 
 	    APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 	    return retval;
@@ -1625,8 +1642,8 @@ PAPI_add_event( int EventSet, int EventCode )
 		papi_return( PAPI_EISRUN );
 
 	/* Now do the magic. */
-
-	papi_return( _papi_hwi_add_event( ESI, EventCode ) );
+	int retval = _papi_hwi_add_event( ESI, EventCode );
+	papi_return( retval );
 }
 
 /**  @class PAPI_remove_event
@@ -1821,8 +1838,14 @@ PAPI_add_named_event( int EventSet, char *EventName )
 	int ret, code;
 	
 	ret = PAPI_event_name_to_code( EventName, &code );
-	if ( ret == PAPI_OK ) ret = PAPI_add_event( EventSet, code );
-	papi_return( ret );
+	if ( ret != PAPI_OK ) {
+		APIDBG("EXIT: return: %d\n", ret);
+		return ret;   // do not use papi_return here because if there was an error PAPI_event_name_to_code already reported it
+	}
+
+	ret = PAPI_add_event( EventSet, code );
+	APIDBG("EXIT: return: %d\n", ret);
+	return ret;   // do not use papi_return here because if there was an error PAPI_add_event already reported it
 }
 
 /**  @class PAPI_remove_named_event

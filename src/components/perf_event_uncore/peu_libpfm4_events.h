@@ -21,7 +21,5 @@ int _peu_libpfm4_init(papi_vector_t *my_vector,
 int _peu_libpfm4_ntv_code_to_info(unsigned int EventCode,
 				   PAPI_event_info_t *info,
 		       struct native_event_table_t *event_table);
-int _peu_libpfm4_setup_counters( struct perf_event_attr *attr,
-				  int event,
-		       struct native_event_table_t *event_table);
+int _peu_libpfm4_get_cidx(void);
 

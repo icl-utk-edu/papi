@@ -15,6 +15,7 @@ typedef struct
   void *mmap_buf;                 /* used for control/profiling           */
   uint64_t tail;                  /* current read location in mmap buffer */
   uint64_t mask;                  /* mask used for wrapping the pages     */
+  int cpu;                        /* cpu associated with this event       */
   struct perf_event_attr attr;    /* perf_event config structure          */
   unsigned int wakeup_mode;       /* wakeup mode when sampling            */
 } pe_event_info_t;
@@ -43,7 +44,6 @@ typedef struct {
   struct native_event_table_t *event_table; /* our event table     */
 } pe_context_t;
 
-int _pe_set_domain( hwd_control_state_t *ctl, int domain);
 int _pe_shutdown_thread( hwd_context_t *ctx );
 int _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl );
 int _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,

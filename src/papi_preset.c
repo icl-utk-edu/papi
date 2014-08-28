@@ -489,11 +489,15 @@ _papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
 
 	     SUBDBG("Looking up: %s\n",t);
 
+	     // show that we do not have an event code yet (the component may create one and update this info) 
+	     // this also clears any values left over from a previous call
+	     _papi_hwi_set_papi_event_code(-1, -1);
+
 	     ret=_papi_hwd[cidx]->ntv_name_to_code(t, &event_idx);
 
 	     if (ret==PAPI_OK) {
 		_papi_hwi_presets[insert].code[i]=
-	              _papi_hwi_native_to_eventcode(cidx,event_idx);
+	              _papi_hwi_native_to_eventcode(cidx, event_idx, -1, t);
 		SUBDBG("Found: %s %#x c%d e%d\n",t,
 		       _papi_hwi_presets[insert].code[i],
 		       cidx,event_idx);

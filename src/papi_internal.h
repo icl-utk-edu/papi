@@ -186,8 +186,10 @@ typedef struct _EventInfo {
   @internal 
  */
 typedef struct _NativeInfo {
-   int ni_event;                /**< native event code; 
+   int ni_event;                /**< native (libpfm4) event code;
                                      always non-zero unless empty */
+   int ni_papi_code;            /**< papi event code
+                                     value returned to papi applications */
    int ni_position;             /**< counter array position where this 
 				     native event lives */
    int ni_owners;               /**< specifies how many owners share 
@@ -436,6 +438,12 @@ extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 #include "threads.h"
 
 EventSetInfo_t *_papi_hwi_lookup_EventSet( int eventset );
+void _papi_hwi_set_papi_event_string (const char *event_string);
+char *_papi_hwi_get_papi_event_string (void);
+void _papi_hwi_free_papi_event_string();
+void _papi_hwi_set_papi_event_code (unsigned int event_code, int update_flag);
+unsigned int _papi_hwi_get_papi_event_code (void);
+int _papi_hwi_get_ntv_idx (unsigned int papi_evt_code);
 int _papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI );
 hwd_context_t *_papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty );
 
@@ -476,7 +484,7 @@ int _papi_hwi_native_code_to_name( unsigned int EventCode, char *hwi_name,
 
 int _papi_hwi_invalid_cmp( int cidx );
 int _papi_hwi_component_index( int event_code );
-int _papi_hwi_native_to_eventcode(int cidx, int event_code);
+int _papi_hwi_native_to_eventcode(int cidx, int event_code, int ntv_idx, const char *event_name);
 int _papi_hwi_eventcode_to_native(int event_code);
 
 #endif /* PAPI_INTERNAL_H */

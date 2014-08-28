@@ -11,15 +11,16 @@
 struct native_event_t {
   int component;
   char *pmu;
+  int papi_event_code;
   int libpfm4_idx;
+  int attr_idx;
   char *allocated_name;
   char *base_name;
+  char *mask_string;
   char *pmu_plus_name;
+  int cpu;
   int users;
-  long long config;
-  long long config1;
-  long long config2;
-  int type;
+  perf_event_attr_t attr;
 };
 
 #define PMU_TYPE_CORE   1
