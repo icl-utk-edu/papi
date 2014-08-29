@@ -809,7 +809,11 @@ enum_add_native_events( int *num_events, int **evtcodes,
      /* For platform independence, always ASK FOR the first event */
      /* Don't just assume it'll be the first numeric value */
      i = 0 | PAPI_NATIVE_MASK;
-     PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
+     retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
+     if ( retval != PAPI_OK )
+     {
+	 test_fail( __FILE__, __LINE__, "PAPI_enum_cmp_event", retval );
+     }
 
      do {
         retval = PAPI_get_event_info( i, &info );
