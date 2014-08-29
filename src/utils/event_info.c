@@ -237,8 +237,7 @@ enum_native_events( FILE * f, int cidx)
 		    retval = PAPI_get_event_info( k, &info );
 		    if ( retval == PAPI_OK ) {
 		       if ( test_event( k )!=PAPI_OK ) {
-			 retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cidx );
-			  continue;
+			   break;
 		       }
 		       xmlize_event( f, &info, -1 );
 		    }
