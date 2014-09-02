@@ -160,7 +160,8 @@ main( int argc, char *argv[] )
 				print_help( argv );
 				exit( 1 );
 			}
-			strncpy( papi_event_str, argv[i + 1], sizeof ( papi_event_str ) );
+			strncpy( papi_event_str, argv[i + 1], sizeof ( papi_event_str ) - 1);
+			papi_event_str[sizeof ( papi_event_str )-1] = '\0';
 			i++;
 		} else if ( strstr( argv[i], "-d" ) )
 			double_precision = 1;

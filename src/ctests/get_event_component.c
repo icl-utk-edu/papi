@@ -42,8 +42,7 @@ main( int argc, char **argv )
             test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
          }
 
-         if (cmpinfo->disabled)
-         {
+         if (cmpinfo->disabled && !TESTS_QUIET) {
            printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
            printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
            continue;
@@ -55,7 +54,12 @@ main( int argc, char **argv )
        if (retval!=PAPI_OK) continue;
 
        do {
-          retval = PAPI_get_event_info( i, &info );
+	   if (PAPI_get_event_info( i, &info ) != PAPI_OK) {
+	       if (!TESTS_QUIET) {
+		   printf("Getting information about event: %#x failed\n", i);
+	       }
+	       continue;
+	   }
 	  our_cid=PAPI_get_event_component(i);
 
 	  if (our_cid!=cid) {

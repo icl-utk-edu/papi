@@ -94,7 +94,7 @@ main( int argc, char **argv )
 	/* Find a reasonable number of iterations (each 
 	 * event active 20 times) during the measurement
 	 */
-	t2 = 10000 * 20 * nevents;	/* Target: 10000 usec/multiplex, 20 repeats */
+	t2 = (long long)(10000 * 20) * nevents;	/* Target: 10000 usec/multiplex, 20 repeats */
 	if ( t2 > 30e6 )
 		test_skip( __FILE__, __LINE__, "This test takes too much time",
 				   retval );

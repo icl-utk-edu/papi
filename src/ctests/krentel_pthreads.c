@@ -125,11 +125,18 @@ my_thread( void *v )
 	}
 
 	PAPI_stop( EventSet, &value );
-	PAPI_remove_event( EventSet, EVENT );
-	PAPI_destroy_eventset( &EventSet );
+	retval = PAPI_remove_event( EventSet, EVENT );
+	if ( PAPI_OK != retval ) {
+	    test_fail( __FILE__, __LINE__, "PAPI_remove_event", retval );
+	}
+	retval = PAPI_destroy_eventset( &EventSet );
+	if ( PAPI_OK != retval ) {
+	    test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	}
 	retval = PAPI_unregister_thread(  );
-	if ( retval != PAPI_OK )
+	if ( PAPI_OK != retval ) {
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
+	}
 	return ( NULL );
 }
 
