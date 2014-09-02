@@ -2269,38 +2269,36 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 	      return PAPI_OK;
 	   }
 
-       /* If not implemented, work around */
-       if ( retval==PAPI_ECMP) {
-          i = 0;
-	  _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
-	  
-	  //	  _papi_hwi_lock( INTERNAL_LOCK );
+		/* If not implemented, work around */
+		if ( retval==PAPI_ECMP) {
+			i = 0;
+			_papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
 
-	  do {
-		   // save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
-		  _papi_hwi_set_papi_event_code(i, 0);
-	     retval = _papi_hwd[cidx]->ntv_code_to_name(
-					  i, 
-					  name, sizeof(name));
-             /* printf("%#x\nname =|%s|\ninput=|%s|\n", i, name, in); */
-	     if ( retval == PAPI_OK && in != NULL) {
-		if ( strcasecmp( name, in ) == 0 ) {
-		   *out = _papi_hwi_native_to_eventcode(cidx, i, -1, name);
-		   break;
-		} else {
-		   retval = PAPI_ENOEVNT;
+//			_papi_hwi_lock( INTERNAL_LOCK );
+
+			do {
+				// save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
+				_papi_hwi_set_papi_event_code(i, 0);
+				retval = _papi_hwd[cidx]->ntv_code_to_name(
+						i,
+						name, sizeof(name));
+				/* printf("%#x\nname =|%s|\ninput=|%s|\n", i, name, in); */
+				if ( retval == PAPI_OK && in != NULL) {
+					if ( strcasecmp( name, in ) == 0 ) {
+						*out = _papi_hwi_native_to_eventcode(cidx, i, -1, name);
+						INTDBG("EXIT: PAPI_OK  event: %s code: %#x\n", in, *out);
+						return PAPI_OK;
+					}
+					retval = PAPI_ENOEVNT;
+				} else {
+					*out = 0;
+					retval = PAPI_ENOEVNT;
+					break;
+				}
+			} while ( ( _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_EVENTS ) == PAPI_OK ) );
+
+//			_papi_hwi_unlock( INTERNAL_LOCK );
 		}
-	     } else {
-		  *out = 0;
-		  retval = PAPI_ENOEVNT;
-		  break;
-	     }
-	  } while ( ( _papi_hwd[cidx]->ntv_enum_events( &i, 
-							PAPI_ENUM_EVENTS ) ==
-					  PAPI_OK ) );
-
-	  //	  _papi_hwi_unlock( INTERNAL_LOCK );
-       }
     }
 
     INTDBG("EXIT: retval: %d\n", retval);
