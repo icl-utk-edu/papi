@@ -112,10 +112,14 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
         if (cfg->family == 15) {
                 switch (cfg->model >> 4) {
                 case 0:
-                        if (cfg->model == 5 && cfg->stepping < 2)
+                        if (cfg->model == 5 && cfg->stepping < 2) {
                                 rev = PFM_PMU_AMD64_K8_REVB;
-                        if (cfg->model == 4 && cfg->stepping == 0)
+				break;
+                        }
+                        if (cfg->model == 4 && cfg->stepping == 0) {
                                 rev = PFM_PMU_AMD64_K8_REVB;
+				break;
+                        }
                         rev = PFM_PMU_AMD64_K8_REVC;
 			break;
                 case 1:

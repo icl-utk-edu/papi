@@ -945,7 +945,7 @@ found_attr:
 		if (type != PFM_ATTR_UMASK && type != PFM_ATTR_RAW_UMASK && !has_val) {
 			if (type != PFM_ATTR_MOD_BOOL)
 				return PFM_ERR_ATTR_VAL;
-			has_val = 1; s = yes; /* no const */
+			s = yes; /* no const */
 			goto handle_bool;
 		}
 
