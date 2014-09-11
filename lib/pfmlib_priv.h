@@ -246,6 +246,7 @@ extern pfmlib_pmu_t intel_ivb_unc_cbo2_support;
 extern pfmlib_pmu_t intel_ivb_unc_cbo3_support;
 extern pfmlib_pmu_t intel_ivb_ep_support;
 extern pfmlib_pmu_t intel_hsw_support;
+extern pfmlib_pmu_t intel_hsw_ep_support;
 extern pfmlib_pmu_t intel_rapl_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb0_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb1_support;

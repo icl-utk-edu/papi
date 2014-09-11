@@ -40,10 +40,30 @@ pfm_hsw_detect(void *this)
 
 	switch (pfm_intel_x86_cfg.model) {
 		case 60: /* Haswell */
-		case 63: /* Haswell */
 		case 69: /* Haswell */
 		case 70: /* Haswell */
 		case 71: /* Haswell */
+			break;
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_hsw_ep_detect(void *this)
+{
+	int ret;
+
+	ret = pfm_intel_x86_detect();
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_intel_x86_cfg.family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	switch (pfm_intel_x86_cfg.model) {
+		case 63: /* Haswell EP */
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
@@ -73,6 +93,35 @@ pfmlib_pmu_t intel_hsw_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
 	.pmu_detect		= pfm_hsw_detect,
+	.pmu_init		= pfm_hsw_init,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+	.get_event_first	= pfm_intel_x86_get_event_first,
+	.get_event_next		= pfm_intel_x86_get_event_next,
+	.event_is_valid		= pfm_intel_x86_event_is_valid,
+	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
+	.can_auto_encode	= pfm_intel_x86_can_auto_encode,
+};
+
+pfmlib_pmu_t intel_hsw_ep_support={
+	.desc			= "Intel Haswell EP",
+	.name			= "hsw_ep",
+	.pmu			= PFM_PMU_INTEL_HSW_EP,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_hsw_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
+	.num_cntrs		= 8, /* consider with HT off by default */
+	.num_fixed_cntrs	= 3,
+	.max_encoding		= 2, /* offcore_response */
+	.pe			= intel_hsw_pe,
+	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| INTEL_X86_PMU_FL_ECMASK,
+	.pmu_detect		= pfm_hsw_ep_detect,
 	.pmu_init		= pfm_hsw_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
