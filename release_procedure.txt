@@ -9,7 +9,8 @@ One way to use this procedure is to print a copy and check off
 the lines as they are completed to avoid confusion.
 ================================================================================
 __ 0a. Notify developers that a release is imminent and the repository should be
-	considered frozen.
+	considered frozen. Check buildbot / make fulltest results to make sure
+	the codebase is bug-free.
 
 __ 0b. Update your local copy from git to make sure you have all changes.
 	git pull
