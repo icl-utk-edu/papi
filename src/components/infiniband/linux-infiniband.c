@@ -724,15 +724,16 @@ _infiniband_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
    if (infiniband_native_events[index].name)
    {
       unsigned int len = strlen(infiniband_native_events[index].name);
-      if (len > sizeof(info->symbol)) len = sizeof(info->symbol);
+      if (len > sizeof(info->symbol)-1) len = sizeof(info->symbol)-1;
       strncpy(info->symbol, infiniband_native_events[index].name, len);
+      info->symbol[len] = '\0';
    }
    if (infiniband_native_events[index].description)
    {
       unsigned int len = strlen(infiniband_native_events[index].description);
-      if (len > sizeof(info->long_descr)) len = sizeof(info->long_descr);
-      strncpy(info->long_descr, 
-                infiniband_native_events[index].description, len);
+      if (len > sizeof(info->long_descr)-1) len = sizeof(info->long_descr)-1;
+      strncpy(info->long_descr, infiniband_native_events[index].description, len);
+      info->long_descr[len] = '\0';
    }
 
    strncpy(info->units, "\0", 1);

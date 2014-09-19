@@ -120,16 +120,20 @@ static int resize_native_table() {
 static counter_info *
 addCounter( const char *name, const char *desc, const char *unit )
 {
+   SUBDBG("ENTER: name: %s, desc: %s, unit: %s\n", name, desc, unit);
+
     counter_info *cntr;
 
 	if ( num_events >= table_size )
-		if (PAPI_OK != resize_native_table())
+	if (PAPI_OK != resize_native_table()) {
+	    SUBDBG("EXIT: can not resize native table\n" );
 			return NULL;
+	}
 
     cntr = malloc( sizeof ( counter_info ) );
 
     if ( cntr == NULL ) {
-       SUBDBG("can not allocate memory for new counter\n" );
+       SUBDBG("EXIT: can not allocate memory for new counter\n" );
        return NULL;
     }
 
@@ -143,6 +147,7 @@ addCounter( const char *name, const char *desc, const char *unit )
 
     num_events++;
 
+SUBDBG("EXIT: cntr: %p\n", cntr);
     return cntr;
 }
 
@@ -238,6 +243,7 @@ addLustreFS( const char *name,
 static int
 init_lustre_counters( void  )
 {
+   SUBDBG("ENTER:\n");
         char lustre_dir[PATH_MAX];
 	char path[PATH_MAX];
 	char path_readahead[PATH_MAX],path_stats[PATH_MAX];
@@ -252,13 +258,11 @@ init_lustre_counters( void  )
 
 	proc_dir = opendir( lustre_dir );
 	if ( proc_dir == NULL ) {
-	   SUBDBG("Cannot open %s\n",lustre_dir);
+      SUBDBG("EXIT: Cannot open %s\n",lustre_dir);
 	   return PAPI_ESYS;
 	}
 
-	entry = readdir( proc_dir );
-
-	while ( entry != NULL ) {
+   while ( (entry = readdir( proc_dir )) != NULL ) {
 	   memset( path, 0, PATH_MAX );
 	   snprintf( path, PATH_MAX - 1, "%s/%s/stats", lustre_dir,
 				  entry->d_name );
@@ -281,12 +285,13 @@ init_lustre_counters( void  )
 	      idx = 0;
 
 	      ptr = strstr(path,"llite/") + 6;
-
-	      while ( *ptr && idx < 100 ) {
-	         fs_name[idx] = *ptr;
-		 ptr++;
-		 idx++;
+         if (ptr == NULL) {
+	      SUBDBG("Path: %s, missing llite directory, performance event not created.\n", path);
+	      continue;
 	      }
+
+         strncpy(fs_name, ptr, sizeof(fs_name)-1);
+         fs_name[sizeof(fs_name)-1] = '\0';
 
 	      SUBDBG("found Lustre FS: %s\n", fs_name);
 
@@ -307,12 +312,11 @@ init_lustre_counters( void  )
 	      addLustreFS( fs_name, path_stats, path_readahead );
 
 	   }
-	   entry = readdir( proc_dir );
 	}
 	closedir( proc_dir );
 
+   SUBDBG("EXIT: PAPI_OK\n");
 	return PAPI_OK;
-
 }
 
 /**
@@ -519,6 +523,7 @@ _lustre_update_control_state( hwd_control_state_t *ctl,
 			      int count, 
 			      hwd_context_t *ctx )
 {
+   SUBDBG("ENTER: ctl: %p, native: %p, count: %d, ctx: %p\n", ctl, native, count, ctx);
     LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
     ( void ) ctx;
     int i, index;
@@ -530,7 +535,7 @@ _lustre_update_control_state( hwd_control_state_t *ctl,
     }
 
     lustre_ctl->num_events=count;
-
+    SUBDBG("EXIT: PAPI_OK\n");
     return PAPI_OK;
 }
 
@@ -665,23 +670,24 @@ _lustre_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 
 
 /*
- * This function has to set the bits needed to count different domains
- * In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
- * By default return PAPI_EINVAL if none of those are specified
- * and PAPI_OK with success
- * PAPI_DOM_USER is only user context is counted
- * PAPI_DOM_KERNEL is only the Kernel/OS context is counted
- * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
- * PAPI_DOM_ALL   is all of the domains
+ * This function can be used to set the event set level domains
+ * where the events should be counted.  In particular: PAPI_DOM_USER,
+ * PAPI_DOM_KERNEL PAPI_DOM_OTHER.  But the lustre component does not
+ * provide a field in its control_state (LUSTRE_control_state_t) to
+ * save this information.  It would also need some way to control when
+ * the counts get updated in order to support domain filters for
+ * event counting.
+ *
+ * So we just ignore this call.
  */
 int
 _lustre_set_domain( hwd_control_state_t * cntrl, int domain )
 {
-	( void ) cntrl;
-	if ( PAPI_DOM_USER != domain ) {
-		return PAPI_EINVAL;
-	}
+    SUBDBG("ENTER: cntrl: %p, domain: %#x\n", cntrl, domain);
 
+    // this component does not allow limiting which domains will increment event counts
+
+    SUBDBG("EXIT: PAPI_OK\n");
 	return PAPI_OK;
 }
 
@@ -692,13 +698,16 @@ _lustre_set_domain( hwd_control_state_t * cntrl, int domain )
 int
 _lustre_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-
+   SUBDBG("ENTER: EventCode: %#x, name: %p, len: %d\n", EventCode, name, len);
   int event=EventCode;
 
   if (event >=0 && event < num_events) {
-     strncpy( name, lustre_native_table[event]->name, len );
+     strncpy( name, lustre_native_table[event]->name, len-1 );
+     name[len-1] = '\0';
+   SUBDBG("EXIT: event name: %s\n", name);
      return PAPI_OK;
   }
+   SUBDBG("EXIT: PAPI_ENOEVNT\n");
   return PAPI_ENOEVNT;
 }
 
@@ -709,13 +718,16 @@ _lustre_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 int
 _lustre_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-
+   SUBDBG("ENTER: EventCode: %#x, name: %p, len: %d\n", EventCode, name, len);
   int event=EventCode;
 
   if (event >=0 && event < num_events) {
-	strncpy( name, lustre_native_table[event]->description, len );
+   strncpy( name, lustre_native_table[event]->description, len-1 );
+    name[len-1] = '\0';
+   SUBDBG("EXIT: description: %s\n", name);
 	return PAPI_OK;
   }
+   SUBDBG("EXIT: PAPI_ENOEVNT\n");
   return PAPI_ENOEVNT;
 }
 
@@ -726,10 +738,12 @@ _lustre_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 int
 _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
+   SUBDBG("ENTER: EventCode: %p, modifier: %d\n", EventCode, modifier);
 
 	if ( modifier == PAPI_ENUM_FIRST ) {
 	   if (num_events==0) return PAPI_ENOEVNT;
 	   *EventCode = 0;
+	SUBDBG("EXIT: *EventCode: %#x\n", *EventCode);
 	   return PAPI_OK;
 	}
 
@@ -738,13 +752,16 @@ _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 
 		if ( lustre_native_table[index + 1] ) {
 			*EventCode = *EventCode + 1;
+	    SUBDBG("EXIT: *EventCode: %#x\n", *EventCode);
 			return PAPI_OK;
 		} else {
+	    SUBDBG("EXIT: PAPI_ENOEVNT\n");
 			return PAPI_ENOEVNT;
 		}
 	} 
 		
 
+   SUBDBG("EXIT: PAPI_EINVAL\n");
 	return PAPI_EINVAL;
 }
 

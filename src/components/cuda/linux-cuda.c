@@ -400,17 +400,26 @@ createNativeEvents( void )
 			for ( eventId = 0;
 				  eventId < device[deviceId].domain[domainId].eventCount;
 				  eventId++ ) {
+		unsigned int evtNameLen = strlen(device[deviceId].name) + strlen(device[deviceId].domain[domainId].name) +
+			strlen(device[deviceId].domain[domainId].event[eventId].name);
+		if (evtNameLen + 4 > sizeof(cuda_native_table[id].name)) {
+		    SUBDBG("Event name too long to fit in cuda_native_table.name, event omitted: available space: %lu, space needed: %d\n",
+			    sizeof(cuda_native_table[id].name), evtNameLen+4);
+		    SUBDBG("device: %s, domain: %s, event: %s\n", device[deviceId].name, device[deviceId].domain[domainId].name,
+			    device[deviceId].domain[domainId].event[eventId].name);
+		    continue;
+		}
 				/* Save native event data */
 				sprintf( cuda_native_table[id].name,
 						 "%s:%s:%s",
 						 device[deviceId].name,
 						 device[deviceId].domain[domainId].name,
-						 device[deviceId].domain[domainId].event[eventId].
-						 name );
+			 device[deviceId].domain[domainId].event[eventId].name );
 
 				strncpy( cuda_native_table[id].description,
 						 device[deviceId].domain[domainId].event[eventId].desc,
-						 PAPI_2MAX_STR_LEN );
+			 PAPI_2MAX_STR_LEN-1 );
+		cuda_native_table[id].description[PAPI_2MAX_STR_LEN-1] = '\0';
 
 				/* The selector has to be !=0 . Starts with 1 */
 				cuda_native_table[id].resources.selector = id + 1;

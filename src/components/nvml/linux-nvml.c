@@ -486,7 +486,7 @@ detectDevices( )
 		cudaError_t cuerr;
 
 		char busId[16];
-		char name[64];
+	char name[65];		    // one bigger than name can be so we can add a null terminator and use string functions on this value
 		char inforomECC[16];
 		char inforomPower[16];
 		char names[device_count][64];
@@ -552,6 +552,8 @@ detectDevices( )
 					return PAPI_ESYS;
 				}
 
+		name[64] = '\0';	    // to safely use strstr operation below, the variable 'name' must be null terminated
+
 				for (j=0; j < i; j++ ) 
 						if ( 0 == strncmp( name, names[j], 64 ) ) {
 								/* if we have a match, and IF everything is sane, 
@@ -578,7 +580,6 @@ detectDevices( )
 						ecc_version = strtof(inforomECC, NULL );
 						power_version = strtof( inforomPower, NULL);
 
-						ret = (*nvmlDeviceGetNamePtr)( devices[i], name, 64 );
 						isTesla = ( NULL == strstr(name, "Tesla") ) ? 0:1;
 
 						/* For Tesla and Quadro products from Fermi and Kepler families. */
@@ -1505,14 +1506,14 @@ _papi_nvml_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
-  strncpy( info->symbol, nvml_native_table[index].name, 
-     sizeof(info->symbol));
+  strncpy( info->symbol, nvml_native_table[index].name, sizeof(info->symbol)-1);
+  info->symbol[sizeof(info->symbol)-1] = '\0';
 
-  strncpy( info->units, nvml_native_table[index].units, 
-     sizeof(info->units));
+  strncpy( info->units, nvml_native_table[index].units, sizeof(info->units)-1);
+  info->units[sizeof(info->units)-1] = '\0';
 
-  strncpy( info->long_descr, nvml_native_table[index].description, 
-     sizeof(info->symbol));
+  strncpy( info->long_descr, nvml_native_table[index].description, sizeof(info->long_descr)-1);
+  info->long_descr[sizeof(info->long_descr)-1] = '\0';
 
 //  info->data_type = nvml_native_table[index].return_type;
 

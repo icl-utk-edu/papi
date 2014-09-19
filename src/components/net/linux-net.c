@@ -51,7 +51,7 @@ papi_vector_t _net_vector;
 #define NET_INVALID_RESULT     -1
 
 
-static NET_native_event_entry_t * _net_native_events;
+static NET_native_event_entry_t * _net_native_events=NULL;
 
 static int num_events       = 0;
 static int is_initialized   = 0;
@@ -444,10 +444,14 @@ _net_shutdown_thread( hwd_context_t *ctx )
 int
 _net_shutdown_component( void )
 {
-    if ( is_initialized ) {
-        is_initialized = 0;
-        papi_free(_net_native_events);
-        _net_native_events = NULL;
+    if ( is_initialized )
+    {
+      is_initialized = 0;
+      if (_net_native_events != NULL)
+      {
+         papi_free(_net_native_events);
+         _net_native_events = NULL;
+      }
     }
 
     return PAPI_OK;
