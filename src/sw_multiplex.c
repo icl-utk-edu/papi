@@ -1136,8 +1136,6 @@ mpx_check( int EventSet )
 	if ( strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" ) == 0 ) {
 		unsigned int chk_domain =
 			PAPI_DOM_USER + PAPI_DOM_KERNEL + PAPI_DOM_SUPERVISOR;
-		if ( ESI == NULL )
-			return ( PAPI_ENOEVST );
 
 		if ( ( ESI->domain.domain & chk_domain ) != chk_domain ) {
 			PAPIERROR

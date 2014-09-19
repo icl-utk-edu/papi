@@ -246,10 +246,11 @@ get_event_line( char **place, FILE * table, char **tmp_perfmon_events_table )
 
 int add_define( char *line, list_t* LIST ) {
   char *t;
-  char local_line[USER_EVENT_OPERATION_LEN];
+  char local_line[USER_EVENT_OPERATION_LEN+1];
   list_t *temp;
 
   strncpy( local_line, line, USER_EVENT_OPERATION_LEN );
+  local_line[USER_EVENT_OPERATION_LEN] = '\0';
 
   temp = (list_t*)papi_malloc(sizeof(list_t));
 
@@ -262,12 +263,14 @@ int add_define( char *line, list_t* LIST ) {
   
   /* next token should be the name */
   t = strtok(NULL, " ");
-  strncpy( temp->name, t, PAPI_MIN_STR_LEN);
+  strncpy( temp->name, t, PAPI_MIN_STR_LEN-1);
+  temp->name[PAPI_MIN_STR_LEN-1] = '\0';
 
   /* next token should be the value */
   t = strtok(NULL," ");
   t[strlen(t)] = '\0';
-  strncpy( temp->value, t, PAPI_MIN_STR_LEN);
+  strncpy( temp->value, t, PAPI_MIN_STR_LEN-1);
+  temp->value[PAPI_MIN_STR_LEN-1] = '\0';
 
   temp->next = LIST->next;
   LIST->next = temp;
@@ -395,12 +398,15 @@ check_preset_events (char *target, user_defined_event_t* ue, int* msi)
 		strcat(ue->operation, temp);
 		ue->events[ue->count++] = _papi_hwi_presets[j].code[0];
 	  } else {
-		op = '-';
 		switch ( _papi_hwi_presets[j].derived_int ) {
 		  case DERIVED_ADD:
 		  case DERIVED_ADD_PS:
-			op = '+';
 		  case DERIVED_SUB:
+	    if (_papi_hwi_presets[j].derived_int == DERIVED_SUB) {
+		op = '-';
+	    } else {
+		op = '+';
+	    }
 			for ( k = 0; k < (int) _papi_hwi_presets[j].count; k++) {
 			  ue->events[ue->count++] = _papi_hwi_presets[j].code[k];
 			  if (k%2)
@@ -574,7 +580,8 @@ load_user_event_table( char *file_name)
 	  goto nextline;
 	} 
 
-	strncpy(foo->symbol, t, PAPI_MIN_STR_LEN);
+   // the entire structure was zeroed so if we only copy one less that what fits in the 'symbol' buffer, it will insure that this buffer is NULL terminated
+   strncpy(foo->symbol, t, PAPI_MIN_STR_LEN-1);
 #ifdef SHOW_LOADS
 	INTDBG("Found a user event named %s\n", foo->symbol );
 #endif

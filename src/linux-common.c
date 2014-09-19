@@ -171,6 +171,7 @@ int
 _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 {
     int tmp, retval = PAPI_OK;
+    unsigned int strSize;
     char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
     float mhz = 0.0;
     FILE *f;
@@ -197,14 +198,17 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
        /* Vendor Name and Vendor Code */
     rewind( f );
     s = search_cpu_info( f, "vendor_id", maxargs );
+    strSize = sizeof(hwinfo->vendor_string);
     if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
        *t = '\0';
+       if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
        strcpy( hwinfo->vendor_string, s + 2 );
     } else {
        rewind( f );
        s = search_cpu_info( f, "vendor", maxargs );
        if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
 	  *t = '\0';
+     if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
 	  strcpy( hwinfo->vendor_string, s + 2 );
        } else {
 	  rewind( f );
@@ -212,6 +216,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	  if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
 	     *t = '\0';
 	     s = strtok( s + 2, " " );
+        if (strlen(s) >= strSize-1)     s[strSize-1] = '\0';
 	     strcpy( hwinfo->vendor_string, s );
 	  } else {
 	     rewind( f );
@@ -258,14 +263,17 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
        /* Model Name */
     rewind( f );
     s = search_cpu_info( f, "model name", maxargs );
+    strSize = sizeof(hwinfo->model_string);
     if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
        *t = '\0';
+       if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
        strcpy( hwinfo->model_string, s + 2 );
     } else {
        rewind( f );
        s = search_cpu_info( f, "family", maxargs );
        if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
 	  *t = '\0';
+     if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
 	  strcpy( hwinfo->model_string, s + 2 );
        } else {
 	  rewind( f );
@@ -274,6 +282,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	     *t = '\0';
 	     strtok( s + 2, " " );
 	     s = strtok( NULL, " " );
+        if (strlen(s) >= strSize-1)     s[strSize-1] = '\0';
 	     strcpy( hwinfo->model_string, s );
 	  } else {
 	     rewind( f );
@@ -282,6 +291,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 		*t = '\0';
 		/* get just the first token */
 		s = strtok( s + 2, " " );
+	if (strlen(s) >= strSize-1)     s[strSize-1] = '\0';
 		strcpy( hwinfo->model_string, s );
 	     }
 	  }
@@ -444,15 +454,18 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	mdi->pid = pid;
 
 	sprintf( maxargs, "/proc/%d/exe", ( int ) pid );
-	if ( readlink( maxargs, mdi->exe_info.fullname, PAPI_HUGE_STR_LEN ) < 0 ) {
+   if ( (retval = readlink( maxargs, mdi->exe_info.fullname, PAPI_HUGE_STR_LEN-1 )) < 0 ) {
 		PAPIERROR( "readlink(%s) returned < 0", maxargs );
 		return PAPI_ESYS;
 	}
+   if (retval > PAPI_HUGE_STR_LEN-1)   retval=PAPI_HUGE_STR_LEN-1;
+   mdi->exe_info.fullname[retval] = '\0';
 
 	/* Careful, basename can modify it's argument */
 
 	strcpy( maxargs, mdi->exe_info.fullname );
-	strcpy( mdi->exe_info.address_info.name, basename( maxargs ) );
+   strncpy( mdi->exe_info.address_info.name, basename( maxargs ), PAPI_HUGE_STR_LEN-1);
+   mdi->exe_info.address_info.name[PAPI_HUGE_STR_LEN-1] = '\0';
 
 	SUBDBG( "Executable is %s\n", mdi->exe_info.address_info.name );
 	SUBDBG( "Full Executable is %s\n", mdi->exe_info.fullname );

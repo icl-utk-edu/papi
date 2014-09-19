@@ -204,13 +204,13 @@ int
 PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 {
 	int retval;
-	int events = PAPI_FP_INS;
+   int events[1] = {PAPI_FP_INS};
 	long long values = 0;
 
 	if ( rtime == NULL || ptime == NULL || flpins == NULL || mflips == NULL )
 		return PAPI_EINVAL;
 
-	retval = _hl_rate_calls( rtime, ptime, &events, &values, flpins, mflips, HL_FLIP );
+   retval = _hl_rate_calls( rtime, ptime, events, &values, flpins, mflips, HL_FLIP );
 	return ( retval );
 }
 
@@ -259,13 +259,13 @@ int
 PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
 {
 	int retval;
-	int events = PAPI_FP_OPS;
+   int events[1] = {PAPI_FP_OPS};
 	long long values = 0;
 
 	if ( rtime == NULL || ptime == NULL || flpops == NULL || mflops == NULL )
 		return PAPI_EINVAL;
 
-	retval = _hl_rate_calls( rtime, ptime, &events, &values, flpops, mflops, HL_FLOP );
+   retval = _hl_rate_calls( rtime, ptime, events, &values, flpops, mflops, HL_FLOP );
 	return ( retval );
 }
 

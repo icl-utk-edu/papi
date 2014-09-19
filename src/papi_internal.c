@@ -2162,20 +2162,22 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 	unsigned int j;
 
 	if ( _papi_hwi_presets[i].symbol ) {	/* if the event is in the preset table */
-	   /* set whole structure to 0 */
+      // since we are setting the whole structure to zero the strncpy calls below will 
+      // be leaving NULL terminates strings as long as they copy 1 less byte than the 
+      // buffer size of the field.
 	   memset( info, 0, sizeof ( PAPI_event_info_t ) );
 
 	   info->event_code = ( unsigned int ) EventCode;
 	   strncpy( info->symbol, _papi_hwi_presets[i].symbol,
-		    sizeof(info->symbol));
+	    sizeof(info->symbol)-1);
 
 	   if ( _papi_hwi_presets[i].short_descr != NULL )
 	      strncpy( info->short_descr, _papi_hwi_presets[i].short_descr,
-				          sizeof ( info->short_descr ) );
+		          sizeof ( info->short_descr )-1 );
 
 	   if ( _papi_hwi_presets[i].long_descr != NULL )
 	      strncpy( info->long_descr,  _papi_hwi_presets[i].long_descr,
-				          sizeof ( info->long_descr ) );
+		          sizeof ( info->long_descr )-1 );
 
 	   info->event_type = _papi_hwi_presets[i].event_type;
 	   info->count = _papi_hwi_presets[i].count;
@@ -2185,17 +2187,17 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 
 	   if ( _papi_hwi_presets[i].postfix != NULL )
 	      strncpy( info->postfix, _papi_hwi_presets[i].postfix,
-				          sizeof ( info->postfix ) );
+		          sizeof ( info->postfix )-1 );
 
 	   for(j=0;j < info->count; j++) {
 	      info->code[j]=_papi_hwi_presets[i].code[j];
 	      strncpy(info->name[j], _papi_hwi_presets[i].name[j],
-		      sizeof(info->name[j]));
+	      sizeof(info->name[j])-1);
 	   }
 
 	   if ( _papi_hwi_presets[i].note != NULL ) {
 	      strncpy( info->note, _papi_hwi_presets[i].note,
-				          sizeof ( info->note ) );
+		          sizeof ( info->note )-1 );
 	   }
 
 	   return PAPI_OK;
@@ -2286,7 +2288,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 				if ( retval == PAPI_OK && in != NULL) {
 					if ( strcasecmp( name, in ) == 0 ) {
 						*out = _papi_hwi_native_to_eventcode(cidx, i, -1, name);
-						INTDBG("EXIT: PAPI_OK  event: %s code: %#x\n", in, *out);
+			INTDBG("EXIT: PAPI_OK, event: %s, code: %#x\n", in, *out);
 						return PAPI_OK;
 					}
 					retval = PAPI_ENOEVNT;
