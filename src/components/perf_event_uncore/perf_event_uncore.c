@@ -62,6 +62,39 @@ _peu_libpfm4_get_cidx() {
 static int _peu_set_domain( hwd_control_state_t *ctl, int domain);
 
 
+
+/******************************************************************/
+/******** Kernel Version Dependent Routines  **********************/
+/******************************************************************/
+
+/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
+ * implementations (e.g. x86) which don't do a static event scheduability
+ * check in sys_perf_event_open.
+ * This was fixed for x86 in the 2.6.33 kernel
+ *
+ * Also! Kernels newer than 2.6.34 will fail in a similar way
+ *       if the nmi_watchdog has stolen a performance counter
+ *       and we try to use the maximum number of counters.
+ *       A sys_perf_event_open() will seem to succeed but will fail
+ *       at read time.  So re-use this work around code.
+ */
+static int
+bug_check_scheduability(void) {
+
+#if defined(__powerpc__)
+   /* PowerPC not affected by this bug */
+#elif defined(__mips__)
+   /* MIPS as of kernel 3.1 does not properly detect schedulability */
+   return 1;
+#else
+   if (_papi_os_info.os_version < LINUX_VERSION(2,6,33))
+	return 1;
+#endif
+
+   return 0;
+}
+
+
 /* The read format on perf_event varies based on various flags that */
 /* are passed into it.  This helper avoids copying this logic       */
 /* multiple places.                                                 */
@@ -90,6 +123,10 @@ get_read_format( unsigned int multiplex,
 
    return format;
 }
+
+/*****************************************************************/
+/********* End Kernel-version Dependent Routines  ****************/
+/*****************************************************************/
 
 /********************************************************************/
 /* Low-level perf_event calls                                       */
@@ -205,6 +242,90 @@ static int map_perf_event_errors_to_papi(int perf_event_error) {
 /*  possible counter value.                                   */
 #define READ_BUFFER_SIZE (3 + (2 * PERF_EVENT_MAX_MPX_COUNTERS))
 
+
+
+/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch */
+/* implementations (e.g. x86 before 2.6.33) which don't do a static event */
+/* scheduability check in sys_perf_event_open.  It is also needed if the  */
+/* kernel is stealing an event, such as when NMI watchdog is enabled.     */
+
+static int
+check_scheduability( pe_context_t *ctx, pe_control_t *ctl)
+{
+   SUBDBG("ENTER: ctx: %p, ctl: %p\n", ctx, ctl);
+   int retval = 0, cnt = -1;
+   ( void ) ctx;	     /*unused */
+   long long papi_pe_buffer[READ_BUFFER_SIZE];
+   int i;
+
+   if (bug_check_scheduability()) {
+
+	/* If the kernel isn't tracking scheduability right       */
+	/* Then we need to start/stop/read to force the event     */
+	/* to be scheduled and see if an error condition happens. */
+
+	/* start all events */
+	for( i = 0; i < ctl->num_events; i++) {
+	    retval = ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL );
+	    if (retval == -1) {
+		SUBDBG("EXIT: Enable failed event index: %d, num_events: %d, return PAPI_ESYS\n", i, ctl->num_events);
+		return PAPI_ESYS;
+	    }
+	}
+
+	/* stop all events */
+	for( i = 0; i < ctl->num_events; i++) {
+	    retval = ioctl(ctl->events[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL );
+	    if (retval == -1) {
+		SUBDBG("EXIT: Disable failed: event index: %d, num_events: %d, return PAPI_ESYS\n", i, ctl->num_events);
+		return PAPI_ESYS;
+	    }
+	}
+
+	/* See if a read of each event returns results */
+	for( i = 0; i < ctl->num_events; i++) {
+	    cnt = read( ctl->events[i].event_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
+	    if ( cnt == -1 ) {
+		SUBDBG( "EXIT: read failed: event index: %d, num_events: %d, return PAPI_ESYS.  Should never happen.\n", i, ctl->num_events);
+		return PAPI_ESYS;
+	    }
+
+	    if ( cnt == 0 ) {
+		/* We read 0 bytes if we could not schedule the event */
+		/* The kernel should have detected this at open       */
+		/* but various bugs (including NMI watchdog)          */
+		/* result in this behavior                            */
+
+		SUBDBG( "EXIT: read returned 0: event index: %d, num_events: %d, return PAPI_ECNFLCT.\n", i, ctl->num_events);
+		return PAPI_ECNFLCT;
+	    }
+	}
+
+	/* Reset all of the counters (opened so far) back to zero      */
+	/* from the above brief enable/disable call pair.              */
+
+	/* We have to reset all events because reset of group leader      */
+	/* does not reset all.                                            */
+	/* we assume that the events are being added one by one and that  */
+	/* we do not need to reset higher events (doing so may reset ones */
+	/* that have not been initialized yet.                            */
+
+	/* Note... PERF_EVENT_IOC_RESET does not reset time running       */
+	/* info if multiplexing, so we should avoid coming here if        */
+	/* we are multiplexing the event.                                 */
+	for( i = 0; i < ctl->num_events; i++) {
+	    retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+	    if (retval == -1) {
+		SUBDBG("EXIT: Reset failed: event index: %d, num_events: %d, return PAPI_ESYS\n", i, ctl->num_events);
+		return PAPI_ESYS;
+	    }
+	}
+   }
+   SUBDBG("EXIT: return PAPI_OK\n");
+   return PAPI_OK;
+}
+
+
 /* Open all events in the control state */
 static int
 open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
@@ -292,7 +413,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 		i, strerror( errno ) );
          ret=map_perf_event_errors_to_papi(errno);
 
-	 goto open_pe_cleanup;
+    goto open_peu_cleanup;
       }
 
       SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
@@ -302,6 +423,25 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
 
       ctl->events[i].event_opened=1;
+   }
+
+
+   /* in many situations the kernel will indicate we opened fine */
+   /* yet things will fail later.  So we need to double check    */
+   /* we actually can use the events we've set up.               */
+
+   /* This is not necessary if we are multiplexing, and in fact */
+   /* we cannot do this properly if multiplexed because         */
+   /* PERF_EVENT_IOC_RESET does not reset the time running info */
+   if (!ctl->multiplexed) {
+	ret = check_scheduability( ctx, ctl);
+
+	if ( ret != PAPI_OK ) {
+	    /* the last event did open, so we need to bump the counter */
+	    /* before doing the cleanup                                */
+	    i++;
+	    goto open_peu_cleanup;
+	}
    }
 
    /* Now that we've successfully opened all of the events, do whatever  */
@@ -318,7 +458,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
    return PAPI_OK;
 
-open_pe_cleanup:
+open_peu_cleanup:
    /* We encountered an error, close up the fds we successfully opened.  */
    /* We go backward in an attempt to close group leaders last, although */
    /* That's probably not strictly necessary.                            */
@@ -774,6 +914,8 @@ int
 _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	       long long **events, int flags )
 {
+    SUBDBG("ENTER: ctx: %p, ctl: %p, events: %p, flags: %#x\n", ctx, ctl, events, flags);
+
    ( void ) flags;			 /*unused */
    int i, ret = -1;
    /* pe_context_t *pe_ctx = ( pe_context_t *) ctx; */ 
@@ -794,12 +936,14 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		    sizeof ( papi_pe_buffer ) );
          if ( ret == -1 ) {
 	    PAPIERROR("read returned an error: ", strerror( errno ));
+       SUBDBG("EXIT: PAPI_ESYS\n");
 	    return PAPI_ESYS;
 	 }
 
 	 /* We should read 3 64-bit values from the counter */
 	 if (ret<(signed)(3*sizeof(long long))) {
 	    PAPIERROR("Error!  short read!\n");
+       SUBDBG("EXIT: PAPI_ESYS\n");
 	    return PAPI_ESYS;
 	 }
 
@@ -850,6 +994,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		    sizeof ( papi_pe_buffer ) );
          if ( ret == -1 ) {
 	    PAPIERROR("read returned an error: ", strerror( errno ));
+       SUBDBG("EXIT: PAPI_ESYS\n");
 	    return PAPI_ESYS;
 	 }
 
@@ -859,6 +1004,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	    PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
 		   pe_ctl->events[i].event_fd,
 		   (long)pe_ctl->tid, pe_ctl->events[i].cpu, ret);
+       SUBDBG("EXIT: PAPI_ESYS\n");
 	    return PAPI_ESYS;
 	 }
 
@@ -885,6 +1031,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
       if ( ret == -1 ) {
 	 PAPIERROR("read returned an error: ", strerror( errno ));
+       SUBDBG("EXIT: PAPI_ESYS\n");
 	 return PAPI_ESYS;
       }
 
@@ -892,6 +1039,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       /* num_events more 64-bit values that hold the counts */
       if (ret<(signed)((1+pe_ctl->num_events)*sizeof(long long))) {
 	 PAPIERROR("Error! short read!\n");
+       SUBDBG("EXIT: PAPI_ESYS\n");
 	 return PAPI_ESYS;
       }
 
@@ -908,6 +1056,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       /* Make sure the kernel agrees with how many events we have */
       if (papi_pe_buffer[0]!=pe_ctl->num_events) {
 	 PAPIERROR("Error!  Wrong number of events!\n");
+       SUBDBG("EXIT: PAPI_ESYS\n");
 	 return PAPI_ESYS;
       }
 
@@ -920,6 +1069,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    /* point PAPI to the values we read */
    *events = pe_ctl->counts;
 
+   SUBDBG("EXIT: PAPI_OK\n");
    return PAPI_OK;
 }
 
