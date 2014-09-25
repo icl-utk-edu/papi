@@ -45,6 +45,7 @@
 #include "papi_test.h"
 
 #define EVT_LINE 80
+#define EVT_LINE_BUF_SIZE 4096
 
 typedef struct command_flags
 {
@@ -169,55 +170,132 @@ space_pad( char *str, int spaces )
 		strcat( str, " " );
 }
 
-static int
+unsigned int event_available = 0;
+unsigned int event_output_buffer_size = 0;
+char *event_output_buffer = NULL;
+
+static void
 validate_event( PAPI_event_info_t * info )
 {
-	unsigned int na = 0;
 	int EventSet = PAPI_NULL;
 
 	if (PAPI_create_eventset (&EventSet) == PAPI_OK) {
 		if (PAPI_add_named_event (EventSet, info->symbol) == PAPI_OK) {
 			PAPI_remove_named_event (EventSet, info->symbol);
-		} else {
-			na = 1;
-		}
+			event_available = 1;
+		} // else printf("********** PAPI_add_named_event( %s ) failed: event could not be added \n", info->symbol);
 		if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK ) {
 			printf("**********  Call to destroy eventset failed when trying to validate event '%s'  **********\n", info->symbol);
-			na = 1;
 		}
 	}
 
-	return na;
+	return;
 }
 
 static void
-print_event( PAPI_event_info_t * info, int offset, int validate, int na )
+format_event_output( PAPI_event_info_t * info, int offset)
 {
 	unsigned int i, j = 0;
-	char str[EVT_LINE + EVT_LINE];
+	char event_line_buffer[EVT_LINE_BUF_SIZE];
 
 	/* indent by offset */
 	if ( offset ) {
-		printf( "|     %-69s%4s|\n", info->symbol, ((validate && na) ? "<NA>" : "") );
+		// this one is used for event masks
+		sprintf(event_line_buffer, "|     %-73s|\n", info->symbol);
 	}
 	else {
-		printf( "| %-73s%4s|\n", info->symbol, ((validate && na) ? "<NA>" : "") );
+		// this one is used for new events
+		sprintf(event_line_buffer, "| %-73s%4s|\n", info->symbol, "<-->");
 	}
 
 	while ( j <= strlen( info->long_descr ) ) {
-		i = EVT_LINE - 12 - 2;
-		if ( i > 0 ) {
-			str[0] = 0;
-			strcat(str,"| " );
-			space_pad( str, 11 );
-			strncat( str, &info->long_descr[j], i );
-			j += i;
-			i = ( unsigned int ) strlen( str );
-			space_pad( str, EVT_LINE - ( int ) i - 1 );
-			strcat( str, "|" );
+		// The event_line_buffer is used to collect an event or mask name and its description.
+		// The description will be folded to keep the length of output lines reasonable.  So this
+		// buffer may contain multiple lines of print output.  Check to make sure there is room
+		// for another line of print output.  If there is not enough room for another output line
+		// just exit the loop and truncate the description field (the buffer is big enough this
+		// should not happen).
+		if ((EVT_LINE_BUF_SIZE - strlen(event_line_buffer)) < EVT_LINE) {
+			printf ("Event or mask description has been truncated.\n");
+			break;
 		}
-		printf( "%s\n", str );
+
+		// get amount of description that will fit in an output line
+		i = EVT_LINE - 12 - 2;
+		// start of a description line
+		strcat(event_line_buffer,"|            " );
+		// if we need to copy less than what fits in this line, move it and exit loop
+		if (i > strlen(&info->long_descr[j])) {
+			strcat( event_line_buffer, &info->long_descr[j]);
+			space_pad( event_line_buffer, i - strlen(&info->long_descr[j]));
+			strcat( event_line_buffer, "|\n" );
+			break;
+		}
+
+		// move what will fit into the line then loop back to do the rest in a new line
+		int k = strlen(event_line_buffer);
+		strncat( event_line_buffer, &info->long_descr[j], i );
+		event_line_buffer[k+i] = '\0';
+		strcat( event_line_buffer, "|\n" );
+
+		// bump index past what we copied
+		j += i;
 	}
+
+	// get the amount of used space in the output buffer
+	int out_buf_used = 0;
+	if ((event_output_buffer_size > 0) && (event_output_buffer != NULL)) {
+		out_buf_used = strlen(event_output_buffer);
+	}
+
+	// if this will not fit in output buffer, make it bigger
+	if (event_output_buffer_size < out_buf_used + strlen(event_line_buffer) + 1) {
+		if (event_output_buffer_size == 0) {
+			event_output_buffer_size = 1024;
+			event_output_buffer = calloc(1, event_output_buffer_size);
+		} else {
+			event_output_buffer_size += 1024;
+			event_output_buffer = realloc(event_output_buffer, event_output_buffer_size);
+		}
+	}
+
+	// make sure we got the memory we asked for
+	if (event_output_buffer == NULL) {
+		test_fail( __FILE__, __LINE__, "Allocation of output buffer memory failed.\n", errno );
+	}
+
+	strcat(event_output_buffer, event_line_buffer);
+	return;
+}
+
+static void
+print_event_output(int val_flag)
+{
+	// first we need to update the available flag at the beginning of the buffer
+	// this needs to reflect if this event name by itself or the event name with one of the masks worked
+	// if none of the combinations worked then we will show the event as not available
+	char *val_flag_ptr = strstr(event_output_buffer, "<-->");
+	if (val_flag_ptr != NULL) {
+		if ((val_flag) && (event_available == 0)) {
+			// event is not available, update the place holder (replace the <--> with <NA>)
+			*(val_flag_ptr+1) = 'N';
+			*(val_flag_ptr+2) = 'A';
+		} else {
+			event_available = 0;       // reset this flag for next event
+			// event is available, just remove the place holder (replace the <--> with spaces)
+			*val_flag_ptr = ' ';
+			*(val_flag_ptr+1) = ' ';
+			*(val_flag_ptr+2) = ' ';
+			*(val_flag_ptr+3) = ' ';
+		}
+	}
+
+	// now we can finally send this events output to the user
+	printf( "%s", event_output_buffer);
+//	printf( "--------------------------------------------------------------------------------\n" );
+
+	event_output_buffer[0] = '\0';          // start the next event with an empty buffer
+	return;
 }
 
 static int
@@ -258,7 +336,9 @@ parse_unit_masks( PAPI_event_info_t * info )
 int
 main( int argc, char **argv )
 {
-	int i, j = 0, k;
+	int i, k;
+	int num_events;
+	int num_cmp_events;
 	int retval;
 	PAPI_event_info_t info;
 	const PAPI_hw_info_t *hwinfo = NULL;
@@ -309,9 +389,8 @@ main( int argc, char **argv )
 	if ( flags.named ) {
 		if ( PAPI_event_name_to_code( flags.name, &i ) == PAPI_OK ) {
 			if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
-				printf( "%-30s%s\n",
-						"Event name:", info.symbol);
-				printf( "%-29s|%s|\n", "Description:", info.long_descr );
+				printf( "Event name:     %s\n",	info.symbol);
+				printf( "Description:    %s\n", info.long_descr );
 
 				/* handle the PAPI component-style events which have a component:::event type */
 				char *ptr;
@@ -328,13 +407,12 @@ main( int argc, char **argv )
 				/* if unit masks exist but none specified, process all */
 				if ( !strchr( ptr, ':' ) ) {
 					if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-						printf( "\nUnit Masks:\n" );
+						printf( "\nUnit Masks:      Mask Name -- Description\n" );
 						do {
 							retval = PAPI_get_event_info( i, &info );
 							if ( retval == PAPI_OK ) {
 								if ( parse_unit_masks( &info ) ) {
-									printf( "%-29s|%s|%s|\n", " Mask Info:",
-											info.symbol, info.long_descr );
+									printf( "  Mask Info:    %10s -- %s\n", info.symbol, info.long_descr );
 								}
 							}
 						} while ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
@@ -347,121 +425,123 @@ main( int argc, char **argv )
 			printf("Is it typed correctly?\n\n");
 			exit( 1 );
 		}
+		test_pass( __FILE__, NULL, 0 );
+		exit( 0 );
 	}
-	else {
 
-		/* Print *ALL* available events */
+	// Look at all the events and masks and print the information the user has asked for */
 
-		numcmp = PAPI_num_components(  );
+	numcmp = PAPI_num_components(  );
 
-		j = 0;
+	num_events = 0;
 
-		for ( cid = 0; cid < numcmp; cid++ ) {
+	for ( cid = 0; cid < numcmp; cid++ ) {
+		const PAPI_component_info_t *component;
+		component=PAPI_get_component_info(cid);
 
-			const PAPI_component_info_t *component;
-			component=PAPI_get_component_info(cid);
+		/* Skip disabled components */
+		if (component->disabled) continue;
 
-			/* Skip disabled components */
-			if (component->disabled) continue;
+		printf( "===============================================================================\n" );
+		printf( " Native Events in Component: %s\n",component->name);
+		printf( "===============================================================================\n" );
 
-			printf( "===============================================================================\n" );
-			printf( " Native Events in Component: %s\n",component->name);
-			printf( "===============================================================================\n" );
+		// show this component has not found any events yet
+		num_cmp_events = 0;
 
-			/* Always ASK FOR the first event */
-			/* Don't just assume it'll be the first numeric value */
-			i = 0 | PAPI_NATIVE_MASK;
+		/* Always ASK FOR the first event */
+		/* Don't just assume it'll be the first numeric value */
+		i = 0 | PAPI_NATIVE_MASK;
 
-			retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
+		retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
-			if (retval==PAPI_OK) 
-
-				do {
-					memset( &info, 0, sizeof ( info ) );
-					retval = PAPI_get_event_info( i, &info );
-
-					/* This event may not exist */
-					if ( retval != PAPI_OK )
-						continue;
-
-					/* Bail if event name doesn't contain include string */
-					if ( flags.include ) {
-						if ( !strstr( info.symbol, flags.istr ) ) {
-							continue;
-						}
-					}
-
-					/* Bail if event name does contain exclude string */
-					if ( flags.xclude ) {
-						if ( strstr( info.symbol, flags.xstr ) )
-							continue;
-					}
-
-					/* count only events that are actually processed */
-					j++;
-
-					if (flags.validate){
-						retval = validate_event(&info);
-					} else {
-						retval = 0;
-					}
-
-					print_event( &info, 0, flags.validate, retval );
-
-					if (flags.details) {
-						if (info.units[0]) printf( "|     Units: %-67s|\n", 
-								info.units );
-					}
-
-					/*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
-							groups id for each group in which this
-							native event lives, in bits 16 - 23 of event code
-							terminating with PAPI_ENOEVNT at the end of the list.
-							*/
-
-					/* This is an IBM Power issue */
-					if ( flags.groups ) {
-						k = i;
-						if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_GROUPS, cid ) == PAPI_OK ) {
-							printf( "Groups: " );
-							do {
-								printf( "%4d", ( ( k & PAPI_NTV_GROUP_AND_MASK ) >>
-											PAPI_NTV_GROUP_SHIFT ) - 1 );
-							} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_GROUPS, cid ) ==PAPI_OK );
-							printf( "\n" );
-						}
-					}
-
-					/* Print umasks */
-					/* components that don't have them can just ignore */
-
-					if ( flags.umask ) { 
-						k = i;
-						if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
-							do {
-								retval = PAPI_get_event_info( k, &info );
-								if ( retval == PAPI_OK ) {
-									if (flags.validate){
-										retval = validate_event(&info);
-									} else {
-										retval = 0; 
-									}
-									if ( parse_unit_masks( &info ) )
-										print_event( &info, 2, flags.validate, retval );
-								}
-							} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
-						}
-
-					}
+		if (retval==PAPI_OK) {
+			do {
+				// if not the first event in this component, put out a divider
+				if (num_cmp_events) {
 					printf( "--------------------------------------------------------------------------------\n" );
+				}
+				memset( &info, 0, sizeof ( info ) );
+				retval = PAPI_get_event_info( i, &info );
 
-				} while (PAPI_enum_cmp_event( &i, enum_modifier, cid ) == PAPI_OK );
+				/* This event may not exist */
+				if ( retval != PAPI_OK ) continue;
+
+				/* Bail if event name doesn't contain include string */
+				if ( flags.include && !strstr( info.symbol, flags.istr ) ) continue;
+                                     
+				/* Bail if event name does contain exclude string */
+                                if ( flags.xclude && strstr( info.symbol, flags.xstr ) ) continue;
+
+				/* count only events that are actually processed */
+				num_events++;
+				num_cmp_events++;
+
+				if (flags.validate){
+					validate_event(&info);
+				}
+
+				format_event_output( &info, 0);
+
+				if (flags.details) {
+					if (info.units[0]) printf( "|     Units: %-67s|\n",
+							info.units );
+				}
+
+				/*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
+						groups id for each group in which this
+						native event lives, in bits 16 - 23 of event code
+						terminating with PAPI_ENOEVNT at the end of the list.
+						*/
+
+				/* This is an IBM Power issue */
+				if ( flags.groups ) {
+					k = i;
+					if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_GROUPS, cid ) == PAPI_OK ) {
+						printf( "Groups: " );
+						do {
+							printf( "%4d", ( ( k & PAPI_NTV_GROUP_AND_MASK ) >>
+										PAPI_NTV_GROUP_SHIFT ) - 1 );
+						} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_GROUPS, cid ) ==PAPI_OK );
+						printf( "\n" );
+					}
+				}
+
+				// If the user has asked us to validate the events then we need to
+				// walk the list of masks and try to validate the event with each one.
+				// Even if the user does not want to display the masks this is necessary
+				// to be able to correctly report which events can be used on this system.
+				//
+				// We also need to walk the list if the user wants to see the masks.
+
+				if (flags.umask || flags.validate){
+					k = i;
+					if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
+						do {
+							retval = PAPI_get_event_info( k, &info );
+							if ( retval == PAPI_OK ) {
+								if ( flags.validate ) {
+									validate_event(&info);
+								}
+								// now test if the masks should be displayed to the user
+								if ( flags.umask ) {
+									if ( parse_unit_masks( &info ) )
+										format_event_output( &info, 2);
+								}
+							}
+						} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
+					}
+				}
+
+				print_event_output(flags.validate);
+			} while (PAPI_enum_cmp_event( &i, enum_modifier, cid ) == PAPI_OK );
 		}
-
-
-		printf("\n");
-		printf( "Total events reported: %d\n", j );
 	}
+
+	if (num_cmp_events != 0) {
+		printf( "--------------------------------------------------------------------------------\n" );
+	}
+	printf( "\nTotal events reported: %d\n", num_events );
 
 	test_pass( __FILE__, NULL, 0 );
 	exit( 0 );
