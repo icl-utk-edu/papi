@@ -348,6 +348,9 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
   }
 
   if (encode_failed != 0) {
+          // Noting the encode_failed error in the attr.config allows
+          // any later validate attempts to return an error value
+          ntv_evt->attr.config = 0xFFFFFF;
 	  SUBDBG("EXIT: encoding event failed\n");
 	  return NULL;
   }
