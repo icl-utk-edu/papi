@@ -26,48 +26,16 @@
 #include "pfmlib_intel_x86_priv.h"
 #include "events/intel_wsm_events.h"
 
-static int
-pfm_wsm_sp_detect(void *this)
-{
-	int ret;
+static const int wsm_models[] = {
+	37, /* Clarkdale */
+	0,
+};
 
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 37: /* Clarkdale */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
-pfm_wsm_dp_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 44: /* Westmere-EP, Gulftown */
-		case 47: /* Westmere E7 */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
+static const int wsm_dp_models[] = {
+	44, /* Westmere-EP, Gulftown */
+	47, /* Westmere E7 */
+	0,
+};
 
 static int
 pfm_wsm_init(void *this)
@@ -90,7 +58,9 @@ pfmlib_pmu_t intel_wsm_sp_support={
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
-	.pmu_detect		= pfm_wsm_sp_detect,
+	.cpu_family		= 6,
+	.cpu_models		= wsm_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_wsm_init,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
@@ -121,7 +91,9 @@ pfmlib_pmu_t intel_wsm_dp_support={
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
-	.pmu_detect		= pfm_wsm_dp_detect,
+	.cpu_family		= 6,
+	.cpu_models		= wsm_dp_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_wsm_init,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,

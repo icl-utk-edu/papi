@@ -29,26 +29,11 @@
 #include "pfmlib_intel_x86_priv.h"
 #include "events/intel_slm_events.h"
 
-static int
-pfm_intel_slm_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch(pfm_intel_x86_cfg.model) {
-	case 55: /* Silvermont */
-	case 77: /* Silvermont Avoton */
-		break;
-	default:
-		return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
+static const int slm_models[] = {
+	55, /* Silvermont */
+	77, /* Silvermont Avoton */
+	0
+};
 
 static int
 pfm_intel_slm_init(void *this)
@@ -72,7 +57,9 @@ pfmlib_pmu_t intel_slm_support={
 				| INTEL_X86_PMU_FL_ECMASK,
 	.supported_plm		= INTEL_X86_PLM,
 
-	.pmu_detect		= pfm_intel_slm_detect,
+	.cpu_family		= 6,
+	.cpu_models		= slm_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_intel_slm_init,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,

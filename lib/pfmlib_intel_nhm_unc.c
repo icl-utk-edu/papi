@@ -65,49 +65,18 @@ static const pfmlib_attr_desc_t nhm_unc_mods[]={
 	PFM_ATTR_NULL
 };
 
-static int
-pfm_nhm_unc_detect(void *this)
-{
-	int ret;
+static const int nhm_models[] = {
+	26,
+	30,
+	31,
+	0
+};
 
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch(pfm_intel_x86_cfg.model) {
-		case 26: /* Nehalem */
-		case 30:
-		case 31:
-			  break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
-pfm_wsm_unc_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 37: /* Westmere */
-		case 44:
-			  break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
+static const int wsm_dp_models[] = {
+	44, /* Westmere-EP, Gulftown */
+	47, /* Westmere E7 */
+	0,
+};
 
 static int
 pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
@@ -329,7 +298,9 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.atdesc			= nhm_unc_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
-	.pmu_detect		= pfm_nhm_unc_detect,
+	.cpu_family		= 6,
+	.cpu_models		= nhm_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_nhm_unc_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_nhm_unc_get_perf_encoding),
@@ -359,7 +330,9 @@ pfmlib_pmu_t intel_wsm_unc_support={
 	.atdesc			= nhm_unc_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
-	.pmu_detect		= pfm_wsm_unc_detect,
+	.cpu_family		= 6,
+	.cpu_models		= wsm_dp_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_nhm_unc_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_nhm_unc_get_perf_encoding),

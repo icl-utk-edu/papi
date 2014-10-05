@@ -27,53 +27,21 @@
 #include "events/intel_ivb_events.h"
 
 static int
-pfm_ivb_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 58: /* IvyBridge (Core i3/i5/i7 3xxx) */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
-pfm_ivbep_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 62: /* IvyTown */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
 pfm_ivb_init(void *this)
 {
 	pfm_intel_x86_cfg.arch_version = 3;
 	return PFM_SUCCESS;
 }
+
+static const int ivb_models[] = {
+	58, /* IvyBridge (Core i3/i5/i7 3xxx) */
+	0
+};
+
+static const int ivbep_models[] = {
+	62, /* Ivytown */
+	0
+};
 
 pfmlib_pmu_t intel_ivb_support={
 	.desc			= "Intel Ivy Bridge",
@@ -89,7 +57,9 @@ pfmlib_pmu_t intel_ivb_support={
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
-	.pmu_detect		= pfm_ivb_detect,
+	.cpu_family		= 6,
+	.cpu_models		= ivb_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_ivb_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
@@ -118,7 +88,9 @@ pfmlib_pmu_t intel_ivb_ep_support={
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
-	.pmu_detect		= pfm_ivbep_detect,
+	.cpu_family		= 6,
+	.cpu_models		= ivbep_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_ivb_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),

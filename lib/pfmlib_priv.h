@@ -116,6 +116,9 @@ typedef struct pfmlib_pmu {
 
 	const pfmlib_attr_desc_t *atdesc;	/* pointer to attrs table */
 
+	const int	cpu_family;		/* cpu family number for detection */
+	const int	*cpu_models;		/* cpu model numbers for detection (zero terminated) */
+
 	int 		 (*pmu_detect)(void *this);
 	int 		 (*pmu_init)(void *this);	/* optional */
 	void		 (*pmu_terminate)(void *this); /* optional */

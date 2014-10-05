@@ -34,49 +34,17 @@ static int pfm_nhm_offcore_encode(void *this, pfmlib_event_desc_t *e, uint64_t *
 
 #include "events/intel_nhm_events.h"
 
-static int
-pfm_nhm_detect(void *this)
-{
-	int ret;
+static const int nhm_models[] = {
+	26,
+	30,
+	31,
+	0
+};
 
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch(pfm_intel_x86_cfg.model) {
-		case 26:
-		case 30:
-		case 31:
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
-pfm_nhm_ex_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch(pfm_intel_x86_cfg.model) {
-		case 46:
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
+static const int nhm_ex_models[] = {
+	46,
+	0
+};
 
 static int
 pfm_nhm_init(void *this)
@@ -152,7 +120,9 @@ pfmlib_pmu_t intel_nhm_support={
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
-	.pmu_detect		= pfm_nhm_detect,
+	.cpu_family		= 6,
+	.cpu_models		= nhm_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_nhm_init,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
@@ -183,7 +153,9 @@ pfmlib_pmu_t intel_nhm_ex_support={
 	.atdesc			= intel_x86_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK
 				| INTEL_X86_PMU_FL_ECMASK,
-	.pmu_detect		= pfm_nhm_ex_detect,
+	.cpu_family		= 6,
+	.cpu_models		= nhm_ex_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_nhm_init,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,

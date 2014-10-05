@@ -30,96 +30,31 @@
 #include "events/intel_ppro_events.h"		/* Pentium Pro */
 #include "events/intel_pm_events.h"		/* Pentium M */
 
-static int
-pfm_p6_detect_pii(void *this)
-{
-	int ret;
+static const int pii_models[] = {
+	3, /* Pentium II */
+	5, /* Pentium II Deschutes */
+	6, /* Pentium II Mendocino */
+	0
+};
 
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
+static const int ppro_models[] = {
+	1, /* Pentium Pro */
+	0
+};
 
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
+static const int piii_models[] = {
+	7, /* Pentium III Katmai */
+	8, /* Pentium III Coppermine */
+	10,/* Pentium III Cascades */
+	11,/* Pentium III Tualatin */
+	0
+};
 
-	switch (pfm_intel_x86_cfg.model) {
-		case 3: /* Pentium II */
-		case 5: /* Pentium II Deschutes */
-		case 6: /* Pentium II Mendocino */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
-pfm_p6_detect_ppro(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 1: /* Pentium Pro */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-
-static int
-pfm_p6_detect_piii(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 7: /* Pentium III Katmai */
-		case 8: /* Pentium III Coppermine */
-		case 10:/* Pentium III Cascades */
-		case 11:/* Pentium III Tualatin */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
-
-static int
-pfm_p6_detect_pm(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 6)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 9: /* Pentium M */
-		case 13:/* Pentium M */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
+static const int pm_models[] = {
+	9, /* Pentium M */
+	13, /* Pentium III Coppermine */
+	0
+};
 
 /* Pentium II support */
 pfmlib_pmu_t intel_pii_support={
@@ -132,7 +67,9 @@ pfmlib_pmu_t intel_pii_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.type			= PFM_PMU_TYPE_CORE,
 	.supported_plm		= INTEL_X86_PLM,
-	.pmu_detect		= pfm_p6_detect_pii,
+	.cpu_family		= 6,
+	.cpu_models		= pii_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
 
@@ -160,7 +97,9 @@ pfmlib_pmu_t intel_p6_support={
 	.type			= PFM_PMU_TYPE_CORE,
 	.supported_plm		= INTEL_X86_PLM,
 
-	.pmu_detect		= pfm_p6_detect_piii,
+	.cpu_family		= 6,
+	.cpu_models		= piii_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
 
@@ -188,7 +127,9 @@ pfmlib_pmu_t intel_ppro_support={
 	.type			= PFM_PMU_TYPE_CORE,
 	.supported_plm		= INTEL_X86_PLM,
 
-	.pmu_detect		= pfm_p6_detect_ppro,
+	.cpu_family		= 6,
+	.cpu_models		= ppro_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.num_cntrs		= 2,
 	.max_encoding		= 1,
 
@@ -215,7 +156,9 @@ pfmlib_pmu_t intel_pm_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.supported_plm		= INTEL_X86_PLM,
 
-	.pmu_detect		= pfm_p6_detect_pm,
+	.cpu_family		= 6,
+	.cpu_models		= pm_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pme_count		= LIBPFM_ARRAY_SIZE(intel_pm_pe),
 	.type			= PFM_PMU_TYPE_CORE,
 	.num_cntrs		= 2,

@@ -29,21 +29,6 @@
 #include "events/amd64_events_fam15h.h"
 #include "events/amd64_events_fam15h_nb.h"
 
-static int
-pfm_amd64_fam15h_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_amd64_detect(this);
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_amd64_cfg.revision == PFM_PMU_AMD64_FAM15H_INTERLAGOS)
-		return PFM_SUCCESS;
-
-	return PFM_ERR_NOTSUPP;
-}
-
 pfmlib_pmu_t amd64_fam15h_interlagos_support={
 	.desc			= "AMD64 Fam15h Interlagos",
 	.name			= "amd64_fam15h_interlagos",
@@ -57,7 +42,8 @@ pfmlib_pmu_t amd64_fam15h_interlagos_support={
 	.pe			= amd64_fam15h_pe,
 	.atdesc			= amd64_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
-	.pmu_detect		= pfm_amd64_fam15h_detect,
+	.cpu_family		= PFM_PMU_AMD64_FAM15H_INTERLAGOS,
+	.pmu_detect		= pfm_amd64_family_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),
 	.get_event_first	= pfm_amd64_get_event_first,
@@ -84,7 +70,8 @@ pfmlib_pmu_t amd64_fam15h_nb_support={
 	.pe			= amd64_fam15h_nb_pe,
 	.atdesc			= amd64_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
-	.pmu_detect		= pfm_amd64_fam15h_detect,
+	.cpu_family		= PFM_PMU_AMD64_FAM15H_INTERLAGOS,
+	.pmu_detect		= pfm_amd64_family_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),
 	.get_event_first	= pfm_amd64_get_event_first,

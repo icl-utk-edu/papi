@@ -28,18 +28,6 @@
 #include "pfmlib_amd64_priv.h"
 #include "events/amd64_events_k7.h"
 
-static int
-pfm_amd64_k7_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_amd64_detect(this);
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	ret = pfm_amd64_cfg.revision;
-	return ret == PFM_PMU_AMD64_K7 ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
-}
 
 pfmlib_pmu_t amd64_k7_support={
 	.desc			= "AMD64 K7",
@@ -55,7 +43,8 @@ pfmlib_pmu_t amd64_k7_support={
 	.atdesc			= amd64_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 
-	.pmu_detect		= pfm_amd64_k7_detect,
+	.cpu_family		= PFM_PMU_AMD64_K7,
+	.pmu_detect		= pfm_amd64_family_detect,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),
