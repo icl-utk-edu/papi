@@ -2779,7 +2779,7 @@ static const test_event_t x86_test_events[]={
 	  .count = 2,
 	  .codes[0] = 0x5301b7,
 	  .codes[1] = 0x3f84000091ull,
-	  .fstr = "hsw_ep::OFFCORE_RESPONSE_0:DMND_DATA_RD:PF_DATA_RD:PF_LLC_DATA_RD:L3_MISS_LOCAL:SNP_ANY:k=1:u=1:e=0:i=0:c=0:t=0:intx=0:intxcp=0",
+	  .fstr = "hsw_ep::OFFCORE_RESPONSE_0:DMND_DATA_RD:PF_DATA_RD:PF_LLC_DATA_RD:L3_MISS_LOCAL_DRAM:SNP_ANY:k=1:u=1:e=0:i=0:c=0:t=0:intx=0:intxcp=0",
 	},
 	{ SRC_LINE,
 	  .name = "hsw_ep::offcore_response_0:any_data:LLC_miss_local",
