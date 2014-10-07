@@ -77,7 +77,8 @@ endif
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_ARM),y)
-ARCH_MAN += libpfm_arm_ac57.3 \
+ARCH_MAN += libpfm_arm_xgene.3 \
+	    libpfm_arm_ac57.3 \
 	    libpfm_arm_ac53.3 \
 	    libpfm_arm_ac15.3 \
 	    libpfm_arm_ac8.3 \
@@ -86,7 +87,8 @@ ARCH_MAN += libpfm_arm_ac57.3 \
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_ARM64),y)
-ARCH_MAN += libpfm_arm_ac57.3 \
+ARCH_MAN += libpfm_arm_xgene.3 \
+	    libpfm_arm_ac57.3 \
 	    libpfm_arm_ac53.3
 endif
 

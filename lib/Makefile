@@ -278,7 +278,8 @@ INC_SPARC=events/sparc_ultra12_events.h		\
 INC_CELL=events/cell_events.h
 
 INC_ARM=events/arm_cortex_a8_events.h		\
-        events/arm_cortex_a9_events.h
+        events/arm_cortex_a9_events.h		\
+        events/arm_arm_xgene_events.h
 
 INC_ARM=pfmlib_arm_priv.h			\
 	events/arm_cortex_a7_events.h		\
