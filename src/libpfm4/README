@@ -48,6 +48,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Sandy Bridge
 		Intel Ivy Bridge
 		Intel Haswell
+		Intel Broadwell
 		Intel Silvermont
 		Intel RAPL (energy consumption)
 		Intel Knights Corner
@@ -58,6 +59,7 @@ The library supports many PMUs. The current version can handle:
 		ARMV7 Cortex A9
 		ARMV7 Cortex A15
 		ARMV8 Cortex A57, A53
+		Applied Micro X-Gene
 		Qualcomm Krait
 
 	- For SPARC

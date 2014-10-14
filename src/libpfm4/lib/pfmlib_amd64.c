@@ -347,6 +347,20 @@ pfm_amd64_detect(void *this)
 	return PFM_SUCCESS;
 }
 
+int
+pfm_amd64_family_detect(void *this)
+{
+	struct pfmlib_pmu *pmu = this;
+	int ret;
+
+	ret = pfm_amd64_detect(this);
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	ret = pfm_amd64_cfg.revision;
+	return ret == pmu->cpu_family ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
+}
+
 static int
 amd64_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask)
 {

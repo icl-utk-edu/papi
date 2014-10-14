@@ -116,6 +116,9 @@ typedef struct pfmlib_pmu {
 
 	const pfmlib_attr_desc_t *atdesc;	/* pointer to attrs table */
 
+	const int	cpu_family;		/* cpu family number for detection */
+	const int	*cpu_models;		/* cpu model numbers for detection (zero terminated) */
+
 	int 		 (*pmu_detect)(void *this);
 	int 		 (*pmu_init)(void *this);	/* optional */
 	void		 (*pmu_terminate)(void *this); /* optional */
@@ -247,6 +250,7 @@ extern pfmlib_pmu_t intel_ivb_unc_cbo3_support;
 extern pfmlib_pmu_t intel_ivb_ep_support;
 extern pfmlib_pmu_t intel_hsw_support;
 extern pfmlib_pmu_t intel_hsw_ep_support;
+extern pfmlib_pmu_t intel_bdw_support;
 extern pfmlib_pmu_t intel_rapl_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb0_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb1_support;
@@ -336,6 +340,7 @@ extern pfmlib_pmu_t arm_1176_support;
 extern pfmlib_pmu_t arm_qcom_krait_support;
 extern pfmlib_pmu_t arm_cortex_a57_support;
 extern pfmlib_pmu_t arm_cortex_a53_support;
+extern pfmlib_pmu_t arm_xgene_support;
 extern pfmlib_pmu_t mips_74k_support;
 extern pfmlib_pmu_t s390x_cpum_cf_support;
 extern pfmlib_pmu_t s390x_cpum_sf_support;

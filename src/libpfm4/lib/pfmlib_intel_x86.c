@@ -173,6 +173,26 @@ pfm_intel_x86_detect(void)
 	return PFM_SUCCESS;
 }
 
+int pfm_intel_x86_model_detect(void *this)
+{
+	pfmlib_pmu_t *pmu = this;
+	const int *p;
+	int ret;
+
+	ret = pfm_intel_x86_detect();
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_intel_x86_cfg.family != pmu->cpu_family)
+		return PFM_ERR_NOTSUPP;
+
+	for (p = pmu->cpu_models; *p; p++) {
+		if (*p == pfm_intel_x86_cfg.model)
+			return PFM_SUCCESS;
+	}
+	return PFM_ERR_NOTSUPP;
+}
+
 int
 pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,

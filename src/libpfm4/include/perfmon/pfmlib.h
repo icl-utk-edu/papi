@@ -243,6 +243,9 @@ typedef enum {
 	PFM_PMU_ARM_CORTEX_A7,		/* ARM Cortex A7 */
 
 	PFM_PMU_INTEL_HSW_EP,		/* Intel Haswell EP */
+	PFM_PMU_INTEL_BDW,		/* Intel Broadwell EP */
+
+	PFM_PMU_ARM_XGENE,		/* Applied Micro X-Gene (ARMv8) */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 

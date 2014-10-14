@@ -213,4 +213,5 @@ extern int pfm_amd64_get_num_events(void *this);
 extern int pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern void pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 extern void pfm_amd64_nb_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
+extern int pfm_amd64_family_detect(void *this);
 #endif /* __PFMLIB_AMD64_PRIV_H__ */

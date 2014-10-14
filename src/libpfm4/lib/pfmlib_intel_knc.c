@@ -26,26 +26,10 @@
 #include "pfmlib_intel_x86_priv.h"		/* architecture private */
 #include "events/intel_knc_events.h"
 
-static int
-pfm_knc_detect(void *this)
-{
-	int ret;
-
-	ret = pfm_intel_x86_detect();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-	if (pfm_intel_x86_cfg.family != 11)
-		return PFM_ERR_NOTSUPP;
-
-	switch (pfm_intel_x86_cfg.model) {
-		case 1: /* Knights Corner */
-			break;
-		default:
-			return PFM_ERR_NOTSUPP;
-	}
-	return PFM_SUCCESS;
-}
+static const int knc_models[] = {
+	1, /* Knights Corner */
+	0
+};
 
 pfmlib_pmu_t intel_knc_support={
 	.desc			= "Intel Knights Corner",
@@ -59,7 +43,9 @@ pfmlib_pmu_t intel_knc_support={
 	.atdesc			= intel_x86_mods,
 	.supported_plm		= INTEL_X86_PLM,
 
-	.pmu_detect		= pfm_knc_detect,
+	.cpu_family		= 11,
+	.cpu_models		= knc_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),

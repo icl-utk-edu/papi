@@ -21,10 +21,10 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  *
- * PMU: hsw (Intel Haswell)
+ * PMU: bdw (Intel Haswell)
  */
 
-static const intel_x86_umask_t hsw_baclears[]={
+static const intel_x86_umask_t bdw_baclears[]={
   { .uname = "ANY",
     .udesc  = "Number of front-end re-steers due to BPU misprediction",
     .ucode  = 0x1f00,
@@ -32,7 +32,7 @@ static const intel_x86_umask_t hsw_baclears[]={
   },
 };
 
-static const intel_x86_umask_t hsw_br_inst_exec[]={
+static const intel_x86_umask_t bdw_br_inst_exec[]={
   { .uname = "NONTAKEN_CONDITIONAL",
     .udesc  = "All macro conditional nontaken branch instructions",
     .ucode  = 0x4100,
@@ -125,7 +125,7 @@ static const intel_x86_umask_t hsw_br_inst_exec[]={
   },
 };
 
-static const intel_x86_umask_t hsw_br_inst_retired[]={
+static const intel_x86_umask_t bdw_br_inst_retired[]={
   { .uname = "CONDITIONAL",
     .udesc  = "Counts all taken and not taken macro conditional branch instructions",
     .ucode  = 0x100,
@@ -169,7 +169,7 @@ static const intel_x86_umask_t hsw_br_inst_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_br_misp_exec[]={
+static const intel_x86_umask_t bdw_br_misp_exec[]={
   { .uname = "NONTAKEN_CONDITIONAL",
     .udesc  = "Not taken speculative and retired mispredicted macro conditional branches",
     .ucode  = 0x4100,
@@ -230,7 +230,7 @@ static const intel_x86_umask_t hsw_br_misp_exec[]={
   },
 };
 
-static const intel_x86_umask_t hsw_br_misp_retired[]={
+static const intel_x86_umask_t bdw_br_misp_retired[]={
   { .uname = "CONDITIONAL",
     .udesc  = "All mispredicted macro conditional branch instructions",
     .ucode  = 0x100,
@@ -254,7 +254,7 @@ static const intel_x86_umask_t hsw_br_misp_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_cpl_cycles[]={
+static const intel_x86_umask_t bdw_cpl_cycles[]={
   { .uname = "RING0",
     .udesc  = "Unhalted core cycles when the thread is in ring 0",
     .ucode  = 0x100,
@@ -273,7 +273,7 @@ static const intel_x86_umask_t hsw_cpl_cycles[]={
   },
 };
 
-static const intel_x86_umask_t hsw_cpu_clk_thread_unhalted[]={
+static const intel_x86_umask_t bdw_cpu_clk_thread_unhalted[]={
   { .uname = "REF_XCLK",
     .udesc  = "Cases when the core is unhalted at 100Mhz",
     .ucode  = 0x100,
@@ -292,7 +292,7 @@ static const intel_x86_umask_t hsw_cpu_clk_thread_unhalted[]={
   },
 };
 
-static const intel_x86_umask_t hsw_cycle_activity[]={
+static const intel_x86_umask_t bdw_cycle_activity[]={
    { .uname  = "CYCLES_L2_PENDING",
      .udesc  = "Cycles with pending L2 miss loads (must use with HT off only)",
      .ucode  = 0x0100 | (0x1 << INTEL_X86_CMASK_BIT),
@@ -322,12 +322,6 @@ static const intel_x86_umask_t hsw_cycle_activity[]={
      .ucntmsk= 0xf,
      .uflags = INTEL_X86_NCOMBO,
    },
-   { .uname  = "STALLS_LDM_PENDING",
-     .udesc  = "Execution stalls due to memory subsystem",
-     .ucode  = 0x0600 | (0x6 << INTEL_X86_CMASK_BIT),
-     .ucntmsk= 0xf,
-     .uflags = INTEL_X86_NCOMBO,
-   },
    { .uname  = "CYCLES_NO_EXECUTE",
      .udesc  = "Cycles during which no instructions were executed in the execution stage of the pipeline",
      .ucode  = 0x0400 | (0x4 << INTEL_X86_CMASK_BIT),
@@ -336,7 +330,7 @@ static const intel_x86_umask_t hsw_cycle_activity[]={
    },
 };
 
-static const intel_x86_umask_t hsw_dtlb_load_misses[]={
+static const intel_x86_umask_t bdw_dtlb_load_misses[]={
   { .uname = "MISS_CAUSES_A_WALK",
     .udesc  = "Misses in all DTLB levels that cause page walks",
     .ucode  = 0x100,
@@ -345,11 +339,6 @@ static const intel_x86_umask_t hsw_dtlb_load_misses[]={
   { .uname = "WALK_COMPLETED_4K",
     .udesc  = "Misses in all TLB levels causes a page walk that completes (4K)",
     .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "WALK_COMPLETED_2M_4M",
-    .udesc  = "Misses in all TLB levels causes a page walk that completes (2M/4M)",
-    .ucode  = 0x400,
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "WALK_COMPLETED",
@@ -367,24 +356,14 @@ static const intel_x86_umask_t hsw_dtlb_load_misses[]={
     .ucode  = 0x2000,
     .uflags = INTEL_X86_NCOMBO,
   },
-  { .uname = "STLB_HIT_2M",
-    .udesc  = "Misses that miss the DTLB and hit the STLB (2M)",
-    .ucode  = 0x4000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
   { .uname = "STLB_HIT",
     .udesc  = "Number of cache load STLB hits. No page walk",
     .ucode  = 0x6000,
     .uflags = INTEL_X86_NCOMBO,
   },
-  { .uname = "PDE_CACHE_MISS",
-    .udesc  = "DTLB misses with low part of linear-to-physical address translation missed",
-    .ucode  = 0x8000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
 };
 
-static const intel_x86_umask_t hsw_itlb_misses[]={
+static const intel_x86_umask_t bdw_itlb_misses[]={
   { .uname = "MISS_CAUSES_A_WALK",
     .udesc  = "Misses in all DTLB levels that cause page walks",
     .ucode  = 0x100,
@@ -393,11 +372,6 @@ static const intel_x86_umask_t hsw_itlb_misses[]={
   { .uname = "WALK_COMPLETED_4K",
     .udesc  = "Misses in all TLB levels causes a page walk that completes (4K)",
     .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "WALK_COMPLETED_2M_4M",
-    .udesc  = "Misses in all TLB levels causes a page walk that completes (2M/4M)",
-    .ucode  = 0x400,
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "WALK_COMPLETED",
@@ -415,11 +389,6 @@ static const intel_x86_umask_t hsw_itlb_misses[]={
     .ucode  = 0x2000,
     .uflags = INTEL_X86_NCOMBO,
   },
-  { .uname = "STLB_HIT_2M",
-    .udesc  = "Misses that miss the DTLB and hit the STLB (2M)",
-    .ucode  = 0x4000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
   { .uname = "STLB_HIT",
     .udesc  = "Number of cache load STLB hits. No page walk",
     .ucode  = 0x6000,
@@ -427,7 +396,7 @@ static const intel_x86_umask_t hsw_itlb_misses[]={
   },
 };
 
-static const intel_x86_umask_t hsw_fp_assist[]={
+static const intel_x86_umask_t bdw_fp_assist[]={
   { .uname = "X87_OUTPUT",
     .udesc  = "Number of X87 FP assists due to output values",
     .ucode  = 0x200,
@@ -463,7 +432,7 @@ static const intel_x86_umask_t hsw_fp_assist[]={
   },
 };
 
-static const intel_x86_umask_t hsw_icache[]={
+static const intel_x86_umask_t bdw_icache[]={
   { .uname = "MISSES",
     .udesc  = "Number of Instruction Cache, Streaming Buffer and Victim Cache Misses. Includes Uncacheable accesses",
     .ucode  = 0x200,
@@ -471,7 +440,7 @@ static const intel_x86_umask_t hsw_icache[]={
   },
 };
 
-static const intel_x86_umask_t hsw_idq[]={
+static const intel_x86_umask_t bdw_idq[]={
   { .uname = "EMPTY",
     .udesc  = "Cycles the Instruction Decode Queue (IDQ) is empty",
     .ucode  = 0x200,
@@ -569,7 +538,7 @@ static const intel_x86_umask_t hsw_idq[]={
   },
 };
 
-static const intel_x86_umask_t hsw_idq_uops_not_delivered[]={
+static const intel_x86_umask_t bdw_idq_uops_not_delivered[]={
   { .uname = "CORE",
     .udesc  = "Count number of non-delivered uops to Resource Allocation Table (RAT)",
     .ucode  = 0x100,
@@ -577,7 +546,7 @@ static const intel_x86_umask_t hsw_idq_uops_not_delivered[]={
   },
 };
 
-static const intel_x86_umask_t hsw_inst_retired[]={
+static const intel_x86_umask_t bdw_inst_retired[]={
   { .uname = "ANY_P",
     .udesc  = "Number of instructions retired. General Counter - architectural event",
     .ucode  = 0x000,
@@ -586,25 +555,31 @@ static const intel_x86_umask_t hsw_inst_retired[]={
   { .uname = "ALL",
     .udesc  = "Precise instruction retired event with HW to reduce effect of PEBS shadow in IP distribution (Precise Event)",
     .ucode  = 0x100,
+    .uequiv = "PREC_DIST",
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
   { .uname = "TOTAL_CYCLES",
     .udesc  = "Number of cycles using always true condition",
     .ucode  = 0x100 | INTEL_X86_MOD_INV | (10 << INTEL_X86_CMASK_BIT), /* inv=1 cnt=10 */
-    .uequiv = "ALL:i=1:c=10",
+    .uequiv = "PREC_DIST:i=1:c=10",
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
     .modhw  = _INTEL_X86_ATTR_I | _INTEL_X86_ATTR_C,
   },
   { .uname = "PREC_DIST",
-    .udesc  = "Precise instruction retired event with HW to reduce effect of PEBS shadow in IP distribution",
+    .udesc  = "Precise instruction retired event with HW to reduce effect of PEBS shadow in IP distribution (Precise event)",
     .ucode  = 0x100,
-    .uequiv = "ALL",
     .ucntmsk= 0x2,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
+  { .uname = "X87",
+    .udesc  = "NUmber of FPU operations retired (instructions with no exceptions)",
+    .ucode  = 0x200,
+    .ucntmsk= 0x2,
+    .uflags = INTEL_X86_NCOMBO,
+  },
 };
 
-static const intel_x86_umask_t hsw_int_misc[]={
+static const intel_x86_umask_t bdw_int_misc[]={
   { .uname = "RECOVERY_CYCLES",
     .udesc  = "Number of cycles waiting for Machine Clears  except JEClear",
     .ucode  = 0x300,
@@ -618,7 +593,7 @@ static const intel_x86_umask_t hsw_int_misc[]={
   },
 };
 
-static const intel_x86_umask_t hsw_itlb[]={
+static const intel_x86_umask_t bdw_itlb[]={
   { .uname = "ITLB_FLUSH",
     .udesc  = "Flushing of the Instruction TLB (ITLB) pages independent of page size",
     .ucode  = 0x100,
@@ -626,7 +601,7 @@ static const intel_x86_umask_t hsw_itlb[]={
   },
 };
 
-static const intel_x86_umask_t hsw_l1d[]={
+static const intel_x86_umask_t bdw_l1d[]={
   { .uname = "REPLACEMENT",
     .udesc  = "L1D Data line replacements",
     .ucode  = 0x100,
@@ -634,7 +609,7 @@ static const intel_x86_umask_t hsw_l1d[]={
   },
 };
 
-static const intel_x86_umask_t hsw_l1d_pend_miss[]={
+static const intel_x86_umask_t bdw_l1d_pend_miss[]={
   { .uname = "PENDING",
     .udesc  = "Cycles with L1D load misses outstanding",
     .ucode  = 0x100,
@@ -667,7 +642,7 @@ static const intel_x86_umask_t hsw_l1d_pend_miss[]={
   },
 };
 
-static const intel_x86_umask_t hsw_l2_demand_rqsts[]={
+static const intel_x86_umask_t bdw_l2_demand_rqsts[]={
   { .uname = "WB_HIT",
     .udesc  = "WB requests that hit L2 cache",
     .ucode  = 0x5000,
@@ -675,7 +650,7 @@ static const intel_x86_umask_t hsw_l2_demand_rqsts[]={
   },
 };
 
-static const intel_x86_umask_t hsw_l2_lines_in[]={
+static const intel_x86_umask_t bdw_l2_lines_in[]={
   { .uname = "I",
     .udesc  = "L2 cache lines in I state filling L2",
     .ucode  = 0x100,
@@ -704,20 +679,15 @@ static const intel_x86_umask_t hsw_l2_lines_in[]={
   },
 };
 
-static const intel_x86_umask_t hsw_l2_lines_out[]={
+static const intel_x86_umask_t bdw_l2_lines_out[]={
   { .uname = "DEMAND_CLEAN",
     .udesc  = "Number of clean L2 cachelines evicted by demand",
     .ucode  = 0x500,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "DEMAND_DIRTY",
-    .udesc  = "Number of dirty L2 cachelines evicted by demand",
-    .ucode  = 0x600,
-    .uflags = INTEL_X86_NCOMBO,
+    .uflags = INTEL_X86_NCOMBO | INTEL_X86_DFL,
   },
 };
 
-static const intel_x86_umask_t hsw_l2_rqsts[]={
+static const intel_x86_umask_t bdw_l2_rqsts[]={
   { .uname = "DEMAND_DATA_RD_MISS",
     .udesc  = "Demand Data Read requests that miss L2 cache",
     .ucode  = 0x2100,
@@ -812,7 +782,7 @@ static const intel_x86_umask_t hsw_l2_rqsts[]={
   },
 };
 
-static const intel_x86_umask_t hsw_l2_trans[]={
+static const intel_x86_umask_t bdw_l2_trans[]={
   { .uname = "DEMAND_DATA_RD",
     .udesc  = "Demand Data Read requests that access L2 cache",
     .ucode  = 0x100,
@@ -855,7 +825,7 @@ static const intel_x86_umask_t hsw_l2_trans[]={
   },
 };
 
-static const intel_x86_umask_t hsw_ld_blocks[]={
+static const intel_x86_umask_t bdw_ld_blocks[]={
   { .uname = "STORE_FORWARD",
     .udesc  = "Counts the number of loads blocked by overlapping with store buffer entries that cannot be forwarded",
     .ucode  = 0x200,
@@ -868,7 +838,7 @@ static const intel_x86_umask_t hsw_ld_blocks[]={
   },
 };
 
-static const intel_x86_umask_t hsw_ld_blocks_partial[]={
+static const intel_x86_umask_t bdw_ld_blocks_partial[]={
   { .uname = "ADDRESS_ALIAS",
     .udesc  = "False dependencies in MOB due to partial compare on address",
     .ucode  = 0x100,
@@ -876,20 +846,15 @@ static const intel_x86_umask_t hsw_ld_blocks_partial[]={
   },
 };
 
-static const intel_x86_umask_t hsw_load_hit_pre[]={
-  { .uname = "SW_PF",
-    .udesc  = "Non software-prefetch load dispatches that hit FB allocated for software prefetch",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
+static const intel_x86_umask_t bdw_load_hit_pre[]={
   { .uname = "HW_PF",
     .udesc  = "Non software-prefetch load dispatches that hit FB allocated for hardware prefetch",
     .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
+    .uflags = INTEL_X86_DFL,
   },
 };
 
-static const intel_x86_umask_t hsw_lock_cycles[]={
+static const intel_x86_umask_t bdw_lock_cycles[]={
   { .uname = "SPLIT_LOCK_UC_LOCK_DURATION",
     .udesc  = "Cycles in which the L1D and L2 are locked, due to a UC lock or split lock",
     .ucode  = 0x100,
@@ -902,7 +867,7 @@ static const intel_x86_umask_t hsw_lock_cycles[]={
   },
 };
 
-static const intel_x86_umask_t hsw_longest_lat_cache[]={
+static const intel_x86_umask_t bdw_longest_lat_cache[]={
   { .uname = "MISS",
     .udesc  = "Core-originated cacheable demand requests missed LLC - architectural event",
     .ucode  = 0x4100,
@@ -915,7 +880,7 @@ static const intel_x86_umask_t hsw_longest_lat_cache[]={
   },
 };
 
-static const intel_x86_umask_t hsw_machine_clears[]={
+static const intel_x86_umask_t bdw_machine_clears[]={
   { .uname = "CYCLES",
     .udesc  = "Cycles there was a Nuke. Account for both thread-specific and All Thread Nukes",
     .ucode  = 0x100,
@@ -938,7 +903,7 @@ static const intel_x86_umask_t hsw_machine_clears[]={
   },
 };
 
-static const intel_x86_umask_t hsw_mem_load_uops_l3_hit_retired[]={
+static const intel_x86_umask_t bdw_mem_load_uops_l3_hit_retired[]={
   { .uname = "XSNP_MISS",
     .udesc  = "Retired load uops which data sources were L3 hit and cross-core snoop missed in on-pkg core cache",
     .ucode  = 0x100,
@@ -961,33 +926,15 @@ static const intel_x86_umask_t hsw_mem_load_uops_l3_hit_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_mem_load_uops_l3_miss_retired[]={
+static const intel_x86_umask_t bdw_mem_load_uops_l3_miss_retired[]={
   { .uname = "LOCAL_DRAM",
     .udesc  = "Retired load uops missing L3 cache but hitting local memory",
     .ucode  = 0x100,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS | INTEL_X86_DFL,
   },
-   { .uname  = "REMOTE_DRAM",
-     .udesc  = "Number of retired load uops that missed L3 but were service by remote RAM, snoop not needed, snoop miss, snoop hit data not forwarded (Precise Event)",
-     .ucode = 0x400,
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
-   },
-   { .uname  = "REMOTE_HITM",
-     .udesc  = "Number of retired load uops whose data sources was remote HITM (Precise Event)",
-     .ucode = 0x1000,
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
-   },
-   { .uname  = "REMOTE_FWD",
-     .udesc  = "Load uops that miss in the L3 whose data source was forwarded from a remote cache (Precise Event)",
-     .ucode = 0x2000,
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
-   },
 };
 
-static const intel_x86_umask_t hsw_mem_load_uops_retired[]={
+static const intel_x86_umask_t bdw_mem_load_uops_retired[]={
   { .uname = "L1_HIT",
     .udesc  = "Retired load uops with L1 cache hits as data source",
     .ucode  = 0x100,
@@ -1025,7 +972,7 @@ static const intel_x86_umask_t hsw_mem_load_uops_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_mem_trans_retired[]={
+static const intel_x86_umask_t bdw_mem_trans_retired[]={
   { .uname  = "LOAD_LATENCY",
     .udesc  = "Memory load instructions retired above programmed clocks, minimum threshold value is 3 (Precise Event and ldlat required)",
     .ucode  = 0x100,
@@ -1039,7 +986,7 @@ static const intel_x86_umask_t hsw_mem_trans_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_mem_uops_retired[]={
+static const intel_x86_umask_t bdw_mem_uops_retired[]={
   { .uname = "STLB_MISS_LOADS",
     .udesc  = "Load uops with true STLB miss retired to architected path",
     .ucode  = 0x1100,
@@ -1077,7 +1024,7 @@ static const intel_x86_umask_t hsw_mem_uops_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_misalign_mem_ref[]={
+static const intel_x86_umask_t bdw_misalign_mem_ref[]={
   { .uname = "LOADS",
     .udesc  = "Speculative cache-line split load uops dispatched to the L1D",
     .ucode  = 0x100,
@@ -1090,7 +1037,7 @@ static const intel_x86_umask_t hsw_misalign_mem_ref[]={
   },
 };
 
-static const intel_x86_umask_t hsw_move_elimination[]={
+static const intel_x86_umask_t bdw_move_elimination[]={
   { .uname = "INT_ELIMINATED",
     .udesc  = "Number of integer Move Elimination candidate uops that were eliminated",
     .ucode  = 0x100,
@@ -1113,7 +1060,7 @@ static const intel_x86_umask_t hsw_move_elimination[]={
   },
 };
 
-static const intel_x86_umask_t hsw_offcore_requests[]={
+static const intel_x86_umask_t bdw_offcore_requests[]={
   { .uname  = "DEMAND_DATA_RD",
     .udesc  = "Demand data read requests sent to uncore (use with HT off only)",
     .ucode = 0x100,
@@ -1136,7 +1083,7 @@ static const intel_x86_umask_t hsw_offcore_requests[]={
   },
 };
 
-static const intel_x86_umask_t hsw_other_assists[]={
+static const intel_x86_umask_t bdw_other_assists[]={
   { .uname = "AVX_TO_SSE",
     .udesc  = "Number of transitions from AVX-256 to legacy SSE when penalty applicable",
     .ucode  = 0x800,
@@ -1154,7 +1101,7 @@ static const intel_x86_umask_t hsw_other_assists[]={
   },
 };
 
-static const intel_x86_umask_t hsw_resource_stalls[]={
+static const intel_x86_umask_t bdw_resource_stalls[]={
   { .uname = "ANY",
     .udesc  = "Cycles Allocation is stalled due to Resource Related reason",
     .ucode  = 0x100,
@@ -1183,7 +1130,7 @@ static const intel_x86_umask_t hsw_resource_stalls[]={
   },
 };
 
-static const intel_x86_umask_t hsw_rob_misc_events[]={
+static const intel_x86_umask_t bdw_rob_misc_events[]={
   { .uname = "LBR_INSERTS",
     .udesc  = "Count each time an new Last Branch Record (LBR) is inserted",
     .ucode  = 0x2000,
@@ -1191,15 +1138,20 @@ static const intel_x86_umask_t hsw_rob_misc_events[]={
   },
 };
 
-static const intel_x86_umask_t hsw_rs_events[]={
+static const intel_x86_umask_t bdw_rs_events[]={
   { .uname = "EMPTY_CYCLES",
     .udesc  = "Cycles the Reservation Station (RS) is empty for this thread",
     .ucode  = 0x100,
     .uflags = INTEL_X86_DFL,
   },
+  { .uname = "EMPTY_END",
+    .udesc  = "Number of times the reservation station (RS) was empty",
+    .ucode  = 0x100 | INTEL_X86_MOD_INV |  (1 << INTEL_X86_CMASK_BIT) | INTEL_X86_MOD_EDGE, /* inv=1, cmask=1,edge=1 */
+    .modhw  = _INTEL_X86_ATTR_I | _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_E,
+  },
 };
 
-static const intel_x86_umask_t hsw_tlb_flush[]={
+static const intel_x86_umask_t bdw_tlb_flush[]={
   { .uname = "DTLB_THREAD",
     .udesc  = "Count number of DTLB flushes of thread-specific entries",
     .ucode  = 0x100,
@@ -1212,7 +1164,7 @@ static const intel_x86_umask_t hsw_tlb_flush[]={
   },
 };
 
-static const intel_x86_umask_t hsw_uops_executed[]={
+static const intel_x86_umask_t bdw_uops_executed[]={
   { .uname = "CORE",
     .udesc  = "Number of uops executed from any thread",
     .ucode  = 0x200,
@@ -1227,7 +1179,7 @@ static const intel_x86_umask_t hsw_uops_executed[]={
   },
 };
 
-static const intel_x86_umask_t hsw_uops_executed_port[]={
+static const intel_x86_umask_t bdw_uops_executed_port[]={
   { .uname = "PORT_0",
     .udesc  = "Cycles which a Uop is executed on port 0",
     .ucode  = 0x100,
@@ -1326,7 +1278,7 @@ static const intel_x86_umask_t hsw_uops_executed_port[]={
   },
 };
 
-static const intel_x86_umask_t hsw_uops_issued[]={
+static const intel_x86_umask_t bdw_uops_issued[]={
   { .uname = "ANY",
     .udesc  = "Number of Uops issued by the Resource Allocation Table (RAT) to the Reservation Station (RS)",
     .ucode  = 0x100,
@@ -1371,7 +1323,7 @@ static const intel_x86_umask_t hsw_uops_issued[]={
   },
 };
 
-static const intel_x86_umask_t hsw_uops_retired[]={
+static const intel_x86_umask_t bdw_uops_retired[]={
   { .uname = "ALL",
     .udesc  = "All uops that actually retired",
     .ucode  = 0x100,
@@ -1418,7 +1370,7 @@ static const intel_x86_umask_t hsw_uops_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_offcore_response[]={
+static const intel_x86_umask_t bdw_offcore_response[]={
    { .uname  = "DMND_DATA_RD",
      .udesc  = "Request: number of demand and DCU prefetch data reads of full and partial cachelines as well as demand data page table entry cacheline reads. Does not count L2 data read prefetches or instruction fetches",
      .ucode = 1ULL << (0 + 8),
@@ -1524,156 +1476,45 @@ static const intel_x86_umask_t hsw_offcore_response[]={
    { .uname  = "LLC_HITM",
      .udesc  = "Supplier: counts L3 hits in M-state (initial lookup)",
      .ucode = 1ULL << (18+8),
-     .umodel = PFM_PMU_INTEL_HSW,
+     .umodel = PFM_PMU_INTEL_BDW,
      .grpid = 1,
    },
    { .uname  = "LLC_HITE",
      .udesc  = "Supplier: counts L3 hits in E-state",
      .ucode = 1ULL << (19+8),
-     .umodel = PFM_PMU_INTEL_HSW,
+     .umodel = PFM_PMU_INTEL_BDW,
      .grpid = 1,
    },
    { .uname  = "LLC_HITS",
      .udesc  = "Supplier: counts L3 hits in S-state",
      .ucode = 1ULL << (20+8),
-     .umodel = PFM_PMU_INTEL_HSW,
+     .umodel = PFM_PMU_INTEL_BDW,
      .grpid = 1,
    },
    { .uname  = "LLC_HITF",
      .udesc  = "Supplier: counts L3 hits in F-state",
      .ucode = 1ULL << (21+8),
-     .umodel = PFM_PMU_INTEL_HSW,
+     .umodel = PFM_PMU_INTEL_BDW,
      .grpid = 1,
    },
    { .uname  = "LLC_HITMESF",
      .udesc  = "Supplier: counts L3 hits in any state (M, E, S, F)",
      .ucode  = 0xfULL << (18+8),
      .uequiv = "LLC_HITM:LLC_HITE:LLC_HITS:LLC_HITF",
-     .umodel = PFM_PMU_INTEL_HSW,
+     .umodel = PFM_PMU_INTEL_BDW,
      .grpid  = 1,
    },
    { .uname  = "LLC_HIT",
      .udesc  = "Alias for LLC_HITMESF",
      .ucode  = 0xfULL << (18+8),
      .uequiv = "LLC_HITM:LLC_HITE:LLC_HITS:LLC_HITF",
-     .umodel = PFM_PMU_INTEL_HSW,
+     .umodel = PFM_PMU_INTEL_BDW,
      .grpid  = 1,
-   },
-   { .uname  = "L3_HITM",
-     .udesc  = "Supplier: counts L3 hits in M-state (initial lookup)",
-     .ucode = 1ULL << (18+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_HITE",
-     .udesc  = "Supplier: counts L3 hits in E-state",
-     .ucode = 1ULL << (19+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_HITS",
-     .udesc  = "Supplier: counts L3 hits in S-state",
-     .ucode = 1ULL << (20+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_HITF",
-     .udesc  = "Supplier: counts L3 hits in F-state",
-     .ucode = 1ULL << (21+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_HIT",
-     .udesc  = "Supplier: counts L3 hits in M, E, S, F state",
-     .ucode = 0xfULL << (18+8),
-     .uequiv = "L3_HITM:L3_HITE:L3_HITS:L3_HITF",
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L4_HIT_LOCAL_L4",
-     .udesc  = "Supplier: counts L4 hits to local L4 cache",
-     .ucode = 0x1ULL << (22+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L4_HIT_REMOTE_HOP0_L4",
-     .udesc  = "Supplier: counts L4 hits to remote L4 cache with 0 hop",
-     .ucode = 0x1ULL << (23+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L4_HIT_REMOTE_HOP1_L4",
-     .udesc  = "Supplier: counts L4 hits to remote L4 cache with 1 hop",
-     .ucode = 0x1ULL << (24+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L4_HIT_REMOTE_HOP2P_L4",
-     .udesc  = "Supplier: counts L4 hits to remote L4 cache with 2P hops",
-     .ucode = 0x1ULL << (25+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L4_HIT",
-     .udesc  = "Supplier: counts L4 hits",
-     .ucode = 0xfULL << (22+8),
-     .uequiv = "L4_HIT_LOCAL_L4:L4_HIT_REMOTE_HOP0_L4:L4_HIT_REMOTE_HOP1_L4:L4_HIT_REMOTE_HOP2P_L4",
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
    },
    { .uname  = "LLC_MISS_LOCAL",
      .udesc  = "Supplier: counts L3 misses to local DRAM",
      .ucode = 1ULL << (22+8),
-     .umodel = PFM_PMU_INTEL_HSW,
-     .grpid = 1,
-   },
-   { .uname  = "L3_MISS_LOCAL_DRAM",
-     .udesc  = "Supplier: counts L3 misses to local DRAM",
-     .ucode = 1ULL << (26+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_MISS_LOCAL",
-     .udesc  = "Supplier: Alias to L3_MISS_LOCAL_DRAM",
-     .ucode = 1ULL << (26+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .uequiv = "L3_MISS_LOCAL_DRAM",
-     .grpid = 1,
-   },
-   { .uname  = "L3_MISS_REMOTE_HOP0_DRAM",
-     .udesc  = "Supplier: counts L3 misses to remote DRAM with 0 hop",
-     .ucode = 0x1ULL << (27+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_MISS_REMOTE_HOP1_DRAM",
-     .udesc  = "Supplier: counts L3 misses to remote DRAM with 1 hop",
-     .ucode = 0x1ULL << (28+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_MISS_REMOTE_HOP2P_DRAM",
-     .udesc  = "Supplier: counts L3 misses to remote DRAM with 2P hops",
-     .ucode = 0x1ULL << (29+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_MISS",
-     .udesc  = "Supplier: counts L3 misses to local or remote DRAM",
-     .ucode = 0xfULL << (26+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "L3_MISS_REMOTE_DRAM",
-     .udesc  = "Supplier: counts L3 misses to remote DRAM",
-     .ucode = 0x3ULL << (27+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
-     .grpid = 1,
-   },
-   { .uname  = "SPL_HIT",
-     .udesc  = "Supplier: counts L3 misses to remote DRAM",
-     .ucode = 0x1ULL << (30+8),
-     .umodel = PFM_PMU_INTEL_HSW_EP,
+     .umodel = PFM_PMU_INTEL_BDW,
      .grpid = 1,
    },
    { .uname  = "SNP_NONE",
@@ -1720,7 +1561,7 @@ static const intel_x86_umask_t hsw_offcore_response[]={
    },
 };
 
-static const intel_x86_umask_t hsw_hle_retired[]={
+static const intel_x86_umask_t bdw_hle_retired[]={
   { .uname = "START",
     .udesc  = "Number of times an HLE execution started",
     .ucode  = 0x100,
@@ -1763,7 +1604,7 @@ static const intel_x86_umask_t hsw_hle_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_rtm_retired[]={
+static const intel_x86_umask_t bdw_rtm_retired[]={
   { .uname = "START",
     .udesc  = "Number of times an RTM execution started",
     .ucode  = 0x100,
@@ -1806,7 +1647,7 @@ static const intel_x86_umask_t hsw_rtm_retired[]={
   },
 };
 
-static const intel_x86_umask_t hsw_tx_mem[]={
+static const intel_x86_umask_t bdw_tx_mem[]={
   { .uname = "ABORT_CONFLICT",
     .udesc  = "Number of times a transactional abort was signaled due to data conflict on a transactionally accessed address",
     .ucode  = 0x100,
@@ -1844,7 +1685,7 @@ static const intel_x86_umask_t hsw_tx_mem[]={
   },
 };
 
-static const intel_x86_umask_t hsw_tx_exec[]={
+static const intel_x86_umask_t bdw_tx_exec[]={
   { .uname = "MISC1",
     .udesc  = "Number of times a class of instructions that may cause a transactional abort was executed. Since this is the count of execution, it may not always cause a transactional abort",
     .ucode  = 0x100,
@@ -1861,13 +1702,18 @@ static const intel_x86_umask_t hsw_tx_exec[]={
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "MISC4",
-    .udesc  = "Number of times an instruction with HLE xacquire prefix was executed inside a RTM transactional region",
+    .udesc  = "Number of times an instruction a xbegin instruction was executed inside HLE transactional region",
     .ucode  = 0x800,
+    .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "MISC5",
+    .udesc  = "Number of times an instruction with HLE xacquire prefix was executed inside a RTM transactional region",
+    .ucode  = 0x1000,
     .uflags = INTEL_X86_NCOMBO,
   },
 };
 
-static const intel_x86_umask_t hsw_offcore_requests_outstanding[]={
+static const intel_x86_umask_t bdw_offcore_requests_outstanding[]={
    { .uname  = "ALL_DATA_RD_CYCLES",
      .udesc  = "Cycles with cacheable data read transactions in the superQ (use with HT off only)",
      .uequiv = "ALL_DATA_RD:c=1",
@@ -1914,20 +1760,15 @@ static const intel_x86_umask_t hsw_offcore_requests_outstanding[]={
    },
 };
 
-static const intel_x86_umask_t hsw_ild_stall[]={
+static const intel_x86_umask_t bdw_ild_stall[]={
    { .uname  = "LCP",
      .udesc  = "Stall caused by changing prefix length of the instruction",
      .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "IQ_FULL",
-     .udesc  = "Stall cycles due to IQ full",
-     .ucode = 0x400,
-     .uflags= INTEL_X86_NCOMBO,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
 };
 
-static const intel_x86_umask_t hsw_page_walker_loads[]={
+static const intel_x86_umask_t bdw_page_walker_loads[]={
    { .uname  = "DTLB_L1",
      .udesc  = "Number of DTLB page walker loads that hit in the L1D and line fill buffer",
      .ucode = 0x1100,
@@ -1958,36 +1799,6 @@ static const intel_x86_umask_t hsw_page_walker_loads[]={
      .ucode = 0x2400,
      .uflags= INTEL_X86_NCOMBO,
    },
-   { .uname  = "EPT_DTLB_L1",
-     .udesc  = "Number of extended page table walks from the DTLB that hit in the L1D and line fill buffer",
-     .ucode = 0x4100,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "EPT_ITLB_L1",
-     .udesc  = "Number of extended page table walks from the ITLB that hit in the L1D and line fill buffer",
-     .ucode = 0x8100,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "EPT_DTLB_L2",
-     .udesc  = "Number of extended page table walks from the DTLB that hit in the L2",
-     .ucode = 0x4200,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "EPT_ITLB_L2",
-     .udesc  = "Number of extended page table walks from the ITLB that hit in the L2",
-     .ucode = 0x8200,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "EPT_DTLB_L3",
-     .udesc  = "Number of extended page table walks from the DTLB that hit in the L3",
-     .ucode = 0x4400,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "EPT_ITLB_L3",
-     .udesc  = "Number of extended page table walks from the ITLB that hit in the L3",
-     .ucode = 0x8400,
-     .uflags= INTEL_X86_NCOMBO,
-   },
    { .uname  = "DTLB_MEMORY",
      .udesc  = "Number of DTLB page walker loads that hit memory",
      .ucode = 0x1800,
@@ -1998,19 +1809,9 @@ static const intel_x86_umask_t hsw_page_walker_loads[]={
      .ucode = 0x2800,
      .uflags= INTEL_X86_NCOMBO,
    },
-   { .uname  = "EPT_DTLB_MEMORY",
-     .udesc  = "Number of extended page table walks from the DTLB that hit memory",
-     .ucode = 0x4800,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "EPT_ITLB_MEMORY",
-     .udesc  = "Number of extended page table walks from the ITLB that hit memory",
-     .ucode = 0x8800,
-     .uflags= INTEL_X86_NCOMBO,
-   },
 };
 
-static const intel_x86_umask_t hsw_lsd[]={
+static const intel_x86_umask_t bdw_lsd[]={
    { .uname  = "UOPS",
      .udesc  = "Number of uops delivered by the Loop Stream Detector (LSD)",
      .ucode = 0x100,
@@ -2018,7 +1819,7 @@ static const intel_x86_umask_t hsw_lsd[]={
    },
 };
 
-static const intel_x86_umask_t hsw_dsb2mite_switches[]={
+static const intel_x86_umask_t bdw_dsb2mite_switches[]={
    { .uname  = "PENALTY_CYCLES",
      .udesc  = "Number of DSB to MITE switch true penalty cycles",
      .ucode = 0x0200,
@@ -2026,15 +1827,29 @@ static const intel_x86_umask_t hsw_dsb2mite_switches[]={
    },
 };
 
-static const intel_x86_umask_t hsw_ept[]={
+static const intel_x86_umask_t bdw_ept[]={
    { .uname  = "CYCLES",
+     .udesc  = "Cycles for an extended page table walk",
+     .ucode = 0x0200,
+     .uequiv = "WALK_CYCLES",
+     .uflags= INTEL_X86_NCOMBO,
+   },
+   { .uname  = "WALK_CYCLES",
      .udesc  = "Cycles for an extended page table walk",
      .ucode = 0x0200,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
 };
 
-static const intel_x86_entry_t intel_hsw_pe[]={
+static const intel_x86_umask_t bdw_arith[]={
+   { .uname  = "FPU_DIV_ACTIVE",
+     .udesc  = "Cycles when divider is busy execuing divide operations",
+     .ucode = 0x0100,
+     .uflags= INTEL_X86_DFL,
+   },
+};
+
+static const intel_x86_entry_t intel_bdw_pe[]={
   { .name   = "UNHALTED_CORE_CYCLES",
     .desc   = "Count core clock cycles whenever the clock signal on the specific core is running (not halted)",
     .modmsk = INTEL_V4_ATTRS,
@@ -2081,8 +1896,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_baclears),
-    .umasks  = hsw_baclears
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_baclears),
+    .umasks  = bdw_baclears
   },
   { .name = "BR_INST_EXEC",
     .desc   = "Branch instructions executed",
@@ -2090,8 +1905,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_br_inst_exec),
-    .umasks  = hsw_br_inst_exec
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_br_inst_exec),
+    .umasks  = bdw_br_inst_exec
   },
   { .name = "BR_INST_RETIRED",
     .desc   = "Branch instructions retired (Precise Event)",
@@ -2100,8 +1915,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_br_inst_retired),
-    .umasks  = hsw_br_inst_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_br_inst_retired),
+    .umasks  = bdw_br_inst_retired
   },
   { .name = "BR_MISP_EXEC",
     .desc   = "Mispredicted branches executed",
@@ -2109,8 +1924,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_br_misp_exec),
-    .umasks  = hsw_br_misp_exec
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_br_misp_exec),
+    .umasks  = bdw_br_misp_exec
   },
   { .name = "BR_MISP_RETIRED",
     .desc   = "Mispredicted retired branches (Precise Event)",
@@ -2119,8 +1934,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_br_misp_retired),
-    .umasks  = hsw_br_misp_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_br_misp_retired),
+    .umasks  = bdw_br_misp_retired
   },
   { .name = "CPL_CYCLES",
     .desc   = "Unhalted core cycles at a specific ring level",
@@ -2128,8 +1943,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_cpl_cycles),
-    .umasks  = hsw_cpl_cycles
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_cpl_cycles),
+    .umasks  = bdw_cpl_cycles
   },
   { .name = "CPU_CLK_THREAD_UNHALTED",
     .desc   = "Count core clock cycles whenever the clock signal on the specific core is running (not halted)",
@@ -2137,8 +1952,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_cpu_clk_thread_unhalted),
-    .umasks  = hsw_cpu_clk_thread_unhalted
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_cpu_clk_thread_unhalted),
+    .umasks  = bdw_cpu_clk_thread_unhalted
   },
   { .name = "CPU_CLK_UNHALTED",
     .desc   = "Count core clock cycles whenever the clock signal on the specific core is running (not halted)",
@@ -2153,8 +1968,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xf,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS & ~_INTEL_X86_ATTR_C,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_cycle_activity),
-    .umasks  = hsw_cycle_activity
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_cycle_activity),
+    .umasks  = bdw_cycle_activity
   },
   { .name = "DTLB_LOAD_MISSES",
     .desc   = "Data TLB load misses",
@@ -2162,8 +1977,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_dtlb_load_misses),
-    .umasks  = hsw_dtlb_load_misses
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_dtlb_load_misses),
+    .umasks  = bdw_dtlb_load_misses
   },
   { .name = "DTLB_STORE_MISSES",
     .desc = "Data TLB store misses",
@@ -2171,8 +1986,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_dtlb_load_misses),
-    .umasks  = hsw_dtlb_load_misses /* shared */
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_dtlb_load_misses),
+    .umasks  = bdw_dtlb_load_misses /* shared */
   },
   { .name = "FP_ASSIST",
     .desc = "X87 floating-point assists",
@@ -2180,8 +1995,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_fp_assist),
-    .umasks  = hsw_fp_assist
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_fp_assist),
+    .umasks  = bdw_fp_assist
   },
   { .name = "HLE_RETIRED",
     .desc = "HLE execution (Precise Event)",
@@ -2190,8 +2005,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_hle_retired),
-    .umasks  = hsw_hle_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_hle_retired),
+    .umasks  = bdw_hle_retired
   },
   { .name = "ICACHE",
     .desc = "Instruction Cache",
@@ -2199,8 +2014,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_icache),
-    .umasks  = hsw_icache
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_icache),
+    .umasks  = bdw_icache
   },
   { .name = "IDQ",
     .desc   = "IDQ operations",
@@ -2208,8 +2023,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_idq),
-    .umasks  = hsw_idq
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_idq),
+    .umasks  = bdw_idq
   },
   { .name = "IDQ_UOPS_NOT_DELIVERED",
     .desc   = "Uops not delivered",
@@ -2217,8 +2032,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xf,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_idq_uops_not_delivered),
-    .umasks  = hsw_idq_uops_not_delivered
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_idq_uops_not_delivered),
+    .umasks  = bdw_idq_uops_not_delivered
   },
   { .name = "INST_RETIRED",
     .desc = "Number of instructions retired (Precise Event)",
@@ -2227,8 +2042,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_inst_retired),
-    .umasks  = hsw_inst_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_inst_retired),
+    .umasks  = bdw_inst_retired
   },
   { .name = "INT_MISC",
     .desc = "Miscellaneous interruptions",
@@ -2236,8 +2051,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_int_misc),
-    .umasks  = hsw_int_misc
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_int_misc),
+    .umasks  = bdw_int_misc
   },
   { .name = "ITLB",
     .desc   = "Instruction TLB",
@@ -2245,8 +2060,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_itlb),
-    .umasks  = hsw_itlb
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_itlb),
+    .umasks  = bdw_itlb
   },
   { .name = "ITLB_MISSES",
     .desc = "Instruction TLB misses",
@@ -2254,8 +2069,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_itlb_misses),
-    .umasks  = hsw_itlb_misses
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_itlb_misses),
+    .umasks  = bdw_itlb_misses
   },
   { .name = "L1D",
     .desc   = "L1D cache",
@@ -2263,8 +2078,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_l1d),
-    .umasks  = hsw_l1d
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_l1d),
+    .umasks  = bdw_l1d
   },
   { .name = "L1D_PEND_MISS",
     .desc   = "L1D pending misses",
@@ -2272,8 +2087,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_l1d_pend_miss),
-    .umasks  = hsw_l1d_pend_miss
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_l1d_pend_miss),
+    .umasks  = bdw_l1d_pend_miss
   },
   { .name = "L2_DEMAND_RQSTS",
     .desc = "Demand Data Read requests to L2",
@@ -2281,8 +2096,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_l2_demand_rqsts),
-    .umasks  = hsw_l2_demand_rqsts
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_l2_demand_rqsts),
+    .umasks  = bdw_l2_demand_rqsts
   },
   { .name = "L2_LINES_IN",
     .desc   = "L2 lines allocated",
@@ -2290,8 +2105,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_l2_lines_in),
-    .umasks  = hsw_l2_lines_in
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_l2_lines_in),
+    .umasks  = bdw_l2_lines_in
   },
   { .name = "L2_LINES_OUT",
     .desc   = "L2 lines evicted",
@@ -2299,8 +2114,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_l2_lines_out),
-    .umasks  = hsw_l2_lines_out
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_l2_lines_out),
+    .umasks  = bdw_l2_lines_out
   },
   { .name = "L2_RQSTS",
     .desc   = "L2 requests",
@@ -2308,8 +2123,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_l2_rqsts),
-    .umasks  = hsw_l2_rqsts
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_l2_rqsts),
+    .umasks  = bdw_l2_rqsts
   },
   { .name = "L2_TRANS",
     .desc   = "L2 transactions",
@@ -2317,8 +2132,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_l2_trans),
-    .umasks  = hsw_l2_trans
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_l2_trans),
+    .umasks  = bdw_l2_trans
   },
   { .name = "LD_BLOCKS",
     .desc   = "Blocking loads",
@@ -2326,8 +2141,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_ld_blocks),
-    .umasks  = hsw_ld_blocks
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_ld_blocks),
+    .umasks  = bdw_ld_blocks
   },
   { .name = "LD_BLOCKS_PARTIAL",
     .desc   = "Partial load blocks",
@@ -2335,8 +2150,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_ld_blocks_partial),
-    .umasks  = hsw_ld_blocks_partial
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_ld_blocks_partial),
+    .umasks  = bdw_ld_blocks_partial
   },
   { .name = "LOAD_HIT_PRE",
     .desc   = "Load dispatches",
@@ -2344,8 +2159,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_load_hit_pre),
-    .umasks  = hsw_load_hit_pre
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_load_hit_pre),
+    .umasks  = bdw_load_hit_pre
   },
   { .name = "LOCK_CYCLES",
     .desc   = "Locked cycles in L1D and L2",
@@ -2353,8 +2168,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_lock_cycles),
-    .umasks  = hsw_lock_cycles
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_lock_cycles),
+    .umasks  = bdw_lock_cycles
   },
   { .name = "LONGEST_LAT_CACHE",
     .desc   = "L3 cache",
@@ -2362,8 +2177,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_longest_lat_cache),
-    .umasks  = hsw_longest_lat_cache
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_longest_lat_cache),
+    .umasks  = bdw_longest_lat_cache
   },
   { .name = "MACHINE_CLEARS",
     .desc   = "Machine clear asserted",
@@ -2371,29 +2186,29 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_machine_clears),
-    .umasks  = hsw_machine_clears
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_machine_clears),
+    .umasks  = bdw_machine_clears
   },
   { .name = "MEM_LOAD_UOPS_L3_HIT_RETIRED",
-  .desc   = "L3 hit load uops retired (Precise Event)",
+    .desc   = "L3 hit load uops retired (Precise Event)",
     .code = 0xd2,
     .cntmsk = 0xf,
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_mem_load_uops_l3_hit_retired),
-    .umasks  = hsw_mem_load_uops_l3_hit_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_mem_load_uops_l3_hit_retired),
+    .umasks  = bdw_mem_load_uops_l3_hit_retired
   },
   { .name = "MEM_LOAD_UOPS_LLC_HIT_RETIRED",
-  .desc   = "L3 hit load uops retired (Precise Event)",
+    .desc   = "L3 hit load uops retired (Precise Event)",
     .equiv = "MEM_LOAD_UOPS_L3_HIT_RETIRED",
     .code = 0xd2,
     .cntmsk = 0xf,
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_mem_load_uops_l3_hit_retired),
-    .umasks  = hsw_mem_load_uops_l3_hit_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_mem_load_uops_l3_hit_retired),
+    .umasks  = bdw_mem_load_uops_l3_hit_retired
   },
   { .name = "MEM_LOAD_UOPS_L3_MISS_RETIRED",
     .desc   = "Load uops retired that missed the L3 (Precise Event)",
@@ -2402,8 +2217,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_mem_load_uops_l3_miss_retired),
-    .umasks  = hsw_mem_load_uops_l3_miss_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_mem_load_uops_l3_miss_retired),
+    .umasks  = bdw_mem_load_uops_l3_miss_retired
   },
   { .name = "MEM_LOAD_UOPS_LLC_MISS_RETIRED",
     .desc   = "Load uops retired that missed the L3 (Precise Event)",
@@ -2413,8 +2228,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_mem_load_uops_l3_miss_retired),
-    .umasks  = hsw_mem_load_uops_l3_miss_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_mem_load_uops_l3_miss_retired),
+    .umasks  = bdw_mem_load_uops_l3_miss_retired
   },
   { .name = "MEM_LOAD_UOPS_RETIRED",
     .desc = "Retired load uops (Precise Event)",
@@ -2423,8 +2238,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_mem_load_uops_retired),
-    .umasks  = hsw_mem_load_uops_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_mem_load_uops_retired),
+    .umasks  = bdw_mem_load_uops_retired
   },
   { .name = "MEM_TRANS_RETIRED",
     .desc   = "Memory transactions retired (Precise Event)",
@@ -2433,8 +2248,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS | _INTEL_X86_ATTR_LDLAT,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_mem_trans_retired),
-    .umasks  = hsw_mem_trans_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_mem_trans_retired),
+    .umasks  = bdw_mem_trans_retired
   },
   { .name = "MEM_UOPS_RETIRED",
     .desc = "Memory uops retired (Precise Event)",
@@ -2443,8 +2258,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_mem_uops_retired),
-    .umasks  = hsw_mem_uops_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_mem_uops_retired),
+    .umasks  = bdw_mem_uops_retired
   },
   { .name = "MISALIGN_MEM_REF",
     .desc = "Misaligned memory references",
@@ -2452,8 +2267,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_misalign_mem_ref),
-    .umasks  = hsw_misalign_mem_ref
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_misalign_mem_ref),
+    .umasks  = bdw_misalign_mem_ref
   },
   { .name = "MOVE_ELIMINATION",
     .desc = "Move Elimination",
@@ -2461,8 +2276,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_move_elimination),
-    .umasks  = hsw_move_elimination
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_move_elimination),
+    .umasks  = bdw_move_elimination
   },
   { .name = "OFFCORE_REQUESTS",
     .desc = "Demand Data Read requests sent to uncore",
@@ -2470,8 +2285,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_offcore_requests),
-    .umasks  = hsw_offcore_requests
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_offcore_requests),
+    .umasks  = bdw_offcore_requests
   },
   { .name = "OTHER_ASSISTS",
     .desc = "Software assist",
@@ -2479,8 +2294,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_other_assists),
-    .umasks  = hsw_other_assists
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_other_assists),
+    .umasks  = bdw_other_assists
   },
   { .name = "RESOURCE_STALLS",
     .desc = "Cycles Allocation is stalled due to Resource Related reason",
@@ -2488,8 +2303,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_resource_stalls),
-    .umasks  = hsw_resource_stalls
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_resource_stalls),
+    .umasks  = bdw_resource_stalls
   },
   { .name = "ROB_MISC_EVENTS",
     .desc = "ROB miscellaneous events",
@@ -2497,8 +2312,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_rob_misc_events),
-    .umasks  = hsw_rob_misc_events
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_rob_misc_events),
+    .umasks  = bdw_rob_misc_events
   },
   { .name = "RS_EVENTS",
     .desc = "Reservation Station",
@@ -2506,8 +2321,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xf,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_rs_events),
-    .umasks  = hsw_rs_events
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_rs_events),
+    .umasks  = bdw_rs_events
   },
   { .name = "RTM_RETIRED",
     .desc = "Restricted Transaction Memory execution (Precise Event)",
@@ -2516,8 +2331,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_rtm_retired),
-    .umasks  = hsw_rtm_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_rtm_retired),
+    .umasks  = bdw_rtm_retired
   },
   { .name = "TLB_FLUSH",
     .desc   = "TLB flushes",
@@ -2525,8 +2340,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_tlb_flush),
-    .umasks  = hsw_tlb_flush
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_tlb_flush),
+    .umasks  = bdw_tlb_flush
   },
   { .name = "UOPS_EXECUTED",
     .desc   = "Uops executed",
@@ -2534,8 +2349,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_uops_executed),
-    .umasks  = hsw_uops_executed
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_uops_executed),
+    .umasks  = bdw_uops_executed
   },
   { .name = "LSD",
     .desc   = "Loop stream detector",
@@ -2543,8 +2358,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_lsd),
-    .umasks  = hsw_lsd,
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_lsd),
+    .umasks  = bdw_lsd,
   },
 
   { .name = "UOPS_EXECUTED_PORT",
@@ -2553,8 +2368,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_uops_executed_port),
-    .umasks  = hsw_uops_executed_port
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_uops_executed_port),
+    .umasks  = bdw_uops_executed_port
   },
   { .name = "UOPS_ISSUED",
     .desc   = "Uops issued",
@@ -2562,8 +2377,17 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_uops_issued),
-    .umasks  = hsw_uops_issued
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_uops_issued),
+    .umasks  = bdw_uops_issued
+  },
+  { .name = "ARITH",
+    .desc   = "Arithmetic uop",
+    .code = 0x14,
+    .cntmsk = 0xff,
+    .ngrp = 1,
+    .modmsk = INTEL_V4_ATTRS,
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_arith),
+    .umasks  = bdw_arith
   },
   { .name = "UOPS_RETIRED",
     .desc = "Uops retired (Precise Event)",
@@ -2572,8 +2396,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .ngrp = 1,
     .flags = INTEL_X86_PEBS,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_uops_retired),
-    .umasks  = hsw_uops_retired
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_uops_retired),
+    .umasks  = bdw_uops_retired
   },
   { .name = "TX_MEM",
     .desc = "Transactional memory aborts",
@@ -2581,8 +2405,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_tx_mem),
-    .umasks  = hsw_tx_mem,
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_tx_mem),
+    .umasks  = bdw_tx_mem,
   },
   { .name = "TX_EXEC",
     .desc = "Transactional execution",
@@ -2590,53 +2414,53 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_tx_exec),
-    .umasks  = hsw_tx_exec
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_tx_exec),
+    .umasks  = bdw_tx_exec
   },
   { .name   = "OFFCORE_REQUESTS_OUTSTANDING",
     .desc   = "Outstanding offcore requests",
     .modmsk = INTEL_V4_ATTRS,
     .cntmsk = 0xff,
     .code = 0x60,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_offcore_requests_outstanding),
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_offcore_requests_outstanding),
     .ngrp = 1,
-    .umasks = hsw_offcore_requests_outstanding,
+    .umasks = bdw_offcore_requests_outstanding,
   },
   { .name   = "ILD_STALL",
     .desc   = "Instruction Length Decoder stalls",
     .modmsk = INTEL_V4_ATTRS,
     .cntmsk = 0xff,
     .code = 0x87,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_ild_stall),
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_ild_stall),
     .ngrp = 1,
-    .umasks = hsw_ild_stall,
+    .umasks = bdw_ild_stall,
   },
   { .name   = "PAGE_WALKER_LOADS",
     .desc   = "Page walker loads",
     .modmsk = INTEL_V4_ATTRS,
     .cntmsk = 0xf,
     .code = 0xbc,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_page_walker_loads),
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_page_walker_loads),
     .ngrp = 1,
-    .umasks = hsw_page_walker_loads,
+    .umasks = bdw_page_walker_loads,
   },
   { .name   = "DSB2MITE_SWITCHES",
     .desc   = "Number of DSB to MITE switches",
     .modmsk = INTEL_V4_ATTRS,
     .cntmsk = 0xff,
     .code = 0xab,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_dsb2mite_switches),
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_dsb2mite_switches),
     .ngrp = 1,
-    .umasks = hsw_dsb2mite_switches,
+    .umasks = bdw_dsb2mite_switches,
   },
   { .name   = "EPT",
     .desc   = "Extended page table",
     .modmsk = INTEL_V4_ATTRS,
     .cntmsk = 0xff,
     .code = 0x4f,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_ept),
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_ept),
     .ngrp = 1,
-    .umasks = hsw_ept,
+    .umasks = bdw_ept,
   },
   { .name   = "OFFCORE_RESPONSE_0",
     .desc   = "Offcore response event (must provide at least one request type and either any_response or any combination of supplier + snoop)",
@@ -2644,9 +2468,9 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xf,
     .code = 0x1b7,
     .flags= INTEL_X86_NHM_OFFCORE,
-    .numasks = LIBPFM_ARRAY_SIZE(hsw_offcore_response),
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_offcore_response),
     .ngrp = 3,
-    .umasks = hsw_offcore_response,
+    .umasks = bdw_offcore_response,
   },
   { .name   = "OFFCORE_RESPONSE_1",
     .desc   = "Offcore response event (must provide at least one request type and either any_response or any combination of supplier + snoop)",
@@ -2654,8 +2478,8 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .cntmsk = 0xf,
     .code = 0x1bb,
     .flags= INTEL_X86_NHM_OFFCORE,
-    .numasks =  LIBPFM_ARRAY_SIZE(hsw_offcore_response),
+    .numasks =  LIBPFM_ARRAY_SIZE(bdw_offcore_response),
     .ngrp = 3,
-    .umasks = hsw_offcore_response, /* identical to actual umasks list for this event */
+    .umasks = bdw_offcore_response, /* identical to actual umasks list for this event */
   },
 };

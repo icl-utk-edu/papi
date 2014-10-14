@@ -32,6 +32,7 @@
 
 #include "events/arm_cortex_a57_events.h"    /* A57 event tables */
 #include "events/arm_cortex_a53_events.h"    /* A53 event tables */
+#include "events/arm_xgene_events.h"         /* Applied Micro X-Gene tables */
 
 static int
 pfm_arm_detect_cortex_a57(void *this)
@@ -60,6 +61,22 @@ pfm_arm_detect_cortex_a53(void *this)
 
 	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
 		(pfm_arm_cfg.part == 0xd03)) { /* Cortex A53 */
+			return PFM_SUCCESS;
+	}
+	return PFM_ERR_NOTSUPP;
+}
+
+static int
+pfm_arm_detect_xgene(void *this)
+{
+	int ret;
+
+	ret = pfm_arm_detect(this);
+	if (ret != PFM_SUCCESS)
+		return PFM_ERR_NOTSUPP;
+
+	if ((pfm_arm_cfg.implementer == 0x50) && /* Applied Micro */
+		(pfm_arm_cfg.part == 0x000)) { /* Applied Micro X-Gene */
 			return PFM_SUCCESS;
 	}
 	return PFM_ERR_NOTSUPP;
@@ -100,6 +117,31 @@ pfmlib_pmu_t arm_cortex_a53_support={
 	.pe			= arm_cortex_a53_pe,
 
 	.pmu_detect		= pfm_arm_detect_cortex_a53,
+	.max_encoding		= 1,
+	.num_cntrs		= 6,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first	= pfm_arm_get_event_first,
+	.get_event_next		= pfm_arm_get_event_next,
+	.event_is_valid		= pfm_arm_event_is_valid,
+	.validate_table		= pfm_arm_validate_table,
+	.get_event_info		= pfm_arm_get_event_info,
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
+};
+
+/* Applied Micro X-Gene support */
+pfmlib_pmu_t arm_xgene_support={
+	.desc			= "Applied Micro X-Gene",
+	.name			= "arm_xgene",
+	.pmu			= PFM_PMU_ARM_XGENE,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_xgene_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.pe			= arm_xgene_pe,
+
+	.pmu_detect		= pfm_arm_detect_xgene,
 	.max_encoding		= 1,
 	.num_cntrs		= 6,
 
