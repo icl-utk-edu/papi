@@ -53,10 +53,17 @@ static int find_existing_event(char *name,
   _papi_hwi_lock( NAMELIB_LOCK );
 
   for(i=0;i<event_table->num_native_events;i++) {
-
+    // Most names passed in will contain the pmu name, so first we compare to the allocated name (it has pmu name on front)
     if (!strcmp(name,event_table->native_events[i].allocated_name)) {
       SUBDBG("Found allocated_name: %s, libpfm4_idx: %#x, papi_event_code: %#x\n", 
          event_table->native_events[i].allocated_name, event_table->native_events[i].libpfm4_idx, event_table->native_events[i].papi_event_code);
+      event=i;
+      break;
+    }
+    // some callers have an event name without the pmu name on the front, so we also compare to the base name (just the event name part)
+    if (!strcmp(name,event_table->native_events[i].base_name)) {
+      SUBDBG("Found base_name: %s, libpfm4_idx: %#x, papi_event_code: %#x\n",
+         event_table->native_events[i].base_name, event_table->native_events[i].libpfm4_idx, event_table->native_events[i].papi_event_code);
       event=i;
       break;
     }
@@ -112,7 +119,6 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 
   SUBDBG("ENTER: name: %s, libpfm4_index: %#x, event_table: %p, event_table->pmu_type: %d\n", name, libpfm4_index, event_table, event_table->pmu_type);
 
-  static int last_libpfm4_index=0;
   int nevt_idx;
   int event_num;
   int encode_failed=0;
@@ -127,6 +133,7 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 
   pfm_perf_encode_arg_t perf_arg;
   pfm_event_info_t einfo;
+  pfm_event_attr_info_t ainfo;
   pfm_pmu_info_t pinfo;
 
   // if no place to put native events, report that allocate failed
@@ -152,7 +159,7 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
      ntv_evt = &(event_table->native_events[nevt_idx]);
   }
 
-  SUBDBG("event_num: %d, nevt_idx: %d, ntv_evt: %p, ntv_evt->attr_idx: %d\n", event_num, nevt_idx, ntv_evt, ntv_evt->attr_idx);
+  SUBDBG("event_num: %d, nevt_idx: %d, ntv_evt: %p\n", event_num, nevt_idx, ntv_evt);
 
   /* clear the argument and attribute structures */
   memset(&perf_arg,0,sizeof(pfm_perf_encode_arg_t));
@@ -224,11 +231,9 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 	  SUBDBG("libpfm4_index: %#x\n", libpfm4_index);
   }
 
-	/* libpfm requires the structure be zeroed */
+	// get this events information from libpfm4, if unavailable return event not found (structure be zeroed)
 	memset( &einfo, 0, sizeof( pfm_event_info_t ));
 	einfo.size = sizeof(pfm_event_info_t);
-
-	// get this events information from libpfm4, if unavailable return event not found
 	if ((ret = pfm_get_event_info(libpfm4_index, PFM_OS_PERF_EVENT_EXT, &einfo)) != PFM_SUCCESS) {
 		free(event_string);
 		free(pmu_name);
@@ -237,8 +242,9 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 		return NULL;
 	}
 
-	// if pmu type is not one supported by this component, return event not found
+	// if pmu type is not one supported by this component, return event not found (structure be zeroed)
 	memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+	pinfo.size = sizeof(pfm_pmu_info_t);
 	pfm_get_pmu_info(einfo.pmu, &pinfo);
 	if (pmu_is_present_and_right_type(&pinfo, event_table->pmu_type) == 0) {
 		free(event_string);
@@ -248,73 +254,94 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 		return NULL;
 	}
 
-	// if we have a new event code, start back at beginning of attributes
-	if (libpfm4_index != last_libpfm4_index) {
-		SUBDBG("new native event code: libpfm4_index: %#x, last_libpfm4_index: %#x, attr_idx: %d\n", libpfm4_index, last_libpfm4_index, attr_idx);
-		attr_idx = 0;
-	}
-	last_libpfm4_index = libpfm4_index;
-
   ntv_evt->allocated_name=strdup(name);
+  ntv_evt->mask_string=strdup(masks);
   ntv_evt->component=_pe_libpfm4_get_cidx();
   ntv_evt->pmu=pmu_name;
   ntv_evt->base_name=strdup(event);
   ntv_evt->pmu_plus_name=strdup(fullname);
   ntv_evt->libpfm4_idx=libpfm4_index;
-  ntv_evt->attr_idx=attr_idx;
+  ntv_evt->event_description=strdup(einfo.desc);
   ntv_evt->users=0;      /* is this needed? */
+  ntv_evt->cpu=perf_arg.cpu;
 
-  free(event_string);
+	SUBDBG("ntv_evt->mask_string: %p (%s)\n", ntv_evt->mask_string, ntv_evt->mask_string);
+	char *msk_ptr = strdup(masks);		// get a work copy of the mask string before we free the space it was in
+	free(event_string);
 
-  // the event string returned from the encode call contains all of the legal masks for this event
-  // we really want to save just the masks provided in the event string passed to this function
-  // so get the pmu name, event name and mask list pointers for the event string passed to us
-  event_string = strdup(name);
-  SUBDBG("event_string: %s\n", event_string);
+	// if there is any mask data, collect their descriptions
+	if ((msk_ptr != NULL)  &&  (strlen(msk_ptr) > 0)) {
+		// go get the descriptions for each of the masks provided with this event
+		char mask_desc[200] = "";
+		char *ptr = msk_ptr;
+		SUBDBG("ptr: %p (%s)\n", ptr, ptr);
+		while (ptr != NULL) {
+			char *ptrm = strstr(ptr, ":");
+			if (ptrm != NULL) {
+				*ptrm = '\0';
+				ptrm++;
+			}
 
-  event = strstr (event_string, "::");
-  if (event != NULL) {
-    *event = 0;     // null terminate pmu name
-    event += 2;     // event name follows '::'
-  } else {
-    event = event_string;
-  }
-  masks = strstr (event, ":");
-  if (masks != NULL) {
-	  *masks = 0;     // null terminate event name
-	  masks += 1;     // masks follow :
-  } else {
-	  masks = "";
-  }
-  SUBDBG("pmu: %s, event: %s, masks: %s\n", ntv_evt->pmu, event, masks);
+			// get the length of the mask name
+			char *wrk = strchr(ptr, '=');
+			unsigned int msk_name_len;
+			if (wrk != NULL) {
+				msk_name_len = wrk - ptr;
+			} else {
+				msk_name_len = strlen (ptr);
+			}
 
-  // if we have no masks, create native event using native event index of -1 (says no mask)
-  int new_event_code;
-  if(strlen(masks) == 0) {
-	new_event_code = _papi_hwi_native_to_eventcode(_pe_libpfm4_get_cidx(), libpfm4_index, -1, ntv_evt->allocated_name);
-  } else {
-	// we have a mask, use the correct index into the native events array for the index
-	new_event_code = _papi_hwi_native_to_eventcode(_pe_libpfm4_get_cidx(), libpfm4_index, nevt_idx, ntv_evt->allocated_name);
-  }
+			int i;
+			for (i=0 ; i<einfo.nattrs ; i++) {
+				// get this events attribute information from libpfm4, if unavailable return event not found (table must be cleared)
+				memset (&ainfo, 0, sizeof(pfm_event_attr_info_t));
+				ainfo.size = sizeof(pfm_event_attr_info_t);
+				ret = pfm_get_event_attr_info(libpfm4_index, i, PFM_OS_PERF_EVENT_EXT, &ainfo);
+				if (ret != PFM_SUCCESS) {
+					free (msk_ptr);
+					SUBDBG("EXIT: Attribute info not found, libpfm4_index: %#x, ret: %d\n", libpfm4_index, _papi_libpfm4_error(ret));
+					return NULL;
+				}
+
+				// if this is one of the ones we want, append its description
+				if ((msk_name_len == strlen(ainfo.name))  && (strncmp(ptr, ainfo.name, msk_name_len) == 0)) {
+					SUBDBG("Found mask: %s, i: %d\n", ainfo.name, i);
+					if ((strlen(mask_desc) + 1 + strlen(ainfo.desc)) < sizeof(mask_desc)) {
+						if (strlen(mask_desc) > 0) {
+							strcat (mask_desc, ":");
+						}
+						strcat (mask_desc, ainfo.desc);
+					}
+					break;
+				}
+			}
+
+			ptr = ptrm;
+		}
+		ntv_evt->mask_description=strdup(mask_desc);
+		SUBDBG("ntv_evt->mask_description: %p (%s)\n", ntv_evt->mask_description, ntv_evt->mask_description);
+	}
+
+	// give back space if we got any
+	if (msk_ptr != NULL) {
+		free (msk_ptr);
+	}
+
+	// create a papi table for this native event, put the index into the event sets array of native events into the papi table
+	int new_event_code = _papi_hwi_native_to_eventcode(_pe_libpfm4_get_cidx(), libpfm4_index, nevt_idx, ntv_evt->allocated_name);
 	_papi_hwi_set_papi_event_string((const char *)ntv_evt->allocated_name);
 	_papi_hwi_set_papi_event_code(new_event_code, 1);
 
-  ntv_evt->papi_event_code=new_event_code;
-  ntv_evt->mask_string=strdup(masks);
+	ntv_evt->papi_event_code=new_event_code;
 
-  free(event_string);
-
-  SUBDBG("Using %#x as index for %s\n", ntv_evt->libpfm4_idx, fullname);
-
-  ntv_evt->cpu=perf_arg.cpu;
-  SUBDBG("event_table->native_events[%d]: %p, cpu: %d, attr.config: 0x%"PRIx64", attr.config1: 0x%"PRIx64", attr.config2: 0x%"PRIx64", attr.type: 0x%"PRIx32", attr.exclude_user: %d, attr.exclude_kernel: %d, attr.exclude_guest: %d\n",
+	SUBDBG("Using %#x as index for %s\n", ntv_evt->libpfm4_idx, fullname);
+	SUBDBG("num_native_events: %d, allocated_native_events: %d\n", event_table->num_native_events, event_table->allocated_native_events);
+	SUBDBG("Native Event: papi_event_code: %#x, libpfm4_idx: %#x, pmu: %s, base_name: %s, mask_string: %s, allocated_name: %s\n",
+			ntv_evt->papi_event_code, ntv_evt->libpfm4_idx, ntv_evt->pmu, ntv_evt->base_name, ntv_evt->mask_string, ntv_evt->allocated_name);
+	SUBDBG("event_table->native_events[%d]: %p, cpu: %d, attr.config: 0x%"PRIx64", attr.config1: 0x%"PRIx64", attr.config2: 0x%"PRIx64", attr.type: 0x%"PRIx32", attr.exclude_user: %d, attr.exclude_kernel: %d, attr.exclude_guest: %d\n",
 		nevt_idx, &(event_table->native_events[nevt_idx]), ntv_evt->cpu, ntv_evt->attr.config,
 		ntv_evt->attr.config1, ntv_evt->attr.config2, ntv_evt->attr.type,
 		ntv_evt->attr.exclude_user, ntv_evt->attr.exclude_kernel, ntv_evt->attr.exclude_guest);
-
-  SUBDBG("Event: base_name: %s, mask_string: %s, libpfm4_idx: %#x, papi_event_code: %#x, num_native_events: %d, allocated_native_events: %d\n",
-		  ntv_evt->base_name, ntv_evt->mask_string, ntv_evt->libpfm4_idx,
-		  ntv_evt->papi_event_code, event_table->num_native_events, event_table->allocated_native_events);
 
   /* If we've used all of the allocated native events, then allocate more room */
   if (event_table->num_native_events >=
@@ -386,6 +413,7 @@ get_first_event_next_pmu(int pmu_idx, int pmu_type)
 
     /* clear the PMU structure (required by libpfm4) */
     memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+    pinfo.size = sizeof(pfm_pmu_info_t);
     ret=pfm_get_pmu_info(pmu_idx, &pinfo);
 
     if ((ret==PFM_SUCCESS) && pmu_is_present_and_right_type(&pinfo,pmu_type)) {
@@ -419,7 +447,6 @@ get_first_event_next_pmu(int pmu_idx, int pmu_type)
 /* Exported functions                                      */
 /***********************************************************/
 
-
 /** @class  _pe_libpfm4_ntv_name_to_code
  *  @brief  Take an event name and convert it to an event code.
  *
@@ -447,7 +474,9 @@ _pe_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
   event_num=find_existing_event(name, event_table);
   if (event_num >= 0) {
 	     *event_code=event_table->native_events[event_num].libpfm4_idx;
-	     SUBDBG("EXIT: Found code: %#x\n",*event_code);
+	     // the following call needs to happen to prevent the internal layer from creating a new papi native event table
+	     _papi_hwi_set_papi_event_code(event_table->native_events[event_num].papi_event_code, 1);
+	     SUBDBG("EXIT: Found papi_event_code: %#x, libpfm4_idx: %#x\n", event_table->native_events[event_num].papi_event_code, event_table->native_events[event_num].libpfm4_idx);
 	     return PAPI_OK;
   }
 
@@ -489,92 +518,66 @@ _pe_libpfm4_ntv_code_to_name(unsigned int EventCode,
 	SUBDBG("ENTER: EventCode: %#x, ntv_name: %p, len: %d, event_table: %p\n", EventCode, ntv_name, len, event_table);
 
 	int eidx;
-	int ret;
-	int papi_ret;
 	int papi_event_code;
-	pfm_pmu_info_t pinfo;
-	pfm_event_info_t einfo;
 
 	// get the attribute index for this papi event
 	papi_event_code = _papi_hwi_get_papi_event_code();
 
-	// an attribute index less than 0 is invalid, return error
+	// a papi event code less than 0 is invalid, return error
 	if (papi_event_code <= 0) {
 		SUBDBG("EXIT: PAPI_ENOEVNT\n");
 		return PAPI_ENOEVNT;
 	}
 
-	// find our native event table for this papi event code
-	for (eidx=0 ; eidx<event_table->num_native_events ; eidx++) {
+	// find our native event table for this papi event code (search list backwards because it improves chances of finding it quickly)
+	for (eidx=event_table->num_native_events-1 ; eidx>=0 ; eidx--) {
 		if ((papi_event_code == event_table->native_events[eidx].papi_event_code) && (EventCode == ((unsigned)event_table->native_events[eidx].libpfm4_idx))) {
+			SUBDBG("Found native_event[%d]: papi_event_code: %#x, libpfm4_idx: %#x\n", eidx, event_table->native_events[eidx].papi_event_code, event_table->native_events[eidx].libpfm4_idx);
 			break;
 		}
 	}
 
-	if (eidx < event_table->num_native_events) {
-		char *ename = event_table->native_events[eidx].pmu_plus_name;
+	// if we did not find a match, return an error
+	if (eidx < 0) {
+		// If we did not find a match in our native event table, then the code passed in has not been
+		// allocated yet  It should not be possible to get to this code.  The user has to call the papi
+		// code_to_name api with a papi event code for a native event.  But the only way to get one of
+		// those is to call either name_to_code or enum_cmp_events first.  When one of these calls is
+		// done we allocate the event so it should always be there.
 
-		// if it will not fit, return error
-		if (strlen (ename) >= (unsigned)len) {
-			SUBDBG("EXIT: event name %s will not fit in buffer provided\n", ename);
+		SUBDBG("EXIT: PAPI_ENOEVNT\n");
+		return PAPI_ENOEVNT;
+	}
+
+	// if this event is defined by the default pmu, then use only the event name
+	// if it is not defined by the default pmu, then use both the pmu name and event name
+	char *ename;
+	if (strcmp(event_table->default_pmu.name, event_table->native_events[eidx].pmu) == 0) {
+		ename = event_table->native_events[eidx].base_name;
+	} else {
+		ename = event_table->native_events[eidx].pmu_plus_name;
+	}
+
+	// if it will not fit, return error
+	if (strlen (ename) >= (unsigned)len) {
+		SUBDBG("EXIT: event name %s will not fit in buffer provided\n", ename);
+		return PAPI_EBUF;
+	}
+	strcpy (ntv_name, ename);
+
+	// if this event had masks, also add their names
+	char *mname = event_table->native_events[eidx].mask_string;
+	if ((mname != NULL)  &&  (strlen(mname) > 0)) {
+		if ((strlen(ename) + 8 + strlen(mname)) >= (unsigned)len) {
+			SUBDBG("EXIT: Not enough room for event and mask descriptions: need: %u, have: %u", (unsigned)(strlen(ename) + 8 + strlen(mname)), (unsigned)len);
 			return PAPI_EBUF;
 		}
-		strcpy (ntv_name, ename);
-
-		SUBDBG("EXIT: event name: %s\n", ename);
-		return PAPI_OK;
+		strcat (ntv_name, ":");
+		strcat (ntv_name, mname);
 	}
 
-	// if we did not find a match in our native event table, then the code passed in has not been allocated yet
-	// try to use libpfm4 to see if we can get a name (not sure if this can happen)
-
-	// We must be listing events so try to get event name from libpfm4
-	SUBDBG("Use libpfm4 to get event name\n");
-
-	// get this events information from libpfm4 (structure be zeroed)
-	memset( &einfo, 0, sizeof( pfm_event_info_t ));
-	einfo.size = sizeof(pfm_event_info_t);
-	if ((ret = pfm_get_event_info(EventCode, PFM_OS_PERF_EVENT_EXT, &einfo)) != PFM_SUCCESS) {
-		papi_ret = _papi_libpfm4_error(ret);
-		SUBDBG("EXIT: return: %d (%s)\n", papi_ret, PAPI_strerror(papi_ret));
-		return papi_ret;
-	}
-
-	// get the pmu name
-	memset( &pinfo, 0, sizeof(pfm_pmu_info_t) );
-	pinfo.size = sizeof(pfm_pmu_info_t);
-	ret=pfm_get_pmu_info(einfo.pmu, &pinfo);
-	if (ret!=PFM_SUCCESS) {
-		SUBDBG("EXIT: pfm_get_pmu_info returned: %d\n", ret);
-		return ret;
-	}
-
-	// start with empty name string
-	ntv_name[0] = 0;
-
-	/* Only prepend PMU name if not on the "default" PMU */
-	if (event_table->default_pmu.pmu != pinfo.pmu) {
-		// if pmu name will not fit, return an error
-		if (strlen(pinfo.name)+2 >= (unsigned)len) {
-			SUBDBG("EXIT: PAPI_EBUF (%s), pmu name does not fit\n", PAPI_strerror(PAPI_EBUF));
-			return PAPI_EBUF;
-		}
-		strcat(ntv_name, pinfo.name);
-		strcat(ntv_name, "::");
-		len -= (strlen(pinfo.name)+2);
-	}
-
-	// now add the event name
-	if (strlen(einfo.name) < (unsigned)len) {
-		strcat(ntv_name, einfo.name);
-		len -= strlen(einfo.name);
-
-		SUBDBG("EXIT: name: %s\n", ntv_name);
-		return PAPI_OK;
-	}
-
-	SUBDBG("EXIT: PAPI_EBUF (%s), event name does not fit\n", PAPI_strerror(PAPI_EBUF));
-	return PAPI_EBUF;
+	SUBDBG("EXIT: event name: %s\n", ntv_name);
+	return PAPI_OK;
 }
 
 
@@ -607,37 +610,60 @@ _pe_libpfm4_ntv_code_to_descr( unsigned int EventCode,
 {
 	SUBDBG("ENTER: EventCode: %#x, ntv_descr: %p, len: %d: event_table: %p\n", EventCode, ntv_descr, len, event_table);
 
-	int ret;
-	int papi_ret;
-	pfm_event_info_t einfo;
+	int eidx;
+	int papi_event_code;
 
-	if (event_table->pmu_type) {
-		;   // avoid compiler warning
+	// get the attribute index for this papi event
+	papi_event_code = _papi_hwi_get_papi_event_code();
+
+	// a papi event code less than 0 is invalid, return error
+	if (papi_event_code <= 0) {
+		SUBDBG("EXIT: PAPI_ENOEVNT\n");
+		return PAPI_ENOEVNT;
 	}
 
-	/* libpfm requires the structure be zeroed */
-	memset( &einfo, 0, sizeof( pfm_event_info_t ));
-	einfo.size = sizeof(pfm_event_info_t);
+	// find our native event table for this papi event code (search list backwards because it improves chances of finding it quickly)
+	for (eidx=event_table->num_native_events-1 ; eidx>=0 ; eidx--) {
+		SUBDBG("native_event[%d]: papi_event_code: %#x, libpfm4_idx: %#x\n", eidx, event_table->native_events[eidx].papi_event_code, event_table->native_events[eidx].libpfm4_idx);
+		if ((papi_event_code == event_table->native_events[eidx].papi_event_code) && (EventCode == ((unsigned)event_table->native_events[eidx].libpfm4_idx))) {
+			break;
+		}
+	}
 
-	// get this events information from libpfm4
-	ret = pfm_get_event_info(EventCode, PFM_OS_PERF_EVENT_EXT, &einfo);
-	SUBDBG("GOT BACK, ret: %d\n", ret);
+	// if we did not find a match, return an error
+	if (eidx < 0) {
+		// If we did not find a match in our native event table, then the code passed in has not been
+		// allocated yet  It should not be possible to get to this code.  The user has to call the papi
+		// code_to_name api with a papi event code for a native event.  But the only way to get one of
+		// those is to call either name_to_code or enum_cmp_events first.  When one of these calls is
+		// done we allocate the event so it should always be there.
 
-	if (ret == PFM_SUCCESS) {
-		// if name will not fit, return an error
-		if (strlen(einfo.desc) > (unsigned)len) {
-			SUBDBG("EXIT: PAPI_EBUF (%s)\n", PAPI_strerror(PAPI_EBUF));
+		SUBDBG("EXIT: PAPI_ENOEVNT\n");
+		return PAPI_ENOEVNT;
+	}
+
+	char *edesc = event_table->native_events[eidx].event_description;
+
+	// if it will not fit, return error
+	if (strlen (edesc) >= (unsigned)len) {
+		SUBDBG("EXIT: event name %s will not fit in buffer provided\n", edesc);
+		return PAPI_EBUF;
+	}
+	strcpy (ntv_descr, edesc);
+
+	// if this event had masks, also add their descriptions
+	char *mdesc = event_table->native_events[eidx].mask_description;
+	if ((mdesc != NULL)  &&  (strlen(mdesc) > 0)) {
+		if ((strlen(edesc) + 8 + strlen(mdesc)) >= (unsigned)len) {
+			SUBDBG("EXIT: Not enough room for event and mask descriptions: need: %u, have: %u", (unsigned)(strlen(edesc) + 8 + strlen(mdesc)), (unsigned)len);
 			return PAPI_EBUF;
 		}
-
-		strncpy(ntv_descr, einfo.desc, len);
-		SUBDBG("EXIT: description: %s\n", ntv_descr);
-		return PAPI_OK;
+		strcat (ntv_descr, ", masks:");
+		strcat (ntv_descr, mdesc);
 	}
 
-	papi_ret = _papi_libpfm4_error(ret);
-	SUBDBG("EXIT: return: %d (%s)\n", papi_ret, PAPI_strerror(papi_ret));
-	return papi_ret;
+	SUBDBG("EXIT: event description: %s\n", ntv_descr);
+	return PAPI_OK;
 }
 
 
@@ -649,100 +675,19 @@ _pe_libpfm4_ntv_code_to_info(unsigned int EventCode,
 	SUBDBG("ENTER: EventCode: %#x, info: %p, event_table: %p\n", EventCode, info, event_table);
 
 	int ret;
-	struct native_event_t *ntv_evt;
-	char *temp;
-	pfm_event_attr_info_t ainfo;
 
-	// get the native event index used for this papi event, if we do not know about this event yet try to get info from libpfm4
-	int ntv_idx = _papi_hwi_get_ntv_idx(_papi_hwi_get_papi_event_code());
-	if (ntv_idx < 0) {
-		// collect libpfm4 information about this event
-		if ((ret = _pe_libpfm4_ntv_code_to_name(EventCode, info->symbol, sizeof(info->symbol), event_table)) != PAPI_OK) {
-			SUBDBG("EXIT: _pe_libpfm4_ntv_code_to_name returned: %d\n", ret);
-			return PAPI_ENOEVNT;
-		}
-		if ((ret = _pe_libpfm4_ntv_code_to_descr(EventCode, info->long_descr, sizeof(info->long_descr), event_table)) != PAPI_OK) {
-			SUBDBG("EXIT: _pe_libpfm4_ntv_code_to_descr returned: %d\n", ret);
-			return PAPI_ENOEVNT;
-		}
-
-		SUBDBG("EXIT: EventCode: %#x, name: %s, desc: %s\n", EventCode, info->symbol, info->long_descr);
-		return PAPI_OK;
-	}
-	ntv_evt = &(event_table->native_events[ntv_idx]);
-//	SUBDBG("event_table->native_events[%d]: %p, ntv_evt: %p, ntv_evt->attr_idx: %d\n", ntv_idx, &(event_table->native_events[ntv_idx]), ntv_evt, ntv_evt->attr_idx);
-
-	// make sure there is enough room for event name
-	if (strlen(ntv_evt->pmu_plus_name) >= sizeof(info->symbol)) {
-		SUBDBG("EXIT: event name too long\n");
+	// get the event name first
+	if ((ret = _pe_libpfm4_ntv_code_to_name(EventCode, info->symbol, sizeof(info->symbol), event_table)) != PAPI_OK) {
+		SUBDBG("EXIT: _pe_libpfm4_ntv_code_to_name returned: %d\n", ret);
 		return PAPI_ENOEVNT;
 	}
 
-	// put the pmu name and event name into the callers info structure
-	strcpy(info->symbol, ntv_evt->pmu_plus_name);
-
-	// put the event description into the info structure
 	if ((ret = _pe_libpfm4_ntv_code_to_descr(EventCode, info->long_descr, sizeof(info->long_descr), event_table)) != PAPI_OK) {
 		SUBDBG("EXIT: _pe_libpfm4_ntv_code_to_descr returned: %d\n", ret);
 		return PAPI_ENOEVNT;
 	}
 
-	// if native event attribute index is negative, we are listing an event which does not have a mask
-	// just return what was built so far
-	if (ntv_evt->attr_idx < 0) {
-		SUBDBG("EXIT: EventCode: %#x, name: %s, desc: %s\n", EventCode, info->symbol, info->long_descr);
-		return PAPI_OK;
-	}
-
-	// there should be a mask for this event code so add its information to end of event name and description
-
-	// go get the attribute information for this event
-	// libpfm4 likes the table cleared
-	memset (&ainfo, 0, sizeof(pfm_event_attr_info_t));
-	ainfo.size = sizeof(pfm_event_attr_info_t);
-	ret = pfm_get_event_attr_info(EventCode, ntv_evt->attr_idx, PFM_OS_PERF_EVENT_EXT, &ainfo);
-	if (ret != PFM_SUCCESS) {
-		SUBDBG("EXIT: Attribute info not found, EventCode: %#x, attr_idx: %d, ret: %d\n", EventCode, ntv_evt->attr_idx, _papi_libpfm4_error(ret));
-		return _papi_libpfm4_error(ret);
-	}
-	SUBDBG("EventCode: %#x, attr_idx: %d, type: %d, name: %s, description: %s\n", EventCode, ntv_evt->attr_idx, ainfo.type, ainfo.name, ainfo.desc);
-
-	// format the attribute name so we can put it on the end of the event name
-	temp = malloc(strlen(ainfo.name) + 35);
-	switch (ainfo.type) {
-	case PFM_ATTR_UMASK:
-		sprintf(temp,":%s",ainfo.name);
-		break;
-	case PFM_ATTR_MOD_BOOL:
-	case PFM_ATTR_MOD_INTEGER:
-		sprintf(temp, ":%s", ainfo.name);
-		// a few attributes require a non-zero value to encode correctly (most would accept zero here)
-		strcat(temp,"=0");
-		break;
-	default:
-		free(temp);
-		SUBDBG("EXIT: Unsupported attribute type: %d", ainfo.type);
-		return PAPI_EATTR;
-	}
-
-	if ((strlen(info->symbol) + strlen(temp)) >= sizeof(info->symbol)) {
-		SUBDBG("EXIT: Not enough room in info->symbol for event string: need: %u, have: %u", (unsigned)(strlen(info->symbol) + strlen(temp)), (unsigned)sizeof(info->symbol));
-		free(temp);
-		return PAPI_EBUF;
-	}
-	strcat(info->symbol, temp);
-	free(temp);
-
-
-	if ((strlen(info->long_descr) + 8 + strlen(ainfo.desc)) >= sizeof(info->long_descr)) {
-		SUBDBG("EXIT: Not enough room in info->long_descr for event description: need: %u, have: %u", (unsigned)(strlen(info->long_descr) + 8 +strlen(ainfo.desc)), (unsigned)sizeof(info->long_descr));
-		return PAPI_EBUF;
-	}
-	strcat (info->long_descr, ", masks:");
-	strcat (info->long_descr, ainfo.desc);
-
-	SUBDBG("EXIT: EventCode: %#x, name: %s, desc: %s\n",
-			EventCode, info->symbol, info->long_descr);
+	SUBDBG("EXIT: EventCode: %#x, name: %s, desc: %s\n", EventCode, info->symbol, info->long_descr);
 	return PAPI_OK;
 }
 
@@ -773,6 +718,7 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 	int code,ret, pnum;
 	int max_umasks;
 	char event_string[BUFSIZ];
+	pfm_pmu_info_t pinfo;
 	pfm_event_info_t einfo;
 	struct native_event_t *our_event;
 
@@ -785,32 +731,45 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 	      return code;
 	   }
 
-		// get this events name
-		// libpfm requires the structure be zeroed
+		// get the event information from libpfm4 (must zero structure)
 		memset( &einfo, 0, sizeof( pfm_event_info_t ));
 		einfo.size = sizeof(pfm_event_info_t);
-
-		// get this events information from libpfm4
 		if ((ret = pfm_get_event_info(code, PFM_OS_PERF_EVENT_EXT, &einfo)) != PFM_SUCCESS) {
 			SUBDBG("EXIT: pfm_get_event_info returned: %d\n", ret);
 			return PAPI_ENOIMPL;
 		}
 
-	    /* clear the PMU structure (required by libpfm4) */
-		pfm_pmu_info_t pinfo;
-		memset(&pinfo,0,sizeof(pfm_pmu_info_t));
-		if ((ret=pfm_get_pmu_info(einfo.pmu, &pinfo)) != PFM_SUCCESS) {
+		// get the pmu information from libpfm4 (must zero structure)
+		memset( &pinfo, 0, sizeof(pfm_pmu_info_t) );
+		pinfo.size = sizeof(pfm_pmu_info_t);
+		ret=pfm_get_pmu_info(einfo.pmu, &pinfo);
+		if (ret!=PFM_SUCCESS) {
 			SUBDBG("EXIT: pfm_get_pmu_info returned: %d\n", ret);
-			return PAPI_ENOIMPL;
+			return ret;
 		}
 
-		sprintf(event_string, "%s::%s", pinfo.name, einfo.name);
-		SUBDBG("code: %#x, event: %s\n", code, einfo.name);
+		// build full event name
+		sprintf (event_string, "%s::%s", pinfo.name, einfo.name);
+		SUBDBG("code: %#x, pmu: %s, event: %s, event_string: %s\n", code, pinfo.name, einfo.name, event_string);
 
-		int new_event_code = _papi_hwi_native_to_eventcode(_pe_libpfm4_get_cidx(), code, -1, event_string);
-		_papi_hwi_set_papi_event_string(event_string);
-		_papi_hwi_set_papi_event_code(new_event_code, 1);
-		*PapiEventCode = code;
+		// go allocate this event, need to create tables used by the get event info call that will probably follow
+		if ((our_event = allocate_native_event(event_string, code, event_table)) == NULL) {
+			// allocate may have created the event table but returned NULL to tell the caller the event string was invalid (attempt to encode it failed).
+			// if the caller wants to use this event to count something, it will report an error
+			// but if the caller is just interested in listing the event, then we need an event table with an event name and libpfm4 index
+			int evt_idx;
+			if ((evt_idx = find_existing_event(event_string, event_table)) < 0) {
+				SUBDBG("EXIT: Allocating event: '%s' failed\n", event_string);
+				return PAPI_ENOEVNT;
+			}
+
+			// give back the new event code
+			*PapiEventCode = event_table->native_events[evt_idx].libpfm4_idx;
+			SUBDBG("EXIT: event code: %#x\n", *PapiEventCode);
+			return PAPI_OK;
+		}
+
+		*PapiEventCode = our_event->libpfm4_idx;
 
 		SUBDBG("EXIT: *PapiEventCode: %#x\n", *PapiEventCode);
 		return PAPI_OK;
@@ -819,14 +778,13 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 	/* Handle looking for the next event */
 	if ( modifier == PAPI_ENUM_EVENTS ) {
 		attr_idx = 0;   // set so if they want attribute information, it will start with the first attribute
+
 		// get the next event code from libpfm4, if there are no more in this pmu find first event in next pmu
 		if ((code = pfm_get_event_next(*PapiEventCode)) < 0) {
 
-			/* libpfm requires the structure be zeroed */
+			// get this events information from libpfm4, we need the pmu number of the last event we processed (table must be cleared)
 			memset( &einfo, 0, sizeof( pfm_event_info_t ));
 			einfo.size = sizeof(pfm_event_info_t);
-
-			// get this events information from libpfm4, we need the pmu number of the last event we processed
 			if ((ret = pfm_get_event_info(*PapiEventCode, PFM_OS_PERF_EVENT_EXT, &einfo)) != PFM_SUCCESS) {
 				SUBDBG("EXIT: pfm_get_event_info returned: %d\n", ret);
 				return PAPI_ENOIMPL;
@@ -847,8 +805,27 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 			}
 		}
 
-		// get the event name for this event code
-		_pe_libpfm4_ntv_code_to_name(code, event_string, sizeof(event_string), event_table);
+
+		// get the event information from libpfm4 (must zero structure)
+		memset( &einfo, 0, sizeof( pfm_event_info_t ));
+		einfo.size = sizeof(pfm_event_info_t);
+		if ((ret = pfm_get_event_info(code, PFM_OS_PERF_EVENT_EXT, &einfo)) != PFM_SUCCESS) {
+			SUBDBG("EXIT: pfm_get_event_info returned: %d\n", ret);
+			return PAPI_ENOIMPL;
+		}
+
+		// get the pmu information from libpfm4 (must zero structure)
+		memset( &pinfo, 0, sizeof(pfm_pmu_info_t) );
+		pinfo.size = sizeof(pfm_pmu_info_t);
+		ret=pfm_get_pmu_info(einfo.pmu, &pinfo);
+		if (ret!=PFM_SUCCESS) {
+			SUBDBG("EXIT: pfm_get_pmu_info returned: %d\n", ret);
+			return ret;
+		}
+
+		// build full event name
+		sprintf (event_string, "%s::%s", pinfo.name, einfo.name);
+		SUBDBG("code: %#x, pmu: %s, event: %s, event_string: %s\n", code, pinfo.name, einfo.name, event_string);
 
 		// go allocate this event, need to create tables used by the get event info call that will follow
 		if ((our_event = allocate_native_event(event_string, code, event_table)) == NULL) {
@@ -867,11 +844,6 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 			return PAPI_OK;
 		}
 
-		// the event table may have been created as part of processing the papi preset events
-		// if that happened, it may not have a valid attribute index yet, so put correct index into event table
-		our_event->attr_idx = attr_idx;
-//      SUBDBG("our_event: %p, papi_event_code: %#x, libpfm4_idx: %#x, attr_idx: %d\n", our_event, our_event->papi_event_code, our_event->libpfm4_idx, our_event->attr_idx);
-
 		// give back the new event code
 		*PapiEventCode = our_event->libpfm4_idx;
 
@@ -887,11 +859,9 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 
 	/* Enumerate PAPI_NTV_ENUM_UMASKS (umasks on an event) */
 	if ( modifier == PAPI_NTV_ENUM_UMASKS ) {
-		/* libpfm requires the structure be zeroed */
+		// get this events information from libpfm4, we need the number of masks this event knows about (table must be cleared)
 		memset( &einfo, 0, sizeof( pfm_event_info_t ));
 		einfo.size = sizeof(pfm_event_info_t);
-
-		// get this events information from libpfm4, we need the number of masks this event knows about
 		if ((ret = pfm_get_event_info(*PapiEventCode, PFM_OS_PERF_EVENT_EXT, &einfo)) != PFM_SUCCESS) {
 			SUBDBG("EXIT: pfm_get_event_info returned: %d\n", ret);
 			return PAPI_ENOIMPL;
@@ -907,8 +877,19 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 			return PAPI_ENOEVNT;
 		}
 
-		// get the event name for this event code
-		_pe_libpfm4_ntv_code_to_name(*PapiEventCode, event_string, sizeof(event_string), event_table);
+		// find the event table for this event, we need the pmu name and event name without any masks
+		int ntv_idx = _papi_hwi_get_ntv_idx(_papi_hwi_get_papi_event_code());
+		if (ntv_idx < 0) {
+			SUBDBG("EXIT: _papi_hwi_get_ntv_idx returned: %d\n", ntv_idx);
+			return ntv_idx;
+		}
+		char *ename = event_table->native_events[ntv_idx].pmu_plus_name;
+		if ((ename == NULL)  ||  (strlen(ename) >= sizeof(event_string))) {
+			SUBDBG("EXIT: Event name will not fit into buffer\n");
+			return PAPI_EBUF;
+		}
+		strcpy (event_string, ename);
+		SUBDBG("event_string: %s\n", event_string);
 
 		// go get the attribute information for this event
 		// libpfm4 likes the table cleared
@@ -960,11 +941,6 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 			return PAPI_OK;
 		}
 
-		// the event table may have been created as part of processing the papi preset events
-		// if that happened, it may not have a valid attribute index yet, so put correct index into event table
-		our_event->attr_idx = attr_idx;
-//      SUBDBG("our_event: %p, papi_event_code: %#x, libpfm4_idx: %#x, attr_idx: %d\n", our_event, our_event->papi_event_code, our_event->libpfm4_idx, our_event->attr_idx);
-
 		// bump so next time we will use next attribute
 		attr_idx++;
 
@@ -1007,23 +983,24 @@ _pe_libpfm4_shutdown(struct native_event_table_t *event_table) {
   /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
 
-     /* free memory allocated with strdup or malloc */
-     for( i=0; i<event_table->num_native_events; i++) {
-        free(event_table->native_events[i].base_name);
-        free(event_table->native_events[i].pmu_plus_name);
-        free(event_table->native_events[i].pmu);
-        free(event_table->native_events[i].allocated_name);
-        free(event_table->native_events[i].mask_string);
+  /* free memory allocated with strdup or malloc */
+  for( i=0; i<event_table->num_native_events; i++) {
+     free(event_table->native_events[i].base_name);
+     free(event_table->native_events[i].pmu_plus_name);
+     free(event_table->native_events[i].pmu);
+     free(event_table->native_events[i].allocated_name);
+     free(event_table->native_events[i].mask_string);
+     free(event_table->native_events[i].event_description);
+     if (event_table->native_events[i].mask_description != NULL) {
+          free(event_table->native_events[i].mask_description);
      }
+  }
 
-     memset(event_table->native_events,0,
-	 sizeof(struct native_event_t)*event_table->allocated_native_events);
-     event_table->num_native_events=0;
-     event_table->allocated_native_events=0;
-     free(event_table->native_events);
+  free(event_table->native_events);
 
   _papi_hwi_unlock( NAMELIB_LOCK );
 
+  SUBDBG("EXIT: PAPI_OK\n");
   return PAPI_OK;
 }
 
@@ -1066,14 +1043,16 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
    detected_pmus=0;
    ncnt=0;
 
+   /* init default pmu */
    /* need to init pinfo or pfmlib might complain */
    memset(&(event_table->default_pmu), 0, sizeof(pfm_pmu_info_t));
-   /* init default pmu */
+   pinfo.size = sizeof(pfm_pmu_info_t);
    retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
    
    SUBDBG("Detected pmus:\n");
    for(i=0;i<PFM_PMU_MAX;i++) {
       memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+      pinfo.size = sizeof(pfm_pmu_info_t);
       retval=pfm_get_pmu_info(i, &pinfo);
       if (retval!=PFM_SUCCESS) {
 	 continue;

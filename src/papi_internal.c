@@ -244,8 +244,8 @@ char *_papi_hwi_strip_component_prefix(char *event_name)
 
 /* find the papi event code (4000xxx) associated with the specified component, native event, and event name */
 static int
-_papi_hwi_find_native_event(int cidx, int event, int ntv_idx, const char *event_name) {
-  INTDBG("ENTER: cidx: %x, event: %#x, ntv_idx: %d, event_name: %s\n", cidx, event, ntv_idx, event_name);
+_papi_hwi_find_native_event(int cidx, int event, const char *event_name) {
+  INTDBG("ENTER: cidx: %x, event: %#x, event_name: %s\n", cidx, event, event_name);
 
   int i;
 
@@ -488,7 +488,7 @@ _papi_hwi_native_to_eventcode(int cidx, int event_code, int ntv_idx, const char 
 	  return result;
   }
 
-  result=_papi_hwi_find_native_event(cidx, event_code, ntv_idx, event_name);
+  result=_papi_hwi_find_native_event(cidx, event_code, event_name);
   if (result==PAPI_ENOEVNT) {
      // Need to create one
      result=_papi_hwi_add_native_event(cidx, event_code, ntv_idx, event_name);

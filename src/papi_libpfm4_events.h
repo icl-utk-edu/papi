@@ -13,10 +13,11 @@ struct native_event_t {
   char *pmu;
   int papi_event_code;
   int libpfm4_idx;
-  int attr_idx;
   char *allocated_name;
   char *base_name;
   char *mask_string;
+  char *event_description;
+  char *mask_description;
   char *pmu_plus_name;
   int cpu;
   int users;
