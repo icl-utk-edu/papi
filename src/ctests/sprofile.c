@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    sprofile.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -10,10 +10,15 @@
 
 /* These architectures use Function Descriptors as Function Pointers */
 
-#if (defined(linux) && defined(__ia64__)) || (defined(_AIX)) ||(defined(__powerpc64__))
+#if (defined(linux) && defined(__ia64__)) || (defined(_AIX)) \
+  || ((defined(__powerpc64__) && (_CALL_ELF != 2)))
+/* PPC64 Big Endian is ELF version 1 which uses function descriptors */
 #define DO_READS (unsigned long)(*(void **)do_reads)
 #define DO_FLOPS (unsigned long)(*(void **)do_flops)
 #else
+/* PPC64 Little Endian is ELF version 2 which does not use
+ * function descriptors
+ */
 #define DO_READS (unsigned long)(do_reads)
 #define DO_FLOPS (unsigned long)(do_flops)
 #endif
