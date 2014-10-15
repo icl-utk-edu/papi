@@ -315,7 +315,7 @@ ia64_get_memory_info( PAPI_hw_info_t * hw_info )
 
 #if defined(__powerpc__)
 
-PAPI_mh_info_t sys_mem_info[4] = {
+PAPI_mh_info_t sys_mem_info[] = {
 	{2,						 // 970 begin
 	 {
 	  {						 // level 1 begins
