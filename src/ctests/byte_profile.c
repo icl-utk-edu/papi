@@ -213,9 +213,14 @@ main( int argc, char **argv )
 /* Itanium and PowerPC64 processors return function descriptors instead
  * of function addresses. You must dereference the descriptor to get the address.
 */
-#if defined(ITANIUM1) || defined(ITANIUM2) || defined(__powerpc64__)
+#if defined(ITANIUM1) || defined(ITANIUM2) \
+    || (defined(__powerpc64__) && (_CALL_ELF != 2))
 	start = ( caddr_t ) ( ( ( struct fdesc * ) start )->ip );
 	end = ( caddr_t ) ( ( ( struct fdesc * ) end )->ip );
+        /* PPC64 Big Endian is ELF version 1 which uses function descriptors.
+         *  PPC64 Little Endian is ELF version 2 which does not use
+         * function descriptors
+         */
 #endif
 
 	/* call dummy so it doesn't get optimized away */
