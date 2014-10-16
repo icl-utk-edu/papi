@@ -225,6 +225,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 		*t = '\0';
 	        s = strtok( s + 2, " " );
 		if ( ( strcasecmp( s, "pSeries" ) == 0 ) ||
+                    ( strcasecmp( s, "PowerNV" ) == 0 ) ||
 		     ( strcasecmp( s, "PowerMac" ) == 0 ) ) {
 		   strcpy( hwinfo->vendor_string, "IBM" );
 		}
