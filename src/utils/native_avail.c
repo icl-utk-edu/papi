@@ -179,6 +179,11 @@ validate_event( PAPI_event_info_t * info )
 {
 	int EventSet = PAPI_NULL;
 
+	// if this event has already passed the validate test, no need to try this one again
+	if (event_available) {
+		return;
+	}
+
 	if (PAPI_create_eventset (&EventSet) == PAPI_OK) {
 		if (PAPI_add_named_event (EventSet, info->symbol) == PAPI_OK) {
 			PAPI_remove_named_event (EventSet, info->symbol);
@@ -338,7 +343,7 @@ main( int argc, char **argv )
 {
 	int i, k;
 	int num_events;
-	int num_cmp_events;
+	int num_cmp_events = 0;
 	int retval;
 	PAPI_event_info_t info;
 	const PAPI_hw_info_t *hwinfo = NULL;
@@ -457,10 +462,6 @@ main( int argc, char **argv )
 
 		if (retval==PAPI_OK) {
 			do {
-				// if not the first event in this component, put out a divider
-				if (num_cmp_events) {
-					printf( "--------------------------------------------------------------------------------\n" );
-				}
 				memset( &info, 0, sizeof ( info ) );
 				retval = PAPI_get_event_info( i, &info );
 
@@ -471,7 +472,12 @@ main( int argc, char **argv )
 				if ( flags.include && !strstr( info.symbol, flags.istr ) ) continue;
                                      
 				/* Bail if event name does contain exclude string */
-                                if ( flags.xclude && strstr( info.symbol, flags.xstr ) ) continue;
+				if ( flags.xclude && strstr( info.symbol, flags.xstr ) ) continue;
+
+				// if not the first event in this component, put out a divider
+				if (num_cmp_events) {
+					printf( "--------------------------------------------------------------------------------\n" );
+				}
 
 				/* count only events that are actually processed */
 				num_events++;
@@ -517,9 +523,17 @@ main( int argc, char **argv )
 				if (flags.umask || flags.validate){
 					k = i;
 					if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
+						// clear event string using first mask
+						char first_event_mask_string[PAPI_HUGE_STR_LEN] = "";
+
 						do {
 							retval = PAPI_get_event_info( k, &info );
 							if ( retval == PAPI_OK ) {
+								// if first event mask string not set yet, set it now
+								if (strlen(first_event_mask_string) == 0) {
+									strcpy (first_event_mask_string, info.symbol);
+								}
+
 								if ( flags.validate ) {
 									validate_event(&info);
 								}
@@ -530,9 +544,28 @@ main( int argc, char **argv )
 								}
 							}
 						} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
+						// if we are validating events and the event_available flag is not set yet, try a few more combinations
+						if (flags.validate  && (event_available == 0)) {
+							// try using the event with the first mask defined for the event and the cpu mask
+							// this is a kludge but many of the uncore events require an event specific mask (usually
+							// the first one defined will do) and they all require the cpu mask
+							strcpy (info.symbol, first_event_mask_string);
+							strcat (info.symbol, ":cpu=1");
+							validate_event(&info);
+						}
+						if (flags.validate  && (event_available == 0)) {
+							// an even bigger kludge is that there are 4 snpep_unc_pcu events which require the 'ff' and 'cpu' masks to work correctly.
+							// if nothing else has worked, this code will try those two masks with the current event name to see if it works
+							strcpy (info.symbol, first_event_mask_string);
+							char *wptr = strrchr (info.symbol, ':');
+							if (wptr != NULL) {
+								*wptr = '\0';
+								strcat (info.symbol, ":ff=64:cpu=1");
+								validate_event(&info);
+							}
+						}
 					}
 				}
-
 				print_event_output(flags.validate);
 			} while (PAPI_enum_cmp_event( &i, enum_modifier, cid ) == PAPI_OK );
 		}
