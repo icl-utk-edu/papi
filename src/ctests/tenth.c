@@ -213,7 +213,7 @@ main( int argc, char **argv )
 #endif
 
 		printf( "percent error: %f\n",
-				( float ) ( abs( ( int ) ( tmax - sum[0] ) ) * 100 / sum[0] ) );
+                        (( float )  abs( ( int ) ( tmax - sum[0] ) ) / (float)  sum[0] ) * 100.0 );
 		tmin = ( long long ) ( ( double ) tmax * 0.8 );
 		tmax = ( long long ) ( ( double ) tmax * 1.2 );
 		if ( sum[0] > tmax || sum[0] < tmin )
