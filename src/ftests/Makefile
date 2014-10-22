@@ -4,12 +4,12 @@ INCLUDE = -I../testlib
 LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
 CC	= gcc
-F77	= gfortran
 CFLAGS	= -g -O 
 FFLAGS	= -g -O -ffixed-line-length-132
 
 TESTLIB = ../testlib/libtestlib.a
 
+ifneq ($(F77),)
 include Makefile.recipies
 
 install: default
@@ -22,3 +22,11 @@ install: default
 	-find . -name "*.[Ffh]" -type f -exec cp {} $(DATADIR)/ftests \;
 	-cp Makefile.target $(DATADIR)/ftests/Makefile
 	-cat Makefile.recipies >> $(DATADIR)/ftests/Makefile
+
+else
+all:
+       @echo "Install Fortran compiler to build and run Fortran tests"
+
+install:
+       @echo "No Fortran tests to install."
+endif

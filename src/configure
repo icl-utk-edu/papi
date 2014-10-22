@@ -2417,7 +2417,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 if test "x$F77" = "x"; then
-   F77="@echo nof77 "
+   F77=
 fi
 # Extract the first word of "mpicc", so it can be a program name with args.
 set dummy mpicc; ac_word=$2

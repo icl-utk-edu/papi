@@ -3,11 +3,14 @@
 /* cpu type */
 #undef CPU
 
-/* Define to 1 if you have the `clock_gettime' function. */
+/* POSIX 1b clock */
 #undef HAVE_CLOCK_GETTIME
 
 /* POSIX 1b realtime clock */
 #undef HAVE_CLOCK_GETTIME_REALTIME
+
+/* POSIX 1b realtime HR clock */
+#undef HAVE_CLOCK_GETTIME_REALTIME_HR
 
 /* POSIX 1b per-thread clock */
 #undef HAVE_CLOCK_GETTIME_THREAD

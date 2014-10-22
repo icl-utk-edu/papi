@@ -7,8 +7,10 @@ CFLAGS	= -g -O -Wall
 
 UTILSRCS:= do_loops.c test_utils.c dummy.c clockcore.c
 UTILOBJS:=$(UTILSRCS:.c=.o)
+ifneq ($(F77),)
 UTILSRCS+= ftests_util.F
 UTILOBJS+= ftests_util.o
+endif
 
 all:	$(UTILOBJS)
 	$(AR) $(ARG64) rv libtestlib.a $(UTILOBJS)
