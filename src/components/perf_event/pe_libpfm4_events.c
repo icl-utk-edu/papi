@@ -183,6 +183,13 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 	  // the event table is used by the list so we put what we can get into it
 	  // but the failure doing the encode causes us to return null to our caller
 	  encode_failed = 1;
+
+	  // Noting the encode_failed error in the attr.config allows
+	  // any later validate attempts to return an error value
+	  ntv_evt->attr.config = 0xFFFFFF;
+
+	  // we also want to make it look like a cpu number was not provided as an event mask
+	  perf_arg.cpu = -1;
   }
 
   // get a copy of the event name and break it up into its parts
@@ -272,7 +279,7 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 	// if there is any mask data, collect their descriptions
 	if ((msk_ptr != NULL)  &&  (strlen(msk_ptr) > 0)) {
 		// go get the descriptions for each of the masks provided with this event
-		char mask_desc[200] = "";
+		char mask_desc[PAPI_HUGE_STR_LEN] = "";
 		char *ptr = msk_ptr;
 		SUBDBG("ptr: %p (%s)\n", ptr, ptr);
 		while (ptr != NULL) {
@@ -303,19 +310,36 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 					return NULL;
 				}
 
-				// if this is one of the ones we want, append its description
+				// if this is the one we want, append its description
 				if ((msk_name_len == strlen(ainfo.name))  && (strncmp(ptr, ainfo.name, msk_name_len) == 0)) {
 					SUBDBG("Found mask: %s, i: %d\n", ainfo.name, i);
-					if ((strlen(mask_desc) + 1 + strlen(ainfo.desc)) < sizeof(mask_desc)) {
-						if (strlen(mask_desc) > 0) {
-							strcat (mask_desc, ":");
-						}
-						strcat (mask_desc, ainfo.desc);
+					// find out how much space is left in the mask description work buffer we are building
+					unsigned int mskleft = sizeof(mask_desc) - strlen(mask_desc);
+					// if no space left, just discard this mask description
+					if (mskleft <= 1) {
+						SUBDBG("EXIT: Attribute description discarded: %s\n", ainfo.desc);
+						break;
 					}
+					// if description buffer is not empty, put in mask description separator
+					if (strlen(mask_desc) > 0) {
+						strcat (mask_desc, ":");
+						mskleft--;
+					}
+					// if new description will not all fit in buffer, report truncation
+					if (mskleft < (strlen(ainfo.desc) + 1)) {
+						SUBDBG("EXIT: Attribute description truncated: %s\n", ainfo.desc);
+					}
+					// move as much of this description as will fit
+					strncat (mask_desc, ainfo.desc, mskleft-1);
+					mask_desc[mskleft-1] = '\0';
 					break;
 				}
 			}
 
+			// if we have filled the work buffer, we can quit now
+			if ( (sizeof(mask_desc) - strlen(mask_desc))  <= 1) {
+				break;
+			}
 			ptr = ptrm;
 		}
 		ntv_evt->mask_description=strdup(mask_desc);
@@ -345,7 +369,7 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 
   /* If we've used all of the allocated native events, then allocate more room */
   if (event_table->num_native_events >=
-      event_table->allocated_native_events) {
+      event_table->allocated_native_events-1) {
 
       SUBDBG("Allocating more room for native events (%d %ld)\n",
 	    (event_table->allocated_native_events+NATIVE_EVENT_CHUNK),
@@ -375,12 +399,6 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
   }
 
   if (encode_failed != 0) {
-          // Record encode_failed error by setting attr.config to
-          // 0xFFFFFFF.  This causes any later validate attempts to
-          // fail, which is the desired behavior.  Note: as of
-          // 2014/10/09 this has not been thoroughly tested, since an
-          // failure case is not known.
-          ntv_evt->attr.config = 0xFFFFFF;
 	  SUBDBG("EXIT: encoding event failed\n");
 	  return NULL;
   }
