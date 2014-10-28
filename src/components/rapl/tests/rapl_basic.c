@@ -170,7 +170,8 @@ int main (int argc, char **argv)
              "Error getting event info\n",retval);
 	}
 	
-	strncpy(units[num_events],evinfo.units,PAPI_MIN_STR_LEN);
+	strncpy(units[num_events],evinfo.units,sizeof(units[0])-1);
+	units[sizeof(units[0])-1] = '\0';		// buffer must be null terminated to safely use strstr operation on it below
 	data_type[num_events] = evinfo.data_type;
 
         retval = PAPI_add_event( EventSet, code );

@@ -395,11 +395,14 @@ _rapl_init_component( int cidx )
        num_read=fscanf(fff,"%d",&package);
        fclose(fff);
        if (num_read!=1) {
-	  fprintf(stderr,"error reading %s\n",filename);
+    		 strcpy(_rapl_vector.cmp_info.disabled_reason, "Error reading file: ");
+    		 strncat(_rapl_vector.cmp_info.disabled_reason, filename, PAPI_MAX_STR_LEN - strlen(_rapl_vector.cmp_info.disabled_reason) - 1);
+    		 _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1] = '\0';
+    		 return PAPI_ESYS;
        }
 
        /* Check if a new package */
-       if (package < nr_cpus) {
+       if ((package >= 0) && (package < nr_cpus)) {
          if (packages[package] == -1) {
            SUBDBG("Found package %d out of total %d\n",package,num_packages);
 	   packages[package]=package;
@@ -976,14 +979,14 @@ _rapl_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
-  strncpy( info->symbol, rapl_native_events[index].name, 
-	   sizeof(info->symbol));
+  strncpy( info->symbol, rapl_native_events[index].name, sizeof(info->symbol)-1);
+  info->symbol[sizeof(info->symbol)-1] = '\0';
 
-  strncpy( info->long_descr, rapl_native_events[index].description, 
-	   sizeof(info->symbol));
+  strncpy( info->long_descr, rapl_native_events[index].description, sizeof(info->long_descr)-1);
+  info->long_descr[sizeof(info->long_descr)-1] = '\0';
 
-  strncpy( info->units, rapl_native_events[index].units, 
-	   sizeof(info->units));
+  strncpy( info->units, rapl_native_events[index].units, sizeof(info->units)-1);
+  info->units[sizeof(info->units)-1] = '\0';
 
   info->data_type = rapl_native_events[index].return_type;
 

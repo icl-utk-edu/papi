@@ -486,7 +486,7 @@ detectDevices( )
 		cudaError_t cuerr;
 
 		char busId[16];
-	char name[65];		    // one bigger than name can be so we can add a null terminator and use string functions on this value
+		char name[64];
 		char inforomECC[16];
 		char inforomPower[16];
 		char names[device_count][64];
@@ -516,7 +516,8 @@ detectDevices( )
 			SUBDBG("nvmlDeviceGetPciInfo() failed %s\n", (*nvmlErrorStringPtr)(ret) );
 			return PAPI_ESYS;
 		}
-		strncpy(nvml_busIds[i], info.busId, 16);
+		strncpy(nvml_busIds[i], info.busId, sizeof(nvml_busIds[i])-1);
+		nvml_busIds[i][sizeof(nvml_busIds[i])-1] = '\0';
 	}
 
 	/* We want to key our list of nvmlDevice_ts by each device's cuda index */
@@ -546,13 +547,13 @@ detectDevices( )
 				isUnique = 1;
 				features[i] = 0;
 
-				ret = (*nvmlDeviceGetNamePtr)( devices[i], name, 64 );
+				ret = (*nvmlDeviceGetNamePtr)( devices[i], name, sizeof(name)-1 );
 				if ( NVML_SUCCESS != ret) {
 					SUBDBG("nvmlDeviceGetName failed \n");
 					return PAPI_ESYS;
 				}
 
-		name[64] = '\0';	    // to safely use strstr operation below, the variable 'name' must be null terminated
+				name[sizeof(name)-1] = '\0';	// to safely use strstr operation below, the variable 'name' must be null terminated
 
 				for (j=0; j < i; j++ ) 
 						if ( 0 == strncmp( name, names[j], 64 ) ) {
@@ -653,8 +654,8 @@ this card. (nvml return code %d)\n", ret );
 								num_events += 2;
 						}
 
-						strncpy( names[i], name, 64); 
-
+						strncpy( names[i], name, sizeof(names[0])-1);
+						names[i][sizeof(names[0])-1] = '\0';
 				}
 		}
 		return PAPI_OK;
@@ -681,7 +682,8 @@ createNativeEvents( )
 		for (i=0; i < device_count; i++ ) {
 				memset( names[i], 0x0, 64 );
 				isUnique = 1;
-				ret = (*nvmlDeviceGetNamePtr)( devices[i], name, 64 );
+				ret = (*nvmlDeviceGetNamePtr)( devices[i], name, sizeof(name)-1 );
+				name[sizeof(name)-1] = '\0';	// to safely use strlen operation below, the variable 'name' must be null terminated
 
 				for (j=0; j < i; j++ ) 
 				{
@@ -893,7 +895,8 @@ createNativeEvents( )
 								entry->type = FEATURE_UTILIZATION;
 								entry++;
 						}
-						strncpy( names[i], name, 64); 
+						strncpy( names[i], name, sizeof(names[0])-1);
+						names[i][sizeof(names[0])-1] = '\0';
 				}
 		}
 }

@@ -324,8 +324,10 @@ _net_init_component( int cidx  )
     _net_native_events = (NET_native_event_entry_t*)
         papi_malloc(sizeof(NET_native_event_entry_t) * num_events);
     do {
-        strncpy(_net_native_events[i].name, t->name, PAPI_MAX_STR_LEN);
-        strncpy(_net_native_events[i].description, t->description, PAPI_MAX_STR_LEN);
+        strncpy(_net_native_events[i].name, t->name, PAPI_MAX_STR_LEN-1);
+        _net_native_events[i].name[PAPI_MAX_STR_LEN-1] = '\0';
+        strncpy(_net_native_events[i].description, t->description, PAPI_MAX_STR_LEN-1);
+        _net_native_events[i].description[PAPI_MAX_STR_LEN-1] = '\0';
         _net_native_events[i].resources.selector = i + 1;
         last    = t;
         t       = t->next;

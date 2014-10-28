@@ -1094,7 +1094,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       }
 
       /* put the count values in their proper location */
-      for(i=0;i<papi_pe_buffer[0];i++) {
+      for(i=0;i<pe_ctl->num_events;i++) {
          pe_ctl->counts[i] = papi_pe_buffer[1+i];
       }
    }
