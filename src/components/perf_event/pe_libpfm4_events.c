@@ -993,10 +993,17 @@ _pe_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
  */
 
 int 
-_pe_libpfm4_shutdown(struct native_event_table_t *event_table) {
+_pe_libpfm4_shutdown(papi_vector_t *my_vector,
+		struct native_event_table_t *event_table) {
   SUBDBG("ENTER: event_table: %p\n", event_table);
 
   int i;
+
+  for (i=0 ; i<PAPI_PMU_MAX ; i++) {
+	  if (my_vector->cmp_info.pmu_names[i] != NULL) {
+		  free (my_vector->cmp_info.pmu_names[i]);
+	  }
+  }
 
   /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
@@ -1041,6 +1048,7 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 
    int detected_pmus=0, found_default=0;
    int i;
+   int j=0;
    pfm_err_t retval = PFM_SUCCESS;
    unsigned int ncnt;
    pfm_pmu_info_t pinfo;
@@ -1064,7 +1072,7 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
    /* init default pmu */
    /* need to init pinfo or pfmlib might complain */
    memset(&(event_table->default_pmu), 0, sizeof(pfm_pmu_info_t));
-   pinfo.size = sizeof(pfm_pmu_info_t);
+   event_table->default_pmu.size = sizeof(pfm_pmu_info_t);
    retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
    
    SUBDBG("Detected pmus:\n");
@@ -1072,7 +1080,7 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
       memset(&pinfo,0,sizeof(pfm_pmu_info_t));
       pinfo.size = sizeof(pfm_pmu_info_t);
       retval=pfm_get_pmu_info(i, &pinfo);
-      if (retval!=PFM_SUCCESS) {
+      if ((retval!=PFM_SUCCESS) || (pinfo.name == NULL)) {
 	 continue;
       }
 
@@ -1081,6 +1089,10 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 
          detected_pmus++;
 	 ncnt+=pinfo.nevents;
+
+	 if (j < PAPI_PMU_MAX) {
+	     my_vector->cmp_info.pmu_names[j++] = strdup(pinfo.name);
+	 }
        
          if (pmu_type&PMU_TYPE_CORE) {
 

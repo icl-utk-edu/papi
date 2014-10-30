@@ -690,7 +690,7 @@ _peu_init_component( int cidx )
 int _peu_shutdown_component( void ) {
 
   /* deallocate our event table */
-  _peu_libpfm4_shutdown(&uncore_native_event_table);
+  _peu_libpfm4_shutdown(&_perf_event_uncore_vector, &uncore_native_event_table);
 
   /* Shutdown libpfm4 */
   _papi_libpfm4_shutdown();

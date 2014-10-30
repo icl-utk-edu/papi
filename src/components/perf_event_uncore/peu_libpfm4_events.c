@@ -987,10 +987,17 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
  */
 
 int 
-_peu_libpfm4_shutdown(struct native_event_table_t *event_table) {
+_peu_libpfm4_shutdown(papi_vector_t *my_vector,
+		struct native_event_table_t *event_table) {
   SUBDBG("ENTER: event_table: %p\n", event_table);
 
   int i;
+
+  for (i=0 ; i<PAPI_PMU_MAX ; i++) {
+	  if (my_vector->cmp_info.pmu_names[i] != NULL) {
+		  free (my_vector->cmp_info.pmu_names[i]);
+	  }
+  }
 
   /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
@@ -1035,6 +1042,7 @@ _peu_libpfm4_init(papi_vector_t *my_vector,
 
    int detected_pmus=0;
    int i;
+   int j=0;
    pfm_err_t retval = PFM_SUCCESS;
    unsigned int ncnt;
    pfm_pmu_info_t pinfo;
@@ -1072,6 +1080,9 @@ _peu_libpfm4_init(papi_vector_t *my_vector,
          detected_pmus++;
 	 ncnt+=pinfo.nevents;
 
+	 if ((j < PAPI_PMU_MAX) && (pinfo.name != NULL)) {
+	     my_vector->cmp_info.pmu_names[j++] = strdup(pinfo.name);
+	 }
          my_vector->cmp_info.num_cntrs += pinfo.num_cntrs+
                                    pinfo.num_fixed_cntrs;
       }

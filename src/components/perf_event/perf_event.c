@@ -1710,7 +1710,7 @@ int
 _pe_shutdown_component( void ) {
 
   /* deallocate our event table */
-  _pe_libpfm4_shutdown(&perf_native_event_table);
+  _pe_libpfm4_shutdown(&_perf_event_vector, &perf_native_event_table);
 
   /* Shutdown libpfm4 */
   _papi_libpfm4_shutdown();

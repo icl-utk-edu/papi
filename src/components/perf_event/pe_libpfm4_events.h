@@ -16,7 +16,8 @@ int _pe_libpfm4_ntv_code_to_name( unsigned int EventCode, char *name,
 int _pe_libpfm4_ntv_code_to_descr( unsigned int EventCode, char *name,
 				     int len,
 		       struct native_event_table_t *event_table);
-int _pe_libpfm4_shutdown(struct native_event_table_t *event_table);
+int _pe_libpfm4_shutdown(papi_vector_t *my_vector,
+		       struct native_event_table_t *event_table);
 int _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 		       struct native_event_table_t *event_table,
 		       int pmu_type);

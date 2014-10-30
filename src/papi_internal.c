@@ -161,6 +161,72 @@ _papi_hwi_get_ntv_idx (unsigned int papi_evt_code) {
 	return result;
 }
 
+//
+// Check for the presence of a component name or pmu name in the event string.
+// If found check if it matches this component or one of the pmu's supported by this component.
+//
+// returns true if the event could be for this component and false if it is not for this component.
+//    if there is no component or pmu name then it could be for this component and returns true.
+//
+static int
+is_supported_by_component(int cidx, char *event_name) {
+	INTDBG("ENTER: cidx: %d, event_name: %s\n", cidx, event_name);
+	int i;
+	int component_name = 0;
+	int pmu_name = 0;
+	char *wptr = NULL;
+
+	// if event does not have a component name or pmu name, return to show it could be supported by this component
+	// when component and pmu names are not provided, we just have to call the components to see if they recognize the event
+	//
+
+	// look for component names first
+	if ((wptr = strstr(event_name, ":::")) != NULL) {
+		component_name = 1;
+	} else if ((wptr = strstr(event_name, "::")) != NULL) {
+		pmu_name = 1;
+	} else {
+		INTDBG("EXIT: No Component or PMU name in event string, try this component\n");
+		// need to force all components to be called to find owner of this event
+		// ????  can we assume the default pmu when no component or pmu name is provided ????
+		return 1;
+	}
+
+	// get a temporary copy of the component or pmu name
+	int name_len = wptr - event_name;
+	wptr = strdup(event_name);
+	wptr[name_len] = '\0';
+
+	// if a component name was found, compare it to the component name in the component info structure
+	if (component_name) {
+//		INTDBG("component_name: %s\n", _papi_hwd[cidx]->cmp_info.name);
+		if (strcmp (wptr, _papi_hwd[cidx]->cmp_info.name) == 0) {
+			free (wptr);
+			INTDBG("EXIT: Component %s supports this event\n", _papi_hwd[cidx]->cmp_info.name);
+			return 1;
+		}
+	}
+
+	// if a pmu name was found, compare it to the pmu name list if the component info structure (if there is one)
+	if (pmu_name) {
+		for ( i=0 ; i<PAPI_PMU_MAX ; i++) {
+			if (_papi_hwd[cidx]->cmp_info.pmu_names[i] == NULL) {
+				continue;
+			}
+//			INTDBG("pmu_name[%d]: %p (%s)\n", i, _papi_hwd[cidx]->cmp_info.pmu_names[i], _papi_hwd[cidx]->cmp_info.pmu_names[i]);
+			if (strcmp (wptr, _papi_hwd[cidx]->cmp_info.pmu_names[i]) == 0) {
+				INTDBG("EXIT: Component %s supports PMU %s and this event\n", _papi_hwd[cidx]->cmp_info.name, wptr);
+				free (wptr);
+				return 1;
+			}
+		}
+	}
+
+	free (wptr);
+	INTDBG("EXIT: Component does not support this event\n");
+	return 0;
+}
+
 /** @internal
  * @class _papi_hwi_prefix_component_name
  * @brief Prefixes a component's name to each of its events. 
@@ -2243,12 +2309,13 @@ _papi_hwi_query_native_event( unsigned int EventCode )
 int
 _papi_hwi_native_name_to_code( char *in, int *out )
 {
-    INTDBG("ENTER: in: %s, checking all %d components\n", in, papi_num_components);
+    INTDBG("ENTER: in: %s, out: %p\n", in, out);
 
     int retval = PAPI_ENOEVNT;
     char name[PAPI_HUGE_STR_LEN];	   /* make sure it's big enough */
     unsigned int i;
     int cidx;
+    char *full_event_name = strdup(in);
 
 	in = _papi_hwi_strip_component_prefix(in);
 
@@ -2256,6 +2323,9 @@ _papi_hwi_native_name_to_code( char *in, int *out )
     for(cidx=0; cidx < papi_num_components; cidx++) {
 
        if (_papi_hwd[cidx]->cmp_info.disabled) continue;
+
+       // if this component does not support the pmu which defines this event, no need to call it
+       if (is_supported_by_component(cidx, full_event_name) == 0) continue;
 
        INTDBG("cidx: %d, name: %s, event: %s\n", cidx, _papi_hwd[cidx]->cmp_info.name, in);
 
@@ -2267,6 +2337,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
        retval = _papi_hwd[cidx]->ntv_name_to_code( in, ( unsigned * ) out );
        if (retval==PAPI_OK) {
 	      *out = _papi_hwi_native_to_eventcode(cidx, *out, -1, in);
+	      free (full_event_name);
 	      INTDBG("EXIT: PAPI_OK  event: %s code: %#x\n", in, *out);
 	      return PAPI_OK;
 	   }
@@ -2303,6 +2374,7 @@ _papi_hwi_native_name_to_code( char *in, int *out )
 		}
     }
 
+    free (full_event_name);
     INTDBG("EXIT: retval: %d\n", retval);
     return retval;
 }

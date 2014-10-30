@@ -72,6 +72,7 @@ parse_args( int argc, char **argv, command_flags_t * f )
 int
 main( int argc, char **argv )
 {
+	int i;
 	int retval;
 	const PAPI_hw_info_t *hwinfo = NULL;
 	const PAPI_component_info_t* cmpinfo;
@@ -129,9 +130,26 @@ main( int argc, char **argv )
 	  if (cmpinfo->disabled) continue;
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
-	  printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n\n", 
-		  " ", cmpinfo->num_native_events, cmpinfo->num_preset_events,
-		  cmpinfo->num_cntrs);
+	  printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n",
+		  " ", cmpinfo->num_native_events, cmpinfo->num_preset_events, cmpinfo->num_cntrs);
+	  printf( "        %-23s PMU's supported: ", " ");
+	  int line_len = 49;
+	  for (i=0 ; i<PAPI_PMU_MAX ; i++) {
+		  if (cmpinfo->pmu_names[i] == NULL) continue;
+
+		  if (line_len + strlen(cmpinfo->pmu_names[i]) > 130) {
+			  printf("\n        %-23s                  ", " ");
+			  line_len = 49;
+		  } else {
+			  line_len += strlen(cmpinfo->pmu_names[i]);
+		  }
+		  // if it is not the first entry on a line, separate the names
+		  if ((i != 0) && (line_len > 50)) {
+			  printf(", ");
+		  }
+		  printf("%s", cmpinfo->pmu_names[i]);
+	  }
+	  printf("\n\n");
 
 	  if ( flags.details ) {
 		printf( "Version:\t\t\t%s\n", cmpinfo->version );
