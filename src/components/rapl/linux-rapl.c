@@ -9,8 +9,10 @@
  *  This component enables RAPL (Running Average Power Level)
  *  energy measurements on Intel SandyBridge/IvyBridge/Haswell
  *
- *  To work, the x86 generic MSR driver must be installed
- *    (CONFIG_X86_MSR) and the /dev/cpu/?/msr files must have read permissions
+ *  To work, either msr_safe kernel module from LLNL 
+ *  (https://github.com/scalability-llnl/msr-safe), or 
+ *  the x86 generic MSR driver must be installed
+ *    (CONFIG_X86_MSR) and the /dev/cpu/?/<msr_safe | msr> files must have read permissions
  */
 
 #include <stdio.h>
@@ -170,12 +172,16 @@ static int open_fd(int offset) {
   char filename[BUFSIZ];
 
   if (fd_array[offset].open==0) {
-     sprintf(filename,"/dev/cpu/%d/msr",offset);
-     fd = open(filename, O_RDONLY);
-     if (fd>=0) {
-        fd_array[offset].fd=fd;
-	fd_array[offset].open=1;
-     }
+	  sprintf(filename,"/dev/cpu/%d/msr_safe",offset);
+      fd = open(filename, O_RDONLY);
+	  if (fd<0) {
+		  sprintf(filename,"/dev/cpu/%d/msr",offset);
+          fd = open(filename, O_RDONLY);
+	  }
+	  if (fd>=0) {
+		  fd_array[offset].fd=fd;
+	      fd_array[offset].open=1;
+      } 
   }
   else {
     fd=fd_array[offset].fd;
@@ -421,9 +427,9 @@ _rapl_init_component( int cidx )
      num_cpus=j;
 
      if (num_packages==0) {
-        SUBDBG("Can't access /dev/cpu/*/msr\n");
+        SUBDBG("Can't access /dev/cpu/*/<msr_safe | msr>\n");
 	strncpy(_rapl_vector.cmp_info.disabled_reason,
-		"Can't access /dev/cpu/*/msr",PAPI_MAX_STR_LEN);
+		"Can't access /dev/cpu/*/<msr_safe | msr>",PAPI_MAX_STR_LEN);
 	return PAPI_ESYS;
      }
 
