@@ -484,7 +484,7 @@ static const intel_x86_umask_t ivbep_unc_h_osb_edr[]={
   },
   { .uname = "READS_REMOTE_S",
     .udesc  = "Reads to remote S",
-    .ucode  = 01000,
+    .ucode  = 0x1000,
   }
 };
 
