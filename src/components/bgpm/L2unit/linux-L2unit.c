@@ -557,7 +557,7 @@ L2UNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 	{
 		int index = ( *EventCode ) + OFFSET;
 
-		if ( index < L2UNIT_MAX_COUNTERS ) {
+		if ( index < L2UNIT_MAX_EVENTS ) {
 			*EventCode = *EventCode + 1;
 			return ( PAPI_OK );
 		} else
@@ -593,7 +593,7 @@ L2UNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 #endif
 		return PAPI_ENOEVNT;
 	}
-	else if ( ret < OFFSET || ret > L2UNIT_MAX_COUNTERS ) // not a L2Unit event
+	else if ( ret < OFFSET || ret > L2UNIT_MAX_EVENTS ) // not a L2Unit event
 		return PAPI_ENOEVNT;
 	else
 		*event_code = ( ret - OFFSET );
@@ -677,6 +677,7 @@ papi_vector_t _L2unit_vector = {
 				 .short_name = "L2Unit",
 				 .description = "Blue Gene/Q L2Unit component",
 				 .num_cntrs = L2UNIT_MAX_COUNTERS,
+				 .num_native_events = L2UNIT_MAX_EVENTS-OFFSET+1,
 				 .num_mpx_cntrs = L2UNIT_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,

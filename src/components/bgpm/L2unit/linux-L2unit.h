@@ -32,7 +32,8 @@
  *******************************************************************************/
 
 /* this number assumes that there will never be more events than indicated */
-#define L2UNIT_MAX_COUNTERS PEVT_L2UNIT_LAST_EVENT
+#define L2UNIT_MAX_COUNTERS UPC_L2_NUM_COUNTERS
+#define L2UNIT_MAX_EVENTS PEVT_L2UNIT_LAST_EVENT
 #define OFFSET ( PEVT_PUNIT_LAST_EVENT + 1 )
 
 /* Stores private information for each event */

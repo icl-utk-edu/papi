@@ -32,7 +32,9 @@
  *******************************************************************************/
 
 /* this number assumes that there will never be more events than indicated */
-#define NWUNIT_MAX_COUNTERS PEVT_NWUNIT_LAST_EVENT
+//#define NWUNIT_MAX_COUNTERS UPC_NW_ALL_LINKCTRS
+#define NWUNIT_MAX_COUNTERS UPC_NW_NUM_CTRS
+#define NWUNIT_MAX_EVENTS PEVT_NWUNIT_LAST_EVENT
 #define OFFSET ( PEVT_IOUNIT_LAST_EVENT + 1 )
 
 

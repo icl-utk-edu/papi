@@ -32,7 +32,8 @@
  *******************************************************************************/
 
 /* this number assumes that there will never be more events than indicated */
-#define IOUNIT_MAX_COUNTERS PEVT_IOUNIT_LAST_EVENT
+#define IOUNIT_MAX_COUNTERS UPC_C_IOSRAM_NUM_COUNTERS
+#define IOUNIT_MAX_EVENTS PEVT_IOUNIT_LAST_EVENT
 #define OFFSET ( PEVT_L2UNIT_LAST_EVENT + 1 )
 
 

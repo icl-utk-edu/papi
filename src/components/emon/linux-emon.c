@@ -588,6 +588,7 @@ papi_vector_t _emon_vector = {
 				 .name = "EMON",
 				 .short_name = "EMON",
 				 .description = "Blue Gene/Q EMON component",
+				 .num_native_events = EMON_MAX_COUNTERS,
 				 .num_cntrs = EMON_MAX_COUNTERS,
 				 .num_mpx_cntrs = EMON_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_ALL,

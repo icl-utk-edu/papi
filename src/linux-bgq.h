@@ -42,7 +42,8 @@
 #include "linux-context.h"
 
 /* this number assumes that there will never be more events than indicated */
-#define BGQ_PUNIT_MAX_COUNTERS PEVT_PUNIT_LAST_EVENT
+#define BGQ_PUNIT_MAX_COUNTERS UPC_P_NUM_COUNTERS 
+#define BGQ_PUNIT_MAX_EVENTS PEVT_PUNIT_LAST_EVENT
 #define MAX_COUNTER_TERMS BGQ_PUNIT_MAX_COUNTERS
 // keep a large enough gap between actual BGPM events and our local opcode events
 #define OPCODE_BUF ( MAX_COUNTERS + MAX_COUNTERS ) 

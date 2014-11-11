@@ -345,7 +345,7 @@ NWUNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 	{
 		int index = ( *EventCode ) + OFFSET;
 
-		if ( index < NWUNIT_MAX_COUNTERS ) {
+		if ( index < NWUNIT_MAX_EVENTS ) {
 			*EventCode = *EventCode + 1;
 			return ( PAPI_OK );
 		} else
@@ -381,7 +381,7 @@ NWUNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 #endif
 		return PAPI_ENOEVNT;
 	}
-	else if ( ret < OFFSET || ret > NWUNIT_MAX_COUNTERS ) // not a NWUnit event
+	else if ( ret < OFFSET || ret > NWUNIT_MAX_EVENTS ) // not a NWUnit event
 		return PAPI_ENOEVNT;
 	else
 		*event_code = ( ret - OFFSET ) ;
@@ -465,6 +465,7 @@ papi_vector_t _NWunit_vector = {
 				 .short_name = "NWUnit",
 				 .description = "Blue Gene/Q NWUnit component",
 				 .num_cntrs = NWUNIT_MAX_COUNTERS,
+				 .num_native_events = NWUNIT_MAX_EVENTS-OFFSET+1,
 				 .num_mpx_cntrs = NWUNIT_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,

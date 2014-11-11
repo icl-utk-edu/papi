@@ -464,6 +464,7 @@ papi_vector_t _CNKunit_vector = {
 				 .name = "bgpm/CNKUnit",
 				 .short_name = "CNKUnit",
 				 .description = "Blue Gene/Q CNKUnit component",
+				 .num_native_events = CNKUNIT_MAX_COUNTERS-OFFSET+1,
 				 .num_cntrs = CNKUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = CNKUNIT_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,

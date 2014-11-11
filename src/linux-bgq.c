@@ -401,7 +401,7 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 		ptr->EventGroup_local[i] = index;
 
 		// we found an opcode event
-		if ( index > BGQ_PUNIT_MAX_COUNTERS ) {
+		if ( index > BGQ_PUNIT_MAX_EVENTS ) {
 			for( j = 0; j < num_opcode_events; j++ ) {
 #ifdef DEBUG_BGQ
 				printf(_AT_ " _bgq_update_control_state: %d out of %d OPCODES\n",
@@ -1142,7 +1142,7 @@ _bgq_ntv_name_to_code( char *name, unsigned int *event_code )
 #endif
 			return PAPI_ENOEVNT;
 		}
-		else if ( ret > BGQ_PUNIT_MAX_COUNTERS ) // not a PUnit event
+		else if ( ret > BGQ_PUNIT_MAX_EVENTS ) // not a PUnit event
 			return PAPI_ENOEVNT;
 		else
 			*event_code = ( ret - 1 );		
@@ -1249,7 +1249,7 @@ _bgq_ntv_enum_events( unsigned int *EventCode, int modifier )
 		{
 			int index = ( *EventCode & PAPI_NATIVE_AND_MASK ) + 1;
 			
-			if ( index < BGQ_PUNIT_MAX_COUNTERS ) {
+			if ( index < BGQ_PUNIT_MAX_EVENTS ) {
 				*EventCode = *EventCode + 1;
 				return ( PAPI_OK );
 			} else
@@ -1296,6 +1296,7 @@ papi_vector_t _bgq_vectors = {
 				 .description = "Blue Gene/Q component",
 				 .num_cntrs = BGQ_PUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = BGQ_PUNIT_MAX_COUNTERS,
+				 .num_native_events = BGQ_PUNIT_MAX_EVENTS,
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,

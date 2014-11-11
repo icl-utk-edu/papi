@@ -512,7 +512,7 @@ IOUNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
 	{
 		int index = ( *EventCode ) + OFFSET;
 
-		if ( index < IOUNIT_MAX_COUNTERS ) {
+		if ( index < IOUNIT_MAX_EVENTS ) {
 			*EventCode = *EventCode + 1;
 			return ( PAPI_OK );
 		} else
@@ -548,7 +548,7 @@ IOUNIT_ntv_name_to_code( char *name, unsigned int *event_code )
 #endif
 		return PAPI_ENOEVNT;
 	}
-	else if ( ret < OFFSET || ret > IOUNIT_MAX_COUNTERS ) // not an IOUnit event
+	else if ( ret < OFFSET || ret > IOUNIT_MAX_EVENTS ) // not an IOUnit event
 		return PAPI_ENOEVNT;
 	else
 		*event_code = ( ret - OFFSET ) ;
@@ -631,6 +631,7 @@ papi_vector_t _IOunit_vector = {
 				 .name = "bgpm/IOUnit",
 				 .short_name = "IOUnit",
 				 .description = "Blue Gene/Q IOUnit component",
+				 .num_native_events = IOUNIT_MAX_EVENTS-OFFSET+1,
 				 .num_cntrs = IOUNIT_MAX_COUNTERS,
 				 .num_mpx_cntrs = IOUNIT_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_USER,
