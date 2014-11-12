@@ -1,4 +1,4 @@
-.TH "PAPI_component_info_t" 3 "Mon Jun 30 2014" "Version 5.4.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_component_info_t" 3 "Wed Nov 12 2014" "Version 5.4.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -65,6 +65,9 @@ PAPI_component_info_t \-
 .br
 .ti -1c
 .RI "int \fBcomponent_type\fP"
+.br
+.ti -1c
+.RI "char * \fBpmu_names\fP [40]"
 .br
 .ti -1c
 .RI "int \fBreserved\fP [8]"
@@ -171,6 +174,8 @@ Number of hardware counters the component or PAPI can multiplex supports
 Number of native events the component supports 
 .SS "int PAPI_component_info_t::num_preset_events"
 Number of preset events the component supports 
+.SS "char* PAPI_component_info_t::pmu_names[40]"
+list of pmu names supported by this component 
 .SS "unsigned int PAPI_component_info_t::posix1b_timers"
 Using POSIX 1b interval timers (timer_create) instead of setitimer 
 .SS "unsigned int PAPI_component_info_t::precise_intr"
