@@ -35,6 +35,9 @@ ctests/burn
 ctests/pthrtough2
 ctests/timer_overflow
 
+# Some architectures require OMP_NUM_THREADS otherwise the test hangs
+ctests/omptough
+
 # these tests haven't been implemented
 
 
