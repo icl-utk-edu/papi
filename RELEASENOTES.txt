@@ -3,6 +3,44 @@ order.
 
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
+
+===============================================================================
+PAPI 5.4.0 RELEASE NOTES                                            13 Nov 2014
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP540.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+Full support for CUDA 6.5 has been delayed and will be included in the next 
+release.
+
+New Platforms:
+-------------
+	* EMON power component for IBM Blue Gene/Q
+    * Support for the Applied Micro X-Gene processor
+	* Support for IBM POWER non-virtualized platform
+    * RAPL support for Intel Haswell models (60,69,71)
+
+Enhancements:
+------------
+    * Added list of supported PMU names (core/uncore components)  
+    * Support for extended event masks (core/uncore components)
+    * Extension of the RAPL energy measurements on Intel via msr-safe
+    * Updated IBM POWER7, POWER8 presets
+	* 'papi_native_avail --validate' supports events that require
+	  multiple masks to be valid  
+
+Bug Fixes:
+----------
+    * HW counter and event count added/fixed for BGPM components
+	* Reduce cost of using PAPI_name_to_code
+	* Non-null terminated strings fixed
+	* Growing list of native events in core/uncore components fixed
+    * Cleaned up Intel IvyBridge presets
+	* Addressed Coverity reported issues
+
 ===============================================================================
 PAPI 5.3.2 RELEASE NOTES                                            30 Jun 2014
 ===============================================================================
