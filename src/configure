@@ -1439,6 +1439,7 @@ fi;
 echo "$as_me:$LINENO: result: $assumed_kernel" >&5
 echo "${ECHO_T}$assumed_kernel" >&6
 
+micflag=0
 echo "$as_me:$LINENO: checking for if MIC should be used" >&5
 echo $ECHO_N "checking for if MIC should be used... $ECHO_C" >&6
 
@@ -1450,7 +1451,8 @@ if test "${with_mic+set}" = set; then
 						virtualtimer=cputime_id
 						perf_events=yes
 						walltimer=clock_realtime_hr
-						ffsll=no
+						ffsll=yes
+						micflag=1
 						cross_compiling=yes
 						arch=k1om
 else
@@ -2272,7 +2274,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2275:" \
+echo "$as_me:2277:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -2417,7 +2419,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 if test "x$F77" = "x"; then
-   F77=
+   F77="@echo nof77 "
 fi
 # Extract the first word of "mpicc", so it can be a program name with args.
 set dummy mpicc; ac_word=$2
@@ -4315,6 +4317,7 @@ if test "${with_pthread_mutexes+set}" = set; then
 
 fi;
 
+if test "$micflag" = "0" ; then
 
 # Check whether --with-ffsll or --without-ffsll was given.
 if test "${with_ffsll+set}" = set; then
@@ -4424,6 +4427,9 @@ else
 fi
 
 fi;
+fi
+
+
 if test "$didcheck" != "1"; then
   echo "$as_me:$LINENO: checking for ffsll" >&5
 echo $ECHO_N "checking for ffsll... $ECHO_C" >&6
@@ -4528,6 +4534,9 @@ fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 
+
+
+if test "$micflag" = "0" ; then
 
 # Check whether --with-walltimer or --without-walltimer was given.
 if test "${with_walltimer+set}" = set; then
@@ -4717,6 +4726,9 @@ fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 fi;
+fi
+
+
 echo "$as_me:$LINENO: checking for real time clock or cycle counter" >&5
 echo $ECHO_N "checking for real time clock or cycle counter... $ECHO_C" >&6
 if test "$walltimer" = "gettimeofday"; then
@@ -4773,6 +4785,10 @@ LIBS=""
 LDFLAGS=""
 CFLAGS="-pthread"
 
+
+
+
+if test "$micflag" = "0" ; then
 
 # Check whether --with-tls or --without-tls was given.
 if test "${with_tls+set}" = set; then
@@ -4865,6 +4881,9 @@ echo "$as_me: WARNING: Disabling usage of __thread." >&2;};
                  fi
                fi
 fi;
+fi
+
+
 echo "$as_me:$LINENO: checking for high performance thread local storage" >&5
 echo $ECHO_N "checking for high performance thread local storage... $ECHO_C" >&6
 if test "$tls" = "no"; then
@@ -4883,6 +4902,10 @@ fi
 echo "$as_me:$LINENO: result: $tls" >&5
 echo "${ECHO_T}$tls" >&6
 
+
+
+
+if test "$micflag" = "0" ; then
 
 # Check whether --with-virtualtimer or --without-virtualtimer was given.
 if test "${with_virtualtimer+set}" = set; then
@@ -5091,6 +5114,10 @@ fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 fi;
+fi
+
+
+
 LDFLAGS=$SAVED_LDFLAGS
 CFLAGS=$SAVED_CFLAGS
 LIBS=$SAVED_LIBS
