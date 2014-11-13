@@ -81,7 +81,6 @@ AC_ARG_WITH(assumed_kernel,
 		)		
 AC_MSG_RESULT($assumed_kernel)
 
-micflag=0
 AC_MSG_CHECKING([for if MIC should be used])
 		AC_ARG_WITH(mic,
 						[ --with-mic To compile for Intel MIC ],
@@ -90,8 +89,7 @@ AC_MSG_CHECKING([for if MIC should be used])
 						virtualtimer=cputime_id
 						perf_events=yes
 						walltimer=clock_realtime_hr
-						ffsll=yes
-						micflag=1
+						ffsll=no
 						cross_compiling=yes
 						arch=k1om],
 						[MIC=no])
@@ -108,7 +106,7 @@ TOPTFLAGS="-O0"
 AC_PROG_CC([xlc icc gcc cc])
 AC_PROG_F77([xlf ifort gfortran f95 f90 f77])
 if test "x$F77" = "x"; then
-   F77="@echo nof77 "
+   F77=
 fi
 AC_CHECK_PROG( [MPICC], mpicc, [mpicc], [])
 
@@ -400,7 +398,6 @@ AC_ARG_WITH(pthread-mutexes,
 	      CFLAGS="$CFLAGS -DUSE_PTHREAD_MUTEXES"
 	      ])
 
-if test "$micflag" = "0" ; then
   AC_ARG_WITH(ffsll,
 	          [  --with-ffsll		Specify use of the ffsll() function ],
 	          [ffsll=$withval],
@@ -409,9 +406,6 @@ if test "$micflag" = "0" ; then
 		       fi
                didcheck=1
                AC_CHECK_FUNC(ffsll,[ffsll=yes],[ffsll=no]) ])
-fi
-
-
 if test "$didcheck" != "1"; then
   AC_MSG_CHECKING(for ffsll)
   if test "$ffsll" = "yes" ; then
@@ -434,9 +428,6 @@ AC_LINK_IFELSE([#include <sys/types.h>
                                 AC_DEFINE(HAVE_SYSCALL_GETTID, 1, [gettid syscall function])],
                                [AC_MSG_RESULT(no)]) ])
 
-
-
-if test "$micflag" = "0" ; then
 AC_ARG_WITH(walltimer,
             [  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>		Specify realtime timer ],
             [walltimer=$withval],
@@ -509,9 +500,6 @@ AC_ARG_WITH(walltimer,
 	                                             AC_MSG_RESULT(yes)	],
                                                 [walltimer="cycle"
 	                                             AC_MSG_RESULT(no)]) ]) ])  ])
-fi
-
-
 AC_MSG_CHECKING(for real time clock or cycle counter)
 if test "$walltimer" = "gettimeofday"; then
   AC_DEFINE(HAVE_GETTIMEOFDAY, 1, [Normal gettimeofday timer])
@@ -537,10 +525,6 @@ LIBS=""
 LDFLAGS=""
 CFLAGS="-pthread"
 
-
-
-
-if test "$micflag" = "0" ; then
 AC_ARG_WITH(tls,
               [  --with-tls=<keyword>		This platform supports thread local storage with a keyword ],
               [tls=$withval],
@@ -589,9 +573,6 @@ AC_ARG_WITH(tls,
                    rm -f conftest.c conftest.so conftest
                  fi
                fi])
-fi
-
-
 AC_MSG_CHECKING(for high performance thread local storage)
 if test "$tls" = "no"; then
   NOTLS="-DNO_TLS"
@@ -604,10 +585,6 @@ elif test "x$tls" != "x"; then
 fi
 AC_MSG_RESULT($tls)
 
-
-
-
-if test "$micflag" = "0" ; then
 AC_ARG_WITH(virtualtimer,
               [  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>		Specify per-thread virtual timer ],
               [virtualtimer=$withval],
@@ -736,10 +713,6 @@ AC_ARG_WITH(virtualtimer,
 	                                   virtualtimer="times"],
                                       [AC_MSG_RESULT(no)
 	                                   virtualtimer="default"]) ]) ])
-fi
-
-
-
 LDFLAGS=$SAVED_LDFLAGS
 CFLAGS=$SAVED_CFLAGS
 LIBS=$SAVED_LIBS
