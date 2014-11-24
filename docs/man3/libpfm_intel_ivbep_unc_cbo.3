@@ -48,6 +48,16 @@ filtering takes place.
 Thread Filter. This is a 1-bit filter which is used to filter C-Box requests based on logical
 processor (hyper-thread) identification. Possibles values are 0-1. If the filter is not
 specified, then no filtering takes place.
+.TP
+.B nc
+Non-Coherent. This is a 1-bit filter which is used to filter C-Box requests only for the
+TOR_INSERTS and TOR_OCCUPANCY umasks using the OPCODE matcher. If the filter is not
+specified, then no filtering takes place.
+.TP
+.B isoc
+Isochronous. This is a 1-bit filter which is used to filter C-Box requests only for the
+TOR_INSERTS and TOR_OCCUPANCY umasks using the OPCODE matcher. If the filter is not
+specified, then no filtering takes place.
 
 .SH Opcode filtering
 
