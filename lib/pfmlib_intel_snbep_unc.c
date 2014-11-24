@@ -45,6 +45,7 @@ const pfmlib_attr_desc_t snbep_unc_mods[]={
 	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask filter1 */
 	PFM_ATTR_B("isoc", "match isochronous requests"),   /* isochronous */
 	PFM_ATTR_B("nc", "match non-coherent requests"),   /* non-coherent */
+	PFM_ATTR_I("cf", "core id filter, includes non-thread data in bit 5 [0-63]"),	/* core id (hswep) */
 	PFM_ATTR_NULL
 };
 
@@ -81,6 +82,26 @@ pfm_intel_ivbep_unc_detect(void *this)
 
        switch(pfm_intel_x86_cfg.model) {
                case 62: /* SandyBridge-EP */
+                         break;
+               default:
+                       return PFM_ERR_NOTSUPP;
+       }
+       return PFM_SUCCESS;
+}
+
+int
+pfm_intel_hswep_unc_detect(void *this)
+{
+       int ret;
+
+       ret = pfm_intel_x86_detect();
+       if (ret != PFM_SUCCESS)
+
+       if (pfm_intel_x86_cfg.family != 6)
+               return PFM_ERR_NOTSUPP;
+
+       switch(pfm_intel_x86_cfg.model) {
+               case 63: /* Haswell-EP */
                          break;
                default:
                        return PFM_ERR_NOTSUPP;
@@ -415,6 +436,14 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					has_cbo_tid = 1;
 					umodmsk |= _SNBEP_UNC_ATTR_CF;
 					break;
+				case SNBEP_UNC_ATTR_CF1: /* core id */
+					if (ival > 63)
+						return PFM_ERR_ATTR_VAL;
+					reg.cbo.unc_tid = 1;
+					filters[0].hswep_cbo_filt0.cid = ival; /* includes non-thread data */
+					has_cbo_tid = 1;
+					umodmsk |= _SNBEP_UNC_ATTR_CF1;
+					break;
 				case SNBEP_UNC_ATTR_NF: /* node id filter0 */
 					if (ival > 255 || ival == 0) {
 						DPRINT("invalid nf,  0 < nf < 256\n");
@@ -549,6 +578,9 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			break;
 		case SNBEP_UNC_ATTR_CF:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].cbo_filt.cid);
+			break;
+		case SNBEP_UNC_ATTR_CF1:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].hswep_cbo_filt0.cid);
 			break;
 		case SNBEP_UNC_ATTR_FF:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, (filters[0].val >> (pcu_filt_band*8)) & 0xff);
