@@ -1278,16 +1278,18 @@ _pe_update_control_state( hwd_control_state_t *ctl,
 				SUBDBG("set exclude_kernel attribute from eventset level domain flags, encode: %d, eventset: %d\n", pe_ctl->events[i].attr.exclude_kernel, !(pe_ctl->domain & PAPI_DOM_KERNEL));
 				pe_ctl->events[i].attr.exclude_kernel = !(pe_ctl->domain & PAPI_DOM_KERNEL);
 			}
-			pe_ctl->events[i].attr.exclude_guest = 1;
 
 			// libpfm4 supports mh (monitor host) and mg (monitor guest) event masks
 			// perf_events supports exclude_hv and exclude_idle attributes
 			// PAPI_set_domain supports PAPI_DOM_SUPERVISOR and PAPI_DOM_OTHER domain attributes
-			// not sure how these libpfm4 masks, perf_event attributes, and PAPI domain attributes relate to each other, the code sample below is one possibility
+			// not sure how these perf_event attributes, and PAPI domain attributes relate to each other
+			// if that can be figured out then there should probably be code here to set some perf_events attributes based on what was set in a PAPI_set_domain call
+			// the code sample below is one possibility
 //			if (strstr(ntv_evt->allocated_name, ":mg=") == NULL) {
 //				SUBDBG("set exclude_hv attribute from eventset level domain flags, encode: %d, eventset: %d\n", pe_ctl->events[i].attr.exclude_hv, !(pe_ctl->domain & PAPI_DOM_SUPERVISOR));
 //				pe_ctl->events[i].attr.exclude_hv = !(pe_ctl->domain & PAPI_DOM_SUPERVISOR);
 //			}
+
 
 			// set the cpu number provided with an event mask if there was one (will be -1 if mask not provided)
 			pe_ctl->events[i].cpu = ntv_evt->cpu;
