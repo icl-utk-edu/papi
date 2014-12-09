@@ -41,6 +41,8 @@
 #define SNBEP_UNC_ATTR_FF		7
 #define SNBEP_UNC_ATTR_A		8
 #define SNBEP_UNC_ATTR_NF1		9 /* for filter1 */
+#define SNBEP_UNC_ATTR_ISOC	       10 /* isochronous */
+#define SNBEP_UNC_ATTR_NC	       11 /* non-coherent */
 
 #define _SNBEP_UNC_ATTR_I	(1 << SNBEP_UNC_ATTR_I)
 #define _SNBEP_UNC_ATTR_E	(1 << SNBEP_UNC_ATTR_E)
@@ -52,6 +54,8 @@
 #define _SNBEP_UNC_ATTR_FF	(1 << SNBEP_UNC_ATTR_FF)
 #define _SNBEP_UNC_ATTR_A	(1 << SNBEP_UNC_ATTR_A)
 #define _SNBEP_UNC_ATTR_NF1	(1 << SNBEP_UNC_ATTR_NF1)
+#define _SNBEP_UNC_ATTR_ISOC	(1 << SNBEP_UNC_ATTR_ISOC)
+#define _SNBEP_UNC_ATTR_NC	(1 << SNBEP_UNC_ATTR_NC)
 
 #define SNBEP_UNC_IRP_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
@@ -146,7 +150,7 @@ typedef union {
 		unsigned long unc_umask:8;	/* unit mask */
 		unsigned long unc_res1:1;	/* reserved */
 		unsigned long unc_rst:1;	/* reset */
-		unsigned long unc_edge:1;	/* edge detec */
+		unsigned long unc_edge:1;	/* edge detect */
 		unsigned long unc_tid:1;	/* tid filter enable */
 		unsigned long unc_res2:2;	/* reserved */
 		unsigned long unc_en:1;		/* enable */

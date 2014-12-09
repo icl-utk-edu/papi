@@ -18,7 +18,7 @@
 *
 */
 typedef struct {
-   unsigned pme_code;
+   uint64_t pme_code;
    const char *pme_name;
    const char *pme_short_desc;
    const char *pme_long_desc;

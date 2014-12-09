@@ -143,6 +143,20 @@ static const test_event_t ppc_test_events[]={
 	  .codes[0] = 0x200f2,
 	  .fstr = "power7::PM_INST_DISP",
 	},
+	{ SRC_LINE,
+	  .name = "power8::PM_L1MISS_LAT_EXC_1024",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x67200301eaull,
+	  .fstr = "power8::PM_L1MISS_LAT_EXC_1024",
+	},
+	{ SRC_LINE,
+	  .name = "power8::PM_RC_LIFETIME_EXC_32",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0xde200201e6ull,
+	  .fstr = "power8::PM_RC_LIFETIME_EXC_32",
+	},
 };
 #define NUM_TEST_EVENTS (int)(sizeof(ppc_test_events)/sizeof(test_event_t))
 

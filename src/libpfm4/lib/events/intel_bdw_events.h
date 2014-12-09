@@ -21,7 +21,7 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  *
- * PMU: bdw (Intel Haswell)
+ * PMU: bdw (Intel Broadwell)
  */
 
 static const intel_x86_umask_t bdw_baclears[]={

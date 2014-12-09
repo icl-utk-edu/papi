@@ -38,11 +38,13 @@ const pfmlib_attr_desc_t snbep_unc_mods[]={
 	PFM_ATTR_I("t", "threshold in range [0-255]"),	/* threshold */
 	PFM_ATTR_I("t", "threshold in range [0-31]"),	/* threshold */
 	PFM_ATTR_I("tf", "thread id filter [0-1]"),	/* thread id */
-	PFM_ATTR_I("cf", "core id filter [0-7]"),	/* core id */
+	PFM_ATTR_I("cf", "core id filter, includes non-thread data in bit 4 [0-15]"),	/* core id (ivbep) */
 	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask filter0 */
 	PFM_ATTR_I("ff", "frequency >= 100Mhz * [0-255]"),/* freq filter */
 	PFM_ATTR_I("addr", "physical address matcher [40 bits]"),/* address matcher */
 	PFM_ATTR_I("nf", "node id bitmask filter [0-255]"),/* nodeid mask filter1 */
+	PFM_ATTR_B("isoc", "match isochronous requests"),   /* isochronous */
+	PFM_ATTR_B("nc", "match non-coherent requests"),   /* non-coherent */
 	PFM_ATTR_NULL
 };
 
@@ -406,7 +408,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					umodmsk |= _SNBEP_UNC_ATTR_TF;
 					break;
 				case SNBEP_UNC_ATTR_CF: /* core id */
-					if (ival > 7)
+					if (ival > 15)
 						return PFM_ERR_ATTR_VAL;
 					reg.cbo.unc_tid = 1;
 					filters[0].cbo_filt.cid = ival;
@@ -444,6 +446,12 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					addr.ha_addr.lo_addr = ival; /* LSB 26 bits */
 					addr.ha_addr.hi_addr = (ival >> 26) & ((1ULL << 14)-1);
 					umodmsk |= _SNBEP_UNC_ATTR_A;
+					break;
+				case SNBEP_UNC_ATTR_ISOC: /* isoc filter */
+					filters[1].ivbep_cbo_filt1.isoc = !!ival;
+					break;
+				case SNBEP_UNC_ATTR_NC: /* nc filter */
+					filters[1].ivbep_cbo_filt1.nc = !!ival;
 					break;
 			}
 		}
@@ -539,8 +547,17 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		case SNBEP_UNC_ATTR_TF:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.cbo.unc_tid);
 			break;
+		case SNBEP_UNC_ATTR_CF:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].cbo_filt.cid);
+			break;
 		case SNBEP_UNC_ATTR_FF:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, (filters[0].val >> (pcu_filt_band*8)) & 0xff);
+			break;
+		case SNBEP_UNC_ATTR_ISOC:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[1].ivbep_cbo_filt1.isoc);
+			break;
+		case SNBEP_UNC_ATTR_NC:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[1].ivbep_cbo_filt1.nc);
 			break;
 		case SNBEP_UNC_ATTR_NF:
 			if (modmsk_r & _SNBEP_UNC_ATTR_NF)
