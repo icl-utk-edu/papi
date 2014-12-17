@@ -22,6 +22,13 @@
 #include "extras.h"
 
 
+// A place to put user defined events
+extern hwi_presets_t user_defined_events[];
+extern int user_defined_events_count;
+
+static int papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag);
+
+
 /* This routine copies values from a dense 'findem' array of events 
    into the sparse global _papi_hwi_presets array, which is assumed 
    to be empty at initialization. 
@@ -92,7 +99,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 	   }
 
 	   _papi_hwi_presets[preset_index].postfix=
-	                                   strdup(findem[pnum].operation);
+	                                   papi_strdup(findem[pnum].operation);
 
 	   did_something++;
        }
@@ -112,15 +119,15 @@ _papi_hwi_cleanup_all_presets( void )
 	for ( preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS;
 		  preset_index++ ) {
 	    if ( _papi_hwi_presets[preset_index].postfix != NULL ) {
-	       free( _papi_hwi_presets[preset_index].postfix );
+	       papi_free( _papi_hwi_presets[preset_index].postfix );
 	       _papi_hwi_presets[preset_index].postfix = NULL;
 	    }
 	    if ( _papi_hwi_presets[preset_index].note != NULL ) {
-	       free( _papi_hwi_presets[preset_index].note );
+	       papi_free( _papi_hwi_presets[preset_index].note );
 	       _papi_hwi_presets[preset_index].note = NULL;
 	    }
 	    for(j=0; j<_papi_hwi_presets[preset_index].count;j++) {
-	       free(_papi_hwi_presets[preset_index].name[j]);
+	       papi_free(_papi_hwi_presets[preset_index].name[j]);
 	    }
 	}
 	
@@ -215,18 +222,22 @@ trim_note( char *in )
 }
 
 static inline int
-find_preset_code( char *tmp, int *code )
-{
-    int i = 0;
-
-    while ( _papi_hwi_presets[i].symbol != NULL ) {
-	  if ( strcasecmp( tmp, _papi_hwi_presets[i].symbol ) == 0 ) {
-	     *code = ( int ) ( i | PAPI_PRESET_MASK );
-	     return PAPI_OK;
-	  }
-	  i++;
-    }
-    return PAPI_EINVAL;
+find_event_index(hwi_presets_t *array, int size, char *tmp) {
+	SUBDBG("ENTER: array: %p, size: %d, tmp: %s\n", array, size, tmp);
+	int i;
+	for (i = 0; i < size; i++) {
+		if (array[i].symbol == NULL) {
+			array[i].symbol = papi_strdup(tmp);
+			SUBDBG("EXIT: i: %d\n", i);
+			return i;
+		}
+		if (strcasecmp(tmp, array[i].symbol) == 0) {
+			SUBDBG("EXIT: i: %d\n", i);
+			return i;
+		}
+	}
+	SUBDBG("EXIT: PAPI_EINVAL\n");
+	return PAPI_EINVAL;
 }
 
 /* Look for an event file 'name' in a couple common locations.
@@ -288,6 +299,468 @@ get_event_line( char *line, FILE * table, char **tmp_perfmon_events_table )
 	}
 }
 
+// update tokens in formula referring to index "old_index" with tokens referring to index "new_index".
+static void
+update_ops_string(char **formula, int old_index, int new_index) {
+	INTDBG("ENTER:   *formula: %s, old_index: %d, new_index: %d\n", *formula?*formula:"NULL", old_index, new_index);
+
+	int cur_index;
+	char *newFormula;
+	char *subtoken;
+	char *tok_save_ptr=NULL;
+
+	// if formula is null just return
+	if (*formula == NULL) {
+		INTDBG("EXIT: Null pointer to formula passed in\n");
+		return;
+	}
+
+	// get some space for the new formula we are going to create
+	newFormula = papi_calloc(strlen(*formula) + 20, 1);
+
+	// replace the specified "replace" tokens in the new original formula with the new insertion formula
+	newFormula[0] = '\0';
+	subtoken = strtok_r(*formula, "|", &tok_save_ptr);
+	while ( subtoken != NULL) {
+//		INTDBG("subtoken: %s, newFormula: %s\n", subtoken, newFormula);
+		char work[10];
+		// if this is the token we want to replace with the new token index, do it now
+		if ((subtoken[0] == 'N')  &&  (isdigit(subtoken[1]))) {
+			cur_index = atoi(&subtoken[1]);
+			// if matches old index, use the new one
+			if (cur_index == old_index) {
+				sprintf (work, "N%d", new_index);
+				strcat (newFormula, work);
+			} else if (cur_index > old_index) {
+				// current token greater than old index, make it one less than what it was
+				sprintf (work, "N%d", cur_index-1);
+				strcat (newFormula, work);
+			} else {
+				// current token less than old index, copy this part of the original formula into the new formula
+				strcat(newFormula, subtoken);
+			}
+		} else {
+			// copy this part of the original formula into the new formula
+			strcat(newFormula, subtoken);
+		}
+		strcat (newFormula, "|");
+		subtoken = strtok_r(NULL, "|", &tok_save_ptr);
+	}
+	papi_free (*formula);
+	*formula = newFormula;
+
+	INTDBG("EXIT: newFormula: %s\n", newFormula);
+	return;
+}
+
+//
+// Handle creating a new derived event of type DERIVED_ADD.  This may create a new formula
+// which can be used to compute the results of the new event from the events it depends on.
+// This code is also responsible for making sure that all the needed native events are in the
+// new events native event list and that the formula's referenced to this array are correct.
+//
+static void
+ops_string_append(hwi_presets_t *results, hwi_presets_t *depends_on, int addition) {
+	INTDBG("ENTER: results: %p, depends_on: %p, addition %d\n", results, depends_on, addition);
+
+	int i;
+	int second_event = 0;
+	char newFormula[PAPI_MIN_STR_LEN] = "";
+	char work[20];
+
+	// if our results already have a formula, start with what was collected so far
+	// this should only happens when processing the second event of a new derived add
+	if (results->postfix != NULL) {
+		INTDBG("Event %s has existing formula %s\n", results->symbol, results->postfix);
+		// get the existing formula
+		strncat(newFormula, results->postfix, sizeof(newFormula)-1);
+		newFormula[sizeof(newFormula)-1] = '\0';
+		second_event = 1;
+	}
+
+	// process based on what kind of event the one we depend on is
+	switch (depends_on->derived_int) {
+		case DERIVED_POSTFIX: {
+			// the event we depend on has a formula, append it our new events formula
+
+			// if event we depend on does not have a formula, report error
+			if (depends_on->postfix == NULL) {
+				INTDBG("Event %s is of type DERIVED_POSTFIX but is missing operation string\n", depends_on->symbol);
+				return;
+			}
+
+			// may need to renumber the native event index values in the depends on event formula before putting it into new derived event
+			char *temp = papi_strdup(depends_on->postfix);
+
+			// If this is not the first event of the new derived add, need to adjust native event index values in formula.
+			// At this time we assume that all the native events in the second events formula are unique for the new event
+			// and just bump the indexes by the number of events already known to the new event.  Later when we add the events
+			// to the native event list for this new derived event, we will check to see if the native events are already known
+			// to the new derived event and if so adjust the indexes again.
+			if (second_event) {
+				for ( i=depends_on->count-1 ; i>=0 ; i--) {
+					update_ops_string(&temp, i, results->count + i);
+				}
+			}
+
+			// append the existing formula from the event we depend on (but get rid of last '|' character)
+			strncat(newFormula, temp, sizeof(newFormula)-1);
+			newFormula[sizeof(newFormula)-1] = '\0';
+			papi_free (temp);
+			break;
+		}
+		case DERIVED_ADD: {
+			// the event we depend on has no formula, create a formula for our new event to add together the depends_on native event values
+
+			// build a formula for this add event
+			sprintf(work, "N%d|N%d|+|", results->count, results->count + 1);
+			strcat(newFormula, work);
+			break;
+		}
+		case DERIVED_SUB: {
+			// the event we depend on has no formula, create a formula for our new event to subtract the depends_on native event values
+
+			// build a formula for this subtract event
+			sprintf(work, "N%d|N%d|-|", results->count, results->count + 1);
+			strcat(newFormula, work);
+			break;
+		}
+		case NOT_DERIVED: {
+			// the event we depend on has no formula and is itself only based on one native event, create a formula for our new event to include this native event
+
+			// build a formula for this subtract event
+			sprintf(work, "N%d|", results->count);
+			strcat(newFormula, work);
+			break;
+		}
+		default: {
+			// the event we depend on has unsupported derived type, put out some debug and give up
+			INTDBG("Event %s depends on event %s which has an unsupported derived type of %d\n", results->symbol, depends_on->symbol, depends_on->derived_int);
+			return;
+		}
+	}
+
+	// if this was the second event, append to the formula an operation to add or subtract the results of the two events
+	if (second_event) {
+		if (addition != 0) {
+			strcat(newFormula, "+|");
+		} else {
+			strcat(newFormula, "-|");
+		}
+		// also change the new derived events type to show it has a formula now
+		results->derived_int = DERIVED_POSTFIX;
+	}
+
+	// we need to free the existing space (created by malloc and we need to create a new one)
+	papi_free (results->postfix);
+	results->postfix = papi_strdup(newFormula);
+	INTDBG("EXIT: newFormula: %s\n", newFormula);
+	return;
+}
+
+// merge the 'insertion' formula into the 'original' formula replacing the
+// 'replaces' token in the 'original' formula.
+static void
+ops_string_merge(char **original, char *insertion, int replaces, int start_index) {
+	INTDBG("ENTER: original: %p, *original: %s, insertion: %s, replaces: %d, start_index: %d\n", original, *original, insertion, replaces, start_index);
+
+	int orig_len=0;
+	int ins_len=0;
+	char *subtoken;
+	char *workBuf;
+	char *workPtr;
+	char *tok_save_ptr=NULL;
+	char *newOriginal;
+	char *newInsertion;
+	char *newFormula;
+	int insert_events;
+
+	if (*original != NULL) {
+		orig_len = strlen(*original);
+	}
+	if (insertion != NULL) {
+		ins_len = strlen(insertion);
+	}
+	newFormula = papi_calloc (orig_len + ins_len + 40, 1);
+
+	// if insertion formula is not provided, then the original formula remains basically unchanged.
+	if (insertion == NULL) {
+		// if the original formula has a leading '|' then get rid of it
+		workPtr = *original;
+		if (workPtr[0] == '|') {
+			strcpy(newFormula, &workPtr[1]);
+		} else {
+			strcpy(newFormula, workPtr);
+		}
+		// formula fields are always malloced space so free the previous one
+		papi_free (*original);
+		*original = newFormula;
+		INTDBG("EXIT: newFormula: %s\n", *original);
+		return;
+	}
+
+	// renumber the token numbers in the insertion formula
+	// also count how many native events are used in this formula
+	insert_events = 0;
+	newInsertion = papi_calloc(ins_len+20, 1);
+	workBuf = papi_calloc(ins_len+10, 1);
+	workPtr = papi_strdup(insertion);
+	subtoken = strtok_r(workPtr, "|", &tok_save_ptr);
+	while ( subtoken != NULL) {
+//		INTDBG("subtoken: %s, newInsertion: %s\n", subtoken, newInsertion);
+		if ((subtoken[0] == 'N')  &&  (isdigit(subtoken[1]))) {
+			insert_events++;
+			int val = atoi(&subtoken[1]);
+			val += start_index;
+			subtoken[1] = '\0';
+			sprintf (workBuf, "N%d", val);
+		} else {
+			strcpy(workBuf, subtoken);
+		}
+		strcat (newInsertion, workBuf);
+		strcat (newInsertion, "|");
+		subtoken = strtok_r(NULL, "|", &tok_save_ptr);
+	}
+	papi_free (workBuf);
+	papi_free (workPtr);
+	INTDBG("newInsertion: %s\n", newInsertion);
+
+	// if original formula is not provided, then the updated insertion formula becomes the new formula
+	// but we still had to renumber the native event tokens in case another native event was put into the list first
+	if (*original == NULL) {
+		*original = papi_strdup(newInsertion);
+		INTDBG("EXIT: newFormula: %s\n", newInsertion);
+		papi_free (newInsertion);
+		papi_free (newFormula);
+		return;
+	}
+
+	// if token to replace not valid, return null  (do we also need to check an upper bound ???)
+	if ((replaces < 0)) {
+		papi_free (newInsertion);
+		papi_free (newFormula);
+		INTDBG("EXIT: Invalid value for token in original formula to be replaced\n");
+		return;
+	}
+
+	// renumber the token numbers in the original formula
+	// tokens with an index greater than the replaces token need to be incremented by number of events in insertion formula-1
+	newOriginal = papi_calloc (orig_len+20, 1);
+	workBuf = papi_calloc(orig_len+10, 1);
+	workPtr = papi_strdup(*original);
+
+	subtoken = strtok_r(workPtr, "|", &tok_save_ptr);
+	while ( subtoken != NULL) {
+//		INTDBG("subtoken: %s, newOriginal: %s\n", subtoken, newOriginal);
+		// prime the work area with the next token, then see if we need to change it
+		strcpy(workBuf, subtoken);
+		if ((subtoken[0] == 'N')  &&  (isdigit(subtoken[1]))) {
+			int val = atoi(&subtoken[1]);
+			if (val > replaces) {
+				val += insert_events-1;
+				subtoken[1] = '\0';
+				sprintf (workBuf, "N%d", val);
+			}
+		}
+		// put the work buffer into the new original formula
+		strcat (newOriginal, workBuf);
+		strcat (newOriginal, "|");
+		subtoken = strtok_r(NULL, "|", &tok_save_ptr);
+	}
+	papi_free (workBuf);
+	papi_free (workPtr);
+	INTDBG("newOriginal: %s\n", newOriginal);
+
+	// replace the specified "replace" tokens in the new original formula with the new insertion formula
+	newFormula[0] = '\0';
+	workPtr = newOriginal;
+	subtoken = strtok_r(workPtr, "|", &tok_save_ptr);
+	while ( subtoken != NULL) {
+//		INTDBG("subtoken: %s, newFormula: %s\n", subtoken, newFormula);
+		// if this is the token we want to replace with the insertion string, do it now
+		if ((subtoken[0] == 'N')  &&  (isdigit(subtoken[1]))  &&  (replaces == atoi(&subtoken[1]))) {
+			// copy updated insertion string into the original string (replacing this token)
+			strcat(newFormula, newInsertion);
+		} else {
+			// copy this part of the original formula into the new formula
+			strcat(newFormula, subtoken);
+			strcat(newFormula, "|");
+		}
+		subtoken = strtok_r(NULL, "|", &tok_save_ptr);
+	}
+	papi_free (newInsertion);
+	papi_free (workPtr);
+
+	// formula fields are always malloced space so free the previous one
+	papi_free (*original);
+	*original = newFormula;
+	INTDBG("EXIT: newFormula: %s\n", newFormula);
+	return;
+}
+
+//
+//  Check to see if an event the new derived event being created depends on is known.  We check both preset and user defined derived events here.
+//  If it is a known derived event then we set the new event being defined to include the necessary native events and formula to compute its
+//  derived value and use it in the correct context of the new derived event being created.  Depending on the inputs, the operations strings (formulas)
+//  to be used by the new derived event may need to be created and/or adjusted to reference the correct native event indexes for the new derived event.
+//  The formulas processed by this code must be reverse polish notation (RPN) or postfix format and they must contain place holders (like N0, N1) which
+//  identify indexes into the native event array used to compute the new derived events final value.
+//
+//  Arguments:
+//    target:  event we are looking for
+//    derived_type:  type of derived event being created (add, subtract, postfix)
+//    results:  where to build the new preset event being defined.
+//    search: table of known existing preset or user events the new derived event is allowed to use (points to a table of either preset or user events).
+//    search_size:  number of entries in the search table.
+//
+static int
+check_derived_events(char *target, int derived_type, hwi_presets_t* results, hwi_presets_t * search, int search_size, int token_index)
+{
+	INTDBG("ENTER: target: %p (%s), results: %p, search: %p, search_size: %d, token_index: %d\n", target, target, results, search, search_size, token_index);
+	unsigned int i;
+	int j;
+	int k;
+	int found = 0;
+
+	for (j=0; j < search_size; j++) {
+		//	INTDBG("search[%d].symbol: %s, looking for: %s\n", j, search[j].symbol, target);
+		if (search[j].symbol == NULL) {
+			INTDBG("EXIT: returned: 0\n");
+			return 0;
+		}
+
+		// if not the event we depend on, just look at next
+		if ( strcasecmp( target, search[j].symbol) != 0 ) {
+			continue;
+		}
+
+		INTDBG("Found a match\n");
+
+		// derived formulas need to be adjusted based on what kind of derived event we are processing
+		// the derived type passed to this function is the type of the new event being defined (not the events it is based on)
+		// when we get here the formula must be in reverse polish notation (RPN) format
+		switch (derived_type) {
+			case DERIVED_POSTFIX: {
+				// go create a formula to merge the second formula into a spot identified by one of the tokens in
+				// the first formula.
+				ops_string_merge(&(results->postfix), search[j].postfix, token_index, results->count);
+				break;
+			}
+			case DERIVED_ADD: {
+				// the new derived event adds two things together, go handle this target events role in the add
+				ops_string_append(results, &search[j], 1);
+				break;
+			}
+			case DERIVED_SUB: {
+				// go create a formula to subtract the value generated by the second formula from the value generated by the first formula.
+				ops_string_append(results, &search[j], 0);
+				break;
+			}
+				default: {
+				INTDBG("Derived type: %d, not currently handled\n", derived_type);
+				break;
+			}
+		}
+
+		// copy event name and code used by the derived event into the results table (place where new derived event is getting created)
+		for ( k = 0; k < (int)search[j].count; k++ ) {
+//			INTDBG("search[%d]: %p, name[%d]: %s, code[%d]: %#x\n", j, &search[j], k, search[j].name[k], k, search[j].code[k]);
+			// if this event is already in the list, just update the formula so that references to this event point to the existing one
+			for (i=0 ; i < results->count ; i++) {
+				if (results->code[i] == search[j].code[k]) {
+					INTDBG("event: %s, code: %#x, already in results at index: %d\n", search[j].name[k], search[j].code[k], i);
+					// replace all tokens in the formula that refer to index "results->count + found" with a token that refers to index "i".
+					// the index "results->count + found" identifies the index used in the formula for the event we just determined is a duplicate
+					update_ops_string(&(results->postfix), results->count + found, i);
+					found++;
+					break;
+				}
+			}
+
+			// if we did not find a match, copy native event info into results array
+			if (found == 0) {
+				// not a duplicate, go ahead and copy into results and bump number of native events in results
+				if (search[j].name[k]) {
+					results->name[results->count] = papi_strdup(search[j].name[k]);
+				} else {
+					results->name[results->count] = papi_strdup(target);
+				}
+				results->code[results->count] = search[j].code[k];
+				INTDBG("results: %p, name[%d]: %s, code[%d]: %#x\n", results, results->count, results->name[results->count], results->count, results->code[results->count]);
+
+				results->count++;
+			}
+		}
+
+		INTDBG("EXIT: returned: 1\n");
+		return 1;
+	}
+
+	INTDBG("EXIT: returned: 0\n");
+	return 0;
+}
+
+static int
+check_native_events(char *target, hwi_presets_t* results)
+{
+	INTDBG("ENTER: target: %p (%s), results: %p\n", target, target, results);
+	int ret;
+
+	// find this native events code
+	if ( ( ret = _papi_hwi_native_name_to_code( target, (int *)(&results->code[results->count])) ) != PAPI_OK ) {
+		INTDBG("EXIT: returned: 0, call to convert name to event code failed with ret: %d\n", ret);
+		return 0;
+	}
+
+	// if the code returned was 0, return to show it is not a valid native event
+	if ( results->code[results->count] == 0 ) {
+		INTDBG( "EXIT: returned: 0, event code not found\n");
+		return 0;
+	}
+
+	// if this native event is not for component 0, return to show it can not be used in derived events
+	// it should be possible to create derived events for other components as long as all events in the derived event are associated with the same component
+	if ( _papi_hwi_component_index(results->code[results->count]) != 0 ) {
+		INTDBG( "EXIT: returned: 0, new event not associated with component 0 (current limitation with derived events)\n");
+		return 0;
+	}
+
+	//	  found = 1;
+	INTDBG("\tFound a native event %s\n", target);
+	results->name[results->count++] = papi_strdup(target);
+
+	INTDBG( "EXIT: returned: 1\n");
+	return 1;
+}
+
+// see if the event_name string passed in matches a known event name
+// if it does these calls also updates information in event definition tables to remember the event
+static int
+is_event(char *event_name, int derived_type, hwi_presets_t* results, int token_index) {
+	INTDBG("ENTER: event_name: %p (%s), derived_type: %d, results: %p, token_index: %d\n", event_name, event_name, derived_type, results, token_index);
+
+	/* check if its a preset event */
+	if ( check_derived_events(event_name, derived_type, results, &_papi_hwi_presets[0], PAPI_MAX_PRESET_EVENTS, token_index) ) {
+		INTDBG("EXIT: found preset event\n");
+		return 1;
+	}
+
+	/* check if its a user defined event */
+	if ( check_derived_events(event_name, derived_type, results, user_defined_events, user_defined_events_count, token_index) ) {
+		INTDBG("EXIT: found user event\n");
+		return 1;
+	}
+
+	/* check if its a native event */
+	if ( check_native_events(event_name, results) ) {
+		INTDBG("EXIT: found native event\n");
+		return 1;
+	}
+
+	INTDBG("EXIT: event not found\n");
+	return 0;
+}
+
 /* Static version of the events file. */
 #if defined(STATIC_PAPI_EVENTS_TABLE)
 #include "papi_events_table.h"
@@ -295,277 +768,592 @@ get_event_line( char *line, FILE * table, char **tmp_perfmon_events_table )
 static char *papi_events_table = NULL;
 #endif
 
-int
-_papi_load_preset_table( char *pmu_str, int pmu_type, int cidx)
-{
+int _papi_load_preset_table(char *pmu_str, int pmu_type, int cidx) {
+	SUBDBG("ENTER: pmu_str: %s, pmu_type: %d, cidx: %d\n", pmu_str, pmu_type, cidx);
 
-  (void) cidx;  /* We'll use this later */
+	int retval;
 
-    char pmu_name[PAPI_MIN_STR_LEN];
-    char line[LINE_MAX];
-    char name[PATH_MAX] = "builtin papi_events_table";
-    char *tmp_papi_events_table = NULL;
-    char *tmpn;
-    FILE *table;
-    int ret;
-    unsigned int event_idx;
-    int invalid_event;
-    int line_no = 1, derived = 0, insert = 0, preset = 0;
-    int get_presets = 0;   /* only get PRESETS after CPU is identified      */
-    int found_presets = 0; /* only terminate search after PRESETS are found */
-	                   /* this allows support for synonyms for CPU names*/
+	// go load papi preset events (last argument tells function if we are loading presets or user events)
+	retval = papi_load_derived_events(pmu_str, pmu_type, cidx, 1);
+	if (retval != PAPI_OK) {
+		SUBDBG("EXIT: retval: %d\n", retval);
+		return retval;
+	}
 
-    SUBDBG("ENTER\n");
+	// go load the user defined event definitions if any are defined
+	retval = papi_load_derived_events(pmu_str, pmu_type, cidx, 0);
 
-    /* copy the pmu identifier, stripping commas if found */
-    tmpn = pmu_name;
-    while ( *pmu_str ) {
-       if ( *pmu_str != ',' ) *tmpn++ = *pmu_str;
-       pmu_str++;
-    }
-    *tmpn = '\0';
+	SUBDBG("EXIT: retval: %d\n", retval);
+	return retval;
+}
 
-    /* try the environment variable first */
-    if ( ( tmpn = getenv( "PAPI_CSV_EVENT_FILE" ) ) && 
-         ( strlen( tmpn ) != 0 ) ) {
-       sprintf( name, "%s", tmpn );
-       table = fopen( name, "r" );
-    }
-    /* if no valid environment variable, look for built-in table */
-    else if ( papi_events_table ) {
-       tmp_papi_events_table = papi_events_table;
-       table = NULL;
-    }
-    /* if no env var and no built-in, search for default file */
-    else {
+// global variables
+#define STACK_MAX 400 // size of stack
+static char *stack[STACK_MAX]; // stack
+static char *sptr; // stack pointer
+static int  top = -1; // stack length
+
+// isitsym: This function returns true if the character is a symbol
+static
+int isitsym( char symbol ) {
+	switch( symbol ) {
+	case '(':
+	case ')':
+	case '+':
+	case '-':
+	case '*':
+	case '/':
+	case '%':
+		return 1;
+	default :
+		return 0;
+	} // end switch symbol
+} // end isitsym
+
+// priority: This function returns the priority of the operator
+static
+int priority( char symbol ) {
+	switch( symbol ) {
+	case '(':
+		return 0;
+	case '+':
+	case '-':
+		return 1;
+	case '*':
+	case '/':
+	case '%':
+		return 2;
+	default :
+		return 0;
+	} // end switch symbol
+} // end priority
+
+static
+int push( char *symbol ) {
+	if( top >= (STACK_MAX - 1) ) {
+		INTDBG("EXIT: Stack Overflow converting Algebraic Expression:%d\n", top );
+		return -1;  //***TODO: Figure out how to exit gracefully
+	} // end if top>MAX
+	stack[++top] = papi_malloc(sizeof(char));
+	stack[top] = symbol;
+	return 0;
+} // end push
+
+// pop from stack
+static
+char *pop() {
+	if( top < 0 ) {
+		INTDBG("EXIT: Stack Underflow converting Algebraic Expression:%d\n", top );
+		return NULL;  //***TODO: Figure out how to exit gracefully
+	} // end if empty
+	sptr = stack[top--];
+	return( sptr );
+} // end pop
+
+// free pointers from stack
+void
+freestack() {
+	int i;
+	for( i = 0; i < STACK_MAX; i++ ) {
+		if ( stack[i] != NULL )
+			papi_free(stack[i]);
+		else
+			break;
+	} // end for stack max
+} // end freestack
+
+// gettoken: get next token from the infix string
+static int
+gettoken( char *infix, char *token, unsigned int *index ) {
+	INTDBG("ENTER: infix: %s, token: %s, index: %d\n", infix, token, *index);
+	int i = 0;
+	int j = *index;
+	if ( tolower(infix[j]) >= 'a' && tolower(infix[j] <= 'z') ) {
+		token[i] = infix[j];
+		while ( !isitsym(infix[++j]) && ( infix[j] != '\0' ) )
+			token[++i] = infix[j];
+		*index = j;
+		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
+		return 1;
+	} // end if starts with character
+	if ( infix[j] == '"' ) {
+		while (	!isitsym(infix[++j]) && ( infix[j] != '"' ) )
+			token[i++] = infix[j];
+		*index = j+1;
+		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
+		return 1;
+	} // end if starts with double quote
+	if ( tolower(infix[j]) >= '0' && tolower(infix[j] <= '9') ) {
+		token[i] = infix[j];
+		while ( !isitsym(infix[++j]) && ( tolower(infix[j]) >= '0' &&
+				tolower(infix[j] <= '9') ) && ( infix[j] != '\0' ) )
+			token[++i] = infix[j];
+		*index = j;
+		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
+		return 1;
+	} // end if starts with number
+	if ( isitsym(infix[j]) ) {
+		token[i] = infix[j];
+		*index = ++j;
+		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
+		return 1;
+	} // end if it is a special character
+	INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
+	return 0; // error
+} // end gettoken
+
+/* infix_to_postfix:
+   routine that will be called with parameter:
+   char *in characters of infix notation (algebraic formula)
+   returns: char * pointer to string of returned postfix */
+static char *
+infix_to_postfix( char *in ) {
+	INTDBG("ENTER: in: %s, size: %zu\n", in, strlen(in));
+	static char postfix[PAPI_HUGE_STR_LEN];	// output
+	unsigned int *index = papi_malloc(sizeof(int));
+	char *ptr = &in[0];
+
+	*index = 0;
+	memset(&postfix,0,PAPI_HUGE_STR_LEN);
+	memset(&stack,0,STACK_MAX);
+	top = -1; // initialize stack
+
+	while( *index < strlen( in ) ) {
+		INTDBG("INTDBG: in: %s, length: %zu, index: %d\n", in, strlen( in ), *index);
+		char next[PAPI_MIN_STR_LEN];
+		char *token = papi_malloc(PAPI_MIN_STR_LEN);
+		memset(next,0,PAPI_MIN_STR_LEN);
+		memset(token,0,PAPI_MIN_STR_LEN);
+		gettoken(ptr, token, index);
+		INTDBG("INTDBG: token: %s|\n", token);
+		switch( token[0] ) {
+		case '(':
+			push(&token[0]);
+			break;
+		case ')':
+			do {
+				char *tmpstr;
+				tmpstr = pop();
+				if ( strlen(tmpstr) < PAPI_MIN_STR_LEN )
+					strcpy(next, tmpstr);
+				if ( next[0] != '(' ) {
+					if ( (strlen(postfix) + strlen(next)) < (PAPI_HUGE_STR_LEN - 1) ) {
+						strcat(postfix, next);
+						strcat(postfix, "|");
+					} // end if enough space
+				} // end if not (
+				else
+					break;
+			} while( 1 ); // TODO: Might be a problem
+			break;
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+		case '%':
+		case '^':
+			if ( top >= 0 ) {
+				while( priority(stack[top][0]) >= priority(token[0]) ) {
+					char *tmpstr;
+					tmpstr = pop();
+					if ( (strlen(postfix) + strlen(tmpstr)) < (PAPI_HUGE_STR_LEN - 1) ) {
+						strcat(postfix, tmpstr);
+						strcat(postfix, "|");
+					} // end if enough space
+					if ( top < 0 )
+						break;
+				} // end while
+			} // if something on stack
+			push(&token[0]);
+			break;
+		default: // if an operand comes
+			if ( (strlen(postfix) + strlen(token)) < (PAPI_HUGE_STR_LEN - 1) ) {
+				strcat(postfix, token);
+				strcat(postfix, "|");
+
+
+			} // end if enough space
+			break;
+		} // end switch symbol
+	} // end while
+
+	papi_free(index);
+
+	while( top >= 0 ) {
+		char *tmpstr;
+		tmpstr = pop();
+		if ( (strlen(postfix) + strlen(tmpstr)) < (PAPI_HUGE_STR_LEN - 1) ) {
+			strcat(postfix, tmpstr);
+			strcat(postfix, "|");
+		} // end if enough space
+	} // end while still stuff in the stack
+
+	INTDBG("EXIT: postfix: %s, size: %zu\n", postfix, strlen(postfix));
+	freestack();
+	return (postfix);
+} // end infix_to_postfix
+
+/*
+ * This function will load event definitions from either a file or an in memory table.  It is used to load both preset events
+ * which are defined by the PAPI development team and delivered with the product and user defined events which can be defined
+ * by papi users and provided to papi to be processed at library initialization.  Both the preset events and user defined events
+ * support the same event definition syntax.
+ *
+ * Event definition file syntax:
+ * see PAPI_derived_event_files(1) man page.
+ *
+ * Blank lines are ignored
+ * Lines that begin with '#' are comments.
+ * Lines that begin with 'CPU' identify a pmu name and have the following effect.
+ *      If this pmu name does not match the pmu_str passed in, it is ignored and we get the next input line.
+ *      If this pmu name matches the pmu_str passed in, we set a 'process events' flag.
+ *      Multiple consecutive 'CPU' lines may be provided and if any of them match the pmu_str passed in, we set a 'process events' flag.
+ *      When a 'CPU' line is found following event definition lines, it turns off the 'process events' flag and then does the above checks.
+ * Lines that begin with 'PRESET' or 'EVENT' specify an event definition and are processed as follows.
+ *      If the 'process events' flag is not set, the line is ignored and we get the next input line.
+ *      If the 'process events' flag is set, the event is processed and the event information is put into the next slot in the results array.
+ *
+ * There are three possible sources of input for preset event definitions.  The code will first look for the environment variable
+ * "PAPI_CSV_EVENT_FILE".  If found its value will be used as the pathname of where to get the preset information.  If not found,
+ * the code will look for a built in table containing preset events.  If the built in table was not created during the build of
+ * PAPI then the code will build a pathname of the form "PAPI_DATADIR/PAPI_EVENT_FILE".  Each of these are build variables, the
+ * PAPI_DATADIR variable can be given a value during the configure of PAPI at build time, and the PAPI_EVENT_FILE variable has a
+ * hard coded value of "papi_events.csv".
+ *
+ * There is only one way to define user events.  The code will look for an environment variable "PAPI_USER_EVENTS_FILE".  If found
+ * its value will be used as the pathname of a file which contains user event definitions.  The events defined in this file will be
+ * added to the ones known by PAPI when the call to PAPI_library_init is done.
+ *
+ * TODO:
+ * Look into restoring the ability to specify a user defined event file with a call to PAPI_set_opt(PAPI_USER_EVENTS_FILE).
+ * This needs to figure out how to pass a pmu name (could use default pmu from component 0) to this function.
+ *
+ * Currently code elsewhere in PAPI limits the events which preset and user events can depend on to those events which are known to component 0.  This possibly could
+ * be relaxed to allow events from different components.  But since all the events used by any derived event must be added to the same eventset, it will always be a
+ * requirement that all events used by a given derived event must be from the same component.
+ *
+ */
+
+
+static int
+papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag) {
+	SUBDBG( "ENTER: pmu_str: %s, pmu_type: %d, cidx: %d, preset_flag: %d\n", pmu_str, pmu_type, cidx, preset_flag);
+
+	char pmu_name[PAPI_MIN_STR_LEN];
+	char line[LINE_MAX];
+	char name[PATH_MAX] = "builtin papi_events_table";
+	char *event_file_path=NULL;
+	char *event_table_ptr=NULL;
+	int event_type_bits = 0;
+	char *tmpn;
+	char *tok_save_ptr=NULL;
+	FILE *event_file = NULL;
+	hwi_presets_t *results=NULL;
+	int result_size = 0;
+	int *event_count = NULL;
+	int invalid_event;
+	int line_no = 0;  /* count of lines read from event definition input */
+	int derived = 0;
+	int res_idx = 0;  /* index into results array for where to store next event */
+	int preset = 0;
+	int get_events = 0; /* only process derived events after CPU type they apply to is identified      */
+	int found_events = 0; /* flag to track if event definitions (PRESETS) are found since last CPU declaration */
 #ifdef PAPI_DATADIR
-       sprintf( name, "%s/%s", PAPI_DATADIR, PAPI_EVENT_FILE );
-#else
-       sprintf( name, "%s", PAPI_EVENT_FILE );
+		char path[PATH_MAX];
 #endif
-       table = open_event_table( name );
-    }
 
-    /* if no valid file or built-in table, bail */
-    if ( table == NULL && tmp_papi_events_table == NULL ) {
-       PAPIERROR( "fopen(%s): %s, please set the PAPI_CSV_EVENT_FILE "
-                  "env. variable", name, strerror( errno ) );
-       return PAPI_ESYS;
-    }
 
-    /* at this point either a valid file pointer or built-in table pointer */
-    while ( get_event_line( line, table, &tmp_papi_events_table ) ) {
-       char *t;
-       int i;
+	if (preset_flag) {
+		/* try the environment variable first */
+		if ((tmpn = getenv("PAPI_CSV_EVENT_FILE")) && (strlen(tmpn) > 0)) {
+			event_file_path = tmpn;
+		}
+		/* if no valid environment variable, look for built-in table */
+		else if (papi_events_table) {
+			event_table_ptr = papi_events_table;
+		}
+		/* if no env var and no built-in, search for default file */
+		else {
+#ifdef PAPI_DATADIR
+			sprintf( path, "%s/%s", PAPI_DATADIR, PAPI_EVENT_FILE );
+			event_file_path = path;
+#else
+			event_file_path = PAPI_EVENT_FILE;
+#endif
+		}
+		event_type_bits = PAPI_PRESET_MASK;
+		results = &_papi_hwi_presets[0];
+		result_size = PAPI_MAX_PRESET_EVENTS;
+		event_count = &_papi_hwd[cidx]->cmp_info.num_preset_events;
+	} else {
+		if ((event_file_path = getenv( "PAPI_USER_EVENTS_FILE" )) == NULL ) {
+			SUBDBG("EXIT: User event definition file not provided.\n");
+			return PAPI_OK;
+		}
 
-       t = trim_string( strtok( line, "," ) );
+		event_type_bits = PAPI_UE_MASK;
+		results = &user_defined_events[0];
+		result_size = PAPI_MAX_USER_EVENTS;
+		event_count = &user_defined_events_count;
+	}
 
-       /* Skip blank lines */
-       if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) continue;
+	// if we have an event file pathname, open it and read event definitions from the file
+	if (event_file_path != NULL) {
+		if ((event_file = open_event_table(event_file_path)) == NULL) {
+			// if file open fails, return an error
+			SUBDBG("EXIT: Event file open failed.\n");
+			return PAPI_ESYS;
+		}
+		strncpy(name, event_file_path, sizeof(name)-1);
+		name[sizeof(name)-1] = '\0';
+	} else if (event_table_ptr == NULL) {
+		// if we do not have a path name or table pointer, return an error
+		SUBDBG("EXIT: Both event_file_path and event_table_ptr are NULL.\n");
+		return PAPI_ESYS;
+	}
 
-       /* Skip comments */
-       if ( t[0] == '#' ) {
-	  goto nextline;
-       } 
+	/* copy the pmu identifier, stripping commas if found */
+	tmpn = pmu_name;
+	while (*pmu_str) {
+		if (*pmu_str != ',')
+			*tmpn++ = *pmu_str;
+		pmu_str++;
+	}
+	*tmpn = '\0';
 
-       if ( strcasecmp( t, "CPU" ) == 0 ) {
+	/* at this point we have either a valid file pointer or built-in table pointer */
+	while (get_event_line(line, event_file, &event_table_ptr)) {
+		char *t;
+		int i;
 
-	  if ( get_presets != 0 && found_presets != 0 ) {
-	     SUBDBG( "Ending preset scanning at line %d of %s.\n", 
-                     line_no, name );
+		// increment number of lines we have read
+		line_no++;
 
-	     get_presets=0; found_presets=0;
-				
-	  }
-			
-	  t = trim_string( strtok( NULL, "," ) );
-	  if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-	     PAPIERROR( "Expected name after CPU token at line %d of %s "
-			"-- ignoring", line_no, name );
-	     goto nextline;
-	  }
+		t = trim_string(strtok_r(line, ",", &tok_save_ptr));
 
-	  SUBDBG( "Examining CPU (%s) vs. (%s)\n", t, pmu_name );
+		/* Skip blank lines */
+		if ((t == NULL) || (strlen(t) == 0))
+			continue;
 
-	  if ( strcasecmp( t, pmu_name ) == 0 ) {
-	     int type;
+		/* Skip comments */
+		if (t[0] == '#') {
+			continue;
+		}
 
-	     SUBDBG( "Found CPU %s at line %d of %s.\n", t, line_no, name );
+		if (strcasecmp(t, "CPU") == 0) {
+			if (get_events != 0 && found_events != 0) {
+				SUBDBG( "Ending event scanning at line %d of %s.\n", line_no, name);
+				get_events = 0;
+				found_events = 0;
+			}
 
-	     t = trim_string( strtok( NULL, "," ) );
-	     if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-		SUBDBG("No additional qualifier found, matching on string.\n");
+			t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
+			if ((t == NULL) || (strlen(t) == 0)) {
+				PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring", line_no, name);
+				continue;
+			}
 
-		get_presets = 1;
-	     } else if ( ( sscanf( t,"%d",&type )==1) && (type==pmu_type) ) {
-                SUBDBG( "Found CPU %s type %d at line %d of %s.\n",
-			pmu_name, type, line_no, name );
-		get_presets = 1;
-	     } else {
-		SUBDBG( "Additional qualifier match failed %d vs %d.\n",
-			pmu_type, type );
+			if (strcasecmp(t, pmu_name) == 0) {
+				int type;
 
-	     }
-	  }
-       } else if ( strcasecmp( t, "PRESET" ) == 0 ) {
+				SUBDBG( "Process events for PMU %s found at line %d of %s.\n", t, line_no, name);
 
-          if ( get_presets == 0 ) goto nextline;
+				t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
+				if ((t == NULL) || (strlen(t) == 0)) {
+					SUBDBG("No additional qualifier found, matching on string.\n");
+					get_events = 1;
+				} else if ((sscanf(t, "%d", &type) == 1) && (type == pmu_type)) {
+					SUBDBG( "Found CPU %s type %d at line %d of %s.\n", pmu_name, type, line_no, name);
+					get_events = 1;
+				} else {
+					SUBDBG( "Additional qualifier match failed %d vs %d.\n", pmu_type, type);
+				}
+			}
+			continue;
+		}
 
-	  found_presets = 1;
-	  t = trim_string( strtok( NULL, "," ) );
+		if ((strcasecmp(t, "PRESET") == 0)  || (strcasecmp(t, "EVENT") == 0)) {
 
-	  if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-			       
-             PAPIERROR( "Expected name after PRESET token at line %d of %s "
-			"-- ignoring", line_no, name );
-	     goto nextline;
-	  }
+			if (get_events == 0)
+				continue;
 
-	  SUBDBG( "Examining preset %s\n", t );
+			found_events = 1;
+			t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
 
-	  if ( find_preset_code( t, &preset ) != PAPI_OK ) {
-	     PAPIERROR ( "Invalid preset name %s after PRESET token "
-			 "at line %d of %s -- ignoring",
-			 t, line_no, name );
-	     goto nextline;
-	  }
+			if ((t == NULL) || (strlen(t) == 0)) {
+				PAPIERROR("Expected name after PRESET token at line %d of %s -- ignoring", line_no, name);
+				continue;
+			}
 
-	  SUBDBG( "Found %#08x for %s\n", preset, t );
+			SUBDBG( "Examining event %s\n", t);
 
-	  t = trim_string( strtok( NULL, "," ) );
-	  if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-	     PAPIERROR( "Expected derived type after PRESET token at "
-                        "line %d of %s -- ignoring", line_no, name );
-	     goto nextline;
-	  }
+			// see if this event already exists in the results array, if not already known it sets up event in unused entry
+			if ((res_idx = find_event_index (results, result_size, t)) < 0) {
+				PAPIERROR("No room left for event %s -- ignoring", t);
+				continue;
+			}
 
-	  if ( _papi_hwi_derived_type( t, &derived ) != PAPI_OK ) {
-	     PAPIERROR( "Invalid derived name %s after PRESET token at "
-			"line %d of %s -- ignoring",
-			t, line_no, name );
-	     goto nextline;
-	  }
+			// add the proper event bits (preset or user defined bits)
+			preset = res_idx | event_type_bits;
 
-	  /****************************************/
-	  /* Have a preset, let's start assigning */
-	  /****************************************/
+			SUBDBG( "Use event code: %#x for %s\n", preset, t);
 
-	  SUBDBG( "Found %d for %s\n", derived, t );
-	  SUBDBG( "Adding %#x,%d to preset search table.\n", 
-		  preset, derived );
-	  
-	  insert=preset&PAPI_PRESET_AND_MASK;
+			t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
+			if ((t == NULL) || (strlen(t) == 0)) {
+				// got an error, make this entry unused
+				papi_free (results[res_idx].symbol);
+				results[res_idx].symbol = NULL;
+				PAPIERROR("Expected derived type after PRESET token at line %d of %s -- ignoring", line_no, name);
+				continue;
+			}
 
-	  /* _papi_hwi_presets[insert].event_code = preset; */
-	  _papi_hwi_presets[insert].derived_int = derived;
+			if (_papi_hwi_derived_type(t, &derived) != PAPI_OK) {
+				// got an error, make this entry unused
+				papi_free (results[res_idx].symbol);
+				results[res_idx].symbol = NULL;
+				PAPIERROR("Invalid derived name %s after PRESET token at line %d of %s -- ignoring", t, line_no, name);
+				continue;
+			}
 
-	  /* Derived support starts here */
-	  /* Special handling for postfix */
-	  if ( derived == DERIVED_POSTFIX ) {
-	     t = trim_string( strtok( NULL, "," ) );
-	     if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-		PAPIERROR( "Expected Operation string after derived type "
-			   "DERIVED_POSTFIX at line %d of %s -- ignoring",
-			   line_no, name );
-		goto nextline;
-	     }
+			/****************************************/
+			/* Have an event, let's start assigning */
+			/****************************************/
 
-	     SUBDBG( "Saving PostFix operations %s\n", t );
+			SUBDBG( "Adding event: %s, code: %#x, derived: %d results[%d]: %p.\n", t, preset, derived, res_idx, &results[res_idx]);
 
-	     _papi_hwi_presets[insert].postfix=strdup(t);
-	  }
-			
-	  /* All derived terms collected here */
-	  i = 0;
-	  invalid_event=0;
-	  do {
-	     t = trim_string( strtok( NULL, "," ) );
-	     if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) break;
-	     if ( strcasecmp( t, "NOTE" ) == 0 ) break;
-	     _papi_hwi_presets[insert].name[i]=strdup(t);
+			/* results[res_idx].event_code = preset; */
+			results[res_idx].derived_int = derived;
 
-	     SUBDBG( "Adding term (%d) %s to preset event %#x.\n", 
-		     i, t, preset );
+			/* Derived support starts here */
+			/* Special handling for postfix and infix */
+			if ((derived == DERIVED_POSTFIX)  || (derived == DERIVED_INFIX)) {
+				t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
+				if ((t == NULL) || (strlen(t) == 0)) {
+					// got an error, make this entry unused
+					papi_free (results[res_idx].symbol);
+					results[res_idx].symbol = NULL;
+					PAPIERROR("Expected Operation string after derived type DERIVED_POSTFIX or DERIVED_INFIX at line %d of %s -- ignoring", line_no, name);
+					continue;
+				}
 
-	     SUBDBG("Looking up: %s\n",t);
+				// if it is an algebraic formula, we need to convert it to postfix
+				if (derived == DERIVED_INFIX) {
+					SUBDBG( "Converting InFix operations %s\n", t);
+					t = infix_to_postfix( t );
+					results[res_idx].derived_int = DERIVED_POSTFIX;
+				}
 
-	     // show that we do not have an event code yet (the component may create one and update this info) 
-	     // this also clears any values left over from a previous call
-	     _papi_hwi_set_papi_event_code(-1, -1);
+				SUBDBG( "Saving PostFix operations %s\n", t);
+				results[res_idx].postfix = papi_strdup(t);
+			}
 
-	     ret=_papi_hwd[cidx]->ntv_name_to_code(t, &event_idx);
+			/* All derived terms collected here */
+			i = 0;
+			invalid_event = 0;
+			results[res_idx].count = 0;
+			do {
+				t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
+				if ((t == NULL) || (strlen(t) == 0))
+					break;
+				if (strcasecmp(t, "NOTE") == 0)
+					break;
+				if (strcasecmp(t, "LDESC") == 0)
+					break;
+				if (strcasecmp(t, "SDESC") == 0)
+					break;
 
-	     if (ret==PAPI_OK) {
-		_papi_hwi_presets[insert].code[i]=
-	              _papi_hwi_native_to_eventcode(cidx, event_idx, -1, t);
-		SUBDBG("Found: %s %#x c%d e%d\n",t,
-		       _papi_hwi_presets[insert].code[i],
-		       cidx,event_idx);
-	     }
-	     else {
-		PAPIERROR("papi_preset: Error finding event %s",t);
-		invalid_event=1;
-	     }
+				SUBDBG( "Adding term (%d) %s to derived event %#x, current native event count: %d.\n", i, t, preset, results[res_idx].count);
 
-	  } while ( ++i < PAPI_EVENTS_IN_DERIVED_EVENT );
+				// show that we do not have an event code yet (the component may create one and update this info)
+				// this also clears any values left over from a previous call
+				_papi_hwi_set_papi_event_code(-1, -1);
 
-	  /* preset code list must be PAPI_NULL terminated */
-	  if (i<PAPI_EVENTS_IN_DERIVED_EVENT) {
-             _papi_hwi_presets[insert].code[i] = PAPI_NULL;
-	  }
+				// make sure that this term in the derived event is a valid event name
+				// this call replaces preset and user event names with the equivalent native events in our results table
+				// it also updates formulas for derived events so that they refer to the correct native event index
+				if (is_event(t, results[res_idx].derived_int, &results[res_idx], i) == 0) {
+					invalid_event = 1;
+					PAPIERROR("Error finding event %s, it is used in derived event %s", t, results[res_idx].symbol);
+					break;
+				}
 
-	  if (invalid_event) {
-	    /* We signify a valid preset if count > 0 */
-	     _papi_hwi_presets[insert].count=0;
-	  } else {
-	     _papi_hwi_presets[insert].count=i;
-	  }
+				i++;
+			} while (results[res_idx].count < PAPI_EVENTS_IN_DERIVED_EVENT);
 
-	  /* End of derived support */
+			/* preset code list must be PAPI_NULL terminated */
+			if (i < PAPI_EVENTS_IN_DERIVED_EVENT) {
+				results[res_idx].code[results[res_idx].count] = PAPI_NULL;
+			}
 
-	  if ( i == 0 ) {
-	     PAPIERROR( "Expected PFM event after DERIVED token at "
-			"line %d of %s -- ignoring", line_no, name );
-	     goto nextline;
-	  }
-	  if ( i == PAPI_EVENTS_IN_DERIVED_EVENT ) {
-	     t = trim_string( strtok( NULL, "," ) );
-	  }
-			
-	  /* Handle optional NOTEs */
-	  if ( t && ( strcasecmp( t, "NOTE" ) == 0 ) ) {
-	     SUBDBG( "%s found on line %d\n", t, line_no );
+			if (invalid_event) {
+				// got an error, make this entry unused
+				papi_free (results[res_idx].symbol);
+				results[res_idx].symbol = NULL;
+				continue;
+			}
 
-	     /* read the rest of the line */
-	     t = trim_note( strtok( NULL, "" ) );
-	
-	     if ( ( t == NULL ) || ( strlen( t ) == 0 ) ) {
-		PAPIERROR( "Expected Note string at line %d of %s",
-			   line_no, name );
-	     }
-	     else {
-	        _papi_hwi_presets[insert].note = strdup( t );
-		SUBDBG( "NOTE: --%s-- found on line %d\n", t, line_no );
-	     }
-	  }
-	  _papi_hwd[cidx]->cmp_info.num_preset_events++;
+			/* End of derived support */
 
-       } else {
-	  PAPIERROR( "Unrecognized token %s at line %d of %s -- ignoring", 
-		     t, line_no, name );
-	  goto nextline;
-       }
-nextline:
-       line_no++;
-    }
+			// if we did not find any terms to base this derived event on, report error
+			if (i == 0) {
+				// got an error, make this entry unused
+				papi_free (results[res_idx].symbol);
+				results[res_idx].symbol = NULL;
+				PAPIERROR("Expected PFM event after DERIVED token at line %d of %s -- ignoring", line_no, name);
+				continue;
+			}
 
-    if ( table ) {
-       fclose( table );
-    }
+			if (i == PAPI_EVENTS_IN_DERIVED_EVENT) {
+				t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
+			}
 
-    SUBDBG("Done parsing preset table\n");
-	
-    return PAPI_OK;
+			// if something was provided following the list of events to be used by the operation, process it
+			if ( t!= NULL  && strlen(t) > 0 ) {
+				do {
+					// save the field name
+					char *fptr = papi_strdup(t);
+
+					// get the value to be used with this field
+					t = trim_note(strtok_r(NULL, ",", &tok_save_ptr));
+					if ( t== NULL  || strlen(t) == 0 ) {
+						papi_free(fptr);
+						break;
+					}
+
+					// Handle optional short descriptions, long descriptions and notes
+					if (strcasecmp(fptr, "SDESC") == 0) {
+						results[res_idx].short_descr = papi_strdup(t);
+					}
+					if (strcasecmp(fptr, "LDESC") == 0) {
+						results[res_idx].long_descr = papi_strdup(t);
+					}
+					if (strcasecmp(fptr, "NOTE") == 0) {
+						results[res_idx].note = papi_strdup(t);
+					}
+
+					SUBDBG( "Found %s (%s) on line %d\n", fptr, t, line_no);
+					papi_free (fptr);
+
+					// look for another field name
+					t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
+					if ( t== NULL  || strlen(t) == 0 ) {
+						break;
+					}
+				} while (t != NULL);
+			}
+			(*event_count)++;
+			continue;
+		}
+
+		PAPIERROR("Unrecognized token %s at line %d of %s -- ignoring", t, line_no, name);
+	}
+
+	if (event_file) {
+		fclose(event_file);
+	}
+
+	SUBDBG("EXIT: Done processing derived event file.\n");
+	return PAPI_OK;
 }
 
 

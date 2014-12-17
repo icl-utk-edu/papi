@@ -1,4 +1,4 @@
-.TH "papi_avail" 1 "Wed Nov 12 2014" "Version 5.4.0.0" "PAPI" \" -*- nroff -*-
+.TH "papi_avail" 1 "Tue Dec 9 2014" "Version 5.4.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,27 +7,36 @@ papi_avail \- papi_avail utility\&.
 file avail\&.c 
 .SH "Name"
 .PP
-papi_avail - provides availability and detail information for PAPI preset events\&.
+papi_avail - provides availability and detail information for PAPI preset and user defined events\&.
 .SH "Synopsis"
 .PP
 papi_avail [-adht] [-e event]
 .SH "Description"
 .PP
-papi_avail is a PAPI utility program that reports information about the current PAPI installation and supported preset events\&. Using the -e option, it will also display information about specific native events\&.
+papi_avail is a PAPI utility program that reports information about the current PAPI installation and supported preset and user defined events\&.
 .SH "Options"
 .PP
 .PD 0
 .IP "\(bu" 2
--a Display only the available PAPI preset events\&. 
+-a Display only the available PAPI events\&. 
 .IP "\(bu" 2
--d Display PAPI preset event information in a more detailed format\&. 
+-d Display PAPI event information in a more detailed format\&. 
 .IP "\(bu" 2
 -h Display help information about this utility\&. 
 .IP "\(bu" 2
--t Display the PAPI preset event information in a tabular format\&. This is the default\&. 
+-t Display the PAPI event information in a tabular format\&. This is the default\&. 
 .IP "\(bu" 2
--e < event > Display detailed event information for the named event\&. This event can be either a preset or a native event\&. 
+-e < event > Display detailed event information for the named event\&. This event can be a preset event, a user defined event, or a native event\&. If the event is a preset or a user defined event the output shows a list of native events the event is based on and the formula that is used to compute the events final value\&. 
 .PP
 .SH "Bugs"
 .PP
 There are no known bugs in this utility\&. If you find a bug, it should be reported to the PAPI Mailing List at ptools-perfapi@ptools.org\&. 
+.br
+ 
+.PP
+\fBSee also:\fP
+.RS 4
+PAPI_derived_event_files 
+.RE
+.PP
+

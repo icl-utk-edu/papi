@@ -1,32 +1,167 @@
+
+// Define the papi_avail man page contents.
 /**
   * file avail.c
   *	@brief papi_avail utility.
   * @page papi_avail
   *	@section Name
-  *	papi_avail - provides availability and detail information for PAPI preset events. 
+  *	papi_avail - provides availability and detail information for PAPI preset and user defined events.
   * 
   *	@section Synopsis
   *	papi_avail [-adht] [-e event] 
   *
   *	@section Description
   *	papi_avail is a PAPI utility program that reports information about the 
-  *	current PAPI installation and supported preset events. 
-  *	Using the -e option, it will also display information about specific native events. 
+  *	current PAPI installation and supported preset and user defined events.
   *
   *	@section Options
   * <ul>
-  *		<li>-a	 Display only the available PAPI preset events.
-  *		<li>-d	Display PAPI preset event information in a more detailed format.
+  *		<li>-a	Display only the available PAPI events.
+  *		<li>-d	Display PAPI event information in a more detailed format.
   *		<li>-h	Display help information about this utility.
-  *		<li>-t	Display the PAPI preset event information in a tabular format. This is the default.
+  *		<li>-t	Display the PAPI event information in a tabular format. This is the default.
   *		<li>-e < event >	Display detailed event information for the named event. 
-  *			This event can be either a preset or a native event. 
+  *			This event can be a preset event, a user defined event, or a native event.
+  *			If the event is a preset or a user defined event the output shows a list of native
+  *			events the event is based on and the formula that is used to compute the events final value.
   *	</ul>
   *
   *	@section Bugs
   *	There are no known bugs in this utility. 
   *	If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>.
+  * <br>
+  *	@see PAPI_derived_event_files
+  *
   */
+
+// Define the PAPI_derived_event_files man page contents.
+/**
+ *	@page PAPI_derived_event_files
+ *	@brief Describes derived event definition file syntax.
+ *
+ *	@section main Derived Events
+ *		PAPI provides the ability to define events whose value will be derived from multiple native events.  The list of native
+ *		events to be used in a derived event and a formula which describes how to use them is provided in an event definition file.
+ *		The PAPI team provides an event definition file which describes all of the supported PAPI preset events.  PAPI also allows
+ *		a user to provide an event definition file that describes a set of user defined events which can extend the events PAPI
+ *		normally supports.
+ *
+ *		This page documents the syntax of the commands which can appear in an event definition file.
+ *
+ * <br>
+ *	@subsection rules General Rules:
+ *	<ul>
+ *		<li>Blank lines are ignored.</li>
+ *		<li>Lines that begin with '#' are comments (they are also ignored).</li>
+ *		<li>Names shown inside < > below represent values that must be provided by the user.</li>
+ *		<li>If a user provided value contains white space, it must be protected with quotes.</li>
+ *	</ul>
+ *
+ * <br>
+ *	@subsection commands Commands:
+ *		@par CPU,\<pmuName\>
+ *		Specifies a PMU name which controls if the PRESET and EVENT commands that follow this line should
+ *		be processed.  Multiple CPU commands can be entered without PRESET or EVENT commands between them to provide
+ *		a list of PMU names to which the derived events that follow will apply.  When a PMU name provided in the list
+ *		matches a PMU name known to the running system, the events which follow will be created.  If none of the PMU
+ *		names provided in the list match a PMU name on the running system, the events which follow will be ignored.
+ *		When a new CPU command follows either a PRESET or EVENT command, the PMU list is rebuilt.<br><br>
+ *
+ *		@par PRESET,\<eventName\>,\<derivedType\>,\<eventAttr\>,LDESC,\"\<longDesc\>\",SDESC,\"\<shortDesc\>\",NOTE,\"\<note\>\"
+ *		Declare a PAPI preset derived event.<br><br>
+ *
+ *		@par EVENT,\<eventName\>,\<derivedType\>,\<eventAttr\>,LDESC,\"\<longDesc\>\",SDESC,\"\<shortDesc\>\",NOTE,\"\<note\>\"
+ *		Declare a user defined derived event.<br><br>
+ *
+ *		@par Where:
+ *		@par pmuName:
+ *			The PMU which the following events should apply to.  A list of PMU names supported by your
+ *			system can be obtained by running papi_component_avail on your system.<br>
+ *		@par eventName:
+ *			Specifies the name used to identify this derived event.  This name should be unique within the events on your system.<br>
+ *		@par derivedType:
+ *			Specifies the kind of derived event being defined (see 'Derived Types' below).<br>
+ *		@par eventAttr:
+ *			Specifies a formula and a list of base events that are used to compute the derived events value.  The syntax
+ *			of this field depends on the 'derivedType' specified above (see 'Derived Types' below).<br>
+ *		@par longDesc:
+ *			Provides the long description of the event.<br>
+ *		@par shortDesc:
+ *			Provides the short description of the event.<br>
+ *		@par note:
+ *			Provides an event note.<br>
+ *		@par baseEvent (used below):
+ *			Identifies an event on which this derived event is based.  This may be a native event (possibly with event masks),
+ *			an already known preset event, or an already known user event.<br>
+ *
+ * <br>
+ *	@subsection notes Notes:
+ *		The PRESET command has traditionally been used in the PAPI provided preset definition file.
+ *		The EVENT command is intended to be used in user defined event definition files.  The code treats them
+ *		the same so they are interchangeable and they can both be used in either event definition file.<br>
+ *
+ * <br>
+ *	@subsection types Derived Types:
+ *		This describes values allowed in the 'derivedType' field of the PRESET and EVENT commands.  It also
+ *		shows the syntax of the 'eventAttr' field for each derived type supported by these commands.
+ *		All of the derived events provide a list of one or more events which the derived event is based
+ *		on (baseEvent).  Some derived events provide a formula that specifies how to compute the derived
+ *		events value using the baseEvents in the list.  The following derived types are supported, the syntax
+ *		of the 'eventAttr' parameter for each derived event type is shown in parentheses.<br><br>
+ *
+ *		@par NOT_DERIVED (\<baseEvent\>):
+ *			This derived type defines an alias for the existing event 'baseEvent'.<br>
+ *		@par DERIVED_ADD (\<baseEvent1\>,\<baseEvent2\>):
+ *			This derived type defines a new event that will be the sum of two other
+ *			events.  It has a value of 'baseEvent1' plus 'baseEvent2'.<br>
+ *		@par DERIVED_PS (PAPI_TOT_CYC,\<baseEvent1\>):
+ *			This derived type defines a new event that will report the number of 'baseEvent1' events which occurred
+ *			per second.  It has a value of ((('baseEvent1' * cpu_max_mhz) * 1000000 ) / PAPI_TOT_CYC).  The user must
+ *			provide PAPI_TOT_CYC as the first event of two events in the event list for this to work correctly.<br>
+ *		@par DERIVED_ADD_PS (PAPI_TOT_CYC,\<baseEvent1\>,\<baseEvent2\>):
+ *			This derived type defines a new event that will add together two event counters and then report the number
+ *			which occurred per second.  It has a value of (((('baseEvent1' + baseEvent2) * cpu_max_mhz) * 1000000 ) / PAPI_TOT_CYC).
+ *			The user must provide PAPI_TOT_CYC as the first event of three events in the event list for this to work correctly.<br>
+ *		@par DERIVED_CMPD (\<baseEvent1\>,\<baseEvent2\):
+ *			This derived type works much like the NOT_DERIVED type.  It is rarely used and it looks like the code just returns
+ *			a single value returned from the kernel.  There is no calculation done to compute this events value.  Not sure why
+ *			multiple input events seem to be needed to use this event type.<br>
+ *		@par DERIVED_SUB (\<baseEvent1\>,\<baseEvent2\>):
+ *			This derived type defines a new event that will be the difference between two other
+ *			events.  It has a value of 'baseEvent1' minus 'baseEvent2'.<br>
+ *		@par DERIVED_POSTFIX (\<pfFormula\>,\<baseEvent1\>,\<baseEvent2\>, ... ,\<baseEventn\>):
+ *			This derived type defines a new event whose value is computed from several native events using
+ *			a postfix (reverse polish notation) formula.  Its value is the result of processing the postfix
+ *			formula.  The 'pfFormula' is of the form 'N0|N1|N2|5|*|+|-|' where the '|' acts as a token
+ *			separator and the tokens N0, N1, and N2 are place holders that represent baseEvent0, baseEvent1,
+ *			and baseEvent2 respectively.<br>
+ *		@par DERIVED_INFIX (\<ifFormula\>,\<baseEvent1\>,\<baseEvent2\>, ... ,\<baseEventn\>):
+ *			This derived type defines a new event whose value is computed from several native events using
+ *			an infix (algebraic notation) formula.  Its value is the result of processing the infix
+ *			formula.  The 'ifFormula' is of the form 'N0-(N1+(N2*5))' where the tokens N0, N1, and N2
+ *			are place holders that represent baseEvent0, baseEvent1, and baseEvent2 respectively.<br>
+ *
+ * <br>
+ *	@subsection example Example:
+ *		In the following example, the events PAPI_SP_OPS, USER_SP_OPS, and ALIAS_SP_OPS will all measure the same events and return
+ *		the same value.  They just demonstrate different ways to use the PRESET and EVENT event definition commands.<br><br>
+ *
+ *		<ul>
+ *			<li># The following lines define pmu names that all share the following events</li>
+ *			<li>CPU nhm</li>
+ *			<li>CPU nhm-ex</li>
+ *			<li>\# Events which should be defined for either of the above pmu types</li>
+ *			<li>PRESET,PAPI_TOT_CYC,NOT_DERIVED,UNHALTED_CORE_CYCLES</li>
+ *			<li>PRESET,PAPI_REF_CYC,NOT_DERIVED,UNHALTED_REFERENCE_CYCLES</li>
+ *			<li>PRESET,PAPI_SP_OPS,DERIVED_POSTFIX,N0|N1|3|*|+|,FP_COMP_OPS_EXE:SSE_SINGLE_PRECISION,FP_COMP_OPS_EXE:SSE_FP_PACKED,NOTE,"Using a postfix formula"</li>
+ *			<li>EVENT,USER_SP_OPS,DERIVED_INFIX,N0+(N1*3),FP_COMP_OPS_EXE:SSE_SINGLE_PRECISION,FP_COMP_OPS_EXE:SSE_FP_PACKED,NOTE,"Using the same formula in infix format"</li>
+ *			<li>EVENT,ALIAS_SP_OPS,NOT_DERIVED,PAPI_SP_OPS,LDESC,"Alias for preset event PAPI_SP_OPS"</li>
+ *			<li># End of event definitions for above pmu names and start of a section for a new pmu name.</li>
+ *			<li>CPU snb</li>
+ *		</ul>
+ *
+ */
+
 
 #include "papi_test.h"
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
@@ -50,34 +185,25 @@ print_help( char **argv )
 	printf( "Usage: %s [options]\n", argv[0] );
 	printf( "Options:\n\n" );
 	printf( "General command options:\n" );
-	printf( "\t-a, --avail   Display only available preset events\n" );
-	printf
-		( "\t-d, --detail  Display detailed information about all preset events\n" );
-	printf
-		( "\t-e EVENTNAME  Display detail information about specified preset or native event\n" );
+	printf( "\t-a, --avail   Display only available PAPI preset and user defined events\n" );
+	printf( "\t-d, --detail  Display detailed information about events\n" );
+	printf( "\t-e EVENTNAME  Display detail information about specified event\n" );
 	printf( "\t-h, --help    Print this help message\n" );
 	printf( "\nEvent filtering options:\n" );
 	printf( "\t--br          Display branch related PAPI preset events\n" );
 	printf( "\t--cache       Display cache related PAPI preset events\n" );
 	printf( "\t--cnd         Display conditional PAPI preset events\n" );
-	printf
-		( "\t--fp          Display Floating Point related PAPI preset events\n" );
-	printf
-		( "\t--ins         Display instruction related PAPI preset events\n" );
+	printf( "\t--fp          Display Floating Point related PAPI preset events\n" );
+	printf( "\t--ins         Display instruction related PAPI preset events\n" );
 	printf( "\t--idl         Display Stalled or Idle PAPI preset events\n" );
-	printf
-		( "\t--l1          Display level 1 cache related PAPI preset events\n" );
-	printf
-		( "\t--l2          Display level 2 cache related PAPI preset events\n" );
-	printf
-		( "\t--l3          Display level 3 cache related PAPI preset events\n" );
+	printf( "\t--l1          Display level 1 cache related PAPI preset events\n" );
+	printf( "\t--l2          Display level 2 cache related PAPI preset events\n" );
+	printf( "\t--l3          Display level 3 cache related PAPI preset events\n" );
 	printf( "\t--mem         Display memory related PAPI preset events\n" );
 	printf( "\t--msc         Display miscellaneous PAPI preset events\n" );
-	printf
-		( "\t--tlb         Display Translation Lookaside Buffer PAPI preset events\n" );
+	printf( "\t--tlb         Display Translation Lookaside Buffer PAPI preset events\n" );
 	printf( "\n" );
-	printf
-		( "This program provides information about PAPI preset and native events.\n" );
+	printf( "This program provides information about PAPI preset and user defined events.\n" );
 	printf( "PAPI preset event filters can be combined in a logical OR.\n" );
 }
 
@@ -102,12 +228,12 @@ parse_unit_masks( PAPI_event_info_t * info )
 int
 main( int argc, char **argv )
 {
-   int args, j, k;
+   int args, i, j, k;
    int retval;
    unsigned int filter = 0;
    int print_event_info = 0;
    char *name = NULL;
-   int print_avail_only = 0;
+   int print_avail_only = PAPI_ENUM_EVENTS;
    int print_tabular = 1;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
@@ -182,7 +308,7 @@ main( int argc, char **argv )
 	 test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
       }
 
-      retval=papi_print_header("Available events and hardware information.\n", 
+      retval=papi_print_header("Available PAPI preset and user defined events plus hardware information.\n",
 			       &hwinfo );
       if ( retval != PAPI_OK ) {
 	 test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
@@ -264,8 +390,23 @@ main( int argc, char **argv )
 
 	 /* Print *ALL* Events */
 
+  for (i=0 ; i<2 ; i++) {
+	  // set the event code to fetch preset events the first time through loop and user events the second time through the loop
+	  // also print heading to show which kind of events follow
+	  if (i== 0) {
+		event_code = 0 | PAPI_PRESET_MASK;
+		printf( "================================================================================\n" );
+		printf( "  PAPI Preset Events\n" );
+		printf( "================================================================================\n" );
+	  } else {
+		event_code = 0 | PAPI_UE_MASK;
+		printf( "\n");       // put a blank line after the presets before strarting the user events
+		printf( "================================================================================\n" );
+		printf( "  User Defined Events\n" );
+		printf( "================================================================================\n" );
+	  }
+
 	 /* For consistency, always ASK FOR the first event */
-	 event_code = 0 | PAPI_PRESET_MASK;
 	 PAPI_enum_event( &event_code, PAPI_ENUM_FIRST );
 
 	 if ( print_tabular ) {
@@ -283,7 +424,8 @@ main( int argc, char **argv )
 	 do {
 	    if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
 	       if ( print_tabular ) {
-		  if ( filter & info.event_type ) {
+	      // if this is a user defined event or its a preset and matches the preset event filters, display its information
+		  if ( (i==1) || (filter & info.event_type)) {
 		     if ( print_avail_only ) {
 		        if ( info.count ) {
 			   printf( "%-13s%#x  %-5s%s",
@@ -337,9 +479,9 @@ main( int argc, char **argv )
 	       }
 	    }
 	 } while (PAPI_enum_event( &event_code, print_avail_only ) == PAPI_OK);
+  }
       }
-      printf( "----------------------------------------"
-              "---------------------------------\n" );
+      printf( "--------------------------------------------------------------------------------\n" );
       if ( !print_event_info ) {
 	 if ( print_avail_only ) {
 	    printf( "Of %d available events, %d ", avail_count, deriv_count );

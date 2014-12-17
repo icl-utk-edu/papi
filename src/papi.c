@@ -30,8 +30,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
-
-#include "papi_user_events.h"
+#include "papi_preset.h"
 
 #include "cpus.h"
 #include "extras.h"
@@ -41,6 +40,10 @@
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
+
+
+extern hwi_presets_t user_defined_events[PAPI_MAX_USER_EVENTS];
+extern int user_defined_events_count;
 
 
 #ifdef DEBUG
@@ -497,7 +500,7 @@ int
 PAPI_library_init( int version )
 {
     APIDBG( "Entry: version: %#x\n", version);
-	char *filename;
+
 	int tmp = 0, tmpel;
 
 	/* This is a poor attempt at a lock. 
@@ -642,14 +645,6 @@ PAPI_library_init( int version )
 	_in_papi_library_init_cnt--;
 	_papi_hwi_error_level = tmpel;
 
-#ifdef STATIC_USER_EVENTS
-	_papi_user_defined_events_setup(NULL);
-#endif
-
-	if ( (filename = getenv( "PAPI_USER_EVENTS_FILE" )) != NULL ) {
-	  _papi_user_defined_events_setup(filename);
-	}
-
 	return ( init_retval = PAPI_VER_CURRENT );
 }
 
@@ -700,7 +695,7 @@ PAPI_query_event( int EventCode )
     APIDBG( "Entry: EventCode: %#x\n", EventCode);
 	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
-		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
+		if ( EventCode < 0 || EventCode >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
 
 		if ( _papi_hwi_presets[EventCode].count )
@@ -716,10 +711,13 @@ PAPI_query_event( int EventCode )
 
 	if ( IS_USER_DEFINED(EventCode) ) {
 	  EventCode &= PAPI_UE_AND_MASK;
-	  if ( EventCode < 0 || EventCode > (int)_papi_user_events_count)
-		return ( PAPI_EINVAL );
+	  if ( EventCode < 0 || EventCode >= PAPI_MAX_USER_EVENTS)
+		  papi_return ( PAPI_ENOEVNT );
 
-	  papi_return( PAPI_OK );
+		if ( user_defined_events[EventCode].count )
+			papi_return (PAPI_OK);
+		else
+			papi_return (PAPI_ENOEVNT);
 	}
 
 	papi_return( PAPI_ENOEVNT );
@@ -864,7 +862,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
 	}
 
 	if ( IS_USER_DEFINED(EventCode) ) {
-	   papi_return( PAPI_OK );
+	   papi_return( _papi_hwi_get_user_event_info( EventCode, info ));
 	}
 	papi_return( PAPI_ENOTPRESET );
 }
@@ -931,12 +929,14 @@ PAPI_event_code_to_name( int EventCode, char *out )
 
 	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
-		if ( ( EventCode >= PAPI_MAX_PRESET_EVENTS )
-			 || ( _papi_hwi_presets[EventCode].symbol == NULL ) )
+		if ( EventCode < 0 || EventCode >= PAPI_MAX_PRESET_EVENTS )
 			papi_return( PAPI_ENOTPRESET );
 
-		strncpy( out, _papi_hwi_presets[EventCode].symbol,
-				 PAPI_MAX_STR_LEN );
+		if (_papi_hwi_presets[EventCode].symbol == NULL )
+			papi_return( PAPI_ENOTPRESET );
+
+		strncpy( out, _papi_hwi_presets[EventCode].symbol, PAPI_MAX_STR_LEN-1 );
+		out[PAPI_MAX_STR_LEN-1] = '\0';
 		papi_return( PAPI_OK );
 	}
 
@@ -946,14 +946,17 @@ PAPI_event_code_to_name( int EventCode, char *out )
 	}
 
 	if ( IS_USER_DEFINED(EventCode) ) {
-	  EventCode &= PAPI_UE_AND_MASK;
+		EventCode &= PAPI_UE_AND_MASK;
 
-	  if ( EventCode < 0 || EventCode > (int)_papi_user_events_count )
-		papi_return( PAPI_EINVAL );
+		if ( EventCode < 0 || EventCode >= user_defined_events_count )
+			papi_return( PAPI_ENOEVNT );
 
-	  strncpy( out, _papi_user_events[EventCode].symbol,
-		  PAPI_MIN_STR_LEN);
-	  papi_return( PAPI_OK );
+		if (user_defined_events[EventCode].symbol == NULL )
+			papi_return( PAPI_ENOEVNT );
+
+		strncpy( out, user_defined_events[EventCode].symbol, PAPI_MAX_STR_LEN-1);
+		out[PAPI_MAX_STR_LEN-1] = '\0';
+		papi_return( PAPI_OK );
 	}
 
 	papi_return( PAPI_ENOEVNT );
@@ -1030,13 +1033,21 @@ PAPI_event_name_to_code( char *in, int *out )
 	   }
 	}
 
-	for ( i=0; i < (int)_papi_user_events_count; i++ ) {
-	  if ( strcasecmp( _papi_user_events[i].symbol, in ) == 0 ) {
-		*out = (int) ( i | PAPI_UE_MASK );
-		papi_return( PAPI_OK );
-	  }
+	// check to see if it is a user defined event
+	for ( i=0; i < user_defined_events_count ; i++ ) {
+		APIDBG("&user_defined_events[%d]: %p, user_defined_events[%d].symbol: %s, user_defined_events[%d].count: %d\n",
+				i, &user_defined_events[i], i, user_defined_events[i].symbol, i, user_defined_events[i].count);
+		if (user_defined_events[i].symbol == NULL)
+			break;
+		if (user_defined_events[i].count == 0)
+			break;
+		if ( strcasecmp( user_defined_events[i].symbol, in ) == 0 ) {
+			*out = (int) ( i | PAPI_UE_MASK );
+			papi_return( PAPI_OK );
+		}
 	}
 
+	// go look for native events defined by one of the components
 	papi_return( _papi_hwi_native_name_to_code( in, out ) );
 }
 
@@ -1165,20 +1176,27 @@ PAPI_enum_event( int *EventCode, int modifier )
 	if ( IS_PRESET(i) ) {
 		if ( modifier == PAPI_ENUM_FIRST ) {
 			*EventCode = ( int ) PAPI_PRESET_MASK;
+			APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 			return ( PAPI_OK );
 		}
 		i &= PAPI_PRESET_AND_MASK;
 		while ( ++i < PAPI_MAX_PRESET_EVENTS ) {
-			if ( _papi_hwi_presets[i].symbol == NULL )
+			if ( _papi_hwi_presets[i].symbol == NULL ) {
+				APIDBG("EXIT: PAPI_ENOEVNT\n");
 				return ( PAPI_ENOEVNT );	/* NULL pointer terminates list */
+			}
 			if ( modifier & PAPI_PRESET_ENUM_AVAIL ) {
 				if ( _papi_hwi_presets[i].count == 0 )
 					continue;
 			}
 			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );
+			APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 			return ( PAPI_OK );
 		}
-	} else if ( IS_NATIVE(i) ) {
+		papi_return( PAPI_EINVAL );
+	}
+
+	if ( IS_NATIVE(i) ) {
 	    // save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
 	    _papi_hwi_set_papi_event_code(*EventCode, 0);
 
@@ -1198,18 +1216,38 @@ PAPI_enum_event( int *EventCode, int modifier )
 
 	    APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 	    return retval;
-	} else if ( IS_USER_DEFINED(i) ) {
-	  if ( modifier == PAPI_ENUM_FIRST ) {
-		*EventCode = (int) 0x0;
+	}
+
+	if ( IS_USER_DEFINED(i) ) {
+		if ( modifier == PAPI_ENUM_FIRST ) {
+			*EventCode = (int) (0 | PAPI_UE_MASK);
+			APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
+			return ( PAPI_OK );
+		}
+
+		i &= PAPI_UE_AND_MASK;
+		++i;
+
+		if ( i <= 0  ||  i >= user_defined_events_count ) {
+			APIDBG("EXIT: PAPI_ENOEVNT\n");
+			return ( PAPI_ENOEVNT );
+		}
+
+		// if next entry does not have an event name, we are done
+		if (user_defined_events[i].symbol == NULL) {
+			APIDBG("EXIT: PAPI_ENOEVNT\n");
+			return ( PAPI_ENOEVNT );
+		}
+
+		// if next entry does not map to any other events, we are done
+		if (user_defined_events[i].count == 0) {
+			APIDBG("EXIT: PAPI_ENOEVNT\n");
+			return ( PAPI_ENOEVNT );
+		}
+
+		*EventCode = (int) (i | PAPI_UE_MASK);
+		APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 		return ( PAPI_OK );
-	  }
-
-	  i &= PAPI_UE_AND_MASK;
-	  ++i;
-
-	  if ( (int)_papi_user_events_count <= i )
-		*EventCode = i;
-	  return ( PAPI_OK );
 	}
 
 	papi_return( PAPI_EINVAL );
@@ -1340,20 +1378,27 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 	if ( IS_PRESET(i) ) {
 		if ( modifier == PAPI_ENUM_FIRST ) {
 			*EventCode = ( int ) PAPI_PRESET_MASK;
+			APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 			return PAPI_OK;
 		}
 		i &= PAPI_PRESET_AND_MASK;
 		while ( ++i < PAPI_MAX_PRESET_EVENTS ) {
-			if ( _papi_hwi_presets[i].symbol == NULL )
+			if ( _papi_hwi_presets[i].symbol == NULL ) {
+				APIDBG("EXIT: PAPI_ENOEVNT\n");
 				return ( PAPI_ENOEVNT );	/* NULL pointer terminates list */
+			}
 			if ( modifier & PAPI_PRESET_ENUM_AVAIL ) {
 				if ( _papi_hwi_presets[i].count == 0 )
 					continue;
 			}
 			*EventCode = ( int ) ( i | PAPI_PRESET_MASK );
+			APIDBG("EXIT: *EventCode: %#x\n", *EventCode);
 			return PAPI_OK;
 		}
-	} else if ( IS_NATIVE(i) ) {
+		papi_return( PAPI_EINVAL );
+	}
+
+	if ( IS_NATIVE(i) ) {
 	    // save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
 	    _papi_hwi_set_papi_event_code(*EventCode, 0);
 
@@ -1362,7 +1407,7 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 	    retval = _papi_hwd[cidx]->ntv_enum_events((unsigned int *)&event_code, modifier );
 
 	    if (retval!=PAPI_OK) {
-	       APIDBG("VMW: retval=%d\n",retval);
+	       APIDBG("EXIT: PAPI_EINVAL retval=%d\n",retval);
 	       return PAPI_EINVAL;
 	    }
 
@@ -1424,6 +1469,7 @@ int
 PAPI_create_eventset( int *EventSet )
 {
    APIDBG("Entry: EventSet: %p\n", EventSet);
+
 	ThreadInfo_t *master;
 	int retval;
 
@@ -1835,6 +1881,7 @@ int
 PAPI_add_named_event( int EventSet, char *EventName )
 {
 	APIDBG("Entry: EventSet: %d, EventName: %s\n", EventSet, EventName);
+
 	int ret, code;
 	
 	ret = PAPI_event_name_to_code( EventName, &code );
@@ -3826,9 +3873,14 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 	}
 	case PAPI_USER_EVENTS_FILE:
 	{
-	  APIDBG("Filename is -%s-\n", ptr->events_file);
-	  _papi_user_defined_events_setup(ptr->events_file);
-	  return( PAPI_OK );
+		APIDBG("User Events Filename is -%s-\n", ptr->events_file);
+
+		// go load the user defined event definitions from the applications event definition file
+		// do not know how to find a pmu name and type for this operation yet
+//		retval = papi_load_derived_events(pmu_str, pmu_type, cidx, 0);
+
+//		_papi_user_defined_events_setup(ptr->events_file);
+		return( PAPI_OK );
 	}
 	default:
 		papi_return( PAPI_EINVAL );
@@ -4404,7 +4456,7 @@ PAPI_shutdown( void )
         EventSetInfo_t *ESI;
         ThreadInfo_t *master;
         DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
-        int i, j = 0, retval;
+        int i, j = 0, k, retval;
 
 
 	if ( init_retval == DEADBEEF ) {
@@ -4457,10 +4509,23 @@ again:
 	}
 #endif
 
+	// if we have some user events defined, release the space they allocated
+	// give back the strings which were allocated when each event was created
+	for ( i=0 ; i<user_defined_events_count ; i++) {
+		papi_free (user_defined_events[i].symbol);
+		papi_free (user_defined_events[i].postfix);
+		papi_free (user_defined_events[i].long_descr);
+		papi_free (user_defined_events[i].short_descr);
+		papi_free (user_defined_events[i].note);
+		for ( k=0 ; k<(int)(user_defined_events[i].count) ; k++) {
+			papi_free (user_defined_events[i].name[k]);
+		}
+	}
+	// make sure the user events list is empty
+	memset (user_defined_events, '\0' , sizeof(user_defined_events));
+	user_defined_events_count = 0;
+
 	/* Shutdown the entire component */
-
-	_papi_cleanup_user_events();
-
 	_papi_hwi_shutdown_highlevel(  );
 	_papi_hwi_shutdown_global_internal(  );
 	_papi_hwi_shutdown_global_threads(  );

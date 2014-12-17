@@ -73,6 +73,7 @@ extern char **_papi_errlist;
 #define DERIVED_CMPD     0x8    /**< Event lives in operand index but takes 2 or more codes */
 #define DERIVED_SUB      0x10   /**< Sub all counters from counter with operand_index */
 #define DERIVED_POSTFIX  0x20   /**< Process counters based on specified postfix string */
+#define DERIVED_INFIX    0x40   /**< Process counters based on specified infix string */
 
 /* Thread related: thread local storage */
 
@@ -472,6 +473,7 @@ void _papi_hwi_shutdown_global_internal( void );
 void _papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,
 			      void *context );
 int _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info );
+int _papi_hwi_get_user_event_info( int EventCode, PAPI_event_info_t * info );
 int _papi_hwi_derived_type( char *tmp, int *code );
 
 int _papi_hwi_query_native_event( unsigned int EventCode );

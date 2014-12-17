@@ -3,15 +3,15 @@ CFLAGS += $(EXTRA_CFLAGS)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
     threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT_C) papi_preset.c \
-    papi_vector.c papi_memory.c papi_user_events.c $(COMPSRCS)
+    papi_vector.c papi_memory.c $(COMPSRCS)
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o sw_multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT_OBJ) papi_preset.o \
-    papi_vector.o papi_memory.o papi_user_events.o $(COMPOBJS) $(MISCOBJS)
+    papi_vector.o papi_memory.o $(COMPOBJS) $(MISCOBJS)
 HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h \
 	papiStdEventDefs.h\
 	papi_preset.h threads.h cpus.h papi_vector.h \
-	papi_memory.h config.h papi_user_events.h \
+	papi_memory.h config.h \
 	extras.h sw_multiplex.h papi_hl.h \
 	papi_common_strings.h components_config.h \
 	papi_events_table.h
@@ -159,9 +159,6 @@ $(PAPI_EVENTS_TABLE):	$(PAPI_EVENTS_CSV) papi_events_table.sh
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
-
-papi_user_events.o: papi_user_events.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_user_events.c -o papi_user_events.o
 
 # Required for BGP
 .SUFFIXES: .rts.o

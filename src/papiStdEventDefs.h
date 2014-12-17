@@ -26,12 +26,16 @@ platform's documentation carefully.
    functions, etc.
 */
 
-#define PAPI_PRESET_MASK ((int)0x80000000)
-#define PAPI_NATIVE_MASK 0x40000000
+#define PAPI_PRESET_MASK     ((int)0x80000000)
+#define PAPI_NATIVE_MASK     ((int)0x40000000)
+#define PAPI_UE_MASK		 ((int)0xC0000000)
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
 #define PAPI_NATIVE_AND_MASK 0xBFFFFFFF	/* this masks just the native bit */
+#define PAPI_UE_AND_MASK     0x3FFFFFFF
 
-#define PAPI_MAX_PRESET_EVENTS 128	/*The maxmimum number of preset events */
+#define PAPI_MAX_PRESET_EVENTS 128		/*The maxmimum number of preset events */
+#define PAPI_MAX_USER_EVENTS 50			/*The maxmimum number of user defined events */
+#define USER_EVENT_OPERATION_LEN 512	/*The maximum length of the operation string for user defined events */
 
 /*
    NOTE: The table below defines each entry in terms of a mask and an integer.
