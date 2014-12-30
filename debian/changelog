@@ -1,3 +1,15 @@
+libpfm4 (6.0) unstable; urgency=low
+  * add Intel Broadwell (desktop) support
+  * add Intel Haswell-EP support (core)
+  * add Applied Micro X-Gene processor support
+  * simplified X86 model detection for Intel processors
+  * Intel SNB, IVB, HSW event table updates
+  * IBM Power8 event table updates
+  * add ARM Cortex A53 support
+  * more bug fixes and minor updates
+
+ -- Stephane Eranian <eranian@gmail.com>  Tue, 30 Dec  2014 16:56:01 +0200
+
 libpfm4 (5.0) unstable; urgency=low
   * Intel IVB-EP uncore PMU support
   * Intel Silvermont support
@@ -10,6 +22,8 @@ libpfm4 (5.0) unstable; urgency=low
   * AMD Fam15h fixes
   * various IVB, SNB, HSW event table updates
   * more bug fixes
+
+ -- Stephane Eranian <eranian@gmail.com>  Fri, 21 Feb  2014 18:45:01 +0200
 
 libpfm4 (4.0) unstable; urgency=low
   * Intel IVB-EP support
