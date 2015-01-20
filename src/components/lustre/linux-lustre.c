@@ -97,17 +97,21 @@ papi_vector_t _lustre_vector;
  ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
  *****************************************************************************/
 static int resize_native_table() {
+	SUBDBG("ENTER:\n");
 	counter_info** new_table;
 	int new_size = table_size*2;
 	new_table = (counter_info**)papi_malloc(sizeof(counter_info*) * new_size);
-	if (NULL==new_table)
+	if (NULL==new_table) {
+		SUBDBG("EXIT: PAPI_ENOMEM\n");
 		return PAPI_ENOMEM;
+	}
 	if ( lustre_native_table) {
 		memcpy(new_table, lustre_native_table, sizeof(counter_info*) * table_size );
 		papi_free(lustre_native_table);
 	}
 	lustre_native_table = new_table;
 	table_size*=2;
+	SUBDBG("EXIT: PAPI_OK\n");
 	return PAPI_OK;
 }
 
@@ -249,6 +253,7 @@ init_lustre_counters( void  )
 	char path_readahead[PATH_MAX],path_stats[PATH_MAX];
 	char *ptr;
 	char fs_name[100];
+	int found_luster_fs = 0;
 	int idx = 0;
 	int tmp_fd;
 	DIR *proc_dir;
@@ -258,7 +263,7 @@ init_lustre_counters( void  )
 
 	proc_dir = opendir( lustre_dir );
 	if ( proc_dir == NULL ) {
-      SUBDBG("EXIT: Cannot open %s\n",lustre_dir);
+      SUBDBG("EXIT: PAPI_ESYS (Cannot open %s)\n",lustre_dir);
 	   return PAPI_ESYS;
 	}
 
@@ -268,52 +273,59 @@ init_lustre_counters( void  )
 				  entry->d_name );
 	   SUBDBG("checking for file %s\n", path);
 
-	   if ( ( tmp_fd = open( path, O_RDONLY ) ) != -1 ) {
-	      close( tmp_fd );
-
-	      /* erase \r and \n at the end of path */
-	      /* why is this necessary?             */
-
-	      idx = strlen( path );
-	      idx--;
-
-	      while ( path[idx] == '\r' || path[idx] == '\n' )
-		    path[idx--] = 0;
-
-	      /* Lustre paths are of type server-UUID */
-
-	      idx = 0;
-
-	      ptr = strstr(path,"llite/") + 6;
-         if (ptr == NULL) {
-	      SUBDBG("Path: %s, missing llite directory, performance event not created.\n", path);
-	      continue;
-	      }
-
-         strncpy(fs_name, ptr, sizeof(fs_name)-1);
-         fs_name[sizeof(fs_name)-1] = '\0';
-
-	      SUBDBG("found Lustre FS: %s\n", fs_name);
-
-	      snprintf( path_stats, PATH_MAX - 1, 
-			"%s/%s/stats", 
-			lustre_dir,
-			entry->d_name );
-	      SUBDBG("Found file %s\n", path_stats);
-
-	      snprintf( path_readahead, PATH_MAX - 1, 
-			"%s/%s/read_ahead_stats", 
-			lustre_dir,
-			entry->d_name );
-	      SUBDBG("Now checking for file %s\n", path_readahead);
-
-
-	      strcpy( ptr, "read_ahead_stats" );
-	      addLustreFS( fs_name, path_stats, path_readahead );
-
+	   if ( ( tmp_fd = open( path, O_RDONLY ) ) == -1 ) {
+		   SUBDBG("Path: %s, can not be opened.\n", path);
+		   continue;
 	   }
+
+	  close( tmp_fd );
+
+	  /* erase \r and \n at the end of path */
+	  /* why is this necessary?             */
+
+	  idx = strlen( path );
+	  idx--;
+
+	  while ( path[idx] == '\r' || path[idx] == '\n' )
+		path[idx--] = 0;
+
+	  /* Lustre paths are of type server-UUID */
+
+	  idx = 0;
+
+	  ptr = strstr(path,"llite/") + 6;
+	 if (ptr == NULL) {
+	  SUBDBG("Path: %s, missing llite directory, performance event not created.\n", path);
+	  continue;
+	  }
+
+	 strncpy(fs_name, ptr, sizeof(fs_name)-1);
+	 fs_name[sizeof(fs_name)-1] = '\0';
+
+	  SUBDBG("found Lustre FS: %s\n", fs_name);
+
+	  snprintf( path_stats, PATH_MAX - 1,
+		"%s/%s/stats",
+		lustre_dir,
+		entry->d_name );
+	  SUBDBG("Found file %s\n", path_stats);
+
+	  snprintf( path_readahead, PATH_MAX - 1,
+		"%s/%s/read_ahead_stats",
+		lustre_dir,
+		entry->d_name );
+	  SUBDBG("Now checking for file %s\n", path_readahead);
+
+	  strcpy( ptr, "read_ahead_stats" );
+	  addLustreFS( fs_name, path_stats, path_readahead );
+	  found_luster_fs++;
 	}
 	closedir( proc_dir );
+
+	if (found_luster_fs == 0) {
+		SUBDBG("EXIT: PAPI_ESYS (No luster file systems found)\n");
+		return PAPI_ESYS;
+	}
 
    SUBDBG("EXIT: PAPI_OK\n");
 	return PAPI_OK;
@@ -403,29 +415,6 @@ host_finalize( void )
 }
 
 
-/**
- * see if lustre filesystem is supported by kernel
- */
-static int
-detect_lustre()
-{
-        char lustre_directory[BUFSIZ];
-	DIR *proc_dir;
-
-	sprintf(lustre_directory,"%s/llite",proc_base_path);
-
-	proc_dir = opendir( proc_base_path );
-	if ( proc_dir == NULL ) {
-	  SUBDBG("we are not able to read %s\n",lustre_directory);
-	   return PAPI_ESYS;
-	}
-
-	closedir(proc_dir);
-
-	return PAPI_OK;
-}
-
-
 /*****************************************************************************
  *******************  BEGIN PAPI's COMPONENT REQUIRED FUNCTIONS  *************
  *****************************************************************************/
@@ -437,23 +426,22 @@ detect_lustre()
 int
 _lustre_init_component( int cidx )
 {
-
+	SUBDBG("ENTER:\n");
 	int ret = PAPI_OK;
-
-	/* See if lustre filesystem exists */
-	ret=detect_lustre();
-	if (ret!=PAPI_OK) {
-	   strncpy(_lustre_vector.cmp_info.disabled_reason,
-		   "No lustre filesystems found",PAPI_MAX_STR_LEN);
-	   return ret;
-	}
 
 	resize_native_table();
 	ret=init_lustre_counters();
+	if (ret!=PAPI_OK) {
+	   strncpy(_lustre_vector.cmp_info.disabled_reason,
+		   "No lustre filesystems found",PAPI_MAX_STR_LEN);
+	   SUBDBG("EXIT: ret: %d\n", ret);
+	   return ret;
+	}
 
 	_lustre_vector.cmp_info.num_native_events=num_events;
 	_lustre_vector.cmp_info.CmpIdx = cidx;
 
+	SUBDBG("EXIT: ret: %d\n", ret);
 	return ret;
 }
 
@@ -479,10 +467,13 @@ _lustre_init_thread( hwd_context_t * ctx )
 int
 _lustre_shutdown_component( void )
 {
-
+	SUBDBG("ENTER:\n");
 	host_finalize(  );
 	papi_free( lustre_native_table );
-
+	lustre_native_table = NULL;
+	num_events = 0;
+        table_size = 32;
+	SUBDBG("EXIT:\n");
 	return PAPI_OK;
 }
 
