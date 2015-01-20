@@ -478,7 +478,12 @@ static const intel_x86_umask_t snb_icache[]={
    { .uname  = "MISSES",
      .udesc  = "Number of Instruction Cache, Streaming Buffer and Victim Cache Misses. Includes UC accesses",
      .ucode = 0x200,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+     .uflags= INTEL_X86_NCOMBO,
+   },
+   { .uname  = "IFETCH_STALL",
+     .udesc  = "Number of cycles wher a code-fetch stalled due to L1 instruction cache miss or iTLB miss",
+     .ucode = 0x400,
+     .uflags= INTEL_X86_NCOMBO,
    },
 };
 

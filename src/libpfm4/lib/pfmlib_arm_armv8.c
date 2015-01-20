@@ -143,7 +143,7 @@ pfmlib_pmu_t arm_xgene_support={
 
 	.pmu_detect		= pfm_arm_detect_xgene,
 	.max_encoding		= 1,
-	.num_cntrs		= 6,
+	.num_cntrs		= 4,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),

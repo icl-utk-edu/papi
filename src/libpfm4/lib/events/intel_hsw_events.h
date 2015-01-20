@@ -467,7 +467,12 @@ static const intel_x86_umask_t hsw_icache[]={
   { .uname = "MISSES",
     .udesc  = "Number of Instruction Cache, Streaming Buffer and Victim Cache Misses. Includes Uncacheable accesses",
     .ucode  = 0x200,
-    .uflags = INTEL_X86_DFL,
+    .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "IFETCH_STALL",
+    .udesc  = "Number of cycles where a code-fetch stalled due to L1 instruction cache miss or an iTLB miss",
+    .ucode  = 0x400,
+    .uflags = INTEL_X86_NCOMBO,
   },
 };
 
