@@ -1,27 +1,98 @@
 /****************************/
-/* THIS IS OPEN SOURCE CODE */
+/* THIS IS OPEN SOURE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-cuda.c
- * @author  Heike Jagode (in collaboration with Robert Dietrich, TU Dresden)
- *          jagode@eecs.utk.edu
+ * @author  Asim YarKhan yarkhan@icl.utk.edu (updated in 2015 for multiple CUDA contexts/devices)
+ * @author  Heike Jagode (in collaboration with Robert Dietrich, TU Dresden) jagode@eecs.utk.edu
  *
  * @ingroup papi_components
  *
- * @brief
- *  This file has the source code for a component that enables PAPI-C to 
- *  access hardware monitoring counters for GPU devices through the  
- *  CUPTI library.
+ * @brief This implements a PAPI component that enables PAPI-C to
+ *  access hardware monitoring counters for NVIDIA CUDA GPU devices
+ *  through the CUPTI library.
  */
+
 #include <dlfcn.h>
+#include <cupti.h>
+#include <cuda_runtime_api.h>
 
 #include "papi.h"
+#include "papi_memory.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
-#include "papi_memory.h"
-#include "linux-cuda.h"
 
+/* this number assumes that there will never be more events than indicated */
+#define PAPICUDA_MAX_COUNTERS 512
+
+/* Contains device list, pointer to device desciption, and the list of available events */
+typedef struct papicuda_context {
+    int deviceCount;
+    struct papicuda_device_desc *deviceArray;
+    uint32_t availEventSize;
+    CUpti_EventID* availEventIDArray;
+    int* availEventDeviceNum;
+    struct papicuda_name_desc* availEventDesc;
+} papicuda_context_t;
+
+/* Store the name and description for an event */
+typedef struct papicuda_name_desc  {
+    char name[PAPI_MAX_STR_LEN];
+    char description[PAPI_2MAX_STR_LEN];
+} papicuda_name_desc_t;
+
+/* For a device, store device description */
+typedef struct papicuda_device_desc {
+    CUdevice cuDev;             /* CUDA device */
+    unsigned int deviceNum;
+    char deviceName[PAPI_MIN_STR_LEN];
+    uint32_t maxDomains;        /* number of domains per device */
+    CUpti_EventDomainID *domainIDArray; /* Array[maxDomains] of domain IDs */
+    uint32_t *domainIDNumEvents; /* Array[maxDomains] of num of events in that domain */
+} papicuda_device_desc_t;
+
+/* Control structure tracks array of active contexts, records active events and their values */
+typedef struct papicuda_control {
+    int countOfActiveCUContexts;
+    struct papicuda_active_cucontext_s *arrayOfActiveCUContexts[PAPICUDA_MAX_COUNTERS];
+    int activeEventCount;
+    int activeEventIndex[PAPICUDA_MAX_COUNTERS];
+    int activeEventContextIdx[PAPICUDA_MAX_COUNTERS];
+    long long activeEventValues[PAPICUDA_MAX_COUNTERS];
+} papicuda_control_t;
+
+/* For each active context, which CUDA events are being measured, context eventgroups containing events */
+typedef struct papicuda_active_cucontext_s {
+    CUcontext context;
+    int deviceNum;
+    int numEventGroups;
+    CUpti_EventGroup eventGroup[PAPICUDA_MAX_COUNTERS];
+} papicuda_active_cucontext_t;
+
+// file handles used to access cuda libraries with dlopen
+static void *dl1 = NULL;
+static void *dl2 = NULL;
+static void *dl3 = NULL;
+
+/* The PAPI side (external) variable as a global */
+papi_vector_t _cuda_vector;
+
+/* Global variable for hardware description, event and metric lists */
+static papicuda_context_t *global_papicuda_context = NULL;
+
+/* This global variable points to the head of the control state list */
+static papicuda_control_t *global_papicuda_control = NULL;
+
+/* Macros for error checking... each arg is only referenced/evaluated once */
+#define CHECK_CU_ERROR(err, cufunc)                                     \
+    if( (err) != CUDA_SUCCESS ) { PAPIERROR( "CUDA Driver API function failed '%s'", cufunc ); return -1; }
+
+#define CHECK_CUPTI_ERROR(err, cuptifunc)                               \
+    if( (err) != CUPTI_SUCCESS ) { PAPIERROR( "CUPTI API function failed '%s'", cuptifunc ); return -1; }
+
+#define CHECK_PRINT_EVAL( err, str, eval )      \
+    if( (err) ) { PAPIERROR( "%s", str ); eval; }
 
 /********  CHANGE PROTOTYPES TO DECLARE CUDA LIBRARY SYMBOLS AS WEAK  **********
  *  This is done so that a version of PAPI built with the cuda component can   *
@@ -38,452 +109,259 @@
  *  component initialization time.  The component then calls the cuda library  *
  *  functions through these function pointers.                                 *
  *******************************************************************************/
-void (*_dl_non_dynamic_init)(void) __attribute__((weak));
+void ( *_dl_non_dynamic_init )( void ) __attribute__( ( weak ) );
 #undef CUDAAPI
 #define CUDAAPI __attribute__((weak))
-CUresult CUDAAPI cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev);
-CUresult CUDAAPI cuCtxDestroy(CUcontext);
-CUresult CUDAAPI cuCtxGetCurrent(CUcontext *);
-CUresult CUDAAPI cuDeviceGet(CUdevice *, int);
-CUresult CUDAAPI cuDeviceGetCount(int *);
-CUresult CUDAAPI cuDeviceGetName(char *, int, CUdevice);
-CUresult CUDAAPI cuInit(unsigned int);
+CUresult CUDAAPI cuCtxGetCurrent( CUcontext * );
+CUresult CUDAAPI cuDeviceGet( CUdevice *, int );
+CUresult CUDAAPI cuDeviceGetCount( int * );
+CUresult CUDAAPI cuDeviceGetName( char *, int, CUdevice );
+CUresult CUDAAPI cuDeviceGetName( char *, int, CUdevice );
+CUresult CUDAAPI cuInit( unsigned int );
+CUresult CUDAAPI cuCtxPopCurrent( CUcontext * pctx );
+CUresult CUDAAPI cuCtxPushCurrent( CUcontext pctx );
 
-CUresult (*cuCtxCreatePtr)(CUcontext *pctx, unsigned int flags, CUdevice dev);
-CUresult (*cuCtxDestroyPtr)(CUcontext);
-CUresult (*cuCtxGetCurrentPtr)(CUcontext *);
-CUresult (*cuDeviceGetPtr)(CUdevice *, int);
-CUresult (*cuDeviceGetCountPtr)(int *);
-CUresult (*cuDeviceGetNamePtr)(char *, int, CUdevice);
-CUresult (*cuInitPtr)(unsigned int);
+CUresult( *cuCtxCreatePtr )( CUcontext * pctx, unsigned int flags, CUdevice dev );
+CUresult( *cuCtxDestroyPtr )( CUcontext );
+CUresult( *cuCtxGetCurrentPtr )( CUcontext * );
+CUresult( *cuDeviceGetPtr )( CUdevice *, int );
+CUresult( *cuDeviceGetCountPtr )( int * );
+CUresult( *cuDeviceGetNamePtr )( char *, int, CUdevice );
+CUresult( *cuInitPtr )( unsigned int );
+CUresult( *cuCtxPopCurrentPtr )( CUcontext * pctx );
+CUresult( *cuCtxPushCurrentPtr )( CUcontext pctx );
 
 #undef CUDARTAPI
 #define CUDARTAPI __attribute__((weak))
-cudaError_t CUDARTAPI cudaFree(void *);
-cudaError_t CUDARTAPI cudaGetDevice(int *);
-cudaError_t CUDARTAPI cudaRuntimeGetVersion( int *);
-cudaError_t CUDARTAPI cudaDriverGetVersion( int *);
+cudaError_t CUDARTAPI cudaGetDevice( int * );
+cudaError_t CUDARTAPI cudaSetDevice( int );
+cudaError_t CUDARTAPI cudaFree( void * );
 
+cudaError_t ( *cudaGetDevicePtr )( int * );
+cudaError_t ( *cudaSetDevicePtr )( int );
 cudaError_t (*cudaFreePtr)(void *);
-cudaError_t (*cudaGetDevicePtr)(int *);
-cudaError_t (*cudaRuntimeGetVersionPtr)(int *);
-cudaError_t (*cudaDriverGetVersionPtr)(int *);
 
 #undef CUPTIAPI
 #define CUPTIAPI __attribute__((weak))
-CUptiResult CUPTIAPI cuptiDeviceEnumEventDomains(CUdevice, size_t *, CUpti_EventDomainID *);
-CUptiResult CUPTIAPI cuptiDeviceGetEventDomainAttribute(CUdevice, CUpti_EventDomainID, CUpti_EventDomainAttribute, size_t *, void *);
-CUptiResult CUPTIAPI cuptiDeviceGetNumEventDomains(CUdevice, uint32_t *);
-CUptiResult CUPTIAPI cuptiEventDomainEnumEvents(CUpti_EventDomainID, size_t*, CUpti_EventID *);
-CUptiResult CUPTIAPI cuptiEventDomainGetNumEvents(CUpti_EventDomainID, uint32_t *);
-CUptiResult CUPTIAPI cuptiEventGetAttribute(CUpti_EventID, CUpti_EventAttribute, size_t *, void *);
-CUptiResult CUPTIAPI cuptiEventGroupAddEvent(CUpti_EventGroup, CUpti_EventID);
-CUptiResult CUPTIAPI cuptiEventGroupCreate(CUcontext, CUpti_EventGroup *, uint32_t);
-CUptiResult CUPTIAPI cuptiEventGroupDestroy(CUpti_EventGroup);
-CUptiResult CUPTIAPI cuptiEventGroupDisable(CUpti_EventGroup);
-CUptiResult CUPTIAPI cuptiEventGroupEnable(CUpti_EventGroup);
-CUptiResult CUPTIAPI cuptiEventGroupReadAllEvents(CUpti_EventGroup, CUpti_ReadEventFlags, size_t *, uint64_t *, size_t *, CUpti_EventID *, size_t *);
-CUptiResult CUPTIAPI cuptiEventGroupRemoveAllEvents(CUpti_EventGroup);
-CUptiResult CUPTIAPI cuptiEventGroupResetAllEvents(CUpti_EventGroup);
+CUptiResult CUPTIAPI cuptiDeviceEnumEventDomains( CUdevice, size_t *, CUpti_EventDomainID * );
+CUptiResult CUPTIAPI cuptiDeviceGetNumEventDomains( CUdevice, uint32_t * );
+CUptiResult CUPTIAPI cuptiEventDomainEnumEvents( CUpti_EventDomainID, size_t *, CUpti_EventID * );
+CUptiResult CUPTIAPI cuptiEventDomainGetNumEvents( CUpti_EventDomainID, uint32_t * );
+CUptiResult CUPTIAPI cuptiEventDomainGetAttribute ( CUpti_EventDomainID eventDomain, CUpti_EventDomainAttribute attrib, size_t* valueSize, void* value );
+CUptiResult CUPTIAPI cuptiEventGroupAddEvent( CUpti_EventGroup, CUpti_EventID );
+CUptiResult CUPTIAPI cuptiEventGroupCreate( CUcontext, CUpti_EventGroup *, uint32_t );
+CUptiResult CUPTIAPI cuptiEventGroupDestroy( CUpti_EventGroup );
+CUptiResult CUPTIAPI cuptiEventGroupDisable( CUpti_EventGroup );
+CUptiResult CUPTIAPI cuptiEventGroupEnable( CUpti_EventGroup );
+CUptiResult CUPTIAPI cuptiEventGroupReadAllEvents( CUpti_EventGroup, CUpti_ReadEventFlags, size_t *, uint64_t *, size_t *, CUpti_EventID *, size_t * );
+CUptiResult CUPTIAPI cuptiEventGroupResetAllEvents( CUpti_EventGroup );
+CUptiResult CUPTIAPI cuptiEventGetAttribute( CUpti_EventID, CUpti_EventAttribute, size_t *, void * );
 
-CUptiResult (*cuptiDeviceEnumEventDomainsPtr)(CUdevice, size_t *, CUpti_EventDomainID *);
-CUptiResult (*cuptiDeviceGetEventDomainAttributePtr)(CUdevice, CUpti_EventDomainID, CUpti_EventDomainAttribute, size_t *, void *);
-CUptiResult (*cuptiDeviceGetNumEventDomainsPtr)(CUdevice, uint32_t *);
-CUptiResult (*cuptiEventDomainEnumEventsPtr)(CUpti_EventDomainID, size_t*, CUpti_EventID *);
-CUptiResult (*cuptiEventDomainGetNumEventsPtr)(CUpti_EventDomainID, uint32_t *);
-CUptiResult (*cuptiEventGetAttributePtr)(CUpti_EventID, CUpti_EventAttribute, size_t *, void *);
-CUptiResult (*cuptiEventGroupAddEventPtr)(CUpti_EventGroup, CUpti_EventID);
-CUptiResult (*cuptiEventGroupCreatePtr)(CUcontext, CUpti_EventGroup *, uint32_t);
-CUptiResult (*cuptiEventGroupDestroyPtr)(CUpti_EventGroup);
-CUptiResult (*cuptiEventGroupDisablePtr)(CUpti_EventGroup);
-CUptiResult (*cuptiEventGroupEnablePtr)(CUpti_EventGroup);
-CUptiResult (*cuptiEventGroupReadAllEventsPtr)(CUpti_EventGroup, CUpti_ReadEventFlags, size_t *, uint64_t *, size_t *, CUpti_EventID *, size_t *);
-CUptiResult (*cuptiEventGroupRemoveAllEventsPtr)(CUpti_EventGroup);
-CUptiResult (*cuptiEventGroupResetAllEventsPtr)(CUpti_EventGroup);
-
-// file handles used to access cuda libraries with dlopen
-static void* dl1 = NULL;
-static void* dl2 = NULL;
-static void* dl3 = NULL;
-
-static int linkCudaLibraries ();
-
-papi_vector_t _cuda_vector;
-
+CUptiResult( *cuptiDeviceEnumEventDomainsPtr )( CUdevice, size_t *, CUpti_EventDomainID * );
+CUptiResult( *cuptiDeviceGetNumEventDomainsPtr )( CUdevice, uint32_t * );
+CUptiResult( *cuptiEventDomainEnumEventsPtr )( CUpti_EventDomainID, size_t *, CUpti_EventID * );
+CUptiResult( *cuptiEventDomainGetNumEventsPtr )( CUpti_EventDomainID, uint32_t * );
+CUptiResult( *cuptiEventDomainGetAttributePtr ) ( CUpti_EventDomainID eventDomain, CUpti_EventDomainAttribute attrib, size_t* valueSize, void* value );
+CUptiResult( *cuptiEventGroupAddEventPtr )( CUpti_EventGroup, CUpti_EventID );
+CUptiResult( *cuptiEventGroupCreatePtr )( CUcontext, CUpti_EventGroup *, uint32_t );
+CUptiResult( *cuptiEventGroupDestroyPtr )( CUpti_EventGroup );
+CUptiResult( *cuptiEventGroupDisablePtr )( CUpti_EventGroup );
+CUptiResult( *cuptiEventGroupEnablePtr )( CUpti_EventGroup );
+CUptiResult( *cuptiEventGroupReadAllEventsPtr )( CUpti_EventGroup, CUpti_ReadEventFlags, size_t *, uint64_t *, size_t *, CUpti_EventID *, size_t * );
+CUptiResult( *cuptiEventGroupResetAllEventsPtr )( CUpti_EventGroup );
+CUptiResult( *cuptiEventGetAttributePtr )( CUpti_EventID, CUpti_EventAttribute, size_t *, void * );
 
 /******************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
+
 /*
- * Specify device(s): Counts number of cuda events available in this system
+ * Link the necessary CUDA libraries to use the cuda component.  If any of them can not be found, then
+ * the CUDA component will just be disabled.  This is done at runtime so that a version of PAPI built
+ * with the CUDA component can be installed and used on systems which have the CUDA libraries installed
+ * and on systems where these libraries are not installed.
  */
-static int
-detectDevice( void )
+#define CHECK_DL_STATUS( err, str ) if( err ) { strncpy( _cuda_vector.cmp_info.disabled_reason, str, PAPI_MAX_STR_LEN ); return ( PAPI_ENOSUPP ); }
+
+static int papicuda_linkCudaLibraries()
 {
-	CUresult err;
-	int skipDevice = 0;
-	int id;
-	char deviceName_tmp[PAPI_MIN_STR_LEN] = "init";
+    /* Attempt to guess if we were statically linked to libc, if so bail */
+    if( _dl_non_dynamic_init != NULL ) {
+        strncpy( _cuda_vector.cmp_info.disabled_reason, "The cuda component does not support statically linking to libc.", PAPI_MAX_STR_LEN );
+        return PAPI_ENOSUPP;
+    }
+    /* Need to link in the cuda libraries, if not found disable the component */
+    dl1 = dlopen( "libcuda.so", RTLD_NOW | RTLD_GLOBAL );
+    CHECK_DL_STATUS( !dl1 , "CUDA library libcuda.so not found." );
+    cuCtxGetCurrentPtr = dlsym( dl1, "cuCtxGetCurrent" );
+    CHECK_DL_STATUS( dlerror()!=NULL , "CUDA function cuCtxGetCurrent not found." );
+    cuDeviceGetPtr = dlsym( dl1, "cuDeviceGet" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDA function cuDeviceGet not found." );
+    cuDeviceGetCountPtr = dlsym( dl1, "cuDeviceGetCount" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDA function cuDeviceGetCount not found." );
+    cuDeviceGetNamePtr = dlsym( dl1, "cuDeviceGetName" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDA function cuDeviceGetName not found." );
+    cuInitPtr = dlsym( dl1, "cuInit" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDA function cuInit not found." );
+    cuCtxPopCurrentPtr = dlsym( dl1, "cuCtxPopCurrent" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDA function cuCtxPopCurrent not found." );
+    cuCtxPushCurrentPtr = dlsym( dl1, "cuCtxPushCurrent" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDA function cuCtxPushCurrent not found." );
 
-	totalEventCount = 0;
+    dl2 = dlopen( "libcudart.so", RTLD_NOW | RTLD_GLOBAL );
+    CHECK_DL_STATUS( !dl2, "CUDA runtime library libcudart.so not found." );
+    cudaGetDevicePtr = dlsym( dl2, "cudaGetDevice" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDART function cudaGetDevice not found." );
+    cudaSetDevicePtr = dlsym( dl2, "cudaSetDevice" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDART function cudaSetDevice not found." );
+    cudaFreePtr = dlsym( dl2, "cudaFree" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUDART function cudaFree not found." );
 
-/* CUDA initialization  */
-	err = (*cuInitPtr)( 0 );
-	if ( err != CUDA_SUCCESS ) {
-		SUBDBG ("Info: Error from cuInit(): %d\n", err);
-		return ( PAPI_ENOSUPP );
-	}
-
-	/* How many gpgpu devices do we have? */
-	err = (*cuDeviceGetCountPtr)( &deviceCount );
-	CHECK_CU_ERROR( err, "cuDeviceGetCount" );
-	if ( deviceCount == 0 )
-		return ( PAPI_ENOSUPP );
-
-	/* allocate memory for device data table */
-	device = ( DeviceData_t * ) malloc( sizeof ( DeviceData_t ) * deviceCount );
-	if ( device == NULL ) {
-		perror( "malloc(): Failed to allocate memory to CUDA device table" );
-		return ( PAPI_ENOSUPP );
-	}
-
-	/* What are the devices? Get Name and # of domains per device */
-	for ( id = 0; id < deviceCount; id++ ) {
-		err = (*cuDeviceGetPtr)( &device[id].dev, id );
-		CHECK_CU_ERROR( err, "cuDeviceGet" );
-
-		err = (*cuDeviceGetNamePtr)( device[id].name, PAPI_MIN_STR_LEN, device[id].dev );
-		CHECK_CU_ERROR( err, "cuDeviceGetName" );
-
-		SUBDBG ("Cuda deviceName: %s\n", device[id].name);
-
-		/* Skip device if there are multiple of the same type 
-		   and if it has been already added to the list */
-		if ( 0 == strcmp( deviceName_tmp, device[id].name ) ) {
-			skipDevice++;
-			continue;
-		}
-
-		strcpy( deviceName_tmp, device[id].name );
-
-		/* enumerate the domains on the device */
-		if ( 0 != enumEventDomains( device[id].dev, id ) )
-			return ( PAPI_ENOSUPP );
-	}
-
-	deviceCount = deviceCount - skipDevice;
-
-	/* return number of events provided via CuPTI */
-	return totalEventCount;
+    dl3 = dlopen( "libcupti.so", RTLD_NOW | RTLD_GLOBAL );
+    CHECK_DL_STATUS( !dl3, "CUDA runtime library libcupti.so not found." );
+    cuptiDeviceEnumEventDomainsPtr = dlsym( dl3, "cuptiDeviceEnumEventDomains" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiDeviceEnumEventDomains not found." );
+    cuptiDeviceGetNumEventDomainsPtr = dlsym( dl3, "cuptiDeviceGetNumEventDomains" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiDeviceGetNumEventDomains not found." );
+    cuptiEventDomainEnumEventsPtr = dlsym( dl3, "cuptiEventDomainEnumEvents" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventDomainEnumEvents not found." );
+    cuptiEventDomainGetNumEventsPtr = dlsym( dl3, "cuptiEventDomainGetNumEvents" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventDomainGetNumEvents not found." );
+    cuptiEventGetAttributePtr = dlsym( dl3, "cuptiEventGetAttribute" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGetAttribute not found." );
+    cuptiEventGroupAddEventPtr = dlsym( dl3, "cuptiEventGroupAddEvent" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGroupAddEvent not found." );
+    cuptiEventGroupCreatePtr = dlsym( dl3, "cuptiEventGroupCreate" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGroupCreate not found." );
+    cuptiEventGroupDestroyPtr = dlsym( dl3, "cuptiEventGroupDestroy" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGroupDestroy not found." );
+    cuptiEventGroupDisablePtr = dlsym( dl3, "cuptiEventGroupDisable" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGroupDisable not found." );
+    cuptiEventGroupEnablePtr = dlsym( dl3, "cuptiEventGroupEnable" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGroupEnable not found." );
+    cuptiEventGroupReadAllEventsPtr = dlsym( dl3, "cuptiEventGroupReadAllEvents" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGroupReadAllEvents not found." );
+    cuptiEventGroupResetAllEventsPtr = dlsym( dl3, "cuptiEventGroupResetAllEvents" );
+    CHECK_DL_STATUS( dlerror()!=NULL, "CUPTI function cuptiEventGroupResetAllEvents not found." );
+    return ( PAPI_OK );
 }
 
-
-/*
- * Detect supported domains for specified device
- */
-static int
-enumEventDomains( CUdevice dev, int deviceId )
+/* Called during component initialization to get a list of all available events */
+static int papicuda_list_all_events( papicuda_context_t *gctxt )
 {
-	CUptiResult err = CUPTI_SUCCESS;
-	CUpti_EventDomainID *domainId = NULL;
-	uint32_t id = 0;
-	size_t size = 0;
+    SUBDBG( "Entering\n" );
+    CUptiResult cuptiErr;
+    CUresult cuErr;
+    unsigned int deviceNum;
+    uint32_t domainNum, eventNum;
+    papicuda_device_desc_t *mydevice;
+    char tmpStr[PAPI_MIN_STR_LEN];
+    tmpStr[PAPI_MIN_STR_LEN-1]='\0';
+    size_t tmpSizeBytes;
+    int ii;
 
-	device[deviceId].domainCount = 0;
+    /* How many gpgpu devices do we have? */
+    cuErr = ( *cuDeviceGetCountPtr )( &gctxt->deviceCount );
+    if ( cuErr==CUDA_ERROR_NOT_INITIALIZED ) {
+        /* If CUDA not initilaized, initialized CUDA and retry the device list */
+        /* This is required for some of the PAPI tools, that do not call the init functions */
+        CHECK_CU_ERROR( ( *cuInitPtr )( 0 ), "cuInit" );
+        cuErr = ( *cuDeviceGetCountPtr )( &gctxt->deviceCount );
+    }
+    CHECK_CU_ERROR( cuErr, "cuDeviceGetCount" );
+    CHECK_PRINT_EVAL( gctxt->deviceCount==0, "ERROR CUDA: Could not find any CUDA devices", return( PAPI_ENOSUPP ) );
+    SUBDBG( "Found %d devices\n", gctxt->deviceCount );
 
-	/* get number of domains for device dev */
-	err = (*cuptiDeviceGetNumEventDomainsPtr)( dev, &device[deviceId].domainCount );
-	CHECK_CUPTI_ERROR( err, "cuptiDeviceGetNumEventDomains" );
+    /* allocate memory for device information */
+    gctxt->deviceArray = ( papicuda_device_desc_t * ) papi_calloc( gctxt->deviceCount, sizeof( papicuda_device_desc_t ) );
+    CHECK_PRINT_EVAL( !gctxt->deviceArray, "ERROR CUDA: Could not allocate memory for CUDA device structure", return( PAPI_ENOSUPP ) );
 
-	if ( device[deviceId].domainCount == 0 ) {
-		printf( "No domain is exposed by dev = %d\n", dev );
-		return -1;
-	}
+    /* For each device, get domains and domain-events counts */
+    gctxt->availEventSize = 0;
+    for( deviceNum = 0; deviceNum < ( uint )gctxt->deviceCount; deviceNum++ ) {
+        mydevice = &gctxt->deviceArray[deviceNum];
+        /* Get device id for each device */
+        CHECK_CU_ERROR( ( *cuDeviceGetPtr )( &mydevice->cuDev, deviceNum ), "cuDeviceGet" );
+        /* Get device name */
+        CHECK_CU_ERROR( ( *cuDeviceGetNamePtr )( mydevice->deviceName, PAPI_MIN_STR_LEN-1, mydevice->cuDev ), "cuDeviceGetName" );
+        mydevice->deviceName[PAPI_MIN_STR_LEN-1]='\0';
+        /* Get max num domains for each device */
+        CHECK_CUPTI_ERROR( ( *cuptiDeviceGetNumEventDomainsPtr )( mydevice->cuDev, &mydevice->maxDomains ), "cuptiDeviceGetNumEventDomains" );
+        /* Allocate space to hold domain IDs */
+        mydevice->domainIDArray = ( CUpti_EventDomainID * ) papi_calloc( mydevice->maxDomains, sizeof( CUpti_EventDomainID ) );
+        CHECK_PRINT_EVAL( !mydevice->domainIDArray, "ERROR CUDA: Could not allocate memory for CUDA device domains", return( PAPI_ENOMEM ) );
+        /* Put domain ids into allocated space */
+        size_t domainarraysize = mydevice->maxDomains * sizeof( CUpti_EventDomainID );
+        CHECK_CUPTI_ERROR( ( *cuptiDeviceEnumEventDomainsPtr )( mydevice->cuDev, &domainarraysize, mydevice->domainIDArray ), "cuptiDeviceEnumEventDomains" );
+        /* Allocate space to hold domain event counts  */
+        mydevice->domainIDNumEvents = ( uint32_t * ) papi_calloc( mydevice->maxDomains, sizeof( uint32_t ) );
+        CHECK_PRINT_EVAL( !mydevice->domainIDNumEvents, "ERROR CUDA: Could not allocate memory for domain event counts", return( PAPI_ENOMEM ) );
+        /* For each domain, get event counts in domainNumEvents[]  */
+        for ( domainNum=0; domainNum < mydevice->maxDomains; domainNum++ ) {
+            CUpti_EventDomainID domainID = mydevice->domainIDArray[domainNum];
+            /* Get num events in domain */
+            //SUBDBG( "Device %d:%d calling cuptiEventDomainGetNumEventsPtr with domainID %d \n", deviceNum, mydevice->cuDev, domainID );
+            CHECK_CUPTI_ERROR(  ( *cuptiEventDomainGetNumEventsPtr ) ( domainID, &mydevice->domainIDNumEvents[domainNum] ), "cuptiEventDomainGetNumEvents" );
+            /* Keep track of overall number of events */
+            gctxt->availEventSize += mydevice->domainIDNumEvents[domainNum];
+        }
+    }
 
-	/* CuPTI domain struct */
-	size = sizeof ( CUpti_EventDomainID ) * device[deviceId].domainCount;
-	domainId = ( CUpti_EventDomainID * ) malloc( size );
-	if ( domainId == NULL ) {
-		perror( "malloc(): Failed to allocate memory to CuPTI domain ID" );
-		return -1;
-	}
-	memset( domainId, 0, size );
-
-	/* PAPI domain struct */
-	device[deviceId].domain =
-		( DomainData_t * ) malloc( sizeof ( DomainData_t ) *
-								   device[deviceId].domainCount );
-	if ( device[deviceId].domain == NULL ) {
-		perror( "malloc(): Failed to allocate memory to PAPI domain struct" );
-		free(domainId);
-		return -1;
-	}
-
-	/* Enumerates the event domains for a device dev */
-	err = (*cuptiDeviceEnumEventDomainsPtr)( dev, &size, domainId );
-	CHECK_CUPTI_ERROR( err, "cuptiDeviceEnumEventDomains" );
-
-	/* enum domains */
-	for ( id = 0; id < device[deviceId].domainCount; id++ ) {
-		device[deviceId].domain[id].domainId = domainId[id];
-
-		/* query domain name */
-		size = PAPI_MIN_STR_LEN;
-#ifdef CUDA_4_0
-		err = cuptiEventDomainGetAttribute( dev,
-										   device[deviceId].domain[id].
-										   domainId,
-										   CUPTI_EVENT_DOMAIN_ATTR_NAME, &size,
-										   ( void * ) device[deviceId].
-										   domain[id].name );
-		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetAttribute" );
-		
-		/* query num of events avaialble in the domain */
-		size = sizeof ( device[deviceId].domain[id].eventCount );
-		err = cuptiEventDomainGetAttribute( dev,
-										   device[deviceId].domain[id].
-										   domainId,
-										   CUPTI_EVENT_DOMAIN_MAX_EVENTS,
-										   &size,
-										   ( void * ) &device[deviceId].
-										   domain[id].eventCount );
-		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetAttribute" );
-		
-		/* enumerate the events for the domain[id] on the device dev */
-		if ( 0 != enumEvents( dev, deviceId, id ) )
-			return -1;
-#else
-		err = (*cuptiDeviceGetEventDomainAttributePtr)( dev,
-												  device[deviceId].domain[id].domainId,
-												  CUPTI_EVENT_DOMAIN_ATTR_NAME, &size,
-												  ( void * ) device[deviceId].domain[id].name );
-		CHECK_CUPTI_ERROR( err, "cuptiDeviceGetEventDomainAttribute" );
-
-		/* query num of events avaialble in the domain */
-		err = (*cuptiEventDomainGetNumEventsPtr)( device[deviceId].domain[id].domainId,
-										    &device[deviceId].domain[id].eventCount );
-		CHECK_CUPTI_ERROR( err, "cuptiEventDomainGetNumEvents" );
-
-		/* enumerate the events for the domain[id] on the device deviceId */
-		if ( 0 != enumEvents( deviceId, id ) )
-			return -1;
-#endif
-	}
-
-	totalDomainCount += device[deviceId].domainCount;
-	free( domainId );
-	return 0;
-}
-
-
-/*
- * Detect supported events for specified device domain
- */
-#ifdef CUDA_4_0
-static int
-enumEvents( CUdevice dev, int deviceId, int domainId )
-#else
-static int
-enumEvents( int deviceId, int domainId )
-#endif
-{
-	CUptiResult err = CUPTI_SUCCESS;
-	CUpti_EventID *eventId = NULL;
-	size_t size = 0;
-	uint32_t id = 0;
-
-	/* CuPTI event struct */
-	size =
-		sizeof ( CUpti_EventID ) * device[deviceId].domain[domainId].eventCount;
-	eventId = ( CUpti_EventID * ) malloc( size );
-	if ( eventId == NULL ) {
-		perror( "malloc(): Failed to allocate memory to CuPTI event ID" );
-		return -1;
-	}
-	memset( eventId, 0, size );
-
-	/* PAPI event struct */
-	device[deviceId].domain[domainId].event =
-		( EventData_t * ) malloc( sizeof ( EventData_t ) *
-								  device[deviceId].domain[domainId].
-								  eventCount );
-	if ( device[deviceId].domain[domainId].event == NULL ) {
-		perror( "malloc(): Failed to allocate memory to PAPI event struct" );
-		free(eventId);
-		return -1;
-	}
-
-	/* enumerate the events for the domain[domainId] on the device[deviceId] */
-#ifdef CUDA_4_0
-	err =
-		(*cuptiEventDomainEnumEventsPtr)( dev,
-							   ( CUpti_EventDomainID ) device[deviceId].
-							   domain[domainId].domainId, &size, eventId );
-#else
-	err =
-		(*cuptiEventDomainEnumEventsPtr)( ( CUpti_EventDomainID ) device[deviceId].
-									domain[domainId].domainId, &size, eventId );
-#endif
-	CHECK_CUPTI_ERROR( err, "cuptiEventDomainEnumEvents" );
-
-	/* query event info */
-	for ( id = 0; id < device[deviceId].domain[domainId].eventCount; id++ ) {
-		device[deviceId].domain[domainId].event[id].eventId = eventId[id];
-
-		/* query event name */
-		size = PAPI_MIN_STR_LEN;
-#ifdef CUDA_4_0
-		err = (*cuptiEventGetAttributePtr)( dev,
-									 device[deviceId].domain[domainId].
-									 event[id].eventId, CUPTI_EVENT_ATTR_NAME,
-									 &size,
-									 ( uint8_t * ) device[deviceId].
-									 domain[domainId].event[id].name );		
-#else
-		err = (*cuptiEventGetAttributePtr)( device[deviceId].domain[domainId].
-									  event[id].eventId, CUPTI_EVENT_ATTR_NAME,
-									  &size,
-									  ( uint8_t * ) device[deviceId].
-									  domain[domainId].event[id].name );
-#endif
-		CHECK_CUPTI_ERROR( err, "cuptiEventGetAttribute" );
-
-		/* query event description */
-		size = PAPI_2MAX_STR_LEN;
-#ifdef CUDA_4_0
-		err = (*cuptiEventGetAttributePtr)( dev,
-									 device[deviceId].domain[domainId].
-									 event[id].eventId,
-									 CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &size,
-									 ( uint8_t * ) device[deviceId].
-									 domain[domainId].event[id].desc );		
-#else
-		err = (*cuptiEventGetAttributePtr)( device[deviceId].domain[domainId].
-									  event[id].eventId,
-									  CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &size,
-									  ( uint8_t * ) device[deviceId].
-									  domain[domainId].event[id].desc );
-#endif
-		CHECK_CUPTI_ERROR( err, "cuptiEventGetAttribute" );
-	}
-
-	totalEventCount += device[deviceId].domain[domainId].eventCount;
-	free( eventId );
-	return 0;
-}
-
-
-/*
- * Create the native events for specified domain and device
- */
-static int
-createNativeEvents( void )
-{
-	int deviceId, id = 0;
-	uint32_t domainId, eventId;
-	int cuptiDomainId;
-	int i;
-	int devNameLen;
-
-	/* create events for every GPU device and every domain per device  */
-	for ( deviceId = 0; deviceId < deviceCount; deviceId++ ) {
-		/* for the event names, replace blanks in the device name with underscores */
-		devNameLen = strlen( device[deviceId].name );
-		for ( i = 0; i < devNameLen; i++ )
-			if ( device[deviceId].name[i] == ' ' )
-				device[deviceId].name[i] = '_';
-
-		for ( domainId = 0; domainId < device[deviceId].domainCount;
-			  domainId++ ) {
-			cuptiDomainId = device[deviceId].domain[domainId].domainId;
-
-			for ( eventId = 0;
-				  eventId < device[deviceId].domain[domainId].eventCount;
-				  eventId++ ) {
-		unsigned int evtNameLen = strlen(device[deviceId].name) + strlen(device[deviceId].domain[domainId].name) +
-			strlen(device[deviceId].domain[domainId].event[eventId].name);
-		if (evtNameLen + 4 > sizeof(cuda_native_table[id].name)) {
-		    SUBDBG("Event name too long to fit in cuda_native_table.name, event omitted: available space: %lu, space needed: %d\n",
-			    sizeof(cuda_native_table[id].name), evtNameLen+4);
-		    SUBDBG("device: %s, domain: %s, event: %s\n", device[deviceId].name, device[deviceId].domain[domainId].name,
-			    device[deviceId].domain[domainId].event[eventId].name);
-		    continue;
-		}
-				/* Save native event data */
-				sprintf( cuda_native_table[id].name,
-						 "%s:%s:%s",
-						 device[deviceId].name,
-						 device[deviceId].domain[domainId].name,
-			 device[deviceId].domain[domainId].event[eventId].name );
-
-				strncpy( cuda_native_table[id].description,
-						 device[deviceId].domain[domainId].event[eventId].desc,
-			 PAPI_2MAX_STR_LEN-1 );
-		cuda_native_table[id].description[PAPI_2MAX_STR_LEN-1] = '\0';
-
-				/* The selector has to be !=0 . Starts with 1 */
-				cuda_native_table[id].resources.selector = id + 1;
-
-				/* store event ID */
-				cuda_native_table[id].resources.eventId =
-					device[deviceId].domain[domainId].event[eventId].eventId;
-
-				/* increment the table index counter */
-				id++;
-			}
-		}
-	}
-
-	/* Return the number of events created */
-	return id;
-}
-
-
-/*
- * Returns all event values from the CuPTI eventGroup 
- */
-static int
-getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t addedEvents )
-{
-	CUptiResult cuptiErr = CUPTI_SUCCESS;
-	size_t events_read, bufferSizeBytes, arraySizeBytes, i;
-	uint64_t *counterDataBuffer;
-	CUpti_EventID *eventIDArray;
-	int j;
-
-	bufferSizeBytes = addedEvents.count * sizeof ( uint64_t );
-	counterDataBuffer = ( uint64_t * ) malloc( bufferSizeBytes );
-
-	arraySizeBytes = addedEvents.count * sizeof ( CUpti_EventID );
-	eventIDArray = ( CUpti_EventID * ) malloc( arraySizeBytes );
-
-	/* read counter data for the specified event from the CuPTI eventGroup */
-	cuptiErr = (*cuptiEventGroupReadAllEventsPtr)( eventGroup,
-											 CUPTI_EVENT_READ_FLAG_NONE,
-											 &bufferSizeBytes,
-											 counterDataBuffer, &arraySizeBytes,
-											 eventIDArray, &events_read );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupReadAllEvents" );
-
-	if ( events_read != ( size_t ) addedEvents.count )
-		return -1;
-
-	/* Since there is no guarantee that returned counter values are in the same 
-	   order as the counters in the PAPI addedEvents.list, we need to map the
-	   CUpti_EventID to PAPI event ID values.
-	   According to CuPTI doc: counter return values of counterDataBuffer 
-	   correspond to the return event IDs in eventIDArray */
-	for ( i = 0; i < events_read; i++ )
-		for ( j = 0; j < addedEvents.count; j++ )
-			if ( cuda_native_table[addedEvents.list[j]].resources.eventId ==
-				 eventIDArray[i] )
-				// since cuptiEventGroupReadAllEvents() resets counter values to 0;
-				// we have to accumulate ourselves 
-				counts[addedEvents.list[j]] = counts[addedEvents.list[j]] + counterDataBuffer[i];
-
-	free( counterDataBuffer );
-	free( eventIDArray );
-	return 0;
+    /* Allocate space for all events and descriptors */
+    gctxt->availEventIDArray = ( CUpti_EventID * ) papi_calloc( gctxt->availEventSize, sizeof( CUpti_EventID ) );
+    CHECK_PRINT_EVAL( !gctxt->availEventIDArray, "ERROR CUDA: Could not allocate memory for events", return( PAPI_ENOMEM ) );
+    gctxt->availEventDeviceNum = ( int * ) papi_calloc( gctxt->availEventSize, sizeof( int ) );
+    CHECK_PRINT_EVAL( !gctxt->availEventDeviceNum, "ERROR CUDA: Could not allocate memory", return( PAPI_ENOMEM ) );
+    gctxt->availEventDesc = ( papicuda_name_desc_t * ) papi_calloc( gctxt->availEventSize, sizeof( papicuda_name_desc_t ) );
+    CHECK_PRINT_EVAL( !gctxt->availEventDesc, "ERROR CUDA: Could not allocate memory for events", return( PAPI_ENOMEM ) );
+    /* Record the events and descriptions */
+    int idxEventArray = 0;
+    for( deviceNum = 0; deviceNum < ( uint )gctxt->deviceCount; deviceNum++ ) {
+        mydevice = &gctxt->deviceArray[deviceNum];
+        //SUBDBG( "For device %d %d maxdomains %d \n", deviceNum, mydevice->cuDev, mydevice->maxDomains );
+        /* Get and store event IDs, names, descriptions into the large arrays allocated */
+        for ( domainNum=0; domainNum < mydevice->maxDomains; domainNum++ ) {
+            /* Get domain id */
+            CUpti_EventDomainID domainID = mydevice->domainIDArray[domainNum];
+            uint32_t domainNumEvents = mydevice->domainIDNumEvents[domainNum];
+            SUBDBG( "For device %d domain %d %d numEvents %d\n", mydevice->cuDev, domainNum, domainID, domainNumEvents );
+            /* Allocate temp space for eventIDs for this domain */
+            CUpti_EventID *domainEventIDArray = ( CUpti_EventID * ) papi_calloc( domainNumEvents, sizeof( CUpti_EventID ) );
+            CHECK_PRINT_EVAL( !domainEventIDArray, "ERROR CUDA: Could not allocate memory for events", return( PAPI_ENOMEM ) );
+            /* Load the domain eventIDs in temp space */
+            size_t domainEventArraySize = domainNumEvents * sizeof( CUpti_EventID );
+            cuptiErr = ( *cuptiEventDomainEnumEventsPtr )  ( domainID, &domainEventArraySize, domainEventIDArray );
+            CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventDomainEnumEvents" );
+            /* For each event, get and store name and description */
+            for ( eventNum=0; eventNum<domainNumEvents; eventNum++ ) {
+                /* Record the event IDs in native event array */
+                CUpti_EventID myeventID = domainEventIDArray[eventNum];
+                gctxt->availEventIDArray[idxEventArray] = myeventID;
+                gctxt->availEventDeviceNum[idxEventArray] = deviceNum;
+                /* Get event name */
+                tmpSizeBytes = PAPI_MIN_STR_LEN-1 * sizeof( char );
+                cuptiErr = ( *cuptiEventGetAttributePtr ) ( myeventID, CUPTI_EVENT_ATTR_NAME, &tmpSizeBytes, tmpStr ) ;
+                CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGetAttribute" );
+                /* Save a full path for the event, filling spaces with underscores */
+                //snprintf( gctxt->availEventDesc[idxEventArray].name, PAPI_MIN_STR_LEN, "%s:%d:%s", mydevice->deviceName, deviceNum, tmpStr );
+                snprintf( gctxt->availEventDesc[idxEventArray].name, PAPI_MIN_STR_LEN, "device:%d:%s", deviceNum, tmpStr );
+                gctxt->availEventDesc[idxEventArray].name[PAPI_MIN_STR_LEN-1] = '\0';
+                char *nameTmpPtr = gctxt->availEventDesc[idxEventArray].name;
+                for ( ii = 0; ii < ( int )strlen( nameTmpPtr ); ii++ ) if ( nameTmpPtr[ii] == ' ' ) nameTmpPtr[ii] = '_';
+                /* Save description in the native event array */
+                tmpSizeBytes = PAPI_2MAX_STR_LEN-1 * sizeof( char );
+                cuptiErr = ( *cuptiEventGetAttributePtr ) ( myeventID, CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &tmpSizeBytes, gctxt->availEventDesc[idxEventArray].description );
+                CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGetAttribute" );
+                gctxt->availEventDesc[idxEventArray].description[PAPI_2MAX_STR_LEN-1] = '\0';
+                // SUBDBG( "Event ID:%d Name:%s Desc:%s\n", gctxt->availEventIDArray[idxEventArray], gctxt->availEventDesc[idxEventArray].name, gctxt->availEventDesc[idxEventArray].description );
+                /* Increment index past events in this domain to start of next domain */
+                idxEventArray++;
+            }
+            papi_free ( domainEventIDArray );
+        }
+    }
+    /* return 0 if everything went OK */
+    return 0;
 }
 
 
@@ -492,514 +370,385 @@ getEventValue( long long *counts, CUpti_EventGroup eventGroup, AddedEvents_t add
  *****************************************************************************/
 
 /*
- * This is called whenever a thread is initialized
+ * This is called whenever a thread is initialized.
  */
-int
-CUDA_init_thread( hwd_context_t * ctx )
+static int papicuda_init_thread( hwd_context_t * ctx )
 {
-	( void ) ctx;
-	
-	return PAPI_OK;
+    ( void ) ctx;
+    SUBDBG( "Entering\n" );
+
+    return PAPI_OK;
 }
 
 
-/* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+/** Initialize hardware counters, setup the function vector table
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
- *
- * NOTE: only called by main thread (not by every thread) !!!
- *
- * Starting in CUDA 4.0, multiple CPU threads can access the same CUDA context.
- * This is a much easier programming model then pre-4.0 as threads - using the 
- * same context - can share memory, data, etc. 
- * It's possible to create a different context for each thread, but then we are
- * likely running into a limitation that only one context can be profiled at a time.
- * ==> and we don't want this. That's why CUDA context creation is done in 
- * CUDA_init_component() (called only by main thread) rather than CUDA_init() 
- * or CUDA_init_control_state() (both called by each thread).
  */
-int
-CUDA_init_component( int cidx )
+/* NOTE: only called by main thread (not by every thread) !!! Starting
+   in CUDA 4.0, multiple CPU threads can access the same CUDA
+   context. This is a much easier programming model then pre-4.0 as
+   threads - using the same context - can share memory, data,
+   etc. It's possible to create a different context for each thread.
+   That's why CUDA context creation is done in CUDA_init_component()
+   (called only by main thread) rather than CUDA_init() or
+   CUDA_init_control_state() (both called by each thread). */
+static int papicuda_init_component( int cidx )
 {
-	SUBDBG ("Entry: cidx: %d\n", cidx);
-	CUresult cuErr = CUDA_SUCCESS;
+    SUBDBG( "Entering with cidx: %d\n", cidx );
+    int err;
 
-	/* link in all the cuda libraries and resolve the symbols we need to use */
-	if (linkCudaLibraries() != PAPI_OK) {
-		SUBDBG ("Dynamic link of CUDA libraries failed, component will be disabled.\n");
-		SUBDBG ("See disable reason in papi_component_avail output for more details.\n");
-		return (PAPI_ENOSUPP);
-	}
+    /* link in all the cuda libraries and resolve the symbols we need to use */
+    if( papicuda_linkCudaLibraries() != PAPI_OK ) {
+        PAPIERROR( "Dynamic link of CUDA libraries failed, component will be disabled.\n" );
+        return ( PAPI_ENOSUPP );
+    }
 
-	/* Create dynamic event table */
-	NUM_EVENTS = detectDevice(  );
-	if (NUM_EVENTS < 0) {
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "Call to detectDevice failed.",PAPI_MAX_STR_LEN);
-		return (PAPI_ENOSUPP);
-	}
-	/* TODO: works only for one device right now;
-	 need to find out if user can use 2 or more devices at same time */
+    /* Create the structure */
+    if ( !global_papicuda_context )
+        global_papicuda_context = ( papicuda_context_t* ) papi_calloc( 1, sizeof( papicuda_context_t ) );
 
-	/* want create a CUDA context for either the default device or
-	 the device specified with cudaSetDevice() in user code */
-	if ( CUDA_SUCCESS != (*cudaGetDevicePtr)( &currentDeviceID ) ) {
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "No NVIDIA GPU's found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	
-	if ( getenv( "PAPI_VERBOSE" ) ) {
-		printf( "DEVICE USED: %s (%d)\n", device[currentDeviceID].name,
-			   currentDeviceID );
-	}
-	
-	/* get the CUDA context from the calling CPU thread */
-	cuErr = (*cuCtxGetCurrentPtr)( &cuCtx );
+    /* Get list of all native CUDA events supported */
+    err = papicuda_list_all_events( global_papicuda_context );
+    CHECK_PRINT_EVAL( err!=0, "ERROR: Could not get a list of CUDA/CUPTI events", return( PAPI_ENOSUPP ) );
 
-	/* if no CUDA context is bound to the calling CPU thread yet, create one */
-	if ( cuErr != CUDA_SUCCESS || cuCtx == NULL ) {
-		cuErr = (*cuCtxCreatePtr)( &cuCtx, 0, device[currentDeviceID].dev );
-		CHECK_CU_ERROR( cuErr, "cuCtxCreate" );
-	}
+    /* Export some information */
+    _cuda_vector.cmp_info.CmpIdx = cidx;
+    _cuda_vector.cmp_info.num_native_events = global_papicuda_context->availEventSize;
+    _cuda_vector.cmp_info.num_cntrs = _cuda_vector.cmp_info.num_native_events;
+    _cuda_vector.cmp_info.num_mpx_cntrs = _cuda_vector.cmp_info.num_native_events;
 
-	/* cuCtxGetCurrent() can return a non-null context that is not valid 
-	   because the context has not yet been initialized.
-	   Here is a workaround: 
-	   cudaFree(NULL) forces the context to be initialized
-	   if cudaFree(NULL) returns success then we are able to use the context in subsequent calls
-	   if cudaFree(NULL) returns an error (or subsequent cupti* calls) then the context is not usable,
-	   and will never be useable */
-	if ( CUDA_SUCCESS != (*cudaFreePtr)( NULL ) ) {
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "Problem initializing CUDA context.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-
-	/* Create dynamic event table */
-	cuda_native_table = ( CUDA_native_event_entry_t * )
-		malloc( sizeof ( CUDA_native_event_entry_t ) * NUM_EVENTS );
-	if ( cuda_native_table == NULL ) {
-		perror( "malloc(): Failed to allocate memory to events table" );
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "Failed to allocate memory to events table.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-
-	if ( NUM_EVENTS != createNativeEvents(  ) ) {
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "Error creating CUDA event list.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	
-	/* Export the component id */
-	_cuda_vector.cmp_info.CmpIdx = cidx;
-
-	/* Number of events */
-	_cuda_vector.cmp_info.num_native_events = NUM_EVENTS;
-
-	return ( PAPI_OK );
+    //SUBDBG( "Exiting PAPI_OK\n" );
+    return ( PAPI_OK );
 }
 
 
-/*
- * Link the necessary CUDA libraries to use the cuda component.  If any of them can not be found, then
- * the CUDA component will just be disabled.  This is done at runtime so that a version of PAPI built
- * with the CUDA component can be installed and used on systems which have the CUDA libraries installed
- * and on systems where these libraries are not installed.
+/** Setup a counter control state.
+ *   In general a control state holds the hardware info for an
+ *   EventSet.
  */
-static int 
-linkCudaLibraries ()
+static int papicuda_init_control_state( hwd_control_state_t *ctrl )
 {
-		/* Attempt to guess if we were statically linked to libc, if so bail */
-		if ( _dl_non_dynamic_init != NULL ) {
-				strncpy(_cuda_vector.cmp_info.disabled_reason, "The cuda component does not support statically linking to libc.",PAPI_MAX_STR_LEN);
-				return PAPI_ENOSUPP;
-		}
-	/* Need to link in the cuda libraries, if not found disable the component */
-	dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl1)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA library libcuda.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuCtxCreatePtr = dlsym(dl1, "cuCtxCreate_v2");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuCtxCreate not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuCtxDestroyPtr = dlsym(dl1, "cuCtxDestroy_v2");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuCtxDestroy not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuCtxGetCurrentPtr = dlsym(dl1, "cuCtxGetCurrent");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuCtxGetCurrent not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuDeviceGetPtr = dlsym(dl1, "cuDeviceGet");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuDeviceGet not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuDeviceGetCountPtr = dlsym(dl1, "cuDeviceGetCount");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuDeviceGetCount not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuDeviceGetNamePtr = dlsym(dl1, "cuDeviceGetName");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuDeviceGetName not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuInitPtr = dlsym(dl1, "cuInit");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA function cuInit not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
+    SUBDBG( "Entering\n" );
+    ( void ) ctrl;
+    papicuda_context_t *gctxt = global_papicuda_context;
 
-	dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl2)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA runtime library libcudart.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cudaFreePtr = dlsym(dl2, "cudaFree");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaFree not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cudaGetDevicePtr = dlsym(dl2, "cudaGetDevice");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaGetDevice not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cudaRuntimeGetVersionPtr = dlsym(dl2, "cudaRuntimeGetVersion");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaRuntimeGetVersion not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cudaDriverGetVersionPtr = dlsym(dl2, "cudaDriverGetVersion");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDART function cudaDriverGetVersion not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
+    CHECK_PRINT_EVAL( !gctxt, "Error: The PAPI CUDA component needs to be initialized first", return( PAPI_ENOINIT ) );
+    /* If no events were found during the initial component initialization, return error  */
+    if( global_papicuda_context->availEventSize <= 0 ) {
+        strncpy( _cuda_vector.cmp_info.disabled_reason, "ERROR CUDA: No events exist", PAPI_MAX_STR_LEN );
+        return ( PAPI_EMISC );
+    }
+    /* If it does not exist, create the global structure to hold CUDA contexts and active events */
+    if ( !global_papicuda_control ) {
+        global_papicuda_control = ( papicuda_control_t* ) papi_calloc( 1, sizeof( papicuda_control_t ) );
+        global_papicuda_control->countOfActiveCUContexts = 0;
+        global_papicuda_control->activeEventCount = 0;
+    }
+    return PAPI_OK;
+}
 
-	dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl3)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA runtime library libcupti.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiDeviceEnumEventDomainsPtr = dlsym(dl3, "cuptiDeviceEnumEventDomains");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiDeviceEnumEventDomains not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiDeviceGetEventDomainAttributePtr = dlsym(dl3, "cuptiDeviceGetEventDomainAttribute");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiDeviceGetEventDomainAttribute not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiDeviceGetNumEventDomainsPtr = dlsym(dl3, "cuptiDeviceGetNumEventDomains");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiDeviceGetNumEventDomains not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventDomainEnumEventsPtr = dlsym(dl3, "cuptiEventDomainEnumEvents");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventDomainEnumEvents not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventDomainGetNumEventsPtr = dlsym(dl3, "cuptiEventDomainGetNumEvents");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventDomainGetNumEvents not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGetAttributePtr = dlsym(dl3, "cuptiEventGetAttribute");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGetAttribute not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGroupAddEventPtr = dlsym(dl3, "cuptiEventGroupAddEvent");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupAddEvent not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGroupCreatePtr = dlsym(dl3, "cuptiEventGroupCreate");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupCreate not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGroupDestroyPtr = dlsym(dl3, "cuptiEventGroupDestroy");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupDestroy not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGroupDisablePtr = dlsym(dl3, "cuptiEventGroupDisable");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupDisable not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGroupEnablePtr = dlsym(dl3, "cuptiEventGroupEnable");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupEnable not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGroupReadAllEventsPtr = dlsym(dl3, "cuptiEventGroupReadAllEvents");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupReadAllEvents not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-    cuptiEventGroupRemoveAllEventsPtr = dlsym(dl3, "cuptiEventGroupRemoveAllEvents");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupRemoveAllEvents not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
-	cuptiEventGroupResetAllEventsPtr = dlsym(dl3, "cuptiEventGroupResetAllEvents");
-	if (dlerror() != NULL)
-	{
-		strncpy(_cuda_vector.cmp_info.disabled_reason, "CUPTI function cuptiEventGroupResetAllEvents not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
+/** Triggered by eventset operations like add or remove.  For CUDA,
+ * needs to be called multiple times from each seperate CUDA context
+ * with the events to be measured from that context.  For each
+ * context, create eventgroups for the events.
+ */
+static int papicuda_update_control_state( hwd_control_state_t *ctrl, NativeInfo_t *nativeInfo, int nativeCount, hwd_context_t *ctx )
+{
+    /* Note: NativeInfo_t is defined in papi_internal.h */
+    SUBDBG( "Entering with nativeCount %d\n", nativeCount );
+    ( void ) ctx;
+    ( void ) ctrl;
+    papicuda_control_t *gctrl = global_papicuda_control;
+    papicuda_context_t *gctxt = global_papicuda_context;
+    papicuda_active_cucontext_t *currctrl;
+    int currDeviceNum, currContextIdx, cuContextIdx;
+    CUcontext currCuCtx;
+    int index, ii, jj;
 
-	return ( PAPI_OK );
+    if ( nativeCount == 0 ) {
+        /* Does nativeCount=0 implies that the component is being reset!? */
+        /* gctrl->activeEventCount = 0;  */
+    } else {
+        /* nativecount>0 so we need to process the events */
+        // SUBDBG( "There are currently %d contexts\n", gctrl->countOfActiveCUContexts );
+
+        /* Get/query some device and context specific information  */
+        CHECK_PRINT_EVAL( ( *cudaGetDevicePtr )( &currDeviceNum )!=CUDA_SUCCESS, "cudaGetDevice: CUDA device MUST be set before adding events", return( PAPI_EMISC ) );
+        CHECK_PRINT_EVAL( ( *cudaFreePtr )( NULL )!=CUDA_SUCCESS, "cudaFree: Failed to free in this CUDA context", return( PAPI_EMISC ) );
+        CHECK_PRINT_EVAL( ( *cuCtxGetCurrentPtr )( &currCuCtx )!=CUDA_SUCCESS, "cuCtxGetCurrent: CUDA context MUST be initialized before adding events", return ( PAPI_EMISC ) );
+
+        /* Find current context/control, creating it if does not exist */
+        for ( cuContextIdx=0; cuContextIdx<gctrl->countOfActiveCUContexts; cuContextIdx++ )
+            if ( gctrl->arrayOfActiveCUContexts[cuContextIdx]->context == currCuCtx ) break;
+        CHECK_PRINT_EVAL( cuContextIdx==PAPICUDA_MAX_COUNTERS,  "Exceeded hardcoded maximum number of contexts (PAPICUDA_MAX_COUNTERS)", return( PAPI_EMISC ) );
+        if ( cuContextIdx==gctrl->countOfActiveCUContexts ) {
+            gctrl->arrayOfActiveCUContexts[cuContextIdx] = papi_calloc( 1, sizeof( papicuda_active_cucontext_t ) );
+            CHECK_PRINT_EVAL( ( gctrl->arrayOfActiveCUContexts[cuContextIdx]==NULL ), "Memory allocation for new active context failed", return( PAPI_ENOMEM ) ) ;
+            gctrl->arrayOfActiveCUContexts[cuContextIdx]->context = currCuCtx;
+            gctrl->arrayOfActiveCUContexts[cuContextIdx]->deviceNum = currDeviceNum;
+            gctrl->countOfActiveCUContexts++;
+            SUBDBG( "Added a new context ... now %d\n", gctrl->countOfActiveCUContexts );
+        }
+        currContextIdx = cuContextIdx;
+        currctrl = gctrl->arrayOfActiveCUContexts[currContextIdx];
+        /* At this point, currCuCtx is at index cuContextIdx in the arrayOfActiveCUContexts array */
+
+        /* For each event, check if it is already added.  If not, try to added it to the current context.
+           Try each existing eventgroup.  If none will have this event, create a new event group.  If new event group will not have it... fail */
+        /* For each event */
+        for( ii = 0; ii < nativeCount; ii++ ) {
+            index = nativeInfo[ii].ni_event; /* Get the PAPI event index from the user */
+            /* Check to see if event is already in some context */
+            SUBDBG( "Searching %d active events to see if event %d %s is already in some context\n", gctrl->activeEventCount, index, gctxt->availEventDesc[index].name );
+            int eventAlreadyAdded=0;
+            for( jj = 0; jj < gctrl->activeEventCount; jj++ ) {
+                if ( gctrl->activeEventIndex[jj] == index ) {
+                    eventAlreadyAdded=1;
+                    break;
+                }
+            }
+
+            /* If event was not found in any context.. try to insert it into current context */
+            if ( !eventAlreadyAdded ) {
+                SUBDBG( "Need to add event %d %s to the current context\n", index, gctxt->availEventDesc[index].name );
+                /* Make sure that the device number for the event matches the device for this context */
+                CHECK_PRINT_EVAL( (currDeviceNum!=gctxt->availEventDeviceNum[index]), "Current CUDA device cannot use this event", return( PAPI_EINVAL ) );
+                /* if this event index corresponds to something from availEventIDArray */
+                if ( index < ( int )gctxt->availEventSize ) {
+                    /* lookup cuptieventid for this event index */
+                    CUpti_EventID cuptieventid = gctxt->availEventIDArray[index];
+                    CUpti_EventGroup cuptieventgroup;
+                    int addstatus=!CUPTI_SUCCESS, gg;
+                    SUBDBG( "Event %s is going to be added to current context %d having %d eventgroups\n", gctxt->availEventDesc[index].name, currContextIdx, currctrl->numEventGroups );
+                    /* For each existing eventgroup, try to insert this event */
+                    for ( gg=0; gg<currctrl->numEventGroups; gg++ ) {
+                        cuptieventgroup = currctrl->eventGroup[gg];
+                        addstatus = ( *cuptiEventGroupAddEventPtr )( cuptieventgroup, cuptieventid );
+                        if ( addstatus==CUPTI_SUCCESS ) {
+                            SUBDBG( "Event %s successfully added to current eventgroup %d:%d\n", gctxt->availEventDesc[index].name, currContextIdx, gg );
+                            break;
+                        }
+                    }
+                    /* If the event could not be added to any earlier eventgroup, create a new one and try again.  Fail if this does not succeed */
+                    if ( addstatus!=CUPTI_SUCCESS ) {
+                        //SUBDBG( "Event %s needs a new eventgroup\n", gctxt->availEventDesc[index].name );
+                        CHECK_PRINT_EVAL( ( gg>PAPICUDA_MAX_COUNTERS-1 ), "For current CUDA device, could not add event (no more eventgroups can be added)", return( PAPI_EMISC ) );
+                        //SUBDBG( "gg %d context %d %p\n", gg, currctrl->context, currctrl->context  );
+                        CHECK_CUPTI_ERROR( ( *cuptiEventGroupCreatePtr )( currctrl->context, &currctrl->eventGroup[gg], 0 ), "cuptiEventGroupCreate" );
+                        cuptieventgroup = currctrl->eventGroup[gg];
+                        currctrl->numEventGroups++;
+                        addstatus = ( *cuptiEventGroupAddEventPtr )( cuptieventgroup, cuptieventid );
+                        CHECK_PRINT_EVAL( ( addstatus!=CUPTI_SUCCESS ), "cuptiEventGroupAddEvent: Could not add event (event may not match CUDA context)", return( PAPI_EMISC ) );
+                        SUBDBG( "Event %s successfully added to new eventgroup %d:%d\n", gctxt->availEventDesc[index].name, currContextIdx, gg );
+                    }
+                }
+
+                /* Record index of this active event back into the nativeInfo structure */
+                nativeInfo[ii].ni_position = gctrl->activeEventCount;
+                /* record added event at the higher level */
+                CHECK_PRINT_EVAL( ( gctrl->activeEventCount==PAPICUDA_MAX_COUNTERS-1 ), "Exceeded maximum num of events (PAPI_MAX_COUNTERS)", return( PAPI_EMISC ) );
+                gctrl->activeEventIndex[gctrl->activeEventCount] = index;
+                gctrl->activeEventContextIdx[gctrl->activeEventCount] = currContextIdx;
+                gctrl->activeEventValues[gctrl->activeEventCount] = 0;
+                gctrl->activeEventCount++;
+
+            }
+        }
+    }
+    return ( PAPI_OK );
+}
+
+/** Triggered by PAPI_start().
+ * For CUDA component, switch to each context and start all eventgroups.
+*/
+static int papicuda_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
+{
+    SUBDBG( "Entering\n" );
+    ( void ) ctx;
+    ( void ) ctrl;
+    papicuda_control_t *gctrl = global_papicuda_control;
+    //papicuda_context_t *gctxt = global_papicuda_context;
+    papicuda_active_cucontext_t *currctrl;
+    int cuContextIdx, gg, ii;
+    CUptiResult cuptiErr;
+    CUcontext saveCtx, tmpCtx;
+
+    //SUBDBG( "Reset all active event values\n" );
+    for ( ii=0; ii<gctrl->activeEventCount; ii++ )
+        gctrl->activeEventValues[ii] = 0;
+
+    // SUBDBG( "Switch to each context and enable CUDA eventgroups associated with that context\n" );
+    /* Save current cuda context */
+    CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &saveCtx ), "cuCtxPopCurrent" );
+    /* Switch to each context and enable CUDA eventgroups */
+    for ( cuContextIdx=0; cuContextIdx<gctrl->countOfActiveCUContexts; cuContextIdx++ ) {
+        currctrl = gctrl->arrayOfActiveCUContexts[cuContextIdx];
+        //SUBDBG( "Try to switch to context %d associated with device %d\n", cuContextIdx, currctrl->deviceNum );
+        CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( currctrl->context ),  "cuCtxPushCurrent" );
+        for ( gg=0; gg<currctrl->numEventGroups; gg++ ) {
+            // SUBDBG( "Enable event group\n" );
+            cuptiErr = ( *cuptiEventGroupEnablePtr )( currctrl->eventGroup[gg] );
+            CHECK_PRINT_EVAL( ( cuptiErr!=CUPTI_SUCCESS ), "cuptiEventGroupEnable: Could not enable one of the event groups", return( PAPI_EMISC ) );
+            // SUBDBG( "Reset events in eventgroup\n" );
+            cuptiErr = ( *cuptiEventGroupResetAllEventsPtr )( currctrl->eventGroup[gg] );
+            CHECK_PRINT_EVAL( ( cuptiErr!=CUPTI_SUCCESS ), "cuptiEventGroupResetAllEvents: Could not reset the event groups", return( PAPI_EMISC ) );
+            SUBDBG( "For papicuda context %d on device %d event group %d was enabled and reset\n", cuContextIdx, currctrl->deviceNum, gg );
+        }
+        // SUBDBG( "Pop temp context\n" );
+        CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &tmpCtx ),  "cuCtxPopCurrent" );
+    }
+    //SUBDBG( "Restore original context\n" );
+    CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( saveCtx ),  "cuCtxPushCurrent" );
+    return ( PAPI_OK );
+}
+
+/** Triggered by PAPI_stop() */
+static int papicuda_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
+{
+    SUBDBG( "Entering to disable all CUPTI eventgroups\n" );
+    ( void ) ctx;
+    ( void ) ctrl;
+    papicuda_control_t *gctrl = global_papicuda_control;
+    papicuda_active_cucontext_t *currctrl;
+    int cuContextIdx, gg;
+    CUptiResult cuptiErr;
+    CUcontext saveCtx, tmpCtx;
+
+    // SUBDBG( "Save initial CUDA context\n" );
+    CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &saveCtx ), "cuCtxPopCurrent" );
+    // SUBDBG( "Switch to each context and disable CUDA eventgroups\n" );
+    for ( cuContextIdx=0; cuContextIdx<gctrl->countOfActiveCUContexts; cuContextIdx++ ) {
+        currctrl = gctrl->arrayOfActiveCUContexts[cuContextIdx];
+        //SUBDBG( "Try to switch to context %d associated with device %d\n", cuContextIdx, currctrl->deviceNum );
+        CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( currctrl->context ),  "cuCtxPushCurrent" );
+        for ( gg=0; gg<currctrl->numEventGroups; gg++ ) {
+            // SUBDBG( "Disable events in eventgroup\n" );
+            cuptiErr = ( *cuptiEventGroupDisablePtr )( currctrl->eventGroup[gg] );
+            CHECK_PRINT_EVAL( ( cuptiErr!=CUPTI_SUCCESS ), "cuptiEventGroupDisable: Could not disable the event groups", return( PAPI_EMISC ) );
+            SUBDBG( "For papicuda context %d on device %d event group %d was disabled\n", cuContextIdx, currctrl->deviceNum, gg );
+        }
+        CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &tmpCtx ),  "cuCtxPopCurrent" );
+    }
+    //SUBDBG( "Restore original context\n" );
+    CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( saveCtx ),  "cuCtxPushCurrent" );
+    return ( PAPI_OK );
 }
 
 
-/*
- * Control of counters (Reading/Writing/Starting/Stopping/Setup)
- * functions
- */
-int
-CUDA_init_control_state( hwd_control_state_t * ctrl )
+/** Triggered by PAPI_read().  For CUDA component, switch to each
+ * context, read all the eventgroups, and put the values in the
+ * correct places. */
+static int papicuda_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long ** events, int flags )
 {
-	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
-	CUptiResult cuptiErr = CUPTI_SUCCESS;
-	int i;
+    SUBDBG( "Entering\n" );
+    ( void ) ctx;
+    ( void ) ctrl;
+    ( void ) flags;
+    papicuda_control_t *gctrl = global_papicuda_control;
+    papicuda_context_t *gctxt = global_papicuda_context;
+    papicuda_active_cucontext_t *currctrl;
+    int cuContextIdx, gg, ii, jj;
+    CUcontext saveCtx, tmpCtx;
+    CUptiResult cuptiErr;
+    size_t readEventValueBufferSize = sizeof( uint64_t )*PAPICUDA_MAX_COUNTERS;
+    uint64_t readEventValueBuffer[PAPICUDA_MAX_COUNTERS];
+    size_t readEventIDArraySize = sizeof( CUpti_EventID )*PAPICUDA_MAX_COUNTERS;
+    CUpti_EventID readEventIDArray[PAPICUDA_MAX_COUNTERS];
+    size_t numEventIDsRead;
 
-	/* allocate memory for the list of events that are added to the CuPTI eventGroup */
-	CUDA_ctrl->addedEvents.list = malloc( sizeof ( int ) * NUM_EVENTS );
-	if ( CUDA_ctrl->addedEvents.list == NULL ) {
-		perror
-		( "malloc(): Failed to allocate memory to table of events that are added to CuPTI eventGroup" );
-		return ( PAPI_ENOSUPP );
-	}
-	
-	/* initialize the event list */
-	for ( i = 0; i < NUM_EVENTS; i++ )
-		CUDA_ctrl->addedEvents.list[i] = 0;
+    SUBDBG( "Switch to each context and read CUDA eventgroups\n" );
+    // SUBDBG( "Save initial CUDA context\n" );
+    CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &saveCtx ), "cuCtxPopCurrent" );
+    /* Switch to each context and enable CUDA eventgroups */
+    for ( cuContextIdx=0; cuContextIdx<gctrl->countOfActiveCUContexts; cuContextIdx++ ) {
+        currctrl = gctrl->arrayOfActiveCUContexts[cuContextIdx];
+        // SUBDBG( "Switch to context %d associated with device %d\n", cuContextIdx, currctrl->deviceNum );
+        CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( currctrl->context ),  "cuCtxPushCurrent" );
+        for ( gg=0; gg<currctrl->numEventGroups; gg++ ) {
+            // SUBDBG( "Read from context %d eventgroup %d\n", cuContextIdx, gg );
+            cuptiErr = ( *cuptiEventGroupReadAllEventsPtr )( currctrl->eventGroup[gg], CUPTI_EVENT_READ_FLAG_NONE, &readEventValueBufferSize, readEventValueBuffer, &readEventIDArraySize, readEventIDArray, &numEventIDsRead );
+            CHECK_PRINT_EVAL( ( cuptiErr!=CUPTI_SUCCESS ), "cuptiEventGroupReadAllEvents: Could not read from CUPTI eventgroup", return( PAPI_EMISC ) );
+            /* Match read values against active events by scanning activeEvents array and matching associated availEventIDs  */
+            for( ii = 0; ii < ( int )numEventIDsRead; ii++ ) {
+                for( jj = 0; jj < gctrl->activeEventCount; jj++ ) {
+                    int eventIndex = gctrl->activeEventIndex[jj];
+                    if ( gctrl->activeEventContextIdx[jj]==cuContextIdx && gctxt->availEventIDArray[eventIndex]==readEventIDArray[ii] ) {
+                        gctrl->activeEventValues[jj] += ( long long )readEventValueBuffer[ii];
+                        SUBDBG( "Matched read-eventID %d:%d value %ld activeEvent %d value %lld \n", jj, (int)readEventIDArray[ii], readEventValueBuffer[ii], eventIndex, gctrl->activeEventValues[jj] );
+                        break;
+                    }
+                }
+            }
+        }
+        CUresult cuErr = ( *cuCtxPopCurrentPtr ) ( &tmpCtx );
+        if ( cuErr != CUDA_SUCCESS ) PAPIERROR ( "Error popping context %d\n", cuErr );
+        CHECK_CU_ERROR( cuErr,  "cuCtxPopCurrent" );
+    }
+    //SUBDBG( "Restore original context\n" );
+    CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( saveCtx ),  "cuCtxPushCurrent" );
+    *events = gctrl->activeEventValues;
+    return ( PAPI_OK );
+}
 
-	
-	
-	cuptiErr = (*cuptiEventGroupCreatePtr)( cuCtx, &CUDA_ctrl->eventGroup, 0 );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupCreate" );
-	
-	return PAPI_OK;
+/** Called at thread shutdown. Does nothing in the CUDA component. */
+int papicuda_shutdown_thread( hwd_context_t * ctx )
+{
+    SUBDBG( "Entering\n" );
+    ( void ) ctx;
+
+    return ( PAPI_OK );
+}
+
+/** Triggered by PAPI_shutdown() and frees memory allocated in the CUDA component. */
+static int papicuda_shutdown_component( void )
+{
+    SUBDBG( "Entering\n" );
+    papicuda_control_t *gctrl = global_papicuda_control;
+    papicuda_context_t *gctxt = global_papicuda_context;
+    int deviceNum, cuContextIdx;
+    /* Free context  */
+    if ( gctxt ) {
+        for( deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++ ) {
+            papicuda_device_desc_t *mydevice = &gctxt->deviceArray[deviceNum];
+            papi_free( mydevice->domainIDArray );
+            papi_free( mydevice->domainIDNumEvents );
+        }
+        papi_free( gctxt->availEventIDArray );
+        papi_free( gctxt->availEventDeviceNum );
+        papi_free( gctxt->availEventDesc );
+        papi_free( gctxt->deviceArray );
+        papi_free( gctxt );
+        global_papicuda_context = gctxt = NULL;
+    }
+    /* Free control  */
+    if ( gctrl ) {
+        for ( cuContextIdx=0; cuContextIdx<gctrl->countOfActiveCUContexts; cuContextIdx++ )
+            if ( gctrl->arrayOfActiveCUContexts[cuContextIdx]!=NULL )
+                papi_free( gctrl->arrayOfActiveCUContexts[cuContextIdx] );
+        papi_free( gctrl );
+        global_papicuda_control = gctrl = NULL;
+    }
+    // close the dynamic libraries needed by this component (opened in the init substrate call)
+    dlclose( dl1 );
+    dlclose( dl2 );
+    dlclose( dl3 );
+    return ( PAPI_OK );
 }
 
 
-/*
- *
+/** This function sets various options in the component - Does nothing in the CUDA component.
+  @param[in] ctx -- hardware context
+  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
+  @param[in] option -- options to be set
  */
-int
-CUDA_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
+static int papicuda_ctrl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
-	( void ) ctx;
-	int i;
-	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
-	CUptiResult cuptiErr = CUPTI_SUCCESS;
-	
-	// reset all event values to 0
-	for ( i = 0; i < NUM_EVENTS; i++ )
-		CUDA_ctrl->counts[i] = 0;
-
-	cuptiErr = (*cuptiEventGroupEnablePtr)( CUDA_ctrl->eventGroup );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupEnable" );
-
-	/* Resets all events in the CuPTI eventGroup to zero */
-	cuptiErr = (*cuptiEventGroupResetAllEventsPtr)( CUDA_ctrl->eventGroup );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupResetAllEvents" );
-
-	return ( PAPI_OK );
-}
-
-
-/*
- *
- */
-int
-CUDA_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
-{
-	( void ) ctx;
-	( void ) ctrl;
-
-	return ( PAPI_OK );
-}
-
-
-/*
- *
- */
-int
-CUDA_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
-		   long_long ** events, int flags )
-{
-	( void ) ctx;
-	( void ) flags;
-	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
-
-
-	if ( 0 != getEventValue( CUDA_ctrl->counts, CUDA_ctrl->eventGroup, CUDA_ctrl->addedEvents ) )
-		return ( PAPI_ENOSUPP );
-
-	*events = CUDA_ctrl->counts;
-
-	return ( PAPI_OK );
-}
-
-/* 
- *
- */
-int
-CUDA_shutdown_thread( hwd_context_t *ctx )
-{
-	CUDA_context_t *CUDA_ctx = (CUDA_context_t*)ctx;
-	free( CUDA_ctx->state.addedEvents.list );
-	return (PAPI_OK);
-}
-
-/*
- *
- */
-int
-CUDA_shutdown_component( void )
-{
-	CUresult cuErr = CUDA_SUCCESS;
-	
-	/* if running a threaded application, we need to make sure that 
-	   a thread doesn't free the same memory location(s) more than once */
-	if ( CUDA_FREED == 0 ) {
-		uint32_t j;
-		int i;
-		
-		CUDA_FREED = 1;
-
-		/* deallocate all the memory */
-		for ( i = 0; i < deviceCount; i++ ) {
-			for ( j = 0; j < device[i].domainCount; j++ )
-				free( device[i].domain[j].event );
-			
-			free( device[i].domain );
-		}
-
-		free( device );
-		free( cuda_native_table );
-		
-		/* destroy floating CUDA context */
-		cuErr = (*cuCtxDestroyPtr)( cuCtx );
-		if ( cuErr != CUDA_SUCCESS )
-			return ( PAPI_ENOSUPP );			// Not supported
-	}
-
-	// close the dynamic libraries needed by this component (opened in the init substrate call)
-	dlclose(dl1);
-	dlclose(dl2);
-	dlclose(dl3);
-
-	return ( PAPI_OK );
-}
-
-
-/* This function sets various options in the component
- * The valid codes being passed in are PAPI_SET_DEFDOM,
- * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
- */
-int
-CUDA_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
-{
-	( void ) ctx;
-	( void ) code;
-	( void ) option;
-	return ( PAPI_OK );
-}
-
-
-//int CUDA_ntv_code_to_bits ( unsigned int EventCode, hwd_register_t * bits );
-
-
-/*
- *
- */
-int
-CUDA_update_control_state( hwd_control_state_t * ptr,
-						   NativeInfo_t * native, int count,
-						   hwd_context_t * ctx )
-{
-	( void ) ctx;
-	CUDA_control_state_t * CUDA_ptr = ( CUDA_control_state_t * ) ptr;
-	int index, i;
-	CUptiResult cuptiErr = CUPTI_SUCCESS;
-
-    /* Disable the CUDA eventGroup;
-     it also frees the perfmon hardware on the GPU */
-	cuptiErr = (*cuptiEventGroupDisablePtr)( CUDA_ptr->eventGroup );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
-
-    cuptiErr = (*cuptiEventGroupRemoveAllEventsPtr)( CUDA_ptr->eventGroup );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupRemoveAllEvents" );
-    
-    // otherwise, add the events to the eventset
-	for ( i = 0; i < count; i++ ) {
-       
-		index = native[i].ni_event;
-		native[i].ni_position = index;
-
-		/* store events, that have been added to the CuPTI eveentGroup 
-		   in a seperate place (addedEvents).
-		   Needed, so that we can read the values for the added events only */
-		CUDA_ptr->addedEvents.count = count;
-		CUDA_ptr->addedEvents.list[i] = index;
-
-		/* if this device name is different from the actual device the code is running on, then exit */
-		if ( 0 != strncmp( device[currentDeviceID].name,
-						   cuda_native_table[index].name,
-						   strlen( device[currentDeviceID].name ) ) ) {
-			fprintf( stderr, "Device %s is used -- BUT event %s is collected. \n ---> ERROR: Specify events for the device that is used!\n\n",
-				  device[currentDeviceID].name, cuda_native_table[index].name );
-			
-			return ( PAPI_ENOSUPP );	// Not supported 
-		}
-
-		/* Add events to the CuPTI eventGroup */
-		cuptiErr =
-			(*cuptiEventGroupAddEventPtr)( CUDA_ptr->eventGroup,
-									 cuda_native_table[index].resources.
-									 eventId );
-		CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupAddEvent" );
-	}
-
-	return ( PAPI_OK );
+    SUBDBG( "Entering\n" );
+    ( void ) ctx;
+    ( void ) code;
+    ( void ) option;
+    return ( PAPI_OK );
 }
 
 
@@ -1013,198 +762,206 @@ CUDA_update_control_state( hwd_control_state_t * ptr,
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int
-CUDA_set_domain( hwd_control_state_t * cntrl, int domain )
+static int papicuda_set_domain( hwd_control_state_t * ctrl, int domain )
 {
-	int found = 0;
-	( void ) cntrl;
-
-	if ( PAPI_DOM_USER & domain )
-		found = 1;
-
-	if ( PAPI_DOM_KERNEL & domain )
-		found = 1;
-
-	if ( PAPI_DOM_OTHER & domain )
-		found = 1;
-
-	if ( !found )
-		return ( PAPI_EINVAL );
-
-	return ( PAPI_OK );
-}
-
-
-/*
- *
- */
-int
-CUDA_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
-{
-	( void ) ctx;
-	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
-	CUptiResult cuptiErr = CUPTI_SUCCESS;
-
-	/* Resets all events in the CuPTI eventGroup to zero */
-	cuptiErr = (*cuptiEventGroupResetAllEventsPtr)( CUDA_ctrl->eventGroup );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupResetAllEvents" );
-
-	return ( PAPI_OK );
-}
-
-
-/*
- * Disable and Destoy the CUDA eventGroup */
-int
-CUDA_cleanup_eventset( hwd_control_state_t * ctrl )
-{
+    SUBDBG( "Entering\n" );
     ( void ) ctrl;
-    
-    // TODO: after cleanup_eventset() which destroys the eventset, update_control_state()
-    // is called, which operates on the already destroyed eventset. Bad!
-#if 0
-	CUDA_control_state_t * CUDA_ctrl = ( CUDA_control_state_t * ) ctrl;
-	CUptiResult cuptiErr = CUPTI_SUCCESS;
-
-	/* Disable the CUDA eventGroup;
-	   it also frees the perfmon hardware on the GPU */
-	cuptiErr = (*cuptiEventGroupDisablePtr)( CUDA_ctrl->eventGroup );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDisable" );
-
-	/* Call the CuPTI cleaning function before leaving */
-	cuptiErr = (*cuptiEventGroupDestroyPtr)( CUDA_ctrl->eventGroup );
-	CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDestroy" );
-#endif
-	return ( PAPI_OK );
+    if ( ( PAPI_DOM_USER & domain ) ||
+            ( PAPI_DOM_KERNEL & domain ) ||
+            ( PAPI_DOM_OTHER & domain ) )
+        return ( PAPI_OK );
+    else
+        return ( PAPI_EINVAL );
+    return ( PAPI_OK );
 }
 
 
-/*
- * Native Event functions
- */
-int
-CUDA_ntv_enum_events( unsigned int *EventCode, int modifier )
+/** Triggered by PAPI_reset() but only if the EventSet is currently
+ *  running. If the eventset is not currently running, then the saved
+ *  value in the EventSet is set to zero without calling this
+ *  routine.  */
+static int papicuda_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
+    SUBDBG( "Entering\n" );
+    ( void ) ctx;
+    ( void ) ctrl;
+    papicuda_control_t *gctrl = global_papicuda_control;
+    papicuda_active_cucontext_t *currctrl;
+    int cuContextIdx, gg, ii;
+    CUptiResult cuptiErr;
+    CUcontext saveCtx, tmpCtx;
 
-	switch ( modifier ) {
-	case PAPI_ENUM_FIRST:
-		*EventCode = 0;
-
-		return ( PAPI_OK );
-		break;
-
-	case PAPI_ENUM_EVENTS:
-	{
-		int index = *EventCode;
-
-		if ( index < NUM_EVENTS - 1 ) {
-			*EventCode = *EventCode + 1;
-			return ( PAPI_OK );
-		} else
-			return ( PAPI_ENOEVNT );
-
-		break;
-	}
-	default:
-		return ( PAPI_EINVAL );
-	}
-	return ( PAPI_EINVAL );
+    //SUBDBG( "Reset all active event values\n" );
+    for ( ii=0; ii<gctrl->activeEventCount; ii++ )
+        gctrl->activeEventValues[ii] = 0;
+    // SUBDBG( "Save initial CUDA context and restore later\n" );
+    CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &saveCtx ), "cuCtxPopCurrent" );
+    // SUBDBG( "Switch to each context and reset CUDA eventgroups\n" );
+    for ( cuContextIdx=0; cuContextIdx<gctrl->countOfActiveCUContexts; cuContextIdx++ ) {
+        currctrl = gctrl->arrayOfActiveCUContexts[cuContextIdx];
+        //SUBDBG( "Try to switch to context %d associated with device %d\n", cuContextIdx, currctrl->deviceNum );
+        CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( currctrl->context ),  "cuCtxPushCurrent" );
+        for ( gg=0; gg<currctrl->numEventGroups; gg++ ) {
+            // SUBDBG( "Reset events in eventgroup\n" );
+            cuptiErr = ( *cuptiEventGroupResetAllEventsPtr )( currctrl->eventGroup[gg] );
+            CHECK_PRINT_EVAL( ( cuptiErr!=CUPTI_SUCCESS ), "cuptiEventGroupResetAllEvents: Could not reset the event groups", return( PAPI_EMISC ) );
+            SUBDBG( "For papicuda context %d on device %d event group %d was enabled and reset\n", cuContextIdx, currctrl->deviceNum, gg );
+        }
+        CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &tmpCtx ),  "cuCtxPopCurrent" );
+    }
+    // SUBDBG( "Restore original context\n" );
+    CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( saveCtx ),  "cuCtxPushCurrent" );
+    return ( PAPI_OK );
 }
 
 
 /*
- *
- */
-int
-CUDA_ntv_code_to_name( unsigned int EventCode, char *name, int len )
+ * Disable and destroy the CUDA eventGroup
+*/
+static int papicuda_cleanup_eventset( hwd_control_state_t * ctrl )
 {
-	int index = EventCode;
+    SUBDBG( "Entering\n" );
+    ( void ) ctrl;
+    papicuda_control_t *gctrl = global_papicuda_control;
+    papicuda_active_cucontext_t *currctrl;
+    int cuContextIdx, gg;
+    CUptiResult cuptiErr;
+    CUcontext saveCtx, tmpCtx;
 
-	strncpy( name, cuda_native_table[index].name, len );
-	return ( PAPI_OK );
+    SUBDBG( "Switch to each context and disable CUDA eventgroups\n" );
+    /* Save current cuda context and restore later */
+    CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &saveCtx ), "cuCtxPopCurrent" );
+    /* Switch to each context and enable CUDA eventgroups */
+    for ( cuContextIdx=0; cuContextIdx<gctrl->countOfActiveCUContexts; cuContextIdx++ ) {
+        currctrl = gctrl->arrayOfActiveCUContexts[cuContextIdx];
+        /* Switch to this device / cuda context */
+        CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( currctrl->context ),  "cuCtxPushCurrent" );
+        for ( gg=0; gg<currctrl->numEventGroups; gg++ ) {
+            /* Destroy the eventGroups; it also frees the perfmon hardware on the GPU */
+            cuptiErr = ( *cuptiEventGroupDestroyPtr )( currctrl->eventGroup[gg] );
+            CHECK_CUPTI_ERROR( cuptiErr, "cuptiEventGroupDestroy" );
+        }
+        currctrl->numEventGroups = 0;
+        CHECK_CU_ERROR( ( *cuCtxPopCurrentPtr ) ( &tmpCtx ),  "cuCtxPopCurrent" );
+    }
+    CHECK_CU_ERROR( ( *cuCtxPushCurrentPtr ) ( saveCtx ),  "cuCtxPushCurrent" );
+    /* Record that there are no active contexts or events */
+    gctrl->activeEventCount = 0;
+    return ( PAPI_OK );
 }
 
 
-/*
- *
+/** Enumerate Native Events.
+ *   @param EventCode is the event of interest
+ *   @param modifier is one of PAPI_ENUM_FIRST, PAPI_ENUM_EVENTS
  */
-int
-CUDA_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
+static int papicuda_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	int index = EventCode;
-
-	strncpy( name, cuda_native_table[index].description, len );
-	return ( PAPI_OK );
+    //SUBDBG( "Entering\n" );
+    switch( modifier ) {
+    case PAPI_ENUM_FIRST:
+        *EventCode = 0;
+        return ( PAPI_OK );
+        break;
+    case PAPI_ENUM_EVENTS:
+        if( *EventCode < global_papicuda_context->availEventSize - 1 ) {
+            *EventCode = *EventCode + 1;
+            return ( PAPI_OK );
+        } else
+            return ( PAPI_ENOEVNT );
+        break;
+    default:
+        return ( PAPI_EINVAL );
+    }
+    return ( PAPI_OK );
 }
 
 
-/*
- *
+/** Takes a native event code and passes back the name
+ * @param EventCode is the native event code
+ * @param name is a pointer for the name to be copied to
+ * @param len is the size of the name string
  */
-int
-CUDA_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
+static int papicuda_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-	int index = EventCode;
-
-	memcpy( ( CUDA_register_t * ) bits,
-			&( cuda_native_table[index].resources ),
-			sizeof ( CUDA_register_t ) );
-
-	return ( PAPI_OK );
+    //SUBDBG( "Entering EventCode %d\n", EventCode );
+    unsigned int index = EventCode;
+    papicuda_context_t *gctxt = global_papicuda_context;
+    if ( index < gctxt->availEventSize ) {
+        strncpy( name, gctxt->availEventDesc[index].name, len );
+    } else {
+        return ( PAPI_EINVAL );
+    }
+    //SUBDBG( "EventCode %d: Exit %s\n", EventCode, name );
+    return ( PAPI_OK );
 }
 
 
-/*
- *
+/** Takes a native event code and passes back the event description
+ * @param EventCode is the native event code
+ * @param descr is a pointer for the description to be copied to
+ * @param len is the size of the descr string
  */
+static int papicuda_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
+{
+    //SUBDBG( "Entering\n" );
+    unsigned int index = EventCode;
+    papicuda_context_t *gctxt = global_papicuda_context;
+    if ( index < gctxt->availEventSize ) {
+        strncpy( name, gctxt->availEventDesc[index].description, len );
+    } else {
+        return ( PAPI_EINVAL );
+    }
+    return ( PAPI_OK );
+}
+
+
+/** Vector that points to entry points for the component */
 papi_vector_t _cuda_vector = {
-	.cmp_info = {
-				 /* default component information (unspecified values are initialized to 0) */
-				 .name = "cuda",
-				 .short_name = "cuda",
-				 .version = "5.0",
-				 .description = "CuPTI provides the API for monitoring NVIDIA GPU hardware events",
-				 .num_mpx_cntrs = CUDA_MAX_COUNTERS,
-				 .num_cntrs = CUDA_MAX_COUNTERS,
-				 .default_domain = PAPI_DOM_USER,
-				 .default_granularity = PAPI_GRN_THR,
-				 .available_granularities = PAPI_GRN_THR,
-				 .hardware_intr_sig = PAPI_INT_SIGNAL,
+    .cmp_info = {
+        /* default component information (unspecified values are initialized to 0) */
+        .name = "cuda",
+        .short_name = "cuda",
+        .version = "5.1",
+        .description = "The CUDA component uses CuPTI for NVIDIA GPU hardware events",
+        .num_mpx_cntrs = PAPICUDA_MAX_COUNTERS,
+        .num_cntrs = PAPICUDA_MAX_COUNTERS,
+        .default_domain = PAPI_DOM_USER,
+        .default_granularity = PAPI_GRN_THR,
+        .available_granularities = PAPI_GRN_THR,
+        .hardware_intr_sig = PAPI_INT_SIGNAL,
+        /* component specific cmp_info initializations */
+        .fast_real_timer = 0,
+        .fast_virtual_timer = 0,
+        .attach = 0,
+        .attach_must_ptrace = 0,
+        .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+    },
+    /* sizes of framework-opaque component-private structures... these are all unused in this component */
+    .size = {
+        .context = 1, /* sizeof( papicuda_context_t ), */
+        .control_state = 1, /*sizeof( papicuda_control_t ), */
+        .reg_value = 1, /*sizeof( papicuda_register_t ), */
+        .reg_alloc = 1, /*sizeof( papicuda_reg_alloc_t ), */
+    },
+    /* function pointers in this component */
+    .init_thread = papicuda_init_thread, /* ( hwd_context_t * ctx ) */
+    .init_component = papicuda_init_component, /* ( int cidx ) */
+    .init_control_state = papicuda_init_control_state, /* ( hwd_control_state_t * ctrl ) */
+    .start = papicuda_start, /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    .stop = papicuda_stop, /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    .read = papicuda_read, /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long ** events, int flags ) */
+    .shutdown_component = papicuda_shutdown_component, /* ( void ) */
+    .shutdown_thread = papicuda_shutdown_thread, /* ( hwd_context_t * ctx ) */
+    .cleanup_eventset = papicuda_cleanup_eventset, /* ( hwd_control_state_t * ctrl ) */
+    .ctl = papicuda_ctrl, /* ( hwd_context_t * ctx, int code, _papi_int_option_t * option ) */
+    .update_control_state = papicuda_update_control_state, /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
+    .set_domain = papicuda_set_domain, /* ( hwd_control_state_t * cntrl, int domain ) */
+    .reset = papicuda_reset, /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    .ntv_enum_events = papicuda_ntv_enum_events, /* ( unsigned int *EventCode, int modifier ) */
+    .ntv_code_to_name = papicuda_ntv_code_to_name, /* ( unsigned int EventCode, char *name, int len ) */
+    .ntv_code_to_descr = papicuda_ntv_code_to_descr, /* ( unsigned int EventCode, char *name, int len ) */
+    //.ntv_code_to_bits = papicuda_ntv_code_to_bits,   /* ( unsigned int EventCode, hwd_register_t * bits ) */
 
-				 /* component specific cmp_info initializations */
-				 .fast_real_timer = 0,
-				 .fast_virtual_timer = 0,
-				 .attach = 0,
-				 .attach_must_ptrace = 0,
-				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-				 }
-	,
-
-	/* sizes of framework-opaque component-private structures */
-	.size = {
-			 .context = sizeof ( CUDA_context_t ),
-			 .control_state = sizeof ( CUDA_control_state_t ),
-			 .reg_value = sizeof ( CUDA_register_t ),
-			 .reg_alloc = sizeof ( CUDA_reg_alloc_t ),
-			 }
-	,
-	/* function pointers in this component */
-	.init_thread = CUDA_init_thread,
-	.init_component = CUDA_init_component,
-	.init_control_state = CUDA_init_control_state,
-	.start = CUDA_start,
-	.stop = CUDA_stop,
-	.read = CUDA_read,
-	.shutdown_component = CUDA_shutdown_component,
-	.shutdown_thread = CUDA_shutdown_thread,
-	.cleanup_eventset = CUDA_cleanup_eventset,
-	.ctl = CUDA_ctl,
-	.update_control_state = CUDA_update_control_state,
-	.set_domain = CUDA_set_domain,
-	.reset = CUDA_reset,
-
-	.ntv_enum_events = CUDA_ntv_enum_events,
-	.ntv_code_to_name = CUDA_ntv_code_to_name,
-	.ntv_code_to_descr = CUDA_ntv_code_to_descr,
-	.ntv_code_to_bits = CUDA_ntv_code_to_bits,
 };
+

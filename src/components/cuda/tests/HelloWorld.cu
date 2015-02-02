@@ -45,7 +45,8 @@ int main(int argc, char** argv)
 	   FOR THE CUDA DEVICE YOU ARE RUNNING ON.
 	   RUN papi_native_avail to get a list of CUDA events that are 
 	   supported on your machine */
-    char *EventName[] = { "PAPI_FP_OPS" };
+        //char *EventName[] = { "PAPI_FP_OPS" };
+        char *EventName[] = { "cuda:::device:0:elapsed_cycles_sm" };
 	int events[NUM_EVENTS];
 	int eventCount = 0;
 	
@@ -80,6 +81,9 @@ int main(int argc, char** argv)
 	if( retval != PAPI_OK )
 		fprintf( stderr, "PAPI_create_eventset failed\n" );
 	
+        // If multiple GPUs/contexts were being used, 
+        // you need to switch to each device before adding its events
+        // e.g. cudaSetDevice( 0 );
 	retval = PAPI_add_events( EventSet, events, eventCount );
 	if( retval != PAPI_OK )
 		fprintf( stderr, "PAPI_add_events failed\n" );

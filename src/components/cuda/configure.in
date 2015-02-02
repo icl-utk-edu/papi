@@ -49,14 +49,7 @@ if test "$major" -lt 4; then
 	echo "CUDA $major.$minor not supported"
 fi
 
-if test "$major" -eq 4; then
-	if test "$minor" -eq 0; then
-		CUDA_VERSION="-DCUDA_4_0"
-	fi
-fi
-
 AC_CONFIG_FILES([Makefile.cuda])
-AC_SUBST(CUDA_VERSION)
 AC_SUBST(CUDRV_DIR)
 AC_SUBST(CUDA_DIR)
 AC_SUBST(CUPTI_DIR)

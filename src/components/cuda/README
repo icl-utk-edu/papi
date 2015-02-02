@@ -1,8 +1,8 @@
 /** 
 * @file:   README
 * CVS:     $Id$
-* @author: Dan Terpstra
-*          terpstra@icl.utk.edu
+* @author: Asim YarKhan yarkhan@icl.utk.edu
+* @author: Heike McCraw mccraw@icl.utk.edu
 * @defgroup papi_components Components
 * @brief Component Specific Readme file: CUDA
 */
@@ -11,23 +11,64 @@
 
 @section Component Specific Information
 
-cuda/
-The PAPI CUDA component is a hardware performance counter measurement technology for the NVIDIA CUDA platform which provides access to the hardware counters inside the GPU. PAPI CUDA is based on CUPTI support in the NVIDIA driver library. In any environment where the CUPTI-enabled driver is installed, the PAPI CUDA component can provide detailed performance counter information regarding the execution of GPU kernels.
-NOTE: In order to disable and destroy the CUDA eventGroup properly, the user has to call PAPI_cleanup_eventset( EventSet ) before calling PAPI_shutdown() in the application. This is important since it also frees the performance monitoring hardware on the GPU.
+cuda/ 
+The PAPI CUDA component is a hardware performance counter
+measurement technology for the NVIDIA CUDA platform which provides
+access to the hardware counters inside the GPU. PAPI CUDA is based on
+CUPTI support in the NVIDIA driver library. In any environment where
+the CUPTI-enabled driver is installed, the PAPI CUDA component should
+be able to provide detailed performance counter information regarding
+events on the GPU kernels.  
+
+NOTE: To use this PAPI CUDA component, there is a difference from
+standard PAPI usage.  When adding PAPI events to the CUDA component,
+each event needs to be added from the correct CUDA context.  
+
+NOTE: In order to disable and destroy the CUDA eventGroup properly,
+the user has to call PAPI_cleanup_eventset( EventSet ) before calling
+PAPI_shutdown() in the application. This is important since it also
+frees the performance monitoring hardware on the GPU.
 
 How to install PAPI with the CUDA component?
---------------------------------------------
-The PAPI CUDA component requires CUDA version >= 4.0 as well as the CUPTI library. CUPTI is released with the CUDA Tools SDK.
+-------------------------------------------- 
+This PAPI CUDA has been developed using CUDA version 6.5 and the
+associated CUPTI library. CUPTI is released with the CUDA Tools SDK.
 
-Before running the CUDA component, the configure script for the CUDA component must be executed in order to generate the Makefile which contains the configuration settings. This script needs to be executed only once. The CUDA configure script requires the user to specify the following configuration settings:
+Before running the CUDA component, the configure script for the CUDA
+component must be executed in order to generate the Makefile which
+contains the configuration settings. This script needs to be executed
+only once. The CUDA configure script requires the user to specify the
+following configuration settings:
     % cd < latest-papi-version >/src/components/cuda
     % ./configure --with-cuda_incdir=< CUDA INCLUDE PATH > --with-cupti_incdir=< CUPTI INCLUDE PATH > --with-cupti_libdir=< CUPTI LIBRARY PATH >
 
-Furthermore, the CUDA component will be added to PAPI during the configuration of PAPI by adding the '--with-components=cuda' command line option to configure. 
+Furthermore, the CUDA component will be added to PAPI during the
+configuration of PAPI by adding the '--with-components=cuda' command
+line option to configure.
     % ./configure --prefix=< your_choice > --with-components=cuda
 
-Attempting to add the CUDA component to PAPI - without running the configure script for the CUDA component first - will result in a compilation error because the PAPI build environment will be unable to find the Makefile for the CUDA component.
+Attempting to add the CUDA component to PAPI - without running the
+configure script for the CUDA component first - will result in a
+compilation error because the PAPI build environment will be unable to
+find the Makefile for the CUDA component.
 
-For general information on how to create and run components, the user is referred to the INSTALL.txt section "CREATING AND RUNNING COMPONENTS".
+For general information on how to create and run components, the user
+is referred to the INSTALL.txt section "CREATING AND RUNNING
+COMPONENTS".
 
+NOTE: To use this PAPI CUDA component, there is a difference from
+standard PAPI usage.  When adding PAPI events to the CUDA component,
+each event needs to be added from the correct CUDA context.
+
+For example, to measure an event such as "Tesla_K40c:2:inst_executed"
+on CUDA device 2, the user needs to switch the CUDA context to that
+device (e.g. cudaSetDevice( 2 )).  Then while the user is in the
+context for device 2, add the event (e.g. PAPI_add_events ).
+
+REPEAT NOTE: For each CUDA device, switch to that device and add the
+events relevant to that device!
+
+The PAPI-CUDA component requires this to become aware of the CUDA
+contexts that will be used, and which context the user intends to use
+for tracking events on a specific CUDA hardware.
 */
