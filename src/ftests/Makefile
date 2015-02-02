@@ -25,8 +25,8 @@ install: default
 
 else
 all:
-       @echo "Install Fortran compiler to build and run Fortran tests"
+	@echo "Install Fortran compiler to build and run Fortran tests"
 
 install:
-       @echo "No Fortran tests to install."
+	@echo "No Fortran tests to install."
 endif
