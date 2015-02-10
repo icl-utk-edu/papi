@@ -24,7 +24,7 @@ OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow \
 	overflow_index overflow_one_and_read overflow_allcounters
 PROFILE  = profile profile_force_software sprofile profile_twoevents \
 	byte_profile
-ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target
+ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target attach_cpu
 P4_TEST	= p4_lst_ins
 EAR	= earprofile
 RANGE	= data_range
@@ -365,6 +365,9 @@ attach3: attach3.c attach_target $(TESTLIB) $(PAPILIB)
 
 attach2: attach2.c attach_target $(TESTLIB) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o attach2 
+
+attach_cpu: attach_cpu.c $(TESTLIB) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_cpu.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o attach_cpu 
 
 reset: reset.c $(TESTLIB) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o reset 
