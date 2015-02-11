@@ -19,11 +19,10 @@
  *	@section Options
  * <ul>
  * <li>--help, -h    print this help message
- * <li>-d            display detailed information about native events
  * <li>-e EVENTNAME  display detailed information about named native event
  * <li>-i EVENTSTR   include only event names that contain EVENTSTR
  * <li>-x EVENTSTR   exclude any event names that contain EVENTSTR
- * <li>--noumasks    suppress display of Unit Mask information
+ * <li>--noqual      suppress display of event qualifiers (mask and flag) information\n
  * </ul>
  *
  * Processor-specific options
@@ -50,7 +49,6 @@
 typedef struct command_flags
 {
 	int help;
-	int details;
 	int named;
 	int include;
 	int xclude;
@@ -61,7 +59,7 @@ typedef struct command_flags
 	int iarr;
 	int iear;
 	int opcm;
-	int umask;
+	int qualifiers;
 	int groups;
 } command_flags_t;
 
@@ -73,12 +71,11 @@ print_help( char **argv )
 	printf( "Usage: %s [options]\n", argv[0] );
 	printf( "\nOptions:\n" );
 	printf( "   --help, -h   print this help message\n" );
-	printf( "   -d           display detailed information about native events\n" );
 	printf( "   --validate   attempts to add each event\n");
 	printf( "   -e EVENTNAME display detailed information about named native event\n" );
 	printf( "   -i EVENTSTR  include only event names that contain EVENTSTR\n" );
 	printf( "   -x EVENTSTR  exclude any event names that contain EVENTSTR\n" );
-	printf( "   --noumasks   suppress display of Unit Mask information\n" );
+	printf( "   --noqual     suppress display of event qualifiers (mask and flag) information\n" );
 	printf( "\nProcessor-specific options\n");
 	printf( "  --darr        display events supporting Data Address Range Restriction\n" );
 	printf( "  --dear        display Data Event Address Register events only\n" );
@@ -102,7 +99,7 @@ parse_args( int argc, char **argv, command_flags_t * f )
 
 	/* Look for all currently defined commands */
 	memset( f, 0, sizeof ( command_flags_t ) );
-	f->umask = 1;
+	f->qualifiers = 1;
 	f->groups = 1;
 
 	for ( i = 1; i < argc; i++ ) {
@@ -116,12 +113,10 @@ parse_args( int argc, char **argv, command_flags_t * f )
 			f->iear = 1;
 		else if ( !strcmp( argv[i], "--opcm" ) )
 			f->opcm = 1;
-		else if ( !strcmp( argv[i], "--noumasks" ) )
-			f->umask = 0;
+		else if ( !strcmp( argv[i], "--noqual" ) )
+			f->qualifiers = 0;
 		else if ( !strcmp( argv[i], "--nogroups" ) )
 			f->groups = 0;
-		else if ( !strcmp( argv[i], "-d" ) )
-			f->details = 1;
 		else if ( !strcmp( argv[i], "-e" ) ) {
 			f->named = 1;
 			i++;
@@ -202,10 +197,11 @@ format_event_output( PAPI_event_info_t * info, int offset)
 {
 	unsigned int i, j = 0;
 	char event_line_buffer[EVT_LINE_BUF_SIZE];
+	char event_line_units[100];
 
 	/* indent by offset */
 	if ( offset ) {
-		// this one is used for event masks
+		// this one is used for event qualifiers
 		sprintf(event_line_buffer, "|     %-73s|\n", info->symbol);
 	}
 	else {
@@ -247,6 +243,12 @@ format_event_output( PAPI_event_info_t * info, int offset)
 		j += i;
 	}
 
+	// also show the units for this event if a unit name has been set
+	event_line_units[0] = '\0';
+	if (info->units[0] != 0) {
+		sprintf(event_line_units, "|     Units: %-66s|\n", info->units );
+	}
+
 	// get the amount of used space in the output buffer
 	int out_buf_used = 0;
 	if ((event_output_buffer_size > 0) && (event_output_buffer != NULL)) {
@@ -254,7 +256,7 @@ format_event_output( PAPI_event_info_t * info, int offset)
 	}
 
 	// if this will not fit in output buffer, make it bigger
-	if (event_output_buffer_size < out_buf_used + strlen(event_line_buffer) + 1) {
+	if (event_output_buffer_size < out_buf_used + strlen(event_line_buffer) + strlen(event_line_units) + 1) {
 		if (event_output_buffer_size == 0) {
 			event_output_buffer_size = 1024;
 			event_output_buffer = calloc(1, event_output_buffer_size);
@@ -270,6 +272,8 @@ format_event_output( PAPI_event_info_t * info, int offset)
 	}
 
 	strcat(event_output_buffer, event_line_buffer);
+	strcat(event_output_buffer, event_line_units);
+
 	return;
 }
 
@@ -277,7 +281,7 @@ static void
 print_event_output(int val_flag)
 {
 	// first we need to update the available flag at the beginning of the buffer
-	// this needs to reflect if this event name by itself or the event name with one of the masks worked
+	// this needs to reflect if this event name by itself or the event name with one of the qualifiers worked
 	// if none of the combinations worked then we will show the event as not available
 	char *val_flag_ptr = strstr(event_output_buffer, "<-->");
 	if (val_flag_ptr != NULL) {
@@ -304,7 +308,7 @@ print_event_output(int val_flag)
 }
 
 static int
-parse_unit_masks( PAPI_event_info_t * info )
+parse_event_qualifiers( PAPI_event_info_t * info )
 {
 	char *pmask,*ptr;
 
@@ -409,15 +413,15 @@ main( int argc, char **argv )
 					ptr=flags.name;
 				}
 
-				/* if unit masks exist but none specified, process all */
+				/* if event qualifiers exist but none specified, process all */
 				if ( !strchr( ptr, ':' ) ) {
 					if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-						printf( "\nUnit Masks:      Mask Name -- Description\n" );
+						printf( "\nQualifiers:         Name -- Description\n" );
 						do {
 							retval = PAPI_get_event_info( i, &info );
 							if ( retval == PAPI_OK ) {
-								if ( parse_unit_masks( &info ) ) {
-									printf( "  Mask Info:    %10s -- %s\n", info.symbol, info.long_descr );
+								if ( parse_event_qualifiers( &info ) ) {
+									printf( "      Info:   %10s -- %s\n", info.symbol, info.long_descr );
 								}
 							}
 						} while ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
@@ -434,7 +438,7 @@ main( int argc, char **argv )
 		exit( 0 );
 	}
 
-	// Look at all the events and masks and print the information the user has asked for */
+	// Look at all the events and qualifiers and print the information the user has asked for */
 
 	numcmp = PAPI_num_components(  );
 
@@ -489,11 +493,6 @@ main( int argc, char **argv )
 
 				format_event_output( &info, 0);
 
-				if (flags.details) {
-					if (info.units[0]) printf( "|     Units: %-67s|\n",
-							info.units );
-				}
-
 				/*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
 						groups id for each group in which this
 						native event lives, in bits 16 - 23 of event code
@@ -514,13 +513,13 @@ main( int argc, char **argv )
 				}
 
 				// If the user has asked us to validate the events then we need to
-				// walk the list of masks and try to validate the event with each one.
-				// Even if the user does not want to display the masks this is necessary
+				// walk the list of qualifiers and try to validate the event with each one.
+				// Even if the user does not want to display the qualifiers this is necessary
 				// to be able to correctly report which events can be used on this system.
 				//
-				// We also need to walk the list if the user wants to see the masks.
+				// We also need to walk the list if the user wants to see the qualifiers.
 
-				if (flags.umask || flags.validate){
+				if (flags.qualifiers || flags.validate){
 					k = i;
 					if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
 						// clear event string using first mask
@@ -537,9 +536,9 @@ main( int argc, char **argv )
 								if ( flags.validate ) {
 									validate_event(&info);
 								}
-								// now test if the masks should be displayed to the user
-								if ( flags.umask ) {
-									if ( parse_unit_masks( &info ) )
+								// now test if the event qualifiers should be displayed to the user
+								if ( flags.qualifiers ) {
+									if ( parse_event_qualifiers( &info ) )
 										format_event_output( &info, 2);
 								}
 							}
@@ -554,8 +553,8 @@ main( int argc, char **argv )
 							validate_event(&info);
 						}
 						if (flags.validate  && (event_available == 0)) {
-							// an even bigger kludge is that there are 4 snpep_unc_pcu events which require the 'ff' and 'cpu' masks to work correctly.
-							// if nothing else has worked, this code will try those two masks with the current event name to see if it works
+							// an even bigger kludge is that there are 4 snpep_unc_pcu events which require the 'ff' and 'cpu' qualifiers to work correctly.
+							// if nothing else has worked, this code will try those two qualifiers with the current event name to see if it works
 							strcpy (info.symbol, first_event_mask_string);
 							char *wptr = strrchr (info.symbol, ':');
 							if (wptr != NULL) {
