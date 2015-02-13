@@ -69,6 +69,7 @@ static const pfmlib_attr_desc_t perf_event_ext_mods[]={
 	PFM_ATTR_B("mg", "monitor guest execution"),	/* monitor guest level */
 	PFM_ATTR_B("mh", "monitor host execution"),	/* monitor host level */
 	PFM_ATTR_I("cpu", "CPU to program"),		/* CPU to program */
+	PFM_ATTR_B("pinned", "pin event to counters"),	/* pin event  to PMU */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -86,7 +87,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	uint64_t ival;
 	int has_plm = 0, has_vmx_plm = 0;
 	int i, plm = 0, ret, vmx_plm = 0;
-	int cpu = -1;
+	int cpu = -1, pinned = 0;
 
 	sz = pfmlib_check_struct(uarg, uarg->size, PFM_PERF_ENCODE_ABI0, sz);
 	if (!sz)
@@ -211,6 +212,9 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 				return PFM_ERR_ATTR_VAL;
 			cpu = (int)ival;
 			break;
+		case PERF_ATTR_PIN:
+			pinned = (int)!!ival;
+			break;
 		}
 	}
 	/*
@@ -236,10 +240,11 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	attr->exclude_hv     = !(plm & PFM_PLMH);
 	attr->exclude_guest  = !(vmx_plm & PFM_PLM3);
 	attr->exclude_host   = !(vmx_plm & PFM_PLM0);
+	attr->pinned	     = pinned;
 
 	__pfm_vbprintf("PERF[type=%x config=0x%"PRIx64" config1=0x%"PRIx64
                        " excl=%d e_u=%d e_k=%d e_hv=%d e_host=%d e_gu=%d period=%"PRIu64" freq=%d"
-                       " precise=%d] %s\n",
+                       " precise=%d pinned=%d] %s\n",
 			attr->type,
 			attr->config,
 			attr->config1,
@@ -252,6 +257,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			attr->sample_period,
 			attr->freq,
 			attr->precise_ip,
+			attr->pinned,
 			str);
 
 	/*

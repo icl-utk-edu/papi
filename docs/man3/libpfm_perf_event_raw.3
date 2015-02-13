@@ -67,7 +67,19 @@ integer value. It can have the following values: 1 enable precise sampling, 2 en
 sampling and eliminate skid. Not all events necessarily support precise mode, this is dependent
 on the underlying PMU. Eliminating skid is a best effort feature. It may not work for all
 samples.
-
+.TP
+.B cpu
+This integer option is used with system-wide events, i.e., events attached to a CPU instead of
+a thread. The value designate the CPU to attach the event to. It is up to the caller of the library
+to use the cpu field in the library event encoding argument to create the event. No verification on
+the validity of the CPU number is made by the library. Default value is -1 for this field.
+.TP
+.B pinned
+This boolean option is used with system-wide events, i.e., events attached to a CPU instead of
+a thread. If set, then the event is marked as pinned. That means it needs to remain on the counters
+at all time, i.e., it cannot be multiplexed. There can only be as many pinned events as there are
+counters, yet the library does not check for that, the perf_event subsystem does. The default value
+for this field is false, i.e., the event is not pinned.
 
 .SH AUTHORS
 .nf
