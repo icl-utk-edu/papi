@@ -270,16 +270,28 @@ Building PAPI - icc
 -----------------------------------------------------------------------------
 If icc is in your path,
     > ./configure --with-mic
-Builds a mic native version of the library. 
+You may have to provide additional configuration options... try
+    > ./configure --with-mic --with-ffsll --with-walltimer=cycle --with-tls=__thread --with-virtualtimer=clock_thread_cputime_id 
+This builds a mic native version of the library. 
 
 Offload Code
 ------------
-To use PAPI in MIC offload code, build a mic-native version of PAPI using icc,
+To use PAPI in MIC offload code, build a mic-native version of PAPI 
 as detailed above. 
 
-Then in your program, wrap the papi.h header as follows:
-#pragma offload_attribute (push,target(mic))
-#include "papi.h"
+The PAPI utility programs can be run on the MIC using the
+micnativeloadex tool provided by Intel.  The MIC events may require
+additional qualifiers to set the exclude_guest and exclude_host bits
+to 0 (eventname:mg=1:mh=1).  For example, get a list of events
+available on the MIC by calling:
+micnativeloadex ./utils/papi_native_avail 
+Then get an event count while setting the appropriate qualifiers
+micnativeloadex ./utils/papi_command_line -a "CPU_CLK_UNHALTED:mg=1:mh=1"
+
+To add offload code into your program, wrap the papi.h header as
+follows:
+#pragma offload_attribute (push,target(mic)) 
+#include "papi.h" 
 #pragma offload_attribute (pop)
 
 Make PAPI calls from offload code as normal.
