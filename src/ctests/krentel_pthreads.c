@@ -143,7 +143,7 @@ my_thread( void *v )
 int
 main( int argc, char **argv )
 {
-	pthread_t td;
+	pthread_t *td = NULL;
 	long n;
 
 	tests_quiet( argc, argv );	/*Set TESTS_QUIET variable */
@@ -154,6 +154,10 @@ main( int argc, char **argv )
 		threshold = 20000000;
 	if ( argc < 4 || sscanf( argv[3], "%d", &num_threads ) < 1 )
 		num_threads = 3;
+
+	td = malloc((num_threads+1) * sizeof(pthread_t));
+	if (!td)
+		test_fail( __FILE__, __LINE__, "td malloc failed", 1 );
 
 	printf( "program_time = %d, threshold = %d, num_threads = %d\n\n",
 			program_time, threshold, num_threads );
@@ -171,15 +175,22 @@ main( int argc, char **argv )
 	gettimeofday( &start, NULL );
 
 	for ( n = 1; n <= num_threads; n++ ) {
-		if ( pthread_create( &td, NULL, my_thread, ( void * ) n ) != 0 )
+		if ( pthread_create( &(td[n]), NULL, my_thread, ( void * ) n ) != 0 )
 			test_fail( __FILE__, __LINE__, "pthread create failed", 1 );
 	}
 
 	my_thread( ( void * ) 0 );
 
+	/* wait for all the threads */
+	for ( n = 1; n <= num_threads; n++ ) {
+	  	if ( pthread_join( td[n], NULL))
+			test_fail( __FILE__, __LINE__, "pthread join failed", 1 );
+	}
+
+	free(td);
+
 	printf( "done\n" );
 
 	test_pass( __FILE__, NULL, 0 );
-	pthread_exit( NULL );
 	return ( 0 );
 }
