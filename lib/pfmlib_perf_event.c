@@ -180,19 +180,25 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			has_plm = 1;
 			break;
 		case PERF_ATTR_PE:
-			if (!ival || attr->freq)
-				return PFM_ERR_ATTR_VAL;
+			if (!ival || attr->freq) {
+				ret = PFM_ERR_ATTR_VAL;
+				goto done;
+			}
 			attr->sample_period = ival;
 			break;
 		case PERF_ATTR_FR:
-			if (!ival || attr->sample_period)
-				return PFM_ERR_ATTR_VAL;
+			if (!ival || attr->sample_period) {
+				ret = PFM_ERR_ATTR_VAL;
+				goto done;
+			}
 			attr->sample_freq = ival;
 			attr->freq = 1;
 			break;
 		case PERF_ATTR_PR:
-			if (ival > 3)
-				return PFM_ERR_ATTR_VAL;
+			if (ival > 3) {
+				ret = PFM_ERR_ATTR_VAL;
+				goto done;
+			}
 			attr->precise_ip = ival;
 			break;
 		case PERF_ATTR_EX:
@@ -208,8 +214,10 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			has_vmx_plm = 1;
 			break;
 		case PERF_ATTR_CPU:
-			if (ival >= INT_MAX)
-				return PFM_ERR_ATTR_VAL;
+			if (ival >= INT_MAX) {
+				ret = PFM_ERR_ATTR_VAL;
+				goto done;
+			}
 			cpu = (int)ival;
 			break;
 		case PERF_ATTR_PIN:
