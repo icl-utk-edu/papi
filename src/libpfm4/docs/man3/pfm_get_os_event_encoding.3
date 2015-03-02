@@ -52,7 +52,7 @@ be zero.
 If the caller is interested in retrieving the fully qualified event string where all used unit masks
 and all modifiers are spelled out, this field must be set to a non-null address of a pointer to a string (char **).
 Upon return, if \fBfstr\fR was not NULL, then the string pointer passed on entry points to the event string. The string is
-dynamically allocated and needs to eventually be freed. If \fBfstr\fR was NULL on entry, then nothing is returned
+dynamically allocated and \fBmust\fR eventually be freed by the caller. If \fBfstr\fR was NULL on entry, then nothing is returned
 in this field. The typical calling sequence looks as follows:
 .nf
    char *fstr = NULL

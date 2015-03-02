@@ -812,8 +812,16 @@ pfm_find_event(const char *str)
 	memset(&e, 0, sizeof(e));
 
 	ret = pfmlib_parse_event(str, &e);
-	if (ret == PFM_SUCCESS)
-		return pfmlib_pidx2idx(e.pmu, e.event);
+	if (ret == PFM_SUCCESS) {
+		/*
+		 * save index so we can return it
+		 * and free the pattrs data that was
+		 * allocated in pfmlib_parse_event()
+		 */
+		ret = pfmlib_pidx2idx(e.pmu, e.event);
+
+		pfmlib_release_event(&e);
+	}
 
 	return ret;
 }
@@ -1875,7 +1883,8 @@ pfmlib_raw_pmu_encode(void *this, const char *str, int dfl_plm, void *data)
 
 	if (!pmu->get_event_encoding[PFM_OS_NONE]) {
 		DPRINT("PMU %s does not support PFM_OS_NONE\n", pmu->name);
-		return PFM_ERR_NOTSUPP;
+		ret = PFM_ERR_NOTSUPP;
+		goto error;
 	}
 
 	ret = pmu->get_event_encoding[PFM_OS_NONE](pmu, &e);
