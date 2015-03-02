@@ -1,4 +1,4 @@
-.TH "papi_native_avail" 1 "Wed Nov 12 2014" "Version 5.4.0.0" "PAPI" \" -*- nroff -*-
+.TH "papi_native_avail" 1 "Mon Mar 2 2015" "Version 5.4.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -19,15 +19,15 @@ papi_native_avail is a PAPI utility program that reports information about the n
 .IP "\(bu" 2
 --help, -h print this help message 
 .IP "\(bu" 2
--d display detailed information about native events 
-.IP "\(bu" 2
 -e EVENTNAME display detailed information about named native event 
 .IP "\(bu" 2
 -i EVENTSTR include only event names that contain EVENTSTR 
 .IP "\(bu" 2
 -x EVENTSTR exclude any event names that contain EVENTSTR 
 .IP "\(bu" 2
---noumasks suppress display of Unit Mask information 
+--noqual suppress display of event qualifiers (mask and flag) information
+.br
+
 .PP
 .PP
 Processor-specific options 
