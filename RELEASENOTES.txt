@@ -5,6 +5,42 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
+PAPI 5.4.1 RELEASE NOTES                                            02 Mar 2015
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP541.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+The PAPI CUDA component is updated to support CUDA 6.5 with multiple GPUs.
+
+New Platforms:
+-------------
+    * Updated support for Intel Haswell and Haswell-EP
+    * Added ARM Cortex A7 
+    * Added ARM 1176 cpu (original Raspberry Pi)
+
+Enhancements:
+------------
+    * Enhance PAPI preset events allow user defined events.
+        * User defined events are set up via a user event definition file.
+    * CUDA component is updated to support multiple devices and contexts.
+        * Tested under and supports CUDA 6.5.
+        * Note: Events for different CUDA context MUST be added from within the context.
+    * New test demonstrating attaching an eventset to a single CPU rather than a thread.
+    * Use the term "event qualifiers" instead of "event masks" to clarify understanding.
+    * Added pkg-config support to PAPI.
+
+Bug Fixes:
+----------
+    * Fixed lustre segfault bug.
+    * Fixed compilation in the absence of a Fortran compiler.
+    * Fixed bug in krental_pthreads ctest to join threads properly on exit.
+    * Fixed bug in perf_events where event masks were not getting cleared properly.
+    * Fixed memory leak bug in perf_events.
+
+===============================================================================
 PAPI 5.4.0 RELEASE NOTES                                            13 Nov 2014
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
