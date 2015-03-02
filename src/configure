@@ -7756,7 +7756,7 @@ echo "$as_me: Generating f90papi.h" >&6;}
 
 { echo "$as_me:$LINENO: $FILENAME will be included in the generated Makefile" >&5
 echo "$as_me: $FILENAME will be included in the generated Makefile" >&6;}
-          ac_config_files="$ac_config_files Makefile"
+                    ac_config_files="$ac_config_files Makefile papi.pc"
 
                                         ac_config_files="$ac_config_files components/Makefile_comp_tests.target testlib/Makefile.target ctests/Makefile.target ftests/Makefile.target"
 
@@ -8285,6 +8285,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+  "papi.pc" ) CONFIG_FILES="$CONFIG_FILES papi.pc" ;;
   "components/Makefile_comp_tests.target" ) CONFIG_FILES="$CONFIG_FILES components/Makefile_comp_tests.target" ;;
   "testlib/Makefile.target" ) CONFIG_FILES="$CONFIG_FILES testlib/Makefile.target" ;;
   "ctests/Makefile.target" ) CONFIG_FILES="$CONFIG_FILES ctests/Makefile.target" ;;

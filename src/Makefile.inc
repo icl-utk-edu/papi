@@ -17,6 +17,8 @@ HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h \
 	papi_events_table.h
 LIBCFLAGS += -I. $(CFLAGS) -DOSLOCK=\"$(OSLOCK)\" -DOSCONTEXT=\"$(OSCONTEXT)\"
 FHEADERS = fpapi.h f77papi.h f90papi.h
+# pkgconfig directory
+LIBPC = $(LIBDIR)/pkgconfig
 
 all: $(SHOW_CONF) $(LIBS) utils tests
 .PHONY : all test fulltest tests testlib utils ctests ftests comp_tests null
@@ -282,7 +284,7 @@ dist:
 
 install-all: install install-tests
 
-install: install-lib install-man install-utils
+install: install-lib install-man install-utils install-pkgconf
 
 install-lib: native_install
 	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\""; 
@@ -330,6 +332,15 @@ ifneq (${COMPONENTS},)
 		cd ../../.. ; \
 	done 
 endif
+
+install-pkgconf:
+	@echo "pkcongfig being installed in: \"$(DESTDIR)$(LIBPC)\"";
+	-mkdir -p $(DESTDIR)$(LIBPC)
+	-chmod go+rx $(DESTDIR)$(LIBPC)
+	cp papi.pc $(DESTDIR)$(LIBPC)/papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc
+	cd $(DESTDIR)$(LIBPC); ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).pc;
+	cd $(DESTDIR)$(LIBPC); ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc papi-$(PAPIVER).pc;
+	cd $(DESTDIR)$(LIBPC); ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc papi.pc;
 
 #
 # Dummy targets for configurations that do not also include a Rules file with targets
