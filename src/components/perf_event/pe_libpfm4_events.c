@@ -62,10 +62,17 @@ static int find_existing_event(char *name,
     }
     // some callers have an event name without the pmu name on the front, so we also compare to the base name (just the event name part)
     if (!strcmp(name,event_table->native_events[i].base_name)) {
-      SUBDBG("Found base_name: %s, libpfm4_idx: %#x, papi_event_code: %#x\n",
-         event_table->native_events[i].base_name, event_table->native_events[i].libpfm4_idx, event_table->native_events[i].papi_event_code);
-      event=i;
-      break;
+      int nameLen = strlen(event_table->native_events[i].base_name);
+      // the name we are looking for must be the same length as this event table entry name for them to match
+      if (strlen(name) != nameLen + strlen(event_table->native_events[i].mask_string) + 1) {
+        continue;
+      }
+      if(!strcmp(name+nameLen+1, event_table->native_events[i].mask_string)) {
+          SUBDBG("Found base_name: %s, mask_string: %s, libpfm4_idx: %#x, papi_event_code: %#x\n",
+            event_table->native_events[i].base_name, event_table->native_events[i].mask_string , event_table->native_events[i].libpfm4_idx, event_table->native_events[i].papi_event_code);
+          event=i;
+          break;
+      }
     }
   }
   _papi_hwi_unlock( NAMELIB_LOCK );
@@ -167,7 +174,6 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 
   // set argument structure fields so the encode function can give us what we need
   perf_arg.attr=&ntv_evt->attr;
-  perf_arg.fstr=&event_string;
 
   /* use user provided name of the event to get the perf_event encoding and a fully qualified event string */
   ret = pfm_get_os_event_encoding(name, 
@@ -176,7 +182,7 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
   				  &perf_arg);
 
   // If the encode function failed, skip processing of the event_string
-  if ((ret != PFM_SUCCESS) || (event_string == NULL)) {
+  if (ret != PFM_SUCCESS) {
 	  SUBDBG("encode failed for event: %s, returned: %d\n", name, ret);
 
 	  // we need to remember that this event encoding failed but still create the native event table
