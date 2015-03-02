@@ -18,8 +18,9 @@ __ 0b. Update your local copy from git to make sure you have all changes.
 __ 1. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
 
-__ 2. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in,
-	Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
+__ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.in, src/Makefile.in,
+	doc/Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
+        The number may already have been updated after the last release.
 
 -- 2a. On the icl machine gonzo:
 	export PATH=/mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
