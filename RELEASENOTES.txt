@@ -23,7 +23,7 @@ New Platforms:
 
 Enhancements:
 ------------
-    * Enhance PAPI preset events allow user defined events.
+    * Enhance PAPI preset events to allow user defined events.
         * User defined events are set up via a user event definition file.
     * CUDA component is updated to support multiple devices and contexts.
         * Tested under and supports CUDA 6.5.
