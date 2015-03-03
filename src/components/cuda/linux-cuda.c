@@ -400,8 +400,9 @@ static int papicuda_init_component( int cidx )
 
     /* link in all the cuda libraries and resolve the symbols we need to use */
     if( papicuda_linkCudaLibraries() != PAPI_OK ) {
-        PAPIERROR( "Dynamic link of CUDA libraries failed, component will be disabled.\n" );
-        return ( PAPI_ENOSUPP );
+        SUBDBG ("Dynamic link of CUDA libraries failed, component will be disabled.\n");
+        SUBDBG ("See disable reason in papi_component_avail output for more details.\n");
+        return (PAPI_ENOSUPP);
     }
 
     /* Create the structure */
