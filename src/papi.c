@@ -1219,6 +1219,10 @@ PAPI_enum_event( int *EventCode, int modifier )
 	}
 
 	if ( IS_USER_DEFINED(i) ) {
+		if (user_defined_events_count == 0) {
+			APIDBG("EXIT: PAPI_ENOEVNT\n");
+			return PAPI_ENOEVNT;
+		}
 		if ( modifier == PAPI_ENUM_FIRST ) {
 			*EventCode = (int) (0 | PAPI_UE_MASK);
 			APIDBG("EXIT: *EventCode: %#x\n", *EventCode);

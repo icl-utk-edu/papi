@@ -391,23 +391,29 @@ main( int argc, char **argv )
 	 /* Print *ALL* Events */
 
   for (i=0 ; i<2 ; i++) {
-	  // set the event code to fetch preset events the first time through loop and user events the second time through the loop
-	  // also print heading to show which kind of events follow
-	  if (i== 0) {
+	// set the event code to fetch preset events the first time through loop and user events the second time through the loop
+	if (i== 0) {
 		event_code = 0 | PAPI_PRESET_MASK;
+	} else {
+		event_code = 0 | PAPI_UE_MASK;
+	}
+
+	/* For consistency, always ASK FOR the first event, if there is not one then nothing to process */
+	if (PAPI_enum_event( &event_code, PAPI_ENUM_FIRST ) != PAPI_OK) {
+		 continue;
+	}
+
+	// print heading to show which kind of events follow
+	if (i== 0) {
 		printf( "================================================================================\n" );
 		printf( "  PAPI Preset Events\n" );
 		printf( "================================================================================\n" );
-	  } else {
-		event_code = 0 | PAPI_UE_MASK;
+	} else {
 		printf( "\n");       // put a blank line after the presets before strarting the user events
 		printf( "================================================================================\n" );
 		printf( "  User Defined Events\n" );
 		printf( "================================================================================\n" );
-	  }
-
-	 /* For consistency, always ASK FOR the first event */
-	 PAPI_enum_event( &event_code, PAPI_ENUM_FIRST );
+	}
 
 	 if ( print_tabular ) {
 	    printf( "    Name        Code    " );

@@ -64,7 +64,7 @@ int
 _papi_libpfm4_shutdown(void) {
 
 
-  APIDBG("Entry\n");
+  SUBDBG("Entry\n");
 
   /* clean out and free the native events structure */
   _papi_hwi_lock( NAMELIB_LOCK );
