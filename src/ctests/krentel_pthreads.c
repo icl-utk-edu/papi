@@ -82,23 +82,6 @@ do_cycles( long num, int len )
 	}
 }
 
-void
-launch_timer( int *EventSet )
-{
-	if ( PAPI_create_eventset( EventSet ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_create_eventset failed", 1 );
-
-	if ( PAPI_add_event( *EventSet, EVENT ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_add_event failed", 1 );
-
-	if ( PAPI_overflow( *EventSet, EVENT, threshold, 0, my_handler ) !=
-		 PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_overflow failed", 1 );
-
-	if ( PAPI_start( *EventSet ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start failed", 1 );
-}
-
 void *
 my_thread( void *v )
 {
@@ -115,8 +98,19 @@ my_thread( void *v )
 	count[num] = 0;
 	iter[num] = 0;
 	last[num] = start;
+        
+	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset failed", 1 );
 
-	launch_timer( &EventSet );
+	if ( PAPI_add_event( EventSet, EVENT ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_add_event failed", 1 );
+
+	if ( PAPI_overflow( EventSet, EVENT, threshold, 0, my_handler ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_overflow failed", 1 );
+
+	if ( PAPI_start( EventSet ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_start failed", 1 );
+
 	printf( "launched timer in thread %ld\n", num );
 
 	for ( n = 1; n <= program_time; n++ ) {
@@ -125,18 +119,20 @@ my_thread( void *v )
 	}
 
 	PAPI_stop( EventSet, &value );
-	retval = PAPI_remove_event( EventSet, EVENT );
-	if ( PAPI_OK != retval ) {
-	    test_fail( __FILE__, __LINE__, "PAPI_remove_event", retval );
-	}
-	retval = PAPI_destroy_eventset( &EventSet );
-	if ( PAPI_OK != retval ) {
-	    test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
-	}
-	retval = PAPI_unregister_thread(  );
-	if ( PAPI_OK != retval ) {
-		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
-	}
+
+        retval = PAPI_overflow( EventSet, EVENT, 0, 0, my_handler);
+	if ( retval != PAPI_OK )
+            test_fail( __FILE__, __LINE__, "PAPI_overflow failed to reset the overflow handler", retval );
+
+	if ( PAPI_remove_event( EventSet, EVENT ) != PAPI_OK ) 
+	    test_fail( __FILE__, __LINE__, "PAPI_remove_event", 1 );
+
+	if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK ) 
+	    test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", 1 );
+
+	if ( PAPI_unregister_thread( ) != PAPI_OK != retval ) 
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", 1 );
+
 	return ( NULL );
 }
 
