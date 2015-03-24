@@ -245,7 +245,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_assign_eventset_component(EventSet4, 0);
 
-   /* Set the granularity to system-wide */
+   /* Set the granularity to individual thread */
 
    gran_opt.def_cidx=0;
    gran_opt.eventset=EventSet4;
@@ -301,7 +301,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_assign_eventset_component(EventSet5, 0);
 
-   /* Set the granularity to system-wide */
+   /* Set the granularity to process */
 
    gran_opt.def_cidx=0;
    gran_opt.eventset=EventSet5;
@@ -358,7 +358,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_assign_eventset_component(EventSet6, 0);
 
-   /* Set the granularity to system-wide */
+   /* Set the granularity to current cpu */
 
    gran_opt.def_cidx=0;
    gran_opt.eventset=EventSet6;
@@ -392,7 +392,7 @@ int main( int argc, char **argv ) {
          }
 
          if ( !TESTS_QUIET ) {
-            printf("GRN_SYS PAPI_TOT_CYC: %lld\n",grn_sys_values[0]);
+            printf("%lld\n",grn_sys_values[0]);
          }
       }
 
@@ -416,7 +416,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_assign_eventset_component(EventSet7, 0);
 
-   /* Set the granularity to system-wide */
+   /* Set the granularity to all cpus */
 
    gran_opt.def_cidx=0;
    gran_opt.eventset=EventSet7;
