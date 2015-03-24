@@ -376,6 +376,7 @@ int main( int argc, char **argv ) {
          if ( !TESTS_QUIET ) {
             printf("Error trying to add PAPI_TOT_CYC\n");
          }
+         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
       } else {
 
          retval = PAPI_start( EventSet6 );

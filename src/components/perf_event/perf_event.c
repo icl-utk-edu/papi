@@ -1434,6 +1434,7 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	      /* Currently we only support thread and CPU granularity */
               case PAPI_GRN_SYS:
 	 	   pe_ctl->granularity=PAPI_GRN_SYS;
+		   pe_ctl->cpu=_papi_getcpu();
 		   break;
 
               case PAPI_GRN_THR:

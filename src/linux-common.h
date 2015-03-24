@@ -37,4 +37,14 @@ mygettid( void )
 
 int _linux_detect_nmi_watchdog();
 
+#if HAVE_SCHED_GETCPU
+#include <sched.h>
+/* If possible, pick the processors the code is currently running on. */
+#define _papi_getcpu()   sched_getcpu()
+#else
+/* Just map to processor 0 if sched_getcpu() is not available. */
+#define _papi_getcpu()   0
+
+#endif
+
 #endif
