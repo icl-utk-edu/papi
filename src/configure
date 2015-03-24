@@ -3276,7 +3276,8 @@ done
 
 
 
-for ac_header in sys/time.h c_asm.h intrinsics.h mach/mach_time.h
+
+for ac_header in sys/time.h c_asm.h intrinsics.h mach/mach_time.h sched.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -3430,7 +3431,8 @@ done
 
 
 
-for ac_func in gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time
+
+for ac_func in gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time sched_getcpu
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
