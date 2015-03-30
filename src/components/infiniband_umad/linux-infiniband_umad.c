@@ -27,7 +27,7 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-#include "linux-infiniband.h"
+#include "linux-infiniband_umad.h"
 
 void (*_dl_non_dynamic_init)(void) __attribute__((weak));
 
