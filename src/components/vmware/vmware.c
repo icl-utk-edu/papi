@@ -3,7 +3,7 @@
 /****************************/
 
 /**
- * @file    vmware.c
+ * @file    mware.c
  * @author  Matt Johnson
  *          mrj@eecs.utk.edu
  * @author  John Nelson
@@ -1261,7 +1261,7 @@ papi_vector_t _vmware_vector = {
 	}
 	,
 	/* function pointers in this component */
-	.init_thread =        _vmware_init,
+	.init_thread =        _vmware_init_thread,
 	.init_component =     _vmware_init_component,
 	.init_control_state = _vmware_init_control_state,
 	.start =              _vmware_start,
