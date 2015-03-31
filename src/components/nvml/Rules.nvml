@@ -2,7 +2,7 @@ include components/nvml/Makefile.nvml
 
 COMPSRCS += components/nvml/linux-nvml.c
 COMPOBJS += linux-nvml.o
-CFLAGS +=  -I$(NVML_DIR)/include -I$(CUDA_DIR)/include
+CFLAGS +=  -I$(NVML_INCDIR) -I$(CUDA_DIR)/include
 LDFLAGS += $(LDL)
 
 linux-nvml.o: components/nvml/linux-nvml.c $(HEADERS)
