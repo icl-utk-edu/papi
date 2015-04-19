@@ -1513,7 +1513,7 @@ static const intel_x86_umask_t bdw_offcore_response[]={
    },
    { .uname  = "LLC_MISS_LOCAL",
      .udesc  = "Supplier: counts L3 misses to local DRAM",
-     .ucode = 1ULL << (22+8),
+     .ucode = 1ULL << (26+8),
      .umodel = PFM_PMU_INTEL_BDW,
      .grpid = 1,
    },
