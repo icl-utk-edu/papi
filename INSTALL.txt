@@ -298,7 +298,7 @@ Make PAPI calls from offload code as normal.
 
 Finally add -offload-option,mic,ld,$(path_to_papi)/libpapi.a
 to your compile incantation or if that does not recognise papi library try
--offload-option,mic,compiler,"-lpapi -L<path/to dir containinglibpapi.a> to
+-offload-option,mic,compiler,"-lpapi -L<path/to dir containing libpapi.a>" to
 your compile incantation
 
 
