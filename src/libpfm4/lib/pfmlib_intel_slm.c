@@ -32,6 +32,7 @@
 static const int slm_models[] = {
 	55, /* Silvermont */
 	77, /* Silvermont Avoton */
+	76, /* Airmont */
 	0
 };
 

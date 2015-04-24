@@ -50,6 +50,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Haswell
 		Intel Broadwell
 		Intel Silvermont
+		Intel Airmont
 		Intel RAPL (energy consumption)
 		Intel Knights Corner
 		Intel architectural perfmon v1, v2, v3
