@@ -68,6 +68,22 @@ static const intel_x86_entry_t intel_rapl_srv_pe[]={
   },
 };
 
+static const intel_x86_entry_t intel_rapl_hswep_pe[]={
+/*
+ * RAPL_ENERGY_CORES not supported in HSW-EP
+ */
+  { .name   = "RAPL_ENERGY_PKG",
+    .desc   = "Number of Joules consumed by all cores and Last level cache on the package. Unit is 2^-32 Joules",
+    .cntmsk = 0x2,
+    .code   = 0x2,
+  },
+  { .name   = "RAPL_ENERGY_DRAM",
+    .desc   = "Number of Joules consumed by the DRAM. Unit is 2^-32 Joules",
+    .cntmsk = 0x4,
+    .code   = 0x3,
+  },
+};
+
 static int
 pfm_rapl_detect(void *this)
 {
@@ -93,6 +109,10 @@ pfm_rapl_detect(void *this)
 		case 62: /* Ivy Bridge-EP  */
 			intel_rapl_support.pe 	     = intel_rapl_srv_pe;
 			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_srv_pe);
+			break;
+		case 63: /* Haswell-EP  */
+			intel_rapl_support.pe 	     = intel_rapl_hswep_pe;
+			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_hswep_pe);
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
