@@ -239,7 +239,7 @@ perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz)
 	/*
 	 * copy wrapped around leftover
 	 */
-	if ((sz - m) > 0)
+	if (sz > m)
 		memcpy(buf+m, data, sz - m);
 
 	//printf("\nhead=%lx tail=%lx new_tail=%lx sz=%zu\n", hdr->data_head, hdr->data_tail, hdr->data_tail+sz, sz);
