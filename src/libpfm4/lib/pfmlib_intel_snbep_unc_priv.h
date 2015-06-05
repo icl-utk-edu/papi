@@ -43,6 +43,7 @@
 #define SNBEP_UNC_ATTR_NF1		9 /* for filter1 */
 #define SNBEP_UNC_ATTR_ISOC	       10 /* isochronous */
 #define SNBEP_UNC_ATTR_NC	       11 /* non-coherent */
+#define SNBEP_UNC_ATTR_CF1	       12 /* core-filter hswep */
 
 #define _SNBEP_UNC_ATTR_I	(1 << SNBEP_UNC_ATTR_I)
 #define _SNBEP_UNC_ATTR_E	(1 << SNBEP_UNC_ATTR_E)
@@ -56,18 +57,26 @@
 #define _SNBEP_UNC_ATTR_NF1	(1 << SNBEP_UNC_ATTR_NF1)
 #define _SNBEP_UNC_ATTR_ISOC	(1 << SNBEP_UNC_ATTR_ISOC)
 #define _SNBEP_UNC_ATTR_NC	(1 << SNBEP_UNC_ATTR_NC)
+#define _SNBEP_UNC_ATTR_CF1	(1 << SNBEP_UNC_ATTR_CF1)
 
 #define SNBEP_UNC_IRP_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
+#define HSWEP_UNC_IRP_ATTRS \
+	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8|_SNBEP_UNC_ATTR_I)
+
 #define SNBEP_UNC_R3QPI_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
+
+#define HSWEP_UNC_R3QPI_ATTRS SNBEP_UNC_R3QPI_ATTRS
 
 #define IVBEP_UNC_R3QPI_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
 #define SNBEP_UNC_R2PCIE_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
+
+#define HSWEP_UNC_R2PCIE_ATTRS SNBEP_UNC_R2PCIE_ATTRS
 
 #define IVBEP_UNC_R2PCIE_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
@@ -78,12 +87,15 @@
 #define IVBEP_UNC_QPI_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
+#define HSWEP_UNC_QPI_ATTRS SNBEP_UNC_QPI_ATTRS
+
 #define SNBEP_UNC_UBO_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
 #define IVBEP_UNC_UBO_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
+#define HSWEP_UNC_UBO_ATTRS SNBEP_UNC_UBO_ATTRS
 
 #define SNBEP_UNC_PCU_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T5)
@@ -91,17 +103,23 @@
 #define IVBEP_UNC_PCU_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T5)
 
+#define HSWEP_UNC_PCU_ATTRS SNBEP_UNC_PCU_ATTRS
+
 #define SNBEP_UNC_PCU_BAND_ATTRS \
 	(SNBEP_UNC_PCU_ATTRS | _SNBEP_UNC_ATTR_FF)
 
 #define IVBEP_UNC_PCU_BAND_ATTRS \
 	(IVBEP_UNC_PCU_ATTRS | _SNBEP_UNC_ATTR_FF)
 
+#define HSWEP_UNC_PCU_BAND_ATTRS SNBEP_UNC_PCU_BAND_ATTRS
+
 #define SNBEP_UNC_IMC_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
 #define IVBEP_UNC_IMC_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
+
+#define HSWEP_UNC_IMC_ATTRS SNBEP_UNC_IMC_ATTRS
 
 #define SNBEP_UNC_CBO_ATTRS   \
 	(_SNBEP_UNC_ATTR_I   |\
@@ -116,11 +134,20 @@
 	 _SNBEP_UNC_ATTR_CF  |\
 	 _SNBEP_UNC_ATTR_TF)
 
+#define HSWEP_UNC_CBO_ATTRS   \
+	(_SNBEP_UNC_ATTR_E   |\
+	 _SNBEP_UNC_ATTR_T8  |\
+	 _SNBEP_UNC_ATTR_CF1 |\
+	 _SNBEP_UNC_ATTR_TF)
+
 #define SNBEP_UNC_CBO_NID_ATTRS	\
 	(SNBEP_UNC_CBO_ATTRS|_SNBEP_UNC_ATTR_NF)
 
 #define IVBEP_UNC_CBO_NID_ATTRS	\
 	(IVBEP_UNC_CBO_ATTRS|_SNBEP_UNC_ATTR_NF1)
+
+#define HSWEP_UNC_CBO_NID_ATTRS	\
+	(HSWEP_UNC_CBO_ATTRS | _SNBEP_UNC_ATTR_NF1)
 
 #define SNBEP_UNC_HA_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
@@ -128,8 +155,14 @@
 #define IVBEP_UNC_HA_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
+#define HSWEP_UNC_HA_ATTRS \
+	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8|_SNBEP_UNC_ATTR_I)
+
 #define SNBEP_UNC_HA_OPC_ATTRS \
 	(SNBEP_UNC_HA_ATTRS|_SNBEP_UNC_ATTR_A)
+
+#define HSWEP_UNC_SBO_ATTRS \
+	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8|_SNBEP_UNC_ATTR_I)
 
 typedef union {
 	uint64_t val;
@@ -144,7 +177,7 @@ typedef union {
 		unsigned long unc_inv:1;	/* invert counter mask */
 		unsigned long unc_thres:8;	/* counter mask */
 		unsigned long unc_res3:32;	/* reserved */
-	} com; /* covers common fields for cbox, ha, imc, ubox, r2pcie, r3qpi */
+	} com; /* covers common fields for cbox, ha, imc, ubox, r2pcie, r3qpi, sbox */
 	struct {
 		unsigned long unc_event:8;	/* event code */
 		unsigned long unc_umask:8;	/* unit mask */
@@ -237,6 +270,23 @@ typedef union {
 		unsigned long res2:32;
 	} ivbep_cbo_filt1; /* ivbep cbox filter1 */
 	struct {
+		unsigned long tid:1;
+		unsigned long cid:5;
+		unsigned long res0:11;
+		unsigned long state:7;
+		unsigned long res1:8;
+		unsigned long res2:32;
+	} hswep_cbo_filt0; /* hswep cbox filter0 */
+	struct {
+		unsigned long nid:16;
+		unsigned long res0:4;
+		unsigned long opc:9;
+		unsigned long res1:1;
+		unsigned long nc:1;
+		unsigned long isoc:1;
+		unsigned long res2:32;
+	} hswep_cbo_filt1; /* hswep cbox filter1 */
+	struct {
 		unsigned long filt0:8; /* band0 freq filter */
 		unsigned long filt1:8; /* band1 freq filter */
 		unsigned long filt2:8; /* band2 freq filter */
@@ -273,6 +323,7 @@ extern int  pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 extern const pfmlib_attr_desc_t snbep_unc_mods[];
 extern int  pfm_intel_snbep_unc_detect(void *this);
 extern int  pfm_intel_ivbep_unc_detect(void *this);
+extern int  pfm_intel_hswep_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int  pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx);
 extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);

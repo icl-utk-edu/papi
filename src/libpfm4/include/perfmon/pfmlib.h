@@ -247,6 +247,48 @@ typedef enum {
 
 	PFM_PMU_ARM_XGENE,		/* Applied Micro X-Gene (ARMv8) */
 
+	PFM_PMU_INTEL_HSWEP_UNC_CB0,	/* Intel Haswell-EP C-Box core 0 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB1,	/* Intel Haswell-EP C-Box core 1 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB2,	/* Intel Haswell-EP C-Box core 2 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB3,	/* Intel Haswell-EP C-Box core 3 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB4,	/* Intel Haswell-EP C-Box core 4 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB5,	/* Intel Haswell-EP C-Box core 5 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB6,	/* Intel Haswell-EP C-Box core 6 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB7,	/* Intel Haswell-EP C-Box core 7 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB8,	/* Intel Haswell-EP C-Box core 8 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB9,	/* Intel Haswell-EP C-Box core 9 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB10,	/* Intel Haswell-EP C-Box core 10 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB11,	/* Intel Haswell-EP C-Box core 11 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB12,	/* Intel Haswell-EP C-Box core 12 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB13,	/* Intel Haswell-EP C-Box core 13 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB14,	/* Intel Haswell-EP C-Box core 14 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB15,	/* Intel Haswell-EP C-Box core 15 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB16,	/* Intel Haswell-EP C-Box core 16 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_CB17,	/* Intel Haswell-EP C-Box core 17 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_HA0,	/* Intel Haswell-EP HA 0 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_HA1,	/* Intel Haswell-EP HA 1 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC0,	/* Intel Haswell-EP IMC socket 0 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC1,	/* Intel Haswell-EP IMC socket 1 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC2,	/* Intel Haswell-EP IMC socket 2 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC3,	/* Intel Haswell-EP IMC socket 3 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC4,	/* Intel Haswell-EP IMC socket 4 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC5,	/* Intel Haswell-EP IMC socket 5 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC6,	/* Intel Haswell-EP IMC socket 6 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IMC7,	/* Intel Haswell-EP IMC socket 7 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_PCU,	/* Intel Haswell-EP PCU uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_QPI0,	/* Intel Haswell-EP QPI link 0 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_QPI1,	/* Intel Haswell-EP QPI link 1 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_UBOX,	/* Intel Haswell-EP U-Box uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_R2PCIE,	/* Intel Haswell-EP R2PCIe uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_R3QPI0,	/* Intel Haswell-EP R3QPI 0 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_R3QPI1,	/* Intel Haswell-EP R3QPI 1 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_R3QPI2,	/* Intel Haswell-EP R3QPI 2 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_IRP,	/* Intel Haswell-EP IRP uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_SB0,	/* Intel Haswell-EP S-Box 0 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_SB1,	/* Intel Haswell-EP S-Box 1 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_SB2,	/* Intel Haswell-EP S-Box 2 uncore */
+	PFM_PMU_INTEL_HSWEP_UNC_SB3,	/* Intel Haswell-EP S-Box 3 uncore */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
