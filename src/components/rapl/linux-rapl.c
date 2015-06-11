@@ -447,6 +447,13 @@ _rapl_init_component( int cidx )
         return PAPI_ESYS;
      }
 
+     /* Verify needed MSR is readable. In a guest VM it may not be readable*/
+     if (pread(fd, &result, sizeof result, MSR_RAPL_POWER_UNIT) != sizeof result ) {
+        strncpy(_rapl_vector.cmp_info.disabled_reason,
+               "Unable to access RAPL registers",PAPI_MAX_STR_LEN);
+        return PAPI_ESYS;
+     }
+
      /* Calculate the units used */
      result=read_msr(fd,MSR_RAPL_POWER_UNIT);
   
