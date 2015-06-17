@@ -9,8 +9,8 @@
  *  This component enables RAPL (Running Average Power Level)
  *  energy measurements on Intel SandyBridge/IvyBridge/Haswell
  *
- *  To work, either msr_safe kernel module from LLNL 
- *  (https://github.com/scalability-llnl/msr-safe), or 
+ *  To work, either msr_safe kernel module from LLNL
+ *  (https://github.com/scalability-llnl/msr-safe), or
  *  the x86 generic MSR driver must be installed
  *    (CONFIG_X86_MSR) and the /dev/cpu/?/<msr_safe | msr> files must have read permissions
  */
@@ -134,8 +134,8 @@ static int num_events		= 0;
 struct fd_array_t *fd_array=NULL;
 static int num_packages=0,num_cpus=0;
 
-int power_divisor,energy_divisor,time_divisor;
-
+int power_divisor,time_divisor;
+int cpu_energy_divisor,dram_energy_divisor;
 
 #define PACKAGE_ENERGY      	0
 #define PACKAGE_THERMAL     	1
@@ -147,7 +147,7 @@ int power_divisor,energy_divisor,time_divisor;
 #define PACKAGE_MINIMUM_CNT     7
 #define PACKAGE_MAXIMUM_CNT     8
 #define PACKAGE_TIME_WINDOW_CNT 9
-
+#define DRAM_ENERGY		10
 
 /***************************************************************************/
 /******  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *******/
@@ -209,7 +209,11 @@ static long long convert_rapl_energy(int index, long long value) {
    return_val.ll = value; /* default case: return raw input value */
 
    if (rapl_native_events[index].type==PACKAGE_ENERGY) {
-      return_val.ll = (long long)(((double)value/energy_divisor)*1e9);
+      return_val.ll = (long long)(((double)value/cpu_energy_divisor)*1e9);
+   }
+
+   if (rapl_native_events[index].type==DRAM_ENERGY) {
+      return_val.ll = (long long)(((double)value/dram_energy_divisor)*1e9);
    }
 
    if (rapl_native_events[index].type==PACKAGE_THERMAL) {
@@ -467,11 +471,21 @@ _rapl_init_component( int cidx )
      /* which is the same as 1/(2^UNIT_VALUE) */
 
      power_divisor=1<<((result>>POWER_UNIT_OFFSET)&POWER_UNIT_MASK);
-     energy_divisor=1<<((result>>ENERGY_UNIT_OFFSET)&ENERGY_UNIT_MASK);
+     cpu_energy_divisor=1<<((result>>ENERGY_UNIT_OFFSET)&ENERGY_UNIT_MASK);
      time_divisor=1<<((result>>TIME_UNIT_OFFSET)&TIME_UNIT_MASK);
 
+	/* Note! On Haswell-EP DRAM energy is fixed at 15.3uJ	*/
+	/* see https://lkml.org/lkml/2015/3/20/582		*/
+	if ( hw_info->cpuid_model==63) {
+		dram_energy_divisor=1<<16;
+	}
+	else {
+		dram_energy_divisor=cpu_energy_divisor;
+	}
+
      SUBDBG("Power units = %.3fW\n",1.0/power_divisor);
-     SUBDBG("Energy units = %.8fJ\n",1.0/energy_divisor);
+     SUBDBG("CPU Energy units = %.8fJ\n",1.0/cpu_energy_divisor);
+     SUBDBG("DRAM Energy units = %.8fJ\n",1.0/dram_energy_divisor);
      SUBDBG("Time units = %.8fs\n",1.0/time_divisor);
 
      /* Allocate space for events */
@@ -480,7 +494,7 @@ _rapl_init_component( int cidx )
      num_events= ((package_avail*num_packages) +
                  (pp0_avail*num_packages) +
                  (pp1_avail*num_packages) +
-                 (dram_avail*num_packages) + 
+                 (dram_avail*num_packages) +
                  (4*num_packages)) * 2;
 
      rapl_native_events = (_rapl_native_event_entry_t*)
@@ -489,7 +503,7 @@ _rapl_init_component( int cidx )
 
      i = 0;
      k = num_events/2;
-     
+
      /* Create events for package power info */
 
      for(j=0;j<num_packages;j++) {
@@ -674,7 +688,7 @@ _rapl_init_component( int cidx )
 	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[k].msr=MSR_DRAM_ENERGY_STATUS;
 	   		rapl_native_events[k].resources.selector = k + 1;
-	   		rapl_native_events[k].type=PACKAGE_ENERGY;
+	   		rapl_native_events[k].type=DRAM_ENERGY;
 	   		rapl_native_events[k].return_type=PAPI_DATATYPE_UINT64;
 
 	   		i++;
@@ -876,8 +890,9 @@ _rapl_update_control_state( hwd_control_state_t *ctl,
 
        /* Only need to subtract if it's a PACKAGE_ENERGY or ENERGY_CNT type */
        control->need_difference[index]=
-	 	(rapl_native_events[index].type==PACKAGE_ENERGY 
-	 	|| rapl_native_events[index].type==PACKAGE_ENERGY_CNT);
+	 	(rapl_native_events[index].type==PACKAGE_ENERGY ||
+		rapl_native_events[index].type==DRAM_ENERGY ||
+	 	rapl_native_events[index].type==PACKAGE_ENERGY_CNT);
     }
 
     return PAPI_OK;
