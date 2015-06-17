@@ -100,7 +100,7 @@ static int resize_native_table() {
 	SUBDBG("ENTER:\n");
 	counter_info** new_table;
 	int new_size = table_size*2;
-	new_table = (counter_info**)papi_malloc(sizeof(counter_info*) * new_size);
+	new_table = (counter_info**)papi_calloc(sizeof(counter_info*), new_size);
 	if (NULL==new_table) {
 		SUBDBG("EXIT: PAPI_ENOMEM\n");
 		return PAPI_ENOMEM;
@@ -741,7 +741,7 @@ _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 	if ( modifier == PAPI_ENUM_EVENTS ) {
 		int index = *EventCode;
 
-		if ( lustre_native_table[index + 1] ) {
+		if ((index+1 < num_events) && lustre_native_table[index + 1]) {
 			*EventCode = *EventCode + 1;
 	    SUBDBG("EXIT: *EventCode: %#x\n", *EventCode);
 			return PAPI_OK;
