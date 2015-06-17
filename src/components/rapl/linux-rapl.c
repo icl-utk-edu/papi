@@ -363,11 +363,17 @@ _rapl_init_component( int cidx )
 		package_avail=1;
 		pp0_avail=1;
 		pp1_avail=1;
-		/* Not documented by Intel but seems to work */
 		dram_avail=1;
 	   }
 	else if ( hw_info->cpuid_model==63) {
 		/* Haswell-EP */
+		package_avail=1;
+		pp0_avail=1;
+		pp1_avail=0;
+		dram_avail=1;
+	}
+	else if (hw_info->cpuid_model==61) {
+		/* Broadwell */
 		package_avail=1;
 		pp0_avail=1;
 		pp1_avail=0;
@@ -456,7 +462,7 @@ _rapl_init_component( int cidx )
 
      /* Calculate the units used */
      result=read_msr(fd,MSR_RAPL_POWER_UNIT);
-  
+
      /* units are 0.5^UNIT_VALUE */
      /* which is the same as 1/(2^UNIT_VALUE) */
 
