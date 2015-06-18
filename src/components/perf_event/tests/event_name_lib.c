@@ -46,6 +46,7 @@ char *get_offcore_event(char *event, int size) {
 	   case 60: /* Haswell */
 	   case 69:
 	   case 70:
+	   case 63: /* Haswell EP */
 	            strncpy(event,"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 		    return event;
 		    break;
