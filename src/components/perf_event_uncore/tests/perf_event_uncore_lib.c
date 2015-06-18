@@ -44,6 +44,10 @@ char *get_uncore_event(char *event, int size) {
 	            strncpy(event,"ivb_unc_cbo0::UNC_CLOCKTICKS",size);
 		    return event;
 		    break;
+	   case 63: /*haswell EP*/
+		    strncpy(event,"hswep_unc_cbo0::UNC_C_CLOCKTICKS",size);
+		    return event;
+		    break;
 	 }
       }
       return NULL;

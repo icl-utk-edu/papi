@@ -57,7 +57,12 @@ int main( int argc, char **argv ) {
                     strncpy(event_name,"UNC_CBO_CACHE_LOOKUP:STATE_I:ANY_FILTER",BUFSIZ);
                     strncpy(uncore_base,"ivb_unc_cbo",BUFSIZ);
                     break;
-           default:
+           
+           case 63: /* Haswell EP */
+                    strncpy(event_name,"hswep_unc_cbo0::UNC_C_COUNTER0_OCCUPANCY",BUFSIZ);
+                    strncpy(uncore_base,"hswep_unc_cbo0",BUFSIZ);
+                    break;
+	  default:
                     test_skip( __FILE__, __LINE__,
 	            "We only support IVB and SNB-EP for now", PAPI_ENOSUPP );
         }
