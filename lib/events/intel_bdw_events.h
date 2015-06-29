@@ -572,7 +572,7 @@ static const intel_x86_umask_t bdw_inst_retired[]={
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
   { .uname = "X87",
-    .udesc  = "NUmber of FPU operations retired (instructions with no exceptions)",
+    .udesc  = "Number of FPU operations retired (instructions with no exceptions)",
     .ucode  = 0x200,
     .ucntmsk= 0x2,
     .uflags = INTEL_X86_NCOMBO,
