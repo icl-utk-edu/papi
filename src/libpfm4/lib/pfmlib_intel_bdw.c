@@ -30,6 +30,8 @@ static const int bdw_models[] = {
 	61, /* Broadwell Core-M */
 	79, /* Broadwell-EP, Xeon */
 	86, /* Broadwell-EP, Xeon D */
+	71, /* Broadwell + GT3e (Iris Pro graphics) */
+	0
 };
 
 static int

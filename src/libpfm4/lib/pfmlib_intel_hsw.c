@@ -30,7 +30,6 @@ static const int hsw_models[] = {
 	60, /* Haswell */
 	69, /* Haswell */
 	70, /* Haswell */
-	71, /* Haswell */
 	0
 };
 
