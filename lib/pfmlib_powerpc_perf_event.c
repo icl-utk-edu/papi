@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 /* private headers */
 #include "pfmlib_priv.h"		/* library private */
@@ -52,6 +53,60 @@ pfm_gen_powerpc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	return PFM_SUCCESS;
 }
+
+static int
+find_pmu_type_by_name(const char *name)
+{
+    char filename[PATH_MAX];
+    FILE *fp;
+    int ret, type;
+
+    if (!name)
+        return PFM_ERR_NOTSUPP;
+
+    sprintf(filename, "/sys/bus/event_source/devices/%s/type", name);
+
+    fp = fopen(filename, "r");
+    if (!fp)
+        return PFM_ERR_NOTSUPP;
+
+    ret = fscanf(fp, "%d", &type);
+    if (ret != 1)
+        type = PFM_ERR_NOTSUPP;
+
+    fclose(fp);
+
+    return type;
+}
+
+
+int
+pfm_gen_powerpc_get_nest_perf_encoding(void *this, pfmlib_event_desc_t *e)
+{
+    pfmlib_pmu_t *pmu = this;
+    struct perf_event_attr *attr = e->os_data;
+    int ret;
+
+    if (!pmu->get_event_encoding[PFM_OS_NONE])
+        return PFM_ERR_NOTSUPP;
+
+    /*
+     * encoding routine changes based on PMU model
+     */
+    ret = pmu->get_event_encoding[PFM_OS_NONE](this, e);
+    if (ret != PFM_SUCCESS)
+         return ret;
+
+    ret = find_pmu_type_by_name(pmu->perf_name);
+    if (ret < 0)
+        return ret;
+
+    attr->type = ret;
+    attr->config = e->codes[0];
+
+    return PFM_SUCCESS;
+}
+
 
 void
 pfm_gen_powerpc_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
