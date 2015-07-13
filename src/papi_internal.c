@@ -1929,7 +1929,10 @@ _papi_hwi_init_global( void )
 	      if (retval==PAPI_OK) {
 		if (_papi_hwd[i]->cmp_info.num_cntrs >
 		    _papi_hwd[i]->cmp_info.num_mpx_cntrs) {
-		  fprintf(stderr,"Warning!  num_cntrs is more than num_mpx_cntrs\n");
+		  fprintf(stderr,"Warning!  num_cntrs %d is more than num_mpx_cntrs %d for component %s\n",
+                        _papi_hwd[i]->cmp_info.num_cntrs,
+                        _papi_hwd[i]->cmp_info.num_mpx_cntrs,
+                        _papi_hwd[i]->cmp_info.name);
 		}
 
 	      }
