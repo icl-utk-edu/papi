@@ -220,6 +220,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&power7_support,
 	&power8_support,
 	&torrent_support,
+    &powerpc_nest_mcs_read_support,
+    &powerpc_nest_mcs_write_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_SPARC

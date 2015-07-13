@@ -2520,10 +2520,20 @@ static const intel_x86_entry_t intel_hsw_pe[]={
   },
 
   { .name = "UOPS_EXECUTED_PORT",
-    .desc   = "Uops dispatch to specific ports",
+    .desc   = "Uops dispatched to specific ports",
     .code = 0xa1,
     .cntmsk = 0xff,
     .ngrp = 1,
+    .modmsk = INTEL_V4_ATTRS,
+    .numasks = LIBPFM_ARRAY_SIZE(hsw_uops_executed_port),
+    .umasks  = hsw_uops_executed_port
+  },
+  { .name = "UOPS_DISPATCHED_PORT",
+    .desc   = "Uops dispatched to specific ports",
+    .code = 0xa1,
+    .cntmsk = 0xff,
+    .ngrp = 1,
+    .equiv = "UOPS_EXECUTED_PORT",
     .modmsk = INTEL_V4_ATTRS,
     .numasks = LIBPFM_ARRAY_SIZE(hsw_uops_executed_port),
     .umasks  = hsw_uops_executed_port

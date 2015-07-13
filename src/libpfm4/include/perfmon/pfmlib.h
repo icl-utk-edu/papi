@@ -289,6 +289,9 @@ typedef enum {
 	PFM_PMU_INTEL_HSWEP_UNC_SB2,	/* Intel Haswell-EP S-Box 2 uncore */
 	PFM_PMU_INTEL_HSWEP_UNC_SB3,	/* Intel Haswell-EP S-Box 3 uncore */
 
+    PFM_PMU_POWERPC_NEST_MCS_READ_BW,   /* POWERPC Nest Memory Read bandwidth */
+    PFM_PMU_POWERPC_NEST_MCS_WRITE_BW,  /* POWERPC Nest Memory Write bandwidth */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
