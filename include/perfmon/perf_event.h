@@ -111,6 +111,7 @@ enum perf_sw_ids {
 	PERF_COUNT_SW_PAGE_FAULTS_MAJ		= 6,
 	PERF_COUNT_SW_ALIGNMENT_FAULTS		= 7,
 	PERF_COUNT_SW_EMULATION_FAULTS		= 8,
+	PERF_COUNT_SW_DUMMY			= 9,
 	PERF_COUNT_SW_MAX
 };
 
@@ -134,21 +135,64 @@ enum perf_event_sample_format {
 	PERF_SAMPLE_STACK_USER		= 1U << 13,
 	PERF_SAMPLE_WEIGHT		= 1U << 14,
 	PERF_SAMPLE_DATA_SRC		= 1U << 15,
-	PERF_SAMPLE_MAX			= 1U << 16,
+	PERF_SAMPLE_IDENTIFIER		= 1U << 16,
+	PERF_SAMPLE_TRANSACTION		= 1U << 17,
+	PERF_SAMPLE_REGS_INTR		= 1U << 18,
+	PERF_SAMPLE_MAX			= 1U << 19,
+};
+enum {
+	PERF_TXN_ELISION        = (1 << 0),
+	PERF_TXN_TRANSACTION    = (1 << 1),
+	PERF_TXN_SYNC           = (1 << 2),
+	PERF_TXN_ASYNC          = (1 << 3),
+	PERF_TXN_RETRY          = (1 << 4),
+	PERF_TXN_CONFLICT       = (1 << 5),
+	PERF_TXN_CAPACITY_WRITE = (1 << 6),
+	PERF_TXN_CAPACITY_READ  = (1 << 7),
+	PERF_TXN_MAX	        = (1 << 8),
+	PERF_TXN_ABORT_MASK     = (0xffffffffULL << 32),
+	PERF_TXN_ABORT_SHIFT    = 32,
 };
 
 /*
  * branch_sample_type values
  */
+enum perf_branch_sample_type_shift {
+	PERF_SAMPLE_BRANCH_USER_SHIFT		= 0,
+	PERF_SAMPLE_BRANCH_KERNEL_SHIFT		= 1,
+	PERF_SAMPLE_BRANCH_HV_SHIFT		= 2,
+	PERF_SAMPLE_BRANCH_ANY_SHIFT		= 3,
+	PERF_SAMPLE_BRANCH_ANY_CALL_SHIFT	= 4,
+	PERF_SAMPLE_BRANCH_ANY_RETURN_SHIFT	= 5,
+	PERF_SAMPLE_BRANCH_IND_CALL_SHIFT	= 6,
+	PERF_SAMPLE_BRANCH_ABORT_TX_SHIFT	= 7,
+	PERF_SAMPLE_BRANCH_IN_TX_SHIFT		= 8,
+	PERF_SAMPLE_BRANCH_NO_TX_SHIFT		= 9,
+	PERF_SAMPLE_BRANCH_COND_SHIFT		= 10,
+	PERF_SAMPLE_BRANCH_CALL_STACK_SHIFT	= 11,
+	PERF_SAMPLE_BRANCH_IND_JUMP_SHIFT	= 12,
+
+	PERF_SAMPLE_BRANCH_MAX_SHIFT		/* non-ABI */
+};
+
 enum perf_branch_sample_type {
-	PERF_SAMPLE_BRANCH_USER		= 1U << 0,
-	PERF_SAMPLE_BRANCH_KERNEL	= 1U << 1,
-	PERF_SAMPLE_BRANCH_HV		= 1U << 2,
-	PERF_SAMPLE_BRANCH_ANY		= 1U << 3,
-	PERF_SAMPLE_BRANCH_ANY_CALL	= 1U << 4,
-	PERF_SAMPLE_BRANCH_ANY_RETURN	= 1U << 5,
-	PERF_SAMPLE_BRANCH_IND_CALL	= 1U << 6,
-	PERF_SAMPLE_BRANCH_MAX		= 1U << 7,
+	PERF_SAMPLE_BRANCH_USER		= 1U << PERF_SAMPLE_BRANCH_USER_SHIFT,
+	PERF_SAMPLE_BRANCH_KERNEL	= 1U << PERF_SAMPLE_BRANCH_KERNEL_SHIFT,
+	PERF_SAMPLE_BRANCH_HV		= 1U << PERF_SAMPLE_BRANCH_HV_SHIFT,
+
+	PERF_SAMPLE_BRANCH_ANY		= 1U << PERF_SAMPLE_BRANCH_ANY_SHIFT,
+	PERF_SAMPLE_BRANCH_ANY_CALL	= 1U << PERF_SAMPLE_BRANCH_ANY_CALL_SHIFT,
+	PERF_SAMPLE_BRANCH_ANY_RETURN	= 1U << PERF_SAMPLE_BRANCH_ANY_RETURN_SHIFT,
+	PERF_SAMPLE_BRANCH_IND_CALL	= 1U << PERF_SAMPLE_BRANCH_IND_CALL_SHIFT,
+	PERF_SAMPLE_BRANCH_ABORT_TX	= 1U << PERF_SAMPLE_BRANCH_ABORT_TX_SHIFT,
+	PERF_SAMPLE_BRANCH_IN_TX	= 1U << PERF_SAMPLE_BRANCH_IN_TX_SHIFT,
+	PERF_SAMPLE_BRANCH_NO_TX	= 1U << PERF_SAMPLE_BRANCH_NO_TX_SHIFT,
+	PERF_SAMPLE_BRANCH_COND		= 1U << PERF_SAMPLE_BRANCH_COND_SHIFT,
+
+	PERF_SAMPLE_BRANCH_CALL_STACK	= 1U << PERF_SAMPLE_BRANCH_CALL_STACK_SHIFT,
+	PERF_SAMPLE_BRANCH_IND_JUMP	= 1U << PERF_SAMPLE_BRANCH_IND_JUMP_SHIFT,
+
+	PERF_SAMPLE_BRANCH_MAX		= 1U << PERF_SAMPLE_BRANCH_MAX_SHIFT,
 };
 
 enum perf_sample_regs_abi {
@@ -171,6 +215,11 @@ enum perf_event_read_format {
 #define PERF_ATTR_SIZE_VER0	64	/* sizeof first published struct */
 #define PERF_ATTR_SIZE_VER1	72	/* add: config2 */
 #define PERF_ATTR_SIZE_VER2	80	/* add: branch_sample_type */
+#define PERF_ATTR_SIZE_VER3	96	/* add: sample_regs_user */
+					/* add: sample_stack_user */
+#define PERF_ATTR_SIZE_VER4	104	/* add: sample_regs_intr */
+#define PERF_ATTR_SIZE_VER5	112	/* add: aux_watermark */
+
 
 /*
  * SWIG doesn't deal well with anonymous nested structures
@@ -221,7 +270,10 @@ typedef struct perf_event_attr {
 			exclude_guest  :  1,
 			exclude_callchain_kernel : 1,
 			exclude_callchain_user   : 1,
-			__reserved_1   : 41;
+			mmap2          :  1,
+			comm_exec      :  1,
+			use_clockid    :  1,
+			__reserved_1   : 38;
 
 	union {
 		uint32_t	wakeup_events;
@@ -240,6 +292,9 @@ typedef struct perf_event_attr {
 	uint64_t branch_sample_type;
 	uint64_t sample_regs_user;
 	uint32_t sample_stack_user;
+	int32_t  clockid;
+	uint64_t sample_regs_intr;
+	uint32_t aux_watermark;
 	uint32_t __reserved_2;
 } perf_event_attr_t;
 
@@ -248,7 +303,9 @@ struct perf_branch_entry {
 	uint64_t	to;
 	uint64_t	mispred:1,  /* target mispredicted */
 			predicted:1,/* target predicted */
-			reserved:62;
+			in_tx:1,    /* in transaction */
+			abort:1,    /* transaction abort */
+			reserved:60;
 };
 
 /*
@@ -275,6 +332,8 @@ struct perf_branch_stack {
 #define PERF_EVENT_IOC_PERIOD		_IOW('$', 4, uint64_t)
 #define PERF_EVENT_IOC_SET_OUTPUT	_IO ('$', 5)
 #define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
+#define PERF_EVENT_IOC_ID		_IOR('$', 7, __u64 *)
+#define PERF_EVENT_IOC_SET_BPF		_IOW('$', 8, __u32)
 
 /*
  * ioctl() 3rd argument
@@ -297,18 +356,32 @@ struct perf_event_mmap_page {
 	uint64_t	time_running;
 	union {
 		uint64_t capabilities;
-		uint64_t cap_usr_time:1,
-			 cap_usr_rdpmc:1,
-			 cap_____res:62;
-	} SWIG_NAME(rdmap_cap);
+		struct {
+			uint64_t cap_bit0:1,
+				 cap_bit0_is_deprecated:1,
+				 cap_usr_rdpmc:1,
+				 cap_user_time:1,
+				 cap_user_time_zero:1,
+				 cap_____res:59;
+		} SWIG_NAME(rdmap_cap_s);
+	} SWIG_NAME(rdmap_cap_u);
 	uint16_t	pmc_width;
 	uint16_t	time_shift;
 	uint32_t	time_mult;
 	uint64_t	time_offset;
 
-	uint64_t	__reserved[120];
+	uint64_t	time_zero;
+	uint32_t	size;
+	uint8_t		__reserved[118*8+4];
+
 	uint64_t  	data_head;
 	uint64_t	data_tail;
+	uint64_t  	data_offset;
+	uint64_t  	data_size;
+	uint64_t	aux_head;
+	uint64_t	aux_tail;
+	uint64_t	aux_offset;
+	uint64_t	aux_size;
 };
 
 /*
@@ -331,6 +404,9 @@ struct perf_event_header {
 #define PERF_RECORD_MISC_GUEST_KERNEL	(4 << 0)
 #define PERF_RECORD_MISC_GUEST_USER	(5 << 0)
 
+#define PERF_RECORD_MISC_PROC_MAP_PARSE_TIMEOUT	(1 << 12)
+#define PERF_RECORD_MISC_MMAP_DATA		(1 << 13)
+#define PERF_RECORD_MISC_COMM_EXEC		(1 << 13)
 #define PERF_RECORD_MISC_EXACT			(1 << 14)
 #define PERF_RECORD_MISC_EXACT_IP               (1 << 14)
 #define PERF_RECORD_MISC_EXT_RESERVED		(1 << 15)
@@ -349,6 +425,9 @@ enum perf_event_type {
 	PERF_RECORD_READ		= 8,
 	PERF_RECORD_SAMPLE		= 9,
 	PERF_RECORD_MMAP2		= 10,
+	PERF_RECORD_AUX			= 11,
+	PERF_RECORD_ITRACE_START	= 12,
+	PERF_RECORD_LOST_SAMPLES	= 13,
 	PERF_RECORD_MAX
 };
 
@@ -364,12 +443,16 @@ enum perf_callchain_context {
 	PERF_CONTEXT_MAX		= (uint64_t)-4095,
 };
 
+#define PERF_AUX_FLAG_TRUNCATED		0x01
+#define PERF_AUX_FLAG_OVERWRITE		0x02
+
 /*
  * flags for perf_event_open()
  */
 #define PERF_FLAG_FD_NO_GROUP	(1U << 0)
 #define PERF_FLAG_FD_OUTPUT	(1U << 1)
 #define PERF_FLAG_PID_CGROUP	(1U << 2)
+#define PERF_FLAG_FD_CLOEXEC		(1UL << 3)
 
 #endif /* _LINUX_PERF_EVENT_H */
 
