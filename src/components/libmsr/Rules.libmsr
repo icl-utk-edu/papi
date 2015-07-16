@@ -1,0 +1,9 @@
+include components/libmsr/Makefile.libmsr
+
+COMPSRCS += components/libmsr/linux-libmsr.c 
+COMPOBJS += linux-libmsr.o
+CFLAGS += $(LIBMSR_INCFLAG)
+LDFLAGS += $(LDL)
+
+linux-libmsr.o: components/libmsr/linux-libmsr.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/libmsr/linux-libmsr.c -o linux-libmsr.o 
