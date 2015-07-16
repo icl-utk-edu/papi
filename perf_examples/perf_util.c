@@ -340,6 +340,14 @@ perf_display_branch_stack(perf_event_desc_t *desc, FILE *fp)
 static int
 perf_display_regs_user(perf_event_desc_t *hw, FILE *fp)
 {
+	errx(1, "display regs_user not implemented yet\n");
+	return 0;
+}
+
+static int
+perf_display_regs_intr(perf_event_desc_t *hw, FILE *fp)
+{
+	errx(1, "display regs_intr not implemented yet\n");
 	return 0;
 }
 
@@ -395,6 +403,15 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 	type = hw->hw.sample_type;
 	fmt  = hw->hw.read_format;
 
+	if (type & PERF_SAMPLE_IDENTIFIER) {
+		ret = perf_read_buffer_64(hw, &val64);
+		if (ret) {
+			warnx("cannot read IP");
+			return -1;
+		}
+		fprintf(fp, "ID:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
 	/*
 	 * the sample_type information is laid down
 	 * based on the PERF_RECORD_SAMPLE format specified
@@ -696,6 +713,20 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 		}
 		fprintf(fp, "DATA_SRC:%'"PRIu64" ", val64);
 		sz -= sizeof(val64);
+	}
+	if (type & PERF_SAMPLE_TRANSACTION) {
+		ret = perf_read_buffer_64(hw, &val64);
+		if (ret) {
+			warnx( "cannot read txn");
+			return -1;
+		}
+		fprintf(fp, "TXN:%'"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_REGS_INTR) {
+		ret = perf_display_regs_intr(hw, fp);
+		sz -= ret;
 	}
 
 	/*
