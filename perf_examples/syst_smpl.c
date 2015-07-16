@@ -65,7 +65,7 @@ static uint64_t collected_samples, lost_samples;
 static perf_event_desc_t *fds;
 static int num_fds;
 static options_t options;
-static size_t sz, pgsz;
+static size_t pgsz;
 static size_t map_size;
 
 static struct option the_options[]={
@@ -116,7 +116,6 @@ process_smpl_buf(perf_event_desc_t *hw)
 int
 setup_cpu(int cpu, int fd)
 {
-	uint64_t *val;
 	int ret, flags;
 	int i, pid;
 
@@ -156,11 +155,15 @@ setup_cpu(int cpu, int fd)
 			}
 
 			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID|PERF_SAMPLE_CPU;
+			/*
+			 * if we have more than one event, then record event identifier to help with parsing
+			 */
+			if (num_fds > 1)
+				fds[i].hw.sample_type |= PERF_SAMPLE_IDENTIFIER;
+
 			printf("%s period=%"PRIu64" freq=%d\n", fds[i].name, fds[i].hw.sample_period, fds[i].hw.freq);
 
 			fds[i].hw.read_format = PERF_FORMAT_SCALE;
-			if (num_fds > 1)
-				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;
 
 			if (fds[i].hw.freq)
 				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
@@ -196,36 +199,19 @@ setup_cpu(int cpu, int fd)
 	}
 
 	/*
-	 * we are using PERF_FORMAT_GROUP, therefore the structure
-	 * of val is as follows:
-	 *
-	 *      { u64           nr;
-	 *        { u64         time_enabled; } && PERF_FORMAT_ENABLED
-	 *        { u64         time_running; } && PERF_FORMAT_RUNNING
-	 *        { u64         value;
-	 *          { u64       id;           } && PERF_FORMAT_ID
-	 *        }             cntr[nr];
-	 *      }
-	 * We are skipping the first 3 values (nr, time_enabled, time_running)
-	 * and then for each event we get a pair of values.
+	 * collect event ids
 	 */
 	if (num_fds > 1 && fds[0].fd > -1) {
-		ssize_t sret;
-
-		sz = (3+2*num_fds)*sizeof(uint64_t);
-		val = malloc(sz);
-		if (!val)
-			err(1, "cannot allocated memory");
-
-		sret = read(fds[0].fd, val, sz);
-		if (sret != (ssize_t)sz)
-			err(1, "cannot read id %zu", sizeof(val));
-
-		for(i=0; i < num_fds; i++) {
-			fds[i].id = val[2*i+1+3];
-			printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
+		for(i = 0; i < num_fds; i++) {
+			/*
+			 * read the event identifier using ioctl
+			 * new method replaced the trick with PERF_FORMAT_GROUP + PERF_FORMAT_ID + read()
+			 */
+			ret = ioctl(fds[i].fd, PERF_EVENT_IOC_ID, &fds[i].id);
+			if (ret == -1)
+				err(1, "cannot read ID");
+			printf("ID %"PRIu64"  %s\n", fds[i].id, fds[i].name);
 		}
-		free(val);
 	}
 	return 0;
 }

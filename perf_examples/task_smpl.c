@@ -137,8 +137,7 @@ mainloop(char **arg)
 	struct pollfd pollfds[1];
 	sigset_t bmask;
 	int go[2], ready[2];
-	uint64_t *val;
-	size_t sz, pgsz;
+	size_t pgsz;
 	size_t map_size = 0;
 	pid_t pid;
 	int status, ret;
@@ -219,12 +218,16 @@ mainloop(char **arg)
 			fds[i].hw.wakeup_watermark = (options.mmap_pages*pgsz) / 2;
 			fds[i].hw.watermark = 1;
 
-			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID;
+			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD;
+			/*
+			 * if we have more than one event, then record event identifier to help with parsing
+			 */
+			if (num_fds > 1)
+				fds[i].hw.sample_type |= PERF_SAMPLE_IDENTIFIER;
+
 			fprintf(options.output_file,"%s period=%"PRIu64" freq=%d\n", fds[i].name, fds[i].hw.sample_period, fds[i].hw.freq);
 
 			fds[i].hw.read_format = PERF_FORMAT_SCALE;
-			if (num_fds > 1)
-				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;
 
 			if (fds[i].hw.freq)
 				fds[i].hw.sample_type |= PERF_SAMPLE_PERIOD;
@@ -236,7 +239,9 @@ mainloop(char **arg)
 				fds[i].hw.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
 			}
 		}
-
+		/*
+		 * we are grouping the events, so there may be a limit
+		 */
 		fds[i].fd = perf_event_open(&fds[i].hw, pid, options.cpu, fds[0].fd, 0);
 		if (fds[i].fd == -1) {
 			if (fds[i].hw.precise_ip)
@@ -266,35 +271,17 @@ mainloop(char **arg)
 			err(1, "cannot redirect sampling output");
 	}
 
-	/*
-	 * we are using PERF_FORMAT_GROUP, therefore the structure
-	 * of val is as follows:
-	 *
-	 *      { u64           nr;
-	 *        { u64         time_enabled; } && PERF_FORMAT_ENABLED
-	 *        { u64         time_running; } && PERF_FORMAT_RUNNING
-	 *        { u64         value;
-	 *          { u64       id;           } && PERF_FORMAT_ID
-	 *        }             cntr[nr];
-	 * We are skipping the first 3 values (nr, time_enabled, time_running)
-	 * and then for each event we get a pair of values.
-	 */
 	if (num_fds > 1 && fds[0].fd > -1) {
-		sz = (3+2*num_fds)*sizeof(uint64_t);
-		val = malloc(sz);
-		if (!val)
-			err(1, "cannot allocate memory");
-
-		ret = read(fds[0].fd, val, sz);
-		if (ret == -1)
-			err(1, "cannot read id %zu", sizeof(val));
-
-
-		for(i=0; i < num_fds; i++) {
-			fds[i].id = val[2*i+1+3];
-			fprintf(options.output_file,"%"PRIu64"  %s\n", fds[i].id, fds[i].name);
+		for(i = 0; i < num_fds; i++) {
+			/*
+			 * read the event identifier using ioctl
+			 * new method replaced the trick with PERF_FORMAT_GROUP + PERF_FORMAT_ID + read()
+			 */
+			ret = ioctl(fds[i].fd, PERF_EVENT_IOC_ID, &fds[i].id);
+			if (ret == -1)
+				err(1, "cannot read ID");
+			fprintf(options.output_file,"ID %"PRIu64"  %s\n", fds[i].id, fds[i].name);
 		}
-		free(val);
 	}
 
 	pollfds[0].fd = fds[0].fd;
