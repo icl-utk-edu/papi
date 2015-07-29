@@ -135,21 +135,33 @@ pe_vendor_fixups(papi_vector_t *vector)
       (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD)) {
      vector->cmp_info.fast_real_timer = 1;
   }
-     /* ARM */
-  if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
-     /* FIXME: this will change with Cortex A15 */
-     vector->cmp_info.available_domains |=
-            PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-     vector->cmp_info.default_domain =
-            PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
-  }
 
-     /* CRAY */
-  if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
-    vector->cmp_info.available_domains |= PAPI_DOM_OTHER;
-  }
+	/* ARM */
+	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
 
-  return PAPI_OK;
+		/* Some ARMv7 and earlier could not measure	*/
+		/* KERNEL and USER separately.			*/
+
+		/* Whitelist CortexA7 and CortexA15		*/
+		/* There might be more				*/
+
+		if ((_papi_hwi_system_info.hw_info.cpuid_family < 8) &&
+			(_papi_hwi_system_info.hw_info.cpuid_model!=0xc07) &&
+			(_papi_hwi_system_info.hw_info.cpuid_model!=0xc0f)) {
+
+			vector->cmp_info.available_domains |=
+				PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+			vector->cmp_info.default_domain =
+				PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+		}
+	}
+
+	/* CRAY */
+	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY ) {
+		vector->cmp_info.available_domains |= PAPI_DOM_OTHER;
+	}
+
+	return PAPI_OK;
 }
 
 
