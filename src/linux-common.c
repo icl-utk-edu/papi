@@ -50,7 +50,7 @@ static int _linux_init_locks(void) {
    return PAPI_OK;
 }
 
-	
+
 int
 _linux_detect_hypervisor(char *virtual_vendor_name) {
 
@@ -61,7 +61,7 @@ _linux_detect_hypervisor(char *virtual_vendor_name) {
 #else
 	(void) virtual_vendor_name;
 #endif
-	
+
 	return retval;
 }
 
@@ -170,81 +170,114 @@ path_exist( const char *path, ... )
 int
 _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 {
-    int tmp, retval = PAPI_OK;
-    unsigned int strSize;
-    char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
-    float mhz = 0.0;
-    FILE *f;
+	int tmp, retval = PAPI_OK;
+	unsigned int strSize;
+	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+	float mhz = 0.0;
+	FILE *f;
 
-    if ( ( f = fopen( "/proc/cpuinfo", "r" ) ) == NULL ) {
-       PAPIERROR( "fopen(/proc/cpuinfo) errno %d", errno );
-       return PAPI_ESYS;
-    }
+	if ( ( f = fopen( "/proc/cpuinfo", "r" ) ) == NULL ) {
+		PAPIERROR( "fopen(/proc/cpuinfo) errno %d", errno );
+		return PAPI_ESYS;
+	}
 
-	/* All of this information maybe overwritten by the component */
+	/* All of this information may be overwritten by the component */
 
-        /* MHZ */
-    rewind( f );
-    s = search_cpu_info( f, "clock", maxargs );
-    if ( !s ) {
-       rewind( f );
-       s = search_cpu_info( f, "cpu MHz", maxargs );
-    }
-    if ( s ) {
-       sscanf( s + 1, "%f", &mhz );
-    }
-    *cpuinfo_mhz = mhz;
+	/***********************/
+	/* Attempt to find MHz */
+	/***********************/
+	rewind( f );
+	s = search_cpu_info( f, "clock", maxargs );
+	if ( !s ) {
+		rewind( f );
+		s = search_cpu_info( f, "cpu MHz", maxargs );
+	}
+	if ( s ) {
+		sscanf( s + 1, "%f", &mhz );
+	}
+	*cpuinfo_mhz = mhz;
 
-       /* Vendor Name and Vendor Code */
-    rewind( f );
-    s = search_cpu_info( f, "vendor_id", maxargs );
-    strSize = sizeof(hwinfo->vendor_string);
-    if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-       *t = '\0';
-       if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
-       strcpy( hwinfo->vendor_string, s + 2 );
-    } else {
-       rewind( f );
-       s = search_cpu_info( f, "vendor", maxargs );
-       if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-	  *t = '\0';
-     if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
-	  strcpy( hwinfo->vendor_string, s + 2 );
-       } else {
-	  rewind( f );
-	  s = search_cpu_info( f, "system type", maxargs );
-	  if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-	     *t = '\0';
-	     s = strtok( s + 2, " " );
-        if (strlen(s) >= strSize-1)     s[strSize-1] = '\0';
-	     strcpy( hwinfo->vendor_string, s );
-	  } else {
-	     rewind( f );
-	     s = search_cpu_info( f, "platform", maxargs );
-	     if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
+	/*******************************/
+	/* Vendor Name and Vendor Code */
+	/*******************************/
+
+	/* First try to read "vendor_id" field */
+	/* Which is the most common field      */
+	hwinfo->vendor_string[0]=0;
+	rewind( f );
+	s = search_cpu_info( f, "vendor_id", maxargs );
+	strSize = sizeof(hwinfo->vendor_string);
+	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
 		*t = '\0';
-	        s = strtok( s + 2, " " );
-		if ( ( strcasecmp( s, "pSeries" ) == 0 ) ||
-                    ( strcasecmp( s, "PowerNV" ) == 0 ) ||
-		     ( strcasecmp( s, "PowerMac" ) == 0 ) ) {
-		   strcpy( hwinfo->vendor_string, "IBM" );
+		if (strlen(s+2) >= strSize-1) {
+			s[strSize+1] = '\0';
 		}
-	     } else {
+		strcpy( hwinfo->vendor_string, s + 2 );
+	}
+
+	/* If not found, try "vendor" which seems to be Itanium specific */
+	if (!hwinfo->vendor_string[0]) {
+		rewind( f );
+		s = search_cpu_info( f, "vendor", maxargs );
+		if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
+			*t = '\0';
+			if (strlen(s+2) >= strSize-1) {
+				s[strSize+1] = '\0';
+			}
+			strcpy( hwinfo->vendor_string, s + 2 );
+		}
+	}
+
+	/* "system type" seems to be MIPS and Alpha */
+	if (!hwinfo->vendor_string[0]) {
+		rewind( f );
+		s = search_cpu_info( f, "system type", maxargs );
+		if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
+			*t = '\0';
+			s = strtok( s + 2, " " );
+			if (strlen(s) >= strSize-1) {
+				s[strSize-1] = '\0';
+			}
+			strcpy( hwinfo->vendor_string, s );
+		}
+	}
+
+	/* "platform" indicates Power */
+	if (!hwinfo->vendor_string[0]) {
+
+		rewind( f );
+		s = search_cpu_info( f, "platform", maxargs );
+		if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
+			*t = '\0';
+			s = strtok( s + 2, " " );
+			if ( ( strcasecmp( s, "pSeries" ) == 0 ) ||
+				( strcasecmp( s, "PowerNV" ) == 0 ) ||
+				( strcasecmp( s, "PowerMac" ) == 0 ) ) {
+				strcpy( hwinfo->vendor_string, "IBM" );
+			}
+		}
+	}
+
+	/* "CPU implementer" indicates ARM */
+	if (!hwinfo->vendor_string[0]) {
+
 		rewind( f );
 		s = search_cpu_info( f, "CPU implementer", maxargs );
 		if ( s ) {
-		   strcpy( hwinfo->vendor_string, "ARM" );
+			strcpy( hwinfo->vendor_string, "ARM" );
 		}
-	     }
-	  }
-       }
-    }
+	}
 
-    if ( strlen( hwinfo->vendor_string ) ) {
-       decode_vendor_string( hwinfo->vendor_string, &hwinfo->vendor );
-    }
 
-	/* Revision */
+	/* Decode the string to an implementer value */
+	if ( strlen( hwinfo->vendor_string ) ) {
+		decode_vendor_string( hwinfo->vendor_string, &hwinfo->vendor );
+	}
+
+	/**********************************************/
+	/* Provide more stepping/model/family numbers */
+	/**********************************************/
+
     rewind( f );
     s = search_cpu_info( f, "stepping", maxargs );
     if ( s ) {
