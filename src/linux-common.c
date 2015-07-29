@@ -264,7 +264,8 @@ decode_cpuinfo_arm(FILE *f, PAPI_hw_info_t *hwinfo )
 	if ( s ) {
 		sscanf( s + 1, "%d", &tmp );
 		hwinfo->revision = ( float ) tmp;
-		hwinfo->cpuid_stepping = tmp;
+		/* For compatability with old PAPI */
+		hwinfo->model = tmp;
 	}
 
        /* Model Name */
@@ -279,21 +280,52 @@ decode_cpuinfo_arm(FILE *f, PAPI_hw_info_t *hwinfo )
 		strcpy( hwinfo->model_string, s + 2 );
 	}
 
-	/* Family */
+	/* Architecture (ARMv6, ARMv7, ARMv8, etc.) */
+	/* Note the Raspberry Pi lies in the CPU architecture line */
+	/* (it's ARMv6 not ARMv7)                                  */
+	/* So we should actually get the value from the            */
+	/*	Processor/ model name line                         */
 	rewind( f );
 	s = search_cpu_info( f, "CPU architecture", maxargs );
 	if ( s ) {
-		sscanf( s + 1, "%d", &tmp );
-		hwinfo->cpuid_family = tmp;
+
+		if (strstr(s,"AArch64")) {
+			hwinfo->cpuid_family = 8;
+		}
+		else {
+			rewind( f );
+			s = search_cpu_info( f, "Processor", maxargs );
+			if (s) {
+				t=strchr(s,'(');
+				tmp=*(t+2)-'0';
+				hwinfo->cpuid_family = tmp;
+			}
+			else {
+				rewind( f );
+				s = search_cpu_info( f, "model name", maxargs );
+				if (s) {
+					t=strchr(s,'(');
+					tmp=*(t+2)-'0';
+					hwinfo->cpuid_family = tmp;
+				}
+			}
+		}
 	}
 
 	/* CPU Model */
 	rewind( f );
 	s = search_cpu_info( f, "CPU part", maxargs );
 	if ( s ) {
-		sscanf( s + 1, "%d", &tmp );
-		hwinfo->model = tmp;
+		sscanf( s + 1, "%x", &tmp );
 		hwinfo->cpuid_model = tmp;
+	}
+
+	/* CPU Variant */
+	rewind( f );
+	s = search_cpu_info( f, "CPU variant", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%x", &tmp );
+		hwinfo->cpuid_stepping = tmp;
 	}
 
 	return PAPI_OK;
@@ -309,8 +341,9 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
 	float mhz = 0.0;
 	FILE *f;
+	char cpuinfo_filename[]="/proc/cpuinfo";
 
-	if ( ( f = fopen( "/proc/cpuinfo", "r" ) ) == NULL ) {
+	if ( ( f = fopen( cpuinfo_filename, "r" ) ) == NULL ) {
 		PAPIERROR( "fopen(/proc/cpuinfo) errno %d", errno );
 		return PAPI_ESYS;
 	}
