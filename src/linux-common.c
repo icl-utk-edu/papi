@@ -167,10 +167,144 @@ path_exist( const char *path, ... )
 	return access( pathbuf, F_OK ) == 0;
 }
 
+static int
+decode_cpuinfo_x86( FILE *f, PAPI_hw_info_t *hwinfo )
+{
+	int tmp;
+	unsigned int strSize;
+	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+
+	/* Stepping */
+	rewind( f );
+	s = search_cpu_info( f, "stepping", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%d", &tmp );
+		hwinfo->revision = ( float ) tmp;
+		hwinfo->cpuid_stepping = tmp;
+	}
+
+	/* Model Name */
+	rewind( f );
+	s = search_cpu_info( f, "model name", maxargs );
+	strSize = sizeof(hwinfo->model_string);
+	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
+		*t = '\0';
+		if (strlen(s+2) >= strSize-1) {
+			s[strSize+1] = '\0';
+		}
+		strcpy( hwinfo->model_string, s + 2 );
+	}
+
+	/* Family */
+	rewind( f );
+	s = search_cpu_info( f, "cpu family", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%d", &tmp );
+		hwinfo->cpuid_family = tmp;
+	}
+
+
+	/* CPU Model */
+	rewind( f );
+	s = search_cpu_info( f, "model", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%d", &tmp );
+		hwinfo->model = tmp;
+		hwinfo->cpuid_model = tmp;
+	}
+
+	return PAPI_OK;
+}
+
+static int
+decode_cpuinfo_power(FILE *f, PAPI_hw_info_t *hwinfo )
+{
+
+	int tmp;
+	unsigned int strSize;
+	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+
+	/* Revision */
+	rewind( f );
+	s = search_cpu_info( f, "revision", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%d", &tmp );
+		hwinfo->revision = ( float ) tmp;
+		hwinfo->cpuid_stepping = tmp;
+	}
+
+       /* Model Name */
+	rewind( f );
+	s = search_cpu_info( f, "model", maxargs );
+	strSize = sizeof(hwinfo->model_string);
+	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
+		*t = '\0';
+		if (strlen(s+2) >= strSize-1) {
+			s[strSize+1] = '\0';
+		}
+		strcpy( hwinfo->model_string, s + 2 );
+	}
+
+	return PAPI_OK;
+}
+
+
+
+static int
+decode_cpuinfo_arm(FILE *f, PAPI_hw_info_t *hwinfo )
+{
+
+	int tmp;
+	unsigned int strSize;
+	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+
+	/* revision */
+	rewind( f );
+	s = search_cpu_info( f, "CPU revision", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%d", &tmp );
+		hwinfo->revision = ( float ) tmp;
+		hwinfo->cpuid_stepping = tmp;
+	}
+
+       /* Model Name */
+	rewind( f );
+	s = search_cpu_info( f, "model name", maxargs );
+	strSize = sizeof(hwinfo->model_string);
+	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
+		*t = '\0';
+		if (strlen(s+2) >= strSize-1) {
+			s[strSize+1] = '\0';
+		}
+		strcpy( hwinfo->model_string, s + 2 );
+	}
+
+	/* Family */
+	rewind( f );
+	s = search_cpu_info( f, "CPU architecture", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%d", &tmp );
+		hwinfo->cpuid_family = tmp;
+	}
+
+	/* CPU Model */
+	rewind( f );
+	s = search_cpu_info( f, "CPU part", maxargs );
+	if ( s ) {
+		sscanf( s + 1, "%d", &tmp );
+		hwinfo->model = tmp;
+		hwinfo->cpuid_model = tmp;
+	}
+
+	return PAPI_OK;
+
+}
+
+
 int
 _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 {
-	int tmp, retval = PAPI_OK;
+	int retval = PAPI_OK;
 	unsigned int strSize;
 	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
 	float mhz = 0.0;
@@ -278,83 +412,23 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	/* Provide more stepping/model/family numbers */
 	/**********************************************/
 
-    rewind( f );
-    s = search_cpu_info( f, "stepping", maxargs );
-    if ( s ) {
-       sscanf( s + 1, "%d", &tmp );
-       hwinfo->revision = ( float ) tmp;
-       hwinfo->cpuid_stepping = tmp;
-    } else {
-       rewind( f );
-       s = search_cpu_info( f, "revision", maxargs );
-       if ( s ) {
-	  sscanf( s + 1, "%d", &tmp );
-	  hwinfo->revision = ( float ) tmp;
-	  hwinfo->cpuid_stepping = tmp;
-       }
-    }
+	if ((hwinfo->vendor==PAPI_VENDOR_INTEL) ||
+		(hwinfo->vendor==PAPI_VENDOR_AMD)) {
 
-       /* Model Name */
-    rewind( f );
-    s = search_cpu_info( f, "model name", maxargs );
-    strSize = sizeof(hwinfo->model_string);
-    if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-       *t = '\0';
-       if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
-       strcpy( hwinfo->model_string, s + 2 );
-    } else {
-       rewind( f );
-       s = search_cpu_info( f, "family", maxargs );
-       if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-	  *t = '\0';
-     if (strlen(s+2) >= strSize-1)     s[strSize+1] = '\0';
-	  strcpy( hwinfo->model_string, s + 2 );
-       } else {
-	  rewind( f );
-	  s = search_cpu_info( f, "cpu model", maxargs );
-	  if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-	     *t = '\0';
-	     strtok( s + 2, " " );
-	     s = strtok( NULL, " " );
-        if (strlen(s) >= strSize-1)     s[strSize-1] = '\0';
-	     strcpy( hwinfo->model_string, s );
-	  } else {
-	     rewind( f );
-	     s = search_cpu_info( f, "cpu", maxargs );
-	     if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-		*t = '\0';
-		/* get just the first token */
-		s = strtok( s + 2, " " );
-	if (strlen(s) >= strSize-1)     s[strSize-1] = '\0';
-		strcpy( hwinfo->model_string, s );
-	     }
-	  }
-       }
-    }
-
-       /* Family */
-    rewind( f );
-    s = search_cpu_info( f, "family", maxargs );
-    if ( s ) {
-       sscanf( s + 1, "%d", &tmp );
-       hwinfo->cpuid_family = tmp;
-    } else {
-       rewind( f );
-       s = search_cpu_info( f, "cpu family", maxargs );
-       if ( s ) {
-	  sscanf( s + 1, "%d", &tmp );
-	  hwinfo->cpuid_family = tmp;
+		decode_cpuinfo_x86(f,hwinfo);
 	}
-    }
 
-	/* CPU Model */
-    rewind( f );
-    s = search_cpu_info( f, "model", maxargs );
-    if ( s ) {
-       sscanf( s + 1, "%d", &tmp );
-       hwinfo->model = tmp;
-       hwinfo->cpuid_model = tmp;
-    }
+	if (hwinfo->vendor==PAPI_VENDOR_IBM) {
+
+		decode_cpuinfo_power(f,hwinfo);
+	}
+
+	if (hwinfo->vendor==PAPI_VENDOR_ARM) {
+
+		decode_cpuinfo_arm(f,hwinfo);
+	}
+
+
 
 
 	/* The following members are set using the same methodology */
