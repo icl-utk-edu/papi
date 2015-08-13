@@ -187,7 +187,7 @@ CFLAGS += -DCONFIG_PFMLIB_CELL
 endif
 
 ifeq ($(SYS),Linux)
-SLDFLAGS=-shared -Wl,-soname -Wl,$(VLIBPFM)
+SLDFLAGS=$(LDFLAGS) -shared -Wl,-soname -Wl,$(VLIBPFM)
 SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
 VLIBPFM=libpfm.so.$(VERSION)
 SOLIBEXT=so
