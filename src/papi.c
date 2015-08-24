@@ -2106,7 +2106,7 @@ PAPI_start( int EventSet )
 	APIDBG("Entry: EventSet: %d\n", EventSet);
 
 	int is_dirty=0;
-	int retval;
+	int i,retval;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread = NULL;
 	CpuInfo_t *cpu = NULL;
@@ -2175,6 +2175,19 @@ PAPI_start( int EventSet )
 	   if ( retval != PAPI_OK ) {
 	      papi_return( retval );
 	   }
+
+	   //update_control_state disturbs the overflow settings so set 
+	   //it to initial values again
+	   if ( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) {
+           	for( i = 0; i < ESI->overflow.event_counter; i++ ) {
+	               	retval = _papi_hwd[ESI->CmpIdx]->set_overflow( ESI,
+                                                                       ESI->overflow.EventIndex[i],
+                                                                       ESI->overflow.threshold[i] );
+                       if ( retval != PAPI_OK ) {
+	                       	break;
+             		}
+          	}
+          } 
 
 	   /* now that the context contains this event sets information,    */
 	   /* make sure the position array in the EventInfoArray is correct */
