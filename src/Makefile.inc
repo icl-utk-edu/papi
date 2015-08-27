@@ -7,7 +7,7 @@ SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o sw_multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT_OBJ) papi_preset.o \
-    papi_vector.o papi_memory.o $(COMPOBJS) $(MISCOBJS)
+    papi_vector.o papi_memory.o $(COMPOBJS) 
 HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h \
 	papiStdEventDefs.h\
 	papi_preset.h threads.h cpus.h papi_vector.h \
