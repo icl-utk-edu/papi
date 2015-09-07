@@ -25,10 +25,6 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
-endif
-
 CFLAGS+= -I. -D_GNU_SOURCE
 LIBS += -lm
 

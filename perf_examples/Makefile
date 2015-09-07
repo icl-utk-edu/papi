@@ -39,11 +39,6 @@ ifeq ($(ARCH),i386)
 DIRS += x86
 endif
 
-
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
-endif
-
 CFLAGS+= -I. -D_GNU_SOURCE -pthread
 
 PERF_EVENT_HDR=$(TOPDIR)/include/perfmon/pfmlib_perf_event.h
