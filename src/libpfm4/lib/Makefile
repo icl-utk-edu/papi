@@ -176,10 +176,6 @@ SRCS   += pfmlib_mips.c pfmlib_mips_74k.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_MIPS
 endif
 
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
-endif
-
 ifeq ($(CONFIG_PFMLIB_CELL),y)
 INCARCH = $(INC_CELL)
 #SRCS   += pfmlib_cell.c
