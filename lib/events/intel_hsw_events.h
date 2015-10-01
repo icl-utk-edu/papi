@@ -2124,7 +2124,7 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .code = 0xa3,
     .cntmsk = 0xf,
     .ngrp = 1,
-    .modmsk = INTEL_V4_ATTRS & ~_INTEL_X86_ATTR_C,
+    .modmsk = INTEL_V4_ATTRS,
     .numasks = LIBPFM_ARRAY_SIZE(hsw_cycle_activity),
     .umasks  = hsw_cycle_activity
   },

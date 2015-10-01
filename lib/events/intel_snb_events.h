@@ -2420,7 +2420,7 @@ static const intel_x86_entry_t intel_snb_pe[]={
 },
 { .name   = "CYCLE_ACTIVITY",
   .desc   = "Stalled cycles",
-  .modmsk = INTEL_V3_ATTRS & ~_INTEL_X86_ATTR_C,
+  .modmsk = INTEL_V3_ATTRS,
   .cntmsk = 0xff,
   .code = 0xa3,
   .numasks = LIBPFM_ARRAY_SIZE(snb_cycle_activity),
