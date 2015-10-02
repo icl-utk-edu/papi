@@ -47,6 +47,8 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 
 pfm_intel_x86_config_t pfm_intel_x86_cfg;
 
+#define mdhw(m, u, at) (m & u & _INTEL_X86_##at)
+
 /*
  * .byte 0x53 == push ebx. it's universal for 32 and 64 bit
  * .byte 0x5b == pop ebx.
@@ -358,7 +360,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	pfmlib_pmu_t *pmu = this;
 	pfm_event_attr_info_t *a;
 	const intel_x86_entry_t *pe;
-	pfm_intel_x86_reg_t reg;
+	pfm_intel_x86_reg_t reg, reg2;
 	unsigned int grpmsk, ugrpmsk = 0;
 	uint64_t umask1, umask2, ucode, last_ucode = ~0ULL;
 	unsigned int modhw = 0;
@@ -479,42 +481,30 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			uint64_t ival = e->attrs[k].ival;
 			switch(a->idx) {
 				case INTEL_X86_ATTR_I: /* invert */
-					if (modhw & _INTEL_X86_ATTR_I)
-						return PFM_ERR_ATTR_SET;
 					reg.sel_inv = !!ival;
 					umodmsk |= _INTEL_X86_ATTR_I;
 					break;
 				case INTEL_X86_ATTR_E: /* edge */
-					if (modhw & _INTEL_X86_ATTR_E)
-						return PFM_ERR_ATTR_SET;
 					reg.sel_edge = !!ival;
 					umodmsk |= _INTEL_X86_ATTR_E;
 					break;
 				case INTEL_X86_ATTR_C: /* counter-mask */
-					if (modhw & _INTEL_X86_ATTR_C)
-						return PFM_ERR_ATTR_SET;
 					if (ival > 255)
 						return PFM_ERR_ATTR_VAL;
 					reg.sel_cnt_mask = ival;
 					umodmsk |= _INTEL_X86_ATTR_C;
 					break;
 				case INTEL_X86_ATTR_U: /* USR */
-					if (modhw & _INTEL_X86_ATTR_U)
-						return PFM_ERR_ATTR_SET;
 					reg.sel_usr = !!ival;
 					plmmsk |= _INTEL_X86_ATTR_U;
 					umodmsk |= _INTEL_X86_ATTR_U;
 					break;
 				case INTEL_X86_ATTR_K: /* OS */
-					if (modhw & _INTEL_X86_ATTR_K)
-						return PFM_ERR_ATTR_SET;
 					reg.sel_os = !!ival;
 					plmmsk |= _INTEL_X86_ATTR_K;
 					umodmsk |= _INTEL_X86_ATTR_K;
 					break;
 				case INTEL_X86_ATTR_T: /* anythread (v3 and above) */
-					if (modhw & _INTEL_X86_ATTR_T)
-						return PFM_ERR_ATTR_SET;
 					reg.sel_anythr = !!ival;
 					umodmsk |= _INTEL_X86_ATTR_T;
 					break;
@@ -524,20 +514,43 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 					ldlat = ival;
 					break;
 				case INTEL_X86_ATTR_INTX: /* in_tx */
-					if (modhw & _INTEL_X86_ATTR_INTX)
-						return PFM_ERR_ATTR_SET;
 					reg.sel_intx = !!ival;
 					umodmsk |= _INTEL_X86_ATTR_INTX;
 					break;
 				case INTEL_X86_ATTR_INTXCP: /* in_tx_cp */
-					if (modhw & _INTEL_X86_ATTR_INTXCP)
-						return PFM_ERR_ATTR_SET;
 					reg.sel_intxcp = !!ival;
 					umodmsk |= _INTEL_X86_ATTR_INTXCP;
 					break;
 			}
 		}
 	}
+	/*
+	 * we need to wait until all the attributes have been parsed to check
+	 * for conflicts between hardcoded attributes and user-provided attributes.
+	 * we do not want to depend on the order in which they are specified
+	 *
+	 * The test check for conflicts. It is okay to specify an attribute if
+	 * it encodes to the same same value as the hardcoded value. That allows
+	 * use to prase a FQESTR (fully-qualified event string) as returned by
+	 * the library
+	 */
+	reg2.val = (umask1 | umask2)  << 8;
+	if (mdhw(modhw, umodmsk, ATTR_I) && reg2.sel_inv != reg.sel_inv)
+		return PFM_ERR_ATTR_SET;
+	if (mdhw(modhw, umodmsk, ATTR_E) && reg2.sel_edge != reg.sel_edge)
+		return PFM_ERR_ATTR_SET;
+	if (mdhw(modhw, umodmsk, ATTR_C) && reg2.sel_cnt_mask != reg.sel_cnt_mask)
+		return PFM_ERR_ATTR_SET;
+	if (mdhw(modhw, umodmsk, ATTR_U) && reg2.sel_usr != reg.sel_usr)
+		return PFM_ERR_ATTR_SET;
+	if (mdhw(modhw, umodmsk, ATTR_K) && reg2.sel_os != reg.sel_os)
+		return PFM_ERR_ATTR_SET;
+	if (mdhw(modhw, umodmsk, ATTR_T) && reg2.sel_anythr != reg.sel_anythr)
+		return PFM_ERR_ATTR_SET;
+	if (mdhw(modhw, umodmsk, ATTR_INTX) && reg2.sel_intx != reg.sel_intx)
+		return PFM_ERR_ATTR_SET;
+	if (mdhw(modhw, umodmsk, ATTR_INTXCP) && reg2.sel_intxcp != reg.sel_intxcp)
+		return PFM_ERR_ATTR_SET;
 
 	/*
 	 * handle case where no priv level mask was passed.
