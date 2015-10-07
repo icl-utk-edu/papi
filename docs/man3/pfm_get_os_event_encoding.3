@@ -82,12 +82,12 @@ Upon return, this field contains the opaque unique identifier for the event desc
 This index can be used to retrieve information about the event using \fBpfm_get_event_info()\fR, for instance.
 .RE
 .TP
-.B PERF_OS_PERF_EVENT, PERF_OS_PERF_EVENT_EXT
+.B PFM_OS_PERF_EVENT, PFM_OS_PERF_EVENT_EXT
 This value causes the event to be encoded for the perf_event Linux kernel interface (available since 2.6.31).
-The \fBarg\fR must be a pointer to a \fBpfm_perf_encode_arg_t\fR structure. The PERF_OS_PERF_EVENT layer
+The \fBarg\fR must be a pointer to a \fBpfm_perf_encode_arg_t\fR structure. The PFM_OS_PERF_EVENT layer
 provides the modifiers exported by the underlying PMU hardware, some of which may actually be overridden
-by the perf_event interface, such as the monitoring privilege levels. The \fBPERF_OS_PERF_EVENT_EXT\fR extends
-\fBPERF_OS_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period (\fBperiod\fR),
+by the perf_event interface, such as the monitoring privilege levels. The \fBPFM_OS_PERF_EVENT_EXT\fR extends
+\fBPFM_OS_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period (\fBperiod\fR),
 frequency (\fBfreq\fR) and exclusive resource access (\fBexcl\fR).
 
 .nf
@@ -132,7 +132,7 @@ Not used yet.
 .RE
 .PP
 
-Here is a example of how this function could be used with PERF_OS_NONE:
+Here is a example of how this function could be used with PFM_OS_NONE:
 .nf
 #include <inttypes.h>
 #include <err.h>
