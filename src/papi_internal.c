@@ -2551,7 +2551,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
        /* clear the event info */
        memset( info, 0, sizeof ( PAPI_event_info_t ) );
        info->event_code = ( unsigned int ) EventCode;
-
+       info->component_index = (unsigned int) cidx;
        retval = _papi_hwd[cidx]->ntv_code_to_info( 
 			      _papi_hwi_eventcode_to_native(EventCode), info);
 
