@@ -2177,13 +2177,11 @@ static const test_event_t x86_test_events[]={
 	  .name = "ivb_unc_cbo1::unc_clockticks",
 	  .ret  = PFM_ERR_NOTFOUND
 	},
-	{ SRC_LINE,
-	  .name = "rapl::rapl_energy_cores",
-	  .ret = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x1,
-	  .fstr = "rapl::RAPL_ENERGY_CORES",
-	},
+	/*
+	 * RAPL note:
+	 * we can only use the PKG event because it is the only one available
+	 * on all processors. The GPU is client only, the CORES is only certain early CPUs
+	 */
 	{ SRC_LINE,
 	  .name = "rapl::rapl_energy_pkg",
 	  .ret = PFM_SUCCESS,
@@ -2192,7 +2190,7 @@ static const test_event_t x86_test_events[]={
 	  .fstr = "rapl::RAPL_ENERGY_PKG",
 	},
 	{ SRC_LINE,
-	  .name = "rapl::rapl_energy_cores:u",
+	  .name = "rapl::rapl_energy_pkg:u",
 	  .ret = PFM_ERR_ATTR,
 	},
 	{ SRC_LINE,
