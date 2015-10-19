@@ -75,18 +75,20 @@ typedef struct {
 /*
  * pme_flags value (event and unit mask)
  */
-#define INTEL_X86_NCOMBO		0x01	/* unit masks within group cannot be combined */
-#define INTEL_X86_FALLBACK_GEN		0x02	/* fallback from fixed to generic counter possible */
-#define INTEL_X86_PEBS			0x04 	/* event supports PEBS or at least one umask supports PEBS */
-#define INTEL_X86_DFL			0x08	/* unit mask is default choice */
-#define INTEL_X86_GRP_EXCL		0x10	/* only one unit mask group can be selected */
-#define INTEL_X86_NHM_OFFCORE		0x20	/* Nehalem/Westmere offcore_response */
-#define INTEL_X86_EXCL_GRP_GT		0x40	/* exclude use of grp with id > own grp */
-#define INTEL_X86_FIXED			0x80	/* fixed counter only event */
-#define INTEL_X86_NO_AUTOENCODE		0x100	/* does not support auto encoding validation */
-#define INTEL_X86_CODE_OVERRIDE		0x200	/* umask overrides event code */
-#define INTEL_X86_LDLAT			0x400	/* needs load latency modifier (ldlat) */
-#define INTEL_X86_GRP_DFL_NONE		0x800	/* ok if umask group defaults to no umask */
+#define INTEL_X86_NCOMBO		0x0001	/* unit masks within group cannot be combined */
+#define INTEL_X86_FALLBACK_GEN		0x0002	/* fallback from fixed to generic counter possible */
+#define INTEL_X86_PEBS			0x0004 	/* event supports PEBS or at least one umask supports PEBS */
+#define INTEL_X86_DFL			0x0008	/* unit mask is default choice */
+#define INTEL_X86_GRP_EXCL		0x0010	/* only one unit mask group can be selected */
+#define INTEL_X86_NHM_OFFCORE		0x0020	/* Nehalem/Westmere offcore_response */
+#define INTEL_X86_EXCL_GRP_GT		0x0040	/* exclude use of grp with id > own grp */
+#define INTEL_X86_FIXED			0x0080	/* fixed counter only event */
+#define INTEL_X86_NO_AUTOENCODE		0x0100	/* does not support auto encoding validation */
+#define INTEL_X86_CODE_OVERRIDE		0x0200	/* umask overrides event code */
+#define INTEL_X86_LDLAT			0x0400	/* needs load latency modifier (ldlat) */
+#define INTEL_X86_GRP_DFL_NONE		0x0800	/* ok if umask group defaults to no umask */
+#define INTEL_X86_FRONTEND		0x1000	/* Skylake Precise frontend */
+#define INTEL_X86_FETHR			0x2000	/* precise frontend umask requires threshold modifier (fe_thres) */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -154,6 +156,7 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_X86_ATTR_LDLAT	6 /* load latency threshold */
 #define INTEL_X86_ATTR_INTX	7 /* in transaction */
 #define INTEL_X86_ATTR_INTXCP	8 /* not aborted transaction */
+#define INTEL_X86_ATTR_FETHR	9 /* precise frontend latency theshold */
 
 #define _INTEL_X86_ATTR_U	(1 << INTEL_X86_ATTR_U)
 #define _INTEL_X86_ATTR_K	(1 << INTEL_X86_ATTR_K)
@@ -164,6 +167,7 @@ typedef union pfm_intel_x86_reg {
 #define _INTEL_X86_ATTR_INTX	(1 << INTEL_X86_ATTR_INTX)
 #define _INTEL_X86_ATTR_INTXCP	(1 << INTEL_X86_ATTR_INTXCP)
 #define _INTEL_X86_ATTR_LDLAT	(1 << INTEL_X86_ATTR_LDLAT)
+#define _INTEL_X86_ATTR_FETHR	(1 << INTEL_X86_ATTR_FETHR)
 
 #define INTEL_X86_ATTRS \
 	(_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E|_INTEL_X86_ATTR_C|_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
@@ -174,6 +178,7 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_FIXED3_ATTRS	(INTEL_FIXED2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V3_ATTRS 		(INTEL_V2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V4_ATTRS 		(INTEL_V3_ATTRS | _INTEL_X86_ATTR_INTX | _INTEL_X86_ATTR_INTXCP)
+#define INTEL_SKL_FE_ATTRS 	(INTEL_V4_ATTRS | _INTEL_X86_ATTR_FETHR)
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -214,6 +219,7 @@ typedef union pfm_intel_x86_reg {
  * default ldlat value for PEBS-LL events. Used when ldlat= is missing
  */
 #define INTEL_X86_LDLAT_DEFAULT	3 /* default ldlat value in core cycles */
+#define INTEL_X86_FETHR_DEFAULT	1 /* default fe_thres value in core cycles */
 
 typedef struct {
 	unsigned int version:8;

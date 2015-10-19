@@ -49,6 +49,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Ivy Bridge
 		Intel Haswell
 		Intel Broadwell
+		Intel SkyLake
 		Intel Silvermont
 		Intel Airmont
 		Intel RAPL (energy consumption)

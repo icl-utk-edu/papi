@@ -42,6 +42,7 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_I("ldlat", "load latency threshold (cycles, [3-65535])"),	/* load latency threshold */
 	PFM_ATTR_B("intx", "monitor only inside transactional memory region"),
 	PFM_ATTR_B("intxcp", "do not count occurrences inside aborted transactional memory region"),
+	PFM_ATTR_I("fe_thres", "frontend bubble latency threshold in cycles ([1-4095]"),
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -371,6 +372,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int last_grpid =  INTEL_X86_MAX_GRPID;
 	unsigned int grpid;
 	int ldlat = 0, ldlat_um = 0;
+	int fe_thr= 0, fe_thr_um = 0;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 
@@ -439,6 +441,9 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_LDLAT))
 				ldlat_um = 1;
+
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_FETHR))
+				fe_thr_um = 1;
 			/*
 			 * if more than one umask in this group but one is marked
 			 * with ncombo, then fail. It is okay to combine umask within
@@ -520,6 +525,11 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 				case INTEL_X86_ATTR_INTXCP: /* in_tx_cp */
 					reg.sel_intxcp = !!ival;
 					umodmsk |= _INTEL_X86_ATTR_INTXCP;
+					break;
+				case INTEL_X86_ATTR_FETHR: /* precise frontend latency threshold */
+					if (ival < 1 || ival > 4095)
+						return PFM_ERR_ATTR_VAL;
+					fe_thr = ival;
 					break;
 			}
 		}
@@ -608,7 +618,27 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(e->fstr, ":0x%x", a->idx);
 	}
 
-	if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
+	if (fe_thr_um && !fe_thr) {
+		/* try extracting te latency threshold from the event umask first */
+		fe_thr = (umask2 >> 8) & 0x7;
+		/* if not in the umask ,then use default */
+		if (!fe_thr) {
+			DPRINT("missing fe_thres= for umask, forcing to default %d cycles\n", INTEL_X86_FETHR_DEFAULT);
+			fe_thr = INTEL_X86_FETHR_DEFAULT;
+		}
+	}
+	/*
+	 * encode threshold in final position in extra register
+	 */
+	if (fe_thr && fe_thr_um) {
+		umask2 |= fe_thr << 8;
+	}
+
+	/*
+	 * offcore_response or precise frontend require a separate register
+	 */
+	if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)
+	    || intel_x86_eflag(this, e->event, INTEL_X86_FRONTEND)) {
 		e->codes[1] = umask2;
 		e->count = 2;
 		umask2 = 0;
@@ -642,7 +672,6 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 	e->codes[0] = reg.val;
 
-DPRINT("sel_edge=%d cnt=%d\n", reg.sel_edge, reg.sel_cnt_mask);
 	/*
 	 * on recent processors (except Atom), edge requires cmask >=1
 	 */
@@ -690,6 +719,9 @@ DPRINT("sel_edge=%d cnt=%d\n", reg.sel_edge, reg.sel_cnt_mask);
 			break;
 		case INTEL_X86_ATTR_INTXCP:
 			evt_strcat(e->fstr, ":%s=%lu", intel_x86_mods[id].name, reg.sel_intxcp);
+			break;
+		case INTEL_X86_ATTR_FETHR:
+			evt_strcat(e->fstr, ":%s=%lu", intel_x86_mods[id].name, fe_thr);
 			break;
 		}
 	}
