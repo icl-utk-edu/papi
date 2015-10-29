@@ -167,6 +167,7 @@ typedef struct {
 
 typedef struct {
 	int	initdone;
+	int	initret; /* initial return value from pfm_initialize() */
 	int	verbose;
 	int	debug;
 	int	inactive;
@@ -175,7 +176,7 @@ typedef struct {
 	FILE 	*fp;	/* verbose and debug file descriptor, default stderr or PFMLIB_DEBUG_STDOUT */
 } pfmlib_config_t;	
 
-#define PFMLIB_INITIALIZED()	(pfm_cfg.initdone)
+#define PFMLIB_INITIALIZED()	(pfm_cfg.initdone && pfm_cfg.initret == PFM_SUCCESS)
 
 extern pfmlib_config_t pfm_cfg;
 
