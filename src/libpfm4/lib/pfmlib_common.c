@@ -795,29 +795,29 @@ pfm_initialize(void)
 	int ret;
 	/*
 	 * not atomic
+	 * if initialization already done, then reurn previous return value
 	 */
 	if (pfm_cfg.initdone)
-		return PFM_SUCCESS;
+		return pfm_cfg.initret;
 
 	/*
 	 * generic sanity checks
 	 */
 	if (PFM_PMU_MAX & (~PFMLIB_PMU_MASK)) {
 		DPRINT("PFM_PMU_MAX exceeds PFMLIB_PMU_MASK\n");	
-		return PFM_ERR_NOTSUPP;
+		ret = PFM_ERR_NOTSUPP;
+	} else {
+
+		pfmlib_init_env();
+
+		/* must be done before pfmlib_init_pmus() */
+		pfmlib_init_os();
+
+		ret = pfmlib_init_pmus();
 	}
 
-	pfmlib_init_env();
-
-	/* must be done before pfmlib_init_pmus() */
-	pfmlib_init_os();
-
-	ret = pfmlib_init_pmus();
-	if (ret != PFM_SUCCESS)
-		return ret;
-
-
 	pfm_cfg.initdone = 1;
+	pfm_cfg.initret  = ret;
 
 	return ret;
 }
