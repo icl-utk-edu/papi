@@ -469,6 +469,10 @@ enum perf_callchain_context {
 # define __NR_perf_event_open 319
 #endif
 
+#ifdef __s390__
+# define __NR_perf_event_open 331
+#endif
+
 #ifdef __arm__
 #if defined(__ARM_EABI__) || defined(__thumb__)
 # define __NR_perf_event_open 364
