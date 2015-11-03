@@ -122,13 +122,26 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	if (e->count > 1) {
 		/*
 		 * Nehalem/Westmere/Sandy Bridge OFFCORE_RESPONSE events
-		 * take two MSRs. lower level returns two codes:
+		 * take two MSRs. Lower level returns two codes:
 		 * - codes[0] goes to regular counter config
 		 * - codes[1] goes into extra MSR
 		 */
 		if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
 			if (e->count != 2) {
 				DPRINT("perf_encoding: offcore=1 count=%d\n", e->count);
+				return PFM_ERR_INVAL;
+			}
+			attr->config1 = e->codes[1];
+		}
+		/*
+		 * SkyLake FRONTEND_RETIRED event
+		 * takes two MSRs. Lower level returns two codes:
+		 * - codes[0] goes to regular counter config
+		 * - codes[1] goes into extra MSR
+		 */
+		if (intel_x86_eflag(this, e->event, INTEL_X86_FRONTEND)) {
+			if (e->count != 2) {
+				DPRINT("perf_encoding: frontend_retired=1 count=%d\n", e->count);
 				return PFM_ERR_INVAL;
 			}
 			attr->config1 = e->codes[1];
