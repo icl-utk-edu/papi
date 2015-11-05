@@ -485,6 +485,13 @@ pfm_perf_init(void *this)
 {
 	pfmlib_pmu_t *pmu = this;
 	perf_pe = perf_static_events;
+	/*
+	 * we force the value of pme_count by hand because
+	 * the library could be initialized mutltiple times
+	 * due to pfm_terminate() and thus we need to start
+	 * from the default count
+	 */
+	perf_event_support.pme_count = PME_PERF_EVENT_COUNT;
 
 	/* must dynamically add tracepoints */
 	gen_tracepoint_table();
