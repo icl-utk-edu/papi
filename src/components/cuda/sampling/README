@@ -1,0 +1,75 @@
+########################################
+Author: Sangamesh Ragate
+Date  : Nov 12th 2015
+email : sragate@vols.utk.edu
+INNOVATIVE COMPUTING LABORATORY, UTK
+#######################################
+
+
+Descripttion :	This Utility helps in configuring CUPTI for performing PC_SAMPLING
+				on MAXWELL GPUS and those which have PC_SAMPLING support. It is a 
+				standalone tool that works like nvprof and can be used to get the 
+				PC sampling result on any cuda application without re building 
+				the application. 
+
+************************************************************************************************************
+To Compile:
+
+	This utility get compiled automatically when the cuda component for PAPI is compiled
+	The *papi_sampling_cuda executable is generated in the src/utils diretory of PAPI
+
+************************************************************************************************************
+To run the utility:
+
+	./papi_sampling_cuda [-d <GPU Device ID>] [-s <sampling period>] cuda_app [its arguments]
+
+	-d : This switch is optional and is used to supply GPU device ID, should 
+		 be integer > 0, Default is GPU device ID 0
+	-s : This switch is optional and is used to supply PC sampling period. 
+	     Range from 0 to 5, refer "enum CUpti_ActivityPCSamplingPeriod" in
+		 CUPTI user manual. Default is set to 5.
+
+    cuda_app : this is the cuda applicationf for which PC SAMPLING is performed
+	All the arguments that come next belong to the cuda_app.
+	
+
+************************************************************************************************************
+Example to try:
+	
+	After successful compilation of PAPI with cuda component
+	> cd src/components/cuda/sampling/test
+
+
+	NOTE: Make sure papi and cuda shared libraries are in the LD_LIBRARY_PATH before you run the test.
+	matmul is a cuda application which performs 512x512 matrix multiplication
+
+	Try:
+	> ./papi_sampling_cuda matmul
+	> ./papi_sampling_cuda -d 0 -s 0 matmul
+	> ./papi_sampling_cuda -d 0 -s 5 matmul
+	> ./papi_sampling_cuda -d 0 matmul
+	> ./papi_sampling_cuda -s 2 matmul
+
+
+************************************************************************************************************
+Output:
+
+	>Kernel activity record : This gives information about the cuda kernel that was launched for PC SAMPLING
+	>Activity Kind record   : This gives information about the cuda kernel that was launched for PC SAMPLING
+	>PC_SAMPLING record     : Kernel identification, PC value, samples, stall reason
+	>Source locator record  : This is generated if cuda_app is compiled using "-lineinfo" in nvcc
+	>STALL SUMMARY          : This gives the histogram of Stall reason Vs Number of samples due to the 
+							  corresponding stall.
+
+	NOTE: To better understand the output generated, the user should be familiar with the "Activity API" 
+	Records of cupti, more specifically KERNEL,SOURCE_LOACTOR,PC_SAMPLING activity records mentioned in the 
+	CUPT manual.
+************************************************************************************************************
+Additional Feature:
+
+	The utility also generates SASS dump that can be used to trace the stall to the source code line in the 
+	CUDA application. To get the source code line info, recompile only your cuda_app using "-lineinfo" flag in the
+	nvcc.
+
+
+************************************************************************************************************

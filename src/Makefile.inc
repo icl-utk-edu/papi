@@ -20,7 +20,7 @@ FHEADERS = fpapi.h f77papi.h f90papi.h
 # pkgconfig directory
 LIBPC = $(LIBDIR)/pkgconfig
 
-all: $(SHOW_CONF) $(LIBS) utils tests
+all: $(SHOW_CONF) $(LIBS) utils tests cuda_sampling 
 .PHONY : all test fulltest tests testlib utils ctests ftests comp_tests null
 
 include $(COMPONENT_RULES)
@@ -241,6 +241,17 @@ ctests: $(LIBS) testlib
 ftests: $(LIBS) testlib
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" $(FTEST_TARGETS)
 
+
+#compile cuda sampling
+cuda_sampling: 
+ifneq (${COMPONENTS},)
+		@for comp in ${COMPONENTS} ; do  if [ "$$comp" == "cuda" ]; then cd components/$$comp/sampling; $(MAKE); cd ../../.. ;fi done 
+endif
+
+
+
+
+
 # compile tests added to components
 comp_tests:	$(LIBS) testlib
 ifneq (${COMPONENTS},)
@@ -250,7 +261,7 @@ ifneq (${COMPONENTS},)
 			$(SETPATH) cd ../../.. ; done 
 endif
 
-clean: native_clean comp_tests_clean
+clean: native_clean comp_tests_clean cuda_sampling_clean
 	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c 
 	-cd ctests; $(MAKE) clean
 	-cd ctests/bgp; $(MAKE) clean
@@ -268,6 +279,15 @@ ifneq (${COMPONENTS},)
 		cd ../../.. ; \
 	done 
 endif
+
+
+#compile cuda sampling
+cuda_sampling_clean: 
+ifneq (${COMPONENTS},)
+		@for comp in ${COMPONENTS} ; do  if [ "$$comp" == "cuda" ]; then cd components/$$comp/sampling; $(MAKE) clean; cd ../../.. ;fi done 
+endif
+
+
 
 clobber distclean: clean native_clobber
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h papi_events_table.h

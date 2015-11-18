@@ -17,16 +17,16 @@ default: $(TESTS)
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<
 
 HelloWorld: HelloWorld.o $(UTILOBJS)
-	$(CC) -Wl,-rpath,../../../libpfm4/lib $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
+	$(CC) -Wl,-rpath,../../../libpfm4/lib $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU: simpleMultiGPU.cu $(UTILOBJS)
-	$(NVCC) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
+	$(NVCC) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU_no_counters: simpleMultiGPU.cu $(UTILOBJS)
-	$(NVCC) $(INCLUDE) -DNO_COUNTERS -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
+	$(NVCC) $(INCLUDE) -DNO_COUNTERS -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU_cupti_only: simpleMultiGPU.cu $(UTILOBJS)
-	$(NVCC) $(INCLUDE) -DCUPTI_ONLY -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
+	$(NVCC) $(INCLUDE) -DCUPTI_ONLY -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o cuda_ld_preload_example.so

@@ -49,8 +49,12 @@ if test "$major" -lt 4; then
 	echo "CUDA $major.$minor not supported"
 fi
 
+CURR_DIR=`pwd`
+
 AC_CONFIG_FILES([Makefile.cuda])
 AC_SUBST(CUDRV_DIR)
 AC_SUBST(CUDA_DIR)
 AC_SUBST(CUPTI_DIR)
+AC_CONFIG_FILES([sampling/path.h])
+AC_SUBST(CURR_DIR)
 AC_OUTPUT
