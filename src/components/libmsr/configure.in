@@ -7,7 +7,7 @@ AC_ARG_WITH(libmsr_incdir,
            [  --with-libmsr-incdir=<path>         Specify directory of libmsr header files (libmsr.h) in a specific location ],
            [libmsr_incdir=$withval])
 AC_ARG_WITH(libmsr_libdir,
-           [  --with-libmsr-libdir=<path>         Specify directory of libmsr library (libnvidia-ml.so) in a specific location ],
+           [  --with-libmsr-libdir=<path>         Specify directory of libmsr library (libmsr.a or libmsr.so) in a specific location ],
            [libmsr_libdir=$withval])
 
 if test "x$libmsr_libdir" != "x"; then
@@ -20,7 +20,7 @@ if test "x$libmsr_incdir" != "x"; then
 fi
 
 CFLAGS="$CFLAGS -I$libmsr_incdir"
-AC_CHECK_HEADER( [msr_rapl.h], [], [AC_MSG_ERROR([libmsr component: msr_rapl.h not found: use configure flags to set the path ])], )
+AC_CHECK_HEADER( [msr/msr_rapl.h], [], [AC_MSG_ERROR([libmsr component: msr/msr_rapl.h not found: use configure flags to set the path ])], )
 LDFLAGS="$LDFLAGS -L$libmsr_libdir -Wl,-rpath,$libmsr_libdir" 
 AC_CHECK_LIB( [msr], [init_msr], [], [AC_MSG_ERROR([libmsr component: libmsr.so not found: use configure flags to set the path])] )
 LIBMSR_INCDIR=$libmsr_incdir

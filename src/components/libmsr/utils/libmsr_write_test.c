@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 #include "papi.h"
-#include "msr_core.h"
-#include "msr_rapl.h"
+#include "msr/msr_core.h"
+#include "msr/msr_rapl.h"
 
 #define MAX_EVENTS 128
 
@@ -131,16 +131,17 @@ int main (int argc, char **argv)
     /* Write a header line */
     fprintf( fileout, "ACTION TIME-STAMP TIME-FOR-UNIT-WORK TIME-OVERHEAD-RW\t" );
     for(i=0; i<num_events; i++) 
-        fprintf( fileout, "%s\t", events[i]+9 );
+        fprintf( fileout, "%s ", events[i]+9 );
     fprintf( fileout, "\n" );
 
     /* Read the initial values */
     retval = PAPI_read( EventSet, values);
     if (retval != PAPI_OK) { fprintf(stderr,"PAPI_read() failed\n"); exit(1); }
-    fprintf( fileout, "INITIAL %.3f 0\t", ((double)(PAPI_get_real_nsec()-start_time))/1.0e9 );
+    fprintf( fileout, "INIT %8.3f %8.3f ", ((double)(PAPI_get_real_nsec()-start_time))/1.0e9, 0.0 );
+    fprintf( fileout, "%8.3e ", 0.0);
     for(i=0; i<num_events; i++) {
         event_value_union.ll = values[i];
-        fprintf( fileout, "%.3f\t", event_value_union.dbl );
+        fprintf( fileout, "%8.3f ", event_value_union.dbl );
     }
     fprintf( fileout, "\n" );
 
@@ -170,11 +171,11 @@ int main (int argc, char **argv)
             write_end_time=PAPI_get_real_nsec();
             if (retval != PAPI_OK) { fprintf(stderr,"PAPI_write() failed\n"); exit(1); }
 
-            fprintf( fileout, "SET     %.3f \t0 \t", ((double)(PAPI_get_real_nsec()-start_time))/1.0e9 );
-            fprintf( fileout, "%.5e\t", ((double)(write_end_time-write_start_time))/1.0e9 );
+            fprintf( fileout, "SET  %8.3f %8.3f ", ((double)(PAPI_get_real_nsec()-start_time))/1.0e9, 0.0 );
+            fprintf( fileout, "%8.3e ", ((double)(write_end_time-write_start_time))/1.0e9 );
             for(i=0; i<num_events; i++) {
                 event_value_union.ll = values[i];
-                fprintf( fileout, "%.3f\t", event_value_union.dbl );
+                fprintf( fileout, "%8.3f ", event_value_union.dbl );
             }
             fprintf( fileout, "\n" );
         }
@@ -191,11 +192,11 @@ int main (int argc, char **argv)
         retval = PAPI_read( EventSet, values );
         read_end_time=PAPI_get_real_nsec();
         if (retval != PAPI_OK) { fprintf(stderr,"PAPI_read() failed\n"); exit(1); }
-        fprintf( fileout, "READ    %.3f\t %.3f\t", ((double)(PAPI_get_real_nsec()-start_time))/1.0e9, work_time/1.0e9 );
-        fprintf( fileout, "%.5e\t", ((double)(read_end_time-read_start_time))/1.0e9 );
+        fprintf( fileout, "READ %8.3f %8.3f ", ((double)(PAPI_get_real_nsec()-start_time))/1.0e9, work_time/1.0e9 );
+        fprintf( fileout, "%8.3e ", ((double)(read_end_time-read_start_time))/1.0e9 );
         for(i=0; i<num_events; i++) {
             event_value_union.ll = values[i];
-            fprintf( fileout, "%.3f\t", event_value_union.dbl );
+            fprintf( fileout, "%8.3f ", event_value_union.dbl );
         }
         fprintf( fileout, "\n" );
     }

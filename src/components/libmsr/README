@@ -13,11 +13,10 @@
 
 libmsr/
 
-NOTE: This libmsr component is an initial version, and is tested with
-libmsr (10/21/2014 version) and the msr_safe kernel module (11/2014
-version).  These dependencies are expected to be updated in the near
-future, so the libmsr component may need to be changed as well.
-  https ://github.com/scalability-llnl/libmsr
+NOTE: This libmsr component is an initial version, and has been tested
+with libmsr (v0.1.17 11/2015) and the msr_safe kernel module (19/2015
+version).
+  https://github.com/scalability-llnl/libmsr
   https://github.com/scalability-llnl/msr-safe
 
 
@@ -42,7 +41,10 @@ case where PAPI is writing information to a counter as well as reading
 the data from the counter.
 
 
-ENABLE MSR ACCESS 
+--------------------------------------------------
+ENABLE ACCESS TO THE MSRS (MODEL SPECIFIC REGISTERS)
+
+https://github.com/scalability-llnl/msr-safe
 
 To use this component, the system will need to provide access to Model
 Specific Registers (MSRs) from user space.  The actions described
@@ -50,13 +52,16 @@ below will generally require superuser ability.  Note, these actions
 may have security and performance consequences, so please make sure
 you know what you are doing.
 
----
-OPTION 1: Enable MSR access using msr-safe
-    Either, install the msr-safe module from LLNL, and enable read/write
+  OPTION 1: EITHER: Enable MSR access using msr-safe
+    Install the msr-safe module from LLNL, 
        lsmod | grep msr        (should show msr_safe)
-       chmod 666 /dev/cpu/*/msr_safe
+    Use chmod to set site-appropriate access permissions (e.g. 766) for 
+       /dev/cpu/*/msr_safe /dev/cpu/msr_batch /dev/cpu/msr_whitelist
+    Load a whitelist appropriate for your machine
+       e.g. for SandyBridge: 
+         cat msr-safe/whitelists/wl_062D > /dev/cpu/msr_whitelist
     
-OPTION 2: Enable standard MSR access
+  OPTION 2: OR: Enable MSR access via the filesystem and elevated permissions.
     Or, enable access to the standard MSRs filesystem
     
     For Linux kernel version < 3.7, using only file system checks
@@ -82,6 +87,16 @@ OPTION 2: Enable standard MSR access
     full path to the shared libraries during the linking step.
 
 
+--------------------------------------------------
+COMPILE THE LIBMSR LIBRARY TO ACCESS THE MSRS
+
+https://github.com/scalability-llnl/libmsr
+
+Get the library and follow the instructions to build using CMake.
+This library contains a subdirectory, test, which will exercise the
+functionality.
+
+--------------------------------------------------
 CONFIGURING THE PAPI LIBMSR COMPONENT
 
 Set libmsr library and header files by configuring within the component.
@@ -99,11 +114,13 @@ To use the module, make sure that the libraries are accessible.
 To check the installation, the following should show some available counters 
     % ./utils/papi_native_avail | grep libmsr
 To check the installation, the following should some counter values
-    % ./utils/papi_native_avail -e "libmsr:::PKG_JOULES:PACKAGE0"
-    % ./utils/papi_command_line  "libmsr:::PKG_JOULES:PACKAGE0"
+    % ./utils/papi_native_avail -e "libmsr:::PKG_WATTS:PACKAGE0"
+    % ./utils/papi_command_line  "libmsr:::PKG_WATTS:PACKAGE0"
+    % ./utils/papi_command_line  "libmsr:::PKG_DELTA_ENERGY:PACKAGE0"
 
 
-USING THE PAPI LIBMSR COMPONENT 
+--------------------------------------------------
+USE THE PAPI LIBMSR COMPONENT 
 
 See the components/libmsr/utils/README file for instructions.  This
 test demonstrates how to write power constraints, and gives an
