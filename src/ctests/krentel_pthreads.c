@@ -130,8 +130,8 @@ my_thread( void *v )
 	if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK ) 
 	    test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", 1 );
 
-	if ( PAPI_unregister_thread( ) != PAPI_OK != retval ) 
-		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", 1 );
+	if ( PAPI_unregister_thread( ) != PAPI_OK ) 
+            test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", 1 );
 
 	return ( NULL );
 }
