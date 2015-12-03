@@ -4,6 +4,49 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
+
+===============================================================================
+PAPI 5.4.2 RELEASE NOTES                                            01 Dec 2015
+===============================================================================
+For specific and detailed information on changes made in this release, grep
+ChangeLogP542.txt for keywords of interest or go directly to the PAPI git
+repo.
+
+GENERAL NOTES
+===============================================================================
+
+New Implementations:
+-------------------
+    * libmsr component: Using LLNL's libmsr library to access Intel
+      RAPL (Running Average Power Limit) library adds power capping
+      abilities to PAPI.
+    * CUDA PC sampling: A new standalone CUDA sampling tool
+      (papi_cuda_sampling) has been added to the CUDA component
+      (components/cuda/sampling/) and can be used as a preloader to
+      perform PC sampling on Nvidia GPUs which support the CUPTI
+      sampling interface (e.g. Maxwell).
+    * ARM Cortex A53 support: Event definitions added.
+
+Enhancements:
+------------
+    * Added Haswell-EP uncore support
+    * Initial Broadwell, Skylake support
+    * Added a general CUDA example (components/cuda/test) that uses
+      LD_PRELOAD to attach to a running CUcontext.
+
+Bug Fixes:
+----------
+    * Clean output from papi_avail tool when there are no user defined events.
+    * Support PAPI_GRN_SYS granularity for perf component.
+    * Bug fix for infiniband_umad component.
+    * Bug fix for vmware component.
+    * Bug fix for NVML component.
+    * Fixed RAPL component so it reports unsupported inside a guest VM.
+    * Cleanup ARM CPU detection.
+    * Bug fix for PAPI_overflow issue for multiple eventsets.
+    * Increased PERF_EVENT_MAX_MPX_COUNTERS to 192 from 128.
+
+
 ===============================================================================
 PAPI 5.4.1 RELEASE NOTES                                            02 Mar 2015
 ===============================================================================
