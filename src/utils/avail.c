@@ -17,6 +17,7 @@
   *	@section Options
   * <ul>
   *		<li>-a	Display only the available PAPI events.
+  *             <li>-at Display only the available PAPI events after a test.
   *		<li>-d	Display PAPI event information in a more detailed format.
   *		<li>-h	Display help information about this utility.
   *		<li>-t	Display the PAPI event information in a tabular format. This is the default.
@@ -185,23 +186,24 @@ print_help( char **argv )
 	printf( "Usage: %s [options]\n", argv[0] );
 	printf( "Options:\n\n" );
 	printf( "General command options:\n" );
-	printf( "\t-a, --avail   Display only available PAPI preset and user defined events\n" );
-	printf( "\t-d, --detail  Display detailed information about events\n" );
-	printf( "\t-e EVENTNAME  Display detail information about specified event\n" );
-	printf( "\t-h, --help    Print this help message\n" );
+	printf( "\t-a, --avail      Display only available PAPI preset and user defined events\n" );
+	printf( "\t-at,--avail-test Display only available PAPI preset and user defined events after a test\n" );
+	printf( "\t-d, --detail     Display detailed information about events\n" );
+	printf( "\t-e EVENTNAME     Display detail information about specified event\n" );
+	printf( "\t-h, --help       Print this help message\n" );
 	printf( "\nEvent filtering options:\n" );
-	printf( "\t--br          Display branch related PAPI preset events\n" );
-	printf( "\t--cache       Display cache related PAPI preset events\n" );
-	printf( "\t--cnd         Display conditional PAPI preset events\n" );
-	printf( "\t--fp          Display Floating Point related PAPI preset events\n" );
-	printf( "\t--ins         Display instruction related PAPI preset events\n" );
-	printf( "\t--idl         Display Stalled or Idle PAPI preset events\n" );
-	printf( "\t--l1          Display level 1 cache related PAPI preset events\n" );
-	printf( "\t--l2          Display level 2 cache related PAPI preset events\n" );
-	printf( "\t--l3          Display level 3 cache related PAPI preset events\n" );
-	printf( "\t--mem         Display memory related PAPI preset events\n" );
-	printf( "\t--msc         Display miscellaneous PAPI preset events\n" );
-	printf( "\t--tlb         Display Translation Lookaside Buffer PAPI preset events\n" );
+	printf( "\t--br             Display branch related PAPI preset events\n" );
+	printf( "\t--cache          Display cache related PAPI preset events\n" );
+	printf( "\t--cnd            Display conditional PAPI preset events\n" );
+	printf( "\t--fp             Display Floating Point related PAPI preset events\n" );
+	printf( "\t--ins            Display instruction related PAPI preset events\n" );
+	printf( "\t--idl            Display Stalled or Idle PAPI preset events\n" );
+	printf( "\t--l1             Display level 1 cache related PAPI preset events\n" );
+	printf( "\t--l2             Display level 2 cache related PAPI preset events\n" );
+	printf( "\t--l3             Display level 3 cache related PAPI preset events\n" );
+	printf( "\t--mem            Display memory related PAPI preset events\n" );
+	printf( "\t--msc            Display miscellaneous PAPI preset events\n" );
+	printf( "\t--tlb            Display Translation Lookaside Buffer PAPI preset events\n" );
 	printf( "\n" );
 	printf( "This program provides information about PAPI preset and user defined events.\n" );
 	printf( "PAPI preset event filters can be combined in a logical OR.\n" );
@@ -225,6 +227,21 @@ parse_unit_masks( PAPI_event_info_t * info )
 	return ( 1 );
 }
 
+static int
+checkCounter (int eventcode)
+{
+	int EventSet = PAPI_NULL;
+	if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+		return 0;
+	if (PAPI_add_event (EventSet, eventcode) != PAPI_OK)
+		return 0;
+	if (PAPI_cleanup_eventset (EventSet) != PAPI_OK)
+		return 0;
+	if (PAPI_destroy_eventset (&EventSet) != PAPI_OK)
+		return 0;
+	return 1;
+}
+
 int
 main( int argc, char **argv )
 {
@@ -240,6 +257,7 @@ main( int argc, char **argv )
    int tot_count = 0;
    int avail_count = 0;
    int deriv_count = 0;
+   int test_counter = 0;
    int event_code;
 
    PAPI_event_info_t n_info;
@@ -258,7 +276,13 @@ main( int argc, char **argv )
 	    print_help( argv );
 	    exit( 1 );
 	 }
-      } else if ( strstr( argv[args], "-a" ) )
+      }
+      else if ( strstr( argv[args], "-at" ) || strstr (argv[args], "--avail-test") )
+      {
+	 print_avail_only = PAPI_PRESET_ENUM_AVAIL;
+         test_counter = 1;
+      }
+      else if ( strstr( argv[args], "-a" ))
 	 print_avail_only = PAPI_PRESET_ENUM_AVAIL;
       else if ( strstr( argv[args], "-d" ) )
 	 print_tabular = 0;
@@ -434,10 +458,13 @@ main( int argc, char **argv )
 		  if ( (i==1) || (filter & info.event_type)) {
 		     if ( print_avail_only ) {
 		        if ( info.count ) {
-			   printf( "%-13s%#x  %-5s%s",
-				   info.symbol,
-				   info.event_code,
-				   is_derived( &info ), info.long_descr );
+                   if ( (test_counter && checkCounter (event_code)) || !test_counter)
+                   {
+                      printf( "%-13s%#x  %-5s%s",
+                         info.symbol,
+                         info.event_code,
+                         is_derived( &info ), info.long_descr );
+                   }
 			}
 		        if ( info.note[0] ) {
 			   printf( " (%s)", info.note );
@@ -456,7 +483,8 @@ main( int argc, char **argv )
 		     }
 		     tot_count++;
 		     if ( info.count ) {
-			avail_count++;
+	            if ((test_counter && checkCounter (event_code)) || !test_counter )
+	              avail_count++;
 		     }
 		     if ( !strcmp( is_derived( &info ), "Yes" ) ) {
 			deriv_count++;
@@ -464,20 +492,25 @@ main( int argc, char **argv )
 		  }
 	       } else {
 		  if ( ( print_avail_only && info.count ) ||
-		       ( print_avail_only == 0 ) ) {
-		     printf( "%s\t%#x\t%d\t|%s|\n |%s|\n"
+		       ( print_avail_only == 0 ) )
+	      {
+	         if ((test_counter && checkCounter (event_code)) || !test_counter)
+	         {
+	           printf( "%s\t%#x\t%d\t|%s|\n |%s|\n"
 			     " |%s|\n |%s|\n |%s|\n",
 			     info.symbol, info.event_code, info.count,
 			     info.short_descr, info.long_descr, info.note,
 			     info.derived, info.postfix );
-		     for ( j = 0; j < ( int ) info.count; j++ ) {
-			printf( " Native Code[%d]: %#x |%s|\n", j,
-				info.code[j], info.name[j] );
-		     }
+	           for ( j = 0; j < ( int ) info.count; j++ ) {
+	              printf( " Native Code[%d]: %#x |%s|\n", j,
+	              info.code[j], info.name[j] );
+	           }
+             }
 		  }
 		  tot_count++;
 		  if ( info.count ) {
-		     avail_count++;
+	         if ((test_counter && checkCounter (event_code)) || !test_counter )
+		        avail_count++;
 		  }
 		  if ( !strcmp( is_derived( &info ), "Yes" ) ) {
 		     deriv_count++;
