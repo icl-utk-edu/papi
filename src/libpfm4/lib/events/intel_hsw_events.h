@@ -614,6 +614,11 @@ static const intel_x86_umask_t hsw_inst_retired[]={
     .ucntmsk= 0x2,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
+  { .uname = "X87",
+    .udesc  = "X87 FP operations retired with no exceptions. Also counts flows that have several X87 or flows that use X87 uops in the exception handling",
+    .ucode  = 0x200,
+    .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+  },
 };
 
 static const intel_x86_umask_t hsw_int_misc[]={
