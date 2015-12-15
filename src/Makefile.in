@@ -1,6 +1,6 @@
 PAPIVER=5
 PAPIREV=4
-PAPIAGE=2
+PAPIAGE=3
 PAPIINC=0
 PREFIX    = @prefix@
 prefix    = $(PREFIX)
