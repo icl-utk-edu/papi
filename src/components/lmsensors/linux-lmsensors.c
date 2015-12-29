@@ -527,7 +527,6 @@ papi_vector_t _lmsensors_vector = {
 	.num_mpx_cntrs = LM_SENSORS_MAX_COUNTERS,
 	.num_cntrs = LM_SENSORS_MAX_COUNTERS,
 	.default_domain = PAPI_DOM_ALL,
-	.available_domains = PAPI_DOM_ALL,
 	.default_granularity = PAPI_GRN_SYS,
 	.available_granularities = PAPI_GRN_SYS,
 	.hardware_intr_sig = PAPI_INT_SIGNAL,
