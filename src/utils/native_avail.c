@@ -52,7 +52,7 @@ typedef struct command_flags
 	int named;
 	int include;
 	int xclude;
-	int validate;
+	int check;
 	char *name, *istr, *xstr;
 	int darr;
 	int dear;
@@ -71,7 +71,7 @@ print_help( char **argv )
 	printf( "Usage: %s [options]\n", argv[0] );
 	printf( "\nOptions:\n" );
 	printf( "   --help, -h   print this help message\n" );
-	printf( "   --validate   attempts to add each event\n");
+	printf( "   --check, -c  attempts to add each event\n");
 	printf( "   -e EVENTNAME display detailed information about named native event\n" );
 	printf( "   -i EVENTSTR  include only event names that contain EVENTSTR\n" );
 	printf( "   -x EVENTSTR  exclude any event names that contain EVENTSTR\n" );
@@ -143,8 +143,8 @@ parse_args( int argc, char **argv, command_flags_t * f )
 			}
 		} else if ( !strcmp( argv[i], "-h" ) || !strcmp( argv[i], "--help" ) ) {
 			f->help = 1;
-		} else if ( !strcmp( argv[i], "--validate" ) ) {
-			f->validate = 1;
+		} else if ( !strcmp( argv[i], "-c" ) || !strcmp( argv[i], "--check" ) ) {
+			f->check = 1;
 		} else {
 			printf( "%s is not supported\n", argv[i] );
 			exit(1);
@@ -170,11 +170,11 @@ unsigned int event_output_buffer_size = 0;
 char *event_output_buffer = NULL;
 
 static void
-validate_event( PAPI_event_info_t * info )
+check_event( PAPI_event_info_t * info )
 {
 	int EventSet = PAPI_NULL;
 
-	// if this event has already passed the validate test, no need to try this one again
+	// if this event has already passed the check test, no need to try this one again
 	if (event_available) {
 		return;
 	}
@@ -185,7 +185,7 @@ validate_event( PAPI_event_info_t * info )
 			event_available = 1;
 		} // else printf("********** PAPI_add_named_event( %s ) failed: event could not be added \n", info->symbol);
 		if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK ) {
-			printf("**********  Call to destroy eventset failed when trying to validate event '%s'  **********\n", info->symbol);
+			printf("**********  Call to destroy eventset failed when trying to check event '%s'  **********\n", info->symbol);
 		}
 	}
 
@@ -487,8 +487,8 @@ main( int argc, char **argv )
 				num_events++;
 				num_cmp_events++;
 
-				if (flags.validate){
-					validate_event(&info);
+				if (flags.check){
+					check_event(&info);
 				}
 
 				format_event_output( &info, 0);
@@ -512,14 +512,14 @@ main( int argc, char **argv )
 					}
 				}
 
-				// If the user has asked us to validate the events then we need to
-				// walk the list of qualifiers and try to validate the event with each one.
+				// If the user has asked us to check the events then we need to
+				// walk the list of qualifiers and try to check the event with each one.
 				// Even if the user does not want to display the qualifiers this is necessary
 				// to be able to correctly report which events can be used on this system.
 				//
 				// We also need to walk the list if the user wants to see the qualifiers.
 
-				if (flags.qualifiers || flags.validate){
+				if (flags.qualifiers || flags.check){
 					k = i;
 					if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
 						// clear event string using first mask
@@ -533,8 +533,8 @@ main( int argc, char **argv )
 									strcpy (first_event_mask_string, info.symbol);
 								}
 
-								if ( flags.validate ) {
-									validate_event(&info);
+								if ( flags.check ) {
+									check_event(&info);
 								}
 								// now test if the event qualifiers should be displayed to the user
 								if ( flags.qualifiers ) {
@@ -544,15 +544,15 @@ main( int argc, char **argv )
 							}
 						} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
 						// if we are validating events and the event_available flag is not set yet, try a few more combinations
-						if (flags.validate  && (event_available == 0)) {
+						if (flags.check  && (event_available == 0)) {
 							// try using the event with the first mask defined for the event and the cpu mask
 							// this is a kludge but many of the uncore events require an event specific mask (usually
 							// the first one defined will do) and they all require the cpu mask
 							strcpy (info.symbol, first_event_mask_string);
 							strcat (info.symbol, ":cpu=1");
-							validate_event(&info);
+							check_event(&info);
 						}
-						if (flags.validate  && (event_available == 0)) {
+						if (flags.check  && (event_available == 0)) {
 							// an even bigger kludge is that there are 4 snpep_unc_pcu events which require the 'ff' and 'cpu' qualifiers to work correctly.
 							// if nothing else has worked, this code will try those two qualifiers with the current event name to see if it works
 							strcpy (info.symbol, first_event_mask_string);
@@ -560,12 +560,12 @@ main( int argc, char **argv )
 							if (wptr != NULL) {
 								*wptr = '\0';
 								strcat (info.symbol, ":ff=64:cpu=1");
-								validate_event(&info);
+								check_event(&info);
 							}
 						}
 					}
 				}
-				print_event_output(flags.validate);
+				print_event_output(flags.check);
 			} while (PAPI_enum_cmp_event( &i, enum_modifier, cid ) == PAPI_OK );
 		}
 	}

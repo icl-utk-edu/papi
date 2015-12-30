@@ -17,7 +17,7 @@
   *	@section Options
   * <ul>
   *		<li>-a	Display only the available PAPI events.
-  *             <li>-at Display only the available PAPI events after a test.
+  *             <li>-c  Display only the available PAPI events after a check.
   *		<li>-d	Display PAPI event information in a more detailed format.
   *		<li>-h	Display help information about this utility.
   *		<li>-t	Display the PAPI event information in a tabular format. This is the default.
@@ -187,7 +187,7 @@ print_help( char **argv )
 	printf( "Options:\n\n" );
 	printf( "General command options:\n" );
 	printf( "\t-a, --avail      Display only available PAPI preset and user defined events\n" );
-	printf( "\t-at,--avail-test Display only available PAPI preset and user defined events after a test\n" );
+	printf( "\t-c, --check      Display only available PAPI preset and user defined events after an availability check\n" );
 	printf( "\t-d, --detail     Display detailed information about events\n" );
 	printf( "\t-e EVENTNAME     Display detail information about specified event\n" );
 	printf( "\t-h, --help       Print this help message\n" );
@@ -257,7 +257,7 @@ main( int argc, char **argv )
    int tot_count = 0;
    int avail_count = 0;
    int deriv_count = 0;
-   int test_counter = 0;
+   int check_counter = 0;
    int event_code;
 
    PAPI_event_info_t n_info;
@@ -277,10 +277,10 @@ main( int argc, char **argv )
 	    exit( 1 );
 	 }
       }
-      else if ( strstr( argv[args], "-at" ) || strstr (argv[args], "--avail-test") )
+      else if ( strstr( argv[args], "-c" ) || strstr (argv[args], "--check") )
       {
 	 print_avail_only = PAPI_PRESET_ENUM_AVAIL;
-         test_counter = 1;
+         check_counter = 1;
       }
       else if ( strstr( argv[args], "-a" ))
 	 print_avail_only = PAPI_PRESET_ENUM_AVAIL;
@@ -458,7 +458,7 @@ main( int argc, char **argv )
 		  if ( (i==1) || (filter & info.event_type)) {
 		     if ( print_avail_only ) {
 		        if ( info.count ) {
-                   if ( (test_counter && checkCounter (event_code)) || !test_counter)
+                   if ( (check_counter && checkCounter (event_code)) || !check_counter)
                    {
                       printf( "%-13s%#x  %-5s%s",
                          info.symbol,
@@ -483,7 +483,7 @@ main( int argc, char **argv )
 		     }
 		     tot_count++;
 		     if ( info.count ) {
-	            if ((test_counter && checkCounter (event_code)) || !test_counter )
+	            if ((check_counter && checkCounter (event_code)) || !check_counter )
 	              avail_count++;
 		     }
 		     if ( !strcmp( is_derived( &info ), "Yes" ) ) {
@@ -494,7 +494,7 @@ main( int argc, char **argv )
 		  if ( ( print_avail_only && info.count ) ||
 		       ( print_avail_only == 0 ) )
 	      {
-	         if ((test_counter && checkCounter (event_code)) || !test_counter)
+	         if ((check_counter && checkCounter (event_code)) || !check_counter)
 	         {
 	           printf( "%s\t%#x\t%d\t|%s|\n |%s|\n"
 			     " |%s|\n |%s|\n |%s|\n",
@@ -509,7 +509,7 @@ main( int argc, char **argv )
 		  }
 		  tot_count++;
 		  if ( info.count ) {
-	         if ((test_counter && checkCounter (event_code)) || !test_counter )
+	         if ((check_counter && checkCounter (event_code)) || !check_counter )
 		        avail_count++;
 		  }
 		  if ( !strcmp( is_derived( &info ), "Yes" ) ) {
