@@ -915,7 +915,7 @@ static const test_event_t x86_test_events[]={
 	  .name = "wsm::INST_RETIRED:ANY_P:e:c=1",
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
-	  .codes[0] = 0x15700c0ull,
+	  .codes[0] = 0x15701c0ull,
 	},
 	{ SRC_LINE,
 	  .name = "snb::INST_RETIRED:ANY_P:e",
