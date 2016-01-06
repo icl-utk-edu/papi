@@ -788,37 +788,20 @@ int _papi_load_preset_table(char *pmu_str, int pmu_type, int cidx) {
 }
 
 // global variables
-#define STACK_MAX 400 // size of stack
-static char *stack[STACK_MAX]; // stack
-static char *sptr; // stack pointer
-static int  top = -1; // stack length
-
-// isitsym: This function returns true if the character is a symbol
-static
-int isitsym( char symbol ) {
-	switch( symbol ) {
-	case '(':
-	case ')':
-	case '+':
-	case '-':
-	case '*':
-	case '/':
-	case '%':
-		return 1;
-	default :
-		return 0;
-	} // end switch symbol
-} // end isitsym
+static char stack[PAPI_HUGE_STR_LEN]; // stack
+static int stacktop = -1; // stack length
 
 // priority: This function returns the priority of the operator
 static
 int priority( char symbol ) {
-	switch( symbol ) {
-	case '(':
-		return 0;
+        switch( symbol ) {
+        case '@':
+                return -1;
+        case '(':
+                return 0;
 	case '+':
 	case '-':
-		return 1;
+                return 1;
 	case '*':
 	case '/':
 	case '%':
@@ -829,167 +812,91 @@ int priority( char symbol ) {
 } // end priority
 
 static
-int push( char *symbol ) {
-	if( top >= (STACK_MAX - 1) ) {
-		INTDBG("EXIT: Stack Overflow converting Algebraic Expression:%d\n", top );
-		return -1;  //***TODO: Figure out how to exit gracefully
-	} // end if top>MAX
-	stack[++top] = papi_malloc(sizeof(char));
-	stack[top] = symbol;
-	return 0;
+int push( char symbol ) {
+        if( stacktop >= (PAPI_HUGE_STR_LEN - 1) ) {
+                INTDBG("EXIT: Stack Overflow converting Algebraic Expression:%d\n", stacktop );
+                return -1;  //***TODO: Figure out how to exit gracefully
+  } // end if stacktop>MAX
+        stack[++stacktop] = symbol;
+        return 0;
 } // end push
 
 // pop from stack
 static
-char *pop() {
-	if( top < 0 ) {
-		INTDBG("EXIT: Stack Underflow converting Algebraic Expression:%d\n", top );
-		return NULL;  //***TODO: Figure out how to exit gracefully
-	} // end if empty
-	sptr = stack[top--];
-	return( sptr );
+char pop() {
+        if( stacktop < 0 ) {
+                INTDBG("EXIT: Stack Underflow converting Algebraic Expression:%d\n", stacktop );
+                return '\0';  //***TODO: Figure out how to exit gracefully
+        } // end if empty
+        return( stack[stacktop--] );
 } // end pop
-
-// free pointers from stack
-void
-freestack() {
-	int i;
-	for( i = 0; i < STACK_MAX; i++ ) {
-		if ( stack[i] != NULL )
-			papi_free(stack[i]);
-		else
-			break;
-	} // end for stack max
-} // end freestack
-
-// gettoken: get next token from the infix string
-static int
-gettoken( char *infix, char *token, unsigned int *index ) {
-	INTDBG("ENTER: infix: %s, token: %s, index: %d\n", infix, token, *index);
-	int i = 0;
-	int j = *index;
-	if ( tolower(infix[j]) >= 'a' && tolower(infix[j] <= 'z') ) {
-		token[i] = infix[j];
-		while ( !isitsym(infix[++j]) && ( infix[j] != '\0' ) )
-			token[++i] = infix[j];
-		*index = j;
-		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
-		return 1;
-	} // end if starts with character
-	if ( infix[j] == '"' ) {
-		while (	!isitsym(infix[++j]) && ( infix[j] != '"' ) )
-			token[i++] = infix[j];
-		*index = j+1;
-		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
-		return 1;
-	} // end if starts with double quote
-	if ( tolower(infix[j]) >= '0' && tolower(infix[j] <= '9') ) {
-		token[i] = infix[j];
-		while ( !isitsym(infix[++j]) && ( tolower(infix[j]) >= '0' &&
-				tolower(infix[j] <= '9') ) && ( infix[j] != '\0' ) )
-			token[++i] = infix[j];
-		*index = j;
-		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
-		return 1;
-	} // end if starts with number
-	if ( isitsym(infix[j]) ) {
-		token[i] = infix[j];
-		*index = ++j;
-		INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
-		return 1;
-	} // end if it is a special character
-	INTDBG("EXIT: infix: %s, token: %s, index: %d\n", infix, token, *index);
-	return 0; // error
-} // end gettoken
 
 /* infix_to_postfix:
    routine that will be called with parameter:
    char *in characters of infix notation (algebraic formula)
    returns: char * pointer to string of returned postfix */
 static char *
-infix_to_postfix( char *in ) {
-	INTDBG("ENTER: in: %s, size: %zu\n", in, strlen(in));
-	static char postfix[PAPI_HUGE_STR_LEN];	// output
-	unsigned int *index = papi_malloc(sizeof(int));
-	char *ptr = &in[0];
+infix_to_postfix( char *infix ) {
+	INTDBG("ENTER: in: %s, size: %zu\n", infix, strlen(infix));
+	static char postfix[2*PAPI_HUGE_STR_LEN];	// output
+        unsigned int index;
+        int postfixlen;
+        char token;
+        if ( strlen(infix) > PAPI_HUGE_STR_LEN ) 
+            PAPIERROR("A infix string (probably in user-defined presets) is too big (max allowed %d): %s", PAPI_HUGE_STR_LEN, infix );
 
-	*index = 0;
-	memset(&postfix,0,PAPI_HUGE_STR_LEN);
-	memset(&stack,0,STACK_MAX);
-	top = -1; // initialize stack
+        // initialize stack
+	memset( &stack, 0, 2*PAPI_HUGE_STR_LEN );
+	stacktop = -1; 
+	push('#');
+        /* initialize output string */
+	memset(&postfix,0,2*PAPI_HUGE_STR_LEN);
+        postfixlen = 0;
 
-	while( *index < strlen( in ) ) {
-		INTDBG("INTDBG: in: %s, length: %zu, index: %d\n", in, strlen( in ), *index);
-		char next[PAPI_MIN_STR_LEN];
-		char *token = papi_malloc(PAPI_MIN_STR_LEN);
-		memset(next,0,PAPI_MIN_STR_LEN);
-		memset(token,0,PAPI_MIN_STR_LEN);
-		gettoken(ptr, token, index);
-		INTDBG("INTDBG: token: %s|\n", token);
-		switch( token[0] ) {
+	for( index=0; index<strlen(infix); index++ ) {
+                token = infix[index];
+                INTDBG("INTDBG: in: %s, length: %zu, index: %d token %c\n", infix, strlen( infix ), index, token);
+		switch( token ) {
 		case '(':
-			push(&token[0]);
+			push( token );
 			break;
 		case ')':
-			do {
-				char *tmpstr;
-				tmpstr = pop();
-				if ( strlen(tmpstr) < PAPI_MIN_STR_LEN )
-					strcpy(next, tmpstr);
-				if ( next[0] != '(' ) {
-					if ( (strlen(postfix) + strlen(next)) < (PAPI_HUGE_STR_LEN - 1) ) {
-						strcat(postfix, next);
-						strcat(postfix, "|");
-					} // end if enough space
-				} // end if not (
-				else
-					break;
-			} while( 1 ); // TODO: Might be a problem
+                        if (postfix[postfixlen-1]!='|') postfix[postfixlen++] = '|';
+                        while ( stack[stacktop] != '(' ) {
+                                postfix[postfixlen++] = pop();
+                                postfix[postfixlen++] = '|';
+                        }
+                        token = pop();  /* pop the '(' character */
 			break;
 		case '+':
 		case '-':
 		case '*':
 		case '/':
 		case '%':
-		case '^':
-			if ( top >= 0 ) {
-				while( priority(stack[top][0]) >= priority(token[0]) ) {
-					char *tmpstr;
-					tmpstr = pop();
-					if ( (strlen(postfix) + strlen(tmpstr)) < (PAPI_HUGE_STR_LEN - 1) ) {
-						strcat(postfix, tmpstr);
-						strcat(postfix, "|");
-					} // end if enough space
-					if ( top < 0 )
-						break;
-				} // end while
-			} // if something on stack
-			push(&token[0]);
-			break;
-		default: // if an operand comes
-			if ( (strlen(postfix) + strlen(token)) < (PAPI_HUGE_STR_LEN - 1) ) {
-				strcat(postfix, token);
-				strcat(postfix, "|");
-
-
-			} // end if enough space
+		case '^':       /* if an operator */
+                        if (postfix[postfixlen-1]!='|') postfix[postfixlen++] = '|';
+                        while ( priority(stack[stacktop]) > priority(token) ) {
+                                postfix[postfixlen++] = pop();
+                                postfix[postfixlen++] = '|';
+                        }
+                        push( token ); /* save current operator */
+                        break;
+		default: // if alphanumeric character which is not parenthesis or an operator
+                        postfix[postfixlen++] = token;
 			break;
 		} // end switch symbol
 	} // end while
 
-	papi_free(index);
-
-	while( top >= 0 ) {
-		char *tmpstr;
-		tmpstr = pop();
-		if ( (strlen(postfix) + strlen(tmpstr)) < (PAPI_HUGE_STR_LEN - 1) ) {
-			strcat(postfix, tmpstr);
-			strcat(postfix, "|");
-		} // end if enough space
-	} // end while still stuff in the stack
+        /* Write any remaining operators */
+        if (postfix[postfixlen-1]!='|') postfix[postfixlen++] = '|';
+        while ( stacktop>0 ) {
+                postfix[postfixlen++] = pop();
+                postfix[postfixlen++] = '|';
+        }
+        postfix[postfixlen++] = '\0';
+	stacktop = -1; 
 
 	INTDBG("EXIT: postfix: %s, size: %zu\n", postfix, strlen(postfix));
-	freestack();
 	return (postfix);
 } // end infix_to_postfix
 
