@@ -233,8 +233,16 @@ _stealtime_init_thread( hwd_context_t * ctx )
 int
 _stealtime_shutdown_component( void )
 {
-
-   if (event_info!=NULL) free(event_info);
+       int i;
+       int num_events = _stealtime_vector.cmp_info.num_native_events;
+       if (event_info!=NULL) {
+               for (i=0; i<num_events; i++){
+                       free(event_info[i].name);
+                       free(event_info[i].description);
+                       free(event_info[i].units);
+               }
+               free(event_info);
+       }
 
    return PAPI_OK;
 }
@@ -250,6 +258,7 @@ _stealtime_shutdown_thread( hwd_context_t * ctx )
 
   if (context->start_count!=NULL) free(context->start_count);
   if (context->current_count!=NULL) free(context->current_count);
+  if (context->value!=NULL) free(context->value);
 
   return PAPI_OK;
 }
