@@ -275,9 +275,16 @@ static const intel_x86_umask_t hsw_cpl_cycles[]={
 
 static const intel_x86_umask_t hsw_cpu_clk_thread_unhalted[]={
   { .uname = "REF_XCLK",
-    .udesc  = "Cases when the core is unhalted at 100Mhz",
+    .udesc  = "Reference Cycles when the core is unhalted (counts at 100Mhz)",
     .ucode  = 0x100,
     .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "REF_XCLK_ANY",
+    .udesc  = "Reference cycles when the at least one thread on the physical core is unhalted (counts at 100 MHz rate)",
+    .ucode  = 0x100 | INTEL_X86_MOD_ANY, /* any=1 */
+    .uequiv = "REF_XCLK:t",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_T,
   },
   { .uname  = "REF_P",
     .udesc  = "Cycles when the core is unhalted (count at 100 Mhz)",
@@ -289,6 +296,11 @@ static const intel_x86_umask_t hsw_cpu_clk_thread_unhalted[]={
     .udesc  = "Cycles when thread is not halted",
     .ucode = 0x000,
     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+  },
+  { .uname = "ONE_THREAD_ACTIVE",
+    .udesc  = "Counts cycles when this thread is unhalted and the other thread is halted",
+    .ucode  = 0x200,
+    .uflags = INTEL_X86_NCOMBO,
   },
 };
 
@@ -476,6 +488,11 @@ static const intel_x86_umask_t hsw_icache[]={
     .ucode  = 0x200,
     .uflags = INTEL_X86_NCOMBO,
   },
+  { .uname = "HIT",
+    .udesc  = "Number of Instruction Cache, Streaming Buffer and Victim Cache Reads. Includes cacheable and uncacheable accesses and uncacheable fetches",
+    .ucode  = 0x100,
+    .uflags = INTEL_X86_NCOMBO,
+  },
   { .uname = "IFETCH_STALL",
     .udesc  = "Number of cycles where a code-fetch stalled due to L1 instruction cache miss or an iTLB miss",
     .ucode  = 0x400,
@@ -521,6 +538,13 @@ static const intel_x86_umask_t hsw_idq[]={
     .uequiv = "MS_UOPS:c=1",
     .uflags = INTEL_X86_NCOMBO,
     .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "MS_SWITCHES",
+    .udesc  = "Number of cycles that Uops were delivered into Instruction Decode Queue (IDQ) when MS_Busy, initiated by Decode Stream Buffer (DSB) or MITE",
+    .ucode  = 0x3000 | INTEL_X86_MOD_EDGE | (1 << INTEL_X86_CMASK_BIT), /* edge=1 cnt=1 */
+    .uequiv = "MS_UOPS:c=1:e",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_E | _INTEL_X86_ATTR_C,
   },
   { .uname = "MITE_UOPS_CYCLES",
     .udesc  = "Cycles when uops are being delivered to Instruction Decode Queue (IDQ) from MITE path",
@@ -585,8 +609,43 @@ static const intel_x86_umask_t hsw_idq_uops_not_delivered[]={
   { .uname = "CORE",
     .udesc  = "Count number of non-delivered uops to Resource Allocation Table (RAT)",
     .ucode  = 0x100,
-    .uflags = INTEL_X86_DFL,
+    .uflags = INTEL_X86_NCOMBO | INTEL_X86_DFL,
   },
+  { .uname = "CYCLES_0_UOPS_DELIV_CORE",
+    .udesc  = "Cycles per thread when 4 or more uops are not delivered to the Resource Allocation Table (RAT) when backend is not stalled",
+    .ucode  = 0x100 | (4 << INTEL_X86_CMASK_BIT), /* cnt=4 */
+    .uflags = INTEL_X86_NCOMBO,
+    .uequiv = "CORE:c=4",
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_LE_1_UOP_DELIV_CORE",
+    .udesc  = "Cycles per thread when 3 or more uops are not delivered to the Resource Allocation Table (RAT) when backend is not stalled",
+    .ucode  = 0x100 | (3 << INTEL_X86_CMASK_BIT), /* cnt=3 */
+    .uequiv = "CORE:c=3",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_LE_2_UOP_DELIV_CORE",
+    .udesc  = "Cycles with less than 2 uops delivered by the front end",
+    .ucode  = 0x100 | (2 << INTEL_X86_CMASK_BIT), /* cnt=2 */
+    .uequiv = "CORE:c=2",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_LE_3_UOP_DELIV_CORE",
+    .udesc  = "Cycles with less than 3 uops delivered by the front end",
+    .ucode  = 0x100 | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 */
+    .uequiv = "CORE:c=1",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_FE_WAS_OK",
+    .udesc  = "Cycles Front-End (FE) delivered 4 uops or Resource Allocation Table (RAT) was stalling FE",
+    .ucode  = 0x100 | INTEL_X86_MOD_INV | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 inv=1 */
+    .uequiv = "CORE:c=1:i",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_I,
+  }
 };
 
 static const intel_x86_umask_t hsw_inst_retired[]={
@@ -623,9 +682,17 @@ static const intel_x86_umask_t hsw_inst_retired[]={
 
 static const intel_x86_umask_t hsw_int_misc[]={
   { .uname = "RECOVERY_CYCLES",
-    .udesc  = "Number of cycles waiting for Machine Clears  except JEClear",
-    .ucode  = 0x300,
+    .udesc  = "Cycles waiting for the checkpoints in Resource Allocation Table (RAT) to be recovered after Nuke due to all other cases except JEClear (e.g. whenever a ucode assist is needed like SSE exception, memory disambiguation, etc...)",
+    .ucode  = 0x300 | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 */
     .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "RECOVERY_CYCLES_ANY",
+    .udesc  = "Core cycles the allocator was stalled due to recovery from earlier clear event for any thread running on the physical core (e.g. misprediction or memory nuke)",
+    .ucode  = 0x300 | (1 << INTEL_X86_CMASK_BIT) | INTEL_X86_MOD_ANY, /* cnt=1 any=1 */
+    .uequiv = "RECOVERY_CYCLES:t",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_T,
   },
   { .uname = "RECOVERY_STALLS_COUNT",
     .udesc  = "Number of occurrences waiting for Machine Clears",
@@ -681,6 +748,18 @@ static const intel_x86_umask_t hsw_l1d_pend_miss[]={
     .ucntmsk = 0x4,
     .uflags = INTEL_X86_NCOMBO,
     .modhw  = _INTEL_X86_ATTR_E | _INTEL_X86_ATTR_C,
+  },
+  { .uname = "REQUEST_FB_FULL",
+    .udesc  = "Number of times a demand request was blocked due to Fill Buffer (FB) unavailability",
+    .ucode  = 0x200,
+    .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "FB_FULL",
+    .udesc  = "Number of cycles a demand request was blocked due to Fill Buffer (FB) unavailability",
+    .ucode  = 0x200 | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 */
+    .uequiv = "REQUEST_FB_FULL:c=1",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
   },
 };
 
@@ -953,6 +1032,13 @@ static const intel_x86_umask_t hsw_machine_clears[]={
     .ucode  = 0x2000,
     .uflags = INTEL_X86_NCOMBO,
   },
+  { .uname = "COUNT",
+    .udesc  = "Number of machine clears (nukes) of any type",
+    .ucode  = 0x100 | INTEL_X86_MOD_EDGE | (1 << INTEL_X86_CMASK_BIT), /* edge=1 cnt=1 */
+    .uequiv = "CYCLES:c=1:e",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_E | _INTEL_X86_ATTR_C,
+  },
 };
 
 static const intel_x86_umask_t hsw_mem_load_uops_l3_hit_retired[]={
@@ -1209,10 +1295,17 @@ static const intel_x86_umask_t hsw_rob_misc_events[]={
 };
 
 static const intel_x86_umask_t hsw_rs_events[]={
-  { .uname = "EMPTY_CYCLES",
+  { .uname  = "EMPTY_CYCLES",
     .udesc  = "Cycles the Reservation Station (RS) is empty for this thread",
     .ucode  = 0x100,
-    .uflags = INTEL_X86_DFL,
+    .uflags = INTEL_X86_NCOMBO | INTEL_X86_DFL,
+  },
+  { .uname  = "EMPTY_END",
+    .udesc  = "Counts number of time the Reservation Station (RS) goes from empty to non-empty",
+    .ucode  = 0x100 | INTEL_X86_MOD_INV | INTEL_X86_MOD_EDGE | (1 << INTEL_X86_CMASK_BIT), /* inv=1 edge=1 cnt=1 */
+    .uequiv = "EMPTY_CYCLES:c=1:e:i",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_E | _INTEL_X86_ATTR_I | _INTEL_X86_ATTR_C,
   },
 };
 
@@ -1237,10 +1330,68 @@ static const intel_x86_umask_t hsw_uops_executed[]={
   },
   { .uname = "STALL_CYCLES",
     .udesc  = "Number of cycles with no uops executed",
-    .ucode  = 0x200 | INTEL_X86_MOD_INV | (1 << INTEL_X86_CMASK_BIT), /* inv=1 cnt=1 */
-    .uequiv = "CORE:c=1:i=1",
+    .ucode  = 0x100 | INTEL_X86_MOD_INV | (1 << INTEL_X86_CMASK_BIT), /* inv=1 cnt=1 */
     .uflags = INTEL_X86_NCOMBO,
     .modhw  = _INTEL_X86_ATTR_I | _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_GE_1_UOP_EXEC",
+    .udesc  = "Cycles where at least 1 uop was executed per thread",
+    .ucode  = 0x100 | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 */
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_GE_2_UOPS_EXEC",
+    .udesc  = "Cycles where at least 2 uops were executed per thread",
+    .ucode  = 0x100 | (2 << INTEL_X86_CMASK_BIT), /* cnt=2 */
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_GE_3_UOPS_EXEC",
+    .udesc  = "Cycles where at least 3 uops were executed per thread",
+    .ucode  = 0x100 | (3 << INTEL_X86_CMASK_BIT), /* cnt=3 */
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CYCLES_GE_4_UOPS_EXEC",
+    .udesc  = "Cycles where at least 4 uops were executed per thread",
+    .ucode  = 0x100 | (4 << INTEL_X86_CMASK_BIT), /* cnt=4 */
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CORE_CYCLES_GE_1",
+    .udesc  = "Cycles where at least 1 uop was executed from any thread",
+    .ucode  = 0x200 | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 */
+    .uequiv = "CORE:c=1",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CORE_CYCLES_GE_2",
+    .udesc  = "Cycles where at least 2 uops were executed from any thread",
+    .ucode  = 0x200 | (2 << INTEL_X86_CMASK_BIT), /* cnt=2 */
+    .uequiv = "CORE:c=2",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CORE_CYCLES_GE_3",
+    .udesc  = "Cycles where at least 3 uops were executed from any thread",
+    .ucode  = 0x200 | (3 << INTEL_X86_CMASK_BIT), /* cnt=3 */
+    .uequiv = "CORE:c=3",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CORE_CYCLES_GE_4",
+    .udesc  = "Cycles where at least 4 uops were executed from any thread",
+    .ucode  = 0x200 | (4 << INTEL_X86_CMASK_BIT), /* cnt=4 */
+    .uequiv = "CORE:c=4",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_C,
+  },
+  { .uname = "CORE_CYCLES_NONE",
+    .udesc  = "Cycles where no uop is executed on any thread",
+    .ucode  = 0x200 | INTEL_X86_MOD_INV, /* inv=1 */
+    .uequiv = "CORE:i",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_I,
   },
 };
 
@@ -1829,8 +1980,13 @@ static const intel_x86_umask_t hsw_tx_exec[]={
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "MISC4",
-    .udesc  = "Number of times an instruction with HLE xacquire prefix was executed inside a RTM transactional region",
+    .udesc  = "Number of times an instruction with HLE xbegin prefix was executed inside a RTM transactional region",
     .ucode  = 0x800,
+    .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "MISC5",
+    .udesc  = "Number of times an instruction with HLE xacquire prefix was executed inside a RTM transactional region",
+    .ucode  = 0x1000,
     .uflags = INTEL_X86_NCOMBO,
   },
 };
@@ -1868,6 +2024,13 @@ static const intel_x86_umask_t hsw_offcore_requests_outstanding[]={
      .udesc  = "Demand data read transactions in the superQ every cycle (use with HT off only)",
      .ucode = 0x100,
      .uflags= INTEL_X86_NCOMBO,
+   },
+   { .uname  = "DEMAND_DATA_RD_GE_6",
+     .udesc  = "Cycles with at lesat 6 offcore outstanding demand data read requests in the uncore queue",
+     .uequiv = "DEMAND_DATA_RD:c=6",
+     .ucode = 0x100 | (6 << INTEL_X86_CMASK_BIT),
+     .uflags= INTEL_X86_NCOMBO,
+     .modhw  = _INTEL_X86_ATTR_C,
    },
    { .uname  = "DEMAND_RFO",
      .udesc  = "Outstanding RFO (store) transactions in the superQ every cycle (use with HT off only)",
@@ -1982,7 +2145,21 @@ static const intel_x86_umask_t hsw_lsd[]={
    { .uname  = "UOPS",
      .udesc  = "Number of uops delivered by the Loop Stream Detector (LSD)",
      .ucode = 0x100,
-     .uflags= INTEL_X86_DFL,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+   },
+   { .uname  = "ACTIVE",
+     .udesc  = "Cycles with uops delivered by the LSD but which did not come from decoder",
+     .ucode  = 0x100 | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 */
+     .uequiv = "UOPS:c=1",
+     .uflags = INTEL_X86_NCOMBO,
+     .modhw  = _INTEL_X86_ATTR_C,
+   },
+   { .uname  = "CYCLES_4_UOPS",
+     .udesc  = "Cycles with 4 uops delivered by the LSD but which did not come from decoder",
+     .ucode  = 0x100 | (4 << INTEL_X86_CMASK_BIT), /* cnt=4 */
+     .uequiv = "UOPS:c=4",
+     .uflags = INTEL_X86_NCOMBO,
+     .modhw  = _INTEL_X86_ATTR_C,
    },
 };
 
@@ -1995,9 +2172,9 @@ static const intel_x86_umask_t hsw_dsb2mite_switches[]={
 };
 
 static const intel_x86_umask_t hsw_ept[]={
-   { .uname  = "CYCLES",
+   { .uname  = "WALK_CYCLES",
      .udesc  = "Cycles for an extended page table walk",
-     .ucode = 0x0200,
+     .ucode = 0x1000,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
 };
@@ -2013,7 +2190,15 @@ static const intel_x86_umask_t hsw_arith[]={
 static const intel_x86_umask_t hsw_offcore_requests_buffer[]={
    { .uname  = "SQ_FULL",
      .udesc  = "Number of cycles the offcore requests buffer is full",
-     .ucode = 0x0200,
+     .ucode = 0x0100,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
+   },
+};
+
+static const intel_x86_umask_t hsw_avx[]={
+   { .uname  = "ALL",
+     .udesc  = "Approximate counts of AVX and AVX2 256-bit instructions, including non-arithmetic instructions, loads, and stores. May count non-AVX instructions using 256-bit operations",
+     .ucode = 0x0700,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
    },
 };
@@ -2640,6 +2825,15 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .numasks = LIBPFM_ARRAY_SIZE(hsw_arith),
     .ngrp = 1,
     .umasks = hsw_arith,
+  },
+  { .name   = "AVX",
+    .desc   = "Counts AVX instructions",
+    .modmsk = INTEL_V4_ATTRS,
+    .cntmsk = 0xff,
+    .code = 0xc6,
+    .numasks = LIBPFM_ARRAY_SIZE(hsw_avx),
+    .ngrp = 1,
+    .umasks = hsw_avx,
   },
   { .name   = "OFFCORE_REQUESTS_BUFFER",
     .desc   = "Offcore reqest buffer",

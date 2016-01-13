@@ -54,8 +54,7 @@ pfmlib_pmu_t intel_slm_support={
 	.max_encoding		= 2,
 	.pe			= intel_slm_pe,
 	.atdesc			= intel_x86_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK
-				| INTEL_X86_PMU_FL_ECMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
 	.supported_plm		= INTEL_X86_PLM,
 
 	.cpu_family		= 6,
