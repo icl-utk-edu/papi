@@ -102,9 +102,16 @@ static const intel_x86_umask_t skl_br_misp_retired[]={
 
 static const intel_x86_umask_t skl_cpu_clk_thread_unhalted[]={
   { .uname = "REF_XCLK",
-    .udesc  = "Cases when the core is unhalted at 100Mhz",
+    .udesc  = "Count Xclk pulses (100Mhz) when the core is unhalted",
     .ucode  = 0x100,
     .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "REF_XCLK_ANY",
+    .udesc  = "Count Xclk pulses (100Mhz) when the at least one thread on the physical core is unhalted",
+    .ucode  = 0x100 | INTEL_X86_MOD_ANY, /* any=1 */
+    .uequiv = "REF_XCLK:t",
+    .uflags = INTEL_X86_NCOMBO,
+    .modhw  = _INTEL_X86_ATTR_T,
   },
   { .uname  = "REF_P",
     .udesc  = "Cycles when the core is unhalted (count at 100 Mhz)",
@@ -118,7 +125,7 @@ static const intel_x86_umask_t skl_cpu_clk_thread_unhalted[]={
     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
   },
   { .uname  = "ONE_THREAD_ACTIVE",
-    .udesc  = "Cycles when this hyperthread is unhalted and the other hyperthread is halted",
+    .udesc  = "Counts Xclk (100Mhz) pulses when this thread is unhalted and the other thread is halted",
     .ucode  = 0x200,
     .uflags= INTEL_X86_NCOMBO,
   },
