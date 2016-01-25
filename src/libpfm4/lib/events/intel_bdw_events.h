@@ -275,12 +275,12 @@ static const intel_x86_umask_t bdw_cpl_cycles[]={
 
 static const intel_x86_umask_t bdw_cpu_clk_thread_unhalted[]={
   { .uname = "REF_XCLK",
-    .udesc  = "Cases when the core is unhalted at 100Mhz",
+    .udesc  = "Count Xclk pulses (100Mhz) when the core is unhalted",
     .ucode  = 0x100,
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "REF_XCLK_ANY",
-    .udesc  = "Reference cycles when the at least one thread on the physical core is unhalted (counts at 100 MHz rate)",
+    .udesc  = "Count Xclk pulses (100Mhz) when the at least one thread on the physical core is unhalted",
     .ucode  = 0x100 | INTEL_X86_MOD_ANY, /* any=1 */
     .uequiv = "REF_XCLK:t",
     .uflags = INTEL_X86_NCOMBO,
@@ -298,7 +298,7 @@ static const intel_x86_umask_t bdw_cpu_clk_thread_unhalted[]={
     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
   },
   { .uname = "ONE_THREAD_ACTIVE",
-    .udesc  = "Counts cycles when this thread is unhalted and the other thread is halted",
+    .udesc  = "Counts Xclk (100Mhz) pulses when this thread is unhalted and the other thread is halted",
     .ucode  = 0x200,
     .uflags = INTEL_X86_NCOMBO,
   },
