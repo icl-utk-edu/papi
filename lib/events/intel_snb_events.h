@@ -288,7 +288,7 @@ static const intel_x86_umask_t snb_cpu_clk_unhalted[]={
      .uflags= INTEL_X86_NCOMBO,
    },
    { .uname = "REF_XCLK_ANY",
-     .udesc  = "Count Xclk pulses 100Mhz) when the at least one thread on the physical core is unhalted",
+     .udesc  = "Count Xclk pulses (100Mhz) when the at least one thread on the physical core is unhalted",
      .ucode  = 0x100 | INTEL_X86_MOD_ANY, /* any=1 */
      .uequiv = "REF_XCLK:t",
      .uflags = INTEL_X86_NCOMBO,
