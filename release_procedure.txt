@@ -21,33 +21,42 @@ __ 1. Update any documentation that may have changed. Pay particular attention
 __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.in, src/Makefile.in,
 	doc/Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
         The number may already have been updated after the last release.
+	Do not "git push" until autoconf is run (Step 3)
 
 -- 2a. On the icl machine gonzo:
 	export PATH=/mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
 	-- or --
 	setenv PATH /mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
 
--- 2b. Rebuild the doxygen manpages (  cd doc && make && make install )
+-- 2b. Rebuild the doxygen manpages
+        ( cd doc && make && make install )
 	You will want to check if anything needs to be committed to git.
 	(Usually the $(papi_dir)/man/man1 and man3 directories)
 
--- 2c. Update the website docs; 
-	We use Doxyfile-html for this, 
-	newgrp papi		# changes your defacto group to papi (starts a new shell)
-	$(papi_dir)/doc make clean html
-	rm -rf /silk/homes/icl/projectsdev/papi/docs/*
-	(on gonzo: /mnt/papi/docs)
-	cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
-	chmod -R 775 /silk/homes/icl/projectsdev/papi/docs
+-- 2c. Update the website docs... works on gonzo;
+	We use Doxyfile-html for this,
+	newgrp papi
+	changes your defacto group to papi (starts a new shell)
+	( cd doc && make clean html )
+	Cleanup web dir on gonzo:/mnt/papi/docs and install new files
+	Log on gonzo
+	( /bin/rm -rf /mnt/papi/docs/* )
+	( cp -R doc/html/* /mnt/papi/docs )
+	( chmod -R 775 /mnt/papi/docs )
+	Older instructions below
+		rm -rf /silk/homes/icl/projectsdev/papi/docs/*
+		cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
+		chmod -R 775 /silk/homes/icl/projectsdev/papi/docs
 
 __ 3. If configure.in is changed, run autoconf (2.59) and commit the resulting
 	configure file.
-	NOTE: Using an autoconf version >2.59 will work, but will produce an 
+	NOTE: Using an autoconf version >2.59 will work, but will produce an
 	inordinate number of extraneous differences between versions.
+	One possible machine with 2.59 is zoot.
 
-__ 4. Create a ChangeLog for the current release. 
-	We use a python script gitlog2changelog.py to generate is for us. 
-	It expects the tag of the last release as an argument. 
+__ 4. Create a ChangeLog for the current release.
+	We use a python script gitlog2changelog.py to generate is for us.
+	It expects the tag of the last release as an argument.
 	./gitlog2changelog.py papi-a-b-c-t
 	mv ChangeLog ChangeLogP4XYZ.txt
 
@@ -55,19 +64,19 @@ __ 5. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
 __ 6. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 
-__ 7. Add ChangeLogXYZ.txt to git and commit both ChangeLogXYZ.txt and 
+__ 7. Add ChangeLogXYZ.txt to git and commit both ChangeLogXYZ.txt and
 	RELEASENOTES.txt.
 
-__ 8. If this is not an incremental release, branch git. 
+__ 8. If this is not an incremental release, branch git.
 	git checkout -b stable-X.Y [starting point eg master]
 
 __ 9. Tag git: papi-X-Y-Z-t.
 	git tag -a papi-X-Y-Z-t
 
-__ 10. Push everything to the central repo. 
-	git push --tags 
-	-- or -- If you've created a new branch. 
-	git push --tags origin stable-X.Y: 
+__ 10. Push everything to the central repo.
+	git push --tags
+	-- or -- If you've created a new branch.
+	git push --tags origin stable-X.Y:
 
 __ 11. Create a fresh clone of the papi repository.
 	> git clone https://icl.cs.utk.edu/git/papi.git papi-X.Y.Z
@@ -87,9 +96,9 @@ __ 14. zip the tarball:
 	gzip papi-X.Y.Z.tar
 
 __ 15. Copy the tarball to /silk/homes/icl/projects/papi/downloads
-       (gonzo: /mnt/papi/downloads)
+       New location: gonzo:/mnt/papi/downloads
 
-__ 16. Check permissions on the tarball. 664 is good. 
+__ 16. Check permissions on the tarball. 664 is good.
 
 __ 17. Create a link with supporting text on the PAPI software web page.
 
@@ -108,11 +117,11 @@ Below is a step-wise procedure for making a PAPI patch.
 One way to use this procedure is to print a copy and check off
 the lines as they are completed to avoid confusion.
 ================================================================================
-__ 0. Make sure you're on the branch you want to patch against. 
-	> git branch 
+__ 0. Make sure you're on the branch you want to patch against.
+	> git branch
 	* stable-5.0
 
-__1. Generate the patch. 
+__1. Generate the patch.
 	> git diff -p papi-5-0-0-t stable-5.0 > papi-5-0-1.patch
 
 __ 2. Apply the patch.
@@ -125,7 +134,7 @@ __ 3. If the patch applied cleanly, build and test on affected platforms;
 
 __ 4. Copy the diff file to icl:/sw/www/icl/projects/papi/downloads/patches
 
-__ 5. Check permissions on the diff. 644 is good. 
+__ 5. Check permissions on the diff. 644 is good.
 
 __ 6. Create a link with supporting text on the PAPI software web page.
 
@@ -134,7 +143,3 @@ __ 7. Create a News item on the PAPI Web page.
 __ 8. Email the papi discussion list with an announcement.
 
 __ 9. Post the announcement on the PAPI User Forum.
-
-
-
-

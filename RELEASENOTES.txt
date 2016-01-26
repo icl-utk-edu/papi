@@ -6,11 +6,11 @@ in this directory.
 
 
 ===============================================================================
-PAPI 5.4.2 RELEASE NOTES                                            01 Dec 2015
+PAPI 5.4.3 RELEASE NOTES                                            26 Jan 2016
 ===============================================================================
 For specific and detailed information on changes made in this release, grep
-ChangeLogP542.txt for keywords of interest or go directly to the PAPI git
-repo.
+ChangeLogP543.txt for keywords of interest or go directly to the PAPI git
+repo.  
 
 GENERAL NOTES
 ===============================================================================
@@ -33,6 +33,8 @@ Enhancements:
     * Initial Broadwell, Skylake support
     * Added a general CUDA example (components/cuda/test) that uses
       LD_PRELOAD to attach to a running CUcontext.
+    * Added "-check" flag to papi_avail and papi_native_avail to 
+      test counter availability/validity.
 
 Bug Fixes:
 ----------
@@ -45,6 +47,8 @@ Bug Fixes:
     * Cleanup ARM CPU detection.
     * Bug fix for PAPI_overflow issue for multiple eventsets.
     * Increased PERF_EVENT_MAX_MPX_COUNTERS to 192 from 128.
+    * Fixed memory leak in papi_preset.c.
+    * Free allocated memory in the stealtime component.
 
 
 ===============================================================================

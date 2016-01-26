@@ -1,3 +1,55 @@
+2016-01-25
+	
+  * d779d1172a6e4c73b5ece9939c4d067c2b3d7b8d Update libpfm4 current
+    with Jan 25 08:33:02 2016 version.
+
+2016-01-07  
+
+  * 0d9776b8 src/components/stealtime/linux-stealtime.c: Free allocated memory
+  in the stealtime component when component is shutdown  Thanks to William
+  Cohen for contributing this patch and the following explaination: Running
+  examples with "valgrind --leak-check=full ..." showed a number of items
+  allocated by the stealtime component were not freed when PAPI_shutdown() was
+  called.  This patch frees those unused memory allocations.
+
+2016-01-06  
+
+  * de40668c src/papi_preset.c: Fixed memory leak in papi_preset.c by updating
+  the infix_to_postfix function.  Thanks to William Cohen for discovering the
+  leak. The infix_to_postfix function was re-written and tested using user
+  defined events.
+
+2015-12-30  
+
+  * db37e115 src/utils/avail.c src/utils/native_avail.c: Added "-check" flag to
+  papi_avail and papi_native_avail to test counter availability/validity"  This
+  patch updates the papi_avail and papi_native_avail utilities to use the
+  "-check" flag to test the actual availability of counters. There were
+  previously two different flags for this capability, papi_native_avail used
+  "-validate" and papi_avail used "-avail_test". Based on a mailing list
+  discussion these flags have been consolidated as "-check".
+
+2015-12-29  
+
+  * 72e0ffe8 src/components/lmsensors/linux-lmsensors.c: Fixed minor error with
+  multiple initializers for lmsensors_vector .default_granularity.  Thanks to
+  William Cohen for the bug report.
+
+2015-12-07  
+
+  * ec3582d8 src/utils/avail.c: papi_avail to test actual availability of
+  counters using "papi_avail --avail-test"  This problem and the associated
+  patch were detected and contributed by Harald Savat. Thanks.  On an Intel(R)
+  Xeon(R) CPU E5-2660 v2 @ 2.20GHz system with PAPI 5.4.1 installed The
+  papi_avail command indicates that both PAPI_LD_INS and PAPI_SR_INS are
+  available, however the papi_event_chooser does not accept them (see below)
+  and return -1.  This problem can occur in kernels from version 3.1 till 4.1.
+  The kernel devs blocked all uses of the MEM_OPS events (including load and
+  store).  The patch modifies papi_avail to test the counters to see if they
+  can be added. papi_avail     # gets all PAPI counters papi_avail -a  # gets
+  all available PAPI counters papi_avail -at # shows all available PAPI
+  counters that can be added  [Ptools-perfapi: Oct 14 2015]
+
 2015-11-30  
 
   * 1fab922e src/components/libmsr/README src/components/libmsr/configure
