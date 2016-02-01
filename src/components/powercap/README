@@ -1,0 +1,55 @@
+/** 
+* @file:   README
+* CVS:     $Id$
+* @author: Philip Vaccaro
+*          yarkhan@icl.utk.edu
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: powercap
+*/
+
+/** @page component_readme Component Readme
+
+@section Component Specific Information
+
+powercap/
+
+NOTE: This libmsr component is an initial version, and requires that the powercap kernel module be installed and running.
+
+The PAPI powercap component supports measuring and capping power usage
+on recent Intel architectures using the powercap interface exposed through
+the Linux kernel.  
+
+PAPI has created a powercap component that can provide read and write
+access to the information and controls exposed via the Linux powercap interface.
+
+This PAPI component introduces a new ability for PAPI; it is the first
+case where PAPI is writing information to a counter as well as reading
+the data from the counter.
+
+
+--------------------------------------------------
+ENABLE ACCESS TO THE Linux powercap interface
+
+To use this component, the system will need to provide access to Linux powercap interface from user space.  The actions described
+below will generally require superuser ability.  Note, these actions
+may have security and performance consequences, so please make sure
+you know what you are doing.
+
+    Install the "CONFIG_POWERCAP" and "CONFIG_INTEL_RAPL" kernel modules are enabled 
+    Use chmod to set site-appropriate access permissions (e.g. 766) for 
+       /sys/class/powercap/*
+    
+--------------------------------------------------
+CONFIGURING THE PAPI POWERCAP COMPONENT
+
+at the higher src dirctory, configure with this component
+    % cd <papi_dir>/src
+    % ./configure --with-components="libmsr"
+Finally, follow the standard PAPI build (make) instructions
+    % make 
+To use the module, make sure that the libraries are accessible.  
+    % export LD_LIBRARY_PATH=${PAPIDIR}/src:${PAPIDIR}/src/libpfm4/lib:${LIBMSRDIR}/lib:${LD_LIBRARY_PATH}
+To check the installation, the following should show some available counters 
+    % ./utils/papi_native_avail | grep powercap
+
+--------------------------------------------------
