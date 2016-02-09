@@ -27,24 +27,6 @@
  * PMU: ivbep_unc_r3qpi (Intel IvyBridge-EP R3QPI uncore)
  */
 
-static const intel_x86_umask_t ivbep_unc_r3_iio_credits_acquired[]={
-  { .uname = "DRS",
-    .udesc  = "DRS",
-    .ucode  = 0x800,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "NCB",
-    .udesc  = "NCB",
-    .ucode  = 0x1000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "NCS",
-    .udesc  = "NCS",
-    .ucode  = 0x2000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
 static const intel_x86_umask_t ivbep_unc_r3_ring_ad_used[]={
   { .uname = "CCW_VR0_EVEN",
     .udesc  = "Counter-Clockwise and even ring polarity on virtual ring 0",

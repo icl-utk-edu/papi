@@ -299,46 +299,6 @@ static const intel_x86_umask_t snbep_unc_h_txr_bl[]={
   },
 };
 
-static const intel_x86_umask_t snbep_unc_h_wpq_cycles_no_reg_credits[]={
-  { .uname = "CHN0",
-    .udesc  = "HA iMC CHN0 WPQ Credits Empty - Regular",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "CHN1",
-    .udesc  = "HA iMC CHN0 WPQ Credits Empty - Regular",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "CHN2",
-    .udesc  = "HA iMC CHN0 WPQ Credits Empty - Regular",
-    .ucode  = 0x400,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "CHN3",
-    .udesc  = "HA iMC CHN0 WPQ Credits Empty - Regular",
-    .ucode  = 0x800,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
-static const intel_x86_umask_t snbep_unc_h_txr_bl_cycles_full[]={
-  { .uname = "ALL",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x300,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SCHED0",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SCHED1",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
 
 #if 0
 static const intel_x86_umask_t snbep_unc_h_addr_opc_match[]={

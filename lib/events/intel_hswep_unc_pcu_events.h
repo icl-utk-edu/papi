@@ -43,24 +43,6 @@ static const intel_x86_umask_t hswep_unc_p_power_state_occupancy[]={
   },
 };
 
-static const intel_x86_umask_t hswep_unc_p_occupancy_counters[]={
-  { .uname = "C0",
-    .udesc  = "Counts number of cores in C0",
-    .ucode  = 0x0100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "C3",
-    .udesc  = "Counts number of cores in C3",
-    .ucode  = 0x0200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "C6",
-    .udesc  = "Counts number of cores in C6",
-    .ucode  = 0x0300,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
 static const intel_x86_entry_t intel_hswep_unc_p_pe[]={
   { .name   = "UNC_P_CLOCKTICKS",
     .desc   = "PCU Uncore clockticks",

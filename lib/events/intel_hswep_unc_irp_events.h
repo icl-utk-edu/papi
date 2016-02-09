@@ -25,17 +25,6 @@
  * PMU: hswep_unc_irp (Intel Haswell-EP IRP uncore)
  */
 
-static const intel_x86_umask_t hswep_unc_i_address_match[]={
-  { .uname = "STALL_COUNT",
-    .udesc  = "Number of time when it is not possible to merge two conflicting requests, a stall event occurs",
-    .ucode  = 0x100,
-  },
-  { .uname = "MERGE_COUNT",
-    .udesc  = "Number of times when two requests to the same address from the same source are received back to back, it is possible to merge them",
-    .ucode  = 0x200,
-  },
-};
-
 static const intel_x86_umask_t hswep_unc_i_cache_ack_pending_occupancy[]={
   { .uname = "ANY",
     .udesc  = "Any source",
@@ -44,17 +33,6 @@ static const intel_x86_umask_t hswep_unc_i_cache_ack_pending_occupancy[]={
   },
   { .uname = "SOURCE",
     .udesc  = "Track all requests from any source port",
-    .ucode  = 0x200,
-  },
-};
-
-static const intel_x86_umask_t hswep_unc_i_tickles[]={
-  { .uname = "LOST_OWNERSHIP",
-    .udesc  = "Number of request that lost ownership as a result of a tickle",
-    .ucode  = 0x100,
-  },
-  { .uname = "TOP_OF_QUEUE",
-    .udesc  = "Number of cases when a tickle was received but the request was at the head of the queue in the switch. In this case data is returned rather than releasing ownership",
     .ucode  = 0x200,
   },
 };
