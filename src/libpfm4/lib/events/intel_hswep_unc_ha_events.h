@@ -25,25 +25,6 @@
  * PMU: hswep_unc_ha (Intel Haswell-EP HA uncore PMU)
  */
 
-static const intel_x86_umask_t hswep_unc_h_conflict_cycles[]={
-  { .uname = "CONFLICT",
-    .udesc  = "Number of cycles that we are handling conflicts",
-    .ucode  = 0x200,
-  },
-  { .uname = "LAST",
-    .udesc  = "Count every last conflictor in conflict chain. Can be used to compute average conflict chain length",
-    .ucode  = 0x400,
-  },
-  { .uname = "CMP_FWDS",
-    .udesc  = "Count the number of cmp_fwd. This gives the number of late conflicts",
-    .ucode  = 0x1000,
-  },
-  { .uname = "ACKCNFLTS",
-    .udesc  = "Count the number Acknflts",
-    .ucode  = 0x800,
-  },
-};
-
 static const intel_x86_umask_t hswep_unc_h_directory_lookup[]={
   { .uname = "NO_SNP",
     .udesc  = "Snoop not needed",
@@ -405,19 +386,6 @@ static const intel_x86_umask_t hswep_unc_h_snoop_resp[]={
   },
 };
 
-static const intel_x86_umask_t hswep_unc_h_txr_ad[]={
-  { .uname = "NDR",
-    .udesc  = "Counts non-data responses",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SNP",
-    .udesc  = "Counts outbound snoops send on the ring",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
 static const intel_x86_umask_t hswep_unc_h_txr_ad_cycles_full[]={
   { .uname = "ALL",
     .udesc  = "Counts cycles full from both schedulers",
@@ -483,58 +451,6 @@ static const intel_x86_umask_t hswep_unc_h_txr_bl[]={
     .ucode  = 0x400,
     .uflags = INTEL_X86_NCOMBO,
   },
-};
-
-static const intel_x86_umask_t hswep_unc_h_txr_bl_cycles_full[]={
-  { .uname = "ALL",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x300,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SCHED0",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SCHED1",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
-static const intel_x86_umask_t hswep_unc_h_bt_occupancy[]={
-  { .uname = "LOCAL",
-    .udesc  = "Local",
-    .ucode  = 0x100,
-  },
-  { .uname = "REMOTE",
-    .udesc  = "Remote",
-    .ucode  = 0x200,
-  },
-  { .uname = "READS_REMOTE",
-    .udesc  = "Reads remote",
-    .ucode  = 0x800,
-  },
-  { .uname = "WRITES_LOCAL",
-    .udesc  = "Writes local",
-    .ucode  = 0x1000,
-  },
-  { .uname = "WRITES_REMOTE",
-    .udesc  = "Writes remote",
-    .ucode  = 0x2000,
-  },
-};
-
-static const intel_x86_umask_t hswep_unc_h_bt_to_ht_not_issued[]={
-  { .uname = "INCOMING_SNP_HAZARD",
-    .udesc  = "Number of cycles unable to issue from BT due to incoming snoop hazard",
-    .ucode  = 0x200,
-  },
-  { .uname = "INCOMING_BL_HAZARD",
-    .udesc  = "Number of cycles unable to issue from BT due to incoming BL data hazard",
-    .ucode  = 0x400,
-  }
 };
 
 static const intel_x86_umask_t hswep_unc_h_osb[]={
@@ -692,18 +608,6 @@ static const intel_x86_umask_t hswep_unc_h_snoops_cycles_ne[]={
   },
 };
 
-static const intel_x86_umask_t hswep_unc_h_tracker_cycles_full[]={
-  { .uname = "GP",
-    .udesc  = "Number of cycles when the general purpose (GP) HA tracker pool is completely used. It will not return valid count when BT is disabled",
-    .ucode  = 0x100,
-  },
-  { .uname = "ALL",
-    .udesc  = "Number of cycles when the general purpose (GP) HA tracker pool is completely used including reserved HT entries. It will not return vaid count when BT is disabled",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_DFL,
-  },
-};
-
 static const intel_x86_umask_t hswep_unc_h_txr_ak[]={
   { .uname = "NDR",
     .udesc  = "Number of outbound NDR (non-data response) transactions send on the AK ring. AK NDR is used for messages to the local socket",
@@ -717,18 +621,6 @@ static const intel_x86_umask_t hswep_unc_h_txr_ak[]={
     .udesc  = "Number of outbound CDR transactions send on the AK ring to QPI",
     .ucode  = 0x400,
   },
-};
-
-static const intel_x86_umask_t hswep_unc_h_iodc_conflicts[]={
-  { .uname = "ANY",
-    .udesc  = "Any conflict",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_DFL | INTEL_X86_NCOMBO,
-  },
-  { .uname = "LAST",
-    .udesc  = "Last conflict",
-    .ucode  = 0x400,
-  }
 };
 
 static const intel_x86_umask_t hswep_unc_h_stall_no_sbo_credit[]={

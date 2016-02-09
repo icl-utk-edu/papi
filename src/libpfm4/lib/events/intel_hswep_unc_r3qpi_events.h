@@ -25,24 +25,6 @@
  * PMU: hswep_unc_r3qpi (Intel Haswell-EP R3QPI uncore)
  */
 
-static const intel_x86_umask_t hswep_unc_r3_iio_credits_acquired[]={
-  { .uname = "DRS",
-    .udesc  = "DRS",
-    .ucode  = 0x800,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "NCB",
-    .udesc  = "NCB",
-    .ucode  = 0x1000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "NCS",
-    .udesc  = "NCS",
-    .ucode  = 0x2000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
 static const intel_x86_umask_t hswep_unc_r3_ring_ad_used[]={
   { .uname = "CCW_EVEN",
     .udesc  = "Counter-Clockwise and even ring polarity",
@@ -148,37 +130,6 @@ static const intel_x86_umask_t hswep_unc_r3_vn0_credits_used[]={
   { .uname = "NCS",
     .udesc  = "Filter NCS message class",
     .ucode  = 0x2000,
-  },
-};
-
-static const intel_x86_umask_t hswep_unc_r3_hi_ad_credits_empty[]={
-  { .uname = "CBO8",
-    .udesc  = "CBox 8",
-    .ucode  = 0x100,
-  },
-  { .uname = "CBO9",
-    .udesc  = "CBox 9",
-    .ucode  = 0x200,
-  },
-  { .uname = "CBO10",
-    .udesc  = "CBox 10",
-    .ucode  = 0x400,
-  },
-  { .uname = "CBO11",
-    .udesc  = "CBox 11",
-    .ucode  = 0x800,
-  },
-  { .uname = "CBO12",
-    .udesc  = "CBox 12",
-    .ucode  = 0x1000,
-  },
-  { .uname = "CBO13",
-    .udesc  = "CBox 13",
-    .ucode  = 0x2000,
-  },
-  { .uname = "CBO14",
-    .udesc  = "CBox 14 & 16",
-    .ucode  = 0x4000,
   },
 };
 

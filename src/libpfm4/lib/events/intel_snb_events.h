@@ -1491,25 +1491,6 @@ static const intel_x86_umask_t snb_tlb_flush[]={
    },
 };
 
-static const intel_x86_umask_t snb_uops_dispatched[]={
-   { .uname  = "CORE",
-     .udesc  = "Counts total number of uops dispatched from any thread",
-     .ucode = 0x200,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "STALL_CYCLES",
-     .udesc  = "Counts number of cycles no uops were dispatched on this thread",
-     .uequiv = "THREAD:c=1:i=1",
-     .ucode = 0x100 | INTEL_X86_MOD_INV | (0x1 << INTEL_X86_CMASK_BIT),
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "THREAD",
-     .udesc  = "Counts total number of uops to be dispatched per-thread each cycle",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-};
-
 static const intel_x86_umask_t snb_uops_dispatched_port[]={
    { .uname  = "PORT_0",
      .udesc  = "Cycles which a Uop is dispatched on port 0",

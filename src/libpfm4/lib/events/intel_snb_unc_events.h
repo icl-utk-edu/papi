@@ -134,48 +134,6 @@ static const intel_x86_umask_t snb_unc_cbo_cache_lookup[]={
    },
 };
 
-static const intel_x86_umask_t snb_unc_arb_trk_occupancy[]={
-   { .uname  = "ALL",
-     .udesc  = "Counts cycles weighted by the number of requests waiting for data returning from the memory controller, (includes coherent and non-coherent requests initiated by cores, processor graphic units, or LLC)",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
-   },
-};
-
-static const intel_x86_umask_t snb_unc_arb_trk[]={
-   { .uname  = "ALL",
-     .udesc  = "Counts number of coherent and in-coherent requests initiated by cores, processor graphic units, or LLC",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
-   },
-   { .uname  = "WRITES",
-     .udesc  = "Counts the number of allocated write entries, include full, partial, and LLC evictions",
-     .ucode = 0x2000,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-   { .uname  = "EVICTIONS",
-     .udesc  = "Counts the number of LLC evictions allocated",
-     .ucode = 0x8000,
-     .uflags= INTEL_X86_NCOMBO,
-   },
-};
-
-static const intel_x86_umask_t snb_unc_arb_coh_trk_occupancy[]={
-   { .uname  = "ALL",
-     .udesc  = "Cycles weighted by number of requests pending in Coherency Tracker",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
-   },
-};
-
-static const intel_x86_umask_t snb_unc_arb_coh_trk_request[]={
-   { .uname  = "ALL",
-     .udesc  = "Number of requests allocated in Coherency Tracker",
-     .ucode = 0x100,
-     .uflags= INTEL_X86_NCOMBO | INTEL_X86_DFL,
-   },
-};
-
 static const intel_x86_entry_t intel_snb_unc_cbo0_pe[]={
 { .name   = "UNC_CLOCKTICKS",
   .desc   = "uncore clock ticks",
@@ -221,36 +179,5 @@ static const intel_x86_entry_t intel_snb_unc_cbo_pe[]={
   .numasks = LIBPFM_ARRAY_SIZE(snb_unc_cbo_cache_lookup),
   .ngrp = 2,
   .umasks = snb_unc_cbo_cache_lookup,
-},
-};
-
-static const intel_x86_entry_t intel_snb_unc_arb_pe[]={
-{ .name   = "UNC_ARB_TRK_OCCUPANCY",
-  .desc   = "ARB tracker occupancy",
-  .modmsk = INTEL_SNB_UNC_ATTRS,
-  .cntmsk = 0x1,
-  .code = 0x80,
-  .numasks = LIBPFM_ARRAY_SIZE(snb_unc_arb_trk_occupancy),
-  .ngrp = 1,
-  .umasks = snb_unc_arb_trk_occupancy,
-},
-{ .name   = "UNC_ARB_COH_TRK_OCCUPANCY",
-  .desc   = "Coherency traffic occupancy",
-  .modmsk = INTEL_SNB_UNC_ATTRS,
-  .cntmsk = 0x1,
-  .code = 0x83,
-  .flags= INTEL_X86_PEBS,
-  .numasks = LIBPFM_ARRAY_SIZE(snb_unc_arb_coh_trk_occupancy),
-  .ngrp = 1,
-  .umasks = snb_unc_arb_coh_trk_occupancy,
-},
-{ .name   = "UNC_ARB_COH_TRK_REQUEST",
-  .desc   = "Coherency traffic requests",
-  .modmsk = INTEL_SNB_UNC_ATTRS,
-  .cntmsk = 0x1,
-  .code = 0x84,
-  .numasks = LIBPFM_ARRAY_SIZE(snb_unc_arb_coh_trk_request),
-  .ngrp = 1,
-  .umasks = snb_unc_arb_coh_trk_request,
 },
 };

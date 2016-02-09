@@ -343,8 +343,8 @@ measure(void)
 
 		for (delay = 1 ; delay <= options.delay; delay++) {
 
-		for(c=cmin ; c < cmax; c++)
-			start_cpu(c);
+			for(c=cmin ; c < cmax; c++)
+				start_cpu(c);
 
 			if (0) {
 				tv.tv_sec = 0;
@@ -353,8 +353,8 @@ measure(void)
 			} else
 				sleep(1);
 
-		for(c=cmin ; c < cmax; c++)
-			stop_cpu(c);
+			for(c=cmin ; c < cmax; c++)
+				stop_cpu(c);
 
 			for(c = cmin; c < cmax; c++) {
 				printf("# %'ds -----\n", delay);

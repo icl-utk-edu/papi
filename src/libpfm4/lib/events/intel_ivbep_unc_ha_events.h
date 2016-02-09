@@ -308,19 +308,6 @@ static const intel_x86_umask_t ivbep_unc_h_snoop_resp[]={
   },
 };
 
-static const intel_x86_umask_t ivbep_unc_h_txr_ad[]={
-  { .uname = "NDR",
-    .udesc  = "Counts non-data responses",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SNP",
-    .udesc  = "Counts outbound snoops send on the ring",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
 static const intel_x86_umask_t ivbep_unc_h_txr_ad_cycles_full[]={
   { .uname = "ALL",
     .udesc  = "Counts cycles full from both schedulers",
@@ -388,24 +375,6 @@ static const intel_x86_umask_t ivbep_unc_h_txr_bl[]={
   },
 };
 
-static const intel_x86_umask_t ivbep_unc_h_txr_bl_cycles_full[]={
-  { .uname = "ALL",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x300,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SCHED0",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "SCHED1",
-    .udesc  = "BL Egress Full",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
 #if 0
 static const intel_x86_umask_t ivbep_unc_h_addr_opc_match[]={
   { .uname = "FILT",
@@ -437,17 +406,6 @@ static const intel_x86_umask_t ivbep_unc_h_bt_occupancy[]={
     .udesc  = "Writes remote",
     .ucode  = 0x2000,
   },
-};
-
-static const intel_x86_umask_t ivbep_unc_h_bt_to_ht_not_issued[]={
-  { .uname = "INCOMING_SNP_HAZARD",
-    .udesc  = "Number of cycles unable to issue from BT due to incoming snoop hazard",
-    .ucode  = 0x200,
-  },
-  { .uname = "INCOMING_BL_HAZARD",
-    .udesc  = "Number of cycles unable to issue from BT due to incoming BL data hazard",
-    .ucode  = 0x400,
-  }
 };
 
 static const intel_x86_umask_t ivbep_unc_h_osb[]={
@@ -563,18 +521,6 @@ static const intel_x86_umask_t ivbep_unc_h_snp_resp_recv_local[]={
   { .uname = "OTHER",
     .udesc  = "Filters all other snoop responses",
     .ucode  = 0x8000,
-  },
-};
-
-static const intel_x86_umask_t ivbep_unc_h_tracker_cycles_full[]={
-  { .uname = "GP",
-    .udesc  = "Number of cycles when the general purpose (GP) HA tracker pool is completely used. It will not return valid count when BT is disabled",
-    .ucode  = 0x100,
-  },
-  { .uname = "ALL",
-    .udesc  = "Number of cycles when the general purpose (GP) HA tracker pool is completely used including reserved HT entries. It will not return vaid count when BT is disabled",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_DFL,
   },
 };
 

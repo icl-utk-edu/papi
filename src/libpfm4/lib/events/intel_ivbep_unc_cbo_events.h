@@ -436,29 +436,6 @@ static const intel_x86_umask_t ivbep_unc_c_rxr_ismq_retry[]={
   },
 };
 
-static const intel_x86_umask_t ivbep_unc_c_rxr_occupancy[]={
-  { .uname = "IPQ",
-    .udesc  = "IPQ",
-    .ucode  = 0x400,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "IRQ",
-    .udesc  = "IRQ",
-    .ucode  = 0x100,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "IRQ_REJECTED",
-    .udesc  = "IRQ rejected",
-    .ucode  = 0x200,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-  { .uname = "VFIFO",
-    .udesc  = "Number of used entries in the IRQ ordering FIFO in each cycle",
-    .ucode  = 0x1000,
-    .uflags = INTEL_X86_NCOMBO,
-  },
-};
-
 static const intel_x86_umask_t ivbep_unc_c_tor_inserts[]={
   { .uname = "OPCODE",
     .udesc  = "Number of transactions inserted into the TOR that match an opcode (must provide opc_* umask)",
