@@ -3,7 +3,7 @@
 %define python_prefix %(python -c "import sys; print sys.prefix")
 
 Name:		libpfm
-Version:	4.5.0
+Version:	4.6.0
 Release:	1%{?dist}
 
 Summary:	Library to encode performance events for use by perf tool
@@ -14,7 +14,7 @@ URL:		http://perfmon2.sourceforge.net/
 Source0:	http://sourceforge.net/projects/perfmon2/files/libpfm4/%{name}-%{version}.tar.gz
 %if %{with_python}
 BuildRequires:	python-devel
-BuildRequires:	python-setuptools-devel
+BuildRequires:	python-setuptools
 BuildRequires:	swig
 %endif
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -28,7 +28,7 @@ for the perf_events interface available in upstream Linux kernels since v2.6.31.
 %package devel
 Summary:	Development library to encode performance events for perf_events based tools
 Group:		Development/Libraries
-Requires:	%{name} = %{version}
+Requires:	%{name} = %{version}-%{release}
 
 %description devel
 Development library and header files to create performance monitoring
@@ -38,7 +38,7 @@ applications for the perf_events interface.
 %package python
 Summary:	Python bindings for libpfm and perf_event_open system call
 Group:		Development/Languages
-Requires:	%{name} = %{version}
+Requires:	%{name} = %{version}-%{release}
 
 %description python
 Python bindings for libpfm4 and perf_event_open system call.
@@ -97,6 +97,9 @@ rm -fr $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Feb 9 2016 William Cohen <wcohen@redhat.com> 4.6.0-1
+- Update spec file.
+
 * Wed Nov 13 2013 Lukas Berk <lberk@redhat.com> 4.4.0-1
 - Intel IVB-EP support
 - Intel IVB updates support
