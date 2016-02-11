@@ -1,3 +1,13 @@
+libpfm4 (7.0) unstable; urgency=low
+  * add Intel Skylake support
+  * add Intel Haswell-EP uncore PMU support
+  * add Broadwell DE support
+  * updated most Intel x86 event tables to match official tables
+  * refreshed perf_event.h header to 4.2
+  * more bug fixes and minor updates
+
+ -- Stephane Eranian <eranian@gmail.com>  Thu, 11 Feb  2016 16:56:01 +0200
+
 libpfm4 (6.0) unstable; urgency=low
   * add Intel Broadwell (desktop) support
   * add Intel Haswell-EP support (core)
