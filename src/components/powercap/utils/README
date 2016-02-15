@@ -4,7 +4,7 @@ This test demonstrates the ability of PAPI to use the Linux powercap interface t
 write power constraints to gather energy information and apply power
 constraints.
 
-See the instructions in the libmsr directory to build the component.
+See the instructions in the components/powercap directory to build the component.
 
 It works by using PAPI to read information from Linux powercap interface and write
 it to a file.  The code repeatedly runs an OpenMP multithreaded
@@ -15,14 +15,11 @@ the power caps for the power packages are adjusted using
 PAPI_write(EventSet, values ).
 
 Build and run the test as follows
-   cd components/powercap/utils/ 
-   make clean && make 
+   cd components/powercap/utils/
+   make clean
+   make
    ./powercap_write_test
 
 In the output file, you can see the power values that are SET and the
 power values that are READ.  By comparing them you can confirm that
 the component is performing as expected.
-
-Note: For some CPUs, only setting/writing PKG_POWER_LIMIT_1 will have
-effect.  Setting PKG_POWER_LIMIT_2 will not have any effect.
-

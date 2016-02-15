@@ -41,7 +41,7 @@ int main (int argc, char **argv)
     const PAPI_component_info_t *cmpinfo = NULL;
     long long start_time,write_start_time,write_end_time,read_start_time,read_end_time;
     char event_name[BUFSIZ];
-    union { long long ll; double dbl; } event_value_union;
+    long long event_value_ll;
     static int num_events=0;
     FILE *fileout;
     
@@ -125,7 +125,7 @@ int main (int argc, char **argv)
     if (retval != PAPI_OK) { fprintf(stderr,"PAPI_read() failed\n"); exit(1); }
 
     /* Write a header line */
-    fprintf( fileout, "events\t");
+    fprintf( fileout, "time \tevents\t");
     for(i=0; i<num_events; i++) 
         fprintf( fileout, "%s\t", events[i]/*+9*/ );
     fprintf( fileout, "\n" );
@@ -134,11 +134,11 @@ int main (int argc, char **argv)
     retval = PAPI_read( EventSet, values);
     if (retval != PAPI_OK) { fprintf(stderr,"PAPI_read() failed\n"); exit(1); }
     fprintf( fileout, "%8.3f\t",((double)(PAPI_get_real_nsec()-start_time))/1.0e9);
-    fprintf( fileout, "initial\t");
+    fprintf( fileout, "INIT\t");
 
     for(i=0; i<num_events; i++) {
-        event_value_union.ll = values[i];
-        fprintf( fileout, "%lld\t", event_value_union.ll );
+        event_value_ll = values[i];
+        fprintf( fileout, "%lld\t", event_value_ll );
     }
     fprintf( fileout, "\n" );
 
@@ -152,13 +152,14 @@ int main (int argc, char **argv)
     while(rpt++<50) {
         if ( rpt % 10 == 0 )  {
             for (i=0; i<num_events; i++) {
-                event_value_union.ll = values[i];
-                if ( strstr( events[i], "POWER_LIMIT_A" )) event_value_union.ll=powerLimitA;
-                else if ( strstr( events[i], "POWER_LIMIT_B" )) event_value_union.ll=powerLimitB;
-                else {event_value_union.dbl=PAPI_NULL; event_value_union.ll=-1;}
-                values[i]=event_value_union.ll;
+                /* Get current power_limit value */
+                event_value_ll = values[i];
+                if ( strstr( events[i], "POWER_LIMIT_A" )) event_value_ll=powerLimitA;
+                else if ( strstr( events[i], "POWER_LIMIT_B" )) event_value_ll=powerLimitB;
+                else { event_value_ll=-1;}
+                values[i]=event_value_ll;
             }
-            printf("updating vals...\n");
+            printf("updating vals...\n"); /* For next time */
             powerLimitA -= powerLimitAIncr;
             powerLimitB -= powerLimitBIncr;
 
@@ -170,20 +171,19 @@ int main (int argc, char **argv)
             fprintf( fileout, "%8.3f\t",((double)(PAPI_get_real_nsec()-start_time))/1.0e9);
             fprintf( fileout, "SET\t");
             for(i=0; i<num_events; i++) {
-                event_value_union.ll = values[i];
-                if(event_value_union.ll != -1) {
-                  fprintf( fileout, "%lld\t", event_value_union.ll );
-                  //printf( "SET\t");
-                  //printf( "%lld\n", event_value_union.ll );
-                }
-                else
-                  fprintf( fileout, "\t" );
+                event_value_ll = values[i];
+//                if(event_value_ll != -1) {
+                    fprintf( fileout, "%lld\t", event_value_ll );
+                    //printf( "SET\t");
+//                }
+//                else
+//                  fprintf( fileout, "\t" );
             }
             fprintf( fileout, "\n" );
         }
         
         /* DO SOME WORK TO USE ENERGY */
-        usleep(100000);
+        //usleep(100000);
         ompcpuloadprimes( 100000 );
         
         /* Read and output the values */
@@ -194,8 +194,8 @@ int main (int argc, char **argv)
          fprintf( fileout, "%8.3f\t",((double)(PAPI_get_real_nsec()-start_time))/1.0e9);
         fprintf( fileout, "READ\t");
         for(i=0; i<num_events; i++) {
-            event_value_union.ll = values[i];
-            fprintf( fileout, "%lld\t", event_value_union.ll );
+            event_value_ll = values[i];
+            fprintf( fileout, "%lld\t", event_value_ll );
         }
         fprintf( fileout, "\n" );
     }
