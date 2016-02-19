@@ -162,15 +162,15 @@ static const intel_x86_umask_t ivbep_unc_m_pre_count[]={
   },
   { .uname = "RD",
     .udesc  = "Precharge due to read",
-    .ucode  = 0x100,
+    .ucode  = 0x400,
   },
   { .uname = "WR",
     .udesc  = "Precharhe due to write",
-    .ucode  = 0x200,
+    .ucode  = 0x800,
   },
   { .uname = "BYP",
     .udesc  = "Precharge due to bypass",
-    .ucode  = 0x800,
+    .ucode  = 0x1000,
   },
 };
 
