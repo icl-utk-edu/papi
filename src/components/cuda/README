@@ -40,17 +40,22 @@ contains the configuration settings. This script needs to be executed
 only once. The CUDA configure script requires the user to specify the
 following configuration settings:
     % cd < latest-papi-version >/src/components/cuda
-    % ./configure --with-cuda_incdir=< CUDA INCLUDE PATH > --with-cupti_incdir=< CUPTI INCLUDE PATH > --with-cupti_libdir=< CUPTI LIBRARY PATH >
+    % ./configure --with-cuda_dir=< CUDA PATH > --with-cupti_dir=< CUPTI PATH >
 
 Furthermore, the CUDA component will be added to PAPI during the
 configuration of PAPI by adding the '--with-components=cuda' command
 line option to configure.
-    % ./configure --prefix=< your_choice > --with-components=cuda
+    % ./configure --prefix=< your_choice > --with-components="cuda"
 
 Attempting to add the CUDA component to PAPI - without running the
 configure script for the CUDA component first - will result in a
 compilation error because the PAPI build environment will be unable to
 find the Makefile for the CUDA component.
+
+Testing the component requires that libraries for PAPI, CUDA, CUPTI
+can be found or are statically linked in to the executable.  You may
+need to add more library directories to the example shown.  
+sh% export LD_LIBRARY_PATH=${CUDADIR}/lib64:${CUPTIDIR}/lib64:${LD_LIBRARY_PATH}
 
 For general information on how to create and run components, the user
 is referred to the INSTALL.txt section "CREATING AND RUNNING
