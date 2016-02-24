@@ -417,7 +417,7 @@ deallocate_infiniband_resources()
 /*
  * This is called whenever a thread is initialized
  */
-int
+static int
 _infiniband_init_thread( hwd_context_t *ctx )
 {
    (void) ctx;
@@ -429,7 +429,7 @@ _infiniband_init_thread( hwd_context_t *ctx )
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int
+static int
 _infiniband_init_component( int cidx )
 {
    /* discover Infiniband devices and available events */
@@ -458,7 +458,7 @@ _infiniband_init_component( int cidx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int
+static int
 _infiniband_init_control_state( hwd_control_state_t *ctl )
 {
    infiniband_control_state_t* control = (infiniband_control_state_t*) ctl;
@@ -474,7 +474,7 @@ _infiniband_init_control_state( hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _infiniband_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    infiniband_context_t* context = (infiniband_context_t*) ctx;
@@ -496,7 +496,7 @@ _infiniband_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _infiniband_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    infiniband_context_t* context = (infiniband_context_t*) ctx;
@@ -536,7 +536,7 @@ _infiniband_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _infiniband_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		 long_long ** events, int flags )
 {
@@ -550,7 +550,7 @@ _infiniband_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 }
 
 
-int
+static int
 _infiniband_shutdown_component( void )
 {
    /* Cleanup resources used by this component before leaving */
@@ -559,7 +559,7 @@ _infiniband_shutdown_component( void )
    return PAPI_OK;
 }
 
-int
+static int
 _infiniband_shutdown_thread( hwd_context_t *ctx )
 {
    ( void ) ctx;
@@ -573,7 +573,7 @@ _infiniband_shutdown_thread( hwd_context_t *ctx )
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int
+static int
 _infiniband_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
    ( void ) ctx;
@@ -583,7 +583,7 @@ _infiniband_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-int
+static int
 _infiniband_update_control_state( hwd_control_state_t *ctl,
 				 NativeInfo_t * native, 
 				 int count,
@@ -619,7 +619,7 @@ _infiniband_update_control_state( hwd_control_state_t *ctl,
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int
+static int
 _infiniband_set_domain( hwd_control_state_t *ctl, int domain )
 {
    int found = 0;
@@ -644,7 +644,7 @@ _infiniband_set_domain( hwd_control_state_t *ctl, int domain )
 /*
  * Cannot reset the counters using the sysfs interface.
  */
-int
+static int
 _infiniband_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    (void) ctx;
@@ -656,7 +656,7 @@ _infiniband_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  * Native Event functions
  */
-int
+static int
 _infiniband_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
    switch (modifier) {
@@ -688,7 +688,7 @@ _infiniband_ntv_enum_events( unsigned int *EventCode, int modifier )
 /*
  *
  */
-int
+static int
 _infiniband_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
    int index = EventCode;
@@ -703,7 +703,7 @@ _infiniband_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _infiniband_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
    int index = EventCode;
@@ -714,7 +714,7 @@ _infiniband_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
    return PAPI_OK;
 }
 
-int
+static int
 _infiniband_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
    int index = EventCode;

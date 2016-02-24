@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS MIC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 MPICC AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB OPTFLAGS CPUCOMPONENT_NAME CPUCOMPONENT_C CPUCOMPONENT_OBJ OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR CC_COMMON_NAME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS MIC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 MPICC AWK CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LDL datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI PMINIT AR papiLIBS STATIC NOTLS altix perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root old_pfmv2 pfm_prefix pfm_incdir pfm_libdir OS papi_events papi_events_table SETPATH LINKLIB VERSION CPU FILENAME LIBRARY SHLIB VLIB OPTFLAGS CPUCOMPONENT_NAME CPUCOMPONENT_C CPUCOMPONENT_OBJ OSFILESSRC OSFILESOBJ OSFILESHDR OSLOCK OSCONTEXT DESCR CTEST_TARGETS CC_R CC_SHR SMPCFLGS OMPCFLGS NOOPT MISCSRCS MISCOBJS POST_BUILD ARCH_EVENTS CPU_MODEL cpu_option ARG64 FLAGS MISCHDRS SHLIBDEPS TOPTFLAGS TESTS tests SHOW_CONF BGP_SYSDIR BITFLAGS COMPONENT_RULES COMPONENTS FTEST_TARGETS UTIL_TARGETS EXTRA_CFLAGS HAVE_NO_OVERRIDE_INIT PAPI_EVENTS_CSV BGPM_INSTALL_DIR CC_COMMON_NAME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7135,9 +7135,10 @@ FTEST_TARGETS="all"
 UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost papi_component_avail papi_error_codes"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.5.4.3.0'
+VLIB='libpapi.so.$(PAPIVER)'
 OMPCFLGS=-fopenmp
 CC_R='$(CC) -pthread'
-CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(VLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
 if test "$CC_COMMON_NAME" = "gcc"; then
 	if test "$bitmode" = "32"; then
 		BITFLAGS=-m32
@@ -7644,6 +7645,7 @@ fi
 if test "x$PAPI_EVENTS_CSV" == "x"; then
    PAPI_EVENTS_CSV="papi_events.csv"
 fi
+
 
 
 
@@ -8428,6 +8430,7 @@ s,@CPU@,$CPU,;t t
 s,@FILENAME@,$FILENAME,;t t
 s,@LIBRARY@,$LIBRARY,;t t
 s,@SHLIB@,$SHLIB,;t t
+s,@VLIB@,$VLIB,;t t
 s,@OPTFLAGS@,$OPTFLAGS,;t t
 s,@CPUCOMPONENT_NAME@,$CPUCOMPONENT_NAME,;t t
 s,@CPUCOMPONENT_C@,$CPUCOMPONENT_C,;t t

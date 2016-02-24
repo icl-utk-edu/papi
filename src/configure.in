@@ -1233,9 +1233,10 @@ FTEST_TARGETS="all"
 UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost papi_component_avail papi_error_codes"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.AC_PACKAGE_VERSION'
+VLIB='libpapi.so.$(PAPIVER)'
 OMPCFLGS=-fopenmp
 CC_R='$(CC) -pthread'
-CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(VLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
 if test "$CC_COMMON_NAME" = "gcc"; then
 	if test "$bitmode" = "32"; then
 		BITFLAGS=-m32
@@ -1746,6 +1747,7 @@ AC_SUBST(CPU)
 AC_SUBST(FILENAME)
 AC_SUBST(LIBRARY)
 AC_SUBST(SHLIB)
+AC_SUBST(VLIB)
 AC_SUBST(OPTFLAGS)
 AC_SUBST(CPUCOMPONENT_NAME)
 AC_SUBST(CPUCOMPONENT_C)
