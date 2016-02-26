@@ -250,7 +250,7 @@ getEventValue( unsigned event_id )
 /*
  * This is called whenever a thread is initialized
  */
-int
+static int
 _lmsensors_init_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
@@ -262,7 +262,7 @@ _lmsensors_init_thread( hwd_context_t *ctx )
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int
+static int
 _lmsensors_init_component( int cidx )
 {
     int res;
@@ -304,7 +304,7 @@ _lmsensors_init_component( int cidx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int
+static int
 _lmsensors_init_control_state( hwd_control_state_t *ctl )
 {
 	int i;
@@ -322,7 +322,7 @@ _lmsensors_init_control_state( hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _lmsensors_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 	( void ) ctx;
@@ -335,7 +335,7 @@ _lmsensors_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _lmsensors_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
@@ -348,7 +348,7 @@ _lmsensors_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _lmsensors_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		 long_long ** events, int flags )
 {
@@ -372,7 +372,7 @@ _lmsensors_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 }
 
 
-int
+static int
 _lmsensors_shutdown_component( void )
 {
 
@@ -382,7 +382,7 @@ _lmsensors_shutdown_component( void )
 	return PAPI_OK;
 }
 
-int
+static int
 _lmsensors_shutdown_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
@@ -396,7 +396,7 @@ _lmsensors_shutdown_thread( hwd_context_t *ctx )
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int
+static int
 _lmsensors_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
     ( void ) ctx;
@@ -406,7 +406,7 @@ _lmsensors_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-int
+static int
 _lmsensors_update_control_state( hwd_control_state_t *ctl,
 				 NativeInfo_t * native, 
 				 int count,
@@ -428,7 +428,7 @@ _lmsensors_update_control_state( hwd_control_state_t *ctl,
 /*
  * As I understand it, all data reported by these interfaces will be system wide
  */
-int
+static int
 _lmsensors_set_domain( hwd_control_state_t *ctl, int domain )
 {
 	(void) ctl;
@@ -442,7 +442,7 @@ _lmsensors_set_domain( hwd_control_state_t *ctl, int domain )
 /*
  *
  */
-int
+static int
 _lmsensors_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
@@ -454,7 +454,7 @@ _lmsensors_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  * Native Event functions
  */
-int
+static int
 _lmsensors_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 
@@ -486,7 +486,7 @@ _lmsensors_ntv_enum_events( unsigned int *EventCode, int modifier )
 /*
  *
  */
-int
+static int
 _lmsensors_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 	int index = EventCode;
@@ -501,7 +501,7 @@ _lmsensors_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _lmsensors_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
 	int index = EventCode;

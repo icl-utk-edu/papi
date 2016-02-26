@@ -64,6 +64,16 @@ int nmi_watchdog_active;
 /* Forward declaration */
 papi_vector_t _perf_event_vector;
 
+static int _pe_shutdown_thread( hwd_context_t *ctx );
+static int _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl );
+static int _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
+                   long long *from );
+static int _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+                  long long **events, int flags );
+static int _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl );
+static int _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl );
+static int _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
+
 /* Globals */
 struct native_event_table_t perf_native_event_table;
 static int our_cidx;
@@ -869,7 +879,7 @@ _pe_set_domain( hwd_control_state_t *ctl, int domain)
 }
 
 /* Shutdown a thread */
-int
+static int
 _pe_shutdown_thread( hwd_context_t *ctx )
 {
     pe_context_t *pe_ctx = ( pe_context_t *) ctx;
@@ -883,7 +893,7 @@ _pe_shutdown_thread( hwd_context_t *ctx )
 /* reset the hardware counters */
 /* Note: PAPI_reset() does not necessarily call this */
 /* unless the events are actually running.           */
-int
+static int
 _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    int i, ret;
@@ -908,7 +918,7 @@ _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /* write (set) the hardware counters */
 /* Current we do not support this.   */
-int
+static int
 _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		long long *from )
 {
@@ -938,7 +948,7 @@ _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
  *
  */
 
-int
+static int
 _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	       long long **events, int flags )
 {
@@ -1140,7 +1150,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 }
 
 /* Start counting events */
-int
+static int
 _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    int ret;
@@ -1184,7 +1194,7 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 /* Stop all of the counters */
-int
+static int
 _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 	SUBDBG( "ENTER: ctx: %p, ctl: %p\n", ctx, ctl);
@@ -1217,7 +1227,7 @@ _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 
-int
+static int
 _pe_update_control_state( hwd_control_state_t *ctl,
 			       NativeInfo_t *native,
 			       int count, hwd_context_t *ctx )
@@ -1347,7 +1357,7 @@ _pe_update_control_state( hwd_control_state_t *ctl,
 }
 
 /* Set various options on a control state */
-int
+static int
 _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
    int ret;
@@ -1521,7 +1531,7 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 /* Initialize a thread */
-int
+static int
 _pe_init_thread( hwd_context_t *hwd_ctx )
 {
 
@@ -1537,7 +1547,7 @@ _pe_init_thread( hwd_context_t *hwd_ctx )
 }
 
 /* Initialize a new control state */
-int
+static int
 _pe_init_control_state( hwd_control_state_t *ctl )
 {
   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
@@ -1613,7 +1623,7 @@ static int _pe_detect_rdpmc(int default_domain) {
 
 
 /* Initialize the perf_event component */
-int
+static int
 _pe_init_component( int cidx )
 {
 
@@ -1721,7 +1731,7 @@ _pe_init_component( int cidx )
 }
 
 /* Shutdown the perf_event component */
-int
+static int
 _pe_shutdown_component( void ) {
 
   /* deallocate our event table */
@@ -1736,20 +1746,20 @@ _pe_shutdown_component( void ) {
 
 
 
-int
+static int
 _pe_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
   return _pe_libpfm4_ntv_enum_events(PapiEventCode, modifier,
                                        &perf_native_event_table);
 }
 
-int
+static int
 _pe_ntv_name_to_code( char *name, unsigned int *event_code) {
   return _pe_libpfm4_ntv_name_to_code(name,event_code,
                                         &perf_native_event_table);
 }
 
-int
+static int
 _pe_ntv_code_to_name(unsigned int EventCode,
                           char *ntv_name, int len) {
    return _pe_libpfm4_ntv_code_to_name(EventCode,
@@ -1757,7 +1767,7 @@ _pe_ntv_code_to_name(unsigned int EventCode,
 					&perf_native_event_table);
 }
 
-int
+static int
 _pe_ntv_code_to_descr( unsigned int EventCode,
                             char *ntv_descr, int len) {
 
@@ -1765,7 +1775,7 @@ _pe_ntv_code_to_descr( unsigned int EventCode,
                                           &perf_native_event_table);
 }
 
-int
+static int
 _pe_ntv_code_to_info(unsigned int EventCode,
                           PAPI_event_info_t *info) {
 
@@ -1947,7 +1957,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t **thr, int cidx )
  * software overflows are forced
  */
 
-void
+static void
 _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 {
   ( void ) n;                           /*unused */
@@ -2092,7 +2102,7 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 }
 
 /* Stop profiling */
-int
+static int
 _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 {
   int i, ret = PAPI_OK;
@@ -2121,7 +2131,7 @@ _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 }
 
 /* Setup an event to cause overflow */
-int
+static int
 _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
 	SUBDBG("ENTER: ESI: %p, EventIndex: %d, threshold: %d\n", ESI, EventIndex, threshold);
@@ -2227,7 +2237,7 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 }
 
 /* Enable profiling */
-int
+static int
 _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
   int ret;

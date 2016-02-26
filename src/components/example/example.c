@@ -183,7 +183,7 @@ detect_example(void) {
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int
+static int
 _example_init_component( int cidx )
 {
 
@@ -244,7 +244,7 @@ _example_init_component( int cidx )
 }
 
 /** This is called whenever a thread is initialized */
-int
+static int
 _example_init_thread( hwd_context_t *ctx )
 {
 
@@ -264,7 +264,7 @@ _example_init_thread( hwd_context_t *ctx )
  *   EventSet.
  */
 
-int
+static int
 _example_init_control_state( hwd_control_state_t * ctl )
 {
    SUBDBG( "example_init_control_state... %p\n", ctl );
@@ -277,7 +277,7 @@ _example_init_control_state( hwd_control_state_t * ctl )
 
 
 /** Triggered by eventset operations like add or remove */
-int
+static int
 _example_update_control_state( hwd_control_state_t *ctl, 
 				    NativeInfo_t *native,
 				    int count, 
@@ -311,7 +311,7 @@ _example_update_control_state( hwd_control_state_t *ctl,
 }
 
 /** Triggered by PAPI_start() */
-int
+static int
 _example_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -333,7 +333,7 @@ _example_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 
 /** Triggered by PAPI_stop() */
-int
+static int
 _example_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -352,7 +352,7 @@ _example_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /** Triggered by PAPI_read()     */
 /*     flags field is never set? */
-int
+static int
 _example_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 			  long long **events, int flags )
 {
@@ -381,7 +381,7 @@ _example_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
 /** Triggered by PAPI_write(), but only if the counters are running */
 /*    otherwise, the updated state is written to ESI->hw_start      */
-int
+static int
 _example_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 			   long long *events )
 {
@@ -407,7 +407,7 @@ _example_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 /** Triggered by PAPI_reset() but only if the EventSet is currently running */
 /*  If the eventset is not currently running, then the saved value in the   */
 /*  EventSet is set to zero without calling this routine.                   */
-int
+static int
 _example_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
         example_context_t *event_ctx = (example_context_t *)ctx;
@@ -422,7 +422,7 @@ _example_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 /** Triggered by PAPI_shutdown() */
-int
+static int
 _example_shutdown_component(void)
 {
 
@@ -436,7 +436,7 @@ _example_shutdown_component(void)
 }
 
 /** Called at thread shutdown */
-int
+static int
 _example_shutdown_thread( hwd_context_t *ctx )
 {
 
@@ -457,7 +457,7 @@ _example_shutdown_thread( hwd_context_t *ctx )
                         PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
   @param[in] option -- options to be set
  */
-int
+static int
 _example_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
 
@@ -479,7 +479,7 @@ _example_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
     PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
     PAPI_DOM_ALL   is all of the domains
  */
-int
+static int
 _example_set_domain( hwd_control_state_t * cntrl, int domain )
 {
         (void) cntrl;
@@ -521,7 +521,7 @@ _example_set_domain( hwd_control_state_t * cntrl, int domain )
  *  If your component has attribute masks then these need to
  *   be handled here as well.
  */
-int
+static int
 _example_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
   int index;
@@ -563,7 +563,7 @@ _example_ntv_enum_events( unsigned int *EventCode, int modifier )
  * @param name is a pointer for the name to be copied to
  * @param len is the size of the name string
  */
-int
+static int
 _example_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
   int index;
@@ -584,7 +584,7 @@ _example_ntv_code_to_name( unsigned int EventCode, char *name, int len )
  * @param descr is a pointer for the description to be copied to
  * @param len is the size of the descr string
  */
-int
+static int
 _example_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
 {
   int index;

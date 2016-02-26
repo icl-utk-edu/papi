@@ -70,7 +70,8 @@ struct statinfo {
   long long guest;
 };
 
-int read_stealtime( struct STEALTIME_context *context, int starting) {
+static int
+read_stealtime( struct STEALTIME_context *context, int starting) {
 
   FILE *fff;
   char buffer[BUFSIZ],*result;
@@ -131,7 +132,7 @@ int read_stealtime( struct STEALTIME_context *context, int starting) {
  * Component setup and shutdown
  */
 
-int
+static int
 _stealtime_init_component( int cidx )
 {
 
@@ -209,7 +210,7 @@ _stealtime_init_component( int cidx )
 /*
  * This is called whenever a thread is initialized
  */
-int
+static int
 _stealtime_init_thread( hwd_context_t * ctx )
 {
   struct STEALTIME_context *context=(struct STEALTIME_context *)ctx;
@@ -230,7 +231,7 @@ _stealtime_init_thread( hwd_context_t * ctx )
 /*
  *
  */
-int
+static int
 _stealtime_shutdown_component( void )
 {
        int i;
@@ -250,7 +251,7 @@ _stealtime_shutdown_component( void )
 /*
  *
  */
-int
+static int
 _stealtime_shutdown_thread( hwd_context_t * ctx )
 {
 
@@ -268,7 +269,7 @@ _stealtime_shutdown_thread( hwd_context_t * ctx )
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup) functions
  */
-int
+static int
 _stealtime_init_control_state( hwd_control_state_t *ctl )
 {
 
@@ -286,7 +287,7 @@ _stealtime_init_control_state( hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _stealtime_update_control_state( hwd_control_state_t *ctl, 
 			      NativeInfo_t *native,
 			      int count, 
@@ -325,7 +326,7 @@ _stealtime_update_control_state( hwd_control_state_t *ctl,
 /*
  *
  */
-int
+static int
 _stealtime_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -350,7 +351,7 @@ _stealtime_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _stealtime_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -373,7 +374,7 @@ _stealtime_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _stealtime_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 			 long long **events, int flags )
 {
@@ -406,7 +407,7 @@ _stealtime_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 /*
  *
  */
-int
+static int
 _stealtime_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 
@@ -421,7 +422,7 @@ _stealtime_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 /*
  *
  */
-int
+static int
 _stealtime_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 {
 	( void ) ctx;
@@ -440,7 +441,7 @@ _stealtime_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *fr
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int
+static int
 _stealtime_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	( void ) ctx;
@@ -461,7 +462,7 @@ _stealtime_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int
+static int
 _stealtime_set_domain( hwd_control_state_t * cntrl, int domain )
 {
 	( void ) cntrl;
@@ -485,7 +486,7 @@ _stealtime_set_domain( hwd_control_state_t * cntrl, int domain )
 /*
  *
  */
-int
+static int
 _stealtime_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 
@@ -503,7 +504,7 @@ _stealtime_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _stealtime_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
 
@@ -519,7 +520,7 @@ _stealtime_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 
 
 
-int
+static int
 _stealtime_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
@@ -546,7 +547,7 @@ _stealtime_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 /*
  *
  */
-int
+static int
 _stealtime_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 

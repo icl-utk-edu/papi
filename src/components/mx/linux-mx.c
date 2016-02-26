@@ -55,7 +55,7 @@ typedef struct MX_context
 } MX_context_t;
 
 
-MX_native_event_entry_t mx_native_table[] = {
+static const MX_native_event_entry_t mx_native_table[] = {
 	{{1,  }, "LANAI_UPTIME", "Lanai uptime (seconds)"},
 	{{2,  }, "COUNTERS_UPTIME", "Counters uptime (seconds)"},
 	{{3,  }, "BAD_CRC8", "Bad CRC8 (Port 0)"},
@@ -219,7 +219,7 @@ read_mx_counters( long long *counters )
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int
+static int
 _mx_init_component( int cidx )
 {
 
@@ -259,7 +259,7 @@ _mx_init_component( int cidx )
 /*
  * This is called whenever a thread is initialized
  */
-int
+static int
 _mx_init_thread( hwd_context_t * ctx )
 {
 	( void ) ctx;			 /*unused */
@@ -267,13 +267,13 @@ _mx_init_thread( hwd_context_t * ctx )
 }
 
 
-int
+static int
 _mx_shutdown_component(void) 
 {
   return PAPI_OK;
 }
 
-int
+static int
 _mx_shutdown_thread( hwd_context_t * ctx )
 {
 	( void ) ctx;			 /*unused */
@@ -286,7 +286,7 @@ _mx_shutdown_thread( hwd_context_t * ctx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int
+static int
 _mx_init_control_state( hwd_control_state_t *ctl )
 {
 	( void ) ctl;			 /*unused */
@@ -294,7 +294,7 @@ _mx_init_control_state( hwd_control_state_t *ctl )
 	return PAPI_OK;
 }
 
-int
+static int
 _mx_update_control_state( hwd_control_state_t *ctl, NativeInfo_t *native,
 			  int count, hwd_context_t *ctx )
 {
@@ -317,7 +317,7 @@ _mx_update_control_state( hwd_control_state_t *ctl, NativeInfo_t *native,
 }
 
 
-int
+static int
 _mx_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -342,7 +342,7 @@ _mx_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 
-int
+static int
 _mx_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 	( void ) ctx;			 /*unused */
@@ -361,7 +361,7 @@ _mx_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 	return PAPI_OK;
 }
 
-int
+static int
 _mx_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events,
 		 int flags )
 {
@@ -386,14 +386,14 @@ _mx_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events,
 }
 
 
-int
+static int
 _mx_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 	_mx_start( ctx, ctrl );
 	return PAPI_OK;
 }
 
-int
+static int
 _mx_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 {
 	( void ) ctx;			 /*unused */
@@ -411,7 +411,7 @@ _mx_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int
+static int
 _mx_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	( void ) ctx;			 /*unused */
@@ -431,7 +431,7 @@ _mx_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int
+static int
 _mx_set_domain( hwd_control_state_t * cntrl, int domain )
 {
 	( void ) cntrl;			 /*unused */
@@ -444,7 +444,7 @@ _mx_set_domain( hwd_control_state_t * cntrl, int domain )
 
 
 
-int
+static int
 _mx_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 
@@ -459,7 +459,7 @@ _mx_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 
 }
 
-int
+static int
 _mx_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
     int event=EventCode;
@@ -473,7 +473,7 @@ _mx_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 
 
 
-int
+static int
 _mx_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 

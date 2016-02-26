@@ -282,7 +282,7 @@ get_kernel_nr_cpus(void)
 /*
  * This is called whenever a thread is initialized
  */
-int
+static int
 _rapl_init_thread( hwd_context_t *ctx )
 {
   ( void ) ctx;
@@ -295,7 +295,7 @@ _rapl_init_thread( hwd_context_t *ctx )
 /*
  * Called when PAPI process is initialized (i.e. PAPI_library_init)
  */
-int
+static int
 _rapl_init_component( int cidx )
 {
      int i,j,k,fd;
@@ -742,7 +742,7 @@ _rapl_init_component( int cidx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int 
+static int 
 _rapl_init_control_state( hwd_control_state_t *ctl)
 {
 
@@ -756,7 +756,7 @@ _rapl_init_control_state( hwd_control_state_t *ctl)
   return PAPI_OK;
 }
 
-int 
+static int 
 _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
   _rapl_context_t* context = (_rapl_context_t*) ctx;
@@ -775,7 +775,7 @@ _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
   return PAPI_OK;
 }
 
-int 
+static int 
 _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -809,7 +809,7 @@ _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 /* Shutdown a thread */
-int
+static int
 _rapl_shutdown_thread( hwd_context_t *ctx )
 {
   ( void ) ctx;
@@ -834,7 +834,7 @@ _rapl_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 /*
  * Clean up what was setup in  rapl_init_component().
  */
-int 
+static int 
 _rapl_shutdown_component( void ) 
 {
     int i;
@@ -855,7 +855,7 @@ _rapl_shutdown_component( void )
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int
+static int
 _rapl_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
     ( void ) ctx;
@@ -866,7 +866,7 @@ _rapl_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-int
+static int
 _rapl_update_control_state( hwd_control_state_t *ctl,
 			    NativeInfo_t *native, int count,
 			    hwd_context_t *ctx )
@@ -909,7 +909,7 @@ _rapl_update_control_state( hwd_control_state_t *ctl,
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int
+static int
 _rapl_set_domain( hwd_control_state_t *ctl, int domain )
 {
     ( void ) ctl;
@@ -923,7 +923,7 @@ _rapl_set_domain( hwd_control_state_t *ctl, int domain )
 }
 
 
-int
+static int
 _rapl_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
@@ -936,7 +936,7 @@ _rapl_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  * Native Event functions
  */
-int
+static int
 _rapl_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 
@@ -976,7 +976,7 @@ _rapl_ntv_enum_events( unsigned int *EventCode, int modifier )
 /*
  *
  */
-int
+static int
 _rapl_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 
@@ -993,7 +993,7 @@ _rapl_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _rapl_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
      int index = EventCode;
@@ -1005,7 +1005,7 @@ _rapl_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
      return PAPI_ENOEVNT;
 }
 
-int
+static int
 _rapl_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
 {
 

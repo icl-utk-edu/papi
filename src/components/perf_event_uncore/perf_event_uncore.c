@@ -571,7 +571,7 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
 
 /* Initialize a thread */
-int
+static int
 _peu_init_thread( hwd_context_t *hwd_ctx )
 {
 
@@ -588,7 +588,7 @@ _peu_init_thread( hwd_context_t *hwd_ctx )
 }
 
 /* Initialize a new control state */
-int
+static int
 _peu_init_control_state( hwd_control_state_t *ctl )
 {
   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
@@ -613,7 +613,7 @@ _peu_init_control_state( hwd_control_state_t *ctl )
 
 
 /* Initialize the perf_event uncore component */
-int
+static int
 _peu_init_component( int cidx )
 {
 
@@ -687,7 +687,8 @@ _peu_init_component( int cidx )
 }
 
 /* Shutdown the perf_event component */
-int _peu_shutdown_component( void ) {
+static int
+_peu_shutdown_component( void ) {
 
   /* deallocate our event table */
   _peu_libpfm4_shutdown(&_perf_event_uncore_vector, &uncore_native_event_table);
@@ -841,7 +842,7 @@ _peu_set_domain( hwd_control_state_t *ctl, int domain)
 }
 
 /* Shutdown a thread */
-int
+static int
 _peu_shutdown_thread( hwd_context_t *ctx )
 {
     pe_context_t *pe_ctx = ( pe_context_t *) ctx;
@@ -855,7 +856,7 @@ _peu_shutdown_thread( hwd_context_t *ctx )
 /* reset the hardware counters */
 /* Note: PAPI_reset() does not necessarily call this */
 /* unless the events are actually running.           */
-int
+static int
 _peu_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    int i, ret;
@@ -880,7 +881,7 @@ _peu_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 /* write (set) the hardware counters */
 /* Current we do not support this.   */
-int
+static int
 _peu_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		long long *from )
 {
@@ -910,7 +911,7 @@ _peu_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
  *
  */
 
-int
+static int
 _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	       long long **events, int flags )
 {
@@ -1074,7 +1075,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 }
 
 /* Start counting events */
-int
+static int
 _peu_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
    int ret;
@@ -1118,7 +1119,7 @@ _peu_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 /* Stop all of the counters */
-int
+static int
 _peu_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -1146,7 +1147,7 @@ _peu_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 /* Set various options on a control state */
-int
+static int
 _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
    int ret;
@@ -1261,7 +1262,7 @@ _peu_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-int
+static int
 _peu_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
 
@@ -1272,7 +1273,7 @@ _peu_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
                                        &uncore_native_event_table);
 }
 
-int
+static int
 _peu_ntv_name_to_code( char *name, unsigned int *event_code) {
 
   if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
@@ -1281,7 +1282,7 @@ _peu_ntv_name_to_code( char *name, unsigned int *event_code) {
                                         &uncore_native_event_table);
 }
 
-int
+static int
 _peu_ntv_code_to_name(unsigned int EventCode,
                           char *ntv_name, int len) {
 
@@ -1292,7 +1293,7 @@ _peu_ntv_code_to_name(unsigned int EventCode,
 					 &uncore_native_event_table);
 }
 
-int
+static int
 _peu_ntv_code_to_descr( unsigned int EventCode,
                             char *ntv_descr, int len) {
 
@@ -1302,7 +1303,7 @@ _peu_ntv_code_to_descr( unsigned int EventCode,
                                           &uncore_native_event_table);
 }
 
-int
+static int
 _peu_ntv_code_to_info(unsigned int EventCode,
                           PAPI_event_info_t *info) {
 

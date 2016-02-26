@@ -282,7 +282,7 @@ read_net_counters( long long *values )
 /*
  * This is called whenever a thread is initialized
  */
-int
+static int
 _net_init_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
@@ -295,7 +295,7 @@ _net_init_thread( hwd_context_t *ctx )
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int
+static int
 _net_init_component( int cidx  )
 {
     int i = 0;
@@ -350,7 +350,7 @@ _net_init_component( int cidx  )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int
+static int
 _net_init_control_state( hwd_control_state_t *ctl )
 {
     ( void ) ctl;
@@ -359,7 +359,7 @@ _net_init_control_state( hwd_control_state_t *ctl )
 }
 
 
-int
+static int
 _net_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
@@ -381,7 +381,7 @@ _net_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 
-int
+static int
 _net_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     long long ** events, int flags )
 {
@@ -409,7 +409,7 @@ _net_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 }
 
 
-int
+static int
 _net_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     (void) ctx;
@@ -431,7 +431,7 @@ _net_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  * Thread shutdown
  */
-int
+static int
 _net_shutdown_thread( hwd_context_t *ctx )
 {
     ( void ) ctx;
@@ -443,7 +443,7 @@ _net_shutdown_thread( hwd_context_t *ctx )
 /*
  * Clean up what was setup in net_init_component().
  */
-int
+static int
 _net_shutdown_component( void )
 {
     if ( is_initialized )
@@ -465,7 +465,7 @@ _net_shutdown_component( void )
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and
  * PAPI_SET_INHERIT
  */
-int
+static int
 _net_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
     ( void ) ctx;
@@ -476,7 +476,7 @@ _net_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-int
+static int
 _net_update_control_state( hwd_control_state_t *ctl,
         NativeInfo_t *native, int count, hwd_context_t *ctx )
 {
@@ -504,7 +504,7 @@ _net_update_control_state( hwd_control_state_t *ctl,
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL    is all of the domains
  */
-int
+static int
 _net_set_domain( hwd_control_state_t *ctl, int domain )
 {
     ( void ) ctl;
@@ -528,7 +528,7 @@ _net_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  * Native Event functions
  */
-int
+static int
 _net_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
     int index;
@@ -563,7 +563,7 @@ _net_ntv_enum_events( unsigned int *EventCode, int modifier )
 /*
  *
  */
-int
+static int
 _net_ntv_name_to_code( char *name, unsigned int *EventCode )
 {
     int i;
@@ -583,7 +583,7 @@ _net_ntv_name_to_code( char *name, unsigned int *EventCode )
 /*
  *
  */
-int
+static int
 _net_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
     int index = EventCode;
@@ -600,7 +600,7 @@ _net_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _net_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
     int index = EventCode;
@@ -617,7 +617,7 @@ _net_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _net_ntv_code_to_bits( unsigned int EventCode, hwd_register_t *bits )
 {
     int index = EventCode;

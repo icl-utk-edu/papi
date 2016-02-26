@@ -423,7 +423,7 @@ host_finalize( void )
  * Component setup and shutdown
  */
 
-int
+static int
 _lustre_init_component( int cidx )
 {
 	SUBDBG("ENTER:\n");
@@ -452,7 +452,7 @@ _lustre_init_component( int cidx )
 /*
  * This is called whenever a thread is initialized
  */
-int
+static int
 _lustre_init_thread( hwd_context_t * ctx )
 {
   (void) ctx;
@@ -464,7 +464,7 @@ _lustre_init_thread( hwd_context_t * ctx )
 /*
  *
  */
-int
+static int
 _lustre_shutdown_component( void )
 {
 	SUBDBG("ENTER:\n");
@@ -480,7 +480,7 @@ _lustre_shutdown_component( void )
 /*
  *
  */
-int
+static int
 _lustre_shutdown_thread( hwd_context_t * ctx )
 {
 	( void ) ctx;
@@ -493,7 +493,7 @@ _lustre_shutdown_thread( hwd_context_t * ctx )
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup) functions
  */
-int
+static int
 _lustre_init_control_state( hwd_control_state_t *ctl )
 {
     LUSTRE_control_state_t *lustre_ctl = (LUSTRE_control_state_t *)ctl;
@@ -508,7 +508,7 @@ _lustre_init_control_state( hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _lustre_update_control_state( hwd_control_state_t *ctl, 
 			      NativeInfo_t *native,
 			      int count, 
@@ -534,7 +534,7 @@ _lustre_update_control_state( hwd_control_state_t *ctl,
 /*
  *
  */
-int
+static int
 _lustre_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
@@ -560,7 +560,7 @@ _lustre_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _lustre_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -584,7 +584,7 @@ _lustre_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  *
  */
-int
+static int
 _lustre_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 			 long long **events, int flags )
 {
@@ -615,7 +615,7 @@ _lustre_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 /*
  *
  */
-int
+static int
 _lustre_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
 
@@ -630,7 +630,7 @@ _lustre_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 /*
  *
  */
-int
+static int
 _lustre_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 {
 	( void ) ctx;
@@ -649,7 +649,7 @@ _lustre_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from 
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int
+static int
 _lustre_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	( void ) ctx;
@@ -671,7 +671,7 @@ _lustre_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
  *
  * So we just ignore this call.
  */
-int
+static int
 _lustre_set_domain( hwd_control_state_t * cntrl, int domain )
 {
     SUBDBG("ENTER: cntrl: %p, domain: %#x\n", cntrl, domain);
@@ -686,7 +686,7 @@ _lustre_set_domain( hwd_control_state_t * cntrl, int domain )
 /*
  *
  */
-int
+static int
 _lustre_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
    SUBDBG("ENTER: EventCode: %#x, name: %p, len: %d\n", EventCode, name, len);
@@ -706,7 +706,7 @@ _lustre_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _lustre_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
    SUBDBG("ENTER: EventCode: %#x, name: %p, len: %d\n", EventCode, name, len);
@@ -726,7 +726,7 @@ _lustre_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
    SUBDBG("ENTER: EventCode: %p, modifier: %d\n", EventCode, modifier);
