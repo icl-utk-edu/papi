@@ -44,23 +44,4 @@ typedef struct {
   struct native_event_table_t *event_table; /* our event table     */
 } pe_context_t;
 
-int _pe_shutdown_thread( hwd_context_t *ctx );
-int _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl );
-int _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
-		    long long *from );
-int _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
-		   long long **events, int flags );
-int _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl );
-int _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl );
-int _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
-
-int _pe_shutdown_thread( hwd_context_t *ctx );
-int _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl );
-int _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
-                   long long *from );
-int _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
-                  long long **events, int flags );
-int _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl );
-int _pe_stop( hwd_context_t *ctx, hwd_control_state_t *ctl );
-int _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
 
