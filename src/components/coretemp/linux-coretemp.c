@@ -325,7 +325,7 @@ getEventValue( int index )
 /*
  * This is called whenever a thread is initialized
  */
-int 
+static int
 _coretemp_init_thread( hwd_context_t *ctx )
 {
   ( void ) ctx;
@@ -338,7 +338,7 @@ _coretemp_init_thread( hwd_context_t *ctx )
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int 
+static int
 _coretemp_init_component( int cidx )
 {
      int i = 0;
@@ -402,7 +402,7 @@ _coretemp_init_component( int cidx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int 
+static int
 _coretemp_init_control_state( hwd_control_state_t * ctl)
 {
     int i;
@@ -419,7 +419,7 @@ _coretemp_init_control_state( hwd_control_state_t * ctl)
     return PAPI_OK;
 }
 
-int 
+static int
 _coretemp_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
   ( void ) ctx;
@@ -428,7 +428,7 @@ _coretemp_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
   return PAPI_OK;
 }
 
-int 
+static int
 _coretemp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	        long long ** events, int flags)
 {
@@ -455,7 +455,7 @@ _coretemp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     return PAPI_OK;
 }
 
-int 
+static int
 _coretemp_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     (void) ctx;
@@ -471,7 +471,7 @@ _coretemp_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 /* Shutdown a thread */
-int
+static int
 _coretemp_shutdown_thread( hwd_context_t * ctx )
 {
   ( void ) ctx;
@@ -482,7 +482,7 @@ _coretemp_shutdown_thread( hwd_context_t * ctx )
 /*
  * Clean up what was setup in  coretemp_init_component().
  */
-int 
+static int
 _coretemp_shutdown_component( ) 
 {
     if ( is_initialized ) {
@@ -498,7 +498,7 @@ _coretemp_shutdown_component( )
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int
+static int
 _coretemp_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
     ( void ) ctx;
@@ -509,7 +509,7 @@ _coretemp_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-int
+static int
 _coretemp_update_control_state(	hwd_control_state_t *ptr,
 				NativeInfo_t * native, int count,
 				hwd_context_t * ctx )
@@ -536,7 +536,7 @@ _coretemp_update_control_state(	hwd_control_state_t *ptr,
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int
+static int
 _coretemp_set_domain( hwd_control_state_t * cntl, int domain )
 {
        (void) cntl;
@@ -547,7 +547,7 @@ _coretemp_set_domain( hwd_control_state_t * cntl, int domain )
 }
 
 
-int
+static int
 _coretemp_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
@@ -560,7 +560,7 @@ _coretemp_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  * Native Event functions
  */
-int
+static int
 _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 
@@ -599,7 +599,7 @@ _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 /*
  *
  */
-int
+static int
 _coretemp_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
      int index = EventCode;
@@ -614,7 +614,7 @@ _coretemp_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-int
+static int
 _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
      int index = EventCode;
@@ -626,7 +626,7 @@ _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
      return PAPI_ENOEVNT;
 }
 
-int
+static int
 _coretemp_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
 {
 
