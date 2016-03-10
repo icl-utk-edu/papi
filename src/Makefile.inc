@@ -245,7 +245,7 @@ ftests: $(LIBS) testlib
 #compile cuda sampling
 cuda_sampling: 
 ifneq (${COMPONENTS},)
-		@for comp in ${COMPONENTS} ; do  if [ "$$comp" == "cuda" ]; then cd components/$$comp/sampling; $(MAKE); cd ../../.. ;fi done 
+		@for comp in ${COMPONENTS} ; do  if [ "$$comp" = "cuda" ]; then cd components/$$comp/sampling; $(MAKE); cd ../../.. ;fi done 
 endif
 
 
@@ -284,7 +284,7 @@ endif
 #compile cuda sampling
 cuda_sampling_clean: 
 ifneq (${COMPONENTS},)
-		@for comp in ${COMPONENTS} ; do  if [ "$$comp" == "cuda" ]; then cd components/$$comp/sampling; $(MAKE) clean; cd ../../.. ;fi done 
+		@for comp in ${COMPONENTS} ; do  if [ "$$comp" = "cuda" ]; then cd components/$$comp/sampling; $(MAKE) clean; cd ../../.. ;fi done 
 endif
 
 
