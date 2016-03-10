@@ -77,7 +77,7 @@ typedef struct {
 /* Processor Version Register (PVR) field extraction */
 
 #define PVR_VER(pvr)	(((pvr) >>  16) & 0xFFFF)	/* Version field */
-#define PVR_REV(pvr)	(((pvr) >>   0) & 0xFFFF)	/* Revison field */
+#define PVR_REV(pvr)	(((pvr) >>   0) & 0xFFFF)	/* Revision field */
 
 #define __is_processor(pv)	(PVR_VER(mfspr(SPRN_PVR)) == (pv))
 

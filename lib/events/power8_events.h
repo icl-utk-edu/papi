@@ -8,7 +8,7 @@
 /*
 * File:    power8_events.h
 * CVS:
-Author:  Carl Love
+* Author:  Carl Love
 *          carll.ibm.com
 * Mods:    <your name here>
 *          <your email address>
