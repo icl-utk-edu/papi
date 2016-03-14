@@ -1,7 +1,7 @@
 /*
  * pfmlib_power8.c : IBM Power8 support
  *
- * Copyright (C) IBM Corporation, 2013.  All rights reserved.
+ * Copyright (C) IBM Corporation, 2013-2016.  All rights reserved.
  * Contributed by Carl Love (carll@us.ibm.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,7 +29,9 @@
 static int
 pfm_power8_detect(void* this)
 {
-	if (__is_processor(PV_POWER8))
+	if (__is_processor(PV_POWER8) ||
+		__is_processor(PV_POWER8E) ||
+		__is_processor(PV_POWER8NVL))
 		return PFM_SUCCESS;
 	return PFM_ERR_NOTSUPP;
 }

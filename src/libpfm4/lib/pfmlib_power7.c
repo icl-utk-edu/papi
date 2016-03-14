@@ -1,5 +1,5 @@
 /*
- * pfmlib_power7.c : IBM Power6 support
+ * pfmlib_power7.c : IBM Power7 support
  *
  * Copyright (C) IBM Corporation, 2009.  All rights reserved.
  * Contributed by Corey Ashford (cjashfor@us.ibm.com)

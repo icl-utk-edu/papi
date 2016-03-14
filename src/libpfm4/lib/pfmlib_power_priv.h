@@ -77,7 +77,7 @@ typedef struct {
 /* Processor Version Register (PVR) field extraction */
 
 #define PVR_VER(pvr)	(((pvr) >>  16) & 0xFFFF)	/* Version field */
-#define PVR_REV(pvr)	(((pvr) >>   0) & 0xFFFF)	/* Revison field */
+#define PVR_REV(pvr)	(((pvr) >>   0) & 0xFFFF)	/* Revision field */
 
 #define __is_processor(pv)	(PVR_VER(mfspr(SPRN_PVR)) == (pv))
 
@@ -93,7 +93,9 @@ typedef struct {
 #define PV_POWER7p	0x004a
 #define PV_970MP	0x0044
 #define PV_970GX	0x0045
-#define PV_POWER8	0x004b
+#define PV_POWER8E	0x004b
+#define PV_POWER8NVL	0x004c
+#define PV_POWER8	0x004d
 
 extern int pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info);
 extern int pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
