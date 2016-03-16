@@ -19,6 +19,8 @@
 *	   min@cs.utk.edu
 */
 
+#pragma GCC visibility push(default)
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -1466,3 +1468,4 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 	*check = PAPI_set_opt( PAPI_INHERIT, &i );
 }
 
+#pragma GCC visibility pop

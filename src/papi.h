@@ -22,6 +22,8 @@
 #ifndef _PAPI
 #define _PAPI
 
+#pragma GCC visibility push(default)
+
 /**
  * @mainpage PAPI
  *  
@@ -1132,4 +1134,7 @@ int   PAPI_num_hwctrs(void); /**< return the number of hardware counters for the
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
+
 #endif
