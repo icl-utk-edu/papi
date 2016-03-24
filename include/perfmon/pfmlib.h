@@ -26,6 +26,8 @@
 #ifndef __PFMLIB_H__
 #define __PFMLIB_H__
 
+#pragma GCC visibility push(default)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -533,5 +535,7 @@ extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fst
 #ifdef __cplusplus /* extern C */
 }
 #endif
+
+#pragma GCC visibility pop
 
 #endif /* __PFMLIB_H__ */
