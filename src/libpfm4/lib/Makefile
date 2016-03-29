@@ -33,7 +33,7 @@ ifeq ($(SYS),Linux)
 SRCS += pfmlib_perf_event_pmu.c pfmlib_perf_event.c pfmlib_perf_event_raw.c
 endif
 
-CFLAGS+=-D_REENTRANT -I.
+CFLAGS+=-D_REENTRANT -I. -fvisibility=hidden
 
 #
 # list all library support modules

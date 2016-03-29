@@ -25,6 +25,8 @@
 #include <perfmon/pfmlib.h>
 #include <perfmon/perf_event.h>
 
+#pragma GCC visibility push(default)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,5 +62,7 @@ extern pfm_err_t pfm_get_perf_event_encoding(const char *str,
 #ifdef __cplusplus /* extern C */
 }
 #endif
+
+#pragma GCC visibility pop
 
 #endif /* __PFMLIB_PERF_EVENT_H__ */

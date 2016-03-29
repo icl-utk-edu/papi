@@ -22,6 +22,8 @@
 #ifndef __PERFMON_PERF_EVENT_H__
 #define __PERFMON_PERF_EVENT_H__
 
+#pragma GCC visibility push(default)
+
 #include <sys/types.h>
 #include <unistd.h>		/* for syscall numbers */
 #include <inttypes.h>
@@ -587,5 +589,7 @@ union perf_mem_data_src {
 #ifdef __cplusplus /* extern C */
 }
 #endif
+
+#pragma GCC visibility pop
 
 #endif /* __PERFMON_PERF_EVENT_H__ */
