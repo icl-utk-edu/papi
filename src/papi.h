@@ -564,10 +564,11 @@ read the documentation carefully.  */
   typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                                 long long overflow_vector, void *context);
 
-        /* Handle C99 compilation */
-	/* All caddr_ts should become unsigned longs eventually. */
+        /* Handle C99 and more recent compilation */
+	/* caddr_t was never approved by POSIX and is obsolete */
+	/* We should probably switch all caddr_t to void * or long */
 #ifdef __STDC_VERSION__
-  #if (__STDC_VERSION__ == 199901L)
+  #if (__STDC_VERSION__ >= 199901L)
 	typedef char *caddr_t;
   #else
 
