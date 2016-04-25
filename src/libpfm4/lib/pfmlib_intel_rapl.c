@@ -102,7 +102,10 @@ pfm_rapl_detect(void *this)
 		case 60: /* Haswell */
 		case 69: /* Haswell */
 		case 70: /* Haswell */
-		case 71: /* Haswell */
+		case 61: /* Broadwell */
+		case 71: /* Broadwell */
+		case 78: /* Skylake */
+		case 94: /* Skylake H/S */
 			 /* already setup by default */
 			  break;
 		case 45: /* Sandy Bridg-EP  */
@@ -111,6 +114,8 @@ pfm_rapl_detect(void *this)
 			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_srv_pe);
 			break;
 		case 63: /* Haswell-EP  */
+		case 79: /* Broadwell-EP */
+		case 86: /* Broadwell D */
 			intel_rapl_support.pe 	     = intel_rapl_hswep_pe;
 			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_hswep_pe);
 			break;
