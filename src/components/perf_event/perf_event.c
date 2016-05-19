@@ -58,9 +58,6 @@
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
 
-/* Static globals */
-int nmi_watchdog_active;
-
 /* Forward declaration */
 papi_vector_t _perf_event_vector;
 
@@ -179,34 +176,6 @@ pe_vendor_fixups(papi_vector_t *vector)
 /******************************************************************/
 /******** Kernel Version Dependent Routines  **********************/
 /******************************************************************/
-
-/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
- * implementations (e.g. x86) which don't do a static event scheduability
- * check in sys_perf_event_open.
- * This was fixed for x86 in the 2.6.33 kernel
- *
- * Also! Kernels newer than 2.6.34 will fail in a similar way
- *       if the nmi_watchdog has stolen a performance counter
- *       and we try to use the maximum number of counters.
- *       A sys_perf_event_open() will seem to succeed but will fail
- *       at read time.  So re-use this work around code.
- */
-static int
-bug_check_scheduability(void) {
-
-#if defined(__powerpc__)
-  /* PowerPC not affected by this bug */
-#elif defined(__mips__)
-  /* MIPS as of kernel 3.1 does not properly detect schedulability */
-  return 1;
-#else
-  if (_papi_os_info.os_version < LINUX_VERSION(2,6,33)) return 1;
-#endif
-
-  if (nmi_watchdog_active) return 1;
-
-  return 0;
-}
 
 /* PERF_FORMAT_GROUP allows reading an entire group's counts at once   */
 /* before 2.6.34 PERF_FORMAT_GROUP did not work when reading results   */
@@ -508,68 +477,65 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
    long long papi_pe_buffer[READ_BUFFER_SIZE];
    int i,group_leader_fd;
 
-   if (bug_check_scheduability()) {
+   /* If the kernel isn't tracking scheduability right       */
+   /* Then we need to start/stop/read to force the event     */
+   /* to be scheduled and see if an error condition happens. */
 
-      /* If the kernel isn't tracking scheduability right       */
-      /* Then we need to start/stop/read to force the event     */
-      /* to be scheduled and see if an error condition happens. */
+   /* get the proper fd to start */
+   group_leader_fd=ctl->events[idx].group_leader_fd;
+   if (group_leader_fd==-1) group_leader_fd=ctl->events[idx].event_fd;
 
-      /* get the proper fd to start */
-      group_leader_fd=ctl->events[idx].group_leader_fd;
-      if (group_leader_fd==-1) group_leader_fd=ctl->events[idx].event_fd;
+   /* start the event */
+   retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
+   if (retval == -1) {
+      PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed");
+      return PAPI_ESYS;
+   }
 
-      /* start the event */
-      retval = ioctl( group_leader_fd, PERF_EVENT_IOC_ENABLE, NULL );
-      if (retval == -1) {
-	 PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) failed");
-	 return PAPI_ESYS;
-      }
+   /* stop the event */
+   retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
+   if (retval == -1) {
+      PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed" );
+      return PAPI_ESYS;
+   }
 
-      /* stop the event */
-      retval = ioctl(group_leader_fd, PERF_EVENT_IOC_DISABLE, NULL );
-      if (retval == -1) {
-	 PAPIERROR( "ioctl(PERF_EVENT_IOC_DISABLE) failed" );
-	 return PAPI_ESYS;
-      }
+   /* See if a read returns any results */
+   cnt = read( group_leader_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
+   if ( cnt == -1 ) {
+      SUBDBG( "read returned an error!  Should never happen.\n" );
+      return PAPI_ESYS;
+   }
 
-      /* See if a read returns any results */
-      cnt = read( group_leader_fd, papi_pe_buffer, sizeof(papi_pe_buffer));
-      if ( cnt == -1 ) {
-	 SUBDBG( "read returned an error!  Should never happen.\n" );
-	 return PAPI_ESYS;
-      }
+   if ( cnt == 0 ) {
+      /* We read 0 bytes if we could not schedule the event */
+      /* The kernel should have detected this at open       */
+      /* but various bugs (including NMI watchdog)          */
+      /* result in this behavior                            */
 
-      if ( cnt == 0 ) {
-         /* We read 0 bytes if we could not schedule the event */
-         /* The kernel should have detected this at open       */
-         /* but various bugs (including NMI watchdog)          */
-         /* result in this behavior                            */
+      return PAPI_ECNFLCT;
 
-	 return PAPI_ECNFLCT;
+   } else {
 
-     } else {
+      /* Reset all of the counters (opened so far) back to zero      */
+      /* from the above brief enable/disable call pair.              */
 
-	/* Reset all of the counters (opened so far) back to zero      */
-	/* from the above brief enable/disable call pair.              */
+      /* We have to reset all events because reset of group leader      */
+      /* does not reset all.                                            */
+      /* we assume that the events are being added one by one and that  */
+      /* we do not need to reset higher events (doing so may reset ones */
+      /* that have not been initialized yet.                            */
 
-	/* We have to reset all events because reset of group leader      */
-        /* does not reset all.                                            */
-	/* we assume that the events are being added one by one and that  */
-        /* we do not need to reset higher events (doing so may reset ones */
-        /* that have not been initialized yet.                            */
-
-	/* Note... PERF_EVENT_IOC_RESET does not reset time running       */
-	/* info if multiplexing, so we should avoid coming here if        */
-	/* we are multiplexing the event.                                 */
-        for( i = 0; i < idx; i++) {
-	   retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
-	   if (retval == -1) {
-	      PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d "
-			 "(fd %d)failed",
-			 i,ctl->num_events,idx,ctl->events[i].event_fd);
-	      return PAPI_ESYS;
-	   }
-	}
+      /* Note... PERF_EVENT_IOC_RESET does not reset time running       */
+      /* info if multiplexing, so we should avoid coming here if        */
+      /* we are multiplexing the event.                                 */
+      for( i = 0; i < idx; i++) {
+	 retval=ioctl( ctl->events[i].event_fd, PERF_EVENT_IOC_RESET, NULL );
+	 if (retval == -1) {
+	    PAPIERROR( "ioctl(PERF_EVENT_IOC_RESET) #%d/%d %d "
+		       "(fd %d)failed",
+		       i,ctl->num_events,idx,ctl->events[i].event_fd);
+	    return PAPI_ESYS;
+	 }
       }
    }
    return PAPI_OK;
@@ -1658,8 +1624,7 @@ _pe_init_component( int cidx )
   }
 
   /* Detect NMI watchdog which can steal counters */
-  nmi_watchdog_active=_linux_detect_nmi_watchdog();
-  if (nmi_watchdog_active) {
+  if (_linux_detect_nmi_watchdog()) {
     SUBDBG("The Linux nmi_watchdog is using one of the performance "
 	   "counters, reducing the total number available.\n");
   }
