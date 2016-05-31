@@ -420,8 +420,8 @@ typedef struct {
 	size_t			size;	/* struct sizeof */
 	uint64_t		code;	/* attribute code */
 	pfm_attr_t		type;	/* attribute type */
-	int			idx;	/* attribute opaque index */
-	pfm_attr_ctrl_t		ctrl;		/* what is providing attr */
+	uint64_t		idx;	/* attribute opaque index */
+	pfm_attr_ctrl_t		ctrl;	/* what is providing attr */
 	struct {
 		unsigned int    is_dfl:1;	/* is default umask */
 		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
