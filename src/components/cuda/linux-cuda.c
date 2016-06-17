@@ -265,11 +265,17 @@ static int papicuda_list_all_events( papicuda_context_t *gctxt )
     if ( cuErr==CUDA_ERROR_NOT_INITIALIZED ) {
         /* If CUDA not initilaized, initialized CUDA and retry the device list */
         /* This is required for some of the PAPI tools, that do not call the init functions */
-        CHECK_CU_ERROR( ( *cuInitPtr )( 0 ), "cuInit" );
+        if ( (( *cuInitPtr )( 0 )) != CUDA_SUCCESS ) {
+            strncpy( _cuda_vector.cmp_info.disabled_reason, "CUDA cannot be found and initialized (cuInit failed).", PAPI_MAX_STR_LEN );
+            return PAPI_ENOSUPP;
+        }
         cuErr = ( *cuDeviceGetCountPtr )( &gctxt->deviceCount );
     }
     CHECK_CU_ERROR( cuErr, "cuDeviceGetCount" );
-    CHECK_PRINT_EVAL( gctxt->deviceCount==0, "ERROR CUDA: Could not find any CUDA devices", return( PAPI_ENOSUPP ) );
+    if ( gctxt->deviceCount==0 ) {
+        strncpy( _cuda_vector.cmp_info.disabled_reason, "CUDA initialized but no CUDA devices found.", PAPI_MAX_STR_LEN );
+        return PAPI_ENOSUPP;
+    }
     SUBDBG( "Found %d devices\n", gctxt->deviceCount );
 
     /* allocate memory for device information */
@@ -411,7 +417,7 @@ static int papicuda_init_component( int cidx )
 
     /* Get list of all native CUDA events supported */
     err = papicuda_list_all_events( global_papicuda_context );
-    CHECK_PRINT_EVAL( err!=0, "ERROR: Could not get a list of CUDA/CUPTI events", return( PAPI_ENOSUPP ) );
+    if ( err!=0 ) return( err );
 
     /* Export some information */
     _cuda_vector.cmp_info.CmpIdx = cidx;
