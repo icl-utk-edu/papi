@@ -246,17 +246,17 @@ int _libmsr_init_component( int cidx )
 
     /* initialize libmsr */
     if ( libmsr_init_msr() != 0 ) {
-        PAPIERROR( "init_msr (libmsr) returned error.  Possible problems accessing /dev/cpu/<n>/msr_safe or /dev/cpu/<n>/msr"); 
-        strncpy( _libmsr_vector.cmp_info.disabled_reason, "Function init_msr (libmsr) returned error", PAPI_MAX_STR_LEN );
-        return PAPI_EPERM; 
+        strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr could not initialize (libmsr/init_msr failed)", PAPI_MAX_STR_LEN );
+        SUBDBG( "init_msr (libmsr) returned error.  Possible problems accessing /dev/cpu/<n>/msr_safe or /dev/cpu/<n>/msr"); 
+        return PAPI_ENOSUPP; 
     }
 
     /* Initialize libmsr RAPL */
     if ( already_called_libmsr_rapl_initialized_global==0 ) {
         if ( libmsr_rapl_init( &libmsr_rapl_data, &libmsr_rapl_flags ) < 0 ) {
-            PAPIERROR( "rapl_init (libmsr) returned error"); 
-            strncpy( _libmsr_vector.cmp_info.disabled_reason, "Function rapl_init (libmsr) failed. ", PAPI_MAX_STR_LEN );
-            return PAPI_ESYS;
+            strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)", PAPI_MAX_STR_LEN );
+            SUBDBG( "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)"); 
+            return PAPI_ENOSUPP;
         }
         already_called_libmsr_rapl_initialized_global = 1;
     }
