@@ -42,6 +42,7 @@ pfmlib_pmu_t power8_support={
 	.pmu			= PFM_PMU_POWER8,
 	.pme_count		= LIBPFM_ARRAY_SIZE(power8_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= POWER8_PLM,
 	.num_cntrs		= 4,
 	.num_fixed_cntrs	= 2,
 	.max_encoding		= 1,
