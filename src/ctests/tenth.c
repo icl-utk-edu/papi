@@ -24,9 +24,9 @@
 #define EVT1		  PAPI_L2_TCM
 #define EVT2		  PAPI_L2_TCA
 #define EVT3		  PAPI_L2_TCH
-#define EVT1_STR	  "PAPI_L2_TCM: "
-#define EVT2_STR	  "PAPI_L2_TCA: "
-#define EVT3_STR	  "PAPI_L2_TCH: "
+#define EVT1_STR	  "PAPI_L2_TCM"
+#define EVT2_STR	  "PAPI_L2_TCA"
+#define EVT3_STR	  "PAPI_L2_TCH"
 #define MASK1		  MASK_L2_TCM
 #define MASK2		  MASK_L2_TCA
 #define MASK3		  MASK_L2_TCH
@@ -36,9 +36,9 @@
 #define EVT1		  PAPI_L1_DCA
 #define EVT2		  PAPI_L1_DCW
 #define EVT3		  PAPI_L1_DCR
-#define EVT1_STR	  "PAPI_L1_DCA: "
-#define EVT2_STR	  "PAPI_L1_DCW: "
-#define EVT3_STR	  "PAPI_L1_DCR: "
+#define EVT1_STR	  "PAPI_L1_DCA"
+#define EVT2_STR	  "PAPI_L1_DCW"
+#define EVT3_STR	  "PAPI_L1_DCR"
 #define MASK1		  MASK_L1_DCA
 #define MASK2		  MASK_L1_DCW
 #define MASK3		  MASK_L1_DCR
@@ -47,9 +47,9 @@
 #define EVT1		  PAPI_L1_TCM
 #define EVT2		  PAPI_L1_ICM
 #define EVT3		  PAPI_L1_DCM
-#define EVT1_STR	  "PAPI_L1_TCM: "
-#define EVT2_STR	  "PAPI_L1_ICM: "
-#define EVT3_STR	  "PAPI_L1_DCM: "
+#define EVT1_STR	  "PAPI_L1_TCM"
+#define EVT2_STR	  "PAPI_L1_ICM"
+#define EVT3_STR	  "PAPI_L1_DCM"
 #define MASK1		  MASK_L1_TCM
 #define MASK2		  MASK_L1_ICM
 #define MASK3		  MASK_L1_DCM
