@@ -108,7 +108,6 @@ C     And also to make the test code read cleaner
       integer line
       character*(*) callstr
       integer retval,ilen
-      character*(PAPI_MAX_STR_LEN) papi_errstr
       integer last_char
       external last_char
 
@@ -134,10 +133,10 @@ C     And also to make the test code read cleaner
       else if(retval.eq.0)then
         write(*,*) 'SGI requires root permissions for this test'
       else
-        call PAPIF_perror( )
+C Just printing the error number because of difficulty getting error string.
         ilen=last_char(callstr)
-        write(*,'(T2,3a)') 'PAPI error in ', callstr(1:ilen), 
-     *       ': '// papi_errstr(1:last_char(papi_errstr))
+        write(*,'(T2,3a,I3)') 'PAPI error in ', callstr(1:ilen),
+     *       ': ', retval
       end if
       call pause()
       stop
@@ -153,7 +152,6 @@ C     And also to make the test code read cleaner
       integer quiet
       common quiet
 
-      character*(PAPI_MAX_STR_LEN) papi_errstr
       integer last_char
       external last_char
 
@@ -165,10 +163,10 @@ C     And also to make the test code read cleaner
         else if (retval.gt.0) then
           write(*,*) "Error calculating: ", callstr
         else
-          call PAPIF_perror( )
+C Just printing the error number because of difficulty getting error string.
           ilen=last_char(callstr)
-          write(*,'(T2,3a)') 'Error in ', callstr(1:ilen),
-     *         ': ' // papi_errstr(1:last_char(papi_errstr))
+          write(*,'(T2,3a,I3)') 'Error in ', callstr(1:ilen),
+     *         ': ', retval
         end if
       end if
       call pause()
