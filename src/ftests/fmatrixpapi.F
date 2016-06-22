@@ -39,7 +39,8 @@ C     This also initializes the PAPI library
       if ( num_events .LT. 2 ) then
         print *,'This example program requries the architecture to ',
      .       'support 2 simultaneous hardware events...shutting down.'
-        call ftests_skip(__FILE__,retval)
+        call ftest_skip(__FILE__, __LINE__,
+     *       'too few counters', num_events)
       end if
 
       if (tests_quiet .EQ. 0) then

@@ -79,29 +79,6 @@ C     And also to make the test code read cleaner
  100  format(a,t41,a)
       end
 
-      subroutine ftests_skip(test_str,papiretval)
-      implicit integer (p)
-      character*(*) test_str
-      character*(PAPI_MAX_STR_LEN) papi_errstr
-      integer papiretval
-      integer last_char
-      external last_char
-      integer quiet
-      common quiet
-
-      write(*,100) test_str,' SKIPPED'
-      if (quiet .eq. 0) then
-        if(papiretval.lt.0)then
-          call PAPIF_perror( )
-          write(*,*) 'PAPI error: ',
-     *       papi_errstr(1:last_char(papi_errstr))
-        end if
-      end if
-      call pause()
-      stop
- 100  format(a,t41,a)
-      end
-
       subroutine ftest_fail(file, line, callstr, retval)
       implicit integer (p)
       character*(*) file
