@@ -1,8 +1,7 @@
 /** 
 * @file:   README
 * CVS:     $Id$
-* @author: Philip Vaccaro
-*          yarkhan@icl.utk.edu
+* @author: Philip Vaccaro (ICL/UTK)
 * @defgroup papi_components Components
 * @brief Component Specific Readme file: powercap
 */
@@ -13,42 +12,49 @@
 
 powercap/
 
-NOTE: This libmsr component is an initial version, and requires that the powercap kernel module be installed and running.
+NOTE: This component is an initial version, and requires that the
+powercap kernel module be installed and running.  The Linux kernel
+configuration item CONFIG_POWERCAP found in most Linux kernels after
+3.13.
 
 The PAPI powercap component supports measuring and capping power usage
-on recent Intel architectures using the powercap interface exposed through
-the Linux kernel.  
+on recent Intel architectures using the powercap interface exposed
+through the Linux kernel.
 
 PAPI has created a powercap component that can provide read and write
-access to the information and controls exposed via the Linux powercap interface.
-
-This PAPI component introduces a new ability for PAPI; it is the first
-case where PAPI is writing information to a counter as well as reading
-the data from the counter.
-
+access to the information and controls exposed via the Linux powercap
+interface.
 
 --------------------------------------------------
-ENABLE ACCESS TO THE Linux powercap interface
+ENABLE ACCESS TO THE LINUX POWERCAP INTERFACE
 
-To use this component, the system will need to provide access to Linux powercap interface from user space.  The actions described
-below will generally require superuser ability.  Note, these actions
-may have security and performance consequences, so please make sure
-you know what you are doing.
+To use this component, the system will need to provide access to Linux
+powercap interface from user space.  The power capping sysfs interface
+allows kernel subsystems to expose power capping settings to user
+space in a consistent way. Usually, it consists of multiple control
+types that determine which settings may be exposed and power zones
+representing parts of the system that can be subject to power capping.
 
-    Install the "CONFIG_POWERCAP" and "CONFIG_INTEL_RAPL" kernel modules are enabled 
-    Use chmod to set site-appropriate access permissions (e.g. 766) for 
-       /sys/class/powercap/*
+The actions described below will generally require superuser ability.
+Note, these actions may have security and performance consequences, so
+please make sure you know what you are doing.
+
+    Ensure the "CONFIG_POWERCAP" and "CONFIG_INTEL_RAPL" kernel
+    modules are enabled.
+
+    Use chmod to set site-appropriate access permissions (e.g. 766)
+    for /sys/class/powercap/*
     
 --------------------------------------------------
 CONFIGURING THE PAPI POWERCAP COMPONENT
 
-at the higher src dirctory, configure with this component
+At the higher src dirctory, configure with this component
     % cd <papi_dir>/src
-    % ./configure --with-components="libmsr"
-Finally, follow the standard PAPI build (make) instructions
+    % ./configure --with-components="powercap"
+Follow the standard PAPI build (make) instructions
     % make 
 To use the module, make sure that the libraries are accessible.  
-    % export LD_LIBRARY_PATH=${PAPIDIR}/src:${PAPIDIR}/src/libpfm4/lib:${LIBMSRDIR}/lib:${LD_LIBRARY_PATH}
+    % export LD_LIBRARY_PATH=${PAPIDIR}/src:${PAPIDIR}/src/libpfm4/lib:${LD_LIBRARY_PATH}
 To check the installation, the following should show some available counters 
     % ./utils/papi_native_avail | grep powercap
 
