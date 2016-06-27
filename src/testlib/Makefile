@@ -12,8 +12,8 @@ UTILSRCS+= ftests_util.F
 UTILOBJS+= ftests_util.o
 endif
 
-all:	$(UTILOBJS)
-	$(AR) $(ARG64) rv libtestlib.a $(UTILOBJS)
+libtestlib.a: $(UTILOBJS)
+	$(AR) $(ARG64) rv $@ $(UTILOBJS)
 
 do_loops.o: do_loops.c papi_test.h test_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c do_loops.c
@@ -32,6 +32,9 @@ ftests_util.o: ftests_util.F fpapi_test.h
 
 clean:
 	rm -f *.o *genmod.f90 *genmod.mod *.stderr *.stdout core *~ $(ALL) libtestlib.a libtestlib.so
+
+distclean: clean
+	rm -f Makefile.target
 
 install: 
 	@echo "Papi testlib (DATADIR) being installed in: \"$(DATADIR)\""; 
