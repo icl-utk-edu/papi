@@ -7,5 +7,12 @@ COMPOBJS += linux-cuda.o
 CFLAGS += -I$(CUDA_DIR)/include -I$(CUPTI_DIR)/include $(CUDA_VERSION)
 LDFLAGS += $(LDL)
 
-linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS)
+linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS) cuda_sampling
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/linux-cuda.c -o linux-cuda.o
+
+cuda_sampling:
+	cd components/cuda/sampling; $(MAKE);
+
+native_clean:
+	cd components/cuda/sampling; $(MAKE) clean
+

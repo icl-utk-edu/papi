@@ -481,8 +481,8 @@ static int papicuda_update_control_state( hwd_control_state_t *ctrl, NativeInfo_
         // SUBDBG( "There are currently %d contexts\n", gctrl->countOfActiveCUContexts );
 
         /* Get/query some device and context specific information  */
-        CHECK_PRINT_EVAL( ( *cudaGetDevicePtr )( &currDeviceNum )!=CUDA_SUCCESS, "cudaGetDevice: CUDA device MUST be set before adding events", return( PAPI_EMISC ) );
-        CHECK_PRINT_EVAL( ( *cudaFreePtr )( NULL )!=CUDA_SUCCESS, "cudaFree: Failed to free in this CUDA context", return( PAPI_EMISC ) );
+        CHECK_PRINT_EVAL( ( *cudaGetDevicePtr )( &currDeviceNum )!=cudaSuccess, "cudaGetDevice: CUDA device MUST be set before adding events", return( PAPI_EMISC ) );
+        CHECK_PRINT_EVAL( ( *cudaFreePtr )( NULL )!=cudaSuccess, "cudaFree: Failed to free in this CUDA context", return( PAPI_EMISC ) );
         CHECK_PRINT_EVAL( ( *cuCtxGetCurrentPtr )( &currCuCtx )!=CUDA_SUCCESS, "cuCtxGetCurrent: CUDA context MUST be initialized before adding events", return ( PAPI_EMISC ) );
 
         /* Find current context/control, creating it if does not exist */
