@@ -29,7 +29,7 @@ endif
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
-MISCHDRS += linux-lock.h mb.h $(PAPI_EVENTS_TABLE)
+MISCHDRS += linux-lock.h mb.h
 MISCSRCS +=  $(ARCH_SPEC_EVTS)
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
@@ -129,9 +129,6 @@ ifneq (,${PERFCTR_ROOT})
 endif
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
-endif
-ifeq (static,$(PAPI_EVENTS))
-	-rm -f $(PAPI_EVENTS_TABLE)
 endif
 
 native_install: 

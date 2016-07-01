@@ -65,14 +65,6 @@ AC_ARG_WITH(OSVER,
             fi ])
 AC_MSG_RESULT($OSVER)
 
-AC_MSG_CHECKING(for user events)
-
-AC_MSG_CHECKING(for static user events build)
-AC_ARG_WITH(static_user_events,
-							  [ --with-static-user-events             Build with a static user events file papi_static_user_events.h.],
-							  [STATIC_USER_EVENTS=yes])
-AC_MSG_RESULT($STATIC_USER_EVENTS)
-
 AC_MSG_CHECKING(for perf_event workaround level)
 AC_ARG_WITH(assumed_kernel,
 		[  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds],
@@ -249,20 +241,22 @@ AC_ARG_WITH(tests,
 
 AC_MSG_CHECKING(for debug build)
 AC_ARG_WITH(debug,
-            [  --with-debug=<yes,memory>		Yes builds a debug version of the library and memory disables PAPI_NO_MEMORY_MANAGEMENT ],
+            [  --with-debug=<yes,memory,no>		Build a debug version, debug version plus memory tracker or none ],
             [debug=$withval])
 if test "$debug" = "yes"; then
   if test "$CC_COMMON_NAME" = "gcc"; then
     CFLAGS="$CFLAGS -g3"
-  else
-    CFLAGS="$CFLAGS -g"
   fi
   OPTFLAGS="-O0"
-  DEBUGFLAGS="-DDEBUG" 
+  PAPICFLAGS+=" -DDEBUG -DPAPI_NO_MEMORY_MANAGEMENT" 
 elif test "$debug" = "memory"; then
-  DEBUGFLAGS="" 
+  if test "$CC_COMMON_NAME" = "gcc"; then
+    CFLAGS="$CFLAGS -g3"
+  fi
+  OPTFLAGS="-O0"
+  PAPICFLAGS+=" -DDEBUG" 
 else
-  DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" 			
+  PAPICFLAGS+="-DPAPI_NO_MEMORY_MANAGEMENT" 			
 fi
 AC_MSG_RESULT($debug)
 
@@ -280,10 +274,10 @@ if test "$CC_COMMON_NAME" = "gcc"; then
 	AC_MSG_CHECKING( for -Wno-override-init)
 		oldcflags="$CFLAGS"
 		CFLAGS+=" -Wall -Wextra -Werror -Wno-override-init"
-		AC_COMPILE_IFELSE( 
+		AC_COMPILE_IFELSE([AC_LANG_SOURCE( 
 						[ struct A { int x; int y; };
 						int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
-						], 
+						])], 
 						[HAVE_NO_OVERRIDE_INIT=1],
 						[HAVE_NO_OVERRIDE_INIT=0] )
 		CFLAGS="$oldcflags"
@@ -415,15 +409,15 @@ if test "$didcheck" != "1"; then
 fi
 
 AC_MSG_CHECKING(for working gettid)
-AC_LINK_IFELSE([#include <sys/types.h>
-                main() { pid_t a = gettid(); }],
+AC_LINK_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
+                main() { pid_t a = gettid(); }])],
                [AC_MSG_RESULT(yes)
                 AC_DEFINE(HAVE_GETTID, 1, [Full gettid function])],
                [AC_MSG_RESULT(no)
                 AC_MSG_CHECKING(for working syscall(SYS_gettid))
-                AC_LINK_IFELSE([#include <sys/types.h>
+                AC_LINK_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
                                 #include <sys/syscall.h>
-                                main() { pid_t a = syscall(SYS_gettid); }],
+                                main() { pid_t a = syscall(SYS_gettid); }])],
                                [AC_MSG_RESULT(yes)
                                 AC_DEFINE(HAVE_SYSCALL_GETTID, 1, [gettid syscall function])],
                                [AC_MSG_RESULT(no)]) ])
@@ -500,7 +494,7 @@ AC_ARG_WITH(walltimer,
 	                                             AC_MSG_RESULT(yes)	],
                                                 [walltimer="cycle"
 	                                             AC_MSG_RESULT(no)]) ]) ])  ])
-AC_MSG_CHECKING(for real time clock or cycle counter)
+AC_MSG_CHECKING(for which real time clock to use)
 if test "$walltimer" = "gettimeofday"; then
   AC_DEFINE(HAVE_GETTIMEOFDAY, 1, [Normal gettimeofday timer])
 elif test "$walltimer" = "mmtimer"; then
@@ -517,6 +511,7 @@ elif test "$walltimer" = "cycle"; then
 else
   AC_MSG_ERROR([Unknown value for walltimer])
 fi
+AC_MSG_RESULT($walltimer)
 
 SAVED_LIBS=$LIBS
 SAVED_LDFLAGS=$LDFLAGS
@@ -717,7 +712,7 @@ LDFLAGS=$SAVED_LDFLAGS
 CFLAGS=$SAVED_CFLAGS
 LIBS=$SAVED_LIBS
 
-AC_MSG_CHECKING(for thread virtual clock or cycle counter)
+AC_MSG_CHECKING(for which virtual timer to use)
 case "$virtualtimer" in
   times)
     AC_DEFINE(HAVE_PER_THREAD_TIMES, 1, [Working per thread timer]) ;;
@@ -745,64 +740,84 @@ if test "$OS" = "aix"; then
                              [AC_MSG_ERROR([libpmapi.a not found, rerun configure with different flags]) ]) ])
 fi
 
-AC_ARG_WITH(papi_events,
-            [  --with-papi-events=<file>		Specify events file to use],
-            [papi_events=$withval],
-            [papi_events="static" 
-             papi_events_table="papi_events_table.h"
-             CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"])
+AC_MSG_CHECKING(for static user preset events)
+AC_ARG_WITH(static_user_events,
+		  [ --with-static-user-events             Build with a static user events file.],
+		  [STATIC_USER_EVENTS=$withval],
+		  [STATIC_USER_EVENTS=no])
+if test "$STATIC_USER_EVENTS" = "yes"; then
+	PAPICFLAGS+=" -DSTATIC_USER_EVENTS"
+fi
+AC_MSG_RESULT($STATIC_USER_EVENTS)
 
-AC_ARG_WITH(static_tools,
-            [  --with-static-tools		Specify static build of tests and utilities],
-            [STATIC="-static"])
+AC_MSG_CHECKING(for static PAPI preset events)
+AC_ARG_WITH(static_papi_events,
+		  [ --with-static-papi-events             Build with a static papi events file.],
+		  [STATIC_PAPI_EVENTS=$withval],
+		  [STATIC_PAPI_EVENTS=yes])
+if test "$STATIC_PAPI_EVENTS" = "yes"; then
+	PAPICFLAGS+=" -DSTATIC_PAPI_EVENTS_TABLE"
+fi
+AC_MSG_RESULT($STATIC_PAPI_EVENTS)
 
-AC_MSG_CHECKING(for which libraries to build)
+AC_MSG_CHECKING(for whether to build static library)
 AC_ARG_WITH(static_lib,
-            [  --with-static-lib=<yes,no>		Specify whether to build a static library of Papi],
+            [  --with-static-lib=<yes,no>		Build a static library],
             [static_lib=$withval],
             [static_lib=yes])
+AC_MSG_RESULT($static_lib)
+
+AC_MSG_CHECKING(for whether to build shared library)
 AC_ARG_WITH(shared_lib,
-            [  --with-shared-lib=<yes,no>		Specify whether to build a shared library of Papi],
+            [  --with-shared-lib=<yes,no>		Build a shared library],
             [shared_lib=$withval],
             [shared_lib=yes])
+AC_MSG_RESULT($shared_lib)
+
+if test "$shared_lib" = "no" -a "$static_lib" = "no"; then
+  AC_MSG_ERROR(Both shared and static libs are disabled)
+fi
+
 if test "$shared_lib" = "yes"; then
   papiLIBS="shared"
 fi
 if test "$static_lib" = "yes"; then
   papiLIBS="$papiLIBS static"
 fi
-if test "$shared_lib" = "no" -a "$static_lib" = "no"; then
-  AC_MSG_ERROR(Both shared and static libs are disabled)
-else
-  AC_MSG_RESULT($papiLIBS)
+
+AC_MSG_CHECKING(for static compile of tests and utilities)
+AC_ARG_WITH(static_tools,
+            [  --with-static-tools		Specify static compile of tests and utilities],
+            [STATIC="-static"
+	    AC_MSG_RESULT(yes)],
+	    [AC_MSG_RESULT(no)])
+
+if test "$static_lib" = "no"; then
+   AC_MSG_ERROR(Building tests and utilities static but no static papi library to be built)
 fi
 
-AC_MSG_CHECKING(for link test cases with shared library)
-AC_ARG_WITH(shlib,
-	        [  --with-shlib		Specify dynamic linking of papi library with test cases and utilities],
- 	        [shlib=yes
-             SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm4/lib;export LIBPATH=.:./libpfm-3.y/lib:./libpfm4/lib;'   
-             LINKLIB='$(SHLIB)'],
- 	        [if test "$papiLIBS" = "shared"; then
-               shlib=yes
-               SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm4/lib;export LIBPATH=.:./libpfm-3.y/lib:./libpfm4/lib;'   
-               LINKLIB='$(SHLIB)'
-             else
-               LINKLIB='$(LIBRARY)'
-             fi])
-if test "$papiLIBS" != "shared static"; then
-  if test "$shlib" = "yes"; then
-    if echo "x$papiLIBS" | grep static > /dev/null; then
-      AC_MSG_ERROR([Building static but specified shared linking])
-    fi
-  elif echo "x$papiLIBS" | grep shared > /dev/null; then
-    AC_MSG_ERROR([Building shared but specified static linking])
-  fi
-fi
-AC_MSG_RESULT($shlib)
+AC_MSG_CHECKING(for linking with papi shared library of tests and utilities)
+AC_ARG_WITH(shlib_tools,
+	        [  --with-shlib-tools		Specify linking with papi library of tests and utilities],
+ 	        [shlib_tools=yes
+		AC_MSG_RESULT(yes)],
+		[shlib_tools=no
+		AC_MSG_RESULT(no)])
 
-# default
-pfm_incdir="libpfm4/include"
+if test "$shlib_tools" = "yes"; then
+   if test "$shared_lib" != "yes"; then	
+      AC_MSG_ERROR(Building static but specified shared linking for tests and utilities)
+   fi
+   if test "$STATIC" = "-static"; then
+      AC_MSG_ERROR([Building shared but specified static linking])
+   fi
+   LINKLIB='$(SHLIB)'
+elif test "$shlib_tools" = "no"; then
+   if test "$static_lib" != "yes"; then
+      AC_MSG_ERROR([Building shared but specified static linking for tests and utilities])
+   fi
+   LINKLIB='$(LIBRARY)'	
+fi
 
 ##################################################
 #          perfctr
@@ -950,21 +965,34 @@ AC_ARG_WITH(perfmon,
 
 
 force_pfm_incdir=no
+# default
 
 AC_ARG_WITH(pfm_root,
            [  --with-pfm-root=<path>		Specify path to source tree (for use by developers only) ],
-           [pfm_root=$withval])
+           [pfm_root=$withval
+	    pfm_incdir=$withval/include
+	    pfm_libdir=$withval/lib])
 AC_ARG_WITH(pfm_prefix,
            [  --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution ],
-           [pfm_prefix=$withval])
+           [pfm_prefix=$withval
+	    pfm_incdir=$pfm_prefix/include
+	    pfm_libdir=$pfm_prefix/lib])
 AC_ARG_WITH(pfm_incdir,
            [  --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location ],
-           [force_pfm_incdir=yes
-            pfm_incdir=$withval])
+           [pfm_incdir=$withval])
 AC_ARG_WITH(pfm_libdir,
            [  --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location ],
            [pfm_libdir=$withval])
 
+# if these are both empty, it means we haven't set either pfm_prefix or pfm_root
+# which would have set them. Thus it means that we set this to our included
+# libpfm4 library. Shame on the person that sets one but not the other.
+
+if test "x$pfm_incdir" = "x" -a "x$pfm_libdir" = "x"; then
+   pfm_root="libpfm4"
+   pfm_incdir="libpfm4/include"
+   pfm_libdir="libpfm4/lib"
+fi
 
 ##################################################
 #          Linux perf_event/perf_counter
@@ -999,6 +1027,12 @@ if test "$enable_perfevent_rdpmc" = "true"; then
 fi
 
 # Uncore support
+AC_ARG_WITH(pe_incdir,
+	      [  --with-pe-incdir=<path>		Specify path to the correct perf header file],
+              [pe_incdir=$withval 
+               force_perf_events=yes
+	       user_specified_interface=pe],
+	      [pe_incdir=$pfm_incdir/perfmon])
 
 AC_ARG_ENABLE(perf_event_uncore,
 		[  --disable-perf-event-uncore		Disable perf_event uncore component])
@@ -1006,19 +1040,6 @@ AC_ARG_ENABLE(perf_event_uncore,
 AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
 	disable_uncore=no
 ])
-
-if test "$force_pfm_incdir" != "yes"; then
-  if test "$force_perf_events" = "yes"; then
-	pfm_incdir="libpfm4/include"
-  fi
-fi
-pe_incdir="$pfm_incdir/perfmon"
-
-AC_ARG_WITH(pe_incdir,
-	          [  --with-pe-incdir=<path>		Specify path to the correct perf header file],
-              [pe_incdir=$with_pe_incdir 
-               force_perf_events=yes
-	       user_specified_interface=pe])
 
 # Check for perf_event.h
   if test "$force_perf_events" = "yes"; then
@@ -1045,12 +1066,12 @@ if test "$user_specified_interface" != "no"; then
 	if test "$user_specified_interface" = "perfmon"; then
 	   perfctr=0
 	   perf_events="no"
-	   CFLAGS="$CFLAGS $PFMCFLAGS"
+	   PAPICFLAGS+=" $PFMCFLAGS"
 	else
 		if test "$user_specified_interface" = "pe"; then
 			   perfctr=0
 			   perfmon=0
-			   CFLAGS="$CFLAGS $PECFLAGS"
+			   PAPICFLAGS+=" $PECFLAGS"
 		else
 			AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events")
 		fi								 
@@ -1058,10 +1079,10 @@ if test "$user_specified_interface" != "no"; then
    fi
 else
 	if test "$perfmon" != 0; then
-	   CFLAGS="$CFLAGS $PFMCFLAGS"
+	   PAPICFLAGS+=" $PFMCFLAGS"
 	fi
 	if test "$perf_events" = "yes"; then
-	   CFLAGS="$CFLAGS $PECFLAGS"
+	   PAPICFLAGS+=" $PECFLAGS"
 	fi
 fi
 
@@ -1076,30 +1097,9 @@ fi
 #
 
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
-  dotest=0
-  if test "x$pfm_root" != "x"; then
-    LIBS="-L$pfm_root/lib -lpfm"
-    CPPFLAGS="$CPPFLAGS -I$pfm_root/include"
-    dotest=1
-  elif test "x$pfm_prefix" != "x"; then
-    LIBS="-L$pfm_prefix/lib -lpfm"
-    CPPFLAGS="$CPPFLAGS -I$pfm_prefix/include"
-    if test "x$pfm_libdir" = "x"; then
-      pfm_libdir="$pfm_prefix/lib"
-    fi
-    if test "x$pfm_prefix" = "x"; then
-      pfm_incdir="$pfm_prefix/include"
-    fi
-    dotest=1
-  else
-    if test "x$pfm_libdir" != "x"; then
-      LIBS="-L$pfm_libdir -lpfm"
-      dotest=1
-    fi
-    if test "x$pfm_incdir" != "x"; then
-      CPPFLAGS="$CPPFLAGS -I$pfm_incdir"
-    fi
-  fi
+  LIBS="-L$pfm_libdir -lpfm"
+  CPPFLAGS="$CPPFLAGS -I$pfm_incdir"
+  dotest=1
   if test "$dotest" = 1; then
     AC_CHECK_LIB([pfm], [pfm_initialize], 
                  [AC_CHECK_HEADERS([perfmon/pfmlib.h],
@@ -1263,8 +1263,9 @@ if test "$CC_COMMON_NAME" = "gcc"; then
 	fi
 fi
 
-OPTFLAGS="$OPTFLAGS $DEBUGFLAGS"
-CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE $NOTLS $BITFLAGS"
+OPTFLAGS="$OPTFLAGS"
+PAPICFLAGS+=" -D_REENTRANT -D_GNU_SOURCE $NOTLS"
+CFLAGS="$CFLAGS $BITFLAGS"
 if test "$CC_COMMON_NAME" = "gcc"; then
 	CFLAGS="$CFLAGS -Wall"
 fi
@@ -1325,19 +1326,16 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
     BITFLAGS="-bmaxdata:0x80000000/dsa"
   fi
 
-    CPUCOMPONENT_NAME=aix
-    CPUCOMPONENT_C=aix.c
-    CPUCOMPONENT_OBJ=aix.o
-    VECTOR=_aix_vector
-    PAPI_EVENTS_CSV="papi_events.csv"
-    MISCHDRS="aix.h components/perfctr_ppc/ppc64_events.h papi_events_table.h"
-    MISCSRCS="aix.c"
-	SAVED_CFLAGS="$CFLAGS"
-    CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -Icomponents/perfctr_ppc -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
-	CFLAGS="$SAVED_CFLAGS $CFLAGS"
-    FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
-
-  FLAGS='-I$(PMAPI)/include -Icomponents/perfctr_ppc -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
+  CPUCOMPONENT_NAME=aix
+  CPUCOMPONENT_C=aix.c
+  CPUCOMPONENT_OBJ=aix.o
+  VECTOR=_aix_vector
+  PAPI_EVENTS_CSV="papi_events.csv"
+  MISCHDRS="aix.h components/perfctr_ppc/ppc64_events.h papi_events_table.h"
+  MISCSRCS="aix.c"
+  CFLAGS+='-qenum=4 -Icomponents/perfctr_ppc -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
+  FFLAGS+='-WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+  CFLAGS+='-I$(PMAPI)/include -Icomponents/perfctr_ppc -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
   if test $debug != "yes"; then
 	OPTFLAGS='-O3 -qstrict $(PMINIT)'
   else
@@ -1439,7 +1437,7 @@ re.h"
     MISCSRCS="$MISCSRCS freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c freebsd/map-westme\
 re.c"
   DESCR="FreeBSD -over libpmc- "
-  CFLAGS="$CFLAGS -I. -Ifreebsd -DPIC -fPIC $DEBUGFLAGS"
+  CFLAGS+=" -I. -Ifreebsd -DPIC -fPIC"
   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
 
 elif test "$MAKEVER" = "linux-generic"; then
@@ -1710,14 +1708,11 @@ tests="$tests comp_tests"
 
 AC_MSG_RESULT($components)
 
-if test "$STATIC_USER_EVENTS" = "yes"; then
-	CFLAGS="$CFLAGS -DSTATIC_USER_EVENTS"
-fi
-
+AC_MSG_CHECKING(for PAPI event CSV filename to use)
 if test "x$PAPI_EVENTS_CSV" == "x"; then
    PAPI_EVENTS_CSV="papi_events.csv"
 fi
-
+AC_MSG_RESULT($PAPI_EVENTS_CSV)
 
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
@@ -1730,7 +1725,6 @@ AC_SUBST(datarootdir)
 AC_SUBST(docdir)
 AC_SUBST(PACKAGE_TARNAME)
 AC_SUBST(arch)
-AC_SUBST(DEBUGFLAGS)
 AC_SUBST(MAKEVER)
 AC_SUBST(PMAPI)
 AC_SUBST(PMINIT)
@@ -1741,7 +1735,6 @@ AC_SUBST(AR)
 AC_SUBST(papiLIBS)
 AC_SUBST(STATIC)
 AC_SUBST(LDFLAGS)
-AC_SUBST(NOTLS)
 AC_SUBST(altix)
 AC_SUBST(perfctr_root)
 AC_SUBST(perfctr_prefix)
@@ -1756,8 +1749,8 @@ AC_SUBST(OS)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(CPPFLAGS)
-AC_SUBST(papi_events)
-AC_SUBST(papi_events_table)
+AC_SUBST(PAPI_EVENTS)
+AC_SUBST(PAPI_EVENTS_CSV)
 AC_SUBST(SETPATH)
 AC_SUBST(LINKLIB)
 AC_SUBST(VERSION)
@@ -1766,6 +1759,7 @@ AC_SUBST(FILENAME)
 AC_SUBST(LIBRARY)
 AC_SUBST(SHLIB)
 AC_SUBST(VLIB)
+AC_SUBST(PAPICFLAGS)
 AC_SUBST(OPTFLAGS)
 AC_SUBST(CPUCOMPONENT_NAME)
 AC_SUBST(CPUCOMPONENT_C)
@@ -1806,7 +1800,6 @@ AC_SUBST(FTEST_TARGETS)
 AC_SUBST(UTIL_TARGETS)
 AC_SUBST(EXTRA_CFLAGS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
-AC_SUBST(PAPI_EVENTS_CSV)
 AC_SUBST(BGPM_INSTALL_DIR)
 AC_SUBST(CC_COMMON_NAME)
 

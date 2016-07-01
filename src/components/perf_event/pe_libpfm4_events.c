@@ -25,7 +25,6 @@
 
 #include "perfmon/pfmlib.h"
 #include "perfmon/pfmlib_perf_event.h"
-#include "libpfm4/lib/pfmlib_priv.h"
 
 #define NATIVE_EVENT_CHUNK 1024
 

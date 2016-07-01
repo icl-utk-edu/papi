@@ -17,13 +17,12 @@ ifneq (/usr,$(PFM_PREFIX))
       PFM_INC_PATH := $(PFM_ROOT)/include
    endif
    ifneq (/usr/include,$(PFM_INC_PATH))
-      CFLAGS	+= -I$(PFM_INC_PATH)
+      LIBCFLAGS	+= -I$(PFM_INC_PATH)
    endif
 endif
 
-CFLAGS += -fvisibility=hidden
-
-MISCHDRS += linux-lock.h mb.h papi_libpfm4_events.h $(PAPI_EVENTS_TABLE)
+LIBCFLAGS += -fvisibility=hidden
+MISCHDRS += linux-lock.h mb.h papi_libpfm4_events.h
 MISCSRCS += papi_libpfm4_events.c
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
@@ -66,9 +65,6 @@ native_clean:
 	-rm -f $(MISCOBJS)
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
-endif
-ifeq (static,$(PAPI_EVENTS))
-	-rm -f $(PAPI_EVENTS_TABLE)
 endif
 
 native_install:

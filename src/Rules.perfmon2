@@ -20,7 +20,7 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 endif
 endif
 
-MISCHDRS += linux-lock.h mb.h papi_libpfm_events.h $(PAPI_EVENTS_TABLE)
+MISCHDRS += linux-lock.h mb.h papi_libpfm_events.h
 MISCSRCS += papi_libpfm3_events.c 
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
@@ -51,9 +51,6 @@ native_clean:
 	-rm -f $(MISCOBJS)
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
-endif
-ifeq (static,$(PAPI_EVENTS))
-	-rm -f $(PAPI_EVENTS_TABLE)
 endif
 
 native_install:

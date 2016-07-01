@@ -8,13 +8,14 @@ OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o sw_multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT_OBJ) papi_preset.o \
     papi_vector.o papi_memory.o $(COMPOBJS) 
-HEADERS   = $(MISCHDRS) $(OSFILESHDR) papi.h papi_internal.h \
-	papiStdEventDefs.h\
+PAPI_EVENTS_TABLE = papi_events_table.h
+HEADERS  = $(MISCHDRS) $(OSFILESHDR) $(PAPI_EVENTS_TABLE) \
+	papi.h papi_internal.h papiStdEventDefs.h \
 	papi_preset.h threads.h cpus.h papi_vector.h \
 	papi_memory.h config.h \
 	extras.h sw_multiplex.h papi_hl.h \
-	papi_common_strings.h components_config.h \
-	papi_events_table.h
+	papi_common_strings.h components_config.h
+	
 LIBCFLAGS += -I. $(CFLAGS) -DOSLOCK=\"$(OSLOCK)\" -DOSCONTEXT=\"$(OSCONTEXT)\"
 FHEADERS = fpapi.h f77papi.h f90papi.h
 # pkgconfig directory
@@ -143,7 +144,7 @@ papi_memory.o: papi_memory.c $(HEADERS)
 papi_vector.o: papi_vector.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_vector.c -o papi_vector.o
 
-papi_preset.o: papi_preset.c $(HEADERS) $(PAPI_EVENTS_TABLE)
+papi_preset.o: papi_preset.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_preset.c -o papi_preset.o 
 
 sw_multiplex.o: sw_multiplex.c $(HEADERS)
@@ -155,11 +156,10 @@ $(CPUCOMPONENT_OBJ): $(CPUCOMPONENT_C) $(HEADERS)
 x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cpuid_info.c -o x86_cpuid_info.o
 
-
-$(PAPI_EVENTS_TABLE):	$(PAPI_EVENTS_CSV) papi_events_table.sh
+$(PAPI_EVENTS_TABLE): $(PAPI_EVENTS_CSV) papi_events_table.sh
 	sh papi_events_table.sh $(PAPI_EVENTS_CSV) > $@
 
-$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
+$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
 
 # Required for BGP
@@ -236,7 +236,7 @@ utils: $(LIBS) testlib
 	$(SETPATH) cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" $(UTIL_TARGETS)
 
 ctests: $(LIBS) testlib
-	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. $(CFLAGS) $(DEBUGFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LDL="$(LDL)" LIBRARY="../$(LINKLIB)" $(CTEST_TARGETS)
+	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LDL="$(LDL)" LIBRARY="../$(LINKLIB)" $(CTEST_TARGETS)
 
 ftests: $(LIBS) testlib
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" $(FTEST_TARGETS)
@@ -272,9 +272,8 @@ ifneq (${COMPONENTS},)
 	done 
 endif
 
-
 clobber distclean: clean native_clobber
-	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h papi_events_table.h
+	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h $(PAPI_EVENTS_TABLE)
 	-cd utils;  $(MAKE) clean
 	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
