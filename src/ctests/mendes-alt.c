@@ -18,6 +18,32 @@ static int EventSet = PAPI_NULL;
 
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
+void
+funcX( a, b, n )
+double a[MAX], b[MAX];
+int n;
+{
+	int i, k;
+	for ( k = 0; k < TIMES; k++ )
+		for ( i = 0; i < n; i++ )
+			a[i] = a[i] * b[i] + 1.;
+}
+
+void
+funcA( a, b, n )
+double a[MAX], b[MAX];
+int n;
+{
+	int i, k;
+	double t[MAX];
+	for ( k = 0; k < TIMES; k++ )
+		for ( i = 0; i < n; i++ ) {
+			t[i] = b[n - i];
+			b[i] = a[n - i];
+			a[i] = t[i];
+		}
+}
+
 int
 main( argc, argv )
 int argc;
@@ -25,7 +51,6 @@ char *argv[];
 {
 	int i, retval;
 	double a[MAX], b[MAX];
-	void funcX(  ), funcA(  );
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
@@ -156,30 +181,4 @@ char *argv[];
 	}
 	test_pass( __FILE__, NULL, 0 );
 	exit( 1 );
-}
-
-void
-funcX( a, b, n )
-double a[MAX], b[MAX];
-int n;
-{
-	int i, k;
-	for ( k = 0; k < TIMES; k++ )
-		for ( i = 0; i < n; i++ )
-			a[i] = a[i] * b[i] + 1.;
-}
-
-void
-funcA( a, b, n )
-double a[MAX], b[MAX];
-int n;
-{
-	int i, k;
-	double t[MAX];
-	for ( k = 0; k < TIMES; k++ )
-		for ( i = 0; i < n; i++ ) {
-			t[i] = b[n - i];
-			b[i] = a[n - i];
-			a[i] = t[i];
-		}
 }

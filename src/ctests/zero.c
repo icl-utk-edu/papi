@@ -115,7 +115,7 @@ main( int argc, char **argv )
 	   printf( "-------------------------------------------------------------------------\n" );
 
 	   printf( "Verification: PAPI_TOT_CYC should be roughly real_cycles\n" );
-	   printf( "NOTE: Not true if dynamic frequency scaling is enabled.\n" );
+	   printf( "NOTE: Not true if dynamic frequency scaling or turbo boost is enabled.\n" );
 	   printf( "Verification: PAPI_FP_INS should be roughly %d\n", 2*NUM_FLOPS );
 	}
 	/* Check that TOT_CYC and real_cycles roughly match */
