@@ -1,12 +1,8 @@
 # File: utils/Makefile
-# CVS:  $Id$
 INCLUDE = -I../testlib -I. 
-LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
-TESTLIB = ../testlib/libtestlib.a
-CC	= gcc
-CC_R	= $(CC) -pthread
-CFLAGS	= -g -O -Wall
+testlibdir=../testlib
+TESTLIB= $(testlibdir)/libtestlib.a
 
 ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail \
 	papi_command_line papi_event_chooser papi_decode papi_xml_event_info \
