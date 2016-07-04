@@ -1,5 +1,5 @@
 # File: ftests/Makefile
-INCLUDE = -I../testlib
+INCLUDE = -I../testlib -I.
 PAPILIB = $(LIBRARY)
 FFLAGS	= $(CFLAGS) -ffixed-line-length-132
 testlibdir=../testlib
