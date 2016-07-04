@@ -1,5 +1,5 @@
 # File: ctests/Makefile
-INCLUDE = -I.. -I../testlib
+INCLUDE = -I../testlib -I.
 PAPILIB=$(LIBRARY)
 testlibdir=../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
