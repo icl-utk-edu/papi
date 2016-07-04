@@ -1,9 +1,5 @@
 INCLUDE = -I.
-LIBRARY = -lpapi
 PAPILIB = $(LIBRARY)
-CC	= gcc
-CC_R	= $(CC) -pthread
-CFLAGS	= -g -O -Wall
 
 UTILSRCS:= do_loops.c test_utils.c dummy.c clockcore.c
 UTILOBJS:=$(UTILSRCS:.c=.o)
