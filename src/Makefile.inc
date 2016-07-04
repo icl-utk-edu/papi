@@ -1,5 +1,4 @@
 PAPI_SRCDIR = $(PWD)	
-CFLAGS += $(EXTRA_CFLAGS)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
     threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT_C) papi_preset.c \
@@ -230,16 +229,16 @@ fulltest: tests
 tests: $(TESTS) 
 
 testlib:
-	$(SETPATH) cd testlib;  $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CC_SHR="$(CC_SHR)" CFLAGS="-I.. $(CFLAGS)" F77="$(F77)" FFLAGS="-I.. $(FFLAGS)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)"
+	$(SETPATH) cd testlib;  $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CC_SHR="$(CC_SHR)" CFLAGS="-I.. $(CFLAGS)" F77="$(F77)" FFLAGS="-I.. $(FFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" 
 
 utils: $(LIBS) testlib
-	$(SETPATH) cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" $(UTIL_TARGETS)
+	$(SETPATH) cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" $(UTIL_TARGETS)
 
 ctests: $(LIBS) testlib
-	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LDL="$(LDL)" LIBRARY="../$(LINKLIB)" $(CTEST_TARGETS)
+	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LDL="$(LDL)" LIBRARY="../$(LINKLIB)" $(CTEST_TARGETS)
 
 ftests: $(LIBS) testlib
-	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" $(FTEST_TARGETS)
+	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" $(FTEST_TARGETS)
 
 
 
@@ -274,7 +273,6 @@ endif
 
 clobber distclean: clean native_clobber
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h $(PAPI_EVENTS_TABLE)
-	-cd utils;  $(MAKE) clean
 	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
 null:

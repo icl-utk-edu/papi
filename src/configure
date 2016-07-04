@@ -627,7 +627,6 @@ LIBOBJS
 CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
-EXTRA_CFLAGS
 UTIL_TARGETS
 FTEST_TARGETS
 COMPONENTS
@@ -4433,9 +4432,9 @@ if test "$CC_COMMON_NAME" = "gcc"; then
   major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
   minor=`echo $gcc_version | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
   if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
-    EXTRA_CFLAGS="-Wextra"
+    CFLAGS+=" -Wextra"
   else
-    EXTRA_CFLAGS="-W"
+    CFLAGS+=" -W"
   fi
 # -Wextra => -Woverride-init on gcc >= 4.2
 # This issues a warning (error under -Werror) for some libpfm4 code.
@@ -5897,14 +5896,23 @@ fi
 #
 
 #
-# What does this next section do?
+# What does this next section do? It determines whether or not to run the tests for libpfm
+# based on the settings of pfm_root, pfm_prefix, pfm_incdir, pfm_libdir
 #
 
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
-  LIBS="-L$pfm_libdir -lpfm"
-  CPPFLAGS="$CPPFLAGS -I$pfm_incdir"
-  dotest=1
+   # if prefix set, then yes
+   if test "x$pfm_prefix" != "x"; then
+      dotest=1
+   # if root not set and libdir set, then yes
+   elif test "x$pfm_root" = "x" -a "x$pfm_libdir" != "x"; then
+      dotest=1
+   else
+      dotest=0
+   fi
   if test "$dotest" = 1; then
+    LIBS="-L$pfm_libdir -lpfm"
+    CPPFLAGS="$CPPFLAGS -I$pfm_incdir"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pfm_initialize in -lpfm" >&5
 $as_echo_n "checking for pfm_initialize in -lpfm... " >&6; }
 if ${ac_cv_lib_pfm_pfm_initialize+:} false; then :
@@ -6197,7 +6205,7 @@ CFLAGS="$CFLAGS $BITFLAGS"
 if test "$CC_COMMON_NAME" = "gcc"; then
 	CFLAGS="$CFLAGS -Wall"
 fi
-FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
+FFLAGS="$CFLAGS $BITFLAGS $FFLAGS -Dlinux"
 
 # OS Support
 
@@ -6563,7 +6571,7 @@ if test "$F77" = "pgf77"; then
 elif test "$F77" = "ifort"; then
   FFLAGS="$FFLAGS -warn all"
 elif test "$F77" != "xlf"; then
-  FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
+  FFLAGS="$FFLAGS -ffixed-line-length-132"
 fi
 
 if test "$CC_COMMON_NAME" = "icc"; then
@@ -6689,7 +6697,6 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
-
 
 
 
