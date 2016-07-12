@@ -230,16 +230,37 @@ get_cycles( void )
 /* POWER get_cycles()   */
 /************************/
 
-#elif (defined(__powerpc__) || defined(__arm__) || defined(__mips__))
-/*
- * It's not possible to read the cycles from user space on ppc970.
- * There is a 64-bit time-base register (TBU|TBL), but its
- * update rate is implementation-specific and cannot easily be translated
- * into a cycle count.  So don't implement get_cycles for now,
- * but instead, rely on the definition of HAVE_CLOCK_GETTIME_REALTIME in
- * _papi_hwd_get_real_usec() for the needed functionality.
-*/
+#elif defined(__powerpc__)
 
+static inline long long get_cycles()
+{
+    int64_t result;
+#ifdef _ARCH_PPC64
+    /*
+        This reads timebase in one 64bit go.  Does *not* include a workaround for the cell (see 
+        http://ozlabs.org/pipermail/linuxppc-dev/2006-October/027052.html)
+    */
+    __asm__ volatile(
+        "mftb    %0"
+        : "=r" (result));
+#else
+    /*
+        Read the high 32bits of the timer, then the lower, and repeat if high order has changed in the meantime.  See
+        http://ozlabs.org/pipermail/linuxppc-dev/1999-October/003889.html
+    */
+    unsigned long dummy;
+    __asm__ volatile(
+        "mfspr   %1,269\n\t"  /* mftbu */
+        "mfspr   %L0,268\n\t" /* mftb */
+        "mfspr   %0,269\n\t"  /* mftbu */
+        "cmpw    %0,%1\n\t"   /* check if the high order word has chanegd */
+        "bne     $-16"
+        : "=r" (result), "=r" (dummy));
+#endif
+    return result;
+}
+
+#elif (defined(__arm__) || defined(__mips__))
 static inline long long
 get_cycles( void )
 {

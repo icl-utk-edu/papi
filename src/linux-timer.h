@@ -14,4 +14,3 @@ long long _linux_get_virt_nsec_gettime( void );
 
 int mmtimer_setup(void);
 int init_proc_thread_timer( hwd_context_t *thr_ctx );
-
