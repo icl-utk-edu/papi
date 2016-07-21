@@ -200,13 +200,14 @@ int
 pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
 			   uint64_t *umask,
-			   unsigned int max_grpid)
+			   unsigned int max_grpid,
+			   int excl_grp_but_0)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
 	unsigned int i;
 	int j, k, added, skip;
-	int idx;
+	int idx, grpid;
 
 	k = e->nattrs;
 	ent = pe+e->event;
@@ -239,6 +240,12 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			}
 
 			if (intel_x86_uflag(this, e->event, idx, INTEL_X86_GRP_DFL_NONE)) {
+				skip = 1;
+				continue;
+			}
+			grpid = ent->umasks[idx].grpid;
+
+			if (excl_grp_but_0  != -1 && grpid != 0  && excl_grp_but_0 != grpid) {
 				skip = 1;
 				continue;
 			}
@@ -373,6 +380,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int grpid;
 	int ldlat = 0, ldlat_um = 0;
 	int fe_thr= 0, fe_thr_um = 0;
+	int excl_grp_but_0 = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 
@@ -425,6 +433,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_EXCL_GRP_GT))
 				max_grpid = grpid;
 
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_EXCL_GRP_BUT_0))
+				excl_grp_but_0 = grpid;
 			/*
 			 * upper layer has removed duplicates
 			 * so if we come here more than once, it is for two
@@ -580,11 +590,25 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	 */
 	if ((ugrpmsk != grpmsk && !intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL)) || ugrpmsk == 0) {
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask2, max_grpid);
+		ret = pfm_intel_x86_add_defaults(this, e, ugrpmsk, &umask2, max_grpid, excl_grp_but_0);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
-
+	/*
+	 * GRP_EXCL_BUT_0 groups require at least one bit set in grpid = 0 and one in theirs
+	 * applies to OFFCORE_RESPONSE umasks on some processors (e.g., Goldmont)
+	 */
+	DPRINT("excl_grp_but_0=%d\n", excl_grp_but_0);
+	if (excl_grp_but_0 != -1) {
+		/* skip group 0, because it is authorized */
+		for (k = 1; k < INTEL_X86_NUM_GRP; k++) {
+			DPRINT("grpcounts[%d]=%d\n", k, grpcounts[k]);
+			if (grpcounts[k] && k != excl_grp_but_0) {
+				DPRINT("GRP_EXCL_BUT_0 but grpcounts[%d]=%d\n", k, grpcounts[k]);
+				return PFM_ERR_FEATCOMB;
+			}
+		}
+	}
 	ret = intel_x86_check_pebs(this, e);
 	if (ret != PFM_SUCCESS)
 		return ret;

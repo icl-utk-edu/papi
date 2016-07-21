@@ -89,6 +89,7 @@ typedef struct {
 #define INTEL_X86_GRP_DFL_NONE		0x0800	/* ok if umask group defaults to no umask */
 #define INTEL_X86_FRONTEND		0x1000	/* Skylake Precise frontend */
 #define INTEL_X86_FETHR			0x2000	/* precise frontend umask requires threshold modifier (fe_thres) */
+#define INTEL_X86_EXCL_GRP_BUT_0	0x4000	/* exclude all groups except self and grpid = 0 */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -325,7 +326,7 @@ intel_x86_attr2umask(void *this, int pidx, int attr_idx)
 }
 
 extern int pfm_intel_x86_detect(void);
-extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask, unsigned int max_grpid);
+extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask, unsigned int max_grpid, int excl_grp_but_0);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e);
