@@ -676,6 +676,9 @@ pfmlib_match_forced_pmu(const char *name)
 static int
 pfmlib_is_blacklisted_pmu(pfmlib_pmu_t *p)
 {
+	char *q, *buffer;
+	int ret = 1;
+
 	if (!pfm_cfg.blacklist_pmus)
 		return 0;
 
@@ -683,15 +686,20 @@ pfmlib_is_blacklisted_pmu(pfmlib_pmu_t *p)
 	 * scan list for matching PMU names, we accept substrings.
 	 * for instance: snbep does match snbep*
 	 */
-	char *q, buffer[strlen(pfm_cfg.blacklist_pmus) + 1];
+	buffer = strdup(pfm_cfg.blacklist_pmus);
+	if (!buffer)
+		return 0;
 
 	strcpy (buffer, pfm_cfg.blacklist_pmus);
 	for (q = strtok (buffer, ","); q != NULL; q = strtok (NULL, ",")) {
 		if (strstr (p->name, q) != NULL) {
-			return 1;
+			goto done;
 		}
 	}
-	return 0;
+	ret = 0;
+done:
+	free(buffer);
+	return ret;
 }
 
 static int
