@@ -788,7 +788,7 @@ int _papi_load_preset_table(char *pmu_str, int pmu_type, int cidx) {
 }
 
 // global variables
-static char stack[PAPI_HUGE_STR_LEN]; // stack
+static char stack[2*PAPI_HUGE_STR_LEN]; // stack
 static int stacktop = -1; // stack length
 
 // priority: This function returns the priority of the operator
@@ -813,22 +813,22 @@ int priority( char symbol ) {
 
 static
 int push( char symbol ) {
-        if( stacktop >= (PAPI_HUGE_STR_LEN - 1) ) {
-                INTDBG("EXIT: Stack Overflow converting Algebraic Expression:%d\n", stacktop );
-                return -1;  //***TODO: Figure out how to exit gracefully
+  if (stacktop >= 2*PAPI_HUGE_STR_LEN - 1) {
+    INTDBG("stack overflow converting algebraic expression (%d,%c)\n", stacktop,symbol );
+    return -1;  //***TODO: Figure out how to exit gracefully
   } // end if stacktop>MAX
-        stack[++stacktop] = symbol;
-        return 0;
+  stack[++stacktop] = symbol;
+  return 0;
 } // end push
 
 // pop from stack
 static
 char pop() {
-        if( stacktop < 0 ) {
-                INTDBG("EXIT: Stack Underflow converting Algebraic Expression:%d\n", stacktop );
-                return '\0';  //***TODO: Figure out how to exit gracefully
-        } // end if empty
-        return( stack[stacktop--] );
+  if( stacktop < 0 ) {
+    INTDBG("stack underflow converting algebraic expression\n" );
+    return '\0';  //***TODO: Figure out how to exit gracefully
+  } // end if empty
+  return( stack[stacktop--] );
 } // end pop
 
 /* infix_to_postfix:
@@ -846,11 +846,11 @@ infix_to_postfix( char *infix ) {
             PAPIERROR("A infix string (probably in user-defined presets) is too big (max allowed %d): %s", PAPI_HUGE_STR_LEN, infix );
 
         // initialize stack
-	memset( &stack, 0, 2*PAPI_HUGE_STR_LEN );
+	memset(stack, 0, 2*PAPI_HUGE_STR_LEN);
 	stacktop = -1; 
 	push('#');
         /* initialize output string */
-	memset(&postfix,0,2*PAPI_HUGE_STR_LEN);
+	memset(postfix,0,2*PAPI_HUGE_STR_LEN);
         postfixlen = 0;
 
 	for( index=0; index<strlen(infix); index++ ) {
@@ -1194,7 +1194,8 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 
 			if (invalid_event) {
 				// got an error, make this entry unused
-				papi_free (results[res_idx].symbol);
+			        // preset table is statically allocated, user defined is dynamic
+			        if (!preset_flag) papi_free (results[res_idx].symbol);
 				results[res_idx].symbol = NULL;
 				continue;
 			}
@@ -1204,7 +1205,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 			// if we did not find any terms to base this derived event on, report error
 			if (i == 0) {
 				// got an error, make this entry unused
-				papi_free (results[res_idx].symbol);
+			  if (!preset_flag) papi_free (results[res_idx].symbol);
 				results[res_idx].symbol = NULL;
 				PAPIERROR("Expected PFM event after DERIVED token at line %d of %s -- ignoring", line_no, name);
 				continue;
