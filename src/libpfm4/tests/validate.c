@@ -201,6 +201,7 @@ static const struct_desc_t pfmlib_structs[]={
 		FIELD(code, pfm_event_attr_info_t),
 		FIELD(type, pfm_event_attr_info_t),
 		FIELD(idx, pfm_event_attr_info_t),
+		FIELD(pad, pfm_event_attr_info_t), /* padding */
 		FIELD(ctrl, pfm_event_attr_info_t),
 		LAST_FIELD
 	 },
@@ -270,7 +271,7 @@ validate_structs(void)
 		}
 
 		if (sz != d->sz) {
-			printf("Failed (invisible padding of %zu bytes)\n", d->sz - sz);
+			printf("Failed (invisible padding of %zu bytes, total struct size %zu bytes)\n", d->sz - sz, d->sz);
 			errors++;
 			continue;
 		}
