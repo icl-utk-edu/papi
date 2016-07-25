@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -2063,93 +2064,90 @@ handle_derived_add_ps( int *position, long long *from )
 /* this function implement postfix calculation, it reads in a string where I use:
       |      as delimiter
       N2     indicate No. 2 native event in the derived preset
-      +, -, *, /, %  as operator
+      +, -, *, /  as operator
       #      as MHZ(million hz) got from  _papi_hwi_system_info.hw_info.cpu_max_mhz*1000000.0
 
   Haihang (you@cs.utk.edu)
 */ 
-static long long
-_papi_hwi_postfix_calc( EventInfo_t * evi, long long *hw_counter )
-{
-	INTDBG("ENTER: evi: %p, evi->ops: %p (%s), evi->pos[0]: %d, evi->pos[1]: %d, hw_counter: %p (%lld %lld)\n", evi, evi->ops, evi->ops, evi->pos[0], evi->pos[1], hw_counter, hw_counter[0], hw_counter[1]);
-	char *point = evi->ops, operand[16];
-	double stack[PAPI_EVENTS_IN_DERIVED_EVENT];
-	int i, top = 0;
+ static long long
+ _papi_hwi_postfix_calc( EventInfo_t * evi, long long *hw_counter )
+ {
+        char *point = evi->ops, operand[16];
+        double stack[PAPI_EVENTS_IN_DERIVED_EVENT];
+       int i, val, top = 0;
 
-	memset(&stack,0,PAPI_EVENTS_IN_DERIVED_EVENT*sizeof(double));
+       INTDBG("ENTER: evi: %p, evi->ops: %p (%s), evi->pos[0]: %d, evi->pos[1]: %d, hw_counter: %p (%lld %lld)\n",
+              evi, evi->ops, evi->ops, evi->pos[0], evi->pos[1], hw_counter, hw_counter[0], hw_counter[1]);
 
-	while ( *point != '\0' ) {
-		if ( *point == '|' ) {	/* ignore leading and consecutive '|' characters */
-			point++;
-		} else if ( *point == 'N' ) {	/* to get count for each native event */
-			i = 0;
-			point++;
-			do {
-				operand[i] = *point;
-				point++;
-				i++;
-			} while ( *point != '|' );
-			operand[i] = '\0';
-			stack[top] = ( double ) hw_counter[evi->pos[atoi( operand )]];
-			top++;
-			point++;
-		} else if ( *point == '#' ) {	/* to get mhz, ignore the rest char's */
-			stack[top] = _papi_hwi_system_info.hw_info.cpu_max_mhz * 1000000.0;
-			top++;
-			do {
-				point++;
-			} while ( *point != '|' );
-			point++;
-		} else if ( isdigit( *point ) ) {	/* to get integer, I suppose only integer will be used, 
-											   no error check here, please only use integer */
-			i = 0;
-			do {
-				operand[i] = *point;
-				point++;
-				i++;
-			} while ( *point != '|' );
-			operand[i] = '\0';
-			stack[top] = atoi( operand );
-			top++;
-			point++;
-		} else if ( *point == '+' ) {	/* + calculation */
-			stack[top - 2] += stack[top - 1];
-			top--;
-			do {
-				point++;
-			} while ( *point != '|' );
-			point++;
-		} else if ( *point == '-' ) {	/* - calculation */
-			stack[top - 2] -= stack[top - 1];
-			top--;
-			do {
-				point++;
-			} while ( *point != '|' );
-			point++;
-		} else if ( *point == '*' ) {	/* * calculation */
-			stack[top - 2] *= stack[top - 1];
-			top--;
-			do {
-				point++;
-			} while ( *point != '|' );
-			point++;
-		} else if ( *point == '/' ) {	/* / calculation */
-			stack[top - 2] /= stack[top - 1];
-			top--;
-			do {
-				point++;
-			} while ( *point != '|' );
-			point++;
-		} else {			 /* do nothing */
-			do {
-				point++;
-			} while ( *point != '|' );
-			point++;
-		}
-	}
-	INTDBG("EXIT: stack[0]: %lld\n", (long long)stack[0]);
-	return ( long long ) stack[0];
-}
+        memset(&stack,0,PAPI_EVENTS_IN_DERIVED_EVENT*sizeof(double));
+
+        while ( *point != '\0' ) {
+               if ( *point == '|' ) {  /* consume '|' characters */
+                        point++;
+                } else if ( *point == 'N' ) {   /* to get count for each native event */
+                        point++;
+                       i = 0;
+                       while ( isdigit(*point) ) {
+                               assert(i<16);
+                                operand[i] = *point;
+                                point++;
+                                i++;
+                       }
+                       assert(0<i && i<16);
+                        operand[i] = '\0';
+                       val = atoi( operand );
+                       assert( top < PAPI_EVENTS_IN_DERIVED_EVENT );
+                       assert( 0 <= val && val < PAPI_EVENTS_IN_DERIVED_EVENT );
+                       stack[top] = ( double ) hw_counter[evi->pos[val]];
+                        top++;
+               } else if ( *point == '#' ) {   /* to get mhz */
+                        point++;
+                       assert( top < PAPI_EVENTS_IN_DERIVED_EVENT );
+                        stack[top] = _papi_hwi_system_info.hw_info.cpu_max_mhz * 1000000.0;
+                        top++;
+               } else if ( isdigit( *point ) ) {
+                        i = 0;
+                       while ( isdigit(*point) ) {
+                               assert(i<16);
+                                operand[i] = *point;
+                                point++;
+                                i++;
+                       }
+                       assert(0<i && i<16);
+                        operand[i] = '\0';
+                       assert( top < PAPI_EVENTS_IN_DERIVED_EVENT );
+                        stack[top] = atoi( operand );
+                        top++;
+                } else if ( *point == '+' ) {   /* + calculation */
+                       point++;
+                       assert(top >= 2);
+                        stack[top - 2] += stack[top - 1];
+                        top--;
+                } else if ( *point == '-' ) {   /* - calculation */
+                       point++;
+                       assert(top >= 2);
+                        stack[top - 2] -= stack[top - 1];
+                        top--;
+                } else if ( *point == '*' ) {   /* * calculation */
+                       point++;
+                       assert(top >= 2);
+                        stack[top - 2] *= stack[top - 1];
+                        top--;
+                } else if ( *point == '/' ) {   /* / calculation */
+                       point++;
+                       assert(top >= 2);
+                       /* FIXME should handle runtime divide by zero */
+                        stack[top - 2] /= stack[top - 1];
+                        top--;
+               } else { /* flag an error parsing the preset */
+                       PAPIERROR( "BUG! Unable to parse \"%s\"", evi->ops );
+                       return ( long long ) stack[0];
+                }
+        }
+        assert(top == 1);
+        INTDBG("EXIT: stack[0]: %lld\n", (long long)stack[0]);
+        return ( long long ) stack[0];
+ }
 
 static long long
 handle_derived( EventInfo_t * evi, long long *from )
