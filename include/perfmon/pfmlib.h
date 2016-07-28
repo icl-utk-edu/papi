@@ -297,7 +297,10 @@ typedef enum {
 	PFM_PMU_INTEL_SKL,		/* Intel Skylake */
 
 	PFM_PMU_INTEL_BDW_EP,		/* Intel Broadwell EP */
+
 	PFM_PMU_INTEL_GLM,		/* Intel Goldmont */
+
+	PFM_PMU_INTEL_KNL,		/* Intel Knights Landing */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

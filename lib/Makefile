@@ -93,6 +93,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_hswep_unc_sbo.c \
 	  pfmlib_intel_knc.c \
 	  pfmlib_intel_slm.c \
+	  pfmlib_intel_knl.c \
 	  pfmlib_intel_glm.c \
 	  pfmlib_intel_netburst.c \
 	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
@@ -250,6 +251,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_snbep_unc_r2pcie_events.h \
 	events/intel_snbep_unc_r3qpi_events.h \
 	events/intel_knc_events.h \
+	events/intel_knl_events.h \
 	events/intel_ivbep_unc_cbo_events.h \
 	events/intel_ivbep_unc_ha_events.h \
 	events/intel_ivbep_unc_imc_events.h \

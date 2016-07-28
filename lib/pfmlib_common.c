@@ -202,6 +202,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_hswep_unc_r3qpi1_support,
 	&intel_hswep_unc_r3qpi2_support,
 	&intel_hswep_unc_irp_support,
+	&intel_knl_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
