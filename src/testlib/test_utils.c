@@ -21,7 +21,7 @@ int
 papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 {
 	int cnt, mpx;
-	
+
 	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
    		return PAPI_ESYS;
 	}
@@ -690,12 +690,18 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
   int i = 0;
   int counters = 0;
 
-  *mask = 0;
-  counters = PAPI_num_hwctrs(  );
+	const PAPI_component_info_t* cmpinfo;
 
-  if (counters<=0) {
-     test_fail(__FILE__,__LINE__,"Zero Counters Available!  PAPI Won't like this!\n",0);
-  }
+	*mask = 0;
+	counters = PAPI_num_hwctrs(  );
+
+	if (counters<=0) {
+		cmpinfo = PAPI_get_component_info( 0 );
+		fprintf(stderr,"\nComponent %s disabled due to %s\n",
+			cmpinfo->name, cmpinfo->disabled_reason);
+		test_fail(__FILE__,__LINE__,
+			"ERROR! Zero Counters Available!\n",0);
+	}
 
   /* This code tries to ensure that the event  generated will fit in the */
   /* number of available counters. It has the potential to leak up to    */
