@@ -393,7 +393,7 @@ _rapl_init_component( int cidx )
 	else if (hw_info->cpuid_model==87) {
 		/* Knights Landing (KNL) */
 		package_avail=1;
-		pp0_avail=1;
+		pp0_avail=0;
 		pp1_avail=0;
 		dram_avail=1;
 	}
@@ -490,7 +490,8 @@ _rapl_init_component( int cidx )
 
 	/* Note! On Haswell-EP DRAM energy is fixed at 15.3uJ	*/
 	/* see https://lkml.org/lkml/2015/3/20/582		*/
-	if ( hw_info->cpuid_model==63) {
+	/* Knights Landing is the same */
+	if (( hw_info->cpuid_model==63) ||  (hw_info->cpuid_model==87 )) {
 		dram_energy_divisor=1<<16;
 	}
 	else {
