@@ -519,7 +519,7 @@ static const intel_x86_umask_t glm_offcore_response_0[]={
     { .uname   = "OUTSTANDING",
       .udesc   = "Outstanding request:  counts weighted cycles of outstanding offcore requests of the request type specified in the bits 15:0 of offcore_response from the time the XQ receives the request and any response received. Bits 37:16 must be set to 0. This is only available for offcore_response_0",
       .ucode   = 1ULL << (38 + 8),
-      .uflags  = INTEL_X86_DFL | INTEL_X86_EXCL_GRP_BUT_0, /* can only be combined with request type bits (grpid = 0) */
+      .uflags  = INTEL_X86_GRP_DFL_NONE | INTEL_X86_EXCL_GRP_BUT_0, /* can only be combined with request type bits (grpid = 0) */
       .grpid   = 3,
       .ucntmsk = 0xffull,
     },
