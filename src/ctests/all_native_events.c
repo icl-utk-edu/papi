@@ -136,14 +136,17 @@ main( int argc, char **argv )
 	  /* Skip OFFCORE and UNCORE events  */
 	  /* Adding them will fail currently */
 	  if ( Intel_i7 || ( hwinfo->vendor == PAPI_VENDOR_INTEL ) ) {
-	     if ( !strncmp( info.symbol, "UNC_", 4 ) ) {
-		unc_count++;
-		continue;
-	     }
-	     if ( !strncmp( info.symbol, "OFFCORE_RESPONSE_0", 18 ) ) {
-		offcore_count++;
-		continue;
-	     }
+		  if ( !strncmp( info.symbol, "UNC_", 4 )         ||
+			  (strstr( info.symbol, "::UNC_") != NULL) )  {
+			 unc_count++;
+			 continue;
+		  }
+		  if ( !strncmp( info.symbol, "OFFCORE_RESPONSE_0", 18 ) ||
+			   !strncmp( info.symbol, "OFFCORE_RESPONSE_1", 18 ) ||
+			   !strncmp( info.symbol, "OFFCORE_RESPONSE", 16 )) {
+			 offcore_count++;
+			 continue;
+		  }
 	  }
 
 	  /* Enumerate all umasks */
