@@ -48,7 +48,12 @@ char *get_uncore_event(char *event, int size) {
 		    strncpy(event,"hswep_unc_cbo0::UNC_C_CLOCKTICKS",size);
 		    return event;
 		    break;
-	 }
+
+	   case 87: /*Knights Landing*/
+			strncpy(event,"knl_unc_imc0::UNC_M_D_CLOCKTICKS",size);
+			return event;
+			break;
+	}
       }
       return NULL;
    }
