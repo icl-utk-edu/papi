@@ -749,6 +749,14 @@ static const intel_x86_umask_t bdw_l1d[]={
   },
 };
 
+static const intel_x86_umask_t bdw_sq_misc[]={
+  { .uname = "SPLIT_LOCK",
+    .udesc  = "Number of split locks in the super queue (SQ)",
+    .ucode  = 0x1000,
+    .uflags = INTEL_X86_DFL,
+  },
+};
+
 static const intel_x86_umask_t bdw_l1d_pend_miss[]={
   { .uname = "PENDING",
     .udesc  = "Cycles with L1D load misses outstanding",
@@ -2942,6 +2950,15 @@ static const intel_x86_entry_t intel_bdw_pe[]={
     .numasks = LIBPFM_ARRAY_SIZE(bdw_uops_dispatches_cancelled),
     .ngrp = 1,
     .umasks = bdw_uops_dispatches_cancelled,
+  },
+  { .name   = "SQ_MISC",
+    .desc   = "SuperQueue miscellaneous",
+    .modmsk = INTEL_V4_ATTRS,
+    .cntmsk = 0xf,
+    .code = 0xf4,
+    .numasks = LIBPFM_ARRAY_SIZE(bdw_sq_misc),
+    .ngrp = 1,
+    .umasks = bdw_sq_misc,
   },
   { .name   = "OFFCORE_RESPONSE_0",
     .desc   = "Offcore response event (must provide at least one request type and either any_response or any combination of supplier + snoop)",
