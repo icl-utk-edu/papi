@@ -2224,6 +2224,14 @@ static const intel_x86_umask_t hsw_avx[]={
    },
 };
 
+static const intel_x86_umask_t hsw_sq_misc[]={
+  { .uname = "SPLIT_LOCK",
+    .udesc  = "Number of split locks in the super queue (SQ)",
+    .ucode  = 0x1000,
+    .uflags = INTEL_X86_DFL,
+  },
+};
+
 static const intel_x86_entry_t intel_hsw_pe[]={
   { .name   = "UNHALTED_CORE_CYCLES",
     .desc   = "Count core clock cycles whenever the clock signal on the specific core is running (not halted)",
@@ -2855,6 +2863,15 @@ static const intel_x86_entry_t intel_hsw_pe[]={
     .numasks = LIBPFM_ARRAY_SIZE(hsw_avx),
     .ngrp = 1,
     .umasks = hsw_avx,
+  },
+  { .name   = "SQ_MISC",
+    .desc   = "SuperQueue miscellaneous",
+    .modmsk = INTEL_V4_ATTRS,
+    .cntmsk = 0xf,
+    .code = 0xf4,
+    .numasks = LIBPFM_ARRAY_SIZE(hsw_sq_misc),
+    .ngrp = 1,
+    .umasks = hsw_sq_misc,
   },
   { .name   = "OFFCORE_REQUESTS_BUFFER",
     .desc   = "Offcore reqest buffer",
