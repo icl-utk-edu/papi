@@ -29,7 +29,7 @@
 
 #define PFM_PLM_ALL (PFM_PLM0|PFM_PLM1|PFM_PLM2|PFM_PLM3|PFM_PLMH)
 
-#define PFMLIB_ATTR_DELIM	':'	/* event attribute delimiter */
+#define PFMLIB_ATTR_DELIM	":."	/* event attribute delimiter possible */
 #define PFMLIB_PMU_DELIM	"::"	/* pmu to event delimiter */
 #define PFMLIB_EVENT_DELIM	','	/* event to event delimiter */
 

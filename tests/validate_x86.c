@@ -4358,6 +4358,30 @@ static const test_event_t x86_test_events[]={
 	  .name = "glm::ISSUE_SLOTS_NOT_CONSUMED:RESOURCE_FULL:u:intxcp",
 	  .ret = PFM_ERR_ATTR,
 	},
+	/*
+	 * test delimiter options
+	 */
+	{ SRC_LINE,
+	  .name = "glm::ISSUE_SLOTS_NOT_CONSUMED.RESOURCE_FULL.k=1.u=0.e=0.i=0.c=1",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x15201ca,
+	  .fstr = "glm::ISSUE_SLOTS_NOT_CONSUMED:RESOURCE_FULL:k=1:u=0:e=0:i=0:c=1",
+	},
+	{ SRC_LINE,
+	  .name = "glm::ISSUE_SLOTS_NOT_CONSUMED.RESOURCE_FULL:k=1:u=1:e=0:i=0:c=1",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x15301ca,
+	  .fstr = "glm::ISSUE_SLOTS_NOT_CONSUMED:RESOURCE_FULL:k=1:u=1:e=0:i=0:c=1",
+	},
+	{ SRC_LINE,
+	  .name = "glm::ISSUE_SLOTS_NOT_CONSUMED.RESOURCE_FULL:k=1:u=1:e=0.i=0.c=1",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0x15301ca,
+	  .fstr = "glm::ISSUE_SLOTS_NOT_CONSUMED:RESOURCE_FULL:k=1:u=1:e=0:i=0:c=1",
+	},
 };
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
 
