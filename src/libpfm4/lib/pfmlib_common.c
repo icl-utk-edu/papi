@@ -202,6 +202,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_hswep_unc_r3qpi1_support,
 	&intel_hswep_unc_r3qpi2_support,
 	&intel_hswep_unc_irp_support,
+	&intel_knl_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 
@@ -913,9 +914,10 @@ pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 	s = str;
 
 	while(s) {
-		p = strchr(s, PFMLIB_ATTR_DELIM);
-		if (p)
-			*p++ = '\0';
+	        p = s;
+	        strsep(&p, PFMLIB_ATTR_DELIM);
+		/* if (p)
+		 *p++ = '\0'; */
 
 		q = strchr(s, '=');
 		if (q)
@@ -1159,9 +1161,10 @@ pfmlib_parse_equiv_event(const char *event, pfmlib_event_desc_t *d)
 	if (!str)
 		return PFM_ERR_NOMEM;
 
-	p = strchr(s, PFMLIB_ATTR_DELIM);
-	if (p)
-		*p++ = '\0';
+	p = s;
+	strsep(&p, PFMLIB_ATTR_DELIM);
+	/* if (p)
+	 *p++ = '\0'; */
 
 	match = pmu->match_event ? pmu->match_event : match_event;
 
@@ -1234,9 +1237,11 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		pname = s;
 		s = p + strlen(PFMLIB_PMU_DELIM);
 	}
-	p = strchr(s, PFMLIB_ATTR_DELIM);
-	if (p)
-		*p++ = '\0';
+	p = s;
+	strsep(&p, PFMLIB_ATTR_DELIM);
+	/* if (p)
+	 *p++ = '\0'; */
+
 	/*
 	 * for each pmu
 	 */

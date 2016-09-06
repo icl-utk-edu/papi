@@ -29,7 +29,7 @@
 
 #define PFM_PLM_ALL (PFM_PLM0|PFM_PLM1|PFM_PLM2|PFM_PLM3|PFM_PLMH)
 
-#define PFMLIB_ATTR_DELIM	':'	/* event attribute delimiter */
+#define PFMLIB_ATTR_DELIM	":."	/* event attribute delimiter possible */
 #define PFMLIB_PMU_DELIM	"::"	/* pmu to event delimiter */
 #define PFMLIB_EVENT_DELIM	','	/* event to event delimiter */
 
@@ -353,6 +353,7 @@ extern pfmlib_pmu_t intel_hswep_unc_r3qpi2_support;
 extern pfmlib_pmu_t intel_hswep_unc_irp_support;
 extern pfmlib_pmu_t intel_knc_support;
 extern pfmlib_pmu_t intel_slm_support;
+extern pfmlib_pmu_t intel_knl_support;
 extern pfmlib_pmu_t intel_glm_support;
 extern pfmlib_pmu_t power4_support;
 extern pfmlib_pmu_t ppc970_support;
