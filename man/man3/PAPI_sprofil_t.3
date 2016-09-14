@@ -1,0 +1,37 @@
+.TH "PAPI_sprofil_t" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_sprofil_t \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "void * \fBpr_base\fP"
+.br
+.ti -1c
+.RI "unsigned \fBpr_size\fP"
+.br
+.ti -1c
+.RI "caddr_t \fBpr_off\fP"
+.br
+.ti -1c
+.RI "unsigned \fBpr_scale\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Field Documentation"
+.PP 
+.SS "void* \fBPAPI_sprofil_t::pr_base\fP"buffer base 
+.SS "caddr_t \fBPAPI_sprofil_t::pr_off\fP"pc start address (offset) 
+.SS "unsigned \fBPAPI_sprofil_t::pr_scale\fP"pc scaling factor: fixed point fraction 0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc. also, two extensions 0x1000 == 1, 0x2000 == 2 
+.SS "unsigned \fBPAPI_sprofil_t::pr_size\fP"buffer size 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code.

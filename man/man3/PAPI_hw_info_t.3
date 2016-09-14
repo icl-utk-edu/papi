@@ -1,0 +1,112 @@
+.TH "PAPI_hw_info_t" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_hw_info_t \- 
+.PP
+Hardware info structure.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "int \fBncpu\fP"
+.br
+.ti -1c
+.RI "int \fBthreads\fP"
+.br
+.ti -1c
+.RI "int \fBcores\fP"
+.br
+.ti -1c
+.RI "int \fBsockets\fP"
+.br
+.ti -1c
+.RI "int \fBnnodes\fP"
+.br
+.ti -1c
+.RI "int \fBtotalcpus\fP"
+.br
+.ti -1c
+.RI "int \fBvendor\fP"
+.br
+.ti -1c
+.RI "char \fBvendor_string\fP [128]"
+.br
+.ti -1c
+.RI "int \fBmodel\fP"
+.br
+.ti -1c
+.RI "char \fBmodel_string\fP [128]"
+.br
+.ti -1c
+.RI "float \fBrevision\fP"
+.br
+.ti -1c
+.RI "int \fBcpuid_family\fP"
+.br
+.ti -1c
+.RI "int \fBcpuid_model\fP"
+.br
+.ti -1c
+.RI "int \fBcpuid_stepping\fP"
+.br
+.ti -1c
+.RI "int \fBcpu_max_mhz\fP"
+.br
+.ti -1c
+.RI "int \fBcpu_min_mhz\fP"
+.br
+.ti -1c
+.RI "\fBPAPI_mh_info_t\fP \fBmem_hierarchy\fP"
+.br
+.ti -1c
+.RI "int \fBvirtualized\fP"
+.br
+.ti -1c
+.RI "char \fBvirtual_vendor_string\fP [128]"
+.br
+.ti -1c
+.RI "char \fBvirtual_vendor_version\fP [128]"
+.br
+.ti -1c
+.RI "float \fBmhz\fP"
+.br
+.ti -1c
+.RI "int \fBclock_mhz\fP"
+.br
+.ti -1c
+.RI "int \fBreserved\fP [8]"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "int \fBPAPI_hw_info_t::clock_mhz\fP"Deprecated 
+.SS "int \fBPAPI_hw_info_t::cores\fP"Number of cores per socket 
+.SS "int \fBPAPI_hw_info_t::cpu_max_mhz\fP"Maximum supported CPU speed 
+.SS "int \fBPAPI_hw_info_t::cpu_min_mhz\fP"Minimum supported CPU speed 
+.SS "int \fBPAPI_hw_info_t::cpuid_family\fP"cpuid family 
+.SS "int \fBPAPI_hw_info_t::cpuid_model\fP"cpuid model 
+.SS "int \fBPAPI_hw_info_t::cpuid_stepping\fP"cpuid stepping 
+.SS "\fBPAPI_mh_info_t\fP \fBPAPI_hw_info_t::mem_hierarchy\fP"PAPI memory heirarchy description 
+.SS "float \fBPAPI_hw_info_t::mhz\fP"Deprecated 
+.SS "int \fBPAPI_hw_info_t::model\fP"Model number of CPU 
+.SS "char \fBPAPI_hw_info_t::model_string\fP[128]"Model string of CPU 
+.SS "int \fBPAPI_hw_info_t::ncpu\fP"Number of CPUs per NUMA Node 
+.SS "int \fBPAPI_hw_info_t::nnodes\fP"Total Number of NUMA Nodes 
+.SS "float \fBPAPI_hw_info_t::revision\fP"Revision of CPU 
+.SS "int \fBPAPI_hw_info_t::sockets\fP"Number of sockets 
+.SS "int \fBPAPI_hw_info_t::threads\fP"Number of hdw threads per core 
+.SS "int \fBPAPI_hw_info_t::totalcpus\fP"Total number of CPUs in the entire system 
+.SS "int \fBPAPI_hw_info_t::vendor\fP"Vendor number of CPU 
+.SS "char \fBPAPI_hw_info_t::vendor_string\fP[128]"Vendor string of CPU 
+.SS "char \fBPAPI_hw_info_t::virtual_vendor_string\fP[128]"Vendor for virtual machine 
+.SS "char \fBPAPI_hw_info_t::virtual_vendor_version\fP[128]"Version of virtual machine 
+.SS "int \fBPAPI_hw_info_t::virtualized\fP"Running in virtual machine 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code.

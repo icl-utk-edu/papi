@@ -1,0 +1,41 @@
+.TH "PAPI_addr_range_option_t" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_addr_range_option_t \- 
+.PP
+address range specification for range restricted counting if both are zero, range is disabled  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "int \fBeventset\fP"
+.br
+.ti -1c
+.RI "caddr_t \fBstart\fP"
+.br
+.ti -1c
+.RI "caddr_t \fBend\fP"
+.br
+.ti -1c
+.RI "int \fBstart_off\fP"
+.br
+.ti -1c
+.RI "int \fBend_off\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "caddr_t \fBPAPI_addr_range_option_t::end\fP"user requested end address of an address range 
+.SS "int \fBPAPI_addr_range_option_t::end_off\fP"hardware specified offset from end address 
+.SS "int \fBPAPI_addr_range_option_t::eventset\fP"eventset to restrict 
+.SS "caddr_t \fBPAPI_addr_range_option_t::start\fP"user requested start address of an address range 
+.SS "int \fBPAPI_addr_range_option_t::start_off\fP"hardware specified offset from start address 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code.

@@ -1,0 +1,33 @@
+.TH "PAPI_mpx_info_t" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_mpx_info_t \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "int \fBtimer_sig\fP"
+.br
+.ti -1c
+.RI "int \fBtimer_num\fP"
+.br
+.ti -1c
+.RI "int \fBtimer_us\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Field Documentation"
+.PP 
+.SS "int \fBPAPI_mpx_info_t::timer_num\fP"Number of the itimer or POSIX 1 timer used by the multiplex timer: PAPI_ITIMER 
+.SS "int \fBPAPI_mpx_info_t::timer_sig\fP"Signal number used by the multiplex timer, 0 if not: PAPI_SIGNAL 
+.SS "int \fBPAPI_mpx_info_t::timer_us\fP"uS between switching of sets: PAPI_MPX_DEF_US 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code.

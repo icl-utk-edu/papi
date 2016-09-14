@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_add_named_event \- add PAPI preset or native hardware event by name to an EventSet  
-
+PAPI_add_named_event \- 
 .PP
+add PAPI preset or native hardware event by name to an EventSet  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_add_named_event \- add PAPI preset or native hardware event by name to an E
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_add_named_event( int EventSet, char *EventName )\fP;
+ int PAPI_add_named_event( int EventSet, char *EventName );
 .RE
 .PP
 \fBPAPI_add_named_event\fP adds one event to a PAPI EventSet. 
@@ -76,8 +77,6 @@ PAPI_add_named_event \- add PAPI preset or native hardware event by name to an E
 .br
  \fBPAPI_remove_named_event\fP 
 .RE
-.PP
-
 .PP
 
 

@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_stop_counters \- Stop counting hardware events and reset values to zero.  
-
+PAPI_stop_counters \- 
 .PP
+Stop counting hardware events and reset values to zero.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_stop_counters \- Stop counting hardware events and reset values to zero.
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_stop_counters( long long *values, int array_len )\fP;
+ int PAPI_stop_counters( long long *values, int array_len );
 .RE
 .PP
 \fBParameters:\fP
@@ -37,7 +38,7 @@ After this function is called, the values are reset to zero.
 \fIPAPI_ENOEVST\fP The EventSet has not been added yet.
 .RE
 .PP
-The \fBPAPI_stop_counters()\fP function stops the counters and copies the counts into the *values array. The counters must have been started by a previous call to \fBPAPI_start_counters()\fP.
+The PAPI_stop_counters() function stops the counters and copies the counts into the *values array. The counters must have been started by a previous call to PAPI_start_counters().
 .PP
 .PP
 .nf
@@ -53,10 +54,8 @@ if ( PAPI_stop_counters( values, 2 ) != PAPI_OK )
 .PP
 \fBSee also:\fP
 .RS 4
-\fBPAPI_read_counters()\fP \fBPAPI_start_counters()\fP \fBPAPI_set_opt()\fP 
+PAPI_read_counters() PAPI_start_counters() PAPI_set_opt() 
 .RE
-.PP
-
 .PP
 
 

@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_create_eventset \- Create a new empty PAPI EventSet.  
-
+PAPI_create_eventset \- 
 .PP
+Create a new empty PAPI EventSet.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_create_eventset \- Create a new empty PAPI EventSet.
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- \fBPAPI_create_eventset( int * EventSet )\fP;
+ PAPI_create_eventset( int * EventSet );
 .RE
 .PP
 \fBPAPI_create_eventset\fP creates a new EventSet pointed to by EventSet, which must be initialized to PAPI_NULL before calling this routine. The user may then add hardware events to the event set by calling \fBPAPI_add_event\fP or similar routines.
@@ -60,8 +61,6 @@ PAPI-C uses a late binding model to bind EventSets to components. When an EventS
 .br
  \fBPAPI_cleanup_eventset\fP 
 .RE
-.PP
-
 .PP
 
 

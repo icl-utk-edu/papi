@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_set_thr_specific \- Store a pointer to a thread specific data structure.  
-
+PAPI_set_thr_specific \- 
 .PP
+Store a pointer to a thread specific data structure.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_set_thr_specific \- Store a pointer to a thread specific data structure.
 \fBPrototype:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_set_thr_specific( int tag, void *ptr )\fP;
+ int PAPI_set_thr_specific( int tag, void *ptr );
 .RE
 .PP
 \fBParameters:\fP
@@ -64,8 +65,6 @@ if (ret != PAPI_OK || state == NULL) {
 .RS 4
 \fBPAPI_register_thread\fP \fBPAPI_thread_init\fP \fBPAPI_thread_id\fP \fBPAPI_get_thr_specific\fP 
 .RE
-.PP
-
 .PP
 
 

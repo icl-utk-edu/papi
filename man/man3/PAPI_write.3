@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_write \- Write counter values into counters.  
-
+PAPI_write \- 
 .PP
+Write counter values into counters.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -21,19 +22,17 @@ PAPI_write \- Write counter values into counters.
 .RS 4
 \fIPAPI_ENOEVST\fP The EventSet specified does not exist. 
 .br
-\fIPAPI_ECMP\fP \fBPAPI_write()\fP is not implemented for this architecture. 
+\fIPAPI_ECMP\fP PAPI_write() is not implemented for this architecture. 
 .br
 \fIPAPI_ESYS\fP The EventSet is currently counting events and the component could not change the values of the running counters.
 .RE
 .PP
-\fBPAPI_write()\fP writes the counter values provided in the array values into the event set EventSet. The virtual counters managed by the PAPI library will be set to the values provided. If the event set is running, an attempt will be made to write the values to the running counters. This operation is not permitted by all components and may result in a run-time error.
+PAPI_write() writes the counter values provided in the array values into the event set EventSet. The virtual counters managed by the PAPI library will be set to the values provided. If the event set is running, an attempt will be made to write the values to the running counters. This operation is not permitted by all components and may result in a run-time error.
 .PP
 \fBSee also:\fP
 .RS 4
 \fBPAPI_read\fP 
 .RE
-.PP
-
 .PP
 
 

@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_event_name_to_code \- Convert a name to a numeric hardware event code.  
-
+PAPI_event_name_to_code \- 
 .PP
+Convert a name to a numeric hardware event code.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_event_name_to_code \- Convert a name to a numeric hardware event code.
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_event_name_to_code( char * EventName, int * EventCode )\fP;
+ int PAPI_event_name_to_code( char * EventName, int * EventCode );
 .RE
 .PP
 \fBPAPI_event_name_to_code\fP is used to translate an ASCII PAPI event name into an integer PAPI event code.
@@ -73,8 +74,6 @@ PAPI_presets
 .PP
 PAPI_native 
 .RE
-.PP
-
 .PP
 
 

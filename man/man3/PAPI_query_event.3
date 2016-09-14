@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_query_event \- Query if PAPI event exists.  
-
+PAPI_query_event \- 
 .PP
+Query if PAPI event exists.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,10 +14,10 @@ PAPI_query_event \- Query if PAPI event exists.
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_query_event(int EventCode)\fP;
+ int PAPI_query_event(int EventCode);
 .RE
 .PP
-\fBPAPI_query_event()\fP asks the PAPI library if the PAPI Preset event can be counted on this architecture. If the event CAN be counted, the function returns PAPI_OK. If the event CANNOT be counted, the function returns an error code. This function also can be used to check the syntax of native and user events.
+PAPI_query_event() asks the PAPI library if the PAPI Preset event can be counted on this architecture. If the event CAN be counted, the function returns PAPI_OK. If the event CANNOT be counted, the function returns an error code. This function also can be used to check the syntax of native and user events.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -60,8 +61,6 @@ PAPI_presets
 .PP
 PAPI_native 
 .RE
-.PP
-
 .PP
 
 

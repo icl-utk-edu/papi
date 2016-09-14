@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_num_counters \- Get the number of hardware counters available on the system.  
-
+PAPI_num_counters \- 
 .PP
+Get the number of hardware counters available on the system.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_num_counters \- Get the number of hardware counters available on the system
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_num_counters( void )\fP;
+ int PAPI_num_counters( void );
 .RE
 .PP
 \fBPostcondition:\fP
@@ -46,14 +47,12 @@ Initializes the library to PAPI_HIGH_LEVEL_INITED if necessary.
 .PP
 .RE
 .PP
-\fBPAPI_num_counters()\fP returns the optimal length of the values array for the high level functions. This value corresponds to the number of hardware counters supported by the current CPU component.
+PAPI_num_counters() returns the optimal length of the values array for the high level functions. This value corresponds to the number of hardware counters supported by the current CPU component.
 .PP
 \fBNote:\fP
 .RS 4
-This function only works for the CPU component. To determine the number of counters on another component, use the low level \fBPAPI_num_cmp_hwctrs()\fP. 
+This function only works for the CPU component. To determine the number of counters on another component, use the low level PAPI_num_cmp_hwctrs(). 
 .RE
-.PP
-
 .PP
 
 

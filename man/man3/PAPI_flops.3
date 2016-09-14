@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_flops \- Simplified call to get Mflops/s (floating point operation rate), real and processor time.  
-
+PAPI_flops \- 
 .PP
+Simplified call to get Mflops/s (floating point operation rate), real and processor time.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_flops \- Simplified call to get Mflops/s (floating point operation rate), r
 \fBC Interface: \fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )\fP;
+ int PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops );
 .RE
 .PP
 \fBParameters:\fP
@@ -29,31 +30,29 @@ PAPI_flops \- Simplified call to get Mflops/s (floating point operation rate), r
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_flops()\fP. 
+\fIPAPI_EINVAL\fP The counters were already started by something other than PAPI_flops(). 
 .br
 \fIPAPI_ENOEVNT\fP The floating point operations event does not exist. 
 .br
 \fIPAPI_ENOMEM\fP Insufficient memory to complete the operation.
 .RE
 .PP
-The first call to \fBPAPI_flops()\fP will initialize the PAPI High Level interface, set up the counters to monitor the PAPI_FP_OPS event and start the counters.
+The first call to PAPI_flops() will initialize the PAPI High Level interface, set up the counters to monitor the PAPI_FP_OPS event and start the counters.
 .PP
-Subsequent calls will read the counters and return total real time, total process time, total floating point operations since the start of the measurement and the Mflop/s rate since latest call to \fBPAPI_flops()\fP. A call to \fBPAPI_stop_counters()\fP will stop the counters from running and then calls such as \fBPAPI_start_counters()\fP or other rate calls can safely be used.
+Subsequent calls will read the counters and return total real time, total process time, total floating point operations since the start of the measurement and the Mflop/s rate since latest call to PAPI_flops(). A call to PAPI_stop_counters() will stop the counters from running and then calls such as PAPI_start_counters() or other rate calls can safely be used.
 .PP
 \fBPAPI_flops\fP returns information related to theoretical floating point operations rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
 .PP
 \fBSee also:\fP
 .RS 4
-\fBPAPI_flips()\fP 
+PAPI_flips() 
 .PP
-\fBPAPI_ipc()\fP 
+PAPI_ipc() 
 .PP
-\fBPAPI_epc()\fP 
+PAPI_epc() 
 .PP
-\fBPAPI_stop_counters()\fP 
+PAPI_stop_counters() 
 .RE
-.PP
-
 .PP
 
 

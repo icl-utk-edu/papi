@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_start_counters \- Start counting hardware events.  
-
+PAPI_start_counters \- 
 .PP
+Start counting hardware events.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_start_counters \- Start counting hardware events.
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_start_counters( int *events, int array_len )\fP;
+ int PAPI_start_counters( int *events, int array_len );
 .RE
 .PP
 \fBParameters:\fP
@@ -27,7 +28,7 @@ PAPI_start_counters \- Start counting hardware events.
 .RS 4
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
 .br
-\fIPAPI_EISRUN\fP Counters have already been started, you must call \fBPAPI_stop_counters()\fP before you call this function again. 
+\fIPAPI_EISRUN\fP Counters have already been started, you must call PAPI_stop_counters() before you call this function again. 
 .br
 \fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable. 
 .br
@@ -38,7 +39,7 @@ PAPI_start_counters \- Start counting hardware events.
 \fIPAPI_ENOEVNT\fP The PAPI preset is not available on the underlying hardware.
 .RE
 .PP
-\fBPAPI_start_counters()\fP starts counting the events named in the *events array. This function cannot be called if the counters have already been started. The user must call \fBPAPI_stop_counters()\fP to stop the events explicitly if he/she wants to call this function again. It is the user's responsibility to choose events that can be counted simultaneously by reading the vendor's documentation. The length of the *events array should be no longer than the value returned by \fBPAPI_num_counters()\fP.
+PAPI_start_counters() starts counting the events named in the *events array. This function cannot be called if the counters have already been started. The user must call PAPI_stop_counters() to stop the events explicitly if he/she wants to call this function again. It is the user's responsibility to choose events that can be counted simultaneously by reading the vendor's documentation. The length of the *events array should be no longer than the value returned by PAPI_num_counters().
 .PP
 .PP
 .nf
@@ -49,10 +50,8 @@ if( PAPI_start_counters( Events, num_hwcntrs ) != PAPI_OK )
 .PP
 \fBSee also:\fP
 .RS 4
-\fBPAPI_stop_counters()\fP \fBPAPI_add_event()\fP \fBPAPI_create_eventset()\fP 
+PAPI_stop_counters() PAPI_add_event() PAPI_create_eventset() 
 .RE
-.PP
-
 .PP
 
 

@@ -1,0 +1,95 @@
+.TH "bug" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+bug \- Bug List 
+ 
+.IP "\fBClass \fBPAPI_add_event\fP \fP" 1c
+The vector function should take a pointer to a length argument so a proper return value can be set upon partial success.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_add_events\fP \fP" 1c
+The vector function should take a pointer to a length argument so a proper return value can be set upon partial success.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_add_named_event\fP \fP" 1c
+The vector function should take a pointer to a length argument so a proper return value can be set upon partial success.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_cleanup_eventset\fP \fP" 1c
+If the user has set profile on an event with the call, then when destroying the EventSet the memory allocated by will not be freed. The user should turn off profiling on the Events before destroying the EventSet to prevent this behavior.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_destroy_eventset\fP \fP" 1c
+If the user has set profile on an event with the call, then when destroying the EventSet the memory allocated by will not be freed. The user should turn off profiling on the Events before destroying the EventSet to prevent this behavior.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_disable_component_by_name\fP \fP" 1c
+none known 
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_get_component_index\fP \fP" 1c
+Doesn't work for preset events 
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_get_event_component\fP \fP" 1c
+Doesn't work for preset events 
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_get_hardware_info\fP \fP" 1c
+If called before initialization the behavior of the routine is undefined.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_get_overflow_event_index\fP \fP" 1c
+This function may not return all overflowing events if used with software-driven overflow of multiple derived events. \fBPAPI_get_overflow_event_index\fP decomposes an overflow_vector into an event index array in which the first element corresponds to the least significant set bit in overflow_vector and so on. Based on overflow_vector, the user can only tell which physical counters overflowed. Using this function, the user can map overflowing counters to specific events in the event set. An array is used in this function to support the possibility of multiple simultaneous overflow events.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_get_shared_lib_info\fP \fP" 1c
+If called before initialization the behavior of the routine is undefined.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_is_initialized\fP \fP" 1c
+If you don't call this before using any of the low level PAPI calls, your application could core dump. 
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_library_init\fP \fP" 1c
+If you don't call this before using any of the low level PAPI calls, your application could core dump. 
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_num_cmp_hwctrs\fP \fP" 1c
+This count may include fixed-use counters in addition to the general purpose counters. 
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_profil\fP \fP" 1c
+If you call \fBPAPI_profil\fP, PAPI allocates buffer space that will not be freed if you call \fBPAPI_shutdown\fP or \fBPAPI_cleanup_eventset\fP. To clean all memory, you must call \fBPAPI_profil\fP on the Events with a 0 threshold.
+.PP
+.PP
+.PP
+ 
+.IP "\fBClass \fBPAPI_remove_events\fP \fP" 1c
+The last argument should be a pointer so the count can be returned on partial success in addition to a real error code.
+.PP
+.PP
+

@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_thread_id \- Get the thread identifier of the current thread.  
-
+PAPI_thread_id \- 
 .PP
+Get the thread identifier of the current thread.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -17,7 +18,7 @@ PAPI_thread_id \- Get the thread identifier of the current thread.
 \fI-1\fP is returned if the thread id function returns an error.
 .RE
 .PP
-This function returns a valid thread identifier. It calls the function registered with PAPI through a call to \fBPAPI_thread_init()\fP.
+This function returns a valid thread identifier. It calls the function registered with PAPI through a call to PAPI_thread_init().
 .PP
 .PP
 .nf
@@ -35,8 +36,6 @@ printf('Initial thread id is: %lu\n', tid );
 .RS 4
 \fBPAPI_thread_init\fP 
 .RE
-.PP
-
 .PP
 
 

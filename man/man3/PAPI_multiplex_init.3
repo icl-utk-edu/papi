@@ -2,15 +2,16 @@
 .ad l
 .nh
 .SH NAME
-PAPI_multiplex_init \- Initialize multiplex support in the PAPI library.  
-
+PAPI_multiplex_init \- 
 .PP
+Initialize multiplex support in the PAPI library.  
+
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBPAPI_multiplex_init()\fP enables and initializes multiplex support in the PAPI library. Multiplexing allows a user to count more events than total physical counters by time sharing the existing counters at some loss in precision. Applications that make no use of multiplexing do not need to call this routine.
+PAPI_multiplex_init() enables and initializes multiplex support in the PAPI library. Multiplexing allows a user to count more events than total physical counters by time sharing the existing counters at some loss in precision. Applications that make no use of multiplexing do not need to call this routine.
 .PP
 \fBC Interface:\fP.RS 4
 #include <\fBpapi.h\fP> 
@@ -39,8 +40,6 @@ PAPI_multiplex_init \- Initialize multiplex support in the PAPI library.
 .PP
 \fBPAPI_get_multiplex\fP 
 .RE
-.PP
-
 .PP
 
 

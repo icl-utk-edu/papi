@@ -2,9 +2,10 @@
 .ad l
 .nh
 .SH NAME
-PAPI_ipc \- Simplified call to get instructions per cycle, real and processor time.  
-
+PAPI_ipc \- 
 .PP
+Simplified call to get instructions per cycle, real and processor time.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -13,7 +14,7 @@ PAPI_ipc \- Simplified call to get instructions per cycle, real and processor ti
 \fBC Interface: \fP.RS 4
 #include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )\fP;
+ int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
 .RE
 .PP
 \fBParameters:\fP
@@ -29,33 +30,31 @@ PAPI_ipc \- Simplified call to get instructions per cycle, real and processor ti
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_ipc()\fP. 
+\fIPAPI_EINVAL\fP The counters were already started by something other than PAPI_ipc(). 
 .br
 \fIPAPI_ENOEVNT\fP The floating point operations event does not exist. 
 .br
 \fIPAPI_ENOMEM\fP Insufficient memory to complete the operation.
 .RE
 .PP
-The first call to \fBPAPI_ipc()\fP will initialize the PAPI High Level interface, set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters.
+The first call to PAPI_ipc() will initialize the PAPI High Level interface, set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters.
 .PP
-Subsequent calls will read the counters and return total real time, total process time, total instructions since the start of the measurement and the IPC rate since the latest call to \fBPAPI_ipc()\fP.
+Subsequent calls will read the counters and return total real time, total process time, total instructions since the start of the measurement and the IPC rate since the latest call to PAPI_ipc().
 .PP
-A call to \fBPAPI_stop_counters()\fP will stop the counters from running and then calls such as \fBPAPI_start_counters()\fP or other rate calls can safely be used.
+A call to PAPI_stop_counters() will stop the counters from running and then calls such as PAPI_start_counters() or other rate calls can safely be used.
 .PP
 \fBPAPI_ipc\fP should return a ratio greater than 1.0, indicating instruction level parallelism within the chip. The larger this ratio the more effeciently the program is running.
 .PP
 \fBSee also:\fP
 .RS 4
-\fBPAPI_flips()\fP 
+PAPI_flips() 
 .PP
-\fBPAPI_flops()\fP 
+PAPI_flops() 
 .PP
-\fBPAPI_epc()\fP 
+PAPI_epc() 
 .PP
-\fBPAPI_stop_counters()\fP 
+PAPI_stop_counters() 
 .RE
-.PP
-
 .PP
 
 
