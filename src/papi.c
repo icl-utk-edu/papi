@@ -3717,7 +3717,7 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 			dom = _papi_hwd[cidx]->cmp_info.available_domains;
 
 		if ( dom & ~_papi_hwd[cidx]->cmp_info.available_domains )
-			papi_return( PAPI_EINVAL );
+			papi_return( PAPI_ENOSUPP );
 
 		_papi_hwd[cidx]->cmp_info.default_domain = dom;
 
