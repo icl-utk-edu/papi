@@ -1,25 +1,20 @@
-.TH "PAPI_stop_counters" 3 "Thu Sep 8 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_stop_counters" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_stop_counters \- 
-.PP
-Stop counting hardware events and reset values to zero\&.  
+PAPI_stop_counters \- Stop counting hardware events and reset values to zero.  
 
+.PP
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-
-.PP
-.nf
-@par C Interface:
-\#include <papi.h> @n
-int PAPI_stop_counters( long long *values, int array_len );
-
-.fi
-.PP
+\fBC Interface:\fP.RS 4
+#include <\fBpapi.h\fP> 
+.br
+ int \fBPAPI_stop_counters( long long *values, int array_len )\fP;
+.RE
 .PP
 \fBParameters:\fP
 .RS 4
@@ -30,19 +25,19 @@ int PAPI_stop_counters( long long *values, int array_len );
 .PP
 \fBPostcondition:\fP
 .RS 4
-After this function is called, the values are reset to zero\&.
+After this function is called, the values are reset to zero.
 .RE
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
 .br
-\fIPAPI_ENOTRUN\fP The EventSet is not started yet\&. 
+\fIPAPI_ENOTRUN\fP The EventSet is not started yet. 
 .br
-\fIPAPI_ENOEVST\fP The EventSet has not been added yet\&.
+\fIPAPI_ENOEVST\fP The EventSet has not been added yet.
 .RE
 .PP
-The \fBPAPI_stop_counters()\fP function stops the counters and copies the counts into the *values array\&. The counters must have been started by a previous call to \fBPAPI_start_counters()\fP\&.
+The \fBPAPI_stop_counters()\fP function stops the counters and copies the counts into the *values array. The counters must have been started by a previous call to \fBPAPI_start_counters()\fP.
 .PP
 .PP
 .nf
@@ -53,17 +48,18 @@ if ( PAPI_start_counters( Events, 2 ) != PAPI_OK )
 your_slow_code();
 if ( PAPI_stop_counters( values, 2 ) != PAPI_OK )
     handle_error(1);
- *  
 .fi
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBPAPI_read_counters()\fP \fBPAPI_start_counters()\fP \fBPAPI_set_opt()\fP 
 .RE
 .PP
 
+.PP
+
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code\&.
+Generated automatically by Doxygen for PAPI from the source code.

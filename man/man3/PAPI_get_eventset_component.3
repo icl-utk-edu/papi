@@ -1,50 +1,50 @@
-.TH "PAPI_get_eventset_component" 3 "Thu Sep 8 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_eventset_component" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_eventset_component \- 
-.PP
-return index for component an eventset is assigned to  
+PAPI_get_eventset_component \- return index for component an eventset is assigned to  
 
+.PP
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_ENOEVST\fP eventset does not exist 
+.br
+\fIPAPI_ENOCMP\fP component is invalid or does not exist 
+.br
+\fIpositive\fP value valid component index
+.RE
 .PP
-.nf
-@retval PAPI_ENOEVST
-    eventset does not exist
-@retval PAPI_ENOCMP
-    component is invalid or does not exist
-@retval positive value
-    valid component index
-
-@param EventSet
-           EventSet for which we want to know the component index
-@par Examples:
-
-.fi
+\fBParameters:\fP
+.RS 4
+\fIEventSet\fP EventSet for which we want to know the component index 
+.RE
 .PP
- 
+\fBExamples:\fP.RS 4
+
 .PP
 .nf
         int cidx,eventcode;
         cidx = PAPI_get_eventset_component(eventset);
-*   
 
 .fi
 .PP
- \fBPAPI_get_eventset_component()\fP returns the component an event belongs to\&. 
+ \fBPAPI_get_eventset_component()\fP returns the component an event belongs to. 
+.RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBPAPI_get_event_component\fP 
 .RE
 .PP
 
+.PP
+
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code\&.
+Generated automatically by Doxygen for PAPI from the source code.

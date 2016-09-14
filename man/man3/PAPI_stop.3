@@ -1,23 +1,19 @@
-.TH "PAPI_stop" 3 "Thu Sep 8 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_stop" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_stop \- 
-.PP
-Stop counting hardware events in an event set\&.  
+PAPI_stop \- Stop counting hardware events in an event set.  
 
+.PP
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-
-.PP
-\fBC Interface:\fP
-.RS 4
-#include <\fBpapi\&.h\fP> 
+\fBC Interface:\fP.RS 4
+#include <\fBpapi.h\fP> 
 .br
- int \fBPAPI_stop( int  EventSet, long long * values )\fP;
+ int PAPI_stop( int  EventSet, long long * values );
 .RE
 .PP
 \fBParameters:\fP
@@ -31,53 +27,53 @@ Stop counting hardware events in an event set\&.
 .RS 4
 \fIPAPI_OK\fP 
 .br
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
 .br
-\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable\&. 
+\fIPAPI_ESYS\fP A system or C library call failed inside PAPI, see the errno variable. 
 .br
-\fIPAPI_ENOEVST\fP The EventSet specified does not exist\&. 
+\fIPAPI_ENOEVST\fP The EventSet specified does not exist. 
 .br
-\fIPAPI_ENOTRUN\fP The EventSet is currently not running\&.
+\fIPAPI_ENOTRUN\fP The EventSet is currently not running.
 .RE
 .PP
-\fBPAPI_stop\fP halts the counting of a previously defined event set and the counter values contained in that EventSet are copied into the values array Assumes an initialized PAPI library and a properly added event set\&.
+\fBPAPI_stop\fP halts the counting of a previously defined event set and the counter values contained in that EventSet are copied into the values array Assumes an initialized PAPI library and a properly added event set.
 .PP
-\fBExample:\fP
-.RS 4
+\fBExample:\fP.RS 4
 
 .PP
 .nf
-*  int EventSet = PAPI_NULL;
-*  long long values[2];
-*  int ret;
-*  
-*  ret = PAPI_create_eventset(&EventSet);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  
-*  // Add Total Instructions Executed to our EventSet
-*  ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  
-*  // Start counting
-*  ret = PAPI_start(EventSet);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  poorly_tuned_function();
-*  ret = PAPI_stop(EventSet, values);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  printf("%lld\\n",values[0]);
-*  
+  int EventSet = PAPI_NULL;
+  long long values[2];
+  int ret;
+  
+  ret = PAPI_create_eventset(&EventSet);
+  if (ret != PAPI_OK) handle_error(ret);
+  
+  // Add Total Instructions Executed to our EventSet
+  ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
+  if (ret != PAPI_OK) handle_error(ret);
+  
+  // Start counting
+  ret = PAPI_start(EventSet);
+  if (ret != PAPI_OK) handle_error(ret);
+  poorly_tuned_function();
+  ret = PAPI_stop(EventSet, values);
+  if (ret != PAPI_OK) handle_error(ret);
+  printf('%lld\\n',values[0]);
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBPAPI_create_eventset\fP \fBPAPI_start\fP 
 .RE
 .PP
 
+.PP
+
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code\&.
+Generated automatically by Doxygen for PAPI from the source code.
