@@ -4,6 +4,58 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
+===============================================================================
+PAPI 5.5.0 RELEASE NOTES                                            14 Sep 2016
+===============================================================================
+
+PAPI 5.5 is now available. This release provide a new component that
+provides read and write access to the information and controls exposed
+via the Linux powercap interface.The PAPI powercap component supports
+measuring and capping power usage on recent Intel architectures.[a][b]
+
+We have added core support for Knights Landing (uncore support will be
+released later) as well as power monitoring via the RAPL and powercap
+components.
+
+For specific and detailed information on changes made in this release,
+see ChangeLogP550.txt for keywords of interest or go directly to the
+PAPI git repo.
+
+New Platforms:
+* Added  Knights Landing (KNL) core events and preset events.
+* Added Intel Broadwell/Skylake/Knights Landing RAPL support
+* Updated PAPI preset event support for Intel Broadwell/Skylake
+
+New Component: 
+* Powercap component: PAPI now supports the Linux Power Capping
+  Framework which exposes power capping devices and power measurement
+  to user space via a sysfs virtual file system interface.
+
+Enhancements:
+* Add support for multiple flavors of POWER8 processors.
+* Force all processors to check event schedulability by checking that
+  PAPI can successfully read the counters.
+* Support for Intel Broadwell-EP, Skylake, Goldmont, Haswell-EP
+  inherited from libpfm4.
+* Shared memory object (.so) naming is made more limited so that minor
+  updates do not break ABI compatibility.
+
+Bug Fixes:
+* Improve testlib error messages if a component fails to initialize.
+* Fix _papi_hwi_postfix_calc parsing and robustness.
+* Clean build rules for CUDA sampling subcomponent.
+* Correct IBM Power7 and Power8 computation of PAPI_L1_DCA.
+* Eliminate the sole use of ftests_skip subroutine.
+* Correct the event string names for tenth.c.  
+* Have Fortran test support code report errors more clearly.
+* Cleanup output from libmsr component.
+* PAPI internal functions were marked as static to avoid exposing them
+  externally.
+* Multiple component were fixed to make internal functions static
+  where possible, to avoid exposing the functions as externally
+  accessible entry points.
+* CUDA component configuration bug fixed.
+
 
 ===============================================================================
 PAPI 5.4.3 RELEASE NOTES                                            26 Jan 2016
