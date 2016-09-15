@@ -108,6 +108,9 @@ __ 19. Email the papi developer and discussion lists with an announcement.
 
 __ 20. Post the announcement on the PAPI User Forum.
 
+__ 21. Bump the version number in the repository AFTER the release (look at step 2)
+       papi.spec, src/papi.h, src/configure.in, src/Makefile.in, doc/Doxyfile-common (PROJECT_NUMBER) 
+
 ================================================================================
 
 Patch Procedure for PAPI  January 29, 2010
