@@ -20,8 +20,8 @@ __ 1. Update any documentation that may have changed. Pay particular attention
 
 __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.in, src/Makefile.in,
 	doc/Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
-        The number may already have been updated after the last release.
 	Do not "git push" until autoconf is run (Step 3)
+        The number may already have been updated after the last release, if so, skip this step.
 
 -- 2a. On the icl machine gonzo:
 	export PATH=/mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
@@ -81,7 +81,11 @@ __ 10. Push everything to the central repo.
 __ 11. Create a fresh clone of the papi repository.
 	> git clone https://icl.cs.utk.edu/git/papi.git papi-X.Y.Z
 	> cd papi-X.Y.Z
-
+       Note. If you created a new branch, check if the clone contains
+       your last commit and ChangeLog.  If not, you may need to switch
+       to the master, merge the branch and push.  
+      ( ## if new branch ## git checkout master; git merge stable-X.Y; git push )
+       
 __ 12. Delete any unneccessary files or directories
 		particularly .doc and .pdf files in the /doc directory
 	Things needed in /doc {Doxyfile, Doxyfile-everything}
@@ -110,6 +114,8 @@ __ 20. Post the announcement on the PAPI User Forum.
 
 __ 21. Bump the version number in the repository AFTER the release (look at step 2)
        papi.spec, src/papi.h, src/configure.in, src/Makefile.in, doc/Doxyfile-common (PROJECT_NUMBER) 
+       Regenerate the configure using autoconf 2.59 (probably on gonzo). Then commit.
+       ( git commit -m "Updated version to X.Y.Z after the release"  doc/Doxyfile-common papi.spec release_procedure.txt src/Makefile.in src/configure src/configure.in  src/papi.h )
 
 ================================================================================
 
