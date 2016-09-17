@@ -2,11 +2,11 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @author  Vince Weaver
  *
  * test case for RAPL component
- * 
+ *
  * @brief
  *   Tests basic functionality of RAPL component
  */
@@ -88,17 +88,26 @@ int main (int argc, char **argv)
     char event_names[MAX_RAPL_EVENTS][PAPI_MAX_STR_LEN];
     char units[MAX_RAPL_EVENTS][PAPI_MIN_STR_LEN];
     int data_type[MAX_RAPL_EVENTS];
-    int r,i, do_wrap = 0;
+    int r,i;
     const PAPI_component_info_t *cmpinfo = NULL;
     PAPI_event_info_t evinfo;
     long long before_time,after_time;
     double elapsed_time;
 
+#ifdef WRAP_TEST
+
+	int do_wrap=0;
+
+	if ( argc > 1 ) {
+		if ( strstr( argv[1], "-w" ) ) {
+			do_wrap = 1;
+		}
+	}
+
+#endif
+
         /* Set TESTS_QUIET variable */
      tests_quiet( argc, argv );
-     if ( argc > 1 )
-     	if ( strstr( argv[1], "-w" ) )
-     		do_wrap = 1;
 
 	/* PAPI Initialization */
      retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -130,7 +139,7 @@ int main (int argc, char **argv)
 	      if (!TESTS_QUIET) {
 		 printf("RAPL component disabled: %s\n",
                         cmpinfo->disabled_reason);
-	      } 
+	      }
               test_skip(__FILE__,__LINE__,"RAPL component disabled",0);
            }
 	   break;
@@ -145,7 +154,7 @@ int main (int argc, char **argv)
      /* Create EventSet */
      retval = PAPI_create_eventset( &EventSet );
      if (retval != PAPI_OK) {
-	test_fail(__FILE__, __LINE__, 
+	test_fail(__FILE__, __LINE__,
                               "PAPI_create_eventset()",retval);
      }
 
@@ -160,7 +169,7 @@ int main (int argc, char **argv)
         retval = PAPI_event_code_to_name( code, event_names[num_events] );
 	if ( retval != PAPI_OK ) {
 	   printf("Error translating %#x\n",code);
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
                             "PAPI_event_code_to_name", retval );
 	}
 
@@ -181,13 +190,13 @@ int main (int argc, char **argv)
 	  break; /* We've hit an event limit */
 	}
 	num_events++;
-  	      
+
         r = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, rapl_cid );
      }
 
      values=calloc(num_events,sizeof(long long));
      if (values==NULL) {
-	test_fail(__FILE__, __LINE__, 
+	test_fail(__FILE__, __LINE__,
                               "No memory",retval);
      }
 
@@ -256,7 +265,7 @@ int main (int argc, char **argv)
 			  }
 		   }
 		}
-	
+
 		printf("\n");
 		printf("Fixed value counts:\n");
 
@@ -274,7 +283,7 @@ int main (int argc, char **argv)
 	double max_time;
 	unsigned long long max_value = 0;
 	int repeat;
-	
+
 	for(i=0;i<num_events;i++) {
 		if (strstr(event_names[i],"ENERGY_CNT")) {
 			if (max_value < (unsigned) values[i]) {
@@ -286,7 +295,7 @@ int main (int argc, char **argv)
 	printf("\n");
 	printf ("Approximate time to energy measurement wraparound: %.3f sec or %.3f min.\n", 
 		max_time, max_time/60);
-	
+
 	if (do_wrap) {
 		 printf ("Beginning wraparound execution.");
 	     /* Start Counting */
@@ -303,7 +312,7 @@ int main (int argc, char **argv)
 			printf("."); fflush(stdout);
 		}
 		printf("\n");
-	 
+
 		 /* Stop Counting */
 		 after_time=PAPI_get_real_nsec();
 		 retval = PAPI_stop( EventSet, values);
@@ -340,18 +349,18 @@ int main (int argc, char **argv)
      /* Done, clean up */
      retval = PAPI_cleanup_eventset( EventSet );
      if (retval != PAPI_OK) {
-	test_fail(__FILE__, __LINE__, 
+	test_fail(__FILE__, __LINE__,
                               "PAPI_cleanup_eventset()",retval);
      }
 
      retval = PAPI_destroy_eventset( &EventSet );
      if (retval != PAPI_OK) {
-	test_fail(__FILE__, __LINE__, 
+	test_fail(__FILE__, __LINE__,
                               "PAPI_destroy_eventset()",retval);
      }
-        
+
      test_pass( __FILE__, NULL, 0 );
-		
+
      return 0;
 }
 
