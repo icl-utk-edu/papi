@@ -115,7 +115,7 @@ Thread( int n )
 int
 main( int argc, char **argv )
 {
-	int maxthr, retval;
+	int retval;
 	long long elapsed_us, elapsed_cyc;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
@@ -142,17 +142,15 @@ main( int argc, char **argv )
 		else
 			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
 	}
-#pragma omp parallel private(maxthr)
+#pragma omp parallel
 	{
-		maxthr = omp_get_num_threads(  );
 		Thread( 1000000 * ( omp_get_thread_num(  ) + 1 ) );
 	}
 	omp_set_num_threads( 1 );
 	Thread( 1000000 * ( omp_get_thread_num(  ) + 1 ) );
 	omp_set_num_threads( omp_get_max_threads(  ) );
-#pragma omp parallel private(maxthr)
+#pragma omp parallel
 	{
-		maxthr = omp_get_num_threads(  );
 		Thread( 1000000 * ( omp_get_thread_num(  ) + 1 ) );
 	}
 
