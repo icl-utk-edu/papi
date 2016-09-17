@@ -4,7 +4,7 @@
 *          you@cs.utk.edu
 * Mods:    Brian Sheely
 *          bsheely@eecs.utk.edu
-* Author:  Vince Weaver 
+* Author:  Vince Weaver
 *          vweaver1 @ eecs.utk.edu
 *          Merge of the libpfm3/libpfm4/pmapi-ppc64_events preset code
 */
@@ -29,13 +29,13 @@ extern int user_defined_events_count;
 static int papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag);
 
 
-/* This routine copies values from a dense 'findem' array of events 
-   into the sparse global _papi_hwi_presets array, which is assumed 
-   to be empty at initialization. 
+/* This routine copies values from a dense 'findem' array of events
+   into the sparse global _papi_hwi_presets array, which is assumed
+   to be empty at initialization.
 
-   Multiple dense arrays can be copied into the sparse array, allowing 
-   event overloading at run-time, or allowing a baseline table to be 
-   augmented by a model specific table at init time. 
+   Multiple dense arrays can be copied into the sparse array, allowing
+   event overloading at run-time, or allowing a baseline table to be
+   augmented by a model specific table at init time.
 
    This method supports adding new events; overriding existing events, or
    deleting deprecated events.
@@ -48,7 +48,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 
     /* dense array of events is terminated with a 0 preset.
        don't do anything if NULL pointer. This allows just notes to be loaded.
-       It's also good defensive programming. 
+       It's also good defensive programming.
      */
     if ( findem != NULL ) {
        for ( pnum = 0; ( pnum < PAPI_MAX_PRESET_EVENTS ) &&
@@ -90,7 +90,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
  
            _papi_hwi_presets[preset_index].derived_int = findem[pnum].derived;
 	   for(k=0;k<j;k++) {
-              _papi_hwi_presets[preset_index].code[k] = 
+              _papi_hwi_presets[preset_index].code[k] =
                      findem[pnum].native[k];
 	   }
 	   /* preset code list must be PAPI_NULL terminated */
@@ -130,7 +130,7 @@ _papi_hwi_cleanup_all_presets( void )
 	       papi_free(_papi_hwi_presets[preset_index].name[j]);
 	    }
 	}
-	
+
 	for(cidx=0;cidx<papi_num_components;cidx++) {
 	   _papi_hwd[cidx]->cmp_info.num_preset_events = 0;
 	}
@@ -190,7 +190,7 @@ trim_string( char *in )
 
 /*  Calls trim_string to remove blank space;
     Removes paired punctuation delimiters from
-    beginning and end of string. If the same punctuation 
+    beginning and end of string. If the same punctuation
     appears first and last (quotes, slashes) they are trimmed;
     Also checks for the following pairs: () <> {} [] */
 static inline char *
@@ -287,7 +287,7 @@ get_event_line( char *line, FILE * table, char **tmp_perfmon_events_table )
 	} else {
 		for ( i = 0;
 			  **tmp_perfmon_events_table && **tmp_perfmon_events_table != '\n';
-			  i++, ( *tmp_perfmon_events_table )++ ) 
+			  i++, ( *tmp_perfmon_events_table )++ )
 			line[i] = **tmp_perfmon_events_table;
 		if (i == 0)
 		    return 0;
@@ -1102,6 +1102,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 
 			// add the proper event bits (preset or user defined bits)
 			preset = res_idx | event_type_bits;
+			(void) preset;
 
 			SUBDBG( "Use event code: %#x for %s\n", preset, t);
 
