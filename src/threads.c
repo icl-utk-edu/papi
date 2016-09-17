@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    threads.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -404,7 +404,7 @@ static int _papi_hwi_thread_free_eventsets(long tid) {
 	    map->dataSlotArray[i] = NULL;
 	    map->availSlots++;
 	    map->fullSlots--;
-	 } 
+	 }
       }
    }
 
@@ -468,6 +468,7 @@ _papi_hwi_shutdown_global_threads( void )
 	}
 	else {
 	   our_tid=tmp->tid;
+	   (void)our_tid;
 
 	   THRDBG("Shutting down %ld\n",our_tid);
 
@@ -493,10 +494,10 @@ _papi_hwi_shutdown_global_threads( void )
 
 	      THRDBG("looking at #%d %ld our_tid: %ld alloc_tid: %ld\n",
 		     i,tmp->tid,our_tid,tmp->allocator_tid);
-	    
+
 		 THRDBG("Also removing thread %ld\n",tmp->tid);
 	         err = _papi_hwi_shutdown_thread( tmp, 1 );
-  
+
 	      tmp=next;
 
 	   }
