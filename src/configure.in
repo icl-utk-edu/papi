@@ -94,7 +94,7 @@ if test "x$FFLAGS" = "x"; then
   FFLAGS=""
 fi
 OPTFLAGS="-O2" 
-TOPTFLAGS="-O0" 
+TOPTFLAGS="-O1" 
 AC_PROG_CC([xlc icc gcc cc])
 AC_PROG_F77([xlf ifort gfortran f95 f90 f77])
 if test "x$F77" = "x"; then
