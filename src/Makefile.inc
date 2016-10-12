@@ -252,7 +252,7 @@ ifneq (${COMPONENTS},)
 			$(SETPATH) cd ../../.. ; done 
 endif
 
-clean: native_clean comp_tests_clean 
+clean: comp_tests_clean 
 	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c 
 	-cd ctests; $(MAKE) clean
 	-cd ctests/bgp; $(MAKE) clean
@@ -271,7 +271,7 @@ ifneq (${COMPONENTS},)
 	done 
 endif
 
-clobber distclean: clean native_clobber
+clobber distclean: clean native_clean native_clobber
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h $(PAPI_EVENTS_TABLE)
 	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
