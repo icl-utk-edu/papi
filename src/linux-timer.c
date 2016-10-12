@@ -29,6 +29,10 @@
 #include "perfmon/pfmlib_montecito.h"
 #endif
 
+#ifdef __powerpc__
+#include <sys/platform/ppc.h>
+#endif
+
 #if defined(HAVE_MMTIMER)
 #include <sys/mman.h>
 #include <linux/mmtimer.h>
@@ -113,7 +117,12 @@ int mmtimer_setup(void) {
 }
 
 #else
-int mmtimer_setup(void) { return PAPI_OK; }
+static uint64_t multiplier = 1;
+int mmtimer_setup(void) { 
+#if defined(__powerpc__)
+multiplier = ((uint64_t)_papi_hwi_system_info.hw_info.cpu_max_mhz * 1000000ULL) / (__ppc_get_timebase_freq()/(uint64_t)1000);
+#endif
+return PAPI_OK; }
 #endif
 
 
@@ -234,7 +243,8 @@ get_cycles( void )
 
 static inline long long get_cycles()
 {
-    int64_t result;
+    uint64_t result;
+	int64_t retval;
 #ifdef _ARCH_PPC64
     /*
         This reads timebase in one 64bit go.  Does *not* include a workaround for the cell (see 
@@ -257,7 +267,8 @@ static inline long long get_cycles()
         "bne     $-16"
         : "=r" (result), "=r" (dummy));
 #endif
-    return result;
+    retval = (result*multiplier)/1000ULL;
+    return retval;
 }
 
 #elif (defined(__arm__) || defined(__mips__))
