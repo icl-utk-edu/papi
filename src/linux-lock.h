@@ -109,9 +109,11 @@ do {                                                    \
 } while(0)
 #define  _papi_hwd_unlock(lck)                          \
 do {                                                    \
-  unsigned int retval;                                 \
+  unsigned int retval;                                  \
+  do {							\
   retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
-} while(0)
+  } while(retval != (unsigned int)MUTEX_CLOSED);        \
+} while (0)
 
 /*****************/
 /* SPARC         */
