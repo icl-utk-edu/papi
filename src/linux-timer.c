@@ -1,5 +1,10 @@
 /*
  * File:    linux-timer.c
+ * 
+ * @author:  Vince Weaver
+ *           vincent.weaver @ maine.edu
+ * Mods:     Philip Mucci
+ *           mucci @ icl.utk.edu
  *
  */
 
@@ -117,6 +122,7 @@ int mmtimer_setup(void) {
 }
 
 #else
+#include <stdint.h>
 static uint64_t multiplier = 1;
 int mmtimer_setup(void) { 
 #if defined(__powerpc__)
