@@ -5,7 +5,6 @@
  *           vincent.weaver @ maine.edu
  * Mods:     Philip Mucci
  *           mucci @ icl.utk.edu
- *
  */
 
 #include <time.h>
@@ -28,6 +27,7 @@
 #include <sys/resource.h>
 
 #include <sys/times.h>
+#include <stdint.h>
 
 #ifdef __ia64__
 #include "perfmon/pfmlib_itanium2.h"
@@ -122,7 +122,6 @@ int mmtimer_setup(void) {
 }
 
 #else
-#include <stdint.h>
 static uint64_t multiplier = 1;
 int mmtimer_setup(void) { 
 #if defined(__powerpc__)
