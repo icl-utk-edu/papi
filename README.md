@@ -22,6 +22,7 @@ In addition, PAPI provides access to a collection of components that
 expose performance measurement opportunites across the hardware and
 software stack.
 
+
 Getting Started
 ---------------
 
