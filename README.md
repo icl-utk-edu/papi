@@ -2,6 +2,7 @@ PAPI: Performance Application Programming Interface
 ===================================================
 
 ** Innovative Computing Lab **
+
 ** University of Tennessee, Knoxville, TN **
 
 ***
@@ -43,6 +44,7 @@ Installing PAPI
 ---------------
 
 To install PAPI on your system:
+
 * Find the section in INSTALL.txt that pertains to your hardware and operating
   system.
 * Follow the directions to install required components and build the PAPI
@@ -58,6 +60,7 @@ Using PAPI
 ----------
 
 To use PAPI in your own programs:
+
 * Read the PAPI Overview found at:
 	http://icl.cs.utk.edu/projects/papi/wiki/Main_Page.
 * Try out the utility programs in /utils to see what's in your system.
