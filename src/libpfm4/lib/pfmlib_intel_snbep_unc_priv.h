@@ -164,6 +164,8 @@
 #define HSWEP_UNC_SBO_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8|_SNBEP_UNC_ATTR_I)
 
+#define KNL_UNC_CHA_TOR_ATTRS    _SNBEP_UNC_ATTR_NF1
+
 typedef union {
 	uint64_t val;
 	struct {
@@ -324,6 +326,7 @@ extern const pfmlib_attr_desc_t snbep_unc_mods[];
 extern int  pfm_intel_snbep_unc_detect(void *this);
 extern int  pfm_intel_ivbep_unc_detect(void *this);
 extern int  pfm_intel_hswep_unc_detect(void *this);
+extern int  pfm_intel_knl_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int  pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx);
 extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);

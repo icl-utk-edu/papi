@@ -94,6 +94,10 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_knc.c \
 	  pfmlib_intel_slm.c \
 	  pfmlib_intel_knl.c \
+	  pfmlib_intel_knl_unc_imc.c \
+	  pfmlib_intel_knl_unc_edc.c \
+	  pfmlib_intel_knl_unc_cha.c \
+	  pfmlib_intel_knl_unc_m2pcie.c \
 	  pfmlib_intel_glm.c \
 	  pfmlib_intel_netburst.c \
 	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
@@ -271,6 +275,10 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_hswep_unc_r2pcie_events.h \
 	events/intel_hswep_unc_r3qpi_events.h \
 	events/intel_hswep_unc_irp_events.h \
+	events/intel_knl_unc_imc_events.h \
+	events/intel_knl_unc_edc_events.h \
+	events/intel_knl_unc_cha_events.h \
+	events/intel_knl_unc_m2pcie_events.h \
 	events/intel_slm_events.h
 
 INC_MIPS=events/mips_74k_events.h events/mips_74k_events.h
