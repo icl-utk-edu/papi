@@ -2,7 +2,7 @@
 
 /* This is arbitrary.  Typically you can add up to ~1000 before */
 /* you run out of fds                                           */
-#define PERF_EVENT_MAX_MPX_COUNTERS 192
+#define PERF_EVENT_MAX_MPX_COUNTERS 384
 
 /* We really don't need fancy definitions for these */
 
