@@ -110,7 +110,7 @@ endif
 # Library version
 #
 VERSION=4
-REVISION=7
+REVISION=8
 AGE=0
 
 #

@@ -1,3 +1,14 @@
+libpfm4 (8.0) unstable; urgency=low
+  * add Intel Knights Landing support
+  * add Intel Goldmont support
+  * update Intel event tables
+  * allow . as delimiter for event string
+  * add SQ_MISC:SPLIT_LOCK
+  * enable Broadwell EP
+  * various fixes
+
+ -- Stephane Eranian <eranian@gmail.com>  Sat, 5 Nov  2016 14:38:01 +0200
+
 libpfm4 (7.0) unstable; urgency=low
   * add Intel Skylake support
   * add Intel Haswell-EP uncore PMU support
