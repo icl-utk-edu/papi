@@ -29,6 +29,9 @@
 static const int skl_models[] = {
 	78, /* Skylake mobile */
 	94, /* Skylake desktop */
+	85, /* Skylake X */
+	142,/* KabyLake mobile */
+	158,/* KabyLake desktop */
 	0
 };
 
