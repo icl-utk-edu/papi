@@ -32,7 +32,7 @@ a few tips on where to go from here.
 * Read the license found in LICENSE.txt. It's pretty short, and not very 
   restrictive, but it'll give you an idea of what you can and can't do with the
   PAPI sources.
-* Visit the website at: <http://icl.cs.utk.edu/papi>
+* Visit the website at: <http://icl.utk.edu/papi>
   There you can find late-breaking news that may be more current than in these
   files. You can also find documentation in a greater variety of formats than
   in the papi/doc/ directory.
@@ -62,7 +62,7 @@ Using PAPI
 To use PAPI in your own programs:
 
 * Read the PAPI Overview found at:
-	http://icl.cs.utk.edu/projects/papi/wiki/Main_Page.
+	http://icl.utk.edu/projects/papi/wiki/Main_Page.
 * Try out the utility programs in /utils to see what's in your system.
 * Try a test program. Source for a number of tests in both C and FORTRAN is
   available in the src/tests/ and src/ftests/ directories. Find a program
@@ -75,9 +75,9 @@ To use PAPI in your own programs:
 Bugs and Questions
 ------------------
 
-* Visit our FAQ at: <http://icl.cs.utk.edu/papi/faq/>
+* Visit our FAQ at: <http://icl.utk.edu/papi/faq/>
   or read a snapshot of the FAQ in papi/PAPI_FAQ.html
 * Subscribe to the PAPI mailing list at:
-  <http://lists.cs.utk.edu/listinfo/ptools-perfapi>
+  <https://groups.google.com/a/icl.utk.edu/forum/#!forum/ptools-perfapi>
 * Read historical postings to the list.
 * Post questions to the list.
