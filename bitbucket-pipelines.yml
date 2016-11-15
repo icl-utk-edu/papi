@@ -12,4 +12,4 @@ pipelines:
           - cd src
           - ./configure
           - make
-          - make fulltest
+#          - make fulltest
