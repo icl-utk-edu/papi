@@ -383,6 +383,13 @@ _rapl_init_component( int cidx )
 	   pp1_avail=0;
 	   dram_avail=1;
 	}
+	else if (hw_info->cpuid_model==79) {
+	   /* Broadwell-EP */
+	   package_avail=1;
+	   pp0_avail=1;
+	   pp1_avail=0;
+	   dram_avail=1;
+	}
 	else if (hw_info->cpuid_model==78 || hw_info->cpuid_model==94) {
 		/* Skylake, Skylake H/S */
 		package_avail=1;
