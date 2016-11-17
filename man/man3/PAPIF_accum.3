@@ -1,4 +1,4 @@
-.TH "PAPIF_accum" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_accum" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,13 +11,16 @@ accumulate and reset counters in an event set
 .PP
 .SH "Detailed Description"
 .PP 
-\fBFortran Interface:\fP.RS 4
-#include 'fpapi.h' 
+
+.PP
+\fBFortran Interface:\fP
+.RS 4
+#include 'fpapi\&.h' 
 .br
- \fBPAPIF_accum\fP( C_INT EventSet, C_LONG_LONG(*) values, C_INT check )
+\fBPAPIF_accum\fP( C_INT EventSet, C_LONG_LONG(*) values, C_INT check )
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_accum\fP 
 .RE
@@ -26,4 +29,4 @@ accumulate and reset counters in an event set
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

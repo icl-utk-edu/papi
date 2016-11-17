@@ -1,4 +1,4 @@
-.TH "PAPIF_get_hardware_info" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_get_hardware_info" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,17 +11,20 @@ get information about the system hardware
 .PP
 .SH "Detailed Description"
 .PP 
-\fBFortran Interface:\fP.RS 4
-#include 'fpapi.h' 
+
+.PP
+\fBFortran Interface:\fP
+.RS 4
+#include 'fpapi\&.h' 
 .br
- \fBPAPIF_get_hardware_info\fP( C_INT ncpu, C_INT nnodes, C_INT totalcpus,
+\fBPAPIF_get_hardware_info\fP( C_INT ncpu, C_INT nnodes, C_INT totalcpus,
 .br
  C_INT vendor, C_STRING vendor_str, C_INT model, C_STRING model_str, 
 .br
  C_FLOAT revision, C_FLOAT mhz )
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_hardware_info\fP 
 .RE
@@ -30,4 +33,4 @@ get information about the system hardware
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

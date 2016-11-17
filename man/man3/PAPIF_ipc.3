@@ -1,23 +1,26 @@
-.TH "PAPIF_ipc" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_ipc" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPIF_ipc \- 
 .PP
-Get instructions per cycle, real and processor time.  
+Get instructions per cycle, real and processor time\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBFortran Interface:\fP.RS 4
-#include 'fpapi.h' 
+
+.PP
+\fBFortran Interface:\fP
+.RS 4
+#include 'fpapi\&.h' 
 .br
- PAPIF_ipc( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ins, C_FLOAT ipc, C_INT check )
+ \fBPAPIF_ipc( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ins, C_FLOAT ipc, C_INT check )\fP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_ipc\fP 
 .RE
@@ -26,4 +29,4 @@ Get instructions per cycle, real and processor time.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

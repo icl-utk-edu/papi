@@ -1,4 +1,4 @@
-.TH "PAPI_get_component_info" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_component_info" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,15 +11,23 @@ get information about a specific software component
 .PP
 .SH "Detailed Description"
 .PP 
-\fBParameters:\fP
-.RS 4
-\fIcidx\fP Component index
-.RE
-.PP
-This function returns a pointer to a structure containing detailed information about a specific software component in the PAPI library. This includes versioning information, preset and native event information, and more. For full details, see \fBPAPI_component_info_t\fP.
-.PP
-\fBExamples:\fP.RS 4
 
+.PP
+.nf
+@param cidx
+    Component index
+
+This function returns a pointer to a structure containing detailed 
+information about a specific software component in the PAPI library. 
+This includes versioning information, preset and native event 
+information, and more. 
+For full details, see @ref PAPI_component_info_t. 
+
+@par Examples:
+
+.fi
+.PP
+ 
 .PP
 .nf
         const PAPI_component_info_t *cmpinfo = NULL;
@@ -27,14 +35,14 @@ This function returns a pointer to a structure containing detailed information a
         exit(1);
         if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
         exit(1);
-        printf('This component supports %d Preset Events and %d Native events.\n',
-        cmpinfo->num_preset_events, cmpinfo->num_native_events);
+        printf("This component supports %d Preset Events and %d Native events\&.\n",
+    cmpinfo->num_preset_events, cmpinfo->num_native_events);
+*   
 
 .fi
 .PP
-.RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_executable_info\fP 
 .PP
@@ -51,4 +59,4 @@ This function returns a pointer to a structure containing detailed information a
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

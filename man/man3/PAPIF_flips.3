@@ -1,23 +1,26 @@
-.TH "PAPIF_flips" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_flips" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPIF_flips \- 
 .PP
-Simplified call to get Mflips/s (floating point instruction rate), real and processor time.  
+Simplified call to get Mflips/s (floating point instruction rate), real and processor time\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBFortran Interface:\fP.RS 4
-#include 'fpapi.h' 
+
+.PP
+\fBFortran Interface:\fP
+.RS 4
+#include 'fpapi\&.h' 
 .br
- PAPIF_flips( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )
+ \fBPAPIF_flips( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )\fP
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_flips\fP 
 .RE
@@ -26,4 +29,4 @@ Simplified call to get Mflips/s (floating point instruction rate), real and proc
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

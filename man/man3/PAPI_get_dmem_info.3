@@ -1,20 +1,23 @@
-.TH "PAPI_get_dmem_info" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_dmem_info" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_get_dmem_info \- 
 .PP
-Get information about the dynamic memory usage of the current program.  
+Get information about the dynamic memory usage of the current program\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
-\fBC Prototype:\fP.RS 4
-#include <\fBpapi.h\fP> 
+
+.PP
+\fBC Prototype:\fP
+.RS 4
+#include <\fBpapi\&.h\fP> 
 .br
- int PAPI_get_dmem_info( PAPI_dmem_info_t *dest );
+ int \fBPAPI_get_dmem_info( PAPI_dmem_info_t *dest )\fP;
 .RE
 .PP
 \fBParameters:\fP
@@ -24,19 +27,19 @@ Get information about the dynamic memory usage of the current program.
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_ECMP\fP The funtion is not implemented for the current component. 
+\fIPAPI_ECMP\fP The funtion is not implemented for the current component\&. 
 .br
-\fIPAPI_EINVAL\fP Any value in the structure or array may be undefined as indicated by this error value. 
+\fIPAPI_EINVAL\fP Any value in the structure or array may be undefined as indicated by this error value\&. 
 .br
-\fIPAPI_SYS\fP A system error occured.
+\fIPAPI_SYS\fP A system error occured\&.
 .RE
 .PP
 \fBNote:\fP
 .RS 4
-This function is only implemented for the Linux operating system. This function takes a pointer to a \fBPAPI_dmem_info_t\fP structure and returns with the structure fields filled in. A value of PAPI_EINVAL in any field indicates an undefined parameter.
+This function is only implemented for the Linux operating system\&. This function takes a pointer to a \fBPAPI_dmem_info_t\fP structure and returns with the structure fields filled in\&. A value of PAPI_EINVAL in any field indicates an undefined parameter\&.
 .RE
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_executable_info\fP \fBPAPI_get_hardware_info\fP \fBPAPI_get_opt\fP \fBPAPI_library_init\fP 
 .RE
@@ -45,4 +48,4 @@ This function is only implemented for the Linux operating system. This function 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.

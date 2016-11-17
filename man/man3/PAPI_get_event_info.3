@@ -1,16 +1,18 @@
-.TH "PAPI_get_event_info" 3 "14 Sep 2016" "Version 5.5.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_event_info" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 PAPI_get_event_info \- 
 .PP
-Get the event's name and description info.  
+Get the event's name and description info\&.  
 
 .SH SYNOPSIS
 .br
 .PP
 .SH "Detailed Description"
 .PP 
+
+.PP
 \fBParameters:\fP
 .RS 4
 \fIEventCode\fP event code (preset or native) 
@@ -20,16 +22,16 @@ Get the event's name and description info.
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
-\fIPAPI_ENOTPRESET\fP The PAPI preset mask was set, but the hardware event specified is not a valid PAPI preset. 
+\fIPAPI_ENOTPRESET\fP The PAPI preset mask was set, but the hardware event specified is not a valid PAPI preset\&. 
 .br
-\fIPAPI_ENOEVNT\fP The PAPI preset is not available on the underlying hardware.
+\fIPAPI_ENOEVNT\fP The PAPI preset is not available on the underlying hardware\&.
 .RE
 .PP
-This function fills the event information into a structure. In Fortran, some fields of the structure are returned explicitly. This function works with existing PAPI preset and native event codes.
+This function fills the event information into a structure\&. In Fortran, some fields of the structure are returned explicitly\&. This function works with existing PAPI preset and native event codes\&.
 .PP
-\fBSee also:\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_event_name_to_code\fP 
 .RE
@@ -38,4 +40,4 @@ This function fills the event information into a structure. In Fortran, some fie
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for PAPI from the source code.
+Generated automatically by Doxygen for PAPI from the source code\&.
