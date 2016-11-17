@@ -373,10 +373,13 @@ _coretemp_init_component( int cidx )
 
      do {
 	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
+        _coretemp_native_events[i].name[PAPI_MAX_STR_LEN-1] = '\0';
 	strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
+        _coretemp_native_events[i].path[PATH_MAX-1] = '\0';
 	strncpy(_coretemp_native_events[i].units,t->units,PAPI_MIN_STR_LEN);
-	strncpy(_coretemp_native_events[i].description,t->description,
-	        PAPI_MAX_STR_LEN);
+	_coretemp_native_events[i].units[PAPI_MIN_STR_LEN-1] = '\0';
+	strncpy(_coretemp_native_events[i].description,t->description,PAPI_MAX_STR_LEN);
+        _coretemp_native_events[i].description[PAPI_MAX_STR_LEN-1] = '\0';
 	_coretemp_native_events[i].stone = 0;
 	_coretemp_native_events[i].resources.selector = i + 1;
 	last	= t;
@@ -634,15 +637,10 @@ _coretemp_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
-  strncpy( info->symbol, _coretemp_native_events[index].name, 
-	   sizeof(info->symbol));
-
-  strncpy( info->long_descr, _coretemp_native_events[index].description, 
-	   sizeof(info->long_descr));
-
-  strncpy( info->units, _coretemp_native_events[index].units, 
-	   sizeof(info->units));
-
+  strncpy( info->symbol, _coretemp_native_events[index].name, sizeof(info->symbol));
+  strncpy( info->long_descr, _coretemp_native_events[index].description, sizeof(info->long_descr));
+  strncpy( info->units, _coretemp_native_events[index].units, sizeof(info->units));
+  info->units[sizeof(info->units)-1] = '\0';
 
   return PAPI_OK;
 }

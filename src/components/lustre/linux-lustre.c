@@ -628,17 +628,17 @@ _lustre_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 
 
 /*
- *
+ *  Unused lustre write function
  */
-static int
-_lustre_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
-{
-	( void ) ctx;
-	( void ) ctrl;
-	( void ) from;
+/* static int */
+/* _lustre_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from ) */
+/* { */
+/* 	( void ) ctx; */
+/* 	( void ) ctrl; */
+/* 	( void ) from; */
 
-	return PAPI_OK;
-}
+/* 	return PAPI_OK; */
+/* } */
 
 
 /*
@@ -674,7 +674,9 @@ _lustre_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 static int
 _lustre_set_domain( hwd_control_state_t * cntrl, int domain )
 {
-    SUBDBG("ENTER: cntrl: %p, domain: %#x\n", cntrl, domain);
+    ( void ) cntrl;
+    ( void ) domain;
+    SUBDBG("ENTER: \n");
 
     // this component does not allow limiting which domains will increment event counts
 

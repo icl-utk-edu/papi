@@ -420,17 +420,17 @@ _stealtime_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 
 
 /*
- *
+ * Unused stealtime write function
  */
-static int
-_stealtime_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
-{
-	( void ) ctx;
-	( void ) ctrl;
-	( void ) from;
+/* static int */
+/* _stealtime_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from ) */
+/* { */
+/* 	( void ) ctx; */
+/* 	( void ) ctrl; */
+/* 	( void ) from; */
 
-	return PAPI_OK;
-}
+/* 	return PAPI_OK; */
+/* } */
 
 
 /*
@@ -528,14 +528,14 @@ _stealtime_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
-  strncpy( info->symbol, event_info[index].name,
-           sizeof(info->symbol));
+  strncpy( info->symbol, event_info[index].name,sizeof(info->symbol));
+  info->symbol[sizeof(info->symbol)-1] = '\0';
 
-  strncpy( info->long_descr, event_info[index].description,
-           sizeof(info->symbol));
+  strncpy( info->long_descr, event_info[index].description,sizeof(info->symbol));
+  info->long_descr[sizeof(info->symbol)-1] = '\0';
 
-  strncpy( info->units, event_info[index].units,
-           sizeof(info->units));
+  strncpy( info->units, event_info[index].units,sizeof(info->units));
+  info->units[sizeof(info->units)-1] = '\0';
 
   return PAPI_OK;
 

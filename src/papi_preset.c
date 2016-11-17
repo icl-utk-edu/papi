@@ -469,7 +469,7 @@ ops_string_merge(char **original, char *insertion, int replaces, int start_index
 	char *subtoken;
 	char *workBuf;
 	char *workPtr;
-	char *tok_save_ptr=NULL;
+	char *tok_save_ptr;
 	char *newOriginal;
 	char *newInsertion;
 	char *newFormula;
@@ -848,7 +848,8 @@ infix_to_postfix( char *infix ) {
         // initialize stack
 	memset(stack, 0, 2*PAPI_HUGE_STR_LEN);
 	stacktop = -1; 
-	push('#');
+	push('#'); 
+        stacktop = 0; // after initialization of stack to #
         /* initialize output string */
 	memset(postfix,0,2*PAPI_HUGE_STR_LEN);
         postfixlen = 0;

@@ -605,6 +605,7 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	/* Careful, basename can modify it's argument */
 
 	strcpy( maxargs, mdi->exe_info.fullname );
+
    strncpy( mdi->exe_info.address_info.name, basename( maxargs ), PAPI_HUGE_STR_LEN-1);
    mdi->exe_info.address_info.name[PAPI_HUGE_STR_LEN-1] = '\0';
 

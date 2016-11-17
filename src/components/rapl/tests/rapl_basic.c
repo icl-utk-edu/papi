@@ -291,7 +291,7 @@ int main (int argc, char **argv)
 		  	}
 		}
 	}
-	max_time = elapsed_time * (0xffffffff / max_value);
+	max_time = elapsed_time * ( (double)0xffffffff / (double)max_value );
 	printf("\n");
 	printf ("Approximate time to energy measurement wraparound: %.3f sec or %.3f min.\n", 
 		max_time, max_time/60);

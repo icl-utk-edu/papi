@@ -450,15 +450,10 @@ _micpower_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
 		if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
-		strncpy( info->symbol, _micpower_native_events[index].name, 
-						sizeof(info->symbol));
-
-		strncpy( info->long_descr, _micpower_native_events[index].description, 
-						sizeof(info->long_descr));
-
-		strncpy( info->units, _micpower_native_events[index].units, 
-						sizeof(info->units));
-
+		strncpy( info->symbol, _micpower_native_events[index].name, sizeof(info->symbol));
+		strncpy( info->long_descr, _micpower_native_events[index].description, sizeof(info->long_descr));
+		strncpy( info->units, _micpower_native_events[index].units, sizeof(info->units));
+		info->units[sizeof(info->units)-1] = '\0';
 
 		return PAPI_OK;
 }

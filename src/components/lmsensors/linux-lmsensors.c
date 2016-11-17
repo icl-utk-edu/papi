@@ -143,7 +143,7 @@ static unsigned
 createNativeEvents( void )
 {
 	unsigned id = 0;
-	unsigned int count = 0;
+        unsigned int count;
 
 	int chip_nr = 0;
 	const sensors_chip_name *chip_name;
@@ -194,6 +194,7 @@ createNativeEvents( void )
 
 		 strncpy( lm_sensors_native_table[id].description,
 			  lm_sensors_native_table[id].name, PAPI_MAX_STR_LEN );
+                 lm_sensors_native_table[id].description[PAPI_MAX_STR_LEN-1] = '\0';
 
 		 /* The selector has to be !=0 . Starts with 1 */
 		 lm_sensors_native_table[id].resources.selector = id + 1;

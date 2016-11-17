@@ -393,15 +393,16 @@ _mx_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 	return PAPI_OK;
 }
 
-static int
-_mx_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
-{
-	( void ) ctx;			 /*unused */
-	( void ) ctrl;			 /*unused */
-	( void ) from;			 /*unused */
+/* Unused write function */
+/* static int */
+/* _mx_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from ) */
+/* { */
+/* 	( void ) ctx;			 /\*unused *\/ */
+/* 	( void ) ctrl;			 /\*unused *\/ */
+/* 	( void ) from;			 /\*unused *\/ */
 
-	return PAPI_OK;
-}
+/* 	return PAPI_OK; */
+/* } */
 
 /*
  * Functions for setting up various options
