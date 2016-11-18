@@ -5,6 +5,28 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
+PAPI 5.5.1 RELEASE NOTES                                            14 Sep 2016
+===============================================================================
+
+PAPI 5.5.1 is now available. This is a point release intended
+primarily to add support for uncore performance monitoring events on
+Intel Xeon Phi Knights Landing (KNL).  Other minor bugfixes have also
+been made.
+
+For specific and detailed information on changes made in this release,
+see ChangeLogP551.txt for keywords of interest or go directly to the
+PAPI git repository.
+
+New Platforms:
+* Added Knights Landing (KNL) uncore event support via libpfm4.
+
+Bug Fixes:
+* Fix some possible string termination problems.
+* Cleanup lustre and mx components.
+* Enable RAPL for Broadwell-EP.
+
+
+===============================================================================
 PAPI 5.5.0 RELEASE NOTES                                            14 Sep 2016
 ===============================================================================
 
