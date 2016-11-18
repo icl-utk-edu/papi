@@ -4,8 +4,8 @@ Version: 5.5.1.0
 Release: 1%{?dist}
 License: BSD
 Group: Development/System
-URL: http://icl.cs.utk.edu/papi/
-Source0: http://icl.cs.utk.edu/projects/papi/downloads/%{name}-%{version}.tar.gz
+URL: http://icl.utk.edu/papi/
+Source0: http://icl.utk.edu/projects/papi/downloads/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: ncurses-devel
 BuildRequires: gcc-gfortran
