@@ -2,6 +2,7 @@
 rm PAPI_FAQ.html
 rm release_procedure.txt
 rm gitlog2changelog.py
+rm bitbucket-pipelines.yml
 rm doc/DataRange.html
 rm doc/PAPI-C.html
 rm doc/README
