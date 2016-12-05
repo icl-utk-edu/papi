@@ -642,9 +642,9 @@ papi_vector_t _example_vector = {
 	/* Used for general PAPI interactions */
 	.start =                _example_start,
 	.stop =                 _example_stop,
-	.read =                 _example_read,
+	.readctr =                 _example_read,
 	.reset =                _example_reset,	
-	.write =                _example_write,
+	.writectr =                _example_write,
 	.init_component =       _example_init_component,	
 	.init_thread =          _example_init_thread,
 	.init_control_state =   _example_init_control_state,

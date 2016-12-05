@@ -124,15 +124,15 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 	if ( !v->stop )
 		v->stop = ( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
 			vec_int_dummy;
-	if ( !v->read )
-		v->read = ( int ( * )
+	if ( !v->readctr )
+		v->readctr = ( int ( * )
 					( hwd_context_t *, hwd_control_state_t *, long long **,
 					  int ) ) vec_int_dummy;
 	if ( !v->reset )
 		v->reset = ( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
 			vec_int_dummy;
-	if ( !v->write )
-		v->write =
+	if ( !v->writectr )
+		v->writectr =
 			( int ( * )( hwd_context_t *, hwd_control_state_t *, long long[] ) )
 			vec_int_dummy;
 	if ( !v->cleanup_eventset ) 

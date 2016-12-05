@@ -2840,7 +2840,7 @@ PAPI_write( int EventSet, long long *values )
 	if ( ESI->state & PAPI_RUNNING ) {
 		/* get the context we should use for this event set */
 		context = _papi_hwi_get_context( ESI, NULL );
-		retval = _papi_hwd[cidx]->write( context, ESI->ctl_state, values );
+		retval = _papi_hwd[cidx]->writectr( context, ESI->ctl_state, values );
 		if ( retval != PAPI_OK )
 			return ( retval );
 	}

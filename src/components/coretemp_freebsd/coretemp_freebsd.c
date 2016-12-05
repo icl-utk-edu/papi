@@ -471,8 +471,8 @@ papi_vector_t _coretemp_freebsd_vector = {
 	.init_control_state = coretemp_init_control_state,
 	.start = coretemp_start,
 	.stop = coretemp_stop,
-	.read = coretemp_read,
-	.write = coretemp_write,
+	.readctr = coretemp_read,
+	.writectr = coretemp_write,
 	.shutdown_component = coretemp_shutdown_component,
 	.ctl = coretemp_ctl,
 

@@ -27,9 +27,9 @@ typedef struct papi_vectors {
     void *	(*get_overflow_address)	(int, char *, int);						/**< */
     int		(*start)		(hwd_context_t *, hwd_control_state_t *);		/**< */
     int		(*stop)			(hwd_context_t *, hwd_control_state_t *);		/**< */
-    int		(*read)			(hwd_context_t *, hwd_control_state_t *, long long **, int);	/**< */
+    int		(*readctr)			(hwd_context_t *, hwd_control_state_t *, long long **, int);	/**< */
     int		(*reset)		(hwd_context_t *, hwd_control_state_t *);		/**< */
-    int		(*write)		(hwd_context_t *, hwd_control_state_t *, long long[]);			/**< */
+    int		(*writectr)		(hwd_context_t *, hwd_control_state_t *, long long[]);			/**< */
 	int			(*cleanup_eventset)	( hwd_control_state_t * );				/**< */
     int		(*stop_profiling)	(ThreadInfo_t *, EventSetInfo_t *);			/**< */
     int		(*init_component)	(int);										/**< */

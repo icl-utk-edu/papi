@@ -820,9 +820,9 @@ papi_vector_t _libmsr_vector = {
     /* function pointers in this component */
     .start = _libmsr_start,
     .stop = _libmsr_stop,
-    .read = _libmsr_read,
+    .readctr = _libmsr_read,
     .reset = _libmsr_reset,
-    .write = _libmsr_write,
+    .writectr = _libmsr_write,
     .init_component = _libmsr_init_component,
     .init_thread = _libmsr_init_thread,
     .init_control_state = _libmsr_init_control_state,

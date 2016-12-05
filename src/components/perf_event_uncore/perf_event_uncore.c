@@ -1324,13 +1324,13 @@ papi_vector_t _perf_event_uncore_vector = {
   .init_control_state =    _peu_init_control_state,
   .start =                 _peu_start,
   .stop =                  _peu_stop,
-  .read =                  _peu_read,
+  .readctr =                  _peu_read,
   .shutdown_thread =       _peu_shutdown_thread,
   .ctl =                   _peu_ctl,
   .update_control_state =  _peu_update_control_state,
   .set_domain =            _peu_set_domain,
   .reset =                 _peu_reset,
-  .write =                 _peu_write,
+  .writectr =                 _peu_write,
 
   /* from counter name mapper */
   .ntv_enum_events =   _peu_ntv_enum_events,

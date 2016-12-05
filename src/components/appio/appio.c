@@ -48,6 +48,15 @@
 #  include "dlfcn.h"
 #endif
 
+/* remove the mappings so we can use the direct libc calls */
+#ifdef APPIO_NOINSTRUMEMENT_INSIDE_PAPI_H
+#undef read
+#undef write
+#undef close
+#undef select
+#undef lseek
+#endif
+
 /*
 #pragma weak dlerror
 static void *_dlsym_fake(void *handle, const char* symbol) { (void) handle; (void) symbol; return NULL; }
@@ -170,6 +179,10 @@ static const struct appio_counters {
 /*********************************************************************
  ***  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ****
  ********************************************************************/
+/* If you add any new I/O calls below, remember to check the header
+ * appio_noinstrument_inside_papi.h, to avoid instrumenting the calls
+ * when used by the PAPI library itself.
+ */
 
 int __close(int fd);
 int close(int fd) {
@@ -762,7 +775,7 @@ papi_vector_t _appio_vector = {
     .init_control_state        = _appio_init_control_state,
     .start                     = _appio_start,
     .stop                      = _appio_stop,
-    .read                      = _appio_read,
+    .readctr                   = _appio_read,
     .shutdown_thread           = _appio_shutdown_thread,
     .shutdown_component        = _appio_shutdown_component,
     .ctl                       = _appio_ctl,

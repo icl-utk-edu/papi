@@ -2307,7 +2307,7 @@ papi_vector_t _perf_event_vector = {
   /* function pointers from the shared perf_event lib */
   .start =                 _pe_start,
   .stop =                  _pe_stop,
-  .read =                  _pe_read,
+  .readctr =                  _pe_read,
   .shutdown_thread =       _pe_shutdown_thread,
   .ctl =                   _pe_ctl,
   .update_control_state =  _pe_update_control_state,
@@ -2316,7 +2316,7 @@ papi_vector_t _perf_event_vector = {
   .set_overflow =          _pe_set_overflow,
   .set_profile =           _pe_set_profile,
   .stop_profiling =        _pe_stop_profiling,
-  .write =                 _pe_write,
+  .writectr =                 _pe_write,
 
 
   /* from counter name mapper */

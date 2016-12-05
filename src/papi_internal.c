@@ -1682,7 +1682,7 @@ _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 	long long *dp = NULL;
 	int i, index;
 
-	retval = _papi_hwd[ESI->CmpIdx]->read( context, ESI->ctl_state, 
+	retval = _papi_hwd[ESI->CmpIdx]->readctr( context, ESI->ctl_state, 
 					       &dp, ESI->state );
 	if ( retval != PAPI_OK ) {
 		INTDBG("EXIT: retval: %d\n", retval);

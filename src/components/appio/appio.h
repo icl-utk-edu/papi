@@ -19,6 +19,12 @@
  *  PAPI to access application level file and socket I/O information.
  *  It does this through function replacement in the first person and
  *  by trapping syscalls in the third person.
+ *  We take care to avoid instrumenting I/O calls in PAPI itself. To 
+ *  this end, we include a header -- appio_noinstrument_inside_papi.h --
+ *  in papi_internal.h, that remaps I/O calls so PAPI uses the actual
+ *  uninstrumented C calls. So, if you instrument new I/O calls that
+ *  are also used in PAPI, remember to update the mappinfs in the
+ *  appio_noinstrument_inside_papi.h header.
  */
 
 #ifndef _PAPI_APPIO_H

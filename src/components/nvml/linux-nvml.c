@@ -1574,9 +1574,9 @@ papi_vector_t _nvml_vector = {
 		/* Used for general PAPI interactions */
 		.start =                _papi_nvml_start,
 		.stop =                 _papi_nvml_stop,
-		.read =                 _papi_nvml_read,
+		.readctr =                 _papi_nvml_read,
 		.reset =                _papi_nvml_reset,	
-		.write =                _papi_nvml_write,
+		.writectr =                _papi_nvml_write,
 		.init_component =       _papi_nvml_init_component,	
 		.init_thread =          _papi_nvml_init_thread,
 		.init_control_state =   _papi_nvml_init_control_state,

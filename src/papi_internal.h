@@ -438,6 +438,13 @@ extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 #include "papi_lock.h"
 #include "threads.h"
 
+/* The macro below is set in Rules.appio. If appio
+ * is used, we ensure I/O calls in PAPI are remapped
+ * to the non-intercepted libc variants. This way
+ * appio does not measure I/O generated from within PAPI.
+ * It is safe to do this mapping even if appio isn't used. */
+#include <components/appio/appio_noinstrument_inside_papi.h>
+
 EventSetInfo_t *_papi_hwi_lookup_EventSet( int eventset );
 void _papi_hwi_set_papi_event_string (const char *event_string);
 char *_papi_hwi_get_papi_event_string (void);

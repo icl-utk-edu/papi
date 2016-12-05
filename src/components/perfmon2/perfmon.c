@@ -2238,7 +2238,7 @@ papi_vector_t _perfmon2_vector = {
   .init_control_state =   _papi_pfm_init_control_state,
   .start =                _papi_pfm_start,
   .stop =                 _papi_pfm_stop,
-  .read =                 _papi_pfm_read,
+  .readctr =                 _papi_pfm_read,
   .shutdown_thread =      _papi_pfm_shutdown,
   .shutdown_component =   _papi_pfm_shutdown_component,
   .ctl =                  _papi_pfm_ctl,
@@ -2252,7 +2252,7 @@ papi_vector_t _perfmon2_vector = {
   .dispatch_timer =       _papi_pfm_dispatch_timer,
   .init_thread =          _papi_pfm_init_thread,
   .allocate_registers =   _papi_pfm_allocate_registers,
-  .write =                _papi_pfm_write,
+  .writectr =                _papi_pfm_write,
 
 	/* from the counter name library */
   .ntv_enum_events =      _papi_libpfm_ntv_enum_events,
