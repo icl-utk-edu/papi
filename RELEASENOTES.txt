@@ -5,7 +5,7 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
-PAPI 5.5.1 RELEASE NOTES                                            14 Sep 2016
+PAPI 5.5.1 RELEASE NOTES                                            18 Nov 2016
 ===============================================================================
 
 PAPI 5.5.1 is now available. This is a point release intended
