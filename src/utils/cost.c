@@ -267,7 +267,7 @@ main( int argc, char **argv )
 		totcyc = PAPI_get_real_cyc(  );
 		retval_start=PAPI_start( EventSet );
 		retval_stop=PAPI_stop( EventSet, values );
-		totcyc = PAPI_get_real_cyc(  ) - totcyc;		
+		totcyc = PAPI_get_real_cyc(  ) - totcyc;
 		array[i] = totcyc;
 		if (retval_start || retval_stop) {
 		   test_fail( __FILE__, __LINE__, "PAPI start/stop", retval_start );
@@ -350,61 +350,89 @@ main( int argc, char **argv )
 
 	do_output( 5, array, bins, show_std_dev, show_dist );
 
-	/* Derived event test */
+	/* Derived POSTFIX event test */
 	PAPI_cleanup_eventset( EventSet );
 
 	event = 0 | PAPI_PRESET_MASK;
 
-	if ( ( event = find_derived_postfix( event ) ) != PAPI_NULL ) {
-	  if ( (retval = PAPI_add_event( EventSet, event) ) != PAPI_OK )
-		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+	event = find_derived_postfix( event );
+	if ( event != PAPI_NULL ) {
 
-	  PAPI_get_event_info(event, &info);
-	  printf( "\nPerforming DERIVED_POSTFIX PAPI_read(%d counters)  test...", info.count );
+		PAPI_get_event_info(event, &info);
+		printf( "\nPerforming DERIVED_POSTFIX "
+			"PAPI_read(%d counters)  test (%s)...",
+			info.count, info.symbol );
 
-	  if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-	  PAPI_read( EventSet, values );
+		retval = PAPI_add_event( EventSet, event);
+		if ( retval != PAPI_OK ) {
+			test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+		}
 
-	  for ( i = 0; i < num_iters; i++ ) {
-		totcyc = PAPI_get_real_cyc(  );
+		retval = PAPI_start( EventSet );
+		if ( retval != PAPI_OK ) {
+			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+		}
+
 		PAPI_read( EventSet, values );
-		totcyc = PAPI_get_real_cyc(  ) - totcyc;
-		array[i] = totcyc;
-	  }
-	  if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	  do_output( 6, array, bins, show_std_dev, show_dist );
+		for ( i = 0; i < num_iters; i++ ) {
+			totcyc = PAPI_get_real_cyc(  );
+			PAPI_read( EventSet, values );
+			totcyc = PAPI_get_real_cyc(  ) - totcyc;
+			array[i] = totcyc;
+		}
+
+		retval = PAPI_stop( EventSet, values );
+		if ( retval != PAPI_OK ) {
+			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+		}
+
+		do_output( 6, array, bins, show_std_dev, show_dist );
 
 	} else {
-	  printf("\tI was unable to find a DERIVED_POSTFIX preset event to "
-		  "test on this architecture, skipping.\n");
+		printf("\tI was unable to find a DERIVED_POSTFIX preset event "
+			"to test on this architecture, skipping.\n");
 	}
 
-	if ( ( event = find_derived_add( event ) ) != PAPI_NULL ) {
-	  if ( (retval = PAPI_add_event( EventSet, event) ) != PAPI_OK )
-		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+	/* Find a derived ADD event */
+	PAPI_cleanup_eventset( EventSet );
 
-	  PAPI_get_event_info(event, &info);
-	  printf( "\nPerforming DERIVED_[ADD|SUB] PAPI_read(%d counters)  test...", info.count );
+	event = find_derived_add( event );
+	if ( event != PAPI_NULL ) {
 
-	  if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-	  PAPI_read( EventSet, values );
+		PAPI_get_event_info(event, &info);
+		printf( "\nPerforming DERIVED_[ADD|SUB] "
+			"PAPI_read(%d counters)  test (%s)...",
+			info.count, info.symbol );
 
-	  for ( i = 0; i < num_iters; i++ ) {
-		totcyc = PAPI_get_real_cyc(  );
+		retval = PAPI_add_event( EventSet, event);
+		if ( retval != PAPI_OK ) {
+			test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+		}
+
+		retval = PAPI_start( EventSet );
+		if ( retval != PAPI_OK ) {
+			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+		}
+
 		PAPI_read( EventSet, values );
-		totcyc = PAPI_get_real_cyc(  ) - totcyc;
-		array[i] = totcyc;
-	  }
-	  if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	  do_output( 7, array, bins, show_std_dev, show_dist );
+		for ( i = 0; i < num_iters; i++ ) {
+			totcyc = PAPI_get_real_cyc(  );
+			PAPI_read( EventSet, values );
+			totcyc = PAPI_get_real_cyc(  ) - totcyc;
+			array[i] = totcyc;
+	  	}
+
+		retval = PAPI_stop( EventSet, values );
+		if ( retval != PAPI_OK ) {
+			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+		}
+
+		do_output( 7, array, bins, show_std_dev, show_dist );
 	} else {
-	  printf("\tI was unable to find a suitable DERIVED_[ADD|SUB] event to test, skipping.\n");
+		printf("\tI was unable to find a suitable DERIVED_[ADD|SUB] "
+			"event to test, skipping.\n");
 	}
 
 	free( array );
