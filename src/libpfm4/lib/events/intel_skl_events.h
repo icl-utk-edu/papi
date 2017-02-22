@@ -1154,7 +1154,7 @@ static const intel_x86_umask_t skl_uops_executed[]={
   },
 };
 
-static const intel_x86_umask_t skl_uops_dispatched[]={
+static const intel_x86_umask_t skl_uops_dispatched_port[]={
   { .uname = "PORT_0",
     .udesc  = "Cycles which a Uop is executed on port 0",
     .ucode  = 0x100,
@@ -2510,15 +2510,24 @@ static const intel_x86_entry_t intel_skl_pe[]={
     .numasks = LIBPFM_ARRAY_SIZE(skl_lsd),
     .umasks  = skl_lsd,
   },
-
-  { .name = "UOPS_DISPATCHED",
-    .desc   = "Uops dispatch to specific ports",
+  { .name = "UOPS_DISPATCHED_PORT",
+    .desc   = "Uops dispatched to specific ports",
     .code = 0xa1,
     .cntmsk = 0xff,
     .ngrp = 1,
     .modmsk = INTEL_V4_ATTRS,
-    .numasks = LIBPFM_ARRAY_SIZE(skl_uops_dispatched),
-    .umasks  = skl_uops_dispatched,
+    .numasks = LIBPFM_ARRAY_SIZE(skl_uops_dispatched_port),
+    .umasks  = skl_uops_dispatched_port,
+  },
+  { .name = "UOPS_DISPATCHED",
+    .desc   = "Uops dispatched to specific ports",
+    .equiv = "UOPS_DISPATCHED_PORT",
+    .code = 0xa1,
+    .cntmsk = 0xff,
+    .ngrp = 1,
+    .modmsk = INTEL_V4_ATTRS,
+    .numasks = LIBPFM_ARRAY_SIZE(skl_uops_dispatched_port),
+    .umasks  = skl_uops_dispatched_port,
   },
   { .name = "UOPS_ISSUED",
     .desc   = "Uops issued",
