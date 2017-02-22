@@ -59,6 +59,20 @@ static const intel_x86_entry_t intel_rapl_cln_pe[]={
   }
 };
 
+static const intel_x86_entry_t intel_rapl_skl_cln_pe[]={
+  RAPL_COMMON_EVENTS,
+  { .name   = "RAPL_ENERGY_GPU",
+    .desc   = "Number of Joules consumed by the builtin GPU. Unit is 2^-32 Joules",
+    .cntmsk = 0x8,
+    .code   = 0x4,
+  },
+  { .name   = "RAPL_ENERGY_PSYS",
+    .desc   = "Number of Joules consumed by the builtin PSYS. Unit is 2^-32 Joules",
+    .cntmsk = 0x8,
+    .code   = 0x5,
+  }
+};
+
 static const intel_x86_entry_t intel_rapl_srv_pe[]={
   RAPL_COMMON_EVENTS,
   { .name   = "RAPL_ENERGY_DRAM",
@@ -97,29 +111,36 @@ pfm_rapl_detect(void *this)
 		return PFM_ERR_NOTSUPP;
 
 	switch(pfm_intel_x86_cfg.model) {
-		case 42: /* Sandy Bridge */
-		case 58: /* Ivy Bridge */
-		case 60: /* Haswell */
-		case 69: /* Haswell */
-		case 70: /* Haswell */
-		case 61: /* Broadwell */
-		case 71: /* Broadwell */
-		case 78: /* Skylake */
-		case 94: /* Skylake H/S */
+		case  42: /* Sandy Bridge */
+		case  58: /* Ivy Bridge */
+		case  60: /* Haswell */
+		case  69: /* Haswell */
+		case  70: /* Haswell */
+		case  61: /* Broadwell */
+		case  71: /* Broadwell GT3E */
+		case  92: /* Goldmont */
 			 /* already setup by default */
 			  break;
-		case 45: /* Sandy Bridg-EP  */
-		case 62: /* Ivy Bridge-EP  */
+		case  45: /* Sandy Bridg-EP  */
+		case  62: /* Ivy Bridge-EP  */
 			intel_rapl_support.pe 	     = intel_rapl_srv_pe;
 			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_srv_pe);
 			break;
-		case 63: /* Haswell-EP  */
-		case 79: /* Broadwell-EP */
-		case 86: /* Broadwell D */
+		case  78: /* Skylake */
+		case  94: /* Skylake H/S */
+		case 142: /* Kabylake */
+		case 158: /* Kabylake */
+			intel_rapl_support.pe 	     = intel_rapl_skl_cln_pe;
+			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_skl_cln_pe);
+			break;
+		case  63: /* Haswell-EP  */
+		case  79: /* Broadwell-EP */
+		case  86: /* Broadwell D */
+		case  85: /* Skylake X */
 			intel_rapl_support.pe 	     = intel_rapl_hswep_pe;
 			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_hswep_pe);
 			break;
-		default:
+		default :
 			return PFM_ERR_NOTSUPP;
 	}
 	return PFM_SUCCESS;
