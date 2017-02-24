@@ -42,6 +42,7 @@ find_derived( int i , char *type)
 
   do {
 	if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
+
 	  if ( strcmp( info.derived, type) == 0 )
 		return i;
 	}
@@ -52,7 +53,7 @@ find_derived( int i , char *type)
 
 /* Slight misnomer, find derived event != DERIVED_POSTFIX */
 int
-find_derived_add( int i ) 
+find_derived_add( int i )
 {
   int ret;
 
@@ -60,11 +61,11 @@ find_derived_add( int i )
 	return ret;
 
 
-  return find_derived( i, "DERIVED_SUB"); 
+  return find_derived( i, "DERIVED_SUB");
 }
 
-int 
-find_derived_postfix( int i ) 
+int
+find_derived_postfix( int i )
 {
   return ( find_derived ( i, "DERIVED_POSTFIX" ) );
 }
@@ -396,6 +397,8 @@ main( int argc, char **argv )
 
 	/* Find a derived ADD event */
 	PAPI_cleanup_eventset( EventSet );
+
+	event = 0 | PAPI_PRESET_MASK;
 
 	event = find_derived_add( event );
 	if ( event != PAPI_NULL ) {
