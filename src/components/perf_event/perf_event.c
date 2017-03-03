@@ -79,15 +79,6 @@ _pe_libpfm4_get_cidx() {
 	return our_cidx;
 }
 
-/* These sentinels tell _pe_set_overflow() how to set the */
-/* wakeup_events field in the event descriptor record.        */
-
-#define WAKEUP_COUNTER_OVERFLOW 0
-#define WAKEUP_PROFILING -1
-
-#define WAKEUP_MODE_COUNTER_OVERFLOW 0
-#define WAKEUP_MODE_PROFILING 1
-
 /* The kernel developers say to never use a refresh value of 0        */
 /* See https://lkml.org/lkml/2011/5/24/172                            */
 /* However, on some platforms (like Power) a value of 1 does not work */
@@ -2146,37 +2137,20 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 
   ctl->events[evt_idx].attr.sample_period = threshold;
 
-  /*
-   * Note that the wakeup_mode field initially will be set to zero
-   * (WAKEUP_MODE_COUNTER_OVERFLOW) as a result of a call to memset 0 to
-   * all of the events in the ctl struct.
-   *
-   * Is it even set to any other value elsewhere?
-   */
-  switch ( ctl->events[evt_idx].wakeup_mode ) {
-  case WAKEUP_MODE_PROFILING:
-    /* Setting wakeup_events to special value zero means issue a */
-    /* wakeup (signal) on every mmap page overflow.              */
-    ctl->events[evt_idx].attr.wakeup_events = 0;
-    break;
-
-  case WAKEUP_MODE_COUNTER_OVERFLOW:
-    /* Can this code ever be called? */
-
     /* Setting wakeup_events to one means issue a wakeup on every */
     /* counter overflow (not mmap page overflow).                 */
     ctl->events[evt_idx].attr.wakeup_events = 1;
     /* We need the IP to pass to the overflow handler */
     ctl->events[evt_idx].attr.sample_type = PERF_SAMPLE_IP;
     /* one for the user page, and two to take IP samples */
+
+  /* Just a guess at how many pages would make this relatively efficient.  */
+  /* Note that it's "1 +" because of the need for a control page, and the  */
+  /* number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or   */
+  /* zero.  This is required to optimize dealing with circular buffer      */
+  /* wrapping of the mapped pages.                                         */
+
     ctl->events[evt_idx].nr_mmap_pages = 1 + 2;
-    break;
-  default:
-    PAPIERROR( "ctl->wakeup_mode[%d] set to an unknown value - %u",
-	       evt_idx, ctl->events[evt_idx].wakeup_mode);
-	SUBDBG("EXIT: PAPI_EBUG\n");
-    return PAPI_EBUG;
-  }
 
   /* Check for non-zero sample period */
   for ( i = 0; i < ctl->num_events; i++ ) {
@@ -2261,15 +2235,6 @@ _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
     /* a given range.  Kernel does not have this ability. FIXME            */
     return PAPI_ENOSUPP;
   }
-
-  /* Just a guess at how many pages would make this relatively efficient.  */
-  /* Note that it's "1 +" because of the need for a control page, and the  */
-  /* number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or   */
-  /* zero.  This is required to optimize dealing with circular buffer      */
-  /* wrapping of the mapped pages.                                         */
-
-  ctl->events[evt_idx].nr_mmap_pages = (1+8);
-  ctl->events[evt_idx].attr.sample_type |= PERF_SAMPLE_IP;
 
   ret = _pe_set_overflow( ESI, EventIndex, threshold );
   if ( ret != PAPI_OK ) return ret;
