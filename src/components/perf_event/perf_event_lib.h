@@ -17,7 +17,6 @@ typedef struct
   uint64_t mask;                  /* mask used for wrapping the pages     */
   int cpu;                        /* cpu associated with this event       */
   struct perf_event_attr attr;    /* perf_event config structure          */
-  unsigned int wakeup_mode;       /* wakeup mode when sampling            */
 } pe_event_info_t;
 
 
