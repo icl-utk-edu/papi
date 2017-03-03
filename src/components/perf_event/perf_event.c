@@ -639,21 +639,21 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
          ctl->events[i].attr.pinned = !ctl->multiplexed;
 	 ctl->events[i].attr.disabled = 1;
 	 ctl->events[i].group_leader_fd=-1;
-         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
-							   ctl->inherit, 
+         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed,
+							   ctl->inherit,
 							   !ctl->multiplexed );
       } else {
 	 ctl->events[i].attr.pinned=0;
 	 ctl->events[i].attr.disabled = 0;
 	 ctl->events[i].group_leader_fd=ctl->events[0].event_fd;
-         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed, 
-							   ctl->inherit, 
+         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed,
+							   ctl->inherit,
 							   0 );
       }
 
 
       /* try to open */
-      ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr, 
+      ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr,
 						     pid,
 						     ctl->events[i].cpu,
 			       ctl->events[i].group_leader_fd,
@@ -1522,7 +1522,7 @@ _pe_init_control_state( hwd_control_state_t *ctl )
   memset( pe_ctl, 0, sizeof ( pe_control_t ) );
 
   /* Set the domain */
-  _pe_set_domain( ctl, _perf_event_vector.cmp_info.default_domain );    
+  _pe_set_domain( ctl, _perf_event_vector.cmp_info.default_domain );
 
   /* default granularity */
   pe_ctl->granularity= _perf_event_vector.cmp_info.default_granularity;
@@ -1814,7 +1814,7 @@ mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe,
   }
 
   for( ; old != head; ) {
-    perf_sample_event_t *event = ( perf_sample_event_t * ) 
+    perf_sample_event_t *event = ( perf_sample_event_t * )
       & data[old & pe->mask];
     perf_sample_event_t event_copy;
     size_t size = event->header.size;
@@ -1844,14 +1844,14 @@ mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe,
     switch ( event->header.type ) {
     case PERF_RECORD_SAMPLE:
       _papi_hwi_dispatch_profile( ( *thr )->running_eventset[cidx],
-				  ( caddr_t ) ( unsigned long ) event->ip.ip, 
+				  ( caddr_t ) ( unsigned long ) event->ip.ip,
 				  0, profile_index );
       break;
 
     case PERF_RECORD_LOST:
       SUBDBG( "Warning: because of a mmap buffer overrun, %" PRId64
                       " events were lost.\n"
-                      "Loss was recorded when counter id %#"PRIx64 
+                      "Loss was recorded when counter id %#"PRIx64
 	      " overflowed.\n", event->lost.lost, event->lost.id );
       break;
 
@@ -1876,10 +1876,10 @@ find_profile_index( EventSetInfo_t *ESI, int evt_idx, int *flags,
   for ( count = 0; count < ESI->profile.event_counter; count++ ) {
     esi_index = ESI->profile.EventIndex[count];
     pos = ESI->EventInfoArray[esi_index].pos[0];
-                
+
     if ( pos == evt_idx ) {
       *profile_index = count;
-          *native_index = ESI->NativeInfoArray[pos].ni_event & 
+          *native_index = ESI->NativeInfoArray[pos].ni_event &
 	    PAPI_NATIVE_AND_MASK;
           *flags = ESI->profile.flags;
           SUBDBG( "Native event %d is at profile index %d, flags %d\n",
@@ -1902,7 +1902,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t **thr, int cidx )
   unsigned native_index;
   pe_control_t *ctl;
 
-  ret = find_profile_index( ( *thr )->running_eventset[cidx], evt_idx, 
+  ret = find_profile_index( ( *thr )->running_eventset[cidx], evt_idx,
 			    &flags, &native_index, &profile_index );
   if ( ret != PAPI_OK ) {
     return ret;
@@ -1910,7 +1910,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t **thr, int cidx )
 
   ctl= (*thr)->running_eventset[cidx]->ctl_state;
 
-  mmap_read( cidx, thr, 
+  mmap_read( cidx, thr,
 	     &(ctl->events[evt_idx]),
 	     profile_index );
 
@@ -1954,10 +1954,10 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
   hw_context.si = info;
   hw_context.ucontext = ( hwd_ucontext_t * ) uc;
 
-  if ( thread->running_eventset[cidx]->overflow.flags & 
+  if ( thread->running_eventset[cidx]->overflow.flags &
        PAPI_OVERFLOW_FORCE_SW ) {
     address = GET_OVERFLOW_ADDRESS( hw_context );
-    _papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context, 
+    _papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context,
 					address, NULL, 0,
 					0, &thread, cidx );
     return;
@@ -1987,13 +1987,13 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 	       "_papi_hwi_dispatch_timer!", fd );
     return;
   }
-        
+
   if (ioctl( fd, PERF_EVENT_IOC_DISABLE, NULL ) == -1 ) {
       PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) failed");
   }
 
-  if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) && 
-       !( thread->running_eventset[cidx]->profile.flags & 
+  if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) &&
+       !( thread->running_eventset[cidx]->profile.flags &
 	  PAPI_PROFIL_FORCE_SW ) ) {
     process_smpl_buf( found_evt_idx, &thread, cidx );
   }
@@ -2172,10 +2172,10 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
   if ( found_non_zero_sample_period ) {
     /* turn on internal overflow flag for this event set */
     ctl->overflow = 1;
-                
+
     /* Enable the signal handler */
-    retval = _papi_hwi_start_signal( 
-				    ctl->overflow_signal, 
+    retval = _papi_hwi_start_signal(
+				    ctl->overflow_signal,
 				    1, ctl->cidx );
     if (retval != PAPI_OK) {
     	SUBDBG("Call to _papi_hwi_start_signal returned: %d\n", retval);
@@ -2183,7 +2183,7 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
   } else {
     /* turn off internal overflow flag for this event set */
     ctl->overflow = 0;
-                
+
     /* Remove the signal handler, if there are no remaining non-zero */
     /* sample_periods set                                            */
     retval = _papi_hwi_stop_signal(ctl->overflow_signal);
@@ -2270,7 +2270,7 @@ papi_vector_t _perf_event_vector = {
       .short_name = "perf",
       .version = "5.0",
       .description = "Linux perf_event CPU counters",
-  
+
       .default_domain = PAPI_DOM_USER,
       .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR,
       .default_granularity = PAPI_GRN_THR,
