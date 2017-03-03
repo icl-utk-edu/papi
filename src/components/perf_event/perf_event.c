@@ -548,7 +548,6 @@ static int
 configure_fd_for_sampling( pe_control_t *ctl, int evt_idx )
 {
    int ret;
-   void *buf_addr;
    int fd = ctl->events[evt_idx].event_fd;
 
    /* Register that we would like a SIGIO notification when a mmap'd page */
@@ -588,14 +587,24 @@ configure_fd_for_sampling( pe_control_t *ctl, int evt_idx )
       return PAPI_ESYS;
    }
 
+	return PAPI_OK;
+}
+
+static int
+set_up_mmap( pe_control_t *ctl, int evt_idx)
+{
+
+	void *buf_addr;
+	int fd = ctl->events[evt_idx].event_fd;
+
    /* mmap() the sample buffer */
    buf_addr = mmap( NULL, ctl->events[evt_idx].nr_mmap_pages * getpagesize(),
 		    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
    if ( buf_addr == MAP_FAILED ) {
       PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
-		 ctl->events[evt_idx].nr_mmap_pages * getpagesize(  ), 
+		 ctl->events[evt_idx].nr_mmap_pages * getpagesize(  ),
 		 PROT_READ, MAP_SHARED, fd, strerror( errno ) );
-      return ( PAPI_ESYS );
+      return PAPI_ESYS;
    }
 
    SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
@@ -700,26 +709,34 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
    /* Now that we've successfully opened all of the events, do whatever  */
    /* "tune-up" is needed to attach the mmap'd buffers, signal handlers, */
    /* and so on.                                                         */
-   for ( i = 0; i < ctl->num_events; i++ ) {
+	for ( i = 0; i < ctl->num_events; i++ ) {
 
-      /* If sampling is enabled, hook up signal handler */
-      if ((ctl->events[i].attr.sample_period)  &&  (ctl->events[i].nr_mmap_pages > 0)) {
-	 ret = configure_fd_for_sampling( ctl, i );
-	 if ( ret != PAPI_OK ) {
-	    /* All of the fds are open, so we need to clean up all of them */
-	    i = ctl->num_events;
-	    goto open_pe_cleanup;
-	 }
-      } else {
-	 /* Make sure this is NULL so close_pe_events works right */
-	 ctl->events[i].mmap_buf = NULL;
-      }
-   }
+		/* If sampling is enabled, hook up signal handler */
+		if ( (ctl->events[i].attr.sample_period) &&
+		     (ctl->events[i].nr_mmap_pages > 0)) {
 
-   /* Set num_evts only if completely successful */
-   ctx->state |= PERF_EVENTS_OPENED;
+			ret = configure_fd_for_sampling( ctl, i );
+			if ( ret != PAPI_OK ) {
+				/* We failed, and all of the fds are open */
+				/* so we need to clean up all of them */
+				i = ctl->num_events;
+				goto open_pe_cleanup;
+			}
 
-   return PAPI_OK;
+			/* Set up the MMAP sample pages */
+			set_up_mmap(ctl,i);
+		} else {
+			/* Not a sampling event */
+			/* Make sure mmap_buf is NULL */
+			/* so close_pe_events works right */
+			ctl->events[i].mmap_buf = NULL;
+		}
+	}
+
+	/* Set num_evts only if completely successful */
+	ctx->state |= PERF_EVENTS_OPENED;
+
+	return PAPI_OK;
 
 open_pe_cleanup:
    /* We encountered an error, close up the fds we successfully opened.  */
