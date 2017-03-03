@@ -925,36 +925,11 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	SUBDBG("ENTER: ctx: %p, ctl: %p, events: %p, flags: %#x\n", ctx, ctl, events, flags);
 
    ( void ) flags;			 /*unused */
+   ( void ) ctx;			 /*unused */
    int i, ret = -1;
-   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
    long long papi_pe_buffer[READ_BUFFER_SIZE];
    long long tot_time_running, tot_time_enabled, scale;
-
-   /* On kernels before 2.6.33 the TOTAL_TIME_ENABLED and TOTAL_TIME_RUNNING */
-   /* fields are always 0 unless the counter is disabled.  So if we are on   */
-   /* one of these kernels, then we must disable events before reading.      */
-
-   /* Elsewhere though we disable multiplexing on kernels before 2.6.34 */
-   /* so maybe this isn't even necessary.                               */
-
-   if (bug_sync_read()) {
-      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-         for ( i = 0; i < pe_ctl->num_events; i++ ) {
-	    /* disable only the group leaders */
-	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
-	       ret = ioctl( pe_ctl->events[i].event_fd, 
-			   PERF_EVENT_IOC_DISABLE, NULL );
-	       if ( ret == -1 ) {
-	          PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) "
-			   "returned an error: ", strerror( errno ));
-	          return PAPI_ESYS;
-	       }
-	    }
-	 }
-      }
-   }
-
 
    /* Handle case where we are multiplexing */
    if (pe_ctl->multiplexed) {
@@ -1045,7 +1020,6 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       }
    }
 
-
    /* Handle cases where we are using FORMAT_GROUP   */
    /* We assume only one group leader, in position 0 */
 
@@ -1091,32 +1065,69 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       }
    }
 
-
-   /* If we disabled the counters due to the sync_read_bug(), */
-   /* then we need to re-enable them now.                     */
-   if (bug_sync_read()) {
-      if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
-         for ( i = 0; i < pe_ctl->num_events; i++ ) {
-	    if ( pe_ctl->events[i].group_leader_fd == -1 ) {
-	       /* this should refresh any overflow counters too */
-	       ret = ioctl( pe_ctl->events[i].event_fd,
-			    PERF_EVENT_IOC_ENABLE, NULL );
-	       if ( ret == -1 ) {
-	          /* Should never happen */
-	          PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) returned an error: ",
-			    strerror( errno ));
-	          return PAPI_ESYS;
-	       }
-	    }
-	 }
-      }
-   }
-
    /* point PAPI to the values we read */
    *events = pe_ctl->counts;
 
    SUBDBG("EXIT: *events: %p\n", *events);
    return PAPI_OK;
+}
+
+
+static int
+_pe_read_bug_sync( hwd_context_t *ctx, hwd_control_state_t *ctl,
+	       long long **events, int flags )
+{
+
+   ( void ) flags;			 /*unused */
+   int i, ret = -1;
+   pe_context_t *pe_ctx = ( pe_context_t *) ctx;
+   pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+	int result;
+
+   /* On kernels before 2.6.33 the TOTAL_TIME_ENABLED and TOTAL_TIME_RUNNING */
+   /* fields are always 0 unless the counter is disabled.  So if we are on   */
+   /* one of these kernels, then we must disable events before reading.      */
+
+   /* Elsewhere though we disable multiplexing on kernels before 2.6.34 */
+   /* so maybe this isn't even necessary.                               */
+
+	if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
+		 for ( i = 0; i < pe_ctl->num_events; i++ ) {
+			/* disable only the group leaders */
+			if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+				ret = ioctl( pe_ctl->events[i].event_fd,
+					PERF_EVENT_IOC_DISABLE, NULL );
+				if ( ret == -1 ) {
+					PAPIERROR("ioctl(PERF_EVENT_IOC_DISABLE) "
+						"returned an error: ", strerror( errno ));
+					return PAPI_ESYS;
+				}
+			}
+		}
+	}
+
+	result=_pe_read( ctx, ctl, events, flags );
+
+	/* If we disabled the counters due to the sync_read_bug(), */
+	/* then we need to re-enable them now.                     */
+
+	if ( pe_ctx->state & PERF_EVENTS_RUNNING ) {
+		for ( i = 0; i < pe_ctl->num_events; i++ ) {
+			if ( pe_ctl->events[i].group_leader_fd == -1 ) {
+				/* this should refresh any overflow counters too */
+				ret = ioctl( pe_ctl->events[i].event_fd,
+					PERF_EVENT_IOC_ENABLE, NULL );
+				if ( ret == -1 ) {
+					/* Should never happen */
+					PAPIERROR("ioctl(PERF_EVENT_IOC_ENABLE) returned an error: ",
+						strerror( errno ));
+					return PAPI_ESYS;
+				}
+			}
+		}
+	}
+
+	return result;
 }
 
 /* Start counting events */
@@ -1695,7 +1706,12 @@ _pe_init_component( int cidx )
      return retval;
    }
 
-   return PAPI_OK;
+	/* Make decisions based on bugs */
+	if (bug_sync_read()) {
+		_papi_hwd[cidx]->read = _pe_read_bug_sync;
+	}
+
+	return PAPI_OK;
 
 }
 
