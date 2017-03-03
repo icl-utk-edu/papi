@@ -545,7 +545,7 @@ check_scheduability( pe_context_t *ctx, pe_control_t *ctl, int idx )
 /* Do some extra work on a perf_event fd if we're doing sampling  */
 /* This mostly means setting up the mmap buffer.                  */
 static int
-tune_up_fd( pe_control_t *ctl, int evt_idx )
+configure_fd_for_sampling( pe_control_t *ctl, int evt_idx )
 {
    int ret;
    void *buf_addr;
@@ -704,7 +704,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
       /* If sampling is enabled, hook up signal handler */
       if ((ctl->events[i].attr.sample_period)  &&  (ctl->events[i].nr_mmap_pages > 0)) {
-	 ret = tune_up_fd( ctl, i );
+	 ret = configure_fd_for_sampling( ctl, i );
 	 if ( ret != PAPI_OK ) {
 	    /* All of the fds are open, so we need to clean up all of them */
 	    i = ctl->num_events;
