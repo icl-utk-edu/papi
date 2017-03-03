@@ -5,10 +5,10 @@
 /* Prototypes for libpfm name library access */
 
 int _pe_libpfm4_setup_presets( char *name, int type, int cidx );
-int _pe_libpfm4_ntv_enum_events( unsigned int *EventCode, int modifier,
+int _pe_libpfm4_ntv_enum_events( unsigned int *EventCode, int modifier, int cidx,
 		       struct native_event_table_t *event_table);
 int _pe_libpfm4_ntv_name_to_code( char *ntv_name,
-				    unsigned int *EventCode,
+				    unsigned int *EventCode, int cidx,
 		       struct native_event_table_t *event_table);
 int _pe_libpfm4_ntv_code_to_name( unsigned int EventCode, char *name,
 				    int len,
@@ -27,4 +27,4 @@ int _pe_libpfm4_ntv_code_to_info(unsigned int EventCode,
 				   PAPI_event_info_t *info,
 		       struct native_event_table_t *event_table);
 
-int _pe_libpfm4_get_cidx(void);
+//int _pe_libpfm4_get_cidx(void);

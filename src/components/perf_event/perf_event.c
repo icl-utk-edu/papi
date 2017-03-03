@@ -74,10 +74,6 @@ static int _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
 /* Globals */
 struct native_event_table_t perf_native_event_table;
 static int our_cidx;
-int
-_pe_libpfm4_get_cidx() {
-	return our_cidx;
-}
 
 /* The kernel developers say to never use a refresh value of 0        */
 /* See https://lkml.org/lkml/2011/5/24/172                            */
@@ -1722,13 +1718,13 @@ _pe_shutdown_component( void ) {
 static int
 _pe_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 {
-  return _pe_libpfm4_ntv_enum_events(PapiEventCode, modifier,
+  return _pe_libpfm4_ntv_enum_events(PapiEventCode, modifier, our_cidx,
                                        &perf_native_event_table);
 }
 
 static int
 _pe_ntv_name_to_code( char *name, unsigned int *event_code) {
-  return _pe_libpfm4_ntv_name_to_code(name,event_code,
+  return _pe_libpfm4_ntv_name_to_code(name,event_code, our_cidx,
                                         &perf_native_event_table);
 }
 
@@ -1736,7 +1732,7 @@ static int
 _pe_ntv_code_to_name(unsigned int EventCode,
                           char *ntv_name, int len) {
    return _pe_libpfm4_ntv_code_to_name(EventCode,
-                                         ntv_name, len, 
+                                         ntv_name, len,
 					&perf_native_event_table);
 }
 
