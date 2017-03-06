@@ -53,6 +53,7 @@
 #include "linux-context.h"
 
 #include "perf_event_lib.h"
+#include "perf_helpers.h"
 
 /* Defines for ctx->state */
 #define PERF_EVENTS_OPENED  0x01
@@ -272,70 +273,67 @@ get_read_format( unsigned int multiplex,
 /********* Begin perf_event low-level code ***********************/
 /*****************************************************************/
 
-/* In case headers aren't new enough to have __NR_perf_event_open */
-#ifndef __NR_perf_event_open
+static void perf_event_dump_attr( struct perf_event_attr *hw_event,
+	pid_t pid, int cpu, int group_fd, int flags) {
 
-#ifdef __powerpc__
-#define __NR_perf_event_open	319
-#elif defined(__x86_64__)
-#define __NR_perf_event_open	298
-#elif defined(__i386__)
-#define __NR_perf_event_open	336
-#elif defined(__arm__)          366+0x900000
-#define __NR_perf_event_open
-#endif
+	/* Mark parameters as not used                   */
+	/* In the common case (no SUBDBG) the function   */
+	/* compiles into an empty function and complains */
+	/* about unused variables.                       */
+	(void)hw_event;
+	(void)pid;
+	(void)cpu;
+	(void)group_fd;
+	(void)flags;
 
-#endif
-
-static long
-sys_perf_event_open( struct perf_event_attr *hw_event, pid_t pid, int cpu,
-					   int group_fd, unsigned long flags )
-{
-	int ret;
-
-   SUBDBG("sys_perf_event_open(hw_event: %p, pid: %d, cpu: %d, group_fd: %d, flags: %lx\n", hw_event, pid, cpu, group_fd, flags);
-   SUBDBG("   type: %d\n",hw_event->type);
-   SUBDBG("   size: %d\n",hw_event->size);
-   SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",hw_event->config, hw_event->config);
-   SUBDBG("   sample_period: %"PRIu64"\n",hw_event->sample_period);
-   SUBDBG("   sample_type: %"PRIu64"\n",hw_event->sample_type);
-   SUBDBG("   read_format: %"PRIu64"\n",hw_event->read_format);
-   SUBDBG("   disabled: %d\n",hw_event->disabled);
-   SUBDBG("   inherit: %d\n",hw_event->inherit);
-   SUBDBG("   pinned: %d\n",hw_event->pinned);
-   SUBDBG("   exclusive: %d\n",hw_event->exclusive);
-   SUBDBG("   exclude_user: %d\n",hw_event->exclude_user);
-   SUBDBG("   exclude_kernel: %d\n",hw_event->exclude_kernel);
-   SUBDBG("   exclude_hv: %d\n",hw_event->exclude_hv);
-   SUBDBG("   exclude_idle: %d\n",hw_event->exclude_idle);
-   SUBDBG("   mmap: %d\n",hw_event->mmap);
-   SUBDBG("   comm: %d\n",hw_event->comm);
-   SUBDBG("   freq: %d\n",hw_event->freq);
-   SUBDBG("   inherit_stat: %d\n",hw_event->inherit_stat);
-   SUBDBG("   enable_on_exec: %d\n",hw_event->enable_on_exec);
-   SUBDBG("   task: %d\n",hw_event->task);
-   SUBDBG("   watermark: %d\n",hw_event->watermark);
-   SUBDBG("   precise_ip: %d\n",hw_event->precise_ip);
-   SUBDBG("   mmap_data: %d\n",hw_event->mmap_data);
-   SUBDBG("   sample_id_all: %d\n",hw_event->sample_id_all);
-   SUBDBG("   exclude_host: %d\n",hw_event->exclude_host);
-   SUBDBG("   exclude_guest: %d\n",hw_event->exclude_guest);
-   SUBDBG("   exclude_callchain_kernel: %d\n",hw_event->exclude_callchain_kernel);
-   SUBDBG("   exclude_callchain_user: %d\n",hw_event->exclude_callchain_user);
-   SUBDBG("   wakeup_events: %"PRIx32" (%"PRIu32")\n", hw_event->wakeup_events, hw_event->wakeup_events);
-   SUBDBG("   bp_type: %"PRIx32" (%"PRIu32")\n", hw_event->bp_type, hw_event->bp_type);
-   SUBDBG("   config1: %"PRIx64" (%"PRIu64")\n", hw_event->config1, hw_event->config1);
-   SUBDBG("   config2: %"PRIx64" (%"PRIu64")\n", hw_event->config2, hw_event->config2);
-   SUBDBG("   branch_sample_type: %"PRIx64" (%"PRIu64")\n", hw_event->branch_sample_type, hw_event->branch_sample_type);
-   SUBDBG("   sample_regs_user: %"PRIx64" (%"PRIu64")\n", hw_event->sample_regs_user, hw_event->sample_regs_user);
-   SUBDBG("   sample_stack_user: %"PRIx32" (%"PRIu32")\n", hw_event->sample_stack_user, hw_event->sample_stack_user);
-
-	ret =
-		syscall( __NR_perf_event_open, hw_event, pid, cpu, group_fd, flags );
-	SUBDBG("Returned %d %d %s\n",ret,
-	       ret<0?errno:0,
-	       ret<0?strerror(errno):" ");
-	return ret;
+	SUBDBG("sys_perf_event_open(hw_event: %p, pid: %d, cpu: %d, "
+		"group_fd: %d, flags: %lx\n",
+		hw_event, pid, cpu, group_fd, flags);
+	SUBDBG("   type: %d\n",hw_event->type);
+	SUBDBG("   size: %d\n",hw_event->size);
+	SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",
+		hw_event->config, hw_event->config);
+	SUBDBG("   sample_period: %"PRIu64"\n",hw_event->sample_period);
+	SUBDBG("   sample_type: %"PRIu64"\n",hw_event->sample_type);
+	SUBDBG("   read_format: %"PRIu64"\n",hw_event->read_format);
+	SUBDBG("   disabled: %d\n",hw_event->disabled);
+	SUBDBG("   inherit: %d\n",hw_event->inherit);
+	SUBDBG("   pinned: %d\n",hw_event->pinned);
+	SUBDBG("   exclusive: %d\n",hw_event->exclusive);
+	SUBDBG("   exclude_user: %d\n",hw_event->exclude_user);
+	SUBDBG("   exclude_kernel: %d\n",hw_event->exclude_kernel);
+	SUBDBG("   exclude_hv: %d\n",hw_event->exclude_hv);
+	SUBDBG("   exclude_idle: %d\n",hw_event->exclude_idle);
+	SUBDBG("   mmap: %d\n",hw_event->mmap);
+	SUBDBG("   comm: %d\n",hw_event->comm);
+	SUBDBG("   freq: %d\n",hw_event->freq);
+	SUBDBG("   inherit_stat: %d\n",hw_event->inherit_stat);
+	SUBDBG("   enable_on_exec: %d\n",hw_event->enable_on_exec);
+	SUBDBG("   task: %d\n",hw_event->task);
+	SUBDBG("   watermark: %d\n",hw_event->watermark);
+	SUBDBG("   precise_ip: %d\n",hw_event->precise_ip);
+	SUBDBG("   mmap_data: %d\n",hw_event->mmap_data);
+	SUBDBG("   sample_id_all: %d\n",hw_event->sample_id_all);
+	SUBDBG("   exclude_host: %d\n",hw_event->exclude_host);
+	SUBDBG("   exclude_guest: %d\n",hw_event->exclude_guest);
+	SUBDBG("   exclude_callchain_kernel: %d\n",
+		hw_event->exclude_callchain_kernel);
+	SUBDBG("   exclude_callchain_user: %d\n",
+		hw_event->exclude_callchain_user);
+	SUBDBG("   wakeup_events: %"PRIx32" (%"PRIu32")\n",
+		hw_event->wakeup_events, hw_event->wakeup_events);
+	SUBDBG("   bp_type: %"PRIx32" (%"PRIu32")\n",
+		hw_event->bp_type, hw_event->bp_type);
+	SUBDBG("   config1: %"PRIx64" (%"PRIu64")\n",
+		hw_event->config1, hw_event->config1);
+	SUBDBG("   config2: %"PRIx64" (%"PRIu64")\n",
+		hw_event->config2, hw_event->config2);
+	SUBDBG("   branch_sample_type: %"PRIx64" (%"PRIu64")\n",
+		hw_event->branch_sample_type, hw_event->branch_sample_type);
+	SUBDBG("   sample_regs_user: %"PRIx64" (%"PRIu64")\n",
+		hw_event->sample_regs_user, hw_event->sample_regs_user);
+	SUBDBG("   sample_stack_user: %"PRIx32" (%"PRIu32")\n",
+		hw_event->sample_stack_user, hw_event->sample_stack_user);
 }
 
 
@@ -427,6 +425,8 @@ check_permissions( unsigned long tid,
    }
 
    SUBDBG("Calling sys_perf_event_open() from check_permissions\n");
+
+	perf_event_dump_attr( &attr, pid, cpu_num, -1, 0 );
 
    ev_fd = sys_perf_event_open( &attr, pid, cpu_num, -1, 0 );
    if ( ev_fd == -1 ) {
@@ -649,12 +649,19 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
 
       /* try to open */
-      ctl->events[i].event_fd = sys_perf_event_open( &ctl->events[i].attr,
-						     pid,
-						     ctl->events[i].cpu,
-			       ctl->events[i].group_leader_fd,
-						     0 /* flags */
-						     );
+	perf_event_dump_attr(
+				&ctl->events[i].attr,
+				pid,
+				ctl->events[i].cpu,
+				ctl->events[i].group_leader_fd,
+				0 /* flags */ );
+
+	ctl->events[i].event_fd = sys_perf_event_open(
+				&ctl->events[i].attr,
+				pid,
+				ctl->events[i].cpu,
+				ctl->events[i].group_leader_fd,
+				0 /* flags */ );
 
             /* Try to match Linux errors to PAPI errors */
       if ( ctl->events[i].event_fd == -1 ) {
@@ -1576,6 +1583,7 @@ static int _pe_detect_rdpmc(int default_domain) {
   else {
     pe.exclude_kernel=1;
   }
+	perf_event_dump_attr(&pe,0,-1,-1,0);
   fd=sys_perf_event_open(&pe,0,-1,-1,0);
   if (fd<0) {
     return PAPI_ESYS;
