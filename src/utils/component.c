@@ -115,9 +115,9 @@ main( int argc, char **argv )
 	  }
 
 	  if ( flags.details ) {
-		printf( "Version:\t\t\t%s\n", cmpinfo->version );
-		printf( "Number of native events:\t%d\n", cmpinfo->num_native_events);
-		printf( "Number of preset events:\t%d\n", cmpinfo->num_preset_events); 
+		printf( "        %-23s Version:\t\t\t%s\n", " ", cmpinfo->version );
+		printf( "        %-23s Number of native events:\t%d\n", " ", cmpinfo->num_native_events);
+		printf( "        %-23s Number of preset events:\t%d\n", " ", cmpinfo->num_preset_events);
 		printf("\n");
 	  }
 	}
@@ -152,9 +152,8 @@ main( int argc, char **argv )
 	  printf("\n\n");
 
 	  if ( flags.details ) {
-		printf( "Version:\t\t\t%s\n", cmpinfo->version );
-		printf( "Number of native events:\t%d\n", cmpinfo->num_native_events);
-		printf( "Number of preset events:\t%d\n", cmpinfo->num_preset_events); 
+		printf( "        %-23s Version:\t\t\t%s\n", " ", cmpinfo->version );
+		printf( "        %-23s Fast counter read:\t\t%d\n", " ", cmpinfo->fast_counter_read);
 		printf("\n");
 	  }
 	}
