@@ -925,112 +925,143 @@ _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
  *
  */
 
-static int
-_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
-	       long long **events, int flags )
-{
-	SUBDBG("ENTER: ctx: %p, ctl: %p, events: %p, flags: %#x\n", ctx, ctl, events, flags);
 
-	( void ) flags;			 /*unused */
-	( void ) ctx;			 /*unused */
-	int i, ret = -1;
-	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+static int
+_pe_read_multiplexed( pe_control_t *pe_ctl )
+{
+	int i,ret=-1;
 	long long papi_pe_buffer[READ_BUFFER_SIZE];
 	long long tot_time_running, tot_time_enabled, scale;
 
-	/* Handle case where we are multiplexing */
-	if (pe_ctl->multiplexed) {
-		/* perf_event does not support FORMAT_GROUP on multiplex */
-		/* so we have to handle separate events when multiplexing */
+	/* perf_event does not support FORMAT_GROUP on multiplex */
+	/* so we have to handle separate events when multiplexing */
 
-		for ( i = 0; i < pe_ctl->num_events; i++ ) {
+	for ( i = 0; i < pe_ctl->num_events; i++ ) {
 
-			ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer,
-					sizeof ( papi_pe_buffer ) );
-			if ( ret == -1 ) {
-				PAPIERROR("read returned an error: ", strerror( errno ));
-				return PAPI_ESYS;
-			}
+		ret = read( pe_ctl->events[i].event_fd,
+				papi_pe_buffer,
+				sizeof ( papi_pe_buffer ) );
+		if ( ret == -1 ) {
+			PAPIERROR("read returned an error: ",
+					strerror( errno ));
+			return PAPI_ESYS;
+		}
 
-			/* We should read 3 64-bit values from the counter */
-			if (ret<(signed)(3*sizeof(long long))) {
-				PAPIERROR("Error!  short read");
-				return PAPI_ESYS;
-			}
+		/* We should read 3 64-bit values from the counter */
+		if (ret<(signed)(3*sizeof(long long))) {
+			PAPIERROR("Error!  short read");
+			return PAPI_ESYS;
+		}
 
-			SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
+		SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
 				pe_ctl->events[i].event_fd,
 				(long)pe_ctl->tid, pe_ctl->events[i].cpu, ret);
-			SUBDBG("read: %lld %lld %lld\n",
+		SUBDBG("read: %lld %lld %lld\n",
 				papi_pe_buffer[0],
 				papi_pe_buffer[1],
 				papi_pe_buffer[2]);
 
-			tot_time_enabled = papi_pe_buffer[1];
-			tot_time_running = papi_pe_buffer[2];
+		tot_time_enabled = papi_pe_buffer[1];
+		tot_time_running = papi_pe_buffer[2];
 
-			SUBDBG("count[%d] = (papi_pe_buffer[%d] %lld * "
+		SUBDBG("count[%d] = (papi_pe_buffer[%d] %lld * "
 				"tot_time_enabled %lld) / "
 				"tot_time_running %lld\n",
 				i, 0,papi_pe_buffer[0],
 				tot_time_enabled,tot_time_running);
 
-			if (tot_time_running == tot_time_enabled) {
-				/* No scaling needed */
-				pe_ctl->counts[i] = papi_pe_buffer[0];
-			} else if (tot_time_running && tot_time_enabled) {
-	    			/* Scale to give better results */
-				/* avoid truncation.            */
-				/* Why use 100?  Would 128 be faster? */
-				scale = (tot_time_enabled * 100LL) / tot_time_running;
-				scale = scale * papi_pe_buffer[0];
-				scale = scale / 100LL;
-				pe_ctl->counts[i] = scale;
-			} else {
-				/* This should not happen, but Phil reports it sometime does. */
-	    			SUBDBG("perf_event kernel bug(?) count, enabled, "
-					"running: %lld, %lld, %lld\n",
-					papi_pe_buffer[0],tot_time_enabled,
-					tot_time_running);
-
-				pe_ctl->counts[i] = papi_pe_buffer[0];
-			}
-		}
-	}
-
-	/* Handle cases where we cannot use FORMAT GROUP */
-	else if (bug_format_group() || pe_ctl->inherit) {
-
-		/* we must read each counter individually */
-		for ( i = 0; i < pe_ctl->num_events; i++ ) {
-			ret = read( pe_ctl->events[i].event_fd,
-				papi_pe_buffer,
-				sizeof ( papi_pe_buffer ) );
-			if ( ret == -1 ) {
-				PAPIERROR("read returned an error: ", strerror( errno ));
-				return PAPI_ESYS;
-			}
-
-			/* we should read one 64-bit value from each counter */
-			if (ret!=sizeof(long long)) {
-				PAPIERROR("Error!  short read");
-				PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d",
-					pe_ctl->events[i].event_fd,
-					(long)pe_ctl->tid, pe_ctl->events[i].cpu, ret);
-				return PAPI_ESYS;
-			}
-
-			SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
-				pe_ctl->events[i].event_fd, (long)pe_ctl->tid,
-				pe_ctl->events[i].cpu, ret);
-			SUBDBG("read: %lld\n",papi_pe_buffer[0]);
+		if (tot_time_running == tot_time_enabled) {
+			/* No scaling needed */
+			pe_ctl->counts[i] = papi_pe_buffer[0];
+		} else if (tot_time_running && tot_time_enabled) {
+	    		/* Scale to give better results */
+			/* avoid truncation.            */
+			/* Why use 100?  Would 128 be faster? */
+			scale = (tot_time_enabled * 100LL) / tot_time_running;
+			scale = scale * papi_pe_buffer[0];
+			scale = scale / 100LL;
+			pe_ctl->counts[i] = scale;
+		} else {
+			/* This should not happen, but Phil reports it sometime does. */
+			SUBDBG("perf_event kernel bug(?) count, enabled, "
+				"running: %lld, %lld, %lld\n",
+				papi_pe_buffer[0],tot_time_enabled,
+				tot_time_running);
 
 			pe_ctl->counts[i] = papi_pe_buffer[0];
 		}
 	}
+	return PAPI_OK;
+}
 
-	/* Handle cases where we are using FORMAT_GROUP   */
-	/* We assume only one group leader, in position 0 */
+/* For cases where we can't group counters together */
+/* But must read them out individually */
+/* This includes when INHERIT is set, as well as various bugs */
+
+static int
+_pe_read_nogroup( pe_control_t *pe_ctl ) {
+
+	int i,ret=-1;
+	long long papi_pe_buffer[READ_BUFFER_SIZE];
+
+	/* we must read each counter individually */
+	for ( i = 0; i < pe_ctl->num_events; i++ ) {
+		ret = read( pe_ctl->events[i].event_fd,
+				papi_pe_buffer,
+				sizeof ( papi_pe_buffer ) );
+		if ( ret == -1 ) {
+			PAPIERROR("read returned an error: ",
+				strerror( errno ));
+			return PAPI_ESYS;
+		}
+
+		/* we should read one 64-bit value from each counter */
+		if (ret!=sizeof(long long)) {
+			PAPIERROR("Error!  short read");
+			PAPIERROR("read: fd: %2d, tid: %ld, cpu: %d, ret: %d",
+				pe_ctl->events[i].event_fd,
+				(long)pe_ctl->tid, pe_ctl->events[i].cpu, ret);
+			return PAPI_ESYS;
+		}
+
+		SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
+			pe_ctl->events[i].event_fd, (long)pe_ctl->tid,
+			pe_ctl->events[i].cpu, ret);
+		SUBDBG("read: %lld\n",papi_pe_buffer[0]);
+
+		pe_ctl->counts[i] = papi_pe_buffer[0];
+	}
+
+	return PAPI_OK;
+
+}
+
+static int
+_pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+	       long long **events, int flags )
+{
+	SUBDBG("ENTER: ctx: %p, ctl: %p, events: %p, flags: %#x\n",
+		ctx, ctl, events, flags);
+
+	( void ) flags;			 /*unused */
+	( void ) ctx;			 /*unused */
+	int i, j, ret = -1;
+	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+	long long papi_pe_buffer[READ_BUFFER_SIZE];
+
+
+	/* Handle case where we are multiplexing */
+	if (pe_ctl->multiplexed) {
+		_pe_read_multiplexed(pe_ctl);
+	}
+
+	/* Handle cases where we cannot use FORMAT GROUP */
+	else if (bug_format_group() || pe_ctl->inherit) {
+		_pe_read_nogroup(pe_ctl);
+	}
+
+	/* Handle common ase where we are using FORMAT_GROUP	*/
+	/* We assume only one group leader, in position 0	*/
 
 	else {
 		if (pe_ctl->events[0].group_leader_fd!=-1) {
@@ -1042,7 +1073,8 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 			sizeof ( papi_pe_buffer ) );
 
 		if ( ret == -1 ) {
-			PAPIERROR("read returned an error: ", strerror( errno ));
+			PAPIERROR("read returned an error: ",
+				strerror( errno ));
 			return PAPI_ESYS;
 		}
 
@@ -1056,11 +1088,9 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		SUBDBG("read: fd: %2d, tid: %ld, cpu: %d, ret: %d\n",
 			pe_ctl->events[0].event_fd,
 			(long)pe_ctl->tid, pe_ctl->events[0].cpu, ret);
-		{
-			int j;
-			for(j=0;j<ret/8;j++) {
-				SUBDBG("read %d: %lld\n",j,papi_pe_buffer[j]);
-			}
+
+		for(j=0;j<ret/8;j++) {
+			SUBDBG("read %d: %lld\n",j,papi_pe_buffer[j]);
 		}
 
 		/* Make sure the kernel agrees with how many events we have */
