@@ -1,6 +1,6 @@
 /** file component.c
   *	@page papi_component_avail
-  * @brief papi_component_avail utility. 
+  * @brief papi_component_avail utility.
   *	@section  NAME
   *		papi_native_avail - provides detailed information for PAPI native events. 
   *
@@ -13,13 +13,13 @@
   *	@section Options
   *      <ul>
   *		<li>-h help message
-  *		<li>-d provide detailed information about each component. 
+  *		<li>-d provide detailed information about each component.
   *      </ul>
   *
   *	@section Bugs
-  *		There are no known bugs in this utility. 
-  *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *		There are no known bugs in this utility.
+  *		If you find a bug, it should be reported to the
+  *		PAPI Mailing List at <ptools-perfapi@ptools.org>.
  */
 
 #include "papi_test.h"
@@ -32,7 +32,7 @@ typedef struct command_flags
 	int details;
 	int named;
 	char *name;
-} command_flags_t; 
+} command_flags_t;
 
 static void
 print_help( char **argv )
@@ -132,7 +132,7 @@ main( int argc, char **argv )
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
 	  printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n",
 		  " ", cmpinfo->num_native_events, cmpinfo->num_preset_events, cmpinfo->num_cntrs);
-	  printf( "        %-23s PMU's supported: ", " ");
+	  printf( "        %-23s PMUs supported: ", " ");
 	  int line_len = 49;
 	  for (i=0 ; i<PAPI_PMU_MAX ; i++) {
 		  if (cmpinfo->pmu_names[i] == NULL) continue;
