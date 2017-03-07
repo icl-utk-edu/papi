@@ -60,7 +60,8 @@ static inline unsigned long long mmap_read_self(void *addr,
 	struct perf_event_mmap_page *pc = addr;
 
 	uint32_t seq, time_mult, time_shift, index, width;
-	uint64_t count, enabled, running;
+	int64_t count;
+	uint64_t enabled, running;
 	uint64_t cyc, time_offset;
 	int64_t pmc = 0;
 	uint64_t quot, rem;
@@ -111,7 +112,12 @@ static inline unsigned long long mmap_read_self(void *addr,
 
 		/* count is the value of the counter the last time */
 		/* the kernel read it */
+		/* If we don't sign extend it, we get large negative */
+		/* numbers which break if an IOC_RESET is done */
+		width = pc->pmc_width;
 		count = pc->offset;
+		count<<=(64-width);
+		count>>=(64-width);
 
 		/* Ugh, libpfm4 perf_event.h has cap_usr_rdpmc */
 		/* while actual perf_event.h has cap_user_rdpmc */
@@ -119,8 +125,6 @@ static inline unsigned long long mmap_read_self(void *addr,
 		/* Only read if rdpmc enabled and event index valid */
 		/* Otherwise return the older (out of date?) count value */
 		if (pc->cap_usr_rdpmc && index) {
-			/* width can be used to sign-extend result */
-			width = pc->pmc_width;
 
 			/* Read counter value */
 			pmc = rdpmc(index-1);
@@ -132,6 +136,7 @@ static inline unsigned long long mmap_read_self(void *addr,
 			/* add current count into the existing kernel count */
 			count+=pmc;
 
+			/* Only adjust if index is valid */
 			running+=delta;
 		}
 
