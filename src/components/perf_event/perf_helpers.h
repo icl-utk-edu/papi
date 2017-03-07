@@ -17,8 +17,6 @@
 
 #endif
 
-#if defined(__x86_64__) || defined(__i386__)
-
 static long
 sys_perf_event_open( struct perf_event_attr *hw_event,
 		pid_t pid, int cpu, int group_fd, unsigned long flags )
@@ -30,6 +28,9 @@ sys_perf_event_open( struct perf_event_attr *hw_event,
 
 	return ret;
 }
+
+#if defined(__x86_64__) || defined(__i386__)
+
 
 static inline unsigned long long rdtsc(void) {
 
