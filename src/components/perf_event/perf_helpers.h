@@ -31,7 +31,7 @@ sys_perf_event_open( struct perf_event_attr *hw_event,
 	return ret;
 }
 
-inline unsigned long long rdtsc(void) {
+static inline unsigned long long rdtsc(void) {
 
 	unsigned a,d;
 
@@ -40,7 +40,7 @@ inline unsigned long long rdtsc(void) {
 	return ((unsigned long long)a) | (((unsigned long long)d) << 32);
 }
 
-inline unsigned long long rdpmc(unsigned int counter) {
+static inline unsigned long long rdpmc(unsigned int counter) {
 
 	unsigned int low, high;
 
@@ -52,7 +52,7 @@ inline unsigned long long rdpmc(unsigned int counter) {
 #define barrier() __asm__ volatile("" ::: "memory")
 
 /* based on the code in include/uapi/linux/perf_event.h */
-inline unsigned long long mmap_read_self(void *addr,
+static inline unsigned long long mmap_read_self(void *addr,
 					 unsigned long long *en,
 					 unsigned long long *ru) {
 

@@ -1561,52 +1561,70 @@ _pe_init_control_state( hwd_control_state_t *ctl )
 }
 
 /* Check the mmap page for rdpmc support */
-static int _pe_detect_rdpmc(int default_domain) {
+static int _pe_detect_rdpmc(void) {
 
-  struct perf_event_attr pe;
-  int fd,rdpmc_exists=1;
-  void *addr;
-  struct perf_event_mmap_page *our_mmap;
+	struct perf_event_attr pe;
+	int fd,rdpmc_exists=1;
+	void *addr;
+	struct perf_event_mmap_page *our_mmap;
+	int page_size=getpagesize();
 
-  /* Create a fake instructions event so we can read a mmap page */
-  memset(&pe,0,sizeof(struct perf_event_attr));
+#if defined(__i386__) || defined (__x86_64__)
+#else
+	/* We only support rdpmc on x86 for now */
+        return 0;
+#endif
 
-  pe.type=PERF_TYPE_HARDWARE;
-  pe.size=sizeof(struct perf_event_attr);
-  pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+	/* Create a fake instructions event so we can read a mmap page */
+	memset(&pe,0,sizeof(struct perf_event_attr));
 
-  /* There should probably be a helper function to handle this      */
-  /* we break on some ARM because there is no support for excluding */
-  /* kernel.                                                        */
-  if (default_domain & PAPI_DOM_KERNEL ) {
-  }
-  else {
-    pe.exclude_kernel=1;
-  }
+	pe.type=PERF_TYPE_HARDWARE;
+	pe.size=sizeof(struct perf_event_attr);
+	pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+	pe.exclude_kernel=1;
+	pe.disabled=1;
+
 	perf_event_dump_attr(&pe,0,-1,-1,0);
-  fd=sys_perf_event_open(&pe,0,-1,-1,0);
-  if (fd<0) {
-    return PAPI_ESYS;
-  }
+	fd=sys_perf_event_open(&pe,0,-1,-1,0);
 
-  /* create the mmap page */
-  addr=mmap(NULL, 4096, PROT_READ, MAP_SHARED,fd,0);
-  if (addr == (void *)(-1)) {
-    close(fd);
-    return PAPI_ESYS;
-  }
+	/* This hopefully won't happen? */
+	/* Though there is a chance this is the first */
+	/* attempt to open a perf_event */
+	if (fd<0) {
+		SUBDBG("FAILED perf_event_open trying to detect rdpmc support");
+		return PAPI_ESYS;
+	}
 
-  /* get the rdpmc info */
-  our_mmap=(struct perf_event_mmap_page *)addr;
-  if (our_mmap->cap_usr_rdpmc==0) {
-    rdpmc_exists=0;
-  }
+	/* create the mmap page */
+	addr=mmap(NULL, page_size, PROT_READ, MAP_SHARED,fd,0);
+	if (addr == MAP_FAILED) {
+		SUBDBG("FAILED mmap trying to detect rdpmc support");
+		close(fd);
+		return PAPI_ESYS;
+	}
 
-  /* close the fake event */
-  munmap(addr,4096);
-  close(fd);
+	/* get the rdpmc info from the mmap page */
+	our_mmap=(struct perf_event_mmap_page *)addr;
 
-  return rdpmc_exists;
+	/* If cap_usr_rdpmc bit is set to 1, we have support! */
+	if (our_mmap->cap_usr_rdpmc!=0) {
+		rdpmc_exists=1;
+	}
+	else if ((!our_mmap->cap_bit0_is_deprecated) && (our_mmap->cap_bit0)) {
+		/* 3.4 to 3.11 had somewhat broken rdpmc support */
+		/* This convoluted test is the "official" way to detect this */
+		/* To make things easier we don't support these kernels */
+		rdpmc_exists=0;
+	}
+	else {
+		rdpmc_exists=0;
+	}
+
+	/* close the fake event */
+	munmap(addr,page_size);
+	close(fd);
+
+	return rdpmc_exists;
 
 }
 
@@ -1685,17 +1703,15 @@ _pe_init_component( int cidx )
    /* Run Vendor-specific fixups */
    pe_vendor_fixups(_papi_hwd[cidx]);
 
-   /* Detect if we can use rdpmc (or equivalent) */
-   /* We currently do not use rdpmc as it is slower in tests */
-   /* than regular read (as of Linux 3.5)                    */
-   retval=_pe_detect_rdpmc(_papi_hwd[cidx]->cmp_info.default_domain);
-   if (retval < 0 ) {
-      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-	    "sys_perf_event_open() failed, perf_event support for this platform may be broken",PAPI_MAX_STR_LEN);
-
-       return retval;
-    }
-   _papi_hwd[cidx]->cmp_info.fast_counter_read = retval;
+	/* Detect if we can use rdpmc (or equivalent) */
+	retval=_pe_detect_rdpmc();
+	_papi_hwd[cidx]->cmp_info.fast_counter_read = retval;
+	if (retval < 0 ) {
+		/* Don't actually fail here, as could be a surivable bug? */
+		/* If perf_event_open/mmap truly are failing we will      */
+		/* likely catch it pretty quickly elsewhere.              */
+		_papi_hwd[cidx]->cmp_info.fast_counter_read = 0;
+	}
 
    /* Run the libpfm4-specific setup */
    retval = _papi_libpfm4_init(_papi_hwd[cidx]);
