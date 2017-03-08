@@ -584,25 +584,31 @@ set_up_mmap( pe_control_t *ctl, int evt_idx)
 	void *buf_addr;
 	int fd = ctl->events[evt_idx].event_fd;
 
-   /* mmap() the sample buffer */
-   buf_addr = mmap( NULL, ctl->events[evt_idx].nr_mmap_pages * getpagesize(),
-		    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
-   if ( buf_addr == MAP_FAILED ) {
-      PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
-		 ctl->events[evt_idx].nr_mmap_pages * getpagesize(  ),
-		 PROT_READ, MAP_SHARED, fd, strerror( errno ) );
-      return PAPI_ESYS;
-   }
+	/* mmap() the sample buffer */
+	buf_addr = mmap( NULL,
+			ctl->events[evt_idx].nr_mmap_pages * getpagesize(),
+			PROT_READ | PROT_WRITE,
+			MAP_SHARED,
+			fd, 0 );
 
-   SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
+	if ( buf_addr == MAP_FAILED ) {
+		PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
+			ctl->events[evt_idx].nr_mmap_pages * getpagesize(),
+			PROT_READ | PROT_WRITE,
+			MAP_SHARED,
+			fd, strerror( errno ) );
+		return PAPI_ESYS;
+	}
 
-   /* Set up the mmap buffer and its associated helpers */
-   ctl->events[evt_idx].mmap_buf = (struct perf_counter_mmap_page *) buf_addr;
-   ctl->events[evt_idx].tail = 0;
-   ctl->events[evt_idx].mask = ( ctl->events[evt_idx].nr_mmap_pages - 1 ) *
-                               getpagesize() - 1;
+	SUBDBG( "Sample buffer for fd %d is located at %p\n", fd, buf_addr );
 
-   return PAPI_OK;
+	/* Set up the mmap buffer and its associated helpers */
+	ctl->events[evt_idx].mmap_buf = (struct perf_counter_mmap_page *) buf_addr;
+	ctl->events[evt_idx].tail = 0;
+	ctl->events[evt_idx].mask =
+		( ctl->events[evt_idx].nr_mmap_pages - 1 ) * getpagesize() - 1;
+
+	return PAPI_OK;
 }
 
 
@@ -612,97 +618,101 @@ static int
 open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
 
-   int i, ret = PAPI_OK;
-   long pid;
+	int i, ret = PAPI_OK;
+	long pid;
 
-   if (ctl->granularity==PAPI_GRN_SYS) {
-      pid = -1;
-   }
-   else {
-      pid = ctl->tid;
-   }
+	if (ctl->granularity==PAPI_GRN_SYS) {
+		pid = -1;
+	}
+	else {
+		pid = ctl->tid;
+	}
 
-   for( i = 0; i < ctl->num_events; i++ ) {
+	for( i = 0; i < ctl->num_events; i++ ) {
 
-      ctl->events[i].event_opened=0;
+		ctl->events[i].event_opened=0;
 
-      /* set up the attr structure.  We don't set up all fields here */
-      /* as some have already been set up previously.                */
+		/* set up the attr structure.			*/
+		/* We don't set up all fields here		*/
+		/* as some have already been set up previously.	*/
 
-      /* group leader (event 0) is special                */
-      /* If we're multiplexed, everyone is a group leader */
-      if (( i == 0 ) || (ctl->multiplexed)) {
-         ctl->events[i].attr.pinned = !ctl->multiplexed;
-	 ctl->events[i].attr.disabled = 1;
-	 ctl->events[i].group_leader_fd=-1;
-         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed,
-							   ctl->inherit,
-							   !ctl->multiplexed );
-      } else {
-	 ctl->events[i].attr.pinned=0;
-	 ctl->events[i].attr.disabled = 0;
-	 ctl->events[i].group_leader_fd=ctl->events[0].event_fd;
-         ctl->events[i].attr.read_format = get_read_format(ctl->multiplexed,
-							   ctl->inherit,
-							   0 );
-      }
+		/* group leader (event 0) is special                */
+		/* If we're multiplexed, everyone is a group leader */
+		if (( i == 0 ) || (ctl->multiplexed)) {
+			ctl->events[i].attr.pinned = !ctl->multiplexed;
+			ctl->events[i].attr.disabled = 1;
+			ctl->events[i].group_leader_fd=-1;
+			ctl->events[i].attr.read_format = get_read_format(
+							ctl->multiplexed,
+							ctl->inherit,
+							!ctl->multiplexed );
+		} else {
+			ctl->events[i].attr.pinned=0;
+			ctl->events[i].attr.disabled = 0;
+			ctl->events[i].group_leader_fd=ctl->events[0].event_fd;
+			ctl->events[i].attr.read_format = get_read_format(
+							ctl->multiplexed,
+							ctl->inherit,
+							0 );
+		}
 
-
-      /* try to open */
-	perf_event_dump_attr(
+		/* try to open */
+		perf_event_dump_attr(
 				&ctl->events[i].attr,
 				pid,
 				ctl->events[i].cpu,
 				ctl->events[i].group_leader_fd,
 				0 /* flags */ );
 
-	ctl->events[i].event_fd = sys_perf_event_open(
+		ctl->events[i].event_fd = sys_perf_event_open(
 				&ctl->events[i].attr,
 				pid,
 				ctl->events[i].cpu,
 				ctl->events[i].group_leader_fd,
 				0 /* flags */ );
 
-            /* Try to match Linux errors to PAPI errors */
-      if ( ctl->events[i].event_fd == -1 ) {
-	 SUBDBG("sys_perf_event_open returned error on event #%d."
-		"  Error: %s\n",
-		i, strerror( errno ) );
-         ret=map_perf_event_errors_to_papi(errno);
+		/* Try to match Linux errors to PAPI errors */
+		if ( ctl->events[i].event_fd == -1 ) {
+			SUBDBG("sys_perf_event_open returned error "
+				"on event #%d.  Error: %s\n",
+				i, strerror( errno ) );
+			ret=map_perf_event_errors_to_papi(errno);
 
-	 goto open_pe_cleanup;
-      }
+			goto open_pe_cleanup;
+		}
 
-      SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
-              " group_leader/fd: %d, event_fd: %d,"
-              " read_format: %"PRIu64"\n",
-	      pid, ctl->events[i].cpu, ctl->events[i].group_leader_fd,
-	      ctl->events[i].event_fd, ctl->events[i].attr.read_format);
+		SUBDBG ("sys_perf_event_open: tid: %ld, cpu_num: %d,"
+			" group_leader/fd: %d, event_fd: %d,"
+			" read_format: %"PRIu64"\n",
+			pid, ctl->events[i].cpu,
+			ctl->events[i].group_leader_fd,
+			ctl->events[i].event_fd,
+			ctl->events[i].attr.read_format);
 
 
-      /* in many situations the kernel will indicate we opened fine */
-      /* yet things will fail later.  So we need to double check    */
-      /* we actually can use the events we've set up.               */
+		/* in many situations the kernel will indicate we opened fine */
+		/* yet things will fail later.  So we need to double check    */
+		/* we actually can use the events we've set up.               */
 
-      /* This is not necessary if we are multiplexing, and in fact */
-      /* we cannot do this properly if multiplexed because         */
-      /* PERF_EVENT_IOC_RESET does not reset the time running info */
-      if (!ctl->multiplexed) {
-	 ret = check_scheduability( ctx, ctl, i );
+		/* This is not necessary if we are multiplexing, and in fact */
+		/* we cannot do this properly if multiplexed because         */
+		/* PERF_EVENT_IOC_RESET does not reset the time running info */
+		if (!ctl->multiplexed) {
+			ret = check_scheduability( ctx, ctl, i );
 
-         if ( ret != PAPI_OK ) {
-	    /* the last event did open, so we need to bump the counter */
-	    /* before doing the cleanup                                */
-	    i++;
-            goto open_pe_cleanup;
-	 }
-      }
-      ctl->events[i].event_opened=1;
-   }
+			if ( ret != PAPI_OK ) {
+				/* the last event did open, so we need to    */
+				/* bump the counter before doing the cleanup */
+				i++;
+				goto open_pe_cleanup;
+			}
+		}
+		ctl->events[i].event_opened=1;
+	}
 
-   /* Now that we've successfully opened all of the events, do whatever  */
-   /* "tune-up" is needed to attach the mmap'd buffers, signal handlers, */
-   /* and so on.                                                         */
+	/* Now that we've successfully opened all of the events, do whatever  */
+	/* "tune-up" is needed to attach the mmap'd buffers, signal handlers, */
+	/* and so on.                                                         */
 	for ( i = 0; i < ctl->num_events; i++ ) {
 
 		/* If sampling is enabled, hook up signal handler */
@@ -733,18 +743,18 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	return PAPI_OK;
 
 open_pe_cleanup:
-   /* We encountered an error, close up the fds we successfully opened.  */
-   /* We go backward in an attempt to close group leaders last, although */
-   /* That's probably not strictly necessary.                            */
-   while ( i > 0 ) {
-      i--;
-      if (ctl->events[i].event_fd>=0) {
-	 close( ctl->events[i].event_fd );
-	 ctl->events[i].event_opened=0;
-      }
-   }
+	/* We encountered an error, close up the fds we successfully opened.  */
+	/* We go backward in an attempt to close group leaders last, although */
+	/* That's probably not strictly necessary.                            */
+	while ( i > 0 ) {
+		i--;
+		if (ctl->events[i].event_fd>=0) {
+			close( ctl->events[i].event_fd );
+			ctl->events[i].event_opened=0;
+		}
+	}
 
-   return ret;
+	return ret;
 }
 
 /* Close all of the opened events */
@@ -974,7 +984,7 @@ _pe_read_multiplexed( pe_control_t *pe_ctl )
 			/* No scaling needed */
 			pe_ctl->counts[i] = papi_pe_buffer[0];
 		} else if (tot_time_running && tot_time_enabled) {
-	    		/* Scale to give better results */
+			/* Scale to give better results */
 			/* avoid truncation.            */
 			/* Why use 100?  Would 128 be faster? */
 			scale = (tot_time_enabled * 100LL) / tot_time_running;
@@ -1060,8 +1070,12 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		_pe_read_nogroup(pe_ctl);
 	}
 
-	/* Handle common ase where we are using FORMAT_GROUP	*/
+	/* Handle common case where we are using FORMAT_GROUP	*/
 	/* We assume only one group leader, in position 0	*/
+
+	/* By reading the leader file descriptor, we get a series */
+	/* of 64-bit values.  The first is the total number of    */
+	/* events, followed by the counts for them.               */
 
 	else {
 		if (pe_ctl->events[0].group_leader_fd!=-1) {
@@ -1832,27 +1846,27 @@ _pe_ntv_code_to_info(unsigned int EventCode,
 static uint64_t
 mmap_read_head( pe_event_info_t *pe )
 {
-  struct perf_event_mmap_page *pc = pe->mmap_buf;
-  int head;
+	struct perf_event_mmap_page *pc = pe->mmap_buf;
+	int head;
 
-  if ( pc == NULL ) {
-    PAPIERROR( "perf_event_mmap_page is NULL" );
-    return 0;
-  }
+	if ( pc == NULL ) {
+		PAPIERROR( "perf_event_mmap_page is NULL" );
+		return 0;
+	}
 
-  head = pc->data_head;
-  rmb(  );
+	head = pc->data_head;
+	rmb(  );
 
-  return head;
+	return head;
 }
 
 static void
 mmap_write_tail( pe_event_info_t *pe, uint64_t tail )
 {
-  struct perf_event_mmap_page *pc = pe->mmap_buf;
+	struct perf_event_mmap_page *pc = pe->mmap_buf;
 
-  /* ensure all reads are done before we write the tail out. */
-  pc->data_tail = tail;
+	/* ensure all reads are done before we write the tail out. */
+	pc->data_tail = tail;
 }
 
 
@@ -1875,7 +1889,7 @@ typedef union event_union {
 /* Should re-write with comments if we ever figure out what's */
 /* going on here.                                             */
 static void
-mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe, 
+mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe,
            int profile_index )
 {
   uint64_t head = mmap_read_head( pe );
@@ -1947,27 +1961,27 @@ mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe,
 /* Find a native event specified by a profile index */
 static int
 find_profile_index( EventSetInfo_t *ESI, int evt_idx, int *flags,
-                    unsigned int *native_index, int *profile_index )
+		unsigned int *native_index, int *profile_index )
 {
-  int pos, esi_index, count;
+	int pos, esi_index, count;
 
-  for ( count = 0; count < ESI->profile.event_counter; count++ ) {
-    esi_index = ESI->profile.EventIndex[count];
-    pos = ESI->EventInfoArray[esi_index].pos[0];
+	for ( count = 0; count < ESI->profile.event_counter; count++ ) {
+		esi_index = ESI->profile.EventIndex[count];
+		pos = ESI->EventInfoArray[esi_index].pos[0];
 
-    if ( pos == evt_idx ) {
-      *profile_index = count;
-          *native_index = ESI->NativeInfoArray[pos].ni_event &
-	    PAPI_NATIVE_AND_MASK;
-          *flags = ESI->profile.flags;
-          SUBDBG( "Native event %d is at profile index %d, flags %d\n",
-                  *native_index, *profile_index, *flags );
-          return PAPI_OK;
-    }
-  }
-  PAPIERROR( "wrong count: %d vs. ESI->profile.event_counter %d", count,
-	     ESI->profile.event_counter );
-  return PAPI_EBUG;
+		if ( pos == evt_idx ) {
+			*profile_index = count;
+			*native_index = ESI->NativeInfoArray[pos].ni_event &
+					PAPI_NATIVE_AND_MASK;
+			*flags = ESI->profile.flags;
+			SUBDBG( "Native event %d is at profile index %d, flags %d\n",
+				*native_index, *profile_index, *flags );
+			return PAPI_OK;
+		}
+	}
+	PAPIERROR( "wrong count: %d vs. ESI->profile.event_counter %d",
+			count, ESI->profile.event_counter );
+	return PAPI_EBUG;
 }
 
 
@@ -2177,12 +2191,13 @@ _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 static int
 _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
-	SUBDBG("ENTER: ESI: %p, EventIndex: %d, threshold: %d\n", ESI, EventIndex, threshold);
+	SUBDBG("ENTER: ESI: %p, EventIndex: %d, threshold: %d\n",
+		ESI, EventIndex, threshold);
 
-  pe_context_t *ctx;
-  pe_control_t *ctl = (pe_control_t *) ( ESI->ctl_state );
-  int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
-  int cidx;
+	pe_context_t *ctx;
+	pe_control_t *ctl = (pe_control_t *) ( ESI->ctl_state );
+	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
+	int cidx;
 
   cidx = ctl->cidx;
   ctx = ( pe_context_t *) ( ESI->master->context[cidx] );
@@ -2266,50 +2281,62 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 static int
 _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
-  int ret;
-  int evt_idx;
-  pe_control_t *ctl = ( pe_control_t *) ( ESI->ctl_state );
+	int ret;
+	int evt_idx;
+	pe_control_t *ctl = ( pe_control_t *) ( ESI->ctl_state );
 
-  /* Since you can't profile on a derived event, the event is always the */
-  /* first and only event in the native event list.                      */
-  evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
+	/* Since you can't profile on a derived event,	*/
+	/* the event is always the first and only event	*/
+	/* in the native event list.			*/
+	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
-  if ( threshold == 0 ) {
-    SUBDBG( "MUNMAP(%p,%"PRIu64")\n", ctl->events[evt_idx].mmap_buf,
-	    ( uint64_t ) ctl->events[evt_idx].nr_mmap_pages *
-	    getpagesize(  ) );
+	/* If threshold is zero we want to *disable*    */
+	/* profiling on the event                       */
+	if ( threshold == 0 ) {
+		SUBDBG( "MUNMAP(%p,%"PRIu64")\n",
+			ctl->events[evt_idx].mmap_buf,
+			( uint64_t ) ctl->events[evt_idx].nr_mmap_pages *
+			getpagesize() );
 
-    if ( ctl->events[evt_idx].mmap_buf ) {
-      munmap( ctl->events[evt_idx].mmap_buf,
-	      ctl->events[evt_idx].nr_mmap_pages * getpagesize() );
-    }
-    ctl->events[evt_idx].mmap_buf = NULL;
-    ctl->events[evt_idx].nr_mmap_pages = 0;
-    ctl->events[evt_idx].attr.sample_type &= ~PERF_SAMPLE_IP;
-    ret = _pe_set_overflow( ESI, EventIndex, threshold );
-    /* ??? #warning "This should be handled somewhere else" */
-    ESI->state &= ~( PAPI_OVERFLOWING );
-    ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
+		if ( ctl->events[evt_idx].mmap_buf ) {
+			munmap( ctl->events[evt_idx].mmap_buf,
+				ctl->events[evt_idx].nr_mmap_pages *
+				getpagesize() );
+		}
+		ctl->events[evt_idx].mmap_buf = NULL;
+		ctl->events[evt_idx].nr_mmap_pages = 0;
+		ctl->events[evt_idx].attr.sample_type &= ~PERF_SAMPLE_IP;
+		ret = _pe_set_overflow( ESI, EventIndex, threshold );
+		/* Clear any residual overflow flags */
+		/* ??? #warning "This should be handled somewhere else" */
+		ESI->state &= ~( PAPI_OVERFLOWING );
+		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
 
-    return ret;
-  }
+		return ret;
+	}
 
-  /* Look up the native event code */
-  if ( ESI->profile.flags & (PAPI_PROFIL_DATA_EAR | PAPI_PROFIL_INST_EAR)) {
-    /* Not supported yet... */
+	/* Otherwise, we are *enabling* profiling */
 
-    return PAPI_ENOSUPP;
-  }
-  if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
-    /* This requires an ability to randomly alter the sample_period within */
-    /* a given range.  Kernel does not have this ability. FIXME            */
-    return PAPI_ENOSUPP;
-  }
+	/* Look up the native event code */
 
-  ret = _pe_set_overflow( ESI, EventIndex, threshold );
-  if ( ret != PAPI_OK ) return ret;
+	if ( ESI->profile.flags & (PAPI_PROFIL_DATA_EAR |
+					PAPI_PROFIL_INST_EAR)) {
+		/* Not supported yet... */
 
-  return PAPI_OK;
+		return PAPI_ENOSUPP;
+	}
+
+	if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
+		/* This requires an ability to randomly alter the	*/
+		/* sample_period within a given range.			*/
+		/* Linux currently does not have this ability. FIXME	*/
+		return PAPI_ENOSUPP;
+	}
+
+	ret = _pe_set_overflow( ESI, EventIndex, threshold );
+	if ( ret != PAPI_OK ) return ret;
+
+	return PAPI_OK;
 }
 
 
