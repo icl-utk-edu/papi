@@ -703,11 +703,30 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	/* Now that we've successfully opened all of the events, do whatever  */
 	/* "tune-up" is needed to attach the mmap'd buffers, signal handlers, */
 	/* and so on.                                                         */
+
+
+	/* Make things easier and give each event a mmap() buffer */
+	/* Keeping separate tracking for rdpmc vs regular events  */
+	/* Would be a pain.  Also perf always gives every event a */
+	/* mmap buffer.						  */
+
+	for ( i = 0; i < ctl->num_events; i++ ) {
+		/* Just a guess at how many pages would make this relatively efficient.  */
+		/* Note that it's "1 +" because of the need for a control page, and the  */
+		/* number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or   */
+		/* zero.  This is required to optimize dealing with circular buffer      */
+		/* wrapping of the mapped pages.                                         */
+
+		ctl->events[i].nr_mmap_pages = 1 + 2;
+
+		/* Set up the MMAP sample pages */
+		set_up_mmap(ctl,i);
+	}
+
 	for ( i = 0; i < ctl->num_events; i++ ) {
 
 		/* If sampling is enabled, hook up signal handler */
-		if ( (ctl->events[i].attr.sample_period) &&
-		     (ctl->events[i].nr_mmap_pages > 0)) {
+		if (ctl->events[i].attr.sample_period) {
 
 			ret = configure_fd_for_sampling( ctl, i );
 			if ( ret != PAPI_OK ) {
@@ -716,14 +735,6 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 				i = ctl->num_events;
 				goto open_pe_cleanup;
 			}
-
-			/* Set up the MMAP sample pages */
-			set_up_mmap(ctl,i);
-		} else {
-			/* Not a sampling event */
-			/* Make sure mmap_buf is NULL */
-			/* so close_pe_events works right */
-			ctl->events[i].mmap_buf = NULL;
 		}
 	}
 
@@ -747,7 +758,7 @@ open_pe_cleanup:
 	return ret;
 }
 
-
+/* TODO: make code clearer -- vmw */
 static int
 close_event( pe_event_info_t *event )
 {
@@ -1343,7 +1354,7 @@ _pe_update_control_state( hwd_control_state_t *ctl,
 
 			SUBDBG("i: %d, pe_ctx->event_table->num_native_events: %d\n", i, pe_ctx->event_table->num_native_events);
 
-	    	/* Move this events hardware config values and other attributes to the perf_events attribute structure */
+			/* Move this events hardware config values and other attributes to the perf_events attribute structure */
 			memcpy (&pe_ctl->events[i].attr, &ntv_evt->attr, sizeof(perf_event_attr_t));
 
 			/* may need to update the attribute structure with information from event set level domain settings (values set by PAPI_set_domain) */
@@ -1864,6 +1875,9 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 }
 
 /* Stop profiling */
+/* FIXME: does this actually stop anything? */
+/* It looks like it is only actually called from PAPI_stop() */
+/* So the event will be destroyed soon after anyway. */
 static int
 _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 {
@@ -1880,13 +1894,14 @@ _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 	for ( i = 0; i < ctl->num_events; i++ ) {
 		/* Use the mmap_buf field as an indicator */
 		/* of this fd being used for profiling.   */
-		if ( ctl->events[i].mmap_buf ) {
+		if ( ctl->events[i].profiling ) {
 			/* Process any remaining samples in the sample buffer */
 			ret = process_smpl_buf( i, &thread, cidx );
 			if ( ret ) {
 				PAPIERROR( "process_smpl_buf returned error %d", ret );
 				return ret;
 			}
+			ctl->events[i].profiling=0;
 		}
 	}
 
@@ -1908,6 +1923,7 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	cidx = ctl->cidx;
 	ctx = ( pe_context_t *) ( ESI->master->context[cidx] );
 
+	/* FIXME: why pos[0]? */
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
 	SUBDBG("Attempting to set overflow for index %d (%d) of EventSet %d\n",
@@ -1918,8 +1934,9 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 		return PAPI_EINVAL;
 	}
 
+	/* It's an error to disable overflow if it wasn't set in the	*/
+	/* first place.							*/
 	if ( threshold == 0 ) {
-		/* If this counter isn't set to overflow, it's an error */
 		if ( ctl->events[evt_idx].attr.sample_period == 0 ) {
 			SUBDBG("EXIT: PAPI_EINVAL, Tried to clear "
 				"sample threshold when it was not set\n");
@@ -1936,13 +1953,14 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	ctl->events[evt_idx].attr.sample_type = PERF_SAMPLE_IP;
 	/* one for the user page, and two to take IP samples */
 
-	/* Just a guess at how many pages would make this relatively efficient.  */
-	/* Note that it's "1 +" because of the need for a control page, and the  */
-	/* number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or   */
-	/* zero.  This is required to optimize dealing with circular buffer      */
-	/* wrapping of the mapped pages.                                         */
+	if (ctl->events[evt_idx].nr_mmap_pages<2) {
+		PAPIERROR("Trying to sample but with no mmap_pages\n");
+		return PAPI_EINVAL;
+	}
 
-	ctl->events[evt_idx].nr_mmap_pages = 1 + 2;
+	/* FIXME: why are we searching here?  Don't we already assume */
+	/* evt_idx is set?  In fact, does this loop do anything at all? */
+	/* -- vmw */
 
 	/* Check for non-zero sample period */
 	for ( i = 0; i < ctl->num_events; i++ ) {
@@ -1987,7 +2005,8 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	return retval;
 }
 
-/* Enable profiling */
+/* Enable/disable profiling */
+/* If threshold is zero, we disable */
 static int
 _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
@@ -2003,22 +2022,27 @@ _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	/* If threshold is zero we want to *disable*    */
 	/* profiling on the event                       */
 	if ( threshold == 0 ) {
-		SUBDBG( "MUNMAP(%p,%"PRIu64")\n",
-			ctl->events[evt_idx].mmap_buf,
-			( uint64_t ) ctl->events[evt_idx].nr_mmap_pages *
-			getpagesize() );
+//		SUBDBG( "MUNMAP(%p,%"PRIu64")\n",
+//			ctl->events[evt_idx].mmap_buf,
+//			( uint64_t ) ctl->events[evt_idx].nr_mmap_pages *
+//			getpagesize() );
 
-		if ( ctl->events[evt_idx].mmap_buf ) {
-			munmap( ctl->events[evt_idx].mmap_buf,
-				ctl->events[evt_idx].nr_mmap_pages *
-				getpagesize() );
-		}
-		ctl->events[evt_idx].mmap_buf = NULL;
-		ctl->events[evt_idx].nr_mmap_pages = 0;
+//		if ( ctl->events[evt_idx].mmap_buf ) {
+//			munmap( ctl->events[evt_idx].mmap_buf,
+//				ctl->events[evt_idx].nr_mmap_pages *
+//				getpagesize() );
+//		}
+//		ctl->events[evt_idx].mmap_buf = NULL;
+//		ctl->events[evt_idx].nr_mmap_pages = 0;
+
+		/* no longer sample on IP */
 		ctl->events[evt_idx].attr.sample_type &= ~PERF_SAMPLE_IP;
+
+		/* clear out the overflow handler */
+		/* threshold of 0 means to disable it */
 		ret = _pe_set_overflow( ESI, EventIndex, threshold );
 		/* Clear any residual overflow flags */
-		/* ??? #warning "This should be handled somewhere else" */
+		/* ??? old warning says "This should be handled somewhere else" */
 		ESI->state &= ~( PAPI_OVERFLOWING );
 		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
 
@@ -2045,6 +2069,8 @@ _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 
 	ret = _pe_set_overflow( ESI, EventIndex, threshold );
 	if ( ret != PAPI_OK ) return ret;
+
+	ctl->events[evt_idx].profiling=1;
 
 	return PAPI_OK;
 }
