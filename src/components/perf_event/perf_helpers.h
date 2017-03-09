@@ -151,3 +151,123 @@ static inline unsigned long long mmap_read_self(void *addr,
 }
 
 #endif
+
+/* These functions are based on builtin-record.c in the  */
+/* kernel's tools/perf directory.                        */
+/* This code is from a really ancient version of perf */
+/* And should be updated/commented properly */
+
+
+static uint64_t
+mmap_read_head( pe_event_info_t *pe )
+{
+	struct perf_event_mmap_page *pc = pe->mmap_buf;
+	int head;
+
+	if ( pc == NULL ) {
+		PAPIERROR( "perf_event_mmap_page is NULL" );
+		return 0;
+	}
+
+	head = pc->data_head;
+	rmb();
+
+	return head;
+}
+
+static void
+mmap_write_tail( pe_event_info_t *pe, uint64_t tail )
+{
+	struct perf_event_mmap_page *pc = pe->mmap_buf;
+
+	/* ensure all reads are done before we write the tail out. */
+	pc->data_tail = tail;
+}
+
+/* Does the kernel define these somewhere? */
+struct ip_event {
+	struct perf_event_header header;
+ 	uint64_t ip;
+};
+struct lost_event {
+	struct perf_event_header header;
+	uint64_t id;
+	uint64_t lost;
+};
+typedef union event_union {
+	struct perf_event_header header;
+	struct ip_event ip;
+	struct lost_event lost;
+} perf_sample_event_t;
+
+/* Should re-write with comments if we ever figure out what's */
+/* going on here.                                             */
+static void
+mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe,
+           int profile_index )
+{
+	uint64_t head = mmap_read_head( pe );
+	uint64_t old = pe->tail;
+	unsigned char *data = ((unsigned char*)pe->mmap_buf) + getpagesize();
+	int diff;
+
+	diff = head - old;
+	if ( diff < 0 ) {
+		SUBDBG( "WARNING: failed to keep up with mmap data. head = %" PRIu64
+			",  tail = %" PRIu64 ". Discarding samples.\n", head, old );
+		/* head points to a known good entry, start there. */
+		old = head;
+	}
+
+	for( ; old != head; ) {
+		perf_sample_event_t *event = ( perf_sample_event_t * )& data[old & pe->mask];
+		perf_sample_event_t event_copy;
+		size_t size = event->header.size;
+
+		/* Event straddles the mmap boundary -- header should always */
+		/* be inside due to u64 alignment of output.                 */
+		if ( ( old & pe->mask ) + size != ( ( old + size ) & pe->mask ) ) {
+			uint64_t offset = old;
+			uint64_t len = min( sizeof ( *event ), size ), cpy;
+			void *dst = &event_copy;
+
+			do {
+				cpy = min( pe->mask + 1 - ( offset & pe->mask ), len );
+				memcpy( dst, &data[offset & pe->mask], cpy );
+				offset += cpy;
+				dst = ((unsigned char*)dst) + cpy;
+				len -= cpy;
+			} while ( len );
+
+			event = &event_copy;
+		}
+		old += size;
+
+		SUBDBG( "event->type = %08x\n", event->header.type );
+		SUBDBG( "event->size = %d\n", event->header.size );
+
+		switch ( event->header.type ) {
+			case PERF_RECORD_SAMPLE:
+				_papi_hwi_dispatch_profile( ( *thr )->running_eventset[cidx],
+					( caddr_t ) ( unsigned long ) event->ip.ip,
+					0, profile_index );
+				break;
+
+			case PERF_RECORD_LOST:
+				SUBDBG( "Warning: because of a mmap buffer overrun, %" PRId64
+					" events were lost.\n"
+					"Loss was recorded when counter id %#"PRIx64
+					" overflowed.\n", event->lost.lost, event->lost.id );
+				break;
+			default:
+				SUBDBG( "Error: unexpected header type - %d\n",
+					event->header.type );
+				break;
+		}
+	}
+
+	pe->tail = old;
+	mmap_write_tail( pe, old );
+}
+
+
