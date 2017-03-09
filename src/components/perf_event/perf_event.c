@@ -715,16 +715,26 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	/* mmap buffer.						  */
 
 	for ( i = 0; i < ctl->num_events; i++ ) {
-		/* Just a guess at how many pages would make this relatively efficient.  */
-		/* Note that it's "1 +" because of the need for a control page, and the  */
-		/* number following the "+" must be a power of 2 (1, 4, 8, 16, etc) or   */
-		/* zero.  This is required to optimize dealing with circular buffer      */
-		/* wrapping of the mapped pages.                                         */
 
-		ctl->events[i].nr_mmap_pages = 1 + 2;
+		/* Can't mmap() inherited events :( */
+		if (ctl->inherit) {
+			ctl->events[i].nr_mmap_pages = 0;
+			ctl->events[i].mmap_buf = NULL;
+		}
+		else {
+			/* Just a guess at how many pages would make this   */
+			/* relatively efficient.                            */
+			/* Note that it's "1 +" because of the need for a   */
+			/* control page, and the number following the "+"   */
+			/* must be a power of 2 (1, 4, 8, 16, etc) or zero. */
+			/* This is required to optimize dealing with        */
+			/* circular buffer wrapping of the mapped pages.    */
 
-		/* Set up the MMAP sample pages */
-		set_up_mmap(ctl,i);
+			ctl->events[i].nr_mmap_pages = 1 + 2;
+
+			/* Set up the MMAP sample pages */
+			set_up_mmap(ctl,i);
+		}
 	}
 
 	for ( i = 0; i < ctl->num_events; i++ ) {
@@ -1130,6 +1140,10 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 	long long papi_pe_buffer[READ_BUFFER_SIZE];
 
+	/* Handle fast case */
+	if ((fast_counter_read) && (!pe_ctl->inherit)) {
+		return _pe_rdpmc_read( ctx, ctl, events, flags);
+	}
 
 	/* Handle case where we are multiplexing */
 	if (pe_ctl->multiplexed) {
@@ -2329,9 +2343,6 @@ _pe_init_component( int cidx )
 	/* Based on features/bugs               */
 	if (bug_sync_read()) {
 		_papi_hwd[cidx]->read = _pe_read_bug_sync;
-	}
-	else if (fast_counter_read) {
-		_papi_hwd[cidx]->read = _pe_rdpmc_read;
 	}
 
 	return PAPI_OK;
