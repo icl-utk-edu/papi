@@ -2148,7 +2148,7 @@ _pe_init_component( int cidx )
 
 	our_cidx=cidx;
 
-	/* FIXME: put paranoid code in separate function */
+	/* TODO: put paranoid code in separate function? */
 
 	/* The is the official way to detect if perf_event support exists */
 	/* The file is called perf_counter_paranoid on 2.6.31             */
@@ -2168,6 +2168,12 @@ _pe_init_component( int cidx )
 	retval=fscanf(fff,"%d",&paranoid_level);
 	if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
 	fclose(fff);
+
+	if (paranoid_level==3) {
+		strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+			"perf_event support disabled by Linux with paranoid=3",PAPI_MAX_STR_LEN);
+		return PAPI_ENOCMP;
+	}
 
 	if ((paranoid_level==2) && (getuid()!=0)) {
 		SUBDBG("/proc/sys/kernel/perf_event_paranoid prohibits kernel counts");
