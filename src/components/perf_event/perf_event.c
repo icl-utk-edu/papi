@@ -747,12 +747,36 @@ open_pe_cleanup:
 	return ret;
 }
 
+
+static int
+close_event( pe_event_info_t *event )
+{
+
+	if ( event->mmap_buf ) {
+		if ( munmap ( event->mmap_buf,
+				event->nr_mmap_pages * getpagesize() ) ) {
+			PAPIERROR( "munmap of fd = %d returned error: %s",
+							event->event_fd,
+							strerror( errno ) );
+			return PAPI_ESYS;
+		}
+	}
+	if ( close( event->event_fd ) ) {
+		PAPIERROR( "close of fd = %d returned error: %s",
+			event->event_fd, strerror( errno ) );
+		return PAPI_ESYS;
+	}
+
+	event->event_opened=0;
+
+	return 0;
+}
+
 /* Close all of the opened events */
-/* FIXME -- split into two functions */
 static int
 close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 {
-	int i;
+	int i,result;
 	int num_closed=0;
 	int events_not_opened=0;
 
@@ -766,22 +790,9 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	for( i=0; i<ctl->num_events; i++ ) {
 		if (ctl->events[i].event_opened) {
 			if (ctl->events[i].group_leader_fd!=-1) {
-				if ( ctl->events[i].mmap_buf ) {
-					if ( munmap ( ctl->events[i].mmap_buf,
-						ctl->events[i].nr_mmap_pages * getpagesize() ) ) {
-						PAPIERROR( "munmap of fd = %d returned error: %s",
-							ctl->events[i].event_fd, strerror( errno ) );
-						return PAPI_ESYS;
-					}
-				}
-				if ( close( ctl->events[i].event_fd ) ) {
-					PAPIERROR( "close of fd = %d returned error: %s",
-						ctl->events[i].event_fd, strerror( errno ) );
-					return PAPI_ESYS;
-				} else {
-					num_closed++;
-				}
-				ctl->events[i].event_opened=0;
+				result=close_event(&ctl->events[i]);
+				if (result!=0) return result;
+				else num_closed++;
 			}
 		}
 		else {
@@ -791,31 +802,14 @@ close_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 
 	/* Close the group leaders last */
 	for( i=0; i<ctl->num_events; i++ ) {
-
 		if (ctl->events[i].event_opened) {
-
 			if (ctl->events[i].group_leader_fd==-1) {
-				if ( ctl->events[i].mmap_buf ) {
-					if ( munmap ( ctl->events[i].mmap_buf,
-						ctl->events[i].nr_mmap_pages * getpagesize() ) ) {
-						PAPIERROR( "munmap of fd = %d returned error: %s",
-								ctl->events[i].event_fd, strerror( errno ) );
-						return PAPI_ESYS;
-					}
-				}
-
-				if ( close( ctl->events[i].event_fd ) ) {
-					PAPIERROR( "close of fd = %d returned error: %s",
-						ctl->events[i].event_fd, strerror( errno ) );
-					return PAPI_ESYS;
-				} else {
-					num_closed++;
-				}
-				ctl->events[i].event_opened=0;
+				result=close_event(&ctl->events[i]);
+				if (result!=0) return result;
+				else num_closed++;
 			}
 		}
 	}
-
 
 	if (ctl->num_events!=num_closed) {
 		if (ctl->num_events!=(num_closed+events_not_opened)) {
