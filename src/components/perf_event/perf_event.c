@@ -65,6 +65,10 @@ papi_vector_t _perf_event_vector;
 /* Globals */
 struct native_event_table_t perf_native_event_table;
 static int our_cidx;
+static int fast_counter_read=0;
+
+/* Change to zero to disable the feature */
+#define PERF_USE_RDPMC 0
 
 /* The kernel developers say to never use a refresh value of 0        */
 /* See https://lkml.org/lkml/2011/5/24/172                            */
@@ -959,6 +963,48 @@ _pe_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
  * For more info on the layout see include/uapi/linux/perf_event.h
  *
  */
+
+
+/* When we read with rdpmc, we must read each counter individually */
+/* Because of this we don't need separate multiplexing support */
+/* This is all handled by mmap_read_self() */
+static int
+_pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+		long long **events, int flags )
+{
+	SUBDBG("ENTER: ctx: %p, ctl: %p, events: %p, flags: %#x\n",
+		ctx, ctl, events, flags);
+
+	( void ) flags;			/*unused */
+	( void ) ctx;			/*unused */
+	int i;
+	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
+	unsigned long long count, enabled, running, adjusted;
+
+	/* we must read each counter individually */
+	for ( i = 0; i < pe_ctl->num_events; i++ ) {
+
+		count = mmap_read_self(pe_ctl->events[i].mmap_buf,
+					&enabled,&running);
+		/* TODO: error checking? */
+
+		/* Handle multiplexing case */
+		if (enabled!=running) {
+			adjusted = (enabled * 128LL) / running;
+			adjusted = adjusted * count;
+			adjusted = adjusted / 128LL;
+			count = adjusted;
+		}
+
+		pe_ctl->counts[i] = count;
+	}
+	/* point PAPI to the values we read */
+	*events = pe_ctl->counts;
+
+	SUBDBG("EXIT: *events: %p\n", *events);
+
+	return PAPI_OK;
+}
 
 
 static int
@@ -2255,6 +2301,13 @@ _pe_init_component( int cidx )
 		_papi_hwd[cidx]->cmp_info.fast_counter_read = 0;
 	}
 
+#if (PERF_USE_RDPMC==1)
+		fast_counter_read=_papi_hwd[cidx]->cmp_info.fast_counter_read;
+#else
+		fast_counter_read=0;
+		_papi_hwd[cidx]->cmp_info.fast_counter_read = 0;
+#endif
+
 	/* Run the libpfm4-specific setup */
 	retval = _papi_libpfm4_init(_papi_hwd[cidx]);
 	if (retval) {
@@ -2276,6 +2329,9 @@ _pe_init_component( int cidx )
 	/* Based on features/bugs               */
 	if (bug_sync_read()) {
 		_papi_hwd[cidx]->read = _pe_read_bug_sync;
+	}
+	else if (fast_counter_read) {
+		_papi_hwd[cidx]->read = _pe_rdpmc_read;
 	}
 
 	return PAPI_OK;

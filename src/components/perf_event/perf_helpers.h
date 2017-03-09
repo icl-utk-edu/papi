@@ -150,6 +150,13 @@ static inline unsigned long long mmap_read_self(void *addr,
 	return count;
 }
 
+#else
+static inline unsigned long long mmap_read_self(void *addr,
+					 unsigned long long *en,
+					 unsigned long long *ru) {
+	return (unsigned long long)(-1);
+}
+
 #endif
 
 /* These functions are based on builtin-record.c in the  */
