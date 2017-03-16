@@ -66,6 +66,7 @@ papi_vector_t _perf_event_vector;
 struct native_event_table_t perf_native_event_table;
 static int our_cidx;
 static int fast_counter_read=0;
+static int exclude_guest_unsupported=0;
 
 /* Change to zero to disable the feature */
 #define PERF_USE_RDPMC 0
@@ -257,6 +258,48 @@ get_read_format( unsigned int multiplex,
 	  multiplex, inherit, format_group, format);
 
    return format;
+}
+
+
+/* attr.exclude_guest is enabled by default in recent libpfm4 */
+/* however older kernels will reject events with it set */
+/* because the reserved field is not all zeros */
+static int
+check_exclude_guest( void )
+{
+	int ev_fd;
+	struct perf_event_attr attr;
+
+	/* First check that we can open a plain instructions event */
+	memset(&attr, 0 , sizeof(attr));
+	attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+
+	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
+	if ( ev_fd == -1 ) {
+		PAPIERROR("Couldn't open hw_instructions in exclude_guest test");
+		return -1;
+	}
+	close(ev_fd);
+
+	/* Now try again with excude_guest */
+	memset(&attr, 0 , sizeof(attr));
+	attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+	attr.exclude_guest=1;
+
+	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
+	if ( ev_fd == -1 ) {
+		if (errno==EINVAL) {
+			exclude_guest_unsupported=1;
+		}
+		else {
+			PAPIERROR("Unexpected errno in exclude_guest test");
+		}
+	} else {
+		exclude_guest_unsupported=0;
+		close(ev_fd);
+	}
+
+	return PAPI_OK;
 }
 
 /*****************************************************************/
@@ -629,6 +672,19 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 		/* set up the attr structure.			*/
 		/* We don't set up all fields here		*/
 		/* as some have already been set up previously.	*/
+
+		/* Handle the broken exclude_guest problem */
+		/* libpfm4 sets this by default (PEBS events depend on it) */
+		/* but on older kernels that dont know about exclude_guest */
+		/* perf_event_open() will error out as a "reserved"        */
+		/* unknown bit is set to 1.                                */
+		/* Do we need to also watch for exclude_host, exclude_idle */
+		/* exclude_callchain*?					   */
+		if ((ctl->events[i].attr.exclude_guest) &&
+			(exclude_guest_unsupported)) {
+			SUBDBG("Disabling exclude_guest in event %d\n",i);
+			ctl->events[i].attr.exclude_guest=0;
+		}
 
 		/* group leader (event 0) is special                */
 		/* If we're multiplexed, everyone is a group leader */
@@ -2338,6 +2394,9 @@ _pe_init_component( int cidx )
 			"Error initializing libpfm4",PAPI_MAX_STR_LEN);
 		return retval;
 	}
+
+	/* check for exclude_guest issue */
+	check_exclude_guest();
 
 	/* Update the default function pointers */
 	/* Based on features/bugs               */
