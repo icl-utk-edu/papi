@@ -68,9 +68,6 @@ static int our_cidx;
 static int fast_counter_read=0;
 static int exclude_guest_unsupported=0;
 
-/* Change to zero to disable the feature */
-#define PERF_USE_RDPMC 0
-
 /* The kernel developers say to never use a refresh value of 0        */
 /* See https://lkml.org/lkml/2011/5/24/172                            */
 /* However, on some platforms (like Power) a value of 1 does not work */
@@ -2371,7 +2368,7 @@ _pe_init_component( int cidx )
 		_papi_hwd[cidx]->cmp_info.fast_counter_read = 0;
 	}
 
-#if (PERF_USE_RDPMC==1)
+#if (USE_PERFEVENT_RDPMC==1)
 		fast_counter_read=_papi_hwd[cidx]->cmp_info.fast_counter_read;
 #else
 		fast_counter_read=0;
