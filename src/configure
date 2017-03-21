@@ -852,6 +852,9 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-perfevent-rdpmc
+                          Enable userspace rdpmc instruction on perf_event,
+                          default: no
   --disable-perf-event-uncore		Disable perf_event uncore component
 
 Optional Packages:
@@ -2272,7 +2275,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2275:" \
+echo "$as_me:2278:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5934,6 +5937,28 @@ if test "${with_perf_events+set}" = set; then
 	       user_specified_interface=pe
 fi;
 
+# RDPMC support
+
+# Check whether --enable-perfevent_rdpmc or --disable-perfevent_rdpmc was given.
+if test "${enable_perfevent_rdpmc+set}" = set; then
+  enableval="$enable_perfevent_rdpmc"
+  case "${enableval}" in
+             yes) enable_perfevent_rdpmc=true ;;
+             no)  enable_perfevent_rpdmc=false ;;
+             *)   { { echo "$as_me:$LINENO: error: bad value ${enableval} for --enable-perfevent-rdpmc" >&5
+echo "$as_me: error: bad value ${enableval} for --enable-perfevent-rdpmc" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+else
+  enable_perfevent_rdpmc=false
+fi;
+
+if test "$enable_perfevent_rdpmc" = "true"; then
+	PECFLAGS="$PECFLAGS -DUSE_PERFEVENT_RDPMC=1"
+fi
+
+# Uncore support
+
 # Check whether --enable-perf_event_uncore or --disable-perf_event_uncore was given.
 if test "${enable_perf_event_uncore+set}" = set; then
   enableval="$enable_perf_event_uncore"
@@ -6013,7 +6038,7 @@ fi
 
   fi
   if test "$perf_events" = "yes"; then
-      PECFLAGS="-DPEINCLUDE=\\\"$pe_incdir/perf_event.h\\\""
+      PECFLAGS="$PECFLAGS -DPEINCLUDE=\\\"$pe_incdir/perf_event.h\\\""
   fi
 
 #
