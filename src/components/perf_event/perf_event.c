@@ -625,12 +625,31 @@ set_up_mmap( pe_control_t *ctl, int evt_idx)
 			MAP_SHARED,
 			fd, 0 );
 
+	/* This may happen if we go over the limit in	*/
+	/* /proc/sys/kernel/perf_event_mlock_kb		*/
+	/* which defaults to 516k			*/
+	/* with regular rdpmc events on 4k page archs	*/
+	/* this is roughly 128 events			*/
+
+	/* We sholdn't fail, just fall back to non-rdpmc	*/
+	/* Although not sure what happens if it's a sample	*/
+	/* event that fails to mmap.				*/
+
 	if ( buf_addr == MAP_FAILED ) {
-		PAPIERROR( "mmap(NULL,%d,%d,%d,%d,0): %s",
+		SUBDBG( "mmap(NULL,%d,%d,%d,%d,0): %s",
 			ctl->events[evt_idx].nr_mmap_pages * getpagesize(),
 			PROT_READ | PROT_WRITE,
 			MAP_SHARED,
 			fd, strerror( errno ) );
+
+		ctl->events[evt_idx].mmap_buf = NULL;
+
+		/* Easier to just globally disable this, as it should	*/
+		/* be a fairly uncommon case hopefully.			*/
+		if (fast_counter_read) {
+			PAPIERROR("Can't mmap, disabling fast_counter_read\n");
+			fast_counter_read=0;
+		}
 		return PAPI_ESYS;
 	}
 
@@ -1048,7 +1067,8 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	for ( i = 0; i < pe_ctl->num_events; i++ ) {
 
 		count = mmap_read_self(pe_ctl->events[i].mmap_buf,
-					&enabled,&running);
+						&enabled,&running);
+
 		/* TODO: error checking? */
 
 		/* Handle multiplexing case */
