@@ -12,6 +12,7 @@ typedef struct
   int event_fd;                   /* fd of event                          */
   int event_opened;               /* event successfully opened            */
   int profiling;                  /* event is profiling                   */
+  int sampling;			  /* event is a sampling event            */
   uint32_t nr_mmap_pages;         /* number pages in the mmap buffer      */
   void *mmap_buf;                 /* used for control/profiling           */
   uint64_t tail;                  /* current read location in mmap buffer */

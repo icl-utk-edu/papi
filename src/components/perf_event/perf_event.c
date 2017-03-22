@@ -801,8 +801,13 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 			/* must be a power of 2 (1, 4, 8, 16, etc) or zero. */
 			/* This is required to optimize dealing with        */
 			/* circular buffer wrapping of the mapped pages.    */
+			if (ctl->events[i].profiling) {
+				ctl->events[i].nr_mmap_pages = 1 + 2;
+			}
+			else {
+				ctl->events[i].nr_mmap_pages = 1 + 2;
+			}
 
-			ctl->events[i].nr_mmap_pages = 1 + 2;
 
 			/* Set up the MMAP sample pages */
 			set_up_mmap(ctl,i);
@@ -2056,7 +2061,8 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	cidx = ctl->cidx;
 	ctx = ( pe_context_t *) ( ESI->master->context[cidx] );
 
-	/* FIXME: why pos[0]? */
+	/* pos[0] is the first native event */
+	/* derived events might be made up of multiple native events */
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 
 	SUBDBG("Attempting to set overflow for index %d (%d) of EventSet %d\n",
@@ -2069,35 +2075,33 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 
 	/* It's an error to disable overflow if it wasn't set in the	*/
 	/* first place.							*/
-	if ( threshold == 0 ) {
-		if ( ctl->events[evt_idx].attr.sample_period == 0 ) {
+	if (( threshold == 0 ) &&
+		( ctl->events[evt_idx].attr.sample_period == 0 ) ) {
 			SUBDBG("EXIT: PAPI_EINVAL, Tried to clear "
 				"sample threshold when it was not set\n");
 			return PAPI_EINVAL;
-		}
 	}
 
+	/* Set the sample period to threshold */
 	ctl->events[evt_idx].attr.sample_period = threshold;
 
-	/* Setting wakeup_events to one means issue a wakeup on every */
-	/* counter overflow (not mmap page overflow).                 */
-	ctl->events[evt_idx].attr.wakeup_events = 1;
-	/* We need the IP to pass to the overflow handler */
-	ctl->events[evt_idx].attr.sample_type = PERF_SAMPLE_IP;
-	/* one for the user page, and two to take IP samples */
+	if (threshold == 0) {
+		ctl->events[evt_idx].sampling = 0;
+	}
+	else {
 
-	if (ctl->events[evt_idx].nr_mmap_pages<2) {
-		PAPIERROR("Trying to sample but with no mmap_pages\n");
-		return PAPI_EINVAL;
+		/* Setting wakeup_events to one means issue a wakeup on every */
+		/* counter overflow (not mmap page overflow).                 */
+		ctl->events[evt_idx].attr.wakeup_events = 1;
+		/* We need the IP to pass to the overflow handler */
+		ctl->events[evt_idx].attr.sample_type = PERF_SAMPLE_IP;
 	}
 
-	/* FIXME: why are we searching here?  Don't we already assume */
-	/* evt_idx is set?  In fact, does this loop do anything at all? */
-	/* -- vmw */
 
-	/* Check for non-zero sample period */
+	/* Check to see if any events in the EventSet are setup to sample */
+	/* Do we actually handle multiple overflow events at once? --vmw  */
 	for ( i = 0; i < ctl->num_events; i++ ) {
-		if ( ctl->events[evt_idx].attr.sample_period ) {
+		if ( ctl->events[i].attr.sample_period ) {
 			found_non_zero_sample_period = 1;
 			break;
 		}
@@ -2116,6 +2120,7 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 				"returned: %d\n", retval);
 		}
 	} else {
+
 		/* turn off internal overflow flag for this event set */
 		ctl->overflow = 0;
 
@@ -2130,7 +2135,7 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	}
 
 	retval = _pe_update_control_state( ctl, NULL,
-				( (pe_control_t *) (ESI->ctl_state) )->num_events,
+				((pe_control_t *)(ESI->ctl_state) )->num_events,
 				ctx );
 
 	SUBDBG("EXIT: return: %d\n", retval);
