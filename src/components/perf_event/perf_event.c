@@ -804,13 +804,17 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 			if (ctl->events[i].sampling) {
 				ctl->events[i].nr_mmap_pages = 1 + 2;
 			}
-			else {
+			else if (fast_counter_read) {
 				ctl->events[i].nr_mmap_pages = 1;
 			}
-
+			else {
+				ctl->events[i].nr_mmap_pages = 0;
+			}
 
 			/* Set up the MMAP sample pages */
-			set_up_mmap(ctl,i);
+			if (ctl->events[i].nr_mmap_pages) {
+				set_up_mmap(ctl,i);
+			}
 		}
 	}
 
@@ -2090,7 +2094,6 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 		ctl->events[evt_idx].sampling = 0;
 	}
 	else {
-
 		ctl->events[evt_idx].sampling = 1;
 
 		/* Setting wakeup_events to one means issue a wakeup on every */
