@@ -801,11 +801,11 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 			/* must be a power of 2 (1, 4, 8, 16, etc) or zero. */
 			/* This is required to optimize dealing with        */
 			/* circular buffer wrapping of the mapped pages.    */
-			if (ctl->events[i].profiling) {
+			if (ctl->events[i].sampling) {
 				ctl->events[i].nr_mmap_pages = 1 + 2;
 			}
 			else {
-				ctl->events[i].nr_mmap_pages = 1 + 2;
+				ctl->events[i].nr_mmap_pages = 1;
 			}
 
 
@@ -2047,6 +2047,7 @@ _pe_stop_profiling( ThreadInfo_t *thread, EventSetInfo_t *ESI )
 }
 
 /* Set up an event to cause overflow */
+/* If threshold==0 then disable overflow for that event */
 static int
 _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 {
@@ -2089,6 +2090,8 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 		ctl->events[evt_idx].sampling = 0;
 	}
 	else {
+
+		ctl->events[evt_idx].sampling = 1;
 
 		/* Setting wakeup_events to one means issue a wakeup on every */
 		/* counter overflow (not mmap page overflow).                 */
@@ -2176,39 +2179,36 @@ _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 		/* no longer sample on IP */
 		ctl->events[evt_idx].attr.sample_type &= ~PERF_SAMPLE_IP;
 
-		/* clear out the overflow handler */
-		/* threshold of 0 means to disable it */
-		ret = _pe_set_overflow( ESI, EventIndex, threshold );
 		/* Clear any residual overflow flags */
 		/* ??? old warning says "This should be handled somewhere else" */
 		ESI->state &= ~( PAPI_OVERFLOWING );
 		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
 
-		return ret;
-	}
+		ctl->events[evt_idx].profiling=0;
 
-	/* Otherwise, we are *enabling* profiling */
+	} else {
 
-	/* Look up the native event code */
+		/* Otherwise, we are *enabling* profiling */
 
-	if ( ESI->profile.flags & (PAPI_PROFIL_DATA_EAR |
-					PAPI_PROFIL_INST_EAR)) {
-		/* Not supported yet... */
+		/* Look up the native event code */
 
-		return PAPI_ENOSUPP;
-	}
+		if ( ESI->profile.flags & (PAPI_PROFIL_DATA_EAR |
+						PAPI_PROFIL_INST_EAR)) {
+			/* Not supported yet... */
+			return PAPI_ENOSUPP;
+		}
 
-	if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
-		/* This requires an ability to randomly alter the	*/
-		/* sample_period within a given range.			*/
-		/* Linux currently does not have this ability. FIXME	*/
-		return PAPI_ENOSUPP;
+		if ( ESI->profile.flags & PAPI_PROFIL_RANDOM ) {
+			/* This requires an ability to randomly alter the    */
+			/* sample_period within a given range.		     */
+			/* Linux currently does not have this ability. FIXME */
+			return PAPI_ENOSUPP;
+		}
+		ctl->events[evt_idx].profiling=1;
 	}
 
 	ret = _pe_set_overflow( ESI, EventIndex, threshold );
 	if ( ret != PAPI_OK ) return ret;
-
-	ctl->events[evt_idx].profiling=1;
 
 	return PAPI_OK;
 }
