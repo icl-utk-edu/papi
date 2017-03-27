@@ -308,7 +308,7 @@ check_exclude_guest( void )
 /*****************************************************************/
 
 static void perf_event_dump_attr( struct perf_event_attr *hw_event,
-	pid_t pid, int cpu, int group_fd, int flags) {
+	pid_t pid, int cpu, int group_fd, unsigned long int flags) {
 
 	/* Mark parameters as not used                   */
 	/* In the common case (no SUBDBG) the function   */
