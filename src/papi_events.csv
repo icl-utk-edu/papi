@@ -1002,8 +1002,12 @@ CPU,Pentium4/Xeon/EM64T
 CPU,netburst
 CPU,netburst_p
 #
+# Note: the proper event is GLOBAL_POWER_EVENTS:RUNNING
+#       but the kernel grabs that for the watchdog timer
+#       and suggests "" is equivelant
+#PRESET,PAPI_TOT_CYC,NOT_DERIVED,GLOBAL_POWER_EVENTS:RUNNING
+PRESET,PAPI_TOT_CYC,NOT_DERIVED,execution_event:nbogus0:nbogus1:nbogus2:nbogus3:bogus0:bogus1:bogus2:bogus3:cmpl:thr=15
 PRESET,PAPI_TOT_INS,NOT_DERIVED,INSTR_RETIRED:NBOGUSNTAG
-PRESET,PAPI_TOT_CYC,NOT_DERIVED,GLOBAL_POWER_EVENTS:RUNNING
 PRESET,PAPI_RES_STL, NOT_DERIVED, resource_stall:SBFULL
 PRESET,PAPI_BR_INS, NOT_DERIVED, branch_retired:MMNP:MMNM:MMTP:MMTM
 PRESET,PAPI_BR_TKN, NOT_DERIVED, branch_retired:MMTP:MMTM
