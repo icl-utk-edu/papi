@@ -431,7 +431,7 @@ _x86_allocate_registers( EventSetInfo_t * ESI )
 
 	for ( i = 0; i < natNum; i++ ) {
 		/* retrieve the mapping information about this native event */
-		_papi_libpfm_ntv_code_to_bits( ( unsigned int ) ESI->NativeInfoArray[i].
+		_papi_libpfm_ntv_code_to_bits_perfctr( ( unsigned int ) ESI->NativeInfoArray[i].
 							   ni_event, &event_list[i].ra_bits );
 
 		if ( is_pentium4() ) {
