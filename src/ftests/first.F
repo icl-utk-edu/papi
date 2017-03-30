@@ -165,8 +165,8 @@
         print *, 'Column 4 exactly equals column 5'
       end if
 
-      min = INT(values(3)*0.8)
-      max = INT(values(3)*1.2)
+      min = INT(REAL(values(3))*0.8)
+      max = INT(REAL(values(3))*1.2)
 
       if ((values(1).gt.max) .OR. (values(1).lt.min) .OR. 
      *(values(5).gt.(max*2)) .OR. (values(5).lt.(min*2)) .OR.
@@ -176,8 +176,8 @@
      . name, 1)
       end if
 
-      min = INT(values(4)*0.65)
-      max = INT(values(4)*1.35)
+      min = INT(REAL(values(4))*0.65)
+      max = INT(REAL(values(4))*1.35)
       if ((values(2).gt.max) .OR. (values(2).lt.min) .OR. 
      *(values(6).gt.(max*2)) .OR. (values(6).lt.(min*2)) .OR.
      *(values(8).gt.(max*3)) .OR. (values(8).lt.(min*3)) .OR.

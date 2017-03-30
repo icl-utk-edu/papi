@@ -93,7 +93,7 @@
       print *, "Total cost for PAPI_start/stop(2 counters) over",
      *" 50000 iterations:"
       write (*, 100) ntotcyc, "total cyc"
-      write (*, 200) ntotcyc/50001.0, "cyc/call pair"
+      write (*, 200) REAL(ntotcyc)/50001.0, "cyc/call pair"
       print *
       print *
       
@@ -133,7 +133,7 @@ C     Start the read val
       print *, "Total cost for PAPI_read(2 counters) over ",
      *"50000 iterations:"
       write (*, 100) ntotcyc, "total cyc"
-      write (*, 200) ntotcyc/50001.0, "cyc/call"
+      write (*, 200) REAL(ntotcyc)/50001.0, "cyc/call"
       end if
 
  100  format (I15, A15)
