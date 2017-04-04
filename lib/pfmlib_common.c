@@ -1011,10 +1011,10 @@ pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 			ainfo->name = "RAW_UMASK";
 			ainfo->type = PFM_ATTR_RAW_UMASK;
 			ainfo->ctrl = PFM_ATTR_CTRL_PMU;
-			ainfo->idx  = strtoull(s, &endptr, 0);
+			ainfo->idx  = strtoul(s, &endptr, 0);
 			ainfo->equiv= NULL;
 			if (*endptr) {
-				DPRINT("raw umask (%s) is not a number\n", s);
+				DPRINT("raw umask (%s) is not a number\n");
 				return PFM_ERR_ATTR;
 			}
 
@@ -1368,9 +1368,9 @@ found:
 	for (i = 0; i < d->nattrs; i++) {
 		pfm_event_attr_info_t *a = attr(d, i);
 		if (a->type != PFM_ATTR_RAW_UMASK)
-			DPRINT("%d %d %"PRIu64" %s\n", d->event, i, a->idx, d->pattrs[d->attrs[i].id].name);
+			DPRINT("%d %d %d %s\n", d->event, i, a->idx, d->pattrs[d->attrs[i].id].name);
 		else
-			DPRINT("%d %d RAW_UMASK (0x%"PRIx64")\n", d->event, i, a->idx);
+			DPRINT("%d %d RAW_UMASK (0x%x)\n", d->event, i, a->idx);
 	}
 error:
 	free(str);
