@@ -569,7 +569,7 @@ static int
 pfmlib_perf_encode_tp(pfmlib_event_desc_t *e)
 {
 	perf_umask_t *um;
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i, nu = 0;
 
 	e->fstr[0] = '\0';
@@ -607,7 +607,7 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e)
 static int
 pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e)
 {
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	perf_event_t *ent;
 	unsigned int msk, grpmsk;
 	uint64_t umask = 0;
@@ -733,7 +733,7 @@ pfm_perf_event_is_valid(void *this, int idx)
 }
 
 static int
-pfm_perf_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_perf_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	perf_umask_t *um;
 

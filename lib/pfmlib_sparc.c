@@ -165,7 +165,7 @@ int
 pfm_sparc_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	const sparc_entry_t *pe = this_pe(this);
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	pfm_sparc_reg_t reg;
 	int i;
 
@@ -260,7 +260,7 @@ pfm_sparc_validate_table(void *this, FILE *fp)
 }
 
 int
-pfm_sparc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_sparc_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	const sparc_entry_t *pe = this_pe(this);
 	int idx;

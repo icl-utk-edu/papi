@@ -504,7 +504,7 @@ pfmlib_compact_attrs(pfmlib_event_desc_t *e, int i)
 static inline int
 pfmlib_same_attr(pfmlib_event_desc_t *d, int i, int j)
 {
-	pfm_event_attr_info_t *a1, *a2;
+	pfmlib_event_attr_info_t *a1, *a2;
 	pfmlib_attr_t *b1, *b2;
 
 	a1 = attr(d, i);
@@ -967,7 +967,7 @@ pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 static int
 pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 {
-	pfm_event_attr_info_t *ainfo;
+	pfmlib_event_attr_info_t *ainfo;
 	char *s, *p, *q, *endptr;
 	char yes[2] = "y";
 	pfm_attr_t type;
@@ -1366,7 +1366,7 @@ found:
 		ret = pfmlib_sanitize_event(d);
 
 	for (i = 0; i < d->nattrs; i++) {
-		pfm_event_attr_info_t *a = attr(d, i);
+		pfmlib_event_attr_info_t *a = attr(d, i);
 		if (a->type != PFM_ATTR_RAW_UMASK)
 			DPRINT("%d %d %d %s\n", d->event, i, a->idx, d->pattrs[d->attrs[i].id].name);
 		else
@@ -1549,7 +1549,7 @@ static int
 pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 {
 	pfm_event_info_t einfo;
-	pfm_event_attr_info_t ainfo;
+	pfmlib_event_attr_info_t ainfo;
 	char *buf;
 	size_t maxlen = 0, len;
 	int i, u, n = 0, um;
@@ -1811,7 +1811,7 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 int
 pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_t *uinfo)
 {
-	pfm_event_attr_info_t info;
+	pfmlib_event_attr_info_t info;
 	pfmlib_event_desc_t e;
 	pfmlib_pmu_t *pmu;
 	size_t sz = sizeof(info);
@@ -1857,17 +1857,25 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	info = e.pattrs[attr_idx];
 
 	/*
-	 * rewrite size to reflect what we are returning
-	 */
-	info.size = sz;
-	/*
 	 * info.idx = private, namespace specific index,
 	 * should not be visible externally, so override
 	 * with public index
+	 *
+	 * cannot memcpy() info into uinfo as they do not
+	 * have the same size, cf. idx field (uint64 vs, uint32)
 	 */
-	info.idx  = attr_idx;
-
-	memcpy(uinfo, &info, sz);
+	uinfo->name  = info.name;
+	uinfo->desc  = info.desc;
+	uinfo->equiv = info.equiv;
+	uinfo->size  = sz;
+	uinfo->code  = info.code;
+	uinfo->type  = info.type;
+	uinfo->idx   = attr_idx;
+	uinfo->ctrl  = info.ctrl;
+	uinfo->is_dfl= info.is_dfl;
+	uinfo->is_precise = info.is_precise;
+	uinfo->reserved_bits = 0;
+	uinfo->dfl_val64 = info.dfl_val64;
 
 	ret = PFM_SUCCESS;
 error:

@@ -82,7 +82,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	struct perf_event_attr my_attr, *attr;
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	size_t orig_sz, asz, sz = sizeof(arg);
 	uint64_t ival;
 	int has_plm = 0, has_vmx_plm = 0;
@@ -357,7 +357,7 @@ static int
 perf_get_os_attr_info(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_os_t *os = this;
-	pfm_event_attr_info_t *info;
+	pfmlib_event_attr_info_t *info;
 	int i, k, j = e->npattrs;
 
 	for (i = k = 0; os->atdesc[i].name; i++) {

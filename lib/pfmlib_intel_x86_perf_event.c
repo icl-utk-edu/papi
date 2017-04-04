@@ -60,7 +60,7 @@ find_pmu_type_by_name(const char *name)
 static int
 has_ldlat(void *this, pfmlib_event_desc_t *e)
 {
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i;
 
 	for (i = 0; i < e->nattrs; i++) {
@@ -217,7 +217,7 @@ pfm_intel_nhm_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 int
 pfm_intel_x86_requesting_pebs(pfmlib_event_desc_t *e)
 {
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i;
 
 	for (i = 0; i < e->nattrs; i++) {
@@ -233,7 +233,7 @@ pfm_intel_x86_requesting_pebs(pfmlib_event_desc_t *e)
 static int
 intel_x86_event_has_pebs(void *this, pfmlib_event_desc_t *e)
 {
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i;
 
 	/* first check at the event level */

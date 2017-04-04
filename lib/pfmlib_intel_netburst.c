@@ -110,7 +110,7 @@ found:
 int
 pfm_netburst_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	netburst_escr_value_t escr;
 	netburst_cccr_value_t cccr;
 	unsigned int evmask = 0;
@@ -322,7 +322,7 @@ pfm_netburst_event_is_valid(void *this, int pidx)
 }
 
 static int
-pfm_netburst_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_netburst_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	const netburst_entry_t *pe = this_pe(this);
 	int numasks, idx;

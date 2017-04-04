@@ -281,7 +281,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	pfm_snbep_unc_reg_t reg;
 	pfm_snbep_unc_reg_t filters[INTEL_X86_MAX_FILTERS];
 	pfm_snbep_unc_reg_t addr;
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	uint64_t val, umask1, umask2;
 	int k, ret;
 	int has_cbo_tid = 0;
@@ -641,7 +641,7 @@ pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx)
 }
 
 int
-pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const pfmlib_attr_desc_t *atdesc = this_atdesc(this);

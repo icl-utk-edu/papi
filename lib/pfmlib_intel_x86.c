@@ -296,7 +296,7 @@ static int
 intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int numasks = 0, pebs = 0;
 	int i;
 
@@ -340,7 +340,7 @@ static int
 intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, int max_grpid)
 {
 	const intel_x86_entry_t *pe;
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i, grpid;
 
 	DPRINT("check: max_grpid=%d\n", max_grpid);
@@ -366,7 +366,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 {
 	pfmlib_pmu_t *pmu = this;
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	const intel_x86_entry_t *pe;
 	pfm_intel_x86_reg_t reg, reg2;
 	unsigned int grpmsk, ugrpmsk = 0;
@@ -964,7 +964,7 @@ skip_dfl:
 }
 
 int
-pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const pfmlib_attr_desc_t *atdesc = this_atdesc(this);
@@ -1029,7 +1029,7 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 int
 pfm_intel_x86_valid_pebs(pfmlib_event_desc_t *e)
 {
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i, npebs = 0, numasks = 0;
 
 	/* first check at the event level */

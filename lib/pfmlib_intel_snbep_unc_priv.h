@@ -329,7 +329,7 @@ extern int  pfm_intel_hswep_unc_detect(void *this);
 extern int  pfm_intel_knl_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int  pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx);
-extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info);
+extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info);
 
 static inline int
 is_cbo_filt_event(void *this, pfm_intel_x86_reg_t reg)

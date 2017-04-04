@@ -91,7 +91,7 @@ pfm_perf_raw_event_is_valid(void *this, int idx)
 }
 
 static int
-pfm_perf_raw_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_perf_raw_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	return PFM_ERR_ATTR;
 }

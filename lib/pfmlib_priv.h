@@ -56,6 +56,28 @@ typedef struct {
 	pfm_attr_t	type;	/* used to validate value (if any) */
 } pfmlib_attr_desc_t;
 
+typedef struct {
+	const char		*name;	/* attribute symbolic name */
+	const char		*desc;	/* attribute description */
+	const char		*equiv;	/* attribute is equivalent to */
+	size_t			size;	/* struct sizeof */
+	uint64_t		code;	/* attribute code */
+	pfm_attr_t		type;	/* attribute type */
+	int			idx;	/* attribute opaque index */
+	pfm_attr_ctrl_t		ctrl;		/* what is providing attr */
+	struct {
+		unsigned int    is_dfl:1;	/* is default umask */
+		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
+		unsigned int	reserved_bits:30;
+	};
+	union {
+		uint64_t	dfl_val64;	/* default 64-bit value */
+		const char	*dfl_str;	/* default string value */
+		int		dfl_bool;	/* default boolean value */
+		int		dfl_int;	/* default integer value */
+	};
+} pfmlib_event_attr_info_t;
+
 /*
  * attribute description passed to model-specific layer
  */
@@ -90,7 +112,7 @@ typedef struct {
 	int			count;				/* number of entries in codes[] */
 	pfmlib_attr_t		attrs[PFMLIB_MAX_ATTRS];	/* list of requested attributes */
 
-	pfm_event_attr_info_t	*pattrs;			/* list of possible attributes */
+	pfmlib_event_attr_info_t *pattrs;			/* list of possible attributes */
 	char			fstr[PFMLIB_EVT_MAX_NAME_LEN];	/* fully qualified event string */
 	uint64_t		codes[PFMLIB_MAX_ENCODING];	/* event encoding */
 	void			*os_data;
@@ -129,7 +151,7 @@ typedef struct pfmlib_pmu {
 	int		 (*event_is_valid)(void *this, int pidx);
 	int		 (*can_auto_encode)(void *this, int pidx, int uidx);
 
-	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
+	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfmlib_event_attr_info_t *info);
 	int		 (*get_event_encoding[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
 
 	void		 (*validate_pattrs[PFM_OS_MAX])(void *this, pfmlib_event_desc_t *e);
