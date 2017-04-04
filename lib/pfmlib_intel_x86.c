@@ -481,16 +481,24 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 				reg.sel_event_select = last_ucode;
 			}
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
+			int ofr_bits = 8;
+			uint64_t rmask;
 
-			/* there can only be one RAW_UMASK per event */
+			/* set limit on width of raw umask */
+			if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
+				ofr_bits = 38;
+				if (e->pmu->pmu == PFM_PMU_INTEL_WSM || e->pmu->pmu == PFM_PMU_INTEL_WSM_DP)
+					ofr_bits = 16;
+			}
+			rmask = (1ULL << ofr_bits) - 1;
 
-			/* sanity check */
-			if (a->idx & ~0xff) {
-				DPRINT("raw umask is 8-bit wide\n");
+			if (a->idx & ~rmask) {
+				DPRINT("raw umask is too wide max %d bits\n", ofr_bits);
 				return PFM_ERR_ATTR;
 			}
+
 			/* override umask */
-			umask2 = a->idx & 0xff;
+			umask2  = a->idx & rmask;
 			ugrpmsk = grpmsk;
 		} else {
 			uint64_t ival = e->attrs[k].ival;
