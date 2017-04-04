@@ -270,7 +270,7 @@ validate_structs(void)
 		}
 
 		if (sz != d->sz) {
-			printf("Failed (invisible padding of %zu bytes)\n", d->sz - sz);
+			printf("Failed (invisible padding of %zu bytes, total struct size %zu bytes)\n", d->sz - sz, d->sz);
 			errors++;
 			continue;
 		}
