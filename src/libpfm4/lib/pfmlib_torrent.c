@@ -104,7 +104,7 @@ pfm_torrent_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 
 static int
 pfm_torrent_get_event_attr_info(void *this, int idx, int attr_idx,
-				  pfm_event_attr_info_t *info)
+				  pfmlib_event_attr_info_t *info)
 {
 	int m;
 

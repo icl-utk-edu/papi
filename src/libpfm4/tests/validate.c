@@ -201,7 +201,6 @@ static const struct_desc_t pfmlib_structs[]={
 		FIELD(code, pfm_event_attr_info_t),
 		FIELD(type, pfm_event_attr_info_t),
 		FIELD(idx, pfm_event_attr_info_t),
-		FIELD(pad, pfm_event_attr_info_t), /* padding */
 		FIELD(ctrl, pfm_event_attr_info_t),
 		LAST_FIELD
 	 },

@@ -56,7 +56,7 @@ pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 }
 
 int
-pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info)
+pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfmlib_event_attr_info_t *info)
 {
 	/* No attributes are supported */
 	return PFM_ERR_ATTR;

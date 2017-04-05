@@ -296,7 +296,7 @@ static int
 intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int numasks = 0, pebs = 0;
 	int i;
 
@@ -340,7 +340,7 @@ static int
 intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, int max_grpid)
 {
 	const intel_x86_entry_t *pe;
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i, grpid;
 
 	DPRINT("check: max_grpid=%d\n", max_grpid);
@@ -366,7 +366,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 {
 	pfmlib_pmu_t *pmu = this;
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	const intel_x86_entry_t *pe;
 	pfm_intel_x86_reg_t reg, reg2;
 	unsigned int grpmsk, ugrpmsk = 0;
@@ -481,17 +481,23 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 				reg.sel_event_select = last_ucode;
 			}
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
+			int ofr_bits = 8;
 			uint64_t rmask;
-			/* there can only be one RAW_UMASK per event */
+
+			/* set limit on width of raw umask */
 			if (intel_x86_eflag(this, e->event, INTEL_X86_NHM_OFFCORE)) {
-				rmask = (1ULL << 38) - 1;
-			} else {
-				rmask = 0xff;
+				ofr_bits = 38;
+				if (e->pmu->pmu == PFM_PMU_INTEL_WSM || e->pmu->pmu == PFM_PMU_INTEL_WSM_DP)
+					ofr_bits = 16;
 			}
+			rmask = (1ULL << ofr_bits) - 1;
+
 			if (a->idx & ~rmask) {
-				DPRINT("raw umask is too wide\n");
+				DPRINT("raw umask is too wide max %d bits\n", ofr_bits);
 				return PFM_ERR_ATTR;
 			}
+
+			/* override umask */
 			umask2  = a->idx & rmask;
 			ugrpmsk = grpmsk;
 		} else {
@@ -966,7 +972,7 @@ skip_dfl:
 }
 
 int
-pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const pfmlib_attr_desc_t *atdesc = this_atdesc(this);
@@ -1031,7 +1037,7 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 int
 pfm_intel_x86_valid_pebs(pfmlib_event_desc_t *e)
 {
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	int i, npebs = 0, numasks = 0;
 
 	/* first check at the event level */

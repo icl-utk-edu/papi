@@ -174,7 +174,7 @@ pfm_mips_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 	pfmlib_pmu_t *pmu = this;
 	const mips_entry_t *pe = this_pe(this);
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	pfm_mips_sel_reg_t reg;
 	uint64_t ival, cntmask = 0;
 	int plmmsk = 0, code;
@@ -333,7 +333,7 @@ pfm_mips_get_event_nattrs(void *this, int pidx)
 }
 
 int
-pfm_mips_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_mips_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	/* no umasks, so all attrs are modifiers */
 

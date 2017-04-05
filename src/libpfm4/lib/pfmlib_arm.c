@@ -180,7 +180,7 @@ pfm_arm_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 
 	const arm_entry_t *pe = this_pe(this);
-	pfm_event_attr_info_t *a;
+	pfmlib_event_attr_info_t *a;
 	pfm_arm_reg_t reg;
 	unsigned int plm = 0;
 	int i, idx, has_plm = 0;
@@ -305,7 +305,7 @@ pfm_arm_validate_table(void *this, FILE *fp)
 }
 
 int
-pfm_arm_get_event_attr_info(void *this, int pidx, int attr_idx, pfm_event_attr_info_t *info)
+pfm_arm_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info)
 {
 	int idx;
 
