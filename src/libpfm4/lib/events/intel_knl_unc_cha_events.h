@@ -768,7 +768,7 @@ static const intel_x86_entry_t intel_knl_unc_cha_pe[]={
     .umasks  = knl_unc_cha_llc_victims,
   },
   { .name    = "UNC_H_TOR_INSERTS",
-    .desc = "Counts the number of entries successfuly inserted into the TOR that match  qualifications specified by the subevent.",
+    .desc = "Counts the number of entries successfully inserted into the TOR that match  qualifications specified by the subevent.",
     .modmsk = KNL_UNC_CHA_TOR_ATTRS,
     .cntmsk  = 0xf,
     .code    = 0x35,

@@ -487,7 +487,7 @@ static const pme_power_entry_t ppc970_pe[] = {
 		.pme_name = "PM_LSU_LMQ_LHR_MERGE",
 		.pme_code = 0x935,
 		.pme_short_desc = "LMQ LHR merges",
-		.pme_long_desc = "A dcache miss occured for the same real cache line address as an earlier request already in the Load Miss Queue and was merged into the LMQ entry.",
+		.pme_long_desc = "A dcache miss occurred for the same real cache line address as an earlier request already in the Load Miss Queue and was merged into the LMQ entry.",
 	},
 	[ PPC970_PME_PM_MRK_STCX_FAIL ] = {
 		.pme_name = "PM_MRK_STCX_FAIL",
@@ -1039,7 +1039,7 @@ static const pme_power_entry_t ppc970_pe[] = {
 		.pme_name = "PM_MRK_IMR_RELOAD",
 		.pme_code = 0x722,
 		.pme_short_desc = "Marked IMR reloaded",
-		.pme_long_desc = "A DL1 reload occured due to marked load",
+		.pme_long_desc = "A DL1 reload occurred due to marked load",
 	},
 	[ PPC970_PME_PM_MRK_GRP_TIMEO ] = {
 		.pme_name = "PM_MRK_GRP_TIMEO",

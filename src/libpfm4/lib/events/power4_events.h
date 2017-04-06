@@ -570,7 +570,7 @@ static const pme_power_entry_t power4_pe[] = {
 		.pme_name = "PM_LSU_LMQ_LHR_MERGE",
 		.pme_code = 0x926,
 		.pme_short_desc = "LMQ LHR merges",
-		.pme_long_desc = "A dcache miss occured for the same real cache line address as an earlier request already in the Load Miss Queue and was merged into the LMQ entry.",
+		.pme_long_desc = "A dcache miss occurred for the same real cache line address as an earlier request already in the Load Miss Queue and was merged into the LMQ entry.",
 	},
 	[ POWER4_PME_PM_FXU0_BUSY_FXU1_IDLE ] = {
 		.pme_name = "PM_FXU0_BUSY_FXU1_IDLE",
@@ -1188,7 +1188,7 @@ static const pme_power_entry_t power4_pe[] = {
 		.pme_name = "PM_MRK_IMR_RELOAD",
 		.pme_code = 0x922,
 		.pme_short_desc = "Marked IMR reloaded",
-		.pme_long_desc = "A DL1 reload occured due to marked load",
+		.pme_long_desc = "A DL1 reload occurred due to marked load",
 	},
 	[ POWER4_PME_PM_7INST_CLB_CYC ] = {
 		.pme_name = "PM_7INST_CLB_CYC",

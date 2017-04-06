@@ -92,7 +92,7 @@ static const arm_entry_t arm_cortex_a53_pe[]={
 	{.name = "BR_IMMED_RETIRED",
 	 .modmsk = ARMV8_ATTRS,
 	 .code = 0x0d,
-	 .desc = "Software chnage of the PC, instruction architecturally executed, condition check pass"
+	 .desc = "Software change of the PC, instruction architecturally executed, condition check pass"
 	},
 	{.name = "UNALIGNED_LDST_RETIRED",
 	 .modmsk = ARMV8_ATTRS,
