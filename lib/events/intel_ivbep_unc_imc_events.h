@@ -165,7 +165,7 @@ static const intel_x86_umask_t ivbep_unc_m_pre_count[]={
     .ucode  = 0x400,
   },
   { .uname = "WR",
-    .udesc  = "Precharhe due to write",
+    .udesc  = "Precharge due to write",
     .ucode  = 0x800,
   },
   { .uname = "BYP",
