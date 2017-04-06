@@ -150,7 +150,7 @@ C  Stop the counters and put the results in the array values
       end if
 
       call PAPIf_get_real_usec( stoptime )
-      finaltime = (REAL(stoptime)/1000000.0) - (REAL(starttime)/1000000.0)
+      finaltime=(REAL(stoptime)/1000000.0)-(REAL(starttime)/1000000.0)
 
 C  Make sure the compiler does not optimize away the multiplication
       call dummy(r)
