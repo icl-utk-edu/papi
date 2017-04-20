@@ -32,7 +32,7 @@ int ffsll( long long lli );
 #endif
 */
 
-extern int ffsll(long long lli);
+extern int ffsll(long long lli) __THROW __attribute__ ((__const__));
 
 
 /****************/
@@ -127,7 +127,7 @@ posix_profil( caddr_t address, PAPI_sprofil_t * prof,
 		/* test first for 16-bit buckets; this should be the fast case */
 		if ( flags & PAPI_PROFIL_BUCKET_16 ) {
 			if ( ( indx * sizeof ( short ) ) < prof->pr_size ) {
-				buf16 = prof->pr_base;
+				buf16 = (unsigned short *) prof->pr_base;
 				buf16[indx] =
 					( unsigned short ) ( ( unsigned short ) buf16[indx] +
 										 profil_increment( buf16[indx], flags,
@@ -140,7 +140,7 @@ posix_profil( caddr_t address, PAPI_sprofil_t * prof,
 		/* next, look for the 32-bit case */
 		else if ( flags & PAPI_PROFIL_BUCKET_32 ) {
 			if ( ( indx * sizeof ( int ) ) < prof->pr_size ) {
-				buf32 = prof->pr_base;
+				buf32 = (unsigned int *) prof->pr_base;
 				buf32[indx] = ( unsigned int ) buf32[indx] +
 					( unsigned int ) profil_increment( buf32[indx], flags,
 													   excess, threshold );
@@ -151,7 +151,7 @@ posix_profil( caddr_t address, PAPI_sprofil_t * prof,
 		/* finally, fall through to the 64-bit case */
 		else {
 			if ( ( indx * sizeof ( long long ) ) < prof->pr_size ) {
-				buf64 = prof->pr_base;
+				buf64 = (unsigned long long *) prof->pr_base;
 				buf64[indx] = ( unsigned long long ) buf64[indx] +
 					( unsigned long long ) profil_increment( ( long long )
 															 buf64[indx], flags,

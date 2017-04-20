@@ -354,7 +354,7 @@ _papi_hwi_add_native_event(int cidx, int ntv_event, int ntv_idx, const char *eve
 
   if (num_native_events>=num_native_chunks*NATIVE_EVENT_CHUNKSIZE) {
      num_native_chunks++;
-     _papi_native_events=realloc(_papi_native_events,
+     _papi_native_events=(struct native_event_info *) realloc(_papi_native_events,
 				 num_native_chunks*NATIVE_EVENT_CHUNKSIZE*
 				 sizeof(struct native_event_info));
      if (_papi_native_events==NULL) {
@@ -397,7 +397,7 @@ _papi_hwi_add_error( char *error )
 
 	if (_papi_hwi_num_errors >= num_error_chunks*NATIVE_EVENT_CHUNKSIZE) {
 		num_error_chunks++;
-		_papi_errlist=realloc(_papi_errlist, 
+		_papi_errlist= (char **) realloc(_papi_errlist, 
 						num_error_chunks*NATIVE_EVENT_CHUNKSIZE*sizeof(char *));
 		if (_papi_errlist==NULL) {
 			_papi_hwi_num_errors = -2;

@@ -1021,7 +1021,7 @@ enum {
 /** \internal
   * @defgroup low_api The Low Level API 
   @{ */
-   int ffsll(long long lli); //required for --with-ffsll and used in extras.c/papi.c
+   int ffsll(long long lli) __THROW __attribute__ ((__const__)); //required for --with-ffsll and used in extras.c/papi.c
    int   PAPI_accum(int EventSet, long long * values); /**< accumulate and reset hardware events from an event set */
    int   PAPI_add_event(int EventSet, int Event); /**< add single PAPI preset or native hardware event to an event set */
    int   PAPI_add_named_event(int EventSet, char *EventName); /**< add an event by name to a PAPI event set */

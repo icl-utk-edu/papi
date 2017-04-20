@@ -118,7 +118,7 @@ _internal_check_state( HighLevelInfo ** outgoing )
 	 * Do we have the thread specific data setup yet?
 	 */
 	if ( ( retval =
-		   PAPI_get_thr_specific( PAPI_HIGH_LEVEL_TLS, ( void * ) &state ) )
+		   PAPI_get_thr_specific( PAPI_HIGH_LEVEL_TLS, ( void ** ) &state ) )
 		 != PAPI_OK || state == NULL ) {
 		state = ( HighLevelInfo * ) papi_malloc( sizeof ( HighLevelInfo ) );
 		if ( state == NULL )
@@ -837,7 +837,7 @@ _papi_hwi_shutdown_highlevel(  )
 {
 	HighLevelInfo *state = NULL;
 
-	if ( PAPI_get_thr_specific( PAPI_HIGH_LEVEL_TLS, ( void * ) &state ) ==
+	if ( PAPI_get_thr_specific( PAPI_HIGH_LEVEL_TLS, ( void ** ) &state ) ==
 		 PAPI_OK ) {
 		if ( state )
 			papi_free( state );

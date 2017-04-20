@@ -1322,7 +1322,7 @@ PAPI_FCALL( papif_flops, PAPIF_FLOPS,
  */
 PAPI_FCALL( papif_get_clockrate, PAPIF_GET_CLOCKRATE, ( int *cr ) )
 {
-	*cr = PAPI_get_opt( PAPI_CLOCKRATE, NULL );
+	*cr = PAPI_get_opt( PAPI_CLOCKRATE, (PAPI_option_t *)  NULL );
 }
 
 /** @class PAPIF_get_preload
@@ -1406,7 +1406,7 @@ PAPI_FCALL( papif_get_domain, PAPIF_GET_DOMAIN,
 	PAPI_option_t d;
 
 	if ( *mode == PAPI_DEFDOM ) {
-		*domain = PAPI_get_opt( *mode, NULL );
+		*domain = PAPI_get_opt( *mode, (PAPI_option_t *) NULL );
 		*check = PAPI_OK;
 	} else if ( *mode == PAPI_DOMAIN ) {
 		d.domain.eventset = *eventset;
