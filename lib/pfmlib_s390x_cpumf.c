@@ -254,7 +254,7 @@ static int pfm_cpumf_get_event_info(void *this, int idx,
 }
 
 static int pfm_cpumf_get_event_attr_info(void *this, int idx, int umask_idx,
-					 pfm_event_attr_info_t *info)
+					 pfmlib_event_attr_info_t *info)
 {
 	/* Attributes are not supported */
 	return PFM_ERR_ATTR;
