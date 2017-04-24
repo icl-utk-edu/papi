@@ -286,6 +286,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&power6_support,
 	&power7_support,
 	&power8_support,
+	&power9_support,
 	&torrent_support,
     &powerpc_nest_mcs_read_support,
     &powerpc_nest_mcs_write_support,

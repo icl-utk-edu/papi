@@ -367,6 +367,8 @@ typedef enum {
 
 	PFM_PMU_INTEL_KNL_UNC_UBOX,	/* Intel KnightLanding Ubox uncore */
 	PFM_PMU_INTEL_KNL_UNC_M2PCIE,	/* Intel KnightLanding M2PCIe uncore */
+
+	PFM_PMU_POWER9,			/* IBM POWER9 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
