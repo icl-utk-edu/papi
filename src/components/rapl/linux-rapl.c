@@ -498,7 +498,9 @@ _rapl_init_component( int cidx )
 	/* Note! On Haswell-EP DRAM energy is fixed at 15.3uJ	*/
 	/* see https://lkml.org/lkml/2015/3/20/582		*/
 	/* Knights Landing is the same */
-	if (( hw_info->cpuid_model==63) ||  (hw_info->cpuid_model==87 )) {
+	/* so is Broadwell-EP */
+	if (( hw_info->cpuid_model==63) ||  (hw_info->cpuid_model==87 ) ||
+		(hw_info->cpuid_model==79)) {
 		dram_energy_divisor=1<<16;
 	}
 	else {
