@@ -20,7 +20,7 @@
 */
 
 #ifndef __POWER9_EVENTS_H__
-#define __POWER8_EVENTS_H__
+#define __POWER9_EVENTS_H__
 
 #define POWER9_PME_PM_IERAT_RELOAD 0
 #define POWER9_PME_PM_TM_OUTER_TEND 1
