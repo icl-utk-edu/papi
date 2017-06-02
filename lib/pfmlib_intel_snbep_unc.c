@@ -129,7 +129,26 @@ pfm_intel_knl_unc_detect(void *this)
        return PFM_SUCCESS;
 }
 
+int
+pfm_intel_bdx_unc_detect(void *this)
+{
+       int ret;
 
+       ret = pfm_intel_x86_detect();
+       if (ret != PFM_SUCCESS)
+
+       if (pfm_intel_x86_cfg.family != 6)
+               return PFM_ERR_NOTSUPP;
+
+       switch(pfm_intel_x86_cfg.model) {
+               case 79: /* Broadwell X */
+               case 86: /* Broadwell X */
+                         break;
+               default:
+                       return PFM_ERR_NOTSUPP;
+       }
+       return PFM_SUCCESS;
+}
 
 static void
 display_com(void *this, pfmlib_event_desc_t *e, void *val)
@@ -255,7 +274,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 			}
 		}
 		if (!added && !skip) {
-			DPRINT("no default found for event %s unit mask group %d (max_grpid=%d)\n", ent->name, i, max_grpid);
+			DPRINT("no default found for event %s unit mask group %d (max_grpid=%d, i=%d)\n", ent->name, i, max_grpid, i);
 			return PFM_ERR_UMASK;
 		}
 	}

@@ -369,7 +369,57 @@ typedef enum {
 	PFM_PMU_INTEL_KNL_UNC_M2PCIE,	/* Intel KnightLanding M2PCIe uncore */
 
 	PFM_PMU_POWER9,			/* IBM POWER9 */
+
+	PFM_PMU_INTEL_BDX_UNC_CB0,	/* Intel Broadwell-X C-Box core 0 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB1,	/* Intel Broadwell-X C-Box core 1 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB2,	/* Intel Broadwell-X C-Box core 2 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB3,	/* Intel Broadwell-X C-Box core 3 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB4,	/* Intel Broadwell-X C-Box core 4 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB5,	/* Intel Broadwell-X C-Box core 5 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB6,	/* Intel Broadwell-X C-Box core 6 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB7,	/* Intel Broadwell-X C-Box core 7 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB8,	/* Intel Broadwell-X C-Box core 8 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB9,	/* Intel Broadwell-X C-Box core 9 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB10,	/* Intel Broadwell-X C-Box core 10 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB11,	/* Intel Broadwell-X C-Box core 11 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB12,	/* Intel Broadwell-X C-Box core 12 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB13,	/* Intel Broadwell-X C-Box core 13 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB14,	/* Intel Broadwell-X C-Box core 14 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB15,	/* Intel Broadwell-X C-Box core 15 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB16,	/* Intel Broadwell-X C-Box core 16 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB17,	/* Intel Broadwell-X C-Box core 17 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB18,	/* Intel Broadwell-X C-Box core 18 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB19,	/* Intel Broadwell-X C-Box core 19 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB20,	/* Intel Broadwell-X C-Box core 20 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB21,	/* Intel Broadwell-X C-Box core 21 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB22,	/* Intel Broadwell-X C-Box core 22 uncore */
+	PFM_PMU_INTEL_BDX_UNC_CB23,	/* Intel Broadwell-X C-Box core 23 uncore */
+	PFM_PMU_INTEL_BDX_UNC_HA0,	/* Intel Broadwell-X HA 0 uncore */
+	PFM_PMU_INTEL_BDX_UNC_HA1,	/* Intel Broadwell-X HA 1 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC0,	/* Intel Broadwell-X IMC socket 0 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC1,	/* Intel Broadwell-X IMC socket 1 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC2,	/* Intel Broadwell-X IMC socket 2 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC3,	/* Intel Broadwell-X IMC socket 3 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC4,	/* Intel Broadwell-X IMC socket 4 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC5,	/* Intel Broadwell-X IMC socket 5 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC6,	/* Intel Broadwell-X IMC socket 6 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IMC7,	/* Intel Broadwell-X IMC socket 7 uncore */
+	PFM_PMU_INTEL_BDX_UNC_PCU,	/* Intel Broadwell-X PCU uncore */
+	PFM_PMU_INTEL_BDX_UNC_QPI0,	/* Intel Broadwell-X QPI link 0 uncore */
+	PFM_PMU_INTEL_BDX_UNC_QPI1,	/* Intel Broadwell-X QPI link 1 uncore */
+	PFM_PMU_INTEL_BDX_UNC_QPI2,	/* Intel Broadwell-X QPI link 2 uncore */
+	PFM_PMU_INTEL_BDX_UNC_UBOX,	/* Intel Broadwell-X U-Box uncore */
+	PFM_PMU_INTEL_BDX_UNC_R2PCIE,	/* Intel Broadwell-X R2PCIe uncore */
+	PFM_PMU_INTEL_BDX_UNC_R3QPI0,	/* Intel Broadwell-X R3QPI 0 uncore */
+	PFM_PMU_INTEL_BDX_UNC_R3QPI1,	/* Intel Broadwell-X R3QPI 1 uncore */
+	PFM_PMU_INTEL_BDX_UNC_R3QPI2,	/* Intel Broadwell-X R3QPI 2 uncore */
+	PFM_PMU_INTEL_BDX_UNC_IRP,	/* Intel Broadwell-X IRP uncore */
+	PFM_PMU_INTEL_BDX_UNC_SB0,	/* Intel Broadwell-X S-Box 0 uncore */
+	PFM_PMU_INTEL_BDX_UNC_SB1,	/* Intel Broadwell-X S-Box 1 uncore */
+	PFM_PMU_INTEL_BDX_UNC_SB2,	/* Intel Broadwell-X S-Box 2 uncore */
+	PFM_PMU_INTEL_BDX_UNC_SB3,	/* Intel Broadwell-X S-Box 3 uncore */
 	/* MUST ADD NEW PMU MODELS HERE */
+
 
 	PFM_PMU_MAX			/* end marker */
 } pfm_pmu_t;
