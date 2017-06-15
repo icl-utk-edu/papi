@@ -1,5 +1,7 @@
 /** 
  * @file    linux-infiniband.c
+ * @author  Heike Jagode 
+ *          jagode@icl.utk.edu
  * @author  Gabriel Marin
  *          gmarin@eecs.utk.edu
  *
@@ -204,10 +206,30 @@ find_ib_device_events(ib_device_t *dev, int extended)
    int nevents = 0;
    DIR *cnt_dir = NULL;
    char counters_path[128];
-   snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s", 
-          ib_dir_path, dev->dev_name, dev->dev_port, (extended?"_ext":""));
+
+   if ( extended ) {
+      /* mofed driver version <4.0 */
+      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s", 
+             ib_dir_path, dev->dev_name, dev->dev_port, (extended?"_ext":""));
    
-   cnt_dir = opendir(counters_path);
+      cnt_dir = opendir(counters_path);
+      if (cnt_dir == NULL) {
+         /* directory counters_ext in sysfs fs has changed to hw_counters */
+         /* in 4.0 version of mofed driver */
+         SUBDBG("cannot open counters directory `%s'\n", counters_path);
+
+         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters", 
+                ib_dir_path, dev->dev_name, dev->dev_port, "hw_");
+   
+         cnt_dir = opendir(counters_path);
+      }
+   }
+   else {
+      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters", 
+             ib_dir_path, dev->dev_name, dev->dev_port);
+      cnt_dir = opendir(counters_path);
+   }
+   
    if (cnt_dir == NULL) {
       SUBDBG("cannot open counters directory `%s'\n", counters_path);
       goto out;
@@ -363,12 +385,39 @@ static long long
 read_ib_counter_value(int index)
 {
    char ev_file[128];
+   char counters_path[128];
+   DIR *cnt_dir = NULL;
    long long value = 0ll;
    infiniband_native_event_entry_t *iter = &infiniband_native_events[index];
-   snprintf(ev_file, sizeof(ev_file), "%s/%s/ports/%d/counters%s/%s",
-           ib_dir_path, iter->device->dev_name,
-           iter->device->dev_port, (iter->extended?"_ext":""),
-           iter->file_name);
+   
+   if ( iter->extended ) {
+      /* mofed driver version <4.0 */
+      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s",
+             ib_dir_path, iter->device->dev_name, iter->device->dev_port, "_ext");
+   
+      cnt_dir = opendir(counters_path);
+      if (cnt_dir == NULL) {
+         /* directory counters_ext in sysfs fs has changed to hw_counters */
+         /* in 4.0 version of mofed driver */
+         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters",
+                ib_dir_path, iter->device->dev_name, iter->device->dev_port, "hw_");
+   
+         cnt_dir = opendir(counters_path);
+      }
+   }
+   else {
+      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters",
+             ib_dir_path, iter->device->dev_name, iter->device->dev_port );
+      cnt_dir = opendir(counters_path);
+   }
+
+
+   if (cnt_dir != NULL)
+      closedir(cnt_dir);
+
+ 
+   snprintf(ev_file, sizeof(ev_file), "%s/%s",
+           counters_path, iter->file_name);
 
    if (pscanf(ev_file, "%lld", &value) != 1) {
       PAPIERROR("cannot read value for counter '%s'\n", iter->name);
