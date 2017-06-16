@@ -469,7 +469,7 @@ ops_string_merge(char **original, char *insertion, int replaces, int start_index
 	char *subtoken;
 	char *workBuf;
 	char *workPtr;
-	char *tok_save_ptr;
+	char *tok_save_ptr=NULL;
 	char *newOriginal;
 	char *newInsertion;
 	char *newFormula;
