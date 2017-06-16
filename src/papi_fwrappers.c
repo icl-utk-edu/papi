@@ -4,7 +4,6 @@
 
 /* 
 * File:    papi_fwrappers.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Nils Smeds
@@ -530,6 +529,14 @@ PAPI_FCALL( papif_register_thread, PAPIF_REGISTER_THREAD, ( int *check ) )
  *
  * @see PAPI_unregister_thread
  */
+PAPI_FCALL( papif_unregister_thread, PAPIF_UNREGISTER_THREAD, ( int *check ) )
+{
+	*check = PAPI_unregister_thread(  );
+}
+
+/* There was a long (10+ years!) typo that was not noticed here */
+/* Leaving it here as not to break any existing code out there */
+
 PAPI_FCALL( papif_unregster_thread, PAPIF_UNREGSTER_THREAD, ( int *check ) )
 {
 	*check = PAPI_unregister_thread(  );
