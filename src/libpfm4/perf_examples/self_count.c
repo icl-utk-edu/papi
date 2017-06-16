@@ -125,7 +125,6 @@ read_count(perf_event_desc_t *fds)
 	struct perf_event_mmap_page *hdr;
 	uint64_t values[3];
 	uint64_t offset = 0;
-	uint64_t val;
 	unsigned int seq;
 	ssize_t ret;
 	int idx = -1;
@@ -143,11 +142,12 @@ read_count(perf_event_desc_t *fds)
 			values[2] = hdr->time_running;
 			ret = 0;
 		} else {
-			offset = 0;
+			offset = -1;
 			idx = -1;
 			ret = read(fds->fd, values, sizeof(values));
 			if (ret < (ssize_t)sizeof(values))
 				errx(1, "cannot read values");
+			printf("using read\n");
 			break;
 		}
 		barrier();
@@ -160,10 +160,10 @@ read_count(perf_event_desc_t *fds)
 		values[2],
 		idx);
 
-	values[0] += offset;
+	/* subtract offset */
+	values[0] -= offset;
 
-	val   = perf_scale(values);
-	return val;
+	return perf_scale(values);
 }
 
 int
@@ -172,9 +172,8 @@ main(int argc, char **argv)
 	perf_event_desc_t *fds = NULL;
 	long lret;
 	size_t pgsz;
-	uint64_t val;
+	uint64_t val, prev_val;
 	int i, ret, num_fds = 0;
-	int n = 30;
 
 	lret = sysconf(_SC_PAGESIZE);
 	if (lret < 0)
@@ -216,17 +215,15 @@ main(int argc, char **argv)
 	ioctl(fds[0].fd, PERF_EVENT_IOC_ENABLE, 0);
 
 	alarm(10);
-
+	prev_val = 0;
 	for(;quit == 0;) {
-
-		for (i=0; i < num_fds; i++) {
+		for (i = 0; i < num_fds; i++) {
 			val = read_count(&fds[i]);
-			printf("%20"PRIu64" %s\n", val, fds[i].name);
+			/* print evnet deltas */
+			printf("%20"PRIu64" %s\n", val - prev_val, fds[i].name);
+			prev_val = val;
 		}
-		fib(n);
-		n += 5;
-		if (n > 35)
-			n = 30;
+		fib(35);
 	}
 	/*
 	 * disable all counters attached to this thread
