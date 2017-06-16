@@ -1170,3 +1170,86 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
    return PAPI_OK;
 }
 
+/** @class  _peu_libpfm4_init
+ *  @brief  Initialize the libpfm4 code
+ *
+ *  @param[in] event_table
+ *        -- native event table struct
+ *
+ *  @retval PAPI_OK       We initialized correctly
+ *  @retval PAPI_ECMP     There was an error initializing the component
+ *
+ */
+
+int
+_peu_libpfm4_init(papi_vector_t *my_vector, int cidx,
+		   struct native_event_table_t *event_table,
+		   int pmu_type) {
+
+   int detected_pmus=0;
+   int i;
+   int j=0;
+   pfm_err_t retval = PFM_SUCCESS;
+   unsigned int ncnt;
+   pfm_pmu_info_t pinfo;
+
+	(void)cidx;
+
+   /* allocate the native event structure */
+
+   event_table->num_native_events=0;
+   event_table->pmu_type=pmu_type;
+
+   event_table->native_events=calloc(NATIVE_EVENT_CHUNK,
+					   sizeof(struct native_event_t));
+   if (event_table->native_events==NULL) {
+      return PAPI_ENOMEM;
+   }
+   event_table->allocated_native_events=NATIVE_EVENT_CHUNK;
+
+   /* Count number of present PMUs */
+   detected_pmus=0;
+   ncnt=0;
+
+   my_vector->cmp_info.num_cntrs=0;
+
+   SUBDBG("Detected pmus:\n");
+	i=0;
+	while(1) {
+      memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+      pinfo.size = sizeof(pfm_pmu_info_t);
+      retval=pfm_get_pmu_info(i, &pinfo);
+
+	/* We're done if we hit an invalid PMU entry                    */
+	/* We can't check against PFM_PMU_MAX                           */
+	/* as that might not match if libpfm4 is dynamically linked     */
+
+	if (retval==PFM_ERR_INVAL) {
+		break;
+	}
+
+	if ((retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
+		(pmu_is_present_and_right_type(&pinfo,pmu_type))) {
+
+	 SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
+
+         detected_pmus++;
+	 ncnt+=pinfo.nevents;
+
+	 if ((j < PAPI_PMU_MAX) && (pinfo.name != NULL)) {
+	     my_vector->cmp_info.pmu_names[j++] = strdup(pinfo.name);
+	 }
+         my_vector->cmp_info.num_cntrs += pinfo.num_cntrs+
+                                   pinfo.num_fixed_cntrs;
+      }
+	i++;
+   }
+   SUBDBG("%d native events detected on %d pmus\n",ncnt,detected_pmus);
+
+   my_vector->cmp_info.num_native_events = ncnt;
+
+   SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
+
+   return PAPI_OK;
+}
+
