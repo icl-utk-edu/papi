@@ -177,6 +177,7 @@ static struct native_event_t *allocate_native_event(char *name,
 
   // set argument structure fields so the encode function can give us what we need
   perf_arg.attr=&ntv_evt->attr;
+  perf_arg.fstr=&event_string;
 
   /* use user provided name of the event to get the perf_event encoding and a fully qualified event string */
   ret = pfm_get_os_event_encoding(name, 
@@ -185,7 +186,7 @@ static struct native_event_t *allocate_native_event(char *name,
   				  &perf_arg);
 
   // If the encode function failed, skip processing of the event_string
-  if (ret != PFM_SUCCESS) {
+  if ((ret != PFM_SUCCESS) || (event_string == NULL)) {
 	  SUBDBG("encode failed for event: %s, returned: %d\n", name, ret);
 
 	  // we need to remember that this event encoding failed but still create the native event table
@@ -440,7 +441,6 @@ get_first_event_next_pmu(int pmu_idx, int pmu_type)
 	/* Before we only went up to PFM_PMU_MAX but this is set at	*/
 	/* compile time and might not reflect the number of PMUs if	*/
 	/* PAPI is dynamically linked against libpfm4.			*/
-
   while(1) {
 
     /* clear the PMU structure (required by libpfm4) */

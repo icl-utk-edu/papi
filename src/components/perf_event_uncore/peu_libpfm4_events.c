@@ -1,16 +1,16 @@
 /*
-* File:    peu_libpfm4_events.c
+* File:    pe_libpfm4_events.c
 * Author:  Vince Weaver vincent.weaver @ maine.edu
 * Mods:    Gary Mohr
 *          gary.mohr@bull.com
-*          Modified the perf_event_uncore component to use PFM_OS_PERF_EVENT_EXT mode in libpfm4.
+*          Modified the perf_event component to use PFM_OS_PERF_EVENT_EXT mode in libpfm4.
 *          This adds several new event masks, including cpu=, u=, and k= which give the user
 *          the ability to set cpu number to use or control the domain (user, kernel, or both)
 *          in which the counter should be incremented.  These are event masks so it is now 
 *          possible to have multiple events in the same event set that count activity from 
 *          differennt cpu's or count activity in different domains.
 *
-* Handle the libpfm4 event interface for the perf_event_uncore component
+* Handle the libpfm4 event interface for the perf_event component
 */
 
 #include <string.h>
@@ -62,10 +62,17 @@ static int find_existing_event(char *name,
     }
     // some callers have an event name without the pmu name on the front, so we also compare to the base name (just the event name part)
     if (!strcmp(name,event_table->native_events[i].base_name)) {
-      SUBDBG("Found base_name: %s, libpfm4_idx: %#x, papi_event_code: %#x\n",
-         event_table->native_events[i].base_name, event_table->native_events[i].libpfm4_idx, event_table->native_events[i].papi_event_code);
-      event=i;
-      break;
+      int nameLen = strlen(event_table->native_events[i].base_name);
+      // the name we are looking for must be the same length as this event table entry name for them to match
+      if (strlen(name) != nameLen + strlen(event_table->native_events[i].mask_string) + 1) {
+        continue;
+      }
+      if(!strcmp(name+nameLen+1, event_table->native_events[i].mask_string)) {
+        SUBDBG("Found base_name: %s, mask_string: %s, libpfm4_idx: %#x, papi_event_code: %#x\n",
+            event_table->native_events[i].base_name, event_table->native_events[i].mask_string , event_table->native_events[i].libpfm4_idx, event_table->native_events[i].papi_event_code);
+        event=i;
+        break;
+      }
     }
   }
   _papi_hwi_unlock( NAMELIB_LOCK );
@@ -105,8 +112,10 @@ static int pmu_is_present_and_right_type(pfm_pmu_info_t *pinfo, int type) {
  *
  *  @param[in] name
  *             -- name of the event
- *  @param[in] event_idx
+ *  @param[in] libpfm4_idx
  *             -- libpfm4 identifier for the event
+ *  @param[in] cidx
+ *             -- PAPI component index
  *  @param[in] event_table
  *             -- native event table struct
  *
@@ -473,13 +482,15 @@ get_first_event_next_pmu(int pmu_idx, int pmu_type)
 /* Exported functions                                      */
 /***********************************************************/
 
-/** @class  _peu_libpfm4_ntv_name_to_code
+/** @class  _pe_libpfm4_ntv_name_to_code
  *  @brief  Take an event name and convert it to an event code.
  *
  *  @param[in] *name
  *        -- name of event to convert
  *  @param[out] *event_code
  *        -- pointer to an integer to hold the event code
+ *  @param[in] *cidx
+ *        -- PAPI component index
  *  @param[in] event_table
  *        -- native event table struct
  *
@@ -519,7 +530,7 @@ _peu_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
 }
 
 
-/** @class  _peu_libpfm4_ntv_code_to_name
+/** @class  _pe_libpfm4_ntv_code_to_name
  *  @brief  Take an event code and convert it to a name
  *
  *  @param[in] EventCode
@@ -601,7 +612,7 @@ _peu_libpfm4_ntv_code_to_name(unsigned int EventCode,
 }
 
 
-/** @class  _peu_libpfm4_ntv_code_to_descr
+/** @class  _pe_libpfm4_ntv_code_to_descr
  *  @brief  Take an event code and convert it to a description
  *
  *  @param[in] EventCode
@@ -698,12 +709,12 @@ _peu_libpfm4_ntv_code_to_info(unsigned int EventCode,
 
 	// get the event name first
 	if ((ret = _peu_libpfm4_ntv_code_to_name(EventCode, info->symbol, sizeof(info->symbol), event_table)) != PAPI_OK) {
-		SUBDBG("EXIT: _peu_libpfm4_ntv_code_to_name returned: %d\n", ret);
+		SUBDBG("EXIT: _pe_libpfm4_ntv_code_to_name returned: %d\n", ret);
 		return PAPI_ENOEVNT;
 	}
 
 	if ((ret = _peu_libpfm4_ntv_code_to_descr(EventCode, info->long_descr, sizeof(info->long_descr), event_table)) != PAPI_OK) {
-		SUBDBG("EXIT: _peu_libpfm4_ntv_code_to_descr returned: %d\n", ret);
+		SUBDBG("EXIT: _pe_libpfm4_ntv_code_to_descr returned: %d\n", ret);
 		return PAPI_ENOEVNT;
 	}
 
@@ -712,7 +723,7 @@ _peu_libpfm4_ntv_code_to_info(unsigned int EventCode,
 }
 
 
-/** @class  _peu_libpfm4_ntv_enum_events
+/** @class  _pe_libpfm4_ntv_enum_events
  *  @brief  Walk through all events in a pre-defined order
  *
  *  @param[in,out] *PapiEventCode
@@ -817,7 +828,7 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 			SUBDBG("pnum: %d\n", pnum);
 			code=get_first_event_next_pmu(pnum, event_table->pmu_type);
 			if (code < 0) {
-				SUBDBG("EXIT: No more pmu's to list, returning: %d\n", code);
+				SUBDBG("EXIT: No more PMUs to list, returning: %d\n", code);
 				return code;
 			}
 		}
@@ -981,7 +992,7 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 }
 
 
-/** @class  _peu_libpfm4_shutdown
+/** @class  _pe_libpfm4_shutdown
  *  @brief  Shutdown any initialization done by the libpfm4 code
  *
  *  @param[in] event_table
@@ -1029,7 +1040,7 @@ _peu_libpfm4_shutdown(papi_vector_t *my_vector,
 }
 
 
-/** @class  _peu_libpfm4_init
+/** @class  _pe_libpfm4_init
  *  @brief  Initialize the libpfm4 code
  *
  *  @param[in] event_table
