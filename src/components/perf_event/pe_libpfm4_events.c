@@ -591,7 +591,7 @@ _pe_libpfm4_ntv_code_to_name(unsigned int EventCode,
 	// if this event is defined by the default pmu, then use only the event name
 	// if it is not defined by the default pmu, then use both the pmu name and event name
 	char *ename;
-	if (strcmp(event_table->default_pmu.name, event_table->native_events[eidx].pmu) == 0) {
+	if ((event_table->default_pmu.name) && (strcmp(event_table->default_pmu.name, event_table->native_events[eidx].pmu) == 0)) {
 		ename = event_table->native_events[eidx].base_name;
 	} else {
 		ename = event_table->native_events[eidx].pmu_plus_name;

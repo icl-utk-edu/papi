@@ -123,7 +123,8 @@ static int pmu_is_present_and_right_type(pfm_pmu_info_t *pinfo, int type) {
  *
  */
 
-static struct native_event_t *allocate_native_event(char *name, int libpfm4_index,
+static struct native_event_t *allocate_native_event(char *name,
+			int libpfm4_index, int cidx,
 			  struct native_event_table_t *event_table) {
 
   SUBDBG("ENTER: name: %s, libpfm4_index: %#x, event_table: %p, event_table->pmu_type: %d\n", name, libpfm4_index, event_table, event_table->pmu_type);
@@ -272,7 +273,7 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 
   ntv_evt->allocated_name=strdup(name);
   ntv_evt->mask_string=strdup(masks);
-  ntv_evt->component=_peu_libpfm4_get_cidx();
+  ntv_evt->component=cidx;
   ntv_evt->pmu=pmu_name;
   ntv_evt->base_name=strdup(event);
   ntv_evt->pmu_plus_name=strdup(fullname);
@@ -361,7 +362,7 @@ static struct native_event_t *allocate_native_event(char *name, int libpfm4_inde
 	}
 
 	// create a papi table for this native event, put the index into the event sets array of native events into the papi table
-	int new_event_code = _papi_hwi_native_to_eventcode(_peu_libpfm4_get_cidx(), libpfm4_index, nevt_idx, ntv_evt->allocated_name);
+	int new_event_code = _papi_hwi_native_to_eventcode(cidx, libpfm4_index, nevt_idx, ntv_evt->allocated_name);
 	_papi_hwi_set_papi_event_string((const char *)ntv_evt->allocated_name);
 	_papi_hwi_set_papi_event_code(new_event_code, 1);
 
@@ -500,6 +501,7 @@ get_first_event_next_pmu(int pmu_idx, int pmu_type)
 
 int
 _peu_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
+				int cidx,
 				struct native_event_table_t *event_table)
 {
   SUBDBG( "ENTER: name: %s, event_code: %p, *event_code: %#x, event_table: %p\n", name, event_code, *event_code, event_table);
@@ -518,7 +520,7 @@ _peu_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
   }
 
      // Try to allocate this event to see if it is known by libpfm4, if allocate fails tell the caller it is not valid
-     our_event=allocate_native_event(name, -1, event_table);
+     our_event=allocate_native_event(name, -1, cidx, event_table);
      if (our_event==NULL) {
     	 SUBDBG("EXIT: Allocating event: '%s' failed\n", name);
     	 return PAPI_ENOEVNT;
@@ -586,8 +588,14 @@ _peu_libpfm4_ntv_code_to_name(unsigned int EventCode,
 		return PAPI_ENOEVNT;
 	}
 
-	// always use pmu name and event name for uncore events
-	char *ename = event_table->native_events[eidx].pmu_plus_name;
+       // if this event is defined by the default pmu, then use only the event name
+       // if it is not defined by the default pmu, then use both the pmu name and event name
+       char *ename;
+       if ((event_table->default_pmu.name) && (strcmp(event_table->default_pmu.name, event_table->native_events[eidx].pmu) == 0)) {
+               ename = event_table->native_events[eidx].base_name;
+       } else {
+               ename = event_table->native_events[eidx].pmu_plus_name;
+       }
 
 	// if it will not fit, return error
 	if (strlen (ename) >= (unsigned)len) {
@@ -741,7 +749,7 @@ _peu_libpfm4_ntv_code_to_info(unsigned int EventCode,
 
 int
 _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
-			       int modifier,
+			       int modifier, int cidx,
 			       struct native_event_table_t *event_table) {
 
 	SUBDBG("ENTER: PapiEventCode: %p, *PapiEventCode: %#x, modifier: %d, event_table: %p\n", PapiEventCode, *PapiEventCode, modifier, event_table);
@@ -784,7 +792,7 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 		SUBDBG("code: %#x, pmu: %s, event: %s, event_string: %s\n", code, pinfo.name, einfo.name, event_string);
 
 		// go allocate this event, need to create tables used by the get event info call that will probably follow
-		if ((our_event = allocate_native_event(event_string, code, event_table)) == NULL) {
+		if ((our_event = allocate_native_event(event_string, code, cidx, event_table)) == NULL) {
 			// allocate may have created the event table but returned NULL to tell the caller the event string was invalid (attempt to encode it failed).
 			// if the caller wants to use this event to count something, it will report an error
 			// but if the caller is just interested in listing the event, then we need an event table with an event name and libpfm4 index
@@ -856,7 +864,7 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 		SUBDBG("code: %#x, pmu: %s, event: %s, event_string: %s\n", code, pinfo.name, einfo.name, event_string);
 
 		// go allocate this event, need to create tables used by the get event info call that will follow
-		if ((our_event = allocate_native_event(event_string, code, event_table)) == NULL) {
+		if ((our_event = allocate_native_event(event_string, code, cidx, event_table)) == NULL) {
 			// allocate may have created the event table but returned NULL to tell the caller the event string was invalid (attempt to encode it failed).
 			// if the caller wants to use this event to count something, it will report an error
 			// but if the caller is just interested in listing the event, then we need an event table with an event name and libpfm4 index
@@ -952,7 +960,7 @@ _peu_libpfm4_ntv_enum_events( unsigned int *PapiEventCode,
 		}
 
 		// go allocate this event, need to create tables used by the get event info call that will follow
-		if ((our_event = allocate_native_event(event_string, *PapiEventCode, event_table)) == NULL) {
+		if ((our_event = allocate_native_event(event_string, *PapiEventCode, cidx, event_table)) == NULL) {
 			// allocate may have created the event table but returned NULL to tell the caller the event string was invalid.
 			// if the caller wants to use this event to count something, it must report the error
 			// but if the caller is just interested in listing the event (like this code), then find the table that was created and return its libpfm4 index
@@ -1052,7 +1060,7 @@ _peu_libpfm4_shutdown(papi_vector_t *my_vector,
  */
 
 int
-_peu_libpfm4_init(papi_vector_t *my_vector, 
+_peu_libpfm4_init(papi_vector_t *my_vector, int cidx,
 		   struct native_event_table_t *event_table,
 		   int pmu_type) {
 

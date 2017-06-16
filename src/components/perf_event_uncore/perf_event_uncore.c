@@ -620,7 +620,7 @@ _peu_init_component( int cidx )
 
    /* Run the uncore specific libpfm4 setup */
 
-   retval = _peu_libpfm4_init(_papi_hwd[cidx], 
+   retval = _peu_libpfm4_init(_papi_hwd[cidx], our_cidx,
 			       &uncore_native_event_table,
                                PMU_TYPE_UNCORE);
    if (retval) {
@@ -1238,7 +1238,7 @@ _peu_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
   if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
 
 
-  return _peu_libpfm4_ntv_enum_events(PapiEventCode, modifier,
+  return _peu_libpfm4_ntv_enum_events(PapiEventCode, modifier, our_cidx,
                                        &uncore_native_event_table);
 }
 
@@ -1247,7 +1247,7 @@ _peu_ntv_name_to_code( char *name, unsigned int *event_code) {
 
   if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
 
-  return _peu_libpfm4_ntv_name_to_code(name,event_code,
+  return _peu_libpfm4_ntv_name_to_code(name,event_code, our_cidx,
                                         &uncore_native_event_table);
 }
 
