@@ -85,6 +85,7 @@ main( int argc, char **argv )
 	}
 
 	code = PAPI_NATIVE_MASK;
+	last = code;
 	PAPI_enum_event( &code, PAPI_ENUM_FIRST );
 
 	while ( PAPI_enum_event( &code, PAPI_ENUM_EVENTS ) == PAPI_OK ) {
