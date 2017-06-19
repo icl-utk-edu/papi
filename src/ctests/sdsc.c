@@ -1,8 +1,6 @@
 /*
- * $Id$
- *
- * Test example for multiplex functionality, originally 
- * provided by Timothy Kaiser, SDSC. It was modified to fit the 
+ * Test example for multiplex functionality, originally
+ * provided by Timothy Kaiser, SDSC. It was modified to fit the
  * PAPI test suite by Nils Smeds, <smeds@pdc.kth.se>.
  *
  * This example verifies the accuracy of multiplexed events
@@ -17,7 +15,42 @@
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
-static double dummy3( double x, int iters );
+double
+dummy3( double x, int iters, int print )
+{
+	int i;
+	double w, y, z, a, b, c, d, e, f, g, h;
+	double one;
+	double result;
+	one = 1.0;
+	w = x;
+	y = x;
+	z = x;
+	a = x;
+	b = x;
+	c = x;
+	d = x;
+	e = x;
+	f = x;
+	g = x;
+	h = x;
+	for ( i = 1; i <= iters; i++ ) {
+		w = w * 1.000000000001 + one;
+		y = y * 1.000000000002 + one;
+		z = z * 1.000000000003 + one;
+		a = a * 1.000000000004 + one;
+		b = b * 1.000000000005 + one;
+		c = c * 0.999999999999 + one;
+		d = d * 0.999999999998 + one;
+		e = e * 0.999999999997 + one;
+		f = f * 0.999999999996 + one;
+		g = h * 0.999999999995 + one;
+		h = h * 1.000000000006 + one;
+	}
+	result = 2.0 * ( a + b + c + d + e + f + w + x + y + z + g + h );
+	if (print) printf("Result=%lf\n",result);
+	return result;
+}
 
 void
 check_values( int eventset, int *events, int nevents, long long *values,
@@ -100,7 +133,7 @@ ref_measurements( int iters, int *eventset, int *events, int nevents,
 		t1 = PAPI_get_real_usec(  );
 		if ( ( retval = PAPI_start( *eventset ) ) )
 			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-		y = dummy3( x, iters );
+		y = dummy3( x, iters, 0 );
 		if ( ( retval = PAPI_stop( *eventset, &refvalues[i] ) ) )
 			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 		t2 = PAPI_get_real_usec(  );
@@ -212,11 +245,15 @@ main( int argc, char **argv )
 		test_skip( __FILE__, __LINE__, "This test takes too much time",
 				   retval );
 
-	y = dummy3( x, iters );
+	y = dummy3( x, iters, 0 );
 	/* Measure one run */
 	t1 = PAPI_get_real_usec(  );
-	y = dummy3( x, iters );
+	y = dummy3( x, iters, 0 );
 	t1 = PAPI_get_real_usec(  ) - t1;
+
+	if (t1==0) {
+		test_fail(__FILE__, __LINE__, "dummy3 takes no time to run!\n", retval);
+	}
 
 	if ( t1 < 1000000 ) {	 /* Scale up execution time to match t2 */
 		iters = iters * ( int ) ( 1000000 / t1 );
@@ -259,7 +296,7 @@ main( int argc, char **argv )
 	t1 = PAPI_get_real_usec(  );
 	if ( ( retval = PAPI_start( eventset ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-	y = dummy3( x, iters );
+	y = dummy3( x, iters, 0 );
 	if ( ( retval = PAPI_stop( eventset, values ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 	t2 = PAPI_get_real_usec(  );
@@ -294,36 +331,4 @@ main( int argc, char **argv )
 	return 0;
 }
 
-static double
-dummy3( double x, int iters )
-{
-	int i;
-	double w, y, z, a, b, c, d, e, f, g, h;
-	double one;
-	one = 1.0;
-	w = x;
-	y = x;
-	z = x;
-	a = x;
-	b = x;
-	c = x;
-	d = x;
-	e = x;
-	f = x;
-	g = x;
-	h = x;
-	for ( i = 1; i <= iters; i++ ) {
-		w = w * 1.000000000001 + one;
-		y = y * 1.000000000002 + one;
-		z = z * 1.000000000003 + one;
-		a = a * 1.000000000004 + one;
-		b = b * 1.000000000005 + one;
-		c = c * 0.999999999999 + one;
-		d = d * 0.999999999998 + one;
-		e = e * 0.999999999997 + one;
-		f = f * 0.999999999996 + one;
-		g = h * 0.999999999995 + one;
-		h = h * 1.000000000006 + one;
-	}
-	return 2.0 * ( a + b + c + d + e + f + w + x + y + z + g + h );
-}
+
