@@ -1,16 +1,23 @@
 /* This file performs the following test: start, stop and timer
 functionality for 2 slave pthreads */
 
+/* No it doesn't, that description is *completely* wrong */
+
+/* I think this is trying to test the pthread thread-specific */
+/* implementation but it is unclear and the git commit history */
+/* does not help at all here */
+
 #include <pthread.h>
 #include "papi_test.h"
 
-static int processing = 1;
+static volatile int processing = 1;
 
 void *
 Thread( void *arg )
 {
 	int retval;
 	void *arg2;
+
 	retval = PAPI_register_thread(  );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
@@ -62,7 +69,8 @@ Thread( void *arg )
 	retval = PAPI_unregister_thread(  );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
-	return ( NULL );
+
+	return NULL;
 }
 
 int
@@ -73,29 +81,36 @@ main( int argc, char **argv )
 	int retval, rc;
 	pthread_attr_t attr;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-	retval =
-		PAPI_thread_init( ( unsigned long ( * )( void ) ) ( pthread_self ) );
+	retval = PAPI_thread_init( ( unsigned long ( * )( void ) )
+				( pthread_self ) );
 	if ( retval != PAPI_OK ) {
-		if ( retval == PAPI_ECMP )
-			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
-		else
-			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
+		if ( retval == PAPI_ECMP ) {
+			test_skip( __FILE__, __LINE__,
+					"PAPI_thread_init", retval );
+		}
+		else {
+			test_fail( __FILE__, __LINE__,
+				"PAPI_thread_init", retval );
+		}
 	}
 
 	pthread_attr_init( &attr );
 #ifdef PTHREAD_CREATE_UNDETACHED
 	pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_UNDETACHED );
 #endif
+
 #ifdef PTHREAD_SCOPE_SYSTEM
 	retval = pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM );
-	if ( retval != 0 )
+	if ( retval != 0 ) {
 		test_skip( __FILE__, __LINE__, "pthread_attr_setscope", retval );
+	}
 #endif
 
 	flops1 = 1000000;
@@ -104,6 +119,7 @@ main( int argc, char **argv )
 		retval = PAPI_ESYS;
 		test_fail( __FILE__, __LINE__, "pthread_create", retval );
 	}
+
 	flops2 = 2000000;
 	rc = pthread_create( &f_th, &attr, Thread, ( void * ) &flops2 );
 	if ( rc ) {
@@ -126,14 +142,18 @@ main( int argc, char **argv )
 	}
 
 	pthread_attr_destroy( &attr );
+
 	flops5 = 500000;
 	Thread( &flops5 );
+
 	pthread_join( h_th, NULL );
 	pthread_join( g_th, NULL );
 	pthread_join( f_th, NULL );
 	pthread_join( e_th, NULL );
 
 	test_pass( __FILE__, NULL, 0 );
+
 	pthread_exit( NULL );
-	exit( 1 );
+
+	return 1;
 }
