@@ -132,8 +132,8 @@ main( int argc, char *argv[] )
 {
 	extern void dummy( void * );
 
-	float aa, *a, *b, *c, *x, *y;
-	double aad, *ad, *bd, *cd, *xd, *yd;
+	float aa, *a=NULL, *b=NULL, *c=NULL, *x=NULL, *y=NULL;
+	double aad, *ad=NULL, *bd=NULL, *cd=NULL, *xd=NULL, *yd=NULL;
 	int i, j, n;
 	int inner = 0;
 	int vector = 0;
