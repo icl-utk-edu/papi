@@ -1076,7 +1076,7 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 	event_table->pmu_type=pmu_type;
 
 	event_table->native_events=calloc(NATIVE_EVENT_CHUNK,
-					   sizeof(struct native_event_t));
+					sizeof(struct native_event_t));
 	if (event_table->native_events==NULL) {
 		return PAPI_ENOMEM;
 	}
@@ -1108,17 +1108,19 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 			break;
 		}
 
-	      if ((retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
+		if ((retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
 			(pmu_is_present_and_right_type(&pinfo,pmu_type))) {
 
-			 SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
+			SUBDBG("\t%d %s %s %d\n",i,
+				pinfo.name,pinfo.desc,pinfo.type);
 
-		         detected_pmus++;
-	 		ncnt+=pinfo.nevents;
+			detected_pmus++;
+			ncnt+=pinfo.nevents;
 
 			if (j < PAPI_PMU_MAX) {
-	     			my_vector->cmp_info.pmu_names[j++] = strdup(pinfo.name);
-	 		}
+				my_vector->cmp_info.pmu_names[j++] =
+							strdup(pinfo.name);
+			}
 
 			if (pmu_type & PMU_TYPE_CORE) {
 
