@@ -1,6 +1,6 @@
-/** file event_info.c
+/** file papi_xml_event_info.c
  *     @page papi_xml_event_info
- * @brief papi_xml_event_info utility. 
+ * @brief papi_xml_event_info utility.
  *     @section  NAME
  *             papi_xml_event_info - provides detailed information for PAPI events in XML format
  *
@@ -9,7 +9,7 @@
  *     @section Description
  *             papi_native_avail is a PAPI utility program that reports information 
  *             about the events available on the current platform in an XML format.
- *               
+ *
  *             It will attempt to create an EventSet with each event in it, which
  *             can be slow.
  *
@@ -24,15 +24,15 @@
  *       </ul>
  *
  *     @section Bugs
- *             There are no known bugs in this utility. 
- *             If you find a bug, it should be reported to the 
- *             PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+ *             There are no known bugs in this utility.
+ *             If you find a bug, it should be reported to the
+ *             PAPI Mailing List at <ptools-perfapi@ptools.org>.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "papi.h"
-#include "papi_test.h"
 
 static int EventSet;
 static int preset = 1;
@@ -221,17 +221,17 @@ enum_native_events( FILE * f, int cidx)
 	      retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cidx );
 	      continue;
 	   }
-			
+
 	   /* enumerate any umasks */
 	   k = i;
 	   if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK ) {
-		 
+
 	      /* Test if event can be added */
 	      if ( test_event( k ) == PAPI_OK ) {
 
 		 /* add the event */
 		 xmlize_event( f, &info, num );
-		    
+
 		 /* add the event's unit masks */
 		 do {
 		    retval = PAPI_get_event_info( k, &info );
@@ -244,7 +244,7 @@ enum_native_events( FILE * f, int cidx)
 		 } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK);
 		 fprintf( f, "    </event>\n" );
 	      }
-	   } else {		 
+	   } else {
               /* this event has no unit masks; test & write the event */
 	      if ( test_event( i ) == PAPI_OK ) {
 		 xmlize_event( f, &info, num );
@@ -280,7 +280,7 @@ parse_command_line (int argc, char **argv, int numc) {
      for( i = 1; i < argc; i++ ) {
 	if ( argv[i][0] == '-' ) {
 	   switch ( argv[i][1] ) {
-	      case 'c': 
+	      case 'c':
       	                 /* only events for specified component */
 
                          /* UGH, what is this, the IOCCC? */
@@ -354,12 +354,10 @@ main( int argc, char **argv)
 
 	int numc = 0;
 
-	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
-
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT ) {
-	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+		fprintf(stderr,"Error!  PAPI_library_init\n");
+		return retval;
 	}
 
 	/* report any return codes less than 0? */
@@ -376,8 +374,8 @@ main( int argc, char **argv)
 
 	retval = PAPI_create_eventset( &EventSet  );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-	   return 1;
+		fprintf(stderr,"Error!  PAPI_create_eventset\n");
+		return retval;
 	}
 
 	/* Get number of components */
@@ -407,7 +405,7 @@ main( int argc, char **argv)
 	      enum_preset_events( stdout, cidx);
 
 	   fprintf( stdout, "</component>\n" );
-	} 
+	}
 	else {
 	   /* Otherwise, print info for all components */
 	   for ( cidx = 0; cidx < numc; cidx++ ) {
@@ -425,21 +423,25 @@ main( int argc, char **argv)
 
 	       /* clean out eventset */
 	       retval = PAPI_cleanup_eventset( EventSet );
-	       if ( retval != PAPI_OK )
-		  test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
+	       if ( retval != PAPI_OK ) {
+			fprintf(stderr,"Error!  PAPI_cleanup_eventset\n");
+			return retval;
+		}
 	       retval = PAPI_destroy_eventset( &EventSet );
-	       if ( retval != PAPI_OK )
-		  test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	       if ( retval != PAPI_OK ) {
+			fprintf(stderr,"Error!  PAPI_destroy_eventset\n");
+			return retval;
+		}
 	       EventSet = PAPI_NULL;
 
-	       retval = PAPI_create_eventset( &EventSet  );
-	       if ( retval != PAPI_OK ) {
-		  test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );	        }
+		retval = PAPI_create_eventset( &EventSet  );
+		if ( retval != PAPI_OK ) {
+			fprintf(stderr,"Error!  PAPI_create_eventset\n");
+			return retval;
+		}
 
 	       /* re-parse command line to set up any events specified */
 	       parse_command_line (argc, argv, numc);
-	       
-
 	   }
 	}
 	fprintf( stdout, "</eventinfo>\n" );
