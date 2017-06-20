@@ -2,8 +2,8 @@
   * @brief papi_event_chooser utility.
   *	@page papi_event_chooser
   *	@section NAME
-  *		papi_event_chooser - given a list of named events, 
-  *		lists other events that can be counted with them. 
+  *		papi_event_chooser - given a list of named events,
+  *		lists other events that can be counted with them.
   *
   *	@section Synopsis
   *		papi_event_chooser NATIVE | PRESET < event > < event > ...
@@ -16,9 +16,9 @@
   *		This utility has no command line options.
   *
   *	@section Bugs
-  *		There are no known bugs in this utility. 
-  *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at ptools-perfapi@ptools.org. 
+  *		There are no known bugs in this utility.
+  *		If you find a bug, it should be reported to the
+  *		PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
  */
 #include "papi_test.h"
 #include <stdio.h>

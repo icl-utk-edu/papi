@@ -3,19 +3,19 @@
  * but uses offloading to run either on the host CPU or on a target device. */
 /** file hybrid_native_avail.c
   *	@page papi_hybrid_native_avail
-  * @brief papi_hybrid_native_avail utility. 
+  * @brief papi_hybrid_native_avail utility.
   *	@section  NAME
   *		papi_hybrid_native_avail - provides detailed information for PAPI native events. 
   *
   *	@section Synopsis
   *
   *	@section Description
-  *		papi_hybrid_native_avail is a PAPI utility program that reports information 
-  *		about the native events available on the current platform or on an attached MIC card. 
-  *		A native event is an event specific to a specific hardware platform. 
-  *		On many platforms, a specific native event may have a number of optional settings. 
-  *		In such cases, the native event and the valid settings are presented, 
-  *		rather than every possible combination of those settings. 
+  *		papi_hybrid_native_avail is a PAPI utility program that reports information
+  *		about the native events available on the current platform or on an attached MIC card.
+  *		A native event is an event specific to a specific hardware platform.
+  *		On many platforms, a specific native event may have a number of optional settings.
+  *		In such cases, the native event and the valid settings are presented,
+  *		rather than every possible combination of those settings.
   *		For each native event, a name, a description, and specific bit patterns are provided.
   *
   *	@section Options
@@ -37,12 +37,12 @@
   * <li>--iear        display Instruction Event Address Register events only
   * <li>--opcm        display events supporting OpCode Matching
   * <li>--nogroups    suppress display of Event grouping information
-  * </ul> 
+  * </ul>
   *
   *	@section Bugs
-  *		There are no known bugs in this utility. 
-  *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *		There are no known bugs in this utility.
+  *		If you find a bug, it should be reported to the
+  *		PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
   *
   * Modified by Gabriel Marin <gmarin@icl.utk.edu> to use offloading.
   */

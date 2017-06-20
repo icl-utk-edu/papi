@@ -178,7 +178,7 @@ You can pass as many events as you like to be counted or
 recorded, as long as that number does not exceed the number
 of available hardware counters.
 
-Contact ralph@eecs.utk.edu or/and ptools-perfapi@eecs.utk.edu
+Contact ralph@eecs.utk.edu or/and ptools-perfapi@icl.utk.edu
 with any questions regarding PAPI calls in Matlab - either errors or questions.
 Also, this has just been implemented, so changes could
 be coming..........

@@ -1990,15 +1990,15 @@ PAPI_remove_named_event( int EventSet, char *EventName )
  *		A pointer to the integer handle for a PAPI event set as created by PAPI_create_eventset.
  *		The value pointed to by EventSet is then set to PAPI_NULL on success. 
  *
- *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid. 
+ *	@retval PAPI_EINVAL
+ *		One or more of the arguments is invalid.
  *		Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed.
- *	@retval PAPI_ENOEVST 
+ *	@retval PAPI_ENOEVST
  *		The EventSet specified does not exist.
- *	@retval PAPI_EISRUN 
+ *	@retval PAPI_EISRUN
  *		The EventSet is currently counting events.
- *	@retval PAPI_EBUG 
- *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
+ *	@retval PAPI_EBUG
+ *		Internal error, send mail to <ptools-perfapi@icl.utk.edu> and complain.
  *
  *	@par Examples:
  *	@code
@@ -2866,15 +2866,15 @@ PAPI_write( int EventSet, long long *values )
  *	@param EventSet
  *		An integer handle for a PAPI event set as created by PAPI_create_eventset.
  *
- *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid. 
+ *	@retval PAPI_EINVAL
+ *		One or more of the arguments is invalid.
  *		Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed.
- *	@retval PAPI_ENOEVST 
+ *	@retval PAPI_ENOEVST
  *		The EventSet specified does not exist.
- *	@retval PAPI_EISRUN 
+ *	@retval PAPI_EISRUN
  *		The EventSet is currently counting events.
- *	@retval PAPI_EBUG 
- *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
+ *	@retval PAPI_EBUG
+ *		Internal error, send mail to <ptools-perfapi@icl.utk.edu> and complain.
  *
  *	@par Examples:
  *	@code

@@ -1,11 +1,11 @@
-/* file command_line.c
+/* file papi_command_line.c
  * This simply tries to add the events listed on the command line one at a time
  * then starts and stops the counters and prints the results
 */
 
-/** 
-  *	@page papi_command_line 
-  * @brief executes PAPI preset or native events from the command line. 
+/**
+  *	@page papi_command_line
+  * @brief executes PAPI preset or native events from the command line.
   *
   *	@section Synopsis
   *		papi_command_line < event > < event > ...
@@ -24,9 +24,9 @@
   *	</ul>
   *
   *	@section Bugs
-  *		There are no known bugs in this utility. 
-  *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *		There are no known bugs in this utility.
+  *		If you find a bug, it should be reported to the
+  *		PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
  */
 
 #include "papi_test.h"

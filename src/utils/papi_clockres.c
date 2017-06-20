@@ -16,7 +16,7 @@
   *
   *	@section Bugs
   *	There are no known bugs in this utility.
-  *	If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *	If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
   *
   */
 
