@@ -46,6 +46,9 @@ papi_decode: papi_decode.c $(PAPILIB) $(TESTLIB)
 papi_native_avail: papi_native_avail.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_native_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_native_avail
 
+papi_hybrid_native_avail: papi_hybrid_native_avail.c $(PAPILIB) $(TESTLIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_hybrid_native_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_native_avail
+
 papi_component_avail: papi_component_avail.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_component_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_component_avail
 
