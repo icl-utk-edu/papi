@@ -2406,17 +2406,53 @@ _pe_init_component( int cidx )
 	/* Run the libpfm4-specific setup */
 	retval = _papi_libpfm4_init(_papi_hwd[cidx]);
 	if (retval) {
+
 		strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 			"Error initializing libpfm4",PAPI_MAX_STR_LEN);
 		return retval;
+
 	}
+
+	/* Now that libpfm4 is initialized */
+	/* Try to setup the perf_event component events */
 
 	retval = _pe_libpfm4_init(_papi_hwd[cidx], cidx,
 				&perf_native_event_table,
 				PMU_TYPE_CORE | PMU_TYPE_OS);
 	if (retval) {
-		strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-			"Error initializing libpfm4",PAPI_MAX_STR_LEN);
+		switch(retval) {
+			case PAPI_ENOMEM:
+				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+					"Error libpfm4 memory allocation",
+					PAPI_MAX_STR_LEN);
+				break;
+			case PAPI_ENOSUPP:
+				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+					"Error libpfm4 no PMUs found",
+					PAPI_MAX_STR_LEN);
+				break;
+			case PAPI_ENOCMP:
+				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+					"Error libpfm4 no default PMU found",
+					PAPI_MAX_STR_LEN);
+				break;
+			case PAPI_ECOUNT:
+				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+					"Error libpfm4 too many default PMUs found",
+					PAPI_MAX_STR_LEN);
+				break;
+			case PAPI_ENOEVNT:
+				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+					"Error loading preset events",
+					PAPI_MAX_STR_LEN);
+				break;
+			default:
+				printf("PAPI error %d\n",retval);
+				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+					"Unknown libpfm4 related error",
+					PAPI_MAX_STR_LEN);
+
+		}
 		return retval;
 	}
 

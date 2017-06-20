@@ -1144,14 +1144,19 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 	}
 	SUBDBG("%d native events detected on %d pmus\n",ncnt,detected_pmus);
 
+	if (detected_pmus==0) {
+		SUBDBG("Could not find any PMUs\n");
+		return PAPI_ENOSUPP;
+	}
+
 	if (!found_default) {
 		SUBDBG("Could not find default PMU\n");
-		return PAPI_ECMP;
+		return PAPI_ENOCMP;
 	}
 
 	if (found_default>1) {
 		PAPIERROR("Found too many default PMUs!\n");
-		return PAPI_ECMP;
+		return PAPI_ECOUNT;
 	}
 
 	my_vector->cmp_info.num_native_events = ncnt;
@@ -1165,8 +1170,8 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 	if (cidx==0) {
 		retval = _papi_load_preset_table( (char *)event_table->default_pmu.name,
 				event_table->default_pmu.pmu, cidx );
-		if ( retval ) {
-			return retval;
+		if ( retval!=PAPI_OK ) {
+			return PAPI_ENOEVNT;
 		}
 	}
 
