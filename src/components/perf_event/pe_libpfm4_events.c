@@ -1124,7 +1124,7 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 
 			if (pmu_type & PMU_TYPE_CORE) {
 
-				/* Hack to have "default" PMU */
+				/* Hack to have "default core" PMU */
 				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
 					strcmp(pinfo.name,"ix86arch")) {
 
@@ -1150,8 +1150,8 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 	}
 
 	if (!found_default) {
-		SUBDBG("Could not find default PMU\n");
-		return PAPI_ENOCMP;
+		SUBDBG("Could not find default core PMU\n");
+//		return PAPI_ENOCMP;
 	}
 
 	if (found_default>1) {
@@ -1166,8 +1166,8 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 
 	SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
 
-	/* Setup presets, only if Component 0 */
-	if (cidx==0) {
+	/* Setup presets, only if Component 0 and default core PMU */
+	if ((cidx==0) && (found_default)) {
 		retval = _papi_load_preset_table( (char *)event_table->default_pmu.name,
 				event_table->default_pmu.pmu, cidx );
 		if ( retval!=PAPI_OK ) {
