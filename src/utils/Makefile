@@ -34,8 +34,8 @@ papi_command_line: command_line.c $(TESTLIB) $(PAPILIB)
 papi_mem_info: mem_info.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) mem_info.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_mem_info
 
-papi_version: version.c $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) version.c $(PAPILIB) $(LDFLAGS) -o papi_version
+papi_version: papi_version.c $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_version.c $(PAPILIB) $(LDFLAGS) -o papi_version
 
 papi_avail: avail.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_avail
