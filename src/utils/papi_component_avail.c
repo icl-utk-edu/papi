@@ -1,4 +1,4 @@
-/** file component.c
+/** file papi_component_avail.c
   *	@page papi_component_avail
   * @brief papi_component_avail utility.
   *	@section  NAME
@@ -22,7 +22,13 @@
   *		PAPI Mailing List at <ptools-perfapi@ptools.org>.
  */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
+
+#include "print_header.h"
 
 #define EVT_LINE 80
 
@@ -79,27 +85,27 @@ main( int argc, char **argv )
 	command_flags_t flags;
 	int numcmp, cid;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
-
 	/* Initialize before parsing the input arguments */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	if ( retval != PAPI_VER_CURRENT ) {
+		fprintf(stderr,"Error!  PAPI_library_init\n");
+		return retval;
+	}
 
 	parse_args( argc, argv, &flags );
 
-	if ( !TESTS_QUIET ) {
-		retval = PAPI_set_debug( PAPI_VERB_ECONT );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	if ( retval != PAPI_OK ) {
+		fprintf(stderr,"Error!  PAPI_set_debug\n");
+		return retval;
 	}
 
-	retval =
-		papi_print_header
-		( "Available components and hardware information.\n", &hwinfo );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
+	retval = papi_print_header( "Available components and "
+					"hardware information.\n", &hwinfo );
+	if ( retval != PAPI_OK ) {
+		fprintf(stderr,"Error! PAPI_get_ahrdware_info\n");
+		return 2;
+	}
 
 	/* Compiled-in Components */
 	numcmp = PAPI_num_components(  );
@@ -161,6 +167,6 @@ main( int argc, char **argv )
 
 	printf
 	  ( "\n--------------------------------------------------------------------------------\n" );
-	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );
+
+	return 0;
 }

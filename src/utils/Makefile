@@ -19,12 +19,14 @@ papi_avail: papi_avail.c $(PAPILIB) print_header.o
 papi_clockres: papi_clockres.c $(PAPILIB) $(CLOCKCORE)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_clockres.c $(CLOCKCORE) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
 
+papi_component_avail: papi_component_avail.c $(PAPILIB) print_header.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_component_avail.c $(PAPILIB) print_header.o $(LDFLAGS) -o papi_component_avail
+
 papi_event_chooser: papi_event_chooser.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_event_chooser.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
 
 papi_xml_event_info: papi_xml_event_info.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_xml_event_info.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info -lm
-
 
 papi_cost: papi_cost.c $(TESTLIB) $(PAPILIB) cost_utils.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_cost.c $(TESTLIB) cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
@@ -50,8 +52,6 @@ papi_native_avail: papi_native_avail.c $(PAPILIB) $(TESTLIB)
 papi_hybrid_native_avail: papi_hybrid_native_avail.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_hybrid_native_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_native_avail
 
-papi_component_avail: papi_component_avail.c $(PAPILIB) $(TESTLIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_component_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_component_avail
 
 papi_error_codes: papi_error_codes.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_error_codes.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_error_codes
