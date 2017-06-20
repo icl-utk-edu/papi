@@ -1063,110 +1063,112 @@ _pe_libpfm4_init(papi_vector_t *my_vector, int cidx,
 		   struct native_event_table_t *event_table,
 		   int pmu_type) {
 
-   int detected_pmus=0, found_default=0;
-   int i;
-   int j=0;
-   pfm_err_t retval = PFM_SUCCESS;
-   unsigned int ncnt;
-   pfm_pmu_info_t pinfo;
+	int detected_pmus=0, found_default=0;
+	int i;
+	int j=0;
+	unsigned int ncnt;
 
-   /* allocate the native event structure */
+	pfm_err_t retval = PFM_SUCCESS;
+	pfm_pmu_info_t pinfo;
 
-   event_table->num_native_events=0;
-   event_table->pmu_type=pmu_type;
+	/* allocate the native event structure */
+	event_table->num_native_events=0;
+	event_table->pmu_type=pmu_type;
 
-   event_table->native_events=calloc(NATIVE_EVENT_CHUNK,
+	event_table->native_events=calloc(NATIVE_EVENT_CHUNK,
 					   sizeof(struct native_event_t));
-   if (event_table->native_events==NULL) {
-      return PAPI_ENOMEM;
-   }
-   event_table->allocated_native_events=NATIVE_EVENT_CHUNK;
-
-   /* Count number of present PMUs */
-   detected_pmus=0;
-   ncnt=0;
-
-   /* init default pmu */
-   /* need to init pinfo or pfmlib might complain */
-   memset(&(event_table->default_pmu), 0, sizeof(pfm_pmu_info_t));
-   event_table->default_pmu.size = sizeof(pfm_pmu_info_t);
-   retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
-
-   SUBDBG("Detected pmus:\n");
-	i=0;
-	while(1) {
-      memset(&pinfo,0,sizeof(pfm_pmu_info_t));
-      pinfo.size = sizeof(pfm_pmu_info_t);
-      retval=pfm_get_pmu_info(i, &pinfo);
-
-	/* We're done if we hit an invalid PMU entry			*/
-	/* We can't check against PFM_PMU_MAX				*/
-	/* as that might not match if libpfm4 is dynamically linked	*/
-
-	if (retval==PFM_ERR_INVAL) {
-		break;
+	if (event_table->native_events==NULL) {
+		return PAPI_ENOMEM;
 	}
 
-      if ((retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
-	(pmu_is_present_and_right_type(&pinfo,pmu_type))) {
+	event_table->allocated_native_events=NATIVE_EVENT_CHUNK;
 
-	 SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
+	/* Count number of present PMUs */
+	detected_pmus=0;
+	ncnt=0;
 
-         detected_pmus++;
-	 ncnt+=pinfo.nevents;
+	/* init default pmu */
+	/* need to init pinfo or pfmlib might complain */
+	memset(&(event_table->default_pmu), 0, sizeof(pfm_pmu_info_t));
+	event_table->default_pmu.size = sizeof(pfm_pmu_info_t);
+	retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
 
-	 if (j < PAPI_PMU_MAX) {
-	     my_vector->cmp_info.pmu_names[j++] = strdup(pinfo.name);
-	 }
+	SUBDBG("Detected pmus:\n");
+	i=0;
+	while(1) {
+		memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+		pinfo.size = sizeof(pfm_pmu_info_t);
+		retval=pfm_get_pmu_info(i, &pinfo);
 
-         if (pmu_type&PMU_TYPE_CORE) {
+		/* We're done if we hit an invalid PMU entry		*/
+		/* We can't check against PFM_PMU_MAX as that might not	*/
+		/* match if libpfm4 is dynamically linked		*/
 
-	    /* Hack to have "default" PMU */
-	    if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
-                  strcmp(pinfo.name,"ix86arch")) {
+		if (retval==PFM_ERR_INVAL) {
+			break;
+		}
 
-	       SUBDBG("\t  %s is default\n",pinfo.name);
-	       memcpy(&(event_table->default_pmu),
-		      &pinfo,sizeof(pfm_pmu_info_t));
-	       found_default++;
-	    }
-	 }
-         if (pmu_type==PMU_TYPE_UNCORE) {
-	     /* To avoid confusion, no "default" CPU for uncore */
-	       found_default=1;
-	 }
-      }
-	i++;
-   }
-   SUBDBG("%d native events detected on %d pmus\n",ncnt,detected_pmus);
+	      if ((retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
+			(pmu_is_present_and_right_type(&pinfo,pmu_type))) {
 
-   if (!found_default) {
-      SUBDBG("Could not find default PMU\n");
-      return PAPI_ECMP;
-   }
+			 SUBDBG("\t%d %s %s %d\n",i,pinfo.name,pinfo.desc,pinfo.type);
 
-   if (found_default>1) {
-     PAPIERROR("Found too many default PMUs!\n");
-     return PAPI_ECMP;
-   }
+		         detected_pmus++;
+	 		ncnt+=pinfo.nevents;
 
-   my_vector->cmp_info.num_native_events = ncnt;
+			if (j < PAPI_PMU_MAX) {
+	     			my_vector->cmp_info.pmu_names[j++] = strdup(pinfo.name);
+	 		}
 
-   my_vector->cmp_info.num_cntrs = event_table->default_pmu.num_cntrs+
-                                   event_table->default_pmu.num_fixed_cntrs;
+			if (pmu_type & PMU_TYPE_CORE) {
 
-   SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
+				/* Hack to have "default" PMU */
+				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
+					strcmp(pinfo.name,"ix86arch")) {
 
-   /* Setup presets, only if Component 0 */
-   if (cidx==0) {
-      retval = _papi_load_preset_table( (char *)event_table->default_pmu.name, 
-				     event_table->default_pmu.pmu, cidx );
-      if ( retval ) {
-         return retval;
-      }
-   }
+					SUBDBG("\t  %s is default\n",pinfo.name);
+					memcpy(&(event_table->default_pmu),
+						&pinfo,sizeof(pfm_pmu_info_t));
+					found_default++;
+				}
+			}
 
-   return PAPI_OK;
+			if (pmu_type==PMU_TYPE_UNCORE) {
+				/* To avoid confusion, no "default" CPU for uncore */
+				found_default=1;
+			}
+		}
+		i++;
+	}
+	SUBDBG("%d native events detected on %d pmus\n",ncnt,detected_pmus);
+
+	if (!found_default) {
+		SUBDBG("Could not find default PMU\n");
+		return PAPI_ECMP;
+	}
+
+	if (found_default>1) {
+		PAPIERROR("Found too many default PMUs!\n");
+		return PAPI_ECMP;
+	}
+
+	my_vector->cmp_info.num_native_events = ncnt;
+
+	my_vector->cmp_info.num_cntrs = event_table->default_pmu.num_cntrs+
+				event_table->default_pmu.num_fixed_cntrs;
+
+	SUBDBG( "num_counters: %d\n", my_vector->cmp_info.num_cntrs );
+
+	/* Setup presets, only if Component 0 */
+	if (cidx==0) {
+		retval = _papi_load_preset_table( (char *)event_table->default_pmu.name,
+				event_table->default_pmu.pmu, cidx );
+		if ( retval ) {
+			return retval;
+		}
+	}
+
+	return PAPI_OK;
 }
 
 /** @class  _peu_libpfm4_init
