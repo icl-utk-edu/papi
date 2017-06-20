@@ -1,4 +1,12 @@
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#include "papi.h"
+
+#include "clockcore.h"
+
+#define NUM_ITERS  1000000
 
 static char *func_name[] = {
 	"PAPI_get_real_cyc",
@@ -8,11 +16,12 @@ static char *func_name[] = {
 };
 static int CLOCK_ERROR = 0;
 
-void
-clock_res_check( int flag )
+static int
+clock_res_check( int flag, int quiet )
 {
-	if ( CLOCK_ERROR )
-		return;
+	if ( CLOCK_ERROR ) {
+		return -1;
+	}
 
 	long long *elapsed_cyc, total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
 	int i;
@@ -39,7 +48,7 @@ clock_res_check( int flag )
 			elapsed_cyc[i] = ( long long ) PAPI_get_virt_usec(  );
 		break;
 	default:
-		test_fail( __FILE__, __LINE__, "clock_res_check", -1 );
+		return -1;
 
 	}
 
@@ -48,9 +57,9 @@ clock_res_check( int flag )
 	for ( i = 1; i < NUM_ITERS; i++ ) {
 		if ( elapsed_cyc[i] - elapsed_cyc[i - 1] < 0 ) {
 			CLOCK_ERROR = 1;
-			test_fail( __FILE__, __LINE__, "Negative elapsed time", -1 );
+			fprintf(stderr,"Error! Negative elapsed time\n");
 			free( elapsed_cyc );
-			return;
+			return -1;
 		}
 
 		diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
@@ -76,7 +85,7 @@ clock_res_check( int flag )
 	printf( "%s: min %.3lf  max %.3lf \n", func_name[flag], min, max );
 	printf( "                   average %.3lf std %.3lf\n", average, std );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		if ( uniq_cyc == NUM_ITERS - 1 ) {
 			printf( "%s : %7.3f   <%7.3f\n", func_name[flag],
 					( double ) total_cyc / ( double ) ( NUM_ITERS ),
@@ -93,26 +102,32 @@ clock_res_check( int flag )
 	}
 
 	free( elapsed_cyc );
+
+	return PAPI_OK;
 }
 
-void
-clockcore( void )
+int
+clockcore( int quiet )
 {
 	/* check PAPI_get_real_cyc */
-	clock_res_check( 0 );
+	clock_res_check( 0, quiet );
 	/* check PAPI_get_real_usec */
-	clock_res_check( 1 );
+	clock_res_check( 1, quiet );
 
 	/* check PAPI_get_virt_cyc */
 	/* Virtual */
 	if ( PAPI_get_virt_cyc(  ) != -1 ) {
-		clock_res_check( 2 );
-	} else
-		test_fail( __FILE__, __LINE__, "PAPI_get_virt_cyc", -1 );
+		clock_res_check( 2, quiet );
+	} else {
+		return CLOCKCORE_VIRT_CYC_FAIL;
+	}
 
 	/* check PAPI_get_virt_usec */
 	if ( PAPI_get_virt_usec(  ) != -1 ) {
-		clock_res_check( 3 );
-	} else
-		test_fail( __FILE__, __LINE__, "PAPI_get_virt_usec", -1 );
+		clock_res_check( 3, quiet );
+	} else {
+		return CLOCKCORE_VIRT_USEC_FAIL;
+	}
+
+	return PAPI_OK;
 }

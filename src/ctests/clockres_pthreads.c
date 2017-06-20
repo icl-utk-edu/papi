@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include "papi_test.h"
 
+#include "clockcore.h"
 
 void *
 pthread_main( void *arg )
@@ -11,7 +12,10 @@ pthread_main( void *arg )
 	   test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 	}
 
-	clockcore(  );
+	retval=clockcore( TESTS_QUIET );
+	if (retval != PAPI_OK ) {
+		test_fail(__FILE__, __LINE__, "clockcore failure", retval );
+	}
 
 	retval = PAPI_unregister_thread(  );
 	if ( retval != PAPI_OK ) {

@@ -5,6 +5,7 @@ INCLUDE = -I../testlib -I.. -I.
 PAPILIB = ../$(LIBRARY)
 testlibdir=../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
+CLOCKCORE= $(testlibdir)/clockcore.o
 
 ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail \
 	papi_command_line papi_event_chooser papi_decode papi_xml_event_info \
@@ -15,15 +16,15 @@ default all utils: $(ALL)
 papi_avail: papi_avail.c $(PAPILIB) print_header.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_avail.c $(PAPILIB) $(LDFLAGS) -o papi_avail print_header.o
 
+papi_clockres: papi_clockres.c $(PAPILIB) $(CLOCKCORE)
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_clockres.c $(CLOCKCORE) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
+
 papi_event_chooser: papi_event_chooser.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_event_chooser.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
 
 papi_xml_event_info: papi_xml_event_info.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_xml_event_info.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info -lm
 
-papi_clockres: papi_clockres.c $(PAPILIB) $(TESTLIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_clockres.c $(TESTLIB) \
-		$(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
 
 papi_cost: papi_cost.c $(TESTLIB) $(PAPILIB) cost_utils.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_cost.c $(TESTLIB) cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
