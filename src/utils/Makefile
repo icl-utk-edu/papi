@@ -31,6 +31,9 @@ papi_error_codes: papi_error_codes.c $(PAPILIB)
 papi_event_chooser: papi_event_chooser.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_event_chooser.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser
 
+papi_mem_info: papi_mem_info.c $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_mem_info.c $(PAPILIB) $(LDFLAGS) -o papi_mem_info
+
 papi_version: papi_version.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_version.c $(PAPILIB) $(LDFLAGS) -o papi_version
 
@@ -47,9 +50,6 @@ papi_multiplex_cost: papi_multiplex_cost.c $(TESTLIB) $(PAPILIB) cost_utils.o
 
 papi_command_line: papi_command_line.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_command_line.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_command_line
-
-papi_mem_info: papi_mem_info.c $(PAPILIB) $(TESTLIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_mem_info.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_mem_info
 
 papi_native_avail: papi_native_avail.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_native_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_native_avail
