@@ -1,6 +1,6 @@
-/* 
+/*
  * This utility loops through all the PAPI error codes and displays them in
- 	table format
+ *	table format
 */
 
 /** file error_codes.c
@@ -23,12 +23,14 @@
   *		This utility has no command line options.
   *
   *	@section Bugs
-  *		There are no known bugs in this utility. 
-  *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *		There are no known bugs in this utility.
+  *		If you find a bug, it should be reported to the
+  *		PAPI Mailing List at <ptools-perfapi@ptools.org>.
  */
 
-#include "papi_test.h"
+#include <stdio.h>
+
+#include "papi.h"
 
 int
 main( int argc, char **argv )
@@ -36,15 +38,17 @@ main( int argc, char **argv )
 	int i=0;
 	int retval;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	(void)argc;
+	(void)argv;
 
- 	if ( ( retval =
- 		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
- 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
+ 	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
+		fprintf(stderr,"Error with PAPI_library_init!\n");
+		return retval;
+	}
 
 	printf( "\n----------------------------------\n" );
-	printf( "For PAPI Version: %d.%d.%d.%d\n", 
+	printf( "For PAPI Version: %d.%d.%d.%d\n",
 			PAPI_VERSION_MAJOR( PAPI_VERSION ),
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ),
@@ -63,5 +67,6 @@ main( int argc, char **argv )
 	}
 	printf( "There are %d error codes defined\n", i );
 	printf( "----------------------------------\n\n" );
-	exit( 1 );
+
+	return 0;
 }
