@@ -22,6 +22,9 @@ papi_clockres: papi_clockres.c $(PAPILIB) $(CLOCKCORE)
 papi_component_avail: papi_component_avail.c $(PAPILIB) print_header.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_component_avail.c $(PAPILIB) print_header.o $(LDFLAGS) -o papi_component_avail
 
+papi_decode: papi_decode.c $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_decode.c $(PAPILIB) $(LDFLAGS) -o papi_decode
+
 papi_error_codes: papi_error_codes.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_error_codes.c $(PAPILIB) $(LDFLAGS) -o papi_error_codes
 
@@ -45,9 +48,6 @@ papi_mem_info: papi_mem_info.c $(PAPILIB) $(TESTLIB)
 
 papi_version: papi_version.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_version.c $(PAPILIB) $(LDFLAGS) -o papi_version
-
-papi_decode: papi_decode.c $(PAPILIB) $(TESTLIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_decode.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_decode
 
 papi_native_avail: papi_native_avail.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_native_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_native_avail

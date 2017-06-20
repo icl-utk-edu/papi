@@ -1,5 +1,5 @@
 /* This file decodes the preset events into a csv format file */
-/** file decode.c
+/** file papi_decode.c
   * @brief papi_decode utility.
   *	@page papi_decode
   *	@section  NAME
@@ -32,13 +32,16 @@
   *	</ul>
   *
   *	@section Bugs
-  *		There are no known bugs in this utility. 
-  *		If you find a bug, it should be reported to the 
-  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *		There are no known bugs in this utility.
+  *		If you find a bug, it should be reported to the
+  *		PAPI Mailing List at <ptools-perfapi@ptools.org>.
  */
 
-#include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
 
 static void
 print_help( void )
@@ -65,7 +68,9 @@ main( int argc, char **argv )
 	int print_avail_only = 0;
 	PAPI_event_info_t info;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	(void)argc;
+	(void)argv;
+
 	for ( i = 1; i < argc; i++ )
 		if ( argv[i] ) {
 			if ( !strcmp( argv[i], "-a" ) )
@@ -80,13 +85,15 @@ main( int argc, char **argv )
 		}
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	if ( retval != PAPI_VER_CURRENT ) {
+		fprintf(stderr,"Error with PAPI_library_init!\n");
+		return retval;
+	}
 
-	if ( !TESTS_QUIET ) {
-		retval = PAPI_set_debug( PAPI_VERB_ECONT );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	if ( retval != PAPI_OK ) {
+		fprintf(stderr,"Error with PAPI_set_debug\n");
+		return retval;
 	}
 
 	i = PAPI_PRESET_MASK;
@@ -114,5 +121,6 @@ main( int argc, char **argv )
 			printf( "\n" );
 		}
 	} while ( PAPI_enum_event( &i, print_avail_only ) == PAPI_OK );
-	exit( 1 );
+
+	return 0;
 }
