@@ -1257,7 +1257,6 @@ FILENAME=Makefile.inc
 SHOW_CONF=showconf
 CTEST_TARGETS="all"
 FTEST_TARGETS="all"
-UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost papi_component_avail papi_error_codes"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.AC_PACKAGE_VERSION'
 VLIB='libpapi.so.$(PAPIVER)'
@@ -1806,7 +1805,6 @@ AC_SUBST(BITFLAGS)
 AC_SUBST(COMPONENT_RULES)
 AC_SUBST(COMPONENTS)
 AC_SUBST(FTEST_TARGETS)
-AC_SUBST(UTIL_TARGETS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
 AC_SUBST(BGPM_INSTALL_DIR)
 AC_SUBST(CC_COMMON_NAME)
@@ -1828,5 +1826,5 @@ AC_MSG_NOTICE(Generating f90papi.h)
 
 AC_MSG_NOTICE($FILENAME will be included in the generated Makefile)
 AC_CONFIG_FILES([Makefile papi.pc])
-AC_CONFIG_FILES([components/Makefile_comp_tests.target testlib/Makefile.target ctests/Makefile.target ftests/Makefile.target])
+AC_CONFIG_FILES([components/Makefile_comp_tests.target testlib/Makefile.target utils/Makefile.target ctests/Makefile.target ftests/Makefile.target])
 AC_OUTPUT

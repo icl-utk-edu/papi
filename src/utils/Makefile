@@ -1,6 +1,8 @@
 # File: utils/Makefile
-INCLUDE = -I../testlib -I. 
-PAPILIB = $(LIBRARY)
+include Makefile.target
+
+INCLUDE = -I../testlib -I.. -I.
+PAPILIB = ../$(LIBRARY)
 testlibdir=../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
 
@@ -8,7 +10,7 @@ ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail \
 	papi_command_line papi_event_chooser papi_decode papi_xml_event_info \
 	papi_version papi_multiplex_cost papi_component_avail papi_error_codes
 
-default all utils: $(UTIL_TARGETS)
+default all utils: $(ALL)
 
 papi_event_chooser: event_chooser.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) event_chooser.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
@@ -16,7 +18,7 @@ papi_event_chooser: event_chooser.c $(PAPILIB) $(TESTLIB)
 papi_xml_event_info: event_info.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) event_info.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info -lm
 
-papi_clockres: clockres.c $(PAPILIB) $(TESTLIB) 
+papi_clockres: clockres.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) clockres.c $(TESTLIB) \
 		$(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
 

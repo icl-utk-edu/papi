@@ -627,7 +627,6 @@ LIBOBJS
 CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
-UTIL_TARGETS
 FTEST_TARGETS
 COMPONENTS
 COMPONENT_RULES
@@ -731,6 +730,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -841,6 +841,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1093,6 +1094,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1230,7 +1240,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1383,6 +1393,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -6184,7 +6195,6 @@ FILENAME=Makefile.inc
 SHOW_CONF=showconf
 CTEST_TARGETS="all"
 FTEST_TARGETS="all"
-UTIL_TARGETS="papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info papi_version papi_multiplex_cost papi_component_avail papi_error_codes"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.5.5.2.0'
 VLIB='libpapi.so.$(PAPIVER)'
@@ -6785,7 +6795,6 @@ $as_echo "$PAPI_EVENTS_CSV" >&6; }
 
 
 
-
 if test "$cross_compiling" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $nativecc because cross compiling" >&5
 $as_echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
@@ -6810,7 +6819,7 @@ $as_echo "$as_me: Generating f90papi.h" >&6;}
 $as_echo "$as_me: $FILENAME will be included in the generated Makefile" >&6;}
 ac_config_files="$ac_config_files Makefile papi.pc"
 
-ac_config_files="$ac_config_files components/Makefile_comp_tests.target testlib/Makefile.target ctests/Makefile.target ftests/Makefile.target"
+ac_config_files="$ac_config_files components/Makefile_comp_tests.target testlib/Makefile.target utils/Makefile.target ctests/Makefile.target ftests/Makefile.target"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7507,6 +7516,7 @@ do
     "papi.pc") CONFIG_FILES="$CONFIG_FILES papi.pc" ;;
     "components/Makefile_comp_tests.target") CONFIG_FILES="$CONFIG_FILES components/Makefile_comp_tests.target" ;;
     "testlib/Makefile.target") CONFIG_FILES="$CONFIG_FILES testlib/Makefile.target" ;;
+    "utils/Makefile.target") CONFIG_FILES="$CONFIG_FILES utils/Makefile.target" ;;
     "ctests/Makefile.target") CONFIG_FILES="$CONFIG_FILES ctests/Makefile.target" ;;
     "ftests/Makefile.target") CONFIG_FILES="$CONFIG_FILES ftests/Makefile.target" ;;
 
