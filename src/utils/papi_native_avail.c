@@ -1,7 +1,7 @@
 /* This file utility reports hardware info and native event availability */
-/** file native_avail.c
+/** file papi_native_avail.c
  *	@page papi_native_avail
- * @brief papi_native_avail utility. 
+ * @brief papi_native_avail utility.
  *	@section  NAME
  *		papi_native_avail - provides detailed information for PAPI native events. 
  *
@@ -9,11 +9,11 @@
  *
  *	@section Description
  *		papi_native_avail is a PAPI utility program that reports information 
- *		about the native events available on the current platform. 
+ *		about the native events available on the current platform.
  *		A native event is an event specific to a specific hardware platform. 
  *		On many platforms, a specific native event may have a number of optional settings. 
  *		In such cases, the native event and the valid settings are presented, 
- *		rather than every possible combination of those settings. 
+ *		rather than every possible combination of those settings.
  *		For each native event, a name, a description, and specific bit patterns are provided.
  *
  *	@section Options
@@ -33,15 +33,21 @@
  * <li>--iear        display Instruction Event Address Register events only
  * <li>--opcm        display events supporting OpCode Matching
  * <li>--nogroups    suppress display of Event grouping information
- * </ul> 
+ * </ul>
  *
  *	@section Bugs
- *		There are no known bugs in this utility. 
- *		If you find a bug, it should be reported to the 
- *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+ *		There are no known bugs in this utility.
+ *		If you find a bug, it should be reported to the
+ *		PAPI Mailing List at <ptools-perfapi@ptools.org>.
  */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+
+#include "papi.h"
+#include "print_header.h"
 
 #define EVT_LINE 80
 #define EVT_LINE_BUF_SIZE 4096
@@ -192,7 +198,7 @@ check_event( PAPI_event_info_t * info )
 	return;
 }
 
-static void
+static int
 format_event_output( PAPI_event_info_t * info, int offset)
 {
 	unsigned int i, j = 0;
@@ -268,13 +274,14 @@ format_event_output( PAPI_event_info_t * info, int offset)
 
 	// make sure we got the memory we asked for
 	if (event_output_buffer == NULL) {
-		test_fail( __FILE__, __LINE__, "Allocation of output buffer memory failed.\n", errno );
+		fprintf(stderr,"Error!  Allocation of output buffer memory failed.\n");
+		return errno;
 	}
 
 	strcat(event_output_buffer, event_line_buffer);
 	strcat(event_output_buffer, event_line_units);
 
-	return;
+	return 0;
 }
 
 static void
@@ -355,13 +362,11 @@ main( int argc, char **argv )
 	int enum_modifier;
 	int numcmp, cid;
 
-	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
-
 	/* Initialize before parsing the input arguments */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT ) {
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+		fprintf(stderr, "Error! PAPI_library_init\n");
+		return retval;
 	}
 
 	/* Parse the command-line arguments */
@@ -381,17 +386,16 @@ main( int argc, char **argv )
 	else
 		enum_modifier = PAPI_ENUM_EVENTS;
 
-
-	if ( !TESTS_QUIET ) {
-		retval = PAPI_set_debug( PAPI_VERB_ECONT );
-		if ( retval != PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
-		}
+	retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	if ( retval != PAPI_OK ) {
+		fprintf(stderr,"Error!  PAPI_set_debug\n");
+		return retval;
 	}
 
 	retval = papi_print_header( "Available native events and hardware information.\n", &hwinfo );
 	if ( retval != PAPI_OK ) {
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+		fprintf(stderr,"Error!  PAPI_get_hardware_info\n");
+		return 2;
 	}
 
 	/* Do this code if the event name option was specified on the commandline */
@@ -434,8 +438,7 @@ main( int argc, char **argv )
 			printf("Is it typed correctly?\n\n");
 			exit( 1 );
 		}
-		test_pass( __FILE__, NULL, 0 );
-		exit( 0 );
+		return 0;
 	}
 
 	// Look at all the events and qualifiers and print the information the user has asked for */
@@ -474,7 +477,7 @@ main( int argc, char **argv )
 
 				/* Bail if event name doesn't contain include string */
 				if ( flags.include && !strstr( info.symbol, flags.istr ) ) continue;
-                                     
+
 				/* Bail if event name does contain exclude string */
 				if ( flags.xclude && strstr( info.symbol, flags.xstr ) ) continue;
 
@@ -575,6 +578,5 @@ main( int argc, char **argv )
 	}
 	printf( "\nTotal events reported: %d\n", num_events );
 
-	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );
+	return 0;
 }
