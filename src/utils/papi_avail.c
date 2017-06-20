@@ -1,4 +1,3 @@
-
 // Define the papi_avail man page contents.
 /**
   * file avail.c
@@ -6,9 +5,9 @@
   * @page papi_avail
   *	@section Name
   *	papi_avail - provides availability and detail information for PAPI preset and user defined events.
-  * 
+  *
   *	@section Synopsis
-  *	papi_avail [-adht] [-e event] 
+  *	papi_avail [-adht] [-e event]
   *
   *	@section Description
   *	papi_avail is a PAPI utility program that reports information about the 
@@ -28,7 +27,7 @@
   *	</ul>
   *
   *	@section Bugs
-  *	There are no known bugs in this utility. 
+  *	There are no known bugs in this utility.
   *	If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>.
   * <br>
   *	@see PAPI_derived_event_files
@@ -164,8 +163,12 @@
  */
 
 
-#include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
+#include "print_header.h"
 
 static char *
 is_derived( PAPI_event_info_t * info )
@@ -224,7 +227,7 @@ parse_unit_masks( PAPI_event_info_t * info )
 	else
 		memmove( info->long_descr, pmask + sizeof ( char ),
 				 ( strlen( pmask ) + 1 ) * sizeof ( char ) );
-	return ( 1 );
+	return 1;
 }
 
 static int
@@ -261,10 +264,6 @@ main( int argc, char **argv )
    int event_code;
 
    PAPI_event_info_t n_info;
-
-   /* Set TESTS_QUIET variable */
-
-   tests_quiet( argc, argv );	
 
    /* Parse command line arguments */
 
@@ -323,20 +322,23 @@ main( int argc, char **argv )
 
    retval = PAPI_library_init( PAPI_VER_CURRENT );
    if ( retval != PAPI_VER_CURRENT ) {
-      test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	fprintf(stderr,"Error!  PAPI library mismatch!\n");
+	return 1;
    }
 
-   if ( !TESTS_QUIET ) {
-      retval = PAPI_set_debug( PAPI_VERB_ECONT );
-      if ( retval != PAPI_OK ) {
-	 test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
-      }
+
+	retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	if ( retval != PAPI_OK ) {
+		fprintf(stderr,"Error with PAPI_set debug!\n");
+		return 1;
+	}
 
       retval=papi_print_header("Available PAPI preset and user defined events plus hardware information.\n",
 			       &hwinfo );
-      if ( retval != PAPI_OK ) {
-	 test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-      }
+	if ( retval != PAPI_OK ) {
+		fprintf(stderr,"Error with PAPI_get_hardware_info!\n");
+		return 1;
+	}
 
       /* Code for info on just one event */
 
@@ -534,8 +536,7 @@ main( int argc, char **argv )
 	    printf( "are derived.\n\n" );
 	 }
       }
-   }
-   test_pass( __FILE__, NULL, 0 );
-   exit( 1 );
-   
+
+	return 0;
+
 }

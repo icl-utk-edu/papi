@@ -12,6 +12,9 @@ ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail \
 
 default all utils: $(ALL)
 
+papi_avail: papi_avail.c $(PAPILIB) print_header.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_avail.c $(PAPILIB) $(LDFLAGS) -o papi_avail print_header.o
+
 papi_event_chooser: papi_event_chooser.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_event_chooser.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
 
@@ -37,9 +40,6 @@ papi_mem_info: papi_mem_info.c $(PAPILIB) $(TESTLIB)
 papi_version: papi_version.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_version.c $(PAPILIB) $(LDFLAGS) -o papi_version
 
-papi_avail: papi_avail.c $(PAPILIB) $(TESTLIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_avail.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_avail
-
 papi_decode: papi_decode.c $(PAPILIB) $(TESTLIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_decode.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_decode
 
@@ -57,6 +57,9 @@ papi_error_codes: papi_error_codes.c $(PAPILIB) $(TESTLIB)
 
 cost_utils.o: ../testlib/papi_test.h cost_utils.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c cost_utils.c
+
+print_header.o: print_header.h print_header.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c print_header.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
