@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <math.h>
+
 #include "papi_test.h"
 
 int num_iters = NUM_ITERS;

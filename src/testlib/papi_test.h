@@ -2,12 +2,10 @@
 	This file is customized to hide Windows / Unix differences.
 */
 
-#include <sys/wait.h>
 #if (!defined(NO_DLFCN) && !defined(_BGL) && !defined(_BGP))
 #include <dlfcn.h>
 #endif
 
-#include <errno.h>
 #include <memory.h>
 #if !defined(__FreeBSD__) && !defined(__APPLE__)
 #include <malloc.h>
@@ -17,7 +15,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <math.h>
 
 #include "papiStdEventDefs.h"
 #include "papi.h"

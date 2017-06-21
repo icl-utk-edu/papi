@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ptrace.h>
+#include <sys/wait.h>
 
 #include "papi_test.h"
 

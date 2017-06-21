@@ -2,6 +2,9 @@
  * This tests the measuring of events using a system-wide granularity
  */
 
+#include <stdio.h>
+#include <errno.h>
+
 #include "papi_test.h"
 
 #ifndef __USE_GNU
