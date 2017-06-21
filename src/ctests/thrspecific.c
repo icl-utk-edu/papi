@@ -7,7 +7,11 @@ functionality for 2 slave pthreads */
 /* implementation but it is unclear and the git commit history */
 /* does not help at all here */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <pthread.h>
+
 #include "papi_test.h"
 
 static volatile int processing = 1;

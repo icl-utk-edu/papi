@@ -13,9 +13,10 @@
    - Get us.
 */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+#include "papi_test.h"
 
 int
 main( int argc, char **argv )

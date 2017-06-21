@@ -1,14 +1,17 @@
-/* This file performs the following test: start, stop and 
+/* This file performs the following test: start, stop and
    timer functionality for L1 related events
 
    - They are counted in the default counting domain and default
-     granularity, depending on the platform. Usually this is 
+     granularity, depending on the platform. Usually this is
      the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
 
    - Start counters
    - Do iterations
    - Stop and read counters
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

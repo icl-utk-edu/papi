@@ -1,6 +1,5 @@
-/* 
+/*
 * File:    profile.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Dan Terpstra
@@ -27,6 +26,9 @@
    - Do both (flops and reads)
    - Stop eventset 1
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 #include "prof_utils.h"

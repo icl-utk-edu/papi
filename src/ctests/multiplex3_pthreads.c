@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    multiplex3_pthreads.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -11,7 +11,10 @@
  * one thread that is calling PAPI.)
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+
 #include "papi_test.h"
 
 #define MAX_TO_ADD 5

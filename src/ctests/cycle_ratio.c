@@ -14,10 +14,14 @@
 	This test measures the ratio first from a roughly idle state. It then does floating
 	point intensive work to push this core into a fully active or accelerated state,
 	and then it measures the ratio again.
-	
+
 	Using this technique allows you to measure the effective clock rate of the processor
 	over a specific region of code, allowing you to infer the state of acceleration.
 */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "papi_test.h"
 
@@ -35,7 +39,7 @@ main( int argc, char **argv )
 	int mhz;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );

@@ -10,14 +10,17 @@
  * a measure of execution efficiency.
  *
  * PAPI_epc is new in PAPI 5.2. It reports the same information as PAPI_IPC, but 
- * for an arbitrary event instead of total cycles. It also reports incremental 
- * core and (where available) reference cycles to allow the computation of 
+ * for an arbitrary event instead of total cycles. It also reports incremental
+ * core and (where available) reference cycles to allow the computation of
  * effective clock rates in the presence of clock scaling like speed step or turbo-boost.
- * 
+ *
  * This test computes a 1000 x 1000 matrix multiply for orders of indexing for
  * each of the four rate calls. It also accepts a command line parameter for the
  * event to be measured for PAPI_epc. If not provided, PAPI_TOT_INS is measured.
  */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

@@ -1,26 +1,29 @@
-/* 
+/*
 * File:    fork2.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
 
-/* This file performs the following test: 
+/* This file performs the following test:
 
    PAPI_library_init()
          fork();
-         /    \ 
+         /    \
      parent   child
      wait()   PAPI_shutdown()
               PAPI_library_init()
 
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "papi_test.h"
-#include <sys/wait.h>
+
 
 int
 main( int argc, char **argv )

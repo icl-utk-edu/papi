@@ -8,6 +8,13 @@
 *          <your email address>
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "papi_test.h"
+#include "prof_utils.h"
+
+
 /* These architectures use Function Descriptors as Function Pointers */
 
 #if (defined(linux) && defined(__ia64__)) || (defined(_AIX)) \
@@ -25,8 +32,6 @@
 
 /* This file performs the following test: sprofile */
 
-#include "papi_test.h"
-#include "prof_utils.h"
 
 int
 main( int argc, char **argv )

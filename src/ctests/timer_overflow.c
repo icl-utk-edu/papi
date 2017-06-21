@@ -8,6 +8,10 @@
 
 /* This file looks for possible timer overflows. */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "papi_test.h"
 
 #define TIMER_THRESHOLD 100

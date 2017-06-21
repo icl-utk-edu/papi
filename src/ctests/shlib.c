@@ -1,11 +1,15 @@
-/* 
+/*
 * File:    profile.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "papi_test.h"
 
 void print_shlib_info_map(const PAPI_shlib_info_t *shinfo)

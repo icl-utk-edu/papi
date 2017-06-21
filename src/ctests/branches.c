@@ -6,9 +6,12 @@
  * This example verifies the accuracy of branch events
  */
 
-#include "papi_test.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+
+#include "papi_test.h"
+
 
 #define MAXEVENTS 4
 #define SLEEPTIME 100

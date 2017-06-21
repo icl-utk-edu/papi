@@ -1,6 +1,5 @@
-/* 
+/*
 * File:    overflow_twoevents.c
-* CVS:     $Id$
 * Author:  min@cs.utk.edu
 *          Min Zhou
 * Mods:    Philip Mucci
@@ -8,6 +7,9 @@
 */
 
 /* This file performs the following test: overflow dispatch on 2 counters. */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

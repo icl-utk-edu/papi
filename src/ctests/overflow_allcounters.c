@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    overflow_allcounters.c
 * Author:  Haihang You
 *          you@cs.utk.edu
@@ -10,7 +10,7 @@
 
 /* This file performs the following test: overflow all counters
    to test availability of overflow of all counters
-  
+
    - Start eventset 1
    - Do flops
    - Stop and measure eventset 1
@@ -19,6 +19,9 @@
    - Do flops
    - Stop eventset 1
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

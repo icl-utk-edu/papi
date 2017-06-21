@@ -6,9 +6,12 @@
  * This example verifies the accuracy of multiplexed events
  */
 
-#include "papi_test.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+
+#include "papi_test.h"
+
 
 #define REPEATS 5
 #define MAXEVENTS 14

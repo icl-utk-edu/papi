@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    multiplex1_pthreads.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -8,7 +8,10 @@
 
 /* This file tests the multiplex pthread functionality */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+
 #include "papi_test.h"
 
 #define TOTAL_EVENTS 10

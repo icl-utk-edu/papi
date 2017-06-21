@@ -1,10 +1,12 @@
 /* This test checks that mixing PAPI_flips and the other high
  * level calls does the right thing.
- * Kevin 
+ * Kevin
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /*Declared in test_utils.c */
 
 int
 main( int argc, char **argv )

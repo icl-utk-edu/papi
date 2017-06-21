@@ -1,6 +1,8 @@
-#include "papi_test.h"
-
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+
+#include "papi_test.h"
 
 /*  Variable to hold reporting status
 	if TRUE, output is suppressed

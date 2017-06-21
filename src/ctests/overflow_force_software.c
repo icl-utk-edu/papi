@@ -1,6 +1,5 @@
 /*
 * File: overflow_force_software.c
-* CVS: $Id$
 * Author: Kevin London
 * london@cs.utk.edu
 * Mods: Maynard Johnson
@@ -31,6 +30,9 @@ The Eventset contains:
 - Do flops
 - Stop eventset 1
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

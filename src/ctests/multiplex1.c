@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    multiplex.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -6,9 +6,11 @@
 *          <your email address>
 */
 
-/* This file tests the multiplex functionality, originally developed by 
+/* This file tests the multiplex functionality, originally developed by
    John May of LLNL. */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "papi_test.h"
 
 /* Event to use in all cases; initialized in init_papi() */

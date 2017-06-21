@@ -1,6 +1,5 @@
-/* 
+/*
 * File:    prof_utils.c
-* CVS:     $Id$
 * Author:  Dan Terpstra
 *          terpstra@cs.utk.edu
 * Mods:    <your name here>
@@ -16,6 +15,9 @@
    - earprofile.c,
    - future profiling tests.
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 #include "prof_utils.h"

@@ -1,11 +1,13 @@
-/* 
+/*
 * File:    overflow_index.c
-* CVS:     $Id$
 * Author:  min@cs.utk.edu
 *          Min Zhou
 */
 
 /* This file performs the following test: overflow dispatch on 2 counters. */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

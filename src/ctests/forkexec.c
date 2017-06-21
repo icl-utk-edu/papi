@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    forkexec.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -6,8 +6,8 @@
 *          <your email address>
 */
 
-/* This file performs the following test: 
-   
+/* This file performs the following test:
+
             PAPI_library_init();
 	    PAPI_shutdown()
 	        fork()
@@ -18,8 +18,13 @@
 
  */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/wait.h>
+
+#include "papi_test.h"
+
 
 int
 main( int argc, char **argv )

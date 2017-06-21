@@ -8,15 +8,16 @@
     for that matter. :-)
 */
 
-/*  PAPI_describe_event has been deprecated in PAPI 3, since 
+/*  PAPI_describe_event has been deprecated in PAPI 3, since
     its functionality exists in other API calls. Below shows
-    several ways that this call was used, with replacement 
+    several ways that this call was used, with replacement
     code compatible with PAPI 3.
 */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+#include "papi_test.h"
 
 int
 main( int argc, char **argv )

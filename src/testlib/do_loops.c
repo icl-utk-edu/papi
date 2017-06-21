@@ -1,5 +1,9 @@
 /* Compile me with -O0 or else you'll get none. */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "papi_test.h"
 
 volatile int buf[CACHE_FLUSH_BUFFER_SIZE_INTS];

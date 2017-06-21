@@ -1,5 +1,7 @@
 /* This file performs the following test: event_code_to_name */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "papi_test.h"
 
 static void

@@ -1,5 +1,8 @@
 /* This file performs the following test: valid fields in hw_info */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
 
 int

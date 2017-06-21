@@ -7,10 +7,13 @@
  * events in an event set.
  */
 
-#include "papi_test.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+
+#include "papi_test.h"
+
 
 #define MAXEVENTS 9
 #define REPEATS (MAXEVENTS * 4)

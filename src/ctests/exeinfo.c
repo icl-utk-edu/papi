@@ -1,13 +1,15 @@
-/* 
-* File:    profile.c
-* CVS:     $Id$
+/*
+* File:    exeinfo.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
-#include <stdlib.h>
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "papi_test.h"
 
 int

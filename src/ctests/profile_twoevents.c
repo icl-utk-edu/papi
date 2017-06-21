@@ -1,6 +1,5 @@
-/* 
+/*
 * File:    profile_twoevents.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
@@ -8,6 +7,9 @@
 */
 
 /* This file performs the following test: profiling two events */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 #include "prof_utils.h"

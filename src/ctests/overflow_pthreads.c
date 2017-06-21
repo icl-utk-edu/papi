@@ -1,8 +1,8 @@
 /* This file performs the following test: overflow dispatch with pthreads
 
-   - This tests the dispatch of overflow calls from PAPI. These are counted 
-   in the default counting domain and default granularity, depending on 
-   the platform. Usually this is the user domain (PAPI_DOM_USER) and 
+   - This tests the dispatch of overflow calls from PAPI. These are counted
+   in the default counting domain and default granularity, depending on
+   the platform. Usually this is the user domain (PAPI_DOM_USER) and
    thread context (PAPI_GRN_THR).
 
      The Eventset contains:
@@ -15,6 +15,8 @@
    - Stop eventset 1
 */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include "papi_test.h"
 

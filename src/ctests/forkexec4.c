@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    forkexec4.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -19,8 +19,13 @@
 
  */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/wait.h>
+
+#include "papi_test.h"
+
 
 int
 main( int argc, char **argv )

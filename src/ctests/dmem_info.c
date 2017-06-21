@@ -5,6 +5,10 @@
  * Author: Kevin London
  *	   london@cs.utk.edu
  */
+
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
 
 #define ALLOCMEM 200000

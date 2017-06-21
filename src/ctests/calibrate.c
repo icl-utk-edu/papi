@@ -16,6 +16,9 @@
   n, measured counts, theoretical counts, (measured - theory), % error
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
 
 static void resultline( int i, int j, int EventSet, int fail );

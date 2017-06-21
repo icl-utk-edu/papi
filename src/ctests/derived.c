@@ -1,5 +1,8 @@
 /* This file performs the following test: start, stop with a derived event */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
 
 #define OLD_TEST_DRIVER

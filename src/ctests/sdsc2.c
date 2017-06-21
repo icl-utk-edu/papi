@@ -1,17 +1,18 @@
 /*
- * $Id$
- *
- * Test example for multiplex functionality, originally 
- * provided by Timothy Kaiser, SDSC. It was modified to fit the 
+ * Test example for multiplex functionality, originally
+ * provided by Timothy Kaiser, SDSC. It was modified to fit the
  * PAPI test suite by Nils Smeds, <smeds@pdc.kth.se>.
  *
- * This example verifies the PAPI_reset function for 
+ * This example verifies the PAPI_reset function for
  * multiplexed events
  */
 
-#include "papi_test.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+
+#include "papi_test.h"
+
 
 #define REPEATS 5
 #define MAXEVENTS 9

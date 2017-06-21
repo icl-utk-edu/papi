@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    data_range.c
 * Author:  Dan Terpstra
 *          terpstra@cs.utk.edu
@@ -9,7 +9,11 @@
 /* This file performs the following test: */
 /*     exercise the Itanium data address range interface */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
+
 #define NUM 16384
 
 static void init_array( void );

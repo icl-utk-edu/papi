@@ -1,8 +1,11 @@
 /* This code demonstrates the behavior of PAPI_LD_INS, PAPI_SR_INS and PAPI_LST_INS
 	on a Pentium 4 processor. Because of the way these events are implemented in
 	hardware, LD and SR cannot be counted in the presence of either of the other 
-	two events. 
+	two events.
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

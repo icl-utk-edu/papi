@@ -1,15 +1,16 @@
-/* 
+/*
 * File:    multiplex.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
 
-/* This file tests the multiplex functionality, originally developed by 
+/* This file tests the multiplex functionality, originally developed by
    John May of LLNL. */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "papi_test.h"
 
 void

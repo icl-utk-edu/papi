@@ -2,6 +2,8 @@
 /* to a multiplexed event set.  This tests that we properly set the    */
 /* maximum events value.                                               */
 
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi.h"
 #include "papi_test.h"
@@ -14,7 +16,7 @@ int main(int argc, char **argv) {
   int events_tried=0;
 
         /* Set TESTS_QUIET variable */
-        tests_quiet( argc, argv );      
+        tests_quiet( argc, argv );
 
 	/* Initialize the library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );

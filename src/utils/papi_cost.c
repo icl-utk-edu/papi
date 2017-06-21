@@ -30,10 +30,14 @@
   *		There are no known bugs in this utility. If you find a bug,
   *		it should be reported to the PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
  */
+
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
 #include "cost_utils.h"
 
-int 
+int
 find_derived( int i , char *type)
 {
   PAPI_event_info_t info;

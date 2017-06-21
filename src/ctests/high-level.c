@@ -1,6 +1,6 @@
 /*  These examples show the essentials in using the PAPI high-level
     interface. The program consists of 4 work-loops. The programmer
-    intends to count the total events for loop 1, 2 and 4, but not 
+    intends to count the total events for loop 1, 2 and 4, but not
     include the number of events in loop 3.
 
     To accomplish this PAPI_read_counters is used as a counter
@@ -9,8 +9,10 @@
     the contributions of loops 2 and 4 into the total count.
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 int
 main( int argc, char **argv )

@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    zero_fork.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -6,7 +6,7 @@
 *          <your email address>
 */
 
-/* This file performs the following test: 
+/* This file performs the following test:
 
         PAPI_library_init()
         Add two events
@@ -34,8 +34,13 @@
      No validation is done
  */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/wait.h>
+
+#include "papi_test.h"
+
 
 int EventSet1 = PAPI_NULL;
 int PAPI_event, mask1;

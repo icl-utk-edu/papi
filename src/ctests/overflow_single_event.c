@@ -1,6 +1,5 @@
-/* 
+/*
 * File:    overflow_single_event.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
@@ -8,7 +7,7 @@
 */
 
 /* This file performs the following test: overflow dispatch of an eventset
-   with just a single event. 
+   with just a single event.
 
      The Eventset contains:
      + PAPI_FP_INS (overflow monitor)
@@ -21,6 +20,9 @@
    - Do flops
    - Stop eventset 1
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

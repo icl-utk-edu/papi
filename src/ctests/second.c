@@ -1,7 +1,7 @@
 /* This file performs the following test: counter domain testing
 
    - It attempts to use the following two counters. It may use less depending on
-     hardware counter resource limitations. 
+     hardware counter resource limitations.
      + PAPI_TOT_INS
      + PAPI_TOT_CYC
    - Start system domain counters
@@ -14,6 +14,9 @@
    - Do flops
    - Stop and read user domain counters
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

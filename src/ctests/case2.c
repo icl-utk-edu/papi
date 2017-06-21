@@ -10,9 +10,10 @@ events. I still have a problem if someone adds Level 2 cache misses
 and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 2 counters. */
 
-#include "papi_test.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+#include "papi_test.h"
 
 int
 main( int argc, char **argv )

@@ -9,12 +9,15 @@
 /* This file hardware info and performs the following test:
 		- Start and stop all native events.
     This is a good preliminary way to validate native event tables.
-	In its current form this test also stresses the number of 
-	events sets the library can handle outstanding. 
+	In its current form this test also stresses the number of
+	events sets the library can handle outstanding.
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+
 extern unsigned char PENTIUM4;
 
 static int

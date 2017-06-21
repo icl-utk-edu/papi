@@ -1,14 +1,17 @@
-/* 
+/*
 * File:    multiplex1_pthreads.c
 * Author:  Rick Kufrin
-*          rkufrin@ncsa.uiuc.edu                    
+*          rkufrin@ncsa.uiuc.edu
 * Mods:    Philip Mucci
 *          mucci@cs.utk.edu
 */
 
 /* This file really bangs on the multiplex pthread functionality */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+
 #include "papi_test.h"
 
 int *events;

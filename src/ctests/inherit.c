@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #if defined(_AIX) || defined (__FreeBSD__) || defined (__APPLE__)
 #include <sys/wait.h>		 /* ARGH! */
 #else
 #include <wait.h>
 #endif
+
 #include "papi_test.h"
 
 int

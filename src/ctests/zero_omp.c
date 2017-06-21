@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    zero_omp.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -36,6 +36,9 @@ Master serial thread:
    - Get us.
    - Get cyc.
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

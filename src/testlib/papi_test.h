@@ -2,10 +2,6 @@
 	This file is customized to hide Windows / Unix differences.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <unistd.h>
 #include <sys/wait.h>
 #if (!defined(NO_DLFCN) && !defined(_BGL) && !defined(_BGP))
 #include <dlfcn.h>
@@ -50,10 +46,10 @@
 
 #define MAX_TEST_EVENTS 18
 
-struct test_events_t {                                                       
-  unsigned int mask;                                                         
-  unsigned int event;                                                        
-};      
+struct test_events_t {
+	unsigned int mask;
+	unsigned int event;
+};
 
 extern struct test_events_t test_events[];
 
@@ -121,4 +117,3 @@ void init_multiplex(void);
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 #define printf if (!TESTS_QUIET) printf
-

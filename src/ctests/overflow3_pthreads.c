@@ -1,10 +1,7 @@
-/* 
+/*
 * File:    overflow3_pthreads.c
-* CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    
-*          
 */
 
 /* This file tests the overflow functionality when there are
@@ -12,7 +9,10 @@
  * one thread that is calling PAPI.)
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+
 #include "papi_test.h"
 
 int total = 0;

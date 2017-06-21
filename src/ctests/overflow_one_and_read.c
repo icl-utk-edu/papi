@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    overflow_one_and_read.c : based on overflow_twoevents.c
 * Mods:    Philip Mucci
 *          mucci@cs.utk.edu
@@ -9,6 +9,9 @@
 /* This file performs the following test: overflow dispatch on 1 counter.
  * In the handler read events.
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

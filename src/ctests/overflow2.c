@@ -1,6 +1,5 @@
-/* 
+/*
 * File:    overflow.c
-* CVS:     $Id$
 * Author:  Nils Smeds  [Based on tests/overflow.c by Philip Mucci]
 *          smeds@pdc.kth.se
 * Mods:    <your name here>
@@ -21,6 +20,9 @@
    - Do flops
    - Stop eventset 1
 */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

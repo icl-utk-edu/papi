@@ -1,15 +1,21 @@
-/* 
+/*
 * File:    	tenth.c
 * Mods: 	Maynard Johnson
 *			maynardj@us.ibm.com
 */
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "papi_test.h"
+
 #define ITERS 100
 
 /* This file performs the following test: start, stop and timer functionality for 
    PAPI_L1_TCM derived event
 
    - They are counted in the default counting domain and default
-     granularity, depending on the platform. Usually this is 
+     granularity, depending on the platform. Usually this is
      the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
    - Get us.
    - Start counters
@@ -56,7 +62,7 @@
 #endif
 #endif
 
-#include "papi_test.h"
+
 
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 

@@ -14,9 +14,16 @@
    - Get us.
 */
 
-#include "papi_test.h"
-#include <sys/ptrace.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <limits.h>
+#include <sys/ptrace.h>
+
+#include "papi_test.h"
+
+
 
 #ifdef _AIX
 #define _LINUX_SOURCE_COMPAT

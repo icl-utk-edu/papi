@@ -1,5 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 int
 main( int argc, char **argv )

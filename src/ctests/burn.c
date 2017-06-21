@@ -1,7 +1,13 @@
+#include <stdio.h>
+
 #include "papi_test.h"
+
 int
-main(  )
+main( int argc, char **argv  )
 {
+	(void)argc;
+	(void)argv;
+
 	do_stuff(  );
-	exit( 0 );
+	return 0;
 }

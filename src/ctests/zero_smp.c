@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* This file performs the following test: start, stop and timer
 functionality for 2 slave native SMP threads
 
@@ -30,6 +28,9 @@ Master pthread:
    - Get cyc.
 */
 
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "papi_test.h"
 

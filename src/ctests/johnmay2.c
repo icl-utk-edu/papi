@@ -1,5 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+
 
 int
 main( int argc, char **argv )
@@ -10,7 +13,7 @@ main( int argc, char **argv )
 	char event_name[PAPI_MAX_STR_LEN];
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	tests_quiet( argc, argv );
 
         /* init PAPI */
 	if ( ( retval =
