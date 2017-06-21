@@ -16,6 +16,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define TOTAL_EVENTS 10
 
 int solaris_preset_PAPI_events[TOTAL_EVENTS] = {

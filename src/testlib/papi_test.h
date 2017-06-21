@@ -11,7 +11,9 @@
 //#include <malloc.h>
 //#endif
 
-#include "test_utils.h"
+//#include "test_utils.h"
+
+#define TOLERANCE	.2
 
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
@@ -44,6 +46,7 @@ struct test_events_t {
 extern struct test_events_t test_events[];
 
 int papi_print_header (char *prompt, const PAPI_hw_info_t **hwinfo);
+
 void validate_string(char *name, char *s);
 void *get_overflow_address(void *context);
 void free_test_space(long long ** values, int num_tests);
@@ -55,16 +58,22 @@ int add_test_events_r(int *number, int *mask, void *handle);
 int find_nonderived_event( void );
 int enum_add_native_events(int *num_events, int **evtcodes, int need_interrupts, int no_software_events, int cidx);
 int remove_test_events(int *EventSet, int mask);
+
+#if 0
 void do_flush(void);
 void do_misses(int n, int size);
 void do_flops(int n);
 /* export the next symbol as 'end' address of do_flops for profiling */
-void fdo_flops(int *n); 
+void fdo_flops(int *n);
 void do_reads(int n);
 void do_both(int n);
 void do_l1misses(int n);
 void do_stuff(void);
 void dummy(void *);
+void touch_dummy(double *ptr, int size);
+
+#endif
+
 char *stringify_domain(int domain);
 char *stringify_all_domains(int domains);
 char *stringify_granularity(int granularity);
@@ -76,7 +85,6 @@ void test_fail_exit(char *file, int line, char *call, int retval);
 void test_skip(char *file, int line, char *call, int retval);
 void test_warn(char *file, int line, char *call, int retval);
 void test_print_event_header(char *call, int evset);
-void touch_dummy(double *ptr, int size);
 int approx_equals(double a, double b);
 void init_multiplex(void);
 

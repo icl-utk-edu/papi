@@ -15,6 +15,7 @@
 #include "papi_test.h"
 #include "prof_utils.h"
 
+#include "do_loops.h"
 
 /* These architectures use Function Descriptors as Function Pointers */
 

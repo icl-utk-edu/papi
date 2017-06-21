@@ -6,6 +6,8 @@
  * This example verifies the accuracy of branch events
  */
 
+#define MPX_TOLERANCE .20
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

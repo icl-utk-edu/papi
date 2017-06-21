@@ -16,6 +16,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 int *events;
 int numevents = 0;
 int max_events=0;

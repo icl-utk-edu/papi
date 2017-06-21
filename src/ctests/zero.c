@@ -19,6 +19,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define MAX_CYCLE_ERROR 30
 
 int
@@ -34,7 +36,7 @@ main( int argc, char **argv )
 	double cycles_error;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );

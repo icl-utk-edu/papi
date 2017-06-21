@@ -1,7 +1,6 @@
 #include <stdio.h>
 
-#include "papi.h"
-#include "papi_test.h"
+#include "do_loops.h"
 
 int
 main( int argc, char **argv  )

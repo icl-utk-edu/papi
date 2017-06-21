@@ -18,6 +18,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define MAX_TO_ADD 5
 
 /* A thread function that does nothing forever, while the other

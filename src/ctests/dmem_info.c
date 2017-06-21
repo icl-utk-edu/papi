@@ -12,6 +12,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define ALLOCMEM 200000
 static void
 dump_memory_info( FILE * output, PAPI_dmem_info_t * d )

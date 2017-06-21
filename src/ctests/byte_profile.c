@@ -22,6 +22,9 @@
 #include "papi.h"
 #include "papi_test.h"
 #include "prof_utils.h"
+
+#include "do_loops.h"
+
 #define PROFILE_ALL
 
 static const PAPI_hw_info_t *hw_info;

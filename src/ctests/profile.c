@@ -12,9 +12,9 @@
 
 /* This file performs the following test: profiling and program info option call
 
-   - This tests the SVR4 profiling interface of PAPI. These are counted 
-   in the default counting domain and default granularity, depending on 
-   the platform. Usually this is the user domain (PAPI_DOM_USER) and 
+   - This tests the SVR4 profiling interface of PAPI. These are counted
+   in the default counting domain and default granularity, depending on
+   the platform. Usually this is the user domain (PAPI_DOM_USER) and
    thread context (PAPI_GRN_THR).
 
      The Eventset contains:
@@ -33,6 +33,9 @@
 #include "papi.h"
 #include "papi_test.h"
 #include "prof_utils.h"
+
+#include "do_loops.h"
+
 #define PROFILE_ALL
 
 static int do_profile( caddr_t start, unsigned long plength, unsigned scale,

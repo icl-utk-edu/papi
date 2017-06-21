@@ -10,6 +10,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define ITERS 100
 
 /* This file performs the following test: start, stop and timer functionality for 

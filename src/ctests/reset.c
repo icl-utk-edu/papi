@@ -60,6 +60,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 int
 main( int argc, char **argv )
 {
@@ -78,9 +80,9 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	/* add PAPI_TOT_CYC and one of the events in 
-	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
-	   depending on the availability of the event 
+	/* add PAPI_TOT_CYC and one of the events in
+	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS,
+	   depending on the availability of the event
 	   on the platform */
 	EventSet = add_two_events( &num_events, &PAPI_event, &mask );
 

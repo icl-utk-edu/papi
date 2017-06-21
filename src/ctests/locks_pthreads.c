@@ -3,6 +3,9 @@
  * will fail.  -KSL
  */
 
+#define MAX_THREADS 256
+#define TIME_LIMIT_IN_US 60*1000000    /* Run for about 1 minute or 60000000 us */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

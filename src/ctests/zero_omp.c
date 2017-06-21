@@ -43,6 +43,8 @@ Master serial thread:
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #else

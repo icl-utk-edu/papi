@@ -25,6 +25,7 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
 
 
 #ifdef _AIX

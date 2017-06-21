@@ -42,6 +42,7 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
 
 int EventSet1 = PAPI_NULL;
 int PAPI_event, mask1;

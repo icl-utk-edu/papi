@@ -16,6 +16,7 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
 
 #define MAXEVENTS 9
 #define REPEATS (MAXEVENTS * 4)

@@ -24,6 +24,8 @@
 #include "papi_test.h"
 #include "prof_utils.h"
 
+#include "do_loops.h"
+
 /* variables global to profiling tests */
 long long **values;
 char event_name[PAPI_MAX_STR_LEN];

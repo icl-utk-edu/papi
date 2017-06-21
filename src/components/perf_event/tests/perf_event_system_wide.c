@@ -9,6 +9,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif

@@ -33,6 +33,8 @@
 #include "papi_test.h"
 #include "prof_utils.h"
 
+#include "do_loops.h"
+
 #undef THRESHOLD
 #define THRESHOLD 1000
 

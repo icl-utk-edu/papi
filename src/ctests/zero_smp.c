@@ -35,6 +35,8 @@ Master pthread:
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #if defined(sun) && defined(sparc)
 #include <thread.h>
 #elif defined(mips) && defined(sgi) && defined(unix)

@@ -15,6 +15,8 @@
 #include "papi_test.h"
 #include "prof_utils.h"
 
+#include "do_loops.h"
+
 int
 main( int argc, char **argv )
 {

@@ -16,6 +16,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 /* Event to use in all cases; initialized in init_papi() */
 
 #define TOTAL_EVENTS 6

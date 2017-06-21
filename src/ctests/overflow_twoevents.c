@@ -15,6 +15,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define OVER_FMT	"handler(%d) Overflow at %p! vector=%#llx\n"
 #define OUT_FMT		"%-12s : %18lld%18lld%18lld\n"
 #define VEC_FMT		"        at vector %#llx, event %-12s : %6d\n"

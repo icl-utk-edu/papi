@@ -7,6 +7,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #include "event_name_lib.h"
 
 int main( int argc, char **argv ) {

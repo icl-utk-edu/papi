@@ -22,6 +22,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define TAB_DOM	"%s%12lld%15lld%17lld\n"
 
 #define CASE2 0

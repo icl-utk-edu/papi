@@ -2,6 +2,8 @@
  *  Test PAPI with multiple threads.
  */
 
+#define MAX_THREADS 256
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>

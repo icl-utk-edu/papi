@@ -8,6 +8,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #include "perf_event_uncore_lib.h"
 
 #define EVENTS_TO_TRY 16

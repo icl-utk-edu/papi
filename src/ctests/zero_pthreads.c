@@ -35,6 +35,8 @@ Master pthread:
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 void *
 Thread( void *arg )
 {

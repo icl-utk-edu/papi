@@ -6,6 +6,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define OLD_TEST_DRIVER
 
 #ifdef OLD_TEST_DRIVER

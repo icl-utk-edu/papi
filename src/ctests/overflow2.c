@@ -27,6 +27,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "do_loops.h"
+
 #define OVER_FMT    "handler(%d ) Overflow at %p! bit=%#llx \n"
 #define OUT_FMT     "%-12s : %16lld%16lld\n"
 
