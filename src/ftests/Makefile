@@ -1,9 +1,13 @@
 # File: ftests/Makefile
-INCLUDE = -I../testlib -I.
-PAPILIB = $(LIBRARY)
+
+include Makefile.target
+
+INCLUDE = -I../testlib -I. -I..
+PAPILIB = ../$(LIBRARY)
 FFLAGS	= $(CFLAGS) -ffixed-line-length-132
 testlibdir=../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
+DOLOOPS= $(testlibdir)/do_loops.o
 
 ifneq ($(F77),)
 include Makefile.recipies

@@ -5,15 +5,18 @@ include Makefile.target
 INCLUDE = -I. -I..
 PAPILIB = $(LIBRARY)
 
-UTILSRCS:= do_loops.c test_utils.c clockcore.c
-UTILOBJS:=$(UTILSRCS:.c=.o)
+TESTLIBOBJS:= test_utils.o
+
+UTILOBJS:= do_loops.o test_utils.o clockcore.o
 ifneq ($(F77),)
-UTILSRCS+= ftests_util.F
 UTILOBJS+= ftests_util.o
+TESTLIBOBJS+= ftests_util.o
 endif
 
-libtestlib.a: $(UTILOBJS)
-	$(AR) $(ARG64) rv $@ $(UTILOBJS)
+all:	libtestlib.a $(UTILOBJS)
+
+libtestlib.a: $(TESTLIBOBJS)
+	$(AR) $(ARG64) rv $@ $(TESTLIBOBJS)
 
 do_loops.o: do_loops.c papi_test.h test_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c do_loops.c

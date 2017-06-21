@@ -8,8 +8,8 @@ rapl_tests: $(TESTS)
 rapl_overflow.o:	rapl_overflow.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c rapl_overflow.c
 
-rapl_overflow:	rapl_overflow.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o rapl_overflow rapl_overflow.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+rapl_overflow:	rapl_overflow.o $(DOLOOPS) $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) -o rapl_overflow rapl_overflow.o $(DOLOOPS) $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 rapl_basic.o:	rapl_basic.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c rapl_basic.c -o rapl_basic.o -DBASIC_TEST=1
@@ -31,8 +31,4 @@ rapl_wraparound: rapl_wraparound.o $(UTILOBJS) $(PAPILIB)
 
 clean:
 	rm -f $(TESTS) *.o *~
-
-
-
-
 

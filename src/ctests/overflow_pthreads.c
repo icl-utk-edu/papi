@@ -21,6 +21,7 @@
 #include <pthread.h>
 
 #include "papi.h"
+#include "do_loops.h"
 #include "papi_test.h"
 
 static const PAPI_hw_info_t *hw_info = NULL;

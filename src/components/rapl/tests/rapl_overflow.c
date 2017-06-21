@@ -2,6 +2,8 @@
 #include <string.h>
 
 #include "papi.h"
+
+#include "do_loops.h"
 #include "papi_test.h"
 
 static int total = 0;				   /* total overflows */
