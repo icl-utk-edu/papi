@@ -11,8 +11,8 @@
 //#include <malloc.h>
 //#endif
 
-#include "papiStdEventDefs.h"
-#include "papi.h"
+//#include "papiStdEventDefs.h"
+//#include "papi.h"
 #include "test_utils.h"
 
 /* Masks to select operations for add_test_events() and remove_test_events()

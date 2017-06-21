@@ -12,6 +12,8 @@
 /* no overlap in the tests.                                      */
 
 #include <stdio.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 

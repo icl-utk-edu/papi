@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 int

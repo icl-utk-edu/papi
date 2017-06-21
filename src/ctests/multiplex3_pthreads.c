@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define MAX_TO_ADD 5

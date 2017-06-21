@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define MAX_RAPL_EVENTS 64

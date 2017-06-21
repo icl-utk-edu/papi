@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 /* Event to use in all cases; initialized in init_papi() */

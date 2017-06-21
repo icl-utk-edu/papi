@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define OVER_FMT	"handler(%d ) Overflow at %p! bit=%#llx \n"

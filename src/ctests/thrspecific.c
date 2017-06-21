@@ -12,6 +12,7 @@ functionality for 2 slave pthreads */
 #include <unistd.h>
 #include <pthread.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 static volatile int processing = 1;

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 #include "prof_utils.h"
 #define PROFILE_ALL

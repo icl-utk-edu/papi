@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/time.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define EVENT  PAPI_TOT_CYC

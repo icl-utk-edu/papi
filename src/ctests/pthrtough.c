@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define NITER 1000

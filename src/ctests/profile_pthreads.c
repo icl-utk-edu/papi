@@ -5,6 +5,7 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define THR 1000000

@@ -13,6 +13,7 @@
 #include <math.h>
 #include <assert.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 

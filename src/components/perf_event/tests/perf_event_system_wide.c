@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #ifndef __USE_GNU

@@ -22,6 +22,7 @@
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 

@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define OUT_FMT		"%12d\t%12lld\t%12lld\t%.2f\n"

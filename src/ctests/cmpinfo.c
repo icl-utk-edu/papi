@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    cmpinfo.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -7,6 +7,8 @@
 */
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 int

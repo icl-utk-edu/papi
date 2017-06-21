@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define ROWS 1000		// Number of rows in each matrix

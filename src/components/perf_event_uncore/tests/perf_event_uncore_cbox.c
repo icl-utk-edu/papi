@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #include "perf_event_uncore_lib.h"

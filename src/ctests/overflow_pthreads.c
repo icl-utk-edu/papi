@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 static const PAPI_hw_info_t *hw_info = NULL;

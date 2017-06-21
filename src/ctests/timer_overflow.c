@@ -13,10 +13,10 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define TIMER_THRESHOLD 100
-extern int TESTS_QUIET;
 
 int
 main( int argc, char **argv )

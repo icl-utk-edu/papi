@@ -11,6 +11,7 @@ PAPI_start to work but just count the first event?
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 int

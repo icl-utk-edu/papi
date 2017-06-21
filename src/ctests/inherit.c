@@ -9,6 +9,7 @@
 #include <wait.h>
 #endif
 
+#include "papi.h"
 #include "papi_test.h"
 
 int

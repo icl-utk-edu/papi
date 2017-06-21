@@ -11,6 +11,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 

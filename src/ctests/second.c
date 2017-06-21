@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define TAB_DOM	"%s%12lld%15lld%17lld\n"

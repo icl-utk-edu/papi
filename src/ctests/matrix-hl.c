@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 

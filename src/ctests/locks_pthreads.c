@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 volatile long long count = 0;

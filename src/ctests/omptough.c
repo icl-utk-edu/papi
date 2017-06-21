@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <omp.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define NITER (100000)

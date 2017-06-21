@@ -15,6 +15,7 @@ functionality for a parent and a forked child. */
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 int

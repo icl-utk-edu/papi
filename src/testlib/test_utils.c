@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 /*  Variable to hold reporting status

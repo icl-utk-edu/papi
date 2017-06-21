@@ -13,6 +13,7 @@ and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 int

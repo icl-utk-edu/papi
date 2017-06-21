@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM 16384

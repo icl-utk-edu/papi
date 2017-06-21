@@ -15,6 +15,7 @@
 #include <dlfcn.h>
 #endif
 
+#include "papi.h"
 #include "papi_test.h"
 
 void print_shlib_info_map(const PAPI_shlib_info_t *shinfo)

@@ -3,6 +3,8 @@
  */
 
 #include <stdio.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #include "event_name_lib.h"

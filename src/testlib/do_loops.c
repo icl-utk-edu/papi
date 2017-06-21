@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 volatile int buf[CACHE_FLUSH_BUFFER_SIZE_INTS];

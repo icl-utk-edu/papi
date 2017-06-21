@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <inttypes.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 

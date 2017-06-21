@@ -36,6 +36,7 @@ The Eventset contains:
 #include <string.h>
 #include <sys/time.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #define OVER_FMT "handler(%d) Overflow at %p overflow_vector=%#llx!\n"

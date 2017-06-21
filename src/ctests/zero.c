@@ -15,6 +15,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define MAX_CYCLE_ERROR 30

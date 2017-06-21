@@ -5,6 +5,8 @@
   */
 
 #include <stdio.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 int
