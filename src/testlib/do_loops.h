@@ -22,6 +22,7 @@ void fdo_reads__( int *n );
 void FDO_READS( int *n );
 void _FDO_READS( int *n );
 void do_flops( int n );
+/* export the next symbol as 'end' address of do_flops for profiling */
 void fdo_flops( int *n );
 void fdo_flops_( int *n );
 void fdo_flops__( int *n );

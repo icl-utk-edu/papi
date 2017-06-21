@@ -6,6 +6,9 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#define TOLERANCE       .2
+
+
 /*  Variable to hold reporting status
 	if TRUE, output is suppressed
 	if FALSE output is sent to stdout

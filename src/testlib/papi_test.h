@@ -11,10 +11,6 @@
 //#include <malloc.h>
 //#endif
 
-//#include "test_utils.h"
-
-#define TOLERANCE	.2
-
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
 */
@@ -58,21 +54,6 @@ int add_test_events_r(int *number, int *mask, void *handle);
 int find_nonderived_event( void );
 int enum_add_native_events(int *num_events, int **evtcodes, int need_interrupts, int no_software_events, int cidx);
 int remove_test_events(int *EventSet, int mask);
-
-#if 0
-void do_flush(void);
-void do_misses(int n, int size);
-void do_flops(int n);
-/* export the next symbol as 'end' address of do_flops for profiling */
-void fdo_flops(int *n);
-void do_reads(int n);
-void do_both(int n);
-void do_l1misses(int n);
-void do_stuff(void);
-void dummy(void *);
-void touch_dummy(double *ptr, int size);
-
-#endif
 
 char *stringify_domain(int domain);
 char *stringify_all_domains(int domains);
