@@ -19,7 +19,8 @@ libtestlib.a: $(TESTLIBOBJS)
 	$(AR) $(ARG64) rv $@ $(TESTLIBOBJS)
 
 do_loops.o: do_loops.c papi_test.h test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c do_loops.c
+	$(CC) $(INCLUDE) $(CFLAGS) -O0 -c do_loops.c
+#	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c do_loops.c
 
 clockcore.o: clockcore.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c clockcore.c
