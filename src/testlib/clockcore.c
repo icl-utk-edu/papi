@@ -81,11 +81,11 @@ clock_res_check( int flag, int quiet )
 		std += tmp * tmp;
 	}
 
-	std = sqrt( std / ( NUM_ITERS - 2 ) );
-	printf( "%s: min %.3lf  max %.3lf \n", func_name[flag], min, max );
-	printf( "                   average %.3lf std %.3lf\n", average, std );
-
 	if ( !quiet ) {
+		std = sqrt( std / ( NUM_ITERS - 2 ) );
+		printf( "%s: min %.3lf  max %.3lf \n", func_name[flag], min, max );
+		printf( "                   average %.3lf std %.3lf\n", average, std );
+
 		if ( uniq_cyc == NUM_ITERS - 1 ) {
 			printf( "%s : %7.3f   <%7.3f\n", func_name[flag],
 					( double ) total_cyc / ( double ) ( NUM_ITERS ),
