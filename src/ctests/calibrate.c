@@ -419,12 +419,8 @@ main( int argc, char *argv[] )
 static void
 headerlines( char *title, int TESTS_QUIET )
 {
-	const PAPI_hw_info_t *hwinfo = NULL;
 
 	if ( !TESTS_QUIET ) {
-		if ( papi_print_header( "", &hwinfo ) != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
 		printf( "\n%s:\n%8s %12s %12s %8s %8s\n", title, "i", "papi", "theory",
 				"diff", "%error" );
 		printf

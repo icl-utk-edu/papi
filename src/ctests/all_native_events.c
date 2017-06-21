@@ -40,10 +40,10 @@ check_event( int event_code, char *name )
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK )
 	   test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-   
+
 	retval = PAPI_add_event( EventSet, event_code );
 	if ( retval != PAPI_OK ) {
-	  printf( "Error adding %s %d\n", name, retval );
+		if (!TESTS_QUIET) printf( "Error adding %s %d\n", name, retval );
 		return 0;
 	} else {
 	  //		printf( "Added %s successfully ", name );
@@ -58,7 +58,7 @@ check_event( int event_code, char *name )
 			PAPI_perror( "PAPI_stop" );
 			return 0;
 		} else {
-			printf( "Added and Stopped %s successfully.\n", name );
+			if (!TESTS_QUIET) printf( "Added and Stopped %s successfully.\n", name );
 		}
 	}
 
@@ -96,11 +96,11 @@ main( int argc, char **argv )
        test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
     }
 
-    retval = papi_print_header( "Test case ALL_NATIVE_EVENTS: Available "
+    if (!TESTS_QUIET) printf("Test case ALL_NATIVE_EVENTS: Available "
 				"native events and hardware "
-				"information.\n",
-				&hwinfo );
-    if ( retval != PAPI_OK ) {
+				"information.\n");
+	hwinfo=PAPI_get_hardware_info();
+    if ( hwinfo == NULL ) {
        test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
     }
 
@@ -114,19 +114,19 @@ main( int argc, char **argv )
     for( cid = 0; cid < numcmp; cid++ ) {
 
 
-       cmpinfo = PAPI_get_component_info( cid );
+	cmpinfo = PAPI_get_component_info( cid );
 
-        if (cmpinfo  == NULL)
-        {
-           test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
-        }
+	if (cmpinfo  == NULL) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
+	}
 
-        if (cmpinfo->disabled)
-        {
-          printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
-          printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
-          continue;
-        }
+	if (cmpinfo->disabled) {
+		if (!TESTS_QUIET) {
+			printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+			printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
+		}
+		continue;
+	}
 
 
 
@@ -177,17 +177,19 @@ main( int argc, char **argv )
 	       err_count++;
 	    }
 	  }
-	  
+
        } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid ) == PAPI_OK );
 
     }
-    printf( "\n\nSuccessfully found and added %d events "
-            "(in %d eventsets).\n",
-	    add_count , add_count);
+	if (!TESTS_QUIET) {
+		printf( "\n\nSuccessfully found and added %d events "
+			"(in %d eventsets).\n",
+			add_count , add_count);
+	}
 
-    if ( err_count ) {
-       printf( "Failed to add %d events.\n", err_count );
-    }
+	if ( err_count ) {
+		if (!TESTS_QUIET) printf( "Failed to add %d events.\n", err_count );
+	}
 
     if (( unc_count ) || (offcore_count)) {
        char warning[BUFSIZ];

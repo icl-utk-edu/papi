@@ -30,6 +30,7 @@ main( int argc, char **argv )
 	if ( ( exeinfo = PAPI_get_executable_info(  ) ) == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", retval );
 
+	if (!TESTS_QUIET) {
 	printf( "Path+Program: %s\n", exeinfo->fullname );
 	printf( "Program: %s\n", exeinfo->address_info.name );
 	printf( "Text start: %p, Text end: %p\n", exeinfo->address_info.text_start,
@@ -38,6 +39,7 @@ main( int argc, char **argv )
 			exeinfo->address_info.data_end );
 	printf( "Bss start: %p, Bss end: %p\n", exeinfo->address_info.bss_start,
 			exeinfo->address_info.bss_end );
+	}
 
 	if ( ( strlen( &(exeinfo->fullname[0]) ) == 0 ) )
 		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
@@ -62,5 +64,5 @@ main( int argc, char **argv )
 	sleep( 1 );				 /* Needed for debugging, so you can ^Z and stop the process, inspect /proc to see if it's right */
 
 	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );
+	return 0;
 }

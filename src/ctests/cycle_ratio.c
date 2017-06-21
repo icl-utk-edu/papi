@@ -36,7 +36,6 @@ main( int argc, char **argv )
 	int retval;
 	int EventSet = PAPI_NULL;
 	int numflops = NUM_FLOPS;
-	const PAPI_hw_info_t *hwinfo = NULL;
 	long long elapsed_cyc;
 	long long values[2];
 	int mhz;
@@ -55,61 +54,67 @@ main( int argc, char **argv )
 		test_skip( __FILE__, __LINE__, "PAPI_REF_CYC is not defined on this platform.", PAPI_OK );
 	}
 
-    /* create an eventset */
+	/* create an eventset */
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-  }
+	}
 
-    /* add core cycle event */
+	/* add core cycle event */
 	retval = PAPI_add_named_event( EventSet, "PAPI_TOT_CYC");
 	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_add_named_event: PAPI_TOT_CYC", retval );
-  }
+	}
 
-    /* add ref cycle event */
+	/* add ref cycle event */
 	retval = PAPI_add_named_event( EventSet, "PAPI_REF_CYC");
 	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_add_events: PAPI_REF_CYC", retval );
-  }
-  
-	retval = papi_print_header
-	( "Test case CycleRatio.c: Compute the ratio of TOT and REF cycles.\n",
-	  &hwinfo );
-	if ( retval != PAPI_OK )
+	}
+
+	if (!TESTS_QUIET) {
+		printf("Test case CycleRatio.c: "
+			"Compute the ratio of TOT and REF cycles.\n");
+	}
+
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-	
+	}
+
 	/* compute a nominal bus clock frequency */
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
 	   test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 	}
-	
+
 	elapsed_cyc = PAPI_get_real_cyc(  );
 	usleep(1000000);
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 	mhz = elapsed_cyc / 1000000;
-	
+
 	retval = PAPI_stop( EventSet, values );
 	if ( retval != PAPI_OK ) {
 	   test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 	}
-	
+
 	if ( values[1] == 0 ) {
 	   test_warn( __FILE__, __LINE__, "PAPI_REF_CYC = 0\nTry upgrading your kernel.", 0 );
 	}
-	
-    printf( "CPU Computed Megahertz   : %d\n", mhz );
-    printf( "Measure TOT and REF cycles from a cold start\n" );
 
+	if (!TESTS_QUIET) {
+		printf( "CPU Computed Megahertz   : %d\n", mhz );
+		printf( "Measure TOT and REF cycles from a cold start\n" );
+	}
 	work(EventSet, mhz);
 	do_flops(10*numflops);
-	
-	printf( "\nMeasure again after working for a while\n" );
+
+	if (!TESTS_QUIET) {
+		printf( "\nMeasure again after working for a while\n" );
+	}
 
 	work(EventSet, mhz);
 	test_pass( __FILE__, NULL, 0 );
-	return ( 0 );
+	return 0;
 }
 
 static void work (int EventSet, int mhz)
@@ -151,6 +156,7 @@ static void work (int EventSet, int mhz)
 	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 
+	if (!TESTS_QUIET) {
    printf( "-------------------------------------------------------------------------\n" );
    printf( "Using %d iterations of c += a*b\n", numflops );
    printf( "-------------------------------------------------------------------------\n" );
@@ -167,6 +173,7 @@ static void work (int EventSet, int mhz)
    printf( "-------------------------------------------------------------------------\n" );
 
    printf( "Verification: PAPI_REF_CYC should be roughly equal to real_cycles\n" );
+		}
    cycles_error=100.0*((double)values[1] - (double)elapsed_cyc)/(double)elapsed_cyc;
 
    if ((cycles_error>10.0) || (cycles_error<-10.0)) {

@@ -53,7 +53,7 @@ zero_count( void )
 	total = 0;
 }
 
-#define HERE(str)  printf("[%d] %s, %s\n", getpid(), name, str);
+#define HERE(str)  if(!TESTS_QUIET)printf("[%d] %s, %s\n", getpid(), name, str);
 
 void
 print_rate( char *str )
@@ -70,9 +70,11 @@ print_rate( char *str )
 	if ( last_secs <= 0.001 )
 		last_secs = 0.001;
 
-	printf( "[%d] %s, time = %.3f, total = %ld, last = %ld, rate = %.1f/sec\n",
+	if (!TESTS_QUIET) {
+		printf( "[%d] %s, time = %.3f, total = %ld, last = %ld, rate = %.1f/sec\n",
 			getpid(  ), str, st_secs, total, count,
 			( ( double ) count ) / last_secs );
+	}
 
 	if ( last_count != -1 ) {
 		if ( count < .1 * last_count ) {
@@ -172,7 +174,7 @@ main( int argc, char **argv )
 	zero_count(  );
 	my_papi_init(  );
 	name = argv[0];
-	printf( "[%d] %s, num_events = %d\n", getpid(  ), name, num_events );
+	if (!TESTS_QUIET) printf( "[%d] %s, num_events = %d\n", getpid(  ), name, num_events );
 	sprintf( buf, "%d", num_events );
 	my_papi_start(  );
 	run( name, 3 );

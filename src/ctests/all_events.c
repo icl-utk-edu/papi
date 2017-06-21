@@ -38,7 +38,7 @@ main( int argc, char **argv )
 			continue;
 		if ( !( info.count ) )
 			continue;
-		printf( "Adding %-14s", info.symbol );
+		if (!TESTS_QUIET) printf( "Adding %-14s", info.symbol );
 		retval = PAPI_add_event( EventSet, ( int ) info.event_code );
 		if ( retval != PAPI_OK ) {
 			PAPI_perror( "PAPI_add_event" );
@@ -54,7 +54,7 @@ main( int argc, char **argv )
 					PAPI_perror( "PAPI_stop" );
 					err_count++;
 				} else {
-					printf( "successful\n" );
+					if (!TESTS_QUIET) printf( "successful\n" );
 					count++;
 				}
 			}
@@ -67,9 +67,9 @@ main( int argc, char **argv )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 
-	printf( "Successfully added, started and stopped %d events.\n", count );
+	if (!TESTS_QUIET) printf( "Successfully added, started and stopped %d events.\n", count );
 	if ( err_count )
-		printf( "Failed to add, start or stop %d events.\n", err_count );
+		if (!TESTS_QUIET) printf( "Failed to add, start or stop %d events.\n", err_count );
 	if ( count > 0 )
 		test_pass( __FILE__, NULL, 0 );
 	else

@@ -172,8 +172,10 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
 	}
 
-	prof_head( blength, bucket, num_buckets, header );
-	prof_out( start, num_events, bucket, num_buckets, scale );
+	if (!TESTS_QUIET) {
+		prof_head( blength, bucket, num_buckets, header );
+		prof_out( start, num_events, bucket, num_buckets, scale );
+	}
 	retval = prof_check( num_bufs, bucket, num_buckets );
 	for ( i = 0; i < num_bufs; i++ ) {
 		free( profbuf[i] );
@@ -191,6 +193,9 @@ main( int argc, char **argv )
 	int retval;
 	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
+
+	/* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );
 
 	prof_init( argc, argv, &prginfo );
 
@@ -237,13 +242,15 @@ main( int argc, char **argv )
 	if ( length < 0 )
 		test_fail( __FILE__, __LINE__, "Profile length < 0!", ( int ) length );
 
-	prof_print_address
-		( "Test case byte_profile: Multi-event profiling at byte resolution.\n",
-		  prginfo );
-	prof_print_prof_info( start, end, THRESHOLD, event_name );
+	if (!TESTS_QUIET) {
+		prof_print_address( "Test case byte_profile: "
+				"Multi-event profiling at byte resolution.\n",
+				prginfo );
+		prof_print_prof_info( start, end, THRESHOLD, event_name );
+	}
 
 	retval =
-		do_profile( start, ( unsigned ) length, 
+		do_profile( start, ( unsigned ) length,
 			    FULL_SCALE * 2, THRESHOLD,
 			    PAPI_PROFIL_BUCKET_32, mask );
 

@@ -145,27 +145,27 @@ main( int argc, char **argv )
 
 	elapsed_virt_cyc = PAPI_get_virt_cyc(  );
 
-	printf("must_ptrace is %d\n",cmpinfo->attach_must_ptrace);
+	if (!TESTS_QUIET) printf("must_ptrace is %d\n",cmpinfo->attach_must_ptrace);
 	pid_t  child = wait( &status );
-	printf( "Debugger exited wait() with %d\n",child );
+	if (!TESTS_QUIET) printf( "Debugger exited wait() with %d\n",child );
 	  if (WIFSTOPPED( status ))
 	    {
-	      printf( "Child has stopped due to signal %d (%s)\n",
+	      if (!TESTS_QUIET) printf( "Child has stopped due to signal %d (%s)\n",
 		      WSTOPSIG( status ), strsignal(WSTOPSIG( status )) );
 	    }
 	  if (WIFSIGNALED( status ))
 	    {
-	      printf( "Child %ld received signal %d (%s)\n",
+	      if (!TESTS_QUIET) printf( "Child %ld received signal %d (%s)\n",
 		      (long)child,
 		      WTERMSIG(status) , strsignal(WTERMSIG( status )) );
 	    }
-	printf("After %d\n",retval);
+	if (!TESTS_QUIET) printf("After %d\n",retval);
 
 	retval = PAPI_start( EventSet1 );
 	if ( retval != PAPI_OK )
 		test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
 
-	printf("Continuing\n");
+	if (!TESTS_QUIET) printf("Continuing\n");
 #if defined(__FreeBSD__)
 	if ( ptrace( PT_CONTINUE, pid, (caddr_t) 1, 0 ) == -1 ) {
 #else
@@ -178,24 +178,24 @@ main( int argc, char **argv )
 
 	do {
 	  child = wait( &status );
-	  printf( "Debugger exited wait() with %d\n", child);
+	  if (!TESTS_QUIET) printf( "Debugger exited wait() with %d\n", child);
 	  if (WIFSTOPPED( status ))
 	    {
-	      printf( "Child has stopped due to signal %d (%s)\n",
+	      if (!TESTS_QUIET) printf( "Child has stopped due to signal %d (%s)\n",
 		      WSTOPSIG( status ), strsignal(WSTOPSIG( status )) );
 	    }
 	  if (WIFSIGNALED( status ))
 	    {
-	      printf( "Child %ld received signal %d (%s)\n",
+	      if (!TESTS_QUIET) printf( "Child %ld received signal %d (%s)\n",
 		      (long)child,
 		      WTERMSIG(status) , strsignal(WTERMSIG( status )) );
 	    }
 	} while (!WIFEXITED( status ));
 
-	printf("Child exited with value %d\n",WEXITSTATUS(status));
-	if (WEXITSTATUS(status) != 0) 
+	if (!TESTS_QUIET) printf("Child exited with value %d\n",WEXITSTATUS(status));
+	if (WEXITSTATUS(status) != 0) {
 	  test_fail_exit( __FILE__, __LINE__, "Exit status of child to attach to", PAPI_EMISC);
-
+	}
 	retval = PAPI_stop( EventSet1, values[0] );
 	if ( retval != PAPI_OK )
 	  test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
@@ -216,6 +216,7 @@ main( int argc, char **argv )
 	if (retval != PAPI_OK)
 	  test_fail_exit( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 
+	if (!TESTS_QUIET) {
 	printf( "Test case: 3rd party attach start, stop.\n" );
 	printf( "-----------------------------------------------\n" );
 	tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );
@@ -224,8 +225,7 @@ main( int argc, char **argv )
 	printf( "Default granularity is: %d (%s)\n", tmp,
 			stringify_granularity( tmp ) );
 	printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
-	printf
-		( "-------------------------------------------------------------------------\n" );
+	printf( "-------------------------------------------------------------------------\n" );
 
 	printf( "Test type    : \t           1\n" );
 
@@ -236,11 +236,10 @@ main( int argc, char **argv )
 	printf( TAB1, "Virt usec    : \t", elapsed_virt_us );
 	printf( TAB1, "Virt cycles  : \t", elapsed_virt_cyc );
 
-	printf
-		( "-------------------------------------------------------------------------\n" );
+	printf( "-------------------------------------------------------------------------\n" );
 
 	printf( "Verification: none\n" );
-
+	}
 	test_pass( __FILE__, values, num_tests );
 	exit( 1 );
 }

@@ -19,12 +19,14 @@ main( int argc, char **argv )
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-	retval =
-		papi_print_header
-		( "Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n", 
-		  &hwinfo );
-	if ( retval != PAPI_OK )
+	if (!TESTS_QUIET) {
+		printf( "Test case hwinfo.c: "
+			"Check output of PAPI_get_hardware_info.\n");
+	}
+	hwinfo=PAPI_get_hardware_info();
+	if ( hwinfo == NULL ) {
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	}
 
 	mh = &hwinfo->mem_hierarchy;
 
@@ -52,6 +54,7 @@ main( int argc, char **argv )
 	if ( mh->levels < 0 )
 		test_fail( __FILE__, __LINE__, "max mh level < 0", 0 );
 
+	if (!TESTS_QUIET) {
 	printf( "Max level of TLB or Cache: %d\n", mh->levels );
 	for ( i = 0; i < mh->levels; i++ ) {
 		for ( j = 0; j < PAPI_MH_MAX_LEVELS; j++ ) {
@@ -63,8 +66,9 @@ main( int argc, char **argv )
 					c->size, c->line_size, c->num_lines, c->associativity );
 		}
 	}
+	}
 
 	test_pass( __FILE__, 0, 0 );
 
-	exit( 1 );
+	return 0;
 }
