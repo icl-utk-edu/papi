@@ -1,4 +1,4 @@
-/** file cost.c
+/** file papi_cost.c
   * @brief papi_cost utility.
   *	@page papi_cost
   * @section  NAME
@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "papi_test.h"
+#include "papi.h"
 #include "cost_utils.h"
 
 int
@@ -185,9 +185,6 @@ main( int argc, char **argv )
 	int event;
 	PAPI_event_info_t info;
 
-
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
-
 	for ( i = 1; i < argc; i++ ) {
 		if ( !strcmp( argv[i], "-b" ) ) {
 			i++;
@@ -221,37 +218,63 @@ main( int argc, char **argv )
 	printf( "Cost of execution for PAPI start/stop, read and accum.\n" );
 	printf( "This test takes a while. Please be patient...\n" );
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-	if ( ( retval = PAPI_set_debug( PAPI_VERB_ECONT ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
-	if ( ( retval = PAPI_query_event( PAPI_TOT_CYC ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_query_event", retval );
-	if ( ( retval = PAPI_query_event( PAPI_TOT_INS ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_query_event", retval );
-	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-
-	if ( ( retval = PAPI_add_event( EventSet, PAPI_TOT_CYC ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
-
-	if ( ( retval = PAPI_add_event( EventSet, PAPI_TOT_INS ) ) != PAPI_OK )
-		if ( ( retval = PAPI_add_event( EventSet, PAPI_TOT_IIS ) ) != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
+		fprintf(stderr,"PAPI_library_init\n");
+		exit(retval);
+	}
+	retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"PAPI_set_debug\n");
+		exit(retval);
+	}
+	retval = PAPI_query_event( PAPI_TOT_CYC );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"PAPI_query_event\n");
+		exit(retval);
+	}
+	retval = PAPI_query_event( PAPI_TOT_INS );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"PAPI_query_event\n");
+		exit(retval);
+	}
+	retval = PAPI_create_eventset( &EventSet );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"PAPI_create_eventset\n");
+		exit(retval);
+	}
+	retval = PAPI_add_event( EventSet, PAPI_TOT_CYC );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"PAPI_add_event\n");
+		exit(retval);
+	}
+	retval = PAPI_add_event( EventSet, PAPI_TOT_INS );
+	if (retval != PAPI_OK ) {
+		retval = PAPI_add_event( EventSet, PAPI_TOT_IIS );
+		if (retval != PAPI_OK ) {
+			fprintf(stderr,"PAPI_add_event\n");
+			exit(retval);
+		}
+	}
 
 	/* Make sure no errors and warm up */
 
 	totcyc = PAPI_get_real_cyc(  );
-	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-	if ( ( retval = PAPI_stop( EventSet, NULL ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_start");
+		exit(retval);
+	}
+	if ( ( retval = PAPI_stop( EventSet, NULL ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_stop");
+		exit(retval);
+	}
 
 	array =
 		( long long * ) malloc( ( size_t ) num_iters * sizeof ( long long ) );
-	if ( array == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	if ( array == NULL ) {
+		fprintf(stderr,"PAPI_stop");
+		exit(retval);
+	}
 
 	/* Determine clock latency */
 
@@ -276,7 +299,8 @@ main( int argc, char **argv )
 		totcyc = PAPI_get_real_cyc(  ) - totcyc;
 		array[i] = totcyc;
 		if (retval_start || retval_stop) {
-		   test_fail( __FILE__, __LINE__, "PAPI start/stop", retval_start );
+		   fprintf(stderr,"PAPI start/stop\n");
+			exit(retval_start );
 		}
 	}
 
@@ -285,8 +309,10 @@ main( int argc, char **argv )
 	/* Start the read eval */
 	printf( "\nPerforming read test...\n" );
 
-	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_start");
+		exit(retval);
+	}
 	PAPI_read( EventSet, values );
 
 	for ( i = 0; i < num_iters; i++ ) {
@@ -295,23 +321,29 @@ main( int argc, char **argv )
 		totcyc = PAPI_get_real_cyc(  ) - totcyc;
 		array[i] = totcyc;
 	}
-	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_stop");
+		exit(retval);
+	}
 
 	do_output( 2, array, bins, show_std_dev, show_dist );
 
 	/* Start the read with timestamp eval */
 	printf( "\nPerforming read with timestamp test...\n" );
 
-	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_start");
+		exit(retval);
+	}
 	PAPI_read_ts( EventSet, values, &totcyc );
 
 	for ( i = 0; i < num_iters; i++ ) {
 		PAPI_read_ts( EventSet, values, &array[i] );
 	}
-	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_stop");
+		exit(retval);
+	}
 
 	/* post-process the timing array */
 	for ( i = num_iters - 1; i > 0; i-- ) {
@@ -324,8 +356,10 @@ main( int argc, char **argv )
 	/* Start the accum eval */
 	printf( "\nPerforming accum test...\n" );
 
-	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_start");
+		exit(retval);
+	}
 	PAPI_accum( EventSet, values );
 
 	for ( i = 0; i < num_iters; i++ ) {
@@ -334,16 +368,20 @@ main( int argc, char **argv )
 		totcyc = PAPI_get_real_cyc(  ) - totcyc;
 		array[i] = totcyc;
 	}
-	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_stop");
+		exit(retval);
+	}
 
 	do_output( 4, array, bins, show_std_dev, show_dist );
 
 	/* Start the reset eval */
 	printf( "\nPerforming reset test...\n" );
 
-	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_start");
+		exit(retval);
+	}
 
 	for ( i = 0; i < num_iters; i++ ) {
 		totcyc = PAPI_get_real_cyc(  );
@@ -351,8 +389,10 @@ main( int argc, char **argv )
 		totcyc = PAPI_get_real_cyc(  ) - totcyc;
 		array[i] = totcyc;
 	}
-	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK ) {
+		fprintf(stderr,"PAPI_stop");
+		exit(retval);
+	}
 
 	do_output( 5, array, bins, show_std_dev, show_dist );
 
@@ -371,12 +411,14 @@ main( int argc, char **argv )
 
 		retval = PAPI_add_event( EventSet, event);
 		if ( retval != PAPI_OK ) {
-			test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+			fprintf(stderr,"PAPI_add_event");
+			exit(retval);
 		}
 
 		retval = PAPI_start( EventSet );
 		if ( retval != PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+			fprintf(stderr,"PAPI_start");
+			exit(retval);
 		}
 
 		PAPI_read( EventSet, values );
@@ -390,7 +432,8 @@ main( int argc, char **argv )
 
 		retval = PAPI_stop( EventSet, values );
 		if ( retval != PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+			fprintf(stderr,"PAPI_stop");
+			exit(retval);
 		}
 
 		do_output( 6, array, bins, show_std_dev, show_dist );
@@ -415,12 +458,14 @@ main( int argc, char **argv )
 
 		retval = PAPI_add_event( EventSet, event);
 		if ( retval != PAPI_OK ) {
-			test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+			fprintf(stderr,"PAPI_add_event\n");
+			exit(retval);
 		}
 
 		retval = PAPI_start( EventSet );
 		if ( retval != PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+			fprintf(stderr,"PAPI_start");
+			exit(retval);
 		}
 
 		PAPI_read( EventSet, values );
@@ -434,7 +479,8 @@ main( int argc, char **argv )
 
 		retval = PAPI_stop( EventSet, values );
 		if ( retval != PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+			fprintf(stderr,"PAPI_stop");
+			exit(retval);
 		}
 
 		do_output( 7, array, bins, show_std_dev, show_dist );
@@ -444,6 +490,6 @@ main( int argc, char **argv )
 	}
 
 	free( array );
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	return 0;
 }

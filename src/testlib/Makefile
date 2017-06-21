@@ -5,7 +5,7 @@ include Makefile.target
 INCLUDE = -I. -I..
 PAPILIB = $(LIBRARY)
 
-UTILSRCS:= do_loops.c test_utils.c dummy.c clockcore.c
+UTILSRCS:= do_loops.c test_utils.c clockcore.c
 UTILOBJS:=$(UTILSRCS:.c=.o)
 ifneq ($(F77),)
 UTILSRCS+= ftests_util.F
@@ -20,9 +20,6 @@ do_loops.o: do_loops.c papi_test.h test_utils.h
 
 clockcore.o: clockcore.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c clockcore.c
-
-dummy.o: dummy.c
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c dummy.c
 
 test_utils.o: test_utils.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c test_utils.c

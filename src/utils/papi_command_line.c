@@ -33,7 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "papi_test.h"
+#include "papi.h"
+#include "do_loops.h"
 
 static void
 print_help( char **argv )
@@ -64,26 +65,29 @@ main( int argc, char **argv )
 	int u_format = 0;
 	int hex_format = 0;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	printf( "\nThis utility lets you add events from the command line "
+		"interface to see if they work.\n\n" );
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
+		fprintf(stderr,"Error! PAPI_library_init\n");
+		exit(retval );
+	}
 
-	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-
-	/* Automatically pass if no events, for run_tests.sh */
-	if ((( TESTS_QUIET ) && ( argc == 2)) || ( argc == 1 )) {
-		test_pass( __FILE__, NULL, 0 );
+	retval = PAPI_create_eventset( &EventSet );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"Error! PAPI_create_eventset\n");
+		exit(retval );
 	}
 
 	values =
 		( long long * ) malloc( sizeof ( long long ) * ( size_t ) argc );
 	success = ( char * ) malloc( ( size_t ) argc );
 
-	if ( success == NULL || values == NULL )
-		test_fail_exit( __FILE__, __LINE__, "malloc", PAPI_ESYS );
+	if ( success == NULL || values == NULL ) {
+		fprintf(stderr,"Error allocating memory!\n");
+		exit(1);
+	}
 
 	for ( num_events = 0, i = 1; i < argc; i++ ) {
 		if ( !strcmp( argv[i], "-h" ) ) {
@@ -106,7 +110,10 @@ main( int argc, char **argv )
 
 	/* Automatically pass if no events, for run_tests.sh */
 	if ( num_events == 0 ) {
-		test_pass( __FILE__, NULL, 0 );
+		printf("No events specified!\n");
+		printf("Try running something like: %s PAPI_TOT_CYC\n\n",
+			argv[0]);
+		return 0;
 	}
 
 
@@ -115,15 +122,20 @@ main( int argc, char **argv )
 	do_flops( 1 );
 	do_flush(  );
 
-	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK ) {
-	   test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
+	retval = PAPI_start( EventSet );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"Error! PAPI_start\n");
+		exit( retval );
 	}
 
 	do_flops( NUM_FLOPS );
 	do_misses( 1, L1_MISS_BUFFER_SIZE_INTS );
 
-	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
+	retval = PAPI_stop( EventSet, values );
+	if (retval != PAPI_OK ) {
+		fprintf(stderr,"Error! PAPI_stop\n");
+		exit( retval );
+	}
 
 	for ( j = 0; j < num_events; j++ ) {
 		i = success[j];
@@ -157,8 +169,7 @@ main( int argc, char **argv )
 	}
 
 	printf( "\n----------------------------------\n" );
-	printf
-		( "Verification: Checks for valid event name.\n This utility lets you add events from the command line interface to see if they work.\n" );
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	return 0;
+
 }

@@ -4,8 +4,8 @@ include Makefile.target
 INCLUDE = -I../testlib -I.. -I.
 PAPILIB = ../$(LIBRARY)
 testlibdir=../testlib
-TESTLIB= $(testlibdir)/libtestlib.a
 CLOCKCORE= $(testlibdir)/clockcore.o
+DOLOOPS = $(testlibdir)/do_loops.o
 
 ALL = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail \
 	papi_command_line papi_event_chooser papi_decode papi_xml_event_info \
@@ -19,8 +19,14 @@ papi_avail: papi_avail.c $(PAPILIB) print_header.o
 papi_clockres: papi_clockres.c $(PAPILIB) $(CLOCKCORE)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_clockres.c $(CLOCKCORE) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
 
+papi_command_line: papi_command_line.c $(PAPILIB) $(DOLOOPS)
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_command_line.c $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o papi_command_line
+
 papi_component_avail: papi_component_avail.c $(PAPILIB) print_header.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_component_avail.c $(PAPILIB) print_header.o $(LDFLAGS) -o papi_component_avail
+
+papi_cost: papi_cost.c $(PAPILIB) cost_utils.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_cost.c cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
 
 papi_decode: papi_decode.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_decode.c $(PAPILIB) $(LDFLAGS) -o papi_decode
@@ -48,14 +54,6 @@ papi_version: papi_version.c $(PAPILIB)
 
 papi_xml_event_info: papi_xml_event_info.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_xml_event_info.c $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info
-
-
-
-papi_cost: papi_cost.c $(TESTLIB) $(PAPILIB) cost_utils.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_cost.c $(TESTLIB) cost_utils.o $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
-
-papi_command_line: papi_command_line.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_command_line.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_command_line
 
 
 
