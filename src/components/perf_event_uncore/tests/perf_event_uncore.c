@@ -2,6 +2,8 @@
  * This file tests uncore events on perf_event kernels
  */
 
+#include <stdio.h>
+
 #include "papi_test.h"
 
 #include "perf_event_uncore_lib.h"

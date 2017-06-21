@@ -2,6 +2,9 @@
  * This tests the use of offcore_response events
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "papi_test.h"
 
 #include "event_name_lib.h"

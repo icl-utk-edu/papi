@@ -2,6 +2,8 @@
  * This file tests cbox uncore events on IVB and SNB-EP
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "papi_test.h"
 
 #include "perf_event_uncore_lib.h"

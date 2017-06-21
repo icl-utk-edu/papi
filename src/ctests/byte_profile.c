@@ -1,6 +1,5 @@
-/* 
+/*
 * File:    byte_profile.c
-* CVS:     $Id$
 * Author:  Dan Terpstra
 *          terpstra@cs.utk.edu
 * Mods:    Maynard Johnson
@@ -15,6 +14,10 @@
    It is intended to illustrate the use of Multiprofiling on a very tight
    block of code at byte level resolution of the instruction addresses.
 */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "papi_test.h"
 #include "prof_utils.h"

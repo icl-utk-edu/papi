@@ -2,19 +2,14 @@
 	This file is customized to hide Windows / Unix differences.
 */
 
-#if (!defined(NO_DLFCN) && !defined(_BGL) && !defined(_BGP))
-#include <dlfcn.h>
-#endif
+//#if (!defined(NO_DLFCN) && !defined(_BGL) && !defined(_BGP))
+//#include <dlfcn.h>
+//#endif
 
-#include <memory.h>
-#if !defined(__FreeBSD__) && !defined(__APPLE__)
-#include <malloc.h>
-#endif
-#include <assert.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/time.h>
+//#include <memory.h>
+//#if !defined(__FreeBSD__) && !defined(__APPLE__)
+//#include <malloc.h>
+//#endif
 
 #include "papiStdEventDefs.h"
 #include "papi.h"

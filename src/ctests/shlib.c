@@ -8,7 +8,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#if (!defined(NO_DLFCN) && !defined(_BGL) && !defined(_BGP))
+#include <dlfcn.h>
+#endif
 
 #include "papi_test.h"
 

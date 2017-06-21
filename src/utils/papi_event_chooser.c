@@ -20,9 +20,13 @@
   *		If you find a bug, it should be reported to the
   *		PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
  */
-#include "papi_test.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
+#include "print_header.h"
 
 int EventSet = PAPI_NULL;
 int retval;
@@ -117,7 +121,7 @@ native( int cidx )
 	     j++;
 	  }
        }
-	
+
        if ( added == PAPI_OK ) {
 	  /* modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
 	     groups id for each group in which this
@@ -134,7 +138,7 @@ native( int cidx )
 							  PAPI_OK );
 	     printf( "\n" );
 	  }
-	  
+
 	  printf( "---------------------------------------------"
 		  "----------------------------\n" );
        }
@@ -143,8 +147,8 @@ native( int cidx )
     printf( "------------------------------------------"
 	    "-------------------------------\n" );
     printf( "Total events reported: %d\n", j );
-    test_pass( __FILE__, NULL, 0 );
-    exit( 1 );
+
+    exit( 0 );
 }
 
 static int
@@ -181,8 +185,8 @@ preset( void )
 	printf
 		( "-------------------------------------------------------------------------\n" );
 	printf( "Total events reported: %d\n", j );
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	exit( 0 );
 }
 
 int
@@ -198,37 +202,37 @@ main( int argc, char **argv )
        goto use_exit;
     }
 
-    /* Set TESTS_QUIET variable */
-    tests_quiet( argc, argv );	
-
     /* Init PAPI library */
     retval = PAPI_library_init( PAPI_VER_CURRENT );
     if ( retval != PAPI_VER_CURRENT ) {
-       test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	fprintf(stderr,"Error! PAPI_library_init\n");
+	return retval;
     }
 
     retval = PAPI_set_debug( PAPI_VERB_ECONT );
     if ( retval != PAPI_OK ) {
-       test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	fprintf(stderr,"Error! PAPI_set_debug\n");
+	return retval;
     }
 
     retval = papi_print_header( "Event Chooser: Available events "
 				"which can be added with given events.\n",
 		                &hwinfo );
     if ( retval != PAPI_OK ) {
-       test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+       fprintf(stderr, "Error! PAPI_get_hardware_info\n");
+	return 2;
     }
 
     retval = PAPI_create_eventset( &EventSet );
     if ( retval != PAPI_OK ) {
-       fprintf( stderr, "PAPI_create_eventset error\n" );
-       exit( 1 );
+	fprintf( stderr, "PAPI_create_eventset error\n" );
+	return 1;
     }
 
     retval = PAPI_event_name_to_code( argv[2], &cevent );
     if ( retval != PAPI_OK ) {
-       fprintf( stderr, "Event %s can't be found\n", argv[2] );
-       exit( 1 );
+	fprintf( stderr, "Event %s can't be found\n", argv[2] );
+	return 1;
     }
     cidx = PAPI_get_event_component(cevent);
 
@@ -236,13 +240,13 @@ main( int argc, char **argv )
        retval = PAPI_event_name_to_code( argv[i], &pevent );
        if ( retval != PAPI_OK ) {
 	  fprintf( stderr, "Event %s can't be found\n", argv[i] );
-	  exit( 1 );
+	  return 1;
        }
        retval = PAPI_add_event( EventSet, pevent );
        if ( retval != PAPI_OK ) {
 	  fprintf( stderr, "Event %s can't be counted with others %d\n",
 		   argv[i], retval );
-	  exit( 1 );
+	  return 1;
        }
     }
 
@@ -255,10 +259,10 @@ main( int argc, char **argv )
     else {
        goto use_exit;
     }
-    exit( 0 );
-  
+	return 0;
+
 use_exit:
     fprintf( stderr,
 	    "Usage: papi_event_chooser NATIVE|PRESET evt1 evt2 ... \n" );
-    exit( 1 );
+	return 1;
 }

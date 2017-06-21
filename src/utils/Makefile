@@ -28,12 +28,11 @@ papi_decode: papi_decode.c $(PAPILIB)
 papi_error_codes: papi_error_codes.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_error_codes.c $(PAPILIB) $(LDFLAGS) -o papi_error_codes
 
-papi_event_chooser: papi_event_chooser.c $(PAPILIB) $(TESTLIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_event_chooser.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser
+papi_event_chooser: papi_event_chooser.c $(PAPILIB) print_header.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_event_chooser.c print_header.o $(PAPILIB) $(LDFLAGS) -o papi_event_chooser
 
 papi_mem_info: papi_mem_info.c $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_mem_info.c $(PAPILIB) $(LDFLAGS) -o papi_mem_info
-
 
 papi_native_avail: papi_native_avail.c $(PAPILIB) print_header.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_native_avail.c $(PAPILIB) print_header.o $(LDFLAGS) -o papi_native_avail

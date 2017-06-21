@@ -13,6 +13,7 @@
 *          differennt cpu's or count activity in different domains.
 */
 
+#include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>

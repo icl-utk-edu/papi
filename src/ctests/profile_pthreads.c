@@ -2,11 +2,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 
 #include "papi_test.h"
-
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
 #define THR 1000000
 #define FLOPS 100000000

@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/time.h>
 
 #include "papi_test.h"
 

@@ -15,7 +15,7 @@
      2
    - Start counters
    - Do flops
-   - Stop counters (should duplicate above) 
+   - Stop counters (should duplicate above)
 
      3
    - Reset counters (should be redundant if stop works properly)
@@ -55,6 +55,7 @@
    - Read counters (should be zero)
 */
 
+#include <stdio.h>
 #include "papi_test.h"
 
 int
@@ -67,7 +68,7 @@ main( int argc, char **argv )
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );

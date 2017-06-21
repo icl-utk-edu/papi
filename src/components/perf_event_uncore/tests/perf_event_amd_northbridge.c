@@ -7,7 +7,11 @@
  *   PMU, like the Intel uncore support.
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "papi_test.h"
+
 int main( int argc, char **argv ) {
 
    int retval;

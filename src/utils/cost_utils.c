@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "papi_test.h"
+#define NUM_ITERS	1000000
 
 int num_iters = NUM_ITERS;
 

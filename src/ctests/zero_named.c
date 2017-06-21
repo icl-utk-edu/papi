@@ -2,6 +2,7 @@
 	It more or less duplicates the functionality of the classic "zero" test.
 */
 
+#include <stdio.h>
 #include "papi_test.h"
 
 int
@@ -17,7 +18,7 @@ main( int argc, char **argv )
 	double cycles_error;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );

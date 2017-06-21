@@ -4,6 +4,7 @@
 
   */
 
+#include <stdio.h>
 #include "papi_test.h"
 
 int
@@ -18,7 +19,7 @@ main( int argc, char **argv )
 	long long old_instructions;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );

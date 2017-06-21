@@ -33,6 +33,8 @@ The Eventset contains:
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 
 #include "papi_test.h"
 

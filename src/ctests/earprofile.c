@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    profile.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -10,9 +10,9 @@
 
 /* This file performs the following test: profiling and program info option call
 
-   - This tests the SVR4 profiling interface of PAPI. These are counted 
-   in the default counting domain and default granularity, depending on 
-   the platform. Usually this is the user domain (PAPI_DOM_USER) and 
+   - This tests the SVR4 profiling interface of PAPI. These are counted
+   in the default counting domain and default granularity, depending on
+   the platform. Usually this is the user domain (PAPI_DOM_USER) and
    thread context (PAPI_GRN_THR).
 
      The Eventset contains:
@@ -27,9 +27,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "papi_test.h"
 #include "prof_utils.h"
+
 #undef THRESHOLD
 #define THRESHOLD 1000
 

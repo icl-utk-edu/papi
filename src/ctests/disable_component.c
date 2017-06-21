@@ -8,7 +8,7 @@
   This tests the functionality of PAPI_disable_component()
 */
 
-
+#include <stdio.h>
 #include "papi_test.h"
 
 

@@ -22,6 +22,7 @@
    - Read counters
 */
 
+#include <stdio.h>
 #include "papi_test.h"
 
 int

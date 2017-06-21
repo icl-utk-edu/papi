@@ -1,5 +1,5 @@
 /****************************************************************************
- *C     
+ *C
  *C     matrix-hl.f
  *C     An example of matrix-matrix multiplication and using PAPI high level
  *C     to look at the performance. written by Kevin London
@@ -7,8 +7,12 @@
  *C     Added to c tests to check stop
  *C****************************************************************************
  */
-#include "papi_test.h"
+
+
+#include <stdio.h>
 #include <stdlib.h>
+#include "papi_test.h"
+
 
 int
 main( int argc, char **argv )

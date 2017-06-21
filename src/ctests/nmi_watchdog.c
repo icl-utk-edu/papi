@@ -11,6 +11,7 @@
 /* but since that was fixed in 2.6.34 then in theory there is    */
 /* no overlap in the tests.                                      */
 
+#include <stdio.h>
 #include "papi_test.h"
 
 
