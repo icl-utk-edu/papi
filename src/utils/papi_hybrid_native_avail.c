@@ -47,9 +47,9 @@
   * Modified by Gabriel Marin <gmarin@icl.utk.edu> to use offloading.
   */
 
-#pragma offload_attribute (push,target(mic))
-#include "papi_test.h"
-#pragma offload_attribute (pop)
+//#pragma offload_attribute (push,target(mic))
+//#include "papi_test.h"
+//#pragma offload_attribute (pop)
 
 #include <stdlib.h>
 #include <offload.h>
@@ -303,18 +303,18 @@ main( int argc, char **argv )
 	else
 		enum_modifier = PAPI_ENUM_EVENTS;
 
-	/* Set TESTS_QUIET variable */
 ///    #pragma offload target(mic: target_idx) if(offload_mode) in(argc, argv) inout(TESTS_QUIET)
-	tests_quiet( argc, argv );
 
 	/* Initialize before parsing the input arguments */
 #ifdef __INTEL_OFFLOAD
     __Offload_report(1);
 #endif
     #pragma offload target(mic: target_idx) if(offload_mode)
+
 	retval = PAPI_library_init(PAPI_VER_CURRENT);
 	if ( retval != PAPI_VER_CURRENT ) {
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+		fprintf(stderr,"Error! PAPI_library_init\n");
+		exit(retval);
 	}
 
 
@@ -325,7 +325,8 @@ main( int argc, char **argv )
        #pragma offload target(mic: target_idx) if(offload_mode)
 	   retval = PAPI_set_debug( PAPI_VERB_ECONT );
 	   if ( retval != PAPI_OK ) {
-	      test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	      fprintf(stderr,"Error! PAPI_set_debug\n");
+		exit(retval);
 	   }
 	}
 
@@ -338,7 +339,8 @@ main( int argc, char **argv )
 	   fflush(stdout);
     }
 	if ( retval != PAPI_OK ) {
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+		fprintf(stderr,"Error! PAPI_get_hardware_info\n");
+		exit( 2 );
 	}
 
 
@@ -442,7 +444,7 @@ main( int argc, char **argv )
 	       printf( "===============================================================================\n" );
 	       printf( " Native Events in Component: %s\n",component.name);
 	       printf( "===============================================================================\n" );
-	     
+
 	       /* Always ASK FOR the first event */
 	       /* Don't just assume it'll be the first numeric value */
 	       i = 0 | PAPI_NATIVE_MASK;
@@ -478,7 +480,7 @@ main( int argc, char **argv )
 			  	 if ( strstr( info.symbol, flags.xstr ) )
 				    goto endloop;
 			  }
-			  
+
 			  /* count only events that are actually processed */
 			  j++;
 
@@ -562,12 +564,10 @@ endloop:
               retval=PAPI_enum_cmp_event(&i, enum_modifier, cid);
 	       } while (retval == PAPI_OK );
 	   }
-	   	   	
-	
+
 	   printf("\n");
 	   printf( "Total events reported: %d\n", j );
 	}
 
-	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );
+	return 0;
 }
