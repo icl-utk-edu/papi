@@ -1,4 +1,8 @@
-INCLUDE = -I.
+# File: testlib/Makefile
+
+include Makefile.target
+
+INCLUDE = -I. -I..
 PAPILIB = $(LIBRARY)
 
 UTILSRCS:= do_loops.c test_utils.c dummy.c clockcore.c
