@@ -1,7 +1,10 @@
 # File: ctests/Makefile
+
+include Makefile.target
+
 INCLUDE = -I../testlib -I.
-PAPILIB=$(LIBRARY)
-testlibdir=../testlib
+PAPILIB= ../$(LIBRARY)
+testlibdir= ../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
 
 include Makefile.recipies
