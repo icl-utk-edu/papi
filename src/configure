@@ -6819,7 +6819,7 @@ $as_echo "$as_me: Generating f90papi.h" >&6;}
 $as_echo "$as_me: $FILENAME will be included in the generated Makefile" >&6;}
 ac_config_files="$ac_config_files Makefile papi.pc"
 
-ac_config_files="$ac_config_files components/Makefile_comp_tests.target testlib/Makefile.target utils/Makefile.target ctests/Makefile.target ftests/Makefile.target"
+ac_config_files="$ac_config_files components/Makefile_comp_tests.target testlib/Makefile.target utils/Makefile.target ctests/Makefile.target ftests/Makefile.target validation_tests/Makefile.target"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7519,6 +7519,7 @@ do
     "utils/Makefile.target") CONFIG_FILES="$CONFIG_FILES utils/Makefile.target" ;;
     "ctests/Makefile.target") CONFIG_FILES="$CONFIG_FILES ctests/Makefile.target" ;;
     "ftests/Makefile.target") CONFIG_FILES="$CONFIG_FILES ftests/Makefile.target" ;;
+    "validation_tests/Makefile.target") CONFIG_FILES="$CONFIG_FILES validation_tests/Makefile.target" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

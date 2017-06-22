@@ -1,6 +1,11 @@
 /* This file attempts to test the retired instruction event	*/
 /* As implemented by PAPI_TOT_INS				*/
 
+/* For more info on the causes of overcount on x86 systems	*/
+/* See the ISPASS2013 paper:					*/
+/*	"Non-Determinism and Overcount on Modern Hardware	*/
+/*		Performance Counter Implementations"		*/
+
 /* by Vince Weaver, <vincent.weaver@maine.edu>			*/
 
 #include <stdlib.h>
