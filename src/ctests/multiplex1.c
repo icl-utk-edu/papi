@@ -94,7 +94,7 @@ init_papi( int *out_events, int *len )
 /* Tests that PAPI_multiplex_init does not mess with normal operation. */
 
 int
-case1(  )
+case1( void )
 {
 	int retval, i, EventSet = PAPI_NULL;
 	long long values[2];
@@ -143,7 +143,7 @@ case1(  )
 /* Tests that PAPI_set_multiplex() works before adding events */
 
 int
-case2(  )
+case2( void )
 {
 	int retval, i, EventSet = PAPI_NULL;
 	long long values[2];
@@ -165,7 +165,7 @@ case2(  )
 	retval = PAPI_set_multiplex( EventSet );
         if ( retval == PAPI_ENOSUPP) {
 	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
-	}   
+	}
 	else if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
 
@@ -207,7 +207,7 @@ case2(  )
 /* Tests that PAPI_set_multiplex() works after adding events */
 
 int
-case3(  )
+case3( void  )
 {
 	int retval, i, EventSet = PAPI_NULL;
 	long long values[2];
@@ -266,7 +266,7 @@ case3(  )
    PAPI_add_event()/PAPI_set_multiplex() */
 
 int
-case4(  )
+case4( void )
 {
 	int retval, i, EventSet = PAPI_NULL;
 	long long values[4];
@@ -284,12 +284,12 @@ case4(  )
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
-	printf( "Added %s\n", out );
+	if (!TESTS_QUIET) printf( "Added %s\n", out );
 
 	retval = PAPI_set_multiplex( EventSet );
         if ( retval == PAPI_ENOSUPP) {
 	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
-	}   
+	}
 	else if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
 
@@ -328,7 +328,7 @@ case4(  )
    PAPI_start() */
 
 int
-case5(  )
+case5( void )
 {
   int retval, i, j, EventSet = PAPI_NULL;
 	long long start_values[4] = { 0,0,0,0 }, values[4] = {0,0,0,0};
@@ -348,13 +348,14 @@ case5(  )
 	retval = PAPI_assign_eventset_component( EventSet, 0 );
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_assign_eventset_component", retval );
-	
+
 	retval = PAPI_set_multiplex( EventSet );
         if ( retval == PAPI_ENOSUPP) {
 	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
-	}   
-	else if ( retval != PAPI_OK )
+	}
+	else if ( retval != PAPI_OK ) {
 		CPP_TEST_FAIL( "PAPI_set_multiplex", retval );
+	}
 
 	/* Add 2 events... */
 
@@ -377,7 +378,7 @@ case5(  )
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_start", retval );
-	
+
 	retval = PAPI_read( EventSet, start_values );
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_read", retval );
@@ -388,13 +389,18 @@ case5(  )
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_stop", retval );
 
-	for (j=0;j<i;j++)
-	  {
-	      printf("read @start counter[%d]: %lld\n", j, start_values[j]);
-	      printf("read @stop  counter[%d]: %lld\n", j, values[j]);
-	      printf("difference  counter[%d]: %lld\n ", j, values[j]-start_values[j]);
-	      if (values[j]-start_values[j] < 0LL)
-		CPP_TEST_FAIL( "Difference in start and stop resulted in negative value!", 0 );
+	for (j=0;j<i;j++) {
+		if (!TESTS_QUIET) {
+			printf("read @start counter[%d]: %lld\n",
+				j, start_values[j]);
+			printf("read @stop  counter[%d]: %lld\n",
+				j, values[j]);
+			printf("difference  counter[%d]: %lld\n ",
+				j, values[j]-start_values[j]);
+		}
+		if (values[j]-start_values[j] < 0LL) {
+			CPP_TEST_FAIL( "Difference in start and stop resulted in negative value!", 0 );
+		}
 	  }
 
 	retval = PAPI_cleanup_eventset( EventSet );	/* JT */
@@ -411,22 +417,32 @@ main( int argc, char **argv )
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-	printf
-		( "case1: Does PAPI_multiplex_init() not break regular operation?\n" );
+	if (!TESTS_QUIET) {
+		printf( "case1: Does PAPI_multiplex_init() not break regular operation?\n" );
+	}
 	case1(  );
 
-	printf( "\ncase2: Does setmpx/add work?\n" );
+	if (!TESTS_QUIET) {
+		printf( "\ncase2: Does setmpx/add work?\n" );
+	}
 	case2(  );
 
-	printf( "\ncase3: Does add/setmpx work?\n" );
+	if (!TESTS_QUIET) {
+		printf( "\ncase3: Does add/setmpx work?\n" );
+	}
 	case3(  );
 
-	printf( "\ncase4: Does add/setmpx/add work?\n" );
+	if (!TESTS_QUIET) {
+		printf( "\ncase4: Does add/setmpx/add work?\n" );
+	}
 	case4(  );
-	
-	printf( "\ncase5: Does setmpx/add/add/start/read work?\n" );
+
+	if (!TESTS_QUIET) {
+		printf( "\ncase5: Does setmpx/add/add/start/read work?\n" );
+	}
 	case5(  );
 
 	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );
+
+	return 0;
 }

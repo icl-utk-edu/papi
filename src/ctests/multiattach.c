@@ -302,39 +302,40 @@ main( int argc, char **argv )
 	/* it *may* return an error if the component so chooses. You  */
         /* should use read() instead. */
 
-	printf( "Test case: multiple 3rd party attach start, stop.\n" );
-	printf( "-----------------------------------------------\n" );
-	tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );
-	printf( "Default domain is: %d (%s)\n", tmp,
-		stringify_all_domains( tmp ) );
-	tmp = PAPI_get_opt( PAPI_DEFGRN, NULL );
-	printf( "Default granularity is: %d (%s)\n", tmp,
+	if (!TESTS_QUIET) {
+		printf( "Test case: multiple 3rd party attach start, stop.\n" );
+		printf( "-----------------------------------------------\n" );
+		tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );
+		printf( "Default domain is: %d (%s)\n", tmp,
+			stringify_all_domains( tmp ) );
+		tmp = PAPI_get_opt( PAPI_DEFGRN, NULL );
+		printf( "Default granularity is: %d (%s)\n", tmp,
 			stringify_granularity( tmp ) );
-	printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
-	printf( "-------------------------------------------------------------------------\n" );
+		printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
+		printf( "-------------------------------------------------------------------------\n" );
 
-	sprintf( add_event_str, "(PID %jd) %-12s : \t", ( intmax_t ) pid,
+		sprintf( add_event_str, "(PID %jd) %-12s : \t", ( intmax_t ) pid,
+				 event_name );
+		printf( TAB1, add_event_str, values[0][1] );
+		sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t",
+			 ( intmax_t ) pid );
+		printf( TAB1, add_event_str, values[0][0] );
+		sprintf( add_event_str, "(PID %jd) %-12s : \t", ( intmax_t ) pid2,
 			 event_name );
-	printf( TAB1, add_event_str, values[0][1] );
-	sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t",
-		 ( intmax_t ) pid );
-	printf( TAB1, add_event_str, values[0][0] );
-	sprintf( add_event_str, "(PID %jd) %-12s : \t", ( intmax_t ) pid2,
-			 event_name );
-	printf( TAB1, add_event_str,values[1][1] );
-	sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t",
-		 ( intmax_t ) pid2 );
-	printf( TAB1, add_event_str, values[1][0] );
-	printf( TAB1, "Real usec    : \t", elapsed_us );
-	printf( TAB1, "Real cycles  : \t", elapsed_cyc );
-	printf( TAB1, "Virt usec    : \t", elapsed_virt_us );
-	printf( TAB1, "Virt cycles  : \t", elapsed_virt_cyc );
+		printf( TAB1, add_event_str,values[1][1] );
+		sprintf( add_event_str, "(PID %jd) PAPI_TOT_CYC : \t",
+			 ( intmax_t ) pid2 );
+		printf( TAB1, add_event_str, values[1][0] );
+		printf( TAB1, "Real usec    : \t", elapsed_us );
+		printf( TAB1, "Real cycles  : \t", elapsed_cyc );
+		printf( TAB1, "Virt usec    : \t", elapsed_virt_us );
+		printf( TAB1, "Virt cycles  : \t", elapsed_virt_cyc );
 
-	printf
-		( "-------------------------------------------------------------------------\n" );
+		printf( "-------------------------------------------------------------------------\n" );
 
-	printf("Verification: pid %d results should be %dx pid %d\n",
-		pid2,MULTIPLIER,pid );
+		printf("Verification: pid %d results should be %dx pid %d\n",
+			pid2,MULTIPLIER,pid );
+	}
 
 	/* FLOPS ratio */
 	ratio1=(double)values[1][0]/(double)values[0][0];
@@ -342,8 +343,10 @@ main( int argc, char **argv )
 	/* CYCLES ratio */
 	ratio2=(double)values[1][1]/(double)values[0][1];
 
-	printf("\tFLOPS ratio %lld/%lld = %lf\n",
-		values[1][0],values[0][0],ratio1);
+	if (!TESTS_QUIET) {
+		printf("\tFLOPS ratio %lld/%lld = %lf\n",
+			values[1][0],values[0][0],ratio1);
+	}
 
 	double ratio1_high,ratio1_low,ratio2_high,ratio2_low;
 
@@ -357,8 +360,10 @@ main( int argc, char **argv )
 		    "Error: Counter ratio not two", 0 );
 	}
 
-	printf("\tCycles ratio %lld/%lld = %lf\n",
-		values[1][1],values[0][1],ratio2);
+	if (!TESTS_QUIET) {
+		printf("\tCycles ratio %lld/%lld = %lf\n",
+			values[1][1],values[0][1],ratio2);
+	}
 
 	ratio2_high=(double)MULTIPLIER *1.20;
 	ratio2_low=(double)MULTIPLIER * 0.80;

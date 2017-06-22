@@ -55,10 +55,12 @@ print_rate( long num )
 	if ( last_secs <= 0.001 )
 		last_secs = 0.001;
 
-	printf( "[%ld] time = %ld, count = %ld, iter = %ld, "
+	if (!TESTS_QUIET) {
+		printf( "[%ld] time = %ld, count = %ld, iter = %ld, "
 			"rate = %.1f/Kiter\n",
 			num, st_secs, count[num], iter[num],
 			( 1000.0 * ( double ) count[num] ) / ( double ) iter[num] );
+	}
 
 	count[num] = 0;
 	iter[num] = 0;
@@ -104,7 +106,7 @@ my_thread( void *v )
 	count[num] = 0;
 	iter[num] = 0;
 	last[num] = start;
-        
+
 	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset failed", 1 );
 
@@ -117,7 +119,7 @@ my_thread( void *v )
 	if ( PAPI_start( EventSet ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start failed", 1 );
 
-	printf( "launched timer in thread %ld\n", num );
+	if (!TESTS_QUIET) printf( "launched timer in thread %ld\n", num );
 
 	for ( n = 1; n <= program_time; n++ ) {
 		do_cycles( num, 1 );
@@ -148,7 +150,7 @@ main( int argc, char **argv )
 	pthread_t *td = NULL;
 	long n;
 
-	tests_quiet( argc, argv );	/*Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	if ( argc < 2 || sscanf( argv[1], "%d", &program_time ) < 1 )
 		program_time = 6;
@@ -161,8 +163,10 @@ main( int argc, char **argv )
 	if (!td)
 		test_fail( __FILE__, __LINE__, "td malloc failed", 1 );
 
-	printf( "program_time = %d, threshold = %d, num_threads = %d\n\n",
+	if (!TESTS_QUIET) {
+		printf( "program_time = %d, threshold = %d, num_threads = %d\n\n",
 			program_time, threshold, num_threads );
+	}
 
 	if ( PAPI_library_init( PAPI_VER_CURRENT ) != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init failed", 1 );
@@ -191,7 +195,7 @@ main( int argc, char **argv )
 
 	free(td);
 
-	printf( "done\n" );
+	if (!TESTS_QUIET) printf( "done\n" );
 
 	test_pass( __FILE__, NULL, 0 );
 	return ( 0 );

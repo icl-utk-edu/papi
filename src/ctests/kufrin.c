@@ -50,7 +50,7 @@ thread( void *arg )
 
 	values=calloc(max_events,sizeof(long long));
 
-	printf( "Event set %d created\n", eventset );
+	if (!TESTS_QUIET) printf( "Event set %d created\n", eventset );
 
 	/* In Component PAPI, EventSets must be assigned a component index
 	   before you can fiddle with their internals.
@@ -160,19 +160,19 @@ main( int argc, char **argv )
 		if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
 			if ( info.count == 1 ) {
 				events[numevents++] = ( int ) info.event_code;
-				printf( "Added %s\n", info.symbol );
+				if (!TESTS_QUIET) printf( "Added %s\n", info.symbol );
 			} else {
-				printf( "Skipping derived event %s\n", info.symbol );
+				if (!TESTS_QUIET) printf( "Skipping derived event %s\n", info.symbol );
 			}
 		}
 	} while ( ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK )
 			  && ( numevents < max_events ) );
 
-	printf( "Found %d events\n", numevents );
+	if (!TESTS_QUIET) printf( "Found %d events\n", numevents );
 
 	do_stuff(  );
 
-	printf( "Creating %d threads:\n", nthreads );
+	if (!TESTS_QUIET) printf( "Creating %d threads:\n", nthreads );
 
 	threads =
 		( pthread_t * ) malloc( ( size_t ) nthreads * sizeof ( pthread_t ) );
@@ -196,8 +196,10 @@ main( int argc, char **argv )
 		}
 	}
 
-	printf( "Done." );
+	if (!TESTS_QUIET) printf( "Done." );
+
 	test_pass( __FILE__, NULL, 0 );
 	pthread_exit( NULL );
-	exit( 0 );
+
+	return 0;
 }

@@ -44,9 +44,9 @@ Slave( void *arg )
 	/* First one here set's the number */
 	PAPI_lock( PAPI_USR2_LOCK );
 	if ( num_iters == 0 ) {
-		printf( "10000 iterations took %lld us.\n", duration );
+		if (!TESTS_QUIET) printf( "10000 iterations took %lld us.\n", duration );
 		num_iters = ( int ) ( 10 * ( TIME_LIMIT_IN_US / duration ) );
-		printf( "Running %d iterations\n", num_iters );
+		if (!TESTS_QUIET) printf( "Running %d iterations\n", num_iters );
 	}
 	PAPI_unlock( PAPI_USR2_LOCK );
 
@@ -64,7 +64,7 @@ main( int argc, char **argv )
 	const PAPI_hw_info_t *hwinfo = NULL;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	tests_quiet( argc, argv );
 
 	if ( ( retval =
 		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
@@ -87,7 +87,7 @@ main( int argc, char **argv )
 	else
 		nthr = hwinfo->ncpu;
 
-	printf( "Creating %d threads\n", nthr );
+	if (!TESTS_QUIET) printf( "Creating %d threads\n", nthr );
 
 	for ( i = 0; i < nthr; i++ ) {
 		rc = pthread_create( &slaves[i], NULL, Slave, NULL );
@@ -101,11 +101,17 @@ main( int argc, char **argv )
 		pthread_join( slaves[i], NULL );
 	}
 
-	printf( "Expected: %lld Received: %lld\n", ( long long ) nthr * num_iters,
+	if (!TESTS_QUIET) {
+		printf( "Expected: %lld Received: %lld\n",
+			( long long ) nthr * num_iters,
 			count );
+	}
+
 	if ( nthr * num_iters != count )
 		test_fail( __FILE__, __LINE__, "Thread Locks", 1 );
 
 	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	return 0;
+
 }

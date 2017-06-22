@@ -106,27 +106,28 @@ main( int argc, char **argv )
 
 			tmp = PAPI_MH_CACHE_TYPE( L[i].cache[j].type );
 			if ( tmp == PAPI_MH_TYPE_UNIFIED ) {
-				printf( "L%d Unified ", i + 1 );
+				if (!TESTS_QUIET) printf( "L%d Unified ", i + 1 );
 			} else if ( tmp == PAPI_MH_TYPE_DATA ) {
-				printf( "L%d Data ", i + 1 );
+				if (!TESTS_QUIET) printf( "L%d Data ", i + 1 );
 			} else if ( tmp == PAPI_MH_TYPE_INST ) {
-				printf( "L%d Instruction ", i + 1 );
+				if (!TESTS_QUIET) printf( "L%d Instruction ", i + 1 );
 			} else if ( tmp == PAPI_MH_TYPE_VECTOR ) {
-				printf( "L%d Vector ", i + 1 );
+				if (!TESTS_QUIET) printf( "L%d Vector ", i + 1 );
 			} else if ( tmp == PAPI_MH_TYPE_TRACE ) {
-				printf( "L%d Trace ", i + 1 );
+				if (!TESTS_QUIET) printf( "L%d Trace ", i + 1 );
 			} else if ( tmp == PAPI_MH_TYPE_EMPTY ) {
 				break;
 			} else {
-				test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info",
+				test_fail( __FILE__, __LINE__,
+					"PAPI_get_hardware_info",
 						   PAPI_EBUG );
 			}
 
 			tmp = PAPI_MH_CACHE_WRITE_POLICY( L[i].cache[j].type );
 			if ( tmp == PAPI_MH_TYPE_WB ) {
-				printf( "Write back " );
+				if (!TESTS_QUIET) printf( "Write back " );
 			} else if ( tmp == PAPI_MH_TYPE_WT ) {
-				printf( "Write through " );
+				if (!TESTS_QUIET) printf( "Write through " );
 			} else {
 				test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info",
 						   PAPI_EBUG );
@@ -134,22 +135,28 @@ main( int argc, char **argv )
 
 			tmp = PAPI_MH_CACHE_REPLACEMENT_POLICY( L[i].cache[j].type );
 			if ( tmp == PAPI_MH_TYPE_PSEUDO_LRU ) {
-				printf( "Pseudo LRU policy " );
+				if (!TESTS_QUIET) printf( "Pseudo LRU policy " );
 			} else if ( tmp == PAPI_MH_TYPE_LRU ) {
-				printf( "LRU policy " );
+				if (!TESTS_QUIET) printf( "LRU policy " );
 			} else if ( tmp == PAPI_MH_TYPE_UNKNOWN ) {
-				printf( "Unknown policy " );
+				if (!TESTS_QUIET) printf( "Unknown policy " );
 			} else {
 				test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info",
 						   PAPI_EBUG );
 			}
 
-			printf( "Cache:\n" );
-			if ( L[i].cache[j].type ) {
-				printf
-					( "  Total size: %dKB\n  Line size: %dB\n  Number of Lines: %d\n  Associativity: %d\n\n",
-					  ( L[i].cache[j].size ) >> 10, L[i].cache[j].line_size,
-					  L[i].cache[j].num_lines, L[i].cache[j].associativity );
+			if (!TESTS_QUIET) {
+				printf( "Cache:\n" );
+				if ( L[i].cache[j].type ) {
+					printf( "  Total size: %dKB\n"
+						"  Line size: %dB\n"
+						"  Number of Lines: %d\n"
+						"  Associativity: %d\n\n",
+						( L[i].cache[j].size ) >> 10,
+						L[i].cache[j].line_size,
+						L[i].cache[j].num_lines,
+						L[i].cache[j].associativity );
+				}
 			}
 		}
 	}
@@ -163,9 +170,12 @@ main( int argc, char **argv )
 		if ( PAPI_get_event_info( eventlist[i], &evinfo ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_get_event_info", retval );
 
-		printf( "\nEvent: %s\nShort: %s\nLong: %s\n\n",
-				evinfo.symbol, evinfo.short_descr, evinfo.long_descr );
-		printf( "       Bytes\t\tCold\t\tWarm\tPercent\n" );
+		if (!TESTS_QUIET) {
+			printf( "\nEvent: %s\nShort: %s\nLong: %s\n\n",
+				evinfo.symbol, evinfo.short_descr,
+				evinfo.long_descr );
+			printf( "       Bytes\t\tCold\t\tWarm\tPercent\n" );
+		}
 
 		if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
@@ -189,10 +199,13 @@ main( int argc, char **argv )
 			if ( ( retval = PAPI_read( EventSet, &values[1] ) ) != PAPI_OK )
 				test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-			printf( OUT_FMT, j, values[0], values[1],
+			if (!TESTS_QUIET) {
+				printf( OUT_FMT, j,
+					values[0], values[1],
 					( ( float ) values[1] /
-					  ( float ) ( ( values[0] !=
-									0 ) ? values[0] : 1 ) * 100.0 ) );
+					( float ) ( ( values[0] !=0 ) ?
+						values[0] : 1 ) * 100.0 ) );
+			}
 		}
 
 		if ( ( retval = PAPI_stop( EventSet, NULL ) ) != PAPI_OK )
@@ -208,5 +221,5 @@ main( int argc, char **argv )
 
 	test_pass( __FILE__, NULL, 0 );
 
-	exit( 1 );
+	return 0;
 }
