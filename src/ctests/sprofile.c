@@ -56,9 +56,10 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "Profile length < 0!", PAPI_ESYS );
 	}
 	length = ( unsigned long ) ( end - start );
-	prof_print_address
-		( "Test case sprofile: POSIX compatible profiling over multiple regions.\n",
-		  prginfo );
+	if (!TESTS_QUIET) {
+		prof_print_address( "Test case sprofile: POSIX compatible profiling over multiple regions.\n",
+				prginfo );
+	}
 	blength =
 		prof_size( length, FULL_SCALE, PAPI_PROFIL_BUCKET_16, &num_buckets );
 	prof_alloc( 3, blength );
@@ -138,10 +139,11 @@ main( int argc, char **argv )
 	for ( i = 0; i < 3; i++ ) {
 		free( profbuf[i] );
 	}
-	if ( retval == 0 )
+	if ( retval == 0 ) {
 		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
+	}
 
 	test_pass( __FILE__, values, num_tests );
 
-	exit( 1 );
+	return 0;
 }

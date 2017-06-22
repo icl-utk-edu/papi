@@ -55,7 +55,7 @@ int retval, num_tests = 1;
 void
 process_init( void )
 {
-	printf( "Process %d \n", ( int ) getpid(  ) );
+	if (!TESTS_QUIET) printf( "Process %d \n", ( int ) getpid(  ) );
 
 	/* Initialize PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -63,9 +63,9 @@ process_init( void )
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	/* add PAPI_TOT_CYC and one of the events in 
-	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
-	   depends on the availability of the event 
+	/* add PAPI_TOT_CYC and one of the events in
+	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS,
+	   depends on the availability of the event
 	   on the platform                           */
 	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 
@@ -98,14 +98,16 @@ process_fini( void )
 
 	remove_test_events( &EventSet1, mask1 );
 
-	printf( "Process %d %-12s : \t%lld\n", ( int ) getpid(  ), event_name,
+	if (!TESTS_QUIET) {
+		printf( "Process %d %-12s : \t%lld\n", ( int ) getpid(  ), event_name,
 			values[0][1] );
-	printf( "Process %d PAPI_TOT_CYC : \t%lld\n", ( int ) getpid(  ),
+		printf( "Process %d PAPI_TOT_CYC : \t%lld\n", ( int ) getpid(  ),
 			values[0][0] );
-	printf( "Process %d Real usec    : \t%lld\n", ( int ) getpid(  ),
+		printf( "Process %d Real usec    : \t%lld\n", ( int ) getpid(  ),
 			elapsed_us );
-	printf( "Process %d Real cycles  : \t%lld\n", ( int ) getpid(  ),
+		printf( "Process %d Real cycles  : \t%lld\n", ( int ) getpid(  ),
 			elapsed_cyc );
+	}
 
 	free_test_space( values, num_tests );
 
@@ -122,7 +124,9 @@ main( int argc, char **argv )
 	test_skip( __FILE__, __LINE__, "main: fork not supported.", 0 );
 #endif
 
-	printf( "This tests if PAPI_library_init(),2*fork(),PAPI_library_init() works.\n" );
+	if (!TESTS_QUIET) {
+		printf( "This tests if PAPI_library_init(),2*fork(),PAPI_library_init() works.\n" );
+	}
 	/* Initialize PAPI for this process */
 	process_init(  );
 	flops1 = 1000000;

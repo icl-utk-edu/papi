@@ -64,12 +64,14 @@ Thread( int n )
 	long long elapsed_us, elapsed_cyc;
 	char event_name[PAPI_MAX_STR_LEN];
 
-	printf( "Thread %#x started\n", omp_get_thread_num(  ) );
+	if (!TESTS_QUIET) {
+		printf( "Thread %#x started\n", omp_get_thread_num(  ) );
+	}
 	num_events1 = 2;
 
-	/* add PAPI_TOT_CYC and one of the events in 
-	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
-	   depending on the availability of the event 
+	/* add PAPI_TOT_CYC and one of the events in
+	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS,
+	   depending on the availability of the event
 	   on the platform */
 	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 
@@ -115,7 +117,9 @@ Thread( int n )
 	free_test_space( values, num_tests );
 
 	PAPI_unregister_thread(  );
-	printf( "Thread %#x finished\n", omp_get_thread_num(  ) );
+	if (!TESTS_QUIET) {
+		printf( "Thread %#x finished\n", omp_get_thread_num(  ) );
+	}
 }
 
 int
@@ -170,5 +174,6 @@ main( int argc, char **argv )
 	}
 
 	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );
+
+	return 0;
 }

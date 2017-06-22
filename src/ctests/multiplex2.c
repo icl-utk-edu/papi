@@ -86,8 +86,9 @@ case1( void )
 #endif
 
 	/* Fill up the event set with as many non-derived events as we can */
-	printf
-		( "\nFilling the event set with as many non-derived events as we can...\n" );
+	if (!TESTS_QUIET) {
+		printf( "\nFilling the event set with as many non-derived events as we can...\n" );
+	}
 
 	i = PAPI_PRESET_MASK;
 	do {
@@ -99,7 +100,7 @@ case1( void )
 				   break;
 				}
 				else {
-					printf( "Added %s\n", pset.symbol );
+					if (!TESTS_QUIET) printf( "Added %s\n", pset.symbol );
 					j++;
 				}
 			}
@@ -136,18 +137,20 @@ case1( void )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_list_events", retval );
 
-	printf( "\nEvent Counts:\n" );
+	if (!TESTS_QUIET) printf( "\nEvent Counts:\n" );
 	for ( i = 0, allvalid = 0; i < j; i++ ) {
 		PAPI_event_code_to_name( events[i], evname );
-		printf( TAB1, evname, values[i] );
+		if (!TESTS_QUIET) printf( TAB1, evname, values[i] );
 		if ( values[i] == 0 )
 			allvalid++;
 	}
-	printf( "\n" );
-	if ( allvalid ) {
-		printf( "Caution: %d counters had zero values\n", allvalid );
+	if (!TESTS_QUIET) {
+		printf( "\n" );
+		if ( allvalid ) {
+			printf( "Caution: %d counters had zero values\n", allvalid );
+		}
 	}
-   
+
         if (allvalid==j) {
 	   test_fail( __FILE__, __LINE__, "All counters returned zero", 5 );
 	}
@@ -161,9 +164,11 @@ case1( void )
 		}
 	}
 
-	if ( allvalid ) {
-		printf( "Caution: %d counter pair(s) had identical values\n",
+	if (!TESTS_QUIET) {
+		if ( allvalid ) {
+			printf( "Caution: %d counter pair(s) had identical values\n",
 				allvalid );
+		}
 	}
 
 	free( events );
@@ -186,11 +191,14 @@ main( int argc, char **argv )
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-	printf( "%s: Does PAPI_multiplex_init() handle lots of events?\n",
-			argv[0] );
-	printf( "Using %d iterations\n", NUM_ITERS );
+	if (!TESTS_QUIET) {
+		printf( "%s: Does PAPI_multiplex_init() handle lots of events?\n",
+				argv[0] );
+		printf( "Using %d iterations\n", NUM_ITERS );
+	}
 
 	case1(  );
 	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	return 0;
 }

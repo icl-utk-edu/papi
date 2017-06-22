@@ -25,16 +25,20 @@ main( int argc, char **argv )
 	elapsed_us = PAPI_get_virt_usec(  );
 	elapsed_cyc = PAPI_get_virt_cyc(  );
 
-	printf( "Testing virt time clock. (CPU Max %d MHz, CPU Min %d MHz)\n",
-			hw_info->cpu_max_mhz, hw_info->cpu_min_mhz );
-	printf( "Sleeping for 10 seconds.\n" );
+	if (!TESTS_QUIET) {
+		printf( "Testing virt time clock. (CPU Max %d MHz, CPU Min %d MHz)\n",
+				hw_info->cpu_max_mhz, hw_info->cpu_min_mhz );
+		printf( "Sleeping for 10 seconds.\n" );
+	}
 
 	sleep( 10 );
 
 	elapsed_us = PAPI_get_virt_usec(  ) - elapsed_us;
 	elapsed_cyc = PAPI_get_virt_cyc(  ) - elapsed_cyc;
 
-	printf( "%lld us. %lld cyc.\n", elapsed_us, elapsed_cyc );
+	if (!TESTS_QUIET) {
+		printf( "%lld us. %lld cyc.\n", elapsed_us, elapsed_cyc );
+	}
 
 /* Elapsed microseconds and elapsed cycles are not as unambiguous as they appear.
    On Pentium III and 4, for example, cycles is a measured value, while useconds 
@@ -49,12 +53,14 @@ main( int argc, char **argv )
    one instance of Pentium 4 (torc17@utk) are on the order of one part per thousand.
 */
 
-	/* We'll accept 1.5 part per thousand error here (to allow Pentium 4 
+	/* We'll accept 1.5 part per thousand error here (to allow Pentium 4
 	   and Alpha to pass) */
 	if ( elapsed_us > 100000 )
 		test_fail( __FILE__, __LINE__, "Virt time greater than .1 seconds!",
 				   PAPI_EMISC );
 
 	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	return 0;
+
 }

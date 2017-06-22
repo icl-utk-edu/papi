@@ -298,7 +298,7 @@ case4( void )
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
-	printf( "Added %s\n", out );
+	if (!TESTS_QUIET) printf( "Added %s\n", out );
 
 	do_stuff(  );
 
@@ -364,13 +364,13 @@ case5( void )
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
-	printf( "Added %s\n", out );
+	if (!TESTS_QUIET) printf( "Added %s\n", out );
 	i++;
 	retval = PAPI_add_event( EventSet, PAPI_events[i] );
 	if ( retval != PAPI_OK )
 		CPP_TEST_FAIL( "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
-	printf( "Added %s\n", out );
+	if (!TESTS_QUIET) printf( "Added %s\n", out );
 	i++;
 
 	do_stuff(  );
