@@ -619,7 +619,8 @@ ppc64_get_memory_info( PAPI_hw_info_t * hw_info )
 	case 0x3F:				 /* POWER7 */
 		index = 3;
 		break;
-	case 0x4b:				 /*POWER8*/
+	case 0x4b:				 /* POWER8 */
+	case 0x4e:				 /* POWER9 */
 		index = 4;
 		break;
 	default:
