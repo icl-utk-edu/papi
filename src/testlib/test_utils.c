@@ -86,7 +86,6 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	return PAPI_OK;
 }
 
-
 void
 validate_string( char *name, char *s )
 {
@@ -452,7 +451,10 @@ stringify_granularity( int granularity )
 	return ( NULL );
 }
 
-void
+/* Checks for TESTS_QUIET or -q command line variable	*/
+/* Sets the TESTS_QUIET global variable			*/
+/* Also returns the value.				*/
+int
 tests_quiet( int argc, char **argv )
 {
 	if ( ( argc > 1 )
@@ -466,10 +468,12 @@ tests_quiet( int argc, char **argv )
 		if ( retval != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
 	}
-   if (getenv("TESTS_COLOR")!=NULL) {
-      TESTS_COLOR=1;
-   }
-   
+
+	if (getenv("TESTS_COLOR")!=NULL) {
+		TESTS_COLOR=1;
+	}
+
+	return TESTS_QUIET;
 }
 
 #define RED    "\033[1;31m"
