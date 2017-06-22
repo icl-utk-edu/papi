@@ -1,0 +1,21 @@
+ALL = papi_tot_ins
+
+all: $(ALL)
+
+
+display_error.o:	display_error.c display_error.h
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c display_error.c
+
+
+instructions_testcode.o:	instructions_testcode.c testcode.h
+	$(CC) $(INCLUE) $(CFLAGS) $(OPTFLAGS) -c instructions_testcode.c
+
+
+papi_tot_ins: papi_tot_ins.c $(TESTLIB) $(PAPILIB) display_error.o instructions_testcode.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_ins.c $(TESTLIB) display_error.o instructions_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
+
+
+.PHONY : all clean
+
+clean:
+	rm -f *.o *.stderr *.stdout core *~ $(ALL)
