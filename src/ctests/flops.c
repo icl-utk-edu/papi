@@ -11,11 +11,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
-#include "do_loops.h"
-
-#define INDEX 1000
-
-static float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
+#include "testcode.h"
+#include "display_error.h"
 
 int
 main( int argc, char **argv )
@@ -23,8 +20,10 @@ main( int argc, char **argv )
 	float real_time, proc_time, mflops;
 	long long flpins;
 	int retval;
-	int i, j, k, fip = 0;
+	int fip = 0;
 	int quiet=0;
+	long long expected;
+	double double_result,error;
 
 	/* Set TESTS_QUIET variable */
 	quiet=tests_quiet( argc, argv );
@@ -52,12 +51,8 @@ main( int argc, char **argv )
 	PAPI_shutdown(  );
 
 	/* Initialize the Matrix arrays */
-	for ( i = 0; i < INDEX; i++ ) {
-		for ( j = 0; j < INDEX; j++) {
-			mresult[j][i] = 0.0;
-			matrixa[j][i] = matrixb[j][i] = ( float ) rand(  ) * ( float ) 1.1;
-		}
-	}
+	expected=flops_init_matrix();
+	expected=expected*expected*expected*2ULL;
 
 	/* Setup PAPI library and begin collecting data from the counters */
 	if ( fip == 1 ) {
@@ -74,10 +69,7 @@ main( int argc, char **argv )
 	}
 
 	/* Matrix-Matrix multiply */
-	for ( i = 0; i < INDEX; i++ )
-		for ( j = 0; j < INDEX; j++ )
-			for ( k = 0; k < INDEX; k++ )
-				mresult[i][j] = mresult[i][j] + matrixa[i][k] * matrixb[k][j];
+	double_result=flops_matrix_matrix_multiply();
 
 	/* Collect the data into the variables passed in */
 	if ( fip == 1 ) {
@@ -92,18 +84,24 @@ main( int argc, char **argv )
 		}
 	}
 
-	dummy( ( void * ) mresult );
+	if (!quiet) printf("result=%lf\n",double_result);
 
 	if ( !quiet ) {
+		printf( "Real_time: %f Proc_time: %f MFLOPS: %f\n",
+					real_time, proc_time, mflops );
 		if ( fip == 1 ) {
-			printf( "Real_time: %f Proc_time: %f Total flpins: ",
-					real_time, proc_time );
+			printf( "Total flpins: ");
 		} else {
-			printf( "Real_time: %f Proc_time: %f Total flpops: ",
-					real_time, proc_time );
+			printf( "Total flpops: ");
 		}
-		printf( "%lld", flpins );
-		printf( " MFLOPS: %f\n", mflops );
+		printf( "%lld\n\n", flpins );
+	}
+
+	error=display_error(flpins,flpins,flpins,expected,quiet);
+
+	if ((error > 1.0) || (error<-1.0)) {
+		if (!quiet) printf("Instruction count off by more than 1%%\n");
+		test_fail( __FILE__, __LINE__, "Validation failed", 1 );
 	}
 
 	test_pass( __FILE__ );

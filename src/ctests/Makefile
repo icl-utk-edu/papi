@@ -2,12 +2,17 @@
 
 include Makefile.target
 
-INCLUDE = -I../testlib -I.. -I.
+INCLUDE = -I../testlib -I../validation_tests -I.. -I.
 PAPILIB= ../$(LIBRARY)
+
 testlibdir= ../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
 DOLOOPS= $(testlibdir)/do_loops.o
 CLOCKCORE= $(testlibdir)/clockcore.o
+
+validationlibdir= ../validation_tests
+TESTFLOPS= $(validationlibdir)/flops_testcode.o
+DISPLAYERROR= $(validationlibdir)/display_error.o
 
 include Makefile.recipies
 

@@ -1,4 +1,4 @@
-ALL = papi_br_ins papi_br_msp papi_tot_cyc papi_tot_ins
+ALL = papi_br_ins papi_br_msp papi_fp_ops papi_tot_cyc papi_tot_ins
 
 all: $(ALL)
 
@@ -9,6 +9,9 @@ display_error.o:	display_error.c display_error.h
 
 branches_testcode.o:	branches_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c branches_testcode.c
+
+flops_testcode.o:	flops_testcode.c testcode.h
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c flops_testcode.c
 
 instructions_testcode.o:	instructions_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c instructions_testcode.c
@@ -23,6 +26,9 @@ papi_br_ins: papi_br_ins.c $(TESTLIB) $(PAPILIB) display_error.o branches_testco
 
 papi_br_msp: papi_br_msp.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_br_msp.c $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
+
+papi_fp_ops: papi_fp_ops.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_fp_ops.c $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
 
 papi_tot_cyc: papi_tot_cyc.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_cyc.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -lrt -o $@

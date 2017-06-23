@@ -234,8 +234,8 @@ first-twice: first-twice.c $(TESTLIB) $(PAPILIB)
 second: second.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) second.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o second
 
-flops: flops.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) flops.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o flops
+flops: flops.c $(TESTLIB) $(TESTFLOPS) $(DISPLAYERROR) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) flops.c $(TESTLIB) $(TESTFLOPS) $(DISPLAYERROR) $(PAPILIB) $(LDFLAGS) -o flops
 
 ipc: ipc.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) ipc.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o ipc
