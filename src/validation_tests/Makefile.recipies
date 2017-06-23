@@ -25,7 +25,7 @@ papi_br_msp: papi_br_msp.c $(TESTLIB) $(PAPILIB) display_error.o branches_testco
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_br_msp.c $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
 
 papi_tot_cyc: papi_tot_cyc.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_cyc.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -o $@
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_cyc.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -lrt -o $@
 
 papi_tot_ins: papi_tot_ins.c $(TESTLIB) $(PAPILIB) display_error.o instructions_testcode.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_ins.c $(TESTLIB) display_error.o instructions_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
