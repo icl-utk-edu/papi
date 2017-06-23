@@ -438,16 +438,16 @@ test_pass( char *file, long long **values, int num_tests )
 	print_spaces(line_pad);
 
 	if ( TEST_WARN ) {
-		if (TESTS_COLOR) {
-			fprintf( stdout, "%s", YELLOW);
-		}
-		fprintf( stdout, "PASSED with WARNING\n");
+		if (TESTS_COLOR) fprintf( stdout, "%s", YELLOW);
+		fprintf( stdout, "PASSED with WARNING");
+		if (TESTS_COLOR) fprintf( stdout, "%s", NORMAL);
+		fprintf( stdout, "\n");
 	}
 	else {
-		if (TESTS_COLOR) {
-			fprintf( stdout, "%s",GREEN);
-		}
-		fprintf( stdout, "PASSED\n");
+		if (TESTS_COLOR) fprintf( stdout, "%s",GREEN);
+		fprintf( stdout, "PASSED");
+		if (TESTS_COLOR) fprintf( stdout, "%s",NORMAL);
+		fprintf( stdout, "\n");
 	}
 
 	if ( values ) {
@@ -477,10 +477,10 @@ test_fail( char *file, int line, char *call, int retval )
 
 	memset( buf, '\0', sizeof ( buf ) );
 
-	if (TESTS_COLOR) {
-		fprintf(stdout,"%s",RED);
-	}
-	fprintf( stdout, "FAILED!!!\nLine # %d\n", line );
+	if (TESTS_COLOR) fprintf(stdout,"%s",RED);
+	fprintf( stdout, "FAILED!!!");
+	if (TESTS_COLOR) fprintf(stdout,"%s",NORMAL);
+	fprintf( stdout, "\nLine # %d\n", line );
 
 	if ( retval == PAPI_ESYS ) {
 		sprintf( buf, "System error in %s", call );
@@ -530,10 +530,10 @@ test_warn( char *file, int line, char *call, int retval )
 	fprintf(stdout,"%s",file);
 	print_spaces(line_pad);
 
-	if (TESTS_COLOR) {
-		fprintf( stdout, "%s", YELLOW);
-	}
-	fprintf( stdout, "WARNING\nLine # %d\n", line );
+	if (TESTS_COLOR) fprintf( stdout, "%s", YELLOW);
+	fprintf( stdout, "WARNING");
+	if (TESTS_COLOR) fprintf( stdout, "%s", NORMAL);
+	fprintf( stdout, "\nLine # %d\n", line );
 
 	if ( retval == PAPI_ESYS ) {
 		sprintf( buf, "System warning in %s", call );
