@@ -1,4 +1,4 @@
-ALL = papi_tot_ins papi_tot_cyc
+ALL = papi_br_ins papi_tot_cyc papi_tot_ins
 
 all: $(ALL)
 
@@ -7,6 +7,9 @@ display_error.o:	display_error.c display_error.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c display_error.c
 
 
+branchestestcode.o:	branchestestcode.c testcode.h
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c branchestestcode.c
+
 instructions_testcode.o:	instructions_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c instructions_testcode.c
 
@@ -14,6 +17,9 @@ instructions_testcode.o:	instructions_testcode.c testcode.h
 matrix_multiply.o:	matrix_multiply.c matrix_multiply.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c matrix_multiply.c
 
+
+papi_br_ins: papi_br_ins.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_br_ins.c $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
 
 papi_tot_cyc: papi_tot_cyc.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_cyc.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -o $@
