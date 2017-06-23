@@ -50,7 +50,8 @@ int main(int argc, char **argv) {
 	/* Add FP_OPS event */
 	retval=PAPI_add_named_event(eventset,"PAPI_FP_OPS");
 	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__, "adding PAPI_FP_OPS", retval );
+		if (!quiet) fprintf(stderr,"PAPI_FP_OPS not available!\n");
+		test_skip( __FILE__, __LINE__, "adding PAPI_FP_OPS", retval );
 	}
 
 	/* Test a loop with no floating point */
