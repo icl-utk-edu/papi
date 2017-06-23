@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "papi.h"
 #include "papi_test.h"
@@ -80,7 +81,8 @@ int main ( int argc, char **argv )
     char event_descrs[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
     char units[MAX_powercap_EVENTS][PAPI_MIN_STR_LEN];
     int data_type[MAX_powercap_EVENTS];
-    int r,i, do_wrap = 0;
+    int r,i;
+
     const PAPI_component_info_t *cmpinfo = NULL;
     PAPI_event_info_t evinfo;
     long long before_time,after_time;
@@ -88,9 +90,16 @@ int main ( int argc, char **argv )
 
     /* Set TESTS_QUIET variable */
     tests_quiet( argc, argv );
-    if ( argc > 1 )
-        if ( strstr( argv[1], "-w" ) )
-            do_wrap = 1;
+
+	/* Currently unimplemented? */
+#if 0
+	int do_wrap = 0;
+	if ( argc > 1 ) {
+		if ( strstr( argv[1], "-w" ) ) {
+			do_wrap = 1;
+		}
+	}
+#endif
 
     /* PAPI Initialization */
     retval = PAPI_library_init( PAPI_VER_CURRENT );
