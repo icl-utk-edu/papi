@@ -21,7 +21,7 @@ FHEADERS = fpapi.h f77papi.h f90papi.h
 LIBPC = $(LIBDIR)/pkgconfig
 
 all: $(SHOW_CONF) $(LIBS) utils tests 
-.PHONY : all test fulltest tests testlib utils ctests ftests comp_tests null
+.PHONY : all test fulltest tests testlib utils ctests ftests comp_tests validation_tests null
 
 include $(COMPONENT_RULES)
 
@@ -219,26 +219,30 @@ freebsd/map-i7.o: freebsd/map-i7.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd/map-westmere.o: freebsd/map-westmere.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) -c $< -o $@                                          
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
 test: ctests
 	$(SETPATH) ctests/zero
 
 fulltest: tests
 	$(SETPATH) sh run_tests.sh
 
-tests: $(TESTS) 
+tests: $(TESTS)
 
 testlib:
-	$(SETPATH) cd testlib;  $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CC_SHR="$(CC_SHR)" CFLAGS="-I.. $(CFLAGS)" F77="$(F77)" FFLAGS="-I.. $(FFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" 
+	$(SETPATH) cd testlib;  $(MAKE)
 
 utils: $(LIBS) testlib
 	cd utils && $(MAKE)
 
-ctests: $(LIBS) testlib
-	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LDL="$(LDL)" LIBRARY="$(LINKLIB)" $(CTEST_TARGETS)
+validation_tests:	$(LIBS) testlib
+	cd validation_tests; $(MAKE)
+
+ctests: $(LIBS) testlib validation_tests
+	$(SETPATH) cd ctests; $(MAKE)
 
 ftests: $(LIBS) testlib
-	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(FTEST_TARGETS)
+	$(SETPATH) cd ftests; $(MAKE)
 
 
 
@@ -249,16 +253,17 @@ ifneq (${COMPONENTS},)
 		@for comp in ${COMPONENTS} ; do \
 			$$comp_tests: $(LIBS) testlib null ; \
 			$(SETPATH) cd components/$$comp/tests ; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../../../$(LINKLIB)"; \
-			$(SETPATH) cd ../../.. ; done 
+			$(SETPATH) cd ../../.. ; done
 endif
 
-clean: comp_tests_clean 
+clean: comp_tests_clean
 	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c 
 	-cd ctests; $(MAKE) clean
 	-cd ctests/bgp; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
 	-cd testlib; $(MAKE) clean
 	-cd utils;  $(MAKE) clean
+	-cd validation_tests; $(MAKE) clean
 	-cd ../doc; $(MAKE) clean
 
 # Component tests cleaning
