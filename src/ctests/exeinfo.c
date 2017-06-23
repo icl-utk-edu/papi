@@ -63,6 +63,7 @@ main( int argc, char **argv )
 
 	sleep( 1 );				 /* Needed for debugging, so you can ^Z and stop the process, inspect /proc to see if it's right */
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
+
 	return 0;
 }

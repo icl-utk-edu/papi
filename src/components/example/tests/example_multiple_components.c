@@ -2,12 +2,12 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    example_multiple_components.c
  * @author  Vince Weaver
  *	    vweaver1@eecs.utk.edu
  * test if multiple components can be used at once
- * 
+ *
  *
  * @brief
  *  This tests to see if the CPU component and Example component
@@ -16,6 +16,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM_EVENTS 1
@@ -30,9 +33,10 @@ int main (int argc, char **argv)
 	const PAPI_component_info_t *cmpinfo = NULL;
 	int numcmp,cid,example_cid=-1;
 	int code;
+	int quiet=0;
 
         /* Set TESTS_QUIET variable */
-        tests_quiet( argc, argv );      
+        quiet=tests_quiet( argc, argv );
 
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -40,7 +44,7 @@ int main (int argc, char **argv)
 	   test_fail(__FILE__, __LINE__,"PAPI_library_init failed\n",retval);
 	}
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 	   printf( "Testing simultaneous component use with PAPI %d.%d.%d\n",
 			PAPI_VERSION_MAJOR( PAPI_VERSION ),
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
@@ -55,8 +59,8 @@ int main (int argc, char **argv)
 	      test_fail(__FILE__, __LINE__,
                            "PAPI_get_component_info failed\n", 0);
 	   }
-	   if (!TESTS_QUIET) {
-	      printf("\tComponent %d - %d events - %s\n", cid, 
+	   if (!quiet) {
+	      printf("\tComponent %d - %d events - %s\n", cid,
 		     cmpinfo->num_native_events,
 		     cmpinfo->name);
 	   }
@@ -65,14 +69,14 @@ int main (int argc, char **argv)
 	      example_cid=cid;
 	   }
 	}
-	
+
 
 	if (example_cid<0) {
 	   test_skip(__FILE__, __LINE__,
 		     "Example component not found\n", 0);
 	}
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 	  printf("\nFound Example Component at id %d\n",example_cid);
 	}
 
@@ -87,7 +91,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("EXAMPLE_CONSTANT", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_ZERO not found\n",retval );
 	}
 
@@ -108,7 +112,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("PAPI_TOT_CYC", &code);
 	if ( retval != PAPI_OK ) {
-	  test_skip( __FILE__, __LINE__, 
+	  test_skip( __FILE__, __LINE__,
 		      "PAPI_TOT_CYC not available\n",retval );
 	}
 
@@ -118,19 +122,19 @@ int main (int argc, char **argv)
 		      "NO CPU component found\n", retval );
 	}
 
-	if (!TESTS_QUIET) printf("\nStarting EXAMPLE_CONSTANT and PAPI_TOT_CYC at the same time\n");
+	if (!quiet) printf("\nStarting EXAMPLE_CONSTANT and PAPI_TOT_CYC at the same time\n");
 
 	/* Start CPU component event */
 	retval = PAPI_start( EventSet2 );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
 
 	/* Start example component */
 	retval = PAPI_start( EventSet1 );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
 
@@ -149,16 +153,16 @@ int main (int argc, char **argv)
 	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	}
 
-	if (!TESTS_QUIET) printf("Stopping EXAMPLE_CONSTANT and PAPI_TOT_CYC\n\n");
+	if (!quiet) printf("Stopping EXAMPLE_CONSTANT and PAPI_TOT_CYC\n\n");
 
 
-	if (!TESTS_QUIET) printf("Results from EXAMPLE_CONSTANT: %lld\n",values1[0]);
+	if (!quiet) printf("Results from EXAMPLE_CONSTANT: %lld\n",values1[0]);
 
 	if (values1[0]!=42) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 42!\n", 0);
 	}
 
-	if (!TESTS_QUIET) printf("Results from PAPI_TOT_CYC: %lld\n\n",values2[0]);
+	if (!quiet) printf("Results from PAPI_TOT_CYC: %lld\n\n",values2[0]);
 
 	if (values2[0]<1) {
 	   test_fail(  __FILE__, __LINE__, "Result should greater than 0\n", 0);
@@ -181,8 +185,8 @@ int main (int argc, char **argv)
 	   test_fail(  __FILE__, __LINE__, "PAPI_destroy_eventset!\n", retval);
 	}
 
-	test_pass( __FILE__, NULL, 0 );
-		
+	test_pass( __FILE__ );
+
 	return 0;
 }
 

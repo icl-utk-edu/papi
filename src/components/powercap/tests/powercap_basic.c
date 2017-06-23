@@ -7,6 +7,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define MAX_powercap_EVENTS 64
@@ -263,7 +266,7 @@ int main ( int argc, char **argv )
     if ( retval != PAPI_OK )
         test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset()",retval );
 
-    test_pass( __FILE__, NULL, 0 );
+    test_pass( __FILE__ );
 
     return 0;
 }

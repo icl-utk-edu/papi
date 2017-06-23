@@ -59,7 +59,7 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "Virt time greater than .1 seconds!",
 				   PAPI_EMISC );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 

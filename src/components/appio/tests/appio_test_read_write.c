@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "papi.h"
 #include "papi_test.h"
  
 #define NUM_EVENTS 12
@@ -82,12 +83,12 @@ int main(int argc, char** argv) {
   if (PAPI_stop_counters(values, NUM_EVENTS) != PAPI_OK) {
     fprintf(stderr, "Error in PAPI_stop_counters\n");
   }
- 
-  if (!TESTS_QUIET) { 
+
+  if (!TESTS_QUIET) {
     printf("----\n");
-    for (e=0; e<NUM_EVENTS; e++)  
+    for (e=0; e<NUM_EVENTS; e++)
       printf("%s: %lld\n", names[e], values[e]);
   }
-  test_pass( __FILE__, NULL, 0 );
+  test_pass( __FILE__ );
   return 0;
 }

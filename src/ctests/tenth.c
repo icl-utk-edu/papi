@@ -228,6 +228,8 @@ main( int argc, char **argv )
 		if ( sum[0] > tmax || sum[0] < tmin )
 			test_fail( __FILE__, __LINE__, CACHE_LEVEL, 1 );
 	}
-	test_pass( __FILE__, values, num_tests );
-	exit( 1 );
+
+	test_pass( __FILE__ );
+
+	return 0;
 }

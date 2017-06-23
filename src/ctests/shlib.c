@@ -159,6 +159,8 @@ main( int argc, char **argv )
 	}
 #endif
 
-	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

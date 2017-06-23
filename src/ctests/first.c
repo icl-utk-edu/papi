@@ -213,7 +213,7 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "FLOP sanity", 1 );
 	}
 
-	test_pass( __FILE__, values, num_tests );
+	test_pass( __FILE__ );
 
 	return 0;
 

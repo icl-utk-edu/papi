@@ -73,9 +73,7 @@ main( int argc, char **argv )
 	int i;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );      
-
-	quiet=TESTS_QUIET;
+	quiet=tests_quiet( argc, argv );
 
 	/* Init PAPI */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -233,8 +231,7 @@ main( int argc, char **argv )
 	   test_fail(__FILE__, __LINE__,"RAPL counts went backward!",0);
 	}
 
-	test_pass( __FILE__, NULL, 0 );
-
+	test_pass( __FILE__ );
 
 	return 0;
 }

@@ -250,7 +250,7 @@ main( int argc, char **argv )
 	if ( i )
 		test_fail( __FILE__, __LINE__, "Values outside threshold", i );
 	else
-		test_pass( __FILE__, NULL, 0 );
+		test_pass( __FILE__ );
 
 	return 0;
 }

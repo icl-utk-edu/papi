@@ -29,32 +29,32 @@ main( int argc, char **argv )
 	if ( retval != PAPI_VER_CURRENT ) {
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
-	
+
 	/* Verify that the named events exist */
 	retval = PAPI_query_named_event(event_names[0]);
-	if ( retval == PAPI_OK) 
+	if ( retval == PAPI_OK)
 		retval = PAPI_query_named_event(event_names[1]);
 	if ( retval != PAPI_OK )
 	   test_fail( __FILE__, __LINE__, "PAPI_query_named_event", retval );
-	
+
 	/* Create an empty event set */
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK )
 	   test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-   
+
 	/* add the events named above */
 	retval = PAPI_add_named_event( EventSet, event_names[0] );
 	if ( retval != PAPI_OK ) {
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[0] );
 		test_fail( __FILE__, __LINE__, add_event_str, retval );
 	}
-	
+
 	retval = PAPI_add_named_event( EventSet, event_names[1] );
 	if ( retval != PAPI_OK ) {
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[1] );
 		test_fail( __FILE__, __LINE__, add_event_str, retval );
 	}
-	
+
 	values = allocate_test_space( num_tests, num_events );
 
 	/* Gather before stats */
@@ -90,13 +90,13 @@ main( int argc, char **argv )
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[0] );
 		test_fail( __FILE__, __LINE__, add_event_str, retval );
 	}
-	
+
 	retval = PAPI_remove_named_event( EventSet, event_names[1] );
 	if ( retval != PAPI_OK ) {
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[1] );
 		test_fail( __FILE__, __LINE__, add_event_str, retval );
 	}
-	
+
 	if ( !TESTS_QUIET ) {
 	   printf( "PAPI_{query, add, remove}_named_event API test.\n" );
 	   printf( "-----------------------------------------------\n" );
@@ -133,7 +133,7 @@ main( int argc, char **argv )
 	   }
 
 	}
-	test_pass( __FILE__, values, num_tests );
-	
+	test_pass( __FILE__ );
+
 	return 0;
 }

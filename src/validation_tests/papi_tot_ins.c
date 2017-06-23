@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
 
 	if (!quiet) printf("\n");
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	PAPI_shutdown();
 

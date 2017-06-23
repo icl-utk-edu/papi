@@ -36,7 +36,7 @@ main( int argc, char **argv )
 	int retval;
 	const PAPI_exe_info_t *prginfo = NULL;
 	const PAPI_hw_info_t *hw_info;
-	  
+
 	/* Set TESTS_QUIET variable */
 	tests_quiet( argc, argv );
 
@@ -129,9 +129,10 @@ main( int argc, char **argv )
 	free( parray2 );
 	free( parray3 );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
-	exit( 1 );
+	return 0;
+
 }
 
 static void

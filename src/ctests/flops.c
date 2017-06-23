@@ -101,6 +101,8 @@ main( int argc, char **argv )
 			printf( " MFLOPS: %f\n", mflops );
 		}
 	}
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

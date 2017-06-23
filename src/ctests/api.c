@@ -286,6 +286,8 @@ main( int argc, char **argv )
    int   PAPI_unregister_thread(void); // inform PAPI that a previously registered thread is disappearing
    int   PAPI_write(int EventSet, long long * values); // write counter values into counters
 */
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	test_pass( __FILE__ );
+
+	return 0;
 }

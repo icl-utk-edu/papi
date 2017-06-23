@@ -349,7 +349,7 @@ main( int argc, char **argv )
 	if ( fails )
 		test_fail( __FILE__, __LINE__, "Values differ from reference", fails );
 	else
-		test_pass( __FILE__, NULL, 0 );
+		test_pass( __FILE__ );
 
 	return 0;
 }

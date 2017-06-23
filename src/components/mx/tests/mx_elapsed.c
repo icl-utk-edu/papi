@@ -1,8 +1,8 @@
-/** 
+/**
  * @author  Vince Weaver
  *
- * test case for mx myrinet component 
- * 
+ * test case for mx myrinet component
+ *
  *
  * @brief
  *   Tests basic mx myrinet functionality
@@ -10,6 +10,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM_EVENTS 3
@@ -17,14 +20,15 @@
 int main (int argc, char **argv)
 {
 
-  int retval,cid,numcmp,our_cmp;
+	int retval,cid,numcmp,our_cmp;
 	int EventSet = PAPI_NULL;
 	long long values[NUM_EVENTS];
 	int code;
 	const PAPI_component_info_t *cmpinfo = NULL;
+	int quiet=0;
 
-        /* Set TESTS_QUIET variable */
-        tests_quiet( argc, argv );      
+        /* Set quiet variable */
+        quiet=tests_quiet( argc, argv );
 
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -32,7 +36,7 @@ int main (int argc, char **argv)
 	   test_fail(__FILE__, __LINE__,"PAPI_library_init failed\n",retval);
 	}
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 	   printf("Trying mutiple reads in MX component\n");
 	}
 
@@ -46,7 +50,7 @@ int main (int argc, char **argv)
 	   }
 
 	   if (strstr(cmpinfo->name,"mx")) {
-	     if (!TESTS_QUIET) printf("\tFound Myrinet component %d - %s\n", cid, cmpinfo->name);
+	     if (!quiet) printf("\tFound Myrinet component %d - %s\n", cid, cmpinfo->name);
 	     our_cmp=cid;
 	     break;
 	   }
@@ -116,19 +120,19 @@ int main (int argc, char **argv)
 	   test_fail(__FILE__, __LINE__, "PAPI_read()",retval);
 	}
 
-	if (!TESTS_QUIET) printf("%lld %lld %lld\n",values[0],values[1],values[2]);
+	if (!quiet) printf("%lld %lld %lld\n",values[0],values[1],values[2]);
 
 	retval = PAPI_stop( EventSet, values);
 	if (retval != PAPI_OK) {
 	   test_fail(__FILE__, __LINE__, "PAPI_start()",retval);
 	}
 
-	if (!TESTS_QUIET) printf("%lld %lld %lld\n",values[0],values[1],values[2]);
+	if (!quiet) printf("%lld %lld %lld\n",values[0],values[1],values[2]);
 
 
 
-	test_pass( __FILE__, NULL, 0 );
-		
+	test_pass( __FILE__ );
+
 	return 0;
 }
 

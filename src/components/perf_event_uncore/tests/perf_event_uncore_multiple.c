@@ -166,7 +166,7 @@ int main( int argc, char **argv ) {
       printf("\t%s: %lld\n","PAPI_TOT_CYC",values2[0]);
    }
 
-   test_pass( __FILE__, NULL, 0 );
+   test_pass( __FILE__ );
 
    return 0;
 }

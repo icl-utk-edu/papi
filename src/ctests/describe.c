@@ -106,6 +106,7 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__,
 				   "PAPI_get_event_info long_descr value is bogus", retval );
 
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
 }

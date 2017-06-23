@@ -442,7 +442,7 @@ main( int argc, char **argv )
 	}
 	case5(  );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 }

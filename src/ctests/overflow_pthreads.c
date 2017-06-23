@@ -207,7 +207,10 @@ main( int argc, char **argv )
 			test_fail( __FILE__, __LINE__, "not enough overflows", PAPI_EMISC );
 	}
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
+
 	pthread_exit( NULL );
-	exit( 1 );
+
+	return 0;
+
 }

@@ -182,7 +182,7 @@ main( int argc, char **argv )
 	HERE( "stop" );
 	my_papi_stop(  );
 	HERE( "end" );
-	test_pass( name, NULL, 0 );
+	test_pass( name );
 #elif defined(PEXEC)
 	HERE( "stop" );
 	my_papi_stop(  );
@@ -202,7 +202,7 @@ main( int argc, char **argv )
 	else if ( access( "./ctests/child_overflow", X_OK ) == 0 )
 		( TESTS_QUIET ? system( "./ctests/child_overflow TESTS_QUIET" ) :
 		  system( "./ctests/child_overflow" ) );
-	test_pass( name, NULL, 0 );
+	test_pass( name);
 #elif defined(SYSTEM2)
 	HERE( "system(./burn)" );
 	if ( access( "./burn", X_OK ) == 0 )
@@ -210,7 +210,7 @@ main( int argc, char **argv )
 	else if ( access( "./ctests/burn", X_OK ) == 0 )
 		( TESTS_QUIET ? system( "./ctests/burn TESTS_QUIET" ) :
 		  system( "./ctests/burn" ) );
-	test_pass( name, NULL, 0 );
+	test_pass( name);
 #else
 	HERE( "fork" );
 	{
@@ -240,9 +240,10 @@ main( int argc, char **argv )
 			if ( WEXITSTATUS( status ) != 0 )
 				test_fail( name, __LINE__, "child failed", 1 );
 			else
-				test_pass( name, NULL, 0 );
+				test_pass( name);
 		}
 	}
 #endif
-	exit( 0 );
+
+	return 0;
 }

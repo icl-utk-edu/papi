@@ -18,8 +18,6 @@ long long PAPI_values2[PAPI_MAX_EVENTS];
 long long PAPI_values3[PAPI_MAX_EVENTS];
 static int EventSet = PAPI_NULL;
 
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
-
 void
 funcX( a, b, n )
 double a[MAX], b[MAX];
@@ -181,6 +179,9 @@ char *argv[];
 				0 );
 		printf( "\n" );
 	}
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

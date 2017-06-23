@@ -181,6 +181,7 @@ main( int argc, char **argv )
 		printf
 			( "The third case illustrates one possible way to accomplish this.\n" );
 	}
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
 }

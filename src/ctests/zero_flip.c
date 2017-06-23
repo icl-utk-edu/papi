@@ -24,7 +24,7 @@
 int
 main( int argc, char **argv )
 {
-	int retval, num_tests = 2, eventcnt, events[2], i, tmp;
+	int retval, eventcnt, events[2], i, tmp;
 	int EventSet1 = PAPI_NULL, EventSet2 = PAPI_NULL;
 	int PAPI_event;
 	long long values1[2], values2[2];
@@ -153,6 +153,9 @@ main( int argc, char **argv )
 
 		printf( "Verification: none\n" );
 	}
-	test_pass( __FILE__, NULL, num_tests );
-	exit( 1 );
+
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

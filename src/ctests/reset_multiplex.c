@@ -261,6 +261,7 @@ main( int argc, char **argv )
 					   ( ( i == 0 ) ? "PAPI_TOT_CYC" : add_event_str ), 1 );
 	}
 
-	test_pass( __FILE__, values, num_tests );
+	test_pass( __FILE__ );
+
 	return 0;
 }

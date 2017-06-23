@@ -144,7 +144,7 @@ main( int argc, char **argv )
 	}
 
 	if ( ( retval == PAPI_ENOCMP) || ( retval == PAPI_ENOEVNT ) || ( retval == PAPI_OK ) ) {
-		test_pass( __FILE__, 0, 0 );
+		test_pass( __FILE__ );
 	}
 
 	test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", PAPI_EBUG );

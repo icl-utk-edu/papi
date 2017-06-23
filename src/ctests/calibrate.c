@@ -408,8 +408,9 @@ main( int argc, char *argv[] )
 	if ( retval == PAPI_ENOMEM )
 		test_fail( __FILE__, __LINE__, "malloc", retval );
 	else
-		test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+		test_pass( __FILE__ );
+
+	return 1;
 }
 
 /*

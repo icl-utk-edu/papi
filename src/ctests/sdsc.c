@@ -333,7 +333,7 @@ main( int argc, char **argv )
 
 	check_values( eventset, events, nevents, values, refvalues );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 }

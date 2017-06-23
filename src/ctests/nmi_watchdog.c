@@ -69,10 +69,10 @@ int main( int argc, char **argv ) {
 
      test_warn( __FILE__, __LINE__, "NMI Watchdog Active, enabling slow workarounds", 0 );
   }
-	
-  test_pass( __FILE__, NULL, 0 );
-	
-  return 0;
+
+	test_pass( __FILE__ );
+
+ 	return 0;
 }
 
 

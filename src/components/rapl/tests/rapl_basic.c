@@ -363,7 +363,7 @@ int main (int argc, char **argv)
                               "PAPI_destroy_eventset()",retval);
      }
 
-     test_pass( __FILE__, NULL, 0 );
+     test_pass( __FILE__ );
 
      return 0;
 }

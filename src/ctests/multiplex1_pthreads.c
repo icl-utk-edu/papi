@@ -472,6 +472,8 @@ main( int argc, char **argv )
 	if ( retval != PAPI_VER_CURRENT )
 		CPP_TEST_FAIL( "PAPI_library_init", retval );
 
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

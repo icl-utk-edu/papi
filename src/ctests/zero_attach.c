@@ -220,7 +220,7 @@ main( int argc, char **argv )
 		printf( "Verification: none\n" );
 	}
 
-	test_pass( __FILE__, values, num_tests );
+	test_pass( __FILE__ );
 
 	return 0;
 }

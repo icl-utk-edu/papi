@@ -2,17 +2,20 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @author  Vince Weaver
  *
  * test case that displays "pretty" coretemp output
- * 
+ *
  * @brief
  *   Shows "pretty" coretemp output
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM_EVENTS 1
@@ -31,7 +34,7 @@ int main (int argc, char **argv)
     double temperature;
 
         /* Set TESTS_QUIET variable */
-     tests_quiet( argc, argv );      
+     tests_quiet( argc, argv );
 
 	/* PAPI Initialization */
      retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -80,7 +83,7 @@ int main (int argc, char **argv)
         retval = PAPI_event_code_to_name( code, event_name );
 	if ( retval != PAPI_OK ) {
 	   printf("Error translating %#x\n",code);
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
                             "PAPI_event_code_to_name", retval );
 	}
 
@@ -94,7 +97,7 @@ int main (int argc, char **argv)
 	   /* Print Temperature Inputs */
 	   /****************************/
 	if (strstr(event_name,"temp")) {
-	  
+
 	     /* Only print inputs */
 	  if (strstr(event_name,"_input")) {
 
@@ -104,13 +107,13 @@ int main (int argc, char **argv)
 
 	     retval = PAPI_create_eventset( &EventSet );
 	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_create_eventset()",retval);
 	     }
 
              retval = PAPI_add_event( EventSet, code );
              if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                                  "PAPI_add_event()",retval);
 	     }
 
@@ -133,13 +136,13 @@ int main (int argc, char **argv)
 
 	     retval = PAPI_cleanup_eventset( EventSet );
 	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_cleanup_eventset()",retval);
 	     }
 
 	     retval = PAPI_destroy_eventset( &EventSet );
              if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_destroy_eventset()",retval);
 	     }
 	  }
@@ -149,7 +152,7 @@ int main (int argc, char **argv)
 	   /* Print Voltage Inputs */
 	   /****************************/
 	if (strstr(event_name,".in")) {
-	  
+
 	     /* Only print inputs */
 	  if (strstr(event_name,"_input")) {
 
@@ -159,13 +162,13 @@ int main (int argc, char **argv)
 
 	     retval = PAPI_create_eventset( &EventSet );
 	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_create_eventset()",retval);
 	     }
 
              retval = PAPI_add_event( EventSet, code );
              if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                                  "PAPI_add_event()",retval);
 	     }
 
@@ -188,13 +191,13 @@ int main (int argc, char **argv)
 
 	     retval = PAPI_cleanup_eventset( EventSet );
 	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_cleanup_eventset()",retval);
 	     }
 
 	     retval = PAPI_destroy_eventset( &EventSet );
              if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_destroy_eventset()",retval);
 	     }
 	  }
@@ -206,20 +209,20 @@ int main (int argc, char **argv)
 
 	     /* Only print inputs */
 	  if (strstr(event_name,"_input")) {
-           
+
              if (!TESTS_QUIET) printf("%s ",event_name);
 
              EventSet = PAPI_NULL;
 
 	     retval = PAPI_create_eventset( &EventSet );
 	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_create_eventset()",retval);
 	     }
 
              retval = PAPI_add_event( EventSet, code );
              if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                                  "PAPI_add_event()",retval);
 	     }
 
@@ -238,13 +241,13 @@ int main (int argc, char **argv)
 
 	     retval = PAPI_cleanup_eventset( EventSet );
 	     if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_cleanup_eventset()",retval);
 	     }
 
 	     retval = PAPI_destroy_eventset( &EventSet );
              if (retval != PAPI_OK) {
-	        test_fail(__FILE__, __LINE__, 
+	        test_fail(__FILE__, __LINE__,
                               "PAPI_destroy_eventset()",retval);
 	     }
 	  }
@@ -253,12 +256,12 @@ int main (int argc, char **argv)
 	else {
 	  /* Skip unknown */
 	}
-  	      
+
         r = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, coretemp_cid );
      }
-        
-     test_pass( __FILE__, NULL, 0 );
-		
-     return 0;
+
+	test_pass( __FILE__ );
+
+	return 0;
 }
 

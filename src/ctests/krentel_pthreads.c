@@ -197,6 +197,7 @@ main( int argc, char **argv )
 
 	if (!TESTS_QUIET) printf( "done\n" );
 
-	test_pass( __FILE__, NULL, 0 );
-	return ( 0 );
+	test_pass( __FILE__ );
+
+	return 0;
 }

@@ -257,7 +257,7 @@ main( int argc, char **argv )
 	remove_test_events( &EventSet, mask );
 
 	if ( retval )
-		test_pass( __FILE__, values, 1 );
+		test_pass( __FILE__ );
 	else
 		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
 	return 1;

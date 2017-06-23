@@ -579,7 +579,7 @@ main( int argc, char **argv )
 	case2_driver(  );
 	case1_driver(  );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 }

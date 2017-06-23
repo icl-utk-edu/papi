@@ -98,7 +98,7 @@ main( int argc, char **argv )
 			( "\tPAPI Error Code -10: PAPI_EISRUN: EventSet is currently counting\n" );
 		printf( "\tPAPI Error Code -1: PAPI_EINVAL: Invalid argument\n" );
 	}
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 }

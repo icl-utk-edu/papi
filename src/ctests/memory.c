@@ -219,7 +219,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_destroy_eventset( &EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 }

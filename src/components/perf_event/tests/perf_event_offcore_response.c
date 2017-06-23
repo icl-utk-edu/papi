@@ -68,7 +68,7 @@ int main( int argc, char **argv ) {
      printf("\t%s count = %lld\n",offcore_event,total_values[0]);
    }
 
-   test_pass( __FILE__, NULL, 0 );
+   test_pass( __FILE__ );
 
    return 0;
 }

@@ -2,12 +2,12 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @author  Vince Weaver
  *
- * test case for micpower component 
+ * test case for micpower component
  * Based on coretemp test code by Vince Weaver
- * 
+ *
  *
  * @brief
  *   Tests basic component functionality
@@ -15,6 +15,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM_EVENTS 1
@@ -32,7 +35,7 @@ int main (int argc, char **argv)
 	const PAPI_component_info_t *cmpinfo = NULL;
 
         /* Set TESTS_QUIET variable */
-        tests_quiet( argc, argv );      
+        tests_quiet( argc, argv );
 
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -117,8 +120,8 @@ int main (int argc, char **argv)
 	   test_skip(__FILE__,__LINE__,"No events from host_micpower found",0);
 	}
 
-	test_pass( __FILE__, NULL, 0 );
-		
+	test_pass( __FILE__ );
+
 	return 0;
 }
 

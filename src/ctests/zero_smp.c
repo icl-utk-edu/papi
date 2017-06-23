@@ -158,6 +158,8 @@ main( int argc, char **argv )
 		printf( "Master real usec   : \t%lld\n", elapsed_us );
 		printf( "Master real cycles : \t%lld\n", elapsed_cyc );
 	}
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+
+	test_pass( __FILE__ );
+
+	return 0;
 }

@@ -110,7 +110,7 @@ main( int argc, char **argv )
 	if ( nthr * num_iters != count )
 		test_fail( __FILE__, __LINE__, "Thread Locks", 1 );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 

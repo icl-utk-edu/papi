@@ -2,12 +2,12 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    example_basic.c
  * @author  Vince Weaver
  *	    vweaver1@eecs.utk.edu
- * test case for Example component 
- * 
+ * test case for Example component
+ *
  *
  * @brief
  *  This file is a very simple example test and Makefile that acat
@@ -20,6 +20,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM_EVENTS 3
@@ -35,9 +38,10 @@ int main (int argc, char **argv)
 	int code,maximum_code=0;
 	char event_name[PAPI_MAX_STR_LEN];
 	PAPI_event_info_t event_info;
+	int quiet=0;
 
         /* Set TESTS_QUIET variable */
-        tests_quiet( argc, argv );      
+	quiet=tests_quiet( argc, argv );
 
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -45,7 +49,7 @@ int main (int argc, char **argv)
 	   test_fail(__FILE__, __LINE__,"PAPI_library_init failed\n",retval);
 	}
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 	   printf( "Testing example component with PAPI %d.%d.%d\n",
 			PAPI_VERSION_MAJOR( PAPI_VERSION ),
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
@@ -60,8 +64,8 @@ int main (int argc, char **argv)
 	      test_fail(__FILE__, __LINE__,
                            "PAPI_get_component_info failed\n", 0);
 	   }
-	   if (!TESTS_QUIET) {
-	      printf("\tComponent %d - %d events - %s\n", cid, 
+	   if (!quiet) {
+	      printf("\tComponent %d - %d events - %s\n", cid,
 		     cmpinfo->num_native_events,
 		     cmpinfo->name);
 	   }
@@ -70,14 +74,14 @@ int main (int argc, char **argv)
 	      example_cid=cid;
 	   }
 	}
-	
+
 
 	if (example_cid<0) {
 	   test_skip(__FILE__, __LINE__,
 		     "Example component not found\n", 0);
 	}
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 	  printf("\nFound Example Component at id %d\n",example_cid);
 	  printf("\nListing all events in this component:\n");
 	}
@@ -93,17 +97,17 @@ int main (int argc, char **argv)
 	while ( retval == PAPI_OK ) {
 	  if (PAPI_event_code_to_name( code, event_name )!=PAPI_OK) {
 	     printf("Error translating %#x\n",code);
-	     test_fail( __FILE__, __LINE__, 
+	     test_fail( __FILE__, __LINE__,
 		       "PAPI_event_code_to_name", retval );
 	  }
 
 	  if (PAPI_get_event_info( code, &event_info)!=PAPI_OK) {
 	     printf("Error getting info for event %#x\n",code);
-	     test_fail( __FILE__, __LINE__, 
+	     test_fail( __FILE__, __LINE__,
 		       "PAPI_get_event_info()", retval );
 	  }
 
-	  if (!TESTS_QUIET) {
+	  if (!quiet) {
 	    printf("\tEvent %#x: %s -- %s\n",
 		   code,event_name,event_info.long_descr);
 	  }
@@ -113,15 +117,15 @@ int main (int argc, char **argv)
 	  retval = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, example_cid );
 
 	}
-	if (!TESTS_QUIET) printf("\n");
+	if (!quiet) printf("\n");
 
 	/**********************************/
 	/* Try accessing an invalid event */
 	/**********************************/
-	
+
 	retval=PAPI_event_code_to_name( maximum_code+10, event_name );
 	if (retval!=PAPI_ENOEVNT) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		    "Failed to return PAPI_ENOEVNT on invalid event", retval );
 	}
 
@@ -137,7 +141,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("EXAMPLE_ZERO", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_ZERO not found\n",retval );
 	}
 
@@ -152,13 +156,13 @@ int main (int argc, char **argv)
 	   test_fail( __FILE__, __LINE__, 
 		      "PAPI_start failed\n",retval );
 	}
-	
+
 	retval = PAPI_stop( EventSet, values );
 	if ( retval != PAPI_OK ) {
 	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	}
 
-	if (!TESTS_QUIET) printf("Testing EXAMPLE_ZERO: %lld\n",values[0]);
+	if (!quiet) printf("Testing EXAMPLE_ZERO: %lld\n",values[0]);
 
 	if (values[0]!=0) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 0!\n", 0);
@@ -189,7 +193,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("EXAMPLE_CONSTANT", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_CONSTANT not found\n",retval );
 	}
 
@@ -204,13 +208,13 @@ int main (int argc, char **argv)
 	   test_fail( __FILE__, __LINE__, 
 		      "PAPI_start failed\n",retval );
 	}
-	
+
 	retval = PAPI_stop( EventSet, values );
 	if ( retval != PAPI_OK ) {
 	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	}
 
-	if (!TESTS_QUIET) printf("Testing EXAMPLE_CONSTANT: %lld\n",values[0]);
+	if (!quiet) printf("Testing EXAMPLE_CONSTANT: %lld\n",values[0]);
 
 	if (values[0]!=42) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 42!\n", 0);
@@ -242,7 +246,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("EXAMPLE_AUTOINC", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_AUTOINC not found\n",retval );
 	}
 
@@ -252,38 +256,38 @@ int main (int argc, char **argv)
 		      "PAPI_add_events failed\n", retval );
 	}
 
-	if (!TESTS_QUIET) printf("Testing EXAMPLE_AUTOINC: ");
+	if (!quiet) printf("Testing EXAMPLE_AUTOINC: ");
 
 	for(i=0;i<10;i++) {
 
 	   retval = PAPI_start( EventSet );
 	   if ( retval != PAPI_OK ) {
-	      test_fail( __FILE__, __LINE__, 
+	      test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	   }
-	
+
 	   retval = PAPI_stop( EventSet, values );
 	   if ( retval != PAPI_OK ) {
 	      test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	   }
 
-	   if (!TESTS_QUIET) printf("%lld ",values[0]);
+	   if (!quiet) printf("%lld ",values[0]);
 
 	   if (values[0]!=i) {
 	      test_fail(  __FILE__, __LINE__, "Result wrong!\n", 0);
 	   }
 	}
 
-	if (!TESTS_QUIET) printf("\n");
+	if (!quiet) printf("\n");
 
 
 	/***********************************/
 	/* Test multiple reads             */
         /***********************************/
-   
+
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
 
@@ -293,14 +297,14 @@ int main (int argc, char **argv)
 	  if ( retval != PAPI_OK ) {
 	     test_fail(  __FILE__, __LINE__, "PAPI_read failed\n", retval);
 	  }
-	  if (!TESTS_QUIET) printf("%lld ",values[0]);
+	  if (!quiet) printf("%lld ",values[0]);
 	}
-	
+
 	retval = PAPI_stop( EventSet, values );
 	if ( retval != PAPI_OK ) {
 	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	}
-	if (!TESTS_QUIET) printf("%lld\n",values[0]);
+	if (!quiet) printf("%lld\n",values[0]);
 
 	//	if (values[0]!=i) {
 	//   test_fail(  __FILE__, __LINE__, "Result wrong!\n", 0);
@@ -312,19 +316,19 @@ int main (int argc, char **argv)
 
 	retval = PAPI_reset( EventSet);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_reset() failed\n",retval );
 	}
 
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
-	
+
 	retval = PAPI_reset( EventSet);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_reset() failed\n",retval );
 	}
 
@@ -334,7 +338,7 @@ int main (int argc, char **argv)
 	}
 
 
-	if (!TESTS_QUIET) printf("Testing EXAMPLE_AUTOINC after PAPI_reset(): %lld\n",
+	if (!quiet) printf("Testing EXAMPLE_AUTOINC after PAPI_reset(): %lld\n",
 				 values[0]);
 
 	if (values[0]!=0) {
@@ -358,8 +362,8 @@ int main (int argc, char **argv)
 	/* Test multiple events            */
 	/***********************************/
 
-   	if (!TESTS_QUIET) printf("Testing Multiple Events: ");
-   
+   	if (!quiet) printf("Testing Multiple Events: ");
+
    	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK ) {
 	   test_fail( __FILE__, __LINE__,
@@ -368,7 +372,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("EXAMPLE_CONSTANT", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_CONSTANT not found\n",retval );
 	}
 
@@ -377,10 +381,10 @@ int main (int argc, char **argv)
 	   test_fail( __FILE__, __LINE__,
 		      "PAPI_add_events failed\n", retval );
 	}
-   
+
    	retval = PAPI_event_name_to_code("EXAMPLE_GLOBAL_AUTOINC", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_GLOBAL_AUTOINC not found\n",retval );
 	}
 
@@ -389,10 +393,10 @@ int main (int argc, char **argv)
 	   test_fail( __FILE__, __LINE__,
 		      "PAPI_add_events failed\n", retval );
 	}
-   
+
    	retval = PAPI_event_name_to_code("EXAMPLE_ZERO", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_ZERO not found\n",retval );
 	}
 
@@ -402,19 +406,19 @@ int main (int argc, char **argv)
 		      "PAPI_add_events failed\n", retval );
 	}
 
-   
+
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
-	
+
 	retval = PAPI_stop( EventSet, values );
 	if ( retval != PAPI_OK ) {
 	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	}
-	   
-        if (!TESTS_QUIET) {
+
+        if (!quiet) {
            for(i=0;i<3;i++) {
               printf("%lld ",values[i]);
 	   }
@@ -424,7 +428,7 @@ int main (int argc, char **argv)
 	if (values[0]!=42) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 42!\n", 0);
 	}
-   
+
    	if (values[2]!=0) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 0!\n", 0);
 	}
@@ -440,13 +444,13 @@ int main (int argc, char **argv)
 	}
 
 	EventSet=PAPI_NULL;
-   
+
 	/***********************************/
 	/* Test writing to an event        */
 	/***********************************/
 
-   	if (!TESTS_QUIET) printf("Testing Write\n");
-   
+   	if (!quiet) printf("Testing Write\n");
+
    	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK ) {
 	   test_fail( __FILE__, __LINE__,
@@ -455,7 +459,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_event_name_to_code("EXAMPLE_CONSTANT", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_CONSTANT not found\n",retval );
 	}
 
@@ -464,10 +468,10 @@ int main (int argc, char **argv)
 	   test_fail( __FILE__, __LINE__,
 		      "PAPI_add_events failed\n", retval );
 	}
-   
+
    	retval = PAPI_event_name_to_code("EXAMPLE_GLOBAL_AUTOINC", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_GLOBAL_AUTOINC not found\n",retval );
 	}
 
@@ -476,10 +480,10 @@ int main (int argc, char **argv)
 	   test_fail( __FILE__, __LINE__,
 		      "PAPI_add_events failed\n", retval );
 	}
-   
+
    	retval = PAPI_event_name_to_code("EXAMPLE_ZERO", &code);
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "EXAMPLE_ZERO not found\n",retval );
 	}
 
@@ -489,59 +493,59 @@ int main (int argc, char **argv)
 		      "PAPI_add_events failed\n", retval );
 	}
 
-   
+
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
 
         retval = PAPI_read ( EventSet, values );
    	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_read failed\n",retval );
 	}
-   
-        if (!TESTS_QUIET) {
+
+        if (!quiet) {
 	   printf("Before values: ");
            for(i=0;i<3;i++) {
               printf("%lld ",values[i]);
 	   }
 	   printf("\n");
 	}
-   
+
         values[0]=100;
         values[1]=200;
         values[2]=300;
-      
+
         retval = PAPI_write ( EventSet, values );
    	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_write failed\n",retval );
 	}
-   
+
 	retval = PAPI_stop( EventSet, values );
 	if ( retval != PAPI_OK ) {
 	   test_fail(  __FILE__, __LINE__, "PAPI_stop failed\n", retval);
 	}
-	   
-        if (!TESTS_QUIET) {
+
+        if (!quiet) {
 	   printf("After values: ");
            for(i=0;i<3;i++) {
               printf("%lld ",values[i]);
 	   }
 	   printf("\n");
 	}
-   
+
 
 	if (values[0]!=42) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 42!\n", 0);
 	}
-   
+
    	if (values[1]!=200) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 200!\n", 0);
 	}
-   
+
    	if (values[2]!=0) {
 	   test_fail(  __FILE__, __LINE__, "Result should be 0!\n", 0);
 	}
@@ -557,16 +561,16 @@ int main (int argc, char **argv)
 	}
 
 	EventSet=PAPI_NULL;
-   
-   
+
+
         /************/
         /* All Done */
         /************/
-   
-	if (!TESTS_QUIET) printf("\n");
 
-	test_pass( __FILE__, NULL, 0 );
-		
+	if (!quiet) printf("\n");
+
+	test_pass( __FILE__ );
+
 	return 0;
 }
 

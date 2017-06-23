@@ -161,6 +161,6 @@ main( int argc, char **argv )
 	/* Measure this process */
 	process_fini(  );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 	return 0;
 }

@@ -181,7 +181,10 @@ main( int argc, char **argv )
 		printf( "Master real cycles : \t%lld\n", elapsed_cyc );
 	}
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
+
 	pthread_exit( NULL );
-	exit( 1 );
+
+	return 0;
+
 }

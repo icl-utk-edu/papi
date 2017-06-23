@@ -72,10 +72,10 @@ main( int argc, char **argv )
 	if ( value[6] >= value[5] && value[5] >= value[4] && value[4] >= value[3]
 		 && value[3] >= value[2] && value[2] >= value[1] &&
 		 value[1] >= value[0] )
-		test_pass( __FILE__, NULL, 0 );
+		test_pass( __FILE__ );
 	else
 		test_fail( __FILE__, __LINE__, "Calculating Resident Memory",
 				   ( int ) value[6] );
 
-	exit( 1 );
+	return 1;
 }

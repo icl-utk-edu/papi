@@ -282,7 +282,7 @@ main( int argc, char **argv )
 
 	/* FIXME: validate these results somehow? */
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 }

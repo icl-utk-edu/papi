@@ -133,6 +133,8 @@ main( int argc, char **argv )
 			}
 		}
 	}
-	test_pass( __FILE__, 0, 0 );
-	return ( PAPI_EMISC );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

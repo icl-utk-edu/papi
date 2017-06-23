@@ -89,6 +89,8 @@ main( int argc, char **argv )
 
 	PAPI_shutdown( );
 
-	test_pass( __FILE__, values, 1 );
-	return PAPI_OK;
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

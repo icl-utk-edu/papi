@@ -198,7 +198,7 @@ main( int argc, char **argv )
 	}
 
 	case1(  );
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	return 0;
 }

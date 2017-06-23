@@ -317,6 +317,8 @@ main( int argc, char **argv )
 	if ( ( total[2] == 0 ) || ( total[3] == 0 ) || ( total[4] == 0 ) )
 		test_fail( __FILE__, __LINE__, "Software Overflows", 1 );
 
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

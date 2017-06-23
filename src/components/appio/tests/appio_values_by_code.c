@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @author  Tushar Mohan
  * (adapted from code in linux-net)
  * test case for the appio component
@@ -13,6 +13,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define MAX_EVENTS 48
@@ -140,7 +142,7 @@ int main (int argc, char **argv)
         test_skip(__FILE__,__LINE__,"No appio events found", 0);
     }
 
-    test_pass( __FILE__, NULL, 0 );
+    test_pass( __FILE__ );
 
     retval = PAPI_cleanup_eventset( EventSet );
     if (retval != PAPI_OK) {

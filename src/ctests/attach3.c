@@ -59,7 +59,7 @@ wait_for_attach_and_loop( void )
 int
 main( int argc, char **argv )
 {
-	int status, retval, num_tests = 1, tmp;
+	int status, retval, tmp;
 	int EventSet1 = PAPI_NULL;
 	long long **values;
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
@@ -240,6 +240,8 @@ main( int argc, char **argv )
 
 	printf( "Verification: none\n" );
 	}
-	test_pass( __FILE__, values, num_tests );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

@@ -101,8 +101,10 @@ main( int argc, char **argv )
 						mythreshold, PAPI_PROFIL_BUCKET_64 );
 
 	remove_test_events( &EventSet, mask );
-	test_pass( __FILE__, values, num_tests );
-	exit( 1 );
+
+	test_pass( __FILE__ );
+
+	return 0;
 }
 
 static int

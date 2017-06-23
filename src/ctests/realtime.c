@@ -65,6 +65,7 @@ main( int argc, char **argv )
 	if ( ( float ) elapsed_cyc > 11.0 * hw_info->cpu_max_mhz * 1000000.0 )
 		printf( "NOTE: Elapsed real cycles greater than 11*MHz*1000000.0!\n" );
 
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
 }

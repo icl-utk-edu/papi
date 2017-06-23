@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @author  Tushar Mohan
  *
  * test case for the appio component
@@ -14,12 +14,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "papi_test.h"
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+#include "papi.h"
+#include "papi_test.h"
 
 
 #define NUM_EVENTS 11
@@ -129,7 +131,7 @@ int main (int argc, char **argv)
         test_skip(__FILE__,__LINE__,"No appio events found", 0);
     }
 
-    test_pass( __FILE__, NULL, 0 );
+    test_pass( __FILE__ );
 
     return 0;
 }

@@ -225,6 +225,8 @@ main( int argc, char **argv )
 		printf( "              R3C3 ~= (R1C1 + R2C2) ~= all other entries.\n" );
 	}
 
-	test_pass( __FILE__, values, num_tests );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

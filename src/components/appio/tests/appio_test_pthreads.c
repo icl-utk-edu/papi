@@ -124,6 +124,6 @@ int main(int argc, char** argv) {
   for (i=0;i<(numthrds-1);i++)
     pthread_join(callThd[i], NULL);
 
-  test_pass( __FILE__, NULL, 0 );
+  test_pass( __FILE__ );
   return 0;
 }

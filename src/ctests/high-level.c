@@ -113,8 +113,10 @@ main( int argc, char **argv )
 			test_fail( __FILE__, __LINE__, "PAPI_TOT_CYC", 1 );
 		}
 	}
-	/* The values array is not allocated through allocate_test_space 
+	/* The values array is not allocated through allocate_test_space
 	 * so we need to pass NULL here */
-	test_pass( __FILE__, NULL, NUM_EVENTS );
-	exit( 1 );
+	test_pass( __FILE__ );
+
+	return 0;
+
 }

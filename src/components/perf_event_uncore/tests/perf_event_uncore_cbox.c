@@ -63,7 +63,6 @@ int main( int argc, char **argv ) {
                     strncpy(event_name,"UNC_CBO_CACHE_LOOKUP:STATE_I:ANY_FILTER",BUFSIZ);
                     strncpy(uncore_base,"ivb_unc_cbo",BUFSIZ);
                     break;
-           
            case 63: /* Haswell EP */
                     strncpy(event_name,"hswep_unc_cbo0::UNC_C_COUNTER0_OCCUPANCY",BUFSIZ);
                     strncpy(uncore_base,"hswep_unc_cbo0",BUFSIZ);
@@ -183,8 +182,7 @@ int main( int argc, char **argv ) {
 
    PAPI_shutdown();
 
-   test_pass( __FILE__, NULL, 0 );
-
+   test_pass( __FILE__ );
 
    return 0;
 }

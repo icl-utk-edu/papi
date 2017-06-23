@@ -30,12 +30,12 @@ main( int argc, char **argv )
 	if ( retval != PAPI_VER_CURRENT ) {
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
-		
+
 	/* Create an empty event set */
 	retval = PAPI_create_eventset( &EventSet );
 	if ( retval != PAPI_OK ) {
 	   test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-	}   
+	}
 
 	/* add the events named above */
 	retval = PAPI_add_named_event( EventSet, event_names[0] );
@@ -43,7 +43,7 @@ main( int argc, char **argv )
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[0] );
 		test_fail( __FILE__, __LINE__, add_event_str, retval );
 	}
-	
+
 	retval = PAPI_add_named_event( EventSet, event_names[1] );
 	if ( retval != PAPI_OK ) {
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[1] );
@@ -67,7 +67,7 @@ main( int argc, char **argv )
 
 
 	old_instructions=values1[1];
-	
+
 	if ( !TESTS_QUIET ) {
 
 	   printf( "========================\n" );
@@ -86,7 +86,7 @@ main( int argc, char **argv )
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[0] );
 		test_fail( __FILE__, __LINE__, add_event_str, retval );
 	}
-	
+
 
 	/* Start PAPI */
 	retval = PAPI_start( EventSet );
@@ -124,7 +124,7 @@ main( int argc, char **argv )
 	   }
 
 	}
-	test_pass( __FILE__, NULL, 0 );
-	
+	test_pass( __FILE__ );
+
 	return 0;
 }

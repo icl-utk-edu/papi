@@ -22,7 +22,7 @@ main( int argc, char **argv )
    int numcmp, cid, active_components=0;
 
    /* Set TESTS_QUIET variable */
-   tests_quiet( argc, argv );	
+   tests_quiet( argc, argv );
 
    /* Disable All Compiled-in Components */
    numcmp = PAPI_num_components(  );
@@ -61,15 +61,15 @@ main( int argc, char **argv )
       cmpinfo = PAPI_get_component_info( cid );
 
       if (!TESTS_QUIET) {
-	printf( "%d %d Name:   %-23s %s\n", 
+	printf( "%d %d Name:   %-23s %s\n",
 		cid,
 		PAPI_get_component_index((char *)cmpinfo->name),
 		cmpinfo->name ,cmpinfo->description);
-		
+
       }
 
       if (cid!=PAPI_get_component_index((char *)cmpinfo->name)) {
-         test_fail( __FILE__, __LINE__, "PAPI_get_component_index mismatch", 
+         test_fail( __FILE__, __LINE__, "PAPI_get_component_index mismatch",
 		 2 );
       }
 
@@ -86,8 +86,8 @@ main( int argc, char **argv )
    if (active_components>0) {
       test_fail( __FILE__, __LINE__, "too many active components", retval );
    }
-	
-   test_pass( __FILE__, NULL, 0 );
-      
-   return PAPI_OK;
+
+	test_pass( __FILE__ );
+
+	return PAPI_OK;
 }

@@ -198,7 +198,8 @@ main( int argc, char **argv )
 
 	if (!TESTS_QUIET) printf( "Done." );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
+
 	pthread_exit( NULL );
 
 	return 0;

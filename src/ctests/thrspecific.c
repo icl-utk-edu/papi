@@ -156,7 +156,7 @@ main( int argc, char **argv )
 	pthread_join( f_th, NULL );
 	pthread_join( e_th, NULL );
 
-	test_pass( __FILE__, NULL, 0 );
+	test_pass( __FILE__ );
 
 	pthread_exit( NULL );
 

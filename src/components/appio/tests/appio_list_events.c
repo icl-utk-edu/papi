@@ -14,6 +14,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 int main (int argc, char **argv)
@@ -81,7 +83,7 @@ int main (int argc, char **argv)
         test_skip(__FILE__,__LINE__,"No appio events found", 0);
     }
 
-    test_pass( __FILE__, NULL, 0 );
+    test_pass( __FILE__ );
 
     return 0;
 }

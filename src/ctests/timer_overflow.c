@@ -60,6 +60,7 @@ main( int argc, char **argv )
 	if ( timer < 0 )
 		test_fail( __FILE__, __LINE__, "PAPI_get_real_usec: overflow", 1 );
 	else
-		test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+		test_pass( __FILE__ );
+
+	return 0;
 }

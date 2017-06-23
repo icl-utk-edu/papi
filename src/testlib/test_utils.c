@@ -427,14 +427,14 @@ static void print_spaces(int count) {
 /* FIXME! Revert to printf once we are done converting */
 
 void
-test_pass( char *file, long long **values, int num_tests )
+test_pass( char *filename )
 {
 	int line_pad;
 
-	line_pad=60-strlen(file);
+	line_pad=60-strlen(filename);
 	if (line_pad<0) line_pad=0;
 
-	fprintf(stdout,"%s",file);
+	fprintf(stdout,"%s",filename);
 	print_spaces(line_pad);
 
 	if ( TEST_WARN ) {
@@ -448,10 +448,6 @@ test_pass( char *file, long long **values, int num_tests )
 		fprintf( stdout, "PASSED");
 		if (TESTS_COLOR) fprintf( stdout, "%s",NORMAL);
 		fprintf( stdout, "\n");
-	}
-
-	if ( values ) {
-		free_test_space( values, num_tests );
 	}
 
 	if ( PAPI_is_initialized(  ) ) {

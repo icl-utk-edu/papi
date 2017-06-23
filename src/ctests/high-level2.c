@@ -96,6 +96,8 @@ main( int argc, char **argv )
 		if ( ( retval = PAPI_stop_counters( &values, 1 ) ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
 	}
-	test_pass( __FILE__, NULL, 0 );
-	exit( 0 );				 /* just to make the compiler happy... */
+
+	test_pass( __FILE__ );
+
+	return 0;
 }

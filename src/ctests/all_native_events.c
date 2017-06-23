@@ -199,11 +199,11 @@ main( int argc, char **argv )
     }
 
     if ( add_count > 0 ) {
-       test_pass( __FILE__, NULL, 0 );
+       test_pass( __FILE__ );
     }
     else {
        test_fail( __FILE__, __LINE__, "No events added", 1 );
     }
 
-    exit( 1 );
+    return 1;
 }
