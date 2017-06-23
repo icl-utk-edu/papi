@@ -83,10 +83,10 @@ main( int argc, char **argv )
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
+		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
 
 	if ( cmpinfo->attach == 0 )
 		test_skip( __FILE__, __LINE__, "Platform does not support attaching",
@@ -94,14 +94,14 @@ main( int argc, char **argv )
 
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_get_hardware_info", 0 );
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 0 );
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
 	retval = PAPI_create_eventset(&EventSet1);
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 
 	/* Here we are testing that this does not cause a fail */
 
@@ -112,11 +112,11 @@ main( int argc, char **argv )
 
 	retval = PAPI_attach( EventSet1, ( unsigned long ) pid );
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_attach", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_attach", retval );
 
 	retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
 
 
 	strcpy(event_name,"PAPI_FP_INS");
@@ -128,7 +128,7 @@ main( int argc, char **argv )
 	}
 
 	if ( retval != PAPI_OK ) {
-		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
 	}
 
 	values = allocate_test_space( 1, 2);
@@ -159,7 +159,7 @@ main( int argc, char **argv )
 
 	retval = PAPI_start( EventSet1 );
 	if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
 	if (!TESTS_QUIET) printf("Continuing\n");
 #if defined(__FreeBSD__)
@@ -190,11 +190,11 @@ main( int argc, char **argv )
 
 	if (!TESTS_QUIET) printf("Child exited with value %d\n",WEXITSTATUS(status));
 	if (WEXITSTATUS(status) != 0) {
-	  test_fail_exit( __FILE__, __LINE__, "Exit status of child to attach to", PAPI_EMISC);
+	  test_fail( __FILE__, __LINE__, "Exit status of child to attach to", PAPI_EMISC);
 	}
 	retval = PAPI_stop( EventSet1, values[0] );
 	if ( retval != PAPI_OK )
-	  test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
+	  test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
 	elapsed_virt_us = PAPI_get_virt_usec(  ) - elapsed_virt_us;
 
@@ -206,11 +206,11 @@ main( int argc, char **argv )
 
 	retval = PAPI_cleanup_eventset(EventSet1);
 	if (retval != PAPI_OK)
-	  test_fail_exit( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
+	  test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
 
 	retval = PAPI_destroy_eventset(&EventSet1);
 	if (retval != PAPI_OK)
-	  test_fail_exit( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
+	  test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 
 	if (!TESTS_QUIET) {
 	printf( "Test case: 3rd party attach start, stop.\n" );

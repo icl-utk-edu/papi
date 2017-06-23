@@ -60,7 +60,6 @@ char *stringify_all_granularities(int granularities);
 int tests_quiet(int argc, char **argv);
 void test_pass(char *file, long long ** values, int num_tests);
 void test_fail(char *file, int line, char *call, int retval);
-void test_fail_exit(char *file, int line, char *call, int retval);
 void test_skip(char *file, int line, char *call, int retval);
 void test_warn(char *file, int line, char *call, int retval);
 void test_print_event_header(char *call, int evset);

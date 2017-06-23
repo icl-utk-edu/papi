@@ -45,26 +45,26 @@ main( int argc, char **argv )
 	}
 
 	else {
-	
+
 	   if ( !TESTS_QUIET ) printf( "Testing PAPI_num_counters... " );
 
 	   /* get the number of hardware counters available on the system  */
-           retval = PAPI_num_counters(  );	
+           retval = PAPI_num_counters(  );
 	   if ( retval != PAPI_get_cmp_opt( PAPI_MAX_HWCTRS, NULL, 0 ) )
-	      test_fail_exit( __FILE__, __LINE__, "PAPI_num_counters", retval );
+	      test_fail( __FILE__, __LINE__, "PAPI_num_counters", retval );
 	   else if ( !TESTS_QUIET ) printf( "%d\n", retval );
 
 
 	   if ( !TESTS_QUIET ) printf( "Testing PAPI_start_counters... " );
 	   retval = PAPI_start_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_start_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
 	   retval = PAPI_start_counters( Events, 0 );	// pass invalid 2nd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_start_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
 	   retval = PAPI_start_counters( Events, NUM_COUNTERS );	// start counting hardware events
 	   if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_start_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
 	   else if ( !TESTS_QUIET )
 		printf( "started PAPI_TOT_INS\n" );
 
@@ -73,13 +73,13 @@ main( int argc, char **argv )
 		printf( "Testing PAPI_stop_counters... " );
 	   retval = PAPI_stop_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
 	   retval = PAPI_stop_counters( values, 0 );	// pass invalid 2nd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
 	   retval = PAPI_stop_counters( values, NUM_COUNTERS );	// stop counters and return current counts
 	   if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
 	   else if ( !TESTS_QUIET )
 		printf( "stopped counting PAPI_TOT_INS\n" );
 	//NOTE: There are currently no checks on whether or not counter values are correct 
@@ -87,20 +87,20 @@ main( int argc, char **argv )
 
 	   retval = PAPI_start_counters( Events, NUM_COUNTERS );	// start counting hardware events again
 	   if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_start_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
 
 
 	   if ( !TESTS_QUIET )
 		printf( "Testing PAPI_read_counters... " );
 	   retval = PAPI_read_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_read_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
 	   retval = PAPI_read_counters( values, 0 );	// pass invalid 2nd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_read_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
 	   retval = PAPI_read_counters( values, NUM_COUNTERS );	// copy current counts to array and reset counters
 	   if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_read_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
 	   else if ( !TESTS_QUIET )
 		printf( "read PAPI_TOT_INS counts and reset counter\n" );
 	//NOTE: There are currently no checks on whether or not counter values are correct 
@@ -110,13 +110,13 @@ main( int argc, char **argv )
 		printf( "Testing PAPI_accum_counters... " );
 	   retval = PAPI_accum_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_accum_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
 	   retval = PAPI_accum_counters( values, 0 );	// pass invalid 2nd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_accum_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
 	   retval = PAPI_accum_counters( values, NUM_COUNTERS );	// add current counts to array and reset counters
 	   if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_accum_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
 	   else if ( !TESTS_QUIET )
 		printf( "added PAPI_TOT_INS counts and reset counter\n" );
 	//NOTE: There are currently no checks on whether or not counter values are correct 
@@ -124,26 +124,26 @@ main( int argc, char **argv )
 
 	   retval = PAPI_stop_counters( values, NUM_COUNTERS );	// stop counting hardware events 
 	   if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
 
 
 	   if ( !TESTS_QUIET )
 		printf( "Testing PAPI_ipc... " );
 	   retval = PAPI_ipc( NULL, &ptime, &ins, &ipc );	// pass invalid 1st argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_ipc", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
 	   retval = PAPI_ipc( &rtime, NULL, &ins, &ipc );	// pass invalid 2nd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_ipc", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
 	   retval = PAPI_ipc( &rtime, &ptime, NULL, &ipc );	// pass invalid 3rd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_ipc", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
 	   retval = PAPI_ipc( &rtime, &ptime, &ins, NULL );	// pass invalid 4th argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_ipc", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
 	   retval = PAPI_ipc( &rtime, &ptime, &ins, &ipc );	// get instructions per cycle, real and processor time 
 	   if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_ipc", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
 	   else if ( !TESTS_QUIET )
 		printf( "got instructions per cycle, real and processor time\n" );
 	//NOTE: There are currently no checks on whether or not returned values are correct 
@@ -160,21 +160,21 @@ main( int argc, char **argv )
 		printf( "Testing PAPI_flips... " );
 	   retval = PAPI_flips( NULL, &ptime, &flpins, &mflips );	// pass invalid 1st argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flips", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
 	   retval = PAPI_flips( &rtime, NULL, &flpins, &mflips );	// pass invalid 2nd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flips", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
 	   retval = PAPI_flips( &rtime, &ptime, NULL, &mflips );	// pass invalid 3rd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flips", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
 	   retval = PAPI_flips( &rtime, &ptime, &flpins, NULL );	// pass invalid 4th argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flips", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
 	   retval = PAPI_flips( &rtime, &ptime, &flpins, &mflips );	// get Mflips/s, real and processor time 
 	   if ( retval == PAPI_ENOEVNT )
 		test_warn( __FILE__, __LINE__, "PAPI_flips", retval);
 	   else if ( retval != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flips", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
 	   else if ( !TESTS_QUIET )
 		printf( "got Mflips/s, real and processor time\n" );
 	//NOTE: There are currently no checks on whether or not returned values are correct 
@@ -190,21 +190,21 @@ main( int argc, char **argv )
 		printf( "Testing PAPI_flops... " );
 	   retval = PAPI_flops( NULL, &ptime, &flpops, &mflops );	// pass invalid 1st argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
 	   retval = PAPI_flops( &rtime, NULL, &flpops, &mflops );	// pass invalid 2nd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
 	   retval = PAPI_flops( &rtime, &ptime, NULL, &mflops );	// pass invalid 3rd argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
 	   retval = PAPI_flops( &rtime, &ptime, &flpops, NULL );	// pass invalid 4th argument
 	   if ( retval != PAPI_EINVAL )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
 	   retval = PAPI_flops( &rtime, &ptime, &flpops, &mflops );	// get Mflops/s, real and processor time 
 	   if ( retval == PAPI_ENOEVNT )
 		test_warn( __FILE__, __LINE__, "PAPI_flops", retval);
 	   else if ( retval != PAPI_OK ) {
-		test_fail_exit( __FILE__, __LINE__, "PAPI_flops", retval ); }
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval ); }
 	   else if ( !TESTS_QUIET ) {
 		printf( "got Mflops/s, real and processor time\n" ); }
 	//NOTE: There are currently no checks on whether or not returned values are correct 

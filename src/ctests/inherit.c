@@ -25,13 +25,13 @@ main( int argc, char **argv )
         tests_quiet( argc, argv );
 
 	if ( ( retval = PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 
 	if ( ( retval = PAPI_assign_eventset_component( EventSet, 0 ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_assign_eventset_component", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component", retval );
 
 	memset( &opt, 0x0, sizeof ( PAPI_option_t ) );
 	opt.inherit.inherit = PAPI_INHERIT_ALL;
@@ -40,15 +40,15 @@ main( int argc, char **argv )
 		if ( retval == PAPI_ECMP) {
 			test_skip( __FILE__, __LINE__, "Inherit not supported by current component.\n", retval );
 		} else {
-			test_fail_exit( __FILE__, __LINE__, "PAPI_set_opt", retval );
+			test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
 		}
 	}
 
 	if ( ( retval = PAPI_query_event( PAPI_TOT_CYC ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_query_event", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_query_event", retval );
 
 	if ( ( retval = PAPI_add_event( EventSet, PAPI_TOT_CYC ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
 
 	strcpy(event_name,"PAPI_FP_INS");
 	retval = PAPI_add_named_event( EventSet, event_name );
@@ -58,11 +58,11 @@ main( int argc, char **argv )
 	}
 
 	if ( retval != PAPI_OK ) {
-		test_fail_exit( __FILE__, __LINE__, "PAPI_add_event", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
 	}
 
 	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_start", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
 	pid = fork(  );
 	if ( pid == 0 ) {
@@ -75,7 +75,7 @@ main( int argc, char **argv )
 	}
 
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
-		test_fail_exit( __FILE__, __LINE__, "PAPI_stop", retval );
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
 	if (!TESTS_QUIET) {
 	   printf( "Test case inherit: parent starts, child works, parent stops.\n" );

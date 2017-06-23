@@ -66,12 +66,12 @@ main( int argc, char **argv )
 	/* Initialize the library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT ) {
-	   test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
+	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
 	/* get the component info and check if we support attach */
 	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL ) {
-	   test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
+	   test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
 	}
 
 	if ( cmpinfo->attach == 0 ) {
@@ -82,7 +82,7 @@ main( int argc, char **argv )
 	/* fork off first child */
 	pid = fork(  );
 	if ( pid < 0 ) {
-	   test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
+	   test_fail( __FILE__, __LINE__, "fork()", PAPI_ESYS );
 	}
 	if ( pid == 0 ) {
 	   exit( wait_for_attach_and_loop( 1 ) );
@@ -91,7 +91,7 @@ main( int argc, char **argv )
 	/* fork off second child, does twice as much */
 	pid2 = fork(  );
 	if ( pid2 < 0 ) {
-	   test_fail_exit( __FILE__, __LINE__, "fork()", PAPI_ESYS );
+	   test_fail( __FILE__, __LINE__, "fork()", PAPI_ESYS );
 	}
 	if ( pid2 == 0 ) {
 	   exit( wait_for_attach_and_loop( MULTIPLIER ) );

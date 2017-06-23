@@ -62,11 +62,11 @@ main( int argc, char **argv )
 	/* Initialize the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT ) {
-	   test_fail_exit( __FILE__, __LINE__, "PAPI_library_init", retval );
+	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
 	if ( ( cmpinfo = PAPI_get_component_info( 0 ) ) == NULL ) {
-	   test_fail_exit( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
+	   test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 0 );
 	}
 
 	if ( cmpinfo->attach == 0 ) {
