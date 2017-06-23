@@ -1,7 +1,6 @@
 #!/bin/sh
 
 # File:    papi.c
-# CVS:     $Id$
 # Author:  Philip Mucci
 #          mucci@cs.utk.edu
 # Mods:    Kevin London
@@ -12,11 +11,12 @@
 # if make sure that the tests are built
 if [ "x$BUILD" != "x" ]; then
     cd testlib; make; cd ..
+    cd validation_tests; make; cd ..
     cd ctests; make; cd ..
     cd ftests; make; cd ..
     for comp in `ls components/*/tests` ; do \
 	cd components/$$comp/tests ; make; cd ../../.. ;
-    done 
+    done
 fi
 
 AIXTHREAD_SCOPE=S
@@ -33,6 +33,7 @@ if [ "x$VALGRIND" != "x" ]; then
   VALGRIND="valgrind --leak-check=full";
 fi
 
+VTESTS=`find validation_tests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
 FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
@@ -40,7 +41,7 @@ COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -n
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
-ALLTESTS="$CTESTS $FTESTS $COMPTESTS";
+ALLTESTS="$VTESTS $CTESTS $FTESTS $COMPTESTS";
 x=0;
 CWD=`pwd`
 
@@ -108,6 +109,33 @@ else
 fi
 export LIBPATH
 
+echo ""
+echo "Running Event Validation Tests";
+echo ""
+
+for i in $VTESTS;
+do
+  for xtest in $EXCLUDE;
+  do
+    if [ "$i" = "$xtest" ]; then
+      MATCH=1
+      break
+    fi;
+  done
+  if [ $MATCH -ne 1 ]; then
+    if [ -x $i ]; then
+	RAN="$i $RAN"
+    printf "Running $i:\n";
+    $VALGRIND ./$i $TESTS_QUIET
+    fi;
+  fi;
+  MATCH=0
+done
+
+echo ""
+echo "Running C Tests";
+echo ""
+
 for i in $CTESTS;
 do
   for xtest in $EXCLUDE;
@@ -120,7 +148,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	  RAN="$i $RAN"
-      printf "Running $i:";
+      printf "Running $i:\n";
       $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
@@ -143,7 +171,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	RAN="$i $RAN"
-    printf "Running $i:";
+    printf "Running $i:\n";
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
@@ -166,7 +194,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	RAN="$i $RAN"
-    printf "Running $i:";
+    printf "Running $i:\n";
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
