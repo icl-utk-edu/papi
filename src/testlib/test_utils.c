@@ -604,50 +604,32 @@ test_print_event_header( char *call, int evset )
 int
 add_two_events( int *num_events, int *papi_event, int *mask ) {
 
-     /* query and set up the right event to monitor */
-  int EventSet = PAPI_NULL;
-  PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3][2] =
-    { {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
-      {( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
-      {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
-    };
-  int i = 0;
-  int counters = 0;
+	int retval;
+	int EventSet = PAPI_NULL;
 
-	const PAPI_component_info_t* cmpinfo;
+	(void)num_events;
+	(void)papi_event;
+	(void)mask;
 
-	*mask = 0;
-	counters = PAPI_num_hwctrs(  );
-
-	if (counters<=0) {
-		cmpinfo = PAPI_get_component_info( 0 );
-		fprintf(stderr,"\nComponent %s disabled due to %s\n",
-			cmpinfo->name, cmpinfo->disabled_reason);
-		test_fail(__FILE__,__LINE__,
-			"ERROR! Zero Counters Available!\n",0);
+	/* create the eventset */
+	retval = PAPI_create_eventset( &EventSet );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 	}
 
-  /* This code tries to ensure that the event  generated will fit in the */
-  /* number of available counters. It has the potential to leak up to    */
-  /* two event sets if events fail to add successfully.                  */
-
-  for(i=0;i<3;i++) {
-	if ( PAPI_query_event( (int) potential_evt_to_add[i][0] ) == PAPI_OK ) {
-		if ( PAPI_get_event_info( (int) potential_evt_to_add[i][0], &info ) == PAPI_OK ) {
-			if ( ( info.count > 0 ) && ( (unsigned) counters > info.count ) ) {
-				*papi_event = ( int ) potential_evt_to_add[i][0];
-				*mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
-				EventSet = add_test_events( num_events, mask, 1 );
-				if ( *num_events == 2 ) break;
-			}
-		}
+	retval = PAPI_add_named_event( EventSet, "PAPI_TOT_CYC");
+	if ( retval != PAPI_OK ) {
+		if (!TESTS_QUIET) printf("Couldn't add PAPI_TOT_CYC\n");
+		test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_CYC",0);
 	}
-  }
-  if ( i == 3 ) {
-     test_fail( __FILE__, __LINE__, "Not enough room to add an event!", 0 );
-  }
-  return EventSet;
+
+	retval = PAPI_add_named_event( EventSet, "PAPI_TOT_INS");
+	if ( retval != PAPI_OK ) {
+		if (!TESTS_QUIET) printf("Couldn't add PAPI_TOT_CYC\n");
+		test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_CYC",0);
+	}
+
+	return EventSet;
 }
 
 int
