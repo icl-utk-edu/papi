@@ -151,65 +151,50 @@ struct test_events_t test_events[MAX_TEST_EVENTS] = {
 int
 add_test_events( int *number, int *mask, int allow_derived )
 {
-  int retval,i;
-  int EventSet = PAPI_NULL;
-  int num_counters = 0;
-  char name_string[BUFSIZ];
+	int retval,i;
+	int EventSet = PAPI_NULL;
+	char name_string[BUFSIZ];
 
-  *number = 0;
+	*number = 0;
 
-     /* get the number of available HW counters */
-  num_counters = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
-  if ( num_counters < 1 ) {
-     test_fail( __FILE__, __LINE__, "Zero HW Counters available", 
-			   num_counters );
-  }
-
-     /* create the eventset */
-  retval = PAPI_create_eventset( &EventSet );
-  if ( retval != PAPI_OK ) {
-     test_fail( __FILE__, __LINE__, "PAPI_create_eventset", 
-			   retval );
-  }
-
-     /* check all the masks */
-  for(i=0;i<MAX_TEST_EVENTS;i++) {
-    
-     if ( *mask & test_events[i].mask ) {
-
-           /* remove any derived events if told to */
-        if ((is_event_derived(test_events[i].event)) && (!allow_derived)) {
-	   *mask = *mask ^ test_events[i].mask;
-	   continue;
-        }
-
-	retval = PAPI_add_event( EventSet, test_events[i].event );
-
-	if ( retval == PAPI_OK ) {
-
-	   ( *number )++;
-#if 0
-	   if ((*number)==num_counters) {
-	     if ( !TESTS_QUIET) {
-	       fprintf(stdout, "Stopping with %d events due to HW limit\n",
-		       num_counters);
-	     }
-	     break;
-	   }
-#endif
+	/* create the eventset */
+	retval = PAPI_create_eventset( &EventSet );
+	if ( retval != PAPI_OK ) {
+		test_fail(__FILE__,__LINE__,"Trouble creating eventset",retval);
 	}
-	else {
-	   if ( !TESTS_QUIET ) {
-	     PAPI_event_code_to_name(test_events[i].event,name_string);
-	     fprintf( stdout, "%#x %s is not available.\n", 
-		      test_events[i].event,name_string);
-	   }
-	   *mask = *mask ^ test_events[i].mask;
-	}
-     }
-  }
 
-  return EventSet;
+
+	/* check all the masks */
+	for(i=0;i<MAX_TEST_EVENTS;i++) {
+
+		if ( *mask & test_events[i].mask ) {
+
+			/* remove any derived events if told to */
+			if ((is_event_derived(test_events[i].event)) &&
+				(!allow_derived)) {
+				*mask = *mask ^ test_events[i].mask;
+				continue;
+			}
+
+			retval = PAPI_add_event( EventSet,
+				test_events[i].event );
+
+			if ( retval == PAPI_OK ) {
+				( *number )++;
+			}
+			else {
+				if ( !TESTS_QUIET ) {
+				PAPI_event_code_to_name(test_events[i].event,
+							name_string);
+				fprintf( stdout, "%#x %s is not available.\n",
+					test_events[i].event,name_string);
+				}
+				*mask = *mask ^ test_events[i].mask;
+			}
+		}
+	}
+
+	return EventSet;
 }
 
 int

@@ -121,8 +121,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 	blength = prof_size( plength, scale, bucket, &num_buckets );
 	prof_alloc( num_bufs, blength );
 
-	if ( !TESTS_QUIET )
-		printf( "Overall event counts:\n" );
+	if ( !TESTS_QUIET ) printf( "Overall event counts:\n" );
 
 	for ( i = 0; i < num_events; i++ ) {
 		if ( ( retval =
@@ -193,15 +192,17 @@ main( int argc, char **argv )
 	int retval;
 	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet=tests_quiet( argc, argv );
 
 	prof_init( argc, argv, &prginfo );
 
 	hw_info = PAPI_get_hardware_info(  );
-        if ( hw_info == NULL )
+        if ( hw_info == NULL ) {
 	  test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	}
 
        	mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
 
@@ -216,6 +217,10 @@ main( int argc, char **argv )
 	mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
 #endif
 	EventSet = add_test_events( &num_events, &mask, 0 );
+	if (num_events==0) {
+		if (!quiet) printf("Trouble adding events\n");
+		test_skip(__FILE__,__LINE__,"add_test_events",2);
+	}
 	values = allocate_test_space( 1, num_events );
 
 /* profile the cleara and my_main address space */
@@ -242,25 +247,26 @@ main( int argc, char **argv )
 	if ( length < 0 )
 		test_fail( __FILE__, __LINE__, "Profile length < 0!", ( int ) length );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		prof_print_address( "Test case byte_profile: "
 				"Multi-event profiling at byte resolution.\n",
 				prginfo );
 		prof_print_prof_info( start, end, THRESHOLD, event_name );
 	}
 
-	retval =
-		do_profile( start, ( unsigned ) length,
+	retval = do_profile( start, ( unsigned ) length,
 			    FULL_SCALE * 2, THRESHOLD,
 			    PAPI_PROFIL_BUCKET_32, mask );
 
 	remove_test_events( &EventSet, mask );
 
-	if ( retval )
-		test_pass( __FILE__ );
-	else
+	if (retval == 0) {
 		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
-	return 1;
+	}
+
+	test_pass( __FILE__ );
+
+	return 0;
 }
 
 
