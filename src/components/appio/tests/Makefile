@@ -1,8 +1,8 @@
 NAME=appio
-include ../../Makefile_comp_tests
+include ../../Makefile_comp_tests.target
 
 %.o:%.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
 TESTS = appio_list_events appio_values_by_code appio_values_by_name appio_test_read_write appio_test_pthreads appio_test_fread_fwrite appio_test_seek
 
@@ -20,7 +20,7 @@ endif
 
 
 %.o:%.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
 appio_list_events: appio_list_events.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_list_events.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)

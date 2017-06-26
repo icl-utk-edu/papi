@@ -1,10 +1,10 @@
 NAME=micpower
-include ../../Makefile_comp_tests
+include ../../Makefile_comp_tests.target
 
 %.o:%.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
-TESTS = micpower_basic 
+TESTS = micpower_basic
 
 micpower_tests: $(TESTS)
 

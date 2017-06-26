@@ -1,8 +1,8 @@
 NAME=example
-include ../../Makefile_comp_tests
+include ../../Makefile_comp_tests.target
 
 %.o:%.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
 TESTS = example_basic example_multiple_components
 
@@ -16,8 +16,3 @@ example_multiple_components: example_multiple_components.o $(UTILOBJS) $(PAPILIB
 
 clean:
 	rm -f $(TESTS) *.o
-
-
-
-
-
