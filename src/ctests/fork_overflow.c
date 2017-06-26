@@ -14,25 +14,25 @@
 
 #define MAX_EVENTS  3
 
-int Event[MAX_EVENTS] = {
+static int Event[MAX_EVENTS] = {
 	PAPI_TOT_CYC,
 	PAPI_FP_INS,
 	PAPI_FAD_INS,
 };
 
-int Threshold[MAX_EVENTS] = {
+static int Threshold[MAX_EVENTS] = {
 	8000000,
 	4000000,
 	4000000,
 };
 
-int num_events = 1;
-int EventSet = PAPI_NULL;
-char *name = "unknown";
-struct timeval start, last;
-long count, total;
+static int num_events = 1;
+static int EventSet = PAPI_NULL;
+static char *name = "unknown";
+static struct timeval start, last;
+static long count, total;
 
-void
+static void
 my_handler( int EventSet, void *pc, long long ovec, void *context )
 {
 	( void ) EventSet;
@@ -44,7 +44,7 @@ my_handler( int EventSet, void *pc, long long ovec, void *context )
 	total++;
 }
 
-void
+static void
 zero_count( void )
 {
 	gettimeofday( &start, NULL );
@@ -53,9 +53,13 @@ zero_count( void )
 	total = 0;
 }
 
-#define HERE(str)  if(!TESTS_QUIET)printf("[%d] %s, %s\n", getpid(), name, str);
+static void
+print_here( char *str) {
 
-void
+	if (!TESTS_QUIET) printf("[%d] %s, %s\n", getpid(), name, str);
+}
+
+static void
 print_rate( char *str )
 {
 	static int last_count = -1;
@@ -87,7 +91,7 @@ print_rate( char *str )
 	last = now;
 }
 
-void
+static void
 do_cycles( int program_time )
 {
 	struct timeval start, now;
@@ -108,14 +112,14 @@ do_cycles( int program_time )
 	}
 }
 
-void
+static void
 my_papi_init( void )
 {
 	if ( PAPI_library_init( PAPI_VER_CURRENT ) != PAPI_VER_CURRENT )
 		test_fail( name, __LINE__, "PAPI_library_init failed", 1 );
 }
 
-void
+static void
 my_papi_start( void )
 {
 	int ev;
@@ -126,8 +130,10 @@ my_papi_start( void )
 		test_fail( name, __LINE__, "PAPI_create_eventset failed", 1 );
 
 	for ( ev = 0; ev < num_events; ev++ ) {
-		if ( PAPI_add_event( EventSet, Event[ev] ) != PAPI_OK )
-			test_fail( name, __LINE__, "PAPI_add_event failed", 1 );
+		if ( PAPI_add_event( EventSet, Event[ev] ) != PAPI_OK ) {
+			if (!TESTS_QUIET) printf("Trouble adding event\n");
+			test_skip( name, __LINE__, "PAPI_add_event failed", 1 );
+		}
 	}
 
 	for ( ev = 0; ev < num_events; ev++ ) {
@@ -141,14 +147,14 @@ my_papi_start( void )
 		test_fail( name, __LINE__, "PAPI_start failed", 1 );
 }
 
-void
+static void
 my_papi_stop( void )
 {
 	if ( PAPI_stop( EventSet, NULL ) != PAPI_OK )
 		test_fail( name, __LINE__, "PAPI_stop failed", 1 );
 }
 
-void
+static void
 run( char *str, int len )
 {
 	int n;
@@ -164,55 +170,30 @@ main( int argc, char **argv )
 {
 	char buf[100];
 
-	if ( argc < 2 || sscanf( argv[1], "%d", &num_events ) < 1 )
-		num_events = 1;
-	if ( num_events < 0 || num_events > MAX_EVENTS )
-		num_events = 1;
+	int quiet,retval;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Used to be able to set this via command line */
+	num_events=1;
+
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
+
 	do_cycles( 1 );
+
 	zero_count(  );
-	my_papi_init(  );
+
+	retval=PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval!=PAPI_VER_CURRENT) {
+		test_fail( name, __LINE__, "PAPI_library_init failed", 1 );
+	}
+
 	name = argv[0];
-	if (!TESTS_QUIET) printf( "[%d] %s, num_events = %d\n", getpid(  ), name, num_events );
+	if (!quiet) printf( "[%d] %s, num_events = %d\n", getpid(  ), name, num_events );
 	sprintf( buf, "%d", num_events );
 	my_papi_start(  );
 	run( name, 3 );
-#if defined(PCHILD)
-	HERE( "stop" );
-	my_papi_stop(  );
-	HERE( "end" );
-	test_pass( name );
-#elif defined(PEXEC)
-	HERE( "stop" );
-	my_papi_stop(  );
-	HERE( "exec(./child_overflow)" );
-	if ( access( "./child_overflow", X_OK ) == 0 )
-		execl( "./child_overflow", "./child_overflow",
-			   ( TESTS_QUIET ? "TESTS_QUIET" : NULL ), NULL );
-	else if ( access( "./ctests/child_overflow", X_OK ) == 0 )
-		execl( "./ctests/child_overflow", "./ctests/child_overflow",
-			   ( TESTS_QUIET ? "TESTS_QUIET" : NULL ), NULL );
-	test_fail( name, __LINE__, "exec failed", 1 );
-#elif defined(SYSTEM)
-	HERE( "system(./child_overflow)" );
-	if ( access( "./child_overflow", X_OK ) == 0 )
-		( TESTS_QUIET ? system( "./child_overflow TESTS_QUIET" ) :
-		  system( "./child_overflow" ) );
-	else if ( access( "./ctests/child_overflow", X_OK ) == 0 )
-		( TESTS_QUIET ? system( "./ctests/child_overflow TESTS_QUIET" ) :
-		  system( "./ctests/child_overflow" ) );
-	test_pass( name);
-#elif defined(SYSTEM2)
-	HERE( "system(./burn)" );
-	if ( access( "./burn", X_OK ) == 0 )
-		( TESTS_QUIET ? system( "./burn TESTS_QUIET" ) : system( "./burn" ) );
-	else if ( access( "./ctests/burn", X_OK ) == 0 )
-		( TESTS_QUIET ? system( "./ctests/burn TESTS_QUIET" ) :
-		  system( "./ctests/burn" ) );
-	test_pass( name);
-#else
-	HERE( "fork" );
+
+	print_here( "fork" );
 	{
 		int ret = fork(  );
 		if ( ret < 0 )
@@ -225,10 +206,10 @@ main( int argc, char **argv )
 			my_papi_init(  );
 			my_papi_start(  );
 			run( "child", 5 );
-			HERE( "stop" );
+			print_here( "stop" );
 			my_papi_stop(  );
 			sleep( 3 );
-			HERE( "end" );
+			print_here( "end" );
 			exit( 0 );
 		}
 		run( "main", 14 );
@@ -236,14 +217,13 @@ main( int argc, char **argv )
 		{
 			int status;
 			wait( &status );
-			HERE( "end" );
+			print_here( "end" );
 			if ( WEXITSTATUS( status ) != 0 )
 				test_fail( name, __LINE__, "child failed", 1 );
 			else
 				test_pass( name);
 		}
 	}
-#endif
 
 	return 0;
 }

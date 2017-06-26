@@ -372,20 +372,20 @@ reset: reset.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 reset_multiplex: reset_multiplex.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset_multiplex.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o reset_multiplex
 
-fork_overflow: fork_exec_overflow.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork_exec_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o fork_overflow
+fork_overflow: fork_overflow.c $(TESTLIB) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o fork_overflow
 
-exec_overflow: fork_exec_overflow.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPEXEC fork_exec_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exec_overflow
+exec_overflow: exec_overflow.c $(TESTLIB) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPEXEC exec_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exec_overflow
 
-child_overflow: fork_exec_overflow.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPCHILD fork_exec_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o child_overflow
+child_overflow: child_overflow.c $(TESTLIB) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPCHILD child_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o child_overflow
 
-system_child_overflow: fork_exec_overflow.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSYSTEM fork_exec_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o system_child_overflow
+system_child_overflow: system_child_overflow.c $(TESTLIB) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSYSTEM system_child_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o system_child_overflow
 
-system_overflow: fork_exec_overflow.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSYSTEM2 fork_exec_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o system_overflow
+system_overflow: system_overflow.c $(TESTLIB) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSYSTEM2 system_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o system_overflow
 
 burn: burn.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) burn.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o burn
