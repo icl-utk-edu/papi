@@ -79,20 +79,28 @@ main( int argc, char **argv )
 	int retval, event = 0;
 	float rtime, ptime, mflips, mflops, ipc, epc;
 	long long flpins, flpops, ins, ref, core, evt;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
+
 
 	init_mat();
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\n----------------------------------\n" );
 		printf( "PAPI_flips\n");
 	}
 
-	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
-		PAPI_perror( "PAPI_flips" );
+	retval=PAPI_flips(&rtime, &ptime, &flpins, &mflips);
+	if (retval!=PAPI_OK) {
+		if (!quiet) PAPI_perror( "PAPI_flips" );
+		if (retval==PAPI_ENOEVNT) {
+			test_skip(__FILE__,__LINE__,"Could not add event",0);
+		}
+	}
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nStart\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -104,7 +112,7 @@ main( int argc, char **argv )
 	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
 		PAPI_perror( "PAPI_flips" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nClassic\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -116,7 +124,7 @@ main( int argc, char **argv )
 	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
 		PAPI_perror( "PAPI_flips" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nSwapped\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -128,7 +136,7 @@ main( int argc, char **argv )
 	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
 		PAPI_perror( "PAPI_stop_counters" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\n----------------------------------\n" );
 		printf( "PAPI_flops\n");
 	}
@@ -136,7 +144,7 @@ main( int argc, char **argv )
 	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
 		PAPI_perror( "PAPI_flops" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nStart\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -148,7 +156,7 @@ main( int argc, char **argv )
 	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
 		PAPI_perror( "PAPI_flops" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nClassic\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -160,7 +168,7 @@ main( int argc, char **argv )
 	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
 		PAPI_perror( "PAPI_flops" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nSwapped\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -172,7 +180,7 @@ main( int argc, char **argv )
 	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
 		PAPI_perror( "PAPI_stop_counters" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\n----------------------------------\n" );
 		printf( "PAPI_ipc\n");
 	}
@@ -180,7 +188,7 @@ main( int argc, char **argv )
 	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
 		PAPI_perror( "PAPI_ipc" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nStart\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -192,7 +200,7 @@ main( int argc, char **argv )
 	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
 		PAPI_perror( "PAPI_ipc" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nClassic\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -204,7 +212,7 @@ main( int argc, char **argv )
 	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
 		PAPI_perror( "PAPI_ipc" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nSwapped\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -216,7 +224,7 @@ main( int argc, char **argv )
 	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
 		PAPI_perror( "PAPI_stop_counters" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\n----------------------------------\n" );
 		printf( "PAPI_epc\n");
 	}
@@ -228,14 +236,14 @@ main( int argc, char **argv )
 		 	printf("Can't find %s; Using PAPI_TOT_INS\n", argv[1]);
 		 	event = 0;
 		} else {
-		 	if (!TESTS_QUIET) printf("Using event %s\n", argv[1]);
+		 	if (!quiet) printf("Using event %s\n", argv[1]);
 		}
 	}
 
 	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK )
 		PAPI_perror( "PAPI_epc" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nStart\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -249,7 +257,7 @@ main( int argc, char **argv )
 	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK )
 		PAPI_perror( "PAPI_epc" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nClassic\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -262,7 +270,7 @@ main( int argc, char **argv )
 	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK )
 		PAPI_perror( "PAPI_epc" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\nSwapped\n");
 		printf( "real time:       %f\n", rtime);
 		printf( "process time:    %f\n", ptime);
@@ -276,7 +284,7 @@ main( int argc, char **argv )
 	if ( PAPI_stop_counters(NULL, 0)  != PAPI_OK )
 		PAPI_perror( "PAPI_stop_counters" );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "\n----------------------------------\n" );
 	}
 

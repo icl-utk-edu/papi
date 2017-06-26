@@ -32,7 +32,9 @@ int main( int argc, char **argv ) {
    int EventSet8 = PAPI_NULL;
    int EventSet9 = PAPI_NULL;
    int EventSet10 = PAPI_NULL;
- 
+
+	int quiet=0;
+
    PAPI_domain_option_t domain_opt;
    PAPI_granularity_option_t gran_opt;
    PAPI_cpu_option_t cpu_opt;
@@ -55,14 +57,14 @@ int main( int argc, char **argv ) {
    total_affinity_values[0]=0;
    total_all_values[0]=0;
 
-   /* Set TESTS_QUIET variable */
-   tests_quiet( argc, argv );
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
-   /* Init the PAPI library */
-   retval = PAPI_library_init( PAPI_VER_CURRENT );
-   if ( retval != PAPI_VER_CURRENT ) {
-      test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-   }
+	/* Init the PAPI library */
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT ) {
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
    /***************************/
    /***************************/
@@ -70,12 +72,8 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if (!TESTS_QUIET) {
+   if (!quiet) {
       printf("\nTrying PAPI_TOT_CYC with different domains:\n");
-   }
-
-   if (!TESTS_QUIET) {
-      printf("\tPAPI_DOM_USER:\t\t\t");
    }
 
    retval = PAPI_create_eventset(&EventSet1);
@@ -85,11 +83,15 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_add_named_event(EventSet1, "PAPI_TOT_CYC");
    if (retval != PAPI_OK) {
-      if ( !TESTS_QUIET ) {
+      if ( !quiet ) {
          fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
       }
-      test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+      test_skip(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
    }
+
+	if (!quiet) {
+		printf("\tPAPI_DOM_USER:\t\t\t");
+	}
 
    retval = PAPI_start( EventSet1 );
    if ( retval != PAPI_OK ) {
@@ -103,7 +105,7 @@ int main( int argc, char **argv ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("%lld\n",dom_user_values[0]);
    }
 
@@ -114,7 +116,7 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if (!TESTS_QUIET) {
+   if (!quiet) {
       printf("\tPAPI_DOM_USER|PAPI_DOM_KERNEL:\t");
    }
 
@@ -147,7 +149,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_add_named_event(EventSet2, "PAPI_TOT_CYC");
    if (retval != PAPI_OK) {
-      if ( !TESTS_QUIET ) {
+      if ( !quiet ) {
          fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
       }
       test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -165,7 +167,7 @@ int main( int argc, char **argv ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("%lld\n",dom_userkernel_values[0]);
    }
 
@@ -175,7 +177,7 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if (!TESTS_QUIET) {
+   if (!quiet) {
       printf("\tPAPI_DOM_ALL:\t\t\t");
    }
 
@@ -208,7 +210,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_add_named_event(EventSet3, "PAPI_TOT_CYC");
    if (retval != PAPI_OK) {
-      if ( !TESTS_QUIET ) {
+      if ( !quiet ) {
          fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
       }
       test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -226,7 +228,7 @@ int main( int argc, char **argv ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("%lld\n",dom_all_values[0]);
    }
 
@@ -237,11 +239,11 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\nTrying different granularities:\n");
    }
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\tPAPI_GRN_THR:\t\t\t");
    }
 
@@ -268,7 +270,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_add_named_event(EventSet4, "PAPI_TOT_CYC");
    if (retval != PAPI_OK) {
-      if ( !TESTS_QUIET ) {
+      if ( !quiet ) {
          fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
       }
       test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -286,7 +288,7 @@ int main( int argc, char **argv ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("%lld\n",grn_thr_values[0]);
    }
 
@@ -297,7 +299,7 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\tPAPI_GRN_PROC:\t\t\t");
    }
 
@@ -316,14 +318,14 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
    if (retval != PAPI_OK) {
-      if (!TESTS_QUIET) {
+      if (!quiet) {
          printf("Unable to set PAPI_GRN_PROC\n");
       }
    }
    else {
       retval = PAPI_add_named_event(EventSet5, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
-         if ( !TESTS_QUIET ) {
+         if ( !quiet ) {
             printf("Error trying to add PAPI_TOT_CYC\n");
          }
          test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -341,7 +343,7 @@ int main( int argc, char **argv ) {
          test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
       }
 
-      if ( !TESTS_QUIET ) {
+      if ( !quiet ) {
          printf("%lld\n",grn_proc_values[0]);
       }
    }
@@ -354,7 +356,7 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\tPAPI_GRN_SYS:\t\t\t");
    }
 
@@ -373,14 +375,14 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
    if (retval != PAPI_OK) {
-      if (!TESTS_QUIET) {
+      if (!quiet) {
          printf("Unable to set PAPI_GRN_SYS\n");
       }
    }
    else {
       retval = PAPI_add_named_event(EventSet6, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
-         if ( !TESTS_QUIET ) {
+         if ( !quiet ) {
             printf("Error trying to add PAPI_TOT_CYC\n");
          }
          test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -398,7 +400,7 @@ int main( int argc, char **argv ) {
             test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
          }
 
-         if ( !TESTS_QUIET ) {
+         if ( !quiet ) {
             printf("%lld\n",grn_sys_values[0]);
          }
       }
@@ -412,7 +414,7 @@ int main( int argc, char **argv ) {
    /****************************/
    /****************************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\tPAPI_GRN_SYS_CPU:\t\t");
    }
 
@@ -431,14 +433,14 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
    if (retval != PAPI_OK) {
-      if (!TESTS_QUIET) {
+      if (!quiet) {
          printf("Unable to set PAPI_GRN_SYS_CPU\n");
       }
    }
    else {
       retval = PAPI_add_named_event(EventSet7, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
-         if ( !TESTS_QUIET ) {
+         if ( !quiet ) {
             printf("Error trying to add PAPI_TOT_CYC\n");
          }
          test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -456,7 +458,7 @@ int main( int argc, char **argv ) {
          test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
       }
 
-      if ( !TESTS_QUIET ) {
+      if ( !quiet ) {
          printf("%lld\n",grn_sys_cpu_values[0]);
       }
    }
@@ -468,11 +470,11 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\nPAPI_GRN_SYS plus CPU attach:\n");
    }
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\tGRN_SYS, DOM_USER, CPU 0 attach:\t");
    }
 
@@ -491,7 +493,7 @@ int main( int argc, char **argv ) {
 
    retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
    if (retval != PAPI_OK) {
-      if (!TESTS_QUIET) {
+      if (!quiet) {
          printf("Unable to set PAPI_GRN_SYS\n");
       }
    }
@@ -514,7 +516,7 @@ int main( int argc, char **argv ) {
 
       retval = PAPI_add_named_event(EventSet8, "PAPI_TOT_CYC");
       if (retval != PAPI_OK) {
-         if ( !TESTS_QUIET ) {
+         if ( !quiet ) {
             printf("Error trying to add PAPI_TOT_CYC\n");
          }
          test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -532,7 +534,7 @@ int main( int argc, char **argv ) {
          test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
       }
 
-      if ( !TESTS_QUIET ) {
+      if ( !quiet ) {
          printf("%lld\n",total_values[0]);
       }
    }
@@ -544,7 +546,7 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\tGRN_SYS, DOM_USER, CPU 0 affinity:\t");
    }
 
@@ -554,11 +556,11 @@ int main( int argc, char **argv ) {
    retval=sched_setaffinity(0, sizeof(mask), &mask);
 
    if (retval<0) {
-     if (!TESTS_QUIET) {
+     if (!quiet) {
         printf("Setting affinity failed: %s\n",strerror(errno));
      }
    } else {
-   
+
       retval = PAPI_create_eventset(&EventSet9);
       if (retval != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
@@ -574,13 +576,13 @@ int main( int argc, char **argv ) {
 
       retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
       if (retval != PAPI_OK) {
-         if (!TESTS_QUIET) {
+         if (!quiet) {
             printf("Unable to set PAPI_GRN_SYS\n");
          }
       }
       else {
          /* we need to set to a certain cpu for uncore to work */
-      
+
          cpu_opt.eventset=EventSet9;
          cpu_opt.cpu_num=0;
 
@@ -591,7 +593,7 @@ int main( int argc, char **argv ) {
 
          retval = PAPI_add_named_event(EventSet9, "PAPI_TOT_CYC");
          if (retval != PAPI_OK) {
-            if ( !TESTS_QUIET ) {
+            if ( !quiet ) {
                printf("Error trying to add PAPI_TOT_CYC\n");
             }
             test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -609,7 +611,7 @@ int main( int argc, char **argv ) {
             test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
          }
 
-         if ( !TESTS_QUIET ) {
+         if ( !quiet ) {
             printf("%lld\n",total_affinity_values[0]);
          }
       }
@@ -621,7 +623,7 @@ int main( int argc, char **argv ) {
    /***************************/
    /***************************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\tGRN_SYS, DOM_ALL, CPU 0 affinity:\t");
    }
 
@@ -633,11 +635,11 @@ int main( int argc, char **argv ) {
    retval=sched_setaffinity(0, sizeof(mask), &mask);
 
    if (retval<0) {
-     if (!TESTS_QUIET) {
+     if (!quiet) {
         printf("Setting affinity failed: %s\n",strerror(errno));
      }
    } else {
-   
+
       retval = PAPI_create_eventset(&EventSet10);
       if (retval != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
@@ -671,13 +673,13 @@ int main( int argc, char **argv ) {
 
       retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
       if (retval != PAPI_OK) {
-         if (!TESTS_QUIET) {
+         if (!quiet) {
             printf("Unable to set PAPI_GRN_SYS\n");
          }
       }
       else {
          /* we need to set to a certain cpu for uncore to work */
-      
+
          cpu_opt.eventset=EventSet10;
          cpu_opt.cpu_num=0;
 
@@ -688,7 +690,7 @@ int main( int argc, char **argv ) {
 
          retval = PAPI_add_named_event(EventSet10, "PAPI_TOT_CYC");
          if (retval != PAPI_OK) {
-            if ( !TESTS_QUIET ) {
+            if ( !quiet ) {
                printf("Error trying to add PAPI_TOT_CYC\n");
             }
             test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
@@ -706,7 +708,7 @@ int main( int argc, char **argv ) {
             test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
          }
 
-         if ( !TESTS_QUIET ) {
+         if ( !quiet ) {
             printf("%lld\n",total_all_values[0]);
          }
       }
@@ -716,11 +718,11 @@ int main( int argc, char **argv ) {
    /* Validation */
    /**************/
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("\n");
    }
 
-   if ( !TESTS_QUIET ) {
+   if ( !quiet ) {
       printf("Validating:\n");
       printf("\tDOM_USER|DOM_KERNEL (%lld) > DOM_USER (%lld)\n",
              dom_userkernel_values[0],dom_user_values[0]);
@@ -729,11 +731,11 @@ int main( int argc, char **argv ) {
       test_fail( __FILE__, __LINE__, "DOM_USER too high", 0 );
    }
 
-   if ( !TESTS_QUIET ) {
-      printf("\n");
-   }
+	if ( !quiet ) {
+		printf("\n");
+	}
 
-   test_pass( __FILE__ );
+	test_pass( __FILE__ );
 
-   return 0;
+	return 0;
 }

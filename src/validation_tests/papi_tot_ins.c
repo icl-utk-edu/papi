@@ -48,7 +48,8 @@ static void test_million(int quiet) {
 
 	result=PAPI_add_named_event(eventset,"PAPI_TOT_INS");
 	if (result!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__, "adding PAPI_TOT_INS", result );
+		if (!quiet) printf("Could not add PAPI_TOT_INS\n");
+		test_skip( __FILE__, __LINE__, "adding PAPI_TOT_INS", result );
 	}
 
 	for(i=0;i<NUM_RUNS;i++) {

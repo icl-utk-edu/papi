@@ -47,7 +47,8 @@ int main(int argc, char **argv) {
 
 	retval=PAPI_add_named_event(total_eventset,"PAPI_BR_INS");
 	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
+		if (!quiet) printf("Could not add PAPI_BR_INS\n");
+		test_skip( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
 	}
 
 	/* Create miss eventset */

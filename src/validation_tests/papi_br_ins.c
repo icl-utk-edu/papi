@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
 	retval=PAPI_add_named_event(eventset,"PAPI_BR_INS");
 	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
+		test_skip( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
 	}
 
 	if (!quiet) {

@@ -54,7 +54,7 @@ my_dummy( int i )
 }
 
 static void
-my_main(  )
+my_main( void )
 {
 	int i, j;
 

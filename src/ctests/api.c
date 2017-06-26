@@ -44,174 +44,239 @@ main( int argc, char **argv )
 	if ( !quiet ) printf( "%d\n", retval );
 
 	if ( retval == 0) {
-	   if ( !quiet ) printf( "No components found, skipping high level tests\n");
+		if ( !quiet ) printf( "No components found, skipping high level tests\n");
+		test_skip(__FILE__, __LINE__, "No components found", 0);
 	}
 
+	if ( !quiet ) printf( "Testing PAPI_num_counters... " );
+
+	/* get the number of hardware counters available on the system  */
+	retval = PAPI_num_counters(  );
+	if ( retval != PAPI_get_cmp_opt( PAPI_MAX_HWCTRS, NULL, 0 ) ) {
+		test_fail( __FILE__, __LINE__, "PAPI_num_counters", retval );
+	}
+	else if ( !quiet ) printf( "%d\n", retval );
+
+
+	/* Test PAPI_start_counters() */
+	if ( !quiet ) printf( "Testing PAPI_start_counters... " );
+	// pass invalid 1st argument
+	retval = PAPI_start_counters( NULL, NUM_COUNTERS );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
+	}
+	// pass invalid 2nd argument
+	retval = PAPI_start_counters( Events, 0 );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
+	}
+	/* Try PAPI_TOT_INS */
+	retval = PAPI_start_counters( Events, NUM_COUNTERS );
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("\nCould not start PAPI_TOT_INS\n");
+		test_skip( __FILE__, __LINE__, "PAPI_TOT_INS not available.", retval );
+	}
 	else {
-
-	   if ( !quiet ) printf( "Testing PAPI_num_counters... " );
-
-	   /* get the number of hardware counters available on the system  */
-           retval = PAPI_num_counters(  );
-	   if ( retval != PAPI_get_cmp_opt( PAPI_MAX_HWCTRS, NULL, 0 ) )
-	      test_fail( __FILE__, __LINE__, "PAPI_num_counters", retval );
-	   else if ( !quiet ) printf( "%d\n", retval );
-
-
-	   if ( !quiet ) printf( "Testing PAPI_start_counters... " );
-	   retval = PAPI_start_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
-	   retval = PAPI_start_counters( Events, 0 );	// pass invalid 2nd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
-	   retval = PAPI_start_counters( Events, NUM_COUNTERS );	// start counting hardware events
-	   if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
-	   else if ( !quiet )
-		printf( "started PAPI_TOT_INS\n" );
-
-
-	   if ( !quiet )
-		printf( "Testing PAPI_stop_counters... " );
-	   retval = PAPI_stop_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
-	   retval = PAPI_stop_counters( values, 0 );	// pass invalid 2nd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
-	   retval = PAPI_stop_counters( values, NUM_COUNTERS );	// stop counters and return current counts
-	   if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
-	   else if ( !quiet )
-		printf( "stopped counting PAPI_TOT_INS\n" );
-	//NOTE: There are currently no checks on whether or not counter values are correct 
-
-
-	   retval = PAPI_start_counters( Events, NUM_COUNTERS );	// start counting hardware events again
-	   if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
-
-
-	   if ( !quiet )
-		printf( "Testing PAPI_read_counters... " );
-	   retval = PAPI_read_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
-	   retval = PAPI_read_counters( values, 0 );	// pass invalid 2nd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
-	   retval = PAPI_read_counters( values, NUM_COUNTERS );	// copy current counts to array and reset counters
-	   if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
-	   else if ( !quiet )
-		printf( "read PAPI_TOT_INS counts and reset counter\n" );
-	//NOTE: There are currently no checks on whether or not counter values are correct 
-
-
-	   if ( !quiet )
-		printf( "Testing PAPI_accum_counters... " );
-	   retval = PAPI_accum_counters( NULL, NUM_COUNTERS );	// pass invalid 1st argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
-	   retval = PAPI_accum_counters( values, 0 );	// pass invalid 2nd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
-	   retval = PAPI_accum_counters( values, NUM_COUNTERS );	// add current counts to array and reset counters
-	   if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
-	   else if ( !quiet )
-		printf( "added PAPI_TOT_INS counts and reset counter\n" );
-	//NOTE: There are currently no checks on whether or not counter values are correct 
-
-
-	   retval = PAPI_stop_counters( values, NUM_COUNTERS );	// stop counting hardware events 
-	   if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
-
-
-	   if ( !quiet )
-		printf( "Testing PAPI_ipc... " );
-	   retval = PAPI_ipc( NULL, &ptime, &ins, &ipc );	// pass invalid 1st argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
-	   retval = PAPI_ipc( &rtime, NULL, &ins, &ipc );	// pass invalid 2nd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
-	   retval = PAPI_ipc( &rtime, &ptime, NULL, &ipc );	// pass invalid 3rd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
-	   retval = PAPI_ipc( &rtime, &ptime, &ins, NULL );	// pass invalid 4th argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
-	   retval = PAPI_ipc( &rtime, &ptime, &ins, &ipc );	// get instructions per cycle, real and processor time 
-	   if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
-	   else if ( !quiet )
-		printf( "got instructions per cycle, real and processor time\n" );
-	//NOTE: There are currently no checks on whether or not returned values are correct 
-
-
-    //NOTE: PAPI_flips and PAPI_flops fail if any other low-level calls have been made!
-	   PAPI_shutdown(  );
-	   retval = PAPI_library_init( PAPI_VER_CURRENT );
-	   if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
-
-	   if ( !quiet )
-		printf( "Testing PAPI_flips... " );
-	   retval = PAPI_flips( NULL, &ptime, &flpins, &mflips );	// pass invalid 1st argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
-	   retval = PAPI_flips( &rtime, NULL, &flpins, &mflips );	// pass invalid 2nd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
-	   retval = PAPI_flips( &rtime, &ptime, NULL, &mflips );	// pass invalid 3rd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
-	   retval = PAPI_flips( &rtime, &ptime, &flpins, NULL );	// pass invalid 4th argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
-	   retval = PAPI_flips( &rtime, &ptime, &flpins, &mflips );	// get Mflips/s, real and processor time 
-	   if ( retval == PAPI_ENOEVNT )
-		test_warn( __FILE__, __LINE__, "PAPI_flips", retval);
-	   else if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
-	   else if ( !quiet )
-		printf( "got Mflips/s, real and processor time\n" );
-	//NOTE: There are currently no checks on whether or not returned values are correct 
-
-
-	   PAPI_shutdown(  );
-	   retval = PAPI_library_init( PAPI_VER_CURRENT );
-	   if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
-
-	   if ( !quiet )
-		printf( "Testing PAPI_flops... " );
-	   retval = PAPI_flops( NULL, &ptime, &flpops, &mflops );	// pass invalid 1st argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
-	   retval = PAPI_flops( &rtime, NULL, &flpops, &mflops );	// pass invalid 2nd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
-	   retval = PAPI_flops( &rtime, &ptime, NULL, &mflops );	// pass invalid 3rd argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
-	   retval = PAPI_flops( &rtime, &ptime, &flpops, NULL );	// pass invalid 4th argument
-	   if ( retval != PAPI_EINVAL )
-		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
-	   retval = PAPI_flops( &rtime, &ptime, &flpops, &mflops );	// get Mflops/s, real and processor time 
-	   if ( retval == PAPI_ENOEVNT )
-		test_warn( __FILE__, __LINE__, "PAPI_flops", retval);
-	   else if ( retval != PAPI_OK ) {
-		test_fail( __FILE__, __LINE__, "PAPI_flops", retval ); }
-	   else if ( !quiet ) {
-		printf( "got Mflops/s, real and processor time\n" ); }
-	//NOTE: There are currently no checks on whether or not returned values are correct 
+		if ( !quiet ) printf( "started PAPI_TOT_INS\n" );
 	}
+
+	/* Test PAPI_stop_counters() */
+	if ( !quiet ) printf( "Testing PAPI_stop_counters... " );
+	// pass invalid 1st argument
+	retval = PAPI_stop_counters( NULL, NUM_COUNTERS );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+	}
+	// pass invalid 2nd argument
+	retval = PAPI_stop_counters( values, 0 );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+	}
+	// stop counters and return current counts
+	retval = PAPI_stop_counters( values, NUM_COUNTERS );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+	}
+	else if ( !quiet ) printf( "stopped counting PAPI_TOT_INS\n" );
+	//NOTE: There are currently no checks on whether or not counter values are correct
+
+
+	// start counting hardware events again
+	retval = PAPI_start_counters( Events, NUM_COUNTERS );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start_counters", retval );
+	}
+
+	/* Test PAPI_read_counters() */
+	if ( !quiet ) printf( "Testing PAPI_read_counters... " );
+	// pass invalid 1st argument
+	retval = PAPI_read_counters( NULL, NUM_COUNTERS );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
+	}
+	// pass invalid 2nd argument
+	retval = PAPI_read_counters( values, 0 );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
+	}
+	// copy current counts to array and reset counters
+	retval = PAPI_read_counters( values, NUM_COUNTERS );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_read_counters", retval );
+	}
+	else {
+		if ( !quiet ) printf( "read PAPI_TOT_INS counts and reset counter\n" );
+	}
+	//NOTE: There are currently no checks on whether or not counter values are correct 
+
+
+	/* Test PAPI_accum_counters() */
+	if ( !quiet ) printf( "Testing PAPI_accum_counters... " );
+	// pass invalid 1st argument
+	retval = PAPI_accum_counters( NULL, NUM_COUNTERS );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
+	}
+	// pass invalid 2nd argument
+	retval = PAPI_accum_counters( values, 0 );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
+	}
+	// add current counts to array and reset counters
+	retval = PAPI_accum_counters( values, NUM_COUNTERS );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_accum_counters", retval );
+	}
+	else {
+		if ( !quiet ) printf( "added PAPI_TOT_INS counts and reset counter\n" );
+	}
+	//NOTE: There are currently no checks on whether or not counter values are correct 
+
+
+	// stop counting hardware events
+	retval = PAPI_stop_counters( values, NUM_COUNTERS );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop_counters", retval );
+	}
+
+
+	/* Test PAPI_ipc() */
+	if ( !quiet ) printf( "Testing PAPI_ipc... " );
+	// pass invalid 1st argument
+	retval = PAPI_ipc( NULL, &ptime, &ins, &ipc );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
+	}
+	// pass invalid 2nd argument
+	retval = PAPI_ipc( &rtime, NULL, &ins, &ipc );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
+	}
+	// pass invalid 3rd argument
+	retval = PAPI_ipc( &rtime, &ptime, NULL, &ipc );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
+	}
+	// pass invalid 4th argument
+	retval = PAPI_ipc( &rtime, &ptime, &ins, NULL );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
+	}
+	// get instructions per cycle, real and processor time
+	retval = PAPI_ipc( &rtime, &ptime, &ins, &ipc );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
+	}
+	else {
+		if ( !quiet ) printf( "got instructions per cycle, real and processor time\n" );
+	}
+	//NOTE: There are currently no checks on whether or not returned values are correct 
+
+
+	//NOTE: PAPI_flips and PAPI_flops fail if any other low-level calls have been made!
+	PAPI_shutdown(  );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT ) {
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
+
+	/* Test PAPI_flips() */
+	if ( !quiet ) printf( "Testing PAPI_flips... " );
+	// pass invalid 1st argument
+	retval = PAPI_flips( NULL, &ptime, &flpins, &mflips );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
+	}
+	// pass invalid 2nd argument
+	retval = PAPI_flips( &rtime, NULL, &flpins, &mflips );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
+	}
+	// pass invalid 3rd argument
+	retval = PAPI_flips( &rtime, &ptime, NULL, &mflips );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
+	}
+	// pass invalid 4th argument
+	retval = PAPI_flips( &rtime, &ptime, &flpins, NULL );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
+	}
+	// get Mflips/s, real and processor time
+	retval = PAPI_flips( &rtime, &ptime, &flpins, &mflips );
+	if ( retval == PAPI_ENOEVNT ) {
+		test_warn( __FILE__, __LINE__, "PAPI_flips", retval);
+	}
+	else if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flips", retval );
+	}
+	else {
+		if ( !quiet ) printf( "got Mflips/s, real and processor time\n" );
+	}
+	//NOTE: There are currently no checks on whether or not returned values are correct 
+
+
+	PAPI_shutdown(  );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT ) {
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
+
+	/* Test PAPI_flops() */
+	if ( !quiet ) printf( "Testing PAPI_flops... " );
+	// pass invalid 1st argument
+	retval = PAPI_flops( NULL, &ptime, &flpops, &mflops );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
+	}
+	// pass invalid 2nd argument
+	retval = PAPI_flops( &rtime, NULL, &flpops, &mflops );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
+	}
+	// pass invalid 3rd argument
+	retval = PAPI_flops( &rtime, &ptime, NULL, &mflops );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
+	}
+	// pass invalid 4th argument
+	retval = PAPI_flops( &rtime, &ptime, &flpops, NULL );
+	if ( retval != PAPI_EINVAL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
+	}
+	// get Mflops/s, real and processor time
+	retval = PAPI_flops( &rtime, &ptime, &flpops, &mflops );
+	if ( retval == PAPI_ENOEVNT ) {
+		test_warn( __FILE__, __LINE__, "PAPI_flops", retval);
+	}
+	else if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_flops", retval );
+	}
+	else if ( !quiet ) {
+		printf( "got Mflops/s, real and processor time\n" );
+	}
+	//NOTE: There are currently no checks on whether or not returned values are correct 
+
 
         /***************************/
 	/****** Low Level API ******/
