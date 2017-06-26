@@ -38,7 +38,7 @@
 # define PTRACE_TRACEME PT_TRACE_ME
 #endif
 
-int
+static int
 wait_for_attach_and_loop( void )
 {
   char *path;
@@ -67,6 +67,7 @@ main( int argc, char **argv )
 	const PAPI_hw_info_t *hw_info;
 	const PAPI_component_info_t *cmpinfo;
 	pid_t pid;
+	int quiet;
 
 	/* Fork before doing anything with the PMU */
 
@@ -77,7 +78,8 @@ main( int argc, char **argv )
 	if ( pid == 0 )
 		exit( wait_for_attach_and_loop(  ) );
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
 
 	/* Master only process below here */
@@ -120,9 +122,10 @@ main( int argc, char **argv )
 
 
 	retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
-
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Could not add PAPI_TOT_CYC\n");
+		test_skip( __FILE__, __LINE__, "PAPI_add_event", retval );
+	}
 
 	strcpy(event_name,"PAPI_FP_INS");
 	retval = PAPI_add_named_event(EventSet1, event_name);
@@ -145,27 +148,27 @@ main( int argc, char **argv )
 
 	elapsed_virt_cyc = PAPI_get_virt_cyc(  );
 
-	if (!TESTS_QUIET) printf("must_ptrace is %d\n",cmpinfo->attach_must_ptrace);
+	if (!quiet) printf("must_ptrace is %d\n",cmpinfo->attach_must_ptrace);
 	pid_t  child = wait( &status );
-	if (!TESTS_QUIET) printf( "Debugger exited wait() with %d\n",child );
+	if (!quiet) printf( "Debugger exited wait() with %d\n",child );
 	  if (WIFSTOPPED( status ))
 	    {
-	      if (!TESTS_QUIET) printf( "Child has stopped due to signal %d (%s)\n",
+	      if (!quiet) printf( "Child has stopped due to signal %d (%s)\n",
 		      WSTOPSIG( status ), strsignal(WSTOPSIG( status )) );
 	    }
 	  if (WIFSIGNALED( status ))
 	    {
-	      if (!TESTS_QUIET) printf( "Child %ld received signal %d (%s)\n",
+	      if (!quiet) printf( "Child %ld received signal %d (%s)\n",
 		      (long)child,
 		      WTERMSIG(status) , strsignal(WTERMSIG( status )) );
 	    }
-	if (!TESTS_QUIET) printf("After %d\n",retval);
+	if (!quiet) printf("After %d\n",retval);
 
 	retval = PAPI_start( EventSet1 );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
-	if (!TESTS_QUIET) printf("Continuing\n");
+	if (!quiet) printf("Continuing\n");
 #if defined(__FreeBSD__)
 	if ( ptrace( PT_CONTINUE, pid, (caddr_t) 1, 0 ) == -1 ) {
 #else
@@ -178,21 +181,21 @@ main( int argc, char **argv )
 
 	do {
 	  child = wait( &status );
-	  if (!TESTS_QUIET) printf( "Debugger exited wait() with %d\n", child);
+	  if (!quiet) printf( "Debugger exited wait() with %d\n", child);
 	  if (WIFSTOPPED( status ))
 	    {
-	      if (!TESTS_QUIET) printf( "Child has stopped due to signal %d (%s)\n",
+	      if (!quiet) printf( "Child has stopped due to signal %d (%s)\n",
 		      WSTOPSIG( status ), strsignal(WSTOPSIG( status )) );
 	    }
 	  if (WIFSIGNALED( status ))
 	    {
-	      if (!TESTS_QUIET) printf( "Child %ld received signal %d (%s)\n",
+	      if (!quiet) printf( "Child %ld received signal %d (%s)\n",
 		      (long)child,
 		      WTERMSIG(status) , strsignal(WTERMSIG( status )) );
 	    }
 	} while (!WIFEXITED( status ));
 
-	if (!TESTS_QUIET) printf("Child exited with value %d\n",WEXITSTATUS(status));
+	if (!quiet) printf("Child exited with value %d\n",WEXITSTATUS(status));
 	if (WEXITSTATUS(status) != 0) {
 	  test_fail( __FILE__, __LINE__, "Exit status of child to attach to", PAPI_EMISC);
 	}
@@ -216,7 +219,7 @@ main( int argc, char **argv )
 	if (retval != PAPI_OK)
 	  test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 	printf( "Test case: 3rd party attach start, stop.\n" );
 	printf( "-----------------------------------------------\n" );
 	tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );

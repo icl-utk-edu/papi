@@ -33,9 +33,10 @@ main( int argc, char **argv )
 	long long **values;
 	char event_name[PAPI_MAX_STR_LEN] = "PAPI_TOT_CYC";
 	PAPI_option_t opts;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet=tests_quiet( argc, argv );
 
 	// user can provide cpu number on which to count events as arg 1
 	if (argc > 1) {
@@ -67,8 +68,10 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
 
 	retval = PAPI_add_named_event(EventSet1, event_name);
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_add_named_event", retval );
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Trouble adding event %s\n",event_name);
+		test_skip( __FILE__, __LINE__, "PAPI_add_named_event", retval );
+	}
 
 	// get space for counter values (this needs to do this call because it malloc's space that test_pass and friends free)
 	values = allocate_test_space( num_tests, num_events);
@@ -85,7 +88,7 @@ main( int argc, char **argv )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	if (!TESTS_QUIET) printf ("Event: %s: %8lld on Cpu: %d\n", event_name, values[0][0], cpu_num);
+	if (!quiet) printf ("Event: %s: %8lld on Cpu: %d\n", event_name, values[0][0], cpu_num);
 
 	PAPI_shutdown( );
 
