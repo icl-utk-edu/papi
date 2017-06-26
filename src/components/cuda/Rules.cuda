@@ -1,13 +1,15 @@
 # $Id$
 
-include components/cuda/Makefile.cuda
+CUDA_DIR ?= /opt/cuda
+CUPTI_DIR ?= $(CUDA_DIR)/extras/CUPTI
 
 COMPSRCS += components/cuda/linux-cuda.c
 COMPOBJS += linux-cuda.o
-CFLAGS += -I$(CUDA_DIR)/include -I$(CUPTI_DIR)/include $(CUDA_VERSION)
-LDFLAGS += $(LDL)
+CFLAGS += -I$(CUDA_DIR)/include -I$(CUPTI_DIR)/include -g 
+LDFLAGS += -L$(CUPTI_DIR)/lib64 -lcupti $(LDL) -Wl,-rpath=$(CUPTI_DIR)/lib64 -g
 
 linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS) cuda_sampling
+	$(CC) -E $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/linux-cuda.c -o linux-cuda.pre
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/linux-cuda.c -o linux-cuda.o
 
 cuda_sampling:

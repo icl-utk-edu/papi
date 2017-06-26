@@ -25,6 +25,8 @@
 
 #include <cuda.h>
 #include <stdio.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM_EVENTS 1
@@ -46,7 +48,7 @@ int main(int argc, char** argv)
 	   RUN papi_native_avail to get a list of CUDA events that are 
 	   supported on your machine */
         //char *EventName[] = { "PAPI_FP_OPS" };
-        char *EventName[] = { "cuda:::device:0:elapsed_cycles_sm" };
+        char const *EventName[] = { "cuda:::device:0:elapsed_cycles_sm" };
 	int events[NUM_EVENTS];
 	int eventCount = 0;
 	
@@ -62,7 +64,7 @@ int main(int argc, char** argv)
 	
 	/* convert PAPI native events to PAPI code */
 	for( i = 0; i < NUM_EVENTS; i++ ){
-		retval = PAPI_event_name_to_code( EventName[i], &events[i] );
+                retval = PAPI_event_name_to_code( (char *)EventName[i], &events[i] );
 		if( retval != PAPI_OK ) {
 			fprintf( stderr, "PAPI_event_name_to_code failed\n" );
 			continue;

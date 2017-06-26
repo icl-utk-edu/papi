@@ -36,6 +36,7 @@
 #include <cupti.h>
 #include <timer.h>
 
+#include "papi.h"
 #include "papi_test.h"
 
 #if not defined PAPI
@@ -104,28 +105,29 @@ int main( int argc, char **argv )
     const int BLOCK_N = 32;
     const int THREAD_N = 256;
     const int ACCUM_N = BLOCK_N * THREAD_N;
+
+    CUcontext ctx[MAX_GPU_COUNT];
     
     printf( "Starting simpleMultiGPU\n" );
     
     // Report on the available CUDA devices
     int computeCapabilityMajor = 0, computeCapabilityMinor = 0;
     int runtimeVersion = 0, driverVersion = 0;
-    int deviceNum = -1;
-    char deviceName[32];
-    CUdevice dev;
+    char deviceName[64];
+    CUdevice device[MAX_GPU_COUNT];
     CHECK_CUDA_ERROR( cudaGetDeviceCount( &GPU_N ) );
     if( GPU_N > MAX_GPU_COUNT ) GPU_N = MAX_GPU_COUNT;
     printf( "CUDA-capable device count: %i\n", GPU_N );
-    for ( deviceNum=0; deviceNum<GPU_N; deviceNum++ ) {
-        CHECK_CU_ERROR( cuDeviceGet( &dev, deviceNum ), "cuDeviceGet" );
-        CHECK_CU_ERROR( cuDeviceGetName( deviceName, 32, dev ), "cuDeviceGetName" );
-        CHECK_CU_ERROR( cuDeviceComputeCapability( &computeCapabilityMajor, &computeCapabilityMinor,  dev ), "cuDeviceComputeCapability" );
+    for ( i=0; i<GPU_N; i++ ) {
+        CHECK_CU_ERROR( cuDeviceGet( &device[i], i ), "cuDeviceGet" );
+        CHECK_CU_ERROR( cuDeviceGetName( deviceName, 64, device[i] ), "cuDeviceGetName" );
+        CHECK_CU_ERROR( cuDeviceComputeCapability( &computeCapabilityMajor, &computeCapabilityMinor,  device[i] ), "cuDeviceComputeCapability" );
         cudaRuntimeGetVersion( &runtimeVersion );
         cudaDriverGetVersion( &driverVersion );
-        printf( "CUDA Device %d: %s : computeCapability %d.%d runtimeVersion %d.%d driverVersion %d.%d\n", deviceNum, deviceName, computeCapabilityMajor, computeCapabilityMinor, runtimeVersion/1000, (runtimeVersion%100)/10, driverVersion/1000, (driverVersion%100)/10 );
+        printf( "CUDA Device %d: %s : computeCapability %d.%d runtimeVersion %d.%d driverVersion %d.%d\n", i, deviceName, computeCapabilityMajor, computeCapabilityMinor, runtimeVersion/1000, (runtimeVersion%100)/10, driverVersion/1000, (driverVersion%100)/10 );
         if ( computeCapabilityMajor < 2 ) {
-            printf( "CUDA Device %d compute capability is too low... will not add any more GPUs\n", deviceNum );
-            GPU_N = deviceNum;
+            printf( "CUDA Device %d compute capability is too low... will not add any more GPUs\n", i );
+            GPU_N = i;
             break;
         }
     }
@@ -133,6 +135,13 @@ int main( int argc, char **argv )
     cuptiGetVersion( &cupti_linked_version );
     printf("CUPTI version: Compiled against version %d; Linked against version %d\n", CUPTI_API_VERSION, cupti_linked_version );
     
+    // create one context per device
+    for (i = 0; i < GPU_N; i++) {
+        CHECK_CUDA_ERROR( cudaSetDevice( i ) );
+        CHECK_CU_ERROR( cuCtxCreate( &(ctx[i]), 0, device[i] ), "cuCtxCreate" );
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
+    }
+
     printf( "Generating input data...\n" );
     
     // Subdividing input data across GPUs
@@ -149,41 +158,38 @@ int main( int argc, char **argv )
         plan[i].h_Sum = h_SumGPU + i; // point within h_SumGPU array
         gpuBase += plan[i].dataN;
     }
-    
+
+  
     // Create streams for issuing GPU command asynchronously and allocate memory (GPU and System page-locked)
     for( i = 0; i < GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
-        // cudaFree: forces creation of a context
-        CHECK_CUDA_ERROR( cudaFree( NULL ) );
+        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         CHECK_CUDA_ERROR( cudaStreamCreate( &plan[i].stream ) );
-        // Allocate memory
         CHECK_CUDA_ERROR( cudaMalloc( ( void ** ) &plan[i].d_Data, plan[i].dataN * sizeof( float ) ) );
         CHECK_CUDA_ERROR( cudaMalloc( ( void ** ) &plan[i].d_Sum, ACCUM_N * sizeof( float ) ) );
         CHECK_CUDA_ERROR( cudaMallocHost( ( void ** ) &plan[i].h_Sum_from_device, ACCUM_N * sizeof( float ) ) );
         CHECK_CUDA_ERROR( cudaMallocHost( ( void ** ) &plan[i].h_Data, plan[i].dataN * sizeof( float ) ) );
-        
         for( j = 0; j < plan[i].dataN; j++ ) {
             plan[i].h_Data[j] = ( float ) rand() / ( float ) RAND_MAX;
         }
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
     
     
 #ifdef CUPTI_ONLY
-    printf("Setup CUPTI counters internally for elapsed_cycles_sm event (CUPTI_ONLY)\n");
-    CUdevice device[MAX_GPU_COUNT];
-    CUcontext ctx[MAX_GPU_COUNT];
-    CUcontext ctxpopped[MAX_GPU_COUNT];
+    char const *cuptiEventName = "inst_executed"; //  "inst_issued0";
+    printf("Setup CUPTI counters internally for %s event (CUPTI_ONLY)\n", cuptiEventName);
     CUpti_EventGroup eg[MAX_GPU_COUNT];
-    CUpti_EventID myevent;//elapsed cycles
+    CUpti_EventID myevent;
     for ( i=0; i<GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
-        CHECK_CU_ERROR( cuDeviceGet( &device[i], i ), "cuDeviceGet" );
-        CHECK_CU_ERROR( cuCtxCreate( &ctx[i], 0, device[i] ), "cuCtxCreate" );
+        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
+        CHECK_CUPTI_ERROR(cuptiSetEventCollectionMode(ctx[i], CUPTI_EVENT_COLLECTION_MODE_KERNEL), "cuptiSetEventCollectionMode" );
         CHECK_CUPTI_ERROR( cuptiEventGroupCreate( ctx[i], &eg[i], 0 ), "cuptiEventGroupCreate" );
-        cuptiEventGetIdFromName ( device[i], "elapsed_cycles_sm", &myevent );
+        cuptiEventGetIdFromName ( device[i], cuptiEventName, &myevent );
         CHECK_CUPTI_ERROR( cuptiEventGroupAddEvent( eg[i], myevent ), "cuptiEventGroupAddEvent" );
         CHECK_CUPTI_ERROR( cuptiEventGroupEnable( eg[i] ), "cuptiEventGroupEnable" );
-        CHECK_CU_ERROR( cuCtxPopCurrent( &ctxpopped[i] ), "cuCtxPopCurrent" );
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
 #endif
     
@@ -193,7 +199,7 @@ int main( int argc, char **argv )
     int NUM_EVENTS = MAX_GPU_COUNT*MAX_NUM_EVENTS;
     long long values[NUM_EVENTS];
     int eventCount;
-    int retval, gg, ee;
+    int retval, ee;
     
     /* PAPI Initialization */
     retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -203,19 +209,25 @@ int main( int argc, char **argv )
     retval = PAPI_create_eventset( &EventSet );
     if( retval != PAPI_OK ) fprintf( stderr, "PAPI_create_eventset failed\n" );
     
-    // In this example measure 2 events from each GPU
-    int numEventEndings = 2;
-    static char *EventEndings[] = { (char*)"inst_executed", (char *)"elapsed_cycles_sm" };
-    
+    // In this example measure events from each GPU
+    int numEventEndings = 3;
+    char const *EventEndings[] = { 
+        "cuda:::metric:inst_per_warp", 
+        "cuda:::event:inst_executed", 
+        "cuda:::event:elapsed_cycles_sm" 
+    };
+
     // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm
     char *EventName[NUM_EVENTS];
     char tmpEventName[50];
     eventCount = 0;
-    for( gg = 0; gg < GPU_N; gg++ ) {
-        CHECK_CUDA_ERROR( cudaSetDevice( gg ) );         // Set device
+    for( i = 0; i < GPU_N; i++ ) {
+        CHECK_CUDA_ERROR( cudaSetDevice( i ) );         // Set device
+        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
+        CHECK_CUPTI_ERROR(cuptiSetEventCollectionMode(ctx[i], CUPTI_EVENT_COLLECTION_MODE_KERNEL), "cuptiSetEventCollectionMode" );
         for ( ee=0; ee<numEventEndings; ee++ ) {
-            snprintf( tmpEventName, 50, "cuda:::device:%d:%s\0", gg, EventEndings[ee] );
-            printf( "Trying to add event %s to GPU %d in PAPI...", tmpEventName , gg );
+            snprintf( tmpEventName, 50, "%s:device=%d\0", EventEndings[ee], i );
+            printf( "Trying to add event %s to GPU %d in PAPI...", tmpEventName , i ); fflush(NULL);
             retval = PAPI_add_named_event( EventSet, tmpEventName );
             if (retval==PAPI_OK) {
                 printf( "Added event\n" );
@@ -226,6 +238,7 @@ int main( int argc, char **argv )
                 printf( "Could not add event\n" );
             }
         }
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
     
     // Start PAPI event measurement
@@ -238,9 +251,10 @@ int main( int argc, char **argv )
     StartTimer();
     
     // Copy data to GPU, launch the kernel and copy data back. All asynchronously
-    for( i = GPU_N-1; i >= 0; i-- ) {
+    for (i = 0; i < GPU_N; i++) {
         // Set device
-        CHECK_CUDA_ERROR( cudaSetDevice( i ) );
+        CHECK_CUDA_ERROR( cudaSetDevice( i ));
+        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         //AYK CHECK_CUPTI_ERROR( cuptiEventGroupResetAllEvents ( eg[i] ), "cuptiEventGroupResetAllEvents" );
         // Copy input data from CPU
         CHECK_CUDA_ERROR( cudaMemcpyAsync( plan[i].d_Data, plan[i].h_Data, plan[i].dataN * sizeof( float ), cudaMemcpyHostToDevice, plan[i].stream ) );
@@ -249,6 +263,7 @@ int main( int argc, char **argv )
         if ( cudaGetLastError() != cudaSuccess ) { printf( "reduceKernel() execution failed (GPU %d).\n", i ); exit(EXIT_FAILURE); }
         // Read back GPU results
         CHECK_CUDA_ERROR( cudaMemcpyAsync( plan[i].h_Sum_from_device, plan[i].d_Sum, ACCUM_N * sizeof( float ), cudaMemcpyDeviceToHost, plan[i].stream ) );
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
     
     // Process GPU results
@@ -257,6 +272,7 @@ int main( int argc, char **argv )
         float sum;
         // Set device
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
+        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         // Wait for all operations to finish
         cudaStreamSynchronize( plan[i].stream );
         // Finalize GPU reduction for current subvector
@@ -265,26 +281,51 @@ int main( int argc, char **argv )
             sum += plan[i].h_Sum_from_device[j];
         }
         *( plan[i].h_Sum ) = ( float ) sum;
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
     double gpuTime = GetTimer();
 
 
 #ifdef CUPTI_ONLY
     size_t size = 1024;
-    uint64_t buffer[1024];
+    uint64_t buffer[size];
+    uint64_t tmp[size];     for (int jj=0; jj<1024; jj++) tmp[jj]=0;
     for ( i=0; i<GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
+        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         CHECK_CU_ERROR( cuCtxSynchronize( ), "cuCtxSynchronize" );
-        CHECK_CUPTI_ERROR( cuptiEventGroupReadEvent ( eg[i], CUPTI_EVENT_READ_FLAG_NONE, myevent, &size, &buffer[i] ), "cuptiEventGroupReadEvent" );
-        printf( "CUPTI elapsed_cycles_sm device %d counterValue %u\n", i, buffer[i] );
+        CHECK_CUPTI_ERROR( cuptiEventGroupReadEvent ( eg[i], CUPTI_EVENT_READ_FLAG_NONE, myevent, &size, &tmp[0] ), "cuptiEventGroupReadEvent" );
+        for (int jj=0; jj<1024; jj++) if (tmp[jj]>0) printf("tmp[%d] = %llu\n", jj, tmp[jj]);
+        buffer[i] = tmp[0];
+        printf( "CUPTI %s device %d counterValue %u\n", cuptiEventName, i, buffer[i] );
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
 #endif
 
 #ifdef PAPI
+    //AYK Maybe this should be in papi stop
+    for ( i=0; i<GPU_N; i++ ) {
+        CHECK_CUDA_ERROR( cudaSetDevice( i ) );
+        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
+        CHECK_CU_ERROR( cuCtxSynchronize( ), "cuCtxSynchronize" );
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
+    }
+
+    // retval = PAPI_read( EventSet, values );
+    // if( retval != PAPI_OK )  fprintf( stderr, "PAPI_read failed\n" );
+    // for( i = 0; i < eventCount; i++ )
+    //     printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
+
+    // retval = PAPI_read( EventSet, values );
+    // if( retval != PAPI_OK )  fprintf( stderr, "PAPI_read failed\n" );
+    // for( i = 0; i < eventCount; i++ )
+    //     printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
+
     retval = PAPI_stop( EventSet, values );
     if( retval != PAPI_OK )  fprintf( stderr, "PAPI_stop failed\n" );
     for( i = 0; i < eventCount; i++ )
         printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
+
     retval = PAPI_cleanup_eventset( EventSet );
     if( retval != PAPI_OK )  fprintf( stderr, "PAPI_cleanup_eventset failed\n" );
     retval = PAPI_destroy_eventset( &EventSet );

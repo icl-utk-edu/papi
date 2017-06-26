@@ -1,6 +1,9 @@
 NAME=cuda
 include ../../Makefile_comp_tests
-include ../Makefile.cuda
+
+CUDA_DIR ?= /opt/cuda
+CUPTI_DIR ?= $(CUDA_DIR)/extras/CUPTI
+CUDRV_DIR ?= $(CUDA_DIR)
 
 TESTS = HelloWorld simpleMultiGPU simpleMultiGPU_no_counters simpleMultiGPU_cupti_only
 cuda_tests: $(TESTS) 
@@ -17,7 +20,7 @@ default: $(TESTS)
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<
 
 HelloWorld: HelloWorld.o $(UTILOBJS)
-	$(CC) -Wl,-rpath,../../../libpfm4/lib $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CC) $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU: simpleMultiGPU.cu $(UTILOBJS)
 	$(NVCC) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
