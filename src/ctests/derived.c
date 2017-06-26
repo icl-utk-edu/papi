@@ -117,4 +117,6 @@ main( int argc, char **argv )
 	}
 
 	test_pass(__FILE__);
+
+	return 0;
 }
