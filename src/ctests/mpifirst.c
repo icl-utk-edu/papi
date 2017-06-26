@@ -21,8 +21,6 @@
 
 #include "papi_test.h"
 
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
-
 int
 main( int argc, char **argv )
 {
@@ -31,9 +29,11 @@ main( int argc, char **argv )
 	int EventSet = PAPI_NULL;
 	int PAPI_event, mask;
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	int quiet;
 
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	MPI_Init( argc, argv );
 
@@ -97,7 +97,7 @@ main( int argc, char **argv )
 
 	remove_test_events( &EventSet, mask );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Test case 1: Non-overlapping start, stop, read.\n" );
 		printf( "-----------------------------------------------\n" );
 		tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );

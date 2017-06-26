@@ -592,8 +592,8 @@ add_two_events( int *num_events, int *papi_event, int *mask ) {
 	int retval;
 	int EventSet = PAPI_NULL;
 
-	(void)num_events;
-	(void)papi_event;
+	*num_events=2;
+	*papi_event=PAPI_TOT_INS;
 	(void)mask;
 
 	/* create the eventset */

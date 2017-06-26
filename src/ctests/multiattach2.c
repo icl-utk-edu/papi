@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <sys/ptrace.h>
@@ -113,13 +114,10 @@ main( int argc, char **argv )
 
 	retval = PAPI_attach( EventSet2, ( unsigned long ) pid );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, "PAPI_attach", retval ); 
+	   test_fail( __FILE__, __LINE__, "PAPI_attach", retval );
 	}
 
-	retval = PAPI_event_code_to_name( PAPI_event, event_name );
-	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
-	}
+	strcpy(event_name,"PAPI_TOT_INS");
 	sprintf( add_event_str, "PAPI_add_event[%s]", event_name );
 
 	/* num_events1 is greater than num_events2 so don't worry. */

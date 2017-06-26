@@ -23,6 +23,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "papi.h"
 #include "papi_test.h"
@@ -54,10 +55,7 @@ main( int argc, char **argv )
 	   on the platform                             */
 	EventSet = add_two_events( &num_events, &PAPI_event, &mask );
 
-	retval = PAPI_event_code_to_name( PAPI_event, event_name );
-	if ( retval != PAPI_OK ) {
-		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
-	}
+	strcpy(event_name,"PAPI_TOT_INS");
 	sprintf( add_event_str, "PAPI_add_event[%s]", event_name );
 
 	/* Allocate space for results */
