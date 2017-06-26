@@ -45,14 +45,14 @@ int n;
 }
 
 int
-main( argc, argv )
-int argc;
-char *argv[];
+main( int argc, char **argv )
 {
 	int i, retval;
 	double a[MAX], b[MAX];
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
 	for ( i = 0; i < MAX; i++ ) {
 		a[i] = 0.0;
@@ -67,10 +67,16 @@ char *argv[];
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 #ifdef MULTIPLEX
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Activating PAPI Multiplex\n" );
 	}
-	init_multiplex(  );
+
+	retval = PAPI_multiplex_init(  );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI multiplex init fail\n",
+			retval );
+	}
+
 #endif
 
 	retval = PAPI_create_eventset( &EventSet );
@@ -100,10 +106,10 @@ char *argv[];
 		if ( retval < PAPI_OK )
 			test_fail( __FILE__, __LINE__,
 					   "PAPI add PAPI_FP_INS or PAPI_TOT_INS fail\n", retval );
-		else if ( !TESTS_QUIET ) {
+		else if ( !quiet ) {
 			printf( "PAPI_TOT_INS\n" );
 		}
-	} else if ( !TESTS_QUIET ) {
+	} else if ( !quiet ) {
 		printf( "PAPI_FP_INS\n" );
 	}
 
@@ -111,7 +117,7 @@ char *argv[];
 	if ( retval < PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI add PAPI_TOT_CYC  fail\n",
 				   retval );
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "PAPI_TOT_CYC\n" );
 	}
 
@@ -143,7 +149,7 @@ char *argv[];
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI read fail \n", retval );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "values1 is:\n" );
 		for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
 			printf( LLDFMT15, PAPI_values1[i] );

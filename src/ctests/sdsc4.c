@@ -124,7 +124,10 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 #ifdef MPX
-	init_multiplex(  );
+	retval = PAPI_multiplex_init(  );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI multiplex init fail\n", retval );
+	}
 #endif
 	if ( ( retval = PAPI_create_eventset( &eventset ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );

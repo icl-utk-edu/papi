@@ -64,7 +64,6 @@ void test_skip(char *file, int line, char *call, int retval);
 void test_warn(char *file, int line, char *call, int retval);
 void test_print_event_header(char *call, int evset);
 int approx_equals(double a, double b);
-void init_multiplex(void);
 
 /* Unix systems use %lld to display long long values
 	Windows uses %I64d for the same purpose.

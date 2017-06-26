@@ -18,22 +18,10 @@
 
 #include "do_loops.h"
 
-void
-init_papi( void )
-{
-	int retval;
-
-	/* Initialize the library */
-
-	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
-}
 
 /* Tests that we can really multiplex a lot. */
 
-int
+static int
 case1( void )
 {
 	int retval, i, EventSet = PAPI_NULL, j = 0, k = 0, allvalid = 1;
@@ -42,8 +30,17 @@ case1( void )
 	PAPI_event_info_t pset;
 	char evname[PAPI_MAX_STR_LEN];
 
-	init_papi(  );
-	init_multiplex(  );
+	/* Initialize PAPI */
+
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT ) {
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
+
+	retval = PAPI_multiplex_init(  );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI multiplex init fail\n", retval );
+	}
 
 #if 0
 	if ( PAPI_set_domain( PAPI_DOM_KERNEL ) != PAPI_OK )
@@ -122,7 +119,7 @@ case1( void )
 	if ( PAPI_set_domain( PAPI_DOM_KERNEL ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
 #endif
-	
+
 	if ( PAPI_start( EventSet ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 

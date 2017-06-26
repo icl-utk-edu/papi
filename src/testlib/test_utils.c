@@ -818,32 +818,3 @@ enum_add_native_events( int *num_events, int **evtcodes,
 
 	return EventSet;
 }
-
-void
-init_multiplex( void )
-{
-	int retval;
-	const PAPI_hw_info_t *hw_info;
-	const PAPI_component_info_t *cmpinfo;
-
-	/* Initialize the library */
-
-	/* for now, assume multiplexing on CPU compnent only */
-	cmpinfo = PAPI_get_component_info( 0 );
-	if ( cmpinfo == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
-
-	hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
-	if ( ( strstr( cmpinfo->name, "perfctr.c" ) ) && (hw_info !=NULL) &&
-		 strcmp( hw_info->model_string, "POWER6" ) == 0 ) {
-		retval = PAPI_set_domain( PAPI_DOM_ALL );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_domain", retval );
-	}
-	retval = PAPI_multiplex_init(  );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI multiplex init fail\n", retval );
-}
