@@ -123,10 +123,10 @@ my_papi_start( void )
 		test_fail( name, __LINE__, "PAPI_create_eventset failed", 1 );
 
 	for ( ev = 0; ev < num_events; ev++ ) {
-		if ( PAPI_add_event( EventSet, Event[ev] ) != PAPI_OK )
-
+		if ( PAPI_add_event( EventSet, Event[ev] ) != PAPI_OK ) {
 			if (!TESTS_QUIET) printf("Trouble adding event\n");
 			test_skip( name, __LINE__, "PAPI_add_event failed", 1 );
+		}
 	}
 
 	for ( ev = 0; ev < num_events; ev++ ) {

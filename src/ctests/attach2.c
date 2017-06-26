@@ -117,10 +117,10 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_attach", retval );
 
 	retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		if (!quiet) printf("Problem adding PAPI_TOT_CYC\n");
 		test_skip( __FILE__, __LINE__, "PAPI_add_event", retval );
-
+	}
 
 	strcpy(event_name,"PAPI_FP_INS");
 
