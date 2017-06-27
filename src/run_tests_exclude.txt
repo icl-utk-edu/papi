@@ -31,6 +31,9 @@ ctests/cpi.pbs
 # Time wasting support program, not a standalone test
 ctests/burn
 
+# Support program for the attach tests
+ctests/attach_target
+
 # long running tests (if you are not in a hurry comment these lines)
 ctests/pthrtough2
 ctests/timer_overflow
