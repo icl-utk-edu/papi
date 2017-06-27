@@ -4,8 +4,6 @@
 *          mucci@cs.utk.edu
 * Mods:    Dan Terpstra
 *          terpstra@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
 */
 
 /* This file performs the following test: profiling and program info option call
@@ -112,7 +110,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 		free( profbuf[i] );
 	}
 
-	return ( retval );
+	return retval;
 }
 
 
@@ -125,23 +123,36 @@ main( int argc, char **argv )
 	const PAPI_hw_info_t *hw_info;
 	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
+	int quiet;
 
-	prof_init( argc, argv, &prginfo );
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
+
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
+
+	if ( ( prginfo = PAPI_get_executable_info(  ) ) == NULL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
+	}
 
 	if ( ( hw_info = PAPI_get_hardware_info(  ) ) == NULL ) {
-	   test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 0 );
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 0 );
 	}
 
-	if ( ( strncasecmp( hw_info->model_string, "Itanium", strlen( "Itanium" ) )
-		   != 0 ) &&
-		 ( strncasecmp( hw_info->model_string, "32", strlen( "32" ) ) != 0 ) )
+	if ( ( strncasecmp( hw_info->model_string, "Itanium",
+				strlen( "Itanium" ) ) != 0 ) &&
+			( strncasecmp( hw_info->model_string, "32",
+				strlen( "32" ) ) != 0 ) ) {
+		if (!quiet) printf("Itanium only for now.\n");
 		test_skip( __FILE__, __LINE__, "Test unsupported", PAPI_ENOIMPL );
-
-	if ( TESTS_QUIET ) {
-	   test_skip( __FILE__, __LINE__,
-		     "Test deprecated in quiet mode for PAPI 3.6", 0 );
-
 	}
+
+//	if ( quiet ) {
+//	   test_skip( __FILE__, __LINE__,
+//		     "Test deprecated in quiet mode for PAPI 3.6", 0 );
+//	}
 
 	sprintf( event_name, "DATA_EAR_CACHE_LAT4" );
 	if ( ( retval =
@@ -160,7 +171,7 @@ main( int argc, char **argv )
 	num_events = 2;
 	values = allocate_test_space( num_tests, num_events );
 
-/* use these lines to profile entire code address space */
+	/* use these lines to profile entire code address space */
 	start = prginfo->address_info.text_start;
 	end = prginfo->address_info.text_end;
 	length = end - start;

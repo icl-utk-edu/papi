@@ -4,8 +4,6 @@
 *          terpstra@cs.utk.edu
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
-* Mods:    <your name here>
-*          <your email address>
 */
 
 /* This file profiles multiple events with byte level address resolution.
@@ -197,7 +195,14 @@ main( int argc, char **argv )
 	/* Set TESTS_QUIET variable */
 	quiet=tests_quiet( argc, argv );
 
-	prof_init( argc, argv, &prginfo );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT) {
+                test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
+
+	if ( ( prginfo = PAPI_get_executable_info(  ) ) == NULL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
+	}
 
 	hw_info = PAPI_get_hardware_info(  );
         if ( hw_info == NULL ) {

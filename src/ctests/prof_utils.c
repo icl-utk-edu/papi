@@ -2,8 +2,6 @@
 * File:    prof_utils.c
 * Author:  Dan Terpstra
 *          terpstra@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
 */
 
 /* This file contains utility functions useful for all profiling tests
@@ -22,9 +20,10 @@
 
 #include "papi.h"
 #include "papi_test.h"
-#include "prof_utils.h"
 
 #include "do_loops.h"
+
+#include "prof_utils.h"
 
 /* variables global to profiling tests */
 long long **values;
@@ -33,28 +32,6 @@ int PAPI_event;
 int EventSet = PAPI_NULL;
 void *profbuf[5];
 
-/* This function does the generic initialization stuff found at the top of most
-   profile tests (most tests in general). This includes:
-   - setting the QUIET flag;
-   - initing the PAPI library;
-   - setting the debug level;
-   - getting hardware and executable info.
-   It assumes that prginfo is global to the parent routine.
-*/
-void
-prof_init( int argc, char **argv, const PAPI_exe_info_t ** prginfo )
-{
-	int retval;
-
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
-
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
-	if ( ( *prginfo = PAPI_get_executable_info(  ) ) == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
-}
 
 /* Many profiling tests count one of {FP_INS, FP_OPS, TOT_INS} and TOT_CYC.
    This function creates an event set containing the appropriate pair of events.
