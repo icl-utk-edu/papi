@@ -13,14 +13,16 @@ main( int argc, char **argv )
 	long long values;
 	int PAPI_event, retval;
 	char event_name[PAPI_MAX_STR_LEN];
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet=tests_quiet( argc, argv );
 
         /* init PAPI */
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	/* Use PAPI_FP_INS if available, otherwise use PAPI_TOT_INS */
 	if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK )
@@ -28,8 +30,11 @@ main( int argc, char **argv )
 	else
 		PAPI_event = PAPI_TOT_INS;
 
-	if ( ( retval = PAPI_query_event( PAPI_event ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_query_event", retval );
+	retval = PAPI_query_event( PAPI_event );
+	if (retval != PAPI_OK ) {
+		if (!quiet) printf("Trouble querying event\n");
+		test_skip( __FILE__, __LINE__, "PAPI_query_event", retval );
+	}
 
         /* Create the eventset */
 	if ( ( retval = PAPI_create_eventset( &FPEventSet ) ) != PAPI_OK )
@@ -79,7 +84,7 @@ main( int argc, char **argv )
 	if ( FPEventSet != PAPI_NULL )
 		test_fail( __FILE__, __LINE__, "FPEventSet != PAPI_NULL", retval );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		if ( ( retval =
 			   PAPI_event_code_to_name( PAPI_event, event_name ) ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );

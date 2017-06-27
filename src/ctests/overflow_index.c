@@ -74,18 +74,25 @@ main( int argc, char **argv )
 	char event_name[PAPI_MAX_STR_LEN];
 	int index_array[2], number;
 	int num_events1, mask1;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depends on the availability of the event on the
 	   platform */
-	EventSet =
-		add_two_nonderived_events( &num_events1, &PAPI_event, &mask1 );
+	EventSet = add_two_nonderived_events( &num_events1, &PAPI_event, &mask1 );
+
+	if (num_events1==0) {
+		if (!quiet) printf("Trouble adding events\n");
+		test_skip(__FILE__,__LINE__,"Adding events",0);
+	}
 
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK )

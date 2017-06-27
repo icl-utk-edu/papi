@@ -21,8 +21,9 @@ main( int argc, char **argv )
 	long long int values[] = {0,0};
 	PAPI_option_t opt;
 	char event_name[BUFSIZ];
+	int quiet;
 
-        tests_quiet( argc, argv );
+	quiet=tests_quiet( argc, argv );
 
 	if ( ( retval = PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
@@ -44,8 +45,10 @@ main( int argc, char **argv )
 		}
 	}
 
-	if ( ( retval = PAPI_query_event( PAPI_TOT_CYC ) ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_query_event", retval );
+	if ( ( retval = PAPI_query_event( PAPI_TOT_CYC ) ) != PAPI_OK ) {
+		if (!quiet) printf("Trouble finding PAPI_TOT_CYC\n");
+		test_skip( __FILE__, __LINE__, "PAPI_query_event", retval );
+	}
 
 	if ( ( retval = PAPI_add_event( EventSet, PAPI_TOT_CYC ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
@@ -77,7 +80,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_stop( EventSet, values ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 	   printf( "Test case inherit: parent starts, child works, parent stops.\n" );
 	   printf( "------------------------------------------------------------\n" );
 

@@ -1,9 +1,11 @@
 /* This file performs the following test: start, stop and timer functionality
 
-   - It attempts to use the following two counters. It may use less depending on
-     hardware counter resource limitations. These are counted in the default counting
-     domain and default granularity, depending on the platform. Usually this is 
-     the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
+   - It attempts to use the following two counters.
+     It may use less depending on hardware counter resource limitations.
+     These are counted in the default counting domain and default granularity,
+     depending on the platform.
+     Usually this is the user domain (PAPI_DOM_USER) and
+     thread context (PAPI_GRN_THR).
      + PAPI_FP_INS
      + PAPI_TOT_CYC
    - Get us.
@@ -30,8 +32,10 @@ main( int argc, char **argv )
 	long long values1[2], values2[2];
 	long long elapsed_us, elapsed_cyc;
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
@@ -53,10 +57,12 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 
 	/* Add the events */
-	if (!TESTS_QUIET) printf( "Adding: %s\n", event_name );
+	if (!quiet) printf( "Adding: %s\n", event_name );
 	retval = PAPI_add_event( EventSet1, PAPI_event );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Trouble adding event\n");
+		test_skip( __FILE__, __LINE__, "PAPI_add_event", retval );
+	}
 
 	retval = PAPI_add_event( EventSet1, PAPI_TOT_CYC );
 	if ( retval != PAPI_OK )
@@ -127,7 +133,7 @@ main( int argc, char **argv )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Test case 0: start, stop.\n" );
 		printf( "-----------------------------------------------\n" );
 		tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );

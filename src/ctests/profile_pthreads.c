@@ -28,41 +28,50 @@ Thread( void *arg )
 	char event_name[PAPI_MAX_STR_LEN];
 
 	retval = PAPI_register_thread(  );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
+	}
+
 	profbuf = ( unsigned short * ) malloc( length * sizeof ( unsigned short ) );
-	if ( profbuf == NULL )
-		exit( 1 );
+	if ( profbuf == NULL ) {
+		test_fail(__FILE__, __LINE__, "Allocate memory",0);
+	}
+
 	memset( profbuf, 0x00, length * sizeof ( unsigned short ) );
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depends on the availability of the event on the
 	   platform */
-	EventSet1 =
-		add_two_nonderived_events( &num_events1, &PAPI_event, &mask1 );
+	EventSet1 = add_two_nonderived_events( &num_events1, &PAPI_event, &mask1 );
 
 	values = allocate_test_space( num_tests, num_events1 );
 
-	if ( ( retval =
-		   PAPI_event_code_to_name( PAPI_event, event_name ) ) != PAPI_OK )
+	retval = PAPI_event_code_to_name( PAPI_event, event_name );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	}
 
 	elapsed_us = PAPI_get_real_usec(  );
 
 	elapsed_cyc = PAPI_get_real_cyc(  );
 
 	retval = PAPI_profil( profbuf, length, my_start, 65536,
-						  EventSet1, PAPI_event, THR, PAPI_PROFIL_POSIX );
-	if ( retval )
+				EventSet1, PAPI_event, THR, PAPI_PROFIL_POSIX );
+	if ( retval ) {
 		test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+	}
 
-	if ( ( retval = PAPI_start( EventSet1 ) ) != PAPI_OK )
+	retval = PAPI_start( EventSet1 );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( *( int * ) arg );
 
-	if ( ( retval = PAPI_stop( EventSet1, values[0] ) ) != PAPI_OK )
+	retval = PAPI_stop( EventSet1, values[0] );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
 	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 
@@ -70,10 +79,10 @@ Thread( void *arg )
 
 	/* to remove the profile flag */
 	retval = PAPI_profil( profbuf, length, my_start, 65536,
-						  EventSet1, PAPI_event, 0, PAPI_PROFIL_POSIX );
-	if ( retval )
+				EventSet1, PAPI_event, 0, PAPI_PROFIL_POSIX );
+	if ( retval ) {
 		test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
-
+	}
 
 	remove_test_events( &EventSet1, mask1 );
 
@@ -105,14 +114,17 @@ Thread( void *arg )
 		if ( profbuf[i] )
 			break;
 
-	if ( i >= ( int ) length )
+	if ( i >= ( int ) length ) {
 		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
+	}
 	free_test_space( values, num_tests );
 
 	retval = PAPI_unregister_thread(  );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
-	return ( NULL );
+	}
+
+	return NULL;
 }
 
 int
@@ -124,25 +136,36 @@ main( int argc, char **argv )
 	pthread_attr_t attr;
 	long long elapsed_us, elapsed_cyc;
 	const PAPI_exe_info_t *prginfo = NULL;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-	if ( ( retval =
-		   PAPI_thread_init( ( unsigned
-							   long ( * )( void ) ) ( pthread_self ) ) ) !=
-		 PAPI_OK ) {
+	}
+
+	retval = PAPI_query_event(PAPI_TOT_CYC);
+	if (retval != PAPI_OK) {
+
+		if (!quiet) printf("Trouble adding event\n");
+		test_skip(__FILE__,__LINE__,"No events",0);
+	}
+
+	retval = PAPI_thread_init( ( unsigned long ( * )( void ) ) ( pthread_self ));
+	if (retval != PAPI_OK ) {
 		if ( retval == PAPI_ECMP )
 			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
 		else
 			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
 	}
+
 	if ( ( prginfo = PAPI_get_executable_info(  ) ) == NULL ) {
 		retval = 1;
 		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", retval );
 	}
+
 	my_start = prginfo->address_info.text_start;
 	my_end = prginfo->address_info.text_end;
 	length = ( unsigned int ) ( my_end - my_start );
@@ -176,7 +199,7 @@ main( int argc, char **argv )
 
 	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Master real usec   : \t%lld\n", elapsed_us );
 		printf( "Master real cycles : \t%lld\n", elapsed_cyc );
 	}

@@ -10,11 +10,12 @@
 
 /* This test does the following:
 
-
-   - It attempts to use the following two counters. It may use less depending on
-     hardware counter resource limitations. These are counted in the default counting
-     domain and default granularity, depending on the platform. Usually this is 
-     the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
+   - It attempts to use the following two counters.
+	It may use fewer depending on hardware counter resource limitations.
+	These are counted in the default counting domain and
+	default granularity, depending on the platform.
+	Usually this is the user domain (PAPI_DOM_USER) and
+	thread context (PAPI_GRN_THR).
      + PAPI_FP_INS
      + PAPI_TOT_CYC
    - Get us.
@@ -65,7 +66,8 @@ main( int argc, char **argv )
 	/* Add PAPI_TOT_CYC */
 	retval=PAPI_add_named_event(EventSet1,"PAPI_TOT_CYC");
 	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__, "adding PAPI_TOT_CYC", retval );
+		if (!quiet) printf("Trouble adding PAPI_TOT_CYC\n");
+		test_skip( __FILE__, __LINE__, "adding PAPI_TOT_CYC", retval );
 	}
 
 	/* Add PAPI_TOT_INS */

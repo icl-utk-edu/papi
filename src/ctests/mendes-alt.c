@@ -103,10 +103,11 @@ main( int argc, char **argv )
 	retval = PAPI_add_event( EventSet, PAPI_FP_INS );
 	if ( retval < PAPI_OK ) {
 		retval = PAPI_add_event( EventSet, PAPI_TOT_INS );
-		if ( retval < PAPI_OK )
-			test_fail( __FILE__, __LINE__,
+		if ( retval < PAPI_OK ) {
+			if (!quiet) printf("Trouble adding events\n");
+			test_skip( __FILE__, __LINE__,
 					   "PAPI add PAPI_FP_INS or PAPI_TOT_INS fail\n", retval );
-		else if ( !quiet ) {
+		} else if ( !quiet ) {
 			printf( "PAPI_TOT_INS\n" );
 		}
 	} else if ( !quiet ) {

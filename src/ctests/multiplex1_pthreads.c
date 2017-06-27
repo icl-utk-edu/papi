@@ -32,9 +32,7 @@ int preset_PAPI_events[TOTAL_EVENTS] = {
 static int PAPI_events[TOTAL_EVENTS] = { 0, };
 static int PAPI_events_len = 0;
 
-#define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
-
-void
+static void
 init_papi_pthreads( int *out_events, int *len )
 {
 	int retval;
@@ -45,7 +43,7 @@ init_papi_pthreads( int *out_events, int *len )
 	/* Initialize the library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
-		CPP_TEST_FAIL( "PAPI_library_init", retval );
+		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval );
 
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )
@@ -59,7 +57,7 @@ init_papi_pthreads( int *out_events, int *len )
 		in_events = power6_preset_PAPI_events;
 		retval = PAPI_set_domain( PAPI_DOM_ALL );
 		if ( retval != PAPI_OK )
-			CPP_TEST_FAIL( "PAPI_set_domain", retval );
+			test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval );
 	}
 
 	retval = PAPI_multiplex_init(  );
@@ -67,13 +65,11 @@ init_papi_pthreads( int *out_events, int *len )
 	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
 	}
 	else if ( retval != PAPI_OK ) {
-		CPP_TEST_FAIL( "PAPI_multiplex_init", retval );
+		test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval );
 	}
-   
-	if ( ( retval =
-		   PAPI_thread_init( ( unsigned
-							   long ( * )( void ) ) ( pthread_self ) ) ) !=
-		 PAPI_OK ) {
+
+	retval = PAPI_thread_init( ( unsigned long ( * )( void ) ) ( pthread_self ) );
+	if (retval != PAPI_OK ) {
 		if ( retval == PAPI_ECMP )
 			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
 		else
@@ -95,8 +91,10 @@ init_papi_pthreads( int *out_events, int *len )
 				printf( "%s does not exist\n", out );
 		}
 	}
-	if ( real_len < 1 )
-		CPP_TEST_FAIL( "No counters available", 0 );
+	if ( real_len < 1 ) {
+		if (!TESTS_QUIET) printf("No counters available\n");
+		test_skip(__FILE__, __LINE__, "No counters available", 0 );
+	}
 	*len = real_len;
 }
 
@@ -150,7 +148,7 @@ case1_pthreads( void *arg )
 
 		retval = PAPI_add_event( EventSet, PAPI_events[i] );
 		if ( retval != PAPI_OK )
-			CPP_TEST_FAIL( "PAPI_add_event", retval );
+			test_fail(__FILE__, __LINE__, "PAPI_add_event", retval );
 		PAPI_event_code_to_name( PAPI_events[i], out );
 		if ( !TESTS_QUIET )
 			printf( "Added %s\n", out );
@@ -175,10 +173,10 @@ case1_pthreads( void *arg )
 
 	if ( ( retval = PAPI_cleanup_eventset( EventSet ) ) != PAPI_OK )	/* JT */
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
-	
+
 	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
-	
+
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
@@ -205,7 +203,7 @@ case2_pthreads( void *arg )
 	   0 is always the cpu component */
 	retval = PAPI_assign_eventset_component( EventSet, 0 );
 	if ( retval != PAPI_OK )
-		CPP_TEST_FAIL( "PAPI_assign_eventset_component", retval );
+		test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval );
 
 	if ( ( retval = PAPI_set_multiplex( EventSet ) ) != PAPI_OK ) {
 	   if ( retval == PAPI_ENOSUPP) {
@@ -220,7 +218,7 @@ case2_pthreads( void *arg )
 
 		retval = PAPI_add_event( EventSet, PAPI_events[i] );
 		if ( retval != PAPI_OK )
-			CPP_TEST_FAIL( "PAPI_add_event", retval );
+			test_fail(__FILE__, __LINE__, "PAPI_add_event", retval );
 		PAPI_event_code_to_name( PAPI_events[i], out );
 		if ( !TESTS_QUIET )
 			printf( "Added %s\n", out );
@@ -248,7 +246,7 @@ case2_pthreads( void *arg )
 
 	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
-	
+
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
@@ -275,7 +273,7 @@ case3_pthreads( void *arg )
 
 		retval = PAPI_add_event( EventSet, PAPI_events[i] );
 		if ( retval != PAPI_OK )
-			CPP_TEST_FAIL( "PAPI_add_event", retval );
+			test_fail(__FILE__, __LINE__, "PAPI_add_event", retval );
 		PAPI_event_code_to_name( PAPI_events[i], out );
 		if ( !TESTS_QUIET )
 			printf( "Added %s\n", out );
@@ -309,7 +307,7 @@ case3_pthreads( void *arg )
 
 	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
-	
+
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
@@ -335,7 +333,7 @@ case4_pthreads( void *arg )
 	i = 0;
 	retval = PAPI_add_event( EventSet, PAPI_events[i] );
 	if ( retval != PAPI_OK )
-		CPP_TEST_FAIL( "PAPI_add_event", retval );
+		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
 	printf( "Added %s\n", out );
 
@@ -343,13 +341,13 @@ case4_pthreads( void *arg )
 	        if ( retval == PAPI_ENOSUPP) {
 	           test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
 	        }
-	   
+
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
 	}
 	i = 1;
 	retval = PAPI_add_event( EventSet, PAPI_events[i] );
 	if ( retval != PAPI_OK )
-		CPP_TEST_FAIL( "PAPI_add_event", retval );
+		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval );
 	PAPI_event_code_to_name( PAPI_events[i], out );
 	printf( "Added %s\n", out );
 
@@ -375,7 +373,7 @@ case4_pthreads( void *arg )
 
 	if ( ( retval = PAPI_destroy_eventset( &EventSet) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
-	
+
 	if ( ( retval = PAPI_unregister_thread(  ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 
@@ -470,7 +468,7 @@ main( int argc, char **argv )
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
-		CPP_TEST_FAIL( "PAPI_library_init", retval );
+		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval );
 
 	test_pass( __FILE__ );
 

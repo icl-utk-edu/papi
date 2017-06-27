@@ -28,13 +28,13 @@ typedef struct
 } ocount_t;
 
 /* there are two experiments: batch and interleaf; for each experiment there
-   are three possible vectors, one counter overflows, the other 
+   are three possible vectors, one counter overflows, the other
    counter overflows, both overflow */
-ocount_t overflow_counts[2][3] =
+static ocount_t overflow_counts[2][3] =
 	{ {{0, 0}, {0, 0}, {0, 0}}, {{0, 0}, {0, 0}, {0, 0}} };
-int total_unknown = 0;
+static int total_unknown = 0;
 
-void
+static void
 handler( int mode, void *address, long long overflow_vector, void *context )
 {
 	( void ) context;		 /*unused */
@@ -68,7 +68,7 @@ handler( int mode, void *address, long long overflow_vector, void *context )
 	total_unknown++;
 }
 
-void
+static void
 handler_batch( int EventSet, void *address, long long overflow_vector,
 			   void *context )
 {
@@ -76,7 +76,7 @@ handler_batch( int EventSet, void *address, long long overflow_vector,
 	handler( 0, address, overflow_vector, context );
 }
 
-void
+static void
 handler_interleaf( int EventSet, void *address, long long overflow_vector,
 				   void *context )
 {
@@ -95,21 +95,28 @@ main( int argc, char **argv )
 	char event_name[3][PAPI_MAX_STR_LEN];
 	int num_events1;
 	int threshold = THRESHOLD;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
-	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
+	retval = PAPI_create_eventset( &EventSet );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
 
 	/* decide which of PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS to add,
 	   depending on the availability and derived status of the event on
 	   this platform */
-	if ( ( PAPI_event = find_nonderived_event(  ) ) == 0 )
-		test_fail( __FILE__, __LINE__, "no PAPI_event", 0 );
+	if ( ( PAPI_event = find_nonderived_event(  ) ) == 0 ) {
+		if (!quiet) printf("No events found!\n");
+		test_skip( __FILE__, __LINE__, "no PAPI_event", 0 );
+	}
 
 	if ( ( retval = PAPI_add_event( EventSet, PAPI_event ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );

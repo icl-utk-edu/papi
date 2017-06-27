@@ -18,9 +18,9 @@
 
 #include "do_loops.h"
 
-int *events;
-int numevents = 0;
-int max_events=0;
+static int *events;
+static int numevents = 0;
+static int max_events=0;
 
 double
 loop( long n )
@@ -104,14 +104,15 @@ thread( void *arg )
 int
 main( int argc, char **argv )
 {
-	int nthreads = 8, ret, i;
+	int nthreads = 8, retval, i;
 	PAPI_event_info_t info;
 	pthread_t *threads;
-	const PAPI_hw_info_t *hw_info;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		if ( argc > 1 ) {
 			int tmp = atoi( argv[1] );
 			if ( tmp >= 1 )
@@ -119,30 +120,19 @@ main( int argc, char **argv )
 		}
 	}
 
-	ret = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( ret != PAPI_VER_CURRENT ) {
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", ret );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT ) {
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
-	if ( strcmp( hw_info->model_string, "POWER6" ) == 0 ) {
-		ret = PAPI_set_domain( PAPI_DOM_ALL );
-		if ( ret != PAPI_OK ) {
-			test_fail( __FILE__, __LINE__, "PAPI_set_domain", ret );
-		}
+	retval = PAPI_thread_init( ( unsigned long ( * )( void ) ) pthread_self );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
 	}
 
-	ret = PAPI_thread_init( ( unsigned long ( * )( void ) ) pthread_self );
-	if ( ret != PAPI_OK ) {
-		test_fail( __FILE__, __LINE__, "PAPI_thread_init", ret );
-	}
-
-	ret = PAPI_multiplex_init(  );
-	if ( ret != PAPI_OK ) {
-		test_fail( __FILE__, __LINE__, "PAPI_multiplex_init", ret );
+	retval = PAPI_multiplex_init(  );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_multiplex_init", retval );
 	}
 
 	if ((max_events = PAPI_get_cmp_opt(PAPI_MAX_MPX_CTRS,NULL,0)) <= 0) {
@@ -160,19 +150,23 @@ main( int argc, char **argv )
 		if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
 			if ( info.count == 1 ) {
 				events[numevents++] = ( int ) info.event_code;
-				if (!TESTS_QUIET) printf( "Added %s\n", info.symbol );
+				if (!quiet) printf( "Added %s\n", info.symbol );
 			} else {
-				if (!TESTS_QUIET) printf( "Skipping derived event %s\n", info.symbol );
+				if (!quiet) printf( "Skipping derived event %s\n", info.symbol );
 			}
 		}
 	} while ( ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK )
 			  && ( numevents < max_events ) );
 
-	if (!TESTS_QUIET) printf( "Found %d events\n", numevents );
+	if (!quiet) printf( "Found %d events\n", numevents );
+
+	if (numevents==0) {
+		test_skip(__FILE__,__LINE__,"No events found",0);
+	}
 
 	do_stuff(  );
 
-	if (!TESTS_QUIET) printf( "Creating %d threads:\n", nthreads );
+	if (!quiet) printf( "Creating %d threads:\n", nthreads );
 
 	threads =
 		( pthread_t * ) malloc( ( size_t ) nthreads * sizeof ( pthread_t ) );
@@ -182,21 +176,21 @@ main( int argc, char **argv )
 
 	/* Create the threads */
 	for ( i = 0; i < nthreads; i++ ) {
-		ret = pthread_create( &threads[i], NULL, thread, NULL );
-		if ( ret != 0 ) {
+		retval = pthread_create( &threads[i], NULL, thread, NULL );
+		if ( retval != 0 ) {
 			test_fail( __FILE__, __LINE__, "pthread_create", PAPI_ESYS );
 		}
 	}
 
 	/* Wait for thread completion */
 	for ( i = 0; i < nthreads; i++ ) {
-		ret = pthread_join( threads[i], NULL );
-		if ( ret != 0 ) {
+		retval = pthread_join( threads[i], NULL );
+		if ( retval != 0 ) {
 			test_fail( __FILE__, __LINE__, "pthread_join", PAPI_ESYS );
 		}
 	}
 
-	if (!TESTS_QUIET) printf( "Done." );
+	if (!quiet) printf( "Done." );
 
 	test_pass( __FILE__ );
 

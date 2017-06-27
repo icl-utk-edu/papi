@@ -27,7 +27,7 @@ typedef struct
 	int count;
 } ocount_t;
 
-/* there are three possible vectors, one counter overflows, the other 
+/* there are three possible vectors, one counter overflows, the other
    counter overflows, both overflow */
 /*not used*/ ocount_t overflow_counts[3] = { {0, 0}, {0, 0}, {0, 0} };
 /*not used*/ int total_unknown = 0;
@@ -65,19 +65,26 @@ main( int argc, char **argv )
 	int PAPI_event;
 	char event_name[PAPI_MAX_STR_LEN];
 	int num_events1, mask1;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depends on the availability of the event on the
 	   platform */
 /* NOTE: Only adding one overflow on PAPI_event -- no overflow for PAPI_TOT_CYC*/
-	EventSet =
-		add_two_nonderived_events( &num_events1, &PAPI_event, &mask1 );
+	EventSet = add_two_nonderived_events( &num_events1,
+						&PAPI_event, &mask1 );
+	if (num_events1==0) {
+		if (!quiet) printf("Trouble adding events\n");
+		test_skip(__FILE__,__LINE__,"Adding event",1);
+	}
 
 	values = allocate_test_space( 2, num_events1 );
 

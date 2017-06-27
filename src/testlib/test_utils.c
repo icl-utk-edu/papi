@@ -621,37 +621,37 @@ int
 add_two_nonderived_events( int *num_events, int *papi_event, int *mask ) {
 
 	/* query and set up the right event to monitor */
-  int EventSet = PAPI_NULL;
+	int EventSet = PAPI_NULL;
+	int retval;
+
+	*num_events=0;
 
 #define POTENTIAL_EVENTS 3
 
-  unsigned int potential_evt_to_add[POTENTIAL_EVENTS][2] =
+	unsigned int potential_evt_to_add[POTENTIAL_EVENTS][2] =
 		{ {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
 		  {( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
 		  {( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
 		};
 
-  int i;
+	int i;
 
-  *mask = 0;
+	*mask = 0;
 
-   /* could leak up to two event sets. */
-  for(i=0;i<POTENTIAL_EVENTS;i++) {
+	/* could leak up to two event sets. */
+	for(i=0;i<POTENTIAL_EVENTS;i++) {
+		retval = PAPI_query_event( ( int ) potential_evt_to_add[i][0] );
+		if (retval  == PAPI_OK ) {
+			if ( !is_event_derived(potential_evt_to_add[i][0])) {
+		 		*papi_event = ( int ) potential_evt_to_add[i][0];
+		 		*mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
+		 		EventSet = add_test_events( num_events, mask, 0 );
+		 		if ( *num_events == 2 ) break;
+			}
+		}
+	}
 
-     if ( PAPI_query_event( ( int ) potential_evt_to_add[i][0] ) == PAPI_OK ) {
-       if ( !is_event_derived(potential_evt_to_add[i][0])) {
-		 *papi_event = ( int ) potential_evt_to_add[i][0];
-		 *mask = ( int ) potential_evt_to_add[i][1] | MASK_TOT_CYC;
-		 EventSet = add_test_events( num_events, mask, 0 );
-		 if ( *num_events == 2 ) break;
-       }
-    }
-  }
-
-  if ( i == POTENTIAL_EVENTS ) {
-     test_fail( __FILE__, __LINE__, "Can't find a non-derived event!", 0 );
-  }
-  return EventSet;
+	return EventSet;
 }
 
 /* add native events to use all counters */
@@ -661,57 +661,62 @@ enum_add_native_events( int *num_events, int **evtcodes,
 			int cidx)
 {
 	/* query and set up the right event to monitor */
-     int EventSet = PAPI_NULL;
-     int i = 0, k, event_code, retval;
-     int counters, event_found = 0;
-     PAPI_event_info_t info;
-     const PAPI_component_info_t *s = NULL;
-     const PAPI_hw_info_t *hw_info = NULL;
 
-     s = PAPI_get_component_info( cidx );
-     if ( s == NULL ) {
-	test_fail( __FILE__, __LINE__,
-			   "PAPI_get_component_info", PAPI_ECMP );
-     }
+	int EventSet = PAPI_NULL;
+	int i = 0, k, event_code, retval;
+	int counters, event_found = 0;
+	PAPI_event_info_t info;
+	const PAPI_component_info_t *s = NULL;
+	const PAPI_hw_info_t *hw_info = NULL;
 
-     hw_info = PAPI_get_hardware_info(  );
-     if ( hw_info == NULL ) {
-        test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-     }
+	*num_events=0;
 
-     counters = PAPI_num_hwctrs(  );
-     if (counters<1) {
-	test_fail(__FILE__,__LINE__, "No counters available!\n",1);
-     }
-
-     if (!TESTS_QUIET) printf("Trying to fill %d hardware counters...\n",
-			      counters);
-
-     if (need_interrupt) {
-        if ( (!strcmp(hw_info->model_string,"POWER6")) ||
-	     (!strcmp(hw_info->model_string,"POWER5")) ) {
-
-	   test_warn(__FILE__, __LINE__,
-		    "Limiting num_counters because of LIMITED_PMC on Power5 and Power6",1);
-           counters=4;
+	s = PAPI_get_component_info( cidx );
+	if ( s == NULL ) {
+		test_fail( __FILE__, __LINE__,
+				"PAPI_get_component_info", PAPI_ECMP );
 	}
-     }
 
-     ( *evtcodes ) = ( int * ) calloc( counters, sizeof ( int ) );
+	hw_info = PAPI_get_hardware_info(  );
+	if ( hw_info == NULL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	}
 
-     retval = PAPI_create_eventset( &EventSet );
-     if ( retval != PAPI_OK ) {
-	test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
-     }
+	counters = PAPI_num_hwctrs(  );
+	if (counters<1) {
+		if (!TESTS_QUIET) printf("No counters available\n");
+		return EventSet;
+	}
 
-     /* For platform independence, always ASK FOR the first event */
-     /* Don't just assume it'll be the first numeric value */
-     i = 0 | PAPI_NATIVE_MASK;
-     retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
-     if ( retval != PAPI_OK )
-     {
-	 test_fail( __FILE__, __LINE__, "PAPI_enum_cmp_event", retval );
-     }
+	if (!TESTS_QUIET) {
+		printf("Trying to fill %d hardware counters...\n", counters);
+	}
+
+	if (need_interrupt) {
+		if ( (!strcmp(hw_info->model_string,"POWER6")) ||
+			(!strcmp(hw_info->model_string,"POWER5")) ) {
+
+			test_warn(__FILE__, __LINE__,
+					"Limiting num_counters because of "
+					"LIMITED_PMC on Power5 and Power6",1);
+			counters=4;
+		}
+	}
+
+	( *evtcodes ) = ( int * ) calloc( counters, sizeof ( int ) );
+
+	retval = PAPI_create_eventset( &EventSet );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
+
+	/* For platform independence, always ASK FOR the first event */
+	/* Don't just assume it'll be the first numeric value */
+	i = 0 | PAPI_NATIVE_MASK;
+	retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_enum_cmp_event", retval );
+	}
 
      do {
         retval = PAPI_get_event_info( i, &info );

@@ -2,8 +2,6 @@
 * File:    overflow.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
 */
 
 /* This file performs the following test: overflow dispatch
@@ -57,26 +55,33 @@ main( int argc, char **argv )
 	char event_name1[PAPI_MAX_STR_LEN];
 	const PAPI_hw_info_t *hw_info = NULL;
 	int num_events, mask;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );	
+	quiet = tests_quiet( argc, argv );
 
 	/* Init PAPI */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	/* Get hardware info */
 	hw_info = PAPI_get_hardware_info(  );
-	if ( hw_info == NULL )
+	if ( hw_info == NULL ) {
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	}
 
 	/* add PAPI_TOT_CYC and one of the events in     */
         /*     PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, */
-	/* depending on the availability of the event on */ 
+	/* depending on the availability of the event on */
 	/* the platform */
-	EventSet =
-		add_two_nonderived_events( &num_events, &PAPI_event, &mask );
+	EventSet = add_two_nonderived_events( &num_events, &PAPI_event, &mask );
+
+	if (num_events==0) {
+		if (!quiet) printf("Trouble adding event!\n");
+		test_skip(__FILE__,__LINE__,"Event add",1);
+	}
 
 	printf("Using %#x for the overflow event\n",PAPI_event);
 

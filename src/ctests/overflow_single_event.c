@@ -2,8 +2,6 @@
 * File:    overflow_single_event.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
 */
 
 /* This file performs the following test: overflow dispatch of an eventset
@@ -57,17 +55,21 @@ main( int argc, char **argv )
 	int PAPI_event = 0, mythreshold;
 	char event_name[PAPI_MAX_STR_LEN];
 	const PAPI_hw_info_t *hw_info = NULL;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
+	/* Ugh */
 	if ( ( !strncmp( hw_info->model_string, "UltraSPARC", 10 ) &&
 		   !( strncmp( hw_info->vendor_string, "SUN", 3 ) ) ) ||
 		 ( !strncmp( hw_info->model_string, "AMD K7", 6 ) ) ||
@@ -85,52 +87,67 @@ main( int argc, char **argv )
 		PAPI_event = find_nonderived_event( );
 	}
 
-	if (( PAPI_event == PAPI_FP_OPS ) || ( PAPI_event == PAPI_FP_INS ))
+	if (PAPI_event==0) {
+		if (!quiet) printf("Trouble adding event\n");
+		test_skip(__FILE__,__LINE__,"Event trouble",1);
+	}
+
+	if (( PAPI_event == PAPI_FP_OPS ) || ( PAPI_event == PAPI_FP_INS )) {
 		mythreshold = THRESHOLD;
-	else
+	}
+	else {
 #if defined(linux)
 		mythreshold = ( int ) hw_info->cpu_max_mhz * 20000;
 #else
 		mythreshold = THRESHOLD * 2;
 #endif
+	}
 
 	retval = PAPI_create_eventset( &EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
 
 	retval = PAPI_add_event( EventSet, PAPI_event );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
+	}
 
 	retval = PAPI_start( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( NUM_FLOPS );
 
 	retval = PAPI_stop( EventSet, &values[0] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
 	retval = PAPI_overflow( EventSet, PAPI_event, mythreshold, 0, handler );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
+	}
 
 	retval = PAPI_start( EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
 	do_flops( NUM_FLOPS );
 
 	retval = PAPI_stop( EventSet, &values[1] );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
+	/* double ugh */
 #if defined(linux) || defined(__ia64__) || defined(_POWER4)
 	num_flops *= 2;
 #endif
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		if ( ( retval =
 			   PAPI_event_code_to_name( PAPI_event, event_name ) ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );

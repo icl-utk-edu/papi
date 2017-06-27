@@ -21,9 +21,10 @@ main( int argc, char **argv )
 	char add_event_str[PAPI_MAX_STR_LEN];
 	double instructions_error;
 	long long old_instructions;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet = tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -41,7 +42,8 @@ main( int argc, char **argv )
 	retval = PAPI_add_named_event( EventSet, event_names[0] );
 	if ( retval != PAPI_OK ) {
 		sprintf( add_event_str, "PAPI_add_named_event[%s]", event_names[0] );
-		test_fail( __FILE__, __LINE__, add_event_str, retval );
+		if (!quiet) printf("Trouble %s\n",add_event_str);
+		test_skip( __FILE__, __LINE__, add_event_str, retval );
 	}
 
 	retval = PAPI_add_named_event( EventSet, event_names[1] );
@@ -68,7 +70,7 @@ main( int argc, char **argv )
 
 	old_instructions=values1[1];
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 
 	   printf( "========================\n" );
 
@@ -109,7 +111,7 @@ main( int argc, char **argv )
 
 	/* this only works if IPC != 1 */
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 
 	   printf( "==========================\n" );
 	   printf( "After removing PAP_TOT_CYC\n");

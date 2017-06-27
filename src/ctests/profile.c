@@ -6,11 +6,10 @@
 *          terpstra@cs.utk.edu
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
-* Mods:    <your name here>
-*          <your email address>
 */
 
-/* This file performs the following test: profiling and program info option call
+/* This file performs the following test:
+	profiling and program info option call
 
    - This tests the SVR4 profiling interface of PAPI. These are counted
    in the default counting domain and default granularity, depending on
@@ -51,8 +50,26 @@ main( int argc, char **argv )
 	int mythreshold = THRESHOLD;
 	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
+	int quiet;
 
-	prof_init( argc, argv, &prginfo );
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
+
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
+                test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
+
+        if ( ( prginfo = PAPI_get_executable_info(  ) ) == NULL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
+	}
+
+	retval = PAPI_query_event(PAPI_TOT_CYC);
+	if (retval!=PAPI_OK) {
+		if (!quiet) printf("No events found\n");
+		test_skip(__FILE__, __LINE__,"No events found",1);
+	}
+
 	mask = prof_events( num_tests );
 
 #ifdef PROFILE_ALL
@@ -81,24 +98,27 @@ main( int argc, char **argv )
 #endif
 
 	length = end - start;
-	if ( length < 0 )
+	if ( length < 0 ) {
 		test_fail( __FILE__, __LINE__, "Profile length < 0!", ( int ) length );
+	}
 
-	prof_print_address
-		( "Test case profile: POSIX compatible profiling with hardware counters.\n",
-		  prginfo );
+	prof_print_address( "Test case profile: "
+			"POSIX compatible profiling with hardware counters.\n",
+			prginfo );
+
 	prof_print_prof_info( start, end, mythreshold, event_name );
-	retval =
-		do_profile( start, ( unsigned long ) length, FULL_SCALE, mythreshold,
-					PAPI_PROFIL_BUCKET_16 );
-	if ( retval == PAPI_OK )
-		retval =
-			do_profile( start, ( unsigned long ) length, FULL_SCALE,
-						mythreshold, PAPI_PROFIL_BUCKET_32 );
-	if ( retval == PAPI_OK )
-		retval =
-			do_profile( start, ( unsigned long ) length, FULL_SCALE,
-						mythreshold, PAPI_PROFIL_BUCKET_64 );
+	retval = do_profile( start, ( unsigned long ) length, FULL_SCALE,
+				mythreshold, PAPI_PROFIL_BUCKET_16 );
+	if ( retval == PAPI_OK ) {
+		retval = do_profile( start, ( unsigned long ) length,
+						FULL_SCALE, mythreshold,
+						PAPI_PROFIL_BUCKET_32 );
+	}
+	if ( retval == PAPI_OK ) {
+		retval = do_profile( start, ( unsigned long ) length,
+						FULL_SCALE, mythreshold,
+						PAPI_PROFIL_BUCKET_64 );
+	}
 
 	remove_test_events( &EventSet, mask );
 
@@ -143,13 +163,13 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 			   PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
 							EventSet, PAPI_event, thresh,
 							profflags[i] | bucket ) ) != PAPI_OK ) {
-		   if (retval==PAPI_ENOSUPP) { 
+		   if (retval==PAPI_ENOSUPP) {
 		      char warning[BUFSIZ];
-		    
+
 		      sprintf(warning,"PAPI_profil %s not supported",
 			      profstr[i]);
 		      test_warn( __FILE__, __LINE__, warning, 1 );
-		   }		   
+		   }
 		   else {
 		      test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
 		   }
@@ -198,5 +218,5 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 		free( profbuf[i] );
 	}
 
-	return ( retval );
+	return retval;
 }

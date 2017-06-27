@@ -55,16 +55,21 @@ mainloop( int arg )
 
 	( void ) arg;
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
+	}
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depending on the availability of the event on the
 	   platform */
-	EventSet1 =
-		add_two_nonderived_events( &num_events1, &PAPI_event, &mask1 );
+	EventSet1 = add_two_nonderived_events( &num_events1,
+			&PAPI_event, &mask1 );
+
+	if (num_events1==0) {
+		if (!TESTS_QUIET) printf("Trouble creating events\n");
+		test_skip(__FILE__,__LINE__,"Creating events",0);
+	}
 
 	values = allocate_test_space( num_tests, num_events1 );
 
@@ -117,12 +122,16 @@ main( int argc, char **argv )
 	int i, rc, retval;
 	pthread_t id[NUM_THREADS];
 	pthread_attr_t attr;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
-	printf( "%s: Using %d threads\n\n", argv[0], NUM_THREADS );
-	printf
-		( "Does non-threaded overflow work with extraneous threads present?\n" );
+	if (!quiet) {
+		printf( "%s: Using %d threads\n\n", argv[0], NUM_THREADS );
+		printf( "Does non-threaded overflow work "
+			"with extraneous threads present?\n" );
+	}
 
 	pthread_attr_init( &attr );
 #ifdef PTHREAD_CREATE_UNDETACHED

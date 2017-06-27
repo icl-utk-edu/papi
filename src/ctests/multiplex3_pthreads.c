@@ -51,8 +51,9 @@ mainloop( int arg )
 	/* Initialize the library */
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	retval = PAPI_multiplex_init(  );
 	if ( retval != PAPI_OK ) {
@@ -60,27 +61,28 @@ mainloop( int arg )
 	}
 
 	retval = PAPI_create_eventset( &EventSet );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
 
 	/* In Component PAPI, EventSets must be assigned a component index
 	   before you can fiddle with their internals.
 	   0 is always the cpu component */
 	retval = PAPI_assign_eventset_component( EventSet, 0 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component",
 				   retval );
+	}
 
 	retval = PAPI_set_multiplex( EventSet );
         if ( retval == PAPI_ENOSUPP) {
-	   test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
-	} else if ( retval != PAPI_OK )
+		test_skip(__FILE__, __LINE__, "Multiplex not supported", 1);
+	} else if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
+	}
 
-	if ( ( retval =
-		   PAPI_thread_init( ( unsigned
-							   long ( * )( void ) ) ( pthread_self ) ) ) !=
-		 PAPI_OK ) {
+	retval = PAPI_thread_init( ( unsigned long ( * )( void ) ) ( pthread_self ) );
+	if (retval != PAPI_OK ) {
 		if ( retval == PAPI_ECMP )
 			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
 		else
@@ -88,8 +90,11 @@ mainloop( int arg )
 	}
 
 	retval = PAPI_add_event( EventSet, PAPI_TOT_INS );
-	if ( ( retval != PAPI_OK ) && ( retval != PAPI_ECNFLCT ) )
-		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
+	if ( ( retval != PAPI_OK ) && ( retval != PAPI_ECNFLCT ) ) {
+		if (!TESTS_QUIET) printf("Trouble adding PAPI_TOT_INS\n");
+		test_skip( __FILE__, __LINE__, "PAPI_add_event", retval );
+	}
+
 	if ( !TESTS_QUIET ) {
 		printf( "Added %s\n", "PAPI_TOT_INS" );
 	}
@@ -194,12 +199,16 @@ main( int argc, char **argv )
 	int i, rc, retval;
 	pthread_t id[NUM_THREADS];
 	pthread_attr_t attr;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
 
-	printf( "%s: Using %d threads\n\n", argv[0], NUM_THREADS );
-	printf
-		( "Does non-threaded multiplexing work with extraneous threads present?\n" );
+	if (!quiet) {
+		printf( "%s: Using %d threads\n\n", argv[0], NUM_THREADS );
+		printf( "Does non-threaded multiplexing work "
+			"with extraneous threads present?\n" );
+	}
 
 	/* Create a bunch of unused pthreads, to simulate threads created
 	 * by the system that the user doesn't know about.

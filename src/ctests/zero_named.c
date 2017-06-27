@@ -1,5 +1,6 @@
-/* This test exercises the PAPI_{query, add, remove}_event APIs for PRESET events.
-	It more or less duplicates the functionality of the classic "zero" test.
+/* This test exercises the PAPI_{query, add, remove}_event APIs
+   for PRESET events.
+   It more or less duplicates the functionality of the classic "zero" test.
 */
 
 #include <stdio.h>
@@ -20,9 +21,10 @@ main( int argc, char **argv )
 	char *event_names[] = {"PAPI_TOT_CYC","PAPI_TOT_INS"};
 	char add_event_str[PAPI_MAX_STR_LEN];
 	double cycles_error;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet=tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -32,10 +34,13 @@ main( int argc, char **argv )
 
 	/* Verify that the named events exist */
 	retval = PAPI_query_named_event(event_names[0]);
-	if ( retval == PAPI_OK)
+	if ( retval == PAPI_OK) {
 		retval = PAPI_query_named_event(event_names[1]);
-	if ( retval != PAPI_OK )
-	   test_fail( __FILE__, __LINE__, "PAPI_query_named_event", retval );
+	}
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Trouble querying events\n");
+		test_skip( __FILE__, __LINE__, "PAPI_query_named_event", retval );
+	}
 
 	/* Create an empty event set */
 	retval = PAPI_create_eventset( &EventSet );
@@ -97,7 +102,7 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, add_event_str, retval );
 	}
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 	   printf( "PAPI_{query, add, remove}_named_event API test.\n" );
 	   printf( "-----------------------------------------------\n" );
 	   tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );

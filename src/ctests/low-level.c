@@ -4,7 +4,7 @@
     some simple mistakes that are easily made and how a correct
     code would accomplish the same thing.
 
-    Example 1: The total count over two work loops (Loops 1 and 2) 
+    Example 1: The total count over two work loops (Loops 1 and 2)
     are supposed to be measured. Due to a mis-understanding of the
     semantics of the API the total count gets wrong.
     The example also illustrates that it is legal to read both
@@ -27,21 +27,24 @@
 
 #include "do_loops.h"
 
+#define NUM_EVENTS 2
+
 int
 main( int argc, char **argv )
 {
 	int retval;
-#define NUM_EVENTS 2
 	long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
 	int Events[NUM_EVENTS];
 	int EventSet = PAPI_NULL;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
-
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	/* query and set up the right events to monitor */
 	if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK ) {
@@ -52,15 +55,18 @@ main( int argc, char **argv )
 		Events[1] = PAPI_TOT_CYC;
 	}
 
-	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
+	retval = PAPI_create_eventset( &EventSet );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
 
-	if ( ( retval =
-		   PAPI_add_events( EventSet, ( int * ) Events,
-							NUM_EVENTS ) ) < PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_add_events", retval );
+	retval = PAPI_add_events( EventSet, ( int * ) Events, NUM_EVENTS );
+	if (retval < PAPI_OK ) {
+		if (!quiet) printf("Trouble adding events\n");
+		test_skip( __FILE__, __LINE__, "PAPI_add_events", retval );
+	}
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "\n   Incorrect usage of read and accum.\n" );
 		printf( "   Some cycles are counted twice\n" );
 	}
@@ -73,7 +79,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_read( EventSet, values ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( TWO12, values[0], values[1], "(Counters continuing...)\n" );
 
 	/* Loop 2 */
@@ -84,7 +90,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_accum( EventSet, values ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( TWO12, values[0], values[1], "(Counters being accumulated)\n" );
 
 	/* Loop 3 */
@@ -96,7 +102,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_read( EventSet, dummyvalues ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( TWO12, dummyvalues[0], dummyvalues[1],
 				"(Reading stopped counters)\n" );
 
@@ -114,7 +120,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_read( EventSet, values ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( TWO12, values[0], values[1], "(Counters continuing...)\n" );
 
 	/* Loop 2 */
@@ -124,7 +130,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_read( EventSet, dummyvalues ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( TWO12, dummyvalues[0], dummyvalues[1],
 				"(Intermediate counts...)\n" );
 
@@ -136,13 +142,13 @@ main( int argc, char **argv )
 	 * and the counts in loop 2 are included in the total counts           */
 	if ( ( retval = PAPI_accum( EventSet, values ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( TWO12, values[0], values[1], "" );
 
 	if ( ( retval = PAPI_stop( EventSet, dummyvalues ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "\n   Correct usage of read and accum.\n" );
 		printf( "   PAPI_reset and PAPI_accum used to skip counting\n" );
 		printf( "   a section of the code.\n" );
@@ -154,7 +160,7 @@ main( int argc, char **argv )
 
 	if ( ( retval = PAPI_read( EventSet, values ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( TWO12, values[0], values[1], "(Counters continuing)\n" );
 
 	/* Code that should not be counted */
@@ -163,7 +169,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_reset( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_reset", retval );
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( "%12s %12s  (Counters reset)\n", "", "" );
 
 	do_flops( NUM_FLOPS );
@@ -171,10 +177,10 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_accum( EventSet, values ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( TWO12, values[0], values[1], "" );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "----------------------------------\n" );
 		printf( "Verification: The last line in each experiment should be\n" );
 		printf( "approximately twice the value of the first line.\n" );

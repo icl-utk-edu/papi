@@ -70,16 +70,20 @@ prof_events( int num_tests)
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depends on the availability of the event on the
 	   platform */
-	EventSet =
-		add_two_nonderived_events( &num_events, &PAPI_event, &mask );
+	EventSet = add_two_nonderived_events( &num_events, &PAPI_event, &mask );
+
+	if (num_events==0) {
+		return 0;
+	}
 
 	values = allocate_test_space( num_tests, num_events );
 
-	if ( ( retval =
-		   PAPI_event_code_to_name( PAPI_event, event_name ) ) != PAPI_OK )
+	retval = PAPI_event_code_to_name( PAPI_event, event_name );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	}
 
-	return ( mask );
+	return mask;
 }
 
 /* This function displays info from the prginfo structure in a standardized format.

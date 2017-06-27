@@ -21,9 +21,10 @@ main( int argc, char **argv )
 	long long ins;
 	int retval;
 	int i, j, k;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
-
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
 	/* Initialize the Matrix arrays */
 	for( i = 0; i < INDEX; i++ ) {
@@ -34,8 +35,11 @@ main( int argc, char **argv )
 	}
 
 	/* Setup PAPI library and begin collecting data from the counters */
-	if ( ( retval = PAPI_ipc( &real_time, &proc_time, &ins, &ipc ) ) < PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
+	retval = PAPI_ipc( &real_time, &proc_time, &ins, &ipc );
+	if (retval < PAPI_OK ) {
+		if (!quiet) printf("Trouble starting IPC\n");
+		test_skip( __FILE__, __LINE__, "PAPI_ipc", retval );
+	}
 
 	/* Matrix-Matrix multiply */
 	for ( i = 0; i < INDEX; i++ )
@@ -48,13 +52,13 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_ipc", retval );
 	dummy( ( void * ) mresult );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Real_time: %f Proc_time: %f Total ins: ", real_time,
 				proc_time );
 		printf( LLDFMT, ins );
 		printf( " IPC: %f\n", ipc );
 	}
-   
+
            /* This should not happen unless the optimizer */
            /* gets too good                               */
         if (ins < INDEX*INDEX) {
