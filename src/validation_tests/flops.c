@@ -18,7 +18,7 @@ main( int argc, char **argv )
 {
 	int retval;
 	double rtime, ptime, mflips, mflops, ipc;
-	long long flips, flops, ins[2];
+	long long flips=0, flops=0, ins[2];
 
 	double rtime_start,rtime_end;
 	double ptime_start,ptime_end;
@@ -135,10 +135,12 @@ main( int argc, char **argv )
 	mflips_swapped=mflips;
 
 	// turn off flips
-	retval=PAPI_remove_named_event(eventset,"PAPI_FP_INS");
-	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__,
-			"PAPI_remove_named_event", retval );
+	if (event_added_flips) {
+		retval=PAPI_remove_named_event(eventset,"PAPI_FP_INS");
+		if (retval!=PAPI_OK) {
+			test_fail( __FILE__, __LINE__,
+				"PAPI_remove_named_event", retval );
+		}
 	}
 
 	/************************/
@@ -225,10 +227,12 @@ main( int argc, char **argv )
 	mflops_swapped=mflops;
 
 	// turn off flops
-	retval=PAPI_remove_named_event(eventset,"PAPI_FP_OPS");
-	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__,
-			"PAPI_remove_named_event", retval );
+	if (event_added_flops) {
+		retval=PAPI_remove_named_event(eventset,"PAPI_FP_OPS");
+		if (retval!=PAPI_OK) {
+			test_fail( __FILE__, __LINE__,
+				"PAPI_remove_named_event", retval );
+		}
 	}
 
 	/************************/
