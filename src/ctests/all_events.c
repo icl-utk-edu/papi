@@ -21,6 +21,7 @@ main( int argc, char **argv )
 	long long values;
 	PAPI_event_info_t info;
 	int quiet=0;
+	char error_message[BUFSIZ];
 
 	/* Set TESTS_QUIET variable */
 	quiet=tests_quiet( argc, argv );
@@ -43,14 +44,30 @@ main( int argc, char **argv )
 
 	/* Add all preset events */
 	for ( i = 0; i < PAPI_MAX_PRESET_EVENTS; i++ ) {
+
 		if ( PAPI_get_event_info( PAPI_PRESET_MASK | i, &info ) != PAPI_OK )
 			continue;
+
 		if ( !( info.count ) )
 			continue;
+
 		if (!quiet) printf( "Adding %-14s", info.symbol );
+
 		retval = PAPI_add_event( EventSet, ( int ) info.event_code );
 		if ( retval != PAPI_OK ) {
-			PAPI_perror( "PAPI_add_event" );
+			if (!quiet) {
+				printf("Error adding event %s\n",info.symbol);
+				if (retval==PAPI_ECNFLCT) {
+					printf("Probably NMI watchdog related\n");
+				}
+			}
+			if (retval==PAPI_ECNFLCT) {
+				sprintf(error_message,"Problem adding %s (probably NMI Watchdog related)",info.symbol);
+			}
+			else {
+				sprintf(error_message,"Problem adding %s",info.symbol);
+			}
+			test_warn( __FILE__, __LINE__, error_message, retval );
 			err_count++;
 		} else {
 			retval = PAPI_start( EventSet );
