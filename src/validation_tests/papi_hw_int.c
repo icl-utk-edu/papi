@@ -1,5 +1,5 @@
-/* This file attempts to test the PAPI_HW_INT	*/
-/* performance counter.				*/
+/* This file attempts to test the PAPI_HW_INT				*/
+/* performance counter (Total hardware interrupts).			*/
 
 /* This assumes that interrupts will be happening in the background */
 /* Including a regular timer tick of HZ.  This is not always true   */
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 		ns = (seconds*1000000000ULL)+ns;
 
 		/* be done if 3 billion nanoseconds has passed */
-
+		if (ns>3000000000) break;
 	}
 
 	retval=PAPI_stop(eventset,&count);
