@@ -1,4 +1,5 @@
-ALL = papi_br_ins papi_br_msp papi_fp_ops papi_hw_int \
+ALL = flops \
+	papi_br_ins papi_br_msp papi_fp_ops papi_hw_int \
 	papi_ld_ins papi_sr_ins \
 	papi_tot_cyc papi_tot_ins
 
@@ -21,6 +22,10 @@ instructions_testcode.o:	instructions_testcode.c testcode.h
 
 matrix_multiply.o:	matrix_multiply.c matrix_multiply.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c matrix_multiply.c
+
+
+flops: flops.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) flops.c $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
 
 
 papi_br_ins: papi_br_ins.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
