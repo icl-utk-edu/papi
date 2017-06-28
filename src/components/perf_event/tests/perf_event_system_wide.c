@@ -21,41 +21,47 @@
 
 int main( int argc, char **argv ) {
 
-   int retval;
-   int EventSet1 = PAPI_NULL;
-   int EventSet2 = PAPI_NULL;
-   int EventSet3 = PAPI_NULL;
-   int EventSet4 = PAPI_NULL;
-   int EventSet5 = PAPI_NULL;
-   int EventSet6 = PAPI_NULL;
-   int EventSet7 = PAPI_NULL;
-   int EventSet8 = PAPI_NULL;
-   int EventSet9 = PAPI_NULL;
-   int EventSet10 = PAPI_NULL;
+	int retval;
+	int EventSetDefault = PAPI_NULL;
+	int EventSetUser = PAPI_NULL;
+	int EventSetKernel = PAPI_NULL;
+	int EventSetUserKernel = PAPI_NULL;
+	int EventSetAll = PAPI_NULL;
+	int EventSet4 = PAPI_NULL;
+	int EventSet5 = PAPI_NULL;
+	int EventSet6 = PAPI_NULL;
+	int EventSet7 = PAPI_NULL;
+	int EventSet8 = PAPI_NULL;
+	int EventSet9 = PAPI_NULL;
+	int EventSet10 = PAPI_NULL;
 
 	int quiet=0;
 
-   PAPI_domain_option_t domain_opt;
-   PAPI_granularity_option_t gran_opt;
-   PAPI_cpu_option_t cpu_opt;
-   cpu_set_t mask;
+	PAPI_domain_option_t domain_opt;
+	PAPI_granularity_option_t gran_opt;
+	PAPI_cpu_option_t cpu_opt;
+	cpu_set_t mask;
 
-   long long dom_user_values[1],dom_userkernel_values[1],dom_all_values[1];
-   long long grn_thr_values[1],grn_proc_values[1];
-   long long grn_sys_values[1],grn_sys_cpu_values[1];
-   long long total_values[1],total_affinity_values[1];
-   long long total_all_values[1];
+	long long dom_default_values[1],
+		dom_user_values[1],
+		dom_kernel_values[1],
+		dom_userkernel_values[1],
+		dom_all_values[1];
+	long long grn_thr_values[1],grn_proc_values[1];
+	long long grn_sys_values[1],grn_sys_cpu_values[1];
+	long long total_values[1],total_affinity_values[1];
+	long long total_all_values[1];
 
-   dom_user_values[0]=0;
-   dom_userkernel_values[0]=0;
-   dom_all_values[0]=0;
-   grn_thr_values[0]=0;
-   grn_proc_values[0]=0;
-   grn_sys_values[0]=0;
-   grn_sys_cpu_values[0]=0;
-   total_values[0]=0;
-   total_affinity_values[0]=0;
-   total_all_values[0]=0;
+	dom_user_values[0]=0;
+	dom_userkernel_values[0]=0;
+	dom_all_values[0]=0;
+	grn_thr_values[0]=0;
+	grn_proc_values[0]=0;
+	grn_sys_values[0]=0;
+	grn_sys_cpu_values[0]=0;
+	total_values[0]=0;
+	total_affinity_values[0]=0;
+	total_all_values[0]=0;
 
 	/* Set TESTS_QUIET variable */
 	quiet=tests_quiet( argc, argv );
@@ -66,110 +72,227 @@ int main( int argc, char **argv ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-   /***************************/
-   /***************************/
-   /* Default, user events    */
-   /***************************/
-   /***************************/
+	if (!quiet) {
+		printf("\nTrying PAPI_TOT_INS with different domains:\n");
+	}
 
-   if (!quiet) {
-      printf("\nTrying PAPI_TOT_CYC with different domains:\n");
-   }
+	/***************************/
+	/***************************/
+	/* Default		   */
+	/***************************/
+	/***************************/
 
-   retval = PAPI_create_eventset(&EventSet1);
-   if (retval != PAPI_OK) {
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
-   }
+	retval = PAPI_create_eventset(&EventSetDefault);
+	if (retval != PAPI_OK) {
+		test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
+	}
 
-   retval = PAPI_add_named_event(EventSet1, "PAPI_TOT_CYC");
-   if (retval != PAPI_OK) {
-      if ( !quiet ) {
-         fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
-      }
-      test_skip(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
-   }
+	retval = PAPI_add_named_event(EventSetDefault, "PAPI_TOT_INS");
+	if (retval != PAPI_OK) {
+		if ( !quiet ) {
+			fprintf(stderr,"Error trying to add PAPI_TOT_INS\n");
+		}
+		test_skip(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
+	}
+
+	if (!quiet) {
+		printf("\tDefault:\t\t\t");
+	}
+
+	retval = PAPI_start( EventSetDefault );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
+
+	do_flops( NUM_FLOPS );
+
+	retval = PAPI_stop( EventSetDefault, dom_default_values );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
+
+	if ( !quiet ) {
+		printf("%lld\n",dom_default_values[0]);
+	}
+
+	/***************************/
+	/***************************/
+	/* user events             */
+	/***************************/
+	/***************************/
+
+	retval = PAPI_create_eventset(&EventSetUser);
+	if (retval != PAPI_OK) {
+		test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
+	}
+
+	retval = PAPI_assign_eventset_component(EventSetUser, 0);
+
+	/* we need to set domain to be as inclusive as possible */
+	domain_opt.def_cidx=0;
+	domain_opt.eventset=EventSetUser;
+	domain_opt.domain=PAPI_DOM_USER;
+
+	retval = PAPI_set_opt(PAPI_DOMAIN,(PAPI_option_t*)&domain_opt);
+	if (retval != PAPI_OK) {
+		if (retval==PAPI_EPERM) {
+         		test_skip( __FILE__, __LINE__,
+		    		"this test; trying to set PAPI_DOM_ALL; need to run as root",
+				retval);
+		}
+		else {
+			test_fail(__FILE__, __LINE__, "setting PAPI_DOM_KERNEL",retval);
+		}
+	}
+
+	retval = PAPI_add_named_event(EventSetUser, "PAPI_TOT_INS");
+	if (retval != PAPI_OK) {
+		if ( !quiet ) {
+			fprintf(stderr,"Error trying to add PAPI_TOT_INS\n");
+		}
+		test_skip(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
+	}
 
 	if (!quiet) {
 		printf("\tPAPI_DOM_USER:\t\t\t");
 	}
 
-   retval = PAPI_start( EventSet1 );
-   if ( retval != PAPI_OK ) {
-      test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-   }
+	retval = PAPI_start( EventSetUser );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
 
-   do_flops( NUM_FLOPS );
+	do_flops( NUM_FLOPS );
 
-   retval = PAPI_stop( EventSet1, dom_user_values );
-   if ( retval != PAPI_OK ) {
-      test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
-   }
+	retval = PAPI_stop( EventSetUser, dom_user_values );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
 
-   if ( !quiet ) {
-      printf("%lld\n",dom_user_values[0]);
-   }
-
-
-   /***************************/
-   /***************************/
-   /* User+Kernel events      */
-   /***************************/
-   /***************************/
-
-   if (!quiet) {
-      printf("\tPAPI_DOM_USER|PAPI_DOM_KERNEL:\t");
-   }
-
-   retval = PAPI_create_eventset(&EventSet2);
-   if (retval != PAPI_OK) {
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
-   }
-
-   retval = PAPI_assign_eventset_component(EventSet2, 0);
-
-   /* we need to set domain to be as inclusive as possible */
-
-   domain_opt.def_cidx=0;
-   domain_opt.eventset=EventSet2;
-   domain_opt.domain=PAPI_DOM_USER|PAPI_DOM_KERNEL;
-
-   retval = PAPI_set_opt(PAPI_DOMAIN,(PAPI_option_t*)&domain_opt);
-   if (retval != PAPI_OK) {
-
-      if (retval==PAPI_EPERM) {
-         test_skip( __FILE__, __LINE__,
-		    "this test; trying to set PAPI_DOM_ALL; need to run as root",
-		    retval);
-      }
-      else {
-         test_fail(__FILE__, __LINE__, "setting PAPI_DOM_ALL",retval);
-      }
-   }
+	if ( !quiet ) {
+		printf("%lld\n",dom_user_values[0]);
+	}
 
 
-   retval = PAPI_add_named_event(EventSet2, "PAPI_TOT_CYC");
-   if (retval != PAPI_OK) {
-      if ( !quiet ) {
-         fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
-      }
-      test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
-   }
+	/***************************/
+	/***************************/
+	/* kernel events           */
+	/***************************/
+	/***************************/
 
-   retval = PAPI_start( EventSet2 );
-   if ( retval != PAPI_OK ) {
-      test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-   }
+	retval = PAPI_create_eventset(&EventSetKernel);
+	if (retval != PAPI_OK) {
+		test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
+	}
 
-   do_flops( NUM_FLOPS );
+	retval = PAPI_assign_eventset_component(EventSetKernel, 0);
 
-   retval = PAPI_stop( EventSet2, dom_userkernel_values );
-   if ( retval != PAPI_OK ) {
-      test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
-   }
+	/* we need to set domain to be as inclusive as possible */
+	domain_opt.def_cidx=0;
+	domain_opt.eventset=EventSetKernel;
+	domain_opt.domain=PAPI_DOM_KERNEL;
 
-   if ( !quiet ) {
-      printf("%lld\n",dom_userkernel_values[0]);
-   }
+	retval = PAPI_set_opt(PAPI_DOMAIN,(PAPI_option_t*)&domain_opt);
+	if (retval != PAPI_OK) {
+		if (retval==PAPI_EPERM) {
+         		test_skip( __FILE__, __LINE__,
+		    		"this test; trying to set PAPI_DOM_ALL; need to run as root",
+				retval);
+		}
+		else {
+			test_fail(__FILE__, __LINE__, "setting PAPI_DOM_KERNEL",retval);
+		}
+	}
+
+	retval = PAPI_add_named_event(EventSetKernel, "PAPI_TOT_INS");
+	if (retval != PAPI_OK) {
+		if ( !quiet ) {
+			fprintf(stderr,"Error trying to add PAPI_TOT_INS\n");
+		}
+		test_skip(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
+	}
+
+	if (!quiet) {
+		printf("\tPAPI_DOM_KERNEL:\t\t");
+	}
+
+	retval = PAPI_start( EventSetKernel );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
+
+	do_flops( NUM_FLOPS );
+
+	retval = PAPI_stop( EventSetKernel, dom_kernel_values );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
+
+	if ( !quiet ) {
+		printf("%lld\n",dom_kernel_values[0]);
+	}
+
+
+	/***************************/
+	/***************************/
+	/* User+Kernel events      */
+	/***************************/
+	/***************************/
+
+	if (!quiet) {
+		printf("\tPAPI_DOM_USER|PAPI_DOM_KERNEL:\t");
+	}
+
+	retval = PAPI_create_eventset(&EventSetUserKernel);
+	if (retval != PAPI_OK) {
+		test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
+	}
+
+	retval = PAPI_assign_eventset_component(EventSetUserKernel, 0);
+
+	/* we need to set domain to be as inclusive as possible */
+
+	domain_opt.def_cidx=0;
+	domain_opt.eventset=EventSetUserKernel;
+	domain_opt.domain=PAPI_DOM_USER|PAPI_DOM_KERNEL;
+
+	retval = PAPI_set_opt(PAPI_DOMAIN,(PAPI_option_t*)&domain_opt);
+	if (retval != PAPI_OK) {
+
+		if (retval==PAPI_EPERM) {
+			test_skip( __FILE__, __LINE__,
+				"this test; trying to set PAPI_DOM_ALL; need to run as root",
+				retval);
+		}
+		else {
+			test_fail(__FILE__, __LINE__, "setting PAPI_DOM_ALL",retval);
+		}
+	}
+
+
+	retval = PAPI_add_named_event(EventSetUserKernel, "PAPI_TOT_INS");
+	if (retval != PAPI_OK) {
+		if ( !quiet ) {
+			fprintf(stderr,"Error trying to add PAPI_TOT_INS\n");
+		}
+		test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
+	}
+
+	retval = PAPI_start( EventSetUserKernel );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+	}
+
+	do_flops( NUM_FLOPS );
+
+	retval = PAPI_stop( EventSetUserKernel, dom_userkernel_values );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+	}
+
+	if ( !quiet ) {
+		printf("%lld\n",dom_userkernel_values[0]);
+	}
 
    /***************************/
    /***************************/
@@ -181,17 +304,17 @@ int main( int argc, char **argv ) {
       printf("\tPAPI_DOM_ALL:\t\t\t");
    }
 
-   retval = PAPI_create_eventset(&EventSet3);
+   retval = PAPI_create_eventset(&EventSetAll);
    if (retval != PAPI_OK) {
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
    }
 
-   retval = PAPI_assign_eventset_component(EventSet3, 0);
+   retval = PAPI_assign_eventset_component(EventSetAll, 0);
 
    /* we need to set domain to be as inclusive as possible */
 
    domain_opt.def_cidx=0;
-   domain_opt.eventset=EventSet3;
+   domain_opt.eventset=EventSetAll;
    domain_opt.domain=PAPI_DOM_ALL;
 
    retval = PAPI_set_opt(PAPI_DOMAIN,(PAPI_option_t*)&domain_opt);
@@ -208,22 +331,22 @@ int main( int argc, char **argv ) {
    }
 
 
-   retval = PAPI_add_named_event(EventSet3, "PAPI_TOT_CYC");
+   retval = PAPI_add_named_event(EventSetAll, "PAPI_TOT_INS");
    if (retval != PAPI_OK) {
       if ( !quiet ) {
-         fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
+         fprintf(stderr,"Error trying to add PAPI_TOT_INS\n");
       }
-      test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+      test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
    }
 
-   retval = PAPI_start( EventSet3 );
+   retval = PAPI_start( EventSetAll );
    if ( retval != PAPI_OK ) {
       test_fail( __FILE__, __LINE__, "PAPI_start", retval );
    }
 
    do_flops( NUM_FLOPS );
 
-   retval = PAPI_stop( EventSet3, dom_all_values );
+   retval = PAPI_stop( EventSetAll, dom_all_values );
    if ( retval != PAPI_OK ) {
       test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
    }
@@ -268,12 +391,12 @@ int main( int argc, char **argv ) {
    }
 
 
-   retval = PAPI_add_named_event(EventSet4, "PAPI_TOT_CYC");
+   retval = PAPI_add_named_event(EventSet4, "PAPI_TOT_INS");
    if (retval != PAPI_OK) {
       if ( !quiet ) {
-         fprintf(stderr,"Error trying to add PAPI_TOT_CYC\n");
+         fprintf(stderr,"Error trying to add PAPI_TOT_INS\n");
       }
-      test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+      test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
    }
 
    retval = PAPI_start( EventSet4 );
@@ -323,12 +446,12 @@ int main( int argc, char **argv ) {
       }
    }
    else {
-      retval = PAPI_add_named_event(EventSet5, "PAPI_TOT_CYC");
+      retval = PAPI_add_named_event(EventSet5, "PAPI_TOT_INS");
       if (retval != PAPI_OK) {
          if ( !quiet ) {
-            printf("Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_INS\n");
          }
-         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
       }
 
       retval = PAPI_start( EventSet5 );
@@ -380,12 +503,12 @@ int main( int argc, char **argv ) {
       }
    }
    else {
-      retval = PAPI_add_named_event(EventSet6, "PAPI_TOT_CYC");
+      retval = PAPI_add_named_event(EventSet6, "PAPI_TOT_INS");
       if (retval != PAPI_OK) {
          if ( !quiet ) {
-            printf("Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_INS\n");
          }
-         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
       } else {
 
          retval = PAPI_start( EventSet6 );
@@ -438,12 +561,12 @@ int main( int argc, char **argv ) {
       }
    }
    else {
-      retval = PAPI_add_named_event(EventSet7, "PAPI_TOT_CYC");
+      retval = PAPI_add_named_event(EventSet7, "PAPI_TOT_INS");
       if (retval != PAPI_OK) {
          if ( !quiet ) {
-            printf("Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_INS\n");
          }
-         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
       }
 
       retval = PAPI_start( EventSet7 );
@@ -514,12 +637,12 @@ int main( int argc, char **argv ) {
          test_fail(__FILE__, __LINE__, "PAPI_CPU_ATTACH",retval);
       }
 
-      retval = PAPI_add_named_event(EventSet8, "PAPI_TOT_CYC");
+      retval = PAPI_add_named_event(EventSet8, "PAPI_TOT_INS");
       if (retval != PAPI_OK) {
          if ( !quiet ) {
-            printf("Error trying to add PAPI_TOT_CYC\n");
+            printf("Error trying to add PAPI_TOT_INS\n");
          }
-         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
       }
 
       retval = PAPI_start( EventSet8 );
@@ -591,12 +714,12 @@ int main( int argc, char **argv ) {
             test_fail(__FILE__, __LINE__, "PAPI_CPU_ATTACH",retval);
          }
 
-         retval = PAPI_add_named_event(EventSet9, "PAPI_TOT_CYC");
+         retval = PAPI_add_named_event(EventSet9, "PAPI_TOT_INS");
          if (retval != PAPI_OK) {
             if ( !quiet ) {
-               printf("Error trying to add PAPI_TOT_CYC\n");
+               printf("Error trying to add PAPI_TOT_INS\n");
             }
-            test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+            test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
          }
 
          retval = PAPI_start( EventSet9 );
@@ -688,12 +811,12 @@ int main( int argc, char **argv ) {
             test_fail(__FILE__, __LINE__, "PAPI_CPU_ATTACH",retval);
          }
 
-         retval = PAPI_add_named_event(EventSet10, "PAPI_TOT_CYC");
+         retval = PAPI_add_named_event(EventSet10, "PAPI_TOT_INS");
          if (retval != PAPI_OK) {
             if ( !quiet ) {
-               printf("Error trying to add PAPI_TOT_CYC\n");
+               printf("Error trying to add PAPI_TOT_INS\n");
             }
-            test_fail(__FILE__, __LINE__, "adding PAPI_TOT_CYC ",retval);
+            test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
          }
 
          retval = PAPI_start( EventSet10 );
