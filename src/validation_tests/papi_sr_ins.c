@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
 	retval=PAPI_add_named_event(eventset,"PAPI_SR_INS");
 	if (retval!=PAPI_OK) {
-		if (quiet) printf("Could not add PAPI_SR_INS\n");
+		if (!quiet) printf("Could not add PAPI_SR_INS\n");
 		test_skip( __FILE__, __LINE__, "adding PAPI_LD_INS", retval );
 	}
 
