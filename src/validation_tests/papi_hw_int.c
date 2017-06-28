@@ -31,8 +31,8 @@ int main(int argc, char **argv) {
 	int eventset=PAPI_NULL;
 
 	struct timespec before,after;
-	long long seconds;
-        long long ns;
+	unsigned long long seconds;
+        unsigned long long ns;
 
 	quiet=tests_quiet(argc,argv);
 
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 		ns = (seconds*1000000000ULL)+ns;
 
 		/* be done if 3 billion nanoseconds has passed */
-		if (ns>3000000000) break;
+		if (ns>3000000000ULL) break;
 	}
 
 	retval=PAPI_stop(eventset,&count);
