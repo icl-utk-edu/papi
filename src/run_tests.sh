@@ -93,7 +93,7 @@ echo "The following test cases will NOT be run:";
 echo $EXCLUDE;
 
 echo "";
-echo "Running C Tests";
+echo "Running Tests";
 echo ""
 
 if [ "$LD_LIBRARY_PATH" = "" ]; then
