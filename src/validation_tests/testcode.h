@@ -11,3 +11,4 @@ int random_branches_testcode(int number, int quiet);
 
 int flops_init_matrix(void);
 float flops_matrix_matrix_multiply(void);
+float flops_swapped_matrix_matrix_multiply(void);

@@ -321,8 +321,8 @@ low-level: low-level.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 matrix-hl: matrix-hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS)  matrix-hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
 
-hl_rates: hl_rates.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) hl_rates.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o hl_rates
+hl_rates: hl_rates.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) hl_rates.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB) $(LDFLAGS) -o hl_rates
 
 high-level: high-level.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) high-level.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o high-level
