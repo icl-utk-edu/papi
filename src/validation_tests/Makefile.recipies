@@ -5,6 +5,9 @@ ALL = flops \
 
 all: $(ALL)
 
+%.o:%.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c $<
+
 
 display_error.o:	display_error.c display_error.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c display_error.c
@@ -24,33 +27,32 @@ matrix_multiply.o:	matrix_multiply.c matrix_multiply.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c matrix_multiply.c
 
 
-flops: flops.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) flops.c $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
+flops: flops.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -o flops flops.o $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB)
 
+papi_br_ins: papi_br_ins.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
+	$(CC) $(LDFLAGS) -o papi_br_ins papi_br_ins.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB)
 
-papi_br_ins: papi_br_ins.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_br_ins.c $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
+papi_br_msp: papi_br_msp.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
+	$(CC) $(LDFLAGS) -o papi_br_msp papi_br_msp.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB)
 
-papi_br_msp: papi_br_msp.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_br_msp.c $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
+papi_fp_ops: papi_fp_ops.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
+	$(CC) $(LDFLAGS) -o papi_fp_ops papi_fp_ops.o $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB)
 
-papi_fp_ops: papi_fp_ops.c $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_fp_ops.c $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
+papi_hw_int: papi_hw_int.o $(TESTLIB) $(PAPILIB)
+	$(CC) $(LDFLAGS) -o papi_hw_int papi_hw_int.o $(TESTLIB) $(PAPILIB) -lrt
 
-papi_hw_int: papi_hw_int.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_hw_int.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lrt -o $@
+papi_ld_ins: papi_ld_ins.o $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
+	$(CC) $(LDFLAGS) -o papi_ld_ins papi_ld_ins.o $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) -lrt
 
-papi_ld_ins: papi_ld_ins.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_ld_ins.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -lrt -o $@
+papi_sr_ins: papi_sr_ins.o $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
+	$(CC) $(LDFLAGS) -o papi_sr_ins papi_sr_ins.o $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB)
 
-papi_sr_ins: papi_sr_ins.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_sr_ins.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -lrt -o $@
+papi_tot_cyc: papi_tot_cyc.o $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
+	$(CC) $(LDFLAGS) -o papi_tot_cyc papi_tot_cyc.o $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB)
 
-papi_tot_cyc: papi_tot_cyc.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_cyc.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -lrt -o $@
-
-papi_tot_ins: papi_tot_ins.c $(TESTLIB) $(PAPILIB) display_error.o instructions_testcode.o
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_ins.c $(TESTLIB) display_error.o instructions_testcode.o $(PAPILIB) $(LDFLAGS) -o $@
+papi_tot_ins: papi_tot_ins.o $(TESTLIB) $(PAPILIB) display_error.o instructions_testcode.o
+	$(CC) $(LDFLAGS) -o papi_tot_ins papi_tot_ins.o $(TESTLIB) display_error.o instructions_testcode.o $(PAPILIB)
 
 
 .PHONY : all clean
