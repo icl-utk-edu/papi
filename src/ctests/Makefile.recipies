@@ -192,8 +192,8 @@ describe: describe.c $(TESTLIB) $(PAPILIB)
 derived: derived.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) derived.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o derived
 
-zero: zero.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o zero
+zero: zero.c $(TESTLIB) $(TESTINS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero.c $(TESTLIB) $(TESTINS) $(PAPILIB) $(LDFLAGS) -o zero
 
 zero_named: zero_named.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_named.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o zero_named

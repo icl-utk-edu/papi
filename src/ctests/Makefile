@@ -12,6 +12,7 @@ CLOCKCORE= $(testlibdir)/clockcore.o
 
 validationlibdir= ../validation_tests
 TESTFLOPS= $(validationlibdir)/flops_testcode.o
+TESTINS= $(validationlibdir)/instructions_testcode.o
 DISPLAYERROR= $(validationlibdir)/display_error.o
 
 include Makefile.recipies

@@ -9,15 +9,13 @@
 /* major Intel chips do not have good floating point events and would fail. */
 
 /* This test does the following:
-
-   - It attempts to use the following two counters.
-	It may use fewer depending on hardware counter resource limitations.
+   - It uses PAPI_TOT_INS and PAPI_TOT_CYC
+     older versions also tried PAPI_FP_INS but this counter is not
+     available on mnay machines.
 	These are counted in the default counting domain and
 	default granularity, depending on the platform.
 	Usually this is the user domain (PAPI_DOM_USER) and
 	thread context (PAPI_GRN_THR).
-     + PAPI_FP_INS
-     + PAPI_TOT_CYC
    - Get us.
    - Start counters
    - Do flops
@@ -31,20 +29,21 @@
 #include "papi.h"
 #include "papi_test.h"
 
-#include "do_loops.h"
+#include "testcode.h"
 
 #define MAX_CYCLE_ERROR 30
 
 #define NUM_EVENTS	2
 
+#define NUM_LOOPS	200
+
 int
 main( int argc, char **argv )
 {
-	int retval, tmp;
+	int retval, tmp, result, i;
 	int EventSet1 = PAPI_NULL;
 	long long values[NUM_EVENTS];
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
-//	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 	double cycles_error;
 	int quiet=0;
 
@@ -77,7 +76,13 @@ main( int argc, char **argv )
 	}
 
 	/* warm up the processor to pull it out of idle state */
-	do_flops( NUM_FLOPS*10 );
+	for(i=0;i<100;i++) {
+		result=instructions_million();
+	}
+	if (result==CODE_UNIMPLEMENTED) {
+		if (!quiet) printf("Instructions testcode not available\n");
+		test_skip( __FILE__, __LINE__, "No instructions code", retval );
+	}
 
 	/* Gather before stats */
 	elapsed_us = PAPI_get_real_usec(  );
@@ -92,7 +97,9 @@ main( int argc, char **argv )
 	}
 
 	/* our work code */
-	do_flops( NUM_FLOPS );
+	for(i=0;i<NUM_LOOPS;i++) {
+		instructions_million();
+	}
 
 	/* Stop PAPI */
 	retval = PAPI_stop( EventSet1, values );
@@ -132,7 +139,7 @@ main( int argc, char **argv )
 		tmp = PAPI_get_opt( PAPI_DEFGRN, NULL );
 		printf( "Default granularity is: %d (%s)\n", tmp,
 				stringify_granularity( tmp ) );
-		printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
+		printf( "Using %d iterations 1 million instructions\n", NUM_LOOPS );
 		printf( "-------------------------------------------------------------------------\n" );
 
 		printf( "Test type    : \t           1\n" );
@@ -150,7 +157,7 @@ main( int argc, char **argv )
 
 		printf( "Verification: PAPI_TOT_CYC should be roughly real_cycles\n" );
 		printf( "NOTE: Not true if dynamic frequency scaling or turbo boost is enabled.\n" );
-		printf( "Verification: PAPI_FP_INS should be roughly %d\n", 2*NUM_FLOPS );
+		printf( "Verification: PAPI_TOT_INS should be roughly %d\n", NUM_LOOPS*1000000 );
 	}
 
 	/* Check that TOT_CYC and real_cycles roughly match */
@@ -159,14 +166,10 @@ main( int argc, char **argv )
 		printf("PAPI_TOT_CYC Error of %.2f%%\n",cycles_error);
 		test_fail( __FILE__, __LINE__, "Cycles validation", 0 );
 	}
-	/* Check that FP_INS is reasonable */
-	if (abs(values[1] - (2*NUM_FLOPS)) > (2*NUM_FLOPS)) {
-		printf("%s Error of %.2f%%\n", "PAPI_TOT_INS", (100.0 * (double)(values[1] - (2*NUM_FLOPS)))/(2*NUM_FLOPS));
-		test_fail( __FILE__, __LINE__, "FLOPS validation", 0 );
-	}
-	if (abs(values[1] - (2*NUM_FLOPS)) > (NUM_FLOPS/2)) {
-		printf("%s Error of %.2f%%\n", "PAPI_TOT_INS", (100.0 * (double)(values[1] - (2*NUM_FLOPS)))/(2*NUM_FLOPS));
-		test_warn( __FILE__, __LINE__, "FLOPS validation", 0 );
+	/* Check that TOT_INS is reasonable */
+	if (abs(values[1] - (1000000*NUM_LOOPS)) > (1000000*NUM_LOOPS)) {
+		printf("%s Error of %.2f%%\n", "PAPI_TOT_INS", (100.0 * (double)(values[1] - (1000000*NUM_LOOPS)))/(1000000*NUM_LOOPS));
+		test_fail( __FILE__, __LINE__, "Instruction validation", 0 );
 	}
 
 	test_pass( __FILE__ );
