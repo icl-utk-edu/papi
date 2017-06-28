@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sys/utsname.h>
 
 #include "papi.h"
 
@@ -11,10 +12,13 @@ int
 papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 {
 	int cnt, mpx;
+	struct utsname uname_info;
 
 	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
    		return PAPI_ESYS;
 	}
+
+	uname(&uname_info);
 
 	printf( "%s", prompt );
 	printf
@@ -24,6 +28,8 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ),
 			PAPI_VERSION_INCREMENT( PAPI_VERSION ) );
+	printf( "Operating system         : %s %s\n",
+		uname_info.sysname, uname_info.release);
 	printf( "Vendor string and code   : %s (%d)\n", ( *hwinfo )->vendor_string,
 			( *hwinfo )->vendor );
 	printf( "Model string and code    : %s (%d)\n", ( *hwinfo )->model_string,
