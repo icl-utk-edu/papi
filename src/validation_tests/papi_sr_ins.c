@@ -1,5 +1,5 @@
-/* This file attempts to test the PAPI_LD_INS			*/
-/* performance counter (retired loads).				*/
+/* This file attempts to test the PAPI_SR_INS	*/
+/* performance counter (retired stores).	*/
 
 /* This just does a generic matrix-matrix test			*/
 /* Should have a comprehensive assembly language test		*/
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (!quiet) {
-		printf("\nTesting PAPI_LD_INS\n\n");
+		printf("\nTesting PAPI_SR_INS\n\n");
 	}
 
 	retval=PAPI_create_eventset(&eventset);
@@ -57,20 +57,20 @@ int main(int argc, char **argv) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 	}
 
-	retval=PAPI_add_named_event(eventset,"PAPI_LD_INS");
+	retval=PAPI_add_named_event(eventset,"PAPI_SR_INS");
 	if (retval!=PAPI_OK) {
-		if (quiet) printf("Could not add PAPI_LD_INS\n");
+		if (quiet) printf("Could not add PAPI_SR_INS\n");
 		test_skip( __FILE__, __LINE__, "adding PAPI_LD_INS", retval );
 	}
 
-
-	/****************/
-	/* Sleep test   */
-	/****************/
+	/**************/
+	/* Sleep test */
+	/**************/
 
 	if (!quiet) {
 		printf("Testing a sleep of 1 second (%d times):\n",SLEEP_RUNS);
 	}
+
 
 	for(i=0;i<SLEEP_RUNS;i++) {
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 	average=total/SLEEP_RUNS;
 
 	if (!quiet) {
-		printf("\tAverage should be low, as no loads when sleeping\n");
+		printf("\tAverage should be low, as no stores when sleeping\n");
 		printf("\tMeasured average: %lld\n",average);
 	}
 
@@ -120,10 +120,10 @@ int main(int argc, char **argv) {
 		test_fail( __FILE__, __LINE__, "Problem stopping!", retval );
 	}
 
-	expected=naive_matrix_multiply_estimated_loads(quiet);
+	expected=naive_matrix_multiply_estimated_stores(quiet);
 
 	if (!quiet) {
-		printf("\tActual measured loads = %lld\n",count);
+		printf("\tActual measured stores = %lld\n",count);
 	}
 
 	error=  100.0 * (double)(count-expected) / (double)expected;

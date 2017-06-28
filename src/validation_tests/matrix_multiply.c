@@ -52,6 +52,26 @@ long long naive_matrix_multiply_estimated_loads(int quiet) {
 	return loads;
 }
 
+long long naive_matrix_multiply_estimated_stores(int quiet) {
+
+	long long stores=0;
+
+	/* setup */
+	stores+=MATRIX_SIZE*MATRIX_SIZE*2;
+
+	/* multiply */
+	stores+=MATRIX_SIZE*MATRIX_SIZE;
+
+	/* sum */
+	stores+=1;
+
+	if (!quiet) {
+		printf("Estimated stores: %lld\n",stores);
+	}
+
+	return stores;
+}
+
 
 double naive_matrix_multiply(int quiet) {
 
