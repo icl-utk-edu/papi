@@ -1,6 +1,10 @@
 /* This file attempts to test the PAPI_HW_INT	*/
 /* performance counter.				*/
 
+/* This assumes that interrupts will be happening in the background */
+/* Including a regular timer tick of HZ.  This is not always true   */
+/* but should be roughly true on your typical Linux system.         */
+
 /* by Vince Weaver, <vincent.weaver@maine.edu>	*/
 
 

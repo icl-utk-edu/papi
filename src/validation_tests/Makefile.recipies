@@ -1,4 +1,6 @@
-ALL = papi_br_ins papi_br_msp papi_fp_ops papi_hw_int papi_tot_cyc papi_tot_ins
+ALL = papi_br_ins papi_br_msp papi_fp_ops papi_hw_int \
+	papi_ld_ins \
+	papi_tot_cyc papi_tot_ins
 
 all: $(ALL)
 
@@ -32,6 +34,9 @@ papi_fp_ops: papi_fp_ops.c $(TESTLIB) $(PAPILIB) display_error.o branches_testco
 
 papi_hw_int: papi_hw_int.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_hw_int.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lrt -o $@
+
+papi_ld_ins: papi_ld_ins.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_ld_ins.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -lrt -o $@
 
 papi_tot_cyc: papi_tot_cyc.c $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) papi_tot_cyc.c $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) -lrt -o $@
