@@ -16,7 +16,7 @@
 	declared here so it can be available globally
 */
 int TESTS_QUIET = 0;
-static int TESTS_COLOR = 0;
+static int TESTS_COLOR = 1;
 static int TEST_WARN = 0;
 
 void
@@ -375,6 +375,8 @@ stringify_granularity( int granularity )
 int
 tests_quiet( int argc, char **argv )
 {
+	char *value;
+
 	if ( ( argc > 1 )
 		 && ( ( strcasecmp( argv[1], "TESTS_QUIET" ) == 0 )
 			  || ( strcasecmp( argv[1], "-q" ) == 0 ) ) ) {
@@ -387,8 +389,19 @@ tests_quiet( int argc, char **argv )
 			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
 	}
 
-	if (getenv("TESTS_COLOR")!=NULL) {
-		TESTS_COLOR=1;
+	value=getenv("TESTS_COLOR");
+	if (value!=NULL) {
+		if (value[0]=='y') {
+			TESTS_COLOR=1;
+		}
+		else {
+			TESTS_COLOR=0;
+		}
+	}
+
+	/* Disable colors if sending to a file */
+	if (!isatty(fileno(stdout))) {
+		TESTS_COLOR=0;
 	}
 
 	return TESTS_QUIET;
