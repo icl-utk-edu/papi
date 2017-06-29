@@ -399,6 +399,7 @@ tests_quiet( int argc, char **argv )
 #define GREEN  "\033[1;32m"
 #define NORMAL "\033[0m"
 
+
 static void print_spaces(int count) {
 	int i;
 
@@ -407,6 +408,7 @@ static void print_spaces(int count) {
 	}
 }
 
+
 /* Ugh, all these "fprintf(stdout)" are due to the */
 /* TESTS_QUIET #define printf hack		*/
 /* FIXME! Revert to printf once we are done converting */
@@ -414,15 +416,18 @@ static void print_spaces(int count) {
 void
 test_pass( char *filename )
 {
-	int line_pad;
+	(void)filename;
 
-	line_pad=60-strlen(filename);
-	if (line_pad<0) line_pad=0;
+//	int line_pad;
 
-	fprintf(stdout,"%s",filename);
-	print_spaces(line_pad);
+//	line_pad=60-strlen(filename);
+//	if (line_pad<0) line_pad=0;
+
+//	fprintf(stdout,"%s",filename);
+//	print_spaces(line_pad);
 
 	if ( TEST_WARN ) {
+		print_spaces(59);
 		if (TESTS_COLOR) fprintf( stdout, "%s", YELLOW);
 		fprintf( stdout, "PASSED with WARNING");
 		if (TESTS_COLOR) fprintf( stdout, "%s", NORMAL);
@@ -447,21 +452,23 @@ test_pass( char *filename )
 void
 test_fail( char *file, int line, char *call, int retval )
 {
-	int line_pad;
+//	int line_pad;
 	char buf[128];
 
-	line_pad=(60-strlen(file));
-	if (line_pad<0) line_pad=0;
+	(void)file;
 
-	fprintf(stdout,"%s",file);
-	print_spaces(line_pad);
+//	line_pad=(60-strlen(file));
+//	if (line_pad<0) line_pad=0;
+
+//	fprintf(stdout,"%s",file);
+//	print_spaces(line_pad);
 
 	memset( buf, '\0', sizeof ( buf ) );
 
 	if (TESTS_COLOR) fprintf(stdout,"%s",RED);
 	fprintf( stdout, "FAILED!!!");
 	if (TESTS_COLOR) fprintf(stdout,"%s",NORMAL);
-	fprintf( stdout, "\nLine # %d\n", line );
+	fprintf( stdout, "\nLine # %d ", line );
 
 	if ( retval == PAPI_ESYS ) {
 		sprintf( buf, "System error in %s", call );
@@ -478,7 +485,7 @@ test_fail( char *file, int line, char *call, int retval )
 		fprintf( stdout, "Error in %s: %s\n", call, PAPI_strerror( retval ) );
 	}
 
-	fprintf( stdout, "\n" );
+//	fprintf( stdout, "\n" );
 
 	/* NOTE: Because test_fail is called from thread functions,
 	   calling PAPI_shutdown here could prevent some threads
@@ -500,21 +507,24 @@ void
 test_warn( char *file, int line, char *call, int retval )
 {
 
-	int line_pad;
+	(void)file;
 
-	line_pad=60-strlen(file);
-	if (line_pad<0) line_pad=0;
+//	int line_pad;
+
+//	line_pad=60-strlen(file);
+//	if (line_pad<0) line_pad=0;
 
 	char buf[128];
 	memset( buf, '\0', sizeof ( buf ) );
 
-	fprintf(stdout,"%s",file);
-	print_spaces(line_pad);
+//	fprintf(stdout,"%s",file);
+//	print_spaces(line_pad);
 
+	if (TEST_WARN==0) fprintf(stdout,"\n");
 	if (TESTS_COLOR) fprintf( stdout, "%s", YELLOW);
-	fprintf( stdout, "WARNING");
+	fprintf( stdout, "WARNING ");
 	if (TESTS_COLOR) fprintf( stdout, "%s", NORMAL);
-	fprintf( stdout, "\nLine # %d\n", line );
+	fprintf( stdout, "Line # %d ", line );
 
 	if ( retval == PAPI_ESYS ) {
 		sprintf( buf, "System warning in %s", call );
@@ -527,23 +537,23 @@ test_warn( char *file, int line, char *call, int retval )
 		fprintf( stdout, "Warning in %s: %s\n", call, PAPI_strerror( retval ));
 	}
 
-	fprintf( stdout, "\n" );
 	TEST_WARN++;
 }
 
 void
 test_skip( char *file, int line, char *call, int retval )
 {
-	int line_pad;
+//	int line_pad;
 
+	(void)file;
 	(void)line;
 	(void)call;
 	(void)retval;
 
-	line_pad=(60-strlen(file));
+//	line_pad=(60-strlen(file));
 
-	fprintf(stdout,"%s",file);
-	print_spaces(line_pad);
+//	fprintf(stdout,"%s",file);
+//	print_spaces(line_pad);
 
 	fprintf( stdout, "SKIPPED\n");
 

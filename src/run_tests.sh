@@ -125,7 +125,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	RAN="$i $RAN"
-    printf "Running $i:\n";
+    printf "Running %-50s %s" $i:
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
@@ -148,7 +148,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	  RAN="$i $RAN"
-      printf "Running $i:\n";
+      printf "Running %-50s %s" $i:
       $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
@@ -171,7 +171,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	RAN="$i $RAN"
-    printf "Running $i:\n";
+    printf "Running $i:\n"
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
@@ -195,6 +195,7 @@ do
     if [ -x $i ]; then
 	RAN="$i $RAN"
     printf "Running $i:\n";
+    printf "%-59s"
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
