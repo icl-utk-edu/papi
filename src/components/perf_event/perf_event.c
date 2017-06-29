@@ -814,6 +814,8 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 			/* Set up the MMAP sample pages */
 			if (ctl->events[i].nr_mmap_pages) {
 				set_up_mmap(ctl,i);
+			} else {
+				ctl->events[i].mmap_buf = NULL;
 			}
 		}
 	}
@@ -857,23 +859,32 @@ open_pe_cleanup:
 static int
 close_event( pe_event_info_t *event )
 {
+	int munmap_error=0,close_error=0;
 
 	if ( event->mmap_buf ) {
+		if (event->nr_mmap_pages==0) {
+			PAPIERROR("munmap and num pages is zero");
+		}
 		if ( munmap ( event->mmap_buf,
 				event->nr_mmap_pages * getpagesize() ) ) {
 			PAPIERROR( "munmap of fd = %d returned error: %s",
 							event->event_fd,
 							strerror( errno ) );
-			return PAPI_ESYS;
+			event->mmap_buf=NULL;
+			munmap_error=1;
 		}
 	}
 	if ( close( event->event_fd ) ) {
 		PAPIERROR( "close of fd = %d returned error: %s",
 			event->event_fd, strerror( errno ) );
-		return PAPI_ESYS;
+		close_error=1;
 	}
 
 	event->event_opened=0;
+
+	if ((close_error || munmap_error)) {
+		return PAPI_ESYS;
+	}
 
 	return 0;
 }
