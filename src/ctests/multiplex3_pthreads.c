@@ -32,7 +32,7 @@ thread_fn( void *dummy )
 	while ( 1 ) {
 		do_stuff(  );
 	}
-	return ( NULL );
+	return NULL;
 }
 
 /* Runs a bunch of multiplexed events */
@@ -170,7 +170,9 @@ mainloop( int arg )
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	test_print_event_header( "multiplex3_pthreads:\n", EventSet );
+	if (!TESTS_QUIET) {
+		test_print_event_header( "multiplex3_pthreads:\n", EventSet );
+	}
 	allvalid = 0;
 	for ( i = 0; i < MAX_TO_ADD; i++ ) {
 		printf( ONENUM, values[i] );

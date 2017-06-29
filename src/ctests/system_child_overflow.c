@@ -1,4 +1,5 @@
 /*
+ *  Use "system() to run child_overflow
  *  Test PAPI with fork() and exec().
  */
 
@@ -156,7 +157,7 @@ main( int argc, char **argv )
 {
 	char buf[100];
 
-	int quiet,retval;
+	int quiet,retval,result=0;
 
 	/* Used to be able to set this via command line */
 	num_events=1;
@@ -168,6 +169,7 @@ main( int argc, char **argv )
 
 	zero_count(  );
 
+	/* Init library */
 	retval=PAPI_library_init( PAPI_VER_CURRENT );
 	if (retval!=PAPI_VER_CURRENT) {
 		test_fail( name, __LINE__, "PAPI_library_init failed", 1 );
@@ -180,14 +182,25 @@ main( int argc, char **argv )
 	run( name, 3 );
 
 	print_here( "system(./child_overflow)" );
-	if ( access( "./child_overflow", X_OK ) == 0 )
-		( quiet ? system( "./child_overflow TESTS_QUIET" ) :
-		  system( "./child_overflow" ) );
-	else if ( access( "./ctests/child_overflow", X_OK ) == 0 )
-		( quiet ? system( "./ctests/child_overflow TESTS_QUIET" ) :
-		  system( "./ctests/child_overflow" ) );
 
-	test_pass(__FILE__);
+	if ( access( "./child_overflow", X_OK ) == 0 ) {
+		if ( quiet) result=system( "./child_overflow TESTS_QUIET" );
+		else result=system( "./child_overflow" );
+	}
+	else if ( access( "./ctests/child_overflow", X_OK ) == 0 ) {
+		if ( quiet) result=system( "./ctests/child_overflow TESTS_QUIET" );
+		else result=system( "./ctests/child_overflow" );
+	}
+
+	if (result<0) {
+		test_fail(__FILE__,__LINE__,"system failed\n",1);
+	}
+
+	if (!quiet) printf("Successfully returned from system\n");
+
+	// Rely on test_pass from child_overflow
+	// otherwise the run_tests.sh output is ugly
+	//test_pass(__FILE__);
 
 	return 0;
 }
