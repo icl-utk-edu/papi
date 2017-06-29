@@ -376,17 +376,19 @@ int
 tests_quiet( int argc, char **argv )
 {
 	char *value;
+	int retval;
 
 	if ( ( argc > 1 )
 		 && ( ( strcasecmp( argv[1], "TESTS_QUIET" ) == 0 )
 			  || ( strcasecmp( argv[1], "-q" ) == 0 ) ) ) {
 		TESTS_QUIET = 1;
-	} else {
-		int retval;
+	}
 
-		retval = PAPI_set_debug( PAPI_VERB_ECONT );
-		if ( retval != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
+	/* Always report PAPI errors when testing */
+	/* Even in quiet mode */
+	retval = PAPI_set_debug( PAPI_VERB_ECONT );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_set_debug", retval );
 	}
 
 	value=getenv("TESTS_COLOR");

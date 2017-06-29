@@ -4668,7 +4668,7 @@ PAPI_perror( char *msg )
 
 	if ( msg )
 		if ( *msg )
-				fprintf( stderr, "%s: ", msg );
+			fprintf( stderr, "%s: ", msg );
 
 	fprintf( stderr, "%s\n", foo );
 }
