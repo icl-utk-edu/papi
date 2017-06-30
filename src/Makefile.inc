@@ -1,4 +1,4 @@
-PAPI_SRCDIR = $(PWD)	
+PAPI_SRCDIR = $(PWD)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
     threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT_C) papi_preset.c \
@@ -6,7 +6,7 @@ SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o sw_multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT_OBJ) papi_preset.o \
-    papi_vector.o papi_memory.o $(COMPOBJS) 
+    papi_vector.o papi_memory.o $(COMPOBJS)
 PAPI_EVENTS_TABLE = papi_events_table.h
 HEADERS  = $(MISCHDRS) $(OSFILESHDR) $(PAPI_EVENTS_TABLE) \
 	papi.h papi_internal.h papiStdEventDefs.h \
@@ -14,7 +14,7 @@ HEADERS  = $(MISCHDRS) $(OSFILESHDR) $(PAPI_EVENTS_TABLE) \
 	papi_memory.h config.h \
 	extras.h sw_multiplex.h papi_hl.h \
 	papi_common_strings.h components_config.h
-	
+
 LIBCFLAGS += -I. $(CFLAGS) -DOSLOCK=\"$(OSLOCK)\" -DOSCONTEXT=\"$(OSCONTEXT)\"
 FHEADERS = fpapi.h f77papi.h f90papi.h
 # pkgconfig directory
@@ -56,7 +56,7 @@ $(LIBRARY): $(OBJECTS)
 	rm -f $(LIBRARY)
 	$(AR) $(ARG64) rv $(LIBRARY) $(OBJECTS)
 
-$(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS) 
+$(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 	@if test "$(SHLIB)" != "libpapi.so" ; then \
 	    rm -f $(SHLIB) libpapi.so; \
 	fi
@@ -67,9 +67,9 @@ $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 	@if test "$(SHLIB)" != "libpapi.so" ; then \
 		ln -sf $(SHLIB) libpapi.so; \
 	fi
-							
+
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
-	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
+	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c
 
 papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.c
@@ -83,26 +83,26 @@ papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
 papi_fwrappers_.o: papi_fwrappers_.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o 
 
-papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS) 
+papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers__.c -o papi_fwrappers__.o
 
 upper_PAPI_FWRAPPERS.o: upper_PAPI_FWRAPPERS.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c upper_PAPI_FWRAPPERS.c -o upper_PAPI_FWRAPPERS.o
 
 papi.o: papi.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o
 
 papi_internal.o: papi_internal.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_internal.c -o papi_internal.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_internal.c -o papi_internal.o
 
 threads.o: threads.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c threads.c -o threads.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c threads.c -o threads.o
 
 cpus.o: cpus.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c cpus.c -o cpus.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c cpus.c -o cpus.o
 
 papi_hl.o: papi_hl.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o
 
 aix-memory.o: aix-memory.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c aix-memory.c -o aix-memory.o
@@ -135,7 +135,7 @@ linux-common.o: linux-common.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-common.c -o linux-common.o
 
 extras.o: extras.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o
 
 papi_memory.o: papi_memory.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_memory.c -o papi_memory.o
@@ -144,10 +144,10 @@ papi_vector.o: papi_vector.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_vector.c -o papi_vector.o
 
 papi_preset.o: papi_preset.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_preset.c -o papi_preset.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_preset.c -o papi_preset.o
 
 sw_multiplex.o: sw_multiplex.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sw_multiplex.c -o sw_multiplex.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sw_multiplex.c -o sw_multiplex.o
 
 $(CPUCOMPONENT_OBJ): $(CPUCOMPONENT_C) $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPUCOMPONENT_C) -o $(CPUCOMPONENT_OBJ) 
@@ -236,7 +236,7 @@ utils: $(LIBS) testlib
 	cd utils && $(MAKE)
 
 validation_tests:	$(LIBS) testlib
-	cd validation_tests; $(MAKE)
+	$(SETPATH) cd validation_tests; $(MAKE)
 
 ctests: $(LIBS) testlib validation_tests
 	$(SETPATH) cd ctests; $(MAKE)
@@ -252,7 +252,7 @@ comp_tests:	$(LIBS) testlib
 ifneq (${COMPONENTS},)
 		@for comp in ${COMPONENTS} ; do \
 			$$comp_tests: $(LIBS) testlib null ; \
-			$(SETPATH) cd components/$$comp/tests ; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../../../$(LINKLIB)"; \
+			$(SETPATH) cd components/$$comp/tests ; $(MAKE) ; \
 			$(SETPATH) cd ../../.. ; done
 endif
 
@@ -318,7 +318,7 @@ install-man:
 
 install-utils: 
 	$(SETPATH) cd utils; $(MAKE) BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" install
-	
+
 install-tests:  install-comp_tests
 	$(SETPATH) cd testlib; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" F77="$(F77)" FFLAGS="-I.. $(FFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" install
 	$(SETPATH) cd ctests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" install
@@ -336,7 +336,7 @@ ifneq (${COMPONENTS},)
 		cd components/$$comp/tests ; \
 		$(MAKE) DATADIR="$(DESTDIR)$(DATADIR)/components" install  ; \
 		cd ../../.. ; \
-	done 
+	done
 endif
 
 install-pkgconf:
