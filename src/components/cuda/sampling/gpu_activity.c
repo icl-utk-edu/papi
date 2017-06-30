@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
+#include <sys/wait.h>
+
 #include "path.h"
 
 
@@ -72,6 +76,7 @@ int main(int argc,char** argv){
 	char env1[1024];
 	char env2[256];
 	char env3[256];
+	int status;
 
 	//get the shared library load path
 	strcpy(env1,"LD_LIBRARY_PATH=");
@@ -100,7 +105,7 @@ int main(int argc,char** argv){
 		printf("Profile fork failed \n");
 		exit(-1);
 	}else{
-		wait();
+		wait(&status);
 	}
 	return 0;
 }
