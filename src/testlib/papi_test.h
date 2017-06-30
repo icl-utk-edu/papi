@@ -2,6 +2,13 @@
 	This file is customized to hide Windows / Unix differences.
 */
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
 //#if (!defined(NO_DLFCN) && !defined(_BGL) && !defined(_BGP))
 //#include <dlfcn.h>
 //#endif
@@ -58,10 +65,10 @@ char *stringify_all_domains(int domains);
 char *stringify_granularity(int granularity);
 char *stringify_all_granularities(int granularities);
 int tests_quiet(int argc, char **argv);
-void test_pass(char *filename);
-void test_fail(char *file, int line, char *call, int retval);
-void test_skip(char *file, int line, char *call, int retval);
-void test_warn(char *file, int line, char *call, int retval);
+void test_pass(const char *filename);
+void test_fail(const char *file, int line, const char *call, int retval);
+void test_skip(const char *file, int line, const char *call, int retval);
+void test_warn(const char *file, int line, const char *call, int retval);
 void test_print_event_header(char *call, int evset);
 int approx_equals(double a, double b);
 
@@ -90,4 +97,8 @@ int approx_equals(double a, double b);
 #define LLDFMT15 "%15lld"
 
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
+
+#ifdef __cplusplus
+}
+#endif
 

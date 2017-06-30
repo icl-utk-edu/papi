@@ -429,7 +429,7 @@ static void print_spaces(int count) {
 /* FIXME! Revert to printf once we are done converting */
 
 void
-test_pass( char *filename )
+test_pass( const char *filename )
 {
 	(void)filename;
 
@@ -465,7 +465,7 @@ test_pass( char *filename )
 
 /* Use a positive value of retval to simply print an error message */
 void
-test_fail( char *file, int line, char *call, int retval )
+test_fail( const char *file, int line, const char *call, int retval )
 {
 //	int line_pad;
 	char buf[128];
@@ -519,7 +519,7 @@ test_fail( char *file, int line, char *call, int retval )
 
 /* Use a positive value of retval to simply print an error message */
 void
-test_warn( char *file, int line, char *call, int retval )
+test_warn( const char *file, int line, const char *call, int retval )
 {
 
 	(void)file;
@@ -556,7 +556,7 @@ test_warn( char *file, int line, char *call, int retval )
 }
 
 void
-test_skip( char *file, int line, char *call, int retval )
+test_skip( const char *file, int line, const char *call, int retval )
 {
 //	int line_pad;
 
