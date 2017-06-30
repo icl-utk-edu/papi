@@ -31,9 +31,9 @@ main( int argc, char **argv )
 	int event[2];
 	/*     PAPI values of the counters */
 	long long values[2], tmp;
-	extern int TESTS_QUIET;
+	int quiet;
 
-	tests_quiet( argc, argv );
+	quiet = tests_quiet( argc, argv );
 
 	/*     Setup default values */
 	num_events = 0;
@@ -42,12 +42,12 @@ main( int argc, char **argv )
 	 *     This also initializes the PAPI library */
 	num_events = PAPI_num_counters(  );
 	if ( num_events < 2 ) {
-		printf( "This example program requries the architecture to "
+		if (!quiet) printf( "This example program requries the architecture to "
 				"support 2 simultaneous hardware events...shutting down.\n" );
 		test_skip( __FILE__, __LINE__, "PAPI_num_counters", 1 );
 	}
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( "Number of hardware counters supported: %d\n", num_events );
 
 	if ( PAPI_query_event( PAPI_FP_OPS ) == PAPI_OK )
@@ -100,7 +100,7 @@ main( int argc, char **argv )
 	 */
 	dummy( r );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		if ( event[0] == PAPI_TOT_INS ) {
 			printf( TAB1, "TOT Instructions:", values[0] );
 		} else {

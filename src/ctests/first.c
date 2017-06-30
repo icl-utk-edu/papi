@@ -36,12 +36,14 @@ main( int argc, char **argv )
 	int retval, num_tests = 5, num_events, tmp;
 	long long **values;
 	int EventSet = PAPI_NULL;
-	int PAPI_event, mask;
-	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	char event_name1[]="PAPI_TOT_CYC";
+	char event_name2[]="PAPI_TOT_INS";
+	char add_event_str[PAPI_MAX_STR_LEN];
 	long long min, max;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet = tests_quiet( argc, argv );
 
 	/* Init PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -49,14 +51,27 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	/* add PAPI_TOT_CYC and one of the events in
-	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS,
-	   depending on the availability of the event
-	   on the platform                             */
-	EventSet = add_two_events( &num_events, &PAPI_event, &mask );
+	/* create the eventset */
+	retval = PAPI_create_eventset( &EventSet );
+	if ( retval != PAPI_OK ) {
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
 
-	strcpy(event_name,"PAPI_TOT_INS");
-	sprintf( add_event_str, "PAPI_add_event[%s]", event_name );
+	retval = PAPI_add_named_event( EventSet, event_name1);
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Couldn't add %s\n",event_name1);
+		test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_CYC",0);
+	}
+
+	retval = PAPI_add_named_event( EventSet, event_name2);
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Couldn't add %s\n",event_name2);
+		test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_INS",0);
+	}
+
+	num_events=2;
+
+	sprintf( add_event_str, "PAPI_add_event[%s]", event_name2 );
 
 	/* Allocate space for results */
 	values = allocate_test_space( num_tests, num_events );
@@ -116,9 +131,10 @@ main( int argc, char **argv )
 	}
 
 	/* remove results.  We never stop??? */
-	remove_test_events( &EventSet, mask );
+	PAPI_remove_named_event(EventSet,event_name1);
+	PAPI_remove_named_event(EventSet,event_name2);
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Test case 1: Non-overlapping start, stop, read.\n" );
 		printf( "-----------------------------------------------\n" );
 		tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );
@@ -131,7 +147,7 @@ main( int argc, char **argv )
 		printf( "-------------------------------------------------------------------------\n" );
 
 		printf( "Test type   :        1           2           3           4           5\n" );
-		sprintf( add_event_str, "%s:", event_name );
+		sprintf( add_event_str, "%s:", event_name2 );
 		printf( TAB5, add_event_str,
 			values[0][1], values[1][1], values[2][1],
 			values[3][1], values[4][1] );

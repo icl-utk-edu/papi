@@ -62,6 +62,10 @@ Thread( void *arg )
 	   depending on the availability of the event
 	   on the platform                              */
 	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
+	printf("Events %d\n",num_events1);
+	if (num_events1<2) {
+	   test_fail( __FILE__, __LINE__, "Not enough events", retval );
+	}
 
 	retval = PAPI_event_code_to_name( PAPI_event, event_name );
 	if ( retval != PAPI_OK ) {
@@ -118,9 +122,10 @@ main( int argc, char **argv )
 	int retval, rc;
 	pthread_attr_t attr;
 	long long elapsed_us, elapsed_cyc;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet = tests_quiet( argc, argv );
 
 	/* Init PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -128,15 +133,26 @@ main( int argc, char **argv )
 	   test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	retval = PAPI_thread_init( ( unsigned long ( * )( void ) ) 
+	if (!PAPI_query_event(PAPI_TOT_INS)!=PAPI_OK) {
+		if (!quiet) printf("Can't find PAPI_TOT_INS\n");
+		test_skip(__FILE__,__LINE__,"Event missing",1);
+	}
+
+	if (PAPI_query_event(PAPI_TOT_CYC)!=PAPI_OK) {
+		if (!quiet) printf("Can't find PAPI_TOT_CYC\n");
+		test_skip(__FILE__,__LINE__,"Event missing",1);
+	}
+
+	retval = PAPI_thread_init( ( unsigned long ( * )( void ) )
 				   ( pthread_self ) );
+
 	if ( retval != PAPI_OK ) {
-	   if ( retval == PAPI_ECMP ) {
-	      test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
-	   }
-	   else {
-	      test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
-	   }
+		if ( retval == PAPI_ECMP ) {
+			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
+		}
+		else {
+			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
+		}
 	}
 
 	elapsed_us = PAPI_get_real_usec(  );
@@ -191,7 +207,7 @@ main( int argc, char **argv )
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Master real usec   : \t%lld\n", elapsed_us );
 		printf( "Master real cycles : \t%lld\n", elapsed_cyc );
 	}
