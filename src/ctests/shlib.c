@@ -2,8 +2,6 @@
 * File:    profile.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
 */
 
 #include <stdio.h>
@@ -18,15 +16,15 @@
 #include "papi.h"
 #include "papi_test.h"
 
-void print_shlib_info_map(const PAPI_shlib_info_t *shinfo)
+void print_shlib_info_map(const PAPI_shlib_info_t *shinfo, int quiet)
 {
 	PAPI_address_map_t *map = shinfo->map;
 	int i;
 	if (NULL == map) {
-	    test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
+		test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
 	}
 
-	for ( i = 0; i < shinfo->count; i++ ) {
+	if (!quiet) for ( i = 0; i < shinfo->count; i++ ) {
 		printf( "Library: %s\n", map->name );
 		printf( "Text start: %p, Text end: %p\n", map->text_start,
 				map->text_end );
@@ -66,15 +64,17 @@ void display( char *msg )
 int
 main( int argc, char **argv )
 {
-	int retval;
+	int retval,quiet;
 
 	const PAPI_shlib_info_t *shinfo;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	if ( ( shinfo = PAPI_get_shared_lib_info(  ) ) == NULL ) {
 		test_skip( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
@@ -84,78 +84,103 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
 	}
 
-	print_shlib_info_map(shinfo);
+	print_shlib_info_map(shinfo, quiet);
 
-	sleep( 1 );				 /* Needed for debugging, so you can ^Z and stop the process, inspect /proc to see if it's right */
+	/* Needed for debugging, so you can ^Z and stop the process, */
+	/* inspect /proc to see if it's right */
+	sleep( 1 );
 
 #ifndef NO_DLFCN
 	{
-		char *_libname = "libcrypt.so";
-		void *handle;
-		void ( *setkey) (const char *key);
-		void ( *encrypt) (char block[64], int edflag);
-		char key[64]={
-			1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-			1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-			1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-			1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-		}; /* bit pattern for key */
-		char orig[64];      /* bit pattern for messages */
-		char txt[64];      	    /* bit pattern for messages */
 
-		int oldcount;
+	char *_libname = "libcrypt.so";
+	void *handle;
+	void ( *setkey) (const char *key);
+	void ( *encrypt) (char block[64], int edflag);
+	char key[64]={
+		1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
+		1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
+		1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
+		1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
+	}; /* bit pattern for key */
+	char orig[64];      /* bit pattern for messages */
+	char txt[64];      	    /* bit pattern for messages */
 
-		handle = dlopen( _libname, RTLD_NOW );
-		if ( !handle ) {
-			printf( "dlopen: %s\n", dlerror(  ) );
-			printf
-				( "Did you forget to set the environmental variable LIBPATH (in AIX) or LD_LIBRARY_PATH (in linux) ?\n" );
+	int oldcount;
+
+	handle = dlopen( _libname, RTLD_NOW );
+	if ( !handle ) {
+		printf( "dlopen: %s\n", dlerror(  ) );
+		if (!quiet) printf( "Did you forget to set the environmental "
+			"variable LIBPATH (in AIX) or "
+			"LD_LIBRARY_PATH (in linux) ?\n" );
 			test_fail( __FILE__, __LINE__, "dlopen", 1 );
-		}
+	}
 
-		setkey = dlsym( handle, "setkey" );
-		encrypt = dlsym( handle, "encrypt" );
-		if ( setkey == NULL || encrypt == NULL) {
-			printf( "dlsym: %s\n", dlerror(  ) );
-			test_fail( __FILE__, __LINE__, "dlsym", 1 );
-		}
+	setkey = dlsym( handle, "setkey" );
+	encrypt = dlsym( handle, "encrypt" );
+	if ( setkey == NULL || encrypt == NULL) {
+		if (!quiet) printf( "dlsym: %s\n", dlerror(  ) );
+		test_fail( __FILE__, __LINE__, "dlsym", 1 );
+	}
 
-		memset(orig,0,64);
-		memcpy(txt,orig,64);
-		setkey(key);
-		
-		printf("original  "); display(txt);
-		encrypt(txt, 0);   /* encode */
-		printf("encrypted "); display(txt);
-		if (!memcmp(txt,orig,64))
-			test_fail( __FILE__, __LINE__, "encode", 1 );
-		encrypt(txt, 1);   /* decode */
-		printf("decrypted "); display(txt);
-		if (memcmp(txt,orig,64))
-			test_fail( __FILE__, __LINE__, "decode", 1 );
- 
+	memset(orig,0,64);
+	memcpy(txt,orig,64);
+	setkey(key);
 
-		oldcount = shinfo->count;
+	if (!quiet) {
+		printf("original  ");
+		display(txt);
+	}
 
-		if ( ( shinfo = PAPI_get_shared_lib_info(  ) ) == NULL ) {
-			test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
-		}
+	encrypt(txt, 0);   /* encode */
 
-		sleep( 1 );			 /* Needed for debugging, so you can ^Z and stop the process, inspect /proc to see if it's right */
+	if (!quiet) {
+		printf("encrypted ");
+		display(txt);
+	}
 
-		if ( ( shinfo->count == 0 ) && ( shinfo->map ) ) {
-			test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
-		}
+	if (!memcmp(txt,orig,64)) {
+		test_fail( __FILE__, __LINE__, "encode", 1 );
+	}
 
-		if ( shinfo->count <= oldcount ) {
-			test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
-		}
+	encrypt(txt, 1);   /* decode */
 
-		print_shlib_info_map(shinfo);
+	if (!quiet) {
+		printf("decrypted ");
+		display(txt);
+	}
 
-		sleep( 1 );			 /* Needed for debugging, so you can ^Z and stop the process, inspect /proc to see if it's right */
+	if (memcmp(txt,orig,64)) {
+		test_fail( __FILE__, __LINE__, "decode", 1 );
+	}
 
-		dlclose( handle );
+	oldcount = shinfo->count;
+
+	if ( ( shinfo = PAPI_get_shared_lib_info(  ) ) == NULL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
+	}
+
+	/* Needed for debugging, so you can ^Z and stop the process, */
+	/* inspect /proc to see if it's right */
+	sleep( 1 );
+
+	if ( ( shinfo->count == 0 ) && ( shinfo->map ) ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
+	}
+
+	if ( shinfo->count <= oldcount ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_shared_lib_info", 1 );
+	}
+
+	print_shlib_info_map(shinfo, quiet);
+
+	/* Needed for debugging, so you can ^Z and stop the process, */
+	/* inspect /proc to see if it's right */
+	sleep( 1 );
+
+	dlclose( handle );
+
 	}
 #endif
 

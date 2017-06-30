@@ -2,8 +2,6 @@
 * File:    profile_twoevents.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
 */
 
 /* This file performs the following test: profiling two events */
@@ -55,15 +53,18 @@ main( int argc, char **argv )
 	if ( start > end )
 		test_fail( __FILE__, __LINE__, "Profile length < 0!", 0 );
 	length = ( unsigned long ) ( end - start );
-	prof_print_address
-		( "Test case profile: POSIX compatible profiling with two events.\n",
-		  prginfo );
-	prof_print_prof_info( start, end, THRESHOLD, event_name );
+
+	if (!quiet) {
+		prof_print_address( "Test case profile: POSIX compatible profiling with two events.\n",
+					prginfo );
+		prof_print_prof_info( start, end, THRESHOLD, event_name );
+	}
+
 	prof_alloc( 2, length );
 
 	blength =
 		prof_size( length, FULL_SCALE, PAPI_PROFIL_BUCKET_16, &num_buckets );
-	do_no_profile(  );
+	do_no_profile( quiet );
 
 	if ( !quiet ) {
 		printf( "Test type   : \tPAPI_PROFIL_POSIX\n" );
@@ -108,8 +109,11 @@ main( int argc, char **argv )
 
 	sprintf( title, "   \t\t    %s\tPAPI_TOT_CYC\naddress\t\t\tcounts\tcounts\n",
 			 event_name );
-	prof_head( blength, PAPI_PROFIL_BUCKET_16, num_buckets, title );
-	prof_out( start, 2, PAPI_PROFIL_BUCKET_16, num_buckets, FULL_SCALE );
+
+	if (!quiet) {
+		prof_head( blength, PAPI_PROFIL_BUCKET_16, num_buckets, title );
+		prof_out( start, 2, PAPI_PROFIL_BUCKET_16, num_buckets, FULL_SCALE );
+	}
 
 	remove_test_events( &EventSet, mask );
 

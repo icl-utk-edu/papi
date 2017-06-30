@@ -70,9 +70,10 @@ main( int argc, char **argv )
 	int EventSet = PAPI_NULL;
 	int PAPI_event, mask;
 	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet = tests_quiet( argc, argv );
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -214,51 +215,51 @@ main( int argc, char **argv )
 
 	remove_test_events( &EventSet, mask );
 
-	printf( "Test case: Start/Stop/Read/Accum/Reset.\n" );
-	printf( "----------------------------------------------------------------\n" );
-	tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );
-	printf( "Default domain is: %d (%s)\n", tmp, 
-		stringify_all_domains( tmp ) );
-	tmp = PAPI_get_opt( PAPI_DEFGRN, NULL );
-	printf( "Default granularity is: %d (%s)\n", tmp,
+	if (!quiet) {
+		printf( "Test case: Start/Stop/Read/Accum/Reset.\n" );
+		printf( "----------------------------------------------------------------\n" );
+		tmp = PAPI_get_opt( PAPI_DEFDOM, NULL );
+		printf( "Default domain is: %d (%s)\n", tmp,
+			stringify_all_domains( tmp ) );
+		tmp = PAPI_get_opt( PAPI_DEFGRN, NULL );
+		printf( "Default granularity is: %d (%s)\n", tmp,
 			stringify_granularity( tmp ) );
-	printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
-	printf( "-------------------------------------------------------------------------\n" );
+		printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
+		printf( "-------------------------------------------------------------------------\n" );
 
-	sprintf( add_event_str, "%s:", event_name );
-	printf( "                           PAPI_TOT_CYC    %s\n", event_name );
-	printf( "1. start,ops,stop          %10lld      %10lld\n", values[0][0],
+		sprintf( add_event_str, "%s:", event_name );
+		printf( "                           PAPI_TOT_CYC    %s\n", event_name );
+		printf( "1. start,ops,stop          %10lld      %10lld\n", values[0][0],
 			values[0][1] );
-	printf( "2. start,ops,stop          %10lld      %10lld\n", values[1][0],
+		printf( "2. start,ops,stop          %10lld      %10lld\n", values[1][0],
 			values[1][1] );
-	printf( "3. reset,start,ops,stop    %10lld      %10lld\n", values[2][0],
+		printf( "3. reset,start,ops,stop    %10lld      %10lld\n", values[2][0],
 			values[2][1] );
-	printf( "4. start,ops/2,read        %10lld      %10lld\n", values[3][0],
+		printf( "4. start,ops/2,read        %10lld      %10lld\n", values[3][0],
 			values[3][1] );
-	printf( "5. ops/2,read              %10lld      %10lld\n", values[4][0],
+		printf( "5. ops/2,read              %10lld      %10lld\n", values[4][0],
 			values[4][1] );
-	printf( "6. ops/2,accum             %10lld      %10lld\n", values[5][0],
+		printf( "6. ops/2,accum             %10lld      %10lld\n", values[5][0],
 			values[5][1] );
-	printf( "7. ops/2,read              %10lld      %10lld\n", values[6][0],
+		printf( "7. ops/2,read              %10lld      %10lld\n", values[6][0],
 			values[6][1] );
-	printf( "8. reset,ops/2,stop        %10lld      %10lld\n", values[7][0],
+		printf( "8. reset,ops/2,stop        %10lld      %10lld\n", values[7][0],
 			values[7][1] );
-	printf( "9. reset,read              %10lld      %10lld\n", values[8][0],
+		printf( "9. reset,read              %10lld      %10lld\n", values[8][0],
 			values[8][1] );
-	printf
-		( "-------------------------------------------------------------------------\n" );
-	printf( "Verification:\n" );
-	printf( "Row 1 approximately equals rows 2 and 3 \n" );
-	printf( "Row 4 approximately equals 1/2 of row 3\n" );
-	printf( "Row 5 approximately equals twice row 4\n" );
-	printf( "Row 6 approximately equals 6 times row 4\n" );
-	printf( "Rows 7 and 8 approximately equal row 4\n" );
-	printf( "Row 9 equals 0\n" );
-	printf( "%% difference between %s 1 & 2: %.2f\n", "PAPI_TOT_CYC",
-		100.0 * ( float ) values[0][0] / ( float ) values[1][0] );
-	printf( "%% difference between %s 1 & 2: %.2f\n", add_event_str,
-		100.0 * ( float ) values[0][1] / ( float ) values[1][1] );
-
+		printf( "-------------------------------------------------------------------------\n" );
+		printf( "Verification:\n" );
+		printf( "Row 1 approximately equals rows 2 and 3 \n" );
+		printf( "Row 4 approximately equals 1/2 of row 3\n" );
+		printf( "Row 5 approximately equals twice row 4\n" );
+		printf( "Row 6 approximately equals 6 times row 4\n" );
+		printf( "Rows 7 and 8 approximately equal row 4\n" );
+		printf( "Row 9 equals 0\n" );
+		printf( "%% difference between %s 1 & 2: %.2f\n", "PAPI_TOT_CYC",
+			100.0 * ( float ) values[0][0] / ( float ) values[1][0] );
+		printf( "%% difference between %s 1 & 2: %.2f\n", add_event_str,
+			100.0 * ( float ) values[0][1] / ( float ) values[1][1] );
+	}
 
 	for ( i = 0; i <= 1; i++ ) {
 		if ( !approx_equals

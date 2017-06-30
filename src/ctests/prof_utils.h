@@ -29,7 +29,7 @@ void prof_out(caddr_t start, int n, int bucket, int num_buckets, unsigned int sc
 unsigned long prof_size(unsigned long plength, unsigned scale, int bucket, int *num_buckets);
 int prof_check(int n, int bucket, int num_buckets);
 int prof_buckets(int bucket);
-void do_no_profile(void);
+void do_no_profile(int quiet);
 
 /* variables global to profiling tests */
 extern long long **values;

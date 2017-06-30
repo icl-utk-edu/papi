@@ -5,7 +5,7 @@ PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads \
 	zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads \
 	krentel_pthreads
 MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
-	sdsc4-mpx reset_multiplex
+	sdsc2-mpx-noreset sdsc4-mpx reset_multiplex
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
@@ -28,7 +28,7 @@ ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target atta
 P4_TEST	= p4_lst_ins
 EAR	= earprofile
 RANGE	= data_range
-BROKEN	= pernode
+BROKEN	= pernode val_omp version
 API = api
 ifneq ($(MPICC),)
 ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
@@ -81,7 +81,7 @@ papi_api: $(API)
 api: api.c $(TESTLIB) $(PAPILIB) 
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) api.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
-sdsc2: sdsc2.c $(TESTLIB) $(PAPILIB) 
+sdsc2: sdsc2.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) sdsc.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
 sdsc2-mpx: sdsc2.c $(TESTLIB) $(PAPILIB)
@@ -91,13 +91,13 @@ branches: branches.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) branches.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
 sdsc2-mpx-noreset: sdsc2.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) -DMPX -DSTARTSTOP $(TOPTFLAGS) sdsc.c $(TESTLIB) $(PAPILIB) -lm $(LDFLAGS) -o $@
+	$(CC) $(INCLUDE) $(CFLAGS) -DMPX -DSTARTSTOP $(TOPTFLAGS) sdsc2.c $(TESTLIB) $(PAPILIB) -lm $(LDFLAGS) -o $@
 
-sdsc-mpx: sdsc.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
+sdsc-mpx: sdsc-mpx.c $(TESTLIB) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc-mpx.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
-sdsc4-mpx: sdsc4.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc4.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
+sdsc4-mpx: sdsc4-mpx.c $(TESTLIB) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc4-mpx.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
 calibrate: calibrate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) calibrate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o calibrate

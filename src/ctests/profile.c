@@ -37,8 +37,102 @@
 
 #define PROFILE_ALL
 
-static int do_profile( caddr_t start, unsigned long plength, unsigned scale,
-					   int thresh, int bucket );
+static int
+do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
+			int bucket )
+{
+	int i, retval;
+	unsigned long blength;
+	int num_buckets;
+
+	char *profstr[5] = { "PAPI_PROFIL_POSIX",
+		"PAPI_PROFIL_RANDOM",
+		"PAPI_PROFIL_WEIGHTED",
+		"PAPI_PROFIL_COMPRESS",
+		"PAPI_PROFIL_<all>"
+	};
+
+	int profflags[5] = { PAPI_PROFIL_POSIX,
+		PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM,
+		PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED,
+		PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS,
+		PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED |
+			PAPI_PROFIL_RANDOM | PAPI_PROFIL_COMPRESS
+	};
+
+	do_no_profile( TESTS_QUIET );
+	blength = prof_size( plength, scale, bucket, &num_buckets );
+	prof_alloc( 5, blength );
+
+	for ( i = 0; i < 5; i++ ) {
+		if ( !TESTS_QUIET ) {
+			printf( "Test type   : \t%s\n", profstr[i] );
+		}
+
+#ifndef SWPROFILE
+		if ( ( retval =
+			   PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
+							EventSet, PAPI_event, thresh,
+							profflags[i] | bucket ) ) != PAPI_OK ) {
+		   if (retval==PAPI_ENOSUPP) {
+		      char warning[BUFSIZ];
+
+		      sprintf(warning,"PAPI_profil %s not supported",
+			      profstr[i]);
+		      test_warn( __FILE__, __LINE__, warning, 1 );
+		   }
+		   else {
+		      test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+		   }
+		}
+#else
+		if ( ( retval =
+			   PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
+							EventSet, PAPI_event, thresh,
+							profflags[i] | bucket | PAPI_PROFIL_FORCE_SW ) ) !=
+			 PAPI_OK ) {
+		   test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+		}
+#endif
+
+		if ( retval != PAPI_OK )
+			break;
+
+		if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+
+		do_flops( getenv( "NUM_FLOPS" ) ? atoi( getenv( "NUM_FLOPS" ) ) :
+				  NUM_FLOPS );
+
+		if ( ( retval = PAPI_stop( EventSet, values[1] ) ) != PAPI_OK )
+			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+
+		if ( !TESTS_QUIET ) {
+			printf( TAB1, event_name, ( values[1] )[0] );
+			printf( TAB1, "PAPI_TOT_CYC", ( values[1] )[1] );
+		}
+		retval = PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
+							EventSet, PAPI_event, 0,
+							profflags[i] );
+		if (retval != PAPI_OK ) {
+			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+		}
+	}
+
+	if ( retval == PAPI_OK ) {
+		if (!TESTS_QUIET) prof_head( blength, bucket, num_buckets,
+				   "address\t\t\tflat\trandom\tweight\tcomprs\tall\n" );
+		if (!TESTS_QUIET) prof_out( start, 5, bucket, num_buckets, scale );
+		retval = prof_check( 5, bucket, num_buckets );
+	}
+
+	for ( i = 0; i < 5; i++ ) {
+		free( profbuf[i] );
+	}
+
+	return retval;
+}
+
 
 int
 main( int argc, char **argv )
@@ -102,11 +196,13 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "Profile length < 0!", ( int ) length );
 	}
 
-	prof_print_address( "Test case profile: "
+	if (!quiet) {
+		prof_print_address( "Test case profile: "
 			"POSIX compatible profiling with hardware counters.\n",
 			prginfo );
+		prof_print_prof_info( start, end, mythreshold, event_name );
+	}
 
-	prof_print_prof_info( start, end, mythreshold, event_name );
 	retval = do_profile( start, ( unsigned long ) length, FULL_SCALE,
 				mythreshold, PAPI_PROFIL_BUCKET_16 );
 	if ( retval == PAPI_OK ) {
@@ -127,96 +223,3 @@ main( int argc, char **argv )
 	return 0;
 }
 
-static int
-do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
-			int bucket )
-{
-	int i, retval;
-	unsigned long blength;
-	int num_buckets;
-
-	char *profstr[5] = { "PAPI_PROFIL_POSIX",
-		"PAPI_PROFIL_RANDOM",
-		"PAPI_PROFIL_WEIGHTED",
-		"PAPI_PROFIL_COMPRESS",
-		"PAPI_PROFIL_<all>"
-	};
-
-	int profflags[5] = { PAPI_PROFIL_POSIX,
-		PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM,
-		PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED,
-		PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS,
-		PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED |
-			PAPI_PROFIL_RANDOM | PAPI_PROFIL_COMPRESS
-	};
-
-	do_no_profile(  );
-	blength = prof_size( plength, scale, bucket, &num_buckets );
-	prof_alloc( 5, blength );
-
-	for ( i = 0; i < 5; i++ ) {
-		if ( !TESTS_QUIET )
-			printf( "Test type   : \t%s\n", profstr[i] );
-
-#ifndef SWPROFILE
-		if ( ( retval =
-			   PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
-							EventSet, PAPI_event, thresh,
-							profflags[i] | bucket ) ) != PAPI_OK ) {
-		   if (retval==PAPI_ENOSUPP) {
-		      char warning[BUFSIZ];
-
-		      sprintf(warning,"PAPI_profil %s not supported",
-			      profstr[i]);
-		      test_warn( __FILE__, __LINE__, warning, 1 );
-		   }
-		   else {
-		      test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
-		   }
-		}
-#else
-		if ( ( retval =
-			   PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
-							EventSet, PAPI_event, thresh,
-							profflags[i] | bucket | PAPI_PROFIL_FORCE_SW ) ) !=
-			 PAPI_OK ) {
-		   test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
-		}
-#endif
-
-		if ( retval != PAPI_OK )
-			break;
-
-		if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-
-		do_flops( getenv( "NUM_FLOPS" ) ? atoi( getenv( "NUM_FLOPS" ) ) :
-				  NUM_FLOPS );
-
-		if ( ( retval = PAPI_stop( EventSet, values[1] ) ) != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
-
-		if ( !TESTS_QUIET ) {
-			printf( TAB1, event_name, ( values[1] )[0] );
-			printf( TAB1, "PAPI_TOT_CYC", ( values[1] )[1] );
-		}
-		if ( ( retval =
-			   PAPI_profil( profbuf[i], ( unsigned int ) blength, start, scale,
-							EventSet, PAPI_event, 0,
-							profflags[i] ) ) != PAPI_OK )
-			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
-	}
-
-	if ( retval == PAPI_OK ) {
-		prof_head( blength, bucket, num_buckets,
-				   "address\t\t\tflat\trandom\tweight\tcomprs\tall\n" );
-		prof_out( start, 5, bucket, num_buckets, scale );
-		retval = prof_check( 5, bucket, num_buckets );
-	}
-
-	for ( i = 0; i < 5; i++ ) {
-		free( profbuf[i] );
-	}
-
-	return retval;
-}

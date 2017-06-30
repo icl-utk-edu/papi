@@ -83,7 +83,9 @@ main( int argc, char **argv )
 		test_skip(__FILE__,__LINE__,"Event add",1);
 	}
 
-	printf("Using %#x for the overflow event\n",PAPI_event);
+	if (!quiet) {
+		printf("Using %#x for the overflow event\n",PAPI_event);
+	}
 
 	if ( PAPI_event == PAPI_FP_INS ) {
 		mythreshold = THRESHOLD;
@@ -132,14 +134,13 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
 
 	if ( !TESTS_QUIET ) {
-		if ( ( retval =
-			   PAPI_event_code_to_name( PAPI_event, event_name1 ) ) != PAPI_OK )
+		retval = PAPI_event_code_to_name( PAPI_event, event_name1 );
+		if (retval != PAPI_OK ) {
 			test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+		}
 
-		printf
-			( "Test case: Overflow dispatch of 2nd event in set with 2 events.\n" );
-		printf
-			( "---------------------------------------------------------------\n" );
+		printf( "Test case: Overflow dispatch of 2nd event in set with 2 events.\n" );
+		printf( "---------------------------------------------------------------\n" );
 		printf( "Threshold for overflow is: %d\n", mythreshold );
 		printf( "Using %d iterations of c += a*b\n", num_flops );
 		printf( "-----------------------------------------------\n" );
@@ -186,10 +187,13 @@ main( int argc, char **argv )
 	max =
 		( long long ) ( ( ( double ) values[0][1] * ( 1.0 + OVR_TOLERANCE ) ) /
 						( double ) mythreshold );
-	printf( "Overflows: total(%d) > max(%lld) || total(%d) < min(%lld) \n", total,
-			max, total, min );
-	if ( total > max || total < min )
+	if (!quiet) {
+		printf( "Overflows: total(%d) > max(%lld) || "
+			"total(%d) < min(%lld) \n", total, max, total, min );
+	}
+	if ( total > max || total < min ) {
 		test_fail( __FILE__, __LINE__, "Overflows", 1 );
+	}
 
 	test_pass( __FILE__ );
 	return 0;

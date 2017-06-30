@@ -1,7 +1,7 @@
 /*
 * File:    	tenth.c
 * Mods: 	Maynard Johnson
-*			maynardj@us.ibm.com
+*		maynardj@us.ibm.com
 */
 
 #include <stdio.h>
@@ -66,9 +66,6 @@
 #endif
 
 
-
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
-
 int
 main( int argc, char **argv )
 {
@@ -87,27 +84,32 @@ main( int argc, char **argv )
 	long long min[3];
 	long long max[3];
 	long long sum[3];
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	/* Make sure that required resources are available */
 	/* Skip (don't fail!) if they are not */
 	retval = PAPI_query_event( EVT1 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_skip( __FILE__, __LINE__, EVT1_STR, retval );
+	}
 
 	retval = PAPI_query_event( EVT2 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_skip( __FILE__, __LINE__, EVT2_STR, retval );
+	}
 
 	retval = PAPI_query_event( EVT3 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_skip( __FILE__, __LINE__, EVT3_STR, retval );
-
+	}
 
 	EventSet1 = add_test_events( &num_events1, &mask1, 1 );
 	EventSet2 = add_test_events( &num_events2, &mask2, 1 );
@@ -172,7 +174,7 @@ main( int argc, char **argv )
 		}
 	}
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "Test case 10: start, stop for derived event %s.\n",
 				CACHE_LEVEL );
 		printf( "--------------------------------------------------------\n" );
@@ -221,12 +223,16 @@ main( int argc, char **argv )
 		tmax = ( long long ) ( sum[1] + sum[2] );
 #endif
 
-		printf( "percent error: %f\n",
-                        (( float )  abs( ( int ) ( tmax - sum[0] ) ) / (float)  sum[0] ) * 100.0 );
+		if (!quiet) {
+			printf( "percent error: %f\n",
+                       		(( float )  abs( ( int ) ( tmax - sum[0] ) ) /
+				(float)  sum[0] ) * 100.0 );
+		}
 		tmin = ( long long ) ( ( double ) tmax * 0.8 );
 		tmax = ( long long ) ( ( double ) tmax * 1.2 );
-		if ( sum[0] > tmax || sum[0] < tmin )
+		if ( sum[0] > tmax || sum[0] < tmin ) {
 			test_fail( __FILE__, __LINE__, CACHE_LEVEL, 1 );
+		}
 	}
 
 	test_pass( __FILE__ );

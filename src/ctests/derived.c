@@ -108,9 +108,11 @@ main( int argc, char **argv )
 	if (!quiet) printf( "Verification: Does it produce a non-zero value?\n" );
 
 	if ( values != 0 ) {
-		printf( "Yes: " );
-		printf( LLDFMT, values );
-		printf( "\n" );
+		if (!quiet) {
+			printf( "Yes: " );
+			printf( LLDFMT, values );
+			printf( "\n" );
+		}
 	}
 	else {
 		test_fail(__FILE__,__LINE__, "Validation", 1 );

@@ -159,28 +159,30 @@ static void work (int EventSet, int mhz)
 	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 
 	if (!TESTS_QUIET) {
-   printf( "-------------------------------------------------------------------------\n" );
-   printf( "Using %d iterations of c += a*b\n", numflops );
-   printf( "-------------------------------------------------------------------------\n" );
+		printf( "-------------------------------------------------------------------------\n" );
+		printf( "Using %d iterations of c += a*b\n", numflops );
+		printf( "-------------------------------------------------------------------------\n" );
 
-   printf( TAB1, "PAPI_TOT_CYC             : \t", values[0] );
-   printf( TAB1, "PAPI_REF_CYC             : \t", values[1] );
-   printf( "%-12s %12f\n", "Cycle Ratio              : \t", ratio );
-   printf( "%-12s %12d\n", "Effective MHz            : \t", (int)(ratio * mhz) );
-   printf( TAB1, "Real usec                : \t", elapsed_us );
-   printf( TAB1, "Real cycles              : \t", elapsed_cyc );
-   printf( TAB1, "Virt usec                : \t", elapsed_virt_us );
-   printf( TAB1, "Virt cycles              : \t", elapsed_virt_cyc );
+		printf( TAB1, "PAPI_TOT_CYC             : \t", values[0] );
+		printf( TAB1, "PAPI_REF_CYC             : \t", values[1] );
+		printf( "%-12s %12f\n", "Cycle Ratio              : \t", ratio );
+		printf( "%-12s %12d\n", "Effective MHz            : \t", (int)(ratio * mhz) );
+		printf( TAB1, "Real usec                : \t", elapsed_us );
+		printf( TAB1, "Real cycles              : \t", elapsed_cyc );
+		printf( TAB1, "Virt usec                : \t", elapsed_virt_us );
+		printf( TAB1, "Virt cycles              : \t", elapsed_virt_cyc );
 
-   printf( "-------------------------------------------------------------------------\n" );
+		printf( "-------------------------------------------------------------------------\n" );
 
-   printf( "Verification: PAPI_REF_CYC should be roughly equal to real_cycles\n" );
-		}
-   cycles_error=100.0*((double)values[1] - (double)elapsed_cyc)/(double)elapsed_cyc;
+		printf( "Verification: PAPI_REF_CYC should be roughly equal to real_cycles\n" );
+	}
 
-   if ((cycles_error>10.0) || (cycles_error<-10.0)) {
-	 printf("Error of %.2f%%\n",cycles_error);
-	 test_warn( __FILE__, __LINE__, "validation", 0 );
-   }
+	cycles_error=100.0*((double)values[1] -
+			(double)elapsed_cyc)/(double)elapsed_cyc;
+
+	if ((cycles_error>10.0) || (cycles_error<-10.0)) {
+		if (!TESTS_QUIET) printf("Error of %.2f%%\n",cycles_error);
+		test_warn( __FILE__, __LINE__, "validation", 0 );
+	}
 
 }

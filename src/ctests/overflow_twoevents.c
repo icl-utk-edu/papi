@@ -133,14 +133,17 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
 	/* Set both overflows after adding both events (batch) */
-	if ( ( retval =
-		   PAPI_overflow( EventSet, PAPI_event, threshold, 0,
-						  handler_batch ) ) != PAPI_OK )
+	retval = PAPI_overflow( EventSet, PAPI_event, threshold, 0,
+						  handler_batch );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
-	if ( ( retval =
-		   PAPI_overflow( EventSet, PAPI_TOT_CYC, threshold, 0,
-						  handler_batch ) ) != PAPI_OK )
+	}
+
+	retval = PAPI_overflow( EventSet, PAPI_TOT_CYC, threshold, 0,
+						  handler_batch );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
+	}
 
 	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
@@ -154,16 +157,18 @@ main( int argc, char **argv )
 	num_events1 = 1;
 	retval =
 		PAPI_get_overflow_event_index( EventSet, 1, &idx[0], &num_events1 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		printf( "PAPI_get_overflow_event_index error: %s\n",
 				PAPI_strerror( retval ) );
+	}
 
 	num_events1 = 1;
 	retval =
 		PAPI_get_overflow_event_index( EventSet, 2, &idx[1], &num_events1 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		printf( "PAPI_get_overflow_event_index error: %s\n",
 				PAPI_strerror( retval ) );
+	}
 
 	if ( ( retval = PAPI_cleanup_eventset( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
@@ -193,70 +198,74 @@ main( int argc, char **argv )
 	num_events1 = 1;
 	retval =
 		PAPI_get_overflow_event_index( EventSet, 1, &idx[2], &num_events1 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		printf( "PAPI_get_overflow_event_index error: %s\n",
 				PAPI_strerror( retval ) );
+	}
 
 	num_events1 = 1;
-	retval =
-		PAPI_get_overflow_event_index( EventSet, 2, &idx[3], &num_events1 );
-	if ( retval != PAPI_OK )
+	retval = PAPI_get_overflow_event_index( EventSet, 2, &idx[3],
+								&num_events1 );
+	if ( retval != PAPI_OK ) {
 		printf( "PAPI_get_overflow_event_index error: %s\n",
 				PAPI_strerror( retval ) );
+	}
 
 	if ( ( retval = PAPI_cleanup_eventset( EventSet ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", retval );
 
-	if ( ( retval =
-		   PAPI_event_code_to_name( PAPI_event, event_name[0] ) ) != PAPI_OK )
+	retval = PAPI_event_code_to_name( PAPI_event, event_name[0] );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	}
 
-	if ( ( retval =
-		   PAPI_event_code_to_name( PAPI_TOT_CYC, event_name[1] ) ) != PAPI_OK )
+	retval = PAPI_event_code_to_name( PAPI_TOT_CYC, event_name[1] );
+	if (retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
+	}
 
 	strcpy( event_name[2], "Unknown" );
 
-	printf
-		( "Test case: Overflow dispatch of both events in set with 2 events.\n" );
-	printf
-		( "---------------------------------------------------------------\n" );
-	printf( "Threshold for overflow is: %d\n", threshold );
-	printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
-	printf( "-----------------------------------------------\n" );
+	if (!TESTS_QUIET) {
+		printf( "Test case: Overflow dispatch of both events in set with 2 events.\n" );
+		printf( "---------------------------------------------------------------\n" );
+		printf( "Threshold for overflow is: %d\n", threshold );
+		printf( "Using %d iterations of c += a*b\n", NUM_FLOPS );
+		printf( "-----------------------------------------------\n" );
 
-	printf( "Test type    : %18s%18s%18s\n", "1 (no overflow)", "2 (batch)",
+		printf( "Test type    : %18s%18s%18s\n", "1 (no overflow)", "2 (batch)",
 			"3 (interleaf)" );
-	printf( OUT_FMT, event_name[0], ( values[0] )[0], ( values[1] )[0],
+		printf( OUT_FMT, event_name[0], ( values[0] )[0], ( values[1] )[0],
 			( values[2] )[0] );
-	printf( OUT_FMT, event_name[1], ( values[0] )[1], ( values[1] )[1],
+		printf( OUT_FMT, event_name[1], ( values[0] )[1], ( values[1] )[1],
 			( values[2] )[1] );
-	printf( "\n" );
+		printf( "\n" );
 
-	printf( "Predicted overflows at event %-12s : %6d\n", event_name[0],
+		printf( "Predicted overflows at event %-12s : %6d\n", event_name[0],
 			( int ) ( ( values[0] )[0] / threshold ) );
-	printf( "Predicted overflows at event %-12s : %6d\n", event_name[1],
+		printf( "Predicted overflows at event %-12s : %6d\n", event_name[1],
 			( int ) ( ( values[0] )[1] / threshold ) );
 
-	printf( "\nBatch overflows (add, add, over, over):\n" );
-	for ( k = 0; k < 2; k++ ) {
-		if ( overflow_counts[0][k].mask ) {
-			printf( VEC_FMT, ( long long ) overflow_counts[0][k].mask,
+		printf( "\nBatch overflows (add, add, over, over):\n" );
+		for ( k = 0; k < 2; k++ ) {
+			if ( overflow_counts[0][k].mask ) {
+				printf( VEC_FMT, ( long long ) overflow_counts[0][k].mask,
 					event_name[idx[k]], overflow_counts[0][k].count );
+			}
 		}
-	}
 
-	printf( "\nInterleaved overflows (add, over, add, over):\n" );
-	for ( k = 0; k < 2; k++ ) {
-		if ( overflow_counts[1][k].mask )
-			printf( VEC_FMT, 
-				( long long ) overflow_counts[1][k].mask,
-				event_name[idx[k + 2]], 
-				overflow_counts[1][k].count );
-	}
+		printf( "\nInterleaved overflows (add, over, add, over):\n" );
+		for ( k = 0; k < 2; k++ ) {
+			if ( overflow_counts[1][k].mask )
+				printf( VEC_FMT,
+					( long long ) overflow_counts[1][k].mask,
+					event_name[idx[k + 2]],
+					overflow_counts[1][k].count );
+		}
 
-	printf( "\nCases 2+3 Unknown overflows: %d\n", total_unknown );
-	printf( "-----------------------------------------------\n" );
+		printf( "\nCases 2+3 Unknown overflows: %d\n", total_unknown );
+		printf( "-----------------------------------------------\n" );
+	}
 
 	if ( overflow_counts[0][0].count == 0 || overflow_counts[0][1].count == 0 )
 		test_fail( __FILE__, __LINE__, "a batch counter had no overflows", 1 );
@@ -272,3 +281,4 @@ main( int argc, char **argv )
 
 	return 0;
 }
+

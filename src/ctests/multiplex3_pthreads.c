@@ -37,7 +37,7 @@ thread_fn( void *dummy )
 
 /* Runs a bunch of multiplexed events */
 
-void
+static void
 mainloop( int arg )
 {
 	int allvalid;
@@ -116,16 +116,16 @@ mainloop( int arg )
 			test_fail( __FILE__, __LINE__, "PAPI_get_event_info", retval );
 
 		if ( pset.count ) {
-			printf( "Adding %s\n", pset.symbol );
+			if (!TESTS_QUIET) printf( "Adding %s\n", pset.symbol );
 
 			retval = PAPI_add_event( EventSet, ( int ) pset.event_code );
 			if ( ( retval != PAPI_OK ) && ( retval != PAPI_ECNFLCT ) )
 				test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
 
 			if ( retval == PAPI_OK ) {
-				printf( "Added %s\n", pset.symbol );
+				if (!TESTS_QUIET) printf( "Added %s\n", pset.symbol );
 			} else {
-				printf( "Could not add %s\n", pset.symbol );
+				if (!TESTS_QUIET) printf( "Could not add %s\n", pset.symbol );
 			}
 
 			do_stuff(  );
@@ -148,7 +148,7 @@ mainloop( int arg )
 					retval =
 						PAPI_remove_event( EventSet, ( int ) pset.event_code );
 					if ( retval == PAPI_OK )
-						printf( "Removed %s\n", pset.symbol );
+						if (!TESTS_QUIET) printf( "Removed %s\n", pset.symbol );
 				        /* This added because the test */
 				        /* can take a long time if mplexing */
 				        /* is broken and all values are 0   */
@@ -175,11 +175,11 @@ mainloop( int arg )
 	}
 	allvalid = 0;
 	for ( i = 0; i < MAX_TO_ADD; i++ ) {
-		printf( ONENUM, values[i] );
+		if (!TESTS_QUIET) printf( ONENUM, values[i] );
 		if ( values[i] != 0 )
 			allvalid++;
 	}
-	printf( "\n" );
+	if (!TESTS_QUIET) printf( "\n" );
 	if ( !allvalid )
 		test_fail( __FILE__, __LINE__, "all counter registered no counts", 1 );
 

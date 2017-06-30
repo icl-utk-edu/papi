@@ -32,7 +32,7 @@ int main( int argc, char **argv ) {
 	quiet = tests_quiet( argc, argv );
 
 	uname(&uname_info);
-	printf("%s\n",uname_info.release);
+	if (!quiet) printf("Found Linux %s\n",uname_info.release);
 
 	/* Init the PAPI library */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );

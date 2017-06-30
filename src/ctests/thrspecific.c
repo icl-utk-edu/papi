@@ -22,58 +22,65 @@ Thread( void *arg )
 {
 	int retval;
 	void *arg2;
+	int i;
 
 	retval = PAPI_register_thread(  );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
+	}
 
-	printf( "Thread %#x started, specific data is at %p\n",
+	if (!TESTS_QUIET) {
+		printf( "Thread %#x started, specific data is at %p\n",
 			( int ) pthread_self(  ), arg );
+	}
 
 	retval = PAPI_set_thr_specific( PAPI_USR1_TLS, arg );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_set_thr_specific", retval );
+	}
 
 	retval = PAPI_get_thr_specific( PAPI_USR1_TLS, &arg2 );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_get_thr_specific", retval );
+	}
 
-	if ( arg != arg2 )
+	if ( arg != arg2 ) {
 		test_fail( __FILE__, __LINE__, "set vs get specific", 0 );
+	}
 
 	while ( processing ) {
 		if ( *( ( int * ) arg ) == 500000 ) {
 			sleep( 1 );
-			int i;
+
 			PAPI_all_thr_spec_t data;
 			data.num = 10;
-			data.id =
-				( unsigned long * ) malloc( ( size_t ) data.num *
+			data.id = ( unsigned long * ) malloc( ( size_t ) data.num *
 											sizeof ( unsigned long ) );
-			data.data =
-				( void ** ) malloc( ( size_t ) data.num * sizeof ( void * ) );
+			data.data = ( void ** ) malloc( ( size_t ) data.num * sizeof ( void * ) );
 
-			retval =
-				PAPI_get_thr_specific( PAPI_USR1_TLS | PAPI_TLS_ALL_THREADS,
+			retval = PAPI_get_thr_specific( PAPI_USR1_TLS | PAPI_TLS_ALL_THREADS,
 									   ( void ** ) &data );
-			if ( retval != PAPI_OK )
+			if ( retval != PAPI_OK ) {
 				test_fail( __FILE__, __LINE__, "PAPI_get_thr_specific",
 						   retval );
+			}
 
-			if ( data.num != 5 )
+			if ( data.num != 5 ) {
 				test_fail( __FILE__, __LINE__, "data.num != 5", 0 );
+			}
 
-			for ( i = 0; i < data.num; i++ )
+			if (!TESTS_QUIET) for ( i = 0; i < data.num; i++ ) {
 				printf( "Entry %d, Thread %#lx, Data Pointer %p, Value %d\n",
 						i, data.id[i], data.data[i], *( int * ) data.data[i] );
-
+			}
 			processing = 0;
 		}
 	}
 
 	retval = PAPI_unregister_thread(  );
-	if ( retval != PAPI_OK )
+	if ( retval != PAPI_OK ) {
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
+	}
 
 	return NULL;
 }
@@ -85,13 +92,17 @@ main( int argc, char **argv )
 	int flops1, flops2, flops3, flops4, flops5;
 	int retval, rc;
 	pthread_attr_t attr;
+	int quiet;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet = tests_quiet( argc, argv );
+
+	if (!quiet) printf("Testing threads\n");
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
+	if ( retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+	}
 
 	retval = PAPI_thread_init( ( unsigned long ( * )( void ) )
 				( pthread_self ) );
@@ -107,6 +118,7 @@ main( int argc, char **argv )
 	}
 
 	pthread_attr_init( &attr );
+
 #ifdef PTHREAD_CREATE_UNDETACHED
 	pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_UNDETACHED );
 #endif

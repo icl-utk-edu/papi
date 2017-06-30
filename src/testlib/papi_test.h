@@ -91,4 +91,3 @@ int approx_equals(double a, double b);
 
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-#define printf if (!TESTS_QUIET) printf

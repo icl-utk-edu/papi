@@ -60,6 +60,7 @@ main( int argc, char **argv )
 	int using_aix = 0;
 	int cid;
 	int quiet;
+	long long value;
 
 	/* Set TESTS_QUIET variable */
 	quiet = tests_quiet( argc, argv );
@@ -254,7 +255,10 @@ main( int argc, char **argv )
 		//       mythreshold,
 		//       ovt[j],
 		//       *(values+j+num_events*(j+1))/mythreshold);
-		if ( *( values + j + num_events * ( j + 1 ) ) / mythreshold != ovt[j] ) {
+
+		value = values[j+num_events*(j+1)];
+
+		if ( value / mythreshold != ovt[j] ) {
 			char error_string[BUFSIZ];
 
 			if ( using_perfmon )
@@ -267,11 +271,10 @@ main( int argc, char **argv )
 						   1 );
 			else {
 				sprintf( error_string,
-						 "Overflow value differs from expected %lld / %d != %d (%lld)",
-						 *( values + j + num_events * ( j + 1 ) ), mythreshold,
-						 ovt[j],
-						 *( values + j +
-							num_events * ( j + 1 ) ) / mythreshold );
+					"Overflow value differs from expected %lld / %d should be %lld, we got %d",
+					value , mythreshold,
+					value / mythreshold,
+					ovt[j] );
 				test_fail( __FILE__, __LINE__, error_string, 1 );
 			}
 		}

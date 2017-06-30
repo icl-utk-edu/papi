@@ -110,7 +110,7 @@ prof_print_prof_info( caddr_t start, caddr_t end, int threshold,
    Assumed globals: EventSet, values, event_name.
 */
 void
-do_no_profile( void )
+do_no_profile( int quiet )
 {
 	int retval;
 
@@ -123,9 +123,11 @@ do_no_profile( void )
 	if ( ( retval = PAPI_stop( EventSet, values[0] ) ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-	printf( "Test type   : \t%s\n", "No profiling" );
-	printf( TAB1, event_name, ( values[0] )[0] );
-	printf( TAB1, "PAPI_TOT_CYC", ( values[0] )[1] );
+	if (!quiet) {
+		printf( "Test type   : \t%s\n", "No profiling" );
+		printf( TAB1, event_name, ( values[0] )[0] );
+		printf( TAB1, "PAPI_TOT_CYC", ( values[0] )[1] );
+	}
 }
 
 /* This routine allocates and initializes up to 5 equal sized profiling buffers.
