@@ -4,7 +4,6 @@
 
 /** 
  * @file    HelloWorld.c
- * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	<your name here>
@@ -30,7 +29,7 @@
 #include "papi_test.h"
 
 #define NUM_EVENTS 1
-#define PAPI
+#define PAPI 1
 
 // Prototypes
 __global__ void helloWorld(char*);
@@ -48,20 +47,29 @@ int main(int argc, char** argv)
 	   RUN papi_native_avail to get a list of CUDA events that are 
 	   supported on your machine */
         //char *EventName[] = { "PAPI_FP_OPS" };
-        char const *EventName[] = { "cuda:::device:0:elapsed_cycles_sm" };
+        char const *EventName[] = { "cuda:::event:elapsed_cycles_sm:device=0" };
 	int events[NUM_EVENTS];
 	int eventCount = 0;
+	int quiet;
+
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 	
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if( retval != PAPI_VER_CURRENT )
-		fprintf( stderr, "PAPI_library_init failed\n" );
-	
-	printf( "PAPI_VERSION     : %4d %6d %7d\n",
+	if( retval != PAPI_VER_CURRENT ) {
+		if (!quiet) printf("PAPI init failed\n");
+		test_fail(__FILE__,__LINE__,
+			"PAPI_library_init failed", 0 );
+	}
+
+	if (!quiet) {
+		printf( "PAPI_VERSION     : %4d %6d %7d\n",
 			PAPI_VERSION_MAJOR( PAPI_VERSION ),
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ) );
-	
+	}
+
 	/* convert PAPI native events to PAPI code */
 	for( i = 0; i < NUM_EVENTS; i++ ){
                 retval = PAPI_event_name_to_code( (char *)EventName[i], &events[i] );
@@ -70,29 +78,34 @@ int main(int argc, char** argv)
 			continue;
 		}
 		eventCount++;
-		printf( "Name %s --- Code: %#x\n", EventName[i], events[i] );
+		if (!quiet) printf( "Name %s --- Code: %#x\n", EventName[i], events[i] );
 	}
 
 	/* if we did not find any valid events, just report test failed. */
 	if (eventCount == 0) {
-		printf( "Test FAILED: no valid events found.\n");
+		if (!quiet) printf( "Test FAILED: no valid events found.\n");
+		test_skip(__FILE__,__LINE__,"No events found",0);
 		return 1;
 	}
 	
 	retval = PAPI_create_eventset( &EventSet );
-	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_create_eventset failed\n" );
-	
+	if( retval != PAPI_OK ) {
+		if (!quiet) printf( "PAPI_create_eventset failed\n" );
+		test_fail(__FILE__,__LINE__,"Cannot create eventset",retval);
+	}	
+
         // If multiple GPUs/contexts were being used, 
         // you need to switch to each device before adding its events
         // e.g. cudaSetDevice( 0 );
 	retval = PAPI_add_events( EventSet, events, eventCount );
-	if( retval != PAPI_OK )
+	if( retval != PAPI_OK ) {
 		fprintf( stderr, "PAPI_add_events failed\n" );
-	
+	}
+
 	retval = PAPI_start( EventSet );
-	if( retval != PAPI_OK )
+	if( retval != PAPI_OK ) {
 		fprintf( stderr, "PAPI_start failed\n" );
+	}
 #endif
 
 
@@ -130,7 +143,7 @@ int main(int argc, char** argv)
 	// free up the allocated memory on the device
 	cudaFree(d_str);
 	
-	printf("END: %s\n", str);
+	if (!quiet) printf("END: %s\n", str);
 
 	
 #ifdef PAPI
@@ -149,8 +162,10 @@ int main(int argc, char** argv)
 	PAPI_shutdown();
 
 	for( i = 0; i < eventCount; i++ )
-		printf( "%12lld \t\t --> %s \n", values[i], EventName[i] );
+		if (!quiet) printf( "%12lld \t\t --> %s \n", values[i], EventName[i] );
 #endif
+
+	test_pass(__FILE__);
 
 	return 0;
 }

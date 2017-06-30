@@ -1,5 +1,5 @@
 NAME=cuda
-include ../../Makefile_comp_tests
+include ../../Makefile_comp_tests.target
 
 CUDA_DIR ?= /opt/cuda
 CUPTI_DIR ?= $(CUDA_DIR)/extras/CUPTI
@@ -20,7 +20,7 @@ default: $(TESTS)
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<
 
 HelloWorld: HelloWorld.o $(UTILOBJS)
-	$(CC) $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(NVCC) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU: simpleMultiGPU.cu $(UTILOBJS)
 	$(NVCC) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
