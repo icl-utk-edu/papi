@@ -107,3 +107,22 @@ do_flops3( double x, int iters, int quiet )
 
 	return result;
 }
+
+
+volatile double a = 0.5, b = 2.2;
+
+double
+do_flops( int n, int quiet )
+{
+        int i;
+        double c = 0.11;
+
+        for ( i = 0; i < n; i++ ) {
+                c += a * b;
+        }
+
+	if (!quiet) printf("%lf\n",c);
+
+	return c;
+}
+

@@ -31,7 +31,9 @@
 #include "papi.h"
 #include "papi_test.h"
 
-#include "do_loops.h"
+#include "testcode.h"
+
+#define NUM_FLOPS  20000000
 
 static void work (int EventSet, int sleep_test, int quiet)
 {
@@ -58,7 +60,7 @@ static void work (int EventSet, int sleep_test, int quiet)
 		sleep(2);
 	}
 	else {
-		do_flops( numflops );
+		do_flops( numflops, 1 );
 	}
 
 	/* Stop PAPI */

@@ -16,3 +16,5 @@ int flops_init_matrix(void);
 float flops_matrix_matrix_multiply(void);
 float flops_swapped_matrix_matrix_multiply(void);
 double do_flops3( double x, int iters, int quiet );
+double do_flops( int n, int quiet );
+
