@@ -16,51 +16,14 @@
 #include "papi.h"
 #include "papi_test.h"
 
-#include "do_loops.h"
+#include "testcode.h"
 
 #define MAXEVENTS 9
 #define REPEATS (MAXEVENTS * 4)
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
-
-double
-dummy3( double x, int iters, int print )
-{
-	int i;
-	double w, y, z, a, b, c, d, e, f, g, h;
-	double result;
-	double one;
-	one = 1.0;
-	w = x;
-	y = x;
-	z = x;
-	a = x;
-	b = x;
-	c = x;
-	d = x;
-	e = x;
-	f = x;
-	g = x;
-	h = x;
-	for ( i = 1; i <= iters; i++ ) {
-		w = w * 1.000000000001 + one;
-		y = y * 1.000000000002 + one;
-		z = z * 1.000000000003 + one;
-		a = a * 1.000000000004 + one;
-		b = b * 1.000000000005 + one;
-		c = c * 0.999999999999 + one;
-		d = d * 0.999999999998 + one;
-		e = e * 0.999999999997 + one;
-		f = f * 0.999999999996 + one;
-		g = h * 0.999999999995 + one;
-		h = h * 1.000000000006 + one;
-	}
-	result = 2.0 * ( a + b + c + d + e + f + w + x + y + z + g + h );
-
-	if (print) printf("Result = %lf\n", result);
-
-	return result;
-}
+#define MPX_TOLERANCE	0.20
+#define NUM_FLOPS  20000000
 
 int
 main( int argc, char **argv )
@@ -194,7 +157,7 @@ main( int argc, char **argv )
 
 	/* Measure one run */
 	t1 = PAPI_get_real_usec(  );
-	y = dummy3( x, iters, 0 );
+	y = do_flops3( x, iters, 1 );
 	t1 = PAPI_get_real_usec(  ) - t1;
 
 	/* Scale up execution time to match t2 */
@@ -230,7 +193,7 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_start( eventset ) ) ) {
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 	}
-	y = dummy3( x, iters, 0 );
+	y = do_flops3( x, iters, 1 );
 	PAPI_read( eventset, refvals );
 	t2 = PAPI_get_real_usec(  );
 
@@ -345,7 +308,7 @@ main( int argc, char **argv )
 
 		/* Run the actual workload */
 		t1 = PAPI_get_real_usec(  );
-		y = dummy3( x, iters, 0 );
+		y = do_flops3( x, iters, 1 );
 		PAPI_read( eventset, values );
 		t2 = PAPI_get_real_usec(  );
 

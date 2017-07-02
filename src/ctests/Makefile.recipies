@@ -42,7 +42,7 @@ DEFAULT = papi_api serial forkexec_tests overflow_tests profile_tests attach mul
 
 all: $(ALL)
 
-default ctests ctest: $(DEFAULT) 
+default ctests ctest: $(DEFAULT)
 
 attach: $(ATTACH)
 
@@ -58,7 +58,7 @@ shared: $(SHARED)
 
 multiplex_and_pthreads: $(MPXPTHR) $(MPX) $(PTHREADS)
 
-multiplex: $(MPX) 
+multiplex: $(MPX)
 
 omp: $(OMP)
 
@@ -78,7 +78,7 @@ profile_tests: $(PROFILE)
 
 papi_api: $(API)
 
-api: api.c $(TESTLIB) $(PAPILIB) 
+api: api.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) api.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
 sdsc2: sdsc2.c $(TESTLIB) $(PAPILIB)
@@ -96,8 +96,8 @@ sdsc2-mpx-noreset: sdsc2.c $(TESTLIB) $(PAPILIB)
 sdsc-mpx: sdsc-mpx.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc-mpx.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
-sdsc4-mpx: sdsc4-mpx.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc4-mpx.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
+sdsc4-mpx: sdsc4-mpx.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS)
+	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc4-mpx.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
 calibrate: calibrate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) calibrate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o calibrate
