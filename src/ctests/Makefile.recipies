@@ -81,20 +81,20 @@ papi_api: $(API)
 api: api.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) api.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
-sdsc2: sdsc2.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) sdsc.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
+sdsc2: sdsc2.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) sdsc.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
-sdsc2-mpx: sdsc2.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
+sdsc2-mpx: sdsc2.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS)
+	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc2.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
-branches: branches.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) branches.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -lm -o $@
+branches: branches.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) branches.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS) $(LDFLAGS) -lm -o $@
 
-sdsc2-mpx-noreset: sdsc2.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) -DMPX -DSTARTSTOP $(TOPTFLAGS) sdsc2.c $(TESTLIB) $(PAPILIB) -lm $(LDFLAGS) -o $@
+sdsc2-mpx-noreset: sdsc2.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS)
+	$(CC) $(INCLUDE) $(CFLAGS) -DMPX -DSTARTSTOP $(TOPTFLAGS) sdsc2.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB) -lm $(LDFLAGS) -o $@
 
-sdsc-mpx: sdsc-mpx.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc-mpx.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
+sdsc-mpx: sdsc-mpx.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS)
+	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc-mpx.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB) $(LDFLAGS) -o $@
 
 sdsc4-mpx: sdsc4-mpx.c $(TESTLIB) $(PAPILIB) $(TESTFLOPS)
 	$(CC) $(INCLUDE) $(CFLAGS) -DMPX $(TOPTFLAGS) sdsc4-mpx.c $(TESTLIB) $(TESTFLOPS) $(PAPILIB) $(LDFLAGS) -lm -o $@

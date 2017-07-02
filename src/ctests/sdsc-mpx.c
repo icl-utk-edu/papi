@@ -14,50 +14,14 @@
 #include "papi.h"
 #include "papi_test.h"
 
-#include "do_loops.h"
-
+#include "testcode.h"
 
 #define REPEATS 5
 #define MAXEVENTS 14
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
-
-double
-dummy3( double x, int iters, int print )
-{
-	int i;
-	double w, y, z, a, b, c, d, e, f, g, h;
-	double one;
-	double result;
-	one = 1.0;
-	w = x;
-	y = x;
-	z = x;
-	a = x;
-	b = x;
-	c = x;
-	d = x;
-	e = x;
-	f = x;
-	g = x;
-	h = x;
-	for ( i = 1; i <= iters; i++ ) {
-		w = w * 1.000000000001 + one;
-		y = y * 1.000000000002 + one;
-		z = z * 1.000000000003 + one;
-		a = a * 1.000000000004 + one;
-		b = b * 1.000000000005 + one;
-		c = c * 0.999999999999 + one;
-		d = d * 0.999999999998 + one;
-		e = e * 0.999999999997 + one;
-		f = f * 0.999999999996 + one;
-		g = h * 0.999999999995 + one;
-		h = h * 1.000000000006 + one;
-	}
-	result = 2.0 * ( a + b + c + d + e + f + w + x + y + z + g + h );
-	if (print) printf("Result=%lf\n",result);
-	return result;
-}
+#define MPX_TOLERANCE   0.20
+#define NUM_FLOPS  20000000
 
 void
 check_values( int eventset, int *events, int nevents, long long *values,
@@ -140,7 +104,7 @@ ref_measurements( int iters, int *eventset, int *events, int nevents,
 		t1 = PAPI_get_real_usec(  );
 		if ( ( retval = PAPI_start( *eventset ) ) )
 			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-		y = dummy3( x, iters, 0 );
+		y = do_flops3( x, iters, 1 );
 		if ( ( retval = PAPI_stop( *eventset, &refvalues[i] ) ) )
 			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 		t2 = PAPI_get_real_usec(  );
@@ -165,29 +129,7 @@ ref_measurements( int iters, int *eventset, int *events, int nevents,
 	*eventset = PAPI_NULL;
 }
 
-void
-decide_which_events( int *events, int *nevents )
-{
-	int i, j = 0;
-	PAPI_event_info_t info;
-	int newevents[MAXEVENTS];
 
-	for ( i = 0; i < MAXEVENTS; i++ ) {
-		if ( PAPI_get_event_info( events[i], &info ) == PAPI_OK ) {
-			if ( info.count && ( strcmp( info.derived, "NOT_DERIVED" ) == 0 ) ) {
-				if (!TESTS_QUIET) printf( "Added %s\n", info.symbol );
-				newevents[j++] = events[i];
-			}
-		}
-	}
-
-	if ( j < 2 )
-		test_skip( __FILE__, __LINE__, "Not enough events to multiplex...", 0 );
-	*nevents = j;
-	memcpy( events, newevents, sizeof ( newevents ) );
-
-	if (!TESTS_QUIET) printf( "Using %d events\n\n", *nevents );
-}
 
 int
 main( int argc, char **argv )
@@ -241,40 +183,70 @@ main( int argc, char **argv )
 		printf( "Comparing a multiplex measurement with separate measurements.\n\n" );
 	}
 
+	/* Initialize PAPI */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	decide_which_events( events, &nevents );
+	/* Iterate through event list and remove those that aren't suitable */
+	nevents = MAXEVENTS;
+	for ( i = 0; i < nevents; i++ ) {
+		if (( PAPI_get_event_info( events[i], &info ) == PAPI_OK ) &&
+		    (info.count && (strcmp( info.derived, "NOT_DERIVED")==0))) {
+			if (!quiet) printf( "Added %s\n", info.symbol );
+		}
+		else {
+			for ( j = i; j < MAXEVENTS-1; j++ ) {
+				events[j] = events[j + 1];
+			}
+			nevents--;
+			i--;
+		}
+	}
+
+	/* Skip test if not enough events available */
+	if ( nevents < 2 ) {
+		test_skip( __FILE__, __LINE__, "Not enough events to multiplex...", 0 );
+	}
+
+	if (!quiet) printf( "Using %d events\n\n", nevents );
 
 	retval = PAPI_multiplex_init(  );
 	if ( retval != PAPI_OK ) {
-		test_fail( __FILE__, __LINE__, "PAPI multiplex init fail\n", retval );
+		test_fail( __FILE__, __LINE__,
+				"PAPI multiplex init fail\n", retval );
 	}
 
 	/* Find a reasonable number of iterations (each
 	 * event active 20 times) during the measurement
 	 */
-	t2 = 10000 * 20 * nevents;	/* Target: 10000 usec/multiplex, 20 repeats */
+	/* Target: 10000 usec/multiplex, 20 repeats */
+	t2 = 10000 * 20 * nevents;
 	if ( t2 > 30e6 ) {
 		test_skip( __FILE__, __LINE__, "This test takes too much time",
 				   retval );
 	}
 
-	y = dummy3( x, iters, 0 );
-	/* Measure one run */
+	/* Warmup? */
+	y = do_flops3( x, iters, 1 );
+
+	/* Measure time of one run */
 	t1 = PAPI_get_real_usec(  );
-	y = dummy3( x, iters, 0 );
+	y = do_flops3( x, iters, 1 );
 	t1 = PAPI_get_real_usec(  ) - t1;
 
 	if (t1==0) {
-		test_fail(__FILE__, __LINE__, "dummy3 takes no time to run!\n", retval);
+		test_fail(__FILE__, __LINE__,
+			"do_flops3 takes no time to run!\n", retval);
 	}
 
-	if ( t1 < 1000000 ) {	 /* Scale up execution time to match t2 */
-		iters = iters * ( int ) ( 1000000 / t1 );
-		if (!quiet) printf( "Modified iteration count to %d\n\n", iters );
+	/* Scale up execution time to match t2 */
+	if ( t2 > t1 ) {
+		iters = iters * ( int ) ( t2 / t1 );
+		if (!quiet) {
+			printf( "Modified iteration count to %d\n\n", iters );
+		}
 	}
 
 	if (!quiet) fprintf(stdout,"y=%lf\n",y);
@@ -313,7 +285,7 @@ main( int argc, char **argv )
 	t1 = PAPI_get_real_usec(  );
 	if ( ( retval = PAPI_start( eventset ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-	y = dummy3( x, iters, 0 );
+	y = do_flops3( x, iters, 1 );
 	if ( ( retval = PAPI_stop( eventset, values ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 	t2 = PAPI_get_real_usec(  );

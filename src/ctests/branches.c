@@ -6,8 +6,6 @@
  * This example verifies the accuracy of branch events
  */
 
-#define MPX_TOLERANCE .20
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,49 +14,12 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "testcode.h"
 
 #define MAXEVENTS 4
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
-
-double
-dummy3( double x, int iters, int print )
-{
-	int i;
-	double w, y, z, a, b, c, d, e, f, g, h;
-	double one;
-	double result;
-	one = 1.0;
-	w = x;
-	y = x;
-	z = x;
-	a = x;
-	b = x;
-	c = x;
-	d = x;
-	e = x;
-	f = x;
-	g = x;
-	h = x;
-	for ( i = 1; i <= iters; i++ ) {
-		w = w * 1.000000000001 + one;
-		y = y * 1.000000000002 + one;
-		z = z * 1.000000000003 + one;
-		a = a * 1.000000000004 + one;
-		b = b * 1.000000000005 + one;
-		c = c * 0.999999999999 + one;
-		d = d * 0.999999999998 + one;
-		e = e * 0.999999999997 + one;
-		f = f * 0.999999999996 + one;
-		g = h * 0.999999999995 + one;
-		h = h * 1.000000000006 + one;
-	}
-	result = 2.0 * ( a + b + c + d + e + f + w + x + y + z + g + h );
-
-	if (print) printf("Result=%lf\n",result);
-
-	return result;
-}
+#define MPX_TOLERANCE .20
 
 int
 main( int argc, char **argv )
@@ -74,24 +35,16 @@ main( int argc, char **argv )
 	int nevents = MAXEVENTS;
 	int eventset = PAPI_NULL;
 	int events[MAXEVENTS];
+	int quiet;
 
-	events[0] = PAPI_BR_NTK;
-	events[1] = PAPI_BR_PRC;
-	events[2] = PAPI_BR_INS;
-	events[3] = PAPI_BR_MSP;
-/*
-  events[3]=PAPI_BR_CN; 
-  events[4]=PAPI_BR_UCN;*/
-	/*events[5]=PAPI_BR_TKN; */
+	/* Set quiet variable */
+	quiet = tests_quiet( argc, argv );
 
-
-	for ( i = 0; i < MAXEVENTS; i++ ) {
-		values[i] = 0;
-	}
-
+	/* Parse command line args */
 	if ( argc > 1 ) {
-		if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-			tests_quiet( argc, argv );
+		if ( !strcmp( argv[1], "TESTS_QUIET" ) ) {
+
+		}
 		else {
 			sleep_time = atoi( argv[1] );
 			if ( sleep_time <= 0 )
@@ -99,7 +52,22 @@ main( int argc, char **argv )
 		}
 	}
 
-	if ( !TESTS_QUIET ) {
+	events[0] = PAPI_BR_NTK;
+	events[1] = PAPI_BR_PRC;
+	events[2] = PAPI_BR_INS;
+	events[3] = PAPI_BR_MSP;
+
+	/* Why were these disabled?
+	events[3]=PAPI_BR_CN;
+	events[4]=PAPI_BR_UCN;
+	events[5]=PAPI_BR_TKN; */
+
+
+	for ( i = 0; i < MAXEVENTS; i++ ) {
+		values[i] = 0;
+	}
+
+	if ( !quiet ) {
 		printf( "\nAccuracy check of branch presets.\n" );
 		printf( "Comparing a measurement with separate measurements.\n\n" );
 	}
@@ -133,7 +101,7 @@ main( int argc, char **argv )
 	if ( nevents < 1 )
 		test_skip( __FILE__, __LINE__, "Not enough events left...", 0 );
 
-	/* Find a reasonable number of iterations (each 
+	/* Find a reasonable number of iterations (each
 	 * event active 20 times) during the measurement
 	 */
 	t2 = (long long)(10000 * 20) * nevents;	/* Target: 10000 usec/multiplex, 20 repeats */
@@ -143,7 +111,7 @@ main( int argc, char **argv )
 
 	/* Measure one run */
 	t1 = PAPI_get_real_usec(  );
-	y = dummy3( x, iters, 0 );
+	y = do_flops3( x, iters, 1 );
 	t1 = PAPI_get_real_usec(  ) - t1;
 
 	if ( t2 > t1 )			 /* Scale up execution time to match t2 */
@@ -154,31 +122,31 @@ main( int argc, char **argv )
 
 	x = 1.0;
 
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( "\nFirst run: Together.\n" );
 
 	t1 = PAPI_get_real_usec(  );
 	if ( ( retval = PAPI_start( eventset ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-	y = dummy3( x, iters, 0 );
+	y = do_flops3( x, iters, 1 );
 	if ( ( retval = PAPI_stop( eventset, values ) ) )
 		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 	t2 = PAPI_get_real_usec(  );
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "\tOperations= %.1f Mflop", y * 1e-6 );
 		printf( "\t(%g Mflop/s)\n\n", ( y / ( double ) ( t2 - t1 ) ) );
 		printf( "PAPI grouped measurement:\n" );
 	}
 	for ( j = 0; j < nevents; j++ ) {
 		PAPI_get_event_info( events[j], &info );
-		if ( !TESTS_QUIET ) {
+		if ( !quiet ) {
 			printf( "%20s = ", info.short_descr );
 			printf( LLDFMT, values[j] );
 			printf( "\n" );
 		}
 	}
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( "\n" );
 
 
@@ -199,33 +167,33 @@ main( int argc, char **argv )
 
 		x = 1.0;
 
-		if ( !TESTS_QUIET )
+		if ( !quiet )
 			printf( "\nReference measurement %d (of %d):\n", i + 1, nevents );
 
 		t1 = PAPI_get_real_usec(  );
 		if ( ( retval = PAPI_start( eventset ) ) )
 			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
-		y = dummy3( x, iters, 0 );
+		y = do_flops3( x, iters, 1 );
 		if ( ( retval = PAPI_stop( eventset, &refvalues[i] ) ) )
 			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 		t2 = PAPI_get_real_usec(  );
 
-		if ( !TESTS_QUIET ) {
+		if ( !quiet ) {
 			printf( "\tOperations= %.1f Mflop", y * 1e-6 );
 			printf( "\t(%g Mflop/s)\n\n", ( y / ( double ) ( t2 - t1 ) ) );
 		}
 		PAPI_get_event_info( events[i], &info );
-		if ( !TESTS_QUIET ) {
+		if ( !quiet ) {
 			printf( "PAPI results:\n%20s = ", info.short_descr );
 			printf( LLDFMT, refvalues[i] );
 			printf( "\n" );
 		}
 	}
-	if ( !TESTS_QUIET )
+	if ( !quiet )
 		printf( "\n" );
 
 
-	if ( !TESTS_QUIET ) {
+	if ( !quiet ) {
 		printf( "\n\nRelative accuracy:\n" );
 		for ( j = 0; j < nevents; j++ )
 			printf( "   Event %.2d", j );
@@ -236,7 +204,7 @@ main( int argc, char **argv )
 		spread[j] = abs( ( int ) ( refvalues[j] - values[j] ) );
 		if ( values[j] )
 			spread[j] /= ( double ) values[j];
-		if ( !TESTS_QUIET )
+		if ( !quiet )
 			printf( "%10.3g ", spread[j] );
 		/* Make sure that NaN get counted as errors */
 		if ( spread[j] < MPX_TOLERANCE )
@@ -244,13 +212,15 @@ main( int argc, char **argv )
 		else if ( refvalues[j] < MINCOUNTS )	/* Neglect inprecise results with low counts */
 			i--;
 	}
-	if ( !TESTS_QUIET )
+	if ( !quiet ) {
 		printf( "\n\n" );
+	}
 
-	if ( i )
+	if ( i ) {
 		test_fail( __FILE__, __LINE__, "Values outside threshold", i );
-	else
-		test_pass( __FILE__ );
+	}
+
+	test_pass( __FILE__ );
 
 	return 0;
 }
