@@ -7,16 +7,34 @@
 
 	PAPI_REF_CYC should measure the number of cycles at a constant
 	reference clock rate, independent of the actual clock rate of the core.
-	On Intel machines this is often 100MHz.
+*/
 
-	This test measures the ratio first from a roughly idle state.
-	It then does floating point intensive work to push this core
-	into a fully active or accelerated state,
-	and then it measures the ratio again.
+/*
+	PAPI_REF_CYC has various issues on Intel chips:
 
-	Using this technique allows you to measure the effective clock rate
-	of the processor over a specific region of code, allowing you to
-	infer the state of acceleration.
+	On older machines PAPI uses UNHALTED_REFERENCE_CYCLES but this
+	means different things on different architectures
+
+	+ On Core2/Atom this maps to the special Fixed Counter 2
+		CPU_CLK_UNHALTED.REF
+		This counts at the same rate as the TSC (PAPI_get_real_cyc())
+		And also seems to match PAPI_TOT_CYC
+		It is documented as having a fixed ratio to the
+		CPU_CLK_UNHALTED.BUS (3c/1) event.
+
+	+ On Nehalem/Westemere this also maps to Fixed Counter 2.
+		Again, counts same rate as the TSC  and returns
+		CPU_CLK_UNHALTED.REF_P (3c/1)
+		times the "Maximum Non-Turbo Ratio"
+
+	+ Same for Sandybridge/Ivybridge
+
+	On newer HSW,BDW,SKL machines PAPI uses a different type of event
+	CPU_CLK_THREAD_UNHALTED:REF_XCLK
+
+	+ On Haswell machines this is just the reference clock
+		(100MHz?)
+	+ On Sandybridge this is off by a factor of 8x?
 */
 
 /* NOTE:
@@ -94,22 +112,30 @@ static void work (int EventSet, int sleep_test, int quiet)
 
 
 	if (sleep_test) {
+		if (!quiet) {
+		printf( "Verification: PAPI_REF_CYC should be much lower than real_usec\n");
+		}
+		if (values[1]>elapsed_us) {
+			if (!quiet) printf("PAPI_REF_CYC too high!\n");
+			test_fail( __FILE__, __LINE__, "PAPI_REF_CYC too high", 0 );
+		}
 
 	}
 	else {
-		/* PAPI_REF_CYC is 100MHz or 10ns on Intel chips */
-		/* So papi_virt_usec should be REF_CYC/100 */
+		/* PAPI_REF_CYC should be roughly the same as TSC when busy */
+		/* on Intel chips */
 		if (!quiet) {
-		printf( "Verification: virt_usec should be PAPI_REF_CYC/100\n");
-		printf( "              real_usec should be roughly virt_usec\n");
+		printf( "Verification: real_cyc should be roughly PAPI_REF_CYC\n");
+		printf( "              real_usec should be roughly virt_usec (on otherwise idle system)\n");
 		}
+
 		cycles_error=100.0*
-			((double)values[1]-((double)elapsed_virt_us)*100.0)
+			((double)values[1]-((double)elapsed_cyc))
 				/values[1];
 
 		if ((cycles_error>10.0) || (cycles_error<-10.0)) {
 			if (!quiet) printf("Error of %.2f%%\n",cycles_error);
-			test_warn( __FILE__, __LINE__, "PAPI_REF_CYC validation", 0 );
+			test_fail( __FILE__, __LINE__, "PAPI_REF_CYC validation", 0 );
 		}
 
 		cycles_error=100.0*
@@ -121,10 +147,6 @@ static void work (int EventSet, int sleep_test, int quiet)
 			test_warn( __FILE__, __LINE__, "real_us validation", 0 );
 		}
 	}
-
-
-
-
 }
 
 
