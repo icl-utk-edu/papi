@@ -47,7 +47,7 @@ main( int argc, char **argv )
 	quiet=tests_quiet( argc, argv );
 
 	/* Initialize the test matrix */
-	flops_init_matrix();
+	flops_float_init_matrix();
 
 	/************************/
 	/* FLIPS		*/
@@ -81,7 +81,7 @@ main( int argc, char **argv )
 	}
 
 	// Flips classic
-	flops_matrix_matrix_multiply();
+	flops_float_matrix_matrix_multiply();
 	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
 		PAPI_perror( "PAPI_flips" );
 
@@ -95,7 +95,7 @@ main( int argc, char **argv )
 	mflips_classic=mflips;
 
 	// Flips swapped
-	flops_swapped_matrix_matrix_multiply();
+	flops_float_swapped_matrix_matrix_multiply();
 	if ( PAPI_flips(&rtime, &ptime, &flpins, &mflips)  != PAPI_OK )
 		PAPI_perror( "PAPI_flips" );
 
@@ -142,7 +142,7 @@ main( int argc, char **argv )
 	}
 
 	// Classic flops
-	flops_matrix_matrix_multiply();
+	flops_float_matrix_matrix_multiply();
 	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
 		PAPI_perror( "PAPI_flops" );
 
@@ -156,7 +156,7 @@ main( int argc, char **argv )
 	mflops_classic=mflops;
 
 	// Swapped flops
-	flops_swapped_matrix_matrix_multiply();
+	flops_float_swapped_matrix_matrix_multiply();
 	if ( PAPI_flops(&rtime, &ptime, &flpops, &mflops)  != PAPI_OK )
 		PAPI_perror( "PAPI_flops" );
 
@@ -202,7 +202,7 @@ main( int argc, char **argv )
 	}
 
 	// Classic ipc
-	flops_matrix_matrix_multiply();
+	flops_float_matrix_matrix_multiply();
 	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
 		PAPI_perror( "PAPI_ipc" );
 
@@ -216,7 +216,7 @@ main( int argc, char **argv )
 	ipc_classic=ipc;
 
 	// Swapped ipc
-	flops_swapped_matrix_matrix_multiply();
+	flops_float_swapped_matrix_matrix_multiply();
 	if ( PAPI_ipc(&rtime, &ptime, &ins, &ipc)  != PAPI_OK )
 		PAPI_perror( "PAPI_ipc" );
 
@@ -278,7 +278,7 @@ main( int argc, char **argv )
 	}
 
 	// Classic epc
-	flops_matrix_matrix_multiply();
+	flops_float_matrix_matrix_multiply();
 	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK )
 		PAPI_perror( "PAPI_epc" );
 
@@ -294,7 +294,7 @@ main( int argc, char **argv )
 	epc_classic=epc;
 
 	// Swapped epc
-	flops_swapped_matrix_matrix_multiply();
+	flops_float_swapped_matrix_matrix_multiply();
 	if ( PAPI_epc(event, &rtime, &ptime, &ref, &core, &evt, &epc)  != PAPI_OK ) {
 		PAPI_perror( "PAPI_epc" );
 	}

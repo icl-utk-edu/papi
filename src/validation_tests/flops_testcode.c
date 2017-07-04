@@ -11,12 +11,16 @@
 #define ROWS	1000
 #define COLUMNS	1000
 
-static float matrixa[ROWS][COLUMNS],
-		matrixb[ROWS][COLUMNS],
-		mresult[ROWS][COLUMNS];
+static float float_matrixa[ROWS][COLUMNS],
+		float_matrixb[ROWS][COLUMNS],
+		float_mresult[ROWS][COLUMNS];
+
+static double double_matrixa[ROWS][COLUMNS],
+		double_matrixb[ROWS][COLUMNS],
+		double_mresult[ROWS][COLUMNS];
 
 
-int flops_init_matrix(void) {
+int flops_float_init_matrix(void) {
 
 	int i,j;
 
@@ -24,15 +28,15 @@ int flops_init_matrix(void) {
 	/* Non-optimail row major.  Intentional? */
 	for ( i = 0; i < ROWS; i++ ) {
 		for ( j = 0; j < COLUMNS; j++) {
-			mresult[j][i] = 0.0;
-			matrixa[j][i] = ( float ) rand() * ( float ) 1.1;
-			matrixb[j][i] = ( float ) rand() * ( float ) 1.1;
+			float_mresult[j][i] = 0.0;
+			float_matrixa[j][i] = ( float ) rand() * ( float ) 1.1;
+			float_matrixb[j][i] = ( float ) rand() * ( float ) 1.1;
 		}
 	}
 	return ROWS;
 }
 
-float flops_matrix_matrix_multiply(void) {
+float flops_float_matrix_matrix_multiply(void) {
 
 	int i,j,k;
 
@@ -40,15 +44,15 @@ float flops_matrix_matrix_multiply(void) {
 	for ( i = 0; i < ROWS; i++ ) {
 		for ( j = 0; j < COLUMNS; j++ ) {
 			for ( k = 0; k < COLUMNS; k++ ) {
-				mresult[i][j] += matrixa[i][k] * matrixb[k][j];
+				float_mresult[i][j] += float_matrixa[i][k] * float_matrixb[k][j];
 			}
 		}
 	}
 
-	return mresult[10][10];
+	return float_mresult[10][10];
 }
 
-float flops_swapped_matrix_matrix_multiply(void) {
+float flops_float_swapped_matrix_matrix_multiply(void) {
 
 	int i, j, k;
 
@@ -58,11 +62,62 @@ float flops_swapped_matrix_matrix_multiply(void) {
 	for (i = 0; i < ROWS; i++) {
 		for (k = 0; k < COLUMNS; k++) {
 			for (j = 0; j < COLUMNS; j++) {
-				mresult[i][j] += matrixa[i][k] * matrixb[k][j];
+				float_mresult[i][j] += float_matrixa[i][k] * float_matrixb[k][j];
 			}
 		}
 	}
-	return mresult[10][10];
+	return float_mresult[10][10];
+}
+
+
+
+int flops_double_init_matrix(void) {
+
+	int i,j;
+
+	/* Initialize the Matrix arrays */
+	/* Non-optimail row major.  Intentional? */
+	for ( i = 0; i < ROWS; i++ ) {
+		for ( j = 0; j < COLUMNS; j++) {
+			double_mresult[j][i] = 0.0;
+			double_matrixa[j][i] = ( double ) rand() * ( double ) 1.1;
+			double_matrixb[j][i] = ( double ) rand() * ( double ) 1.1;
+		}
+	}
+	return ROWS;
+}
+
+double flops_double_matrix_matrix_multiply(void) {
+
+	int i,j,k;
+
+	/* Matrix-Matrix multiply */
+	for ( i = 0; i < ROWS; i++ ) {
+		for ( j = 0; j < COLUMNS; j++ ) {
+			for ( k = 0; k < COLUMNS; k++ ) {
+				double_mresult[i][j] += double_matrixa[i][k] * double_matrixb[k][j];
+			}
+		}
+	}
+
+	return double_mresult[10][10];
+}
+
+double flops_double_swapped_matrix_matrix_multiply(void) {
+
+	int i, j, k;
+
+	/* Matrix-Matrix multiply */
+	/* With inner loops swapped */
+
+	for (i = 0; i < ROWS; i++) {
+		for (k = 0; k < COLUMNS; k++) {
+			for (j = 0; j < COLUMNS; j++) {
+				double_mresult[i][j] += double_matrixa[i][k] * double_matrixb[k][j];
+			}
+		}
+	}
+	return double_mresult[10][10];
 }
 
 

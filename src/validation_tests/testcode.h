@@ -12,9 +12,12 @@ int branches_testcode(void);
 int random_branches_testcode(int number, int quiet);
 
 /* flops_testcode.c */
-int flops_init_matrix(void);
-float flops_matrix_matrix_multiply(void);
-float flops_swapped_matrix_matrix_multiply(void);
+int flops_float_init_matrix(void);
+float flops_float_matrix_matrix_multiply(void);
+float flops_float_swapped_matrix_matrix_multiply(void);
+int flops_double_init_matrix(void);
+double flops_double_matrix_matrix_multiply(void);
+double flops_double_swapped_matrix_matrix_multiply(void);
 double do_flops3( double x, int iters, int quiet );
 double do_flops( int n, int quiet );
 

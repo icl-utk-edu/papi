@@ -51,7 +51,7 @@ main( int argc, char **argv )
 	PAPI_shutdown(  );
 
 	/* Initialize the Matrix arrays */
-	expected=flops_init_matrix();
+	expected=flops_float_init_matrix();
 	expected=expected*expected*expected*2ULL;
 
 	/* Setup PAPI library and begin collecting data from the counters */
@@ -69,7 +69,7 @@ main( int argc, char **argv )
 	}
 
 	/* Matrix-Matrix multiply */
-	double_result=flops_matrix_matrix_multiply();
+	double_result=flops_float_matrix_matrix_multiply();
 
 	/* Collect the data into the variables passed in */
 	if ( fip == 1 ) {

@@ -49,7 +49,7 @@ main( int argc, char **argv )
 	}
 
 	/* Initialize the test matrix */
-	flops_init_matrix();
+	flops_float_init_matrix();
 
 	/************************/
 	/* FLIPS		*/
@@ -78,7 +78,7 @@ main( int argc, char **argv )
 	ptime_start=PAPI_get_virt_usec();
 
 	// Flips classic
-	flops_matrix_matrix_multiply();
+	flops_float_matrix_matrix_multiply();
 
 	rtime_end=PAPI_get_real_usec();
 	ptime_end=PAPI_get_virt_usec();
@@ -111,7 +111,7 @@ main( int argc, char **argv )
 		PAPI_start(eventset);
 	}
 
-	flops_swapped_matrix_matrix_multiply();
+	flops_float_swapped_matrix_matrix_multiply();
 
 	rtime_end=PAPI_get_real_usec();
 	ptime_end=PAPI_get_virt_usec();
@@ -170,7 +170,7 @@ main( int argc, char **argv )
 	ptime_start=PAPI_get_virt_usec();
 
 	// Classic flops
-	flops_matrix_matrix_multiply();
+	flops_float_matrix_matrix_multiply();
 
 	rtime_end=PAPI_get_real_usec();
 	ptime_end=PAPI_get_virt_usec();
@@ -203,7 +203,7 @@ main( int argc, char **argv )
 		PAPI_start(eventset);
 	}
 
-	flops_swapped_matrix_matrix_multiply();
+	flops_float_swapped_matrix_matrix_multiply();
 
 	rtime_end=PAPI_get_real_usec();
 	ptime_end=PAPI_get_virt_usec();
@@ -274,7 +274,7 @@ main( int argc, char **argv )
 	ptime_start=PAPI_get_virt_usec();
 
 	// Classic ipc
-	flops_matrix_matrix_multiply();
+	flops_float_matrix_matrix_multiply();
 
 	rtime_end=PAPI_get_real_usec();
 	ptime_end=PAPI_get_virt_usec();
@@ -310,7 +310,7 @@ main( int argc, char **argv )
 	ptime_start=PAPI_get_virt_usec();
 
 
-	flops_swapped_matrix_matrix_multiply();
+	flops_float_swapped_matrix_matrix_multiply();
 
 	rtime_end=PAPI_get_real_usec();
 	ptime_end=PAPI_get_virt_usec();

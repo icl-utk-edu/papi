@@ -1,10 +1,10 @@
-/* This file attempts to test the floating point		*/
-/* performance counter PAPI_FP_OPS				*/
+/* This file attempts to test the single-precision floating point	*/
+/* performance counter PAPI_SP_OPS					*/
 
-/* by Vince Weaver, <vincent.weaver@maine.edu>			*/
+/* by Vince Weaver, <vincent.weaver@maine.edu>				*/
 
-/* Note!  There are many many many things that can go wrong	*/
-/* when trying to get a sane floating point measurement.	*/
+/* Note!  There are many many many things that can go wrong		*/
+/* when trying to get a sane floating point measurement.		*/
 
 
 #include <stdlib.h>
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 	quiet=tests_quiet(argc,argv);
 
 	if (!quiet) {
-		printf("\nTesting the PAPI_FP_OPS event.\n\n");
+		printf("\nTesting the PAPI_SP_OPS event.\n\n");
 	}
 
 	/* Init the PAPI library */
@@ -48,16 +48,16 @@ int main(int argc, char **argv) {
 	}
 
 	/* Add FP_OPS event */
-	retval=PAPI_add_named_event(eventset,"PAPI_FP_OPS");
+	retval=PAPI_add_named_event(eventset,"PAPI_SP_OPS");
 	if (retval!=PAPI_OK) {
-		if (!quiet) fprintf(stderr,"PAPI_FP_OPS not available!\n");
-		test_skip( __FILE__, __LINE__, "adding PAPI_FP_OPS", retval );
+		if (!quiet) fprintf(stderr,"PAPI_SP_OPS not available!\n");
+		test_skip( __FILE__, __LINE__, "adding PAPI_SP_OPS", retval );
 	}
 
 	/**************************************/
 	/* Test a loop with no floating point */
 	/**************************************/
-	total=0; high=0; low=0;
+	total=0;
 	expected=0;
 
 	if (!quiet) {
@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
 	total=0; high=0; low=0;
 	expected=flops_double_init_matrix();
 
-	expected=expected*expected*expected*2ULL;
+	expected=expected*0;
 
 	num_runs=3;
 
