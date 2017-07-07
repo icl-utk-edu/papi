@@ -53,6 +53,31 @@ int branches_testcode(void) {
 	);
 
 	return 0;
+#elif defined(__powerpc__)
+	/* Not really optimized */
+
+	asm(	"\txor	3,3,3\n"
+		"\tlis	3,500000@ha\n"
+		"\taddi	3,3,500000@l\n"
+	    	"test_loop:\n"
+		"\tb	test_jmp\n"
+		"\tnop\n"
+		"test_jmp:\n"
+		"\txor	4,4,4\n"
+		"\tcmpwi	cr0,4,1\n"
+		"\tbge	test_jmp2\n"
+		"\tnop\n"
+		"\taddi	4,4,1\n"
+		"test_jmp2:\n"
+		"\taddi	3,3,-1\n"
+		"\tcmpwi	cr0,3,1\n"
+		"\tbgt	test_loop\n"
+		: /* no output registers */
+		: /* no inputs		 */
+		: "cr0", "r3", "r4" /* clobbered */
+	);
+
+	return 0;
 #endif
 
     return -1;
@@ -66,7 +91,7 @@ int random_branches_testcode(int number, int quiet) {
   double junk2=5.0;
 
    for(j=0;j<number;j++) {
-	
+
 	if (( ((random()>>2)^(random()>>4)) %1000)>500) goto label_false;
 
 	junk++;   /* can't just add, the optimizer is way too clever */
