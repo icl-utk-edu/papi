@@ -281,7 +281,7 @@ long long
 _linux_get_real_cycles( void )
 {
 	long long retval;
-#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||defined(__arm__)||defined(__mips__)
+#if defined(HAVE_GETTIMEOFDAY)||defined(__arm__)||defined(__mips__)
 
 	/* Crude estimate, not accurate in prescence of DVFS */
 
