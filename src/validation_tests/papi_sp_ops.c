@@ -105,8 +105,6 @@ int main(int argc, char **argv) {
 	total=0; high=0; low=0;
 	expected=flops_float_init_matrix();
 
-	expected=expected*expected*expected*2ULL;
-
 	num_runs=3;
 
 	if (!quiet) {

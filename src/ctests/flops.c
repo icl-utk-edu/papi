@@ -52,7 +52,6 @@ main( int argc, char **argv )
 
 	/* Initialize the Matrix arrays */
 	expected=flops_float_init_matrix();
-	expected=expected*expected*expected*2ULL;
 
 	/* Setup PAPI library and begin collecting data from the counters */
 	if ( fip == 1 ) {

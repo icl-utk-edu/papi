@@ -33,7 +33,14 @@ int flops_float_init_matrix(void) {
 			float_matrixb[j][i] = ( float ) rand() * ( float ) 1.1;
 		}
 	}
-	return ROWS;
+
+#if defined(__powerpc__)
+	/* Has fused multiply-add */
+	return ROWS*ROWS*ROWS;
+#else
+	return ROWS*ROWS*ROWS*2;
+#endif
+
 }
 
 float flops_float_matrix_matrix_multiply(void) {
@@ -84,7 +91,14 @@ int flops_double_init_matrix(void) {
 			double_matrixb[j][i] = ( double ) rand() * ( double ) 1.1;
 		}
 	}
-	return ROWS;
+
+#if defined(__powerpc__)
+		/* has fused multiply-add */
+		return ROWS*ROWS*ROWS;
+#else
+	return ROWS*ROWS*ROWS*2;
+#endif
+
 }
 
 double flops_double_matrix_matrix_multiply(void) {
