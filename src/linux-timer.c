@@ -1,6 +1,6 @@
 /*
  * File:    linux-timer.c
- * 
+ *
  * @author:  Vince Weaver
  *           vincent.weaver @ maine.edu
  * Mods:     Philip Mucci
@@ -122,8 +122,13 @@ int mmtimer_setup(void) {
 }
 
 #else
+
+#if defined(__powerpc__)
 static uint64_t multiplier = 1;
-int mmtimer_setup(void) { 
+#endif
+
+int mmtimer_setup(void) {
+
 #if defined(__powerpc__)
 multiplier = ((uint64_t)_papi_hwi_system_info.hw_info.cpu_max_mhz * 1000000ULL) / (__ppc_get_timebase_freq()/(uint64_t)1000);
 #endif
@@ -136,9 +141,9 @@ return PAPI_OK; }
 
 /* Hardware clock functions */
 
-/* All architectures should set HAVE_CYCLES in configure if they have these. 
-   Not all do so for now, we have to guard at the end of the statement, 
-   instead of the top. When all archs set this, this region will be guarded 
+/* All architectures should set HAVE_CYCLES in configure if they have these.
+   Not all do so for now, we have to guard at the end of the statement,
+   instead of the top. When all archs set this, this region will be guarded
    with:
      #if defined(HAVE_CYCLE)
    which is equivalent to
@@ -324,7 +329,7 @@ _linux_get_real_cycles( void )
 long long
 _linux_get_real_usec_gettime( void )
 {
-	
+
    long long retval;
 
    struct timespec foo;
@@ -346,14 +351,14 @@ _linux_get_real_usec_gettime( void )
 long long
 _linux_get_real_usec_gettimeofday( void )
 {
-	
+
    long long retval;
 
    struct timeval buffer;
    gettimeofday( &buffer, NULL );
    retval = ( long long ) buffer.tv_sec * ( long long ) 1000000;
    retval += ( long long ) ( buffer.tv_usec );
-	
+
    return retval;
 }
 
@@ -361,12 +366,12 @@ _linux_get_real_usec_gettimeofday( void )
 long long
 _linux_get_real_usec_cycles( void )
 {
-	
+
    long long retval;
 
    /* Not accurate in the prescence of DVFS */
 
-   retval = get_cycles(  ) / 
+   retval = get_cycles(  ) /
             ( long long ) _papi_hwi_system_info.hw_info.cpu_max_mhz;
 
    return retval;
@@ -374,7 +379,7 @@ _linux_get_real_usec_cycles( void )
 
 
 
-/******************************* 
+/*******************************
  * HAVE_PER_THREAD_GETRUSAGE   *
  *******************************/
 
@@ -412,11 +417,11 @@ _linux_get_virt_usec_times( void )
 
    SUBDBG( "user %d system %d\n", ( int ) buffer.tms_utime,
 				( int ) buffer.tms_stime );
-   retval = ( long long ) ( ( buffer.tms_utime + buffer.tms_stime ) * 
+   retval = ( long long ) ( ( buffer.tms_utime + buffer.tms_stime ) *
 			    1000000 / sysconf( _SC_CLK_TCK ));
 
    /* NOT CLOCKS_PER_SEC as in the headers! */
-	
+
    return retval;
 }
 
@@ -435,7 +440,7 @@ _linux_get_virt_usec_gettime( void )
     syscall( __NR_clock_gettime, CLOCK_THREAD_CPUTIME_ID, &foo );
     retval = ( long long ) foo.tv_sec * ( long long ) 1000000;
     retval += ( long long ) foo.tv_nsec / 1000;
-	
+
     return retval;
 }
 
@@ -465,7 +470,7 @@ again:
    rv = read( stat_fd, buf, LINE_MAX * sizeof ( char ) );
    if ( rv == -1 ) {
       if ( errno == EBADF ) {
-	 close(stat_fd);	 
+	 close(stat_fd);
 	 goto again;
       }
       PAPIERROR( "read()" );
@@ -517,7 +522,7 @@ again:
 long long
 _linux_get_real_nsec_gettime( void )
 {
-	
+
    long long retval;
 
    struct timespec foo;
@@ -548,10 +553,6 @@ _linux_get_virt_nsec_gettime( void )
     syscall( __NR_clock_gettime, CLOCK_THREAD_CPUTIME_ID, &foo );
     retval = ( long long ) foo.tv_sec * ( long long ) 1000000000;
     retval += ( long long ) foo.tv_nsec ;
-	
+
     return retval;
 }
-
-
-
-
