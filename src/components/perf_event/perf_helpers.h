@@ -154,6 +154,12 @@ static inline unsigned long long mmap_read_self(void *addr,
 static inline unsigned long long mmap_read_self(void *addr,
 					 unsigned long long *en,
 					 unsigned long long *ru) {
+
+	(void)addr;
+
+	*en=0;
+	*ru=0;
+
 	return (unsigned long long)(-1);
 }
 

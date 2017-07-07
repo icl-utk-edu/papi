@@ -98,6 +98,8 @@ static void test_million(int quiet) {
 
 static void test_fldcw(int quiet) {
 
+	(void)quiet;
+
 #if defined(__i386__) || (defined __x86_64__)
 	int i,result,ins_result;
 	int eventset=PAPI_NULL;
@@ -161,6 +163,8 @@ static void test_fldcw(int quiet) {
 /* HW counters count this as one each, not one per repeat */
 
 static void test_rep(int quiet) {
+
+	(void)quiet;
 
 #if defined(__i386__) || (defined __x86_64__)
 	int i,result,ins_result;
