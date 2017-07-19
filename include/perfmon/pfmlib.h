@@ -418,8 +418,9 @@ typedef enum {
 	PFM_PMU_INTEL_BDX_UNC_SB1,	/* Intel Broadwell-X S-Box 1 uncore */
 	PFM_PMU_INTEL_BDX_UNC_SB2,	/* Intel Broadwell-X S-Box 2 uncore */
 	PFM_PMU_INTEL_BDX_UNC_SB3,	/* Intel Broadwell-X S-Box 3 uncore */
-	/* MUST ADD NEW PMU MODELS HERE */
 
+	PFM_PMU_AMD64_FAM17H,		/* AMD AMD64 Fam17h Zen */
+	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
 } pfm_pmu_t;
