@@ -1,5 +1,5 @@
-/* This file attempts to test the mispredicted branches		*/
-/* performance event as counted by PAPI_BR_MSP			*/
+/* This file attempts to test the predicted correctly branches	*/
+/* performance event as counted by PAPI_BR_PRC			*/
 
 /* by Vince Weaver, <vincent.weaver@maine.edu>			*/
 
@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
 	int num_runs=100,i;
 	int num_random_branches=500000;
 	long long high=0,low=0,average=0,expected=1500000;
+	long long expected_high,expected_low;
 
 	long long count,total=0;
 	int quiet=0,retval,ins_result;
@@ -30,7 +31,7 @@ int main(int argc, char **argv) {
 	quiet=tests_quiet(argc,argv);
 
 	if (!quiet) {
-		printf("\nTesting the PAPI_BR_MSP event.\n");
+		printf("\nTesting the PAPI_BR_PRC event.\n");
 	}
 
 	/* Init the PAPI library */
@@ -51,15 +52,15 @@ int main(int argc, char **argv) {
 		test_skip( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
 	}
 
-	/* Create miss eventset */
+	/* Create correct eventset */
 	retval=PAPI_create_eventset(&miss_eventset);
 	if (retval!=PAPI_OK) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 	}
 
-	retval=PAPI_add_named_event(miss_eventset,"PAPI_BR_MSP");
+	retval=PAPI_add_named_event(miss_eventset,"PAPI_BR_PRC");
 	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__, "adding PAPI_BR_MSP", retval );
+		test_fail( __FILE__, __LINE__, "adding PAPI_BR_PRC", retval );
 	}
 
 	if (!quiet) {
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
 		printf("Testing a loop with %lld branches (%d times):\n",
 			expected,num_runs);
 		printf("\tOn a simple loop like this, "
-			"miss rate should be very small.\n");
+			"hit rate should be very high.\n");
 	}
 
 	for(i=0;i<num_runs;i++) {
@@ -96,9 +97,9 @@ int main(int argc, char **argv) {
 
 	average=(total/num_runs);
 
-	if (!quiet) printf("\tAverage number of branch misses: %lld\n",average);
+	if (!quiet) printf("\tAverage number of branch hits: %lld\n",average);
 
-	if (average>1000) {
+	if (average<expected/2) {
 		if (!quiet) printf("Branch miss rate too high\n");
 		test_fail( __FILE__, __LINE__, "Error too high", 1 );
 	}
@@ -140,7 +141,7 @@ int main(int argc, char **argv) {
 	if (!quiet) {
 		printf("\nTesting a function that branches "
 			"based on a random number\n");
-		printf("   The loop has %lld branches\n",expected);
+		printf("   The loop has %lld branches.\n",expected);
 		printf("   %d are random branches.\n",num_random_branches);
 	}
 
@@ -171,20 +172,27 @@ int main(int argc, char **argv) {
 
 	average=total/num_runs;
 
+	expected_low=expected-((num_random_branches/4)*3);
+	expected_high=expected-(num_random_branches/4);
+
 	if (!quiet) {
-		printf("\nOut of %lld branches, %lld were mispredicted\n",expected,average);
-		printf("Assuming a good random number generator and no freaky luck\n");
-		printf("The mispredicts should be roughly between %d and %d\n",
-			num_random_branches/4,(num_random_branches/4)*3);
+		printf("\nOut of %lld branches, "
+			"%lld were correctly predicted\n",expected,average);
+		printf("Assuming a good random number generator and no "
+			"freaky luck\n");
+		printf("The mispredicts should be roughly "
+			"between %lld and %lld\n",
+			expected_low,expected_high);
+
 	}
 
-	if ( average < (num_random_branches/4)) {
-		if (!quiet) printf("Mispredicts too low\n");
+	if ( average < expected_low) {
+		if (!quiet) printf("Branch hits too low\n");
 		test_fail( __FILE__, __LINE__, "Error too low", 1 );
 	}
 
-	if (average > (num_random_branches/4)*3) {
-		if (!quiet) printf("Mispredicts too high\n");
+	if (average > expected_high) {
+		if (!quiet) printf("Branch hits too high\n");
 		test_fail( __FILE__, __LINE__, "Error too high", 1 );
 	}
 
