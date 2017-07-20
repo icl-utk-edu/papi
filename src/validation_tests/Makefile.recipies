@@ -1,5 +1,5 @@
 ALL = flops_validation \
-	papi_br_cn papi_br_ins papi_br_msp papi_br_ucn \
+	papi_br_cn papi_br_ins papi_br_msp papi_br_ntk papi_br_ucn \
 	papi_dp_ops papi_fp_ops papi_sp_ops papi_hw_int \
 	papi_ld_ins papi_sr_ins \
 	papi_ref_cyc papi_tot_cyc papi_tot_ins
@@ -39,6 +39,9 @@ papi_br_ins: papi_br_ins.o $(TESTLIB) $(PAPILIB) display_error.o branches_testco
 
 papi_br_msp: papi_br_msp.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
 	$(CC) -o papi_br_msp papi_br_msp.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
+
+papi_br_ntk: papi_br_ntk.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
+	$(CC) -o papi_br_ntk papi_br_ntk.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
 papi_br_ucn: papi_br_ucn.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
 	$(CC) -o papi_br_ucn papi_br_ucn.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
