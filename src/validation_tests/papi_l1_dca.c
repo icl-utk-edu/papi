@@ -3,6 +3,9 @@
 
 /* by Vince Weaver, <vincent.weaver@maine.edu>			*/
 
+/* Note on AMD fam15h we get 3x expected on writes? */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,12 +21,35 @@
 
 static double array[ARRAYSIZE];
 
-int main(int argc, char **argv) {
+int cache_write_test(double *array, int size) {
+	int i;
+
+	for(i=0; i<size; i++) {
+		array[i]=(double)i;
+	}
+
+	return 0;
+}
+
+double cache_read_test(double *array, int size) {
 
 	int i;
+	double sum=0;
+
+	for(i=0; i<size; i++) {
+		sum+= array[i];
+	}
+
+	return sum;
+}
+
+int main(int argc, char **argv) {
+
+	int i,n;
 	int quiet;
 	int eventset=PAPI_NULL;
 
+	int errors=0;
 	int retval;
 	int num_runs=NUM_RUNS;
 	long long high,low,average,expected=ARRAYSIZE;
@@ -66,19 +92,18 @@ int main(int argc, char **argv) {
 
 	high=0; low=0; total=0;
 
-	for(i=0;i<num_runs;i++) {
+	for(n=0;n<num_runs;n++) {
 
 		PAPI_reset(eventset);
 		PAPI_start(eventset);
 
-		for(i=0; i<ARRAYSIZE; i++) {
-			array[i]=(double)i;
-		}
+		cache_write_test(array,ARRAYSIZE);
+
 		retval=PAPI_stop(eventset,&count);
 
                 if (retval!=PAPI_OK) {
                         test_fail( __FILE__, __LINE__,
-                                "reading PAPI_TOT_INS", retval );
+                                "reading PAPI_L1_DCA", retval );
                 }
 
                 if (count>high) high=count;
@@ -92,7 +117,7 @@ int main(int argc, char **argv) {
 
 	if ((error > 1.0) || (error<-1.0)) {
 		if (!quiet) printf("Instruction count off by more than 1%%\n");
-		test_fail( __FILE__, __LINE__, "Error too high", 1 );
+		errors++;
 	}
 
 	if (!quiet) printf("\n");
@@ -115,15 +140,14 @@ int main(int argc, char **argv) {
 		PAPI_reset(eventset);
 		PAPI_start(eventset);
 
-		for(i=0; i<ARRAYSIZE; i++) {
-			aSumm += array[i];
-		}
+
+		aSumm+=cache_read_test(array,ARRAYSIZE);
 
 		retval=PAPI_stop(eventset,&count);
 
                 if (retval!=PAPI_OK) {
                         test_fail( __FILE__, __LINE__,
-                                "reading PAPI_TOT_INS", retval );
+                                "reading PAPI_L1_DCA", retval );
                 }
 
                 if (count>high) high=count;
@@ -131,18 +155,25 @@ int main(int argc, char **argv) {
                 total+=count;
         }
 
+	if (!quiet) {
+		printf("\tRead test sim= %lf\n",aSumm);
+	}
+
         average=(total/num_runs);
 
 	error=display_error(average,high,low,expected,quiet);
 
 	if ((error > 1.0) || (error<-1.0)) {
 		if (!quiet) printf("Instruction count off by more than 1%%\n");
-		test_fail( __FILE__, __LINE__, "Error too high", 1 );
+		errors++;
 	}
 
 	if (!quiet) {
-		printf("Read test (%lf):\n",aSumm);
 		printf("\n");
+	}
+
+	if (errors) {
+		test_fail( __FILE__, __LINE__, "Error too high", 1 );
 	}
 
 	test_pass(__FILE__);
