@@ -3,6 +3,7 @@ ALL = flops_validation \
 	papi_br_ntk papi_br_prc papi_br_tkn papi_br_ucn \
 	papi_dp_ops papi_fp_ops papi_sp_ops papi_hw_int \
 	papi_l1_dca \
+	papi_l2_dca \
 	papi_ld_ins papi_sr_ins \
 	papi_ref_cyc papi_tot_cyc papi_tot_ins
 
@@ -15,9 +16,15 @@ all: $(ALL)
 display_error.o:	display_error.c display_error.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c display_error.c
 
+cache_helper.o:	cache_helper.c cache_helper.h
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c cache_helper.c
+
 
 branches_testcode.o:	branches_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c branches_testcode.c
+
+cache_testcode.o:	cache_testcode.c testcode.h
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c cache_testcode.c
 
 flops_testcode.o:	flops_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c flops_testcode.c
@@ -66,8 +73,11 @@ papi_hw_int: papi_hw_int.o $(TESTLIB) $(PAPILIB)
 papi_ld_ins: papi_ld_ins.o $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
 	$(CC) -o papi_ld_ins papi_ld_ins.o $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
-papi_l1_dca: papi_l1_dca.o $(TESTLIB) $(PAPILIB) display_error.o matrix_multiply.o
-	$(CC) -o papi_l1_dca papi_l1_dca.o $(TESTLIB) display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
+papi_l1_dca: papi_l1_dca.o $(TESTLIB) $(PAPILIB) cache_testcode.o display_error.o matrix_multiply.o
+	$(CC) -o papi_l1_dca papi_l1_dca.o $(TESTLIB) cache_testcode.o display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
+
+papi_l2_dca: papi_l2_dca.o $(TESTLIB) $(PAPILIB) cache_helper.o cache_testcode.o display_error.o matrix_multiply.o
+	$(CC) -o papi_l2_dca papi_l2_dca.o $(TESTLIB) cache_helper.o cache_testcode.o display_error.o matrix_multiply.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
 papi_ref_cyc: papi_ref_cyc.o $(TESTLIB) $(PAPILIB) display_error.o flops_testcode.o
 	$(CC) -o papi_ref_cyc papi_ref_cyc.o $(TESTLIB) display_error.o flops_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)

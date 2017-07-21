@@ -21,3 +21,6 @@ double flops_double_swapped_matrix_matrix_multiply(void);
 double do_flops3( double x, int iters, int quiet );
 double do_flops( int n, int quiet );
 
+/* cache_testcode.h */
+int cache_write_test(double *array, int size);
+double cache_read_test(double *array, int size);

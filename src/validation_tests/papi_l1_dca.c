@@ -13,6 +13,7 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "testcode.h"
 #include "display_error.h"
 
 #define NUM_RUNS 100
@@ -21,31 +22,9 @@
 
 static double array[ARRAYSIZE];
 
-int cache_write_test(double *array, int size) {
-	int i;
-
-	for(i=0; i<size; i++) {
-		array[i]=(double)i;
-	}
-
-	return 0;
-}
-
-double cache_read_test(double *array, int size) {
-
-	int i;
-	double sum=0;
-
-	for(i=0; i<size; i++) {
-		sum+= array[i];
-	}
-
-	return sum;
-}
-
 int main(int argc, char **argv) {
 
-	int i,n;
+	int i;
 	int quiet;
 	int eventset=PAPI_NULL;
 
@@ -92,7 +71,7 @@ int main(int argc, char **argv) {
 
 	high=0; low=0; total=0;
 
-	for(n=0;n<num_runs;n++) {
+	for(i=0;i<num_runs;i++) {
 
 		PAPI_reset(eventset);
 		PAPI_start(eventset);
