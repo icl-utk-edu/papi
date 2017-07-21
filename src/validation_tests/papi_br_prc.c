@@ -60,7 +60,8 @@ int main(int argc, char **argv) {
 
 	retval=PAPI_add_named_event(miss_eventset,"PAPI_BR_PRC");
 	if (retval!=PAPI_OK) {
-		test_fail( __FILE__, __LINE__, "adding PAPI_BR_PRC", retval );
+		if (!quiet) printf("Could not add PAPI_BR_PRC\n");
+		test_skip( __FILE__, __LINE__, "adding PAPI_BR_PRC", retval );
 	}
 
 	if (!quiet) {
