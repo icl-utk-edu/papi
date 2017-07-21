@@ -43,10 +43,11 @@
 static struct {
 	int compact;
 	int sort;
-	int encode;
-	int combo;
-	int combo_lim;
-	int desc;
+	uint8_t encode;
+	uint8_t combo;
+	uint8_t combo_lim;
+	uint8_t name_only;
+	uint8_t desc;
 	char *csv_sep;
 	pfm_event_info_t efilter;
 	pfm_event_attr_info_t ufilter;
@@ -304,6 +305,12 @@ show_event_info_compact(pfm_event_info_t *info)
 	if (ret != PFM_SUCCESS)
 		errx(1, "cannot get pmu info: %s", pfm_strerror(ret));
 
+	if (options.name_only) {
+		if (options.encode)
+			printf("0x%-10"PRIx64, info->code);
+		printf("%s\n", info->name);
+		return;
+	}
 	pfm_for_each_event_attr(i, info) {
 		ret = pfm_get_event_attr_info(info->idx, i, options.os, &ainfo);
 		if (ret != PFM_SUCCESS)
@@ -406,6 +413,11 @@ show_event_info(pfm_event_info_t *info)
 	int mod = 0, um = 0;
 	int i, ret;
 	const char *src;
+
+	if (options.name_only) {
+		printf("%s\n", info->name);
+		return;
+	}
 
 	memset(&ainfo, 0, sizeof(ainfo));
 	memset(&pinfo, 0, sizeof(pinfo));
@@ -531,7 +543,7 @@ show_info(char *event, regex_t *preg)
 			sprintf(fullname, "%s::%s", pinfo.name, info.name);
 
 			if (regexec(preg, fullname, 0, NULL, 0) == 0) {
-				if (options.compact)
+				 if (options.compact)
 					if (options.combo)
 						show_event_info_combo(&info);
 					else
@@ -777,7 +789,7 @@ main(int argc, char **argv)
 
 	pinfo.size = sizeof(pinfo);
 
-	while ((c=getopt(argc, argv,"hELsm:Ml:F:x:DO:")) != -1) {
+	while ((c=getopt(argc, argv,"hELsm:MNl:F:x:DO:")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
@@ -792,6 +804,8 @@ main(int argc, char **argv)
 			case 'M':
 				options.combo = 1;
 				break;
+			case 'N':
+				options.name_only = 1;
 			case 's':
 				options.sort = 1;
 				break;
