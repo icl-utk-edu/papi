@@ -23,6 +23,9 @@ cache_helper.o:	cache_helper.c cache_helper.h
 branches_testcode.o:	branches_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c branches_testcode.c
 
+busy_work.o:	busy_work.c testcode.h
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c busy_work.c
+
 cache_testcode.o:	cache_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c cache_testcode.c
 
@@ -32,9 +35,9 @@ flops_testcode.o:	flops_testcode.c testcode.h
 instructions_testcode.o:	instructions_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c instructions_testcode.c
 
-
 matrix_multiply.o:	matrix_multiply.c matrix_multiply.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c matrix_multiply.c
+
 
 
 flops_validation: flops_validation.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o

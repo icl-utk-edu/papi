@@ -9,8 +9,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "papi.h"
 #include "papi_test.h"
+
+#include "testcode.h"
 
 #define MAX_EVENTS  3
 
@@ -26,9 +29,6 @@ static int Threshold[MAX_EVENTS] = {
 	4000000,
 };
 
-static int num_events = 1;
-static int EventSet = PAPI_NULL;
-static char *name = "unknown";
 static struct timeval start, last;
 static long count, total;
 
@@ -44,20 +44,9 @@ my_handler( int EventSet, void *pc, long long ovec, void *context )
 	total++;
 }
 
-static void
-zero_count( void )
-{
-	gettimeofday( &start, NULL );
-	last = start;
-	count = 0;
-	total = 0;
-}
 
-static void
-print_here( char *str) {
 
-	if (!TESTS_QUIET) printf("[%d] %s, %s\n", getpid(), name, str);
-}
+
 
 static void
 print_rate( char *str )
@@ -82,69 +71,13 @@ print_rate( char *str )
 
 	if ( last_count != -1 ) {
 		if ( count < .1 * last_count ) {
-			test_fail( name, __LINE__, "Interrupt rate changed!", 1 );
+			test_fail( __FILE__, __LINE__, "Interrupt rate changed!", 1 );
 			exit( 1 );
 		}
 	}
 	last_count = ( int ) count;
 	count = 0;
 	last = now;
-}
-
-static void
-do_cycles( int program_time )
-{
-	struct timeval start, now;
-	double x, sum;
-
-	gettimeofday( &start, NULL );
-
-	for ( ;; ) {
-		sum = 1.0;
-		for ( x = 1.0; x < 250000.0; x += 1.0 )
-			sum += x;
-		if ( sum < 0.0 )
-			printf( "==>>  SUM IS NEGATIVE !!  <<==\n" );
-
-		gettimeofday( &now, NULL );
-		if ( now.tv_sec >= start.tv_sec + program_time )
-			break;
-	}
-}
-
-static void
-my_papi_start( void )
-{
-	int ev;
-
-	EventSet = PAPI_NULL;
-
-	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
-		test_fail( name, __LINE__, "PAPI_create_eventset failed", 1 );
-
-	for ( ev = 0; ev < num_events; ev++ ) {
-		if ( PAPI_add_event( EventSet, Event[ev] ) != PAPI_OK ) {
-			if (!TESTS_QUIET) printf("Trouble adding event.\n");
-			test_skip( name, __LINE__, "PAPI_add_event failed", 1 );
-		}
-	}
-
-	for ( ev = 0; ev < num_events; ev++ ) {
-		if ( PAPI_overflow( EventSet, Event[ev], Threshold[ev], 0, my_handler )
-			 != PAPI_OK ) {
-			test_fail( name, __LINE__, "PAPI_overflow failed", 1 );
-		}
-	}
-
-	if ( PAPI_start( EventSet ) != PAPI_OK )
-		test_fail( name, __LINE__, "PAPI_start failed", 1 );
-}
-
-static void
-my_papi_stop( void )
-{
-	if ( PAPI_stop( EventSet, NULL ) != PAPI_OK )
-		test_fail( name, __LINE__, "PAPI_stop failed", 1 );
 }
 
 static void
@@ -161,9 +94,10 @@ run( char *str, int len )
 int
 main( int argc, char **argv )
 {
-	char buf[100];
-
 	int quiet,retval;
+	int ev, EventSet = PAPI_NULL;
+	int num_events;
+	char *name = "unknown";
 
 	/* Used to be able to set this via command line */
 	num_events=1;
@@ -173,23 +107,67 @@ main( int argc, char **argv )
 
 	do_cycles( 1 );
 
-	zero_count(  );
+	/* zero out the count fields */
+	gettimeofday( &start, NULL );
+	last = start;
+	count = 0;
+	total = 0;
 
-
+	/* Initialize PAPI */
 	retval=PAPI_library_init( PAPI_VER_CURRENT );
 	if (retval!=PAPI_VER_CURRENT) {
 		test_fail( name, __LINE__, "PAPI_library_init failed", 1 );
 	}
 
 	name = argv[0];
-	if (!quiet) printf( "[%d] %s, num_events = %d\n", getpid(  ), name, num_events );
-	sprintf( buf, "%d", num_events );
-	my_papi_start(  );
+	if (!quiet) {
+		printf( "[%d] %s, num_events = %d\n", getpid(),
+			name, num_events );
+	}
+
+	/* Set up eventset */
+	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK ) {
+		test_fail( name, __LINE__, "PAPI_create_eventset failed", 1 );
+	}
+
+	/* Add events */
+	for ( ev = 0; ev < num_events; ev++ ) {
+		if ( PAPI_add_event( EventSet, Event[ev] ) != PAPI_OK ) {
+			if (!quiet) printf("Trouble adding event.\n");
+			test_skip( name, __LINE__, "PAPI_add_event failed", 1 );
+		}
+	}
+
+	/* Set up overflow handler */
+	for ( ev = 0; ev < num_events; ev++ ) {
+		if ( PAPI_overflow( EventSet, Event[ev],
+					Threshold[ev], 0, my_handler )
+			 != PAPI_OK ) {
+			test_fail( name, __LINE__, "PAPI_overflow failed", 1 );
+		}
+	}
+
+	/* Start the eventset */
+	if ( PAPI_start( EventSet ) != PAPI_OK ) {
+		test_fail( name, __LINE__, "PAPI_start failed", 1 );
+	}
+
+	/* Generate some workload */
 	run( name, 3 );
 
-	print_here( "stop" );
-	my_papi_stop(  );
-	print_here( "end" );
+	if (!quiet) {
+		printf("[%d] %s, %s\n", getpid(), name, "stop");
+	}
+
+	/* Stop measuring */
+	if ( PAPI_stop( EventSet, NULL ) != PAPI_OK ) {
+		test_fail( name, __LINE__, "PAPI_stop failed", 1 );
+	}
+
+	if (!quiet) {
+		printf("[%d] %s, %s\n", getpid(), name, "end");
+	}
+
 	test_pass(__FILE__);
 
 	return 0;

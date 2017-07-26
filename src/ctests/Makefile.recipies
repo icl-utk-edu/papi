@@ -372,11 +372,11 @@ reset_multiplex: reset_multiplex.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 fork_overflow: fork_overflow.c $(TESTLIB) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o fork_overflow
 
-exec_overflow: exec_overflow.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPEXEC exec_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exec_overflow
+exec_overflow: exec_overflow.c $(TESTLIB) $(PAPILIB) $(TESTCYCLES)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPEXEC exec_overflow.c $(TESTLIB) $(PAPILIB) $(TESTCYCLES) $(LDFLAGS) -o exec_overflow
 
-child_overflow: child_overflow.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPCHILD child_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o child_overflow
+child_overflow: child_overflow.c $(TESTLIB) $(PAPILIB) $(TESTCYCLES)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPCHILD child_overflow.c $(TESTLIB) $(PAPILIB) $(TESTCYCLES) $(LDFLAGS) -o child_overflow
 
 system_child_overflow: system_child_overflow.c $(TESTLIB) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSYSTEM system_child_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o system_child_overflow
