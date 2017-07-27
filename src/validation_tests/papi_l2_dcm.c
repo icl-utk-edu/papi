@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 			l2_size/1024,l2_linesize,l2_entries);
 	}
 
-	arraysize=l2_size/sizeof(double);
+	arraysize=(l2_size/sizeof(double))*8;
 
 	if (!quiet) {
 		printf("\tAllocating %ld bytes of memory (%d doubles)\n",
@@ -99,6 +99,8 @@ int main(int argc, char **argv) {
 	if (!quiet) {
 		printf("\nWrite Test: Writing an array of %d doubles %d random times:\n",
 			arraysize,ITERATIONS);
+		printf("\tPrefetch and shared nature of L2s make this hard.\n");
+		printf("\tExpected 7/8 of accesses to be miss.\n");
         }
 
 	high=0; low=0; total=0;
@@ -124,13 +126,9 @@ int main(int argc, char **argv) {
 
 	average=(total/num_runs);
 
-	expected=ITERATIONS;
+	expected=(ITERATIONS*7)/8;
 
 //	expected=arraysize/(l1_linesize);
-
-	if (!quiet) {
-		printf("\tPrefetch and shared nature of L2s make this hard.\n");
-	}
 
 	error=display_error(average,high,low,expected,quiet);
 
@@ -148,6 +146,7 @@ int main(int argc, char **argv) {
 	if (!quiet) {
 		printf("\nRead Test: Summing %d random doubles from array "
 			"of size %d:\n",ITERATIONS,arraysize);
+		printf("\tExpected 7/8 of accesses to be miss.\n");
         }
 
 	high=0; low=0; total=0;
@@ -173,7 +172,7 @@ int main(int argc, char **argv) {
 
 	average=(total/num_runs);
 
-	expected=ITERATIONS;
+	expected=(ITERATIONS*7)/8;
 
 //	expected=arraysize/(l1_linesize/sizeof(double));
 
@@ -189,9 +188,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (errors) {
-		/* Can't explain current results */
-		test_skip( __FILE__, __LINE__, "event too complex", retval );
-//		test_fail( __FILE__, __LINE__, "Error too high", 1 );
+		test_fail( __FILE__, __LINE__, "Error too high", 1 );
 	}
 
 
