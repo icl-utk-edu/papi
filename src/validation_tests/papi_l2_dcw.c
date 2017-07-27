@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (warnings) {
-		test_warn(__FILE__, __LINE__, "Average results OK but some measurements out of bounds",1);
+		test_warn(__FILE__, __LINE__, "Average results OK but some measurements low",1);
 	}
 
 	test_pass(__FILE__);
