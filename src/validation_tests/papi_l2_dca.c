@@ -1,6 +1,13 @@
 /* This code attempts to test the L2 Data Cache Acceesses	*/
 /* performance counter PAPI_L2_DCA				*/
 
+
+/* Notes:							*/
+/*	Should this be equivelent to PAPI_L1_DCM?		*/
+/*		(on IVY it is, on HSW it is not)		*/
+/*	Should this include *all* L2 accesses or just those	*/
+/*		cause by the user?  Prefetch? MESI?		*/
+
 /* by Vince Weaver, vincent.weaver@maine.edu			*/
 
 #include <stdio.h>
@@ -113,13 +120,13 @@ int main(int argc, char **argv) {
 
 	average=(total/num_runs);
 
-	expected=arraysize/(l1_linesize/sizeof(double));
+	expected=arraysize/(l2_linesize/sizeof(double));
 
 	if (!quiet) {
 		printf("\tShould be roughly "
-			"arraysize/L1_linesize/double_size (%d/%d/%ld): "
+			"arraysize/L2_linesize/double_size (%d/%d/%ld): "
 			"%lld\n\n",
-			arraysize,l1_linesize,sizeof(double),
+			arraysize,l2_linesize,sizeof(double),
 			expected);
 	}
 
@@ -164,13 +171,13 @@ int main(int argc, char **argv) {
 
 	average=(total/num_runs);
 
-	expected=arraysize/(l1_linesize/sizeof(double));
+	expected=arraysize/(l2_linesize/sizeof(double));
 
 	if (!quiet) {
 		printf("\tShould be roughly "
-			"arraysize/L1_linesize/double_size (%d/%d/%ld): "
+			"arraysize/L2_linesize/double_size (%d/%d/%ld): "
 			"%lld\n\n",
-			arraysize,l1_linesize,sizeof(double),
+			arraysize,l2_linesize,sizeof(double),
 			expected);
 	}
 
