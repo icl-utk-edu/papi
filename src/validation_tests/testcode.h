@@ -24,6 +24,8 @@ double do_flops( int n, int quiet );
 /* cache_testcode.c */
 int cache_write_test(double *array, int size);
 double cache_read_test(double *array, int size);
+int cache_random_write_test(double *array, int size, int count);
+double cache_random_read_test(double *array, int size, int count);
 
 /* busy_work.c */
 double do_cycles( int minimum_time );
