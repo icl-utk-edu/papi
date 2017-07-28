@@ -5609,20 +5609,6 @@ static const test_event_t x86_test_events[]={
 	  .codes[0] = 0x510845ull,
 	  .fstr = "amd64_fam17h::L1_DTLB_MISS:TLB_RELOAD_1G_L2_HIT:k=0:u=1:e=0:i=0:c=0:h=0:g=0",
 	},
-	{ SRC_LINE,
-	  .name = "amd64_fam16h::RETIRED_INSTRUCTIONS",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x5300c0,
-	  .fstr = "amd64_fam16h::RETIRED_INSTRUCTIONS:k=1:u=1:e=0:i=0:c=0:h=0:g=0",
-	},
-	{ SRC_LINE,
-	  .name = "amd64_fam16h::CPU_CLK_UNHALTED:u",
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x510076,
-	  .fstr = "amd64_fam16h::CPU_CLK_UNHALTED:k=0:u=1:e=0:i=0:c=0:h=0:g=0",
-	},
 };
 
 #define NUM_TEST_EVENTS (int)(sizeof(x86_test_events)/sizeof(test_event_t))
