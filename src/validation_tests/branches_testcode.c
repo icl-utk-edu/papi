@@ -31,7 +31,6 @@ int branches_testcode(void) {
 
 #elif defined(__arm__)
     /* Initial code contributed by sam wang linux.swang _at_ gmail.com */
-
 	asm(	"\teor r3,r3,r3\n"
 		"\tldr r3,=500000\n"
 	    	"test_loop:\n"
@@ -50,6 +49,28 @@ int branches_testcode(void) {
 		: /* no output registers */
 		: /* no inputs		 */
 		: "cc", "r2", "r3" /* clobbered */
+	);
+
+	return 0;
+#elif defined(__aarch64__)
+	asm(	"\teor x3,x3,x3\n"
+		"\tldr x3,=500000\n"
+		"test_loop:\n"
+		"\tB test_jmp\n"
+		"\tnop\n"
+		"test_jmp:\n"
+		"\teor x2,x2,x2\n"
+		"\tcmp x2,#1\n"
+		"\tbge test_jmp2\n"
+		"\tnop\n"
+		"\tadd x2,x2,#1\n"
+		"test_jmp2:\n"
+		"\tsub x3,x3,#1\n"
+		"\tcmp x3,#1\n"
+		"\tbgt test_loop\n"
+		: /* no output registers */
+		: /* no inputs		 */
+		: "cc", "x2", "x3" /* clobbered */
 	);
 
 	return 0;
