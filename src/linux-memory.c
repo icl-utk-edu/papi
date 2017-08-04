@@ -894,15 +894,202 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 }
 #endif
 
-/* FIXME:  have code read the /sys/ cpu files to gather cache info */
-/*         in cases where we can't otherwise get cache size data   */
 
+/* Fallback Linux code to read the cache info from /sys */
 int
-generic_get_memory_info( PAPI_hw_info_t * hw_info )
+generic_get_memory_info( PAPI_hw_info_t *hw_info )
 {
 
+	int type=0,level,result;
+	int size,line_size,associativity,sets;
+	DIR *dir;
+	FILE *fff;
+	char filename[BUFSIZ],type_string[BUFSIZ];
+	struct dirent *d;
+	int max_level=0;
+	int level_count=0,last_level=-1,level_index=0;
 
-	/* Now fetch the cache info */
+	PAPI_mh_level_t *L = hw_info->mem_hierarchy.level;
+
+	/* open Linux cache dir			*/
+	/* assume all CPUs same as cpu0.	*/
+	/* Not necessarily a good assumption	*/
+
+	dir=opendir("/sys/devices/system/cpu/cpu0/cache");
+	if (dir==NULL) {
+		goto unrecoverable_error;
+	}
+
+	while(1) {
+		d = readdir(dir);
+		if (d==NULL) break;
+
+		if (strncmp(d->d_name, "index", 5)) continue;
+
+		MEMDBG("Found %s\n",d->d_name);
+
+		/*************/
+		/* Get level */
+		/*************/
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/level",
+			d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open level.\n");
+			goto unrecoverable_error;
+		}
+
+		result=fscanf(fff,"%d",&level);
+		fclose(fff);
+		if (result!=1) {
+			MEMDBG("Could not read cache level\n");
+			goto unrecoverable_error;
+		}
+
+		/* Index arrays from 0 */
+		level_index=level-1;
+
+		if (level!=last_level) {
+			level_count=0;
+			last_level=level;
+		} else {
+			level_count++;
+		}
+
+		if (level_count>=PAPI_MH_MAX_LEVELS) {
+			MEMDBG("Exceeded maximum levels %d\n",
+				PAPI_MH_MAXLEVELS);
+			break;
+		}
+
+		/************/
+		/* Get type */
+		/************/
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/type",d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open type\n");
+		}
+		result=fscanf(fff,"%s",type_string);
+		fclose(fff);
+		if (result!=1) {
+			MEMDBG("Could not read cache type\n");
+		}
+		if (!strcmp(type_string,"Data")) {
+			type=PAPI_MH_TYPE_DATA;
+		}
+		if (!strcmp(type_string,"Instruction")) {
+			type=PAPI_MH_TYPE_INST;
+		}
+		if (!strcmp(type_string,"Unified")) {
+			type=PAPI_MH_TYPE_UNIFIED;
+		}
+		L[level_index].cache[level_count].type=type;
+
+		/*************/
+		/* Get Size  */
+		/*************/
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/size",d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open size\n");
+		}
+		result=fscanf(fff,"%d",&size);
+		fclose(fff);
+		if (result!=1) {
+			MEMDBG(stderr,"Could not read cache size\n");
+		}
+
+		/* Linux reports in kB, PAPI expects in Bytes */
+		L[level_index].cache[level_count].size=size*1024;
+
+		/*************/
+		/* Line Size */
+		/*************/
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/coherency_line_size",
+			d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open linesize\n");
+		}
+		result=fscanf(fff,"%d",&line_size);
+		fclose(fff);
+		if (result!=1) {
+			MEMDBG("Could not read cache line-size\n");
+		}
+		L[level_index].cache[level_count].line_size=line_size;
+
+
+		/*********************/
+		/* Get Associativity */
+		/*********************/
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/ways_of_associativity",
+			d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open associativity\n");
+		}
+		result=fscanf(fff,"%d",&associativity);
+		fclose(fff);
+		if (result!=1) {
+			MEMDBG("Could not read cache associativity\n");
+		}
+		L[level_index].cache[level_count].associativity=associativity;
+
+		/************/
+		/* Get Sets */
+		/************/
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/number_of_sets",
+			d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open sets\n");
+		}
+		result=fscanf(fff,"%d",&sets);
+		fclose(fff);
+
+		if (result!=1) {
+			MEMDBG("Could not read cache sets\n");
+		}
+		L[level_index].cache[level_count].num_lines=sets;
+
+
+		if (((size*1024)/line_size/associativity)!=sets) {
+			MEMDBG("Warning!  sets %d != expected %d\n",
+				sets,((size*1024)/line_size/associativity));
+		}
+
+		MEMDBG("\tL%d %s cache\n",level,type_string);
+		MEMDBG("\t%d kilobytes\n",size);
+		MEMDBG("\t%d byte linesize\n",line_size);
+		MEMDBG("\t%d-way associative\n",associativity);
+		MEMDBG("\t%d lines\n",sets);
+		MEMDBG("\tUnknown inclusivity\n");
+		MEMDBG("\tUnknown replacement algorithm\n");
+		MEMDBG("\tUnknown if victim cache\n");
+
+		if (level>max_level) max_level=level;
+
+                if (level>=PAPI_MAX_MEM_HIERARCHY_LEVELS) {
+			MEMDBG("Exceeded maximum cache level %d\n",
+				PAPI_MAX_MEM_HIERARCHY_LEVELS);
+			break;
+		}
+	}
+
+	hw_info->mem_hierarchy.levels = max_level;
+
+	return 0;
+
+unrecoverable_error:
+
+	/* Just say we have no cache */
 	hw_info->mem_hierarchy.levels = 0;
 
 	return 0;
@@ -924,7 +1111,7 @@ _linux_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 #elif defined(__sparc__)
 	sparc_get_memory_info( hwinfo );
 #elif defined(__arm__)
-	#warning "WARNING! linux_get_memory_info() does nothing on ARM!"
+	#warning "WARNING! linux_get_memory_info() does nothing on ARM32!"
         generic_get_memory_info (hwinfo);
 #else
         generic_get_memory_info (hwinfo);
