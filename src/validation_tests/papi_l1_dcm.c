@@ -82,6 +82,11 @@ int main(int argc, char **argv) {
 
 	arraysize=(l1_size/sizeof(double))*8;
 
+	if (arraysize==0) {
+		if (!quiet) printf("Could not detect cache size\n");
+		test_skip(__FILE__,__LINE__,"No cache info",0);
+	}
+
 	if (!quiet) {
 		printf("\tAllocating %ld bytes of memory (%d doubles)\n",
 			arraysize*sizeof(double),arraysize);
