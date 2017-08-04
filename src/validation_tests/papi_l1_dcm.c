@@ -24,6 +24,9 @@
 
 #include "testcode.h"
 
+/* Is 5% too big? */
+#define ALLOWED_ERROR	5.0
+
 #define NUM_RUNS	100
 
 #define ITERATIONS	1000000
@@ -136,8 +139,11 @@ int main(int argc, char **argv) {
 
 	error=display_error(average,high,low,expected,quiet);
 
-	if ((error > 1.0) || (error<-1.0)) {
-		if (!quiet) printf("Instruction count off by more than 1%%\n");
+	if ((error > ALLOWED_ERROR) || (error<-ALLOWED_ERROR)) {
+		if (!quiet) {
+			printf("Instruction count off by more than "
+				"%.2lf%%\n",ALLOWED_ERROR);
+		}
 		errors++;
 	}
 
@@ -182,8 +188,11 @@ int main(int argc, char **argv) {
 
 	error=display_error(average,high,low,expected,quiet);
 
-	if ((error > 1.0) || (error<-1.0)) {
-		if (!quiet) printf("Instruction count off by more than 1%%\n");
+	if ((error > ALLOWED_ERROR) || (error<-ALLOWED_ERROR)) {
+		if (!quiet) {
+			printf("Instruction count off by more than "
+				"%.2lf%%\n",ALLOWED_ERROR);
+		}
 		errors++;
 	}
 
