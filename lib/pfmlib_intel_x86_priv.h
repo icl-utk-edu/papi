@@ -69,6 +69,7 @@ typedef struct {
 	unsigned int			modmsk;	/* bitmask of modifiers for this event */
 	unsigned int			modmsk_req; /* bitmask of required modifiers */
 	unsigned short			ngrp;	/* number of unit masks groups */
+	unsigned short			model;	/*  only available on this PMU model */
 	const intel_x86_umask_t		*umasks; /* umask desc */
 } intel_x86_entry_t;
 
@@ -262,6 +263,18 @@ intel_x86_eflag(void *this, int idx, int flag)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	return !!(pe[idx].flags & flag);
+}
+
+static inline int
+is_model_event(void *this, int pidx)
+{
+	pfmlib_pmu_t *pmu = this;
+	const intel_x86_entry_t *pe = this_pe(this);
+	unsigned short model;
+
+	model = pe[pidx].model;
+
+	return model == 0 || model == pmu->pmu;
 }
 
 static inline int
