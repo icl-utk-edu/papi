@@ -421,6 +421,8 @@ typedef enum {
 
 	PFM_PMU_AMD64_FAM17H,		/* AMD AMD64 Fam17h Zen */
 	PFM_PMU_AMD64_FAM16H,		/* AMD AMD64 Fam16h Jaguar */
+
+	PFM_PMU_INTEL_SKX,		/* Intel Skylake-X */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
