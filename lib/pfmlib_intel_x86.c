@@ -200,14 +200,15 @@ int
 pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
 			   uint64_t *umask,
-			   unsigned int max_grpid,
+			   unsigned short max_grpid,
 			   int excl_grp_but_0)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
 	unsigned int i;
+	unsigned short grpid;
 	int j, k, added, skip;
-	int idx, grpid;
+	int idx;
 
 	k = e->nattrs;
 	ent = pe+e->event;
@@ -337,11 +338,12 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 }
 
 static int
-intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, int max_grpid)
+intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, unsigned short max_grpid)
 {
 	const intel_x86_entry_t *pe;
 	pfmlib_event_attr_info_t *a;
-	int i, grpid;
+	unsigned short grpid;
+	int i;
 
 	DPRINT("check: max_grpid=%d\n", max_grpid);
 	pe = this_pe(this);
@@ -375,9 +377,9 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int plmmsk = 0;
 	int umodmsk = 0, modmsk_r = 0;
 	int k, ret, id;
-	unsigned int max_grpid = INTEL_X86_MAX_GRPID;
-	unsigned int last_grpid =  INTEL_X86_MAX_GRPID;
-	unsigned int grpid;
+	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
+	unsigned short last_grpid =  INTEL_X86_MAX_GRPID;
+	unsigned short grpid;
 	int ldlat = 0, ldlat_um = 0;
 	int fe_thr= 0, fe_thr_um = 0;
 	int excl_grp_but_0 = -1;

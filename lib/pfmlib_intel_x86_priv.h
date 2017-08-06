@@ -47,13 +47,13 @@ typedef struct {
 	uint64_t		ucode;  /* unit mask code */
 	uint64_t		ufilters[INTEL_X86_MAX_FILTERS]; /* extra encoding for event */
 	unsigned int		uflags;	/* unit mask flags */
-	unsigned int		umodel; /* only available on this PMU model */
-	unsigned int		grpid;	/* unit mask group id */
+	unsigned short		umodel; /* only available on this PMU model */
+	unsigned short		grpid;	/* unit mask group id */
 	unsigned int		modhw;	/* hardwired modifiers, cannot be changed */
 	unsigned int		umodmsk_req; /* bitmask of required modifiers */
 } intel_x86_umask_t;
 
-#define INTEL_X86_MAX_GRPID	(~0U)
+#define INTEL_X86_MAX_GRPID	((unsigned short)(~0))
 
 /*
  * event description
@@ -68,7 +68,7 @@ typedef struct {
 	unsigned int			flags;	/* flags */
 	unsigned int			modmsk;	/* bitmask of modifiers for this event */
 	unsigned int			modmsk_req; /* bitmask of required modifiers */
-	unsigned int			ngrp;	/* number of unit masks groups */
+	unsigned short			ngrp;	/* number of unit masks groups */
 	const intel_x86_umask_t		*umasks; /* umask desc */
 } intel_x86_entry_t;
 
@@ -270,7 +270,7 @@ is_model_umask(void *this, int pidx, int attr)
 	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
-	unsigned int model;
+	unsigned short model;
 
 	ent = pe + pidx;
 	model = ent->umasks[attr].umodel;
@@ -290,7 +290,8 @@ intel_x86_num_umasks(void *this, int pidx)
 {
 	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
-	unsigned int i, n = 0, model;
+	unsigned int i, n = 0;
+	unsigned short model;
 
 	/*
 	 * some umasks may be model specific
@@ -326,7 +327,7 @@ intel_x86_attr2umask(void *this, int pidx, int attr_idx)
 }
 
 extern int pfm_intel_x86_detect(void);
-extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask, unsigned int max_grpid, int excl_grp_but_0);
+extern int pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e, unsigned int msk, uint64_t *umask, unsigned short max_grpid, int excl_grp_but_0);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e);
