@@ -173,7 +173,12 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
                 }
 	} else if (cfg->family == 21) { /* family 15h */
 		rev = PFM_PMU_AMD64_FAM15H_INTERLAGOS;
+	} else if (cfg->family == 23) { /* family 17h */
+		rev = PFM_PMU_AMD64_FAM17H;
+	} else if (cfg->family == 22) { /* family 16h */
+		rev = PFM_PMU_AMD64_FAM16H;
 	}
+
         cfg->revision = rev;
 }
 

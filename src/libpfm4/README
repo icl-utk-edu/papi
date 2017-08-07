@@ -38,6 +38,8 @@ The library supports many PMUs. The current version can handle:
 		AMD64 Fam12h (Llano)
 		AMD64 Fam14h (Bobcat)
 		AMD64 Fam15h (Bulldozer) (core and uncore)
+		AMD64 Fam16h (Jaguar)
+		AMD64 Fam17h (Zen)
 
 	- For Intel X86: 
 		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)

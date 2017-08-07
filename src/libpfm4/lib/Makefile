@@ -91,6 +91,16 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_hswep_unc_r3qpi.c \
 	  pfmlib_intel_hswep_unc_irp.c \
 	  pfmlib_intel_hswep_unc_sbo.c \
+	  pfmlib_intel_bdx_unc_cbo.c \
+	  pfmlib_intel_bdx_unc_ubo.c \
+	  pfmlib_intel_bdx_unc_sbo.c \
+	  pfmlib_intel_bdx_unc_ha.c \
+	  pfmlib_intel_bdx_unc_imc.c \
+	  pfmlib_intel_bdx_unc_irp.c \
+	  pfmlib_intel_bdx_unc_pcu.c \
+	  pfmlib_intel_bdx_unc_qpi.c \
+	  pfmlib_intel_bdx_unc_r2pcie.c \
+	  pfmlib_intel_bdx_unc_r3qpi.c \
 	  pfmlib_intel_knc.c \
 	  pfmlib_intel_slm.c \
 	  pfmlib_intel_knl.c \
@@ -102,7 +112,8 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_netburst.c \
 	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
 	  pfmlib_amd64_fam11h.c pfmlib_amd64_fam12h.c \
-	  pfmlib_amd64_fam14h.c pfmlib_amd64_fam15h.c
+	  pfmlib_amd64_fam14h.c pfmlib_amd64_fam15h.c \
+	  pfmlib_amd64_fam17h.c pfmlib_amd64_fam16h.c
 
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86
 
@@ -228,6 +239,8 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/amd64_events_fam12h.h	\
 	events/amd64_events_fam14h.h	\
 	events/amd64_events_fam15h.h	\
+	events/amd64_events_fam17h.h	\
+	events/amd64_events_fam16h.h	\
 	events/intel_p6_events.h	\
 	events/intel_netburst_events.h	\
 	events//intel_x86_arch_events.h \
@@ -275,6 +288,16 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_hswep_unc_r2pcie_events.h \
 	events/intel_hswep_unc_r3qpi_events.h \
 	events/intel_hswep_unc_irp_events.h \
+	events/intel_bdx_unc_cbo_events.h \
+	events/intel_bdx_unc_ubo_events.h \
+	events/intel_bdx_unc_sbo_events.h \
+	events/intel_bdx_unc_ha_events.h \
+	events/intel_bdx_unc_imc_events.h \
+	events/intel_bdx_unc_irp_events.h \
+	events/intel_bdx_unc_pcu_events.h \
+	events/intel_bdx_unc_qpi_events.h \
+	events/intel_bdx_unc_r2pcie_events.h \
+	events/intel_bdx_unc_r3qpi_events.h \
 	events/intel_knl_unc_imc_events.h \
 	events/intel_knl_unc_edc_events.h \
 	events/intel_knl_unc_cha_events.h \
