@@ -200,14 +200,15 @@ int
 pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
 			   uint64_t *umask,
-			   unsigned int max_grpid,
+			   unsigned short max_grpid,
 			   int excl_grp_but_0)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
 	unsigned int i;
+	unsigned short grpid;
 	int j, k, added, skip;
-	int idx, grpid;
+	int idx;
 
 	k = e->nattrs;
 	ent = pe+e->event;
@@ -337,11 +338,12 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 }
 
 static int
-intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, int max_grpid)
+intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, unsigned short max_grpid)
 {
 	const intel_x86_entry_t *pe;
 	pfmlib_event_attr_info_t *a;
-	int i, grpid;
+	unsigned short grpid;
+	int i;
 
 	DPRINT("check: max_grpid=%d\n", max_grpid);
 	pe = this_pe(this);
@@ -375,9 +377,9 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int plmmsk = 0;
 	int umodmsk = 0, modmsk_r = 0;
 	int k, ret, id;
-	unsigned int max_grpid = INTEL_X86_MAX_GRPID;
-	unsigned int last_grpid =  INTEL_X86_MAX_GRPID;
-	unsigned int grpid;
+	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
+	unsigned short last_grpid =  INTEL_X86_MAX_GRPID;
+	unsigned short grpid;
 	int ldlat = 0, ldlat_um = 0;
 	int fe_thr= 0, fe_thr_um = 0;
 	int excl_grp_but_0 = -1;
@@ -778,8 +780,12 @@ int
 pfm_intel_x86_get_event_first(void *this)
 {
 	pfmlib_pmu_t *p = this;
+	int idx = 0;
 
-	return p->pme_count ? 0 : -1;
+	/* skip event for different models */
+	while (!is_model_event(this, idx) && idx < p->pme_count) idx++;
+
+	return p->pme_count ? idx : -1;
 }
 
 int
@@ -787,17 +793,22 @@ pfm_intel_x86_get_event_next(void *this, int idx)
 {
 	pfmlib_pmu_t *p = this;
 
+	/* pme_count is always >= 1*/
 	if (idx >= (p->pme_count-1))
 		return -1;
 
-	return idx+1;
+	idx++;
+	/* skip event for different models */
+	while (!is_model_event(this, idx) && idx < p->pme_count) idx++;
+
+	return idx < p->pme_count ? idx : -1;
 }
 
 int
 pfm_intel_x86_event_is_valid(void *this, int pidx)
 {
 	pfmlib_pmu_t *p = this;
-	return pidx >= 0 && pidx < p->pme_count;
+	return pidx >= 0 && pidx < p->pme_count && is_model_event(this, pidx);
 }
 
 int
@@ -821,6 +832,9 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 	}
 
 	for(i=0; i < pmu->pme_count; i++) {
+
+		if (!is_model_event(this, i))
+			continue;
 
 		if (!pe[i].name) {
 			fprintf(fp, "pmu: %s event%d: :: no name (prev event was %s)\n", pmu->name, i,
@@ -862,6 +876,10 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			fprintf(fp, "pmu: %s event%d: %s :: ngrp too big (max=%d)\n", pmu->name, i, pe[i].name, INTEL_X86_NUM_GRP);
 			error++;
 		}
+		if (pe[i].model >= PFM_PMU_MAX) {
+			fprintf(fp, "pmu: %s event%d: %s :: model too big (max=%d)\n", pmu->name, i, pe[i].name, PFM_PMU_MAX);
+			error++;
+		}
 
 		for (j=i+1; j < (int)pmu->pme_count; j++) {
 			if (pe[i].code == pe[j].code && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
@@ -891,6 +909,10 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 
 			if (pe[i].ngrp && pe[i].umasks[j].grpid >= pe[i].ngrp) {
 				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpid, pe[i].ngrp);
+				error++;
+			}
+			if (pe[i].umasks[j].umodel >= PFM_PMU_MAX) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: model too big (max=%d)\n", pmu->name, i, pe[i].name,  j, pe[i].umasks[j].uname, PFM_PMU_MAX);
 				error++;
 			}
 			if (pe[i].umasks[j].uflags & INTEL_X86_DFL)
@@ -978,6 +1000,11 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_eve
 	const pfmlib_attr_desc_t *atdesc = this_atdesc(this);
 	int numasks, idx;
 
+	if (!is_model_event(this, pidx)) {
+		DPRINT("invalid event index %d\n", pidx);
+		return PFM_ERR_INVAL;
+	}
+
 	numasks = intel_x86_num_umasks(this, pidx);
 	if (attr_idx < numasks) {
 		idx = intel_x86_attr2umask(this, pidx, attr_idx);
@@ -1015,6 +1042,11 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	pfmlib_pmu_t *pmu = this;
+
+	if (!is_model_event(this, idx)) {
+		DPRINT("invalid event index %d\n", idx);
+		return PFM_ERR_INVAL;
+	}
 
 	info->name  = pe[idx].name;
 	info->desc  = pe[idx].desc;

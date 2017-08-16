@@ -199,7 +199,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
 			   uint64_t *umask,
 			   pfm_snbep_unc_reg_t *filters,
-			   unsigned int max_grpid)
+			   unsigned short max_grpid)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
@@ -293,8 +293,8 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	unsigned int grpmsk, ugrpmsk = 0;
-	unsigned int max_grpid = INTEL_X86_MAX_GRPID;
-	unsigned int last_grpid =  INTEL_X86_MAX_GRPID;
+	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
+	unsigned short last_grpid =  INTEL_X86_MAX_GRPID;
 	int umodmsk = 0, modmsk_r = 0;
 	int pcu_filt_band = -1;
 	pfm_snbep_unc_reg_t reg;
@@ -304,7 +304,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	uint64_t val, umask1, umask2;
 	int k, ret;
 	int has_cbo_tid = 0;
-	unsigned int grpid;
+	unsigned short grpid;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
