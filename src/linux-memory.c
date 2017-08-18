@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    linux-memory.c
 * Author:  Kevin London
 *          london@cs.utk.edu
@@ -959,7 +959,7 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 
 		if (level_count>=PAPI_MH_MAX_LEVELS) {
 			MEMDBG("Exceeded maximum levels %d\n",
-				PAPI_MH_MAXLEVELS);
+				PAPI_MH_MAX_LEVELS);
 			break;
 		}
 
@@ -1000,7 +1000,7 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		result=fscanf(fff,"%d",&size);
 		fclose(fff);
 		if (result!=1) {
-			MEMDBG(stderr,"Could not read cache size\n");
+			MEMDBG("Could not read cache size\n");
 		}
 
 		/* Linux reports in kB, PAPI expects in Bytes */
