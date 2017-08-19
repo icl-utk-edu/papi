@@ -93,19 +93,24 @@ Thread( int n )
 int
 main( int argc, char **argv )
 {
-    /* Set TESTS_QUIET variable */
-    tests_quiet( argc, argv );
-
+	int quiet;
 	long long elapsed_us, elapsed_cyc;
+
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
 
 	elapsed_us = PAPI_get_real_usec(  );
 
 	elapsed_cyc = PAPI_get_real_cyc(  );
 
 #ifdef HAVE_OPENSHMEM
+	// This code doesn't exist???
 	start_pes( 2 );
 	Thread( 1000000 * ( _my_pe(  ) + 1 ) );
 #else
+	if (!quiet) {
+		printf("No OpenSHMEM support\n");
+	}
 	test_skip( __FILE__, __LINE__, "OpenSHMEM support not found, skipping.", 0);
 #endif
 
@@ -116,5 +121,5 @@ main( int argc, char **argv )
 	printf( "Master real usec   : \t%lld\n", elapsed_us );
 	printf( "Master real cycles : \t%lld\n", elapsed_cyc );
 
-	exit( 0 );
+	return 0;
 }
