@@ -145,7 +145,7 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 	}
 
-	if (!PAPI_query_event(PAPI_TOT_INS)!=PAPI_OK) {
+	if (PAPI_query_event(PAPI_TOT_INS)!=PAPI_OK) {
 		if (!quiet) printf("Can't find PAPI_TOT_INS\n");
 		test_skip(__FILE__,__LINE__,"Event missing",1);
 	}
