@@ -58,6 +58,30 @@ char *get_offcore_event(char *event, int size) {
 			return event;
 			break;
 
+			case 61: /* Broadwell */
+			case 71:
+			case 86:
+			case 79: /* Broadwell EP */
+			strncpy(event,
+			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
+			return event;
+			break;
+
+			case 78: /* Skylake */
+			case 94:
+			case 85: /* Skylake-X */
+			strncpy(event,
+			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
+			return event;
+			break;
+
+			case 142: /* Kabylake */
+			case 158:
+			strncpy(event,
+			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
+			return event;
+			break;
+
 			case 87: /* Knights Landing */
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
