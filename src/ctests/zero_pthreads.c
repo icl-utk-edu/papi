@@ -62,7 +62,9 @@ Thread( void *arg )
 	   depending on the availability of the event
 	   on the platform                              */
 	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
-	printf("Events %d\n",num_events1);
+	if (!TESTS_QUIET) {
+		printf("Events %d\n",num_events1);
+	}
 	if (num_events1<2) {
 	   test_fail( __FILE__, __LINE__, "Not enough events", retval );
 	}
