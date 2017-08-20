@@ -11,7 +11,7 @@ MPI	= mpifirst
 SHARED  = shlib
 SERIAL  = inherit hwinfo code2name reset cmpinfo realtime virttime first \
 	exeinfo zero zero_named branches dmem_info all_native_events \
-	all_events derived high-level2 hl_rates describe memory  \
+	all_events derived failed_events high-level2 hl_rates describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth ipc \
 	get_event_component disable_component remove_events
@@ -290,6 +290,9 @@ all_events: all_events.c $(TESTLIB) $(PAPILIB)
 
 all_native_events: all_native_events.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) all_native_events.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o all_native_events
+
+failed_events: failed_events.c $(TESTLIB) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) failed_events.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o failed_events
 
 get_event_component: get_event_component.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) get_event_component.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o get_event_component
