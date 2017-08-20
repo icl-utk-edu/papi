@@ -1,5 +1,5 @@
 /*
- * This file tests cbox uncore events on IVB and SNB-EP
+ * This file tests cbox uncore events on Intel Processors
  */
 
 #include <stdio.h>
@@ -26,6 +26,7 @@ int main( int argc, char **argv ) {
 	int uncore_cidx=-1;
 	int max_cbox=0;
 	int core_to_use=0;
+	char *result;
 
 	const PAPI_hw_info_t *hwinfo;
 
@@ -55,36 +56,23 @@ int main( int argc, char **argv ) {
 
 	/* Get event to use */
 	if (hwinfo->vendor == PAPI_VENDOR_INTEL) {
+		result=get_uncore_cbox_event(event_name,uncore_base,BUFSIZ);
 
-      if ( hwinfo->cpuid_family == 6) {
-         switch(hwinfo->cpuid_model) {
-           case 45: /* SandyBridge EP */
-                    strncpy(event_name,"UNC_C_TOR_OCCUPANCY:ALL",BUFSIZ);
-                    strncpy(uncore_base,"snbep_unc_cbo",BUFSIZ);
-                    break;
-           case 58: /* IvyBridge */
-                    strncpy(event_name,"UNC_CBO_CACHE_LOOKUP:STATE_I:ANY_FILTER",BUFSIZ);
-                    strncpy(uncore_base,"ivb_unc_cbo",BUFSIZ);
-                    break;
-           case 63: /* Haswell EP */
-                    strncpy(event_name,"hswep_unc_cbo0::UNC_C_COUNTER0_OCCUPANCY",BUFSIZ);
-                    strncpy(uncore_base,"hswep_unc_cbo0",BUFSIZ);
-                    break;
-	  default:
-                    test_skip( __FILE__, __LINE__,
-	            "We only support IVB and SNB-EP for now", PAPI_ENOSUPP );
-        }
-      }
-      else {
-          test_skip( __FILE__, __LINE__,
-	            "We only support IVB and SNB-EP for now", PAPI_ENOSUPP );
-      }
-   }
-   else {
-      test_skip( __FILE__, __LINE__,
-	            "This test only supported Intel chips", PAPI_ENOSUPP );
-
-   }
+		if (result==NULL) {
+			if (!quiet) {
+				printf("No event available\n");
+			}
+			test_skip( __FILE__, __LINE__,
+				"No event available", PAPI_ENOSUPP );
+		}
+	}
+	else {
+		if (!quiet) {
+			printf("We only support Intel for now\n");
+		}
+		test_skip( __FILE__, __LINE__,
+			"This test only supported Intel chips", PAPI_ENOSUPP );
+	}
 
 	if (!quiet) {
 		printf("Trying for %d sockets\n",hwinfo->sockets);
