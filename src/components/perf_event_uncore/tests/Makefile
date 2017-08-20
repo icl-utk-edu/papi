@@ -4,7 +4,7 @@ include ../../Makefile_comp_tests.target
 %.o:%.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
-TESTS = perf_event_uncore perf_event_uncore_multiple \
+TESTS = perf_event_uncore perf_event_uncore_attach perf_event_uncore_multiple \
 	perf_event_amd_northbridge perf_event_uncore_cbox
 
 DOLOOPS= $(testlibdir)/do_loops.o
@@ -21,6 +21,9 @@ perf_event_amd_northbridge:	perf_event_amd_northbridge.o $(DOLOOPS) $(UTILOBJS) 
 
 perf_event_uncore:	perf_event_uncore.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) perf_event_uncore_lib.o
 	$(CC) $(LFLAGS) -o perf_event_uncore perf_event_uncore.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) $(LDFLAGS)
+
+perf_event_uncore_attach:	perf_event_uncore_attach.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) perf_event_uncore_lib.o
+	$(CC) $(LFLAGS) -o perf_event_uncore_attach perf_event_uncore_attach.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) $(LDFLAGS)
 
 perf_event_uncore_multiple:	perf_event_uncore_multiple.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(LFLAGS) $(INCLUDE) -o perf_event_uncore_multiple perf_event_uncore_multiple.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) 

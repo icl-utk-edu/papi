@@ -1,8 +1,8 @@
 /*
  * This file tests uncore events on perf_event kernels
  *
- * In this test we use the :cpu=0 way of attaching to the CPU
- * rather than the legacy PAPI way.
+ * It uses the older PAPI_set_opt() way of specifying the CPU/granularity
+ * rather than the new :cpu=0 method
  */
 
 #include <stdio.h>
@@ -28,7 +28,7 @@ int main( int argc, char **argv ) {
 	quiet = tests_quiet( argc, argv );
 
 	if (!quiet) {
-		printf("Testing the :cpu=0 way of attaching an uncore event to a core\n");
+		printf("Testing creating an uncore event using PAPI_set_opt() to specify CPU\n");
 	}
 
 	/* Init the PAPI library */
@@ -66,12 +66,63 @@ int main( int argc, char **argv ) {
 			PAPI_ENOSUPP );
 	}
 
-	sprintf(uncore_event,"%s:cpu=0",uncore_event);
-
 	/* Create an eventset */
 	retval = PAPI_create_eventset(&EventSet);
 	if (retval != PAPI_OK) {
 		test_fail(__FILE__, __LINE__, "PAPI_create_eventset",retval);
+	}
+
+	/* Set a component for the EventSet */
+	retval = PAPI_assign_eventset_component(EventSet, uncore_cidx);
+
+	/* we need to set to a certain cpu for uncore to work */
+
+	PAPI_cpu_option_t cpu_opt;
+
+	cpu_opt.eventset=EventSet;
+	cpu_opt.cpu_num=0;
+
+	retval = PAPI_set_opt(PAPI_CPU_ATTACH,(PAPI_option_t*)&cpu_opt);
+	if (retval != PAPI_OK) {
+		if (!quiet) {
+			printf("Could not cpu attach\n");
+		}
+		test_skip( __FILE__, __LINE__,
+			"this test; trying to PAPI_CPU_ATTACH; need to run as root",
+			retval);
+	}
+
+	/* we need to set the granularity to system-wide for uncore to work */
+
+	PAPI_granularity_option_t gran_opt;
+
+	gran_opt.def_cidx=0;
+	gran_opt.eventset=EventSet;
+	gran_opt.granularity=PAPI_GRN_SYS;
+
+	retval = PAPI_set_opt(PAPI_GRANUL,(PAPI_option_t*)&gran_opt);
+	if (retval != PAPI_OK) {
+		test_skip( __FILE__, __LINE__,
+			"this test; trying to set PAPI_GRN_SYS",
+			retval);
+	}
+
+	/* we need to set domain to be as inclusive as possible */
+
+	PAPI_domain_option_t domain_opt;
+
+	domain_opt.def_cidx=0;
+	domain_opt.eventset=EventSet;
+	domain_opt.domain=PAPI_DOM_ALL;
+
+	retval = PAPI_set_opt(PAPI_DOMAIN,(PAPI_option_t*)&domain_opt);
+	if (retval != PAPI_OK) {
+		if (!quiet) {
+			printf("could not set PAPI_DOM_ALL\n");
+		}
+		test_skip( __FILE__, __LINE__,
+			"this test; trying to set PAPI_DOM_ALL; need to run as root",
+			retval);
 	}
 
 	/* Add our uncore event */
