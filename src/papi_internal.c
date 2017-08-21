@@ -604,9 +604,9 @@ PAPIERROR( char *format, ... )
 	if ( ( _papi_hwi_error_level != PAPI_QUIET ) ||
 		 ( getenv( "PAPI_VERBOSE" ) ) ) {
 		va_start( args, format );
-		fprintf( stderr, "\nPAPI Error: " );
+		fprintf( stderr, "PAPI Error: " );
 		vfprintf( stderr, format, args );
-		fprintf( stderr, ".\n" );
+		fprintf( stderr, "\n" );
 		va_end( args );
 	}
 }
