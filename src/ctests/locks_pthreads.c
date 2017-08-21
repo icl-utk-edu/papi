@@ -4,7 +4,7 @@
  */
 
 #define MAX_THREADS 256
-#define TIME_LIMIT_IN_US 60*1000000    /* Run for about 1 minute or 60000000 us */
+#define BASE_ITER 10000000
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +16,6 @@
 
 volatile long long count = 0;
 volatile long long tmpcount = 0;
-volatile int num_iters = 0;
 
 void
 lockloop( int iters, volatile long long *mycount )
@@ -34,24 +33,12 @@ Slave( void *arg )
 {
 	long long duration;
 
-	( void ) arg;
-
-	sleep( 1 );
 	duration = PAPI_get_real_usec(  );
-	lockloop( 10000, &tmpcount );
+	lockloop( BASE_ITER, &count );
 	duration = PAPI_get_real_usec(  ) - duration;
 
-	/* First one here set's the number */
-	PAPI_lock( PAPI_USR2_LOCK );
-	if ( num_iters == 0 ) {
-		if (!TESTS_QUIET) printf( "10000 iterations took %lld us.\n", duration );
-		num_iters = ( int ) ( 10 * ( TIME_LIMIT_IN_US / duration ) );
-		if (!TESTS_QUIET) printf( "Running %d iterations\n", num_iters );
-	}
-	PAPI_unlock( PAPI_USR2_LOCK );
-
-	lockloop( num_iters, &count );
-	pthread_exit( NULL );
+	printf("%f lock/unlocks per us\n",(float)BASE_ITER/(float)duration);
+	pthread_exit( arg );
 }
 
 
@@ -87,7 +74,7 @@ main( int argc, char **argv )
 	else
 		nthr = hwinfo->ncpu;
 
-	if (!TESTS_QUIET) printf( "Creating %d threads\n", nthr );
+	if (!TESTS_QUIET) printf( "Creating %d threads, %d lock/unlock\n", nthr , BASE_ITER);
 
 	for ( i = 0; i < nthr; i++ ) {
 		rc = pthread_create( &slaves[i], NULL, Slave, NULL );
@@ -103,11 +90,11 @@ main( int argc, char **argv )
 
 	if (!TESTS_QUIET) {
 		printf( "Expected: %lld Received: %lld\n",
-			( long long ) nthr * num_iters,
+			( long long ) nthr * BASE_ITER,
 			count );
 	}
 
-	if ( nthr * num_iters != count )
+	if ( nthr * BASE_ITER != count )
 		test_fail( __FILE__, __LINE__, "Thread Locks", 1 );
 
 	test_pass( __FILE__ );
