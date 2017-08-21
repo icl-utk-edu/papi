@@ -273,7 +273,7 @@ check_exclude_guest( void )
 
 	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
 	if ( ev_fd == -1 ) {
-		PAPIERROR("Couldn't open hw_instructions in exclude_guest test");
+		PAPIERROR("Couldn't open hw_instructions in exclude_guest=0 test");
 		return -1;
 	}
 	close(ev_fd);
@@ -289,7 +289,7 @@ check_exclude_guest( void )
 			exclude_guest_unsupported=1;
 		}
 		else {
-			PAPIERROR("Unexpected errno in exclude_guest test");
+		  PAPIERROR("Couldn't open hw_instructions in exclude_guest=1 test");
 		}
 	} else {
 		exclude_guest_unsupported=0;
