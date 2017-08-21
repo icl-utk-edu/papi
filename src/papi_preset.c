@@ -1182,7 +1182,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 				// it also updates formulas for derived events so that they refer to the correct native event index
 				if (is_event(t, results[res_idx].derived_int, &results[res_idx], i) == 0) {
 					invalid_event = 1;
-					PAPIERROR("Error finding event %s, it is used in derived event %s", t, results[res_idx].symbol);
+					PAPIERROR("Missing event %s, used in derived event %s", t, results[res_idx].symbol);
 					break;
 				}
 
