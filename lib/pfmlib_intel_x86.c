@@ -783,9 +783,9 @@ pfm_intel_x86_get_event_first(void *this)
 	int idx = 0;
 
 	/* skip event for different models */
-	while (!is_model_event(this, idx) && idx < p->pme_count) idx++;
+	while (idx < p->pme_count && !is_model_event(this, idx)) idx++;
 
-	return p->pme_count ? idx : -1;
+	return idx < p->pme_count ? idx : -1;
 }
 
 int
@@ -799,7 +799,7 @@ pfm_intel_x86_get_event_next(void *this, int idx)
 
 	idx++;
 	/* skip event for different models */
-	while (!is_model_event(this, idx) && idx < p->pme_count) idx++;
+	while (idx < p->pme_count && !is_model_event(this, idx)) idx++;
 
 	return idx < p->pme_count ? idx : -1;
 }
