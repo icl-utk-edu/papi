@@ -16,7 +16,6 @@
 #include "papi.h"
 #include "papi_internal.h"
 
-
 static void init_mem_hierarchy( PAPI_mh_info_t * mh_info );
 static int init_amd( PAPI_mh_info_t * mh_info, int *levels );
 static short int _amd_L2_L3_assoc( unsigned short int pattern );
@@ -1529,8 +1528,3 @@ _x86_detect_hypervisor(char *vendor_name)
   }
   return 0;
 }
-
-
-
-
-
