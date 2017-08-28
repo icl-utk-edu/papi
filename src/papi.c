@@ -501,7 +501,7 @@ PAPI_library_init( int version )
 {
     APIDBG( "Entry: version: %#x\n", version);
 
-	int tmp = 0, tmpel;
+	int tmp = 0;
 
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
@@ -591,15 +591,10 @@ PAPI_library_init( int version )
 	}
 #endif
 
-	/* Be verbose for now */
-
-	tmpel = _papi_hwi_error_level;
-	_papi_hwi_error_level = PAPI_VERB_ECONT;
 
 	/* Initialize internal globals */
 	if ( _papi_hwi_init_global_internal(  ) != PAPI_OK ) {
 		_in_papi_library_init_cnt--;
-		_papi_hwi_error_level = tmpel;
 		papi_return( PAPI_EINVAL );
 	}
 
@@ -609,7 +604,6 @@ PAPI_library_init( int version )
 	   init_retval = tmp;
 	   _papi_hwi_shutdown_global_internal(  );
 	   _in_papi_library_init_cnt--;
-	   _papi_hwi_error_level = tmpel;
 	   papi_return( init_retval );
 	}
 
@@ -620,7 +614,6 @@ PAPI_library_init( int version )
 		init_retval = tmp;
 		_papi_hwi_shutdown_global_internal(  );
 		_in_papi_library_init_cnt--;
-		_papi_hwi_error_level = tmpel;
 		papi_return( init_retval );
 	}
 	
@@ -637,13 +630,11 @@ PAPI_library_init( int version )
 		    }
 		}
 		_in_papi_library_init_cnt--;
-		_papi_hwi_error_level = tmpel;
 		papi_return( init_retval );
 	}
 
 	init_level = PAPI_LOW_LEVEL_INITED;
 	_in_papi_library_init_cnt--;
-	_papi_hwi_error_level = tmpel;
 
 	return ( init_retval = PAPI_VER_CURRENT );
 }
