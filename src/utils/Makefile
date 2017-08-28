@@ -68,6 +68,9 @@ print_header.o: print_header.h print_header.c
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
+distclean clobber: clean
+	  rm -f Makefile.target
+
 install: $(UTIL_TARGETS)
 	@echo "Utilities (BINDIR) being installed in: \"$(BINDIR)\"";
 	-mkdir -p $(BINDIR)

@@ -256,15 +256,14 @@ ifneq (${COMPONENTS},)
 			$(SETPATH) cd ../../.. ; done
 endif
 
-clean: comp_tests_clean
+clean: comp_tests_clean native_clean
 	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c 
+	-cd ../doc; $(MAKE) clean
 	-cd ctests; $(MAKE) clean
-	-cd ctests/bgp; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
 	-cd testlib; $(MAKE) clean
 	-cd utils;  $(MAKE) clean
 	-cd validation_tests; $(MAKE) clean
-	-cd ../doc; $(MAKE) clean
 
 # Component tests cleaning
 comp_tests_clean:
@@ -276,7 +275,14 @@ ifneq (${COMPONENTS},)
 	done 
 endif
 
-clobber distclean: clean native_clean native_clobber
+clobber distclean: clean native_clobber 
+	-cd ../doc; $(MAKE) distclean
+	-cd ctests; $(MAKE) distclean
+	-cd ftests; $(MAKE) distclean
+	-cd testlib; $(MAKE) distclean
+	-cd utils;  $(MAKE) distclean
+	-cd validation_tests; $(MAKE) distclean
+	-cd components; $(MAKE) -f Makefile_comp_tests distclean
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h $(PAPI_EVENTS_TABLE)
 	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 

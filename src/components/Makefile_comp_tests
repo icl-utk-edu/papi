@@ -17,4 +17,7 @@ install:
 	-cp Makefile $(DATADIR)/$(NAME)/tests
 	-cp ../../Makefile_comp_tests.target $(DATADIR)/Makefile_comp_tests
 
+clean:
 
+distclean clobber: clean
+	  rm -f Makefile_comp_tests.target

@@ -425,3 +425,6 @@ prof_utils.o: prof_utils.c $(testlibdir)/papi_test.h prof_utils.h
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL) unregister_pthreads
+
+distclean clobber: clean
+	  rm -f Makefile.target

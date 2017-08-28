@@ -1,4 +1,4 @@
-.PHONY:	clean install force_me all
+.PHONY:	clean clobber distclean install force_me all
 
 all: man
 	@echo "Built PAPI user documentation"
@@ -16,6 +16,8 @@ man/man1: ../src/utils/papi_avail.c ../src/utils/papi_clockres.c  ../src/utils/p
  
 clean:
 	rm -rf man html doxyerror
+
+distclean clobber: clean
 
 install: man
 	-rm -f man/man3/HighLevelInfo.3

@@ -113,7 +113,10 @@ papi_tot_ins: papi_tot_ins.o $(TESTLIB) $(PAPILIB) display_error.o instructions_
 	$(CC) -o papi_tot_ins papi_tot_ins.o $(TESTLIB) display_error.o instructions_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
 
-.PHONY : all clean
+.PHONY : all clean distclean clobber
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
+
+distclean clobber: clean
+	  rm -f Makefile.target
