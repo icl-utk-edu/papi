@@ -1,6 +1,9 @@
 /* This file attempts to test the retired branches taken	*/
 /* performance counter PAPI_BR_TKN				*/
 
+/* This measures taken *conditional* branches			*/
+/* Though this may fall back to total if not available.		*/
+
 /* by Vince Weaver, <vincent.weaver@maine.edu>			*/
 
 #include <stdlib.h>
@@ -18,17 +21,23 @@
 int main(int argc, char **argv) {
 
 	int num_runs=100,i;
-	long long high=0,low=0,average=0,expected=1000000;
+	long long high=0,low=0,average=0,expected=500000;
 	double error;
 
 	long long count,total=0;
 	int quiet=0,retval,ins_result;
-	int eventset=PAPI_NULL;
+	int eventset_total=PAPI_NULL;
+	int eventset_conditional=PAPI_NULL;
+	int eventset_taken=PAPI_NULL;
+	int eventset_nottaken=PAPI_NULL;
+	long long count_total,count_conditional,count_taken,count_nottaken;
+
 
 	quiet=tests_quiet(argc,argv);
 
 	if (!quiet) {
 		printf("\nTesting the PAPI_BR_TKN event.\n");
+		printf("\tIt measures total number of conditional branches not taken\n");
 	}
 
 	/* Init the PAPI library */
@@ -37,28 +46,98 @@ int main(int argc, char **argv) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 	}
 
-	retval=PAPI_create_eventset(&eventset);
+	/* Create Total Eventset */
+	retval=PAPI_create_eventset(&eventset_total);
 	if (retval!=PAPI_OK) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 	}
 
-	retval=PAPI_add_named_event(eventset,"PAPI_BR_TKN");
+	retval=PAPI_add_named_event(eventset_total,"PAPI_BR_INS");
+	if (retval!=PAPI_OK) {
+		test_skip( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
+	}
+
+
+	/* Create Total Eventset */
+	retval=PAPI_create_eventset(&eventset_conditional);
+	if (retval!=PAPI_OK) {
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
+
+	retval=PAPI_add_named_event(eventset_conditional,"PAPI_BR_CN");
+	if (retval!=PAPI_OK) {
+		test_skip( __FILE__, __LINE__, "adding PAPI_BR_CN", retval );
+	}
+
+	/* Create Taken Eventset */
+	retval=PAPI_create_eventset(&eventset_taken);
+	if (retval!=PAPI_OK) {
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
+
+	retval=PAPI_add_named_event(eventset_taken,"PAPI_BR_TKN");
 	if (retval!=PAPI_OK) {
 		test_skip( __FILE__, __LINE__, "adding PAPI_BR_TKN", retval );
 	}
 
+	/* Create Not-Taken Eventset */
+	retval=PAPI_create_eventset(&eventset_nottaken);
+	if (retval!=PAPI_OK) {
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+	}
+
+	retval=PAPI_add_named_event(eventset_taken,"PAPI_BR_NTK");
+	if (retval!=PAPI_OK) {
+		test_skip( __FILE__, __LINE__, "adding PAPI_BR_NTK", retval );
+	}
+
+	/* Get total count */
+	PAPI_reset(eventset_total);
+	PAPI_start(eventset_total);
+	ins_result=branches_testcode();
+	retval=PAPI_stop(eventset_total,&count_total);
+
+	/* Get total count */
+	PAPI_reset(eventset_conditional);
+	PAPI_start(eventset_conditional);
+	ins_result=branches_testcode();
+	retval=PAPI_stop(eventset_conditional,&count_conditional);
+
+	/* Get taken count */
+	PAPI_reset(eventset_taken);
+	PAPI_start(eventset_taken);
+	ins_result=branches_testcode();
+	retval=PAPI_stop(eventset_taken,&count_taken);
+
+
+	/* Get not-taken count */
+	PAPI_reset(eventset_nottaken);
+	PAPI_start(eventset_nottaken);
+	ins_result=branches_testcode();
+	retval=PAPI_stop(eventset_nottaken,&count_nottaken);
+
+
 	if (!quiet) {
-		printf("Testing a loop with %lld branches (%d times):\n",
+		printf("The test code has:\n");
+		printf("\t%lld total branches\n",count_total);
+		printf("\t%lld conditional branches\n",count_conditional);
+		printf("\t%lld taken branches\n",count_taken);
+		printf("\t%lld not-taken branches\n",count_nottaken);
+
+	}
+
+	if (!quiet) {
+		printf("Testing a loop with %lld taken branches (%d times):\n",
 			expected,num_runs);
 	}
 
 	for(i=0;i<num_runs;i++) {
-		PAPI_reset(eventset);
-		PAPI_start(eventset);
+		PAPI_reset(eventset_taken);
+		PAPI_start(eventset_taken);
 
 		ins_result=branches_testcode();
 
-		retval=PAPI_stop(eventset,&count);
+		retval=PAPI_stop(eventset_taken,&count);
 
 		if (ins_result==CODE_UNIMPLEMENTED) {
 			fprintf(stderr,"\tCode unimplemented\n");
