@@ -21,7 +21,8 @@
 int main(int argc, char **argv) {
 
 	int num_runs=100,i;
-	long long high=0,low=0,average=0,expected=500000;
+	long long high=0,low=0,average=0;
+	long long expected_cond=500000,expected_total=1000000;
 	double error;
 
 	long long count,total=0;
@@ -31,7 +32,8 @@ int main(int argc, char **argv) {
 	int eventset_taken=PAPI_NULL;
 	int eventset_nottaken=PAPI_NULL;
 	long long count_total,count_conditional,count_taken,count_nottaken;
-
+	int cond_avail=1,nottaken_avail=1;
+	int not_expected=0;
 
 	quiet=tests_quiet(argc,argv);
 
@@ -66,7 +68,9 @@ int main(int argc, char **argv) {
 
 	retval=PAPI_add_named_event(eventset_conditional,"PAPI_BR_CN");
 	if (retval!=PAPI_OK) {
-		test_skip( __FILE__, __LINE__, "adding PAPI_BR_CN", retval );
+		if (!quiet) printf("Could not add PAPI_BR_CN\n");
+		cond_avail=0;
+		//test_skip( __FILE__, __LINE__, "adding PAPI_BR_CN", retval );
 	}
 
 	/* Create Taken Eventset */
@@ -77,6 +81,7 @@ int main(int argc, char **argv) {
 
 	retval=PAPI_add_named_event(eventset_taken,"PAPI_BR_TKN");
 	if (retval!=PAPI_OK) {
+		if (!quiet) printf("Could not add PAPI_BR_TKN\n");
 		test_skip( __FILE__, __LINE__, "adding PAPI_BR_TKN", retval );
 	}
 
@@ -88,7 +93,9 @@ int main(int argc, char **argv) {
 
 	retval=PAPI_add_named_event(eventset_taken,"PAPI_BR_NTK");
 	if (retval!=PAPI_OK) {
-		test_skip( __FILE__, __LINE__, "adding PAPI_BR_NTK", retval );
+		if (!quiet) printf("Could not add PAPI_BR_NTK\n");
+		nottaken_avail=0;
+		//test_skip( __FILE__, __LINE__, "adding PAPI_BR_NTK", retval );
 	}
 
 	/* Get total count */
@@ -97,11 +104,13 @@ int main(int argc, char **argv) {
 	ins_result=branches_testcode();
 	retval=PAPI_stop(eventset_total,&count_total);
 
-	/* Get total count */
-	PAPI_reset(eventset_conditional);
-	PAPI_start(eventset_conditional);
-	ins_result=branches_testcode();
-	retval=PAPI_stop(eventset_conditional,&count_conditional);
+	/* Get conditional count */
+	if (cond_avail) {
+		PAPI_reset(eventset_conditional);
+		PAPI_start(eventset_conditional);
+		ins_result=branches_testcode();
+		retval=PAPI_stop(eventset_conditional,&count_conditional);
+	}
 
 	/* Get taken count */
 	PAPI_reset(eventset_taken);
@@ -111,24 +120,29 @@ int main(int argc, char **argv) {
 
 
 	/* Get not-taken count */
-	PAPI_reset(eventset_nottaken);
-	PAPI_start(eventset_nottaken);
-	ins_result=branches_testcode();
-	retval=PAPI_stop(eventset_nottaken,&count_nottaken);
-
+	if (nottaken_avail) {
+		PAPI_reset(eventset_nottaken);
+		PAPI_start(eventset_nottaken);
+		ins_result=branches_testcode();
+		retval=PAPI_stop(eventset_nottaken,&count_nottaken);
+	}
 
 	if (!quiet) {
 		printf("The test code has:\n");
 		printf("\t%lld total branches\n",count_total);
-		printf("\t%lld conditional branches\n",count_conditional);
+		if (cond_avail) {
+			printf("\t%lld conditional branches\n",count_conditional);
+		}
 		printf("\t%lld taken branches\n",count_taken);
-		printf("\t%lld not-taken branches\n",count_nottaken);
+		if (nottaken_avail) {
+			printf("\t%lld not-taken branches\n",count_nottaken);
+		}
 
 	}
 
 	if (!quiet) {
-		printf("Testing a loop with %lld taken branches (%d times):\n",
-			expected,num_runs);
+		printf("Testing a loop with %lld conditional taken branches (%d times):\n",
+			expected_cond,num_runs);
 	}
 
 	for(i=0;i<num_runs;i++) {
@@ -156,14 +170,29 @@ int main(int argc, char **argv) {
 
 	average=(total/num_runs);
 
-	error=display_error(average,high,low,expected,quiet);
+	error=display_error(average,high,low,expected_cond,quiet);
 
 	if ((error > 1.0) || (error<-1.0)) {
 		if (!quiet) printf("Instruction count off by more than 1%%\n");
-		test_fail( __FILE__, __LINE__, "Error too high", 1 );
+		not_expected=1;
+		//test_fail( __FILE__, __LINE__, "Error too high", 1 );
 	}
 
 	if (!quiet) printf("\n");
+
+	/* Check if using TOTAL instead of CONDITIONAL */
+	if (not_expected) {
+
+		error=display_error(average,high,low,expected_total,quiet);
+
+		if ((error > 1.0) || (error<-1.0)) {
+			if (!quiet) printf("Instruction count off by more than 1%%\n");
+			test_fail( __FILE__, __LINE__, "Error too high", 1 );
+		}
+		else {
+			test_warn(__FILE__,__LINE__,"Using TOTAL BRANCHES as base rather than CONDITIONAL BRANCHES\n",0);
+		}
+	}
 
 	test_pass( __FILE__ );
 
