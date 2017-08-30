@@ -1,6 +1,11 @@
 /* This file attempts to test the predicted correctly branches	*/
 /* performance event as counted by PAPI_BR_PRC			*/
 
+/* Ideally this event should measure 				*/
+/*	predicted correctly *conditional* branches		*/
+
+/* If that's not available, then use total branches.		*/
+
 /* by Vince Weaver, <vincent.weaver@maine.edu>			*/
 
 
@@ -31,7 +36,10 @@ int main(int argc, char **argv) {
 	quiet=tests_quiet(argc,argv);
 
 	if (!quiet) {
-		printf("\nTesting the PAPI_BR_PRC event.\n");
+		printf("\nTesting the PAPI_BR_PRC event.\n\n");
+		printf("This should measure predicted correctly conditional branches\n");
+		printf("If such a counter is not available, it may report predicted correctly\n");
+		printf("total branches instead.\n");
 	}
 
 	/* Init the PAPI library */
@@ -46,10 +54,17 @@ int main(int argc, char **argv) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 	}
 
-	retval=PAPI_add_named_event(total_eventset,"PAPI_BR_INS");
+//	retval=PAPI_add_named_event(total_eventset,"PAPI_BR_INS");
+//	if (retval!=PAPI_OK) {
+//		if (!quiet) printf("Could not add PAPI_BR_INS\n");
+//		test_skip( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
+//	}
+
+
+	retval=PAPI_add_named_event(total_eventset,"PAPI_BR_CN");
 	if (retval!=PAPI_OK) {
-		if (!quiet) printf("Could not add PAPI_BR_INS\n");
-		test_skip( __FILE__, __LINE__, "adding PAPI_BR_INS", retval );
+		if (!quiet) printf("Could not add PAPI_BR_CN\n");
+		test_skip( __FILE__, __LINE__, "adding PAPI_BR_CN", retval );
 	}
 
 	/* Create correct eventset */
@@ -142,7 +157,7 @@ int main(int argc, char **argv) {
 	if (!quiet) {
 		printf("\nTesting a function that branches "
 			"based on a random number\n");
-		printf("   The loop has %lld branches.\n",expected);
+		printf("   The loop has %lld conditional branches.\n",expected);
 		printf("   %d are random branches.\n",num_random_branches);
 	}
 
