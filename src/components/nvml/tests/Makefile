@@ -3,8 +3,8 @@ include ../../Makefile_comp_tests
 include ../Makefile.nvml
 
 NVCC = $(CUDA_DIR)/bin/nvcc
-NVCFLAGS = -arch=sm_13
-CUDALIBS = -L$(NVML_DIR)/lib64 -L$(CUDA_DIR)/lib64 -lcuda -lcudart -lnvidia-ml
+NVCFLAGS = -L$(NVML_INCDIR)
+CUDALIBS = -L$(NVML_LIBDIR) -L$(CUDA_DIR)/lib64 -lcuda -lcudart -lnvidia-ml
 
 %.o:%.cu
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<

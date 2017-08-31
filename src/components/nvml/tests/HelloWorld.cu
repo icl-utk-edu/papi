@@ -25,6 +25,7 @@
 
 #include <cuda.h>
 #include <stdio.h>
+#include "papi.h"
 #include "papi_test.h"
 
 #define NUM_EVENTS 1
@@ -45,8 +46,9 @@ int main(int argc, char** argv)
 	   FOR THE CUDA DEVICE YOU ARE RUNNING ON.
 	   RUN papi_native_avail to get a list of CUDA events that are 
 	   supported on your machine */
-    char *EventName[] = { "PAPI_FP_OPS" };
-	int events[NUM_EVENTS];
+        // e.g. on a P100 nvml:::Tesla_P100-SXM2-16GB:power
+        char *EventName[] = { "PAPI_FP_OPS" };
+        int events[NUM_EVENTS];
 	int eventCount = 0;
 	
 	/* PAPI Initialization */

@@ -523,7 +523,7 @@ detectDevices( )
 	/* We want to key our list of nvmlDevice_ts by each device's cuda index */
 	for (i=0; i < device_count; i++) {
 			cuerr = (*cudaDeviceGetPCIBusIdPtr)( busId, 16, i );
-			if ( CUDA_SUCCESS != cuerr ) {
+			if ( cudaSuccess != cuerr ) {
 				SUBDBG("cudaDeviceGetPCIBusId failed.\n");
 				return PAPI_ESYS;
 			}
@@ -930,7 +930,7 @@ _papi_nvml_init_component( int cidx )
 		}
 
 		cuerr = (*cuInitPtr)( 0 );
-		if ( CUDA_SUCCESS != cuerr ) {
+		if ( cudaSuccess != cuerr ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "The CUDA library failed to initialize.");
 				return PAPI_ENOSUPP;
 		}
@@ -943,7 +943,7 @@ _papi_nvml_init_component( int cidx )
 		}
 
 		cuerr = (*cudaGetDeviceCountPtr)( &cuda_count );
-		if ( CUDA_SUCCESS != cuerr ) {
+		if ( cudaSuccess != cuerr ) {
 				strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a device count from CUDA.");
 				return PAPI_ENOSUPP;
 		}
