@@ -50,22 +50,20 @@ show_bgp_conf:
 
 static: $(LIBRARY)
 
-shared: $(SHLIB)
-
 $(LIBRARY): $(OBJECTS)
 	rm -f $(LIBRARY)
 	$(AR) $(ARG64) rv $(LIBRARY) $(OBJECTS)
 
+shared: libpapi.so libpapi.so.$(PAPIVER)
+
+libpapi.so libpapi.so.$(PAPIVER): $(SHLIB)
+	ln -sf $(SHLIB) $@
+	   
 $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
-	@if test "$(SHLIB)" != "libpapi.so" ; then \
-	    rm -f $(SHLIB) libpapi.so; \
-	fi
+	rm -f $(SHLIB) libpapi.so libpapi.so.$(PAPIVER); 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS) $(LDFLAGS)
 	@if test "$(POST_BUILD)" != "" ; then \
 		-$(POST_BUILD) ; \
-	fi
-	@if test "$(SHLIB)" != "libpapi.so" ; then \
-		ln -sf $(SHLIB) libpapi.so; \
 	fi
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
@@ -257,7 +255,7 @@ ifneq (${COMPONENTS},)
 endif
 
 clean: comp_tests_clean native_clean
-	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c 
+	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so libpapi.so.$(PAPIVER) $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c 
 	-cd ../doc; $(MAKE) clean
 	-cd ctests; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
