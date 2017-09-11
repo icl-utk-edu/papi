@@ -19,6 +19,7 @@
  *	@section Options
  * <ul>
  * <li>--help, -h    print this help message
+ * <li>--check, -c    print this help message
  * <li>-e EVENTNAME  display detailed information about named native event
  * <li>-i EVENTSTR   include only event names that contain EVENTSTR
  * <li>-x EVENTSTR   exclude any event names that contain EVENTSTR

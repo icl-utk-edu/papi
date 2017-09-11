@@ -1,13 +1,13 @@
-.TH "papi_avail" 1 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
+.TH "papi_avail" 1 "Wed Sep 6 2017" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 papi_avail \- papi_avail utility\&.
 .PP
-file papi_avail\&.c 
+file avail\&.c 
 .SH "Name"
 .PP
-papi_avail - provides availability and information about PAPI preset and user defined events\&.
+papi_avail - provides availability and detail information for PAPI preset and user defined events\&.
 .SH "Synopsis"
 .PP
 papi_avail [-adht] [-e event]
@@ -18,7 +18,7 @@ papi_avail is a PAPI utility program that reports information about the current 
 .PP
 .PD 0
 .IP "\(bu" 2
---help, -h Print this help message\&.  
+-h Display help information about this utility\&. 
 .IP "\(bu" 2
 -a Display only the available PAPI events\&. 
 .IP "\(bu" 2
@@ -26,11 +26,38 @@ papi_avail is a PAPI utility program that reports information about the current 
 .IP "\(bu" 2
 -d Display PAPI event information in a more detailed format\&. 
 .IP "\(bu" 2
--h Display help information about this utility\&. 
+-e < event > Display detailed event information for the named event\&. This event can be a preset event, a user defined event, or a native event\&. If the event is a preset or a user defined event the output shows a list of native events the event is based on and the formula that is used to compute the events final value\&.
+.br
+
+.PP
+.PP
+Event filtering options 
+.PD 0
+
 .IP "\(bu" 2
--t Display the PAPI event information in a tabular format\&. This is the default\&. 
+--br Display branch related PAPI preset events 
 .IP "\(bu" 2
--e < event > Display detailed event information for the named event\&. This event can be a preset event, a user defined event, or a native event\&. If the event is a preset or a user defined event the output shows a list of native events the event is based on and the formula that is used to compute the events final value\&. 
+--cache Display cache related PAPI preset events 
+.IP "\(bu" 2
+--cnd Display conditional PAPI preset events 
+.IP "\(bu" 2
+--fp Display Floating Point related PAPI preset events 
+.IP "\(bu" 2
+--ins Display instruction related PAPI preset events 
+.IP "\(bu" 2
+--idl Display Stalled or Idle PAPI preset events 
+.IP "\(bu" 2
+--l1 Display level 1 cache related PAPI preset events 
+.IP "\(bu" 2
+--l2 Display level 2 cache related PAPI preset events 
+.IP "\(bu" 2
+--l3 Display level 3 cache related PAPI preset events 
+.IP "\(bu" 2
+--mem Display memory related PAPI preset events 
+.IP "\(bu" 2
+--msc Display miscellaneous PAPI preset events 
+.IP "\(bu" 2
+--tlb Display Translation Lookaside Buffer PAPI preset events 
 .PP
 .SH "Bugs"
 .PP
@@ -38,7 +65,7 @@ There are no known bugs in this utility\&. If you find a bug, it should be repor
 .br
  
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 PAPI_derived_event_files 
 .RE

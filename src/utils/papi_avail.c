@@ -15,17 +15,31 @@
   *
   *	@section Options
   * <ul>
-  *		<li>-a	Display only the available PAPI events.
-  *             <li>-c  Display only the available PAPI events after a check.
-  *		<li>-d	Display PAPI event information in a more detailed format.
   *		<li>-h	Display help information about this utility.
-  *		<li>-t	Display the PAPI event information in a tabular format. This is the default.
+  *		<li>-a	Display only the available PAPI events.
+  *     <li>-c  Display only the available PAPI events after a check.
+  *		<li>-d	Display PAPI event information in a more detailed format.
   *		<li>-e < event >	Display detailed event information for the named event. 
   *			This event can be a preset event, a user defined event, or a native event.
   *			If the event is a preset or a user defined event the output shows a list of native
-  *			events the event is based on and the formula that is used to compute the events final value.
+  *			events the event is based on and the formula that is used to compute the events final value.\n
   *	</ul>
   *
+  * Event filtering options 
+  * <ul>
+  *     <li>--br        Display branch related PAPI preset events
+  *     <li>--cache     Display cache related PAPI preset events
+  *     <li>--cnd       Display conditional PAPI preset events
+  *     <li>--fp        Display Floating Point related PAPI preset events
+  *     <li>--ins       Display instruction related PAPI preset events
+  *     <li>--idl       Display Stalled or Idle PAPI preset events
+  *     <li>--l1        Display level 1 cache related PAPI preset events
+  *     <li>--l2        Display level 2 cache related PAPI preset events
+  *     <li>--l3        Display level 3 cache related PAPI preset events
+  *     <li>--mem       Display memory related PAPI preset events
+  *     <li>--msc       Display miscellaneous PAPI preset events
+  *     <li>--tlb       Display Translation Lookaside Buffer PAPI preset events
+  * </ul>
   *	@section Bugs
   *	There are no known bugs in this utility.
   *	If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
@@ -189,11 +203,11 @@ print_help( char **argv )
 	printf( "Usage: %s [options]\n", argv[0] );
 	printf( "Options:\n\n" );
 	printf( "General command options:\n" );
+	printf( "\t-h, --help       Print this help message\n" );
 	printf( "\t-a, --avail      Display only available PAPI preset and user defined events\n" );
 	printf( "\t-c, --check      Display only available PAPI preset and user defined events after an availability check\n" );
 	printf( "\t-d, --detail     Display detailed information about events\n" );
 	printf( "\t-e EVENTNAME     Display detail information about specified event\n" );
-	printf( "\t-h, --help       Print this help message\n" );
 	printf( "\nEvent filtering options:\n" );
 	printf( "\t--br             Display branch related PAPI preset events\n" );
 	printf( "\t--cache          Display cache related PAPI preset events\n" );
