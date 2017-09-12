@@ -3,7 +3,7 @@
 /****************************/
 
 /** 
- * @file    linux-infiniband.c
+ * @file    linux-infiniband_umad.c
  * @author  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
  *          jagode@eecs.utk.edu
  *
@@ -70,7 +70,7 @@ static void* dl2 = NULL;
 
 static int linkInfinibandLibraries ();
 
-papi_vector_t _infiniband_vector;
+papi_vector_t _infiniband_umad_vector;
 
 
 
@@ -580,7 +580,7 @@ INFINIBAND_init_component( int cidx )
 
 	/* make sure that the infiniband library finds the kernel module loaded. */
 	if ( (*umad_initPtr)(  ) < 0 ) {
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Call to initialize umad library failed.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Call to initialize umad library failed.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 
@@ -590,7 +590,7 @@ INFINIBAND_init_component( int cidx )
 	}
 
 	/* Export the component id */
-	_infiniband_vector.cmp_info.CmpIdx = cidx;
+	_infiniband_umad_vector.cmp_info.CmpIdx = cidx;
 
 	return ( PAPI_OK );
 }
@@ -607,7 +607,7 @@ linkInfinibandLibraries ()
 {
 	/* Attempt to guess if we were statically linked to libc, if so bail */
 	if ( _dl_non_dynamic_init != NULL ) {
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "The Infiniband component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "The Infiniband component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
 		return PAPI_ENOSUPP;
 	}
 
@@ -615,25 +615,25 @@ linkInfinibandLibraries ()
 	dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);
 	if (!dl1)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband library libibumad.so not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibumad.so not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	umad_initPtr = dlsym(dl1, "umad_init");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function umad_init not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function umad_init not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	umad_get_cas_namesPtr = dlsym(dl1, "umad_get_cas_names");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function umad_get_cas_names not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function umad_get_cas_names not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	umad_get_caPtr = dlsym(dl1, "umad_get_ca");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function umad_get_ca not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function umad_get_ca not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 
@@ -641,37 +641,37 @@ linkInfinibandLibraries ()
 	dl2 = dlopen("libibmad.so", RTLD_NOW | RTLD_GLOBAL);
 	if (!dl2)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband library libibmad.so not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibmad.so not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	mad_decode_fieldPtr = dlsym(dl2, "mad_decode_field");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function mad_decode_field not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function mad_decode_field not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	mad_rpc_open_portPtr = dlsym(dl2, "mad_rpc_open_port");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function mad_rpc_open_port not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function mad_rpc_open_port not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	ib_resolve_self_viaPtr = dlsym(dl2, "ib_resolve_self_via");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function ib_resolve_self_via not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function ib_resolve_self_via not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	performance_reset_viaPtr = dlsym(dl2, "performance_reset_via");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function performance_reset_via not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function performance_reset_via not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 	pma_query_viaPtr = dlsym(dl2, "pma_query_via");
 	if (dlerror() != NULL)
 	{
-		strncpy(_infiniband_vector.cmp_info.disabled_reason, "Infiniband function pma_query_via not found.",PAPI_MAX_STR_LEN);
+		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband function pma_query_via not found.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
 
@@ -907,7 +907,7 @@ INFINIBAND_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 /*
  *
  */
-papi_vector_t _infiniband_vector = {
+papi_vector_t _infiniband_umad_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
 				 .name ="infiniband",

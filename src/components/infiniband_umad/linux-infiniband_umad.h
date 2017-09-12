@@ -3,7 +3,7 @@
 /****************************/
 
 /** 
- * @file    linux-infiniband.h
+ * @file    linux-infiniband_umad.h
  * @author  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
  *          jagode@eecs.utk.edu
  *
