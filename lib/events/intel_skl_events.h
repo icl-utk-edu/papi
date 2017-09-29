@@ -2117,6 +2117,26 @@ static const intel_x86_umask_t skl_core_power[]={
    },
 };
 
+static const intel_x86_umask_t skl_sw_prefetch[]={
+   { .uname  = "NTA",
+     .udesc  = "Number of prefetch.nta instructions executed",
+     .ucode = 0x100,
+     .umodel = PFM_PMU_INTEL_SKL,
+     .uflags= INTEL_X86_NCOMBO,
+   },
+   { .uname  = "T0",
+     .udesc  = "Number of prefetch.t0 instructions executed",
+     .ucode = 0x200,
+     .umodel = PFM_PMU_INTEL_SKL,
+     .uflags= INTEL_X86_NCOMBO,
+   },
+   { .uname  = "T1_T2",
+     .udesc  = "Number prefetch.t1 or prefetch.t2 instructions executed",
+     .ucode = 0x4000,
+     .umodel = PFM_PMU_INTEL_SKL,
+     .uflags= INTEL_X86_NCOMBO,
+   },
+};
 
 static const intel_x86_entry_t intel_skl_pe[]={
   { .name   = "UNHALTED_CORE_CYCLES",
@@ -2801,6 +2821,15 @@ static const intel_x86_entry_t intel_skl_pe[]={
     .model  = PFM_PMU_INTEL_SKX,
     .ngrp = 1,
     .umasks = skl_core_power,
+  },
+  { .name   = "SW_PREFETCH",
+    .desc   = "Software prefetches",
+    .modmsk = INTEL_V4_ATTRS,
+    .cntmsk = 0xf,
+    .code = 0x32,
+    .numasks = LIBPFM_ARRAY_SIZE(skl_sw_prefetch),
+    .ngrp = 1,
+    .umasks = skl_sw_prefetch,
   },
   { .name   = "OFFCORE_REQUESTS_BUFFER",
     .desc   = "Offcore requests buffer",
