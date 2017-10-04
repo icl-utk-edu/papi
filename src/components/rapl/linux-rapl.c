@@ -343,29 +343,13 @@ _rapl_init_component( int cidx )
 	/* Detect RAPL support */
 	switch(hw_info->cpuid_model) {
 		case 42:	/* SandyBridge */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=1;
-			dram_avail=0;
-			break;
-		case 45:	/* SandyBridge-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-			break;
 		case 58:	/* IvyBridge */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=1;
 			dram_avail=0;
 			break;
-		case 62:	/* IvyBridge-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-			break;
+
 		case 60:	/* Haswell */
 		case 69:	/* Haswell ULT */
 		case 70:	/* Haswell */
@@ -374,25 +358,9 @@ _rapl_init_component( int cidx )
 			pp1_avail=1;
 			dram_avail=1;
 			break;
-		case 63:	/* Haswell-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-			break;
+
 		case 61:	/* Broadwell */
 		case 71:	/* Broadwell-H*/
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-			break;
-		case 79:	/* Broadwell-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-			break;
 		case 78:	/* Skylake */
 		case 94:	/* Skylake H/S */
 			package_avail=1;
@@ -400,12 +368,35 @@ _rapl_init_component( int cidx )
 			pp1_avail=0;
 			dram_avail=1;
 			break;
+
+
+
+		/* Server Class Machines */
+
+		case 45:	/* SandyBridge-EP */
+		case 62:	/* IvyBridge-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+
+		case 63:	/* Haswell-EP */
+		case 79:	/* Broadwell-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+
+
 		case 87:	/* Knights Landing (KNL) */
 			package_avail=1;
 			pp0_avail=0;
 			pp1_avail=0;
 			dram_avail=1;
 			break;
+
 		default:	/* not a supported model */
 			strncpy(_rapl_vector.cmp_info.disabled_reason,
 				"CPU model not supported",
