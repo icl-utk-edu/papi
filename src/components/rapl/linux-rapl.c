@@ -367,6 +367,9 @@ _rapl_init_component( int cidx )
 		case 60:	/* Haswell */
 		case 69:	/* Haswell ULT */
 		case 70:	/* Haswell GT3E */
+		case 92:	/* Atom Goldmont */
+		case 122:	/* Atom Gemini Lake */
+		case 95:	/* Atom Denverton */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=1;
@@ -397,8 +400,6 @@ _rapl_init_component( int cidx )
 			psys_avail=1;
 			different_units=0;
 			break;
-
-
 
 		/* Server Class Machines */
 
