@@ -302,7 +302,7 @@ _rapl_init_component( int cidx )
      FILE *fff;
      char filename[BUFSIZ];
 
-     int package_avail, dram_avail, pp0_avail, pp1_avail;
+     int package_avail, dram_avail, pp0_avail, pp1_avail, different_units;
 
      long long result;
      int package;
@@ -342,12 +342,16 @@ _rapl_init_component( int cidx )
 
 	/* Detect RAPL support */
 	switch(hw_info->cpuid_model) {
+
+		/* Desktop / Laptops */
+
 		case 42:	/* SandyBridge */
 		case 58:	/* IvyBridge */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=1;
 			dram_avail=0;
+			different_units=0;
 			break;
 
 		case 60:	/* Haswell */
@@ -357,6 +361,7 @@ _rapl_init_component( int cidx )
 			pp0_avail=1;
 			pp1_avail=1;
 			dram_avail=1;
+			different_units=0;
 			break;
 
 		case 61:	/* Broadwell */
@@ -367,6 +372,7 @@ _rapl_init_component( int cidx )
 			pp0_avail=1;
 			pp1_avail=0;
 			dram_avail=1;
+			different_units=0;
 			break;
 
 
@@ -379,6 +385,7 @@ _rapl_init_component( int cidx )
 			pp0_avail=1;
 			pp1_avail=0;
 			dram_avail=1;
+			different_units=0;
 			break;
 
 		case 63:	/* Haswell-EP */
@@ -387,6 +394,7 @@ _rapl_init_component( int cidx )
 			pp0_avail=1;
 			pp1_avail=0;
 			dram_avail=1;
+			different_units=1;
 			break;
 
 
@@ -395,6 +403,7 @@ _rapl_init_component( int cidx )
 			pp0_avail=0;
 			pp1_avail=0;
 			dram_avail=1;
+			different_units=1;
 			break;
 
 		default:	/* not a supported model */
@@ -483,8 +492,7 @@ _rapl_init_component( int cidx )
 	/* see https://lkml.org/lkml/2015/3/20/582		*/
 	/* Knights Landing is the same */
 	/* so is Broadwell-EP */
-	if (( hw_info->cpuid_model==63) ||  (hw_info->cpuid_model==87 ) ||
-		(hw_info->cpuid_model==79)) {
+	if ( different_units ) {
 		dram_energy_divisor=1<<16;
 	}
 	else {
