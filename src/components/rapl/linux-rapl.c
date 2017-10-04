@@ -63,6 +63,9 @@
 #define MSR_DRAM_PERF_STATUS            0x61B
 #define MSR_DRAM_POWER_INFO             0x61C
 
+/* PSYS RAPL Domain */
+#define MSR_PLATFORM_ENERGY_STATUS	0x64d
+
 /* RAPL bitsmasks */
 #define POWER_UNIT_OFFSET          0
 #define POWER_UNIT_MASK         0x0f
@@ -148,6 +151,7 @@ int cpu_energy_divisor,dram_energy_divisor;
 #define PACKAGE_MAXIMUM_CNT     8
 #define PACKAGE_TIME_WINDOW_CNT 9
 #define DRAM_ENERGY		10
+#define PLATFORM_ENERGY		11
 
 /***************************************************************************/
 /******  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *******/
@@ -214,6 +218,10 @@ static long long convert_rapl_energy(int index, long long value) {
 
    if (rapl_native_events[index].type==DRAM_ENERGY) {
       return_val.ll = (long long)(((double)value/dram_energy_divisor)*1e9);
+   }
+
+   if (rapl_native_events[index].type==PLATFORM_ENERGY) {
+      return_val.ll = (long long)(((double)value/cpu_energy_divisor)*1e9);
    }
 
    if (rapl_native_events[index].type==PACKAGE_THERMAL) {
@@ -302,7 +310,8 @@ _rapl_init_component( int cidx )
      FILE *fff;
      char filename[BUFSIZ];
 
-     int package_avail, dram_avail, pp0_avail, pp1_avail, different_units;
+	int package_avail, dram_avail, pp0_avail, pp1_avail, psys_avail;
+	int different_units;
 
      long long result;
      int package;
@@ -351,29 +360,41 @@ _rapl_init_component( int cidx )
 			pp0_avail=1;
 			pp1_avail=1;
 			dram_avail=0;
+			psys_avail=0;
 			different_units=0;
 			break;
 
 		case 60:	/* Haswell */
 		case 69:	/* Haswell ULT */
-		case 70:	/* Haswell */
+		case 70:	/* Haswell GT3E */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=1;
 			dram_avail=1;
+			psys_avail=0;
 			different_units=0;
 			break;
 
 		case 61:	/* Broadwell */
-		case 71:	/* Broadwell-H*/
-		case 78:	/* Skylake */
-		case 94:	/* Skylake H/S */
-		case 142:	/* Kabylake */
-		case 158:	/* Kabylake */
+		case 71:	/* Broadwell-H (GT3E) */
+		case 86:	/* Broadwell XEON_D */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=0;
 			dram_avail=1;
+			psys_avail=0;
+			different_units=0;
+			break;
+
+		case 78:	/* Skylake Mobile */
+		case 94:	/* Skylake Desktop (H/S) */
+		case 142:	/* Kabylake Mobile */
+		case 158:	/* Kabylake Desktop */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			psys_avail=1;
 			different_units=0;
 			break;
 
@@ -387,6 +408,7 @@ _rapl_init_component( int cidx )
 			pp0_avail=1;
 			pp1_avail=0;
 			dram_avail=1;
+			psys_avail=0;
 			different_units=0;
 			break;
 
@@ -397,15 +419,18 @@ _rapl_init_component( int cidx )
 			pp0_avail=1;
 			pp1_avail=0;
 			dram_avail=1;
+			psys_avail=0;
 			different_units=1;
 			break;
 
 
 		case 87:	/* Knights Landing (KNL) */
+		case 133:	/* Knights Mill (KNM) */
 			package_avail=1;
 			pp0_avail=0;
 			pp1_avail=0;
 			dram_avail=1;
+			psys_avail=0;
 			different_units=1;
 			break;
 
@@ -715,6 +740,24 @@ _rapl_init_component( int cidx )
 		}
      }
 
+     if (psys_avail) {
+        for(j=0;j<num_packages;j++) {
+
+	   		sprintf(rapl_native_events[k].name,
+		   		"PSYS_ENERGY:PACKAGE%d",j);
+	   		strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
+           	sprintf(rapl_native_events[k].description,
+		   		"Energy used by SoC on package %d",j);
+	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
+	   		rapl_native_events[k].msr=MSR_PLATFORM_ENERGY_STATUS;
+	   		rapl_native_events[k].resources.selector = k + 1;
+	   		rapl_native_events[k].type=PLATFORM_ENERGY;
+	   		rapl_native_events[k].return_type=PAPI_DATATYPE_UINT64;
+
+			k++;
+		}
+     }
+
      if (pp0_avail) {
         for(j=0;j<num_packages;j++) {
 			sprintf(rapl_native_events[i].name,
@@ -911,6 +954,7 @@ _rapl_update_control_state( hwd_control_state_t *ctl,
        control->need_difference[index]=
 	 	(rapl_native_events[index].type==PACKAGE_ENERGY ||
 		rapl_native_events[index].type==DRAM_ENERGY ||
+		rapl_native_events[index].type==PLATFORM_ENERGY ||
 	 	rapl_native_events[index].type==PACKAGE_ENERGY_CNT);
     }
 
