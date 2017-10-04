@@ -332,93 +332,86 @@ _rapl_init_component( int cidx )
         return PAPI_ENOSUPP;
      }
 
-	/* check model to support */
-	if (hw_info->cpuid_family==6) {
-		if (hw_info->cpuid_model==42) {
-			/* SandyBridge */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=1;
-			dram_avail=0;
-		}
-		else if (hw_info->cpuid_model==45) {
-			/* SandyBridge-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-		}
-		else if (hw_info->cpuid_model==58) {
-			/* IvyBridge */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=1;
-			dram_avail=0;
-		}
-		else if (hw_info->cpuid_model==62) {
-			/* IvyBridge-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-		}
-		else if (hw_info->cpuid_model==60 || hw_info->cpuid_model==69 || hw_info->cpuid_model==70 ) {
-			/* Haswell */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=1;
-			dram_avail=1;
-		}
-		else if ( hw_info->cpuid_model==63) {
-			/* Haswell-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-		}
-		else if (hw_info->cpuid_model==61 || hw_info->cpuid_model==71) {
-			/* Broadwell */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-		}
-		else if (hw_info->cpuid_model==79) {
-			/* Broadwell-EP */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-		}
-		else if (hw_info->cpuid_model==78 || hw_info->cpuid_model==94) {
-			/* Skylake, Skylake H/S */
-			package_avail=1;
-			pp0_avail=1;
-			pp1_avail=0;
-			dram_avail=1;
-		}
-		else if (hw_info->cpuid_model==87) {
-			/* Knights Landing (KNL) */
-			package_avail=1;
-			pp0_avail=0;
-			pp1_avail=0;
-			dram_avail=1;
-		}
-		else {
-			/* not a supported model */
-			strncpy(_rapl_vector.cmp_info.disabled_reason,
-				"CPU model not supported",
-				PAPI_MAX_STR_LEN);
-			return PAPI_ENOIMPL;
-		}
-	}
-	else {
+	/* Make sure it is a family 6 Intel Chip */
+	if (hw_info->cpuid_family!=6) {
 		/* Not a family 6 machine */
 		strncpy(_rapl_vector.cmp_info.disabled_reason,
 			"CPU family not supported",PAPI_MAX_STR_LEN);
 		return PAPI_ENOIMPL;
 	}
 
+	/* Detect RAPL support */
+	switch(hw_info->cpuid_model) {
+		case 42:	/* SandyBridge */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=1;
+			dram_avail=0;
+			break;
+		case 45:	/* SandyBridge-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+		case 58:	/* IvyBridge */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=1;
+			dram_avail=0;
+			break;
+		case 62:	/* IvyBridge-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+		case 60:	/* Haswell */
+		case 69:	/* Haswell ULT */
+		case 70:	/* Haswell */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=1;
+			dram_avail=1;
+			break;
+		case 63:	/* Haswell-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+		case 61:	/* Broadwell */
+		case 71:	/* Broadwell-H*/
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+		case 79:	/* Broadwell-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+		case 78:	/* Skylake */
+		case 94:	/* Skylake H/S */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+		case 87:	/* Knights Landing (KNL) */
+			package_avail=1;
+			pp0_avail=0;
+			pp1_avail=0;
+			dram_avail=1;
+			break;
+		default:	/* not a supported model */
+			strncpy(_rapl_vector.cmp_info.disabled_reason,
+				"CPU model not supported",
+				PAPI_MAX_STR_LEN);
+			return PAPI_ENOIMPL;
+	}
 
      /* Detect how many packages */
      j=0;
@@ -766,13 +759,13 @@ _rapl_init_component( int cidx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-static int 
+static int
 _rapl_init_control_state( hwd_control_state_t *ctl)
 {
 
   _rapl_control_state_t* control = (_rapl_control_state_t*) ctl;
   int i;
-  
+
   for(i=0;i<RAPL_MAX_COUNTERS;i++) {
      control->being_measured[i]=0;
   }
@@ -780,7 +773,7 @@ _rapl_init_control_state( hwd_control_state_t *ctl)
   return PAPI_OK;
 }
 
-static int 
+static int
 _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
   _rapl_context_t* context = (_rapl_context_t*) ctx;
@@ -799,7 +792,7 @@ _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
   return PAPI_OK;
 }
 
-static int 
+static int
 _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 
@@ -840,7 +833,7 @@ _rapl_shutdown_thread( hwd_context_t *ctx )
   return PAPI_OK;
 }
 
-int 
+int
 _rapl_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	    long long **events, int flags)
 {
@@ -858,8 +851,8 @@ _rapl_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 /*
  * Clean up what was setup in  rapl_init_component().
  */
-static int 
-_rapl_shutdown_component( void ) 
+static int
+_rapl_shutdown_component( void )
 {
     int i;
 
@@ -937,7 +930,7 @@ static int
 _rapl_set_domain( hwd_control_state_t *ctl, int domain )
 {
     ( void ) ctl;
-    
+
     /* In theory we only support system-wide mode */
     /* How to best handle that? */
     if ( PAPI_DOM_ALL != domain )
@@ -952,7 +945,7 @@ _rapl_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
     ( void ) ctl;
-	
+
     return PAPI_OK;
 }
 
@@ -976,10 +969,10 @@ _rapl_ntv_enum_events( unsigned int *EventCode, int modifier )
 	   *EventCode = 0;
 
 	   return PAPI_OK;
-		
+
 
 	case PAPI_ENUM_EVENTS:
-	
+
 	   index = *EventCode & PAPI_NATIVE_AND_MASK;
 
 	   if ( index < num_events - 1 ) {
@@ -989,7 +982,7 @@ _rapl_ntv_enum_events( unsigned int *EventCode, int modifier )
 	      return PAPI_ENOEVNT;
 	   }
 	   break;
-	
+
 	default:
 		return PAPI_EINVAL;
 	}
