@@ -368,6 +368,8 @@ _rapl_init_component( int cidx )
 		case 71:	/* Broadwell-H*/
 		case 78:	/* Skylake */
 		case 94:	/* Skylake H/S */
+		case 142:	/* Kabylake */
+		case 158:	/* Kabylake */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=0;
@@ -390,6 +392,7 @@ _rapl_init_component( int cidx )
 
 		case 63:	/* Haswell-EP */
 		case 79:	/* Broadwell-EP */
+		case 85:	/* Skylake-X */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=0;
