@@ -539,6 +539,7 @@ _rapl_init_component( int cidx )
                  (pp0_avail*num_packages) +
                  (pp1_avail*num_packages) +
                  (dram_avail*num_packages) +
+		(psys_avail*num_packages) +
                  (4*num_packages)) * 2;
 
      rapl_native_events = (_rapl_native_event_entry_t*)
@@ -743,6 +744,16 @@ _rapl_init_component( int cidx )
      if (psys_avail) {
         for(j=0;j<num_packages;j++) {
 
+	   		sprintf(rapl_native_events[i].name,
+		   		"PSYS_ENERGY_CNT:PACKAGE%d",j);
+           	sprintf(rapl_native_events[i].description,
+		   		"Energy used in counts by SoC on package %d",j);
+	   		rapl_native_events[i].fd_offset=cpu_to_use[j];
+	   		rapl_native_events[i].msr=MSR_PLATFORM_ENERGY_STATUS;
+	   		rapl_native_events[i].resources.selector = i + 1;
+	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
+	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
+
 	   		sprintf(rapl_native_events[k].name,
 		   		"PSYS_ENERGY:PACKAGE%d",j);
 	   		strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
@@ -754,6 +765,7 @@ _rapl_init_component( int cidx )
 	   		rapl_native_events[k].type=PLATFORM_ENERGY;
 	   		rapl_native_events[k].return_type=PAPI_DATATYPE_UINT64;
 
+			i++;
 			k++;
 		}
      }
