@@ -332,92 +332,92 @@ _rapl_init_component( int cidx )
         return PAPI_ENOSUPP;
      }
 
-     /* check model to support */
-     if (hw_info->cpuid_family==6) {
-       if (hw_info->cpuid_model==42) {
-	  /* SandyBridge */
-          package_avail=1;
-          pp0_avail=1;
-          pp1_avail=1;
-          dram_avail=0;
-       }
-       else if (hw_info->cpuid_model==45) {
-	  /* SandyBridge-EP */
-          package_avail=1;
-          pp0_avail=1;
-          pp1_avail=0;
-          dram_avail=1;
-       }
-       else if (hw_info->cpuid_model==58) {
-	  /* IvyBridge */
-          package_avail=1;
-          pp0_avail=1;
-          pp1_avail=1;
-          dram_avail=0;
-       }
-       else if (hw_info->cpuid_model==62) {
-	  /* IvyBridge-EP */
-          package_avail=1;
-          pp0_avail=1;
-          pp1_avail=0;
-          dram_avail=1;
-       }
-       else if (hw_info->cpuid_model==60 || hw_info->cpuid_model==69 || hw_info->cpuid_model==70 ) {
-		/* Haswell */
-		package_avail=1;
-		pp0_avail=1;
-		pp1_avail=1;
-		dram_avail=1;
-	   }
-	else if ( hw_info->cpuid_model==63) {
-		/* Haswell-EP */
-		package_avail=1;
-		pp0_avail=1;
-		pp1_avail=0;
-		dram_avail=1;
+	/* check model to support */
+	if (hw_info->cpuid_family==6) {
+		if (hw_info->cpuid_model==42) {
+			/* SandyBridge */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=1;
+			dram_avail=0;
+		}
+		else if (hw_info->cpuid_model==45) {
+			/* SandyBridge-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+		}
+		else if (hw_info->cpuid_model==58) {
+			/* IvyBridge */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=1;
+			dram_avail=0;
+		}
+		else if (hw_info->cpuid_model==62) {
+			/* IvyBridge-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+		}
+		else if (hw_info->cpuid_model==60 || hw_info->cpuid_model==69 || hw_info->cpuid_model==70 ) {
+			/* Haswell */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=1;
+			dram_avail=1;
+		}
+		else if ( hw_info->cpuid_model==63) {
+			/* Haswell-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+		}
+		else if (hw_info->cpuid_model==61 || hw_info->cpuid_model==71) {
+			/* Broadwell */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+		}
+		else if (hw_info->cpuid_model==79) {
+			/* Broadwell-EP */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+		}
+		else if (hw_info->cpuid_model==78 || hw_info->cpuid_model==94) {
+			/* Skylake, Skylake H/S */
+			package_avail=1;
+			pp0_avail=1;
+			pp1_avail=0;
+			dram_avail=1;
+		}
+		else if (hw_info->cpuid_model==87) {
+			/* Knights Landing (KNL) */
+			package_avail=1;
+			pp0_avail=0;
+			pp1_avail=0;
+			dram_avail=1;
+		}
+		else {
+			/* not a supported model */
+			strncpy(_rapl_vector.cmp_info.disabled_reason,
+				"CPU model not supported",
+				PAPI_MAX_STR_LEN);
+			return PAPI_ENOIMPL;
+		}
 	}
-	else if (hw_info->cpuid_model==61 || hw_info->cpuid_model==71) {
-	   /* Broadwell */
-	   package_avail=1;
-	   pp0_avail=1;
-	   pp1_avail=0;
-	   dram_avail=1;
+	else {
+		/* Not a family 6 machine */
+		strncpy(_rapl_vector.cmp_info.disabled_reason,
+			"CPU family not supported",PAPI_MAX_STR_LEN);
+		return PAPI_ENOIMPL;
 	}
-	else if (hw_info->cpuid_model==79) {
-	   /* Broadwell-EP */
-	   package_avail=1;
-	   pp0_avail=1;
-	   pp1_avail=0;
-	   dram_avail=1;
-	}
-	else if (hw_info->cpuid_model==78 || hw_info->cpuid_model==94) {
-		/* Skylake, Skylake H/S */
-		package_avail=1;
-		pp0_avail=1;
-		pp1_avail=0;
-		dram_avail=1;
-	}
-	else if (hw_info->cpuid_model==87) {
-		/* Knights Landing (KNL) */
-		package_avail=1;
-		pp0_avail=0;
-		pp1_avail=0;
-		dram_avail=1;
-	}
-       else {
-	 /* not a supported model */
-	 strncpy(_rapl_vector.cmp_info.disabled_reason,
-		 "CPU model not supported",
-		 PAPI_MAX_STR_LEN);
-	 return PAPI_ENOIMPL;
-       }
-     }
-     else {
-       /* Not a family 6 machine */
-       strncpy(_rapl_vector.cmp_info.disabled_reason,
-	       "CPU family not supported",PAPI_MAX_STR_LEN);
-       return PAPI_ENOIMPL;
-     }
 
 
      /* Detect how many packages */
