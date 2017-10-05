@@ -114,6 +114,7 @@ enum perf_sw_ids {
 	PERF_COUNT_SW_ALIGNMENT_FAULTS		= 7,
 	PERF_COUNT_SW_EMULATION_FAULTS		= 8,
 	PERF_COUNT_SW_DUMMY			= 9,
+	PERF_COUNT_SW_BPF_OUTPUT		= 10,
 	PERF_COUNT_SW_MAX
 };
 
@@ -140,6 +141,7 @@ enum perf_event_sample_format {
 	PERF_SAMPLE_IDENTIFIER		= 1U << 16,
 	PERF_SAMPLE_TRANSACTION		= 1U << 17,
 	PERF_SAMPLE_REGS_INTR		= 1U << 18,
+	PERF_SAMPLE_PHYS_ADDR		= 1U << 19,
 	PERF_SAMPLE_MAX			= 1U << 19,
 };
 enum {
@@ -173,6 +175,10 @@ enum perf_branch_sample_type_shift {
 	PERF_SAMPLE_BRANCH_COND_SHIFT		= 10,
 	PERF_SAMPLE_BRANCH_CALL_STACK_SHIFT	= 11,
 	PERF_SAMPLE_BRANCH_IND_JUMP_SHIFT	= 12,
+	PERF_SAMPLE_BRANCH_CALL_SHIFT		= 13,
+	PERF_SAMPLE_BRANCH_NO_FLAGS_SHIFT	= 14,
+	PERF_SAMPLE_BRANCH_NO_CYCLES_SHIFT	= 15,
+	PERF_SAMPLE_BRANCH_TYPE_SAVE_SHIFT	= 16,
 
 	PERF_SAMPLE_BRANCH_MAX_SHIFT		/* non-ABI */
 };
@@ -193,6 +199,10 @@ enum perf_branch_sample_type {
 
 	PERF_SAMPLE_BRANCH_CALL_STACK	= 1U << PERF_SAMPLE_BRANCH_CALL_STACK_SHIFT,
 	PERF_SAMPLE_BRANCH_IND_JUMP	= 1U << PERF_SAMPLE_BRANCH_IND_JUMP_SHIFT,
+	PERF_SAMPLE_BRANCH_CALL		= 1U << PERF_SAMPLE_BRANCH_IND_CALL_SHIFT,
+	PERF_SAMPLE_BRANCH_NO_FLAGS	= 1U << PERF_SAMPLE_BRANCH_NO_FLAGS_SHIFT,
+	PERF_SAMPLE_BRANCH_NO_CYCLES	= 1U << PERF_SAMPLE_BRANCH_NO_CYCLES_SHIFT,
+	PERF_SAMPLE_BRANCH_TYPE_SAVE	= 1U << PERF_SAMPLE_BRANCH_TYPE_SAVE_SHIFT,
 
 	PERF_SAMPLE_BRANCH_MAX		= 1U << PERF_SAMPLE_BRANCH_MAX_SHIFT,
 };
@@ -275,7 +285,10 @@ typedef struct perf_event_attr {
 			mmap2          :  1,
 			comm_exec      :  1,
 			use_clockid    :  1,
-			__reserved_1   : 38;
+			context_switch :  1,
+			write_backward :  1,
+			namespaces     :  1,
+			__reserved_1   : 35;
 
 	union {
 		uint32_t	wakeup_events;
@@ -307,7 +320,9 @@ struct perf_branch_entry {
 			predicted:1,/* target predicted */
 			in_tx:1,    /* in transaction */
 			abort:1,    /* transaction abort */
-			reserved:60;
+			cycles:16,  /* cycle count to last branch */
+			type:4,     /* branch type */
+			reserved:40;
 };
 
 /*
@@ -336,6 +351,7 @@ struct perf_branch_stack {
 #define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
 #define PERF_EVENT_IOC_ID		_IOR('$', 7, uint64_t *)
 #define PERF_EVENT_IOC_SET_BPF		_IOW('$', 8, uint32_t)
+#define PERF_EVENT_IOC_PAUSE_OUTPUT	_IOW('$', 9, __u32)
 
 /*
  * ioctl() 3rd argument
@@ -430,6 +446,9 @@ enum perf_event_type {
 	PERF_RECORD_AUX			= 11,
 	PERF_RECORD_ITRACE_START	= 12,
 	PERF_RECORD_LOST_SAMPLES	= 13,
+	PERF_RECORD_SWITCH		= 14,
+	PERF_RECORD_SWITCH_CPU_WIDE	= 15,
+	PERF_RECORD_NAMESPACES		= 16,
 	PERF_RECORD_MAX
 };
 
@@ -558,6 +577,9 @@ union perf_mem_data_src {
 #define PERF_MEM_LVL_UNC	0x2000 /* Uncached memory */
 #define PERF_MEM_LVL_SHIFT	5
 
+#define PERF_MEM_REMOTE_REMOTE	0x01  /* Remote */
+#define PERF_MEM_REMOTE_SHIFT	37
+
 /* snoop mode */
 #define PERF_MEM_SNOOP_NA	0x01 /* not available */
 #define PERF_MEM_SNOOP_NONE	0x02 /* no snoop */
@@ -565,6 +587,9 @@ union perf_mem_data_src {
 #define PERF_MEM_SNOOP_MISS	0x08 /* snoop miss */
 #define PERF_MEM_SNOOP_HITM	0x10 /* snoop hit modified */
 #define PERF_MEM_SNOOP_SHIFT	19
+
+#define PERF_MEM_SNOOPX_FWD	0x01 /* forward */
+#define PERF_MEM_SNOOPX_SHIFT	37
 
 /* locked instruction */
 #define PERF_MEM_LOCK_NA	0x01 /* not available */

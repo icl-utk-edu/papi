@@ -128,6 +128,11 @@ static int pfm_cpumcf_init(void *this)
 		ext_set = cpumcf_zec12_counters;
 		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_zec12_counters);
 		break;
+	case 2964:  /* IBM z13  */
+	case 2965:  /* IBM z13s */
+		ext_set = cpumcf_z13_counters;
+		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z13_counters);
+		break;
 	default:
 		/* No extended counter set for this machine type or there
 		 * was an error retrieving the machine type */
