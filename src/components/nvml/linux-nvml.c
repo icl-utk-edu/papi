@@ -1,6 +1,14 @@
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
+/****************************
+THIS IS OPEN SOURCE CODE 
+
+Part of the PAPI software library. Copyright (c) 2005 - 2017,
+Innovative Computing Laboratory, Dept of Electrical Engineering &
+Computer Science University of Tennessee, Knoxville, TN.
+
+The open source software license conforms to the 2-clause BSD License
+template.
+
+****************************/
 
 /**
  * @file    linux-nvml.c
@@ -10,12 +18,13 @@
  *          ralph@eecs.utk.edu
  * @ingroup papi_components
  *
- * @brief
- *  This is an NVML component, it demos the component interface
- *  and implements two counters nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature
- *  from Nvidia Management Library. Please refer to NVML documentation for details
- * about nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature. Power is reported in mW
- * and temperature in Celcius.
+ * @brief This is an NVML component, it demos the component interface
+ *  and implements a number of counters from the Nvidia Management
+ *  Library. Please refer to NVML documentation for details about
+ *  nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature. Power is
+ *  reported in mW and temperature in Celcius.  The counter
+ *  descriptions should contain the units that the measurement
+ *  returns.
  */
 #include <dlfcn.h>
 
@@ -89,9 +98,12 @@ nvmlReturn_t DECLDIR nvmlDeviceGetEccMode(nvmlDevice_t, nvmlEnableState_t *, nvm
 nvmlReturn_t DECLDIR nvmlInit(void);
 nvmlReturn_t DECLDIR nvmlDeviceGetCount(unsigned int *);
 nvmlReturn_t DECLDIR nvmlShutdown(void);
+nvmlReturn_t DECLDIR nvmlDeviceGetPowerManagementLimit(nvmlDevice_t device, unsigned int* limit);
+nvmlReturn_t DECLDIR nvmlDeviceSetPowerManagementLimit(nvmlDevice_t device, unsigned int  limit);
+nvmlReturn_t DECLDIR nvmlDeviceGetPowerManagementLimitConstraints(nvmlDevice_t device, unsigned int* minLimit, unsigned int* maxLimit);
 
 nvmlReturn_t (*nvmlDeviceGetClockInfoPtr)(nvmlDevice_t, nvmlClockType_t, unsigned int *);
-char*              (*nvmlErrorStringPtr)(nvmlReturn_t);
+char* (*nvmlErrorStringPtr)(nvmlReturn_t);
 nvmlReturn_t (*nvmlDeviceGetDetailedEccErrorsPtr)(nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, nvmlEccErrorCounts_t *);
 nvmlReturn_t (*nvmlDeviceGetFanSpeedPtr)(nvmlDevice_t, unsigned int *);
 nvmlReturn_t (*nvmlDeviceGetMemoryInfoPtr)(nvmlDevice_t, nvmlMemory_t *);
@@ -108,7 +120,9 @@ nvmlReturn_t (*nvmlDeviceGetEccModePtr)(nvmlDevice_t, nvmlEnableState_t *, nvmlE
 nvmlReturn_t (*nvmlInitPtr)(void);
 nvmlReturn_t (*nvmlDeviceGetCountPtr)(unsigned int *);
 nvmlReturn_t (*nvmlShutdownPtr)(void);
-
+nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int* limit);
+nvmlReturn_t (*nvmlDeviceSetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int  limit);
+nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(nvmlDevice_t device, unsigned int* minLimit, unsigned int* maxLimit);
 
 // file handles used to access cuda libraries with dlopen
 static void* dl1 = NULL;
@@ -116,7 +130,6 @@ static void* dl2 = NULL;
 static void* dl3 = NULL;
 
 static int linkCudaLibraries();
-
 
 /* Declare our vector in advance */
 papi_vector_t _nvml_vector;
@@ -148,7 +161,10 @@ static int device_count = 0;
 static int num_events = 0;
 
 static nvmlDevice_t* devices = NULL;
-static int*          features = NULL;
+static int* features = NULL;
+static unsigned int *power_management_initial_limit = NULL;
+static unsigned int *power_management_limit_constraint_min = NULL;
+static unsigned int *power_management_limit_constraint_max = NULL;
 
 unsigned long long
 getClockSpeed(nvmlDevice_t dev, nvmlClockType_t which_one)
@@ -175,8 +191,6 @@ getEccLocalErrors(nvmlDevice_t dev, nvmlEccBitType_t bits, int which_one)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
-
-
     switch (which_one) {
     case LOCAL_ECC_REGFILE:
         return counts.registerFile;
@@ -202,8 +216,6 @@ getFanSpeed(nvmlDevice_t dev)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
-
-
     return (unsigned long long)ret;
 }
 
@@ -217,8 +229,6 @@ getMaxClockSpeed(nvmlDevice_t dev, nvmlClockType_t which_one)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
-
-
     return (unsigned long long) ret;
 }
 
@@ -257,8 +267,6 @@ getPState(nvmlDevice_t dev)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
-
-
     switch (state) {
     case NVML_PSTATE_15:
         ret++;
@@ -298,7 +306,6 @@ getPState(nvmlDevice_t dev)
          * The API docs just state Unknown performance state... */
         return (unsigned long long) - 1;
     }
-
     return (unsigned long long)ret;
 }
 
@@ -312,8 +319,6 @@ getPowerUsage(nvmlDevice_t dev)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
-
-
     return (unsigned long long) power;
 }
 
@@ -327,8 +332,6 @@ getTemperature(nvmlDevice_t dev)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
-
-
     return (unsigned long long)ret;
 }
 
@@ -342,8 +345,6 @@ getTotalEccErrors(nvmlDevice_t dev, nvmlEccBitType_t bits)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
-
-
     return counts;
 }
 
@@ -361,7 +362,6 @@ getUtilization(nvmlDevice_t dev, int which_one)
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
     }
 
-
     switch (which_one) {
     case GPU_UTILIZATION:
         return (unsigned long long) util.gpu;
@@ -374,16 +374,46 @@ getUtilization(nvmlDevice_t dev, int which_one)
     return (unsigned long long) - 1;
 }
 
+unsigned long long getPowerManagementLimit(nvmlDevice_t dev)
+{
+    unsigned int limit;
+    nvmlReturn_t rv;
+    rv = (*nvmlDeviceGetPowerManagementLimitPtr)(dev, &limit);
+    if (NVML_SUCCESS != rv) {
+        SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(rv));
+        return (unsigned long long) 0;
+    }
+    return (unsigned long long) limit;
+}
+
 static void
 nvml_hardware_reset()
 {
     /* nvmlDeviceSet* and nvmlDeviceClear* calls require root/admin access, so while
      * possible to implement a reset on the ECC counters, we pass */
     /*
-       int i;
        for ( i=0; i < device_count; i++ )
        nvmlDeviceClearEccErrorCounts( device[i], NVML_VOLATILE_ECC );
-     */
+    */
+    int i;
+    nvmlReturn_t ret;
+    unsigned int templimit = 0;
+    for (i = 0; i < device_count; i++) {
+        if (HAS_FEATURE(features[i], FEATURE_POWER_MANAGEMENT)) {
+            // if power management is available
+            if (power_management_initial_limit[i] != 0) {
+                ret = (*nvmlDeviceGetPowerManagementLimitPtr)(devices[i], &templimit);
+                if ((ret == NVML_SUCCESS) && (templimit != power_management_initial_limit[i])) {
+                    SUBDBG("Reset power_management_limit on device %d to initial value of %d \n", i, power_management_initial_limit[i]);
+                    // if power is not at its initial value
+                    // reset to initial value
+                    ret = (*nvmlDeviceSetPowerManagementLimitPtr)(devices[i], power_management_initial_limit[i]);
+                    if (ret != NVML_SUCCESS)
+                        SUBDBG("Unable to reset the NVML power management limit on device %i to %ull (return code %d) \n", i, power_management_initial_limit[i] , ret);
+                }
+            }
+        }
+    }
 }
 
 /** Code that reads event values.                         */
@@ -413,8 +443,7 @@ nvml_hardware_read(long long *value, int which_one)
 
     switch (entry->type) {
     case FEATURE_CLOCK_INFO:
-        *value =  getClockSpeed(handle,
-                                (nvmlClockType_t)entry->options.clock);
+        *value =  getClockSpeed(handle, (nvmlClockType_t)entry->options.clock);
         break;
     case FEATURE_ECC_LOCAL_ERRORS:
         *value = getEccLocalErrors(handle,
@@ -449,13 +478,71 @@ nvml_hardware_read(long long *value, int which_one)
         *value = getUtilization(handle,
                                 (int)entry->options.which_one);
         break;
+    case FEATURE_POWER_MANAGEMENT:
+        *value = getPowerManagementLimit(handle);
+        break;
+
+    case FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN:
+        *value = power_management_limit_constraint_min[cudaIdx];
+        break;
+
+    case FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX:
+        *value = power_management_limit_constraint_max[cudaIdx];
+        break;
+
     default:
         return PAPI_EINVAL;
     }
 
     return PAPI_OK;
+}
 
+/** Code that reads event values.                         */
+/*   You might replace this with code that accesses       */
+/*   hardware or reads values from the operatings system. */
+static int nvml_hardware_write(long long *value, int which_one)
+{
+    nvml_native_event_entry_t *entry;
+    nvmlDevice_t handle;
+    int cudaIdx = -1;
+    nvmlReturn_t nvret;
 
+    entry = &nvml_native_table[which_one];
+    /* replace entry->resources with the current cuda_device->nvml device */
+    (*cudaGetDevicePtr)(&cudaIdx);
+
+    if (cudaIdx < 0 || cudaIdx > device_count)
+        return PAPI_EINVAL;
+
+    /* Make sure the device we are running on has the requested event */
+    if (!HAS_FEATURE(features[cudaIdx] , entry->type))
+        return PAPI_EINVAL;
+
+    handle = devices[cudaIdx];
+
+    switch (entry->type) {
+    case FEATURE_POWER_MANAGEMENT: {
+        unsigned int setToPower = (unsigned int) * value;
+        if (setToPower < power_management_limit_constraint_min[cudaIdx]) {
+            SUBDBG("Error: Desired power %u mW < minimum %u mW on device %d\n", setToPower, power_management_limit_constraint_min[cudaIdx], cudaIdx);
+            return PAPI_EINVAL;
+        }
+        if (setToPower > power_management_limit_constraint_max[cudaIdx]) {
+            SUBDBG("Error: Desired power %u mW > maximum %u mW on device %d\n", setToPower, power_management_limit_constraint_max[cudaIdx], cudaIdx);
+            return PAPI_EINVAL;
+        }
+        if ((nvret = (*nvmlDeviceSetPowerManagementLimitPtr)(handle, setToPower)) != NVML_SUCCESS) {
+            SUBDBG("Error: %s\n", (*nvmlErrorStringPtr)(nvret));
+            return PAPI_EINVAL;
+        }
+    }
+    break;
+
+    default:
+        return PAPI_EINVAL;
+    }
+
+    return PAPI_OK;
 }
 
 /********************************************************************/
@@ -490,7 +577,8 @@ detectDevices()
     char names[device_count][64];
     char nvml_busIds[device_count][16];
 
-    float ecc_version = 0.0, power_version = 0.0;
+    float ecc_version = 0.0;
+    float power_version = 0.0;
 
     int i = 0,
         j = 0;
@@ -499,7 +587,6 @@ detectDevices()
     int isUnique = 1;
 
     unsigned int temp = 0;
-
 
     /* list of nvml pci_busids */
     for (i = 0; i < device_count; i++) {
@@ -551,7 +638,7 @@ detectDevices()
             return PAPI_ESYS;
         }
 
-        name[sizeof(name) - 1] = '\0';  // to safely use strstr operation below, the variable 'name' must be null terminated
+        name[sizeof(name) - 1] = '\0';   // to safely use strstr operation below, the variable 'name' must be null terminated
 
         for (j = 0; j < i; j++)
             if (0 == strncmp(name, names[j], 64)) {
@@ -565,13 +652,13 @@ detectDevices()
         if (isUnique) {
             ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_ECC, inforomECC, 16);
             if (NVML_SUCCESS != ret) {
-                SUBDBG("nvmlGetInforomVersion carps %s\n", (*nvmlErrorStringPtr)(ret));
+                SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
                 isFermi = 0;
             }
             ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_POWER, inforomPower, 16);
             if (NVML_SUCCESS != ret) {
                 /* This implies the card is older then Fermi */
-                SUBDBG("nvmlGetInforomVersion carps %s\n", (*nvmlErrorStringPtr)(ret));
+                SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
                 SUBDBG("Based upon the return to nvmlGetInforomVersion, we conclude this card is older then Fermi.\n");
                 isFermi = 0;
             }
@@ -604,8 +691,7 @@ detectDevices()
                     }
                 }
             } else {
-                SUBDBG("nvmlDeviceGetEccMode does not appear to be supported. (nvml\
-return code %d)\n", ret);
+                SUBDBG("nvmlDeviceGetEccMode does not appear to be supported. (nvml return code %d)\n", ret);
             }
 
             /* For all discrete products with dedicated fans */
@@ -638,13 +724,46 @@ return code %d)\n", ret);
                 features[i] |= FEATURE_POWER;
                 num_events++;
             } else {
-                SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on\
-this card. (nvml return code %d)\n", ret);
+                SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on this card. (nvml return code %d)\n", ret);
             }
 
             /* For all discrete and S-class products. */
             features[i] |= FEATURE_TEMP;
             num_events++;
+
+            // For power_management_limit
+            {
+                // Just try the call to see if it works
+                unsigned int templimit = 0;
+                ret = (*nvmlDeviceGetPowerManagementLimitPtr)(devices[i], &templimit);
+                if (ret == NVML_SUCCESS && templimit > 0) {
+                    power_management_initial_limit[i] = templimit;
+                    features[i] |= FEATURE_POWER_MANAGEMENT;
+                    num_events += 1;
+                } else {
+                    power_management_initial_limit[i] = 0;
+                    SUBDBG("nvmlDeviceGetPowerManagementLimit not appear to be supported on this card. (NVML code %d)\n", ret);
+                }
+            }
+
+            // For power_management_limit_constraints, minimum and maximum
+            {
+                unsigned int minLimit = 0, maxLimit = 0;
+                ret = (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(devices[i], &minLimit, &maxLimit);
+                ret == NVML_SUCCESS;
+                if (ret == NVML_SUCCESS) {
+                    power_management_limit_constraint_min[i] = minLimit;
+                    features[i] |= FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN;
+                    num_events += 1;
+                    power_management_limit_constraint_max[i] = maxLimit;
+                    features[i] |= FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX;
+                    num_events += 1;
+                } else {
+                    power_management_limit_constraint_min[i] = 0;
+                    power_management_limit_constraint_max[i] = INT_MAX;
+                }
+                SUBDBG("Done nvmlDeviceGetPowerManagementLimitConstraintsPtr\n");
+            }
 
             /* For Tesla and Quadro products from the Fermi and Kepler families */
             if (isFermi) {
@@ -681,7 +800,7 @@ createNativeEvents()
         memset(names[i], 0x0, 64);
         isUnique = 1;
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
-        name[sizeof(name) - 1] = '\0';  // to safely use strlen operation below, the variable 'name' must be null terminated
+        name[sizeof(name) - 1] = '\0';   // to safely use strlen operation below, the variable 'name' must be null terminated
 
         for (j = 0; j < i; j++) {
             if (0 == strncmp(name, names[j], 64))
@@ -694,8 +813,6 @@ createNativeEvents()
             for (j = 0; j < nameLen; j++)
                 if (' ' == sanitized_name[j])
                     sanitized_name[j] = '_';
-
-
 
             if (HAS_FEATURE(features[i], FEATURE_CLOCK_INFO)) {
                 sprintf(entry->name, "%s:graphics_clock", sanitized_name);
@@ -892,6 +1009,31 @@ createNativeEvents()
                 entry->type = FEATURE_UTILIZATION;
                 entry++;
             }
+
+            if (HAS_FEATURE(features[i], FEATURE_POWER_MANAGEMENT)) {
+                sprintf(entry->name, "%s:power_management_limit", sanitized_name);
+                // set the power event units value to "mW" for milliwatts
+                strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+                strncpy(entry->description, "Power management limit in milliwatts associated with the device.  The power limit defines the upper boundary for the cards power draw. If the cards total power draw reaches this limit the power management algorithm kicks in. This should be writable (with appropriate privileges) on supported Kepler or later (unit milliWatts). ", PAPI_MAX_STR_LEN);
+                entry->type = FEATURE_POWER_MANAGEMENT;
+                entry++;
+            }
+            if (HAS_FEATURE(features[i], FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN)) {
+                sprintf(entry->name, "%s:power_management_limit_constraint_min", sanitized_name);
+                strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+                strncpy(entry->description, "The minimum power management limit in milliwatts.", PAPI_MAX_STR_LEN);
+                entry->type = FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN;
+                entry++;
+            }
+
+            if (HAS_FEATURE(features[i], FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX)) {
+                sprintf(entry->name, "%s:power_management_limit_constraint_max", sanitized_name);
+                strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+                strncpy(entry->description, "The maximum power management limit in milliwatts.", PAPI_MAX_STR_LEN);
+                entry->type = FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX;
+                entry++;
+            }
+
             strncpy(names[i], name, sizeof(names[0]) - 1);
             names[i][sizeof(names[0]) - 1] = '\0';
         }
@@ -947,7 +1089,7 @@ _papi_nvml_init_component(int cidx)
 
     /* We can probably recover from this, when we're clever */
     if ((cuda_count > 0) && (nvml_count != (unsigned int)cuda_count)) {
-        strcpy(_nvml_vector.cmp_info.disabled_reason, "Cuda and the NVIDIA managament library have different device counts.");
+        strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA managament library have different device counts.");
         return PAPI_ENOSUPP;
     }
 
@@ -958,6 +1100,11 @@ _papi_nvml_init_component(int cidx)
 
     /* Handles to each device */
     devices = (nvmlDevice_t*)papi_malloc(sizeof(nvmlDevice_t) * device_count);
+
+    /* For each device, store the intial power value to enable reset if power is altered */
+    power_management_initial_limit = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
+    power_management_limit_constraint_min = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
+    power_management_limit_constraint_max = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
 
     /* Figure out what events are supported on each card. */
     if ((papi_errorcode = detectDevices()) != PAPI_OK) {
@@ -983,7 +1130,6 @@ _papi_nvml_init_component(int cidx)
 
     return PAPI_OK;
 }
-
 
 /*
  * Link the necessary CUDA libraries to use the cuda component.  If any of them can not be found, then
@@ -1128,10 +1274,23 @@ linkCudaLibraries()
         strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlShutdown not found.", PAPI_MAX_STR_LEN);
         return (PAPI_ENOSUPP);
     }
-
+    nvmlDeviceGetPowerManagementLimitPtr = dlsym(dl3, "nvmlDeviceGetPowerManagementLimit");
+    if (dlerror() != NULL) {
+        strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetPowerManagementLimit not found.", PAPI_MAX_STR_LEN);
+        return (PAPI_ENOSUPP);
+    }
+    nvmlDeviceSetPowerManagementLimitPtr = dlsym(dl3, "nvmlDeviceSetPowerManagementLimit");
+    if (dlerror() != NULL) {
+        strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceSetPowerManagementLimit not found.", PAPI_MAX_STR_LEN);
+        return (PAPI_ENOSUPP);
+    }
+    nvmlDeviceGetPowerManagementLimitConstraintsPtr = dlsym(dl3, "nvmlDeviceGetPowerManagementLimitConstraints");
+    if (dlerror() != NULL) {
+        strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetPowerManagementLimitConstraints not found.", PAPI_MAX_STR_LEN);
+        return (PAPI_ENOSUPP);
+    }
     return (PAPI_OK);
 }
-
 
 /** Setup a counter control state.
  *   In general a control state holds the hardware info for an
@@ -1148,7 +1307,6 @@ _papi_nvml_init_control_state(hwd_control_state_t * ctl)
     return PAPI_OK;
 }
 
-
 /** Triggered by eventset operations like add or remove */
 int
 _papi_nvml_update_control_state(hwd_control_state_t *ctl,
@@ -1161,7 +1319,6 @@ _papi_nvml_update_control_state(hwd_control_state_t *ctl,
 
     nvml_control_state_t *nvml_ctl = (nvml_control_state_t *) ctl;
     (void) ctx;
-
 
     /* if no events, return */
     if (count == 0) return PAPI_OK;
@@ -1193,7 +1350,6 @@ _papi_nvml_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
     return PAPI_OK;
 }
 
-
 /** Triggered by PAPI_stop() */
 int
 _papi_nvml_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
@@ -1218,7 +1374,6 @@ _papi_nvml_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
     return PAPI_OK;
 }
 
-
 /** Triggered by PAPI_read() */
 int
 _papi_nvml_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
@@ -1231,7 +1386,6 @@ _papi_nvml_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
     int i;
     int ret;
     nvml_control_state_t* nvml_ctl = (nvml_control_state_t*) ctl;
-
 
     for (i = 0; i < nvml_ctl->num_events; i++) {
         if (PAPI_OK !=
@@ -1248,22 +1402,27 @@ _papi_nvml_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
 /** Triggered by PAPI_write(), but only if the counters are running */
 /*    otherwise, the updated state is written to ESI->hw_start      */
 int
-_papi_nvml_write(hwd_context_t *ctx, hwd_control_state_t *ctl,
-                 long long *events)
+_papi_nvml_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *events)
 {
     SUBDBG("Enter: ctx: %p, ctl: %p\n", ctx, ctl);
-
     (void) ctx;
-    (void) ctl;
-    (void) events;
-
+    nvml_control_state_t* nvml_ctl = (nvml_control_state_t*) ctl;
+    int i;
+    int ret;
 
     /* You can change ECC mode and compute exclusivity modes on the cards */
     /* But I don't see this as a function of a PAPI component at this time */
     /* All implementation issues aside. */
+
+    // Currently POWER_MANAGEMENT can be written
+    for (i = 0; i < nvml_ctl->num_events; i++) {
+        if (PAPI_OK != (ret = nvml_hardware_write(&events[i], nvml_ctl->which_counter[i])))
+            return ret;
+    }
+
+    /* return pointer to the values we read */
     return PAPI_OK;
 }
-
 
 /** Triggered by PAPI_reset() but only if the EventSet is currently running */
 /*  If the eventset is not currently running, then the saved value in the   */
@@ -1287,14 +1446,16 @@ int
 _papi_nvml_shutdown_component()
 {
     SUBDBG("Enter:\n");
-
+    nvml_hardware_reset();
     if (nvml_native_table != NULL)
         papi_free(nvml_native_table);
     if (devices != NULL)
         papi_free(devices);
     if (features != NULL)
         papi_free(features);
-
+    if (power_management_initial_limit) papi_free(power_management_initial_limit);
+    if (power_management_limit_constraint_min) papi_free(power_management_limit_constraint_min);
+    if (power_management_limit_constraint_max) papi_free(power_management_limit_constraint_max);
     (*nvmlShutdownPtr)();
 
     device_count = 0;
@@ -1321,8 +1482,6 @@ _papi_nvml_shutdown_thread(hwd_context_t *ctx)
     return PAPI_OK;
 }
 
-
-
 /** This function sets various options in the component
   @param code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
  */
@@ -1334,7 +1493,6 @@ _papi_nvml_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
     (void) ctx;
     (void) code;
     (void) option;
-
 
     /* FIXME.  This should maybe set up more state, such as which counters are active and */
     /*         counter mappings. */
@@ -1382,11 +1540,9 @@ _papi_nvml_set_domain(hwd_control_state_t * cntrl, int domain)
     return PAPI_OK;
 }
 
-
 /**************************************************************/
 /* Naming functions, used to translate event numbers to names */
 /**************************************************************/
-
 
 /** Enumerate Native Events
  *   @param EventCode is the event of interest
@@ -1515,7 +1671,6 @@ papi_vector_t _nvml_vector = {
         .default_granularity = PAPI_GRN_THR,
         .available_granularities = PAPI_GRN_THR,
         .hardware_intr_sig = PAPI_INT_SIGNAL,
-
 
         /* component specific cmp_info initializations */
         .hardware_intr = 0,

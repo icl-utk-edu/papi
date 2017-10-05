@@ -1,21 +1,51 @@
-The PAPI NVML component provides an interface to the nVidia Management Library (nvml).
+The PAPI NVML component provides an interface to the nVidia Management Library (nvml, libnvidia-ml).
 
-The NVIDIA Management Library can be downloaded as part of the Tesla Development Kit.
-<http://developer.nvidia.com/tesla-deployment-kit>
+In versions 8 and later part of the CUDA Toolkit, The NVIDIA
+Management Library is no longer a separate download is installed with
+CUDA.  On Linux/x86 platforms, it is often found in
+/usr/lib64/nvidia/libnvidia-ml.so
+
+Other download packages may be available at 
+https://developer.nvidia.com/gpu-deployment-kit
 
 Before running the NVML component, the configure script for the NVML component 
 must be executed in order to generate the Makefile which contains the 
 configuration settings. This script needs to be executed only once. 
 
     % cd < papi_dir >/src/components/nvml
-    % ./configure --with-nvml-dir=< NVML PATH > --with-cuda-dir=<path>
+    % ./configure --with-nvml-libdir=<NVMLDIR>> --with-nvml-incdir=<NVMLDIR> --with-cuda-dir=<CUDADIR>
 
-Furthermore, the NVML component will be added to PAPI during the configuration of 
-PAPI by adding the '--with-components=nvml' command line option to configure.
-    % ./configure --with-components=nvml
+For example, one configuration may look like this
+    %./configure --with-nvml-libdir=/usr/lib64/nvidia --with-nvml-incdir=/usr/local/cuda/include --with-cuda-dir=/usr/local/cuda
+
+The NVML component is added to PAPI during the configuration of PAPI
+by adding the '--with-components=nvml' command line option to
+configure.    
+
+   % ./configure --with-components="nvml"
 
 At build-time the nVidia compiler, nvcc, needs to be in your path, as does the cuda run-time library (libcudart.so).
 
-
 Please refer to http://developer.download.nvidia.com/assets/cuda/files/CUDADownloads/NVML/nvml.pdf 
-for details about NVML library
+for details about NVML library.
+
+
+
+Note: Power Limiting using NVML (aka power capping) requires root.
+
+PAPI has added support for power limiting using NVML (on supported
+devices from the Kepler family or later).  The executable needs to
+have root permissions to change the power limits on the device.
+
+The power_management_limit can be written to set a limit (in
+milliWatts) to the power consumption by DEVICE.  The value that can
+be written needs to be between the
+power_management_limit_constraint_min and
+power_management_limit_constraint_max.
+
+nvml:::DEVICE:power_management_limit
+nvml:::DEVICE:power_management_limit_constraint_min
+nvml:::DEVICE:power_management_limit_constraint_max
+
+A test for writing of the power_management_limit can be found in the
+nvml/tests.
