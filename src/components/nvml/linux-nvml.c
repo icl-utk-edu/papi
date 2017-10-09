@@ -1,5 +1,5 @@
 /****************************
-THIS IS OPEN SOURCE CODE 
+THIS IS OPEN SOURCE CODE
 
 Part of the PAPI software library. Copyright (c) 2005 - 2017,
 Innovative Computing Laboratory, Dept of Electrical Engineering &
@@ -584,7 +584,6 @@ detectDevices()
         j = 0;
     int isTesla = 0;
     int isFermi = 0;
-    int isUnique = 1;
 
     unsigned int temp = 0;
 
@@ -625,11 +624,11 @@ detectDevices()
     }
 
     memset(names, 0x0, device_count * 64);
+
     /* So for each card, check whats querable */
     for (i = 0; i < device_count; i++) {
         isTesla = 0;
         isFermi = 1;
-        isUnique = 1;
         features[i] = 0;
 
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
@@ -640,140 +639,133 @@ detectDevices()
 
         name[sizeof(name) - 1] = '\0';   // to safely use strstr operation below, the variable 'name' must be null terminated
 
-        for (j = 0; j < i; j++)
-            if (0 == strncmp(name, names[j], 64)) {
-                /* if we have a match, and IF everything is sane,
-                 * devices with the same name eg Tesla C2075 share features */
-                isUnique = 0;
-                features[i] = features[j];
+        ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_ECC, inforomECC, 16);
+        if (NVML_SUCCESS != ret) {
+            SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
+            isFermi = 0;
+        }
+        ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_POWER, inforomPower, 16);
+        if (NVML_SUCCESS != ret) {
+            /* This implies the card is older then Fermi */
+            SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
+            SUBDBG("Based upon the return to nvmlGetInforomVersion, we conclude this card is older then Fermi.\n");
+            isFermi = 0;
+        }
 
-            }
+        ecc_version = strtof(inforomECC, NULL);
+        power_version = strtof(inforomPower, NULL);
 
-        if (isUnique) {
-            ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_ECC, inforomECC, 16);
-            if (NVML_SUCCESS != ret) {
-                SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
-                isFermi = 0;
-            }
-            ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_POWER, inforomPower, 16);
-            if (NVML_SUCCESS != ret) {
-                /* This implies the card is older then Fermi */
-                SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
-                SUBDBG("Based upon the return to nvmlGetInforomVersion, we conclude this card is older then Fermi.\n");
-                isFermi = 0;
-            }
+        isTesla = (NULL == strstr(name, "Tesla")) ? 0 : 1;
 
-            ecc_version = strtof(inforomECC, NULL);
-            power_version = strtof(inforomPower, NULL);
+        /* For Tesla and Quadro products from Fermi and Kepler families. */
+        if (isFermi) {
+            features[i] |= FEATURE_CLOCK_INFO;
+            num_events += 3;
+        }
 
-            isTesla = (NULL == strstr(name, "Tesla")) ? 0 : 1;
-
-            /* For Tesla and Quadro products from Fermi and Kepler families. */
-            if (isFermi) {
-                features[i] |= FEATURE_CLOCK_INFO;
-                num_events += 3;
-            }
-
-            /*  For Tesla and Quadro products from Fermi and Kepler families.
-                requires NVML_INFOROM_ECC 2.0 or higher for location-based counts
-                requires NVML_INFOROM_ECC 1.0 or higher for all other ECC counts
-                requires ECC mode to be enabled. */
-            ret = (*nvmlDeviceGetEccModePtr)(devices[i], &mode, NULL);
-            if (NVML_SUCCESS == ret) {
-                if (NVML_FEATURE_ENABLED == mode) {
-                    if (ecc_version >= 2.0) {
-                        features[i] |= FEATURE_ECC_LOCAL_ERRORS;
-                        num_events += 8; /* {single bit, two bit errors} x { reg, l1, l2, memory } */
-                    }
-                    if (ecc_version >= 1.0) {
-                        features[i] |= FEATURE_ECC_TOTAL_ERRORS;
-                        num_events += 2; /* single bit errors, double bit errors */
-                    }
+        /*  For Tesla and Quadro products from Fermi and Kepler families.
+            requires NVML_INFOROM_ECC 2.0 or higher for location-based counts
+            requires NVML_INFOROM_ECC 1.0 or higher for all other ECC counts
+            requires ECC mode to be enabled. */
+        ret = (*nvmlDeviceGetEccModePtr)(devices[i], &mode, NULL);
+        if (NVML_SUCCESS == ret) {
+            if (NVML_FEATURE_ENABLED == mode) {
+                if (ecc_version >= 2.0) {
+                    features[i] |= FEATURE_ECC_LOCAL_ERRORS;
+                    num_events += 8; /* {single bit, two bit errors} x { reg, l1, l2, memory } */
                 }
-            } else {
-                SUBDBG("nvmlDeviceGetEccMode does not appear to be supported. (nvml return code %d)\n", ret);
+                if (ecc_version >= 1.0) {
+                    features[i] |= FEATURE_ECC_TOTAL_ERRORS;
+                    num_events += 2; /* single bit errors, double bit errors */
+                }
             }
+        } else {
+            SUBDBG("nvmlDeviceGetEccMode does not appear to be supported. (nvml return code %d)\n", ret);
+        }
 
-            /* For all discrete products with dedicated fans */
-            features[i] |= FEATURE_FAN_SPEED;
+        /* For all discrete products with dedicated fans */
+        features[i] |= FEATURE_FAN_SPEED;
+        num_events++;
+
+        /* For Tesla and Quadro products from Fermi and Kepler families. */
+        if (isFermi) {
+            features[i] |= FEATURE_MAX_CLOCK;
+            num_events += 3;
+        }
+
+        /* For all products */
+        features[i] |= FEATURE_MEMORY_INFO;
+        num_events += 3; /* total, free, used */
+
+        /* For Tesla and Quadro products from the Fermi and Kepler families. */
+        if (isFermi) {
+            features[i] |= FEATURE_PERF_STATES;
             num_events++;
+        }
 
-            /* For Tesla and Quadro products from Fermi and Kepler families. */
-            if (isFermi) {
-                features[i] |= FEATURE_MAX_CLOCK;
-                num_events += 3;
-            }
-
-            /* For all products */
-            features[i] |= FEATURE_MEMORY_INFO;
-            num_events += 3; /* total, free, used */
-
-            /* For Tesla and Quadro products from the Fermi and Kepler families. */
-            if (isFermi) {
-                features[i] |= FEATURE_PERF_STATES;
-                num_events++;
-            }
-
-            /*  For "GF11x" Tesla and Quadro products from the Fermi family
+        /*  For "GF11x" Tesla and Quadro products from the Fermi family
                 requires NVML_INFOROM_POWER 3.0 or higher
                 For Tesla and Quadro products from the Kepler family
                 does not require NVML_INFOROM_POWER */
-            /* Just try reading power, if it works, enable it*/
-            ret = (*nvmlDeviceGetPowerUsagePtr)(devices[i], &temp);
-            if (NVML_SUCCESS == ret) {
-                features[i] |= FEATURE_POWER;
-                num_events++;
-            } else {
-                SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on this card. (nvml return code %d)\n", ret);
-            }
-
-            /* For all discrete and S-class products. */
-            features[i] |= FEATURE_TEMP;
+        /* Just try reading power, if it works, enable it*/
+        ret = (*nvmlDeviceGetPowerUsagePtr)(devices[i], &temp);
+        if (NVML_SUCCESS == ret) {
+            features[i] |= FEATURE_POWER;
             num_events++;
-
-            // For power_management_limit
-            {
-                // Just try the call to see if it works
-                unsigned int templimit = 0;
-                ret = (*nvmlDeviceGetPowerManagementLimitPtr)(devices[i], &templimit);
-                if (ret == NVML_SUCCESS && templimit > 0) {
-                    power_management_initial_limit[i] = templimit;
-                    features[i] |= FEATURE_POWER_MANAGEMENT;
-                    num_events += 1;
-                } else {
-                    power_management_initial_limit[i] = 0;
-                    SUBDBG("nvmlDeviceGetPowerManagementLimit not appear to be supported on this card. (NVML code %d)\n", ret);
-                }
-            }
-
-            // For power_management_limit_constraints, minimum and maximum
-            {
-                unsigned int minLimit = 0, maxLimit = 0;
-                ret = (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(devices[i], &minLimit, &maxLimit);
-                ret == NVML_SUCCESS;
-                if (ret == NVML_SUCCESS) {
-                    power_management_limit_constraint_min[i] = minLimit;
-                    features[i] |= FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN;
-                    num_events += 1;
-                    power_management_limit_constraint_max[i] = maxLimit;
-                    features[i] |= FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX;
-                    num_events += 1;
-                } else {
-                    power_management_limit_constraint_min[i] = 0;
-                    power_management_limit_constraint_max[i] = INT_MAX;
-                }
-                SUBDBG("Done nvmlDeviceGetPowerManagementLimitConstraintsPtr\n");
-            }
-
-            /* For Tesla and Quadro products from the Fermi and Kepler families */
-            if (isFermi) {
-                features[i] |= FEATURE_UTILIZATION;
-                num_events += 2;
-            }
-
-            strncpy(names[i], name, sizeof(names[0]) - 1);
-            names[i][sizeof(names[0]) - 1] = '\0';
+        } else {
+            SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on this card. (nvml return code %d)\n", ret);
         }
+
+        /* For all discrete and S-class products. */
+        features[i] |= FEATURE_TEMP;
+        num_events++;
+
+        // For power_management_limit
+        {
+            // Just try the call to see if it works
+            unsigned int templimit = 0;
+            ret = (*nvmlDeviceGetPowerManagementLimitPtr)(devices[i], &templimit);
+            if (ret == NVML_SUCCESS && templimit > 0) {
+                power_management_initial_limit[i] = templimit;
+                features[i] |= FEATURE_POWER_MANAGEMENT;
+                num_events += 1;
+            } else {
+                power_management_initial_limit[i] = 0;
+                SUBDBG("nvmlDeviceGetPowerManagementLimit not appear to be supported on this card. (NVML code %d)\n", ret);
+            }
+        }
+
+        // For power_management_limit_constraints, minimum and maximum
+        {
+            unsigned int minLimit = 0, maxLimit = 0;
+            ret = (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(devices[i], &minLimit, &maxLimit);
+            if (ret == NVML_SUCCESS) {
+                power_management_limit_constraint_min[i] = minLimit;
+                features[i] |= FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN;
+                num_events += 1;
+                power_management_limit_constraint_max[i] = maxLimit;
+                features[i] |= FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX;
+                num_events += 1;
+            } else {
+                power_management_limit_constraint_min[i] = 0;
+                power_management_limit_constraint_max[i] = INT_MAX;
+            }
+            SUBDBG("Done nvmlDeviceGetPowerManagementLimitConstraintsPtr\n");
+        }
+
+        /* For Tesla and Quadro products from the Fermi and Kepler families */
+        if (isFermi) {
+            features[i] |= FEATURE_UTILIZATION;
+            num_events += 2;
+        }
+
+        int retval = snprintf(names[i], sizeof(name), "%s:device:%d", name, i);
+        if (retval > (int)sizeof(name)) {
+            SUBDBG("Device name is too long %s:device%d", name, i);
+            return (PAPI_EINVAL);
+        }
+        names[i][sizeof(name) - 1] = '\0';
+        printf("name of device %i is %s\n", i, names[i]);
     }
     return PAPI_OK;
 }
@@ -786,7 +778,6 @@ createNativeEvents()
     char names[device_count][64];
 
     int i, nameLen = 0, j;
-    int isUnique = 1;
 
     nvml_native_event_entry_t* entry;
     nvmlReturn_t ret;
@@ -798,245 +789,246 @@ createNativeEvents()
 
     for (i = 0; i < device_count; i++) {
         memset(names[i], 0x0, 64);
-        isUnique = 1;
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
         name[sizeof(name) - 1] = '\0';   // to safely use strlen operation below, the variable 'name' must be null terminated
 
-        for (j = 0; j < i; j++) {
-            if (0 == strncmp(name, names[j], 64))
-                isUnique = 0;
+        nameLen = strlen(name);
+        strncpy(sanitized_name, name, PAPI_MAX_STR_LEN);
+
+        int retval = snprintf(sanitized_name, sizeof(name), "%s:device_%d", name, i);
+        if (retval > (int)sizeof(name)) {
+            SUBDBG("Device name is too long %s:device%d", name, i);
+            return (PAPI_EINVAL);
+        }
+        sanitized_name[sizeof(name) - 1] = '\0';
+        printf("name of device %i is %s\n", i, sanitized_name);
+
+        for (j = 0; j < nameLen; j++)
+            if (' ' == sanitized_name[j])
+                sanitized_name[j] = '_';
+
+        if (HAS_FEATURE(features[i], FEATURE_CLOCK_INFO)) {
+            sprintf(entry->name, "%s:graphics_clock", sanitized_name);
+            strncpy(entry->description, "Graphics clock domain (MHz).", PAPI_MAX_STR_LEN);
+            entry->options.clock = NVML_CLOCK_GRAPHICS;
+            entry->type = FEATURE_CLOCK_INFO;
+            entry++;
+
+            sprintf(entry->name, "%s:sm_clock", sanitized_name);
+            strncpy(entry->description, "SM clock domain (MHz).", PAPI_MAX_STR_LEN);
+            entry->options.clock = NVML_CLOCK_SM;
+            entry->type = FEATURE_CLOCK_INFO;
+            entry++;
+
+            sprintf(entry->name, "%s:memory_clock", sanitized_name);
+            strncpy(entry->description, "Memory clock domain (MHz).", PAPI_MAX_STR_LEN);
+            entry->options.clock = NVML_CLOCK_MEM;
+            entry->type = FEATURE_CLOCK_INFO;
+            entry++;
         }
 
-        if (isUnique) {
-            nameLen = strlen(name);
-            strncpy(sanitized_name, name, PAPI_MAX_STR_LEN);
-            for (j = 0; j < nameLen; j++)
-                if (' ' == sanitized_name[j])
-                    sanitized_name[j] = '_';
+        if (HAS_FEATURE(features[i], FEATURE_ECC_LOCAL_ERRORS)) {
+            sprintf(entry->name, "%s:l1_single_ecc_errors", sanitized_name);
+            strncpy(entry->description, "L1 cache single bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_SINGLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_L1,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
 
-            if (HAS_FEATURE(features[i], FEATURE_CLOCK_INFO)) {
-                sprintf(entry->name, "%s:graphics_clock", sanitized_name);
-                strncpy(entry->description, "Graphics clock domain (MHz).", PAPI_MAX_STR_LEN);
-                entry->options.clock = NVML_CLOCK_GRAPHICS;
-                entry->type = FEATURE_CLOCK_INFO;
-                entry++;
+            sprintf(entry->name, "%s:l2_single_ecc_errors", sanitized_name);
+            strncpy(entry->description, "L2 cache single bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_SINGLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_L2,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
 
-                sprintf(entry->name, "%s:sm_clock", sanitized_name);
-                strncpy(entry->description, "SM clock domain (MHz).", PAPI_MAX_STR_LEN);
-                entry->options.clock = NVML_CLOCK_SM;
-                entry->type = FEATURE_CLOCK_INFO;
-                entry++;
+            sprintf(entry->name, "%s:memory_single_ecc_errors", sanitized_name);
+            strncpy(entry->description, "Device memory single bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_SINGLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_MEM,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
 
-                sprintf(entry->name, "%s:memory_clock", sanitized_name);
-                strncpy(entry->description, "Memory clock domain (MHz).", PAPI_MAX_STR_LEN);
-                entry->options.clock = NVML_CLOCK_MEM;
-                entry->type = FEATURE_CLOCK_INFO;
-                entry++;
-            }
+            sprintf(entry->name, "%s:regfile_single_ecc_errors", sanitized_name);
+            strncpy(entry->description, "Register file single bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_SINGLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_REGFILE,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
 
-            if (HAS_FEATURE(features[i], FEATURE_ECC_LOCAL_ERRORS)) {
-                sprintf(entry->name, "%s:l1_single_ecc_errors", sanitized_name);
-                strncpy(entry->description, "L1 cache single bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_SINGLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_L1,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
+            sprintf(entry->name, "%s:1l_double_ecc_errors", sanitized_name);
+            strncpy(entry->description, "L1 cache double bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_DOUBLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_L1,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
 
-                sprintf(entry->name, "%s:l2_single_ecc_errors", sanitized_name);
-                strncpy(entry->description, "L2 cache single bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_SINGLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_L2,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
+            sprintf(entry->name, "%s:l2_double_ecc_errors", sanitized_name);
+            strncpy(entry->description, "L2 cache double bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_DOUBLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_L2,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
 
-                sprintf(entry->name, "%s:memory_single_ecc_errors", sanitized_name);
-                strncpy(entry->description, "Device memory single bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_SINGLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_MEM,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
+            sprintf(entry->name, "%s:memory_double_ecc_errors", sanitized_name);
+            strncpy(entry->description, "Device memory double bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_DOUBLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_MEM,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
 
-                sprintf(entry->name, "%s:regfile_single_ecc_errors", sanitized_name);
-                strncpy(entry->description, "Register file single bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_SINGLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_REGFILE,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
-
-                sprintf(entry->name, "%s:1l_double_ecc_errors", sanitized_name);
-                strncpy(entry->description, "L1 cache double bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_DOUBLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_L1,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
-
-                sprintf(entry->name, "%s:l2_double_ecc_errors", sanitized_name);
-                strncpy(entry->description, "L2 cache double bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_DOUBLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_L2,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
-
-                sprintf(entry->name, "%s:memory_double_ecc_errors", sanitized_name);
-                strncpy(entry->description, "Device memory double bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_DOUBLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_MEM,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
-
-                sprintf(entry->name, "%s:regfile_double_ecc_errors", sanitized_name);
-                strncpy(entry->description, "Register file double bit ECC", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_DOUBLE_BIT_ECC,
-                     .which_one = LOCAL_ECC_REGFILE,
-                };
-                entry->type = FEATURE_ECC_LOCAL_ERRORS;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_FAN_SPEED)) {
-                sprintf(entry->name, "%s:fan_speed", sanitized_name);
-                strncpy(entry->description, "The fan speed expressed as a percent of the maximum, i.e. full speed is 100%", PAPI_MAX_STR_LEN);
-                entry->type = FEATURE_FAN_SPEED;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_MAX_CLOCK)) {
-                sprintf(entry->name, "%s:graphics_max_clock", sanitized_name);
-                strncpy(entry->description, "Maximal Graphics clock domain (MHz).", PAPI_MAX_STR_LEN);
-                entry->options.clock = NVML_CLOCK_GRAPHICS;
-                entry->type = FEATURE_MAX_CLOCK;
-                entry++;
-
-                sprintf(entry->name, "%s:sm_max_clock", sanitized_name);
-                strncpy(entry->description, "Maximal SM clock domain (MHz).", PAPI_MAX_STR_LEN);
-                entry->options.clock = NVML_CLOCK_SM;
-                entry->type = FEATURE_MAX_CLOCK;
-                entry++;
-
-                sprintf(entry->name, "%s:memory_max_clock", sanitized_name);
-                strncpy(entry->description, "Maximal Memory clock domain (MHz).", PAPI_MAX_STR_LEN);
-                entry->options.clock = NVML_CLOCK_MEM;
-                entry->type = FEATURE_MAX_CLOCK;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_MEMORY_INFO)) {
-                sprintf(entry->name, "%s:total_memory", sanitized_name);
-                strncpy(entry->description, "Total installed FB memory (in bytes).", PAPI_MAX_STR_LEN);
-                entry->options.which_one = MEMINFO_TOTAL_MEMORY;
-                entry->type = FEATURE_MEMORY_INFO;
-                entry++;
-
-                sprintf(entry->name, "%s:unallocated_memory", sanitized_name);
-                strncpy(entry->description, "Uncallocated FB memory (in bytes).", PAPI_MAX_STR_LEN);
-                entry->options.which_one = MEMINFO_UNALLOCED;
-                entry->type = FEATURE_MEMORY_INFO;
-                entry++;
-
-                sprintf(entry->name, "%s:allocated_memory", sanitized_name);
-                strncpy(entry->description, "Allocated FB memory (in bytes). Note that the driver/GPU always sets aside a small amount of memory for bookkeeping.", PAPI_MAX_STR_LEN);
-                entry->options.which_one = MEMINFO_ALLOCED;
-                entry->type = FEATURE_MEMORY_INFO;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_PERF_STATES)) {
-                sprintf(entry->name, "%s:pstate", sanitized_name);
-                strncpy(entry->description, "The performance state of the device.", PAPI_MAX_STR_LEN);
-                entry->type = FEATURE_PERF_STATES;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_POWER)) {
-                sprintf(entry->name, "%s:power", sanitized_name);
-                // set the power event units value to "mW" for miliwatts
-                strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
-                strncpy(entry->description, "Power usage reading for the device, in miliwatts. This is the power draw (+/-5 watts) for the entire board: GPU, memory, etc.", PAPI_MAX_STR_LEN);
-                entry->type = FEATURE_POWER;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_TEMP)) {
-                sprintf(entry->name, "%s:temperature", sanitized_name);
-                strncpy(entry->description, "Current temperature readings for the device, in degrees C.", PAPI_MAX_STR_LEN);
-                entry->type = FEATURE_TEMP;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_ECC_TOTAL_ERRORS)) {
-                sprintf(entry->name, "%s:total_ecc_errors", sanitized_name);
-                strncpy(entry->description, "Total single bit errors.", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_SINGLE_BIT_ECC,
-                };
-                entry->type = FEATURE_ECC_TOTAL_ERRORS;
-                entry++;
-
-                sprintf(entry->name, "%s:total_ecc_errors", sanitized_name);
-                strncpy(entry->description, "Total double bit errors.", PAPI_MAX_STR_LEN);
-                entry->options.ecc_opts = (struct local_ecc) {
-                    .bits = NVML_DOUBLE_BIT_ECC,
-                };
-                entry->type = FEATURE_ECC_TOTAL_ERRORS;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_UTILIZATION)) {
-                sprintf(entry->name, "%s:gpu_utilization", sanitized_name);
-                strncpy(entry->description, "Percent of time over the past second during which one or more kernels was executing on the GPU.", PAPI_MAX_STR_LEN);
-                entry->options.which_one = GPU_UTILIZATION;
-                entry->type = FEATURE_UTILIZATION;
-                entry++;
-
-                sprintf(entry->name, "%s:memory_utilization", sanitized_name);
-                strncpy(entry->description, "Percent of time over the past second during which global (device) memory was being read or written.", PAPI_MAX_STR_LEN);
-                entry->options.which_one = MEMORY_UTILIZATION;
-                entry->type = FEATURE_UTILIZATION;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_POWER_MANAGEMENT)) {
-                sprintf(entry->name, "%s:power_management_limit", sanitized_name);
-                // set the power event units value to "mW" for milliwatts
-                strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
-                strncpy(entry->description, "Power management limit in milliwatts associated with the device.  The power limit defines the upper boundary for the cards power draw. If the cards total power draw reaches this limit the power management algorithm kicks in. This should be writable (with appropriate privileges) on supported Kepler or later (unit milliWatts). ", PAPI_MAX_STR_LEN);
-                entry->type = FEATURE_POWER_MANAGEMENT;
-                entry++;
-            }
-            if (HAS_FEATURE(features[i], FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN)) {
-                sprintf(entry->name, "%s:power_management_limit_constraint_min", sanitized_name);
-                strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
-                strncpy(entry->description, "The minimum power management limit in milliwatts.", PAPI_MAX_STR_LEN);
-                entry->type = FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN;
-                entry++;
-            }
-
-            if (HAS_FEATURE(features[i], FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX)) {
-                sprintf(entry->name, "%s:power_management_limit_constraint_max", sanitized_name);
-                strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
-                strncpy(entry->description, "The maximum power management limit in milliwatts.", PAPI_MAX_STR_LEN);
-                entry->type = FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX;
-                entry++;
-            }
-
-            strncpy(names[i], name, sizeof(names[0]) - 1);
-            names[i][sizeof(names[0]) - 1] = '\0';
+            sprintf(entry->name, "%s:regfile_double_ecc_errors", sanitized_name);
+            strncpy(entry->description, "Register file double bit ECC", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_DOUBLE_BIT_ECC,
+                 .which_one = LOCAL_ECC_REGFILE,
+            };
+            entry->type = FEATURE_ECC_LOCAL_ERRORS;
+            entry++;
         }
+
+        if (HAS_FEATURE(features[i], FEATURE_FAN_SPEED)) {
+            sprintf(entry->name, "%s:fan_speed", sanitized_name);
+            strncpy(entry->description, "The fan speed expressed as a percent of the maximum, i.e. full speed is 100%", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_FAN_SPEED;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_MAX_CLOCK)) {
+            sprintf(entry->name, "%s:graphics_max_clock", sanitized_name);
+            strncpy(entry->description, "Maximal Graphics clock domain (MHz).", PAPI_MAX_STR_LEN);
+            entry->options.clock = NVML_CLOCK_GRAPHICS;
+            entry->type = FEATURE_MAX_CLOCK;
+            entry++;
+
+            sprintf(entry->name, "%s:sm_max_clock", sanitized_name);
+            strncpy(entry->description, "Maximal SM clock domain (MHz).", PAPI_MAX_STR_LEN);
+            entry->options.clock = NVML_CLOCK_SM;
+            entry->type = FEATURE_MAX_CLOCK;
+            entry++;
+
+            sprintf(entry->name, "%s:memory_max_clock", sanitized_name);
+            strncpy(entry->description, "Maximal Memory clock domain (MHz).", PAPI_MAX_STR_LEN);
+            entry->options.clock = NVML_CLOCK_MEM;
+            entry->type = FEATURE_MAX_CLOCK;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_MEMORY_INFO)) {
+            sprintf(entry->name, "%s:total_memory", sanitized_name);
+            strncpy(entry->description, "Total installed FB memory (in bytes).", PAPI_MAX_STR_LEN);
+            entry->options.which_one = MEMINFO_TOTAL_MEMORY;
+            entry->type = FEATURE_MEMORY_INFO;
+            entry++;
+
+            sprintf(entry->name, "%s:unallocated_memory", sanitized_name);
+            strncpy(entry->description, "Uncallocated FB memory (in bytes).", PAPI_MAX_STR_LEN);
+            entry->options.which_one = MEMINFO_UNALLOCED;
+            entry->type = FEATURE_MEMORY_INFO;
+            entry++;
+
+            sprintf(entry->name, "%s:allocated_memory", sanitized_name);
+            strncpy(entry->description, "Allocated FB memory (in bytes). Note that the driver/GPU always sets aside a small amount of memory for bookkeeping.", PAPI_MAX_STR_LEN);
+            entry->options.which_one = MEMINFO_ALLOCED;
+            entry->type = FEATURE_MEMORY_INFO;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_PERF_STATES)) {
+            sprintf(entry->name, "%s:pstate", sanitized_name);
+            strncpy(entry->description, "The performance state of the device.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_PERF_STATES;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_POWER)) {
+            sprintf(entry->name, "%s:power", sanitized_name);
+            // set the power event units value to "mW" for miliwatts
+            strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+            strncpy(entry->description, "Power usage reading for the device, in miliwatts. This is the power draw (+/-5 watts) for the entire board: GPU, memory, etc.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_POWER;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_TEMP)) {
+            sprintf(entry->name, "%s:temperature", sanitized_name);
+            strncpy(entry->description, "Current temperature readings for the device, in degrees C.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_TEMP;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_ECC_TOTAL_ERRORS)) {
+            sprintf(entry->name, "%s:total_ecc_errors", sanitized_name);
+            strncpy(entry->description, "Total single bit errors.", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_SINGLE_BIT_ECC,
+            };
+            entry->type = FEATURE_ECC_TOTAL_ERRORS;
+            entry++;
+
+            sprintf(entry->name, "%s:total_ecc_errors", sanitized_name);
+            strncpy(entry->description, "Total double bit errors.", PAPI_MAX_STR_LEN);
+            entry->options.ecc_opts = (struct local_ecc) {
+                .bits = NVML_DOUBLE_BIT_ECC,
+            };
+            entry->type = FEATURE_ECC_TOTAL_ERRORS;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_UTILIZATION)) {
+            sprintf(entry->name, "%s:gpu_utilization", sanitized_name);
+            strncpy(entry->description, "Percent of time over the past second during which one or more kernels was executing on the GPU.", PAPI_MAX_STR_LEN);
+            entry->options.which_one = GPU_UTILIZATION;
+            entry->type = FEATURE_UTILIZATION;
+            entry++;
+
+            sprintf(entry->name, "%s:memory_utilization", sanitized_name);
+            strncpy(entry->description, "Percent of time over the past second during which global (device) memory was being read or written.", PAPI_MAX_STR_LEN);
+            entry->options.which_one = MEMORY_UTILIZATION;
+            entry->type = FEATURE_UTILIZATION;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_POWER_MANAGEMENT)) {
+            sprintf(entry->name, "%s:power_management_limit", sanitized_name);
+            // set the power event units value to "mW" for milliwatts
+            strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+            strncpy(entry->description, "Power management limit in milliwatts associated with the device.  The power limit defines the upper boundary for the cards power draw. If the cards total power draw reaches this limit the power management algorithm kicks in. This should be writable (with appropriate privileges) on supported Kepler or later (unit milliWatts). ", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_POWER_MANAGEMENT;
+            entry++;
+        }
+        if (HAS_FEATURE(features[i], FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN)) {
+            sprintf(entry->name, "%s:power_management_limit_constraint_min", sanitized_name);
+            strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+            strncpy(entry->description, "The minimum power management limit in milliwatts.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MIN;
+            entry++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX)) {
+            sprintf(entry->name, "%s:power_management_limit_constraint_max", sanitized_name);
+            strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+            strncpy(entry->description, "The maximum power management limit in milliwatts.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_NVML_POWER_MANAGEMENT_LIMIT_CONSTRAINT_MAX;
+            entry++;
+        }
+
+        strncpy(names[i], name, sizeof(names[0]) - 1);
+        names[i][sizeof(names[0]) - 1] = '\0';
     }
 }
 
