@@ -1,7 +1,7 @@
 #ifndef __PFMLIB_S390X_PRIV_H__
 #define __PFMLIB_S390X_PRIV_H__
 
-#define CPUMF_COUNTER_MAX	    256
+#define CPUMF_COUNTER_MAX	    0xffff
 typedef struct {
 	uint64_t ctrnum;	    /* counter number */
 	unsigned int ctrset;	    /* counter set */
