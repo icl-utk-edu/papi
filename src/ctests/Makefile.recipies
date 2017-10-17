@@ -9,12 +9,12 @@ MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = inherit hwinfo code2name reset cmpinfo realtime virttime first \
-	exeinfo zero zero_named branches dmem_info all_native_events \
-	all_events derived failed_events high-level2 hl_rates describe memory  \
-	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops second johnmay2 matrix-hl tenth ipc \
-	get_event_component disable_component remove_events
+SERIAL  = all_events all_native_events branches calibrate case1 case2 \
+	cmpinfo code2name derived describe memory disable_component \
+	dmem_info eventname exeinfo failed_events first flops \
+	get_event_component inherit high-level high-level2 hl_rates \
+	hwinfo ipc johnmay2 low-level matrix-hl realtime remove_events \
+	reset second tenth virttime zero zero_flip zero_named
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
 	fork_overflow exec_overflow child_overflow system_child_overflow \
 	system_overflow burn zero_fork
