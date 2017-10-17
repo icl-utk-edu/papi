@@ -13,8 +13,9 @@ SERIAL  = all_events all_native_events branches calibrate case1 case2 \
 	cmpinfo code2name derived describe memory disable_component \
 	dmem_info eventname exeinfo failed_events first flops \
 	get_event_component inherit high-level high-level2 hl_rates \
-	hwinfo ipc johnmay2 low-level matrix-hl realtime remove_events \
-	reset second tenth virttime zero zero_flip zero_named
+	hwinfo ipc johnmay2 low-level matrix-hl \
+	realtime remove_events reset second tenth version virttime \
+	zero zero_flip zero_named
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
 	fork_overflow exec_overflow child_overflow system_child_overflow \
 	system_overflow burn zero_fork
@@ -28,7 +29,7 @@ ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target atta
 P4_TEST	= p4_lst_ins
 EAR	= earprofile
 RANGE	= data_range
-BROKEN	= pernode val_omp version
+BROKEN	= pernode val_omp
 API = api
 ifneq ($(MPICC),)
 ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
@@ -158,6 +159,9 @@ krentel_pthreads: krentel_pthreads.c $(TESTLIB) $(PAPILIB)
 
 overflow_pthreads: overflow_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) overflow_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o overflow_pthreads -lpthread
+
+version: version.c $(TESTLIB) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) version.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o version
 
 zero_pthreads: zero_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o zero_pthreads -lpthread

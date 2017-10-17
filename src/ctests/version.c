@@ -1,32 +1,36 @@
-/* This file performs the following test: compare and report versions from papi.h and the papi library */
+/* This file performs the following test: */
+/* compare and report versions from papi.h and the papi library */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "papi.h"
 #include "papi_test.h"
-extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
+int main( int argc, char **argv ) {
 
-int
-main( int argc, char **argv )
-{
-	int retval, init_version, lib_version;
+	int init_version, lib_version;
+	int quiet;
 
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+	/* Set TESTS_QUIET variable */
+	quiet = tests_quiet( argc, argv );
 
 	init_version = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( init_version != PAPI_VER_CURRENT )
-		test_fail( __FILE__, __LINE__, "PAPI_library_init", init_version );
+	if ( init_version != PAPI_VER_CURRENT ) {
+		test_fail( __FILE__, __LINE__,
+				"PAPI_library_init", init_version );
+	}
 
-	if ( ( lib_version =
-		   PAPI_get_opt( PAPI_LIB_VERSION, NULL ) ) == PAPI_EINVAL )
+	lib_version = PAPI_get_opt( PAPI_LIB_VERSION, NULL );
+	if (lib_version == PAPI_EINVAL ) {
 		test_fail( __FILE__, __LINE__, "PAPI_get_opt", PAPI_EINVAL );
+	}
 
-	if ( !TESTS_QUIET ) {
-		printf
-			( "Version.c: Compare and report versions from papi.h and the papi library.\n" );
-		printf
-			( "-------------------------------------------------------------------------\n" );
+	if ( !quiet) {
+		printf( "Version.c: Compare and report versions from papi.h and the papi library.\n" );
+		printf( "-------------------------------------------------------------------------\n" );
 		printf( "                    MAJOR  MINOR  REVISION\n" );
-		printf
-			( "-------------------------------------------------------------------------\n" );
+		printf( "-------------------------------------------------------------------------\n" );
 
 		printf( "PAPI_VER_CURRENT : %4d %6d %7d\n",
 				PAPI_VERSION_MAJOR( PAPI_VER_CURRENT ),
@@ -45,12 +49,14 @@ main( int argc, char **argv )
 				PAPI_VERSION_MINOR( lib_version ),
 				PAPI_VERSION_REVISION( lib_version ) );
 
-		printf
-			( "-------------------------------------------------------------------------\n" );
+		printf( "-------------------------------------------------------------------------\n" );
 	}
 
-	if ( lib_version != PAPI_VERSION )
+	if ( lib_version != PAPI_VERSION ) {
 		test_fail( __FILE__, __LINE__, "Version Mismatch", PAPI_EINVAL );
-	test_pass( __FILE__, NULL, 0 );
-	exit( 1 );
+	}
+
+	test_pass( __FILE__ );
+
+	return 0;
 }
