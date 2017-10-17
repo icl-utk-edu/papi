@@ -29,25 +29,29 @@ int main( int argc, char **argv ) {
 	if ( !quiet) {
 		printf( "Version.c: Compare and report versions from papi.h and the papi library.\n" );
 		printf( "-------------------------------------------------------------------------\n" );
-		printf( "                    MAJOR  MINOR  REVISION\n" );
+		printf( "                    MAJOR  MINOR  REVISION  INCREMENT\n" );
 		printf( "-------------------------------------------------------------------------\n" );
 
-		printf( "PAPI_VER_CURRENT : %4d %6d %7d\n",
+		printf( "PAPI_VER_CURRENT : %4d %6d %7d %10d\n",
 				PAPI_VERSION_MAJOR( PAPI_VER_CURRENT ),
 				PAPI_VERSION_MINOR( PAPI_VER_CURRENT ),
-				PAPI_VERSION_REVISION( PAPI_VER_CURRENT ) );
-		printf( "PAPI_library_init: %4d %6d %7d\n",
+				PAPI_VERSION_REVISION( PAPI_VER_CURRENT ),
+				PAPI_VERSION_INCREMENT( PAPI_VER_CURRENT ) );
+		printf( "PAPI_library_init: %4d %6d %7d %10d\n",
 				PAPI_VERSION_MAJOR( init_version ),
 				PAPI_VERSION_MINOR( init_version ),
-				PAPI_VERSION_REVISION( init_version ) );
-		printf( "PAPI_VERSION     : %4d %6d %7d\n",
+				PAPI_VERSION_REVISION( init_version ),
+				PAPI_VERSION_INCREMENT( init_version ) );
+		printf( "PAPI_VERSION     : %4d %6d %7d %10d\n",
 				PAPI_VERSION_MAJOR( PAPI_VERSION ),
 				PAPI_VERSION_MINOR( PAPI_VERSION ),
-				PAPI_VERSION_REVISION( PAPI_VERSION ) );
-		printf( "PAPI_get_opt     : %4d %6d %7d\n",
+				PAPI_VERSION_REVISION( PAPI_VERSION ),
+				PAPI_VERSION_INCREMENT (PAPI_VERSION) );
+		printf( "PAPI_get_opt     : %4d %6d %7d %10d\n",
 				PAPI_VERSION_MAJOR( lib_version ),
 				PAPI_VERSION_MINOR( lib_version ),
-				PAPI_VERSION_REVISION( lib_version ) );
+				PAPI_VERSION_REVISION( lib_version ),
+				PAPI_VERSION_INCREMENT( lib_version) );
 
 		printf( "-------------------------------------------------------------------------\n" );
 	}
