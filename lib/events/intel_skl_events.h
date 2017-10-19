@@ -1973,7 +1973,7 @@ static const intel_x86_umask_t skl_fp_arith[]={
 };
 
 static const intel_x86_umask_t skl_exe_activity[]={
-   { .uname  = "",
+   { .uname  = "1_PORTS_UTIL",
      .udesc  = "Cycles with 1 uop executing across all ports and Reservation Station is not empty",
      .ucode = 0x0200,
      .uflags= INTEL_X86_NCOMBO,
