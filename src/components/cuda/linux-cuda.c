@@ -954,11 +954,9 @@ static int papicuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long l
                 size_t valueKindSize = sizeof(valueKind);
                 CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricId, CUPTI_METRIC_ATTR_VALUE_KIND, &valueKindSize, &valueKind), return (PAPI_EMISC));
                 CUPTI_CALL((*cuptiMetricGetValuePtr) (cudevice, metricId, eventIdArraySizeBytes, eventIdArray, eventValueArraySizeBytes, eventValueArray, durationNs, &metricValue), return (PAPI_EMISC));
-                SUBDBG("Value for the metric %s = %lu\n", metricName, metricValue.metricValueUint64);
                 int retval = papicuda_convert_metric_value_to_long_long(metricValue, valueKind, &(gctrl->activeEventValues[jj]));
                 if(retval != PAPI_OK)
                     return (retval);
-                SUBDBG("Converting metric %s to long long = %lld\n", metricName, gctrl->activeEventValues[jj]);
                 papi_free(eventIdArray);
                 papi_free(eventValueArray);
                 break;

@@ -177,7 +177,7 @@ int main( int argc, char **argv )
     
     
 #ifdef CUPTI_ONLY
-    char const *cuptiEventName = "inst_executed"; //  "inst_issued0";
+    char const *cuptiEventName = "inst_executed"; // "elapsed_cycles_sm" "inst_executed"; "inst_issued0";
     printf("Setup CUPTI counters internally for %s event (CUPTI_ONLY)\n", cuptiEventName);
     CUpti_EventGroup eg[MAX_GPU_COUNT];
     CUpti_EventID myevent;
@@ -288,16 +288,16 @@ int main( int argc, char **argv )
 
 #ifdef CUPTI_ONLY
     size_t size = 1024;
+    size_t sizeBytes = size*sizeof(uint64_t);
     uint64_t buffer[size];
     uint64_t tmp[size];     for (int jj=0; jj<1024; jj++) tmp[jj]=0;
     for ( i=0; i<GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         CHECK_CU_ERROR( cuCtxSynchronize( ), "cuCtxSynchronize" );
-        CHECK_CUPTI_ERROR( cuptiEventGroupReadEvent ( eg[i], CUPTI_EVENT_READ_FLAG_NONE, myevent, &size, &tmp[0] ), "cuptiEventGroupReadEvent" );
-        for (int jj=0; jj<1024; jj++) if (tmp[jj]>0) printf("tmp[%d] = %llu\n", jj, tmp[jj]);
+        CHECK_CUPTI_ERROR( cuptiEventGroupReadEvent ( eg[i], CUPTI_EVENT_READ_FLAG_NONE, myevent, &sizeBytes, &tmp[0] ), "cuptiEventGroupReadEvent" );
         buffer[i] = tmp[0];
-        printf( "CUPTI %s device %d counterValue %u\n", cuptiEventName, i, buffer[i] );
+        printf( "CUPTI %s device %d counterValue %u (on one domain, may need to be multiplied by num of domains)\n", cuptiEventName, i, buffer[i] );
         CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
 #endif
