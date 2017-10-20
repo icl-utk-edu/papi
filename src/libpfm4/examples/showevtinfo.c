@@ -806,6 +806,7 @@ main(int argc, char **argv)
 				break;
 			case 'N':
 				options.name_only = 1;
+				break;
 			case 's':
 				options.sort = 1;
 				break;
