@@ -744,12 +744,15 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
             size_t sizeBytes = (eventctrl->conEventsCount) * sizeof(CUpti_EventID);
             // SUBDBG("About to create eventGroupPasses for the context (sizeBytes %zu) \n", sizeBytes);
 #ifdef PAPICUDA_KERNEL_REPLAY_MODE
-            CUPTI_CALL((*cuptiEnableKernelReplayModePtr) (eventCuCtx), return (PAPI_EMISC));
-            CUPTI_CALL((*cuptiEventGroupSetsCreatePtr) (eventCuCtx, sizeBytes, eventctrl->conEvents, &eventctrl->eventGroupPasses), return (PAPI_EMISC));
+            CUPTI_CALL((*cuptiEnableKernelReplayModePtr) (eventCuCtx), return (PAPI_ECMP));
+            CUPTI_CALL((*cuptiEventGroupSetsCreatePtr) (eventCuCtx, sizeBytes, eventctrl->conEvents, &eventctrl->eventGroupPasses), return (PAPI_ECMP));
 #else
-            CUPTI_CALL((*cuptiSetEventCollectionModePtr)(eventCuCtx,CUPTI_EVENT_COLLECTION_MODE_KERNEL), return(PAPI_EMISC));
+            CUPTI_CALL((*cuptiSetEventCollectionModePtr)(eventCuCtx,CUPTI_EVENT_COLLECTION_MODE_KERNEL), return(PAPI_ECMP));
             CUPTI_CALL((*cuptiEventGroupSetsCreatePtr) (eventCuCtx, sizeBytes, eventctrl->conEvents, &eventctrl->eventGroupPasses), return (PAPI_EMISC));
-            CHECK_PRINT_EVAL(eventctrl->eventGroupPasses->numSets > 1, "The desired CUPTI events require more than 1 pass... try different events", return (PAPI_EMISC));
+            if (eventctrl->eventGroupPasses->numSets > 1) {
+                SUBDBG("Error occured: The combined CUPTI events require more than 1 pass... try different events\n");
+                return(PAPI_ECOMBO);
+            }
 #endif
 
             SUBDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-requied %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, eventctrl->eventGroupPasses->numSets);
@@ -1031,7 +1034,8 @@ static int papicuda_cleanup_eventset(hwd_control_state_t * ctrl)
             CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));
         else
             CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
-        CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses), return (PAPI_EMISC));
+        //CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses), return (PAPI_EMISC));
+        (*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses);
         gctrl->arrayOfActiveCUContexts[cc]->eventGroupPasses = NULL;
         /* Pop the pushed context */
         if(currDeviceNum != saveDeviceNum)
