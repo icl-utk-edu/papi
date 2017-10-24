@@ -255,7 +255,6 @@ int main( int argc, char **argv )
         // Set device
         CHECK_CUDA_ERROR( cudaSetDevice( i ));
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
-        //AYK CHECK_CUPTI_ERROR( cuptiEventGroupResetAllEvents ( eg[i] ), "cuptiEventGroupResetAllEvents" );
         // Copy input data from CPU
         CHECK_CUDA_ERROR( cudaMemcpyAsync( plan[i].d_Data, plan[i].h_Data, plan[i].dataN * sizeof( float ), cudaMemcpyHostToDevice, plan[i].stream ) );
         // Perform GPU computations
@@ -303,7 +302,6 @@ int main( int argc, char **argv )
 #endif
 
 #ifdef PAPI
-    //AYK Maybe this should be in papi stop
     for ( i=0; i<GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
