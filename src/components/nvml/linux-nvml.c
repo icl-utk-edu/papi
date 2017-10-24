@@ -565,63 +565,20 @@ detectDevices()
 {
     nvmlReturn_t ret;
     nvmlEnableState_t mode = NVML_FEATURE_DISABLED;
-    nvmlDevice_t handle;
-    nvmlPciInfo_t info;
 
-    cudaError_t cuerr;
-
-    char busId[16];
     char name[64];
     char inforomECC[16];
     char inforomPower[16];
     char names[device_count][64];
-    char nvml_busIds[device_count][16];
 
     float ecc_version = 0.0;
     float power_version = 0.0;
 
-    int i = 0,
-        j = 0;
+    int i = 0;
     int isTesla = 0;
     int isFermi = 0;
 
     unsigned int temp = 0;
-
-    /* list of nvml pci_busids */
-    for (i = 0; i < device_count; i++) {
-        ret = (*nvmlDeviceGetHandleByIndexPtr)(i, &handle);
-        if (NVML_SUCCESS != ret) {
-            SUBDBG("nvmlDeviceGetHandleByIndex(%d) failed\n", i);
-            return PAPI_ESYS;
-        }
-
-        ret = (*nvmlDeviceGetPciInfoPtr)(handle, &info);
-        if (NVML_SUCCESS != ret) {
-            SUBDBG("nvmlDeviceGetPciInfo() failed %s\n", (*nvmlErrorStringPtr)(ret));
-            return PAPI_ESYS;
-        }
-        strncpy(nvml_busIds[i], info.busId, sizeof(nvml_busIds[i]) - 1);
-        nvml_busIds[i][sizeof(nvml_busIds[i]) - 1] = '\0';
-    }
-
-    /* We want to key our list of nvmlDevice_ts by each device's cuda index */
-    for (i = 0; i < device_count; i++) {
-        cuerr = (*cudaDeviceGetPCIBusIdPtr)(busId, 16, i);
-        if (cudaSuccess != cuerr) {
-            SUBDBG("cudaDeviceGetPCIBusId failed.\n");
-            return PAPI_ESYS;
-        }
-        for (j = 0; j < device_count; j++) {
-            if (!strncmp(busId, nvml_busIds[j], 16)) {
-                ret = (*nvmlDeviceGetHandleByIndexPtr)(j, &devices[i]);
-                if (NVML_SUCCESS != ret) {
-                    SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", j, i);
-                    return PAPI_ESYS;
-                }
-                break;
-            }
-        }
-    }
 
     memset(names, 0x0, device_count * 64);
 
@@ -630,11 +587,17 @@ detectDevices()
         isTesla = 0;
         isFermi = 1;
         features[i] = 0;
+        
+        ret = (*nvmlDeviceGetHandleByIndexPtr)(i, &devices[i]);
+        if (NVML_SUCCESS != ret) {
+            SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", i, i);
+            return PAPI_ESYS;
+        }
 
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlDeviceGetName failed \n");
-            return PAPI_ESYS;
+            strncpy(name, "deviceNameUnknown", 17);
         }
 
         name[sizeof(name) - 1] = '\0';   // to safely use strstr operation below, the variable 'name' must be null terminated
@@ -765,7 +728,6 @@ detectDevices()
             return (PAPI_EINVAL);
         }
         names[i][sizeof(name) - 1] = '\0';
-        printf("name of device %i is %s\n", i, names[i]);
     }
     return PAPI_OK;
 }
@@ -790,6 +752,10 @@ createNativeEvents()
     for (i = 0; i < device_count; i++) {
         memset(names[i], 0x0, 64);
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
+        if (NVML_SUCCESS != ret) {
+            SUBDBG("nvmlDeviceGetName failed \n");
+            strncpy(name, "deviceNameUnknown", 17);
+        }
         name[sizeof(name) - 1] = '\0';   // to safely use strlen operation below, the variable 'name' must be null terminated
 
         nameLen = strlen(name);
@@ -798,10 +764,9 @@ createNativeEvents()
         int retval = snprintf(sanitized_name, sizeof(name), "%s:device_%d", name, i);
         if (retval > (int)sizeof(name)) {
             SUBDBG("Device name is too long %s:device%d", name, i);
-            return (PAPI_EINVAL);
+            return;
         }
         sanitized_name[sizeof(name) - 1] = '\0';
-        printf("name of device %i is %s\n", i, sanitized_name);
 
         for (j = 0; j < nameLen; j++)
             if (' ' == sanitized_name[j])
@@ -1086,6 +1051,7 @@ _papi_nvml_init_component(int cidx)
     }
 
     device_count = cuda_count;
+    SUBDBG("Need to setup NVML with %d devices\n", device_count);
 
     /* A per device representation of what events are present */
     features = (int*)papi_malloc(sizeof(int) * device_count);
