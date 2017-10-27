@@ -12,38 +12,28 @@
 
 powercap/
 
-NOTE: This component is an initial version, and requires that the
-powercap kernel module be installed and running.  The Linux kernel
-configuration item CONFIG_POWERCAP found in most Linux kernels after
-3.13.
-
 The PAPI powercap component supports measuring and capping power usage
-on recent Intel architectures using the powercap interface exposed
+on recent Intel architectures (Sandybridge or later) using the powercap interface exposed
 through the Linux kernel.
 
-PAPI has created a powercap component that can provide read and write
-access to the information and controls exposed via the Linux powercap
-interface.
-
 --------------------------------------------------
-ENABLE ACCESS TO THE LINUX POWERCAP INTERFACE
+MEASURING AND CAPPING POWER
 
-To use this component, the system will need to provide access to Linux
-powercap interface from user space.  The power capping sysfs interface
-allows kernel subsystems to expose power capping settings to user
-space in a consistent way. Usually, it consists of multiple control
-types that determine which settings may be exposed and power zones
-representing parts of the system that can be subject to power capping.
+The powercap sysfs interface exposes energy counters and R/W regsiter-like
+power settings. The counters and R/W settings apply to a power domain on a system.
 
-The actions described below will generally require superuser ability.
-Note, these actions may have security and performance consequences, so
-please make sure you know what you are doing.
+For example, a single KNL chip exposes package power and DRAM power information. 
+On KNL this component can be used to read package/DRAM energy counters and set package/DRAM power limits.
+There are two limits in the package domain and a single limit in the DRAM domain. The two limits 
+in the package domain correspond to long/short term limits. 
 
-    Ensure the "CONFIG_POWERCAP" and "CONFIG_INTEL_RAPL" kernel
-    modules are enabled.
+For all supported processors, each package/DRAM power limit has an associated
+time window. The time window for each limit can also be changed, which changes the enforcement time window of
+that limit.
 
-    Use chmod to set site-appropriate access permissions (e.g. 766)
-    for /sys/class/powercap/*
+These counters and settings are exposed though this PAPI component and can be accessed just like any normal PAPI
+counter. Running the "powercap_basic" test in the test directory will list all the events on a system. There is also a 
+"powercap_limit" test in the test directory that shows how a power limit is applied.
     
 --------------------------------------------------
 CONFIGURING THE PAPI POWERCAP COMPONENT
@@ -57,5 +47,18 @@ To use the module, make sure that the libraries are accessible.
     % export LD_LIBRARY_PATH=${PAPIDIR}/src:${PAPIDIR}/src/libpfm4/lib:${LD_LIBRARY_PATH}
 To check the installation, the following should show some available counters 
     % ./utils/papi_native_avail | grep powercap
+    
+--------------------------------------------------
+SYSTEM SETUP
+
+The actions described below will generally require superuser ability.
+Note, these actions may have security and performance consequences, so
+please make sure you know what you are doing.
+
+    Ensure the "CONFIG_POWERCAP" and "CONFIG_INTEL_RAPL" kernel
+    modules are enabled.
+
+    Use chmod to set site-appropriate access permissions (e.g. 766)
+    for /sys/class/powercap/*
 
 --------------------------------------------------
