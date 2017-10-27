@@ -249,7 +249,7 @@ static int papicuda_linkCudaLibraries()
     cuCtxPushCurrentPtr = DLSYM_AND_CHECK(dl1, "cuCtxPushCurrent");
     cuCtxSynchronizePtr = DLSYM_AND_CHECK(dl1, "cuCtxSynchronize");
 
-    dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);
+    dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
     CHECK_PRINT_EVAL(!dl2, "CUDA runtime library libcudart.so not found.", return (PAPI_ENOSUPP));
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
     cudaSetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaSetDevice");

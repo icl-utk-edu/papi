@@ -1116,7 +1116,7 @@ linkCudaLibraries()
         return (PAPI_ENOSUPP);
     }
 
-    dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);
+    dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
     if (!dl2) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDA runtime library libcudart.so not found.", PAPI_MAX_STR_LEN);
         return (PAPI_ENOSUPP);
@@ -1405,24 +1405,21 @@ _papi_nvml_shutdown_component()
 {
     SUBDBG("Enter:\n");
     nvml_hardware_reset();
-    if (nvml_native_table != NULL)
-        papi_free(nvml_native_table);
-    if (devices != NULL)
-        papi_free(devices);
-    if (features != NULL)
-        papi_free(features);
+    if (nvml_native_table != NULL) papi_free(nvml_native_table);
+    if (devices != NULL) papi_free(devices);
+    if (features != NULL) papi_free(features);
     if (power_management_initial_limit) papi_free(power_management_initial_limit);
     if (power_management_limit_constraint_min) papi_free(power_management_limit_constraint_min);
     if (power_management_limit_constraint_max) papi_free(power_management_limit_constraint_max);
-    (*nvmlShutdownPtr)();
+   (*nvmlShutdownPtr)();
 
     device_count = 0;
     num_events = 0;
 
     // close the dynamic libraries needed by this component (opened in the init component call)
-    dlclose(dl1);
-    dlclose(dl2);
-    dlclose(dl3);
+    if (dl3) dlclose(dl3); dl3=NULL;
+    if (dl2) dlclose(dl2); dl2=NULL;
+    if (dl1) dlclose(dl1); dl1=NULL;
 
     return PAPI_OK;
 }
