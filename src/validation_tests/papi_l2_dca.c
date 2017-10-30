@@ -1,12 +1,16 @@
 /* This code attempts to test the L2 Data Cache Acceesses	*/
 /* performance counter PAPI_L2_DCA				*/
 
-
 /* Notes:							*/
 /*	Should this be equivelent to PAPI_L1_DCM?		*/
-/*		(on IVY it is, on HSW it is not)		*/
+/*		(on IVY it is)					*/
+/*	On Haswell/Broadwell/Skylake this maps to :		*/
+/*		L2_RQSTS:ALL_DEMAND_REFERENCES			*/
+
 /*	Should this include *all* L2 accesses or just those	*/
-/*		cause by the user?  Prefetch? MESI?		*/
+/*		caused by the user?  Prefetch? MESI?		*/
+
+
 
 /* by Vince Weaver, vincent.weaver@maine.edu			*/
 
