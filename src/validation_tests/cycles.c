@@ -16,17 +16,20 @@
 
 #include "testcode.h"
 
+#define MAX_CYCLE_ERROR 30
+
 #define NUM_EVENTS	2
 
 #define NUM_LOOPS	200
 
-int main( int argc, char **argv ) {
-
+int
+main( int argc, char **argv )
+{
 	int retval, tmp, result, i;
 	int EventSet1 = PAPI_NULL;
 	long long values[NUM_EVENTS];
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
-	double ipc;
+	double cycles_error;
 	int quiet=0;
 
 	/* Set TESTS_QUIET variable */
@@ -112,14 +115,6 @@ int main( int argc, char **argv ) {
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", retval );
 	}
 
-	/* Calculate Instructions per Cycle, avoiding division by zero */
-	if (values[0]!=0) {
-		ipc = (double)values[1]/(double)values[0];
-	}
-	else {
-		ipc=0.0;
-	}
-
 	/* Print the results */
 	if ( !quiet ) {
 		printf( "Test case 0: start, stop.\n" );
@@ -138,7 +133,6 @@ int main( int argc, char **argv ) {
 		/* cycles is first, other event second */
 		printf( "%-12s %12lld\n", "PAPI_TOT_CYC : \t", values[0] );
 		printf( "%-12s %12lld\n", "PAPI_TOT_INS : \t", values[1] );
-		printf( "%-12s %12.2lf\n",  "IPC          : \t", ipc );
 
 		printf( "%-12s %12lld\n", "Real usec    : \t", elapsed_us );
 		printf( "%-12s %12lld\n", "Real cycles  : \t", elapsed_cyc );
@@ -147,27 +141,22 @@ int main( int argc, char **argv ) {
 
 		printf( "-------------------------------------------------------------------------\n" );
 
-
+		printf( "Verification: PAPI_TOT_CYC should be roughly real_cycles\n" );
+		printf( "NOTE: Not true if dynamic frequency scaling or turbo boost is enabled.\n" );
 		printf( "Verification: PAPI_TOT_INS should be roughly %d\n", NUM_LOOPS*1000000 );
+	}
 
+	/* Check that TOT_CYC and real_cycles roughly match */
+	cycles_error=100.0*((double)values[0] - (double)elapsed_cyc)/((double)elapsed_cyc);
+	if ((cycles_error > MAX_CYCLE_ERROR) || (cycles_error < -MAX_CYCLE_ERROR)) {
+		printf("PAPI_TOT_CYC Error of %.2f%%\n",cycles_error);
+		test_fail( __FILE__, __LINE__, "Cycles validation", 0 );
 	}
 
 	/* Check that TOT_INS is reasonable */
 	if (abs(values[1] - (1000000*NUM_LOOPS)) > (1000000*NUM_LOOPS)) {
 		printf("%s Error of %.2f%%\n", "PAPI_TOT_INS", (100.0 * (double)(values[1] - (1000000*NUM_LOOPS)))/(1000000*NUM_LOOPS));
 		test_fail( __FILE__, __LINE__, "Instruction validation", 0 );
-	}
-
-	/* Check that TOT_CYC is non-zero */
-	if(values[0]==0) {
-		printf("Cycles is zero\n");
-		test_fail( __FILE__, __LINE__, "Cycles validation", 0 );
-	}
-
-	/* Unless you have an amazing processor, IPC should be < 100 */
-	if ((ipc <=0.01 ) || (ipc >=100.0)) {
-		printf("Unlikely IPC of %.2f%%\n", ipc);
-		test_fail( __FILE__, __LINE__, "IPC validation", 0 );
 	}
 
 	test_pass( __FILE__ );
