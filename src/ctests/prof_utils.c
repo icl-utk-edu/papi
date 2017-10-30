@@ -66,7 +66,7 @@ prof_events( int num_tests)
 /* This function displays info from the prginfo structure in a standardized format.
 */
 void
-prof_print_address( char *title, const PAPI_exe_info_t * prginfo )
+prof_print_address( const char *title, const PAPI_exe_info_t * prginfo )
 {
 	printf( "%s\n", title );
 	printf
@@ -180,7 +180,7 @@ prof_buckets( int bucket )
 /* A standardized header printing routine. No assumed globals.
 */
 void
-prof_head( unsigned long blength, int bucket, int num_buckets, char *header )
+prof_head( unsigned long blength, int bucket, int num_buckets, const char *header )
 {
 	int bucket_size = prof_buckets( bucket );
 	printf

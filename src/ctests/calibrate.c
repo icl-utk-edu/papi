@@ -35,7 +35,7 @@
         (Re)Initialize PAPI_flops() and begin counting floating ops.
 */
 static void
-headerlines( char *title, int quiet )
+headerlines( const char *title, int quiet )
 {
 
 	if ( !quiet ) {
@@ -181,7 +181,7 @@ matrix_double( int n, double *c, double *a, double *b )
 }
 
 static void
-reset_flops( char *title, int EventSet )
+reset_flops( const char *title, int EventSet )
 {
 	int retval;
 	char err_str[PAPI_MAX_STR_LEN];

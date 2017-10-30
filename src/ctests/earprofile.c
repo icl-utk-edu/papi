@@ -61,7 +61,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 	int i, retval;
 	unsigned long blength;
 	int num_buckets;
-	char *profstr[2] = { "PAPI_PROFIL_POSIX", "PAPI_PROFIL_INST_EAR" };
+	const char *profstr[2] = { "PAPI_PROFIL_POSIX", "PAPI_PROFIL_INST_EAR" };
 	int profflags[2] =
 		{ PAPI_PROFIL_POSIX, PAPI_PROFIL_POSIX | PAPI_PROFIL_INST_EAR };
 	int num_profs;

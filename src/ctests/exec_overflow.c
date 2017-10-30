@@ -48,7 +48,7 @@ my_handler( int EventSet, void *pc, long long ovec, void *context )
 
 
 static void
-print_rate( char *str )
+print_rate( const char *str )
 {
 	static int last_count = -1;
 	struct timeval now;
@@ -80,7 +80,7 @@ print_rate( char *str )
 }
 
 static void
-run( char *str, int len )
+run( const char *str, int len )
 {
 	int n;
 
@@ -94,7 +94,7 @@ int
 main( int argc, char **argv )
 {
 	int num_events = 1;
-	char *name = "unknown";
+	const char *name = "unknown";
 	int ev,EventSet = PAPI_NULL;
 	int quiet,retval;
 

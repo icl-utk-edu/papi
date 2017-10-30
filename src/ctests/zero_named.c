@@ -18,7 +18,7 @@ main( int argc, char **argv )
 	int num_events = 2;
 	long long **values;
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
-	char *event_names[] = {"PAPI_TOT_CYC","PAPI_TOT_INS"};
+	const char *event_names[] = {"PAPI_TOT_CYC","PAPI_TOT_INS"};
 	char add_event_str[PAPI_MAX_STR_LEN];
 	double cycles_error;
 	int quiet;

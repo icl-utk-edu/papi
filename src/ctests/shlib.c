@@ -93,7 +93,7 @@ main( int argc, char **argv )
 #ifndef NO_DLFCN
 	{
 
-	char *_libname = "libcrypt.so";
+	const char *_libname = "libcrypt.so";
 	void *handle;
 	void ( *setkey) (const char *key);
 	void ( *encrypt) (char block[64], int edflag);

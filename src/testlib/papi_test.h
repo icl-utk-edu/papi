@@ -48,7 +48,7 @@ struct test_events_t {
 
 extern struct test_events_t test_events[];
 
-void validate_string(char *name, char *s);
+void validate_string(const char *name, char *s);
 void *get_overflow_address(void *context);
 void free_test_space(long long ** values, int num_tests);
 long long **allocate_test_space(int num_tests, int num_events);
@@ -69,7 +69,7 @@ void test_pass(const char *filename);
 void test_fail(const char *file, int line, const char *call, int retval);
 void test_skip(const char *file, int line, const char *call, int retval);
 void test_warn(const char *file, int line, const char *call, int retval);
-void test_print_event_header(char *call, int evset);
+void test_print_event_header(const char *call, int evset);
 int approx_equals(double a, double b);
 
 /* Unix systems use %lld to display long long values

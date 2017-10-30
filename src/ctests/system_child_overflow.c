@@ -29,7 +29,7 @@ static int Threshold[MAX_EVENTS] = {
 
 static int num_events = 1;
 static int EventSet = PAPI_NULL;
-static char *name = "unknown";
+static const char *name = "unknown";
 static struct timeval start, last;
 static long count, total;
 
@@ -55,13 +55,13 @@ zero_count( void )
 }
 
 static void
-print_here( char *str) {
+print_here( const char *str) {
 
 	if (!TESTS_QUIET) printf("[%d] %s, %s\n", getpid(), name, str);
 }
 
 static void
-print_rate( char *str )
+print_rate( const char *str )
 {
 	static int last_count = -1;
 	struct timeval now;
@@ -142,7 +142,7 @@ my_papi_start( void )
 }
 
 static void
-run( char *str, int len )
+run( const char *str, int len )
 {
 	int n;
 

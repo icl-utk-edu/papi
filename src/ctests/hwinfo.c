@@ -30,8 +30,8 @@ main( int argc, char **argv )
 
 	mh = &hwinfo->mem_hierarchy;
 
-	validate_string( ( char * ) hwinfo->vendor_string, "vendor_string" );
-	validate_string( ( char * ) hwinfo->model_string, "model_string" );
+	validate_string( hwinfo->vendor_string, "vendor_string" );
+	validate_string( hwinfo->model_string, "model_string" );
 
 	if ( hwinfo->vendor == PAPI_VENDOR_UNKNOWN )
 		test_fail( __FILE__, __LINE__, "Vendor unknown", 0 );

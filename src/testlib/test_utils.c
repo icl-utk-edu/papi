@@ -20,7 +20,7 @@ static int TESTS_COLOR = 1;
 static int TEST_WARN = 0;
 
 void
-validate_string( char *name, char *s )
+validate_string( const char *name, char *s )
 {
 	if ( ( s == NULL ) || ( strlen( s ) == 0 ) ) {
 		char s2[1024] = "";
@@ -577,7 +577,7 @@ test_skip( const char *file, int line, const char *call, int retval )
 
 
 void
-test_print_event_header( char *call, int evset )
+test_print_event_header( const char *call, int evset )
 {
         int *ev_ids;
 	int i, nev;

@@ -45,11 +45,11 @@ wait_for_attach_and_loop( void )
   char newpath[PATH_MAX];
   path = getenv("PATH");
 
-  sprintf(newpath, "PATH=./:%s", (path)?path:'\0' );
+  sprintf(newpath, "PATH=./:%s", (path)?path:"\0" );
   putenv(newpath);
 
   if (ptrace(PTRACE_TRACEME, 0, 0, 0) == 0) {
-    execlp("attach_target","attach_target","100000000",NULL); 
+    execlp("attach_target","attach_target","100000000",NULL);
     perror("execl(attach_target) failed");
   }
   perror("PTRACE_TRACEME");

@@ -7,7 +7,7 @@
 #include "papi_test.h"
 
 static void
-test_continue( char *call, int retval )
+test_continue( const char *call, int retval )
 {
 	if (!TESTS_QUIET) {
 		printf( "Expected error in %s: %s\n", call,

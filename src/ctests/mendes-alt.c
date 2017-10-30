@@ -18,10 +18,7 @@ long long PAPI_values2[PAPI_MAX_EVENTS];
 long long PAPI_values3[PAPI_MAX_EVENTS];
 static int EventSet = PAPI_NULL;
 
-void
-funcX( a, b, n )
-double a[MAX], b[MAX];
-int n;
+void funcX( double a[MAX], double b[MAX], int n)
 {
 	int i, k;
 	for ( k = 0; k < TIMES; k++ )
@@ -29,10 +26,7 @@ int n;
 			a[i] = a[i] * b[i] + 1.;
 }
 
-void
-funcA( a, b, n )
-double a[MAX], b[MAX];
-int n;
+void funcA( double a[MAX], double b[MAX], int n)
 {
 	int i, k;
 	double t[MAX];

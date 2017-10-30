@@ -45,7 +45,7 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 	unsigned long blength;
 	int num_buckets;
 
-	char *profstr[5] = { "PAPI_PROFIL_POSIX",
+	const char *profstr[5] = { "PAPI_PROFIL_POSIX",
 		"PAPI_PROFIL_RANDOM",
 		"PAPI_PROFIL_WEIGHTED",
 		"PAPI_PROFIL_COMPRESS",
