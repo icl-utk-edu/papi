@@ -43,7 +43,7 @@ static int attr_idx;
  *
  */
 
-static int find_existing_event(char *name,
+static int find_existing_event(const char *name,
                                struct native_event_table_t *event_table) {
   SUBDBG("Entry: name: %s, event_table: %p, num_native_events: %d\n", name, event_table, event_table->num_native_events);
 
@@ -125,7 +125,7 @@ static int pmu_is_present_and_right_type(pfm_pmu_info_t *pinfo, int type) {
  */
 
 static struct native_event_t *allocate_native_event(
-		char *name,
+		const char *name,
 		int libpfm4_index, int cidx,
 		struct native_event_table_t *event_table) {
 
@@ -545,7 +545,7 @@ get_first_event_next_pmu(int pmu_idx, int pmu_type)
  */
 
 int
-_pe_libpfm4_ntv_name_to_code( char *name, unsigned int *event_code,
+_pe_libpfm4_ntv_name_to_code( const char *name, unsigned int *event_code,
 				int cidx,
 				struct native_event_table_t *event_table)
 {

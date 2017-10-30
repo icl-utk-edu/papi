@@ -1459,7 +1459,7 @@ _papi_pfm_ntv_enum_events( unsigned int *EventCode, int modifier )
 }
 
 static int
-_papi_pfm_ntv_name_to_code( char *name, unsigned int *event_code )
+_papi_pfm_ntv_name_to_code( const char *name, unsigned int *event_code )
 {
 	pfmlib_event_t event;
 	unsigned int i, mask = 0;

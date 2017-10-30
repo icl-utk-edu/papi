@@ -364,7 +364,7 @@ NWUNIT_ntv_enum_events( unsigned int *EventCode, int modifier )
  *
  */
 int
-NWUNIT_ntv_name_to_code( char *name, unsigned int *event_code )
+NWUNIT_ntv_name_to_code( const char *name, unsigned int *event_code )
 {
 #ifdef DEBUG_BGQ
 	printf( "NWUNIT_ntv_name_to_code\n" );

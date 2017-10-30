@@ -12,7 +12,7 @@
 int _papi_libpfm_error( int pfm_error );
 int _papi_libpfm_setup_presets( char *name, int type, int cidx );
 int _papi_libpfm_ntv_enum_events( unsigned int *EventCode, int modifier );
-int _papi_libpfm_ntv_name_to_code( char *ntv_name,
+int _papi_libpfm_ntv_name_to_code( const char *ntv_name,
 				       unsigned int *EventCode );
 int _papi_libpfm_ntv_code_to_name( unsigned int EventCode, char *name,
 				       int len );

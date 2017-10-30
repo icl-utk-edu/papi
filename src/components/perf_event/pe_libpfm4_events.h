@@ -7,7 +7,7 @@
 int _pe_libpfm4_setup_presets( char *name, int type, int cidx );
 int _pe_libpfm4_ntv_enum_events( unsigned int *EventCode, int modifier, int cidx,
 		       struct native_event_table_t *event_table);
-int _pe_libpfm4_ntv_name_to_code( char *ntv_name,
+int _pe_libpfm4_ntv_name_to_code( const char *ntv_name,
 				    unsigned int *EventCode, int cidx,
 		       struct native_event_table_t *event_table);
 int _pe_libpfm4_ntv_code_to_name( unsigned int EventCode, char *name,

@@ -1057,7 +1057,7 @@ _bgq_init_component( int cidx )
  * Event Name to Native Code
  */
 int
-_bgq_ntv_name_to_code( char *name, unsigned int *event_code )
+_bgq_ntv_name_to_code( const char *name, unsigned int *event_code )
 {
 #ifdef DEBUG_BGQ
 	printf( "_bgq_ntv_name_to_code\n" );

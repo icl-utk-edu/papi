@@ -1244,7 +1244,7 @@ _peu_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 }
 
 static int
-_peu_ntv_name_to_code( char *name, unsigned int *event_code) {
+_peu_ntv_name_to_code( const char *name, unsigned int *event_code) {
 
   if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
 

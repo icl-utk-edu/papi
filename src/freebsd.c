@@ -745,7 +745,7 @@ int _papi_freebsd_ntv_enum_events(unsigned int *EventCode, int modifier)
 
 }
 
-int _papi_freebsd_ntv_name_to_code(char *name, unsigned int *event_code) {
+int _papi_freebsd_ntv_name_to_code(const char *name, unsigned int *event_code) {
 
    SUBDBG("Entering\n");
 

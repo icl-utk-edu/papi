@@ -514,7 +514,7 @@ EMON_ntv_code_to_name( unsigned int EventCode, char *name, int len )
  * 
  */
 int
-EMON_ntv_name_to_code( char *name, unsigned int *code )
+EMON_ntv_name_to_code( const char *name, unsigned int *code )
 {
 	int index;
 

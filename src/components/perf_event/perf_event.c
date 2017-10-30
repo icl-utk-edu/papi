@@ -1791,7 +1791,7 @@ _pe_ntv_enum_events( unsigned int *PapiEventCode, int modifier )
 }
 
 static int
-_pe_ntv_name_to_code( char *name, unsigned int *event_code)
+_pe_ntv_name_to_code( const char *name, unsigned int *event_code)
 {
 	return _pe_libpfm4_ntv_name_to_code(name,event_code, our_cidx,
 			&perf_native_event_table);

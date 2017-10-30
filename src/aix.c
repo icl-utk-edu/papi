@@ -1193,7 +1193,7 @@ _aix_update_shlib_info( papi_mdi_t *mdi )
 }
 
 int
-_aix_ntv_name_to_code( char *name, unsigned int *evtcode )
+_aix_ntv_name_to_code( const char *name, unsigned int *evtcode )
 {
        int i;
 

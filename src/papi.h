@@ -1024,7 +1024,7 @@ enum {
    int ffsll(long long lli) __THROW __attribute__ ((__const__)); //required for --with-ffsll and used in extras.c/papi.c
    int   PAPI_accum(int EventSet, long long * values); /**< accumulate and reset hardware events from an event set */
    int   PAPI_add_event(int EventSet, int Event); /**< add single PAPI preset or native hardware event to an event set */
-   int   PAPI_add_named_event(int EventSet, char *EventName); /**< add an event by name to a PAPI event set */
+   int   PAPI_add_named_event(int EventSet, const char *EventName); /**< add an event by name to a PAPI event set */
    int   PAPI_add_events(int EventSet, int *Events, int number); /**< add array of PAPI preset or native hardware events to an event set */
    int   PAPI_assign_eventset_component(int EventSet, int cidx); /**< assign a component index to an existing but empty eventset */
    int   PAPI_attach(int EventSet, unsigned long tid); /**< attach specified event set to a specific process or thread id */
@@ -1035,7 +1035,7 @@ enum {
    int   PAPI_enum_event(int *EventCode, int modifier); /**< return the event code for the next available preset or natvie event */
    int   PAPI_enum_cmp_event(int *EventCode, int modifier, int cidx); /**< return the event code for the next available component event */
    int   PAPI_event_code_to_name(int EventCode, char *out); /**< translate an integer PAPI event code into an ASCII PAPI preset or native name */
-   int   PAPI_event_name_to_code(char *in, int *out); /**< translate an ASCII PAPI preset or native name into an integer PAPI event code */
+   int   PAPI_event_name_to_code(const char *in, int *out); /**< translate an ASCII PAPI preset or native name into an integer PAPI event code */
    int  PAPI_get_dmem_info(PAPI_dmem_info_t *dest); /**< get dynamic memory usage information */
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info); /**< get the name and descriptions for a given preset or native event code */
    const PAPI_exe_info_t *PAPI_get_executable_info(void); /**< get the executable's address space information */
@@ -1068,12 +1068,12 @@ enum {
 					 unsigned scale, int EventSet, int EventCode, 
 					 int threshold, int flags); /**< generate PC histogram data where hardware counter overflow occurs */
    int   PAPI_query_event(int EventCode); /**< query if a PAPI event exists */
-   int   PAPI_query_named_event(char *EventName); /**< query if a named PAPI event exists */
+   int   PAPI_query_named_event(const char *EventName); /**< query if a named PAPI event exists */
    int   PAPI_read(int EventSet, long long * values); /**< read hardware events from an event set with no reset */
    int   PAPI_read_ts(int EventSet, long long * values, long long *cyc); /**< read from an eventset with a real-time cycle timestamp */
    int   PAPI_register_thread(void); /**< inform PAPI of the existence of a new thread */
    int   PAPI_remove_event(int EventSet, int EventCode); /**< remove a hardware event from a PAPI event set */
-   int   PAPI_remove_named_event(int EventSet, char *EventName); /**< remove a named event from a PAPI event set */
+   int   PAPI_remove_named_event(int EventSet, const char *EventName); /**< remove a named event from a PAPI event set */
    int   PAPI_remove_events(int EventSet, int *Events, int number); /**< remove an array of hardware events from a PAPI event set */
    int   PAPI_reset(int EventSet); /**< reset the hardware event counts in an event set */
    int   PAPI_set_debug(int level); /**< set the current debug level for PAPI */

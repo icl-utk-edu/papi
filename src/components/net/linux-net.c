@@ -564,7 +564,7 @@ _net_ntv_enum_events( unsigned int *EventCode, int modifier )
  *
  */
 static int
-_net_ntv_name_to_code( char *name, unsigned int *EventCode )
+_net_ntv_name_to_code( const char *name, unsigned int *EventCode )
 {
     int i;
 

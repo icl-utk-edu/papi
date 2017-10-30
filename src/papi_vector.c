@@ -168,7 +168,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->ntv_enum_events = ( int ( * )( unsigned int *, int ) ) vec_int_dummy;
 	if ( !v->ntv_name_to_code )
 		v->ntv_name_to_code =
-			( int ( * )( char *, unsigned int * ) ) vec_int_dummy;
+			( int ( * )( const char *, unsigned int * ) ) vec_int_dummy;
 	if ( !v->ntv_code_to_name )
 		v->ntv_code_to_name =
 			( int ( * )( unsigned int, char *, int ) ) vec_int_dummy;

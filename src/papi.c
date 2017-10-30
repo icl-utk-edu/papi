@@ -728,7 +728,7 @@ PAPI_query_event( int EventCode )
  *
  * @par C Interface:
  * \#include <papi.h> @n
- * int PAPI_query_named_event(char *EventName);
+ * int PAPI_query_named_event(const char *EventName);
  *
  * PAPI_query_named_event() asks the PAPI library if the PAPI named event can be 
  * counted on this architecture. 
@@ -762,10 +762,10 @@ PAPI_query_event( int EventCode )
  * @see PAPI_query_event 
  */
 int
-PAPI_query_named_event( char *EventName )
+PAPI_query_named_event( const char *EventName )
 {
 	int ret, code;
-	
+
 	ret = PAPI_event_name_to_code( EventName, &code );
 	if ( ret == PAPI_OK ) ret = PAPI_query_event( code );
 	papi_return( ret);
@@ -967,7 +967,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *
  *	@par C Interface:
  *	\#include <papi.h> @n
- *	int PAPI_event_name_to_code( char * EventName, int * EventCode );
+ *	int PAPI_event_name_to_code( const char * EventName, int * EventCode );
  *
  *	PAPI_event_name_to_code is used to translate an ASCII PAPI event name 
  *	into an integer PAPI event code. 
@@ -1010,7 +1010,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *	@see PAPI_native
  */
 int
-PAPI_event_name_to_code( char *in, int *out )
+PAPI_event_name_to_code( const char *in, int *out )
 {
    APIDBG("Entry: in: %p, name: %s, out: %p\n", in, in, out);
 	int i;
@@ -1823,7 +1823,7 @@ PAPI_remove_event( int EventSet, int EventCode )
  *
  *	@par C Interface:
  *	\#include <papi.h> @n
- *	int PAPI_add_named_event( int EventSet, char *EventName );
+ *	int PAPI_add_named_event( int EventSet, const char *EventName );
  *
  *	PAPI_add_named_event adds one event to a PAPI EventSet. @n
  *	A hardware event can be either a PAPI preset or a native hardware event code.
@@ -1882,12 +1882,12 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	PAPI_remove_named_event
  */
 int
-PAPI_add_named_event( int EventSet, char *EventName )
+PAPI_add_named_event( int EventSet, const char *EventName )
 {
 	APIDBG("Entry: EventSet: %d, EventName: %s\n", EventSet, EventName);
 
 	int ret, code;
-	
+
 	ret = PAPI_event_name_to_code( EventName, &code );
 	if ( ret != PAPI_OK ) {
 		APIDBG("EXIT: return: %d\n", ret);
@@ -1911,7 +1911,7 @@ PAPI_add_named_event( int EventSet, char *EventName )
  *
  *   @par C Interface:
  *   \#include <papi.h> @n
- *   int PAPI_remove_event( int  EventSet, int  EventCode );
+ *   int PAPI_remove_named_event( int  EventSet, const char *EventName );
  *
  *   @param[in] EventSet
  *	   -- an integer handle for a PAPI event set as created 
@@ -1967,14 +1967,15 @@ PAPI_add_named_event( int EventSet, char *EventName )
  *	PAPI_add_named_event
  */
 int
-PAPI_remove_named_event( int EventSet, char *EventName )
+PAPI_remove_named_event( int EventSet, const char *EventName )
 {
 	APIDBG("Entry: EventSet: %d, EventName: %s\n", EventSet, EventName);
 	int ret, code;
-	
+
 	ret = PAPI_event_name_to_code( EventName, &code );
 	if ( ret == PAPI_OK ) ret = PAPI_remove_event( EventSet, code );
 	papi_return( ret );
+
 }
 
 /** @class PAPI_destroy_eventset 

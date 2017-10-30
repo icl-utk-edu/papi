@@ -292,9 +292,9 @@ _papi_hwi_prefix_component_name( char *component_name, char *event_name, char *o
  *  This function checks specifically for ':::' and will return the start of 
  *  event_name if it doesn't find the ::: .
  */
-char *_papi_hwi_strip_component_prefix(char *event_name)
+const char *_papi_hwi_strip_component_prefix(const char *event_name)
 {
-	char *start = NULL;
+	const char *start = NULL;
 /* We assume ::: is the seperator 
  * eg: 
  * 		papi_component:::event_name 
@@ -2398,7 +2398,7 @@ _papi_hwi_query_native_event( unsigned int EventCode )
    Returns code = 0 and PAPI_OK if name not found.
    This allows for sparse native event arrays */
 int
-_papi_hwi_native_name_to_code( char *in, int *out )
+_papi_hwi_native_name_to_code( const char *in, int *out )
 {
     INTDBG("ENTER: in: %s, out: %p\n", in, out);
 

@@ -181,7 +181,7 @@ _papi_libpfm_error( int pfm_error )
 }
 
 int
-_papi_libpfm_ntv_name_to_code( char *name, unsigned int *event_code )
+_papi_libpfm_ntv_name_to_code( const char *name, unsigned int *event_code )
 {
 	pfmlib_event_t event;
 	unsigned int i;
