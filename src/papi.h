@@ -1097,9 +1097,9 @@ enum {
    int   PAPI_write(int EventSet, long long * values); /**< write counter values into counters */
    int   PAPI_get_event_component(int EventCode);  /**< return which component an EventCode belongs to */
    int   PAPI_get_eventset_component(int EventSet);  /**< return which component an EventSet is assigned to */
-   int   PAPI_get_component_index(char *name); /**< Return component index for component with matching name */
+   int   PAPI_get_component_index(const char *name); /**< Return component index for component with matching name */
    int   PAPI_disable_component(int cidx); /**< Disables a component before init */
-   int	 PAPI_disable_component_by_name( char *name ); /**< Disable, before library init, a component by name. */
+   int	 PAPI_disable_component_by_name(const char *name ); /**< Disable, before library init, a component by name. */
 
 
    /** @} */

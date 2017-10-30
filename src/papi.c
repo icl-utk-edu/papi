@@ -6599,7 +6599,7 @@ PAPI_get_event_component( int EventCode)
  *	@brief returns the component index for the named component
  *	@retval ENOCMP
  *		component does not exist
- *	
+ *
  *	@param name
  *              name of component to find index for
  *	@par Examples:
@@ -6616,7 +6616,7 @@ PAPI_get_event_component( int EventCode)
  *	@bug	Doesn't work for preset events
  *	@see  PAPI_get_event_component
  */
-int  PAPI_get_component_index(char *name)
+int  PAPI_get_component_index(const char *name)
 {
 	APIDBG( "Entry: name: %s\n", name);
   int cidx;
@@ -6643,7 +6643,7 @@ int  PAPI_get_component_index(char *name)
  *		component does not exist
  *      @retval ENOINIT
  *              cannot disable as PAPI has already been initialized
- *	
+ *
  *	@param cidx
  *              component index of component to be disabled
  *	@par Examples:
@@ -6723,7 +6723,7 @@ PAPI_disable_component( int cidx )
  *	\see PAPI_disable_component
 */
 int
-PAPI_disable_component_by_name( char *name )
+PAPI_disable_component_by_name(const char *name )
 {
 	APIDBG( "Entry: name: %s\n", name);
 	int cidx;
