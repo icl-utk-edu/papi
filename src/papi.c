@@ -4622,7 +4622,7 @@ PAPI_strerror( int errorCode )
  *
  * @par C Interface:
  *     \#include <papi.h> @n
- *     void PAPI_perror( char *s );
+ *     void PAPI_perror( const char *s );
  *
  *  @param[in] s
  *      -- Optional message to print before the string describing the last error message. 
@@ -4659,7 +4659,7 @@ PAPI_strerror( int errorCode )
  *  @see PAPI_strerror
  */
 void
-PAPI_perror( char *msg )
+PAPI_perror( const char *msg )
 {
 	char *foo;
 

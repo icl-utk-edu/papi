@@ -1060,10 +1060,10 @@ enum {
    int   PAPI_lock(int); /**< lock one of two PAPI internal user mutex variables */
    int   PAPI_multiplex_init(void); /**< initialize multiplex support in the PAPI library */
    int   PAPI_num_cmp_hwctrs(int cidx); /**< return the number of hardware counters for a specified component */
-    int   PAPI_num_events(int EventSet); /**< return the number of events in an event set */
+   int   PAPI_num_events(int EventSet); /**< return the number of events in an event set */
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler); /**< set up an event set to begin registering overflows */
-   void   PAPI_perror(char *msg ); /**< Print a PAPI error message */
+   void  PAPI_perror(const char *msg ); /**< Print a PAPI error message */
    int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, 
 					 unsigned scale, int EventSet, int EventCode, 
 					 int threshold, int flags); /**< generate PC histogram data where hardware counter overflow occurs */
