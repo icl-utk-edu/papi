@@ -1,4 +1,4 @@
-ALL = flops_validation \
+ALL = cycles_validation flops_validation \
 	papi_br_cn papi_br_ins papi_br_msp \
 	papi_br_ntk papi_br_prc papi_br_tkn papi_br_ucn \
 	papi_dp_ops papi_fp_ops papi_sp_ops papi_hw_int \
@@ -39,9 +39,12 @@ matrix_multiply.o:	matrix_multiply.c matrix_multiply.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c matrix_multiply.c
 
 
+cycles_validation: cycles_validation.o $(TESTLIB) $(PAPILIB) display_error.o instructions_testcode.o
+	$(CC) -o cycles_validation cycles_validation.o $(TESTLIB) display_error.o instructions_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
 flops_validation: flops_validation.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
 	$(CC) -o flops_validation flops_validation.o $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
+
 
 papi_br_cn: papi_br_cn.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
 	$(CC) -o papi_br_cn papi_br_cn.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) $(LDFLAGS) $(EXTRALIB)
