@@ -14,7 +14,7 @@ use strict;
 # of scripts that come with iozone, but is a complete re-write
 #
 # The main reason to write this was the need to compare the behaviour of
-# two or more different setups, for tuning filesystems or 
+# two or more different setups, for tuning filesystems or
 # comparing different pieces of hardware.
 #
 # This script is in the public domain, too short and too trivial
@@ -59,7 +59,7 @@ my $xoffset = "offset -7";
 my $yoffset = "offset -3";
 
 if ($nooffset == 1){
-   $xoffset = ""; $yoffset = "";      
+   $xoffset = ""; $yoffset = "";
 }
 
 print "\niozone_visualizer.pl : this script is distributed as public domain\n";
@@ -105,9 +105,9 @@ $outdir="report_".join("_",map{/([^\.]+)(\..*)?/ && $1}(@Reports));
 
 print STDERR "Output directory: $outdir ";
 
-if ( -d $outdir ) 
+if ( -d $outdir )
 {
-    print STDERR "(removing old directory) "; 
+    print STDERR "(removing old directory) ";
     system "rm -rf $outdir";
 }
 
@@ -175,7 +175,7 @@ print HTML "</ul></td></tr>\n";
 foreach $column (keys %columns)
 {
     print STDERR " $column";
-    
+
     open(G, ">$outdir/$column.do") or die "cannot open $outdir/$column.do for writing";
 
 
@@ -193,7 +193,7 @@ set autoscale z
 #set xrange [2.**5:2.**24]
 set xlabel "File size in KBytes" -2
 set ylabel "Record size in Kbytes" 2
-set zlabel "Kbytes/sec" 4,8 
+set zlabel "Kbytes/sec" 4,8
 set style data lines
 set dgrid3d 80,80,3
 #set terminal png small picsize 900 700
@@ -260,4 +260,3 @@ print HTML qq{
 </html>
 };
 print STDERR "done.\n";
-

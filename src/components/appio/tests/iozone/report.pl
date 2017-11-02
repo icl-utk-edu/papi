@@ -8,7 +8,7 @@
 # of scripts that come with iozone, but is a complete re-write
 #
 # The main reason to write this was the need to compare the behaviour of
-# two or more different setups, for tuning filesystems or 
+# two or more different setups, for tuning filesystems or
 # comparing different pieces of hardware.
 #
 # This script is in the public domain, too short and too trivial
@@ -57,9 +57,9 @@ $outdir="report_".join("_",map{/([^\.]+)(\..*)?/ && $1}(@Reports));
 
 print STDERR "Output directory: $outdir ";
 
-if ( -d $outdir ) 
+if ( -d $outdir )
 {
-    print STDERR "(removing old directory) "; 
+    print STDERR "(removing old directory) ";
     system "rm -rf $outdir";
 }
 
@@ -91,7 +91,7 @@ print STDERR "done.\nGenerating graphs:";
 foreach $column (keys %columns)
 {
     print STDERR " $column";
-    
+
     open(G, ">$outdir/$column.do") or die "cannot open $outdir/$column.do for writing";
     print G qq{
 set title "Iozone performance: $column"
@@ -148,4 +148,3 @@ set output "2d-$column.png"
 }
 
 print STDERR "done.\n";
-
