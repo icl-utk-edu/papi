@@ -13,17 +13,6 @@ AC_ARG_WITH(sensors_incdir,
                              [#include <sensors.h>])],
             [AC_MSG_ERROR([Component requires path to sensors includes])])	
 
-AC_ARG_WITH(sensors_libdir,
-            [--with-sensors_libdir=<path> Specify path to sensors library],
-            [SENSORS_LIBDIR=$withval
-             LDFLAGS="$LDFLAGS -L$withval -lsensors" 
-             AC_CHECK_LIB([sensors], 
-                          [sensors_init], 
-                          [],				          
-                          [AC_MSG_ERROR([libsensors not found])])],
-            [AC_MSG_ERROR([Component requires path to sensors library])])
-
 AC_SUBST(SENSORS_INCDIR)
-AC_SUBST(SENSORS_LIBDIR)
 AC_CONFIG_FILES([Makefile.lmsensors])
 AC_OUTPUT

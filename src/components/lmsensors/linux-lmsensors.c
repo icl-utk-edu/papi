@@ -33,6 +33,7 @@
 #include <error.h>
 #include <time.h>
 #include <string.h>
+#include <dlfcn.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -101,6 +102,23 @@ static _lmsensors_native_event_entry_t *lm_sensors_native_table;
 static int num_events = 0;
 
 
+int (*sensors_initPtr)(FILE *input);
+void (*sensors_cleanupPtr)(void);
+int (*sensors_snprintf_chip_namePtr)(char *str, size_t size,
+				  const sensors_chip_name *chip);
+char *(*sensors_get_labelPtr)(const sensors_chip_name *name, const sensors_feature *feature);
+int (*sensors_get_valuePtr)(const sensors_chip_name *name, int subfeat_nr,
+		      double *value);
+const sensors_chip_name *(*sensors_get_detected_chipsPtr)(const sensors_chip_name
+						       *match, int *nr);
+const sensors_feature *(*sensors_get_featuresPtr)(const sensors_chip_name *name, int *nr);
+const sensors_subfeature *(*sensors_get_all_subfeaturesPtr)(const sensors_chip_name *name,
+			    const sensors_feature *feature, int *nr);
+
+// file handles used to access lmsensors libraries with dlopen
+static void* dl1 = NULL;
+
+static int link_lmsensors_libraries ();
 
 papi_vector_t _lmsensors_vector;
 
@@ -119,13 +137,13 @@ detectSensors( void )
 
 	/* Loop through all the chips, features, subfeatures found */
 	while ( ( chip_name =
-			  sensors_get_detected_chips( NULL, &chip_nr ) ) != NULL ) {
+			  sensors_get_detected_chipsPtr( NULL, &chip_nr ) ) != NULL ) {
 		int a = 0, b;
 		const sensors_feature *feature;
 
-		while ( ( feature = sensors_get_features( chip_name, &a ) ) ) {
+		while ( ( feature = sensors_get_featuresPtr( chip_name, &a ) ) ) {
 			b = 0;
-			while ( ( sensors_get_all_subfeatures( chip_name, feature,
+			while ( ( sensors_get_all_subfeaturesPtr( chip_name, feature,
 												   &b ) ) ) {
 				id++;
 			}
@@ -156,7 +174,7 @@ createNativeEvents( void )
 
 	/* Loop through all the chips found */
 	while ( ( chip_name =
-			  sensors_get_detected_chips( NULL, &chip_nr ) ) != NULL ) {
+			  sensors_get_detected_chipsPtr( NULL, &chip_nr ) ) != NULL ) {
 	   int a, b;
 	   const sensors_feature *feature;
 	   const sensors_subfeature *sub;
@@ -165,16 +183,16 @@ createNativeEvents( void )
 	   //	   lm_sensors_native_table[id].count = 0;
 
 		/* get chip name from its internal representation */
-	   sensors_snprintf_chip_name( chipnamestring,
+	   sensors_snprintf_chip_namePtr( chipnamestring,
 					    PAPI_MIN_STR_LEN, chip_name );
 
 	   a = 0;
 
 	   /* Loop through all the features found */
-	   while ( ( feature = sensors_get_features( chip_name, &a ) ) ) {
+	   while ( ( feature = sensors_get_featuresPtr( chip_name, &a ) ) ) {
 	      char *featurelabel;
 
-	      if ( !( featurelabel = sensors_get_label( chip_name, feature ))) {
+	      if ( !( featurelabel = sensors_get_labelPtr( chip_name, feature ))) {
 		 fprintf( stderr, "ERROR: Can't get label of feature %s!\n",
 						 feature->name );
 		 continue;
@@ -183,7 +201,7 @@ createNativeEvents( void )
 	      b = 0;
 
 	      /* Loop through all the subfeatures found */
-	      while ((sub=sensors_get_all_subfeatures(chip_name,feature,&b))) {
+	      while ((sub=sensors_get_all_subfeaturesPtr(chip_name,feature,&b))) {
 
 	         count = 0;
 
@@ -230,7 +248,7 @@ getEventValue( unsigned event_id )
 	double value;
 	int res;
 
-	res = sensors_get_value( lm_sensors_native_table[event_id].resources.name,
+	res = sensors_get_valuePtr( lm_sensors_native_table[event_id].resources.name,
 							 lm_sensors_native_table[event_id].resources.
 							 subfeat_nr, &value );
 
@@ -269,8 +287,15 @@ _lmsensors_init_component( int cidx )
     int res;
     (void) cidx;
 
+    /* link in all the lmsensor libraries and resolve the symbols we need to use */
+    if (link_lmsensors_libraries() != PAPI_OK) {
+	    SUBDBG ("Dynamic link of lmsensors libraries failed, component will be disabled.\n");
+	    SUBDBG ("See disable reason in papi_component_avail output for more details.\n");
+	    return (PAPI_ENOSUPP);
+    }
+
     /* Initialize libsensors library */
-    if ( ( res = sensors_init( NULL ) ) != 0 ) {
+    if ( ( res = sensors_initPtr( NULL ) ) != 0 ) {
        strncpy(_lmsensors_vector.cmp_info.disabled_reason,
 	      "Cannot enable libsensors",PAPI_MAX_STR_LEN);
        return res;
@@ -300,6 +325,84 @@ _lmsensors_init_component( int cidx )
     return PAPI_OK;
 }
 
+/*
+ * Link the necessary lmsensors libraries to use the lmsensors
+ * component.  If any of them can not be found, then the lmsensors
+ * component will just be disabled.  This is done at runtime so that a
+ * version of PAPI built with the Infiniband component can be
+ * installed and used on systems which have the lmsensors libraries
+ * installed and on systems where these libraries are not installed.
+ */
+static int
+link_lmsensors_libraries ()
+{
+	/* Need to link in the lmsensors libraries, if not found disable the component */
+	dl1 = dlopen("libsensors.so", RTLD_NOW | RTLD_GLOBAL);
+	if (!dl1)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensors library libsensors.so not found.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_initPtr = dlsym(dl1, "sensors_init");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_init.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_cleanupPtr = dlsym(dl1, "sensors_cleanup");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_cleanup.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_snprintf_chip_namePtr = dlsym(dl1, "sensors_snprintf_chip_name");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_snprintf_chip_name.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_get_labelPtr = dlsym(dl1, "sensors_get_label");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_get_label.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_get_valuePtr = dlsym(dl1, "sensors_get_value");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_get_value.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_get_detected_chipsPtr = dlsym(dl1, "sensors_get_detected_chips");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_get_detected_chips.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_get_featuresPtr = dlsym(dl1, "sensors_get_features");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_get_features.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+	sensors_get_all_subfeaturesPtr = dlsym(dl1, "sensors_get_all_subfeatures");
+	if (dlerror() != NULL)
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_get_all_subfeatures.",PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
+
+	return ( PAPI_OK );
+}
 
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
@@ -378,7 +481,7 @@ _lmsensors_shutdown_component( void )
 {
 
 	/* Call the libsensors cleaning function before leaving */
-	sensors_cleanup(  );
+	sensors_cleanupPtr(  );
 
 	return PAPI_OK;
 }
