@@ -105,7 +105,7 @@ static int _local_read_zone_str( int fd, char *out_buf, int sz )
     ret = read( fd, out_buf, sz );
     if ( ret > 0 && ret < sz )
         out_buf[ret] = '\0';
-    close( fd );
+//    close( fd );
     out_buf[sz - 1] = '\0';
 
     close( fd );
@@ -246,8 +246,10 @@ static int _local_open_zone_fd( int zone_id, int subzone_id, int which, int flag
         break;
     }
 
-    if( zone_fd_array[zone_id][subzone_id][which].open )
+    if( zone_fd_array[zone_id][subzone_id][which].open ) {
         close( zone_fd_array[zone_id][subzone_id][which].fd );
+        zone_fd_array[zone_id][subzone_id][which].open = 0;
+    }
 
     fd = open( final_path, flag );
 
@@ -289,7 +291,7 @@ static int _local_write_attr_value( int zone_id, int subzone_id, int which, long
 /*
  * creates descriptions for each of the events based on the event type
  */
-static int _local_read_zone_descr( int zone_id, int subzone_id, char *zone_name_out, int buffsz )
+void _local_read_zone_descr( int zone_id, int subzone_id, char *zone_name_out, int buffsz )
 {
     int fd = _local_open_zone_fd( zone_id, subzone_id, ZONE_NAME, O_RDONLY );
 
@@ -306,9 +308,8 @@ static int _local_read_zone_descr( int zone_id, int subzone_id, char *zone_name_
                 i++;
         }
         zone_name_out[i] = '\0';
+        close(fd);
     }
-
-    return fd;
 }
 
 /*
@@ -478,7 +479,7 @@ int _powercap_init_component( int cidx )
     for( i = 0; i < num_zones; i++ ) {
         for( j = 0; j < num_subzones+1; j++ ) {
             for( k = 0; k < num_attr; k++ ) {
-                zone_fd_array[i][j][k].fd = 0;
+                zone_fd_array[i][j][k].fd = -1;
                 zone_fd_array[i][j][k].open = 0;
             }
         }
@@ -710,7 +711,10 @@ int _powercap_shutdown_component( void )
         for( i=0; i<num_zones; i++ ) {
             for( j=0; j<num_subzones+1; j++ ) {
                 for( k=0; k<num_attr; k++ ) {
-                    if ( zone_fd_array[i][j][k].open ) close( zone_fd_array[i][j][k].fd );
+                    if ( zone_fd_array[i][j][k].open ) {
+                       close( zone_fd_array[i][j][k].fd );
+                       zone_fd_array[i][j][k].open = 0;
+                    }
                 }
                 papi_free( zone_fd_array[i][j] );
             }
