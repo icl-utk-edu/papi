@@ -55,9 +55,10 @@ check_values( int eventset, int *events, int nevents, long long *values,
 		if (!TESTS_QUIET) {
 		  printf("reference = %lld,  value = %lld,  diff = %lld\n",
 			 refvalues[j],values[j],refvalues[j] - values[j]  );
+		}
 		  sprintf(buff,"Error on %d, spread %lf > threshold %lf AND count %lld > minimum size threshold %d\n",j,spread[j],MPX_TOLERANCE,
 			 refvalues[j],MINCOUNTS);
-		}
+
 		  test_fail( __FILE__, __LINE__, buff, 1 );
 		}
 	}
