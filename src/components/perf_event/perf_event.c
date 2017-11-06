@@ -2260,6 +2260,12 @@ static int _pe_detect_rdpmc(void) {
         return 0;
 #endif
 
+	/* There were various subtle bugs in rdpmc support before	*/
+	/* the Linux 4.13 release.					*/
+	if (_papi_os_info.os_version < LINUX_VERSION(4,13,0)) {
+		return 0;
+	}
+
 	/* Create a fake instructions event so we can read a mmap page */
 	memset(&pe,0,sizeof(struct perf_event_attr));
 

@@ -1014,13 +1014,13 @@ AC_ARG_WITH(perf_events,
 
 AC_ARG_ENABLE(perfevent_rdpmc,
 AS_HELP_STRING([--enable-perfevent-rdpmc],
-		[Enable userspace rdpmc instruction on perf_event, default: no]),
+		[Enable userspace rdpmc instruction on perf_event, default: yes]),
 [case "${enableval}" in
              yes) enable_perfevent_rdpmc=true ;;
              no)  enable_perfevent_rpdmc=false ;;
              *)   AC_MSG_ERROR([bad value ${enableval} for --enable-perfevent-rdpmc]) ;;
 esac],
-[enable_perfevent_rdpmc=false])
+[enable_perfevent_rdpmc=true])
 
 if test "$enable_perfevent_rdpmc" = "true"; then
 	PECFLAGS="$PECFLAGS -DUSE_PERFEVENT_RDPMC=1"

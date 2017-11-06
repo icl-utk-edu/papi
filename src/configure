@@ -1425,7 +1425,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-perfevent-rdpmc
                           Enable userspace rdpmc instruction on perf_event,
-                          default: no
+                          default: yes
   --disable-perf-event-uncore		Disable perf_event uncore component
 
 Optional Packages:
@@ -5785,7 +5785,7 @@ if test "${enable_perfevent_rdpmc+set}" = set; then :
              *)   as_fn_error $? "bad value ${enableval} for --enable-perfevent-rdpmc" "$LINENO" 5 ;;
 esac
 else
-  enable_perfevent_rdpmc=false
+  enable_perfevent_rdpmc=true
 fi
 
 
