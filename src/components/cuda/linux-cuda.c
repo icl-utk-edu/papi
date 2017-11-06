@@ -364,7 +364,9 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         uint32_t maxMetrics;
         mydevice = &gctxt->deviceArray[deviceNum];
-        CUPTI_CALL((*cuptiDeviceGetNumMetricsPtr) (mydevice->cuDev, &maxMetrics), return (PAPI_EMISC));
+        // CUPTI_CALL((*cuptiDeviceGetNumMetricsPtr) (mydevice->cuDev, &maxMetrics), return (PAPI_EMISC));
+        if ( (*cuptiDeviceGetNumMetricsPtr) (mydevice->cuDev, &maxMetrics) != CUPTI_SUCCESS )
+            maxMetrics = 0;
         maxEventSize += maxMetrics;
     }
 
@@ -433,7 +435,11 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
         uint32_t maxMetrics, i;
         CUpti_MetricID *metricIdList = NULL;
         mydevice = &gctxt->deviceArray[deviceNum];
-        CUPTI_CALL((*cuptiDeviceGetNumMetricsPtr) (mydevice->cuDev, &maxMetrics), return (PAPI_EMISC));
+        // CUPTI_CALL((*cuptiDeviceGetNumMetricsPtr) (mydevice->cuDev, &maxMetrics), return (PAPI_EMISC));
+        if ( (*cuptiDeviceGetNumMetricsPtr) (mydevice->cuDev, &maxMetrics) != CUPTI_SUCCESS ) {
+            maxMetrics = 0;
+            continue;
+        }
         SUBDBG("Device %d: Checking each of the (maxMetrics) %d metrics\n", deviceNum, maxMetrics);
         size_t size = maxMetrics * sizeof(CUpti_EventID);
         metricIdList = (CUpti_MetricID *) papi_calloc(maxMetrics, sizeof(CUpti_EventID));
