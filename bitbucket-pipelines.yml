@@ -13,3 +13,8 @@ pipelines:
           - ./configure
           - make
 #          - make fulltest
+          - ctests/zero
+          - ctests/cmpinfo
+          - ctests/hwinfo
+          - utils/papi_avail
+          - utils/papi_native_avail -c --noqual -i PERF
