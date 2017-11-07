@@ -167,7 +167,7 @@ createNativeEvents( void )
 	const sensors_chip_name *chip_name;
 
 	/* component name and description */
-	strcpy( _lmsensors_vector.cmp_info.short_name, "LM_SENSORS" );
+	strcpy( _lmsensors_vector.cmp_info.short_name, "lm_sensors" );
 	strcpy( _lmsensors_vector.cmp_info.description,
 			"lm-sensors provides tools for monitoring the hardware health" );
 
@@ -206,8 +206,7 @@ createNativeEvents( void )
 	         count = 0;
 
 		 /* Save native event data */
-		 sprintf( lm_sensors_native_table[id].name, "%s.%s.%s.%s",
-			  _lmsensors_vector.cmp_info.short_name,
+		 sprintf( lm_sensors_native_table[id].name, "%s.%s.%s",
 			  chipnamestring, featurelabel, sub->name );
 
 		 strncpy( lm_sensors_native_table[id].description,
