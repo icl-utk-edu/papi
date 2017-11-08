@@ -17,6 +17,8 @@
 volatile long long count = 0;
 volatile long long tmpcount = 0;
 
+int quiet=0;
+
 void
 lockloop( int iters, volatile long long *mycount )
 {
@@ -37,7 +39,9 @@ Slave( void *arg )
 	lockloop( BASE_ITER, &count );
 	duration = PAPI_get_real_usec(  ) - duration;
 
-	printf("%f lock/unlocks per us\n",(float)BASE_ITER/(float)duration);
+	if (!quiet) {
+		printf("%f lock/unlocks per us\n",(float)BASE_ITER/(float)duration);
+	}
 	pthread_exit( arg );
 }
 
@@ -51,30 +55,39 @@ main( int argc, char **argv )
 	const PAPI_hw_info_t *hwinfo = NULL;
 
 	/* Set TESTS_QUIET variable */
-	tests_quiet( argc, argv );
+	quiet = tests_quiet( argc, argv );
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if (retval != PAPI_VER_CURRENT ) {
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-
-	if ( ( hwinfo = PAPI_get_hardware_info(  ) ) == NULL )
-		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
-
-	retval =
-		PAPI_thread_init( ( unsigned long ( * )( void ) ) ( pthread_self ) );
-	if ( retval != PAPI_OK ) {
-		if ( retval == PAPI_ECMP )
-			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
-		else
-			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
 	}
 
-	if ( hwinfo->ncpu > MAX_THREADS )
-		nthr = MAX_THREADS;
-	else
-		nthr = hwinfo->ncpu;
+	hwinfo = PAPI_get_hardware_info(  );
+	if (hwinfo == NULL ) {
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
+	}
 
-	if (!TESTS_QUIET) printf( "Creating %d threads, %d lock/unlock\n", nthr , BASE_ITER);
+	retval = PAPI_thread_init(
+			( unsigned long ( * )( void ) ) ( pthread_self ) );
+	if ( retval != PAPI_OK ) {
+		if ( retval == PAPI_ECMP ) {
+			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
+		}
+		else {
+			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
+		}
+	}
+
+	if ( hwinfo->ncpu > MAX_THREADS ) {
+		nthr = MAX_THREADS;
+	}
+	else {
+		nthr = hwinfo->ncpu;
+	}
+
+	if (!quiet) {
+		printf( "Creating %d threads, %d lock/unlock\n", nthr , BASE_ITER);
+	}
 
 	for ( i = 0; i < nthr; i++ ) {
 		rc = pthread_create( &slaves[i], NULL, Slave, NULL );
@@ -88,14 +101,15 @@ main( int argc, char **argv )
 		pthread_join( slaves[i], NULL );
 	}
 
-	if (!TESTS_QUIET) {
+	if (!quiet) {
 		printf( "Expected: %lld Received: %lld\n",
 			( long long ) nthr * BASE_ITER,
 			count );
 	}
 
-	if ( nthr * BASE_ITER != count )
+	if ( nthr * BASE_ITER != count ) {
 		test_fail( __FILE__, __LINE__, "Thread Locks", 1 );
+	}
 
 	test_pass( __FILE__ );
 
