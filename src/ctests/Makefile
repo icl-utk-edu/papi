@@ -20,12 +20,12 @@ include Makefile.recipies
 .PHONY : install
 
 install: default
-	@echo "C tests (DATADIR) being installed in: \"$(datadir)\""; 
-	-mkdir -p $(datadir)/ctests
-	-chmod go+rx $(datadir)
-	-chmod go+rx $(datadir)/ctests
-	-find . -perm -100 -type f -exec cp {} $(datadir)/ctests \;
-	-chmod go+rx $(datadir)/ctests/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(datadir)/ctests \;
-	-cp Makefile.target $(datadir)/ctests/Makefile
-	-cat Makefile.recipies >> $(datadir)/ctests/Makefile
+	@echo "C tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/ctests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/ctests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/ctests \;
+	-chmod go+rx $(DATADIR)/ctests/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/ctests \;
+	-cp Makefile.target $(DATADIR)/ctests/Makefile
+	-cat Makefile.recipies >> $(DATADIR)/ctests/Makefile

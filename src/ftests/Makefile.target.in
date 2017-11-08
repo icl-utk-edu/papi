@@ -4,6 +4,7 @@ exec_prefix = @exec_prefix@
 datarootdir = @datarootdir@
 datadir = @datadir@/${PACKAGE_TARNAME}
 testlibdir = $(datadir)/testlib
+DATADIR = $(DESTDIR)$(datadir)
 INCLUDE = -I. -I@includedir@ -I$(testlibdir)
 LIBDIR  = @libdir@
 LIBRARY = @LIBRARY@

@@ -5,6 +5,7 @@ datarootdir = @datarootdir@
 datadir = @datadir@/${PACKAGE_TARNAME}
 testlibdir = $(datadir)/testlib
 validationlibdir = $(datadir)/validation_tests
+DATADIR = $(DESTDIR)$(datadir)
 INCLUDE = -I. -I@includedir@ -I$(testlibdir) -I$(validationlibdir)
 LIBDIR  = @libdir@
 LIBRARY=@LIBRARY@

@@ -1,4 +1,9 @@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
 prefix = @prefix@
+exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@
+datadir = @datadir@/${PACKAGE_TARNAME}
+DATADIR = $(DESTDIR)$(datadir)
 LIBRARY = @LIBRARY@
 PAPILIB = $(LIBRARY)
 INCLUDE = -I. -I@includedir@
