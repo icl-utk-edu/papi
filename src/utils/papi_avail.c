@@ -1,10 +1,10 @@
 // Define the papi_avail man page contents.
 /**
-  * file avail.c
+  * file papi_avail.c
   *	@brief papi_avail utility.
   * @page papi_avail
   *	@section Name
-  *	papi_avail - provides availability and detail information for PAPI preset and user defined events.
+  *	papi_avail - provides availability and detailed information for PAPI preset and user defined events.
   *
   *	@section Synopsis
   *	papi_avail [-adht] [-e event]
