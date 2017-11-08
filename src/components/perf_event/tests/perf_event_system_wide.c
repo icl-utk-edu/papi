@@ -503,13 +503,21 @@ int main( int argc, char **argv ) {
       }
    }
    else {
-      retval = PAPI_add_named_event(EventSet6, "PAPI_TOT_INS");
-      if (retval != PAPI_OK) {
-         if ( !quiet ) {
-            printf("Error trying to add PAPI_TOT_INS\n");
-         }
-         test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS ",retval);
-      } else {
+
+	retval = PAPI_add_named_event(EventSet6, "PAPI_TOT_INS");
+	if (retval != PAPI_OK) {
+
+		if (retval == PAPI_EPERM) {
+			/* FIXME: read perf_event_paranoid and see */
+			if (!quiet) printf("SYS granularity not allowed, probably perf_event_paranoid permissions\n");
+		}
+		else {
+			if ( !quiet ) {
+            			printf("Error adding PAPI_TOT_INS with system granularity\n");
+         		}
+			test_fail(__FILE__, __LINE__, "adding PAPI_TOT_INS with system granularity",retval);
+		}
+	} else {
 
          retval = PAPI_start( EventSet6 );
          if ( retval != PAPI_OK ) {
@@ -629,6 +637,9 @@ int main( int argc, char **argv ) {
       retval = PAPI_set_opt(PAPI_CPU_ATTACH,(PAPI_option_t*)&cpu_opt);
       if (retval != PAPI_OK) {
 	 if (retval==PAPI_EPERM) {
+		if (!quiet) {
+			printf("Permission error trying to CPU_ATTACH; need to run as root\n");
+		}
             test_skip( __FILE__, __LINE__,
 		    "this test; trying to CPU_ATTACH; need to run as root",
 		    retval);
