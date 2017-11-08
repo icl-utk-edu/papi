@@ -3,7 +3,6 @@
 include Makefile.target
 
 INCLUDE = -I../testlib -I. -I..
-PAPILIB = ../$(LIBRARY)
 FFLAGS	= $(CFLAGS) -ffixed-line-length-132
 testlibdir=../testlib
 TESTLIB= $(testlibdir)/libtestlib.a

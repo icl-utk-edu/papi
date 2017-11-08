@@ -2,7 +2,6 @@
 include Makefile.target
 
 INCLUDE = -I../testlib -I.. -I.
-PAPILIB = ../$(LIBRARY)
 testlibdir=../testlib
 CLOCKCORE= $(testlibdir)/clockcore.o
 DOLOOPS = $(testlibdir)/do_loops.o

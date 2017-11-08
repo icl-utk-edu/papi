@@ -3,7 +3,6 @@
 include Makefile.target
 
 INCLUDE = -I../testlib -I../validation_tests -I.. -I.
-PAPILIB= ../$(LIBRARY)
 
 testlibdir= ../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
