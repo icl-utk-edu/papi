@@ -164,7 +164,7 @@ main( int argc, char **argv )
 			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
 	}
 #if defined(linux)
-	mythreshold = hw_info->cpu_max_mhz * 10000 * 2;
+	mythreshold = ((long long)hw_info->cpu_max_mhz) * 10000 * 2;
 #else
 	mythreshold = THRESHOLD * 2;
 #endif
