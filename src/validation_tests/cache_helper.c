@@ -82,7 +82,7 @@ long long get_cachesize(int type) {
 	result=check_if_cache_info_available();
 	if (result<0) return result;
 
-	if (type>MAX_CACHE) {
+	if (type>=MAX_CACHE) {
 		printf("Errror!\n");
 		return -1;
 	}
@@ -98,7 +98,7 @@ long long get_entries(int type) {
 	result=check_if_cache_info_available();
 	if (result<0) return result;
 
-	if (type>MAX_CACHE) {
+	if (type>=MAX_CACHE) {
 		printf("Errror!\n");
 		return -1;
 	}
@@ -114,7 +114,7 @@ long long get_linesize(int type) {
 	result=check_if_cache_info_available();
 	if (result<0) return result;
 
-	if (type>MAX_CACHE) {
+	if (type>=MAX_CACHE) {
 		printf("Errror!\n");
 		return -1;
 	}
