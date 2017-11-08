@@ -71,23 +71,33 @@ _linux_detect_hypervisor(char *virtual_vendor_name) {
 
 static char pathbuf[PATH_MAX] = "/";
 
-
 static char *
-search_cpu_info( FILE * f, char *search_str, char *line )
+search_cpu_info( FILE * f, char *search_str)
 {
-	/* This function courtesy of Rudolph Berrendorf! */
-	/* See the home page for the German version of PAPI. */
-	char *s;
+	static char line[PAPI_HUGE_STR_LEN] = "";
+	char *s, *start = NULL;
 
-	while ( fgets( line, 256, f ) != NULL ) {
-		if ( strstr( line, search_str ) != NULL ) {
-			/* ignore all characters in line up to : */
-			for ( s = line; *s && ( *s != ':' ); ++s );
-			if ( *s )
-				return s;
+	rewind(f);
+
+	while (fgets(line,PAPI_HUGE_STR_LEN,f)!=NULL) {
+		s=strstr(line,search_str);
+		if (s!=NULL) {
+			/* skip all characters in line up to the colon */
+			/* and then spaces */
+			s=strchr(s,':');
+			if (s==NULL) break;
+			s++;
+			while (isspace(*s)) {
+				s++;
+			}
+			start = s;
+			/* Find and clear newline */
+			s=strrchr(start,'\n');
+			if (s!=NULL) *s = 0;
+			break;
 		}
 	}
-	return NULL;
+	return start;
 }
 
 static void
@@ -172,43 +182,36 @@ decode_cpuinfo_x86( FILE *f, PAPI_hw_info_t *hwinfo )
 {
 	int tmp;
 	unsigned int strSize;
-	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+	char *s;
 
 	/* Stepping */
-	rewind( f );
-	s = search_cpu_info( f, "stepping", maxargs );
+	s = search_cpu_info( f, "stepping");
 	if ( s ) {
-		sscanf( s + 1, "%d", &tmp );
-		hwinfo->revision = ( float ) tmp;
-		hwinfo->cpuid_stepping = tmp;
+		if (sscanf( s, "%d", &tmp ) ==1 ) {
+			hwinfo->revision = ( float ) tmp;
+			hwinfo->cpuid_stepping = tmp;
+		}
 	}
 
 	/* Model Name */
-	rewind( f );
-	s = search_cpu_info( f, "model name", maxargs );
+	s = search_cpu_info( f, "model name");
 	strSize = sizeof(hwinfo->model_string);
-	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-		*t = '\0';
-		if (strlen(s+2) >= strSize-1) {
-			s[strSize+1] = '\0';
-		}
-		strcpy( hwinfo->model_string, s + 2 );
+	if ( s ) {
+		strncpy( hwinfo->model_string, s, strSize);
 	}
 
 	/* Family */
-	rewind( f );
-	s = search_cpu_info( f, "cpu family", maxargs );
+	s = search_cpu_info( f, "cpu family");
 	if ( s ) {
-		sscanf( s + 1, "%d", &tmp );
+		sscanf( s, "%d", &tmp );
 		hwinfo->cpuid_family = tmp;
 	}
 
 
 	/* CPU Model */
-	rewind( f );
-	s = search_cpu_info( f, "model", maxargs );
+	s = search_cpu_info( f, "model");
 	if ( s ) {
-		sscanf( s + 1, "%d", &tmp );
+		sscanf( s , "%d", &tmp );
 		hwinfo->model = tmp;
 		hwinfo->cpuid_model = tmp;
 	}
@@ -222,27 +225,21 @@ decode_cpuinfo_power(FILE *f, PAPI_hw_info_t *hwinfo )
 
 	int tmp;
 	unsigned int strSize;
-	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+	char *s;
 
 	/* Revision */
-	rewind( f );
-	s = search_cpu_info( f, "revision", maxargs );
+	s = search_cpu_info( f, "revision");
 	if ( s ) {
-		sscanf( s + 1, "%d", &tmp );
+		sscanf( s, "%d", &tmp );
 		hwinfo->revision = ( float ) tmp;
 		hwinfo->cpuid_stepping = tmp;
 	}
 
        /* Model Name */
-	rewind( f );
-	s = search_cpu_info( f, "model", maxargs );
+	s = search_cpu_info( f, "model");
 	strSize = sizeof(hwinfo->model_string);
-	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-		*t = '\0';
-		if (strlen(s+2) >= strSize-1) {
-			s[strSize+1] = '\0';
-		}
-		strcpy( hwinfo->model_string, s + 2 );
+	if ( s ) {
+		strncpy( hwinfo->model_string, s, strSize);
 	}
 
 	return PAPI_OK;
@@ -256,28 +253,22 @@ decode_cpuinfo_arm(FILE *f, PAPI_hw_info_t *hwinfo )
 
 	int tmp;
 	unsigned int strSize;
-	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+	char *s, *t;
 
 	/* revision */
-	rewind( f );
-	s = search_cpu_info( f, "CPU revision", maxargs );
+	s = search_cpu_info( f, "CPU revision");
 	if ( s ) {
-		sscanf( s + 1, "%d", &tmp );
+		sscanf( s, "%d", &tmp );
 		hwinfo->revision = ( float ) tmp;
 		/* For compatability with old PAPI */
 		hwinfo->model = tmp;
 	}
 
-       /* Model Name */
-	rewind( f );
-	s = search_cpu_info( f, "model name", maxargs );
+	/* Model Name */
+	s = search_cpu_info( f, "model name");
 	strSize = sizeof(hwinfo->model_string);
-	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-		*t = '\0';
-		if (strlen(s+2) >= strSize-1) {
-			s[strSize+1] = '\0';
-		}
-		strcpy( hwinfo->model_string, s + 2 );
+	if ( s ) {
+		strncpy( hwinfo->model_string, s, strSize );
 	}
 
 	/* Architecture (ARMv6, ARMv7, ARMv8, etc.) */
@@ -285,24 +276,22 @@ decode_cpuinfo_arm(FILE *f, PAPI_hw_info_t *hwinfo )
 	/* (it's ARMv6 not ARMv7)                                  */
 	/* So we should actually get the value from the            */
 	/*	Processor/ model name line                         */
-	rewind( f );
-	s = search_cpu_info( f, "CPU architecture", maxargs );
+
+	s = search_cpu_info( f, "CPU architecture");
 	if ( s ) {
 
 		if (strstr(s,"AArch64")) {
 			hwinfo->cpuid_family = 8;
 		}
 		else {
-			rewind( f );
-			s = search_cpu_info( f, "Processor", maxargs );
+			s = search_cpu_info( f, "Processor" );
 			if (s) {
 				t=strchr(s,'(');
 				tmp=*(t+2)-'0';
 				hwinfo->cpuid_family = tmp;
 			}
 			else {
-				rewind( f );
-				s = search_cpu_info( f, "model name", maxargs );
+				s = search_cpu_info( f, "model name" );
 				if (s) {
 					t=strchr(s,'(');
 					tmp=*(t+2)-'0';
@@ -313,18 +302,16 @@ decode_cpuinfo_arm(FILE *f, PAPI_hw_info_t *hwinfo )
 	}
 
 	/* CPU Model */
-	rewind( f );
-	s = search_cpu_info( f, "CPU part", maxargs );
+	s = search_cpu_info( f, "CPU part" );
 	if ( s ) {
-		sscanf( s + 1, "%x", &tmp );
+		sscanf( s, "%x", &tmp );
 		hwinfo->cpuid_model = tmp;
 	}
 
 	/* CPU Variant */
-	rewind( f );
-	s = search_cpu_info( f, "CPU variant", maxargs );
+	s = search_cpu_info( f, "CPU variant" );
 	if ( s ) {
-		sscanf( s + 1, "%x", &tmp );
+		sscanf( s, "%x", &tmp );
 		hwinfo->cpuid_stepping = tmp;
 	}
 
@@ -337,8 +324,7 @@ int
 _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 {
 	int retval = PAPI_OK;
-	unsigned int strSize;
-	char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+	char *s;
 	float mhz = 0.0;
 	FILE *f;
 	char cpuinfo_filename[]="/proc/cpuinfo";
@@ -353,16 +339,17 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	/***********************/
 	/* Attempt to find MHz */
 	/***********************/
-	rewind( f );
-	s = search_cpu_info( f, "clock", maxargs );
+	s = search_cpu_info( f, "cpu MHz" );
 	if ( !s ) {
-		rewind( f );
-		s = search_cpu_info( f, "cpu MHz", maxargs );
+		s = search_cpu_info( f, "clock" );
 	}
 	if ( s ) {
-		sscanf( s + 1, "%f", &mhz );
+		sscanf( s, "%f", &mhz );
+		*cpuinfo_mhz = mhz;
 	}
-	*cpuinfo_mhz = mhz;
+	else {
+		PAPIWARN("Failed to find a clock speed in /proc/cpuinfo");
+	}
 
 	/*******************************/
 	/* Vendor Name and Vendor Code */
@@ -370,73 +357,44 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 
 	/* First try to read "vendor_id" field */
 	/* Which is the most common field      */
-	hwinfo->vendor_string[0]=0;
-	rewind( f );
-	s = search_cpu_info( f, "vendor_id", maxargs );
-	strSize = sizeof(hwinfo->vendor_string);
-	if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-		*t = '\0';
-		if (strlen(s+2) >= strSize-1) {
-			s[strSize+1] = '\0';
-		}
-		strcpy( hwinfo->vendor_string, s + 2 );
+	s = search_cpu_info( f, "vendor_id");
+	if ( s ) {
+		strcpy( hwinfo->vendor_string, s );
 	}
-
-	/* If not found, try "vendor" which seems to be Itanium specific */
-	if (!hwinfo->vendor_string[0]) {
-		rewind( f );
-		s = search_cpu_info( f, "vendor", maxargs );
-		if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-			*t = '\0';
-			if (strlen(s+2) >= strSize-1) {
-				s[strSize+1] = '\0';
-			}
-			strcpy( hwinfo->vendor_string, s + 2 );
-		}
-	}
-
-	/* "system type" seems to be MIPS and Alpha */
-	if (!hwinfo->vendor_string[0]) {
-		rewind( f );
-		s = search_cpu_info( f, "system type", maxargs );
-		if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-			*t = '\0';
-			s = strtok( s + 2, " " );
-			if (strlen(s) >= strSize-1) {
-				s[strSize-1] = '\0';
-			}
+	else {
+		/* If not found, try "vendor" which seems to be Itanium specific */
+		s = search_cpu_info( f, "vendor" );
+		if ( s ) {
 			strcpy( hwinfo->vendor_string, s );
 		}
-	}
-
-	/* "platform" indicates Power */
-	if (!hwinfo->vendor_string[0]) {
-
-		rewind( f );
-		s = search_cpu_info( f, "platform", maxargs );
-		if ( s && ( t = strchr( s + 2, '\n' ) ) ) {
-			*t = '\0';
-			s = strtok( s + 2, " " );
-			if ( ( strcasecmp( s, "pSeries" ) == 0 ) ||
-				( strcasecmp( s, "PowerNV" ) == 0 ) ||
-				( strcasecmp( s, "PowerMac" ) == 0 ) ) {
-				strcpy( hwinfo->vendor_string, "IBM" );
+		else {
+			/* "system type" seems to be MIPS and Alpha */
+			s = search_cpu_info( f, "system type");
+			if ( s ) {
+				strcpy( hwinfo->vendor_string, s );
+			}
+			else {
+				/* "platform" indicates Power */
+				s = search_cpu_info( f, "platform");
+				if ( s ) {
+					if ( ( strcasecmp( s, "pSeries" ) == 0 ) ||
+						( strcasecmp( s, "PowerNV" ) == 0 ) ||
+						( strcasecmp( s, "PowerMac" ) == 0 ) ) {
+						strcpy( hwinfo->vendor_string, "IBM" );
+					}
+				}
+				else {
+					/* "CPU implementer" indicates ARM */
+					s = search_cpu_info( f, "CPU implementer");
+					if ( s ) {
+						strcpy( hwinfo->vendor_string, "ARM" );
+					}
+				}
 			}
 		}
 	}
 
-	/* "CPU implementer" indicates ARM */
-	if (!hwinfo->vendor_string[0]) {
-
-		rewind( f );
-		s = search_cpu_info( f, "CPU implementer", maxargs );
-		if ( s ) {
-			strcpy( hwinfo->vendor_string, "ARM" );
-		}
-	}
-
-
-	/* Decode the string to an implementer value */
+	/* Decode the string to a PAPI specific implementer value */
 	if ( strlen( hwinfo->vendor_string ) ) {
 		decode_vendor_string( hwinfo->vendor_string, &hwinfo->vendor );
 	}
@@ -486,17 +444,18 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 
 	/* Number of NUMA nodes */
 	/* The following line assumes nnodes was initialized to zero! */
-	while ( path_exist( _PATH_SYS_SYSTEM "/node/node%d", hwinfo->nnodes ) )
+	while ( path_exist( _PATH_SYS_SYSTEM "/node/node%d", hwinfo->nnodes ) ) {
 		hwinfo->nnodes++;
+	}
 
 	/* Number of CPUs per node */
-	hwinfo->ncpu =
-		hwinfo->nnodes >
-		1 ? hwinfo->totalcpus / hwinfo->nnodes : hwinfo->totalcpus;
+	hwinfo->ncpu = hwinfo->nnodes > 1 ?
+			hwinfo->totalcpus / hwinfo->nnodes : hwinfo->totalcpus;
 
 	/* Number of sockets */
-	if ( hwinfo->threads > 0 && hwinfo->cores > 0 )
+	if ( hwinfo->threads > 0 && hwinfo->cores > 0 ) {
 		hwinfo->sockets = hwinfo->totalcpus / hwinfo->cores / hwinfo->threads;
+	}
 
 #if 0
 	int *nodecpu;
@@ -505,7 +464,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	if ( nodecpu ) {
 	   int i;
 	   for ( i = 0; i < hwinfo->nnodes; ++i ) {
-	       nodecpu[i] = path_sibling( 
+	       nodecpu[i] = path_sibling(
                              _PATH_SYS_SYSTEM "/node/node%d/cpumap", i );
 	   }
 	} else {
@@ -516,37 +475,35 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 
 	/* Fixup missing Megahertz Value */
 	/* This is missing from cpuinfo on ARM and MIPS */
-     if (*cpuinfo_mhz < 1.0) {
-	rewind( f );
+	if (*cpuinfo_mhz < 1.0) {
+		s = search_cpu_info( f, "BogoMIPS" );
+		if ((!s) || (sscanf( s, "%f", &mhz ) != 1)) {
+			INTDBG("MHz detection failed. "
+				"Please edit file %s at line %d.\n",
+				__FILE__,__LINE__);
+		}
 
-	s = search_cpu_info( f, "BogoMIPS", maxargs );
-	if ((!s) || (sscanf( s + 1, "%f", &mhz ) != 1)) {
-	   INTDBG("Mhz detection failed. Please edit file %s at line %d.\n",
-		     __FILE__,__LINE__);
+		if (hwinfo->vendor == PAPI_VENDOR_MIPS) {
+			/* MIPS has 2x clock multiplier */
+			*cpuinfo_mhz = 2*(((int)mhz)+1);
+
+			/* Also update version info on MIPS */
+			s = search_cpu_info( f, "cpu model");
+			s = strstr(s," V")+2;
+			strtok(s," ");
+			sscanf(s, "%f ", &hwinfo->revision );
+		}
+		else {
+			/* In general bogomips is proportional to number of CPUs */
+			if (hwinfo->totalcpus) {
+				if (mhz!=0) *cpuinfo_mhz = mhz / hwinfo->totalcpus;
+			}
+		}
 	}
 
-	if (hwinfo->vendor == PAPI_VENDOR_MIPS) {
-	    /* MIPS has 2x clock multiplier */
-	    *cpuinfo_mhz = 2*(((int)mhz)+1);
+	fclose( f );
 
-	    /* Also update version info on MIPS */
-	    rewind( f );
-	    s = search_cpu_info( f, "cpu model", maxargs );
-	    s = strstr(s+1," V")+2;
-	     strtok(s," ");
-	    sscanf(s, "%f ", &hwinfo->revision );
-	}
-	else {
-	    /* In general bogomips is proportional to number of CPUs */
-	    if (hwinfo->totalcpus) {
-	       if (mhz!=0) *cpuinfo_mhz = mhz / hwinfo->totalcpus;
-	    }
-	}
-     }
-
-    fclose( f );
-
-    return retval;
+	return retval;
 }
 
 int
@@ -577,10 +534,8 @@ int
 _linux_get_system_info( papi_mdi_t *mdi ) {
 
 	int retval;
-
 	char maxargs[PAPI_HUGE_STR_LEN];
 	pid_t pid;
-
 	int cpuinfo_mhz,sys_min_khz,sys_max_khz;
 
 	/* Software info */
@@ -595,19 +550,24 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	mdi->pid = pid;
 
 	sprintf( maxargs, "/proc/%d/exe", ( int ) pid );
-   if ( (retval = readlink( maxargs, mdi->exe_info.fullname, PAPI_HUGE_STR_LEN-1 )) < 0 ) {
+	retval = readlink( maxargs, mdi->exe_info.fullname,
+			PAPI_HUGE_STR_LEN-1 );
+	if ( retval < 0 ) {
 		PAPIERROR( "readlink(%s) returned < 0", maxargs );
 		return PAPI_ESYS;
 	}
-   if (retval > PAPI_HUGE_STR_LEN-1)   retval=PAPI_HUGE_STR_LEN-1;
-   mdi->exe_info.fullname[retval] = '\0';
 
-	/* Careful, basename can modify it's argument */
+	if (retval > PAPI_HUGE_STR_LEN-1) {
+		retval=PAPI_HUGE_STR_LEN-1;
+	}
+	mdi->exe_info.fullname[retval] = '\0';
 
+	/* Careful, basename can modify its argument */
 	strcpy( maxargs, mdi->exe_info.fullname );
 
-   strncpy( mdi->exe_info.address_info.name, basename( maxargs ), PAPI_HUGE_STR_LEN-1);
-   mdi->exe_info.address_info.name[PAPI_HUGE_STR_LEN-1] = '\0';
+	strncpy( mdi->exe_info.address_info.name, basename( maxargs ),
+		PAPI_HUGE_STR_LEN-1);
+	mdi->exe_info.address_info.name[PAPI_HUGE_STR_LEN-1] = '\0';
 
 	SUBDBG( "Executable is %s\n", mdi->exe_info.address_info.name );
 	SUBDBG( "Full Executable is %s\n", mdi->exe_info.fullname );
@@ -649,8 +609,8 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	retval = _linux_get_mhz( &sys_min_khz, &sys_max_khz );
 	if ( retval ) {
 
-	   mdi->hw_info.cpu_max_mhz=cpuinfo_mhz;
-	   mdi->hw_info.cpu_min_mhz=cpuinfo_mhz;
+		mdi->hw_info.cpu_max_mhz=cpuinfo_mhz;
+		mdi->hw_info.cpu_min_mhz=cpuinfo_mhz;
 
 	   /*
 	   mdi->hw_info.mhz=cpuinfo_mhz;
@@ -658,8 +618,8 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	   */
 	}
 	else {
-	   mdi->hw_info.cpu_max_mhz=sys_max_khz/1000;
-	   mdi->hw_info.cpu_min_mhz=sys_min_khz/1000;
+		mdi->hw_info.cpu_max_mhz=sys_max_khz/1000;
+		mdi->hw_info.cpu_min_mhz=sys_min_khz/1000;
 
 	   /*
 	   mdi->hw_info.mhz=sys_max_khz/1000;
@@ -676,8 +636,8 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	SUBDBG( "Found %d %s(%d) %s(%d) CPUs at %d Mhz.\n",
 			mdi->hw_info.totalcpus,
 			mdi->hw_info.vendor_string,
-			mdi->hw_info.vendor, 
-		        mdi->hw_info.model_string, 
+			mdi->hw_info.vendor,
+		        mdi->hw_info.model_string,
 		        mdi->hw_info.model,
 		        mdi->hw_info.cpu_max_mhz);
 
@@ -687,7 +647,7 @@ _linux_get_system_info( papi_mdi_t *mdi ) {
 	return PAPI_OK;
 }
 
-int 
+int
 _papi_hwi_init_os(void) {
 
     int major=0,minor=0,sub=0;
