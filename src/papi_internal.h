@@ -1,7 +1,7 @@
 /****************************/
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
-/** 
+/**
 * @file    papi_internal.h
 * @author  Philip Mucci
 *          mucci@cs.utk.edu
@@ -19,7 +19,7 @@
 /* AIX's C compiler does not recognize the inline keyword */
 #ifdef _AIX
 #define inline
-#endif 
+#endif
 
 #include "papi_debug.h"
 
@@ -44,7 +44,7 @@ extern char **_papi_errlist;
 
 
 /* some members of structs and/or function parameters may or may not be
-   necessary, but at this point, we have included anything that might 
+   necessary, but at this point, we have included anything that might
    possibly be useful later, and will remove them as we progress */
 
 /* Signal used for overflow delivery */
@@ -168,7 +168,7 @@ typedef struct _EventSetProfileInfo {
 
 /** This contains info about an individual event added to the EventSet.
   The event can be either PRESET or NATIVE, and either simple or derived.
-  If derived, it can consist of up to PAPI_EVENTS_IN_DERIVED_EVENT 
+  If derived, it can consist of up to PAPI_EVENTS_IN_DERIVED_EVENT
   native events.
   An EventSet contains a pointer to an array of these structures to define
   each added event.
@@ -182,20 +182,20 @@ typedef struct _EventInfo {
 } EventInfo_t;
 
 /** This contains info about each native event added to the EventSet.
-  An EventSet contains an array of MAX_COUNTERS of these structures 
+  An EventSet contains an array of MAX_COUNTERS of these structures
   to define each native event in the set.
-  @internal 
+  @internal
  */
 typedef struct _NativeInfo {
    int ni_event;                /**< native (libpfm4) event code;
                                      always non-zero unless empty */
    int ni_papi_code;            /**< papi event code
                                      value returned to papi applications */
-   int ni_position;             /**< counter array position where this 
+   int ni_position;             /**< counter array position where this
 				     native event lives */
-   int ni_owners;               /**< specifies how many owners share 
+   int ni_owners;               /**< specifies how many owners share
 				     this native event */
-   hwd_register_t *ni_bits;     /**< Component defined resources used by 
+   hwd_register_t *ni_bits;     /**< Component defined resources used by
 				     this native event */
 } NativeInfo_t;
 
@@ -205,7 +205,7 @@ typedef struct _NativeInfo {
 /** This contains only the information about an event that
  *	would cause two events to be counted separately.  Options
  *	that don't affect an event aren't included here.
- *	@internal 
+ *	@internal
  */
 typedef struct _papi_info {
    long long event_type;
@@ -249,55 +249,55 @@ typedef struct _threadlist {
 /* Ugh, should move this out and into all callers of papi_internal.h */
 #include "sw_multiplex.h"
 
-/** Opaque struct, not defined yet...due to threads.h <-> papi_internal.h 
+/** Opaque struct, not defined yet...due to threads.h <-> papi_internal.h
  @internal */
 struct _ThreadInfo;
 struct _CpuInfo;
 
-/** Fields below are ordered by access in PAPI_read for performance 
+/** Fields below are ordered by access in PAPI_read for performance
  @internal */
 typedef struct _EventSetInfo {
   struct _ThreadInfo *master;  /**< Pointer to thread that owns this EventSet*/
   struct _CpuInfo    *CpuInfo; /**< Pointer to cpu that owns this EventSet */
-  
+
   int state;                   /**< The state of this entire EventSet; can be
 				  PAPI_RUNNING or PAPI_STOPPED plus flags */
-  
-  EventInfo_t *EventInfoArray; /**< This array contains the mapping from 
-				  events added into the API into hardware 
-				  specific encoding as returned by the 
-				  kernel or the code that directly 
+
+  EventInfo_t *EventInfoArray; /**< This array contains the mapping from
+				  events added into the API into hardware
+				  specific encoding as returned by the
+				  kernel or the code that directly
 				  accesses the counters. */
-  
-  hwd_control_state_t *ctl_state; /**< This contains the encoding necessary 
-                                       for the hardware to set the counters 
+
+  hwd_control_state_t *ctl_state; /**< This contains the encoding necessary
+                                       for the hardware to set the counters
                                        to the appropriate conditions */
 
-  unsigned long int tid;       /**< Thread ID, only used if 
+  unsigned long int tid;       /**< Thread ID, only used if
                                     PAPI_thread_init() is called  */
-  
+
   int EventSetIndex;           /**< Index of the EventSet in the array  */
 
   int CmpIdx;		       /**< Which Component this EventSet Belongs to */
-  
+
   int NumberOfEvents;          /**< Number of events added to EventSet */
-  
+
   long long *hw_start;         /**< Array of length num_mpx_cntrs to hold
-				    unprocessed, out of order, 
+				    unprocessed, out of order,
                                     long long counter registers */
-  
-  long long *sw_stop;          /**< Array of length num_mpx_cntrs that 
-                                    contains processed, in order, PAPI 
+
+  long long *sw_stop;          /**< Array of length num_mpx_cntrs that
+                                    contains processed, in order, PAPI
                                     counter values when used or stopped */
-  
-  int NativeCount;             /**< Number of native events in 
+
+  int NativeCount;             /**< Number of native events in
                                     NativeInfoArray */
-  
-  NativeInfo_t *NativeInfoArray;  /**< Info about each native event in 
+
+  NativeInfo_t *NativeInfoArray;  /**< Info about each native event in
                                        the set */
   hwd_register_t *NativeBits;     /**< Component-specific bits corresponding
 				       to the native events */
-  
+
   EventSetDomainInfo_t domain;
   EventSetGranularityInfo_t granularity;
   EventSetOverflowInfo_t overflow;
@@ -397,7 +397,7 @@ typedef union _papi_int_option_t {
 	_papi_int_addr_range_t address_range;
 } _papi_int_option_t;
 
-/** Hardware independent context 
+/** Hardware independent context
  *	@internal */
 typedef struct {
    hwd_siginfo_t *si;
@@ -411,7 +411,7 @@ typedef struct _papi_mdi {
    PAPI_hw_info_t hw_info;      /**< See definition in papi.h */
    PAPI_exe_info_t exe_info;    /**< See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /**< See definition in papi.h */
-   PAPI_preload_info_t preload_info; /**< See definition in papi.h */ 
+   PAPI_preload_info_t preload_info; /**< See definition in papi.h */
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;
@@ -451,6 +451,7 @@ hwd_context_t *_papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty );
 extern int _papi_hwi_error_level;
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 void PAPIERROR( char *format, ... );
+void PAPIWARN( char *format, ... );
 int _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx );
 void _papi_hwi_free_EventSet( EventSetInfo_t * ESI );
 int _papi_hwi_create_eventset( int *EventSet, ThreadInfo_t * handle );

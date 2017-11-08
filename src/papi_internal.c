@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    papi_internal.c
 *
 * Author:  Philip Mucci
@@ -605,6 +605,20 @@ PAPIERROR( char *format, ... )
 		 ( getenv( "PAPI_VERBOSE" ) ) ) {
 		va_start( args, format );
 		fprintf( stderr, "PAPI Error: " );
+		vfprintf( stderr, format, args );
+		fprintf( stderr, "\n" );
+		va_end( args );
+	}
+}
+
+void
+PAPIWARN( char *format, ... )
+{
+	va_list args;
+	if ( ( _papi_hwi_error_level != PAPI_QUIET ) ||
+		 ( getenv( "PAPI_VERBOSE" ) ) ) {
+		va_start( args, format );
+		fprintf( stderr, "PAPI Warning: " );
 		vfprintf( stderr, format, args );
 		fprintf( stderr, "\n" );
 		va_end( args );
