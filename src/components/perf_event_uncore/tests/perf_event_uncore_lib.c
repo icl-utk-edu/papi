@@ -80,7 +80,6 @@ char *get_uncore_event(char *event, int size) {
 			case 85: /* Skylake-X */
 				/* note libpfm4 has no skylake-x unc support */
 			return NULL;
-			return event;
 			break;
 
 			case 87: /*Knights Landing*/
