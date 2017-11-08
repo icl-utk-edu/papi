@@ -15,10 +15,15 @@
 #include "perfmon/pfmlib.h"
 #include "perfmon/pfmlib_perf_event.h"
 
+/**********************************************************/
+/* Local scope globals                                    */
+/**********************************************************/
+
+static int libpfm4_users=0;
+
 /***********************************************************/
 /* Exported functions                                      */
 /***********************************************************/
-
 
 /** @class  _papi_libpfm4_error
  *  @brief  convert libpfm error codes to PAPI error codes
@@ -47,39 +52,41 @@ _papi_libpfm4_error( int pfm_error ) {
   case PFM_ERR_ATTR_SET: return PAPI_EATTR;    /* attribute value already set */
   case PFM_ERR_TOOMANY:  return PAPI_ECOUNT;   /* too many parameters */
   case PFM_ERR_TOOSMALL: return PAPI_ECOUNT;   /* parameter is too small */
-  default: return PAPI_EINVAL;
+  default:
+	PAPIWARN("Unknown libpfm error code %d, returning PAPI_EINVAL",pfm_error);
+	return PAPI_EINVAL;
   }
 }
-
-static int libpfm4_users=0;
 
 /** @class  _papi_libpfm4_shutdown
  *  @brief  Shutdown any initialization done by the libpfm4 code
  *
- *  @retval PAPI_OK       We always return PAPI_OK
+ *  @param[in] component
+ *        -- component doing the shutdown
+ *
+ *  @retval PAPI_OK       Success
  *
  */
 
-int 
-_papi_libpfm4_shutdown(void) {
+int
+_papi_libpfm4_shutdown(papi_vector_t *my_vector) {
 
+	/* clean out and free the native events structure */
+	_papi_hwi_lock( NAMELIB_LOCK );
 
-  SUBDBG("Entry\n");
+	libpfm4_users--;
 
-  /* clean out and free the native events structure */
-  _papi_hwi_lock( NAMELIB_LOCK );
+	/* Only free if we're the last user */
 
-  libpfm4_users--;
+	if (!libpfm4_users) {
+		pfm_terminate();
+	}
 
-  /* Only free if we're the last user */
+	_papi_hwi_unlock( NAMELIB_LOCK );
 
-  if (!libpfm4_users) {
-     pfm_terminate();
-  }
+	strcpy(my_vector->cmp_info.support_version,"");
 
-  _papi_hwi_unlock( NAMELIB_LOCK );
-
-  return PAPI_OK;
+	return PAPI_OK;
 }
 
 /** @class  _papi_libpfm4_init
@@ -88,53 +95,63 @@ _papi_libpfm4_shutdown(void) {
  *  @param[in] my_vector
  *        -- vector of the component doing the initialization
  *
- *  @retval PAPI_OK       We initialized correctly
- *  @retval PAPI_ECMP     There was an error initializing the component
+ *  @retval PAPI_OK       Success
+ *  @retval PAPI_ECMP     There was an error initializing
  *
  */
 
 int
 _papi_libpfm4_init(papi_vector_t *my_vector) {
 
-   int version;
-   pfm_err_t retval = PFM_SUCCESS;
+	int version;
+	pfm_err_t retval = PFM_SUCCESS;
 
-   _papi_hwi_lock( NAMELIB_LOCK );
+	_papi_hwi_lock( NAMELIB_LOCK );
 
-   if (!libpfm4_users) {
-      retval = pfm_initialize();
-      if ( retval != PFM_SUCCESS ) libpfm4_users--;
-   }
-   libpfm4_users++;
+	if (!libpfm4_users) {
+		retval = pfm_initialize();
+		if ( retval == PFM_SUCCESS ) {
+			libpfm4_users++;
+		}
+		else {
+			strncpy(my_vector->cmp_info.disabled_reason,
+				pfm_strerror(retval),PAPI_MAX_STR_LEN);
+			_papi_hwi_unlock( NAMELIB_LOCK );
+			return PAPI_ESBSTR;
+		}
+	}
+	else {
+		libpfm4_users++;
+	}
 
-   _papi_hwi_unlock( NAMELIB_LOCK );
+	_papi_hwi_unlock( NAMELIB_LOCK );
 
-   if ( retval != PFM_SUCCESS ) {
-      PAPIERROR( "pfm_initialize(): %s", pfm_strerror( retval ) );
-      return PAPI_ESYS;
-   }
+	/* get the libpfm4 version */
 
-   /* get the libpfm4 version */
-   SUBDBG( "pfm_get_version()\n");
-   if ( (version=pfm_get_version( )) < 0 ) {
-      PAPIERROR( "pfm_get_version(): %s", pfm_strerror( retval ) );
-      return PAPI_ESYS;
-   }
+	version=pfm_get_version( );
+	if (version >= 0) {
 
-   /* Set the version */
-   sprintf( my_vector->cmp_info.support_version, "%d.%d",
-	    PFM_MAJ_VERSION( version ), PFM_MIN_VERSION( version ) );
+		/* Complain if the compiled-against version */
+		/* doesn't match current version            */
 
-   /* Complain if the compiled-against version doesn't match current version */
-   if ( PFM_MAJ_VERSION( version ) != PFM_MAJ_VERSION( LIBPFM_VERSION ) ) {
-      PAPIERROR( "Version mismatch of libpfm: compiled %#x vs. installed %#x\n",
-				   PFM_MAJ_VERSION( LIBPFM_VERSION ),
-				   PFM_MAJ_VERSION( version ) );
-      return PAPI_ESYS;
-   }
+		if ( PFM_MAJ_VERSION( version ) !=
+			PFM_MAJ_VERSION( LIBPFM_VERSION ) ) {
 
-   return PAPI_OK;
+			PAPIWARN( "Version mismatch of libpfm: "
+				"compiled %#x vs. installed %#x\n",
+				PFM_MAJ_VERSION( LIBPFM_VERSION ),
+				PFM_MAJ_VERSION( version ) );
+
+		}
+
+		/* Set the version */
+		sprintf( my_vector->cmp_info.support_version, "%d.%d",
+			PFM_MAJ_VERSION( version ),
+			PFM_MIN_VERSION( version ) );
+
+	} else {
+		PAPIWARN( "pfm_get_version(): %s", pfm_strerror( retval ) );
+	}
+
+	return PAPI_OK;
 }
-
-
-

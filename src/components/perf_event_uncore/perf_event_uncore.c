@@ -660,13 +660,14 @@ _peu_init_component( int cidx )
 static int
 _peu_shutdown_component( void ) {
 
-  /* deallocate our event table */
-  _pe_libpfm4_shutdown(&_perf_event_uncore_vector, &uncore_native_event_table);
+	/* deallocate our event table */
+	_pe_libpfm4_shutdown(&_perf_event_uncore_vector,
+				&uncore_native_event_table);
 
-  /* Shutdown libpfm4 */
-  _papi_libpfm4_shutdown();
+	/* Shutdown libpfm4 */
+	_papi_libpfm4_shutdown(&_perf_event_uncore_vector);
 
-  return PAPI_OK;
+	return PAPI_OK;
 }
 
 /* This function clears the current contents of the control structure and
