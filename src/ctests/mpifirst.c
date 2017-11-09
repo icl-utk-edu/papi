@@ -19,6 +19,11 @@
    - Read counters
 */
 
+#include <stdio.h>
+#include <string.h>
+#include <mpi.h>
+
+#include "papi.h"
 #include "papi_test.h"
 
 int
