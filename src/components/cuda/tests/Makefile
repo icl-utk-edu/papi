@@ -9,8 +9,8 @@ TESTS = HelloWorld simpleMultiGPU simpleMultiGPU_no_counters
 cuda_tests: $(TESTS) 
 
 CUDA_DIR ?= $(CUDA_PATH)
-NVCC = $(CUDA_DIR)/bin/nvcc
-NVCFLAGS = -g 
+NVCC = $(CUDA_DIR)/bin/nvcc 
+NVCFLAGS = -g -ccbin='$(CC)'
 INCLUDE += -I$(CUDA_DIR)/include -I$(CUPTI_DIR)/include 
 CUDALIBS = -L$(CUDRV_DIR)/lib64 -L$(CUDA_DIR)/lib64 -L$(CUPTI_DIR)/lib64 -lcudart -lcupti -lcuda 
 PAPILIB += -L../../../libpfm4/lib -lpfm
@@ -20,16 +20,16 @@ default: $(TESTS)
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<
 
 HelloWorld: HelloWorld.o $(UTILOBJS)
-	$(NVCC) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(NVCC) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU: simpleMultiGPU.cu $(UTILOBJS)
-	$(NVCC) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU_no_counters: simpleMultiGPU.cu $(UTILOBJS)
-	$(NVCC) $(INCLUDE) -DNO_COUNTERS -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DNO_COUNTERS -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU_cupti_only: simpleMultiGPU.cu $(UTILOBJS)
-	$(NVCC) $(INCLUDE) -DCUPTI_ONLY -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DCUPTI_ONLY -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o cuda_ld_preload_example.so

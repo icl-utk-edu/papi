@@ -118,7 +118,7 @@ fi
 # remark #869: parameter was never referenced 
 # remark #271: trailing comma is nonstandard
 if test "$CC_COMMON_NAME" = "icc"; then
-  CC="$CC -diag-disable 188,869,271"
+  CFLAGS="$CFLAGS -diag-disable 188,869,271"
   if test "$MIC" = "yes"; then
      CC="$CC -mmic -fPIC"
   fi

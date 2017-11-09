@@ -100,7 +100,6 @@ static papicuda_control_t *global_papicuda_control = NULL;
         int _cond = (checkcond);                                        \
         if (_cond) {                                                    \
             SUBDBG("error: condition %s failed: %s.\n", #checkcond, str); \
-            PAPIERROR("%s:%d: error: condition %s failed: %s",  __FILE__, __LINE__, #checkcond, str); \
             evalthis;                                                   \
         }                                                               \
     } while (0)
@@ -110,7 +109,6 @@ static papicuda_control_t *global_papicuda_control = NULL;
         cudaError_t _status = (call);                                   \
         if (_status != cudaSuccess) {                                   \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status); \
-            PAPIERROR("%s:%d: error: function %s failed with error %d", __FILE__, __LINE__, #call, _status); \
             handleerror;                                                \
         }                                                               \
     } while (0)
@@ -120,7 +118,6 @@ static papicuda_control_t *global_papicuda_control = NULL;
         CUresult _status = (call);                                      \
         if (_status != CUDA_SUCCESS) {                                  \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status); \
-            PAPIERROR("%s:%d: error: function %s failed with error %d", __FILE__, __LINE__, #call, _status); \
             handleerror;                                                \
         }                                                               \
     } while (0)
@@ -133,7 +130,6 @@ static papicuda_control_t *global_papicuda_control = NULL;
             const char *errstr;                                         \
             (*cuptiGetResultStringPtr)(_status, &errstr);               \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr); \
-            PAPIERROR("%s:%d: error: function %s failed with error %s.\n", __FILE__, __LINE__, #call, errstr); \
             handleerror;                                                \
         }                                                               \
     } while (0)
