@@ -55,6 +55,11 @@
 #include "perf_event_lib.h"
 #include "perf_helpers.h"
 
+/* Set to enable pre-Linux 2.6.34 perf_event workarounds   */
+/* If disabling them gets no complaints then we can remove */
+/* These in a future version of PAPI.                      */
+#define OBSOLETE_WORKAROUNDS 0
+
 /* Defines for ctx->state */
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
@@ -80,6 +85,8 @@ static int exclude_guest_unsupported;
 
 static int _pe_set_domain( hwd_control_state_t *ctl, int domain);
 
+#if (OBSOLETE_WORKAROUNDS==1)
+
 /* Check for processor support */
 /* Can be used for generic checking, though in general we only     */
 /* check for pentium4 here because support was broken for multiple */
@@ -97,6 +104,8 @@ processor_supported(int vendor, int family) {
    }
    return PAPI_OK;
 }
+
+#endif
 
 /* Fix up the config based on what CPU/Vendor we are running on */
 static int
@@ -156,6 +165,7 @@ pe_vendor_fixups(papi_vector_t *vector)
 /******** Kernel Version Dependent Routines  **********************/
 /******************************************************************/
 
+
 /* PERF_FORMAT_GROUP allows reading an entire group's counts at once   */
 /* before 2.6.34 PERF_FORMAT_GROUP did not work when reading results   */
 /*  from attached processes.  We are lazy and disable it for all cases */
@@ -164,9 +174,13 @@ pe_vendor_fixups(papi_vector_t *vector)
 static int
 bug_format_group(void) {
 
-  if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) return 1;
 
-  /* MIPS, as of version 3.1, does not support this properly */
+#if (OBSOLETE_WORKAROUNDS==1)
+	if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) return 1;
+#endif
+
+	/* MIPS, as of version 3.1, does not support this properly */
+	/* FIXME: is this still true? */
 
 #if defined(__mips__)
   return 1;
@@ -175,6 +189,8 @@ bug_format_group(void) {
   return 0;
 
 }
+
+#if (OBSOLETE_WORKAROUNDS==1)
 
 
 /* There's a bug prior to Linux 2.6.33 where if you are using */
@@ -190,6 +206,7 @@ bug_sync_read(void) {
 
 }
 
+#endif
 
 /* Set the F_SETOWN_EX flag on the fd.                          */
 /* This affects which thread an overflow signal gets sent to    */
@@ -198,32 +215,23 @@ bug_sync_read(void) {
 static int
 fcntl_setown_fd(int fd) {
 
-   int ret;
-   struct f_owner_ex fown_ex;
+	int ret;
+	struct f_owner_ex fown_ex;
 
-      /* F_SETOWN_EX is not available until 2.6.32 */
-   if (_papi_os_info.os_version < LINUX_VERSION(2,6,32)) {
+	/* F_SETOWN_EX is not available until 2.6.32 */
+	/* but PAPI perf_event support didn't work on 2.6.31 anyay */
 
-      /* get ownership of the descriptor */
-      ret = fcntl( fd, F_SETOWN, mygettid(  ) );
-      if ( ret == -1 ) {
-	 PAPIERROR( "cannot fcntl(F_SETOWN) on %d: %s", fd, strerror(errno) );
-	 return PAPI_ESYS;
-      }
-   }
-   else {
-      /* set ownership of the descriptor */
-      fown_ex.type = F_OWNER_TID;
-      fown_ex.pid  = mygettid();
-      ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
+	/* set ownership of the descriptor */
+	fown_ex.type = F_OWNER_TID;
+	fown_ex.pid  = mygettid();
+	ret = fcntl(fd, F_SETOWN_EX, (unsigned long)&fown_ex );
 
-      if ( ret == -1 ) {
-	 PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s",
-		    fd, strerror( errno ) );
-	 return PAPI_ESYS;
-      }
-   }
-   return PAPI_OK;
+	if ( ret == -1 ) {
+		PAPIERROR( "cannot fcntl(F_SETOWN_EX) on %d: %s",
+			fd, strerror( errno ) );
+		return PAPI_ESYS;
+	}
+	return PAPI_OK;
 }
 
 /* The read format on perf_event varies based on various flags that */
@@ -1306,6 +1314,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	return PAPI_OK;
 }
 
+#if (OBSOLETE_WORKAROUNDS==1)
 /* On kernels before 2.6.33 the TOTAL_TIME_ENABLED and TOTAL_TIME_RUNNING */
 /* fields are always 0 unless the counter is disabled.  So if we are on   */
 /* one of these kernels, then we must disable events before reading.      */
@@ -1360,6 +1369,8 @@ _pe_read_bug_sync( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
 	return result;
 }
+
+#endif
 
 /* Start counting events */
 static int
@@ -2363,6 +2374,47 @@ _pe_handle_paranoid(papi_vector_t *component) {
 
 }
 
+#if (OBSOLETE_WORKAROUNDS==1)
+/* Version based workarounds */
+/* perf_event has many bugs */
+/* PAPI has to work around a number of them, but for the most part */
+/* all of those were fixed by Linux 2.6.34 (May 2010) */
+/* Unfortunately it's not easy to auto-detect for these so we were */
+/* going by uname() version number */
+/* To complicate things, some vendors like Redhat backport fixes */
+/* So even though their kernel reports as 2.6.32 it has the fixes */
+/* As of PAPI 5.6 we're going to default to disabling the workarounds */
+/* I'm going to leave them here, ifdefed out, for the time being */
+static int
+_pe_version_workarounds(papi_vector_t *component) {
+
+	/* Kernel multiplexing is broken prior to kernel 2.6.34 */
+	/* The fix was probably git commit:                     */
+	/*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
+	if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) {
+		component->cmp_info.kernel_multiplex = 0;
+		component->cmp_info.num_mpx_cntrs = PAPI_MAX_SW_MPX_EVENTS;
+	}
+
+	/* Check that processor is supported */
+	if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
+			_papi_hwi_system_info.hw_info.cpuid_family)!=PAPI_OK) {
+		fprintf(stderr,"warning, your processor is unsupported\n");
+		/* should not return error, as software events should still work */
+	}
+
+	/* Update the default function pointers */
+	/* Based on features/bugs               */
+	if (bug_sync_read()) {
+		component->read = _pe_read_bug_sync;
+	}
+
+	return PAPI_OK;
+
+}
+
+#endif
+
 
 
 
@@ -2379,24 +2431,10 @@ _pe_init_component( int cidx )
 	retval=_pe_handle_paranoid(_papi_hwd[cidx]);
 	if (retval!=PAPI_OK) return retval;
 
-	/* Kernel multiplexing is broken prior to kernel 2.6.34 */
-	/* The fix was probably git commit:                     */
-	/*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
-	if (_papi_os_info.os_version < LINUX_VERSION(2,6,34)) {
-		_papi_hwd[cidx]->cmp_info.kernel_multiplex = 0;
-		_papi_hwd[cidx]->cmp_info.num_mpx_cntrs = PAPI_MAX_SW_MPX_EVENTS;
-	}
-	else {
-		_papi_hwd[cidx]->cmp_info.kernel_multiplex = 1;
-		_papi_hwd[cidx]->cmp_info.num_mpx_cntrs = PERF_EVENT_MAX_MPX_COUNTERS;
-	}
-
-	/* Check that processor is supported */
-	if (processor_supported(_papi_hwi_system_info.hw_info.vendor,
-			_papi_hwi_system_info.hw_info.cpuid_family)!=PAPI_OK) {
-		fprintf(stderr,"warning, your processor is unsupported\n");
-		/* should not return error, as software events should still work */
-	}
+#if (OBSOLETE_WORKAROUNDS==1)
+	/* Handle any kernel version related workarounds */
+	_pe_version_workarounds(_papi_hwd[cidx]);
+#endif
 
 	/* Setup mmtimers, if appropriate */
 	retval=mmtimer_setup();
@@ -2425,6 +2463,7 @@ _pe_init_component( int cidx )
 #if (USE_PERFEVENT_RDPMC==1)
 
 #else
+	/* Force fast_counter_read off if --enable-perfevent-rdpmc=no */
 	_papi_hwd[cidx]->cmp_info.fast_counter_read = 0;
 #endif
 
@@ -2494,12 +2533,6 @@ _pe_init_component( int cidx )
 	/* check for exclude_guest issue */
 	check_exclude_guest();
 
-	/* Update the default function pointers */
-	/* Based on features/bugs               */
-	if (bug_sync_read()) {
-		_papi_hwd[cidx]->read = _pe_read_bug_sync;
-	}
-
 	return PAPI_OK;
 
 }
@@ -2531,6 +2564,10 @@ papi_vector_t _perf_event_vector = {
       .cpu = 1,
       .inherit = 1,
       .cntr_umasks = 1,
+
+	.kernel_multiplex = 1,
+	.num_mpx_cntrs = PERF_EVENT_MAX_MPX_COUNTERS,
+
 
   },
 
