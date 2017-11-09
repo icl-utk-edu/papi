@@ -65,8 +65,8 @@ papi_vector_t _perf_event_vector;
 /* Globals */
 struct native_event_table_t perf_native_event_table;
 static int our_cidx;
-static int fast_counter_read=0;
-static int exclude_guest_unsupported=0;
+static int fast_counter_read;
+static int exclude_guest_unsupported;
 
 /* The kernel developers say to never use a refresh value of 0        */
 /* See https://lkml.org/lkml/2011/5/24/172                            */
@@ -266,6 +266,8 @@ check_exclude_guest( void )
 {
 	int ev_fd;
 	struct perf_event_attr attr;
+
+	exclude_guest_unsupported=0;
 
 	/* First check that we can open a plain instructions event */
 	memset(&attr, 0 , sizeof(attr));
