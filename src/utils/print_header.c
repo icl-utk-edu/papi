@@ -13,10 +13,13 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 {
 	int cnt, mpx;
 	struct utsname uname_info;
+	PAPI_option_t options;
 
 	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
    		return PAPI_ESYS;
 	}
+
+	PAPI_get_opt(PAPI_COMPONENTINFO,&options);
 
 	uname(&uname_info);
 
@@ -78,8 +81,9 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	} else {
 		printf( "Max Multiplex Counters   : PAPI error %d: %s\n", mpx, PAPI_strerror(mpx));
 	}
-	printf
-		( "--------------------------------------------------------------------------------\n" );
+	printf("Fast counter read (rdpmc): %s\n",
+		options.cmp_info->fast_counter_read?"yes":"no");
+	printf( "--------------------------------------------------------------------------------\n" );
 	printf( "\n" );
 	return PAPI_OK;
 }
