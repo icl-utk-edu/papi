@@ -2379,12 +2379,6 @@ _pe_init_component( int cidx )
 	retval=_pe_handle_paranoid(_papi_hwd[cidx]);
 	if (retval!=PAPI_OK) return retval;
 
-	/* Detect NMI watchdog which can steal counters */
-	if (_linux_detect_nmi_watchdog()) {
-		SUBDBG("The Linux nmi_watchdog is using one of the performance "
-			"counters, reducing the total number available.\n");
-	}
-
 	/* Kernel multiplexing is broken prior to kernel 2.6.34 */
 	/* The fix was probably git commit:                     */
 	/*     45e16a6834b6af098702e5ea6c9a40de42ff77d8         */
@@ -2485,6 +2479,16 @@ _pe_init_component( int cidx )
 
 		}
 		return retval;
+	}
+
+	/* Detect NMI watchdog which can steal counters */
+	/* FIXME: on Intel we should also halve the count if SMT enabled */
+	if (_linux_detect_nmi_watchdog()) {
+		if (_papi_hwd[cidx]->cmp_info.num_cntrs>0) {
+			_papi_hwd[cidx]->cmp_info.num_cntrs--;
+		}
+		SUBDBG("The Linux nmi_watchdog is using one of the performance "
+			"counters, reducing the total number available.\n");
 	}
 
 	/* check for exclude_guest issue */
