@@ -2321,26 +2321,20 @@ static int _pe_detect_rdpmc(void) {
 }
 
 
-/* Initialize the perf_event component */
 static int
-_pe_init_component( int cidx )
-{
-
-	int retval;
-	int paranoid_level;
+_pe_handle_paranoid(papi_vector_t *component) {
 
 	FILE *fff;
-
-	our_cidx=cidx;
-
-	/* TODO: put paranoid code in separate function? */
+	int paranoid_level;
+	int retval;
 
 	/* The is the official way to detect if perf_event support exists */
 	/* The file is called perf_counter_paranoid on 2.6.31             */
 	/* currently we are lazy and do not support 2.6.31 kernels        */
+
 	fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
 	if (fff==NULL) {
-		strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+		strncpy(component->cmp_info.disabled_reason,
 			"perf_event support not detected",PAPI_MAX_STR_LEN);
 		return PAPI_ENOCMP;
 	}
@@ -2355,15 +2349,35 @@ _pe_init_component( int cidx )
 	fclose(fff);
 
 	if (paranoid_level==3) {
-		strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+		strncpy(component->cmp_info.disabled_reason,
 			"perf_event support disabled by Linux with paranoid=3",PAPI_MAX_STR_LEN);
 		return PAPI_ENOCMP;
 	}
 
 	if ((paranoid_level==2) && (getuid()!=0)) {
 		SUBDBG("/proc/sys/kernel/perf_event_paranoid prohibits kernel counts");
-		_papi_hwd[cidx]->cmp_info.available_domains &=~PAPI_DOM_KERNEL;
+		component->cmp_info.available_domains &=~PAPI_DOM_KERNEL;
 	}
+
+	return PAPI_OK;
+
+}
+
+
+
+
+/* Initialize the perf_event component */
+static int
+_pe_init_component( int cidx )
+{
+
+	int retval;
+
+	our_cidx=cidx;
+
+	/* Update component behavior based on paranoid setting */
+	retval=_pe_handle_paranoid(_papi_hwd[cidx]);
+	if (retval!=PAPI_OK) return retval;
 
 	/* Detect NMI watchdog which can steal counters */
 	if (_linux_detect_nmi_watchdog()) {
