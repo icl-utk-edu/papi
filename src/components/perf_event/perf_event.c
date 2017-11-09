@@ -65,7 +65,6 @@ papi_vector_t _perf_event_vector;
 /* Globals */
 struct native_event_table_t perf_native_event_table;
 static int our_cidx;
-static int fast_counter_read;
 static int exclude_guest_unsupported;
 
 /* The kernel developers say to never use a refresh value of 0        */
@@ -648,9 +647,9 @@ set_up_mmap( pe_control_t *ctl, int evt_idx)
 
 		/* Easier to just globally disable this, as it should	*/
 		/* be a fairly uncommon case hopefully.			*/
-		if (fast_counter_read) {
+		if (_perf_event_vector.cmp_info.fast_counter_read) {
 			PAPIERROR("Can't mmap, disabling fast_counter_read\n");
-			fast_counter_read=0;
+			_perf_event_vector.cmp_info.fast_counter_read=0;
 		}
 		return PAPI_ESYS;
 	}
@@ -806,7 +805,7 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 			if (ctl->events[i].sampling) {
 				ctl->events[i].nr_mmap_pages = 1 + 2;
 			}
-			else if (fast_counter_read) {
+			else if (_perf_event_vector.cmp_info.fast_counter_read) {
 				ctl->events[i].nr_mmap_pages = 1;
 			}
 			else {
@@ -1236,7 +1235,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	long long papi_pe_buffer[READ_BUFFER_SIZE];
 
 	/* Handle fast case */
-	if ((fast_counter_read) && (!pe_ctl->inherit)) {
+	if ((_perf_event_vector.cmp_info.fast_counter_read) && (!pe_ctl->inherit)) {
 		return _pe_rdpmc_read( ctx, ctl, events, flags);
 	}
 
@@ -2416,10 +2415,9 @@ _pe_init_component( int cidx )
 	}
 
 #if (USE_PERFEVENT_RDPMC==1)
-		fast_counter_read=_papi_hwd[cidx]->cmp_info.fast_counter_read;
+
 #else
-		fast_counter_read=0;
-		_papi_hwd[cidx]->cmp_info.fast_counter_read = 0;
+	_papi_hwd[cidx]->cmp_info.fast_counter_read = 0;
 #endif
 
 	/* Run the libpfm4-specific setup */
