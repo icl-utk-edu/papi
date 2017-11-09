@@ -971,11 +971,13 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open type\n");
+			goto unrecoverable_error;
 		}
 		result=fscanf(fff,"%s",type_string);
 		fclose(fff);
 		if (result!=1) {
 			MEMDBG("Could not read cache type\n");
+			goto unrecoverable_error;
 		}
 		if (!strcmp(type_string,"Data")) {
 			type=PAPI_MH_TYPE_DATA;
@@ -996,11 +998,13 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open size\n");
+			goto unrecoverable_error;
 		}
 		result=fscanf(fff,"%d",&size);
 		fclose(fff);
 		if (result!=1) {
 			MEMDBG("Could not read cache size\n");
+			goto unrecoverable_error;
 		}
 
 		/* Linux reports in kB, PAPI expects in Bytes */
@@ -1015,11 +1019,13 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open linesize\n");
+			goto unrecoverable_error;
 		}
 		result=fscanf(fff,"%d",&line_size);
 		fclose(fff);
 		if (result!=1) {
 			MEMDBG("Could not read cache line-size\n");
+			goto unrecoverable_error;
 		}
 		L[level_index].cache[level_count].line_size=line_size;
 
@@ -1033,11 +1039,13 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open associativity\n");
+			goto unrecoverable_error;
 		}
 		result=fscanf(fff,"%d",&associativity);
 		fclose(fff);
 		if (result!=1) {
 			MEMDBG("Could not read cache associativity\n");
+			goto unrecoverable_error;
 		}
 		L[level_index].cache[level_count].associativity=associativity;
 
@@ -1050,12 +1058,14 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open sets\n");
+			goto unrecoverable_error;
 		}
 		result=fscanf(fff,"%d",&sets);
 		fclose(fff);
 
 		if (result!=1) {
 			MEMDBG("Could not read cache sets\n");
+			goto unrecoverable_error;
 		}
 		L[level_index].cache[level_count].num_lines=sets;
 
