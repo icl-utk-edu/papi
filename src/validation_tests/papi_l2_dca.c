@@ -73,6 +73,13 @@ int main(int argc, char **argv) {
 	l2_linesize=get_linesize(L2_CACHE);
 	l2_entries=get_entries(L2_CACHE);
 
+	if ((l2_size==0) || (l2_linesize==0)) {
+		if (!quiet) {
+			printf("Unable to determine size of L2 cache!\n");
+		}
+		test_skip( __FILE__, __LINE__, "adding PAPI_L2_DCA", retval );
+	}
+
 	if (!quiet) {
 		printf("\tDetected %dk L1 DCache, %dB linesize\n",
 			l1_size/1024,l1_linesize);
@@ -83,7 +90,7 @@ int main(int argc, char **argv) {
 	arraysize=l2_size/sizeof(double);
 
 	if (!quiet) {
-		printf("\tAllocating %ld bytes of memory (%d doubles)\n",
+		printf("\tAllocating %zu bytes of memory (%d doubles)\n",
 			arraysize*sizeof(double),arraysize);
 	}
 
@@ -128,7 +135,7 @@ int main(int argc, char **argv) {
 
 	if (!quiet) {
 		printf("\tShould be roughly "
-			"arraysize/L2_linesize/double_size (%d/%d/%ld): "
+			"arraysize/L2_linesize/double_size (%d/%d/%zu): "
 			"%lld\n\n",
 			arraysize,l2_linesize,sizeof(double),
 			expected);
@@ -179,7 +186,7 @@ int main(int argc, char **argv) {
 
 	if (!quiet) {
 		printf("\tShould be roughly "
-			"arraysize/L2_linesize/double_size (%d/%d/%ld): "
+			"arraysize/L2_linesize/double_size (%d/%d/%zu): "
 			"%lld\n\n",
 			arraysize,l2_linesize,sizeof(double),
 			expected);
