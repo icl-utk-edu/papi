@@ -348,7 +348,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 		*cpuinfo_mhz = mhz;
 	}
 	else {
-		PAPIWARN("Failed to find a clock speed in /proc/cpuinfo");
+	//	PAPIWARN("Failed to find a clock speed in /proc/cpuinfo");
 	}
 
 	/*******************************/
