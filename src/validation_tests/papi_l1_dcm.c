@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (!quiet) {
-		printf("\tAllocating %ld bytes of memory (%d doubles)\n",
+		printf("\tAllocating %zu bytes of memory (%d doubles)\n",
 			arraysize*sizeof(double),arraysize);
 	}
 
