@@ -336,11 +336,13 @@ static struct native_event_t *allocate_native_event(
 			unsigned int msk_name_len;
 			if (wrk != NULL) {
 				msk_name_len = wrk - ptr;
+				SUBDBG("Found =, length=%d\n",msk_name_len);
 			} else {
 				msk_name_len = strlen (ptr);
+				SUBDBG("No =, length=%d\n",msk_name_len);
 			}
 
-			int i;
+			int i, mask_found=0;
 			for (i=0 ; i<einfo.nattrs ; i++) {
 				// get this events attribute information
 				// from libpfm4, if unavailable return
@@ -353,7 +355,7 @@ static struct native_event_t *allocate_native_event(
 				if (ret != PFM_SUCCESS) {
 					free (msk_ptr);
 					SUBDBG("EXIT: Attribute info not found, libpfm4_index: %#x, ret: %d\n", libpfm4_index, _papi_libpfm4_error(ret));
-					// do we need to unlock here? --vmw
+					// FIXME: do we need to unlock here? --vmw
 					return NULL;
 				}
 
@@ -361,7 +363,9 @@ static struct native_event_t *allocate_native_event(
 				// append its description
 				if ((msk_name_len == strlen(ainfo.name))  &&
 					(strncmp(ptr, ainfo.name, msk_name_len) == 0)) {
-					SUBDBG("Found mask: %s, i: %d\n", ainfo.name, i);
+					mask_found=1;
+					SUBDBG("Found mask: libpfm4=%s -- matches %s --  i: %d, %d %zu\n",
+						ainfo.name, ptr, i, msk_name_len, strlen(ainfo.name));
 					// find out how much space is left in the mask description work buffer we are building
 					unsigned int mskleft = sizeof(mask_desc) - strlen(mask_desc);
 					// if no space left, just discard this mask description
@@ -383,6 +387,13 @@ static struct native_event_t *allocate_native_event(
 					mask_desc[mskleft-1] = '\0';
 					break;
 				}
+			}
+
+			/* See if we had a mask that wasn't found */
+			if (!mask_found) {
+				SUBDBG("Mask not found! %s\n",ptr);
+				/* FIXME: do we need to unlock here? */
+				return NULL;
 			}
 
 			// if we have filled the work buffer, we can quit now
