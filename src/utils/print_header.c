@@ -67,7 +67,7 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	printf( "Running in a VM          : %s\n", ( *hwinfo )->virtualized?
 		"yes":"no");
 	if ( (*hwinfo)->virtualized) {
-           printf( "VM Vendor:               : %s\n", (*hwinfo)->virtual_vendor_string);
+           printf( "VM Vendor                : %s\n", (*hwinfo)->virtual_vendor_string);
 	}
 	cnt = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
 	mpx = PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL );
