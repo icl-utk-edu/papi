@@ -1,7 +1,7 @@
 NAME=perf_event
 include ../../Makefile_comp_tests.target
 
-TESTS = nmi_watchdog perf_event_offcore_response perf_event_system_wide perf_event_user_kernel
+TESTS = broken_events nmi_watchdog perf_event_offcore_response perf_event_system_wide perf_event_user_kernel
 
 DOLOOPS= $(testlibdir)/do_loops.o
 
@@ -10,6 +10,13 @@ perf_event_tests: $(TESTS)
 
 event_name_lib.o:	event_name_lib.c event_name_lib.h
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c event_name_lib.c
+
+
+broken_events.o:	broken_events.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c broken_events.c
+
+broken_events:	broken_events.o event_name_lib.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) -o broken_events broken_events.o event_name_lib.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 
 nmi_watchdog.o:	nmi_watchdog.c
