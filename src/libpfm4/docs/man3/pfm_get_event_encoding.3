@@ -9,6 +9,7 @@ pfm_get_event_encoding \- get raw event encoding
 .sp
 .SH DESCRIPTION
 This function is used to retrieve the raw event encoding corresponding to the event string in \fBstr\fR.
+Only one event per call can be encoded. As such, \fBstr\fR can contain only one symbolic event name.
 The string may contain unit masks and modifiers. The default privilege level mask is passed in \fBdfl_plm\fR.
 It may be used depending on the event.
 
@@ -100,7 +101,7 @@ a specific error code is returned.
 The \fBcode\fR argument is too small for the encoding.
 .TP
 .B PFM_ERR_INVAL
-The \fBcode\fR or \fBcount\fR argument is \fBNULL\fR.
+The \fBcode\fR or \fBcount\fR argument is \fBNULL\fR or the \fBstr\fR contains more than one symbolic event.
 .TP
 .B PFM_ERR_NOMEM
 Not enough memory.

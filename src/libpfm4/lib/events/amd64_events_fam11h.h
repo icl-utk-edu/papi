@@ -1392,7 +1392,7 @@ static const amd64_entry_t amd64_fam11h_pe[]={
   .ngrp    = 1,
   .umasks  = amd64_fam11h_sideband_signals,
 },
-{ .name    = "Interrupt Events",
+{ .name    = "INTERRUPT_EVENTS",
   .desc    = "Interrupt Events",
   .modmsk  = AMD64_FAM10H_ATTRS,
   .code    = 0x1ea,

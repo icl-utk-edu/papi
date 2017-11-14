@@ -31,7 +31,7 @@
 
 #define PFMLIB_ATTR_DELIM	":."	/* event attribute delimiter possible */
 #define PFMLIB_PMU_DELIM	"::"	/* pmu to event delimiter */
-#define PFMLIB_EVENT_DELIM	','	/* event to event delimiter */
+#define PFMLIB_EVENT_DELIM	", \t\n"/* event to event delimiters */
 
 #define PFM_ATTR_I(y, d) { .name = (y), .type = PFM_ATTR_MOD_INTEGER, .desc = (d) }
 #define PFM_ATTR_B(y, d) { .name = (y), .type = PFM_ATTR_MOD_BOOL, .desc = (d) }
