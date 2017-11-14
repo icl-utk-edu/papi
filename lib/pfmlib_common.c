@@ -464,7 +464,7 @@ pfmlib_getl(char **buffer, size_t *len, FILE *fp)
 	int c;
 	size_t maxsz, maxi, d, i = 0;
 
-	if (!len || !fp || !buffer)
+	if (!len || !fp || !buffer || *len < 2)
 		return -1;
 
 	b = *buffer;
