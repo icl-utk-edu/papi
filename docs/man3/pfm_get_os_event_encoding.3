@@ -10,7 +10,8 @@ pfm_get_os_event_encoding \- get event encoding for a specific operating system
 .SH DESCRIPTION
 This is the key function to retrieve the encoding of an event for a specific operating system
 interface. The event string passed in \fBstr\fR is parsed and encoded for the operating system
-specified by \fBos\fR. The event is encoded to monitor at the privilege levels specified
+specified by \fBos\fR. Only one event per call can be encoded. As such, \fBstr\fR can contain only
+one symbolic event name. The event is encoded to monitor at the privilege levels specified
 by the \fBdfl_plm\fR mask, if supported, otherwise this parameter is ignored. The operating
 system specific input and output arguments are passed in \fBarg\fR.
 
@@ -169,7 +170,7 @@ a specific error code is returned.
 The \fBcode\fR argument is too small for the encoding.
 .TP
 .B PFM_ERR_INVAL
-The \fBcode\fR or \fBcount\fR argument is \fBNULL\fR.
+The \fBcode\fR or \fBcount\fR argument is \fBNULL\fR or the \fBstr\fR contains more than one symbolic event.
 .TP
 .B PFM_ERR_NOMEM
 Not enough memory.

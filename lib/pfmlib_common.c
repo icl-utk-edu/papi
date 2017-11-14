@@ -1329,22 +1329,18 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	int i, j, ret;
 
 	/*
+	 * support only one event at a time.
+	 */
+	p = strpbrk(event, PFMLIB_EVENT_DELIM);
+	if (p)
+		return PFM_ERR_INVAL;
+	/*
 	 * create copy because string is const
 	 */
 	s = str = strdup(event);
 	if (!str)
 		return PFM_ERR_NOMEM;
 
-	/*
-	 * ignore everything passed after a comma
-	 * (simplify dealing with const event list)
-	 *
-	 * safe to do before pname, because now
-	 * PMU name cannot have commas in them.
-	 */
-	p = strchr(s, PFMLIB_EVENT_DELIM);
-	if (p)
-		*p = '\0';
 
 	/* check for optional PMU name */
 	p = strstr(s, PFMLIB_PMU_DELIM);

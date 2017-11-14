@@ -378,10 +378,7 @@ static const test_event_t x86_test_events[]={
 	},
 	{ SRC_LINE,
 	  .name = "core::RAT_STALLS:ANY:u:c=1,cycles", /* must cut at comma */
-	  .ret  = PFM_SUCCESS,
-	  .count = 1,
-	  .codes[0] = 0x1510fd2ull,
-	  .fstr = "core::RAT_STALLS:ANY:k=0:u=1:e=0:i=0:c=1"
+	  .ret  = PFM_ERR_INVAL,
 	},
 	{ SRC_LINE,
 	  .name = "wsm::mem_uncore_retired:remote_dram",
