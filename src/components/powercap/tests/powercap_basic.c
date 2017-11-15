@@ -141,7 +141,6 @@ int main ( int argc, char **argv )
     /* Add all events */
     code = PAPI_NATIVE_MASK;
     r = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, powercap_cid );
-
     while ( r == PAPI_OK ) {
         retval = PAPI_event_code_to_name( code, event_names[num_events] );
         if ( retval != PAPI_OK )
