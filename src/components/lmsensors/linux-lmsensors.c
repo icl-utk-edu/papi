@@ -97,7 +97,7 @@ typedef struct _lmsensors_context
 static _lmsensors_native_event_entry_t *lm_sensors_native_table;
 /* number of events in the table*/
 static int num_events = 0;
-long_long *cached_counts = NULL;	// used for caching readings
+static long_long *cached_counts = NULL;	// used for caching readings
 
 
 int (*sensors_initPtr)(FILE *input);
