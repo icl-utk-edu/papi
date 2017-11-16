@@ -100,17 +100,17 @@ static int num_events = 0;
 static long_long *cached_counts = NULL;	// used for caching readings
 
 
-int (*sensors_initPtr)(FILE *input);
-void (*sensors_cleanupPtr)(void);
-int (*sensors_snprintf_chip_namePtr)(char *str, size_t size,
+static int (*sensors_initPtr)(FILE *input);
+static void (*sensors_cleanupPtr)(void);
+static int (*sensors_snprintf_chip_namePtr)(char *str, size_t size,
 				  const sensors_chip_name *chip);
-char *(*sensors_get_labelPtr)(const sensors_chip_name *name, const sensors_feature *feature);
-int (*sensors_get_valuePtr)(const sensors_chip_name *name, int subfeat_nr,
+static char *(*sensors_get_labelPtr)(const sensors_chip_name *name, const sensors_feature *feature);
+static int (*sensors_get_valuePtr)(const sensors_chip_name *name, int subfeat_nr,
 		      double *value);
-const sensors_chip_name *(*sensors_get_detected_chipsPtr)(const sensors_chip_name
+static const sensors_chip_name *(*sensors_get_detected_chipsPtr)(const sensors_chip_name
 						       *match, int *nr);
-const sensors_feature *(*sensors_get_featuresPtr)(const sensors_chip_name *name, int *nr);
-const sensors_subfeature *(*sensors_get_all_subfeaturesPtr)(const sensors_chip_name *name,
+static const sensors_feature *(*sensors_get_featuresPtr)(const sensors_chip_name *name, int *nr);
+static const sensors_subfeature *(*sensors_get_all_subfeaturesPtr)(const sensors_chip_name *name,
 			    const sensors_feature *feature, int *nr);
 
 // file handles used to access lmsensors libraries with dlopen
