@@ -490,7 +490,7 @@ _rapl_init_component( int cidx )
 
      /* Init fd_array */
 
-     fd_array=papi_calloc(sizeof(struct fd_array_t),num_cpus);
+     fd_array=papi_calloc(num_cpus, sizeof(struct fd_array_t));
      if (fd_array==NULL) return PAPI_ENOMEM;
 
      fd=open_fd(cpu_to_use[0]);
@@ -544,7 +544,7 @@ _rapl_init_component( int cidx )
                  (4*num_packages)) * 2;
 
      rapl_native_events = (_rapl_native_event_entry_t*)
-          papi_calloc(sizeof(_rapl_native_event_entry_t),num_events);
+          papi_calloc(num_events, sizeof(_rapl_native_event_entry_t));
 
 
      i = 0;

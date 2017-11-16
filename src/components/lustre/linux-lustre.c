@@ -100,7 +100,7 @@ static int resize_native_table() {
 	SUBDBG("ENTER:\n");
 	counter_info** new_table;
 	int new_size = table_size*2;
-	new_table = (counter_info**)papi_calloc(sizeof(counter_info*), new_size);
+	new_table = (counter_info**)papi_calloc(new_size, sizeof(counter_info*));
 	if (NULL==new_table) {
 		SUBDBG("EXIT: PAPI_ENOMEM\n");
 		return PAPI_ENOMEM;

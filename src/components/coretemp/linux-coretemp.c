@@ -49,7 +49,7 @@ insert_in_list(char *name, char *units,
 
 
     /* new_event   path, events->d_name */
-    temp = (struct temp_event *) papi_calloc(sizeof(struct temp_event),1);
+    temp = (struct temp_event *) papi_calloc(1, sizeof(struct temp_event));
     if (temp==NULL) {
        PAPIERROR("out of memory!");
        /* We should also free any previously allocated data */
@@ -369,7 +369,7 @@ _coretemp_init_component( int cidx )
      t = root;
   
      _coretemp_native_events = (CORETEMP_native_event_entry_t*)
-          papi_calloc(sizeof(CORETEMP_native_event_entry_t),num_events);
+          papi_calloc(num_events, sizeof(CORETEMP_native_event_entry_t));
 
      do {
 	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);

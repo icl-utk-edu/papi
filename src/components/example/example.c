@@ -202,7 +202,7 @@ _example_init_component( int cidx )
 	/* Allocate memory for the our native event table */
 	example_native_table =
 		( example_native_event_entry_t * )
-		papi_calloc( sizeof(example_native_event_entry_t),num_events);
+		papi_calloc( num_events, sizeof(example_native_event_entry_t) );
 	if ( example_native_table == NULL ) {
 		PAPIERROR( "malloc():Could not get memory for events table" );
 		return PAPI_ENOMEM;

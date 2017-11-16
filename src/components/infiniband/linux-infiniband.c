@@ -354,7 +354,7 @@ find_ib_devices()
       int i = num_events - 1;
       // now allocate memory to store the counters into the native table
       infiniband_native_events = (infiniband_native_event_entry_t*)
-           papi_calloc(sizeof(infiniband_native_event_entry_t), num_events);
+           papi_calloc(num_events, sizeof(infiniband_native_event_entry_t));
       ib_counter_t *iter = root_counter;
       while (iter != 0)
       {
