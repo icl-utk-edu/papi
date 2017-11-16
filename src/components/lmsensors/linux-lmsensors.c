@@ -43,8 +43,6 @@
 
 /*************************  DEFINES SECTION  ***********************************
  *******************************************************************************/
-/* this number assumes that there will never be more events than indicated */
-#define LM_SENSORS_MAX_COUNTERS 512
 // time in usecs
 #define LM_SENSORS_REFRESHTIME 200000
 
@@ -82,7 +80,6 @@ typedef struct _lmsensors_reg_alloc
 
 typedef struct _lmsensors_control_state
 {
-	long_long counts[LM_SENSORS_MAX_COUNTERS];	// used for caching
 	long_long lastupdate;
 } _lmsensors_control_state_t;
 
@@ -100,6 +97,7 @@ typedef struct _lmsensors_context
 static _lmsensors_native_event_entry_t *lm_sensors_native_table;
 /* number of events in the table*/
 static int num_events = 0;
+long_long *cached_counts = NULL;	// used for caching readings
 
 
 int (*sensors_initPtr)(FILE *input);
@@ -304,12 +302,23 @@ _lmsensors_init_component( int cidx )
     num_events = detectSensors(  );
     SUBDBG("Found %d sensors\n",num_events);
 
+    _lmsensors_vector.cmp_info.num_mpx_cntrs = num_events;
+    _lmsensors_vector.cmp_info.num_cntrs = num_events;
+
     if ( ( lm_sensors_native_table =
 	   calloc( num_events, sizeof ( _lmsensors_native_event_entry_t )))
 				   == NULL ) {
        strncpy(_lmsensors_vector.cmp_info.disabled_reason,
 	      "Could not malloc room",PAPI_MAX_STR_LEN);
        return PAPI_ENOMEM;
+    }
+
+    cached_counts = (long long*) calloc(num_events, sizeof(long long));
+
+    if (cached_counts == NULL) {
+        strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+               "Could not malloc room",PAPI_MAX_STR_LEN);
+	return PAPI_ENOMEM;
     }
 
     if ( ( unsigned ) num_events != createNativeEvents(  ) ) {
@@ -413,8 +422,7 @@ _lmsensors_init_control_state( hwd_control_state_t *ctl )
 	int i;
 
 	for ( i = 0; i < num_events; i++ )
-		( ( _lmsensors_control_state_t * ) ctl )->counts[i] =
-			getEventValue( i );
+		cached_counts[i] = getEventValue( i );
 
 	( ( _lmsensors_control_state_t * ) ctl )->lastupdate =
 		PAPI_get_real_usec(  );
@@ -465,12 +473,12 @@ _lmsensors_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     if ( start - control->lastupdate > 200000 ) {	// cache refresh
        
        for ( i = 0; i < num_events; i++ ) {
-	   control->counts[i] = getEventValue( i );
+	   cached_counts[i] = getEventValue( i );
        }
        control->lastupdate = PAPI_get_real_usec(  );
     }
 
-    *events = control->counts;
+    *events = cached_counts;
     return PAPI_OK;
 }
 
@@ -478,6 +486,8 @@ _lmsensors_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 static int
 _lmsensors_shutdown_component( void )
 {
+	if (cached_counts)
+		free(cached_counts);
 
 	/* Call the libsensors cleaning function before leaving */
 	sensors_cleanupPtr(  );
@@ -627,8 +637,8 @@ papi_vector_t _lmsensors_vector = {
 	.short_name = "lmsensors",
 	.version = "5.0",
 	.description = "Linux LMsensor statistics",
-	.num_mpx_cntrs = LM_SENSORS_MAX_COUNTERS,
-	.num_cntrs = LM_SENSORS_MAX_COUNTERS,
+	.num_mpx_cntrs = 0,
+	.num_cntrs = 0,
 	.default_domain = PAPI_DOM_ALL,
 	.default_granularity = PAPI_GRN_SYS,
 	.available_granularities = PAPI_GRN_SYS,
