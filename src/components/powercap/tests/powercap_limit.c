@@ -17,7 +17,8 @@
 
 int main ( int argc, char **argv )
 {
-
+  (void) argv;
+  (void) argc;
   int retval,cid,powercap_cid=-1,numcmp;
   int EventSet = PAPI_NULL;
   long long values[MAX_powercap_EVENTS];
@@ -32,7 +33,7 @@ int main ( int argc, char **argv )
   /* PAPI Initialization */
   retval = PAPI_library_init( PAPI_VER_CURRENT );
   if ( retval != PAPI_VER_CURRENT )
-    test_fail( __FILE__, __LINE__,"PAPI_library_init failed\n",retval );
+    test_fail( __FILE__, __LINE__,"PAPI_library_init\n",retval );
 
   if ( !TESTS_QUIET ) printf( "Trying all powercap events\n" );
 
@@ -41,7 +42,7 @@ int main ( int argc, char **argv )
   for( cid=0; cid<numcmp; cid++ ) {
 
     if ( ( cmpinfo = PAPI_get_component_info( cid ) ) == NULL )
-      test_fail( __FILE__, __LINE__,"PAPI_get_component_info failed\n", 0 );
+      test_fail( __FILE__, __LINE__,"PAPI_get_component_info\n", 0 );
 
     if ( strstr( cmpinfo->name,"powercap" ) ) {
       powercap_cid=cid;
@@ -61,6 +62,10 @@ int main ( int argc, char **argv )
   if ( cid==numcmp )
     test_skip( __FILE__,__LINE__,"No powercap component found\n",0 );
 
+  /* Skip if component has no counters */
+  if ( cmpinfo->num_cntrs==0 )
+    test_skip( __FILE__,__LINE__,"No counters in the powercap component\n",0 );
+
   /* Create EventSet */
   retval = PAPI_create_eventset( &EventSet );
   if ( retval != PAPI_OK )
@@ -74,8 +79,8 @@ int main ( int argc, char **argv )
   /* find all package power events */
   while ( r == PAPI_OK ) {
     retval = PAPI_event_code_to_name( code, event_names[num_events] );
-    if ( retval != PAPI_OK )
-      test_fail( __FILE__, __LINE__,"Error from PAPI_event_code_to_name", retval );
+    if ( retval != PAPI_OK ) 
+      test_fail( __FILE__, __LINE__,"PAPI_event_code_to_name", retval );
 
     retval = PAPI_add_event(EventSet, code);
     if (retval != PAPI_OK)

@@ -71,7 +71,8 @@ void run_test( int quiet )
 
 int main ( int argc, char **argv )
 {
-
+    (void) argv;
+    (void) argc;
     int retval,cid,powercap_cid=-1,numcmp;
     int EventSet = PAPI_NULL;
     long long *values;
@@ -132,6 +133,10 @@ int main ( int argc, char **argv )
     /* Component not found */
     if ( cid==numcmp )
         test_skip( __FILE__,__LINE__,"No powercap component found\n",0 );
+
+    /* Skip if component has no counters */
+    if ( cmpinfo->num_cntrs==0 )
+        test_skip( __FILE__,__LINE__,"No counters in the powercap component\n",0 );
 
     /* Create EventSet */
     retval = PAPI_create_eventset( &EventSet );
