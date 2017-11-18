@@ -146,6 +146,7 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 			}
 			attr->config1 = e->codes[1];
 		}
+
 		/*
 		 * Event has filters and perf_events expects them in the umask (extended)
 		 * For instance: SK UPI BASIC_HDR_FILT

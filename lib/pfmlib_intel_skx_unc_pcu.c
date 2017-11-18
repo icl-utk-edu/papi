@@ -1,7 +1,7 @@
 /*
- * pfmlib_intel_ivbep_unc_pcu.c : Intel IvyBridge-EP Power Control Unit (PCU) uncore PMU
+ * pfmlib_intel_skx_unc_pcu.c : Intel SkylakeX Power Control Unit (PCU) uncore PMU
  *
- * Copyright (c) 2014 Google Inc. All rights reserved
+ * Copyright (c) 2017 Google Inc. All rights reserved
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,7 +31,7 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_x86_priv.h"
 #include "pfmlib_intel_snbep_unc_priv.h"
-#include "events/intel_ivbep_unc_pcu_events.h"
+#include "events/intel_skx_unc_pcu_events.h"
 
 static void
 display_pcu(void *this, pfmlib_event_desc_t *e, void *val)
@@ -67,21 +67,21 @@ display_pcu(void *this, pfmlib_event_desc_t *e, void *val)
 }
 
 
-pfmlib_pmu_t intel_ivbep_unc_pcu_support = {
-	.desc			= "Intel Ivy Bridge-EP PCU uncore",
-	.name			= "ivbep_unc_pcu",
+pfmlib_pmu_t intel_skx_unc_pcu_support = {
+	.desc			= "Intel SkylakeX PCU uncore",
+	.name			= "skx_unc_pcu",
 	.perf_name		= "uncore_pcu",
-	.pmu			= PFM_PMU_INTEL_IVBEP_UNC_PCU,
-	.pme_count		= LIBPFM_ARRAY_SIZE(intel_ivbep_unc_p_pe),
+	.pmu			= PFM_PMU_INTEL_SKX_UNC_PCU,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_skx_unc_p_pe),
 	.type			= PFM_PMU_TYPE_UNCORE,
 	.num_cntrs		= 4,
 	.num_fixed_cntrs	= 0,
 	.max_encoding		= 2,
-	.pe			= intel_ivbep_unc_p_pe,
+	.pe			= intel_skx_unc_p_pe,
 	.atdesc			= snbep_unc_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK | INTEL_PMU_FL_UNC_OCC
 				| PFMLIB_PMU_FL_NO_SMPL,
-	.pmu_detect		= pfm_intel_ivbep_unc_detect,
+	.pmu_detect		= pfm_intel_skx_unc_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_snbep_unc_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_snbep_unc_get_perf_encoding),
 	 PFMLIB_OS_DETECT(pfm_intel_x86_perf_detect),

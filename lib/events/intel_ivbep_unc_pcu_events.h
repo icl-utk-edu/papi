@@ -412,7 +412,7 @@ static const intel_x86_entry_t intel_ivbep_unc_p_pe[]={
     .code = 0x80,
     .cntmsk = 0xf,
     .ngrp = 1,
-    .modmsk = IVBEP_UNC_PCU_ATTRS,
+    .modmsk = IVBEP_UNC_PCU_ATTRS | _SNBEP_UNC_ATTR_I, /* available only on occ_invert */
     .numasks = LIBPFM_ARRAY_SIZE(ivbep_unc_p_power_state_occupancy),
     .umasks  = ivbep_unc_p_power_state_occupancy
   },

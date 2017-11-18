@@ -46,6 +46,14 @@ const pfmlib_attr_desc_t snbep_unc_mods[]={
 	PFM_ATTR_B("isoc", "match isochronous requests"),   /* isochronous */
 	PFM_ATTR_B("nc", "match non-coherent requests"),   /* non-coherent */
 	PFM_ATTR_I("cf", "core id filter, includes non-thread data in bit 5 [0-63]"),	/* core id (hswep) */
+	PFM_ATTR_I("tf", "thread id filter [0-3]"),	 /* thread id (skx)*/
+	PFM_ATTR_I("cf", "source id filter [0-63]"),	 /* src-id/core-id (skx) */
+	PFM_ATTR_B("loc", "match on local node target"), /* loc filter1 (skx) */
+	PFM_ATTR_B("rem", "match on remote node target"),/* rem filter1 (skx) */
+	PFM_ATTR_B("lmem", "local memory cacheable"),	 /* nm filter1 (skx) */
+	PFM_ATTR_B("rmem", "remote memory cacheable"),	 /* not_nm filter1 (skx) */
+	PFM_ATTR_I("dnid", "destination node id [0-15]"), /* SKX:UPI */
+	PFM_ATTR_I("rcsnid", "destination RCS Node id [0-15]"), /* SKX:UPI */
 	PFM_ATTR_NULL
 };
 
@@ -149,6 +157,27 @@ pfm_intel_bdx_unc_detect(void *this)
        }
        return PFM_SUCCESS;
 }
+
+int
+pfm_intel_skx_unc_detect(void *this)
+{
+       int ret;
+
+       ret = pfm_intel_x86_detect();
+       if (ret != PFM_SUCCESS)
+
+       if (pfm_intel_x86_cfg.family != 6)
+               return PFM_ERR_NOTSUPP;
+
+       switch(pfm_intel_x86_cfg.model) {
+               case 85: /* Skylake X */
+                         break;
+               default:
+                       return PFM_ERR_NOTSUPP;
+       }
+       return PFM_SUCCESS;
+}
+
 
 static void
 display_com(void *this, pfmlib_event_desc_t *e, void *val)
@@ -502,6 +531,14 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					filters[0].cbo_filt.tid = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_TF;
 					break;
+				case SNBEP_UNC_ATTR_TF1: /* thread id skx */
+					if (ival > 7)
+						return PFM_ERR_ATTR_VAL;
+					reg.cha.unc_tid = 1;
+					filters[0].skx_cha_filt0.tid = ival; /* includes non-thread data */
+					must_have_filt0 = 1;
+					umodmsk |= _SNBEP_UNC_ATTR_TF1;
+					break;
 				case SNBEP_UNC_ATTR_CF: /* core id */
 					if (ival > 15)
 						return PFM_ERR_ATTR_VAL;
@@ -534,6 +571,14 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					filters[1].ivbep_cbo_filt1.nid = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_NF1;
 					break;
+				case SNBEP_UNC_ATTR_CF2: /* src-id/core-id skx */
+					if (ival > 64)
+						return PFM_ERR_ATTR_VAL;
+					reg.cha.unc_tid = 1;
+					filters[0].skx_cha_filt0.sid = ival;
+					must_have_filt0 = 1;
+					umodmsk |= _SNBEP_UNC_ATTR_CF2;
+					break;
 				case SNBEP_UNC_ATTR_FF: /* freq band filter */
 					if (ival > 255)
 						return PFM_ERR_ATTR_VAL;
@@ -556,6 +601,51 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 				case SNBEP_UNC_ATTR_NC: /* nc filter */
 					filters[1].ivbep_cbo_filt1.nc = !!ival;
 					break;
+				case SNBEP_UNC_ATTR_LOC: /* local target skx */
+					filters[1].skx_cha_filt1.loc = !!ival;
+					break;
+				case SNBEP_UNC_ATTR_REM: /* remote target skx */
+					filters[1].skx_cha_filt1.rem = !!ival;
+					break;
+				case SNBEP_UNC_ATTR_LMEM: /* local target skx */
+					filters[1].skx_cha_filt1.loc = !!ival;
+					break;
+				case SNBEP_UNC_ATTR_RMEM: /* local memory skx */
+					filters[1].skx_cha_filt1.not_nm = !!ival;
+					break;
+				case SNBEP_UNC_ATTR_DNID: /* destination node id skx */
+					if (ival > 15) {
+						DPRINT("dnid must be [0-15]\n");
+						return PFM_ERR_ATTR_VAL;
+					}
+					filters[0].skx_upi_filt.dnid = ival;
+					filters[0].skx_upi_filt.en_dnidd = 1;
+					break;
+				case SNBEP_UNC_ATTR_RCSNID: /* RCS node id skx */
+					if (ival > 15) {
+						DPRINT("rcsnid must be [0-15]\n");
+						return PFM_ERR_ATTR_VAL;
+					}
+					filters[0].skx_upi_filt.rcsnid = ival;
+					filters[0].skx_upi_filt.en_rcsnid = 1;
+					break;
+				default:
+					DPRINT("event %s invalid attribute %d\n", pe[e->event].name, a->idx);
+					return PFM_ERR_ATTR;
+					
+			}
+		}
+	}
+
+	/* check required groups are in place */
+	if (max_req_grpid != -1) {
+		int x;
+		for (x = 0; x <= max_req_grpid; x++) {
+			if (req_grps[x] == 0xff)
+				continue;
+			if ((ugrpmsk & (1 << x)) == 0) {
+				DPRINT("required grpid %d umask missing\n", x);
+				return PFM_ERR_FEATCOMB;
 			}
 		}
 	}
@@ -605,6 +695,19 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	if (modmsk_r && !(umodmsk & modmsk_r)) {
 		DPRINT("required modifiers missing: 0x%x\n", modmsk_r);
 		return PFM_ERR_ATTR;
+	}
+
+	/*
+	 * fixup filt1.all_opc based on values of the filter
+	 */
+	if (is_cha_filt_event(this, 1, reg)) {
+		if (filters[1].val == 0)
+			/* default value: rem=loc=nm=not_nm=all_opc=1 */
+			filters[1].val =0x3b;
+		else if (filters[1].skx_cha_filt1.opc0 || filters[1].skx_cha_filt1.opc1) {
+			/* enable opcode filtering */
+			filters[1].val &= ~(1ULL << 3);
+		}
 	}
 
 	evt_strcat(e->fstr, "%s", pe[e->event].name);
@@ -669,11 +772,17 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		case SNBEP_UNC_ATTR_TF:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.cbo.unc_tid);
 			break;
+		case SNBEP_UNC_ATTR_TF1:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].skx_cha_filt0.tid);
+			break;
 		case SNBEP_UNC_ATTR_CF:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].cbo_filt.cid);
 			break;
 		case SNBEP_UNC_ATTR_CF1:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].hswep_cbo_filt0.cid);
+			break;
+		case SNBEP_UNC_ATTR_CF2:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].skx_cha_filt0.sid);
 			break;
 		case SNBEP_UNC_ATTR_FF:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, (filters[0].val >> (pcu_filt_band*8)) & 0xff);
@@ -696,6 +805,27 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(e->fstr, ":%s=0x%lx", snbep_unc_mods[idx].name,
 				   addr.ha_addr.hi_addr << 26 | addr.ha_addr.lo_addr);
 			break;
+		case SNBEP_UNC_ATTR_REM:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[1].skx_cha_filt1.rem);
+			break;
+		case SNBEP_UNC_ATTR_LOC:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[1].skx_cha_filt1.loc);
+			break;
+		case SNBEP_UNC_ATTR_RMEM:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[1].skx_cha_filt1.rem);
+			break;
+		case SNBEP_UNC_ATTR_LMEM:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[1].skx_cha_filt1.loc);
+			break;
+		case SNBEP_UNC_ATTR_DNID:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].skx_upi_filt.dnid);
+			break;
+		case SNBEP_UNC_ATTR_RCSNID:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].skx_upi_filt.rcsnid);
+			break;
+		default:
+			DPRINT("unknown attribute %d for event %s\n", idx, pe[e->event].name);
+			return PFM_ERR_ATTR;
 		}
 	}
 	display_reg(this, e, reg);
