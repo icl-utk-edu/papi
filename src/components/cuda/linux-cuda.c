@@ -139,6 +139,8 @@ static papicuda_control_t *global_papicuda_control = NULL;
 #define ALIGN_BUFFER(buffer, align)                                     \
   (((uintptr_t) (buffer) & ((align)-1)) ? ((buffer) + (align) - ((uintptr_t) (buffer) & ((align)-1))) : (buffer))
 
+/* Function prototypes */
+static int papicuda_cleanup_eventset(hwd_control_state_t * ctrl);
 
 /* ******  CHANGE PROTOTYPES TO DECLARE CUDA LIBRARY SYMBOLS AS WEAK  **********
  *  This is done so that a version of PAPI built with the cuda component can   *
@@ -618,7 +620,7 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
 {
     SUBDBG("Entering with nativeCount %d\n", nativeCount);
     (void) ctx;
-    (void) ctrl;
+    // (void) ctrl;
     papicuda_control_t *gctrl = global_papicuda_control;
     papicuda_context_t *gctxt = global_papicuda_context;
     int currDeviceNum;
@@ -762,11 +764,13 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
             CUPTI_CALL((*cuptiEventGroupSetsCreatePtr) (eventCuCtx, sizeBytes, eventctrl->conEvents, &eventctrl->eventGroupPasses), return (PAPI_EMISC));
             if (eventctrl->eventGroupPasses->numSets > 1) {
                 SUBDBG("Error occured: The combined CUPTI events require more than 1 pass... try different events\n");
+                papicuda_cleanup_eventset(ctrl);
                 return(PAPI_ECOMBO);
+            } else  {
+                SUBDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-requied %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, eventctrl->eventGroupPasses->numSets);
             }
-#endif
 
-            SUBDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-requied %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, eventctrl->eventGroupPasses->numSets);
+#endif
         }
         
         if(eventCuCtx != currCuCtx) 
@@ -1048,11 +1052,13 @@ static int papicuda_cleanup_eventset(hwd_control_state_t * ctrl)
         //CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses), return (PAPI_EMISC));
         (*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses);
         gctrl->arrayOfActiveCUContexts[cc]->eventGroupPasses = NULL;
+        papi_free( gctrl->arrayOfActiveCUContexts[cc] );
         /* Pop the pushed context */
         if(currDeviceNum != saveDeviceNum)
             CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     }
     /* Record that there are no active contexts or events */
+    gctrl->countOfActiveCUContexts = 0;
     gctrl->activeEventCount = 0;
     return (PAPI_OK);
 }
