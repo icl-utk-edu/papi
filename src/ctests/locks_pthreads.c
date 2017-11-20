@@ -4,7 +4,7 @@
  */
 
 #define MAX_THREADS 256
-#define BASE_ITER 10000000
+#define APPR_TOTAL_ITER 1000000
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +16,7 @@
 
 volatile long long count = 0;
 volatile long long tmpcount = 0;
+volatile long long thread_iter = 0;
 
 int quiet=0;
 
@@ -36,11 +37,11 @@ Slave( void *arg )
 	long long duration;
 
 	duration = PAPI_get_real_usec(  );
-	lockloop( BASE_ITER, &count );
+	lockloop( thread_iter, &count );
 	duration = PAPI_get_real_usec(  ) - duration;
 
 	if (!quiet) {
-		printf("%f lock/unlocks per us\n",(float)BASE_ITER/(float)duration);
+		printf("%f lock/unlocks per us\n",(float)thread_iter/(float)duration);
 	}
 	pthread_exit( arg );
 }
@@ -85,8 +86,11 @@ main( int argc, char **argv )
 		nthr = hwinfo->ncpu;
 	}
 
+	/* Scale the per thread work to keep the serial runtime about the same. */
+	thread_iter = APPR_TOTAL_ITER/nthr;
+
 	if (!quiet) {
-		printf( "Creating %d threads, %d lock/unlock\n", nthr , BASE_ITER);
+		printf( "Creating %d threads, %lld lock/unlock\n", nthr , thread_iter);
 	}
 
 	for ( i = 0; i < nthr; i++ ) {
@@ -103,11 +107,11 @@ main( int argc, char **argv )
 
 	if (!quiet) {
 		printf( "Expected: %lld Received: %lld\n",
-			( long long ) nthr * BASE_ITER,
+			( long long ) nthr * thread_iter,
 			count );
 	}
 
-	if ( nthr * BASE_ITER != count ) {
+	if ( nthr * thread_iter != count ) {
 		test_fail( __FILE__, __LINE__, "Thread Locks", 1 );
 	}
 
