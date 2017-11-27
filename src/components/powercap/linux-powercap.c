@@ -128,6 +128,9 @@ static int write_powercap_value( int index, long long value )
 {
   snprintf(write_buff, sizeof(write_buff), "%lld", value);
   int sz = pwrite(event_fds[index], write_buff, PAPI_MAX_STR_LEN, 0);
+  if(sz == -1) {
+     perror("Error in pwrite(): ");
+  }
   return 1;
 }
 
@@ -155,7 +158,6 @@ static int _powercap_init_component( int cidx )
   char event_path[128];
 
   DIR *events;
-  struct dirent *check_event;
 
   // get hw info
   const PAPI_hw_info_t *hw_info;
@@ -173,7 +175,6 @@ static int _powercap_init_component( int cidx )
   num_events = 0;
   for(s = 0; s < num_sockets; s++) {
 
-    char events_dir[128];
     // compose string of a pkg directory path
     snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d/", s);
 
@@ -270,13 +271,14 @@ static int _powercap_init_component( int cidx )
 static int _powercap_init_control_state( hwd_control_state_t *ctl )
 {
     _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
+    memset( control, 0, sizeof ( _powercap_control_state_t ) );
     return PAPI_OK;
 }
 
 static int _powercap_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     _powercap_context_t* context = ( _powercap_context_t* ) ctx;
-    _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
+    (void) ctl;
 
     int b;
     for( b = 0; b < num_events; b++ ) {
@@ -288,7 +290,7 @@ static int _powercap_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 static int _powercap_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-  _powercap_context_t* context = ( _powercap_context_t* ) ctx;
+  (void) ctx;
   _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
 
   int c;
@@ -313,7 +315,8 @@ static int
 _powercap_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
                 long long **events, int flags )
 {
-  _powercap_context_t* context = ( _powercap_context_t* ) ctx;
+  (void) ctx;
+  (void) flags;
   _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
 
   int i;
