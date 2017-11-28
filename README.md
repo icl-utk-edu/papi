@@ -43,15 +43,14 @@ a few tips on where to go from here.
 Downloading PAPI
 ----------------
 
-* Clone the PAPI repository the first time with the following command:
+* Clone the PAPI repository the first time with the following command: ::
    > git clone https://bitbucket.org/icl/papi.git
 
 * This creates a complete copy of the papi git repository on your computer 
   in a folder called 'papi'.
 
-* To make sure your copy is up to date with the repository:
+* To make sure your copy is up to date with the repository: ::
    > cd papi
-   
    > git pull  https://bitbucket.org/icl/papi.git
 
 
