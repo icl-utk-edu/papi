@@ -74,22 +74,23 @@ static void
 print_help( char **argv )
 {
 	printf( "This is the PAPI native avail program.\n" );
-	printf( "It provides availability and detail information for PAPI native events.\n" );
+	printf( "It provides availability and details about PAPI Native Events.\n" );
 	printf( "Usage: %s [options]\n", argv[0] );
-	printf( "\nOptions:\n" );
-	printf( "   --help, -h   print this help message\n" );
-	printf( "   --check, -c  attempts to add each event\n");
-	printf( "   -e EVENTNAME display detailed information about named native event\n" );
-	printf( "   -i EVENTSTR  include only event names that contain EVENTSTR\n" );
-	printf( "   -x EVENTSTR  exclude any event names that contain EVENTSTR\n" );
-	printf( "   --noqual     suppress display of event qualifiers (mask and flag) information\n" );
-	printf( "\nProcessor-specific options\n");
-	printf( "  --darr        display events supporting Data Address Range Restriction\n" );
-	printf( "  --dear        display Data Event Address Register events only\n" );
-	printf( "  --iarr        display events supporting Instruction Address Range Restriction\n" );
-	printf( "  --iear        display Instruction Event Address Register events only\n" );
-	printf( "  --opcm        display events supporting OpCode Matching\n" );
-	printf( "  --nogroups    suppress display of Event grouping information\n" );
+        printf( "Options:\n\n" );
+	printf( "\nGeneral command options:\n" );
+	printf( "\t-h, --help       print this help message\n" );
+	printf( "\t-c, --check      attempts to add each event\n");
+	printf( "\t-e EVENTNAME     display detailed information about named native event\n" );
+	printf( "\t-i EVENTSTR      include only event names that contain EVENTSTR\n" );
+	printf( "\t-x EVENTSTR      exclude any event names that contain EVENTSTR\n" );
+	printf( "\t--noqual         suppress display of event qualifiers (mask and flag) information\n" );
+	printf( "\nProcessor-specific options:\n");
+	printf( "\t--darr           display events supporting Data Address Range Restriction\n" );
+	printf( "\t--dear           display Data Event Address Register events only\n" );
+	printf( "\t--iarr           display events supporting Instruction Address Range Restriction\n" );
+	printf( "\t--iear           display Instruction Event Address Register events only\n" );
+	printf( "\t--opcm           display events supporting OpCode Matching\n" );
+	printf( "\t--nogroups       suppress display of Event grouping information\n" );
 	printf( "\n" );
 }
 
@@ -148,7 +149,7 @@ parse_args( int argc, char **argv, command_flags_t * f )
 				printf( "Invalid argument for -x\n");
 				exit(1);
 			}
-		} else if ( !strcmp( argv[i], "-h" ) || !strcmp( argv[i], "--help" ) ) {
+		} else if ( strstr( argv[i], "-h" ) ) {
 			f->help = 1;
 		} else if ( !strcmp( argv[i], "-c" ) || !strcmp( argv[i], "--check" ) ) {
 			f->check = 1;

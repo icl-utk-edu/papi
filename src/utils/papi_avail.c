@@ -200,6 +200,9 @@ is_derived( PAPI_event_info_t * info )
 static void
 print_help( char **argv )
 {
+        printf( "This is the PAPI avail program.\n" );
+        printf( "It provides availability and details about PAPI Presets and User-defined Events.\n" );
+	printf( "PAPI Preset Event filters can be combined in a logical OR.\n" );
 	printf( "Usage: %s [options]\n", argv[0] );
 	printf( "Options:\n\n" );
 	printf( "General command options:\n" );
@@ -222,8 +225,6 @@ print_help( char **argv )
 	printf( "\t--msc            Display miscellaneous PAPI preset events\n" );
 	printf( "\t--tlb            Display Translation Lookaside Buffer PAPI preset events\n" );
 	printf( "\n" );
-	printf( "This program provides information about PAPI preset and user defined events.\n" );
-	printf( "PAPI preset event filters can be combined in a logical OR.\n" );
 }
 
 static int
