@@ -51,6 +51,7 @@ Downloading PAPI
 
 * To make sure your copy is up to date with the repository:
    > cd papi
+   
    > git pull  https://bitbucket.org/icl/papi.git
 
 
