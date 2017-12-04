@@ -32,7 +32,7 @@ int ffsll( long long lli );
 #endif
 */
 
-extern int ffsll(long long lli) __THROW __attribute__ ((__const__));
+extern int ffsll(long long lli);
 
 
 /****************/
