@@ -26,14 +26,9 @@ vendors did in the kernel extensions or performance libraries. */
 #include "extras.h"
 #include "threads.h"
 
-/*
 #if (!defined(HAVE_FFSLL) || defined(__bgp__))
 int ffsll( long long lli );
 #endif
-*/
-
-extern int ffsll(long long lli);
-
 
 /****************/
 /* BEGIN LOCALS */
