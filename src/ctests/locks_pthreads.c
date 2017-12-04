@@ -1,7 +1,7 @@
-/* This file checks to make sure the locking mechanisms work correctly on the platform.
- * Platforms where the locking mechanisms are not implemented or are incorrectly implemented
- * will fail.  -KSL
- */
+/* This file checks to make sure the locking mechanisms work correctly	*/
+/* on the platform.							*/
+/* Platforms where the locking mechanisms are not implemented or are	*/
+/* incorrectly implemented will fail.  -KSL				*/
 
 #define MAX_THREADS 256
 #define APPR_TOTAL_ITER 1000000
@@ -18,7 +18,7 @@ volatile long long count = 0;
 volatile long long tmpcount = 0;
 volatile long long thread_iter = 0;
 
-int quiet=0;
+static int quiet=0;
 
 void
 lockloop( int iters, volatile long long *mycount )
@@ -41,7 +41,8 @@ Slave( void *arg )
 	duration = PAPI_get_real_usec(  ) - duration;
 
 	if (!quiet) {
-		printf("%f lock/unlocks per us\n",(float)thread_iter/(float)duration);
+		printf("%f lock/unlocks per us\n",
+			(float)thread_iter/(float)duration);
 	}
 	pthread_exit( arg );
 }
@@ -68,14 +69,15 @@ main( int argc, char **argv )
 		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 	}
 
-	retval = PAPI_thread_init(
-			( unsigned long ( * )( void ) ) ( pthread_self ) );
+	retval = PAPI_thread_init((unsigned long (*)(void)) ( pthread_self ) );
 	if ( retval != PAPI_OK ) {
 		if ( retval == PAPI_ECMP ) {
-			test_skip( __FILE__, __LINE__, "PAPI_thread_init", retval );
+			test_skip( __FILE__, __LINE__,
+				"PAPI_thread_init", retval );
 		}
 		else {
-			test_fail( __FILE__, __LINE__, "PAPI_thread_init", retval );
+			test_fail( __FILE__, __LINE__,
+				"PAPI_thread_init", retval );
 		}
 	}
 
@@ -90,14 +92,16 @@ main( int argc, char **argv )
 	thread_iter = APPR_TOTAL_ITER/nthr;
 
 	if (!quiet) {
-		printf( "Creating %d threads, %lld lock/unlock\n", nthr , thread_iter);
+		printf( "Creating %d threads, %lld lock/unlock\n",
+			nthr , thread_iter);
 	}
 
 	for ( i = 0; i < nthr; i++ ) {
 		rc = pthread_create( &slaves[i], NULL, Slave, NULL );
 		if ( rc ) {
 			retval = PAPI_ESYS;
-			test_fail( __FILE__, __LINE__, "pthread_create", retval );
+			test_fail( __FILE__, __LINE__,
+				"pthread_create", retval );
 		}
 	}
 
