@@ -152,7 +152,7 @@ profile_pthreads: profile_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o profile_pthreads -lpthread
 
 locks_pthreads: locks_pthreads.c $(TESTLIB) $(PAPILIB)
-	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) locks_pthreads.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o locks_pthreads -lpthread
+	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) locks_pthreads.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o locks_pthreads -lpthread -lm
 
 krentel_pthreads: krentel_pthreads.c $(TESTLIB) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) krentel_pthreads.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o krentel_pthreads -lpthread

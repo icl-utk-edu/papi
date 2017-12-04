@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <math.h>
 
 #include "papi.h"
 #include "papi_test.h"
@@ -89,7 +90,7 @@ main( int argc, char **argv )
 	}
 
 	/* Scale the per thread work to keep the serial runtime about the same. */
-	thread_iter = APPR_TOTAL_ITER/nthr;
+	thread_iter = APPR_TOTAL_ITER/sqrt(nthr);
 
 	if (!quiet) {
 		printf( "Creating %d threads, %lld lock/unlock\n",
