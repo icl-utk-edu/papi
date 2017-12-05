@@ -4663,6 +4663,11 @@ fi
 
 fi
 
+               if test "$ffsll" = "yes" ; then
+
+$as_echo "#define HAVE_FFSLL 1" >>confdefs.h
+
+               fi
 if test "$didcheck" != "1"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ffsll" >&5
 $as_echo_n "checking for ffsll... " >&6; }

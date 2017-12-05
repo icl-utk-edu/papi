@@ -400,6 +400,9 @@ AC_ARG_WITH(pthread-mutexes,
 		       fi
                didcheck=1
                AC_CHECK_FUNC(ffsll,[ffsll=yes],[ffsll=no]) ])
+               if test "$ffsll" = "yes" ; then
+                 AC_DEFINE(HAVE_FFSLL, 1, This platform has the ffsll() function)
+               fi
 if test "$didcheck" != "1"; then
   AC_MSG_CHECKING(for ffsll)
   if test "$ffsll" = "yes" ; then
