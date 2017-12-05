@@ -28,6 +28,8 @@ vendors did in the kernel extensions or performance libraries. */
 
 #if (!defined(HAVE_FFSLL) || defined(__bgp__))
 int ffsll( long long lli );
+#else
+#include <string.h>
 #endif
 
 /****************/
