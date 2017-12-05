@@ -1,4 +1,5 @@
-Release Procedure for PAPI  28 Oct, 2013
+Release Procedure for PAPI
+==========================
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -48,11 +49,11 @@ __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.i
 		cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
 		chmod -R 775 /silk/homes/icl/projectsdev/papi/docs
 
-__ 3. If configure.in is changed, run autoconf (2.59) and commit the resulting
+__ 3. If configure.in is changed, run autoconf (2.69) and commit the resulting
 	configure file.
-	NOTE: Using an autoconf version >2.59 will work, but will produce an
+	NOTE: Using an autoconf version >2.69 will work, but will produce an
 	inordinate number of extraneous differences between versions.
-	One possible machine with 2.59 is zoot.
+	One possible machine with 2.69 is saturn.
 
 __ 4. Create a ChangeLog for the current release.
 	We use a python script gitlog2changelog.py to generate is for us.
@@ -115,7 +116,7 @@ __ 20. Post the announcement on the PAPI User Forum.
 
 __ 21. Bump the version number in the repository AFTER the release (look at step 2)
        papi.spec, src/papi.h, src/configure.in, src/Makefile.in, doc/Doxyfile-common (PROJECT_NUMBER) 
-       Regenerate the configure using autoconf 2.59 (probably on gonzo). Then commit.
+       Regenerate the configure using autoconf 2.69 (e.g. on saturn). Then commit.
        ( git commit -m "Updated version to X.Y.Z after the release"  doc/Doxyfile-common papi.spec release_procedure.txt src/Makefile.in src/configure src/configure.in  src/papi.h )
 
 ================================================================================
