@@ -1550,7 +1550,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "CO mach 0 Busy. Used by PMU to sample ave CO lifetime (mach0 used as sample point)",
 },
 [ POWER9_PME_PM_CO0_BUSY_ALT ] = {
-	.pme_name = "PM_CO0_BUSY",
+	.pme_name = "PM_CO0_BUSY_ALT",
 	.pme_code = 0x000004608C,
 	.pme_short_desc = "CO mach 0 Busy.",
 	.pme_long_desc = "CO mach 0 Busy. Used by PMU to sample ave CO lifetime (mach0 used as sample point)",
@@ -2277,7 +2277,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "Data SLB Miss - Total of all segment sizes",
 },
 [ POWER9_PME_PM_DSLB_MISS_ALT ] = {
-	.pme_name = "PM_DSLB_MISS",
+	.pme_name = "PM_DSLB_MISS_ALT",
 	.pme_code = 0x0000010016,
 	.pme_short_desc = "gate_and(sd_pc_c0_comp_valid AND sd_pc_c0_comp_thread(0:1)=tid,sd_pc_c0_comp_ppc_count(0:3)) + gate_and(sd_pc_c1_comp_valid AND sd_pc_c1_comp_thread(0:1)=tid,sd_pc_c1_comp_ppc_count(0:3))",
 	.pme_long_desc = "gate_and(sd_pc_c0_comp_valid AND sd_pc_c0_comp_thread(0:1)=tid,sd_pc_c0_comp_ppc_count(0:3)) + gate_and(sd_pc_c1_comp_valid AND sd_pc_c1_comp_thread(0:1)=tid,sd_pc_c1_comp_ppc_count(0:3))",
@@ -3155,7 +3155,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "Instruction SLB Miss - Total of all segment sizes",
 },
 [ POWER9_PME_PM_ISLB_MISS_ALT ] = {
-	.pme_name = "PM_ISLB_MISS",
+	.pme_name = "PM_ISLB_MISS_ALT",
 	.pme_code = 0x0000040006,
 	.pme_short_desc = "Number of ISLB misses for this thread",
 	.pme_long_desc = "Number of ISLB misses for this thread",
@@ -3323,7 +3323,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "All successful I-side dispatches that were an L2 miss for this thread (excludes i_l2mru_tch reqs)",
 },
 [ POWER9_PME_PM_L2_INST_MISS_ALT ] = {
-	.pme_name = "PM_L2_INST_MISS",
+	.pme_name = "PM_L2_INST_MISS_ALT",
 	.pme_code = 0x000004609E,
 	.pme_short_desc = "All successful I-side dispatches that were an L2 miss for this thread (excludes i_l2mru_tch reqs)",
 	.pme_long_desc = "All successful I-side dispatches that were an L2 miss for this thread (excludes i_l2mru_tch reqs)",
@@ -3335,7 +3335,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "All successful I-side dispatches for this thread (excludes i_l2mru_tch reqs)",
 },
 [ POWER9_PME_PM_L2_INST_ALT ] = {
-	.pme_name = "PM_L2_INST",
+	.pme_name = "PM_L2_INST_ALT",
 	.pme_code = 0x000003609E,
 	.pme_short_desc = "All successful I-side dispatches for this thread (excludes i_l2mru_tch reqs)",
 	.pme_long_desc = "All successful I-side dispatches for this thread (excludes i_l2mru_tch reqs)",
@@ -3347,7 +3347,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "All successful D-side load dispatches for this thread (L2 miss + L2 hits)",
 },
 [ POWER9_PME_PM_L2_LD_DISP_ALT ] = {
-	.pme_name = "PM_L2_LD_DISP",
+	.pme_name = "PM_L2_LD_DISP_ALT",
 	.pme_code = 0x0000036082,
 	.pme_short_desc = "All successful I-or-D side load dispatches for this thread (excludes i_l2mru_tch_reqs)",
 	.pme_long_desc = "All successful I-or-D side load dispatches for this thread (excludes i_l2mru_tch_reqs)",
@@ -3359,7 +3359,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "All successful D-side load dispatches that were L2 hits for this thread",
 },
 [ POWER9_PME_PM_L2_LD_HIT_ALT ] = {
-	.pme_name = "PM_L2_LD_HIT",
+	.pme_name = "PM_L2_LD_HIT_ALT",
 	.pme_code = 0x0000036882,
 	.pme_short_desc = "All successful I-or-D side load dispatches for this thread that were L2 hits (excludes i_l2mru_tch_reqs)",
 	.pme_long_desc = "All successful I-or-D side load dispatches for this thread that were L2 hits (excludes i_l2mru_tch_reqs)",
@@ -3449,7 +3449,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "RC retries on PB for any load from core (excludes DCBFs)",
 },
 [ POWER9_PME_PM_L2_RTY_LD_ALT ] = {
-	.pme_name = "PM_L2_RTY_LD",
+	.pme_name = "PM_L2_RTY_LD_ALT",
 	.pme_code = 0x000003689E,
 	.pme_short_desc = "RC retries on PB for any load from core (excludes DCBFs)",
 	.pme_long_desc = "RC retries on PB for any load from core (excludes DCBFs)",
@@ -3461,7 +3461,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "RC retries on PB for any store from core (excludes DCBFs)",
 },
 [ POWER9_PME_PM_L2_RTY_ST_ALT ] = {
-	.pme_name = "PM_L2_RTY_ST",
+	.pme_name = "PM_L2_RTY_ST_ALT",
 	.pme_code = 0x000004689E,
 	.pme_short_desc = "RC retries on PB for any store from core (excludes DCBFs)",
 	.pme_long_desc = "RC retries on PB for any store from core (excludes DCBFs)",
@@ -3479,7 +3479,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "SNP dispatched for a write and was M (true M); for DMA cacheinj this will pulse if rty/push is required (won't pulse if cacheinj is accepted)",
 },
 [ POWER9_PME_PM_L2_SN_M_WR_DONE_ALT ] = {
-	.pme_name = "PM_L2_SN_M_WR_DONE",
+	.pme_name = "PM_L2_SN_M_WR_DONE_ALT",
 	.pme_code = 0x0000046886,
 	.pme_short_desc = "SNP dispatched for a write and was M (true M); for DMA cacheinj this will pulse if rty/push is required (won't pulse if cacheinj is accepted)",
 	.pme_long_desc = "SNP dispatched for a write and was M (true M); for DMA cacheinj this will pulse if rty/push is required (won't pulse if cacheinj is accepted)",
@@ -3497,7 +3497,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "All successful D-side store dispatches for this thread",
 },
 [ POWER9_PME_PM_L2_ST_DISP_ALT ] = {
-	.pme_name = "PM_L2_ST_DISP",
+	.pme_name = "PM_L2_ST_DISP_ALT",
 	.pme_code = 0x000001689E,
 	.pme_short_desc = "All successful D-side store dispatches for this thread (L2 miss + L2 hits)",
 	.pme_long_desc = "All successful D-side store dispatches for this thread (L2 miss + L2 hits)",
@@ -3509,7 +3509,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "All successful D-side store dispatches for this thread that were L2 hits",
 },
 [ POWER9_PME_PM_L2_ST_HIT_ALT ] = {
-	.pme_name = "PM_L2_ST_HIT",
+	.pme_name = "PM_L2_ST_HIT_ALT",
 	.pme_code = 0x000002689E,
 	.pme_short_desc = "All successful D-side store dispatches that were L2 hits for this thread",
 	.pme_long_desc = "All successful D-side store dispatches that were L2 hits for this thread",
@@ -3587,7 +3587,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "Lifetime, sample of CO machine 0 valid",
 },
 [ POWER9_PME_PM_L3_CO0_BUSY_ALT ] = {
-	.pme_name = "PM_L3_CO0_BUSY",
+	.pme_name = "PM_L3_CO0_BUSY_ALT",
 	.pme_code = 0x00000468AC,
 	.pme_short_desc = "Lifetime, sample of CO machine 0 valid",
 	.pme_long_desc = "Lifetime, sample of CO machine 0 valid",
@@ -3617,7 +3617,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "L3 castouts in Mepf state for this thread",
 },
 [ POWER9_PME_PM_L3_CO_MEPF_ALT ] = {
-	.pme_name = "PM_L3_CO_MEPF",
+	.pme_name = "PM_L3_CO_MEPF_ALT",
 	.pme_code = 0x00000168A0,
 	.pme_short_desc = "L3 CO of line in Mep state (includes casthrough to memory).",
 	.pme_long_desc = "L3 CO of line in Mep state (includes casthrough to memory). The Mepf state indicates that a line was brought in to satisfy an L3 prefetch request",
@@ -3731,7 +3731,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "L3 CO received retry port 0 (memory only), every retry counted",
 },
 [ POWER9_PME_PM_L3_P0_CO_RTY_ALT ] = {
-	.pme_name = "PM_L3_P0_CO_RTY",
+	.pme_name = "PM_L3_P0_CO_RTY_ALT",
 	.pme_code = 0x00000460AE,
 	.pme_short_desc = "L3 CO received retry port 2 (memory only), every retry counted",
 	.pme_long_desc = "L3 CO received retry port 2 (memory only), every retry counted",
@@ -3773,7 +3773,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "L3 PF received retry port 0, every retry counted",
 },
 [ POWER9_PME_PM_L3_P0_PF_RTY_ALT ] = {
-	.pme_name = "PM_L3_P0_PF_RTY",
+	.pme_name = "PM_L3_P0_PF_RTY_ALT",
 	.pme_code = 0x00000260AE,
 	.pme_short_desc = "L3 PF received retry port 2, every retry counted",
 	.pme_long_desc = "L3 PF received retry port 2, every retry counted",
@@ -3803,7 +3803,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "L3 CO received retry port 1 (memory only), every retry counted",
 },
 [ POWER9_PME_PM_L3_P1_CO_RTY_ALT ] = {
-	.pme_name = "PM_L3_P1_CO_RTY",
+	.pme_name = "PM_L3_P1_CO_RTY_ALT",
 	.pme_code = 0x00000468AE,
 	.pme_short_desc = "L3 CO received retry port 3 (memory only), every retry counted",
 	.pme_long_desc = "L3 CO received retry port 3 (memory only), every retry counted",
@@ -3845,7 +3845,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "L3 PF received retry port 1, every retry counted",
 },
 [ POWER9_PME_PM_L3_P1_PF_RTY_ALT ] = {
-	.pme_name = "PM_L3_P1_PF_RTY",
+	.pme_name = "PM_L3_P1_PF_RTY_ALT",
 	.pme_code = 0x00000268AE,
 	.pme_short_desc = "L3 PF received retry port 3, every retry counted",
 	.pme_long_desc = "L3 PF received retry port 3, every retry counted",
@@ -3875,7 +3875,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "Lifetime, sample of PF machine 0 valid",
 },
 [ POWER9_PME_PM_L3_PF0_BUSY_ALT ] = {
-	.pme_name = "PM_L3_PF0_BUSY",
+	.pme_name = "PM_L3_PF0_BUSY_ALT",
 	.pme_code = 0x00000460B4,
 	.pme_short_desc = "Lifetime, sample of PF machine 0 valid",
 	.pme_long_desc = "Lifetime, sample of PF machine 0 valid",
@@ -3929,7 +3929,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "Lifetime, sample of RD machine 0 valid",
 },
 [ POWER9_PME_PM_L3_RD0_BUSY_ALT ] = {
-	.pme_name = "PM_L3_RD0_BUSY",
+	.pme_name = "PM_L3_RD0_BUSY_ALT",
 	.pme_code = 0x00000468B4,
 	.pme_short_desc = "Lifetime, sample of RD machine 0 valid",
 	.pme_long_desc = "Lifetime, sample of RD machine 0 valid",
@@ -3947,7 +3947,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "Lifetime, sample of snooper machine 0 valid",
 },
 [ POWER9_PME_PM_L3_SN0_BUSY_ALT ] = {
-	.pme_name = "PM_L3_SN0_BUSY",
+	.pme_name = "PM_L3_SN0_BUSY_ALT",
 	.pme_code = 0x00000460AC,
 	.pme_short_desc = "Lifetime, sample of snooper machine 0 valid",
 	.pme_long_desc = "Lifetime, sample of snooper machine 0 valid",
@@ -3989,7 +3989,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "Rotating sample of 8 WI valid",
 },
 [ POWER9_PME_PM_L3_WI0_BUSY_ALT ] = {
-	.pme_name = "PM_L3_WI0_BUSY",
+	.pme_name = "PM_L3_WI0_BUSY_ALT",
 	.pme_code = 0x00000260B6,
 	.pme_short_desc = "Rotating sample of 8 WI valid (duplicate)",
 	.pme_long_desc = "Rotating sample of 8 WI valid (duplicate)",
@@ -5928,7 +5928,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "RC mach 0 Busy. Used by PMU to sample ave RC lifetime (mach0 used as sample point)",
 },
 [ POWER9_PME_PM_RC0_BUSY_ALT ] = {
-	.pme_name = "PM_RC0_BUSY",
+	.pme_name = "PM_RC0_BUSY_ALT",
 	.pme_code = 0x000002608C,
 	.pme_short_desc = "RC mach 0 Busy.",
 	.pme_long_desc = "RC mach 0 Busy. Used by PMU to sample ave RC lifetime (mach0 used as sample point)",
@@ -6042,7 +6042,7 @@ static const pme_power_entry_t power9_pe[] = {
 	.pme_long_desc = "SN mach 0 Busy. Used by PMU to sample ave SN lifetime (mach0 used as sample point)",
 },
 [ POWER9_PME_PM_SN0_BUSY_ALT ] = {
-	.pme_name = "PM_SN0_BUSY",
+	.pme_name = "PM_SN0_BUSY_ALT",
 	.pme_code = 0x0000026090,
 	.pme_short_desc = "SN mach 0 Busy.",
 	.pme_long_desc = "SN mach 0 Busy. Used by PMU to sample ave SN lifetime (mach0 used as sample point)",
