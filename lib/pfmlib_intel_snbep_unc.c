@@ -226,7 +226,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 
 			idx = e->pattrs[j].idx;
 
-			if (ent->umasks[idx].grpid != i)
+			if (get_grpid(ent->umasks[idx].grpid) != i)
 				continue;
 
 			if (max_grpid != INTEL_X86_MAX_GRPID && i > max_grpid) {
@@ -266,7 +266,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 
 				if (intel_x86_uflag(this, e->event, idx, INTEL_X86_EXCL_GRP_GT)) {
 					if (max_grpid != INTEL_X86_MAX_GRPID) {
-						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[idx].grpid);
+						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, get_grpid(ent->umasks[idx].grpid));
 						return PFM_ERR_UMASK;
 					}
 					max_grpid = ent->umasks[idx].grpid;
@@ -295,6 +295,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	unsigned int grpmsk, ugrpmsk = 0;
 	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
 	unsigned short last_grpid =  INTEL_X86_MAX_GRPID;
+	unsigned short req_grpid;
 	int umodmsk = 0, modmsk_r = 0;
 	int pcu_filt_band = -1;
 	pfm_snbep_unc_reg_t reg;
@@ -304,8 +305,10 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	uint64_t val, umask1, umask2;
 	int k, ret;
 	int has_cbo_tid = 0;
+	int max_req_grpid = -1;
 	unsigned short grpid;
 	int grpcounts[INTEL_X86_NUM_GRP];
+	int req_grps[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
 
@@ -338,7 +341,8 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 		if (a->type == PFM_ATTR_UMASK) {
 			uint64_t um;
 
-			grpid = pe[e->event].umasks[a->idx].grpid;
+			grpid     = get_grpid(pe[e->event].umasks[a->idx].grpid);
+			req_grpid = get_req_grpid(pe[e->event].umasks[a->idx].grpid);
 
 			/*
 			 * certain event groups are meant to be
@@ -379,6 +383,19 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			 * umask group
 			 */
 			++grpcounts[grpid];
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_GRP_REQ)) {
+				DPRINT("event requires grpid %d\n", req_grpid);
+				/* initialize req_grpcounts array only when needed */
+				if (max_req_grpid == -1) {
+					int x;
+					for (x = 0; x < INTEL_X86_NUM_GRP; x++)
+						req_grps[x] = 0xff;
+				}
+				if (req_grpid > max_req_grpid)
+					max_req_grpid = req_grpid;
+				DPRINT("max_req_grpid=%d\n", max_req_grpid);
+				req_grps[req_grpid] = 1;
+			}
 
 			/* mark that we have a umask with NCOMBO in this group */
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_NCOMBO))
@@ -526,6 +543,20 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			}
 		}
 	}
+
+	/* check required groups are in place */
+	if (max_req_grpid != -1) {
+		int x;
+		for (x = 0; x <= max_req_grpid; x++) {
+			if (req_grps[x] == 0xff)
+				continue;
+			if ((ugrpmsk & (1 << x)) == 0) {
+				DPRINT("required grpid %d umask missing\n", x);
+				return PFM_ERR_FEATCOMB;
+			}
+		}
+	}
+
 	/*
 	 * check that there is at least of unit mask in each unit mask group
 	 */

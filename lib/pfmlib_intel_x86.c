@@ -232,7 +232,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 
 			idx = e->pattrs[j].idx;
 
-			if (ent->umasks[idx].grpid != i)
+			if (get_grpid(ent->umasks[idx].grpid) != i)
 				continue;
 
 			if (max_grpid != INTEL_X86_MAX_GRPID && i > max_grpid) {
@@ -275,7 +275,7 @@ pfm_intel_x86_add_defaults(void *this, pfmlib_event_desc_t *e,
 
 				if (intel_x86_uflag(this, e->event, idx, INTEL_X86_EXCL_GRP_GT)) {
 					if (max_grpid != INTEL_X86_MAX_GRPID) {
-						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, ent->umasks[idx].grpid);
+						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, get_grpid(ent->umasks[idx].grpid));
 						return PFM_ERR_UMASK;
 					}
 					max_grpid = ent->umasks[idx].grpid;
@@ -377,13 +377,16 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int plmmsk = 0;
 	int umodmsk = 0, modmsk_r = 0;
 	int k, ret, id;
+	int max_req_grpid = -1;
+	unsigned short grpid;
 	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
 	unsigned short last_grpid =  INTEL_X86_MAX_GRPID;
-	unsigned short grpid;
+	unsigned short req_grpid;
 	int ldlat = 0, ldlat_um = 0;
 	int fe_thr= 0, fe_thr_um = 0;
 	int excl_grp_but_0 = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
+	int req_grps[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
 
 	memset(grpcounts, 0, sizeof(grpcounts));
@@ -414,7 +417,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			continue;
 
 		if (a->type == PFM_ATTR_UMASK) {
-			grpid = pe[e->event].umasks[a->idx].grpid;
+			grpid     = get_grpid(pe[e->event].umasks[a->idx].grpid);
+			req_grpid = get_req_grpid(pe[e->event].umasks[a->idx].grpid);
 
 			/*
 			 * certain event groups are meant to be
@@ -446,6 +450,19 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			 * umask group
 			 */
 			++grpcounts[grpid];
+			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_GRP_REQ)) {
+				DPRINT("event requires grpid %d\n", req_grpid);
+				/* initialize req_grpcounts array only when needed */
+				if (max_req_grpid == -1) {
+					int x;
+					for (x = 0; x < INTEL_X86_NUM_GRP; x++)
+						req_grps[x] = 0xff;
+				}
+				if (req_grpid > max_req_grpid)
+					max_req_grpid = req_grpid;
+				DPRINT("max_req_grpid=%d\n", max_req_grpid);
+				req_grps[req_grpid] = 1;
+			}
 
 			/* mark that we have a umask with NCOMBO in this group */
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_NCOMBO))
@@ -466,7 +483,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 				return PFM_ERR_FEATCOMB;
 			}
 
-			last_grpid = grpid;
+			last_grpid= grpid;
 			ucode     = pe[e->event].umasks[a->idx].ucode;
 			modhw    |= pe[e->event].umasks[a->idx].modhw;
 			umask2   |= ucode >> 8;
@@ -554,6 +571,19 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			}
 		}
 	}
+	/* check required groups are in place */
+	if (max_req_grpid != -1) {
+		int x;
+		for (x = 0; x <= max_req_grpid; x++) {
+			if (req_grps[x] == 0xff)
+				continue;
+			if ((ugrpmsk & (1 << x)) == 0) {
+				DPRINT("required grpid %d umask missing\n", x);
+				return PFM_ERR_FEATCOMB;
+			}
+		}
+	}
+
 	/*
 	 * we need to wait until all the attributes have been parsed to check
 	 * for conflicts between hardcoded attributes and user-provided attributes.
@@ -907,11 +937,15 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 				error++;
 			}
 
-			if (pe[i].ngrp && pe[i].umasks[j].grpid >= pe[i].ngrp) {
-				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpid, pe[i].ngrp);
+			if (pe[i].ngrp && get_grpid(pe[i].umasks[j].grpid) >= pe[i].ngrp) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, get_grpid(pe[i].umasks[j].grpid), pe[i].ngrp);
 				error++;
 			}
-			if (pe[i].umasks[j].umodel >= PFM_PMU_MAX) {
+			if (pe[i].ngrp && get_req_grpid(pe[i].umasks[j].grpid) >= pe[i].ngrp) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid req_grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, get_req_grpid(pe[i].umasks[j].grpid), pe[i].ngrp);
+				error++;
+			}
+				if (pe[i].umasks[j].umodel >= PFM_PMU_MAX) {
 				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: model too big (max=%d)\n", pmu->name, i, pe[i].name,  j, pe[i].umasks[j].uname, PFM_PMU_MAX);
 				error++;
 			}

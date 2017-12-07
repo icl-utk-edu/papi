@@ -91,6 +91,7 @@ typedef struct {
 #define INTEL_X86_FRONTEND		0x1000	/* Skylake Precise frontend */
 #define INTEL_X86_FETHR			0x2000	/* precise frontend umask requires threshold modifier (fe_thres) */
 #define INTEL_X86_EXCL_GRP_BUT_0	0x4000	/* exclude all groups except self and grpid = 0 */
+#define INTEL_X86_GRP_REQ		0x8000	/* grpid field split as (grpid & 0xff) | (required_grpid & 0xff) << 8 */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -337,6 +338,16 @@ intel_x86_attr2umask(void *this, int pidx, int attr_idx)
 		attr_idx--;
 	}
 	return i;
+}
+
+static inline unsigned short get_grpid(unsigned short  grpid)
+{
+	return grpid & 0xff;
+}
+
+static inline unsigned short get_req_grpid(unsigned short  grpid)
+{
+	return (grpid >> 8) & 0xff;
 }
 
 extern int pfm_intel_x86_detect(void);
