@@ -1,18 +1,20 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Copyright 2008 Marcus D. Hanwell <marcus@cryos.org>
+# Minor changes for NUT by Charles Lepple
 # Distributed under the terms of the GNU General Public License v2 or later
 
 import string, re, os
-import sys 
+from textwrap import TextWrapper
+import sys
+
+rev_range = ''
+
+if len(sys.argv) > 1:
+    base = sys.argv[1]
+    rev_range = '%s..HEAD' % base
 
 # Execute git log with the desired command line options.
-command="git log --summary --stat --no-merges --date=short "
-if len(sys.argv) < 2:
-	print "Please specify a tag."
-	sys.exit(1)
-
-command += sys.argv[1] + ".." 
-fin = os.popen(command, 'r')
+fin = os.popen('git log --summary --stat --no-merges --date=short %s' % rev_range, 'r')
 # Create a ChangeLog file in the current directory.
 fout = open('ChangeLog', 'w')
 
@@ -25,12 +27,13 @@ message = ""
 messageNL = False
 files = ""
 prevAuthorLine = ""
-commitID = ""
+
+wrapper = TextWrapper(initial_indent="\t", subsequent_indent="\t  ")
 
 # The main part of the loop
 for line in fin:
     # The commit line marks the start of a new commit object.
-    if string.find(line, 'commit') >= 0:
+    if line.startswith('commit'):
         # Start all over again...
         authorFound = False
         dateFound = False
@@ -39,27 +42,27 @@ for line in fin:
         message = ""
         filesFound = False
         files = ""
-        foo = line.split( None )
-        commitID = foo[1][:8]
         continue
     # Match the author line and extract the part we want
-    elif re.match('Author:', line) >=0:
+    elif 'Author:' in line:
         authorList = re.split(': ', line, 1)
         author = authorList[1]
         author = author[0:len(author)-1]
-        author = ""
         authorFound = True
     # Match the date line
-    elif re.match('Date:', line) >= 0:
+    elif 'Date:' in line:
         dateList = re.split(':   ', line, 1)
         date = dateList[1]
         date = date[0:len(date)-1]
         dateFound = True
+    # The Fossil-IDs are ignored:
+    elif line.startswith('    Fossil-ID:') or line.startswith('    [[SVN:'):
+        continue
     # The svn-id lines are ignored
-    elif re.match('    git-svn-id:', line) >= 0:
+    elif '    git-svn-id:' in line:
         continue
     # The sign off line is ignored too
-    elif re.search('Signed-off-by', line) >= 0:
+    elif 'Signed-off-by' in line:
         continue
     # Extract the actual commit message for this commit
     elif authorFound & dateFound & messageFound == False:
@@ -77,7 +80,7 @@ for line in fin:
             else:
                 message = message + " " + line.strip()
     # If this line is hit all of the files have been stored for this commit
-    elif any(x in line for x in ['files changed', 'file changed']):
+    elif re.search('files? changed', line) >= 0:
         filesFound = True
         continue
     # Collect the files for this commit. FIXME: Still need to add +/- to files
@@ -94,37 +97,18 @@ for line in fin:
         # author on this day
         authorLine = date + "  " + author
         if len(prevAuthorLine) == 0:
-            fout.write(authorLine + "\n")
+            fout.write(authorLine + "\n\n")
         elif authorLine == prevAuthorLine:
             pass
         else:
-            fout.write("\n" + authorLine + "\n")
+            fout.write("\n" + authorLine + "\n\n")
 
-        pruned_files = files.split(",")
-        files = ""
-        for i in range( len(pruned_files) )[:3]:
-            files+= pruned_files[i]
-        if len(pruned_files) > 3:
-            files+="..."
-# Assemble the actual commit message line(s) and limit the line length
-# to 80 characters.
-        commitLine = "* " + commitID + " " + files + ": " + message
-        i = 0
-        commit = ""
-        while i < len(commitLine):
-            if len(commitLine) < i + 78:
-                commit = commit + "\n  " + commitLine[i:len(commitLine)]
-                break
-            index = commitLine.rfind(' ', i, i+78)
-            if index > i:
-                commit = commit + "\n  " + commitLine[i:index]
-                i = index+1
-            else:
-                commit = commit + "\n  " + commitLine[i:78]
-                i = i+79
+        # Assemble the actual commit message line(s) and limit the line length
+        # to 80 characters.
+        commitLine = "* " + files + ": " + message
 
         # Write out the commit line
-        fout.write(commit + "\n")
+        fout.write(wrapper.fill(commitLine) + "\n")
 
         #Now reset all the variables ready for a new commit block.
         authorFound = False
