@@ -1,4 +1,4 @@
-.TH "PAPI_event_name_to_code" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_event_name_to_code" 3 "Mon Dec 18 2017" "Version 5.6.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,7 +16,7 @@ Convert a name to a numeric hardware event code\&.
 .nf
 @par C Interface:
 \#include <papi.h> @n
-int PAPI_event_name_to_code( char * EventName, int * EventCode );
+int PAPI_event_name_to_code( const char * EventName, int * EventCode );
 
 PAPI_event_name_to_code is used to translate an ASCII PAPI event name 
 into an integer PAPI event code. 

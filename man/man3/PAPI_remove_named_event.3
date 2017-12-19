@@ -1,4 +1,4 @@
-.TH "PAPI_remove_named_event" 3 "Thu Nov 17 2016" "Version 5.5.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_remove_named_event" 3 "Mon Dec 18 2017" "Version 5.6.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -23,7 +23,7 @@ the current platform, run papi_native_avail in the PAPI distribution.
 
 @par C Interface:
 \#include <papi.h> @n
-int PAPI_remove_event( int  EventSet, int  EventCode );
+int PAPI_remove_named_event( int  EventSet, const char *EventName );
 
 @param[in] EventSet
    -- an integer handle for a PAPI event set as created 

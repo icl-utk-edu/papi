@@ -5,6 +5,65 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
+PAPI 5.6.0 RELEASE NOTES                                            19 Dec 2017
+===============================================================================
+
+PAPI 5.6.0 contains a major cleanup of the source code and the build
+system to have consistent code structure, eliminate errors, and reduce
+redundancies.  A number of validation tests have been added to PAPI to
+verify the PAPI preset events.  Improvements and changes to multiple
+PAPI components have been made, varying from supporting new events to
+fixes in the component testing.
+
+For specific and detailed information on changes made in this release,
+see ChangeLogP560.txt for keywords of interest or go directly to the
+PAPI git repository.
+
+Major changes
+
+* Validation tests: A substantial effort to add validation tests to
+  PAPI to check and detect problems in the definition of PAPI preset
+  events.
+* Event testing: Thorough cleanup of code in the C and Fortran testing
+  to add processor support, cleanup output and make the testing
+  behavior consistent.
+* CUDA component: Updated and rewritten to support CUPTI Metric API
+  (combinations of basic events).  This component now supports NVLink
+  information through the Metric API. Updated testing for the
+  component.
+* NVML component: Updated to support power management limits and
+  improved event names. Minor other bug fixes.
+* RAPL component: Added support for: Intel Atom models Goldmont /
+  Gemini_Lake / Denverton, Skylake-X / Kabylake
+* PAPI preset events: Many updates to the PAPI preset event mappings;
+  Skylake X support, initial AMD fam17h, fix AMD fam16h, added more
+  Power8 events, initial Power9 events.
+
+Other changes
+
+* Updating man and help pages for papi_avail and papi_native_avail.
+* Powercap component: Added test for setting power caps via PAPI
+  powercap component.
+* Infiniband component: Bugfix for infiniband_umad component.
+* Uncore component:  Updated to support recent processors.  
+* Lmsensors component updated to support correct runtime linking,
+  better events name, and a number of bug fixes.
+* Updated and fixed timer support for multiple architectures.  
+* All components: Cleanup and standardize testing behavior in the
+  components.
+* Build system: Much needed cleanup of configure and make scripts.
+* Support for C++ was enhanced.
+* Enabling optional support for reading events using perfevent-rdpmc
+  on recent Linux kernels can speed up PAPI_read() by a factor of 5.
+* Pthread testing limited to avoid excessive CPU consumption on highly
+  parallel machines.
+
+Acknowledgements: This release is the result of efforts from many
+people, with special Thanks to Vince Weaver, Phil Mucci, Steve
+Kauffman, William Cohen, Will Schmidt, and Stephane Eranian (for
+libpfm4) from the internal PAPI team.
+
+===============================================================================
 PAPI 5.5.1 RELEASE NOTES                                            18 Nov 2016
 ===============================================================================
 
