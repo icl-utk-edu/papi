@@ -1,3 +1,13 @@
+libpfm4 (9.0) unstable; urgency=low
+  * add support for Broadwell EP uncore PMUa
+  * add support for Intel Skylake X
+  * add support for AMD Fam17h
+  * add support for IBM Power9
+  * add support for AMD Fam16h
+  * various fixes and event table updates
+
+ -- Stephane Eranian <eranian@gmail.com>  Thu, 4 Jan  2018 13:37:01 +0200
+
 libpfm4 (8.0) unstable; urgency=low
   * add Intel Knights Landing support
   * add Intel Goldmont support
