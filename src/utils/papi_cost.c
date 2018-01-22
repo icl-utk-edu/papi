@@ -5,7 +5,7 @@
   *		papi_cost - computes execution time costs for basic PAPI operations.
   *
   *	@section Synopsis
-  *		papi_cost [-dhs] [-b bins] [-t threshold]
+  *		papi_cost [-dhps] [-b bins] [-t threshold]
   *
   *	@section Description
   *		papi_cost is a PAPI utility program that computes the min / max / mean / std. deviation
@@ -20,6 +20,7 @@
   *			partitioned for display. The default is 100.
   *		<li>-d	Display a graphical distribution of costs in a vertical histogram.
   *		<li>-h	Display help information about this utility.
+  *             <li>-p  Display 25/50/75 perecentile results for making boxplots.
   *		<li>-s	Show the number of iterations in each of the first 10
   *			standard deviations above the mean.
   *		<li>-t < threshold > 	Set the threshold for the number of iterations to
@@ -79,19 +80,16 @@ static void
 print_help( void )
 {
 	printf( "This is the PAPI cost program.\n" );
-	printf
-		( "It computes min / max / mean / std. deviation for PAPI start/stop pairs; for PAPI reads, and for PAPI_accums.  Usage:\n\n" );
+	printf( "It computes min / max / mean / std. deviation for PAPI start/stop pairs; for PAPI reads, and for PAPI_accums.  Usage:\n\n" );
 	printf( "    cost [options] [parameters]\n" );
 	printf( "    cost TESTS_QUIET\n\n" );
 	printf( "Options:\n\n" );
-	printf
-		( "  -b BINS       set the number of bins for the graphical distribution of costs. Default: 100\n" );
+	printf( "  -b BINS       set the number of bins for the graphical distribution of costs. Default: 100\n" );
 	printf( "  -d            show a graphical distribution of costs\n" );
 	printf( "  -h            print this help message\n" );
-	printf
-		( "  -s            show number of iterations above the first 10 std deviations\n" );
-	printf
-		( "  -t THRESHOLD  set the threshold for the number of iterations. Default: 100,000\n" );
+	printf( "  -p            print 25/50/75th percentile results for making boxplots\n");
+	printf( "  -s            show number of iterations above the first 10 std deviations\n" );
+	printf( "  -t THRESHOLD  set the threshold for the number of iterations. Default: 100,000\n" );
 	printf( "\n" );
 }
 
@@ -101,12 +99,11 @@ print_stats( int i, long long min, long long max, double average, double std )
 {
 	char *test[] = { "loop latency", "PAPI_start/stop (2 counters)",
 		"PAPI_read (2 counters)", "PAPI_read_ts (2 counters)",
-			"PAPI_accum (2 counters)", "PAPI_reset (2 counters)", 
+			"PAPI_accum (2 counters)", "PAPI_reset (2 counters)",
 			"PAPI_read (1 derived_postfix counter)"," PAPI_read (1 derived_[add|sub] counter)"
 	};
 	printf( "\nTotal cost for %s over %d iterations\n", test[i], num_iters );
-	printf
-		( "min cycles   : %lld\nmax cycles   : %lld\nmean cycles  : %lf\nstd deviation: %lf\n ",
+	printf( "min cycles   : %lld\nmax cycles   : %lld\nmean cycles  : %lf\nstd deviation: %lf\n",
 		  min, max, average, std );
 }
 
@@ -147,16 +144,30 @@ print_dist( long long min, long long max, int bins, int *d )
 }
 
 static void
+print_percentile(long long percent25, long long percent50,
+		long long percent75,long long percent99)
+{
+	printf("25%% cycles   : %lld\n50%% cycles   : %lld\n"
+		"75%% cycles   : %lld\n99%% cycles   : %lld\n",
+		percent25,percent50,percent75,percent99);
+}
+
+static void
 do_output( int test_type, long long *array, int bins, int show_std_dev,
-		   int show_dist )
+		   int show_dist, int show_percentile )
 {
 	int s[10];
 	long long min, max;
 	double average, std;
+	long long percent25,percent50,percent75,percent99;
 
 	std = do_stats( array, &min, &max, &average );
-
 	print_stats( test_type, min, max, average, std );
+
+	if (show_percentile) {
+		do_percentile(array,&percent25,&percent50,&percent75,&percent99);
+		print_percentile(percent25,percent50,percent75,percent99);
+	}
 
 	if ( show_std_dev ) {
 		do_std_dev( array, s, std, average );
@@ -179,7 +190,7 @@ main( int argc, char **argv )
 	int i, retval, EventSet = PAPI_NULL;
 	int retval_start,retval_stop;
 	int bins = 100;
-	int show_dist = 0, show_std_dev = 0;
+	int show_dist = 0, show_std_dev = 0, show_percent = 0;
 	long long totcyc, values[2];
 	long long *array;
 	int event;
@@ -195,6 +206,8 @@ main( int argc, char **argv )
 		}
 		else if ( !strcmp( argv[i], "-d" ) )
 			show_dist = 1;
+		else if ( !strcmp( argv[i], "-p" ) )
+			show_percent = 1;
 		else if ( !strcmp( argv[i], "-h" ) ) {
 			print_help(  );
 			exit( 1 );
@@ -286,7 +299,7 @@ main( int argc, char **argv )
 		array[i] = totcyc;
 	}
 
-	do_output( 0, array, bins, show_std_dev, show_dist );
+	do_output( 0, array, bins, show_std_dev, show_dist, show_percent );
 
 	/* Start the start/stop eval */
 
@@ -304,7 +317,7 @@ main( int argc, char **argv )
 		}
 	}
 
-	do_output( 1, array, bins, show_std_dev, show_dist );
+	do_output( 1, array, bins, show_std_dev, show_dist, show_percent );
 
 	/* Start the read eval */
 	printf( "\nPerforming read test...\n" );
@@ -326,7 +339,7 @@ main( int argc, char **argv )
 		exit(retval);
 	}
 
-	do_output( 2, array, bins, show_std_dev, show_dist );
+	do_output( 2, array, bins, show_std_dev, show_dist, show_percent );
 
 	/* Start the read with timestamp eval */
 	printf( "\nPerforming read with timestamp test...\n" );
@@ -351,7 +364,7 @@ main( int argc, char **argv )
 	}
 	array[0] -= totcyc;
 
-	do_output( 3, array, bins, show_std_dev, show_dist );
+	do_output( 3, array, bins, show_std_dev, show_dist, show_percent );
 
 	/* Start the accum eval */
 	printf( "\nPerforming accum test...\n" );
@@ -373,7 +386,7 @@ main( int argc, char **argv )
 		exit(retval);
 	}
 
-	do_output( 4, array, bins, show_std_dev, show_dist );
+	do_output( 4, array, bins, show_std_dev, show_dist, show_percent );
 
 	/* Start the reset eval */
 	printf( "\nPerforming reset test...\n" );
@@ -394,7 +407,7 @@ main( int argc, char **argv )
 		exit(retval);
 	}
 
-	do_output( 5, array, bins, show_std_dev, show_dist );
+	do_output( 5, array, bins, show_std_dev, show_dist, show_percent );
 
 	/* Derived POSTFIX event test */
 	PAPI_cleanup_eventset( EventSet );
@@ -436,7 +449,7 @@ main( int argc, char **argv )
 			exit(retval);
 		}
 
-		do_output( 6, array, bins, show_std_dev, show_dist );
+		do_output( 6, array, bins, show_std_dev, show_dist, show_percent );
 
 	} else {
 		printf("\tI was unable to find a DERIVED_POSTFIX preset event "
@@ -483,7 +496,7 @@ main( int argc, char **argv )
 			exit(retval);
 		}
 
-		do_output( 7, array, bins, show_std_dev, show_dist );
+		do_output( 7, array, bins, show_std_dev, show_dist, show_percent );
 	} else {
 		printf("\tI was unable to find a suitable DERIVED_[ADD|SUB] "
 			"event to test, skipping.\n");
