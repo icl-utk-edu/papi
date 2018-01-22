@@ -39,38 +39,42 @@
 #include "papi.h"
 #include "cost_utils.h"
 
-int
+/* Search for a derived event of type "type" */
+static int
 find_derived( int i , char *type)
 {
-  PAPI_event_info_t info;
+	PAPI_event_info_t info;
 
-  PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+	PAPI_enum_event( &i, PAPI_ENUM_FIRST );
 
-  do {
-	if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
+	do {
+		if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
 
-	  if ( strcmp( info.derived, type) == 0 )
-		return i;
-	}
-  } while ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK );
+			if ( strcmp( info.derived, type) == 0 ) {
+				return i;
+			}
+		}
+	} while ( PAPI_enum_event( &i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK );
 
-  return PAPI_NULL;
+	return PAPI_NULL;
 }
 
 /* Slight misnomer, find derived event != DERIVED_POSTFIX */
-int
+/* Will look for DERIVED_ADD, if not available will also accept DERIVED_SUB */
+static int
 find_derived_add( int i )
 {
-  int ret;
+	int ret;
 
-  if ( (ret = find_derived( i, "DERIVED_ADD")) != PAPI_NULL)
-	return ret;
+	ret = find_derived( i, "DERIVED_ADD");
+	if (ret != PAPI_NULL) {
+		return ret;
+	}
 
-
-  return find_derived( i, "DERIVED_SUB");
+	return find_derived( i, "DERIVED_SUB");
 }
 
-int
+static int
 find_derived_postfix( int i )
 {
   return ( find_derived ( i, "DERIVED_POSTFIX" ) );
@@ -97,14 +101,22 @@ print_help( void )
 static void
 print_stats( int i, long long min, long long max, double average, double std )
 {
-	char *test[] = { "loop latency", "PAPI_start/stop (2 counters)",
-		"PAPI_read (2 counters)", "PAPI_read_ts (2 counters)",
-			"PAPI_accum (2 counters)", "PAPI_reset (2 counters)",
-			"PAPI_read (1 derived_postfix counter)"," PAPI_read (1 derived_[add|sub] counter)"
+	char *test[] = {
+		"loop latency",
+		"PAPI_start/stop (2 counters)",
+		"PAPI_read (2 counters)",
+		"PAPI_read_ts (2 counters)",
+		"PAPI_accum (2 counters)",
+		"PAPI_reset (2 counters)",
+		"PAPI_read (1 derived_postfix counter)",
+		"PAPI_read (1 derived_[add|sub] counter)"
 	};
-	printf( "\nTotal cost for %s over %d iterations\n", test[i], num_iters );
-	printf( "min cycles   : %lld\nmax cycles   : %lld\nmean cycles  : %lf\nstd deviation: %lf\n",
-		  min, max, average, std );
+
+	printf( "\nTotal cost for %s over %d iterations\n",
+		test[i], num_iters );
+	printf( "min cycles   : %lld\nmax cycles   : %lld\n"
+		"mean cycles  : %lf\nstd deviation: %lf\n",
+		min, max, average, std );
 }
 
 static void
@@ -113,10 +125,8 @@ print_std_dev( int *s )
 	int i;
 
 	printf( "\n" );
-	printf
-		( "              --------# Standard Deviations Above the Mean--------\n" );
-	printf
-		( "0-------1-------2-------3-------4-------5-------6-------7-------8-------9-----10\n" );
+	printf( "              --------# Standard Deviations Above the Mean--------\n" );
+	printf( "0-------1-------2-------3-------4-------5-------6-------7-------8-------9-----10\n" );
 	for ( i = 0; i < 10; i++ )
 		printf( "  %d\t", s[i] );
 	printf( "\n\n" );
@@ -132,8 +142,7 @@ print_dist( long long min, long long max, int bins, int *d )
 	for ( i = 0; i < bins; i++ ) {
 		printf( "%8d:", ( int ) min + ( step * i ) );
 		if ( d[i] > 100 ) {
-			printf
-				( "**************************** %d counts ****************************",
+			printf( "**************************** %d counts ****************************",
 				  d[i] );
 		} else {
 			for ( j = 0; j < d[i]; j++ )
@@ -282,10 +291,9 @@ main( int argc, char **argv )
 		exit(retval);
 	}
 
-	array =
-		( long long * ) malloc( ( size_t ) num_iters * sizeof ( long long ) );
+	array = ( long long * ) malloc( ( size_t ) num_iters * sizeof ( long long ) );
 	if ( array == NULL ) {
-		fprintf(stderr,"PAPI_stop");
+		fprintf(stderr,"Error allocating memory for results\n");
 		exit(retval);
 	}
 
