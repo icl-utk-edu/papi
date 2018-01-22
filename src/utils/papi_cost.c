@@ -24,7 +24,7 @@
   *		<li>-s	Show the number of iterations in each of the first 10
   *			standard deviations above the mean.
   *		<li>-t < threshold > 	Set the threshold for the number of iterations to
-  *			measure costs. The default is 100,000.
+  *			measure costs. The default is 1,000,000.
   *	</ul>
   *
   *	@section Bugs
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "papi.h"
 #include "cost_utils.h"
@@ -93,7 +94,7 @@ print_help( void )
 	printf( "  -h            print this help message\n" );
 	printf( "  -p            print 25/50/75th percentile results for making boxplots\n");
 	printf( "  -s            show number of iterations above the first 10 std deviations\n" );
-	printf( "  -t THRESHOLD  set the threshold for the number of iterations. Default: 100,000\n" );
+	printf( "  -t THRESHOLD  set the threshold for the number of iterations. Default: 1,000,000\n" );
 	printf( "\n" );
 }
 
@@ -204,37 +205,38 @@ main( int argc, char **argv )
 	long long *array;
 	int event;
 	PAPI_event_info_t info;
+	int c;
 
-	for ( i = 1; i < argc; i++ ) {
-		if ( !strcmp( argv[i], "-b" ) ) {
-			i++;
-			if ( i >= argc || (bins = atoi( argv[i] ) > 0 ) ) {
-				printf( "-b requires a positive bin count!\n" );
-				exit( 1 );
-			}
+	/* Check command-line arguments */
+
+	while ( (c=getopt(argc, argv, "hb:dpst:") ) != -1) {
+
+		switch(c) {
+
+			case 'h':
+				print_help();
+				exit(1);
+			case 'b':
+				bins=atoi(optarg);
+				break;
+			case 'd':
+				show_dist=1;
+				break;
+			case 'p':
+				show_percent=1;
+				break;
+			case 's':
+				show_std_dev=1;
+				break;
+			case 't':
+				num_iters=atoi(optarg);
+				break;
+			default:
+				print_help();
+				exit(1);
+				break;
 		}
-		else if ( !strcmp( argv[i], "-d" ) )
-			show_dist = 1;
-		else if ( !strcmp( argv[i], "-p" ) )
-			show_percent = 1;
-		else if ( !strcmp( argv[i], "-h" ) ) {
-			print_help(  );
-			exit( 1 );
-		}
-		else if ( !strcmp( argv[i], "-s" ) )
-			show_std_dev = 1;
-		else if ( !strcmp( argv[i], "-t" ) ) {
-			i++;
-			if ( i >= argc || (num_iters = ( int ) atol( argv[i] ) > 0) ) {
-				printf( "-t requires a positive threshold value!\n" );
-				exit( 1 );
-			}
-		}
-		else {
-			/* If not a valid option, print out some help information */
-			print_help( );
-			exit( 1 );
-		}
+
 	}
 
 	printf( "Cost of execution for PAPI start/stop, read and accum.\n" );
