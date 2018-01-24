@@ -350,7 +350,7 @@ code2name: code2name.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) code2name.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o code2name
 
 attach_target: attach_target.c $(DOLOOPS)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_target.c -o attach_target $(DOLOOPS) $(TESTLIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_target.c -o attach_target $(DOLOOPS) $(TESTLIB) $(LDFLAGS)
 
 zero_attach: zero_attach.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_attach.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o zero_attach
