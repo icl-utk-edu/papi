@@ -75,17 +75,41 @@ __weak_func int validate_arch(FILE *fp)
 	return 0;
 }
 
+__weak_func int validate_perf(FILE *fp)
+{
+	return 0;
+}
+
+
 static struct {
-	int valid_intern;
-	int valid_arch;
+	int valid_mode;
 } options;
+
+#define VALID_INTERN	0x1
+#define VALID_ARCH	0x2
+#define VALID_PERF	0x4
+#define VALID_ALL	(VALID_INTERN|\
+			 VALID_ARCH  |\
+			 VALID_PERF)
+static inline int
+valid_mode(int f)
+{
+	return !!(options.valid_mode & f);
+}
 
 static void
 usage(void)
 {
-	printf("validate [-c] [-a] [-A]\n"
+	printf("validate [-c] [-a] [-A]"
+#ifdef __linux__
+		"[-p]"
+#endif
+		"\n"
 		"-c\trun the library validate events\n"
 		"-a\trun architecture specific event tests\n"
+#ifdef __linux__
+		"-p\trun perf_events specific event tests\n"
+#endif
 		"-A\trun all tests\n"
 		"-h\tget help\n");
 }
@@ -289,14 +313,16 @@ main(int argc, char **argv)
 	while ((c=getopt(argc, argv,"hcaA")) != -1) {
 		switch(c) {
 			case 'c':
-				options.valid_intern = 1;
+				options.valid_mode |= VALID_INTERN;
 				break;
 			case 'a':
-				options.valid_arch = 1;
+				options.valid_mode |= VALID_ARCH;
+				break;
+			case 'p':
+				options.valid_mode |= VALID_PERF;
 				break;
 			case 'A':
-				options.valid_arch = 1;
-				options.valid_intern = 1;
+				options.valid_mode |= VALID_ALL;
 				break;
 			case 'h':
 				usage();
@@ -305,6 +331,9 @@ main(int argc, char **argv)
 				errx(1, "unknown option error");
 		}
 	}
+	if (options.valid_mode == 0)
+		options.valid_mode = VALID_ALL;
+
 	/* to allow encoding of events from non detected PMU models */
 	ret = set_env_var("LIBPFM_ENCODE_INACTIVE", "1", 1);
 	if (ret != PFM_SUCCESS)
@@ -314,21 +343,21 @@ main(int argc, char **argv)
 	if (ret != PFM_SUCCESS)
 		errx(1, "cannot initialize libpfm: %s", pfm_strerror(ret));
 
-	/* run everything by default */
-	if (!(options.valid_intern || options.valid_arch)) {
-		options.valid_intern = 1;
-		options.valid_arch = 1;
-	}
 
 	printf("Libpfm structure tests:\n");
 	errors += validate_structs();
 
-	if (options.valid_intern) {
+	if (valid_mode(VALID_PERF)) {
+		printf("perf_events specific tests:\n");
+		errors += validate_perf(stderr);
+	}
+
+	if (valid_mode(VALID_INTERN)) {
 		printf("Libpfm internal table tests:\n");
 		errors += validate_event_tables();
 	}
 
-	if (options.valid_arch) {
+	if (valid_mode(VALID_ARCH)) {
 		printf("Architecture specific tests:\n");
 		errors += validate_arch(stderr);
 	}
