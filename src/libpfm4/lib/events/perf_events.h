@@ -94,7 +94,7 @@
 	CACHE_PF_ACCESS(n, d, e)
 
 static perf_event_t perf_static_events[]={
-	PCL_EVT_HW(CPU_CYCLES),
+	PCL_EVT_HW_FL(CPU_CYCLES, PERF_FL_PRECISE),
 	PCL_EVT_AHW(CYCLES, CPU_CYCLES),
 	PCL_EVT_AHW(CPU-CYCLES, CPU_CYCLES),
 
