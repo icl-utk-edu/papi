@@ -64,17 +64,19 @@ typedef struct {
 	int		numasks;		/* number of unit masls */
 	int		ngrp;			/* number of umasks groups */
 	unsigned long	umask_ovfl_idx;		/* base index of overflow unit masks */
+	int		flags;			/* evnet flags */
 	perf_umask_t	umasks[PERF_MAX_UMASKS];/* first unit masks */
 } perf_event_t;
 
 /*
- * umask options: uflags
+ * event/umask flags
  */
 #define PERF_FL_DEFAULT	0x1	/* umask is default for group */
+#define PERF_FL_PRECISE	0x2	/* support precise sampling */
 
 #define PERF_INVAL_OVFL_IDX ((unsigned long)-1)
 
-#define PCL_EVT(f, t, m)	\
+#define PCL_EVT(f, t, m, fl)	\
 	{ .name = #f,		\
 	  .id = (f),		\
 	  .type = (t),		\
@@ -83,10 +85,11 @@ typedef struct {
 	  .numasks = 0,		\
 	  .modmsk = (m),	\
 	  .ngrp = 0,		\
+	  .flags = fl,		\
 	  .umask_ovfl_idx = PERF_INVAL_OVFL_IDX,\
 	}
 
-#define PCL_EVTA(f, t, m, a)	\
+#define PCL_EVTA(f, t, m, a, fl)\
 	{ .name = #f,		\
 	  .id = a,		\
 	  .type = t,		\
@@ -95,13 +98,15 @@ typedef struct {
 	  .numasks = 0,		\
 	  .modmsk = m,		\
 	  .ngrp = 0,		\
+	  .flags = fl,		\
 	  .umask_ovfl_idx = PERF_INVAL_OVFL_IDX,\
 	}
 
-#define PCL_EVT_HW(n) PCL_EVT(PERF_COUNT_HW_##n, PERF_TYPE_HARDWARE, PERF_ATTR_HW)
-#define PCL_EVT_SW(n) PCL_EVT(PERF_COUNT_SW_##n, PERF_TYPE_SOFTWARE, PERF_ATTR_SW)
-#define PCL_EVT_AHW(n, a) PCL_EVTA(n, PERF_TYPE_HARDWARE, PERF_ATTR_HW, PERF_COUNT_HW_##a)
-#define PCL_EVT_ASW(n, a) PCL_EVTA(n, PERF_TYPE_SOFTWARE, PERF_ATTR_SW, PERF_COUNT_SW_##a)
+#define PCL_EVT_HW(n) PCL_EVT(PERF_COUNT_HW_##n, PERF_TYPE_HARDWARE, PERF_ATTR_HW, 0)
+#define PCL_EVT_SW(n) PCL_EVT(PERF_COUNT_SW_##n, PERF_TYPE_SOFTWARE, PERF_ATTR_SW, 0)
+#define PCL_EVT_AHW(n, a) PCL_EVTA(n, PERF_TYPE_HARDWARE, PERF_ATTR_HW, PERF_COUNT_HW_##a, 0)
+#define PCL_EVT_ASW(n, a) PCL_EVTA(n, PERF_TYPE_SOFTWARE, PERF_ATTR_SW, PERF_COUNT_SW_##a, 0)
+#define PCL_EVT_HW_FL(n, fl) PCL_EVT(PERF_COUNT_HW_##n, PERF_TYPE_HARDWARE, PERF_ATTR_HW, fl)
 
 #ifndef MAXPATHLEN
 #define MAXPATHLEN	1024
@@ -747,7 +752,7 @@ pfm_perf_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_event_att
 	info->type = PFM_ATTR_UMASK;
 	info->ctrl = PFM_ATTR_CTRL_PMU;
 
-	info->is_precise = 0;
+	info->is_precise =  !!(um->uflags & PERF_FL_PRECISE);
 	info->is_dfl = 0;
 	info->idx = attr_idx;
 	info->dfl_val64 = 0;
@@ -765,7 +770,7 @@ pfm_perf_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->equiv = perf_pe[idx].equiv;
 	info->idx   = idx;
 	info->pmu   = pmu->pmu;
-	info->is_precise = 0;
+	info->is_precise =  !!(perf_pe[idx].flags & PERF_FL_PRECISE);
 
 	/* unit masks + modifiers */
 	info->nattrs  = perf_pe[idx].numasks;
