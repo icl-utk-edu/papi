@@ -254,7 +254,9 @@ static int pfm_cpumf_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 static int pfm_cpumf_get_event_first(void *this)
 {
-	return 0;
+	pfmlib_pmu_t *pmu = this;
+
+	return !!pmu->pme_count ? 0 : -1;
 }
 
 static int pfm_cpumf_get_event_next(void *this, int idx)
@@ -316,6 +318,9 @@ static int pfm_cpumf_get_event_info(void *this, int idx,
 {
 	pfmlib_pmu_t *pmu = this;
 	const pme_cpumf_ctr_t *pe = this_pe(this);
+
+	if (idx >= pmu->pme_count)
+		return PFM_ERR_INVAL;
 
 	info->name = pe[idx].name;
 	info->desc = pe[idx].desc;
