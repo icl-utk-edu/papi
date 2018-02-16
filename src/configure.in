@@ -1609,7 +1609,7 @@ elif test "$F77" != "xlf"; then
 fi
 
 if test "$CC_COMMON_NAME" = "icc"; then
-    OMPCFLGS=-openmp
+    OMPCFLGS=-qopenmp
 fi
 
 AC_MSG_CHECKING(for components to build)

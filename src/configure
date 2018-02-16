@@ -6578,7 +6578,7 @@ elif test "$F77" != "xlf"; then
 fi
 
 if test "$CC_COMMON_NAME" = "icc"; then
-    OMPCFLGS=-openmp
+    OMPCFLGS=-qopenmp
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for components to build" >&5
