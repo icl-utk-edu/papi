@@ -2,7 +2,7 @@
   *	@page papi_component_avail
   * @brief papi_component_avail utility.
   *	@section  NAME
-  *		papi_native_avail - provides detailed information for PAPI native events. 
+  *		papi_component_avail - provides detailed information on the PAPI components available on the system.
   *
   *	@section Synopsis
   *
