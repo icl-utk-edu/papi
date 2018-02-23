@@ -113,8 +113,10 @@ main( int argc, char **argv )
 		retval );
 
 	retval = PAPI_attach( EventSet1, ( unsigned long ) pid );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_attach", retval );
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Cannot attach: %s\n",PAPI_strerror(retval));
+		test_skip( __FILE__, __LINE__, "PAPI_attach", retval );
+	}
 
 	retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
 	if ( retval != PAPI_OK ) {

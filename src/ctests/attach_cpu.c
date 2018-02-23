@@ -64,8 +64,11 @@ main( int argc, char **argv )
 	opts.cpu.cpu_num = cpu_num;
 
 	retval = PAPI_set_opt( PAPI_CPU_ATTACH, &opts );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
+	if ( retval != PAPI_OK ) {
+		if (!quiet) printf("Can't PAPI_CPU_ATTACH: %s\n",
+				PAPI_strerror(retval));
+		test_skip( __FILE__, __LINE__, "PAPI_set_opt", retval );
+	}
 
 	retval = PAPI_add_named_event(EventSet1, event_name);
 	if ( retval != PAPI_OK ) {
