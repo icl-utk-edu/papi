@@ -580,5 +580,11 @@ main( int argc, char **argv )
 	}
 	printf( "\nTotal events reported: %d\n", num_events );
 
+	if (num_events==0) {
+		printf("\nNo events detected!  Check papi_component_avail to find out why.\n");
+		printf("\n");
+	}
+
+
 	return 0;
 }

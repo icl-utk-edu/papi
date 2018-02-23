@@ -552,6 +552,11 @@ main( int argc, char **argv )
 	 }
       }
 
+	if (avail_count==0) {
+		printf("No events detected!  Check papi_component_avail to find out why.\n");
+		printf("\n");
+	}
+
 	return 0;
 
 }
