@@ -47,7 +47,10 @@ int main( int argc, char **argv ) {
 	/* Add PAPI_TOT_CYC */
 	retval=PAPI_add_named_event(EventSet1,"PAPI_TOT_CYC");
 	if (retval!=PAPI_OK) {
-		if (!quiet) printf("Trouble adding PAPI_TOT_CYC\n");
+		if (!quiet) {
+			printf("Trouble adding PAPI_TOT_CYC: %s\n",
+				PAPI_strerror(retval));
+		}
 		test_skip( __FILE__, __LINE__, "adding PAPI_TOT_CYC", retval );
 	}
 
