@@ -502,6 +502,7 @@ _papi_hwi_init_errors(void) {
     _papi_hwi_add_error("Invalid or missing event attributes");
     _papi_hwi_add_error("Too many events or attributes");
     _papi_hwi_add_error("Bad combination of features");
+    _papi_hwi_add_error("Component containing event is disabled");
 }
 
 int
@@ -1334,12 +1335,18 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
     int i, j, thisindex, remap, retval = PAPI_OK;
     int cidx;
 
-    cidx=_papi_hwi_component_index( EventCode );
-    if (cidx<0) return PAPI_ENOCMP;
+	/* Sanity check the component */
+	cidx=_papi_hwi_component_index( EventCode );
+	if (cidx<0) {
+		return PAPI_ENOCMP;
+	}
+	if (_papi_hwd[cidx]->cmp_info.disabled) {
+		return PAPI_ECMP_DISABLED;
+	}
 
     /* Sanity check that the new EventCode is from the same component */
     /* as previous events.                                            */
-    
+
     if ( ESI->CmpIdx < 0 ) {
        if ( ( retval = _papi_hwi_assign_eventset( ESI, cidx)) != PAPI_OK ) {
    	      INTDBG("EXIT: Error assigning eventset to component index %d\n", cidx);
@@ -1382,7 +1389,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  if ( !count ) {
 	     return PAPI_ENOEVNT;
 	  }
-			
+
 	  /* check if the native events have been used as overflow events */
 	  /* this is not allowed                                          */
 	  if ( ESI->state & PAPI_OVERFLOWING ) {
@@ -1414,7 +1421,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 				  _papi_hwi_presets[preset_index].postfix;
              ESI->NumberOfEvents++;
 	     _papi_hwi_map_events_to_native( ESI );
-	     
+
 	  }
        }
        /* Handle adding Native events */
@@ -1424,7 +1431,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  if ( _papi_hwi_query_native_event( ( unsigned int ) EventCode ) != PAPI_OK ) {
 	     return PAPI_ENOEVNT;
 	  }
-			
+
 	  /* check if the native events have been used as overflow events */
 	  /* This is not allowed                                          */
 	  if ( ESI->state & PAPI_OVERFLOWING ) {
@@ -1449,7 +1456,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	                                   ( unsigned int ) EventCode;
              ESI->NumberOfEvents++;
 	     _papi_hwi_map_events_to_native( ESI );
-	     
+
 	  }
        } else if ( IS_USER_DEFINED( EventCode ) ) {
 		 int count;
@@ -1490,7 +1497,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
        }
     }
     else {
-		
+
        /* Multiplexing is special. See multiplex.c */
 
        retval = mpx_add_event( &ESI->multiplex.mpx_evset, EventCode,
