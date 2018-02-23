@@ -204,13 +204,17 @@ int
 PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 {
 	int retval;
-   int events[1] = {PAPI_FP_INS};
+	int events[1] = {PAPI_FP_INS};
 	long long values = 0;
 
-	if ( rtime == NULL || ptime == NULL || flpins == NULL || mflips == NULL )
+	if ( rtime == NULL || ptime == NULL ||
+			flpins == NULL || mflips == NULL ) {
 		return PAPI_EINVAL;
+	}
 
-   retval = _hl_rate_calls( rtime, ptime, events, &values, flpins, mflips, HL_FLIP );
+	retval = _hl_rate_calls( rtime, ptime, events,
+			&values, flpins, mflips, HL_FLIP );
+
 	return ( retval );
 }
 
@@ -413,13 +417,13 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK ) {
 		return ( retval );
 	}
-	
+
 	if ( state->running != HL_STOP && state->running != mode ) {
 		return PAPI_EINVAL;
 	}
 
 	if ( state->running == HL_STOP ) {
-	
+
 		switch (mode) {
 			case HL_FLOP:
 			case HL_FLIP:
@@ -446,7 +450,7 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 			return retval;
 		}
-		
+
 		/* Initialize the interface */
 		state->running = mode;
 		*real_time 	= 0.0;
@@ -489,7 +493,7 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 		}
 		state->last_real_time = rt;
 		state->last_proc_time = pt;
-	
+
 		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
 			state->running = HL_STOP;
 			return retval;

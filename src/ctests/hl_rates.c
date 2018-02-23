@@ -62,9 +62,7 @@ main( int argc, char **argv )
 	retval=PAPI_flips(&rtime, &ptime, &flpins, &mflips);
 	if (retval!=PAPI_OK) {
 		if (!quiet) PAPI_perror( "PAPI_flips" );
-		if (retval==PAPI_ENOEVNT) {
-			test_skip(__FILE__,__LINE__,"Could not add event",0);
-		}
+		test_skip(__FILE__,__LINE__,"Could not add event",0);
 	}
 
 	if (!quiet) {

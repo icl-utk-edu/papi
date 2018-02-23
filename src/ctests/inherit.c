@@ -40,6 +40,8 @@ main( int argc, char **argv )
 	if ( ( retval = PAPI_set_opt( PAPI_INHERIT, &opt ) ) != PAPI_OK ) {
 		if ( retval == PAPI_ECMP) {
 			test_skip( __FILE__, __LINE__, "Inherit not supported by current component.\n", retval );
+		} else if (retval == PAPI_EPERM) {
+			test_skip( __FILE__, __LINE__, "Inherit not supported by current component.\n", retval );
 		} else {
 			test_fail( __FILE__, __LINE__, "PAPI_set_opt", retval );
 		}
