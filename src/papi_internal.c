@@ -474,35 +474,40 @@ int _papi_hwi_publish_error( char *error )
 	return (-error_code); /* internally error_code is an index, externally, it should be <= 0 */
 }
 
+
+/* Why are the errors done this way?
+   Should they not be auto-generated the same way the Fortran ones are?
+   --vmw
+*/
 void
 _papi_hwi_init_errors(void) {
 /* we use add error to avoid the cost of lookups, we know the errors are not there yet */
-	_papi_hwi_add_error("No error");
-    _papi_hwi_add_error("Invalid argument");
-    _papi_hwi_add_error("Insufficient memory");
-    _papi_hwi_add_error("A System/C library call failed");
-    _papi_hwi_add_error("Not supported by component");
-    _papi_hwi_add_error("Access to the counters was lost or interrupted");
-    _papi_hwi_add_error("Internal error, please send mail to the developers");
-    _papi_hwi_add_error("Event does not exist");
-    _papi_hwi_add_error("Event exists, but cannot be counted due to hardware resource limits");
-    _papi_hwi_add_error("EventSet is currently not running");
-    _papi_hwi_add_error("EventSet is currently counting");
-    _papi_hwi_add_error("No such EventSet available");
-    _papi_hwi_add_error("Event in argument is not a valid preset");
-    _papi_hwi_add_error("Hardware does not support performance counters");
-    _papi_hwi_add_error("Unknown error code");
-    _papi_hwi_add_error("Permission level does not permit operation");
-    _papi_hwi_add_error("PAPI hasn't been initialized yet");
-    _papi_hwi_add_error("Component Index isn't set");
-    _papi_hwi_add_error("Not supported");
-    _papi_hwi_add_error("Not implemented");
-    _papi_hwi_add_error("Buffer size exceeded");
-    _papi_hwi_add_error("EventSet domain is not supported for the operation");
-    _papi_hwi_add_error("Invalid or missing event attributes");
-    _papi_hwi_add_error("Too many events or attributes");
-    _papi_hwi_add_error("Bad combination of features");
-    _papi_hwi_add_error("Component containing event is disabled");
+	/*  0 PAPI_OK */	_papi_hwi_add_error("No error");
+	/*  1 PAPI_EINVAL */	_papi_hwi_add_error("Invalid argument");
+	/*  2 PAPI_ENOMEM */	_papi_hwi_add_error("Insufficient memory");
+	/*  3 PAPI_ESYS */	_papi_hwi_add_error("A System/C library call failed");
+	/*  4 PAPI_ECMP */	_papi_hwi_add_error("Not supported by component");
+	/*  5 PAPI_ECLOST */	_papi_hwi_add_error("Access to the counters was lost or interrupted");
+	/*  6 PAPI_EBUG */	_papi_hwi_add_error("Internal error, please send mail to the developers");
+	/*  7 PAPI_ENOEVNT */	_papi_hwi_add_error("Event does not exist");
+	/*  8 PAPI_ECNFLCT */	_papi_hwi_add_error("Event exists, but cannot be counted due to hardware resource limits");
+	/*  9 PAPI_ENOTRUN */	_papi_hwi_add_error("EventSet is currently not running");
+	/* 10 PAPI_EISRUN */	_papi_hwi_add_error("EventSet is currently counting");
+	/* 11 PAPI_ENOEVST */	_papi_hwi_add_error("No such EventSet available");
+	/* 12 PAPI_ENOTPRESET */_papi_hwi_add_error("Event in argument is not a valid preset");
+	/* 13 PAPI_ENOCNTR */	_papi_hwi_add_error("Hardware does not support performance counters");
+	/* 14 PAPI_EMISC */	_papi_hwi_add_error("Unknown error code");
+	/* 15 PAPI_EPERM */	_papi_hwi_add_error("Permission level does not permit operation");
+	/* 16 PAPI_ENOINIT */	_papi_hwi_add_error("PAPI hasn't been initialized yet");
+	/* 17 PAPI_ENOCMP */	_papi_hwi_add_error("Component Index isn't set");
+	/* 18 PAPI_ENOSUPP */	_papi_hwi_add_error("Not supported");
+	/* 19 PAPI_ENOIMPL */	_papi_hwi_add_error("Not implemented");
+	/* 20 PAPI_EBUF */	_papi_hwi_add_error("Buffer size exceeded");
+	/* 21 PAPI_EINVAL_DOM */_papi_hwi_add_error("EventSet domain is not supported for the operation");
+	/* 22 PAPI_EATTR */	_papi_hwi_add_error("Invalid or missing event attributes");
+	/* 23 PAPI_ECOUNT */	_papi_hwi_add_error("Too many events or attributes");
+	/* 24 PAPI_ECOMBO */	_papi_hwi_add_error("Bad combination of features");
+	/* 25 PAPI_ECMP_DISABLED */_papi_hwi_add_error("Component containing event is disabled");
 }
 
 int
