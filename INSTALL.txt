@@ -102,7 +102,7 @@ AIX - IBM POWER5 and POWER6 and POWER7
 PAPI is supported on AIX 5.x for POWER5 and POWER6.
 PAPI is also tested on AIX 6.1 for POWER7.
 Use ./configure to select the desired make options for your system, 
-specifying the --with_bitmode=32 or --with-bitmode=64 to select wordlength.
+specifying the --with-bitmode=32 or --with-bitmode=64 to select wordlength.
 32 bits is the default.
 
 1.	On AIX 5.x, the bos.pmapi is a product level fileset (part of the OS).
