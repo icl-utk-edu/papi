@@ -5695,7 +5695,8 @@ check_pmu_supported(const char *evt)
 {
 	pfm_pmu_info_t info;
 	char *p;
-	int i, ret;
+	int ret;
+	pfm_pmu_t i;
 
 	memset(&info, 0, sizeof(info));
 	info.size = sizeof(info);

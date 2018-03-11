@@ -200,7 +200,7 @@ perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz)
 	/*
 	 * data points to beginning of buffer payload
 	 */
-	data = ((void *)hdr)+sysconf(_SC_PAGESIZE);
+	data = (void*)(((uintptr_t)hdr)+sysconf(_SC_PAGESIZE));
 
 	/*
 	 * position of tail within the buffer payload
@@ -234,13 +234,13 @@ perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz)
 	m = c < sz ? c : sz;
 
 	/* copy beginning */
-	memcpy(buf, data+tail, m);
+	memcpy(buf, (void*)(((uintptr_t)data)+tail), m);
 
 	/*
 	 * copy wrapped around leftover
 	 */
 	if (sz > m)
-		memcpy(buf+m, data, sz - m);
+		memcpy((void*)(((uintptr_t)buf)+m), data, sz - m);
 
 	//printf("\nhead=%lx tail=%lx new_tail=%lx sz=%zu\n", hdr->data_head, hdr->data_tail, hdr->data_tail+sz, sz);
 	hdr->data_tail += sz;

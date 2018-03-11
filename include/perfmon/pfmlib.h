@@ -657,7 +657,7 @@ extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fst
 	for((x)=0; (x) < (z)->nattrs; (x) = (x)+1)
 
 #define pfm_for_all_pmus(x) \
-	for((x)= 0 ; (x) < PFM_PMU_MAX; (x)++)
+	for((x)= PFM_PMU_NONE ; (x) < PFM_PMU_MAX; (x)++)
 
 #ifdef __cplusplus /* extern C */
 }

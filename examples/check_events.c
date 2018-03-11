@@ -54,7 +54,8 @@ main(int argc, const char **argv)
 	const char **p;
 	char *fqstr;
 	pfm_event_info_t info;
-	int i, j, ret;
+	int j, ret;
+	pfm_pmu_t i;
 	int total_supported_events = 0;
 	int total_available_events = 0;
 
@@ -69,7 +70,7 @@ main(int argc, const char **argv)
 	memset(&info, 0, sizeof(info));
 
 	printf("Supported PMU models:\n");
-	for(i=0; i < PFM_PMU_MAX; i++) {
+	for(i=PFM_PMU_NONE; i < PFM_PMU_MAX; i++) {
 		ret = pfm_get_pmu_info(i, &pinfo);
 		if (ret != PFM_SUCCESS)
 			continue;
@@ -78,7 +79,7 @@ main(int argc, const char **argv)
 	}
 
 	printf("Detected PMU models:\n");
-	for(i=0; i < PFM_PMU_MAX; i++) {
+	for(i=PFM_PMU_NONE; i < PFM_PMU_MAX; i++) {
 		ret = pfm_get_pmu_info(i, &pinfo);
 		if (ret != PFM_SUCCESS)
 			continue;

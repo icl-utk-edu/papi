@@ -591,7 +591,7 @@ pfmlib_pmu_initialized(pfmlib_pmu_t *pmu)
 static inline pfm_pmu_t
 idx2pmu(int idx)
 {
-	return (pfm_pmu_t)(idx >> PFMLIB_PMU_SHIFT) & PFMLIB_PMU_MASK;
+	return (pfm_pmu_t)((idx >> PFMLIB_PMU_SHIFT) & PFMLIB_PMU_MASK);
 }
 
 static inline pfmlib_pmu_t *
@@ -770,7 +770,7 @@ pfmlib_pmu_activate(pfmlib_pmu_t *p)
 
 	DPRINT("activated %s\n", p->desc);
 
-	return PFM_SUCCESS;	
+	return PFM_SUCCESS;
 }
 
 static inline int
