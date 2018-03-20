@@ -359,7 +359,8 @@ INC_ARM=pfmlib_arm_priv.h			\
 	events/arm_cortex_a9_events.h		\
 	events/arm_cortex_a15_events.h		\
 	events/arm_cortex_a57_events.h		\
-	events/arm_cortex_a53_events.h
+	events/arm_cortex_a53_events.h		\
+	events/arm_thunderx2_events.h
 
 INC_ARM64=events/arm_cortex_a57_events.h	\
 	  events/arm_cortex_a53_events.h
