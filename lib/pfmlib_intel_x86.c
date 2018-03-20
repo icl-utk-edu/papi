@@ -876,7 +876,10 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			fprintf(fp, "pmu: %s event%d: %s :: no description\n", pmu->name, i, pe[i].name);
 			error++;
 		}
-
+		if (pe[i].desc && strlen(pe[i].desc) == 0) {
+			fprintf(fp, "pmu: %s event%d: %s :: empty description\n", pmu->name, i, pe[i].name);
+			error++;
+		}
 		if (!pe[i].cntmsk) {
 			fprintf(fp, "pmu: %s event%d: %s :: cntmsk=0\n", pmu->name, i, pe[i].name);
 			error++;
@@ -936,7 +939,10 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 				fprintf(fp, "pmu: %s event%d: umask%d: %s :: no description\n", pmu->name, i, j, pe[i].umasks[j].uname);
 				error++;
 			}
-
+			if (pe[i].umasks[j].udesc && strlen(pe[i].umasks[j].udesc) == 0) {
+				fprintf(fp, "pmu: %s event%d: umask%d: %s :: empty description\n", pmu->name, i, j, pe[i].umasks[j].uname);
+				error++;
+			}
 			if (pe[i].ngrp && get_grpid(pe[i].umasks[j].grpid) >= pe[i].ngrp) {
 				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, get_grpid(pe[i].umasks[j].grpid), pe[i].ngrp);
 				error++;
