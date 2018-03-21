@@ -194,6 +194,18 @@ get_pcu_filt_band(void *this, pfm_snbep_unc_reg_t reg)
 	return reg.pcu.unc_event - PCU_FREQ_BAND0_CODE;
 }
 
+static inline void
+set_filters(void *this, pfm_snbep_unc_reg_t *filters, int event, int umask)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+
+	filters[0].val |= pe[event].umasks[umask].ufilters[0] & ((1ULL << 32)-1);
+	filters[0].val &= ~(pe[event].umasks[umask].ufilters[0] >> 32);
+
+	filters[1].val |= pe[event].umasks[umask].ufilters[1] & ((1ULL << 32)-1);
+	filters[1].val &= ~(pe[event].umasks[umask].ufilters[1] >>32);
+}
+
 int
 snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
@@ -253,8 +265,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 				 */
 				*umask |= ent->umasks[idx].ucode >> 8;
 
-				filters[0].val |= pe[e->event].umasks[idx].ufilters[0];
-				filters[1].val |= pe[e->event].umasks[idx].ufilters[1];
+				set_filters(this, filters, e->event, idx);
 
 				e->attrs[k].id = j; /* pattrs index */
 				e->attrs[k].ival = 0;
@@ -414,8 +425,8 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			last_grpid = grpid;
 
 			um = pe[e->event].umasks[a->idx].ucode;
-			filters[0].val |= pe[e->event].umasks[a->idx].ufilters[0];
-			filters[1].val |= pe[e->event].umasks[a->idx].ufilters[1];
+
+			set_filters(this, filters, e->event, a->idx);
 
 			um >>= 8;
 			umask2  |= um;
@@ -605,7 +616,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	e->codes[e->count++] = reg.val;
 
 	/*
-	 * handles C-box filter
+	 * handles filters
 	 */
 	if (filters[0].val || filters[1].val || has_cbo_tid)
 		e->codes[e->count++] = filters[0].val;
