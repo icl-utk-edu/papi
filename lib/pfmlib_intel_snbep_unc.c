@@ -211,7 +211,8 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 			   unsigned int msk,
 			   uint64_t *umask,
 			   pfm_snbep_unc_reg_t *filters,
-			   unsigned short max_grpid)
+			   unsigned short max_grpid,
+			   int *numasks)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const intel_x86_entry_t *ent;
@@ -271,6 +272,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 				e->attrs[k].ival = 0;
 				k++;
 
+				(*numasks)++;
 				added++;
 				if (intel_x86_eflag(this, e->event, INTEL_X86_GRP_EXCL))
 					goto done;
@@ -314,8 +316,8 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	pfm_snbep_unc_reg_t addr;
 	pfmlib_event_attr_info_t *a;
 	uint64_t val, umask1, umask2;
-	int k, ret;
-	int has_cbo_tid = 0;
+	int k, ret, numasks = 0;
+	int must_have_filt0 = 0;
 	int max_req_grpid = -1;
 	unsigned short grpid;
 	int grpcounts[INTEL_X86_NUM_GRP];
@@ -334,12 +336,15 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	reg.val = val = pe[e->event].code;
 
 	/* take into account hardcoded umask */
-	umask1 = (val >> 8) & 0xff;
+	umask1 = (val >> 8);
 	umask2 = umask1;
 
 	grpmsk = (1 << pe[e->event].ngrp)-1;
 
 	modmsk_r = pe[e->event].modmsk_req;
+
+	if (intel_x86_eflag(this, e->event, INTEL_X86_FORCE_FILT0))
+		must_have_filt0 = 1;
 
 	for(k=0; k < e->nattrs; k++) {
 		a = attr(e, k);
@@ -441,6 +446,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->idx].uname);
 
 			modmsk_r |= pe[e->event].umasks[a->idx].umodmsk_req;
+			numasks++;
 
 		} else if (a->type == PFM_ATTR_RAW_UMASK) {
 
@@ -454,6 +460,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			/* override umask */
 			umask2 = a->idx & 0xff;
 			ugrpmsk = grpmsk;
+			numasks++;
 		} else {
 			uint64_t ival = e->attrs[k].ival;
 			switch(a->idx) {
@@ -491,7 +498,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 						return PFM_ERR_ATTR_VAL;
 					}
 					reg.cbo.unc_tid = 1;
-					has_cbo_tid = 1;
+					must_have_filt0 = 1;
 					filters[0].cbo_filt.tid = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_TF;
 					break;
@@ -500,7 +507,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 						return PFM_ERR_ATTR_VAL;
 					reg.cbo.unc_tid = 1;
 					filters[0].cbo_filt.cid = ival;
-					has_cbo_tid = 1;
+					must_have_filt0 = 1;
 					umodmsk |= _SNBEP_UNC_ATTR_CF;
 					break;
 				case SNBEP_UNC_ATTR_CF1: /* core id */
@@ -508,7 +515,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 						return PFM_ERR_ATTR_VAL;
 					reg.cbo.unc_tid = 1;
 					filters[0].hswep_cbo_filt0.cid = ival; /* includes non-thread data */
-					has_cbo_tid = 1;
+					must_have_filt0 = 1;
 					umodmsk |= _SNBEP_UNC_ATTR_CF1;
 					break;
 				case SNBEP_UNC_ATTR_NF: /* node id filter0 */
@@ -572,10 +579,15 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	if (pe[e->event].numasks && (ugrpmsk != grpmsk || ugrpmsk == 0)) {
 		uint64_t um = 0;
 		ugrpmsk ^= grpmsk;
-		ret = snbep_unc_add_defaults(this, e, ugrpmsk, &um, filters, max_grpid);
+		ret = snbep_unc_add_defaults(this, e, ugrpmsk, &um, filters, max_grpid, &numasks);
 		if (ret != PFM_SUCCESS)
 			return ret;
 		umask2 |= um;
+	}
+	/* if event has umasks, then likely at least one must be set */
+	if (pe[e->event].numasks && numasks == 0) {
+		DPRINT("event has umasks but none specified\n");
+		return PFM_ERR_ATTR;
 	}
 
 	/*
@@ -616,7 +628,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	/*
 	 * handles filters
 	 */
-	if (filters[0].val || filters[1].val || has_cbo_tid)
+	if (filters[0].val || filters[1].val || must_have_filt0)
 		e->codes[e->count++] = filters[0].val;
 	if (filters[1].val)
 		e->codes[e->count++] = filters[1].val;
