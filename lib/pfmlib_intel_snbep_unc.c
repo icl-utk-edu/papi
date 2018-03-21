@@ -329,8 +329,6 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 
 	addr.val = 0;
 
-	pe = this_pe(this);
-
 	umask_str[0] = e->fstr[0] = '\0';
 
 	reg.val = val = pe[e->event].code;
