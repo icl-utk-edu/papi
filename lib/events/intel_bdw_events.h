@@ -2925,7 +2925,7 @@ static const intel_x86_entry_t intel_bdw_pe[]={
     .umasks = bdw_ept,
   },
   { .name   = "FP_ARITH",
-    .desc   = "Floating-point",
+    .desc   = "Floating-point instructions retired",
     .modmsk = INTEL_V4_ATTRS,
     .cntmsk = 0xf,
     .code = 0xc7,
