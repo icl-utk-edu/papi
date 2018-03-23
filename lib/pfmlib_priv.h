@@ -541,6 +541,7 @@ extern pfmlib_pmu_t intel_skx_unc_m3upi0_support;
 extern pfmlib_pmu_t intel_skx_unc_m3upi1_support;
 extern pfmlib_pmu_t intel_skx_unc_m3upi2_support;
 extern pfmlib_pmu_t intel_skx_unc_irp_support;
+extern pfmlib_pmu_t intel_knm_support;
 
 extern pfmlib_pmu_t intel_glm_support;
 extern pfmlib_pmu_t power4_support;

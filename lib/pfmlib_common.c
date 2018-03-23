@@ -368,6 +368,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_skx_unc_m3upi1_support,
 	&intel_skx_unc_m3upi2_support,
 	&intel_skx_unc_irp_support,
+	&intel_knm_support,
 	&intel_x86_arch_support, /* must always be last for x86 */
 #endif
 

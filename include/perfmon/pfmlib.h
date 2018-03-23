@@ -475,6 +475,7 @@ typedef enum {
 	PFM_PMU_INTEL_SKX_UNC_UPI0,	/* Intel Skylake-X UPI link 0 uncore */
 	PFM_PMU_INTEL_SKX_UNC_UPI1,	/* Intel Skylake-X UPI link 1 uncore */
 	PFM_PMU_INTEL_SKX_UNC_UPI2,	/* Intel Skylake-X UPI link 2 uncore */
+	PFM_PMU_INTEL_KNM,		/* Intel Knights Mill */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
