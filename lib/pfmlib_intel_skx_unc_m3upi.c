@@ -1,7 +1,7 @@
 /*
  * pfmlib_intel_skx_m3upi.c : Intel SkylakeX M3UPI uncore PMU
  *
- * Copyright (c) 2017 Google Inc. All rights reserved
+ * Copyright (c) 2017 Google LLC
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
