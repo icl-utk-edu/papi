@@ -414,7 +414,8 @@ typedef union {
 		unsigned long sid:6; /* source id */
 		unsigned long res0:8;
 		unsigned long state:10; /* llc lookup cacheline state */
-		unsigned long res1:37;
+		unsigned long res1:32;
+		unsigned long res2:5;
 	} skx_cha_filt0; /* skx cha filter0 */
 	struct {
 		unsigned long rem:1;
