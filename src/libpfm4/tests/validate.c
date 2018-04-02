@@ -118,7 +118,8 @@ static int
 validate_event_tables(void)
 {
 	pfm_pmu_info_t pinfo;
-	int i, ret, errors = 0;
+	pfm_pmu_t i;
+	int ret, errors = 0;
 
 	memset(&pinfo, 0, sizeof(pinfo));
 

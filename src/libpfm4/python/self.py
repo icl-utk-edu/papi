@@ -40,7 +40,7 @@ if __name__ == '__main__':
   if options.events:
     events = options.events.split(",")
   else:
-    raise "You need to specify events to monitor"
+    raise Exception("You need to specify events to monitor")
 
   s = perfmon.PerThreadSession(int(os.getpid()), events)
   s.start()
@@ -55,4 +55,4 @@ if __name__ == '__main__':
   # read the counts
   for i in range(0, len(events)):
     count = struct.unpack("L", s.read(i))[0]
-    print """%s\t%lu""" % (events[i], count)
+    print("""%s\t%lu""" % (events[i], count))

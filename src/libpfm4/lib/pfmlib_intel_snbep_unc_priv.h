@@ -29,6 +29,7 @@
  */
 #define INTEL_PMU_FL_UNC_OCC 0x10000	/* PMU has occupancy counter filters */
 #define INTEL_PMU_FL_UNC_CBO 0x20000	/* PMU is Cbox */
+#define INTEL_PMU_FL_UNC_CHA 0x40000	/* PMU is CHA (skylake and later) */
 
 
 #define SNBEP_UNC_ATTR_E		0
@@ -44,6 +45,14 @@
 #define SNBEP_UNC_ATTR_ISOC	       10 /* isochronous */
 #define SNBEP_UNC_ATTR_NC	       11 /* non-coherent */
 #define SNBEP_UNC_ATTR_CF1	       12 /* core-filter hswep */
+#define SNBEP_UNC_ATTR_TF1	       13 /* thread-filter skx */
+#define SNBEP_UNC_ATTR_CF2	       14 /* core-filter (src filter) skx */
+#define SNBEP_UNC_ATTR_LOC	       15 /* local node target skx */
+#define SNBEP_UNC_ATTR_REM	       16 /* remote node target skx */
+#define SNBEP_UNC_ATTR_LMEM	       17 /* near memory cacheable skx */
+#define SNBEP_UNC_ATTR_RMEM	       18 /* not near memory cacheable skx */
+#define SNBEP_UNC_ATTR_DNID	       19 /* destination node id */
+#define SNBEP_UNC_ATTR_RCSNID	       20 /* RCS node id */
 
 #define _SNBEP_UNC_ATTR_I	(1 << SNBEP_UNC_ATTR_I)
 #define _SNBEP_UNC_ATTR_E	(1 << SNBEP_UNC_ATTR_E)
@@ -58,6 +67,14 @@
 #define _SNBEP_UNC_ATTR_ISOC	(1 << SNBEP_UNC_ATTR_ISOC)
 #define _SNBEP_UNC_ATTR_NC	(1 << SNBEP_UNC_ATTR_NC)
 #define _SNBEP_UNC_ATTR_CF1	(1 << SNBEP_UNC_ATTR_CF1)
+#define _SNBEP_UNC_ATTR_TF1	(1 << SNBEP_UNC_ATTR_TF1)
+#define _SNBEP_UNC_ATTR_CF2	(1 << SNBEP_UNC_ATTR_CF2)
+#define _SNBEP_UNC_ATTR_LOC	(1 << SNBEP_UNC_ATTR_LOC)
+#define _SNBEP_UNC_ATTR_REM	(1 << SNBEP_UNC_ATTR_REM)
+#define _SNBEP_UNC_ATTR_LMEM	(1 << SNBEP_UNC_ATTR_LMEM)
+#define _SNBEP_UNC_ATTR_RMEM	(1 << SNBEP_UNC_ATTR_RMEM)
+#define _SNBEP_UNC_ATTR_DNID    (1 << SNBEP_UNC_ATTR_DNID)
+#define _SNBEP_UNC_ATTR_RCSNID  (1 << SNBEP_UNC_ATTR_RCSNID)
 
 #define SNBEP_UNC_IRP_ATTRS \
 	(_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
@@ -112,6 +129,9 @@
 #define HSWEP_UNC_PCU_ATTRS SNBEP_UNC_PCU_ATTRS
 
 #define BDX_UNC_PCU_ATTRS \
+	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T5)
+
+#define SKX_UNC_PCU_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
 
 #define SNBEP_UNC_PCU_BAND_ATTRS \
@@ -122,6 +142,8 @@
 
 #define HSWEP_UNC_PCU_BAND_ATTRS SNBEP_UNC_PCU_BAND_ATTRS
 #define BDX_UNC_PCU_BAND_ATTRS   SNBEP_UNC_PCU_BAND_ATTRS
+#define SKX_UNC_PCU_BAND_ATTRS  \
+	(SKX_UNC_PCU_ATTRS | _SNBEP_UNC_ATTR_FF)
 
 #define SNBEP_UNC_IMC_ATTRS \
 	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
@@ -188,6 +210,53 @@
 
 #define KNL_UNC_CHA_TOR_ATTRS    _SNBEP_UNC_ATTR_NF1
 
+#define SKX_UNC_CHA_ATTRS     \
+	(_SNBEP_UNC_ATTR_I   |\
+	 _SNBEP_UNC_ATTR_E   |\
+	 _SNBEP_UNC_ATTR_T8)
+
+#define SKX_UNC_CHA_FILT1_ATTRS \
+	(SKX_UNC_CHA_ATTRS   |\
+	 _SNBEP_UNC_ATTR_LOC |\
+	 _SNBEP_UNC_ATTR_REM |\
+	 _SNBEP_UNC_ATTR_LMEM|\
+	 _SNBEP_UNC_ATTR_RMEM|\
+	 _SNBEP_UNC_ATTR_NC  |\
+	 _SNBEP_UNC_ATTR_ISOC)
+
+#define SKX_UNC_IIO_ATTRS     \
+	(_SNBEP_UNC_ATTR_I   |\
+	 _SNBEP_UNC_ATTR_E   |\
+	 _SNBEP_UNC_ATTR_T8)
+
+#define SKX_UNC_IMC_ATTRS     \
+	(_SNBEP_UNC_ATTR_I   |\
+	 _SNBEP_UNC_ATTR_E   |\
+	 _SNBEP_UNC_ATTR_T8)
+
+#define SKX_UNC_IRP_ATTRS     \
+	(_SNBEP_UNC_ATTR_I   |\
+	 _SNBEP_UNC_ATTR_E   |\
+	 _SNBEP_UNC_ATTR_T8)
+
+#define SKX_UNC_M2M_ATTRS     \
+	(_SNBEP_UNC_ATTR_I   |\
+	 _SNBEP_UNC_ATTR_E   |\
+	 _SNBEP_UNC_ATTR_T8)
+
+#define SKX_UNC_M3UPI_ATTRS   \
+	(_SNBEP_UNC_ATTR_I   |\
+	 _SNBEP_UNC_ATTR_E   |\
+	 _SNBEP_UNC_ATTR_T8)
+
+#define SKX_UNC_UBO_ATTRS   SNBEP_UNC_UBO_ATTRS
+
+#define SKX_UNC_UPI_ATTRS   \
+	(_SNBEP_UNC_ATTR_I|_SNBEP_UNC_ATTR_E|_SNBEP_UNC_ATTR_T8)
+#define SKX_UNC_UPI_OPC_ATTRS   \
+	(SKX_UNC_UPI_ATTRS |\
+	 _SNBEP_UNC_ATTR_DNID| _SNBEP_UNC_ATTR_RCSNID)
+
 typedef union {
 	uint64_t val;
 	struct {
@@ -215,6 +284,36 @@ typedef union {
 		unsigned long unc_thres:8;	/* counter mask */
 		unsigned long unc_res3:32;	/* reserved */
 	} cbo; /* covers c-box */
+	struct {
+		unsigned long unc_event:8;	/* event code */
+		unsigned long unc_umask:8;	/* unit mask */
+		unsigned long unc_res1:1;	/* reserved */
+		unsigned long unc_rst:1;	/* reset */
+		unsigned long unc_edge:1;	/* edge detect */
+		unsigned long unc_tid:1;	/* tid filter enable */
+		unsigned long unc_ov:1;		/* overflow enable */
+		unsigned long unc_res2:1;	/* reserved */
+		unsigned long unc_en:1;		/* enable */
+		unsigned long unc_inv:1;	/* invert counter mask */
+		unsigned long unc_thres:8;	/* counter mask */
+		unsigned long unc_res3:32;	/* reserved */
+	} cha; /* covers skx cha */
+	struct {
+		unsigned long unc_event:8;	/* event code */
+		unsigned long unc_umask:8;	/* unit mask */
+		unsigned long unc_res1:1;	/* reserved */
+		unsigned long unc_rst:1;	/* reset */
+		unsigned long unc_edge:1;	/* edge detect */
+		unsigned long unc_tid:1;	/* tid filter enable */
+		unsigned long unc_ov:1;		/* overflow enable */
+		unsigned long unc_res2:1;	/* reserved */
+		unsigned long unc_en:1;		/* enable */
+		unsigned long unc_inv:1;	/* invert counter mask */
+		unsigned long unc_thres:8;	/* counter mask */
+		unsigned long unc_chmsk:8;	/* channel mask */
+		unsigned long unc_fcmsk:8;	/* fc mask */
+		unsigned long unc_res3:16;	/* reserved */
+	} iio; /* covers skx iio*/
 	struct {
 		unsigned long unc_event:8;	/* event code */
 		unsigned long unc_res1:6;	/* reserved */
@@ -311,6 +410,50 @@ typedef union {
 		unsigned long res2:32;
 	} hswep_cbo_filt1; /* hswep cbox filter1 */
 	struct {
+		unsigned long tid:3; /* thread 0-3 */
+		unsigned long sid:6; /* source id */
+		unsigned long res0:8;
+		unsigned long state:10; /* llc lookup cacheline state */
+		unsigned long res1:32;
+		unsigned long res2:5;
+	} skx_cha_filt0; /* skx cha filter0 */
+	struct {
+		unsigned long rem:1;
+		unsigned long loc:1;
+		unsigned long res0:1;
+		unsigned long all_opc:1;
+		unsigned long nm:1;
+		unsigned long not_nm:1;
+		unsigned long res1:3;
+		unsigned long opc0:10;
+		unsigned long opc1:10;
+		unsigned long res2:1;
+		unsigned long nc:1;
+		unsigned long isoc:1;
+		unsigned long res3:32;
+	} skx_cha_filt1; /* skx cha filter1 */
+	struct {
+		unsigned long opc:1;
+		unsigned long loc:1;
+		unsigned long rem:1;
+		unsigned long data:1;
+		unsigned long nondata:1;
+		unsigned long dualslot:1;
+		unsigned long sglslot:1;
+		unsigned long isoch:1;
+		unsigned long dnid:4;
+		unsigned long res1:1;
+		unsigned long en_dnidd:1;
+		unsigned long rcsnid:4;
+		unsigned long en_rcsnid:1;
+		unsigned long slot0:1;
+		unsigned long slot1:1;
+		unsigned long slot2:1;
+		unsigned long llcrd_non0:1;
+		unsigned long llcrd_implnull:1;
+		unsigned long res2:9;
+	} skx_upi_filt; /* skx upi basic_hdr_filt */
+	struct {
 		unsigned long filt0:8; /* band0 freq filter */
 		unsigned long filt1:8; /* band1 freq filter */
 		unsigned long filt2:8; /* band2 freq filter */
@@ -350,24 +493,46 @@ extern int  pfm_intel_ivbep_unc_detect(void *this);
 extern int  pfm_intel_hswep_unc_detect(void *this);
 extern int  pfm_intel_knl_unc_detect(void *this);
 extern int  pfm_intel_bdx_unc_detect(void *this);
+extern int  pfm_intel_skx_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int  pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx);
 extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info);
 
 static inline int
-is_cbo_filt_event(void *this, pfm_intel_x86_reg_t reg)
+is_cha_filt_event(void *this, int x, pfm_snbep_unc_reg_t reg)
 {
 	pfmlib_pmu_t *pmu = this;
-	uint64_t sel = reg.sel_event_select;
+	uint64_t sel = reg.com.unc_event;
 	/*
-	 * umask bit 0 must be 1 (OPCODE)
 	 * TOR_INSERT: event code 0x35
 	 * TOR_OCCUPANCY: event code 0x36
 	 * LLC_LOOKUP : event code 0x34
 	 */
-	return (pmu->flags & INTEL_PMU_FL_UNC_CBO)
-		&& (reg.sel_unit_mask & 0x1)
-		&& (sel == 0x35 || sel == 0x36 || sel == 0x34);
+	if (!(pmu->flags & INTEL_PMU_FL_UNC_CHA))
+		return 0;
+	if (x == 0)
+		return sel == 0x34;
+	if (x == 1)
+		return sel == 0x35 || sel == 0x36;
+	return 0;
+}
+
+
+static inline int
+is_cbo_filt_event(void *this, pfm_snbep_unc_reg_t reg)
+{
+	pfmlib_pmu_t *pmu = this;
+	uint64_t sel = reg.com.unc_event;
+	/*
+	 * Cbox-only: umask bit 0 must be 1 (OPCODE)
+	 *
+	 * TOR_INSERT: event code 0x35
+	 * TOR_OCCUPANCY: event code 0x36
+	 * LLC_LOOKUP : event code 0x34
+	 */
+	if (pmu->flags & INTEL_PMU_FL_UNC_CBO)
+		return (reg.com.unc_umask & 0x1) && (sel == 0x35 || sel == 0x36 || sel == 0x34);
+	return 0;
 }
 
 #endif /* __PFMLIB_INTEL_SNBEP_UNC_PRIV_H__ */

@@ -79,7 +79,8 @@ pfmlib_pmu_t intel_hswep_unc_pcu_support = {
 	.max_encoding		= 2,
 	.pe			= intel_hswep_unc_p_pe,
 	.atdesc			= snbep_unc_mods,
-	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK | INTEL_PMU_FL_UNC_OCC
+				| PFMLIB_PMU_FL_NO_SMPL,
 	.pmu_detect		= pfm_intel_hswep_unc_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_snbep_unc_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_intel_snbep_unc_get_perf_encoding),

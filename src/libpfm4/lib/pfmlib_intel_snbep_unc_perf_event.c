@@ -63,7 +63,7 @@ pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
 	struct perf_event_attr *attr = e->os_data;
-	pfm_intel_x86_reg_t reg;
+	pfm_snbep_unc_reg_t reg;
 	int ret;
 
 	if (!pmu->get_event_encoding[PFM_OS_NONE])
@@ -83,7 +83,10 @@ pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	attr->config = reg.val;
 
-	if (is_cbo_filt_event(this, reg) && e->count > 1) {
+	if (( is_cbo_filt_event(this, reg)
+	   || is_cha_filt_event(this, 0, reg)
+	   || is_cha_filt_event(this, 1, reg))
+	    && e->count > 1) {
 		if (e->count >= 2)
 			attr->config1 = e->codes[1];
 		if (e->count >= 3)

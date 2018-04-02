@@ -423,6 +423,59 @@ typedef enum {
 	PFM_PMU_AMD64_FAM16H,		/* AMD AMD64 Fam16h Jaguar */
 
 	PFM_PMU_INTEL_SKX,		/* Intel Skylake-X */
+
+	PFM_PMU_INTEL_SKX_UNC_CHA0,	/* Intel Skylake-X CHA core 0 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA1,	/* Intel Skylake-X CHA core 1 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA2,	/* Intel Skylake-X CHA core 2 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA3,	/* Intel Skylake-X CHA core 3 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA4,	/* Intel Skylake-X CHA core 4 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA5,	/* Intel Skylake-X CHA core 5 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA6,	/* Intel Skylake-X CHA core 6 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA7,	/* Intel Skylake-X CHA core 7 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA8,	/* Intel Skylake-X CHA core 8 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA9,	/* Intel Skylake-X CHA core 9 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA10,	/* Intel Skylake-X CHA core 10 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA11,	/* Intel Skylake-X CHA core 11 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA12,	/* Intel Skylake-X CHA core 12 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA13,	/* Intel Skylake-X CHA core 13 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA14,	/* Intel Skylake-X CHA core 14 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA15,	/* Intel Skylake-X CHA core 15 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA16,	/* Intel Skylake-X CHA core 16 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA17,	/* Intel Skylake-X CHA core 17 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA18,	/* Intel Skylake-X CHA core 18 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA19,	/* Intel Skylake-X CHA core 19 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA20,	/* Intel Skylake-X CHA core 20 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA21,	/* Intel Skylake-X CHA core 21 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA22,	/* Intel Skylake-X CHA core 22 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA23,	/* Intel Skylake-X CHA core 23 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA24,	/* Intel Skylake-X CHA core 24 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA25,	/* Intel Skylake-X CHA core 25 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA26,	/* Intel Skylake-X CHA core 26 uncore */
+	PFM_PMU_INTEL_SKX_UNC_CHA27,	/* Intel Skylake-X CHA core 27 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IIO0,	/* Intel Skylake-X IIO0 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IIO1,	/* Intel Skylake-X IIO1 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IIO2,	/* Intel Skylake-X IIO2 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IIO3,	/* Intel Skylake-X IIO3 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IIO4,	/* Intel Skylake-X IIO4 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IIO5,	/* Intel Skylake-X IIO5 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IMC0,	/* Intel Skylake-X IMC0 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IMC1,	/* Intel Skylake-X IMC1 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IMC2,	/* Intel Skylake-X IMC2 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IMC3,	/* Intel Skylake-X IMC3 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IMC4,	/* Intel Skylake-X IMC4 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IMC5,	/* Intel Skylake-X IMC5 uncore */
+	PFM_PMU_INTEL_SKX_UNC_IRP,	/* Intel Skylake-X IRP  uncore */
+	PFM_PMU_INTEL_SKX_UNC_M2M0,	/* Intel Skylake-X M2M0 uncore */
+	PFM_PMU_INTEL_SKX_UNC_M2M1,	/* Intel Skylake-X M2M1 uncore */
+	PFM_PMU_INTEL_SKX_UNC_M3UPI0,	/* Intel Skylake-X M3UPI0 uncore */
+	PFM_PMU_INTEL_SKX_UNC_M3UPI1,	/* Intel Skylake-X M3UPI1 uncore */
+	PFM_PMU_INTEL_SKX_UNC_M3UPI2,	/* Intel Skylake-X M3UPI2 uncore */
+	PFM_PMU_INTEL_SKX_UNC_PCU,	/* Intel Skylake-X PCU uncore */
+	PFM_PMU_INTEL_SKX_UNC_UBOX,	/* Intel Skylake-X U-Box uncore */
+	PFM_PMU_INTEL_SKX_UNC_UPI0,	/* Intel Skylake-X UPI link 0 uncore */
+	PFM_PMU_INTEL_SKX_UNC_UPI1,	/* Intel Skylake-X UPI link 1 uncore */
+	PFM_PMU_INTEL_SKX_UNC_UPI2,	/* Intel Skylake-X UPI link 2 uncore */
+	PFM_PMU_INTEL_KNM,		/* Intel Knights Mill */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
@@ -657,7 +710,7 @@ extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fst
 	for((x)=0; (x) < (z)->nattrs; (x) = (x)+1)
 
 #define pfm_for_all_pmus(x) \
-	for((x)= 0 ; (x) < PFM_PMU_MAX; (x)++)
+	for((x)= PFM_PMU_NONE ; (x) < PFM_PMU_MAX; (x)++)
 
 #ifdef __cplusplus /* extern C */
 }

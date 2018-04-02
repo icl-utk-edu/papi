@@ -34,7 +34,7 @@
  * maximum number of unit masks groups per event
  */
 #define INTEL_X86_NUM_GRP	8
-#define INTEL_X86_MAX_FILTERS	3
+#define INTEL_X86_MAX_FILTERS	2
 
 /*
  * unit mask description
@@ -45,7 +45,12 @@ typedef struct {
 	const char		*uequiv;/* name of event from which this one is derived, NULL if none */
 	uint64_t		ucntmsk;/* supported counters for umask (if set, supersedes cntmsk) */
 	uint64_t		ucode;  /* unit mask code */
-	uint64_t		ufilters[INTEL_X86_MAX_FILTERS]; /* extra encoding for event */
+	/*
+	 * extra 32-bit encoding for event
+	 * filter[0]: bit 0-31 is set mask, bit 32-63 is clear mask
+	 * filter[1]: bit 0-31 is set mask, bit 32-63 is clear mask
+	 */
+	uint64_t		ufilters[INTEL_X86_MAX_FILTERS];
 	unsigned int		uflags;	/* unit mask flags */
 	unsigned short		umodel; /* only available on this PMU model */
 	unsigned short		grpid;	/* unit mask group id */
@@ -76,21 +81,24 @@ typedef struct {
 /*
  * pme_flags value (event and unit mask)
  */
-#define INTEL_X86_NCOMBO		0x0001	/* unit masks within group cannot be combined */
-#define INTEL_X86_FALLBACK_GEN		0x0002	/* fallback from fixed to generic counter possible */
-#define INTEL_X86_PEBS			0x0004 	/* event supports PEBS or at least one umask supports PEBS */
-#define INTEL_X86_DFL			0x0008	/* unit mask is default choice */
-#define INTEL_X86_GRP_EXCL		0x0010	/* only one unit mask group can be selected */
-#define INTEL_X86_NHM_OFFCORE		0x0020	/* Nehalem/Westmere offcore_response */
-#define INTEL_X86_EXCL_GRP_GT		0x0040	/* exclude use of grp with id > own grp */
-#define INTEL_X86_FIXED			0x0080	/* fixed counter only event */
-#define INTEL_X86_NO_AUTOENCODE		0x0100	/* does not support auto encoding validation */
-#define INTEL_X86_CODE_OVERRIDE		0x0200	/* umask overrides event code */
-#define INTEL_X86_LDLAT			0x0400	/* needs load latency modifier (ldlat) */
-#define INTEL_X86_GRP_DFL_NONE		0x0800	/* ok if umask group defaults to no umask */
-#define INTEL_X86_FRONTEND		0x1000	/* Skylake Precise frontend */
-#define INTEL_X86_FETHR			0x2000	/* precise frontend umask requires threshold modifier (fe_thres) */
-#define INTEL_X86_EXCL_GRP_BUT_0	0x4000	/* exclude all groups except self and grpid = 0 */
+#define INTEL_X86_NCOMBO		0x00001	/* unit masks within group cannot be combined */
+#define INTEL_X86_FALLBACK_GEN		0x00002	/* fallback from fixed to generic counter possible */
+#define INTEL_X86_PEBS			0x00004 /* event supports PEBS or at least one umask supports PEBS */
+#define INTEL_X86_DFL			0x00008	/* unit mask is default choice */
+#define INTEL_X86_GRP_EXCL		0x00010	/* only one unit mask group can be selected */
+#define INTEL_X86_NHM_OFFCORE		0x00020	/* Nehalem/Westmere offcore_response */
+#define INTEL_X86_EXCL_GRP_GT		0x00040	/* exclude use of grp with id > own grp */
+#define INTEL_X86_FIXED			0x00080	/* fixed counter only event */
+#define INTEL_X86_NO_AUTOENCODE		0x00100	/* does not support auto encoding validation */
+#define INTEL_X86_CODE_OVERRIDE		0x00200	/* umask overrides event code */
+#define INTEL_X86_LDLAT			0x00400	/* needs load latency modifier (ldlat) */
+#define INTEL_X86_GRP_DFL_NONE		0x00800	/* ok if umask group defaults to no umask */
+#define INTEL_X86_FRONTEND		0x01000	/* Skylake Precise frontend */
+#define INTEL_X86_FETHR			0x02000	/* precise frontend umask requires threshold modifier (fe_thres) */
+#define INTEL_X86_EXCL_GRP_BUT_0	0x04000	/* exclude all groups except self and grpid = 0 */
+#define INTEL_X86_GRP_REQ		0x08000	/* grpid field split as (grpid & 0xff) | (required_grpid & 0xff) << 8 */
+#define INTEL_X86_FILT_UMASK		0x10000	/* Event use filter which may be encoded in umask */
+#define INTEL_X86_FORCE_FILT0		0x20000	/* Event must set filter0 even if zero value */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -337,6 +345,16 @@ intel_x86_attr2umask(void *this, int pidx, int attr_idx)
 		attr_idx--;
 	}
 	return i;
+}
+
+static inline unsigned short get_grpid(unsigned short  grpid)
+{
+	return grpid & 0xff;
+}
+
+static inline unsigned short get_req_grpid(unsigned short  grpid)
+{
+	return (grpid >> 8) & 0xff;
 }
 
 extern int pfm_intel_x86_detect(void);

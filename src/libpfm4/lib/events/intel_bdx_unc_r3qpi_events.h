@@ -687,7 +687,7 @@ static intel_x86_entry_t intel_bdx_unc_r3_pe[]={
   },
   { .name   = "UNC_R3_TXR_NACK",
     .code   = 0x26,
-    .desc   = "",
+    .desc   = "TBD",
     .modmsk = BDX_UNC_R3QPI_ATTRS,
     .cntmsk = 0x3,
     .ngrp   = 1,

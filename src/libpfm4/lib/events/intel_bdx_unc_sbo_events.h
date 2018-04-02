@@ -368,7 +368,7 @@ static intel_x86_entry_t intel_bdx_unc_s_pe[]={
   },
   { .name   = "UNC_S_TXR_ADS_USED",
     .code   = 0x4,
-    .desc   = "",
+    .desc   = "TBD",
     .modmsk = BDX_UNC_SBO_ATTRS,
     .cntmsk = 0xf,
     .ngrp   = 1,

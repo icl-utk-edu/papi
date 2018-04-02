@@ -502,7 +502,8 @@ show_info(char *event, regex_t *preg)
 {
 	pfm_pmu_info_t pinfo;
 	pfm_event_info_t info;
-	int i, j, ret, match = 0, pname;
+	pfm_pmu_t j;
+	int i, ret, match = 0, pname;
 	size_t len, l = 0;
 	char *fullname = NULL;
 
@@ -565,7 +566,7 @@ show_info_sorted(char *event, regex_t *preg)
 {
 	pfm_pmu_info_t pinfo;
 	pfm_event_info_t info;
-	unsigned int j;
+	pfm_pmu_t j;
 	int i, ret, n, match = 0;
 	size_t len, l = 0;
 	char *fullname = NULL;
@@ -781,7 +782,8 @@ main(int argc, char **argv)
 	char default_sep[2] = "\t";
 	char *ostr = NULL;
 	char **args;
-	int i, match;
+	pfm_pmu_t i;
+	int match;
 	regex_t preg;
 	int ret, c;
 

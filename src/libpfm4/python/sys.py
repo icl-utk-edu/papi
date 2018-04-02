@@ -48,7 +48,7 @@ if __name__ == '__main__':
     if options.events:
       events = options.events.split(",")
     else:
-      raise "You need to specify events to monitor"
+      raise Exception("You need to specify events to monitor")
 
     s = perfmon.SystemWideSession(cpus, events)
 
@@ -60,4 +60,4 @@ if __name__ == '__main__':
       for c in cpus:
         for i in range(0, len(events)):
           count = struct.unpack("L", s.read(c, i))[0]
-          print """CPU%d: %s\t%lu""" % (c, events[i], count)
+          print("""CPU%d: %s\t%lu""" % (c, events[i], count))
