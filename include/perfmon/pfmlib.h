@@ -475,7 +475,74 @@ typedef enum {
 	PFM_PMU_INTEL_SKX_UNC_UPI0,	/* Intel Skylake-X UPI link 0 uncore */
 	PFM_PMU_INTEL_SKX_UNC_UPI1,	/* Intel Skylake-X UPI link 1 uncore */
 	PFM_PMU_INTEL_SKX_UNC_UPI2,	/* Intel Skylake-X UPI link 2 uncore */
+
 	PFM_PMU_INTEL_KNM,		/* Intel Knights Mill */
+	PFM_PMU_INTEL_KNM_UNC_IMC0,	/* Intel Knights Mill IMC channel 0 uncore */
+	PFM_PMU_INTEL_KNM_UNC_IMC1,	/* Intel Knights Mill IMC channel 1 uncore */
+	PFM_PMU_INTEL_KNM_UNC_IMC2,	/* Intel Knights Mill IMC channel 2 uncore */
+	PFM_PMU_INTEL_KNM_UNC_IMC3,	/* Intel Knights Mill IMC channel 3 uncore */
+	PFM_PMU_INTEL_KNM_UNC_IMC4,	/* Intel Knights Mill IMC channel 4 uncore */
+	PFM_PMU_INTEL_KNM_UNC_IMC5,	/* Intel Knights Mill IMC channel 5 uncore */
+	PFM_PMU_INTEL_KNM_UNC_IMC_UCLK0,/* Intel Knights Mill IMC UCLK unit 0 uncore */
+	PFM_PMU_INTEL_KNM_UNC_IMC_UCLK1,/* Intel Knights Mill IMC UCLK unit 1 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK0,/* Intel Knights Mill EDC ECLK unit 0 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK1,/* Intel Knights Mill EDC ECLK unit 1 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK2,/* Intel Knights Mill EDC ECLK unit 2 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK3,/* Intel Knights Mill EDC ECLK unit 3 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK4,/* Intel Knights Mill EDC ECLK unit 4 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK5,/* Intel Knights Mill EDC ECLK unit 5 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK6,/* Intel Knights Mill EDC ECLK unit 6 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_ECLK7,/* Intel Knights Mill EDC ECLK unit 7 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK0,/* Intel Knights Mill EDC UCLK unit 0 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK1,/* Intel Knights Mill EDC UCLK unit 1 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK2,/* Intel Knights Mill EDC UCLK unit 2 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK3,/* Intel Knights Mill EDC UCLK unit 3 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK4,/* Intel Knights Mill EDC UCLK unit 4 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK5,/* Intel Knights Mill EDC UCLK unit 5 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK6,/* Intel Knights Mill EDC UCLK unit 6 uncore */
+	PFM_PMU_INTEL_KNM_UNC_EDC_UCLK7,/* Intel Knights Mill EDC UCLK unit 7 uncore */
+
+	PFM_PMU_INTEL_KNM_UNC_CHA0,	/* Intel Knights Mill CHA unit 0 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA1,	/* Intel Knights Mill CHA unit 1 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA2,	/* Intel Knights Mill CHA unit 2 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA3,	/* Intel Knights Mill CHA unit 3 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA4,	/* Intel Knights Mill CHA unit 4 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA5,	/* Intel Knights Mill CHA unit 5 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA6,	/* Intel Knights Mill CHA unit 6 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA7,	/* Intel Knights Mill CHA unit 7 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA8,	/* Intel Knights Mill CHA unit 8 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA9,	/* Intel Knights Mill CHA unit 9 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA10,	/* Intel Knights Mill CHA unit 10 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA11,	/* Intel Knights Mill CHA unit 11 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA12,	/* Intel Knights Mill CHA unit 12 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA13,	/* Intel Knights Mill CHA unit 13 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA14,	/* Intel Knights Mill CHA unit 14 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA15,	/* Intel Knights Mill CHA unit 15 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA16,	/* Intel Knights Mill CHA unit 16 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA17,	/* Intel Knights Mill CHA unit 17 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA18,	/* Intel Knights Mill CHA unit 18 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA19,	/* Intel Knights Mill CHA unit 19 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA20,	/* Intel Knights Mill CHA unit 20 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA21,	/* Intel Knights Mill CHA unit 21 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA22,	/* Intel Knights Mill CHA unit 22 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA23,	/* Intel Knights Mill CHA unit 23 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA24,	/* Intel Knights Mill CHA unit 24 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA25,	/* Intel Knights Mill CHA unit 25 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA26,	/* Intel Knights Mill CHA unit 26 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA27,	/* Intel Knights Mill CHA unit 27 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA28,	/* Intel Knights Mill CHA unit 28 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA29,	/* Intel Knights Mill CHA unit 29 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA30,	/* Intel Knights Mill CHA unit 30 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA31,	/* Intel Knights Mill CHA unit 31 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA32,	/* Intel Knights Mill CHA unit 32 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA33,	/* Intel Knights Mill CHA unit 33 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA34,	/* Intel Knights Mill CHA unit 34 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA35,	/* Intel Knights Mill CHA unit 35 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA36,	/* Intel Knights Mill CHA unit 36 uncore */
+	PFM_PMU_INTEL_KNM_UNC_CHA37,	/* Intel Knights Mill CHA unit 37 uncore */
+
+	PFM_PMU_INTEL_KNM_UNC_UBOX,	/* Intel Knights Mill Ubox uncore */
+	PFM_PMU_INTEL_KNM_UNC_M2PCIE,	/* Intel Knights Mill M2PCIe uncore */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

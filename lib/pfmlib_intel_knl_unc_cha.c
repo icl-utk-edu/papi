@@ -4,6 +4,10 @@
  * Copyright (c) 2016 Intel Corp. All rights reserved
  * Contributed by Peinan Zhang <peinan.zhang@intel.com>
  *
+ * Intel Knights Mill CHA uncore PMU support added April 2018
+ * Based on Intel's Knights Landing event table, which is shared with Knights Mill
+ * Contributed by Heike Jagode <jagode@icl.utk.edu>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -48,6 +52,33 @@ pfmlib_pmu_t intel_knl_unc_cha##n##_support = { \
         .atdesc                 = snbep_unc_mods,           \
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,  \
 	.pmu_detect		= pfm_intel_knl_unc_detect, \
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_snbep_unc_get_encoding, \
+	 PFMLIB_ENCODE_PERF(pfm_intel_snbep_unc_get_perf_encoding), \
+	 PFMLIB_OS_DETECT(pfm_intel_x86_perf_detect), \
+	.get_event_first	= pfm_intel_x86_get_event_first, \
+	.get_event_next		= pfm_intel_x86_get_event_next, \
+	.event_is_valid		= pfm_intel_x86_event_is_valid, \
+	.validate_table		= pfm_intel_x86_validate_table, \
+	.get_event_info		= pfm_intel_x86_get_event_info, \
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info, \
+	PFMLIB_VALID_PERF_PATTRS(pfm_intel_snbep_unc_perf_validate_pattrs), \
+	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs, \
+}; \
+ \
+pfmlib_pmu_t intel_knm_unc_cha##n##_support = { \
+	.desc			= "Intel Knights Mill CHA "#n" uncore", \
+	.name			= "knm_unc_cha"#n, \
+	.perf_name		= "uncore_cha_"#n, \
+	.pmu			= PFM_PMU_INTEL_KNM_UNC_CHA##n, \
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_knl_unc_cha_pe), \
+	.type			= PFM_PMU_TYPE_UNCORE, \
+	.num_cntrs		= 4, \
+	.num_fixed_cntrs	= 0, \
+	.max_encoding		= 1, \
+	.pe			= intel_knl_unc_cha_pe,   \
+        .atdesc                 = snbep_unc_mods,           \
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK,  \
+	.pmu_detect		= pfm_intel_knm_unc_detect, \
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_snbep_unc_get_encoding, \
 	 PFMLIB_ENCODE_PERF(pfm_intel_snbep_unc_get_perf_encoding), \
 	 PFMLIB_OS_DETECT(pfm_intel_x86_perf_detect), \

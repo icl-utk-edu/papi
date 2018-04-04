@@ -58,7 +58,7 @@ The library supports many PMUs. The current version can handle:
 		Intel RAPL (energy consumption)
 		Intel Knights Corner
 		Intel Knights Landing (core, uncore)
-		Intel Knights Mill
+		Intel Knights Mill (core, uncore)
 		Intel architectural perfmon v1, v2, v3
 
 	- For ARM:

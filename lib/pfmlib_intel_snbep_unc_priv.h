@@ -492,6 +492,7 @@ extern int  pfm_intel_snbep_unc_detect(void *this);
 extern int  pfm_intel_ivbep_unc_detect(void *this);
 extern int  pfm_intel_hswep_unc_detect(void *this);
 extern int  pfm_intel_knl_unc_detect(void *this);
+extern int  pfm_intel_knm_unc_detect(void *this);
 extern int  pfm_intel_bdx_unc_detect(void *this);
 extern int  pfm_intel_skx_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
