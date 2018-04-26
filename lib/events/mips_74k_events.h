@@ -592,7 +592,7 @@ static const mips_entry_t mips_74k_pe []={
     .desc = "OCP write requests accepted",
   },
   {
-    .name = "OCP_WRITE_CACHEABLE REQUESTS",
+    .name = "OCP_WRITE_CACHEABLE_REQUESTS",
     .code = 0xc6,
     .desc = "OCP cacheable write requests accepted",
   },
