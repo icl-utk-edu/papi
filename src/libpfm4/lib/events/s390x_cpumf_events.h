@@ -899,8 +899,8 @@ static const pme_cpumf_ctr_t cpumcf_z13_counters[] = {
 	{
 		.ctrnum = 128,
 		.ctrset = CPUMF_CTRSET_EXTENDED,
-		.name = "L1D_WRITES_RO_EXCL",
-		.desc = "Counter:128 Name:L1D_WRITES_RO_EXCL A directory"
+		.name = "L1D_RO_EXCL_WRITES",
+		.desc = "Counter:128 Name:L1D_RO_EXCL_WRITES A directory"
 			" write to the Level-1 Data cache where the line was"
 			" originally in a Read-Only state in the cache but"
 			" has been updated to be in the Exclusive state that"
@@ -1351,8 +1351,8 @@ static const pme_cpumf_ctr_t cpumcf_z14_counters[] = {
 	{
 		.ctrnum = 128,
 		.ctrset = CPUMF_CTRSET_EXTENDED,
-		.name = "L1D_WRITES_RO_EXCL",
-		.desc = "Counter:128 Name:L1D_WRITES_RO_EXCL A directory"
+		.name = "L1D_RO_EXCL_WRITES",
+		.desc = "Counter:128 Name:L1D_RO_EXCL_WRITES A directory"
 			" write to the Level-1 Data cache where the line was"
 			" originally in a Read-Only state in the cache but"
 			" has been updated to be in the Exclusive state that"

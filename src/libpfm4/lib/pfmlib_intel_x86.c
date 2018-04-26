@@ -293,6 +293,20 @@ done:
 	return PFM_SUCCESS;
 }
 
+#if 1
+static int
+intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
+{
+	return PFM_SUCCESS;
+}
+#else
+/* this routine is supposed to check that umask combination is valid
+ * w.r.t. PEBS. You cannot combine PEBS with non PEBS. But this is
+ * only a problem is PEBS is requested. But this is not known at this
+ * arch level. It is known at the OS interface level. Therefore we
+ * cannot really check this here.
+ * We keep the code around in case we need it later on
+ */
 static int
 intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 {
@@ -300,11 +314,6 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 	pfmlib_event_attr_info_t *a;
 	int numasks = 0, pebs = 0;
 	int i;
-
-#if 1
-	if (1) // !intel_x86_requesting_pebs(e))
-		return PFM_SUCCESS;
-#endif
 
 	/*
 	 * if event has no umask and is PEBS, then we are okay
@@ -314,7 +323,7 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 		return PFM_SUCCESS;
 
 	/*
-	 * if the event sets PEBS, then it measn at least one umask
+	 * if the event sets PEBS, then it means at least one umask
 	 * supports PEBS, so we need to check
 	 */
 	for (i = 0; i < e->nattrs; i++) {
@@ -336,6 +345,7 @@ intel_x86_check_pebs(void *this, pfmlib_event_desc_t *e)
 	 */
 	return pebs != numasks ? PFM_ERR_FEATCOMB : PFM_SUCCESS;
 }
+#endif
 
 static int
 intel_x86_check_max_grpid(void *this, pfmlib_event_desc_t *e, unsigned short max_grpid)

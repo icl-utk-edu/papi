@@ -97,7 +97,6 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 	memset(grpcounts, 0, sizeof(grpcounts));
 	memset(ncombo, 0, sizeof(ncombo));
 
-	pe = this_pe(this);
 	umask_str[0] = e->fstr[0] = '\0';
 
 	reg.val = 0;
