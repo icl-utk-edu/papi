@@ -10,10 +10,10 @@ MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
 SERIAL  = all_events all_native_events branches calibrate case1 case2 \
-	cmpinfo code2name derived describe memory disable_component \
+	cmpinfo code2name derived describe destroy disable_component \
 	dmem_info eventname exeinfo failed_events first flops \
 	get_event_component inherit high-level high-level2 hl_rates \
-	hwinfo ipc johnmay2 low-level matrix-hl \
+	hwinfo ipc johnmay2 low-level matrix-hl memory \
 	realtime remove_events reset second tenth version virttime \
 	zero zero_flip zero_named
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
@@ -195,6 +195,9 @@ describe: describe.c $(TESTLIB) $(PAPILIB)
 
 derived: derived.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) derived.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o derived
+
+destroy: destroy.c $(TESTLIB) $(TESTINS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) destroy.c $(TESTLIB) $(TESTINS) $(PAPILIB) $(LDFLAGS) -o destroy
 
 zero: zero.c $(TESTLIB) $(TESTINS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero.c $(TESTLIB) $(TESTINS) $(PAPILIB) $(LDFLAGS) -o zero
