@@ -4535,7 +4535,7 @@ again:
 	user_defined_events_count = 0;
 
 	/* Shutdown the entire component */
-	_papi_hwi_shutdown_highlevel(  );
+	//_papi_hwi_shutdown_highlevel(  );
 	_papi_hwi_shutdown_global_internal(  );
 	_papi_hwi_shutdown_global_threads(  );
 	for( i = 0; i < papi_num_components; i++ ) {
