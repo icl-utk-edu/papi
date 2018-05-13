@@ -35,7 +35,6 @@
 #include "cpus.h"
 #include "extras.h"
 #include "sw_multiplex.h"
-#include "papi_hl.h"
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
