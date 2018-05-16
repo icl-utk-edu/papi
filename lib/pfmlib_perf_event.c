@@ -45,10 +45,10 @@ static const pfmlib_attr_desc_t perf_event_mods[]={
 	PFM_ATTR_B("u", "monitor at user level"),	/* monitor user level */
 	PFM_ATTR_B("k", "monitor at kernel level"),	/* monitor kernel level */
 	PFM_ATTR_B("h", "monitor at hypervisor level"),	/* monitor hypervisor level */
-	PFM_ATTR_SKIP,
-	PFM_ATTR_SKIP,
-	PFM_ATTR_SKIP,
-	PFM_ATTR_SKIP,
+	PFM_ATTR_SKIP, /* to match index in oerf_event_ext_mods */
+	PFM_ATTR_SKIP, /* to match index in oerf_event_ext_mods */
+	PFM_ATTR_SKIP, /* to match index in oerf_event_ext_mods */
+	PFM_ATTR_SKIP, /* to match index in oerf_event_ext_mods */
 	PFM_ATTR_B("mg", "monitor guest execution"),	/* monitor guest level */
 	PFM_ATTR_B("mh", "monitor host execution"),	/* monitor host level */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
