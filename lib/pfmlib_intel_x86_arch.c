@@ -99,6 +99,9 @@ create_arch_event_table(unsigned int mask, int version)
 			*pe = intel_x86_arch_pe[i];
 
 			switch(version) {
+			case 4:
+				pe->modmsk = INTEL_V4_ATTRS;
+				break;
 			case 3:
 				pe->modmsk = INTEL_V3_ATTRS;
 				break;
