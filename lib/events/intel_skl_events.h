@@ -863,7 +863,7 @@ static const intel_x86_umask_t skl_mem_load_l3_miss_retired[]={
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
   { .uname = "REMOTE_FWD",
-    .udesc  = "Retired load instructions whose data sources was remote HITM",
+    .udesc  = "Retired load instructions whose data sources was forwarded from a remote cache",
     .ucode  = 0x800,
     .umodel = PFM_PMU_INTEL_SKX,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
