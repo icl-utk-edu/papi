@@ -1,6 +1,6 @@
 ALL = strtest zero zeronamed first second tenth description fdmemtest accum highlevel cost \
 	  case1 case2 clockres eventname fmatrixlowpapi fmatrixpapi fmatrixpapi2 flops fmultiplex1 \
-      johnmay2 fmultiplex2 avail
+      johnmay2 fmultiplex2 avail openmp
 
 .PHONY : all default ftests ftest clean install
 
@@ -47,6 +47,9 @@ accum: accum.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 
 highlevel: highlevel.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) highlevel.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) -o highlevel $(LDFLAGS)
+
+openmp: openmp.F $(TESTLIB) $(PAPILIB)
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) openmp.F $(TESTLIB) $(PAPILIB) -o openmp $(LDFLAGS) $(OMPCFLGS)
 
 zero: zero.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) zero.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) -o zero $(LDFLAGS)
