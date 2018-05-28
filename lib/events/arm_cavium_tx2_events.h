@@ -346,7 +346,7 @@ static const arm_entry_t arm_thunderx2_pe[]={
 	 .code = 0x60,
 	 .desc = "Bus access, read"
 	},
-	{.name = "BUS_ACCESS_LD",
+	{.name = "BUS_ACCESS_WR",
 	 .modmsk = ARMV8_ATTRS,
 	 .code = 0x61,
 	 .desc = "Bus access, write"
