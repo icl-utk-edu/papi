@@ -99,6 +99,9 @@ create_arch_event_table(unsigned int mask, int version)
 			*pe = intel_x86_arch_pe[i];
 
 			switch(version) {
+			case 4:
+				pe->modmsk = INTEL_V4_ATTRS;
+				break;
 			case 3:
 				pe->modmsk = INTEL_V3_ATTRS;
 				break;
@@ -208,6 +211,7 @@ pfmlib_pmu_t intel_x86_arch_support={
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK | PFMLIB_PMU_FL_ARCH_DFL,
 	.type			= PFM_PMU_TYPE_CORE,
 	.max_encoding		= 1,
+	.supported_plm		= INTEL_X86_PLM,
 
 	.pmu_detect		= pfm_intel_x86_arch_detect,
 	.pmu_init		= pfm_intel_x86_arch_init,

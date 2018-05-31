@@ -307,6 +307,11 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 				compact = 1;
 			/*
 			 * no priv level support
+			 * We assume that if we do not support hardware plm,
+			 * then the host, guest priv level filtering in not
+			 * supported as well, even though on some arch it is
+			 * achieved by the OS enabling/disabled on VMM entry
+			 * and exit.
 			 */
 			if (pmu->supported_plm == 0
 			    && (   e->pattrs[i].idx == PERF_ATTR_U
