@@ -328,6 +328,7 @@ gen_tracepoint_table(void)
 	int reuse_event = 0;
 	int numasks;
 	char *tracepoint_name;
+	int retlen;
 
 	err = get_debugfs_mnt();
 	if (err == -1)
@@ -351,7 +352,10 @@ gen_tracepoint_table(void)
 		if (!strcmp(d1->d_name, ".."))
 			continue;
 
-		snprintf(d2path, MAXPATHLEN, "%s/%s", debugfs_mnt, d1->d_name);
+		retlen = snprintf(d2path, MAXPATHLEN, "%s/%s", debugfs_mnt, d1->d_name);
+		/* ensure generated d2path string is valid */
+		if (retlen <= 0 || MAXPATHLEN <= retlen)
+			continue;
 
 		/* fails if d2path is not a directory */
 		dir2 = opendir(d2path);
@@ -398,10 +402,18 @@ gen_tracepoint_table(void)
 				continue;
 
 #ifdef HAS_OPENAT
-                        snprintf(idpath, MAXPATHLEN, "%s/id", d2->d_name);
+			retlen = snprintf(idpath, MAXPATHLEN, "%s/id", d2->d_name);
+			/* ensure generated d2path string is valid */
+			if (retlen <= 0 || MAXPATHLEN <= retlen)
+			continue;
+
                         fd = openat(dir2_fd, idpath, O_RDONLY);
 #else
-                        snprintf(idpath, MAXPATHLEN, "%s/%s/id", d2path, d2->d_name);
+                        retlen = snprintf(idpath, MAXPATHLEN, "%s/%s/id", d2path, d2->d_name);
+			/* ensure generated d2path string is valid */
+			if (retlen <= 0 || MAXPATHLEN <= retlen)
+			continue;
+
                         fd = open(idpath, O_RDONLY);
 #endif
 			if (fd == -1)
