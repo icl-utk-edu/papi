@@ -1103,6 +1103,34 @@ enum {
    int PAPI_num_components(void); /**< get the number of components available on the system */
    /** @} */
 
+/** \internal
+  @defgroup high_api  The High Level API 
+
+   The simple interface implemented by the following routines
+   allows the user to access and count specific hardware events from
+   both C and Fortran.
+   @{ */
+
+   int PAPI_hl_region_begin(const char* region); /**< begin a new region for reading hardware events */
+   int PAPI_hl_read(const char* region); /**< read hardware events inside a region */
+   int PAPI_hl_region_end(const char* region); /**< end region and store difference of hardware events in global data structure */
+/** @} */
+
+/** \internal
+  @defgroup high_api  The High Level API Advanced (Optional)
+
+   The following four routines allow the user to control initialization and
+   finalization of the high level interface as well as determine PAPI events
+   and trigger output generation from both C and Fortran.
+   @{ */
+
+   int PAPI_hl_init(); /**< intialize high level interface and create eventsets */
+   int PAPI_hl_finalize(); /**< shutdown eventsets and clear up everything */
+   int PAPI_hl_set_events(const char* events); /**< set specfic events to be recorded */
+   void PAPI_hl_print_output(); /**< generate output */
+
+/** @} */
+
 
 /* Backwards compatibility hacks.  Remove eventually? */
 int   PAPI_num_hwctrs(void); /**< return the number of hardware counters for the cpu. for backward compatibility. Don't use! */
