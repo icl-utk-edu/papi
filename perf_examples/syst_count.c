@@ -112,12 +112,19 @@ open_cgroup(char *name)
 {
         char path[MAX_PATH+1];
         char mnt[MAX_PATH+1];
-        int cfd;
+        int cfd = -1;
+	int retlen;
 
         if (cgroupfs_find_mountpoint(mnt, MAX_PATH+1))
                 errx(1, "cannot find cgroup fs mount point");
 
-        snprintf(path, MAX_PATH, "%s/%s", mnt, name);
+	retlen = snprintf(path, MAX_PATH, "%s/%s", mnt, name);
+
+	/* ensure generated d2path string is valid */
+	if (retlen <= 0 || MAX_PATH <= retlen) {
+		warn("Unable to generate path name %s/%s\n", mnt, name);
+		return cfd;
+	}
 
         cfd = open(path, O_RDONLY);
         if (cfd == -1)
