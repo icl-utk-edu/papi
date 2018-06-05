@@ -23,6 +23,7 @@
 # 
 # Self monitoring example. Copied from self.c
 
+from __future__ import print_function
 import os
 import optparse
 import random
