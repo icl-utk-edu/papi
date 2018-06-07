@@ -74,6 +74,11 @@ need to add the library directories as shown here.
 
  % export LD_LIBRARY_PATH=${CUDA_DIR}/lib64:${CUPTI_DIR}/lib64:${LD_LIBRARY_PATH}
 
+Before starting working with the cuda component, verify it's active by
+running:
+   % ./papi_component_avail"
+and check if it listed under the "Active Components" list.
+
 Test by running from the src directory
    % ./components/cuda/tests/simpleMultiGPU
 
@@ -82,6 +87,6 @@ is referred to the INSTALL.txt section "CREATING AND RUNNING
 COMPONENTS".
 
 To find a list of CUDA supported events.
-    % utils/papi_native_avail | grep CUDA
+    % utils/papi_native_avail | grep -i CUDA
 
 */
