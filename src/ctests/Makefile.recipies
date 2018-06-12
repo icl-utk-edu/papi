@@ -1,7 +1,9 @@
-OMP	= zero_omp omptough
+OMP	= omp_hl \
+	zero_omp omptough
 SMP	= zero_smp
 SHMEM	= zero_shmem
-PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads \
+PTHREADS= pthread_hl \
+	pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads \
 	zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads \
 	krentel_pthreads
 MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
@@ -9,7 +11,8 @@ MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = all_events all_native_events branches calibrate case1 case2 \
+SERIAL  = serial_hl serial_hl_advanced serial_hl_ll_comb \
+	all_events all_native_events branches calibrate case1 case2 \
 	cmpinfo code2name derived describe destroy disable_component \
 	dmem_info eventname exeinfo failed_events first \
 	get_event_component inherit \
@@ -138,6 +141,9 @@ overflow3_pthreads: overflow3_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 thrspecific: thrspecific.c $(TESTLIB) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) thrspecific.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o thrspecific -lpthread
 
+pthread_hl: pthread_hl.c $(TESTLIB) $(PAPILIB)
+	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) pthread_hl.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o pthread_hl -lpthread
+
 pthrtough: pthrtough.c $(TESTLIB) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) pthrtough.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o pthrtough -lpthread
 
@@ -167,6 +173,9 @@ zero_smp: zero_smp.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 
 zero_shmem: zero_shmem.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(SMPCFLGS) $(CFLAGS) $(TOPTFLAGS) zero_shmem.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o zero_shmem $(SMPLIBS)
+
+omp_hl: omp_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	-$(CC_R) $(INCLUDE) $(OMPCFLGS) $(CFLAGS) $(TOPTFLAGS) omp_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o omp_hl $(OMPLIBS)
 
 zero_omp: zero_omp.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC_R) $(INCLUDE) $(OMPCFLGS) $(CFLAGS) $(TOPTFLAGS) zero_omp.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o zero_omp $(OMPLIBS)
@@ -281,6 +290,15 @@ pernode: pernode.c $(TESTLIB) $(PAPILIB)
 
 dmem_info: dmem_info.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) dmem_info.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o dmem_info
+
+serial_hl: serial_hl.c $(TESTLIB) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o serial_hl -lpthread
+
+serial_hl_advanced: serial_hl_advanced.c $(TESTLIB) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_advanced.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o serial_hl_advanced -lpthread
+
+serial_hl_ll_comb: serial_hl_ll_comb.c $(TESTLIB) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_ll_comb.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o serial_hl_ll_comb -lpthread
 
 all_events: all_events.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) all_events.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o all_events

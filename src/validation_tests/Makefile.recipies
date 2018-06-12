@@ -40,7 +40,7 @@ matrix_multiply.o:	matrix_multiply.c matrix_multiply.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c matrix_multiply.c
 
 flops_validation_hl: flops_validation_hl.o $(TESTLIB) $(PAPILIB) flops_testcode.o
-	$(CC) -o flops_validation_hl flops_validation_hl.o $(TESTLIB) flops_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB) -pthread
+	$(CC) -o flops_validation_hl flops_validation_hl.o $(TESTLIB) flops_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB) -lpthread
 
 cycles_validation: cycles_validation.o $(TESTLIB) $(PAPILIB) display_error.o instructions_testcode.o
 	$(CC) -o cycles_validation cycles_validation.o $(TESTLIB) display_error.o instructions_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
