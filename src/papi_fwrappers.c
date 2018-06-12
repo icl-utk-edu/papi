@@ -1325,4 +1325,19 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 	*check = PAPI_set_opt( PAPI_INHERIT, &i );
 }
 
+
+ /* The High Level API Wrappers */
+
+PAPI_FCALL( papif_hl_region_begin, PAPIF_REGION_BEGIN,
+			( const char* name, int *check ) )
+{
+	*check = PAPI_hl_region_begin( name );
+}
+
+PAPI_FCALL( papif_hl_region_end, PAPIF_REGION_END,
+			( const char* name, int *check ) )
+{
+	*check = PAPI_hl_region_end( name );
+}
+
 #pragma GCC visibility pop

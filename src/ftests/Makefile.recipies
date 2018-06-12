@@ -1,10 +1,17 @@
 ALL = strtest zero zeronamed first second tenth description fdmemtest accum cost \
-	  case1 case2 clockres eventname fmatrixlowpapi fmultiplex1 \
-      johnmay2 fmultiplex2 avail
+	case1 case2 clockres eventname fmatrixlowpapi fmultiplex1 \
+	johnmay2 fmultiplex2 avail \
+	serial_hl
+
+# Workaround for new high-level API that uses pthread_mutex_trylock
+LDFLAGS += -lpthread
 
 .PHONY : all default ftests ftest clean install
 
 all default ftests ftest: $(ALL)
+
+serial_hl: serial_hl.F $(TESTLIB) $(PAPILIB)
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) serial_hl.F $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o serial_hl
 
 clockres: clockres.F $(TESTLIB) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) clockres.F $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o clockres
