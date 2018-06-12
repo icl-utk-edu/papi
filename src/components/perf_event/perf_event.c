@@ -398,6 +398,7 @@ static int map_perf_event_errors_to_papi(int perf_event_error) {
       case ENOENT:
 	   ret = PAPI_ENOEVNT;
            break;
+	case ESRCH:	/* If cannnot find process to attach to */
       case ENOSYS:
       case EAGAIN:
       case EBUSY:
