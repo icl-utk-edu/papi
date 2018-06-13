@@ -656,8 +656,8 @@ static const intel_x86_umask_t skl_l2_rqsts[]={
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "DEMAND_DATA_RD_HIT",
-    .udesc  = "Demand Data Read requests that hit L2 cache",
-    .ucode  = 0x4100,
+    .udesc  = "Demand Data Read requests, initiated by load instructions, that hit L2 cache",
+    .ucode  = 0xc100,
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "DEMAND_RFO_MISS",
@@ -673,7 +673,7 @@ static const intel_x86_umask_t skl_l2_rqsts[]={
   },
   { .uname = "DEMAND_RFO_HIT",
     .udesc  = "RFO requests that hit L2 cache",
-    .ucode  = 0x4200,
+    .ucode  = 0xc200,
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "RFO_HIT",
@@ -694,7 +694,7 @@ static const intel_x86_umask_t skl_l2_rqsts[]={
   },
   { .uname = "CODE_RD_HIT",
     .udesc  = "L2 cache hits when fetching instructions, code reads",
-    .ucode  = 0x4400,
+    .ucode  = 0xc400,
     .uflags = INTEL_X86_NCOMBO,
   },
   { .uname = "MISS",
@@ -1076,7 +1076,12 @@ static const intel_x86_umask_t skl_rob_misc_events[]={
   { .uname = "LBR_INSERTS",
     .udesc  = "Count each time an new Last Branch Record (LBR) is inserted",
     .ucode  = 0x2000,
-    .uflags = INTEL_X86_NCOMBO | INTEL_X86_DFL,
+    .uflags = INTEL_X86_NCOMBO,
+  },
+  { .uname = "PAUSE_INST",
+    .udesc  = "Count number of retired PAUSE instructions (that do not end up with a VMEXIT to the VMM; TSX aborted instructions may be counted). This event is not supported on first SKL and KBL processors",
+    .ucode  = 0x4000,
+    .uflags = INTEL_X86_NCOMBO,
   },
 };
 
@@ -2178,6 +2183,13 @@ static const intel_x86_umask_t skl_core_snoop_response[]={
    },
 };
 
+static const intel_x86_umask_t skl_partial_rat_stalls[]={
+   { .uname  = "SCOREBOARD",
+     .udesc  = "Count core cycles where the pipeline is stalled due to serialization operations",
+     .ucode = 0x100,
+     .uflags= INTEL_X86_DFL,
+   },
+};
 
 static const intel_x86_entry_t intel_skl_pe[]={
   { .name   = "UNHALTED_CORE_CYCLES",
@@ -2922,6 +2934,15 @@ static const intel_x86_entry_t intel_skl_pe[]={
     .numasks = LIBPFM_ARRAY_SIZE(skl_core_snoop_response),
     .ngrp = 1,
     .umasks = skl_core_snoop_response,
+  },
+  { .name   = "PARTIAL_RAT_STALLS",
+    .desc   = "RAT stalls",
+    .modmsk = INTEL_V4_ATTRS,
+    .cntmsk = 0xf,
+    .code = 0x59,
+    .numasks = LIBPFM_ARRAY_SIZE(skl_partial_rat_stalls),
+    .ngrp = 1,
+    .umasks = skl_partial_rat_stalls,
   },
   { .name   = "OFFCORE_REQUESTS_BUFFER",
     .desc   = "Offcore requests buffer",
