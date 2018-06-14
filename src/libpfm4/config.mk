@@ -111,7 +111,7 @@ endif
 #
 VERSION=4
 REVISION=10
-AGE=0
+AGE=1
 
 #
 # Where should things (lib, headers, man) go in the end.

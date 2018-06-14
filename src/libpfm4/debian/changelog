@@ -1,3 +1,9 @@
+libpfm4 (10.1) unstable; urgency=low
+  * fix Cavium Thunder X2 build issues
+  * Update Skylake event table
+
+ -- Stephane Eranian <eranian@gmail.com>  Thu, 13 Jun  2018 23:40:01 +0200
+
 libpfm4 (10.0) unstable; urgency=low
   * add support for Skylake X uncore PMUs
   * add support for Cavium Thunder X2 core PMU
