@@ -1,0 +1,65 @@
+/**
+* @file:   README
+* CVS:     $Id$
+* @author: Heike Jagode (jagode@icl.utk.edu)
+* @author: Tony Castaldo (tonycastaldo@icl.utk.edu) & Jiali Li (jli111@vols.utk.edu)
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: pcp
+*/
+
+General Information
+-------------------
+
+/*TODO*/
+/*HJ: will add more details*/
++++ This component only supports the 
+    Performance Metrics Domain agent: pmda=perfevent
+...
++++ Purpose: Enable monitoring of P9 next event via PCP without
+             elevated privilege.
+...
++++ P9 nest counters: any number of counters can be monitored
+                      at any time. Meaning, there is no limitation
+                      similar to P9 core counter monitoring, which
+                      is limited to the number of counters (on P9
+                      there are 6 counters: 4 programmable and
+                      2 fixed (cycles, instructions completed).
+...
+
+
+How to install PAPI with the PCP component?
+-------------------------------------------
+
+This PAPI PCP component has been developed and tested using PCP
+version 3.12.2.
+
+This component uses the PCP location from the environment (or looks
+for /usr by default).  Please set PCP_DIR during builds so that
+the component can find the required header files and library.
+
+Configure PAPI with PCP enabled.
+    % cd src
+    % ./configure --prefix=<prefix-location> --with-components="pcp"
+
+Build with PCP_DIR specified
+    % export PCP_DIR=/usr
+    % make && make install
+
+Testing the component requires that libraries for PAPI and PCP
+can be found or are statically linked in to the executable.  You may
+need to add the library directories as shown here.
+
+    % export LD_LIBRARY_PATH=${PCP_DIR}/lib64:${LD_LIBRARY_PATH}
+
+For general information on how to create and run components, the user
+is referred to the INSTALL.txt section "CREATING AND RUNNING
+COMPONENTS".
+
+
+To check if PCP was successfully installed with PAPI.
+    % <prefix-location>/bin/papi_component_avail
+
+To find a list of PCP supported events.
+    % <prefix-location>/bin/papi_native_avail | grep pcp
+
+*/

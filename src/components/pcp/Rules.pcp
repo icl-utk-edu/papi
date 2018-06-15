@@ -1,0 +1,15 @@
+# define where pcp lib is to be found. (just / means use system lib64).
+PCP_DIR ?= /usr/lib64/pcp
+
+COMPSRCS += components/pcp/linux-pcp.c
+COMPOBJS += linux-pcp.o
+CFLAGS += -I/usr/include/pcp -I/home/tonycastaldo/papi/src/ 
+LDFLAGS += -L/usr/lib64 -lpapi
+
+# The below do not get expanded. I think the make line is constructed from the above, alone.
+# CFLAGS += -fverbose-asm -Wa,-adhln=linux-pcp.s 
+
+#We produce a pre-compile with macro expansions, since we use them to reduce repetititve code.
+linux-pcp.o: components/pcp/linux-pcp.c 
+	$(CC) -E $(LIBCFLAGS) $(OPTFLAGS) -c components/pcp/linux-pcp.c -o linux-pcp.pre
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/pcp/linux-pcp.c -o linux-pcp.o 
