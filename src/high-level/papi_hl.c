@@ -26,6 +26,11 @@
 #include "papi.h"
 #include "papi_hl_priv.h"
 
+/* For dynamic linking to libpapi */
+/* Weak symbol for pthread_mutex_trylock to avoid additional linking
+ * against libpthread when not used.*/
+#pragma weak pthread_mutex_trylock
+int pthread_mutex_trylock(pthread_mutex_t *mutex); __attribute__((weak));
 
 void _internal_onetime_library_init(void)
 {
