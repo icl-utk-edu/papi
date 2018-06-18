@@ -294,7 +294,7 @@ dist:
 
 install-all: install install-tests
 
-install: install-hl-scripts install-lib install-man install-utils install-pkgconf
+install: install-lib install-man install-utils install-hl-scripts install-pkgconf
 
 install-hl-scripts:
 	cp high-level/scripts/papi_hl_output_writer.py $(DESTDIR)$(BINDIR)
