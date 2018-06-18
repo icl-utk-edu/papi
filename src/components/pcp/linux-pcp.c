@@ -37,9 +37,9 @@
 #endif 
 
 // Event Name filters, used in init_component for the routine pmTraversePMNS(). Differs by system.
-  #define AGENT_NAME "xfs"          /* Saturn PCP. */
+//#define AGENT_NAME "xfs"          /* Saturn PCP. */
 //#define AGENT_NAME "mem"          /* Saturn PCP. */
-//#define AGENT_NAME "perf_event"   /* Power9 PCP. */
+  #define AGENT_NAME "perfevent"    /* Power9 PCP. */
 //#define AGENT_NAME ""             /* Get it all! */
 
 /* To remove redefined warnings */
@@ -49,8 +49,8 @@
 #undef PACKAGE_STRING
 #undef PACKAGE_VERSION
 
-#include <pmapi.h> // See https://pcp.io/man/man3/pmapi.3.html for routines.
-#include <impl.h>  // also a PCP file.  
+#include <pcp/pmapi.h> // See https://pcp.io/man/man3/pmapi.3.html for routines.
+#include <pcp/impl.h>  // also a PCP file.  
 
 #define MYPCPLIB "libpcp.so"  // Name of my PCP library. 
 
@@ -96,7 +96,7 @@ typedef struct _pcp_register
 //-----------------------------------------------------------------------------
 // WARNING: Do NOT expect pointers into the pcp_event_info[] array to remain
 // valid during processing; the list is realloc() to make room and this can
-// invalidate the pointer. (Hard won knowledge). 
+// i_nvalidate the pointer. (Hard won knowledge). 
 //-----------------------------------------------------------------------------
 typedef struct _pcp_event_info               // an array of these is populated by our pcp create event routine.
 {
@@ -799,6 +799,12 @@ static int _pcp_init_component(int cidx)
    sEventCount = 0;                                                     // begin at zero.
    _time_gettimeofday(&t1, NULL);
    ret = pcp_pmTraversePMNS(AGENT_NAME, cbPopulateNameOnly);            // Timed on Saturn [Intel Xeon 2.0GHz]; typical 9ms, range 8.5-10.5ms.
+   if (ret < 0) {                                                       // Failure...
+      fprintf(stderr, "%s:%i pmTraversePMNS failed; ret=%i [%s]\n", 
+         __FILE__, __LINE__, ret, pcp_pmErrStr(ret)); 
+      return PAPI_ENOSUPP;                                              // Cannot support it.
+   }      
+      
    _time_gettimeofday(&t2, NULL);
    _time_fprintf(stderr, "pmTraversePMNS PopulateNameOnly took %li uS.\n", 
       (mConvertUsec(t2)-mConvertUsec(t1)));
@@ -806,6 +812,12 @@ static int _pcp_init_component(int cidx)
                "sEventInfoBlock=%i.\n", 
       sEventCount, sEventInfoSize, sEventInfoBlock);
   
+   if (sEventCount < 1) {                                               // Failure...
+      fprintf(stderr, "%s:%i pmTraversePMNS returned zero events for AGENT=\"%s\". Failing.\n", 
+         __FILE__, __LINE__, AGENT_NAME);
+      return PAPI_ENOSUPP;                                              // Can't work with no names!
+   }
+
    int i,j;
    char **allNames=calloc(sEventCount, sizeof(char*));                  // Make an array for all names. 
    for (i=0; i<sEventCount; i++) {                                      // .. 
@@ -814,12 +826,42 @@ static int _pcp_init_component(int cidx)
 
    pmID *allPMID=calloc(sEventCount, sizeof(pmID));                     // Make an array for results.
 
+   //----------------------------------------------------------------
+   // Unlike Saturn, on the Power9 we get an 'IPC protocol failure' 
+   // if we try to read more than 946 names at a time. This is some
+   // limitation on a communication packet size. On our test system
+   // Power9; the maximum number we can read is 946. To allow leeway
+   // for other possible values; we read in blocks of 256.
+   //----------------------------------------------------------------
+   #define LNBLOCK 256                                                  /* Power9 gets IPC errors if count is too large. */
+
    _time_gettimeofday(&t1, NULL);
-   ret = pcp_pmLookupName(sEventCount, allNames, allPMID);              // Get all the pmid at once.
+
+   i=0;                                                                 // Starting index for allPMID.
+   while (i<sEventCount) {                                              // read in blocks of LNBLOCK.
+      j = sEventCount-i;                                                // .. presume we can read the rest.
+      if (j > LNBLOCK) j=LNBLOCK;                                       // .. reduce if we cannot.
+      ret = pcp_pmLookupName(j, allNames+i, allPMID+i);                 // .. Get a block of PMIDs for a block of names.
+      if (ret < 0) {                                                    // .. Failure...
+         fprintf(stderr, "%s:%i pmLookupName for %i names failed; ret=%i [%s]. Failing.\n", 
+            __FILE__, __LINE__, sEventCount, ret, pcp_pmErrStr(ret));
+         if (ret == PM_ERR_IPC) {
+            fprintf(stderr, "This is a communications error with the daemon; one known cause\n"
+                            "is if our read block is too large; reducing LNBLOCK in the code\n"
+                            "may solve this issue.\n");
+         }
+
+         return PAPI_ENOSUPP;                                           // .. .. Can't work with no names!
+      }
+
+      i+=j;                                                             // .. Adjust the pointer forward by what we read.
+   } // end while to read names in chunks, and avoid IPC error. 
+
    _time_gettimeofday(&t2, NULL);
    _time_fprintf(stderr, "pmLookupName for all took %li uS, ret=%i.\n", 
       (mConvertUsec(t2)-mConvertUsec(t1)), ret );
-  
+
+   #undef LNBLOCK                                                       /* Discard constant; no further use. */  
    for (i=0; i<sEventCount; i++) pcp_event_info[i].pmid = allPMID[i];   // copy all the pmid over to array.
 
    pmResult *allFetch = NULL;                                           // result of pmFetch. 
