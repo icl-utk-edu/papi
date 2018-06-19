@@ -58,7 +58,7 @@ shared: libpapi.so libpapi.so.$(PAPIVER)
 
 libpapi.so libpapi.so.$(PAPIVER): $(SHLIB)
 	ln -sf $(SHLIB) $@
-	   
+
 $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 	rm -f $(SHLIB) libpapi.so libpapi.so.$(PAPIVER); 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS) $(LDFLAGS)
