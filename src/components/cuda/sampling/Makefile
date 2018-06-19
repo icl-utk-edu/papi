@@ -3,7 +3,7 @@
 CUDA_DIR ?= /opt/cuda
 CUPTI_DIR ?= $(CUDA_DIR)/extras/CUPTI
 CFG = -I$(CUDA_DIR)/include  -I$(CUPTI_DIR)/include
-LDG = -L$(CUDA_DIR)/lib64  -L$(CUPTI_DIR)/lib64
+LDG = -L$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64/stubs  -L$(CUPTI_DIR)/lib64
 NVCC = $(CUDA_DIR)/bin/nvcc
 
 all:

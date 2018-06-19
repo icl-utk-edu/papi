@@ -12,7 +12,7 @@ CUDA_DIR ?= $(CUDA_PATH)
 NVCC = $(CUDA_DIR)/bin/nvcc 
 NVCFLAGS = -g -ccbin='$(CC)'
 INCLUDE += -I$(CUDA_DIR)/include -I$(CUPTI_DIR)/include 
-CUDALIBS = -L$(CUDRV_DIR)/lib64 -L$(CUDA_DIR)/lib64 -L$(CUPTI_DIR)/lib64 -lcudart -lcupti -lcuda 
+CUDALIBS = -L$(CUDRV_DIR)/lib64 -L$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64/stubs -L$(CUPTI_DIR)/lib64 -lcudart -lcupti -lcuda 
 PAPILIB += -L../../../libpfm4/lib -lpfm
 default: $(TESTS)
 
