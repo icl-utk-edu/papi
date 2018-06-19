@@ -1328,16 +1328,71 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 
  /* The High Level API Wrappers */
 
-PAPI_FCALL( papif_hl_region_begin, PAPIF_REGION_BEGIN,
-			( const char* name, int *check ) )
+#if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_hl_region_begin, PAPIF_HL_REGION_BEGIN,
+			( char* name, int *check, int Event_len ) )
+{
+	char tmp[PAPI_MAX_STR_LEN];
+	Fortran2cstring( tmp, name, PAPI_MAX_STR_LEN, Event_len );
+	*check = PAPI_hl_region_begin( tmp );
+}
+#else
+PAPI_FCALL( papif_hl_region_begin, PAPIF_HL_REGION_BEGIN,
+			( char* name, int *check ) )
 {
 	*check = PAPI_hl_region_begin( name );
 }
+#endif
 
-PAPI_FCALL( papif_hl_region_end, PAPIF_REGION_END,
-			( const char* name, int *check ) )
+#if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_hl_region_end, PAPIF_HL_REGION_END,
+			( char* name, int *check, int Event_len ) )
+{
+	char tmp[PAPI_MAX_STR_LEN];
+	Fortran2cstring( tmp, name, PAPI_MAX_STR_LEN, Event_len );
+	*check = PAPI_hl_region_end( tmp );
+}
+#else
+PAPI_FCALL( papif_hl_region_end, PAPIF_HL_REGION_END,
+			( char* name, int *check ) )
 {
 	*check = PAPI_hl_region_end( name );
+}
+#endif
+
+PAPI_FCALL( papif_hl_init, PAPIF_HL_INIT,
+			( int *check ) )
+{
+	*check = PAPI_hl_init();
+}
+
+PAPI_FCALL( papif_hl_finalize, PAPIF_HL_FINALIZE,
+			( int *check ) )
+{
+	*check = PAPI_hl_finalize();
+}
+
+#if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_hl_set_events, PAPIF_HL_SET_EVENTS,
+			( char* name, int *check, int Event_len ) )
+{
+	char tmp[PAPI_MAX_STR_LEN];
+	Fortran2cstring( tmp, name, PAPI_MAX_STR_LEN, Event_len );
+	*check = PAPI_hl_set_events( tmp );
+}
+#else
+PAPI_FCALL( papif_hl_set_events, PAPIF_HL_SET_EVENTS,
+			( char* name, int *check ) )
+{
+	*check = PAPI_hl_set_events( name );
+}
+#endif
+
+PAPI_FCALL( papif_hl_print_output, PAPIF_HL_PRINT_OUTPUT,
+			( void *check ) )
+{
+	(void) check;
+	PAPI_hl_print_output();
 }
 
 #pragma GCC visibility pop

@@ -1,14 +1,17 @@
 ALL = strtest zero zeronamed first second tenth description fdmemtest accum cost \
 	case1 case2 clockres eventname fmatrixlowpapi fmultiplex1 \
 	johnmay2 fmultiplex2 avail \
-	serial_hl
+	serial_hl serial_hl_advanced
 
 .PHONY : all default ftests ftest clean install
 
 all default ftests ftest: $(ALL)
 
-serial_hl: serial_hl.F $(TESTLIB) $(PAPILIB)
-	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) serial_hl.F $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o serial_hl -lpthread
+serial_hl: serial_hl.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) serial_hl.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl -lpthread
+
+serial_hl_advanced: serial_hl_advanced.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) serial_hl_advanced.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_advanced -lpthread
 
 clockres: clockres.F $(TESTLIB) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) clockres.F $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o clockres
