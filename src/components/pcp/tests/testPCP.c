@@ -34,7 +34,7 @@ int main(int argc, char **argv) {                                       // args 
    gettimeofday(&t1, NULL);
    ret = PAPI_library_init( PAPI_VER_CURRENT );
    gettimeofday(&t2, NULL);
-   if (!quiet) printf("PAPI_Library_init run time = %9.1f uS\n", (mConvertUsec(t2)-mConvertUsec(t1)));
+   if (!quiet) fprintf(stderr, "PAPI_Library_init run time = %9.1f uS\n", (mConvertUsec(t2)-mConvertUsec(t1)));
  
    if (ret != PAPI_VER_CURRENT) {                                       // if we failed, 
       test_fail(__FILE__, __LINE__, "PAPI_library_init failed\n", ret); // report.
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {                                       // args 
 
 
 	if (!quiet) {
-	   printf( "Testing PCP Component with PAPI %d.%d.%d\n",
+	   fprintf(stderr, "Testing PCP Component with PAPI %d.%d.%d\n",
 			PAPI_VERSION_MAJOR( PAPI_VERSION ),
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ) );
@@ -50,10 +50,10 @@ int main(int argc, char **argv) {                                       // args 
 
    // PAPI_init_thread should be run only once, immediately after 
    // library init. 
-   ret = PAPI_thread_init(dummyThreadId);                               // PCP doesn't do anything, but should not err or crash on thread init.
-   if (ret != PAPI_OK) {                                                // If we get an error, this tester needs updating; pcp code has changed.
-      test_fail(__FILE__, __LINE__, "PAPI_thread_init failed; this tester needs to be updated.\n", ret); // report.
-   }
+// ret = PAPI_thread_init(dummyThreadId);                               // PCP doesn't do anything, but should not err or crash on thread init.
+// if (ret != PAPI_OK) {                                                // If we get an error, this tester needs updating; pcp code has changed.
+//    test_fail(__FILE__, __LINE__, "PAPI_thread_init failed; this tester needs to be updated.\n", ret); // report.
+// }
    
    // Find our component, pcp; 
    k = PAPI_num_components();                                           // get number of components.
@@ -77,13 +77,14 @@ int main(int argc, char **argv) {                                       // args 
    }
 
 	if (!quiet) {
-	  printf("\nFound PCP Component at id %d\n",cid);
+	  fprintf(stderr, "Found PCP Component at id %d\n",cid);
 	}
 
    // Library is initialized and pcp component is identified.
 
    // Set up to exercise the code for _pcp_ctl; it does nothing 
-   // but prove it doesn't crash if called.
+   // but prove it doesn't crash if called. The actual call to
+   // PAPI_set_opt is below; it requires an eventset. 
 
    PAPI_option_t aDomOpt;                                            // make a domain option.
    aDomOpt.domain.def_cidx = cid;                                    // fill it out.
@@ -93,6 +94,7 @@ int main(int argc, char **argv) {                                       // args 
 
    m=PAPI_NATIVE_MASK;                                               // Get the PAPI NATIVE mask.
    ret=PAPI_enum_cmp_event(&m,PAPI_ENUM_FIRST,cid);                  // Begin enumeration of ALL papi counters.
+   if (ret != PAPI_OK) fprintf(stderr, "PAPI_enum_cmp_event returned %i [%s].\n", ret, PAPI_strerror(ret));
    if (ret != PAPI_OK) {                                             // If that failed, report and exit.
       test_fail(__FILE__, __LINE__, "PAPI_enum_cmp_event failed.\n",
          ret);
@@ -308,9 +310,10 @@ int main(int argc, char **argv) {                                       // args 
       test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset(EventSet) failed.\n", ret);
    }
 
-   if (!quiet) printf("PCP discovered %i events; added %i.\n", count, i);         // Say what we learned.
+   if (!quiet) fprintf(stderr, "PCP discovered %i events; added "    // Say what we learned.
+               "%i.\n", count, i);                                   // .. 
    PAPI_shutdown();                                                  // get out of papi.
-	if (!quiet) printf("Shutdown completed.\n");                      // If we are verbose, 
+	if (!quiet) fprintf(stderr, "Shutdown completed.\n");             // If we are verbose, 
 	test_pass( __FILE__ );                                            // Note the test passed. 
    return 0;                                                         // Exit with all okay.
 } // END main.

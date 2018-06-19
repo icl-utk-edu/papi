@@ -9,7 +9,7 @@
 // 'batch' reads to minimize overhead. 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-// #define DEBUG /* To enable SUBDBG messages */
+#define DEBUG /* To enable SUBDBG messages */
 // see also _papi_hwi_debug = DEBUG_SUBSTRATE; below, to enable xxxDBG macros.
 
 #include <unistd.h>
@@ -785,13 +785,19 @@ static int _pcp_init_component(int cidx)
    }
    #undef hostnameLen /* done with it. */
 
+   fprintf(stderr, "%s:%i retrieved hostname='%s'\n", __FILE__, __LINE__, hostname);
+
    ctxHandle = pcp_pmNewContext(PM_CONTEXT_HOST, hostname);             // Set the new context to hostname retrieved.
    if (ctxHandle < 0) {
       fprintf(stderr, "%s: Cannot connect to PMCD (Performance "
-               "Metric Collector Daemon) on host \"%s\":%s\n",
+               "Metric Collector Daemon) on host \"%s\":%s\n"
+               "(Ensure PAPI component is running on a machine with "
+               "Performance Co-Pilot (PCP) installed.)\n",
          pmProgname, hostname, pcp_pmErrStr(ctxHandle));
+      return(PAPI_ENOSUPP);
    }
 
+   fprintf(stderr, "%s:%i Found ctxHandle=%i\n", __FILE__, __LINE__, ctxHandle);
    sEventInfoSize = sEventInfoBlock;                                    // first allocation.   
    pcp_event_info = (_pcp_event_info_t*) 
       calloc(sEventInfoSize, sizeof(_pcp_event_info_t));                // Make room for all events.
@@ -940,6 +946,7 @@ static int _pcp_init_component(int cidx)
          ret = pcp_pmLookupDesc(pcp_event_info[i].pmid,                 // .. get the event descriptor.
                &pcp_event_info[i].desc);                                // .. into the table.
 
+         fprintf(stderr, "Event %s has %i values, indom=%i.\n", pcp_event_info[i].name, pcp_event_info[i].numVal, pcp_event_info[i].desc.indom); 
          if (pcp_event_info[i].desc.indom != PM_INDOM_NULL) {           // .. If we have a non-null domain,
             for (j=0; j<vset->numval; j++) {                            // .. for every value present,
                pmValue *pmval = &vset->vlist[j];                        // .. .. get that guy.
@@ -1060,10 +1067,8 @@ static int _pcp_init_component(int cidx)
 static int _pcp_init_thread(hwd_context_t * ctx) 
 {
    mRtnCnt(_pcp_init_thread);                                           // count this function.
-   SUBDBG( "ENTER: _pcp_init_thread\n");
    _pcp_context_t* myCtx = (_pcp_context_t*) ctx;                       // recast.
    myCtx->initDone = 1;                                                 // Nothing else to do for init.
-   SUBDBG( "EXIT: _pcp_init_thread\n");
    return PAPI_OK;
 }  // end routine.
 
@@ -1075,7 +1080,6 @@ static int _pcp_init_thread(hwd_context_t * ctx)
 static int _pcp_init_control_state( hwd_control_state_t *ctl)
 {
    mRtnCnt(_pcp_init_control_state);                                    // count this function.
-    SUBDBG( "ENTER _pcp_init_control_state\n" );
     _pcp_control_state_t* control = ( _pcp_control_state_t* ) ctl;
    // contents: _pcp_control_state state at this writing: 
    // contents of state: 
@@ -1086,7 +1090,6 @@ static int _pcp_init_control_state( hwd_control_state_t *ctl)
 
     memset(control, 0, sizeof(_pcp_control_state_t));                   // zero it.
 
-    SUBDBG( "EXIT _pcp_init_control_state\n" );
     return PAPI_OK;
 } // end routine.
 
@@ -1290,8 +1293,6 @@ static int _pcp_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
    mRtnCnt(_pcp_reset);                                                 // count this function.
    ( void ) ctx;                                                        // avoid unused var warning.
-   SUBDBG( "ENTER: _pcp_reset ctl: %p, ctx: %p\n", ctl, ctx );
-
    int i, k, ret;
    unsigned long long aValue;
 
@@ -1318,7 +1319,6 @@ static int _pcp_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 
    // That is all we do; reset the zeroValue to the current value.
    pcp_pmFreeResult(allFetch);                                          // .. Clean up.
-   SUBDBG( "EXIT: _pcp_reset ctl: %p, ctx: %p\n", ctl, ctx );
    return PAPI_OK;
 } // end routine. 
 
@@ -1331,9 +1331,7 @@ static int _pcp_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 static int _pcp_start( hwd_context_t *ctx, hwd_control_state_t *ctl) 
 {
    mRtnCnt(_pcp_start);                                                 // count this function.
-   SUBDBG( "ENTER: _pcp_start %p %p.\n", ctx, ctl );
    _pcp_reset(ctx, ctl);                                                // Just reset counters.
-   SUBDBG( "EXIT: _pcp_start %p %p.\n", ctx, ctl );
    return PAPI_OK;
 } // end routine.
 
@@ -1642,7 +1640,6 @@ static int _pcp_ntv_code_to_descr(unsigned int pcpIdx, char *descr, int len)
    strncpy(descr, helpText, len);                                       // copy it over.
    descr[len-1] = 0;                                                    // force a z-terminator.
    free(helpText);                                                      // release text alloc by pm routine.
-   SUBDBG( "EXIT: _pcp_ntv_code_to_descr\n");
    return PAPI_OK;                                                      // EXIT, all good.
 } // end routine.
 
