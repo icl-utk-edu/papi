@@ -298,17 +298,19 @@ def write_json_file(data, file_name):
                       indent=4, sort_keys=False,
                       separators=(',', ': '), ensure_ascii=False)
     outfile.write(to_unicode(str_))
+    print str_
 
 
-def main(source, format):
+def main(source, format, type):
   if (format == "json"):
     json = create_json_object(source)
     formated_json = format_json_object(json)
     write_json_file(formated_json, 'papi.json')
 
-    # #summarize data over threads and ranks
-    # sum_json = sum_json_object(formated_json)
-    # write_json_file(sum_json, 'papi_sum.json')
+    #summarize data over threads and ranks
+    if type == 'accumulated':
+      sum_json = sum_json_object(formated_json)
+      write_json_file(sum_json, 'papi_sum.json')
   else:
     print("Format not supported!")
 
@@ -319,10 +321,13 @@ def parse_args():
                       help='Measurement directory of raw data.')
   parser.add_argument('--format', type=str, required=False, default='json', 
                       help='Output format, e.g. json.')
+  parser.add_argument('--type', type=str, required=False, default='detail', 
+                      help='Output type: detail or accumulated.')
   return parser.parse_args()
 
 
 if __name__ == '__main__':
   args = parse_args()
   main(format=args.format,
-       source=args.source)
+       source=args.source,
+       type=args.type)
