@@ -9,7 +9,7 @@
 // 'batch' reads to minimize overhead. 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-#define DEBUG /* To enable SUBDBG messages */
+// #define DEBUG /* To enable SUBDBG messages */
 // see also _papi_hwi_debug = DEBUG_SUBSTRATE; below, to enable xxxDBG macros.
 
 #include <unistd.h>
@@ -81,7 +81,8 @@ typedef union
    long long ll;
    unsigned long long ull;
    double    d;
-   void *vp; 
+   void *vp;
+   unsigned char ch[8];
 } convert_64_t;
 
 //-----------------------------------------------------------------------------
@@ -217,7 +218,7 @@ int cnt[ctr_pcp_ntv_code_to_info+1] = {0};         // counters for the following
    if (COUNT_ROUTINES) {            /* Note if (0) optimized out completely even if -O0. */  \
       cnt[ctr##funcname]++;         /* Increment counter. */                                 \
       if (cnt[ctr##funcname] == 1)  /* If first time entering a new function, report it. */  \
-         fprintf(stderr, "Entered " TOSTRING(funcname) "\n");                                \
+         _prog_fprintf(stderr, "Entered " TOSTRING(funcname) "\n");                          \
    }
 #else                                                                   /* If COUNT_ROUTINES != 1, */
 #define mRtnCnt(funcname)                                               /* .. make macro do nothing. */
@@ -235,8 +236,9 @@ static struct timeval t1, t2;                                           // used 
 #define mConvertUsec(timeval_) \
         (timeval_.tv_sec*1000000+timeval_.tv_usec)                      /* avoid typos. */
 
-#define _time_fprintf if (1) fprintf                                    /* change to 1 to enable printing of performance timings.         */
-#define _time_gettimeofday if (1) gettimeofday                          /* change to 1 to enable gettimeofday for performance timings.    */
+#define _prog_fprintf if (0) fprintf                                    /* change to 1 to enable printing of progress debug messages.     */
+#define _time_fprintf if (0) fprintf                                    /* change to 1 to enable printing of performance timings.         */
+#define _time_gettimeofday if (0) gettimeofday                          /* change to 1 to enable gettimeofday for performance timings.    */
 
 
 static void* dllib1 = NULL;                                             // Our dynamic library. 
@@ -503,7 +505,6 @@ void makeQualifiedEvent(int baseEvent, int idx, char *qualifier)
                  "pcp_event_info=%p at size=%i.\n",
                  __FILE__, __LINE__, __func__, 
                 pcp_event_info, sEventInfoSize);
-         free(pcp_event_info);                                          // get rid of old memory.
          exit(-1);
       } // end if realloc failed.
 
@@ -528,6 +529,39 @@ void makeQualifiedEvent(int baseEvent, int idx, char *qualifier)
    pcp_event_info[sEventCount].name[slen] = 0;                          // ensure z-terminator. 
    sEventCount++;                                                       // increment our count of events.
 } // end routine.
+
+
+//-----------------------------------------------------------------------------
+// Helper; reads the description if it has not already been read for a given
+// index. Presumes pmid is already present.
+//-----------------------------------------------------------------------------
+
+void getPMDesc(int pcpIdx) {                                            // Reads the variable descriptor.
+   int ret;
+   if (pcp_event_info[pcpIdx].pmid == PM_ID_NULL) return;               // Already have it.
+   ret = pcp_pmLookupDesc(pcp_event_info[pcpIdx].pmid,                  // Get the event descriptor.
+         &pcp_event_info[pcpIdx].desc);                                 // .. into the table; will set desc.pmid to not null.
+   if (ret == PM_ERR_PMID) {                                            // If we failed for PMID,
+      fprintf(stderr, "%s:%i:%s Invalid PMID.\n",
+              __FILE__, __LINE__, __func__); 
+      exit(-1);
+   } // end if realloc failed.
+      
+   if (ret == PM_ERR_NOAGENT) {                                         // If we failed for agent,
+      fprintf(stderr, "%s:%i:%s PMDA Agent not available to respond..\n",
+              __FILE__, __LINE__, __func__); 
+      exit(-1);
+   } // end if realloc failed.
+
+   if (ret != 0) {                                                      // Unknown error, 
+      fprintf(stderr, "%s:%i:%s Unknown error code ret=%i.\n",
+              __FILE__, __LINE__, __func__, ret); 
+      exit(-1);
+   } // end if realloc failed.
+
+   pcp_event_info[pcpIdx].valType = pcp_event_info[pcpIdx].desc.type;   // Always copy type over.
+   return;                                                              // No error. 
+} // END code.
 
 
 //-----------------------------------------------------------------------------
@@ -605,13 +639,15 @@ static char *cachedGetInDom(pmInDom indom, int inst)
 
    fprintf(stderr, "%s:%i:%s ERROR: cachedGetInDom: domain=%u, domIdx=%i, numInstances=%i, failed to find inst=%i.\n",
       __FILE__, __LINE__, FUNC, indom, domIdx, cachedDomains[domIdx].numInstances, inst);
+   exit(-1);                                                            // Cannot continue; should not have happened.
 
-   return NULL;                                                         // Couldn't find it.
+   return NULL;                                                         // Code cannot be reached. Couldn't find it.
 } // end routine.
 
 
 //-----------------------------------------------------------------------------
-// Helper routine, returns a ll value from a value set pointer.
+// Helper routine, returns a ull value from a value set pointer. Automatically
+// does conversions from 32 bit to 64 bit (int32, uint32, fp32).  
 //-----------------------------------------------------------------------------
 unsigned long long getULLValue(pmValueSet *vset, int value_index) 
 {
@@ -620,19 +656,19 @@ unsigned long long getULLValue(pmValueSet *vset, int value_index)
    uPointer_t myPtr;                                                 // a union helper to avoid warnings.
 
    if (vset->valfmt == PM_VAL_INSITU) {                              // If the value format is in situ; a 32 bit value.
-      convert.ll = (long long) vset->vlist[value_index].value.lval;  // .. we can just collect the value immediately.
+      convert.ll = vset->vlist[value_index].value.lval;              // .. we can just collect the value immediately.
       value = convert.ull;                                           // .. 
    } else {                                                          // If it is either static or dynamic alloc table,
       pmValueBlock *pmvb = vset->vlist[value_index].value.pval;      // .. value given is a pointer to value block.
       myPtr.cPtr = pmvb->vbuf;                                       // .. use cPtr because vbuf defined as char[1] in pmValueBlock.
       switch (pmvb->vtype) {                                         // Note we restricted the types in init; these cases should agree.
          case  PM_TYPE_32:       // 32-bit signed integer
-            convert.ll = (long long) myPtr.iPtr[0];
+            convert.ll = myPtr.iPtr[0];
             value = convert.ull;
             break;
 
          case  PM_TYPE_U32:      // 32-bit unsigned integer
-            value = (long long) myPtr.uiPtr[0];
+            value =  myPtr.uiPtr[0];
             break;
 
          case  PM_TYPE_64:       // 64-bit signed integer
@@ -678,11 +714,20 @@ unsigned long long getULLValue(pmValueSet *vset, int value_index)
 // done in the type intended, and we have to recast to do it. Note that 32
 // bit signed int or float were saved and cast as 64 bit int or double,
 // respectively.
+//
+// There are three types of 'semantics' in a description; only one is a 
+// counter; the other two are instantaneous values. We do not subtract a
+// zero reference value from instantaneous values. 
+// PM_SEM_COUNTER    // cumulative counter (monotonic increasing)
+// PM_SEM_INSTANT    // instantaneous value, continuous domain
+// PM_SEM_DISCRETE   // instantaneous value, discrete domain
 //----------------------------------------------------------------------------
 
 void subZero(_pcp_control_state_t *myCtl, int event)
 {
    int k = myCtl->pcpIndex[event];                                      // get pcp_event_info[] index.
+   if (pcp_event_info[k].desc.sem != PM_SEM_COUNTER) return;            // Don't subtract from instantaneous values.
+
    convert_64_t zero, rawval;
    rawval.ull = myCtl->pcpValue[event];                                 // collect the raw value.
    zero.ull = pcp_event_info[k].zeroValue;                              // collect the zero (base) value.
@@ -708,6 +753,7 @@ void subZero(_pcp_control_state_t *myCtl, int event)
       default:
          fprintf(stderr, "%s:%i pcp_event_info[%s] contains an unrecognized value type=%i.\n",
             __FILE__, __LINE__,  pcp_event_info[k].name, pcp_event_info[k].valType);
+         exit(-1);                                                      // Quit, this shouldn't happen; something needs updating.
          break;
    } // end switch on type. 
    
@@ -737,6 +783,11 @@ int getHelpText(unsigned int pcpIdx, char **helpText)
 
    pmID myPMID = pcp_event_info[pcpIdx].pmid;                           // collect the pmid.
    ret = pcp_pmLookupText(myPMID, PM_TEXT_HELP, helpText);              // collect a line of text, routine mallocs helpText.
+   if (ret != 0) {                                                      // If larger help is not available, Try oneline.
+      if (*helpText != NULL) free(*helpText);                           // .. Free anything allocated. 
+      *helpText = NULL;                                                 // .. start it as null.
+      ret = pcp_pmLookupText(myPMID, PM_TEXT_ONELINE, helpText);        // .. collect a line of text, routine mallocs helpText.
+   } 
 
    if (ret == PM_ERR_TEXT) {                                            // If not available, 
       *helpText = strdup(errMsg);                                       // duplicate this error message.
@@ -785,7 +836,7 @@ static int _pcp_init_component(int cidx)
    }
    #undef hostnameLen /* done with it. */
 
-   fprintf(stderr, "%s:%i retrieved hostname='%s'\n", __FILE__, __LINE__, hostname);
+   _prog_fprintf(stderr, "%s:%i retrieved hostname='%s'\n", __FILE__, __LINE__, hostname); // show progress.
 
    ctxHandle = pcp_pmNewContext(PM_CONTEXT_HOST, hostname);             // Set the new context to hostname retrieved.
    if (ctxHandle < 0) {
@@ -797,7 +848,7 @@ static int _pcp_init_component(int cidx)
       return(PAPI_ENOSUPP);
    }
 
-   fprintf(stderr, "%s:%i Found ctxHandle=%i\n", __FILE__, __LINE__, ctxHandle);
+   _prog_fprintf(stderr, "%s:%i Found ctxHandle=%i\n", __FILE__, __LINE__, ctxHandle); // show progress.
    sEventInfoSize = sEventInfoBlock;                                    // first allocation.   
    pcp_event_info = (_pcp_event_info_t*) 
       calloc(sEventInfoSize, sizeof(_pcp_event_info_t));                // Make room for all events.
@@ -807,7 +858,11 @@ static int _pcp_init_component(int cidx)
    ret = pcp_pmTraversePMNS(AGENT_NAME, cbPopulateNameOnly);            // Timed on Saturn [Intel Xeon 2.0GHz]; typical 9ms, range 8.5-10.5ms.
    if (ret < 0) {                                                       // Failure...
       fprintf(stderr, "%s:%i pmTraversePMNS failed; ret=%i [%s]\n", 
-         __FILE__, __LINE__, ret, pcp_pmErrStr(ret)); 
+         __FILE__, __LINE__, ret, pcp_pmErrStr(ret));
+      if (ret == PM_ERR_NAME) {                                         // We know what this one is,
+         fprintf(stderr, "(This error occurs if AGENT_NAME '%s' is not recognized as an event type by this PMCD Daemon.)\n", AGENT_NAME);
+      }
+
       return PAPI_ENOSUPP;                                              // Cannot support it.
    }      
       
@@ -831,6 +886,11 @@ static int _pcp_init_component(int cidx)
    } // end for each event.
 
    pmID *allPMID=calloc(sEventCount, sizeof(pmID));                     // Make an array for results.
+   if (allPMID == NULL) {                                               // If we failed,
+      fprintf(stderr, "%s:%i:%s calloc denied for allPMID; size=%i.\n", 
+              __FILE__, __LINE__, __func__, sEventCount);
+      exit(-1);
+   } // end if calloc failed.
 
    //----------------------------------------------------------------
    // Unlike Saturn, on the Power9 we get an 'IPC protocol failure' 
@@ -839,7 +899,7 @@ static int _pcp_init_component(int cidx)
    // Power9; the maximum number we can read is 946. To allow leeway
    // for other possible values; we read in blocks of 256.
    //----------------------------------------------------------------
-   #define LNBLOCK 256                                                  /* Power9 gets IPC errors if count is too large. */
+   #define LNBLOCK 256                                                  /* Power9 gets IPC errors if read block is too large. */
 
    _time_gettimeofday(&t1, NULL);
 
@@ -854,7 +914,7 @@ static int _pcp_init_component(int cidx)
          if (ret == PM_ERR_IPC) {
             fprintf(stderr, "This is a communications error with the daemon; one known cause\n"
                             "is if our read block is too large; reducing LNBLOCK in the code\n"
-                            "may solve this issue.\n");
+                            "above this line may solve this issue.\n");
          }
 
          return PAPI_ENOSUPP;                                           // .. .. Can't work with no names!
@@ -862,20 +922,20 @@ static int _pcp_init_component(int cidx)
 
       i+=j;                                                             // .. Adjust the pointer forward by what we read.
    } // end while to read names in chunks, and avoid IPC error. 
+   #undef LNBLOCK                                                       /* Discard constant; no further use. */  
 
    _time_gettimeofday(&t2, NULL);
    _time_fprintf(stderr, "pmLookupName for all took %li uS, ret=%i.\n", 
       (mConvertUsec(t2)-mConvertUsec(t1)), ret );
 
-   #undef LNBLOCK                                                       /* Discard constant; no further use. */  
    for (i=0; i<sEventCount; i++) pcp_event_info[i].pmid = allPMID[i];   // copy all the pmid over to array.
 
    pmResult *allFetch = NULL;                                           // result of pmFetch. 
    _time_gettimeofday(&t1, NULL);
    ret = pcp_pmFetch(sEventCount, allPMID, &allFetch);                  // Fetch (read) all the events.
    _time_gettimeofday(&t2, NULL);
-   _time_fprintf(stderr, "pmFetch for all took %li uS, ret=%i.\n", 
-      (mConvertUsec(t2)-mConvertUsec(t1)), ret);
+   _time_fprintf(stderr, "pmFetch for all took %li uS, for %i events; ret=%i.\n", 
+      (mConvertUsec(t2)-mConvertUsec(t1)), sEventCount, ret);
 
    //-------------------------------------------------------------------
    // In processing fetches, if we find a multi-valued event, we need
@@ -902,23 +962,50 @@ static int _pcp_init_component(int cidx)
       }
      
       pcp_event_info[i].numVal = vset->numval;                          // Show we have a value.
-      if (vset->numval == 0) continue;                                  // If no values, leave numVal = 0 for deletion. (We do see this in tests). 
-      pcp_event_info[i].valfmt = vset->valfmt;                          // Get the value format.
-      pcp_event_info[i].valType = PM_TYPE_U32;                          // Default presumption is U32.
+      if (vset->numval == 0) {                                          // If the value is zero, 
+//       _prog_fprintf(stderr, "%s:%i Discarding, no values for event  '%s'.\n", __FILE__, __LINE__, pcp_event_info[i].name);
+         continue;                                  // If no values, leave numVal = 0 for deletion. (We do see this in tests). 
+      }
+
+      pcp_event_info[i].valfmt = vset->valfmt;                          // Get the value format. (INSITU or not).
+      getPMDesc(i);                                                     // Get the value descriptor.
+      unsigned long long ullval= (long long) -1;   // debug stuff.
+      convert_64_t convert;
 
       if (vset->valfmt != PM_VAL_INSITU) {                              // If not in situ, must get the type.
          pmValue *pmval = &vset->vlist[0];                              // .. Get the first value.
          pmValueBlock *pB = pmval->value.pval;                          // .. get it.
-         pcp_event_info[i].valType = pB->vtype;                         // .. get the type.
+         if (pcp_event_info[i].valType != pB->vtype) {
+            fprintf(stderr, "%s:%i:%s Disagreement between desc and fetch on type. %i vs %i.\n", 
+               __FILE__, __LINE__, FUNC, pcp_event_info[i].valType, pB->vtype);
+            exit (-1);
+         }
+
+//       pcp_event_info[i].valType = pB->vtype;                         // .. get the type.
+         ullval = getULLValue(vset, 0);                                 // .. get the first value.
 
          switch(pB->vtype) {                                            // PCP's variable type; an int flag.
             case  PM_TYPE_32:                                           // 32-bit signed integer
-            case  PM_TYPE_U32:                                          // 32-bit unsigned integer
-            case  PM_TYPE_64:                                           // 64-bit signed integer
-            case  PM_TYPE_U64:                                          // 64-bit unsigned integer
-            case  PM_TYPE_FLOAT:                                        // 32-bit floating point
-            case  PM_TYPE_DOUBLE:                                       // 64-bit floating point
+               _prog_fprintf(stderr, "type I32, desc.sem=%i, event '%s'=", pcp_event_info[i].desc.sem, pcp_event_info[i].name); 
                break;
+            case  PM_TYPE_U32:                                          // 32-bit unsigned integer
+               _prog_fprintf(stderr, "type U32, desc.sem=%i, event '%s'=", pcp_event_info[i].desc.sem, pcp_event_info[i].name); 
+               break;
+            case  PM_TYPE_FLOAT:                                        // 32-bit floating point
+               _prog_fprintf(stderr, "type F32, desc.sem=%i, event '%s'=", pcp_event_info[i].desc.sem, pcp_event_info[i].name); 
+               break;                                                   // END CASE.
+
+            case  PM_TYPE_64:                                           // 64-bit signed integer
+               convert.ull = ullval;
+               _prog_fprintf(stderr, "type I64, desc.sem=%i, event '%s'= (ll) %lli =", pcp_event_info[i].desc.sem, pcp_event_info[i].name, convert.ll); 
+               break;
+            case  PM_TYPE_U64:                                          // 64-bit unsigned integer
+               _prog_fprintf(stderr, "type U64, desc.sem=%i, event '%s'= (ull) %llu =", pcp_event_info[i].desc.sem, pcp_event_info[i].name, convert.ull); 
+               break;
+            case  PM_TYPE_DOUBLE:                                       // 64-bit floating point
+               convert.ull = ullval;
+               _prog_fprintf(stderr, "type U64, desc.sem=%i, event '%s'= (double) %f =", pcp_event_info[i].desc.sem, pcp_event_info[i].name, convert.d); 
+               break;                                                   // END CASE.
 
             // IF YOU want to return string values, this is a place
             // to change; currently all string-valued events are
@@ -929,24 +1016,29 @@ static int _pcp_init_component(int cidx)
             // char* or void*. 
 
             case  PM_TYPE_STRING:                                       // pB->vbuf is char* to string value.
+               _prog_fprintf(stderr, "%s:%i Discarding PM_TYPE_STRING event, desc.sem=%i, event '%s'=", __FILE__, __LINE__, pcp_event_info[i].desc.sem, pcp_event_info[i].name); 
                pcp_event_info[i].numVal = 0;                            // .. .. set numVal = 0 for deletion.
                break;
 
             default:                                                    // If we don't recognize the type,
+               _prog_fprintf(stderr, "%s:%i Dsicarding PM_UNKNOWN_TYPE event, desc.sem=%i, event '%s'=", __FILE__, __LINE__, pcp_event_info[i].desc.sem, pcp_event_info[i].name); 
                pcp_event_info[i].numVal = 0;                            // .. set numVal = 0 for deletion.
                break;
          } // end switch.
-      } // If not In Situ.        
-      
+      } // If not In Situ.
+      else {
+         _prog_fprintf(stderr, "type IST, desc.sem=%i, event '%s'=", pcp_event_info[i].desc.sem, pcp_event_info[i].name); 
+      }
+
+      convert.ull = ullval; 
+      _prog_fprintf(stderr, "%02X%02X%02X%02X %02X%02X%02X%02X\n", convert.ch[0], convert.ch[1],  convert.ch[2], convert.ch[3],  convert.ch[4], convert.ch[5],  convert.ch[6], convert.ch[7]);
       // Lookup description takes time; so we only do it for
       // multi-valued events here. For other events, we will do it
       // as needed for EventInfo filling.
 
       if (pcp_event_info[i].numVal > 1) {                               // If a domain qualifier is possible;
-         ret = pcp_pmLookupDesc(pcp_event_info[i].pmid,                 // .. get the event descriptor.
-               &pcp_event_info[i].desc);                                // .. into the table.
-
-         fprintf(stderr, "Event %s has %i values, indom=%i.\n", pcp_event_info[i].name, pcp_event_info[i].numVal, pcp_event_info[i].desc.indom); 
+         getPMDesc(i);                                                  // .. Get the event descriptor.
+         _prog_fprintf(stderr, "Event %s has %i values, indom=%i.\n", pcp_event_info[i].name, pcp_event_info[i].numVal, pcp_event_info[i].desc.indom); 
          if (pcp_event_info[i].desc.indom != PM_INDOM_NULL) {           // .. If we have a non-null domain,
             for (j=0; j<vset->numval; j++) {                            // .. for every value present,
                pmValue *pmval = &vset->vlist[j];                        // .. .. get that guy.
@@ -1043,7 +1135,7 @@ static int _pcp_init_component(int cidx)
    pcp_pmFreeResult(allFetch);                                          // .. release the results we fetched.
 
 //  For PCP, we can read any number of events at once
-//  in a single event set.
+//  in a single event set. Set vector elements for PAPI.
 
    _pcp_vector.cmp_info.num_native_events = sEventCount;                // Setup our pcp vector.
    _pcp_vector.cmp_info.num_cntrs = sEventCount;                  
@@ -1062,7 +1154,7 @@ static int _pcp_init_component(int cidx)
 
 //----------------------------------------------------------------------------
 // Init vars in pcp_context.
-// This is called, immediately after _pcp_init_component.  
+// This is called immediately after _pcp_init_component.  
 //----------------------------------------------------------------------------
 static int _pcp_init_thread(hwd_context_t * ctx) 
 {
@@ -1075,7 +1167,6 @@ static int _pcp_init_thread(hwd_context_t * ctx)
 
 //----------------------------------------------------------------------------
 // The control_state is our internal description of an event set. 
-// This is called. 
 //----------------------------------------------------------------------------
 static int _pcp_init_control_state( hwd_control_state_t *ctl)
 {
@@ -1192,6 +1283,7 @@ static int _pcp_update_control_state(
       MyCtl->pcpIndex[i]=index;                                         // remember the index.
       MyCtl->pcpValue[i]=0;                                             // clear the value.   
       native[i].ni_position = i;                                        // Tell PAPI about its location (doesn't matter to us), we have no restrictions on position.
+      getPMDesc(index);                                                 // Any time an event is added, ensure we have its variable descriptor.
    } // end for each event listed.
 
    return PAPI_OK;
@@ -1318,6 +1410,8 @@ static int _pcp_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
    } // end loop through all events in this event set.
 
    // That is all we do; reset the zeroValue to the current value.
+   // For efficiency we do not check if it is a counter, instantaneous
+   // or discrete value; that is done in subZero.
    pcp_pmFreeResult(allFetch);                                          // .. Clean up.
    return PAPI_OK;
 } // end routine. 
@@ -1376,7 +1470,7 @@ static int _pcp_read(hwd_context_t *ctx,                                // unuse
    // Now subtract zero value from them.
       
    for (i=0; i<myCtl->numEvents; i++) {                                 // for each event, 
-      subZero(myCtl, i);                                                // .. subtract zero value in proper type.
+      subZero(myCtl, i);                                                // .. subtract zero value in proper type. [TONY DON"T COMMENT OUT, JUST DEBUG]
    } // end loop through all events in this event set.
 
    // Done, point the caller to our results list.
@@ -1425,7 +1519,7 @@ static int _pcp_shutdown_component(void)
    sEventCount = 0;                                                     // clear number of events. 
 
    for (i=0; i<=ctr_pcp_ntv_code_to_info; i++) 
-      fprintf(stderr, "routine counter %i = %i.\n", i, cnt[i]);
+      _prog_fprintf(stderr, "routine counter %i = %i.\n", i, cnt[i]);
 
    return PAPI_OK;
 } // end routine.
@@ -1495,7 +1589,6 @@ static int _pcp_ctl (hwd_context_t *ctx, int code, _papi_int_option_t *option)
 // PAPI_DOM_OTHER    : Exception/transient mode (like user TLB misses) 
 // PAPI_DOM_ALL      : all of the domains, THE ONLY ONE WE ACCEPT!
 // All other domains result in an invalid value.
-// [TONY not called yet]
 //----------------------------------------------------------------------------
 static int _pcp_set_domain(hwd_control_state_t *ctl, int domain) 
 {
@@ -1588,6 +1681,7 @@ static int _pcp_ntv_code_to_name(unsigned int pcpIdx, char *name, int len)
 {
    mRtnCnt(_pcp_ntv_code_to_name);                                      // count this function.
 
+   pcpIdx &= PAPI_NATIVE_AND_MASK;                                      // We can be called with the NATIVE bit set.
    if (pcpIdx >= (unsigned int) sEventCount) {                          // out of range?
       fprintf(stderr, "%s:%i:%s called with out-of-range pcpIdx=%u.\n", 
          __FILE__, __LINE__, FUNC, pcpIdx);
@@ -1616,6 +1710,7 @@ static int _pcp_ntv_code_to_descr(unsigned int pcpIdx, char *descr, int len)
 {
    mRtnCnt(_pcp_ntv_code_to_descr);                                     // count this function.
 
+   pcpIdx &= PAPI_NATIVE_AND_MASK;                                      // We might be called with the NATIVE bit set.
    if (pcpIdx >= (unsigned int) sEventCount) {                          // out of range?
       fprintf(stderr, "%s:%i:%s called with out-of-range pcpIdx=%u.\n", 
          __FILE__, __LINE__, FUNC, pcpIdx);
@@ -1628,7 +1723,7 @@ static int _pcp_ntv_code_to_descr(unsigned int pcpIdx, char *descr, int len)
       return PAPI_EINVAL;                                               // exit with error.
    }
 
-   char *helpText;                                                      // pointer to receive the result.
+   char *helpText = NULL;                                               // pointer to receive the result.
    int ret = getHelpText(pcpIdx, &helpText);                            // get it. 
    if (ret != PAPI_OK) {                                                // If there is any error,
       if (helpText != NULL) free(helpText);                             // .. no memory leak.
@@ -1658,6 +1753,10 @@ static int _pcp_ntv_code_to_descr(unsigned int pcpIdx, char *descr, int len)
 // data_type is PAPI_DATATYPE_INT64, PAPI_DATATYPE_UINT64,
 // PAPI_DATATYPE_FP64, PAPI_DATATYPE_BIT64.
 // We translate all values into INT64, UINT64, or FP64.
+//
+// timescope;                          // Counter or instantaneous.
+// PAPI_TIMESCOPE_SINCE_START          // Data is cumulative from start.
+// PAPI_TIMESCOPE_POINT                // Data is an instantaneous value.
 //---------------------------------------------------------------------
 
 static int _pcp_ntv_code_to_info(unsigned int pcpIdx, PAPI_event_info_t *info) 
@@ -1683,16 +1782,24 @@ static int _pcp_ntv_code_to_info(unsigned int pcpIdx, PAPI_event_info_t *info)
    // Units resides in pmDesc; we need to get it if we don't already
    // have it (multi-valued events got it during init).
 
-   if (pcp_event_info[pcpIdx].desc.pmid == PM_ID_NULL) {                // if not yet retrieved,
-      ret = pcp_pmLookupDesc(pcp_event_info[pcpIdx].pmid,               // .. get the event descriptor.
-            &pcp_event_info[pcpIdx].desc);                              // .. into the table; will et desc.pmid to not null.
-   }
+   getPMDesc(pcpIdx);                                                   // get the description.
 
    char unitStr[64];
    // This routine has been timed over 19600 trials on Saturn;
    // it requires an average of 2 uS. No daemon comm needed.
 
    pcp_pmUnitsStr_r(&pcp_event_info[pcpIdx].desc.units, unitStr, 64);   // Construct the unit string; needs at least 60 char.
+   if (1 || strlen(unitStr) == 0) {
+      sprintf(unitStr, "[%u, %i, %u, %u, %i, %i, %i]", 
+         pcp_event_info[pcpIdx].desc.units.pad,
+         pcp_event_info[pcpIdx].desc.units.scaleCount,
+         pcp_event_info[pcpIdx].desc.units.scaleTime,
+         pcp_event_info[pcpIdx].desc.units.scaleSpace,
+         pcp_event_info[pcpIdx].desc.units.dimCount,
+         pcp_event_info[pcpIdx].desc.units.dimTime,
+         pcp_event_info[pcpIdx].desc.units.dimSpace
+         ); 
+   }
 
    len = sizeof(info->units);                                           // length of destination.
    strncpy( info->units, unitStr, len);                                 // copy it over.
@@ -1716,6 +1823,12 @@ static int _pcp_ntv_code_to_info(unsigned int pcpIdx, PAPI_event_info_t *info)
          info->data_type = PAPI_DATATYPE_FP64;                          // What papi needs.
          break;                                                         // END CASE.
    };
+
+   if (pcp_event_info[pcpIdx].desc.sem == PM_SEM_COUNTER) {             // If we have a counter,
+      info->timescope = PAPI_TIMESCOPE_SINCE_START;                     // .. normal stuff.
+   } else {                                                             // An instantaneous value. 
+      info->timescope = PAPI_TIMESCOPE_POINT;                           // .. What PAPI calls that.
+   }
 
    return PAPI_OK;                                                      // exit.
 } // end routine.

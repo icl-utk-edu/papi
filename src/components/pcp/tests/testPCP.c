@@ -15,6 +15,14 @@ static struct timeval t1, t2;
 
 unsigned long dummyThreadId(void) { return(0); }                        // dummy return to give a thread id.
 
+typedef union
+{
+   long long ll;
+   unsigned long long ull;
+   double    d;
+   void *vp;
+   unsigned char ch[8];
+} convert_64_t;
 
 //-----------------------------------------------------------------------------
 // MAIN.
@@ -194,7 +202,7 @@ int main(int argc, char **argv) {                                       // args 
             test_fail( __FILE__, __LINE__, errMsg, ret);             // report and exit.
          }
          
-         long long *values = NULL;                                   // pointer, malloced receiving area.
+         long long *values = NULL;                                   // pointer for us to malloc next.
 
          eventSetCount = PAPI_num_events(EventSet);                  // get the number of events in set.
          values = calloc(eventSetCount, sizeof(long long));          // make zeroed space for it. 
@@ -210,22 +218,24 @@ int main(int argc, char **argv) {                                       // args 
             printf("%i, %s, %s, %s, 0x%08x,", 
             info.component_index, info.symbol,info.units, 
             info.long_descr, info.event_code);
+            convert_64_t cvt;
+            cvt.ll = values[0];                                      // copy the value returned.
 
             switch (info.data_type) {                                // based on type, 
                case PAPI_DATATYPE_INT64:
-                  printf("INT64, %lli", (long long) values[0]);
+                  printf("INT64, %lli", cvt.ll);
                   break;                                             // END CASE.
 
                case PAPI_DATATYPE_UINT64:
-                  printf("UINT64, %lli", (unsigned long long) values[0]);
+                  printf("UINT64, %llu", cvt.ull);
                   break;                                             // END CASE.
 
                case PAPI_DATATYPE_FP64:
-                  printf("FP64, %f", (double) values[0]);
+                  printf("FP64, %f", cvt.d);
                   break;                                             // END CASE.
             
                default:
-                  printf("UNKNOWN TYPE, %p", (void*) values[0]);
+                  printf("UNKNOWN TYPE, %p", cvt.vp);
                   break;                                             // END CASE.
             }
                   
