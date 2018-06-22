@@ -1789,16 +1789,21 @@ static int _pcp_ntv_code_to_info(unsigned int pcpIdx, PAPI_event_info_t *info)
    // it requires an average of 2 uS. No daemon comm needed.
 
    pcp_pmUnitsStr_r(&pcp_event_info[pcpIdx].desc.units, unitStr, 64);   // Construct the unit string; needs at least 60 char.
-   if (1 || strlen(unitStr) == 0) {
-      sprintf(unitStr, "[%u, %i, %u, %u, %i, %i, %i]", 
-         pcp_event_info[pcpIdx].desc.units.pad,
-         pcp_event_info[pcpIdx].desc.units.scaleCount,
-         pcp_event_info[pcpIdx].desc.units.scaleTime,
-         pcp_event_info[pcpIdx].desc.units.scaleSpace,
-         pcp_event_info[pcpIdx].desc.units.dimCount,
-         pcp_event_info[pcpIdx].desc.units.dimTime,
-         pcp_event_info[pcpIdx].desc.units.dimSpace
-         ); 
+   if ( strlen(unitStr) == 0) {
+      sprintf(unitStr, "fraction");                                     // Only ever seen for 'dutycycle' events.
+
+      // Following is for debug purposes. 
+      if (0) {                                                          // Alternatively, show the details of the PCP units descriptor.
+         sprintf(unitStr, "[%u, %i, %u, %u, %i, %i, %i]", 
+            pcp_event_info[pcpIdx].desc.units.pad,
+            pcp_event_info[pcpIdx].desc.units.scaleCount,
+            pcp_event_info[pcpIdx].desc.units.scaleTime,
+            pcp_event_info[pcpIdx].desc.units.scaleSpace,
+            pcp_event_info[pcpIdx].desc.units.dimCount,
+            pcp_event_info[pcpIdx].desc.units.dimTime,
+            pcp_event_info[pcpIdx].desc.units.dimSpace
+         );
+      } 
    }
 
    len = sizeof(info->units);                                           // length of destination.

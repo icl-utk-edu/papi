@@ -151,6 +151,21 @@ fetching values, etc.
 
 ------------------------------------------------------------------
 
+The testPCP.c code (bitbucket/icl/papi/src/components/pcp/tests)
+
+This is straightforward application level code that reads through
+every event, and tests every interface function of the component
+at least once. First it finds the pcp component, then enumerates
+all the events. It creates an event set, resets it, adds and
+subtracts the event by name, gets its code, gets its info, and so
+on. The final test is to add all the events to a single event set,
+clean it up, destroy it, and execute a PAPI_shutdown.
+
+It will print (to stdout) a CSV style text, with a heading,
+detailing all the symbols, units, text description, time scope,
+type and a sample value for for each event. 
+------------------------------------------------------------------
+
 
 How to install PAPI with the PCP component?
 -------------------------------------------

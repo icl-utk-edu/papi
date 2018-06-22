@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // This test program exercises the functions within the linux-pcp.c component.
 //-----------------------------------------------------------------------------
 
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {                                       // args 
    // Setups are done, we begin the work work here.
    //----------------------------------------------
    int count = 0;
-   if (!quiet) printf("Component Idx, Symbol, Units, Description, HexCode (this run only), PAPI_TYPE, Sample Value\n");
+   if (!quiet) printf("Component Idx, Symbol, Units, Description, HexCode (this run only), Time Scope, PAPI_TYPE, Sample Value\n");
 
    do{                                                               // Enumerate all events.
       memset(&info,0,sizeof(PAPI_event_info_t));                     // Clear event info.
@@ -221,6 +221,12 @@ int main(int argc, char **argv) {                                       // args 
             convert_64_t cvt;
             cvt.ll = values[0];                                      // copy the value returned.
 
+            if (info.timescope == PAPI_TIMESCOPE_SINCE_START) { 
+               printf("SINCE START,");
+            } else {
+               printf("POINT,"); 
+            }
+                  
             switch (info.data_type) {                                // based on type, 
                case PAPI_DATATYPE_INT64:
                   printf("INT64, %lli", cvt.ll);
@@ -238,7 +244,7 @@ int main(int argc, char **argv) {                                       // args 
                   printf("UNKNOWN TYPE, %p", cvt.vp);
                   break;                                             // END CASE.
             }
-                  
+
             printf("\n");   
          }
 
