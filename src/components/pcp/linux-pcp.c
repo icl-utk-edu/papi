@@ -818,6 +818,11 @@ int getHelpText(unsigned int pcpIdx, char **helpText)
 //---------------------------------------------------------------------------
 static int _pcp_init_component(int cidx) 
 {
+
+   char *reason = _papi_hwd[cidx]->cmp_info.disabled_reason;            // For error messages.
+   int rLen = PAPI_MAX_STR_LEN-1;                                       // Most I will print.
+   reason[rLen]=0;                                                      // last resort terminator.
+
    mRtnCnt(_pcp_init_component);                                        // count the routine.
    #define hostnameLen 512 /* constant used multiple times. */
    char hostname[hostnameLen];                                          // host name.
@@ -825,14 +830,16 @@ static int _pcp_init_component(int cidx)
 
    ret = _local_linkDynamicLibraries();
    if ( ret != PAPI_OK ) {                                              // Failure to get lib.
-      fprintf(stderr, "%s:%i %s, Failed attempt to link to PCP "
-              "library '%s', ret code=%i.\n", 
-         __FILE__, __LINE__, FUNC, MYPCPLIB, ret);
-      return PAPI_ENOSUPP;
+      snprintf(reason, rLen, "Failed attempt to link to PCP "
+              "library '%s'.\n", MYPCPLIB);
+      return PAPI_ESYS;
    }
 
+   ret = gethostname(hostname, hostnameLen);                            // Try to get the host hame.
    if( gethostname(hostname, hostnameLen) != 0) {                       // If we can't get the hostname, 
-     PAPIERROR( "PCP: gethostname errno %d", errno );
+      snprintf(reason, rLen, "Failed system call, gethostname() "
+            "returned %i.", ret);
+      return PAPI_ESYS;
    }
    #undef hostnameLen /* done with it. */
 
@@ -840,15 +847,13 @@ static int _pcp_init_component(int cidx)
 
    ctxHandle = pcp_pmNewContext(PM_CONTEXT_HOST, hostname);             // Set the new context to hostname retrieved.
    if (ctxHandle < 0) {
-      fprintf(stderr, "%s: Cannot connect to PMCD (Performance "
-               "Metric Collector Daemon) on host \"%s\":%s\n"
-               "(Ensure PAPI component is running on a machine with "
-               "Performance Co-Pilot (PCP) installed.)\n",
-         pmProgname, hostname, pcp_pmErrStr(ctxHandle));
-      return(PAPI_ENOSUPP);
+      snprintf(reason, rLen, "Cannot connect to PM Daemon on host \"%s\".\n "
+         "(Ensure this machine has Performance Co-Pilot installed.)\n", hostname);
+      return(ctxHandle);                                                // contains PAPI error code, not handle.
    }
 
    _prog_fprintf(stderr, "%s:%i Found ctxHandle=%i\n", __FILE__, __LINE__, ctxHandle); // show progress.
+
    sEventInfoSize = sEventInfoBlock;                                    // first allocation.   
    pcp_event_info = (_pcp_event_info_t*) 
       calloc(sEventInfoSize, sizeof(_pcp_event_info_t));                // Make room for all events.
@@ -857,13 +862,14 @@ static int _pcp_init_component(int cidx)
    _time_gettimeofday(&t1, NULL);
    ret = pcp_pmTraversePMNS(AGENT_NAME, cbPopulateNameOnly);            // Timed on Saturn [Intel Xeon 2.0GHz]; typical 9ms, range 8.5-10.5ms.
    if (ret < 0) {                                                       // Failure...
-      fprintf(stderr, "%s:%i pmTraversePMNS failed; ret=%i [%s]\n", 
-         __FILE__, __LINE__, ret, pcp_pmErrStr(ret));
+      snprintf(reason, rLen, "pmTraversePMNS failed; ret=%i [%s]\n", 
+         ret, pcp_pmErrStr(ret));
       if (ret == PM_ERR_NAME) {                                         // We know what this one is,
-         fprintf(stderr, "(This error occurs if AGENT_NAME '%s' is not recognized as an event type by this PMCD Daemon.)\n", AGENT_NAME);
+         snprintf(reason, rLen, "pmTraversePMNS ret=PM_ERR_NAME: "
+            "Occurs if event filter '%s' unknown to PCP Daemon.\n", AGENT_NAME);
       }
 
-      return PAPI_ENOSUPP;                                              // Cannot support it.
+      return PAPI_ENOIMPL;                                              // Not implemented.
    }      
       
    _time_gettimeofday(&t2, NULL);
@@ -874,12 +880,12 @@ static int _pcp_init_component(int cidx)
       sEventCount, sEventInfoSize, sEventInfoBlock);
   
    if (sEventCount < 1) {                                               // Failure...
-      fprintf(stderr, "%s:%i pmTraversePMNS returned zero events for AGENT=\"%s\". Failing.\n", 
-         __FILE__, __LINE__, AGENT_NAME);
-      return PAPI_ENOSUPP;                                              // Can't work with no names!
+      snprintf(reason, rLen, "pmTraversePMNS returned zero events "
+         "for AGENT=\"%s\".\n", AGENT_NAME);
+      return PAPI_ENOIMPL;                                              // Can't work with no names!
    }
 
-   int i,j;
+   int i,j,k;
    char **allNames=calloc(sEventCount, sizeof(char*));                  // Make an array for all names. 
    for (i=0; i<sEventCount; i++) {                                      // .. 
       allNames[i] = pcp_event_info[i].name;                             // copy pointer into array. 
@@ -887,9 +893,9 @@ static int _pcp_init_component(int cidx)
 
    pmID *allPMID=calloc(sEventCount, sizeof(pmID));                     // Make an array for results.
    if (allPMID == NULL) {                                               // If we failed,
-      fprintf(stderr, "%s:%i:%s calloc denied for allPMID; size=%i.\n", 
-              __FILE__, __LINE__, __func__, sEventCount);
-      exit(-1);
+      snprintf(reason, rLen, "memory alloc denied for allPMID; "
+            "size=%i.\n", sEventCount);
+      return(PAPI_ENOMEM);                                              // memory failure.
    } // end if calloc failed.
 
    //----------------------------------------------------------------
@@ -900,6 +906,7 @@ static int _pcp_init_component(int cidx)
    // for other possible values; we read in blocks of 256.
    //----------------------------------------------------------------
    #define LNBLOCK 256                                                  /* Power9 gets IPC errors if read block is too large. */
+   k = (__LINE__)-1;                                                    // where LNBLOCK is defined.   
 
    _time_gettimeofday(&t1, NULL);
 
@@ -909,15 +916,15 @@ static int _pcp_init_component(int cidx)
       if (j > LNBLOCK) j=LNBLOCK;                                       // .. reduce if we cannot.
       ret = pcp_pmLookupName(j, allNames+i, allPMID+i);                 // .. Get a block of PMIDs for a block of names.
       if (ret < 0) {                                                    // .. Failure...
-         fprintf(stderr, "%s:%i pmLookupName for %i names failed; ret=%i [%s]. Failing.\n", 
-            __FILE__, __LINE__, sEventCount, ret, pcp_pmErrStr(ret));
-         if (ret == PM_ERR_IPC) {
-            fprintf(stderr, "This is a communications error with the daemon; one known cause\n"
-                            "is if our read block is too large; reducing LNBLOCK in the code\n"
-                            "above this line may solve this issue.\n");
+         snprintf(reason, rLen, "pmLookupName for %i names failed; ret=%i [%s].\n", 
+            sEventCount, ret, pcp_pmErrStr(ret));
+         if (ret == PM_ERR_IPC) {                                       // .. If we know it, rewrite.
+            snprintf(reason, rLen, "pmLookupName ret=PM_ERR_IPC: one known cause is a readblock too large; reduce LNBLOCK (%s:%i).\n",
+                  __FILE__,k);
+            return PAPI_EBUF;                                           // Give buffer exceeded.
          }
 
-         return PAPI_ENOSUPP;                                           // .. .. Can't work with no names!
+         return PAPI_ESYS;                                              // .. .. Can't work with no names!
       }
 
       i+=j;                                                             // .. Adjust the pointer forward by what we read.
@@ -976,9 +983,9 @@ static int _pcp_init_component(int cidx)
          pmValue *pmval = &vset->vlist[0];                              // .. Get the first value.
          pmValueBlock *pB = pmval->value.pval;                          // .. get it.
          if (pcp_event_info[i].valType != pB->vtype) {
-            fprintf(stderr, "%s:%i:%s Disagreement between desc and fetch on type. %i vs %i.\n", 
-               __FILE__, __LINE__, FUNC, pcp_event_info[i].valType, pB->vtype);
-            exit (-1);
+            snprintf(reason, rLen, "Disagreement between var descriptor and fetch on event %s. %i vs %i. Possible version incompatibiity.\n", 
+               pcp_event_info[i].name, pcp_event_info[i].valType, pB->vtype);
+            return PAPI_ENOSUPP;                                          // .. in
          }
 
 //       pcp_event_info[i].valType = pB->vtype;                         // .. get the type.
@@ -1071,9 +1078,9 @@ static int _pcp_init_component(int cidx)
    pcp_event_info = realloc(pcp_event_info,                             // release any extra memory. 
                         sEventCount*sizeof(_pcp_event_info_t));         // .. 
    if (pcp_event_info == NULL) {                                        // If we failed,
-      fprintf(stderr, "%s:%i:%s malloc/realloc denied for pcp_event_info; size=%i.\n", 
-              __FILE__, __LINE__, __func__, sEventCount);
-      exit(-1);
+      snprintf(reason, rLen, "memory realloc denied for "
+            "pcp_event_info; size=%i.\n", sEventCount);
+      return PAPI_ENOMEM;                                               // no memory.
    } // end if realloc failed.
 
    qsort(pcp_event_info, sEventCount,                                   // sort by PMID, idx, name.
