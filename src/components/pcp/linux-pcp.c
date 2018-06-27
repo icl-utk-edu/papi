@@ -1239,12 +1239,6 @@ static int _pcp_update_control_state(
          MyCtl->pcpValue = NULL;                                        // .. never free it again.
       }
 
-      if (MyCtl->pcpIndex != NULL) {                                    // If we have space allocated,
-         free(MyCtl->pcpIndex);                                         // .. discard it,
-         free(MyCtl->pcpValue);                                         // .. and values,
-         MyCtl->pcpIndex = NULL;                                        // .. never free it again.
-         MyCtl->pcpValue = NULL;                                        // .. never free it again.
-      }
       MyCtl->maxAllocated = 0;                                          // .. no longer tracking max.
       return PAPI_OK;                                                   // .. get out.
    }
