@@ -39,10 +39,12 @@
  *
  * @section papi_high_api High Level Functions
  * A simple interface for instrumenting end-user applications. 
- * Fully supported on both C and Fortran. 
+ * Fully supported on both C and Fortran.
  * See individual functions for details on usage.
  * 
  *	@ref high_api
+ *
+ * @ref high_api_advanced
  * 
  * Note that the high-level interface is self-initializing. 
  * You can mix high and low level calls, but you @b must call either 
@@ -1117,7 +1119,7 @@ enum {
 /** @} */
 
 /** \internal
-  @defgroup high_api  The High Level API Advanced (Optional)
+  @defgroup high_api_advanced  The High Level API Advanced (Optional)
 
    The following four routines allow the user to control initialization and
    finalization of the high level interface as well as determine PAPI events

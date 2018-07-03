@@ -8,7 +8,7 @@ html: force_me
 
 man: man/man1 man/man3
 
-man/man3: ../src/papi.h ../src/papi.c ../src/papi_hl.c ../src/papi_fwrappers.c
+man/man3: ../src/papi.h ../src/papi.c ../src/high-level/papi_hl.c ../src/papi_fwrappers.c
 	doxygen Doxyfile-man3
 
 man/man1: ../src/utils/papi_avail.c ../src/utils/papi_clockres.c  ../src/utils/papi_command_line.c ../src/utils/papi_component_avail.c ../src/utils/papi_cost.c ../src/utils/papi_decode.c ../src/utils/papi_error_codes.c ../src/utils/papi_event_chooser.c ../src/utils/papi_xml_event_info.c ../src/utils/papi_mem_info.c ../src/utils/papi_multiplex_cost.c ../src/utils/papi_native_avail.c  ../src/utils/papi_version.c

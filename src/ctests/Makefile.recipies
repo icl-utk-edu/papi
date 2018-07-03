@@ -9,7 +9,8 @@ PTHREADS= pthread_hl \
 MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
 	sdsc2-mpx-noreset sdsc4-mpx reset_multiplex
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
-MPI	= mpifirst
+MPI	= mpi_hl mpi_omp_hl \
+	mpifirst
 SHARED  = shlib
 SERIAL  = serial_hl serial_hl_advanced serial_hl_ll_comb \
 	all_events all_native_events branches calibrate case1 case2 \
@@ -230,6 +231,12 @@ virttime: virttime.c $(TESTLIB) $(PAPILIB)
 
 first: first.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) first.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o first
+
+mpi_hl: mpi_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	$(MPICC) $(INCLUDE) $(MPFLAGS) $(CFLAGS) $(TOPTFLAGS) mpi_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o mpi_hl
+
+mpi_omp_hl: mpi_omp_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	$(MPICC) $(INCLUDE) $(MPFLAGS) $(OMPCFLGS) $(CFLAGS) $(TOPTFLAGS) mpi_omp_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o mpi_omp_hl $(OMPLIBS)
 
 mpifirst: mpifirst.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(MPICC) $(INCLUDE) $(MPFLAGS) $(CFLAGS) $(TOPTFLAGS) first.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o mpifirst

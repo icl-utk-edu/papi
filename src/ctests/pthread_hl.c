@@ -3,8 +3,15 @@
 #include <time.h>
 #include <pthread.h>
 #include "papi.h"
+#include "papi_test.h"
 
 #define NUM_THREADS 4
+
+typedef struct papi_args
+{
+   long tid;
+   int quiet;
+} papi_args_t;
 
 int matmult()
 {
@@ -43,36 +50,60 @@ int matmult()
    return(cksum);
 }
 
-void *CallMatMul(void *threadid)
+void *CallMatMul(void *args)
 {
    long tid;
-   tid = (long)threadid;
+   int retval, quiet;
    char region_name[10];
 
+   papi_args_t* papi_args = (papi_args_t*)args;
+   tid = (*papi_args).tid;
+   quiet = (*papi_args).quiet;
+
    sprintf(region_name, "matmul_%ld", tid);
-   PAPI_hl_region_begin(region_name);
-   printf("Sum matmul thread %ld: 0x%x\n", tid, matmult());
-   PAPI_hl_region_end(region_name);
+
+   retval = PAPI_hl_region_begin(region_name);
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_hl_region_begin", retval );
+   }
+   if ( !quiet ) {
+      printf("Sum matmul thread %ld: 0x%x\n", tid, matmult());
+   }
+   retval = PAPI_hl_region_end(region_name);
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
+   }
 
    pthread_exit(NULL);
 }
 
-
-int main()
+int main( int argc, char **argv )
 {
    pthread_t threads[NUM_THREADS];
+   papi_args_t args[NUM_THREADS];
    int rc;
    long t;
+   int quiet = 0;
+
+   /* Set TESTS_QUIET variable */
+   quiet = tests_quiet( argc, argv );
 
    for( t = 0; t < NUM_THREADS; t++) {
-      rc = pthread_create(&threads[t], NULL, CallMatMul, (void *)t);
+      args[t].tid = t;
+      args[t].quiet = quiet;
+      rc = pthread_create(&threads[t], NULL, CallMatMul, (void *)&args[t]);
       if (rc) {
          printf("ERROR; return code from pthread_create() is %d\n", rc);
          exit(-1);
       }
    }
 
-   pthread_exit(NULL);
+   for( t = 0; t < NUM_THREADS; t++) {
+      pthread_join(threads[t], NULL);
+   }
+
+   PAPI_hl_print_output();
+   test_pass( __FILE__ );
 
    return 0;
 }

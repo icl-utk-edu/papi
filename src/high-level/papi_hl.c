@@ -30,11 +30,11 @@
 /* Weak symbol for pthread_mutex_trylock to avoid additional linking
  * against libpthread when not used. */
 #pragma weak pthread_mutex_trylock
-int __attribute__((weak)) pthread_mutex_trylock(pthread_mutex_t *mutex)
-{
-   (void)(mutex);
-   return 0;
-}
+// int __attribute__((weak)) pthread_mutex_trylock(pthread_mutex_t *mutex)
+// {
+//    (void)(mutex);
+//    return 0;
+// }
 
 void _internal_onetime_library_init(void)
 {
@@ -969,17 +969,17 @@ PAPI_hl_print_output()
          _internal_hl_write_output();
    }
 
-   /* test */
-   if ( hl_initiated == true ) {
-      _internal_clean_up_local_data();
-      PAPI_lock( PAPIHL_LOCK );
-      if ( hl_initiated == true ) {
-         /* clean up data */
-         _internal_clean_up_global_data();
-         _internal_hl_determine_output_path();
-      }
-      PAPI_unlock( PAPIHL_LOCK );
-   }
+   // /* test */
+   // if ( hl_initiated == true ) {
+   //    _internal_clean_up_local_data();
+   //    PAPI_lock( PAPIHL_LOCK );
+   //    if ( hl_initiated == true ) {
+   //       /* clean up data */
+   //       _internal_clean_up_global_data();
+   //       _internal_hl_determine_output_path();
+   //    }
+   //    PAPI_unlock( PAPIHL_LOCK );
+   // }
 }
 
 int

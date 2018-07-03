@@ -69,6 +69,7 @@ int main( int argc, char **argv )
       }
    }
 
+   PAPI_hl_print_output();
    test_pass( __FILE__ );
 
    return 0;

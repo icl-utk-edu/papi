@@ -305,7 +305,9 @@ def main(source, format, type):
   if (format == "json"):
     json = create_json_object(source)
     formated_json = format_json_object(json)
-    write_json_file(formated_json, 'papi.json')
+
+    if type == 'detail':
+      write_json_file(formated_json, 'papi.json')
 
     #summarize data over threads and ranks
     if type == 'accumulated':

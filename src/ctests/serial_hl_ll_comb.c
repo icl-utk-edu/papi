@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "papi.h"
+#include "papi_test.h"
 
 int matmult()
 {
@@ -41,16 +42,94 @@ int matmult()
 }
 
 
-int main() 
+int main( int argc, char **argv )
 {
-   int i;
-   
-   for ( i = 1; i < 5; ++i ) {
+   int retval, i;
+   int quiet = 0;
+
+   /* Set TESTS_QUIET variable */
+   quiet = tests_quiet( argc, argv );
+
+   /* three iterations with high-level API */
+   if ( !quiet ) {
+      printf("Testing high-level API...\n");
+   }
+
+   for ( i = 1; i < 4; ++i ) {
       char region_name[10];
       sprintf(region_name, "matmul_%d", i);
-      PAPI_hl_region_begin(region_name);
-      printf("Sum matmul round %d: 0x%x\n", i, matmult());
-      PAPI_hl_region_end(region_name);
+
+      retval = PAPI_hl_region_begin(region_name);
+      if ( retval != PAPI_OK ) {
+         test_fail( __FILE__, __LINE__, "PAPI_hl_region_begin", retval );
+      }
+
+      if ( !quiet ) {
+         printf("Sum matmul round %d: 0x%x\n", i, matmult());
+      }
+
+      retval = PAPI_hl_region_end(region_name);
+      if ( retval != PAPI_OK ) {
+         test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
+      }
    }
+   PAPI_hl_print_output();
+   PAPI_hl_finalize();
+
+   /* one iteration with low-level API */
+   if ( !quiet ) {
+      printf("\nTesting low-level API...\n");
+   }
+
+   long long values[2];
+   int EventSet = PAPI_NULL;
+   char event_name1[]="PAPI_TOT_CYC";
+   char event_name2[]="PAPI_TOT_INS";
+
+   /* create the eventset */
+   retval = PAPI_create_eventset( &EventSet );
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+   }
+
+   retval = PAPI_add_named_event( EventSet, event_name1);
+   if ( retval != PAPI_OK ) {
+      if (!quiet) printf("Couldn't add %s\n",event_name1);
+      test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_CYC",0);
+   }
+
+   retval = PAPI_add_named_event( EventSet, event_name2);
+   if ( retval != PAPI_OK ) {
+      if (!quiet) printf("Couldn't add %s\n",event_name2);
+      test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_INS",0);
+   }
+
+   /* Start PAPI */
+   retval = PAPI_start( EventSet );
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+   }
+
+   if ( !quiet ) {
+      printf("Sum matmul round 4: 0x%x\n", matmult());
+   }
+
+   /* Read results */
+   retval = PAPI_stop( EventSet, values );
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+   }
+
+   if ( !quiet ) {
+      printf("%s: %lld\n", event_name1, values[0]);
+      printf("%s: %lld\n", event_name2, values[1]);
+   }
+
+   /* remove results. */
+   PAPI_remove_named_event(EventSet,event_name1);
+   PAPI_remove_named_event(EventSet,event_name2);
+
+   test_pass( __FILE__ );
+
    return 0;
 }

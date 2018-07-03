@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <mpi.h>
 #include <omp.h>
 #include "papi.h"
 #include "papi_test.h"
@@ -47,9 +48,14 @@ int main( int argc, char **argv )
 {
    int retval, i;
    int quiet = 0;
+   int world_size, world_rank;
 
    /* Set TESTS_QUIET variable */
    quiet = tests_quiet( argc, argv );
+
+   MPI_Init( &argc, &argv );
+   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
    #pragma omp parallel
    #pragma omp for
@@ -65,7 +71,7 @@ int main( int argc, char **argv )
       }
 
       if ( !quiet ) {
-         printf("Thread %d: Sum matmul round %d: 0x%x\n", tid, i, matmult());
+         printf("Rank %d, Thread %d: Sum matmul round %d: 0x%x\n", world_rank, tid, i, matmult());
       }
 
       retval = PAPI_hl_region_end(region_name);
@@ -75,6 +81,7 @@ int main( int argc, char **argv )
    }
 
    PAPI_hl_print_output();
+   MPI_Finalize();
    test_pass( __FILE__ );
 
    return 0;
