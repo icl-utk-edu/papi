@@ -41,6 +41,8 @@ COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -n
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
+PAPI_HL_OUTPUT_WRITER="high-level/scripts/papi_hl_output_writer.py"
+
 ALLTESTS="$VTESTS $CTESTS $FTESTS $COMPTESTS";
 x=0;
 CWD=`pwd`
@@ -124,9 +126,20 @@ do
   done
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-	RAN="$i $RAN"
-    printf "Running %-50s %s" $i:
-    $VALGRIND ./$i $TESTS_QUIET
+      RAN="$i $RAN"
+      printf "Running %-50s %s" $i:
+      $VALGRIND ./$i $TESTS_QUIET
+      
+      #generate output for high-level tests
+      if [[ $i = *"_hl"* ]] ; then
+        if [[ $TESTS_QUIET != "TESTS_QUIET" ]] ; then
+          $PAPI_HL_OUTPUT_WRITER
+          rm papi.json
+        fi
+        #delete temporary output folder
+        rm -r papi
+      fi
+
     fi;
   fi;
   MATCH=0
@@ -147,9 +160,20 @@ do
   done
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-	  RAN="$i $RAN"
+      RAN="$i $RAN"
       printf "Running %-50s %s" $i:
       $VALGRIND ./$i $TESTS_QUIET
+
+      #generate output for high-level tests
+      if [[ $i = *"_hl"* ]] ; then
+        if [[ $TESTS_QUIET != "TESTS_QUIET" ]] ; then
+          $PAPI_HL_OUTPUT_WRITER
+          rm papi.json
+        fi
+        #delete temporary output folder
+        rm -r papi
+      fi
+
     fi;
   fi;
   MATCH=0
@@ -170,9 +194,20 @@ do
   done
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-	RAN="$i $RAN"
-    printf "Running $i:\n"
-    $VALGRIND ./$i $TESTS_QUIET
+      RAN="$i $RAN"
+      printf "Running $i:\n"
+      $VALGRIND ./$i $TESTS_QUIET
+
+      #generate output for high-level tests
+      if [[ $i = *"_hl"* ]] ; then
+        if [[ $TESTS_QUIET != "TESTS_QUIET" ]] ; then
+          $PAPI_HL_OUTPUT_WRITER
+          rm papi.json
+        fi
+        #delete temporary output folder
+        rm -r papi
+      fi
+
     fi;
   fi;
   MATCH=0

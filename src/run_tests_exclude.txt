@@ -41,6 +41,9 @@ ctests/timer_overflow
 # Some architectures require OMP_NUM_THREADS otherwise the test hangs
 ctests/omptough
 
+# Mixed high-level and low-level tests with different components
+ctests/serial_hl_ll_comb2
+
 # these tests haven't been implemented
 
 

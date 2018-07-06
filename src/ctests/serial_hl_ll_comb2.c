@@ -5,9 +5,41 @@
 #include "papi_test.h"
 #include "do_loops.h"
 
+struct threeNum
+{
+   int n1, n2, n3;
+};
+
+void do_io()
+{
+   int n;
+   struct threeNum num;
+   FILE *fptr;
+
+   if ((fptr = fopen("storage.bin","wb")) == NULL){
+      printf("Error! opening file");
+      /* File exits if the file pointer returns NULL. */
+      exit(1);
+   }
+
+   for (n = 1; n < 5; ++n) {
+      num.n1 = n;
+      num.n2 = 5*n;
+      num.n3 = 5*n + 1;
+      fwrite(&num, sizeof(struct threeNum), 1, fptr); 
+   }
+
+   for(n = 1; n < 5; ++n)
+   {
+      fread(&num, sizeof(struct threeNum), 1, fptr); 
+   }
+   fclose(fptr);
+}
+
+
 int main( int argc, char **argv )
 {
-   int retval, i;
+   int retval;
    int quiet = 0;
    char* region_name;
 
@@ -16,32 +48,19 @@ int main( int argc, char **argv )
 
    region_name = "do_flops";
 
-   /* three iterations with high-level API */
    if ( !quiet ) {
-      printf("\nTesting high-level API: do_flops\n");
+      printf("\nTesting high-level and low-level API in parallel: do_flops\n");
    }
 
-   for ( i = 1; i < 4; ++i ) {
+   PAPI_hl_init();
+   PAPI_hl_set_events("appio:::READ_BYTES, appio:::WRITE_BYTES, coretemp:::hwmon0:temp2_input=instant");
 
-      retval = PAPI_hl_region_begin(region_name);
-      if ( retval != PAPI_OK ) {
-         test_fail( __FILE__, __LINE__, "PAPI_hl_region_begin", retval );
-      }
-
-      do_flops( NUM_FLOPS );
-
-      retval = PAPI_hl_region_end(region_name);
-      if ( retval != PAPI_OK ) {
-         test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
-      }
+   retval = PAPI_hl_region_begin(region_name);
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_hl_region_begin", retval );
    }
-   PAPI_hl_print_output();
-   PAPI_hl_finalize();
 
-   /* one iteration with low-level API */
-   if ( !quiet ) {
-      printf("\nTesting low-level API: do_flops\n");
-   }
+   do_flops( NUM_FLOPS );
 
    long long values[2];
    int EventSet = PAPI_NULL;
@@ -73,6 +92,8 @@ int main( int argc, char **argv )
    }
 
    do_flops( NUM_FLOPS );
+   /* do some IO */
+   do_io();
 
    /* Read results */
    retval = PAPI_stop( EventSet, values );
@@ -88,6 +109,14 @@ int main( int argc, char **argv )
    /* remove results. */
    PAPI_remove_named_event(EventSet,event_name1);
    PAPI_remove_named_event(EventSet,event_name2);
+
+   retval = PAPI_hl_region_end(region_name);
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
+   }
+
+   PAPI_hl_print_output();
+   PAPI_hl_finalize();
 
    test_pass( __FILE__ );
 
