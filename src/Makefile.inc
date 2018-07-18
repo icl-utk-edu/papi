@@ -288,7 +288,7 @@ null:
 
 dist: 
 	$(MAKE) install-all PREFIX=`pwd`/papi-$(CPUCOMPONENT_NAME)
-	tar cfv ./papi-$(CPUCOMPONENT).tar ./papi-$(CPUCOMPONENT_NAME)
+	tar cfv ./papi-$(CPUCOMPONENT_NAME).tar ./papi-$(CPUCOMPONENT_NAME)
 	gzip ./papi-$(CPUCOMPONENT_NAME).tar
 	rm -rf ./papi-$(CPUCOMPONENT_NAME)
 

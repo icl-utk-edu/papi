@@ -188,7 +188,10 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_FIXED3_ATTRS	(INTEL_FIXED2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V3_ATTRS 		(INTEL_V2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V4_ATTRS 		(INTEL_V3_ATTRS | _INTEL_X86_ATTR_INTX | _INTEL_X86_ATTR_INTXCP)
-#define INTEL_SKL_FE_ATTRS 	(INTEL_V4_ATTRS | _INTEL_X86_ATTR_FETHR)
+#define INTEL_SKL_FE_ATTRS 	(INTEL_V2_ATTRS         |\
+				 _INTEL_X86_ATTR_INTX   |\
+				 _INTEL_X86_ATTR_INTXCP |\
+				 _INTEL_X86_ATTR_FETHR)
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select

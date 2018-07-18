@@ -482,11 +482,13 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_cortex_a57_support,
 	&arm_cortex_a53_support,
 	&arm_xgene_support,
+	&arm_thunderx2_support,
 #endif
 #ifdef CONFIG_PFMLIB_ARCH_ARM64
 	&arm_cortex_a57_support,
 	&arm_cortex_a53_support,
 	&arm_xgene_support,
+	&arm_thunderx2_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_S390X
