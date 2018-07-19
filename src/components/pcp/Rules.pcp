@@ -1,0 +1,10 @@
+PCP_DIR ?= /usr
+
+COMPSRCS += components/pcp/linux-pcp.c
+COMPOBJS += linux-pcp.o
+LDFLAGS += -L$(PCP_DIR)/lib64 -lpcp
+CC_SHR += -I$(PCP_DIR)/include
+PCP_INC = -I$(PCP_DIR)/include
+
+linux-pcp.o: components/pcp/linux-pcp.c 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) $(PCP_INC) -c components/pcp/linux-pcp.c -o linux-pcp.o 
