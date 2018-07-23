@@ -21,7 +21,7 @@
   *		<li>-x < Max number of events to test >
   *		<li> -k, Do not time kernel multiplexing
   *		<li> -s, Do not ime software multiplexed EventSets
-  *		<li> -t THREASHOLD, Test with THRESHOLD iterations of counting loop. 
+  *		<li> -t THRESHOLD, Test with THRESHOLD iterations of counting loop.
   *	</ul>
   *
   *	@section Bugs
@@ -162,7 +162,7 @@ usage(void)
 		"\t-x num, number of events to count\n"
 		"\t-s, Do not run software multiplexing test.\n"
 		"\t-k, Do not attempt kernel multiplexed test.\n"
-		"\t-t THREASHOLD set the threshold for the number "
+		"\t-t THRESHOLD set the threshold for the number "
 		"of iterations. Default: 100,000\n" );
 }
 

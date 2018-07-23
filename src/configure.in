@@ -378,7 +378,7 @@ AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type])
 
 # First set pthread-mutexes based on arch                                       
 case $arch in
-  aarch64|arm*)
+  aarch64|arm*|parisc*)
     pthread_mutexes=yes
     CFLAGS="$CFLAGS -DUSE_PTHREAD_MUTEXES"
     echo "forcing use of pthread mutexes... " >&6

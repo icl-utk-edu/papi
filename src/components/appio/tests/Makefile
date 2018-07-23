@@ -56,7 +56,7 @@ appio_test_pthreads: appio_test_pthreads.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ appio_test_pthreads.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lpthread
 
 iozone/iozone_linux$(ARCH_SUFFIX).o iozone/libasync.o iozone/libbif.o: 
-	cd iozone; $(MAKE) iozone_linux$(ARCH_SUFFIX).o libasync.o libbif.o
+	$(MAKE) -C iozone iozone_linux$(ARCH_SUFFIX).o libasync.o libbif.o
 
 init_fini.o: init_fini.c
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $^

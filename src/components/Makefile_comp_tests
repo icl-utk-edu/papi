@@ -20,4 +20,4 @@ install:
 clean:
 
 distclean clobber: clean
-	  rm -f Makefile_comp_tests.target
+	rm -f Makefile_comp_tests.target

@@ -34,7 +34,7 @@
  * active. However, a typical usage of PAPI is to measure over
  * sections of code by starting the event once and by comparing
  * the values returned by subsequent calls to PAPI_read. The difference
- * in counts is used as the measure of occured events in the code
+ * in counts is used as the measure of occurred events in the code
  * section between the calls. 
  *
  * When multiplexing is used in this fashion the time proportion used
@@ -1309,7 +1309,7 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 	     PAPIERROR("Cleanup eventset\n");
 	   }
 	   if (PAPI_destroy_eventset( &( mev->papi_event )) !=PAPI_OK) {
-	     PAPIERROR("Destory eventset\n");
+	     PAPIERROR("Destroy eventset\n");
 	   }
 	}
 	if ( mev )

@@ -292,7 +292,7 @@ async_suspend(struct cache_ent *ce)
 }
 
 /*************************************************************************
- * This routine is a generic async reader assist funtion. It takes
+ * This routine is a generic async reader assist function. It takes
  * the same calling parameters as read() but also extends the
  * interface to include:
  * stride ..... For the async reads, what is the distance, in size units, 
@@ -1197,7 +1197,7 @@ struct cache *gc;
 }
 
 /*************************************************************************
- * This routine is a generic async writer assist funtion. It takes
+ * This routine is a generic async writer assist function. It takes
  * the same calling parameters as write() but also extends the
  * interface to include:
  * 
@@ -1508,7 +1508,7 @@ struct cache *gc;
 }
 
 /*************************************************************************
- * This routine is a generic async writer assist funtion. It takes
+ * This routine is a generic async writer assist function. It takes
  * the same calling parameters as write() but also extends the
  * interface to include:
  * 

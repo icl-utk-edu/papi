@@ -62,7 +62,7 @@ Native_Event_LabelDescription_t Core2ExtremeProcessor_info[] =
 	{"BUS_HITM_DRV", "The number of bus cycles during which the processor drives the HITM# pin."},
 	{"BUS_IO_WAIT", "The number of core cycles during which I/O requests wait in the bus queue."},
 	{"BUS_LOCK_CLOCKS", "The number of bus cycles during which the LOCK signal was asserted on the bus."},
-	{"BUS_REQUEST_OUTSTANDING", "The number of pending full cache line read transactions on the bus occuring in each cycle."},
+	{"BUS_REQUEST_OUTSTANDING", "The number of pending full cache line read transactions on the bus occurring in each cycle."},
 	{"BUS_TRANS_ANY", "The number of bus transactions of any kind."},
 	{"BUS_TRANS_BRD", "The number of burst read transactions."},
 	{"BUS_TRANS_BURST", "The number of burst transactions."},

@@ -58,22 +58,22 @@ shared: libpapi.so libpapi.so.$(PAPIVER)
 
 libpapi.so libpapi.so.$(PAPIVER): $(SHLIB)
 	ln -sf $(SHLIB) $@
-	   
+
 $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 	rm -f $(SHLIB) libpapi.so libpapi.so.$(PAPIVER); 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS) $(LDFLAGS)
-	@if test "$(POST_BUILD)" != "" ; then \
+	@set -ex; if test "$(POST_BUILD)" != "" ; then \
 		-$(POST_BUILD) ; \
 	fi
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
-	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c
+	$(CPP) $(CPPFLAGS) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c
 
 papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
-	$(CPP) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.c
+	$(CPP) $(CPPFLAGS) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.c
 
 upper_PAPI_FWRAPPERS.c: papi_fwrappers.c $(HEADERS)
-	$(CPP) -DFORTRANCAPS papi_fwrappers.c > upper_PAPI_FWRAPPERS.c
+	$(CPP) $(CPPFLAGS) -DFORTRANCAPS papi_fwrappers.c > upper_PAPI_FWRAPPERS.c
 
 papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
@@ -165,7 +165,7 @@ $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 bgp_tests:$(LIBRARY) null
-	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../../$(LINKLIB)" bgp_tests
+	$(SETPATH) $(MAKE) -C ctests/bgp CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../../$(LINKLIB)" bgp_tests
  
 #Required for freebsd
 freebsd-memory.o: freebsd-memory.c $(HEADERS)
@@ -228,19 +228,19 @@ fulltest: tests
 tests: $(TESTS)
 
 testlib:
-	$(SETPATH) cd testlib;  $(MAKE)
+	$(SETPATH) $(MAKE) -C testlib
 
 utils: $(LIBS) testlib
-	cd utils && $(MAKE)
+	$(MAKE) -C utils
 
 validation_tests:	$(LIBS) testlib
-	$(SETPATH) cd validation_tests; $(MAKE)
+	$(SETPATH) $(MAKE) -C validation_tests
 
 ctests: $(LIBS) testlib validation_tests
-	$(SETPATH) cd ctests; $(MAKE)
+	$(SETPATH) $(MAKE) -C ctests
 
 ftests: $(LIBS) testlib
-	$(SETPATH) cd ftests; $(MAKE)
+	$(SETPATH) $(MAKE) -C ftests
 
 
 
@@ -248,41 +248,38 @@ ftests: $(LIBS) testlib
 # compile tests added to components
 comp_tests:	$(LIBS) testlib
 ifneq (${COMPONENTS},)
-		@for comp in ${COMPONENTS} ; do \
-			$$comp_tests: $(LIBS) testlib null ; \
-			$(SETPATH) cd components/$$comp/tests ; $(MAKE) ; \
-			$(SETPATH) cd ../../.. ; done
+	@set -ex; for comp in ${COMPONENTS} ; do \
+		$(SETPATH) $(MAKE) -C components/$$comp/tests ; \
+	done
 endif
 
 clean: comp_tests_clean native_clean
-	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so libpapi.so.$(PAPIVER) $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c 
-	-cd ../doc; $(MAKE) clean
-	-cd ctests; $(MAKE) clean
-	-cd ftests; $(MAKE) clean
-	-cd testlib; $(MAKE) clean
-	-cd utils;  $(MAKE) clean
-	-cd validation_tests; $(MAKE) clean
+	rm -rf $(LIBRARY) $(SHLIB) libpapi.so libpapi.so.$(PAPIVER) $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c
+	$(MAKE) -C ../doc clean
+	$(MAKE) -C ctests clean
+	$(MAKE) -C ftests clean
+	$(MAKE) -C testlib clean
+	$(MAKE) -C utils clean
+	$(MAKE) -C validation_tests clean
 
 # Component tests cleaning
 comp_tests_clean:
 ifneq (${COMPONENTS},)
-	@for comp in ${COMPONENTS} ; do \
-		cd components/$$comp/tests ; \
-		$(MAKE) clean ; \
-		cd ../../.. ; \
+	@set -ex; for comp in ${COMPONENTS} ; do \
+		$(MAKE) -C components/$$comp/tests clean ; \
 	done 
 endif
 
 clobber distclean: clean native_clobber 
-	-cd ../doc; $(MAKE) distclean
-	-cd ctests; $(MAKE) distclean
-	-cd ftests; $(MAKE) distclean
-	-cd testlib; $(MAKE) distclean
-	-cd utils;  $(MAKE) distclean
-	-cd validation_tests; $(MAKE) distclean
-	-cd components; $(MAKE) -f Makefile_comp_tests distclean
-	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h $(PAPI_EVENTS_TABLE)
-	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
+	$(MAKE) -C ../doc distclean
+	$(MAKE) -C ctests distclean
+	$(MAKE) -C ftests distclean
+	$(MAKE) -C testlib distclean
+	$(MAKE) -C utils distclean
+	$(MAKE) -C validation_tests distclean
+	$(MAKE) -C components -f Makefile_comp_tests distclean
+	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h $(PAPI_EVENTS_TABLE)
+	rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
 null:
 
@@ -301,33 +298,34 @@ install-lib: native_install
 	-mkdir -p $(DESTDIR)$(INCDIR)
 	-chmod go+rx $(DESTDIR)$(INCDIR)
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
-	cd $(DESTDIR)$(INCDIR); chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
+	cd $(DESTDIR)$(INCDIR) && chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
 	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	-chmod go+rx $(DESTDIR)$(LIBDIR)
-	@if test -r $(LIBRARY) ; then \
-	   cp $(LIBRARY) $(DESTDIR)$(LIBDIR); \
-	   chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY); \
+	@set -ex; if test -r $(LIBRARY) ; then \
+		cp $(LIBRARY) $(DESTDIR)$(LIBDIR); \
+		chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY); \
 	fi
-	@if test -r $(SHLIB) ; then \
+	@set -ex; if test -r $(SHLIB) ; then \
 		cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC); \
 		chmod go+r $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) ; \
-		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE); \
-		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPIVER); \
-		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so; \
+		cd $(DESTDIR)$(LIBDIR); \
+		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE); \
+		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPIVER); \
+		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so; \
 	fi
 
 install-man:  
-		cd ../man && $(MAKE) DOCDIR=$(DESTDIR)$(DOCDIR) MANDIR=$(DESTDIR)$(MANDIR) install
+	$(MAKE) -C ../man DOCDIR=$(DESTDIR)$(DOCDIR) MANDIR=$(DESTDIR)$(MANDIR) install
 
 install-utils: 
-	$(SETPATH) cd utils; $(MAKE) BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" install
+	$(SETPATH) $(MAKE) -C utils BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" install
 
 install-tests:  install-comp_tests
-	$(SETPATH) cd testlib; $(MAKE) install
-	$(SETPATH) cd ctests; $(MAKE) install
-	$(SETPATH) cd ftests; $(MAKE) install
-	$(SETPATH) cd validation_tests; $(MAKE) install
+	$(SETPATH) $(MAKE) -C testlib install
+	$(SETPATH) $(MAKE) -C ctests install
+	$(SETPATH) $(MAKE) -C ftests install
+	$(SETPATH) $(MAKE) -C validation_tests install
 	-cp run_tests.sh $(DESTDIR)$(DATADIR)
 	-cp run_tests_exclude_cuda.txt $(DESTDIR)$(DATADIR)
 	-cp run_tests_exclude.txt $(DESTDIR)$(DATADIR)
@@ -337,10 +335,8 @@ install-tests:  install-comp_tests
 # Component tests installing
 install-comp_tests:
 ifneq (${COMPONENTS},)
-	@for comp in ${COMPONENTS} ; do \
-		cd components/$$comp/tests ; \
-		$(MAKE) DATADIR="$(DESTDIR)$(DATADIR)/components" install  ; \
-		cd ../../.. ; \
+	@set -ex; for comp in ${COMPONENTS} ; do \
+		$(MAKE) -C components/$$comp/tests DATADIR="$(DESTDIR)$(DATADIR)/components" install ; \
 	done
 endif
 

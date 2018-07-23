@@ -60,7 +60,7 @@ Native_Event_LabelDescription_t AtomProcessor_info[] =
 	{"BUS_HITM_DRV", "The number of bus cycles during which the processor drives the HITM# pin.  This event is thread-independent."},
 	{"BUS_IO_WAIT", "The number of core cycles during which I/O requests wait in the bus queue."},
 	{"BUS_LOCK_CLOCKS", "The number of bus cycles during which the LOCK signal was asserted on the bus.  This event is thread independent."},
-	{"BUS_REQUEST_OUTSTANDING", "The number of pending full cache line read transactions on the bus occuring in each cycle.  This event is thread independent."},
+	{"BUS_REQUEST_OUTSTANDING", "The number of pending full cache line read transactions on the bus occurring in each cycle.  This event is thread independent."},
 	{"BUS_TRANS_P", "The number of partial bus transactions."},
 	{"BUS_TRANS_IFETCH", "The number of instruction fetch full cache line bus transactions."},
 	{"BUS_TRANS_INVAL", "The number of invalidate bus transactions."},

@@ -36,7 +36,7 @@ clean:
 
 # Extra example to show LD_PRELOAD can be used to insert PAPI CUDA into a pre-existing binary
 cuda_ld_preload_example.so: simpleMultiGPU_no_counters cuda_ld_preload_example.c
-	gcc -Wall -fPIC -shared -o cuda_ld_preload_example.so $(LFLAGS) $(INCLUDE) cuda_ld_preload_example.c ../../../libpapi.so
+	gcc -Wall -fPIC -shared -o cuda_ld_preload_example.so $(LDFLAGS) $(INCLUDE) cuda_ld_preload_example.c ../../../libpapi.so
 
 run: 
 	( cd ~/icl/papi/papi/src/ && make )
