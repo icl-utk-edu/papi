@@ -1345,6 +1345,22 @@ PAPI_FCALL( papif_hl_region_begin, PAPIF_HL_REGION_BEGIN,
 #endif
 
 #if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_hl_read, PAPIF_HL_READ,
+			( char* name, int *check, int Event_len ) )
+{
+	char tmp[PAPI_MAX_STR_LEN];
+	Fortran2cstring( tmp, name, PAPI_MAX_STR_LEN, Event_len );
+	*check = PAPI_hl_read( tmp );
+}
+#else
+PAPI_FCALL( papif_hl_read, PAPIF_HL_READ,
+			( char* name, int *check ) )
+{
+	*check = PAPI_hl_read( name );
+}
+#endif
+
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_hl_region_end, PAPIF_HL_REGION_END,
 			( char* name, int *check, int Event_len ) )
 {
