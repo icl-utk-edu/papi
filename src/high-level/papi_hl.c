@@ -30,11 +30,6 @@
 /* Weak symbol for pthread_mutex_trylock to avoid additional linking
  * against libpthread when not used. */
 #pragma weak pthread_mutex_trylock
-// int __attribute__((weak)) pthread_mutex_trylock(pthread_mutex_t *mutex)
-// {
-//    (void)(mutex);
-//    return 0;
-// }
 
 void _internal_onetime_library_init(void)
 {
