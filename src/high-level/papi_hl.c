@@ -899,6 +899,36 @@ void _internal_clean_up_global_data()
    absolute_output_file_path = NULL;
 }
 
+/** @class PAPI_hl_init
+* @brief Initializes the high-level PAPI library.
+*
+* @par C Interface:
+* \#include <papi.h> @n
+* int PAPI_hl_init();
+*
+* @retval PAPI_OK 
+* @retval PAPI_HIGH_LEVEL_INITED 
+* -- Initialization was already called.
+*
+* PAPI_hl_init initializes the PAPI library and some high-level specific features.
+* If your application is making use of threads you do not need to call any other low level
+* initialization functions as PAPI_hl_init includes thread support.
+* Note that the first call of PAPI_hl_region_begin will automatically call PAPI_hl_init if not
+* already called.
+*
+* @par Example:
+*
+* @code
+* int retval;
+*
+* retval = PAPI_hl_init();
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+* @endcode
+*
+* @see PAPI_hl_finalize PAPI_hl_set_events PAPI_hl_region_begin PAPI_hl_read PAPI_hl_region_end PAPI_hl_print_output
+*/
 int
 PAPI_hl_init()
 {
@@ -922,11 +952,38 @@ PAPI_hl_init()
          hl_initiated = true;
       }
       PAPI_unlock( PAPIHL_LOCK );
+      return ( PAPI_OK );
    }
-
-   return ( PAPI_OK );
+   return ( PAPI_HIGH_LEVEL_INITED );
 }
 
+/** @class PAPI_hl_finalize
+* @brief Finalizes the high-level PAPI library.
+*
+* @par C Interface:
+* \#include <papi.h> @n
+* int PAPI_hl_finalize( );
+*
+* @retval PAPI_OK
+* @retval PAPI_EINVAL
+* -- One or more of the arguments is invalid.
+*
+* PAPI_hl_finalize finalizes the high-level library by destroying all counting event sets
+* and internal data structures.
+*
+* @par Example:
+*
+* @code
+* int retval;
+*
+* retval = PAPI_hl_finalize();
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+* @endcode
+*
+* @see PAPI_hl_init PAPI_hl_set_events PAPI_hl_region_begin PAPI_hl_read PAPI_hl_region_end PAPI_hl_print_output
+*/
 int PAPI_hl_finalize()
 {
    if ( hl_initiated == true ) {
@@ -943,6 +1000,39 @@ int PAPI_hl_finalize()
    return ( PAPI_OK );
 }
 
+/** @class PAPI_hl_set_events
+* @brief Generates event sets based on a list of hardware events.
+*
+* @par C Interface:
+* \#include <papi.h> @n
+* int PAPI_hl_set_events( const char* events );
+*
+* @param events
+* -- list of hardware events separated by commas
+*
+* @retval PAPI_OK 
+* @retval PAPI_EINVAL 
+* -- One or more of the arguments is invalid.
+*
+* PAPI_hl_set_events offers the user the possibility to determine hardware events in
+* the source code as an alternative to the environment variable PAPI_EVENTS.
+* Note that the content of PAPI_EVENTS is ignored if PAPI_hl_set_events was successfully executed.
+* If the events argument cannot be interpreted, default hardware events are
+* taken for the measurement.
+*
+* @par Example:
+*
+* @code
+* int retval;
+*
+* retval = PAPI_hl_set_events("PAPI_TOT_INS,PAPI_TOT_CYC");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+* @endcode
+*
+* @see PAPI_hl_init PAPI_hl_finalize PAPI_hl_region_begin PAPI_hl_read PAPI_hl_region_end PAPI_hl_print_output
+*/
 int
 PAPI_hl_set_events(const char* events)
 {
@@ -961,6 +1051,41 @@ PAPI_hl_set_events(const char* events)
    return ( PAPI_OK );
 }
 
+/** @class PAPI_hl_print_output
+* @brief Prints values of hardware events.
+*
+* @par C Interface:
+* \#include <papi.h> @n
+* int PAPI_hl_print_output( );
+*
+* @retval PAPI_OK 
+* @retval PAPI_EINVAL 
+* -- One or more of the arguments is invalid.
+*
+* PAPI_hl_print_output prints the measured values of hardware events in one file for serial
+* or thread parallel applications.
+* Multi-processing applications, such as MPI, will have one output file per process.
+* Each output file contains measured values of all threads.
+* The entire measurement can be converted in a better readable output via python.
+* The python script papi_hl_output_writer.py generates a JSON output file that contains all
+* threads and MPI ranks of the measurement as well as derived metrics like IPC and others.
+* Note that if PAPI_hl_print_output is not called explicitly PAPI will try to generate output
+* at the end of the application. However, for some reason, this feature sometimes does not work.
+* It is therefore recommended to call PAPI_hl_print_output for larger applications.
+*
+* @par Example:
+*
+* @code
+* int retval;
+*
+* retval = PAPI_hl_print_output();
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+* @endcode
+*
+* @see PAPI_hl_init PAPI_hl_finalize PAPI_hl_set_events PAPI_hl_region_begin PAPI_hl_read PAPI_hl_region_end 
+*/
 void
 PAPI_hl_print_output()
 {
@@ -968,20 +1093,53 @@ PAPI_hl_print_output()
       if ( output_generated == false )
          _internal_hl_write_output();
    }
-
-   // /* test */
-   // if ( hl_initiated == true ) {
-   //    _internal_clean_up_local_data();
-   //    PAPI_lock( PAPIHL_LOCK );
-   //    if ( hl_initiated == true ) {
-   //       /* clean up data */
-   //       _internal_clean_up_global_data();
-   //       _internal_hl_determine_output_path();
-   //    }
-   //    PAPI_unlock( PAPIHL_LOCK );
-   // }
 }
 
+/** @class PAPI_hl_region_begin
+* @brief Reads and stores hardware events at the beginning of an instrumented code region.
+*
+* @par C Interface:
+* \#include <papi.h> @n
+* int PAPI_hl_region_begin( const char* region );
+*
+* @param region
+* -- a unique region name
+*
+* @retval PAPI_OK 
+* @retval PAPI_EINVAL 
+* -- One or more of the arguments is invalid.
+*
+* PAPI_hl_region_begin reads hardware events and stores them internally at the beginning
+* of an instrumented code region.
+* If not specified via environment variable PAPI_EVENTS, default events are used.
+* The first call sets all counters implicitly to zero and starts counting.
+* Note that if PAPI_EVENTS is not set or cannot be interpreted, default hardware events are
+* recorded.
+*
+* @par Example:
+*
+* @code
+* export PAPI_EVENTS="PAPI_TOT_INS,PAPI_TOT_CYC"
+* @endcode
+*
+*
+* @code
+* int retval;
+*
+* retval = PAPI_hl_region_begin("computation");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+*  //Do some computation here
+*
+* retval = PAPI_hl_region_end("computation");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+* @endcode
+*
+* @see PAPI_hl_read PAPI_hl_region_end
+*/
 int
 PAPI_hl_region_begin( const char* region )
 {
@@ -1013,6 +1171,49 @@ PAPI_hl_region_begin( const char* region )
    return ( PAPI_OK );
 }
 
+/** @class PAPI_hl_read
+* @brief Reads and stores hardware events inside of an instrumented code region.
+*
+* @par C Interface:
+* \#include <papi.h> @n
+* int PAPI_hl_read( const char* region );
+*
+* @param region
+* -- a unique region name corresponding to PAPI_hl_region_begin
+*
+* @retval PAPI_OK 
+* @retval PAPI_EINVAL 
+* -- One or more of the arguments is invalid.
+*
+* PAPI_hl_read reads hardware events and stores them internally inside
+* of an instrumented code region.
+* Assumes that PAPI_hl_region_begin was called before.
+*
+* @par Example:
+*
+* @code
+* int retval;
+*
+* retval = PAPI_hl_region_begin("computation");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+*  //Do some computation here
+*
+* retval = PAPI_hl_read("computation");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+*  //Do some computation here
+*
+* retval = PAPI_hl_region_end("computation");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+* @endcode
+*
+* @see PAPI_hl_region_begin PAPI_hl_region_end
+*/
 int
 PAPI_hl_read(const char* region)
 {
@@ -1035,6 +1236,46 @@ PAPI_hl_read(const char* region)
    return ( PAPI_OK );
 }
 
+/** @class PAPI_hl_region_end
+* @brief Reads and stores hardware events at the end of an instrumented code region.
+*
+* @par C Interface:
+* \#include <papi.h> @n
+* int PAPI_hl_region_end( const char* region );
+*
+* @param region
+* -- a unique region name corresponding to PAPI_hl_region_begin
+*
+* @retval PAPI_OK 
+* @retval PAPI_EINVAL 
+* -- One or more of the arguments is invalid.
+*
+* PAPI_hl_region_end reads hardware events and stores the difference to the values from
+* PAPI_hl_region_begin at the end of an instrumented code region.
+* Assumes that PAPI_hl_region_begin was called before.
+* Note that an output is automatically generated when your application terminates.
+* If the automatic output does not work for any reason, PAPI_hl_print_output must be called.
+* 
+*
+* @par Example:
+*
+* @code
+* int retval;
+*
+* retval = PAPI_hl_region_begin("computation");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+*  //Do some computation here
+*
+* retval = PAPI_hl_region_end("computation");
+* if ( retval != PAPI_OK )
+*     handle_error(1);
+*
+* @endcode
+*
+* @see PAPI_hl_region_begin PAPI_hl_read
+*/
 int
 PAPI_hl_region_end( const char* region )
 {
