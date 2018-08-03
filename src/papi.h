@@ -63,6 +63,8 @@
  * 
  * @ref PAPIF
  *
+ * @ref PAPIF-HL
+ *
  * @section Components 
  *
  *	Components provide access to hardware information on specific subsystems.

@@ -43,7 +43,7 @@
 #endif
 /* The Low Level Wrappers */
 
-/** \internal @defgroup PAPIF PAPI Fortran API */
+/** \internal @defgroup PAPIF PAPI Fortran Low Level API */
 
 /* helper routine to convert Fortran strings to C strings */
 #if defined(_FORTRAN_STRLEN_AT_END)
@@ -1326,8 +1326,56 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 }
 
 
- /* The High Level API Wrappers */
+/* The High Level API Wrappers */
+/** \internal @defgroup PAPIF-HL PAPI Fortran High Level API */
 
+/** @class PAPIf_hl_region_begin
+ * @ingroup PAPIF-HL
+ * @brief Reads and stores hardware events at the beginning of an instrumented code region.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_region_begin( C_STRING region, C_INT check )
+ *
+ * @retval PAPI_OK
+ * @retval PAPI_ENOTRUN
+ * -- EventSet is currently not running or could not determined.
+ * @retval PAPI_ESYS
+ * -- A system or C library call failed inside PAPI, see the errno variable.
+ *
+ * PAPIf_hl_region_begin reads hardware events and stores them internally at the beginning
+ * of an instrumented code region.
+ * If not specified via environment variable PAPI_EVENTS, default events are used.
+ * The first call sets all counters implicitly to zero and starts counting.
+ * Note that if PAPI_EVENTS is not set or cannot be interpreted, default hardware events are
+ * recorded.
+ *
+ * @par Example:
+ *
+ * @code
+ * export PAPI_EVENTS="PAPI_TOT_INS,PAPI_TOT_CYC"
+ * @endcode
+ *
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_region_begin("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *      write (*,*) "PAPIf_hl_region_begin failed!"
+ * end if
+ *
+ * !do some computation here
+ *
+ * call PAPIf_hl_region_end("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_region_end failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_region_begin
+ */
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_hl_region_begin, PAPIF_HL_REGION_BEGIN,
 			( char* name, int *check, int Event_len ) )
@@ -1344,6 +1392,55 @@ PAPI_FCALL( papif_hl_region_begin, PAPIF_HL_REGION_BEGIN,
 }
 #endif
 
+/** @class PAPIf_hl_read
+ * @ingroup PAPIF-HL
+ * @brief Reads and stores hardware events inside of an instrumented code region.
+ *
+ * @par Fortran Prototype:
+ * \#include <fpapi.h> @n
+ * int PAPIf_hl_read( C_STRING region, C_INT check )
+ *
+ * @param region
+ * -- a unique region name corresponding to PAPIf_hl_region_begin
+ *
+ * @retval PAPI_OK
+ * @retval PAPI_ENOTRUN
+ * -- EventSet is currently not running or could not determined.
+ * @retval PAPI_ESYS
+ * -- A system or C library call failed inside PAPI, see the errno variable.
+ *
+ * PAPIf_hl_read reads hardware events and stores them internally inside
+ * of an instrumented code region.
+ * Assumes that PAPIf_hl_region_begin was called before.
+ *
+ * @par Example:
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_region_begin("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_region_begin failed!"
+ * end if
+ *
+ * !do some computation here
+ *
+ * call PAPIf_hl_read("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_read failed!"
+ * end if
+ *
+ * !do some computation here
+ *
+ * call PAPIf_hl_region_end("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_region_end failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_read
+ */
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_hl_read, PAPIF_HL_READ,
 			( char* name, int *check, int Event_len ) )
@@ -1360,6 +1457,50 @@ PAPI_FCALL( papif_hl_read, PAPIF_HL_READ,
 }
 #endif
 
+/** @class PAPIf_hl_region_end
+ * @ingroup PAPIF-HL
+ * @brief Reads and stores hardware events at the end of an instrumented code region.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_region_end( C_STRING region, C_INT check )
+ *
+ * @param region
+ * -- a unique region name corresponding to PAPIf_hl_region_begin
+ *
+ * @retval PAPI_OK
+ * @retval PAPI_ENOTRUN
+ * -- EventSet is currently not running or could not determined.
+ * @retval PAPI_ESYS
+ * -- A system or C library call failed inside PAPI, see the errno variable.
+ *
+ * PAPIf_hl_region_end reads hardware events and stores the difference to the values from
+ * PAPIf_hl_region_begin at the end of an instrumented code region.
+ * Assumes that PAPIf_hl_region_begin was called before.
+ * Note that an output is automatically generated when your application terminates.
+ * If the automatic output does not work for any reason, PAPIf_hl_print_output must be called.
+ *
+ * @par Example:
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_region_begin("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_region_begin failed!"
+ * end if
+ *
+ * !do some computation here
+ *
+ * call PAPIf_hl_region_end("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_region_end failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_region_end
+ */
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_hl_region_end, PAPIF_HL_REGION_END,
 			( char* name, int *check, int Event_len ) )
@@ -1376,18 +1517,118 @@ PAPI_FCALL( papif_hl_region_end, PAPIF_HL_REGION_END,
 }
 #endif
 
+/** @class PAPIf_hl_init
+ * @ingroup PAPIF-HL
+ * @brief Initializes the high-level PAPI library.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_init( C_INT check )
+ *
+ * @retval PAPI_OK 
+ * @retval PAPI_HIGH_LEVEL_INITED 
+ * -- Initialization was already called.
+ *
+ * PAPIf_hl_init initializes the PAPI library and some high-level specific features.
+ * If your application is making use of threads you do not need to call any other low level
+ * initialization functions as PAPIf_hl_init includes thread support.
+ * Note that the first call of PAPIf_hl_region_begin will automatically call PAPIf_hl_init
+ * if not already called.
+ *
+ * @par Example:
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_init(retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_init failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_init
+ */
 PAPI_FCALL( papif_hl_init, PAPIF_HL_INIT,
 			( int *check ) )
 {
 	*check = PAPI_hl_init();
 }
 
+/** @class PAPIf_hl_finalize
+ * @ingroup PAPIF-HL
+ * @brief Finalizes the high-level PAPI library.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_finalize( C_INT check )
+ *
+ * @retval PAPI_OK
+ * @retval PAPI_EINVAL
+ * -- Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed.
+ * @retval PAPI_ENOEVST
+ * -- The EventSet specified does not exist.
+ * @retval PAPI_EISRUN
+ * -- The EventSet is currently counting events.
+ * @retval PAPI_EBUG
+ * -- Internal error, send mail to ptools-perfapi@icl.utk.edu and complain.
+ *
+ * PAPIf_hl_finalize finalizes the high-level library by destroying all counting event sets
+ * and internal data structures.
+ *
+ * @par Example:
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_finalize(retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_finalize failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_finalize
+ */
 PAPI_FCALL( papif_hl_finalize, PAPIF_HL_FINALIZE,
 			( int *check ) )
 {
 	*check = PAPI_hl_finalize();
 }
 
+/** @class PAPIf_hl_set_events
+ * @ingroup PAPIF-HL
+ * @brief Generates event sets based on a list of hardware events.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_set_events( C_STRING events, C_INT check )
+ *
+ * @param events
+ * -- list of hardware events separated by commas
+ *
+ * @retval PAPI_OK 
+ *
+ * PAPIf_hl_set_events offers the user the possibility to determine hardware events in
+ * the source code as an alternative to the environment variable PAPI_EVENTS.
+ * Note that the content of PAPI_EVENTS is ignored if PAPIf_hl_set_events was successfully  executed.
+ * If the events argument cannot be interpreted, default hardware events are
+ * taken for the measurement.
+ *
+ * @par Example:
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_set_events("PAPI_TOT_INS,PAPI_TOT_CYC", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_set_events failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_set_events
+ */
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL( papif_hl_set_events, PAPIF_HL_SET_EVENTS,
 			( char* name, int *check, int Event_len ) )
@@ -1404,6 +1645,33 @@ PAPI_FCALL( papif_hl_set_events, PAPIF_HL_SET_EVENTS,
 }
 #endif
 
+/** @class PAPIf_hl_print_output
+ * @ingroup PAPIF-HL
+ * @brief Prints values of hardware events.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_print_output( )
+ *
+ * PAPIf_hl_print_output prints the measured values of hardware events in one file for serial
+ * or thread parallel applications.
+ * Multi-processing applications, such as MPI, will have one output file per process.
+ * Each output file contains measured values of all threads.
+ * The entire measurement can be converted in a better readable output via python.
+ * For more information, see <a href="https://bitbucket.org/icl/papi/wiki/papi-hl.md">High Level API</a>.
+ * Note that if PAPIf_hl_print_output is not called explicitly PAPI will try to generate output
+ * at the end of the application. However, for some reason, this feature sometimes does not  work.
+ * It is therefore recommended to call PAPIf_hl_print_output for larger applications.
+ *
+ * @par Example:
+ *
+ * @code
+ * call PAPIf_hl_print_output()
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_print_output 
+ */
 PAPI_FCALL( papif_hl_print_output, PAPIF_HL_PRINT_OUTPUT,
 			( void *check ) )
 {

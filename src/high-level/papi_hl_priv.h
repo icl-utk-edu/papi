@@ -161,7 +161,7 @@ void _internal_hl_determine_output_path();
 void _internal_hl_write_output();
 
 /* functions for cleaning up heap memory */
-void _internal_clean_up_local_data();
+int _internal_clean_up_local_data();
 void _internal_clean_up_global_data();
 
 #endif
