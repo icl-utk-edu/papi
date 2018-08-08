@@ -137,9 +137,12 @@ typedef struct _EventSetOverflowInfo {
    int event_counter;
    PAPI_overflow_handler_t handler;
    long long *deadline;
-   int *threshold;
-   int *EventIndex;
-   int *EventCode;
+   long long *threshold;
+   long long *overflow_type;
+   long long *sample_type;
+   long long *EventIndex;
+   long long *EventCode;
+
 } EventSetOverflowInfo_t;
 
 typedef struct _EventSetAttachInfo {

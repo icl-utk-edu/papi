@@ -798,8 +798,9 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
    /* NOTE: the next two malloc allocate blocks of memory that are later */
    /* parcelled into overflow and profile arrays                         */
    ESI->overflow.deadline = ( long long * )
-		papi_malloc( ( sizeof ( long long ) +
-					   sizeof ( int ) * 3 ) * ( size_t ) max_counters );
+		papi_malloc( sizeof ( long long ) +
+			(sizeof ( long long ) * 5 ) * ( size_t ) max_counters);
+
 
    ESI->profile.prof = ( PAPI_sprofil_t ** )
 		papi_malloc( ( sizeof ( PAPI_sprofil_t * ) * ( size_t ) max_counters +
@@ -832,11 +833,15 @@ _papi_hwi_assign_eventset( EventSetInfo_t *ESI, int cidx )
    /* Carve up the overflow block into separate arrays */
    ptr = ( char * ) ESI->overflow.deadline;
    ptr += sizeof ( long long ) * max_counters;
-   ESI->overflow.threshold = ( int * ) ptr;
-   ptr += sizeof ( int ) * max_counters;
-   ESI->overflow.EventIndex = ( int * ) ptr;
-   ptr += sizeof ( int ) * max_counters;
-   ESI->overflow.EventCode = ( int * ) ptr;
+   ESI->overflow.threshold = ( long long * ) ptr;
+   ptr += sizeof ( long long ) * max_counters;
+   ESI->overflow.overflow_type = ( long long * ) ptr;
+   ptr += sizeof ( long long ) * max_counters;
+   ESI->overflow.sample_type = ( long long * ) ptr;
+   ptr += sizeof ( long long ) * max_counters;
+   ESI->overflow.EventIndex = ( long long * ) ptr;
+   ptr += sizeof ( long long ) * max_counters;
+   ESI->overflow.EventCode = ( long long * ) ptr;
 
    /* Carve up the profile block into separate arrays */
    ptr = ( char * ) ESI->profile.prof +

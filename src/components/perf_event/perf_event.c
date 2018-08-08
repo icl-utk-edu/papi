@@ -337,6 +337,7 @@ static void perf_event_dump_attr( struct perf_event_attr *hw_event,
 	SUBDBG("   config: %"PRIx64" (%"PRIu64")\n",
 		hw_event->config, hw_event->config);
 	SUBDBG("   sample_period: %"PRIu64"\n",hw_event->sample_period);
+//	printf("sample_type = %llx\n",hw_event->sample_type);
 	SUBDBG("   sample_type: %"PRIu64"\n",hw_event->sample_type);
 	SUBDBG("   read_format: %"PRIu64"\n",hw_event->read_format);
 	SUBDBG("   disabled: %d\n",hw_event->disabled);
@@ -1905,6 +1906,8 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 	pe_control_t *ctl;
 	int cidx = _perf_event_vector.cmp_info.CmpIdx;
 
+	printf("VMW: blah, dispatch timer!\n");
+
 	if ( thread == NULL ) {
 		PAPIERROR( "thread == NULL in _papi_pe_dispatch_timer for fd %d!", fd );
 		return;
@@ -2027,10 +2030,18 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 	* user level (the kernel event dispatcher hides that info).
 	*/
 
+		if (0) {
 		_papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context,
 					( caddr_t ) ( unsigned long ) ip,
 					NULL, ( 1 << found_evt_idx ), 0,
 					&thread, cidx );
+		}
+		else {
+		_papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context,
+					( caddr_t ) ( unsigned long ) pe->mmap_buf,
+					NULL, ( 1 << found_evt_idx ), 0,
+					&thread, cidx );
+		}
 
 	}
 
@@ -2086,6 +2097,7 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	pe_control_t *ctl = (pe_control_t *) ( ESI->ctl_state );
 	int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
 	int cidx;
+	long long overflow_type,sample_type;
 
 	cidx = ctl->cidx;
 	ctx = ( pe_context_t *) ( ESI->master->context[cidx] );
@@ -2093,6 +2105,9 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 	/* pos[0] is the first native event */
 	/* derived events might be made up of multiple native events */
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
+
+	overflow_type = ESI->overflow.overflow_type[0];
+	sample_type = ESI->overflow.sample_type[0];
 
 	SUBDBG("Attempting to set overflow for index %d (%d) of EventSet %d\n",
 		evt_idx,EventIndex,ESI->EventSetIndex);
@@ -2124,7 +2139,13 @@ _pe_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold )
 		/* counter overflow (not mmap page overflow).                 */
 		ctl->events[evt_idx].attr.wakeup_events = 1;
 		/* We need the IP to pass to the overflow handler */
-		ctl->events[evt_idx].attr.sample_type = PERF_SAMPLE_IP;
+
+		if (overflow_type==0) {
+			ctl->events[evt_idx].attr.sample_type = PERF_SAMPLE_IP;
+		}
+		else {
+			ctl->events[evt_idx].attr.sample_type = sample_type;
+		}
 	}
 
 
@@ -2203,8 +2224,8 @@ _pe_set_profile( EventSetInfo_t *ESI, int EventIndex, int threshold )
 //		ctl->events[evt_idx].mmap_buf = NULL;
 //		ctl->events[evt_idx].nr_mmap_pages = 0;
 
-		/* no longer sample on IP */
-		ctl->events[evt_idx].attr.sample_type &= ~PERF_SAMPLE_IP;
+		/* no longer sample */
+		ctl->events[evt_idx].attr.sample_type = 0;
 
 		/* Clear any residual overflow flags */
 		/* ??? old warning says "This should be handled somewhere else" */

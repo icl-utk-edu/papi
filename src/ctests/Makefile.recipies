@@ -23,6 +23,7 @@ OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow \
 	system_overflow burn overflow overflow_force_software \
 	overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	overflow_index overflow_one_and_read overflow_allcounters
+SAMPLING = sampling
 PROFILE  = profile profile_force_software sprofile profile_twoevents \
 	byte_profile
 ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target attach_cpu attach_validate
@@ -32,10 +33,10 @@ RANGE	= data_range
 BROKEN	= pernode val_omp
 API = api
 ifneq ($(MPICC),)
-ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
+ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(SAMPLING) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	  $(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ATTACH) $(API)
 else
-ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
+ALL	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(SAMPLING) $(PROFILE) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	  $(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ATTACH) $(API)
 endif
 
@@ -78,6 +79,8 @@ overflow_tests: $(OVERFLOW)
 profile_tests: $(PROFILE)
 
 papi_api: $(API)
+
+sampling_tests:	$(SAMPLING)
 
 api: api.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) api.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
@@ -285,6 +288,9 @@ earprofile: earprofile.c $(TESTLIB) $(DOLOOPS) prof_utils.o $(PAPILIB)
 
 byte_profile: byte_profile.c $(TESTLIB) $(DOLOOPS) prof_utils.o $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) byte_profile.c prof_utils.o $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o byte_profile
+
+sampling: sampling.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) sampling.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o sampling
 
 pernode: pernode.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) pernode.c $(LDFLAGS) -o pernode

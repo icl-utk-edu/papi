@@ -1101,7 +1101,11 @@ enum {
    int   PAPI_disable_component(int cidx); /**< Disables a component before init */
    int	 PAPI_disable_component_by_name(const char *name ); /**< Disable, before library init, a component by name. */
 
-
+   int   PAPI_sample_init(int EventSet,
+		int EventCode,
+		long long sample_period,
+		long long sample_type,
+		PAPI_overflow_handler_t handler); /**< set up an event set to begin advanced sampling */
    /** @} */
 
 /** \internal

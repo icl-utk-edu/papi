@@ -1,0 +1,10 @@
++ Clean up the code
++ Make sure the proper size is used for the mmap buffer
++ Get rid of the need to have the user deal with head/wrapping
+	or having to have a pointer to the mmap buffer.
+	Just return a copy of the mmap data?
+
++ Test that LBR and IBS work
++ Write a sample program that writes out a properly formatted
+	perf.data file
+

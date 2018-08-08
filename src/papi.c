@@ -4897,6 +4897,7 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 		/* New or existing entry */
 		ESI->overflow.deadline[i] = threshold;
 		ESI->overflow.threshold[i] = threshold;
+		ESI->overflow.overflow_type[i] = 0;
 		ESI->overflow.EventIndex[i] = index;
 		ESI->overflow.flags = flags;
 
@@ -4943,6 +4944,307 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
 
 	return PAPI_OK;
 }
+
+
+// FIXME
+/** @class PAPI_sample_init
+ *  @brief Set up an event set to begin registering overflows.
+ *
+ * PAPI_overflow() marks a specific EventCode in an EventSet to generate an 
+ * overflow signal after every threshold events are counted. 
+ * More than one event in an event set can be used to trigger overflows. 
+ * In such cases, the user must call this function once for each overflowing 
+ * event. 
+ * To turn off overflow on a specified event, call this function with a 
+ * threshold value of 0.
+ *
+ * Overflows can be implemented in either software or hardware, but the scope 
+ * is the entire event set. 
+ * PAPI defaults to hardware overflow if it is available. 
+ * In the case of software overflow, a periodic timer interrupt causes PAPI 
+ * to compare the event counts against the threshold values and call the 
+ * overflow handler if one or more events have exceeded their threshold. 
+ * In the case of hardware overflow, the counters are typically set to the 
+ * negative of the threshold value and count up to 0. 
+ * This zero-crossing triggers a hardware interrupt that calls the overflow 
+ * handler. 
+ * Because of this counter interrupt, the counter values for overflowing 
+ * counters 
+ * may be very small or even negative numbers, and cannot be relied upon 
+ * as accurate. 
+ * In such cases the overflow handler can approximate the counts by supplying 
+ * the threshold value whenever an overflow occurs. 
+ *
+ * _papi_overflow_handler()  is  a placeholder for a user-defined function
+ * to process overflow events.  A pointer to this function  is  passed  to
+ * the  PAPI_overflow  routine, where it is invoked whenever a software or
+ * hardware overflow occurs.  This handler receives the  EventSet  of  the
+ * overflowing  event,  the  Program  Counter  address  when the interrupt
+ * occurred, an overflow_vector that can be processed to  determined  which
+ * event(s)  caused  the  overflow,  and a pointer to the machine context,
+ * which can be used in a  platform-specific  manor  to  extract  register
+ * information about what was happening when the overflow occurred.
+ *
+ * @par C Interface:
+ * \#include <papi.h> @n
+ * int PAPI_overflow (int EventSet, int EventCode, int threshold, 
+ * int flags, PAPI_overflow_handler_t handler ); @n@n
+ * (*PAPI_overflow_handler_t) _papi_overflow_handler
+ * (int  EventSet, void *address, long_long overflow_vector, 
+ * void *context );
+ *
+ * @par Fortran Interface:
+ * Not implemented
+ *
+ * @param[in] EventSet
+ *	      -- an integer handle to a PAPI event set as created by 
+ *            @ref PAPI_create_eventset
+ * @param[in] EventCode
+ *	      -- the preset or native event code to be set for overflow 
+ *            detection. 
+ *	      This event must have already been added to the EventSet.
+ * @param[in] threshold
+ *	      -- the overflow threshold value for this EventCode.
+ * @param[in] flags
+ *	      -- bitmap that controls the overflow mode of operation. 
+ *	      Set to PAPI_OVERFLOW_FORCE_SW to force software 
+ *            overflowing, even if hardware overflow support is available. 
+ *	      If hardware overflow support is available on a given system, 
+ *            it will be the default mode of operation. 
+ *	      There are situations where it is advantageous to use software 
+ *            overflow instead. 
+ *	      Although software overflow is inherently less accurate, 
+ *            with more latency and processing overhead, it does allow for 
+ *            overflowing on derived events,  and for the accurate recording 
+ *            of overflowing event counts. 
+ *	      These two features are typically not available with hardware 
+ *            overflow. 
+ *	      Only one type of overflow is allowed per event set, so 
+ *            setting one event to hardware overflow and another to forced 
+ *            software overflow will result in an error being returned.
+ *	@param[in] handler
+ *	      -- pointer to the user supplied handler function to call upon 
+ *            overflow 
+ *      @param[in] address 
+ *            -- the Program Counter address at the time of the overflow
+ *      @param[in] overflow_vector  
+ *            -- a long long word containing flag bits to indicate
+ *               which hardware counter(s) caused the overflow
+ *      @param[in] *context 
+ *            -- pointer to a machine specific structure that defines the
+ *               register context at the time of overflow. This parameter 
+ *               is often unused and can be ignored in the user function.
+ *
+ * @retval PAPI_OK On success, PAPI_overflow returns PAPI_OK.  
+ * @retval PAPI_EINVAL One or more of the arguments is invalid.   
+ *            Most likely a bad threshold value.
+ * @retval PAPI_ENOMEM Insufficient memory to complete the operation.
+ * @retval PAPI_ENOEVST The EventSet specified does not exist.
+ * @retval PAPI_EISRUN The EventSet is currently counting events.
+ * @retval PAPI_ECNFLCT The underlying counter hardware cannot count 
+ *             this event and other events in the EventSet simultaneously. 
+ *             Also can happen if you are trying to overflow both by hardware
+ *             and by forced software at the same time.
+ * @retval PAPI_ENOEVNT The PAPI event is not available on 
+ *             the underlying hardware.
+ *
+ * @par Example
+ * @code
+ * // Define a simple overflow handler:
+ * void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+ * {
+ *    fprintf(stderr,\"Overflow at %p! bit=%#llx \\n\",
+ *             address,overflow_vector);
+ * }
+ *
+ * // Call PAPI_overflow for an EventSet containing PAPI_TOT_INS,
+ * // setting the threshold to 100000. Use the handler defined above.
+ * retval = PAPI_overflow(EventSet, PAPI_TOT_INS, 100000, 0, handler);
+ * @endcode
+ *
+ *
+ * @see PAPI_overflow
+ *
+ */
+int
+PAPI_sample_init( int EventSet, int EventCode,
+		long long sample_period,
+		long long sample_type,
+	       PAPI_overflow_handler_t handler )
+{
+	APIDBG( "Entry: EventSet: %d, EventCode: %#x, period: %lld, "
+		"flags: %llx, handler: %p\n",
+		EventSet, EventCode, sample_period, sample_type, handler);
+
+	int retval, cidx, index, i;
+	EventSetInfo_t *ESI;
+
+	/* Lookup the eventset and make sure it is valid */
+	ESI = _papi_hwi_lookup_EventSet( EventSet );
+	if ( ESI == NULL ) {
+		OVFDBG("No EventSet\n");
+		papi_return( PAPI_ENOEVST );
+        }
+
+	/* Get the component for the eventset */
+	cidx = valid_ESI_component( ESI );
+	if ( cidx < 0 ) {
+		OVFDBG("Component Error\n");
+		papi_return( cidx );
+	}
+
+	/* Make sure the event set is currently stopped */
+	if ( ( ESI->state & PAPI_STOPPED ) != PAPI_STOPPED ) {
+		OVFDBG("Already running\n");
+		papi_return( PAPI_EISRUN );
+	}
+
+	/* Make sure we are not attached to a thread */
+	if ( ESI->state & PAPI_ATTACHED ) {
+		OVFDBG("Attached\n");
+		papi_return( PAPI_EINVAL );
+	}
+
+	/* Make sure we are not attached to a core */
+	/* Note: we might want to make this possible in the future */
+	if ( ESI->state & PAPI_CPU_ATTACHED ) {
+		OVFDBG("CPU attached\n");
+		papi_return( PAPI_EINVAL );
+	}
+
+	/* Make sure the event is in the eventset */
+	if ( ( index = _papi_hwi_lookup_EventCodeIndex( ESI,
+      					( unsigned int ) EventCode ) ) < 0 ) {
+		papi_return( PAPI_ENOEVNT );
+	}
+
+	/* Make sure the period is valid */
+	if ( sample_period < 0 ) {
+		OVFDBG("Period below zero\n");
+		papi_return( PAPI_EINVAL );
+	}
+
+	/* We do not support derived events in overflow */
+	/* Unless it's DERIVED_CMPD in which no calculations are done */
+	if ( (sample_period != 0) &&
+		 ( ESI->EventInfoArray[index].derived ) &&
+		 ( ESI->EventInfoArray[index].derived != DERIVED_CMPD ) ) {
+		OVFDBG("Derived event in sample\n");
+		papi_return( PAPI_EINVAL );
+	}
+
+	/* the first time to call PAPI_overflow function (?) */
+
+	if ( !( ESI->state & PAPI_OVERFLOWING ) ) {
+		if ( handler == NULL ) {
+			OVFDBG("NULL handler\n");
+			papi_return( PAPI_EINVAL );
+		}
+		if ( sample_period == 0 ) {
+			OVFDBG("Zero threshold\n");
+			papi_return( PAPI_EINVAL );
+		}
+	}
+
+	/* Sample counter won't fit? */
+	/* How would this happen? */
+	if ( sample_period > 0 &&
+		 ESI->overflow.event_counter >=
+			_papi_hwd[cidx]->cmp_info.num_cntrs ) {
+		papi_return( PAPI_ECNFLCT );
+	}
+
+	/* Period is zero, which means disable */
+	if ( sample_period == 0 ) {
+		for ( i = 0; i < ESI->overflow.event_counter; i++ ) {
+			if ( ESI->overflow.EventCode[i] == EventCode )
+				break;
+		}
+		/* EventCode not found */
+		if ( i == ESI->overflow.event_counter )
+			papi_return( PAPI_EINVAL );
+		/* compact these arrays */
+		while ( i < ESI->overflow.event_counter - 1 ) {
+			ESI->overflow.deadline[i] = ESI->overflow.deadline[i + 1];
+			ESI->overflow.threshold[i] = ESI->overflow.threshold[i + 1];
+			ESI->overflow.overflow_type[i] = ESI->overflow.overflow_type[i + 1];
+			ESI->overflow.sample_type[i] = ESI->overflow.sample_type[i + 1];
+			ESI->overflow.EventIndex[i] = ESI->overflow.EventIndex[i + 1];
+			ESI->overflow.EventCode[i] = ESI->overflow.EventCode[i + 1];
+			i++;
+		}
+		ESI->overflow.deadline[i] = 0;
+		ESI->overflow.threshold[i] = 0;
+		ESI->overflow.overflow_type[i] = 0;
+		ESI->overflow.sample_type[i] = 0;
+		ESI->overflow.EventIndex[i] = 0;
+		ESI->overflow.EventCode[i] = 0;
+		ESI->overflow.event_counter--;
+	} else {
+
+		for ( i = 0; i < ESI->overflow.event_counter; i++ ) {
+			if ( ESI->overflow.EventCode[i] == EventCode )
+				break;
+		}
+		/* A new entry */
+		if ( i == ESI->overflow.event_counter ) {
+			ESI->overflow.EventCode[i] = EventCode;
+			ESI->overflow.event_counter++;
+		}
+		/* New or existing entry */
+		ESI->overflow.deadline[i] = sample_period;
+		ESI->overflow.threshold[i] = sample_period;
+		ESI->overflow.overflow_type[i] = 1;
+		ESI->overflow.sample_type[i] = sample_type;
+		ESI->overflow.EventIndex[i] = index;
+
+	}
+
+	/* If overflowing is already active, we should check to
+	   make sure that we don't specify a different handler
+	   or different flags here. You can't mix them. */
+
+	ESI->overflow.handler = handler;
+
+	/* Set up the option structure for the low level.
+	   If we have hardware interrupts and we are not using
+	   forced software emulated interrupts */
+
+	if ( _papi_hwd[cidx]->cmp_info.hardware_intr &&
+		 !( ESI->overflow.flags & PAPI_OVERFLOW_FORCE_SW ) ) {
+		retval = _papi_hwd[cidx]->set_overflow( ESI, index, sample_period );
+		if ( retval == PAPI_OK )
+			ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+		else {
+			papi_return( retval );	/* We should undo stuff here */
+		}
+	} else {
+		/* Make sure hardware overflow is not set */
+		ESI->overflow.flags &= ~( PAPI_OVERFLOW_HARDWARE );
+	}
+
+	APIDBG( "Overflow using: %s\n",
+			( ESI->overflow.
+			  flags & PAPI_OVERFLOW_HARDWARE ? "[Hardware]" : ESI->overflow.
+			  flags & PAPI_OVERFLOW_FORCE_SW ? "[Forced Software]" :
+			  "[Software]" ) );
+
+	/* Toggle the overflow flags and ESI state */
+
+	if ( ESI->overflow.event_counter >= 1 )
+		ESI->state |= PAPI_OVERFLOWING;
+	else {
+		ESI->state ^= PAPI_OVERFLOWING;
+		ESI->overflow.flags = 0;
+		ESI->overflow.handler = NULL;
+	}
+
+	return PAPI_OK;
+}
+
+
+
+
 
 /** @class PAPI_sprofil
  *	@brief Generate PC histogram data from multiple code regions where hardware counter overflow occurs.

@@ -306,7 +306,8 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
 		} else
 			overflow_vector = overflow_bit;
 
-		if ( ( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ) || overflow_flag ) {
+		if ( ( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE )
+			|| overflow_flag ) {
 			if ( ESI->state & PAPI_PROFILING ) {
 				int k = 0;
 				while ( overflow_vector ) {
@@ -343,8 +344,10 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
 				}
 				/* do not use overflow_vector after this place */
 			} else {
-				ESI->overflow.handler( ESI->EventSetIndex, ( void * ) address,
-									   overflow_vector, ctx->ucontext );
+				ESI->overflow.handler( ESI->EventSetIndex,
+					( void * ) address,
+					overflow_vector,
+					ctx->ucontext );
 			}
 		}
 		ESI->state &= ~( PAPI_PAUSED );
