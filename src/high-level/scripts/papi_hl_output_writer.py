@@ -92,9 +92,18 @@ class Sum_Counters(object):
   regions_last_rank_id = {}
 
   def add_region(self, rank_id, region, events=OrderedDict()):
+
+    #clean events from read values caused by PAPI_hl_read
+    cleaned_events = OrderedDict()
+    for key,value in events.items():
+      metric_value = value
+      if isinstance(value, dict):
+        metric_value = float(value['Total'])
+      cleaned_events[key] = metric_value
+
     if region not in self.regions:
       #new region
-      new_region_events = events.copy()
+      new_region_events = cleaned_events.copy()
       new_region_events['Number of ranks'] = 1
       new_region_events['Number of threads'] = 1
       new_region_events['Number of processes'] = 1
@@ -103,7 +112,7 @@ class Sum_Counters(object):
     else:
       #add counter values to existing region
       known_events = self.regions[region].copy()
-      new_events = events.copy()
+      new_events = cleaned_events.copy()
 
       #increase number of ranks when rank_id has changed
       if self.regions_last_rank_id[region] == rank_id:
