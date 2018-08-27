@@ -62,7 +62,7 @@ accesses PCP directly, then
 > pminfo -t 
 
 will list all the events available to you. If your machine is just used to
-schedule a job to be run on some node, for example via via srun or jsrun, then
+schedule a job to be run on some node, for example via srun or jsrun, then
 you need to run pminfo using that:
 
 > jsrun --np 1 pminfo -t
@@ -96,7 +96,7 @@ See the first topic at top of this README for more detailed instructions.
 
 
 HOWEVER, there is another program that will copy all the enables of pmid.txt
-to the newpmid.txt, if the events are found in newpmid.txt. It is called 
+to newpmid.txt, if the events are found in newpmid.txt. It is called 
 updatePMID.c. 
 
 To run this, first rename pmid.txt to oldpmid.txt:
@@ -108,7 +108,8 @@ Compile updatePMID.c:
 > make -f Makefile2 updatePMID
 
 And execute it. IT WILL REPLACE ANY pmid.txt FILE, if you want what you had
-for reference make sure you made a copy or did the rename above. To execute:
+for reference, make sure you made a copy of it or renamed it to oldpmid.txt.
+To execute:
 
 > ./updatePMID
 
@@ -118,7 +119,7 @@ pmid.txt.  Any enabled events in oldpmid.txt that are NOT found in newpmid.txt
 are noted on stderr. It leaves unchanged oldpmid.txt and newpmid.txt; the
 changes are only present in the output file, pmid.txt. No comments you have
 added to the previous pmid.txt are preserved, either; if you are using
-comments to explain the utility of some vents or anything else, you must
+comments to explain the utility of some events or anything else, you must
 transfer those manually. (I would suggest if you wish to keep notes in
 pmid.txt, then start your own comments with '##' so you can find them easily.)
 

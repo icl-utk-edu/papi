@@ -15,7 +15,7 @@
 #define INNEW  "newpmid.txt"
 
 int main(int argc, char **argv) {
-   int i, enableCount=0;
+   int i, j, enableCount=0;
    char line[1024], ename[1024];
 
    FILE* myOut=fopen(OUTPUT, "w");              // Open the file for output.
@@ -55,6 +55,9 @@ int main(int argc, char **argv) {
    // with '#' are rescanned to collect the event 
    // name, if we find that in the oldEvents, we 
    // uncomment the line before writing it out.
+   // We also 'flag' the event found; by changing
+   // the first character to 0; so we can report
+   // old events we did NOT find.
 
    while(1) {
       int ret=fscanf(myNEW, "%1024[^\n]\n", line);    // Note leading white space is skipped automatically by fscanf.
@@ -74,6 +77,7 @@ int main(int argc, char **argv) {
       if (i<oldCount) {                               // If we did find it,
          fprintf(stderr,"Enabling: %s\n", line);      // .. Show if we enable something previously commented out.
          line[0]=' ';                                 // .. remove comment mark.
+         oldEvents[i][0] = 0;                         // .. mark this one read.
          enableCount++;                               // .. remember we output an enabled event.
       }
 
@@ -81,8 +85,21 @@ int main(int argc, char **argv) {
    }
 
    fprintf(stderr, "Total Enabled Events: %i\n", enableCount);
-
+   j = 0;                                             // init count of old events not found in new file.
    for (i=0; i<oldCount; i++) {
+      if (oldEvents[i][0] != 0) j++;                  // count it.
+   }
+
+   if (j == 0) {                                      // If all accounted for,
+      fprintf(stderr,"All events in oldpmid.txt were enabled in pmid.txt.\n");
+   } else {
+      fprintf(stderr,"The following events (%i) in oldpmid.txt were not found in newpmid.txt:\n", j);
+      for (i=0; i<oldCount; i++) {
+         if (oldEvents[i][0] != 0) fprintf(stderr, "%s\n", oldEvents[i]);
+      }
+   }
+   
+   for (i=0; i<oldCount; i++) {                       // For each old event,
       free(oldEvents[i]);                             // ..free malloced memory.
    }
 
