@@ -23,6 +23,9 @@
  *
  * ARM Architecture Reference Manual, ARMv8, for ARMv8-A architecture profile,
  * ARM DDI 0487B.a (ID033117)
+ *
+ * Cavium ThunderX2 C99XX PMU Events (Abridged), July 31, 2018
+ * https://cavium.com/resources.html
  */
 
 static const arm_entry_t arm_thunderx2_pe[]={
@@ -160,6 +163,11 @@ static const arm_entry_t arm_thunderx2_pe[]={
 	 .modmsk = ARMV8_ATTRS,
 	 .code = 0x1C,
 	 .desc = "Instruction architecturally executed (condition check pass)  Write to translation table base"
+	},
+	{.name = "CHAIN",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x1E,
+	 .desc = "For odd-numbered counters, increments the count by one for each overflow of the proceeding even counter"
 	},
 	{.name = "L1D_CACHE_ALLOCATE",
 	 .modmsk = ARMV8_ATTRS,
@@ -556,6 +564,274 @@ static const arm_entry_t arm_thunderx2_pe[]={
 	 .code = 0x91,
 	 .desc = "Release consistency instruction speculatively executed (store-release)"
 	},
-
-	/* END Cavium ThunderX2 specific events */
+	{.name = "L1D_LHS_VANOTP",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC1,
+	 .desc = "A Load hit store retry"
+	},
+	{.name = "L1D_LHS_OVRLAP",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC2,
+	 .desc = "A Load hit store retry, VA match, PA mismatch"
+	},
+	{.name = "L1D_LHS_VANOSD",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC3,
+	 .desc = "A Load hit store retry, VA match, store data not issued"
+	},
+	{.name = "L1D_LHS_FWD",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC4,
+	 .desc = "A Load hit store forwarding. Load completes"
+	},
+	{.name = "L1D_BNKCFL",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC6,
+	 .desc = "Bank conflict load retry"
+	},
+	{.name = "L1D_LSMQ_FULL",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC7,
+	 .desc = "LSMQ retry"
+	},
+	{.name = "L1D_LSMQ_HIT",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC8,
+	 .desc = "LSMQ hit retry"
+	},
+	{.name = "L1D_EXPB_MISS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xC9,
+	 .desc = "An external probe missed the L1"
+	},
+	{.name = "L1D_L2EV_MISS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xCA,
+	 .desc = "An L2 evict operation missed the L1"
+	},
+	{.name = "L1D_EXPB_HITM",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xCB,
+	 .desc = "An external probe hit a modified line in the L1"
+	},
+	{.name = "L1D_L2EV_HITM",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xCC,
+	 .desc = "An L2 evict operation hit a modified line in the L1"
+	},
+	{.name = "L1D_EXPB_HIT",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xCD,
+	 .desc = "An external probe hit in the L1"
+	},
+	{.name = "L1D_L2EV_HIT",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xCE,
+	 .desc = "An L2 evict operation hit in the L1"
+	},
+	{.name = "L1D_EXPB_RETRY",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xCF,
+	 .desc = "An external probe hit was retried"
+	},
+	{.name = "L1D_L2EV_RETRY",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xD0,
+	 .desc = "An L2 evict operation was retried"
+	},
+	{.name = "L1D_ST_RMW",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xD1,
+	 .desc = "A read modify write store was drained and updated the L1"
+	},
+	{.name = "L1D_LSMQ00_LDREQ",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xD2,
+	 .desc = "A load has allocated LSMQ entry 0"
+	},
+	{.name = "L1D_LSMQ00_LDVLD",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xD3,
+	 .desc = "LSMQ entry 0 was initiated by a load"
+	},
+	{.name = "L1D_LSMQ15_STREQ",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xD4,
+	 .desc = "A store was allocated LSMQ entry 15"
+	},
+	{.name = "L1D_LSMQ15_STVLD",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xD5,
+	 .desc = "LSMQ entry 15 was initiated by a store"
+	},
+	{.name = "L1D_PB_FLUSH",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xD6,
+	 .desc = "LRQ ordering flush"
+	},
+	{.name = "BR_COND_MIS_PRED_RETIRED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xE0,
+	 .desc = "Conditional branch instruction executed, but mis-predicted"
+	},
+	{.name = "BR_IND_MIS_PRED_RETIRED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xE1,
+	 .desc = "Indirect branch instruction executed, but mis-predicted"
+	},
+	{.name = "BR_RETURN_MIS_PRED_RETIRED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xE2,
+	 .desc = "Return branch instruction executed, but mis-predicted"
+	},
+	{.name = "OP_RETIRED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xE8,
+	 .desc = "Uops executed"
+	},
+	{.name = "LD_OP_RETIRED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xE9,
+	 .desc = "Load uops executed"
+	},
+	{.name = "ST_OP_RETIRED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xEA,
+	 .desc = "Store uops executed"
+	},
+	{.name = "FUSED_OP_RETIRED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xEB,
+	 .desc = "Fused uops executed"
+	},
+	{.name = "IRQ_MASK",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xF8,
+	 .desc = "Cumulative duration of a PSTATE.I interrupt mask set to 1"
+	},
+	{.name = "FIQ_MASK",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xF9,
+	 .desc = "Cumulative duration of a PSTATE.F interrupt mask set to 1"
+	},
+	{.name = "SERROR_MASK",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0xFA,
+	 .desc = "Cumulative duration of PSTATE.A interrupt mask set to 1"
+	},
+	{.name = "WFIWFE_SLEEP",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x108,
+	 .desc = "Number of cycles in which CPU is in low power mode due to WFI/WFE instruction"
+	},
+	{.name = "L2TLB_4K_PAGE_MISS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x127,
+	 .desc = "L2 TLB lookup miss using 4K page size"
+	},
+	{.name = "L2TLB_64K_PAGE_MISS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x128,
+	 .desc = "L2 TLB lookup miss using 64K page size"
+	},
+	{.name = "L2TLB_2M_PAGE_MISS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x129,
+	 .desc = "L2 TLB lookup miss using 2M page size"
+	},
+	{.name = "L2TLB_512M_PAGE_MISS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x12A,
+	 .desc = "L2 TLB lookup miss using 512M page size"
+	},
+	{.name = "ISB_EMPTY",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x150,
+	 .desc = "Number of cycles during which micro-op skid-buffer is empty"
+	},
+	{.name = "ISB_FULL",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x151,
+	 .desc = "Number of cycles during which micro-op skid-buffer is back-pressuring decode"
+	},
+	{.name = "STALL_NOTSELECTED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x152,
+	 .desc = "Number of cycles during which thread was available for dispatch but not selected"
+	},
+	{.name = "ROB_RECYCLE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x153,
+	 .desc = "Number of cycles in which one or more valid micro-ops did not dispatch due to ROB full"
+	},
+	{.name = "ISSQ_RECYCLE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x154,
+	 .desc = "Number of cycles in which one or more valid micro-ops did not dispatch due to ISSQ full"
+	},
+	{.name = "GPR_RECYCLE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x155,
+	 .desc = "Number of cycles in which one or more valid micro-ops did not dispatch due to GPR full"
+	},
+	{.name = "FPR_RECYCLE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x156,
+	 .desc = "Number of cycles in which one or more valid micro-ops did not dispatch due to FPR full"
+	},
+	{.name = "LRQ_RECYCLE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x158,
+	 .desc = "Number of cycles in which one or more valid micro-ops did not dispatch due to LRQ full"
+	},
+	{.name = "SRQ_RECYCLE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x159,
+	 .desc = "Number of cycles in which one or more valid micro-ops did not dispatch due to SRQ full"
+	},
+	{.name = "BSR_RECYCLE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x15B,
+	 .desc = "Number of cycles in which one or more valid micro-ops did not dispatch due to BSR full"
+	},
+	{.name = "UOPSFUSED",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x164,
+	 .desc = "Number of fused micro-ops dispatched"
+	},
+	{.name = "L2D_TLBI_INT",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x20B,
+	 .desc = "Internal mmu tlbi cacheops"
+	},
+	{.name = "L2D_TLBI_EXT",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x20C,
+	 .desc = "External mmu tlbi cacheops"
+	},
+	{.name = "L2D_HWPF_DMD_HIT",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x218,
+	 .desc = "Scu ld/st requests that hit cache or msg for lines brought in by the hardware prefetcher"
+	},
+	{.name = "L2D_HWPF_REQ_VAL",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x219,
+	 .desc = "Scu hwpf requests into the pipeline"
+	},
+	{.name = "L2D_HWPF_REQ_LD",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x21A,
+	 .desc = "Scu hwpf ld requests into the pipeline"
+	},
+	{.name = "L2D_HWPF_REQ_MISS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x21B,
+	 .desc = "Scu hwpf ld requests that miss"
+	},
+	{.name = "L2D_HWPF_NEXT_LINE",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = 0x21C,
+	 .desc = "Scu hwpf next line requests generated"
+	},
 };
