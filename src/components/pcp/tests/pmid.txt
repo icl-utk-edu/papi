@@ -1,10 +1,11 @@
-# The '#' character in the first column is a comment line.
-# This file was constructed by the script 'newpmid.sh'.
+# The '#' character in the first column is a comment line.            
+# This file was constructed by the script 'newpmid.sh'.               
 # The space ' ' character indicates an event you wish to be included. 
 # You can align the event names; any leading spaces will be discarded.
-# The program 'buildEventList' reads this file and constructs the
-# C-code EventList.c to be included in linux-pcp.c, so the PCP events
-# are known at initialization time.
+#                                                                     
+# The program 'buildEventList' reads this file and constructs the     
+# C-code EventList.c to be included in linux-pcp.c, so the PCP events 
+# are known at initialization time.                                   
 # cgroup.blkio.all.io_merged.async [Per-cgroup asynchronous merges]
 # cgroup.blkio.all.io_merged.read [Per-cgroup read merges]
 # cgroup.blkio.all.io_merged.sync [Per-cgroup synchronous merges ]
