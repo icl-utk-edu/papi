@@ -97,7 +97,7 @@ typedef struct _pcp_register
 //-----------------------------------------------------------------------------
 // WARNING: Do NOT expect pointers into the pcp_event_info[] array to remain
 // valid during processing; the list is realloc() to make room and this can
-// i_nvalidate the pointer. (Hard won knowledge). 
+// invalidate the pointer. (Hard won knowledge). 
 //-----------------------------------------------------------------------------
 typedef struct _pcp_event_info               // an array of these is populated by our pcp create event routine.
 {
@@ -179,7 +179,7 @@ papi_vector_t _pcp_vector;                         // What we expose to PAPI, ro
 
 
 // -------------------------- GLOBAL SECTION ---------------------------------
-
+#include    "PCPEventList.c"
 int         _papi_hwi_debug = DEBUG_SUBSTRATE;                          // Bit flags to enable xxxDBG; SUBDBG for Substrate. Overrides weak global in papi.c.
 static int  sEventInfoSize=0;                                           // total size of pcp_event_info.
 static int  sEventInfoBlock = ((8*1024) / sizeof(_pcp_event_info_t));   // add about 8K at a time.
@@ -545,19 +545,19 @@ void getPMDesc(int pcpIdx) {                                            // Reads
       fprintf(stderr, "%s:%i:%s Invalid PMID.\n",
               __FILE__, __LINE__, __func__); 
       exit(-1);
-   } // end if realloc failed.
+   } // end on failure.
       
    if (ret == PM_ERR_NOAGENT) {                                         // If we failed for agent,
       fprintf(stderr, "%s:%i:%s PMDA Agent not available to respond..\n",
               __FILE__, __LINE__, __func__); 
       exit(-1);
-   } // end if realloc failed.
+   } // end on failure.
 
    if (ret != 0) {                                                      // Unknown error, 
       fprintf(stderr, "%s:%i:%s Unknown error code ret=%i.\n",
               __FILE__, __LINE__, __func__, ret); 
       exit(-1);
-   } // end if realloc failed.
+   } // end on failure.
 
    pcp_event_info[pcpIdx].valType = pcp_event_info[pcpIdx].desc.type;   // Always copy type over.
    return;                                                              // No error. 
@@ -797,9 +797,9 @@ int getHelpText(unsigned int pcpIdx, char **helpText)
       return PAPI_EATTR;                                                // .. invalid or missing event attribute.
    }
 
-   // Replace all /n with '|'.
+   // Replace all /n with space.
    for (p=(*helpText); p[0] != 0; p++) {                                // loop through string routine allocated,
-      if (p[0] == '\n') p[0] = '|';                                     // .. If we found a \n, replace with '|'.
+      if (p[0] == '\n') p[0] = ' ';                                     // .. If we found a \n, replace with space.
    } // end scan for \n.
 
    return PAPI_OK;                                                      // Presumably all went well.    
@@ -859,6 +859,12 @@ static int _pcp_init_component(int cidx)
       calloc(sEventInfoSize, sizeof(_pcp_event_info_t));                // Make room for all events.
 
    sEventCount = 0;                                                     // begin at zero.
+
+   // We first add in and PCPEventList names.
+   while(PCPEventList[sEventCount][0] != '.') {                         // Until we hit the end of the list,
+      cbPopulateNameOnly(PCPEventList[sEventCount]);                    // Add to our list. (routine increases sEventCount).
+   }
+
    _time_gettimeofday(&t1, NULL);
    ret = pcp_pmTraversePMNS(AGENT_NAME, cbPopulateNameOnly);            // Timed on Saturn [Intel Xeon 2.0GHz]; typical 9ms, range 8.5-10.5ms.
    if (ret < 0) {                                                       // Failure...
@@ -966,6 +972,13 @@ static int _pcp_init_component(int cidx)
          fprintf(stderr, "%s:%i vset=NULL for name='%s'\n", 
             __FILE__, __LINE__, pcp_event_info[i].name);
          continue;                                                      // .. next in loop.
+      }
+
+      // if numVal < 0, we had an error; likely an invalid name in
+      // PCPEventList (PM_ERR_PMID). 
+      if (vset->numval < 0) {                                           // If we had an error on fetching this name,
+         pcp_event_info[i].numVal = 0;                                  // .. this signals a name to be deleted,
+         continue;                                                      // .. skip to next.
       }
      
       pcp_event_info[i].numVal = vset->numval;                          // Show we have a value.
@@ -1203,8 +1216,8 @@ static int _pcp_init_control_state( hwd_control_state_t *ctl)
 
 // NOTE: This code allocates pcpIndex[] in the control and never frees
 // it.  However, the PAPI code in destroying the eventSet calls this
-// with a zero count; so we free() it then, without reallocating. Also,
-// the values[] array
+// with a zero count; so we free() it then, without reallocating. Same 
+// note for the pcpValue[] array.
 
 // NOTE: Also, PAPI *may* call more than once with a zero count on the
 // control. If you free pcpIndex, set it to NULL, so you don't try to
