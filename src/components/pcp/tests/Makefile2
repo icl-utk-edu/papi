@@ -20,7 +20,14 @@ benchStats.o:	benchStats.c
 benchStats: benchStats.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) -o benchStats benchStats.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm 
 
+updatePMID: updatePMID.c $(UTILOBJS)
+	$(CC) $(INCLUDE) -o updatePMID updatePMID.c 
+
+buildPCPEventList: buildPCPEventList.c
+	$(CC) $(INCLUDE) -o buildPCPEventList buildPCPEventList.c  
+
 clean:
 	rm -f benchPCP benchPCP.o benchPCP.s 
 	rm -f benchStats benchStats.o
 	rm -f retZero.o
+	rm -f updatePMID
