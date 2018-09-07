@@ -30,25 +30,37 @@
 #include "papi_memory.h"
 
 
+/***************/
+/* AMD Support */
+/***************/
+#define MSR_AMD_RAPL_POWER_UNIT                 0xc0010299
+
+#define MSR_AMD_PKG_ENERGY_STATUS               0xc001029B
+#define MSR_AMD_PP0_ENERGY_STATUS               0xc001029A
+
+
+/*****************/
+/* Intel support */
+/*****************/
+
 /*
  * Platform specific RAPL Domains.
  * Note that PP1 RAPL Domain is supported on 062A only
  * And DRAM RAPL Domain is supported on 062D only
  */
 
-
 /* RAPL defines */
-#define MSR_RAPL_POWER_UNIT             0x606
+#define MSR_INTEL_RAPL_POWER_UNIT	0x606
 
 /* Package */
 #define MSR_PKG_RAPL_POWER_LIMIT        0x610
-#define MSR_PKG_ENERGY_STATUS           0x611
+#define MSR_INTEL_PKG_ENERGY_STATUS	0x611
 #define MSR_PKG_PERF_STATUS             0x613
 #define MSR_PKG_POWER_INFO              0x614
 
 /* PP0 */
 #define MSR_PP0_POWER_LIMIT             0x638
-#define MSR_PP0_ENERGY_STATUS           0x639
+#define MSR_INTEL_PP0_ENERGY_STATUS	0x639
 #define MSR_PP0_POLICY                  0x63A
 #define MSR_PP0_PERF_STATUS             0x63B
 
@@ -139,6 +151,7 @@ static int num_packages=0,num_cpus=0;
 
 int power_divisor,time_divisor;
 int cpu_energy_divisor,dram_energy_divisor;
+unsigned int msr_rapl_power_unit;
 
 #define PACKAGE_ENERGY      	0
 #define PACKAGE_THERMAL     	1
@@ -158,16 +171,17 @@ int cpu_energy_divisor,dram_energy_divisor;
 /***************************************************************************/
 
 
-static long long read_msr(int fd, int which) {
+static long long read_msr(int fd, unsigned int which) {
 
-  uint64_t data;
+	uint64_t data;
 
-  if ( fd<0 || pread(fd, &data, sizeof data, which) != sizeof data ) {
-    perror("rdmsr:pread");
-    exit(127);
-  }
+	if ( fd<0 || pread(fd, &data, sizeof data, which) != sizeof data ) {
+		perror("rdmsr:pread");
+		fprintf(stderr,"rdmsr error, msr %x\n",which);
+		exit(127);
+	}
 
-  return (long long)data;
+	return (long long)data;
 }
 
 static int open_fd(int offset) {
@@ -322,6 +336,9 @@ _rapl_init_component( int cidx )
      int packages[nr_cpus];
      int cpu_to_use[nr_cpus];
 
+	unsigned int msr_pkg_energy_status,msr_pp0_energy_status;
+
+
      /* Fill with sentinel values */
      for (i=0; i<nr_cpus; ++i) {
        packages[i] = -1;
@@ -329,28 +346,40 @@ _rapl_init_component( int cidx )
      }
 
 
-     /* check if Intel processor */
-     hw_info=&(_papi_hwi_system_info.hw_info);
+	/* check if supported processor */
+	hw_info=&(_papi_hwi_system_info.hw_info);
 
-     /* Ugh can't use PAPI_get_hardware_info() if
-	PAPI library not done initializing yet */
+	/* Ugh can't use PAPI_get_hardware_info() if
+		PAPI library not done initializing yet */
 
-     if (hw_info->vendor!=PAPI_VENDOR_INTEL) {
-        strncpy(_rapl_vector.cmp_info.disabled_reason,
-		"Not an Intel processor",PAPI_MAX_STR_LEN);
-        return PAPI_ENOSUPP;
-     }
-
-	/* Make sure it is a family 6 Intel Chip */
-	if (hw_info->cpuid_family!=6) {
-		/* Not a family 6 machine */
-		strncpy(_rapl_vector.cmp_info.disabled_reason,
-			"CPU family not supported",PAPI_MAX_STR_LEN);
-		return PAPI_ENOIMPL;
+	switch(hw_info->vendor) {
+		case PAPI_VENDOR_INTEL:
+		case PAPI_VENDOR_AMD:
+			break;
+		default:
+			strncpy(_rapl_vector.cmp_info.disabled_reason,
+			"Not a supported processor",PAPI_MAX_STR_LEN);
+		        return PAPI_ENOSUPP;
 	}
 
-	/* Detect RAPL support */
-	switch(hw_info->cpuid_model) {
+
+	/* Make sure it is a family 6 Intel Chip */
+
+	if (hw_info->vendor==PAPI_VENDOR_INTEL) {
+
+		msr_rapl_power_unit=MSR_INTEL_RAPL_POWER_UNIT;
+		msr_pkg_energy_status=MSR_INTEL_PKG_ENERGY_STATUS;
+		msr_pp0_energy_status=MSR_INTEL_PP0_ENERGY_STATUS;
+
+		if (hw_info->cpuid_family!=6) {
+			/* Not a family 6 machine */
+			strncpy(_rapl_vector.cmp_info.disabled_reason,
+				"CPU family not supported",PAPI_MAX_STR_LEN);
+			return PAPI_ENOIMPL;
+		}
+
+		/* Detect RAPL support */
+		switch(hw_info->cpuid_model) {
 
 		/* Desktop / Laptops */
 
@@ -440,7 +469,30 @@ _rapl_init_component( int cidx )
 				"CPU model not supported",
 				PAPI_MAX_STR_LEN);
 			return PAPI_ENOIMPL;
+		}
 	}
+
+	if (hw_info->vendor==PAPI_VENDOR_AMD) {
+
+		msr_rapl_power_unit=MSR_AMD_RAPL_POWER_UNIT;
+		msr_pkg_energy_status=MSR_AMD_PKG_ENERGY_STATUS;
+		msr_pp0_energy_status=MSR_AMD_PP0_ENERGY_STATUS;
+
+		if (hw_info->cpuid_family!=0x17) {
+			/* Not a family 17h machine */
+			strncpy(_rapl_vector.cmp_info.disabled_reason,
+				"CPU family not supported",PAPI_MAX_STR_LEN);
+			return PAPI_ENOIMPL;
+		}
+
+		package_avail=1;
+		pp0_avail=1;		/* Doesn't work on EPYC? */
+		pp1_avail=0;
+		dram_avail=0;
+		psys_avail=0;
+		different_units=0;
+	}
+
 
      /* Detect how many packages */
      j=0;
@@ -501,14 +553,14 @@ _rapl_init_component( int cidx )
      }
 
      /* Verify needed MSR is readable. In a guest VM it may not be readable*/
-     if (pread(fd, &result, sizeof result, MSR_RAPL_POWER_UNIT) != sizeof result ) {
+     if (pread(fd, &result, sizeof result, msr_rapl_power_unit) != sizeof result ) {
         strncpy(_rapl_vector.cmp_info.disabled_reason,
                "Unable to access RAPL registers",PAPI_MAX_STR_LEN);
         return PAPI_ESYS;
      }
 
      /* Calculate the units used */
-     result=read_msr(fd,MSR_RAPL_POWER_UNIT);
+     result=read_msr(fd,msr_rapl_power_unit);
 
      /* units are 0.5^UNIT_VALUE */
      /* which is the same as 1/(2^UNIT_VALUE) */
@@ -540,8 +592,11 @@ _rapl_init_component( int cidx )
                  (pp0_avail*num_packages) +
                  (pp1_avail*num_packages) +
                  (dram_avail*num_packages) +
-		(psys_avail*num_packages) +
-                 (4*num_packages)) * 2;
+		(psys_avail*num_packages)) * 2;
+
+	if (hw_info->vendor==PAPI_VENDOR_INTEL) {
+		num_events+=(4*num_packages) * 2;
+	}
 
      rapl_native_events = (_rapl_native_event_entry_t*)
           papi_calloc(num_events, sizeof(_rapl_native_event_entry_t));
@@ -552,6 +607,7 @@ _rapl_init_component( int cidx )
 
      /* Create events for package power info */
 
+	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
      	sprintf(rapl_native_events[i].name,
 			"THERMAL_SPEC_CNT:PACKAGE%d",j);
@@ -578,6 +634,7 @@ _rapl_init_component( int cidx )
 		k++;
      }
 
+	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
 		sprintf(rapl_native_events[i].name,
 			"MINIMUM_POWER_CNT:PACKAGE%d",j);
@@ -604,6 +661,7 @@ _rapl_init_component( int cidx )
 		k++;
      }
 
+	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
 		sprintf(rapl_native_events[i].name,
 			"MAXIMUM_POWER_CNT:PACKAGE%d",j);
@@ -630,6 +688,7 @@ _rapl_init_component( int cidx )
 		k++;
      }
 
+	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
 		sprintf(rapl_native_events[i].name,
 			"MAXIMUM_TIME_WINDOW_CNT:PACKAGE%d",j);
@@ -665,7 +724,7 @@ _rapl_init_component( int cidx )
 	   		sprintf(rapl_native_events[i].description,
 		   		"Energy used in counts by chip package %d",j);
 	   		rapl_native_events[i].fd_offset=cpu_to_use[j];
-	   		rapl_native_events[i].msr=MSR_PKG_ENERGY_STATUS;
+	   		rapl_native_events[i].msr=msr_pkg_energy_status;
 	   		rapl_native_events[i].resources.selector = i + 1;
 	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
 	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
@@ -676,7 +735,7 @@ _rapl_init_component( int cidx )
 	   		sprintf(rapl_native_events[k].description,
 		   		"Energy used by chip package %d",j);
 	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
-	   		rapl_native_events[k].msr=MSR_PKG_ENERGY_STATUS;
+	   		rapl_native_events[k].msr=msr_pkg_energy_status;
 	   		rapl_native_events[k].resources.selector = k + 1;
 	   		rapl_native_events[k].type=PACKAGE_ENERGY;
 	   		rapl_native_events[k].return_type=PAPI_DATATYPE_UINT64;
@@ -778,7 +837,7 @@ _rapl_init_component( int cidx )
 	   		sprintf(rapl_native_events[i].description,
 		   		"Energy used in counts by all cores in package %d",j);
 	   		rapl_native_events[i].fd_offset=cpu_to_use[j];
-	   		rapl_native_events[i].msr=MSR_PP0_ENERGY_STATUS;
+	   		rapl_native_events[i].msr=msr_pp0_energy_status;
 	   		rapl_native_events[i].resources.selector = i + 1;
 	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
 	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
@@ -789,7 +848,7 @@ _rapl_init_component( int cidx )
 	   		sprintf(rapl_native_events[k].description,
 		   		"Energy used by all cores in package %d",j);
 	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
-	   		rapl_native_events[k].msr=MSR_PP0_ENERGY_STATUS;
+	   		rapl_native_events[k].msr=msr_pp0_energy_status;
 	   		rapl_native_events[k].resources.selector = k + 1;
 	   		rapl_native_events[k].type=PACKAGE_ENERGY;
 	   		rapl_native_events[k].return_type=PAPI_DATATYPE_UINT64;
