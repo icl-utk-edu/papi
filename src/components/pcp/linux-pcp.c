@@ -36,11 +36,67 @@
 #define  FUNC __func__  /* force it. */ 
 #endif 
 
-// Event Name filters, used in init_component for the routine pmTraversePMNS(). Differs by system.
-//#define AGENT_NAME "xfs"          /* Saturn PCP. */
-//#define AGENT_NAME "mem"          /* Saturn PCP. */
-  #define AGENT_NAME "perfevent"    /* Power9 PCP. */
-//#define AGENT_NAME ""             /* Get it all! */
+//-----------------------------------------------------------------------------
+// The following are the agents known at this writing on the test system.
+// The code will include any event that begins with the characters shown.
+// You CAN extend the names to a sub-group; e.g. "disk.all" will only include
+// that subset of disk events, not the disk.dev, disk.dm, disk.md or
+// or disk.partitions subgroups. You can extend this to complete event names.
+//
+// This approach could specify the same event more than once; but this code
+// will automatically exclude duplicates. For example, "disk.all.read" is an
+// event that could be specified in one entry, a later entry of "disk.all"
+// would include it too, but that's okay, we won't create another event for
+// it.
+//
+// Comment out agents you do not want. 
+//
+// The agent "." ends this list, and MUST be present.
+//
+// Performance: On the Power 9, this is effectively the same if only perfevent
+// is selected (about 17ms); the others add overhead fairly linearly. Since
+// each event requires a Daemon communication, on P9 this adds about a
+// millisecond. With seven events selected  
+//-----------------------------------------------------------------------------
+
+int PCPAgents = 0;         // count of valid entries in array below.
+int *PCPAgentLen;          // malloced on init; length of each string below.
+char *PCPAgent[]={
+// "cgroup",
+// "containers",
+// "disk", 
+// "disk.all.read",     // Example: including a single event.
+// "disk.all.write",    // Example: including another single event.
+   "disk.all",          // Example: Including a subset of disk; ~16 events. 
+// "event",
+// "filesys",
+// "hinv",
+// "hotproc",
+// "ipc",
+// "jbd2",
+// "kernel",
+   "mem",
+// "mmv",
+   "network",
+   "nfs",
+   "nfs3",
+   "nfs4",
+   "perfevent",
+// "pmcd",
+// "pmda",
+// "proc",
+// "quota",
+// "rpc",
+// "swap",
+// "swapdev",
+// "sysfs",
+// "tape",
+// "tmpfs",
+// "vfs",
+// "xfs",
+   "."
+}; // end of valid agents list.
+
 
 /* To remove redefined warnings */
 #undef PACKAGE_BUGREPORT
@@ -97,7 +153,7 @@ typedef struct _pcp_register
 //-----------------------------------------------------------------------------
 // WARNING: Do NOT expect pointers into the pcp_event_info[] array to remain
 // valid during processing; the list is realloc() to make room and this can
-// i_nvalidate the pointer. (Hard won knowledge). 
+// invalidate the pointer. (Hard won knowledge). 
 //-----------------------------------------------------------------------------
 typedef struct _pcp_event_info               // an array of these is populated by our pcp create event routine.
 {
@@ -108,7 +164,7 @@ typedef struct _pcp_event_info               // an array of these is populated b
    int       valType;                        // Type of value (PM_TYPE_[32,U32,64,U64,FLOAT,DOUBLE,STRING).
    char      domainDesc[PAPI_MAX_STR_LEN];   // Domain description if not null.
    int       numVal;                         // number of values in array.
-   int       idx;                            // idx into vlist array.
+   int       idx;                            // idx into vlist array. Also used as strlen for cmp in cbPopulateNameOnly.
    unsigned long long zeroValue;             // Value that counts as zero.
 } _pcp_event_info_t;
 
@@ -464,15 +520,29 @@ int qsPMID(const void *arg1, const void* arg2)
 
 
 //-----------------------------------------------------------------------------
-// cbPopulateNameOnly: This is a callback routine, called by pmTraversePMNS.  That
-// routine iterates through the PM name space and calls this routine once per
-// name. We increment sEventCount as we go, this will be the final count of valid
-// array entries. sEventInfoSize will be >= sEventCount.
+// cbPopulateNameOnly: This is a callback routine, called by pmTraversePMNS.
+// That routine iterates through the PM name space and calls this routine once
+// per name. We increment sEventCount as we go, this will be the final count
+// of valid array entries. sEventInfoSize will be >= sEventCount.  Because our
+// PCPAgents list can allow the same event to be selected by more than one
+// entry, we check first to see if the event name is already present. To make
+// that quicker, we store strlen(name) in the .idx element of the structure.
+// These are zeroed later.
+//
 // WARNING: May realloc() pcp_event_info[], invalidating pointers into it.
 //-----------------------------------------------------------------------------
 
 void cbPopulateNameOnly(const char *name) 
 {
+   int i, len=strlen(name);                                             // Get the length of the name.
+   for (i=0; i<sEventCount; i++) {                                      // For all names we have so far,
+      if (len == pcp_event_info[i].idx &&                               // ..fail early if lengths are not the same.
+          strcmp(name, pcp_event_info[i].name) == 0) {                  // ..if we've seen it before,
+//       fprintf(stderr, "Found duplicated event '%s'.\n", name);
+         return;                                                        // ..exit if we found a match.
+      }
+   }
+  
    if (sEventCount >= sEventInfoSize) {                                 // If we must realloc, 
       sEventInfoSize += sEventInfoBlock;                                // .. Add another page.
       pcp_event_info = realloc(pcp_event_info,                          // .. do realloc.
@@ -482,6 +552,7 @@ void cbPopulateNameOnly(const char *name)
    }
 
    strncpy(pcp_event_info[sEventCount].name, name, PAPI_MAX_STR_LEN-1); // copy name.
+   pcp_event_info[sEventCount].idx = len;                               // Remember the length.
    sEventCount++;                                                       // increment our count of events.
 } // end routine.
 
@@ -818,7 +889,7 @@ int getHelpText(unsigned int pcpIdx, char **helpText)
 //---------------------------------------------------------------------------
 static int _pcp_init_component(int cidx) 
 {
-
+   int i,j,k;
    char *reason = _papi_hwd[cidx]->cmp_info.disabled_reason;            // For error messages.
    int rLen = PAPI_MAX_STR_LEN-1;                                       // Most I will print.
    reason[rLen]=0;                                                      // last resort terminator.
@@ -859,18 +930,28 @@ static int _pcp_init_component(int cidx)
       calloc(sEventInfoSize, sizeof(_pcp_event_info_t));                // Make room for all events.
 
    sEventCount = 0;                                                     // begin at zero.
-   _time_gettimeofday(&t1, NULL);
-   ret = pcp_pmTraversePMNS(AGENT_NAME, cbPopulateNameOnly);            // Timed on Saturn [Intel Xeon 2.0GHz]; typical 9ms, range 8.5-10.5ms.
-   if (ret < 0) {                                                       // Failure...
-      snprintf(reason, rLen, "pmTraversePMNS failed; ret=%i [%s]\n", 
-         ret, pcp_pmErrStr(ret));
-      if (ret == PM_ERR_NAME) {                                         // We know what this one is,
-         snprintf(reason, rLen, "pmTraversePMNS ret=PM_ERR_NAME: "
-            "Occurs if event filter '%s' unknown to PCP Daemon.\n", AGENT_NAME);
-      }
 
-      return PAPI_ENOIMPL;                                              // Not implemented.
-   }      
+   while (PCPAgent[PCPAgents][0] != '.') PCPAgents++;                   // count the entries until stopper.
+   if (PCPAgents < 1) {
+      snprintf(reason, rLen, "No agents are defined in the code (%s).\n", __FILE__);   // Report an error.
+      return PAPI_ENOIMPL;                                                             // Nothing implemented!
+   }
+
+   _time_gettimeofday(&t1, NULL);
+   for (i=0; i<PCPAgents; i++) {                                        // Extract each agent individually.
+      ret = pcp_pmTraversePMNS(PCPAgent[i], cbPopulateNameOnly);        // ..
+
+      if (ret < 0) {                                                    // Failure...
+         snprintf(reason, rLen, "pmTraversePMNS failed for agent '%s'; ret=%i [%s]\n", 
+            PCPAgent[i], ret, pcp_pmErrStr(ret));
+         if (ret == PM_ERR_NAME) {                                         // We know what this one is,
+            snprintf(reason, rLen, "pmTraversePMNS ret=PM_ERR_NAME: "
+               "Occurs if event filter '%s' unknown to PCP Daemon.\n", PCPAgent[i]);
+         }
+
+         return PAPI_ENOIMPL;                                              // Not implemented.
+      }      
+   } // end of each agent.
       
    _time_gettimeofday(&t2, NULL);
    _time_fprintf(stderr, "pmTraversePMNS PopulateNameOnly took %li uS.\n", 
@@ -880,15 +961,14 @@ static int _pcp_init_component(int cidx)
       sEventCount, sEventInfoSize, sEventInfoBlock);
   
    if (sEventCount < 1) {                                               // Failure...
-      snprintf(reason, rLen, "pmTraversePMNS returned zero events "
-         "for AGENT=\"%s\".\n", AGENT_NAME);
+      snprintf(reason, rLen, "pmTraversePMNS returned zero events.");
       return PAPI_ENOIMPL;                                              // Can't work with no names!
    }
 
-   int i,j,k;
    char **allNames=calloc(sEventCount, sizeof(char*));                  // Make an array for all names. 
    for (i=0; i<sEventCount; i++) {                                      // .. 
-      allNames[i] = pcp_event_info[i].name;                             // copy pointer into array. 
+      allNames[i] = pcp_event_info[i].name;                             // copy pointer into array.
+      pcp_event_info[i].idx = 0;                                        // Zero out string len used earlier. 
    } // end for each event.
 
    pmID *allPMID=calloc(sEventCount, sizeof(pmID));                     // Make an array for results.
@@ -932,8 +1012,8 @@ static int _pcp_init_component(int cidx)
    #undef LNBLOCK                                                       /* Discard constant; no further use. */  
 
    _time_gettimeofday(&t2, NULL);
-   _time_fprintf(stderr, "pmLookupName for all took %li uS, ret=%i.\n", 
-      (mConvertUsec(t2)-mConvertUsec(t1)), ret );
+   _time_fprintf(stderr, "pmLookupName for all took %li uS.\n", 
+      (mConvertUsec(t2)-mConvertUsec(t1)) );
 
    for (i=0; i<sEventCount; i++) pcp_event_info[i].pmid = allPMID[i];   // copy all the pmid over to array.
 
