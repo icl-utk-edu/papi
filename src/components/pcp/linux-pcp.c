@@ -53,10 +53,11 @@
 //
 // The agent "." ends this list, and MUST be present.
 //
-// Performance: On the Power 9, this is effectively the same if only perfevent
-// is selected (about 17ms); the others add overhead fairly linearly. Since
-// each event requires a Daemon communication, on P9 this adds about a
-// millisecond. With seven events selected  
+// Performance: On the Power 9, selecting only perfevent or perfevent plus the
+// six others shown (disk.all, mem, network, nfs, nfs3, nfs4) doesn't seem to
+// affect the PAPI_library_init run time, either way it takes around 250ms,
+// give or take 30ms. If ALL the agents are active, the overhead doubles to
+// about 500ms.
 //-----------------------------------------------------------------------------
 
 int PCPAgents = 0;         // count of valid entries in array below.
