@@ -60,7 +60,6 @@
 //-----------------------------------------------------------------------------
 
 int PCPAgents = 0;         // count of valid entries in array below.
-int *PCPAgentLen;          // malloced on init; length of each string below.
 char *PCPAgent[]={
 // "cgroup",
 // "containers",
