@@ -20,7 +20,15 @@ benchStats.o:	benchStats.c
 benchStats: benchStats.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) -o benchStats benchStats.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm 
 
+# This code will time Standalone PCP operations (not through PAPI) for a baseline to assess PAPI added overhead.
+benchSAPCP.o:	benchSAPCP.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c benchSAPCP.c -o benchSAPCP.o
+
+benchSAPCP: benchSAPCP.o $(UTILOBJS) $(PAPILIB) retZero.o 
+	$(CC) $(INCLUDE) -o benchSAPCP benchSAPCP.o retZero.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -Xlinker -Map=benchSAPCP_link.map
+
 clean:
-	rm -f benchPCP benchPCP.o benchPCP.s 
+	rm -f benchPCP benchPCP.o benchPCP.s benchPCP_link.map 
 	rm -f benchStats benchStats.o
+	rm -f benchSAPCP benchSAPCP.o
 	rm -f retZero.o
