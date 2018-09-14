@@ -254,7 +254,7 @@ static int papicuda_linkCudaLibraries()
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
 
     dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);
-    CHECK_PRINT_EVAL(!dl3, "CUDA runtime library libcudart.so not found.", return (PAPI_ENOSUPP));
+    CHECK_PRINT_EVAL(!dl3, "CUDA Profiling Tools Interface (CUPTI) library libcupti.so not found.", return (PAPI_ENOSUPP));
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
     /* cuptiDeviceEnumEventDomainsPtr = dlsym( dl3, "cuptiDeviceEnumEventDomains" ); */
     /* if ( dlerror()!=NULL ) { strncpy( _cuda_vector.cmp_info.disabled_reason, "A CUDA required function was not found in dynamic libs", PAPI_MAX_STR_LEN ); return ( PAPI_ENOSUPP ); } */
