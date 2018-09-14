@@ -915,7 +915,7 @@ static int papicuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long l
         }
 
         // normalize the event values to represent the total number of domain instances on the device
-        for(ii = 0; ii < numEventIDsRead; ii++) }
+        for(ii = 0; ii < numEventIDsRead; ii++) {
             readEventValueBuffer[ii] = (readEventValueBuffer[ii] * numTotalInstances) / numInstances;
 	}
         /* For this pushed device and context, figure out the event and metric values and record them into the arrays */
