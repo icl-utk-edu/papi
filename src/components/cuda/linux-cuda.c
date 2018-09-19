@@ -254,7 +254,7 @@ static int papicuda_linkCudaLibraries()
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
 
     dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);
-    CHECK_PRINT_EVAL(!dl3, "CUDA runtime library libcudart.so not found.", return (PAPI_ENOSUPP));
+    CHECK_PRINT_EVAL(!dl3, "CUDA Profiling Tools Interface (CUPTI) library libcupti.so not found.", return (PAPI_ENOSUPP));
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
     /* cuptiDeviceEnumEventDomainsPtr = dlsym( dl3, "cuptiDeviceEnumEventDomains" ); */
     /* if ( dlerror()!=NULL ) { strncpy( _cuda_vector.cmp_info.disabled_reason, "A CUDA required function was not found in dynamic libs", PAPI_MAX_STR_LEN ); return ( PAPI_ENOSUPP ); } */
@@ -915,9 +915,9 @@ static int papicuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long l
         }
 
         // normalize the event values to represent the total number of domain instances on the device
-        for(ii = 0; ii < numEventIDsRead; ii++) 
-            readEventValueBuffer[numEventIDsRead] = (readEventValueBuffer[numEventIDsRead] * numTotalInstances) / numInstances;
-
+        for(ii = 0; ii < numEventIDsRead; ii++) {
+            readEventValueBuffer[ii] = (readEventValueBuffer[ii] * numTotalInstances) / numInstances;
+	}
         /* For this pushed device and context, figure out the event and metric values and record them into the arrays */
         SUBDBG("For this device and context, match read values against active events by scanning activeEvents array and matching associated availEventIDs\n");
         for(jj = 0; jj < gctrl->activeEventCount; jj++) {
