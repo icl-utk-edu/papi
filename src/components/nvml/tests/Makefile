@@ -22,6 +22,10 @@ nvml_power_limiting_test: nvml_power_limiting_test.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvml_power_limiting_test nvml_power_limiting_test.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 	cp nvml_power_limiting_test ~/nvml_power_limiting_test
 
+nvml_power_limit_read_test: nvml_power_limit_read_test.o $(UTILOBJS) 
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvml_power_limit_read_test nvml_power_limit_read_test.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
+	cp nvml_power_limit_read_test ~/nvml_power_limit_read_test
+
 benchSANVML: benchSANVML.o $(UTILOBJS) 
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o benchSANVML benchSANVML.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
 

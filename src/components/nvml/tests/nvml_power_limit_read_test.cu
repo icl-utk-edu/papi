@@ -12,7 +12,8 @@
  *
  * @brief
 
- * This file tests the ability to do power control using NVML.
+ * This file tests the ability to read power limits using NVML.
+ * It does not write. 
 
  * The papi configure and papi Makefile will take care of the
  * compilation of the component tests (if all tests are added to a
@@ -154,71 +155,7 @@ int main( int argc, char** argv )
             test_fail( __FILE__, __LINE__, "PAPI_read failed.", retval );
         }
 
-        printf( "%s = %lld (read initial power management limit)\n", EventName[i], values[i]);
-        long long int initial_power_management_limit = values[i];
-
-        printf("On device %d the power_management_limit is going to be reduced by 30\n", device_id[i]);
-        long long int newPower=initial_power_management_limit-30;
-        retval = PAPI_write( EventSet, &newPower);
-        if ( retval!=PAPI_OK ) {
-            for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
-            PAPI_stop(EventSet, values);                                // Must be stopped.
-            PAPI_cleanup_eventset(EventSet);                            // Empty it.
-            PAPI_destroy_eventset(&EventSet);                           // Release memory.
-            fprintf(stderr, "PAPI_write failure returned %i, = %s.\n", retval, PAPI_strerror(retval));
-            test_fail( __FILE__,__LINE__,"Attempted PAPI_write of power_management_limit failed:  Possible reasons: Insufficient permissions; Power management unavailable;. Outside min/max limits; failed to run with sudo.", retval );
-        } else {
-            printf("Call succeeded to set power_management_limit to %llu milliWatts\n", newPower);
-        }
-
-        retval = PAPI_read(EventSet, values+i);
-        if( retval != PAPI_OK ) {
-            fprintf(stderr, "PAPI_read failure returned %i [%s].\n", retval, PAPI_strerror(retval));
-            test_fail( __FILE__, __LINE__, "PAPI_read failed.", retval );
-        }
-
-        if ( values[i] != newPower) {
-            fprintf(stderr, "Mismatch: power_management_limit on device %d set to %llu but read as %llu\n", device_id[i], newPower, values[i]);
-            for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
-            PAPI_stop(EventSet, values);                                // Must be stopped.
-            PAPI_cleanup_eventset(EventSet);                            // Empty it.
-            PAPI_destroy_eventset(&EventSet);                           // Release memory.
-            test_fail( __FILE__,__LINE__,"Mismatch: power_management_limit on device set to one value but read as a different value", -1 );
-        } else {
-           printf("Verified: Power management limit was successfully reduced.\n"); 
-        }
-
-        retval = PAPI_write( EventSet, &initial_power_management_limit);    // Try to write the original value.
-        if ( retval!=PAPI_OK ) {
-            for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
-            PAPI_stop(EventSet, values);                                // Must be stopped.
-            PAPI_cleanup_eventset(EventSet);                            // Empty it.
-            PAPI_destroy_eventset(&EventSet);                           // Release memory.
-            fprintf(stderr, "Restoring value, PAPI_write failure returned %i, = %s.\n", retval, PAPI_strerror(retval));
-            test_fail( __FILE__,__LINE__,"Attempted PAPI_write to restore power_management_limit failed:  Possible reasons: Insufficient permissions; Power management unavailable;. Outside min/max limits; failed to run with sudo.", retval );
-        }
-
-        retval = PAPI_read( EventSet, values+i );                           // Now read it back.
-        if( retval != PAPI_OK ) {
-            for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
-            PAPI_stop(EventSet, values);                                // Must be stopped.
-            PAPI_cleanup_eventset(EventSet);                            // Empty it.
-            PAPI_destroy_eventset(&EventSet);                           // Release memory.
-            fprintf(stderr, "PAPI_read failure returned %i [%s].\n", retval, PAPI_strerror(retval));
-            test_fail( __FILE__, __LINE__, "PAPI_read failed.", retval );
-        }
-        
-        if ( values[i] != initial_power_management_limit) {
-            fprintf(stderr, "Mismatch on reset: power_management_limit on device %d set to %llu but read as %llu\n", device_id[i], initial_power_management_limit, values[i] );
-            for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
-            PAPI_stop(EventSet, values);                                // Must be stopped.
-            PAPI_cleanup_eventset(EventSet);                            // Empty it.
-            PAPI_destroy_eventset(&EventSet);                           // Release memory.
-            test_fail( __FILE__,__LINE__,"Mismatch on reset: power_management_limit on device set to one value but read as a different value", -1 );
-        } else {
-           printf("Reset to initial power level of %lld was successful.\n", values[i]);
-        }
-        
+        printf( "Read: %s = %lld\n", EventName[i], values[i]);
         PAPI_stop(EventSet, values);                                    // Stop it so we can clear it.
         PAPI_cleanup_eventset(EventSet);                                // Empty it  for the next one.
     } // end loop for all found events.
