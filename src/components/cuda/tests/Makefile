@@ -31,8 +31,15 @@ simpleMultiGPU_no_counters: simpleMultiGPU.cu $(UTILOBJS)
 simpleMultiGPU_cupti_only: simpleMultiGPU.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DCUPTI_ONLY -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
+nvlink_bandwidth: nvlink_bandwidth.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+nvlink_bandwidth_cupti_only: nvlink_bandwidth_cupti_only.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
 clean:
 	rm -f $(TESTS) *.o cuda_ld_preload_example.so
+
 
 # Extra example to show LD_PRELOAD can be used to insert PAPI CUDA into a pre-existing binary
 cuda_ld_preload_example.so: simpleMultiGPU_no_counters cuda_ld_preload_example.c

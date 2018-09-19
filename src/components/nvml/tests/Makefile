@@ -1,6 +1,7 @@
 NAME=nvml
 include ../../Makefile_comp_tests
 include ../Makefile.nvml
+# -fverbose-asm -Wa,-adhln=benchSANVML.s
 
 NVCC = $(CUDA_DIR)/bin/nvcc
 NVCFLAGS = -L$(NVML_INCDIR) -ccbin=$(CC)
@@ -21,7 +22,11 @@ nvml_power_limiting_test: nvml_power_limiting_test.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvml_power_limiting_test nvml_power_limiting_test.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 	cp nvml_power_limiting_test ~/nvml_power_limiting_test
 
+benchSANVML: benchSANVML.o $(UTILOBJS) 
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o benchSANVML benchSANVML.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
+
 clean:
 	rm -f $(TESTS) *.o
+	rm -f benchSANVML
 
 FORCE:
