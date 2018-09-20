@@ -68,6 +68,7 @@ char *PCPAgent[]={
 // "disk.all.read",     // Example: including a single event.
 // "disk.all.write",    // Example: including another single event.
    "disk.all",          // Example: Including a subset of disk; ~16 events. 
+// "wxyz",              // Only used for testing code with a non-existent agent.
 // "event",
 // "filesys",
 // "hinv",
@@ -941,14 +942,14 @@ static int _pcp_init_component(int cidx)
    for (i=0; i<PCPAgents; i++) {                                        // Extract each agent individually.
       ret = pcp_pmTraversePMNS(PCPAgent[i], cbPopulateNameOnly);        // ..
 
+      if (ret == PM_ERR_NAME) {                                         // If the name is not recognized, skip it.
+         _prog_fprintf(stderr, "Agent %s was not found; skipping it.\n", PCPAgent[i]);    // Report if enabled.
+         continue;                                                                        // Just skip it.
+      }
+
       if (ret < 0) {                                                    // Failure...
          snprintf(reason, rLen, "pmTraversePMNS failed for agent '%s'; ret=%i [%s]\n", 
             PCPAgent[i], ret, pcp_pmErrStr(ret));
-         if (ret == PM_ERR_NAME) {                                         // We know what this one is,
-            snprintf(reason, rLen, "pmTraversePMNS ret=PM_ERR_NAME: "
-               "Occurs if event filter '%s' unknown to PCP Daemon.\n", PCPAgent[i]);
-         }
-
          return PAPI_ENOIMPL;                                              // Not implemented.
       }      
    } // end of each agent.
