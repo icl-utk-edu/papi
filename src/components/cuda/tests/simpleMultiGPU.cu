@@ -66,10 +66,11 @@ const int MAX_NUM_EVENTS = 32;
     if (err != CUDA_SUCCESS) { printf ("Error %d for CUDA Driver API function '%s'\n", err, cufunc); return -1; }
 
 #define CHECK_CUDA_ERROR(err)                                           \
-    if (err != cudaSuccess) { printf ("Error %d for CUDA \n", err ); return -1; }
+    if (err != cudaSuccess) { printf ("%s:%i Error %d for CUDA [%s]\n", __FILE__, __LINE__, err, cudaGetErrorString(err) ); return -1; }
 
 #define CHECK_CUPTI_ERROR(err, cuptifunc)                               \
-    if (err != CUPTI_SUCCESS) { printf ("Error %d for CUPTI API function '%s'\n", err, cuptifunc); return -1; }
+    if (err != CUPTI_SUCCESS) { const char *errStr; cuptiGetResultString(err, &errStr); \
+       printf ("%s:%i Error %d [%s] for CUPTI API function '%s'\n", __FILE__, __LINE__, err, errStr, cuptifunc); return -1; }
 
 
 // //////////////////////////////////////////////////////////////////////////////
@@ -180,14 +181,15 @@ int main( int argc, char **argv )
     char const *cuptiEventName = "inst_executed"; // "elapsed_cycles_sm" "inst_executed"; "inst_issued0";
     printf("Setup CUPTI counters internally for %s event (CUPTI_ONLY)\n", cuptiEventName);
     CUpti_EventGroup eg[MAX_GPU_COUNT];
-    CUpti_EventID myevent;
+    CUpti_EventID *myevent = (CUpti_EventID*) calloc(GPU_N, sizeof(CUpti_EventID));   // Make space for event ids.
     for ( i=0; i<GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         CHECK_CUPTI_ERROR(cuptiSetEventCollectionMode(ctx[i], CUPTI_EVENT_COLLECTION_MODE_KERNEL), "cuptiSetEventCollectionMode" );
         CHECK_CUPTI_ERROR( cuptiEventGroupCreate( ctx[i], &eg[i], 0 ), "cuptiEventGroupCreate" );
-        cuptiEventGetIdFromName ( device[i], cuptiEventName, &myevent );
-        CHECK_CUPTI_ERROR( cuptiEventGroupAddEvent( eg[i], myevent ), "cuptiEventGroupAddEvent" );
+        cuptiEventGetIdFromName ( device[i], cuptiEventName, &myevent[i] );
+        printf("%s:%i myevent[%i]=%u.\n", __FILE__, __LINE__, i, myevent[i]);
+        CHECK_CUPTI_ERROR( cuptiEventGroupAddEvent( eg[i], myevent[i] ), "cuptiEventGroupAddEvent" );
         CHECK_CUPTI_ERROR( cuptiEventGroupEnable( eg[i] ), "cuptiEventGroupEnable" );
         CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
@@ -294,7 +296,7 @@ int main( int argc, char **argv )
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         CHECK_CU_ERROR( cuCtxSynchronize( ), "cuCtxSynchronize" );
-        CHECK_CUPTI_ERROR( cuptiEventGroupReadEvent ( eg[i], CUPTI_EVENT_READ_FLAG_NONE, myevent, &sizeBytes, &tmp[0] ), "cuptiEventGroupReadEvent" );
+        CHECK_CUPTI_ERROR( cuptiEventGroupReadEvent ( eg[i], CUPTI_EVENT_READ_FLAG_NONE, myevent[i], &sizeBytes, &tmp[0] ), "cuptiEventGroupReadEvent" );
         buffer[i] = tmp[0];
         printf( "CUPTI %s device %d counterValue %u (on one domain, may need to be multiplied by num of domains)\n", cuptiEventName, i, buffer[i] );
         CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
@@ -354,7 +356,11 @@ int main( int argc, char **argv )
         }
     }
     double cpuTime = GetTimer();
-    printf( "  CPU Processing time: %f (ms)\n", cpuTime );
+    if (gpuTime > 0) {
+        printf( "  CPU Processing time: %f (ms) (speedup %.2fX)\n", cpuTime, (cpuTime/gpuTime) );
+    } else {
+        printf( "  CPU Processing time: %f (ms)\n", cpuTime);
+    }
 
     // Compare GPU and CPU results
     printf( "Comparing GPU and Host CPU results...\n" );
@@ -369,6 +375,10 @@ int main( int argc, char **argv )
         cudaDeviceReset();
     }
 
+#ifdef CUPTI_ONLY
+    free(myevent);
+#endif 
+    
     exit( ( diff < 1e-5 ) ? EXIT_SUCCESS : EXIT_FAILURE );
 }
 
