@@ -2521,7 +2521,6 @@ _pe_init_component( int cidx )
 					PAPI_MAX_STR_LEN);
 				break;
 			default:
-				printf("PAPI error %d\n",retval);
 				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Unknown libpfm4 related error",
 					PAPI_MAX_STR_LEN);
