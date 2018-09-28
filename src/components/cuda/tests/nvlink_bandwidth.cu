@@ -80,6 +80,7 @@ extern "C" __global__ void test_nvlink_bandwidth(float *src, float *dst)
 
 static void printActivity(CUpti_Activity * record)
 {
+    fprintf(stderr, "CUpti_Activity kind=%i (_NVLINK=%i).\n", record->kind, CUPTI_ACTIVITY_KIND_NVLINK);
     if(record->kind == CUPTI_ACTIVITY_KIND_NVLINK) {
         nvlinkRec = (CUpti_ActivityNvLink *) record;
         // printf("typeDev0 %d, typeDev1 %d, sysmem %d, peer %d, physical links %d, portdev0 %d, %d, %d, %d, portDev1 %d, %d, %d, %d, bandwidth %llu\n", nvlinkRec->typeDev0, nvlinkRec->typeDev1, ((nvlinkRec->flag & CUPTI_LINK_FLAG_SYSMEM_ACCESS) ? 1 : 0), ((nvlinkRec->flag & CUPTI_LINK_FLAG_PEER_ACCESS) ? 1 : 0), nvlinkRec->physicalNvLinkCount, nvlinkRec->portDev0[0], nvlinkRec->portDev0[1], nvlinkRec->portDev0[2], nvlinkRec->portDev0[3], nvlinkRec->portDev1[0], nvlinkRec->portDev1[1], nvlinkRec->portDev1[2], nvlinkRec->portDev1[3], (long long unsigned int) nvlinkRec->bandwidth);
@@ -438,6 +439,7 @@ int main(int argc, char *argv[])
     // Check condition : nvlinkRec->flag & CUPTI_LINK_FLAG_SYSMEM_ACCESS
     // True : Nvlink is present between CPU & GPU
     // False : Nvlink is not present.
+    printf("line %i, nvlinkRec ptr = %08X.\n", __LINE__, nvlinkRec);
     if((nvlinkRec) && (((cpuToGpu) && (cpuToGpuAccess)) || ((gpuToGpu) && (gpuToGpuAccess)))) {
 
 #ifdef CUPTI_ONLY

@@ -29,8 +29,14 @@ nvml_power_limit_read_test: nvml_power_limit_read_test.o $(UTILOBJS)
 benchSANVML: benchSANVML.o $(UTILOBJS) 
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o benchSANVML benchSANVML.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
 
+
+nvmlcap_plot: nvmlcap_plot.o $(UTILOBJS) 
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvmlcap_plot nvmlcap_plot.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
+
+
 clean:
 	rm -f $(TESTS) *.o
 	rm -f benchSANVML
+	rm -f nvmlcap_plot results*
 
 FORCE:

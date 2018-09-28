@@ -37,6 +37,9 @@ nvlink_bandwidth: nvlink_bandwidth.cu $(UTILOBJS)
 nvlink_bandwidth_cupti_only: nvlink_bandwidth_cupti_only.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
+nvidia_nvlink_bandwidth: nvidia_nvlink_bandwidth.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
 clean:
 	rm -f $(TESTS) *.o cuda_ld_preload_example.so
 
