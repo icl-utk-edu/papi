@@ -1099,14 +1099,23 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		count = mmap_read_self(pe_ctl->events[i].mmap_buf,
 						&enabled,&running);
 
-		/* TODO: error checking? */
+		/* TODO: more error checking? */
 
 		/* Handle multiplexing case */
-		if (enabled!=running) {
+		if (enabled == running) {
+			/* no adjustment needed */
+		}
+		else if (enabled && running) {
 			adjusted = (enabled * 128LL) / running;
 			adjusted = adjusted * count;
 			adjusted = adjusted / 128LL;
 			count = adjusted;
+		} else {
+			/* This should not happen, but we have had it reported */
+			SUBDBG("perf_event kernel bug(?) count, enabled, "
+				"running: %lld, %lld, %lld\n",
+				papi_pe_buffer[0],enabled,running);
+
 		}
 
 		pe_ctl->counts[i] = count;
