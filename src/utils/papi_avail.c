@@ -537,24 +537,26 @@ main( int argc, char **argv )
 	 } while (PAPI_enum_event( &event_code, print_avail_only ) == PAPI_OK);
   }
       }
-      printf( "--------------------------------------------------------------------------------\n" );
-      if ( !print_event_info ) {
-	 if ( print_avail_only ) {
-	    printf( "Of %d available events, %d ", avail_count, deriv_count );
-	 } else {
-	    printf( "Of %d possible events, %d are available, of which %d ",
-		    tot_count, avail_count, deriv_count );
-	 }
-	 if ( deriv_count == 1 ) {
-	    printf( "is derived.\n\n" );
-	 } else {
-	    printf( "are derived.\n\n" );
-	 }
-      }
 
-	if (avail_count==0) {
-		printf("No events detected!  Check papi_component_avail to find out why.\n");
-		printf("\n");
+	printf( "--------------------------------------------------------------------------------\n" );
+
+	if ( !print_event_info ) {
+		if ( print_avail_only ) {
+			printf( "Of %d available events, %d ", avail_count, deriv_count );
+		} else {
+			printf( "Of %d possible events, %d are available, of which %d ",
+				tot_count, avail_count, deriv_count );
+		}
+		if ( deriv_count == 1 ) {
+			printf( "is derived.\n\n" );
+		} else {
+			printf( "are derived.\n\n" );
+		}
+
+		if (avail_count==0) {
+			printf("No events detected!  Check papi_component_avail to find out why.\n");
+			printf("\n");
+		}
 	}
 
 	return 0;
