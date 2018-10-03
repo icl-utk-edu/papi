@@ -260,6 +260,41 @@ checkCounter (int eventcode)
 	return 1;
 }
 
+
+/*
+  Checks whether a preset event is available. If it is available,
+  the function returns 1, or 0 otherwise. */
+
+int is_preset_event_available(char *name) {
+
+  int  event_code = 0 | PAPI_PRESET_MASK;
+  PAPI_event_info_t info;
+  int check_counter = 1;
+
+
+  if (PAPI_enum_event( &event_code, PAPI_ENUM_FIRST ) != PAPI_OK) {
+    printf("error!");
+    exit(1);
+  }
+
+  /* Iterate over all the available preset events and compare them by names. */
+  do {
+    if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
+      
+      if ( info.count ) {
+	if ( (check_counter && checkCounter (event_code)) || !check_counter) {
+	  if (strcmp(info.symbol, name) == 0)
+	    return 1;
+	}
+      }
+    }
+  } while (PAPI_enum_event( &event_code, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK);
+
+  return 0;
+}
+
+
+
 int
 main( int argc, char **argv )
 {
@@ -387,6 +422,11 @@ main( int argc, char **argv )
 		     printf( " Native Event Description: |%s|\n\n",
 			     n_info.long_descr );
 		  }
+
+		  if (!is_preset_event_available(name)) {
+		    printf("\nPRESET event %s is NOT available on this architecture!\n\n", name);
+		  }
+
 	       } else {	 /* must be a native event code */
 		  printf( "%-30s%s\n%-30s%#-10x\n%-30s%d\n",
 			  "Event name:", info.symbol, "Event Code:",
