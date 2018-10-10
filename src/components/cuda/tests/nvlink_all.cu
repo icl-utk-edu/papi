@@ -39,7 +39,7 @@
         if (_status != CUPTI_SUCCESS) {                                 \
             const char *errstr;                                         \
             cuptiGetResultString(_status, &errstr);                     \
-            fprintf(stderr, "%s:%d: error: function %s failed with error %s.\n", \
+            fprintf(stderr, "%s:%d: error: function %s failed with message '%s'.\n", \
                     __FILE__, __LINE__, #call, errstr);                 \
             exit(-1);                                                   \
         }                                                               \
@@ -52,8 +52,8 @@
             const char *errName=NULL, *errStr=NULL;                     \
             CUresult _e1 = cuGetErrorName(_status, &errName);           \
             CUresult _e2 = cuGetErrorString(_status, &errStr);          \
-            fprintf(stderr, "%s:%d: error: function %s failed with error %d [%s]='%s'.\n", \
-                    __FILE__, __LINE__, #apiFuncCall, _status, errName, errStr);           \
+            fprintf(stderr, "%s:%d: error: function %s failed with error [%s]='%s'.\n", \
+                    __FILE__, __LINE__, #apiFuncCall, errName, errStr); \
             exit(-1);                                                   \
         }                                                               \
     } while (0);  
@@ -62,7 +62,7 @@
     do {                                                                \
         cudaError_t _status = apiFuncCall;                              \
         if (_status != cudaSuccess) {                                   \
-            fprintf(stderr, "%s:%d: error: function %s failed with error %s.\n", \
+            fprintf(stderr, "%s:%d: error: function %s failed with message'%s'.\n", \
                     __FILE__, __LINE__, #apiFuncCall, cudaGetErrorString(_status)); \
             exit(-1);                                                   \
         }                                                               \
@@ -71,7 +71,7 @@
 #define MEMORY_ALLOCATION_CALL(var)                                     \
     do {                                                                \
         if (var == NULL) {                                              \
-            fprintf(stderr, "%s:%d: Error: Memory Allocation Failed \n", \
+            fprintf(stderr, "%s:%d: Error: Memory Allocation Failed \n",\
                     __FILE__, __LINE__);                                \
             exit(-1);                                                   \
         }                                                               \
@@ -84,27 +84,35 @@
 #define BUF_SIZE       (32 * 1024)
 #define ALIGN_SIZE     (8)
 #define SUCCESS        (0)
-#define NUM_METRIC     (4)
+#define NUM_METRIC     (18)
 #define NUM_EVENTS     (2)
 #define MAX_SIZE       (64*1024*1024)   // 64 MB
 #define NUM_STREAMS    (6)      // gp100 has 6 physical copy engines
+
+typedef union
+{
+   long long ll;
+   unsigned long long ull;
+   double    d;
+   void *vp;
+   unsigned char ch[8];
+} convert_64_t;
 
 int cpuToGpu = 0;
 int gpuToGpu = 0;
 
 
 //-----------------------------------------------------------------------------
-// This is the GPU routine to move a block from dst (on one GPU) to src (on
-// another GPU. 
+// This is the GPU routine to move a block from 'source' (on one GPU) to 'dest'
+// on another GPU. 
 //-----------------------------------------------------------------------------
-extern "C" __global__ void test_nvlink_bandwidth(float *src, float *dst)
+extern "C" __global__ void test_nvlink_bandwidth(float *source, float *dest)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    dst[idx] = src[idx] * 2.0f;
+    dest[idx] = source[idx] * 2.0f;
 } // end routine
 
-#define DIM(x) (sizeof(x)/sizeof(*(x)))
-
+#define DIM(x) (sizeof(x)/sizeof(*(x))) /* compute elements in an array */
 
 //-----------------------------------------------------------------------------
 // Return a text version with B, KB, MB, GB or TB. 
@@ -138,7 +146,6 @@ void testCpuToGpu(CUpti_EventGroup * eventGroup,
       int numEventGroup)
 {
     int i;
-    fprintf(stderr, "NUM_STREAMS = %d.\n", NUM_STREAMS); 
     // Unidirectional copy H2D (Host to Device).
     for(i = 0; i < NUM_STREAMS; i++) {
         RUNTIME_API_CALL(cudaMemcpyAsync((void *) pDevBuffer[i], pHostBuffer[i], bufferSize, cudaMemcpyHostToDevice, cudaStreams[i]));
@@ -161,7 +168,7 @@ void testCpuToGpu(CUpti_EventGroup * eventGroup,
 
 
 //-----------------------------------------------------------------------------
-// Copy buffers from the host to each device, in preparation for a transfer
+// Copy buffers from the host to each device, in preperation for a transfer
 // between devices.
 //-----------------------------------------------------------------------------
 void testGpuToGpu_part1(CUpti_EventGroup * eventGroup, 
@@ -171,11 +178,6 @@ void testGpuToGpu_part1(CUpti_EventGroup * eventGroup,
       int numEventGroup)
 {
     int i;
-
-    RUNTIME_API_CALL(cudaSetDevice(0));
-    RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(1, 0));
-    RUNTIME_API_CALL(cudaSetDevice(1));
-    RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(0, 0));
 
     // Unidirectional copy H2D
     for(i = 0; i < NUM_STREAMS; i++) {
@@ -264,7 +266,7 @@ void parseCommandLineArgs(int argc, char *argv[])
 //-----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    int deviceCount = 0, i = 0, numEventGroup = 0;
+    int device, deviceCount = 0, i = 0, numEventGroup = 0;
     size_t bufferSize = 0, freeMemory = 0, totalMemory = 0;
     char str[64];
 
@@ -277,33 +279,8 @@ int main(int argc, char *argv[])
     uint64_t timeDuration;
     CUpti_EventGroup eventGroup[32];
 
-    const char *EventBase[NUM_METRIC] = {
-         "cuda:::metric:nvlink_total_data_transmitted"
-        ,"cuda:::metric:nvlink_total_data_received"
-        ,"cuda:::metric:nvlink_transmit_throughput"
-        ,"cuda:::metric:nvlink_receive_throughput"     // We can read these four together, no more.
-//      ,"cuda:::metric:nvlink_total_response_data_received"
-//      ,"cuda:::metric:nvlink_user_response_data_received"
-//      ,"cuda:::metric:nvlink_user_ratom_data_transmitted"
-//      ,"cuda:::metric:nvlink_user_nratom_data_transmitted"
-//      ,"cuda:::metric:nvlink_overhead_data_transmitted"
-//      ,"cuda:::metric:nvlink_data_transmission_efficiency"
-//      ,"cuda:::metric:nvlink_user_data_transmitted"
-//      ,"cuda:::metric:nvlink_user_data_received"
-//      ,"cuda:::metric:nvlink_overhead_data_received"
-//      ,"cuda:::metric:nvlink_total_nratom_data_transmitted"
-//      ,"cuda:::metric:nvlink_total_ratom_data_transmitted"
-//      ,"cuda:::metric:nvlink_total_write_data_transmitted"
-//      ,"cuda:::metric:nvlink_user_write_data_transmitted"
-//      ,"cuda:::metric:nvlink_data_receive_efficiency"
-    };
-    
     // Parse command line arguments
     parseCommandLineArgs(argc, argv);
-
-//  CUPTI_CALL(cuptiActivityEnable(CUPTI_ACTIVITY_KIND_NVLINK));
-//  CUPTI_CALL(cuptiActivityRegisterCallbacks(bufferRequested, bufferCompleted));
-
 
     DRIVER_API_CALL(cuInit(0));
     RUNTIME_API_CALL(cudaGetDeviceCount(&deviceCount));
@@ -314,12 +291,9 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    for(i = 0; i < deviceCount; i++) {
-        RUNTIME_API_CALL(cudaGetDeviceProperties(&prop[i], i));
-        printf("CUDA Device %d Name: %s", i, prop[i].name);
-        printf(", MultiProcessors=%i", prop[i].multiProcessorCount);
-        printf(", MaxThreadsPerMP=%i", prop[i].maxThreadsPerMultiProcessor);
-        printf("\n");
+    for(device = 0; device < deviceCount; device++) {
+        RUNTIME_API_CALL(cudaGetDeviceProperties(&prop[device], device));
+        printf("CUDA Device %d Name: %s\n", device, prop[device].name);
     }
 
     // Set memcpy size based on available device memory
@@ -340,13 +314,11 @@ int main(int argc, char *argv[])
     // Nvlink-topology Records are generated even before cudaMemcpy API is called.
     CUPTI_CALL(cuptiActivityFlushAll(0));
 
-    fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
+    // fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
-    long long values[MAX_DEVICES * NUM_METRIC];
-    char *EventName[MAX_DEVICES * NUM_METRIC];
     int eventCount;
-    int retval, ee;
-    int k, cid=-1;
+    int retval;
+    int k, m, cid=-1;
 
     /* PAPI Initialization */
     retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -356,7 +328,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    fprintf(stderr, "PAPI version: %d.%d.%d\n", 
+    printf("PAPI version: %d.%d.%d\n", 
         PAPI_VERSION_MAJOR(PAPI_VERSION), 
         PAPI_VERSION_MINOR(PAPI_VERSION), 
         PAPI_VERSION_REVISION(PAPI_VERSION));
@@ -376,94 +348,162 @@ int main(int argc, char *argv[])
     } // end search components.
 
     if (cid < 0) {                                                      // if no PCP component found,
-        fprintf(stderr, "Failed to find pcp component among %i "
+        fprintf(stderr, "Failed to find cuda component among %i "
             "reported components.\n", k);
         exit(-1); 
     }
 
-    fprintf(stderr, "Found CUDA Component at id %d\n",cid);
-
-    CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
-    CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
+    printf("Found CUDA Component at id %d\n", cid);
 
     // Add events at a GPU specific level ... eg cuda:::metric:nvlink_total_data_transmitted:device=0
     // Just profile devices to match the CUPTI example
-    char tmpEventName[1024];
     eventCount = 0;
-    for(i = 0; i < deviceCount; i++) {                                  // Profile all devices.
-        fprintf(stderr, "Set device to %d\n", i);
-        for(ee = 0; ee < NUM_METRIC; ee++) {
-            snprintf(tmpEventName, 1024, "%s:device=%d\0", EventBase[ee], i);
-            retval = PAPI_add_named_event(EventSet, tmpEventName);      // Don't want to fail program if name not found...
-            if(retval == PAPI_OK) {
-                fprintf(stderr, "Added event %s to GPU %d.\n", tmpEventName, i);
-                EventName[eventCount] = strdup(tmpEventName);
-                eventCount++;
-            } else {
-                fprintf(stderr, "Failed to add event %s to GPU %i; ret=%d [%s].\n", tmpEventName, i, retval, PAPI_strerror(retval));
-            }
-        }
-    }
-
-    if (eventCount < 1) {                                              // If we failed on all of them,
-        fprintf(stderr, "Unable to add any NVLINK events; they are not present in the component.\n");
-        fprintf(stderr, "Unable to proceed with this test.\n");
-        CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                // destroy the event set.
-        exit(-1);                                                      // exit no matter what.
-    }
-
-    // If we have events, init the values to -1, to see if we read them. 
-    for(i = 0; i < eventCount; i++)
-        values[i] = -1;
-
-    // ===== Allocate Memory =====================================
+    int eventsRead=0;
 
     for(i = 0; i < NUM_STREAMS; i++) {
         RUNTIME_API_CALL(cudaMalloc((void **) &pDevBuffer0[i], bufferSize));
-
+    
         pHostBuffer[i] = (float *) malloc(bufferSize);
         MEMORY_ALLOCATION_CALL(pHostBuffer[i]);
     }
-    
-    if(cpuToGpu) {
-        CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
-        testCpuToGpu(eventGroup, pDevBuffer0, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-        CALL_PAPI_OK(PAPI_stop(EventSet, values));                      // Stop and read values.
-    } else if(gpuToGpu) {
-        RUNTIME_API_CALL(cudaSetDevice(1));
-        for(i = 0; i < NUM_STREAMS; i++) 
-            RUNTIME_API_CALL(cudaMalloc((void **) &pDevBuffer1[i], bufferSize));
+            
+   // Begin enumeration of all events.
+   if (cpuToGpu) printf("Experiment timing memory copy from host to GPU.\n");
+   if (gpuToGpu) printf("Experiment timing memory copy between GPU 0 and each other GPU.\n");
 
-        //  Prepare the copy, load up buffers on each device from the host.
-        testGpuToGpu_part1(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-        CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
-        // Copy from device 0->1, then device 1->0.
-        testGpuToGpu_part2(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-        CALL_PAPI_OK(PAPI_stop(EventSet, values));                      // Stop and read values.
+   printf("Events with numeric values were read; if they are zero, they may not  \n"
+          "be operational, or the exercises performed by this code do not affect \n"
+          "them. We report all 'nvlink' events presented by the cuda component.  \n"
+          "\n"
+          "---------------------------Event Name---------------------------:---Value---\n");
+
+    PAPI_event_info_t info;                                             // To get event enumeration info.
+    m=PAPI_NATIVE_MASK;                                                 // Get the PAPI NATIVE mask.
+    CALL_PAPI_OK(PAPI_enum_cmp_event(&m,PAPI_ENUM_FIRST,cid));          // Begin enumeration of ALL papi counters.
+    do {                                                                // Enumerate all events.
+        memset(&info,0,sizeof(PAPI_event_info_t));                      // Clear event info.
+        k=m;                                                            // Make a copy of current code.
+
+        // enumerate sub-events, with masks. For this test, we do not
+        // have any! But we do this to test our enumeration works as
+        // expected. First time through is guaranteed, of course.
+
+        do {                                                            // enumerate masked events. 
+            CALL_PAPI_OK(PAPI_get_event_info(k,&info));                 // get name of k symbol.
+            if (strstr(info.symbol, "nvlink") == NULL) continue;        // skip if not an nvlink event.
+            char *devstr = strstr(info.symbol, "device=");              // look for device enumerator.
+            if (devstr == NULL) continue;                               // Skip if no device present. 
+            device=atoi(devstr+7);                                      // Get the device id, for info.
+            // fprintf(stderr, "Found nvlink symbol '%s', device=%i.\n", info.symbol , device);
+            if (device < 0 || device >= deviceCount) continue;          // skip any not in range.
+
+            CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
+            CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
+
+            retval = PAPI_add_named_event(EventSet, info.symbol);       // Don't want to fail program if name not found...
+            if(retval == PAPI_OK) {
+                // fprintf(stderr, "Added event %s.\n", info.symbol);
+                eventCount++;                                           // Bump number of events we could test.
+            } else {
+                fprintf(stderr, "Failed to add event %s; ret=%d [%s].\n", info.symbol, retval, PAPI_strerror(retval));
+                CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));          // Delete all events in set.
+                CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));         // destroy the event set.
+                continue; 
+            }
+
+            long long value=-1;                                         // The only value we read.
+            
+            // ===== Allocate Memory =====================================
+            
+            if(cpuToGpu) {
+                if (device == 0) { 
+                    CALL_PAPI_OK(PAPI_start(EventSet));                         // Start event counters.
+                    testCpuToGpu(eventGroup, pDevBuffer0, pHostBuffer, bufferSize, cudaStreams, 
+                                 &timeDuration, numEventGroup);
+                } else {
+                    RUNTIME_API_CALL(cudaSetDevice(device));
+                    for(i = 0; i < NUM_STREAMS; i++) {
+                        RUNTIME_API_CALL(cudaMalloc((void **) &pDevBuffer1[i], bufferSize));
+                    }
+
+                    CALL_PAPI_OK(PAPI_start(EventSet));                         // Start event counters.
+                    testCpuToGpu(eventGroup, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, 
+                                 &timeDuration, numEventGroup);
+
+                    for (i=0; i<NUM_STREAMS; i++) {
+                        RUNTIME_API_CALL(cudaFree((void **) pDevBuffer1[i]));
+                    }
+                } // end testing device other than 0.
+
+                CALL_PAPI_OK(PAPI_stop(EventSet, &value));                  // Stop and read value.
+
+            } else if(gpuToGpu) {
+                // Need to target another GPU. I already have pDevBuffer0 on device 0.
+                int partner=device;                                         // Presume event is not on zero.
+                if (device == 0) partner=1;                                 // If it is on zero, make partner 1.
+
+                RUNTIME_API_CALL(cudaSetDevice(0));                         // Device 0 must 
+                RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(partner, 0));   // access partner.  
+                
+                RUNTIME_API_CALL(cudaSetDevice(partner));                   // The partner device must access 0.
+                RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(0, 0));         // Let non-zero device access 0.
+
+                for(i = 0; i < NUM_STREAMS; i++) {
+                    RUNTIME_API_CALL(cudaMalloc((void **) &pDevBuffer1[i], bufferSize));
+                }
+
+                //  Prepare the copy, load up buffers on each device from the host.
+                testGpuToGpu_part1(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
+
+                // What we want to time: Copy from device 0->1, then device 1->0.
+                CALL_PAPI_OK(PAPI_start(EventSet));                         // Start event counters.
+                testGpuToGpu_part2(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
+                CALL_PAPI_OK(PAPI_stop(EventSet, &value));                  // Stop and read value.
+
+                // Disable peer access.
+                RUNTIME_API_CALL(cudaSetDevice(0));
+                RUNTIME_API_CALL(cudaDeviceDisablePeerAccess(partner)); // Kill connection to device i.
+                
+                RUNTIME_API_CALL(cudaSetDevice(partner));
+                RUNTIME_API_CALL(cudaDeviceDisablePeerAccess(0));       // Kill access to device 0.
+
+                // Now free the pointers on device 'partner' (never 0). 
+                for (i=0; i<NUM_STREAMS; i++) {
+                    RUNTIME_API_CALL(cudaFree((void **) pDevBuffer1[i]));
+                }
+
+                RUNTIME_API_CALL(cudaSetDevice(0));                     // return to default pointer.
+            } // end gpuToGpu testing.
+            
+            CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                  // Delete all events in set.
+            CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                 // destroy the event set.
+
+            // report each event counted.
+            char str[64];
+            if (value >= 0) {                                               // If not still -1,
+                eventsRead++;                                               // .. count and report.
+                calculateSize(str, value);
+                printf("%-64s: %s \n", info.symbol, str);
+            } else {
+                printf("%-64s: Failed to read.\n");
+            }
+        } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK); // Get next umask entry (bits different) (should return PAPI_NOEVNT).
+    } while(PAPI_enum_cmp_event(&m,PAPI_ENUM_EVENTS,cid)==PAPI_OK);         // Get next event code.
+
+    if (eventCount < 1) {                                                   // If we failed on all of them,
+        fprintf(stderr, "Unable to add any NVLINK events; they are not present in the component.\n");
+        fprintf(stderr, "Unable to proceed with this test.\n");
+        exit(-1);                                                           // exit no matter what.
     }
-
-    // report each event counted.
-    int eventsRead=0;
-    for(i = 0; i < eventCount; i++) {
-        char str[64];
-        if (values[i] >= 0) {                                           // If not still -1,
-            eventsRead++;                                               // .. count and report.
-            calculateSize(str, (uint64_t) values[i] );
-            printf("PAPI %s: %s \n", EventName[i], str);
-        }
-    }
-
-
-    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // Delete all events in set.
-    CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // Release PAPI memory.
-    PAPI_shutdown();                                                    // Has no return.
+ 
+    PAPI_shutdown();                                                        // Has no return.
         
-    if (eventsRead > 0) {                                               // If we succeeded with any, report. 
-        printf("%i bandwidth events successfully reported.\n", eventsRead);
-        return(0);                                                      // exit OK.
+    if (eventsRead > 0) {                                                   // If we succeeded with any, report. 
+        printf("\n%i nvlink events successfully reported.\n", eventsRead);
+        return(0);                                                          // exit OK.
     }
 
-    printf("Failed to read any bandwidth events.\n");                   // report a failure.
+    printf("\nFailed to read any nvlink events.\n");                        // report a failure.
         
-    return (-1);                                                        // Exit with error.
+    return (-1);                                                            // Exit with error.
 } // end MAIN.

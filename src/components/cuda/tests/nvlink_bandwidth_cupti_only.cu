@@ -2,6 +2,11 @@
  * Copyright 2015-2016 NVIDIA Corporation. All rights reserved.
  *
  * Sample to demonstrate use of NVlink CUPTI APIs
+ * Note: this is nearly identical to the NVDIA provided version, which can be
+ * found in $CUDAPATH/extras/CUPTI/sample/nvlink_bandwidth/nvlink_bandwidth.cu.
+ * The differences are white space and the addition of 'timeDuration' to the 
+ * printMetricValue routine; some printf() and output text changes. -TonyC.
+ *
  */
 
  #include <stdio.h>

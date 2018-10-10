@@ -449,21 +449,22 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
             gctxt->availEventDeviceNum[idxEventArray] = deviceNum;
             size = PAPI_MIN_STR_LEN;
             CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_NAME, &size, (uint8_t *) tmpStr), return (PAPI_EMISC));
-            // FIXME SOMEDAY: For this release the nvlink metrics are not functioning so skip them
-            if(strstr(tmpStr, "nvlink")!=NULL)  continue;
-            // FIXME SOMEDAY: For this release the nvlink metrics are not functioning so skip them
-            if(size >= PAPI_MIN_STR_LEN)
+            if(size >= PAPI_MIN_STR_LEN) {
                 gctxt->availEventDesc[idxEventArray].name[PAPI_MIN_STR_LEN - 1] = '\0';
+            }
             snprintf(gctxt->availEventDesc[idxEventArray].name, PAPI_MIN_STR_LEN, "metric:%s:device=%d", tmpStr, deviceNum);
             size = PAPI_2MAX_STR_LEN;
             CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_LONG_DESCRIPTION, &size, (uint8_t *) gctxt->availEventDesc[idxEventArray].description), return (PAPI_EMISC));
-            if(size >= PAPI_2MAX_STR_LEN)
+            if(size >= PAPI_2MAX_STR_LEN) {
                 gctxt->availEventDesc[idxEventArray].description[PAPI_2MAX_STR_LEN - 1] = '\0';
+            }
             // SUBDBG( "For device %d availEvent[%d] %s\n", mydevice->cuDev, idxEventArray, gctxt->availEventDesc[idxEventArray].name);
             idxEventArray++;
         }
+
         papi_free(metricIdList);
     }
+
     gctxt->availEventSize = idxEventArray;
 
     /* return 0 if everything went OK */
