@@ -20,11 +20,164 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <error.h>
+#include <errno.h>
 #include <time.h>
 #include <stdint.h>
 #include <unistd.h>
 #include "papi.h"
-#include "papi_hl_priv.h"
+
+#ifdef CONFIG_PAPIHLLIB_DEBUG
+#define APIDBG(format, args...) fprintf(stderr, format, ## args)
+#else
+#define APIDBG(format, args...) { ; }
+#endif
+
+#define verbose_fprintf \
+   if (verbosity == 1) fprintf
+
+#define PAPIHL_LOCK PAPI_LOCK_USR2
+
+/* these should be exported */
+#define PAPIHL_NUM_OF_COMPONENTS 10
+#define PAPIHL_NUM_OF_EVENTS_PER_COMPONENT 10
+
+
+/* global components data begin *****************************************/
+typedef struct components
+{
+   int component_id;
+   int num_of_events;
+   int max_num_of_events;
+   char **event_names;
+   short *event_types;
+   int EventSet; //only for testing at initialization phase
+} components_t;
+
+components_t *components = NULL;
+int num_of_components = 0;
+int max_num_of_components = PAPIHL_NUM_OF_COMPONENTS;
+int total_num_events = 0;
+
+/* global components data end *******************************************/
+
+
+/* thread local components data begin ***********************************/
+typedef struct local_components
+{
+   int EventSet;
+   /** Return values for the eventsets */
+   long_long *values;
+} local_components_t;
+
+__thread local_components_t *_local_components = NULL;
+
+/* thread local components data end *************************************/
+
+
+/* global event storage data begin **************************************/
+typedef struct reads
+{
+   struct reads *next;
+   struct reads *prev;
+   long_long value;        /**< Event value */
+} reads_t;
+
+typedef struct
+{
+   long_long offset;       /**< Event value for region_begin */
+   long_long total;        /**< Event value for region_end - region_begin + previous value */
+   reads_t *read_values;   /**< List of read event values inside a region */
+} value_t;
+
+typedef struct regions
+{
+   char *region;           /**< Region name */
+   struct regions *next;
+   struct regions *prev;
+   value_t values[];       /**< Array of event values based on current eventset */
+} regions_t;
+
+typedef struct
+{
+   unsigned long key;      /**< Thread ID */
+   regions_t *value;       /**< List of regions */
+} threads_t;
+
+int compar(const void *l, const void *r)
+{
+   const threads_t *lm = l;
+   const threads_t *lr = r;
+   return lm->key - lr->key;
+}
+
+typedef struct
+{
+   void *root;             /**< Root of binary tree */
+   threads_t *find_p;      /**< Pointer that is used for finding a thread node */ 
+} binary_tree_t;
+
+/**< Global binary tree that stores events from all threads */
+binary_tree_t* binary_tree = NULL;
+
+/* global event storage data end ****************************************/
+
+
+/* global auxiliary variables begin *************************************/
+enum region_type { REGION_BEGIN, REGION_READ, REGION_END };
+
+char **requested_event_names = NULL; /**< Events from user or default */
+int num_of_requested_events = 0;
+
+bool hl_initiated = false;       /**< Check PAPI-HL has been initiated */
+bool hl_finalized = false;       /**< Check PAPI-HL has been fininalized */
+bool events_determined = false;  /**< Check if events are determined */
+bool output_generated = false;   /**< Check if output has been already generated */
+static char *absolute_output_file_path = NULL;
+int output_counter = 0;
+short verbosity = 0;
+
+/* global auxiliary variables end ***************************************/
+
+
+void _internal_onetime_library_init(void);
+
+/* functions for creating eventsets for different components */
+static int _internal_checkCounter ( char* counter );
+int _internal_determine_rank();
+char *_internal_remove_spaces( char *str );
+int _internal_hl_determine_default_events();
+int _internal_hl_read_user_events();
+int _internal_hl_new_component(int component_id, components_t *component);
+int _internal_hl_add_event_to_component(char *event_name, int event,
+                                        short event_type, components_t *component);
+int _internal_hl_create_components();
+int _internal_hl_read_events(const char* events);
+int _internal_hl_create_event_sets();
+
+/* functions for storing events */
+reads_t* _internal_hl_insert_read_node( reads_t** head_node );
+int _internal_hl_add_values_to_region( regions_t *node, long_long cycles,
+                                        enum region_type reg_typ );
+regions_t* _internal_hl_insert_region_node( regions_t** head_node, const char *region );
+regions_t* _internal_hl_find_region_node( regions_t* head_node, const char *region );
+threads_t* _internal_hl_insert_thread_node( unsigned long tid );
+threads_t* _internal_hl_find_thread_node( unsigned long tid );
+int _internal_hl_store_values( unsigned long tid, const char *region,
+                               long_long cycles, enum region_type reg_typ );
+int _internal_hl_create_global_binary_tree();
+
+/* functions for output generation */
+static int _internal_mkdir(const char *dir);
+int _internal_hl_determine_output_path();
+void _internal_hl_write_output();
+
+/* functions for cleaning up heap memory */
+int _internal_clean_up_local_data();
+void _internal_clean_up_global_data();
+
+
+
+
 
 /* For dynamic linking to libpapi */
 /* Weak symbol for pthread_mutex_trylock to avoid additional linking
@@ -130,6 +283,8 @@ int _internal_hl_determine_default_events()
 
    /* allocate memory for requested events */
    requested_event_names = (char**)malloc(num_of_defaults * sizeof(char*));
+   if ( requested_event_names == NULL )
+      return ( PAPI_ENOMEM );
 
    /* check if default events are available on the current machine */
    for ( i = 0; i < num_of_defaults; i++ ) {
@@ -151,6 +306,8 @@ int _internal_hl_read_user_events(const char *user_events)
    char *token;
    
    user_events_copy = strdup(user_events);
+   if ( user_events_copy == NULL )
+      return ( PAPI_ENOMEM );
 
    /* check if string is not empty */
    if ( strlen( user_events_copy ) > 0 )
@@ -167,6 +324,8 @@ int _internal_hl_read_user_events(const char *user_events)
 
       /* allocate memory for requested events */
       requested_event_names = (char**)malloc(num_of_req_events * sizeof(char*));
+      if ( requested_event_names == NULL )
+         return ( PAPI_ENOMEM );
 
       /* parse list of event names */
       token = strtok( user_events_copy, separator );
@@ -176,6 +335,8 @@ int _internal_hl_read_user_events(const char *user_events)
             return PAPI_EINVAL;
          }
          requested_event_names[req_event_index] = strdup(_internal_remove_spaces(token));
+         if ( requested_event_names[req_event_index] == NULL )
+            return ( PAPI_ENOMEM );
          token = strtok( NULL, separator );
          req_event_index++;
       }
@@ -189,7 +350,7 @@ int _internal_hl_read_user_events(const char *user_events)
    return ( PAPI_OK );
 }
 
-void _internal_hl_new_component(int component_id, components_t *component)
+int _internal_hl_new_component(int component_id, components_t *component)
 {
    int retval;
 
@@ -197,7 +358,7 @@ void _internal_hl_new_component(int component_id, components_t *component)
    component->EventSet = PAPI_NULL;
    if ( ( retval = PAPI_create_eventset( &component->EventSet ) ) != PAPI_OK ) {
       verbose_fprintf(stdout, "\nPAPI-HL Error: Cannot create EventSet for component %d.\n", component_id);
-      exit(EXIT_FAILURE);
+      return ( retval );
    }
 
    component->component_id = component_id;
@@ -205,10 +366,15 @@ void _internal_hl_new_component(int component_id, components_t *component)
    component->max_num_of_events = PAPIHL_NUM_OF_EVENTS_PER_COMPONENT;
    component->event_names = NULL;
    component->event_names = (char**)malloc(component->max_num_of_events * sizeof(char*));
+   if ( component->event_names == NULL )
+      return ( PAPI_ENOMEM );
    component->event_types = NULL;
    component->event_types = (short*)malloc(component->max_num_of_events * sizeof(short));
+   if ( component->event_types == NULL )
+      return ( PAPI_ENOMEM );
 
    num_of_components += 1;
+   return ( PAPI_OK );
 }
 
 int _internal_hl_add_event_to_component(char *event_name, int event,
@@ -220,7 +386,11 @@ int _internal_hl_add_event_to_component(char *event_name, int event,
    if ( component->num_of_events == component->max_num_of_events ) {
       component->max_num_of_events *= 2;
       component->event_names = (char**)realloc(component->event_names, component->max_num_of_events * sizeof(char*));
+      if ( component->event_names == NULL )
+         return ( PAPI_ENOMEM );
       component->event_types = (short*)realloc(component->event_types, component->max_num_of_events * sizeof(short));
+      if ( component->event_types == NULL )
+         return ( PAPI_ENOMEM );
    }
 
    retval = PAPI_add_event( component->EventSet, event );
@@ -254,6 +424,8 @@ int _internal_hl_create_components()
    short event_type = 0;
 
    components = (components_t*)malloc(max_num_of_components * sizeof(components_t));
+   if ( components == NULL )
+      return ( PAPI_ENOMEM );
 
    for ( i = 0; i < num_of_requested_events; i++ ) {
       /* check if requested event contains event type (instant or delta) */
@@ -299,22 +471,28 @@ int _internal_hl_create_components()
             if ( num_of_components == max_num_of_components ) {
                max_num_of_components *= 2;
                components = (components_t*)realloc(components, max_num_of_components * sizeof(components_t));
+               if ( components == NULL )
+                  return ( PAPI_ENOMEM );
             }
             comp_index = num_of_components;
-            _internal_hl_new_component(component_id, &components[comp_index]);
+            retval = _internal_hl_new_component(component_id, &components[comp_index]);
+            if ( retval != PAPI_OK )
+               return ( retval );
          }
 
          /* add event to current component */
-         _internal_hl_add_event_to_component(requested_event_names[i], event, event_type, &components[comp_index]);
+         retval = _internal_hl_add_event_to_component(requested_event_names[i], event, event_type, &components[comp_index]);
+         if ( retval != PAPI_OK )
+            return ( retval );
       }
    }
 
    /* destroy all EventSets from global data */
    for ( i = 0; i < num_of_components; i++ ) {
       if ( ( retval = PAPI_cleanup_eventset (components[i].EventSet) ) != PAPI_OK )
-         exit(EXIT_FAILURE);
+         return ( retval );
       if ( ( retval = PAPI_destroy_eventset (&components[i].EventSet) ) != PAPI_OK )
-         exit(EXIT_FAILURE);
+         return ( retval );
       components[i].EventSet = PAPI_NULL;
 
       // printf("component_id = %d\n", components[i].component_id);
@@ -332,19 +510,24 @@ int _internal_hl_create_components()
 
 int _internal_hl_read_events(const char* events)
 {
-   int i;
+   int i, retval;
    if ( events != NULL ) {
       if ( _internal_hl_read_user_events(events) != PAPI_OK )
-         _internal_hl_determine_default_events();
+         if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK )
+            return ( retval );
 
    /* check if user specified events via environment variable */
    } else if ( getenv("PAPI_EVENTS") != NULL ) {
       char *user_events_from_env = strdup( getenv("PAPI_EVENTS") );
+      if ( user_events_from_env == NULL )
+         return ( PAPI_ENOMEM );
       if ( _internal_hl_read_user_events(user_events_from_env) != PAPI_OK )
-         _internal_hl_determine_default_events();
+         if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK )
+            return ( retval );
       free(user_events_from_env);
    } else {
-      _internal_hl_determine_default_events();
+      if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK )
+            return ( retval );
    }
 
    /* create components based on requested events */
@@ -357,8 +540,10 @@ int _internal_hl_read_events(const char* events)
          free(requested_event_names[i]);
       free(requested_event_names);
       num_of_requested_events = 0;
-      _internal_hl_determine_default_events();
-      _internal_hl_create_components();
+      if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK )
+         return ( retval );
+      if ( ( retval = _internal_hl_create_components() ) != PAPI_OK )
+         return ( retval );
    }
 
    events_determined = true;
@@ -372,6 +557,9 @@ int _internal_hl_create_event_sets()
 
    /* allocate memory for local components */
    _local_components = (local_components_t*)malloc(num_of_components * sizeof(local_components_t));
+   if ( _local_components == NULL )
+      return ( PAPI_ENOMEM );
+
    for ( i = 0; i < num_of_components; i++ ) {
       /* create EventSet */
       _local_components[i].EventSet = PAPI_NULL;
@@ -391,6 +579,8 @@ int _internal_hl_create_event_sets()
       }
       /* allocate memory for return values */
       _local_components[i].values = (long_long*)malloc(components[i].num_of_events * sizeof(long_long));
+      if ( _local_components[i].values == NULL )
+         return ( PAPI_ENOMEM );
    }
 
    for ( i = 0; i < num_of_components; i++ ) {
@@ -411,7 +601,8 @@ reads_t* _internal_hl_insert_read_node(reads_t** head_node)
    reads_t *new_node;
 
    /* create new region node */
-   new_node = malloc(sizeof(reads_t));
+   if ( ( new_node = malloc(sizeof(reads_t)) ) == NULL )
+      return ( NULL );
    new_node->next = NULL;
    new_node->prev = NULL;
 
@@ -427,7 +618,7 @@ reads_t* _internal_hl_insert_read_node(reads_t** head_node)
    return new_node;
 }
 
-void _internal_hl_add_values_to_region( regions_t *node, long_long cycles,
+int _internal_hl_add_values_to_region( regions_t *node, long_long cycles,
                                         enum region_type reg_typ )
 {
    int i, j;
@@ -444,11 +635,15 @@ void _internal_hl_add_values_to_region( regions_t *node, long_long cycles,
             node->values[cmp_iter++].offset = _local_components[i].values[j];
    } else if ( reg_typ == REGION_READ ) {
       /* create a new read node and add values*/
-      reads_t* read_node = _internal_hl_insert_read_node(&node->values[1].read_values);
+      reads_t* read_node;
+      if ( ( read_node = _internal_hl_insert_read_node(&node->values[1].read_values) ) == NULL )
+         return ( PAPI_ENOMEM );
       read_node->value = cycles - node->values[1].offset;
       for ( i = 0; i < num_of_components; i++ ) {
          for ( j = 0; j < components[i].num_of_events; j++ ) {
-            reads_t* read_node = _internal_hl_insert_read_node(&node->values[cmp_iter].read_values);
+            reads_t* read_node;
+            if ( ( read_node = _internal_hl_insert_read_node(&node->values[cmp_iter].read_values) ) == NULL )
+               return ( PAPI_ENOMEM );
             if ( components[i].event_types[j] == 1 )
                read_node->value = _local_components[i].values[j];
             else
@@ -472,6 +667,7 @@ void _internal_hl_add_values_to_region( regions_t *node, long_long cycles,
             cmp_iter++;
          }
    }
+   return ( PAPI_OK );
 }
 
 
@@ -486,7 +682,11 @@ regions_t* _internal_hl_insert_region_node(regions_t** head_node, const char *re
 
    /* create new region node */
    new_node = malloc(sizeof(regions_t) + extended_total_num_events * sizeof(value_t));
+   if ( new_node == NULL )
+      return ( NULL );
    new_node->region = (char *)malloc((strlen(region) + 1) * sizeof(char));
+   if ( new_node->region == NULL )
+      return ( NULL );
    new_node->next = NULL;
    new_node->prev = NULL;
    strcpy(new_node->region, region);
@@ -524,6 +724,8 @@ regions_t* _internal_hl_find_region_node(regions_t* head_node, const char *regio
 threads_t* _internal_hl_insert_thread_node(unsigned long tid)
 {
    threads_t *new_node = (threads_t*)malloc(sizeof(threads_t));
+   if ( new_node == NULL )
+      return ( NULL );
    new_node->key = tid;
    new_node->value = NULL; /* head node of region list */
    tsearch(new_node, &binary_tree->root, compar);
@@ -546,6 +748,7 @@ threads_t* _internal_hl_find_thread_node(unsigned long tid)
 int _internal_hl_store_values( unsigned long tid, const char *region,
                                long_long cycles, enum region_type reg_typ )
 {
+   int retval;
    threads_t* current_thread_node;
 
    /* check if current thread is already stored in tree */
@@ -553,7 +756,8 @@ int _internal_hl_store_values( unsigned long tid, const char *region,
    if ( current_thread_node == NULL ) {
       /* insert new node for current thread in tree if type is REGION_BEGIN */
       if ( reg_typ == REGION_BEGIN ) {
-         current_thread_node = _internal_hl_insert_thread_node(tid);
+         if ( ( current_thread_node = _internal_hl_insert_thread_node(tid) ) == NULL )
+            return ( PAPI_ENOMEM );
       } else
          return ( PAPI_EINVAL );
    }
@@ -565,33 +769,41 @@ int _internal_hl_store_values( unsigned long tid, const char *region,
    if ( current_region_node == NULL ) {
       /* create new node for current region in list if type is REGION_BEGIN */
       if ( reg_typ == REGION_BEGIN ) {
-         current_region_node = _internal_hl_insert_region_node(&current_thread_node->value,region);
+         if ( ( current_region_node = _internal_hl_insert_region_node(&current_thread_node->value,region) ) == NULL )
+            return ( PAPI_ENOMEM );
       } else
          return ( PAPI_EINVAL );
    }
 
    /* add recorded values to current region */
-   _internal_hl_add_values_to_region( current_region_node, cycles, reg_typ );
+   if ( ( retval = _internal_hl_add_values_to_region( current_region_node, cycles, reg_typ ) ) != PAPI_OK )
+      return ( retval );
 
    return ( PAPI_OK );
 }
 
 
-void _internal_hl_create_global_binary_tree()
+int _internal_hl_create_global_binary_tree()
 {
-   binary_tree = (binary_tree_t*)malloc(sizeof(binary_tree_t));
+   if ( ( binary_tree = (binary_tree_t*)malloc(sizeof(binary_tree_t)) ) == NULL )
+      return ( PAPI_ENOMEM );
    binary_tree->root = NULL;
-   binary_tree->find_p = (threads_t*)malloc(sizeof(threads_t));
+   if ( ( binary_tree->find_p = (threads_t*)malloc(sizeof(threads_t)) ) == NULL )
+      return ( PAPI_ENOMEM );
+   return ( PAPI_OK );
 }
 
 
-static void _internal_mkdir(const char *dir)
+static int _internal_mkdir(const char *dir)
 {
+   int retval;
+   int errno;
    char *tmp = NULL;
    char *p = NULL;
    size_t len;
 
-   tmp = strdup(dir);
+   if ( ( tmp = strdup(dir) ) == NULL )
+      return ( PAPI_ENOMEM );
    len = strlen(tmp);
 
    if(tmp[len - 1] == '/')
@@ -601,25 +813,36 @@ static void _internal_mkdir(const char *dir)
       if(*p == '/')
       {
          *p = 0;
-         mkdir(tmp, S_IRWXU);
+         errno = 0;
+         retval = mkdir(tmp, S_IRWXU);
+         if ( retval != 0 && errno != EEXIST )
+            return ( PAPI_ESYS );
          *p = '/';
       }
    }
-   mkdir(tmp, S_IRWXU);
+   retval = mkdir(tmp, S_IRWXU);
+   if ( retval != 0 && errno != EEXIST )
+      return ( PAPI_ESYS );
    free(tmp);
+
+   return ( PAPI_OK );
 }
 
-void _internal_hl_determine_output_path()
+int _internal_hl_determine_output_path()
 {
    /* check if PAPI_OUTPUT_DIRECTORY is set */
    char *output_prefix = NULL;
-   if ( getenv("PAPI_OUTPUT_DIRECTORY") != NULL )
-      output_prefix = strdup( getenv("PAPI_OUTPUT_DIRECTORY") );
-   else
-      output_prefix = strdup( get_current_dir_name() );
+   if ( getenv("PAPI_OUTPUT_DIRECTORY") != NULL ) {
+      if ( ( output_prefix = strdup( getenv("PAPI_OUTPUT_DIRECTORY") ) ) == NULL )
+         return ( PAPI_ENOMEM );
+   } else {
+      if ( ( output_prefix = strdup( get_current_dir_name() ) ) == NULL )
+         return ( PAPI_ENOMEM );
+   }
    
    /* generate absolute path for measurement directory */
-   absolute_output_file_path = (char *)malloc((strlen(output_prefix) + 64) * sizeof(char));
+   if ( ( absolute_output_file_path = (char *)malloc((strlen(output_prefix) + 64) * sizeof(char)) ) == NULL )
+      return ( PAPI_ENOMEM );
    if ( output_counter > 0 )
       sprintf(absolute_output_file_path, "%s/papi_%d", output_prefix, output_counter);
    else
@@ -631,7 +854,8 @@ void _internal_hl_determine_output_path()
 
       /* rename old directory by adding a timestamp */
       char *new_absolute_output_file_path = NULL;
-      new_absolute_output_file_path = (char *)malloc((strlen(absolute_output_file_path) + 64) * sizeof(char));
+      if ( ( new_absolute_output_file_path = (char *)malloc((strlen(absolute_output_file_path) + 64) * sizeof(char)) ) == NULL )
+         return ( PAPI_ENOMEM );
 
       /* create timestamp */
       time_t t = time(NULL);
@@ -660,6 +884,8 @@ void _internal_hl_determine_output_path()
    }
    free(output_prefix);
    output_counter++;
+
+   return ( PAPI_OK );
 }
 
 void _internal_hl_write_output()
@@ -677,7 +903,10 @@ void _internal_hl_write_output()
          int cpu_freq;
 
          /* create new measurement directory */
-         _internal_mkdir(absolute_output_file_path);
+         if ( ( _internal_mkdir(absolute_output_file_path) ) != PAPI_OK ) {
+            verbose_fprintf(stdout, "\nPAPI-HL Error: Cannot create measurement directory %s.\n", absolute_output_file_path);
+            return;
+         }
 
          /* determine rank for output file */
          int rank = _internal_determine_rank();
@@ -703,6 +932,7 @@ void _internal_hl_write_output()
          if ( output_file == NULL )
          {
             verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file %s!\n", absolute_output_file_path);
+            return;
          }
          else
          {
@@ -719,9 +949,18 @@ void _internal_hl_write_output()
             }
 
             /* list all threads */
-            PAPI_list_threads( tids, &number_of_threads );
-            tids = malloc( number_of_threads * sizeof(unsigned long) );
-            PAPI_list_threads( tids, &number_of_threads );
+            if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
+               verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
+               return;
+            }
+            if ( ( tids = malloc( number_of_threads * sizeof(unsigned long) ) ) == NULL ) {
+               verbose_fprintf(stdout, "PAPI-HL Error: OOM!\n");
+               return;
+            }
+            if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
+               verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
+               return;
+            }
 
             /* example output
             * CPU in MHz:1995

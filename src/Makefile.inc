@@ -13,7 +13,7 @@ HEADERS  = $(MISCHDRS) $(OSFILESHDR) $(PAPI_EVENTS_TABLE) \
 	papi.h papi_internal.h papiStdEventDefs.h \
 	papi_preset.h threads.h cpus.h papi_vector.h \
 	papi_memory.h config.h \
-	extras.h sw_multiplex.h high-level/papi_hl_priv.h \
+	extras.h sw_multiplex.h \
 	papi_common_strings.h components_config.h
 
 LIBCFLAGS += -I. $(CFLAGS) -DOSLOCK=\"$(OSLOCK)\" -DOSCONTEXT=\"$(OSCONTEXT)\"
