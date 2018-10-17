@@ -33,7 +33,8 @@
 #define DEBUG_PROFILE           0x080
 #define DEBUG_MEMORY            0x100
 #define DEBUG_LEAK              0x200
-#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE|DEBUG_MEMORY|DEBUG_LEAK)
+#define DEBUG_HIGHLEVEL         0x400
+#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE|DEBUG_MEMORY|DEBUG_LEAK|DEBUG_HIGHLEVEL)
 
 /* Please get rid of the DBG macro from your code */
 
@@ -69,6 +70,7 @@ extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
 #define PRFDBG(format, args...) (PAPIDEBUG(DEBUG_PROFILE,format, ## args))
 #define MEMDBG(format, args...) (PAPIDEBUG(DEBUG_MEMORY,format, ## args))
 #define LEAKDBG(format, args...) (PAPIDEBUG(DEBUG_LEAK,format, ## args))
+#define HLDBG(format, args...) (PAPIDEBUG(DEBUG_HIGHLEVEL,format, ## args))
 #endif
 
 #else
@@ -82,6 +84,7 @@ extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
 #define PRFDBG(format, args...) { ; }
 #define MEMDBG(format, args...) { ; }
 #define LEAKDBG(format, args...) { ; }
+#define HLDBG(format, args...) { ; }
 #define PAPIDEBUG(level, format, args...) { ; }
 #endif
 #endif
