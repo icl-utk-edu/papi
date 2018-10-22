@@ -581,6 +581,8 @@ PAPI_library_init( int version )
 				_papi_hwi_debug |= DEBUG_MEMORY;
 			if ( strstr( var, "LEAK" ) )
 				_papi_hwi_debug |= DEBUG_LEAK;
+			if ( strstr( var, "HIGHLEVEL" ) )
+				_papi_hwi_debug |= DEBUG_HIGHLEVEL;
 			if ( strstr( var, "ALL" ) )
 				_papi_hwi_debug |= DEBUG_ALL;
 		}

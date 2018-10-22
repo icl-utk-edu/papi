@@ -135,7 +135,7 @@ short verbosity = 0;
 /* global auxiliary variables end ***************************************/
 
 
-static int _internal_onetime_library_init(void);
+static void _internal_onetime_library_init(void);
 
 /* functions for creating eventsets for different components */
 static int _internal_checkCounter ( char* counter );
@@ -177,27 +177,31 @@ static void _internal_clean_up_global_data();
    against libpthread when not used. */
 #pragma weak pthread_mutex_trylock
 
-static int _internal_onetime_library_init(void)
+void _internal_onetime_library_init(void)
 {
    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
    static int done = 0;
    int retval;
 
-   HLDBG("Initialize!\n");
-   /*  failure means we've already initialized or attempted! */
+   /*  failure means already we've already initialized or attempted! */
    if (pthread_mutex_trylock(&mutex) == 0) {
       if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT) 
-         error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init");
+      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init"); 
+      if ((retval = PAPI_thread_init(&pthread_self)) != PAPI_OK)
+      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init"); 
+      if ((retval = PAPI_multiplex_init()) != PAPI_OK)
+      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_multiplex_init"); 
+      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
+      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_set_debug");
       done = 1;
    reg:
-      if ((retval = PAPI_thread_init(&pthread_self)) != PAPI_OK)
-         error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init");
-      HLDBG("Done!\n");
-      return ( PAPI_OK );
+      if ((retval = PAPI_register_thread()) != PAPI_OK)
+      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_register_thread");
+      HLDBG("PAPI-HL initialized!\n");
+      return;
    } 
 
    while (!done) {
-      HLDBG("Initialization conflict, waiting...\n");
       usleep(10);
    }
    goto reg;
@@ -496,11 +500,11 @@ static int _internal_hl_create_components()
          return ( retval );
       components[i].EventSet = PAPI_NULL;
 
-      // printf("component_id = %d\n", components[i].component_id);
-      // printf("num_of_events = %d\n", components[i].num_of_events);
-      // for ( j = 0; j < components[i].num_of_events; j++ ) {
-      //    printf("  %s type=%d\n", components[i].event_names[j], components[i].event_types[j]);
-      // }
+      HLDBG("component_id = %d\n", components[i].component_id);
+      HLDBG("num_of_events = %d\n", components[i].num_of_events);
+      for ( j = 0; j < components[i].num_of_events; j++ ) {
+         HLDBG(" %s type=%d\n", components[i].event_names[j], components[i].event_types[j]);
+      }
    }
 
    if ( num_of_components == 0 )
@@ -744,6 +748,8 @@ static inline threads_t* _internal_hl_find_thread_node(unsigned long tid)
 static int _internal_hl_store_counters( unsigned long tid, const char *region,
                                         enum region_type reg_typ )
 {
+   _papi_hwi_lock( HIGHLEVEL_LOCK );
+
    int retval;
    threads_t* current_thread_node;
 
@@ -751,7 +757,7 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
    current_thread_node = _internal_hl_find_thread_node(tid);
    if ( current_thread_node == NULL ) {
 
-      _papi_hwi_lock( HIGHLEVEL_LOCK );
+      //_papi_hwi_lock( HIGHLEVEL_LOCK );
          if ( current_thread_node == NULL ) {
          /* insert new node for current thread in tree if type is REGION_BEGIN */
          if ( reg_typ == REGION_BEGIN ) {
@@ -764,7 +770,7 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
             return ( PAPI_EINVAL );
          }
       }
-      _papi_hwi_unlock( HIGHLEVEL_LOCK );
+      //_papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
 
    regions_t* current_region_node;
@@ -774,16 +780,23 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
    if ( current_region_node == NULL ) {
       /* create new node for current region in list if type is REGION_BEGIN */
       if ( reg_typ == REGION_BEGIN ) {
-         if ( ( current_region_node = _internal_hl_insert_region_node(&current_thread_node->value,region) ) == NULL )
+         if ( ( current_region_node = _internal_hl_insert_region_node(&current_thread_node->value,region) ) == NULL ) {
+            _papi_hwi_unlock( HIGHLEVEL_LOCK );
             return ( PAPI_ENOMEM );
-      } else
+         }
+      } else {
+         _papi_hwi_unlock( HIGHLEVEL_LOCK );
          return ( PAPI_EINVAL );
+      }
    }
 
    /* add recorded values to current region */
-   if ( ( retval = _internal_hl_add_values_to_region( current_region_node, reg_typ ) ) != PAPI_OK )
+   if ( ( retval = _internal_hl_add_values_to_region( current_region_node, reg_typ ) ) != PAPI_OK ) {
+      _papi_hwi_unlock( HIGHLEVEL_LOCK );
       return ( retval );
+   }
 
+   _papi_hwi_unlock( HIGHLEVEL_LOCK );
    return ( PAPI_OK );
 }
 
@@ -1199,8 +1212,7 @@ PAPI_hl_init()
    int retval;
    if ( hl_initiated == false && hl_finalized == false )
    {
-      if ( ( retval = _internal_onetime_library_init() ) != PAPI_OK )
-         return ( retval );
+      _internal_onetime_library_init();
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( hl_initiated == false && hl_finalized == false )
       {

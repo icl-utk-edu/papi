@@ -54,7 +54,7 @@ extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
 #define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:%d:%#lx ",a,__FILE__, FUNC, __LINE__,(int)getpid(),_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d:%d ",a,__FILE__, FUNC, __LINE__, (int)getpid())
 #define ISLEVEL(a) (_papi_hwi_debug&a)
 
-#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":(a&DEBUG_LEAK)?"LEAK":"UNKNOWN")
+#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":(a&DEBUG_LEAK)?"LEAK":(a&DEBUG_HIGHLEVEL)?"HIGHLEVEL":"UNKNOWN")
 
 #ifndef NO_VARARG_MACRO		 /* Has variable arg macro support */
 #define PAPIDEBUG(level,format, args...) { if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
@@ -284,6 +284,26 @@ _LEAKDBG( char *format, ... )
 } while(0); _LEAKDBG
 #else
 #define LEAKDBG _LEAKDBG
+#endif
+
+static void
+_HLDBG( char *format, ... )
+{
+#ifdef DEBUG
+	va_list args;
+	va_start(args, format);
+	PAPIDEBUG( DEBUG_HIGHLEVEL, format , args);
+	va_end(args);
+#endif
+}
+#ifdef DEBUG
+#define HLDBG do { \
+  if (DEBUG_HIGHLEVEL&_papi_hwi_debug) {\
+	DEBUGLABEL( DEBUGLEVEL ( DEBUG_HIGHLEVEL ) ); \
+  } \
+} while(0); _HLDBG
+#else
+#define HLDBG _HLDBG
 #endif
 
 /* ifdef NO_VARARG_MACRO */
