@@ -19,6 +19,9 @@ default: $(TESTS)
 %.o:%.cu
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<
 
+%.mac:%.cu
+	$(NVCC) $(INCLUDE) $(NVCFLAGS) -E -c -o $@ $<
+
 HelloWorld: HelloWorld.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
