@@ -35,6 +35,8 @@
 #define PAPIHL_NUM_OF_COMPONENTS 10
 #define PAPIHL_NUM_OF_EVENTS_PER_COMPONENT 10
 
+#define PAPIHL_ACTIVE 1
+#define PAPIHL_DEACTIVATED 0
 
 /* global components data begin *****************************************/
 typedef struct components
@@ -131,16 +133,17 @@ bool output_generated = false;   /**< Check if output has been already generated
 static char *absolute_output_file_path = NULL;
 int output_counter = 0;
 short verbosity = 0;
+bool state = PAPIHL_ACTIVE;
 
 /* global auxiliary variables end ***************************************/
 
 
-static void _internal_onetime_library_init(void);
+static void _internal_hl_onetime_library_init(void);
 
 /* functions for creating eventsets for different components */
-static int _internal_checkCounter ( char* counter );
-static int _internal_determine_rank();
-static char *_internal_remove_spaces( char *str );
+static int _internal_hl_checkCounter ( char* counter );
+static int _internal_hl_determine_rank();
+static char *_internal_hl_remove_spaces( char *str );
 static int _internal_hl_determine_default_events();
 static int _internal_hl_read_user_events();
 static int _internal_hl_new_component(int component_id, components_t *component);
@@ -160,16 +163,18 @@ static inline threads_t* _internal_hl_find_thread_node( unsigned long tid );
 static int _internal_hl_store_counters( unsigned long tid, const char *region,
                                         enum region_type reg_typ );
 static int _internal_hl_read_counters();
+static int _internal_hl_read_and_store_counters( const char *region, enum region_type reg_typ );
 static int _internal_hl_create_global_binary_tree();
 
 /* functions for output generation */
-static int _internal_mkdir(const char *dir);
+static int _internal_hl_mkdir(const char *dir);
 static int _internal_hl_determine_output_path();
 static void _internal_hl_write_output();
 
 /* functions for cleaning up heap memory */
-static int _internal_clean_up_local_data();
-static void _internal_clean_up_global_data();
+static void _internal_hl_clean_up_local_data();
+static void _internal_hl_clean_up_global_data();
+static void _internal_hl_clean_up_all(bool deactivate);
 
 
 /* For dynamic linking to libpapi */
@@ -177,38 +182,34 @@ static void _internal_clean_up_global_data();
    against libpthread when not used. */
 #pragma weak pthread_mutex_trylock
 
-void _internal_onetime_library_init(void)
+static void _internal_hl_onetime_library_init(void)
 {
    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-   static int done = 0;
+   static volatile int done = 0;
    int retval;
 
-   /*  failure means already we've already initialized or attempted! */
    if (pthread_mutex_trylock(&mutex) == 0) {
       if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT) 
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init"); 
-      if ((retval = PAPI_thread_init(&pthread_self)) != PAPI_OK)
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init"); 
-      if ((retval = PAPI_multiplex_init()) != PAPI_OK)
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_multiplex_init"); 
-      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_set_debug");
-      done = 1;
-   reg:
-      if ((retval = PAPI_register_thread()) != PAPI_OK)
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_register_thread");
-      HLDBG("PAPI-HL initialized!\n");
-      return;
+         error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init"); 
+      if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
+         /* only suceeds if PAPI_library_init suceeded */
+         done = 1;
+         state = PAPIHL_ACTIVE;
+         /* Debug output only works if PAPI_library_init succeeded */
+         HLDBG("PAPI-HL with thread support has been initiated!\n");
+      } else {
+         error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init");
+         state = PAPIHL_DEACTIVATED;
+      }
    } 
 
-   while (!done) {
+   while ( !done ) {
       usleep(10);
    }
-   goto reg;
 }
 
 static int
-_internal_checkCounter ( char* counter )
+_internal_hl_checkCounter ( char* counter )
 {
    int EventSet = PAPI_NULL;
    int eventcode;
@@ -232,7 +233,7 @@ _internal_checkCounter ( char* counter )
    return ( PAPI_OK );
 }
 
-static int _internal_determine_rank()
+static int _internal_hl_determine_rank()
 {
    int rank = -1;
    /* check environment variables for rank identification */
@@ -249,7 +250,7 @@ static int _internal_determine_rank()
    return rank;
 }
 
-static char *_internal_remove_spaces( char *str )
+static char *_internal_hl_remove_spaces( char *str )
 {
    char *out = str, *put = str;
    for(; *str != '\0'; ++str) {
@@ -279,8 +280,10 @@ static int _internal_hl_determine_default_events()
 
    /* check if default events are available on the current machine */
    for ( i = 0; i < num_of_defaults; i++ ) {
-      if ( _internal_checkCounter( default_events[i] ) == PAPI_OK ) {
+      if ( _internal_hl_checkCounter( default_events[i] ) == PAPI_OK ) {
          requested_event_names[num_of_requested_events++] = strdup(default_events[i]);
+         if ( requested_event_names[num_of_requested_events -1] == NULL )
+            return ( PAPI_ENOMEM );
       }
    }
 
@@ -325,7 +328,7 @@ static int _internal_hl_read_user_events(const char *user_events)
             /* more entries as in the first run */
             return PAPI_EINVAL;
          }
-         requested_event_names[req_event_index] = strdup(_internal_remove_spaces(token));
+         requested_event_names[req_event_index] = strdup(_internal_hl_remove_spaces(token));
          if ( requested_event_names[req_event_index] == NULL )
             return ( PAPI_ENOMEM );
          token = strtok( NULL, separator );
@@ -560,41 +563,43 @@ static int _internal_hl_create_event_sets()
    int i, j, retval;
    long_long cycles;
 
-   /* allocate memory for local components */
-   _local_components = (local_components_t*)malloc(num_of_components * sizeof(local_components_t));
-   if ( _local_components == NULL )
-      return ( PAPI_ENOMEM );
+   if ( state == PAPIHL_ACTIVE ) {
+      /* allocate memory for local components */
+      _local_components = (local_components_t*)malloc(num_of_components * sizeof(local_components_t));
+      if ( _local_components == NULL )
+         return ( PAPI_ENOMEM );
 
-   for ( i = 0; i < num_of_components; i++ ) {
-      /* create EventSet */
-      _local_components[i].EventSet = PAPI_NULL;
-      if ( ( retval = PAPI_create_eventset( &_local_components[i].EventSet ) ) != PAPI_OK ) {
-         return (retval );
+      for ( i = 0; i < num_of_components; i++ ) {
+         /* create EventSet */
+         _local_components[i].EventSet = PAPI_NULL;
+         if ( ( retval = PAPI_create_eventset( &_local_components[i].EventSet ) ) != PAPI_OK ) {
+            return (retval );
+         }
+         /* add event to current EventSet */
+         for ( j = 0; j < components[i].num_of_events; j++ ) {
+            retval = PAPI_add_event( _local_components[i].EventSet, components[i].event_codes[j] );
+            if ( retval != PAPI_OK ) {
+               return (retval );
+            }
+         }
+         /* allocate memory for return values */
+         _local_components[i].values = (long_long*)malloc(components[i].num_of_events * sizeof(long_long));
+         if ( _local_components[i].values == NULL )
+            return ( PAPI_ENOMEM );
       }
-      /* add event to current EventSet */
-      for ( j = 0; j < components[i].num_of_events; j++ ) {
-         retval = PAPI_add_event( _local_components[i].EventSet, components[i].event_codes[j] );
-         if ( retval != PAPI_OK ) {
+
+      for ( i = 0; i < num_of_components; i++ ) {
+         if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK )
+            return (retval );
+
+         /* warm up PAPI code paths and data structures */
+         if ( ( retval = PAPI_read_ts( _local_components[i].EventSet, _local_components[i].values, &cycles ) != PAPI_OK ) ) {
             return (retval );
          }
       }
-      /* allocate memory for return values */
-      _local_components[i].values = (long_long*)malloc(components[i].num_of_events * sizeof(long_long));
-      if ( _local_components[i].values == NULL )
-         return ( PAPI_ENOMEM );
+      return PAPI_OK;
    }
-
-   for ( i = 0; i < num_of_components; i++ ) {
-      if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK )
-         return (retval );
-
-      /* warm up PAPI code paths and data structures */
-      if ( ( retval = PAPI_read_ts( _local_components[i].EventSet, _local_components[i].values, &cycles ) != PAPI_OK ) ) {
-         return (retval );
-      }
-   }
-
-   return PAPI_OK;
+   return ( PAPI_EMISC );
 }
 
 static inline reads_t* _internal_hl_insert_read_node(reads_t** head_node)
@@ -748,16 +753,14 @@ static inline threads_t* _internal_hl_find_thread_node(unsigned long tid)
 static int _internal_hl_store_counters( unsigned long tid, const char *region,
                                         enum region_type reg_typ )
 {
-   _papi_hwi_lock( HIGHLEVEL_LOCK );
-
    int retval;
    threads_t* current_thread_node;
+
+   _papi_hwi_lock( HIGHLEVEL_LOCK );
 
    /* check if current thread is already stored in tree */
    current_thread_node = _internal_hl_find_thread_node(tid);
    if ( current_thread_node == NULL ) {
-
-      //_papi_hwi_lock( HIGHLEVEL_LOCK );
          if ( current_thread_node == NULL ) {
          /* insert new node for current thread in tree if type is REGION_BEGIN */
          if ( reg_typ == REGION_BEGIN ) {
@@ -770,7 +773,6 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
             return ( PAPI_EINVAL );
          }
       }
-      //_papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
 
    regions_t* current_region_node;
@@ -817,6 +819,24 @@ static int _internal_hl_read_counters()
    return ( PAPI_OK );
 }
 
+static int _internal_hl_read_and_store_counters( const char *region, enum region_type reg_typ )
+{
+   int retval;
+   /* read all events */
+   if ( ( retval = _internal_hl_read_counters() ) != PAPI_OK ) {
+      HLDBG("Could not read counters for thread %lu.\n", PAPI_thread_id());
+      _internal_hl_clean_up_all(true);
+      return ( retval );
+   }
+
+   /* store all events */
+   if ( ( retval = _internal_hl_store_counters( PAPI_thread_id(), region, reg_typ) ) != PAPI_OK ) {
+      HLDBG("Could not store counters for thread %lu.\n", PAPI_thread_id());
+      _internal_hl_clean_up_all(true);
+      return ( retval );
+   }
+   return ( PAPI_OK );
+}
 
 static int _internal_hl_create_global_binary_tree()
 {
@@ -829,7 +849,7 @@ static int _internal_hl_create_global_binary_tree()
 }
 
 
-static int _internal_mkdir(const char *dir)
+static int _internal_hl_mkdir(const char *dir)
 {
    int retval;
    int errno;
@@ -938,13 +958,13 @@ static void _internal_hl_write_output()
          int cpu_freq;
 
          /* create new measurement directory */
-         if ( ( _internal_mkdir(absolute_output_file_path) ) != PAPI_OK ) {
+         if ( ( _internal_hl_mkdir(absolute_output_file_path) ) != PAPI_OK ) {
             verbose_fprintf(stdout, "\nPAPI-HL Error: Cannot create measurement directory %s.\n", absolute_output_file_path);
             return;
          }
 
          /* determine rank for output file */
-         int rank = _internal_determine_rank();
+         int rank = _internal_hl_determine_rank();
 
          if ( rank < 0 )
          {
@@ -1011,7 +1031,7 @@ static void _internal_hl_write_output()
             fprintf(output_file, "Thread,JSON{Region:{Event:Value,...},...}");
             for ( i = 0; i < number_of_threads; i++ )
             {
-               HLDBG("Thread %lu\n", tids[i]);
+               //HLDBG("Thread %lu\n", tids[i]);
                /* find values of current thread in global binary tree */
                threads_t* thread_node = _internal_hl_find_thread_node(tids[i]);
                if ( thread_node != NULL ) {
@@ -1087,64 +1107,65 @@ static void _internal_hl_write_output()
    }
 }
 
-static int _internal_clean_up_local_data()
+static void _internal_hl_clean_up_local_data()
 {
    int i, retval;
    /* destroy all EventSets from local data */
-   for ( i = 0; i < num_of_components; i++ ) {
-      if ( ( retval = PAPI_stop( _local_components[i].EventSet, _local_components[i].values ) ) != PAPI_OK )
-         return ( retval );
-      if ( ( retval = PAPI_cleanup_eventset (_local_components[i].EventSet) ) != PAPI_OK )
-         return ( retval );
-      if ( ( retval = PAPI_destroy_eventset (&_local_components[i].EventSet) ) != PAPI_OK )
-         return ( retval );
-      free(_local_components[i].values);
+   if ( _local_components != NULL ) {
+      for ( i = 0; i < num_of_components; i++ ) {
+         if ( ( retval = PAPI_stop( _local_components[i].EventSet, _local_components[i].values ) ) != PAPI_OK )
+            HLDBG("PAPI_stop failed: %d.\n", retval);
+         if ( ( retval = PAPI_cleanup_eventset (_local_components[i].EventSet) ) != PAPI_OK )
+            HLDBG("PAPI_cleanup_eventset failed: %d.\n", retval);
+         if ( ( retval = PAPI_destroy_eventset (&_local_components[i].EventSet) ) != PAPI_OK )
+            HLDBG("PAPI_destroy_eventset failed: %d.\n", retval);
+         free(_local_components[i].values);
+      }
+      free(_local_components);
+      _local_components = NULL;
    }
-   free(_local_components);
-   _local_components = NULL;
-
-   return ( PAPI_OK );
 }
 
-static void _internal_clean_up_global_data()
+static void _internal_hl_clean_up_global_data()
 {
    int i;
    int extended_total_num_events;
 
    /* clean up binary tree of recorded events */
    threads_t *thread_node;
-   while ( binary_tree->root != NULL ) {
-      thread_node = *(threads_t **)binary_tree->root;
+   if ( binary_tree != NULL ) {
+      while ( binary_tree->root != NULL ) {
+         thread_node = *(threads_t **)binary_tree->root;
 
-      /* clean up double linked list of region data */
-      regions_t *region = thread_node->value;
-      regions_t *tmp;
-      while ( region != NULL ) {
+         /* clean up double linked list of region data */
+         regions_t *region = thread_node->value;
+         regions_t *tmp;
+         while ( region != NULL ) {
 
-         /* clean up read node list */
-         extended_total_num_events = total_num_events + 2;
-         for ( i = 0; i < extended_total_num_events; i++ ) {
-            reads_t *read_node = region->values[i].read_values;
-            reads_t *read_node_tmp;
-            while ( read_node != NULL ) {
-               read_node_tmp = read_node;
-               read_node = read_node->next;
-               free(read_node_tmp);
+            /* clean up read node list */
+            extended_total_num_events = total_num_events + 2;
+            for ( i = 0; i < extended_total_num_events; i++ ) {
+               reads_t *read_node = region->values[i].read_values;
+               reads_t *read_node_tmp;
+               while ( read_node != NULL ) {
+                  read_node_tmp = read_node;
+                  read_node = read_node->next;
+                  free(read_node_tmp);
+               }
             }
+
+            tmp = region;
+            region = region->next;
+
+            free(tmp->region);
+            free(tmp);
          }
+         free(region);
 
-         tmp = region;
-         region = region->next;
-
-         free(tmp->region);
-         free(tmp);
+         tdelete(thread_node, &binary_tree->root, compar);
+         free(thread_node);
       }
-      free(region);
-
-      tdelete(thread_node, &binary_tree->root, compar);
-      free(thread_node);
-    }
-
+   }
 
    /* clean up global component data */
    for ( i = 0; i < num_of_components; i++ ) {
@@ -1152,11 +1173,15 @@ static void _internal_clean_up_global_data()
       free(components[i].event_codes);
       free(components[i].event_types);
    }
-   free(components);
-   components = NULL;
-   num_of_components = 0;
-   max_num_of_components = PAPIHL_NUM_OF_COMPONENTS;
-   total_num_events = 0;
+
+//TODO: Cannot free components if other threads are still using them
+   //free(components);
+   //components = NULL;
+
+   /* we need num_of_components for _internal_hl_clean_up_local_data */
+   //num_of_components = 0;
+   //max_num_of_components = PAPIHL_NUM_OF_COMPONENTS;
+   //total_num_events = 0;
 
    /* clean up requested event names */
    for ( i = 0; i < num_of_requested_events; i++ )
@@ -1164,11 +1189,33 @@ static void _internal_clean_up_global_data()
    free(requested_event_names);
    requested_event_names = NULL;
 
-   num_of_requested_events = 0;
-   events_determined = false;
-   output_generated = false;
+   //num_of_requested_events = 0;
+   //events_determined = false;
+   //output_generated = false;
    free(absolute_output_file_path);
    absolute_output_file_path = NULL;
+   //hl_initiated = false;
+   //hl_finalized = true;
+}
+
+static void _internal_hl_clean_up_all(bool deactivate)
+{
+   /* clean up thread local data */
+   HLDBG("Clean up thread local data for thread %lu\n", PAPI_thread_id());
+   _internal_hl_clean_up_local_data();
+
+   /* clean up global data */
+   if ( state == PAPIHL_ACTIVE && deactivate ) {
+      _papi_hwi_lock( HIGHLEVEL_LOCK );
+      if ( state == PAPIHL_ACTIVE ) {
+         HLDBG("Clean up global data for thread %lu\n", PAPI_thread_id());
+         _internal_hl_clean_up_global_data();
+         /* deactivate PAPI-HL */
+         if ( deactivate )
+            state = PAPIHL_DEACTIVATED;
+      }
+      _papi_hwi_unlock( HIGHLEVEL_LOCK );
+   }
 }
 
 /** @class PAPI_hl_init
@@ -1210,32 +1257,38 @@ int
 PAPI_hl_init()
 {
    int retval;
-   if ( hl_initiated == false && hl_finalized == false )
-   {
-      _internal_onetime_library_init();
-      _papi_hwi_lock( HIGHLEVEL_LOCK );
+   if ( state == PAPIHL_ACTIVE ) {
       if ( hl_initiated == false && hl_finalized == false )
       {
-         /* check VERBOSE level */
-         if ( getenv("PAPI_VERBOSE") != NULL ) {
-            if ( strcmp("1", getenv("PAPI_VERBOSE")) == 0 )
-               verbosity = 1;
-         }
+         _internal_hl_onetime_library_init();
+         if ( state == PAPIHL_ACTIVE ) {
+            _papi_hwi_lock( HIGHLEVEL_LOCK );
+            if ( hl_initiated == false && hl_finalized == false )
+            {
+               /* check VERBOSE level */
+               if ( getenv("PAPI_VERBOSE") != NULL ) {
+                  if ( strcmp("1", getenv("PAPI_VERBOSE")) == 0 )
+                     verbosity = 1;
+               }
 
-         /* determine output directory and output file */
-         if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
+               /* determine output directory and output file */
+               if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
+                  state = PAPIHL_DEACTIVATED;
+                  _papi_hwi_unlock( HIGHLEVEL_LOCK );
+                  return ( retval );
+               }
+
+               /* register the termination function for output */
+               atexit(PAPI_hl_print_output);
+               hl_initiated = true;
+            }
             _papi_hwi_unlock( HIGHLEVEL_LOCK );
-            return ( retval );
-         }
-
-         /* register the termination function for output */
-         atexit(PAPI_hl_print_output);
-         hl_initiated = true;
+            return ( PAPI_OK );
+         } 
+         return ( PAPI_ENOINIT );
       }
-      _papi_hwi_unlock( HIGHLEVEL_LOCK );
-      return ( PAPI_OK );
    }
-   return ( PAPI_HIGH_LEVEL_INITED );
+   return ( PAPI_EMISC );
 }
 
 /** @class PAPI_hl_finalize
@@ -1278,20 +1331,23 @@ PAPI_hl_init()
  */
 int PAPI_hl_finalize()
 {
-   int retval;
-   if ( hl_initiated == true ) {
-      if ( ( retval = _internal_clean_up_local_data() ) != PAPI_OK )
-         return ( retval );
-      _papi_hwi_lock( HIGHLEVEL_LOCK );
+   int number_of_threads;
+   if ( state == PAPIHL_ACTIVE ) {
       if ( hl_initiated == true ) {
-         /* clean up data */
-         _internal_clean_up_global_data();
-         hl_initiated = false;
-         hl_finalized = true;
+
+         /* number of registered threads */
+         PAPI_list_threads( NULL, &number_of_threads );
+         HLDBG("Number of threads: %d\n", number_of_threads);
+         _internal_hl_clean_up_all(true);
+//TODO:
+         /* tell all registered threads to stop counting events */
+         //PAPI_shutdown();
+         //verbose_fprintf(stdout, "PAPI-HL shutdown!\n");
+
+         return ( PAPI_OK );
       }
-      _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
-   return ( PAPI_OK );
+   return ( PAPI_EMISC );
 }
 
 /** @class PAPI_hl_set_events
@@ -1334,25 +1390,34 @@ int
 PAPI_hl_set_events(const char* events)
 {
    int retval;
-   if ( hl_initiated == true ) {
-      if ( events_determined == false )
-      {
-         _papi_hwi_lock( HIGHLEVEL_LOCK );
+   if ( state == PAPIHL_ACTIVE ) {
+      if ( hl_initiated == true ) {
          if ( events_determined == false )
          {
-            if ( ( retval = _internal_hl_read_events(events) ) != PAPI_OK ) {
-               _papi_hwi_unlock( HIGHLEVEL_LOCK );
-               return ( retval );
+            _papi_hwi_lock( HIGHLEVEL_LOCK );
+            if ( events_determined == false && state == PAPIHL_ACTIVE )
+            {
+               if ( ( retval = _internal_hl_read_events(events) ) != PAPI_OK ) {
+                  state = PAPIHL_DEACTIVATED;
+                  _internal_hl_clean_up_global_data();
+                  _papi_hwi_unlock( HIGHLEVEL_LOCK );
+                  return ( retval );
+               }
+               if ( ( retval = _internal_hl_create_global_binary_tree() ) != PAPI_OK ) {
+                  state = PAPIHL_DEACTIVATED;
+                  _internal_hl_clean_up_global_data();
+                  _papi_hwi_unlock( HIGHLEVEL_LOCK );
+                  return ( retval );
+               }
             }
-            if ( ( retval = _internal_hl_create_global_binary_tree() ) != PAPI_OK ) {
-               _papi_hwi_unlock( HIGHLEVEL_LOCK );
-               return ( retval );
-            }
+            _papi_hwi_unlock( HIGHLEVEL_LOCK );
          }
-         _papi_hwi_unlock( HIGHLEVEL_LOCK );
       }
+      if ( state == PAPIHL_DEACTIVATED)
+         return ( PAPI_EINVAL );
+      return ( PAPI_OK );
    }
-   return ( PAPI_OK );
+   return ( PAPI_EMISC );
 }
 
 /** @class PAPI_hl_print_output
@@ -1390,9 +1455,10 @@ PAPI_hl_set_events(const char* events)
 void
 PAPI_hl_print_output()
 {
-   if ( hl_initiated == true ) {
-      if ( output_generated == false )
-         _internal_hl_write_output();
+   if ( state == PAPIHL_ACTIVE && 
+        hl_initiated == true && 
+        output_generated == false ) {
+      _internal_hl_write_output();
    }
 }
 
@@ -1449,6 +1515,9 @@ PAPI_hl_region_begin( const char* region )
 {
    int retval;
 
+   if ( state == PAPIHL_DEACTIVATED )
+      return ( PAPI_EMISC );
+
    if ( hl_finalized == true )
       return ( PAPI_ENOTRUN );
 
@@ -1464,17 +1533,14 @@ PAPI_hl_region_begin( const char* region )
 
    if ( _local_components == NULL ) {
       if ( ( retval = _internal_hl_create_event_sets() ) != PAPI_OK ) {
-         _local_components = NULL;
+         HLDBG("Could not create local events sets for thread %lu.\n", PAPI_thread_id());
+         _internal_hl_clean_up_all(true);
          return ( retval );
       }
    }
 
-   /* read all events */
-   if ( ( retval = _internal_hl_read_counters() ) != PAPI_OK )
-      return ( retval );
-
-   /* store all events */
-   if ( ( retval = _internal_hl_store_counters( PAPI_thread_id(), region, REGION_BEGIN) ) != PAPI_OK )
+   /* read and store all events */
+   if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_BEGIN) ) != PAPI_OK )
       return ( retval );
 
    return ( PAPI_OK );
@@ -1531,15 +1597,14 @@ PAPI_hl_read(const char* region)
 {
    int retval;
 
+   if ( state == PAPIHL_DEACTIVATED )
+      return ( PAPI_EMISC );
+
    if ( _local_components == NULL )
       return ( PAPI_ENOTRUN );
 
-   /* read all events */
-   if ( ( retval = _internal_hl_read_counters() ) != PAPI_OK )
-      return ( retval );
-
-   /* store all events */
-   if ( ( retval = _internal_hl_store_counters( PAPI_thread_id(), region, REGION_READ) ) != PAPI_OK )
+   /* read and store all events */
+   if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_READ) ) != PAPI_OK )
       return ( retval );
 
    return ( PAPI_OK );
@@ -1593,15 +1658,14 @@ PAPI_hl_region_end( const char* region )
 {
    int retval;
 
+   if ( state == PAPIHL_DEACTIVATED )
+      return ( PAPI_EMISC );
+
    if ( _local_components == NULL )
       return ( PAPI_ENOTRUN );
 
-   /* read all events */
-   if ( ( retval = _internal_hl_read_counters() ) != PAPI_OK )
-      return ( retval );
-
-   /* store all events */
-   if ( ( retval = _internal_hl_store_counters( PAPI_thread_id(), region, REGION_END) ) != PAPI_OK )
+   /* read and store all events */
+   if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_END) ) != PAPI_OK )
       return ( retval );
 
    return ( PAPI_OK );
