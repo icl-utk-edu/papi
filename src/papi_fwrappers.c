@@ -1342,6 +1342,10 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
  * -- EventSet is currently not running or could not determined.
  * @retval PAPI_ESYS
  * -- A system or C library call failed inside PAPI, see the errno variable.
+ * @retval PAPI_EMISC
+ * -- PAPI has been deactivated due to previous erros.
+ * @retval PAPI_ENOMEM
+ * -- Insufficient memory.
  *
  * PAPIf_hl_region_begin reads hardware events and stores them internally at the beginning
  * of an instrumented code region.
@@ -1408,6 +1412,10 @@ PAPI_FCALL( papif_hl_region_begin, PAPIF_HL_REGION_BEGIN,
  * -- EventSet is currently not running or could not determined.
  * @retval PAPI_ESYS
  * -- A system or C library call failed inside PAPI, see the errno variable.
+ * @retval PAPI_EMISC
+ * -- PAPI has been deactivated due to previous erros.
+ * @retval PAPI_ENOMEM
+ * -- Insufficient memory.
  *
  * PAPIf_hl_read reads hardware events and stores them internally inside
  * of an instrumented code region.
@@ -1473,6 +1481,10 @@ PAPI_FCALL( papif_hl_read, PAPIF_HL_READ,
  * -- EventSet is currently not running or could not determined.
  * @retval PAPI_ESYS
  * -- A system or C library call failed inside PAPI, see the errno variable.
+ * @retval PAPI_EMISC
+ * -- PAPI has been deactivated due to previous erros.
+ * @retval PAPI_ENOMEM
+ * -- Insufficient memory.
  *
  * PAPIf_hl_region_end reads hardware events and stores the difference to the values from
  * PAPIf_hl_region_begin at the end of an instrumented code region.
@@ -1528,6 +1540,10 @@ PAPI_FCALL( papif_hl_region_end, PAPIF_HL_REGION_END,
  * @retval PAPI_OK 
  * @retval PAPI_HIGH_LEVEL_INITED 
  * -- Initialization was already called.
+ * @retval PAPI_EMISC
+ * -- Initialization failed.
+ * @retval PAPI_ENOMEM
+ * -- Insufficient memory.
  *
  * PAPIf_hl_init initializes the PAPI library and some high-level specific features.
  * If your application is making use of threads you do not need to call any other low level
@@ -1608,6 +1624,10 @@ PAPI_FCALL( papif_hl_finalize, PAPIF_HL_FINALIZE,
  * -- list of hardware events separated by commas
  *
  * @retval PAPI_OK 
+ * @retval PAPI_EMISC
+ * -- PAPI has been deactivated due to previous erros.
+ * @retval PAPI_ENOMEM
+ * -- Insufficient memory.
  *
  * PAPIf_hl_set_events offers the user the possibility to determine hardware events in
  * the source code as an alternative to the environment variable PAPI_EVENTS.
