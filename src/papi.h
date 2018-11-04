@@ -1127,7 +1127,8 @@ enum {
    @{ */
 
    int PAPI_hl_init(); /**< intialize high level library */
-   int PAPI_hl_finalize(); /**< shutdown eventsets and clear up everything */
+   int PAPI_hl_cleanup_thread(); /**< clean local-thread event sets */
+   int PAPI_hl_finalize(); /**< shutdown event sets and clear up everything */
    int PAPI_hl_set_events(const char* events); /**< set specfic events to be recorded */
    void PAPI_hl_print_output(); /**< generate output */
 

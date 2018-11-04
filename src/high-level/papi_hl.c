@@ -54,6 +54,7 @@ components_t *components = NULL;
 int num_of_components = 0;
 int max_num_of_components = PAPIHL_NUM_OF_COMPONENTS;
 int total_num_events = 0;
+int num_of_cleaned_threads = 0;
 
 /* global components data end *******************************************/
 
@@ -68,6 +69,7 @@ typedef struct local_components
 
 __thread local_components_t *_local_components = NULL;
 __thread long_long _local_cycles;
+__thread volatile bool _local_state = PAPIHL_ACTIVE;
 
 /* thread local components data end *************************************/
 
@@ -133,7 +135,7 @@ bool output_generated = false;   /**< Check if output has been already generated
 static char *absolute_output_file_path = NULL;
 int output_counter = 0;
 short verbosity = 0;
-volatile bool state = PAPIHL_ACTIVE;
+bool state = PAPIHL_ACTIVE;
 
 /* global auxiliary variables end ***************************************/
 
@@ -175,6 +177,7 @@ static void _internal_hl_write_output();
 static void _internal_hl_clean_up_local_data();
 static void _internal_hl_clean_up_global_data();
 static void _internal_hl_clean_up_all(bool deactivate);
+static int _internal_hl_check_for_clean_thread_states();
 
 
 /* For dynamic linking to libpapi */
@@ -925,8 +928,7 @@ static int _internal_hl_determine_output_path()
 
       /* This is a workaround for MPI applications!!!
        * Only rename existing measurement directory when it is older than
-       * current timestamp. If it's not, we assume that another MPI process already
-       * created a new measurement directory. */
+       * current timestamp. If it's not, we assume that another MPI process already created a new measurement directory. */
       if ( unix_time_from_old_directory < current_unix_time ) {
 
          if ( rename(absolute_output_file_path, new_absolute_output_file_path) != 0 ) {
@@ -1123,7 +1125,13 @@ static void _internal_hl_clean_up_local_data()
       }
       free(_local_components);
       _local_components = NULL;
+
+      /* count global thread variable */
+      _papi_hwi_lock( HIGHLEVEL_LOCK );
+      num_of_cleaned_threads++;
+      _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
+   _local_state = PAPIHL_DEACTIVATED;
 }
 
 static void _internal_hl_clean_up_global_data()
@@ -1174,48 +1182,71 @@ static void _internal_hl_clean_up_global_data()
       free(components[i].event_types);
    }
 
-//TODO: Cannot free components if other threads are still using them
+   /* we cannot free components here since other threads could still use them */
    //free(components);
-   //components = NULL;
 
-   /* we need num_of_components for _internal_hl_clean_up_local_data */
-   //num_of_components = 0;
-   //max_num_of_components = PAPIHL_NUM_OF_COMPONENTS;
-   //total_num_events = 0;
 
    /* clean up requested event names */
    for ( i = 0; i < num_of_requested_events; i++ )
       free(requested_event_names[i]);
    free(requested_event_names);
-   requested_event_names = NULL;
 
-   //num_of_requested_events = 0;
-   //events_determined = false;
-   //output_generated = false;
    free(absolute_output_file_path);
-   absolute_output_file_path = NULL;
-   //hl_initiated = false;
-   //hl_finalized = true;
 }
 
 static void _internal_hl_clean_up_all(bool deactivate)
 {
+   int num_of_threads;
    /* clean up thread local data */
    HLDBG("Clean up thread local data for thread %lu\n", PAPI_thread_id());
    _internal_hl_clean_up_local_data();
 
    /* clean up global data */
-   if ( state == PAPIHL_ACTIVE && deactivate ) {
+   if ( state == PAPIHL_ACTIVE ) {
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( state == PAPIHL_ACTIVE ) {
+
          HLDBG("Clean up global data for thread %lu\n", PAPI_thread_id());
          _internal_hl_clean_up_global_data();
+
+         /* check if all other registered threads have cleaned up */
+         PAPI_list_threads(NULL, &num_of_threads);
+
+         HLDBG("Number of registered threads: %d.\n", num_of_threads);
+         HLDBG("Number of cleaned threads: %d.\n", num_of_cleaned_threads);
+
+         if ( _internal_hl_check_for_clean_thread_states() == PAPI_OK &&
+               num_of_threads == num_of_cleaned_threads ) {
+            PAPI_shutdown();
+            /* clean up components */
+            free(components);
+            HLDBG("PAPI-HL shutdown!\n");
+         } else {
+            verbose_fprintf(stdout, "PAPI-HL Warning: Could not call PAPI_shutdown() since some threads still have running event sets. Make sure to call PAPI_hl_cleanup_thread() at the end of all parallel regions and PAPI_hl_finalize() in the master thread!\n");
+         }
+
          /* deactivate PAPI-HL */
          if ( deactivate )
             state = PAPIHL_DEACTIVATED;
       }
       _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
+}
+
+static int _internal_hl_check_for_clean_thread_states()
+{
+   EventSetInfo_t *ESI;
+   DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
+   int i;
+
+   for( i = 0; i < map->totalSlots; i++ ) {
+      ESI = map->dataSlotArray[i];
+      if ( ESI ) {
+         if ( ESI->state & PAPI_RUNNING ) 
+            return ( PAPI_EISRUN );
+      }
+   }
+   return ( PAPI_OK );
 }
 
 /** @class PAPI_hl_init
@@ -1250,6 +1281,7 @@ static void _internal_hl_clean_up_all(bool deactivate)
  *
  * @endcode
  *
+ * @see PAPI_hl_cleanup_thread
  * @see PAPI_hl_finalize
  * @see PAPI_hl_set_events
  * @see PAPI_hl_region_begin
@@ -1295,6 +1327,68 @@ PAPI_hl_init()
    return ( PAPI_EMISC );
 }
 
+/** @class PAPI_hl_cleanup_thread
+ * @brief Cleans up all thread-local data.
+ * 
+ * @par C Interface:
+ * \#include <papi.h> @n
+ * void PAPI_hl_cleanup_thread( );
+ *
+ * @retval PAPI_OK
+ * @retval PAPI_EMISC
+ * -- Thread has been already cleaned up or PAPI is deactivated due to previous erros.
+ * 
+ * PAPI_hl_cleanup_thread shuts down thread-local event sets and cleans local
+ * data structures. It is recommended to use this function in combination with
+ * PAPI_hl_finalize if your application is making use of threads.
+ *
+ * @par Example:
+ *
+ * @code
+ * int retval;
+ *
+ * #pragma omp parallel
+ * {
+ *   retval = PAPI_hl_region_begin("computation");
+ *   if ( retval != PAPI_OK )
+ *       handle_error(1);
+ *
+ *    //Do some computation here
+ *
+ *   retval = PAPI_hl_region_end("computation");
+ *   if ( retval != PAPI_OK )
+ *       handle_error(1);
+ * 
+ *   retval = PAPI_hl_cleanup_thread();
+ *   if ( retval != PAPI_OK )
+ *       handle_error(1);
+ * }
+ *
+ * retval = PAPI_hl_finalize();
+ * if ( retval != PAPI_OK )
+ *     handle_error(1);
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_init
+ * @see PAPI_hl_finalize
+ * @see PAPI_hl_set_events
+ * @see PAPI_hl_region_begin
+ * @see PAPI_hl_read
+ * @see PAPI_hl_region_end
+ * @see PAPI_hl_print_output
+ */
+int PAPI_hl_cleanup_thread()
+{
+   if ( state == PAPIHL_ACTIVE && 
+        hl_initiated == true && 
+        _local_state == PAPIHL_ACTIVE ) {
+         _internal_hl_clean_up_local_data();
+         return ( PAPI_OK );
+      }
+   return ( PAPI_EMISC );
+}
+
 /** @class PAPI_hl_finalize
  * @brief Finalizes the high-level PAPI library.
  *
@@ -1303,14 +1397,8 @@ PAPI_hl_init()
  * int PAPI_hl_finalize( );
  *
  * @retval PAPI_OK
- * @retval PAPI_EINVAL
- * -- Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed.
- * @retval PAPI_ENOEVST
- * -- The EventSet specified does not exist.
- * @retval PAPI_EISRUN
- * -- The EventSet is currently counting events.
- * @retval PAPI_EBUG
- * -- Internal error, send mail to ptools-perfapi@icl.utk.edu and complain.
+ * @retval PAPI_EMISC
+ * -- PAPI has been already finalized or deactivated due to previous erros.
  *
  * PAPI_hl_finalize finalizes the high-level library by destroying all counting event sets
  * and internal data structures.
@@ -1327,6 +1415,7 @@ PAPI_hl_init()
  * @endcode
  *
  * @see PAPI_hl_init
+ * @see PAPI_hl_cleanup_thread
  * @see PAPI_hl_set_events
  * @see PAPI_hl_region_begin
  * @see PAPI_hl_read
@@ -1335,21 +1424,9 @@ PAPI_hl_init()
  */
 int PAPI_hl_finalize()
 {
-   int number_of_threads;
-   if ( state == PAPIHL_ACTIVE ) {
-      if ( hl_initiated == true ) {
-
-         /* number of registered threads */
-         PAPI_list_threads( NULL, &number_of_threads );
-         HLDBG("Number of threads: %d\n", number_of_threads);
-         _internal_hl_clean_up_all(true);
-//TODO:
-         /* tell all registered threads to stop counting events */
-         //PAPI_shutdown();
-         //verbose_fprintf(stdout, "PAPI-HL shutdown!\n");
-
-         return ( PAPI_OK );
-      }
+   if ( state == PAPIHL_ACTIVE && hl_initiated == true ) {
+      _internal_hl_clean_up_all(true);
+      return ( PAPI_OK );
    }
    return ( PAPI_EMISC );
 }
@@ -1372,7 +1449,7 @@ int PAPI_hl_finalize()
  *
  * PAPI_hl_set_events offers the user the possibility to determine hardware events in
  * the source code as an alternative to the environment variable PAPI_EVENTS.
- * Note that the content of PAPI_EVENTS is ignored if PAPI_hl_set_events was successfully  executed.
+ * Note that the content of PAPI_EVENTS is ignored if PAPI_hl_set_events was successfully executed.
  * If the events argument cannot be interpreted, default hardware events are
  * taken for the measurement.
  *
@@ -1388,6 +1465,7 @@ int PAPI_hl_finalize()
  * @endcode
  *
  * @see PAPI_hl_init
+ * @see PAPI_hl_cleanup_thread
  * @see PAPI_hl_finalize
  * @see PAPI_hl_region_begin
  * @see PAPI_hl_read
@@ -1454,6 +1532,7 @@ PAPI_hl_set_events(const char* events)
  * @endcode
  *
  * @see PAPI_hl_init
+ * @see PAPI_hl_cleanup_thread
  * @see PAPI_hl_finalize
  * @see PAPI_hl_set_events
  * @see PAPI_hl_region_begin
@@ -1527,8 +1606,12 @@ PAPI_hl_region_begin( const char* region )
 {
    int retval;
 
-   if ( state == PAPIHL_DEACTIVATED )
+   if ( state == PAPIHL_DEACTIVATED ) {
+      /* check if we have to clean up local stuff */
+      if ( _local_state == PAPIHL_ACTIVE )
+         _internal_hl_clean_up_local_data();
       return ( PAPI_EMISC );
+   }
 
    if ( hl_finalized == true )
       return ( PAPI_ENOTRUN );
@@ -1613,8 +1696,12 @@ PAPI_hl_read(const char* region)
 {
    int retval;
 
-   if ( state == PAPIHL_DEACTIVATED )
+   if ( state == PAPIHL_DEACTIVATED ) {
+      /* check if we have to clean up local stuff */
+      if ( _local_state == PAPIHL_ACTIVE )
+         _internal_hl_clean_up_local_data();
       return ( PAPI_EMISC );
+   }
 
    if ( _local_components == NULL )
       return ( PAPI_ENOTRUN );
@@ -1678,8 +1765,12 @@ PAPI_hl_region_end( const char* region )
 {
    int retval;
 
-   if ( state == PAPIHL_DEACTIVATED )
+   if ( state == PAPIHL_DEACTIVATED ) {
+      /* check if we have to clean up local stuff */
+      if ( _local_state == PAPIHL_ACTIVE )
+         _internal_hl_clean_up_local_data();
       return ( PAPI_EMISC );
+   }
 
    if ( _local_components == NULL )
       return ( PAPI_ENOTRUN );

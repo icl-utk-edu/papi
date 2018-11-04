@@ -1571,6 +1571,42 @@ PAPI_FCALL( papif_hl_init, PAPIF_HL_INIT,
 	*check = PAPI_hl_init();
 }
 
+/** @class PAPIf_hl_cleanup_thread
+ * @ingroup PAPIF-HL
+ * @brief Cleans up all thread-local data.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_cleanup_thread( C_INT check )
+ *
+ * @retval PAPI_OK
+ * @retval PAPI_EMISC
+ * -- Thread has been already cleaned up or PAPI is deactivated due to previous erros.
+ *
+ * PAPIf_hl_cleanup_thread shuts down thread-local event sets and cleans local
+ * data structures. It is recommended to use this function in combination with
+ * PAPI_hl_finalize if your application is making use of threads.
+ *
+ * @par Example:
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_cleanup_thread(retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_cleanup_thread failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_cleanup_thread
+ */
+PAPI_FCALL( papif_hl_cleanup_thread, PAPIF_HL_CLEANUP_THREAD,
+			( int *check ) )
+{
+	*check = PAPI_hl_cleanup_thread();
+}
+
 /** @class PAPIf_hl_finalize
  * @ingroup PAPIF-HL
  * @brief Finalizes the high-level PAPI library.
@@ -1580,14 +1616,8 @@ PAPI_FCALL( papif_hl_init, PAPIF_HL_INIT,
  * PAPIf_hl_finalize( C_INT check )
  *
  * @retval PAPI_OK
- * @retval PAPI_EINVAL
- * -- Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed.
- * @retval PAPI_ENOEVST
- * -- The EventSet specified does not exist.
- * @retval PAPI_EISRUN
- * -- The EventSet is currently counting events.
- * @retval PAPI_EBUG
- * -- Internal error, send mail to ptools-perfapi@icl.utk.edu and complain.
+ * @retval PAPI_EMISC
+ * -- PAPI has been already finalized or deactivated due to previous erros.
  *
  * PAPIf_hl_finalize finalizes the high-level library by destroying all counting event sets
  * and internal data structures.
