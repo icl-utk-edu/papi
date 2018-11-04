@@ -963,7 +963,7 @@ static int pfm2intel[] =
 
 /* This call is broken. Selector can be much bigger than 32 bits. It should be a pfmlib_regmask_t - pjm */
 /* Also, libpfm assumes events can live on different counters with different codes. This call only returns
-    the first occurence found. */
+    the first occurrence found. */
 /* Right now its only called by ntv_code_to_bits in perfctr-p3, so we're ok. But for it to be
     generally useful it should be fixed. - dkt */
 static int

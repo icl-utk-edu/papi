@@ -1072,7 +1072,7 @@ not
   PAPI_COMPONENT_MASK and PAPI_COMPONENT_AND_MASK.  It adds the new functions
   _papi_hwi_component_index() _papi_hwi_native_to_eventcode()
   _papi_hwi_eventcode_to_native()  By replacing all of the former macros with
-  the equivelant of the latter functions, it allows all of the future
+  the equivalent of the latter functions, it allows all of the future
   16-component limit changes to be made in the functions.  Components now
   receive as events a plain 32-bit value as their internal native event; the
   high bits are not set.  This may break some external components.  This change

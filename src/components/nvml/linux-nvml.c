@@ -1068,7 +1068,7 @@ _papi_nvml_init_component(int cidx)
     if ((papi_errorcode = detectDevices()) != PAPI_OK) {
         papi_free(features);
         papi_free(devices);
-        sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install.");
+        sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occurred in device feature detection, please check your NVIDIA Management Library and CUDA install.");
         return PAPI_ENOSUPP;
     }
 

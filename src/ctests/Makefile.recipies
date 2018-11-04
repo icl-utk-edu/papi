@@ -344,7 +344,7 @@ low-level: low-level.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) low-level.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o low-level
 
 shlib: shlib.c $(TESTLIB) $(PAPILIB)
-		$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o shlib $(LDL)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o shlib $(LDL)
 
 exeinfo: exeinfo.c $(TESTLIB) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exeinfo.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exeinfo 
@@ -439,4 +439,4 @@ clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL) unregister_pthreads
 
 distclean clobber: clean
-	  rm -f Makefile.target
+	rm -f Makefile.target

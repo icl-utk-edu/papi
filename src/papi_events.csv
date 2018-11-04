@@ -1102,7 +1102,7 @@ CPU,netburst_p
 #
 # Note: the proper event is GLOBAL_POWER_EVENTS:RUNNING
 #       but the kernel grabs that for the watchdog timer
-#       and suggests "" is equivelant
+#       and suggests "" is equivalent
 #PRESET,PAPI_TOT_CYC,NOT_DERIVED,GLOBAL_POWER_EVENTS:RUNNING
 PRESET,PAPI_TOT_CYC,NOT_DERIVED,execution_event:nbogus0:nbogus1:nbogus2:nbogus3:bogus0:bogus1:bogus2:bogus3:cmpl:thr=15
 PRESET,PAPI_TOT_INS,NOT_DERIVED,INSTR_RETIRED:NBOGUSNTAG

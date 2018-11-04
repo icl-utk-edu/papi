@@ -26,6 +26,7 @@ int main (int argc, char **argv)
 	int retval,cid,rapl_cid=-1,numcmp;
 	int EventSet = PAPI_NULL;
 	long long values[MAX_EVENTS];
+	long long prev_values[MAX_EVENTS];
 	int i,code,enum_retval;
 	PAPI_event_info_t evinfo;
 	const PAPI_component_info_t *cmpinfo = NULL;
@@ -145,6 +146,9 @@ int main (int argc, char **argv)
 
 	start_time=PAPI_get_real_nsec();
 
+	/* HJ: temporary fix: powercap component doesn't start at 0 */
+        int skip_first = 1;
+
 	while(1) {
 
 		/* Start Counting */
@@ -168,14 +172,26 @@ int main (int argc, char **argv)
 		total_time=((double)(after_time-start_time))/1.0e9;
 		elapsed_time=((double)(after_time-before_time))/1.0e9;
 
+
+	        /* HJ: temporary fix: powercap component doesn't start at 0 */
+		if( 1 == skip_first ) {
+			for(i=0;i<num_events;i++) {
+				prev_values[i] = values[i];
+			}
+
+			skip_first = 0;
+			continue;
+		}
+
+
 		for(i=0;i<num_events;i++) {
 			
 			/* Scaled energy measurements */
 			if (strstr(events[i],"ENERGY")) {
 				fprintf(fff[i],"%.4f  %.3f %s  %.3f %s  (* Average Power for %s *)\n",
 						total_time,
-						((double)values[i]/1.0e6), "J",
-						((double)values[i]/1.0e6)/elapsed_time, "W", 
+						((double)(values[i]-prev_values[i])/1.0e6), "J",
+						((double)(values[i]-prev_values[i])/1.0e6)/elapsed_time, "W", 
 						events[i] );
 			}
 			else if (strstr(events[i],"POWER")) {
@@ -198,6 +214,8 @@ int main (int argc, char **argv)
 			}
 
 			fflush(fff[i]);
+	        	/* HJ: temporary fix: powercap component doesn't start at 0 */
+			prev_values[i] = values[i];
 		}
 	}
 

@@ -721,7 +721,7 @@ read the documentation carefully.  */
 /** Specify the file containing user defined events. */
 typedef char* PAPI_user_defined_events_file_t;
 
-   /* The following defines and next for structures define the memory heirarchy */
+   /* The following defines and next for structures define the memory hierarchy */
    /* All sizes are in BYTES */
    /* Associativity:
 		0: Undefined;
@@ -799,7 +799,7 @@ typedef char* PAPI_user_defined_events_file_t;
       int cpu_max_mhz;              /**< Maximum supported CPU speed */
       int cpu_min_mhz;              /**< Minimum supported CPU speed */
 
-      PAPI_mh_info_t mem_hierarchy; /**< PAPI memory heirarchy description */
+      PAPI_mh_info_t mem_hierarchy; /**< PAPI memory hierarchy description */
       int virtualized;              /**< Running in virtual machine */
       char virtual_vendor_string[PAPI_MAX_STR_LEN]; 
                                     /**< Vendor for virtual machine */

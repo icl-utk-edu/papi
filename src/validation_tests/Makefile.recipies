@@ -122,4 +122,4 @@ clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
 distclean clobber: clean
-	  rm -f Makefile.target
+	rm -f Makefile.target

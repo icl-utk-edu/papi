@@ -130,6 +130,7 @@ static papicuda_control_t *global_papicuda_control = NULL;
             const char *errstr;                                         \
             (*cuptiGetResultStringPtr)(_status, &errstr);               \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr); \
+            fprintf(stderr, "CUPTI_CALL macro:%d '%s' failed with error '%s'.\n", __LINE__, #call, errstr); \
             handleerror;                                                \
         }                                                               \
     } while (0)
@@ -254,7 +255,7 @@ static int papicuda_linkCudaLibraries()
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
 
     dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);
-    CHECK_PRINT_EVAL(!dl3, "CUDA runtime library libcudart.so not found.", return (PAPI_ENOSUPP));
+    CHECK_PRINT_EVAL(!dl3, "CUDA Profiling Tools Interface (CUPTI) library libcupti.so not found.", return (PAPI_ENOSUPP));
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
     /* cuptiDeviceEnumEventDomainsPtr = dlsym( dl3, "cuptiDeviceEnumEventDomains" ); */
     /* if ( dlerror()!=NULL ) { strncpy( _cuda_vector.cmp_info.disabled_reason, "A CUDA required function was not found in dynamic libs", PAPI_MAX_STR_LEN ); return ( PAPI_ENOSUPP ); } */
@@ -310,7 +311,7 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
     /* How many CUDA devices do we have? */
     cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
     if(cuErr == CUDA_ERROR_NOT_INITIALIZED) {
-        /* If CUDA not initilaized, initialized CUDA and retry the device list */
+        /* If CUDA not initialized, initialize CUDA and retry the device list */
         /* This is required for some of the PAPI tools, that do not call the init functions */
         if(((*cuInitPtr) (0)) != CUDA_SUCCESS) {
             strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA cannot be found and initialized (cuInit failed).", PAPI_MAX_STR_LEN);
@@ -449,21 +450,22 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
             gctxt->availEventDeviceNum[idxEventArray] = deviceNum;
             size = PAPI_MIN_STR_LEN;
             CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_NAME, &size, (uint8_t *) tmpStr), return (PAPI_EMISC));
-            // FIXME SOMEDAY: For this release the nvlink metrics are not functioning so skip them
-            if(strstr(tmpStr, "nvlink")!=NULL)  continue;
-            // FIXME SOMEDAY: For this release the nvlink metrics are not functioning so skip them
-            if(size >= PAPI_MIN_STR_LEN)
+            if(size >= PAPI_MIN_STR_LEN) {
                 gctxt->availEventDesc[idxEventArray].name[PAPI_MIN_STR_LEN - 1] = '\0';
+            }
             snprintf(gctxt->availEventDesc[idxEventArray].name, PAPI_MIN_STR_LEN, "metric:%s:device=%d", tmpStr, deviceNum);
             size = PAPI_2MAX_STR_LEN;
             CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_LONG_DESCRIPTION, &size, (uint8_t *) gctxt->availEventDesc[idxEventArray].description), return (PAPI_EMISC));
-            if(size >= PAPI_2MAX_STR_LEN)
+            if(size >= PAPI_2MAX_STR_LEN) {
                 gctxt->availEventDesc[idxEventArray].description[PAPI_2MAX_STR_LEN - 1] = '\0';
+            }
             // SUBDBG( "For device %d availEvent[%d] %s\n", mydevice->cuDev, idxEventArray, gctxt->availEventDesc[idxEventArray].name);
             idxEventArray++;
         }
+
         papi_free(metricIdList);
     }
+
     gctxt->availEventSize = idxEventArray;
 
     /* return 0 if everything went OK */
@@ -620,7 +622,6 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
 {
     SUBDBG("Entering with nativeCount %d\n", nativeCount);
     (void) ctx;
-    // (void) ctrl;
     papicuda_control_t *gctrl = global_papicuda_control;
     papicuda_context_t *gctxt = global_papicuda_context;
     int currDeviceNum;
@@ -636,7 +637,7 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
 
     /* Get deviceNum, initialize context if needed via free, get context */
     // CU_CALL( (*cuCtxGetCurrentPtr)(&currCuCtx), return(PAPI_EMISC));
-    CUDA_CALL((*cudaGetDevicePtr) (&currDeviceNum), return (PAPI_EMISC));
+    CUDA_CALL((*cudaGetDevicePtr) (&currDeviceNum), return (PAPI_EMISC)); 
     SUBDBG("currDeviceNum %d \n", currDeviceNum);
     CUDA_CALL((*cudaFreePtr) (NULL), return (PAPI_EMISC));
     CU_CALL((*cuCtxGetCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
@@ -750,7 +751,7 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
         /* Create/recreate eventgrouppass structures for the added event and context */
         SUBDBG("Create eventGroupPasses for context (destroy pre-existing) (nativeCount %d, conEventsCount %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount);
         if(eventctrl->conEventsCount > 0) {
-            // SUBDBG("Destroy prevous eventGroupPasses for the context \n");
+            // SUBDBG("Destroy previous eventGroupPasses for the context \n");
             if(eventctrl->eventGroupPasses != NULL)
                 CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (eventctrl->eventGroupPasses), return (PAPI_EMISC));
             eventctrl->eventGroupPasses = NULL;
@@ -761,13 +762,16 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
             CUPTI_CALL((*cuptiEventGroupSetsCreatePtr) (eventCuCtx, sizeBytes, eventctrl->conEvents, &eventctrl->eventGroupPasses), return (PAPI_ECMP));
 #else
             CUPTI_CALL((*cuptiSetEventCollectionModePtr)(eventCuCtx,CUPTI_EVENT_COLLECTION_MODE_KERNEL), return(PAPI_ECMP));
+            // EventGroupSets tells us how many passes it will take to read this collection of events; 
+            // in case they are in different domains (cannot be read simultaneously). If they conflict
+            // (require more than one pass) then we return the PAPI standard "invalid combination". 
             CUPTI_CALL((*cuptiEventGroupSetsCreatePtr) (eventCuCtx, sizeBytes, eventctrl->conEvents, &eventctrl->eventGroupPasses), return (PAPI_EMISC));
-            if (eventctrl->eventGroupPasses->numSets > 1) {
-                SUBDBG("Error occured: The combined CUPTI events require more than 1 pass... try different events\n");
-                papicuda_cleanup_eventset(ctrl);
+            if (eventctrl->eventGroupPasses->numSets > 1) {     // If more than one domain is present, 
+                SUBDBG("Error occurred: The combined CUPTI events require more than 1 pass... try different events\n");
+                papicuda_cleanup_eventset(ctrl); // Will do cuptiEventGroupSetsDestroy() to clean up memory.
                 return(PAPI_ECOMBO);
             } else  {
-                SUBDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-requied %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, eventctrl->eventGroupPasses->numSets);
+                SUBDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-required %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, eventctrl->eventGroupPasses->numSets);
             }
 
 #endif
@@ -805,8 +809,9 @@ static int papicuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
         CUcontext eventCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
         SUBDBG("Set to device %d cuCtx %p \n", eventDeviceNum, eventCuCtx);
         // CUDA_CALL( (*cudaSetDevicePtr)(eventDeviceNum), return(PAPI_EMISC));
-        if(eventDeviceNum != saveDeviceNum)
+        if(eventDeviceNum != saveDeviceNum) {
             CU_CALL((*cuCtxPushCurrentPtr) (eventCuCtx), return (PAPI_EMISC));
+        }
         CUpti_EventGroupSets *eventEventGroupPasses = gctrl->arrayOfActiveCUContexts[cc]->eventGroupPasses;
         for (ss=0; ss<eventEventGroupPasses->numSets; ss++) {
             CUpti_EventGroupSet groupset = eventEventGroupPasses->sets[ss];
@@ -817,8 +822,9 @@ static int papicuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
             }
             CUPTI_CALL((*cuptiEventGroupSetEnablePtr) (&groupset), return (PAPI_EMISC));
         }
-        if(eventDeviceNum != saveDeviceNum)
+        if(eventDeviceNum != saveDeviceNum) {
             CU_CALL((*cuCtxPopCurrentPtr) (&eventCuCtx), return (PAPI_EMISC));
+        }
     }
 
     return (PAPI_OK);
@@ -915,9 +921,9 @@ static int papicuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long l
         }
 
         // normalize the event values to represent the total number of domain instances on the device
-        for(ii = 0; ii < numEventIDsRead; ii++) 
-            readEventValueBuffer[numEventIDsRead] = (readEventValueBuffer[numEventIDsRead] * numTotalInstances) / numInstances;
-
+        for(ii = 0; ii < numEventIDsRead; ii++) {
+            readEventValueBuffer[ii] = (readEventValueBuffer[ii] * numTotalInstances) / numInstances;
+	}
         /* For this pushed device and context, figure out the event and metric values and record them into the arrays */
         SUBDBG("For this device and context, match read values against active events by scanning activeEvents array and matching associated availEventIDs\n");
         for(jj = 0; jj < gctrl->activeEventCount; jj++) {
@@ -1033,11 +1039,13 @@ static int papicuda_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 static int papicuda_cleanup_eventset(hwd_control_state_t * ctrl)
 {
     SUBDBG("Entering\n");
-    (void) ctrl;
+    (void) ctrl;                                                    // Don't need this parameter.
     papicuda_control_t *gctrl = global_papicuda_control;
+    papicuda_context_t *gctxt = global_papicuda_context;
     // papicuda_active_cucontext_t *currctrl;
     uint32_t cc;
     int saveDeviceNum;
+    unsigned int ui;
 
     SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
     CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
@@ -1058,6 +1066,11 @@ static int papicuda_cleanup_eventset(hwd_control_state_t * ctrl)
             CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     }
     /* Record that there are no active contexts or events */
+    for (ui=0; ui<gctrl->activeEventCount; ui++) {              // For each active event,
+        int idx = gctrl->activeEventIndex[ui];                  // .. Get its index...
+        gctxt->availEventIsBeingMeasuredInEventset[idx] = 0;    // .. No longer being measured.
+    }
+ 
     gctrl->countOfActiveCUContexts = 0;
     gctrl->activeEventCount = 0;
     return (PAPI_OK);

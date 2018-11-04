@@ -281,7 +281,7 @@ static inline long long get_cycles()
     return retval;
 }
 
-#elif (defined(__arm__) || defined(__mips__))
+#elif (defined(__arm__) || defined(__mips__) || defined(__hppa__))
 static inline long long
 get_cycles( void )
 {

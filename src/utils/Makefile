@@ -69,7 +69,7 @@ clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
 distclean clobber: clean
-	  rm -f Makefile.target
+	rm -f Makefile.target
 
 install: $(UTIL_TARGETS)
 	@echo "Utilities (BINDIR) being installed in: \"$(BINDIR)\"";

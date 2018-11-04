@@ -12,7 +12,7 @@
 #define THRESHOLD 100000 
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
-int total = 0;	/* we use total to track the amount of overflows that occured */
+int total = 0;	/* we use total to track the amount of overflows that occurred */
 
 /* THis is the handler called by PAPI_overflow*/
 void
@@ -84,7 +84,7 @@ int main ()
 		                       handler)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   printf ("Here are the addresses at which overflows occured and overflow vectors \n");
+   printf ("Here are the addresses at which overflows occurred and overflow vectors \n");
   printf ("--------------------------------------------------------------\n");
 
 

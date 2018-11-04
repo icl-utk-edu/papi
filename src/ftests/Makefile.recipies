@@ -77,4 +77,4 @@ clean:
 	rm -f *.o *genmod.f90 *genmod.mod *.stderr *.stdout core *~ $(ALL)
 
 distclean clobber: clean
-	  rm -f Makefile.target
+	rm -f Makefile.target

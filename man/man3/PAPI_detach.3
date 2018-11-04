@@ -21,7 +21,7 @@ int PAPI_detach( int  EventSet, unsigned long  tid );
 PAPI_detach is a wrapper function that calls PAPI_set_opt to allow PAPI to 
 monitor performance counts on a thread other than the one currently executing. 
 This is sometimes referred to as third party monitoring. 
-PAPI_attach connects the specified EventSet to the specifed thread;
+PAPI_attach connects the specified EventSet to the specified thread;
 PAPI_detach breaks that connection and restores the EventSet to the 
 original executing thread. 
 

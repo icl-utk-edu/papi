@@ -19,6 +19,9 @@ default: $(TESTS)
 %.o:%.cu
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -c -o $@ $<
 
+%.mac:%.cu
+	$(NVCC) $(INCLUDE) $(NVCFLAGS) -E -c -o $@ $<
+
 HelloWorld: HelloWorld.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
@@ -31,12 +34,25 @@ simpleMultiGPU_no_counters: simpleMultiGPU.cu $(UTILOBJS)
 simpleMultiGPU_cupti_only: simpleMultiGPU.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DCUPTI_ONLY -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
+nvlink_bandwidth: nvlink_bandwidth.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+nvlink_all: nvlink_all.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+nvlink_bandwidth_cupti_only: nvlink_bandwidth_cupti_only.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+nvidia_nvlink_bandwidth: nvidia_nvlink_bandwidth.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
 clean:
-	rm -f $(TESTS) *.o cuda_ld_preload_example.so
+	rm -f $(TESTS) *.o cuda_ld_preload_example.so nvlink_bandwidth nvlink_all
+
 
 # Extra example to show LD_PRELOAD can be used to insert PAPI CUDA into a pre-existing binary
 cuda_ld_preload_example.so: simpleMultiGPU_no_counters cuda_ld_preload_example.c
-	gcc -Wall -fPIC -shared -o cuda_ld_preload_example.so $(LFLAGS) $(INCLUDE) cuda_ld_preload_example.c ../../../libpapi.so
+	gcc -Wall -fPIC -shared -o cuda_ld_preload_example.so $(LDFLAGS) $(INCLUDE) cuda_ld_preload_example.c ../../../libpapi.so
 
 run: 
 	( cd ~/icl/papi/papi/src/ && make )

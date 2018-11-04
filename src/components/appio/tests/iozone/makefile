@@ -96,14 +96,14 @@ rpm:
 # Turn on the optimizer, largefiles, Posix async I/O and threads.
 #
 hpux-11.0:	iozone_hpux-11.0.o libasync.o libbif.o
-	 $(CC) +O3 +Oparallel $(LDFLAGS) iozone_hpux-11.0.o libasync.o \
+	$(CC) +O3 +Oparallel $(LDFLAGS) iozone_hpux-11.0.o libasync.o \
 		libbif.o -lpthread -lrt -o iozone
 
 #
 # Turn on wide-mode, the optimizer, largefiles, Posix async I/O and threads.
 #
 hpux-11.0w:	iozone_hpux-11.0w.o libasyncw.o libbif.o
-	 $(CC) +DD64 +O3 $(LDFLAGS) iozone_hpux-11.0w.o libasyncw.o \
+	$(CC) +DD64 +O3 $(LDFLAGS) iozone_hpux-11.0w.o libasyncw.o \
 		libbif.o -lpthread -lrt -o iozone
 
 
@@ -111,26 +111,26 @@ hpux-11.0w:	iozone_hpux-11.0w.o libasyncw.o libbif.o
 # Simple build with largefiles, Posix threads and Posix async I/O
 #
 hpuxs-11.0:	iozone_hpuxs-11.0.o libasync.o libbif.o fileop_hpuxs-11.0.o pit_server.o
-	 $(CC) -O $(LDFLAGS)  iozone_hpuxs-11.0.o \
+	$(CC) -O $(LDFLAGS)  iozone_hpuxs-11.0.o \
 		libasync.o libbif.o -lpthread -lrt -o iozone
-	 $(CC) -O $(LDFLAGS) fileop_hpuxs-11.0.o -o fileop
-	 $(CC) -O $(LDFLAGS) pit_server.o -o pit_server
+	$(CC) -O $(LDFLAGS) fileop_hpuxs-11.0.o -o fileop
+	$(CC) -O $(LDFLAGS) pit_server.o -o pit_server
 
 #
 # Simple build with wide-mode, largefiles, Posix threads and Posix async I/O
 #
 hpuxs-11.0w:	iozone_hpuxs-11.0w.o libasyncw.o libbif.o
-	 $(CC) -O +DD64 $(LDFLAGS) iozone_hpuxs-11.0w.o \
+	$(CC) -O +DD64 $(LDFLAGS) iozone_hpuxs-11.0w.o \
 		libasyncw.o libbif.o -lpthread -lrt -o iozone
 
 #
 # Simple 10.1 build with no threads, no largefiles, no async I/O 
 #
 hpux-10.1:	iozone_hpux-10.1.o  libbif.o
-	 $(C89) +e -O $(LDFLAGS) iozone_hpux-10.1.o libbif.o -o iozone
+	$(C89) +e -O $(LDFLAGS) iozone_hpux-10.1.o libbif.o -o iozone
 
 hpux-10.20:	iozone_hpux-10.20.o  libbif.o
-	 $(C89) +e -O $(LDFLAGS) iozone_hpux-10.20.o libbif.o -o iozone
+	$(C89) +e -O $(LDFLAGS) iozone_hpux-10.20.o libbif.o -o iozone
 
 #
 # Simple generic HP build with no threads, no largefiles, no async I/O 

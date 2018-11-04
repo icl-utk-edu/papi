@@ -3,7 +3,6 @@
 include Makefile.target
 
 INCLUDE = -I. -I..
-PAPILIB = $(LIBRARY)
 
 TESTLIBOBJS:= test_utils.o
 
@@ -42,7 +41,5 @@ install:
 	-mkdir -p $(DATADIR)/testlib
 	-chmod go+rx $(DATADIR)
 	-chmod go+rx $(DATADIR)/testlib
-	-find . -perm -100 -type f -exec cp {} $(DATADIR)/testlib \;
-	-chmod go+rx $(DATADIR)/testlib/*
 	-find . -name "*.[chaF]" -type f -exec cp {} $(DATADIR)/testlib \;
 	-cp Makefile.target $(DATADIR)/testlib/Makefile

@@ -29,8 +29,8 @@ else
         else
              TARGETS = $(TARGETS_NTHD)  
         endif
-        LDFLAGS =  $(PAPILIB) 
-        LDFLAGS_PTHREAD =  $(PAPILIB) -lpthread
+        LDFLAGS += $(PAPILIB)
+        LDFLAGS_PTHREAD = $(LDFLAGS) -lpthread
     endif
  endif
 endif

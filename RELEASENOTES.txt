@@ -1181,7 +1181,7 @@ Enhancements:
 -------------
 - The perf_events linux kernel interface is supported for POWER and x86 in 
   linux kernels 2.6.31 and above.
-- PAPI info now includes information on multicore heirarchy. This is reported
+- PAPI info now includes information on multicore hierarchy. This is reported
   in the header of many tests.
 
 New Platforms:

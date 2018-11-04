@@ -312,7 +312,7 @@ main( int argc, char **argv )
 				   "Software Overflows exceed theoretical maximum", 1 );
 
 	if ( total[2] < soft_min || total[3] < soft_min || total[4] < soft_min )
-		printf( "WARNING: Software Overflow occuring but suspiciously low\n" );
+		printf( "WARNING: Software Overflow occurring but suspiciously low\n" );
 
 	if ( ( total[2] == 0 ) || ( total[3] == 0 ) || ( total[4] == 0 ) )
 		test_fail( __FILE__, __LINE__, "Software Overflows", 1 );
