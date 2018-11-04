@@ -1084,6 +1084,8 @@ static int
 _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		long long **events, int flags )
 {
+	long long papi_pe_buffer[READ_BUFFER_SIZE];
+
 	SUBDBG("ENTER: ctx: %p, ctl: %p, events: %p, flags: %#x\n",
 		ctx, ctl, events, flags);
 
