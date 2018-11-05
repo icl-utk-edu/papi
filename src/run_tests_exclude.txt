@@ -44,6 +44,10 @@ ctests/omptough
 # Mixed high-level and low-level tests with different components
 ctests/serial_hl_ll_comb2
 
+# MPI tests for high-level API
+ctests/mpi_hl
+ctests/mpi_omp_hl
+
 # these tests haven't been implemented
 
 
