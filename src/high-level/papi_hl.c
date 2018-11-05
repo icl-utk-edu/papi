@@ -28,6 +28,11 @@
 #include "papi_internal.h"
 
 
+/* For dynamic linking to libpapi */
+/* Weak symbol for pthread_once to avoid additional linking
+ * against libpthread when not used. */
+#pragma weak pthread_once
+
 #define verbose_fprintf \
    if (verbosity == 1) fprintf
 
@@ -139,7 +144,7 @@ bool state = PAPIHL_ACTIVE;
 
 /* global auxiliary variables end ***************************************/
 
-
+static void _internal_hl_library_init(void);
 static void _internal_hl_onetime_library_init(void);
 
 /* functions for creating eventsets for different components */
@@ -180,34 +185,55 @@ static void _internal_hl_clean_up_all(bool deactivate);
 static int _internal_hl_check_for_clean_thread_states();
 
 
-/* For dynamic linking to libpapi */
-/* Weak symbol for pthread_mutex_trylock to avoid additional linking
-   against libpthread when not used. */
-#pragma weak pthread_mutex_trylock
+static void _internal_hl_library_init(void)
+{
+   /* This function is only called by one thread! */
+   int retval;
+
+   /* check VERBOSE level */
+   if ( getenv("PAPI_VERBOSE") != NULL ) {
+      if ( strcmp("1", getenv("PAPI_VERBOSE")) == 0 )
+         verbosity = 1;
+   }
+
+   if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
+      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init");
+   
+   /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
+   if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
+
+      /* determine output directory and output file */
+      if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
+         error_at_line(0, retval, __FILE__ ,__LINE__, "_internal_hl_determine_output_path");
+         state = PAPIHL_DEACTIVATED;
+         verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
+      } else {
+
+         /* register the termination function for output */
+         atexit(PAPI_hl_print_output);
+         verbose_fprintf(stdout, "PAPI-HL Info: PAPI has been initiated!\n");
+      }
+   } else {
+      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init");
+      state = PAPIHL_DEACTIVATED;
+      verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
+   }
+   hl_initiated = true;
+}
 
 static void _internal_hl_onetime_library_init(void)
 {
-   static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-   static volatile int done = 0;
-   int retval;
-
-   if (pthread_mutex_trylock(&mutex) == 0) {
-      if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT) 
-         error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init"); 
-      if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
-         /* only suceeds if PAPI_library_init suceeded */
-         done = 1;
-         state = PAPIHL_ACTIVE;
-         /* Debug output only works if PAPI_library_init succeeded */
-         HLDBG("PAPI-HL with thread support has been initiated!\n");
-      } else {
-         error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init");
-         state = PAPIHL_DEACTIVATED;
-      }
-   } 
-
-   while ( !done ) {
-      usleep(10);
+   static pthread_once_t library_is_initialized = PTHREAD_ONCE_INIT;
+   if ( pthread_once ) {
+      /* we assume that PAPI_hl_init() is called from a parallel region */
+      pthread_once(&library_is_initialized, _internal_hl_library_init);
+      /* wait until first thread has finished */
+      while ( !hl_initiated )
+         usleep(10);
+   } else {
+      /* we assume that PAPI_hl_init() is called from a serial application
+       * that was not linked against libpthread */
+      _internal_hl_library_init();
    }
 }
 
@@ -1292,37 +1318,15 @@ static int _internal_hl_check_for_clean_thread_states()
 int
 PAPI_hl_init()
 {
-   int retval;
    if ( state == PAPIHL_ACTIVE ) {
-      if ( hl_initiated == false && hl_finalized == false )
-      {
+      if ( hl_initiated == false && hl_finalized == false ) {
          _internal_hl_onetime_library_init();
-         if ( state == PAPIHL_ACTIVE ) {
-            _papi_hwi_lock( HIGHLEVEL_LOCK );
-            if ( hl_initiated == false && hl_finalized == false )
-            {
-               /* check VERBOSE level */
-               if ( getenv("PAPI_VERBOSE") != NULL ) {
-                  if ( strcmp("1", getenv("PAPI_VERBOSE")) == 0 )
-                     verbosity = 1;
-               }
-
-               /* determine output directory and output file */
-               if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
-                  state = PAPIHL_DEACTIVATED;
-                  _papi_hwi_unlock( HIGHLEVEL_LOCK );
-                  return ( retval );
-               }
-
-               /* register the termination function for output */
-               atexit(PAPI_hl_print_output);
-               hl_initiated = true;
-            }
-            _papi_hwi_unlock( HIGHLEVEL_LOCK );
-            return ( PAPI_OK );
-         } 
-         return ( PAPI_ENOINIT );
+         /* check if the library has been initialized successfully */
+         if ( state == PAPIHL_DEACTIVATED )
+            return ( PAPI_EMISC );
+         return ( PAPI_OK );
       }
+      return ( PAPI_ENOINIT );
    }
    return ( PAPI_EMISC );
 }

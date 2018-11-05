@@ -44,6 +44,11 @@ int main( int argc, char **argv )
       if ( retval != PAPI_OK ) {
          test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
       }
+
+      retval = PAPI_hl_cleanup_thread();
+      if ( retval != PAPI_OK ) {
+         test_fail( __FILE__, __LINE__, "PAPI_hl_cleanup_thread", retval );
+      }
    }
 
    PAPI_hl_print_output();

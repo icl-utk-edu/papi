@@ -36,7 +36,7 @@ int main( int argc, char **argv )
       }
    }
    PAPI_hl_print_output();
-   PAPI_hl_finalize();
+   PAPI_hl_cleanup_thread();
 
    /* one iteration with low-level API */
    if ( !quiet ) {

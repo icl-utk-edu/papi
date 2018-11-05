@@ -299,16 +299,16 @@ dmem_info: dmem_info.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) dmem_info.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o dmem_info
 
 serial_hl: serial_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl -lpthread
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl
 
 serial_hl_advanced: serial_hl_advanced.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_advanced.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_advanced -lpthread
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_advanced.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_advanced
 
 serial_hl_ll_comb: serial_hl_ll_comb.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_ll_comb.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_ll_comb -lpthread
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_ll_comb.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_ll_comb
 
 serial_hl_ll_comb2: serial_hl_ll_comb2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_ll_comb2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_ll_comb2 -lpthread
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_ll_comb2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_ll_comb2
 
 all_events: all_events.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) all_events.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o all_events
