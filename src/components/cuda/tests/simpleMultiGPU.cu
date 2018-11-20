@@ -214,29 +214,30 @@ int main( int argc, char **argv )
     if( retval != PAPI_OK ) fprintf( stderr, "PAPI_create_eventset failed\n" );
     
     // In this example measure events from each GPU
-    int numEventEndings = 3;
+    int numEventEndings = 2;
     char const *EventEndings[] = { 
-        "cuda:::metric:inst_per_warp", 
-        "cuda:::event:inst_executed", 
-        "cuda:::event:elapsed_cycles_sm" 
+        "cuda:::metric:nvlink_total_data_transmitted",
+        "cuda:::metric:nvlink_total_data_received", 
+//      "cuda:::event:inst_executed", 
+//      "cuda:::event:elapsed_cycles_sm" 
     };
 
     // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm
     char *EventName[NUM_EVENTS];
-    char tmpEventName[50];
+    char tmpEventName[64];
     eventCount = 0;
     for( i = 0; i < GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );         // Set device
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         CHECK_CUPTI_ERROR(cuptiSetEventCollectionMode(ctx[i], CUPTI_EVENT_COLLECTION_MODE_KERNEL), "cuptiSetEventCollectionMode" );
         for ( ee=0; ee<numEventEndings; ee++ ) {
-            snprintf( tmpEventName, 50, "%s:device=%d\0", EventEndings[ee], i );
+            snprintf( tmpEventName, 64, "%s:device=%d\0", EventEndings[ee], i );
             // printf( "Trying to add event %s to GPU %d in PAPI...", tmpEventName , i ); fflush(NULL);
             retval = PAPI_add_named_event( EventSet, tmpEventName );
             if (retval==PAPI_OK) {
                 printf( "Add event success: '%s' GPU %i\n", tmpEventName, i );
-                EventName[eventCount] = (char *)calloc( 50, sizeof(char) );
-                snprintf( EventName[eventCount], 50, "%s", tmpEventName );
+                EventName[eventCount] = (char *)calloc( 64, sizeof(char) );
+                snprintf( EventName[eventCount], 64, "%s", tmpEventName );
                 eventCount++;
             } else {
                 printf( "Add event failure: '%s' GPU %i error=%s\n", tmpEventName, i, PAPI_strerror(retval));

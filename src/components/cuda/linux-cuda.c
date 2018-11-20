@@ -44,6 +44,8 @@ typedef struct papicuda_context {
 typedef struct papicuda_name_desc {
     char name[PAPI_MAX_STR_LEN];
     char description[PAPI_2MAX_STR_LEN];
+    int  nvlink;                            // 1=metric and begins with nvlink (needs special read treatment). 
+    CUpti_MetricValueKind MV_Kind;          // Needed to compute metric from individual events.
 } papicuda_name_desc_t;
 
 /* For a device, store device description */
@@ -67,17 +69,27 @@ typedef struct papicuda_control {
     uint64_t cuptiReadTimestampNs;
 } papicuda_control_t;
 
-/* For each active context, which CUDA events are being measured, context eventgroups containing events */
+// For each active cuda context (one measuring something) we also track the
+// cuda device number it is on, whether it contains nvlink metrics the count
+// and IDs and values of metrics and individual events being measured. Note we
+// allow for for multiple passes in the structure, but elsewhere in this code
+// we prohibit combining events or metrics that would result in multiple
+// passes. Note that 'metrics' may require multiple events to be read, these
+// are then arithmetically combined to produce the metric value.
 typedef struct papicuda_active_cucontext_s {
     CUcontext cuCtx;
     int deviceNum;
-    uint32_t conMetricsCount;
-    CUpti_EventID conMetrics[PAPICUDA_MAX_COUNTERS];
-    CUpti_MetricValue conMetricValues[PAPICUDA_MAX_COUNTERS];
-    uint32_t conEventsCount;
-    CUpti_EventID conEvents[PAPICUDA_MAX_COUNTERS];
+    uint32_t nvlink;                                            // 1 if metrics are nvlink, 0 otherwise.
+
+    uint32_t conMetricsCount;                                   // Number of metrics (either cuda or nvlink).
+    CUpti_EventID conMetrics[PAPICUDA_MAX_COUNTERS];            // Metric IDs.
+    CUpti_MetricValue conMetricValues[PAPICUDA_MAX_COUNTERS];   
+
+    uint32_t conEventsCount;                                    // Number of individual events.
+    CUpti_EventID conEvents[PAPICUDA_MAX_COUNTERS];             // Event IDs.
     uint64_t conEventValues[PAPICUDA_MAX_COUNTERS];
-    CUpti_EventGroupSets *eventGroupPasses;
+
+    CUpti_EventGroupSets *eventGroupPasses;                     // We allow for multi-pass reading here.
 } papicuda_active_cucontext_t;
 
 // file handles used to access cuda libraries with dlopen
@@ -453,6 +465,16 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
             if(size >= PAPI_MIN_STR_LEN) {
                 gctxt->availEventDesc[idxEventArray].name[PAPI_MIN_STR_LEN - 1] = '\0';
             }
+
+            // We flag names that begin with nvlink; they require a special read treatment.
+            if (strncmp(tmpStr, "nvlink", 6) == 0) gctxt->availEventDesc[idxEventArray].nvlink = 1;         // flags as an nvlink event.
+            else                                   gctxt->availEventDesc[idxEventArray].nvlink = 0;         // Not an nvlink event.
+            if (gctxt->availEventDesc[idxEventArray].nvlink) {
+                size_t MV_KindSize = sizeof(CUpti_MetricValueKind);
+                CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_VALUE_KIND,    // Collect the metric kind. 
+                    &MV_KindSize, &gctxt->availEventDesc[idxEventArray].MV_Kind), return (PAPI_EMISC));     
+            }
+
             snprintf(gctxt->availEventDesc[idxEventArray].name, PAPI_MIN_STR_LEN, "metric:%s:device=%d", tmpStr, deviceNum);
             size = PAPI_2MAX_STR_LEN;
             CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_LONG_DESCRIPTION, &size, (uint8_t *) gctxt->availEventDesc[idxEventArray].description), return (PAPI_EMISC));
@@ -470,7 +492,7 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
 
     /* return 0 if everything went OK */
     return 0;
-}
+} // end papicuda_add_native_events
 
 
 /*
@@ -523,9 +545,10 @@ static int papicuda_convert_metric_value_to_long_long(CUpti_MetricValue metricVa
         CHECK_PRINT_EVAL(1, "ERROR: unsupported metric value kind", return (PAPI_EINVAL));
         exit(-1);
     }
+
     *papiValue = tmpValue.ll;
     return (PAPI_OK);
-}
+} // end routine
 
 
 /* ****************************************************************************
@@ -584,7 +607,7 @@ static int papicuda_init_component(int cidx)
     _cuda_vector.cmp_info.num_mpx_cntrs = _cuda_vector.cmp_info.num_native_events;
 
     return (PAPI_OK);
-}
+} // end init_component
 
 
 /* Setup a counter control state.
@@ -612,11 +635,16 @@ static int papicuda_init_control_state(hwd_control_state_t * ctrl)
     return PAPI_OK;
 }
 
-/* Triggered by eventset operations like add or remove.  For CUDA,
- * needs to be called multiple times from each seperate CUDA context
- * with the events to be measured from that context.  For each
- * context, create eventgroups for the events.
+/* Triggered by eventset operations like add or remove.  For CUDA, needs to be
+ * called multiple times from each seperate CUDA context with the events to be
+ * measured from that context.  For each context, create eventgroups for the
+ * events.
+ * Note: nvlink events are metrics, but must be read differently; so we
+ * recognize them here. Since they are incompatible with any non-nvlink events
+ * or metrics, we can use the same structures as cuda metrics to store them
+ * (because they cannot be mixed together).
  */
+
 /* Note: NativeInfo_t is defined in papi_internal.h */
 static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx)
 {
@@ -636,7 +664,6 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
         return (PAPI_OK);
 
     /* Get deviceNum, initialize context if needed via free, get context */
-    // CU_CALL( (*cuCtxGetCurrentPtr)(&currCuCtx), return(PAPI_EMISC));
     CUDA_CALL((*cudaGetDevicePtr) (&currDeviceNum), return (PAPI_EMISC)); 
     SUBDBG("currDeviceNum %d \n", currDeviceNum);
     CUDA_CALL((*cudaFreePtr) (NULL), return (PAPI_EMISC));
@@ -646,32 +673,34 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
     /* Handle user request of events to be monitored */
     for(ii = 0; ii < nativeCount; ii++) {
         /* Get the PAPI event index from the user */
-        index = nativeInfo[ii].ni_event;
-#ifdef DEBUG
-        char *eventName = gctxt->availEventDesc[index].name;
-#endif
-        int eventDeviceNum = gctxt->availEventDeviceNum[index];
+        index = nativeInfo[ii].ni_event;                                    // Get the index of the event (in the global context).
+        char *eventName    = gctxt->availEventDesc[index].name;             // Shortcut to name.
+        int nvlinkMetric   = gctxt->availEventDesc[index].nvlink;           // Get if this is an nvlink metric.
+        int eventDeviceNum = gctxt->availEventDeviceNum[index];             // Device number for this event.
+        (void) eventName;                                                   // Useful in checkpoint and debug, don't warn if not used.
 
         /* if this event is already added continue to next ii, if not, mark it as being added */
-        if(gctxt->availEventIsBeingMeasuredInEventset[index] == 1) {
+        if(gctxt->availEventIsBeingMeasuredInEventset[index] == 1) {        // If already being collected, skip it.
             SUBDBG("Skipping event %s which is already added\n", eventName);
             continue;
-        } else
-            gctxt->availEventIsBeingMeasuredInEventset[index] = 1;
+        } else {
+            gctxt->availEventIsBeingMeasuredInEventset[index] = 1;          // If not being collected yet, flag it as being collected now.
+        }
 
         /* Find context/control in papicuda, creating it if does not exist */
-        for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
+        for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {            // Scan all active contexts.
             CHECK_PRINT_EVAL(cc >= PAPICUDA_MAX_COUNTERS, "Exceeded hardcoded maximum number of contexts (PAPICUDA_MAX_COUNTERS)", return (PAPI_EMISC));
-            if(gctrl->arrayOfActiveCUContexts[cc]->deviceNum == eventDeviceNum) {
-                eventCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
+            if(gctrl->arrayOfActiveCUContexts[cc]->deviceNum == eventDeviceNum) {   // If this cuda context is for the device for this event,
+                eventCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;             // Remember that context. 
                 SUBDBG("Event %s device %d already has a cuCtx %p registered\n", eventName, eventDeviceNum, eventCuCtx);
-                if(eventCuCtx != currCuCtx)
+                if(eventCuCtx != currCuCtx)                                         // If that is not our CURRENT context, push and make it so.
                     CU_CALL((*cuCtxPushCurrentPtr) (eventCuCtx), return (PAPI_EMISC));
                 break;
             }
         }
-        // Create context if it does not exit
-        if(cc == gctrl->countOfActiveCUContexts) {
+
+        // Create context if it does not exist
+        if(cc == gctrl->countOfActiveCUContexts) {                          // If we never found the context, create one.
             SUBDBG("Event %s device %d does not have a cuCtx registered yet...\n", eventName, eventDeviceNum);
             if(currDeviceNum != eventDeviceNum) {
                 CUDA_CALL((*cudaSetDevicePtr) (eventDeviceNum), return (PAPI_EMISC));
@@ -687,41 +716,46 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
             gctrl->arrayOfActiveCUContexts[cc]->eventGroupPasses = NULL;
             gctrl->arrayOfActiveCUContexts[cc]->conMetricsCount = 0;
             gctrl->arrayOfActiveCUContexts[cc]->conEventsCount = 0;
+            gctrl->arrayOfActiveCUContexts[cc]->nvlink = nvlinkMetric;          // Remember if it contains an nvlink metric.
             gctrl->countOfActiveCUContexts++;
             SUBDBG("Added a new context deviceNum %d cuCtx %p ... now countOfActiveCUContexts is %d\n", eventDeviceNum, eventCuCtx, gctrl->countOfActiveCUContexts);
-        }
-        eventContextIdx = cc;
+        } // end if we needed to create a new context.
 
-        papicuda_active_cucontext_t *eventctrl = gctrl->arrayOfActiveCUContexts[eventContextIdx];
+        eventContextIdx = cc;
+        papicuda_active_cucontext_t *eventctrl = gctrl->arrayOfActiveCUContexts[eventContextIdx];   // get the context for this event.
+
+        // METRICS are added to conMetrics, EVENTS are added to conEvents. 
         switch (gctxt->availEventKind[index]) {
-        case CUPTI_ACTIVITY_KIND_METRIC:
+        case CUPTI_ACTIVITY_KIND_METRIC:                                                            // For a metric, must add all individual events needed to compute it.
             SUBDBG("Need to add metric %d %s \n", index, eventName);
+
             /* For the metric, find list of events required */
             CUpti_MetricID metricId = gctxt->availEventIDArray[index];
-            CUPTI_CALL((*cuptiMetricGetNumEventsPtr) (metricId, &numEvents), return (PAPI_EINVAL));
+            CUPTI_CALL((*cuptiMetricGetNumEventsPtr) (metricId, &numEvents), return (PAPI_EINVAL)); // .. get # of events in it.
             size_t sizeBytes = numEvents * sizeof(CUpti_EventID);
             CUpti_EventID *eventIdArray = papi_malloc(sizeBytes);
             CHECK_PRINT_EVAL(eventIdArray == NULL, "Malloc failed", return (PAPI_ENOMEM));
-            CUPTI_CALL((*cuptiMetricEnumEventsPtr) (metricId, &sizeBytes, eventIdArray), return (PAPI_EINVAL));
+            CUPTI_CALL((*cuptiMetricEnumEventsPtr) (metricId, &sizeBytes, eventIdArray), return (PAPI_EINVAL)); // .. enumerate the events in it.
             SUBDBG("For metric %s, append the list of %d required events\n", eventName, numEvents);
             for(ee = 0; ee < numEvents; ee++) {
-                eventctrl->conEvents[eventctrl->conEventsCount] = eventIdArray[ee];
-                eventctrl->conEventsCount++;
+                eventctrl->conEvents[eventctrl->conEventsCount] = eventIdArray[ee];                             // .. .. add each to the array.
+                eventctrl->conEventsCount++;                                                                    // .. .. and count them.
                 SUBDBG("For metric %s, appended event %d - %d %d to this context (conEventsCount %d)\n", eventName, ee, eventIdArray[ee], eventctrl->conEvents[eventctrl->conEventsCount], eventctrl->conEventsCount);
                 if (eventctrl->conEventsCount >= PAPICUDA_MAX_COUNTERS) {
                     SUBDBG("Num events (generated by metric) exceeded PAPICUDA_MAX_COUNTERS\n");
                     return(PAPI_EINVAL);
                 }
             }
-            eventctrl->conMetrics[eventctrl->conMetricsCount] = metricId;
-            eventctrl->conMetricsCount++;
+            eventctrl->conMetrics[eventctrl->conMetricsCount] = metricId;                           // Add the metricID to list of metrics.
+            eventctrl->conMetricsCount++;                                                           // And increase the count.
             if (eventctrl->conMetricsCount >= PAPICUDA_MAX_COUNTERS) {
                 SUBDBG("Num metrics exceeded PAPICUDA_MAX_COUNTERS\n");
                 return(PAPI_EINVAL);
             }
-            break;
 
-        case CUPTI_ACTIVITY_KIND_EVENT:
+            break;  //--------------------------------------------------------------------------------END CASE for a metric.
+
+        case CUPTI_ACTIVITY_KIND_EVENT:                                                             // For an event, just add it.
             SUBDBG("Need to add event %d %s to the context\n", index, eventName);
             /* lookup cuptieventid for this event index */
             CUpti_EventID eventId = gctxt->availEventIDArray[index];
@@ -744,11 +778,16 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
         /* record added event at the higher level */
         CHECK_PRINT_EVAL(gctrl->activeEventCount == PAPICUDA_MAX_COUNTERS - 1, "Exceeded maximum num of events (PAPI_MAX_COUNTERS)", return (PAPI_EMISC));
         gctrl->activeEventIndex[gctrl->activeEventCount] = index;
+
         // gctrl->activeEventContextIdx[gctrl->activeEventCount] = eventContextIdx;
         gctrl->activeEventValues[gctrl->activeEventCount] = 0;
         gctrl->activeEventCount++;
 
         /* Create/recreate eventgrouppass structures for the added event and context */
+        // Actually we destroy any existing eventGroup passes, and then create one for
+        // the new set of events. But we won't accept more than one set; i.e. the
+        // number of eventGroupSets will always be one.
+
         SUBDBG("Create eventGroupPasses for context (destroy pre-existing) (nativeCount %d, conEventsCount %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount);
         if(eventctrl->conEventsCount > 0) {
             // SUBDBG("Destroy previous eventGroupPasses for the context \n");
@@ -777,12 +816,13 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
 #endif
         }
         
-        if(eventCuCtx != currCuCtx) 
+        if(eventCuCtx != currCuCtx)                                                 // restore original context for caller, if we changed it. 
             CU_CALL((*cuCtxPopCurrentPtr) (&eventCuCtx), return (PAPI_EMISC));
 
     }
     return (PAPI_OK);
-}
+} // end PAPI_update_controlState.
+
 
 /* Triggered by PAPI_start().
  * For CUDA component, switch to each context and start all eventgroups.
@@ -804,6 +844,7 @@ static int papicuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
     CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
     CUPTI_CALL((*cuptiGetTimestampPtr) (&gctrl->cuptiStartTimestampNs), return (PAPI_EMISC));
+
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
         int eventDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
         CUcontext eventCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
@@ -812,6 +853,7 @@ static int papicuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
         if(eventDeviceNum != saveDeviceNum) {
             CU_CALL((*cuCtxPushCurrentPtr) (eventCuCtx), return (PAPI_EMISC));
         }
+
         CUpti_EventGroupSets *eventEventGroupPasses = gctrl->arrayOfActiveCUContexts[cc]->eventGroupPasses;
         for (ss=0; ss<eventEventGroupPasses->numSets; ss++) {
             CUpti_EventGroupSet groupset = eventEventGroupPasses->sets[ss];
@@ -828,12 +870,92 @@ static int papicuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     }
 
     return (PAPI_OK);
-}
+} // end routine.
+
+//-------------------------------------------------------------------------------------------------
+// This routine is an adaptation from 'readMetricValue' in nvlink_bandwidth_cupti_only.cu; where 
+// it is shown to work. Note that a metric can consist of more than one event, so the number of 
+// events and the number of metrics does not have to match.
+// 'eventGroup' should contain the events needed to read the 
+// 'numEvents' is the number of events needed to read to compute the metrics.
+// 'metricId' is the array of METRICS, and 
+// 'numMetrics" is the number of them, and also applies to the arrays 'values' and 'myKinds'.
+// 'dev is the CUDevice needed to compute the metric. We don't need to switch the context, that is 
+// already done by the caller so we are pointing at the correct context.
+//-------------------------------------------------------------------------------------------------
+void readMetricValue(CUpti_EventGroup eventGroup, 
+                    uint32_t numEvents,                         // array COLS in results,
+                    uint64_t numTotalInstances,                 // array ROWS in results, 
+                    CUdevice dev,                               // current Device structure.
+                    uint32_t numMetrics,
+                    CUpti_MetricID *metricId,
+                    CUpti_MetricValueKind *myKinds, 
+                    long long int *values,
+                    uint64_t timeDuration) 
+{
+    size_t bufferSizeBytes, numCountersRead;
+    uint64_t *eventValueArray = NULL;
+    CUpti_EventID *eventIdArray;
+    size_t arraySizeBytes = 0;
+    uint64_t *aggrEventValueArray = NULL;
+    size_t aggrEventValueArraySize;
+    uint32_t i = 0, j = 0;
+
+    arraySizeBytes = sizeof(CUpti_EventID) * numEvents;
+    bufferSizeBytes = sizeof(uint64_t) * numEvents * numTotalInstances;
+
+    eventValueArray = (uint64_t *) malloc(bufferSizeBytes);
+
+    eventIdArray = (CUpti_EventID *) malloc(arraySizeBytes);
+
+    aggrEventValueArray = (uint64_t *) calloc(numEvents, sizeof(uint64_t));
+
+    aggrEventValueArraySize = sizeof(uint64_t) * numEvents;
+
+    CUPTI_CALL( (*cuptiEventGroupReadAllEvents) 
+                (eventGroup, CUPTI_EVENT_READ_FLAG_NONE, &bufferSizeBytes,
+                 eventValueArray, &arraySizeBytes, eventIdArray, &numCountersRead), 
+                return);
+
+    // Arrangement of 2-d Array returned in eventValueArray:
+    //    domain instance 0: event0 event1 ... eventN
+    //    domain instance 1: event0 event1 ... eventN
+    //    ...
+    //    domain instance M: event0 event1 ... eventN
+    // But we accumulate by column, event[0], event[1], etc.
+
+    for (i = 0; i < numEvents; i++) {                   // outer loop is column (event) we are on.
+        for (j = 0; j < numTotalInstances; j++) {       // inner loop is row (instance) we are on.
+            aggrEventValueArray[i] += eventValueArray[i + numEvents * j];
+        }
+    }
+
+    // After aggregation, we use the data to compose the metrics.
+    for (i = 0; i < numMetrics; i++) {
+        CUpti_MetricValue metricValue;
+        CUPTI_CALL( (*cuptiMetricGetValue) 
+                    (dev, metricId[i], arraySizeBytes, eventIdArray, 
+                     aggrEventValueArraySize, aggrEventValueArray, 
+                     timeDuration, &metricValue), 
+                    return);
+
+        papicuda_convert_metric_value_to_long_long(metricValue, myKinds[i], &values[i]); 
+    }
+
+    free(eventValueArray);
+    free(eventIdArray);
+} // end readMetricValue.
 
 
-/* Triggered by PAPI_read().  For CUDA component, switch to each
- * context, read all the eventgroups, and put the values in the
- * correct places. */
+// Triggered by PAPI_read().  For CUDA component, switch to each context, read
+// all the eventgroups, and put the values in the correct places. Note that
+// parameters (ctx, ctrl, flags) are all ignored. The design of this components
+// doesn't pay attention to PAPI EventSets, because ONLY ONE is ever allowed
+// for a component.  So instead of maintaining ctx and ctrl, we use global
+// variables to keep track of the one and only eventset.
+// Note that **values is where we have to give PAPI the address of an array
+// of the values we read (or composed).
+
 static int papicuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **values, int flags)
 {
     SUBDBG("Entering\n");
@@ -842,159 +964,245 @@ static int papicuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long l
     (void) flags;
     papicuda_control_t *gctrl = global_papicuda_control;
     papicuda_context_t *gctxt = global_papicuda_context;
-    uint32_t gg, ii, jj, ee, instanceK, cc, rr, ss;
-    int saveDeviceNum;
+    uint32_t gg, ii, jj, kk, ee, instanceK, cc, rr, ss, numMetrics;
+    int index, saveDeviceNum;
     size_t eventIdsSize = PAPICUDA_MAX_COUNTERS * sizeof(CUpti_EventID);
     uint64_t readEventValueBuffer[PAPICUDA_MAX_COUNTERS];
     CUpti_EventID readEventIDArray[PAPICUDA_MAX_COUNTERS];
 
     // Get read time stamp
-    CUPTI_CALL((*cuptiGetTimestampPtr) (&gctrl->cuptiReadTimestampNs), return (PAPI_EMISC));
-    uint64_t durationNs = gctrl->cuptiReadTimestampNs - gctrl->cuptiStartTimestampNs;
-    gctrl->cuptiStartTimestampNs = gctrl->cuptiReadTimestampNs;
+    CUPTI_CALL((*cuptiGetTimestampPtr) (&gctrl->cuptiReadTimestampNs), return (PAPI_EMISC));    // Read current timestamp.
+    uint64_t durationNs = gctrl->cuptiReadTimestampNs - gctrl->cuptiStartTimestampNs;           // compute duration from start.
+    gctrl->cuptiStartTimestampNs = gctrl->cuptiReadTimestampNs;                                 // Change start to value just read.
     
-    SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
-    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
-    for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
-        int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
-        CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
+    SUBDBG("Save current context, then switch to each active device/context and enable context-specific eventgroups\n");
+    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));               // Save Caller's current device number on entry.
+
+    for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {                            // For each active context, 
+        int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;              // Get the device number.
+        CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;                // Get the actual CUcontext.
         SUBDBG("Set to device %d cuCtx %p \n", currDeviceNum, currCuCtx);
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));
-        else
-            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
+        if(currDeviceNum != saveDeviceNum)                                              // If my current is not the same as callers,
+            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));           // .. Push the current, and replace with mine.
+        else                                                                            // If my current IS the same as callers, 
+            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));            // .. No push. Just set the current.
 
         size_t numEventIDsRead = 0;
-        CU_CALL((*cuCtxSynchronizePtr) (), return (PAPI_EMISC));
-        CUpti_EventGroupSets *currEventGroupPasses = gctrl->arrayOfActiveCUContexts[cc]->eventGroupPasses;
+        CU_CALL((*cuCtxSynchronizePtr) (), return (PAPI_EMISC));                        // Block until device finishes all prior tasks.
+        CUpti_EventGroupSets *currEventGroupPasses = gctrl->arrayOfActiveCUContexts[cc]->eventGroupPasses;  // Make a copy of EventGroupSets.
         uint32_t numEvents, numInstances, numTotalInstances;
         size_t sizeofuint32num = sizeof(uint32_t);
         CUpti_EventDomainID groupDomainID;
         size_t groupDomainIDSize = sizeof(groupDomainID);
-        CUdevice cudevice = gctxt->deviceArray[currDeviceNum].cuDev;
+        CUdevice cudevice = gctxt->deviceArray[currDeviceNum].cuDev;                    // Make a copy of the current device.
 
         /* Since we accumulate the eventValues in a buffer, it needs to be cleared for each context */
         for(ee = 0; ee < PAPICUDA_MAX_COUNTERS; ee++)
             readEventValueBuffer[ee] = 0;
 
-        for (ss=0; ss<currEventGroupPasses->numSets; ss++) {
-            CUpti_EventGroupSet groupset = currEventGroupPasses->sets[ss]; 
+        // For each pass, we get the event groups that can be read together.
+        // But since elsewhere, we don't allow events to be added that would
+        // REQUIRE more than one pass, this will always be just ONE pass. This
+        // 'ss' loop and its inner 'gg' loop are a generalized approach for 
+        // potential changes to this policy.
+
+        for (ss=0; ss<currEventGroupPasses->numSets; ss++) {                            // For each pass, we get the event groups that can be read together.
+            CUpti_EventGroupSet groupset = currEventGroupPasses->sets[ss];              // This set of event groups.
             SUBDBG("Read events in this context\n");
-            for(gg = 0; gg < groupset.numEventGroups; gg++) {
+
+            for(gg = 0; gg < groupset.numEventGroups; gg++) {                           // process each eventgroup within the groupset.
                 CUpti_EventGroup group = groupset.eventGroups[gg];
-                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_EVENT_DOMAIN_ID, &groupDomainIDSize, &groupDomainID), return (PAPI_EMISC));
-                CUPTI_CALL((*cuptiDeviceGetEventDomainAttributePtr) (cudevice, groupDomainID, CUPTI_EVENT_DOMAIN_ATTR_TOTAL_INSTANCE_COUNT, &sizeofuint32num, &numTotalInstances), return (PAPI_EMISC));
-                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_INSTANCE_COUNT, &sizeofuint32num, &numInstances), return (PAPI_EMISC));
-                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_NUM_EVENTS, &sizeofuint32num, &numEvents), return (PAPI_EMISC));
+                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_EVENT_DOMAIN_ID,    // Get domain ID.
+                    &groupDomainIDSize, &groupDomainID), return (PAPI_EMISC));
+                CUPTI_CALL((*cuptiDeviceGetEventDomainAttributePtr) (cudevice, groupDomainID,                   // Get total number of instances of this domain.
+                    CUPTI_EVENT_DOMAIN_ATTR_TOTAL_INSTANCE_COUNT, &sizeofuint32num, &numTotalInstances), return (PAPI_EMISC));
+                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_INSTANCE_COUNT,     // Get specific number of instances (both these are for scaling).
+                    &sizeofuint32num, &numInstances), return (PAPI_EMISC));
+                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_NUM_EVENTS,         // Get number of events in this group.
+                    &sizeofuint32num, &numEvents), return (PAPI_EMISC));
                 eventIdsSize = PAPICUDA_MAX_COUNTERS * sizeof(CUpti_EventID);
                 CUpti_EventID eventIds[PAPICUDA_MAX_COUNTERS];
-                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_EVENTS, &eventIdsSize, eventIds), return (PAPI_EMISC));
-                SUBDBG("Context %d eventgroup %d domain numTotalInstaces %u numInstances %u numEvents %u\n", cc, gg, numTotalInstances, numInstances, numEvents);
+                CUPTI_CALL((*cuptiEventGroupGetAttributePtr) (group, CUPTI_EVENT_GROUP_ATTR_EVENTS,             // Read event IDs. 
+                    &eventIdsSize, eventIds), return (PAPI_EMISC));
+
+                // We flags contexts anytime we create one with an nvlink metric in it.
+                // Since nvlink is "exclusive" (cannot be mixed with cuda metrics or 
+                // events), if one item is nvlink, they all must be nvlink. TC
+                if (gctrl->arrayOfActiveCUContexts[cc]->nvlink) {                                       // If this is an nvlink set,
+                    // We need to build an array for the Kinds of metric events; this 
+                    // is how to interpret the number returned (double, int, %, etc).
+                    numMetrics = gctrl->arrayOfActiveCUContexts[cc]->conMetricsCount;                   // Get the number of metrics. also 'conMetrics' and 'conMetricValues' here
+                    CUpti_MetricValueKind *myKinds = calloc(numMetrics, sizeof(CUpti_MetricValueKind)); // Make room.
+                    for (kk=0; kk<numMetrics; kk++) {                                                   // For each metric on this device,
+                        eventIds[kk] = gctrl->arrayOfActiveCUContexts[cc]->conMetrics[kk];              // Just copying an array here.
+
+                        // Now must find this metric ID in our availEvent list to collect the
+                        // MV_Kind. Note device number must match as well! 
+                        for (jj=0; jj < gctrl->activeEventCount; jj++) {                                // Need to find this event in the active list.
+                            index = gctrl->activeEventIndex[jj];                                        // .. get the global index amongst all events.
+                            if (eventIds[kk] != gctxt->availEventIDArray[index] ||                      // .. skip if not a match on ID,
+                                currDeviceNum != gctxt->availEventDeviceNum[index]) continue;           // .. skip if not a match on device number.
+
+                            myKinds[kk] = gctxt->availEventDesc[index].MV_Kind;                         // .. found it! copy kind.
+                            break;                                                                      // .. Exit loop.
+                        } // end search for metric in availEvents.
+
+                        // This should be impossible; but if it happens...
+                        if (jj == gctrl->activeEventCount) {                                            // If we did not find it, 
+                            free(myKinds);                                                              // .. clean up memory.
+                            return(PAPI_EMISC);                                                         // .. we have an error, couldn't find a conMetric[] entry in the global list of events.
+                        }
+                    } // end of building arrays eventIds[kk] and myKinds[kk].
+
+                    long long int *received = calloc(numMetrics, sizeof (long long int));               // Space for answers.
+
+                    // below, the group contains the numEvents needed to build the metrics;
+                    // while eventIds[numMetrics] and myKinds[numMetrics] are the metric IDs
+                    // and how to format them. 
+                    readMetricValue(group, numEvents, numTotalInstances,                                // Helper routine to read them all and return long longs.
+                        cudevice, numMetrics, eventIds, myKinds,
+                        received, durationNs);                                                          // We get answers in recieved.
+
+                    // Now we must move the metric values we just received back
+                    // into the proper entry within the activeEventValues[]
+                    // array (because there can be entries in there, filled in
+                    // by other contexts for other devices). So we find
+                    // matching events (which can be duplicated across devices)
+                    // and matching current device numbers.
+                    for (kk=0; kk<numMetrics; kk++) {                                                   // For each metric on this device,
+                        for (jj=0; jj < gctrl->activeEventCount; jj++) {                                // Need to find this event in the active list.
+                            index = gctrl->activeEventIndex[jj];                                        // .. get the global index amongst all events.
+                            if (eventIds[kk] != gctxt->availEventIDArray[index] ||                      // .. skip if not a match on ID,
+                                currDeviceNum != gctxt->availEventDeviceNum[index]) continue;           // .. skip if not a match on device number.
+                            gctrl->activeEventValues[jj] = received[kk];                                // .. Matched, now we know where to stuff value.
+                            break;                                                                      // .. Exit loop.
+                        }
+                    }
+                    
+                    free(received);                                                     // Done with memory. 
+                    free(myKinds);                                                      // Done with memory.
+    
+                    continue;                                                           // Skip to the next group in this group set.
+                } // END IF nvlink group.
+
+                SUBDBG("Context %d eventgroup %d domain numTotalInstances %u numInstances %u numEvents %u\n", cc, gg, numTotalInstances, numInstances, numEvents);
                 size_t valuesSize = sizeof(uint64_t) * numInstances;
                 uint64_t *values = (uint64_t *) papi_malloc(valuesSize);
                 CHECK_PRINT_EVAL(values == NULL, "Out of memory", return (PAPI_ENOMEM));
                 /* For each event, read all values and normalize */
-                for(ee = 0; ee < numEvents; ee++) {
-                    CUPTI_CALL((*cuptiEventGroupReadEventPtr) (group, CUPTI_EVENT_READ_FLAG_NONE, eventIds[ee], &valuesSize, values), return (PAPI_EMISC));
+                for(ee = 0; ee < numEvents; ee++) {                                     // Read each event.
+                    CUPTI_CALL((*cuptiEventGroupReadEventPtr) (group,                   // Read this event, value for each instance into values[] array.
+                        CUPTI_EVENT_READ_FLAG_NONE, eventIds[ee], &valuesSize, values), return (PAPI_EMISC));
                     // sum collect event values from all instances
                     uint64_t valuesum = 0;
-                    for(instanceK = 0; instanceK < numInstances; instanceK++)
+                    for(instanceK = 0; instanceK < numInstances; instanceK++)           // Total up the values read.
                         valuesum += values[instanceK];
-                    // It seems that the same event can occur multiple times in eventIds, so we need to accumulate values in older valueBuffers if needed 
-                    // Scan thru readEvents looking for a match, break if found, if not found, increment numEventIDsRead
-                    for(rr = 0; rr < numEventIDsRead; rr++)
+
+                    // It seems that the same event can occur multiple times in eventIds,
+                    // so we need to accumulate values in older valueBuffers if needed
+                    // Scan thru readEvents looking for a match, break if found, if not
+                    // found, increment numEventIDsRead.
+                    //
+                    for(rr = 0; rr < numEventIDsRead; rr++)                             // Make rr = the index of the eventId in the readEventIDArray[].
                         if(readEventIDArray[rr] == eventIds[ee])
                             break;
+
                     /* If the event was not found, increment the numEventIDsRead */
                     if(rr == numEventIDsRead)
                     numEventIDsRead++;
                     readEventIDArray[rr] = eventIds[ee];
-                    readEventValueBuffer[rr] += valuesum;
+                    readEventValueBuffer[rr] += valuesum;                               // Add in the sum of values read.
                     size_t tmpStrSize = PAPI_MIN_STR_LEN - 1 * sizeof(char);
                     char tmpStr[PAPI_MIN_STR_LEN];
-                    CUPTI_CALL((*cuptiEventGetAttributePtr) (eventIds[ee], CUPTI_EVENT_ATTR_NAME, &tmpStrSize, tmpStr), return (PAPI_EMISC));
+                    CUPTI_CALL((*cuptiEventGetAttributePtr) (eventIds[ee],              // Get the event name (from its ID) for a debug message.
+                        CUPTI_EVENT_ATTR_NAME, &tmpStrSize, tmpStr), return (PAPI_EMISC));
                     SUBDBG("Read context %d eventgroup %d numEventIDsRead %lu device %d event %d/%d %d name %s value %lu (rr %d id %d val %lu) \n", cc, gg, numEventIDsRead, currDeviceNum, ee, numEvents, eventIds[ee], tmpStr, valuesum, rr,
                            eventIds[rr], readEventValueBuffer[rr]);
-                }
-                papi_free(values);
+                } // end of all events in this group.
+                papi_free(values);                                                      // release the values[] array.
+            } // end of an event group.
+        } // end of an ss pass, for a set of passes.
+
+        if (gctrl->arrayOfActiveCUContexts[cc]->nvlink == 0) {                          // NVLINK event sets are finished, need to do more work for non-nvlink.
+
+            // normalize the event values to represent the total number of domain instances on the device
+            for(ii = 0; ii < numEventIDsRead; ii++) {
+                readEventValueBuffer[ii] = (readEventValueBuffer[ii] * numTotalInstances) / numInstances;
             }
-        }
 
-        // normalize the event values to represent the total number of domain instances on the device
-        for(ii = 0; ii < numEventIDsRead; ii++) {
-            readEventValueBuffer[ii] = (readEventValueBuffer[ii] * numTotalInstances) / numInstances;
-	}
-        /* For this pushed device and context, figure out the event and metric values and record them into the arrays */
-        SUBDBG("For this device and context, match read values against active events by scanning activeEvents array and matching associated availEventIDs\n");
-        for(jj = 0; jj < gctrl->activeEventCount; jj++) {
-            int index = gctrl->activeEventIndex[jj];
-            /* If the device/context does not match the current context, move to next */
-            if(gctxt->availEventDeviceNum[index] != currDeviceNum)
-                continue;
-            uint32_t eventId = gctxt->availEventIDArray[index];
-            switch (gctxt->availEventKind[index]) {
-            case CUPTI_ACTIVITY_KIND_EVENT:
-                SUBDBG("Searching for activeEvent %s eventId %u\n", gctxt->availEventDesc[index].name, eventId);
-                for(ii = 0; ii < numEventIDsRead; ii++) {
-                    SUBDBG("Look at readEventIDArray[%u/%zu] with id %u\n", ii, numEventIDsRead, readEventIDArray[ii]);
-                    if(readEventIDArray[ii] == eventId) {
-                        gctrl->activeEventValues[jj] += (long long) readEventValueBuffer[ii];
-                        SUBDBG("Matched read-eventID %d:%d eventName %s value %ld activeEvent %d value %lld \n", jj, (int) eventId, gctxt->availEventDesc[index].name, readEventValueBuffer[ii], index, gctrl->activeEventValues[jj]);
-                        break;
-                    }
-                }
-                break;
-
-            case CUPTI_ACTIVITY_KIND_METRIC:
-                SUBDBG("For the metric, find list of events required to calculate this metric value\n");
-                CUpti_MetricID metricId = gctxt->availEventIDArray[index];
-                int metricDeviceNum = gctxt->availEventDeviceNum[index];
-                CUdevice cudevice = gctxt->deviceArray[metricDeviceNum].cuDev;
-                uint32_t numEvents, ee;
-                CUPTI_CALL((*cuptiMetricGetNumEventsPtr) (metricId, &numEvents), return (PAPI_EINVAL));
-                SUBDBG("Metric %s needs %d events\n", gctxt->availEventDesc[index].name, numEvents);
-                size_t eventIdArraySizeBytes = numEvents * sizeof(CUpti_EventID);
-                CUpti_EventID *eventIdArray = papi_malloc(eventIdArraySizeBytes);
-                CHECK_PRINT_EVAL(eventIdArray == NULL, "Malloc failed", return (PAPI_ENOMEM));
-                size_t eventValueArraySizeBytes = numEvents * sizeof(uint64_t);
-                uint64_t *eventValueArray = papi_malloc(eventValueArraySizeBytes);
-                CHECK_PRINT_EVAL(eventValueArray == NULL, "Malloc failed", return (PAPI_ENOMEM));
-                CUPTI_CALL((*cuptiMetricEnumEventsPtr) (metricId, &eventIdArraySizeBytes, eventIdArray), return (PAPI_EINVAL));
-                // Match metrics for the users events
-                for(ee = 0; ee < numEvents; ee++) {
-                    for(ii = 0; ii < numEventIDsRead; ii++) {
-                        if(eventIdArray[ee] == readEventIDArray[ii]) {
-                            SUBDBG("Matched metric %s, found %d/%d events with eventId %d\n", gctxt->availEventDesc[index].name, ee, numEvents, readEventIDArray[ii]);
-                            eventValueArray[ee] = readEventValueBuffer[ii];
-                            break;
+            /* For this pushed device and context, figure out the event and metric values and record them into the arrays */
+            SUBDBG("For this device and context, match read values against active events by scanning activeEvents array and matching associated availEventIDs\n");
+            for(jj = 0; jj < gctrl->activeEventCount; jj++) {
+                index = gctrl->activeEventIndex[jj];
+                /* If the device/context does not match the current context, move to next */
+                if(gctxt->availEventDeviceNum[index] != currDeviceNum)
+                    continue;
+                uint32_t eventId = gctxt->availEventIDArray[index];
+                switch (gctxt->availEventKind[index]) {
+                    case CUPTI_ACTIVITY_KIND_EVENT:
+                        SUBDBG("Searching for activeEvent %s eventId %u\n", gctxt->availEventDesc[index].name, eventId);
+                        for(ii = 0; ii < numEventIDsRead; ii++) {
+                            SUBDBG("Look at readEventIDArray[%u/%zu] with id %u\n", ii, numEventIDsRead, readEventIDArray[ii]);
+                            if(readEventIDArray[ii] == eventId) {
+                                gctrl->activeEventValues[jj] += (long long) readEventValueBuffer[ii];
+                                SUBDBG("Matched read-eventID %d:%d eventName %s value %ld activeEvent %d value %lld \n", jj, (int) eventId, gctxt->availEventDesc[index].name, readEventValueBuffer[ii], index, gctrl->activeEventValues[jj]);
+                                break;
+                            }
                         }
-                    }
-                    CHECK_PRINT_EVAL(ii == numEventIDsRead, "Could not find required event for metric", return (PAPI_EINVAL));
-                }
+                        break;
 
-                // Use CUPTI to calculate a metric.  Return all metric values mapped into long long values.
-                CUpti_MetricValue metricValue;
-                CUpti_MetricValueKind valueKind;
-                size_t valueKindSize = sizeof(valueKind);
-                CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricId, CUPTI_METRIC_ATTR_VALUE_KIND, &valueKindSize, &valueKind), return (PAPI_EMISC));
-                CUPTI_CALL((*cuptiMetricGetValuePtr) (cudevice, metricId, eventIdArraySizeBytes, eventIdArray, eventValueArraySizeBytes, eventValueArray, durationNs, &metricValue), return (PAPI_EMISC));
-                int retval = papicuda_convert_metric_value_to_long_long(metricValue, valueKind, &(gctrl->activeEventValues[jj]));
-                if(retval != PAPI_OK)
-                    return (retval);
-                papi_free(eventIdArray);
-                papi_free(eventValueArray);
-                break;
+                    case CUPTI_ACTIVITY_KIND_METRIC:
+                        SUBDBG("For the metric, find list of events required to calculate this metric value\n");
+                        CUpti_MetricID metricId = gctxt->availEventIDArray[index];
+                        int metricDeviceNum = gctxt->availEventDeviceNum[index];
+                        CUdevice cudevice = gctxt->deviceArray[metricDeviceNum].cuDev;
+                        uint32_t numEvents, ee;
+                        CUPTI_CALL((*cuptiMetricGetNumEventsPtr) (metricId, &numEvents), return (PAPI_EINVAL));
+                        SUBDBG("Metric %s needs %d events\n", gctxt->availEventDesc[index].name, numEvents);
+                        size_t eventIdArraySizeBytes = numEvents * sizeof(CUpti_EventID);
+                        CUpti_EventID *eventIdArray = papi_malloc(eventIdArraySizeBytes);
+                        CHECK_PRINT_EVAL(eventIdArray == NULL, "Malloc failed", return (PAPI_ENOMEM));
+                        size_t eventValueArraySizeBytes = numEvents * sizeof(uint64_t);
+                        uint64_t *eventValueArray = papi_malloc(eventValueArraySizeBytes);
+                        CHECK_PRINT_EVAL(eventValueArray == NULL, "Malloc failed", return (PAPI_ENOMEM));
+                        CUPTI_CALL((*cuptiMetricEnumEventsPtr) (metricId, &eventIdArraySizeBytes, eventIdArray), return (PAPI_EINVAL));
+                        // Match metrics for the users events
+                        for(ee = 0; ee < numEvents; ee++) {
+                            for(ii = 0; ii < numEventIDsRead; ii++) {
+                                if(eventIdArray[ee] == readEventIDArray[ii]) {
+                                    SUBDBG("Matched metric %s, found %d/%d events with eventId %d\n", gctxt->availEventDesc[index].name, ee, numEvents, readEventIDArray[ii]);
+                                    eventValueArray[ee] = readEventValueBuffer[ii];
+                                    break;
+                                }
+                            }
+                            CHECK_PRINT_EVAL(ii == numEventIDsRead, "Could not find required event for metric", return (PAPI_EINVAL));
+                        }
 
-            default:
-                SUBDBG("Not handled");
-                break;
-            }
-        }
+                        // Use CUPTI to calculate a metric.  Return all metric values mapped into long long values.
+                        CUpti_MetricValue metricValue;
+                        CUpti_MetricValueKind valueKind;
+                        size_t valueKindSize = sizeof(valueKind);
+                        CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricId, CUPTI_METRIC_ATTR_VALUE_KIND, &valueKindSize, &valueKind), return (PAPI_EMISC));
+                        CUPTI_CALL((*cuptiMetricGetValuePtr) (cudevice, metricId, eventIdArraySizeBytes, eventIdArray, eventValueArraySizeBytes, eventValueArray, durationNs, &metricValue), return (PAPI_EMISC));
+                        int retval = papicuda_convert_metric_value_to_long_long(metricValue, valueKind, &(gctrl->activeEventValues[jj]));
+                        if(retval != PAPI_OK)
+                            return (retval);
+                        papi_free(eventIdArray);
+                        papi_free(eventValueArray);
+                        break;
+
+                    default:
+                        SUBDBG("Not handled");
+                        break;
+                } // end switch.
+            } // end event loop.
+        } // end if not an nvlink event set.
 
         /* Pop the pushed context */
         if(currDeviceNum != saveDeviceNum)
             CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     }
+
     *values = gctrl->activeEventValues;
     return (PAPI_OK);
 }
@@ -1074,7 +1282,7 @@ static int papicuda_cleanup_eventset(hwd_control_state_t * ctrl)
     gctrl->countOfActiveCUContexts = 0;
     gctrl->activeEventCount = 0;
     return (PAPI_OK);
-}
+} // end papicuda_cleanup_eventset
 
 
 /* Called at thread shutdown. Does nothing in the CUDA component. */

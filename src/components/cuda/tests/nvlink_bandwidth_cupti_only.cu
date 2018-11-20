@@ -74,6 +74,7 @@ int cpuToGpu = 0;
 int gpuToGpu = 0;
 int cpuToGpuAccess = 0;
 int gpuToGpuAccess = 0;
+int DeviceToReport = 0;
 
 extern "C" __global__ void test_nvlink_bandwidth(float *src, float *dst)
 {
@@ -192,6 +193,8 @@ void readMetricValue(CUpti_EventGroup eventGroup, uint32_t numEvents,
                                               &numTotalInstancesSize, 
                                               (void *)&numTotalInstances));
 
+    printf("LINE %i, DeviceEventDomainAttribute numTotalInstances=%llu.\n", __LINE__, numTotalInstances);
+
     arraySizeBytes = sizeof(CUpti_EventID) * numEvents;
     bufferSizeBytes = sizeof(uint64_t) * numEvents * numTotalInstances;
 
@@ -214,10 +217,19 @@ void readMetricValue(CUpti_EventGroup eventGroup, uint32_t numEvents,
                                                 eventIdArray, 
                                                 &numCountersRead));
 
-    for (i = 0; i < numEvents; i++) {
-        for (j = 0; j < numTotalInstances; j++) {
+    printf("LINE %i, numCountersRead=%d.\n", __LINE__, numCountersRead);
+
+    // Arrangement of 2-d Array returned in eventValueArray:
+    //    domain instance 0: event0 event1 ... eventN
+    //    domain instance 1: event0 event1 ... eventN
+    //    ...
+    //    domain instance M: event0 event1 ... eventN
+    // But we accumulate by column, event[0], event[1], etc.
+
+    for (i = 0; i < numEvents; i++) {                   // outer loop column traversal.
+        for (j = 0; j < numTotalInstances; j++) {       // inner loop row traversal.
             aggrEventValueArray[i] += eventValueArray[i + numEvents * j];
-            //printf("For event %d (id %d) instance %d value %ul aggregate %d = %ul\n", i, eventIdArray[i], j,  eventValueArray[i + numEvents * j], i, aggrEventValueArray[i]);
+            printf("For event %d (id %d) instance %d value %llu aggregate %d = %llu\n", i, eventIdArray[i], j,  eventValueArray[i + numEvents * j], i, aggrEventValueArray[i]);
         }
     }
 
@@ -324,15 +336,35 @@ void testGpuToGpu(CUpti_EventGroup *eventGroup, CUdeviceptr *pDevBuffer0, CUdevi
                     cudaStream_t *cudaStreams,
                     uint64_t *timeDuration, int numEventGroup)
 {
-    int i;
+    int i, access;
     uint32_t value = 1;
     uint64_t startTimestamp, endTimestamp;
 
+    CUPTI_CALL(cuptiActivityFlushAll(0));
 
-    RUNTIME_API_CALL(cudaSetDevice(0));
-    RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(1, 0));
-    RUNTIME_API_CALL(cudaSetDevice(1));
-    RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(0, 0));
+    // Note the commented out cudaDeviceEnablePeerAccess() calls fail on peak;
+    // the compute mode is set wrong and we don't have SUDO access to change it
+    // or allow these calls. 
+    
+    RUNTIME_API_CALL(cudaDeviceCanAccessPeer(&access, 0, 1)); 
+    if (access) {
+        printf("Device 0 can access Device 1.\n");
+//      RUNTIME_API_CALL(cudaSetDevice(0));
+//      RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(1, 0));
+    } else { 
+        printf("Device 0 cannot access Device 1. GPU to GPU Test aborted.\n"); 
+        return; 
+    }
+
+    RUNTIME_API_CALL(cudaDeviceCanAccessPeer(&access, 1, 0));
+    if (access) {
+        printf("Device 1 can access Device 0.\n");
+//      RUNTIME_API_CALL(cudaSetDevice(1));
+//      RUNTIME_API_CALL(cudaDeviceEnablePeerAccess(0, 0));
+    } else {
+        printf("Device 1 cannot access Device 0. GPU to GPU Test aborted.\n");
+        return;
+    }
 
     //Unidirectional copy H2D
     for (i = 0; i < NUM_STREAMS; i++) {
@@ -378,11 +410,12 @@ static void printUsage() {
     printf("       -help           : display help message\n");
     printf("       --cpu-to-gpu    : Show results for data transfer between CPU and GPU \n");
     printf("       --gpu-to-gpu    : Show results for data transfer between two GPUs \n");
+    printf("       --Dn            : Must follow the above argument; n=device to report; 0,1,... \n");
 }
 
 void parseCommandLineArgs(int argc, char *argv[])
 {
-    if (argc != 2) {
+    if (argc != 3) {
         printf("Invalid number of options\n");
         exit(0);
     }
@@ -401,6 +434,13 @@ void parseCommandLineArgs(int argc, char *argv[])
     }
     else {
         cpuToGpu = 1;
+    }
+
+    if (strncmp(argv[2], "--D", 3) == 0) {
+        DeviceToReport = atoi(argv[2]+3);
+    } else {
+        printUsage();
+        exit(0);
     }
 }
 
@@ -427,8 +467,8 @@ int main(int argc, char *argv[])
 
     // Adding nvlink Metrics.
     const char *metricName[NUM_METRIC] = {"nvlink_total_data_transmitted",
-                                    "nvlink_total_data_received",
                                     "nvlink_transmit_throughput",
+                                    "nvlink_total_data_received",
                                     "nvlink_receive_throughput"};
 
     // Parse command line arguments
@@ -447,6 +487,11 @@ int main(int argc, char *argv[])
         printf("There is no device supporting CUDA.\n");
         exit(-1);
     }
+
+   if (DeviceToReport < 0 || DeviceToReport >= deviceCount) {
+        printf("The device given to report (%i) does not exist.\n", DeviceToReport);
+        exit(-1);
+   }
 
    CUresult cu_res = cuCtxCreate(&ctx, 0, 0);          // create context here.
    const char *cu_errstr;
@@ -486,13 +531,13 @@ int main(int argc, char *argv[])
    // True : Nvlink is present between CPU & GPU
    // False : Nvlink is not present.
    if ((nvlinkRec) && (((cpuToGpu) && (cpuToGpuAccess)) || ((gpuToGpu) && (gpuToGpuAccess)))) {
-
        for (i = 0; i < NUM_METRIC; i++) {
-           CUPTI_CALL(cuptiMetricGetIdFromName(0, metricName[i], &metricId[i]));
+           CUPTI_CALL(cuptiMetricGetIdFromName(DeviceToReport, metricName[i], &metricId[i]));
            CUPTI_CALL(cuptiMetricGetNumEvents(metricId[i], &numEvents[i]));
+           printf("LINE %i: device %i metricId[%i]=%d [%s], numEvents[%i]=%d.\n", __LINE__, DeviceToReport, i, metricId[i], metricName[i], i, numEvents[i]);
        }
 
-
+       printf("LINE %i: sizeof metricId=%i\n", __LINE__, (sizeof metricId));
        CUPTI_CALL(cuptiMetricCreateEventGroupSets(ctx, (sizeof metricId) ,metricId, &passes));
 
        // EventGroups required to profile Nvlink metrics.
@@ -522,6 +567,8 @@ int main(int argc, char *argv[])
            MEMORY_ALLOCATION_CALL(pHostBuffer[i]);
        }
 
+       RUNTIME_API_CALL(cudaDeviceSynchronize());
+
        if (cpuToGpu) {
            testCpuToGpu(eventGroup, pDevBuffer0, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
            printf("Data transferred between CPU & Device%d : \n", (int)nvlinkRec->typeDev0);
@@ -531,13 +578,15 @@ int main(int argc, char *argv[])
            for(i = 0; i < NUM_STREAMS; i++) {
                RUNTIME_API_CALL(cudaMalloc((void**)&pDevBuffer1[i], bufferSize));
            }
-           testGpuToGpu(eventGroup, pDevBuffer0, pDevBuffer1,pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-           printf("Data transferred between Device 0 & Device 1 : \n");
+           
+           RUNTIME_API_CALL(cudaDeviceSynchronize());
+           testGpuToGpu(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
+           printf("Data transferred between Device 0 & Device 1 : %.3f MB\n", ((double) bufferSize) / (1<<20));
        }
 
        // Collect Nvlink Metric values for the data transfer via Nvlink for all the eventGroups.
        for (i = 0; i < numEventGroup; i++) {
-           readMetricValue(eventGroup[i], NUM_EVENTS, 0, metricId, timeDuration, metricValue);
+           readMetricValue(eventGroup[i], NUM_EVENTS, DeviceToReport, metricId, timeDuration, metricValue);
 
            CUPTI_CALL(cuptiEventGroupDisable(eventGroup[i]));
            CUPTI_CALL(cuptiEventGroupDestroy(eventGroup[i]));
