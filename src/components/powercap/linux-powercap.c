@@ -94,6 +94,7 @@ static int event_fds[POWERCAP_MAX_COUNTERS];
 typedef struct _powercap_control_state {
   long long count[POWERCAP_MAX_COUNTERS];
   long long which_counter[POWERCAP_MAX_COUNTERS];
+  long long need_difference[POWERCAP_MAX_COUNTERS];
   long long lastupdate;
 } _powercap_control_state_t;
 
@@ -272,6 +273,16 @@ static int _powercap_init_control_state( hwd_control_state_t *ctl )
 {
     _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
     memset( control, 0, sizeof ( _powercap_control_state_t ) );
+
+
+    /* if an event is a counter, set its corresponding flag to 1  */
+    int i;
+    for (i = 0; i < num_events; i++) {
+        if ((powercap_ntv_events[i].type == PKG_ENERGY) || (powercap_ntv_events[i].type == COMPONENT_ENERGY)) {
+  	    control->need_difference[i] = 1;
+        }
+    }
+
     return PAPI_OK;
 }
 
@@ -291,13 +302,7 @@ static int _powercap_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 static int _powercap_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
   (void) ctx;
-  _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
-
-  int c;
-  for( c = 0; c < num_events; c++ ) {
-    control->count[c]=read_powercap_value(c);
-  }
-
+  (void) ctl;
   return PAPI_OK;
 }
 
@@ -315,14 +320,42 @@ static int
 _powercap_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
                 long long **events, int flags )
 {
-  (void) ctx;
+  SUBDBG("Enter _powercap_read\n");
+
   (void) flags;
   _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
+  _powercap_context_t* context = ( _powercap_context_t* ) ctx;
 
-  int i;
+  long long start_val = 0;
+  long long curr_val = 0;
+  int c;
 
-  for(i=0;i<num_events;i++) {
-    control->count[i]=read_powercap_value(control->which_counter[i]);
+  for( c = 0; c < num_events; c++ ) {
+    start_val = context->start_value[c];
+    curr_val = read_powercap_value(c);
+
+    SUBDBG("%d, start value: %lld, current value %lld\n", c, start_val, curr_val);
+
+    if(start_val) {
+
+      /* Make sure an event is a counter. */
+      if (control->need_difference[c] == 1) {
+
+	/* Wraparound. */
+	if(start_val > curr_val) {
+	  SUBDBG("Wraparound!\nstart value:\t%lld,\tcurrent value:%lld\n", start_val, curr_val);
+	  curr_val += (0x100000000 - start_val);
+	}
+	/* Normal subtraction. */
+	else if (start_val < curr_val) {
+	  SUBDBG("Normal subtraction!\nstart value:\t%lld,\tcurrent value:%lld\n", start_val, curr_val);
+	  curr_val -= start_val;
+	}
+	SUBDBG("Final value: %lld\n", curr_val);
+
+      }
+    }
+    control->count[c]=curr_val;
   }
 
   *events = ( ( _powercap_control_state_t* ) ctl )->count;

@@ -74,6 +74,7 @@ int main( int argc, char** argv )
     printf( "NVML found as Component %d of %d: %s: %d events\n", (1+cmpinfo->CmpIdx), numcmp, cmpinfo->name, cmpinfo->num_native_events );
     if (cmpinfo->disabled) {                                    // If disabled,
         fprintf(stderr, "NVML PAPI Component is disabled.\n");
+        fprintf(stderr, "The reason is: %s\n", cmpinfo->disabled_resaon);
         test_skip( __FILE__,__LINE__,"Component nvml is disabled", 0 );
     }
 
