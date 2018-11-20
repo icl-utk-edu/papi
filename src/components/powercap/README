@@ -34,6 +34,8 @@ that limit.
 These counters and settings are exposed though this PAPI component and can be accessed just like any normal PAPI
 counter. Running the "powercap_basic" test in the test directory will list all the events on a system. There is also a 
 "powercap_limit" test in the test directory that shows how a power limit is applied.
+
+Note: Power Limiting using powercap requires root or write permission to the files situated in the /sys/class/powercap directory.
     
 --------------------------------------------------
 CONFIGURING THE PAPI POWERCAP COMPONENT

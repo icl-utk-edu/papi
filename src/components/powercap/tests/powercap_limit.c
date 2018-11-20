@@ -33,7 +33,7 @@ int main ( int argc, char **argv )
   /* PAPI Initialization */
   retval = PAPI_library_init( PAPI_VER_CURRENT );
   if ( retval != PAPI_VER_CURRENT )
-    test_fail( __FILE__, __LINE__,"PAPI_library_init\n",retval );
+    test_fail( __FILE__, __LINE__,"PAPI_library_init()\n",retval );
 
   if ( !TESTS_QUIET ) printf( "Trying all powercap events\n" );
 
@@ -42,7 +42,7 @@ int main ( int argc, char **argv )
   for( cid=0; cid<numcmp; cid++ ) {
 
     if ( ( cmpinfo = PAPI_get_component_info( cid ) ) == NULL )
-      test_fail( __FILE__, __LINE__,"PAPI_get_component_info\n", 0 );
+      test_fail( __FILE__, __LINE__,"PAPI_get_component_info()\n", 0 );
 
     if ( strstr( cmpinfo->name,"powercap" ) ) {
       powercap_cid=cid;
@@ -80,7 +80,7 @@ int main ( int argc, char **argv )
   while ( r == PAPI_OK ) {
     retval = PAPI_event_code_to_name( code, event_names[num_events] );
     if ( retval != PAPI_OK ) 
-      test_fail( __FILE__, __LINE__,"PAPI_event_code_to_name", retval );
+      test_fail( __FILE__, __LINE__,"PAPI_event_code_to_name()", retval );
 
     retval = PAPI_add_event(EventSet, code);
     if (retval != PAPI_OK)
@@ -104,7 +104,7 @@ int main ( int argc, char **argv )
   /* initial read of package limits */
   retval = PAPI_read( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_start()",retval );
+    test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
 
 
   printf("\nCURRENT LIMITS\n");
@@ -117,14 +117,14 @@ int main ( int argc, char **argv )
   printf("\nSETTING LIMITS 10 WATTS BELOW CURRENT LIMITS\n");
   retval = PAPI_write( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_start()",retval );
+    test_fail( __FILE__, __LINE__, "PAPI_write()",retval );
 
   usleep(10000);
 
-  printf("\nREADING LIMITS TO MAKE SURE SET\n");
+  printf("\nREADING LIMITS TO MAKE SURE THEY ARE SET\n");
   retval = PAPI_read( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_start()",retval );
+    test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
   usleep(10000);
 
   printf("\nNEW LIMITS\n");
@@ -136,13 +136,13 @@ int main ( int argc, char **argv )
   printf("\nRESET LIMITS BEFORE EXITING...");
   retval = PAPI_write( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_start()",retval );
+    test_fail( __FILE__, __LINE__, "PAPI_write()",retval );
   usleep(10000);
 
-  printf("\nREADING RESET LIMITS TO MAKE SURE SET\n");
+  printf("\nREADING RESET LIMITS TO MAKE SURE THEY ARE SET\n");
   retval = PAPI_read( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_start()",retval );
+    test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
   usleep(10000);
 
   printf("\nRESET LIMITS\n");

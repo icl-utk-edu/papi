@@ -51,7 +51,7 @@ frees the performance monitoring hardware on the GPU.
 How to install PAPI with the CUDA component?
 -------------------------------------------- 
 
-This PAPI CUDA componen has been developed and tested using CUDA
+This PAPI CUDA component has been developed and tested using CUDA
 version 8.0 and the associated CUPTI library. CUPTI is released with
 the CUDA Tools SDK.
 
