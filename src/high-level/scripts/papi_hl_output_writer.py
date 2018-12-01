@@ -319,7 +319,7 @@ def main(source, format, type):
       write_json_file(formated_json, 'papi.json')
 
     #summarize data over threads and ranks
-    if type == 'accumulated':
+    if type == 'accumulate':
       sum_json = sum_json_object(formated_json)
       write_json_file(sum_json, 'papi_sum.json')
   else:
@@ -333,7 +333,30 @@ def parse_args():
   parser.add_argument('--format', type=str, required=False, default='json', 
                       help='Output format, e.g. json.')
   parser.add_argument('--type', type=str, required=False, default='detail', 
-                      help='Output type: detail or accumulated.')
+                      help='Output type: detail or accumulate.')
+
+  # check if papi directory exists
+  source = str(parser.parse_args().source)
+  if os.path.isdir(source) == False:
+    print("Measurement directory '{}' does not exist!\n".format(source))
+    parser.print_help()
+    parser.exit()
+
+  # check format
+  output_format = str(parser.parse_args().format)
+  if output_format != "json":
+    print("Output format '{}' is not supported!\n".format(output_format))
+    parser.print_help()
+    parser.exit()
+
+  # check type
+  output_type = str(parser.parse_args().type)
+  if output_type != "detail" and output_type != "accumulate":
+    print("Output type '{}' is not supported!\n".format(output_type))
+    parser.print_help()
+    parser.exit()
+  
+
   return parser.parse_args()
 
 

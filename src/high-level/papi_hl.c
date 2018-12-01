@@ -139,7 +139,7 @@ bool events_determined = false;  /**< Check if events are determined */
 bool output_generated = false;   /**< Check if output has been already generated */
 static char *absolute_output_file_path = NULL;
 int output_counter = 0;
-short verbosity = 0;
+short verbosity = 1;
 bool state = PAPIHL_ACTIVE;
 
 /* global auxiliary variables end ***************************************/
@@ -191,9 +191,8 @@ static void _internal_hl_library_init(void)
    int retval;
 
    /* check VERBOSE level */
-   if ( getenv("PAPI_VERBOSE") != NULL ) {
-      if ( strcmp("1", getenv("PAPI_VERBOSE")) == 0 )
-         verbosity = 1;
+   if ( getenv("PAPI_NO_WARNING") != NULL ) {
+      verbosity = 0;
    }
 
    if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
@@ -1079,6 +1078,7 @@ static void _internal_hl_write_output()
 
                   /* read regions in reverse order */
                   while (regions != NULL) {
+                     HLDBG("region %s\n", regions->region);
                      fprintf(output_file, "\"%s\":{", regions->region);
 
                      for ( j = 0; j < extended_total_num_events; j++ ) {
@@ -1108,10 +1108,13 @@ static void _internal_hl_write_output()
                               read_cnt++;
                            }
                         } else {
-                           if ( j == ( extended_total_num_events - 1 ) )
+                           if ( j == ( extended_total_num_events - 1 ) ) {
+                              HLDBG("%s:%lld\n", all_event_names[j], regions->values[j].total);
                               fprintf(output_file, "\"%s\":\"%lld\"}", all_event_names[j], regions->values[j].total);
-                           else
+                           } else {
+                              HLDBG("%s:%lld\n", all_event_names[j], regions->values[j].total);
                               fprintf(output_file, "\"%s\":\"%lld\",", all_event_names[j], regions->values[j].total);
+                           }
                         }
                      }
 
