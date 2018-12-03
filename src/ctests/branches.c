@@ -13,7 +13,10 @@
 	PAPI_BR_MSP -- branches mispredicted
   First measure all 4 at once (or as many as will fit).
   Then run them one by one.
-  Compare to see if they match.
+  Compare results to see if they match.
+
+  Note: sometimes have seen failure if system is under fuzzing load
+
 */
 
 
@@ -36,7 +39,7 @@ int
 main( int argc, char **argv )
 {
 	PAPI_event_info_t info;
-	int i, j, retval;
+	int i, j, retval, errors=0;
 	int iters = 10000000;
 	double x = 1.1, y;
 	long long t1, t2;
@@ -47,6 +50,12 @@ main( int argc, char **argv )
 	int eventset = PAPI_NULL;
 	int events[MAXEVENTS];
 	int quiet;
+	char event_names[MAXEVENTS][256] = {
+		"PAPI_BR_NTK",	// not taken
+		"PAPI_BR_PRC",	// predicted correctly
+		"PAPI_BR_INS",	// total branches
+		"PAPI_BR_MSP",	// branches mispredicted
+	};
 
 	/* Set quiet variable */
 	quiet = tests_quiet( argc, argv );
@@ -242,28 +251,40 @@ main( int argc, char **argv )
 
 	if ( !quiet ) {
 		printf( "\n\nRelative accuracy:\n" );
-		for ( j = 0; j < nevents; j++ )
-			printf( "   Event %.2d", j );
-		printf( "\n" );
+		printf( "\tEvent\t\tGroup\t\tIndividual\tSpread\n");
 	}
 
 	for ( j = 0; j < nevents; j++ ) {
 		spread[j] = abs( ( int ) ( refvalues[j] - values[j] ) );
 		if ( values[j] )
 			spread[j] /= ( double ) values[j];
-		if ( !quiet )
-			printf( "%10.3g ", spread[j] );
+		if ( !quiet ) {
+			printf( "\t%02d: ",j);
+			printf( "%s",event_names[j]);
+			printf( "\t%10lld", values[j] );
+			printf( "\t%10lld", refvalues[j] );
+			printf("\t%10.3g\n", spread[j] );
+		}
+
 		/* Make sure that NaN get counted as errors */
-		if ( spread[j] < MPX_TOLERANCE )
-			i--;
-		else if ( refvalues[j] < MINCOUNTS )	/* Neglect inprecise results with low counts */
-			i--;
+		if ( spread[j] > MPX_TOLERANCE ) {
+
+			/* Neglect inprecise results with low counts */
+			if ( refvalues[j] < MINCOUNTS ) {
+			}
+			else {
+				errors++;
+				if (!quiet) {
+					printf("\tError: Spread > %lf\n",MPX_TOLERANCE);
+				}
+			}
+		}
 	}
 	if ( !quiet ) {
 		printf( "\n\n" );
 	}
 
-	if ( i ) {
+	if ( errors ) {
 		test_fail( __FILE__, __LINE__, "Values outside threshold", i );
 	}
 
