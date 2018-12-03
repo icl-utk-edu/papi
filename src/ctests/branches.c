@@ -31,7 +31,6 @@
 #include "testcode.h"
 
 #define MAXEVENTS 4
-#define SLEEPTIME 100
 #define MINCOUNTS 100000
 #define MPX_TOLERANCE .20
 
@@ -44,7 +43,6 @@ main( int argc, char **argv )
 	double x = 1.1, y;
 	long long t1, t2;
 	long long values[MAXEVENTS], refvalues[MAXEVENTS];
-	int sleep_time = SLEEPTIME;
 	double spread[MAXEVENTS];
 	int nevents = MAXEVENTS;
 	int eventset = PAPI_NULL;
@@ -64,11 +62,6 @@ main( int argc, char **argv )
 	if ( argc > 1 ) {
 		if ( !strcmp( argv[1], "TESTS_QUIET" ) ) {
 
-		}
-		else {
-			sleep_time = atoi( argv[1] );
-			if ( sleep_time <= 0 )
-				sleep_time = SLEEPTIME;
 		}
 	}
 
