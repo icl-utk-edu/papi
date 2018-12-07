@@ -22,11 +22,14 @@ main( int argc, char **argv )
 	int num_cpus = 8;
 	int EventSet[MAX_CPUS];
 	const PAPI_hw_info_t *hwinfo;
+	double diff;
 
 	long long values[MAX_CPUS];
 	char event_name[PAPI_MAX_STR_LEN] = "PAPI_TOT_INS";
 	PAPI_option_t opts;
 	int quiet;
+	long long average=0;
+	int same=0;
 
 	/* Set TESTS_QUIET variable */
 	quiet=tests_quiet( argc, argv );
@@ -102,9 +105,30 @@ main( int argc, char **argv )
 
 	for(i=0;i<num_cpus;i++) {
 		if (!quiet) {
-			printf ("Event: %s: %8lld on Cpu: %d\n",
+			printf ("Event: %s: %10lld on Cpu: %d\n",
 				event_name, values[i], i);
 		}
+	}
+
+	for(i=0;i<num_cpus;i++) {
+		average+=values[i];
+	}
+	average/=num_cpus;
+	if (!quiet) {
+		printf("Average: %10lld\n",average);
+	}
+
+
+	for(i=0;i<num_cpus;i++) {
+		diff=((double)values[i]-(double)average)/(double)average;
+		if ((diff<0.01) && (diff>-0.01)) same++;
+	}
+
+	if (same) {
+		if (!quiet) {
+			printf("Error!  %d events were the same\n",same);
+		}
+		test_fail( __FILE__, __LINE__, "Too similar", 0 );
 	}
 
 	PAPI_shutdown( );
