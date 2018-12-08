@@ -833,7 +833,7 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
 
 static int _internal_hl_read_counters()
 {
-   int i, retval;
+   int i, j, retval;
    for ( i = 0; i < num_of_components; i++ ) {
       if ( i < ( num_of_components - 1 ) ) {
          retval = PAPI_read( _local_components[i].EventSet, _local_components[i].values);
@@ -841,6 +841,11 @@ static int _internal_hl_read_counters()
          /* get cycles for last component */
          retval = PAPI_read_ts( _local_components[i].EventSet, _local_components[i].values, &_local_cycles );
       }
+      HLDBG("Thread-ID:%lu, Component-ID:%d\n", PAPI_thread_id(), components[i].component_id);
+      for ( j = 0; j < components[i].num_of_events; j++ ) {
+        HLDBG("Thread-ID:%lu, %s:%lld\n", PAPI_thread_id(), components[i].event_names[j], _local_components[i].values[j]);
+      }
+
       if ( retval != PAPI_OK )
          return ( retval );
    }
@@ -852,14 +857,15 @@ static int _internal_hl_read_and_store_counters( const char *region, enum region
    int retval;
    /* read all events */
    if ( ( retval = _internal_hl_read_counters() ) != PAPI_OK ) {
-      HLDBG("Could not read counters for thread %lu.\n", PAPI_thread_id());
+      verbose_fprintf(stdout, "PAPI-HL Error: Could not read counters for thread %lu.\n", PAPI_thread_id());
       _internal_hl_clean_up_all(true);
       return ( retval );
    }
 
    /* store all events */
    if ( ( retval = _internal_hl_store_counters( PAPI_thread_id(), region, reg_typ) ) != PAPI_OK ) {
-      HLDBG("Could not store counters for thread %lu.\n", PAPI_thread_id());
+      verbose_fprintf(stdout, "PAPI-HL Error: Could not store counters for thread %lu.\n", PAPI_thread_id());
+      verbose_fprintf(stdout, "PAPI-HL Advice: Check if your regions are matching.\n");
       _internal_hl_clean_up_all(true);
       return ( retval );
    }
@@ -1058,7 +1064,7 @@ static void _internal_hl_write_output()
             fprintf(output_file, "Thread,JSON{Region:{Event:Value,...},...}");
             for ( i = 0; i < number_of_threads; i++ )
             {
-               //HLDBG("Thread %lu\n", tids[i]);
+               HLDBG("Thread ID:%lu\n", tids[i]);
                /* find values of current thread in global binary tree */
                threads_t* thread_node = _internal_hl_find_thread_node(tids[i]);
                if ( thread_node != NULL ) {
@@ -1078,7 +1084,7 @@ static void _internal_hl_write_output()
 
                   /* read regions in reverse order */
                   while (regions != NULL) {
-                     HLDBG("region %s\n", regions->region);
+                     HLDBG("  Region:%s\n", regions->region);
                      fprintf(output_file, "\"%s\":{", regions->region);
 
                      for ( j = 0; j < extended_total_num_events; j++ ) {
@@ -1109,10 +1115,10 @@ static void _internal_hl_write_output()
                            }
                         } else {
                            if ( j == ( extended_total_num_events - 1 ) ) {
-                              HLDBG("%s:%lld\n", all_event_names[j], regions->values[j].total);
+                              HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].total);
                               fprintf(output_file, "\"%s\":\"%lld\"}", all_event_names[j], regions->values[j].total);
                            } else {
-                              HLDBG("%s:%lld\n", all_event_names[j], regions->values[j].total);
+                              HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].total);
                               fprintf(output_file, "\"%s\":\"%lld\",", all_event_names[j], regions->values[j].total);
                            }
                         }
@@ -1145,11 +1151,11 @@ static void _internal_hl_clean_up_local_data()
    if ( _local_components != NULL ) {
       for ( i = 0; i < num_of_components; i++ ) {
          if ( ( retval = PAPI_stop( _local_components[i].EventSet, _local_components[i].values ) ) != PAPI_OK )
-            HLDBG("PAPI_stop failed: %d.\n", retval);
+            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_stop failed: %d.\n", retval);
          if ( ( retval = PAPI_cleanup_eventset (_local_components[i].EventSet) ) != PAPI_OK )
-            HLDBG("PAPI_cleanup_eventset failed: %d.\n", retval);
+            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_cleanup_eventset failed: %d.\n", retval);
          if ( ( retval = PAPI_destroy_eventset (&_local_components[i].EventSet) ) != PAPI_OK )
-            HLDBG("PAPI_destroy_eventset failed: %d.\n", retval);
+            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_destroy_eventset failed: %d.\n", retval);
          free(_local_components[i].values);
       }
       free(_local_components);
@@ -1226,6 +1232,12 @@ static void _internal_hl_clean_up_global_data()
 static void _internal_hl_clean_up_all(bool deactivate)
 {
    int num_of_threads;
+
+   /* we assume that output has been already generated or
+    * cannot be generated due to prevoius errors */
+   output_generated = true;
+   verbose_fprintf(stdout, "PAPI-HL Info: Output generation is deactivated!\n");
+
    /* clean up thread local data */
    HLDBG("Clean up thread local data for thread %lu\n", PAPI_thread_id());
    _internal_hl_clean_up_local_data();
@@ -1642,6 +1654,7 @@ PAPI_hl_region_begin( const char* region )
    }
 
    /* read and store all events */
+   HLDBG("Thread ID:%lu, Region:%s\n", PAPI_thread_id(), region);
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_BEGIN) ) != PAPI_OK )
       return ( retval );
 
@@ -1714,6 +1727,7 @@ PAPI_hl_read(const char* region)
       return ( PAPI_ENOTRUN );
 
    /* read and store all events */
+   HLDBG("Thread ID:%lu, Region:%s\n", PAPI_thread_id(), region);
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_READ) ) != PAPI_OK )
       return ( retval );
 
@@ -1783,6 +1797,7 @@ PAPI_hl_region_end( const char* region )
       return ( PAPI_ENOTRUN );
 
    /* read and store all events */
+   HLDBG("Thread ID:%lu, Region:%s\n", PAPI_thread_id(), region);
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_END) ) != PAPI_OK )
       return ( retval );
 
