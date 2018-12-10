@@ -379,7 +379,7 @@ static int _internal_hl_new_component(int component_id, components_t *component)
    /* create new EventSet */
    component->EventSet = PAPI_NULL;
    if ( ( retval = PAPI_create_eventset( &component->EventSet ) ) != PAPI_OK ) {
-      verbose_fprintf(stdout, "\nPAPI-HL Error: Cannot create EventSet for component %d.\n", component_id);
+      verbose_fprintf(stdout, "PAPI-HL Error: Cannot create EventSet for component %d.\n", component_id);
       return ( retval );
    }
 
@@ -432,12 +432,12 @@ static int _internal_hl_add_event_to_component(char *event_name, int event,
    if ( retval != PAPI_OK ) {
       const PAPI_component_info_t* cmpinfo;
       cmpinfo = PAPI_get_component_info( component->component_id );
-      verbose_fprintf(stdout, "\nPAPI-HL Warning: Cannot add %s to component %s.\n", event_name, cmpinfo->name);
+      verbose_fprintf(stdout, "PAPI-HL Warning: Cannot add %s to component %s.\n", event_name, cmpinfo->name);
       verbose_fprintf(stdout, "The following event combination is not supported:\n");
       for ( i = 0; i < component->num_of_events; i++ )
          verbose_fprintf(stdout, "  %s\n", component->event_names[i]);
       verbose_fprintf(stdout, "  %s\n", event_name);
-      verbose_fprintf(stdout, "Advice: Use papi_event_chooser to obtain an appropriate event set for this component.\n\n");
+      verbose_fprintf(stdout, "Advice: Use papi_event_chooser to obtain an appropriate event set for this component.\n");
       return PAPI_EINVAL;
    }
 
@@ -485,7 +485,7 @@ static int _internal_hl_create_components()
       /* determine event code and corresponding component id */
       retval = PAPI_event_name_to_code( requested_event_names[i], &event );
       if ( retval != PAPI_OK ) {
-         verbose_fprintf(stdout, "\nPAPI-HL Warning: \"%s\" does not exists or is not supported on this machine.\n\n", requested_event_names[i]);
+         verbose_fprintf(stdout, "PAPI-HL Warning: \"%s\" does not exists or is not supported on this machine.\n", requested_event_names[i]);
       } else {
          component_id = PAPI_COMPONENT_INDEX( event );
 
@@ -518,7 +518,7 @@ static int _internal_hl_create_components()
 
          /* add event to current component */
          retval = _internal_hl_add_event_to_component(requested_event_names[i], event, event_type, &components[comp_index]);
-         if ( retval != PAPI_OK )
+         if ( retval == PAPI_ENOMEM )
             return ( retval );
       }
    }
@@ -570,7 +570,7 @@ static int _internal_hl_read_events(const char* events)
    if ( _internal_hl_create_components() != PAPI_OK )
    {
       /* requested events do not work at all, use default events */
-      verbose_fprintf(stdout, "\nPAPI-HL Warning: All requested events do not work, using default.\n\n");
+      verbose_fprintf(stdout, "PAPI-HL Warning: All requested events do not work, using default.\n");
 
       for ( i = 0; i < num_of_requested_events; i++ )
          free(requested_event_names[i]);
@@ -963,8 +963,8 @@ static int _internal_hl_determine_output_path()
       if ( unix_time_from_old_directory < current_unix_time ) {
 
          if ( rename(absolute_output_file_path, new_absolute_output_file_path) != 0 ) {
-            verbose_fprintf(stdout, "\nPAPI-HL Warning: Cannot rename old measurement directory.\n");
-            verbose_fprintf(stdout, "If you use MPI, another process may have already renamed the directory.\n\n");
+            verbose_fprintf(stdout, "PAPI-HL Warning: Cannot rename old measurement directory.\n");
+            verbose_fprintf(stdout, "If you use MPI, another process may have already renamed the directory.\n");
          }
       }
 
@@ -980,6 +980,7 @@ static void _internal_hl_write_output()
 {
    if ( output_generated == false )
    {
+      verbose_fprintf(stdout, "PAPI-HL Info: Generate Output...\n");
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( output_generated == false ) {
          char **all_event_names = NULL;
@@ -992,7 +993,7 @@ static void _internal_hl_write_output()
 
          /* create new measurement directory */
          if ( ( _internal_hl_mkdir(absolute_output_file_path) ) != PAPI_OK ) {
-            verbose_fprintf(stdout, "\nPAPI-HL Error: Cannot create measurement directory %s.\n", absolute_output_file_path);
+            verbose_fprintf(stdout, "PAPI-HL Error: Cannot create measurement directory %s.\n", absolute_output_file_path);
             return;
          }
 
@@ -1151,7 +1152,9 @@ static void _internal_hl_clean_up_local_data()
    if ( _local_components != NULL ) {
       for ( i = 0; i < num_of_components; i++ ) {
          if ( ( retval = PAPI_stop( _local_components[i].EventSet, _local_components[i].values ) ) != PAPI_OK )
-            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_stop failed: %d.\n", retval);
+            /* only print error when event set is running */
+            if ( retval != -9 )
+              verbose_fprintf(stdout, "PAPI-HL Error: PAPI_stop failed: %d.\n", retval);
          if ( ( retval = PAPI_cleanup_eventset (_local_components[i].EventSet) ) != PAPI_OK )
             verbose_fprintf(stdout, "PAPI-HL Error: PAPI_cleanup_eventset failed: %d.\n", retval);
          if ( ( retval = PAPI_destroy_eventset (&_local_components[i].EventSet) ) != PAPI_OK )
@@ -1210,16 +1213,7 @@ static void _internal_hl_clean_up_global_data()
       }
    }
 
-   /* clean up global component data */
-   for ( i = 0; i < num_of_components; i++ ) {
-      free(components[i].event_names);
-      free(components[i].event_codes);
-      free(components[i].event_types);
-   }
-
    /* we cannot free components here since other threads could still use them */
-   //free(components);
-
 
    /* clean up requested event names */
    for ( i = 0; i < num_of_requested_events; i++ )
@@ -1231,21 +1225,24 @@ static void _internal_hl_clean_up_global_data()
 
 static void _internal_hl_clean_up_all(bool deactivate)
 {
-   int num_of_threads;
+   int i, num_of_threads;
 
    /* we assume that output has been already generated or
     * cannot be generated due to prevoius errors */
    output_generated = true;
-   verbose_fprintf(stdout, "PAPI-HL Info: Output generation is deactivated!\n");
 
    /* clean up thread local data */
-   HLDBG("Clean up thread local data for thread %lu\n", PAPI_thread_id());
-   _internal_hl_clean_up_local_data();
+   if ( _local_state == PAPIHL_ACTIVE ) {
+     HLDBG("Clean up thread local data for thread %lu\n", PAPI_thread_id());
+     _internal_hl_clean_up_local_data();
+   }
 
    /* clean up global data */
    if ( state == PAPIHL_ACTIVE ) {
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( state == PAPIHL_ACTIVE ) {
+
+         verbose_fprintf(stdout, "PAPI-HL Info: Output generation is deactivated!\n");
 
          HLDBG("Clean up global data for thread %lu\n", PAPI_thread_id());
          _internal_hl_clean_up_global_data();
@@ -1260,6 +1257,11 @@ static void _internal_hl_clean_up_all(bool deactivate)
                num_of_threads == num_of_cleaned_threads ) {
             PAPI_shutdown();
             /* clean up components */
+            for ( i = 0; i < num_of_components; i++ ) {
+               free(components[i].event_names);
+               free(components[i].event_codes);
+               free(components[i].event_types);
+            }
             free(components);
             HLDBG("PAPI-HL shutdown!\n");
          } else {
