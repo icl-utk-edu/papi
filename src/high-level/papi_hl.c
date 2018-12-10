@@ -138,9 +138,11 @@ bool hl_finalized = false;       /**< Check PAPI-HL has been fininalized */
 bool events_determined = false;  /**< Check if events are determined */
 bool output_generated = false;   /**< Check if output has been already generated */
 static char *absolute_output_file_path = NULL;
-int output_counter = 0;
-short verbosity = 1;
-bool state = PAPIHL_ACTIVE;
+static int output_counter = 0;   /**< Count each output generation. Not used yet */
+short verbosity = 1;             /**< Verbose output is always generated */
+bool state = PAPIHL_ACTIVE;      /**< PAPIHL is active until first error or finalization */
+static int region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
+static int region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
 
 /* global auxiliary variables end ***************************************/
 
@@ -789,17 +791,15 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
    /* check if current thread is already stored in tree */
    current_thread_node = _internal_hl_find_thread_node(tid);
    if ( current_thread_node == NULL ) {
-         if ( current_thread_node == NULL ) {
-         /* insert new node for current thread in tree if type is REGION_BEGIN */
-         if ( reg_typ == REGION_BEGIN ) {
-            if ( ( current_thread_node = _internal_hl_insert_thread_node(tid) ) == NULL ) {
-               _papi_hwi_unlock( HIGHLEVEL_LOCK );
-               return ( PAPI_ENOMEM );
-            }
-         } else {
+      /* insert new node for current thread in tree if type is REGION_BEGIN */
+      if ( reg_typ == REGION_BEGIN ) {
+         if ( ( current_thread_node = _internal_hl_insert_thread_node(tid) ) == NULL ) {
             _papi_hwi_unlock( HIGHLEVEL_LOCK );
-            return ( PAPI_EINVAL );
+            return ( PAPI_ENOMEM );
          }
+      } else {
+         _papi_hwi_unlock( HIGHLEVEL_LOCK );
+         return ( PAPI_EINVAL );
       }
    }
 
@@ -815,8 +815,16 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
             return ( PAPI_ENOMEM );
          }
       } else {
+         /* ignore no matching REGION_READ */
+         if ( reg_typ == REGION_READ ) {
+            verbose_fprintf(stdout, "PAPI-HL Warning: Cannot find matching region for PAPI_hl_read(\"%s\") for thread %lu.\n", region, PAPI_thread_id());
+            retval = PAPI_OK;
+         } else {
+            verbose_fprintf(stdout, "PAPI-HL Warning: Cannot find matching region for PAPI_hl_region_end(\"%s\") for thread %lu.\n", region, PAPI_thread_id());
+            retval = PAPI_EINVAL;
+         }
          _papi_hwi_unlock( HIGHLEVEL_LOCK );
-         return ( PAPI_EINVAL );
+         return ( retval );
       }
    }
 
@@ -980,7 +988,13 @@ static void _internal_hl_write_output()
 {
    if ( output_generated == false )
    {
-      verbose_fprintf(stdout, "PAPI-HL Info: Generate Output...\n");
+      if ( region_begin_cnt == region_end_cnt ) {
+         verbose_fprintf(stdout, "PAPI-HL Info: Generate output...\n");
+      } else {
+         verbose_fprintf(stdout, "PAPI-HL Warning: Cannot generate output due to not matching regions.\n");
+         return;
+      }
+
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( output_generated == false ) {
          char **all_event_names = NULL;
@@ -1660,6 +1674,7 @@ PAPI_hl_region_begin( const char* region )
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_BEGIN) ) != PAPI_OK )
       return ( retval );
 
+   region_begin_cnt++;
    return ( PAPI_OK );
 }
 
@@ -1722,6 +1737,11 @@ PAPI_hl_read(const char* region)
       /* check if we have to clean up local stuff */
       if ( _local_state == PAPIHL_ACTIVE )
          _internal_hl_clean_up_local_data();
+      return ( PAPI_EMISC );
+   }
+
+   if ( region_begin_cnt == 0 ) {
+      verbose_fprintf(stdout, "PAPI-HL Warning: Cannot find matching region for PAPI_hl_read(\"%s\") for thread %lu.\n", region, PAPI_thread_id());
       return ( PAPI_EMISC );
    }
 
@@ -1795,6 +1815,11 @@ PAPI_hl_region_end( const char* region )
       return ( PAPI_EMISC );
    }
 
+   if ( region_begin_cnt == 0 ) {
+      verbose_fprintf(stdout, "PAPI-HL Warning: Cannot find matching region for PAPI_hl_region_end(\"%s\") for thread %lu.\n", region, PAPI_thread_id());
+      return ( PAPI_EMISC );
+   }
+
    if ( _local_components == NULL )
       return ( PAPI_ENOTRUN );
 
@@ -1803,6 +1828,7 @@ PAPI_hl_region_end( const char* region )
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_END) ) != PAPI_OK )
       return ( retval );
 
+   region_end_cnt++;
    return ( PAPI_OK );
 }
 
