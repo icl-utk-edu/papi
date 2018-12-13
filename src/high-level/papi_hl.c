@@ -75,6 +75,8 @@ typedef struct local_components
 __thread local_components_t *_local_components = NULL;
 __thread long_long _local_cycles;
 __thread volatile bool _local_state = PAPIHL_ACTIVE;
+__thread int _local_region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
+__thread int _local_region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
 
 /* thread local components data end *************************************/
 
@@ -834,6 +836,10 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
       return ( retval );
    }
 
+   /* count all REGION_BEGIN and REGION_END calls */
+   if ( reg_typ == REGION_BEGIN ) region_begin_cnt++;
+   if ( reg_typ == REGION_END ) region_end_cnt++;
+
    _papi_hwi_unlock( HIGHLEVEL_LOCK );
    return ( PAPI_OK );
 }
@@ -988,13 +994,6 @@ static void _internal_hl_write_output()
 {
    if ( output_generated == false )
    {
-      if ( region_begin_cnt == region_end_cnt ) {
-         verbose_fprintf(stdout, "PAPI-HL Info: Generate output...\n");
-      } else {
-         verbose_fprintf(stdout, "PAPI-HL Warning: Cannot generate output due to not matching regions.\n");
-         return;
-      }
-
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( output_generated == false ) {
          char **all_event_names = NULL;
@@ -1004,6 +1003,14 @@ static void _internal_hl_write_output()
          FILE *output_file;
          /* current CPU frequency in MHz */
          int cpu_freq;
+
+         if ( region_begin_cnt == region_end_cnt ) {
+            verbose_fprintf(stdout, "PAPI-HL Info: Generate output...\n");
+         } else {
+            verbose_fprintf(stdout, "PAPI-HL Warning: Cannot generate output due to not matching regions.\n");
+            output_generated = true;
+            return;
+         }
 
          /* create new measurement directory */
          if ( ( _internal_hl_mkdir(absolute_output_file_path) ) != PAPI_OK ) {
@@ -1674,7 +1681,7 @@ PAPI_hl_region_begin( const char* region )
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_BEGIN) ) != PAPI_OK )
       return ( retval );
 
-   region_begin_cnt++;
+   _local_region_begin_cnt++;
    return ( PAPI_OK );
 }
 
@@ -1740,7 +1747,7 @@ PAPI_hl_read(const char* region)
       return ( PAPI_EMISC );
    }
 
-   if ( region_begin_cnt == 0 ) {
+   if ( _local_region_begin_cnt == 0 ) {
       verbose_fprintf(stdout, "PAPI-HL Warning: Cannot find matching region for PAPI_hl_read(\"%s\") for thread %lu.\n", region, PAPI_thread_id());
       return ( PAPI_EMISC );
    }
@@ -1828,7 +1835,7 @@ PAPI_hl_region_end( const char* region )
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_END) ) != PAPI_OK )
       return ( retval );
 
-   region_end_cnt++;
+   _local_region_end_cnt++;
    return ( PAPI_OK );
 }
 
