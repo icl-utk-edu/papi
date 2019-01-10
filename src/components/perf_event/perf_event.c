@@ -1094,6 +1094,7 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	int i;
 	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 	unsigned long long count, enabled, running, adjusted;
+	int errors=0;
 
 	/* we must read each counter individually */
 	for ( i = 0; i < pe_ctl->num_events; i++ ) {
@@ -1101,7 +1102,9 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		count = mmap_read_self(pe_ctl->events[i].mmap_buf,
 						&enabled,&running);
 
-		/* TODO: more error checking? */
+		if (count==0xffffffffffffffffULL) {
+			errors++;
+		}
 
 		/* Handle multiplexing case */
 		if (enabled == running) {
@@ -1126,6 +1129,8 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	*events = pe_ctl->counts;
 
 	SUBDBG("EXIT: *events: %p\n", *events);
+
+	if (errors) return PAPI_ESYS;
 
 	return PAPI_OK;
 }
@@ -1253,10 +1258,16 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	int i, j, ret = -1;
 	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 	long long papi_pe_buffer[READ_BUFFER_SIZE];
+	int result;
 
 	/* Handle fast case */
+	/* FIXME: we fallback to slow reads if *any* event in eventset fails */
+	/*        in theory we could only fall back for the one event        */
+	/*        but that makes the code more complicated.                  */
 	if ((_perf_event_vector.cmp_info.fast_counter_read) && (!pe_ctl->inherit)) {
-		return _pe_rdpmc_read( ctx, ctl, events, flags);
+		result=_pe_rdpmc_read( ctx, ctl, events, flags);
+		/* if successful we are done, otherwise fall back to read */
+		if (result==PAPI_OK) return PAPI_OK;
 	}
 
 	/* Handle case where we are multiplexing */
