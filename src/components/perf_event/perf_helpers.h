@@ -138,6 +138,10 @@ static inline unsigned long long mmap_read_self(void *addr,
 
 			/* Only adjust if index is valid */
 			running+=delta;
+		} else {
+			/* Falling back because rdpmc not supported	*/
+			/* for this event.				*/
+			return 0xffffffffffffffffULL;
 		}
 
 		barrier();
