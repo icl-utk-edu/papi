@@ -25,7 +25,8 @@ OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow \
 	overflow_index overflow_one_and_read overflow_allcounters
 PROFILE  = profile profile_force_software sprofile profile_twoevents \
 	byte_profile
-ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target attach_cpu attach_validate attach_cpu_validate
+ATTACH	= multiattach multiattach2 zero_attach attach3 attach2 attach_target \
+	attach_cpu attach_validate attach_cpu_validate attach_cpu_sys_validate
 P4_TEST	= p4_lst_ins
 EAR	= earprofile
 RANGE	= data_range
@@ -375,6 +376,9 @@ attach_cpu: attach_cpu.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 
 attach_cpu_validate: attach_cpu_validate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_cpu_validate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o attach_cpu_validate
+
+attach_cpu_sys_validate: attach_cpu_sys_validate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_cpu_sys_validate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o attach_cpu_sys_validate
 
 attach_validate: attach_validate.c attach_target $(TESTLIB) $(TESTINS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_validate.c $(TESTLIB) $(TESTINS) $(PAPILIB) $(LDFLAGS) -o attach_validate
