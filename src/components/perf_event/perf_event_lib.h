@@ -30,6 +30,7 @@ typedef struct {
   unsigned int overflow;          /* overflow enable                   */
   unsigned int inherit;           /* inherit enable                    */
   unsigned int overflow_signal;   /* overflow signal                   */
+  unsigned int attached;          /* attached to a process             */
   int cidx;                       /* current component                 */
   int cpu;                        /* which cpu to measure              */
   pid_t tid;                      /* thread we are monitoring          */

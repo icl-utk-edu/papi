@@ -684,11 +684,23 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	int i, ret = PAPI_OK;
 	long pid;
 
-	if (ctl->granularity==PAPI_GRN_SYS) {
-		pid = -1;
+
+	/* Set the pid setting */
+	/* If attached, this is the pid of process we are attached to. */
+	/* If GRN_THRD then it is 0 meaning current process only */
+	/* If GRN_SYS then it is -1 meaning all procs on this CPU */
+	/* Note if GRN_SYS then CPU must be specified, not -1 */
+
+	if (ctl->attached) {
+		pid = ctl->tid;
 	}
 	else {
-		pid = ctl->tid;
+		if (ctl->granularity==PAPI_GRN_SYS) {
+			pid = -1;
+		}
+		else {
+			pid = 0;
+		}
 	}
 
 	for( i = 0; i < ctl->num_events; i++ ) {
@@ -1650,6 +1662,7 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	      return ret;
 	   }
 
+	   pe_ctl->attached = 1;
 	   pe_ctl->tid = option->attach.tid;
 
 	   /* If events have been already been added, something may */
@@ -1662,7 +1675,9 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_DETACH:
 	   pe_ctl = ( pe_control_t *) ( option->attach.ESI->ctl_state );
 
+	   pe_ctl->attached = 0;
 	   pe_ctl->tid = 0;
+
 	   return PAPI_OK;
 
       case PAPI_CPU_ATTACH:
@@ -1675,11 +1690,6 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	       return ret;
 	   }
 	   /* looks like we are allowed so set cpu number */
-
-	   /* this tells the kernel not to count for a thread   */
-	   /* should we warn if we try to set both?  perf_event */
-	   /* will reject it.                                   */
-	   pe_ctl->tid = -1;
 
 	   pe_ctl->cpu = option->cpu.cpu_num;
 
@@ -1696,7 +1706,7 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	      return ret;
 	   }
 	   /* looks like we are allowed, so set event set level counting domains */
-       pe_ctl->domain = option->domain.domain;
+	pe_ctl->domain = option->domain.domain;
 	   return PAPI_OK;
 
       case PAPI_GRANUL:

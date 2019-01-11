@@ -86,6 +86,22 @@ main( int argc, char **argv )
 	}
 
 
+	int tmp;
+	PAPI_option_t options;
+
+	tmp = PAPI_get_opt( PAPI_DEFGRN, NULL );
+	if (!quiet) {
+		printf( "Default granularity is: %d (%s)\n", tmp,
+			stringify_granularity( tmp ) );
+	}
+
+	options.granularity.eventset = EventSet[0];
+	tmp = PAPI_get_opt( PAPI_GRANUL, &options) ;
+	if (!quiet) {
+		printf( "Eventset[0] granularity is: %d (%s)\n", options.granularity.granularity,
+		stringify_granularity( options.granularity.granularity ) );
+	}
+
 	for(i=0;i<num_cpus;i++) {
 		retval = PAPI_start( EventSet[i] );
 		if ( retval != PAPI_OK ) {
