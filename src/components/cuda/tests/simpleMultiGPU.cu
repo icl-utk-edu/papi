@@ -53,6 +53,17 @@
 
 #include "simpleMultiGPU.h"
 
+// THIS MACRO EXITS if the papi call does not return PAPI_OK. Do not use for routines that
+// return anything else; e.g. PAPI_num_components, PAPI_get_component_info, PAPI_library_init.
+#define CALL_PAPI_OK(papi_routine)                                                        \
+    do {                                                                                  \
+        int _papiret = papi_routine;                                                      \
+        if (_papiret != PAPI_OK) {                                                        \
+            fprintf(stderr, "%s:%d macro: PAPI Error: function " #papi_routine " failed with ret=%d [%s].\n", \
+                    __FILE__, __LINE__, _papiret, PAPI_strerror(_papiret));               \
+            exit(-1);                                                                     \
+        }                                                                                 \
+    } while (0);
 // //////////////////////////////////////////////////////////////////////////////
 // Data configuration
 // //////////////////////////////////////////////////////////////////////////////
@@ -203,6 +214,7 @@ int main( int argc, char **argv )
     int NUM_EVENTS = MAX_GPU_COUNT*MAX_NUM_EVENTS;
     long long values[NUM_EVENTS];
     int eventCount;
+    int cid=-1;
     int retval, ee;
     
     /* PAPI Initialization */
@@ -210,16 +222,37 @@ int main( int argc, char **argv )
     if( retval != PAPI_VER_CURRENT ) fprintf( stderr, "PAPI_library_init failed\n" );
     printf( "PAPI version: %d.%d.%d\n", PAPI_VERSION_MAJOR( PAPI_VERSION ), PAPI_VERSION_MINOR( PAPI_VERSION ), PAPI_VERSION_REVISION( PAPI_VERSION ) );
     
-    retval = PAPI_create_eventset( &EventSet );
-    if( retval != PAPI_OK ) fprintf( stderr, "PAPI_create_eventset failed\n" );
+    // Find cuda component index.
+    int k = PAPI_num_components();                                      // get number of components.
+    for (i=0; i<k && cid<0; i++) {                                      // while not found,
+        PAPI_component_info_t *aComponent = 
+            (PAPI_component_info_t*) PAPI_get_component_info(i);        // get the component info.     
+        if (aComponent == NULL) {                                       // if we failed,
+            fprintf(stderr,  "PAPI_get_component_info(%i) failed, "
+                "returned NULL. %i components reported.\n", i,k);
+            exit(-1);    
+        }
+
+       if (strcmp("cuda", aComponent->name) == 0) cid=i;                // If we found our match, record it.
+    } // end search components.
+
+    if (cid < 0) {                                                      // if no PCP component found,
+        fprintf(stderr, "Failed to find cuda component among %i "
+            "reported components.\n", k);
+        PAPI_shutdown();
+        exit(-1); 
+    }
+
+    printf("Found CUDA Component at id %d\n", cid);
+
+    CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
+    CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
     
     // In this example measure events from each GPU
     int numEventEndings = 2;
     char const *EventEndings[] = { 
         "cuda:::metric:nvlink_total_data_transmitted",
-        "cuda:::metric:nvlink_total_data_received", 
-//      "cuda:::event:inst_executed", 
-//      "cuda:::event:elapsed_cycles_sm" 
+        "cuda:::metric:nvlink_total_data_received",
     };
 
     // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm
@@ -248,7 +281,7 @@ int main( int argc, char **argv )
     
     // Start PAPI event measurement
     retval = PAPI_start( EventSet );
-    if( retval != PAPI_OK )  fprintf( stderr, "PAPI_start failed\n" );
+    if( retval != PAPI_OK )  fprintf( stderr, "PAPI_start failed, retval=%i [%s].\n", retval, PAPI_strerror(retval));
 #endif
     
     // Start timing and compute on GPU(s)
@@ -314,17 +347,7 @@ int main( int argc, char **argv )
         CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
 
-    // retval = PAPI_read( EventSet, values );
-    // if( retval != PAPI_OK )  fprintf( stderr, "PAPI_read failed\n" );
-    // for( i = 0; i < eventCount; i++ )
-    //     printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
-
-    // retval = PAPI_read( EventSet, values );
-    // if( retval != PAPI_OK )  fprintf( stderr, "PAPI_read failed\n" );
-    // for( i = 0; i < eventCount; i++ )
-    //     printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
-
-    retval = PAPI_stop( EventSet, values );
+    retval = PAPI_stop( EventSet, values );                                         // Stop (will read values).
     if( retval != PAPI_OK )  fprintf( stderr, "PAPI_stop failed\n" );
     for( i = 0; i < eventCount; i++ )
         printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
@@ -336,13 +359,6 @@ int main( int argc, char **argv )
     PAPI_shutdown();
 #endif
 
-    for( i = 0; i < GPU_N; i++ ) {
-        CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Sum_from_device ) );
-        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Sum ) );
-        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Data ) );
-        // Shut down this GPU
-        CHECK_CUDA_ERROR( cudaStreamDestroy( plan[i].stream ) );
-    }
     sumGPU = 0;
     for( i = 0; i < GPU_N; i++ ) {
         sumGPU += h_SumGPU[i];
@@ -373,9 +389,12 @@ int main( int argc, char **argv )
 
     // Cleanup and shutdown
     for( i = 0; i < GPU_N; i++ ) {
-        CHECK_CUDA_ERROR( cudaSetDevice( i ) );
+        CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Sum_from_device ) );
         CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Data ) );
-        cudaDeviceReset();
+        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Sum ) );
+        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Data ) );
+        // Shut down this GPU
+        CHECK_CUDA_ERROR( cudaStreamDestroy( plan[i].stream ) );
     }
 
 #ifdef CUPTI_ONLY
