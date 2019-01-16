@@ -544,6 +544,8 @@ typedef enum {
 	PFM_PMU_INTEL_KNM_UNC_UBOX,	/* Intel Knights Mill Ubox uncore */
 	PFM_PMU_INTEL_KNM_UNC_M2PCIE,	/* Intel Knights Mill M2PCIe uncore */
 	PFM_PMU_ARM_THUNDERX2,		/* Cavium ThunderX2 */
+
+	PFM_PMU_INTEL_CLX,		/* Intel CascadeLake X */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

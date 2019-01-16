@@ -925,7 +925,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		}
 
 		for (j=i+1; j < (int)pmu->pme_count; j++) {
-			if (pe[i].code == pe[j].code && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
+			if (pe[i].code == pe[j].code && pe[i].model == pe[j].model && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
 				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
 				error++;
 				}
@@ -1170,4 +1170,30 @@ pfm_intel_x86_can_auto_encode(void *this, int pidx, int uidx)
 		return 0;
 
 	return !intel_x86_uflag(this, pidx, uidx, INTEL_X86_NO_AUTOENCODE);
+}
+
+static int
+intel_x86_event_valid(void *this, int i)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	pfmlib_pmu_t *pmu = this;
+
+        return pe[i].model == 0 || pe[i].model == pmu->pmu;
+}
+
+int
+pfm_intel_x86_get_num_events(void *this)
+{
+	pfmlib_pmu_t *pmu = this;
+	int i, num = 0;
+
+	/*
+	 * count actual number of events for specific PMU.
+	 * Table may contain more events for the family than
+	 * what a specific model actually supports.
+	 */
+	for (i = 0; i < pmu->pme_count; i++)
+		if (intel_x86_event_valid(this, i))
+			num++;
+	return num;
 }

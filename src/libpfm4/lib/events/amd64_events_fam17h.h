@@ -954,7 +954,7 @@ static const amd64_entry_t amd64_fam17h_pe[]={
     .umasks = amd64_fam17h_tablewalker_allocation,
   },
   { .name   = "MERGE",
-    .desc   = "See <xref file='svd_core_pmc' title='Large Increment per Cycle Events' format='name'>.",
+    .desc   = "Merge two counters together. This event must be programmed on the odd performance counter",
     .modmsk  = AMD64_FAM17H_ATTRS,
     .code    = 0xfff,
     .flags   = 0,
