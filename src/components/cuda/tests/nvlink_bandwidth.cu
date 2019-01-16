@@ -84,7 +84,6 @@
 #define BUF_SIZE       (32 * 1024)
 #define ALIGN_SIZE     (8)
 #define SUCCESS        (0)
-#define NUM_METRIC     (4)
 #define MAX_SIZE       (64*1024*1024)   // 64 MB
 
 int Streams;                            // Number of physical copy engines to use; taken from Device Properties asyncEngineCount.
@@ -105,7 +104,9 @@ int gpuToGpu = 0;
 extern "C" __global__ void test_nvlink_bandwidth(float *src, float *dst)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    dst[idx] = src[idx] * 2.0f;
+    if (idx % 2) dst[idx] = src[idx] * 2.0f;
+    else         dst[idx] = src[idx] * 1.5f;
+//  dst[idx] = src[idx] * 2.0f;
 } // end routine
 
 #define DIM(x) (sizeof(x)/sizeof(*(x)))
@@ -147,13 +148,15 @@ void testCpuToGpu(CUpti_EventGroup * eventGroup,
     fprintf(stderr, "Streams = %d.\n", Streams); 
     // Unidirectional copy H2D (Host to Device).
     for(i = 0; i < Streams; i++) {
-        RUNTIME_API_CALL(cudaMemcpyAsync((void *) pDevBuffer[i], pHostBuffer[i], bufferSize, cudaMemcpyHostToDevice, cudaStreams[i]));
+//      RUNTIME_API_CALL(cudaMemcpyAsync((void *) pDevBuffer[i], pHostBuffer[i], bufferSize, cudaMemcpyHostToDevice, cudaStreams[i]));
+        test_nvlink_bandwidth <<< GRID_SIZE, BLOCK_SIZE >>> ((float *) pDevBuffer[i], (float *) pHostBuffer[i]);
     }
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
     // Unidirectional copy D2H (Device to Host).
     for(i = 0; i < Streams; i++) {
-        RUNTIME_API_CALL(cudaMemcpyAsync(pHostBuffer[i], (void *) pDevBuffer[i], bufferSize, cudaMemcpyDeviceToHost, cudaStreams[i]));
+//      RUNTIME_API_CALL(cudaMemcpyAsync(pHostBuffer[i], (void *) pDevBuffer[i], bufferSize, cudaMemcpyDeviceToHost, cudaStreams[i]));
+        test_nvlink_bandwidth <<< GRID_SIZE, BLOCK_SIZE >>> ((float *) pHostBuffer[i], (float *) pDevBuffer[i]);
     }
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
@@ -289,11 +292,32 @@ int main(int argc, char *argv[])
     // conflict of some sort, but haven't tracked down the documentation to
     // prove that.  -Tony C.
 
+#define NUM_METRIC     ( 4)
     const char *MetricBase[NUM_METRIC] = {
-         "cuda:::metric:nvlink_total_data_transmitted"
-        ,"cuda:::metric:nvlink_transmit_throughput"
-        ,"cuda:::metric:nvlink_total_data_received"
-        ,"cuda:::metric:nvlink_receive_throughput"
+        "cuda:::metric:nvlink_total_data_transmitted"        , // okay Group NVLINK.
+        "cuda:::metric:nvlink_transmit_throughput"           , // okay Group NVLINK.
+        "cuda:::metric:nvlink_total_data_received"           , // okay Group NVLINK.
+        "cuda:::metric:nvlink_receive_throughput"            , // okay Group NVLINK.
+//      "cuda:::metric:inst_per_warp"                        , // okay group A.
+//      "cuda:::metric:warp_execution_efficiency"            , // okay Group A.
+//      "cuda:::metric:warp_nonpred_execution_efficiency"    , // okay Group A.
+//      "cuda:::metric:shared_load_transactions_per_request" , // okay Group A.
+//      "cuda:::metric:shared_store_transactions_per_request", // okay Group A.
+//      "cuda:::metric:shared_store_transactions"            , // okay Group A.
+//      "cuda:::metric:shared_load_transactions"             , // okay Group A.
+//      "cuda:::metric:inst_replay_overhead"                 , // Group B
+//      "cuda:::metric:local_load_transactions"              , // Group B.
+//      "cuda:::metric:local_load_transactions_per_request"  , // Group NONE. Bad Combo, even by itself requires 2 passes.
+//      "cuda:::metric:local_store_transactions_per_request" , // Group NONE. Bad Combo, even by itself.
+//      "cuda:::metric:gld_transactions_per_request"         , // Group NONE. Bad Combo, even by itself.
+//      "cuda:::metric:gst_transactions_per_request"         , // Group NONE. Bad Combo, even by itself.
+//      "cuda:::event:active_cycles"                         ,
+//      "cuda:::event:active_warps"                          ,
+//      "cuda:::event:active_cycles"                         ,
+//      "cuda:::event:active_warps"                          ,
+//      "cuda:::event:inst_executed"                         ,
+//      "cuda:::event:warps_launched"                        ,
+//      "cuda:::metric:branch_efficiency"                    , // Even by itself, causes signal 11 (seg fault) on SECOND read.
     };
     
     // Parse command line arguments
@@ -425,8 +449,15 @@ int main(int argc, char *argv[])
         for(i = 0; i < eventCount; i++) values[i] = -1;                // init.
 
         if(cpuToGpu) {
+            RUNTIME_API_CALL(cudaSetDevice(1));
+            for(i = 0; i < Streams; i++) 
+                RUNTIME_API_CALL(cudaMalloc((void **) &pDevBuffer1[i], bufferSize));
             CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
+            RUNTIME_API_CALL(cudaSetDevice(0));
             testCpuToGpu(eventGroup, pDevBuffer0, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
+            RUNTIME_API_CALL(cudaSetDevice(1));
+            testCpuToGpu(eventGroup, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
+            RUNTIME_API_CALL(cudaSetDevice(0));
             CALL_PAPI_OK(PAPI_stop(EventSet, values));                      // Stop and read values.
         } else if(gpuToGpu) {
             RUNTIME_API_CALL(cudaSetDevice(1));
