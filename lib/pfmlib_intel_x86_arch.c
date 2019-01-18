@@ -43,23 +43,12 @@
 extern pfmlib_pmu_t intel_x86_arch_support;
 
 static intel_x86_entry_t *x86_arch_pe;
-/*
- * .byte 0x53 == push ebx. it's universal for 32 and 64 bit
- * .byte 0x5b == pop ebx.
- * Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
- * Using the opcode directly avoids this problem.
- */
+
 static inline void
 cpuid(unsigned int op, unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d)
 {
-  __asm__ __volatile__ (".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b"
-       : "=a" (*a),
-	     "=S" (*b),
-		 "=c" (*c),
-		 "=d" (*d)
-       : "a" (op));
+	asm volatile("cpuid" : "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d) : "a" (op) : "memory");
 }
-
 
 /*
  * create architected event table
