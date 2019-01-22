@@ -724,9 +724,11 @@ CPU,hsw_ep
 CPU,bdw
 CPU,bdw_ep
 CPU,skl
-CPU,skx
 # Note, libpfm4 treats Kaby Lake as just a form of skylake
 CPU,kbl
+CPU,skx
+# Note, libpfm4 treats Cascade Lake-X as just a form of skylake-X
+CPU,clx
 PRESET,PAPI_TOT_CYC,NOT_DERIVED,CPU_CLK_THREAD_UNHALTED:THREAD_P
 PRESET,PAPI_TOT_INS,NOT_DERIVED,INST_RETIRED:ANY_P
 PRESET,PAPI_REF_CYC,NOT_DERIVED,UNHALTED_REFERENCE_CYCLES
