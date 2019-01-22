@@ -694,6 +694,7 @@ static int papicuda_init_thread(hwd_context_t * ctx)
 {
     (void) ctx;
     SUBDBG("Entering\n");
+
     return PAPI_OK;
 }
 
@@ -764,6 +765,7 @@ static int papicuda_init_control_state(hwd_control_state_t * ctrl)
         global_papicuda_control->countOfActiveCUContexts = 0;
         global_papicuda_control->activeEventCount = 0;
     }
+
     return PAPI_OK;
 } // end papicuda_init_control_state
 

@@ -35,9 +35,6 @@
 #include <cupti.h>
 #include <timer.h>
 
-#include "papi.h"
-#include "papi_test.h"
-
 #ifndef MAX
 #define MAX(a,b) (a > b ? a : b)
 #endif
@@ -507,10 +504,9 @@ int main( int argc, char **argv )
             CUPTI_CALL(cuptiMetricCreateEventGroupSets(ctx[i], 
                 sizeof(CUpti_MetricID), &metricId, &egs[i]));               // Get the pointer to sets.
             
-            printf("Metric device %i requires %i sets, the first has %i Groups.\n", 
-                i, egs[i]->numSets, egs[i]->sets[0].numEventGroups);
+            printf("%s Metric device %i requires %i sets, the first has %i Groups.\n", 
+                NameToCollect, i, egs[i]->numSets, egs[i]->sets[0].numEventGroups);
             if (egs[i]->numSets > 1) {
-                printf("'%s' requires multiple application runs to complete. Aborting.\n", NameToCollect);
                 fprintf(stderr, "%s Aborted requires %i sets.\n", NameToCollect, egs[i]->numSets);
                 exit(-1);
             }
@@ -550,7 +546,7 @@ int main( int argc, char **argv )
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         // Copy input data from CPU
         CHECK_CUDA_ERROR( cudaMemcpyAsync( plan[i].d_Data, plan[i].h_Data, plan[i].dataN * sizeof( float ), cudaMemcpyHostToDevice, plan[i].stream ) );
-        // Perform GPU computations. Sums are ketp in plan[i].d_Sum.
+        // Perform GPU computations. Sums are kept in plan[i].d_Sum.
         if (RunKernel) {                                // Can be skipped to analyze an event or metric.
             printf("Executing GPU Kernel.\n"); fflush(stdout);
             reduceKernel <<< BLOCK_N, THREAD_N, 0, plan[i].stream >>> ( plan[i].d_Sum, plan[i].d_Data, plan[i].dataN );
@@ -599,6 +595,7 @@ int main( int argc, char **argv )
         CHECK_CU_ERROR( cuCtxSynchronize( ), "cuCtxSynchronize" );              // wait for all to finish.
 
         if (isMetric) {                                                         // If we have a metric,
+            fprintf(stderr, "Reading metric %s.\n", NameToCollect);
             CUpti_MetricValue metricValue;
             readMetricValue(&(egs[i]->sets[0]),                                 // Pointer to the single set.
             device[i], metricId,
