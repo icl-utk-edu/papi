@@ -6,6 +6,10 @@
  * @file    linux-infiniband_umad.c
  * @author  Heike Jagode (in collaboration with Michael Kluge, TU Dresden)
  *          jagode@eecs.utk.edu
+ * @author  Tony Castaldo; minor changes; the infiniband_umad.h differs
+ *          on the declaration of umad_get_ca(), and demands a const char*
+ *          instead of a char*. Corrected the prototypes below.
+ *
  *
  * @ingroup papi_components 		
  * 
@@ -48,7 +52,7 @@ void (*_dl_non_dynamic_init)(void) __attribute__((weak));
  *************************************************************************************/
 int                 __attribute__((weak)) umad_init              ( void );
 int                 __attribute__((weak)) umad_get_cas_names     ( char [][UMAD_CA_NAME_LEN], int  );
-int                 __attribute__((weak)) umad_get_ca            ( char *, umad_ca_t * );
+int                 __attribute__((weak)) umad_get_ca            ( const char *, umad_ca_t * );
 void                __attribute__((weak)) mad_decode_field       ( unsigned char *, enum MAD_FIELDS, void *);
 struct ibmad_port * __attribute__((weak)) mad_rpc_open_port      ( char *, int, int *, int );
 int                 __attribute__((weak)) ib_resolve_self_via    ( ib_portid_t *, int *, ibmad_gid_t *, const struct ibmad_port * );
@@ -57,7 +61,7 @@ uint8_t *           __attribute__((weak)) pma_query_via          ( void *, ib_po
 
 int                  (*umad_initPtr)             ( void );
 int                  (*umad_get_cas_namesPtr)    ( char [][UMAD_CA_NAME_LEN], int );
-int                  (*umad_get_caPtr)           ( char *, umad_ca_t * );
+int                  (*umad_get_caPtr)           ( const char *, umad_ca_t * );
 void                 (*mad_decode_fieldPtr)      ( unsigned char *, enum MAD_FIELDS, void * );
 struct ibmad_port *  (*mad_rpc_open_portPtr)     ( char *, int, int *, int );
 int                  (*ib_resolve_self_viaPtr)   (ib_portid_t *, int *, ibmad_gid_t *, const struct ibmad_port * );
