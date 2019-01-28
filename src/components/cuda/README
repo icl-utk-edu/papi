@@ -70,9 +70,13 @@ Build with CUDA_DIR and CUPTI_DIR specified
 
 Testing the component requires that libraries for PAPI, CUDA, CUPTI
 can be found or are statically linked in to the executable.  You may
-need to add the library directories as shown here.  
+need to add the library directories; examples are shown here.  
 
  % export LD_LIBRARY_PATH=${CUDA_DIR}/lib64:${CUPTI_DIR}/lib64:${LD_LIBRARY_PATH}
+
+Note libraries may be found in different places on different systems; the point
+is that we need an environment variable $CUDA_DIR (with the underscore), and 
+the CUPTI directory in the $LD_LIBRARY_PATH. 
 
 Before starting working with the cuda component, verify it's active by
 running:
