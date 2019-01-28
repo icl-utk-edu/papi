@@ -133,7 +133,10 @@ int main( int argc, char **argv )
     for ( i=0; i<GPU_N; i++ ) {
         CHECK_CU_ERROR( cuDeviceGet( &device[i], i ), "cuDeviceGet" );
         CHECK_CU_ERROR( cuDeviceGetName( deviceName, 64, device[i] ), "cuDeviceGetName" );
-        CHECK_CU_ERROR( cuDeviceComputeCapability( &computeCapabilityMajor, &computeCapabilityMinor,  device[i] ), "cuDeviceComputeCapability" );
+        CHECK_CU_ERROR( cuDeviceGetAttribute( &computeCapabilityMajor, 
+            CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, device[i]), "cuDeviceGetAttribute");
+        CHECK_CU_ERROR( cuDeviceGetAttribute( &computeCapabilityMinor, 
+            CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, device[i]), "cuDeviceGetAttribute");
         cudaRuntimeGetVersion( &runtimeVersion );
         cudaDriverGetVersion( &driverVersion );
         printf( "CUDA Device %d: %s : computeCapability %d.%d runtimeVersion %d.%d driverVersion %d.%d\n", i, deviceName, computeCapabilityMajor, computeCapabilityMinor, runtimeVersion/1000, (runtimeVersion%100)/10, driverVersion/1000, (driverVersion%100)/10 );

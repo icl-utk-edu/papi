@@ -47,7 +47,8 @@ int main(int argc, char** argv)
 	   RUN papi_native_avail to get a list of CUDA events that are 
 	   supported on your machine */
         // e.g. on a P100 nvml:::Tesla_P100-SXM2-16GB:power
-        char *EventName[] = { "PAPI_FP_OPS" };
+        char anEvent[64] = "PAPI_FP_OPS";
+        char *EventName[] = { anEvent };
         int events[NUM_EVENTS];
 	int eventCount = 0;
 	
