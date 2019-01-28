@@ -975,7 +975,7 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl,
                 papicuda_cleanup_eventset(ctrl);                                // Will do cuptiEventGroupSetsDestroy() to clean up memory.
                 return(PAPI_ECOMBO);
             } else  {
-                SUBDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-required %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, eventctrl->eventGroupSets->numSets);
+                SUBDBG("Created eventGroupSets. nativeCount %d, allEventsCount %d. Sets (passes-required) = %d) \n", gctrl->activeEventCount, eventctrl->allEventsCount, eventctrl->eventGroupSets->numSets);
             }
 
 #endif // #if/#else/#endif on PAPICUDA_KERNEL_REPLAY_MODE
