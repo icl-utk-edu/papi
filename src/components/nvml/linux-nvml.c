@@ -580,6 +580,9 @@ detectDevices()
 
     unsigned int temp = 0;
 
+    (void) power_version;        // prevent test/debug variables from causing warnings.
+    (void) isTesla;              // prevent test/debug variables from causing warnings.
+
     memset(names, 0x0, device_count * 64);
 
     /* So for each card, check whats querable */
