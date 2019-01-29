@@ -175,6 +175,7 @@ getClockSpeed(nvmlDevice_t dev, nvmlClockType_t which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
 
     return (unsigned long long)ret;
@@ -190,6 +191,7 @@ getEccLocalErrors(nvmlDevice_t dev, nvmlEccBitType_t bits, int which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     switch (which_one) {
     case LOCAL_ECC_REGFILE:
@@ -215,6 +217,7 @@ getFanSpeed(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long)ret;
 }
@@ -228,6 +231,7 @@ getMaxClockSpeed(nvmlDevice_t dev, nvmlClockType_t which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long) ret;
 }
@@ -241,6 +245,7 @@ getMemoryInfo(nvmlDevice_t dev, int which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
 
     switch (which_one) {
@@ -266,6 +271,7 @@ getPState(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     switch (state) {
     case NVML_PSTATE_15:
@@ -318,6 +324,7 @@ getPowerUsage(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long) power;
 }
@@ -331,6 +338,7 @@ getTemperature(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long)ret;
 }
@@ -344,6 +352,7 @@ getTotalEccErrors(nvmlDevice_t dev, nvmlEccBitType_t bits)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return counts;
 }
@@ -360,6 +369,7 @@ getUtilization(nvmlDevice_t dev, int which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
 
     switch (which_one) {
@@ -493,6 +503,8 @@ nvml_hardware_read(long long *value, int which_one)
     default:
         return PAPI_EINVAL;
     }
+    if (*value == (long long)(unsigned long long) - 1)
+        return PAPI_EINVAL;
 
     return PAPI_OK;
 }
@@ -564,19 +576,16 @@ static int
 detectDevices()
 {
     nvmlReturn_t ret;
-    nvmlEnableState_t mode = NVML_FEATURE_DISABLED;
+    nvmlEnableState_t mode        = NVML_FEATURE_DISABLED;
+    nvmlEnableState_t pendingmode = NVML_FEATURE_DISABLED;
 
     char name[64];
     char inforomECC[16];
-    char inforomPower[16];
     char names[device_count][64];
 
     float ecc_version = 0.0;
-    float power_version = 0.0;
 
     int i = 0;
-    int isTesla = 0;
-    int isFermi = 0;
 
     unsigned int temp = 0;
 
@@ -584,8 +593,6 @@ detectDevices()
 
     /* So for each card, check whats querable */
     for (i = 0; i < device_count; i++) {
-        isTesla = 0;
-        isFermi = 1;
         features[i] = 0;
         
         ret = (*nvmlDeviceGetHandleByIndexPtr)(i, &devices[i]);
@@ -605,23 +612,11 @@ detectDevices()
         ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_ECC, inforomECC, 16);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
-            isFermi = 0;
-        }
-        ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_POWER, inforomPower, 16);
-        if (NVML_SUCCESS != ret) {
-            /* This implies the card is older then Fermi */
-            SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
-            SUBDBG("Based upon the return to nvmlGetInforomVersion, we conclude this card is older then Fermi.\n");
-            isFermi = 0;
+        } else {
+            ecc_version = strtof(inforomECC, NULL);
         }
 
-        ecc_version = strtof(inforomECC, NULL);
-        power_version = strtof(inforomPower, NULL);
-
-        isTesla = (NULL == strstr(name, "Tesla")) ? 0 : 1;
-
-        /* For Tesla and Quadro products from Fermi and Kepler families. */
-        if (isFermi) {
+        if (getClockSpeed(devices[i], NVML_CLOCK_GRAPHICS) != (unsigned long long) - 1) {
             features[i] |= FEATURE_CLOCK_INFO;
             num_events += 3;
         }
@@ -630,7 +625,7 @@ detectDevices()
             requires NVML_INFOROM_ECC 2.0 or higher for location-based counts
             requires NVML_INFOROM_ECC 1.0 or higher for all other ECC counts
             requires ECC mode to be enabled. */
-        ret = (*nvmlDeviceGetEccModePtr)(devices[i], &mode, NULL);
+        ret = (*nvmlDeviceGetEccModePtr)(devices[i], &mode, &pendingmode);
         if (NVML_SUCCESS == ret) {
             if (NVML_FEATURE_ENABLED == mode) {
                 if (ecc_version >= 2.0) {
@@ -646,12 +641,14 @@ detectDevices()
             SUBDBG("nvmlDeviceGetEccMode does not appear to be supported. (nvml return code %d)\n", ret);
         }
 
-        /* For all discrete products with dedicated fans */
-        features[i] |= FEATURE_FAN_SPEED;
-        num_events++;
+        /* Check if fan speed is available */
+        if (getFanSpeed(devices[i]) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_FAN_SPEED;
+            num_events++;
+        }
 
-        /* For Tesla and Quadro products from Fermi and Kepler families. */
-        if (isFermi) {
+        /* Check if clock data are available */
+        if (getMaxClockSpeed(devices[i], NVML_CLOCK_GRAPHICS) != (unsigned long long) - 1) {
             features[i] |= FEATURE_MAX_CLOCK;
             num_events += 3;
         }
@@ -660,8 +657,8 @@ detectDevices()
         features[i] |= FEATURE_MEMORY_INFO;
         num_events += 3; /* total, free, used */
 
-        /* For Tesla and Quadro products from the Fermi and Kepler families. */
-        if (isFermi) {
+        /* Check if performance state is available */
+        if (getPState(devices[i]) != (unsigned long long) - 1) {
             features[i] |= FEATURE_PERF_STATES;
             num_events++;
         }
@@ -679,9 +676,11 @@ detectDevices()
             SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on this card. (nvml return code %d)\n", ret);
         }
 
-        /* For all discrete and S-class products. */
-        features[i] |= FEATURE_TEMP;
-        num_events++;
+        /* Check if temperature data are available */
+        if (getTemperature(devices[i]) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_TEMP;
+            num_events++;
+        }
 
         // For power_management_limit
         {
@@ -716,8 +715,8 @@ detectDevices()
             SUBDBG("Done nvmlDeviceGetPowerManagementLimitConstraintsPtr\n");
         }
 
-        /* For Tesla and Quadro products from the Fermi and Kepler families */
-        if (isFermi) {
+        /* Check if temperature data are available */
+        if (getUtilization(devices[i], GPU_UTILIZATION) != (unsigned long long) - 1) {
             features[i] |= FEATURE_UTILIZATION;
             num_events += 2;
         }
@@ -1068,7 +1067,7 @@ _papi_nvml_init_component(int cidx)
     if ((papi_errorcode = detectDevices()) != PAPI_OK) {
         papi_free(features);
         papi_free(devices);
-        sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occurred in device feature detection, please check your NVIDIA Management Library and CUDA install.");
+        sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install.");
         return PAPI_ENOSUPP;
     }
 
