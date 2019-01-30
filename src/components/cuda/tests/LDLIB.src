@@ -2,9 +2,5 @@
 # NOTE on peak you also need 'module load cuda' to even get the cuda 
 # directories. That will set environment variable $CUDAPATH, you may need to
 # 'export CUDA_DIR=$CUDAPATH'.
-# PEAK version.
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_DIR/extras/CUPTI/lib64
-#
-# SATURN version.
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_DIR/extras/CUPTI/
-#
+# version for PEAK, Saturn.
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_DIR/extras/CUPTI/lib64
