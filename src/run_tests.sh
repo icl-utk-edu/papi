@@ -42,8 +42,6 @@ COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -n
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
 ALLTESTS="$VTESTS $CTESTS $FTESTS $COMPTESTS";
-x=0;
-CWD=`pwd`
 
 PATH=./ctests:$PATH
 export PATH
@@ -62,10 +60,10 @@ if [ -r /proc/cpuinfo ]; then
 fi
 
 echo ""
-if ["$VALGRIND" = ""]; then
-  echo "The following test cases will be run:";
-else
+if [ "x$VALGRIND" != "x" ]; then
   echo "The following test cases will be run using valgrind:";
+else
+  echo "The following test cases will be run:";
 fi
 echo ""
 
@@ -125,7 +123,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	RAN="$i $RAN"
-    printf "Running %-50s %s" $i:
+    printf "Running %-50s " $i:
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
@@ -148,7 +146,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
 	  RAN="$i $RAN"
-      printf "Running %-50s %s" $i:
+      printf "Running %-50s " $i:
       $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
@@ -195,7 +193,7 @@ do
     if [ -x $i ]; then
 	RAN="$i $RAN"
     printf "Running $i:\n";
-    printf "%-59s"
+    printf "%-59s" ""
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
