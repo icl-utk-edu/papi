@@ -1105,7 +1105,7 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	( void ) ctx;			/*unused */
 	int i;
 	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
-	unsigned long long count, enabled, running, adjusted;
+	unsigned long long count, enabled = 0, running = 0, adjusted;
 	int errors=0;
 
 	/* we must read each counter individually */
