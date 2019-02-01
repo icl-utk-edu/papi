@@ -914,10 +914,10 @@ INFINIBAND_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 papi_vector_t _infiniband_umad_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */
-				 .name ="infiniband",
-				 .short_name="infiniband",
+				 .name ="infiniband_umad",
+				 .short_name="infiniband_umad",
 				 .version = "4.2.1",
-				 .description = "Infiniband statistics",
+				 .description = "Infiniband statistics (for OFED versions < 1.4)",
 				 .num_mpx_cntrs = INFINIBAND_MAX_COUNTERS,
 				 .num_cntrs = INFINIBAND_MAX_COUNTERS,
 				 .default_domain = PAPI_DOM_ALL,
