@@ -18,6 +18,9 @@ configuration settings. This script needs to be executed only once.
 For example, one configuration may look like this
     %./configure --with-nvml-libdir=/usr/lib64/nvidia --with-nvml-incdir=/usr/local/cuda/include --with-cuda-dir=/usr/local/cuda
 
+A recent (02/01/2019) NVML configure on the ICL saturn system:
+./configure --with-nvml-libdir=/usr/local/cuda-9.2/targets/x86_64-linux/lib/stubs --with-nvml-incdir=/usr/local/cuda-9.2/include --with-cuda-dir=/usr/local/cuda-9.2 
+
 The NVML component is added to PAPI during the configuration of PAPI
 by adding the '--with-components=nvml' command line option to
 configure.    
