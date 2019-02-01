@@ -159,7 +159,8 @@ static unsigned
 createNativeEvents( void )
 {
 	unsigned id = 0;
-        unsigned int count;
+	unsigned int count;
+	(void) count; // Ignore not used warnings.
 
 	int chip_nr = 0;
 	const sensors_chip_name *chip_name;
