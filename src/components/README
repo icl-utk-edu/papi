@@ -43,3 +43,36 @@ NOTE: there is no need to modify any PAPI code other than adding your tests and 
 Some components under source control have additional information specific to their build process or operation. That information can be found in a README file inside the component directory. If the README doesn't exist, no special information is necessary.
 
 */
+
+/*-----------------------------------------------------------------------------
+  Notes on components as of February 2019 release 5.7.0.0.
+appio
+bgpm                          IBM Blue Gene Q specific. 
+coretemp                      Linux HW Monitor, temperature and other info.
+coretemp_freebsd              FREEBSD version of HW Monitor, temperature and other info.
+cuda                          CUDA events and metrics via NVIDIA CUpti interfaces.
+emon                          IBM Blue Gene Q specific.
+example                       Simple example component. 
+host_micpower                 Requires its own configure and Knights Corner (KNC) architecture.
+infiniband                    Linux Infiniband stats using the sysfs interface. For OFED version < 1.4.
+infiniband_umad               Requires its own configure. Infiniband stats for OFED version >= 1.4.
+libmsr                        Requires its own configure and libmsr from LLNL, for power (RAPL) read/write.
+lmsensors                     Requires its own configure.
+lustre                        lustre filesystem stats
+micpower                      For reading power on Intel XEON PHI. (MIC) 
+mx                            Myricom MX (Myrinet Express) statistics.
+net                           Linux network driver statistics
+nvml                          Requires its own configure; monitors NVIDIA hardware (power, temp, fan speed, etc).
+pcp                           Performance Co-Pilot interface.
+perfctr                       OLD, only used for Linux before 2.6.31.
+perfctr_ppc                   OLD, only used for Linux before 2.6.31.
+perf_event                    Linux perf_event CPU counters
+perf_event_uncore             Linux perf-event CPU uncore and Northbridge
+perfmon2                      OLD, only used for Linux before 2.6.31.
+perfmon_ia64                  OLD, only used for Linux before 2.6.31.
+powercap                      Linux Powercap energy measurements.
+rapl                          Linux RAPL energy measurments.
+stealtime                     Stealtime Filesystem statistics. 
+vmware                        Requires its own configure. Only runs in the VMWARE virtual environment.
+
+*/ 
