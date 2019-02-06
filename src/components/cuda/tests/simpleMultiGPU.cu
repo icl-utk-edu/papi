@@ -1,18 +1,25 @@
-/* PAPI Multiple GPU example.  This example is taken from the NVIDIA
+/* 
+ * PAPI Multiple GPU example.  This example is taken from the NVIDIA
  * documentation (Copyright 1993-2013 NVIDIA Corporation) and has been
  * adapted to show the use of CUPTI and PAPI in collecting event
  * counters for multiple GPU contexts.  PAPI Team (2015)
  */
 
 /*
- * Copyright 1993-2013 NVIDIA Corporation.  All rights reserved.
+ * This software contains source code provided by NVIDIA Corporation
  *
- * Please refer to the NVIDIA end user license agreement (EULA) associated
- * with this source code for terms and conditions that govern your use of
- * this software. Any use, reproduction, disclosure, or distribution of
- * this software and related documentation outside the terms of the EULA
- * is strictly prohibited.
+ * According to the Nvidia EULA (compute 5.5 version)
+ * http://developer.download.nvidia.com/compute/cuda/5_5/rel/docs/EULA.pdf
  *
+ * Chapter 2. NVIDIA CORPORATION CUDA SAMPLES END USER LICENSE AGREEMENT
+ * 2.1.1. Source Code
+ * Developer shall have the right to modify and create derivative works with the Source
+ * Code. Developer shall own any derivative works ("Derivatives") it creates to the Source
+ * Code, provided that Developer uses the Materials in accordance with the terms and
+ * conditions of this Agreement. Developer may distribute the Derivatives, provided that
+ * all NVIDIA copyright notices and trademarks are propagated and used properly and
+ * the Derivatives include the following statement: “This software contains source code
+ * provided by NVIDIA Corporation.”
  */
 
 /*
