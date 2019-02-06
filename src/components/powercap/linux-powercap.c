@@ -184,6 +184,7 @@ static int _powercap_init_component( int cidx )
 
     // not a valid pkg/component directory so continue
     if (events == NULL) { continue; }
+    closedir(events);                                                // opendir has mallocs; so clean up.
 
     // loop through pkg events and create powercap event entries
     for (e = 0; e < PKG_NUM_EVENTS; e++) {
@@ -216,6 +217,7 @@ static int _powercap_init_component( int cidx )
     c = 0;
     snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d:%d/", s, c);
     while((events = opendir(events_dir)) != NULL) {
+      closedir(events);                                                // opendir has mallocs; so clean up.
 
       // loop through pkg events and create powercap event entries
       for (e = 0; e < COMPONENT_NUM_EVENTS; e++) {
