@@ -182,7 +182,8 @@ addLustreFS( const char *name,
 	fff = fopen( procpath_general, "r" );
 	if ( fff == NULL ) {
 	  SUBDBG("can not open '%s'\n", procpath_general );
-	  free(fs);
+     free(fs->proc_file);                                   // strdup.
+	  free(fs);                                              // malloc.
 	  return PAPI_ESYS;
 	}
 	fclose(fff);
@@ -191,7 +192,9 @@ addLustreFS( const char *name,
 	fff = fopen( procpath_readahead, "r" );
 	if ( fff == NULL ) {
 	  SUBDBG("can not open '%s'\n", procpath_readahead );
-	  free(fs);
+     free(fs->proc_file_readahead);                         // strdup.
+     free(fs->proc_file);                                   // strdup.
+	  free(fs);                                              // malloc.
 	  return PAPI_ESYS;
 	}
 	fclose(fff);
@@ -200,7 +203,9 @@ addLustreFS( const char *name,
 	if (NULL == (fs->read_cntr = addCounter( counter_name, 
 				    "bytes read on this lustre client", 
 				    "bytes" ))) {
-			free(fs);
+         free(fs->proc_file_readahead);                         // strdup.
+         free(fs->proc_file);                                   // strdup.
+	      free(fs);                                              // malloc.
 			return PAPI_ENOMEM;
 	}
 
@@ -209,7 +214,9 @@ addLustreFS( const char *name,
 				     "bytes written on this lustre client",
 				     "bytes" ))) {
 			free(fs->read_cntr);
-			free(fs);
+         free(fs->proc_file_readahead);                         // strdup.
+         free(fs->proc_file);                                   // strdup.
+	      free(fs);                                              // malloc.
 			return PAPI_ENOMEM;
 	}
 
@@ -219,7 +226,9 @@ addLustreFS( const char *name,
 					 "bytes" ))) {
 			free(fs->read_cntr);
 			free(fs->write_cntr);
-			free(fs);
+         free(fs->proc_file_readahead);                         // strdup.
+         free(fs->proc_file);                                   // strdup.
+	      free(fs);                                              // malloc.
 			return PAPI_ENOMEM;
 	}
 
@@ -401,13 +410,20 @@ host_finalize( void )
 	   lustre_native_table[i]=NULL;
 	}
 
+   papi_free(lustre_native_table);     // Free the table itself.
+   lustre_native_table = NULL;         // clear the pointer.
+	num_events = 0;
+   table_size = 32;
+
 	fs = root_lustre_fs;
 
 	while ( fs != NULL ) {
 		next_fs = fs->next;
-		free(fs->proc_file);
-		free(fs->proc_file_readahead);
-		free( fs );
+   	free(fs->read_cntr);
+   	free(fs->write_cntr);
+      free(fs->proc_file_readahead);                         // strdup.
+      free(fs->proc_file);                                   // strdup.
+      free(fs);                                              // malloc.
 		fs = next_fs;
 	}
 
@@ -434,6 +450,7 @@ _lustre_init_component( int cidx )
 	if (ret!=PAPI_OK) {
 	   strncpy(_lustre_vector.cmp_info.disabled_reason,
 		   "No lustre filesystems found",PAPI_MAX_STR_LEN);
+      host_finalize();                                         // cleanup.
 	   SUBDBG("EXIT: ret: %d\n", ret);
 	   return ret;
 	}
@@ -469,11 +486,7 @@ _lustre_shutdown_component( void )
 {
 	SUBDBG("ENTER:\n");
 	host_finalize(  );
-	papi_free( lustre_native_table );
-	lustre_native_table = NULL;
-	num_events = 0;
-        table_size = 32;
-	SUBDBG("EXIT:\n");
+   SUBDBG("EXIT:\n");
 	return PAPI_OK;
 }
 
