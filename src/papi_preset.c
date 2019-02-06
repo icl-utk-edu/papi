@@ -127,7 +127,7 @@ _papi_hwi_cleanup_all_presets( void )
 	       _papi_hwi_presets[preset_index].note = NULL;
 	    }
 	    for(j=0; j<_papi_hwi_presets[preset_index].count;j++) {
-	       papi_free(_papi_hwi_presets[preset_index].name[j]);
+           papi_free(_papi_hwi_presets[preset_index].name[j]);
 	    }
 	}
 
@@ -1110,16 +1110,20 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 			t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
 			if ((t == NULL) || (strlen(t) == 0)) {
 				// got an error, make this entry unused
-				papi_free (results[res_idx].symbol);
-				results[res_idx].symbol = NULL;
+                if (results[res_idx].symbol != NULL){
+                    papi_free (results[res_idx].symbol);
+                    results[res_idx].symbol = NULL;
+                }
 				PAPIERROR("Expected derived type after PRESET token at line %d of %s -- ignoring", line_no, name);
 				continue;
 			}
 
 			if (_papi_hwi_derived_type(t, &derived) != PAPI_OK) {
 				// got an error, make this entry unused
-				papi_free (results[res_idx].symbol);
-				results[res_idx].symbol = NULL;
+                if (results[res_idx].symbol != NULL){
+                    papi_free (results[res_idx].symbol);
+                    results[res_idx].symbol = NULL;
+                }
 				PAPIERROR("Invalid derived name %s after PRESET token at line %d of %s -- ignoring", t, line_no, name);
 				continue;
 			}
@@ -1139,8 +1143,10 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 				t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
 				if ((t == NULL) || (strlen(t) == 0)) {
 					// got an error, make this entry unused
-					papi_free (results[res_idx].symbol);
-					results[res_idx].symbol = NULL;
+                    if (results[res_idx].symbol != NULL){
+                        papi_free (results[res_idx].symbol);
+                        results[res_idx].symbol = NULL;
+                    }
 					PAPIERROR("Expected Operation string after derived type DERIVED_POSTFIX or DERIVED_INFIX at line %d of %s -- ignoring", line_no, name);
 					continue;
 				}
@@ -1197,8 +1203,21 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 			if (invalid_event) {
 				// got an error, make this entry unused
 			        // preset table is statically allocated, user defined is dynamic
-			        if (!preset_flag) papi_free (results[res_idx].symbol);
-				results[res_idx].symbol = NULL;
+                unsigned int j;
+                for (j = 0; j < results[res_idx].count; j++){
+                    if (results[res_idx].name[j] != NULL){
+                        papi_free( results[res_idx].name[j] );
+                        results[res_idx].name[j] = NULL;
+                    }
+                }
+
+                if (!preset_flag){
+                    if(results[res_idx].symbol != NULL){
+                        papi_free (results[res_idx].symbol);
+                        results[res_idx].symbol = NULL;
+                    }
+                }
+
 				continue;
 			}
 
@@ -1207,9 +1226,13 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 			// if we did not find any terms to base this derived event on, report error
 			if (i == 0) {
 				// got an error, make this entry unused
-			  if (!preset_flag) papi_free (results[res_idx].symbol);
-				results[res_idx].symbol = NULL;
-				PAPIERROR("Expected PFM event after DERIVED token at line %d of %s -- ignoring", line_no, name);
+                if (!preset_flag){
+                    if(results[res_idx].symbol != NULL){
+                        papi_free (results[res_idx].symbol);
+                        results[res_idx].symbol = NULL;
+                    }
+                }
+                PAPIERROR("Expected PFM event after DERIVED token at line %d of %s -- ignoring", line_no, name);
 				continue;
 			}
 
