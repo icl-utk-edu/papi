@@ -131,6 +131,7 @@ read_stealtime( struct STEALTIME_context *context, int starting) {
 /*
  * Component setup and shutdown
  */
+static int _stealtime_shutdown_component( void );  // prototype for later routine.
 
 static int
 _stealtime_init_component( int cidx )
@@ -147,6 +148,7 @@ _stealtime_init_component( int cidx )
 	if (fff==NULL) {
 	   strncpy(_stealtime_vector.cmp_info.disabled_reason,
 		   "Cannot open /proc/stat",PAPI_MAX_STR_LEN);
+       _stealtime_shutdown_component();
 	   return PAPI_ESYS;
 	}
 
@@ -172,11 +174,13 @@ _stealtime_init_component( int cidx )
 	   strncpy(_stealtime_vector.cmp_info.disabled_reason,
 		   "Cannot find enough CPU lines in /proc/stat",
 		   PAPI_MAX_STR_LEN);
+       _stealtime_shutdown_component();
 	   return PAPI_ESYS;
 	}
 
 	event_info=calloc(num_events,sizeof(struct counter_info));
 	if (event_info==NULL) {
+        _stealtime_shutdown_component();
 	   return PAPI_ENOMEM;
 	}
 
