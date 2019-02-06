@@ -994,14 +994,44 @@ createNativeEvents()
         strncpy(names[i], name, sizeof(names[0]) - 1);
         names[i][sizeof(names[0]) - 1] = '\0';
     }
+} // create native events.
+
+
+// Triggered by PAPI_shutdown(), but also if init fails to complete; for example due
+// to a missing library. We still need to clean up. The dynamic libs (dlxxx routines)
+// may have open mallocs that need to be free()d.
+ 
+int _papi_nvml_shutdown_component()
+{
+    SUBDBG("Enter:\n");
+    nvml_hardware_reset();
+    if (nvml_native_table != NULL) papi_free(nvml_native_table);
+    if (devices != NULL) papi_free(devices);
+    if (features != NULL) papi_free(features);
+    if (power_management_initial_limit) papi_free(power_management_initial_limit);
+    if (power_management_limit_constraint_min) papi_free(power_management_limit_constraint_min);
+    if (power_management_limit_constraint_max) papi_free(power_management_limit_constraint_max);
+    if (nvmlShutdownPtr) (*nvmlShutdownPtr)();        // Call nvml shutdown if we got that far.
+
+    device_count = 0;
+    num_events = 0;
+
+    // close the dynamic libraries needed by this component (opened in the init component call)
+    if (dl3) {dlclose(dl3); dl3=NULL;}
+    if (dl2) {dlclose(dl2); dl2=NULL;}
+    if (dl1) {dlclose(dl1); dl1=NULL;}
+
+    return PAPI_OK;
 }
+
+
 
 /** Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int
-_papi_nvml_init_component(int cidx)
+
+int _papi_nvml_init_component(int cidx)
 {
     SUBDBG("Entry: cidx: %d\n", cidx);
     nvmlReturn_t ret;
@@ -1015,18 +1045,21 @@ _papi_nvml_init_component(int cidx)
     if (linkCudaLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return (PAPI_ENOSUPP);
     }
 
     ret = (*nvmlInitPtr)();
     if (NVML_SUCCESS != ret) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA managament library failed to initialize.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
     cuerr = (*cuInitPtr)(0);
     if (cudaSuccess != cuerr) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The CUDA library failed to initialize.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
@@ -1034,18 +1067,21 @@ _papi_nvml_init_component(int cidx)
     ret = (*nvmlDeviceGetCountPtr)(&nvml_count);
     if (NVML_SUCCESS != ret) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA managament library.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
     cuerr = (*cudaGetDeviceCountPtr)(&cuda_count);
     if (cudaSuccess != cuerr) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a device count from CUDA.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
     /* We can probably recover from this, when we're clever */
     if ((cuda_count > 0) && (nvml_count != (unsigned int)cuda_count)) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA managament library have different device counts.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
@@ -1068,6 +1104,7 @@ _papi_nvml_init_component(int cidx)
         papi_free(features);
         papi_free(devices);
         sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install.");
+        _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
@@ -1394,31 +1431,6 @@ _papi_nvml_reset(hwd_context_t * ctx, hwd_control_state_t * ctl)
 
     /* Reset the hardware */
     nvml_hardware_reset();
-
-    return PAPI_OK;
-}
-
-/** Triggered by PAPI_shutdown() */
-int
-_papi_nvml_shutdown_component()
-{
-    SUBDBG("Enter:\n");
-    nvml_hardware_reset();
-    if (nvml_native_table != NULL) papi_free(nvml_native_table);
-    if (devices != NULL) papi_free(devices);
-    if (features != NULL) papi_free(features);
-    if (power_management_initial_limit) papi_free(power_management_initial_limit);
-    if (power_management_limit_constraint_min) papi_free(power_management_limit_constraint_min);
-    if (power_management_limit_constraint_max) papi_free(power_management_limit_constraint_max);
-   (*nvmlShutdownPtr)();
-
-    device_count = 0;
-    num_events = 0;
-
-    // close the dynamic libraries needed by this component (opened in the init component call)
-    if (dl3) dlclose(dl3); dl3=NULL;
-    if (dl2) dlclose(dl2); dl2=NULL;
-    if (dl1) dlclose(dl1); dl1=NULL;
 
     return PAPI_OK;
 }
