@@ -1099,6 +1099,8 @@ _pe_libpfm4_shutdown(papi_vector_t *my_vector,
 
   free(event_table->native_events);
 
+  pfm_terminate();
+
   _papi_hwi_unlock( NAMELIB_LOCK );
 
   SUBDBG("EXIT: PAPI_OK\n");
