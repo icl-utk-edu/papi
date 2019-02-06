@@ -334,6 +334,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	if (ret == PFM_SUCCESS)
 		memcpy(uarg, &arg, sz);
 
+    free(*arg.fstr);
 done:
 	pfmlib_release_event(&e);
 	return ret;
