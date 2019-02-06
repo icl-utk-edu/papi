@@ -502,8 +502,20 @@ host_finalize(  )
 
 	root_counter = NULL;
 
+	ib_port *nwif, *last;
+   last = root_ib_port;
+   while ( last != NULL ) {                                    // While we have ports; 
+      nwif = last;                                             // Copy the pointer.
+      last = last->next;                                       // update the loop pointer now.
+      if (nwif->name) free(nwif->name);                        // Free any name malloc.
+
+      free(nwif);                                              // free the chain link itself.
+	}
+
+   root_ib_port = NULL;                                     // All done with this.
+
 	is_finalized = 1;
-}
+} // end host_finalize()
 
 
 /**
@@ -780,7 +792,7 @@ INFINIBAND_shutdown_component( void )
 	dlclose(dl2);
 
 	return ( PAPI_OK );
-}
+} // end Shutdown component.
 
 
 /* This function sets various options in the component
