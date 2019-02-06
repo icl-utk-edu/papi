@@ -12,7 +12,6 @@ all: $(ALL)
 %.o:%.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c $<
 
-
 display_error.o:	display_error.c display_error.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c display_error.c
 
@@ -45,6 +44,9 @@ cycles_validation: cycles_validation.o $(TESTLIB) $(PAPILIB) display_error.o ins
 flops_validation: flops_validation.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
 	$(CC) -o flops_validation flops_validation.o $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
+
+memleak_check: memleak_check.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
+	$(CC) -o memleak_check memleak_check.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) $(LDFLAGS) $(EXTRALIB)
 
 papi_br_cn: papi_br_cn.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
 	$(CC) -o papi_br_cn papi_br_cn.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) $(LDFLAGS) $(EXTRALIB)
