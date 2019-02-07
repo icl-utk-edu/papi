@@ -2009,7 +2009,11 @@ _papi_hwi_shutdown_global_internal( void )
     for( i = 0; i < num_native_events; i++){
         free(_papi_native_events[i].evt_name);
     }
+
     free(_papi_native_events);
+    _papi_native_events = NULL;        // In case a new library init is done.
+    num_native_events=0;               // .. 
+    num_native_chunks=0;               // .. 
 
     _papi_hwi_free_papi_event_string();
 
