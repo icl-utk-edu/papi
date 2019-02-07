@@ -72,7 +72,7 @@ clean:
 
 distclean: clean
 
-install_examples: $(TARGETS)
+install-examples install_examples: $(TARGETS)
 	@echo installing: $(TARGETS)
 	-mkdir -p $(EXAMPLESDIR)
 	$(INSTALL) -m 755 $(TARGETS) $(EXAMPLESDIR)
@@ -80,4 +80,4 @@ install_examples: $(TARGETS)
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install depend install_examples
+.PHONY: install depend install_examples install-examples
