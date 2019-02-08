@@ -276,36 +276,52 @@ getPState(nvmlDevice_t dev)
     switch (state) {
     case NVML_PSTATE_15:
         ret++;
+        // fall through
     case NVML_PSTATE_14:
         ret++;
+        // fall through
     case NVML_PSTATE_13:
         ret++;
+        // fall through
     case NVML_PSTATE_12:
         ret++;
+        // fall through
     case NVML_PSTATE_11:
         ret++;
+        // fall through
     case NVML_PSTATE_10:
         ret++;
+        // fall through
     case NVML_PSTATE_9:
         ret++;
+        // fall through
     case NVML_PSTATE_8:
         ret++;
+        // fall through
     case NVML_PSTATE_7:
         ret++;
+        // fall through
     case NVML_PSTATE_6:
         ret++;
+        // fall through
     case NVML_PSTATE_5:
         ret++;
+        // fall through
     case NVML_PSTATE_4:
         ret++;
+        // fall through
     case NVML_PSTATE_3:
         ret++;
+        // fall through
     case NVML_PSTATE_2:
         ret++;
+        // fall through
     case NVML_PSTATE_1:
         ret++;
+        // fall through
     case NVML_PSTATE_0:
         break;
+        // fall through
     case NVML_PSTATE_UNKNOWN:
     default:
         /* This should never happen?
