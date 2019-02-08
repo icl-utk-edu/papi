@@ -101,6 +101,7 @@ generateEventList(char *base_dir)
     int count = 0;
     struct dirent *hwmonx;
     int i,pathnum;
+    int retlen;
 
 #define NUM_PATHS 2
     char paths[NUM_PATHS][PATH_MAX]={
@@ -180,8 +181,12 @@ generateEventList(char *base_dir)
 	     if (fff==NULL) continue;
 	     fclose(fff);
 
-	     snprintf(name, PAPI_MAX_STR_LEN, "%s:in%i_input", 
-			 hwmonx->d_name, i);
+	     retlen = snprintf(name, PAPI_MAX_STR_LEN, "%s:in%i_input", hwmonx->d_name, i);
+	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+	         SUBDBG("Unable to generate name %s:in%i_input\n", hwmonx->d_name, i);
+	         return ( PAPI_EINVAL );
+	     }
+
 	     snprintf(units, PAPI_MIN_STR_LEN, "V");
 	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
@@ -222,8 +227,12 @@ generateEventList(char *base_dir)
 	     if (fff==NULL) continue;
 	     fclose(fff);
 
-	     snprintf(name, PAPI_MAX_STR_LEN, "%s:temp%i_input", 
-			 hwmonx->d_name, i);
+	     retlen = snprintf(name, PAPI_MAX_STR_LEN, "%s:temp%i_input", hwmonx->d_name, i);
+	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+	         SUBDBG("Unable to generate name %s:temp%i_input\n", hwmonx->d_name, i);
+	         return ( PAPI_EINVAL );
+	     }
+
 	     snprintf(units, PAPI_MIN_STR_LEN, "degrees C");
 	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
@@ -257,14 +266,22 @@ generateEventList(char *base_dir)
 	     }
 
 	     /* Look for input fan */
-	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_input", 
-		      path,i);
+	     retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_input", path,i);
+	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+	         SUBDBG("Unable to generate filename %s/fan%d_input\n", path,i);
+	         return ( PAPI_EINVAL );
+	     }
+
 	     fff=fopen(filename,"r");
 	     if (fff==NULL) continue;
 	     fclose(fff);
 
-	     snprintf(name, PAPI_MAX_STR_LEN, "%s:fan%i_input", 
-			 hwmonx->d_name, i);
+	     retlen = snprintf(name, PAPI_MAX_STR_LEN, "%s:fan%i_input", hwmonx->d_name, i);
+	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+	         SUBDBG("Unable to generate name %s:fan%i_input\n", hwmonx->d_name, i);
+	         return ( PAPI_EINVAL );
+	     }
+
 	     snprintf(units, PAPI_MIN_STR_LEN, "RPM");
 	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
