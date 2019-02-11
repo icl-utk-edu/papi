@@ -97,6 +97,9 @@ int coretemp_init_thread (hwd_context_t * ctx)
 	size_t len;
 	UNREFERENCED(ctx);
 
+	( void ) mib; /*unused */
+	( void ) len; /*unused */
+
 	SUBDBG("coretemp_init_thread %p...\n", ctx);
 
 #if 0
@@ -380,7 +383,7 @@ int coretemp_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 int coretemp_shutdown_component (void)
 {
 
-	SUBDBG( "coretemp_shutdown_component... %p\n");
+	SUBDBG( "coretemp_shutdown_component...\n");
 
 	/* Last chance to clean up */
 	papi_free (coretemp_native_table);
