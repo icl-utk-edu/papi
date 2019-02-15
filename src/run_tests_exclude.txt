@@ -25,6 +25,9 @@ components/bcs/tests/Makefile
 testlib/Makefile
 testlib/Makefile.target.in
 
+# This is a utility, not a standalone test.
+validation_tests/memleak_check
+
 # Template PBS Job Script for Parallel Job on Myrinet Nodes
 ctests/cpi.pbs
 
