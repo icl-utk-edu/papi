@@ -13,6 +13,17 @@ __ 0a. Notify developers that a release is imminent and the repository should be
 	considered frozen. Check buildbot / make fulltest results to make sure
 	the codebase is bug-free.
 
+   Before running 'make fulltest', ensure you do NOT configure PAPI using 
+   '--with-debug=yes'. This forces -O0 which will cause some the papi_tot_cyc.c
+   test to fail. We run our 'make fulltest' with no components installed (other
+   than the defaults). Several components require specialized hardware or OS or
+   sudo privileges to operate. 
+
+   You should use '--with-debug=yes' if you wish to do any valgrind testing for
+   memory leaks. You can conduct such tests running the code
+   ./validation_tests/memleak_check.c using valgrind. You may need to load a
+   module to use valgrind.
+
 __ 0b. Update your local copy from git to make sure you have all changes.
 	git pull
 
