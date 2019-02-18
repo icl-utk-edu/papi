@@ -126,7 +126,7 @@ __ 14. zip the tarball:
 	gzip papi-X.Y.Z.tar
 
 __ 15. Copy the tarball to the website; on harry.icl.utk.edu this is 
-       curently:   /nfs/www/icl/projects/dev/papi/downloads
+       currently:  /nfs/www/icl/projects/papi/downloads
        previously: gonzo:/mnt/papi/downloads
        previously: /silk/homes/icl/projects/papi/downloads
 
