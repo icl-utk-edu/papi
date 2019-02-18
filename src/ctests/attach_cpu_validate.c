@@ -51,6 +51,10 @@ main( int argc, char **argv )
 		test_skip( __FILE__, __LINE__, "num_cpus", 0 );
 	}
 
+	if (num_cpus > MAX_CPUS) {
+		num_cpus = MAX_CPUS;
+	}
+
 	for(i=0;i<num_cpus;i++) {
 
 		EventSet[i]=PAPI_NULL;
