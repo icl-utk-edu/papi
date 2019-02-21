@@ -52,6 +52,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Haswell
 		Intel Broadwell
 		Intel SkyLake
+		Intel CascadeLake
 		Intel Silvermont
 		Intel Airmont
 		Intel Goldmont

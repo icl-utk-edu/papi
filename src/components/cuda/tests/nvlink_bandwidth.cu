@@ -84,7 +84,6 @@
 #define BUF_SIZE       (32 * 1024)
 #define ALIGN_SIZE     (8)
 #define SUCCESS        (0)
-#define NUM_METRIC     (2)
 #define MAX_SIZE       (64*1024*1024)   // 64 MB
 
 int Streams;                            // Number of physical copy engines to use; taken from Device Properties asyncEngineCount.
@@ -94,12 +93,20 @@ int gpuToGpu = 0;
 
 //-----------------------------------------------------------------------------
 // This is the GPU routine to move a block from dst (on one GPU) to src (on
-// another GPU. 
+// another GPU. This is no longer used in this code; we use cudaMemcpyAsync().
+// Typical invocation (depends on #defines above):
+//
+//  for(i = 0; i < Streams; i++) {
+//      test_nvlink_bandwidth <<< GRID_SIZE, BLOCK_SIZE >>> ((float *) pDevBuffer1[i], (float *) pDevBuffer0[i]);
+//      printf("test_nvlink_bandwidth stream %d \n", i);
+//  }
 //-----------------------------------------------------------------------------
 extern "C" __global__ void test_nvlink_bandwidth(float *src, float *dst)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    dst[idx] = src[idx] * 2.0f;
+    if (idx % 2) dst[idx] = src[idx] * 2.0f;
+    else         dst[idx] = src[idx] * 1.5f;
+//  dst[idx] = src[idx] * 2.0f;
 } // end routine
 
 #define DIM(x) (sizeof(x)/sizeof(*(x)))
@@ -129,7 +136,8 @@ void calculateSize(char *result, uint64_t size)
 
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+// We use Async copies (returns while operation is still in progress) with 
+// multiple streams; cudaDeviceSynchronize waits for them to complete.
 //-----------------------------------------------------------------------------
 void testCpuToGpu(CUpti_EventGroup * eventGroup, 
       CUdeviceptr * pDevBuffer, float **pHostBuffer, size_t bufferSize, 
@@ -140,13 +148,15 @@ void testCpuToGpu(CUpti_EventGroup * eventGroup,
     fprintf(stderr, "Streams = %d.\n", Streams); 
     // Unidirectional copy H2D (Host to Device).
     for(i = 0; i < Streams; i++) {
-        RUNTIME_API_CALL(cudaMemcpyAsync((void *) pDevBuffer[i], pHostBuffer[i], bufferSize, cudaMemcpyHostToDevice, cudaStreams[i]));
+//      RUNTIME_API_CALL(cudaMemcpyAsync((void *) pDevBuffer[i], pHostBuffer[i], bufferSize, cudaMemcpyHostToDevice, cudaStreams[i]));
+        test_nvlink_bandwidth <<< GRID_SIZE, BLOCK_SIZE >>> ((float *) pDevBuffer[i], (float *) pHostBuffer[i]);
     }
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
     // Unidirectional copy D2H (Device to Host).
     for(i = 0; i < Streams; i++) {
-        RUNTIME_API_CALL(cudaMemcpyAsync(pHostBuffer[i], (void *) pDevBuffer[i], bufferSize, cudaMemcpyDeviceToHost, cudaStreams[i]));
+//      RUNTIME_API_CALL(cudaMemcpyAsync(pHostBuffer[i], (void *) pDevBuffer[i], bufferSize, cudaMemcpyDeviceToHost, cudaStreams[i]));
+        test_nvlink_bandwidth <<< GRID_SIZE, BLOCK_SIZE >>> ((float *) pHostBuffer[i], (float *) pDevBuffer[i]);
     }
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
@@ -162,6 +172,8 @@ void testCpuToGpu(CUpti_EventGroup * eventGroup,
 //-----------------------------------------------------------------------------
 // Copy buffers from the host to each device, in preparation for a transfer
 // between devices.
+// We use Async copies (returns while operation is still in progress) with 
+// multiple streams; cudaDeviceSynchronize waits for them to complete.
 //-----------------------------------------------------------------------------
 void testGpuToGpu_part1(CUpti_EventGroup * eventGroup, 
       CUdeviceptr * pDevBuffer0, CUdeviceptr * pDevBuffer1, 
@@ -204,20 +216,15 @@ void testGpuToGpu_part2(CUpti_EventGroup * eventGroup,
 
     for(i = 0; i < Streams; i++) {
         RUNTIME_API_CALL(cudaMemcpyAsync((void *) pDevBuffer0[i], (void *) pDevBuffer1[i], bufferSize, cudaMemcpyDeviceToDevice, cudaStreams[i]));
-        //printf("Copy %zu stream %d to devBuffer0 from devBuffer1 \n", bufferSize, i);
+        printf("Copy %zu stream %d to devBuffer0 from devBuffer1 \n", bufferSize, i);
     }
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
     for(i = 0; i < Streams; i++) {
         RUNTIME_API_CALL(cudaMemcpyAsync((void *) pDevBuffer1[i], (void *) pDevBuffer0[i], bufferSize, cudaMemcpyDeviceToDevice, cudaStreams[i]));
-        // printf("Copy %zu stream %d to devBuffer0 from devBuffer1 \n", bufferSize, i);
+        printf("Copy %zu stream %d to devBuffer1 from devBuffer0 \n", bufferSize, i);
     }
     RUNTIME_API_CALL(cudaDeviceSynchronize());
-
-    for(i = 0; i < Streams; i++) {
-        test_nvlink_bandwidth <<< GRID_SIZE, BLOCK_SIZE >>> ((float *) pDevBuffer1[i], (float *) pDevBuffer0[i]);
-        // printf("test_nvlink_bandwidth stream %d \n", i);
-    }
 } // end routine.
 
 
@@ -285,21 +292,38 @@ int main(int argc, char *argv[])
     // conflict of some sort, but haven't tracked down the documentation to
     // prove that.  -Tony C.
 
-    const char *TransmitBase[NUM_METRIC] = {
-         "cuda:::metric:nvlink_total_data_transmitted"
-        ,"cuda:::metric:nvlink_transmit_throughput"
+#define NUM_METRIC     ( 4)
+    const char *MetricBase[NUM_METRIC] = {
+        "cuda:::metric:nvlink_total_data_transmitted"        , // okay Group NVLINK.
+        "cuda:::metric:nvlink_transmit_throughput"           , // okay Group NVLINK.
+        "cuda:::metric:nvlink_total_data_received"           , // okay Group NVLINK.
+        "cuda:::metric:nvlink_receive_throughput"            , // okay Group NVLINK.
+//      "cuda:::metric:inst_per_warp"                        , // okay group A.
+//      "cuda:::metric:warp_execution_efficiency"            , // okay Group A.
+//      "cuda:::metric:warp_nonpred_execution_efficiency"    , // okay Group A.
+//      "cuda:::metric:shared_load_transactions_per_request" , // okay Group A.
+//      "cuda:::metric:shared_store_transactions_per_request", // okay Group A.
+//      "cuda:::metric:shared_store_transactions"            , // okay Group A.
+//      "cuda:::metric:shared_load_transactions"             , // okay Group A.
+//      "cuda:::metric:inst_replay_overhead"                 , // Group B
+//      "cuda:::metric:local_load_transactions"              , // Group B.
+//      "cuda:::metric:local_load_transactions_per_request"  , // Group NONE. Bad Combo, even by itself requires 2 passes.
+//      "cuda:::metric:local_store_transactions_per_request" , // Group NONE. Bad Combo, even by itself.
+//      "cuda:::metric:gld_transactions_per_request"         , // Group NONE. Bad Combo, even by itself.
+//      "cuda:::metric:gst_transactions_per_request"         , // Group NONE. Bad Combo, even by itself.
+//      "cuda:::event:active_cycles"                         ,
+//      "cuda:::event:active_warps"                          ,
+//      "cuda:::event:active_cycles"                         ,
+//      "cuda:::event:active_warps"                          ,
+//      "cuda:::event:inst_executed"                         ,
+//      "cuda:::event:warps_launched"                        ,
+//      "cuda:::metric:branch_efficiency"                    , // Even by itself, causes signal 11 (seg fault) on SECOND read.
     };
     
-    const char *ReceiveBase[NUM_METRIC] = {
-         "cuda:::metric:nvlink_total_data_received"
-        ,"cuda:::metric:nvlink_receive_throughput"
-    };
     // Parse command line arguments
     parseCommandLineArgs(argc, argv);
-
-//  CUPTI_CALL(cuptiActivityEnable(CUPTI_ACTIVITY_KIND_NVLINK));
-//  CUPTI_CALL(cuptiActivityRegisterCallbacks(bufferRequested, bufferCompleted));
-
+    if (cpuToGpu) printf("TEST: CPU to GPU transfer.\n");
+    else          printf("TEST: GPU to GPU transfer.\n");
 
     DRIVER_API_CALL(cuInit(0));
     RUNTIME_API_CALL(cudaGetDeviceCount(&deviceCount));
@@ -347,7 +371,7 @@ int main(int argc, char *argv[])
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
     // Nvlink-topology Records are generated even before cudaMemcpy API is called.
-    CUPTI_CALL(cuptiActivityFlushAll(0));
+    CUPTI_CALL(cuptiActivityFlushAll(0x7fffffff)); // flag covers every kind of record.
 
     fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
@@ -410,10 +434,9 @@ int main(int argc, char *argv[])
     for(i = 0; i < deviceCount; i++) {                                  // Profile all devices.
         fprintf(stderr, "Set device to %d\n", i);
         for(ee = 0; ee < NUM_METRIC; ee++) {
-            snprintf(tmpEventName, 1024, "%s:device=%d\0", TransmitBase[ee], i);
+            snprintf(tmpEventName, 1024, "%s:device=%d\0", MetricBase[ee], i);
             retval = PAPI_add_named_event(EventSet, tmpEventName);      // Don't want to fail program if name not found...
             if(retval == PAPI_OK) {
-                fprintf(stderr, "Added event %s to GPU %d.\n", tmpEventName, i);
                 EventName[eventCount] = strdup(tmpEventName);
                 eventCount++;
             } else {
@@ -426,8 +449,15 @@ int main(int argc, char *argv[])
         for(i = 0; i < eventCount; i++) values[i] = -1;                // init.
 
         if(cpuToGpu) {
+            RUNTIME_API_CALL(cudaSetDevice(1));
+            for(i = 0; i < Streams; i++) 
+                RUNTIME_API_CALL(cudaMalloc((void **) &pDevBuffer1[i], bufferSize));
             CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
+            RUNTIME_API_CALL(cudaSetDevice(0));
             testCpuToGpu(eventGroup, pDevBuffer0, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
+            RUNTIME_API_CALL(cudaSetDevice(1));
+            testCpuToGpu(eventGroup, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
+            RUNTIME_API_CALL(cudaSetDevice(0));
             CALL_PAPI_OK(PAPI_stop(EventSet, values));                      // Stop and read values.
         } else if(gpuToGpu) {
             RUNTIME_API_CALL(cudaSetDevice(1));
@@ -436,8 +466,9 @@ int main(int argc, char *argv[])
 
             //  Prepare the copy, load up buffers on each device from the host.
             testGpuToGpu_part1(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-            CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
+
             // Copy from device 0->1, then device 1->0.
+            CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
             testGpuToGpu_part2(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
             CALL_PAPI_OK(PAPI_stop(EventSet, values));                      // Stop and read values.
         }
@@ -451,66 +482,9 @@ int main(int argc, char *argv[])
             }
         }
     }
-
-    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // Delete all events in set.
-
-    // Now start over, with receive events. Pretty much the same as above.
-    eventCount = 0;
-
-    // Add events at a GPU specific level ... eg cuda:::metric:nvlink_total_data_received:device=0
-    for(i = 0; i < deviceCount; i++) {                                  // Profile all devices.
-        fprintf(stderr, "Set device to %d\n", i);
-        for(ee = 0; ee < NUM_METRIC; ee++) {
-            snprintf(tmpEventName, 1024, "%s:device=%d\0", ReceiveBase[ee], i);
-            retval = PAPI_add_named_event(EventSet, tmpEventName);      // Don't want to fail program if name not found...
-            if(retval == PAPI_OK) {
-                fprintf(stderr, "Added event %s to GPU %d.\n", tmpEventName, i);
-                EventName[eventCount] = strdup(tmpEventName);
-                eventCount++;
-            } else {
-                fprintf(stderr, "Failed to add event %s to GPU %i; ret=%d [%s].\n", tmpEventName, i, retval, PAPI_strerror(retval));
-            }
-        }
-    }
-
-    if (eventCount > 0) {                                               // If we have events...
-        for(i = 0; i < eventCount; i++) values[i] = -1;                     // init.
-
-        if(cpuToGpu) {
-            CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
-            testCpuToGpu(eventGroup, pDevBuffer0, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-            CALL_PAPI_OK(PAPI_stop(EventSet, values));                      // Stop and read values.
-        } else if(gpuToGpu) {
-            RUNTIME_API_CALL(cudaSetDevice(1));
-            for(i = 0; i < Streams; i++) 
-                RUNTIME_API_CALL(cudaMalloc((void **) &pDevBuffer1[i], bufferSize));
-
-            //  Prepare the copy, load up buffers on each device from the host.
-            testGpuToGpu_part1(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-            CALL_PAPI_OK(PAPI_start(EventSet));                             // Start event counters.
-            // Copy from device 0->1, then device 1->0.
-            testGpuToGpu_part2(eventGroup, pDevBuffer0, pDevBuffer1, pHostBuffer, bufferSize, cudaStreams, &timeDuration, numEventGroup);
-            CALL_PAPI_OK(PAPI_stop(EventSet, values));                      // Stop and read values.
-        }
-
-        // report each event counted.
-        for(i = 0; i < eventCount; i++) {
-            if (values[i] >= 0) {                                           // If not still -1,
-                eventsRead++;                                               // .. count and report.
-                calculateSize(str, (uint64_t) values[i] );
-                printf("PAPI %64s: %s \n", EventName[i], str);
-            }
-        }
-    }
-
-    if (eventCount < 1) {                                               // If we couldn't report anything,
-        printf("None of our transmit or receive events were successfully added to the eventsets.\n"); 
-    }
-
-    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // Delete all events in set.
-    // END OF receive event reporting.
 
     // Program cleanup.
+    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // Delete all events in set.
     CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // Release PAPI memory.
     PAPI_shutdown();                                                    // Has no return.
         

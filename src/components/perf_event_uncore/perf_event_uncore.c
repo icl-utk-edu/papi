@@ -61,6 +61,7 @@ static int our_cidx;
 #define PERF_EVENTS_RUNNING 0x02
 
 static int _peu_set_domain( hwd_control_state_t *ctl, int domain);
+static int _peu_shutdown_component( void );
 
 
 
@@ -615,6 +616,7 @@ _peu_init_component( int cidx )
    if (retval) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "Error initializing libpfm4",PAPI_MAX_STR_LEN);
+     _peu_shutdown_component( );
      return PAPI_ENOCMP;
    }
 
@@ -627,6 +629,7 @@ _peu_init_component( int cidx )
    if (retval) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "Error setting up libpfm4",PAPI_MAX_STR_LEN);
+     _peu_shutdown_component( );
      return PAPI_ENOCMP;
    }
 
@@ -635,6 +638,7 @@ _peu_init_component( int cidx )
    if (_papi_hwd[cidx]->cmp_info.num_native_events==0) {
      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "No uncore PMUs or events found",PAPI_MAX_STR_LEN);
+     _peu_shutdown_component( );
      return PAPI_ENOCMP;
    }
 
@@ -649,6 +653,7 @@ _peu_init_component( int cidx )
       strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	    "Insufficient permissions for uncore access.  Set /proc/sys/kernel/perf_event_paranoid to 0 or run as root.",
 	    PAPI_MAX_STR_LEN);
+      _peu_shutdown_component( );
      return PAPI_ENOCMP;
    }
 

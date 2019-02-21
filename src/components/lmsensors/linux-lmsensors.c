@@ -159,7 +159,8 @@ static unsigned
 createNativeEvents( void )
 {
 	unsigned id = 0;
-        unsigned int count;
+	unsigned int count;
+	(void) count; // Ignore not used warnings.
 
 	int chip_nr = 0;
 	const sensors_chip_name *chip_name;
@@ -318,12 +319,18 @@ _lmsensors_init_component( int cidx )
     if (cached_counts == NULL) {
         strncpy(_lmsensors_vector.cmp_info.disabled_reason,
                "Could not malloc room",PAPI_MAX_STR_LEN);
-	return PAPI_ENOMEM;
+      free(lm_sensors_native_table);
+      lm_sensors_native_table = NULL;
+	   return PAPI_ENOMEM;
     }
 
     if ( ( unsigned ) num_events != createNativeEvents(  ) ) {
        strncpy(_lmsensors_vector.cmp_info.disabled_reason,
 	      "LM_SENSOR number mismatch",PAPI_MAX_STR_LEN);
+      free(cached_counts);
+      cached_counts = NULL;
+      free(lm_sensors_native_table);
+      lm_sensors_native_table = NULL;
        return PAPI_ECMP;
     }
 
@@ -486,11 +493,18 @@ _lmsensors_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 static int
 _lmsensors_shutdown_component( void )
 {
-	if (cached_counts)
+	if (cached_counts)   {
 		free(cached_counts);
+      cached_counts = NULL;
+   }
 
 	/* Call the libsensors cleaning function before leaving */
 	sensors_cleanupPtr(  );
+
+   if (lm_sensors_native_table) {
+      free(lm_sensors_native_table);
+      lm_sensors_native_table = NULL;
+   }
 
 	return PAPI_OK;
 }

@@ -15,6 +15,6 @@ linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS) cuda_sampling
 cuda_sampling:
 	cd components/cuda/sampling; $(MAKE);
 
-native_clean:
-	cd components/cuda/sampling; $(MAKE) clean
+# native_clean:
+# 	cd components/cuda/sampling; $(MAKE) clean
 

@@ -1,4 +1,4 @@
-.TH "papi_cost" 1 "Mon Dec 18 2017" "Version 5.6.0.0" "PAPI" \" -*- nroff -*-
+.TH "papi_cost" 1 "Wed Jan 30 2019" "Version 5.6.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -10,7 +10,7 @@ file papi_cost\&.c
 papi_cost - computes execution time costs for basic PAPI operations\&.
 .SH "Synopsis"
 .PP
-papi_cost [-dhs] [-b bins] [-t threshold]
+papi_cost [-dhps] [-b bins] [-t threshold]
 .SH "Description"
 .PP
 papi_cost is a PAPI utility program that computes the min / max / mean / std\&. deviation of execution times for PAPI start/stop pairs and for PAPI reads\&. This information provides the basic operating cost to a user's program for collecting hardware counter data\&. Command line options control display capabilities\&.
@@ -24,9 +24,11 @@ papi_cost is a PAPI utility program that computes the min / max / mean / std\&. 
 .IP "\(bu" 2
 -h Display help information about this utility\&. 
 .IP "\(bu" 2
+-p Display 25/50/75 perecentile results for making boxplots\&. 
+.IP "\(bu" 2
 -s Show the number of iterations in each of the first 10 standard deviations above the mean\&. 
 .IP "\(bu" 2
--t < threshold > Set the threshold for the number of iterations to measure costs\&. The default is 100,000\&. 
+-t < threshold > Set the threshold for the number of iterations to measure costs\&. The default is 1,000,000\&. 
 .PP
 .SH "Bugs"
 .PP

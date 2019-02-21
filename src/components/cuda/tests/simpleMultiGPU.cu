@@ -1,18 +1,25 @@
-/* PAPI Multiple GPU example.  This example is taken from the NVIDIA
+/* 
+ * PAPI Multiple GPU example.  This example is taken from the NVIDIA
  * documentation (Copyright 1993-2013 NVIDIA Corporation) and has been
  * adapted to show the use of CUPTI and PAPI in collecting event
  * counters for multiple GPU contexts.  PAPI Team (2015)
  */
 
 /*
- * Copyright 1993-2013 NVIDIA Corporation.  All rights reserved.
+ * This software contains source code provided by NVIDIA Corporation
  *
- * Please refer to the NVIDIA end user license agreement (EULA) associated
- * with this source code for terms and conditions that govern your use of
- * this software. Any use, reproduction, disclosure, or distribution of
- * this software and related documentation outside the terms of the EULA
- * is strictly prohibited.
+ * According to the Nvidia EULA (compute 5.5 version)
+ * http://developer.download.nvidia.com/compute/cuda/5_5/rel/docs/EULA.pdf
  *
+ * Chapter 2. NVIDIA CORPORATION CUDA SAMPLES END USER LICENSE AGREEMENT
+ * 2.1.1. Source Code
+ * Developer shall have the right to modify and create derivative works with the Source
+ * Code. Developer shall own any derivative works ("Derivatives") it creates to the Source
+ * Code, provided that Developer uses the Materials in accordance with the terms and
+ * conditions of this Agreement. Developer may distribute the Derivatives, provided that
+ * all NVIDIA copyright notices and trademarks are propagated and used properly and
+ * the Derivatives include the following statement: “This software contains source code
+ * provided by NVIDIA Corporation.”
  */
 
 /*
@@ -53,6 +60,17 @@
 
 #include "simpleMultiGPU.h"
 
+// THIS MACRO EXITS if the papi call does not return PAPI_OK. Do not use for routines that
+// return anything else; e.g. PAPI_num_components, PAPI_get_component_info, PAPI_library_init.
+#define CALL_PAPI_OK(papi_routine)                                                        \
+    do {                                                                                  \
+        int _papiret = papi_routine;                                                      \
+        if (_papiret != PAPI_OK) {                                                        \
+            fprintf(stderr, "%s:%d macro: PAPI Error: function " #papi_routine " failed with ret=%d [%s].\n", \
+                    __FILE__, __LINE__, _papiret, PAPI_strerror(_papiret));               \
+            exit(-1);                                                                     \
+        }                                                                                 \
+    } while (0);
 // //////////////////////////////////////////////////////////////////////////////
 // Data configuration
 // //////////////////////////////////////////////////////////////////////////////
@@ -122,7 +140,10 @@ int main( int argc, char **argv )
     for ( i=0; i<GPU_N; i++ ) {
         CHECK_CU_ERROR( cuDeviceGet( &device[i], i ), "cuDeviceGet" );
         CHECK_CU_ERROR( cuDeviceGetName( deviceName, 64, device[i] ), "cuDeviceGetName" );
-        CHECK_CU_ERROR( cuDeviceComputeCapability( &computeCapabilityMajor, &computeCapabilityMinor,  device[i] ), "cuDeviceComputeCapability" );
+        CHECK_CU_ERROR( cuDeviceGetAttribute( &computeCapabilityMajor, 
+            CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, device[i]), "cuDeviceGetAttribute");
+        CHECK_CU_ERROR( cuDeviceGetAttribute( &computeCapabilityMinor, 
+            CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, device[i]), "cuDeviceGetAttribute");
         cudaRuntimeGetVersion( &runtimeVersion );
         cudaDriverGetVersion( &driverVersion );
         printf( "CUDA Device %d: %s : computeCapability %d.%d runtimeVersion %d.%d driverVersion %d.%d\n", i, deviceName, computeCapabilityMajor, computeCapabilityMinor, runtimeVersion/1000, (runtimeVersion%100)/10, driverVersion/1000, (driverVersion%100)/10 );
@@ -203,6 +224,7 @@ int main( int argc, char **argv )
     int NUM_EVENTS = MAX_GPU_COUNT*MAX_NUM_EVENTS;
     long long values[NUM_EVENTS];
     int eventCount;
+    int cid=-1;
     int retval, ee;
     
     /* PAPI Initialization */
@@ -210,33 +232,55 @@ int main( int argc, char **argv )
     if( retval != PAPI_VER_CURRENT ) fprintf( stderr, "PAPI_library_init failed\n" );
     printf( "PAPI version: %d.%d.%d\n", PAPI_VERSION_MAJOR( PAPI_VERSION ), PAPI_VERSION_MINOR( PAPI_VERSION ), PAPI_VERSION_REVISION( PAPI_VERSION ) );
     
-    retval = PAPI_create_eventset( &EventSet );
-    if( retval != PAPI_OK ) fprintf( stderr, "PAPI_create_eventset failed\n" );
+    // Find cuda component index.
+    int k = PAPI_num_components();                                      // get number of components.
+    for (i=0; i<k && cid<0; i++) {                                      // while not found,
+        PAPI_component_info_t *aComponent = 
+            (PAPI_component_info_t*) PAPI_get_component_info(i);        // get the component info.     
+        if (aComponent == NULL) {                                       // if we failed,
+            fprintf(stderr,  "PAPI_get_component_info(%i) failed, "
+                "returned NULL. %i components reported.\n", i,k);
+            exit(-1);    
+        }
+
+       if (strcmp("cuda", aComponent->name) == 0) cid=i;                // If we found our match, record it.
+    } // end search components.
+
+    if (cid < 0) {                                                      // if no PCP component found,
+        fprintf(stderr, "Failed to find cuda component among %i "
+            "reported components.\n", k);
+        PAPI_shutdown();
+        exit(-1); 
+    }
+
+    printf("Found CUDA Component at id %d\n", cid);
+
+    CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
+    CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
     
     // In this example measure events from each GPU
-    int numEventEndings = 3;
+    int numEventEndings = 2;
     char const *EventEndings[] = { 
-        "cuda:::metric:inst_per_warp", 
-        "cuda:::event:inst_executed", 
-        "cuda:::event:elapsed_cycles_sm" 
+        "cuda:::metric:nvlink_total_data_transmitted",
+        "cuda:::metric:nvlink_total_data_received",
     };
 
     // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm
     char *EventName[NUM_EVENTS];
-    char tmpEventName[50];
+    char tmpEventName[64];
     eventCount = 0;
     for( i = 0; i < GPU_N; i++ ) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );         // Set device
         CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
         CHECK_CUPTI_ERROR(cuptiSetEventCollectionMode(ctx[i], CUPTI_EVENT_COLLECTION_MODE_KERNEL), "cuptiSetEventCollectionMode" );
         for ( ee=0; ee<numEventEndings; ee++ ) {
-            snprintf( tmpEventName, 50, "%s:device=%d\0", EventEndings[ee], i );
+            snprintf( tmpEventName, 64, "%s:device=%d\0", EventEndings[ee], i );
             // printf( "Trying to add event %s to GPU %d in PAPI...", tmpEventName , i ); fflush(NULL);
             retval = PAPI_add_named_event( EventSet, tmpEventName );
             if (retval==PAPI_OK) {
                 printf( "Add event success: '%s' GPU %i\n", tmpEventName, i );
-                EventName[eventCount] = (char *)calloc( 50, sizeof(char) );
-                snprintf( EventName[eventCount], 50, "%s", tmpEventName );
+                EventName[eventCount] = (char *)calloc( 64, sizeof(char) );
+                snprintf( EventName[eventCount], 64, "%s", tmpEventName );
                 eventCount++;
             } else {
                 printf( "Add event failure: '%s' GPU %i error=%s\n", tmpEventName, i, PAPI_strerror(retval));
@@ -247,7 +291,7 @@ int main( int argc, char **argv )
     
     // Start PAPI event measurement
     retval = PAPI_start( EventSet );
-    if( retval != PAPI_OK )  fprintf( stderr, "PAPI_start failed\n" );
+    if( retval != PAPI_OK )  fprintf( stderr, "PAPI_start failed, retval=%i [%s].\n", retval, PAPI_strerror(retval));
 #endif
     
     // Start timing and compute on GPU(s)
@@ -313,17 +357,7 @@ int main( int argc, char **argv )
         CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
     }
 
-    // retval = PAPI_read( EventSet, values );
-    // if( retval != PAPI_OK )  fprintf( stderr, "PAPI_read failed\n" );
-    // for( i = 0; i < eventCount; i++ )
-    //     printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
-
-    // retval = PAPI_read( EventSet, values );
-    // if( retval != PAPI_OK )  fprintf( stderr, "PAPI_read failed\n" );
-    // for( i = 0; i < eventCount; i++ )
-    //     printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
-
-    retval = PAPI_stop( EventSet, values );
+    retval = PAPI_stop( EventSet, values );                                         // Stop (will read values).
     if( retval != PAPI_OK )  fprintf( stderr, "PAPI_stop failed\n" );
     for( i = 0; i < eventCount; i++ )
         printf( "PAPI counterValue %12lld \t\t --> %s \n", values[i], EventName[i] );
@@ -335,13 +369,6 @@ int main( int argc, char **argv )
     PAPI_shutdown();
 #endif
 
-    for( i = 0; i < GPU_N; i++ ) {
-        CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Sum_from_device ) );
-        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Sum ) );
-        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Data ) );
-        // Shut down this GPU
-        CHECK_CUDA_ERROR( cudaStreamDestroy( plan[i].stream ) );
-    }
     sumGPU = 0;
     for( i = 0; i < GPU_N; i++ ) {
         sumGPU += h_SumGPU[i];
@@ -372,9 +399,12 @@ int main( int argc, char **argv )
 
     // Cleanup and shutdown
     for( i = 0; i < GPU_N; i++ ) {
-        CHECK_CUDA_ERROR( cudaSetDevice( i ) );
+        CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Sum_from_device ) );
         CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Data ) );
-        cudaDeviceReset();
+        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Sum ) );
+        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Data ) );
+        // Shut down this GPU
+        CHECK_CUDA_ERROR( cudaStreamDestroy( plan[i].stream ) );
     }
 
 #ifdef CUPTI_ONLY

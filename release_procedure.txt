@@ -13,6 +13,17 @@ __ 0a. Notify developers that a release is imminent and the repository should be
 	considered frozen. Check buildbot / make fulltest results to make sure
 	the codebase is bug-free.
 
+   Before running 'make fulltest', ensure you do NOT configure PAPI using 
+   '--with-debug=yes'. This forces -O0 which will cause some the papi_tot_cyc.c
+   test to fail. We run our 'make fulltest' with no components installed (other
+   than the defaults). Several components require specialized hardware or OS or
+   sudo privileges to operate. 
+
+   You should use '--with-debug=yes' if you wish to do any valgrind testing for
+   memory leaks. You can conduct such tests running the code
+   ./validation_tests/memleak_check.c using valgrind. You may need to load a
+   module to use valgrind.
+
 __ 0b. Update your local copy from git to make sure you have all changes.
 	git pull
 
@@ -20,40 +31,53 @@ __ 1. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
 
 __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.in, src/Makefile.in,
-	doc/Doxyfile-common (PROJECT_NUMBER) ; and commit to the repo.
-	Do not "git push" until autoconf is run (Step 3)
+	doc/Doxyfile-common (as PROJECT_NUMBER) ; and commit to the repo.
+	Do not "git push" until autoconf is run (Step 3). You will have to run it, you just changed
+	configure.in, which is the reason to run autoconf.
         The number may already have been updated after the last release, if so, skip this step.
 
--- 2a. On the icl machine gonzo:
-	export PATH=/mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
+-- 2a. 	You must find a machine to rebuild the doxygen pages. For the release 5.7.0, we used
+	harry.icl.utk.edu. On that machine, doxygen was already in the $PATH (/usr/bin); you 
+	can check using >doxygen -V to get the version. If not, Find the doxygen directories
+	and add it to $PATH. e.g. >find /usr -name "doxygen" 2>/dev/null 
+	export PATH=/usr/bin/doxygen-1.8.5/bin:$PATH
 	-- or --
 	setenv PATH /mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
 
 -- 2b. Rebuild the doxygen manpages
         ( cd doc && make && make install )
 	You will want to check if anything needs to be committed to git.
-	(Usually the $(papi_dir)/man/man1 and man3 directories)
+	(Usually the $(papi_dir)/man/man1 and man3 directories).
+	doxygen may generate some extraneous files in man1 and man3; eg 
+	man/man1/_home_tonycastaldo_*.* 
+	remove these. 
+	Then you can go to each directory, >cd papi/man/man1, and add it all:
+	>git add *
 
--- 2c. Update the website docs... works on gonzo;
-	We use Doxyfile-html for this,
-	newgrp papi
-	changes your defacto group to papi (starts a new shell)
+-- 2c. Rebuild the website docs.
+	We use Doxyfile-html for this, that is a configuration file in papi/doc
+	that will be used by Makefile.
+	newgrp papi 
+	'newgrp' is a linux command, this changes your defacto group to papi (starts a new shell)
 	( cd doc && make clean html )
-	Cleanup web dir on gonzo:/mnt/papi/docs and install new files
-	Log on gonzo
-	( /bin/rm -rf /mnt/papi/docs/* )
-	( cp -R doc/html/* /mnt/papi/docs )
-	( chmod -R 775 /mnt/papi/docs )
-	Older instructions below
-		rm -rf /silk/homes/icl/projectsdev/papi/docs/*
-		cp -R doc/html/* /silk/homes/icl/projectsdev/papi/docs;
-		chmod -R 775 /silk/homes/icl/projectsdev/papi/docs
+
+-- 2d.  Update the web dir, wherever it may be. On harry.icl.utk.edu, it is found on 
+	/nfs/www/icl/projectsdev/papi/docs, but the sysadmin must give you write permission.
+	for the example below, 'webdir' = '/nfs/www/icl/projects/dev'.
+	You may wish to do a diff between this directory and the papi directory (doc/html/*) to
+	ensure you are replacing the correct files. 
+
+	Cleanup web dir install new files
+	( /bin/rm -rf /webdir/papi/docs/* )
+	( cp -R doc/html/* /webdir/papi/docs )
+	( chmod -R 775 /webdir/papi/docs )
 
 __ 3. If configure.in is changed, run autoconf (2.69) and commit the resulting
 	configure file.
 	NOTE: Using an autoconf version >2.69 will work, but will produce an
 	inordinate number of extraneous differences between versions.
-	One possible machine with 2.69 is saturn.
+	One possible machine with 2.69 is saturn; harry.icl.utk.edu also has 
+	an autoconf with 2.69. 
 
 __ 4. Create a ChangeLog for the current release.
 	We use a python script gitlog2changelog.py to generate is for us.
@@ -61,39 +85,39 @@ __ 4. Create a ChangeLog for the current release.
 	./gitlog2changelog.py papi-a-b-c-t
 	mv ChangeLog ChangeLogP4XYZ.txt
 
-__ 5. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
+__ 5. 	Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
-__ 6. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
+__ 6. 	Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 
-__ 7. Add ChangeLogXYZ.txt to git and commit both ChangeLogXYZ.txt and
+__ 7. 	Add ChangeLogXYZ.txt to git and commit both ChangeLogXYZ.txt and
 	RELEASENOTES.txt.
 
-__ 8. If this is not an incremental release, branch git.
+__ 8.	If this is not an incremental release, branch git.
 	git checkout -b stable-X.Y [starting point eg master]
 
-__ 9. Tag git: papi-X-Y-Z-t.
+__ 9. 	Tag git: papi-X-Y-Z-t.
 	git tag -a papi-X-Y-Z-t
 
-__ 10. Push everything to the central repo.
+__ 10. 	Push everything to the central repo.
 	git push --tags
 	-- or -- If you've created a new branch.
 	git push --tags origin stable-X.Y:
         May also need to do a git push now to get the master branch updated
 
-__ 11. Create a fresh clone of the papi repository.
+__ 11. 	Create a fresh clone of the papi repository.
 	> git clone https://bitbucket.org/icl/papi.git papi-X.Y.Z
 	> cd papi-X.Y.Z
-       Note. If you created a new branch, check if the clone contains
-       your last commit and ChangeLog.  If not, you may need to switch
-       to the master, merge the branch and push.  
-      ( ## if new branch ## git checkout master; git merge stable-X.Y; git push )
+       	Note. If you created a new branch, check if the clone contains
+       	your last commit and ChangeLog.  If not, you may need to switch
+       	to the master, merge the branch and push.  
+      	( ## if new branch ## git checkout master; git merge stable-X.Y; git push )
        
-__ 12. Delete any unneccessary files or directories
-		particularly .doc and .pdf files in the /doc directory
+__ 12. 	Delete any unneccessary files or directories
+	particularly .doc and .pdf files in the /doc directory
 	Things needed in /doc {Doxyfile, Doxyfile-everything}
         You can use the delete_before_release.sh script for this.
 	NOTE: This deletes the .git directory, don't release out of your normal
-		  work directory, you will loose all the marbles this way.
+	work directory, you will lose all the marbles this way.
 
 __ 13. tar the directory:
 	> tar -cvf papi-X.Y.Z.tar papi-X.Y.Z
@@ -101,8 +125,10 @@ __ 13. tar the directory:
 __ 14. zip the tarball:
 	gzip papi-X.Y.Z.tar
 
-__ 15. Copy the tarball to /silk/homes/icl/projects/papi/downloads
-       New location: gonzo:/mnt/papi/downloads
+__ 15. Copy the tarball to the website; on harry.icl.utk.edu this is 
+       currently:  /nfs/www/icl/projects/papi/downloads
+       previously: gonzo:/mnt/papi/downloads
+       previously: /silk/homes/icl/projects/papi/downloads
 
 __ 16. Check permissions on the tarball. 664 is good.
 

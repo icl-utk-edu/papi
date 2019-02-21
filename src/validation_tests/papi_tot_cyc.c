@@ -119,6 +119,12 @@ int main(int argc, char **argv) {
 		printf("\nEstimating GHz with matrix matrix multiply\n");
 	}
 
+   // We have a problem with subsequent runs requiring fewer cycles than
+   // the first run. This may be system dependent; so we do a throw-away
+   // run here, so we end up comparing the SECOND run to the 3rd, 4th, etc.
+
+   naive_matrix_multiply(quiet);                // A first run, to init system.
+
 	clock_gettime(CLOCK_REALTIME,&before);
 
 	PAPI_reset(eventset);

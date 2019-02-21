@@ -151,7 +151,7 @@ main( int argc, char **argv )
 	}
 
 	/* Check that TOT_INS is reasonable */
-	if (abs(values[1] - (1000000*NUM_LOOPS)) > (1000000*NUM_LOOPS)) {
+	if (llabs(values[1] - (1000000*NUM_LOOPS)) > (1000000*NUM_LOOPS)) {
 		printf("%s Error of %.2f%%\n", "PAPI_TOT_INS", (100.0 * (double)(values[1] - (1000000*NUM_LOOPS)))/(1000000*NUM_LOOPS));
 		test_fail( __FILE__, __LINE__, "Instruction validation", 0 );
 	}

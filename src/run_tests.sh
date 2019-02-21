@@ -44,8 +44,6 @@ EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 PAPI_HL_OUTPUT_WRITER="high-level/scripts/papi_hl_output_writer.py"
 
 ALLTESTS="$VTESTS $CTESTS $FTESTS $COMPTESTS";
-x=0;
-CWD=`pwd`
 
 PATH=./ctests:$PATH
 export PATH
@@ -64,10 +62,10 @@ if [ -r /proc/cpuinfo ]; then
 fi
 
 echo ""
-if ["$VALGRIND" = ""]; then
-  echo "The following test cases will be run:";
-else
+if [ "x$VALGRIND" != "x" ]; then
   echo "The following test cases will be run using valgrind:";
+else
+  echo "The following test cases will be run:";
 fi
 echo ""
 
@@ -230,7 +228,7 @@ do
     if [ -x $i ]; then
 	RAN="$i $RAN"
     printf "Running $i:\n";
-    printf "%-59s"
+    printf "%-59s" ""
     $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;

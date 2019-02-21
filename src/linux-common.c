@@ -272,24 +272,44 @@ decode_cpuinfo_arm(FILE *f, PAPI_hw_info_t *hwinfo )
 	}
 
 	/* Architecture (ARMv6, ARMv7, ARMv8, etc.) */
-	/* Note the Raspberry Pi lies in the CPU architecture line */
+
+	/* Parsing this is a bit fragile. */
+	/* On ARM64 the "CPU architecture field" */
+	/*     Prior to Linux 3.19: always "AArch64" */
+	/*     Since Linux 3.19: always "8" */
+	/* On ARM32 the "CPU architecture field" is a value and not */
+	/*	necessarily an integer, so it might be 7 or 7M */
+	/*	also, unknown architectures are assigned a value */
+	/*	such as (10) where 10 does not mean version 10, just */
+	/*	the 10th element in an array */
+	/* Note the original Raspberry Pi lies in the CPU architecture line */
 	/* (it's ARMv6 not ARMv7)                                  */
 	/* So we should actually get the value from the            */
 	/*	Processor/ model name line                         */
 
+
 	s = search_cpu_info( f, "CPU architecture");
 	if ( s ) {
 
+		/* Handle old (prior to Linux 3.19) ARM64 */
 		if (strstr(s,"AArch64")) {
 			hwinfo->cpuid_family = 8;
 		}
 		else {
+			hwinfo->cpuid_family=strtol(s, NULL, 10);
+		}
+
+		/* Old Fallbacks if the above didn't work */
+		if (hwinfo->cpuid_family<0) {
+
+			/* Try the processor field and look inside of parens */
 			s = search_cpu_info( f, "Processor" );
 			if (s) {
 				t=strchr(s,'(');
 				tmp=*(t+2)-'0';
 				hwinfo->cpuid_family = tmp;
 			}
+			/* Try the model name and look inside of parens */
 			else {
 				s = search_cpu_info( f, "model name" );
 				if (s) {

@@ -175,6 +175,7 @@ getClockSpeed(nvmlDevice_t dev, nvmlClockType_t which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
 
     return (unsigned long long)ret;
@@ -190,6 +191,7 @@ getEccLocalErrors(nvmlDevice_t dev, nvmlEccBitType_t bits, int which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     switch (which_one) {
     case LOCAL_ECC_REGFILE:
@@ -215,6 +217,7 @@ getFanSpeed(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long)ret;
 }
@@ -228,6 +231,7 @@ getMaxClockSpeed(nvmlDevice_t dev, nvmlClockType_t which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long) ret;
 }
@@ -241,6 +245,7 @@ getMemoryInfo(nvmlDevice_t dev, int which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
 
     switch (which_one) {
@@ -266,40 +271,57 @@ getPState(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     switch (state) {
     case NVML_PSTATE_15:
         ret++;
+        // fall through
     case NVML_PSTATE_14:
         ret++;
+        // fall through
     case NVML_PSTATE_13:
         ret++;
+        // fall through
     case NVML_PSTATE_12:
         ret++;
+        // fall through
     case NVML_PSTATE_11:
         ret++;
+        // fall through
     case NVML_PSTATE_10:
         ret++;
+        // fall through
     case NVML_PSTATE_9:
         ret++;
+        // fall through
     case NVML_PSTATE_8:
         ret++;
+        // fall through
     case NVML_PSTATE_7:
         ret++;
+        // fall through
     case NVML_PSTATE_6:
         ret++;
+        // fall through
     case NVML_PSTATE_5:
         ret++;
+        // fall through
     case NVML_PSTATE_4:
         ret++;
+        // fall through
     case NVML_PSTATE_3:
         ret++;
+        // fall through
     case NVML_PSTATE_2:
         ret++;
+        // fall through
     case NVML_PSTATE_1:
         ret++;
+        // fall through
     case NVML_PSTATE_0:
         break;
+        // fall through
     case NVML_PSTATE_UNKNOWN:
     default:
         /* This should never happen?
@@ -318,6 +340,7 @@ getPowerUsage(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long) power;
 }
@@ -331,6 +354,7 @@ getTemperature(nvmlDevice_t dev)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return (unsigned long long)ret;
 }
@@ -344,6 +368,7 @@ getTotalEccErrors(nvmlDevice_t dev, nvmlEccBitType_t bits)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
     return counts;
 }
@@ -360,6 +385,7 @@ getUtilization(nvmlDevice_t dev, int which_one)
 
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
     }
 
     switch (which_one) {
@@ -493,6 +519,8 @@ nvml_hardware_read(long long *value, int which_one)
     default:
         return PAPI_EINVAL;
     }
+    if (*value == (long long)(unsigned long long) - 1)
+        return PAPI_EINVAL;
 
     return PAPI_OK;
 }
@@ -564,19 +592,16 @@ static int
 detectDevices()
 {
     nvmlReturn_t ret;
-    nvmlEnableState_t mode = NVML_FEATURE_DISABLED;
+    nvmlEnableState_t mode        = NVML_FEATURE_DISABLED;
+    nvmlEnableState_t pendingmode = NVML_FEATURE_DISABLED;
 
     char name[64];
     char inforomECC[16];
-    char inforomPower[16];
     char names[device_count][64];
 
     float ecc_version = 0.0;
-    float power_version = 0.0;
 
     int i = 0;
-    int isTesla = 0;
-    int isFermi = 0;
 
     unsigned int temp = 0;
 
@@ -584,8 +609,6 @@ detectDevices()
 
     /* So for each card, check whats querable */
     for (i = 0; i < device_count; i++) {
-        isTesla = 0;
-        isFermi = 1;
         features[i] = 0;
         
         ret = (*nvmlDeviceGetHandleByIndexPtr)(i, &devices[i]);
@@ -605,23 +628,11 @@ detectDevices()
         ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_ECC, inforomECC, 16);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
-            isFermi = 0;
-        }
-        ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_POWER, inforomPower, 16);
-        if (NVML_SUCCESS != ret) {
-            /* This implies the card is older then Fermi */
-            SUBDBG("nvmlGetInforomVersion fails %s\n", (*nvmlErrorStringPtr)(ret));
-            SUBDBG("Based upon the return to nvmlGetInforomVersion, we conclude this card is older then Fermi.\n");
-            isFermi = 0;
+        } else {
+            ecc_version = strtof(inforomECC, NULL);
         }
 
-        ecc_version = strtof(inforomECC, NULL);
-        power_version = strtof(inforomPower, NULL);
-
-        isTesla = (NULL == strstr(name, "Tesla")) ? 0 : 1;
-
-        /* For Tesla and Quadro products from Fermi and Kepler families. */
-        if (isFermi) {
+        if (getClockSpeed(devices[i], NVML_CLOCK_GRAPHICS) != (unsigned long long) - 1) {
             features[i] |= FEATURE_CLOCK_INFO;
             num_events += 3;
         }
@@ -630,7 +641,7 @@ detectDevices()
             requires NVML_INFOROM_ECC 2.0 or higher for location-based counts
             requires NVML_INFOROM_ECC 1.0 or higher for all other ECC counts
             requires ECC mode to be enabled. */
-        ret = (*nvmlDeviceGetEccModePtr)(devices[i], &mode, NULL);
+        ret = (*nvmlDeviceGetEccModePtr)(devices[i], &mode, &pendingmode);
         if (NVML_SUCCESS == ret) {
             if (NVML_FEATURE_ENABLED == mode) {
                 if (ecc_version >= 2.0) {
@@ -646,12 +657,14 @@ detectDevices()
             SUBDBG("nvmlDeviceGetEccMode does not appear to be supported. (nvml return code %d)\n", ret);
         }
 
-        /* For all discrete products with dedicated fans */
-        features[i] |= FEATURE_FAN_SPEED;
-        num_events++;
+        /* Check if fan speed is available */
+        if (getFanSpeed(devices[i]) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_FAN_SPEED;
+            num_events++;
+        }
 
-        /* For Tesla and Quadro products from Fermi and Kepler families. */
-        if (isFermi) {
+        /* Check if clock data are available */
+        if (getMaxClockSpeed(devices[i], NVML_CLOCK_GRAPHICS) != (unsigned long long) - 1) {
             features[i] |= FEATURE_MAX_CLOCK;
             num_events += 3;
         }
@@ -660,8 +673,8 @@ detectDevices()
         features[i] |= FEATURE_MEMORY_INFO;
         num_events += 3; /* total, free, used */
 
-        /* For Tesla and Quadro products from the Fermi and Kepler families. */
-        if (isFermi) {
+        /* Check if performance state is available */
+        if (getPState(devices[i]) != (unsigned long long) - 1) {
             features[i] |= FEATURE_PERF_STATES;
             num_events++;
         }
@@ -679,9 +692,11 @@ detectDevices()
             SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on this card. (nvml return code %d)\n", ret);
         }
 
-        /* For all discrete and S-class products. */
-        features[i] |= FEATURE_TEMP;
-        num_events++;
+        /* Check if temperature data are available */
+        if (getTemperature(devices[i]) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_TEMP;
+            num_events++;
+        }
 
         // For power_management_limit
         {
@@ -716,8 +731,8 @@ detectDevices()
             SUBDBG("Done nvmlDeviceGetPowerManagementLimitConstraintsPtr\n");
         }
 
-        /* For Tesla and Quadro products from the Fermi and Kepler families */
-        if (isFermi) {
+        /* Check if temperature data are available */
+        if (getUtilization(devices[i], GPU_UTILIZATION) != (unsigned long long) - 1) {
             features[i] |= FEATURE_UTILIZATION;
             num_events += 2;
         }
@@ -995,14 +1010,44 @@ createNativeEvents()
         strncpy(names[i], name, sizeof(names[0]) - 1);
         names[i][sizeof(names[0]) - 1] = '\0';
     }
+} // create native events.
+
+
+// Triggered by PAPI_shutdown(), but also if init fails to complete; for example due
+// to a missing library. We still need to clean up. The dynamic libs (dlxxx routines)
+// may have open mallocs that need to be free()d.
+ 
+int _papi_nvml_shutdown_component()
+{
+    SUBDBG("Enter:\n");
+    nvml_hardware_reset();
+    if (nvml_native_table != NULL) papi_free(nvml_native_table);
+    if (devices != NULL) papi_free(devices);
+    if (features != NULL) papi_free(features);
+    if (power_management_initial_limit) papi_free(power_management_initial_limit);
+    if (power_management_limit_constraint_min) papi_free(power_management_limit_constraint_min);
+    if (power_management_limit_constraint_max) papi_free(power_management_limit_constraint_max);
+    if (nvmlShutdownPtr) (*nvmlShutdownPtr)();        // Call nvml shutdown if we got that far.
+
+    device_count = 0;
+    num_events = 0;
+
+    // close the dynamic libraries needed by this component (opened in the init component call)
+    if (dl3) {dlclose(dl3); dl3=NULL;}
+    if (dl2) {dlclose(dl2); dl2=NULL;}
+    if (dl1) {dlclose(dl1); dl1=NULL;}
+
+    return PAPI_OK;
 }
+
+
 
 /** Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int
-_papi_nvml_init_component(int cidx)
+
+int _papi_nvml_init_component(int cidx)
 {
     SUBDBG("Entry: cidx: %d\n", cidx);
     nvmlReturn_t ret;
@@ -1016,18 +1061,21 @@ _papi_nvml_init_component(int cidx)
     if (linkCudaLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return (PAPI_ENOSUPP);
     }
 
     ret = (*nvmlInitPtr)();
     if (NVML_SUCCESS != ret) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA managament library failed to initialize.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
     cuerr = (*cuInitPtr)(0);
     if (cudaSuccess != cuerr) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The CUDA library failed to initialize.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
@@ -1035,18 +1083,21 @@ _papi_nvml_init_component(int cidx)
     ret = (*nvmlDeviceGetCountPtr)(&nvml_count);
     if (NVML_SUCCESS != ret) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA managament library.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
     cuerr = (*cudaGetDeviceCountPtr)(&cuda_count);
     if (cudaSuccess != cuerr) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a device count from CUDA.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
     /* We can probably recover from this, when we're clever */
     if ((cuda_count > 0) && (nvml_count != (unsigned int)cuda_count)) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA managament library have different device counts.");
+        _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
@@ -1068,7 +1119,8 @@ _papi_nvml_init_component(int cidx)
     if ((papi_errorcode = detectDevices()) != PAPI_OK) {
         papi_free(features);
         papi_free(devices);
-        sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occurred in device feature detection, please check your NVIDIA Management Library and CUDA install.");
+        sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install.");
+        _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
 
@@ -1395,31 +1447,6 @@ _papi_nvml_reset(hwd_context_t * ctx, hwd_control_state_t * ctl)
 
     /* Reset the hardware */
     nvml_hardware_reset();
-
-    return PAPI_OK;
-}
-
-/** Triggered by PAPI_shutdown() */
-int
-_papi_nvml_shutdown_component()
-{
-    SUBDBG("Enter:\n");
-    nvml_hardware_reset();
-    if (nvml_native_table != NULL) papi_free(nvml_native_table);
-    if (devices != NULL) papi_free(devices);
-    if (features != NULL) papi_free(features);
-    if (power_management_initial_limit) papi_free(power_management_initial_limit);
-    if (power_management_limit_constraint_min) papi_free(power_management_limit_constraint_min);
-    if (power_management_limit_constraint_max) papi_free(power_management_limit_constraint_max);
-   (*nvmlShutdownPtr)();
-
-    device_count = 0;
-    num_events = 0;
-
-    // close the dynamic libraries needed by this component (opened in the init component call)
-    if (dl3) dlclose(dl3); dl3=NULL;
-    if (dl2) dlclose(dl2); dl2=NULL;
-    if (dl1) dlclose(dl1); dl1=NULL;
 
     return PAPI_OK;
 }

@@ -1999,11 +1999,23 @@ _papi_hwi_init_global_internal( void )
 void
 _papi_hwi_shutdown_global_internal( void )
 {
+    int i = 0;
 	_papi_hwi_cleanup_all_presets(  );
 
 	_papi_hwi_cleanup_errors( );
 
 	_papi_hwi_lock( INTERNAL_LOCK );
+
+    for( i = 0; i < num_native_events; i++){
+        free(_papi_native_events[i].evt_name);
+    }
+
+    free(_papi_native_events);
+    _papi_native_events = NULL;        // In case a new library init is done.
+    num_native_events=0;               // .. 
+    num_native_chunks=0;               // .. 
+
+    _papi_hwi_free_papi_event_string();
 
 	papi_free(  _papi_hwi_system_info.global_eventset_map.dataSlotArray );
 	memset(  &_papi_hwi_system_info.global_eventset_map,

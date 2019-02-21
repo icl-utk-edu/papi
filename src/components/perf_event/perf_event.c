@@ -684,11 +684,23 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 	int i, ret = PAPI_OK;
 	long pid;
 
-	if (ctl->granularity==PAPI_GRN_SYS) {
-		pid = -1;
+
+	/* Set the pid setting */
+	/* If attached, this is the pid of process we are attached to. */
+	/* If GRN_THRD then it is 0 meaning current process only */
+	/* If GRN_SYS then it is -1 meaning all procs on this CPU */
+	/* Note if GRN_SYS then CPU must be specified, not -1 */
+
+	if (ctl->attached) {
+		pid = ctl->tid;
 	}
 	else {
-		pid = ctl->tid;
+		if (ctl->granularity==PAPI_GRN_SYS) {
+			pid = -1;
+		}
+		else {
+			pid = 0;
+		}
 	}
 
 	for( i = 0; i < ctl->num_events; i++ ) {
@@ -1091,9 +1103,11 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
 	( void ) flags;			/*unused */
 	( void ) ctx;			/*unused */
+	( void ) papi_pe_buffer;	/*unused */
 	int i;
 	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
-	unsigned long long count, enabled, running, adjusted;
+	unsigned long long count, enabled = 0, running = 0, adjusted;
+	int errors=0;
 
 	/* we must read each counter individually */
 	for ( i = 0; i < pe_ctl->num_events; i++ ) {
@@ -1101,7 +1115,9 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		count = mmap_read_self(pe_ctl->events[i].mmap_buf,
 						&enabled,&running);
 
-		/* TODO: more error checking? */
+		if (count==0xffffffffffffffffULL) {
+			errors++;
+		}
 
 		/* Handle multiplexing case */
 		if (enabled == running) {
@@ -1126,6 +1142,8 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	*events = pe_ctl->counts;
 
 	SUBDBG("EXIT: *events: %p\n", *events);
+
+	if (errors) return PAPI_ESYS;
 
 	return PAPI_OK;
 }
@@ -1253,10 +1271,16 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	int i, j, ret = -1;
 	pe_control_t *pe_ctl = ( pe_control_t *) ctl;
 	long long papi_pe_buffer[READ_BUFFER_SIZE];
+	int result;
 
 	/* Handle fast case */
+	/* FIXME: we fallback to slow reads if *any* event in eventset fails */
+	/*        in theory we could only fall back for the one event        */
+	/*        but that makes the code more complicated.                  */
 	if ((_perf_event_vector.cmp_info.fast_counter_read) && (!pe_ctl->inherit)) {
-		return _pe_rdpmc_read( ctx, ctl, events, flags);
+		result=_pe_rdpmc_read( ctx, ctl, events, flags);
+		/* if successful we are done, otherwise fall back to read */
+		if (result==PAPI_OK) return PAPI_OK;
 	}
 
 	/* Handle case where we are multiplexing */
@@ -1639,6 +1663,7 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	      return ret;
 	   }
 
+	   pe_ctl->attached = 1;
 	   pe_ctl->tid = option->attach.tid;
 
 	   /* If events have been already been added, something may */
@@ -1651,7 +1676,9 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
       case PAPI_DETACH:
 	   pe_ctl = ( pe_control_t *) ( option->attach.ESI->ctl_state );
 
+	   pe_ctl->attached = 0;
 	   pe_ctl->tid = 0;
+
 	   return PAPI_OK;
 
       case PAPI_CPU_ATTACH:
@@ -1664,11 +1691,6 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	       return ret;
 	   }
 	   /* looks like we are allowed so set cpu number */
-
-	   /* this tells the kernel not to count for a thread   */
-	   /* should we warn if we try to set both?  perf_event */
-	   /* will reject it.                                   */
-	   pe_ctl->tid = -1;
 
 	   pe_ctl->cpu = option->cpu.cpu_num;
 
@@ -1685,7 +1707,7 @@ _pe_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 	      return ret;
 	   }
 	   /* looks like we are allowed, so set event set level counting domains */
-       pe_ctl->domain = option->domain.domain;
+	pe_ctl->domain = option->domain.domain;
 	   return PAPI_OK;
 
       case PAPI_GRANUL:

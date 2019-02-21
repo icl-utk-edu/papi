@@ -37,14 +37,31 @@ simpleMultiGPU_cupti_only: simpleMultiGPU.cu $(UTILOBJS)
 nvlink_bandwidth: nvlink_bandwidth.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
+nvlink_bw_plus: nvlink_bw_plus.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+cuda_event_only_test: cuda_event_only_test.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+cudaTest_cupti_only: cudaTest_cupti_only.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+likeComp_cupti_only: likeComp_cupti_only.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
 nvlink_all: nvlink_all.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 nvlink_bandwidth_cupti_only: nvlink_bandwidth_cupti_only.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
-nvidia_nvlink_bandwidth: nvidia_nvlink_bandwidth.cu $(UTILOBJS)
-	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+# The following program is taken from the cuda sample directory; /sw/peak/cuda/9.2.148/samples/1_Utilities/
+nvidia_sample_bw_test: nvidia_sample_bw_test.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -I./sample_inc -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+# The following program is taken from the cuda sample directory; /sw/peak/cuda/9.2.148/samples/1_Utilities/
+p2pBandwidthLatencyTest: p2pBandwidthLatencyTest.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -I./sample_inc -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o cuda_ld_preload_example.so nvlink_bandwidth nvlink_all

@@ -8,6 +8,9 @@
  * test case for the linux-infiniband component
  * Adapted from its counterpart in the net component.
  *
+ * @author Tony Castaldo
+ *      Corrected missing include file for the strstr() function to be used.
+ *
  * @brief
  *   List all net events codes and names
  */
@@ -17,6 +20,7 @@
 
 #include "papi.h"
 #include "papi_test.h"
+#include <string.h>   // Needed for 'strstr' used below.
 
 int main (int argc, char **argv)
 {

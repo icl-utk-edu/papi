@@ -500,7 +500,9 @@ test_fail( const char *file, int line, const char *call, int retval )
 		fprintf( stdout, "Error in %s: %s\n", call, PAPI_strerror( retval ) );
 	}
 
-//	fprintf( stdout, "\n" );
+   fprintf(stdout, "Some tests require special hardware, permissions, OS, compilers\n"
+                   "or library versions. PAPI may still function perfectly on your \n"
+                   "system without the particular feature being tested here.       \n");
 
 	/* NOTE: Because test_fail is called from thread functions,
 	   calling PAPI_shutdown here could prevent some threads

@@ -50,21 +50,10 @@ pfm_intel_x86_config_t pfm_intel_x86_cfg;
 
 #define mdhw(m, u, at) (m & u & _INTEL_X86_##at)
 
-/*
- * .byte 0x53 == push ebx. it's universal for 32 and 64 bit
- * .byte 0x5b == pop ebx.
- * Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
- * Using the opcode directly avoids this problem.
- */
 static inline void
 cpuid(unsigned int op, unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d)
 {
-  __asm__ __volatile__ (".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b"
-       : "=a" (*a),
-	     "=S" (*b),
-		 "=c" (*c),
-		 "=d" (*d)
-       : "a" (op));
+	asm volatile("cpuid" : "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d) : "a" (op) : "memory");
 }
 
 static void
@@ -925,7 +914,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		}
 
 		for (j=i+1; j < (int)pmu->pme_count; j++) {
-			if (pe[i].code == pe[j].code && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
+			if (pe[i].code == pe[j].code && pe[i].model == pe[j].model && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
 				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
 				error++;
 				}
@@ -1170,4 +1159,30 @@ pfm_intel_x86_can_auto_encode(void *this, int pidx, int uidx)
 		return 0;
 
 	return !intel_x86_uflag(this, pidx, uidx, INTEL_X86_NO_AUTOENCODE);
+}
+
+static int
+intel_x86_event_valid(void *this, int i)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	pfmlib_pmu_t *pmu = this;
+
+        return pe[i].model == 0 || pe[i].model == pmu->pmu;
+}
+
+int
+pfm_intel_x86_get_num_events(void *this)
+{
+	pfmlib_pmu_t *pmu = this;
+	int i, num = 0;
+
+	/*
+	 * count actual number of events for specific PMU.
+	 * Table may contain more events for the family than
+	 * what a specific model actually supports.
+	 */
+	for (i = 0; i < pmu->pme_count; i++)
+		if (intel_x86_event_valid(this, i))
+			num++;
+	return num;
 }

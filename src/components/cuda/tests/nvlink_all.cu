@@ -608,7 +608,7 @@ int main(int argc, char *argv[])
     }
 
     for (i=0; i<deviceCount; i++) {
-        printf("Device %i has %i events. %i potential pairings.\n", i, deviceEvents[i], deviceEvents[i]*(deviceEvents[i]-1)/2);
+        printf("Device %i has %i events. %i potential pairings per device.\n", i, deviceEvents[i], deviceEvents[i]*(deviceEvents[i]-1)/2);
     }
 
     // Begin pair testing. We consider every possible pairing of events
@@ -621,8 +621,9 @@ int main(int argc, char *argv[])
     int type;                                                               // 0 succeed on same device, 1 = fail across devices.
     for (type=0; type<2; type++) {
         if (type == 0) {
-            printf("List of Successful Pairings on SAME device:\n");
-            printf("* means value changed significantly when paired.\n");
+            printf("List of Pairings on SAME device:\n");
+            printf("* means value changed by more than 10%% when paired (vs measured singly, above).\n");
+            printf("^ means a pair was rejected as an invalid combo.\n");
         } else {
             printf("List of Failed Pairings on DIFFERENT devices:\n");
         }
@@ -644,6 +645,8 @@ int main(int argc, char *argv[])
                 // Here we must examine the return code.
                 int ret = PAPI_add_named_event(EventSet, eventsFound[pairEvent].name);
                 if (type == 0 && ret == PAPI_ECOMBO) {                                  // A bad combination when looking for valid combos.
+                    printf("%c %64s + %-64s [Invalid Combo]\n", '^',                    // report it.
+                        eventsFound[mainEvent].name, eventsFound[pairEvent].name);
                     badSameCombo++;                                                     // .. count an explicit rejection.
                     CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // .. done with event set.
                     CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // ..
@@ -651,72 +654,77 @@ int main(int argc, char *argv[])
                 }
 
                 if (type == 1 && ret == PAPI_ECOMBO) {                                  // A bad  combination when we are looking for that.
-                    printf("%64s => %-64s BAD COMBINATION ACROSS DEVICES.\n", eventsFound[mainEvent].name, eventsFound[pairEvent].name);   
+                    printf("%64s + %-64s BAD COMBINATION ACROSS DEVICES.\n", 
+                        eventsFound[mainEvent].name, eventsFound[pairEvent].name);      // report it.
                     failOnDiff++;                                                       // count the bad combos.
-                    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // ... don't need to go further.
-                    CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // ...
-                    continue;                                                           // ... try the next combo.
+                    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // .. don't need to go further.
+                    CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // ..
+                    continue;                                                           // .. try the next combo.
                 }
 
                 if (ret != PAPI_OK) {                                                   // If it failed for some other reason,
                     fprintf(stderr, "%s:%d Attempt to add event '%s' to set "
-                            "with event '%s' produced an unexpected error: [%s]\nIgnoring this pair.", 
-                        __FILE__, __LINE__, eventsFound[pairEvent], eventsFound[mainEvent], PAPI_strerror(ret));
-                    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // ... didn't work.
-                    CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // ...
-                    continue;                                                           // ... try the next combo.
+                            "with event '%s' produced an unexpected error: "
+                            "[%s]. Ignoring this pair.\n", 
+                        __FILE__, __LINE__, eventsFound[pairEvent], 
+                        eventsFound[mainEvent], PAPI_strerror(ret));
+                    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // .. didn't work.
+                    CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // ..
+                    continue;                                                           // .. try the next combo.
                 }
 
-                // We were able to add the pair. In type 1, we just skip it.            // We don't report a valid pair across devices.
+                // We were able to add the pair. In type 1, we just skip it,
+                // because we presume a single event on a device isn't changed
+                // by any event on another device.
                 if (type == 1) {
-                    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // ... worked fine; don't measure it.
-                    CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // ...
-                    continue;                                                           // ... try the next combo.
+                    CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                      // .. worked fine; don't measure it.
+                    CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                     // ..
+                    continue;                                                           // .. try the next combo.
                 }
 
                 // We were able to add the pair, in type 0, get a measurement. 
                 readValues[0]= -1; readValues[1] = -1;
 
                 if(cpuToGpu) {
-                    conductCpuToGpu(EventSet, mainDevice, readValues);                      // conduct for main.
+                    conductCpuToGpu(EventSet, mainDevice, readValues);                  // conduct for main.
                     saveValues[0] = readValues[0];
                     saveValues[1] = readValues[1];
                 } else if(gpuToGpu) {
-                    conductGpuToGpu(EventSet, mainDevice, readValues);                      // conduct for main.
+                    conductGpuToGpu(EventSet, mainDevice, readValues);                  // conduct for main.
                     saveValues[0] = readValues[0];
                     saveValues[1] = readValues[1];
                 }
 
-                goodOnSame++;                                                               // Was take by cuda as a valid pairing.
+                goodOnSame++;                                                           // Was accepted by cuda as a valid pairing.
 
                 // For the checks, we add 2 (so -1 becomes +1) to avoid any
                 // divide by zeros. It won't make a significant difference 
                 // in the ratios. (none if readings are the same). 
-                double mainSingle = (2.0 + eventsFound[mainEvent].value);                 // Get value when read alone.
-                double pairSingle = (2.0 + eventsFound[pairEvent].value);                 // ..
-                double mainCheck  = mainSingle/(2.0 + saveValues[0]);                       // Get ratio when paired.
-                double pairCheck  = pairSingle/(2.0 + saveValues[1]);                       // ..
+                double mainSingle = (2.0 + eventsFound[mainEvent].value);               // Get value when read alone.
+                double pairSingle = (2.0 + eventsFound[pairEvent].value);               // ..
+                double mainCheck  = mainSingle/(2.0 + saveValues[0]);                   // Get ratio when paired.
+                double pairCheck  = pairSingle/(2.0 + saveValues[1]);                   // ..
 
-                char flag=' ', flag1=' ', flag2=' ';                                        // Presume all okay.
-                if (mainCheck < 0.90 || mainCheck > 1.10) flag1='*';                        // Flag as significantly different for main.
-                if (pairCheck < 0.90 || pairCheck > 1.10) flag2='*';                        // Flag as significantly different for pair.
+                char flag=' ', flag1=' ', flag2=' ';                                    // Presume all okay.
+                if (mainCheck < 0.90 || mainCheck > 1.10) flag1='*';                    // Flag as significantly different for main.
+                if (pairCheck < 0.90 || pairCheck > 1.10) flag2='*';                    // Flag as significantly different for pair.
                 if (flag1 == '*' || flag2 == '*') {
-                    pairProblems++;                                                         // Remember number of problems.
-                    flag = '*';                                                             // set global flag.
+                    pairProblems++;                                                     // Remember number of problems.
+                    flag = '*';                                                         // set global flag.
                 }
 
-                printf("%c %64s => %-64s [", flag, eventsFound[mainEvent].name, eventsFound[pairEvent].name);
-                calculateSize(str, saveValues[0]);                                          // Do some pretty formatting,
+                printf("%c %64s + %-64s [", flag, eventsFound[mainEvent].name, eventsFound[pairEvent].name);
+                calculateSize(str, saveValues[0]);                                      // Do some pretty formatting,
                 printf("%c%9s,", flag1, str);
                 calculateSize(str, saveValues[1]);
                 printf("%c%9s]\n", flag2, str);
 
-                CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                              // Delete all events in set.
-                CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                             // destroy the event set.
+                CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                          // Delete all events in set.
+                CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                         // destroy the event set.
             }
         } // end loop on all events.
 
-        if (type == 0) {                                                    // For good pairings on same devices,
+        if (type == 0) {                                                                // For good pairings on same devices,
             if (goodOnSame == 0) {
                 printf("NO valid pairings of above events if both on the SAME device.\n");
             } else {
@@ -726,16 +734,16 @@ int main(int argc, char *argv[])
             printf("%i unique pairings on SAME device were rejected as bad combinations.\n", badSameCombo);
             
             if (pairProblems > 0) {
-                printf("Significant change in event values read for %i pairings.\n", pairProblems);
+                printf("%i pairings resulted in a change of one or both event values > 10%%.\n", pairProblems);
             } else {
                 printf("No significant change in event values read for any pairings.\n");
             }
-        } else {                                                            // Must be reporting bad pairings across devies.
+        } else {                                                                        // Must be reporting bad pairings across devies.
             if (failOnDiff == 0) printf("NO failed pairings of above events if each on a DIFFERENT device.\n");
             else printf("%i failed pairings of above events with each on a DIFFERENT device.\n", failOnDiff);
         }
     } // end loop on type.
 
-    PAPI_shutdown();                                                        // Returns no value.
-    return(0);                                                              // exit OK.
+    PAPI_shutdown();                                                                    // Returns no value.
+    return(0);                                                                          // exit OK.
 } // end MAIN.
