@@ -132,9 +132,15 @@ __ 15. Copy the tarball to the website; on harry.icl.utk.edu this is
 
 __ 16. Check permissions on the tarball. 664 is good.
 
+NOTE:  Steps 17 and 18 are typically done by the person responsible
+       for the website, not the programmer completing the release. 
+
 __ 17. Create a link with supporting text on the PAPI software web page.
 
 __ 18. Create a News item on the PAPI Web page.
+
+NOTE:  Steps 19 and 20 are typically done by PAPI PIs or management 
+       (at this writing Heike Jagode and Anthony Danalis). 
 
 __ 19. Email the papi developer and discussion lists with an announcement.
 
@@ -143,7 +149,10 @@ __ 20. Post the announcement on the PAPI User Forum.
 __ 21. Bump the version number in the repository AFTER the release (look at step 2)
        papi.spec, src/papi.h, src/configure.in, src/Makefile.in, doc/Doxyfile-common (PROJECT_NUMBER) 
        Regenerate the configure using autoconf 2.69 (e.g. on saturn). Then commit.
-       ( git commit -m "Updated version to X.Y.Z after the release"  doc/Doxyfile-common papi.spec release_procedure.txt src/Makefile.in src/configure src/configure.in  src/papi.h )
+       ( git commit -m "Updated version to X.Y.Z after the release"  doc/Doxyfile-common papi.spec \
+          release_procedure.txt src/Makefile.in src/configure src/configure.in  src/papi.h )
+       This is to ensure more development commits (that may not be fully tested)
+       will not be in the release version of the repository.
 
 ================================================================================
 
