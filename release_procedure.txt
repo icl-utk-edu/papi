@@ -49,9 +49,13 @@ __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.i
 	You will want to check if anything needs to be committed to git.
 	(Usually the $(papi_dir)/man/man1 and man3 directories).
 	doxygen may generate some extraneous files in man1 and man3; eg 
-	man/man1/_home_tonycastaldo_*.* 
+	man/man1/_home_youruserid_*.* 
+	man/man3/_home_youruserid_*.* 
 	remove these. 
-	Then you can go to each directory, >cd papi/man/man1, and add it all:
+	Then you can go to each directory and add all files:
+        >cd papi/man/man1
+	>git add *
+        >cd papi/man/man3 
 	>git add *
 
 -- 2c. Rebuild the website docs.
@@ -63,9 +67,10 @@ __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.i
 
 -- 2d.  Update the web dir, wherever it may be. On harry.icl.utk.edu, it is found on 
 	/nfs/www/icl/projectsdev/papi/docs, but the sysadmin must give you write permission.
-	for the example below, 'webdir' = '/nfs/www/icl/projects/dev'.
-	You may wish to do a diff between this directory and the papi directory (doc/html/*) to
-	ensure you are replacing the correct files. 
+	for the example below, 'webdir' = '/nfs/www/icl/projectsdev'.
+	You may wish to do a diff between this directory and the papi directory to ensure
+	you are replacing the correct files.
+        >diff webdir/papi/docs/* papi/doc/html/*
 
 	Cleanup web dir install new files
 	( /bin/rm -rf /webdir/papi/docs/* )
@@ -76,6 +81,7 @@ __ 3. If configure.in is changed, run autoconf (2.69) and commit the resulting
 	configure file.
 	NOTE: Using an autoconf version >2.69 will work, but will produce an
 	inordinate number of extraneous differences between versions.
+        You can check the version # with >autoconf -V
 	One possible machine with 2.69 is saturn; harry.icl.utk.edu also has 
 	an autoconf with 2.69. 
 
