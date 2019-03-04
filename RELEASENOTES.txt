@@ -3,48 +3,71 @@ order.
 
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
-===============================================================================
-PAPI 5.7.0 RELEASE NOTES                                            18 Feb 2019
-===============================================================================
-PAPI 5.7.0 continues the effort to clean up the source code, add documentation
-and test/utility files. We have added the PCP component (Performance Co-Pilot)
-which allows access to events on the IBM Power 9 (the CPU on the Summit 
-supercomputer and its development systems). 
 
-For specific and detailed information on changes made in this release, see 
+
+===============================================================================
+PAPI 5.7.0 RELEASE NOTES                                             4 Mar 2019
+===============================================================================
+
+PAPI 5.7 is now available. This release includes a new component, called "pcp",
+which interfaces to the Performance Co-Pilot (PCP). It enables PAPI users to
+monitor IBM POWER9 hardware performance events, particularly shared “NEST”
+events without root access.
+
+This release also upgrades the (to date read-only) PAPI “nvml” component with
+write access to the information and controls exposed via the NVIDIA Management
+Library. The PAPI “nvml” component now supports both---measuring and capping
+power usage---on recent NVIDIA GPU architectures (e.g. V100).
+
+We have added power monitoring as well as PMU support for recent Intel
+architectures such as Cascade Lake, Kaby Lake, Skylake, and Knights Mill (KNM).
+Furthermore, measuring power usage for AMD Fam17h chips is now available via
+the “rapl” component.
+
+For specific and detailed information on changes made for this release, see
 ChangeLogP570.txt for filenames or keywords of interest and change summaries,
 or go directly to the PAPI git repository.
 
-Major changes
+
+Major Changes
 
 * Added the component PCP (Performance Co-Pilot, IBM) which allows access to
-  PCP events. 
-* Updates, fixes, benchmarks and testing for the NVML component, which allows
-  power-management (reporting and setting) for Nvidia components. 
-* NVLINK debugging, and additional testers and example code for nvlink 
-  (communication channels for Nvidia devices to talk to each other).
-  Part of the cuda component.
-* CUPTI only test files are updated and expanded to allow non-PAPI 
-  confirmation of reported issues with Nvidia events or metrics. (Or to
-  confirm that issues are within PAPI).
-* Rewrite of cuda component handling to better handle events, metrics (values
-  computed from multiple events), and NVLINK events, each of which have
-  differently handling requirements and may require separate read groupings.
+  PCP events via the PAPI interface.
+* Added support for IBM POWER9 processors.
+* Added power monitoring support for AMD Fam17h architectures via RAPL.
+* Added power capping support for NVIDIA GPUs.
+* Added benchmarks and testing for the “nvml” component, which allows
+  power-management (reporting and setting) for NVIDIA GPUs.
+* Re-implementation of the “cuda” component to better handle GPU events,
+  metrics (values computed from multiple events), and NVLink events, each of
+  which have differently handling requirements and may require separate read
+  groupings.
+* Enhanced NVLink support, and added additional tests and example code for
+  NVLink (high-speed GPU interconnect).
+* Extension of test suite with more advanced testing: attach_cpu_sys_validate,
+  attach_cpu_validate, event_destroy test, openmp.F test, attach_validate test
+  (rdpmc issue).
 
-Minor changes
-* Many memory leaks have been corrected. Not all, some 3rd party library 
+
+Other Changes
+
+* ARM64 configuration now works with newer Linux kernels (>=3.19).
+* As part of the “cuda” component, expanded CUPTI-only tests to distinguish
+  between PAPI or non-PAPI issues with NVIDIA events and metrics.
+* Many memory leaks have been corrected. Not all, some 3rd party library
   codes still exhibit memory leaks.
-* Better reporting of some bugs. Changes to infiniband_umad name reporting
-  to distinguish it from the infiniband component.
-* new testing by Vince Weaver; attach_cpu_sys_validate, attach_cpu_validate,
-  event destroy test, openmp.F test, attach_validate test (rdpmc issue).
-* RAPL component, Add AMD Fam17H support (energy measurement).
-* ARM64 configuration now works with newer Linux kernels (>=3.10).  
+* Better reporting and error handling of bugs. Changes to “infiniband_umad”
+  name reporting to distinguish it from the “infiniband” component.
+* Cleaning up of the source code, added documentation and test/utility files.
 
-Acknowledgements: This release is the result of efforts from many
-people, with special Thanks to Vince Weaver, Phil Mucci, William Cohen, 
-Stephane Eranian (for libpfm4), Frank Winkler, Konstantin Stefanov, from the 
-internal PAPI team.
+
+Acknowledgements: This release is the result of efforts from many people. The
+PAPI team would like to express special Thanks to Vince Weaver, Stephane
+Eranian (for libpfm4), William Cohen, Steve Kaufmann, Phil Mucci, and
+Konstantin Stefanov.
+
+The PAPI release can be downloaded from http://icl.cs.utk.edu/papi/software.
+
 
 ===============================================================================
 PAPI 5.6.0 RELEASE NOTES                                            19 Dec 2017
