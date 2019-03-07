@@ -108,7 +108,8 @@ __ 10. 	Push everything to the central repo.
 	git push --tags
 	-- or -- If you've created a new branch.
 	git push --tags origin stable-X.Y:
-        May also need to do a git push now to get the master branch updated
+        May also need to do a 'git push' NOW to get the master branch updated
+        (follow instructions returned from git).
 
 __ 11. 	Create a fresh clone of the papi repository.
 	> git clone https://bitbucket.org/icl/papi.git papi-X.Y.Z
