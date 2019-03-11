@@ -56,9 +56,30 @@ int main( int argc, char **argv )
    int rc;
    long t;
    int quiet = 0;
+   int retval;
 
    /* Set TESTS_QUIET variable */
    quiet = tests_quiet( argc, argv );
+
+   retval = PAPI_hl_init();
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_hl_init", retval );
+   }
+
+   for( t = 0; t < NUM_THREADS; t++) {
+      args[t].tid = t;
+      args[t].quiet = quiet;
+      rc = pthread_create(&threads[t], NULL, CallMatMul, (void *)&args[t]);
+      if (rc) {
+         printf("ERROR; return code from pthread_create() is %d\n", rc);
+         exit(-1);
+      }
+   }
+
+   for( t = 0; t < NUM_THREADS; t++) {
+      pthread_join(threads[t], NULL);
+   }
+
 
    for( t = 0; t < NUM_THREADS; t++) {
       args[t].tid = t;

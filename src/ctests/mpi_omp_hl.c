@@ -23,6 +23,12 @@ int main( int argc, char **argv )
 
    region_name = "do_flops";
 
+   retval = PAPI_hl_init();
+   if ( retval != PAPI_OK ) {
+      test_fail( __FILE__, __LINE__, "PAPI_hl_init", retval );
+   }
+
+
    #pragma omp parallel
    #pragma omp for
    for ( i = 1; i <= 2; ++i ) {
