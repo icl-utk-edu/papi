@@ -247,7 +247,10 @@ static hsa_status_t papirocm_add_native_events_callback(const rocprofiler_info_d
     strncpy(ctx->availEventDesc[index].description, info.metric.description, PAPI_2MAX_STR_LEN);
     ctx->availEventDesc[index].description[PAPI_2MAX_STR_LEN - 1] = '\0';
 
-    EventID eventId = {};
+    EventID eventId;            // Removed ={} initialization.
+    eventId.parameters=NULL;    // Init.
+    eventId.parameter_count=0;
+	
     eventId.kind = ROCPROFILER_FEATURE_KIND_METRIC;
     eventId.name = strdup(info.metric.name);
 
@@ -260,9 +263,9 @@ static hsa_status_t papirocm_add_native_events_callback(const rocprofiler_info_d
 
 static int papirocm_add_native_events(papirocm_context_t * ctx)
 {
-    uint32_t maxEventSize = 0;
+    uint32_t i, maxEventSize = 0;
 
-    for (uint32_t i = 0; i < ctx->availAgentSize; ++i) {
+    for (i = 0; i < ctx->availAgentSize; ++i) {
       uint32_t size = 0;
       ROCM_CALL_CK(rocprofiler_get_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC_COUNT, &size), return (PAPI_EMISC));
       maxEventSize += size;
@@ -278,7 +281,7 @@ static int papirocm_add_native_events(papirocm_context_t * ctx)
     ctx->availEventDesc = (ev_name_desc_t *) papi_calloc(maxEventSize, sizeof(ev_name_desc_t));
     CHECK_PRINT_EVAL(!ctx->availEventDesc, "ERROR ROCM: Could not allocate memory", return (PAPI_ENOMEM));
 
-    for (uint32_t i = 0; i < ctx->availAgentSize; ++i) {
+    for (i = 0; i < ctx->availAgentSize; ++i) {
       events_callback_arg_t arg;
       arg.device_num = i;
       arg.ctx = ctx;
