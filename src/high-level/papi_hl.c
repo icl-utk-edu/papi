@@ -181,6 +181,10 @@ static int _internal_hl_create_global_binary_tree();
 /* functions for output generation */
 static int _internal_hl_mkdir(const char *dir);
 static int _internal_hl_determine_output_path();
+static void _internal_hl_json_line_break_and_indent(FILE* f, bool b, int width);
+static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions);
+static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node);
+static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* tids, int threads_num);
 static void _internal_hl_write_output();
 
 /* functions for cleaning up heap memory */
@@ -995,16 +999,169 @@ static int _internal_hl_determine_output_path()
    return ( PAPI_OK );
 }
 
+static void _internal_hl_json_line_break_and_indent( FILE* f, bool b, int width )
+{
+   int i;
+   if ( b ) {
+      fprintf(f, "\n");
+      for ( i = 0; i < width; ++i )
+         fprintf(f, "  ");
+   }
+}
+
+static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions)
+{
+   char **all_event_names = NULL;
+   int extended_total_num_events;
+   int i, j, cmp_iter;
+
+   /* generate array of all events including region count and CPU cycles for output */
+   extended_total_num_events = total_num_events + 2;
+   all_event_names = (char**)malloc(extended_total_num_events * sizeof(char*));
+   all_event_names[0] = "REGION_COUNT";
+   all_event_names[1] = "CYCLES";
+   cmp_iter = 2;
+   for ( i = 0; i < num_of_components; i++ ) {
+      for ( j = 0; j < components[i].num_of_events; j++ ) {
+         all_event_names[cmp_iter++] = components[i].event_names[j];
+      }
+   }
+
+   for ( j = 0; j < extended_total_num_events; j++ ) {
+
+      _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+
+      /* print read values if available */
+      if ( regions->values[j].read_values != NULL) {
+         reads_t* read_node = regions->values[j].read_values;
+         /* going to last node */
+         while ( read_node->next != NULL ) {
+            read_node = read_node->next;
+         }
+         /* read values in reverse order */
+         int read_cnt = 1;
+         fprintf(f, "\"%s\":{", all_event_names[j]);
+
+         _internal_hl_json_line_break_and_indent(f, beautifier, 7);
+         fprintf(f, "\"Total\":\"%lld\",", regions->values[j].total);
+
+         while ( read_node != NULL ) {
+            _internal_hl_json_line_break_and_indent(f, beautifier, 7);
+            fprintf(f, "\"Read_%d\":\"%lld\"", read_cnt,read_node->value);
+
+            read_node = read_node->prev;
+
+            if ( read_node == NULL ) {
+               _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+               fprintf(f, "}");
+               if ( j < extended_total_num_events - 1 )
+                  fprintf(f, ",");
+            } else {
+               fprintf(f, ",");
+            }
+
+            read_cnt++;
+         }
+      } else {
+         HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].total);
+
+         if ( j == ( extended_total_num_events - 1 ) ) {
+            fprintf(f, "\"%s\":\"%lld\"", all_event_names[j], regions->values[j].total);
+         } else {
+            fprintf(f, "\"%s\":\"%lld\",", all_event_names[j], regions->values[j].total);
+         }
+      }
+   }
+
+   free(all_event_names);
+}
+
+static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node)
+{
+   /* iterate over regions list */
+   regions_t *regions = thread_node->value;
+
+   /* going to last node */
+   while ( regions->next != NULL ) {
+      regions = regions->next;
+   }
+
+   /* read regions in reverse order */
+   while (regions != NULL) {
+      HLDBG("  Region:%s\n", regions->region);
+
+      _internal_hl_json_line_break_and_indent(f, beautifier, 4);
+      fprintf(f, "{");
+      _internal_hl_json_line_break_and_indent(f, beautifier, 5);
+      fprintf(f, "\"%s\":{", regions->region);
+
+      _internal_hl_json_region_events(f, beautifier, regions);
+
+      _internal_hl_json_line_break_and_indent(f, beautifier, 5);
+      fprintf(f, "}");
+
+      regions = regions->prev;
+      _internal_hl_json_line_break_and_indent(f, beautifier, 4);
+      if (regions == NULL ) {
+         fprintf(f, "}");
+      } else {
+         fprintf(f, "},");
+      }
+   }
+}
+
+static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* tids, int threads_num)
+{
+   int i;
+
+   _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+   fprintf(f, "\"Threads\":[");
+
+   /* get regions of all threads */
+   for ( i = 0; i < threads_num; i++ )
+   {
+      HLDBG("Thread ID:%lu\n", tids[i]);
+      /* find values of current thread in global binary tree */
+      threads_t* thread_node = _internal_hl_find_thread_node(tids[i]);
+      if ( thread_node != NULL ) {
+         /* do we really need the exact thread id? */
+         _internal_hl_json_line_break_and_indent(f, beautifier, 2);
+         fprintf(f, "{");
+         _internal_hl_json_line_break_and_indent(f, beautifier, 3);
+         fprintf(f, "\"ID\":\"%lu\",", thread_node->key);
+
+         /* in case we only store iterator id as thread id */
+         //fprintf(f, "\"ID\":%d,", i);
+
+         _internal_hl_json_line_break_and_indent(f, beautifier, 3);
+         fprintf(f, "\"regions\":[");
+
+         _internal_hl_json_regions(f, beautifier, thread_node);
+
+         _internal_hl_json_line_break_and_indent(f, beautifier, 3);
+         fprintf(f, "]");
+
+         _internal_hl_json_line_break_and_indent(f, beautifier, 2);
+         if ( i < threads_num - 1 ) {
+            fprintf(f, "},");
+         } else {
+            fprintf(f, "}");
+         }
+      }
+   }
+
+   _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+   fprintf(f, "]");
+}
+
 static void _internal_hl_write_output()
 {
    if ( output_generated == false )
    {
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( output_generated == false ) {
-         char **all_event_names = NULL;
-         int extended_total_num_events;
          unsigned long *tids = NULL;
-         int i, j, cmp_iter, number_of_threads;
+         int number_of_threads;
          FILE *output_file;
          /* current CPU frequency in MHz */
          int cpu_freq;
@@ -1053,18 +1210,6 @@ static void _internal_hl_write_output()
          }
          else
          {
-            /* generate array of all events including region count and CPU cycles for output */
-            extended_total_num_events = total_num_events + 2;
-            all_event_names = (char**)malloc(extended_total_num_events * sizeof(char*));
-            all_event_names[0] = "REGION_COUNT";
-            all_event_names[1] = "CYCLES";
-            cmp_iter = 2;
-            for ( i = 0; i < num_of_components; i++ ) {
-               for ( j = 0; j < components[i].num_of_events; j++ ) {
-                  all_event_names[cmp_iter++] = components[i].event_names[j];
-               }
-            }
-
             /* list all threads */
             if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
                verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
@@ -1079,92 +1224,39 @@ static void _internal_hl_write_output()
                return;
             }
 
-            /* example output
-            * CPU in MHz:1995
-            * Thread,list<Region:list<Event:Value>>
-            * 1,<"calc_1":<"PAPI_TOT_INS":57258,"PAPI_TOT_CYC":39439>,"calc_2":<"PAPI_TOT_INS":57258,"    
-               PAPI_TOT_CYC":39439>>
-            */
+            /* start writing json file */
 
-            /* write current CPU frequency in output file */
-            fprintf(output_file, "CPU in MHz:%d\n", cpu_freq);
+            /* JSON beautifier (line break and indent) */
+            bool beautifier = true;
+
+            /* start of JSON file */
+            fprintf(output_file, "{");
+            _internal_hl_json_line_break_and_indent(output_file, beautifier, 1);
+            fprintf(output_file, "\"CPU in MHz\":\"%d\",", cpu_freq);
 
             /* write all regions with events per thread */
-            fprintf(output_file, "Thread,JSON{Region:{Event:Value,...},...}");
-            for ( i = 0; i < number_of_threads; i++ )
-            {
-               HLDBG("Thread ID:%lu\n", tids[i]);
-               /* find values of current thread in global binary tree */
-               threads_t* thread_node = _internal_hl_find_thread_node(tids[i]);
-               if ( thread_node != NULL ) {
-                  /* do we really need the exact thread id? */
-                  fprintf(output_file, "\n%lu,{", thread_node->key);
+            _internal_hl_json_threads(output_file, beautifier, tids, number_of_threads);
 
-                  /* in case we only store iterator id as thread id */
-                  //fprintf(output_file, "\n%d,{", i);
-
-                  /* iterate over regions list */
-                  regions_t *regions = thread_node->value;
-
-                  /* going to last node */
-                  while ( regions->next != NULL ) {
-                     regions = regions->next;
-                  }
-
-                  /* read regions in reverse order */
-                  while (regions != NULL) {
-                     HLDBG("  Region:%s\n", regions->region);
-                     fprintf(output_file, "\"%s\":{", regions->region);
-
-                     for ( j = 0; j < extended_total_num_events; j++ ) {
-
-                        /* print read values if available */
-                        if ( regions->values[j].read_values != NULL) {
-                           reads_t* read_node = regions->values[j].read_values;
-                           /* going to last node */
-                           while ( read_node->next != NULL ) {
-                              read_node = read_node->next;
-                           }
-                           /* read values in reverse order */
-                           int read_cnt = 1;
-                           fprintf(output_file, "\"%s\":{\"Total\":\"%lld\"", all_event_names[j],regions->values[j].total);
-
-                           while ( read_node != NULL ) {
-                              fprintf(output_file, ",\"Read_%d\":\"%lld\"", read_cnt,read_node->value);
-
-                              read_node = read_node->prev;
-
-                              if ( read_node == NULL )
-                                 fprintf(output_file, "}");
-                              if ( read_node == NULL && j < ( extended_total_num_events - 1 ) )
-                                 fprintf(output_file, ",");
-                              if ( read_node == NULL && j == ( extended_total_num_events - 1 ) )
-                                 fprintf(output_file, "}");
-                              read_cnt++;
-                           }
-                        } else {
-                           if ( j == ( extended_total_num_events - 1 ) ) {
-                              HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].total);
-                              fprintf(output_file, "\"%s\":\"%lld\"}", all_event_names[j], regions->values[j].total);
-                           } else {
-                              HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].total);
-                              fprintf(output_file, "\"%s\":\"%lld\",", all_event_names[j], regions->values[j].total);
-                           }
-                        }
-                     }
-
-                     regions = regions->prev;
-                     if (regions == NULL )
-                        fprintf(output_file, "}");
-                     else
-                        fprintf(output_file, ",");
-                  }
-               }
-            }
+            /* end of JSON file */
+            _internal_hl_json_line_break_and_indent(output_file, beautifier, 0);
+            fprintf(output_file, "}");
             fprintf(output_file, "\n");
-            free(all_event_names);
+
             fclose(output_file);
             free(tids);
+
+            /* print output */
+            printf("\n\nPAPI-HL Output:\n");
+            output_file = fopen(absolute_output_file_path, "r");
+            char c = fgetc(output_file); 
+            while (c != EOF)
+            {
+               printf("%c", c);
+               c = fgetc(output_file);
+            }
+            printf("\n");
+            fclose(output_file);
+
          }
 
          output_generated = true;
