@@ -1245,17 +1245,19 @@ static void _internal_hl_write_output()
             fclose(output_file);
             free(tids);
 
-            /* print output */
-            printf("\n\nPAPI-HL Output:\n");
-            output_file = fopen(absolute_output_file_path, "r");
-            char c = fgetc(output_file); 
-            while (c != EOF)
-            {
-               printf("%c", c);
-               c = fgetc(output_file);
+            if ( getenv("PAPI_SILENT") == NULL ) {
+               /* print output to stdout */
+               printf("\n\nPAPI-HL Output:\n");
+               output_file = fopen(absolute_output_file_path, "r");
+               char c = fgetc(output_file); 
+               while (c != EOF)
+               {
+                  printf("%c", c);
+                  c = fgetc(output_file);
+               }
+               printf("\n");
+               fclose(output_file);
             }
-            printf("\n");
-            fclose(output_file);
 
          }
 
