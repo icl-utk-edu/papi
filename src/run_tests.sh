@@ -29,6 +29,12 @@ else
   export TESTS_QUIET
 fi
 
+# Disable high-level output
+if [[ $TESTS_QUIET == "TESTS_QUIET" ]] ; then
+  export PAPI_SILENT=1
+  export PAPI_NO_WARNING=1
+fi
+
 if [ "x$VALGRIND" != "x" ]; then
   VALGRIND="valgrind --leak-check=full";
 fi
@@ -41,7 +47,6 @@ COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -n
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
-PAPI_HL_OUTPUT_WRITER="high-level/scripts/papi_hl_output_writer.py"
 
 ALLTESTS="$VTESTS $CTESTS $FTESTS $COMPTESTS";
 
@@ -128,13 +133,8 @@ do
       printf "Running %-50s %s" $i:
       $VALGRIND ./$i $TESTS_QUIET
       
-      #generate output for high-level tests
+      #delete output folder for high-level tests
       if [[ $i = *"_hl"* ]] ; then
-        if [[ $TESTS_QUIET != "TESTS_QUIET" ]] ; then
-          $PAPI_HL_OUTPUT_WRITER
-          rm papi.json
-        fi
-        #delete temporary output folder
         rm -r papi
       fi
 
@@ -162,13 +162,8 @@ do
       printf "Running %-50s %s" $i:
       $VALGRIND ./$i $TESTS_QUIET
 
-      #generate output for high-level tests
+      #delete output folder for high-level tests
       if [[ $i = *"_hl"* ]] ; then
-        if [[ $TESTS_QUIET != "TESTS_QUIET" ]] ; then
-          $PAPI_HL_OUTPUT_WRITER
-          rm papi.json
-        fi
-        #delete temporary output folder
         rm -r papi
       fi
 
@@ -196,13 +191,8 @@ do
       printf "Running $i:\n"
       $VALGRIND ./$i $TESTS_QUIET
 
-      #generate output for high-level tests
+      #delete output folder for high-level tests
       if [[ $i = *"_hl"* ]] ; then
-        if [[ $TESTS_QUIET != "TESTS_QUIET" ]] ; then
-          $PAPI_HL_OUTPUT_WRITER
-          rm papi.json
-        fi
-        #delete temporary output folder
         rm -r papi
       fi
 

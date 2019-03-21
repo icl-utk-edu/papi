@@ -36,9 +36,14 @@ int main( int argc, char **argv )
       }
    }
    PAPI_hl_print_output();
-   PAPI_hl_cleanup_thread();
+   PAPI_hl_finalize();
 
    /* one iteration with low-level API */
+   retval = PAPI_library_init( PAPI_VER_CURRENT );
+   if ( retval != PAPI_VER_CURRENT ) {
+      test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+   }
+
    if ( !quiet ) {
       printf("\nTesting low-level API: do_flops\n");
    }
