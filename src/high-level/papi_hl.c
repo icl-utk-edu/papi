@@ -1018,8 +1018,8 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
    /* generate array of all events including region count and CPU cycles for output */
    extended_total_num_events = total_num_events + 2;
    all_event_names = (char**)malloc(extended_total_num_events * sizeof(char*));
-   all_event_names[0] = "REGION_COUNT";
-   all_event_names[1] = "CYCLES";
+   all_event_names[0] = "region_count";
+   all_event_names[1] = "cycles";
    cmp_iter = 2;
    for ( i = 0; i < num_of_components; i++ ) {
       for ( j = 0; j < components[i].num_of_events; j++ ) {
@@ -1043,11 +1043,11 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
          fprintf(f, "\"%s\":{", all_event_names[j]);
 
          _internal_hl_json_line_break_and_indent(f, beautifier, 7);
-         fprintf(f, "\"Total\":\"%lld\",", regions->values[j].total);
+         fprintf(f, "\"total\":\"%lld\",", regions->values[j].total);
 
          while ( read_node != NULL ) {
             _internal_hl_json_line_break_and_indent(f, beautifier, 7);
-            fprintf(f, "\"Read_%d\":\"%lld\"", read_cnt,read_node->value);
+            fprintf(f, "\"read_%d\":\"%lld\"", read_cnt,read_node->value);
 
             read_node = read_node->prev;
 
@@ -1115,7 +1115,7 @@ static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* t
    int i;
 
    _internal_hl_json_line_break_and_indent(f, beautifier, 1);
-   fprintf(f, "\"Threads\":[");
+   fprintf(f, "\"threads\":[");
 
    /* get regions of all threads */
    for ( i = 0; i < threads_num; i++ )
@@ -1128,7 +1128,7 @@ static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* t
          _internal_hl_json_line_break_and_indent(f, beautifier, 2);
          fprintf(f, "{");
          _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-         fprintf(f, "\"ID\":\"%lu\",", thread_node->key);
+         fprintf(f, "\"id\":\"%lu\",", thread_node->key);
 
          /* in case we only store iterator id as thread id */
          //fprintf(f, "\"ID\":%d,", i);
@@ -1232,7 +1232,7 @@ static void _internal_hl_write_output()
             /* start of JSON file */
             fprintf(output_file, "{");
             _internal_hl_json_line_break_and_indent(output_file, beautifier, 1);
-            fprintf(output_file, "\"CPU in MHz\":\"%d\",", cpu_freq);
+            fprintf(output_file, "\"cpu in mhz\":\"%d\",", cpu_freq);
 
             /* write all regions with events per thread */
             _internal_hl_json_threads(output_file, beautifier, tids, number_of_threads);
@@ -1245,7 +1245,7 @@ static void _internal_hl_write_output()
             fclose(output_file);
             free(tids);
 
-            if ( getenv("PAPI_SILENT") == NULL ) {
+            if ( getenv("PAPI_REPORT") != NULL ) {
                /* print output to stdout */
                printf("\n\nPAPI-HL Output:\n");
                output_file = fopen(absolute_output_file_path, "r");

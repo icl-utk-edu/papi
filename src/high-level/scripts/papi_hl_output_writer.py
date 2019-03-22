@@ -14,7 +14,7 @@ except NameError:
 
 cpu_freq = 0
 
-def create_json_object(source):
+def merge_json_files(source):
   json_object = {}
   json_object["ranks"] = []
 
@@ -26,65 +26,33 @@ def create_json_object(source):
     #determine mpi rank based on file name (rank_#)
     rank = item.split('_', 1)[1]
     rank = rank.rsplit('.', 1)[0]
+    #print("rank: {}".format(rank))
+
     json_rank["id"] = rank
-    json_rank["threads"] = []
-    
+
     #open meaurement file
     file_name = str(source) + "/rank_" + str(rank) 
+
     try:
-      rank_file = open(file_name, "r")
-      lines = rank_file.readlines() #[2:]
+      with open(file_name) as json_file:
+        #keep order of all objects
+        data = json.load(json_file, object_pairs_hook=OrderedDict)
     except IOError as ioe:
       print("Cannot open file {} ({})".format(file_name, repr(ioe)))
       return
-    
-    line_counter = 0
 
-    #read lines from file
-    for line in lines:
-      if line_counter == 0:
-        #determine cpu frequency
-        global cpu_freq
-        cpu_freq = int(line.split(':', 1)[1]) * 1000000
-        #print cpu_freq
-        line_counter = line_counter + 1
-        continue
-      if line_counter == 1:
-        #skip second line
-        line_counter = line_counter + 1
-        continue
+    #determine cpu frequency
+    global cpu_freq
+    cpu_freq = int(data['cpu in mhz']) * 1000000
 
-      thread_id = line.split(',', 1)[0]
-      json_thread = {}
-      json_thread["id"] = int(thread_id)
-      json_thread["regions"] = []
+    #get all threads
+    json_rank["threads"] = data["threads"]
 
-      #remove thread_id from line
-      line = line.split(',', 1)[1]
-
-      #load json per thread
-      regions = json.loads(line, object_pairs_hook=OrderedDict)
-      #print json.dumps(regions)
-      for region_key,region_value in regions.items():
-        region_dict = OrderedDict()
-        region_dict["name"] = region_key
-        #print region_key
-        event_dict = OrderedDict()
-        #print region_value
-        for event_key,event_value in region_value.items():
-          #print event_key
-          event_dict.update({event_key:event_value})
-
-        region_dict["events"] = event_dict
-        json_thread["regions"].append(region_dict)
-
-      json_rank["threads"].append(json_thread)
-
-    rank_file.close()
+    #append current rank to json file
     json_object["ranks"].append(json_rank)
 
   # print json.dumps(json_object,indent=2, sort_keys=False,
-  #                   separators=(',', ': '), ensure_ascii=False)
+  #                  separators=(',', ': '), ensure_ascii=False)
   return json_object
 
 class Sum_Counters(object):
@@ -98,7 +66,7 @@ class Sum_Counters(object):
     for key,value in events.items():
       metric_value = value
       if isinstance(value, dict):
-        metric_value = float(value['Total'])
+        metric_value = float(value['total'])
       cleaned_events[key] = metric_value
 
     if region not in self.regions:
@@ -146,7 +114,11 @@ def sum_json_object(json):
   for ranks in json['ranks']:
     for threads in ranks['threads']:
       for regions in threads['regions']:
-        sum_cnt.add_region(ranks['id'], regions['name'], regions['events'])
+        for region_key,region_value in regions.iteritems():
+          name = region_key
+          events = region_value
+          sum_cnt.add_region(ranks['id'], name, events)
+
   return sum_cnt.get_json()
 
 
@@ -157,7 +129,7 @@ def get_ipc_dict(inst, cyc):
     #print str(cyc_key) + "," + str(cyc_value)
     ipc = float(int(inst_value) / int(cyc_value))
     ipc_dict[inst_key] = float(format(ipc, '.2f'))
-  return ipc_dict 
+  return ipc_dict
 
 
 def get_ops_dict(ops, rt):
@@ -202,20 +174,20 @@ def format_events(events):
   rt_dict = OrderedDict()
 
   #Region Count
-  if 'REGION_COUNT' in events:
-    format_events['Region count'] = int(events['REGION_COUNT'])
-    del events['REGION_COUNT']
+  if 'region_count' in events:
+    format_events['Region count'] = int(events['region_count'])
+    del events['region_count']
 
   #Real Time
-  if 'CYCLES' in events:
-    if isinstance(events['CYCLES'],dict):
-      for read_key,read_value in events['CYCLES'].items():
+  if 'cycles' in events:
+    if isinstance(events['cycles'],dict):
+      for read_key,read_value in events['cycles'].items():
         rt_dict[read_key] = float(read_value) / int(cpu_freq)
-      format_events['Real time in s'] = format_read_events(events['CYCLES'],'Runtime')
+      format_events['Real time in s'] = format_read_events(events['cycles'],'Runtime')
     else:
-      rt = float(events['CYCLES']) / int(cpu_freq)
-      format_events['Real time in s'] = convert_value(events['CYCLES'], 'Runtime')
-    del events['CYCLES']
+      rt = float(events['cycles']) / int(cpu_freq)
+      format_events['Real time in s'] = convert_value(events['cycles'], 'Runtime')
+    del events['cycles']
 
   #CPU Time
   if 'perf::TASK-CLOCK' in events:
@@ -273,32 +245,29 @@ def format_json_object(json):
   json_object = {}
   json_object['ranks'] = []
 
-  for ranks in json['ranks']:
-    #print ranks['id']
+  for rank in json['ranks']:
+    # print rank['id']
+    # print rank['threads']
     json_rank = {}
-    json_rank['id'] = ranks['id']
+    json_rank['id'] = rank['id']
     json_rank['threads'] = []
-    for threads in ranks['threads']:
-      #print threads['id']
-      json_thread = {}
-      json_thread['id'] = threads['id']
-      json_thread['regions'] = []
-      for regions in threads['regions']:
-        #print regions['name']
-        region = {}
-        region['name'] = regions['name']
-        region['events'] = {}
-        events = {}
-        for event_key,event_value in regions['events'].iteritems():
-          events[event_key] = event_value
-        
-        formated_events = format_events(events)
 
-        region['events'] = formated_events
-        json_thread['regions'].append(region)
+    for thread in rank['threads']:
+      # print thread['id']
+      json_thread = {}
+      json_thread['id'] = thread['id']
+      json_thread['regions'] = []
+      for region in thread['regions']:
+        json_region = {}
+        for region_key,region_value in region.iteritems():
+          # print region_key
+          # print region_value
+          json_region[region_key] = format_events(region_value)
+
+        json_thread['regions'].append(json_region)
       json_rank['threads'].append(json_thread)
-    json_object["ranks"].append(json_rank)
-    
+    json_object['ranks'].append(json_rank)
+
   return json_object
 
 def write_json_file(data, file_name):
@@ -312,7 +281,7 @@ def write_json_file(data, file_name):
 
 def main(source, format, type):
   if (format == "json"):
-    json = create_json_object(source)
+    json = merge_json_files(source)
     formated_json = format_json_object(json)
 
     if type == 'detail':
