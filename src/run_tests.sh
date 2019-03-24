@@ -31,8 +31,9 @@ fi
 
 # Disable high-level output
 if [[ $TESTS_QUIET == "TESTS_QUIET" ]] ; then
-  export PAPI_SILENT=1
   export PAPI_NO_WARNING=1
+else
+  export PAPI_REPORT=1
 fi
 
 if [ "x$VALGRIND" != "x" ]; then
