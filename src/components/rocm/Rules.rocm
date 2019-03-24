@@ -1,0 +1,12 @@
+# $Id$
+
+ROCM_DIR ?= /opt/rocm
+RPL_DIR ?= /opt/rocm/rocprofiler
+
+COMPSRCS += components/rocm/linux-rocm.c
+COMPOBJS += linux-rocm.o
+CFLAGS += -I$(ROCM_DIR)/include/hsa -I$(RPL_DIR)/include -g 
+LDFLAGS += -L$(ROCM_DIR)/lib -lhsa-runtime64 -L$(RPL_DIR)/lib -lrocprofiler64 $(LDL) -Wl,-rpath=$(ROCM_DIR)/lib -Wl,-rpath=$(RPL_DIR)/lib -g
+
+linux-rocm.o: components/rocm/linux-rocm.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm/linux-rocm.c -o linux-rocm.o

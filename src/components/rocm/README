@@ -1,0 +1,57 @@
+/** 
+* @file:   README
+* CVS:     $Id$
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: ROCM
+*/
+
+/** @page component_readme Component Readme 
+
+@section Component Specific Information
+
+rocm/ 
+
+ROCM component update: Support for ROCM metrics
+
+
+Known problems and limitations in early release of metric support
+-----------------------------------------------------------------
+
+* Only sets of metrics and events that can be gathered in a single
+  pass are supported.  Transparent multi-pass support is expected
+* All metrics are returned as long long integers
+
+
+General information
+-------------------
+
+The PAPI ROCM component is a hardware performance counter
+measurement technology for the AMD ROCM platform which provides
+access to the hardware counters inside the GPU. The component is
+an adapter fo ROCm profiling library (RPL, 'ROC-profiler') which
+is included in standard ROCM release.
+
+
+How to install PAPI with the ROCM component?
+-------------------------------------------- 
+
+This PAPI ROCm componen has been developed and tested using ROCM
+release 1.8.
+
+This component uses the ROCM location from the environment (or looks
+for /opt/rocm by default). Please set ROCM_DIR and RPL_DIR during
+builds so that the component can find the required header files.
+
+Configure PAPI with ROCM enabled.  
+    % cd src
+    % ./configure --prefix=some_location --with-components="rocm"
+
+Build with ROCM_DIR and RPL_DIR specified
+    % export ROCM_DIR=/opt/rocm
+    % export RPL_DIR=/opt/rocm/rocprofiler
+    % make 
+
+To find a list of ROCM supported events.
+    % utils/papi_native_avail | grep rocm
+
+*/
