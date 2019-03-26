@@ -127,7 +127,10 @@ def get_ipc_dict(inst, cyc):
   for (inst_key,inst_value), (cyc_key,cyc_value) in zip(inst.items(), cyc.items()):
     #print str(inst_key) + "," + str(inst_value)
     #print str(cyc_key) + "," + str(cyc_value)
-    ipc = float(int(inst_value) / int(cyc_value))
+    try:
+      ipc = float(int(inst_value) / int(cyc_value))
+    except:
+      ipc = 0
     ipc_dict[inst_key] = float(format(ipc, '.2f'))
   return ipc_dict
 
@@ -203,7 +206,10 @@ def format_events(events):
       ipc_dict = get_ipc_dict(events['PAPI_TOT_INS'], events['PAPI_TOT_CYC'])
       format_events['IPC'] = ipc_dict
     else:
-      ipc = float(int(events['PAPI_TOT_INS']) / int(events['PAPI_TOT_CYC']))
+      try:
+        ipc = float(int(events['PAPI_TOT_INS']) / int(events['PAPI_TOT_CYC']))
+      except:
+        ipc = 0
       format_events['IPC'] = float(format(ipc, '.2f'))
 
     del events['PAPI_TOT_INS']
